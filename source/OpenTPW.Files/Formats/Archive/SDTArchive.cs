@@ -59,7 +59,7 @@ public class SdtArchive : IArchive
 				1 byte: Sound type
 					*See MP2File.SoundTypes (also: https://github.com/ufdada/dk2-tools/blob/6b4e49b607bbb7e0aa843856e584f6dd1365e7fc/Formats/Sound/sdt_struct.bt)
 				4 bytes: Unknown
-				4 bytes: Decoded size
+				4 bytes: Played length, in bytes of 16-bit PCM (a little less than the stream decodes to)
 				4 bytes: Unknown
 				n bytes: File data
 		*/

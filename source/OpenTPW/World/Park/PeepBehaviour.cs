@@ -1401,7 +1401,7 @@ public sealed class PeepBehaviour
 	/// <remarks>
 	/// Watching ends the original's turn; here it does not. The fireworks' script variable 0 is not read, and
 	/// the entertainer's count is of one standing beside the guest: the original then asks the nearest one's
-	/// state <c>0xe</c>, performing, which no member of staff takes here. A prank whose own test fails (the stink
+	/// state <c>0xe</c>, performing, which an entertainer takes here and this count does not ask. A prank whose own test fails (the stink
 	/// bomb's roll, no balloon on the cell) does nothing in the original and counts nothing here.
 	/// </remarks>
 	private void CountAfterLeaving( Peep peep, PeepWalk walk, ParkAdmission admission, int draw )
@@ -1779,8 +1779,9 @@ public sealed class PeepBehaviour
 	/// <item><b>Wait.</b> At the front and invited but not the nominee: the whole turn is nothing (<c>0x005001d8</c>).</item>
 	/// <item><b>The dirt gate</b> (<c>0x005001f0</c>) puts out a queuer for a dirty toilet
 	/// (<see cref="ParkState.IsDirty"/>), which use makes one (<see cref="ParkRideOperation.WearByUse"/>), with
-	/// thought <c>0xe</c>. A handyman's cleaning restores it and is not built (Q133b), so a toilet here stays
-	/// dirty (<c>ride-operation.md</c>, "A toilet's dirt").</item>
+	/// thought <c>0xe</c>. A handyman's cleaning restores it (<c>StaffBehaviour.FindToilet</c>), so a toilet here
+	/// stays dirty until one within his range has walked to it and cleaned it (<c>ride-operation.md</c>,
+	/// "A toilet's dirt").</item>
 	/// <item><b>The lost place.</b> The queue walk cannot reach them - they are unlinked, or somebody in front has
 	/// stopped queueing: put out. The original's log says it closes and reopens the ride; nothing does.</item>
 	/// <item><b>In place</b>: too far back for the thing's longest queue (<see cref="LongestQueue"/>), or a
@@ -1803,7 +1804,7 @@ public sealed class PeepBehaviour
 	/// </list>
 	/// <para>
 	/// <b>A guest who has played no spot animation has <see cref="Peep.TimeOfLastSpotAnim"/> at nought</b>, which
-	/// the thing tick has passed by more than thirty once the lobby has run about seven seconds, so their mood is
+	/// the park's clock (<see cref="ParkState.GameTick"/>, 755 at the shipped park's load) has passed by more than thirty, so their mood is
 	/// read on their first turn in a queue. A queuer above <see cref="QueueHappyAbove"/> then jumps on every 31st
 	/// sweep and is in <see cref="PeepState.PlayingSpotAnimation"/> for eleven of them, during which this turn does
 	/// not run: no place, mood, toilet or board arm.

@@ -306,8 +306,8 @@ public class ParkAdmissionTests
 			Assert.AreNotEqual( PeepState.WaitingForOpening, guests[id].State,
 				$"guest {id} paid, and should have been let through rather than left at the booth" );
 
-			// <b>The load-bearing one.</b> A visitor number is handed out by ParkState.Admit, which only
-			// completing Entering reaches - so this cannot be satisfied by a guest who was merely
+			// <b>The load-bearing one.</b> A visitor number is handed out by ParkState.Admit, which a guest
+			// standing outside the park reaches only by completing Entering - so this cannot be satisfied by a guest who was merely
 			// re-labelled, or aimed at the entrance and left standing.
 			Assert.AreNotEqual( 0, guests[id].VisitorNumber,
 				$"guest {id} should have been counted in, which only arriving through the gate does" );

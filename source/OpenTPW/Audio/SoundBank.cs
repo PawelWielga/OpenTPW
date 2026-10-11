@@ -86,7 +86,7 @@ public sealed class SoundBank
 			var clips = new AudioClip?[archive.soundFiles.Count];
 			var durations = new TimeSpan[archive.soundFiles.Count];
 
-			// The .sdt header carries each entry's decoded size, so how much this bank would cost
+			// The .sdt header carries the length the game plays of each entry, under three frames short of what it decodes to, so about how much this bank would cost
 			// is known before a single frame is decoded.
 			var decoded = archive.soundFiles.Sum( entry => (long)entry.DecodedSize * 2 );
 			var lazy = decoded > DecodeEverythingBelow;

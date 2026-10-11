@@ -90,9 +90,9 @@ public partial class ModelEntity : Entity
 	/// Where to put it, instead of where the entity itself stands.
 	///
 	/// <para>
-	/// <b>It exists so a thing can be shown somewhere without being moved.</b> The ride window's
-	/// preview draws the very model that is standing in the park - the same entities, mid-animation -
-	/// and moving them to centre one in a panel would drag the ride across the park with it.
+	/// <b>It exists so a thing can be shown somewhere without being moved.</b> No caller
+	/// passes one: the object window's preview draws a fresh model of its own, never the instance
+	/// standing in the park, and places it through the projection it hands over.
 	/// </para>
 	/// </param>
 	public void DrawOverlay( System.Numerics.Matrix4x4 view, System.Numerics.Matrix4x4 projection,

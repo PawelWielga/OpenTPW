@@ -52,7 +52,7 @@ public sealed class ParkState
 	/// <summary>
 	/// Every cell's region effects as the park runs, <see cref="ParkWorld.EffectWords"/> words a cell in the map's
 	/// order: the file's, with what a thing bought, sold, dirtied or cleaned since has stamped and taken off
-	/// (the world's <c>+0x1b1104</c>). The staff's and the litter's are the file's and do not move.
+	/// (the world's <c>+0x2d8 + 0x1b1104</c>). The staff's and the litter's are the file's and do not move.
 	/// </summary>
 	public IReadOnlyList<short> Effects => _effects;
 
@@ -547,8 +547,8 @@ public sealed class ParkState
 	/// the id of each object of the file's that no longer stands.
 	///
 	/// <para>
-	/// <b>Only a thing <paramref name="writable"/> passes is written so.</b> Any other (a track ride with a car
-	/// out, a tracked ride) is counted and left as it was: one sold stays in the file, one bought is not in it.
+	/// <b>Only a thing <paramref name="writable"/> passes is written so.</b> Any other (a track ride of a
+	/// BumperType with no record here, a tracked ride) is counted and left as it was: one sold stays in the file, one bought is not in it.
 	/// With no test given nothing is made or taken out.
 	/// </para>
 	/// </summary>

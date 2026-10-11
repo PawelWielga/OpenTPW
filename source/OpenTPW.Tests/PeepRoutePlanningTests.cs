@@ -50,12 +50,13 @@ public class PeepRoutePlanningTests
 	/// <para>
 	/// <b>Which mode that is has been measured.</b>
 	/// The field is on the navigator - <c>FUN_0050f3b0</c> reads it at <c>0050f501</c> beside
-	/// position, velocity and the force limits, and <c>avoid_walls</c> reads it twenty times over. Scanning
-	/// every one of the executable's 881,521 instructions for a write to <c>+0xb4</c> finds exactly one that
-	/// lands on a navigator: <c>0051009f</c>, in the constructor <c>FUN_0050ffe0</c>, writing zero. So zero
-	/// is the mode every person in the game walks and searches in, and
-	/// <see cref="ParkPeople.WalkingMode"/> reproduces it rather than defaulting to it. The other hundred
-	/// writes to that offset in the image belong to unrelated structures.
+	/// position, velocity and the force limits, and <c>avoid_walls</c> reads it twenty times over. The
+	/// navigator's constructor <c>FUN_0050ffe0</c> writes zero to it (<c>0051009f</c>). A person's navigator sits
+	/// at <c>+0xd4</c>, so the same field is also written through the person as <c>+0x188</c>: 1 by a guest's
+	/// gate states, the put-down <c>FUN_004feb50</c> and the leaving retry, and by a member of staff setting off
+	/// for the picket (<c>0x00506a89</c>), by a guard whose route after a catch fails (<c>0x004d6977</c>) and by the
+	/// walker constructor <c>FUN_004f7b20</c> (<c>0x004f7c0f</c>). <see cref="ParkPeople.WalkingMode"/> is the constructor's zero for
+	/// every walk, which departs from the original in those.
 	/// </para>
 	/// <para>
 	/// <see cref="WhichModeIsAskedChangesWhatCanBeReached"/> still earns its place: it measures how much the

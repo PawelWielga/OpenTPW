@@ -51,7 +51,7 @@ public class SoundFile : BaseFormat
 	///     0x1a  uint8   bits per sample
 	///     0x1b  uint8   sound type - see <see cref="MP2File.SoundTypes"/>
 	///     0x1c  int32   unknown, zero in all 3,739 entries the game ships
-	///     0x20  int32   size the audio decodes to, in bytes
+	///     0x20  int32   how much of the audio the game plays, in bytes of 16-bit PCM: a little less than it decodes to
 	///     0x24  int32   unknown, zero in all 3,739
 	///
 	/// Those middle four fields are the ones worth being careful about: read as an int16 and

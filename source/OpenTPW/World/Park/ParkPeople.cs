@@ -1214,11 +1214,10 @@ public sealed partial class ParkPeople : Entity
 	/// vehicle past its unloading is spent before the load drops, and the load is then summoned by its size.
 	///
 	/// <para>
-	/// <b>It exists because the second and third vehicles are otherwise unreachable.</b> The headcount
-	/// is floored at <c>Arrival.MinPeople</c> - one, in every theme the game ships - and
-	/// <see cref="VehicleFor"/> gives one person the bus, so a park left to itself sends the bus every
-	/// time and a seaplane is never asked for. Until the crowd is sized from the park's own draw, this
-	/// is the only way to watch the other two arrive.
+	/// <b>It exists to bring the second and third vehicles in the stock park.</b> The headcount is what
+	/// the park is worth (<see cref="LoadSize"/>), 13 and 12 for the stock park's first two loads, and
+	/// <see cref="VehicleFor"/> gives a load under 36 the bus, so those loads come by bus and a seaplane
+	/// is not asked for. This is the way to watch the other two arrive without a park worth that much.
 	/// </para>
 	/// </summary>
 	internal int ForceArrival( int people )
@@ -3044,7 +3043,7 @@ public sealed partial class ParkPeople : Entity
 				+ $"lastunit {script.LastUnitLocks} ran {script.LongestLastUnitSection} "
 				// What ADDOBJ has started and no KILLOBJ stopped, from the head of the list, each as
 				// type:effect@tag/node/lookup record, the effect "?" on a record a load put back - records only,
-				// since nothing draws or plays them (RideEffects).
+				// since no sound is played from one and a particle is drawn by the park's particle system, not from here (RideEffects).
 				+ $"effects [{string.Join( ' ', (script.Effects?.Records ?? []).Select( record => $"{record.Type}:{(record.Restored ? "?" : record.Effect.ToString())}@{record.Tag}/{record.Node}/{record.Index}" ) )}] "
 				// WHICH scream, not just whether: a ride that replays a fresh sample every pass and one
 				// that loops a single clip for ever both read "screaming True". The sample name and the pass

@@ -39,7 +39,7 @@ keys act on the release").
 |---|---|---|---|
 | — | ui.wad `.md2` | UI meshes authored on the same 2048x1536 virtual screen. A part (node) is stretched to fill its control rect; frame + state picks the part (buttons: normal, disabled, hilite, hidown, helddown, down) | Mesh node names and the part picker |
 | `0x00477310` | — | 9-slice path, taken for `!`-prefixed meshes | Disassembly |
-| `0x00419710` | — | `.bf4` font loader: ids out of `Language\English\residx.dat`, 13 slots x 4 resolution sets | Disassembly; the `.bf4` format is written up in the FileFormats docs |
+| `0x00419710` | — | The language loader (`boot.md`, the first once-only step): the string tables and the keyboard shortcuts, then the `.bf4` fonts: ids out of `Language\English\residx.dat`, 13 slots, one of 4 resolution sets loaded | Disassembly; the `.bf4` format is written up in the FileFormats docs |
 | `0x00485a70` | — | The font in a slot: `CMP ECX,0xd` / `JNC` answers null for any slot from 13 up, and, the compare being unsigned, for a negative one; otherwise `0x0078b54c + (slot + set * 13) * 0x18`, the set in `0x0078b534`. One flat table, 13 slots to a set, so every set is the same length by construction | Disassembly, read first-hand |
 | `FUN_006b0480` | — | The font object's constructor (one call, `0x006b06ef`), storing vtable `0x0070a158`. Slot 13 (`+0x34`) is `FUN_006b4aa0`, the glyph unpacker, reached only through the vtable; slots 14 and 15 are the blend blitters `0x006b0760` (RGB555) and `0x006b0c50` (RGB565). The unpacker's nibble helpers: `0x006b54a0` reads, `0x006b54c0` steps, `0x006b5450` writes, high nibble first. The packings are FileFormats `fonts.md`'s | Q194, from the bytes; function bounds not re-read in Ghidra |
 
@@ -741,7 +741,7 @@ The four park display names **are** in the shipped data, measured with OpenTPW's
 | Address / value | Original name | What it is | Evidence |
 |---|---|---|---|
 | `data/Language/English/THEMENAMES.str` | — | 112 bytes, magic `BFST`, header declaring **4 entries**, decoding to `[0] "Lost Kingdom"`, `[1] "Halloween World"`, `[2] "Wonder Land"`, `[3] "Space Zone"` | Read through `StringFile` |
-| `01`, a three-byte `len`, `len` bytes | — | A BFST record (FileFormats `strings.md`, on its `docs/format-corrections` branch; rows 400 and 417 of UITEXT are over 255, in both languages). **The bytes are character INDICES into `MBToUni.dat`, not text** — which is why `strings`, `grep -a` and any plain text search find nothing but the magic | Byte-level read |
+| `01`, a three-byte `len`, `len` bytes | — | A BFST record (FileFormats `strings.md`; rows 400 and 417 of UITEXT are over 255, in both languages). **The bytes are character INDICES into `MBToUni.dat`, not text** — which is why `strings`, `grep -a` and any plain text search find nothing but the magic | Byte-level read |
 | lengths 12 / 15 / 11 / 10 | — | The four name lengths, visible in the header table, matching the four names exactly, with byte `0x0c` (the space) in the right place in each | Header table |
 | `English/MBToUni.dat` | — | 506 bytes, count byte `0xf9` = **249** characters | Byte read |
 | `american/MBToUni.dat` | — | 504 bytes, count byte `0xf8` = **248**. They differ at byte 7, the count field read after `Seek(6)` — one fewer character shifts every index past it | Byte read |

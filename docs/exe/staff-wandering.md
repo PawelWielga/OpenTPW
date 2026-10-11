@@ -29,7 +29,7 @@ their linked directions. Patrol fallback destinations must be ordinary path cell
 
 **Destination filtering alone did not fix the report.** A regression run with those filters still crossed
 from row 17 onto row 16 while aiming at an allowed point `(47.0195,17.0195)`. On seed 0, tick 1031,
-the researcher reached `(47.198,16.968)`. The unbuilt no-links recovery then lets wandering continue outside.
+the researcher reached `(47.198,16.968)`. That run's build had no no-links recovery, and wandering continued outside.
 
 **Deliberate deviation:** apply the same linked-cell limits to route planning, wall avoidance and physical
 steps during staff's free-walking state. This additional containment is not claimed as original behavior.
@@ -38,7 +38,7 @@ operation share it. Rest and strike walks retain their general routing. Guests a
 
 The original multi-cell random walk and slot-selection order are built for staff inside their area
 (`LinkedWander`, [ride-operation.md](ride-operation.md), "Q108"); the zero-link recovery is built too
-(Q112, the same page, "OpenTPW takes the arm"), and the no-work walk of every kind is built (Q133); the work itself is not (Q133b, Q133d). A worker deliberately dropped on
+(Q112, the same page, "OpenTPW takes the arm"), and the no-work walk of every kind is built (Q133); so is the work, the handyman's clean of a dirty toilet, the mechanic's repair and the entertainer's performance, apart from the handyman's litter search, which is counted and finds nothing (`HANDYMAN_LITTER_SEARCH`), the researcher's points for the lab, which are counted and not spent (`RESEARCH_POINTS_TO_THE_LAB`), and the mechanic's upgrade job (`MECHANIC_UPGRADE_JOB`). A worker deliberately dropped on
 unlinked terrain or already outside is not the linked-path containment case verified here. No blanket restriction was added to hiring,
 placement, rest or strike travel.
 

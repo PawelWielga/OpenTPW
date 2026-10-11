@@ -133,7 +133,9 @@ public sealed class Staff
 
 	/// <summary>
 	/// The dword at <c>+0x188</c>: set as a member sets off for the picket (<c>0x00506a89</c>) and cleared as that
-	/// walk ends (<c>FUN_005056e0</c>). The <c>staff</c> census prints it; what reads it in the original is not traced.
+	/// walk ends (<c>FUN_005056e0</c>). It is the navigator's walking mode (<c>+0xb4</c> of the navigator at <c>+0xd4</c>),
+	/// which the route search is asked in (<c>0x0050f931</c>): the original plans the walk to the picket in mode 1. Here
+	/// that walk is mode 0 (<see cref="ParkPeople.WalkingMode"/>), and the <c>staff</c> census prints the dword.
 	/// </summary>
 	public bool SettingOffForTheStrike { get; internal set; }
 

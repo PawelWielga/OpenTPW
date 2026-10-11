@@ -34,9 +34,12 @@ namespace OpenTPW;
 /// bank's own animation and state <c>0xe</c> - <see cref="Perform"/>.
 /// </para>
 /// <para>
-/// <b>What is deliberately not built, each for a named reason.</b> The rest of the work: a mechanic's broken
-/// ride (<c>FUN_004daa90</c>) and a handyman's litter (<c>FUN_004c8ed0</c>). Each search is counted where the
-/// original makes it and answers as finding nothing.
+/// <b>The mechanic's repair is built</b>: the search (<c>FUN_004daa90</c>), the walk to the ride and the mend -
+/// <see cref="FindRide"/>, <see cref="RepairOn"/>.
+/// </para>
+/// <para>
+/// <b>What is deliberately not built.</b> A handyman's litter (<c>FUN_004c8ed0</c>): the search is counted where
+/// the original makes it and answers as finding nothing.
 /// </para>
 /// <para>
 /// <b>The strike is built</b>: the arm every decide opens with, the walk to the picket (state 4) and the
@@ -415,7 +418,7 @@ public sealed class StaffBehaviour
 				break;
 
 			// Walking to the picket - FUN_005056e0's case 4: a step of the walk, thought 0x15 every turn, and at
-			// the walk's end, arrived or failed alike, the mark at +0x188 is cleared and the member is on strike.
+			// the walk's end, arrived or failed alike, the walking mode at +0x188 is zeroed and the member is on strike.
 			case StaffActivity.GoingOnStrike:
 				var picketWalk = Walked( staff, walk, playing );
 
@@ -758,7 +761,7 @@ public sealed class StaffBehaviour
 
 	/// <summary>
 	/// The decide's strike arm - <c>0x00506a4d</c>..<c>0x00506b25</c> (<c>docs/exe/ride-operation.md</c>, "The
-	/// strike"). The member's kind on strike and the gate's status reading open: the mark at <c>+0x188</c> is
+	/// strike"). The member's kind on strike and the gate's status reading open: the walking mode at <c>+0x188</c> is
 	/// set and the world random is drawn four times, for a cell across the strike area and a byte inside it, then
 	/// a cell down it and a byte inside that. A route there takes state 4 and answers true; none answers false.
 	/// </summary>
@@ -1671,8 +1674,7 @@ public sealed class StaffBehaviour
 	/// next sent to rest. <b>One on the way there</b> gives the claim up and goes Idle.
 	/// <para>
 	/// <b>A handyman whose toilet job (<c>+0x21a</c>) is the thing drops it first and goes idle</b>, in any
-	/// state, by his own arm. A mechanic's ride job (<c>+0x218</c>) goes the same way and is not built: no
-	/// mechanic holds one here.
+	/// state, by his own arm. A mechanic's ride job (<c>+0x218</c>) goes the same way.
 	/// </para>
 	/// <para>
 	/// <b>Not built, and each has nothing here to act on.</b> <c>FUN_00506d10</c> also takes one off the rest area's

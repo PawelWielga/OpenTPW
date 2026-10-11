@@ -287,20 +287,20 @@ public static class Audio
 	/// rest of the mix carries on. Idempotent: telling it what it already is costs nothing.
 	///
 	/// <para>
-	/// <b>This is what a park's menu does to sound, and the WHICH is a restoration while the HOW and
-	/// the HOW MUCH are deviations.</b> The original's pause helper (0x004092a0) sets DAT_00803ad2,
+	/// <b>This is what a park's menu does to sound, and the WHICH and the HOW MUCH are the original's
+	/// while the HOW is ours.</b> The original's pause helper (0x004092a0) sets DAT_00803ad2,
 	/// and the per-frame listener update (FUN_0051c1d0) then replaces the listener's height with
 	/// 10000.0 - so what a pause takes away is exactly what was placed against the listener, and what
 	/// it leaves is everything that never was. That division is the restoration, and it holds without
 	/// knowing a single number, because a listener cannot reach a sound it was never given a place for.
 	/// </para>
 	/// <para>
-	/// <b>The mechanism is ours, and it has to be.</b> Moving the listener would do nothing here: a
-	/// park never sets <see cref="ReferenceDistance"/>, so <see cref="AudioListener.AttenuationTo"/>
-	/// returns 1 before it measures anything, and the rain, the music, the advisor and the interface's own
-	/// sounds carry no position for <see cref="Voice.Locate"/> to act on. Giving a park a reference
-	/// distance to make the trick work would start attenuating screams and thunder by camera distance
-	/// during ordinary play, which is a change to UNPAUSED behaviour that nothing asked for.
+	/// <b>The mechanism is ours.</b> The listener is not lifted: each voice with a place is held where it
+	/// is and let go again. Lifting the listener would silence a voice with a range of its own
+	/// (<see cref="AudioListener.RangeGain"/>) and no other: a park never sets <see cref="ReferenceDistance"/>,
+	/// so <see cref="AudioListener.AttenuationTo"/> returns 1 before it measures anything, and the rain, the
+	/// music, the advisor and the interface's own sounds carry no position for <see cref="Voice.Locate"/>
+	/// to act on.
 	/// </para>
 	/// <para>
 	/// <b>And the amount is the original's.</b> The executable hands QMixer a mapping of 2.0, the voice's

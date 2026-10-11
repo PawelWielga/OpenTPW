@@ -32,7 +32,7 @@ public sealed class MP2File : ArchiveFile
 
 	public SoundTypes SoundType { get; set; }
 
-	/// <summary>How many bytes of PCM this decodes to, as the bank's header states it.</summary>
+	/// <summary>How many bytes of 16-bit PCM the game plays of this entry, as the bank's header states it: a little less than the stream decodes to.</summary>
 	public int DecodedSize { get; set; }
 
 	public MP2File( int header, string name, byte[] soundData, int sampleRate, int bitsPerSample,
@@ -51,8 +51,8 @@ public sealed class MP2File : ArchiveFile
 	/// <summary>
 	/// How long this entry is, worked out from the bitrate in its own first frame header.
 	///
-	/// Not from <see cref="DecodedSize"/>, which is a rounded count that disagrees with the
-	/// decoder by up to a frame - see <see cref="SoundCategoryFile.ReadSamples"/>, which needs
+	/// Not from <see cref="DecodedSize"/>, which is the length the game plays, 0.59 to 2.58 frames short
+	/// of what the stream decodes to - see <see cref="SoundCategoryFile.ReadSamples"/>, which needs
 	/// lengths accurate enough to tell two samples in a bank apart.
 	/// </summary>
 	public TimeSpan Duration

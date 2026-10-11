@@ -151,9 +151,9 @@ public sealed class ParkOrbitCameraMode : CameraMode
 		// (+/-fVar1/DAT_008bcbcc, +/-fVar1, 1). With the 4:3 that every shipped mode except 1280x1024
 		// uses, that is (+/-1.333, +/-1.0, 1) - a vertical half-angle of 45 and a horizontal one of
 		// 53.13. So vertical 90, horizontal 106.26, which is exactly what CameraMode's angle already
-		// means. One link is inferred rather than read: DAT_008bcbcc is written at runtime through a
-		// struct pointer, so its 0.75 comes from the picking code, which carries the same figure as a
-		// literal double and takes atan(0.75) to build the same frustum (FUN_0045bf90).
+		// means. DAT_008bcbcc is written at runtime through a struct pointer and reads 0.75 in the
+		// running original at 1024 x 768; the picking code carries the same figure as a literal
+		// double and takes atan(0.75) to build the same frustum (FUN_0045bf90).
 		//
 		// The reference screenshots cannot check this - see docs/exe/park-engine.md, "Do not try to
 		// measure the FOV from the reference screenshots". Any difference in how much sky the two show

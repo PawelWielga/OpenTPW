@@ -7,7 +7,7 @@ namespace OpenTPW;
 /// This is not a guess or a list from a website. <c>FUN_00551cb0</c> reads an instruction word,
 /// requires its top byte to be <c>0x80</c>, and dispatches only while
 /// <c>(word ^ 0x80000000) &lt; 0x6a</c> - 0x6a being 106 - through the jump table at 0x5567d8.
-/// Anything above that prints "RSSE: Unknown instruction". The names come from the table at
+/// Anything above that is refused as "RSSE: Unknown instruction". The names come from the table at
 /// 0x765280, which is <c>{name*, operandCount*}</c> eight bytes a record, and reading past record
 /// 105 gives pointers like 0x02020202 rather than another opcode, which is what confirms where it
 /// ends.

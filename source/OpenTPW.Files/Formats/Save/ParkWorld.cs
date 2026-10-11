@@ -629,8 +629,9 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// (<c>docs/exe/ride-operation.md</c>, "The guests' and the objects' clock").
 	/// </param>
 	/// <param name="ArrivalIndex">
-	/// <c>mArrivalIndex</c> - the guest's number among the park's visitors, the count as the gate let them in, or
-	/// nought for one not yet through it: 1 to 13 on the thirteen guests of a park saved with thirteen visitors.
+	/// <c>mArrivalIndex</c> - the guest's number among the park's visitors, the count as they were counted in (at
+	/// the gate, or as they were made for one made on a park cell), or nought for one not yet counted: 1 to 13 on
+	/// the thirteen guests of a park saved with thirteen visitors.
 	/// </param>
 	/// <param name="LastPosX">
 	/// <c>mLastPosX</c> (<c>+0x218</c>) - where the held balloon goes next frame, across, in world units;
@@ -1089,7 +1090,7 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// <summary>
 	/// How many guests have ever been admitted - <c>world + 0x1da714</c>. <c>FUN_0051aaf0</c> is the only
 	/// thing that moves it: it adds one and announces "Your park has received its %dth visitor", and its
-	/// single caller is a guest finishing the entering state.
+	/// two callers are a guest finishing the entering state and the constructor of a guest made on a cell that counts as the park's.
 	/// </summary>
 	public int NumberOfVisitorsToDate { get; private set; }
 
@@ -1721,7 +1722,7 @@ public sealed partial class ParkWorld : IParkInitialState
 
 	/// <summary>
 	/// The arrival timer as it was saved: <c>FUN_004cf050</c>'s six fields, in its order (FileFormats, <c>saves.md</c>,
-	/// "The arrival block", on its docs/arrival-block branch). The game's names are <c>mArrivalRate</c>, <c>mTimeSig</c>, <c>mTargetVehicleCapacity</c>,
+	/// "The arrival block"). The game's names are <c>mArrivalRate</c>, <c>mTimeSig</c>, <c>mTargetVehicleCapacity</c>,
 	/// <c>mPeopleOnBus</c>, <c>mOffloading</c> and <c>mGatesOpen</c>.
 	/// </summary>
 	/// <param name="TimeSig">

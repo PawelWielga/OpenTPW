@@ -40,9 +40,9 @@ namespace OpenTPW;
 /// Game_StateMachine) replace the listener's HEIGHT with 10000.0 - the original is Y-up, and the lobby's
 /// own call site passes a (0,1,0) top vector, which is what says so. <see cref="Audio.HoldPlaced"/> is
 /// where that is reproduced, and it carries the account of what is restored and what is ours.
-/// <b>How far that lift actually turned a sound down is UNDETERMINED</b> - QMixer's distance model is
-/// not in the executable, and nothing measured supports "every placed sound attenuates to nothing". What
-/// the lift decides is WHICH sounds, not how much: a listener cannot reach one that was never placed
+/// <b>The lift silences every placed voice that has a range</b>: the listener 10,000 units up is past
+/// the far end of each, and the mixer plays nothing of a channel past it (docs/exe/audio.md, "The mixer's
+/// distance law"). The lift also decides WHICH sounds: a listener cannot reach one that was never placed
 /// against it.
 /// One caller in the game also freezes the interface's own timers, but none of the four screens
 /// modelled here is that caller: they all pass (0,0), which takes the other branch.

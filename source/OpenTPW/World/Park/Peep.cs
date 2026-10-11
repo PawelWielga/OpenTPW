@@ -300,9 +300,11 @@ public sealed class Peep
 	/// who has not been admitted.
 	///
 	/// <para>
-	/// The original keeps it at <c>person + 0x1d8</c> and writes it once, as a guest finishes coming
-	/// through the gate: <c>FUN_004ffb20</c> stores what <c>FUN_0051aaf0</c> hands back, which is the
-	/// world's running total after the increment. The save's <c>mArrivalIndex</c> on a guest read from one.
+	/// The original keeps it at <c>person + 0x1d8</c> and writes it once for each guest, in one of two places:
+	/// the constructor <c>FUN_004faec0</c> for a guest made on a cell that counts as the park's, and
+	/// <c>FUN_004ffb20</c> as an arrival finishes coming through the gate. Each stores what <c>FUN_0051aaf0</c>
+	/// hands back, which is the world's running total after the increment. The save's <c>mArrivalIndex</c> on a
+	/// guest read from one.
 	/// </para>
 	/// </summary>
 	public int VisitorNumber { get; internal set; }

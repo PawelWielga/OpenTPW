@@ -30,7 +30,7 @@ The delay-load IAT *can* be found, but not by searching for a string or a VA: th
 
 The three ints become floats in a stack record `{vtable 00700b90, category, effect, x, y, z}`, virtual-called through `DAT_00802bcc`'s vtable+8. `DAT_00802bcc` is not the manager: it is an 8-byte forwarder (vptr `0x0070a288`, the manager at `+4`) whose `+8` (`0x006b5b40`) calls the manager's `+0x10`, `0x006b87d0`, which is the real play. See "How the engine plays an effect" below.
 
-**`Sound_PlayEffect` has no 2D form: a caller that wants a flat sound passes (0,0,0).** `UI_PlaySound` is literally `Sound_PlayEffect(0, uiCat, id, 0, 0, 0)`. Whether the engine then plays such a voice listener-independent is not established (see "The listener, and what a pause does to it"). OpenTPW copies the shape: one call, optional position (`Audio.Play`, null for flat).
+**`Sound_PlayEffect` has no 2D form: a caller that wants a flat sound passes (0,0,0).** `UI_PlaySound` is literally `Sound_PlayEffect(0, uiCat, id, 0, 0, 0)`. The engine gives such a voice no place against the listener and no distance mapping when its effect is flagged `0x200`, as every effect of `cat_uiSFX.map` is: it takes the `QSWaveMixSetPosition` path, and what the mixer makes of that path is not read (see "The listener, and what a pause does to it"). OpenTPW copies the shape: one call, optional position (`Audio.Play`, null for flat).
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
@@ -41,7 +41,7 @@ The three ints become floats in a stack record `{vtable 00700b90, category, effe
 
 ## How the engine plays an effect: priority, not a repeat delay
 
-Decoded 2026-09-23 for `docs/QUEUE.md` Q9. Five decoders each had their claims checked by two refuters (workflow `wf_99a15f42-84d`). `0x006bc2d0`, `0x006c3e00` and `0x006c0676` were then re-read by hand, and the layout was re-measured over all 31 shipped `cat_*SFX.map`. The file layout itself is in the FileFormats docs clone, `formats/sound-categories.md`, on branch `docs/sound-formats` (not yet on master).
+Decoded 2026-09-23 for `docs/QUEUE.md` Q9. Five decoders each had their claims checked by two refuters (workflow `wf_99a15f42-84d`). `0x006bc2d0`, `0x006c3e00` and `0x006c0676` were then re-read by hand, and the layout was re-measured over all 31 shipped `cat_*SFX.map`. The file layout itself is in the FileFormats docs clone, `formats/sound-categories.md`.
 
 **The engine keeps no time per effect.** No part of the path from `Sound_PlayEffect` down to a voice reads a clock or writes one into an effect record or a category:
 - the play entry `0x006b87d0` does not;
@@ -54,7 +54,7 @@ A second caller of the same category and effect is always let through and gets a
 - **Voice creation.** It is copied into the voice (`0x006bb9f9 MOV DX,[EAX+0xc]`, `0x006bb9fd MOV [ECX+0x22],DX`) as the high word of the sort key at `voice+0x20`. The low word is closeness to the listener (`0x006bba6c`).
 - **The play entry.** When the caller passes in a live handle, the new effect replaces that handle's voice only if its priority is strictly higher (`0x006b88d3`..`0x006b88da`). STARTSCREAM and SINGLESCREAM pass handle 0 (`0x00551165`), so this never applies to them.
 
-Every use of that int as a delay in OpenTPW is OpenTPW's own: `SoundCategory.Play`'s throttle, and every replay it times (the lobby's beds and one-shots, the park's music and weather, and SINGLESCREAM). These are filed as Q43.
+Every use of that int as a delay in OpenTPW is OpenTPW's own: `SoundCategory.Play`'s throttle, and every replay it times (the lobby's beds and one-shots, the park's weather, and SINGLESCREAM). These are filed as Q43.
 
 **The voice class comes from the record's flags word**, the `u16` at `+0x10` (`0x006b6774`..`0x006b67f2`):
 
@@ -470,7 +470,7 @@ built.
 
 Decoded and measured in the original by Q236; built by Q236b (`ParkAudio`, "OpenTPW" below).
 
-**It is the crowd under the pointer.** On every 32nd step, after the music's level (`park-engine.md`, "The music's level"), the park loop reads the word at `[0x007b05cc]` (`0x0054f875`), which is the cell the pointer is over, `y × 128 + x + 1`: the ground pick `FUN_0045d560` writes it each time it runs, nought when the pick finds no cell, and `FUN_0046c0b0` resets it to 1. `FUN_004c8d30( 1, cell, 4, 0 )` then counts the things of kind 1, guests, on the lists of the cells from four before to four after it each way, a 9 by 9 square cut at the map's edges; cell nought counts nothing. The count is held to 100 (`0x0054f89e`), made nought while the world's state `+0x1da738` is 4 (`0x0054f8b0`), and handed to `FUN_0051e7b0`.
+**It is the crowd under the pointer.** On every 32nd step, after the music's level (`park-engine.md`, "The music's level"), the park loop reads the word at `[0x007b05cc]` (`0x0054f875`), which is the cell the pointer is over, `y × 128 + x + 1`: the ground pick `FUN_0045d560` writes it each time it runs, the point held to an edge cell of the map and nought only where its clamps fail (`park-engine.md`, "The picker never hands the mode a cell off the map"), and `FUN_0046c0b0` resets it to 1. `FUN_004c8d30( 1, cell, 4, 0 )` then counts the things of kind 1, guests, on the lists of the cells from four before to four after it each way, a 9 by 9 square cut at the map's edges; cell nought counts nothing. The count is held to 100 (`0x0054f89e`), made nought while the world's state `+0x1da738` is 4 (`0x0054f8b0`), and handed to `FUN_0051e7b0`.
 
 **`FUN_0051e7b0( level )`** keeps the level at `[0x00803ab0]`. While sound is up (`[0x00803aa8]`, set by `FUN_0051b660`): above nought, with no handle at `[0x00803aa4]` it plays kids 91 at (0,0,0) (`Sound_PlayEffect( 0, [0x00803a24], 0x5b, 0, 0, 0 )`), then sets the voice's parameter 7 to the level (`FUN_0051bc40`) and keeps what that answers as the handle, nought once the voice is gone, so a voice that ends is started again on the next beat; at nought it stops a live voice with `Sound_StopFading` and clears the handle.
 
@@ -605,13 +605,13 @@ It takes **nine dwords — three vectors**. The first is the listener **position
 
 That last one is why the flag is better read as **"the world is not being heard right now"** than strictly as "paused": a load started from the paused menu clears it as it rebuilds the world.
 
-### What this does NOT establish, and it is the important part
+### Which voices the lift takes, and how much
 
-**How much a sound is turned down by that lift is undetermined.** The lift decides **which** sounds a pause takes, not **how much** — and only the *which* is recoverable from this executable: a listener cannot reach a sound that was never placed against it. Any sentence of the form "every placed sound attenuates to nothing" is **unsupported**; see the Unknowns below for exactly where the missing model lives.
+**How much a sound is turned down by that lift is the mixer's law.** The lift decides **which** sounds a pause takes: a listener cannot reach a sound that was never placed against it. The mixer decides **how much**: a listener 10,000 units up is past every voice's range, and the mixer plays nothing of a channel past its range ("The mixer's distance law"; a paused park's channel read a distance of 10,000.32 and a gain of nought). A voice with no range, flag `0x8`, is not shown to be silenced, and neither is a voice with a rectangle, flag `0x1000`, which the service keeps at the listener's own height (`FUN_006bd5f0`).
 
-There is also a genuine **2D path**, so "a 2D sound is just one played at (0,0,0)" is true of `Sound_PlayEffect`'s shape but misleading about the engine: wrapper slot `+0x74` (`0x006d2640`) takes a flag — non-zero calls `QSWaveMixSetSourcePosition` (listener-relative), zero calls `QSWaveMixSetPosition` (**listener-independent**). The choice is made per voice at one place, `FUN_006b7fa0`, from **bit `0x20` of `params+0xc`**, which `FUN_006bc410` sets for a placed voice (`0x006bc5d7`) and leaves clear for a voice with flag `0x8`, which is given bit `0x1` instead (`0x006bc52d`). Whether the original's music and UI were registered 2D — immune to the lift — or 3D at the origin turns on whether their effect records hold `0x200`, and is **not established here in either direction**.
+There is also a genuine **2D path**, so "a 2D sound is just one played at (0,0,0)" is true of `Sound_PlayEffect`'s shape but misleading about the engine: wrapper slot `+0x74` (`0x006d2640`) takes a flag — non-zero calls `QSWaveMixSetSourcePosition` (listener-relative), zero calls `QSWaveMixSetPosition` (**listener-independent**). The choice is made per voice at one place, `FUN_006b7fa0`, from **bit `0x20` of `params+0xc`**, which `FUN_006bc410` sets for a placed voice (`0x006bc5d7`) and leaves clear for a voice with flag `0x8`, which is given bit `0x1` instead (`0x006bc52d`). The music's and the UI's effect records hold `0x200` (music 2 is `0x0606` in all four themes, and all 45 effects of `cat_uiSFX.map` carry the bit), so their voices take the `QSWaveMixSetPosition` path; what the mixer makes of that path under the lift is not read.
 
-OpenTPW reproduces the *which* and chooses the *how much*: see `Audio.HoldPlaced`.
+OpenTPW reproduces the *which* and the *how much* by another means: `Audio.HoldPlaced` holds every voice that has a place to silence, where the original lifts the listener past their ranges.
 
 ### The QMixer wrapper vtable
 

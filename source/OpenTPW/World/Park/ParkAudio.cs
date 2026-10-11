@@ -1067,12 +1067,9 @@ public sealed class ParkAudio : Entity
 	/// <summary>
 	/// Starts the theme again when it runs out.
 	///
-	/// It is replayed rather than looped, which is what the lobby does with its beds and for the same
-	/// reason: the category holds the effect ten seconds between plays (OpenTPW's own throttle, <c>docs/QUEUE.md</c>
-	/// Q43) and the effect picks between several arrangements, so
-	/// letting a voice end and asking the category for another is what turns that delay into
-	/// behaviour and what lets a park play a different arrangement each time round. Looping one clip
-	/// could do neither.
+	/// One sample follows another with no wait: once the voice has ended the next is drawn from the variation
+	/// the crowd's level picks (<see cref="NextMusic"/>) and played straight from the bank, which the category's
+	/// throttle does not hold. With no zone holding the level nothing is started until one does.
 	/// </summary>
 	protected override void OnUpdate()
 	{

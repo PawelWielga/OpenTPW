@@ -222,7 +222,7 @@ public class ParkWorldTests
 
 	/// <summary>
 	/// The arrival timer's block, the last 18 bytes before the map, pinned to every one of its six fields as the
-	/// FileFormats page measured them (<c>saves.md</c>, "The arrival block", on its docs/arrival-block branch).
+	/// FileFormats page measured them (<c>saves.md</c>, "The arrival block").
 	///
 	/// <para>
 	/// <b>Pinned whole because a block read from the wrong place still produces six numbers.</b> Five of the six are

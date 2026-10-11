@@ -21,7 +21,7 @@ public sealed partial class ParkPeople
 	/// </para>
 	/// <para>
 	/// <b>A deviation: a handle to a thing the file does not hold is written as nought, and counted</b>
-	/// (<c>SAVE_PARK_HANDLE_TO_AN_UNWRITTEN_THING</c>): what was bought here is not written yet, so a guest bound
+	/// (<c>SAVE_PARK_HANDLE_TO_AN_UNWRITTEN_THING</c>): a thing bought here and left out of the file, or one sold and taken out of it, so a guest bound
 	/// for it or on it is written deciding where they stand (the second counted too,
 	/// <c>SAVE_PARK_GUEST_ON_A_THING</c>) and a member of staff resting in or cleaning it idle.
 	/// </para>

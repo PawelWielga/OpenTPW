@@ -28,8 +28,8 @@ namespace OpenTPW.UI;
 /// <b>What this can actually answer, and what stays blank.</b> Rides fill <i>Name</i>, <i>State Of
 /// Repair</i> and <i>Remaining Life</i> - the two floats the ride window already reads - and leave
 /// <i>Users Last Month</i> and <i>Excitement</i> empty, the first the customers ring's last thirty finished days,
-/// which <see cref="ParkObjectRings"/> keeps and this screen does not read yet, and the second the descriptor field
-/// <c>park.md</c> records as unproven. Shops and sideshows
+/// which <see cref="ParkObjectRings"/> keeps and this screen does not read yet, and the second <c>FUN_004e0860</c>,
+/// which <see cref="ParkRideScore.ExcitementOf"/> works out and this screen does not read yet either. Shops and sideshows
 /// fill only their name, for the same two reasons. <b>Miscellaneous items fill both their columns</b>,
 /// because <i>Number Owned</i> is a count of what is standing. A blank column is an honest gap; a
 /// plausible wrong one is not - putting an object's gross takings under "Total Profit" would be a
@@ -331,8 +331,9 @@ internal sealed class ParkItemsScreen : UiWindow
 		}
 
 		// Named rather than left quietly blank: "last month", satisfaction and "total profit", whose day rings,
-		// mTotalTakings and mTotalCosts ParkState keeps and this screen does not read yet, and the descriptor field
-		// behind "excitement" that park.md records as unproven.
+		// mTotalTakings and mTotalCosts ParkState keeps and this screen does not read yet, and "excitement",
+		// FUN_004e0860 in the refresh FUN_004955e0, which ParkRideScore.ExcitementOf works out and this screen does not
+		// read yet either.
 		Unimplemented.Report( "ALL_ITEMS_MONTHLY_HISTORY" );
 		Unimplemented.Report( "ALL_ITEMS_EXCITEMENT" );
 	}

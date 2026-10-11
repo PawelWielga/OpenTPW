@@ -120,8 +120,9 @@ internal sealed class FrontEnd : Panel
 	/// the tick.
 	///
 	/// <para>
-	/// The original asks with UITEXT 399, handed the player's name, but both of its languages ship that line
-	/// empty, so its box asks nothing at all. Deleting a player loses everything they have saved, so here the
+	/// The original asks with UITEXT 399, handed the player's name: a parameter string, its parameter and then
+	/// "Are you sure you want to / delete this player ?" (docs/exe/saves.md, "Delete"). <c>Localization.Get</c>
+	/// gives a string's first text part alone, which is empty for this row, so here the
 	/// box asks in a line of OpenTPW's own, worded as the game words its other deletions (UITEXT 393 to 397),
 	/// unless the text has a line 399 of its own.
 	/// </para>

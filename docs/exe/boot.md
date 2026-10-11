@@ -9,7 +9,7 @@ How the original game boots: `WinMain` takes a single-instance lock, builds the 
 3. Message loop (`GetMessageA` once, `0x0045ab2a`; `PeekMessageA` here and in three other loops, `FUN_00479260`,
    `FUN_004798e0` and `FUN_005f86e0`, whose waits are not traced; Q194). When idle and running (`DAT_007a1a14` bit 1):
    - **Once**, and every step must succeed or the game quits:
-     1. 0x00419710 — language and string tables and the keyboard shortcuts, from `Data\Language\`.
+     1. 0x00419710 — language and string tables, the keyboard shortcuts and the `.bf4` fonts (13 slots of one resolution set; `lobby.md`), from `Data\Language\`.
      2. 0x0045f7a0 — **the disc check.** `FUN_005aa500` lists the CD drives (`FUN_005f87b0`, mask 8) and asks each for its volume label (`FUN_005f89f0`, `GetVolumeInformationA`); until one reads `TPWorld` it shows a Retry/Cancel box (`MessageBoxW`, type 0x15). Cancel fails the step, so the game quits.
      3. `Window_Create` 0x0044e080 — the "Theme Park World" window and the D3D device. `DirectDrawCreate`, one of
         `DDRAW.dll`'s only two imports, is called from `FUN_00563460` (`0x00563532`, `0x00563651`, `0x00564017`; also
@@ -242,7 +242,7 @@ Evidence is a Ghidra trace of `/testme.exe` throughout; the column names what in
 | 0x0045f640 | | Takes the `CreateMutexA` single-instance lock. | Import call |
 | 0x00449df0 | `Flags_LoadDefaults` | Sets the flag word `DAT_007a1a8c` to 0xc0e15. | Decompile |
 | 0x00424930 | | Reads `save\config.tcf`. | Filename string |
-| 0x00419710 | | Loads language and string tables and keyboard shortcuts from `Data\Language\`. | Path string |
+| 0x00419710 | | Loads language and string tables, the keyboard shortcuts and the `.bf4` fonts (13 slots of one resolution set; `lobby.md`) from `Data\Language\`. | Decompilation |
 | 0x0045f7a0 | | The disc check, second of the four one-time init steps: builds the drive list, returns `FUN_005aa500`'s answer. | Decompile |
 | 0x005aa500 | | Retry/Cancel loop until a CD drive's volume label matches the string at `0x00f7a7c8`; 0 on Cancel. | Decompile |
 | 0x005f87b0 | | Lists drives by `GetLogicalDriveStringsA` and `GetDriveTypeA`; mask bit 8 keeps `DRIVE_CDROM`. | Decompile |

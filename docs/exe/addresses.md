@@ -1250,7 +1250,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x006c3e1c` | The held voice's parameter byte read for the variation pick | OpenTPW/World/Park/ParkAudio.cs  |
 | `0x006c3e26` | | OpenTPW/World/Park/ParkCarSounds.cs  |
 | `0x006c3f49` | No zone covers the parameter: the chain is parked | OpenTPW/World/Park/ParkScreams.cs  |
-| `0x006c581b` | The one call site of QMixer's SetDistanceMapping, gated on a request bit that nothing writes | OpenTPW/Audio/Audio.cs OpenTPW/Audio/AudioListener.cs  |
+| `0x006c581b` | The one call site of QMixer's SetDistanceMapping, gated on request bit `0x200` of `params + 0x14`, which `FUN_006bc410` sets with the mapping 2.0, the voice's range and 0.8 | OpenTPW/Audio/Audio.cs OpenTPW/Audio/AudioListener.cs  |
 | `0x006c9270` | | OpenTPW/Audio/AudioClip.cs  |
 | `0x006e71b4` | | OpenTPW.Tests/PeepHeadingTests.cs OpenTPW/World/Park/PeepHeading.cs  |
 | `0x006fe2bc` | | OpenTPW/World/Park/ParkBumperBoats.cs  |

@@ -496,10 +496,10 @@ frames), `confirm.py`, `mutate.py` and the sheet of OpenTPW's screen beside the 
 
 ## What a park file must hold to be written
 
-Decoded and measured on 2026-10-08 (Q241e). `ParkSaveScreen.Save` still counts `SAVE_GAME_WRITER`; three of the
-writer's five stages are built ("OpenTPW's writer, the first stage", "the cells" and "the people", below), with the
-pool of candidates and the arrival timer ("the staff pool and the arrival timer"); the fourth's decode is "The
-objects, their scripts and their models". The bytes are the FileFormats
+Decoded and measured on 2026-10-08 (Q241e). `ParkSaveScreen.Save` still counts `SAVE_GAME_WRITER`; the writer's
+stages that are built are the "OpenTPW's writer, ..." sections below, and `Level.WritePark`, reached from the
+console's `savepark` alone, is their one caller until Q241j. The objects' decode is "The objects, their scripts
+and their models". The bytes are the FileFormats
 `saves.md`'s; this section is what the original does with them and what a writer here has to get right.
 
 ### The container takes another deflate, and a changed body
@@ -633,7 +633,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | `VANT` | one reading of the real-time clock (`FUN_005f5f10`); the reader keeps its distance from its own | nothing | carried |
 | `GSYS` | nine dwords (above) | nothing read here | carried |
 | `RSYS` | a record per model slot, its channels | every running clip; a slot for a thing bought, one freed for a thing sold | patched |
-| `TRAK` | track rides, their sections and cars | a Hot Pot or another bumper ride bought or sold | patched: a ride with no car is made, taken out or written over ("OpenTPW's writer, a track ride's record"); one with a car is carried and counted |
+| `TRAK` | track rides, their sections and cars | a Hot Pot or another bumper ride bought or sold | patched: a ride with no car is made, taken out or written over ("OpenTPW's writer, a track ride's record"); a bumper ride with a car out is written whole with its cars ("OpenTPW's writer, a track ride's cars"); a ride of a BumperType with no record here and a tracked ride are carried and counted |
 | `FLYR` | the flyers (FileFormats `saves.md`) | nothing built here | carried |
 | `RSSE` | every running script | every script's counter, variables, stack and deadlines; a script for a thing bought, none for one sold | patched |
 | `KAME` | zoom, rotation, flags, two points of interest, a saved rotation | the camera | afresh |
@@ -844,7 +844,7 @@ follow the list. It runs last, because it alone changes the body's length.
   their thing, their place and their links in its queue: the thing's own half is written with the things
   ("OpenTPW's writer, the objects").
 - **Deviations, each counted.** A handle to a thing the file does not hold, which
-  is anything bought here, is written as nought, and a guest bound for it or on it decides where they stand
+  is a thing bought here and left out (`SAVE_PARK_OBJECT_BOUGHT`) or one sold and taken out, is written as nought, and a guest bound for it or on it decides where they stand
   (`SAVE_PARK_HANDLE_TO_AN_UNWRITTEN_THING`, and `SAVE_PARK_GUEST_ON_A_THING` for one on it). A member
   of staff in the hand is written idle where they were picked up, as the original puts the hand's thing down
   first.
@@ -1251,10 +1251,10 @@ and the object constructor `FUN_004db090` was read beside the two files.
   head"). The header's three counts are kept.
 - **The controls** (`ParkWorld.PutControls`): every item's standing count and first-build stamp as
   `ParkState.BuiltItems` runs them.
-- **Not written, counted, and left as the file has them:** a track ride with a car, a track ride of a
+- **Not written, counted, and left as the file has them:** a track ride of a
   BumperType with no record here and a tracked ride (`SAVE_PARK_OBJECT_BOUGHT`, `SAVE_PARK_OBJECT_SOLD`); with
-  each stay its cells. A track ride with no car is written since Q257o ("OpenTPW's writer, a track ride's
-  record"). A thing
+  each stay its cells. A track ride with no car is written ("OpenTPW's writer, a track ride's
+  record"), and a bumper ride with a car out is written whole with its cars ("OpenTPW's writer, a track ride's cars"). A thing
   whose folder holds emitter files is written since Q257n ("OpenTPW's writer, a thing with emitter files"). A
   queue cell's model is Q254's.
 - **A bought thing's state of repair and remaining life start at 100** in the running park too
@@ -2403,8 +2403,8 @@ time 114635643 on all four boats, role 5, as written, and then 114636165, 534 on
 
 **Prediction wrong, mine:** that a boat's start stamp would still read before the load's moment two seconds on (the
 clip is 534 ms, so it had stepped four loops; restated before the desktop run with the 534 taken from the original's
-log). My poller's clock address (`0x00785970`) read nought in the running original: not the live clock's address, not
-used. **Not seen in a picture:** the phase itself, a tenth of a second of a boat's rocking clip; it is the log's, the
+log). My poller read the first word of the clock object (`0x00785970`), which was nought in the running original: the
+clock's reading is not kept there (the accumulator is the double at `+0x18`, `0x00785988`), so that column was not used. **Not seen in a picture:** the phase itself, a tenth of a second of a boat's rocking clip; it is the log's, the
 census's and the two files'. **Not run in either game, tested only:** a handle naming another item's record or an
 empty slot. **Two bugs put back by a game run** (`mutations.py`, `G`): a stood boat forgetting its record's role, and
 the wake's item asked for; each failed its predictions there; the twenty others fail a test, one only after a test was strengthened (a record at rest answering a role). `docs/exe/addresses.md` not regenerated (no new address).
