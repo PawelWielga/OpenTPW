@@ -28,9 +28,11 @@ internal sealed class ParkAdvisorMessages
 	/// <paramref name="GestureRowLine"/> is the one line whose response names a row of the gesture table
 	/// (the response table's +0x0c), -1 where every line's is the random chain. <paramref name="Prop"/> is what
 	/// he wears for every line of it (the response table's +0x14; each built row's +0x18 is nought).
+	/// <paramref name="Group"/> is the group of every line of it (the response table's +0x1c), the id of the tag
+	/// a said line leaves (<see cref="ParkTags"/>).
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
-		int GestureRowLine = -1, int Prop = 0 );
+		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag );
 
 	/// <summary>The ticket hat, the door's lines' prop.</summary>
 	internal const int TicketHat = 9;
@@ -39,16 +41,16 @@ internal sealed class ParkAdvisorMessages
 
 	internal static readonly Topic[] DoorTopics =
 	[
-		new( Opened, "ParkNowOpen.Score", 308, 342, Prop: TicketHat ),
-		new( Closed, "ParkNowClosed.Score", 310, 344, Prop: TicketHat )
+		new( Opened, "ParkNowOpen.Score", 308, 342, Prop: TicketHat, Group: 150 ),
+		new( Closed, "ParkNowClosed.Score", 310, 344, Prop: TicketHat, Group: 151 )
 	];
 	internal static readonly Topic[] ParkTopics =
 	[
 		.. DoorTopics,
-		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat ),
-		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat ),
-		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat ),
-		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat )
+		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
+		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 70 ),
+		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
+		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat, Group: 72 )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -129,8 +131,9 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>
 	/// One world sweep. Playback returns the response duration (zero when the speaker cannot start).
 	/// The helper still succeeds after a zero playback return; its score recheck alone can reject here.
+	/// <paramref name="said"/> hears the event a said line sends, with the response's group and the subject.
 	/// </summary>
-	internal void Tick( int gameTick, long milliseconds, Func<int, int, int> play )
+	internal void Tick( int gameTick, long milliseconds, Func<int, int, int> play, Action<int, int>? said = null )
 	{
 		if ( milliseconds < _waitUntil ) return;
 		var index = -1;
@@ -158,8 +161,8 @@ internal sealed class ParkAdvisorMessages
 		history.Said = true;
 		++Attempts;
 		// The helper then sends an event of type 0x18 carrying the response's group and the record's subject
-		// (FUN_0059b620, FUN_0040f740, FUN_0040fb10); nothing here hears it.
-		Unimplemented.Report( "ADVISOR_MESSAGE_SAID_EVENT" );
+		// (FUN_0059b620, FUN_0040f740, FUN_0040fb10); its one hearer is the tag system (FUN_00509bf0).
+		said?.Invoke( pending.Topic.Group, pending.Subject );
 		Log.Info( $"Park advisor: attempt={Attempts} message={pending.Topic.Id} subject={pending.Subject} score={score} threshold={Threshold} response={response} sample={sample} line={line} tick={gameTick} duration={duration} waitUntil={_waitUntil}" );
 	}
 

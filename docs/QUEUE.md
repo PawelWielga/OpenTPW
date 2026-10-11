@@ -44,11 +44,21 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q309. The writer: what else a made record leaves out.** The old Q308's other pieces, each counted or
+- [ ] **Q310. The writer: what else a made record leaves out.** The old Q309's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q308 (`advisor-park.md`, "What he wears for a line"): the button beside him is still not built or
-  decoded. The theme's own advisor model (slot 1, `Advisor_JUN.md2`, 137 rows) and its costume (prop -1,
+  From Q309 (`advisor-park.md`, "The tag a line leaves on the aerial"): the message bar a tag's left click opens
+  is not built (`TAG_MESSAGE_BAR`: the bar's stream, the tag's text by its kind, the two buttons, `mb_locate`
+  first, and advisor message `0x11c`), nor the particle five seconds before a tag's end (`TAG_ENDING_PARTICLE`,
+  effect `0x5b`: the interface draws no particle in a park). Only the six rows the built topics name are listed
+  (`TAG_ROW_NOT_LISTED`; the table is the executable's, 382 rows). The tags are not written to a park file or
+  read from one (`SAVE_PARK_TAGS`, counted at a save with a tag standing; `FUN_0048ee50`, `FUN_0048ef70`, where
+  in the file is not read). The red top and the later tags are put down at once, not played down (the streams at
+  `0x007502f0` and `0x00752e48`). The two sounds play at their variations' own volume, not measured against the
+  original's mix. Events `0x19` and the postcard's are sent by nothing here. Whether a tag's timers run under
+  the original's menu pause is not measured. In no game run: a second tag, a tag taking another's place, the
+  door's tags, either right click, the left click (the tests hold each). Not heard in either game.
+  From Q308 (`advisor-park.md`, "What he wears for a line"): the theme's own advisor model (slot 1, `Advisor_JUN.md2`, 137 rows) and its costume (prop -1,
   `ThemeAdvisorCostumes`) are not built (`ADVISOR_THEME_COSTUME`, counted where a built topic names one: none
   does). A clip word's `0x10000` and its particles are a gesture row's, not built. The hat is paler than the
   original's (his light is set against his gloves, not decoded). In no game run: the ticket hat (the door's
@@ -66,8 +76,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   (`ADVISOR_RESPONSE_GESTURE_ROW`, counted; no other built response names one). In no game run: lines 205 and
   206, two rides broken at once, a called ride, a post refused inside the 480 sweeps, a break with the advisor
   busy, a bought ride. Rows 67 to 69's posters are still not read. Not heard in either game.
-  From Q305 (`advisor-park.md`, "A ride about to break down"): a small arrow button stands beside the original's advisor for the line, not built or decoded (the button is likely the hearer of the event of type `0x18` a line said
-  sends, counted `ADVISOR_MESSAGE_SAID_EVENT`, whose hearers are not read). He says it a sweep after the post,
+  From Q305 (`advisor-park.md`, "A ride about to break down"): he says it a sweep after the post,
   the original on the post's tick. The record's item word is not kept. The same shape and not built: the two
   no-mechanic rows (105, 107), whose posters are not read. In no game run: lines 195 and 196, two worn rides at
   once, a post refused inside the 480 sweeps, a worn ride with the advisor busy (the message is then spent

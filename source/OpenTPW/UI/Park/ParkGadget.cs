@@ -49,20 +49,18 @@ namespace OpenTPW.UI;
 /// that panel's two buttons takes off again.
 /// </para>
 /// <para>
-/// <b>The message bar is deliberately NOT built, and that is a finding rather than a gap.</b> It has a
-/// stream of its own at 0x007501a0 - a messagel/messagem/messager three-slice with an mb_erase button
-/// and three stacked buttons - and the arm would carry it exactly as it carries the camcorder panel.
-/// But nothing here can ever put a message in it. Every message arrives through FUN_00481580, whose one
-/// caller is CTagSystem::ReceiveMessage (FUN_00509bf0), and the only branch of that whose contents can
-/// be read is postcard status - sent, to outbox, failed - which is out of scope; the other two take an
-/// event id from a simulation that does not exist. A bar built now could only ever be empty, and it
-/// would hold at most ten messages it will never be given (DAT_00750610).
+/// <b>The message bar is not built.</b> It has a stream of its own at 0x007501a0 - a
+/// messagel/messagem/messager three-slice with an mb_erase button and two stacked buttons - and the arm would
+/// carry it exactly as it carries the camcorder panel. A tag's left click is what puts a message on it
+/// (FUN_0048d9c0), and that click is counted, <c>TAG_MESSAGE_BAR</c> (docs/exe/hud.md, "The message bar").
 /// </para>
 /// <para>
-/// <b>The aerial (0x2d, 0x2e) is built as it stands with no message.</b> It is the messages control: each message
-/// puts an icon on the mast and lifts the red top by the icon's height and ten (LAB_004a11e0, 0x100001), and a right
-/// click on the top deletes them all (FUN_004a1190) - its help row says so. With no message bar there is never an
-/// icon, so the top rests on the body, and its right click is counted as <c>AERIAL_DELETE_ALL_MESSAGES</c>.
+/// <b>The aerial (0x2d, 0x2e) is the messages control.</b> Each tag a said line leaves (<see cref="ParkTags"/>)
+/// is a msgtag icon on the mast, which lifts the red top by the icon's height and ten (LAB_004a11e0, 0x100001); a
+/// right click on a tag hides it and takes it off half a second on, and one on the top deletes them all
+/// (FUN_004a1190) - its help row says so. A tag's left click opens the message bar, which is not built: counted,
+/// <c>TAG_MESSAGE_BAR</c>. The top and the tags above one taken off are put down at once, where the original
+/// plays them down (the streams at 0x007502f0 and 0x00752e48).
 /// </para>
 /// <para>
 /// <b>The body, the arm and the aerial stop the pointer</b>, as every shown control of the original's does: the body
@@ -436,12 +434,12 @@ internal sealed class ParkGadget : UiWindow
 
 		// The aerial, the stream's second root: the mast 0x2d (94,918)-(144,984) with the red top 0x2e
 		// (77,790)-(161,918) over it. FUN_004a1d70 sets the mast's top eight above its bottom (0x004a2057), and the
-		// top follows its parent's top edge (flag 0x40000, FUN_0065c9bd), 58 down. A message would lift both again.
+		// top follows its parent's top edge (flag 0x40000, FUN_0065c9bd), 58 down. A tag lifts both again: PutTags.
 		// Each is pinned to the corner the body keeps to, since neither sits in the body's third of the screen.
-		var aerial = Root.Add( new UiControl
+		_mast = Root.Add( new UiControl
 		{
 			Id = 0x2d,
-			Rect = new UiRect( 94, 976, 144, 984 ),
+			Rect = new UiRect( MastLeft, MastBottom - 8, MastRight, MastBottom ),
 			Mesh = UiMesh.Get( "aerial" ),
 			StopsPointer = true,
 			PinAcross = Anchor.Left,
@@ -449,9 +447,8 @@ internal sealed class ParkGadget : UiWindow
 		} );
 
 		// "Right-click to delete ALL messages" - UIHELPTEXT row 476. FUN_004a1190 answers a right click (0x10006,
-		// button 1) by sending the aerial 0x100003, which takes every message off the bar; the bar is not built, so
-		// the click is counted.
-		aerial.Add( new UiControl
+		// button 1) by sending the aerial 0x100003, which takes every tag off, a tenth of a second apart.
+		_mastTop = _mast.Add( new UiControl
 		{
 			Id = 0x2e,
 			Rect = new UiRect( 77, 848, 161, 976 ),
@@ -459,11 +456,7 @@ internal sealed class ParkGadget : UiWindow
 			Mesh = UiMesh.Get( "aerialtop" ),
 			PinAcross = Anchor.Left,
 			PinDown = VerticalAnchor.Bottom,
-			RightClicked = () =>
-			{
-				Unimplemented.Report( "AERIAL_DELETE_ALL_MESSAGES" );
-				Log.Info( "Park gadget: the aerial's right click - there is no message bar, so nothing is deleted" );
-			}
+			RightClicked = () => Tags?.DeleteAll( Time.WallMilliseconds )
 		} );
 
 		// The bank balance, in the OPPOSITE corner - the stream's 0x2f and 0x32. Root controls like the
@@ -664,6 +657,95 @@ internal sealed class ParkGadget : UiWindow
 		CloseArm();
 	}
 
+	private const int MastLeft = 94;
+	private const int MastRight = 144;
+	/// <summary>The mast's bottom edge, where its top stands eight above with no tag on it.</summary>
+	private const int MastBottom = 984;
+	/// <summary>A tag's control, FUN_0048ea00: 0x46 across and 0x41 down.</summary>
+	private const int TagWidth = 0x46;
+	private const int TagHeight = 0x41;
+	/// <summary>What each tag lifts the mast's top by: its height and ten (LAB_004a11e0, 0x100001).</summary>
+	private const int TagStep = TagHeight + 10;
+
+	private readonly UiControl _mast;
+	private readonly UiControl _mastTop;
+	private readonly List<UiControl> _tagControls = [];
+	private ParkTags? _tagsGiven;
+	private ParkTags? _tagsShown;
+
+	/// <summary>The tags the mast shows: the running park's, or the list a test hands the gadget.</summary>
+	internal ParkTags? Tags { get => _tagsGiven ?? Level.Current?.ParkState?.Tags; set => _tagsGiven = value; }
+	private int _tagChangesShown = -1;
+	private int _tagsHeard;
+
+	/// <summary>
+	/// The tags' timers, then the mast as the list stands: the oldest tag lowest, each eight below where the mast's
+	/// top stood as it was put on and across its middle, the top lifted <see cref="TagStep"/> a tag. A hidden tag
+	/// keeps its place until it is taken off.
+	/// </summary>
+	private void PutTags()
+	{
+		var tags = Tags;
+		if ( tags == null ) return;
+
+		tags.Tick( Time.WallMilliseconds );
+		if ( tags == _tagsShown && tags.Changes == _tagChangesShown ) return;
+
+		// The new tag's sound, effect 0x1e of the interface's own category (FUN_0048eb20).
+		if ( tags == _tagsShown && tags.Made > _tagsHeard ) UiSounds.NewTag();
+		_tagsHeard = tags.Made;
+
+		foreach ( var control in _tagControls )
+		{
+			control.Visible = false;
+			_mast.Children.Remove( control );
+		}
+
+		_tagControls.Clear();
+		_tagsShown = tags;
+		_tagChangesShown = tags.Changes;
+
+		var standing = tags.Standing;
+		var top = MastBottom - 8 - TagStep * standing.Count;
+		_mastTop.Move( 0, top - _mast.Rect.Top );
+		_mast.Rect = new UiRect( MastLeft, top, MastRight, MastBottom );
+
+		for ( var i = 0; i < standing.Count; ++i )
+		{
+			var tag = standing[i];
+			var left = (MastLeft + MastRight - TagWidth) / 2;
+			var tagTop = MastBottom - 8 - TagStep * (i + 1) + 8;
+			_tagControls.Add( _mast.Add( new UiControl
+			{
+				Id = 900 + i,
+				Rect = new UiRect( left, tagTop, left + TagWidth, tagTop + TagHeight ),
+				// "Message - left-click to open, right-click to delete", row 475 (FUN_0048ea00, +0x90).
+				HelpText = 475,
+				Mesh = UiMesh.Get( "msgtag" ),
+				Frame = tag.Row.Picture,
+				Visible = !tag.Hidden,
+				PinAcross = Anchor.Left,
+				PinDown = VerticalAnchor.Bottom,
+				LeftClicked = () =>
+				{
+					// Sound 0xc0, then the message bar on the arm with the tag's text and buttons (FUN_0048d9c0).
+					UiSounds.TagClick();
+					Unimplemented.Report( "TAG_MESSAGE_BAR" );
+					Log.Info( $"Park gadget: tag {tag.Row.Id} left clicked - the message bar is not built, so nothing opens" );
+				},
+				RightClicked = () => tags.Hide( tag, Time.WallMilliseconds )
+			} ) );
+		}
+
+		Log.Info( $"Park gadget: {AerialCensus()}" );
+	}
+
+	/// <summary>Where the mast, its top and each tag stand on the virtual screen, for the debug console's <c>tags</c>.</summary>
+	internal string AerialCensus() => $"aerial: mast={Edges( _mast.Rect )} top={Edges( _mastTop.Rect )} "
+		+ string.Join( " ", _tagControls.Select( control => $"tag{control.Id}={Edges( control.Rect )}/frame={control.Frame}/shown={(control.Visible ? 1 : 0)}" ) );
+
+	private static string Edges( UiRect rect ) => $"{rect.Left},{rect.Top},{rect.Right},{rect.Bottom}";
+
 	/// <summary>The park screen that was open when the gadget last looked - see <see cref="Update"/>.</summary>
 	private UiWindow? _screenSeen;
 
@@ -678,6 +760,7 @@ internal sealed class ParkGadget : UiWindow
 
 		_screenSeen = screen;
 
+		PutTags();
 		ShowDate();
 		ShowEarned();
 		ShowMoney();

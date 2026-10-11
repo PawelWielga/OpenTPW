@@ -152,40 +152,119 @@ public class ParkGadgetPressTests
 	}
 
 	/// <summary>
-	/// <b>The aerial stands as the builder leaves it with no message</b>: the mast eight high on the body, the red top
-	/// 58 below the stream's place; both take a press, and the top's right click is counted.
+	/// <b>The aerial stands as the builder leaves it with no tag</b>: the mast eight high on the body, the red top
+	/// 58 below the stream's place; both take a press, and the top's right click with no tag changes nothing.
 	/// </summary>
-	/// <remarks>
-	/// <b>Mutations:</b> the aerial at the stream's rectangles; the mast not stopping the pointer; the count on the
-	/// press rather than the click; the count on every control's click; no count.
-	/// </remarks>
+	/// <remarks><b>Mutations:</b> the aerial at the stream's rectangles; the mast not stopping the pointer.</remarks>
 	[TestMethod]
-	public void TheAerialTakesAPressAndCountsItsRightClick()
+	public void TheAerialTakesAPress()
 	{
-		var stack = new UI.WindowStack();
-		var gadget = new UI.ParkGadget( stack );
-		stack.Open( gadget );
+		var (stack, gadget) = AGadget();
+		gadget.Tags = new ParkTags();
 
 		Assert.AreEqual( new UI.UiRect( 94, 976, 144, 984 ), Find( gadget, 0x2d ).Rect );
 		Assert.AreEqual( new UI.UiRect( 77, 848, 161, 976 ), Find( gadget, 0x2e ).Rect );
 		Assert.AreEqual( 0x2e, Under( gadget, 119, 900 ), "the red top" );
 		Assert.AreEqual( 0x2d, Under( gadget, 119, 980 ), "the mast" );
-		Assert.IsNull( Under( gadget, 119, 820 ), "nothing where the top would be with a message under it" );
+		Assert.IsNull( Under( gadget, 119, 820 ), "nothing where the top would be with a tag under it" );
 		Assert.AreEqual( 476, Find( gadget, 0x2e ).HelpText );
 
-		var before = Times( "AERIAL_DELETE_ALL_MESSAGES" );
-
 		Frame( stack, true, new Vector2( 119, 900 ), 10.00f );
-		Assert.AreEqual( before, Times( "AERIAL_DELETE_ALL_MESSAGES" ), "the press alone is no click" );
-
 		Frame( stack, false, new Vector2( 119, 900 ), 10.08f );
-		Assert.AreEqual( before + 1, Times( "AERIAL_DELETE_ALL_MESSAGES" ), "the release makes it" );
+		Assert.AreEqual( new UI.UiRect( 77, 848, 161, 976 ), Find( gadget, 0x2e ).Rect );
+	}
 
-		Frame( stack, true, new Vector2( 119, 980 ), 12.00f );
-		Frame( stack, false, new Vector2( 119, 980 ), 12.08f );
-		Frame( stack, true, new Vector2( 240, 1030 ), 14.00f );
-		Frame( stack, false, new Vector2( 240, 1030 ), 14.08f );
-		Assert.AreEqual( before + 1, Times( "AERIAL_DELETE_ALL_MESSAGES" ), "a right click on the mast or the body is not the top's" );
+	/// <summary>
+	/// <b>A tag stands on the mast and lifts the red top by its height and ten</b> (<c>LAB_004a11e0</c>, 0x100001):
+	/// the oldest lowest, each 70 by 65 across the mast's middle, eight under where the top stood, showing its row's
+	/// part of msgtag.md2; a hidden one keeps its place; one taken off puts the top and the later tags down.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the top not lifted; lifted by the tag's height alone; the newest tag lowest; the tag at the
+	/// mast's top edge; the picture not set; a hidden tag still shown; a hidden tag's place given up at once; the old controls left on the mast.
+	/// </remarks>
+	[TestMethod]
+	public void ATagStandsOnTheMastAndLiftsTheTop()
+	{
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags();
+
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.0f );
+		var first = tags.Said( 68, 13, 1000 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.1f );
+
+		Assert.AreEqual( new UI.UiRect( 94, 901, 144, 984 ), Find( gadget, 0x2d ).Rect, "the mast up 75" );
+		Assert.AreEqual( new UI.UiRect( 77, 773, 161, 901 ), Find( gadget, 0x2e ).Rect, "and the top on it" );
+		Assert.AreEqual( new UI.UiRect( 84, 909, 154, 974 ), Find( gadget, 900 ).Rect );
+		Assert.AreEqual( (1, 475, true), (Find( gadget, 900 ).Frame, Find( gadget, 900 ).HelpText, Find( gadget, 900 ).Visible) );
+		Assert.AreEqual( 900, Under( gadget, 119, 940 ), "the tag takes the pointer" );
+		Assert.AreEqual( 0x2e, Under( gadget, 119, 820 ), "the top where it now stands" );
+
+		tags.Said( 150, 0, 1200 );
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.3f );
+		Assert.AreEqual( new UI.UiRect( 94, 826, 144, 984 ), Find( gadget, 0x2d ).Rect );
+		Assert.AreEqual( new UI.UiRect( 84, 909, 154, 974 ), Find( gadget, 900 ).Rect, "the older stays lowest" );
+		Assert.AreEqual( new UI.UiRect( 84, 834, 154, 899 ), Find( gadget, 901 ).Rect );
+
+		tags.Hide( first, 1400 );
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.5f );
+		Assert.IsFalse( Find( gadget, 900 ).Visible, "hidden" );
+		Assert.AreEqual( new UI.UiRect( 94, 826, 144, 984 ), Find( gadget, 0x2d ).Rect, "and its place kept for half a second" );
+		Assert.AreNotEqual( 900, Under( gadget, 119, 940 ), "a hidden tag takes no pointer" );
+
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.9f );
+		Assert.AreEqual( new UI.UiRect( 94, 901, 144, 984 ), Find( gadget, 0x2d ).Rect, "off: the top comes down" );
+		Assert.AreEqual( new UI.UiRect( 84, 909, 154, 974 ), Find( gadget, 900 ).Rect, "and the later tag with it" );
+		Assert.AreEqual( 1, tags.Standing.Count );
+		Assert.AreEqual( 2, Find( gadget, 0x2d ).Children.Count, "the top and the one tag: no control of a tag taken off is left on the mast" );
+	}
+
+	/// <summary>
+	/// <b>A tag's right click hides it, its left click is the message bar's, and the top's right click takes every
+	/// tag off, the oldest first, a tenth of a second apart</b> (<c>FUN_0048dae0</c>, <c>FUN_004a1190</c>).
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> a tag's right click doing nothing; taking it off at once; the left click not counted; the
+	/// top's right click doing nothing; taking every tag at once; the newest first.
+	/// </remarks>
+	[TestMethod]
+	public void ATagAndTheTopAnswerTheirClicks()
+	{
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags();
+
+		tags.Said( 68, 13, 1000 );
+		tags.Said( 68, 14, 1000 );
+		tags.Said( 68, 15, 1000 );
+		Frame( stack, false, new Vector2( 1000, 100 ), 2.0f );
+		Assert.AreEqual( 902, Under( gadget, 119, 790 ) );
+
+		var bar = Times( "TAG_MESSAGE_BAR" );
+		Input.Mouse = new() { Left = true, LeftWentDown = true, Position = new Vector2( 119, 790 ) };
+		stack.Update();
+		Input.Mouse = new() { Position = new Vector2( 119, 790 ) };
+		stack.Update();
+		Assert.AreEqual( bar + 1, Times( "TAG_MESSAGE_BAR" ), "the left click asks for the bar" );
+		Assert.AreEqual( 3, tags.Standing.Count( tag => !tag.Hidden ), "and takes nothing off" );
+
+		Frame( stack, true, new Vector2( 119, 790 ), 3.00f );
+		Frame( stack, false, new Vector2( 119, 790 ), 3.08f );
+		Assert.AreEqual( (3, true), (tags.Standing.Count, tags.Standing[2].Hidden), "the right click hides it where it stands" );
+		Frame( stack, false, new Vector2( 1000, 100 ), 3.57f );
+		Assert.AreEqual( 3, tags.Standing.Count );
+		Frame( stack, false, new Vector2( 1000, 100 ), 3.58f );
+		Assert.AreEqual( 2, tags.Standing.Count, "and half a second on it is off" );
+
+		// The top stands on two tags: 976 - 150 = 826, so its middle is at 762.
+		Assert.AreEqual( 0x2e, Under( gadget, 119, 762 ) );
+		Frame( stack, true, new Vector2( 119, 762 ), 5.00f );
+		Frame( stack, false, new Vector2( 119, 762 ), 5.08f );
+		Assert.AreEqual( 2, tags.Standing.Count, "not at the click" );
+		Frame( stack, false, new Vector2( 1000, 100 ), 5.18f );
+		Assert.AreEqual( (1, 14), (tags.Standing.Count, tags.Standing[0].Subject), "the oldest a tenth of a second on" );
+		Frame( stack, false, new Vector2( 1000, 100 ), 5.28f );
+		Assert.AreEqual( 0, tags.Standing.Count, "and the next a tenth after" );
+		Assert.AreEqual( new UI.UiRect( 77, 848, 161, 976 ), Find( gadget, 0x2e ).Rect, "the top back on the body" );
 	}
 
 	private static (UI.WindowStack Stack, UI.ParkGadget Gadget) AGadget()

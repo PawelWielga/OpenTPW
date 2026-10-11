@@ -518,6 +518,9 @@ public class Level
 			return null;
 		}
 
+		// The aerial's tags are records of their own in the original's file (FUN_0048ee50); none is written here.
+		if ( state.Tags.Standing.Count > 0 ) Unimplemented.Report( "SAVE_PARK_TAGS" );
+
 		var point = ParkOrbitCameraMode.PointOfInterest;
 
 		// The file's rotation turns the other way from the orbit camera's yaw: nought is the same view in both, and a

@@ -628,6 +628,12 @@ public static class DebugConsole
 				if ( ParkState.Current?.AdvisorMessages is { } messages ) Reply( messages.Census() );
 				break;
 
+			case "tags":
+				// The tags on the gadget's aerial, the oldest first, and where the gadget has drawn them.
+				Reply( ParkState.Current?.Tags.Census( Time.WallMilliseconds ) ?? "no park" );
+				Reply( Level.Current?.Hud?.Children.OfType<UI.ParkFrontEnd>().FirstOrDefault()?.Gadget.AerialCensus() ?? "no gadget" );
+				break;
+
 			case "greet":
 				// Replays the front-end greeting the way the lobby gives it on arrival with no saved
 				// players, so its timing and ducking can be captured at a moment of the caller's choosing.

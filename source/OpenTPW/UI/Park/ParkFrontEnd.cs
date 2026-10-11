@@ -368,6 +368,9 @@ internal sealed class ParkFrontEnd : Panel
 	/// hold the game clock, which is exactly what a second, private road would be free to get wrong.
 	/// </para>
 	/// </summary>
+	/// <summary>The gadget, for the debug console's <c>tags</c>.</summary>
+	internal ParkGadget Gadget => _gadget;
+
 	internal void DebugOpenMenu() => MenuKey( _stack.Windows.Count > 0 ? _stack.Windows[^1] : null, plain: true );
 
 	/// <summary>

@@ -437,7 +437,8 @@ messages `0x44` and `0x45` ("A ride broken down and no mechanic to come", below)
 
 **What follows a line said.** `FUN_0059b620`, after `Advisor_SayResponse`, builds an event of type `0x18`
 (`FUN_0040f740`, vtable `0x006fd828`, whose first slot answers `0x18`) from the response's group, the record's
-thing id and its `+0x04`, and sends it (`FUN_0040fb10`), for every message, a door's too. Who hears it is not read.
+thing id and its `+0x04`, and sends it (`FUN_0040fb10`), for every message, a door's too. Its one hearer is the
+tag system: "The tag a line leaves on the aerial", below.
 
 **The original** (`q305/orig/`, `original/advisor.py`, Q265's `bounce.TPWS` left alone, the computer on seven
 days so ticks alone are counted): the advisor is thing 3. Message `0x42`'s record read last said 0, line -1, said
@@ -445,7 +446,8 @@ days so ticks alone are counted): the advisor is thing 3. Message `0x42`'s recor
 byte 9, and 9 + 2.055 is not under 10); on that poll it read last said **4800**, line **0**, said 1, and the last
 action's duration 6665 ms. It stayed so through five more falls to 2.4. His slots held message `0x80` at score 20
 the whole run, unsaid, as "Why the stock door is silent" says. In the frame taken 1.5 s on (`a-told.png`) he is up
-at the bottom right **wearing a yellow hard hat**, with a small arrow button beside him.
+at the bottom right **wearing a yellow hard hat**. The small arrow beside him in that frame is the game's
+pointer, holding the path tool's plank; it is there with no line said (`q306/orig/a-end.png`).
 
 **OpenTPW** (`ParkAdvisorMessages.RideWornOut`, `ParkRideOperation.WearByRunning`; `q305/confirm.py`, the stock
 park left alone on the desktop, 4 predictions of 4): the wear line of tick 5504 took the Bounce from 11.89 to
@@ -461,8 +463,7 @@ of the rule (`run-control`).
 | The post | from the wear, with the thing and its item | built; the item is not kept, and nothing reads the subject but the log and `advisor` |
 | When it is said | the tick of the post | a sweep on: the messages' turn is taken before the things' (`ParkPeople`) |
 | The hard hat | drawn | built: "What he wears for a line", below |
-| The button beside him | drawn | not built, not decoded |
-| The event of type `0x18` after a line | sent | counted, `ADVISOR_MESSAGE_SAID_EVENT` |
+| The event of type `0x18` after a line | sent, and heard by the tag system | built: "The tag a line leaves on the aerial", below |
 | Lines 195 and 196, a second ride's own slot, the 480 sweeps before the same message again | the listing's | built and held by the tests alone |
 
 ## A mechanic on his way (message `0x46`, Q306)
@@ -490,7 +491,7 @@ load, `advisor.py` and `object.py` polled together; ticks alone are counted): `V
 1194, the Bounce's state 1 on 1198 with nobody assigned, and on the poll of tick **1201** its assigned member
 read 26 and message `0x46`'s record `(1201, 0, 1, 0)`: last said that tick, line 0, said. The last action's
 duration read 7498 ms. Message `0x42`'s record stayed never said. The frame 1.5 s on (`a-told.png`) has him up
-in the hard hat with the arrow button beside him, as for `0x42`. The ride was open again on tick 1313.
+in the hard hat, as for `0x42`. The ride was open again on tick 1313.
 
 **OpenTPW** (`ParkAdvisorMessages.MechanicOnHisWay`, `StaffBehaviour.Decide`; `q306/confirm.py`, the stock
 park's Belly Bounce broken by `scriptvar 13 VAR_BREAKSTAT 1` 25 s in, 4 predictions of 4): the log read `post
@@ -506,7 +507,6 @@ ride. Main's build, off-screen, posted nothing and counted `MECHANIC_ON_HIS_WAY_
 | When it is said | the tick of the post | a sweep on, as message `0x42` |
 | Response 206's own gesture row | played (`FUN_00598bf0`) | the random chain, counted `ADVISOR_RESPONSE_GESTURE_ROW` |
 | The hard hat | drawn | built: "What he wears for a line", below |
-| The button beside him | drawn | not built, not decoded |
 | Lines 205 and 206, a second ride's own slot, a called ride's silence | the listing's | built and held by the tests alone |
 
 ## A ride broken down and no mechanic to come (messages `0x44` and `0x45`, Q307)
@@ -586,7 +586,6 @@ predictions of 5):
 | When it is said | `0x44` on the post's tick; `0x45` 43 ticks after the line before it began | a sweep on; 31 sweeps after the line before it began (why the original waits twelve more is not read) |
 | The event's other two hearers, and a condemned ride's event | the tag system's log, the relay's `FUN_00481530` | counted, `RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT` |
 | The hard hat | drawn | built: "What he wears for a line", below |
-| The button beside him | drawn | not built, not decoded |
 | The second and third lines of each, a mechanic resting or striking, a mechanic already naming the ride | the listing's | built and held by the tests alone |
 
 ## What he wears for a line (Q308)
@@ -656,5 +655,111 @@ mechanic's decide posts began `Advisor: sample 202 ... wearing 5,0`, `advisor` r
 | The hat's colour | a full yellow | paler: he is lit past his textures (`AdvisorModel`'s light, set against his gloves) |
 | The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows | not built: no built topic names one; counted `ADVISOR_THEME_COSTUME` if one ever does |
 | A clip word's `0x10000` (no prop, the head hidden) and its particles | a gesture row's | not built: the gesture rows are counted, `ADVISOR_RESPONSE_GESTURE_ROW` |
-| The button beside him | drawn | not built, not decoded |
 
+## The tag a line leaves on the aerial (Q309)
+
+**Who hears a said line.** The event of type `0x18` (`FUN_0059b620`, above) carries the response's group at `+8`,
+the record's thing at `+0xc`, -1 at `+0x10` and the record's `+0x04` (the thing's item) at `+0x14`. One thing
+subscribes to `0x18`: the tag system, kind `0xc`, whose constructor `FUN_00509b40` subscribes it to types 7, `0xc`,
+`0x14`, `0x18`, `0x19` and `0x13` (each `PUSH type`, `FUN_00415e00`, `FUN_0040f9e0`). Its hearer `FUN_00509bf0`
+(`FUN_0050b550`'s case `0xc`) acts on three: `0x13` with a detail of 7, 8 or 9 (the postcard's three ends), `0x18`
+and `0x19`; any other only logs. For `0x18`:
+
+1. `FUN_0050af40( group )` finds the group's row in the **tag table**, `0x0075eca8` to `0x00761c68`, 382 rows of
+   `0x20` bytes: nothing for `0x17e` and `0x17f`, else the row at the id's own place where it holds the id, else
+   the first holding it. No row, no tag.
+2. The tag's life is the event's `+0x10`, or the row's `+0x18` where that is under nought (always, from a line).
+3. `FUN_00509e10` writes the tag's text from the row's string (`+0x0c`) by the row's kind (`+0x1c`): kind 0 the
+   string alone, kind 2 the string with the item's name (`FUN_00412f50`).
+4. `FUN_00481580` hands the messages control the tag: its id, the row's `+0x04`, the text, the life, the row's
+   picture (`+0x08`), the row's two button types (`+0x10`, `+0x14`), the thing and the item.
+
+**A row** (`lib/tagtable.py`, read from the executable on disk):
+
+| Offset | What | Over the 382 rows |
+|---|---|---|
+| `+0x00` | id | 114 stand at their own place |
+| `+0x04` | key: the id of the tag this one takes the place of | 107 name themselves |
+| `+0x08` | picture, a short: the part of `msgtag.md2` shown | 0 to 5 |
+| `+0x0c` | string | |
+| `+0x10`, `+0x14` | the message bar's two buttons (`FUN_0048e610`: 3 and 4 `mb_locate`, 9 to `0x11` `mb_buy`, `0x12` `b_loan`, `0x13` `mb_resrch`, `0x14` `b_pkinfo`, `0x15` `b_staffcost`, `0x17` `mb_callmech`, `0x18` `b_entry`, `0x1a` `mb_accept`, `0x1b` `mb_decline`) | the second is 0 or 27 |
+| `+0x18` | life, ms | 0 (121 rows), 30000 (228), 90000 (33) |
+| `+0x1c` | text kind | 0 to 36 |
+
+Of the response table's 149 groups, 148 have a row; the one without is `0x17f`, the lobby's lines'. The built
+topics' rows:
+
+| Group | Lines | Key | Picture | String | Buttons | Life | Kind |
+|---|---|---|---|---|---|---|---|
+| 68 | a ride about to break down (194 to 196) | 383, none | 1 | 71 | 3, 0 | 30000 | 2 |
+| 70 | no mechanics (198 to 200) | 68 | 1 | 72 | 3, 0 | 30000 | 2 |
+| 71 | the mechanics all busy (201 to 203) | 68 | 1 | 73 | 3, 0 | 30000 | 2 |
+| 72 | a mechanic on his way (204 to 206) | 68 | 1 | 74 | 3, 0 | 30000 | 2 |
+| 150 | the park open (308, 309) | 151 | 1 | 149 | 0, 0 | 30000 | 0 |
+| 151 | the park shut (310, 311) | 150 | 1 | 150 | 0, 0 | 30000 | 0 |
+
+**The messages control's list, `FUN_0048eb20`** (through `FUN_0048ede0`; nothing is done with the interface down,
+`[0x007cb2ac]` nought). The ten tags are controls made once by `FUN_0048eaa0` (`FUN_0048ea00`: 70 by 65, mesh
+`msgtag`, handler `FUN_0048dae0`, help row 475, "Message - left-click to open, right-click to delete"), with ten
+records of `0x208` bytes at `0x007c26b0` (the control, in use, the text).
+
+1. Every tag standing whose id is the new one's **key**, about the same thing and item: where the new id is its
+   own key the standing tag takes the new text and nothing more is made; otherwise it is taken off at once
+   (`0x100002` with 1). So a mechanic's line takes off the about-to-break tag of its ride, and the door's two take
+   each other's.
+2. Otherwise, with fewer than ten held (`[0x007ca09c]` against `[0x00750610]`), the first free record's control
+   takes the picture (`FUN_0065d3a3`), the text, timer `0x80080` at the life and timer `0x80081` five seconds
+   before it (both only for a life over nought), and its data; the mast is sent `0x100001` with it, and the
+   interface's sound `0x1e` plays.
+
+**The mast, `LAB_004a11e0`** (control `0x2d`, `[0x007cb2c4]`; `hud.md`, "The management gadget"):
+
+- `0x100001`, a tag put on: the tag is shown, the mast's top edge goes up by the tag's height and ten
+  (`FUN_0065cd95( 0, -h, 0, 0 )`), the tag is put across the mast's middle with its top eight under the mast's
+  new top, and the red top `0x2e`, which follows the mast's top edge, plays the stream at `0x00752e48`.
+- `0x100002`, a tag taken off: hidden, then message 5 to it, at once with a 1 and half a second on otherwise.
+- `0x100003`, the top's right click (`FUN_004a1190`): message 5 to each tag from the first, 100 ms after the one
+  before, the first 100 ms on.
+- A tag's message 5 (`FUN_0048dae0`): its particle killed, its timers stopped, its record freed, the mast's top
+  put down by its height and ten, each later tag moved down the same and played the stream at `0x007502f0`, the
+  red top the same, and the message bar retracted where it showed this tag.
+
+**A tag's own handler, `FUN_0048dae0`:** timer `0x80080` hides it and sends the mast `0x100002` with nought, so
+it is off half a second after its life ends; timer `0x80081` starts particle effect `0x5b` over its middle, once;
+a left click plays sound `0xc0` and shows its message on the bar (`FUN_0048d9c0`, which posts advisor message
+`0x11c`), or retracts the arm where it is the one on show; a right click, unless its message is the one being
+shown (`[0x007ca094]`), hides it and sends `0x100002` with nought. The tags are written to a park file
+(`FUN_0048ee50`, records of `0x21c` bytes) and read back (`FUN_0048ef70`).
+
+**The original** (`q309/orig/run.sh`: Q265's `bounce.TPWS`, `scriptvar.py PID 13 4 1` twenty seconds after the
+load, `original/tags.py`, `advisor.py` and `object.py` polled together): with no tag the mast's rectangle read
+(94, 976, 144, 984) and none held. On the poll of tick 1198, 21.47 s in, where message `0x46`'s record read said,
+one was held: its control at **(84, 909, 154, 974)**, the mast **(94, 901, 144, 984)**, its text "Your Belly Bounce
+ride has broken down, and a mechanic is on his way to fix it." At 52.01 s, tick 1368, none was held and the mast
+read (94, 976, 144, 984) again: **30.54 s** on, the life and the half second. The frames (`a-told.png`,
+`a-end.png`) show the red top lifted over a red block with a white picture, then back down.
+
+**OpenTPW** (`ParkTags`, `ParkAdvisorMessages.Topic.Group`, `ParkGadget.PutTags`; `q309/confirm.py`, the stock
+park's Belly Bounce broken through its script 25 s in, 5 predictions of 6 and the control's one): the line began
+and the log read `Park tags: tag 72 picture 1 subject 13 life 30000 standing 1` and `Park gadget: aerial:
+mast=94,901,144,984 top=77,773,161,901 tag900=84,909,154,974/frame=1/shown=1`, the original's rectangles; `tags`
+read `standing=1 tag=72/picture=1/subject=13/age=1945/hidden=0`; the red top's upper edge stood at window row 363
+where it had stood at 398, the 35 rows 75 units are at 720 down; 28 s on the tag stood, and 32.5 s on `tags` read
+`standing=0` and `mast=94,976,144,984 top=77,848,161,976`. `side-by-side.png` holds both games' aerial before,
+with the tag and after. The prediction that missed was a pixel rule set without the picture in mind: the red top
+at rest covers the tag's box, so the box was 14.6% red before the line where under 5% was predicted, and 19.3%
+with the tag where over 30% was. Main's build said the same line, moved nothing and counted
+`ADVISOR_MESSAGE_SAID_EVENT`.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The rows | 382 in the executable | the six the built topics' groups name; any other group with a row is counted, `TAG_ROW_NOT_LISTED` |
+| The match of a standing tag | id, thing and item | id and thing: a thing has one item |
+| The times | the interface's timers, real milliseconds | the same clock (`Time.WallMilliseconds`), from the gadget's update |
+| The red top and the later tags as one goes | played down (streams `0x007502f0`, `0x00752e48`) | put down at once |
+| The particle five seconds before the end | effect `0x5b` over the tag | counted, `TAG_ENDING_PARTICLE` |
+| A left click | sound `0xc0`, the message bar on the arm with the text and the buttons | the sound, then counted, `TAG_MESSAGE_BAR` |
+| The tag's text | written from the row's string | not kept |
+| The sounds' loudness | not measured | each at its variation's own volume, as the boot's |
+| The tags in a park file | written and read | neither; a load starts with none |
+| The other two events (`0x19`, the postcard's) | heard | nothing sends them here |

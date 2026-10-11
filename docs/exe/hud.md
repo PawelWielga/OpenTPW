@@ -234,8 +234,8 @@ bar read row 476. The arm out was not tried there.
 (`UiControl.DrawsByDepth`, `Depth`), reads both outlines into `UiControl.Outline`, and builds the arm in
 (`PutArm`) and the aerial down. The arm, its end, the mast and the buttons' panel stop the pointer over their
 rectangles (`UiControl.StopsPointer`). Not the original's: the arm does not slide (counted, `GADGET_ARM_SLIDE`; `docs/QUEUE.md` Q230); in, the arm and its end draw
-nothing (how a mesh is drawn on a narrowed control is not traced) and the retract button is hidden; and the top's
-right click is counted, `AERIAL_DELETE_ALL_MESSAGES`, since no message bar is built.
+nothing (how a mesh is drawn on a narrowed control is not traced) and the retract button is hidden. A tag stands
+on the mast and lifts the top (`ParkGadget.PutTags`), and the top's right click takes every tag off.
 
 ### Op 4 sub-op 4 is a hit-test region, not a motion path
 
@@ -784,17 +784,19 @@ Built by `FUN_0048d8b0`. Walked in full: clean op 0, balanced op 5 at `0x007502a
 `FUN_0048d8b0` skins **0x10d32** only — label skin, **font 6** — so the middle slice carries the text. The
 bar sits immediately right of the gadget, which ends at x 439.
 
-### It can never be fed, so do not build it
+### What feeds it
 
 Every message arrives through `FUN_00481580`, whose **one** caller is `CTagSystem::ReceiveMessage`
-(`FUN_00509bf0` — its own debug string names the class). The only branch whose contents are readable is
-**postcard status**: ids `0x17b` / `0x17c` / `0x17d` for "Postcard sent", "Postcard to outbox", "Postcard
-failed". The other two branches (kinds `0x18`, `0x19`) take an event id from the simulation and look it up
-through `FUN_0050af40`. `FUN_0048ef70` is the **save-file loader**, not a live poster — it reads
-0x21c-byte records through `FUN_005f5e20`. The cap is **ten** (`DAT_00750610`, with the string `mb_erase`
-immediately after it at `0x00750614`).
+(`FUN_00509bf0` - its own debug string names the class), and **every line the park advisor says feeds it**: a
+said line sends an event of type `0x18` with its response's group, and the group's row in the tag table is a
+tag on the gadget's aerial (`advisor-park.md`, "The tag a line leaves on the aerial", which has the table, the
+list's rules and the mast's). The other two branches are an event of type `0x19` and the postcard's three ends
+(ids `0x17b` / `0x17c` / `0x17d`, "Postcard sent", "Postcard to outbox", "Postcard failed"). `FUN_0048ef70` is
+the **save-file loader**, not a live poster - it reads 0x21c-byte records through `FUN_005f5e20`. The cap is
+**ten** (`DAT_00750610`, with the string `mb_erase` immediately after it at `0x00750614`). The tags are built
+(`ParkTags`); the bar a tag's left click opens is not (`TAG_MESSAGE_BAR`).
 
-**Advisor lines do NOT land here.** `FUN_00486b00` runs into the advisor's own message system
+**A screen's advisor line is not posted here.** `FUN_00486b00` runs into the advisor's own message system
 (`FUN_0059b590`, `FUN_0059a940`); the bar keeps a separate list (`DAT_007cb2c8`, posted by
 `FUN_0048eb20`). They talk in one direction only: showing a bar message (`FUN_0048d9c0`) posts advisor
 message **0x11c** and calls `FUN_004a2590` to put the bar on the arm.

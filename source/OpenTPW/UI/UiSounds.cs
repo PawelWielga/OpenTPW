@@ -44,6 +44,8 @@ internal static class UiSounds
 	private const int GoldKey = 198;
 	private const int MenuChoiceSound = 193;
 	private const int BootSound = 210;
+	private const int NewTagSound = 0x1e;
+	private const int TagClickSound = 0xc0;
 
 	private const float ButtonClickVolume = 0.385f;
 	private const float ToggleClickVolume = 0.245f;
@@ -93,6 +95,20 @@ internal static class UiSounds
 
 	/// <summary>A game menu choice was clicked - which the menu's choices play themselves (0x00492d80).</summary>
 	public static void MenuChoice() => Play( MenuChoiceSound, MenuChoiceVolume );
+
+	/// <summary>A tag was put on the gadget's aerial (FUN_0048eb20), at its variation's own volume as the boot's is.</summary>
+	public static void NewTag() => PlayAtItsOwn( NewTagSound );
+
+	/// <summary>A tag was left clicked (FUN_0048dae0), at its variation's own volume.</summary>
+	public static void TagClick() => PlayAtItsOwn( TagClickSound );
+
+	private static void PlayAtItsOwn( int effect )
+	{
+		Preload();
+
+		if ( _category != null )
+			_category.Play( effect, BootVolume( _category.VariationsOf( effect ) ), respectDelay: false );
+	}
 
 	private static void Play( int effect, float volume )
 	{

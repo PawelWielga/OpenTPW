@@ -243,7 +243,6 @@ public class ParkRideWearTests
 		park.Turn( 128 );
 		Assert.AreEqual( (18.39f, 1), (MathF.Round( park.Thing().StateOfRepair, 3 ), park.Script[ParkRideOperation.WornVariable]) );
 
-		var events = Times( "ADVISOR_MESSAGE_SAID_EVENT" );
 		var advisor = park.State.AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
 
 		park.Change( thing => thing with { StateOfRepair = 12.5f } );
@@ -260,9 +259,11 @@ public class ParkRideWearTests
 
 		var said = new List<int>();
 
-		advisor.Tick( 321, 0, ( _, sample ) => { said.Add( sample ); return 0; } );
+		var heard = new List<(int Group, int Subject)>();
+
+		advisor.Tick( 321, 0, ( _, sample ) => { said.Add( sample ); return 0; }, ( group, subject ) => heard.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { 191 }, said );
-		Assert.AreEqual( 1, Times( "ADVISOR_MESSAGE_SAID_EVENT" ) - events );
+		CollectionAssert.AreEqual( new[] { (68, (int)BellyBounce) }, heard, "the said line's event: its response's group and the ride" );
 
 		park.Change( thing => thing with { StateOfRepair = 11.5f } );
 		park.Turn( 384 );

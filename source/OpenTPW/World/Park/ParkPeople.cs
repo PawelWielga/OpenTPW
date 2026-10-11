@@ -2070,7 +2070,8 @@ public sealed partial class ParkPeople : Entity
 				{
 					var (first, second) = ParkAdvisorMessages.PropsOf( response );
 					return Advisor.Current?.PlayParkResponse( response, sample, first, second ) ?? 0;
-				} );
+				},
+				(group, subject) => State.Tags.Said( group, subject, Time.WallMilliseconds ) );
 
 			// <b>The number handed on is the park's clock, mGameTick, not the 31 ms tick, and that is not
 			// cosmetic.</b> Peep.Tick spreads guests across four slots by (id & 3) == (tick & 3); every 31 ms

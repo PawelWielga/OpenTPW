@@ -1,0 +1,170 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
+
+namespace OpenTPW.Tests;
+
+/// <summary>
+/// The tags a said line leaves on the gadget's aerial (<c>docs/exe/advisor-park.md</c>, "The tag a line leaves on
+/// the aerial"): the tag table's rows, the list's rule for a tag of the same thing, its ten, and its timers. These
+/// need no game.
+/// </summary>
+[TestClass]
+public class ParkTagsTests
+{
+	[TestInitialize]
+	public void ALog() => Log ??= new();
+
+	private static int Times( string what ) => Unimplemented.Summary.FirstOrDefault( one => one.What == what ).Times;
+
+	/// <summary>
+	/// <b>A said line leaves the tag its response's group names</b> (<c>FUN_00509bf0</c>, <c>FUN_0050af40</c>): the
+	/// rides' and the door's rows show part 1 for thirty seconds; group 0x17f leaves none; a group whose row is
+	/// not listed here is counted.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> every group a tag; no tag; the life not kept; an unlisted row uncounted; 0x17f counted.</remarks>
+	[TestMethod]
+	public void ASaidLineLeavesItsGroupsTag()
+	{
+		var tags = new ParkTags();
+		var unlisted = Times( "TAG_ROW_NOT_LISTED" );
+
+		var tag = tags.Said( 72, 13, 5000 );
+		Assert.IsNotNull( tag );
+		Assert.AreEqual( (72, 1, 13, 5000L, 35000L, false), (tag.Row.Id, tag.Row.Picture, tag.Subject, tag.Born, tag.HideAt, tag.Hidden) );
+		Assert.AreEqual( (1, 1), (tags.Standing.Count, tags.Made) );
+
+		Assert.IsNull( tags.Said( ParkTags.NoTag, 13, 5000 ), "the lobby's lines' group" );
+		Assert.IsNull( tags.Said( 0x17e, 13, 5000 ) );
+		Assert.AreEqual( unlisted, Times( "TAG_ROW_NOT_LISTED" ) );
+		Assert.IsNull( tags.Said( 5, 13, 5000 ) );
+		Assert.AreEqual( unlisted + 1, Times( "TAG_ROW_NOT_LISTED" ) );
+		Assert.AreEqual( 1, tags.Standing.Count );
+
+		CollectionAssert.AreEqual( new[] { 68, 70, 71, 72, 150, 151 }, ParkTags.Rows.Select( row => row.Id ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 383, 68, 68, 68, 151, 150 }, ParkTags.Rows.Select( row => row.Key ).ToArray() );
+		Assert.IsTrue( ParkTags.Rows.All( row => row.Picture == 1 && row.Life == 30000 ) );
+		CollectionAssert.AreEqual( new[] { 150, 151, 68, 70, 71, 72 }, ParkAdvisorMessages.ParkTopics.Select( topic => topic.Group ).ToArray(),
+			"each built topic's lines' group" );
+	}
+
+	/// <summary>
+	/// <b>A new tag takes off the tag of its row's key about the same thing</b> (<c>FUN_0048eb20</c>): a mechanic's
+	/// line's takes the about-to-break tag of that ride and no other ride's; the door's two take each other's; a row
+	/// with no key takes none; and a row that is its own key adds nothing while one stands.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> nothing taken off; a tag of another thing taken off; every older tag taken off; the tag of
+	/// the same id taken off; a row its own key adding a second.
+	/// </remarks>
+	[TestMethod]
+	public void ANewTagTakesTheTagOfItsKey()
+	{
+		var tags = new ParkTags();
+
+		tags.Said( 68, 13, 0 );
+		tags.Said( 68, 14, 0 );
+		tags.Said( 68, 13, 10 );
+		Assert.AreEqual( 3, tags.Standing.Count, "row 68 names no key: a second about the same ride stands too" );
+
+		Assert.IsNotNull( tags.Said( 72, 13, 20 ) );
+		CollectionAssert.AreEqual( new[] { (68, 14), (72, 13) }, tags.Standing.Select( tag => (tag.Row.Id, tag.Subject) ).ToArray() );
+
+		tags.Said( 72, 13, 30 );
+		Assert.AreEqual( 3, tags.Standing.Count, "72's key is 68, not itself" );
+
+		tags.Said( 150, 0, 40 );
+		tags.Said( 151, 0, 50 );
+		CollectionAssert.AreEqual( new[] { 68, 72, 72, 151 }, tags.Standing.Select( tag => tag.Row.Id ).ToArray(), "closed takes opened" );
+		tags.Said( 150, 0, 60 );
+		CollectionAssert.AreEqual( new[] { 68, 72, 72, 150 }, tags.Standing.Select( tag => tag.Row.Id ).ToArray(), "and opened closed" );
+
+		var own = new ParkTags( [new ParkTags.Row( 7, 7, 0, 2, 0, 0, 0, 0 )] );
+		Assert.IsNotNull( own.Said( 7, 3, 0 ) );
+		Assert.IsNull( own.Said( 7, 3, 10 ), "its own key: the one standing is the line's" );
+		Assert.IsNotNull( own.Said( 7, 4, 10 ), "another thing's is new" );
+		Assert.AreEqual( (2, long.MaxValue), (own.Standing.Count, own.Standing[0].HideAt), "and a row with no life is never hidden" );
+	}
+
+	/// <summary><b>The list holds ten</b> (<c>DAT_00750610</c>): an eleventh line leaves none, and one does again once a place is free.</summary>
+	/// <remarks><b>Mutations:</b> no limit; nine; eleven.</remarks>
+	[TestMethod]
+	public void TheListHoldsTen()
+	{
+		var tags = new ParkTags();
+
+		for ( var ride = 1; ride <= 10; ++ride )
+			Assert.IsNotNull( tags.Said( 68, ride, 0 ), $"tag {ride}" );
+
+		Assert.IsNull( tags.Said( 68, 11, 0 ) );
+		Assert.AreEqual( (10, 10), (tags.Standing.Count, tags.Made) );
+
+		tags.Hide( tags.Standing[0], 0 );
+		tags.Tick( 500 );
+		Assert.IsNotNull( tags.Said( 68, 11, 500 ) );
+	}
+
+	/// <summary>
+	/// <b>A tag's two timers</b> (<c>FUN_0048eb20</c>, <c>FUN_0048dae0</c>): five seconds before its life's end its
+	/// particle, counted once; at the end it is hidden; half a second on it is off the mast.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the particle at the start; at the end; counted every turn; hidden a tick early; never
+	/// hidden; taken off as it is hidden; never taken off; the change not told.
+	/// </remarks>
+	[TestMethod]
+	public void ATagIsHiddenAtItsLifesEndAndThenTakenOff()
+	{
+		var tags = new ParkTags();
+		var particle = Times( "TAG_ENDING_PARTICLE" );
+		var tag = tags.Said( 68, 13, 1000 )!;
+
+		tags.Tick( 25999 );
+		Assert.AreEqual( particle, Times( "TAG_ENDING_PARTICLE" ) );
+		tags.Tick( 26000 );
+		tags.Tick( 26500 );
+		Assert.AreEqual( particle + 1, Times( "TAG_ENDING_PARTICLE" ), "once, 25 s in" );
+
+		var changes = tags.Changes;
+		tags.Tick( 30999 );
+		Assert.AreEqual( (false, 1, changes), (tag.Hidden, tags.Standing.Count, tags.Changes) );
+		tags.Tick( 31000 );
+		Assert.AreEqual( (true, 1, changes + 1), (tag.Hidden, tags.Standing.Count, tags.Changes), "hidden, its place kept" );
+		tags.Tick( 31499 );
+		Assert.AreEqual( 1, tags.Standing.Count );
+		tags.Tick( 31500 );
+		Assert.AreEqual( (0, changes + 2), (tags.Standing.Count, tags.Changes) );
+	}
+
+	/// <summary>
+	/// <b>A hidden tag goes half a second on, and a delete of all takes the oldest first, a tenth of a second
+	/// apart</b> (<c>LAB_004a11e0</c>, 0x100002 and 0x100003), not hidden before they go.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> all at once; the newest first; hidden at the click; a hide of a hidden tag starting its wait again.</remarks>
+	[TestMethod]
+	public void AHiddenTagAndADeleteOfAll()
+	{
+		var tags = new ParkTags();
+		var a = tags.Said( 68, 1, 0 )!;
+		tags.Said( 68, 2, 0 );
+		tags.Said( 68, 3, 0 );
+
+		tags.Hide( a, 1000 );
+		tags.Hide( a, 1400 );
+		tags.Tick( 1499 );
+		Assert.AreEqual( 3, tags.Standing.Count );
+		tags.Tick( 1500 );
+		Assert.AreEqual( 2, tags.Standing.Count, "500 ms from the first hide" );
+
+		tags.DeleteAll( 2000 );
+		Assert.IsTrue( tags.Standing.All( tag => !tag.Hidden ) );
+		tags.Tick( 2099 );
+		Assert.AreEqual( 2, tags.Standing.Count );
+		tags.Tick( 2100 );
+		CollectionAssert.AreEqual( new[] { 3 }, tags.Standing.Select( tag => tag.Subject ).ToArray() );
+		tags.Tick( 2199 );
+		Assert.AreEqual( 1, tags.Standing.Count );
+		tags.Tick( 2200 );
+		Assert.AreEqual( 0, tags.Standing.Count );
+		StringAssert.Contains( tags.Census( 2200 ), "standing=0" );
+	}
+}

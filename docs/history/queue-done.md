@@ -6125,6 +6125,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   antennae, as the original's `q306/orig/a-told.png`; main's build drew him bare-headed. Two predictions of
   three: the hat's pixel count was predicted over 1500 by a colour rule the paler hat met 638 times (6307 by the
   rule chosen after). 36 bugs put back, 36 fail a test. Tests 2974. I split the item: its other pieces are Q309.
+- [x] **Q309. A said line leaves a tag on the gadget's aerial.** Done 2026-10-11. The "button beside him" of
+  Q305 to Q308 is the game's pointer; what a said line does leave is a tag. The event of type `0x18` has one
+  hearer, the tag system (`FUN_00509bf0`), which finds the response's group in the tag table (`0x0075eca8`, 382
+  rows) and hands the messages control a tag: a `msgtag` picture on the gadget's mast, which lifts the red top by
+  its height and ten, takes off the tag of its row's key about the same thing, and goes half a second after its
+  life (`exe/advisor-park.md`, "The tag a line leaves on the aerial"; `exe/hud.md`'s "It can never be fed" was
+  wrong). Built: `ParkTags`, `ParkAdvisorMessages.Topic.Group`, `ParkGadget.PutTags`, the console's `tags`. The
+  stock park's Belly Bounce broken through its script, the mechanic's line left tag 72: the mast read
+  (94, 901, 144, 984) and the tag (84, 909, 154, 974) in both games, the red top 35 window rows higher in the
+  frame, and the tag went 30.5 s on here and 30.54 s on in the original; main's build moved nothing. Five
+  predictions of six: a pixel rule for the tag's box was set without the red top's resting place in mind (19.3%
+  red read, over 30% predicted). 59 bugs put back: 58 fail a test, and the 59th once its test was fixed. Tests 2981. I split the item: its other pieces
+  are Q310.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

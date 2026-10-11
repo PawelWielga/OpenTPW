@@ -973,6 +973,8 @@ public sealed class ParkState
 
 	/// <summary>The park's posted advisor messages, installed during level setup.</summary>
 	internal ParkAdvisorMessages? AdvisorMessages { get; set; }
+	/// <summary>The tags said lines have left on the gadget's aerial.</summary>
+	internal ParkTags Tags { get; } = new();
 
 	/// <summary>
 	/// Takes an admission fee - the bank's <c>FUN_004d0600</c>: onto the balance and <see cref="ProfitThisYear"/>,
