@@ -189,7 +189,7 @@ at n+2. The receivers are `__fastcall` and **Ghidra hides them** — read the di
 
 **Higher is nearer the front**, settled by screenshot: the six buttons sit at 10 inside a body at 8 and
 plainly draw over it. So the arm draws **behind** the body, and the handle in front of it. Built the other way
-the arm lays a hard seam across the panel. A control linked later takes its parent's depth and two
+the arm lays a hard seam across the panel. A control linked later takes its parent's depth and two when the caller asks for it (the second argument, `0x0065f4d6`)
 (`FUN_0065f447`).
 
 ### The arm and the aerial as built
@@ -212,13 +212,13 @@ every point of the narrowed arm and of its end is inside the body's outline or t
 `0x004a205c`): (94,976)-(144,984). The top `0x2e` follows the mast's top edge, 58 down: (77,848)-(161,976), resting on
 the body's neck. (The move at `0x004a2034` before it, the mast's top less the top's bottom, is nought in this stream.)
 `LAB_004a11e0`, the mast's handler, answers `0x100001`, a message's icon handed to it: it links the icon as its child,
-fades it in over 500 ms, and grows the mast upward by the icon's height and 10 (`FUN_0065cd95( 0, -(h + 10), 0, 0 )`,
+posts it message 6 with 1 to arrive 500 ms later (`FUN_00658df4`, `0x004a1292`), and grows the mast upward by the icon's height and 10 (`FUN_0065cd95( 0, -(h + 10), 0, 0 )`,
 `0x004a12e3`), which lifts the top as far. `FUN_004a1190`, the top's handler, answers a right click (`0x10006`, button
 1) by sending the mast `0x100003`, and the mast's `0x100003` arm (`0x004a13b7`) walks the icons from `[0x007cb2c8]`,
 posting each message 5 (close) with a delay 100 ms longer than the last one's: "Right-click to delete ALL messages", help row 476. Seen in the original:
 with no message the red top sits on the neck; with one, an icon block stands between them.
 
-**The hit test's order.** `FUN_0065db25` skips a control flagged `0x2` or with `+4` set, tests every child in turn
+**The hit test's order.** `FUN_0065db25` skips a control flagged `0x2` or with `+4` set, and one with flag `0x1` clear and none of `0xf0000000` set (`0x0065db55`), tests every child in turn
 whatever the parent's own region says, keeps the LAST child that answers, and answers itself only when no child did.
 Children are linked at the tail (`FUN_0065f447`), so in stream order. Under the body: the gauge `0x1e`, the date
 `0x20`, the arm `0x21`, the six buttons' panel `0x25`. So the panel answers before the arm where they meet, the arm
@@ -574,7 +574,7 @@ onto layer 0, which first person hides, and the help bar is disabled, so nothing
 **What else a right press does in first person.** `FUN_00488a00` hands every message, before the base proc, to
 `FUN_0042a760`, which sets `DAT_00790aac |= 4` on a right press and clears it on the release (`0x0042a8bd`,
 `0x0042a8fb`). The park's own layer and the full-screen view's cover hand theirs to the same function (`0x00488290`,
-`0x0048845c`, `0x004a287d`), so the bit is the right button held from a press on any of the three, and a press the
+`0x0048845c`, `0x004a287d`), so the bit is the right button held from a press on any of the three (with RMB cancel on, the park's own layer keeps the press back, `0x00488354`, and sends it once the pointer has moved more than 8 or 200 ms have passed), and a press the
 eject button took never sets it. The camera update keeps bits 1, 2, 4 and `0x80` of the word each frame and rebuilds
 the rest from the keys (`AND AL,0x87`, `0x0042b32b`). Walking (`gui_CameraFlags & 0x16` set, `& 0x3c` clear) it
 builds the forward term from the keys, -0.1 for bit `0x40` then +0.1 for bit `0x20` (`0x0042b448`..`0x0042b468`), and
@@ -724,7 +724,7 @@ The table is every `CMP` or `SUB` against `0x10006` or `0x11006` in the image: e
 `06 00 01 00` or `06 10 01 00` stand in code (a byte search, 14 and 3, the base proc's own post at `0x0065f996`
 among them; it reaches the two handlers that sit in no function, `0x0048de67` and `0x005dced0`, which a walk by
 function does not), the handlers that reach the message by
-a chain of `SUB`s (`SUB 0x10002`, then `SUB 4`: the lobby's two and the three after them, found by a second scan), and
+a chain of `SUB`s (`SUB 4` after `SUB 0x10002`, or after `SUB 0x10001` and `DEC` as in `FUN_0048d2e0`, `FUN_00499060` and `0x004a61d0`: the lobby's two and the three after them, found by a second scan), and
 `FUN_00488a00`, which reaches its case through a jump table. A handler that switches on the message that last way is
 not found by either scan, so the table can be short.
 
