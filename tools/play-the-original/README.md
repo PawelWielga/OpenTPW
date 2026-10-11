@@ -96,7 +96,7 @@ with reduced precision. The bigger the number gets, the coarser the clock's smal
 rounded to that step: if a frame is much shorter than the step, its time is lost and the park stops, and if it's a
 bit shorter, it's rounded up and the park runs fast.
 
-What we measured on a computer that had been on for 6½ days: with no frame cap, **the park froze**. Capped at 30 frames
+On a computer that had been on for 6½ days, with no frame cap **the park froze**. Capped at 30 frames
 a second, **it ran about 1½ times too fast**. At a few frames a second, it ran at the right speed. After a restart,
 30 frames a second should stay close to the right speed for about six days.
 

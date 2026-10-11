@@ -113,18 +113,17 @@ say so before launching it.
 - An incremental verifier hunts misses by targeted greps (numbers, Q-numbers, names, history words), not a re-read.
 - End each queue item with a light check of the docs and comments it touched, so drift stays small.
 - After an interruption, resume the run (`resumeFromRunId`) rather than relaunching it. Only agents that had
-  RETURNED are kept, and not always those (2026-10-04: two of six finished sweeps came back from the cache, and four
-  verifiers mid-run were lost whole), so put the long agents last and keep each one short enough to lose.
+  RETURNED are kept, and not always those (a finished agent may be run again, and one mid-run is lost whole), so
+  put the long agents last and keep each one short enough to lose.
 - One verifier per area, with at most about 25 statements to settle. A verifier's cost is its requests times its
   context: one handed two areas made 60 requests and ended at 279k tokens; one handed 236 functions made 72 and ended
   at 369k. Split by area before launch rather than widen one.
 - Evidence is split by the script into parts a `Read` takes whole (under about 18k tokens each), and the prompt tells
   the agent to read all of them in one turn. Functions a verifier will need are dumped from Ghidra by the script
   first, with an index from cited address to file.
-- A tool call that does not depend on another goes in the same turn. The verifiers of 2026-10-04 sent one tool a
-  request; the agent definitions now say to send them together.
-- Paths an agent reports for a mutation are repo-relative, and the runner refuses an absolute one: on 2026-10-04
-  absolute paths put twenty mutations in the main tree instead of the worktree.
+- A tool call that does not depend on another goes in the same turn; the agent definitions say so.
+- Paths an agent reports for a mutation are repo-relative. An absolute one puts the bug in the tree it names, not
+  in the copy, and `mutate.py` does not refuse it: check the list before running it.
 - After a run, `agents_check.py <transcript dir>` prints each agent's type, model, requests, cache reads, end context
   and any rule it broke.
 
@@ -162,7 +161,7 @@ until told to stop. The overnight run of 2026-10-06 was fifteen items in one ses
 - **While a run is live, every other session leaves the repo alone:** no build, no test, no git, no game, no Ghidra
   call. Looking is fine (`autorun.py status`, `report.md`).
 - **Ghidra's lock is the trap.** A session's Ghidra server takes the project at its first call and keeps it until that
-  session's process ends, which a clear does not do (on 2026-10-09 one had held it for three days). A headless
+  session's process ends, which a clear does not do. A headless
   session then finds the project locked. Before a run, the session at the desk calls `release_project` and makes no
   Ghidra call until the run is over; the script probes Ghidra before every session and names the holder's remedy.
 - **A headless session is kept open, or it dies at its first wait.** Started with its prompt as a plain argument,
@@ -206,4 +205,9 @@ The two READMEs (this repo's and the FileFormats clone's) are written for player
 - **Run the scenes side by side.** An off-screen run and a desktop run use separate game folders, so start the census-only scenes off-screen while the photographed one is on the desktop; a second file goes into the original that is already running (`loadfile.sh`).
 - **While iterating, run the tests the change touches** (`--filter`); the whole suite is run once, at the gate.
 - **Edit source with the Edit tool, one change a call.** A batch of replacements in one script fails whole on one miscounted tab and costs a rebuild.
+- **At the gate, keep every failing test's name** (`grep -E '^\s+Failed '` over the whole output, never a tail), and never put the merge in the same command after the test: a failure whose name is lost cannot be chased, and a chained merge lands whatever the test said.
+- **Undo a hand-made bug with `git checkout -p` or `git diff`, never with `sed` on a short pattern**, which can match a second line; or put the bug back through `mutate.py --only`.
+- **A test's "other" value is written as a constant**, neither nought nor the real one: made by arithmetic on the real one (`held ^ 0x10000`) it can come out as the empty value, and a put-back bug lives on that.
+- **Keep a capture of the original until every instrument planned for it has been tried.**
+- **A script that appends a line to a doc checks the file's last byte:** split on newlines and added after the last, empty piece, the line goes in without the final newline.
 - Say what was **not** verified.

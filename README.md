@@ -23,9 +23,9 @@ OpenTPW re-implements the engine of Theme Park World (1999) so it runs on modern
 **Not yet.** OpenTPW is a work in progress. What works today:
 
 - **The lobby works.** The four islands, the front end, the advisor, weather, the options screen and your saved players.
-- **Only Lost Kingdom is partly working, and only from the park the game ships already built.** Enter it and the park runs: guests arrive, queue, ride and buy things; you can buy, sell and move rides, hire staff and lay paths.
-- **A fresh, empty park does not work, on any of the four islands.**
-- **There is no way to finish or keep a park.** No finances, no litter, and nothing saves a park back.
+- **Only Lost Kingdom is partly working.** A new Instant Action game enters the park the game ships already built, and the park runs: guests arrive, queue, ride and buy things; you can buy, sell and move rides, hire staff and lay paths.
+- **A new Full Simulation game starts Lost Kingdom as an empty park,** and you can hire staff in it. The other three islands are not worked on yet.
+- **There is no way to finish a park, and the park menu's Save Game does not save one yet.** Money comes in and wages go out each month, but there are no loans to buy, no litter and no end to a park. Only the debug console's `savepark` writes a park, and not every kind of ride.
 
 [`docs/STATUS.md`](docs/STATUS.md) lists everything that works and everything that does not.
 
@@ -159,15 +159,15 @@ On Windows, run `set OPENTPW_DEBUG_CONSOLE=1` first, then start OpenTPW in the s
 
 | For | Commands |
 |-----|----------|
-| Going places | `lobby`, `island`, `enter`, `park`, `reload`, `quit` |
-| Time | `pause`, `resume`, `step` |
+| Going places | `lobby`, `island`, `enter`, `park`, `reload`, `savepark`, `quit` |
+| Time | `pause`, `resume`, `step`, `clock`, `sweeps` |
 | Lobby camera and weather | `orbit`, `freeze`, `unfreeze`, `attract`, `aim`, `settle`, `near`, `rain`, `weather`, `strike`, `bolt` |
 | Park camera | `camera`, `camcorder`, `facing`, `walk` |
-| Sound | `volume`, `mute`, `sound`, `voices`, `place`, `speech`, `advisor`, `greet`, `duck` |
-| Reading the park | `guests`, `peeps`, `staff`, `candidates`, `rides`, `vehicles`, `paths`, `arrivals`, `objects`, `catalogue`, `money`, `rings`, `spend`, `why`, `cell`, `drawn`, `scriptvar`, `bumpers` |
-| Changing guests | `arrive`, `admit`, `send`, `load`, `depart`, `happy`, `cash`, `thirst`, `balloon`, `toilet` |
-| Building and staff | `buy`, `put`, `sell`, `move`, `path`, `delpath`, `queue`, `delqueue`, `hire`, `fire`, `pickup`, `putstaff`, `carry`, `drop`, `hand`, `strip`, `tool` |
-| Mouse, keys and windows | `pick`, `click`, `rightclick`, `rmbcancel`, `worldclick`, `hover`, `pointer`, `backspace`, `menu`, `buyscreen`, `hirescreen`, `openthing`, `screen`, `windows`, `control`, `state` |
+| Sound | `volume`, `mute`, `sound`, `voices`, `place`, `speech`, `advisor`, `greet`, `duck`, `music`, `crowd`, `bus`, `placed` |
+| Reading the park | `guests`, `peeps`, `staff`, `candidates`, `rides`, `vehicles`, `paths`, `arrivals`, `objects`, `catalogue`, `money`, `rings`, `spend`, `why`, `cell`, `drawn`, `scriptvar`, `bumpers`, `gate`, `hoardings`, `strikes`, `effects`, `emitters`, `particles` |
+| Changing guests | `arrive`, `admit`, `send`, `load`, `depart`, `happy`, `cash`, `thirst`, `balloon`, `toilet`, `need` |
+| Building and staff | `buy`, `put`, `sell`, `move`, `path`, `delpath`, `queue`, `delqueue`, `hire`, `fire`, `pickup`, `putstaff`, `carry`, `drop`, `hand`, `strip`, `tool`, `staffrest`, `forcestrike` |
+| Mouse, keys and windows | `pick`, `click`, `rightclick`, `rmbcancel`, `worldclick`, `hover`, `pointer`, `backspace`, `menu`, `buyscreen`, `hirescreen`, `openthing`, `screen`, `windows`, `control`, `state`, `footprint`, `buymoney`, `preview` |
 | Measuring | `stats`, `assets`, `parks`, `huds`, `water`, `size`, `unimplemented` |
 
 Each command's arguments are in [`DebugConsole.cs`](source/OpenTPW/Client/Diagnostics/DebugConsole.cs), one `case`
@@ -201,10 +201,10 @@ per command. Add a new command to this table.
 | Models (.MD2) | ⚠️ Meshes load; some animation channel kinds are not decoded yet |
 | Sound categories (cat_\*.map) | ⚠️ Decoded; a few fields are unnamed |
 | Park signs (.SGN) | ⚠️ Read and drawn; a gradient fill is drawn flat |
-| Park saves (.TPWS) | ⚠️ Read, only Lost Kingdom's shipped save tested; nothing writes one |
+| Park saves (.TPWS) | ⚠️ Read, only Lost Kingdom's shipped save tested; only the debug console's `savepark` writes one |
 | Ride scripts (.RSE) | ⚠️ Every shipped script runs; some instructions are not built yet |
 | Materials (.MTR) | ❌ |
-| Video (.TQI) | ❌ |
+| Video (.TGQ) | ❌ |
 
 </details>
 

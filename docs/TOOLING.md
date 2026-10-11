@@ -12,12 +12,13 @@ place to look for tools. Each file's docstring is its manual.
 
 | Tool | Use it for |
 |---|---|
-| `lib/parkrun.py` | The scaffold of every save-and-load confirm run: a private game folder, `enter()`, `save()`, `load()`, `reply()`, `gaps()`, `shot()`, `predict()` and `said()`, `done()`; `OFFSCREEN = True` for a run beside the desktop's; `AUDIO_FILE = "<path>"` writes the game's own mix to a file, nothing to the speakers; `original_view( x, y )` for a saved camera the original's frame will show the point in |
+| `lib/parkrun.py` | The scaffold of every save-and-load confirm run: a private game folder, `enter()`, `save()`, `load()`, `reply()`, `gaps( pattern )`, `shot()`, `predict()` and `said()`, `done()`; `OFFSCREEN = True` for a run beside the desktop's; `AUDIO_FILE = "<path>"` writes the game's own mix to a file, nothing to the speakers; `original_view( x, y )` for a saved camera the original's frame will show the point in |
 | `lib/mixmatch.py` | One sample measured in OpenTPW's own mix (`AUDIO_FILE`): `template( sdt, index )` decodes a bank's entry, `window( file, from, to )` cuts the capture between two sizes, `match()` is the best match and its least-squares gain, `steady()` the gain of a looped sample under other sounds, from 0.3 s pieces in 2 s steps |
 | `lib/parkscene.py` | exec'd after `parkrun.py`: the one-line census readers (`var`, `thing_line`, `staff_line`, `bumper_line`, `field`) and the Hot Pot scenes (`hot_pot`, `in_a_go`, `broken_pot`), so a confirm script does not write them again |
 | `lib/parkfile.py` | The one reader of a park file: `Park` (things, cells, sprites), `track()` (the track-rides module, cars and riders), `models()` (every model record: item, flags, node words, lookup records, channels), `head()` (a sprite), `emitters()`, `emitter_words()` and `emitter_aim()` (the particles module's live emitters by their chains, where one is not its template, and its own velocity at `+0x38`; `parkfile.py -e <file>` prints them). Add a module's reader here, not in an item's folder |
 | `lib/sfxmap.py <data dir> [<cat_..SFX.map> [effect]]` | A sound category's effects and variation headers (flags, parameter, volume, pitch, wait, range), walked as the loader walks them; with the data folder alone, the spread of every variation's range over all 31 files. Importable (`Category`, `categories`) |
 | `lib/md2surf.py <wad> <member.md2> [x z]` / `--sweep <data dir>` | A model's header float, lookup records and the faces a point stands on, with the height under a model point; the sweep counts them over every wad. Importable (`Model`): a reader of a `.md2`'s header, lookup table, meshes, vertices and faces to build a model check on |
+| `lib/parkrun-smoke.py <out> <bin> [off]` | The scaffold's own check: enters Lost Kingdom, saves under pause, loads the file back from the Load Park list and compares the three ticks; `off` runs it on the private display |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
 | `original/loadfile.sh load <file> <outdir> <tag>` / `stop` | A park file loaded in the original from its Load Park list, off-screen, with frames; `POLL=` starts a memory reader just before the click. It starts the original only when it is not running, so a second file is 35 s where the first is 123 s |
@@ -123,6 +124,15 @@ whole list):
 - **In a test, a boat is launched empty and then filled:** `Launch`, `Board`, `Fill`, as the ride's script does
   (`BUMP 4`, `1`, `12`); `Board` before `Launch` leaves the car not driven (Q257r).
 
+- **`parkrun.gaps( pattern )` needs its pattern** (`gaps( "SOUND_PLACE" )`): called bare it raises, after the
+  run's readings are taken.
+- **A sound's place is printed as (x, z, height)**, the height last, by the audio log and by `voices`: the Belly
+  Bounce's scream reads (525,250,0).
+- **`bumpers` prints a line a car**, `car N at (x,z) ...`, each behind `[dbg]`: match `\bcar \d+ at \(`, never from
+  the line's start. `parkscene.bumper_line()` is the ride's line only.
+- **Read a category's effects one effect a call** (`sfxmap.py <data dir> <map> <effect>`): a shell loop's output
+  runs two effects together.
+
 **In the original, off-screen at 1024 x 768** (points for `gmove.py X Y`; `gmove.py align` first, with `GW=1022
 GH=766` there, or the pointer is off):
 
@@ -177,11 +187,13 @@ GH=766` there, or the pointer is off):
   seconds from the load is in its memory and not in its picture: poll it, do not film it (Q257w).
 - **Its camera stands further back than OpenTPW's for the same numbers.** A file saved under
   `parkrun.original_view( x, y )` shows the point mid-frame there; measured at zoom 110 and yaw 180 alone (Q257r).
+- **`tpwmem.py read` and `watch` take every address as hex**, with or without `0x`: a decimal one is silently
+  another address, so work a sum out first.
 
 ## The original under Proton
 
 The original game (`testme.exe`, the 2.0 build Ghidra holds) runs on this machine through GE-Proton, as a
-reference instrument (`QUEUE.md` Q168). It is Linux only: Proton is Wine for Linux. It is not an emulator and it
+reference instrument (Q168, `docs/history/queue-done.md`). It is Linux only: Proton is Wine for Linux. It is not an emulator and it
 does nothing on Windows or macOS.
 
 ### What it gives you
@@ -250,8 +262,8 @@ fills the screen.
    Alexah's. The 30 fps cap stays on.
 2. **Never point it at `~/Games/TPWorld`.** The original writes `save/`, `Config.tcf`, `enginedebug.txt` and
    `fallback.txt` into its own folder. The reference install is its own copy.
-3. **On the real screen it takes the whole display and the mouse.** Start it only when the other session is idle
-   and Alexah has agreed to the run (`CLAUDE.md` rule 12). Your monitor's mode is not changed: Proton scales the
+3. **On the real screen it takes the whole display and the mouse.** Start it only when the other session is idle;
+   the run needs no question first (Alexah's standing word). Your monitor's mode is not changed: Proton scales the
    game's mode.
 4. **Off-screen is for memory and logic, not pictures.** llvmpipe drew Lost Kingdom's gate without its sign
    (`VERIFYING.md` rule 128). Without a window manager, the picture is a cropped corner; `original.sh` starts one.
