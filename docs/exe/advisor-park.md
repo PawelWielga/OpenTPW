@@ -729,7 +729,17 @@ it is off half a second after its life ends; timer `0x80081` starts particle eff
 a left click plays sound `0xc0` and shows its message on the bar (`FUN_0048d9c0`, which posts advisor message
 `0x11c`), or retracts the arm where it is the one on show; a right click, unless its message is the one being
 shown (`[0x007ca094]`), hides it and sends `0x100002` with nought. The tags are written to a park file
-(`FUN_0048ee50`, records of `0x21c` bytes) and read back (`FUN_0048ef70`).
+(`FUN_0048ee50`, records of `0x21c` bytes) and read back (`FUN_0048ef70`): `saves.md`, "OpenTPW's writer, the
+aerial's tags".
+
+**The text, `FUN_00509e10`** (the tag system's buffer at `+0xc`, 0x400 characters; its answer is not looked at by
+its caller): a switch on the row's kind. Kind 0 formats the row's string alone from the table at `[0x0078ba90]`,
+the running language's `TAG_SYSTEM.str` (332 rows). Kind 2 formats it with one argument, number 0, the item's
+name: `FUN_00412f50` on the item manager `0x007890a0`, the wide string at the item's record `+0x410` (what fills
+it is not read: it reads "Belly Bounce" for 1100 and "The Hot Pot" for 1140, each item's `Info.Name`); with the
+event's item nought it logs "Object id is IDNULL in CTagSystem" and leaves the buffer as it stood. Kind 1 writes
+"A string needs to be put in here" for a thing that exists, kind 4 "String and number goes here"; kinds 3 and 5
+to `0x24` format numbers and names from the event and the park's globals, not read further.
 
 **The original** (`q309/orig/run.sh`: Q265's `bounce.TPWS`, `scriptvar.py PID 13 4 1` twenty seconds after the
 load, `original/tags.py`, `advisor.py` and `object.py` polled together): with no tag the mast's rectangle read
@@ -754,12 +764,12 @@ with the tag where over 30% was. Main's build said the same line, moved nothing 
 | | The original | OpenTPW |
 |---|---|---|
 | The rows | 382 in the executable | the six the built topics' groups name; any other group with a row is counted, `TAG_ROW_NOT_LISTED` |
-| The match of a standing tag | id, thing and item | id and thing: a thing has one item |
+| The match of a standing tag | id, thing and item | the same; the item is the subject's catalogue id |
 | The times | the interface's timers, real milliseconds | the same clock (`Time.WallMilliseconds`), from the gadget's update |
 | The red top and the later tags as one goes | played down (streams `0x007502f0`, `0x00752e48`) | put down at once |
 | The particle five seconds before the end | effect `0x5b` over the tag | counted, `TAG_ENDING_PARTICLE` |
 | A left click | sound `0xc0`, the message bar on the arm with the text and the buttons | the sound, then counted, `TAG_MESSAGE_BAR` |
-| The tag's text | written from the row's string | not kept |
+| The tag's text | written from the row's string by its kind (`FUN_00509e10`), 37 kinds | kinds 0 and 2, the two the six rows use: the row of `TAG_SYSTEM.str`, and for kind 2 the item's `Info.Name` where its parameter 0 stands; any other kind, and a kind 2 about no item, is counted, `TAG_TEXT_KIND`, and empty. Read by the park file and `tags` alone: no bar shows it |
 | The sounds' loudness | not measured | each at its variation's own volume, as the boot's |
-| The tags in a park file | written and read | neither; a load starts with none |
+| The tags in a park file | written and read | written and read (`saves.md`, "OpenTPW's writer, the aerial's tags") |
 | The other two events (`0x19`, the postcard's) | heard | nothing sends them here |

@@ -44,16 +44,21 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q310. The writer: what else a made record leaves out.** The old Q309's other pieces, each counted or
+- [ ] **Q311. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q310 (`saves.md`, "OpenTPW's writer, the aerial's tags"): a tag's text is written for kinds 0 and 2
+  alone (`TAG_TEXT_KIND`; `FUN_00509e10` has 37), its name the item's `Info.Name`, held on items 1100 and 1140
+  (what fills the item record's `+0x410` is not read); what item 2984 is on a guest's tag is not decoded; a
+  loaded tag's life runs from the state's making, not from the read; the bytes the original leaves unwritten
+  are nought. The call from the said line with the subject's item and name, and the strings' load, are held by
+  the game runs alone. In no game run: two tags in a file, a hidden tag written, a tag of a row not listed put
+  back and taken off by a later line. The new tag's sound at a load was not heard.
   From Q309 (`advisor-park.md`, "The tag a line leaves on the aerial"): the message bar a tag's left click opens
   is not built (`TAG_MESSAGE_BAR`: the bar's stream, the tag's text by its kind, the two buttons, `mb_locate`
   first, and advisor message `0x11c`), nor the particle five seconds before a tag's end (`TAG_ENDING_PARTICLE`,
   effect `0x5b`: the interface draws no particle in a park). Only the six rows the built topics name are listed
-  (`TAG_ROW_NOT_LISTED`; the table is the executable's, 382 rows). The tags are not written to a park file or
-  read from one (`SAVE_PARK_TAGS`, counted at a save with a tag standing; `FUN_0048ee50`, `FUN_0048ef70`, where
-  in the file is not read). The red top and the later tags are put down at once, not played down (the streams at
+  (`TAG_ROW_NOT_LISTED`; the table is the executable's, 382 rows). The red top and the later tags are put down at once, not played down (the streams at
   `0x007502f0` and `0x00752e48`). The two sounds play at their variations' own volume, not measured against the
   original's mix. Events `0x19` and the postcard's are sent by nothing here. Whether a tag's timers run under
   the original's menu pause is not measured. In no game run: a second tag, a tag taking another's place, the

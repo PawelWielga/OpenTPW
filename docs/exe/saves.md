@@ -642,7 +642,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | `SOUN` | two dwords, 84 bytes, then records not decoded | nothing kept here | carried |
 | `CHTS` | two bytes | nothing | carried |
 | `ADSC` | one dword | nothing | carried |
-| The UI block | a count and 540 bytes for each message standing | nothing: no message stands here | carried |
+| The UI block | a count and 540 bytes for each tag standing on the aerial | each tag as it stands ("OpenTPW's writer, the aerial's tags") | written |
 
 **Inside `WRLD`:**
 
@@ -2852,7 +2852,8 @@ The objects' other rules above are the ten files' and the listing's.
 **Not run in either game:** a guest gone (tested; one run met one), a table grown past its hundred slots, a
 person written on an object's cell, a member of staff resting or in the hand at the save. **Not read:** what the sprite
 record's words past `+0xcc` hold, which a made record leaves at nought and the original walked on with. The
-readers of the sound module, the advisor scoring and the UI block were not read, only their writers. What
+readers of the sound module and the advisor scoring were not read, only their writers (the UI block's is read
+since: "OpenTPW's writer, the aerial's tags"). What
 `VANT`'s clock is for, what the action recording is read by after a load, and `FUN_005408f0` are not traced. The
 fresh world's save was not looked at. `addresses.md` is not regenerated.
 
@@ -2995,6 +2996,102 @@ OpenTPW's falls.
 **Not run in either game, tested only:** a ride condemned (a remaining life under 1: no file holds one and
 nothing here lowers it); a ride broken with its door already shut; a ride other than the Hot Pot. Of 18 bugs
 put back all 18 fail a test (`q257y/mutations.py`). `docs/exe/addresses.md` not regenerated.
+
+### OpenTPW's writer, the aerial's tags
+
+Q310, split by the session: the item's other pieces are Q311. **The tags standing on the gadget's aerial are
+written to a park file and put back by a load.** What a tag is, is `advisor-park.md`, "The tag a line leaves on
+the aerial"; this is the file's side. The bytes are the FileFormats `saves.md`, "The interface block: the
+aerial's tags".
+
+**The writer, `FUN_0048ee50`** (the body's last call, `FUN_004816a0` from `FUN_004164c0`, with no tag after
+it). It counts the records in use among the list's ten (`0x007c26b0`, `0x208` bytes each: the control, the
+in-use word at `+4`, the text at `+6`), writes the count, and for each in use, in the table's order, a record
+of `0x21c` bytes built on its stack from the control's data (`FUN_0065e705`): data 1 the id, the text copied to
+its terminator (`FUN_0067bf10`), data 7 the life, data 4 the picture as a word, data 5 and 6 the bar's two
+buttons, data 3 the thing as a word, data 8 the item. Those are the words `FUN_0048eb20` stored as the tag was
+made, so **the life written is the whole life, not what is left of it**, and a tag hidden and waiting its half
+second to go is still a record in use. Nothing else of the stack record is stored: what follows the text's
+terminator, and the two bytes after each word, are leftovers.
+
+**The reader, `FUN_0048ef70`** (`FUN_00481680` from the loader `FUN_00415270`, `0x00415dc2`, after the `ADSC`
+tag's check; logged as `UI`). First `FUN_0048ee20` sends message 5 to every record in use, so the tags standing
+are taken off. Then for each record it fills a tag as the tag system would - the id, the key **`0x17f`**, the
+text, the life, the picture, the buttons, the thing, the item, and nought for the byte that asks for the bar -
+and hands it to the list, `FUN_0048eb20`. So a loaded tag takes no standing tag's place (no tag has id `0x17f`),
+goes into the first free record in the file's order, has its two timers started at **its whole life again**,
+and plays the new tag's sound. With the interface down (`[0x007cb2ac]` nought) the list makes nothing.
+
+**What the original's own files hold** (`parkfile.py -t`): the block is four bytes of nought in the shipped
+park and wherever no tag stood. Five files hold one record: Alexah's two jungle saves (id 94, the ticket price,
+thing and item nought), `q253/orig/sold-by-the-original.TPWS` (id 148, thing 46) and
+`q257x/orig/broken-by-the-original.TPWS` and `fixed-by-the-original.TPWS` (id 72, thing 43, item 1140, "Your The
+Hot Pot ride has broken down, and a mechanic is on his way to fix it."). Each one's life, picture and buttons
+are its id's row of the tag table. Their pads read `6f 00` and `41 00`, and 195 to 231 of the bytes after the
+text are not nought.
+
+**What OpenTPW writes and reads** (`ParkTagRecords` in the files project; `ParkTags.Written`, `Restore`).
+The block is found by anchors that have to agree: the cheats' tag `STHC`, the advisor scoring's one dword and
+its tag `CSDA`, then a count of nought to ten whose records end the body (all nine of the original's files).
+A tag now keeps its item (the subject's catalogue id, the event's `+0x14`), its text and which of the ten
+records it took, the first free as it was made. `Level.WritePark` hands the writer every standing tag in record
+order, and `ParkFileWriter.Body` puts the block in place of the one the body ends on, after every splice. A
+`ParkState` made from a file hands the file's records to the list as new tags keyed `0x17f`, each with the
+file's picture, life and buttons, so a tag of a row this game does not list stands as any other. The text is
+written as the tag is made (`advisor-park.md`, "The text").
+
+**Confirmed in the game** (`q310/confirm.py`, each predicted in `PREDICTION.txt`: the fix 2 of 2 on the
+desktop, the control 1 of 1, the original's own file 2 of 2 and the bought Hot Pot 1 of 1 off-screen). Lost
+Kingdom from `easymode.TPWI`, `scriptvar 13 VAR_BREAKSTAT 1`: the mechanic's line was said 2.4 s on and left tag
+72. Twelve seconds on `tags` read `standing=1 tag=72/picture=1/subject=13/age=12180/hidden=0/item=1100/slot=0/
+life=30000/text="Your Belly Bounce ride has broken down, and a mechanic is on his way to fix it."`, and the file
+saved then holds **count 1: id 72, that text, life 30000, picture 1, buttons 3 and 0, thing 13, item 1100**,
+with nothing counted. **Loaded back from the Load Park list** the log read `Park tags: 1 of the file's put back,
+standing 1` and `tags` the same tag at `age=2539`, the aerial `mast=94,901,144,984
+tag900=84,909,154,974/frame=1/shown=1`; the red top's upper edge stood at window row 363 where it had stood at
+398 before the line; the tag still stood 24.6 s into its new life and was gone, the mast at (94, 976, 144, 984),
+by 36 s (`run-fix1/3-loaded.png`, `4-gone.png`). **The control, the build before:** `SAVE_PARK_TAGS` counted
+once, the file's block four bytes of nought, and after the load `standing=0` with the mast down.
+
+**Bytes beside the original's own.** A bought Hot Pot broken here (thing 43, as the original's own was) wrote a
+record that differs from `broken-by-the-original.TPWS`'s in 233 bytes of 540: the 231 after the text's
+terminator that are not nought in theirs and the two pad bytes `6f` and `41`. Every field the loader reads is
+the same. **The original's own file entered here** read `standing=1 tag=72/picture=1/subject=43/.../item=1140`
+with its text, and saved again wrote the record field for field.
+
+**The original under Proton** (`q310/orig/run2.sh`: `loadfile.sh` with `original/tags.py`; `b-load.log`). Started
+on the control's file it held no tag. **The fix's file loaded from its Load Park list:** none held before the
+click; 0.71 s into the poll, on tick 934, the file's own, one record in use with our text; 0.02 s on its control
+stood at **(84, 909, 154, 974)** with the mast at **(94, 901, 144, 984)**; and none was held at 31.26 s, **30.53 s
+after it stood**, though the tag had stood 12.2 s when the file was written: the whole life again. Its frame six
+seconds after the click shows the red top lifted over the red tag with its white picture
+(`orig/a-2-loaded.png`). Loading the control's file: none held (`c-load.log`). Started on the fix's file
+(`run.sh`), the park it enters from its lobby held the tag too, before any click (`a-load.log`, the first line,
+tick 996). Its `save/` ended each run as it began.
+
+**Still not the original's, each said where it is:**
+
+- **The bytes the original leaves unwritten are nought here**: the text's field after its terminator and the
+  two pads. Its loader reads none of them.
+- **A loaded tag's life runs from the moment the park's state is made**, behind the loading screen, where the
+  original's runs from the read inside its load.
+- A tag is put back whenever a park is made from a file, entered from the lobby or loaded from the menu, as the
+  original's is (one poll of each; above).
+- A file whose block does not read (no count after `CSDA` whose records end the body) is written with its own
+  bytes, and logged.
+- Only kinds 0 and 2 of a tag's text are written (`TAG_TEXT_KIND` counts another); the name is the item's
+  `Info.Name`, held against the original's text on items 1100 and 1140 alone.
+- A record of more than 255 characters is cut there; no tag here is that long.
+
+**Held by the game runs alone, no test:** the call from the said line to the list with the subject's item and
+name (`ParkPeople`), and the strings' load in `Level`. **Not run in either game, tested only:** two tags or more
+in a file and their order, a hidden tag written, a tag of a row not listed here put back and then taken off by a
+later line, ten in a file. **Not heard:** the new tag's sound at a load. Of 55 bugs put back 50 failed a test
+at first; the five that did not (the record's size, a count that does not end the body, the block's anchor, a
+kind 0 string given the name, a restore stamped at nought) each fail one now, the anchor after the reader was
+made to ask for the cheats' tag as well (`q310/mutations.py`, `mutate.out`, `mutate2.out`). The fix, the
+original's own file and the Hot Pot were run again on that build (`run-fix2`, `run-theirs2`, `run-pot2`).
+`docs/exe/addresses.md` not regenerated.
 
 ## What OpenTPW builds
 

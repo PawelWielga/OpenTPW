@@ -657,6 +657,11 @@ public sealed class ParkState
 		_park = park;
 		Current = this;
 
+		// The file's tags go back on the aerial, each with its whole life before it (FUN_0048ef70). A deviation:
+		// the original's lives run from the read, inside its load; these from here, behind the loading screen.
+		if ( park?.Save?.Tags is { } tags )
+			Tags.Restore( tags.Saved, Time.WallMilliseconds );
+
 		Balance = park?.Economy?.Balance ?? 0;
 		AdmissionFee = park?.Economy?.AdmissionFee ?? 0;
 

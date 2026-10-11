@@ -6138,6 +6138,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   predictions of six: a pixel rule for the tag's box was set without the red top's resting place in mind (19.3%
   red read, over 30% predicted). 59 bugs put back: 58 fail a test, and the 59th once its test was fixed. Tests 2981. I split the item: its other pieces
   are Q310.
+- [x] **Q310. The aerial's tags are written to a park file and read back.** Done 2026-10-11. The body's last
+  block, after `ADSC`'s tag, is a count and `0x21c` bytes for each tag standing: its id, text, whole life,
+  picture, the bar's two buttons, thing and item (`FUN_0048ee50`); the loader takes every standing tag off and
+  hands each record to the list as a new tag keyed `0x17f`, so it stands for its whole life again
+  (`FUN_0048ef70`; `exe/saves.md`, "OpenTPW's writer, the aerial's tags"; FileFormats `saves.md`, "The interface
+  block"). A tag's text is its row's string of `TAG_SYSTEM.str`, with the item's name for kind 2
+  (`FUN_00509e10`). Built: `ParkTagRecords`, `ParkWorld.Tags`, the writer's `Running.Tags`, a tag's item, text
+  and record slot, `ParkTags.Written`, `Restore` and `TextOf`; `SAVE_PARK_TAGS` is gone, `TAG_TEXT_KIND` new.
+  The stock park's Belly Bounce broken, the mechanic's tag saved 12 s on: the file holds id 72, life 30000,
+  picture 1, buttons 3 and 0, thing 13, item 1100 and its text; loaded back, `tags` read it at an age of 2.5 s
+  with the mast at (94, 901, 144, 984), gone by 36 s; the original, loading that file, held none, then one at
+  (84, 909, 154, 974) on tick 934 with our text, then none 30.53 s on; a bought Hot Pot's record is the
+  original's own but for the 233 bytes it leaves unwritten; main's build wrote four bytes of nought. Seven
+  predictions of seven. 55 bugs put back: 50 fail a test, and the other five once their tests were fixed. Tests 2987. I split the item: its other pieces are Q311.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

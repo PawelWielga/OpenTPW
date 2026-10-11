@@ -286,6 +286,10 @@ public class Level
 			AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) )
 		};
 		Log.Info( $"{ThemeName}: the park's clock starts at mGameTick {ParkState.GameTick}" );
+		ParkState.Tags.Strings = TagStrings()?.Parts;
+
+		if ( park?.Save?.Tags.Problem is { } unread )
+			Log.Warning( $"{ThemeName}: the file's aerial tags did not read - {unread}" );
 		// Saved advisor histories are not restored yet; fresh histories follow FUN_00599e70.
 		if ( park?.Save != null ) Unimplemented.Report( "PARK_ADVISOR_SAVED_HISTORY" );
 		load.Mark( "park state" );
@@ -518,9 +522,6 @@ public class Level
 			return null;
 		}
 
-		// The aerial's tags are records of their own in the original's file (FUN_0048ee50); none is written here.
-		if ( state.Tags.Standing.Count > 0 ) Unimplemented.Report( "SAVE_PARK_TAGS" );
-
 		var point = ParkOrbitCameraMode.PointOfInterest;
 
 		// The file's rotation turns the other way from the orbit camera's yaw: nought is the same view in both, and a
@@ -651,7 +652,9 @@ public class Level
 			new ParkCameraModule.View( ParkOrbitCameraMode.Zoom, -ParkOrbitCameraMode.Yaw, point.X, point.Y ), cells,
 			people?.Written( written.Contains ), pool?.Written(), people?.WrittenArrival( things != null ? written.Contains : null ), things, people?.WrittenLetGo(),
 			WrittenEffects( loaded, state, written.Contains, asTheFile: things == null ),
-			written.Contains( state.MechanicCursor ) ? state.MechanicCursor : 0 );
+			written.Contains( state.MechanicCursor ) ? state.MechanicCursor : 0,
+			// The aerial's tags end the file (FUN_0048ee50). A file whose own block did not read keeps its bytes.
+			loaded.Tags.Problem == null ? state.Tags.Written() : null );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;
@@ -669,6 +672,10 @@ public class Level
 
 		if ( SaveFolder.WritePark( player.Slot, player.Name, theme, name, file ) is not { } path )
 			return null;
+
+		foreach ( var tag in running.Tags ?? [] )
+			Log.Info( $"Save: aerial tag {tag.Id} written: thing {tag.Thing} item {tag.Item} life {tag.Life} picture {tag.Picture} "
+				+ $"buttons {tag.Button1},{tag.Button2} \"{tag.Text}\"" );
 
 		Log.Info( $"Save: wrote {path}, {file.Length} bytes: mGameTick {running.GameTick}, " +
 			$"{(running.ParkClosed ? "closed" : "open")}, {running.VisitorsToDate} visitors to date, balance {running.Balance}, " +
@@ -792,6 +799,20 @@ public class Level
 		things.UnionWith( made.Select( thing => thing.ThingId ) );
 
 		return things;
+	}
+
+	/// <summary>The running language's table of the aerial tags' strings, or null where it will not read.</summary>
+	private static StringFile? TagStrings()
+	{
+		try
+		{
+			return new StringFile( ParkTags.StringsPath );
+		}
+		catch ( Exception e ) when ( e is IOException or InvalidDataException or ArgumentException or NullReferenceException )
+		{
+			Log.Warning( $"Park tags: {ParkTags.StringsPath} did not read - {e.Message}" );
+			return null;
+		}
 	}
 
 	/// <summary>The running language's table of object names, or null where it will not read.</summary>

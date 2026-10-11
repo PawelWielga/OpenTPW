@@ -54,12 +54,15 @@ public static class ParkFileWriter
 	/// <see cref="Effects"/> is every cell's region effects (<see cref="ParkWorld.PutEffects"/>); the file's where it is null.
 	/// <see cref="MechanicCursor"/> is the object the mechanics' search last began on
 	/// (<see cref="ParkWorld.PutMechanicCursor"/>); the file's where it is null.
+	/// <see cref="Tags"/> is the tags standing on the gadget's aerial (<see cref="ParkTagRecords.Put"/>); the file's
+	/// where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
 		IReadOnlyList<ParkWorld.WrittenPerson>? People = null, ParkWorld.WrittenStaffPool? StaffPool = null,
 		ArrivalTimer? Arrival = null, RunningThings? Things = null, IReadOnlyList<ParkWorld.WrittenSprite>? LetGo = null,
-		IReadOnlyList<short>? Effects = null, int? MechanicCursor = null );
+		IReadOnlyList<short>? Effects = null, int? MechanicCursor = null,
+		IReadOnlyList<ParkTagRecords.Record>? Tags = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -411,6 +414,10 @@ public static class ParkFileWriter
 		// The map lies before the thing list, so it is still where the file has it; its length changes last of all.
 		if ( running.Effects is { } effects )
 			body = loaded.PutEffects( body, effects );
+
+		// The aerial's tags end the body, behind every module (FUN_004164c0's last call, FUN_004816a0).
+		if ( running.Tags is { } tags )
+			body = ParkTagRecords.Put( body, tags );
 
 		return body;
 	}

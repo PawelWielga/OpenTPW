@@ -1415,6 +1415,9 @@ public sealed partial class ParkWorld : IParkInitialState
 
 		// The twelfth, where the camera stood.
 		Camera = new ParkCameraModule( _data );
+
+		// And what ends the body, the tags on the gadget's aerial.
+		Tags = new ParkTagRecords( _data );
 	}
 
 	/// <summary>The file's bytes before its compressed block, or null where this body came from no file.</summary>
@@ -1608,6 +1611,12 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// own <see cref="ParkCameraModule.Problem"/>.
 	/// </summary>
 	public ParkCameraModule Camera { get; }
+
+	/// <summary>
+	/// The tags that stood on the gadget's aerial when this park was saved - see <see cref="ParkTagRecords"/>. Never
+	/// null; ask it for its own <see cref="ParkTagRecords.Problem"/>.
+	/// </summary>
+	public ParkTagRecords Tags { get; }
 
 	/// <summary>
 	/// The clock's reading when this park was saved - see <see cref="ParkClock"/>. Never null; ask it for its own

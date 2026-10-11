@@ -6,8 +6,12 @@ namespace OpenTPW;
 /// of the tag table; the row is the tag's picture, the tag it takes the place of and how long it stands.
 /// docs/exe/advisor-park.md, "The tag a line leaves on the aerial".
 /// <para>
-/// The times are the interface's timers', real milliseconds, handed in by the caller. A tag's item word is not
-/// kept: the list matches a tag by its thing and its item, and a thing has one item.
+/// The times are the interface's timers', real milliseconds, handed in by the caller.
+/// </para>
+/// <para>
+/// <b>A park file holds the tags standing</b> (<see cref="Written"/>, <see cref="Restore"/>;
+/// docs/exe/saves.md, "OpenTPW's writer, the aerial's tags"): each one's id, text, whole life, picture, buttons,
+/// thing and item, and a load puts each back with its whole life before it.
 /// </para>
 /// </summary>
 internal sealed class ParkTags
@@ -42,11 +46,20 @@ internal sealed class ParkTags
 	/// <summary>How long after the one before it each tag goes when the top is right clicked (LAB_004a11e0, 0x100003).</summary>
 	internal const int DeleteAllStep = 100;
 
+	/// <summary>The table the game's running language keeps the tags' strings in (DAT_0078ba90).</summary>
+	internal const string StringsPath = "Language/English/TAG_SYSTEM.str";
+
 	internal sealed class Tag
 	{
 		internal required Row Row { get; init; }
 		/// <summary>The thing the line was about, nought for none.</summary>
 		internal int Subject { get; init; }
+		/// <summary>That thing's item, nought for none.</summary>
+		internal int Item { get; init; }
+		/// <summary>What the message bar would read, written as the tag is made (FUN_00509e10).</summary>
+		internal string Text { get; set; } = string.Empty;
+		/// <summary>Which of the list's ten records holds it: the first free as it was made. A file is written in this order.</summary>
+		internal int Slot { get; init; }
 		internal long Born { get; init; }
 		/// <summary>When timer 0x80080 hides it; never for a row with no life.</summary>
 		internal long HideAt { get; set; } = long.MaxValue;
@@ -62,6 +75,9 @@ internal sealed class ParkTags
 
 	internal ParkTags( IEnumerable<Row>? rows = null ) => _rows = (rows ?? Rows).ToArray();
 
+	/// <summary>The tags' strings, each as its parts (<see cref="StringsPath"/>); with none a tag's text is empty.</summary>
+	internal StringPart[][]? Strings { get; set; }
+
 	/// <summary>The tags on the mast, the oldest first: the oldest stands lowest.</summary>
 	internal IReadOnlyList<Tag> Standing => _tags;
 	/// <summary>One up at every change of the list or of a tag's showing.</summary>
@@ -70,11 +86,12 @@ internal sealed class ParkTags
 	internal int Made { get; private set; }
 
 	/// <summary>
-	/// A line of response group <paramref name="group"/> about <paramref name="subject"/> was said. A tag of the
-	/// row's key about the same thing is taken off at once, or with a row that is its own key is left as the
-	/// line's tag; otherwise the list takes a new tag while it holds fewer than ten.
+	/// A line of response group <paramref name="group"/> about <paramref name="subject"/>, a thing of item
+	/// <paramref name="item"/> called <paramref name="itemName"/>, was said. A tag of the row's key about the same
+	/// thing and item is taken off at once, or with a row that is its own key takes the new text and is left as
+	/// the line's tag; otherwise the list takes a new tag while it holds fewer than ten.
 	/// </summary>
-	internal Tag? Said( int group, int subject, long now )
+	internal Tag? Said( int group, int subject, long now, int item = 0, string? itemName = null )
 	{
 		var row = Array.Find( _rows, candidate => candidate.Id == group );
 		if ( row == null )
@@ -85,25 +102,93 @@ internal sealed class ParkTags
 			return null;
 		}
 
+		return Take( row, subject, item, TextOf( row, item, itemName ), now );
+	}
+
+	/// <summary>
+	/// The messages control's list taking a tag (FUN_0048eb20): the standing tags of <paramref name="row"/>'s key
+	/// about the same thing and item, then the new tag in the first free record.
+	/// </summary>
+	private Tag? Take( Row row, int subject, int item, string text, long now )
+	{
 		var fresh = true;
 		foreach ( var tag in _tags.ToArray() )
 		{
-			if ( tag.Row.Id != row.Key || tag.Subject != subject ) continue;
+			if ( tag.Row.Id != row.Key || tag.Subject != subject || tag.Item != item ) continue;
 			if ( row.Id == row.Key )
+			{
+				tag.Text = text;
 				fresh = false;
+			}
 			else
 				TakeOff( tag );
 		}
 
 		if ( !fresh || _tags.Count >= Most ) return null;
 
-		var made = new Tag { Row = row, Subject = subject, Born = now };
+		var slot = Enumerable.Range( 0, Most ).First( free => _tags.All( tag => tag.Slot != free ) );
+		var made = new Tag { Row = row, Subject = subject, Item = item, Text = text, Slot = slot, Born = now };
 		if ( row.Life > 0 ) made.HideAt = now + row.Life;
 		_tags.Add( made );
 		++Changes;
 		++Made;
 		Log.Info( $"Park tags: tag {row.Id} picture {row.Picture} subject {subject} life {row.Life} standing {_tags.Count}" );
 		return made;
+	}
+
+	/// <summary>
+	/// A tag's text by its row's kind (FUN_00509e10): kind 0 the row's string alone, kind 2 the string with the
+	/// item's name as its parameter 0. Any other kind, and a kind 2 about no item (which the original logs and
+	/// leaves its buffer as it stood), is counted and written empty.
+	/// </summary>
+	internal string TextOf( Row row, int item, string? itemName )
+	{
+		if ( Strings is not { } strings || row.String < 0 || row.String >= strings.Length )
+			return string.Empty;
+
+		if ( row.Kind != 0 && (row.Kind != 2 || item == 0) )
+		{
+			Unimplemented.Report( "TAG_TEXT_KIND" );
+			return string.Empty;
+		}
+
+		var text = new System.Text.StringBuilder();
+
+		foreach ( var part in strings[row.String] )
+		{
+			if ( part.Text != null )
+				text.Append( part.Text );
+			else if ( row.Kind == 2 && part.Parameter == 0 )
+				text.Append( itemName );
+		}
+
+		return text.ToString();
+	}
+
+	/// <summary>
+	/// The tags as a park file holds them (FUN_0048ee50): every record in use, a hidden tag's too, in the order of
+	/// the list's ten records, each with its whole life and not what is left of it.
+	/// </summary>
+	internal IReadOnlyList<ParkTagRecords.Record> Written()
+		=> [.. _tags.OrderBy( tag => tag.Slot ).Select( tag => new ParkTagRecords.Record( tag.Row.Id, tag.Text,
+			tag.Row.Life, tag.Row.Picture, tag.Row.Button1, tag.Row.Button2, tag.Subject, tag.Item ) )];
+
+	/// <summary>
+	/// A park file's tags put on the aerial (FUN_0048ef70): each handed to the list in the file's order as a new
+	/// tag whose key is <see cref="NoTag"/>, so it takes no other's place, with the file's text, picture, buttons,
+	/// thing and item, and its whole life from <paramref name="now"/>. The picture and the life are the file's, so
+	/// a tag of a row this list does not hold stands as any other.
+	/// </summary>
+	internal void Restore( IReadOnlyList<ParkTagRecords.Record> saved, long now )
+	{
+		foreach ( var record in saved )
+		{
+			var row = new Row( record.Id, NoTag, record.Picture, -1, record.Button1, record.Button2, record.Life, 0 );
+			Take( row, record.Thing, record.Item, record.Text, now );
+		}
+
+		if ( saved.Count > 0 )
+			Log.Info( $"Park tags: {saved.Count} of the file's put back, standing {_tags.Count}" );
 	}
 
 	/// <summary>The timers' turn: a tag's particle five seconds before its end, its hiding at its end, and its going.</summary>
@@ -148,5 +233,6 @@ internal sealed class ParkTags
 
 	internal string Census( long now ) => $"tags: standing={_tags.Count} "
 		+ string.Join( " ", _tags.Select( tag =>
-			$"tag={tag.Row.Id}/picture={tag.Row.Picture}/subject={tag.Subject}/age={now - tag.Born}/hidden={(tag.Hidden ? 1 : 0)}" ) );
+			$"tag={tag.Row.Id}/picture={tag.Row.Picture}/subject={tag.Subject}/age={now - tag.Born}/hidden={(tag.Hidden ? 1 : 0)}"
+			+ $"/item={tag.Item}/slot={tag.Slot}/life={tag.Row.Life}/text=\"{tag.Text}\"" ) );
 }

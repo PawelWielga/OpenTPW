@@ -2071,7 +2071,13 @@ public sealed partial class ParkPeople : Entity
 					var (first, second) = ParkAdvisorMessages.PropsOf( response );
 					return Advisor.Current?.PlayParkResponse( response, sample, first, second ) ?? 0;
 				},
-				(group, subject) => State.Tags.Said( group, subject, Time.WallMilliseconds ) );
+				(group, subject) =>
+				{
+					// The event's item word is the subject's item (FUN_0059b620, the record's +0x04).
+					var item = State.TryObject( subject, out var about ) ? about.CatalogueId : 0;
+					var name = _behaviour.Catalogue is { } catalogue && catalogue.TryGet( item, out var named ) ? named.Name : null;
+					State.Tags.Said( group, subject, Time.WallMilliseconds, item, name );
+				} );
 
 			// <b>The number handed on is the park's clock, mGameTick, not the 31 ms tick, and that is not
 			// cosmetic.</b> Peep.Tick spreads guests across four slots by (id & 3) == (tick & 3); every 31 ms
