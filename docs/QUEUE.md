@@ -30,8 +30,7 @@ A line **Needs Alexah (date):** at the end of an item is a question an unattende
   yes** (rule 1). Say what is ready and stop. Do not start the next item.
 - End with four lines: what is ready, what was confirmed on screen, what was not, what the next item is.
 
-**Where the detail is.** `docs/REVIEW-2026-09-21.md` section 5 for Q1 and Q3 to Q7.
-`docs/REVIEW-2026-09-22.md` for Q2 and Q8 to Q12. Q70-Q75 come from the 2026-09-12 review, whose three
+**Where the detail is.** Q72-Q75 come from the 2026-09-12 review, whose three
 artifacts are listed in `docs/history/README.md`. Q208-Q217 come from the 2026-10-04 review of the commits of
 2026-10-03 and 2026-10-04; an id such as `u6-hoardings-1` names a finding in its findings file (`CLAUDE.local.md`
 says where). Q219-Q221 come from the 2026-10-04 effort audit of the commits of 2026-09-29 to 2026-10-01; an id such
@@ -42,11 +41,8 @@ the original.
 
 ## A. Bugs first
 
-**The 2026-10-06 review's leftovers come first, at Alexah's word (2026-10-06).**
-
-**Reordered at Alexah's word (2026-10-08), after Q140b:** what a playable Lost Kingdom park needs most comes next
-(the fee, the visitor count, loads of guests, save and load's decode, the calendar, the shop's window, the gauge,
-the research lab), then the rest of this section in its old order.
+**Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
+park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
 - [ ] **Q269. The writer: what else a made record leaves out.** The old Q268's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
@@ -58,8 +54,7 @@ the research lab), then the rest of this section in its old order.
   the mix (their volumes are `voices`' and the log's). A crowd over 15 was in no game run of either game.
   From Q267 (`audio.md`, "A channel's volume"): a bumper ride's engine (68), thunder
   (`ThunderVolume`) and the interface's flat effects are not through `ChannelGain`. No scream was made
-  at a level other than 20 in the original. In no game run: a single scream, a guest put off (now 10 of 127
-  where it was 0.35), a yawn; the options' two volume sliders do not move `ChannelGain`'s 75 and 60. The
+  at a level other than 20 in the original. In no game run: a single scream, a guest put off (10 of 127), a yawn; the options' two volume sliders do not move `ChannelGain`'s 75 and 60. The
   request mask's bit `0x80000` arm of `FUN_006c5690` (a volume scaled again by `params + 0x9c` over a hundred)
   is not read.
   From Q266 (`ride-operation.md`, "Where a scream is sounded"): a fixed item's scream is counted and sounded
@@ -103,7 +98,7 @@ the research lab), then the rest of this section in its old order.
   counted and started nowhere: `PARK_PARTICLE_ITEM_EFFECT`, `PARK_PARTICLE_NO_PLACE`,
   `PARK_PARTICLE_NO_DIRECTION`, `PARK_PARTICLE_NOT_STARTED`; a loaded emitter begins again
   (`LOADED_EMITTER_LIFE_PART_RUN`); an effect added without its alpha (`WORLD_PARTICLE_ADDED_WITHOUT_ALPHA`).
-  Not started and not counted: the riders' and leavers' puffs
+  Not started, each counted: the riders' and leavers' puffs
   (`BUMPER_RIDER_PARTICLE`, `LEAVER_BOARDING_PARTICLE`), a sold thing's (`DESTROY_PARTICLE_EFFECT`). The writer
   still writes an emitter as it starts, not as the running one stands. A sprite's width on the screen was not
   settled by the original's picture (the listing's rule is built). An effect with no picture is 0.75 wide for
@@ -137,8 +132,7 @@ the research lab), then the rest of this section in its old order.
   item's own effect (`SAVE_PARK_EMITTER_ITEM_EFFECT`), a record with no node (`SAVE_PARK_EMITTER_NO_PLACE`) and
   an effect that links an effector (`SAVE_PARK_EMITTER_NOT_STARTED`). An emitter is written as it starts, its
   life begun again; an `EVENT`'s puff alive at the save is not written; a burst's draws are not made. In no
-  game run: an emitter killed (a record gone, a thing sold). Nothing draws a park's particles here: a script's
-  `ADDOBJ` and `EVENT` start none in `ParticleSystem` (not counted where they would be drawn; count it there).
+  game run: an emitter killed (a record gone, a thing sold).
   The Huge Hollow Rock's two particle nodes stand a cell out in one axis against the original's files.
   From Q257u (`saves.md`, "OpenTPW's writer, a walk's head"): the Inca Totem, a Mayhem sold or moved with riders
   carried and a head in a costume were in no game run; which of a head's 56 pictures each game shows is not
@@ -244,8 +238,7 @@ the research lab), then the rest of this section in its old order.
   From Q126: the thing sweep is capped at three a frame now and `ParkState.GameTick` with it, so after a 2 s stall
   `GameCalendar` (which carries its advances over) runs five ahead of `ParkState.CalendarNow`, and the weather's
   tick and the day's, month's and year's work with it; the original drops all of them with the sweep
-  (`FUN_004d7b20`, `FUN_00512880`). `LongestCatchUp`'s remark ("loses time and can never gain it") is not what
-  `Update` does.
+  (`FUN_004d7b20`, `FUN_00512880`). `LongestCatchUp`'s remark says so and calls it a deviation.
 - [ ] **Q31. The shop's object window.** `Level.OpenObjectWindow` opens only a ride's (`UiType 0`). Shops,
   sideshows and the rest stop at `SHOP_WINDOW`, `SIDESHOW_WINDOW` and `FEATURE_WINDOW`, and a staff member at
   `STAFF_WINDOW` (`Level.ClickWorldAt`); a clicked visitor reaches nothing counted. `park-engine.md`, "The
@@ -275,11 +268,13 @@ the research lab), then the rest of this section in its old order.
     waits for a Full Simulation park (Q197). The cheat table can still award one in any type (rows
     `0x0040c6c0`..`0x0040c7e0` call `0x005af810`/`0x005af940`), behind the cheats byte the `CHTS` module loads, which
     Easymode ships set. The checker's decode is Q194's. Review items economy-8, gap3-8.
-  - **From Q177c:** the buy list and its click read the same list of ticket-bought items as the purchase, and neither is
-    built nor counted: a row whose item has a `GoldenTicketCost` not yet bought with tickets is named "??? Mystery
-    Ride! ???" with its negated ticket cost for a price (`0x004ab02e`), and a click on it is refused when the player
-    holds too few tickets (`FUN_004d4b90`, `0x004ac5a9`). The purchase's own arm is counted
-    (`PURCHASE_GOLDEN_TICKET_ARM`). Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost.
+  - **From Q177c:** the buy list and its click read the same list of ticket-bought items as the purchase: a row whose
+    item has a `GoldenTicketCost` not yet bought with tickets is named "??? Mystery Ride! ???" with its negated ticket
+    cost for a price (`0x004ab02e`), and a click on it is refused when the player holds too few tickets
+    (`FUN_004d4b90`, `0x004ac5a9`). The row is built, from the player's `RideIds` (`docs/exe/hud.md`, "The mystery
+    row"); a click on it is refused always and counted, `MYSTERY_RIDE_PURCHASE`. The ticket test and the spending of
+    tickets are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`). Lost Kingdom's
+    `tourride` (1) and `volcano` (3) carry a ticket cost.
 - [ ] **Q142. The staff pool reads a string table again for every name.** Found by Q70's game run. `ParkStaffPool`
   opens and parses a name table for each candidate it rolls (`RollName`) and STAFF_TYPES for each kind's name
   (`NameOfKind`): 27 of a park load's 28 table reads are six files read over and over, and the staff screen and the
@@ -288,7 +283,7 @@ the research lab), then the rest of this section in its old order.
   `candidates` census and the hire screen show the same names as before.
 - [ ] **Q143. `BFSTReader` takes a string's length from one byte, and four shipped strings are longer.** Found by
   Q70's review. A record is `01`, a length of at least two bytes, little-endian, in a three-byte field, then the
-  characters (FileFormats `strings.md`, on `docs/format-corrections`);
+  characters (FileFormats `strings.md`);
   `ReadFile` reads the length's first byte and skips the other two. Of the 4,730 records in the 42 shipped files, four
   are over 255, all in UITEXT.str: row 400 (`UIStrings.Change`, 262 characters in English, which reads "CHANGE"; 256 in
   american, which reads empty) and row 417 (`SoftwareCopyright`, 615 and 614, cut to 103 and 102). Nothing reads either
@@ -302,7 +297,8 @@ the research lab), then the rest of this section in its old order.
   handed the parameters, and let the delete box say the original's words. `q241/strraw.py` prints a row's parts.
   From Q241c: every part is read now (`BFSTReader.ReadParts`, `StringFile.Parts`, with the three-byte length) and
   `Localization.Format( row, (parameter, value)... )` fills them; `ReadFile` and `Localization.Get` still give the
-  first part by the one-byte length, and nothing but the Load Park screen's date uses the parts.
+  first part by the one-byte length, and only the Load Park screen's date (448) and the Save Park screen's overwrite
+  question (205) use the parts.
 - [ ] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
   what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
   turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a
@@ -338,7 +334,8 @@ the research lab), then the rest of this section in its old order.
   `GameClock.TicksDue` on their own, rides first (`ParticleSystem` is a third), so on a frame with two ticks due every
   script takes both before any guest takes one. `GameClock.TicksDue`'s remark says this must become one loop once
   guests react to what rides did in the same tick, and they do now: a shut ride turns its queue away (`c54e848`). Run
-  the park's systems from one loop, one tick at a time, in the original's order, with Q126. Confirm: a long frame
+  the park's systems from one loop, one tick at a time, in the original's order, keeping the three-sweep cap
+  (`ParkPeople.SweepsAFrame`). Confirm: a long frame
   forced, the log's ride and guest lines interleaved tick by tick.
   From Q238: inside one sweep the original walks ONE list, every kind of thing in it, the newest first
   (`FUN_00516270`; `ride-operation.md`, "Where a ride's turn comes from"). `ParkPeople` sweeps the guests, then the
@@ -408,18 +405,12 @@ the research lab), then the rest of this section in its old order.
 - [ ] **Q157. Guests' and rides' reached arms that count nothing.** Found by the 2026-09-26 staleness audit. Each is
   reached in Lost Kingdom, unbuilt, and calls no `Unimplemented.Report` (`CLAUDE.md` rule 4). In `PeepBehaviour`:
   `Entering` lacks `FUN_004ffb20`'s guard (park shut or gate not open, back to the gate), reachable since the
-  entry-price door shuts a running park; `GoingToRide`'s stuck arm (`BigHappinessChange`, event 3) and its park-shut
-  arm, both built by Q102; `AtGate` asks nothing of `FUN_0051a760`, the arrival vehicle's gate; `HeadingForExit` has no
-  change of mind (`FUN_00500a50`), which a saved guest can take; states 19 and 21 stand silently, 19 on every
-  departure and 21 after `WalkingOutside`, which Q128 builds; `Decide` did nothing when the chooser finds nothing,
-  built by Q107; and `Judge` read `ParkExcitement` as nought, built by Q26b. `CellReroute` never
+  entry-price door shuts a running park; `HeadingForExit` has no
+  change of mind (`FUN_00500a50`), which a saved guest can take. `CellReroute` never
   runs `FUN_005108a0`'s diagonal pass after a scan that splices nothing, which is how most routes end.
-  `CellEdge.Blocked`'s mode-2 entrance arm always answered nothing, whenever the camcorder walks at an entrance: built
-  by Q140b. `Peep.Tick` leaves out the cell's `RegionFX` term (`FUN_00501650`) on every needs turn.
+  `Peep.Tick` leaves out the cell's `RegionFX` term (`FUN_00501650`) on every needs turn.
   `ParkRideOperation` makes no breakdown request and sets no worn flag (`ride-operation.md`, "The first half of the
-  turn"), `Invite` reads no `RunsContinuously` (`+0x33` bit 0), and nothing wrote `mPreviousRides` (`+0x1e0`) - Q165c
-  built that. `ParkRideChoice.CanBeOffered`'s coaster arm (`FUN_00441970`)
-  goes uncounted where `MayOpen` counts `OPEN_GUARD_COASTER_TRACK_RECORD`. Count each where the original tests it, and
+  turn"), and `Invite` reads no `RunsContinuously` (`+0x33` bit 0). Count each where the original tests it, and
   put each build without an item in the queue. Confirm: `unimplemented` over a timed run, each name present, predicted
   first.
   - **Note (fork review, 2026-09-30):** `EntertainerConstsPerGrade[g].HappinessEffectOnCell` (4, 8, 12, 16, 20; `Standard.sam`)
@@ -434,7 +425,7 @@ the research lab), then the rest of this section in its old order.
   `0x4f3af` is empty, and its remark says "left empty and counted"; the original titles it with the name of the thing
   at world `+0x1da732`, `mParkGates` (`ParkWorld`), and its help row 191 reads "Park name - left-click to edit", so
   the title is the park's name and its edit is Q28's. `ParkGadget.ShowDate` prints the machine's short date in place
-  of a format not read back. `ParkBuyScreen`'s description panel `0x1ea` draws its frame and no preview. Count each
+  of a format not read back. `ParkBuyScreen`'s description panel `0x1ea` draws its frame and the footprint picture, and neither the item's turning model nor its name row `0x1ec`. Count each
   where it is drawn. Confirm: `unimplemented` after opening a ride's window, the entry-price screen and the buy
   screen.
   From Q238: the buy list's prices are bare numbers where the original letters "$ 2500" (UITEXT `0x1c1`,
@@ -510,7 +501,7 @@ the research lab), then the rest of this section in its old order.
   pad now throws.
 - [ ] **Q217. Three leftovers among the park's people.** Found by the 2026-10-04 review (`u3-staff-paths-1`,
   `u4-gate-1`, `u2-arrivals-4`). Staff are kept on paths by a fence the original does not have; its own recovery is
-  the no-links arm (`0x004f95c0`, Q112): build that, then ask Alexah whether the fence stays. `ParkPeople` holds two
+  the no-links arm (`0x004f95c0`), built for staff (Q112): ask Alexah whether the fence stays. `ParkPeople` holds two
   versions of `FUN_004fa990`: `InsideGateCensus` reads the position's cell as the original does (bytes `+5`, `+7`),
   `OnACountingCell` reads the occupancy link first; make them one. `ParkCatchUpOrderTests`' row (16, 1) asserts the
   open Q150 defect as the expected result and will go red when Q150 is fixed: say so in the test.
@@ -552,7 +543,7 @@ the research lab), then the rest of this section in its old order.
   silences a negative band; `FUN_00551130` plays `0x48` for one. (4) `RideScript.NextRandom` answers 0 for every
   bound + 1 at or below nought; only -1 divides by nought (`0x00553994`). (5) `ParkItemHeights.Over` floors the
   cell's middle where `0x00452bb0` truncates corner offsets: measure it on raised ground. (6) The original rolls a
-  rider's head sprite to its node (`FUN_0044b510`, `0x0044ba04`); `DrawHead` does not: say it at the site or build
+  rider's head sprite to its node (`FUN_0044b510`, `0x0044ba04`); `DrawHead` does not, and it is counted (`RIDER_HEAD_ROLL`): build
   it. (7) `Peep.Pace` works at 24 bits and `ShopCostOfGoods` at 53 under one control word: settle which, the pinned
   18 may be 19. (8) Two docs lines not yet re-measured: `park.md`'s selector table rows 8 and 9 leave out the
   `0x4000` and type gates of `FUN_00544c80` and `FUN_00544e50`; FileFormats `sound-categories.md` says the masks use
@@ -670,37 +661,331 @@ the research lab), then the rest of this section in its old order.
   After Q241j. Confirm: a fresh Full Simulation park saved and loaded by the original under Proton.
   From Q241f: `Level.WritePark` counts such a park as `SAVE_PARK_WITH_NO_FILE` and writes nothing.
 
+- [ ] **Q270. The park music's level counts every guest, where the original counts only those on five kinds of cell.**
+  From the week-end audit (stage 4; read twice from the listing, not yet measured in the original). `FUN_004c7fa0`
+  (`0x004c801f`) asks `FUN_004fa990`, which takes the guest's cell and passes only a cell of type 0, 1, 3, 9 or 10
+  (`scenes.md`, "The level"). `ParkAudio`'s level takes `Peeps.Count` with no cell test, and its comment says the
+  five tests read the thing's `+8` and that the field is not established; `Peep.CountsOn` is already that test.
+  Build the count through it. Q148 and Q217 touch the same filter. Confirm: `music` read with guests standing on a
+  queue cell and off one, beside the original's level for the same file.
+
+- [ ] **Q271. The model under a point misses the park gate's row.** From the week-end audit (stage 4; read twice
+  from the listing). `FUN_00527e80` (called at `0x00452a82`) answers the gate thing the world keeps at `+0x1da732`
+  for every cell of the entrance's row, from one cell before EntranceA's x to one past EntranceB's, without reading
+  the cell, and only otherwise goes to `FUN_00527d60` (`park.md`, "The scene's height under a point").
+  `ParkSceneHeight.StandingOn` answers null there. Measure first whether the gate thing's type byte is 3
+  (`0x00452ac8`): without it the original answers nought there too. Confirm: the height read under a point on the
+  gate's row in both games.
+
+- [ ] **Q272. A mechanic arriving at a ride that waits for an upgrade is sent away.** From the week-end audit
+  (stage 4; read twice from the listing). `FUN_004da740` puts him to work on any of three: the ride's state 1, its
+  state 2 (`FUN_004e03e0`, `0x004da7ca`) or the ride's `+0x64` call, each going to `FUN_004da370` with `0xd`
+  (`0x004da7fa`). `StaffBehaviour.ArriveAtTheRide` tests state 1 and the call only, sends a state 2 ride's mechanic
+  back to his decide and counts nothing; its summary gives the two tests as the original's. Build the third, or
+  count it. Confirm: a ride put to state 2 with a mechanic sent to it, his state read in both games.
+
+- [ ] **Q273. A node's direction is normalised in another order and width than the original's.** From the week-end
+  audit (stage 4; read twice from the listing). `FUN_00556b90` sums (x*x + y*y) + z*z, keeps the root as a float
+  and divides each element by that float (`0x00556cba`, `0x00556cc6`, `0x00556ccc`). `RideNodes` sums
+  (z*z + y*y) + x*x and divides by the double root, and its comment says the build takes the third element's
+  square first. The last bit of a saved direction can differ. Confirm: a written model record's direction words
+  compared bit for bit with the original's save of the same park.
+
+- [ ] **Q274. A sprite the writer makes takes its first turn at once, where the original's waits one interval.**
+  From the week-end audit (stage 4; read twice from the listing). The constructor `FUN_004758f0` writes `0x3e` to
+  `+0x80` (`0x004759c4`) and the clock plus that `0x3e` to `+0x7c` (`0x004759df`). `ParkWorld.People`'s made sprite
+  leaves `+0x7c` nought, says the constructor does, and writes no `+0x80`. Confirm: a guest made here and saved,
+  the two words read in the file and beside the original's for a guest it made.
+
+- [ ] **Q275. A lookup record's flag `0x10` is set on records that have no position.** From the week-end audit
+  (stage 4; read twice from the listing). `FUN_0044a870` tests the node word's `0x400` (`0x0044a924`) only inside
+  the branch its file flags' `0x30` opens (`0x0044a904`). `ParkModelTables` sets `0x10` from the node's `0x400`
+  alone. Confirm: the records of every model in the nine park files compared with the tables built here, and a
+  node with `0x400` and no position named.
+
+- [ ] **Q276. A rider's head is always drawn from their own bank.** From the week-end audit (stage 4; read twice
+  from the listing). `FUN_004fcac0` gives the rider's own `mSpriteID` only where a costume bank (kind 3) is loaded
+  (`FUN_00541f60( 3 )`, `0x004fcac6`); where none is, it stores the rider's id at the world's `+0x1da708` and
+  answers a draw among the kind 1 banks (`0x004fcae5`..`0x004fcb04`). `ParkGuestSprites` and `ParkFileWriter` give
+  the rider's own bank in every case. Confirm: a park with no costume bank loaded, a rider's head bank read in
+  both games.
+
+- [ ] **Q277. Starting a clip binds every other channel's clip again.** From the week-end audit (stage 4; read
+  twice from the listing). `FUN_00472f60` takes the outgoing clip's marks off (`FUN_00472310`, `0x004730a9`) and
+  binds the new one (`FUN_00472d70`, `0x00473117`), nothing else. `ParkModelTables`' `Running.Started` also binds
+  every other channel's clip again, so a track bit two channels' clips share stays set here where the original
+  drops it; its summary gives the rebinding as the original's. Confirm: a model with two channels sharing a track,
+  its node words after one clip is replaced, against the original's save.
+
+- [ ] **Q278. An entertainer whose bank has no state group performs on animation 0.** From the week-end audit
+  (stage 4; read twice from the listing). `FUN_00541fa0`'s count is tested for not 1 (`0x004d47cc`), so nought
+  takes the modulo arm and queues `0xd` plus a draw modulo `0xffffffff` (`0x004d47d8`..`0x004d47e1`).
+  `StaffBehaviour` takes that arm only above 1, counts `ENTERTAINER_BANK_WITHOUT_A_STATE_GROUP` for nought and
+  starts on animation 0, which its remarks give as a deviation no shipped bank reaches. Dead by content today:
+  build it as the original's or leave the count, on Alexah's word.
+
+- [ ] **Q279. `Level.WrittenCells` writes a footprint cell on tile 8 only where the cell joined a footprint or
+  changed its type or parent.** So a file's thing moved and put back on its own anchor (sell then buy) goes out
+  with its unchanged cells on bare ground's tile 55, which the sale left and `ParkBuilding.Stamp` keeps. Every
+  footprint cell should go out on tile `(0, 8, 0)` as every footprint cell of seven park files is
+  (`docs/exe/saves.md`, "OpenTPW's writer, a thing bought and a thing sold"); a test that sells the Drinks Shop,
+  buys item 1203 on (43,30) again and reads `WrittenCells` for that cell's `TileIndex` would show 55 From the
+  week-end audit (stage 6, the second reading of commit `8422bffa`; read from the code, not reproduced in the
+  game). `OpenTPW/World/Level.cs`, line 907.
+
+- [ ] **Q280. A file's bumper ride with a peep on its leaving or boarding list and no car is written over where it
+  lies once the running lists are empty (`Level.WritePark`.** `Take`: only `CarsOf` is asked of the file), so the
+  file's type 7 and 8 chunks stay and the next load puts those peeps back on the lists. It should be taken out and
+  written whole whenever the file holds any chunk but the record and the close under its handle, as `FUN_005428e0`
+  writes the lists as they stand; a test that loads the commit's own "Boarder" file, empties the list and writes
+  again would show the stale chunk From the week-end audit (stage 6, the second reading of commit `05e54382`; read
+  from the code, not reproduced in the game). `OpenTPW/World/Level.cs`, line 587.
+
+- [ ] **Q281. A member of staff who reaches the picket keeps the facing their walk ended on, and turns on the spot
+  from there.** The original's state setter writes nought to the facing as state 5 is entered (FUN_005054d0 case
+  5, 0x00505582, beside the speed and animation 0x13 that Staff.SetActivity already takes from it), so a striker's
+  turns start from 0; a test that walks a member to the picket and reads PeepWalk.Heading would show it. From the
+  week-end audit (stage 6, the second reading of commit `0db41100`; read from the code, not reproduced in the
+  game). `OpenTPW/World/Park/StaffBehaviour.cs`, line 432.
+
+- [ ] **Q282. A handyman's thought bubble is taken away only on his own sweep in four, as the other kinds' are, so
+  it lasts 13 to 16 sweeps.** The original's handyman pre-step FUN_004d7060 ends by calling the expiry
+  FUN_0050be40 ungated on every sweep (0x004d70ee; docs/exe/ride-operation.md, the pre-step table's note on
+  0x004d70f1), so his lasts exactly 13: a test that gives handyman 25 a bubble on mGameTick 1001 and steps the
+  park to 1014 would show it still there. From the week-end audit (stage 6, the second reading of commit
+  `738789d6`; read from the code, not reproduced in the game). `OpenTPW/World/Park/ParkPeople.cs`, line 2144.
+
+- [ ] **Q283. `ParkParticles.Edit.Start` passes a directed start's `Direction` on to the linked effect when the
+  link does not follow (`its = spawn`, then `Start( its with { Template = linked } )`).** So the linked emitter is
+  written aimed and with no draw of the generator. `Particles_SpawnFull` starts its linked emitter with the plain
+  `Particles_Spawn` (`0x00521cf2`), so the linked start must carry no direction; a test starting effect 51 (links
+  54, not following) with a direction and holding emitter 54's +0x38 to the template's (0, 31, 0) and the seed
+  three draws on would show it From the week-end audit (stage 6, the second reading of commit `d490bc90`; read
+  from the code, not reproduced in the game). `OpenTPW.Files/Formats/Save/ParkParticles.cs`, line 376.
+
+- [ ] **Q284. The console's `particles <slot>` reads a slot that is not a number as slot 0 and prints that
+  emitter's cloud without saying so (`DebugConsole.cs`, `Argument( 1 )` falls back to 0).** It should reply that
+  the slot was not understood, as it does for a slot out of range; `particles abc` in a park with an emitter in
+  slot 0 shows it. From the week-end audit (stage 6, the second reading of commit `03326e26`; read from the code,
+  not reproduced in the game). `OpenTPW/Client/Diagnostics/DebugConsole.cs`, line 1804.
+
+- [ ] **Q285. Seven unbuilt paths the game reaches count nothing.** From the week-end audit (stage 6, the second
+  reading of each commit; read from the code). `CLAUDE.md` rule 4 asks each for an `Unimplemented.Report`; build
+  the path where it is small. One bullet a path.
+  - A park loaded from a file with a camera module opens on the default view and counts nothing:
+    `ParkWorld.Camera.Saved` is read from the file and used by no load, and `Level` reports only
+    `PARK_ADVISOR_SAVED_HISTORY` beside it. The original's loader `FUN_0042cec0` puts the zoom, rotation and point
+    back (`saves.md`, "Loading the modules", Camera), so until Q247 builds it the load should call
+    `Unimplemented.Report` under a name of its own, shown by the `unimplemented` census after a Load Park.
+    (`OpenTPW/World/Level.cs`, line 282; commit `2bdbd7fd`)
+  - `Level.WritePark` writes a park file without writing `gms.dat` first and without putting the pointer back to
+    its default mode, and counts neither: its summary names both as deviations and the body calls no
+    `Unimplemented.Report` for them. The original does both on every save (`saves.md`, "The save", step 1,
+    for `gms.dat`, and `FUN_00516c80` step 1 through `FUN_0046c350` for the pointer), so each should be
+    counted where the file is written until Q248 and Q241j build them, shown by `savepark` followed by
+    `unimplemented`. (`OpenTPW/World/Level.cs`, line 505; commit `2bdbd7fd`)
+  - `Peep.Tick` leaves the cell's region-effects term out of every needs turn and counts nothing, though the park
+    has kept the cells since Q257e (`ParkState.Effects`). The original adds the cell's happiness, illness and
+    hunger words there (`FUN_00501650` through the getter `FUN_004d8410`), so until it is built the turn should
+    call `Unimplemented.Report`, as rule 4 asks and Q157 already lists. (`OpenTPW/World/Park/Peep.cs`, line 716;
+    commit `8b70a8d8`)
+  - A handyman loaded from a park file in state 8 or 9 (the walk to litter and the sweep, FUN_004d73c0's cases 8
+    and 9, set by FUN_004d7330's table at 0x004d73a4) takes `StaffBehaviour.Step`'s `default:` arm, stands for the
+    rest of the session and is counted nowhere. It should at least call `Unimplemented.Report` and fall to idle so
+    he decides again, until the litter job is built; Alexah's `jungle/New Save.TPWS` and `jungle/autosave.TPWS`
+    each hold four such handymen, which a load and the `staff` census would show stuck at `st 0x8` and `st 0x9`.
+    (`OpenTPW/World/Park/StaffBehaviour.cs`, line 579; commit `757c46a6`)
+  - The name box of Save Park and of the new player dialog ignores Delete, Left, Right, Home and End and counts
+    nothing (`WindowStack.Keyboard` hands a `UiEdit` typed text and Backspace alone, and the caret is always at
+    the end). The original's box answers each in `FUN_00667a72` (`0x2e00`, `0x2500`, `0x2700`, `0x2400`, `0x2300`,
+    Shift extending the selection), so either they are built or the keys are counted where they are dropped.
+    (`OpenTPW/UI/WindowStack.cs`, line 745; commit `d2052d84`)
+  - A load drops the cars, riders and two lists of a saved track ride whose BumperType has no record here (every
+    type but the Hot Pot's -1) and counts none of them (`Open` counts the ride alone, as `BUMPER_TEMPLATE_n`, and
+    only for the family's -3, -6, -11 and -14), where the build before Q257p counted each car chunk as
+    SAVED_TRACK_RIDE_CARS. It should count each dropped car, rider and listed peep, since the loader's car arm
+    (FUN_00543560, chunk 5, docs/exe/saves.md "OpenTPW's reader, a track ride's cars") restores a car for any ride
+    its handle names; a test with a type -4 ride and one car chunk would show the census unmoved.
+    (`OpenTPW/World/Park/ParkBumperCars.cs`, line 522; commit `a96db38d`)
+  - A guest's judgement of the entry fee pushes no sample to the park analyser and counts nothing:
+    `ParkAdmission.OpinionOf` returns its band and `PeepBehaviour.Judge` acts on it. The original's `FUN_004ff5b0`
+    calls `FUN_004c74b0( 0, byte )` on each of the four compared arms (`0x004ff693`, `0x004ff6b5`, `0x004ff6f0`,
+    `0x004ff715`; not on the early-out), and kind 0 is the one ring anything reads, the advisor's messages 91 and
+    92 (`ride-operation.md`, "The analyser's samples"), so it should be built or call `Unimplemented.Report`.
+    (`OpenTPW/World/Park/ParkAdmission.cs`, line 303; commit `542b67e4`)
+
+- [ ] **Q286. Seven tests cannot fail for what their names say.** From the week-end audit (stage 6, the second
+  reading of each commit). Each passes with the bug it is named for put back; strengthen each and prove it with
+  `mutate.py`. One bullet a test.
+  - ASavedStampIsKept reads a stamp of nought from the shipped park and then checks only that the Staff
+    constructor copies a value handed to it, so the entertainer's read of mTimeStartedEntertaining at record +503
+    can be moved and the suite stays green. It should write a park with a performing entertainer whose stamp is
+    not nought and read it back, as ParkMechanicRepairTests does for the mechanic's +503, the layout being
+    FileFormats saves.md's entertainer row (mTimeStartedEntertaining 4, mNext 2).
+    (`OpenTPW.Tests/ParkEntertainerPerformanceTests.cs`, line 263; commit `63660f76`)
+  - No test reaches a whole purchase, so the one line that stamps a bought toilet's, camera's or fireworks' region
+    effect (`ParkBuilding.Build`, the `StampEffects` call after `AddObject`) can be deleted with the suite green;
+    `ParkRegionEffectsTests.Bought` calls `StampEffects` itself. A test should buy a Security Camera through
+    `ParkBuilding.Build`'s own path with objects that place, and read security 20 on its cell, which is what
+    `0x004db458` does and what q257e's mutation run showed only the game run catches.
+    (`OpenTPW.Tests/ParkRegionEffectsTests.cs`, line 143; commit `8b70a8d8`)
+  - TheSavedStampIsReadAndKept asserts that no other kind of staff reads a researcher's stamp, but the shipped
+    save holds nought at +503 for all four other members, so the assertion passes with the model guard in
+    ParkWorld.ReadStaff removed (mutation m38 and m38b of q134/mutations.txt survived). It should read a record
+    built with a non-zero +503 for a mechanic, a handyman, an entertainer and a guard (bytes patched in a copy of
+    Easymode.TPWI, or a park written by ParkWorld.People's writer with an entertainer's stamp set) and assert
+    nought, which m38 would then fail. (`OpenTPW.Tests/ParkResearcherResearchTests.cs`, line 109; commit
+    `50516f7c`)
+  - No test holds the range a bumper ride's engine voice is started with: taking `range: rides.RangeOf( effect, 0
+    )` off `ParkCarSounds.Play` fails nothing (`q265/mut-run1.out`, m21 survives), and only the game run
+    `q265/engine.py` showed it. A test should stand a track ride's script far enough to start the engine voice and
+    read its range as the variation's own, 100 for the Hot Pot's (`docs/exe/audio.md`, "Measured here,
+    2026-10-10"). (`OpenTPW/World/Park/ParkCarSounds.cs`, line 92; commit `a069af13`)
+  - `TheBootsSoundIsPlayedAtItsVariationsVolume` asserts `UiSounds.BootVolume` alone, and `UiSounds.Boot`, which
+    hands that volume to `SoundCategory.Play` for effect 210, is called by no test, so a `Boot` that plays at
+    volume 1 or plays the click's effect passes the suite. `Boot` answers nothing and plays only once sound is up
+    (`Audio.Ready`), so it wants a seam first and then a test through it (the voice played: its clip and its
+    volume of nought), which is known by putting `1f` in the `Play` call at
+    `UiSounds.cs:73` and seeing the suite stay green. (`OpenTPW.Tests/ParkCountedPathsTests.cs`, line 205; commit
+    `da9443ff`)
+  - The test `ARideBoughtFacingAPathKeepsItsLinkToItsQueue` builds its purchase by hand and calls
+    `ParkBuilding.LayEnds` itself, so no test fails when `Build` stops calling `LayEnds` (`ParkBuilding.cs:164`)
+    or calls it before `Stamp`. A test should drive `Build` (or `Buy`/`PlaceCarried` on a level) for a Crazy Ape
+    on (41,22) and read cell (42,22) links `0x01` and a queue of one cell; putting the bug back at line 164 shows
+    the gap. (`OpenTPW.Tests/ParkFileWriterBoughtAndSoldTests.cs`, line 647; commit `2dec6b66`)
+  - The test `AThingsVoiceIsSoundedAtTheMiddleOfItsCells` checks `ParkObjects.BoxMiddle` alone, so putting the
+    scream back at the thing's corner in `TrySoundPlace`, or not keeping the footprint in `Place`, fails no test
+    (q266/mutations.py m08 to m10 fail none). A test should stand a thing in a `ParkObjects` and read
+    `TrySoundPlace` for it, the Belly Bounce at (51,23) answering (525, 250), so the wiring is held by the suite
+    and not by one game run. (`OpenTPW.Tests/ParkFootprintTests.cs`, line 141; commit `9ec9a7a9`)
+
+- [ ] **Q287. ParkHireScreen.Selected previews a highlighted candidate's wage with ShowMoney( person.Wage ), and
+  Update() calls ShowMoney() with no wage on every frame (WindowStack.OnUpdate).** So the staff-costs preview is
+  overwritten a frame later and the player never sees it. ShowMoney also never takes the previewed wage off the
+  balance cell, which its own parameter remark says the original does (message 0x401); known by reading lines
+  351-417 and WindowStack.cs:330, not run, and no test covers the cell From the week-end audit (stage 6, a sweep
+  of the source settled by a verifier; read from the code, not seen in the game).
+  `OpenTPW/UI/Park/ParkHireScreen.cs`, line 417. Confirm: a candidate highlighted on the hire screen, the
+  staff-costs figure photographed.
+
+- [ ] **Q288. Names and log lines that say what the code does not.** From the week-end audit (stage 6, a sweep of
+  the source settled by a verifier). The audit changes no code, so each is left as it is: rename or reword, one
+  bullet each. No game run.
+  - ModelFile.Mesh.VertCnt is assigned the mesh's material count (the ushort at mesh +0x5A), while the real vertex
+    count is in VertexCount, and nothing in the source reads VertCnt. Rename it MaterialCount or label it dead by
+    CODE; known from ModelFile.cs lines 197, 414 and 490 and a grep of source/.
+    (`OpenTPW.Files/Formats/Model/ModelFile.cs`, line 197)
+  - ParkParticles.OnScreenAt (0xc1) names the template byte Particles_Spawn tests at 0x00521e98 to answer nought
+    while the header's +0x08 is set; it is not the on-screen flag, which is +0x05, and ParticleLibraryFile already
+    calls the same byte Suppressible. Tp2.plb sets it on 93 of 101 named effects, world and screen alike, so
+    rename it to match (and OnScreenOnlyAt, the header's +0x08 the same test reads, with it).
+    (`OpenTPW.Files/Formats/Save/ParkParticles.cs`, line 76)
+  - ParkParticles.HoldsParticlesAt (+0x05) is the emitter's drawn-on-the-screen byte, which Start reads only to
+    give a world emitter an empty box and a screen one six noughts. The name says something else (particles are
+    held at +0x06/+0x08); FileFormats particles.md 0x05 and ParticleLibraryFile.OnScreen name the byte, so rename
+    it. (`OpenTPW.Files/Formats/Save/ParkParticles.cs`, line 52)
+  - SaveReader.ReadFile throws 'File version is not 133.' when the byte at 0x608 is not 0x85, and that byte is the
+    last of the big-endian magic 0x01221985 at 0x605, not a version. The file's own comment above the read and the
+    FileFormats saves page (header table, 0x605) both say so, so a bad file is reported under the wrong label and
+    three of the magic's four bytes are never checked. (`OpenTPW.Files/Formats/Save/SaveReader.cs`, line 94)
+  - SaveReader.ReadFile names the dword at 0x604 `fileType` and the byte at 0x608 `fileVersion`, and never uses
+    the first. The comment above them and the FileFormats saves page say they are the zero byte with the magic's
+    first three bytes and the magic's last byte, so the names contradict the file's own account; one piece of work
+    with the bullet above (read the magic whole at 0x605 and check it, or rename).
+    (`OpenTPW.Files/Formats/Save/SaveReader.cs`, line 90)
+  - PutPeople throws 'thing N, an object bought, is in the file or the park already' for four conditions, one of
+    which is a made record whose length is not the object record's size. That is read from the one `if` at
+    ParkWorld.People.cs 400-401; the length test wants its own message (MadeObjectRecord always makes the right
+    length, so it is a guard that cannot name itself when it fires).
+    (`OpenTPW.Files/Formats/Save/ParkWorld.People.cs`, line 402)
+  - SaveFolder.LoadConfig logs "Saves: read the options from <path>" after ConfigFile.Read returns null for a
+    version-0 Config.tcf, when nothing was applied and the defaults stand, and equally when a file of an unknown
+    version was applied but left _unreadConfig set. In both cases a later SaveConfig refuses to write and the
+    load's log never says why; known from SaveFolder.cs:57-75 and ConfigFile.cs:61-66, by code only.
+    (`OpenTPW/Client/SaveFolder.cs`, line 75)
+  - SaveFolder.DeletePlayer logs "Saves: deleted the player '<name>' in slot N" whether the folder was absent or
+    DeleteFolder left it behind because it held a dot-named entry, which its own doc comment says happens. Known
+    from SaveFolder.cs:477-480 and 509-530, by code only; the log should say when the folder was left and what was
+    in it. (`OpenTPW/Client/SaveFolder.cs`, line 480)
+  - The console's `bumpers` reply heads its report with `bumpers N`, where N is `report.Count`: one line per
+    bumper ride plus one per live car (DebugConsole.cs:807, :818, :833). The label reads as a count of rides and
+    is not one; known by reading the code, not run. (`OpenTPW/Client/Diagnostics/DebugConsole.cs`, line 833)
+  - The debug console's camcorder reply (ParkCamcorderCameraMode.State) prints `eye=` as the raw ground under the
+    stand plus EyeHeight, while the camera is placed at the eased _groundHeight plus EyeHeight. The label names a
+    height the eye is not at while the ease catches up or the clock is paused, known from reading State() against
+    Place( GroundUnderStand() ), not from a run. (`OpenTPW/World/Park/ParkCamcorderCameraMode.cs`, line 830)
+  - SoundCategoryFile.Variation.GapByParameter holds the first controller's whole mask (the u16 at +0x18: 1
+    volume, 2 pitch, 4 the wait), and ParkAudio.Controlled, ParkAudio.NamesOnVolume and ParkCarSounds test its
+    volume and pitch bits beside SecondMask, so the name describes one bit of three. This is known from
+    SoundCategoryFile.cs's own FirstKey parameter note and from 0x006c3d8a, which tests the word against a passed
+    bit; a rename (to pair with SecondMask) touches ParkAudio, ParkCarSounds, ParkScreams and four test files.
+    (`OpenTPW/World/Park/ParkAudio.cs`)
+  - NodesFor's catch branch warns that a thing "walks or seats riders ... every leg is the shortest and no head is
+    hung" for any script whose model will not read, including one that reaches it only through UsesEffectNodes
+    (ADDOBJ), which walks nobody and hangs no head. That is known from the code: the early return lets an
+    ADDOBJ-only script through, and the null-model branch below guards the same message with `WalkSlots != 0 ||
+    UsesHeads` while the catch does not. (`OpenTPW/World/Park/ParkRides.cs`)
+  - PaceLocal (local 16, the instance's +0xc4) and PaceValue (0x1200) hold the draw's flags word, which the
+    DrawFlags property returns and line 508 writes from a parameter called flags. The names say pace, which
+    nothing in the file decodes or uses; this is known from the constants' own comments and the three uses at
+    lines 321, 373, 468 and 508, so they should be renamed DrawFlagsLocal and DrawFlagsValue.
+    (`OpenTPW/World/Park/SpriteScript.cs`)
+
+- [ ] **Q289. Two members only tests call, which a built path needs.** From the week-end audit (stage 6, the
+  dead-code census). Neither is dead by code: placed content reaches the path each belongs to, and the path is
+  unbuilt.
+  - The constant is read only by PeepSteeringTests:29 (whose message is "a tenth, for crowding - not built"); no
+    production code applies it and no other 0x1999 literal exists. Its doc and PeepWalk.cs:36-42 say the original
+    registers a third steering behaviour, separation, at FUN_0050fdf0 and that leaving it out "makes crowds walk
+    through one another" - every walking peep in a placed park reaches that path, so the unbuilt thing is a GAP,
+    not a dead member. Not checked in Ghidra here. Two things the finder may want: (1) both comments give as the
+    reason that the project keeps no per-cell lists of who stands where, but ParkState now keeps exactly that
+    (_onCellNext, ParkState.cs:1294-1369, "the original's thing +10"), so the stated reason looks stale; (2) grep
+    of docs/QUEUE.md and docs/PLAYER-GAPS.md (held copies) finds no line for separation or crowding.
+    (`OpenTPW/World/Park/PeepSteering.cs`, line 47, `SeparationWeight`)
+  - Called only by RideStateTests:85 and RideScriptRunTests:280, and it is the only writer of _finished. The
+    reader is live: RideScript.cs:2291 stores Ride.TakeRider() for COAST 3. ParkRideOperation.cs:335-338 says so
+    at the site: "COAST 3 is implemented and its coasters still never dismiss anybody, because it drains the
+    finished-rider queue that nothing fills ... a missing simulation, not a missing opcode", and
+    docs/exe/ride-operation.md:4263 lists COAST 3 as how Coaster1, Coaster3 and Minecart dismiss - all three are
+    Lost Kingdom rides (levels/jungle/rides in the .RSE corpus). So content reaches the path and the filler is
+    unbuilt. Unproven: I did not check whether Easymode.TPWI places one of the three or whether they are only
+    buyable. FinishRider's own doc calls it "the seam where a ride simulation will connect" but does not say only
+    tests call it. (`OpenTPW/World/Ride/RideState.cs`, line 138, `FinishRider`)
+
+- [ ] **Q290. The queue's stamp is taken before the queue is measured, where the original measures first.** From
+  the week-end audit (stage 8, the older decode read a second time from the listing; verified once, not reproduced
+  in the game). `ParkState` takes `NextCounter()` before `InvalidateQueue` and the back-cell lookup, and its
+  comment says so, where the executable measures the queue first and takes the counter after (`ride-operation.md`,
+  the row for the queue's remeasure). `OpenTPW/World/Park/ParkState.cs`, line 1688. Confirm: the back cell's stamp
+  read in both games after one queue edit.
+
 ## B. Docs and comments
 
 - [ ] **Q13. Move `docs/CLEANUP-PLAN.md` into `docs/history/`.** Every item in it is closed. It is still untracked in
   `docs/`, so it exists on this machine only. Commit it under `docs/history/` and list it in `docs/history/README.md`.
-  (The STATUS diet landed in `c445844`; `QUEUE.md` and both reviews were committed in `c2ddaf6`.) No game run.
+  No game run.
 - [ ] **Q95. Two descriptor offsets the compiled `.sam` schema names otherwise.** Found by Q50c's schema simulation
   (`FUN_00401030` over the table at `0x00744b30`), not yet checked against each page's own evidence: `hud.md` calls
   item `+0xC4` `Research.Group`, which the schema puts at `+0x178`, making `+0xC4` `UsageInfo.GoldenTicketCost`; and
   `park-engine.md` divides a capacity by `+0x1a0`, which the schema makes `Upgrades[0].InitDuration` (`+0x198` is
   `InitCapacity`). Settle each against the code that reads it, and correct the page that is wrong. No game run.
   Q165 settled both from the scorer (`ride-operation.md`, "What a thing is worth to a guest"): `+0xC4` is
-  `GoldenTicketCost` and `+0x1a0` `InitDuration`; `hud.md`'s `+0xC4` text is still to correct.
+  `GoldenTicketCost` and `+0x1a0` `InitDuration`; `hud.md` ("The mystery row") and `park-engine.md` ("The inputs are named") both say so now.
 - [ ] **Q14. Comment sweep of the cleanup commits.** Replace history-voice comments with what the code does now,
   found by member because line numbers go stale. Left: `AudioListener.AttenuationTo`'s summary nests a `<para>`
   inside a `<para>`, and `ParkCamcorderCameraMode.DebugWalk` steps a per-frame `WalkSpeed / 60f`; make it use
-  `Time.Delta` (rule 10). The history-voice sites this item named are done: most went with `e0462c9`, `Walk`'s two
-  and `Slide`'s doubled line with `0640abc`, `ParkFixedItems`' remark with `36639d3`, and the IslandPanel and
-  LobbyGate sites and the DebugConsole tab with Q41 (`325f102`). No game run.
+  `Time.Delta` (rule 10). No game run.
 - [ ] **Q81. The FileFormats docs still disagree with themselves and with the game.** From the clone's 2026-09-18
   audit, as the 2026-09-24 staleness audit found it (`docs/history/fileformats-docs-ledger.md`). Most of it is fixed,
-  on disjoint branches, which is the other half: `rsse.md`, `vm/instructions.md`, `sounds.md`, `strings.md` and `saves.md` (whose
-  World block is written three times) exist in divergent versions, and the `.md2` format has three pages
-  (`models.md`, `md2.md`, `model.md`). `vm/info.md`'s per-script variable ids are fixed on `docs/rsse-instruction-set` (and
-  `docs/save-module-chain`) only. Still wrong: `saves.md`'s `mFlags` `0x8` bit, its "version 85" (hex), and "the sixth
+  and every branch that held a fix is merged into the clone's master, so no page exists in two versions and the
+  `.md2` format has one page (`models.md`). Still wrong: `saves.md`'s `mFlags` `0x8` bit, its "version 85" (hex), and "the sixth
   person model is the visitor"; and `wad.md`'s name length, which includes the NUL. Open on both sides: what `0x14E`
   means (`SpriteBankFile`'s note). The Bumper enum is not a page error: the page's 1-17 is probably right, and it is
-  `ScriptDefs.cs`, a labelled leftover left as it is, that looks corrupt. Settle each page's one
-  version on the branch that owns it (`docs/README.md`, "The FileFormats docs clone"), then fix. No game run; the
+  `ScriptDefs.cs`, a labelled leftover left as it is, that looks corrupt. Fix each on one short
+  branch off the clone's master (`docs/README.md`, "The FileFormats docs clone"). No game run; the
   site builds.
-- [ ] **Q75. The 2026-09-12 review's Phase F, what is left.** Opportunistic, never alone. Done: `LangVersion` 14.0
-  (`4f6da17`), `Terrain.cs` (`2f38ce3`), `ReadInt16` (`f31862e`). Left: `SixLabors.ImageSharp` 3.1.6 in
+- [ ] **Q75. The 2026-09-12 review's Phase F, what is left.** Opportunistic, never alone. Left: `SixLabors.ImageSharp` 3.1.6 in
   `OpenTPW.ModKit.csproj`; `content/textures/test.png`; `.editorconfig`'s `end_of_line = crlf` with no
   `.gitattributes`; and, to LABEL as dead by CODE rather than delete (rule 3), `Public/ModelFile.cs` and
   `Public/MapFile.cs` (both unreferenced), `Render/Primitives/Cube.cs` and `ReadUIntN`. `Singleton.cs` is used by
@@ -716,7 +1001,7 @@ the research lab), then the rest of this section in its old order.
   `effect type {type} (TRIGGEREVENT)`; the instruction is `EVENT` (`Opcode`), beside `(ADDOBJ)`. The console's `load`
   replies "they come one a tick"; `StepArrivals` admits one a thing sweep. Assert messages: `AnimationEasingTests`
   ("an older note here quoted"), `ParkRideJoinTests` ("only 13 and 14 can be"; six pass the filter),
-  `ParkRestAreaTests` ("the original's own other arm", against Q136 (d)), `ParkStateTests` ("the handyman" of thing
+  `ParkStateTests` ("the handyman" of thing
   26, the mechanic), `ParkTickTests` ("neither of which this tree had"), `ParkPathBuildingTests` ("the loader's
   runtime flag is a different thing", which `park-engine.md` calls not established), `PeepWalkTests` ("at 31ms a
   tick"; a step is a thing sweep), `RideAnimationsTests` ("this branch"), `PeepNeedsTests` ("nothing else makes a
@@ -741,14 +1026,14 @@ the research lab), then the rest of this section in its old order.
 ## C. Alexah's list: cause known, one session each
 
 - [ ] **Q15. Green line between path cells and on ride signs.** Path textures get the default sampler,
-  `AnisotropicWrap` = Wrap (`ParkPaths.Build`, `Material.cs:106`). Sign halves get `AnisotropicRepeat`
-  = Mirror (`SignTexture.cs:71-72`, `Material.cs:107`). The original clamps at every site
+  `AnisotropicWrap` = Wrap (`ParkPaths.Build`, through `Material.Set`'s array form). Sign halves are bound the same way
+  by `LobbyModel` and wrap too (`SignTexture.TryBuild`). The original clamps at every site
   (`render-states.md`, "Texture addressing is CLAMP"). With wrap plus mipmaps, a tile's edge samples the far edge. Use clamp
   where the original does. Confirm: screenshot two paths in a column, a crossroads and a ride sign,
   before and after.
   Every model texture is unclamped too (the 2026-09-26 staleness audit): `LobbyModel` asks `TextureFlags.Repeat`,
-  which `Material` samples as Mirror, as `ParkPaths` and `ParkGround` now do, and an unflagged texture gets the same
-  sampler (`Texture.SamplerFor`). Check that a model's UVs stay inside 0 to 1 before clamping it, since six
+  as `ParkPaths` and `ParkGround` do, but all three bind an array, which `Material.Set` samples as Wrap whatever
+  the flag; `Texture.SamplerFor`'s Mirror is used only for a texture bound alone. Check that a model's UVs stay inside 0 to 1 before clamping it, since six
   register-pushed sites are not covered (`render-states.md`); the sea keeps its wrap.
 - [ ] **Q16. Screams are heard everywhere.** Sounds are placed and panned, but a park never sets
   `Audio.ReferenceDistance` (`Audio.HoldPlaced` says so), so nothing attenuates. The lobby sets it
@@ -812,7 +1097,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   open. The engine finds a bounce rider's node by id in `0x800` ("Where a rider is drawn"); `ModelFile.FindNode` is
   that lookup and `RideNodes` the stored positions at rest (Q175b), not the animated pose a rider needs.
 - [ ] **Q23. Camera rotation snaps by 45 degrees.** `ParkOrbitCameraMode.Update`, the two rotate keys. The 90-degree
-  option exists (`GameOptions.NinetyDegreeRotation`) and is read by nothing. Decode the original's step
+  option exists (`GameOptions.NinetyDegreeRotation`, set on the Options screen and kept in the player file) and the camera does not read it. Decode the original's step
   and its easing (`park-engine.md`, "The park camera", has the saved and required rotation, not the rate). Build what
   the decode says, driven by `Time.SmoothingFactor`. Alexah: match the original, do not invent.
   From Q241f: with the options byte `0x0078d912` set the original's update turns a quarter turn a press
@@ -874,8 +1159,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   (`DESTROY_PARTICLE_EFFECT`, `Info.DestroyParticleEffect`, 75-78, a world effect spread over the
   footprint) and the demolish sound (`DEMOLISH_SOUND`, `0x96`-`0x99` by size). Not yet counted: the
   build side - `Info.CreateParticleEffect` and the `+0xd4` sound zone the script loader makes when an
-  item has one (`park.md`, "What selling a thing does to its script"). Needs a world particle pass,
-  which nothing here has; the screen pass draws only `OnScreen` templates.
+  item has one (`park.md`, "What selling a thing does to its script"). The world pass to draw them in is `WorldParticles`.
 - [ ] **Q40. The place-staff mode's cell rule and its carry preview.** Found by Q6's decode (`park-engine.md`,
   "Putting a candidate down: the type-5 mode"), so this is a build. The original takes a worker only on a
   cell of `mType` 0, 1, 3 or 9, not flagged `0x40`, whose track record after the 12/17 parent redirect is
@@ -888,10 +1172,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   Q9's decode (`docs/exe/audio.md`, "How the engine plays an effect: priority, not a repeat delay").
   `SoundCategoryFile.Effect.RepeatDelay` is the effect record's `+0x0c`, which the original reads only as a voice
   priority, and nothing on its play path reads a clock. So `SoundCategory.Play`'s per-effect throttle has no
-  counterpart, and neither have the replays it times: the lobby's beds and one-shots, the park's music and
-  weather, and SINGLESCREAM. The original's repeating voices come from the flags word instead. There are two kinds:
+  counterpart, and neither have the replays it times: the lobby's beds and one-shots, the park's weather
+  and SINGLESCREAM. The original's repeating voices come from the flags word instead. There are two kinds:
   - `0x0404` chains, built by Q9 for the screams only (staff 188 and the ambient beds are not);
-  - the `0x4|0x2` class, which hands a variation's wait to the mixer (music 2, kids 91, ambient 33). It is undecoded.
+  - the `0x4|0x2` voices whose constructor is not the music's `0x400` one: `0x006be090` (106 records), which hands a variation's wait to the mixer, and `0x006be680` (2). They are undecoded; music 2, kids 91 and ambient 33 are the music's class, which is decoded.
 
   Also owed:
   - the top-N voice pool, keyed by priority and closeness (N is 12, at most 30);
@@ -902,7 +1186,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   From Q135: in the original's mix the performance's end (`TADA.mp2`, staff `0x87`) was found on five of ten ends
   and two of the others fell where the mix was near silent (`ride-operation.md`, "The staff's sounds, in both
   games"): the voice pool may be why, and it is not read. A placed voice there matches its sample at 0.24 at best.
-  Decode the `0x4|0x2` class first. Confirm: capture the lobby's mix and a park's mix, before and after.
+  Decode the `0x4|0x2` class's `0x006be090` and `0x006be680` constructors first. Confirm: capture the lobby's mix and a park's mix, before and after.
   The class's `0x400` constructor is decoded and the park's music follows it (the 2026-10-06 review's fix 4;
   `audio.md`, "The music's class"): parameter 4 picks the variation and an empty park is not silent. Its other
   constructors are not: `0x006be090` (106 records) and `0x006be680` (2).
@@ -1064,7 +1348,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
 ## F. Then
 
 Back to `docs/PLAYER-GAPS.md`: gap 4 (advisor in a park); gap 5 (happiness gauge) is Q244 and gap 7 (saving a
-park) is Q241, both in section A. Also litter and the day ending, whose deferral reasons expired
+park) is Q241j, both in section A. Also litter and the day ending, whose deferral reasons expired
 (`docs/REVIEW-2026-09-21.md` section 6).
 
 ## G. The lobby plan's open items
@@ -1091,7 +1375,7 @@ state machine.
   park terrain loader - but `Sky`'s own note says the original's lobby has no sea below its islands, which contradicts
   the premise. Settle whether the original draws `base.md2`'s sea before building anything.
 - [ ] **Q79. Robustness (plan item 12, the rest).** Atomic save writes exist (`BaseFileSystem.WriteAllBytes`) and
-  input is dropped while unfocused (Q42). Open: top-level error containment (`Program.Main`/`Game.Run` catch nothing),
+  input is dropped while unfocused (Q42). Open: top-level error containment (nothing in `Program.Main` or `Game.Run` catches a failure of the load or the run loop),
   and easing the render rate and music while the window is unfocused.
 - [ ] **Q80. Two tests the lobby audit asked for (plan item 13, the rest).** A save round trip against a real
   game-written file (it wants a sitting with the original to make one), and `LobbyScript` over the four shipped island

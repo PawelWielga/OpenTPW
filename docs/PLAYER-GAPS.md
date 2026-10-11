@@ -1,28 +1,12 @@
 # What a player notices
 
 What a player notices, **ordered by when a player meets it**, not by size or by how interesting it is to build.
-**This is not the work queue: `docs/QUEUE.md` is**, and it reaches this file's open gaps 4, 5 and 7 in its section F.
+**This is not the work queue: `docs/QUEUE.md` is**. Its section F returns to gap 4; gap 5 is its Q244 and gap 7 its Q241j, both in its section A.
 Drawn up 2026-09-20 from `docs/STATUS.md`, the 42-thing Lost Kingdom census
 (`docs/history/current-task-archive.md`, grep `THE PARK IS FULLY DECODED`) and the live plan.
 
 `docs/CLEANUP-PLAN.md` was a second list of nine things a player sees, handed over 2026-09-21. All nine are
 closed; `docs/QUEUE.md` Q13 moves it into `docs/history/`. Until then it is untracked and exists on this machine only.
-
-**All nine closed by 2026-09-22:** 9 (park load time), 6 (sound held
-under a pause), 4 (the lobby ocean), 5 (one scream on a loop), 3 (guests moving in jumps), 1
-(everything replaying its "being built" clip), 2 (the camcorder walking through rides), 8 (the lobby's
-attract camera) and 7 (no "entering the park" animation).
-
-**Three of the nine were mis-diagnosed in the writing, and that is the part worth carrying forward.**
-Item 8's three claims were *all* refuted by measurement — the wander box is the original's own field
-for field, the aim does not swing, and not one frame of 16,407 stepped out of line — so it closed as
-measured-faithful plus a deviation Alexah chose afterwards. Item 7 was the reverse: **Alexah's memory
-was right and the decode was wrong**, having stopped at the first of five steps; the original really
-does swing the camera onto the gate and fly it in before the park loads. And item 1's two guessed
-causes were both refuted on the way to a real fix.
-
-**Nothing in *this* file was ticked by any of that work — not one of the nine appears here**, so this
-list is untouched by it; its own 4, 5 and 7 are queued in `docs/QUEUE.md` section F.
 
 **Alexah sets which item is the goal. One item per session** (`CLAUDE.md`, "How a session runs" 4).
 Tick an item here in the same commit that lands it, and move its detail to the page that owns it.
@@ -30,23 +14,7 @@ Tick an item here in the same commit that lands it, and move its detail to the p
 Scope is **Lost Kingdom only**. Anything that changes nothing in `data/levels/jungle` is not on this list,
 however large it looks — that trap has been hit twice.
 
-## Item 2 is done, 2026-09-21. The work comes from `docs/QUEUE.md`; gaps 4, 5 and 7 below follow it (its section F)
-
-> *"let's get the park management gadget buttons working. We can start with the purchase menu, so we
-> can start work on allowing players to build/delete paths, and queues, along with purchasing,
-> deleting, moving, and managing the rides/shops/sideshows themselves."*
-
-**Every clause of that is now true, and all three steps of Alexah's dependency order are done:**
-
-1. ~~**The purchase menu**~~ — buy and hire, with buy, sell, move, carry, hire, fire, pick up, put down.
-2. ~~**PATHS and QUEUES**~~ — laid and lifted, with `FUN_004de1f0`'s invalidation wired so queues cannot
-   go stale, and **building by pointing** (anchor, then commit — there is no drag, both drag slots are
-   bare `RET` stubs).
-3. ~~**RIDES / SHOPS / SIDESHOWS**~~ — a placed ride's management window cycles, deletes and moves.
-
-**And the category buttons, 2026-09-21.** Info and Money open four real screens — all staff, all items,
-all visitors and the entry price — every one confirmed on screen. **Five of the six gadget buttons now
-open something.**
+## Deferred in item 2: research, park status and patrol areas
 
 **ONLY RESEARCH REMAINS, AND IT IS BLOCKED BY ABSENCE, NOT BY EFFORT.** It is not a category
 (`FUN_004a0840`'s case `0x2b` goes straight to `FUN_004aa480`, as the map does) and its screen is six
@@ -61,41 +29,17 @@ where the original seeds **3**, a declared deviation that reverts the day park s
 
 **Setting a patrol area was explicitly deferred by Alexah** and is not built; staff keep to the areas the save gives them.
 
-## THE GOAL BEFORE IT, SET 2026-09-20: CLOSE THE GUEST LOOP. DONE.
+## How the vehicles move
 
-> Guests should be able to visit and purchase from shops and sideshows, new visitors should arrive,
-> visitors should go home, and they should be dropped off and picked up at the front of the park by a
-> **cruise ship**, a **sea plane** and a **bus**.
-
-**Where it stands, 2026-09-20: every clause of that is now true.** Guests arrive by themselves, are
-carried by all three vehicles, go home when their day runs out, and **buy from both the shop and the
-sideshow** — a filled park took **1110 at the Drinks Shop** (37 sales at 30) and **900 at the Jungle
-Spray** (45 at 20). Both halves were confirmed in the running game by census **and** by screenshot.
-
-**This reordered the queue, and that reorder is now spent.** Items 3, 6 and 8 were halves of one loop
-and all three are ticked. **Items 4, 5 and 7 remain.** Item 5 is the one worth flagging rather than choosing: it
-was found by playing, and it is a **rendering** fault, in Alexah's description of 2026-09-21: the bar draws in the wrong place and
-repeats. See the item itself; do not assume it is small until that is measured.
-
-**The order, agreed with Alexah:**
-
-| | | why here |
-|---|---|---|
-| ~~**1st**~~ | ~~**Arrivals, and the three vehicles** — item 3~~ **DONE 2026-09-20** | Nothing else in the loop can be seen without people coming in |
-| ~~**2nd**~~ | ~~**Departures** — item 6~~ **DONE 2026-09-20**, built with the first rather than after it | The same vehicle loop: one that drops off must pick up. Built alone it drains the park |
-| ~~**3rd**~~ | ~~**Sideshow spending** — item 8~~ **DONE 2026-09-20** | It needed the win roll, which nothing had ever written: every visit took the losing arm |
-| ~~**4th**~~ | ~~**Shops** — item 8~~ **DONE 2026-09-20** | The "structural blocker" was a misread field. Nothing structural was in the way |
-
-**THAT FIRST QUESTION IS ANSWERED — 2026-09-20. IT WAS NEITHER OPTION.**
-It asked whether the vehicles need the `.RSE` runtime built, or can be driven by our own animation
-player. Both premises were wrong. The `.RSE` runtime is **already sufficient** — the bus's script
-binds and runs to completion, reaching nothing unbuilt — and the movement is in neither place: it is a
-**Bézier route in the model file** (the array at `0xac`, indexed by a node's `+0x52`) driven by a
-**per-frame percentage in the animation** (channel `0x200`). Our own player applies it, in
-`LobbyModel.Pose`. So it was **a contained job**, and it is done for all three vehicles.
+The `.RSE` runtime is sufficient: the bus's script binds and runs to completion,
+reaching nothing unbuilt. The movement is a **Bézier route in the model file** (the array at `0xac`, indexed by a
+node's `+0x52`) driven by a **per-frame percentage in the animation** (channel `0x200`), which `LobbyModel.Pose`
+applies for all three vehicles.
 
 Confirmed from the engine as well as the data: `FUN_00471860` indexes the table as
 `*(model + 0xac) + node[+0x52] * 0x10`, and `FUN_00474840` is the cubic Bézier over it.
+
+## The eight gaps
 
 | # | What a player sees | Depends on |
 |---|---|---|
@@ -121,10 +65,7 @@ anything now built, and none blocks another.
 - That is the original's: see `docs/exe/lobby.md`, "Escape cancels the fly-in, and the gate is the flight's".
 - **Not every gate swings.** Fantasy's is a worm with **no rotation tracks at all**, so it gets no
   `MeshRotator`. Each clip plays over the span it declares; the table is in `docs/exe/lobby.md`.
-- **Confirmed in the running game** when the gate still opened at Enter and held the park load: jungle
-  114–120 stepped frames against a predicted 114, fantasy 198–204 against 200. Those figures measured the
-  old length and timing; Q41's run is the current confirmation. On screen the doors go shut → part-open → open, with the difference
-  localised to a band dead centre on the doors (columns 101–135 of 256, peak 33.6 against a 5.84 mean).
+- **Confirmed in the running game** by Q41's run (`q41confirm.py`): the console's `state` read the gate playing its opening clip during the flight, and the cancel from state 2 shut it.
 - **Two traps worth keeping**, both of which cost runs: the debug console's `pause` sets `Time.Paused`
   and `Time.Delta` then reads **nought**, so anything driven by it freezes and never finishes — use
   `step <n>`, each one frame of ¹⁄₆₀ s. And the lobby camera orbits, so `settle` alone lands on
@@ -188,12 +129,6 @@ button. It only logs, and counts each click as `RESEARCH_BUTTON`; R, the shortcu
       is the guest's `mNumRides` (Q177b); shops, sideshows and visitors' Time In Park stay blank and counted
       rather than carrying a plausible wrong quantity. **UITEXT row 117 is literally `"?"`** - the original ships that visitor
       column unnamed too.
-      **The screenshots found four defects every green check had passed.** A column heading 160px
-      clear of its column and a tab strip that vanished with the list it hung off, both invisible at
-      4:3 and both only on a 16:9 window; a kind->label table transposed because the executable's own
-      switch is out of order (case 2 takes `0x6e`, case 3 `0x6d`), which drew guards under
-      "Entertainers' Happiness"; and a visitor list rebuilt every frame, caught as **260** gap reports
-      from one visit. See `docs/exe/hud.md`.
 - [ ] **RESEARCH** - logs and counts (`RESEARCH_BUTTON`), and blocked on a system that does not exist rather than on effort. See
       the note at the head of this item.
 - [x] **PATHS - DONE 2026-09-21, and verified in the running game.** `path 10 10` lays one for
@@ -203,9 +138,7 @@ button. It only logs, and counts each click as `RESEARCH_BUTTON`; R, the shortcu
       `FUN_005348d0`'s rule and takes its art from the executable's own two tile tables.
       **Photographed:** a plus of five cells drew end pieces at all four tips and a **crossroads** at
       the centre, and the HUD money went **87987 -> 87887** - exactly 100 for five cells, on screen.
-      **The running game found a defect no test could have:** tiles were stale by one operation,
-      because `Lay` retiled only the cell it laid while the link pass had also rewritten its
-      NEIGHBOURS' masks. The lift path was always right, and that is what identified it.
+      A laid cell retiles itself and its neighbours.
 - [x] **QUEUES - DONE 2026-09-21, and the `FUN_004de1f0` HOOK IS PROVEN.** `queue <x> <y> <thing>
       <fromX> <fromY>` lays one for **75**; `delqueue` lifts one and **refunds**, where a path does
       not - the original's own asymmetry. A cell records the object it serves and a flow direction
@@ -290,7 +223,8 @@ button. It only logs, and counts each click as `RESEARCH_BUTTON`; R, the shortcu
   which reads identically whether its script is running or parked, and only the pc separates them.
 - **Lives:** `ParkPeople.PeepsIn` builds the save's guests; `ParkPeople.Admit` builds every arrival, at a bus
   stop cell (`ParkAdmission.BusStopA/B`), in `PeepState.AtGate`; the walk in through
-  `PeepState.AtTheBusStop` (21) is not built.
+  the original's outside states is not built (`docs/exe/guest-arrivals.md`); `PeepState.AtTheBusStop` (21) is built and
+  holds leavers until a vehicle stands for them.
 - **Census:** ids 29, 31-41 **and 42** are the 13 guests, on the bus road at x 47-48, y 9-15, already
   walking in. (Thing 42 is a guest too. Compute a free id, never take one from here.)
 - **The gate-admission path it feeds** is built and measured — guests pay at the gate.
@@ -332,12 +266,8 @@ and a bus**. All three are shipped fixed items, and **none of them is missing ar
 **`ParkFixedItems` now loads gates, lights and all three vehicles.** Only the End sign is still held
 back. All six carry `DontApplyOffset 1` and `WhichUIType 4`.
 
-**The bus was the worked example, and the other two followed it** — `88cd6de` stood it and bound its
-script, `14d977d` read the routes, `9d4fb04` decoded the progress scalar, `3872a34` drove it. The other
-two then needed **two** things the bus did not: the `TRIGWAITANIM` opcode (`d132b95`), which their
-scripts use where `bus.RSE` uses plain `TRIGANIM`, and releasing each vehicle at all **three** of its
-`VAR_TRIGGER` spins rather than one. Routes: FERRY 33 points, Seaplane 33, both closed Bézier loops;
-both rest **exactly** on their own route, which the bus does not quite manage.
+**Routes:** ferry 33 points, seaplane 33, both closed Bézier loops; both rest **exactly** on their own route,
+which the bus does not quite manage.
 
 **One limitation carried forward, and it is visible:** a vehicle **does not turn to face its direction
 of travel**, so the bus arrives sitting diagonally across the crossing. That is a real engine behaviour
@@ -362,7 +292,9 @@ from the crossing. So the arrival path they would take is the one the shipped sa
 ## 4. The advisor says one line in a park, and nothing after it
 
 - [ ] **Seen:** the advisor is a constant presence in the original and says nothing here while you play.
-- **Lives:** `docs/exe/advisor-park.md`; a park's lines are `UI/Park/ParkLines.cs`, which says one (`ExplainGadget`).
+- **Lives:** `docs/exe/advisor-park.md`; a park's lines are `UI/Park/ParkLines.cs`, which says one (`ExplainGadget`), and
+  `World/Advisor/ParkAdvisorMessages.cs`, which posts the door's opened and closed messages (Q90b): silent with the shipped
+  `Advisor.sam`, whose score of 20 for each is under the threshold of 25.
 - **The "needs simulation" blocker was refuted:** his acceptance gate consults no world state, and the HUD
   it waited on exists. This is buildable today.
 - **Do not transcribe anything first:** every global speech line is already transcribed in
@@ -415,16 +347,15 @@ from the crossing. So the arrival path they would take is the one the shipped sa
 
 - [ ] **Seen:** Save writes nothing and Publish does nothing, which a player meets at the moment they try to
   stop. Load opens the Load Park screen and loads the row clicked (Q241c); Save opens the Save Park screen, and
-  its OK closes it with nothing written (Q241d).
+  its OK closes it with nothing written (Q241d). The park writer is built, `Level.WritePark`, and only the console's `savepark` reaches it; the screen's call is Q241j.
 - **Lives:** `ParkSaveScreen.Save`, counted as `SAVE_GAME_WRITER`, and `ParkFrontEnd`'s game menu, where
   Publish Park calls `NotYet(...)`, counted as `PUBLISH_PARK`.
 - **Decoded (Q241):** the two screens, the folder's list, the load in place and the writer's container are in
-  `docs/exe/saves.md`, "Load Game and Save Game"; the build is `QUEUE.md` Q241b to Q241j.
-- **The real cost is not the button.** **Only Alexah's own `.TPWS` saves have been read**, in harnesses — the
-  reader must not be assumed to generalise from them and the one file the game ships. `docs/exe/saves.md` also records an unreconciled
-  divergence between the traced preamble byte counts and what the shipped file measures.
+  `docs/exe/saves.md`, "Load Game and Save Game"; Q241b to Q241i are built, and `QUEUE.md` holds Q241j (Save Game saves), Q248 and Q249.
+- **Nine park files agree with the traced preamble** (`docs/exe/saves.md`, "Preamble"): the shipped `Easymode.TPWI` and the eight of
+  Alexah's Full Simulation play. The original under Proton has loaded the files the console's `savepark` wrote.
 - **Full Simulation now starts fresh** (Q197): twelve things, closed, fee 20 and the regular balance/loans;
-  Instant Action keeps `Easymode.TPWI`. This does not implement loading or saving a player's played park.
+  Instant Action keeps `Easymode.TPWI`. Where the player's folder holds a park file for the theme, entering loads the newest instead (Q241b).
   The initialization and its reference comparison are in `exe/park-engine.md`, "A fresh Full Simulation world".
 
 ---
@@ -435,25 +366,10 @@ from the crossing. So the arrival path they would take is the one the shipped sa
       Shop** (37 sales at 30) and **900 at the Jungle Spray** (45 at 20) across two runs, with the
       `spend` census showing the cause before the effect — guests `heading {shop:16}` and then the till
       moving. `save/` unchanged within every run.
-- **THE "STRUCTURAL BLOCKER" WAS A MISREAD FIELD, NOT A BLOCKER.** The filter compares a
-  queue's length against the object's **`+0x40`**, and this project read that as `mQueueSizeInCells`
-  out of the save — nought for the shop and all three toilets. It is not: `FUN_004de130`
-  (`GetBackOfQueue`) **overwrites** `+0x40` by walking real type-3 cells off the map whenever
-  `mBackOfQueue` is nought, and `FUN_004dd920` calls it **before** it reads the count. So `+0x40` is a
-  cache, and the save's copy is the cached answer to that very walk.
-  - **The walk reproduces both cached pairs the save already holds, and neither number was put in**:
-    the Belly Bounce recomputes to 4 cells ending at 2866 = (49,22), the Jungle Spray to 1 cell ending
-    at 3765 = (52,29). Those *are* its `mQueueSizeInCells` and `mBackOfQueue`.
-  - The corroborating argument, which is what should have raised the doubt years earlier: **the three
-    toilets are in the identical position.** Under the old reading no toilet in any park could ever be
-    visited.
-  - `FUN_004de040` reads the entry cell's **`mNeighbours`**, never its `mDirection`, and takes the
-    first set bit in the order `0x01`, `0x10`, `0x40`, `0x04`. Full decode in `docs/exe/ride-operation.md`.
-- **AND THE SHOP NEEDED NO NEW SCRIPT MECHANISM.** `docs/exe/ride-operation.md` claimed "a shop
-  takes its money through the LIMBO mechanism"; **`Coconut.RSE` declares zero limbo slots and zero walk
-  slots and uses neither family.** It runs the identical `VAR_LETMEON` → `WAIT 1000` → `VAR_LETMEOFF`
-  handshake a ride runs, so the boarding chain already built for the Belly Bounce *is* the shop. Limbo
-  is real but belongs to `steak`, `giftshop`, `balloon`, `Cost_shp`, `arc2x3` and `SupBog`.
+- **A queue's length is walked off the map, not read from the save.** `FUN_004de130` (`GetBackOfQueue`)
+  rewrites the object's `+0x40` from the type-3 cells whenever `mBackOfQueue` is nought, so a shop and a toilet
+  whose saved count is nought still take a queue. **A shop is offered and paid like a ride**: `Coconut.RSE` runs the
+  same `VAR_LETMEON` → `WAIT 1000` → `VAR_LETMEOFF` handshake. The decode is `docs/exe/ride-operation.md`.
 - **What made the visit do anything: the win roll.** `FUN_004e2670` draws `r` from the park's own generator as a
   guest enters and wins when `r % 100 <= chance`; SetState stores it in `mQueuePos` (`0x00501f41`), which the settle-up splits on. Nothing here ever wrote
   that byte, so **every visit in the park took the losing arm** — which is why a sideshow charged 20 and
@@ -461,9 +377,6 @@ from the crossing. So the arrival path they would take is the one the shipped sa
   its chance is **100** and a drink is always served; the Jungle Spray declares 75, so **25**.
 - **Built with it:** the losing arm (happiness down by `MediumHappinessChange`), the sideshow's prize
   (`+50`, its `InitCostOfGoods`) and the win's happiness, `log2( cost / price ) * 15` = **+19**.
-- **A number that was predicted wrong and measured right:** the Jungle Spray's prize is **50**, not 5.
-  Predicted as 5, it made winning cost 30 happiness; measured at 50 it gains 19, and the engine's own
-  "Sideshow won - happiness up %d points" reads honestly. The test caught it.
 - **Still unbuilt, and named rather than quietly skipped:** the park analyser's shop and sideshow month
   accumulators (`+0x20130` / `+0x20380`), and of the settle-up's bookkeeping the
   event history, the analyser's sample and the sideshow's thoughts, counted. The visit counts, the object's six day
@@ -485,9 +398,8 @@ from the crossing. So the arrival path they would take is the one the shipped sa
 
 ## Just behind these
 
-- **32 of 106 opcodes are unimplemented** (74 built, `case Opcode.` labels against the enum, measured 2026-09-24).
-  How many of the 32 shipped Lost Kingdom content reaches has not been re-measured since `TRIGWAITANIM`,
-  `SINGLESCREAM` and `SCREAMLEVEL` were built; the `unimplemented` census answers it.
+- **29 of 106 opcodes are unimplemented** (77 built, `case Opcode.` labels against the enum, measured 2026-10-10).
+  How many of the 29 shipped Lost Kingdom content reaches is answered by the `unimplemented` census.
 
 ## Deliberately not on this list
 

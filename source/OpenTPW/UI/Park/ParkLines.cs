@@ -10,14 +10,10 @@ namespace OpenTPW.UI;
 /// when, is here and is content.
 /// </para>
 /// <para>
-/// <b>The samples are read out of the original's response table (0x00768fb8), and which line is which
-/// was confirmed from its transcript rather than inferred from the ids.</b> That caution is not
-/// ceremony. The table's own message-group column looks as though it should line up with the advisor's
-/// compiled section list, and it does for the first twenty-odd - message group 24 really is
-/// StaffGuardBuildCamera, "if you build some security cameras your guards would be more efficient" -
-/// and then it slips: by one around StaffTrainHandymen, by three through the rides, and by five from
-/// RidesBreakdownNoMechanics onwards. The drift accumulates in steps rather than jumping once, so
-/// there is no offset that recovers it. <b>No id in this file was arrived at by counting.</b>
+/// <b>The samples are read out of the original's response table (0x00768fb8), each by its line's
+/// transcript.</b> An id is never worked out from the table's message-group column: that column drifts
+/// from the advisor's compiled section list in accumulating steps, so no offset recovers it
+/// (docs/exe/advisor-park.md).
 /// </para>
 /// <para>
 /// <b>Why there is only one line.</b> Nearly all of data\Advisor\Advisor.sam is about staff, visitors,
@@ -31,11 +27,9 @@ namespace OpenTPW.UI;
 /// arrival would be worse than saying nothing, so it is not said.
 /// </item>
 /// <item>
-/// <b>The line a screen posts as it opens is not said here.</b> FUN_00486b00 is handed a message id, not a
-/// response id: the disassembly puts the caller's argument at +0x0c of the message record, which is the
-/// field the accept gate keys its per-message counters on. The metadata table at 0x0076e300, filled before
-/// WinMain by the static initializer at 0x005a0a50, gives its first response (+0x24) and the response table
-/// its sample (docs/exe/advisor-park.md); which of those lines this game should say, and when, is not built.
+/// <b>The line a screen posts as it opens is not said here.</b> What the original's screens post is a
+/// message id, not a response id; the message's metadata gives its first response and the response
+/// table its sample. Which of those lines this game should say, and when, is not built.
 /// </item>
 /// </list>
 /// </para>
@@ -86,7 +80,7 @@ internal static class ParkLines
 	/// can be read back.
 	/// </para>
 	/// <para>
-	/// Either way the two settings have nowhere to live here - nothing writes a park back, and a player's
+	/// Either way the two settings have nowhere to live here - the park file's writer carries the advisor's module as the file has it, and a player's
 	/// saved options do not carry what he has already been told - so it is said once a visit, which is the
 	/// closest thing that keeps its meaning, and should become once ever when there is somewhere to keep
 	/// that.

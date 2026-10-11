@@ -305,9 +305,9 @@ The ones that have bitten more than once.
   is not, only then is it the feature. Nine explanations were offered before that one-frame control was
   tried, and every one of them was wrong.
 - **97** — **A control window can land inside a genuine silence of the subject, and that is a reading,
-  not a broken instrument.** A park's music is *replayed, not looped* — about 8.5 s of arrangement then
-  a ten-second wait — so a park's mix is digitally silent for more than half of every cycle. A 3 s
-  music-only floor fell in a gap and read −999 dBFS, which is indistinguishable from an audio device
+  not a broken instrument.** A sound that is *replayed after a wait, not looped* leaves the mix digitally
+  silent between its plays (a park's music is not one: its 17.5 s samples follow one another with no wait). A 3 s
+  floor of one such sound fell in a gap and read −999 dBFS, which is indistinguishable from an audio device
   that never opened. Span the subject's own duty cycle before calling a window representative, and ask
   what the subject does *between* its events, not only during them. **And when the floor cannot be
   measured, the comparison is INCONCLUSIVE — never a direction.** With `floor = None` a harness of mine

@@ -37,9 +37,7 @@ Machine-specific paths live in `CLAUDE.local.md` (not committed). Long-form know
 17. **Show the next five queue items before every clear** (2026-09-23). When Alexah says they are about to clear the session, show the next five unticked items in `docs/QUEUE.md`, in queue order, each with what it asks for. **Read the file and show what it says**, rather than reciting it from memory; a half-remembered list handed over at a clear is the one place a stale claim cannot be caught later.
 18. **Spend subagent tokens where they buy accuracy** (2026-09-26). Pick each agent's model by its stage, fan out only after a script has done what a script can, audit incrementally, and check `/usage` before a large run. The table and the rules are `docs/WORKFLOW.md`, "Subagents".
 
-19. **Codex's model and effort are chosen by stage too** (2026-10-06). Every `codex-worker` assignment names its
-    `model` and `effort` for the job it is, as an agent names its type, and Codex's tokens are spent as carefully as
-    these. The table and the rules are `docs/WORKFLOW.md`, "Codex".
+19. **Codex is not used** (2026-10-10). No assignment, no bridge call; do not propose it.
 20. **An unattended queue run is started by Alexah, never by a session on its own** (2026-10-09). `autorun.py` starts
     one fresh session per queue item. A session inside a run sees `OPENTPW_AUTORUN=1`: it does one item under every
     rule here, pushes nothing, and skips an item that needs Alexah, leaving a "Needs Alexah" line under it. While a
@@ -110,7 +108,7 @@ Inside `source/OpenTPW/`: `Client/` (startup, `GameDir`, options, renderer, `Dia
 ## How a session runs
 
 1. **Start from the repo root**, always. Claude Code keys its memory to the working directory; a session started in `source/` has none.
-2. Read `docs/STATUS.md`, then the first unticked item in `docs/QUEUE.md` (the file's first hundred lines or so, read with a line limit: never the whole queue), then the one `docs/exe/` page for the area you are about to touch. Do not read `docs/history/` (the former memory archives) whole; grep it, and never quote it as current.
+2. Read `docs/STATUS.md`, then the first unticked item in `docs/QUEUE.md` (the file's first hundred lines or so, read with a line limit: never the whole queue), then the one `docs/exe/` page for the area you are about to touch. Do not read `docs/history/` (old archives and every finished queue item) whole; grep it, and never quote it as current.
 3. Before adding a helper, grep for it. `PeepWalk`, `CellRoute`, `CellSearch`, `MapStep`, `FixedVector`, `ParkState.CellAt` already exist. A harness the same: do not copy the last item's script. The bugs put back go through `mutate.py` and `stryker.sh`, a save-and-load run through `parkrun.py`, what lasts under a second in the original through `record.sh`, and who writes an address there through `watch.sh` (`docs/WORKFLOW.md`, "Verifying"; `docs/TOOLING.md`; `CLAUDE.local.md` says where they live). The whole list of stored tools, and the recipes found by trial, are `docs/TOOLING.md`: read both before writing a harness script, and add to them what you build (rule 21).
 4. One task per session. When the task is done: build and test alone in a worktree, commit, tick the item in `docs/QUEUE.md` (the pre-commit hook moves it to `docs/history/queue-done.md`), and update `docs/STATUS.md` in the same commit (the item's "not verified" account goes above the last one's, which the same hook moves to `docs/history/not-verified.md`), say what is ready, and stop. Do not start the next task in the same session.
 5. Memory files (`~/.claude/projects/.../memory/`) hold rules and the live plan only, each under 300 lines. Facts go in `docs/`. A correction replaces the old text; no `>>>` markers, no "this line said".

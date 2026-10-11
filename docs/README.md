@@ -13,15 +13,14 @@ Where the project's memory lives. Code says what; these files say why, and what 
 | `CLEANUP-PLAN.md` | Nine things a player saw, **all closed** 2026-09-22. **Untracked by instruction** — never staged, and deliberately not in `.gitignore`, so it shows in every `git status`. It exists on one machine and is absent from a fresh clone. `QUEUE.md` Q13 moves it into `history/`. | Never (closed) |
 | `DECISIONS.md` | Choices that could have gone another way, one paragraph each, dated: what was chosen, why, and where its facts now live. | When a choice is made |
 | `MEMORY-DIET.md` | What moved out of the memory folder and where, and what is still owed. | While the diet is unfinished |
-| `WORKFLOW.md` | Branches, pushing, subagents (model by stage), sessions, commits, READMEs, how to verify | Rarely |
-| `TOOLING.md` | Recipes for the tools. So far two: the original game under Proton, and the executable's own routines under unicorn | When a recipe changes |
+| `WORKFLOW.md` | Branches, pushing, subagents (model by stage), sessions, unattended runs, commits, READMEs, how to verify | Rarely |
+| `TOOLING.md` | The stored tools every item reuses (`CLAUDE.md` rule 21) and the recipes found by trial, with the original game under Proton and the executable's own routines under unicorn | When a tool is built or a recipe is found |
 | `exe/` | Reverse-engineering facts as tables: addresses, offsets, field names, counts from shipped data | Whenever a fact is found |
 | FileFormats docs clone | File-format facts: the bytes in a shipped file. A separate repo, `OpenTPW.FileFormats` - see "The FileFormats docs clone" below. | Whenever a format fact is found |
-| `history/` | Superseded plans and per-branch ledgers, **verbatim**. Grep it; never read it whole, and never edit it — history is kept as it was written. | Never |
+| `history/` | Superseded plans and per-branch ledgers, **verbatim**. Grep it; never read it whole, and never edit it by hand — history is kept as it was written. | The pre-commit hook, which adds to `queue-done.md` and `not-verified.md` |
 
 **One planned file does not exist yet:** **`ARCHITECTURE.md`** (how a frame runs, how a scene is built,
-who owns the tick, init order). **`TOOLING.md`** exists with two recipes; the recipe notes `MEMORY-DIET.md` lists
-are still owed to it.
+who owns the tick, init order).
 
 ## The FileFormats docs clone
 
@@ -79,6 +78,10 @@ own source rots within days — the fact lives here and the code points at it, n
 | `exe/audio.md` | QMixer, the single sound entry point, how an effect plays (priority, voice classes, held chains, the voice pool), and the `.md2` node flags that mark an emitter. |
 | `exe/render-states.md` | The compiled render-state word, CULL_NONE, the two alpha references, the three sorts the original does. |
 | `exe/saves.md` | `Config.tcf`, `gms.dat`, and the `.TPWS` container preamble. |
+| `exe/park-gate.md` | The entry-price door and the park gate: what writes the command, who counts as inside, and the close that retries every 30 sweeps (Q89, Q89b). |
+| `exe/ride-hoardings.md` | The hoardings a ride raises and lowers: the generated mesh, its four texture choices, vertices and UVs (Q91, Q91b). |
+| `exe/guest-arrivals.md` | A new guest's initial values (happiness, thirst, hunger, toilet need), the draw order, and the visitor count (Q85, Q146). |
+| `exe/ride-window-door.md` | An ordinary ride's door and its closed display (Q92). |
 
 Rule: a fact is written here **once**. Code comments and commit messages point at the row; they do not
 repeat it. A confidence marker — unknown, unverified, refuted — is part of the fact and travels with it.

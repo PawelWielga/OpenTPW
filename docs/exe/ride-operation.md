@@ -1,6 +1,6 @@
 # Ride operation in the original executable
 
-How a placed catalogue object — a ride, a shop, a sideshow, a toilet — operates in the original game: the turn it takes on the park's thing sweep, the boarding handshake it shares with a guest, how a rider leaves and pays, how the queue renumbers itself, and the script instructions the engine and the ride use to talk to each other. The short version of the turn is: **the park sweeps every thing once in eight game ticks; a healthy object drops a stale queue head, maybe requests a breakdown, invites the guest at the front, then dismisses anyone who has finished.** The admission itself is driven from the *guest's* side, not the ride's — the ride invites, the guest accepts. Everything below is read off the disassembly, the shipped `.RSE` scripts and the shipped `.sam` balance files; where a fact is a measurement, its provenance is named in the row.
+How a placed catalogue object — a ride, a shop, a sideshow, a toilet — operates in the original game: the turn it takes on the park's thing sweep, the boarding handshake it shares with a guest, how a rider leaves and pays, how the queue renumbers itself, and the script instructions the engine and the ride use to talk to each other. The short version of the turn is: **the park sweeps every thing once in eight game ticks; a healthy object wears and maybe requests a breakdown, drops a stale queue head, invites the guest at the front, then dismisses anyone who has finished.** The admission itself is driven from the *guest's* side, not the ride's — the ride invites, the guest accepts. Everything below is read off the disassembly, the shipped `.RSE` scripts and the shipped `.sam` balance files; where a fact is a measurement, its provenance is named in the row.
 
 Two kinds of offset appear on this page and they are **not** interchangeable. A `+0x..` is a **runtime** offset into the live struct. A bare decimal ("file 214") is an offset into the **saved record** that `ParkWorld` walks. `mCash` is runtime `+0x1a0` and file 414; `mFlags` is runtime `+0x32` and file 58, and `mEntryPos` runtime `+0x36` and file 206.
 
@@ -96,7 +96,7 @@ In order:
 2. Read script var **7** (`VAR_BROKEN`). If nought, **`FUN_004e1410()` — DISMISS** — and return.
 3. Otherwise the wear at `+0x48`, truncated (`__ftol`), decides. Non-zero: log `"Object %d: Setting state BROKEN_DOWN"` (`0x0075c038`), `FUN_00454550( modelSlotTable[ +0x20 ], 2 )`, then `FUN_004e0e60( 1 )` = SetState. Nought: log `"Object %d: Setting state CONDEMNED"` (`0x0075c014`), `FUN_00454550( …, 4 )`, then `FUN_004e0e60( 4 )`.
 
-**So a healthy object's whole turn is: drop a stale queue head → maybe request a breakdown → Invite → Dismiss.** In the shipped Lost Kingdom park every VISITABLE object is state 0 and everything else is state 3, so that path is the live one.
+**So a healthy object's whole turn is: wear and maybe request a breakdown → drop a stale queue head → Invite → Dismiss.** In the shipped Lost Kingdom park every VISITABLE object is state 0 and everything else is state 3, so that path is the live one.
 
 ### A ride broken down, in both games
 
@@ -137,7 +137,7 @@ chain, kept between searches and saved** (the file's `mNextObject`, FileFormats 
 3. Otherwise every object is looked at once, from the cursor's right round the chain (the walk wraps at the
    end, `0x004dabf4`), and the cursor is left where the walk began.
 4. An object is a candidate when its state is 1, broken down (`FUN_004e0370`), or `mRequestedService` is set and
-   it is no toilet (`+0x32` bit 1 clear, `0x004dac1a`), or its state is 2, waiting for an upgrade
+   it is no toilet (`+0x32` bit 0 clear, `0x004dac1a`), or its state is 2, waiting for an upgrade
    (`FUN_004e03e0`); and the member assigned to it (`FUN_004e0220`) is nobody or this mechanic.
 5. **The nearest wins**: the squared distance in cells between the mechanic's own cell and the object's
    (`+5` and `+7` of each), compared unsigned and strictly (`CMP ECX,EAX` / `JNC`, `0x004dacd2`), from
@@ -155,7 +155,7 @@ hurry speed, where the handyman's walk to a toilet takes one.
 cleared and he decides ("UNUSUAL INCIDENT"). Then a step of the walk (`FUN_004fa2a0`), with no tiring: arrived,
 a ride broken down, waiting for an upgrade or calling goes to state `0xd`, and any other sends him to his
 decide with the ride still named; a walk that fails clears `+0x218` and decides. Unlike the handyman's arrival,
-his own cell is not held against the entry.
+his own cell is not held against the entry. OpenTPW's `ArriveAtTheRide` asks only for broken down or calling: a ride waiting for an upgrade sends him to his decide, not counted (the search passes such a ride over, `MECHANIC_UPGRADE_JOB`, so only a mechanic loaded on his way to one arrives at it).
 
 **State `0xd`.** The setter queues animation `0x12` and sets `+0x214` (`mDurationOfRepair`): for a repair
 `(100 - the State of repair's byte) x MechanicConstsPerGrade.WorkDuration / 100` in whole sweeps
@@ -278,7 +278,7 @@ Entering state 14 also writes the guest's `+0x1f1` from the win roll, for every 
 | `FUN_004e0900` | AdmitPerson | Called **by the guest**, not by the ride. | Disassembly of `FUN_005006b0` |
 | `FUN_00500870` | — | Forcing the head on: the object from the guest's own `MajorDest`, the gate `FUN_004e0a70`, unlink, assert, `SetState(0x10)`. Its one caller is the object's `FUN_004e0450` (`0x004e0500`); the guest's own case `0xe` is a separate inlined copy that boards the calling guest. | Disassembly |
 | `FUN_005019f0` | — | The guest's per-state turn dispatch. | Disassembly |
-| `FUN_00501db0` | SetState | The guest state setter this project reproduces as `Peep.SetState`. Case `0xe` writes `person[+0x1f1] = FUN_004e2670( object )`. Case `0xf` asks for animation 1, the walk (`0x00501f5c`; `FUN_004d4140( 1, ... )` when `+0xc` is nought); case `0x10` asks for 3, the stand, on a thing whose byte `+0x32` carries `0x20` (`0x0050212b`), and calls `FUN_004d4170` otherwise. | `search_bytes` for `88 ?? f1 01 00 00`; decompile |
+| `FUN_00501db0` | SetState | The guest state setter this project reproduces as `Peep.SetState`. Case `0xe` writes `person[+0x1f1] = FUN_004e2670( object )`. Case `0xf` asks for animation 1, the walk (`0x00501f5c`; `FUN_004d4140( 1, ... )` when `+0xc` is nought); case `0x10` asks for 3, the stand, on a thing whose byte `+0x32` carries `0x20` (`0x0050212b`), and calls `FUN_004d4170` otherwise. Case `3` rolls `FUN_00516330() % 150 + 200` into `+0x200`, the save's `mParkOpeningWaitingTime`; `FUN_004ff9d0` counts that field down before it judges the fee, and its case 1 ("park on the expensive side") rolls `% 50 + 50` into it. | `search_bytes` for `88 ?? f1 01 00 00`; decompile |
 | `FUN_00500a50` | — | The state-18 (`HeadingForExit`) handler. | State → handler map |
 | `FUN_004fde50` | — | The price-opinion function. Ends `if ((price <= worth) && (price <= person[+0x1a0])) return 0;`. Computes what a guest thinks a thing is WORTH from the item descriptor's `+0x140`..`+0x150` (through `FUN_004dd4e0`), `UsageInfo.RipOffOK`, and the object's chance of winning (`FUN_004e21b0`, `+0x190`) and, **for a sideshow only** (`+0x4ac` == 2), prize (`FUN_004e1a10`); then pushes a price sample. See "At the door" below. | Disassembly |
 
@@ -290,7 +290,7 @@ Entering state 14 also writes the guest's `+0x1f1` from the win roll, for every 
 
 - **The destination is the cell BEYOND the exit**, not the exit. Direction = the exit cell's own direction byte (`+0xd`, via `FUN_00522850`), **flipped to the opposite (`FUN_004d8c00`, a four-bit rotate) when `mExitPos == mEntryPos`** — which is **ten of the eleven objects** in Lost Kingdom. `FUN_004d97e0` steps to the neighbour. It must not be a queue cell (`FUN_00536320`).
 - **`FUN_004dedf0` yields a FIXED-POINT position:** high byte the cell (`(mExitPos - 1) & 0x7f`, `>> 7`), low byte a sub-cell offset taken from the ITEM's own `.sam` — descriptor `+0xdc`/`+0xe0` for the exit, `+0xd4`/`+0xd8` for the stand point — validated with `"Dodgy X exit point in SAM file"`. Non-zero `which` selects the exit (`+0x38`), nought the stand point (`+0x36`); both are PACKED.
-- **The failure arm closes the ride.** If the aim will not route, the original refuses the dismissal and calls **`FUN_004df150`**: clears `mCanLoad` (`+0x68`) and `mPersonBeingLoaded` (`+0x6c`), logs `"Object %d: Closing…"`, sets script var 6 (`VAR_RIDECLOSED`). Same body as `FUN_004e0e60`. **This is observable in the original**: a ride whose exit is not connected still teleports the guest onto it and leaves them there with a `?` overhead. If that is thought `0x11`, the stranded bubble, it comes only from SetRandomDest's LINKED walk reaching a dead end or its refusal after one: an exit cell with no links takes the no-links arm, which raises nothing ("Deciding and wandering"). Which picture `0x11` is, and the teleported guest's cell, are not established.
+- **The failure arm closes the ride.** If the aim will not route, the original refuses the dismissal and calls **`FUN_004df150`**: clears `mCanLoad` (`+0x68`) and `mPersonBeingLoaded` (`+0x6c`), logs `"Object %d: Closing…"`, sets script var 6 (`VAR_RIDECLOSED`). Same body as `FUN_004e0e60`. **This is observable in the original**: a ride whose exit is not connected still teleports the guest onto it and leaves them there with a `?` overhead. If that is thought `0x11`, the stranded bubble, it comes only from SetRandomDest's LINKED walk reaching a dead end or its refusal after one: an exit cell with no links takes the no-links arm, which raises nothing ("Deciding and wandering"). Thought `0x11` is the blue question mark ("Thoughts and their pictures"); whether this guest's `?` is it, and the teleported guest's cell, are not established.
 - `FUN_004fa530` is SetDest and **answers whether a route exists**; ExitRide charges and changes state ONLY when it does. It aims at the cell's centre, writes the destination before it routes, and can answer 0 without routing on `mStrandedTime` (see "Walking to a new place in the queue").
 
 | Address / offset | Original name | What it is | Evidence |
@@ -423,7 +423,7 @@ step's move, so the guest ends the tick near the point, not on it; nothing snaps
 **Where a walk ends, measured (Q235).** The walk tick `FUN_004fa2a0` runs the step `FUN_0050f3b0` and then answers 2
 on the give-up flag (`+0x18c`), else 0 when `FUN_0050fd40` answers `0x10000`, which it does on the finished byte
 (`+0x60`), on a route of no length (`+0xa0` nought), or when what is left is under 1/65536 of the route. The finished
-byte has one writer in the walk, `follow_path` at `0x0050ef37`, inside that same step: on the last waypoint, the
+byte has one writer that ends a walk as arrived, `follow_path` at `0x0050ef37`, inside that same step (the route's entry `FUN_0050f8e0`, which `follow_path` re-plans through, also sets it at `0x0050f980` when no route is found, together with the give-up flag, so that tick answers 2): on the last waypoint, the
 octagonal distance from the position **before the move** to the target below 1.6 radii. The same call then still
 steers at the target, at the lesser of the top speed and **half the distance** (`0x00700990` × `0x00700998`, 2.0 ×
 65536.0), the force weighted a half, and the step is taken. So a walk ends one slowed step inside 0.32 of a cell, and
@@ -494,7 +494,7 @@ then sets state 10 (event 2), and the first state-10 turn answers 2 and takes th
 near the guest changed since their last good route, the re-plan revives the loser's route and they walk to the loser's
 back cell under the winner's name, to be re-aimed there. **The score is measured at the back cell too**:
 `FUN_004fcc30` asks `GetBackOfQueue` of the object (`FUN_004de110` with the object in `ECX` at `0x004fcc49`,
-`0x004fcc65` and `0x004fcc7d`; the guest is `EDI`) and reads the squared distance from the guest's cell (bytes `+5`
+`0x004fcc66` and `0x004fcc7d`; the guest is `EDI`) and reads the squared distance from the guest's cell (bytes `+5`
 and `+7`), the close-to-queue test (under 9) and the nearby-effects divisor (the word `+8` of what `FUN_004d8410`
 answers for that cell id; its log says "nearby fireworks") all at that cell.
 OpenTPW's `ParkRideChooser.ScoreOf` reads the three there too
@@ -543,7 +543,7 @@ Seed 1's cycle, 248,316,293 states, never meets `0x80000000`, which lies on anot
 A direction neither switch knows stands the point at the cell's centre, counted
 `QUEUE_PLACE_DODGY_DIRECTION`, where the original routes with whatever its stack held. A place past the queue's cells
 is refused before routing, where the original routes to (127, 255) and fails. `FUN_004fa5f0`'s stranded refusal is
-absent: nothing keeps `mStrandedTime`. The chooser's in-walk routing is built ("Q104", below).
+built (`PeepBehaviour.RefusedAsStranded`, asked by `SendTo`); on these paths the stamp is nought unless a save loaded it. The chooser's in-walk routing is built ("Q104", below).
 
 **Q102: state 10's stuck and shut arms** are built in `PeepBehaviour` (`LoseHeartOnTheWay`): either takes
 `BigHappinessChange` off (`FUN_004fea70( 2 )`, the byte at `0x00785060`, clamped to 0..100), zeroes `MajorDest` and
@@ -592,7 +592,7 @@ lost 25 to Q102's arm and 25 more three sweeps on to this one, the thinking gap 
 the original's walker re-plans when the ground near the guest has changed since their last plan, which can revive
 the failed route and walk them to the loser's back cell under the winner's name; `PeepWalk` keeps no ground stamp,
 so here the stuck arm is always what follows. `FUN_004fa530`'s stranded refusal, which answers no route without
-touching the walker, is not built (Q110b). The offer gate is asked
+touching the walker, is built (`PeepBehaviour.RefusedAsStranded`, asked by `SendTo`). The offer gate is asked
 before the score here and after it in the original. None of it was compared with the original.
 
 The supporting helpers:
@@ -615,7 +615,7 @@ The supporting helpers:
 | `FUN_004fa5f0` / `FUN_004fa530` | SetDest | To an 8.8 point / to a cell's centre. The stranded refusal, then `+0x18`, `+0x1a`, `+0x198` written before the route. | Disassembly |
 | `FUN_004fa770` | — | The stranded refusal: 1 when no 16×16 block stamp of the 3×3 cells around the guest (or the far end of their queue run) reaches `mStrandedTime` ("The stranded bookkeeping"). `FUN_004de1f0` stamps the back of a queue it measures again, so a queue edit frees its guests. | Disassembly |
 | `+0x198` | `mStrandedTime` | Saved (`FUN_004f8b10`, `0x004f8eac`). Set only at `0x004f9e09`, the dead end of SetRandomDest's linked walk; zeroed by every walk tick, SetDest, and `FUN_004fa030` when the counter is below it. | Serialiser string |
-| `FUN_004d8750` | — | The edge test every route step asks: `( x, y, dir 0 N / 1 E / 2 S / 3 W, mode )`, non-zero blocked. A guest walks in mode 0 (walker `+0xb4`, guest `+0x188`; guests write only 0 or 1). | Disassembly |
+| `FUN_004d8750` | — | The edge test every route step asks: `( x, y, dir 0 N / 1 E / 2 S / 3 W, mode )`, non-zero blocked. The mode is the walker's `+0xb4`, which is a person's `+0x188`: 0 from the navigator's constructor (`0x0051009f`), and written 1 by a guest's gate states, the put-down `FUN_004feb50` and the leaving retry, by a member of staff setting off for the picket (`0x00506a89`), by the guard's catch `FUN_004d6790` (`0x004d6977`) and by `FUN_004f7b20` (`0x004f7c0f`), a constructor that runs the person base's `FUN_004f8940` with `0x12`. OpenTPW asks in mode 0 always (`ParkPeople.WalkingMode`). | Disassembly |
 | `FUN_0050fd40` / `FUN_0050ed10` | — | The walk tick's progress (`0x10000` = arrived) and the path follower that flags arrival within 0.32 of a cell of the exact target. | Disassembly |
 | `FUN_00516330` | — | The engine's generator: `state = ROR32( state × 0x19660d + 0x3c6ef35f, 13 )`, kept at world `+0x1da708`, answered as its absolute value (`0x80000000` unchanged). One sequence for the queue arms and the scripts' `RAND`. | Disassembly |
 
@@ -1019,7 +1019,7 @@ the one tail (`0x0050049e` / `0x005004aa`): `FUN_004ddd20`, then `FUN_005012f0` 
 animation's start (`0x004fc871`, `0x0050237b`); state 8 returns only after `mGameTick > +0x208 + 10`, and returning
 to 11 stamps `mTimeStartedIdling` (`0x00501eb7`), so in state 11 it is at least 11 past `+0x208`. The window wants
 `mGameTick <= +0x208 + 30` and boredom `mGameTick > +0x208 + 111`. Only a save holding a state-11 guest with the
-two stamps 70 apart could reach it.
+spot animation's stamp more than 70 past the idle one could reach it.
 
 **The longest queue - `FUN_004dda40`.** Verified 2026-09-28 (`docs/QUEUE.md` Q173): three claim groups, each read from
 the disassembly and put to a skeptic; all held, three sharpened. It returns 100 for a thing without the queue-path bit
@@ -1040,7 +1040,7 @@ the disassembly and put to a skeptic; all held, three sharpened. It returns 100 
 - The truncation is `__ftol` (`0x0067a830`): chop, `FISTP` qword, the low dword. An infinite value, or one of 2^63 or
   more, stores the integer indefinite, whose low dword is nought.
 
-Its two asserts, `q` above nought (`"No queue constant entered in SAM file for object num %d ..."`, `0x0075b714`) and
+Its two asserts, `q` above nought (`"No queue constant entered in SAM file for object number %d at upgrade level %d"`, `0x0075b714`) and
 the duration non-zero (`"Operating duration set to zero - shouldn't have a zero duration for a ride!"`, `0x0075b6c8`),
 go to the bare `RET` at `0x005da3c0`, so nothing is refused, and nothing checks `InitSpeed`. A tier stating no
 constant holds 4. A duration of nought, or an `InitSpeed` of nought under a speed, is infinite and holds **nought**,
@@ -1079,7 +1079,7 @@ the toilet. `ParkState.LeaveQueue` splices by the leaver's own links, so a leave
 writes their own next as the head (`0x004ddde9`): an unlinked one empties it and the rest of that queue is lost to the
 walk in turn. **The dirt gate is built** (Q100b, "A toilet's dirt"). **Counted:** the
 coaster's record (`QUEUE_TURN_COASTER_TRACK_RECORD`, let through), the
-thoughts, the heading (`QUEUE_TURN_HEADING`) and boredom
+heading (`QUEUE_TURN_HEADING`) and boredom
 (`QUEUE_TURN_BOREDOM`). **The two spot animations are built** (`PeepBehaviour.PlaySpotAnimation`, below). **The unhappy arm runs the common leave path** (Q85b), after the same mood gap;
 with its thought `0xb` (Q110b). New arrivals start at the constructor's 50
 ([guest-arrivals.md](guest-arrivals.md)). 5b's built half is
@@ -1090,10 +1090,10 @@ clock is `ParkState.GameTick`, 755 at the shipped park's load: their mood is rea
 in a queue, and the window is reached only after a spot animation.
 
 **Q99: the board arm's no route (1b)** is built in `QueueTurn`: a failed `SendTo` runs `ParkRideOperation.Forget`
-and `LeaveQueue`, then the common put-out, and the guest does not enter state 13. Two things differ and are said at
-the site: ours routes to the entry cell's centre where the original aims at the stand point on the same cell, and
-`FUN_004fa5f0`'s refusal on `mStrandedTime` (`+0x198`, `0x004fa62a`) is not built - every walk tick zeroes the stamp,
-so on this arm it is nought unless a save loaded it, and nothing here reads a save's.
+and `LeaveQueue`, then the common put-out, and the guest does not enter state 13. One thing differs and is said at
+the site: ours routes to the entry cell's centre where the original aims at the stand point on the same cell.
+`FUN_004fa5f0`'s refusal on `mStrandedTime` (`+0x198`, `0x004fa62a`) is asked first (`PeepBehaviour.RefusedAsStranded`) - every walk tick zeroes the stamp,
+so on this arm it is nought unless a save loaded it.
 
 **What reaches it.** Not a guest standing at the front: a queue's first cell is NOMODIFY (`flags 0x0020`, the shipped
 Belly Bounce's (52,22) and a bought ride's alike), `delqueue` refuses it, and the path verdict lets path over a queue
@@ -1281,12 +1281,12 @@ at `[ESP+0x18]`) serves every arm. A byte below is `(u8)__ftol` of the float nam
    3×3 cells around the guest (`FUN_004c8eb0( 6, cell, 1 )`, which is `FUN_004c8d30` answering at the first), then
    the nearest thing of the chain at world `+0x1da740`, linked by `+0x210` (`FUN_00500f00`), and its
    staff state `0xe`: event `0xe` with the entertainer's id, face them, return. Both skip the facing when dx + dy is
-   nought, falling on to (f).
+   nought: the fireworks arm then falls on to the entertainer test (`0x004fefc4`), and the entertainer arm to (f) with no event pushed (`0x004ff0b2`).
 6. **(f) Pranks.** Happiness below 15 and r % 101 below `mPrankeryIndex` (`+0x1c0`: 100 + id % 3 for a prankster, else
    0; always true at 101 and 102), by the index: **100**, when r % 100 is under `PeepInfo.StinkbombLikelihood`
    (`[0x007850e0]`, 25; `0x004ff24b`), litter type 8 on the cell and sound `0xcf`; **101**, litter type r % 5 + 1;
    **102**, the balloon of the first other guest in the cell's thing list who holds one let go (`FUN_004fe950`). A
-   prank done pushes event `0xf`, sends a type-`0xe` bus message (the guest's id twice, and id % 3) and takes −1.0
+   prank done pushes event `0xf`, sends a type-`0xe` bus message (nought at `+4`, the guest's id at `+8`, id % 3 at `+0xc`) and takes −1.0
    off happiness (`[0x00700794]`, so +1, clamped 0..100); one not done (the bomb's roll, no balloon) does nothing.
    It does not return.
 7. **The split** (`0x004ff3b4`), r % 3. **0**, only when mGameTick > `+0x1fc` + 30, unsigned: the chooser
@@ -1326,12 +1326,12 @@ candidate's mask before it is chosen. The filters, each lowering the count: for 
 a slot outside it; **on a path cell, a queue or entrance neighbour** (`0x004f9733`..`0x004f9774`); on a type-3 cell, the
 slot its `mDirection` names, the count lowered even when that slot was already empty (`0x004f977b`..`0x004f97e3`); a
 type-10 (exit) neighbour. Then **a count below 2** takes the first non-empty slot in that order, a step back allowed;
-**two or more** start at r & 3 and take the first non-empty slot that is not the reverse of the last step (none on the
+**two or more** start at a fresh draw & 3 (`0x004f9874`) and take the first non-empty slot that is not the reverse of the last step (none on the
 first pass: the reverse slot starts at `0x270f`, `0x004f94c1`); **none left, on any pass**, is the dead end below. With
 two or more counted and no slot passing, the start slot is taken as it is (`0x004f98a1`), which a count that high never
 reaches. A last pass that would end on the person's own cell gets
 one more. So **a wander ends 1 to 5 linked cells away, never on the person's own cell**, at a point inside the last one:
-sub-bytes `r & 0x7f` clamped to 5..`0x7b`, x then y (`0x004f991c`..`0x004f997f`), through an inline SetDest, which
+sub-bytes of two fresh draws, each `& 0x7f` clamped to 5..`0x7b`, x then y (`0x004f991c`..`0x004f997f`), through an inline SetDest, which
 writes `+0x18`/`+0x1a` before it routes (`0x004f99bf`); a route
 sets `+0xd0` = 1 and answers 1, a failure answers 0 and stamps nothing.
 
@@ -1407,9 +1407,9 @@ time.
 
 ### The red square under a stranded person
 
-`FUN_004fa030( fraction )` is the per-frame placement of one person. Its one live caller is the frame driver
+`FUN_004fa030( fraction )` is the per-frame placement of one person. It has three callers: the constructor `FUN_004faec0` (`0x004fb265`) and the state setter `FUN_00501db0` (`0x00501fc5`, with a fraction of nought) call it once each, and every frame it is called by the frame driver
 `FUN_00518f90` (`0x00519012`), which walks the thing list and calls it for every thing whose `+3` is nought and whose
-type byte is 1, 4, 5, 6, 7, 8 or `0x12`: guests and all five staff kinds. In order it places the body (while `+0x28`
+type byte is 1, 4, 5, 6, 7, 8 or `0x12`: guests, the five staff kinds (4 to 8) and the kind `0x12` that `FUN_004f7b20` hands the person base's constructor. In order it places the body (while `+0x28`
 is nought), takes a counter value and zeroes a `+0x198` above it, **queues the square while `+0x198` is non-zero**
 (`0x004fa0e6`..`0x004fa14f`), places the bubble at `+0xb4` 2.5 above the body (`[0x0075c804]`), and places a guest's
 balloon.
@@ -1441,7 +1441,7 @@ rendered frames**, and held still by a pause; every red square on screen, a tool
 in the original, 40 runs of each ("Q110b").
 
 **It slides with a tool's blueprint.** With `+0x98` nought, `DAT_00874fc4` nought (the queue tool's strip
-`FUN_005234d0` writes it, and while it is set every record's `+0x98` is 1) and a texture below 13, `FUN_0053df30` moves the square by the blueprint's eased offset (`0x0053df93`: x − `[0x008186b8]` × 10 +
+`FUN_005234d0` writes it nought at `0x005239f6` and `FUN_0053bfe0` writes it nought at `0x0053c000`, its only two writes, so the test always passes; were it set, every record's `+0x98` would be 1) and a texture below 13, `FUN_0053df30` moves the square by the blueprint's eased offset (`0x0053df93`: x − `[0x008186b8]` × 10 +
 `[0x00820afc]`, z likewise from `[0x008186b4]`, `[0x00820af8]`) while the tool mode `DAT_0081ae2c` is 4, `0xe` or
 `0x13`. Read, not seen: what those three modes are and where the square lands under them is not measured.
 
@@ -1558,7 +1558,7 @@ bus (size 1's is 15). Guests who had reached (42,5) or (43,5) went `0x15`, `0x14
 vehicle current and one was current on the same reading: thing 36 on 1640, which took one guest from (42,3) on 1714,
 and the bus on 1770, which took two from (42,5) and (43,5) on 1853. Every guest that went, went from `0x15` on a cell
 of the current vehicle's pair: sixteen of sixteen. (A bus was current again on 1924 with nobody logged at the stop;
-whose summons that was the log does not show.) **One prediction was wrong**: "at most one a cell a sweep". Five went
+whose summons that was the log does not show.) **More than one can go from a cell in a sweep**: five went
 on one tick from two cells: a guest deleted leaves the next on the cell the head, and the same sweep reaches them.
 Two guests were first seen in `0x15` one cell east of a stop cell, 37 on (44,5) on 1135 and 32 on (44,3) on 1237,
 and each walked on to a cell of the pair on the next sweeps. Why their walks ended there is not decoded (the aim is a
@@ -1601,8 +1601,8 @@ content in Lost Kingdom), else `DECIDE_ENTERTAINER_BESIDE`, then `DECIDE_PRANK_S
 held**, and differs from the original's reach in four ways, said at the site: no arm ends the turn; nothing clears a
 test (the jump's stamp, the levels zeroed), so a guest counts on every turn it holds; the bin's route is not asked;
 and the entertainer's count is of one standing beside the guest, where the original goes on to ask for staff state
-`0xe`, which nobody takes here (Q133d). The fireworks' script variable is not read. The console's `need` sets
-illness, litter or prankery.
+`0xe`, performing, which an entertainer takes here (Q133d) and the count does not ask (Q227). The fireworks' script variable is not read. The console's `need` sets
+`vomit`, `litter` or `prankery`.
 
 Predicted and read in Lost Kingdom (`q111confirm.py`, `q111/run1`). The stock park left alone 120 s: vomit, litter,
 pranks and fireworks all nought as predicted, the happy jump 0 (0 to 40 predicted), an entertainer beside 4 (0 to 60).
@@ -1781,7 +1781,7 @@ step that holds the refusals), so a
 refusal is forgotten 61 to 80 sweeps later. The constructor zeroes both; the thing-removed
 message (`FUN_004fb360`, `0x004fb4ba`..`0x004fb4d9`) zeroes each `mPreviousRides` slot naming the thing and the
 temporary slot at the same index, whatever that holds; both are saved, interleaved (FileFormats `saves.md`, 470).
-`FUN_004dd670`, the age, has other readers too: the object window's Age and the arrivals' headcount score
+`FUN_004dd670`, the age, has other readers too: the object window's Age (`0x004adf40`), eleven calls from `0x004cab73` to `0x004cc130` that are not traced, and the arrivals' headcount score
 (`FUN_004c8240`, `0x004c8391`).
 
 **Measured in two played saves** (Alexah's jungle park, `mGameTick` 19,004 and 19,007; `q165cprobe`, read-only): of
@@ -2021,7 +2021,7 @@ order: the same kind as the thing left last scores nought first; the queue term 
 queueing (`ParkState.QueueCount`, `FUN_004ddf50( 0 )`) over the walked cells (`ParkRideChoice.QueueCellsFor`), and the
 choice's room test and the arrival's gates read the same count; the mean is unsigned; new is `(uint)age <= 7`; rain is
 the weather's `Drops` above nought, which `ParkPeople` hands in; then the golden-ticket or price factor
-(`ParkRideScore.Priced`, at double precision, the runtime's starting precision, which is an assumption: Eruption's 1.4
+(`ParkRideScore.Priced`, at double precision, the runtime's starting precision, which is an assumption (the live precision is not settled: `park-engine.md`, "Which rounding is live"): Eruption's 1.4
 on a score of 45 gives 62, where single or extended precision gives 63); then the two histories, the first matching visit and every matching
 refusal. `ParkRideScore.ExcitementOf` is `FUN_004e0860( object, 0 )`, which the chooser, the arrival's excitement
 refusal and the settle-up's excitement match all read: the Jungle Spray is 30, and the Belly Bounce at its settings 40. Each guest keeps both histories
@@ -2228,7 +2228,7 @@ it on `mGameTick & 0x3f` (`FUN_004df670`, `0x004df719`), both unbuilt (Q157); a 
 of an item's first build (`FUN_004db090`, `0x004db69c`, the record `FUN_004d3d10` answers, `+0x1c`, when nought).
 `FUN_004e0900` (`0x004e0941`, `0x004e09fe`) and `FUN_004ddf50` (`0x004ddfe6`) only print it through `FUN_005da3c0`.
 So **an object's turn takes no clock of its own that OpenTPW builds**: the number `ParkPeople.TakeTheRidesTurns` is
-handed reaches only the guests' `SetState` and the balloon's sprite clock (`ParkRideOperation.SpriteClock`), and the
+handed reaches only the guests' `SetState`; a balloon built on a ride's turn takes `ParkRideOperation.SpriteNow`, and the
 sprite clock is the millisecond one, not this.
 
 **The rest of the 85**, by owner: the increment and the gate's retry on `% 30` (`FUN_00516380`, `0x00516388`,
@@ -2237,7 +2237,7 @@ sprite clock is the millisecond one, not this.
 helpers (`FUN_0041a960`, `FUN_0041a970`, `FUN_0041a990`: the arrivals, the staff pool, the music and the advisor),
 the calendar's eight (`FUN_004f8260` to `FUN_004f88b0`), the bank's five (`FUN_004d01f0` to `FUN_004d0850`), the
 challenge's day (`FUN_004d1e90`), the staff's thirty-four (`FUN_004d46d0` to `FUN_004da490`, `FUN_00502600` to
-`FUN_005056e0`, `FUN_00508e70`, `FUN_00508f70`; "The staff turn", below) and a debug print (`FUN_004041d0`).
+`FUN_005056e0`, `FUN_00508e70`, `FUN_00508f70`; "The staff turn", below) and a debug print in the layout replay (`FUN_004041d0`).
 
 **Measured in the original under Proton** (2026-10-07, stock Lost Kingdom, 1,604 sweeps from the load, `clock.py`
 polling the guests' fields beside the counter; five predictions written first, all five held):
@@ -2402,7 +2402,7 @@ booth or entrance A or B in states `0x10`, `0x12` and `0x13`. `mTimeHired` is mG
   What each effect holds, and how it is played here: `audio.md`, "The staff's voices". **Built** (Q135,
   `StaffBehaviour.DrawForSound`, `ParkAudio.StaffSound`), all but the chase's two, which no code here reaches.
 - **Thoughts** go through `FUN_0050be80` on the member's `+0x30`, with a second argument of 0 at every staff call.
-  Past two early outs whose meaning is open (`[0x00790ab0] & 0x16`; `[0x00fb3b7c]` = 1), it first frees whatever
+  Past two early outs (a first-person view, `gui_CameraFlags` `[0x00790ab0] & 0x16`; an online game, `[0x00fb3b7c]` = 1, for a second argument of 0), it first frees whatever
   balloon `+0x84` holds (`0x0050bee3`), then shows the new one only when mGameTick >= `+0x8c` + 20 × class, unsigned
   (`0x0050c04b`). `+0x8c` is stamped on any showing (`0x0050c05c`), so one stamp serves every thought, and a gated call
   leaves no balloon. Classes: `0x12` 3 (60 sweeps), `0x13` 2 (40), `0x14`, `0x15` and `0x16` 0, shown on every call.
@@ -2476,7 +2476,7 @@ tired arm**: the rest byte (`+0x1fc` truncated) against `[0x00785324]`, `SETL` w
 (`0x00506698`, `0x00506b41`), so with `RestLevel` 1 only a rest byte of nought is too tired to work, and each of the
 three decides skips its search then and goes straight to the walk. The mechanic's and the handyman's own setters
 (`FUN_004da370`, `FUN_004d7330`) pass 0 and 1 to `FUN_005054d0` unchanged. The entertainer's performance queues
-animation `0xd`, or `0xd` + a draw mod (`FUN_00541fa0` − 1) where that count is over 1 (`0x004d47b5`), and writes
+animation `0xd`, or `0xd` + a draw mod (`FUN_00541fa0` − 1) where that count is not 1 (`0x004d47b5`; the test is `CMP EAX,1`, `JNZ`, so a count of nought divides by `0xffffffff`), and writes
 state `0xe` and `+0x214` inline. Its pre-step `FUN_004d4660` unstamps region effect 0 at the cell it stood on
 (`FUN_004f9460`) and stamps it at its own whenever the two differ, before the shared tick.
 
@@ -2573,7 +2573,7 @@ turn the sprite is due, until another animation is queued.
 `0x00476698`); local 0 and locals from 7 up are integers. If's (`0x004762b0`), read at entries 1 to 5, 7 and 8: 1 `==`,
 2 `!=`, 3 `>`, 4 `<` against another local; 5 `==`, 7 `>`, 8 `<` against the operand; the body runs when it holds,
 and otherwise `FUN_00475130` walks the words to the closing EndIf (`0x004762f0`) or the word `0x00476320`, counting
-nested Ifs, and leaves the program counter on it. If counts a depth up at `+0x70` and EndIf down; past ten it only
+nested Ifs, and leaves the program counter on the EndIf or one past `0x00476320`, which is the Else (`0x00475226`). If counts a depth up at `+0x70` and EndIf down; past ten it only
 logs. A state start (`FUN_00475b80`, `0x00475c23`) zeroes `+0x70`, `+0x74` and the loop count `+0x78`, sets `+0x1c`
 to `0x14`, and writes the set whole into `+0xb4`; a set's frames per direction are the byte at bank `+0x222 + 4 ×
 set` (`FUN_00540c60`).
@@ -2656,7 +2656,7 @@ animation not queued again. So a spell is WorkDuration + 1 sweeps in state `0xf`
 4 for 4 and 5, 5 for 7, 2 for 6 and everything above) and on any class but 3, 4 and 5, on every sweep where
 mGameTick % 20 is nought (`0x00502984`), hands `ResearcherConstsPerGrade[grade].ResearchAbility` (`0x0078545c`,
 stride 12) to the lab: `FUN_00519550` for the lab, then `FUN_00503430( ability )`, which shares the points among
-the five categories being researched by each one's effort and calls `FUN_00504630` for each. `Standard.sam` gives
+the five categories being researched by each one's effort and calls `FUN_00504630` for each with effort / the efforts' sum × the lab's `+0x1460` × ability × 0.01 (`[0x007007e4]`, `0x005034a6`..`0x005034ca`). `Standard.sam` gives
 2, 3, 4, 5, 6 and jungle's `Easy_Standard.sam` 6, 9, 12, 16, 20, which the original's memory held in the park.
 
 **The original under Proton**, stock Lost Kingdom left alone, researcher 30 (grade 2) read once a sweep from 755 to
@@ -2678,8 +2678,7 @@ same park for 240 s, `sweeps`, `staff` and `guests` read about three times a sec
 (`q134/confirm.py`, `run1/`): Walking on 365 readings and Researching on 217 from 775 on, never Idle; twelve
 spells, each ended on its stamp + 31 in a walk; 199 of 199 readings in a spell on script 402, set 4, frames 0 to 3;
 the place still in each; the whole-number rest down 3 or 4 a spell; fifty lots of 12 points counted,
-`RESEARCH_POINTS_TO_THE_LAB`, one for each multiple of twenty from 755 to 1740. The build before, 2 of 2: Idle on 168
-readings of 596 and Walking on the rest, never off the walk's script, `RESEARCH_COMPLETING` counted 83 times.
+`RESEARCH_POINTS_TO_THE_LAB`, one for each multiple of twenty from 755 to 1740.
 **Beside the original** (`q134/sheet-beside-original.png`): the same white-coated researcher seen from behind, arm
 raised over what they hold; the two cameras are not at the same height, and OpenTPW's is cut along its lower edge by
 the ground, as every sprite is.
@@ -2728,10 +2727,10 @@ rest's end and the hire. Read again in the listing first, and all of it as writt
 entertainer's `FUN_004d4340` at `0x004d4430`. **The staff constructor `FUN_00504b90` sets rest and happiness to 100,
 `+0xc2` to 0 and `+0xc0` to 60 below grade 3 and 100 from it**; the entertainer's writes 60 again (`0x004d43fa`); the
 person base under it leaves `+0xc8` at 0.0. So a hire's base is 140 before their first sweep and their speed eases up
-from nought. **"Too tired to work" is asked at four places**: the mechanic's, the handyman's and the entertainer's
+from nought. **"Too tired to work" is asked in four kinds' decides**: the mechanic's, the handyman's and the entertainer's
 decides before their searches (`0x004da5c7`, `0x004d7113`, `0x004d46e0`: the entertainer's draw mod 3 is skipped
 with the look, and the handyman's `+0x21a` is not written), and the researcher's only before it researches
-(`0x00502bca`, `0x00502afd`, `0x00502cad`, `0x005026f6`), where it leaves the state as it was. The guard's has none.
+(`0x00502bca`, `0x00502afd`, `0x00502cad`, `0x005026f6`), where it leaves the state as it was. The guard's decide has none; a guard is asked only as a chase starts (`FUN_004d6260`, `0x004d6264`), where one too tired logs "Too tired to chase kids" and is not sent.
 
 In OpenTPW: `StaffBehaviour.TiredOrCarryingOn` (`FUN_00506a40` past the strike), `TooTiredToWork`, `Rest`'s decide,
 `Hired`; `Staff.Pace` on `Peep.Ease`, the park's sweep calling it before the stamp; the shared setter's hurry. The
@@ -2796,7 +2795,7 @@ guests `FUN_004fa990` passes, kept and counted again when it is more than five f
 park is closed, so I'm not considering striking" for both. So a kind is looked at only in an open park with nobody
 in it. Past that, for each kind with a member whose stamp is not this tick: the stamp
 is written; a set flag is cleared and nothing else is done; a clear one calls `FUN_00508f70( kind )`
-(`0x00508f39`, its only caller). A strike therefore lasts one month and the kind is looked at again the month
+(`0x00508f39`, its only caller). A strike therefore ends at the first later month's look to pass those gates, or on the picket ("The staff's side"), and the kind is considered again at the passing look
 after.
 
 **The 24 months, `FUN_004f8800`.** It adds `mGameTick × mFunnySecsPerRealSec / 4 × 10,000,000` to
@@ -2812,8 +2811,8 @@ reader was found, looking after each `FUN_00519450` call); for kind 0 alone and 
 (`+0x1efa4` down by `0x7c`), cells whose dword at `[0x008023a0] + id × 68 − 0x18` is set (`FUN_004c8180`) over
 cells of kind 1, 3 or 9 (`FUN_004c8150`), above 0.2 (`[0x007008dc]`, `0x005093c2`); then, for every kind, more
 than three members whose rest bytes (`(u8)trunc( +0x1fc )`) average under 15 by unsigned division ("striking
-through fatigue"), or more than three whose happiness bytes (`+0x1f8`) do ("through unhappiness"). What the cell
-dword is, most likely litter, is not read (Q225).
+through fatigue"), or more than three whose happiness bytes (`+0x1f8`) do ("through unhappiness"). The cell
+dword is the one the handyman's litter search tests (`FUN_004c8ed0`, the cell's `+0x2c`); what writes it is not read (Q225).
 
 **The levels, `FUN_00508f70`.** With a cause, by the level: 0 becomes 1 and posts a warning; 1, 2 and 3 become 2,
 3 and 4, set the flag and post a strike; 4 stays 4, sets the flag and posts a strike. With no cause the level and
@@ -2828,7 +2827,7 @@ strike "...have gone on strike" (125, 128, 131, 134, 137) and the calling-off ".
 all" (140, 143, 146 and on). The message ids' own rows in the metadata table were not read.
 
 **The staff's side.** Every decide opens with `FUN_00506a40`'s arm (`0x00506a4d`..`0x00506b25`): the kind's
-flag set and the gate's `VAR_STATUS` reading 1 (`FUN_0051a290`) log "Right, I'm fed up, I'm going on strike", set
+flag set and the gate's `VAR_STATUS` reading 1 (`FUN_0051a290`) log "Right!  I'm fed up, I'm going on strike!  And I'm going to that bus stop!", set
 the member's `+0x188` to 1, and draw the world random four times: a cell x of `StrikeAreaStartX` + draw mod
 `StrikeAreaSizeX` (`0x007855ec`, `0x007855f4`: 40 and 6), a byte inside it, a cell y of `StrikeAreaStartY` + draw
 mod `StrikeAreaSizeY` (`0x007855f0`, `0x007855f8`: 9 and 1), a byte inside it. A route there (`FUN_004fa5f0`)
@@ -2839,7 +2838,7 @@ byte less 128, held to `0x7ff` unsigned; then, with the park shut and nobody ins
 taken afresh), the kind's flag is cleared (`FUN_005099a0`, its only caller); then, the flag clear, a route to
 `EntranceA`'s cell (`0x007855bc`, `0x007855c0`: (47,17)) takes state 1, and none takes state 0. The only other
 reader of a flag is the ride window's status (`FUN_00485f60`: 7 and `0x13` for the mechanics', `0xd` for the
-handymen's). What reads `+0x188` is not traced.
+handymen's). `+0x188` is the walking mode: the member's navigator sits at `+0xd4` (`FUN_004fa5f0`, `0x004fa656`) and the route planner `FUN_0050f8e0` hands its `+0xb4` to the search (`0x0050f931`), so the route to the picket is planned in mode 1. OpenTPW plans it in mode 0 (`ParkPeople.WalkingMode`).
 
 **Measured in the original** (`q138/orig/`: `watch.py`, `a.log`, `PREDICTION.txt`, `PREDICTION-result.txt`; five
 predictions of six, the miss a timetable of mine). The shipped save's five records read {0, 0, 715}: the month
@@ -2853,7 +2852,7 @@ state 4 again within 18. `s4-strike.png` is the picket. Not run: a park open and
 forced one, a calling-off, a strike ended by shutting the park, a walk that fails; the advisor's lines were not
 listened to.
 
-**Reach** (`CLAUDE.md` rule 3). The month's look is reached every month. `FUN_00508f70` is reached only in an
+**Reach** (`CLAUDE.md` rule 3). The month's look is reached every month. `FUN_00508f70` is reached, unless `mForceStrike` is set (`0x00508e85`), only in an
 open park with no guest inside as a month turns, and does anything only past 66.5 minutes; no Lost Kingdom park
 left to run gets there, and a player's can.
 
@@ -2870,7 +2869,7 @@ the walk to `EntranceA`. `Staff.SettingOffForTheStrike` is `+0x188`.
 
 **Counted, not built.** The three posts, where `FUN_00508f70` makes them: `STRIKE_WARNING_TO_THE_ADVISOR`,
 `STRIKE_TO_THE_ADVISOR`, `STRIKE_CALLED_OFF_TO_THE_ADVISOR` (`docs/PLAYER-GAPS.md` gap 4: the park's advisor
-does not speak). The handymen's cell ratio, `STRIKE_HANDYMEN_CELL_RATIO`, which answers as no cause (Q225).
+says none of these three). The handymen's cell ratio, `STRIKE_HANDYMEN_CELL_RATIO`, which answers as no cause (Q225).
 `STAFF_HQ_MONTHLY_STRIKE_CHECK` is gone. The ride window's three strike statuses (`FUN_00485f60`) are Q212's.
 
 **Differences, each said at its site.** The look's guest count is taken as the month turns, where the
@@ -2907,7 +2906,7 @@ park, a walk that fails (tested only).
 | The mechanic, the handyman and the entertainer with no work | walk about | walk about: the mechanic and the handyman on every decide, the entertainer on `mGameTick & 3` (`StaffBehaviour.WalkAbout`, `Entertain`; "The no-work walk, in both games") | from their saved walks' ends |
 | The mechanic's search for a ride | `FUN_004daa90` on every decide not too tired | built (`StaffBehaviour.FindRide`; "The mechanic's repair"); an upgrade job is counted, `MECHANIC_UPGRADE_JOB` | every mechanic decide |
 | The handyman's searches | litter `FUN_004c8ed0` at his decide and at his idle pre-step, then a toilet `FUN_004d7880` | the litter search counted, `HANDYMAN_LITTER_SEARCH`, and answers none; the toilet search built (`StaffBehaviour.FindToilet`; "A toilet's dirt") | every handyman decide; no cell here holds litter (Q225) |
-| The entertainer's performance | a draw mod 3 of nought, a guest in reach: a second draw, the bank's state animation, state `0xe` for WorkDuration + 1 sweeps, effect `0x87` ("The entertainer's performance") | built (`StaffBehaviour.Perform`; "The performance, in both games"); the look is `ParkPeople.GuestsNear`, each guest at the cell the park has them linked into; effect `0x87` counted, `STAFF_SOUND_PERFORMANCE_END` (Q135) | a third of the entertainer's decides |
+| The entertainer's performance | a draw mod 3 of nought, a guest in reach: a second draw, the bank's state animation, state `0xe` for WorkDuration + 1 sweeps, effect `0x87` ("The entertainer's performance") | built (`StaffBehaviour.Perform`; "The performance, in both games"); the look is `ParkPeople.GuestsNear`, each guest at the cell the park has them linked into; effect `0x87` played (`StaffBehaviour.PlaySound`, Q135) | a third of the entertainer's decides |
 | The stand as a member goes idle | SetState(0) queues animation 3 every time (`FUN_004fa460`) | queued from a performance and after a clean only; any other idle keeps the picture it had | every idle |
 | State scripts 1 to 3 (words 1800, 1812, 1824) and a bank with no group | played; an animation past the table | not copied, counted `SPRITE_STATE_ANIMATION_NOT_STARTED`; counted `ENTERTAINER_BANK_WITHOUT_A_STATE_GROUP` | no shipped bank |
 | The entertainer's region effect | the pre-step `FUN_004d4660` moves `RegionFX[0]` with them, cell by cell | built, `ParkPeople.MoveEffect`, before the member's turn ("The region effects") | every cell the entertainer crosses |
@@ -2928,8 +2927,8 @@ A toilet is an object with `mFlags & 1`, set by the constructor from the descrip
 State of repair (file 1074): 100 at construction (`0x004db360`), and **dirty means it truncates to a byte below 25.0**
 (`FLD [ECX+0x44]`, `__ftol`, `AND EAX,0xff`, against `0x00700550`). That test is `FUN_004e0390`, and it is inlined at
 six sites in four more functions (every reference to `0x00700550` in the image). Every store to an object's `+0x44` in the object code (`0x004db000`..`0x004e3000`, swept) is in one
-of the six functions named here. Not ruled out: seven float stores to a `+0x44` outside that range whose structures
-were not read (`0x00432ef1`, `0x00442548`, `0x0053dd42`, `0x005d9a9e`, `0x005d9d86`, `0x005dcd33`, `0x005e310c`).
+of the six functions named here. Not ruled out: fifteen `FSTP` float stores to a `+0x44` outside that range whose structures
+were not read (`0x00432170`, `0x00432eb3`, `0x00432ef1`, `0x0043d6b5`, `0x00442535`, `0x00442548`, `0x00472083`, `0x0053dc03`, `0x0053dd42`, `0x0055d296`, `0x0056b8ed`, `0x005d9a9e`, `0x005d9d86`, `0x005dcd33`, `0x005e310c`), nor any integer store of a float's bits to a `+0x44` there.
 
 **What lowers it: use, and nothing else a shipped toilet reaches.**
 
@@ -2952,13 +2951,13 @@ not run). Lost Kingdom's three toilets (things 21, 22, 23, item 1402) are saved 
 |---|---|---|
 | The queue turn's dirt gate | `0x005001f0` | thought `0xe`, the queuer is put out ("The queue", step 3) |
 | The arrival's excitement difference `FUN_004fd4e0` | `0x004fd4ea` | answers 100 instead of the difference, which the gate at `0x004ffc7a` reads as "too exciting" (event 4, thought `0xf`) - but only at the back of the queue with room, and when `FUN_004e0860( object, 1 )` is non-zero (`0x004ffc68`). With 1 that function answers the descriptor's `+0x13c` itself, `UsageInfo.ExcitementLevel`, which neither jungle toilet sets: no Lost Kingdom toilet takes this arm, and an arrival joins a dirty one |
-| The object's turn `FUN_004e0b90` | `0x004e0d16` | `VAR_WORN` = 1, every turn. `Toilet.rse` answers it once with `ADDOBJ 1, 1, 9, 1` and `ADDOBJ 1, 1, 69, 1` (latched in its own `VAR_WORNON`), and `KILLOBJ 1` when `VAR_WORN` reads nought again |
+| The object's turn `FUN_004e0b90` | `0x004e0d16` | `VAR_WORN` = 1, every turn its `mState` (`+0x19c`) is neither 3 nor 4 (`0x004e0c04`, `0x004e0c0d` leave before the test). `Toilet.rse` answers it once with `ADDOBJ 1, 1, 9, 1` and `ADDOBJ 1, 1, 69, 1` (latched in its own `VAR_WORNON`), and `KILLOBJ 1` when `VAR_WORN` reads nought again |
 | The handyman's search `FUN_004d7880` | `0x004d79ab` | a candidate for cleaning |
 | The destructor `FUN_004dd0a0` | `0x004dd222` | unstamps effect 6 where a clean toilet's sale unstamps 1 |
 
 The chooser does not read it: a dirty toilet is still chosen and walked to. Nothing on this path closes one; the
 request for service below does, and the other closers were not shown unreachable for a toilet. The one other float
-read of an object's `+0x44` found is the mechanic's repair time (`0x004da42a`).
+read of an object's `+0x44` found is the mechanic's repair time (`0x004da42a`); the serialiser `FUN_004db7d0` reads it too, truncated to a byte the same way (`0x004dc6cf`).
 
 **The region effects.** `FUN_004d8440( fx, cell )` stamps and `FUN_004d8460( fx, cell )` unstamps, both
 `FUN_004d8480( sign, fx, cell )`, whose `this` is `[0x008023a0]`, the world `+0x2d8`: over the square of the effect's
@@ -2995,7 +2994,7 @@ entertainer's pre-step `FUN_004d4660` and a guard's `FUN_004d6360`, each before 
 which unstamp their effect round the old id and stamp it round the new when the two differ; and their destructors
 `FUN_004d4620` and `FUN_004d5eb0`, which unstamp round the old. No other kind's is ever moved: a mechanic's, a
 handyman's and a researcher's stay the cell they were made on in every file. **An id of nought walks no cell**
-(`FUN_004d8480`: its row is 511 less the radius, past 127), so a member loaded with nought has nothing taken off
+(`FUN_004d8480`: its row is `0x1ffffff` less the radius, past 127), so a member loaded with nought has nothing taken off
 and theirs stamped at the first pre-step. An entertainer's effect is five cells and sums to 6; a guard's is 49
 cells and sums to 114.
 
@@ -3011,7 +3010,7 @@ their purchase; a sale always takes it off), and nothing reads the grid: a guest
 (Q157) and the chooser still divides by the file's attraction word.
 
 **The handyman's cleaning.** With no litter in range (`FUN_004c8ed0` answers 0) the decide `FUN_004d7100` calls
-`FUN_004d7880` (`0x004d72f7`), which walks every object from `mFirstObject` and keeps the nearest toilet that
+`FUN_004d7880` (`0x004d72f7`), which walks every object from `mFirstObject` and keeps the last toilet (2 says where that is the nearest) that
 
 1. nobody else is assigned to (`FUN_004e0220`: `mAssignedStaffMember` `+0x5e` nought or this handyman; the getter
    itself forgets an assignment more than 100 ticks old, `+0x60`, whose member no longer aims at this object,
@@ -3025,7 +3024,7 @@ their purchase; a sale always takes it off), and nothing reads the grid: a guest
 3. the handyman can route to its entry cell `mEntryPos` (`+0x36`, `FUN_004fa530`).
 
 The route test is the destination setter itself (`FUN_004fa530` writes the walker's `+0x18`, `+0x1a` and then asks
-`FUN_00510100`), so the handyman is left aimed at the last candidate tested, which is the winner unless a later
+`FUN_00510100`), so the handyman is left aimed at the last candidate tested past the stranded refusal (`0x004fa5a4`, which writes nothing), which is the winner unless a later
 candidate's route failed. `+0x60` is the save's `mTimeMarkedForMaintenance` (file 1082: the serialiser handles
 `+0x64` and then `+0x60`, `0x004dc710`, `0x004dc736`).
 
@@ -3178,7 +3177,7 @@ Named by its own strings: `"Litter gone up by %d, is now %d"`, `"Customer bought
    which the needs turn sets back from the need within four sweeps. Event `0x11` names the toilet; `0x12` names nothing
    and is pushed before illness is emptied. The online branch also sets the toilet's script variable 8 to nought
    (`0x004e2517`). OpenTPW builds the dirtying (`ParkRideOperation.WearByUse`, Q100b; the two
-   effect stamps counted), the need, the illness and the speed, and counts both events
+   effect stamps with it, Q257e), the need, the illness and the speed, and counts both events
    (`ParkRideOperation.UseTheToilet`, Q170b).
 6. **Then, for a sideshow only:** `person[+0x1d0] += 1` and a happiness rise computed from **`log2( costOfGoods / pricePerUse )`** - `FUN_004e1a10` (`+0x188`, cost of goods) over `FUN_004e1a00` (`+0x194`, price), `FILD`/`FIDIV` at `0x004fe835`/`0x004fe84b`, the logarithm by `FYL2X` over `ln 2` - scaled by the byte at `DAT_0078505c` (`PeepInfo.MediumHappinessChange`), and logged as `"Sideshow won - happiness up %d points to %d"`.
 
@@ -3259,8 +3258,8 @@ Alexah's two played Lost Kingdom saves, written by the original, which hold 29 a
 is not reproduced (`ParkGenerator`); the bob's phase counts placements on the frame clock at 30 a second rather than
 per rendered frame; the two other callers of the placement are not reproduced; whether the per-frame placement runs
 while a park's menu has paused the clock is not traced; a saved balloon's first turn is one interval after the load,
-as a person's is; a park saved while a balloon bursts loses the burst at load, as no guest names it any more and its
-loop stack is not read (none of the 79 balloons in Alexah's four played saves that hold any is bursting). No prank
+as a person's is. A balloon saved while it bursts, which no guest names any more, goes on bursting after the load on its
+saved loop stack (`ParkPeople`, `Balloon.Saved`; none of the 79 balloons in Alexah's four played saves that hold any is bursting). No prank
 and no challenge exists here to read it.
 
 ### A costume
@@ -3554,8 +3553,8 @@ in double ("What a thing is worth to a guest", "Where OpenTPW differs", the FPU'
 (`ParkState.TurnTheYear`, on `GameCalendar.YearRolled`). Counted, not built: the analyser's money in and out
 (`BANK_ANALYSER_MONEY_IN`, `_MONEY_OUT`), the gate fee's analyser totals and challenge post
 (`GATE_FEE_ANALYSER_TOTALS`, `GATE_FEE_CHALLENGE_POST`), the booking's (`COST_OF_GOODS_CHALLENGE_POST`), the purchase's golden-ticket arm (`PURCHASE_GOLDEN_TICKET_ARM`, on
-every such purchase, as no list of ticket-bought items is kept) and a kart or water ride's track at a sale
-(`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. Not counted: the buy list's mystery row and its ticket test (Q141).
+every such purchase, as the purchase does not ask the player's `RideIds`) and a kart or water ride's track at a sale
+(`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row is built (`hud.md`, "The mystery row"); a click on it is refused whatever tickets the player holds and counted, `MYSTERY_RIDE_PURCHASE`, as its ticket test is not built (Q141).
 
 **Who reads what the booking moves**:
 
@@ -3608,7 +3607,7 @@ Ghidra and over every shipped `.sam`). **None of it is built in OpenTPW**: Q141 
 the game type `DAT_00fb3b7c` is 0 (`0x004d4a31`..`0x004d4a40`), so play awards no ticket in Instant Action or online
 (`saves.md`, "Keys and tickets"). It runs the six Local tickets (`FUN_004d4bc0`), the four Global (`FUN_004d4e50`), then
 the Secret. Each ticket is tested and awarded alone, never "all met", and **every threshold compare is a signed strict `>`**
-(`CMP` then `JLE` past). The thresholds are the balance globals by key order (`park-engine.md`, "How a key finds its
+(`CMP` then `JLE` past; the one at `0x00785798` as a float, `FILD`/`FCOMPP` then `JZ` past at `0x004d4cae`, as strict). The thresholds are the balance globals by key order (`park-engine.md`, "How a key finds its
 global"): `GoldenTicketLocal`'s seven keys at `0x00785790`..`0x007857a8`, `GoldenTicketGlobal`'s five at
 `0x007857ac`..`0x007857bc`, all ints. Their values per theme are FileFormats `sam.md`'s.
 
@@ -3624,7 +3623,7 @@ global"): `GoldenTicketLocal`'s seven keys at `0x00785790`..`0x007857a8`, `Golde
 | Global 1 | `FUN_004cc3b0`: the highest excitement (`FUN_004e0860`) over rides of `WhichTrackType` 1, car track | `GokartExcitement` `0x007857b0` |
 | Global 2 | `FUN_004cc6f0(&id, 2)`: the longest `FUN_00545310` section list over rides of `WhichTrackType` 2, water | `WaterLength` `0x007857b4` |
 | Global 3 | `FUN_004cd7f0`: the cells of kind 9, 10, 4 or `0x15`, or whose record is track type 11, 13, 16, 18 or 25 (`hud.md`'s cell predicates) | `MinCellsCovered` `0x007857bc` |
-| Secret | progress `+0x26` clear and `FUN_004cd720() == 100` exactly: the whole percentage of the cells not of kind 2, 7 or `0x1e` whose 10-byte record (`FUN_004d8410`, world `+0x1b1104`) has a word at `+6` above 0 (what `+6` holds is not decoded) | none |
+| Secret | progress `+0x26` clear and `FUN_004cd720() == 100` exactly: the whole percentage of the cells not of kind 2, 7 or `0x1e` whose 10-byte record (`FUN_004d8410`, the world's `+0x2d8 + 0x1b1104`) has a word at `+6` above 0 (what `+6` holds is not decoded) | none |
 
 `MinCellsOwned` (`0x007857b8`) has no reader: no dword of the executable holds the address. The Local tickets first skip
 one the park holds (`FUN_005af7f0(i)`); the Globals have no such test, because the award itself decides
@@ -3660,7 +3659,7 @@ being offered") is not traced.
 
 **The pacing.** The five `Challenges.*` keys sit at `0x007857c0`..`0x007857d0` by key order: `DaysAfterCompletedChallenge`,
 `DaysAfterDeclinedChallenge` (readers not traced), `DaysUntilFirstChallenge` (`0x007857c8`), `DeclinesToForfeit` (`0x007857cc`)
-and `ShortTimeLeftWarningAt` (`0x007857d0`). `FUN_004d1e90`, the daily tick: with the system off, it needs the park open
+and `ShortTimeLeftWarningAt` (`0x007857d0`). `FUN_004d1e90`, the challenge thing's turn on every thing sweep (`FUN_0050b360`, `0x0050b4f8`): with the system off, it needs the park open
 (`FUN_004c9050`) and `FUN_004f8800`'s time in whole days (`/ 0xC92A69C000`) at least `0x007857c8`, then switches it on
 and offers at once. Later offers wait for `mNextChallengeEventTime` (`+0x3d0`, an absolute time on the park calendar).
 While one is on, a tick whose world counter `+0x1da70c` has its low two bits nought posts message `0x160` from the slot
@@ -3670,7 +3669,7 @@ While one is on, a tick whose world counter `+0x1da70c` has its low two bits nou
 time **left**, in days × 100 / `TargetTime`, is below `0x007857d0`, it raises message `0x17f` (`FUN_0040f7a0`).
 
 **The win test**, `FUN_004d1660(slot, &value, atEnd)`, by Type; with `CheckAtEndOnly` (`+0x1c`) set it tests only at the
-end. None of the metric helpers named here is decoded.
+end. Of the metric helpers named here only `FUN_004c9530` and `FUN_004c95d0` are decoded ("A held balloon", 10).
 
 | Type | Wins when |
 |---|---|
@@ -3706,7 +3705,7 @@ Five constructors join set `0xc`: model 9's (`0x00508a08`), the tag system's, th
 1. **Thing 1**, model 9, the header's `mStaffHQ`, pays the training (`FUN_00508a30` → `FUN_00508e70` → `FUN_0050c800`,
    `0x00508e79`), whether the park is open or shut, and then looks at strikes ("The strike", above).
 2. **Thing 4**, the tag system, ignores it.
-3. **Thing 5**, the park analyser, closes the month (`FUN_004c7720`, its one call `0x004c739c`): it samples the
+3. **Thing 5**, the park analyser, closes the month (`FUN_004c7720`, its one call `0x004c739e`): it samples the
    balance into its ring (`+0x1f104`), then pushes and zeroes the month's costs `+0x1f5a0`, staff `+0x1f7f0`, training
    `+0x1fa40` and cash in `+0x1fc90`, each into a 144-month ring (`FUN_004ce290`), and rolls a dozen totals besides.
    One of them is the guests' stay: the mean of its ring of the last fifty stays (`FUN_004cef30` over `+0x21600`,
@@ -3968,7 +3967,7 @@ Sets 22 to 25, the four arrows, are named by no thought. **All 22 callers**, and
 | `0x00500200`, `0x0050033f`, `0x005003b1`, `0x0050045b`, `0x005005b9`, `0x00500650`, the queue turn | `0xe`, `0xb`, 4, `0xc`, `0x10`, `0xd` | `PeepBehaviour.QueueTurn`; `0xc` is the boredom arm's, unbuilt and counted (`QUEUE_TURN_BOREDOM`) |
 | `0x00500756`, the door's price | 6 | `PeepBehaviour.WalkAwayFromTheDoor` |
 | `0x00501496`, a shortened queue | `0xd` | `PeepBehaviour.QueueShortened` |
-| `0x00506b50`, `0x00506ccd`, `0x00506cf4`, every staff decide (`FUN_00506a40`) | `0x14` tired; else `0x13` at a happiness byte of 10 or less; else `0x12` above 97 when a draw's low four bits are nought | `StaffBehaviour.ThinkOfTheMood` |
+| `0x00506b50`, `0x00506ccd`, `0x00506cf4`, every staff decide (`FUN_00506a40`) | `0x14` tired; else `0x13` at a happiness byte of 10 or less; else `0x12` above 97 when a draw's low four bits are nought | `StaffBehaviour.TiredOrCarryingOn` |
 | `0x0050701f`, the patrol roll's thirty failures | `0x16` | `StaffBehaviour`'s patrol roll |
 | `0x00505709`, the strike walk `FUN_005056e0` | `0x15` | built: every turn of state 4 (`StaffBehaviour.Step`, Q138b) |
 
@@ -3978,7 +3977,7 @@ Counted by Q110 and built by Q110b (below); this section is Q110's account. **Th
 (`0x005347af`, `0x00534913`, `0x0053908c`, each then `FUN_004d8c50` and `FUN_004d8c60`); OpenTPW counts it once in
 `ParkState.SetRecord` and `ClearRecord`, where a cell's type changes to ground, path or queue (a track cell's writer
 has no caller here). The refusals (`FUN_004fa770`'s six callers) and the blinking square need a non-zero `+0x198`,
-which only the dead end writes, so they are reached only after `WANDER_DEAD_END_STRANDED_STAMP`.
+which only the dead end writes, so they are reached only after a wander has met a dead end (`PeepBehaviour.SetRandomDest`).
 
 **Measured in the original** (the reference park under Proton, off-screen, the park clock true; `strand.py` polls
 every person's `+0x198`, `mLastThought`, `mThoughtScript` and `mTimeBubbleShown` every 20 ms). The stock park left
@@ -3995,8 +3994,8 @@ again by a path laid beside it).
 
 **Read in OpenTPW**, predicted first (`q110confirm.py`). The stock park left alone 150 s: every new count nought, as
 predicted (no map edit, no dead end, no member of staff tired, at 10 or below or above 97, no patrol roll failed, no
-fee refused). `delpath 48 22`: `MAP_TYPE_WRITE_BLOCK_STAMP` 1, as predicted; `QUEUE_REMEASURE_BACK_CELL_STAMP` stayed
-nought where one was predicted, the prediction wrong: `ClearCell` measures again only for a cleared path cell
+fee refused). `delpath 48 22`: the block stamp counted once and no queue measured again:
+`ClearCell` measures again only for a cleared path cell
 beside an entrance, never beside a queue cell (`0x0053694b`). Ten guests made on the cut tail (49,22), a queue cell whose one link
 its own `mDirection` drops: 343 wanders in 40 s, **343 dead ends, every one from (49,22)**, the count equal to the
 log's lines. Where the original's three stood stranded, four of ours joined the queue behind them, the chooser's
@@ -4010,11 +4009,11 @@ one away; the hold-off test is unsigned, `mTimeBubbleShown + class × 20 <= mGam
 `FUN_0050be40` frees it when `mTimeBubbleShown + 12 < mGameTick`, unsigned; its three callers are the guest's needs
 turn (`0x00501951`, on every needs turn, riding or not), the staff handler on the member's own sweep in four
 (`FUN_00505490`, `0x005054b3`: `(id & 3) == (mGameTick & 3)`) and `FUN_004d7060`. So a bubble lasts 13 to 16 sweeps.
-The walk tick `FUN_004fa2a0` zeroes `+0x198` after its step, before it reads the give-up flag (`0x004fa30b`). The
+The walk tick `FUN_004fa2a0` zeroes `+0x198` after its step (`0x004fa30b`), between loading the give-up flag (`0x004fa301`) and branching on it (`0x004fa311`). The
 route's re-plan: `FUN_0050ed10` reads the block stamp at the walker's position shifted right by twenty
 (`FUN_004d8cd0`), and when the route's stamp `+0x48` is below it calls `FUN_0050f8e0( target, 1 )`, giving up
 (`+0xb8` = 1) when that finds no route; `FUN_0050f8e0` writes a fresh counter value to `+0x48` on a route found
-(`0x0050fd19`). The queue re-measure takes its counter value before the measure and writes it after (`0x004de233`,
+(`0x0050fd19`). The queue re-measure walks the queue to its back cell first (`FUN_004de130`, `0x004de210`), then takes its counter value and writes it into that cell's block (`0x004de233`,
 `0x004de266`).
 
 **The needs' pick, `FUN_004fc8a0`**, each need truncated to a byte, in order: hunger (`+0x1a8`) and thirst (`+0x1a4`)
@@ -4041,7 +4040,7 @@ same reason. A bubble runs no sprite script: it shows from the sweep it is made,
 sprite interval later. A saved bubble (`mThoughtScript`) is shown again after a load, its picture its sprite's script's (`saves.md`,
 "OpenTPW's writer, the arrival vehicle, a balloon let go and a thought read back"). The
 picker's litter arm is counted and never taken (`NEEDS_THOUGHT_LITTER_SHARE`), and its sound (`NEEDS_THOUGHT_4_SOUND`).
-A rider drawn as a head has the bubble over the head. The blink and the wave run on the frame clock at an assumed
+A rider drawn as a head has the bubble over the head. The original's blink and wave count rendered frames, at no rate of their own (measured under the harness's 30 fps cap); here they run on the frame clock at a chosen
 30 frames a second. **A failed route is not revived by a stamp** ("Q104"): `PeepBehaviour.Walked` gives up before
 the walk's step when no route is held.
 
@@ -4293,7 +4292,7 @@ The one-to-one rule — declares walk slots ⟺ uses the walk family — holds p
 | `0x00765280` | — | A table of `{name, operand-count-as-a-STRING}`, **106 entries, `NOP` to `SPARK`** (record 106 is not one). Confirms operand counts (WALKON 7, BOUNCE 2, WALKST_FLOAT 3, WALKFLOATSTOP 0). **Its ORDER matches the handler table's**, which is what confirms the numbering. | Table read |
 | `FUN_00551600` | `RSSE_Initialise` | `"Tried to Initialise twice"`. Its only use of the opcode name table is to SUM ITS CHARACTERS into a checksum at `DAT_00879190`. Not a dispatch. | Its own string |
 | `FUN_005597a0` | `RSSE_Load` | `RSSE` magic `0x45535352`, per-script mallocs, then the `OBJ ` list `0x204a424f`. Allocates walk slots as `count << 5`. | Disassembly |
-| `FUN_0055abf0` | — | The per-tick driver, 5,712 bytes, the largest in the region; walks the TOUR ride records at `[0x8791f8]` (slots 1..99, `0x122c` bytes each, twenty cars at stride `0xe4`, made by `FUN_0055a620`). Contains **no CMP/SUB against 73..78 at all**, so it is not the decoder. | Disassembly |
+| `FUN_0055abf0` | — | The flying cars' driver, run every 2nd tick (`TEST AL,0x1` on `[0x00877d34]`, `0x0054f5c0`), 5,712 bytes, the largest in the region; walks the TOUR ride records at `[0x8791f8]` (slots 1..99, `0x122c` bytes each, twenty cars at stride `0xe4`, made by `FUN_0055a620`). Contains **no CMP/SUB against 73..78 at all**, so it is not the decoder. | Disassembly |
 | `FUN_00557a70` | — | Fetch the next operand word: advances the IP at `+0x3c`, bounds-checked against `+0x50`, logging `"Tried to read outside scri…"` and parking the IP at `0xffffd8f0`. | Its own string |
 | `FUN_005573a0` | — | Resolve an operand: tagged `0x40000000` indexes the variable array at `+0x1c`, otherwise sign-extend the low 16 bits. | Disassembly |
 
@@ -4532,7 +4531,7 @@ The record is **16 bytes**: handle `+0`, node `+4` = `*(EBP+0x70) + slotIndex`, 
 - **The engine finds them by id in the walk space `0x800`**: `FUN_00557ab0` hands `FUN_0044b220` the bounce record's node with `0x800` (`0x00557b3a`..`0x00557b54`; the lookup is `audio.md`'s "Node lookup is by id AND a capability flag"). An id is unique only together with its flag. In that one model id 1 is `body` (`0x10000851`), `air` (`0x171`), `camera` (`0x1031`) and `body11` (`0x411`), and only `body` carries `0x800`.
 - Park objects load at the origin and are afterwards moved, so a node position must have the placed rotation and origin applied; the load origin is not the placed one.
 - `UsageInfo.RideHandlesSprite` is the flag "If the script handles the person sprite".
-- **Measured in the running game**: node 0 of thing 13 resolves to **(525.4, 252.6, 10.3)**, against the queue front at (525, 234).
+- **Measured in the running game**: node 1 (`body`) of thing 13 resolves to **(525.4, 252.6, 10.3)**, against the queue front at (525, 234).
 
 ## Where a WALKING peep is drawn, and it is INTERPOLATED per frame
 
@@ -4646,7 +4645,7 @@ in `voices`, where the build before read (510,230), 34.09 and 0.7128 (`q266/conf
 
 ## How a scream VARIES, and it is the script that does it
 
-The variety is not inside the sound engine. It is `Bouncy.RSE`'s own subroutine at **193**, reached by `JSR ->193` from **22** and **116** — that is, on **every pass** of the ride loop:
+Which band a scream plays in is not chosen inside the sound engine. It is `Bouncy.RSE`'s own subroutine at **193**, reached by `JSR ->193` from **22** and **116** — that is, on **every pass** of the ride loop:
 
 ```
 193  BOUNCING     VAR_TEMP        ; how many riders are bouncing NOW
@@ -4739,7 +4738,7 @@ object record's own `mOperatingCapacity`. The byte layout is in the FileFormats 
 
 **A channel's flag word is the engine's own field, and it is NOT the flag word a caller passes in.** The
 two overlap and disagree. A caller's flags are `0x1` loop, `0x2` start at once, `0x4` do not lay the rest
-pose down, `0x8` do not apply the hide list. The field stored on the channel uses `0x1` the
+pose down, `0x8` do not apply the hide list and no rest pose either (the test before `FUN_00472310` is `0xc`, `0x0047309f`, `0x00473126`). The field stored on the channel uses `0x1` the
 same way, but its `0x2` means **frozen at frame nought**, its `0x4` means **held on the last frame** and its
 `0x8` that **a role 0 clip has run past its end there** (`saves.md`, "OpenTPW's writer, a channel's `0x8`") —
 states rather than requests. A start of a loaded role's in-range entry over a channel that is not idle
@@ -4764,8 +4763,8 @@ where the save left them (`park.md`, "Where OpenTPW's animation state parts from
 Restoring only the script is a net loss, and measurably so: a thing whose
 steady-state loop holds no animation instruction never reaches the `LOOPANIM` in its prologue again, and
 ten of Lost Kingdom's fourteen placed things stood frozen for the whole session when the counter alone
-was put back. The rest is stepped over by length, neither restored nor counted in the `unimplemented` census — the
-limbo, bounce and walk tables — so the walk still has to add up. The name is **not** in the
+was put back. The limbo, bounce and walk tables are restored too (`RideScript.RestoreRiders`), each reading moved as
+the deadlines are. The name is **not** in the
 saved struct and is taken off the script's own opening `NAME` instead, which matters because resuming
 skips that instruction and `FINDSCRIPTRAND` looks a script up by name. `ParkRides.BindNew` — the path a
 player takes by building something — deliberately restores nothing, because a new thing has no past and
@@ -4779,7 +4778,7 @@ Behaviour that reads like a bug and is the original:
 - **A healthy ride's turn never completes an admission.** `FUN_004e0450` is reached only while closing, or from `Invite`'s `mCanLoad == 0` bail. The guest's own state-14 turn does the completion.
 - **A shop is offered and paid like a ride.** The queue-room test reads the object's `+0x40`, which is **not** `mQueueSizeInCells` as loaded: `FUN_004de130` (`GetBackOfQueue`) *overwrites* it by walking the map whenever `mBackOfQueue` is nought, and `FUN_004dd920` calls that **before** it reads the count. The shop's entry cell connects to a path, so the walk answers one cell and `0 < 4` passes. All six objects carrying the choosable bit really can be offered — the three toilets are in the identical position, and no toilet in any park could be visited if the count were read as loaded. **And a shop does NOT take its money through LIMBO**: `Coconut.RSE` declares zero limbo slots and zero walk slots and uses neither family, running the same `VAR_LETMEON` → `WAIT 1000` → `VAR_LETMEOFF` handshake a ride runs. The engine never reads a script's limbo slots either: swept over all 43 functions that resolve a script frame, with the opcode handlers' own accesses as the positive control. It is paid by the ordinary dismiss path, `FUN_004e1410` → `FUN_005014e0` → `FUN_004fd970` → `FUN_004fe1a0`. Limbo is real, but it is how `steak`, `giftshop`, `balloon`, `Cost_shp`, `arc2x3` and the Super Toilet's `SupBog` hold a guest — never `coconut`, and it is script-private bookkeeping the engine never reads.
 - **`SINGLESCREAM`'s negative branch skips effect `0x6b`.** The gap is in the original's switch and is matched by the shipped category listing.
-- **`BOUNCESETBASE` writes a field the bounce family never reads**, so `Bouncy`'s rider nodes stay at 0..9.
+- **`BOUNCESETBASE` writes a field the bounce family never reads**, so `Bouncy`'s rider nodes stay at ids 1..10.
 - **A guest the ride cannot route away is teleported onto the exit and left there** with a `?` bubble, and the ride closes itself.
 - **`UsageInfo.InitChanceOfLoosing`** is the game's own spelling, and it is stated as LOSING where the runtime field is winning.
 
@@ -4812,7 +4811,7 @@ The Jungle Spray is queued for and invited in **about one run in five** at that 
 - **`FUN_005019f0` case `0x11`**, the walk of the `mFirstGuard` chain through `+0x210` / `+0x212`.
 - **Whether a shop's duration of nought is correct** (it may simply not read it) where `FUN_004df8f0` would take a clamped value from the descriptor's `+0x1a0`. A bought one's is: the constructor writes `+0x5c` only for a starting duration above nought, and every shop's is nought (Q171).
 - **Refuted, so do not repeat:** "only `UNBOUNCE` writes `VAR_LETMEOFF`" — there are six writers, and the claim is false for 16 of the park theme's 17 dismissing ride scripts. "The shops' `mOperatingCapacity` might be nought, leaving them permanently full" — every visitable object has a non-zero capacity.
-- Descriptor keys present in the `.sam` files that OpenTPW does not read yet: `ShopType`, `RideHandlesSprite` (the flag byte's `0x20`, Q52), `RequiresTeleport`.
+- Descriptor keys present in the `.sam` files that OpenTPW does not read yet: `ShopType`, `RequiresTeleport`.
 
 ## Measuring the corpus without inventing findings
 

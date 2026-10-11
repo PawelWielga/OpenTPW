@@ -112,7 +112,8 @@ public class Level
 		// into a park disagree about case: the debug console passes "jungle" and the island panel
 		// passes the island's own name, "Jungle". Everything downstream lower-cases anyway, so the
 		// only thing that actually differed was the log - but a name that is sometimes capitalised is
-		// a trap set for the first thing that ever keys on it.
+		// a trap set for the first thing that ever keys on it. Global's path below is the one still built
+		// from the name as given; the file system matches a name whatever its case.
 		ThemeName = levelName.ToLowerInvariant();
 		Kind = kind;
 
@@ -211,8 +212,9 @@ public class Level
 	/// of the park's own terrain.wad, through the same model and texture path the lobby already uses.
 	/// </para>
 	/// <para>
-	/// The advisor says a single line - see <see cref="UI.ParkLines"/> - rather than the scored queue of them
-	/// the original runs.
+	/// The advisor is handed lines from two places: <see cref="UI.ParkLines"/> for the park's screens, and
+	/// <see cref="ParkAdvisorMessages"/> for the park-door messages, which it scores through eight slots. The
+	/// original's other park messages and its polling analyser are not built.
 	/// </para>
 	/// </summary>
 	private void SetupParkEntities()
@@ -259,15 +261,12 @@ public class Level
 		};
 
 		// The park's own sky, and it is a real one: every theme ships a sky/ folder holding the same
-		// three textures the lobby's does, and the original loads them through the same loader -
-		// FUN_005852b0, called by the lobby at 0x005d8bac and by a park's level load at 0x00407f95,
-		// which state 9 reaches through FUN_00407e00 (0x0054ed3f).
+		// three textures the lobby's does, and the original loads them through the same loader
+		// (FUN_005852b0; docs/exe/park-engine.md, "The sky").
 		//
-		// Centred on the world origin at 300, because that is where the sky object puts itself
-		// (FUN_00584ef0 writes both, FUN_005856c0 puts them back) and NOTHING re-centres it for a park:
-		// the setter's only caller is the lobby, and the rebuild's only other caller is engine init.
-		// Untinted, because a park has no island script and so no SKYCOLOUR - see Sky's constructor for
-		// everything that decides.
+		// Centred on the world origin at 300, because that is where the sky object puts itself and
+		// NOTHING re-centres it for a park. Untinted, because a park has no island script and so no
+		// SKYCOLOUR - see Sky's constructor for everything that decides.
 		//
 		// First, as in the lobby, because the sky never writes depth and has to go down before anything
 		// that should cover it.
@@ -342,18 +341,18 @@ public class Level
 		_ = new ParkGuestSprites( ThemeName, park, banks );
 		load.Mark( "guest sprites" );
 
-		// And what those people want, which is deliberately not the same object as what they look like:
-		// the sprites above never run a tick, and this never touches a vertex. It goes after them only
-		// for readability - it asks nothing of them.
-		// And it is handed the two things the admission states need that the save alone cannot answer: the
-		// balance stack, for what a guest will put up with paying, and the gate's own script state, which
-		// is what a guest waiting outside is actually waiting on.
-		// And the scripts a ride's own turn drives, by the same delegate argument the gate already uses: the
-		// people need one script per thing and nothing else from the rides, and the rides are built above
-		// this line so they cannot be handed the people instead.
 		// Who the park may hire, which is a population of its own and nothing to do with the people
 		// already in it - see ParkStaffPool. Built before the park's own people only for readability;
 		// neither asks anything of the other.
+		// ParkPeople, built after it, is what those people want, which is deliberately not the same object
+		// as what they look like: the sprites above never run a tick, and ParkPeople never touches a vertex.
+		// It goes after them only for readability - it asks nothing of them.
+		// It is handed the two things the admission states need that the save alone cannot answer: the
+		// balance stack, for what a guest will put up with paying, and the gate's own script state, which
+		// is what a guest waiting outside is actually waiting on.
+		// And the scripts a ride's own turn drives, by the same delegate argument the gate uses: the
+		// people need one script per thing and nothing else from the rides, and the rides are built above
+		// this line so they cannot be handed the people instead.
 		StaffPool = StaffPoolFor( park, Balance, ParkState?.GameTick ?? 0 );
 		load.Mark( "staff pool" );
 
@@ -475,7 +474,7 @@ public class Level
 	/// or null where nothing was written.
 	///
 	/// <para>
-	/// <b>Three of the writer's five stages are built, and the fourth for the things the file holds</b>
+	/// <b>The stages built are the ones <c>docs/exe/saves.md</c>'s "OpenTPW's writer" sections describe</b>
 	/// (<see cref="ParkFileWriter"/>): the file the park was loaded
 	/// from goes out again with the park's clock, its door, its visitor count, its cash, the camera, the ground
 	/// (<see cref="WrittenCells"/>), the people (<see cref="ParkPeople.Written"/>), the pool of candidates
@@ -775,7 +774,7 @@ public class Level
 
 	/// <summary>
 	/// The things a park file written from <paramref name="loaded"/> holds that are no person: the file's own, since
-	/// nothing bought or sold is written yet. A person's handle to any other thing is written as nought.
+	/// nothing bought or sold is handed to this overload. A person's handle to any other thing is written as nought.
 	/// </summary>
 	internal static HashSet<int> WrittenThings( ParkWorld loaded ) =>
 		[.. loaded.Things.Where( thing => thing.Model is not (ParkWorld.GuestModel or (>= 4 and <= 8)) ).Select( thing => thing.ThingId )];
@@ -815,7 +814,7 @@ public class Level
 	///
 	/// <para>
 	/// <b>A cell that has joined or left a footprint, or changed its footprint's owner, is left as the file's and
-	/// counted</b>: the thing that stands there is not written yet, and neither is the cell's <c>mWho</c>, so the file
+	/// counted</b>: this overload is handed no thing bought or sold, so the thing that stands there is not written, nor the cell's <c>mWho</c>, and the file
 	/// would hold a footprint with nothing on it, or a thing on bare ground. An entrance that has only gained or lost
 	/// a link is written.
 	/// </para>
@@ -1366,8 +1365,8 @@ public class Level
 
 	/// <summary>
 	/// How long a right press stays a quick click: a frame's tick more than 200 ms after it disarms it
-	/// (<c>0x0048823f</c>). The original's release reads no clock, only the flag (<c>0x0048836f</c>); after a stopped
-	/// frame its tick came before the release, three times of three, which is the order here.
+	/// (<c>0x0048823f</c>). The original's release reads no clock, only the flag (<c>0x0048836f</c>). Here a frame's
+	/// tick is tested before its release, the order the original's two arrive in after a stopped frame.
 	/// </summary>
 	internal const long QuickClickLimit = 200;
 
@@ -1410,12 +1409,11 @@ public class Level
 	/// <summary>
 	/// Whether a left press that landed on the park is kept from it because one of the park's screens is open
 	/// (<see cref="UI.WindowStack.ParkScreenOpen"/>): with nothing held and no tool armed, always. The park's mouse proc
-	/// skips the press while a screen is open (<c>CMP [0x007c24c8]</c>, <c>0x00488741</c>): no hover is taken, the idle
-	/// click <c>FUN_004879d0</c> is not run, so no window opens and no path tool is picked up, and the mode's
-	/// button-down slot is not called. The release has no such test (<c>0x004885a5</c>) and reaches the mode's
-	/// button-up slot, which is where a carry shell commits (<c>FUN_00524960</c>; its one read of the down's flag,
-	/// <c>0x00524a77</c>, gates a sound), so a click beside a screen still puts down what the hand holds and still
-	/// lays an armed tool's run. Here every click acts on its press, so that is this press.
+	/// skips the press while a screen is open (<c>0x00488741</c>; <c>docs/exe/park-engine.md</c>, "A park screen is
+	/// open"): no hover is taken, the idle click is not run, so no window opens and no path tool is picked up, and
+	/// the mode's button-down slot is not called. The release has no such test and reaches the mode's button-up
+	/// slot, which is where a carry shell commits, so a click beside a screen still puts down what the hand holds
+	/// and still lays an armed tool's run. Here every click acts on its press, so that is this press.
 	/// </summary>
 	internal static bool KeptFromThePark( bool parkScreenOpen )
 		=> parkScreenOpen && ParkHand.Empty && ParkBuildMode.Current == ParkBuildMode.None;
@@ -1622,19 +1620,18 @@ public class Level
 	///
 	/// <para>
 	/// <b>Only in a park, which is the original's own rule and not a simplification of it.</b> The helper
-	/// those screens call (0x004092a0) does nothing unless 0x00786ba4 is exactly 1 - Game+0x3c, the
-	/// pause-permission gate, which the state machine sets to 0 as the lobby comes up (0x0054e682) and to
-	/// 1 as a park loads (0x0054ea4c). See <see cref="GameClock"/> for why that field means both "a park
+	/// those screens call (0x004092a0) does nothing unless the pause-permission gate is exactly 1, which
+	/// the state machine sets to 0 as the lobby comes up and to 1 as a park loads (docs/exe/weather.md,
+	/// "Why the lobby does not pause"). See <see cref="GameClock"/> for why that field means both "a park
 	/// is running" and "nobody already holds the pause".
 	/// </para>
 	/// <para>
-	/// <b>Not all three screens test that global before calling.</b> The
-	/// lobby's game menu never reaches the test: GameMenu_Open (0x0048c830) branches on its scene argument
-	/// at 0x0048c83a, and non-zero - which is what the lobby passes, at 0x005e4207 - builds the lobby's
-	/// menu and returns without ever touching the pause. Only the park path reaches the gate at 0x0048c868.
+	/// <b>Not all three screens test that gate before calling.</b> The
+	/// lobby's game menu never reaches the test: GameMenu_Open branches on its scene argument, and non-zero -
+	/// which is what the lobby passes - builds the lobby's menu and returns without ever touching the pause.
 	/// The other two do test it: the message box at 0x0047f251, also requiring the lobby's front-end object
-	/// to be gone (0x00f82884, a pointer rather than a flag), and the options screen at 0x004a3a4f - which
-	/// the lobby genuinely does reach, so there the gate really is what prevents the pause, by declining to
+	/// to be gone (a pointer rather than a flag), and the options screen at 0x004a3a4f - which
+	/// the lobby does reach, so there the gate is what prevents the pause, by declining to
 	/// pause rather than by refusing to open. So in the lobby the world carries on behind an open menu, and
 	/// what the lobby does instead is hold its advisor: see <see cref="FrontEnd.OnUpdate"/> and
 	/// <see cref="Advisor.Paused"/>.

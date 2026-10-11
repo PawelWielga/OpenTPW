@@ -40,7 +40,7 @@ Jungle: **96x85 cells, 97x86 vertices, 8342 heights, 8160 cell records.** Valida
 | `FUN_00450950` | — | Confirms the header independently: allocates `(u16@+4 + u16@+6) * 4 + 0x30`, copies 0x30 bytes of header, then `vertexCount` dwords from the pointer at `+0x28` and `cellCount` dwords from the pointer at `+0x2c`, into a **private copy** (`DAT_0079fc54`) so the loader's flag edits never touch the loaded model | Decompiled |
 | `FUN_004504c0` | — | The load-time pass that computes the non-planar bit (below) | Decompiled |
 | `FUN_00450b00` | — | Heightfield derivation, one of the four routines the 96x85 figure came from | Decompiled |
-| `FUN_00467030` | — | Heightfield derivation, one of the four routines the 96x85 figure came from | Decompiled |
+| `FUN_00467030` | — | The model placement (`ride-operation.md`). Reads the header's `+0x08`/`+0x0c` and cell size `+0x10`/`+0x14` to turn a cell into a world position, cell × size + `+0x08`/`+0x0c` (`0x00467104`..`0x00467113`); it reads neither cell count | Decompiled |
 | `DAT_0079fc54` | — | The loader's private copy of the heightfield block | `FUN_00450950` |
 
 ### The cell record
@@ -167,7 +167,7 @@ Every theme uses **exactly six ground-base textures** (`jgr`/`hrk`/`sfl` = jungl
 
 **Index 0 is the null slot, not a texture — confirmed by rendering it.** It resolves to whatever frame 0 happens to be (`grd_ctr1` in jungle, `jho_fnt1` in the other three) and sits on exactly the cells whose flag word is `0x1` — the river and the paths. Drawn, jungle's `grd_ctr1` turns out to be the **road centre texture, black with yellow markings**, and it paved the river bed and every path with tarmac. A texture the road scenery uses is not the ground under a river. **Do not draw index-0 cells as ground at all.**
 
-**Skipping them does not leave holes — it uncovers the park.** `base.MD2` already carries the river with its flowing water and stone banks, the waterfall under the bridge, and the brick of the paths; a ground quad over a cell marked 0 was putting a lid on all of it. So index 0 means "the scenery draws this cell's surface", not "nothing is built here". The first guess — that these were gaps waiting on unimplemented water and path tiles — was wrong, and the render is what corrected it.
+**Skipping them does not leave holes — it uncovers the park.** `base.MD2` already carries the river with its flowing water and stone banks, the waterfall under the bridge, and the brick of the paths; a ground quad over a cell marked 0 puts a lid on all of it. So index 0 means "the scenery draws this cell's surface", not "nothing is built here".
 
 ---
 
@@ -188,8 +188,8 @@ This matches the value derived from the data alone. The camera's default POI **(
 
 | Address | What it is | Evidence |
 |---|---|---|
-| `FUN_004d8610` | MapInfo / FixedItemInfo coordinate encode | Proven from the encode/decode pair |
-| `FUN_004dd500` | MapInfo / FixedItemInfo coordinate decode | Confirmed empirically: `base.map`'s `0x08`/`0x90`/`0x94` bits land exactly on the FixedItemInfo coordinates in all four themes |
+| `FUN_004d8610` | Packs a ticket booth's cell to a packed cell id, `y * 128 + x + 1`: `FixedItemInfo.TicketBoothA` (`0x0078559c`, `0x007855a0`) for argument 0, `TicketBoothB` (`0x007855a4`, `0x007855a8`) otherwise. `FUN_004d8650` (bus stops), `FUN_004d8690` (entrances) and `FUN_004d86d0` do the same for theirs (`park.md`, "Arrivals") | Disassembly: `SHL EAX,0x7` on the Y, then `LEA ..,[EAX + ECX + 1]` (`0x004d8623`, `0x004d8626`). The values are used as cell numbers with no scaling |
+| `FUN_004dd500` | Builds a placed thing's model (`FUN_00463060`, or `FUN_00463ab0` to rebuild) at an integer cell: the thing's packed cell id `+0x34` unpacked as `x = (id - 1) & 0x7f`, `y = (id - 1) >> 7` (`0x004dd5d3`..`0x004dd5e5`), or, for an item whose `+0x38` is set, the item's own `+0x20`/`+0x24` with `MapInfo.FixedItemOriginX`/`Y` (`[0x00785594]`/`[0x00785598]`, the two value slots before `TicketBoothAPosX`'s `0x0078559c` in the balance table's order) where they are nought. It calls none of the FixedItemInfo packers | Disassembly. From the data: `base.map`'s `0x08`/`0x90`/`0x94` bits land exactly on the FixedItemInfo coordinates in all four themes |
 
 ---
 
@@ -253,7 +253,7 @@ bounds at `+0x24` and `+0x28`, its float bounds at `+0x2c` and `+0x30`, an array
 `SupplementalMeshes` 8, `Attraction` 3, `SignTextures` 2). No key is type 8 or 9. Only two bounded keys have a lower
 bound above nought: `Info.NewAttractionDecayTime` `[1, 1000)` and `UsageInfo.ExciteFactor` `[50, 200)`; every other
 type-6 key's is nought. **`FUN_004017a0` refuses a line** whose key the schema does not name (`FUN_00401280`,
-case-sensitive), whose whole-number value is not an optional `-` and digits, whose float is not digits with at most one
+case-sensitive), whose whole-number value is not an optional `-` and digits, whose float is not an optional `-` and digits with at most one
 `.`, which is negative in a type-5 key, or which is outside a type-6 key's `[lo, hi)`; a block's rows are its value.
 None of the 128 item descriptions in Lost Kingdom's item folders (five category files and `Online_Rides.sam`, and in
 the wads 70 own, 50 `Easy_`, 2 `Online_`) holds a refused line. The `Coaster.sam` in `coaster1`, `coaster3` and
@@ -310,7 +310,7 @@ Separate from the lobby island camera. Save module `"SAD_CAMERA"`, chunk magic `
 
 The camera persists a *saved* POI and *saved* Y rotation as well as the *required* ones — the shape of a camera that leaves its position and is put back (camcorder mode does exactly that).
 
-Terrain-following is probably real, but **the sampler's identity is disputed between agents**.
+Terrain-following is real, and the sampler is `FUN_00452560( x, z, 1 )`. With `gui_CameraFlags & 0x16` clear (`0x0042c6c4`) the update `FUN_0042b1c0` calls it on the look-at point (`0x007908f0`, `0x007908f8`) at `0x0042c817`, adds the last answer (`0x00790ae4`), halves the sum (0.5 at `0x006fddfc`), stores it back and adds it to the eye's height (`0x00790aa4`). `FUN_00452560` interpolates the landscape's corner heights (`+0x28` of `[0x007a0854] + 0x6c`) and answers nought off the map; it is not `FUN_004527f0`, which no camera function calls.
 
 ### The 90 is VERTICAL
 
@@ -327,7 +327,7 @@ Terrain-following is probably real, but **the sampler's identity is disputed bet
 
 With 4:3 the rays are `(+/-1.333, +/-1.0, 1)`: **vertical half-angle 45, horizontal 53.13 → vfov 90, hfov 106.26.** OpenTPW's `Camera` takes a camera mode's `FieldOfView` as its vertical angle at 4:3, and both park camera modes ask for 90.
 
-**The one inferred link:** `DAT_008bcbcc` is written at runtime through a struct pointer (the only static write, at `0x00582da8`, is the defaults initialiser zeroing `[base+4]` of the render struct at `0x008bcbc8`), so its 0.75 is **inferred, not read**. Corroboration: the picking code `FUN_0045bf90` carries 0.75 as a literal **double** at `_DAT_006fe640` and takes `atan(0.75)` to build the same frustum; and `FUN_00449ec0`'s mode table is 160x120 / 320x240 / 400x300 / 512x384 / 640x480 / 800x600 / 1024x768 / 1280x1024 / 1600x1200 / 2048x1536 — **every mode 4:3 except 1280x1024**, which is what `Camera.ReferenceAspect` already says.
+**The aspect term:** `DAT_008bcbcc` is written at runtime through a struct pointer (the only static write, at `0x00582da8`, is the defaults initialiser zeroing `[base+4]` of the render struct at `0x008bcbc8`); it reads 0.75 in the running original at 1024 x 768 (`park.md`, the `2 x DAT_008bcbcc` scale at `0x0087b0d0`). Corroboration: the picking code `FUN_0045bf90` carries 0.75 as a literal **double** at `_DAT_006fe640` and takes `atan(0.75)` to build the same frustum; and `FUN_00449ec0`'s mode table is 160x120 / 320x240 / 400x300 / 512x384 / 640x480 / 800x600 / 1024x768 / 1280x1024 / 1600x1200 / 2048x1536 — **every mode 4:3 except 1280x1024**, which is what `Camera.ReferenceAspect` already says.
 
 ### Also mapped on the way
 
@@ -464,7 +464,7 @@ FPU's current precision.**
 
 | Address / offset | Original name | What it is | Evidence |
 |---|---|---|---|
-| `0x004033a0` | — | Game-clock step: `+0x18 += (raw - +0x10) * +0x20` in x87 | objdump of `testme.exe` (Ghidra cross-check owed) |
+| `0x004033a0` | — | Game-clock step: `+0x18 += (raw - +0x10) * +0x20` in x87 | Disassembly (`0x004033a6`..`0x004033cb`) |
 | `0x00785970+0x18` (`0x00785988`) | — | The accumulator (double). Read live: 558,586,560 at 6.5 days of uptime, a multiple of 64 | `/proc/pid/mem` |
 | `0x00785970+0x20` (`0x00785990`) | — | Scale (double), 1.0 in a park | `/proc/pid/mem` |
 | `0x005f5f10` | — | Raw clock: `(QPC - start) / divisor + offset` by 64-by-32 `IDIV`; `timeGetTime()` when QPC fails | objdump |
@@ -520,7 +520,7 @@ The real peep module is `0x004f9000`-`0x00512000`, **281 functions / 95,152 byte
 
 **Which tick drives the peeps, in both halves.** The peeps are **simulated** off the every-8th-tick thing sweep — `FUN_00516380` → `FUN_0050b360` behind the gate at `0054f668` — and they are **placed for drawing once per FRAME** by `FUN_00518f90`, called from `0x0054fa85`, which lies past the 31 ms catch-up loop's back edge at `0x0054f8da`. So neither answer alone is right: the position is stepped on the 248 ms beat and interpolated to the frame. Full decode in `ride-operation.md`, "Where a WALKING peep is drawn". **`mGameTick` (`[0x0080239c] + 0x1da70c`) counts those sweeps**: `FUN_00516380` increments it (`0x00516394`) and is called at `0x0054f7bb`, inside the block the every-8th gate skips (checked 2026-09-23, Q36). So every peep comparison against it - a guest's 30-sweep thinking gap in `FUN_004fec90` among them - is in thing sweeps, and so is every one a member of staff makes (`ride-operation.md`, "The staff turn").
 
-**A sweep that cannot run is dropped, not owed.** The step counter and the baseline are moved before anything is tested (`0x0054f4c7`, `0x0054f4d6`), so nothing makes a lost sweep up later. At most three sweeps run in a rendered frame: `[0x00879064]` counts them (`0x0054f680`, `0x0054f696`), is reset each frame (`0x0054fc2a`) and in the routine the park's load registers at `0x0054ecbc` (`0x0054e32f`), and a step past the third jumps to `0x0054f828`, which still runs `0x0055a470` and the every-32nd block. The loop keeps no more than 2 s of backlog (`0x0054f49b`). And an inactive full-screen window skips each whole step (`0x0054f4d4`-`0x0054f4e5`; `weather.md`), which in an ordinary park, paused on losing focus (`0x0046b74c`), costs only the steps still owed. The every-30th test at `0x00516453` and the every-100th at `0x004d7b4f` count sweeps too. **OpenTPW** (Q126): `ParkPeople.OnUpdate` counts the frame's sweeps and drops a step that comes due with `SweepsAFrame`, three, already run; the tick number moves on and `ParkState.GameTick` does not. Measured, the game's process stopped 2.5 s and the park clock read before it and half a second after, three times each: the original `+5`, `+5`, `+5` (`mGameTick` at world `+0x1da70c`); OpenTPW `+5`, `+5`, `+6`, its log "3 run and 5 dropped in a frame of 64 ticks"; before the cap `+10`, `+11`, `+10`. The sweep is all the skip passes over: between `0x0054f68f` and `0x0054f828` are a first-use guard, the game mode's dispatch (`[0x00fb3b7c]`: the online mode's sweep goes through `FUN_005166b0`) and a timing ring around the call. `[0x00878a1c]`, the peeps' drawing baseline, is moved before the test (`0x0054f683`), so a dropped step still restarts the interpolation, as `ParkPeople.ThingTickFraction` does. The scripts and the sprites, which run before the gate, are capped in neither game. **Still parted**: the original's calendar, weather and day's, month's and year's work are inside the sweep (`FUN_004d7b20` at its end, `FUN_00512880` from the thing turn) and are dropped with it, where `GameCalendar` carries its advances over and so now runs five ahead of `ParkState.CalendarNow` after a 2 s stall (Q149); the tick number handed to the things jumps over a dropped step (Q132); and `FUN_0055a470`, which runs on every eighth step dropped or not and picks a sound setting by the ride the camera is on, is not built (Q157).
+**A sweep that cannot run is dropped, not owed.** The baseline and the step counter are moved before the step's first branch (`0x0054f4c7`, `0x0054f4d6`; the window's `TEST` at `0x0054f4d4` sits between the counter's `INC` and its store, and its `JNZ` at `0x0054f4dc` follows both), so nothing makes a lost sweep up later. At most three sweeps run in a rendered frame: `[0x00879064]` counts them (`0x0054f680`, `0x0054f696`), is reset each frame (`0x0054fc2a`) and in the routine the park's load registers at `0x0054ecbc` (`0x0054e32f`), and a step past the third jumps to `0x0054f828`, which still runs `0x0055a470` and the every-32nd block. The loop keeps no more than 2 s of backlog (`0x0054f49b`). And an inactive full-screen window skips each whole step (`0x0054f4d4`-`0x0054f4e5`; `weather.md`), which in an ordinary park, paused on losing focus (`0x0046b74c`), costs only the steps still owed. The every-30th test at `0x00516453` and the every-100th at `0x004d7b4f` count sweeps too. **OpenTPW** (Q126): `ParkPeople.OnUpdate` counts the frame's sweeps and drops a step that comes due with `SweepsAFrame`, three, already run; the tick number moves on and `ParkState.GameTick` does not. Measured, the game's process stopped 2.5 s and the park clock read before it and half a second after, three times each: the original `+5`, `+5`, `+5` (`mGameTick` at world `+0x1da70c`); OpenTPW `+5`, `+5`, `+6`, its log "3 run and 5 dropped in a frame of 64 ticks"; before the cap `+10`, `+11`, `+10`. The sweep is all the skip passes over: between `0x0054f68f` and `0x0054f828` are a first-use guard, the game mode's dispatch (`[0x00fb3b7c]`: the online mode's sweep goes through `FUN_005166b0`) and a timing ring around the call. `[0x00878a1c]`, the peeps' drawing baseline, is moved before the test (`0x0054f683`), so a dropped step still restarts the interpolation, as `ParkPeople.ThingTickFraction` does. The scripts and the sprites, which run before the gate, are capped in neither game. **Still parted**: the original's calendar, weather and day's, month's and year's work are inside the sweep (`FUN_004d7b20` at its end, `FUN_00512880` from the thing turn) and are dropped with it, where `GameCalendar` carries its advances over and so now runs five ahead of `ParkState.CalendarNow` after a 2 s stall (Q149); the tick number handed to the things jumps over a dropped step (Q132); and `FUN_0055a470`, which runs on every eighth step dropped or not and picks a sound setting by the ride the camera is on, is not built (Q157).
 
 **The music's level** (Q129, the three instructions re-read first-hand). On a step whose counter has its low five bits nought (`TEST [0x00877d34],0x1f`, `0x0054f82d`), every 992 ms of game time and never while no step runs, the loop takes the crowd's level (`FUN_004c81e0`, half the counted guests, to 100), holds it to 89 (`CMP EAX,0x59`, `0x0054f84e`), makes it nought while the world's state `+0x1da738` is 4 (`0x0054f860`) and hands it to `FUN_0051e790`, which sets parameter 4 of the music's voice (`FUN_0051bc40`, into the sound library through `FUN_006b5b80`'s virtual call). **The level picks the music's variation and never its loudness** (`audio.md`, "The music's class": the voice's class draws each next sample from the variation the current one's zones give for parameter 4, and music 2's variations all hold volume 100 with no controller). Lost Kingdom's six variations take 0-14, 15-29, 30-44, 45-59, 60-74 and 75-90; the first sample is always the first variation's, so an empty park plays variation 1 and is not silent. The same block then does two more things (`0x0054f875`..`0x0054f8c8`): the crowd's own voice, kids 91, is handed the guests within four cells of the cell at `[0x007b05cc]`, the cell under the pointer, held to 100 and nought in state 4 (`FUN_004c8d30`, `FUN_0051e7b0`; `audio.md`, "The crowd's voice": the level picks its variation and sets its volume, 14 to 22 of 100), and `FUN_0055ab50` is called. **`FUN_0055ab50` is the flying cars' rectangle** (Q236): it copies the box of the park's boundary walk (`FUN_0052c6c0`; `FUN_0052ba50` keeps the least and greatest cell x and y it visits at `0x008186e4`, `0x008186e8`, `0x00818c0c`, `0x00818c08`) into four words, in the cars' units of 3000 a cell and drawn in 3.5 cells: `0x007660bc` and `0x007660c4` the least x and y × 3000 + 10500, `0x007660b8` and `0x007660c0` the greatest × 3000 − 10500. Every reader is one of the flying cars' routines (`FUN_0055a720`, `FUN_0055abf0`, `FUN_0055c350`, `FUN_0055cc00`, `FUN_0055de70`, `FUN_0055e020`): a new car starts on a random point of one side, 45000 beyond the facing one (`0x0055a720`). Nothing in the stock Lost Kingdom park flies, so the words feed nothing there; they were not read from the running game. **OpenTPW**: `ParkAudio.MusicLevel` and `SetsMusicLevel`, asked in `OnUpdate` of every tick the frame ran; as each sample ends `ParkAudio.NextMusic` draws the next one's variation by the level (`ParkScreams.NextVariation`, the chain's rule), at `MusicVolume` whatever the level. The block's second call is built too (Q236b: `ParkAudio.SetCrowdVoice`; `audio.md`, "The crowd's voice"); its third is counted, not built (`PARK_LOOP_FUN_0055AB50`, which waits for the flying cars). Which guests are counted is Q148's.
 
@@ -725,7 +725,7 @@ Each row's `+0x0c` is a 16-byte thunk (`MOV ECX,0x007b51f0; CALL x; MOV EAX,1; R
 | `postcard` | `FUN_004a9380` |
 | `camcorder` | `FUN_00481a10` |
 
-**`-1` is a REMEMBERED TAB, not "nothing selected".** `FUN_0049bdd0` rebuilds the screen when `param_1 == -1`, then does `if (param_1 == -1) param_1 = DAT_007ca30c;` and switches five ways on that (cases 0-4) to choose both a title string (`0x8b`-`0x8f`) and a control id (`0x2490`/`0x2493`/`0x2492`/`0x2494`/`0x2491`). So hire has **five tabs** and `-1` means "open on the tab it was left on"; passing a real index when the screen already exists only re-titles and re-selects instead of rebuilding. **An earlier guess that `-1` meant "no item selected" was wrong** and is recorded here so it is not made again.
+**`-1` is a REMEMBERED TAB, not "nothing selected".** `FUN_0049bdd0` rebuilds the screen when `param_1 == -1`, then does `if (param_1 == -1) param_1 = DAT_007ca30c;` and switches five ways on that (cases 0-4) to choose both a title string (`0x8b`-`0x8f`) and a control id (`0x2490`/`0x2493`/`0x2492`/`0x2494`/`0x2491`). So hire has **five tabs** and `-1` means "open on the tab it was left on"; passing a real index when the screen already exists only re-titles and re-selects instead of rebuilding.
 
 **The staff and visitor locators are ONE shared panel**, `FUN_004b3f60`, differing only in which global they test (`0x007cc3c0` vs `0x007cc418`, `0x58` apart — sibling objects). It switches on a type byte at `param_1 + 2` for its title (`0x95e`..`0x964`) and treats `param_1 == 0` as nothing selected. It also builds `DAT_007b05e8` exactly as `FUN_00481a10` does, which corroborates that `DAT_007b05e8` is **not** a camcorder-only global.
 
@@ -886,7 +886,7 @@ an **entrance**, a cell of type 9 (`FUN_00536340`, `[cell+8] == 9`): it reads th
 the thing chain of that owner's cell (`+0x24`, the next at the thing's `+0xa`), and returns the first catalogue object
 (kind byte `+2` is 3) whose item's `+0x118` is nought. `+0x118` is **`UsageInfo.CannotRide`**, row 11 of the descriptor
 key table at `0x00745940` (rows of `0x3c` bytes, row 0 at `+0xec` and four bytes a row, which rows 21, 27 and 28
-confirm as `+0x140`, `+0x158` and `+0x15c`); its values in the shipped files are FileFormats `sam.md`'s, on its `docs/sam-and-saves-corrections` branch. On a hit the loop runs `FUN_00412e90( 0x7890a0, item )`, whose
+confirm as `+0x140`, `+0x158` and `+0x15c`); its values in the shipped files are FileFormats `sam.md`'s. On a hit the loop runs `FUN_00412e90( 0x7890a0, item )`, whose
 answer it drops, then the thing's `FUN_004e15b0( 1 )`, the ride window's "Ride it!" (`hud.md`) entered from first
 person, and ends the sweep (`0x0042c5b6`); the position is still written back. **OpenTPW** has no ride view: `Slide`
 asks the same question after every pass (`ParkCamcorderCameraMode.RideAt`, the objects anchored on the owner's cell
@@ -1184,7 +1184,7 @@ id in `FUN_0045d560`:
 
     DAT_007b05cc = y * 0x80 + 1 + x        -- identical to this project's y*128 + x + 1
 
-Written as a **16-bit** store, 0 when the point is off the map. The "y" is really the **Z** component of
+Written as a **16-bit** store. A point off the map is held to an edge cell first; 0 is stored only where the clamps fail ("The picker never hands the mode a cell off the map"). The "y" is really the **Z** component of
 the world hit point. The hovered *thing* is latched separately into the mouse-manager object at
 `0x007b05a8`, and a click **snapshots** it (`FUN_0048c960`) rather than re-reading it live.
 
@@ -1888,7 +1888,7 @@ object with flag bit `0x02` by squared cell distance along the live chain, **tes
 `ParkPeople.ThingRemoved` from the demolisher): all of the guest's answer but the event ring, which it does not keep -
 a saved major naming the thing is let go of by every guest (`Peep.SavedMajorDest`, `0x004fb4a6`..`0x004fb4b3`), and
 `mPreviousRides` and the refusal beside it are cleared (`Peep.ForgetThing`, `0x004fb4ba`); the sound, at the seat node, the origin by flag `0x20`, or - a deviation - at the feet of a walk-on rider, whom
-the original's `WALK` stepper places and nothing here does; and the staff rest-area arms. Nothing here holds a job on a
+the original's `WALK` stepper places and nothing here does; and the staff rest-area arms, after a handyman's toilet job or a mechanic's ride job is dropped, to idle, where it names the
 thing. The `VAR_STAFFIN` count and message 15 are unbuilt wherever the original touches them - arriving to rest
 (`FUN_00505fe0`), the end of a rest (`FUN_005061d0` at `0x00506286`) and the eviction - and all three count
 `REST_AREA_OCCUPANCY`. Entering state 0 queues the stand (`FUN_005054d0` through `FUN_004fa460`), which OpenTPW's
@@ -1913,7 +1913,7 @@ put-down is a purchase that keeps the old thing's facing.**
   demolish happened**, which it does not when the red latch `DAT_00816d48` is set or the cell is not typed
   4, 9 or 10.
 - **The object is not freed yet.** `FUN_0050b780` marks it dead (`+2 = 2`, `+3 = 1`) and queues its id on
-  `0x00801f38`, which the per-tick `FUN_00516380` drains. So the reads that follow are sound: `+0xe` is the
+  `0x00801f38`, which the thing sweep `FUN_00516380` drains on every 8th 31 ms tick. So the reads that follow are sound: `+0xe` is the
   item id (a key `FUN_00412e90` searches for, not an index) and `+0x10` the angle in degrees.
 - **Then the move tool.** `FUN_0046c5a0( 0x3b, itemId )` builds a type-3 shell
   `{0x006fe9e0, 1, 0x3b, carrying 1, itemId}` and `FUN_0046c350` installs it; its OnInstall `FUN_0046d5a0`
@@ -2119,9 +2119,8 @@ The opening pool is `FUN_005087d0`, from the park's creation (`FUN_005156a0`, wh
 `FUN_004d7af0` and `FUN_00507bb0`): `BeginningNumberOf<Kind>` candidates of each kind in turn through `FUN_00507600`,
 so each marked nought with its own lifetime, then the pool's mark; it runs before any save is read.
 
-**In the original**, predicted first, the pool read from memory every 100 ms for 240 s (`pool.py`; **two of the
-prediction's numbers were wrong**: 360 sweeps for the top-up, where it is the first sweep more than 360 past the
-mark, 361, and "at most 12", where the key loaded is 10). The keys as
+**In the original**, predicted first, the pool read from memory every 100 ms for 240 s (`pool.py`). The top-up
+comes on the first sweep more than 360 past the mark, 361. The keys as
 Lost Kingdom's Instant Action loads them: 90, 10 and 120; `Max` 6, 5, 6, 4, 3; `Min` 1, 1, 1, 1, 0; in the park 30,
 15, 30, 15, 6. The pool stood at fourteen when the read began on 868 (the save holds sixteen, below), made on `mGameTick` 361 and 722, its mark 722. **Twenty-four
 of twenty-four candidates went on the first sweep past four times their lifetime** (one of lifetime 141 made on 361
@@ -2777,7 +2776,7 @@ stripped no-op that the player never sees. Re-implement them as debug logging, n
 
 **The trap that makes this look like a mismatch: `0x00481500` is a bare `JMP rel32` thunk** (`e9 7b 7e 02 00`), undisassembled and with no function, so it *looks* like a different handler from the button's `FUN_004a9380` until the jump is resolved (`0x00481505 + 0x00027e7b = 0x004a9380`). **Resolve every thunk before concluding two routes differ** — both of these shortcuts converge on the same function as their button, which is the pattern.
 
-`FUN_004a9380` fits a postcard screen: `UI_PlaySound(0x95)`, then `Game_Pause(0,0)` and **`g_ParkRunning = 0`**, `UI_SetVisible(0)`, `UIParticles_ButtonGlintStop()`, `Advisor_StopQuietly(1)`, and it selects a screen with `DAT_007cc190 = 1; DAT_007cc150 = 3` (`FUN_004a9350` reads that selector). The feature ships real data — `data\Postcard.wad`, `postcard.jpg`, `data\postcard\legal.tga` and an HTML template *"Theme Park World (TM) Virtual Postcard"* — so it writes a picture out. **Not in scope now; Alexah flagged it as needed later for 100% parity.** The gadget's button is counted as `POSTCARD_BUTTON`, Ctrl+P under the full-screen view as `FULL_SCREEN_VIEW_POSTCARD`; Ctrl+P over the park and in first person is read by nothing and not counted.
+`FUN_004a9380` arms the postcard and opens no screen: `UI_PlaySound(0x95)`, then `Game_Pause(0,0)` and **`g_ParkRunning = 0`** (game type `DAT_00fb3b7c` 1 calls `FUN_004bcec0` instead of both), `UI_SetVisible(0)`, `FUN_006591e3()`, `UIParticles_ButtonGlintStop()`, `Advisor_StopQuietly(1)`, and `DAT_007cc190 = 1; DAT_007cc150 = 3`. Those two are a pending flag and a countdown: the UI pass `FUN_0048a580` calls `FUN_004a9350`, which takes one off the count each call and answers 1 on the third, with the UI hidden; `FUN_004a9180` then puts `g_ParkRunning` back to 1 and calls `FUN_00409300` (unless the game type is 1), shows the UI again, calls `FUN_004a8c00` and clears the flag. `FUN_004a8c00` is where the postcard's screen opens: where `FUN_005b6460()` answers non-zero it loads the tree `0x007540d8` with handler `0x004a7d70` (`UI_LoadTree`, kept in `DAT_007cc184`); otherwise it calls `FUN_0047f410(0x4e, 0)` and loads nothing. The feature ships real data — `data\Postcard.wad`, `postcard.jpg`, `data\postcard\legal.tga` and an HTML template *"Theme Park World (TM) Virtual Postcard"* — so it writes a picture out. **Not in scope now; Alexah flagged it as needed later for 100% parity.** The gadget's button is counted as `POSTCARD_BUTTON`, Ctrl+P under the full-screen view as `FULL_SCREEN_VIEW_POSTCARD`; Ctrl+P over the park and in first person is read by nothing and not counted.
 
 ---
 
@@ -2912,7 +2911,7 @@ changes 40 of the row's 97 normals. Rows are placed at `+0x0c + r × +0x14` in t
 (it stands to the low-x, low-y side of the park). Shading shows only below that; a face turned away gets the ambient
 alone, (85, 85, 104).
 
-**Set once.** `FUN_004080e0`, called only from the park load at `0x0054ed3f` in state 9, copies the four values to
+**Set once.** `FUN_004080e0`, called only from the park load `FUN_00407e00` (`0x00407ef2`), which state 9 calls at `0x0054ed3f`, copies the four values to
 `0x008bd47c` (fog), `0x007a0b44` (ambient), `0x007a0b3c` (directional) and `0x007a0b30-38` (direction);
 `FUN_00458590` applies them at `0x0054ed64`. The sun is constructed earlier, at `0x0054eca4`, from those globals
 before they are filled. Nothing time-driven writes any of them; this does not on its own rule out a day-night look
@@ -2947,15 +2946,14 @@ computes (`models.md`, "Normals").
      box, culls it, and splits it, `FUN_0056e780` keeping each of 128 rows' x span. `FUN_00576a00` calls both
      branches: `FUN_0056ea90` for the spans, `FUN_00576910` → `FUN_0056f090` → `FUN_00572440` → `FUN_0055f780` for
      the tiles. No sprite passes through any of them.
-7. The park camera's terrain-following sampler — probably real, identity disputed between agents.
+7. ~~The park camera's terrain-following sampler.~~ Settled: `FUN_00452560`, called at `0x0042c817`; see "The park camera" above.
 
 ---
 
 ## Building and deleting paths and queues
 
 Decoded 2026-09-21 by a six-dimension pass over `/testme.exe`, each dimension re-derived by a second
-agent told to refute it. **The brief that opened the work was wrong about its central function and
-says so here**, because the wrong premise is the thing most likely to be re-invented.
+agent told to refute it.
 
 ### `FUN_00524960` is the build-tool APPLY DISPATCHER, not a placement engine
 
@@ -3009,8 +3007,8 @@ North as `0x01`. `ParkRideChoice.StartSides` already records the same mirror. **
   both intervening cardinals all mType 1), and a **weak one-sided** fix-up applied to the neighbour
   whose intervening cardinal need only be "not 3 and not 9". The weak one sets a single bit and never
   its partner, so **`mNeighbours` is legitimately asymmetric**. **The weak one is inside the mType 1 arm
-  of each cardinal block alone** (north: `0x0053498c`..`0x00534a0d`; the mType 10 and mType 9 arms after
-  it, `0x00534a1b` and `0x00534a4a`, write the two bits and retile): a ride's end a path joins gains the
+  of each cardinal block alone** (north: `0x00534987`..`0x00534a0d`; the mType 10 and mType 9 arms after
+  it, `0x00534a18` and `0x00534a48`, write the two bits and retile): a ride's end a path joins gains the
   one bit toward it and no diagonal. Of the 249 ride ends in the original's park files to hand (the
   shipped Lost Kingdom, the eight Full Simulation files, two saved under Proton) none holds a diagonal
   bit (`q256/ends.py`; its control, a file of OpenTPW's from before Q256, shows one, `0x82`);
@@ -3315,13 +3313,12 @@ for a step of (0,0) or decremented for any other, and **the cell is removed only
 force (`0x00536825`). Nothing is refunded. So Backspace takes up exactly what a run laid fresh and leaves what it crossed.
 
 **`+0x20` is `mOverlapCounter`.** The serialiser `FUN_004d0b30` pairs the string at `0x0075a054` with
-`LEA ECX,[ESI+0x20]`; in the save it is record offset `+8` (the FileFormats `saves.md` on its `docs/item-footprints` branch, not yet
-merged). The shipped
+`LEA ECX,[ESI+0x20]`; in the save it is record offset `+8` (the FileFormats `saves.md`). The shipped
 Lost Kingdom has 14 non-zero path cells, all corners and junctions — eleven at 1, (47,21), (48,21) and
 (48,28) at 2 — and the queue node (52,22) at 1.
 
 **`mFlags & 0x40` marks land outside the park** — the meaning is inferred from a census, the writer is
-not found (Buy Land, `0x39`, is the likely clearer). 13,878 of Lost Kingdom's 16,384 cells carry it, all
+not found beyond its clearer: `FUN_005311c0` tests it (`FUN_00535db0( 0x40 )`) and clears it (`FUN_0053a530( 0x40 )`, first at `0x00531327`), and Buy Land's apply arm reaches that (tool `0x39` tested at `0x00525c4e`, `FUN_005327e0` at `0x00525d52`, the call at `0x005328b4`), as does the terrain initializer `FUN_005323f0` (`0x00532557`). 13,878 of Lost Kingdom's 16,384 cells carry it, all
 of mType 7, 0, 2 or 30; every path, queue, footprint and entrance is among the 2,506 without it. **Every track record's `mNeighbours` is 0**, so the corner
 test never fires on the shipped park.
 
@@ -3346,13 +3343,12 @@ and its owner id to be either the object being built or nought — so the builde
 forks from ever existing, and the walk's fixed probe order is a tie-break for states the builder does
 not produce, not the primary fork rule. And the eight direction statics are laid out in **source
 order, not bit order**: six of eight addresses pair differently than a naive reading gives
-(`0x7cdba8` is S, `0x7cdbc8` is E, `0x7cdbd8` is NE). The bit→delta table itself survived; only the
-address shorthand was wrong. **Cite the initialisers and `FUN_004d97e0`'s jump table, never the
-address ordering.**
+(`0x7cdba8` is S, `0x7cdbc8` is E, `0x7cdbd8` is NE). **Cite the initialisers and `FUN_004d97e0`'s jump
+table, never the address ordering.**
 
 ### Two things these dimensions disagree about, recorded rather than resolved
 
-**Which array the build code mutates — STILL CONTESTED, and it changed sides twice.** One decode read
+**Which array the build code mutates.** One decode read
 it as the **0x44-byte** `CMapCell` at `DAT_007cf83c + 0x294`, the other as the **0x28-byte** record at
 `DAT_007cf83c + 0x1102B0`, and their field offsets agree exactly (`+0x08` type, `+0x0c` mask, `+0x0d`
 direction, `+0x0e` flags, `+0x10` owner, `+0x14/+0x18/+0x1c` tile) — which is what made it look like a
@@ -3361,12 +3357,13 @@ flat contradiction rather than two readings of two arrays.
 Where it now rests: the adversarial pass over the placement decode calls the 0x28 reading **backwards
 and refutes it four ways**, the clearest being the line walker `FUN_00536100`, which forms the cell
 pointer as `SHL ECX,4; ADD ECX,EAX; LEA ECX,[EDX + ECX*0x4 + 0x294]` — id × 17 × 4 = id × `0x44`. So
-**the build path writes the 0x44 record**, and the 0x28 array is the separate track layer. Against
-that, the adversarial pass over the *tools* decode has `FUN_00522850` fetching the direction byte from
-the **0x28** record. Both cannot be right about the same byte, and no third witness has settled it.
+**the build path writes the 0x44 record**, and the 0x28 array is the separate track layer. The
+adversarial pass over the *tools* decode has `FUN_00522850` fetching the direction byte from
+the **0x28** record, and that is right too: `FUN_00522850` is the bare `MOV AL,[ECX + 0xd]` and reads
+whichever record it is handed. ExitRide (`0x0050158b`) and the demolisher (`0x0052826b`) hand it a 0x44
+cell; `FUN_0053b280` hands it its own `this` (`0x0053b3a0`), a 0x28 record (`0x0053b2d5`..`0x0053b2e2`).
 
-**Do not cite either as settled.** Nothing in OpenTPW depends on it — cells are modelled as records
-rather than as raw memory — which is exactly why it is safe to leave open rather than guessed.
+Nothing in OpenTPW depends on it — cells are modelled as records rather than as raw memory.
 
 **`FUN_0052fe50` is called by the demolisher `FUN_00527ee0` and by the Backspace handler `0x0040bda0`** — which is
 undefined bytes in Ghidra, so a cross-reference search misses it. Each call clears a whole straight run: it pops the

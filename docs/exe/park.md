@@ -135,7 +135,7 @@ The inflated payload names the park's features by path — `data\levels\jungle\F
 
 ## Formats that are not the problem
 
-`test.tpt` (jungle + space only, 236 bytes) is a weather table: dword chunk count 6, then per chunk a 4-byte tag, 4-byte size, payload — `WTHR`, `TEMP`, `WNDS` (wind speed), `WNDD` (wind direction), `CLCV` (cloud cover), `ADSR`; each carries a count then five (value, weight) pairs. Decodable by inspection; named "test", probably vestigial.
+`test.tpt` (jungle + space only, 236 bytes) is a weather table: dword chunk count 6, then per chunk a 4-byte tag, 4-byte size, payload — `WTHR`, `TEMP`, `WNDS` (wind speed), `WNDD` (wind direction), `CLCV` (cloud cover), `ADSR`; each carries a count then five (value, weight) pairs. Decodable by inspection; named "test", and the executable holds neither `.tpt` in either case nor the tags `WTHR` or `CLCV` in either byte order, so nothing there opens it by name or reads its chunks.
 
 `scape.omp` (409-590 bytes, one per park) is an `OBJ_` record file ending in an `INCL` chunk naming the C++ headers it was built from: the land's own sounds and, in the jungle, its waterfall's spray ("The land's own particles", below; FileFormats `omp.md`).
 
@@ -153,10 +153,12 @@ The model is authored with its **footprint's corner at its own origin** — a 1x
 
 ## `.sgn` — one layout, walked in order
 
+`FUN_005eb8a0` inks a line: where the glyph mask (`+0x38`) is zero it writes four zero bytes, and elsewhere it
+reads the line's fill tiled by modulo, row less `+0x28` over `+0x24` and column over `+0x3c` (decompilation;
+`SignFile` letters in the flat ink colour instead, an approximation).
 `SignFile` reads all 84 signs by walking the header in the engine's own order (`FUN_005ec3a0`): 61 leave the
 artwork byte at `0x08` clear, and three (jelly, zob, C_SCAT) omit both ink blocks, which is what made the header
-look like it had two fixed sizes. The layout is in the FileFormats clone, `formats/sgn.md`, on its
-`docs/sign-format-corrections` branch (not yet on master). The `.sgn` is always named after the
+look like it had two fixed sizes. The layout is in the FileFormats clone, `formats/sgn.md`. The `.sgn` is always named after the
 item's own folder — **80 of 80 across all four themes** (72 rides, and `gates` and `sign1` in each theme's `features/`).
 
 ## `.RSE` — the ride-script container
@@ -331,7 +333,7 @@ The consequence for OpenTPW: the advance belongs in the frame sweep, **not in th
 
 ### End of clip is five outcomes, not three
 
-A channel on role 0 found past its end is first marked `0x8` (`0x00473758`), and every advance of a channel on another role takes the mark off (`0x004738b2`; `saves.md`, "OpenTPW's writer, a channel's `0x8`"). The queue is promoted first, whatever the model's flag word holds (`0x0047375d`). Failing that, `model[+4] & 0x18` chooses: clear, replay when flag `0x1` else pseudo-role `0xe`; else if `0x8` clear, **stall** (pin elapsed to total, set `model[+4] |= 0x40400000`, defer a stop to the end of the frame, which parks the channel at role 12 with its pose kept, `0x00473a30`); else **stop and call out** to the dispose/reposition group. `FUN_00473e30` sets `0x10` on a thing's model whose only clips are role 0's (`0x00473f32`): 22 Lost Kingdom items, each running one `WAITANIM 0, 0` and nothing that reads the channel afterwards. The replay's speed comes from `+0x30` when non-zero, only falling back to `+0xc`.
+A channel on role 0 found past its end is first marked `0x8` (`0x00473758`), and every advance of a channel on another role takes the mark off (`0x004738b2`; `saves.md`, "OpenTPW's writer, a channel's `0x8`"). The queue is promoted first, whatever the model's flag word holds (`0x0047375d`). Failing that, `model[+4] & 0x18` chooses: clear, replay when flag `0x1` else pseudo-role `0xe`; else if `0x8` clear, **stall** (pin elapsed to total, set `model[+4] |= 0x40400000`, defer a stop to the end of the same advance, after the pose is applied, which parks the channel at role 12 with its pose kept, `0x00473a30`); else **stop and call out** to the dispose/reposition group. `FUN_00473e30` sets `0x10` on a thing's model whose only clips are role 0's (`0x00473f32`): 22 Lost Kingdom items, each running one `WAITANIM 0, 0` and nothing that reads the channel afterwards. The replay's speed comes from `+0x30` when non-zero, only falling back to `+0xc`.
 
 **"Freeze" is not "stop posing".** `FUN_00472f60`'s `0xe` pins `elapsed := total`, so the clip is posed **once more at its true final frame** and held; `FUN_00471860`'s early return never fires for it. A rest-restore does exist (`FUN_00472310`, master -> instance, differential at a clip switch) and the freeze paths suppress it by passing bit `4`. **In blend mode (`model+0x30 & 4`) the rest pose is re-laid every frame and a finished channel snaps back** — the opposite of freezing.
 
@@ -413,7 +415,7 @@ The list lives at clip block `+0x1a` (count) / `+0x38` (pointer). **854 of 1,166
 | `0x00551cc1` | `XOR EDI,EDI` — **EDI is zero throughout the dispatcher** |
 | `0x551cd7` | the prologue's `EBX = 0xffffd8f0` (-10000), the "park the PC" value |
 
-Outside the opcode range the engine says *"RSSE: Unknown instruction"*; without the 0x80 byte, *"RSSE: Bad instruction - missing p..."*.
+Outside the opcode range the engine passes *"RSSE: Unknown instruction"* to its logger, and without the 0x80 byte *"RSSE: Bad instruction - missing p..."*; the logger `FUN_005da3c0` is a bare `RET`, so neither prints.
 
 Decoded table head: `NOP "0"`, `CRIT_LOCK "0"`, `CRIT_UNLOCK "0"`, `COPY "2"`, `SETLV "1"`, `SUB "3"`, `ENDSLICE "0"`, `GETTIME "1"`, ... — exactly `Opcode.cs`'s own order (NOP=0 ... GETTIME=7), so the enum and the binary agree. **`SETLV` takes one operand.**
 
@@ -577,13 +579,13 @@ So a locked region runs **atomically, unbounded by the 50-instruction slice**, u
 
 **`ENDSLICE` and `WAIT` yield by zeroing the budget**, which is why `ENDSLICE`'s whole body is one instruction: `MOV [+0x98], 0`. `field[0x26]` and `+0x98` are the same field.
 
-**Nine handlers write the budget, and all nine write nought** (every one of the 106 jump-table targets walked to its `RET`; `search_bytes` on the flag's address finds its six references): `CRIT_UNLOCK`, `ENDSLICE`, `WAIT` and `WAITABS` (`0x005538d7`, a rewind of two), `WAITANIM` (`0x00552a78`, `0x00552b0b`), `WAIT4ANIM` (`0x0055391a`), `TRIGWAITANIM` (only on a re-entry that is still waiting; its first visit, `0x005536a0`, rewinds WITHOUT a yield, so the same turn dispatches it again), and the two channel forms. **`WAITANIM_CH` and `TRIGWAITANIM_CH` rewind one word short**: `0x005532f7` subtracts 3 from a four-word instruction (and `0x005536a0` 4 from a five-word one), so the next dispatch lands on operand 0, prints *"RSSE: Bad instruction - missing parameter ?"* and parks the script. Nothing ships them, nor `WAITABS`. **The critical flag has two writers among the handlers**, `CRIT_LOCK` and `CRIT_UNLOCK`; the scheduler's reset at `0x00551701`, the initialiser `FUN_00551600` and the save-state reader `FUN_005597a0` are the others, and neither of those two is in the handlers' callee closure.
+**Nine handlers write the budget, and all nine write nought** (every one of the 106 jump-table targets walked to its `RET`; `search_bytes` on the flag's address finds its six references): `CRIT_UNLOCK`, `ENDSLICE`, `WAIT` and `WAITABS` (`0x005538d7`, a rewind of two), `WAITANIM` (`0x00552a78`, `0x00552b0b`), `WAIT4ANIM` (`0x0055391a`), `TRIGWAITANIM` (only on a re-entry that is still waiting; its first visit, `0x005536a0`, rewinds WITHOUT a yield, so the same turn dispatches it again), and the two channel forms. **`WAITANIM_CH` and `TRIGWAITANIM_CH` rewind one word short**: `0x005532f7` subtracts 3 from a four-word instruction (and `0x005536a0` 4 from a five-word one), so the next dispatch lands on operand 0, refuses it as *"RSSE: Bad instruction - missing parameter ?"* (a string for the bare-`RET` logger, so nothing prints) and parks the script. Nothing ships them, nor `WAITABS`. **The critical flag has two writers among the handlers**, `CRIT_LOCK` and `CRIT_UNLOCK`; the scheduler's reset at `0x00551701`, the initialiser `FUN_00551600` and the save-state reader `FUN_005597a0` are the others, and neither of those two is in the handlers' callee closure.
 
-**A script's death frees its records, and the trigger is a negative PC.** Every operand-fetch overrun stores `0xffffd8f0` into the PC at `+0x3c`, and the teardown `FUN_00558500` drains the effect list. **Running off the end of the body is the normal death path**, and it prints *"RSSE: Tried to read outside script memory"* on the way — **so that string is not evidence of a malformed script.**
+**A script's death frees its records, and the trigger is a negative PC.** Every operand-fetch overrun stores `0xffffd8f0` into the PC at `+0x3c`, and the teardown `FUN_00558500` drains the effect list. **Running off the end of the body is the normal death path**, and it passes *"RSSE: Tried to read outside script memory"* to the bare-`RET` logger on the way — **so that string is not evidence of a malformed script.**
 
 ### The clock, the speed word, and WAIT
 
-**The clock is milliseconds.** The chain is `0x00402d70` -> `0x00402f10` -> `0x004030d0` -> `0x004033a0` -> `0x005f5fa0` -> **`0x005f5f10`**, and that last one is the whole answer: it calls `QueryPerformanceCounter` and divides by a stored divisor, and **falls back to `timeGetTime()`** when the counter is unavailable. The two paths are chosen at runtime and must be interchangeable, so the divisor scales QPC to `timeGetTime`'s unit — milliseconds. `WAIT 3000` is three seconds.
+**The clock is milliseconds.** The chain is `0x00402d70` -> `0x00402f10` -> `0x004030d0` -> `0x004033a0` -> `0x005f5fa0` -> **`0x005f5f10`**, and that last one is the whole answer: it calls `QueryPerformanceCounter` and divides by a stored divisor, and **falls back to `timeGetTime()`** when the counter is unavailable. The divisor is the counter's frequency over 1000: the clock's set-up at `0x005f5e80` loads 1000 (`MOV ESI,0x3e8`, `0x005f5e87`), asks `QueryPerformanceFrequency` (`0x005f5ea0`) and stores frequency / 1000 at `+0x4` (`DIV ESI` `0x005f5ee5`, `0x005f5eea`), with `timeGetTime()` at `+0x8` and the starting count at `+0x10`; the reading is (count − start) / that + the starting `timeGetTime` (`0x005f5f57`..`0x005f5f62`) — milliseconds on both paths. `WAIT 3000` is three seconds.
 
 The dispatcher's prologue computes `[ESP+0x14] = DAT_00700fd0 - (short)field[+0xc0] * DAT_00700fcc`, **and that is the divisor `WAIT` FDIVs its duration by**. `DAT_00700fcc` = **-0.01**, `DAT_00700fd0` = **0.5**, so the divisor is `0.5 + 0.01 * speed`. **At the loader's speed of 50 that is exactly 1.0** — the neutral point — which is why the two 50s look like one thing and are not.
 
@@ -642,8 +644,8 @@ so an unlocked pair can be split, leaving a raw reading in `VAR_TEMP` and in the
 
 **The engine's readings survive a load unchanged; OpenTPW's do not.** `FUN_005597a0` reads the variable block raw and
 writes no variable after it, and the load puts the `0x785970` clock back to the saved reading (`FUN_00415140` at
-`0x00415193`, through `FUN_004031f0`: offset = saved - now), on the load path where `FUN_00414d40`'s fourth argument is
-not 1 (`0x004150b5`; only `0x0054f105`, game type 1, pushes 1, and `0x005ad04a` and `0x005ac735` push 2, so the Easymode
+`0x00415193`, through `FUN_004031f0`: offset = saved - now), on the load path where `FUN_00414d40`'s third argument is
+not 1 (the test at `0x004150ae`; only `0x0054f105`, game type 1, pushes 1, and `0x005ad04a` and `0x005ac735` push 2, so the Easymode
 load restores it). The clock is integer milliseconds (`FUN_00402f10`, the
 `QueryPerformanceCounter` count over frequency/1000, through `__ftol`). OpenTPW copies the variables raw
 (`ParkRides.Resume`) but runs its scripts on its own clock (`ParkRides.Moved`), far behind a save's, so `deadline - now`
@@ -894,7 +896,7 @@ builds. No `TRIGWAITANIM`, trigger or `WAIT4ANIM` decided apart in either phase.
 
 **`FUN_005573d0` is the whole subsystem**, switching on the type: **1-2 `Particles_Spawn` / `Particles_SpawnFull`; 3-9 `Sound_PlayEffect` through a named category** — 3 `cat_rides'`, 4 `cat_ambient'` (a SECOND pair registered by `FUN_0051ec50`), 5 `cat_rides`, 6 `cat_kids`, 7 `cat_staff`, 8 `cat_ambient`, 9 `cat_ui`, all from `Sound_RegisterGlobalCategories`; **10** the thing's own custom bank, which returns 0 early if none is registered. Anything else is **"RSSE: Unknown object type"**, and the guard is unsigned after a `DEC`, so 0 and negatives take it.
 
-**The no-model path does not do nothing — this is the opposite of the animation family.** `FUN_00556b90` is the position gate, and with the model handle at `+0xc8` nought it **returns 1**, not 0, having written position `(0, 0, K)`. Its **only** `return 0` is "RSSE: Invalid Node ID", reachable only when a model exists. **So the engine really does spawn, at the origin.** Two further traps in that gate: it **never writes the direction vector** on the fallback path, so type 2 with no model reads **uninitialised stack** in the original; and the same block also serves a live case (model present, node negative) where it returns a **real** position.
+**The no-model path does not do nothing — this is the opposite of the animation family.** `FUN_00556b90` is the position gate, and with the model handle at `+0xc8` nought it **returns 1**, not 0, having written position `(0, 0, 0)` (the z is the float at `0x00700fd8`, which is 0.0). Its **only** `return 0` is "RSSE: Invalid Node ID", reachable only when a model exists. **So the engine really does spawn, at the origin.** Two further traps in that gate: it **never writes the direction vector** on the fallback path, so type 2 with no model reads **uninitialised stack** in the original; and the same block also serves a live case (model present, node negative) where it returns a **real** position.
 
 **`KILLOBJ` kills EVERY match, not the first.** At `0x552376` it does `MOV EAX,ESI / MOV ESI,[ESI]` — advancing *before* unlinking what it matched — then rejoins the test at `0x5523bd`. There is no break anywhere in it, and even the unknown-type error path converges on the same unlink-and-continue. **`FADEOBJ` is identical for a particle** (both reach `FUN_0051ff70(handle, -2)`, which is `Particles_Kill`'s own body) and differs only for a sound: `Sound_Stop` vs `Sound_StopFading`.
 
@@ -951,7 +953,7 @@ to `FUN_004587b0( thing id, index )` for the light. `ENABLELIGHT` calls `FUN_004
 of the light's `+0x50`; `DISABLELIGHT` calls `FUN_00458940`, which sets it. `SETLIGHT` multiplies its second operand
 by the float at `0x00700fe0` (0.01) and calls `FUN_004587e0( light, f )`, which scales the light's base colour by it;
 `COLOURLIGHT` calls `FUN_00458890( light, r × 0.01, g × 0.01, b × 0.01 )`, which writes the colour. **None checks for
-a missing node**: `FUN_0044b220` answers -1, and `FUN_004587b0` then reads the entry before the table, very likely a
+a missing node**: `FUN_0044b220` answers -1, and `FUN_004587b0` then answers the word 12 bytes before the table (entry -1's `+0x8`, `0x004587c5`..`0x004587d2`), which the callee follows three deep and writes through (`FUN_00458910`, `0x00458915`..`0x00458930`); what lies before the table was not traced, so very likely a
 crash. No shipped script uses any of the four.
 
 ### `SPARK` (105) at `0x005564ed` — spawns nothing
@@ -1107,7 +1109,7 @@ Decoded 2026-09-23 as disassembly, every claim re-derived by a refuter.
 `REMOVECHILD` (`0x55526a`) and the tick loop's negative-PC path (`0x551ac6`) pass **0**. The RSSE shutdown `FUN_005584b0` and the save-state reader `FUN_005597a0` call the flat destructor directly with 0.
 
 **The mode is a bitmask, and only two bits are read.** It is passed unchanged to all four `FUN_00558500` calls.
-- **`0x2`** (`TEST BL,2` at `0x00559102`), for the script named in the call only, and only when its thing word `+0xac` is set: the item's `Info.DestroyParticleEffect` (descriptor `+0x64`) is spawned by `Particles_Spawn` (`FUN_00521e60`) at the centre of the thing's cell rectangle ×10 at its base height, and its emitter's area is set to the box (`FUN_00466b70`, its heights from the `.hmp`) by `FUN_00520030` — emitter `+0x44/+0x48/+0x4c`, which is the template's `Area`. With no model it spawns at the origin (`0x00559170`). The value is the item's own where it declares one and its category's otherwise (FileFormats `sam.md`, "The particle effects an item gives off" - on the clone's `docs/item-footprints` branch until it merges); 0 spawns nothing (`0x005590f7`), and every value the jungle's items use, 75 to 78, is a world effect (`OnScreen` 0 in `Tp2.plb`).
+- **`0x2`** (`TEST BL,2` at `0x00559102`), for the script named in the call only, and only when its thing word `+0xac` is set: the item's `Info.DestroyParticleEffect` (descriptor `+0x64`) is spawned by `Particles_Spawn` (`FUN_00521e60`) at the centre of the thing's cell rectangle ×10 at its base height, and its emitter's area is set to the box (`FUN_00466b70`, its heights from the `.hmp`) by `FUN_00520030` — emitter `+0x44/+0x48/+0x4c`, which is the template's `Area`. With no model it spawns at the origin (`0x00559170`). The value is the item's own where it declares one and its category's otherwise (FileFormats `sam.md`, "The particle effects an item gives off"); 0 spawns nothing (`0x005590f7`), and every value the jungle's items use, 75 to 78, is a world effect (`OnScreen` 0 in `Tp2.plb`).
 - **`0x4`** (`0x00558582`, `0x005585f8`, inside `FUN_00558500`): the heads `ADDHEAD` hung on the model are taken off it (`FUN_0044b220` → `FUN_0044b4c0`, which frees the head's render object), and so are those of walk slots in action 4, state 2. The peep is untouched.
 - Bit `0x1`, and anything above `0x4`, is read nowhere.
 
@@ -1302,7 +1304,7 @@ asks for it under each car's four corners; a walk slot without flag bit 0 asks t
 (`ride-operation.md`, the slot's `+0x1a`). Three calls.
 
 **Whose model** (`FUN_00450ac0( cellX, cellZ )`, each clamped to the landscape's size). A cell of the track grid
-holding a piece answers that piece's model (`FUN_0053bf30`). Otherwise `FUN_00527d60`: a cell of type 4, 9 or 10 (a
+holding a piece answers that piece's model (`FUN_0053bf30`). Otherwise `FUN_00527e80`: a cell on the entrance's row (`DAT_007855c0`), from one cell before `EntranceA`'s x (`DAT_007855bc`) to one past `EntranceB`'s (`DAT_007855c4`), answers the thing the world keeps at `+0x1da732`, whatever the cell holds; any other cell goes to `FUN_00527d60`, where a cell of type 4, 9 or 10 (a
 footprint, an entrance, an exit) is followed to its **parent cell** (`+0x2a4`), and the first object on that cell's
 thing list (`FUN_004d99e0`, thing type 3) gives its model handle `+0x20`. Any other cell answers nought, and the
 caller keeps what it had: the bumper draw keeps the car's `+0xa0`, the height it last stood at.
@@ -1315,7 +1317,7 @@ caller keeps what it had: the bumper draw keeps the car's `+0xa0`, the height it
 | 1 | else the header's flags `+0x30` carry `0x80`, or its float `+0xa0` is not nought | the landscape's under the point (`FUN_004527f0`) |
 | 4 | else | the one mesh the model's instance keeps at `+0x2c`, with the normals at `+0x30`; a miss answers the root node's own height. Not read: who sets `+0x2c` |
 
-A miss in mode 2 answers -100 (`0xc2c80000`), which the bumper draw replaces with the car's `+0xa0`. A float at
+A miss in mode 2 answers -100 (`0xc2c80000`) plus the header's float like any other answer; the bumper draw replaces an answer of exactly -100 with the car's `+0xa0` (`0x0054675a`), so only where that float is nought. A float at
 `+0xa0` that is not a number is set to nought first (`FUN_0067b410`).
 
 **The landscape's height** (`FUN_004527f0( x, z )`, world units, a cell 10): nought off the map. On a cell whose
@@ -1603,7 +1605,7 @@ a new world (`FUN_00407d80`, `0x0054eccb`), whose constructor builds this block 
 `+0x11` 1. `FUN_004cf050` reads and writes it as `mArrivalRate` (`+0`), `mTimeSig` (`+4`, through `FUN_0041a860`,
 `0x004cf296` in the read arm), `mTargetVehicleCapacity` (`+8`), `mPeopleOnBus` (`+0xc`), `mOffloading` (`+0x10`) and
 `mGatesOpen` (`+0x11`): the last 18 bytes of the World block's 76 bytes of arrival and clock fields (FileFormats,
-`saves.md`, "The arrival block", on its `docs/arrival-block` branch). Entering a park zeroes `mGameTick` (`FUN_005156a0`, `0x00515865`, from `FUN_00407e00` at `0x0054ed3f`).
+`saves.md`, "The arrival block"). Entering a park zeroes `mGameTick` (`FUN_005156a0`, `0x00515865`, from `FUN_00407e00` at `0x0054ed3f`).
 Later in the same pass of state 9, `FUN_005accf0` (`0x0054f12b`) loads the newest `*.TPW*` in the player's folder for
 the theme over it (`saves.md`, "Entering a park"), through `FUN_00414d40( path, 0, 2 )` (`0x005ad054`), `FUN_00415270` and `FUN_005179c0`, which reads
 `mGameTick` at `0x00517bec` and this block at `0x00518202`. Nothing writes either between that load and the first
@@ -1808,8 +1810,8 @@ What it adds is **`( AttractionValue + bonus ) / n`**, a signed whole division (
 (`0x004c83b5`..`0x004c83e4`, signed). The fields are the item descriptor's `Info.AttractionValue` (`+0x58`),
 `Info.NewAttractionDecayTime` (`+0x5c`, at least 1 by its bound) and `Attraction[0..2].NewBonus` (`+0x268`, `+0x26c`,
 `+0x270`), named by counting the compiled schema's four-byte slots between `WhichUIType` at `+0x4c` and
-`WhichTrackType` at `+0x9c`, both known from their readers. So **two of one flat ride are worth what one is**, each
-adding half, and all of them stay new, or stop being new, together, by the day the first was built, a sold one
+`WhichTrackType` at `+0x9c`, both known from their readers. So **two of one flat ride are worth what one is, less the division's remainder**, each
+adding half cut to a whole number (35 gives 17 twice, 34), and all of them stay new, or stop being new, together, by the day the first was built, a sold one
 included: the stamp is written only while it reads nought (`0x004db69c`) and the count alone goes down. Each track
 ride adds its whole value and is new from its own purchase. A day is 23.04 sweeps at the shipped rate of 15,000.
 
@@ -1940,7 +1942,7 @@ whose node's matrix is never stored (`PARK_PARTICLE_NO_DIRECTION`), a start the 
 engine frees and this keeps (`PARK_PARTICLE_NOT_STARTED`). A loaded emitter begins its effect again: the file's
 running words are not read (`LOADED_EMITTER_LIFE_PART_RUN` where its life is not the template's). An effect added
 without its alpha (flags `0x4` with no `0x2000`) is drawn scaled by it (`WORLD_PARTICLE_ADDED_WITHOUT_ALPHA`).
-Not started at all, and not counted: a rider's and a leaver's puffs (a broken boat's smoke is started since Q259, below). The
+Not started at all, and counted under their own keys: a rider's puffs (`BUMPER_RIDER_PARTICLE`) and a leaver's (`LEAVER_BOARDING_PARTICLE`) (a broken boat's smoke is started since Q259, below). The
 writer is as it was: an emitter is written as it starts, not as the running one stands. The density is the
 options' (1000 at medium), where the file loaded in the original carries its own (500), so a density-scaled
 effect holds about twice the particles here: the stink 17 to 19 against 8 to 9.
@@ -2050,7 +2052,7 @@ park's system starts, which is why the shipped file holds it in slot 0 under han
 as the park's entities are made (`Level`, after `WorldParticles`), starts each type 2's effect at its place in
 the park's particle system and keeps no handle. A park entered from a file starts it afresh rather than
 reading the file's emitter, whose particles the original's loader empties in any case. The file's sounds are
-read and not played, each counted (`SCAPE_OMP_SOUND_TYPE_1`, `SCAPE_OMP_SOUND_TYPE_3`: six in the jungle), and
+read: a type 1 of the global category is started (`ParkPlacedObjects.StartSounds`, `ParkAudio.StartPlaced`), and a type 1 of the level's own category and every type 3 are counted (`SCAPE_OMP_SOUND_TYPE_1`, `SCAPE_OMP_SOUND_TYPE_3`: four in the jungle), and
 a start the system refuses is counted (`PARK_PARTICLE_NOT_STARTED`).
 
 **Run, 2026-10-10** (`q262/confirm.py`, 5 of 5 predictions on the desktop, each written first in
@@ -2118,7 +2120,7 @@ global category whose effect is a looped one (flag `0x8`) with something to play
 sound comes up (`ParkPlacedObjects.StartSounds`, `ParkAudio.StartPlaced`): a looped voice at the record's place,
 the height the world's third axis, with the record's range, at its variation's volume, 100 for the fall and 50
 for the river. A hundred plays at the music's level times 75 over 60, the two groups' levels as the original's
-channels read them (`ParkAudio.PlacedVolume`). The level's own category is not loaded, so its two type 1
+channels read them (`ParkAudio.ChannelGain`). The level's own category is not loaded, so its two type 1
 records are counted (`SCAPE_OMP_SOUND_TYPE_1`), and both type 3 (`SCAPE_OMP_SOUND_TYPE_3`). The console's
 `placed` prints the listener and each of the land's sounds with its distance and gain.
 

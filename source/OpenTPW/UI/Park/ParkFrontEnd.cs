@@ -116,12 +116,10 @@ internal sealed class ParkFrontEnd : Panel
 		"f_load",
 
 		// The Information and Money categories' own screens - allstaff (0x750e10), allitems (0x7508e0
-		// and its three list trees), allpeeps (0x7506c8) and entryprice (0x751798). Every one of these
-		// names was RESOLVED from the hash its layout stream carries, against ui.wad's own table, rather
-		// than guessed: the stream asks for a mesh as h = (c ^ h) * 47 over the model's first node name,
-		// and the arithmetic was checked against two hashes this file already knew before any of it was
-		// trusted. The entry-price screen's three right-hand buttons resolve to b_staffcost / b_loans /
-		// b_finance, not a spinner, which the handler confirms.
+		// and its three list trees), allpeeps (0x7506c8) and entryprice (0x751798). Each name is the one
+		// the hash its layout stream carries resolves to in ui.wad's own table: the stream asks for a mesh
+		// as h = (c ^ h) * 47 over the model's first node name (docs/exe/hud.md). The entry-price screen's
+		// three right-hand buttons are b_staffcost / b_loans / b_finance, not a spinner.
 		"list_allstaff", "list_kids", "list_all",
 		"b_finance", "b_loans", "b_staffcost", "b_door", "b_plus", "b_minus",
 		"b_parkinfo", "b_kids",
