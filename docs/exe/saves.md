@@ -198,9 +198,9 @@ to `0x007909e0`, and, when the options byte `0x0078d912` is set, **rounds the ro
 (`0x0042d05e`): `FUN_0067b24a` of the rotation and the double π/2 at `0x006fdd88`, taken to be the remainder
 (not read), is taken off, and the rotation moved on to the next quarter when that is past an eighth
 (`0x006fdd98`, `0x006fdd90`). The rotation is in radians: with the byte set (`0x0042b471`) the camera's update
-turns it a quarter turn a press (`0x0042b489`, `0x0042b4a4`, the constants `0x006fdd94` and `0x006fdd68`). Which
-option the byte is was not traced (`OptionsScreen_ControlChanged` writes it, `0x004a37f9`); the options screen's
-90-degree rotation is the likely one (Q23). Measured under Proton (Q241f): a file holding -0.7854 read 0.0 after the load, and one holding
+turns it a quarter turn a press (`0x0042b489`, `0x0042b4a4`, the constants `0x006fdd94` and `0x006fdd68`). The
+byte is the options screen's Rotation setting: control `0x1d4c6` flips it (`OptionsScreen_ControlChanged`, `0x004a37cf`..`0x004a37f9`) and the line `0x1d4d0`
+shows UITEXT 352, " Smooth", with it clear and 353, " 90 degs", with it set (`0x004a37f3`; Q23). Measured under Proton (Q241f): a file holding -0.7854 read 0.0 after the load, and one holding
 ±1.5708 read as written.
 
 **Action ids.** The action recorder's ids, and the names `FUN_004041d0` gives them, are `park-engine.md`, "There is no
@@ -463,7 +463,7 @@ online one) runs after the new world is made, and loads a park file over it:
    written at the same instant leave the one Windows listed first.
 4. With one held, the path is the folder, `\` (`0x00f7aed0`), the name, and `FUN_00414d40( path, 0, 2 )`
    (`0x005ad054`) loads it as "The load" above does. **With none held nothing is loaded** (`0x005ad00b`), and the
-   world just made stands: the fresh park of `park.md`, "A fresh Full Simulation park", whatever the game type.
+   world just made stands: the fresh park of `park-engine.md`, "A fresh Full Simulation world", whatever the game type.
 
 Nothing asks which mode the player is in: a Full Simulation player's saved park is loaded the same way, and an
 Instant Action player whose folder has lost its `easymode.TPWI` gets the empty world.
@@ -865,9 +865,9 @@ easymode's 18 people, and 45 s after its load those thirteen guests had been cou
 and two researchers; 30 s on all thirteen made guests stood elsewhere and the hire had walked from (47.4,28.3) to
 (42.4,28.4); 60 s on the made guests held arrival indices 14 to 26, ten of them in a queue, one stepping up it and two riding, and
 every guest of the file's held the index the file gave. Left running, the first file's park reached tick 11,735
-and 180 visitors. **Predictions wrong, mine:** a visitor count that "never passes 26" (the next load came, in both
-games); 32 people at the save where one run had 31 (a guest of the file's had gone home); and two of my own
-checks of OpenTPW's load, which read a sweep after it (walkers 0.1 to 0.5 of a cell on, one guest setting off).
+and 180 visitors. **Seen in the runs:** the visitor count passes 26 (the next load came, in both
+games); one run had 31 people at the save, not 32 (a guest of the file's had gone home); and a census of
+OpenTPW's load reads a sweep after it (walkers 0.1 to 0.5 of a cell on, one guest setting off).
 
 **Measured (Q251, `q251/`): the balloons, a bubble, the hire's date and the set bytes.** Lost Kingdom with a Balloon
 Shop bought at (43,22) and a researcher hired under `pause` at `mGameTick` 783, left until its first load of thirteen
@@ -956,7 +956,7 @@ the first sweep, and ten of the save's twenty candidates were left.
 the counts 1 five times; its Hire Janitors tab listed the five cleaners of OpenTPW's own screen at the same
 wages; its candidates timed out one by one, to ten by 1752; the pool's mark read 1805 on `mGameTick` 1805, with
 twenty again; and `mOffloading` read 1 on `mGameTick` 1916 with `mPeopleOnBus` 12, dropped one a sweep from
-1947 and let go on 1959. **One prediction wrong, mine:** no vehicle current at the save; the bus was, at status
+1947 and let go on 1959. **A vehicle was current at the save:** the bus, at status
 3 on its way round, so `SAVE_PARK_ARRIVAL_VEHICLE` was counted once. **Seen in the original and not
 predicted:** `mCurrentArrivalVehicle` went from nought to 32 on the first sweep after the load, a vehicle made
 anew, then 40 on 1583, the bus on 1768, nought on 1896 and 32 on 1898, which brought the load: the tail's
@@ -1454,12 +1454,11 @@ original let go itself in that run (the file's holders had a life of 1) read 166
 commit's own file the same way (`orig/g-load.log`): 15 and status 1 on the first poll of 1273, slots 27 and 28
 fading from 250 and last read on 1276, the bubble on slot 26, and the handle 15 to status 6 on 1403; there the bus
 was summoned again on 1404, the handle still 15, for a leaver at the stop.
-**Predictions wrong, mine** (`PREDICTION.txt`): the bus spent 125 to 135 sweeps past its summons (141: the 130
-was measured with a load of one, and thirteen take twelve sweeps more to drop); the bubble gone by sixteen
-sweeps past its stamp as my poll read it (the poll was four sweeps apart); and two of the control's: no balloon
-let go after its load (three were, new ones, the file's holders having a life of 1) and a bus nobody forgets
-(with a load held the old build summons the bus again on its first sweep, which makes it current); and the
-circuit's length a second time, restated as 141 for every circuit where one with no load is 129.
+**Also read** (`PREDICTION.txt`): the bus is spent 141 sweeps past its summons with a load of thirteen (130 was
+measured with a load of one, and thirteen take twelve sweeps more to drop; a circuit with no load is 129); the
+poll of the bubble was four sweeps apart; in the control three balloons were let go after its load (new ones,
+the file's holders having a life of 1); and with a load held the old build summons the bus again on its first
+sweep, which makes it current.
 **Not predicted:** the original's bubble was last read six and ten sweeps past its stamp in the two runs, sooner
 than the twelve a needs turn waits: the tired hire's next thought frees it (`FUN_0050be80`). And the original's
 sprite turns came 62 ms apart, where a sprite on the made interval of 62
@@ -1470,9 +1469,8 @@ vehicle whose thing is not written, a handle that is none of the three. **Not ru
 current with no load held. **No test:** `Level.WritePark`'s hand of the things and of the let-go list to the
 writer (the run's two log lines). **Not looked at:** the original's bubble and balloons are its memory's and in
 no photograph of it: the first file's camera was on the bus stop, and the second's, put between the balloons
-and the hire, takes in less ground there and shows neither (`sheet-ours-beside-original.png`). Of 62 bugs put
-back 57 failed a test at first; one showed a line that did nothing, taken out; two fail after tests were added;
-the two of `Level.WritePark`'s hand fail none. The save was `savepark` under `pause`, the shop `buy`, the hire `hire`: no
+and the hire, takes in less ground there and shows neither (`sheet-ours-beside-original.png`). Of the bugs put
+back, the two of `Level.WritePark`'s hand fail no test. The save was `savepark` under `pause`, the shop `buy`, the hire `hire`: no
 player's hand reaches the writer yet. `docs/exe/addresses.md` not regenerated.
 
 ### A model record's two tables, and a head on a node
@@ -1779,7 +1777,7 @@ rebuilds it from the things in memory, each member of staff fitted on a cell; `a
 control's). **The fix's:** on the first poll, at the load from the Load Park list and 75 s on, 302 cells,
 (46,27) `0,0,0,20,0` and 0 cells wrong against the things in memory, the staff's effects moving with them. The
 bought camera sold from its window (the bomb, then the question's tick): (46,27) nought, no cell under nought,
-0 wrong; the file's own camera 19, sold before it by my misplaced click, the same. **The control's:** on
+0 wrong; the file's own camera 19, sold before it, the same. **The control's:** on
 entering the park 250 cells, (46,27) nought, 122 wrong; **after the load from the list over that running park
 (46,27) read security -20 with the camera standing**, 53 cells under nought, and after its sale -40, 77 under
 nought (`sheet-original-sale-fix-control.png`: the window and the ground after, fix then control; nothing of an
@@ -1791,10 +1789,9 @@ destructor unstamping, and the control's cell, which has no record, was left hol
 the fix's, which has one, read the file's 20. A file of the original's own always holds the record, so it never
 shows.
 
-**Predictions wrong, mine:** the control's cell in the original, 0 to 10 at the load and -20 to -10 after the
-sale; it read -20 and -40 (above). **My mistakes in the original's run:** the first click sold the file's
-camera, the view being turned, and the second opened a passing member of staff's window, whose dismissal my
-next two clicks confirmed; the running park only, nothing saved, the save sum the same before and after.
+**Also done in the original's run:** the file's camera was sold first, the view being turned, and a passing
+member of staff's window opened and their dismissal confirmed; the running park only, nothing saved, the save
+sum the same before and after.
 **Not run in either game:** fireworks (no Instant Action item was tried, no file holds one), a toilet bought, a
 toilet dirtied or cleaned and then written (tests only), a thing bought and left out of the file, the objects
 going out as the file's. **Not built:** the fireworks' spent turn (`FIREWORKS_SPENT_REGION_EFFECT`), any reader of the running grid (Q257n,
@@ -1872,8 +1869,8 @@ build before's, bit `0x10` left out of the comparison; the Litter Bin's `0xc` wi
 other role); the node pass's effect on the picture, in either game: the two frames show the ape built and do not
 tell the fix from the control. OpenTPW writes `0x1c` where the original's own file holds `0xc`: bit `0x10`, which
 comes and goes on the engine's held channel and stays on one here. The 22 items whose only clips are role 0's
-are still held on role 0 here where the engine parks them idle (`park.md`, "the stall"), so a bought one of
-those is written held with the mark, where the original's is idle.
+are still held on role 0 here where the engine parks them idle (`park.md`, "End of clip is five outcomes, not
+three": the stall), so a bought one of those is written held with the mark, where the original's is idle.
 
 ### OpenTPW's writer, a walk slot's facing
 
@@ -2104,8 +2101,8 @@ one sprite from file to file; `q257u/locals.py`), and only the state script's ho
 above nought, which no file has. The drawing flags at `+0xc4` are the next
 section's. The photographs show the entertainer
 performing and the park after the load and do not tell the fix from the control: the difference is one frame
-of eight, once. Of 22 bugs put back 21 failed a test at first; the last, a loaded sprite due at once, fails after
-the test was given the first due time (`mut-run1.log`, `mut-run2.log`). `docs/exe/addresses.md` not regenerated.
+of eight, once. Each of 22 bugs put back fails a test
+(`mut-run1.log`, `mut-run2.log`). `docs/exe/addresses.md` not regenerated.
 
 ### OpenTPW's writer, a person's sprite's drawing flags
 
@@ -2168,8 +2165,8 @@ the template it was spawned from. **55 of 55** type 1 and 2 records in the thirt
 whose `+0xa` is the handle's high word; 73 of the 128 emitters in use are named by no record, an `EVENT`'s or a
 screen effect's. In memory the live system is at `0x0080ced0` and emitter slot *n* at `0x0080cefc + 0x140 n`.
 
-**What OpenTPW writes.** `Level.WritePark`'s rule for a thing that can be written no longer refuses an item whose
-folder holds `.emt` files; `ParkItemCatalogue.HasEmitters` is gone. A bought Loudspeaker goes out as any thing
+**What OpenTPW writes.** `Level.WritePark`'s rule for a thing that can be written takes an item whose
+folder holds `.emt` files as any other. A bought Loudspeaker goes out as any thing
 bought does ("OpenTPW's writer, a thing bought and a thing sold"), and one sold is taken out.
 
 **A deviation, said at `Level.WritePark`:** an `EVENT`'s puff alive at the save is not in the written file (the
@@ -2282,10 +2279,9 @@ queue joined to the path there with two clicks, the record read state 1 and four
 shows the hoardings down and two boats in the water (`orig/a-5-open.png`). With the control's file: record 0
 free, 42 things, no thing 43.
 
-**Predictions wrong, mine:** the `buy` reply names no track handle (I had it print one); the model header's
-cursor, 92 for my 93 (I had read the original's, whose file holds a vehicle's model too); the made object's
-names, `The` and `Hot Pot` for my one line; and the things left after the sale, 41 for my 42 (the original's
-file holds 42, not the stock park's 43 with the pot). **Not run in either game, tested only:** a ride with a
+**Read in the runs:** the `buy` reply names no track handle; the model header's cursor is 92 (the original's
+file reads 93, holding a vehicle's model too); the made object's names are two, `The` and `Hot Pot`; and the
+things left after the sale are 41 (the original's file holds 42, not the stock park's 43 with the pot). **Not run in either game, tested only:** a ride with a
 boat out bought, kept or sold (counted and left); a ride kept and written over with other words than the file's
 (scene `b` saved it untouched); a ride made between two of the file's; a turned ride (the three codes stand on
 the listing: the one file with a turned track ride holds 6 on a Dino Karts). **Not seen in the original:** a
@@ -2798,7 +2794,7 @@ mechanic had the pot fixed 25 s later**, the smoke killed. Saved from the menu s
 break (`broken-by-the-original.TPWS`): the four cars hold `0x1400001`, `0x1410008`, `0x1420005` and
 `0x143000c`, each an emitter in use of effect 2, life nought, the first at raw (28330, 1949, 16855) for a node
 read at (442.6575, 30.4622, 263.3747) under the menu's pause: times 1024, cut, shifted down four. A break that
-landed as a go ended, with no car flagged, smoked none (my first try, and my prediction's miss).
+landed as a go ended, with no car flagged, smoked none.
 
 **What OpenTPW writes.** A car keeps the handle its file held (`Car.Smoke`), let go of at a fix, a launch and
 its removal. `ParkBumperCars.Written` writes it while the car smokes. `ParkCarWriter` asks for each smoking
@@ -2925,9 +2921,8 @@ began.
 job and count across the same load; `q257z/orig/k-load.log`). The file's 23 was read and held while he walked
 (state `0xc`, job 43) and repaired (`0xd` on tick 901, the count nought); on tick 903, his decide after the
 mend, it read 22 and his job nought; then one object a decide, 21 down to 16, 14 down to 11, nought, 43, 15, 24,
-23. So the cursor moves along `mNext` one object a search, through nought to the head, as read. **Predicted and
-missed:** I had the chain in id order (24, nought, 43, 15, 16); it is the file's links', which is the order
-`ParkState.ObjectsInChainOrder` walks.
+23. So the cursor moves along `mNext` one object a search, through nought to the head, as read. **The chain's
+order is the file's links', not the ids'**: the order `ParkState.ObjectsInChainOrder` walks.
 
 **Still not the original's, each said where it is:**
 
@@ -2983,10 +2978,9 @@ shut it and wrote `VAR_RIDECLOSED`; the queue's head changed on each of the next
 then nobody) and `VAR_RUNNING` read nought on tick 930. So the control's file is one the original puts right
 in a tick, and the fix's is one it has nothing to put right in. Its `save/` ended as it began.
 
-**Predicted and missed** (`PREDICTION.txt` keeps each): nobody seated inside a second (a poll each half second
-read four at 0.6 to 0.7 s and none at 1.1 to 1.2 s, in three runs; the original's is 0.3 s, and this run's poll cannot say
-which side of a second OpenTPW's falls); one guest turned away (my scene's: five to eight were queueing); and
-the first fix run's file read `mState` 0, which is how the writer's gap was found.
+**Not settled by the poll:** how soon the seats empty. A poll each half second read four seated at 0.6 to 0.7 s
+and none at 1.1 to 1.2 s, in three runs, where the original's is 0.3 s; it cannot say which side of a second
+OpenTPW's falls.
 
 **Still not the original's, each said where it is:**
 

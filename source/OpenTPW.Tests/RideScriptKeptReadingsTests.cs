@@ -150,7 +150,7 @@ public class RideScriptKeptReadingsTests
 	}
 
 	/// <summary>
-	/// <b>The walk finds exactly what Q181's sweep found</b>, over all 308 scripts and their 197 distinct bodies:
+	/// <b>The walk finds exactly three kept readings</b>, over all 308 scripts and their 197 distinct bodies:
 	/// <c>VAR_STARTNOW</c> in 51 bodies, <c>VAR_TIMER1</c> in 2 and <c>VAR_ENDTIME</c> in 1, and nothing else.
 	/// </summary>
 	[TestMethod]

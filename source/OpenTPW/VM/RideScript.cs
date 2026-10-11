@@ -1003,8 +1003,8 @@ public sealed class RideScript
 	/// unknown position as the end of the script, so a counter landing between instructions would not
 	/// error - it would leave the thing standing there doing nothing at all, which is a worse fault than
 	/// the one this fixes. Every one of the fourteen counters in the shipped park lands on an exact
-	/// instruction boundary, so this is a guard against a file that is not what we think rather than
-	/// against the ones we have read.
+	/// instruction boundary, so this is a guard against a malformed file rather than against any the
+	/// game ships.
 	/// </para>
 	/// </summary>
 	/// <returns>Whether that position is the start of an instruction, and was taken.</returns>
@@ -1624,14 +1624,9 @@ public sealed class RideScript
 
 		// Nothing brings a channel up to date here, and that is deliberate. The engine sweeps its animation
 		// players once per FRAME, off a clock snapshot taken outside the fixed-step loop the scripts run in,
-		// and never from the script system: FUN_004735d0, which advances and poses, has exactly ONE caller
-		// (FUN_00473c70, at 00473d2e), and not one of that function's ten call sites is FUN_005516b0 or is
-		// called directly inside the 31ms loop. The park's are FUN_0044e410(2), FUN_00429df0(0), FUN_00429df0(1),
-		// and the draw's FUN_0044e410(3) and FUN_0044e380 (the on-screen models' route), all of them past the
-		// loop's back edge in Game_StateMachine. Of the rest, FUN_0044e510 advances one model of the state
-		// machine's own (0x0054e72a), and five advance a coaster's car models (FUN_00430590, FUN_00430ed0,
-		// FUN_00432df0), which a layout replayed inside the loop reaches too (0x004311f0); none is a placed
-		// thing's own model. ParkObjects.Sweep is where that lives here.
+		// and never from the script system: FUN_004735d0, which advances and poses, is not called from the
+		// scripts' FUN_005516b0, and a placed thing's own model is advanced only outside the 31ms loop
+		// (docs/exe/park.md, "Who advances a channel, and when"). ParkObjects.Sweep is where that lives here.
 		//
 		// Advancing per tick would promote a queued clip mid-catch-up: with three ticks due, a clip
 		// ending on the first would have its successor running before the second tick's instructions

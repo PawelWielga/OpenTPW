@@ -75,7 +75,7 @@ public sealed class ParkRideOperation
 	/// <para>
 	/// <b>Generator departure.</b> The original draws <c>r</c> from the park's own generator (<c>FUN_00516330</c>,
 	/// <c>0x004e26c6</c>), one draw for every admission to anything, where this draws from the
-	/// <see cref="Random"/> it is handed. The chance is the object's saved low byte (Q97).
+	/// <see cref="Random"/> it is handed. The chance is the object's saved low byte.
 	/// </para>
 	/// <para>
 	/// <b>A shop always wins, and that is the mechanism rather than an accident.</b> Nothing in the
@@ -325,7 +325,7 @@ public sealed class ParkRideOperation
 	/// collected from yet.
 	/// </para>
 	/// <para>
-	/// <b>WHICH instruction does the writing depends on the ride, and there are six.</b> Across the 22
+	/// <b>WHICH instruction does the writing depends on the ride, and there are six.</b> Across the 30
 	/// Lost Kingdom ride scripts: <c>UNBOUNCE</c>/<c>FORCEUNBOUNCE</c> (Bouncy alone), <c>BUMP 2</c>
 	/// (bumper, GoKarts, Wateride), <c>COAST 3</c> (the three coasters), <c>WALKGET</c> (incagod, Lookout,
 	/// Totem, tvsim), <c>HOP</c> with <c>DELHEAD</c> (Mumbo, PorkPie, Spider, Volcano, Monkey), and
@@ -436,11 +436,10 @@ public sealed class ParkRideOperation
 	/// </para>
 	/// <para>
 	/// <b>The placement happens whatever is beyond the exit, and that is the original's behaviour rather
-	/// than a convenience here.</b> Alexah has watched it: in the original, a ride whose exit is not
-	/// connected to the rest of the park still <i>teleports</i> the guest onto the exit, and they then
-	/// stand on it with a <b>?</b> over their head. The decompilation agrees - <c>FUN_004fa930</c> is
-	/// called before the facing is so much as read - so the position is set first and unconditionally,
-	/// and only the aim can fail.
+	/// than a convenience here.</b> In the original, a ride whose exit is not connected to the rest of
+	/// the park still <i>teleports</i> the guest onto the exit, and they then stand on it with a <b>?</b>
+	/// over their head: <c>FUN_004fa930</c> is called before the facing is so much as read, so the
+	/// position is set first and unconditionally, and only the aim can fail.
 	/// </para>
 	/// <para>
 	/// <b>The ? is thought <c>0x11</c></b>, the stranded bubble, a blue question mark, which only
@@ -594,7 +593,7 @@ public sealed class ParkRideOperation
 		// object's +0x188, built from UsageInfo.InitCostOfGoods, against the object and the park's bank, then adds
 		// the same to the guest's cash: fifty, for the Jungle Spray, against the twenty they were just charged. A shop
 		// books its own cost of goods and pays nobody (docs/exe/ride-operation.md, "The cost of goods and the park's
-		// money", Q97). Both read the object's cost of goods.
+		// money"). Both read the object's cost of goods.
 		if ( item.UiType == SideshowUiType )
 		{
 			_state.BookCostOfGoods( ride.ThingId, ride.CostOfGoods );
@@ -680,7 +679,7 @@ public sealed class ParkRideOperation
 	/// and the product are in double, the runtime's starting precision, where which precision is live is not
 	/// settled (<c>docs/exe/park-engine.md</c>, "Which rounding is live"): only off the steps of 50 the saves hold
 	/// does it matter, and a Drinks Shop at a quality of nought and an amount of 10 books 18 here and 19 at 24 bits.
-	/// The cost is the object's <c>+0x188</c>, read as unsigned (Q97).
+	/// The cost is the object's <c>+0x188</c>, read as unsigned.
 	/// </remarks>
 	internal static int ShopCostOfGoods( ParkItemCatalogue.Item item, ParkWorld.CatalogueObject shop )
 	{

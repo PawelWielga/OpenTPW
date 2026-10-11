@@ -134,17 +134,14 @@ public sealed record LobbyScript
 	///
 	/// Two lobby behaviours are rolled once per rendered frame and scaled by no delta at all - the
 	/// strike test below, and the ambient one-shot (see <see cref="LobbyAudio"/>) - both in
-	/// FUN_005e0470. What they came to per second was therefore whatever frame rate the machine
-	/// managed, and nobody has established what that was.
+	/// FUN_005e0470. What they come to per second is therefore whatever frame rate the machine
+	/// manages, and the rate the original ran at is not known.
 	///
 	/// <b>So this is a choice, not a recovery.</b> Twenty-five a second, because that is the rate
-	/// the engine's own sky converts seconds to ticks at - the 25.0 at 0x00701f7c, in FUN_00585f10 -
-	/// and it is the rate in the binary shaped like a frame rate that the lobby's own subsystems are
-	/// timed against. It is not a measurement of what the original ran at, and nothing found so far
-	/// is. The alternatives with an equal claim are the animation clock's thirty (0x00472f60,
-	/// 0x00474070 - though that is a playback speed rather than a frame rate) and the state
-	/// machine's 31ms step (0x00520130, about thirty-two a second, which would make both rolls 29%
-	/// busier).
+	/// the engine's own sky converts seconds to ticks at (docs/exe/ui.md, "Animation rate"). It is
+	/// not a measurement of what the original ran at. The alternatives with an equal claim are the
+	/// animation clock's thirty (a playback speed rather than a frame rate) and the state machine's
+	/// 31ms step (about thirty-two a second, which would make both rolls 29% busier).
 	///
 	/// Kept apart from <see cref="TicksPerSecond"/> deliberately: sharing one constant would tie the
 	/// storm and the ambience to the lobby's data rate, which is a different quantity.

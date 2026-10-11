@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace OpenTPW.Tests;
 
-/// <summary>Q92: real window callbacks, live status/guard refresh and rendered list cell colours.</summary>
+/// <summary>Real window callbacks, live status/guard refresh and rendered list cell colours.</summary>
 [TestClass]
 public class ParkRideWindowDoorTests
 {

@@ -4,15 +4,15 @@ namespace OpenTPW;
 
 /// <summary>
 /// One turn of what a member of staff is doing - the shared half of the original's five per-kind
-/// behaviours, which turns out to be nearly all of them.
+/// behaviours, which is nearly all of them.
 ///
 /// <para>
-/// <b>The finding this class rests on.</b> Each kind of staff has a per-turn function of its own
+/// <b>One machine with five extensions.</b> Each kind of staff has a per-turn function of its own
 /// (<c>FUN_004da490</c> mechanic, <c>FUN_004d73c0</c> handyman, <c>FUN_004d4810</c> entertainer,
 /// <c>FUN_004d6410</c> guard, <c>FUN_005029f0</c> researcher) and all five open with the same switch on
 /// <c>mState</c>, answering states 2 to 7 through the same three handlers - whose own diagnostics call
-/// them <c>CStaff::</c> - and 0 and 1 in arms of their own. So this is one machine with five extensions,
-/// not five machines, and the shared part moves every kind.
+/// them <c>CStaff::</c> - and 0 and 1 in arms of their own. The shared part moves every kind
+/// (docs/exe/ride-operation.md, the staff handler table).
 /// </para>
 /// <para>
 /// <b>What is built.</b> Every shared state, and every kind's decide with no work

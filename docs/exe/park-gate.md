@@ -131,12 +131,10 @@ contains the matching census. Prediction lines are in `runtime2-summary.log` and
 open, and reopened. An unchanged open-frame pair was also captured. Both completed runs
 left game-save file hashes unchanged after removing only the verification player created
 by the fresh-park run. Earlier exploratory runs changed only loading-count cache
-`save/opentpw.cfg`, which was reported and left intact. One harness used the wrong hex
-OK-button ID; one staff fixture had no inside guests and therefore correctly took the
-immediate close. Both were corrected before the completed runs.
+`save/opentpw.cfg`, which was reported and left intact.
 
-**Saved-closed follow-up (2026-10-03, `alexah/261-q89b-saved-gate-proof`).** The initial
-completion omitted this required runtime case; it is now checked separately from a fresh
+**Saved-closed follow-up (2026-10-03, `alexah/261-q89b-saved-gate-proof`).** This runtime
+case is checked separately from a fresh
 park. An unchanged copy of the original game's FullSimCheated `jungle/restart.INTS`
 (SHA-256 `84887acabaf850cd06e77b11034845941c47227570159cad7dc9a2a94fa05db9`)
 was loaded through `Level.ReadPark` and the production save reader. A private game overlay
@@ -163,9 +161,8 @@ unchanged-save run above. This does not separately observe every restored VM fie
 `fixtures.json`, `fixture-probe.jsonl`, `setup.py` and `confirm-saved.py` record setup and
 checks. Original save, stock park and production save hashes stayed unchanged. Only the
 private closed overlay's loading-count cache changed, and was retained. The first pending
-run correctly preserved 1/1 but its later zero-guest expectation was wrong: eight saved
-guests entered after reopening. That failed harness run is retained; the completed pending
-check observes reopening while paused. No production code change was needed.
+run kept 1/1, and eight saved guests entered after reopening; the completed pending
+check observes reopening while paused.
 
 **Regression limits.** `ParkGateTests` covers ordinary script close/reopen, changed-door and
 status guards, census types and guest activities, exact world-sweep cadence through the real
@@ -193,5 +190,4 @@ guard incorrectly applied to immediate closure. Each failed the new tests. The o
 mutation initially survived because the fixture had no separate occupancy mapping; the test
 now explicitly stands its subject on type-30 cell (2,2) while its navigator is at (1,1), and
 that mutation fails. `mutations.json` records the final failures; first-attempt results were
-retained. Source and binary were restored and the full suite passed: **1679**, no failures or
-skips, **121** build warnings and no errors.
+retained. Source and binary were restored and the full suite passed.

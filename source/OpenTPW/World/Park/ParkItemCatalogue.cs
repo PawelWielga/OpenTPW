@@ -356,7 +356,7 @@ public sealed class ParkItemCatalogue
 
 	/// <summary>
 	/// Whether the file just read holds a line the original refuses. The original quits the game there, naming the file
-	/// (<c>0x00413f18</c>); OpenTPW leaves out what the file describes and counts it (Alexah, 2026-09-30). No shipped
+	/// (<c>0x00413f18</c>); OpenTPW leaves out what the file describes and counts it, a deviation. No shipped
 	/// file has one.
 	/// </summary>
 	private static bool Refuses( string file, ItemDescriptionFile description )

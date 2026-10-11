@@ -16,8 +16,7 @@ namespace OpenTPW.UI;
 /// <para>
 /// <b>How big.</b> A particle's size over 64 is its height in 2048ths of the screen's -1 to 1, and
 /// its width is that times the sprite's own width over height - in the screen's -1 to 1 across,
-/// which is wider, so on a 4:3 screen the original stretches every sprite by a third across. It
-/// does: the twinkles in screenshots of the park picker are wider than they are tall. A turned
+/// which is wider, so on a 4:3 screen the original stretches every sprite by a third across. A turned
 /// particle's corners are turned in those same units, in 256ths of a turn (0x00591430).
 /// </para>
 /// <para>

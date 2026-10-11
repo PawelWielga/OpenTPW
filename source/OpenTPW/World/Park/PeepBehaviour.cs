@@ -498,13 +498,14 @@ public sealed class PeepBehaviour
 			// %d: Got stuck in middle o[f]..." and then carries on into the same test rather than treating
 			// it as a failure.
 			//
-			// First the guest asks whether the thing is worth its price to them (FUN_004fde50, 0x00500715;
-			// see PeepPriceOpinion), and walks away from the door if it is not - WalkAwayFromTheDoor.
+			// First the guest asks whether the thing is worth its price to them (see PeepPriceOpinion), and
+			// walks away from the door if it is not - WalkAwayFromTheDoor.
 			// ParkAdmission judges the GATE fee, a different question.
 			//
 			// Refused, the guest walks back to their place - still linked at the head, so the front
-			// (FindQueueDestination, 0x00500826) - to wait in the queue for a new call forward, and is put out
-			// if they cannot get there (0x00500857), without the ride forgetting them (no FUN_004e0ac0).
+			// (FindQueueDestination) - to wait in the queue for a new call forward, and is put out
+			// if they cannot get there, without the ride forgetting them
+			// (docs/exe/ride-operation.md, "State 13 (BeingAdmitted)").
 			case PeepState.BeingAdmitted:
 				if ( Walked( peep, walk, playing ) != WalkVerdict.Walking && Chosen( peep ) is { } arriving )
 				{
@@ -1513,28 +1514,27 @@ public sealed class PeepBehaviour
 	/// arrival test, the gates, the join, and the walk to their own place in the queue.
 	///
 	/// <para>
-	/// <b>The arrival test</b> (<c>0x004ffc3d</c>): the guest must stand on the back-of-queue cell
+	/// <b>The arrival test</b>: the guest must stand on the back-of-queue cell
 	/// (<see cref="ParkRideChoice.QueueCellsFor"/>, <c>GetBackOfQueue</c>), which is where
 	/// <see cref="ChooseSomewhereToGo"/> aimed them. Anywhere else, "The back of the queue has moved while I was
 	/// walking here": they are aimed at its centre again and walk on in <see cref="PeepState.GoingToRide"/>, or,
-	/// with no back of queue or no route to it, go back to deciding still naming the thing (<c>0x004ffe16</c>).
+	/// with no back of queue or no route to it, go back to deciding still naming the thing.
 	/// </para>
 	/// <para>
 	/// <b>The gates.</b> A guest who fails one goes back to deciding, and none is docked. The free-space
-	/// gate is <c>FUN_004dda20</c>, <c>length &lt; cells * 4</c> over the walked cells
+	/// gate is <c>length &lt; cells * 4</c> over the walked cells
 	/// (<see cref="ParkRideChoice.HasQueueRoom"/>): refused, the guest <b>still names the thing</b>
-	/// (<c>0x004ffe0a</c> writes neither <c>+0x1dc</c> nor a refusal), until the chooser next runs and lets it go.
+	/// (neither <c>+0x1dc</c> nor a refusal is written), until the chooser next runs and lets it go.
 	/// The excitement gate is <see cref="TurnsAwayFrom"/> and the third is <see cref="QueueTooLong"/>, each with the
 	/// length counted as the original counts it (<see cref="QueueCount"/>). A guest refused by either of these two
 	/// remembers the thing (<see cref="Peep.RememberRefusal"/>) and lets it go, and the excitement refusal also
-	/// zeroes <see cref="Peep.TimeStartedIdling"/> (<c>0x004ffcf6</c>), so the thinking gap in front of the chooser
+	/// zeroes <see cref="Peep.TimeStartedIdling"/>, so the thinking gap in front of the chooser
 	/// is over at once. Each arm thinks its thought (<see cref="Think"/>) and its event is counted: this project
 	/// keeps no event ring. See <c>docs/exe/ride-operation.md</c>, "Q103".
 	/// </para>
 	/// <para>
-	/// <b>The walk</b> is <see cref="FindQueueDestination"/> (<c>0x004ffdad</c>). A guest who cannot get to their
-	/// place - somebody in front of them has stopped queueing, or no route - leaves the queue they have just joined
-	/// (<c>0x004ffdf4</c>).
+	/// <b>The walk</b> is <see cref="FindQueueDestination"/>. A guest who cannot get to their
+	/// place - somebody in front of them has stopped queueing, or no route - leaves the queue they have just joined.
 	/// </para>
 	/// </summary>
 	private void JoinTheQueue( Peep peep, PeepWalk walk, int tick )
@@ -1768,15 +1768,15 @@ public sealed class PeepBehaviour
 	/// <remarks>
 	/// <list type="number">
 	/// <item><b>Board.</b> At the front (<see cref="Peep.QueuePos"/>, a byte, nought), invited
-	/// (<see cref="Peep.BeenAdmitted"/>) and the ride's nominee (<c>FUN_004e0aa0</c>): the invitation is cleared
+	/// (<see cref="Peep.BeenAdmitted"/>) and the ride's nominee: the invitation is cleared
 	/// and they walk to the ride: the entry cell's centre, where the original aims at the stand point on the same
-	/// cell (<c>FUN_004dedf0(0)</c>, the item's sub-cell offset turned by the facing). With no route the ride
-	/// forgets them and they are put out (<c>0x0050010a</c>, <see cref="PutOutOfTheQueue"/>). The original's
-	/// <c>FUN_004fa5f0</c> also answers nought without routing on a guest's <c>mStrandedTime</c> (<c>+0x198</c>,
-	/// <c>0x004fa62a</c>, <see cref="RefusedAsStranded"/>), which every walk tick zeroes, so on this arm it is
+	/// cell (the item's sub-cell offset turned by the facing). With no route the ride
+	/// forgets them and they are put out (<see cref="PutOutOfTheQueue"/>). The original's
+	/// route to a point also answers nought without routing on a guest's <c>mStrandedTime</c>
+	/// (<see cref="RefusedAsStranded"/>), which every walk tick zeroes, so on this arm it is
 	/// nought unless a save loaded it.</item>
-	/// <item><b>Wait.</b> At the front and invited but not the nominee: the whole turn is nothing (<c>0x005001d8</c>).</item>
-	/// <item><b>The dirt gate</b> (<c>0x005001f0</c>) puts out a queuer for a dirty toilet
+	/// <item><b>Wait.</b> At the front and invited but not the nominee: the whole turn is nothing.</item>
+	/// <item><b>The dirt gate</b> puts out a queuer for a dirty toilet
 	/// (<see cref="ParkState.IsDirty"/>), which use makes one (<see cref="ParkRideOperation.WearByUse"/>), with
 	/// thought <c>0xe</c>. A handyman's cleaning restores it (<c>StaffBehaviour.FindToilet</c>), so a toilet here
 	/// stays dirty until one within his range has walked to it and cleaned it (<c>ride-operation.md</c>,
@@ -1787,9 +1787,9 @@ public sealed class PeepBehaviour
 	/// car track that is not valid, is put out; a coaster's track
 	/// record is counted and let through, as the choice lets it through.</item>
 	/// <item><b>Out of place</b>: more than <see cref="QueueDriftAllowed"/> out, or no delay left, re-takes the place
-	/// - unless the ride is broken down (<c>FUN_004e0370</c>, state 1), when nothing is re-taken. Re-taking walks them
-	/// to it (<see cref="FindQueueDestination"/>, <c>0x00500532</c>) and the mood still runs on the same turn; one who
-	/// cannot get there is put out (<c>0x005004b3</c>). Otherwise a delay is spent.</item>
+	/// - unless the ride is broken down (its state 1), when nothing is re-taken. Re-taking walks them
+	/// to it (<see cref="FindQueueDestination"/>) and the mood still runs on the same turn; one who
+	/// cannot get there is put out. Otherwise a delay is spent.</item>
 	/// <item><b>The mood</b>, read once <see cref="QueueMoodGap"/> sweeps have passed since a spot animation: above
 	/// <see cref="QueueHappyAbove"/> spot animation <see cref="SpotHappy"/> and from <see cref="QueueUnhappyBelow"/>
 	/// to 19 <see cref="SpotBored"/> (<see cref="PlaySpotAnimation"/>), either ending the turn;
@@ -2162,15 +2162,15 @@ public sealed class PeepBehaviour
 	/// which asks everybody in the queue but the ride's nominee.
 	/// </summary>
 	/// <remarks>
-	/// <b>A guest whose place is at or past four to a cell is put out</b> (<c>0x00501413</c>..<c>0x0050141c</c>),
-	/// unless they are already <see cref="PeepState.EnteringRide"/> (<c>0x00501422</c>). The comparison is
+	/// <b>A guest whose place is at or past four to a cell is put out</b>,
+	/// unless they are already <see cref="PeepState.EnteringRide"/>. The comparison is
 	/// unsigned, so a place of -1 - a guest the walk could not reach, see
-	/// <see cref="ParkState.PositionInQueue"/> - is past the end too. Going out is <c>FUN_004ddd20</c> and then
+	/// <see cref="ParkState.PositionInQueue"/> - is past the end too. Going out is leaving the queue's links and then
 	/// <see cref="DismissFromTheQueue"/>: <see cref="ParkAdmission.MediumHappinessChange"/> and nothing else.
-	/// The kids' sound is the caller's, which knows where the guest is drawn.
+	/// The kids' sound is the caller's, which knows where the guest is drawn
+	/// (<c>docs/exe/ride-operation.md</c>, "The queue measured again").
 	/// <para>
-	/// <b>One guest in three also thinks something</b>: thought <c>0xd</c> when the id divides by three
-	/// (<c>0x0050148a</c>).
+	/// <b>One guest in three also thinks something</b>: thought <c>0xd</c> when the id divides by three.
 	/// </para>
 	/// </remarks>
 	/// <param name="place">Where the queue walk found them, or -1.</param>
@@ -2377,10 +2377,10 @@ public sealed class PeepBehaviour
 		if ( picked is not { } chosen )
 			return $"at ({x},{y}) the chooser picked NOTHING {memory}";
 
-		// <b>THE ROUTE IS DELIBERATELY NOT TESTED HERE, and both ways of testing it were wrong.</b>
+		// <b>THE ROUTE IS DELIBERATELY NOT TESTED HERE: neither way of testing it would be right.</b>
 		//
 		// Asking <c>CellRoute.Reaches</c> - the accessible static - measures the wrong thing: it is a
-		// straight-LINE test, the one route straightening uses, not the pathfinder. It answered OPEN
+		// straight-LINE test, the one route straightening uses, not the pathfinder. It answers OPEN
 		// only for a guest already standing beside the queue and SHUT from everywhere else, which reads
 		// exactly like "nothing can reach it" and means "nothing can see it in a clear line".
 		//

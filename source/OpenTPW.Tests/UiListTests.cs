@@ -264,7 +264,7 @@ public class UiListTests
 	private static string[] Names( UiList list ) => list.Rows.Select( row => row.Name ).ToArray();
 
 	/// <summary>
-	/// Six entertainers in slot order. The three at 48 are the ones Q130d read in the original, slots 0, 8 and 13
+	/// Six entertainers in slot order. The three at 48 are the original's, slots 0, 8 and 13
 	/// (<c>docs/exe/hud.md</c>, "A list's order"); the three at 60 and their slots are the test's own.
 	/// </summary>
 	private static readonly (int Slot, string Name, int Wage)[] Entertainers =
@@ -291,8 +291,8 @@ public class UiListTests
 
 	/// <summary>
 	/// <b>A heading's click sorts the whole list and keeps equal rows as they stood</b> (<c>FUN_00665a44</c>,
-	/// <c>FUN_006628f4</c>), where a fresh fill leaves them in the order added: the original's six entertainers,
-	/// as Q130d read them.
+	/// <c>FUN_006628f4</c>), where a fresh fill leaves them in the order added: the six entertainers above, the
+	/// three at 48 the original's.
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the re-sort not stable; the click sorting nothing; the wage compared as text; a fresh fill

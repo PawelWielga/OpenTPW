@@ -5,38 +5,30 @@ namespace OpenTPW;
 ///
 /// <para>
 /// <b>The original has no day counter at all.</b> It keeps an accelerated wall clock - its own source
-/// calls it <i>funny time</i> - and reads the date back out of it with FileTimeToSystemTime every world
-/// tick (FUN_004f8260). A day advances as an <b>edge</b>: the derived calendar day is compared against
-/// the stored one and an event fires when they differ. Nothing accumulates days, which is why there is
-/// no "day length" constant anywhere to find.
+/// calls it <i>funny time</i> - and reads the date back out of it every world tick. A day advances as
+/// an <b>edge</b>: the derived calendar day is compared against the stored one and an event fires when
+/// they differ. Nothing accumulates days. See <c>docs/exe/weather.md</c>, the section on the calendar.
 /// </para>
 /// <para>
-/// The conversion is <c>funny_seconds = counter * mFunnySecsPerRealSec / 4</c> (FUN_004f8770), where the
-/// counter is bumped once per call of FUN_00516380 - the world tick - and the park loop calls that only
-/// on every <b>eighth</b> 31ms game tick (<c>TEST byte ptr [0x00877d34],0x7</c> at 0x0054f668, the call
-/// at 0x0054f7bb). Eight ticks is 248ms, so the counter runs at about four a second, which is where the
-/// otherwise inexplicable divide-by-four comes from.
+/// The conversion is <c>funny_seconds = counter * mFunnySecsPerRealSec / 4</c>, where the counter is
+/// bumped once per world tick, and the park loop runs that only on every <b>eighth</b> 31ms game tick.
+/// Eight ticks is 248ms, so the counter runs at about four a second.
 /// </para>
 /// <para>
 /// <b>The rate is park data, not a constant.</b> <c>mFunnySecsPerRealSec</c> lives in the world clock's
-/// save block and defaults to 15000 (<c>MOV dword ptr [ESI+0x1c],0x3a98</c> at 0x004f7ea9). It has
-/// exactly two writers in the whole executable - that default and the save loader - no script opcode, no
-/// balance key and no setter, and the clock pointer never escapes into a variable, so nothing else
-/// <i>can</i> write it. The one park the game ships does not override it: jungle's Easymode.TPWI holds
-/// <c>98 3a 00 00</c> = 15000 in its clock block. So until the clock block is read back off disk, the
-/// default is the right answer and <see cref="Rate"/> is where that will arrive.
+/// save block and defaults to 15000. The one park the game ships does not override it: jungle's
+/// Easymode.TPWI holds 15000 in its clock block. <see cref="Rate"/> is where a park's own value arrives.
 /// </para>
 /// <para>
-/// <b>A day is 5.714 seconds, and the missing hundredth is not rounding.</b> 86,400 funny seconds at
-/// 15,000 a second is 5.76s <i>nominal</i> - but the counter is fed 248ms per unit while every
-/// conversion divides by four as though it were 250ms, so funny time runs about 0.8% fast and nothing
-/// anywhere compensates for it. Counting the ticks rather than integrating real seconds is what
-/// reproduces that, which is why this counts ticks.
+/// <b>A day is 5.714 seconds.</b> 86,400 funny seconds at 15,000 a second is 5.76s <i>nominal</i> - but
+/// the counter is fed 248ms per unit while every conversion divides by four as though it were 250ms, so
+/// funny time runs about 0.8% fast and nothing compensates for it. Counting the ticks rather than
+/// integrating real seconds is what reproduces that, which is why this counts ticks.
 /// </para>
 /// <para>
 /// What it comes to: a month is about three minutes, a year about thirty-five minutes, and
-/// <c>Weather.DaysBetweenChanges</c> of 7 is <b>a change of weather roughly every forty seconds</b>.
-/// That last figure is why park weather is worth building at all - see <c>ParkWeather</c>.
+/// <c>Weather.DaysBetweenChanges</c> of 7 is <b>a change of weather roughly every forty seconds</b> -
+/// see <c>ParkWeather</c>.
 /// </para>
 /// </summary>
 public static class GameCalendar

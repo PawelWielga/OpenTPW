@@ -74,7 +74,7 @@ public static class PeepPriceOpinion
 				- item.VomitEffect * Meter( peep.Vomit ) / 100
 				+ 100;
 
-			// The descriptor's InitCostOfGoods, not the object's saved cost (004fdf32); docs/exe/ride-operation.md, Q97.
+			// The descriptor's InitCostOfGoods, not the object's saved cost (004fdf32); docs/exe/ride-operation.md.
 			var valued = (uint)(mood * (item.CostOfGoods * 115 / 100)) / 100;
 
 			// The object's +0x188 and low byte of +0x190; docs/exe/ride-operation.md, Q97.

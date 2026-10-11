@@ -343,7 +343,7 @@ The ids seen so far: `0xbc` when buy opens, `0xbd` when hire opens, `0xc6` and `
 |---|---|
 | The loader that fills `0x0076e300` | **Found** and emulated: the static initializer at `0x005a0a50` (above); the 40 screen-posted ids are posted-only rows of one line each |
 | The u16 at message `+0x00` | Unknown — it is written by `FUN_0059c0a0` but is not the gating id |
-| `Welcome` (section 2) | Looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own |
+| `Welcome` (section 2) | Looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
 | Responses 399-402 | All carry sample 1, an `OpenPark` line — the same stub shape |
 
 ## Q90b — the posted door path (2026-10-03)

@@ -5,39 +5,35 @@ namespace OpenTPW.UI;
 /// <see cref="ParkBuyScreen"/> rather than a second button of its own.
 ///
 /// <para>
-/// <b>Where the layout comes from.</b> <c>FUN_0049bdd0</c> builds it from the compiled layout stream
-/// at <c>0x00751fa8</c>, handler <c>FUN_0049b650</c> - 1074 bytes, 31 controls, walked to a balanced
-/// close. See <c>docs/exe/hud.md</c>, where both screens' trees are written out.
+/// <b>Where the layout comes from.</b> The original's compiled layout stream at <c>0x00751fa8</c>,
+/// 31 controls. See <c>docs/exe/hud.md</c>, where both screens' trees are written out.
 /// </para>
 ///
 /// <para>
-/// <b>The two screens reach each other directly.</b> <c>FUN_004a0940( 1 )</c> opens whichever of them
-/// that category was last left on, from a remembered-tab global; each also carries a button to the
-/// other - this one's <c>0x2495</c>, and the buy screen's <c>0x1ff</c>.
+/// <b>The two screens reach each other directly.</b> The category's opener shows whichever of them it
+/// was last left on; each also carries a button to the other - this one's <c>0x2495</c>, and the buy
+/// screen's <c>0x1ff</c>.
 /// </para>
 ///
 /// <para>
-/// <b>Its list has TWO columns, not three.</b> A row's payload is sized by the column count, so where
-/// the buy screen pushes name, price and a tick-box, this pushes a name and a wage. That is exactly
-/// why <see cref="UiList.Row"/> carries a value per column rather than a fixed record.
+/// <b>Its list has two columns, not three.</b> A row's payload is sized by the column count, so where
+/// the buy screen pushes name, price and a tick-box, this pushes a name and a wage. That is why
+/// <see cref="UiList.Row"/> carries a value per column rather than a fixed record.
 /// </para>
 ///
 /// <para>
-/// <b>What is deliberately NOT filled in.</b> The mini-balance block (<c>0x2485</c>, help row 163,
-/// "indicates the financial effects of hiring the selected person") is a MONTHLY ACCOUNT, and not the
-/// park's cash. <c>FUN_0049bdd0</c> reads three monthly ring buffers off the park analyser (<c>mParkAnalyser</c>) - cash in at
-/// <c>+0x1fc94</c>, staff costs at <c>+0x1f7f4</c>, total costs at <c>+0x1f5a4</c>, each with its own
-/// index and count - and fills the rows as cash in, staff costs, total-minus-staff for other costs,
-/// and cash-in-minus-total for the balance. This game keeps no monthly history, so only the staff bill
-/// can be answered, and it is answered from the wages actually being paid.
+/// <b>What is not filled in.</b> The mini-balance block (<c>0x2485</c>, help row 163, "indicates the
+/// financial effects of hiring the selected person") is a monthly account, and not the park's cash.
+/// The original reads three monthly ring buffers off the park analyser - cash in, staff costs and
+/// total costs - and fills the rows as cash in, staff costs, total-minus-staff for other costs, and
+/// cash-in-minus-total for the balance. This game keeps no monthly history, so only the staff bill can
+/// be answered, and it is answered from the wages actually being paid.
+/// </para>
 ///
 /// <para>
-/// The other three rows stay blank rather than carry a plausible number. <b>Putting the park's cash
-/// under "Balance" is not a rounding error but a different quantity wearing that row's label</b> - the
-/// screen would then show the same figure twice, once correctly as the money readout and once as a
-/// month's net it is not. All four cells are still built, so the panel keeps the shape the original
-/// has and the figures have somewhere to land the day a monthly history exists.
-/// </para>
+/// The other three rows stay blank: the park's cash under "Balance" would be a different quantity
+/// wearing that row's label, the same figure as the money readout shown again as a month's net it is
+/// not. All four cells are still built, so the panel keeps the shape the original has.
 /// </para>
 /// </summary>
 internal sealed class ParkHireScreen : UiWindow

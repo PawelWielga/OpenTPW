@@ -95,7 +95,7 @@ public class ParkVisitorsScreenTests
 	}
 
 	/// <remarks>
-	/// <b>Mutations:</b> the rewrite clearing and refilling the list (the build before Q200b) throws the top row back to
+	/// <b>Mutations:</b> the rewrite clearing and refilling the list throws the top row back to
 	/// nought; no subscription leaves the row count unmoved by an arrival; no unsubscription keeps adding rows after
 	/// the screen closes; the first rewrite timed from nought and not from the opening; each later one too; the next
 	/// tick a period after a late one; the timer run under a message box, or not stamped afresh as the box goes.

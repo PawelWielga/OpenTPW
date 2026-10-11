@@ -4,63 +4,37 @@ namespace OpenTPW.UI;
 /// The park map: the screen behind the gadget's map button.
 ///
 /// <para>
-/// <b>Where it comes from.</b> FUN_005f0b40 builds it from the compiled layout stream at 0x00774da0,
-/// with LAB_005f0b00 as its handler. Every rectangle and every id below is that stream's, walked
-/// opcode by opcode, and every mesh is named by the hash the stream carries - so the scroll arrows are
-/// asked for as <c>nuup</c>, <c>nudown</c>, <c>nuleft</c> and <c>nuright</c>, which are the first nodes
-/// of b_mapup/b_mapdn/b_mapleft/b_mapright.md2, and the three panel backings as <c>buttpan1</c>,
-/// <c>buttpan2</c> and <c>textpan</c>.
+/// <b>Where it comes from.</b> The original's compiled layout stream at 0x00774da0
+/// (<c>docs/exe/hud.md</c>, "The park map"). Every rectangle and every id below is that stream's, and
+/// every mesh is named by the hash the stream carries.
 /// </para>
 /// <para>
-/// <b>It pauses, and that makes it the first park window that should.</b> FUN_005f0b40 calls
-/// FUN_004092a0, clears <c>g_ParkRunning</c> and quietens the advisor with Advisor_StopQuietly(1) - the
-/// fading stop, not the crying one. <see cref="ParkGadget"/> must leave <see cref="UiWindow.Pauses"/>
-/// false because it is up for the whole of a park; this is the opposite case, and
-/// <see cref="ParkFrontEnd"/> already holds the advisor for any window that pauses.
+/// <b>It pauses</b>, as the original's does, and quietens the advisor with the fading stop, not the
+/// crying one. <see cref="ParkGadget"/> leaves <see cref="UiWindow.Pauses"/> false because it is up for
+/// the whole of a park; this is the opposite case, and <see cref="ParkFrontEnd"/> holds the advisor for
+/// any window that pauses.
 /// </para>
 /// <para>
-/// <b>The map really is the shipped picture.</b> Every park carries its own 512x512 <c>2dmap.tga</c>,
-/// and the original loads it: the name is a static global built at 0x005f0ad0 into DAT_00f86d20, which
-/// FUN_005f1ea0 hands to the image loader before storing the width and height that size its tile set -
-/// <c>(512+63)&gt;&gt;6</c> is 8, so 8x8 tiles of 64x64. That arithmetic is what confirms the image the
-/// original draws is the one on disk.
+/// <b>The map is the shipped picture.</b> Every park carries its own 512x512 <c>2dmap.tga</c>, and the
+/// original loads the whole of it, as 8x8 tiles of 64x64. It is shown whole here too, the black border
+/// the art has included, and is not cropped to its inner field: what the original then shows of it is
+/// governed by a zoom and scroll that are not decoded. Cell (x,y) lands at pixel (16 + 5x, 43 + 5y) of
+/// that image.
 /// </para>
 /// <para>
-/// <b>What is NOT built, and why it is a refusal rather than a gap.</b> Over that picture the original
-/// paints a live 128x128 grid of classification codes (FUN_005f2050, FUN_005f2380): rides, shops,
-/// sideshows, tracks, visitors and staff, each cell coloured by FUN_005f09a0, which is a three-stop
-/// colour ramp over a per-thing metric from 0 to 100. Its six layer switches and its two radio groups
-/// - staff overlays and the metric picker - choose what that overlay shows, and the game's own help rows name
-/// them: "excitement ratings", "customer satisfaction", "ride reliability", "queue times". <b>The overlay is not
-/// built.</b> Of its metrics excitement is worked out (<see cref="ParkRideScore.ExcitementOf"/>) and satisfaction's
-/// days are kept (<see cref="ParkObjectRings.Satisfaction"/>; the overlay averages them through FUN_004e1e30,
-/// 0x005f2565), reliability and queue times are not, and built now its switches would sit over an overlay half
-/// empty, which is what the aerial and the message bar were each refused for. So this screen is the map, and the
-/// map is honest.
+/// <b>The overlay is not built.</b> Over that picture the original paints a live 128x128 grid of
+/// classification codes - rides, shops, sideshows, tracks, visitors and staff - each cell coloured by a
+/// three-stop ramp over a per-thing metric from 0 to 100, and its six layer switches and two radio
+/// groups (staff overlays and the metric picker) choose what it shows. Of its metrics excitement is
+/// worked out (<see cref="ParkRideScore.ExcitementOf"/>) and satisfaction's days are kept
+/// (<see cref="ParkObjectRings.Satisfaction"/>); reliability and queue times are not, so the switches
+/// would sit over an overlay half empty. The two button panels that back the switches, buttpan1 and
+/// buttpan2, are kept bare, as the screen's own backing art.
 /// </para>
 /// <para>
-/// <b>The terrain colours are not invented either.</b> The original's own land codes (10, 11, 12,
-/// and 9 for track type 25) take descriptors from globals that are filled at run time, so what colour it
-/// paints them is not readable from the image - and the shipped picture already shows the park's
-/// terrain. Painting cells over it in colours chosen here would be decoration, not fidelity. The cell
-/// to pixel mapping is worked out and recorded all the same, because it is what will place a ride on
-/// this map later: cell (x,y) lands at pixel (16 + 5x, 43 + 5y) of that image.
-/// </para>
-/// <para>
-/// <b>Two things about how it looks, said plainly rather than quietly shipped.</b> The two button
-/// panels are <i>bare</i>: buttpan1 and buttpan2 back the six layer switches along y 1409-1512, and
-/// those switches are refused above, so the panels carry nothing. They are kept because they are the
-/// screen's own backing art and the layout is the point - which is a different thing from drawing a
-/// control that would do nothing, and the distinction is worth stating because two things have been
-/// refused nearby for looking exactly like this.
-/// </para>
-/// <para>
-/// And <b>the picture keeps the black border the shipped art has</b>, so a thick frame sits inside the
-/// square. Its inner field is measured - x 16..495, y 43..467, which is 96x85 cells of exactly five
-/// pixels - so cropping to it would fill more of the viewport and look better. It is not cropped: the
-/// original's tile set is 8x8 of 64, which is the whole 512, so the whole image is what it loads, and
-/// what it then shows is governed by a zoom and scroll that are not traced. Cropping would be
-/// inventing behaviour to improve the look, which is the one thing this file may not do.
+/// <b>No terrain colours are painted over the picture.</b> The colours the original gives its land
+/// codes are filled in at run time and are not known, and the shipped picture already shows the park's
+/// terrain.
 /// </para>
 /// <para>
 /// <b>Engine and content.</b> The window, the controls and the help bar are engine. Which controls the

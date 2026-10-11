@@ -12,10 +12,10 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// <b>The obvious reading is refuted.</b> An id is not an index into the numbered <c>&lt;stem&gt;M&lt;n&gt;.md2</c>
-/// clips an item happens to ship: of the 72 ride archives whose script names a literal id, every one uses
-/// an id at or above the number of such files it ships, and two ship none at all while still triggering
-/// ids 0 and 5. <c>M</c> is simply the letter of one role - id 5 - the one whose files carry numbers.
+/// <b>An id does not count clips.</b> It is not an index into the numbered <c>&lt;stem&gt;M&lt;n&gt;.md2</c>
+/// clips an item ships: a script triggers ids 0 and 5 on an item that ships no such file. <c>M</c> is the
+/// letter of one role - id 5 - the one whose files carry numbers (docs/exe/park.md, "Item animation: the
+/// twelve roles").
 /// </para>
 ///
 /// <para>

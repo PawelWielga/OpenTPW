@@ -17,10 +17,9 @@ namespace OpenTPW;
 /// static 'gateway' mesh sits right where this one lands), so it needs no placement of ours.
 ///
 /// <para>
-/// <b>The park-entry flight plays it, as the original's does.</b> An island holds two animated models, its isle at
-/// <c>island+4</c> and this gate at <c>island+8</c> (<c>FUN_005dfa60</c>, from the ISLAND() line's third and fourth
-/// names). The camera plays the gate's M1, which opens it, as it finishes swinging round onto it (<c>0x005e06e4</c>),
-/// and its M2, which shuts it, when Escape cancels the flight after that (<c>0x005e18ab</c>). See
+/// <b>The park-entry flight plays it, as the original's does.</b> An island holds two animated models, its isle and
+/// this gate, named by the ISLAND() line's third and fourth names. The camera plays the gate's M1, which opens it, as
+/// it finishes swinging round onto it, and its M2, which shuts it, when Escape cancels the flight after that. See
 /// <see cref="LobbyCameraMode.LeaveForPark"/> and <see cref="LobbyCameraMode.CancelLeave"/>; <c>docs/exe/lobby.md</c>,
 /// "Escape cancels the fly-in".
 /// </para>
@@ -34,7 +33,7 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// <b>Two things here are our reading, not the original's measured behaviour.</b> Between those two calls the gate
+/// <b>Two things here are inferred, not the original's measured behaviour.</b> Between those two calls the gate
 /// idles shut, and a clip that has ended is held on its last frame. The original's lobby loop may replay a model's M1
 /// by itself whenever its channel has finished (<c>FUN_00473c70</c>, unless the instance's <c>+4</c> carries
 /// <c>0x8004</c>), and whether a lobby channel holds a finished clip reads <c>+4 &amp; 0x18</c>; the lobby instances'
@@ -42,7 +41,7 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// <b>Not every gate is a pair of hinged doors.</b> Measured across all four rather than inferred from one:
+/// <b>Not every gate is a pair of hinged doors.</b> Across all four:
 /// <c>Jun</c> and <c>Hal</c> turn two meshes, <c>Spa</c> one, the hatch, and <c>Fan</c> none at all but morphs two,
 /// because its gate is a worm. <see cref="LobbyModel.Pose"/> poses both halves of a clip, so all four play the same
 /// way.

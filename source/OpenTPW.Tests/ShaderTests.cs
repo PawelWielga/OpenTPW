@@ -44,7 +44,7 @@ public class ShaderTests
 
 	/// <summary>
 	/// test.shader binds <see cref="Material.TextureSlots"/> textures, one per material a mesh can draw with, and picks
-	/// each by its index; an index past them draws flat magenta (the Hot Pot's floor, Q203).
+	/// each by its index; an index past them draws flat magenta.
 	/// </summary>
 	[TestMethod]
 	public void TheModelShaderBindsEveryTextureSlot()

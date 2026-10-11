@@ -777,8 +777,8 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// </summary>
 	/// <remarks>
 	/// <b>Two choices, said here.</b> The rider's body is not drawn: the original keeps it, standing, where the rider was
-	/// when they boarded (admission's <c>+0x28</c> = 1 stops the guest draw placing it), and Alexah's memory of the game
-	/// is a head in the boat and nothing else, which is what this draws (2026-09-30). The picture is the one the seat node
+	/// when they boarded (admission's <c>+0x28</c> = 1 stops the guest draw placing it), and this draws a head in the boat
+	/// and nothing else (<c>docs/exe/ride-operation.md</c>, "What the head is"). The picture is the one the seat node
 	/// shows the camera (<see cref="ParkBumperBoats.HeadFrame"/>); the sprite's flag word <c>0x3000080</c> carries
 	/// <c>0x2000000</c>, so the drawing adds no direction of its own (<c>FUN_00542010</c>). The original also rolls the
 	/// quad to the node (locals 8 and 9), which is not drawn here (<c>RIDER_HEAD_ROLL</c>, counted as a boat is stood).

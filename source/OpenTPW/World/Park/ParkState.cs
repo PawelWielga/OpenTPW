@@ -938,16 +938,16 @@ public sealed class ParkState
 
 	/// <summary>
 	/// Opens the park to visitors or shuts it - the <c>b_door</c> switch on the entry-price screen, which is
-	/// the original's <c>FUN_00519ef0( open, 0 )</c>.
+	/// the original's <c>FUN_00519ef0( open, 0 )</c> (<c>docs/exe/ride-operation.md</c>, "The park's door").
 	/// </summary>
 	/// <remarks>
-	/// <b>Each arm acts only on a change</b> (<c>0x00519f76</c>, <c>0x0051a09e</c>). It sets
+	/// <b>Each arm acts only on a change.</b> It sets
 	/// <see cref="ParkIsClosed"/>, which <see cref="PeepBehaviour"/> reads at the gate, and hands the rides to
-	/// <see cref="DoorMoved"/>: closing closes every object a guest may be offered (<c>0x0051a1ae</c>), opening
-	/// opens each that <see cref="ParkRideOperation.MayOpen"/> allows (<c>0x0051a01e</c>).
+	/// <see cref="DoorMoved"/>: closing closes every object a guest may be offered, opening
+	/// opens each that <see cref="ParkRideOperation.MayOpen"/> allows.
 	/// <para>
 	/// The people command the gate script - opening writes 1, closing writes 0
-	/// only when nobody is in the park and the gate reads open (<c>0x0051a0e8</c>..<c>0x0051a161</c>) - and
+	/// only when nobody is in the park and the gate reads open - and
 	/// each posts a type-<c>0x13</c> message, 3 open or 4 closed, which the advisor answers with its own
 	/// message <c>0x80</c> or <c>0x81</c>; the message is posted whether or not anything changed.
 	/// </para>
@@ -1417,8 +1417,7 @@ public sealed class ParkState
 	/// <b><see cref="LeaveCell"/> is not enough on its own.</b> It unlinks the cell's own chain but
 	/// leaves <see cref="_cellOf"/> naming a cell the thing is no longer on, and that entry is what
 	/// <see cref="StandOn"/> consults to decide what to undo - so a thing id handed out again later
-	/// would evict whoever is standing where its previous owner used to be. Nothing reuses an id today,
-	/// which is exactly why this would have gone unnoticed.
+	/// would evict whoever is standing where its previous owner used to be. Nothing reuses an id today.
 	/// </para>
 	/// </summary>
 	public void Forget( int thingId )

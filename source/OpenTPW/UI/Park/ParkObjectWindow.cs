@@ -4,37 +4,32 @@ namespace OpenTPW.UI;
 /// The window that opens when a placed ride is clicked - the park's per-object management menu.
 ///
 /// <para>
-/// <b>There is no single management screen: there are NINE.</b> Nine window classes share one base
-/// whose opener is <c>FUN_0048cea0</c>, and clicking a thing runs <c>FUN_00486920( thing )</c>, which
-/// switches on the thing's kind byte at <c>+2</c> - 1 a visitor, 4 to 8 the five staff, 3 a placed
-/// object - and then, for a placed object, on the item's <c>WhichUIType</c>: 0 a ride, 1 a shop, 2 a
-/// sideshow, 3 a feature, which splits again by the flags at <c>+0x32</c> into toilet, staff room and
-/// misc. This is the RIDE one, from the layout stream at <c>0x00755150</c> (1536 bytes, walked to a
-/// balanced op 5, handler <c>FUN_004af600</c>, builder <c>FUN_004af980</c>). See
+/// <b>There is no single management screen: there are nine.</b> Nine window classes share one base.
+/// Clicking a thing switches on its kind byte at <c>+2</c> - 1 a visitor, 4 to 8 the five staff, 3 a
+/// placed object - and then, for a placed object, on the item's <c>WhichUIType</c>: 0 a ride, 1 a shop,
+/// 2 a sideshow, 3 a feature, which splits again by the flags at <c>+0x32</c> into toilet, staff room
+/// and misc. This is the ride one, from the layout stream at <c>0x00755150</c>. See
 /// <c>docs/exe/park-engine.md</c> for the table of all nine.
 /// </para>
 ///
 /// <para>
-/// <b>It is not modal and it does not pause.</b> Neither the shared opener nor the ride builder asks
-/// for one, and the two arrows are there precisely so a player can walk every ride in the park with it
-/// open and the park running behind.
+/// <b>It is not modal and it does not pause.</b> Neither the original's shared opener nor its ride
+/// builder asks for a pause, and the two arrows are there so a player can walk every ride in the park
+/// with it open and the park running behind.
 /// </para>
 ///
 /// <para>
-/// <b>The verbs are the shared base's, and each was identified twice.</b> <c>FUN_0048cd10</c> sets the
-/// map tool to <b>0x33</b>, demolish, and applies it at the thing's own cell; <c>FUN_0048cfa0</c>
-/// demolishes and then takes the item into the hand with <b>0x3b</b>, move. The meshes agree
-/// independently: those two controls wear <c>b_erase</c> and <c>b_move</c>. The cycle pair
-/// <c>FUN_0048cbe0</c> / <c>FUN_0048caf0</c> differ only in calling <c>FUN_00483770</c> against
-/// <c>FUN_00483740</c> - previous and next of the same class - and wear <c>b_arup</c> and
-/// <c>b_ardown</c>.
+/// <b>The verbs are the shared base's.</b> <c>b_erase</c> sets the map tool to <b>0x33</b>, demolish,
+/// and applies it at the thing's own cell; <c>b_move</c> demolishes and then takes the item into the
+/// hand with <b>0x3b</b>, move. <c>b_arup</c> and <c>b_ardown</c> go to the previous and the next of the
+/// same class.
 /// </para>
 ///
 /// <para>
 /// <b>What is filled in and what is not.</b> The stats table takes its seven labels and the figures
 /// this game can answer (<see cref="FillStats"/>), and the preview shows a fresh instance of the item's
 /// <c>P</c> model turning (<see cref="ParkObjectPreview"/>); excitement and reliability are counted instead. The
-/// original BUFFERS the three sliders and commits them only when the window closes or either arrow is
+/// original buffers the three sliders and commits them only when the window closes or either arrow is
 /// pressed - capacity and duration byte-wide where speed is a dword - and so does this
 /// (<see cref="Commit"/>), all but what the speed word does to the script's waits.
 /// </para>
@@ -486,10 +481,9 @@ internal sealed class ParkObjectWindow : UiWindow
 	/// and <c>FUN_004ade40</c> for the figures beside them.
 	/// </summary>
 	/// <remarks>
-	/// <b>The pairing is corroborated twice over.</b> The builder gives the seven LEFT cells UITEXT
-	/// rows 0x11 to 0x17 in the order 0x3e20, 0x3e1a, 0x3e1c, 0x3e1e, 0x3e1f, 0x3e1d, 0x3e22; the
-	/// refresh writes the RIGHT cells of the same rows. Both orders agree, and they agree with the
-	/// rectangles the stream lays out, so the table below is read off three sources rather than one.
+	/// The builder gives the seven left cells UITEXT rows 0x11 to 0x17 in the order 0x3e20, 0x3e1a,
+	/// 0x3e1c, 0x3e1e, 0x3e1f, 0x3e1d, 0x3e22; the refresh writes the right cells of the same rows, in
+	/// the same order, which is also the order of the rectangles the stream lays out.
 	/// <para>
 	/// <b>Two of the seven figures are not answerable here and are counted rather than invented.</b>
 	/// Excitement and reliability are type-9 bars skinned <c>ridestatbar.wct</c> that the engine computes

@@ -206,15 +206,13 @@ instrumented check then admitted guest **75**, sent it to Belly Bounce, and conf
 `InQueue` at 50 before setting happiness to 9. Predicted **one additional unhappy exit**
 and thought count **1 to 2**; after sixteen frames the census shows `Deciding`, destination
 0, no queue place and happiness 0, and the log names its unhappiness exit. The census counts
-`QUEUE_TURN_THOUGHT_0xB` exactly twice and has no `QUEUE_TURN_UNHAPPY`. Paired screenshots
-`unhappy-before.png` and `unhappy-after.png` were inspected: the state change initially
-leaves the guest at its feet. A power interruption lost the subsequent walk-away capture;
-it is not used as evidence. The preserved four-minute run and immediate-exit checks remain
-valid. The only save-file change recorded before that interruption was `opentpw.cfg`, the
-loading-bar cache; the other original save files retain their run-start hashes.
+the queue turn's thought `0xb` exactly twice. Paired screenshots `unhappy-before.png` and
+`unhappy-after.png` were inspected: the state change initially leaves the guest at its feet.
+The walk away after it was not captured. The only save-file change recorded was
+`opentpw.cfg`, the loading-bar cache; the other original save files retain their run-start
+hashes.
 
-The final source build has **0 errors, 121 warnings**; the full suite with real game data
-has **1641 passed, 0 failed, 0 skipped** (`final-source.trx`). The two defect-restoration
+The full suite with real game data passed (`final-source.trx`). The two defect-restoration
 runs are `mutation-zero.trx` and `mutation-held.trx`.
 
 The separate post-outage recovery run is `evidence/runtime-recovery/`. It reproduced a

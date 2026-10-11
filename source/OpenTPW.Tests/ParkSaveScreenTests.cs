@@ -346,7 +346,7 @@ public class ParkSaveScreenTests
 		Assert.AreEqual( "1x SAVE_GAME_WRITER", Counted() );
 	}
 
-	/// <summary>What has been counted, less the list's own count of a first row it does not select (Q232).</summary>
+	/// <summary>What has been counted, less the list's own count of a first row it does not select.</summary>
 	private static string Counted() => string.Join( ", ", Unimplemented.Summary
 		.Where( entry => entry.What != "LIST_FIRST_ROW_SELECTED" )
 		.Select( entry => $"{entry.Times}x {entry.What}" ) );

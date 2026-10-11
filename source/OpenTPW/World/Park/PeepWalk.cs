@@ -18,7 +18,7 @@ public enum WalkVerdict
 /// for a guest who is going somewhere, and the thing that finally makes anybody move.
 ///
 /// <para>
-/// <b>It is a join rather than an algorithm.</b> Every piece it uses was built and tested on its own:
+/// <b>It is a join rather than an algorithm.</b> Every piece it uses is a class of its own:
 /// <see cref="WallAvoidance"/> pushes off walls, <see cref="PeepJourney"/> follows the route,
 /// <see cref="PeepSteering"/> adds those up and takes the step, and <see cref="PeepNavigator"/> plans the
 /// route and measures the progress. This is the thing that calls them in the right

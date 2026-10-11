@@ -545,16 +545,16 @@ public sealed class Peep
 	/// <see cref="PeepWalk"/>.
 	///
 	/// <para>
-	/// <b>Eleven of the twenty-two, found by asking which handlers can reach the walk tick at all.</b>
+	/// <b>Eleven of the twenty-two: the states whose handler can reach the walk tick at all.</b>
 	/// <c>FUN_005019f0</c> switches on the state and calls <c>FUN_004fa2a0</c> - the walk - from four of its
 	/// cases in its own body; but most cases jump straight to a handler that makes the call itself, one
 	/// level down: <c>FUN_004ff730</c> for <see cref="PeepState.HeadingForGate"/>, <c>FUN_004ffb20</c> for
 	/// <see cref="PeepState.Entering"/>, <c>FUN_004fff20</c>, <c>FUN_004ffbc0</c>, <c>FUN_005006b0</c>,
-	/// <c>FUN_00500900</c> and <c>FUN_00500a50</c> for the rest. Searching every one of the twenty-two
-	/// handlers for a path to the walk gives states 0, 2, 5, 7, 9, 10, 12, 13, 15, 18 and 20.
+	/// <c>FUN_00500900</c> and <c>FUN_00500a50</c> for the rest. The states with a path to the walk are
+	/// 0, 2, 5, 7, 9, 10, 12, 13, 15, 18 and 20.
 	/// </para>
 	/// <para>
-	/// <b>Ten of the eleven agree with a list written from the other direction.</b> <see cref="AnimationFor"/>
+	/// <b>Ten of the eleven are the states given the walking animation.</b> <see cref="AnimationFor"/>
 	/// queues the walking animation for exactly ten states, and they are these without
 	/// <see cref="PeepState.LeavingRide"/>, and there the difference is this build's: the original's setter
 	/// asks for the walk on the way into it too - see <see cref="AnimationFor"/>.

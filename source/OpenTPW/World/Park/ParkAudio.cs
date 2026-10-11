@@ -5,23 +5,19 @@ namespace OpenTPW;
 ///
 /// <para>
 /// The original loads four categories as a park comes up and plays one thing. Its state machine
-/// registers cat_ambient, cat_rides, cat_speech and cat_music (FUN_0051ec50 at 0x0054ec92), re-applies
-/// the group volumes (Sound_ApplyGroupVolumes 0x0051bd70, at 0x0054ec9a), and then calls FUN_0051e730
-/// at 0x0054ec9f, which plays <b>effect 2 of cat_music</b> - the only effect that category declares -
-/// and keeps the voice. That order is the order this is built in.
+/// registers cat_ambient, cat_rides, cat_speech and cat_music (FUN_0051ec50), re-applies the group
+/// volumes, and then plays <b>effect 2 of cat_music</b> - the only effect that category declares -
+/// and keeps the voice (<c>docs/exe/scenes.md</c>, "Sound scopes"). That order is the order this is built in.
 /// </para>
 ///
 /// <para>
-/// <b>The crowd picks the music's variation, not its loudness.</b> The very next line is
-/// FUN_0051bc40( voice, 4, 0 ), which sets the voice's parameter 4 to nought, and the park loop sets it every
-/// 32nd tick afterwards (FUN_0051e790 at 0x0054f870) from a count: FUN_004c81e0 is
-/// <c>clamp( guests / 2, 0, 100 )</c>, held to 89 by the caller - see <see cref="CrowdLevel"/>. Parameter 4 is
-/// the id music 2's record names (<c>+0x12</c>), so it is the voice's zone parameter and nothing else: each next
-/// sample is drawn from the variation the current one's zones give for it (FUN_006be450, from the voice's own
-/// slot at 0x006bde00). Every variation's volume is a fixed hundred with no controller on it, in all four
-/// themes, so the level never touches how loud the music is. Lost Kingdom's zones are 0-14, 15-29, 30-44, 45-59,
-/// 60-74 and 75-90 for its six variations: thirteen guests, level six, play the first, and so does an empty
-/// park (<c>docs/exe/park-engine.md</c>, "The music's level").
+/// <b>The crowd picks the music's variation, not its loudness.</b> The voice's parameter 4 is set to nought as it
+/// starts and every 32nd tick afterwards from a count, <c>clamp( guests / 2, 0, 100 )</c> held to 89 - see
+/// <see cref="CrowdLevel"/>. It is the voice's zone parameter and nothing else: each next sample is drawn from the
+/// variation the current one's zones give for it (from the voice's own slot at 0x006bde00). Every variation's volume
+/// is a fixed hundred with no controller on it, in all four themes, so the level never touches how loud the music is.
+/// Lost Kingdom's zones are 0-14, 15-29, 30-44, 45-59, 60-74 and 75-90 for its six variations: thirteen guests, level
+/// six, play the first, and so does an empty park (<c>docs/exe/park-engine.md</c>, "The music's level").
 /// </para>
 ///
 /// <para>

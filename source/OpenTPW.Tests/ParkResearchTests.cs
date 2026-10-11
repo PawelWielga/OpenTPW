@@ -113,7 +113,7 @@ public class ParkResearchTests
 	}
 
 	/// <summary>
-	/// The control: in the shipped park the save's flag and the file's cost agree item for item (Q201's measure), so
+	/// The control: in the shipped park the save's flag and the file's cost agree item for item, so
 	/// this passes whichever rule is read; the tab tests below pass only if the filter is applied at all.
 	/// </summary>
 	[TestMethod]

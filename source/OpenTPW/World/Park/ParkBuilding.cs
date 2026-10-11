@@ -302,7 +302,7 @@ public static class ParkBuilding
 			// The item's own starting price, copied unclamped (0x004db3ad): what the charge takes, the door's price
 			// opinion weighs and a sideshow's excitement reads. A move's put-down builds afresh, so it starts here too.
 			PricePerUse: item.InitPricePerUse,
-			// Object-owned settings seeded by FUN_004db090; docs/exe/ride-operation.md, Q97.
+			// Object-owned settings seeded by FUN_004db090; docs/exe/ride-operation.md, "The sideshow win roll".
 			CostOfGoods: item.CostOfGoods, ChanceOfWinning: item.ChanceOfWinning,
 
 			// Quality of goods and amount of special ingredient both start at 50 (0x004db389, 0x004db3b3), where a

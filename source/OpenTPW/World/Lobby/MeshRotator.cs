@@ -223,9 +223,9 @@ public class MeshRotator
 	/// mask tests <c>0x289</c>, <c>0x1000</c> and <c>0x10000</c> and never <c>0x20000</c>, which is the
 	/// visibility channel - so what a clip switched off stays off across a clip change and is shown again
 	/// only by a later clip saying so. The engine un-hides exactly one thing on the way in, the outgoing
-	/// clip's own hide list, which we do not read. That is what lets a built item keep the state its
-	/// construction clip left it in - see <c>ParkObjects.PoseAsBuilt</c>, which is our stand-in for that
-	/// list rather than a rival to it.
+	/// clip's own hide list, which is not read here. That is what lets a built item keep the state its
+	/// construction clip left it in - see <c>ParkObjects.PoseAsBuilt</c>, which stands in for that
+	/// list rather than rivalling it.
 	/// </para>
 	/// </summary>
 	public void Rest( AnimationFile outgoing )

@@ -197,7 +197,7 @@ internal sealed class GameOptions
 	/// the options screen as a slider moves.
 	///
 	/// The original hands the sound library a group's volume out of 100. How that library turns it into
-	/// loudness was not traced, so here it is a straight multiply, taken against the group's default: at
+	/// loudness is a straight multiply as far as the mixer (the percent times 0.01 is the group's level, 0x006b59d0), so here it is one too, taken against the group's default: at
 	/// the defaults every group plays at the level its layers were set to by measurement, a group turned
 	/// to 0 is silent, and one turned all the way up plays at 100 over its default.
 	/// </summary>

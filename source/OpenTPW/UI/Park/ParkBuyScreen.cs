@@ -4,41 +4,34 @@ namespace OpenTPW.UI;
 /// The purchase menu - the screen behind the gadget's <c>b_buy</c> button.
 ///
 /// <para>
-/// <b>Where the layout comes from.</b> <c>FUN_004acc70</c> builds it from the compiled layout stream
-/// at <c>0x00754cf8</c>, with <c>FUN_004ac270</c> as its handler. Every rectangle and every id below
-/// is that stream's, walked opcode by opcode to a balanced close - 1080 bytes, 32 controls - and the
-/// walk is corroborated three ways: the tab help rows, the resolved mesh names and the screen's own
-/// tab-index switch all give the same ordering, matching UITEXT 119-122. See <c>docs/exe/hud.md</c>.
+/// <b>Where the layout comes from.</b> The original's compiled layout stream at <c>0x00754cf8</c>,
+/// 32 controls: every rectangle and every id below is that stream's. See <c>docs/exe/hud.md</c>.
 /// </para>
 ///
 /// <para>
-/// <b>The tab ids are deliberately not in order</b>, and that is the stream's doing rather than a
-/// mistake here: tab 0 (rides) is <c>0x1fb</c>, tab 1 (shops) <c>0x1fd</c>, tab 2 (sideshows)
-/// <c>0x1fa</c> and tab 3 (features) <c>0x1fc</c>. The tab index is the item's own
-/// <c>Info.WhichUIType</c>, which is what makes the four tabs one walk with one test.
+/// <b>The tab ids are not in order</b>, because the stream's are not: tab 0 (rides) is <c>0x1fb</c>,
+/// tab 1 (shops) <c>0x1fd</c>, tab 2 (sideshows) <c>0x1fa</c> and tab 3 (features) <c>0x1fc</c>. The
+/// tab index is the item's own <c>Info.WhichUIType</c>, which is what makes the four tabs one walk with
+/// one test.
 /// </para>
 ///
 /// <para>
-/// <b>The tab group is a CHILD of the list.</b> In the original's tree the tabs, the column headers
-/// and the scrollbar all hang off the list control, which is why that screen installs its tab handler
-/// on the list. Nothing here depends on the bubbling - each tab carries its own action - but the
-/// nesting is kept because it is the layout.
+/// <b>The tab group is a child of the list.</b> In the original's tree the tabs, the column headers
+/// and the scrollbar all hang off the list control. Nothing here depends on the bubbling - each tab
+/// carries its own action - but the nesting is kept because it is the layout.
 /// </para>
 ///
 /// <para>
-/// <b>One thing is deliberately NOT built, for a reason rather than for want of a rect.</b> The stats
-/// panel <c>0x1ed</c> and its seven readouts are excitement, reliability and capacity - simulation
-/// values this game does not have, the same reason the map screen's overlays are refused. The root's
-/// frame is <c>w_big</c>: the stream hashes a model's first NODE name, <c>0xf76e4200</c> is
-/// <c>window4</c>, and that node is inside <c>w_big.MD2</c>, the frame five screens share. The row's
-/// third column is the original's tick-box, <c>i_boxtick</c> framed from the row state - see
-/// <c>UiList.StateMesh</c>.
+/// <b>One thing is not built.</b> The stats panel <c>0x1ed</c> and its seven readouts are excitement,
+/// reliability and capacity - simulation values this game does not have, as with the map screen's
+/// overlay. The root's frame is <c>w_big</c>, the frame five screens share, whose first node is
+/// <c>window4</c>. The row's third column is the original's tick-box, <c>i_boxtick</c> framed from the
+/// row state - see <c>UiList.StateMesh</c>.
 /// </para>
 ///
 /// <para>
-/// <b>Whether the original pauses here is NOT established</b> - its own builder was read and nothing
-/// in it asks for a pause, unlike the map screen, which plainly does. So this does not pause, and the
-/// park carries on behind it.
+/// <b>It does not pause.</b> Nothing in the original's builder asks for a pause, where the map
+/// screen's does, so the park carries on behind it.
 /// </para>
 /// </summary>
 internal sealed class ParkBuyScreen : UiWindow

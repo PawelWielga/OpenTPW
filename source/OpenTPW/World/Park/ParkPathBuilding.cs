@@ -1240,10 +1240,7 @@ public static class ParkPathBuilding
 	/// <b>Then <c>FUN_0052fe50( object, 1 )</c> until it answers nought.</b> Each call pops the top as T and
 	/// clears the line from T to the new top P (<see cref="ClearQueueLine"/>) - nothing when P is a path
 	/// (<c>0x0052ff9a</c>) - and measures the queue again (<c>0x0052ffec</c>); the bottom entry is never T, so
-	/// it goes as the far end of the last run. The Belly Bounce's list, (52,22), (52,22), (49,22), clears all
-	/// four cells in its first call, which then measures the one cell the entrance still links to, room for
-	/// four; its second clears nothing and puts nobody out. <c>docs/exe/ride-operation.md</c>, "The sale's
-	/// drain".
+	/// it goes as the far end of the last run (<c>docs/exe/ride-operation.md</c>, "The sale's drain").
 	/// </para>
 	/// <para>
 	/// <b>Then one cell's worth is taken back</b> (<c>FUN_004d01f0</c>), the node the placer laid for nothing,

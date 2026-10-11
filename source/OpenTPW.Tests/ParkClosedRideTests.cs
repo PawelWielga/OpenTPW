@@ -7,11 +7,9 @@ using System.Linq;
 namespace OpenTPW.Tests;
 
 /// <summary>
-/// Closing and opening rides, and what a closed ride does to its queue - the park's door
-/// (<c>FUN_00519ef0</c>), the close and open (<c>FUN_004df300</c>, <c>FUN_004df390</c>) and their guard
-/// (<c>FUN_004df290</c>), the closed ride's completion on its own turn (<c>FUN_004e0450</c>), and the reopen
-/// at the end of a queue measured again (<c>FUN_004de1f0</c>). See <c>docs/exe/ride-operation.md</c>, "The
-/// closed ride".
+/// Closing and opening rides, and what a closed ride does to its queue - the park's door, the close and open and
+/// their guard, the closed ride's completion on its own turn (<c>FUN_004e0450</c>), and the reopen at the end of a
+/// queue measured again. See <c>docs/exe/ride-operation.md</c>, "The closed ride".
 ///
 /// <para>
 /// Every park here is Lost Kingdom's own, with a Belly Bounce script standing in for every visitable object's:

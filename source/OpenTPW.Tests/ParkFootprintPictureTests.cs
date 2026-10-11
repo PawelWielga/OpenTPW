@@ -276,8 +276,9 @@ public class ParkFootprintPictureTests
 		=> string.Join( " ", Enumerable.Range( 0, shape.Width ).Select( column => (int)ParkFootprintPicture.Grid( shape )[column, row] ) );
 
 	/// <summary>
-	/// The grids the original's memory held for five rows of its buy list (Q233): the Aztec Mayhem, the Crazy Ape, the
-	/// Belly Bounce, the Balloon Shop and the Staff Room. And no shape in Lost Kingdom's catalogue passes eight cells.
+	/// The grids the original holds for five rows of its buy list (<c>docs/exe/park-engine.md</c>, "The buy screen's
+	/// footprint picture"): the Aztec Mayhem, the Crazy Ape, the Belly Bounce, the Balloon Shop and the Staff Room. And no
+	/// shape in Lost Kingdom's catalogue passes eight cells.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the shape not carried to the item; its rows not turned over; the footprint override's box for the picture's.</remarks>
 	[TestMethod]

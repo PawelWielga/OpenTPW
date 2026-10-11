@@ -20,7 +20,7 @@ How the original game boots: `WinMain` takes a single-instance lock, builds the 
 
 ## The flag word — `DAT_007a1a8c`
 
-`Flags_LoadDefaults` 0x00449df0 sets it to 0xc0e15. It is replaced only if `dialog.tcf` loads; no such file is in the install, so that is probably a developer settings dialog.
+`Flags_LoadDefaults` 0x00449df0 sets it to 0xc0e15. It is replaced only if `dialog.tcf` loads; no such file is in the install, so that is probably a developer settings dialog (a guess from the file's name alone; nothing that writes it was found).
 
 | Bit | Meaning |
 |---|---|
@@ -33,7 +33,7 @@ How the original game boots: `WinMain` takes a single-instance lock, builds the 
 1. **Textures:** 0x004688b0 picks the texture folders by a detail setting (`DAT_00785874`): `stexture`/`ssharete` or `textures`/`sharetex`.
 2. **Checks and options:**
    - 0x005d55a0 checks an "Authorization Stamp" and logs the result.
-   - 0x0040f000 parses options, probably the command line: `version quickload nodebug noload SAVEDEBUG flmouse bwcursor`. If it fails, the game aborts.
+   - 0x0040f000 parses the command line's options (the words `GetCommandLineA`'s string was split into by 0x00405630): `version quickload nodebug noload SAVEDEBUG flmouse bwcursor`. If it fails, the game aborts.
    - 0x0040cb80 reads the settings sections `system camera cheat coaster shortcuts`.
 3. **Log and random seed:** logs "Compiled Mar 24 2000 at 15:14:05" and seeds the random number generator from `GetTickCount`.
 4. **Sound:** 0x0051b660 initialises it, volumes coming from the settings. It then plays effect 0xd2 (210) from category `DAT_00803a2c`, flat (`Sound_PlayEffect( 0, cat, 0xd2, 0, 0, 0 )`). **It is silent** (Q139): the effect is one variation of one sample, `BUTTON01.mp2`, the click's own (effect 31), with the variation's volume at (0, 0) where effect 31's is (100, 100); and the original's mix, written to a file from the device's opening (`q139/orig/`, `measure.py`), is exact zeros through the whole boot, 76.8 s on the file's axis, until the first sound after it. The control was weak: the one click made in the lobby afterwards matched `BUTTON01` at 0.26 under the lobby's own sound, below the 0.4 asked for, so the reading rests on the zeros and the file's volume, not on a match. What a play at volume nought is for was not read. OpenTPW plays it at that volume (`UiSounds.Boot`). Then `Sound_ApplyGroupVolumes`.
@@ -151,7 +151,7 @@ a run of consecutive audio chunks equals `+0x7c`; any other chunk resets the cou
 The ADPCM step, per channel: `s = ((nibble << 28) >> (shift + 8)) + cur * c1 + prev * c2 + 0x80 >> 8`, clamped to 16
 bits. `c1` is from `0x00705ec8` (0, 240, 460, 392) and `c2` from `0x00705ed8` (0, 0, -208, -220). The exe decodes
 whole blocks, so it yields a few samples more than the header counts (`bf.tgq`: 194,824 per channel against 194,815). The chunk and the decoded buffers are
-counted with `InterlockedIncrement`, which suggests a separate decoding thread.
+counted with `InterlockedIncrement`: the player reads and decodes on its own thread. `FUN_0066efd0` starts it at `0x0066f050` (`0x0066efe8`) when the settings' flag `0x10000` is set, and `FUN_0051b010` always sets it (`0x0051b127`); its loop `FUN_0066f090` calls the chunk reader's caller `FUN_0066f380` and the frame decoder `FUN_00670c20`. `FUN_006727c0` starts a second thread at `0x006724a0`, not read.
 
 **Not established.** Which x87 precision the original decodes under. The unicorn runs used `0x027F` (53-bit, the
 Windows default); 64-bit gives the same pixels; 24-bit (Direct3D's default) changes 37.5% of the samples of
@@ -262,7 +262,7 @@ Evidence is a Ghidra trace of `/testme.exe` throughout; the column names what in
 | 0x004688b0 | | Picks texture folders by the detail setting: `stexture`/`ssharete` or `textures`/`sharetex`. | Folder-name strings |
 | `DAT_00785874` | | The texture detail setting read by 0x004688b0. | Read site |
 | 0x005d55a0 | | Checks the "Authorization Stamp" and logs the result. | String |
-| 0x0040f000 | | Parses options, probably the command line: `version quickload nodebug noload SAVEDEBUG flmouse bwcursor`. Failure aborts the game. | Option strings |
+| 0x0040f000 | | Parses the command line's options (`GetCommandLineA`'s string, split by 0x00405630): `version quickload nodebug noload SAVEDEBUG flmouse bwcursor`. Failure aborts the game. | Option strings |
 | 0x0040cb80 | | Reads settings sections `system camera cheat coaster shortcuts`. | Section strings |
 | 0x0051b660 | | Initialises sound; volumes come from the settings. | Decompile |
 | `DAT_00803a2c` | `cat_ui` | The UI sound category (see `lobby.md`); boot plays its effect 0xd2 (210), `BUTTON01` at volume nought. | Call argument; the sound map; a capture |

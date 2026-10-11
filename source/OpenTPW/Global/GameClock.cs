@@ -10,62 +10,24 @@ namespace OpenTPW;
 /// menu, message box, options screen or map stops it dead.
 /// </para>
 /// <para>
-/// <b>The original keeps one of these as a global object at 0x785970</b>, with GameClock_Pause
-/// (0x00402d90) and GameClock_Resume (0x00402db0) over it. It is three layers: a stopwatch over a raw
-/// millisecond counter that pause freezes by capturing where it had got to (0x00403030/0x00403050),
-/// a second stopwatch on another source that pause stops in lockstep with the first, and a fixed-step
-/// latch (0x00402ea0) that makes the clock <i>read</i> a value stepped one tick at a time instead of
-/// following real time. Only the first of those matters here, because the latch is for recorded play -
-/// the park enters it only while 0x00878128 is set (0x0054f455), which nothing offline ever sets.
+/// <b>Pause is nothing but a frozen clock.</b> Neither of the original's tick loops tests a paused
+/// flag. Each reads the clock (a global object at 0x785970), works out how far behind its last step it
+/// is, and steps while it is behind - so a clock that stops reporting new time leaves the loop with
+/// nothing to do, and everything the tick drives stops together. That is copied here:
+/// <see cref="Paused"/> only zeroes <see cref="Delta"/>, and <see cref="TicksDue"/> then comes out zero
+/// by itself. The original's fixed-step latch, which is for recorded play, is not reproduced.
 /// </para>
 /// <para>
-/// <b>Pause is nothing but a frozen clock, and that is the whole trick.</b> Neither tick loop tests a
-/// paused flag. Each reads the clock, works out how far behind its last step it is, and steps while it
-/// is behind - so a clock that stops reporting new time simply leaves the loop with nothing to do, and
-/// every single thing the tick drives stops together without any of them knowing why. That is copied
-/// here exactly: <see cref="Paused"/> only zeroes <see cref="Delta"/>, and <see cref="TicksDue"/> then
-/// comes out zero by itself.
+/// A pause also does what a clock cannot: it holds the advisor's voice, and it lifts the audio
+/// listener 10,000 units up, which silences every placed voice that has a range
+/// (<see cref="Audio.HoldPlaced"/>). It does not freeze the interface's own timers: no screen modelled
+/// here asks the original for that.
 /// </para>
 /// <para>
-/// <b>That is true of the LOOPS, and it is not true of everything.</b>
-/// The original does keep a paused flag, Game+0x1c at 0x00786b84, written by the pause helper at
-/// 0x004092ad. Exactly one thing in the whole executable reads it: FUN_00486b90 at 0x00486bce, which
-/// refuses to spawn a particle burst behind an open screen. So the honest claim is that no loop needs
-/// the flag, not that nothing consults it. <b>Do not confuse that address with 0x00786ba4</b>, one hex
-/// digit away and a different field entirely - see the remarks below.
-/// </para>
-/// <para>
-/// A pause also reaches out and does things a clock cannot: it holds the advisor's voice, and it sets
-/// DAT_00803ad2, which makes the per-frame listener update (FUN_0051c1d0, called from three sites in
-/// Game_StateMachine) replace the listener's HEIGHT with 10000.0 - the original is Y-up, and the lobby's
-/// own call site passes a (0,1,0) top vector, which is what says so. <see cref="Audio.HoldPlaced"/> is
-/// where that is reproduced, and it carries the account of what is restored and what is ours.
-/// <b>The lift silences every placed voice that has a range</b>: the listener 10,000 units up is past
-/// the far end of each, and the mixer plays nothing of a channel past it (docs/exe/audio.md, "The mixer's
-/// distance law"). The lift also decides WHICH sounds: a listener cannot reach one that was never placed
-/// against it.
-/// One caller in the game also freezes the interface's own timers, but none of the four screens
-/// modelled here is that caller: they all pass (0,0), which takes the other branch.
-/// </para>
-/// <para>
-/// <b>Only a park pauses, and it takes three separate things to arrange that.</b> 0x00786ba4 is
-/// Game+0x3c, the pause-permission gate - Ghidra's own decompile names it g_ParkRunning - and all
-/// three primitives refuse unless it is exactly 1: pause at 0x004092a3, resume at 0x00409303, toggle
-/// at 0x00409353. The state machine sets its base per scene, 0 as the lobby comes up (0x0054e682) and
-/// 1 as an ordinary park loads (0x0054ea4c); each screen that pauses then <i>borrows</i> it, zeroing
-/// it while it holds the pause and restoring 1 before resuming. So the one field means both "a park
-/// is running" and "nobody already holds the pause", and it has to be read as both.
-/// </para>
-/// <para>
-/// The lobby's own Escape menu never reaches that test at all. GameMenu_Open (0x0048c830) first
-/// returns if a menu already exists, then branches on its scene argument at 0x0048c83a: non-zero
-/// builds the lobby's menu and returns, and only the park path reaches the gate at 0x0048c868. The
-/// lobby passes 1 (0x005e4207); every other caller passes 0. The options screen <i>is</i> reachable
-/// from the lobby, and there the gate is genuinely what stops the pause - though it never refuses to
-/// open, it only declines to pause. The message box additionally wants the lobby's front-end object
-/// gone (0x00f82884, a pointer rather than a flag). So in the lobby the clock never stops, whatever is
-/// open over it. The lobby holds its advisor instead, which is <see cref="Advisor.Paused"/>, and that
-/// is unaffected by any of this.
+/// <b>Only a park pauses.</b> In the lobby the clock never stops, whatever is open over it; the lobby
+/// holds its advisor instead, which is <see cref="Advisor.Paused"/>. The original's pause-permission
+/// gate and what keeps the lobby from pausing are in <c>docs/exe/weather.md</c>, "Pause, and why the
+/// calendar cannot roll while paused".
 /// </para>
 /// <para>
 /// <b>The debug console's <c>pause</c> is a different thing and still works.</b> That one stops

@@ -1370,7 +1370,7 @@ public class ParkTickTests
 	}
 
 	/// <summary>
-	/// <b>A guest heading for the gate runs for the bus while it pulls away</b> (<c>FUN_004ff730</c>; Q199): the hurry
+	/// <b>A guest heading for the gate runs for the bus while it pulls away</b> (<c>FUN_004ff730</c>): the hurry
 	/// is 50 on the sweeps the park's own bus answers 3, and the guest's 25 or nought again once it answers 4. The
 	/// test plays <c>bus.RSE</c>'s part by hand, as the test above does.
 	/// </summary>
@@ -1899,7 +1899,7 @@ public class ParkTickTests
 	}
 
 	/// <summary>
-	/// <b>Every walk onto a ride in the shipped park is noticed within one tick of coming due</b> (Q183).
+	/// <b>Every walk onto a ride in the shipped park is noticed within one tick of coming due</b>.
 	///
 	/// <para>
 	/// At a sixtieth of a second a frame runs at most one tick, so the tick a slot changes in is known to the
@@ -1939,10 +1939,10 @@ public class ParkTickTests
 			EnterPark();
 
 			// Three guests on the stock Jungle Spray (thing 14), its three lanes' legs 1100, 700 and 1100 each way,
-			// as the console's admit and send make them (Q184): nobody chooses a walk-on ride in this run on their own.
+			// as the console's admit and send make them: nobody chooses a walk-on ride in this run on their own.
 			const int JungleSpray = 14;
 
-			// Kind 3, as Q184's run: a kind 0 sent there goes on to another ride.
+			// Kind 3: a kind 0 sent there goes on to another ride.
 			for ( var i = 0; i < 3; ++i )
 			{
 				var guest = people.AdmitInside( 55, 30, 3 );

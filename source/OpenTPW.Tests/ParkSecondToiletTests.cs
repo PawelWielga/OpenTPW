@@ -100,8 +100,7 @@ public class ParkSecondToiletTests
 	/// <b>The switch test's lengths</b> - <c>FUN_004d8b40</c>, the waypoints the bare search records, the leg from the
 	/// start not counted. From 23's entry: to a guest at (56,19) 4 and to 21's entry 3, so a guest there switches;
 	/// to a guest at (56,17) 2 and to 22's entry 2, a tie, which does not. From 22's entry: to a guest at (56,18) 2 and
-	/// to 21's entry 1, so a second switch can follow a first. The corridor's first four measured by Q170's shadow in the
-	/// running game.
+	/// to 21's entry 1, so a second switch can follow a first.
 	/// </summary>
 	[TestMethod]
 	public void TheLengthsUpTheCorridorAreTheSearchesWaypoints()

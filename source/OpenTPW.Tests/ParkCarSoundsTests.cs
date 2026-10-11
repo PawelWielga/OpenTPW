@@ -73,9 +73,9 @@ public class ParkCarSoundsTests
 	}
 
 	/// <summary>
-	/// Measured in the original (Q202): the lead boat's handle appears on the go's first tick and is the same handle for
-	/// the whole go; when the go ends the boats stay, the unloading arm fades the voice, and the handle goes once the
-	/// voice has (8 ticks later there). No other boat ever holds one.
+	/// As in the original (<c>docs/exe/audio.md</c>, "The bumper arm's engine"): the lead boat's handle appears on the go's
+	/// first tick and is the same handle for the whole go; when the go ends the boats stay, the unloading arm fades the
+	/// voice, and the handle goes once the voice has (8 ticks later there). No other boat ever holds one.
 	/// </summary>
 	[TestMethod]
 	public void TheLeadBoatHoldsOneSoundForTheGoAndFadesItAtTheEnd()
@@ -154,8 +154,8 @@ public class ParkCarSoundsTests
 
 	/// <summary>
 	/// The go's end fades the engine every unloading tick while the step still pitches it each tick (the order of
-	/// <c>TrackRides_Tick</c>'s first pass): the pitch must not stop the fade, or the engine sounds on after the go
-	/// (seen in the game, Q202 run 1). A device is stood in as <see cref="ParkScreamChainTests"/> does.
+	/// <c>TrackRides_Tick</c>'s first pass): the pitch must not stop the fade, or the engine sounds on after the go.
+	/// A device is stood in as <see cref="ParkScreamChainTests"/> does.
 	/// </summary>
 	[TestMethod]
 	public void AFadingEngineFadesOnThoughTheStepPitchesIt()

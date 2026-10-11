@@ -4,15 +4,14 @@ namespace OpenTPW.UI;
 /// The game menu Escape brings up: a column of choices down from the top of the dimmed screen.
 ///
 /// <para>
-/// GameMenu_Open (0x0048c830) builds it in code rather than from a layout stream - GameMenu_BuildLobby
-/// (0x0048c600) in the lobby, GameMenu_BuildPark (0x0048c150) in a park, both on the same menu list. A
+/// The original builds it in code rather than from a layout stream - GameMenu_BuildLobby in the lobby,
+/// GameMenu_BuildPark in a park, both on the same menu list (docs/exe/ui.md, "Escape game menu"). A
 /// control over the whole screen wearing LOLIGHT.MD2 dims everything behind and takes the pointer
 /// (0x00492e80), and MenuList_AddItem (0x00492f60) stacks the choices on it. Each is its text in font 0 on
 /// the purple skin, centred across the screen, as wide as the text and as tall as a line of it and five
 /// pixels more, turned from the screen's pixels into the layout's units. In the lobby the first starts five
-/// units down; in a park it starts at ten, which is GameMenu_BuildPark passing <c>iVar1 * 2</c> with
-/// <c>iVar1</c> of 5. Each of the others sits five below the one before, in both - except in a park whose
-/// FUN_005b6450 answers non-zero, where <c>iVar1</c> is 0: the first at 0, and no gap.
+/// units down; in a park it starts at ten. Each of the others sits five below the one before, in both -
+/// except in a park whose FUN_005b6450 answers non-zero: the first at 0, and no gap.
 /// </para>
 /// <para>
 /// <b>The pointer.</b> A choice rests at (0, 175, 190), which it is given as it is shown (message 0x11).

@@ -11,9 +11,8 @@ namespace OpenTPW;
 /// folder, centred on the origin at <see cref="Sky.ParkHeight"/> and untinted - but from
 /// <see cref="ParkOrbitCameraMode"/>, looking down at forty-five degrees or more, it never shows: the top
 /// of the frame is at the horizon at best. From the ground it fills the upper half of the frame with
-/// its cloud band legible. <b>Measured by capture, not asserted</b>: what the orbit camera shows past
-/// the ground's edge is the fog colour, one colour with no variance, not sky (docs/exe/park-engine.md,
-/// "The ORBIT camera never shows the sky").
+/// its cloud band legible. What the orbit camera shows past the ground's edge is the fog colour, one
+/// colour with no variance, not sky (docs/exe/park-engine.md, "The ORBIT camera never shows the sky").
 /// </para>
 ///
 /// <para>

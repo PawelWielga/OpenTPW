@@ -7,8 +7,8 @@ namespace OpenTPW;
 ///
 /// <para>
 /// <b>A held voice.</b> The Hot Pot's engine, jungle effect 194, is flagged <c>0x6</c>: no timer ends it, and its own
-/// tick plays its sample again each time the channel ends, so the car keeps one handle for the whole go (measured in
-/// the original, Q202). Its one 447 ms sample is looped here, which the original does with up to a service pass's gap.
+/// tick plays its sample again each time the channel ends, so the car keeps one handle for the whole go
+/// ("The bumper arm's engine"). Its one 447 ms sample is looped here, which the original does with up to a service pass's gap.
 /// </para>
 /// <para>
 /// <b>Its two controllers.</b> A variation names the parameter ids its first and second controllers answer to and what
@@ -160,8 +160,8 @@ public sealed class ParkCarSounds : ParkBumperCars.ISounds
 		held.Pitch = Level( held, 2, held.Header.Pitch );
 		held.Voice.SetRate( Rate( held.Pitch ) );
 
-		// A fade runs on to its end whatever the step sets (the original's voice went 135 ms after its fade began,
-		// Q202); a volume set here would stop it.
+		// A fade runs on to its end whatever the step sets (the original's voice went 135 ms after its fade began:
+		// docs/exe/audio.md, "The bumper arm's engine"); a volume set here would stop it.
 		if ( !held.Voice.Ending )
 			held.Voice.SetVolume( Level( held, 1, held.Header.Volume ) / 100f );
 	}

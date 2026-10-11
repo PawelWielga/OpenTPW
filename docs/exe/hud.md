@@ -1321,7 +1321,7 @@ Read the archive with the `wadcat.py` harness (`<wad> list`; the harness folder 
 
 So **`FUN_0048c8d0()` means "the game menu exists AND is on screen"**, and the buy button refusing
 while the pause menu is up is correct behaviour rather than an unbuilt path. The same function on the
-bank Thing is what reads the balance, which is how it was mistaken for one.
+bank Thing is what reads the balance.
 
 **A caveat about the teardown**: several menu arms do NOT clear
 `DAT_007c2534` — those that open a confirm box leave it set until that box's own callback runs, so the

@@ -63,7 +63,7 @@ public class ParkFootprintOccupancyTests
 	}
 
 	/// <summary>
-	/// The whole of Q2: a click anywhere on a thing finds it, not just on the cell it is anchored at.
+	/// A click anywhere on a thing finds it, not just on the cell it is anchored at.
 	/// </summary>
 	[TestMethod]
 	public void EveryCellOfAFootprintFindsTheThingThatOwnsIt()

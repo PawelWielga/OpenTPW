@@ -346,7 +346,7 @@ public class ParkAdmissionTests
 		// The crossing is not the end of it: from there they walk to one of the four cells by the first bus stop
 		// and stand to go home (docs/exe/ride-operation.md, "Q128").
 		// A walk's end is drawn anywhere on its cell and its last step can carry a guest just over the far edge, as
-		// the original's does (one of its leavers was first seen standing on (44,3)), so the cell beyond counts.
+		// the original's does, so the cell beyond counts.
 		var stopCells = PeepBehaviour.StopCells( admission.BusStopA )
 			.SelectMany( cell => new[] { cell, (cell.X + 1, cell.Y) } ).ToHashSet();
 

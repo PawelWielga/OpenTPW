@@ -16,8 +16,7 @@ namespace OpenTPW;
 /// <b>One square a cell, 10 by 10, at the ground's own corner heights plus 1.5, see-through, and
 /// waving</b> - the original's <c>FUN_0053df30</c> face 0, whose corners <c>FUN_0053ddd0</c> lifts by
 /// <c>sin( phase + x + z )</c> from a 4,096-entry table (<c>FUN_004708d0</c>), the phase gaining 0.1 a
-/// frame while the game is not paused. Alexah, who played the original: "they were translucent. They
-/// waved like a flag/water."
+/// frame while the game is not paused (<c>docs/exe/park-engine.md</c>, "Placement feedback").
 /// <para>
 /// Three things are counted rather than guessed: the brightening and dimming that goes with the wave (the
 /// same sine scales the vertex's up vector, which this shader normalises away), the turning of <c>m_link</c> and

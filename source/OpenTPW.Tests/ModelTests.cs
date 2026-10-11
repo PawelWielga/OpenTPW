@@ -196,8 +196,8 @@ public class ModelTests
 
 	/// <summary>
 	/// No mesh the game ships names more materials than the model shader binds (<see cref="Material.TextureSlots"/>):
-	/// 31 at most, the jungle Coaster3 preview's ground, and 48 of the archives' 4,823 meshes past the old 16, the Hot Pot's floor among them,
-	/// whose triangles on materials 16-24 drew magenta (Q203). Every <c>.md2</c> in every archive is read; one,
+	/// 31 at most, the jungle Coaster3 preview's ground, and 48 of the archives' 4,823 meshes name more than 16, the Hot Pot's floor among them,
+	/// with 25, whose triangles reach past the sixteenth. Every <c>.md2</c> in every archive is read; one,
 	/// <c>wr_tunnel.md2</c>, does not parse.
 	/// </summary>
 	[TestMethod]

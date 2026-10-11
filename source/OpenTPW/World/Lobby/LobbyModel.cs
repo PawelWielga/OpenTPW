@@ -402,8 +402,7 @@ public sealed class LobbyModel
 	/// <summary>
 	/// Model space is Y-up; the world we draw into swaps Y and Z, which is the same swizzle the
 	/// mesh positions go through. Conjugating the matrix by that swap converts its rotation,
-	/// scale and shear together - unlike decomposing to a TRS, which silently drops the shear
-	/// and skewed the jungle island's tallest palm trunk sideways by five units.
+	/// scale and shear together - unlike decomposing to a TRS, which silently drops the shear.
 	///
 	/// Only the linear part is converted; the translation is swizzled by the caller.
 	/// </summary>
