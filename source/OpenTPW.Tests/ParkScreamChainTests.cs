@@ -1379,9 +1379,10 @@ public class ParkScreamChainTests
 
 	/// <summary>
 	/// <c>ParkAudio.OnDelete</c>, "the park is ending: what it has playing fades": the music's sample and the rain's
-	/// looped bed are both told to end as the park is deleted, as the original stops every voice between scenes
-	/// (<c>0x0051bcb0</c>, <see cref="Audio.StopAll"/>). Neither is ending before: the music's first sample is
-	/// started by the park's first update, and the rain's bed by a level above nought.
+	/// two voices are told to end as the park is deleted, as the original stops every voice between scenes
+	/// (<c>0x0051bcb0</c>, <see cref="Audio.StopAll"/>). None is ending before: the music's first sample is
+	/// started by the park's first update, the rain's bed by a level above nought and the weather's own voice by
+	/// a turn to rain, each on the pass after.
 	/// </summary>
 	[TestMethod]
 	public void AParkThatEndsFadesItsMusicAndItsRain()
@@ -1399,27 +1400,278 @@ public class ParkScreamChainTests
 				dry = [.. Audio.Voices];
 			}
 
-			park.SetRainLevel( 1f );
+			park.StartOwnRain();
+			park.SetRainLevel( 96 );
+
+			lock ( Audio.Lock )
+				Assert.AreEqual( 0, Audio.Voices.Count( voice => !dry.Contains( voice ) ), "a held voice's sample starts on the pass after" );
+
+			park.Update();
 
 			List<Voice> wet;
 
 			lock ( Audio.Lock )
 				wet = Audio.Voices.Where( voice => !dry.Contains( voice ) ).ToList();
 
-			Assert.AreEqual( 1, wet.Count, "the rain is one voice" );
+			Assert.AreEqual( 2, wet.Count, "the rain is two voices: the bed and the weather's own" );
 
-			var rain = wet[0];
+			foreach ( var rain in wet )
+			{
+				Assert.IsFalse( rain.Loop, "one sample after another, not a loop" );
+				Assert.AreEqual( "RAIN.mp2", rain.Name );
+				Assert.AreEqual( AudioBus.Effects, rain.Bus );
+				Assert.IsNull( rain.Range, "flat, as the original plays it at (0,0,0)" );
+				Assert.IsFalse( rain.Ending, "the rain falls" );
+			}
 
-			Assert.IsTrue( rain.Loop, "a looped bed, which never ends by itself" );
-			Assert.AreEqual( AudioBus.Effects, rain.Bus );
 			Assert.IsFalse( music.Ending, "the music plays while the park runs" );
-			Assert.IsFalse( rain.Ending, "and the rain falls" );
 
 			park.Delete();
 
 			Assert.IsTrue( music.Ending, "a park that ends fades its music out" );
-			Assert.IsTrue( rain.Ending, "and its rain" );
+			Assert.IsTrue( wet.All( rain => rain.Ending ), "and both of its rain's voices" );
+			Assert.IsFalse( park.RainBed.Held );
+			Assert.IsFalse( park.RainOwn.Held );
 		} );
+	}
+
+	/// <summary>
+	/// The global ambient's effect 33, the rain (<c>docs/exe/weather.md</c>, "Two rain voices, and how loud each is"): four variations of
+	/// volume 1 to 2, 3, 4 and 5, each naming parameter 8 on its volume, each with the same four zones, a quarter of
+	/// the level a variation. So a level gives <c>level x (high - 1) / 100 + 1</c> on the variation current, and
+	/// the channel's own number beside the music's 60 is 1, 2 or 3 of 127 below a level of a hundred.
+	/// </summary>
+	[TestMethod]
+	public void TheRainsFourVariationsTakeTheirVolumeFromTheLevel()
+	{
+		GameData.Required();
+
+		var file = new SoundCategoryFile( "global/sound", "ambient" );
+		var headers = file.ReadVariations()[file.IndexOf( 33 )];
+		var random = new Random( 1 );
+
+		Assert.AreEqual( 8, ParkAudio.RainParameter );
+		Assert.AreEqual( 4, headers.Count );
+
+		for ( var variation = 0; variation < 4; ++variation )
+		{
+			Assert.AreEqual( (1, variation + 2), headers[variation].Volume, $"variation {variation + 1}'s volume bytes" );
+			Assert.AreEqual( 8, headers[variation].FirstKey );
+			Assert.IsTrue( ParkAudio.NamesOnVolume( headers[variation], ParkAudio.RainParameter ) );
+			Assert.AreEqual( 1, headers[variation].Samples );
+
+			for ( var level = 0; level <= 100; ++level )
+			{
+				Assert.AreEqual( (level * (variation + 1) / 100) + 1,
+					ParkAudio.Controlled( headers[variation], 1, ParkAudio.RainParameter, level, random ), $"variation {variation + 1} at level {level}" );
+				Assert.AreEqual( 1, ParkAudio.Controlled( headers[variation], 1, 7, level, random ), "another parameter leaves it at its low" );
+				Assert.AreEqual( level == 0 ? 0 : (level - 1) / 25,
+					ParkScreams.NextVariation( headers, variation, level, random ), $"the zone of level {level}" );
+			}
+		}
+
+		// The channel's own number: 1, 2, 2, 3 and 4 of 127 beside the music's 60.
+		Assert.AreEqual( 0.0055f, ParkAudio.ChannelGain( 1 ), 0.00001f );
+		Assert.AreEqual( 0.0110f, ParkAudio.ChannelGain( 2 ), 0.00001f );
+		Assert.AreEqual( 0.0110f, ParkAudio.ChannelGain( 3 ), 0.00001f );
+		Assert.AreEqual( 0.0165f, ParkAudio.ChannelGain( 4 ), 0.00001f );
+		Assert.AreEqual( 0.0220f, ParkAudio.ChannelGain( 5 ), 0.00001f );
+	}
+
+	/// <summary>
+	/// <c>ParkAudio.SetRainLevel</c>, <c>FUN_0051e830</c>: the bed is held from the first level above nought, its
+	/// first sample of the first variation whatever the level; each set gives the variation current its volume again
+	/// at once; a sample that follows another is of the level's zone and plays at what the voice kept, until the
+	/// next set; nought fades it and lets it go, and the next level starts it afresh.
+	/// </summary>
+	[TestMethod]
+	public void TheRainsBedTakesItsVolumeAtASetFromTheVariationCurrent()
+	{
+		InAPark( "jungle", park =>
+		{
+			park.Update();
+
+			List<Voice> dry;
+
+			lock ( Audio.Lock )
+				dry = [.. Audio.Voices];
+
+			Voice Sample()
+			{
+				lock ( Audio.Lock )
+					return Audio.Voices.Last( voice => !dry.Contains( voice ) && voice.Name == "RAIN.mp2" );
+			}
+
+			var bed = park.RainBed;
+
+			park.SetRainLevel( 3 );
+
+			Assert.IsTrue( bed.Held );
+			Assert.AreEqual( -1, bed.Variation, "no sample yet" );
+
+			park.Update();
+
+			var first = Sample();
+
+			Assert.AreEqual( (0, 1, 1), (bed.Variation, bed.Volume, bed.Samples), "the first variation, at level 3" );
+			Assert.AreEqual( 0.0055f, first.Volume, 0.00001f, "1 of 127 beside the music's 60" );
+
+			// The ramp's sets, to the most the drops reach: the first variation's 1 to 2 stays 1 below a hundred.
+			foreach ( var level in new[] { 6, 10, 50, 96 } )
+			{
+				park.SetRainLevel( level );
+				park.Update();
+
+				Assert.AreEqual( (0, 1, 1, level), (bed.Variation, bed.Volume, bed.Samples, bed.Level) );
+				Assert.AreSame( first, Sample(), "a set starts no sample" );
+				Assert.AreEqual( 0.0055f, first.Volume, 0.00001f );
+			}
+
+			// The sample ends: the next is of the zone of 96, the fourth variation, at the volume the voice kept.
+			first.Stop();
+			park.Update();
+
+			var second = Sample();
+
+			Assert.AreNotSame( first, second );
+			Assert.AreEqual( (3, 1, 2), (bed.Variation, bed.Volume, bed.Samples), "queued with its sample alone: the volume is the voice's" );
+			Assert.AreEqual( 0.0055f, second.Volume, 0.00001f );
+
+			// A set on the fourth: 93 x 4 / 100 + 1 is 4, 3 of 127; 50 gives 3, 2 of 127.
+			park.SetRainLevel( 93 );
+			Assert.AreEqual( 4, bed.Volume );
+			Assert.AreEqual( 0.0165f, second.Volume, 0.00001f, "at once, on the playing sample" );
+
+			park.SetRainLevel( 50 );
+			Assert.AreEqual( 3, bed.Volume );
+			Assert.AreEqual( 0.0110f, second.Volume, 0.00001f );
+
+			// The next is of the zone of 50, the second variation, still at 3 until a set: 46 x 2 / 100 + 1 is 1.
+			second.Stop();
+			park.Update();
+
+			var third = Sample();
+
+			Assert.AreEqual( (1, 3, 3), (bed.Variation, bed.Volume, bed.Samples) );
+			Assert.AreEqual( 0.0110f, third.Volume, 0.00001f );
+
+			park.SetRainLevel( 46 );
+			Assert.AreEqual( 1, bed.Volume );
+			Assert.AreEqual( 0.0055f, third.Volume, 0.00001f );
+
+			Assert.IsFalse( park.RainOwn.Held, "the level starts the bed alone" );
+
+			// Nought lets it go; a level above 100 is 100, and the voice starts afresh from the first variation.
+			park.SetRainLevel( 0 );
+
+			Assert.IsFalse( bed.Held );
+			Assert.IsTrue( third.Ending, "faded" );
+
+			park.Update();
+			Assert.AreSame( third, Sample(), "a voice let go starts no sample" );
+
+			park.SetRainLevel( 250 );
+			park.Update();
+
+			Assert.AreEqual( (0, 2, 4, 100), (bed.Variation, bed.Volume, bed.Samples, bed.Level), "the first variation at a hundred is its high, 2" );
+			Assert.AreEqual( 0.0110f, Sample().Volume, 0.00001f );
+		} );
+	}
+
+	/// <summary>
+	/// <c>ParkAudio.StartOwnRain</c>, <c>FUN_005131f0</c>: the weather thing's own rain voice is the same effect held
+	/// beside the bed with no level ever set, so every sample is the first variation's at its low volume, 1, whatever
+	/// the bed's level; it is let go by its own stop and not by the bed's.
+	/// </summary>
+	[TestMethod]
+	public void TheWeathersOwnRainVoiceStaysOnTheFirstVariationAtOne()
+	{
+		InAPark( "jungle", park =>
+		{
+			park.Update();
+
+			List<Voice> dry;
+
+			lock ( Audio.Lock )
+				dry = [.. Audio.Voices];
+
+			Voice Sample()
+			{
+				lock ( Audio.Lock )
+					return Audio.Voices.Last( voice => !dry.Contains( voice ) && voice.Name == "RAIN.mp2" );
+			}
+
+			var own = park.RainOwn;
+
+			park.StartOwnRain();
+			park.Update();
+
+			Assert.IsTrue( own.Held );
+			Assert.IsFalse( park.RainBed.Held, "the weather's own voice is not the bed" );
+
+			for ( var sample = 1; sample <= 6; ++sample )
+			{
+				var voice = Sample();
+
+				Assert.AreEqual( (0, 1, sample, 0), (own.Variation, own.Volume, own.Samples, own.Level) );
+				Assert.AreEqual( 0.0055f, voice.Volume, 0.00001f );
+
+				park.StartOwnRain();
+				park.Update();
+				Assert.AreSame( voice, Sample(), "a second start of a held voice starts nothing" );
+				Assert.AreEqual( 0, own.Variation, "and leaves it on its variation" );
+
+				voice.Stop();
+				park.Update();
+			}
+
+			// The bed's level and its stop leave it alone: its next sample is still of the zone of nought.
+			park.SetRainLevel( 96 );
+			park.Update();
+			Assert.AreEqual( (0, 1, 0), (own.Variation, own.Volume, own.Level) );
+
+			own.Voice!.Stop();
+			park.Update();
+			Assert.AreEqual( (0, 1, 0, 8), (own.Variation, own.Volume, own.Level, own.Samples), "whatever the bed's level" );
+			Assert.AreEqual( 0.0055f, own.Plays, 0.00001f );
+
+			park.SetRainLevel( 0 );
+			Assert.IsTrue( own.Held );
+			Assert.AreEqual( 0.0055f, own.Plays, 0.00001f );
+
+			var last = own.Voice!;
+
+			park.StopOwnRain();
+
+			Assert.IsFalse( own.Held );
+			Assert.IsTrue( last.Ending );
+
+			// Started again it begins afresh.
+			park.StartOwnRain();
+			Assert.AreEqual( -1, own.Variation, "no sample until the next pass" );
+
+			park.Update();
+			Assert.AreEqual( (0, 1, 9), (own.Variation, own.Volume, own.Samples) );
+		} );
+	}
+
+	/// <summary>
+	/// <c>ParkWeather.RainLevel</c>, the level the drops' ramp hands the rain's bed at each step (<c>0x00512ac5</c>):
+	/// the drops as a whole hundredth of the most, cut not rounded, so 20 of 600 a step reads 3, 6, 10, and the 580
+	/// the heaviest rain settles at is 96, never a hundred.
+	/// </summary>
+	[TestMethod]
+	public void TheRainsLevelIsTheDropsAsAWholeHundredthOfTheMost()
+	{
+		CollectionAssert.AreEqual( new[] { 3, 6, 10, 13, 16, 20, 23, 26, 30, 33, 36, 40, 43, 46, 50, 53, 56, 60 },
+			Enumerable.Range( 1, 18 ).Select( step => ParkWeather.RainLevel( step * 20, 600 ) ).ToArray() );
+
+		Assert.AreEqual( 96, ParkWeather.RainLevel( 580, 600 ) );
+		Assert.AreEqual( 13, ParkWeather.RainLevel( 80, 600 ) );
+		Assert.AreEqual( 100, ParkWeather.RainLevel( 600, 600 ) );
+		Assert.AreEqual( 0, ParkWeather.RainLevel( 0, 600 ) );
+		Assert.AreEqual( 0, ParkWeather.RainLevel( 5, 600 ), "under a hundredth is nought, which lets the bed go" );
+		Assert.AreEqual( 0, ParkWeather.RainLevel( 20, 0 ), "a balance with no drops has no rain" );
 	}
 
 	/// <summary>

@@ -6015,6 +6015,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   thirteen thunders read 0.3520 at pitches of -4 to 3 where the build before read 0.4000 at none, each sample in
   the game's own mix at its pitch (`q300/confirm.py`, fix 5 of 5, control 4 of 4); eleven bugs put back, all
   eleven fail a test. `docs/exe/audio.md`, "A channel's volume".
+- [x] **Q301. The rain's bed plays at the channel's own number.** Done 2026-10-11 (branch
+  `alexah/425-rain-bed-channel-number`). I split the old Q301: this is its rain piece, and every other piece is
+  Q302. The original's rain is two held voices of global ambient 33, whose four variations hold volumes of 1 to 2,
+  3, 4 and 5 keyed to the level: with its forecast held at 1, 20, 35 and 100, `rainmix.py` read 56 level sets of 56
+  leave the bed's channel at `round( 0.75 x ( level x (high - 1) / 100 + 1 ) )`, 1 to 3 of 127 beside the music's
+  60, and the weather thing's own voice at 1 of 127 (`q301/orig/a-load.log`). Here both are held
+  (`ParkAudio.SetRainLevel`, `StartOwnRain`): the sets after `weather 1`, `20` and `35` read volume 1, 4 then 3,
+  and 1, playing at 0.0055, 0.0165, 0.0110, where the build before played one loop at up to 0.13, and the rain's
+  rms in the game's own mix is 0.106 of that build's with the two voices apart (0.0997 owed) and 0.141 with them
+  started on one frame (0.141 owed) (`q301/confirm.py`, fix 14 of 14 and 13 of 14, control 3 of 3); twenty bugs
+  put back, all twenty fail a test. `docs/exe/weather.md`, "Two rain voices, and how loud each
+  is".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -322,8 +322,8 @@ listing's and the files' alone.
 scream's child takes its variation's volume (`ScreamChildVolume`), and a single scream, a guest put off and a
 yawn the picked variation's (`SoundCategory.Play`'s `gain`); the land's own sounds go through the same sum.
 `SCREAMLEVEL` moves the playing child's volume only where its variation names the parameter on its volume, which
-no shipped scream does. The staff's voices and the crowd's take it too (Q268, below), a bumper ride's engine (Q299, below) and thunder (Q300, below). **Not through it yet:**
-every flat effect of the interface, the rain's bed, and the lobby's own thunder.
+no shipped scream does. The staff's voices and the crowd's take it too (Q268, below), a bumper ride's engine (Q299, below), thunder (Q300, below) and the rain's two voices, 1 to 3 of 127 (`weather.md`, "Two rain voices, and how loud each is"). **Not through it yet:**
+every flat effect of the interface and the lobby's own thunder.
 
 **Measured here, 2026-10-10** (`q267/confirm.py`, 4 of 4): with the camera on the Belly Bounce `voices` read ten
 scream samples at (525, 250), each at a volume of 0.1925 (35 over 60 of the music's 0.33), 24.26 off at a gain of

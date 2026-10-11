@@ -44,12 +44,22 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q301. The writer: what else a made record leaves out.** The old Q300's other pieces, each counted or
+- [ ] **Q302. The writer: what else a made record leaves out.** The old Q301's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q301 (`weather.md`, "Two rain voices, and how loud each is"): what a level set on the bed's stale handle
+  answers after a stop is not read (`FUN_006b5b80`), and here the next shower's first step starts the bed at
+  once; the two rain channels read a far end of 95, not their variations' 100: a flat channel's far end is not
+  looked into; the flat channel at 4 of 127 from a park's start is not the rain's and is still not named; the
+  wiring from `ParkWeather` to the rain's calls is held by the game run and no test (a test cannot stand a
+  `ParkWeather`: its drops need the graphics device); snow, which stops the weather's own voice and keeps the
+  bed, was in no game run (no Lost Kingdom snow); the fix's two voices were not told apart in the mix, only
+  their sum; that the original's two start on one mixer buffer is the listing's order and one poll line, not a
+  measurement of its mix; how closely one rain sample follows another in the
+  original is not measured (its sound off-screen is not paced). Not listened to by a person.
   From Q300 (`audio.md`, "A channel's volume"): a thunder is still held back by the per-effect wait (one bolt of
-  fourteen had none; the original sounded two 12 ticks apart: Q43); the rain's bed and the lobby's own thunder
-  are not through `ChannelGain`; one of the original's thirty thunders opened at 24 of 127 for a second, by what
+  fourteen had none; the original sounded two 12 ticks apart: Q43); the lobby's own thunder
+  is not through `ChannelGain`; one of the original's thirty thunders opened at 24 of 127 for a second, by what
   was not read; a real storm was in no run of either game (the original's bolts were a held flag's, these the
   console's), and the bolt is not made out in this game's frame. Not listened to by a person.
   From Q299 (`audio.md`, "A channel's volume"): the engine's sample was not found in the mix (its pitch moves each

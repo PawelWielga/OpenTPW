@@ -370,7 +370,7 @@ public static class DebugConsole
 				Reply( ParkWeather.Current == null
 					? "weather none - not in a park"
 					: $"weather quality={ParkWeather.Current.Quality} drops={ParkWeather.Current.Drops} "
-						+ $"storm={ParkWeather.Current.Lightning}" );
+						+ $"storm={ParkWeather.Current.Lightning} rain: {ParkAudio.Current?.RainCensus() ?? "no park audio"}" );
 				break;
 
 			// Waiting for one is up to forty seconds of real time, which is no way to check a bolt.

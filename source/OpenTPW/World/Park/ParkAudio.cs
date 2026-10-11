@@ -57,47 +57,11 @@ public sealed class ParkAudio : Entity
 
 	private const int RainEffect = 33;
 
-	/// <summary>
-	/// The loudest the rain bed gets, at every drop the balance file allows.
-	///
-	/// <para>
-	/// <b>Measured, not chosen.</b> RAIN.mp2,
-	/// pulled out of AmbientHD.sdt, measures <b>-16.9 dBFS RMS</b> and peaks at full scale. The three
-	/// thunder samples beside it measure -19.9, -14.7 and -16.1, a median of -16.1 - so rain and
-	/// thunder are recorded within a decibel of each other and the samples give no reason to treat one
-	/// as louder than the other.
-	/// </para>
-	/// <para>
-	/// What differs is the role, and <see cref="LobbyAudio"/> is an established scale for it: music
-	/// 0.50, thunder 0.40, one-shots 0.14, a scene's own bed 0.13, the global bed 0.07. Rain is a
-	/// continuous loop belonging to the scene, which is what a bed is, and beds sit about 9.8 dB below
-	/// thunder - <c>20*log10(0.13/0.40)</c>. With the samples level, that puts rain at the bed's own
-	/// 0.13. The headroom argument agrees: these are 1999 samples mastered hard against the rails, and
-	/// LobbyAudio's remarks warn that modest-looking gains still sum past 1.0 and clip. Rain, thunder
-	/// and music together come to 0.86 before <see cref="Audio.MasterVolume"/> and 0.43 after it.
-	/// </para>
-	/// <para>
-	/// The original is no help here, which is why this rests on the game's own scale instead: it drives
-	/// the voice 0 to 100 through a control slot (FUN_0051bc40 selector 8) whose default sits behind a
-	/// runtime pointer that cannot be resolved from the binary.
-	/// </para>
-	/// <para>
-	/// <b>Then confirmed out of the mixer, which is the half that settles it.</b> Capturing through
-	/// SDL's disk driver and measuring a dry window against a wet one, the rain's own contribution by
-	/// power subtraction is <b>-36.3 dBFS</b> - the same figure a park's music was confirmed at, at full gain - and it
-	/// adds 3.4 dB to the mix at the heaviest rain the game can produce. The level scales with the drop
-	/// count, so ordinary weather sits well below that.
-	/// </para>
-	/// <para>
-	/// <b>Gains do not compare across samples of different density.</b> Rain's gain is well under half
-	/// the music's, yet measured the two are level: RAIN.mp2 is a continuous loop peaking at full scale
-	/// where music has dynamics and gaps, so the same RMS falls out of a much lower gain.
-	/// </para>
-	/// </summary>
-	private const float RainVolume = 0.13f;
+	/// <summary>The parameter the rain's level is set under (<c>FUN_0051e830</c>'s 8); each of 33's four variations names it on its volume.</summary>
+	public const int RainParameter = 8;
 
-	/// <summary>How long the rain takes to come up and to go away, so a storm does not switch on.</summary>
-	private const float RainFadeSeconds = 1.5f;
+	/// <summary>What <c>Sound_StopFading</c> hands the library (<c>0x3c</c>, <c>0x0051c300</c>), taken as milliseconds.</summary>
+	private const float RainFadeSeconds = 0.06f;
 
 	/// <summary>
 	/// How loud, and it is a correction rather than a preference.
@@ -400,7 +364,37 @@ public sealed class ParkAudio : Entity
 	/// </summary>
 	private readonly SoundCategory? _ambient;
 
-	private Voice? _rain;
+	/// <summary>One of the rain's two held voices: its level, the variation its sample is of, and the volume it keeps.</summary>
+	internal sealed class RainVoice
+	{
+		/// <summary>Whether the voice is held, playing one sample after another.</summary>
+		public bool Held { get; set; }
+
+		/// <summary>The level it was last set to, which picks its next sample's variation; nought on a voice nobody sets.</summary>
+		public int Level { get; set; }
+
+		/// <summary>The variation its sample is of, zero-based, or -1 before its first.</summary>
+		public int Variation { get; set; } = -1;
+
+		/// <summary>The volume, of a hundred, its first sample or the last set gave it.</summary>
+		public int Volume { get; set; }
+
+		/// <summary>How many samples it has started since the park began.</summary>
+		public int Samples { get; set; }
+
+		public Voice? Voice { get; set; }
+
+		/// <summary>What its sample is playing at, nought with none.</summary>
+		public float Plays => Voice is { Playing: true } ? Voice.Volume : 0f;
+	}
+
+	/// <summary>The rain's bed (<c>[0x00803aac]</c>), the voice the level is set on.</summary>
+	internal RainVoice RainBed { get; } = new();
+
+	/// <summary>The weather thing's own rain voice (<c>mRainSoundHandle</c>, <c>+0x54</c>), which nothing sets a level on.</summary>
+	internal RainVoice RainOwn { get; } = new();
+
+	private readonly Random _rainRandom = new();
 
 	/// <summary>
 	/// The guests' own voices, which is where the scream samples live - <c>cat_kids</c>, the category
@@ -613,44 +607,124 @@ public sealed class ParkAudio : Entity
 	}
 
 	/// <summary>
-	/// Sets how hard it is raining, 0 for dry through 1 for as hard as the balance file allows,
-	/// starting the bed if it is not already going.
-	///
-	/// <para>
-	/// <b>One voice, where the original starts two, and that is a deliberate departure.</b> The
-	/// original runs the bed twice over during rain: FUN_005131f0 starts effect 0x21 into the weather
-	/// thing's own mRainSoundHandle, and FUN_0051e830 starts the same effect again into a global
-	/// handle, with no dedupe anywhere - the driver's only guard is keyed on the handle passed in, and
-	/// both sites pass zero. Only the global one is ever given a level. The second voice is what makes
-	/// its rain sound unlike its snow, but its level lives behind a runtime pointer that cannot be read
-	/// from the binary, so how loud it was is unknown, and doubling an identical loop at a gain nobody
-	/// can establish would be a guess.
-	/// </para>
-	/// <para>
-	/// <b>The departure is audible where it snows.</b> Snow is reachable - hallow's snow band is 0..25,
-	/// and <c>Level.CreatePark</c> makes a fresh park for a theme that ships no park file - and there
-	/// snow and rain sound identical here where the original distinguishes them. This wants settling
-	/// by capturing the mix - see <c>ParkWeather.Snowing</c>.
-	/// </para>
+	/// <c>FUN_0051e830</c>, called at each step of the drops' ramp with the drops as a hundredth of the most: above
+	/// nought the bed is held if it is not and its parameter 8 set, which gives the variation then current its
+	/// volume again, <c>level x (high - low) / 100 + low</c> (<see cref="Controlled"/>); at nought it is faded and
+	/// let go. The four variations' volumes are 1 to 2, 3, 4 and 5 of a hundred, so the bed is 1 to 3 of 127 beside
+	/// the music's 60 (<c>docs/exe/weather.md</c>, "Two rain voices, and how loud each is").
 	/// </summary>
-	internal void SetRainLevel( float level )
+	internal void SetRainLevel( int level )
 	{
-		if ( !Audio.Ready || _ambient is not { IsValid: true } )
-			return;
+		level = Math.Clamp( level, 0, 100 );
 
-		level = level.Clamp( 0f, 1f );
-
-		if ( level <= 0f )
+		if ( level == 0 )
 		{
-			StopRain();
+			LetGo( RainBed, RainFadeSeconds );
 			return;
 		}
 
-		if ( _rain is not { Playing: true } )
-			_rain = _ambient.Play( RainEffect, RainVolume * level, loop: true,
-				fadeInSeconds: RainFadeSeconds, bus: AudioBus.Effects );
-		else
-			_rain.SetVolume( RainVolume * level, RainFadeSeconds );
+		RainBed.Level = level;
+
+		if ( !RainBed.Held )
+		{
+			// Its first sample starts on the next pass and takes the level as it does.
+			RainBed.Held = true;
+
+			Log.Info( $"Park audio: the rain's bed started at level {level} on tick {GameClock.Ticks}" );
+			return;
+		}
+
+		var headers = _ambient?.VariationsOf( RainEffect ) ?? [];
+
+		if ( RainBed.Variation < 0 || RainBed.Variation >= headers.Count )
+			return;
+
+		// The set applies the volume again only where the parameter is one of the variation's own controllers.
+		var header = headers[RainBed.Variation];
+
+		if ( header.FirstKey != RainParameter && header.SecondKey != RainParameter )
+			return;
+
+		RainBed.Volume = Controlled( header, 1, RainParameter, level, _rainRandom );
+		RainBed.Voice?.SetVolume( ChannelGain( RainBed.Volume ) );
+
+		Log.Info( $"Park audio: the rain's bed set to level {level}, variation {RainBed.Variation + 1} volume {RainBed.Volume} "
+			+ $"plays {ChannelGain( RainBed.Volume ):F4} on tick {GameClock.Ticks}" );
+	}
+
+	/// <summary>
+	/// The weather thing's own rain voice, started as a quality turns to rain (<c>FUN_005131f0</c>, mode 0): the same
+	/// effect again, held beside the bed. Nothing sets its level, so its controllers stay at the nought a new voice
+	/// has (<c>FUN_006b7150</c>): the first variation for ever, at its low volume of 1.
+	/// </summary>
+	internal void StartOwnRain()
+	{
+		if ( RainOwn.Held )
+			return;
+
+		RainOwn.Held = true;
+
+		Log.Info( $"Park audio: the weather's own rain voice started on tick {GameClock.Ticks}" );
+	}
+
+	/// <summary>The weather thing's own rain voice faded and let go: a turn to snow, or the drops at nought (<c>FUN_005131f0</c>, modes 1 and 2).</summary>
+	internal void StopOwnRain() => LetGo( RainOwn, RainFadeSeconds );
+
+	private static void LetGo( RainVoice rain, float seconds )
+	{
+		if ( !rain.Held )
+			return;
+
+		rain.Voice?.FadeOut( seconds );
+		rain.Voice = null;
+		rain.Held = false;
+		rain.Variation = -1;
+		rain.Level = 0;
+		rain.Volume = 0;
+	}
+
+	/// <summary>
+	/// A held rain voice's next sample once the last has ended, as the crowd's (<see cref="NextCrowdSample"/>): the
+	/// first variation first, then the one the level's zone gives. A voice's first sample takes its volume from the
+	/// level as its channel is set up; a later one is queued with its sample alone and plays at what the voice kept.
+	/// </summary>
+	private void NextRainSample( RainVoice rain, string name )
+	{
+		if ( !rain.Held || rain.Voice is { Playing: true } || _ambient is not { IsValid: true } )
+			return;
+
+		var headers = _ambient.VariationsOf( RainEffect );
+		var first = rain.Variation < 0;
+		var next = ParkScreams.NextVariation( headers, rain.Variation, rain.Level, _rainRandom );
+
+		if ( next < 0 )
+			return;
+
+		rain.Variation = next;
+
+		if ( first )
+			rain.Volume = Controlled( headers[next], 1, RainParameter, rain.Level, _rainRandom );
+
+		rain.Voice = Audio.Play( _ambient.PickFrom( RainEffect, next ), ChannelGain( rain.Volume ), bus: AudioBus.Effects );
+
+		if ( rain.Voice is null )
+			return;
+
+		++rain.Samples;
+
+		Log.Info( $"Park audio: {name}, sample '{rain.Voice.Name}' variation {next + 1} at level {rain.Level}, volume {rain.Volume} "
+			+ $"plays {rain.Voice.Volume:F4} on tick {GameClock.Ticks}" );
+	}
+
+	/// <summary>The rain's two voices as they stand, for the console.</summary>
+	internal string RainCensus()
+	{
+		static string One( RainVoice rain )
+			=> rain.Held
+				? $"held, level {rain.Level} variation {rain.Variation + 1} volume {rain.Volume} plays {rain.Plays:F4}, {rain.Samples} samples"
+				: $"not held, {rain.Samples} samples";
+
+		return $"bed {One( RainBed )}; own {One( RainOwn )}";
 	}
 
 	/// <summary>
@@ -1061,22 +1135,11 @@ public sealed class ParkAudio : Entity
 		return string.Join( "; ", lines );
 	}
 
-	/// <summary>
-	/// Stops the rain, and lets the effect go.
-	///
-	/// The release matters: a looping voice holds its effect for ever - <see cref="SoundCategory.Play"/>
-	/// parks it at positive infinity - so without this the next shower in the same park would find the
-	/// effect still taken.
-	/// </summary>
+	/// <summary>Both of the rain's voices faded and let go: the drops at nought, or the weather gone.</summary>
 	internal void StopRain()
 	{
-		if ( _rain == null )
-			return;
-
-		_rain.FadeOut( RainFadeSeconds );
-		_rain = null;
-
-		_ambient?.Release( RainEffect );
+		LetGo( RainBed, RainFadeSeconds );
+		LetGo( RainOwn, RainFadeSeconds );
 	}
 
 	/// <summary>The park is ending: what it has playing fades, and its effect is let go.</summary>
@@ -1085,9 +1148,8 @@ public sealed class ParkAudio : Entity
 		_voice?.FadeOut( StopSeconds );
 		_voice = null;
 
-		_rain?.FadeOut( StopSeconds );
-		_rain = null;
-		_ambient?.Release( RainEffect );
+		LetGo( RainBed, StopSeconds );
+		LetGo( RainOwn, StopSeconds );
 
 		// And whoever is still screaming as the park ends: each chain's newest child is cut, as a stop
 		// cuts it. The effects hold nothing to let go of.
@@ -1186,6 +1248,8 @@ public sealed class ParkAudio : Entity
 		}
 
 		NextCrowdSample();
+		NextRainSample( RainBed, "the rain's bed" );
+		NextRainSample( RainOwn, "the weather's own rain voice" );
 
 		if ( _music is not { IsValid: true } )
 			return;

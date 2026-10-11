@@ -34,6 +34,7 @@ place to look for tools. Each file's docstring is its manual.
 | `original/mixer.py PID [SECS]` | The original's memory, inside `QMixer.dll`: the session and its listener, and every open channel's flags, place, distance mapping, volume, the mixer's own distance, and its cone, distance and final gains, with the gain the law gives beside the one read. How loud the mixer is playing a voice, where `voices.py` says only whether it sounds. A `POLL` for `loadfile.sh` |
 | `original/crowdmix.py PID SECS` | The original's memory: the crowd's voice (level, handle, keys, values, the current variation with its weight, the sample record) beside every flat mixer channel's volume of 127, in ONE log stamped with the wall clock and `mGameTick`, a line a change, 20 ms a poll. Use it where `crowd.py` and `mixer.py` would have to be held together by eye; `mixer.py` prints nothing for a change of volume alone. A `POLL` for `loadfile.sh` |
 | `original/mixfreq.py PID SECS [2d]` | The original's memory, inside `QMixer.dll`: every open 3D channel's place, far end, volume of 127 and FREQUENCY (`+0x1f4`), a stamped line each time one opens or changes, and at the end a count by far end, volume and frequency. Which pitch each sample of an effect plays at; `2d` reads the flat channels instead. A `POLL` for `loadfile.sh` |
+| `original/rainmix.py PID SECS` | The original's memory: the weather thing's quality, forecast, drops, target and its own rain handle, the global rain handle, the two rain voices (controller keys and values, the current variation's volume bytes) and every flat mixer channel under 40 of 127 with its frequency, in ONE stamped log, a line a change. How loud the rain is and what sets it; `crowdmix.py` is the same for the crowd's voice. A `POLL` for `loadfile.sh` |
 | `original/breakq.py PID SECS THING [all]` | The original's memory, **written**: breaks a ride (`VAR_BREAKSTAT`) each time it is open with a queue that has stood four seconds, so every break puts a queue out, a line a break. With `all` it first writes nought over the mask byte at `0x0050133f`, so every guest dismissed from a queue plays kids `0x80`, not one in eight. Stop the original afterwards |
 | `original/thingpoke.py PID SECS KIND THING:OFFSET:FMT=VALUE ...` | The original's memory, **written**: holds words of things at given values, written again whenever they read otherwise, a line a write; refuses a thing whose type byte (`+2`) is not KIND. `150 15 7:0x38:B=1` holds the weather's `mLightning`, so bolts and thunder come on a clear day. `thingwords.py` reads the same words. Stop the original afterwards |
 | `original/mixpairs.py [<mixer.py log>]` | A `mixer.py` log against the category files: every pair of a 3D channel's far end and volume of 127, with the variation volumes of that range that `round( v x 0.75 )` makes it from. Says which effects' channels a log holds, and that none plays at a number the files cannot make |
@@ -126,6 +127,13 @@ whole list):
   moves the pan, so match its sample in each channel of the capture apart and take the root of the two gains'
   squares: over the volume times `voices`' distance gain that is one number, 0.66, for every thunder
   (`q300/confirm.py`, Q300).
+- **The rain alone in the mix:** `bus music 0`, 16 s, `camera 1100 1100 110 180`, then `weather 16`, not 1: a
+  quality of 15 or less arms the lightning, and thunder (range 1500) is then the mix. 16 is 360 drops, a level of
+  60, reached in 4.5 s. `weather` prints both rain voices (level, variation, volume, what each plays at); the log
+  has a line a set and a line a sample. Each `weather N` holds off the park's own next change for some 40 s. The
+  two voices are the same sample, a part of a second apart unless the command lands on a weather tick's frame: apart,
+  `mixmatch.steady` scores 0.77 and tells no gain and the rms is the two powers' sum; together it scores 1.00 at
+  twice a voice's gain. Compare the mix's rms between two builds and allow for both (`q301/confirm.py`, Q301).
 - **The crowd's voice alone in the mix:** `hover 50 24` holds the pointer's cell on the Belly Bounce's queue
   whatever the camera does, so with `bus music 0` and `camera 1100 1100 110 180` the mix is the crowd's flat
   voice and nothing else. `voices` names each sample as `<name> Effects flat`; match each at its six pitches
@@ -217,6 +225,11 @@ GH=766` there, or the pointer is off):
   `bounce.TPWS`: a bolt every five seconds or so, each thunder a 3D channel at a far end of 1500 and a height of
   300, 30 in 150 s. The game writes the flag back to nought every 163 ticks, as its weather changes, so it must be
   held, not written once (`q300/orig/run.sh`, Q300).
+- **Its weather, chosen:** hold the weather thing's FORECAST, not its quality: `thingpoke.py PID 50 15 7:0x28:i=1`
+  makes its next change the heaviest rain (and lightning), `=20` and `=35` lighter rain with none, `=100` dry. A
+  quality written straight to `+0xc` changes nothing, since only a delivered forecast is turned into drops
+  (`FUN_005127a0`). A change came inside 35 s of each hold, the computer on seven days; `rainmix.py` beside it
+  reads the drops, both rain voices and their channels (`q301/orig/run.sh`, Q301).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).

@@ -382,10 +382,18 @@ public sealed class ParkWeather : Entity
 
 		Snowing = snowing;
 
+		// The thing's own rain voice is started by rain and stopped by snow (FUN_005131f0, modes 0 and 1); a dry
+		// quality leaves it until the drops are gone.
 		if ( snowing )
+		{
 			_targetDrops = Intensity( Quality, _snowLow, _snowHigh );
+			ParkAudio.Current?.StopOwnRain();
+		}
 		else if ( raining )
+		{
 			_targetDrops = Intensity( Quality, _rainLow, _rainHigh );
+			ParkAudio.Current?.StartOwnRain();
+		}
 		else
 			// Outside every band there is nothing to fall. The original's own branches each write the
 			// target, and nothing writes it when neither matches - which leaves the ramp below to take
@@ -413,9 +421,12 @@ public sealed class ParkWeather : Entity
 		return Math.Clamp( (100 - intensity) * _maxRaindrops / 100, 0, _maxRaindrops );
 	}
 
+	/// <summary>The level a step of the ramp hands the rain's bed: the drops as a whole hundredth of the most (<c>0x00512ac5</c>).</summary>
+	internal static int RainLevel( int drops, int most ) => most > 0 ? drops * 100 / most : 0;
+
 	/// <summary>
 	/// Walks the drops toward what the quality asked for, a <c>SpeedOfChange</c> at a time, and drives
-	/// the rain loop's level from where they have got to.
+	/// the level of the rain's bed from where they have got to.
 	///
 	/// <para>
 	/// Within one step of a target it stops moving and, when that target is nothing, stops the rain
@@ -451,10 +462,9 @@ public sealed class ParkWeather : Entity
 		// count is the renderer's own business and is NOT the same number - it draws Level of its own
 		// pool, which is the lobby's nine hundred. Matching the two exactly is a thing to do once
 		// there is a reason to believe the park's pool size, rather than now.
-		var level = _drops / (float)_maxRaindrops;
+		_rain.Level = _drops / (float)_maxRaindrops;
 
-		_rain.Level = level;
-		ParkAudio.Current?.SetRainLevel( level );
+		ParkAudio.Current?.SetRainLevel( RainLevel( _drops, _maxRaindrops ) );
 	}
 
 	/// <summary>
