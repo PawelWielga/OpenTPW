@@ -962,9 +962,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 
 ## B. Docs and comments
 
-- [ ] **Q13. Move `docs/CLEANUP-PLAN.md` into `docs/history/`.** Every item in it is closed. It is still untracked in
-  `docs/`, so it exists on this machine only. Commit it under `docs/history/` and list it in `docs/history/README.md`.
-  No game run.
 - [ ] **Q14. Comment sweep of the cleanup commits.** Replace history-voice comments with what the code does now,
   found by member because line numbers go stale. Left: `AudioListener.AttenuationTo`'s summary nests a `<para>`
   inside a `<para>`, and `ParkCamcorderCameraMode.DebugWalk` steps a per-frame `WalkSpeed / 60f`; make it use

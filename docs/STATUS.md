@@ -55,7 +55,7 @@ Last updated: 2026-10-10. **This header names no branch and no sha, deliberately
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q268: **predicted and missed:** in the game, P2 by my own check (`crowd` reads a volume of nought between two samples, and the check took it for one; every volume read was the channel's); in the original nothing (3 of 3), the control nothing (3 of 3). **Held by the order of stretches, not by a clock:** the original's two logs are not stamped, so the crowd's channel and its handle are matched as five held stretches and five empty ones in the same order, and that 11 of 127 is levels 13 to 15 is by the same order. **Not explained:** the original's twin variation never showed a drawn volume (10 and 11 alone), where this game's draws 14 to 21; its flat channels at 1 to 4 of 127 are not named (Q269). **Not measured in the mix:** the staff's voices (the log and `voices` alone), and no person listened to either. **In no game run:** a crowd past 15, the park's other themes. One frame, one camera. FileFormats not touched (no new byte). `docs/exe/addresses.md` not regenerated (no new address). One Ghidra read (`FUN_006bc090`, again). No Codex, no subagent, no workflow; `stryker.sh`, `record.sh`, `watch.sh`, `parkfile.py`, `parkscene.py` not used.
+- Q13: nothing of it is seen on screen: a closed plan moved into `docs/history/`. No game run.
 
 
 

@@ -24,7 +24,7 @@ project builds on `net10.0` against NeoVeldrid 1.2.1 and Silk.NET, and the game 
 editor (`b2aca43`). The facts it rests on live in the code: how Silk.NET finds its natives, and the host-supplied
 `NATIVE_DLL_SEARCH_DIRECTORIES` the game prepends to it, in `NativeLibraries`' summary (`e2aaab1`); the shader
 uniform-block naming in `ShaderCompiler`; and why the audio device is opened on the SDL the window came from in
-`Audio`'s header (`846dd0f`). The stale `bin/Debug/net8.0/` output left behind is noted in `CLAUDE.local.md`. The
+`Audio`'s header (`846dd0f`). The
 migration plan, "Leaving Veldrid" (Alexah's, drawn 2026-09-12), is
 https://claude.ai/code/artifact/74a59520-a16a-4703-84df-0ad69f15a58c: read it for its API verification table and the
 audio-trap proof; its eight-commit ladder is superseded by the four the migration landed as.

@@ -5,7 +5,7 @@ What a player notices, **ordered by when a player meets it**, not by size or by 
 Drawn up 2026-09-20 from `docs/STATUS.md`, the 42-thing Lost Kingdom census
 (`docs/history/current-task-archive.md`, grep `THE PARK IS FULLY DECODED`) and the live plan.
 
-`docs/CLEANUP-PLAN.md` was a second list of nine things a player sees, handed over 2026-09-21. All nine are
+`docs/history/CLEANUP-PLAN.md` was a second list of nine things a player sees, handed over 2026-09-21. All nine are
 closed; `docs/QUEUE.md` Q13 moves it into `docs/history/`. Until then it is untracked and exists on this machine only.
 
 **Alexah sets which item is the goal. One item per session** (`CLAUDE.md`, "How a session runs" 4).

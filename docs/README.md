@@ -10,7 +10,6 @@ Where the project's memory lives. Code says what; these files say why, and what 
 | `QUEUE.md` | **The work queue.** Numbered items, bugs first, one per session, taken from the top unless Alexah reorders. Each is ticked in the commit that lands it; the pre-commit hook moves it to `history/queue-done.md`. | Every task |
 | `PLAYER-GAPS.md` | Gaps ordered by when a player meets each one. Not the queue: `QUEUE.md` returns to its open gaps 4, 5 and 7 after its own items (its section F). | As an item lands |
 | `REVIEW-2026-09-21.md`, `REVIEW-2026-09-22.md` | The two dated codebase reviews `QUEUE.md` was drawn from; the detail behind Q1-Q12. Their line numbers are from the tip each was written against. | Never |
-| `CLEANUP-PLAN.md` | Nine things a player saw, **all closed** 2026-09-22. **Untracked by instruction** — never staged, and deliberately not in `.gitignore`, so it shows in every `git status`. It exists on one machine and is absent from a fresh clone. `QUEUE.md` Q13 moves it into `history/`. | Never (closed) |
 | `DECISIONS.md` | Choices that could have gone another way, one paragraph each, dated: what was chosen, why, and where its facts now live. | When a choice is made |
 | `MEMORY-DIET.md` | What moved out of the memory folder and where, and what is still owed. | While the diet is unfinished |
 | `WORKFLOW.md` | Branches, pushing, subagents (model by stage), sessions, unattended runs, commits, READMEs, how to verify | Rarely |

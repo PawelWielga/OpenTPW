@@ -6004,6 +6004,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `GoldenTicketCost` and `+0x1a0` `InitDuration`; `hud.md` ("The mystery row") and `park-engine.md` ("The inputs are named") both say so now.
   Done, ticked 2026-10-11 on Alexah's word after the week-end audit's reading: both pages carry the corrected
   offsets and nothing on either is left to correct.
+- [x] **Q13. Move `docs/CLEANUP-PLAN.md` into `docs/history/`.** Every item in it is closed. It is still untracked in
+  `docs/`, so it exists on this machine only. Commit it under `docs/history/` and list it in `docs/history/README.md`.
+  No game run.
+  Done 2026-10-11 on Alexah's word, at the week-end audit's close: the file is `docs/history/CLEANUP-PLAN.md`, as it was
+  written, and `docs/history/README.md` lists it.
 
 ## C. Alexah's list: cause known, one session each
 
