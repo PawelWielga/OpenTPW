@@ -262,6 +262,14 @@ GH=766` there, or the pointer is off):
   `staff` reads 26 and message `0x46`'s record `(tick, 0, 1, 0)` (`q306/orig/run.sh`, Q306). Here
   `scriptvar 13 VAR_BREAKSTAT 1` once the opening line is over (25 s in) does the same in two seconds: grep the
   log for `Park advisor: post message=70` (`q306/confirm.py`).
+- **Its advisor told no mechanic can come:** *none in the park*: fire the mechanic HERE (`fire 26`), `savepark`,
+  and load that file in the original (it reads a park with no mechanic as its own); the same `POLL` with
+  `0x44,0x45,0x46` has `0x44`'s record said on the tick the Bounce's state reads 1. *Every mechanic busy*: the
+  original's own `q257o/orig/hotpot-later2.TPWS`, `scriptvar.py %PID% 43 4 1` 3.5 s in and `scriptvar.py %PID%
+  13 4 1` six seconds on, `thingwords.py %PID% 80 26:0x19c:I:state 26:0x218:H:job` beside the pollers: a slot
+  holds `0x45` with the Bounce as the first line is still said (`q307/orig/run.sh none|busy`, Q307). Here
+  `parkscene.broken_pot()` then `scriptvar 13 VAR_BREAKSTAT 1` once the log reads `mechanic 26 found ride`
+  (`q307/confirm.py`).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).

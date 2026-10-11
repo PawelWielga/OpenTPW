@@ -3,9 +3,10 @@ using System.Globalization;
 namespace OpenTPW;
 
 /// <summary>
-/// The park's posted messages, category 0, selection mode 2: the door's two, a ride about to break down and a
-/// mechanic on his way to one. The eight slots, strict tick threshold, helper recheck and per-message histories
-/// follow FUN_0059a550; docs/exe/advisor-park.md, Q90, "A ride about to break down" and "A mechanic on his way".
+/// The park's posted messages, category 0, selection mode 2: the door's two, a ride about to break down, a
+/// ride broken down with no mechanic to come and a mechanic on his way to one. The eight slots, strict tick
+/// threshold, helper recheck and per-message histories follow FUN_0059a550; docs/exe/advisor-park.md, Q90, "A ride
+/// about to break down", "A ride broken down and no mechanic to come" and "A mechanic on his way".
 /// Other park messages and the polling analyser remain unbuilt.
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -14,6 +15,10 @@ internal sealed class ParkAdvisorMessages
 	internal const int Closed = 129;
 	/// <summary>Message 0x42, posted by a ride's wear (FUN_004df670, 0x004df8be) with the ride as its subject.</summary>
 	internal const int RideWornOut = 66;
+	/// <summary>Message 0x44, posted by the mechanics' base as a ride breaks down in a park with no mechanic (FUN_004dadc0, 0x004dae62).</summary>
+	internal const int NoMechanics = 68;
+	/// <summary>Message 0x45, posted by the mechanics' base as a ride breaks down with every mechanic busy (FUN_004dadc0, 0x004daff0).</summary>
+	internal const int MechanicsBusy = 69;
 	/// <summary>Message 0x46, posted by the mechanic's decide (FUN_004da5b0, 0x004da6bf) with the ride he sets off for as its subject.</summary>
 	internal const int MechanicOnHisWay = 70;
 
@@ -34,6 +39,8 @@ internal sealed class ParkAdvisorMessages
 	[
 		.. DoorTopics,
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255 ),
+		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255 ),
+		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255 ),
 		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2 )
 	];
 

@@ -14,6 +14,7 @@ public class ParkAdvisorMessageTests
 		=> new( new MemoryStream( Encoding.ASCII.GetBytes( $"GeneralAdvisor.MinScoreForConsideration {threshold}\n"
 			+ $"MessageGroups[0].MinTimeSameMessage 120\nMessageGroups[0].SayOnlyOnce 0\n"
 			+ $"ParkNowOpen.Score {open}\nParkNowClosed.Score {close}\nRidesBreakdownImminent.Score {worn}\n"
+			+ "RidesBreakdownNoMechanics.Score 105\nRidesBreakdownBusyMechanics.Score 107\n"
 			+ $"RidesBreakdownMechanicOnIt.Score {mechanic}\n" ) ) );
 
 	private static void Set( SettingsFile settings, string key, int value )
@@ -77,6 +78,46 @@ public class ParkAdvisorMessageTests
 		CollectionAssert.AreEqual( new[] { (204, 202), (205, 203), (206, 204), (204, 202) }, said );
 		CollectionAssert.AreEqual( new[] { 0, 0, 1, 0 }, rows, "response 206 alone names a gesture row" );
 		Assert.IsTrue( messages.Census().Contains( "message=70/score=110/line=0/lastTick=2440" ), messages.Census() );
+	}
+
+	/// <summary>
+	/// Messages 0x44 and 0x45's rows: responses 198 to 200 are samples 196 to 198 and 201 to 203 are 199 to 201,
+	/// three lines in turn each, scores 105 and 107, a slot a ride.
+	/// </summary>
+	[TestMethod]
+	[DataRow( ParkAdvisorMessages.NoMechanics, 105, 198, 196 )]
+	[DataRow( ParkAdvisorMessages.MechanicsBusy, 107, 201, 199 )]
+	public void StockNoMechanicToComeIsSpokenOfInThreeLinesThatWrap( int message, int score, int response, int sample )
+	{
+		FileSystem = GameData.Required();
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var said = new List<(int, int)>();
+		var rows = Times( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		for ( var i = 0; i < 4; ++i )
+		{
+			var tick = 1000 + i * 480;
+			Assert.IsTrue( messages.Post( message, tick, 13 ) );
+			Assert.IsTrue( messages.Post( message, tick, 14 ), "255 copies" );
+			messages.Tick( tick, i * 100000L, ( r, s ) => { said.Add( (r, s) ); return 0; } );
+			messages.Tick( tick, i * 100000L + 50000, ( r, s ) => 0 );
+		}
+		CollectionAssert.AreEqual( new[] { (response, sample), (response + 2, sample + 2), (response + 1, sample + 1), (response, sample) }, said );
+		Assert.AreEqual( rows, Times( "ADVISOR_RESPONSE_GESTURE_ROW" ), "none of the six names a gesture row" );
+		Assert.IsTrue( messages.Census().Contains( $"message={message}/score={score}/line=1/lastTick=2440" ), messages.Census() );
+	}
+
+	/// <summary>Busy mechanics, 107, are said before none, 105, and after a mechanic on his way, 110.</summary>
+	[TestMethod]
+	public void TheFourBreakdownMessagesAreSaidByScore()
+	{
+		FileSystem = GameData.Required();
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		foreach ( var id in new[] { ParkAdvisorMessages.RideWornOut, ParkAdvisorMessages.NoMechanics, ParkAdvisorMessages.MechanicsBusy, ParkAdvisorMessages.MechanicOnHisWay } )
+			Assert.IsTrue( messages.Post( id, 100, 13 ) );
+		var said = new List<int>();
+		for ( var i = 0; i < 4; ++i )
+			messages.Tick( 100 + i, i * 2000, ( _, sample ) => { said.Add( sample ); return 0; } );
+		CollectionAssert.AreEqual( new[] { 202, 199, 196, 191 }, said );
 	}
 
 	/// <summary>A mechanic on his way, 110, is said before a ride about to break down, 100, and each ride has its own slot.</summary>

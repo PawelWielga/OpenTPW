@@ -188,8 +188,10 @@ Q257y. **OpenTPW runs step 3**: `ParkPeople.TakeTheRidesTurns`, on a state 0 thi
 decides (`FLD [ESI+0x48]`, `__ftol`, `TEST AL,AL`, `0x004e1508`..`0x004e1512`): above nought the hoardings take
 kind 2 and the state is 1; at nought kind 4 and state 4. Then SetState's arm in its order: one completion
 (`CompleteOrTurnAway`), the close (`ParkRideOperation.Close`: `mCanLoad` and the nominee nought,
-`VAR_RIDECLOSED` 1, the hoardings' kind 1, which keeps the picture already up), the post to the event bus
-counted (`RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT`), and the state stored. From the next turn the thing
+`VAR_RIDECLOSED` 1, the hoardings' kind 1, which keeps the picture already up), the event sent
+before the state is stored, heard here by the mechanics' base alone (`ParkPeople.MessageForABreak`;
+`advisor-park.md`, "A ride broken down and no mechanic to come") and counted for its other hearers
+(`RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT`), and the state stored. From the next turn the thing
 is on the states-1/2/4 arm: a completion and a dismissal a turn.
 
 **Which scripts reach it.** Of Lost Kingdom's 81 scripts seventeen write `VAR_BROKEN` 1, the seventeen rides',

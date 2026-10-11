@@ -653,6 +653,184 @@ public class ParkClosedRideTests
 		}
 	}
 
+	private const int Mechanic = 26;
+
+	private static Staff TheMechanic( Park park ) => park.People.Staff.Single( member => member.ThingId == Mechanic );
+
+	/// <summary>Breaks the Belly Bounce on its own turn with the advisor listening; answers his messages.</summary>
+	private static ParkAdvisorMessages BreakWithTheAdvisorListening( Park park, int gameTick = 2000, ParkAdvisorMessages? messages = null )
+	{
+		park.State.AdvisorMessages = messages ??= new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		park.State.SetGameTick( gameTick );
+		Assert.IsTrue( park.Scripts[BellyBounce].Set( ParkRideOperation.BrokenVariable, 1 ) );
+		park.People.TakeTheRidesTurns( thingTick: 10 );
+		Assert.AreEqual( ParkRideChoice.StateRefusedOne, Thing( park, BellyBounce ).State, "broken down" );
+
+		return messages;
+	}
+
+	/// <summary>
+	/// The mechanics' base hears a break (<c>FUN_004dadc0</c>): the shipped park's one mechanic, walking with no
+	/// job, is free, and the advisor is told nothing.
+	/// </summary>
+	[TestMethod]
+	public void ABreakWithAFreeMechanicTellsTheAdvisorNothing()
+	{
+		var park = Open();
+
+		try
+		{
+			Assert.AreEqual( (0, false), (TheMechanic( park ).ObjectToRepair, TheMechanic( park ).Activity is StaffActivity.Resting) );
+			Assert.AreEqual( 0, BreakWithTheAdvisorListening( park ).PendingCount );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>With no mechanic in the park the advisor is posted message 0x44 with the ride, on the park's tick.</summary>
+	[TestMethod]
+	public void ABreakWithNoMechanicInTheParkPostsMessage68WithTheRide()
+	{
+		var park = Open();
+
+		try
+		{
+			Assert.IsTrue( park.People.Fire( Mechanic ) );
+
+			var messages = BreakWithTheAdvisorListening( park );
+
+			Assert.IsTrue( messages.Census().Contains( "pending=1 attempts=0 threshold=25 slot=68/subject=13 " ), messages.Census() );
+
+			var said = new List<(int, int)>();
+
+			messages.Tick( 2001, 0, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+			CollectionAssert.AreEqual( new[] { (198, 196) }, said );
+
+			park.People.TakeTheRidesTurns( thingTick: 11 );
+			Assert.AreEqual( 0, messages.PendingCount, "a ride already broken down is not spoken of again" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>The post carries the park's tick: one inside 480 sweeps of the line last said is refused.</summary>
+	[TestMethod]
+	public void ABreakInsideTheMessagesOwnWaitIsNotPosted()
+	{
+		var park = Open();
+
+		try
+		{
+			Assert.IsTrue( park.People.Fire( Mechanic ) );
+
+			var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+
+			Assert.IsTrue( messages.Post( ParkAdvisorMessages.NoMechanics, 1600, 14 ) );
+			messages.Tick( 1600, 0, ( _, _ ) => 0 );
+			Assert.AreEqual( 0, BreakWithTheAdvisorListening( park, gameTick: 2079, messages ).PendingCount, "479 sweeps on" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// A mechanic with another job, or with none and resting, on his way to rest or striking, is busy: with
+	/// nobody else, message 0x45. One with no job in any other state is free.
+	/// </summary>
+	[TestMethod]
+	[DataRow( 14, StaffActivity.GoingToRide, 69 )]
+	[DataRow( 14, StaffActivity.Idle, 69 )]
+	[DataRow( 0, StaffActivity.GoingToRest, 69 )]
+	[DataRow( 0, StaffActivity.Resting, 69 )]
+	[DataRow( 0, StaffActivity.GoingOnStrike, 69 )]
+	[DataRow( 0, StaffActivity.OnStrike, 69 )]
+	[DataRow( 0, StaffActivity.Idle, 0 )]
+	[DataRow( 0, StaffActivity.Walking, 0 )]
+	[DataRow( 0, StaffActivity.Repairing, 0 )]
+	[DataRow( 0, StaffActivity.Held, 0 )]
+	public void ABreakWithEveryMechanicBusyPostsMessage69( int job, StaffActivity doing, int message )
+	{
+		var park = Open();
+
+		try
+		{
+			TheMechanic( park ).ObjectToRepair = job;
+			TheMechanic( park ).SetActivity( doing, 0 );
+			Assert.AreEqual( message, ParkPeople.MessageForABreak( park.People.Staff, Thing( park, BellyBounce ) ) );
+
+			var messages = BreakWithTheAdvisorListening( park );
+
+			Assert.AreEqual( message == 0 ? 0 : 1, messages.PendingCount );
+			Assert.AreEqual( message != 0, messages.Census().Contains( "slot=69/subject=13 " ), messages.Census() );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// A mechanic whose job already names the ride ends the look: message 0x46 where nobody called him to it
+	/// (<c>+0x64</c>), nothing where somebody did. A condemned ride's event is another, and posts nothing.
+	/// </summary>
+	[TestMethod]
+	[DataRow( 0, 100f, 70 )]
+	[DataRow( 1, 100f, 0 )]
+	[DataRow( 0, 0f, 0 )]
+	public void ABreakOfTheRideAMechanicAlreadyNamesPostsMessage70UnlessHeWasCalled( int called, float life, int message )
+	{
+		var park = Open();
+
+		try
+		{
+			TheMechanic( park ).ObjectToRepair = BellyBounce;
+			Change( park, BellyBounce, thing => thing with { RequestedService = called, RemainingLife = life } );
+
+			var messages = park.State.AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+
+			Assert.IsTrue( park.Scripts[BellyBounce].Set( ParkRideOperation.BrokenVariable, 1 ) );
+			park.People.TakeTheRidesTurns( thingTick: 10 );
+			Assert.AreEqual( message == 0 ? 0 : 1, messages.PendingCount, messages.Census() );
+			Assert.AreEqual( message != 0, messages.Census().Contains( $"slot={message}/subject=13 " ), messages.Census() );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>Two mechanics: a busy one before a free one says nothing, and two busy say message 0x45.</summary>
+	[TestMethod]
+	public void TheLookGoesOnPastABusyMechanicToAFreeOne()
+	{
+		var park = Open();
+
+		try
+		{
+			var saved = park.World.People.Single( person => person.ThingId == Mechanic );
+			var second = new Staff( 99, saved.Model, saved.Staff!.Value with { State = (int)StaffActivity.Walking }, saved.Navigator );
+			var first = TheMechanic( park );
+
+			first.ObjectToRepair = 14;
+			Assert.AreEqual( 0, ParkPeople.MessageForABreak( new[] { first, second }, Thing( park, BellyBounce ) ) );
+			Assert.AreEqual( 0, ParkPeople.MessageForABreak( new[] { second, first }, Thing( park, BellyBounce ) ) );
+			second.ObjectToRepair = 15;
+			Assert.AreEqual( 69, ParkPeople.MessageForABreak( new[] { first, second }, Thing( park, BellyBounce ) ) );
+			Assert.AreEqual( 68, ParkPeople.MessageForABreak( park.People.Staff.Where( member => member.ThingId != Mechanic ), Thing( park, BellyBounce ) ),
+				"the other four kinds are not mechanics" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
 	/// <summary>
 	/// <c>mRequestedService</c> is read from file offset 1078, the dword after the three floats; the shipped
 	/// park has no mechanic called on any of its fourteen objects. This pins the offset against the float

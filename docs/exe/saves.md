@@ -2987,7 +2987,8 @@ OpenTPW's falls.
 - The mechanic mends a broken ride ("OpenTPW's writer, the mechanic's job", Q257z). Only the console's
   `scriptvar` breaks one, the breakdown request being unbuilt (`ride-operation.md`, "The first half of the
   turn", step 3).
-- SetState's post to the event bus is counted, not built (`RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT`).
+- SetState's event is heard by the mechanics' base alone (`advisor-park.md`, "A ride broken down and no mechanic to
+  come"); its other hearers and a condemned ride's are counted (`RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT`).
 - The original's file reads `+0x48` 99.0 and `+0x44` 92.0 on the pot where OpenTPW's reads 100 and 100: the wear
   by running (`FUN_004df670`) was unbuilt then and is built since (Q303, `ride-operation.md`, "A ride's wear"). In the load above one wear, on tick 1152 with a go running, took 1.55 and 0.03 off.
 

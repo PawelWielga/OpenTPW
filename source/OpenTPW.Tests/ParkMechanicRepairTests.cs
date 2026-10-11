@@ -89,7 +89,8 @@ public class ParkMechanicRepairTests
 		=> new( new SettingsFile( new MemoryStream( Encoding.ASCII.GetBytes(
 			"GeneralAdvisor.MinScoreForConsideration 25\nMessageGroups[0].MinTimeSameMessage 120\n"
 			+ "MessageGroups[0].SayOnlyOnce 0\nParkNowOpen.Score 20\nParkNowClosed.Score 20\n"
-			+ "RidesBreakdownImminent.Score 100\nRidesBreakdownMechanicOnIt.Score 110\n" ) ) ) );
+			+ "RidesBreakdownImminent.Score 100\nRidesBreakdownNoMechanics.Score 105\n"
+			+ "RidesBreakdownBusyMechanics.Score 107\nRidesBreakdownMechanicOnIt.Score 110\n" ) ) ) );
 
 	private static int Counted( string gap ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == gap ).Times;
 

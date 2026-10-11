@@ -44,9 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q307. The writer: what else a made record leaves out.** The old Q306's other pieces, each counted or
+- [ ] **Q308. The writer: what else a made record leaves out.** The old Q307's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q307 (`advisor-park.md`, "A ride broken down and no mechanic to come"): the event's other two hearers
+  are not read or built (the kind-17 relay's `FUN_00481530`, for types 7 and 8), nor a condemned ride's event
+  (`RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT`, counted). The mechanics are looked at in the staff
+  list's order, not the chain's from `mFirstMechanic`. The original said `0x45` 43 ticks after the line before
+  it began, this game 31 sweeps: not read. Row 67 (message `0x43`) scores nought and has no constant poster:
+  not looked at further. In no game run: lines 199, 200, 202 and 203, a mechanic resting or striking, a
+  mechanic already naming the ride that breaks, two mechanics, a condemned ride, a hired mechanic after
+  "you don't have any mechanics". The hard hat and button are still not built. Not heard in either game.
   From Q306 (`advisor-park.md`, "A mechanic on his way"): response 206's own gesture row is not played
   (`ADVISOR_RESPONSE_GESTURE_ROW`, counted; no other built response names one). In no game run: lines 205 and
   206, two rides broken at once, a called ride, a post refused inside the 480 sweeps, a break with the advisor

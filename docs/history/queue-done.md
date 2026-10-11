@@ -6098,6 +6098,24 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   said 1201, line 0, said; he is up in a hard hat in `a-told.png`. Seventeen bugs put back
   (`q306/mutations.py`): seventeen fail a test, the first round's one survivor (a post stamped with tick
   nought) after a test was added.
+- [x] **Q307. The advisor is told a ride has broken down and no mechanic can come.** A piece of the old Q307
+  (the writer's leftovers), split by the session: its other pieces are Q308. Rows 68 and 69's posters were not
+  read. **Read** (`advisor-park.md`, "A ride broken down and no mechanic to come"): a break's SetState sends an
+  event of type 7 before the state is stored; the mechanics' base hears it in `FUN_004dadc0` and posts message
+  `0x44` with no mechanic in the park, `0x45` at the end of a chain of mechanics each with another job or
+  resting or striking, `0x46` for one already naming the ride uncalled, and nothing for a free one; rows 68
+  and 69 are posted only, scores `RidesBreakdownNoMechanics.Score` (105) and `BusyMechanics` (107), 255
+  copies, responses 198 to 200 and 201 to 203, samples 196 to 201, mode 2; row 67 scores nought and has no
+  poster. **Built**: `ParkAdvisorMessages.NoMechanics` and `MechanicsBusy`, `ParkPeople.MessageForABreak`;
+  `BreakDown` posts. **Run** (`q307/confirm.py`, 5 of 5, the control 1 of 1): the stock park's mechanic fired
+  and its Belly Bounce broken, `post message=68 subject=13 score=105 ... queued` on tick 876 and on 877
+  `response=198 sample=196 line=0`, the advisor up in `run-none1/2-told.png`; a bought Hot Pot broken and
+  then the Bounce, `post message=69 subject=13 score=107` on tick 924, said on 944 as `response=201
+  sample=199`, in `run-busy1/2-told-busy.png`. **The original** (`q307/orig/`, 2 of 2): given this game's
+  file of the park with no mechanic, `0x44`'s record read never said until tick 951, the tick its Bounce's
+  state read 1, then said, line 0; on its own file of a Hot Pot, its slots held `(13, 1100, -1, 0x45, 107)`
+  after the Bounce's break and `0x45` was said on tick 1870. Thirty-five bugs put back
+  (`q307/mutations.py`): thirty-five fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

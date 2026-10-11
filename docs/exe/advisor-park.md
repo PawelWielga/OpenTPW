@@ -433,7 +433,7 @@ down", "look out, she's gonna blow...", "one of your rides is about to break dow
 line after the last and starts again past the count (`0x0059a796`, `0x0059a7fa`). The three rows after it in the
 `.sam` are the same shape: `RidesBreakdownNoMechanics` 105, `BusyMechanics` 107, `MechanicOnIt` 110 at
 `0x00fb378c` to `0x00fb3794`. The last is message `0x46`'s ("A mechanic on his way", below); the first two are
-not built and their posters are not read.
+messages `0x44` and `0x45` ("A ride broken down and no mechanic to come", below).
 
 **What follows a line said.** `FUN_0059b620`, after `Advisor_SayResponse`, builds an event of type `0x18`
 (`FUN_0040f740`, vtable `0x006fd828`, whose first slot answers `0x18`) from the response's group, the record's
@@ -476,7 +476,8 @@ forced, the score the message's own; then `FUN_005194d0` and `FUN_0059a940`.
 **Its row** (`0x0076e300 + 70 x 0x38` = `0x0076f250`, `meta_full.json`): posted only, category 0, either game
 mode, score `0x0059dc90` (`MOV EAX,[ECX + 0x254]`, so `0x00fb3794`, `RidesBreakdownMechanicOnIt.Score`; the file
 sets **110**), 255 copies in the slots, first response 204, 3 lines, mode 2. Rows 67 to 69 beside it are posted
-only too, 255 copies each: 67 one line from response 197, 68 three from 198, 69 three from 201.
+only too, 255 copies each: 67 one line from response 197, 68 three from 198, 69 three from 201 (68 and 69: "A
+ride broken down and no mechanic to come", below).
 
 Responses 204, 205 and 206 (`0x0076a938`, read in the image) are samples and lip files **202, 203, 204**, model
 and bank word 0, face fields 5 and 0, group `0x48`. The gesture of 204 and 205 is -1, the random chain; **206's
@@ -505,3 +506,82 @@ ride. Main's build, off-screen, posted nothing and counted `MECHANIC_ON_HIS_WAY_
 | Response 206's own gesture row | played (`FUN_00598bf0`) | the random chain, counted `ADVISOR_RESPONSE_GESTURE_ROW` |
 | The hard hat and the button beside him | drawn | not built, not decoded |
 | Lines 205 and 206, a second ride's own slot, a called ride's silence | the listing's | built and held by the tests alone |
+
+## A ride broken down and no mechanic to come (messages `0x44` and `0x45`, Q307)
+
+**Who posts them.** Not the ride: the mechanics' base, hearing the ride's event. SetState's arm 1
+(`FUN_004e0e60`, `ride-operation.md`, "A ride broken down, in both games") builds an event of vtable
+`0x006fd7c8`, whose first slot (`0x0040f3a0`) answers **7**, with the ride's id at `+8`, and sends it
+(`FUN_0040fb10`) before the state is stored. The send is a call of `FUN_0050b550` on each subscriber of the type
+in turn, then and there. The condemned arm's event is type 8 (`0x006fd7d0`), the upgrade arm's 9 (`0x006fd7d8`).
+Three things subscribe to 7 (`FUN_0040f9e0`): the mechanics' base (`FUN_004da920`, the constructor of kind 10,
+thing 2, the thing whose `+0xc` is the search's cursor), the tag system (`FUN_00509b40`, whose hearer
+`FUN_00509bf0` only logs a type it does not know) and the kind-17 relay (`FUN_0050c9b0`, whose hearer hands 7
+and 8 to `FUN_00481530`, not read).
+
+**The base's hearer, `FUN_004dadc0`** (`FUN_0050b550`'s case 10):
+
+1. `mFirstMechanic` (world `+0x1da73e`) nought: **message `0x44`** (`0x004dae62`).
+2. Otherwise along the mechanics' chain (each one's `+0x210`):
+   - a mechanic whose `+0x218` (`mObjectToRepair`) is the ride ends the look: **message `0x46`** when the ride's
+     `+0x64` (called for, `FUN_004e03d0`) is nought (`0x004daf78`), nothing when it is set;
+   - one whose `+0x218` is nought and whose state class (`FUN_005064f0`) is neither 3 (states 2 and 3, going to
+     rest and resting) nor 4 (states 4 and 5, going on strike and on strike) is free, and ends the look with
+     nothing said (`0x004daec5`);
+   - any other (another job, or none and resting or striking) is passed.
+3. The chain's end: **message `0x45`** (`0x004daff0`).
+
+Each post is `FUN_0059b590( message, the event's thing id, [ride + 0xe], -1, 0, -1 )`, then `FUN_005194d0` and
+`FUN_0059a940`: the shape of `0x42`'s and `0x46`'s. So a break with a free mechanic says nothing at the break,
+and "a mechanic is on his way" follows from his own decide.
+
+**Their rows** (`meta_full.json`; the score functions read in the image):
+
+| | Row 68, `0x44` (`0x0076f1e0`) | Row 69, `0x45` (`0x0076f218`) |
+|---|---|---|
+| `+0x00`, `+0x08`, `+0x0c` | 1 posted only, category 0, either game mode | the same |
+| `+0x10` score | `0x0059dc70`: `MOV EAX,[ECX + 0x24c]`, `RidesBreakdownNoMechanics.Score`, **105** in the file | `0x0059dc80`: `[ECX + 0x250]`, `RidesBreakdownBusyMechanics.Score`, **107** |
+| `+0x20` copies | 255 | 255 |
+| `+0x24`, `+0x28`, `+0x2c` | first response 198, 3 lines, mode 2 | 201, 3, 2 |
+| Responses (`0x0076a878`, `0x0076a8d8`) | 198 to 200 = samples **196, 197, 198**, gesture -1, face fields 5 and 0, group 70 | 201 to 203 = samples **199, 200, 201**, gesture -1, 5 and 0, group 71 |
+| The transcripts | "a ride is broken down and you don't have any mechanics, you should hire some right away" and two more | "... has broken down and the mechanics are all busy, maybe you should hire some more" and two more |
+
+Row 67 (message `0x43`, one line, response 197, sample 193) has a score function that answers nought
+(`0x005d60c0`: `XOR EAX,EAX`), and no call of `FUN_0059b590` names `0x43` as a constant: it cannot be said.
+
+**The original** (`q307/orig/run.sh`, `advisor.py`, `object.py`, `thingwords.py` polled together; ticks alone
+are counted):
+
+- *No mechanic* (`none`: this game's own file, saved after the stock park's one mechanic was fired; the Bounce
+  broken by `scriptvar.py PID 13 4 1` 20 s in): `VAR_BREAKSTAT` written on tick 950, and on the poll of tick
+  **951** the Bounce's state read 1 and message `0x44`'s record `(951, 0, 1, 0)`: last said that tick, line 0,
+  said. `0x45` and `0x46` stayed never said. He is up in the hard hat in `none-told.png`.
+- *Every mechanic busy* (`busy`: the original's own `hotpot-later2.TPWS`, its pot, thing 43, broken 3.5 s in
+  and its Bounce six seconds on): the pot's break said nothing; on tick 1827 mechanic 26's state read `0xc`,
+  his job 43, and `0x46`'s record `(1827, 0, 1, 0)`. On the poll after the Bounce's break (tick 1853) a slot
+  held **`(13, 1100, -1, 0x45, 107)`**: the ride, its item, no line asked for, the message, the score; on tick
+  1870 `0x45`'s record read `(1870, 0, 1, 0)` and the action's duration 8331 ms. `0x44` stayed never said. He
+  mended the pot, took the Bounce on tick 1907, and `0x46` was not said again.
+
+**OpenTPW** (`ParkPeople.MessageForABreak`, called from `ParkPeople.BreakDown`; `q307/confirm.py`, 5
+predictions of 5):
+
+- `none` (the stock park, `fire 26`, `scriptvar 13 VAR_BREAKSTAT 1`): `post message=68 subject=13 score=105
+  threshold=25 tick=876 result=queued pending=1` beside the break's own line, then on tick 877 `attempt=1 ...
+  response=198 sample=196 line=0`, `playback=started`, duration 9832 ms; `advisor` read `saying sp_196.mp2` and
+  `message=68/score=105/line=0/lastTick=877`. He is up in `run-none1/2-told.png`.
+- `busy` (a Hot Pot bought and broken in its go, the Bounce broken as mechanic 26 walked to the pot): no post
+  at the pot's break; `post message=70 subject=43` on tick 912, the tick he found it; `post message=69
+  subject=13 score=107 ... tick=924 result=queued` at the Bounce's break; on tick 944, the first line over,
+  `attempt=2 ... response=201 sample=199 line=0`, duration 7331 ms, the original's 8331 less the scheduler's
+  second. He is up beside both shut rides in `run-busy1/2-told-busy.png`.
+- Main's build (`control`, off-screen): the same break with no mechanic posted nothing.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The post | from the mechanics' base, hearing the break's event, with the ride and its item | from `BreakDown`, where the event is sent; the item is not kept |
+| The order mechanics are looked at | the chain from `mFirstMechanic` | the staff list's; it decides only between a mechanic already naming the ride and a free one |
+| When it is said | `0x44` on the post's tick; `0x45` 43 ticks after the line before it began | a sweep on; 31 sweeps after the line before it began (why the original waits twelve more is not read) |
+| The event's other two hearers, and a condemned ride's event | the tag system's log, the relay's `FUN_00481530` | counted, `RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT` |
+| The hard hat and the button beside him | drawn | not built, not decoded |
+| The second and third lines of each, a mechanic resting or striking, a mechanic already naming the ride | the listing's | built and held by the tests alone |

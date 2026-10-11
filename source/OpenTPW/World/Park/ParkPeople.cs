@@ -2389,10 +2389,52 @@ public sealed partial class ParkPeople : Entity
 
 		CompleteOrTurnAway( operation, script, thing, thingTick );
 		operation.Close( script, thing.ThingId );
+
+		// The event is sent before the state is stored. A break's is heard by the mechanics' base; its other
+		// two hearers (the kind-17 relay's FUN_00481530 and the tag system) and a condemned ride's are counted.
+		if ( !condemned && MessageForABreak( _staff, thing ) is var message and not 0 )
+			State.AdvisorMessages?.Post( message, State.GameTick, thing.ThingId );
+
 		Unimplemented.Report( condemned ? "RIDE_CONDEMNED_EVENT" : "RIDE_BROKEN_DOWN_EVENT" );
 
 		if ( State.TryObject( thing.ThingId, out var shut ) )
 			State.ReplaceObject( shut with { State = state } );
+	}
+
+	/// <summary>
+	/// What the mechanics' base tells the advisor as a ride breaks down - <c>FUN_004dadc0</c>, thing kind 10's
+	/// hearer of the event of type 7 (docs/exe/advisor-park.md, "A ride broken down and no mechanic to come").
+	/// With no mechanic in the park, <see cref="ParkAdvisorMessages.NoMechanics"/>. Otherwise the mechanics
+	/// are looked at in turn: one whose job already names the ride ends the look, with
+	/// <see cref="ParkAdvisorMessages.MechanicOnHisWay"/> where nobody called him to it; one with no job who is
+	/// neither resting, on his way to rest nor striking ends it with nothing said; and with nobody left,
+	/// <see cref="ParkAdvisorMessages.MechanicsBusy"/>. Nought is no message.
+	/// <para>
+	/// The original looks along the mechanics' chain (<c>mFirstMechanic</c>, each one's <c>+0x210</c>); the order
+	/// here is the staff list's, which is the chain's only by chance. The order matters only where one mechanic
+	/// already names the ride and another is free.
+	/// </para>
+	/// </summary>
+	internal static int MessageForABreak( IEnumerable<Staff> staff, ParkWorld.CatalogueObject ride )
+	{
+		var anyMechanic = false;
+
+		foreach ( var member in staff )
+		{
+			if ( member.Model != MechanicModel )
+				continue;
+
+			anyMechanic = true;
+
+			if ( member.ObjectToRepair == ride.ThingId )
+				return ride.RequestedService == 0 ? ParkAdvisorMessages.MechanicOnHisWay : 0;
+
+			if ( member.ObjectToRepair == 0 && member.Activity is not (StaffActivity.GoingToRest
+				or StaffActivity.Resting or StaffActivity.GoingOnStrike or StaffActivity.OnStrike) )
+				return 0;
+		}
+
+		return anyMechanic ? ParkAdvisorMessages.MechanicsBusy : ParkAdvisorMessages.NoMechanics;
 	}
 
 	/// <summary>
