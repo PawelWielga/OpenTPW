@@ -307,7 +307,7 @@ What each shows, from its own decoded labels:
 - **loans** — "Available Loans": Lender Name / Amount / Interest Rate / Monthly Repayment.
 - **staffcosts** — "Staff Training Budgets": Cash in / − Staff costs / − Other costs / − Loan
   payments / Balance.
-- **entryprice** — one "Ticket Price" row. It writes the park object's `+0x118` through
+- **entryprice** — one "Ticket Price" row. It writes the bank's `+0x118` (the thing `FUN_005195d0` answers, not the park object) through
   `FUN_004d05d0`, whose format string reads *"Admission fee set to %d"*. The setter does that and no more
   (`0x004d05e8`); the fee's two readers each take `+0x118` as they run, a guest's judgement (`FUN_004ff5b0`,
   `0x004ff602`, logged as *"GP: %d, AF: %d"*) and the charge (`FUN_004d0600`, `0x004d0609`), so a new price is the
@@ -415,7 +415,7 @@ behaviour.
 
 **Four are built and five are blocked on simulation this project does not have.** Built: **entryprice**,
 **allpeeps**, **allstaff** and **allitems**. Blocked: **loans** (taking and repaying a loan: `ParkWorld.EconomyState.Loans` reads the save's `mLoans[]`
-records, and nothing in the game reads them), **financeinfo** (the
+records, `ParkState` keeps them and the month's change pays the bought ones' instalments (`TurnTheMonth`); taking one is not built), **financeinfo** (the
 money-in/out split and the graph history), **staffcosts** (training budgets, other costs, loan payments) and
 **parkstatus** (Top 3 Thoughts, arrival rate, park rating, multi-year history), each counted when opened
 (`LOANS_SCREEN`, `FINANCE_SCREEN`, `STAFF_COSTS_SCREEN`, `PARK_STATUS_SCREEN`), and **research** (`mResearchDone`,
@@ -1126,7 +1126,7 @@ slot and colour handed over, and the help row at `+0x90`. Both openers hand font
 | | 1 | 1458, 317, 1664, 422 | 124 "Price" | 145 | number |
 | | 2 | 1669, 317, 1729, 422 | 138 "." | 146 | number, the tick's state |
 
-The types are `FUN_006636b2`'s (hire `0x0049c0cf`, buy `0x004ad033`); the visitors list leaves all six columns
+The types are `FUN_006636b2`'s (hire from `0x0049c0bf`, buy from `0x004ad027`); the visitors list leaves all six columns
 numbers. The buy list sorts on the text its row shows, so a mystery ride's "??? Mystery Ride! ???" stands first, and
 the two land rows are sorted in with the rest (`FUN_004aaf70` adds them through the same insert, Buy Land priced at
 `[0x0078560c]`).

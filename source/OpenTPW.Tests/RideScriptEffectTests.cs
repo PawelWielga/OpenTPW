@@ -313,7 +313,7 @@ public class RideScriptEffectTests
 
 	/// <summary>
 	/// <b>A load puts the file's list back the other way round</b>: the reader links each record in at the head as it
-	/// reads it (<c>0x00559fd9</c>), so the file's first is the list's last, and a save writes from the head. Each
+	/// reads it (<c>0x00559fca</c>), so the file's first is the list's last, and a save writes from the head. Each
 	/// keeps the handle its file held; one started since holds nought, where nothing here spawns one.
 	/// </summary>
 	[TestMethod]

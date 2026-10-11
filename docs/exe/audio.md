@@ -141,7 +141,7 @@ and keeps a range that is not nought at the voice's `+0x40`:
 |---|---|---|
 | `0x8` | `0x6` | Bit `0x4`: the voice's channel is given 9999 (`FUN_006c5110`, `0x006bc410`'s end), its loop count. Measured: global ambient 8's voice held its channel through 14 s on a 1.8 s sample |
 | `0x4` | `0x2` | |
-| `0x200` | `0x8` | No range and no place: the service never silences it, and its channel is put at (0, 1, 0) with position request bit `0x1` (`FUN_006bb220`) |
+| `0x200` | `0x8` | No range and no place: the service never silences it, and its place is written as the whole words 0, 1, 0 (`0x006bc51d`, `FUN_006bb220`; the slots are floats, so its y is the bit pattern 1, 1.4e-45, and not 1.0), with bit `0x1` at `params + 0xc`; it reaches `QSWaveMixSetPosition` (`0x006d272b`), where a placed voice, with bit `0x20` there, reaches `QSWaveMixSetSourcePosition` |
 | `0x20` | `0x200` | |
 | `0x4000` | `0x20000` | |
 | a range given | `0x80` | The range at `+0x40` is the voice's own |
@@ -289,7 +289,7 @@ Read for Q267 and held against the running original's channels (`q265/orig/a-loa
 **A voice's loudness is its variation's volume and nothing else of the play.** The channel's set-up
 `FUN_006c5690` sends a volume when the request mask has bit `0x2`: it copies `params + 0x28` to the channel
 record's `+0x18`, scales it (`FUN_006bb860`) and hands the whole number to the wrapper's slot `+0x80`.
-`params + 0x28` and the bit are written by `FUN_006c5130`, and the voice's apply (`0x006bbbe0`) gives it
+`params + 0x28` and the bit are written by `FUN_006c5130`, and the voice's channel set-up (`0x006bc461`; under voice flag `0x8000` the word at the voice's `+0x48` instead, which `FUN_006bc900` stores for a voice with no channel, reached only from `FUN_0051c0e0`, whose three callers are the advisor's two stops) and its apply (`0x006bbbe0`, skipped under voice flag `0x400`) give it
 `FUN_006bc090`'s answer: the variation's two volume bytes (`+0xc`, `+0xd`), by a controller of the variation's
 own or else a draw between them ("A voice's two controllers", below); 100 for a voice with no variation.
 
@@ -443,7 +443,7 @@ ticks over a 447 ms sample.
 
 **The controllers** (`[voice+0x4c]`, eight bytes, `FUN_006b7150`): four keys then four values. Key 0 is the effect
 record's `+0x12`; keys 1 and 2 are the variation header's bytes `+0x16` and `+0x1a` (`FUN_006bbf00`); key 3 is 0.
-`FUN_0051bc40( voice, id, level )` goes to the voice's vtable `+0x28` (`0x006bbb80`): every slot whose key is `id`'s
+`FUN_0051bc40( voice, id, level )` goes to the voice's vtable `+0x28` (`0x006bbb80`; the held chain's `0x006bda90` and class `0x0070a498`'s `0x006be580` call it first): every slot whose key is `id`'s
 low byte takes `level`'s low byte, and a match past slot 0, unless the voice holds `0x4000`, applies them
 (`0x006bbbe0`). Slot 0 is the held chains' zone parameter (above).
 
@@ -609,7 +609,7 @@ That last one is why the flag is better read as **"the world is not being heard 
 
 **How much a sound is turned down by that lift is undetermined.** The lift decides **which** sounds a pause takes, not **how much** — and only the *which* is recoverable from this executable: a listener cannot reach a sound that was never placed against it. Any sentence of the form "every placed sound attenuates to nothing" is **unsupported**; see the Unknowns below for exactly where the missing model lives.
 
-There is also a genuine **2D path**, so "a 2D sound is just one played at (0,0,0)" is true of `Sound_PlayEffect`'s shape but misleading about the engine: wrapper slot `+0x74` (`0x006d2640`) takes a flag — non-zero calls `QSWaveMixSetSourcePosition` (listener-relative), zero calls `QSWaveMixSetPosition` (**listener-independent**). The choice is made per voice at one place, `FUN_006b7fa0`, from **bit `0x20` of `params+0xc`**, and **no writer of that bit was found**. So whether the original's music and UI were registered 2D — immune to the lift — or 3D at the origin is **not established in either direction**.
+There is also a genuine **2D path**, so "a 2D sound is just one played at (0,0,0)" is true of `Sound_PlayEffect`'s shape but misleading about the engine: wrapper slot `+0x74` (`0x006d2640`) takes a flag — non-zero calls `QSWaveMixSetSourcePosition` (listener-relative), zero calls `QSWaveMixSetPosition` (**listener-independent**). The choice is made per voice at one place, `FUN_006b7fa0`, from **bit `0x20` of `params+0xc`**, which `FUN_006bc410` sets for a placed voice (`0x006bc5d7`) and leaves clear for a voice with flag `0x8`, which is given bit `0x1` instead (`0x006bc52d`). Whether the original's music and UI were registered 2D — immune to the lift — or 3D at the origin turns on whether their effect records hold `0x200`, and is **not established here in either direction**.
 
 OpenTPW reproduces the *which* and chooses the *how much*: see `Audio.HoldPlaced`.
 

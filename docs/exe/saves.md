@@ -259,8 +259,8 @@ string at `0x00752588`, stored at the box's `+0x144`). Then it turns the keyboar
 **The name box.** A character typed with nothing selected is inserted only while the text is shorter than the
 room `FUN_006662b7` gave (`0x006679dc`, the box's `+0x13c`, 15), and not at all when it is in the refused list
 (`0x006678ca`, `+0x144`); Enter, Tab, Backspace and Escape are not characters (`0x0066786a`). The box's setter
-(`FUN_00666308`, vtable `+0x24`) copies at most that many characters and ends in `FUN_006668e9( -5, 0, -1 )`,
-where the select-all `FUN_006677ae` ends in `( -5, 1, -1 )`: text put in by the setter is not selected, and the
+(`FUN_00666308`, which vtable `+0x24`, `FUN_006664fa`, calls with the text and a 1) copies at most that many characters and ends in `FUN_006668e9( -5, 0, -1 )`,
+whose third argument, the selection's other end, is -1 (`0x00666d5c`), where the select-all `FUN_006677ae` calls `FUN_0066778d( 0, length )`, which is `( 0, 1, length )` (it calls `( -5, 1, -1 )` instead only when the box's `+0x162` is set, which the constructor does from `[0x00faa56c]`): text put in by the setter is not selected, and the
 caret stands at its end. The opening's "New Save" is selected because the opener gives the box the focus after
 setting it (`FUN_0065e59b`, `0x0049f3a6`).
 
@@ -289,7 +289,7 @@ written on 8 October.
 | `0x400`, a click on a row | load that entry (`FUN_005ac5d0`), then close | put that entry's name in the box (its vtable `+0x24`) |
 | `0x802`, `0x804`, Enter and Escape in the name box (`lobby.md`) | | posts `0x100` with -1, with -2 |
 | 5, "close yourself" (`FUN_00485b40` sends it) | close, answer 1 | close, answer 1 |
-| `0x14`, the window going | window pointer nought, `FUN_004862a0`, `g_ParkRunning` 1, `FUN_00409300` | the same, after `FUN_00486b60` |
+| `0x14`, the window going | window pointer nought, `FUN_004862a0`, `g_ParkRunning` 1, `FUN_00409300` | the same, with `FUN_00486b60` straight after the window pointer is noughted |
 
 Enter and Escape reach the handler as `0x802` and `0x804` and it posts itself the button's message
 (`FUN_00658ccc`, `0x0049ec4d`), which `UI_MessageHook_ClickSound` clicks for like any `0x100`.
@@ -315,7 +315,7 @@ match it saves (`FUN_0049e9b0`). With one it opens a message box, UITEXT 205 han
    before the park file is opened. Under Proton `gms.dat` was written 28 ms before the park file, its bytes unchanged.
 2. **The path** is `FUN_005c8890`'s folder, `\` (`0x00f7b888`), the name, the extension.
 3. **`FUN_00414920( path, 0, 2 )`** on the object at `0x0078a450`, whose `+4` takes a failure's number: 1 the file
-   would not open, 2 no memory, 3 a write failed, 5 a module failed. A failure deletes the file (`FUN_005f5d60`).
+   would not open, 2 no memory, 3 a write failed, 5 a module failed. A failure deletes the file (`FUN_005f5d60`), three apart: the first open failing (`0x0041497b`), the memory file not made (`0x00414a69`), and the deflated block's write coming up short (`0x00414c37`), which closes the file and leaves it.
    Nothing was found that shows the number to the player.
 
 `FUN_00414920`'s third argument is the mode, which must not be nought; 1 writes the action recording alone (the
@@ -331,7 +331,7 @@ author header, nought for none.
   bytes from `0x00802080` at their head; the magic `0x01221985` through `htonl`; the flag dword, nought here. With
   the flag set the author header follows (`FUN_00418da0`).
 - The file is closed. **The body** is written to a memory file (`FUN_005f72c0`, `0x200` to begin with) by
-  `FUN_004164c0`, after `FUN_00402e60` stamps two clock readings into the saver.
+  `FUN_004164c0`, after `FUN_00402e60` stamps two clock readings into the game clock (`0x00785970`, at `+0x4c` and `+0x74`).
 - **The body is deflated** (`FUN_005f8050`, the compressor's vtable `0x00703128`, slot 1, the code at
   `0x00619280`): `deflateInit2_( strm, -1, 8, 15, 9, 0, "1.1.3", 0x38 )` and one `deflate( Z_FINISH )` into a
   buffer as large as the body, behind a 28-byte header: `BILZ`, the body's length, the stream's length plus 28,
@@ -359,12 +359,12 @@ compressed bytes.
 
 `FUN_005ac650` builds the same path and calls `FUN_00414d40( path, 0, 2 )`: the version (above 500 is refused in
 mode 2, failure 9), the preamble (`FUN_00416240`, failure 7), the rest of the file read whole and inflated
-(`FUN_005f8120` for the size, `FUN_005f8100`; failures 4 and 6). Then, in any mode but 1, **the running park is
+(`FUN_005f8120` for the size, `FUN_005f8100`; failures 4 and 6). Mode 0 answers 1 there, after the preamble alone (`0x00414e9f`). Then, in any mode but 1, **the running park is
 taken down where it stands** - `FUN_00457e10`, `FUN_004d8330`, `FUN_0052f8d0( 0x80, 0x80 )`, `FUN_005191e0`,
 `FUN_00515fb0`, `FUN_00515f30`, `FUN_0042a190`, `FUN_005445d0`, `FUN_00437150`, `FUN_005584b0`,
 `Advisor_StopQuietly( 0 )`, `FUN_004815d0` - the modules are read over it (`FUN_00415270`, "Loading the modules"
 above), and `FUN_00415140` puts it back together (its calls run from `FUN_005508c0` to `FUN_0051c1c0( 0 )`, with
-the loaded fonts dropped on the way; none is decoded here). A module that fails leaves "Loading failed. System state now undefined" in the log and
+the loaded fonts dropped on the way; none is decoded here). A module that fails leaves "Loading failed.  System state now (possibly) inconsistent." in the log and
 failure 6. There is no loading screen and no change of scene: under Proton the park was back four seconds after
 the click, its date gone from 2.9.2000 to the save's 2.7.2000.
 
@@ -525,7 +525,7 @@ file was changed for 8.11.2000. The clock module was left as saved under a tick 
 `FUN_00516c80( stream )`, on the world:
 
 1. **The pointer mode is put back to the default first**: a new mode object of vtable `0x006fea10` is installed
-   through `FUN_0046c350`, which calls the vtable `+0x2c` of the mode in force and deletes it. A saved park never
+   through `FUN_0046c350`, which calls the vtable `+0x2c` of the mode in force and deletes it (in game type 1 the setter deletes the new object too and installs one of vtable `0x006fe980`, `0x0046c3c0` to `0x0046c426`). A saved park never
    holds a tool or a thing in the hand.
 2. `version`, the dword 2, then the other 25 header fields in the file's order, each from its own place in the
    world (`+0x1da708` to `+0x1da746`; the FileFormats table). Logged as "World vars".
@@ -565,7 +565,7 @@ FileFormats page takes from the readers holds for the writer.
 **The reader makes every thing again.** For each record it allocates the model's object, runs its constructor and
 then the serialiser, and hangs it on the node `0x007cfb90 + id × 20`; after the last it rebuilds the free list
 from every node with no thing, in rising id (10,239 ids). So a file may use any ids it likes, a thing's id is
-its place in no array, and nothing of a thing but what its serialiser writes survives a save. Then it calls
+the index of its node in that table (read with no bound checked) and its place in no other array, and nothing of a thing but what its serialiser writes survives a save. Then it calls
 `FUN_005408f0` when `mWorldState` is 4 and `FUN_005408e0` otherwise (not decoded).
 
 ### What ties the modules together
@@ -771,7 +771,7 @@ writes both back; the console's `staff` prints it. Nothing here shows the days e
 `FUN_00540c60( bank, n )` answers the byte at the bank object's `+0x222 + 4 × n`. `SpriteBank_Load` reads the sixteen
 sets of the `.esp` (file `0x10E`, four bytes a set) to `+0x220`: the first picture's word, **the frames a direction at
 `+0x222`** and the directions flag at `+0x223` (`0x00540ee3`..`0x00540f1d`), which is how `Sprites_LookUp` uses them
-(`0x005423f0`). The byte is written to a sprite's `+0xbc` in three places and no other:
+(`0x005423f0`). The byte is stored to a sprite's `+0xbc` on its own in three places; the whole-record copy `FUN_00475cf0` (`0x00475d40`, `0x118` bytes of another sprite) and the reader `FUN_00475730` carry it with the rest of the record:
 
 | Where | With |
 |---|---|
@@ -820,7 +820,8 @@ follow the list. It runs last, because it alone changes the body's length.
 - **The staff lists** are written from the list's order, as the files' run.
 - **The sprite table.** A kept person keeps their slot; a made one takes the lowest empty, and the table grows
   by fifty when it is full; a gone one's is emptied. A made record is the constructor's (`FUN_004758f0`): its
-  slot, state 1, the timer `0x14`, alpha 255, scale 1, the program and the place, and nought in `+0x7c`, a time
+  slot, state 1, an empty loop stack (`+0x1c` 20), alpha 255, scale 1, the program and the place, and nought in `+0x7c`, where the
+  constructor stores its clock plus the interval `0x3e` (`0x004759df`): a time
   already past. A live slot's handle is the slot's own number, which the reader only tests against nought.
   **`+0xbc` is the frames a direction of the set the sprite was made on** ("A sprite's `+0xbc`", below): a made
   person's is their bank's set 0's, and a state's animation started since writes its own set's over a made
@@ -1194,7 +1195,7 @@ built again from the back of the file forwards and the world goes out with the p
 and the object constructor `FUN_004db090` was read beside the two files.
 
 - **The object.** The constructor joins set `0xb` (`FUN_0040f9e0`), writes `mTopLeft`, the entry and the exit as
-  the anchor cell plus a pair of the item's description each, turned by the angle, and the three floats `+0x44`,
+  the anchor cell plus a pair of the item's description each, the entry's and the exit's turned by the angle and `mTopLeft`'s by the angle and a half turn more (`0x004db2da`), and the three floats `+0x44`,
   `+0x48` and `+0x4c` as 100.0; builds `mFlags` from the description; sets `mState` nought for a thing a guest may
   be offered and 3 for any other (`0x004db4fb`, `FUN_004e0e60`); pushes the item's starting speed into the script
   and keeps it; stamps the date from the park's calendar; adds one to its item's object control and stamps the
@@ -1207,7 +1208,7 @@ and the object constructor `FUN_004db090` was read beside the two files.
   and corner").
 - **The name** is two rows of the running language's `OBJECT_NAMES.str`. `FUN_004147f0` and `FUN_00414870` walk a
   table in the executable, twelve bytes an item (`0x007488d8`: the item's id, the first line's row, the second's),
-  281 items; a ride's name is two rows and any other's one, its second the empty row 1. Each line is copied to 32
+  281 items; a ride's name is two rows, and so are twelve other items' (three a theme: Lost Kingdom's 1431, 1432 and 1601); every other's is one, its second the empty row 1. Each line is copied to 32
   characters. The fresh record's bytes past each terminator are unwritten memory.
 - **The cells.** All sixteen cells of the ape's footprint hold type 4 (9 on the entrance, 10 on the exit), the
   anchor's packed id as their parent and tile `(0, 8, 0)`; only the anchor names the thing in `mWho`. The sale
@@ -1490,19 +1491,19 @@ is laid over the fresh node's: the reader clears the eleven bits below on the no
 
 | File | Node | What sets it |
 |---|---|---|
-| `0x1` | `0x10` | hidden. A clip's hide list, as the clip is bound (`FUN_00472d70`), on a node without `0x80000000`; taken off again, for the hide list and the tracks of the clip a channel last ran, by `FUN_004726d0`, which then binds every running channel's clip again (its callers were not read) |
+| `0x1` | `0x10` | hidden. A clip's hide list, as the clip is bound (`FUN_00472d70`), on a node without `0x80000000`; taken off again, for the hide list and the tracks of the clip a channel last ran, by `FUN_004726d0`, which then binds every running channel's clip again; where the model's own `+4` holds `0x8` it first takes the bit off every node, a `0x80000000` one too (`0x00472763`). Its one caller is `FUN_0044e380` |
 | `0x2` | `0x20` | every child of the node is a childless transform-only node: the item loader's closing loop over the nodes (`FUN_004629d0`, `0x00462fbc`), which walks the child chain and tests each child's file flag `0x200` and its own first child. The Crazy Ape's two arms, which hold only head and nose markers |
 | `0x4` | `0x8000` | not looked for; in no record of 7,688 |
-| `0x8` | `0x10000` | the mesh was morphed and its face normals are stale: set by the morph (`FUN_00471860`, `FUN_004714a0`), cleared by `FUN_00473a40`, which works the normals out again, from the pose walk (`0x0044afd8`, for a node with `0x10000000`) and `FUN_00473c30` |
+| `0x8` | `0x10000` | the mesh was morphed and its face normals are stale: set by the morph (`FUN_00471860`, `FUN_004714a0`), cleared by `FUN_00473a40`, which works the normals out again, from the pose walk (`0x0044afd8`, for a node with `0x10000000`), from `FUN_00473c30` and from the model's advance `FUN_00473c70` (`0x00473ddf`, for a model whose mesh data's `+0x30` holds `0x4`) |
 | `0x20` | `0x40000` | a clip bound to a channel has a track for the node (`FUN_00472d70`) |
-| `0x40` | `0x80000` | the md2 loader with its flag `0x20` (`FUN_00461f10`, `0x004625c5`, on the node at mesh `+0x78`) and two more writers (`FUN_00461ed0`, `FUN_00424ef0` at `0x00425253`, its test not read), each an `OR` of `0x80800`; 62 words of seven items hold it, none of them an item a player buys, and the first node of every track car's model and of its wake's (24 of 24, Q257r; which of the three writes it there was not traced) |
+| `0x40` | `0x80000` | the md2 loader with its flag `0x20` (`FUN_00461f10`, `0x004625c5`, on the node at `+0x78` of the mesh's data, the mesh's `+4`) and two more writers (`FUN_00461ed0`, `FUN_00424ef0` at `0x00425253`, its test not read), each an `OR` of `0x80800`; 62 words of seven items hold it, none of them an item a player buys, and the first node of every track car's model and of its wake's (24 of 24, Q257r; which of the three writes it there was not traced) |
 | `0x80` | `0x200000` | that track's flags hold `0x1000`, a morph |
 | `0x100` | `0x400000` | that track's flags hold `0x10000` |
 | `0x800` | `0x100000` | that track's flags hold any of `0x289` |
 | `0x200` | `0x20000000` | the node's lookup record has a position, its file flags meeting `0x30`: the md2 loader's pass over the lookup records (`FUN_0044a870`, `0x0044a90c`), which sets the record's `0x1` and its handle `-1` in the same breath |
 | `0x400` | `0x80000000` | the node is transform-only, its file flags holding `0x200`: the same closing loop (`0x00462f47`), one `OR` of `0x80000010`, so such a node is hidden as it is marked. A hide list spares a node with it; a visibility track does not (`FUN_00471860` tests no such bit). The head pass (`FUN_0044ba60`) writes the same on each head record's node |
 
-`FUN_00472d70( clip, model )` runs as a clip is started on a channel without the caller's flag `0x8`
+`FUN_00472d70( clip, mesh )` (the model's `+8`) runs as a clip is started on a channel without the caller's flag `0x8`
 (`FUN_00472f60`, `0x00473117`) and from `FUN_004726d0`. **A load does not run it**: the
 reader puts each channel back and calls only `FUN_00472cb0`, the clip's length and frame, so after a load the node
 words are what say which nodes the running clips move, until a clip is next started.
@@ -1517,10 +1518,10 @@ them. The rule itself is the next section but one, "The rule for a record's two 
 
 **A head on a node is a sprite of its own, and the lookup record holds its slot.** A model's lookup state is
 `{ flags, records, count }` at `+0x28` of the model's mesh (the model's `+8`), a record twenty bytes: its flags, and at `+0xc` what is
-attached. `FUN_0044b410( model, record, visitor )` sets `0x4` in the shared flags, counts one more attached, sets
+attached. `FUN_0044b410( mesh, record, visitor )` sets `0x4` in the shared flags, counts one more attached, sets
 `0x2` in the record, and stores the handle `FUN_00475a10( 0x0074f558, kind, bank )` answers: a world sprite in the
 first free slot of the sprite table from 1, kind 1 with the rider's child for its bank or kind 3 with their
-costume (`FUN_004fcac0`), or bank 0 where no visitor is given. `FUN_0044b4c0( model, record )` counts one fewer,
+costume (`FUN_004fcac0`), or bank 0 where no visitor is given. `FUN_0044b4c0( mesh, record )` counts one fewer,
 clears the shared `0x4` when none is left, clears the record's `0x2`, frees the sprite (`FUN_00475550`) and stores
 `-1`. The writer puts each record's flags and handle in the file and the reader puts both back, with the shared
 flags and the count; the sprite itself comes back with the sprite table. **That is what hangs a head again after a
@@ -1554,8 +1555,8 @@ record has a position, `0x2` where its children are all childless transform-only
 **A clip bound** to a channel (`FUN_00472d70`, a start without the caller's `0x8`) marks each track's node `0x20`,
 with `0x80`, `0x100` and `0x800` by the track's flags, and hides each node of its hide list but a transform-only
 one. **The next clip started on the channel** first takes the last one's marks off (`FUN_00472310`, the clip kept
-at the channel's `+0x34`): the track bits of its tracks' nodes, and the hidden bit of its tracks' and its list's
-nodes, a transform-only node's apart. **A clip that ends** takes nothing off: a thing whose model has clips in
+in the model's table at the channel's role and number, `+0x4` and `+0x8` (`0x00473051`; the channel's `+0x34`, the clip last posed, is read by `FUN_004726d0` alone), and only where the channel is not on role 12 and the caller's flags miss `0xc`): the track bits of its tracks' nodes (`0xf40000`, or `0x800000` alone where the mesh data's `+0x30` holds `0x4`), and the hidden bit of its tracks' and its list's
+nodes, a transform-only node's apart. **A clip that ends** takes nothing off, but on a model with flag `0x8`, whose channel goes to role 12 with no caller's flag and so has the clip's marks taken off (`0x00473783`): a thing whose model has clips in
 role 0 only (model flag `0x10`, `FUN_00473e30`) parks its channel on role 12 with flag `0x20` and keeps the build
 clip's marks for good, which is the Staff Room's `0xa2` on an idle channel; a held channel keeps them too. **A
 visibility track** hides and shows its node as the clip is posed, a transform-only node among them, and what it
@@ -1563,7 +1564,7 @@ left stands after its clip is replaced (the Crazy Ape's `Dummy01`, the parent of
 clip and reads `0x420`, then `0xc20` under the ride clip, in every record).
 
 Against the 870 records, bit `0x8` apart: 836 read exactly as a model made, each channel's clip bound (an idle
-channel's taken as its build clip) and its visibility tracks laid over at the saved frame. The other 34: 30 are a
+channel's taken as its build clip) and its visibility tracks laid over at the saved frame. The other 34: 28 are a
 transform-only node a visibility track of some earlier clip left shown or hidden (the Security Camera's, the
 Aztec Mayhem's heads, the ferry's), which the saved channels do not name; 4 are a running clip whose tracks are
 not marked (the Rocky Racers' `pp_dum`, the TV simulator's `seats`, in two saves of one park), and 2 a shop's
@@ -1572,7 +1573,7 @@ argument is set (`FUN_004735d0`; otherwise it passes `0x8` and nothing is taken 
 exactly those; what the argument is was not traced.
 
 **A lookup record's pair on a model with nothing attached**, 870 of 870: flags `0x1` its file flags meet `0x30`,
-`0x8` they meet `0x580f00` or its item sets `DoHeadProcessing`, `0x10` its node's file flags hold `0x400`, `0x20`
+`0x8` they meet `0x580f00` or its item sets `DoHeadProcessing`, `0x10` it has a position and its node's file flags hold `0x400` (`FUN_0044a870`, `0x0044a924`, inside the `0x30` branch), `0x20`
 its node has no child (`FUN_0044aa10`, `0x0044aaa5`); the handle `-1` with a position and nought without. **The
 shared flags**: `0x1` some record has a position, `0x8` some record's file flags hold `0x2`, and `0x2` where the
 item's model was loaded with the head pass (`FUN_0044ba60`, from `FUN_004629d0` on its `param_5 & 0x80`) and a
@@ -1596,7 +1597,7 @@ file's own words and each channel's clip as a load ends (`ParkRides.Restore`, th
 lookup records are left the file's.
 
 **Deviations, each said at its site.** Bit `0x8` is never set, and a file's is kept. A clip promoted from the
-queue is bound whether or not its model is in view. Where a channel the file
+queue is bound whether or not its model is in view. As a clip is started the other channels' clips mark their nodes again, which `FUN_00472f60` does not do (a track bit two channels' clips share goes with the outgoing clip there). Where a channel the file
 had idle is started, its unnamed last clip's marks cannot be told from another idle channel's, and all go. A
 thing bought whose model will not read declares no tables (`SAVE_PARK_MADE_MODEL_TABLES`, counted), and so no
 head.
@@ -1623,7 +1624,7 @@ Built on 2026-10-09 (Q257d). The bytes are the FileFormats `saves.md`'s ("A head
 
 **A head's sprite is made on program word 1704 and rests on 1698.** `FUN_0044b410` hands `FUN_00475a10` the
 program at `0x0074f558`, and the constructor `FUN_004758f0` stores `(program - 0x0074dab8) / 4` at the record's
-`+0x08` and `+0x0c`: 1704, which `+0x0c` keeps for good. It is made with no place, set or frame (the five noughts
+`+0x08` and `+0x0c`: 1704, which `+0x0c` keeps for good. It is made with no place, set or frame (the four noughts
 of the call), state 1, the stack's room 20. Every one of the 122 heads in the files to hand has run its first
 turn since and reads alike: `+0x08` 1698, `+0x10` 1696, state 2, room 19 with word 1714 in the stack's first
 place, `+0x74` 1 (the loop count beside it, `+0x78`, is nought: the word pushed is no loop's start), `+0xbc` 8,
@@ -1634,7 +1635,7 @@ with no table (a car's, the Aztec Mayhem's); the rest are what the record keeps 
 pointers of the run (`q257d/census.py`).
 
 **The kind and the bank are the rider's** (`FUN_004fcac0`): kind 3 on the rider's bank where their `mESPSprite`
-is 2, a costume, else kind 1 on their `mSpriteID`.
+is 2, a costume, else kind 1 on their `mSpriteID`; where no bank of kind 3 is loaded (`FUN_00541f60( 3 )` nought) it is kind 1 on a bank rolled afresh from the rider's own word (`0x004fcae5`, `FUN_00541f70( 1 )`).
 
 **What is written** (`ParkRides.WrittenHeads`, `ParkFileWriter.PlanHeads`, `ParkThingStates.Put`,
 `ParkWorld.PutPeople`). For a script with a head table, each head hung is found on its node's lookup record,
@@ -1840,7 +1841,7 @@ end there.** It is not the caller's `0x8` (do not apply the hide list): the star
 caller's `0x1` and, as `0x20`, its `0x4`, and never its `0x8`. The advance `FUN_004735d0` sets the bit as a
 channel on role 0 is found past its clip's end (`0x00473754`: `CMP EBP,ECX`, the role against nought, then
 `OR EBX,0x8`), before it deals with the ending, so the hold or the loop that follows keeps it. Every advance of a
-channel on any other role takes it off (`0x004738b2`) and sets `0x40000000` in the model's flag word (`+4`);
+channel on any other role that still holds it takes it off (`0x004738b2`) and, only then, sets `0x40000000` in the model's flag word (`+4`);
 the stall of a model with `0x10` takes it off too (`0x004737f3`). An idle channel is not advanced, so one stopped
 from outside keeps it. The model's advance `FUN_00473c70` answers `0x40000000` once: every node holding `0x100`
 loses `0x800`, `DAT_008bd508` gains `0x80000000` if any did, and the bit is cleared (`0x00473d3c`). What those
@@ -1998,7 +1999,7 @@ Q257i, split by the session: the item's other pieces are Q257n. **A script's obj
   count `DAT_008791b4` taken down, the tag never written. So no record a file holds has a handle of nought: 140
   of 140.
 - **The writer** `FUN_00559350` writes, after the guard `OBJ `, the count, 28, and each record raw from the head:
-  the newest first. **The reader** `FUN_005597a0` links each record in at the head as it reads it (`0x00559fd9`),
+  the newest first. **The reader** `FUN_005597a0` links each record in at the head as it reads it (`0x00559fca`),
   so a loaded list stands the other way round from its file, and a list saved, loaded and saved again turns
   round each time. It starts nothing: the record keeps the handle its file held, and the particle it names is the
   `PART` module's to bring back.
@@ -2006,7 +2007,7 @@ Q257i, split by the session: the item's other pieces are Q257n. **A script's obj
   the three files the original wrote from it; a particle's is its slot below and a count above, and
   `FUN_0051ff70` acts on one only where the slot's own count matches, and never on nought.
 - **Each sweep the engine walks every list** (`FUN_005516b0`, `0x0055188f`) and, for a record with a node, puts
-  its particle or sound where lookup record `+0x14` stands. A record with no node is passed over.
+  its particle where lookup record `+0x14` stands, and its sound there only on the sweeps where the script's id `+0x8` and the tick `DAT_008791a4` agree in their low three bits (`0x00551a1c`), one in eight. A record with no node is passed over.
 
 **Measured on the thirteen files** (`q257i/objs.py`, `objs.out`; `q257i/census`, the prediction written first):
 140 records in 100 of 440 scripts, types 1, 2, 3, 4, 5, 7 and 8; 79 with no node, each holding -1 for its
@@ -2219,7 +2220,7 @@ where `+0x7c` is -1), **each followed by a type 9 for every node of its rider li
 peep, the seat id `+0xc`); **a type 7 for every node of the leaving list `+0xc8`** and **a type 8 for every node
 of the boarding list `+0xc4`** (the handle and the peep); and **the close** (type 6: the handle).
 
-**The loader `FUN_00543560`** lays a ride with `Bumper_LayRide( 0, x, z, orientation, handle )`, which takes the
+**The loader `FUN_00543560`** lays a ride with `Bumper_LayRide( 0, x, z, orientation, handle, item )`, which takes the
 slot the handle names and fills it from the BumperType's template; then `Bumper_SetPerformance`, the two mesh
 words, the duration ("Set Ride Duration to %d") and the state. A car is read over a fresh pool car: `+0x94`
 and the rider list are cleared, `+0x9c` is the record, the record's car count goes up, its collision object
@@ -2425,7 +2426,7 @@ boat afterwards:
 | `+0x68` | the thrust bonus (`park.md`, "How a bumper ride's cars move") | the karts' and the water ride's arms | nought |
 | `+0x84` | nothing: no instruction of `0x00543000`..`0x0054c000` reads or writes a register's `+0x84` | the launch's zeroing | nought |
 | `+0xa0` | a float, the height the car was last drawn at | the draw, every frame, each car of the ride drawn (`0x00546969`) | the pot's water, about 29.80, plus its bob |
-| `+0xa4` | the stuck count (`park.md`, "Kept in the pot") | the launch (nought), then `Bumper_Retarget`'s bumper arm on every call (`0x0054a246`) | -1 |
+| `+0xa4` | the stuck count (`park.md`, "Kept in the pot") | the launch (nought), then the placement, `Bumper_Retarget`'s bumper arm for a car still flagged `0x100000` (`0x0054a246`) | -1 |
 | `+0xa8` | the ticks counted while the stuck count is over nought (`TrackRides_Tick`, `0x00547047`) | the launch | nought |
 
 **The height `+0xa0`.** The draw takes the scene's height under each of the car's four corners; a corner the
@@ -2709,7 +2710,7 @@ is written with its emitter, aimed**: the Jungle Spray's jet while it runs.
 **What a directed start does** (`FUN_005573d0`'s case 2, `0x005574bb`; `Particles_SpawnFull`, `0x00521930`,
 read whole). `FUN_00556b90` answers the node's place and, through its third argument, its direction: the third
 row of the node's stored matrix (`+0x20`, `+0x24`, `+0x28`), negated where the lookup record's flag byte
-carries `0x10`, over its length (summed z, y, x), times 1024 (`0x00700fdc`); a record with no matrix gives
+carries `0x10`, over its length (the first two's squares summed, then the third's, and the root kept as a float), times 1024 (`0x00700fdc`); a record with no matrix gives
 (0, 0, 1). Each of the three is cut to a whole number (`__ftol`) and handed over after the place.
 `Particles_SpawnFull` is `Particles_Spawn` but for two things: it makes no draw of the generator, and it writes
 the emitter's own velocity at `+0x38`, `+0x3c` and `+0x40`, each the direction's component times the effect's

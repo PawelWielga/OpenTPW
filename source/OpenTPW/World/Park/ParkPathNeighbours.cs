@@ -139,7 +139,7 @@ public static class ParkPathNeighbours
 		write( x, y, self with { Neighbours = (byte)(self.Neighbours | bit) } );
 		write( nx, ny, nb with { Neighbours = (byte)(nb.Neighbours | back) } );
 
-		// The fix-up is in the type 1 arm alone (0x0053498c..0x00534a0d for the north side): a ride's end
+		// The fix-up is in the type 1 arm alone (0x00534987..0x00534a0d for the north side): a ride's end
 		// gains the one bit and no diagonal.
 		if ( nb.Type == PathType )
 			WeakFixUp( read, write, nx, ny, back );

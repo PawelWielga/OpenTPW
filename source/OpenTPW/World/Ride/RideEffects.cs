@@ -194,7 +194,7 @@ public sealed class RideEffects
 
 	/// <summary>
 	/// Puts back the list a park file holds, <paramref name="saved"/> in the file's order: each record goes in at
-	/// the head as it is read, as the reader <c>FUN_005597a0</c> links them (<c>0x00559fd9</c>), so the list stands
+	/// the head as it is read, as the reader <c>FUN_005597a0</c> links them (<c>0x00559fca</c>), so the list stands
 	/// the other way round from the file. Nothing is started and nothing counted.
 	/// </summary>
 	public void Restore( IEnumerable<SavedEffect> saved )
