@@ -45,12 +45,22 @@ The fan website is at https://maexah.github.io/OpenTPW/ . It is its own project:
   ids and titles, in order) of the commit being pushed. So those two files are public words: a queue title is
   read by visitors as it is written. The hook never refuses a push. It says so when it did not publish, which
   happens while the website's own repo holds work that is not pushed yet.
-- **Some of what the website says is kept by hand, and a task that changes what a player can do must say so.**
-  When a ride, shop or sideshow starts to run for guests, when saving a park or finishing a game starts to work,
-  or when a land opens, end the task's report with one line: "the website needs a change", and what. The
-  website's `README.md`, "Changing what the site says", names the place for each (the `running` list, the "What
-  you can do today" lists, the park notice). Making that change is website work: its own repo, its own session
-  if it is more than a line, and its own yes before it is pushed.
+- **Some of what the website says is kept by hand, and the task that changes what a player can do changes it.**
+  Alexah, 2026-10-11: "Then update the website. Don't ask, just do it from now on please." When a ride, shop or
+  sideshow starts to run for guests, when a player can do or see something new in a park (rides break down,
+  saving a park, finishing a game), or when a land opens, the same session, after the item is merged:
+  1. changes the words in the website's repo (its `README.md`, "Changing what the site says", names the place
+     for each: the `running` list, a land's `today` lines, the park notice), short and plain, saying nothing the
+     engine does not do;
+  2. builds it, runs its two tests, looks at the preview's pictures, and has one separate read-only agent run
+     the page (the website's rule 12);
+  3. commits there and pushes its `main`, which publishes; no yes is asked for this push (the website's rule 1
+     names the exception);
+  4. reads the live page back (`curl` the page at https://maexah.github.io/OpenTPW/ until it holds the new
+     words; GitHub Pages takes a minute or two) and says so in the report.
+  This covers the website's words for that task and nothing else: a new page, the look or a screenshot is
+  website work with its own yes, and **a push of this repo's `main` still needs its fresh yes** (rule 1).
+  A task that changes nothing a player can do changes nothing there; the Ride Status board follows by itself.
 
 ## Subagents
 
