@@ -134,7 +134,7 @@ public static class DebugConsole
 
 		var distance = (place - Camera.Ears).Length;
 
-		return $" at ({place.X:F0},{place.Y:F0},{place.Z:F0}) volume {voice.Volume:F4} range {range:F0} distance {distance:F2} "
+		return $" at ({place.X:F0},{place.Y:F0},{place.Z:F0}) volume {voice.Volume:F4} rate {voice.Rate:F4} range {range:F0} distance {distance:F2} "
 			+ $"law {AudioListener.RangeGain( distance, range ):F4} gain {voice.DistanceGain:F4}";
 	}
 

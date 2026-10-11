@@ -44,11 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q297. The writer: what else a made record leaves out.** The old Q269's other pieces, each counted or
+- [ ] **Q298. The writer: what else a made record leaves out.** The old Q297's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q269 (`audio.md`, "A held voice's next sample"): the music's samples (the same class) and a held
-  scream's chain (`FUN_006bdd30`'s own slot 0, not read) still take a volume and a pitch a sample here. How
+  From Q297 (`audio.md`, "A scream's child and its pitch"): a kids' one-shot is given no pitch here
+  (`KIDS_ONE_SHOT_PITCH`: a single scream's bytes are -8 and 8, a guest put off's -5 and 5; the rule is
+  `FUN_006bc410`'s, and a pitch below nought was in no run of either game). A scream child's pitch under
+  `SCREAMLEVEL`'s apply (`0x006bbbe0`) is not built: no shipped scream names its parameter. In no game run:
+  bands 2 to 4 (effects 72 to 74), a bought ride. Not listened to by a person. The one-shot's slot `+0x40`
+  (`0x006c3d80`) was read for the wait alone.
+  From Q269 (`audio.md`, "A held voice's next sample"): How
   closely one sample follows another is not measured: the original's null device off-screen is not paced. The
   original's crowd channel read a far end of 95 in one run and 100 in the next, on a flat channel: not read.
   A level over 13 was in no game run of either game. Each beat's set draws the pitch again on the playing

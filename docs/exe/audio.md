@@ -78,6 +78,7 @@ Nothing on this path writes a volume. A sample's volume comes from its variation
 - **What a child gets.** `0x006c3a80` gives it:
   - a variation (`0x006c3e00`);
   - a fresh weighted sample (`0x006bc680`);
+  - as it starts, a volume and a pitch of its own ("A scream's child and its pitch", below);
   - its time: now plus a wait drawn from that variation's header (`0x006c3abe`..`0x006c3ac5`).
 - **How the wait is drawn.** The wait is the header's `u16` pair at `+0x10`/`+0x12` (`0x006bc2d0`):
   - nought when both are nought;
@@ -505,8 +506,10 @@ started inside one beat shared volume and pitch, 314 of 314; the 27 twin samples
 0.0550 and 15 at 0.0605, the voice's own (the level reached 13, which the prediction had not allowed for: its two
 misses), and six twin samples were found in the game's own mix at 0.0273 to 0.0275; the build before read a twin at
 every volume from 14 to 21 and in its mix at up to 0.0413. Eleven bugs put back (`q269/mutations.py`): all eleven fail a test.
-**Not read:** the music's samples (the same class) and a held scream's chain (`FUN_006bdd30`'s own slot 0), which
-here still take a volume and a pitch a sample.
+The music is of the same class, and its variations hold volume bytes 100 and 100 and pitch bytes 0 and 0 in all four
+themes (`sfxmap.py`), so its first sample's draw is no draw and a later sample has nothing to keep: OpenTPW plays it at
+one volume and no pitch. A held scream is another class, and each of its samples is a voice of its own: "A scream's
+child and its pitch", below.
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
@@ -516,6 +519,53 @@ here still take a volume and a pitch a sample.
 | `0x006bdf50` | — | Slot `+0x14`, a voice's start: slot `+0x44` (`FUN_006bc410`) fills the requests, volume and pitch among them | Disassembly |
 | `0x006be5e0` | — | Slot `+0x38`: `FUN_006be450` with controller value 0, then the keys | Disassembly |
 | `0x006c0610` | — | The loader's pass over an effect's variations: running totals to weights, zone indices to pointers | Decompiled |
+
+## A scream's child and its pitch
+
+Read for Q297 and measured in the running original (`original/mixfreq.py`, `q297/orig/`).
+
+**Each child of a held scream is given a volume and a pitch as it starts.** A child is a voice of its own (class
+`0x0070a9e0`, "A held voice is a chain", above), not a sample queued on its parent's channel, so it starts as a
+one-shot does: its slot `+0x14` (`0x006bd800`) zeroes a request block and has slot `+0x44` (`0x006c3ae0`) fill it,
+then opens a channel with it (`FUN_006b9ab0`). The fill sets the sample (slot `+0x48`, `FUN_006bc240`), the volume
+(`FUN_006bc090` into `FUN_006c5130`), the group (`FUN_006c51f0`) and the pitch (`FUN_006bc170` into `FUN_006c5170`,
+the request's `+0x24` under flag `0x20`), then the distance mapping from the variation's range. `FUN_006bc170` is the
+one-shot's own: a controller's value over the variation's signed bytes `+0x0e`/`+0x0f` where the voice has a
+controller for bit 2 (slot `+0x40`, `0x006c3d80` in this class), else a draw from the low byte up to, not including,
+the high one. Kids 71 to 74 hold 0 and 6 in every one of their sixteen variations and name no controller on the
+pitch, so **every child draws 0 to 5**, afresh, where the crowd's voice draws once and keeps it.
+
+**Measured** (predicted first, `q297/PREDICTION.txt`; Q265's `bounce.TPWS`, the listener about 50 units from the
+Belly Bounce, 150 s at 20 ms a poll): the scream channels (3D, a far end of 95, 35 of 127, at (525,250,0)) made 180
+lines, and their frequency word `+0x1f4` read 22050 (28 lines), 22371 (40), 22533 (24), 22696 (23), 22861 (31) and
+23026 (34): the six of "A held voice's next sample" and no other, 22050 in 15.6% where a sixth was owed. In the same
+log the channels with a far end of 75 at 18 of 127 read frequencies below 22050 too (20366 to 23701): a variation
+whose pitch bytes run either side of nought, not looked up.
+
+**What OpenTPW does** (`ParkAudio.PlayScream`, `ScreamChildPitch`; `ParkScreams.Chain.Pitch`): each child draws its
+pitch from its variation as its volume is read, and its voice is set to the rate the pitch stands for
+(`ParkCarSounds.Rate`). Held in the running game (`q297/confirm.py`, fix 3 of 4, control 3 of 3): 38 children of the
+Belly Bounce's scream in 75 s, each log line a pitch of 0 to 5 and all six seen, `voices` reading the six rates
+(1.0000, 1.0145, 1.0219, 1.0293, 1.0368, 1.0443) at a volume of 0.1925 as before. In the game's own mix
+(`q297/pitchscan.py`, each sample matched at each of six pitches over the whole capture): a pair of sample and pitch
+that a log line names scored 0.895 to 1.000, 33 of 34 (the other, 0.301, was the first child, under the music), and a
+pair no line names 0.742 at most, 32 of 32; the build before read every sample at 1.000 on pitch 0 and 0.772 at
+most on another. The two checks written first each missed on their own terms: one wanted five samples played once
+(two were, both right), the other a score of 0.97, which a pitched template, resampled by a straight line where the
+mixer steps to the nearest sample, reaches in 22 of 34. Eleven bugs put back (`q297/mutations.py`): all eleven fail
+a test.
+
+**Not built:** a kids' one-shot's pitch (a single scream's bytes are -8 and 8, a guest put off's -5 and 5), counted
+as `KIDS_ONE_SHOT_PITCH`; the parameter set's apply on a playing child (`0x006bbbe0`), which no shipped scream's
+variation asks for.
+
+| Address | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x0070a9e0` | — | vtable of a held scream's child: `+0x14` `0x006bd800`, `+0x40` `0x006c3d80`, `+0x44` `0x006c3ae0`, `+0x48` `FUN_006bc240` | Read from the image |
+| `0x006bd800` | — | The child's start: a request block zeroed, filled by slot `+0x44`, a channel opened with it | Disassembly |
+| `0x006c3ae0` | — | The child's request fill: sample, volume, group, pitch, the range's mapping | Disassembly |
+| `0x006bc170` | — | A voice's pitch: by a controller over the variation's bytes `+0x0e`/`+0x0f`, or a draw between them | Decompiled |
+| `0x006c5170` | — | A request's pitch: `+0x24`, flag `0x20` | Decompiled |
 
 ## The crowd's voice
 

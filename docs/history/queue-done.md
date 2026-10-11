@@ -5976,6 +5976,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   lines read 14 at 0.0550 and 15 at 0.0605, the voice's own, where I had said 14 alone (the level reached 13:
   the two misses); the control, main before it, 2 of 2: a twin at every volume from 14 to 21 and in the mix at
   up to 0.0413. Eleven bugs put back: all eleven fail a test.
+- [x] **Q297. A scream's child draws its pitch.** Split by the session from the old Q297: its other pieces
+  are Q298. Done 2026-10-11: a held scream's child is a voice of its own (class `0x0070a9e0`), and its request
+  fill (`0x006c3ae0`) asks for a volume and a pitch (`FUN_006bc090`, `FUN_006bc170`), where a held voice's next
+  sample asks for neither; kids 71 to 74 hold pitch bytes 0 and 6, so each child draws 0 to 5 (`audio.md`,
+  "A scream's child and its pitch"). The music's variations hold 100 and 100 and 0 and 0 in all four themes:
+  nothing to draw, and nothing changed there. `ParkAudio.ScreamChildPitch` and `ParkScreams.Chain.Pitch` are
+  new; a kids' one-shot's pitch is counted (`KIDS_ONE_SHOT_PITCH`). In the running original, predicted first
+  and as predicted: 180 lines of the Belly Bounce's scream channels in 150 s read six frequencies and no
+  other, 22050 (28), 22371 (40), 22533 (24), 22696 (23), 22861 (31) and 23026 (34). In the running game,
+  predicted first, 3 of 4: 38 children, each line a pitch of 0 to 5, all six seen, `voices` reading the six
+  rates and 0.1925; the miss was my check (it wanted five samples played once; two were, both in the mix at
+  their logged pitch). The whole mix scanned at six pitches: a pair of sample and pitch a log line names scores
+  0.895 to 1.000 (33 of 34; the one under played beneath the music) and one no line names 0.742 at most (32 of
+  32), where my 0.97 bar found 22 of 34. The control, main before it, 3 of 3: no pitch in the log, every
+  sample at 1.000 on pitch 0. Eleven bugs put back: all eleven fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

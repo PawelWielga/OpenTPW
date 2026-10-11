@@ -699,23 +699,32 @@ public sealed class ParkAudio : Entity
 
 	/// <summary>
 	/// Sounds one child of a held scream: a sample of that variation, placed at the ride, at the
-	/// variation's own volume (<see cref="ChannelGain"/>), heard over the variation's own range
+	/// variation's own volume (<see cref="ChannelGain"/>) and pitch, heard over the variation's own range
 	/// (<see cref="SoundCategory.RangeOf"/>). <see cref="ParkScreams"/> decides when and which; this is only
 	/// the sound.
 	/// </summary>
 	/// <remarks>
-	/// Parameter 6, <see cref="ScreamVolume"/>, is the chain's zone parameter and picks the variation
-	/// (<c>0x006c3e1c</c>); the volume is the variation's bytes under it (<c>FUN_006bc090</c>), 47 on every
-	/// shipped scream whatever the parameter (<c>docs/exe/audio.md</c>, "A channel's volume").
+	/// A child is a voice of its own, so each is given a volume and a pitch as its channel is set up
+	/// (<c>0x006c3ae0</c>: <c>FUN_006bc090</c>, then <c>FUN_006bc170</c>). Parameter 6,
+	/// <see cref="ScreamVolume"/>, is the chain's zone parameter and picks the variation (<c>0x006c3e1c</c>); the
+	/// volume is the variation's bytes under it, 47 on every shipped scream whatever the parameter, and the pitch
+	/// a draw between its two, 0 to 5 on every shipped one (<c>docs/exe/audio.md</c>, "A channel's volume",
+	/// "A scream's child and its pitch").
 	/// </remarks>
 	private Voice? PlayScream( ParkScreams.Chain chain, int variation )
 	{
-		var voice = Audio.Play( _kids?.PickFrom( chain.Effect, variation ),
-			ChannelGain( ScreamChildVolume( chain.Effect, variation, chain.Level ) ),
+		var volume = ScreamChildVolume( chain.Effect, variation, chain.Level );
+
+		chain.Pitch = ScreamChildPitch( chain.Effect, variation, chain.Level );
+
+		var voice = Audio.Play( _kids?.PickFrom( chain.Effect, variation ), ChannelGain( volume ),
 			bus: AudioBus.Effects, position: chain.At, range: _kids?.RangeOf( chain.Effect, variation ) );
 
 		if ( voice != null )
+		{
+			voice.SetRate( ParkCarSounds.Rate( chain.Pitch ) );
 			_screamSamples.Add( voice.Name );
+		}
 
 		return voice;
 	}
@@ -731,13 +740,32 @@ public sealed class ParkAudio : Entity
 			? Controlled( headers[variation], 1, _kids.ParameterOf( effect ), ScreamVolume( level ), _screamRandom )
 			: 0;
 
+	/// <summary>
+	/// The pitch, in 96ths of an octave, of a child of scream <paramref name="effect"/>'s variation
+	/// <paramref name="variation"/> under a script's level, drawn afresh for every child
+	/// (<c>FUN_006bc170</c>): the variation's bytes, by a controller of its own that names the effect's
+	/// parameter or else a draw between them (<see cref="Controlled"/>). Nought for a variation the category
+	/// has not got.
+	/// </summary>
+	internal int ScreamChildPitch( int effect, int variation, int level )
+		=> _kids?.VariationsOf( effect ) is { } headers && variation >= 0 && variation < headers.Count
+			? Controlled( headers[variation], 2, _kids.ParameterOf( effect ), ScreamVolume( level ), _screamRandom )
+			: 0;
+
 	private readonly Random _screamRandom = new();
 
 	/// <summary>
 	/// A one-shot of the kids' category the engine sets no level for (<c>Sound_PlayEffect</c> with no
 	/// <c>FUN_0051bc40</c> after it): the picked variation's own volume, its bytes or a draw between them.
 	/// </summary>
-	private float OneShotGain( SoundCategoryFile.Variation header ) => ChannelGain( Controlled( header, 1, 0, 0, _screamRandom ) );
+	private float OneShotGain( SoundCategoryFile.Variation header )
+	{
+		// The original's one-shot is given a pitch too (FUN_006bc410); none is set here.
+		if ( header.Pitch.Low != header.Pitch.High )
+			Unimplemented.Report( "KIDS_ONE_SHOT_PITCH" );
+
+		return ChannelGain( Controlled( header, 1, 0, 0, _screamRandom ) );
+	}
 
 	/// <summary>
 	/// Stops a ride screaming - <c>STOPSCREAM</c>: its own chain is cut and forgotten, and no other
@@ -934,7 +962,7 @@ public sealed class ParkAudio : Entity
 	internal string ScreamState( int scriptId )
 		=> _screams.Find( scriptId ) is { } scream
 			? $"effect {scream.Effect} band {scream.Band} level {scream.Level} variation {scream.Variation + 1} "
-				+ $"sample '{scream.Sample}' plays {scream.Plays} next in {Math.Max( 0f, scream.NextAt - Time.Now ):0.00}s"
+				+ $"sample '{scream.Sample}' pitch {scream.Pitch} plays {scream.Plays} next in {Math.Max( 0f, scream.NextAt - Time.Now ):0.00}s"
 				+ (scream.Voice is { Playing: true } ? "" : " (between)")
 			: "none";
 

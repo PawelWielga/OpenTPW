@@ -33,6 +33,7 @@ place to look for tools. Each file's docstring is its manual.
 | `original/voices.py PID [SECS]` | The original's memory: every live sound voice by the service's own list (its effect and flags word, the voice's flags, place, range and rectangle, how far it is from the listener), with the listener first; a block a change. Says which placed sounds are in range and sounding. A `POLL` for `loadfile.sh` |
 | `original/mixer.py PID [SECS]` | The original's memory, inside `QMixer.dll`: the session and its listener, and every open channel's flags, place, distance mapping, volume, the mixer's own distance, and its cone, distance and final gains, with the gain the law gives beside the one read. How loud the mixer is playing a voice, where `voices.py` says only whether it sounds. A `POLL` for `loadfile.sh` |
 | `original/crowdmix.py PID SECS` | The original's memory: the crowd's voice (level, handle, keys, values, the current variation with its weight, the sample record) beside every flat mixer channel's volume of 127, in ONE log stamped with the wall clock and `mGameTick`, a line a change, 20 ms a poll. Use it where `crowd.py` and `mixer.py` would have to be held together by eye; `mixer.py` prints nothing for a change of volume alone. A `POLL` for `loadfile.sh` |
+| `original/mixfreq.py PID SECS [2d]` | The original's memory, inside `QMixer.dll`: every open 3D channel's place, far end, volume of 127 and FREQUENCY (`+0x1f4`), a stamped line each time one opens or changes, and at the end a count by far end, volume and frequency. Which pitch each sample of an effect plays at; `2d` reads the flat channels instead. A `POLL` for `loadfile.sh` |
 | `original/mixpairs.py [<mixer.py log>]` | A `mixer.py` log against the category files: every pair of a 3D channel's far end and volume of 127, with the variation volumes of that range that `round( v x 0.75 )` makes it from. Says which effects' channels a log holds, and that none plays at a number the files cannot make |
 | `original/modelboxes.py PID [FIRST LAST]` | The original's memory: each thing's model record's cell rectangle (`+0xc0`, `+0xc4`), whether it has a `.hmp`, the box's middle (where its scream is sounded) and its base height. Read the objects' lines (the stock park's are things 13 to 24): a person's `+0x20` is no model handle, and its line is noise |
 | `original/research.py <in> <out> <item>` | A copy of a jungle park file with one item marked researched, so Instant Action's buy list offers it |
@@ -102,6 +103,11 @@ whole list):
   `KidsHD.sdt` and `xKidsHD.sdt`). The gain is the voice's volume times its distance gain times 0.397 with the
   camera at `515 235 60 180`, the master and the pan together, so compare two builds, not a build with a sum.
   `voices` prints each ranged voice's volume (Q267).
+- **A pitched sample found in the mix:** match its template at each pitch (`q297/pitchscan.py`: read at a rate of
+  `2 ^ ((p + 1) / 96)`, 1 at pitch 0) over the whole capture. At pitch 0 a hit is 1.000; at another pitch 0.90 to
+  0.99, because the template is resampled by a straight line and the mixer steps to the nearest sample, and a miss
+  is 0.77 at most: take 0.85 as the bar, not 0.97. A ride's variation repeats its few samples, so hold each
+  (sample, pitch) pair of the log against the mix, not each sample once (Q297).
 - **The crowd's voice alone in the mix:** `hover 50 24` holds the pointer's cell on the Belly Bounce's queue
   whatever the camera does, so with `bus music 0` and `camera 1100 1100 110 180` the mix is the crowd's flat
   voice and nothing else. `voices` names each sample as `<name> Effects flat`; match each at its six pitches
@@ -179,6 +185,8 @@ GH=766` there, or the pointer is off):
   `930 200`): the crowd's is the 2D channel at the listener's own place, there while the handle is held and
   gone while it is nought. Neither log is stamped, so hold them together by the order of their stretches
   (`q268/orig/run.sh`, Q268).
+- **Its screams' pitches:** `mixfreq.py PID 150` after a load of Q265's `bounce.TPWS` reads the Belly Bounce's
+  scream channels (far end 95, 35 of 127, at (525,250,0)), 180 lines in 150 s (`q297/orig/run.sh`, Q297).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).

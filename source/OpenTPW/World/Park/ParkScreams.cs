@@ -52,6 +52,9 @@ internal sealed class ParkScreams
 
 		public string Sample = "";
 
+		/// <summary>The newest child's pitch, in 96ths of an octave: each child's own (<c>0x006c3ae0</c>).</summary>
+		public int Pitch;
+
 		/// <summary>Whether a second start let this chain go - see <see cref="LetGo"/>.</summary>
 		public bool HeldByNothing;
 	}
@@ -196,7 +199,7 @@ internal sealed class ParkScreams
 		chain.Sample = chain.Voice?.Name ?? "";
 
 		Log.Info( $"Park audio: script {scriptId} scream {chain.Plays}, effect {chain.Effect} "
-			+ $"variation {next + 1} sample '{chain.Sample}', the next in {gap} ms"
+			+ $"variation {next + 1} sample '{chain.Sample}' pitch {chain.Pitch}, the next in {gap} ms"
 			+ (chain.HeldByNothing ? ", held by nothing" : "") );
 	}
 

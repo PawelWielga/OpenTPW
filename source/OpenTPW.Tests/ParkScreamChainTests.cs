@@ -1062,6 +1062,87 @@ public class ParkScreamChainTests
 	}
 
 	/// <summary>
+	/// <b>Each child of a held scream is given a pitch of its own</b> (<c>docs/exe/audio.md</c>, "A scream's child
+	/// and its pitch"): a draw between its variation's two pitch bytes, 0 to 5 on every shipped scream, made again
+	/// for every child and set on its voice as the rate the pitch stands for. The volume is as it was.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> no rate set on the child; a pitch never drawn; the volume's bytes read for it; one drawn a
+	/// chain and kept; the rate of another number than the pitch.
+	/// </remarks>
+	[TestMethod]
+	public void EachChildOfAScreamDrawsItsOwnPitch()
+	{
+		var file = new SoundCategoryFile( "global/sound", "kids" );
+
+		foreach ( var effect in new[] { 0x47, 0x48, 0x49, 0x4a } )
+			foreach ( var header in file.ReadVariations()[file.IndexOf( effect )] )
+				Assert.AreEqual( (0, 6), header.Pitch, $"effect {effect}'s pitch bytes" );
+
+		InAPark( "jungle", park =>
+		{
+			// Band 8 is effect 74, whose children are at most half a second apart.
+			Assert.IsTrue( park.Scream( 13, 8, 90, Here ) );
+
+			var chain = park.HeldScream( 13 )!;
+			var pitches = new List<int>();
+
+			Assert.AreEqual( 0x4a, chain.Effect );
+
+			void IsPitched()
+			{
+				Assert.IsTrue( chain.Pitch is >= 0 and <= 5, $"a pitch of {chain.Pitch}" );
+				Assert.AreEqual( ParkCarSounds.Rate( chain.Pitch ), (float)chain.Voice!.Rate, 0.000001f, $"the rate of pitch {chain.Pitch}" );
+				Assert.AreEqual( 35f / 60f * 0.33f, chain.Voice.Volume, 0.0001f, "at the volume it had" );
+
+				pitches.Add( chain.Pitch );
+			}
+
+			IsPitched();
+
+			for ( var frame = 0; frame < 3600; ++frame )
+			{
+				var plays = chain.Plays;
+
+				Frame( held: false );
+				park.Update();
+
+				if ( chain.Plays != plays )
+					IsPitched();
+			}
+
+			Assert.IsTrue( pitches.Count >= 100, $"a minute with waits under half a second made {pitches.Count}" );
+
+			for ( var pitch = 0; pitch <= 5; ++pitch )
+				Assert.IsTrue( pitches.Contains( pitch ), $"no child of {pitches.Count} drew pitch {pitch}" );
+
+			Assert.AreEqual( ParkCarSounds.Rate( 5 ), MathF.Pow( 2f, 6f / 96f ), 0.000001f, "a pitch of 5 is six 96ths of an octave up" );
+		} );
+	}
+
+	/// <summary>
+	/// <b>A one-shot of the kids' whose variation holds a pitch range is counted</b>: the original gives it a
+	/// pitch as it starts and nothing here does. One whose two pitch bytes are alike is not.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the count taken out; every one-shot counted.</remarks>
+	[TestMethod]
+	public void AOneShotWithAPitchRangeIsCounted()
+	{
+		static int Counted() => Unimplemented.Summary.Where( gap => gap.What == "KIDS_ONE_SHOT_PITCH" ).Sum( gap => gap.Times );
+
+		InAPark( "jungle", park =>
+		{
+			var before = Counted();
+
+			Assert.IsTrue( park.SingleScream( 1, -1, Here ), "effect 105, pitch bytes 0 and 0" );
+			Assert.AreEqual( before, Counted() );
+
+			Assert.IsTrue( park.SingleScream( 1, 90, Here ), "one of effects 75 to 90, pitch bytes -8 and 8" );
+			Assert.AreEqual( before + 1, Counted() );
+		} );
+	}
+
+	/// <summary>
 	/// <b>A second start over a held scream is refused, and the first screams on held by nothing</b>: the refusal's
 	/// nought goes over the script's handle (<c>0x00555ee6</c>). The script holds no scream after it, its stop finds
 	/// none, the chain let go goes on making children through a later start and stop, and only the park's end cuts it.
