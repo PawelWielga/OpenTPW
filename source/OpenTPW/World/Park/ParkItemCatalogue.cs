@@ -123,7 +123,10 @@ public sealed class ParkItemCatalogue
 
 		// What an object built of it starts its mFlags at, and the cells from its anchor to its mTopLeft -
 		// ItemDescriptionFile.ObjectFlags and MapOffset. See ParkBuilding.Constructed.
-		int ObjectFlags = 0, int MapOffsetX = 0, int MapOffsetY = 0 )
+		int ObjectFlags = 0, int MapOffsetX = 0, int MapOffsetY = 0,
+
+		// Each tier's wear rate and red lines - ItemDescriptionFile.WearRateAt. See WearAt.
+		IReadOnlyList<ParkRideWear.Tier>? WearTiers = null )
 	{
 		/// <summary>The bonus of one step of the age, nought past the third - <see cref="ItemDescriptionFile.NewBonusAt"/>.</summary>
 		public int NewBonusAt( int step ) => step switch { 0 => NewBonus0, 1 => NewBonus1, 2 => NewBonus2, _ => 0 };
@@ -144,6 +147,14 @@ public sealed class ParkItemCatalogue
 			2 => (InitSpeed2, InitDuration2),
 			_ => throw new ArgumentOutOfRangeException( nameof( tier ), tier, "Upgrades has three tiers" )
 		};
+
+		/// <summary>
+		/// A tier's wear rate and red lines, <c>Upgrades[tier]</c> - what a ride's wear reads (<c>FUN_004df670</c>).
+		/// An item that states none has tier nought's own red lines and a rate of nought: it never wears.
+		/// </summary>
+		public ParkRideWear.Tier WearAt( int tier ) => WearTiers is { } tiers && (uint)tier < (uint)tiers.Count
+			? tiers[tier]
+			: new ParkRideWear.Tier( 0, RedLineSpeed, RedLineCapacity );
 
 		/// <summary>
 		/// A tier's queue constant, <c>Upgrades[tier].QueueWaitTimeConstant</c> - what the longest queue a guest joins
@@ -344,7 +355,10 @@ public sealed class ParkItemCatalogue
 						description.BumperAdjust( 270 )],
 					description.SupplementalMeshes, description.Hoarding, description.Shape,
 					description.NewBonusAt( 0 ), description.NewBonusAt( 1 ), description.NewBonusAt( 2 ),
-					description.ObjectFlags, description.MapOffset.X, description.MapOffset.Y );
+					description.ObjectFlags, description.MapOffset.X, description.MapOffset.Y,
+					[.. Enumerable.Range( 0, ItemDescriptionFile.Tiers ).Select( tier => new ParkRideWear.Tier(
+						description.WearRateAt( tier ), description.RedLineSpeedAt( tier ),
+						description.RedLineCapacityAt( tier ) ) )] );
 
 			return true;
 		}

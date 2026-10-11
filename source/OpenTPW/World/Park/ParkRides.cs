@@ -965,7 +965,7 @@ public sealed class ParkRides : Entity
 
 			if ( _scripts.TryGetValue( placed.ThingId, out var handle ) && Scheduler.Find( handle ) is { } script )
 			{
-				record = script.Made( Reading, placed.OperatingSpeed > 0 ? placed.OperatingSpeed : ParkScriptStates.LoaderSpeed,
+				record = script.Made( Reading, ParkRideWear.SpeedWord( placed ),
 					thing.Directory );
 				madeHandles.Add( handle );
 				animations = script.Animations;

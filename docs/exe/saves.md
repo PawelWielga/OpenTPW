@@ -2927,8 +2927,9 @@ order is the file's links', not the ids'**: the order `ParkState.ObjectsInChainO
 
 - An upgrade job, the advisor's message and a coaster's circuit test are counted (`ride-operation.md`, "The
   mechanic's repair", "Where OpenTPW differs").
-- The State of repair stays 100 here (the wear by use, Q157), so every repair's count is nought and the
-  count down was in no game run: the tests alone.
+- A ride wears by running (Q303, `ride-operation.md`, "A ride's wear"), and a Belly Bounce worn to nought was
+  mended in a game run: 30 sweeps of repair at the mechanic's grade. A count between nought and the whole was in
+  no game run: the tests alone.
 - His repairing animation, `0x12`, is queued; whether the picture is the original's was not compared (the
   original's frames were not looked at; its memory was).
 
@@ -2988,7 +2989,7 @@ OpenTPW's falls.
   turn", step 3).
 - SetState's post to the event bus is counted, not built (`RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT`).
 - The original's file reads `+0x48` 99.0 and `+0x44` 92.0 on the pot where OpenTPW's reads 100 and 100: the wear
-  by use (`FUN_004df670`) is unbuilt (Q157). In the load above one wear, on tick 1152 with a go running, took 1.55 and 0.03 off.
+  by running (`FUN_004df670`) was unbuilt then and is built since (Q303, `ride-operation.md`, "A ride's wear"). In the load above one wear, on tick 1152 with a go running, took 1.55 and 0.03 off.
 
 **Not run in either game, tested only:** a ride condemned (a remaining life under 1: no file holds one and
 nothing here lowers it); a ride broken with its door already shut; a ride other than the Hot Pot. Of 18 bugs

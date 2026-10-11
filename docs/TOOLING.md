@@ -141,6 +141,10 @@ whole list):
   distance before predicting its law. A sea sample opens quietly: match its 1.5 s from 3 s in
   (`t[3 * 22050:]`), which scores 1.00 where its first second and a half scored 0.20 under a gull
   (`q302/confirm.py`, Q302).
+- **A ride worn out by itself:** enter the stock park and leave it: the Belly Bounce (thing 13) logs `Object 13:
+  wear 1.515 with 1 on` every 64 sweeps (16 s), is told it is worn after 53 of them, asks to break down after 66
+  (17.5 minutes) and is mended and open two minutes on. `openthing 13` shows its State of repair's bar, `objects`
+  prints the number (`q303/confirm.py`, Q303).
 - **The crowd's voice alone in the mix:** `hover 50 24` holds the pointer's cell on the Belly Bounce's queue
   whatever the camera does, so with `bus music 0` and `camera 1100 1100 110 180` the mix is the crowd's flat
   voice and nothing else. `voices` names each sample as `<name> Effects flat`; match each at its six pitches
@@ -242,6 +246,10 @@ GH=766` there, or the pointer is off):
   (`q302/files/sea-*.TPWS`). `voices.py` shows effects 2 and 3 (flags word `0x0006`, voice flag `0x1000`) with
   their rectangles, and `mixfreq.py` their channels at the voices' places: 37 of 127 the gulls, 25 or 41 the
   sea, a far end of 100. A second effect 2, flagged `0x0606` at (0,0,0), is the music (`q302/orig/run.sh`, Q302).
+- **Its Belly Bounce worn out by itself:** `object.py PID 840 13 5 4 7 8 9` as the `POLL` of a load of Q265's
+  `bounce.TPWS`, left alone: a fall of the State of repair every 64 ticks, `VAR_WORN` under 20, the break some
+  4,500 ticks after the load (13 minutes at seven days' uptime) and the mend 126 ticks later.
+  `q303/steps.py <log>` prints a line a fall with the riders that give it (`q303/orig/run.sh`, Q303).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).

@@ -114,14 +114,15 @@ public class ParkEasyCatalogueTests
 	}
 
 	[TestMethod]
-	public void TheWearAndResearchKeysAreCounted()
+	public void TheWearKeysAreKeptAndTheResearchKeysCounted()
 	{
 		Write( "shops/fries/easy_Fries.sam", "Upgrades[0].WearRate 3\nUpgrades[2].WearRate 1\nResearch.Group 2\n" );
 		Unimplemented.Forget();
 
-		Catalogue( instantAction: true );
+		Assert.IsTrue( Catalogue( instantAction: true ).TryGet( 1201, out var fries ) );
 
-		Assert.AreEqual( 2, Unimplemented.Summary.Single( one => one.What == "ITEM_WEAR_RATE" ).Times );
+		Assert.AreEqual( (3, 0, 1), (fries.WearAt( 0 ).Rate, fries.WearAt( 1 ).Rate, fries.WearAt( 2 ).Rate) );
+		Assert.IsFalse( Unimplemented.Summary.Any( one => one.What == "ITEM_WEAR_RATE" ) );
 		Assert.AreEqual( 1, Unimplemented.Summary.Single( one => one.What == "ITEM_RESEARCH_KEYS" ).Times );
 	}
 

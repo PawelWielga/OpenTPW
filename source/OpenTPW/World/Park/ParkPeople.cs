@@ -2284,15 +2284,22 @@ public sealed partial class ParkPeople : Entity
 		// which is a ride that looks alive and is not.
 		//
 		// A copy of the list, because a turn may replace a thing's record under the walk: a toilet's use lowers
-		// its State of repair (ParkRideOperation.WearByUse).
-		foreach ( var thing in _behaviour.State.Objects.ToArray() )
+		// its State of repair (ParkRideOperation.WearByUse), and a ride's running does (WearByRunning).
+		foreach ( var listed in _behaviour.State.Objects.ToArray() )
 		{
+			var thing = listed;
 			var script = _scriptFor( thing.ThingId );
 
-			// FUN_004e0b90's last two steps, the toilet's worn flag and the stale head. States 3 and 4 return
-			// before ever reaching them.
+			// FUN_004e0b90's last three steps: the wear and the breakdown request, the toilet's worn flag and the
+			// stale head. States 3 and 4 return before ever reaching them.
 			if ( thing.State is not (3 or ParkRideChoice.StateRefusedFour) )
 			{
+				operation.WearAndAskToBreak( script, thing, ItemOf( thing ), thingTick );
+
+				// The rest of the turn reads the thing as the wear left it.
+				if ( _behaviour.State.TryObject( thing.ThingId, out var worn ) )
+					thing = worn;
+
 				operation.TellTheWorn( script, thing.ThingId );
 				operation.DropStaleQueueHead( thing.ThingId );
 			}
@@ -2534,6 +2541,9 @@ public sealed partial class ParkPeople : Entity
 	/// (<c>StaffBehaviour.TrackTypeOf</c>). Reached the same way <c>ParkRideChooser.ItemFor</c> reaches
 	/// it, so there is one lookup rather than two that can disagree.
 	/// </summary>
+	private ParkItemCatalogue.Item? ItemOf( ParkWorld.CatalogueObject thing )
+		=> _behaviour.Catalogue is { } catalogue && catalogue.TryGet( thing.CatalogueId, out var item ) ? item : null;
+
 	private int TrackTypeOf( ParkWorld.CatalogueObject thing )
 		=> _behaviour.Catalogue is { } catalogue && catalogue.TryGet( thing.CatalogueId, out var item )
 			? item.TrackType

@@ -8,8 +8,8 @@ namespace OpenTPW;
 /// <b>A ride is ticked like anything else in the park.</b> <c>FUN_0050b360</c> switches on a thing's
 /// model byte and hands model 3 to <c>FUN_004e0b90</c> and then <c>FUN_004e0e00</c>, exactly as it hands
 /// a guest to their needs and then their behaviours. <b>Both halves run</b>, script and all, but not
-/// whole: the first half's wear (<c>FUN_004df670</c>) and breakdown request are unbuilt
-/// (<c>docs/exe/ride-operation.md</c>, "The first half of the turn").
+/// whole: the first half's fireworks arm is unbuilt (<c>docs/exe/ride-operation.md</c>, "The first half of the
+/// turn").
 /// </para>
 /// <para>
 /// <b>Ride operation is script-driven, and that is why only this much is here.</b> The object holds a
@@ -855,6 +855,104 @@ public sealed class ParkRideOperation
 		_state.StampEffect( ParkRegionEffects.DirtyToilet, used.CellX, used.CellY );
 
 		return true;
+	}
+
+	/// <summary>
+	/// The wear and the breakdown request of a thing's turn - <c>FUN_004e0b90</c>'s third step
+	/// (<c>0x004e0c13</c>..<c>0x004e0d0d</c>; <c>docs/exe/ride-operation.md</c>, "A ride's wear"), for a thing
+	/// not in state 1, 3 or 4 with <c>mCanLoad</c> set, on a turn the clock's low three bits are nought.
+	///
+	/// <para>
+	/// First the wear (<see cref="WearByRunning"/>). Then, when the remaining life's byte or the State of repair's
+	/// is nought, a thing that is no toilet and whose <see cref="BreakStatVariable"/> reads nought loses
+	/// <see cref="ParkRideWear.BreakdownCostsLife"/> of its life, unless that byte is nought already, and its
+	/// script is told to break down. The script answers with <see cref="BrokenVariable"/>, and the ride's own
+	/// turn takes it from there.
+	/// </para>
+	/// </summary>
+	/// <returns>Whether a breakdown was asked for.</returns>
+	public bool WearAndAskToBreak( RideScript? script, ParkWorld.CatalogueObject thing, ParkItemCatalogue.Item? item,
+		int gameTick )
+	{
+		if ( script == null || thing.State == ParkRideChoice.StateRefusedOne || thing.CanLoad == 0
+			|| (gameTick & ParkRideWear.TurnMask) != 0 || !_state.TryObject( thing.ThingId, out var now ) )
+			return false;
+
+		if ( item is { } described )
+			now = WearByRunning( script, now, described, gameTick );
+
+		if ( (byte)(int)now.RemainingLife != 0 && (byte)(int)now.StateOfRepair != 0 )
+			return false;
+
+		if ( now.IsToilet || script[BreakStatVariable] != 0 )
+			return false;
+
+		if ( (byte)(int)now.RemainingLife != 0 )
+		{
+			now = now with { RemainingLife = ParkRideWear.Lowered( now.RemainingLife, ParkRideWear.BreakdownCostsLife ) };
+			_state.ReplaceObject( now );
+		}
+
+		Log.Info( $"Object {thing.ThingId}: requested breakdown, State of repair {now.StateOfRepair:R}, "
+			+ $"life {now.RemainingLife:R}, tick {gameTick}" );
+
+		script.Set( BreakStatVariable, 1 );
+
+		return true;
+	}
+
+	/// <summary>
+	/// A ride's wear by running - <c>FUN_004df670</c>: every 64th sweep, a thing whose tier has a wear rate and
+	/// whose script reads <see cref="RunningVariable"/> above nought, or which runs all the time
+	/// (<c>+0x33</c> bit 0, <c>Info.RunsContinuously</c>), loses <see cref="ParkRideWear.Of"/> of its State of
+	/// repair and <see cref="ParkRideWear.LifeShare"/> of that of its remaining life, each held to 0..100. The
+	/// wear is nought while <see cref="OnRideVariable"/> reads nought. A State of repair whose byte is below
+	/// <see cref="ParkRideWear.WornBelow"/> has <see cref="WornVariable"/> written 1.
+	/// </summary>
+	/// <remarks>
+	/// Counted, not built: the advisor's message <c>0x42</c> on the turn the byte falls below
+	/// <see cref="ParkRideWear.AdvisorBelow"/> (<c>RIDE_WORN_OUT_MESSAGE</c>). The online game's arm, which wears
+	/// nothing, is not built: there is no online game.
+	/// </remarks>
+	/// <returns>The thing as the wear leaves it.</returns>
+	internal ParkWorld.CatalogueObject WearByRunning( RideScript script, ParkWorld.CatalogueObject thing,
+		ParkItemCatalogue.Item item, int gameTick )
+	{
+		var tier = item.WearAt( thing.UpgradeLevel );
+
+		if ( tier.Rate == 0
+			|| (script[RunningVariable] <= 0 && (thing.Flags & ItemDescriptionFile.RunsContinuouslyFlag) == 0)
+			|| (gameTick & ParkRideWear.EveryMask) != 0 )
+			return thing;
+
+		var riders = script[OnRideVariable];
+		var wear = riders == 0
+			? 0f
+			: ParkRideWear.Of( ParkRideWear.SpeedWord( thing ), riders, item.MaxSpeed, item.MaxCapacity, tier );
+
+		var worn = thing with
+		{
+			StateOfRepair = ParkRideWear.Lowered( thing.StateOfRepair, wear ),
+			RemainingLife = ParkRideWear.Lowered( thing.RemainingLife, (double)wear * ParkRideWear.LifeShare )
+		};
+
+		_state.ReplaceObject( worn );
+
+		var repair = (int)worn.StateOfRepair & 0xff;
+
+		if ( wear != 0f )
+		{
+			Log.Info( $"Object {thing.ThingId}: wear {wear:R} with {riders} on, State of repair "
+				+ $"{thing.StateOfRepair:R} to {worn.StateOfRepair:R}, life {worn.RemainingLife:R}, tick {gameTick}" );
+		}
+
+		if ( repair < ParkRideWear.WornBelow )
+			script.Set( WornVariable, 1 );
+
+		if ( repair < ParkRideWear.AdvisorBelow && wear + (float)repair >= ParkRideWear.AdvisorBelow )
+			Unimplemented.Report( "RIDE_WORN_OUT_MESSAGE" );
+
+		return worn;
 	}
 
 	/// <summary>The script variable a dirty toilet is told every turn - <c>VAR_WORN</c>, variable 8.</summary>

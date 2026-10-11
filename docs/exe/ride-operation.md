@@ -71,7 +71,7 @@ In order:
 1. If `mFlags & 0x80`: read script var **0** (`VAR_LETMEON`); if it reads **1**, run `FUN_004cd4e0` / `FUN_004d8460(7, …)` and write **2** back. **The `0x80` bit is `IsFireworks`** (descriptor `+0x110`, set by `FUN_004db090`); no jungle item sets it.
 2. **States 3 and 4 return immediately** — a state-3 object does nothing at all on its turn.
 3. **Wear and the breakdown request**, only in a state other than 1 with `mCanLoad` set and `mGameTick & 7` nought
-   (`0x004e0c13`..`0x004e0c33`). First the wear `FUN_004df670` ("A toilet's dirt", below). Then,
+   (`0x004e0c13`..`0x004e0c33`). First the wear `FUN_004df670` ("A ride's wear", below). Then,
    only when the wear `+0x48` or the State of repair `+0x44` truncates to a byte of nought (`0x004e0c4e`..`0x004e0c64`),
    a non-toilet whose `VAR_BREAKSTAT` is nought logs `"Object %d: requested breakdown"`, takes 5.0 (`0x007005c8`) off
    `+0x48` unless its byte is already nought (clamped 0..100), and writes **`VAR_BREAKSTAT` = 1**. So var 4 is an
@@ -80,6 +80,86 @@ In order:
    (`mFlags & 1`) whose `+0x44` truncates to a byte below 25.0 (`0x00700550`) has **`VAR_WORN` (var 8) = 1** written.
    Nothing here writes it for a non-toilet; a ride's is `FUN_004df670`'s, below 20.
 5. **The stale-queue-head drop.** If `mFirstInQ` names nobody the engine knows, or names somebody not queueing (`FUN_00502430`), the head is cleared and nothing else is tidied.
+
+### A ride's wear - `FUN_004df670` and `FUN_004df450`
+
+Q303, read in the listing 2026-10-11 and built (`ParkRideWear`, `ParkRideOperation.WearAndAskToBreak` and
+`WearByRunning`, called first in a thing's turn by `ParkPeople.TakeTheRidesTurns`).
+
+**The gates of `FUN_004df670`**, in its order: the tier's `Upgrades[l].WearRate` (descriptor `+0x1b0 + 0x40 × l`,
+`l` the byte `+0x50`, read as an integer and taken as nought in the online game, `[0x00fb3b7c]` == 1) not nought
+(`0x004df6e0`); `VAR_RUNNING` (variable 9) above nought, or `mFlags & 0x100` (`+0x33` bit 0,
+`Info.RunsContinuously`) (`0x004df701`..`0x004df70e`); `mGameTick & 0x3f` nought (`0x004df719`). With its caller's
+gates that is every 64th sweep of an open thing not broken down.
+
+**The wear `w`** is nought while `VAR_ONRIDE` (variable 5) reads nought (`0x004df741`). Otherwise it is
+`FUN_004df450( speed, capacity, duration, 0 )`, a thiscall handed the script's speed word (`FUN_0055a330`, the
+short at the script's `+0xc0`), `VAR_CAPACITY` and `VAR_DURATION` as floats and a flag of nought. With that flag it
+reads neither the capacity nor the duration handed to it:
+
+    n = VAR_ONRIDE, held to 0..UsageInfo.MaxCapacity (descriptor +0x128)        0x004df466..0x004df4cd
+    x = speed / UsageInfo.MaxSpeed (+0x138) × 0.9 + 0.1                          0x004df4e9..0x004df52c
+        x = (x + 1) × 0.5   when Upgrades[l].RedLineSpeed (+0x1ac + 0x40 × l) <= speed
+    y = n / MaxCapacity × 0.9 + 0.1                                              0x004df58d..0x004df5d8
+        y = (y + 1) × 0.5   when Upgrades[l].RedLineCapacity (+0x19c + 0x40 × l) <= n × 0.1
+    w = (x + y) × WearRate × 0.5                                                 0x004df617..0x004df628
+
+The constants are the floats at `0x00700580` (0.9), `0x00700584` (-0.1, subtracted), `0x00700588` (-1.0,
+subtracted), `0x0070058c` (0.5) and `0x00700590` (0.1). **The capacity's red line is held against a tenth of the
+riders** (`FILD n`, `FMUL [0x00700590]`, `0x004df5b9`..`0x004df5d2`), so with ten seats at most it is met only by a
+line of nought or one. With the flag set (the caller `FUN_004df640`, which answers the low byte of `100 - trunc( 9 × w )`, `9.0` at
+`0x00700594`; its own callers were not read) `y` is the capacity handed in over `MaxCapacity` instead.
+Each ratio is stored as a float before its floor is added (`0x004df50c`, `0x004df5b0`).
+
+**What it does with `w`** (`0x004df7b6`..`0x004df895`): the State of repair `+0x44` loses `w` and the remaining
+life `+0x48` loses `0.02 × w` (`0x00700548`), each held to 0..100 (above 100 is 100, anything else not at least
+nought is nought); `VAR_WORN` (variable 8) is written 1 when `+0x44`'s byte is below 20 (`0x0070059c`), every such
+turn; and when that byte is below 10 (`0x007005a0`) and the byte plus `w` is not, the turn it fell there, advisor
+message `0x42` is posted with the thing's id (`FUN_0059b590`, `FUN_005194d0`).
+
+**The breakdown request** is the caller's, on the same turn and on every eighth sweep after it (step 3, above): the
+life's byte or the repair's nought, not a toilet, `VAR_BREAKSTAT` nought: the life loses 5 unless its byte is
+nought, `"Object %d: requested breakdown"`, `VAR_BREAKSTAT` = 1. The ride's script answers with `VAR_BROKEN`, and
+the second half's state-0 turn takes it to broken down, or condemned when the life's byte is nought ("A ride broken
+down, in both games"). So the State of repair is what a mechanic restores and the life is what breakdowns use up:
+a fiftieth of every wear and 5 a breakdown.
+
+**The numbers.** `Rides.sam` gives every ride `MaxSpeed` 100, `InitSpeed` and `RedLineSpeed` 60, 75, 90 and
+`WearRate` 5, 3, 2 by tier; the twelve rides' `Easy_` files set the rates 3, 2, 1 (1, 1, 1 for `minecart` and
+`wateride`), and the features' are nought. A ride at its starting speed is on its red line, so `x` is 0.82. The
+Belly Bounce (`MaxCapacity` 10) in Instant Action wears `1.38 + 0.135 n` with `n` on, the Hot Pot (8)
+`1.38 + 0.16875 n`; in Full Simulation five thirds of that.
+
+**In the original** (`q303/orig/`, `bounce.TPWS` loaded and left alone, `object.py` polling thing 13 with
+variables 5, 4, 7, 8, 9; predicted first in `q303/PREDICTION.txt`): two runs, 26 falls of
+the State of repair in the first and 58 in the second, every one first read on a tick that divides by 64 and every
+one `1.38 + 0.135 n` to the poller's two places for the `VAR_ONRIDE` read beside it (1 to 5 on; the last, 1.48,
+cut off at nought), the life 0.02 of each. In the second the ride was left to wear out: `VAR_WORN` read 1 from the
+fall to 18.92 (20.98 before it); on tick 5632 the State of repair reached 0.00, `VAR_BREAKSTAT` and `VAR_BROKEN`
+read 1 and the life 92.99 (98.03 less the wear's share less 5); a tick on the state was 1; mechanic 26 was assigned
+31 ticks after the break; and on tick 5758, 126 after it, the ride read 100, state 0, every variable nought, the
+life still 92.99. `VAR_RUNNING` read the same number as `VAR_ONRIDE` throughout. Not seen: a second tier, another
+ride, a condemned ride, message `0x42` (the advisor was not read).
+
+**In OpenTPW** (`q303/confirm.py`, the stock park left alone on the desktop): 8 predictions of 8. The Belly Bounce
+carried one rider at every wearing sweep, so 66 log lines of `wear 1.515 with 1 on` took it from 100 to 0.010, each
+on a tick dividing by 64 (832 to 4992), each State of repair the one before less the wear; `VAR_WORN` read 1 after
+the line that left 19.705; on tick 4992 `requested breakdown` with the life 93.000, and the ride was state 1 with
+its door shut and its hoardings rising at the next census; mechanic 26 found it on tick 5002, repaired from 5045
+for 30 sweeps and it read 100, open, `VAR_WORN` and `VAR_BREAKSTAT` nought on 5103, 111 sweeps after the break;
+it wore again from 100 on tick 5184. `RIDE_WORN_OUT_MESSAGE` counted once. The ride's window drew the State of
+repair's bar at a fifth, then empty under the BROKEN DOWN sign (`q303/run-fix1/3-worn.png`,
+`4-broken-of-its-own-wear.png`). The build before read 100 for 150 s and counted `ITEM_WEAR_RATE` 54 times
+(`run-control`). No other thing of the stock park wore.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The wear, every 64th sweep | `FUN_004df670` | built, `ParkRideOperation.WearByRunning`; the speed is the thing's `mOperatingSpeed`, or 50 at nought, as no script here keeps a speed word (Q155) |
+| `VAR_WORN` under 20 | written 1 | built; what a ride's script does on it was not looked at |
+| Advisor message `0x42` under 10 | posted | counted, `RIDE_WORN_OUT_MESSAGE` |
+| The breakdown request | every eighth sweep | built, `ParkRideOperation.WearAndAskToBreak` |
+| The online game's rate of nought | `[0x00fb3b7c]` | not built: there is no online game |
+| How many ride at once | a ride that runs all the time is invited onto while it runs (`+0x33` bit 0) | `Invite` does not read it (Q157), so the Belly Bounce carries one at a time here and wears at the least rate |
 
 ## The second half — `FUN_004e0e00`, a switch on `mState` (`+0x19c`)
 
@@ -2223,7 +2303,7 @@ SetState stamps in cases 8 and `0xb` only; its case `0x15` reads the stay. `+0x1
 arrival's refusal (`PeepBehaviour.JoinTheQueue`), which is no clock read.
 
 **The objects' reads.** `FUN_004e0b90`'s wear and breakdown step on `mGameTick & 7` (`0x004e0c2c`) and the wear inside
-it on `mGameTick & 0x3f` (`FUN_004df670`, `0x004df719`), both unbuilt (Q157); a staff claim stamped `+0x60`
+it on `mGameTick & 0x3f` (`FUN_004df670`, `0x004df719`), both built (Q303, "A ride's wear"); a staff claim stamped `+0x60`
 (`FUN_004e01f0`, `0x004e01ff`) and let go 100 on (`FUN_004e0220`, `0x004e024d`), with the staff; the constructor's stamp
 of an item's first build (`FUN_004db090`, `0x004db69c`, the record `FUN_004d3d10` answers, `+0x1c`, when nought).
 `FUN_004e0900` (`0x004e0941`, `0x004e09fe`) and `FUN_004ddf50` (`0x004ddfe6`) only print it through `FUN_005da3c0`.
@@ -2935,7 +3015,7 @@ were not read (`0x00432170`, `0x00432eb3`, `0x00432ef1`, `0x0043d6b5`, `0x004425
 | Writer | When | What |
 |---|---|---|
 | `FUN_004e2440`, from the settle-up's toilet arm alone (`0x004fe7a8`) | every use, not in the online game | `+0x44` += need's byte × −0.05 (`0x007005d0`), held to 0..100. On the use that takes a toilet from not dirty to dirty: `"Toilet has become dirty and smelly"`, effect 1 unstamped and effect 6 stamped at its cell ("The effects of a visit", step 5) |
-| `FUN_004df670`, from the object's turn (`0x004e0c49`) | `mGameTick & 0x3f` nought, the tier's `Upgrades[l].WearRate` (descriptor `+0x1b0 + 0x40 × l`) non-zero, not online, and `VAR_RUNNING` above nought or `mFlags & 0x100` | a wear `w` - nought while `VAR_ONRIDE` is nought, else `FUN_004df450`'s, which is not decoded here - comes off `+0x44`, and `0.02 × w` (`0x00700548`) off `+0x48`, each held to 0..100; `VAR_WORN` = 1 when `+0x44`'s byte is below 20 (`0x0070059c`); advisor message `0x42` on the turn its byte goes below 10 (`0x007005a0`) |
+| `FUN_004df670`, from the object's turn (`0x004e0c49`) | `mGameTick & 0x3f` nought, the tier's `Upgrades[l].WearRate` (descriptor `+0x1b0 + 0x40 × l`) non-zero, not online, and `VAR_RUNNING` above nought or `mFlags & 0x100` | a wear `w` - nought while `VAR_ONRIDE` is nought, else `FUN_004df450`'s ("A ride's wear") - comes off `+0x44`, and `0.02 × w` (`0x00700548`) off `+0x48`, each held to 0..100; `VAR_WORN` = 1 when `+0x44`'s byte is below 20 (`0x0070059c`); advisor message `0x42` on the turn its byte goes below 10 (`0x007005a0`) |
 | `FUN_004df8f0`, the mechanic's repair | | 100 |
 | `FUN_004dfd80`, the handyman's clean (below) | | 100 |
 | the constructor `FUN_004db090`, the loader `FUN_004db7d0` | | 100; the file's |

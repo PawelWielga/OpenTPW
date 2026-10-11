@@ -146,7 +146,10 @@ public sealed partial class ItemDescriptionFile
 	public int ObjectFlags
 		=> (ProvidesRelief ? 0x1 : 0) | (Set( ChillsYouOutBit ) ? 0x2 : 0) | (IsChoosable ? 0x4 : 0) | (HasQueue ? 0x8 : 0)
 			| (Set( ProvidesSecurityBit ) ? 0x10 : 0) | (Set( RideHandlesSpriteBit ) ? 0x20 : 0)
-			| (Set( HoldsLitterBit ) ? 0x40 : 0) | (Set( IsFireworksBit ) ? 0x80 : 0) | (Set( RunsContinuouslyBit ) ? 0x100 : 0);
+			| (Set( HoldsLitterBit ) ? 0x40 : 0) | (Set( IsFireworksBit ) ? 0x80 : 0) | (Set( RunsContinuouslyBit ) ? RunsContinuouslyFlag : 0);
+
+	/// <summary>The bit of an object's <c>mFlags</c> that <c>Info.RunsContinuously</c> sets (<c>+0x33</c> bit 0).</summary>
+	public const int RunsContinuouslyFlag = 0x100;
 
 	/// <summary>
 	/// <c>Info.MapOffsetX</c> and <c>Info.MapOffsetY</c>, descriptor <c>+0x30</c> and <c>+0x34</c>: the cells from an
@@ -543,6 +546,25 @@ public sealed partial class ItemDescriptionFile
 
 	public int RedLineCapacity => _redLineCapacity ?? _category?.RedLineCapacity ?? 0;
 
+	/// <summary>
+	/// A tier's red lines - <c>Upgrades[tier].RedLineSpeed</c> and <c>RedLineCapacity</c>, descriptor
+	/// <c>+0x1ac</c> and <c>+0x19c + 0x40 × tier</c>, the category's showing through. A ride's wear reads its own
+	/// tier's (<c>FUN_004df450</c>).
+	/// </summary>
+	public int RedLineSpeedAt( int tier )
+		=> tier == 0 ? RedLineSpeed : _laterRedLineSpeed[tier - 1] ?? _category?.RedLineSpeedAt( tier ) ?? 0;
+
+	public int RedLineCapacityAt( int tier )
+		=> tier == 0 ? RedLineCapacity : _laterRedLineCapacity[tier - 1] ?? _category?.RedLineCapacityAt( tier ) ?? 0;
+
+	/// <summary>
+	/// A tier's wear rate - <c>Upgrades[tier].WearRate</c>, descriptor <c>+0x1b0 + 0x40 × tier</c>, the category's
+	/// showing through, nought when neither states it. Nought is a thing that never wears
+	/// (<c>FUN_004df670</c>, <c>0x004df6e0</c>).
+	/// </summary>
+	public int WearRateAt( int tier )
+		=> _wearRate[tier] ?? _category?.WearRateAt( tier ) ?? 0;
+
 	private int? _buildPrice;
 
 	private int? _researchCost;
@@ -594,6 +616,12 @@ public sealed partial class ItemDescriptionFile
 	private readonly float?[] _queueWaitTimeConstant = new float?[Tiers];
 	private int? _durationUnit;
 	private int? _redLineSpeed;
+
+	private readonly int?[] _laterRedLineSpeed = new int?[Tiers - 1];
+
+	private readonly int?[] _laterRedLineCapacity = new int?[Tiers - 1];
+
+	private readonly int?[] _wearRate = new int?[Tiers];
 	private int? _redLineCapacity;
 
 	private int? _entryDeltaX;
@@ -701,14 +729,22 @@ public sealed partial class ItemDescriptionFile
 
 			switch ( key )
 			{
-				// Wear and research are unbuilt, and these are the keys of theirs the Instant Action layer sets
-				// (Easy_<stem>.sam), counted where they are read rather than stored for nothing to use. Slot
-				// nought's research cost is read: it is what seeds the researched flag. See ResearchCost.
+				// Each tier's wear rate, which the Instant Action layer (Easy_<stem>.sam) sets for its rides.
 				case "Upgrades[0].WearRate":
-				case "Upgrades[1].WearRate":
-				case "Upgrades[2].WearRate":
-					Unimplemented.Report( "ITEM_WEAR_RATE" );
+					_wearRate[0] = Number( line );
 					break;
+
+				case "Upgrades[1].WearRate":
+					_wearRate[1] = Number( line );
+					break;
+
+				case "Upgrades[2].WearRate":
+					_wearRate[2] = Number( line );
+					break;
+
+				// Research is unbuilt, and these are the keys of its the Instant Action layer sets, counted where
+				// they are read rather than stored for nothing to use. Slot nought's research cost is read: it is
+				// what seeds the researched flag. See ResearchCost.
 
 				case "Upgrades[0].CostOfResearch":
 					_researchCost = Number( line );
@@ -1012,6 +1048,23 @@ public sealed partial class ItemDescriptionFile
 
 				case "Upgrades[0].RedLineCapacity":
 					_redLineCapacity = Number( line );
+					break;
+
+				// The later tiers' red lines, which an upgraded ride's wear reads.
+				case "Upgrades[1].RedLineSpeed":
+					_laterRedLineSpeed[0] = Number( line );
+					break;
+
+				case "Upgrades[2].RedLineSpeed":
+					_laterRedLineSpeed[1] = Number( line );
+					break;
+
+				case "Upgrades[1].RedLineCapacity":
+					_laterRedLineCapacity[0] = Number( line );
+					break;
+
+				case "Upgrades[2].RedLineCapacity":
+					_laterRedLineCapacity[1] = Number( line );
 					break;
 			}
 		}

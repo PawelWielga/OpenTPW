@@ -6043,6 +6043,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   gull at 0.0990 to 0.0997 of 0.1017; `SCAPE_OMP_SOUND_TYPE_3` read no more, twice in the control. 31 bugs put
   back, 31 fail a test (three survived the first tests, which were then made to move the listener and to see the
   first variation drawn). Tests 2916.
+- [x] **Q303. A ride wears by running, asks to break down, and is mended.** A piece of the old Q303 (the
+  writer's leftovers), split by the session: its other pieces are Q304. The State of repair stayed 100, so no
+  ride ever broke of itself and no repair counted down. **Read** (`ride-operation.md`, "A ride's wear"):
+  `FUN_004df670` and `FUN_004df450`: every 64th sweep an open ride with somebody on loses
+  `(x + y) × WearRate × 0.5`, `x` its speed over the item's most and `y` its riders over the item's most, each
+  scaled to 0.1..1 and moved half way to 1 on its red line; the life loses a fiftieth of it; `VAR_WORN` under
+  20; at nought the caller asks for a breakdown and takes 5 off the life. **The original** (`q303/orig/`, 3
+  predictions of 3): 84 falls in two runs, each on a tick dividing by 64 and each `1.38 + 0.135 n` for the
+  Belly Bounce's riders; worn from 18.92; broken at 0.00 on tick 5632 with the life 92.99, mechanic 26 assigned
+  31 ticks on, 100 and open 126 ticks after the break. **Built** (`ParkRideWear`,
+  `ParkRideOperation.WearAndAskToBreak`, `WearByRunning`, `ItemDescriptionFile.WearRateAt`, `RedLineSpeedAt`,
+  `RedLineCapacityAt`, `ParkItemCatalogue.Item.WearAt`). **Run** (`q303/confirm.py`, 8 of 8, the control 1 of
+  1): 66 lines of `wear 1.515 with 1 on` from 100 to 0.010, worn from 19.705, `requested breakdown` on tick 4992
+  with the life 93.000, broken at once, mended by mechanic 26 and open 111 sweeps on, wearing again from 100;
+  the ride's window drew the bar at a fifth and then empty under BROKEN DOWN. 55 bugs put
+  back, 55 fail a test (three survived the first tests, which were then made to land on a byte of 9, to stand
+  on the riders' line, and to condemn a ride on the turn the ask takes its last life). Tests 2939.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
