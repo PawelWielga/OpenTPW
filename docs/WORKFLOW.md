@@ -20,6 +20,7 @@ file does not, so where the two differ `CLAUDE.md` wins.
 
 - **Never push, and never open a pull request, without a fresh yes from Alexah.** Commit locally as work finishes. Say what is ready, which branches, and where it would go. Then wait.
 - When the yes comes, it covers everything of Alexah's that is not yet up. Survey every local branch in **both** clones against origin with `git ls-remote`, not a remembered list, and do not narrow it to what you named. Two stay behind unless asked for by name: a branch carrying an open pull request, and `wf-review-*` scratch branches. `git ls-remote upstream 'refs/pull/*'` lists closed pull requests too, so read a pull request's state (`https://api.github.com/repos/<owner>/<repo>/pulls/<n>`, no login needed) before holding its branch back.
+- **`gh-pages` on origin is not ours to survey.** It holds the fan website's finished files and nothing of the engine ("The website" below). The website's own publish replaces it by force, the one force push there is. Never check it out, merge it, push to it by hand or delete it, and leave it out of the survey above.
 - Push only to `origin` (Alexah's fork), one explicit refspec per branch, no force, no pull request. Run it with `GIT_TERMINAL_PROMPT=0` and the askpass variables unset so a missing login fails fast, then read the tips back with `git ls-remote origin`.
 - Before a push, every commit is built **and tested** alone in a throwaway worktree. CI is refused; this ritual is what replaces it.
 - Stage files explicitly. Never `git add -A`. Check `git worktree list` and `git branch --list 'worktree-*'` for leftovers from review agents.
@@ -30,6 +31,26 @@ Four things about that gate, each of which has cost a session:
 - **A green working-tree build is not evidence that a commit compiles.** `git mv` stages a rename using the file's *indexed* content, so a class rename can stay unstaged and the commit fails to build even though your tree is fine.
 - **`git add -p` is unavailable here.** When one file carries changes belonging to two commits, re-cut the commits so their file sets are *disjoint*; do not try to split a file.
 - **A test count in a commit message is a claim about that commit standing alone**, and a full-suite run cannot check it. Either gate the commit alone or do not quote a count.
+
+## The website
+
+The fan website is at https://maexah.github.io/OpenTPW/ . It is its own project: a private repo in the folder
+`OpenTPW.Website` beside this one, with its own `CLAUDE.md`, plan and rules. Only two things tie it to this repo
+(Alexah, 2026-10-11: "ensure updating the site when relevant is part of the workflow").
+
+- **A push of `main` brings it up to date by itself.** `tools/hooks/pre-push` (the same `core.hooksPath` as the
+  pre-commit hook) runs the website's `tools/publish.sh`. That rebuilds the pages and sends them to the branch
+  `gh-pages` of this repo on origin, which GitHub Pages serves. The website's Ride Status board is read from
+  `docs/STATUS.md` (the "Numbers" table's `Opcodes` and `Known gaps` rows) and `docs/QUEUE.md` (the open items'
+  ids and titles, in order) of the commit being pushed. So those two files are public words: a queue title is
+  read by visitors as it is written. The hook never refuses a push. It says so when it did not publish, which
+  happens while the website's own repo holds work that is not pushed yet.
+- **Some of what the website says is kept by hand, and a task that changes what a player can do must say so.**
+  When a ride, shop or sideshow starts to run for guests, when saving a park or finishing a game starts to work,
+  or when a land opens, end the task's report with one line: "the website needs a change", and what. The
+  website's `README.md`, "Changing what the site says", names the place for each (the `running` list, the "What
+  you can do today" lists, the park notice). Making that change is website work: its own repo, its own session
+  if it is more than a line, and its own yes before it is pushed.
 
 ## Subagents
 
