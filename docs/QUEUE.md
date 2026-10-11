@@ -965,13 +965,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q13. Move `docs/CLEANUP-PLAN.md` into `docs/history/`.** Every item in it is closed. It is still untracked in
   `docs/`, so it exists on this machine only. Commit it under `docs/history/` and list it in `docs/history/README.md`.
   No game run.
-- [ ] **Q95. Two descriptor offsets the compiled `.sam` schema names otherwise.** Found by Q50c's schema simulation
-  (`FUN_00401030` over the table at `0x00744b30`), not yet checked against each page's own evidence: `hud.md` calls
-  item `+0xC4` `Research.Group`, which the schema puts at `+0x178`, making `+0xC4` `UsageInfo.GoldenTicketCost`; and
-  `park-engine.md` divides a capacity by `+0x1a0`, which the schema makes `Upgrades[0].InitDuration` (`+0x198` is
-  `InitCapacity`). Settle each against the code that reads it, and correct the page that is wrong. No game run.
-  Q165 settled both from the scorer (`ride-operation.md`, "What a thing is worth to a guest"): `+0xC4` is
-  `GoldenTicketCost` and `+0x1a0` `InitDuration`; `hud.md` ("The mystery row") and `park-engine.md` ("The inputs are named") both say so now.
 - [ ] **Q14. Comment sweep of the cleanup commits.** Replace history-voice comments with what the code does now,
   found by member because line numbers go stale. Left: `AudioListener.AttenuationTo`'s summary nests a `<para>`
   inside a `<para>`, and `ParkCamcorderCameraMode.DebugWalk` steps a per-frame `WalkSpeed / 60f`; make it use
@@ -985,6 +978,9 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   `ScriptDefs.cs`, a labelled leftover left as it is, that looks corrupt. Fix each on one short
   branch off the clone's master (`docs/README.md`, "The FileFormats docs clone"). No game run; the
   site builds.
+  Read by the week-end audit (2026-10-11), not re-measured: `wad.md`'s name length and the `mFlags` `0x8` bit read
+  corrected. Still to judge: `saves.md`'s version `85`, its "sixth person model is the visitor", `0x14E`, and
+  `vm/info.md`'s per-script variable ids.
 - [ ] **Q75. The 2026-09-12 review's Phase F, what is left.** Opportunistic, never alone. Left: `SixLabors.ImageSharp` 3.1.6 in
   `OpenTPW.ModKit.csproj`; `content/textures/test.png`; `.editorconfig`'s `end_of_line = crlf` with no
   `.gitattributes`; and, to LABEL as dead by CODE rather than delete (rule 3), `Public/ModelFile.cs` and
@@ -1035,12 +1031,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   as `ParkPaths` and `ParkGround` do, but all three bind an array, which `Material.Set` samples as Wrap whatever
   the flag; `Texture.SamplerFor`'s Mirror is used only for a texture bound alone. Check that a model's UVs stay inside 0 to 1 before clamping it, since six
   register-pushed sites are not covered (`render-states.md`); the sea keeps its wrap.
-- [ ] **Q16. Screams are heard everywhere.** Sounds are placed and panned, but a park never sets
-  `Audio.ReferenceDistance` (`Audio.HoldPlaced` says so), so nothing attenuates. The lobby sets it
-  (`LobbyAudio.MoveTo`) and clears it on the way out. The distance law lives in `QMixer.dll`
-  (`audio.md`), so the reference distance is a declared choice; say so at the site. Confirm: capture the
-  mix with the camera on the ride and far from it; show the level difference; screenshot both camera
-  positions.
 - [ ] **Q17. Camcorder mode can strafe.** `ParkCamcorderCameraMode.Walk` passes
   `Input.Right` into `Step`. `park-engine.md`, "Walking on the ground is swept against the cell edges", decodes the sweep by two velocities but not the
   keys. Remove the strafe. Confirm: press the strafe key, the stand position in the `camcorder` census
@@ -1052,9 +1042,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   carries each mode's refresh rate. Add an Options row: VSync mode, and a frame limit from 30 up to
   Unlimited, default the monitor's refresh rate on first launch. Confirm: screenshot the options row;
   log the measured frame time at two settings.
-- [ ] **Q20a. A world particle pass.** Nothing draws a particle effect in the world (`ParticleSystem`'s summary, "Not
-  built: drawing effects in the world"; `ScreenParticles` draws only `OnScreen` templates). Build it once, for Q20b and
-  Q38. Confirm: one known effect drawn in the park, screenshot.
 - [ ] **Q20b. No bubbles on the drinks shop, no chimney smoke on the staff room.** The scripts ask for the effects and
   `RideEffects` records the request; nothing consumes the records. Join them to `ParticleSystem.Spawn` through Q20a's
   pass (`ParLib.cs` names `Bubbles = 58`, `Smoke = 2`, `SmallSmoke = 13`; `park.md` decodes the node and the per-tick
@@ -1068,6 +1055,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
     emitters only together with those records, or `Coconut.RSE`'s `KILLOBJ 1` can never stop the bubbles. The theme's
     `.emt` files go into the first empty template slots, 101 and 102 in jungle, never past 104. Layout: Q193. Review
     items fmt-assets-v1, gap3-6, gap5-1..gap5-4.
+  Read by the week-end audit (2026-10-11): the bubbles and the seeding with the OBJ records are done (Q257i,
+  Q258). What is left is the staff room's chimney smoke, which has no trace in the tree.
 - [ ] **Q21. Entering a park: hide the front end for the fly-in.** `IslandPanel.EnterPark` closes only the
   island panel, and the rest of the front end stays up while the camera flies in. Hide it for the flight, and
   say what Escape's cancel (`FrontEnd.MenuKey`, `LobbyCameraMode.CancelLeave`) brings back - today only the
@@ -1344,6 +1333,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     twelve things (the ten managers, then the unplaced gates and lights, catalogue objects x601 and x603), no people
     and no placed objects, `mGameTick` 0, the park closed, fee 20 and the shipped `Standard.sam`'s loans (APR 18-23);
     only the cash shows the edited data folder. It is Q197's reference. Review items gap3-2..gap3-11.
+  Read by the week-end audit (2026-10-11): the jungle half looks done by Q165c, Q174c, Q181b and Q197. Left, and
+  not said above: the RSYS module that does not walk closed in the jungle saves, the `ParkGuestSprites`
+  duplicate-slot throw (not run again), and the fantasy and hallow saves, which are outside the Lost Kingdom
+  scope.
 
 ## F. Then
 

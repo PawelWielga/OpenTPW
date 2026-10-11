@@ -5995,6 +5995,32 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   stand. Then repoint what says the ticked entries live in `QUEUE.md` (`docs/STATUS.md`'s "Next", `docs/WORKFLOW.md`,
   the memory index) and check every Q-number still resolves to exactly one entry across the two files. Alexah's yes
   2026-10-01. No game run.
+- [x] **Q95. Two descriptor offsets the compiled `.sam` schema names otherwise.** Found by Q50c's schema simulation
+  (`FUN_00401030` over the table at `0x00744b30`), not yet checked against each page's own evidence: `hud.md` calls
+  item `+0xC4` `Research.Group`, which the schema puts at `+0x178`, making `+0xC4` `UsageInfo.GoldenTicketCost`; and
+  `park-engine.md` divides a capacity by `+0x1a0`, which the schema makes `Upgrades[0].InitDuration` (`+0x198` is
+  `InitCapacity`). Settle each against the code that reads it, and correct the page that is wrong. No game run.
+  Q165 settled both from the scorer (`ride-operation.md`, "What a thing is worth to a guest"): `+0xC4` is
+  `GoldenTicketCost` and `+0x1a0` `InitDuration`; `hud.md` ("The mystery row") and `park-engine.md` ("The inputs are named") both say so now.
+  Done, ticked 2026-10-11 on Alexah's word after the week-end audit's reading: both pages carry the corrected
+  offsets and nothing on either is left to correct.
+
+## C. Alexah's list: cause known, one session each
+
+- [x] **Q16. Screams are heard everywhere.** Sounds are placed and panned, but a park never sets
+  `Audio.ReferenceDistance` (`Audio.HoldPlaced` says so), so nothing attenuates. The lobby sets it
+  (`LobbyAudio.MoveTo`) and clears it on the way out. The distance law lives in `QMixer.dll`
+  (`audio.md`), so the reference distance is a declared choice; say so at the site. Confirm: capture the
+  mix with the camera on the ride and far from it; show the level difference; screenshot both camera
+  positions.
+  Done another way by Q264 to Q267 (2026-10-10), ticked 2026-10-11 on Alexah's word after the week-end audit's
+  reading: a placed voice fades by its variation's range, the original's mixer law, not by a reference distance;
+  each of the four was confirmed in the running game against the original's mixer.
+- [x] **Q20a. A world particle pass.** Nothing draws a particle effect in the world (`ParticleSystem`'s summary, "Not
+  built: drawing effects in the world"; `ScreenParticles` draws only `OnScreen` templates). Build it once, for Q20b and
+  Q38. Confirm: one known effect drawn in the park, screenshot.
+  Done by Q258 and Q261 (2026-10-10), ticked 2026-10-11 on Alexah's word after the week-end audit's reading:
+  `WorldParticles` draws a park's particles, confirmed in the running game by those items.
 
 ## D. Alexah's list: decode first, then build (two sessions each)
 
