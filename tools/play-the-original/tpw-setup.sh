@@ -16,6 +16,10 @@
 # ~/.cache. To remove the game, delete ~/Games/TPW and that menu entry.
 #
 # It does NOT download the game or a no-CD .exe. You need your own disc (or an .iso of it) and your own no-CD .exe.
+# It also needs python3, tar, find, sha256sum and sha512sum; curl or wget for the downloads; 7z or bsdtar to open a
+# disc image; and about 3.5 GB of free space when it has to download GE-Proton.
+# With no --disc it first offers a game disc it finds under /run/media, /media or /mnt, and it asks for the .exe only
+# when the install folder has no TP-nodisc.exe yet.
 #
 # Usage:
 #   bash tpw-setup.sh                                  asks you for the disc and the .exe
@@ -48,7 +52,7 @@ while [ $# -gt 0 ]; do
 		--exe) EXE="$2"; shift 2 ;;
 		--dir) DEST="$2"; shift 2 ;;
 		--no-menu) MENU=0; shift ;;
-		-h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+		-h|--help) sed -n '2,/^$/p' "$0"; exit 0 ;;
 		*) die "I don't know the option '$1'. Try: bash tpw-setup.sh --help" ;;
 	esac
 done
