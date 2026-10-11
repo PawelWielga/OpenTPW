@@ -145,17 +145,29 @@ public class ParkVoiceRangeTests
 			park.Thunder( at + new Vector3( 0f, 0f, 300f ) );
 			Assert.AreEqual( 1500f, Last().Range );
 
+			// Each one-shot the engine sets no level for plays at its variation's own volume, as a channel's
+			// whole number of 127 beside the music's 60: 47 is 35, and a guest put off's 14 is 10.
+			var of47 = 35f / 60f * 0.33f;
+
 			Assert.IsTrue( park.SingleScream( 1, -1, at ) );
-			Assert.AreEqual( 100f, Last().Range, "effect 0x69" );
+			var voice = Last();
+			Assert.AreEqual( 100f, voice.Range, "effect 0x69" );
+			Assert.AreEqual( of47, voice.Volume, 1e-6f, "effect 0x69's volume" );
 
 			Assert.IsTrue( park.SingleScream( 1, 90, at ) );
-			Assert.AreEqual( 95f, Last().Range, "effect 0x4d" );
+			voice = Last();
+			Assert.AreEqual( 95f, voice.Range, "effect 0x4d" );
+			Assert.AreEqual( of47, voice.Volume, 1e-6f, "effect 0x4d's volume" );
 
 			Assert.IsTrue( park.PutOff( at ) );
-			Assert.AreEqual( 100f, Last().Range );
+			voice = Last();
+			Assert.AreEqual( 100f, voice.Range );
+			Assert.AreEqual( 10f / 60f * 0.33f, voice.Volume, 1e-6f, "a guest put off" );
 
 			Assert.IsTrue( park.Yawn( at ) );
-			Assert.AreEqual( 100f, Last().Range );
+			voice = Last();
+			Assert.AreEqual( 100f, voice.Range );
+			Assert.AreEqual( of47, voice.Volume, 1e-6f, "a yawn" );
 
 			Assert.IsTrue( park.StaffSound( 0xa9, at ) );
 			Assert.AreEqual( 75f, Last().Range );
@@ -169,6 +181,19 @@ public class ParkVoiceRangeTests
 
 			Assert.IsTrue( child.IsPlaced );
 			Assert.AreEqual( 95f, child.Range, "a held scream's child" );
+			Assert.AreEqual( of47, child.Volume, 1e-6f, "a held scream's child, whatever its level" );
+
+			// Given a gain, the category makes the volume from the picked variation's header and reads no other.
+			var kidsOwn = new SoundCategory( "global", "global/sound", "kids" );
+			var asked = new List<(int Low, int High)>();
+			var made = kidsOwn.Play( 0x80, 0.9f, respectDelay: false, gain: header => { asked.Add( header.Volume ); return 0.123f; } )!;
+
+			Last();
+			Assert.AreEqual( 0.123f, made.Volume, 1e-6f );
+			Assert.AreEqual( 1, asked.Count );
+			Assert.AreEqual( (14, 14), asked[0], "the put-off's own bytes" );
+			Assert.AreEqual( 0.9f, kidsOwn.Play( 0x80, 0.9f, respectDelay: false )!.Volume, 1e-6f, "and with none, the volume given" );
+			Last();
 
 			// A placed voice the category is asked for without its range has none: the lobby's are this project's own.
 			var kids = new SoundCategory( "global", "global/sound", "kids" );

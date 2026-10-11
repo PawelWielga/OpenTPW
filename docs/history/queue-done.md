@@ -5919,6 +5919,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   a frame of the ride with its rider in the air; the control, main before it, 3 of 3: (510,230), 34.09,
   0.7128. Ten bugs put back: seven fail the new test, and the three in the wiring fail none (no test stands
   a `ParkObjects`; the control run is that bug).
+- [x] **Q267. A scream plays at its variation's volume, not at its script's level.** Split by the session from
+  the old Q267: its other pieces are Q268. Done 2026-10-10: a channel's volume is its variation's bytes
+  (`FUN_006bc090`) times the groups' levels, rounded a half to even (`FUN_006bb860`), as a whole number of 127
+  (`FUN_006d2980`, the table at `0x00782e40`); a scream's parameter 6 picks its variation and is no volume
+  (`audio.md`, "A channel's volume"). In the running original's mixer log all twelve kinds of 3D channel read
+  `round( v x 0.75 )` of a volume the files hold for that range, and all 212 scream lines 35 of 127 (47),
+  predicted first, 2 of 2. Built: `ParkAudio.ChannelGain`; a scream's child, a single scream, a guest put off,
+  a yawn and the land's own sounds go through it. In the running game, predicted first, 4 of 4 on the first
+  run: `voices` read ten scream samples at a volume of 0.1925 (35 over 60 of the music's 0.33) at (525, 250),
+  the log's line parameter 35, volume 47, over a frame of the Belly Bounce with its rider, and nine samples in
+  the game's own mix at 0.0614 each; the control, main before it, 2 of 2: volume 35 in the log and 0.1116 in
+  the mix, predicted before its run, so the fix is 0.550 of it (0.55 owed). Missed: the mix's bare number,
+  guessed 0.077 (the pan's share not counted). Twenty bugs put back: 18 fail a test, a nineteenth after a test
+  line was added, and one fails none (a `SCREAMLEVEL` that sets a flat volume behind the test for a
+  controller, which no shipped scream passes).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

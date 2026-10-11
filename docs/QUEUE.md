@@ -48,9 +48,17 @@ the original.
 (the fee, the visitor count, loads of guests, save and load's decode, the calendar, the shop's window, the gauge,
 the research lab), then the rest of this section in its old order.
 
-- [ ] **Q267. The writer: what else a made record leaves out.** The old Q266's other pieces, each counted or
+- [ ] **Q268. The writer: what else a made record leaves out.** The old Q267's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q267 (`audio.md`, "A channel's volume"): the staff's voices and the crowd's are still at
+  `ParkAudio.CrowdVoiceGain`, 0.30 for a hundred where the channel's number gives 0.4125 (the original's staff
+  channels read 18 and 12 of 127, the files' 24 and 16); a bumper ride's engine (68), thunder
+  (`ThunderVolume`) and the interface's flat effects are not through `ChannelGain` either. No scream was made
+  at a level other than 20 in the original. In no game run: a single scream, a guest put off (now 10 of 127
+  where it was 0.35), a yawn; the options' two volume sliders do not move `ChannelGain`'s 75 and 60. The
+  request mask's bit `0x80000` arm of `FUN_006c5690` (a volume scaled again by `params + 0x9c` over a hundred)
+  is not read.
   From Q266 (`ride-operation.md`, "Where a scream is sounded"): a fixed item's scream is counted and sounded
   where its model stands (`SOUND_PLACE_NO_CELL_RECTANGLE`; the original's record holds cell (0,0) alone,
   so (5, 5)); the wiring from the script to the place is held by the game run alone; a single scream, a
@@ -58,10 +66,7 @@ the research lab), then the rest of this section in its old order.
   where the original's is its model's base height, nought on the stock park's flat land and not read on a
   hill; a script's own started sound with no node (`FUN_00556b90`'s other arm, the same middle) was not
   looked at here; the scream was not measured in the mix, its place and gain read from `voices` alone.
-  From Q265 (`audio.md`, "A voice's range, and the rectangle it follows the listener in"): the scream
-  channel's volume read 35 of 127, the variation's 47 times the sound effects'
-  75 over a hundred; the levels here (`ScreamVolume`, `SingleScreamVolume`, `CrowdVoiceGain` for the staff)
-  were not held against that. Not identified: the original's channels at the listener's own place with a
+  From Q265 (`audio.md`, "A voice's range, and the rectangle it follows the listener in"): Not identified: the original's channels at the listener's own place with a
   mapping of 2.0, 95.0, 0.80 and a volume of 10 of 127. Held by the tests alone, in no game run: thunder, a
   single scream, a guest put off, a yawn; a bumper ride's engine's range is held by a game run and no test (no test
   stands a track ride's script), and its voice is at height nought where its boat floats 30 up. A script's own started sounds (`ADDOBJ`) were not looked at.
@@ -71,8 +76,7 @@ the research lab), then the rest of this section in its old order.
   gulls' and sea's voice class (`0x0006`, `0x006be090`) is not decoded, nor why the level's ambient 181 had
   no voice in the original. A channel's volume read as a whole number of 127 (the fall 75, the music 60), so a
   sound effect at a hundred is 1.25 of the music; the crowd's voice is still at its measured 0.30 where that
-  gives 0.4125 (`ParkAudio.CrowdVoiceGain`), and the code that makes the number (`FUN_006bb860`, the wrapper's
-  `+0x80`) is not read. A voice out of range plays on unheard here, where the original gives its channel up:
+  gives 0.4125 (`ParkAudio.CrowdVoiceGain`). A voice out of range plays on unheard here, where the original gives its channel up:
   where its sample stands when it is heard again is not decoded. The pan is a plain left and right, not
   QSound's. The orbit camera's point is left at height nought where the ground is high, so the listener's
   height over a hill was not held against the original's. In no game run: the river in the mix, another

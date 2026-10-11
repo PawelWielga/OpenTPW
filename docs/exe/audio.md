@@ -165,7 +165,8 @@ range. **Held in the running original** (Q265, `original/mixer.py` over 150 s of
 the Belly Bounce, `q265/orig/a-load.log`; predicted first, 2 of 2): the ride's scream channels read a mapping of
 2.0, 95.0 and 0.80 at (525, 250, 0), and on all 206 lines off the listener the gain was the law's (0.5653 at
 49.41); the staff's read 60, 75 and 90, others 80 and 100, and no channel read a number the files do not hold. A
-scream's channel volume read 0.2756, 35 of 127: its variation's 47 times the sound effects' 75 over a hundred.
+scream's channel volume read 0.2756, 35 of 127: its variation's 47 times the sound effects' 75 over a hundred
+("A channel's volume", below).
 **Not read:** the channels that stood at the listener's own place with a mapping of 2.0, 95.0, 0.80 and a volume of
 10 of 127 (a distance of nought, so at full gain): which effect they are.
 
@@ -245,8 +246,7 @@ place as (x, z, height), and the mixer keeps the third negated (`0x18001020`).
 **Not predicted, found: a channel's volume is a whole number of 127.** The fall's read 0.5905, 75 of 127; the
 river's 0.2992, 38; the music's 0.4724, 60. Those are each variation's volume (100, 50 and 100) times its
 group's level, the options' defaults of 75 for sound effects and 60 for music (`sound.sam`, `DefaultVolume`),
-rounded. The code that makes the number (`FUN_006bb860` and the wrapper's slot `+0x80`) was not read; the three
-readings are the evidence. A paused park's channel reads a distance of 10,000.32 and a gain of nought: the
+rounded. The code that makes the number is read in "A channel's volume", below. A paused park's channel reads a distance of 10,000.32 and a gain of nought: the
 pause's lift (below) is past any range.
 
 **Not read:** how the mixer applies the final gain to a sample (taken as a plain factor); what the pan and
@@ -281,6 +281,66 @@ and nought far off (`q265/engine.py`, 2 of 2).
 | `QMixer 0x18009c50` | — | The session's channel n: the count at `+8`, the array at `+0xc` | Decompiled; walked live |
 | `0x006d22d0` | — | The wrapper's channel flags from the game's, always with `0x1000` | Disassembly |
 | `0x006d2320` | — | The wrapper's slot `+0x68`: `QSWaveMixSetPanRate`, then `QSWaveMixEnableChannel` with those flags | Decompiled |
+
+## A channel's volume
+
+Read for Q267 and held against the running original's channels (`q265/orig/a-load.log`, `original/mixpairs.py`).
+
+**A voice's loudness is its variation's volume and nothing else of the play.** The channel's set-up
+`FUN_006c5690` sends a volume when the request mask has bit `0x2`: it copies `params + 0x28` to the channel
+record's `+0x18`, scales it (`FUN_006bb860`) and hands the whole number to the wrapper's slot `+0x80`.
+`params + 0x28` and the bit are written by `FUN_006c5130`, and the voice's apply (`0x006bbbe0`) gives it
+`FUN_006bc090`'s answer: the variation's two volume bytes (`+0xc`, `+0xd`), by a controller of the variation's
+own or else a draw between them ("A voice's two controllers", below); 100 for a voice with no variation.
+
+- **The groups' levels** (`FUN_006bb860`): the channel record's mask at `+0x24` picks up to four floats at
+  `[+0x34]`, multiplied together from 1.0, and the volume times that is rounded as the FPU rounds, to the
+  nearest and a half to the even number. In the running game the sound effects' product is 0.75 and the music's
+  0.60, the options' two defaults (`sound.sam`, `DefaultVolume`).
+- **The wrapper** (`FUN_006d2980`, slot `+0x80`): a number from 0 to 127, looked up in the table of words at
+  `0x00782e40`, which is `n x 258` and 32,767 at 127, and passed to `QSWaveMixSetVolume`. Anything outside 0 to
+  127 is refused. The mixer keeps it over 32,767 ("The mixer's distance law"), so a channel's volume reads as
+  `n / 127`.
+- **A scream's parameter 6 is no volume.** It is slot 0 of the voice's controllers, the held chain's zone
+  parameter, and a set of it applies a volume only on a match past slot 0 (`0x006bbb80`). All 32 variations of
+  the kids' screams, effects 71 to 90, hold the bytes 47 and 47 and name no controller on the volume, so a
+  scream is 47 whatever its script's level: `round( 47 x 0.75 )` is 35. That the Belly Bounce's parameter is
+  also 35, `(20 + 50) / 2`, is a coincidence of the two numbers.
+
+**Held in the running original** (predicted first, `q267/PREDICTION.txt`, 2 of 2). Its mixer's log of 150 s of the
+shipped park holds twelve pairs of a 3D channel's far end and volume, and each is `round( v x 0.75 )`, a half to
+the even, of a volume a variation of that range holds in the global or the jungle's category files: 35 of 127 at
+95 (47, the screams, all 212 lines of them at (525, 250)); 18 and 12 at 75 (the staff's 24 and 16); 26 at 80
+(34); 45, 64 and 16 at 90 (60, 85, 21); 32 at 60 (42); 75, 35, 21 and 10 at 100 (100, 47, 28 and 14). With
+Q264's river, 38 from 50, the rounding is seen both ways: 37.5 up to 38 and 10.5 down to 10. **Not done:** no
+scream was made at a level other than 20 in the original, so that the parameter moves no volume there is the
+listing's and the files' alone.
+
+**What OpenTPW does** (`ParkAudio.ChannelGain`): a sound effect's volume `v` plays at
+`round( v x 75 / 100 ) / 60` of the music's own level, the same whole number beside the music's 60. A held
+scream's child takes its variation's volume (`ScreamChildVolume`), and a single scream, a guest put off and a
+yawn the picked variation's (`SoundCategory.Play`'s `gain`); the land's own sounds go through the same sum.
+`SCREAMLEVEL` moves the playing child's volume only where its variation names the parameter on its volume, which
+no shipped scream does. **Not through it yet:** the staff's voices and the crowd's (`CrowdVoiceGain`, 0.30 where
+this gives 0.4125 for a hundred), a bumper ride's engine, thunder, and every flat effect of the interface.
+
+**Measured here, 2026-10-10** (`q267/confirm.py`, 4 of 4): with the camera on the Belly Bounce `voices` read ten
+scream samples at (525, 250), each at a volume of 0.1925 (35 over 60 of the music's 0.33), 24.26 off at a gain of
+0.8034, and the log's line read parameter 35, volume 47; nine of the ten were found in the game's own mix at a
+score of 0.99 or better, each at a least-squares gain of 0.0614. The build before (control, 2 of 2) read the
+log's volume as 35, the parameter, and eight samples in its mix at 0.1116 each, predicted before its run: the
+fix's is 0.550 of it, where 0.1925 over 0.35 is 0.55. Twenty bugs put back (`q267/mutations.py`): 18 fail a test,
+one more after a test line was added, and one fails none, a `SCREAMLEVEL` that sets a flat volume behind the
+test for a controller, which no shipped scream passes.
+
+| Address | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x006c5690` | — | A channel's set-up from a voice's requests: bit `0x2` the volume | Decompiled |
+| `0x006c5130` | — | Stores a volume at `params + 0x28` and sets request bit `0x2` | Disassembly |
+| `0x006bb860` | — | A channel's volume times its groups' levels, rounded | Decompiled |
+| `0x006d2980` | — | The wrapper's slot `+0x80`: 0 to 127 through the table to `QSWaveMixSetVolume` | Decompiled |
+| `0x00782e40` | — | 128 words, `n x 258`, 32,767 at 127 | Read |
+| `0x006bc090` | — | A voice's volume from its variation's bytes | Decompiled |
 
 ## Where positional audio actually lived
 
@@ -384,7 +444,7 @@ so a pitch `p` plays at 2^((p + 1) / 96) of the sample's rate above nought and 2
 
 **OpenTPW** builds this for the bumper arm (`ParkBumperCars`, `ParkCarSounds`): the lead's engine looped at 68 / 100,
 moved and pitched each tick, faded with 60 taken as milliseconds. The volume's further scale by the groups' levels
-(`FUN_006bb860`) and QMixer's own volume scale are not read. The coasters', tour ride's and go-karts' slots are not
+is read ("A channel's volume") and not applied to the engine here. The coasters', tour ride's and go-karts' slots are not
 built.
 
 ## The crowd's voice

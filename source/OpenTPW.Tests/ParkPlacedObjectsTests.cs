@@ -321,11 +321,11 @@ public class ParkPlacedObjectsTests
 				Assert.AreEqual( AudioBus.Effects, voice.Bus );
 				Assert.AreEqual( sound.Place, voice.Place );
 				Assert.AreEqual( 97f, voice.Range );
-				Assert.AreEqual( volume / 100f * ParkAudio.PlacedVolume, voice.Volume, 1e-6f );
+				Assert.AreEqual( ParkAudio.ChannelGain( volume ), voice.Volume, 1e-6f );
 			}
 
 			// The music's level times the options' two defaults, 75 over 60.
-			Assert.AreEqual( 0.4125f, ParkAudio.PlacedVolume, 1e-6f );
+			Assert.AreEqual( 0.4125f, ParkAudio.ChannelGain( 100 ), 1e-6f );
 			Assert.AreEqual( "watfall.mp2", fall.Voice!.Name, true );
 
 			// A second start of the same effect is another voice: the loop holds no delay against it.

@@ -278,6 +278,11 @@ public sealed class ParkAudio : Entity
 		return high == low ? low : low + random.Next( high - low );
 	}
 
+	/// <summary>Whether one of a variation's two controllers is on its volume and keyed by <paramref name="parameter"/>.</summary>
+	internal static bool NamesOnVolume( SoundCategoryFile.Variation header, int parameter )
+		=> ((header.GapByParameter & 1) != 0 && header.FirstKey == parameter)
+			|| ((header.SecondMask & 1) != 0 && header.SecondKey == parameter);
+
 	/// <summary>The level the crowd's voice was last set to (<c>[0x00803ab0]</c>).</summary>
 	internal int CrowdVoiceLevelNow { get; private set; }
 
@@ -445,20 +450,6 @@ public sealed class ParkAudio : Entity
 	private static readonly int[] ScreamEffects = [0x47, 0x48, 0x49, 0x4a];
 
 	/// <summary>
-	/// How loud a <c>SINGLESCREAM</c> is, and <b>this one is a choice rather than a reading</b>.
-	///
-	/// <para>
-	/// The engine sets <i>no level at all</i> for a one-shot: neither <c>FUN_00551320</c> nor
-	/// <c>FUN_00551560</c> calls <c>FUN_0051bc40</c>, so the voice plays at whatever the driver's
-	/// default is - and that default lives in <c>QMixer.dll</c>, which is not in the Ghidra project.
-	/// So this is the same gain Lost Kingdom's own ride screams at, <c>(20 + 50) / 2</c> over a
-	/// hundred, standing in for a number nobody has measured. Said here rather than left to look
-	/// like a decode, exactly as <see cref="Audio.HoldPlaced"/>'s silence does.
-	/// </para>
-	/// </summary>
-	private const float SingleScreamVolume = 0.35f;
-
-	/// <summary>
 	/// The script speed the volume is averaged against - the engine's <c>+0xc0</c>, which its loader
 	/// sets to 50 and <b>no opcode ever writes</b>.
 	/// </summary>
@@ -473,8 +464,8 @@ public sealed class ParkAudio : Entity
 
 	/// <summary>
 	/// A held scream's parameter 6: the engine's <c>(a + b) / 2</c>, held to nought through 100
-	/// (<c>0x00551241</c>..<c>0x00551265</c>). Its chain picks each later child's variation by it, and
-	/// the gain here follows it - see <see cref="PlayScream"/>.
+	/// (<c>0x00551241</c>..<c>0x00551265</c>). Its chain picks each later child's variation by it. It is no
+	/// loudness: a child's is its variation's own - see <see cref="PlayScream"/>.
 	/// </summary>
 	public static int ScreamVolume( int level ) => Math.Clamp( (level + ScriptSpeed) / 2, 0, 100 );
 
@@ -694,7 +685,8 @@ public sealed class ParkAudio : Entity
 		}
 
 		Log.Info( $"Park audio: script {scriptId} screaming, band {band} effect {effect} "
-			+ $"volume {ScreamVolume( level )} at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
+			+ $"parameter {ScreamVolume( level )} volume {ScreamChildVolume( effect, 0, level )} "
+			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
 
 		// Its first child now, the rest from OnUpdate, each on this ride's own clock.
 		_screams.Start( scriptId, effect, band, level, at, Time.Now );
@@ -704,18 +696,19 @@ public sealed class ParkAudio : Entity
 
 	/// <summary>
 	/// Sounds one child of a held scream: a sample of that variation, placed at the ride, at the
-	/// chain's level, heard over the variation's own range (<see cref="SoundCategory.RangeOf"/>).
-	/// <see cref="ParkScreams"/> decides when and which; this is only the sound.
+	/// variation's own volume (<see cref="ChannelGain"/>), heard over the variation's own range
+	/// (<see cref="SoundCategory.RangeOf"/>). <see cref="ParkScreams"/> decides when and which; this is only
+	/// the sound.
 	/// </summary>
 	/// <remarks>
-	/// The gain is <see cref="ScreamVolume"/>, the value the original gives the voice's parameter 6.
-	/// What the original is known to do with that value is pick the next child's variation
-	/// (<c>0x006c3e1c</c>); whether anything also reads it as a level is not established, so hearing it
-	/// as one is this project's choice, <c>docs/QUEUE.md</c> Q43.
+	/// Parameter 6, <see cref="ScreamVolume"/>, is the chain's zone parameter and picks the variation
+	/// (<c>0x006c3e1c</c>); the volume is the variation's bytes under it (<c>FUN_006bc090</c>), 47 on every
+	/// shipped scream whatever the parameter (<c>docs/exe/audio.md</c>, "A channel's volume").
 	/// </remarks>
 	private Voice? PlayScream( ParkScreams.Chain chain, int variation )
 	{
-		var voice = Audio.Play( _kids?.PickFrom( chain.Effect, variation ), ScreamVolume( chain.Level ) / 100f,
+		var voice = Audio.Play( _kids?.PickFrom( chain.Effect, variation ),
+			ChannelGain( ScreamChildVolume( chain.Effect, variation, chain.Level ) ),
 			bus: AudioBus.Effects, position: chain.At, range: _kids?.RangeOf( chain.Effect, variation ) );
 
 		if ( voice != null )
@@ -723,6 +716,25 @@ public sealed class ParkAudio : Entity
 
 		return voice;
 	}
+
+	/// <summary>
+	/// The volume, of a hundred, of a child of scream <paramref name="effect"/>'s variation
+	/// <paramref name="variation"/> under a script's level: the variation's bytes, by a controller of its own
+	/// that names the effect's parameter or else a draw between them (<see cref="Controlled"/>). Nought for a
+	/// variation the category has not got.
+	/// </summary>
+	internal int ScreamChildVolume( int effect, int variation, int level )
+		=> _kids?.VariationsOf( effect ) is { } headers && variation >= 0 && variation < headers.Count
+			? Controlled( headers[variation], 1, _kids.ParameterOf( effect ), ScreamVolume( level ), _screamRandom )
+			: 0;
+
+	private readonly Random _screamRandom = new();
+
+	/// <summary>
+	/// A one-shot of the kids' category the engine sets no level for (<c>Sound_PlayEffect</c> with no
+	/// <c>FUN_0051bc40</c> after it): the picked variation's own volume, its bytes or a draw between them.
+	/// </summary>
+	private float OneShotGain( SoundCategoryFile.Variation header ) => ChannelGain( Controlled( header, 1, 0, 0, _screamRandom ) );
 
 	/// <summary>
 	/// Stops a ride screaming - <c>STOPSCREAM</c>: its own chain is cut and forgotten, and no other
@@ -743,8 +755,8 @@ public sealed class ParkAudio : Entity
 	/// <summary>
 	/// <c>SINGLESCREAM</c> - one scream, once, belonging to nobody: the engine keeps no handle for it
 	/// and sets no level (<c>FUN_00551320</c> and <c>FUN_00551560</c>, neither of which touches
-	/// <c>FUN_0051bc40</c>). See <see cref="SingleScreamEffectFor"/> for which one, and
-	/// <see cref="SingleScreamVolume"/> for why its gain is a declared choice.
+	/// <c>FUN_0051bc40</c>), so it plays at its variation's own volume (<see cref="OneShotGain"/>). See
+	/// <see cref="SingleScreamEffectFor"/> for which one.
 	/// </summary>
 	/// <returns>Whether anything started.</returns>
 	internal bool SingleScream( int band, int level, Vector3 at )
@@ -760,7 +772,7 @@ public sealed class ParkAudio : Entity
 			return false;
 		}
 
-		var voice = _kids.Play( effect, SingleScreamVolume, bus: AudioBus.Effects, position: at, ownRange: true );
+		var voice = _kids.Play( effect, bus: AudioBus.Effects, position: at, ownRange: true, gain: OneShotGain );
 
 		if ( voice == null )
 			return false;
@@ -768,7 +780,7 @@ public sealed class ParkAudio : Entity
 		_screamSamples.Add( voice.Name );
 
 		Log.Info( $"Park audio: single scream, band {band} level {level} effect {effect} "
-			+ $"sample '{voice.Name}' at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
+			+ $"sample '{voice.Name}' volume {voice.Volume:0.0000} at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
 
 		return true;
 	}
@@ -783,7 +795,7 @@ public sealed class ParkAudio : Entity
 	/// </summary>
 	/// <remarks>
 	/// The engine sets no level for it (<c>Sound_PlayEffect</c> with no handle, no <c>FUN_0051bc40</c>), as
-	/// for <c>SINGLESCREAM</c>, so it plays at the same declared stand-in, <see cref="SingleScreamVolume"/>.
+	/// for <c>SINGLESCREAM</c>, so it plays at its variation's own volume (<see cref="OneShotGain"/>).
 	/// It is not held back by the repeat delay: a sale puts several guests off at once, and the original
 	/// throttles nothing.
 	/// </remarks>
@@ -793,13 +805,13 @@ public sealed class ParkAudio : Entity
 		if ( !Audio.Ready || _kids is not { IsValid: true } )
 			return false;
 
-		var voice = _kids.Play( PutOffEffect, SingleScreamVolume, respectDelay: false, bus: AudioBus.Effects,
-			position: at, ownRange: true );
+		var voice = _kids.Play( PutOffEffect, respectDelay: false, bus: AudioBus.Effects,
+			position: at, ownRange: true, gain: OneShotGain );
 
 		if ( voice == null )
 			return false;
 
-		Log.Info( $"Park audio: put off, effect {PutOffEffect} sample '{voice.Name}' "
+		Log.Info( $"Park audio: put off, effect {PutOffEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} "
 			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0}) range {voice.Range ?? 0f:0} gain {voice.DistanceGain:0.0000}" );
 
 		return true;
@@ -857,7 +869,7 @@ public sealed class ParkAudio : Entity
 	/// not been checked by listening; they are named <c>yawn1</c>, <c>yawn2a</c> and <c>yawn3a</c>.
 	/// </summary>
 	/// <remarks>
-	/// The engine sets no level for it, as for <see cref="PutOff"/>, so it plays at the same declared stand-in,
+	/// The engine sets no level for it, as for <see cref="PutOff"/>, so it plays at its variation's own volume,
 	/// and it is not held back by the repeat delay.
 	/// </remarks>
 	/// <returns>Whether anything started.</returns>
@@ -866,13 +878,13 @@ public sealed class ParkAudio : Entity
 		if ( !Audio.Ready || _kids is not { IsValid: true } )
 			return false;
 
-		var voice = _kids.Play( YawnEffect, SingleScreamVolume, respectDelay: false, bus: AudioBus.Effects,
-			position: at, ownRange: true );
+		var voice = _kids.Play( YawnEffect, respectDelay: false, bus: AudioBus.Effects,
+			position: at, ownRange: true, gain: OneShotGain );
 
 		if ( voice == null )
 			return false;
 
-		Log.Info( $"Park audio: yawn, effect {YawnEffect} sample '{voice.Name}' "
+		Log.Info( $"Park audio: yawn, effect {YawnEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} "
 			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
 
 		return true;
@@ -884,9 +896,9 @@ public sealed class ParkAudio : Entity
 	/// <summary>
 	/// <c>SCREAMLEVEL</c> - moves the parameter of the scream a script is already holding, by the same
 	/// <c>(operand + speed) / 2</c> the start used (<c>FUN_00551290</c>, parameter 6). The chain's later
-	/// children pick their variation by it, and here the newest child's gain follows it too - see
-	/// <see cref="PlayScream"/>. It does nothing at all when no scream is held, which is the engine's own
-	/// guard on a nought handle.
+	/// children pick their variation by it. The child playing takes a new volume only where its variation
+	/// names the parameter on its volume (<c>0x006bbb80</c>, a match past slot 0), which no shipped scream
+	/// does. It does nothing at all when no scream is held, which is the engine's own guard on a nought handle.
 	/// </summary>
 	/// <remarks>
 	/// <b>One thing the engine does here is deliberately NOT reproduced.</b> Its handler writes the
@@ -904,11 +916,13 @@ public sealed class ParkAudio : Entity
 
 		scream.Level = level;
 
-		var volume = ScreamVolume( level );
+		var parameter = ScreamVolume( level );
 
-		scream.Voice?.SetVolume( volume / 100f );
+		if ( _kids?.VariationsOf( scream.Effect ) is { } headers && scream.Variation >= 0
+			&& scream.Variation < headers.Count && NamesOnVolume( headers[scream.Variation], _kids.ParameterOf( scream.Effect ) ) )
+			scream.Voice?.SetVolume( ChannelGain( ScreamChildVolume( scream.Effect, scream.Variation, level ) ) );
 
-		Log.Info( $"Park audio: script {scriptId} scream level {level} -> volume {volume}" );
+		Log.Info( $"Park audio: script {scriptId} scream level {level} -> parameter {parameter}" );
 
 		return true;
 	}
@@ -933,17 +947,20 @@ public sealed class ParkAudio : Entity
 	/// <summary>How many screams a second start has left held by nothing, still making children.</summary>
 	internal int ScreamsLetGo => _screams.LetGoCount;
 
+	/// <summary>The sound effects' group level, of a hundred: the options' default (<c>sound.sam</c>, <c>DefaultVolume</c>).</summary>
+	internal const int EffectsGroupLevel = 75;
+
+	/// <summary>The music's group level, of a hundred, which <see cref="MusicVolume"/> stands for.</summary>
+	internal const int MusicGroupLevel = 60;
+
 	/// <summary>
-	/// What a hundred of a sound effect's volume plays at here, before <see cref="Audio.MasterVolume"/>: the
-	/// music's level times 75 over 60.
+	/// What a sound effect's volume, of a hundred, plays at here before <see cref="Audio.MasterVolume"/>: the
+	/// original's whole number of 127, the volume times the group's level rounded to even
+	/// (<c>FUN_006bb860</c>, handed to <c>FUN_006d2980</c>), beside the music's 60
+	/// (<c>docs/exe/audio.md</c>, "A channel's volume").
 	/// </summary>
-	/// <remarks>
-	/// The original's mixer holds a channel's volume as the variation's volume times its group's level over a
-	/// hundred, of 127: the waterfall's channel reads 75 of 127 and the music's 60, the options' two defaults
-	/// (<c>docs/exe/audio.md</c>, "The mixer's distance law"). That the mixer scales a sample by that number and
-	/// nothing more is not read.
-	/// </remarks>
-	internal const float PlacedVolume = MusicVolume * 75f / 60f;
+	internal static float ChannelGain( int volume )
+		=> MathF.Round( volume * EffectsGroupLevel / 100f, MidpointRounding.ToEven ) / MusicGroupLevel * MusicVolume;
 
 	/// <summary>The land's own sounds that are sounding, with what each was started from.</summary>
 	internal IReadOnlyList<(ParkPlacedObjects.Sound Sound, int Volume, Voice? Voice)> Placed => _placed;
@@ -963,7 +980,7 @@ public sealed class ParkAudio : Entity
 		var header = _ambient!.VariationsOf( sound.Effect )[0];
 		var volume = Controlled( header, 1, 0, 0, _musicRandom );
 
-		var voice = _ambient.Play( sound.Effect, volume / 100f * PlacedVolume, loop: true, respectDelay: false,
+		var voice = _ambient.Play( sound.Effect, ChannelGain( volume ), loop: true, respectDelay: false,
 			bus: AudioBus.Effects, position: sound.Place, range: sound.Range );
 
 		_placed.Add( (sound, volume, voice) );

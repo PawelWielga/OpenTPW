@@ -31,6 +31,7 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/spritesheet.py <bank.ESP> <out.png> <set>...` | A sprite bank's picture sets with their alpha, each frame over black and over white, and each frame's alpha spread and mean colour: what a particle's picture is before any blend. `wadcat --dump SPR_PA.ESP` and `--dump SPR_PA.TPC` on `esprites.wad` write the two files it reads |
 | `original/voices.py PID [SECS]` | The original's memory: every live sound voice by the service's own list (its effect and flags word, the voice's flags, place, range and rectangle, how far it is from the listener), with the listener first; a block a change. Says which placed sounds are in range and sounding. A `POLL` for `loadfile.sh` |
 | `original/mixer.py PID [SECS]` | The original's memory, inside `QMixer.dll`: the session and its listener, and every open channel's flags, place, distance mapping, volume, the mixer's own distance, and its cone, distance and final gains, with the gain the law gives beside the one read. How loud the mixer is playing a voice, where `voices.py` says only whether it sounds. A `POLL` for `loadfile.sh` |
+| `original/mixpairs.py [<mixer.py log>]` | A `mixer.py` log against the category files: every pair of a 3D channel's far end and volume of 127, with the variation volumes of that range that `round( v x 0.75 )` makes it from. Says which effects' channels a log holds, and that none plays at a number the files cannot make |
 | `original/modelboxes.py PID [FIRST LAST]` | The original's memory: each thing's model record's cell rectangle (`+0xc0`, `+0xc4`), whether it has a `.hmp`, the box's middle (where its scream is sounded) and its base height. Read the objects' lines (the stock park's are things 13 to 24): a person's `+0x20` is no model handle, and its line is noise |
 | `original/research.py <in> <out> <item>` | A copy of a jungle park file with one item marked researched, so Instant Action's buy list offers it |
 | `original/original.sh`, `tpwmem.py`, `gmove.py`, `record.sh`, `watch.sh` | Starting, reading, clicking, filming and watchpointing the original ("The original under Proton", below) |
@@ -91,6 +92,12 @@ whole list):
   180` is 750 and more from every sound in the park, where the mix with `bus music 0` is exact nought. `voices`
   prints each ranged voice's place, range, distance and gain; a scream's child lives a second or so, so poll it
   every 0.4 s and gather (Q265).
+- **A one-shot measured in the mix:** `AUDIO_FILE`, `bus music 0`, 16 s, then poll `voices` for 40 s between
+  two byte marks and `mixmatch.match( window, template, 0.5 )` each sample named: a scream child scores 0.99 to
+  1.000 and reads one gain to four places (`q267/confirm.py`; `find( name )` there looks a sample up in
+  `KidsHD.sdt` and `xKidsHD.sdt`). The gain is the voice's volume times its distance gain times 0.397 with the
+  camera at `515 235 60 180`, the master and the pan together, so compare two builds, not a build with a sum.
+  `voices` prints each ranged voice's volume (Q267).
 - **The orbit camera's eye is not `zoom` from the point it looks at where the ground is high:** the eye is
   lifted by the ground's height under the point and the point stays at height nought. Over the waterfall
   (ground about 12) `camera 530 513 30 180` puts the eye 38.5 off, not 30. Read `placed`'s listener, do not

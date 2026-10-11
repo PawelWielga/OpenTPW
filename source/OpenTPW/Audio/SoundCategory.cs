@@ -129,9 +129,13 @@ public sealed class SoundCategory
 	/// Whether a placed voice given no <paramref name="range"/> takes its variation's, as the original's does
 	/// (<see cref="RangeOf"/>). The lobby's placed voices are this project's own and take none.
 	/// </param>
+	/// <param name="gain">
+	/// Given, the volume is what it makes of the picked variation's header, and <paramref name="volume"/> is not
+	/// read: the original's voice takes its volume from its variation (<c>FUN_006bc090</c>).
+	/// </param>
 	public Voice? Play( int id, float volume = 1f, bool loop = false, float fadeInSeconds = 0f,
 		bool respectDelay = true, AudioBus bus = AudioBus.Effects, Vector3? position = null, float? range = null,
-		bool ownRange = false )
+		bool ownRange = false, Func<SoundCategoryFile.Variation, float>? gain = null )
 	{
 		var effect = _effects.FirstOrDefault( candidate => candidate.Id == id );
 
@@ -148,6 +152,9 @@ public sealed class SoundCategory
 
 		if ( ownRange && position is not null )
 			range ??= RangeOf( effect, variation );
+
+		if ( gain != null && variation < effect.Headers.Count )
+			volume = gain( effect.Headers[variation] );
 
 		// A looping voice never finishes, so it holds the effect until something stops it.
 		effect.AvailableAt = loop

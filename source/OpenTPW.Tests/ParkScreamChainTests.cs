@@ -884,7 +884,7 @@ public class ParkScreamChainTests
 	}
 
 	/// <summary>
-	/// <b>Each child of a held scream is a new one-shot voice, placed at the ride, at the chain's level, playing a
+	/// <b>Each child of a held scream is a new one-shot voice, placed at the ride, at its variation's own volume, playing a
 	/// sample of the variation the chain chose</b>, and a newer child leaves the one before it to play out. A level
 	/// moved mid-scream carries to every later child. A stop cuts the newest child and makes no more, and so does
 	/// the park's end.
@@ -893,7 +893,7 @@ public class ParkScreamChainTests
 	/// Level 90 is volume 70 and sends every child after the first to variation 3; level 20 is volume 35 and
 	/// variation 2. The variations' sample lists are read from the category and must not overlap, or naming the
 	/// variation by its sample would prove nothing. <b>Mutations:</b> a looped child, a child placed anywhere but the
-	/// ride, at another level or at the one-shot's fixed level, from another variation or the effect's own pick, a
+	/// ride, at the script's level or at a flat volume, from another variation or the effect's own pick, a
 	/// child that stops or fades the one before, a level that does not carry, a stop that leaves the chain or the
 	/// newest child running, a park that ends without cutting it, a band that screams at nought, and a census that
 	/// does not count the children, each fail an assertion here. Not pinned: the
@@ -930,7 +930,7 @@ public class ParkScreamChainTests
 				Assert.IsFalse( child!.Loop, "a child is a one-shot, which is what makes the next one a new sample" );
 				Assert.AreEqual( AudioBus.Effects, child.Bus );
 				Assert.AreEqual( Here, child.Place, "placed at the ride" );
-				Assert.AreEqual( ParkAudio.ScreamVolume( level ) / 100f, child.Volume, 0.0001f, $"at level {level}'s volume" );
+				Assert.AreEqual( 35f / 60f * 0.33f, child.Volume, 0.0001f, $"at its variation's 47, 35 of 127, at level {level}" );
 				Assert.IsTrue( samples[chain.Variation].Contains( child.Name ),
 					$"'{child.Name}' is not a sample of variation {chain.Variation + 1}" );
 
@@ -950,7 +950,10 @@ public class ParkScreamChainTests
 				{
 					level = 20;
 
+					var playing = chain.Voice!.Volume;
+
 					Assert.IsTrue( park.ScreamLevel( 13, level ) );
+					Assert.AreEqual( playing, chain.Voice!.Volume, "no scream's variation names the parameter on its volume" );
 				}
 
 				var plays = chain.Plays;
