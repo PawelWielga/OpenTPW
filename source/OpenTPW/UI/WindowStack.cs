@@ -229,6 +229,7 @@ internal sealed class WindowStack : Panel
 	/// <summary>Whether any open window pauses the game - see <see cref="UiWindow.Pauses"/>.</summary>
 	public bool AnyPausing => _windows.Exists( window => window.Pauses );
 
+	// Dead by CODE: nothing calls it.
 	internal bool IsFront( UiWindow window ) => _windows.Count > 0 && _windows[^1] == window;
 
 	internal void Open( UiWindow window )

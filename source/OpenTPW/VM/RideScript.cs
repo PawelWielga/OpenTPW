@@ -37,7 +37,7 @@ namespace OpenTPW;
 /// <b>Only the opcodes whose handlers were actually read are implemented.</b> Everything else is a
 /// no-op that <see cref="NotImplemented"/> counts, because a guessed instruction is worse than an
 /// absent one: it would run, produce a plausible number and take a branch nobody can account for.
-/// The ones left out include heads, lights, the date and time, and tours.
+/// The ones left out include lights, the date and the time of day, and tours.
 /// </para>
 /// </summary>
 public sealed class RideScript
@@ -729,6 +729,7 @@ public sealed class RideScript
 	public bool Waiting => _waitUntil is not null;
 
 	/// <summary>True while the script is sitting on a <c>WAIT4ANIM</c> that has not come due.</summary>
+	/// Dead by CODE: only RideScriptAnimationTests, RideScriptClockTests, RideScriptModelTests and ParkRidesTests call it.
 	public bool WaitingForAnimation => _animationUntil is not null;
 
 	/// <summary>The <c>WAIT</c> or <c>WAITANIM</c> deadline, <c>+0xa0</c>, on the caller's clock; null for none.</summary>
@@ -1659,7 +1660,7 @@ public sealed class RideScript
 	/// ride that swallowed its riders - the exact shape of green feature this project keeps catching.
 	/// </para>
 	/// <para>
-	/// <b>Its cadence is a deliberate deviation, kept by Alexah's decision</b> (docs/QUEUE.md Q183). The engine's
+	/// <b>Its cadence is a deliberate deviation, kept by Alexah's decision</b> (docs/history/queue-done.md Q183). The engine's
 	/// positioner <c>FUN_00557ab0</c> runs this for every script once a park FRAME, after the 31 ms catch-up loop
 	/// (<c>0x0054fa08</c>), which ties when an arrival is noticed to the frame rate (7 ms late at 144 fps, 33 at
 	/// 30). Here <see cref="RideScriptScheduler.StepTheWalks"/> runs it for every script once a TICK, after that
@@ -3478,6 +3479,7 @@ public sealed class RideScript
 	/// Sets the generator's state, as the engine's own setter (<c>FUN_00516370</c>) does. The tests reach
 	/// through it a state no run from <see cref="DefaultSeed"/> ever reaches.
 	/// </summary>
+	/// Dead by CODE: only RideScriptClockTests, RideScriptRelativeTests and RideScriptHeadTests call it.
 	internal void SeedRandom( uint state ) => _random = state;
 
 	/// <summary>

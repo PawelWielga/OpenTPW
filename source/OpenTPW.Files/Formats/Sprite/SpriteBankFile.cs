@@ -118,6 +118,7 @@ public sealed class SpriteBankFile : BaseFormat
 public readonly record struct SpriteSet( int First, int FramesPerDirection, int Directions )
 {
 	/// <summary>Whether this set stores a run per direction, whatever the count.</summary>
+	/// Dead by CODE: nothing calls it.
 	public bool Directional => Directions > 0;
 }
 

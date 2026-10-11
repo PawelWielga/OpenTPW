@@ -311,5 +311,6 @@ public sealed class ParkAdmission
 	}
 
 	/// <summary>Both at once, which is all any caller wants - see <see cref="IdealPrice"/> for the jitter.</summary>
+	/// Dead by CODE: nothing calls it.
 	public Opinion OpinionAt( int excitement, Random random ) => OpinionOf( IdealPrice( excitement, random ) );
 }

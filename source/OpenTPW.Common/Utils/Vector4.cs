@@ -33,6 +33,7 @@ public struct Vector4 : IEquatable<Vector4>
 	public static readonly Vector4 UnitX = new( 1f, 0f, 0f, 0f );
 	public static readonly Vector4 UnitY = new( 0f, 1f, 0f, 0f );
 	public static readonly Vector4 UnitZ = new( 0f, 0f, 1f, 0f );
+	// Dead by CODE: nothing reads it.
 	public static readonly Vector4 UnitW = new( 0f, 0f, 0f, 1f );
 
 	public readonly float Length => internalVector.Length();
@@ -102,6 +103,7 @@ public struct Vector4 : IEquatable<Vector4>
 	public readonly Vector4 WithX( float x_ ) => new Vector4( x_, Y, Z, W );
 	public readonly Vector4 WithY( float y_ ) => new Vector4( X, y_, Z, W );
 	public readonly Vector4 WithZ( float z_ ) => new Vector4( X, Y, z_, W );
+	// Dead by CODE: nothing calls it.
 	public readonly Vector4 WithW( float w_ ) => new Vector4( X, Y, Z, w_ );
 
 	public override int GetHashCode() => HashCode.Combine( internalVector );

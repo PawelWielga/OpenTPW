@@ -17,6 +17,7 @@ public class Time
 	private static long? _pinnedWall;
 
 	/// <summary>Holds <see cref="WallMilliseconds"/> at a value, for a test, which has no real time to wait through; null lets it run.</summary>
+	/// Dead by CODE: only the tests call it (TestRun and nine test classes).
 	internal static void PinWall( long? milliseconds ) => _pinnedWall = milliseconds;
 
 	/// <summary>

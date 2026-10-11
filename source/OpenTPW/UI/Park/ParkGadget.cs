@@ -24,10 +24,10 @@ namespace OpenTPW.UI;
 /// </para>
 /// <para>
 /// <b>What is here and what is not.</b> The gadget draws, the date is live and the buttons light and
-/// click. <b>Five of the six now open something</b>: buy and hire, the map, the camcorder arm, the
+/// click. <b>Five of the six open something</b>: buy and hire, the map, the camcorder arm, the
 /// Information category's staff/items/visitors lists, and the Money category's entry price. <b>Only
-/// Research still does nothing</b> - it is not a category, and neither its six effort sliders nor its two
-/// message boxes are built - so it says so, the way the park menu's Load and Save already do, and counts
+/// Research does nothing</b> - it is not a category, and neither its six effort sliders nor its two
+/// message boxes are built - so it says so in the log and counts
 /// each click as <c>RESEARCH_BUTTON</c>. <b>The gauge is live.</b> There is a happiness on every guest, and
 /// FUN_004c7bb0 is what the original does with them - average them, and read nought while the park is
 /// shut, which is what still leaves it resting at its lowest part in a park nobody has entered.
@@ -725,9 +725,9 @@ internal sealed class ParkGadget : UiWindow
 	/// GetLocaleInfoA/W appear only inside CRT locale code.
 	/// </para>
 	/// <para>
-	/// The resource's own text has not been read back yet - it is not a row of any shipped .str - so what
-	/// it looks like is still unknown, and this shows a short date until it is. That is a stand-in, not
-	/// a match.
+	/// That entry of that bundle is UITEXT 448, the row the Load Park list writes a save's date with
+	/// (<see cref="ParkFileScreen.DateOf"/>; docs/exe/saves.md). This does not use it: it shows the machine's
+	/// short date, a stand-in and not a match.
 	/// </para>
 	/// </summary>
 	private void ShowDate() => _date.Text = GameCalendar.Now.ToShortDateString();

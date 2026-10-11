@@ -19,6 +19,7 @@ public static class ParkModelTables
 	public const uint HoldsOnlyMarkers = 0x2;
 
 	/// <summary>The mesh was morphed and its face normals are stale, the node's <c>0x10000</c>. Never written here: the engine clears it as it next poses the mesh.</summary>
+	/// Dead by CODE: only ParkModelTablesTests calls it.
 	public const uint StaleNormals = 0x8;
 
 	/// <summary>

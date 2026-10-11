@@ -2621,7 +2621,7 @@ hands in the park's units times 1024, `0x00557481`), the box emptied, `+0x08` cl
 header's `+0x18`, `+0x06` = -1, `+0xab` = 0 and `+0x6f` set from the force. A template with a burst and mode
 nought then emits it; and one that links an effect (`+0xb4`) starts that too, an emitter (put off by the linked
 template's velocity and marked `+0xab` where `+0xb8` says it follows) or an effector (`+0xba`), and keeps its
-handle. It answers `count << 16 | slot`; nought for an effect of the world's (`+0xc1`) while the header's
+handle. It answers `count << 16 | slot`; nought for an effect marked at `+0xc1` while the header's
 `+0x08` is set; -1 with no slot free or no such effect.
 
 - **A type 2 record** is started by `Particles_SpawnFull` (`0x00521930`), the same with the three words at

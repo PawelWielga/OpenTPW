@@ -53,7 +53,7 @@ internal static class Game
 		Directory.CreateDirectory( saveFolder );
 		SaveFileSystem = new BaseFileSystem( saveFolder );
 
-		// The machine's options, which the original reads before it sets anything else up.
+		// The machine's options, which the original reads in WinMain's setup, before its message loop (0x00424930).
 		SaveFolder.LoadConfig();
 
 		// And the ones it has no room for, which are OpenTPW's own - how the game fills the screen.

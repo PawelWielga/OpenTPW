@@ -197,8 +197,8 @@ public sealed class ParkParticles
 		public ReadOnlySpan<byte> Bytes( int slot ) => Live.AsSpan( EmittersAt + (slot * EmitterSize), EmitterSize );
 
 		/// <summary>
-		/// Whether <see cref="Start"/> starts <paramref name="template"/> as the engine does: an effect that links
-		/// an effector, itself or down its chain of linked emitters, is not started here.
+		/// Whether <see cref="Start"/> starts <paramref name="template"/> as the engine does. False for an effect that links
+		/// an effector, itself or down its chain of linked emitters: the engine starts the effector and Start does not, so the writer leaves the effect out.
 		/// </summary>
 		public bool Starts( int template )
 		{
@@ -252,7 +252,7 @@ public sealed class ParkParticles
 
 		/// <summary>
 		/// Starts an emitter as <c>Particles_Spawn</c> does and answers its handle: nought for an effect of the
-		/// screen's while the system keeps to those, <see cref="NoSlot"/> with no slot free or no such effect.
+		/// library's marked at <c>+0xc1</c> while the header's switch at <c>+0x08</c> is set, <see cref="NoSlot"/> with no slot free or no such effect.
 		///
 		/// <para>
 		/// No particle is emitted: a file holds none, and the loader empties every emitter. An effect that bursts

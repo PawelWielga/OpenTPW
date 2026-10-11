@@ -16,6 +16,7 @@ public sealed partial class ParkWorld
 	private readonly List<ThingRecord> _records = [];
 
 	/// <summary>Every thing's record, in the file's order.</summary>
+	/// Dead by CODE: nothing calls it.
 	internal IReadOnlyList<ThingRecord> ThingRecords => _records;
 
 	/// <summary>Where <c>Used Thing Head</c> sits, the dword before the first record; -1 where the walk never got there.</summary>
@@ -39,6 +40,7 @@ public sealed partial class ParkWorld
 	/// The things on a cell, as the file chains them: the cell's <c>mWho</c>, then each thing's <c>mMapChild</c>
 	/// (<c>FUN_0050b090</c>). Empty off the map, on a cell with nobody, or where the list was not read.
 	/// </summary>
+	/// Dead by CODE: only ParkFileWriterPeopleTests and ParkFileWriterBoughtAndSoldTests call it.
 	public IReadOnlyList<int> ChainAt( int x, int y )
 	{
 		var chain = new List<int>();
@@ -61,6 +63,7 @@ public sealed partial class ParkWorld
 	}
 
 	/// <summary>A copy of a thing's record as the file holds it, its eight-byte list head first; null for an id the file does not hold.</summary>
+	/// Dead by CODE: only ParkFileWriterTests, ParkFileWriterThingsTests, ParkFileWriterPeopleTests and ParkFileWriterBoughtAndSoldTests call it.
 	public byte[]? RecordOf( int thingId )
 	{
 		var at = _records.FindIndex( record => record.Id == thingId );
@@ -69,6 +72,7 @@ public sealed partial class ParkWorld
 	}
 
 	/// <summary>A copy of a live sprite slot's 280-byte record; null for an empty slot.</summary>
+	/// Dead by CODE: only ParkFileWriterPeopleTests calls it.
 	public byte[]? SpriteRecordOf( int slot ) =>
 		_spriteRecords.TryGetValue( slot, out var at ) ? _data.AsSpan( at, SpriteRecordSize ).ToArray() : null;
 
@@ -77,6 +81,7 @@ public sealed partial class ParkWorld
 	/// each, raw (FileFormats <c>saves.md</c>, "The navigator"): only the first <c>path_buffer_count</c> waypoints
 	/// and one leg fewer mean anything. Empty for a thing that is no person of the file's.
 	/// </summary>
+	/// Dead by CODE: only ParkFileWriterPeopleTests calls it.
 	public IReadOnlyList<(int X, int Y, int Leg)> SubpathOf( int thingId )
 	{
 		var at = _records.FindIndex( record => record.Id == thingId && IsPerson( record.Model ) );
@@ -99,6 +104,7 @@ public sealed partial class ParkWorld
 	/// A staff kind's list, by its thing model: the header's head for the kind (<c>mFirstHandyman</c> to
 	/// <c>mFirstResearcher</c>), then each member's <c>mNext</c>. Empty for a model that is not staff.
 	/// </summary>
+	/// Dead by CODE: only ParkFileWriterPeopleTests calls it.
 	public IReadOnlyList<int> StaffList( int model )
 	{
 		var list = new List<int>();
@@ -125,6 +131,7 @@ public sealed partial class ParkWorld
 	/// The message centre's listener sets, each the ids told of one message type, in the file's order (FileFormats
 	/// <c>saves.md</c>, "The message centre module"); null where the file's sprites or particles did not close.
 	/// </summary>
+	/// Dead by CODE: only ParkFileWriterTests, ParkFileWriterPeopleTests and ParkFileWriterBoughtAndSoldTests call it.
 	public IReadOnlyList<IReadOnlyList<int>>? MessageSets()
 	{
 		if ( !ClosedOnSpriteTrailer )
@@ -197,7 +204,7 @@ public sealed partial class ParkWorld
 
 	/// <summary>
 	/// A sprite that is no person's own picture, as the writer takes it: a balloon or a thought bubble. All of
-	/// <see cref="Picture"/> but its slot and state is written, its place among it.
+	/// <see cref="Picture"/> but its slot, state and facing is written, its place among it.
 	/// </summary>
 	/// <param name="Interval">The sprite record's <c>+0x80</c>.</param>
 	/// <param name="MadeSetByte">The record's <c>+0xbc</c> where the sprite is made; see <see cref="WrittenPerson"/>.</param>
@@ -252,7 +259,7 @@ public sealed partial class ParkWorld
 	/// <summary>What <see cref="PutPeople"/> did, for the log.</summary>
 	/// <param name="UnmatchedSpriteSets">
 	/// Made sprites that were handed no <c>+0xbc</c>, their bank not being to hand, and found no sprite of the same
-	/// kind, bank and set in the file to copy it from: it was taken from a sprite of another set or kind, or left
+	/// kind, bank and set in the file to copy it from: it was taken from a sprite of the kind in another set or bank, or left
 	/// at one.
 	/// </param>
 	/// <param name="Balloons">Balloons written, each on its guest's <c>mBalloonScript</c>.</param>
@@ -980,6 +987,7 @@ public sealed partial class ParkWorld
 	public int SpriteFlagsOf( int slot )
 		=> _spriteRecords.TryGetValue( slot, out var at ) ? ReadInt32At( at + SpriteFlagsAt ) : 0;
 
+	// Dead by CODE: nothing calls it.
 	private const int SpriteDueAt = 0x7c;
 
 	private const int SpriteIntervalAt = 0x80;
@@ -994,7 +1002,7 @@ public sealed partial class ParkWorld
 
 	/// <summary>
 	/// A sprite record as the original's constructor leaves one (<c>FUN_004758f0</c>): its slot, state 1, an empty loop stack,
-	/// alpha 255 and scale 1, and nought where the constructor writes nought or nothing. Its <c>+0x7c</c> is
+	/// scale 1 and nought elsewhere; the program, interval, place, alpha and picture are the caller's to write. Its <c>+0x7c</c> is
 	/// nought, a time already past, so it takes its first turn at once.
 	///
 	/// <para>

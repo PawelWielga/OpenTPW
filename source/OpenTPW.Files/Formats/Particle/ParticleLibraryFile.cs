@@ -260,7 +260,7 @@ public sealed class ParticleEffectTemplate
 	/// <summary>+0xC0. The particle density setting leaves the rates and counts alone.</summary>
 	public bool IgnoresDensity { get; }
 
-	/// <summary>+0xC1. Refused while the system is told to hold back such effects (0x0080ced8), which nothing found does.</summary>
+	/// <summary>+0xC1. Refused while the system is told to hold back such effects (0x0080ced8, set by <c>Particles_SetLowDetail</c>).</summary>
 	public bool Suppressible { get; }
 
 	/// <summary>+0xC2. <see cref="Area"/> is a box; otherwise it is an upright ellipse.</summary>

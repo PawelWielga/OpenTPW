@@ -34,6 +34,7 @@ namespace OpenTPW;
 public sealed class TextureTableFile
 {
 	/// <summary>Every section the file declares, in the order it declares them.</summary>
+	/// Dead by CODE: only ParkPathTests calls it.
 	public IReadOnlyList<string> SectionNames => _order;
 
 	private readonly List<string> _order = [];

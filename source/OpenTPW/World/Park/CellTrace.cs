@@ -39,9 +39,11 @@ public enum TraceState
 public sealed class CellTrace
 {
 	/// <summary>The original's value for having come back to the line.</summary>
+	/// Dead by CODE: only CellTraceTests calls it.
 	public const int RejoinedMarker = 0x32;
 
 	/// <summary>The original's value for having run out of room.</summary>
+	/// Dead by CODE: only CellTraceTests calls it.
 	public const int FullMarker = 0x33;
 
 	/// <summary>How many cells it will record before giving up, which the original compares against.</summary>

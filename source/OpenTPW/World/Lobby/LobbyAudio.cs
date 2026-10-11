@@ -52,6 +52,7 @@ public sealed class LobbyAudio : Entity
 	/// counted.
 	/// </summary>
 	private const int GlobalThunder = 1;
+	// Dead by CODE: nothing calls it.
 	private const int GlobalMusicBed = 2;
 	private const int GlobalAmbientBed = 3;
 	private const int LocalMusic = 1;

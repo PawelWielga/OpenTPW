@@ -146,6 +146,7 @@ public class SaveReader : BaseFormat
 	/// (removes all null entries after string conversion)
 	/// </summary>
 	/// <returns></returns>
+	/// Dead by CODE: nothing calls it.
 	public string FileToString()
 	{
 		var output = ReadFile();

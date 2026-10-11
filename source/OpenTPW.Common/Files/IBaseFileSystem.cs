@@ -1,6 +1,7 @@
 ﻿
 namespace OpenTPW;
 
+// Dead by CODE: nothing implements or names it.
 public interface IBaseFileSystem
 {
 	string GetAbsolutePath( string relativePath );

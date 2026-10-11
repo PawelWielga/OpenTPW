@@ -26,11 +26,11 @@ namespace OpenTPW.UI;
 ///
 /// <para>
 /// <b>Two of the six columns are left blank.</b> Time In Park is decoded - a quarter of the park hours since the
-/// guest's arrival stamp <c>+0x1d4</c> (<c>FUN_004fd950</c>, <c>0x0049383e</c>) - and a <see cref="Peep"/> keeps no
-/// arrival stamp yet. The fifth column is
+/// guest's arrival stamp <c>+0x1d4</c> (<c>FUN_004fd950</c>, <c>0x0049383e</c>) - which <see cref="Peep.ArrivalDate"/>
+/// keeps and this column does not show. The fifth column is
 /// stranger: <b>UITEXT row 117 is literally <c>"?"</c> in the shipped string file</b>, so the original ships
 /// that column unnamed too; its row adder fills it from the guest's last thought (<c>0x0049385a</c>), which
-/// nothing here keeps. It is built, headed as the game heads it, and left empty. Rides Ridden is the guest's
+/// <see cref="Peep.Thoughts"/> keeps and this column does not show. Each is headed as the game heads it and left empty. Rides Ridden is the guest's
 /// <see cref="Peep.NumRides"/> (<c>0x00493850</c>).
 /// </para>
 /// </summary>
@@ -193,7 +193,6 @@ internal sealed class ParkVisitorsScreen : UiWindow
 
 	private void LogOrder() => Log.Info( $"Visitors list: {_list.Census()}" );
 
-	/// <summary>A guest's row - the original's row adder <c>FUN_00493800</c>.</summary>
 	/// <summary>
 	/// The list's right click (<c>0x402</c>, <c>0x00493483</c>): the camera to the row's guest, then the screen closed
 	/// (message 4, <c>0x004934da</c>), whether or not the guest is still there to go to.
@@ -204,6 +203,7 @@ internal sealed class ParkVisitorsScreen : UiWindow
 		Stack.Close( this );
 	}
 
+	/// <summary>A guest's row - the original's row adder <c>FUN_00493800</c>.</summary>
 	/// <remarks>
 	/// Every column is a number, and the list sorts on it. The original's happiness is its whole part as a bar,
 	/// <c>(byte) &lt;&lt; 10 / 100</c> (<c>0x00493870</c>), which stands in the same order as the whole part.

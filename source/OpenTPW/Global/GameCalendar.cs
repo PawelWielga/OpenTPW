@@ -178,15 +178,15 @@ public static class GameCalendar
 	}
 
 	/// <summary>
-	/// Brings the calendar up to whatever <see cref="GameClock"/> has counted, and says whether the day
-	/// turned. Driven from <see cref="Level.Update"/> after the clock, and only in a park - the
+	/// Brings the calendar up to whatever <see cref="GameClock"/> has counted, and sets the day's, the month's and the
+	/// year's edges. Driven from <see cref="Level.Update"/> after the clock, and only in a park - the
 	/// original's counter is advanced from the park loop and nowhere else, so the lobby has no calendar.
 	///
 	/// <para>
 	/// Because it is derived from <see cref="GameClock.Ticks"/>, a paused park stops the calendar for
 	/// free: no ticks come due, so no counter advances and the date cannot move. That is exactly how the
 	/// original behaves, and it was worth proving rather than assuming - the park loop reads its "now"
-	/// through 0x00402d70, which is a thunk onto the pause-aware accessor FUN_004030d0, and Game_Pause
+	/// through 0x00402d70, which reaches the pause-aware accessor FUN_004030d0, and Game_Pause
 	/// freezes the very object it reads (<c>MOV ECX,0x785970</c> at both 0x004092c3 and 0x0054f47a).
 	/// </para>
 	/// </summary>

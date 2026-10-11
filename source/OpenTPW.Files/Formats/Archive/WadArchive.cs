@@ -302,6 +302,7 @@ public sealed class WadArchive : IArchive
 		return GetItem<ArchiveFile>( internalPath );
 	}
 
+	// Dead by CODE: nothing calls it.
 	public ArchiveDirectory GetDirectory( string internalPath )
 	{
 		return GetItem<ArchiveDirectory>( internalPath );

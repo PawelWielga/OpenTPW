@@ -3,6 +3,7 @@
 public sealed class MapFile : BaseFormat
 {
 	// Guesswork / placeholders
+	// Dead by CODE: nothing calls it.
 	public enum TileType
 	{
 		Ground = 0,

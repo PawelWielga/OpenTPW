@@ -395,6 +395,7 @@ public class BaseFileSystem
 		return !string.IsNullOrEmpty( archivePath );
 	}
 
+	// Dead by CODE: nothing calls it.
 	public FileSystemWatcher CreateWatcher( string relativeDir, string filter )
 	{
 		var directoryName = GetAbsolutePath( relativeDir );

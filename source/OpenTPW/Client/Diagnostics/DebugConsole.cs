@@ -361,8 +361,8 @@ public static class DebugConsole
 				break;
 
 			// A park's weather is a different thing entirely from the lobby's - see ParkWeather. Its
-			// quality is the one lever worth having, because everything else follows from it: 0 is the
-			// heaviest storm the game can make and 100 is a clear day.
+			// quality is the one lever worth having, because everything else follows from it: 1 is the
+			// worst weather it can ask for (a lower number is raised to 1) and 100 is a clear day.
 			case "weather":
 				if ( ParkWeather.Current != null && parts.Length > 1 )
 					ParkWeather.Current.DebugQuality( (int)Argument( 1 ) );
@@ -521,7 +521,6 @@ public static class DebugConsole
 					: "crowd: a park has to be loaded" );
 				break;
 
-			// The park's own clock and what the three-a-frame cap has cost it (ParkPeople.SweepsAFrame).
 			// Writes the running park into the player's folder under the name given, spaces and all, as far as the
 			// writer is built (Level.WritePark). The park menu's Save Game does not reach it yet.
 			case "savepark":
@@ -538,6 +537,7 @@ public static class DebugConsole
 					: $"savepark: '{saveName}' was not written - the log says why" );
 				break;
 
+			// The park's own clock and what the three-a-frame cap has cost it (ParkPeople.SweepsAFrame).
 			case "sweeps":
 				Reply( ParkPeople.Current is { } swept
 					? $"sweeps: mGameTick {swept.State.GameTick}, {swept.SweepsRun} run, {swept.SweepsDropped} dropped"
@@ -2031,7 +2031,6 @@ public static class DebugConsole
 					: "money: a park has to be loaded" );
 				break;
 
-			// Every bound hoarding: its panels, texture, progress and flags.
 			// The open object window's preview: what it shows, its fit and where its turn and clip stand.
 			// `preview <radians>` holds the turn there for a repeatable frame; `preview go` lets it turn.
 			case "preview":
@@ -2047,6 +2046,7 @@ public static class DebugConsole
 				Reply( $"preview: {previewWindow.PreviewCensus ?? "none built"}" );
 				break;
 
+			// Every bound hoarding: its panels, texture, progress and flags.
 			case "hoardings":
 				foreach ( var hoardingLine in ParkObjects.Current?.HoardingCensus() ?? [] ) Reply( hoardingLine );
 				break;

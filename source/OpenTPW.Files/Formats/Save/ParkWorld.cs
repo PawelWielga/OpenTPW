@@ -188,13 +188,13 @@ public sealed partial class ParkWorld : IParkInitialState
 		public bool IsFireworks => (Flags & IsFireworksFlag) != 0;
 
 		/// <summary>
-		/// Whether tired guests can use this object - one bit, and the thing a handyman's toilet arm
-		/// looks for.
+		/// Whether this object is a toilet - one bit, and the thing a handyman's toilet search
+		/// (<c>StaffBehaviour.FindToilet</c>) looks for.
 		/// </summary>
 		public bool IsToilet => (Flags & ToiletFlag) != 0;
 
 		/// <summary>
-		/// Whether a member of staff can rest here. <b>One byte unlocks rest areas for all five kinds of
+		/// Whether a member of staff can rest here. <b>One bit unlocks rest areas for all five kinds of
 		/// staff</b>: the rest-area search (<c>FUN_00506910</c>, <c>StaffBehaviour.GoAndRest</c>) takes only
 		/// an object carrying it.
 		/// </summary>
@@ -378,6 +378,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		/// answer to a bare <c>RET</c>, so nothing is refused. Kept because it is the one bound the executable states
 		/// outright about any of these numbers.
 		/// </summary>
+		/// Dead by CODE: only ParkEconomyTests calls it.
 		public const int EnormousDeposit = 1000000;
 	}
 
@@ -762,6 +763,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		/// How many behaviours a member of staff has. Eight are shared by every kind; the numbers above
 		/// these belong to one kind each, so a state outside the whole range reads as a bad record.
 		/// </summary>
+		/// Dead by CODE: nothing calls it.
 		public const int SharedStates = 8;
 
 		/// <summary>How many pay grades there are - <c>PerGradeStaffConsts[0..4]</c>.</summary>
@@ -773,6 +775,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		/// register. Read straight off the switch both <c>FUN_00506300</c> and the strike code share.
 		/// </summary>
 		/// <returns>0 to 4, or -1 for a model that is not staff.</returns>
+		/// Dead by CODE: only ParkStaffStateTests calls it.
 		public static int PayTypeOf( int model ) => model switch
 		{
 			5 => 0,  // handyman
@@ -872,6 +875,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		public float Speed => MathF.Sqrt( (float)VelocityX * VelocityX + (float)VelocityY * VelocityY ) / One;
 
 		/// <summary>Whether the navigator has given up on reaching where it was sent.</summary>
+		/// Dead by CODE: only ParkNavigatorStateTests calls it.
 		public bool Stuck => CantReachDest != 0;
 	}
 
@@ -951,9 +955,10 @@ public sealed partial class ParkWorld : IParkInitialState
 		/// <summary>
 		/// Whether anything has been dropped here. <b>Nought on every cell of the park the game ships</b>,
 		/// and that is a fact about the file rather than a gap in the reading: the shipped park has never
-		/// been played, so nobody has ever dropped anything in it. A handyman built against this would
-		/// find nothing and fall through to patrolling, which is worth knowing before building one.
+		/// been played, so nobody has ever dropped anything in it. The handyman's litter search is counted
+		/// and not built (<c>HANDYMAN_LITTER_SEARCH</c>); he goes on to his toilet search and a random walk.
 		/// </summary>
+		/// Dead by CODE: only ParkDecodedRecordTests calls it.
 		public bool HasLitter => Litter != 0;
 
 		/// <summary>
@@ -981,6 +986,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		/// (<c>ParkState.EnterCell</c>, <c>LeaveCell</c>); this reports what the file holds.
 		/// </para>
 		/// </summary>
+		/// Dead by CODE: only ParkDecodedRecordTests calls it.
 		public bool IsOccupied => Occupant != 0;
 
 		/// <summary>
@@ -988,6 +994,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		/// <c>Type 0</c> is a real type rather than a "no answer", so this is the field that tells the two
 		/// apart. Every cell of the one park the game ships carries one.
 		/// </summary>
+		/// Dead by CODE: only ParkWorldTests calls it.
 		public bool IsMapped => (Status & MapRecord) != 0;
 	}
 
@@ -1142,11 +1149,11 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// prefix on top.
 	/// </para>
 	/// <para>
-	/// Models 9 and 11 to 19 are the park's singleton managers - one ride system, one advisor, one
-	/// tagging system - and these sizes are <b>measured from the one park the game ships</b>, because
-	/// most of their readers have not been read - the strike system's (model 9), the weather's (15) and
-	/// the economy's (16) have. Several are certainly not fixed in general: model 13 is 73,544
-	/// bytes of what is very likely another gated grid. They are here only so the walk can reach the
+	/// Models 9 to 19 are the park's singleton managers - the staff HQ (9), the mechanics' HQ (10), the
+	/// tagging system (12), the park analyser (13), the research lab (14), the weather (15), the economy (16),
+	/// the message receiver (17) and the challenge manager (19); the header names none for 11. Their sizes are
+	/// <b>measured from park files</b>, each one fixed (FileFormats saves.md, "Thing records"). Model 13 is
+	/// 73,544 bytes, mostly undecoded, closed by twenty sample rings and a 76-byte tail. They are here only so the walk can reach the
 	/// trailer and prove itself; every object is read before the first of them.
 	/// </para>
 	/// </summary>
@@ -1160,7 +1167,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		[7] = 511,   // guard
 		[8] = 509,   // researcher
 		[9] = 103,   // the strike system
-		[10] = 18,   // a bare map object
+		[10] = 18,   // the mechanics' HQ
 		[11] = 5846,
 		[12] = 16,
 		[13] = 73544,
@@ -1208,7 +1215,8 @@ public sealed partial class ParkWorld : IParkInitialState
 	// pairs each field's name string with the struct offset it is read into, and the offsets it names -
 	// mRandomSeed 0x1da708, mGameTick 0x1da70c, mParkClosed 0x1da710, mNumberOfVisitorsToDate 0x1da714,
 	// mWeather 0x1da724, mBankAccount 0x1da726, mParkGates 0x1da732, mWorldState 0x1da738 - give the same
-	// order and the same widths as the sizes above, including Guard before Researcher near the end.
+	// widths as the sizes above. The order above is the order it names them in, not the offsets' own:
+	// mFirstGuard (0x1da744) is named before mFirstResearcher (0x1da742).
 	// The three arrival vehicles and whichever is on its way. The original picks between the three by
 	// how many people are coming - under 36 takes the first, up to 60 the second, more than 60 the
 	// third (FUN_004cf3e0) - which is what the file's own "_Size1..3" naming is saying.
@@ -1901,7 +1909,7 @@ public sealed partial class ParkWorld : IParkInitialState
 			if ( _at + size > _data.Length )
 				throw new InvalidDataException( $"map cell {cell} runs past the end of the payload" );
 
-			// Only the map record is read. A cell carrying a track record and no map record would open
+			// A cell is made only from a map record. A cell carrying a track record and no map record would open
 			// with the same twenty-nine byte tile base, but those are a track's fields rather than a
 			// tile's, and no cell of the one park the game ships is shaped that way.
 			if ( (status & MapRecord) != 0 )
@@ -2121,7 +2129,7 @@ public sealed partial class ParkWorld : IParkInitialState
 			State: ReadInt32At( start + 200 ),               // mState
 			TopLeft: (ushort)ReadUInt16At( start + 204 ),    // mTopLeft - the footprint's own corner
 			AssignedStaff: (ushort)ReadUInt16At( start + 210 ), // mAssignedStaffMember
-			// mBackOfQueue and mFirstInQ sit two bytes apart and are DIFFERENT KINDS OF THING, which is
+			// mBackOfQueue and mFirstInQ sit eight bytes apart and are DIFFERENT KINDS OF THING, which is
 			// the sort of pairing that invites a reader to treat them alike. mBackOfQueue is a packed
 			// CELL - the shipped park's two shops carry 3765 and 2866, which unpack to (52,29) and
 			// (49,22), each beside its own object - while mFirstInQ is a PERSON handle, because
@@ -2392,7 +2400,7 @@ public sealed partial class ParkWorld : IParkInitialState
 			LastThought: ReadInt32At( start + 386 ),
 			ThoughtScript: ReadInt32At( start + 390 ),
 			TimeBubbleShown: ReadInt32At( start + 394 ),
-			// The three stamps, each a reading of the save's own mGameTick.
+			// Three stamps, each a reading of the save's own mGameTick, and mArrivalIndex, the guest's number.
 			ArrivalDate: ReadInt32At( start + 398 ),        // mArrivalDate
 			ArrivalIndex: ReadInt32At( start + 402 ),       // mArrivalIndex
 			TimeOfLastSpotAnim: ReadInt32At( start + 513 ), // mTimeOfLastSpotAnim
@@ -2597,7 +2605,7 @@ public sealed partial class ParkWorld : IParkInitialState
 	}
 
 	/// <summary>
-	/// The model number of the park's economy - the only manager this reader opens, because
+	/// The model number of the park's economy - the manager read for the park's prices, because
 	/// <see cref="BankAccount"/> names it and nothing else in the save says what a park charges.
 	/// </summary>
 	private const int EconomyModel = 16;

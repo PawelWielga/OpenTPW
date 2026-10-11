@@ -198,6 +198,7 @@ public sealed class SpriteScript
 	public const int Walking = 1;
 
 	/// <summary>Walking in a hurry - set 2, eight pictures, chosen when the person's purpose speed is up.</summary>
+	/// Dead by CODE: only SpriteScriptTests calls it.
 	public const int Hurrying = 2;
 
 	/// <summary>Standing - set 0, one picture. Every one-shot animation ends by jumping into it.</summary>

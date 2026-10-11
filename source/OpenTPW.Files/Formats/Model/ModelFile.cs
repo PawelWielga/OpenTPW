@@ -11,9 +11,7 @@ namespace OpenTPW;
 /// and the same 0xDD/0xCB constants at 0x04/0x08. They are distinguished by the mesh table
 /// pointer at 0x70: a static mesh always has one, an animation file always has zero.
 ///
-/// Determined by testing all 2129 .md2 files present in the real game data (using a harness
-/// that reused this project's own WadArchive/BaseFileSystem/ModelFile code), not by reading
-/// a handful of files by hand:
+/// Over all 2129 .md2 files of the game (FileFormats models.md, "Static meshes" and "Animation"):
 ///
 ///   - Static meshes (850 files, 40%) - what the parser below implements. Real offsets at
 ///     0x50 (textureListOffset), 0x54 (frameListOffset) and 0x70 (meshPtr), plus embedded
@@ -151,15 +149,16 @@ public partial class ModelFile : BaseFormat
 		/// </summary>
 		public uint Type { get; set; }
 
-		/// <summary>The points are cubic Bezier controls - every vehicle path, and every ride's.</summary>
+		/// <summary>The points are cubic Bezier controls - every path but space's slide's.</summary>
 		public bool IsBezier => (Type & 0x2) != 0;
 
 		/// <summary>The points are plain waypoints. Only space's slide does this.</summary>
 		public bool IsStraight => (Type & 0x8) != 0;
 
 		/// <summary>
-		/// The route itself. A Bezier path's count is a multiple of three rather than 3n+1,
-		/// because the loop is CLOSED: the last segment's end point is point 0 again.
+		/// The route itself. A Bezier path's count is a multiple of three rather than 3n+1:
+		/// a closed one's (type bit 0x1) last segment ends on point 0 again, and an open one's last
+		/// two points are never sampled (FileFormats models.md, "Type").
 		/// </summary>
 		public Vector3[] Points { get; set; } = Array.Empty<Vector3>();
 	}
@@ -306,9 +305,9 @@ public partial class ModelFile : BaseFormat
 		/// serve both, which is why the shader still discards near-zero alpha.
 		///
 		/// Bit 0 is the only one set on every material. The engine ORs 0x8030 into this word itself
-		/// for the materials of any mesh carrying a UV animation, but 0x10 and 0x20 are not a pair:
-		/// they occur alone 33 and 36 times respectively. What either selects, and what the 0x40
-		/// seen on just two materials means, is not known.
+		/// for the materials of any mesh carrying a UV animation (<c>0x004626fb</c>), but 0x10 and 0x20 are
+		/// not a pair: each occurs without the other. The engine carries 0x40 into the model's header flags
+		/// at 0x30; what 0x10 and 0x20 select is not known (FileFormats models.md, "Material flags").
 		/// </summary>
 		public bool IsTranslucent => (Flags & 0x2) != 0;
 	}
@@ -884,7 +883,7 @@ public partial class ModelFile : BaseFormat
 
 	/// <summary>
 	/// The header's float at <c>0xa0</c>: what the engine adds to a height it takes for a point on this model
-	/// (<c>FUN_004511a0</c>), and, where it is not nought, what makes that height the landscape's under the point
+	/// (<c>FUN_004511a0</c>), and, where no lookup record carries <c>0x2</c> and it is not nought, what makes that height the landscape's under the point
 	/// (<c>FUN_00450ea0</c>). The jungle Hot Pot's is 29.8, its water. FileFormats models.md, "The surface a point stands on".
 	/// </summary>
 	public float SurfaceLift { get; private set; }
@@ -901,7 +900,8 @@ public partial class ModelFile : BaseFormat
 	///
 	/// The ushort at 0x48 is a record count and the uint at 0x7C the table's offset; each record
 	/// is 20 bytes, a flag word, the id, then a word not understood and two pointers - FileFormats
-	/// models.md, "Node lookup ids" - that nothing here reads. Record r belongs to node (ushort at 0x46) + r.
+	/// models.md, "Node lookup ids". The first pointer is the node's face anchor (<see cref="Node.Face"/>); the word
+	/// and the second pointer are not read. Record r belongs to node (ushort at 0x46) + r.
 	/// That pairing is the engine's own: its lookup (0x0044b220, <see cref="FindNode"/> here) walks the
 	/// table for a record whose id matches and whose flag word shares a bit with a mask it is given,
 	/// returns the record index, and the costume code adds 0x46 to it to find the node it shows or hides. 346 of the
@@ -1001,12 +1001,11 @@ public partial class ModelFile : BaseFormat
 	/// The routes at file 0xac: a pointer to an array of 16-byte records, each
 	/// { type, point count, offset of the points, 0 }, with the points 12-byte XYZ triples.
 	///
-	/// NOTHING IN THE FILE SAYS HOW MANY RECORDS THERE ARE. Every u16 in 0x90..0xc0 was measured
-	/// against the known counts and none is a count: 0xb8 reads 1 for the haunted house, which
-	/// has four, and 49 for the bus, which has one. What the game does instead is index them by
-	/// node - each node that follows a route carries its index at +0x52 - so the highest index
-	/// any node names is the last route. A model whose route no node names, which is the bus,
-	/// the ferry and the go-karts, still has the one at index 0, hence the floor of one.
+	/// The header's ushort at 0x40 is the count (FileFormats models.md, "Paths"), and it is not read
+	/// here: the count is taken from the nodes. Each node that follows a route carries its index
+	/// at +0x52, so the highest index any node names is the last route. A model whose route no
+	/// node names, which is the bus, the ferry and the go-karts, still has the one at index 0,
+	/// hence the floor of one.
 	///
 	/// That matters because the array is not self-delimiting: the bytes after the haunted
 	/// house's fourth record are vertex floats, and read as a record they give a count of

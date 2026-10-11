@@ -16,14 +16,13 @@ namespace OpenTPW;
 /// <b>Guests walk, and arriving somewhere now means something.</b> The needs loop is the first of the
 /// original's two per-guest calls and the twenty-two state behaviours are the second - see
 /// <see cref="PeepBehaviour"/>, which is that second call and which decides what a walk coming to an end
-/// amounts to. <b>Eighteen of the twenty-two are built</b>; the other four stand in one group at the
-/// foot of its switch, each saying what it waits on.
+/// amounts to. <b>Twenty-one of the twenty-two are built</b>; the other, the litter-bin errand
+/// (<see cref="PeepState.GoingToMinorDestination"/>), stands at the foot of its switch saying what it waits on.
 /// <para>
 /// <b>They choose now.</b> A guest judges the admission fee, pays it, decides where to go, walks there,
 /// joins the queue and steps up it, is invited aboard, rides, and is let off at the exit. Six of this
 /// park's objects can be offered: the ride, the sideshow, the drinks shop and the three toilets
-/// (<see cref="ParkRideChoice.Offerable"/>). Bringing the states up one at a time is how the ride VM was
-/// done, and it is why this could be trusted at each step rather than all at once at the end.
+/// (<see cref="ParkRideChoice.Offerable"/>).
 /// </para>
 /// </para>
 /// </summary>
@@ -1073,12 +1072,15 @@ public sealed partial class ParkPeople : Entity
 	private int _arrivalMark;
 
 	/// <summary>The <c>mGameTick</c> the next load's wait is counted from - the original's <c>mTimeSig</c>.</summary>
+	/// Dead by CODE: only ParkTickTests and ParkFileWriterPoolTests call it.
 	internal int ArrivalMark => _arrivalMark;
 
 	/// <summary>Whether a load is held, from the sweep that calls it to the sweep that lets it go - <c>mOffloading</c>.</summary>
+	/// Dead by CODE: only ParkTickTests and ParkFileWriterPoolTests call it.
 	internal bool LoadHeld => _offloading;
 
 	/// <summary>How many of the load held are still to be dropped - <c>mPeopleOnBus</c>.</summary>
+	/// Dead by CODE: only ParkTickTests and ParkFileWriterPoolTests call it.
 	internal int StillToDrop => _arrivalsRemaining;
 
 	/// <summary>
@@ -1401,8 +1403,8 @@ public sealed partial class ParkPeople : Entity
 	}
 
 	/// <summary>
-	/// Sets a level the deciding turn's unbuilt arms test, for the debug console's <c>need</c>: illness, litter or
-	/// prankery. An INSTRUMENT, as <see cref="SetToilet"/> is: nothing here makes a guest ill, two drinks fill
+	/// Sets a level the deciding turn's unbuilt arms test, for the debug console's <c>need</c>: vomit, litter or
+	/// prankery. An INSTRUMENT, as <see cref="SetToilet"/> is: a visit adds only a little illness, two drinks fill
 	/// their litter, and one arrival in twenty is a prankster.
 	/// </summary>
 	/// <param name="only">One guest's thing id, or nought for every guest.</param>
@@ -2633,6 +2635,7 @@ public sealed partial class ParkPeople : Entity
 	}
 
 	/// <summary>This staff member's walk, for the same.</summary>
+	/// Dead by CODE: only ParkStaffDrawingTests, ParkTickTests, ParkDecidingArmsTests and ParkEvictionTests call it.
 	internal PeepWalk? StaffWalkFor( int thingId ) => _staffWalks.GetValueOrDefault( thingId );
 
 	/// <summary>

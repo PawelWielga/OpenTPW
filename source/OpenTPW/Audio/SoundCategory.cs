@@ -36,16 +36,20 @@ public sealed class SoundCategory
 		/// The soonest this may play again, on <see cref="Time.Now"/>'s clock.
 		///
 		/// Counted from when the last pick would <i>finish</i>, not from when it started. The
-		/// delays only make sense that way: the music effect's is four seconds against tracks
-		/// that run seventeen and a half, so read as a gap between starts it would stack three
-		/// copies of a park's theme on top of each other.
+		/// lobby's music effect's is four seconds against tracks that run seventeen and a half,
+		/// so read as a gap between starts it would stack copies of a park's theme on top of
+		/// each other. The delay is this project's own reading of the number, which the
+		/// original holds as a voice priority (<c>docs/QUEUE.md</c> Q43).
 		/// </summary>
 		public float AvailableAt = float.NegativeInfinity;
 	}
 
 	public string Name { get; }
 
-	/// <summary>False when the category's files or banks were missing. Every call below no-ops.</summary>
+	/// <summary>
+	/// False when the category's .map files were missing or did not parse, or name no bank or no effect, and
+	/// every call below then no-ops. A bank that would not load keeps its slot, empty, and does not make it false.
+	/// </summary>
 	public bool IsValid { get; }
 
 	private readonly List<SoundBank> _banks = new();
@@ -266,9 +270,10 @@ public sealed class SoundCategory
 	/// Picks one of an effect's samples: a variation evenly, then a sample within it by weight.
 	///
 	/// The weights are a running total out of 65,535, so a roll in that range lands in exactly one
-	/// entry's slice. Nothing in the file weights the variations against each other, so they are
-	/// even - which for hallow means its rain, its terrors, its three pairs of bats and its spirit
-	/// each get a turn rather than the bats crowding out everything else.
+	/// entry's slice. The variation is drawn evenly: this does not read the weight a variation's
+	/// header carries (<see cref="SoundCategoryFile.Variation.Weight"/>) - which for hallow means its
+	/// rain, its terrors, its three pairs of bats and its spirit each get a turn rather than the
+	/// bats crowding out everything else.
 	///
 	/// A sample that would not decode gives silence rather than a re-roll: re-rolling would
 	/// quietly change the odds, and nothing in the lobby's banks fails to decode anyway.

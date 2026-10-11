@@ -43,6 +43,7 @@ public sealed class IconFile : BaseFormat
 	private readonly List<IconImage> _images = [];
 
 	/// <summary>Every image that could be read, in the order the file lists them.</summary>
+	/// Dead by CODE: only IconTests calls it.
 	public IReadOnlyList<IconImage> Images => _images;
 
 	/// <summary>

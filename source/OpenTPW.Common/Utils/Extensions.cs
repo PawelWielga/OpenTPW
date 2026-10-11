@@ -39,7 +39,9 @@ public static class BoolArrayExtension
 public static class MathExtensions
 {
 	public static int CeilToInt( this float x ) => (int)Math.Ceiling( x );
+	// Dead by CODE: nothing calls it.
 	public static int FloorToInt( this float x ) => (int)Math.Floor( x );
+	// Dead by CODE: nothing calls it.
 	public static int RoundToInt( this float x ) => (int)Math.Round( x );
 
 	public static int NearestPowerOf2( this int x ) => NearestPowerOf2( (uint)x );
@@ -79,6 +81,7 @@ public static class MathExtensions
 
 	public static Vector3 Normalize( this Vector3 vector ) => vector / vector.Length;
 
+	// Dead by CODE: nothing calls it.
 	public static Vector3 RandomVector3( float min = 0.0f, float max = 1.0f )
 	{
 		float x = Random.Shared.NextSingle() * (max - min) + min;
@@ -101,9 +104,13 @@ public static class MathExtensions
 		);
 	}
 
+	// Dead by CODE: nothing calls it.
 	public static Vector4 Column1( this Matrix4x4 matrix ) => new Vector4( matrix.M11, matrix.M21, matrix.M31, matrix.M41 );
+	// Dead by CODE: nothing calls it.
 	public static Vector4 Column2( this Matrix4x4 matrix ) => new Vector4( matrix.M12, matrix.M22, matrix.M32, matrix.M42 );
+	// Dead by CODE: nothing calls it.
 	public static Vector4 Column3( this Matrix4x4 matrix ) => new Vector4( matrix.M13, matrix.M23, matrix.M33, matrix.M43 );
+	// Dead by CODE: nothing calls it.
 	public static Vector4 Column4( this Matrix4x4 matrix ) => new Vector4( matrix.M14, matrix.M24, matrix.M34, matrix.M44 );
 
 	public static Vector3 Right( this Matrix4x4 matrix ) => new Vector3( matrix.M11, matrix.M21, matrix.M31 );
@@ -143,6 +150,7 @@ public static class MathExtensions
 	}
 }
 
+// Dead by CODE: nothing calls its Pop or Push; every Pop and Push in the source is a Stack's own.
 public static class ListExtension
 {
 	public static T Pop<T>( this IList<T> list )

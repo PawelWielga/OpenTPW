@@ -790,9 +790,8 @@ public sealed class PeepBehaviour
 
 				break;
 
-			// <b>Three states answered by standing still, each saying what it waits on.</b> Nothing here sets
-			// 9; HeadingForExit and WalkingOutside set 19 and 21, and ParkPeople takes a guest in 19 out
-			// of the park. A case that breaks looks exactly like a missing case on screen - the guest stands
+			// <b>One state answered by standing still, saying what it waits on.</b> Nothing here sets 9.
+			// A case that breaks looks exactly like a missing case on screen - the guest stands
 			// still either way - so the difference has to be written down, and UnansweredState is what lets
 			// the program itself tell them apart.
 			//

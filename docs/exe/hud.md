@@ -747,7 +747,7 @@ clears the stamp; a slider's thumb keeps its press too and leaves the stamp alon
 `0x80`; all seven list records carry it: buy `0x91`, the rest `0x291`, none `0x8` or `0x100`), and
 `LeftDoubleClicked` activates it again (`FUN_006656fa`); `UiList.StraySpoilsAClick` is false, for either button.
 The original's selected row is the one last hovered, so there a click that misses every row activates that one: here
-only a list that follows the pointer does so (the buy list), and any other's miss is counted,
+only a list that follows the pointer does so (the buy list and the park-file screens'), and any other's miss is counted,
 `LIST_CLICK_MISS_SELECTION_NOT_UNDER_POINTER`. A screen that answers no activation is counted,
 `LIST_ROW_ACTIVATED_UNANSWERED`: the visitors, all-staff and all-items lists, the first of which opens a visitor's
 window in the original. The game menu's rows, the lobby's player slots and Quit Game answer `LeftClicked` and

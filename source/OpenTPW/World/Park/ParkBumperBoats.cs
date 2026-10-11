@@ -14,7 +14,7 @@ namespace OpenTPW;
 /// record there laid over it, so its clip goes on from the frame the save left it on.
 /// </para>
 /// <para>
-/// <b>Two departures, said here.</b> The rocking the original works out from the four corners' heights is not drawn
+/// <b>The departures, said here.</b> The rocking the original works out from the four corners' heights is not drawn
 /// (<c>BUMPER_CAR_ROCK</c>), nor the wake under a boat (<c>BUMPER_CAR_WAKE</c>).
 /// </para>
 /// <para>

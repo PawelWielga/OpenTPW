@@ -32,7 +32,7 @@ namespace OpenTPW;
 /// </summary>
 public sealed class HeightfieldFile
 {
-	/// <summary>The block header's own size, and the distance from the header back to nothing - it points forwards and backwards.</summary>
+	/// <summary>The block header's size in bytes - its last field is the uint at +0x2c - which the scan needs left in the file.</summary>
 	private const int HeaderSize = 0x30;
 
 	/// <summary>Cells across, and down. 96 x 85 in every park the game ships.</summary>
@@ -187,6 +187,7 @@ public sealed class HeightfieldFile
 	public ushort FlagsAt( int x, int y ) => (ushort)(Cells[(y * CellsX) + x] & 0xFFFF);
 
 	/// <summary>The texture index of a cell - the high half of its record.</summary>
+	/// Dead by CODE: only ParkPathTests and ParkFootprintTests call it.
 	public ushort TextureAt( int x, int y ) => (ushort)(Cells[(y * CellsX) + x] >> 16);
 
 	public HeightfieldFile( Stream stream )

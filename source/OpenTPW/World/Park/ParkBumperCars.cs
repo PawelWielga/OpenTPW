@@ -1,7 +1,7 @@
 namespace OpenTPW;
 
 /// <summary>
-/// The bumper family's half of the track-ride record and its cars - the Hot Pot's boats, and the four other
+/// The bumper family's half of the track-ride record and its cars - the Hot Pot's boats, and the other
 /// themes' bumper rides (BumperType -1, -3, -6, -11 and -14). <c>docs/exe/park.md</c>, "How a bumper ride ends a go,
 /// and lets its riders off", "Where a bumper ride's cars float" and "How a bumper ride's cars move".
 ///
@@ -22,7 +22,7 @@ namespace OpenTPW;
 /// </para>
 /// <para>
 /// <b>Not built, and counted where it is reached:</b> the go-karts' and the water ride's arms, whose scripts keep
-/// <c>BUMP</c> a counted no-op; the other bumper types' templates; the cars' other sounds, smoke and splashes.
+/// <c>BUMP</c> a counted no-op; the other bumper types' templates; the cars' other sounds, splashes, puffs, wake and rocking.
 /// </para>
 /// </summary>
 public sealed class ParkBumperCars
@@ -95,7 +95,7 @@ public sealed class ParkBumperCars
 		/// <summary>The point steered at is taken again from the target and the car's offset.</summary>
 		Resteer = 0x10000,
 
-		/// <summary>Struck by another car this tick, as the second of a closing pair.</summary>
+		/// <summary>Struck by another car as the second of a closing pair; kept until the car next chooses a target.</summary>
 		Bumped = 0x40000,
 		Seating = 0x80000,
 		New = 0x100000,
@@ -1176,7 +1176,7 @@ public sealed class ParkBumperCars
 
 	/// <summary>
 	/// <c>Bumper_SteerToward</c>, <c>FUN_00547c60</c>: the point steered at taken again when asked, the steering heading
-	/// turned the record's whole turn toward it when more than half a turn off, and thrust along that heading when
+	/// turned the record's whole turn toward it when more than half that turn off, and thrust along that heading when
 	/// nearly on it; both need <see cref="CarFlags.Active"/> and the ride not broken, and the thrust no
 	/// <see cref="CarFlags.Seating"/>, so only a car with riders, in a go, drives. Answers the distance to the point.
 	/// </summary>
@@ -1231,7 +1231,7 @@ public sealed class ParkBumperCars
 	}
 
 	/// <summary>
-	/// <c>Bumper_StepCar</c>, <c>FUN_00547f50</c>, the Hot Pot's arm: friction (seven tenths of it while seating, none for
+	/// <c>Bumper_StepCar</c>, <c>FUN_00547f50</c>, the Hot Pot's arm: friction (seven tenths of it while seating, else 1000 for
 	/// a broken ride), the stepped velocity kept for the bumps, the speed, the position; and while the ride runs the drawn
 	/// heading eased toward the steering heading by the speed over 1000. Another bumper type turns toward its velocity
 	/// instead, and has no template here (<c>BUMPER_TEMPLATE_n</c>).

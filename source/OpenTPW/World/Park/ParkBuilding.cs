@@ -18,8 +18,10 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// <b>What is deliberately not built yet, and is counted rather than guessed:</b> the markers drawn while
-/// carrying (<c>CARRY_PREVIEW_MARKERS</c>) and the age-based scrap curve - see <see cref="Sell"/>.
+/// <b>What is not built is counted where it falls, rather than guessed:</b> each gap has its
+/// <c>Unimplemented.Report</c> key at its own site - among them the markers drawn while carrying
+/// (<c>CARRY_PREVIEW_MARKERS</c>), the terrain rule (<c>PLACEMENT_TERRAIN_RULE</c>) and the age-based scrap
+/// curve, see <see cref="Sell"/>.
 /// </para>
 /// </summary>
 public static class ParkBuilding
@@ -769,9 +771,7 @@ public static class ParkBuilding
 	/// <remarks>
 	/// <b>This is not <see cref="ParkObjects.Turn"/> and must not be folded into it.</b> That one is a
 	/// quaternion about the world's up axis, with a deliberately negative sense measured off the save's
-	/// own footprint cells; this is an integer map delta in cell space. The original keeps them apart too,
-	/// and pairing the wrong one with the wrong space is the mistake <see cref="ParkObjects"/>'s own
-	/// remarks record having made once already.
+	/// own footprint cells; this is an integer map delta in cell space. The original keeps them apart too.
 	/// <para>
 	/// The engine asserts on any angle that is not a quarter turn, so the four arms are the whole of it.
 	/// </para>

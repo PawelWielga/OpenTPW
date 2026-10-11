@@ -58,6 +58,7 @@ internal sealed class UiMesh
 
 	public string Name { get; }
 
+	// Dead by CODE: nothing calls it.
 	public int PartCount => _parts.Length;
 
 	/// <summary>A mesh by name - "b_login" for ui/b_login.md2 - loaded once. Null, and a warning, if it will not load.</summary>

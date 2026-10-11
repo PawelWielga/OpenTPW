@@ -251,6 +251,7 @@ public partial struct Rotation : IEquatable<Rotation>
 			&& W.Equals( rot.W );
 	}
 
+	// Dead by CODE: nothing calls it.
 	public System.Numerics.Quaternion GetSystemQuaternion() => _internalQuaternion;
 
 	public override int GetHashCode()

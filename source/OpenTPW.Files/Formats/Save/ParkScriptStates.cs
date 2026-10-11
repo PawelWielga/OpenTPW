@@ -59,7 +59,7 @@ public readonly record struct SavedScript( int Handle, int Position, int BodyWor
 
 /// <summary>
 /// One record of a script's object list, an effect <c>ADDOBJ</c> started (<c>docs/exe/saves.md</c>, "OpenTPW's
-/// writer, a made script's started effects"): the type (1 and 2 a particle, 3 to 10 a sound), the handle the spawn
+/// writer, a script's started effects"): the type (1 and 2 a particle, 3 to 10 a sound), the handle the spawn
 /// answered, the node asked for, that node's lookup record in the model (-1 with no node) and the tag a
 /// <c>KILLOBJ</c> matches. The file holds them newest first.
 /// </summary>
@@ -157,8 +157,8 @@ public readonly record struct WrittenScript( int Handle, int Position, int CallI
 /// indices, the result register, the five fields a clock or an animation keeps (the two wait deadlines, the looping
 /// key, <c>TRIGWAITANIM</c>'s mark and the timer), the limbo, bounce and walk slots with their counts, the head
 /// table and the object list (<see cref="SavedEffect"/>) are taken, because they are what this program models; the rest are stepped over by length so that the walk
-/// still has to add up. A script's <i>name</i> is not in the struct at all
-/// and is recovered a different way - see <see cref="RideScript.TakeDeclaredName"/>.
+/// still has to add up. A script's <i>name</i> lies in the string blob, at the offset
+/// the struct holds at <c>+0x74</c>, and is not read from there - see <see cref="RideScript.TakeDeclaredName"/>.
 /// </para>
 /// </summary>
 public sealed partial class ParkScriptStates
@@ -273,10 +273,9 @@ public sealed partial class ParkScriptStates
 	private readonly Dictionary<int, SavedScript> _byHandle = [];
 	private readonly List<int> _order = [];
 
-	/// <summary>Where each record's struct and tables lie in the payload, by handle - what <see cref="Put"/> writes over.</summary>
+	/// <summary>Where each record's struct and the first byte of each table's data lie in the payload (-1 for a table the record lacks), by handle - what <see cref="Put"/> writes over.</summary>
 	private readonly Dictionary<int, Place> _places = [];
 
-	/// <summary>A record's struct and the first byte of each table's data; -1 for a table the record lacks.</summary>
 	/// <summary>Where each record begins and ends, by handle - what <see cref="Splice"/> takes out.</summary>
 	private readonly Dictionary<int, (int Start, int End)> _extents = [];
 
@@ -304,6 +303,7 @@ public sealed partial class ParkScriptStates
 	public int Declared { get; private set; }
 
 	/// <summary>The scripts that were read, by the handle an object record names them with.</summary>
+	/// Dead by CODE: only ParkScriptStateTests and ParkGateTests call it.
 	public IReadOnlyDictionary<int, SavedScript> ByHandle => _byHandle;
 
 	/// <summary>

@@ -31,7 +31,9 @@
 		public static readonly Color Black = new( 0f, 0f, 0f, 1f );
 		public static readonly Color White = new( 1f, 1f, 1f, 1f );
 		public static readonly Color Red = new( 1f, 0f, 0f, 1f );
+		// Dead by CODE: nothing reads it.
 		public static readonly Color Green = new( 0f, 1f, 0f, 1f );
+		// Dead by CODE: nothing reads it.
 		public static readonly Color Blue = new( 0f, 0f, 1f, 1f );
 
 		public readonly float Length => internalColor.Length;

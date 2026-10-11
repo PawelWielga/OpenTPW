@@ -107,9 +107,7 @@ public readonly record struct WrittenHeads( IReadOnlyList<int> Records, IReadOnl
 /// <para>
 /// <b>The walk needs one thing the module does not carry: how many channels each thing has.</b> That is
 /// the item's own <c>NumSimultAnims</c> - the Jungle Spray runs three lanes and everything else one -
-/// so a lookup is passed in. It is load-bearing rather than cosmetic: walked with a single channel for
-/// everything the cursor lands 5,786 bytes short of the end, and with the real counts it lands exactly
-/// on it, across 161 records.
+/// so a lookup is passed in: the walk lands on the module's end only with the real counts.
 /// </para>
 ///
 /// <para>
@@ -216,8 +214,8 @@ public sealed partial class ParkThingStates
 
 	/// <summary>
 	/// The saved record for the <paramref name="ordinal"/>-th thing of this catalogue id, or null where
-	/// the module holds no such record - see the class remarks for why the ordinal is how they are told
-	/// apart, and what that does and does not prove.
+	/// the module holds no such record. The ordinal is the file's order; a placed thing is paired with its
+	/// record by <see cref="ForScript"/>.
 	/// </summary>
 	public SavedThing? For( int catalogueId, int ordinal )
 	{

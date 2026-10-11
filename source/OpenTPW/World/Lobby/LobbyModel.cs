@@ -75,6 +75,7 @@ public sealed class LobbyModel
 	public Vector3 BoundsMax { get; private set; } = new( float.MinValue, float.MinValue, float.MinValue );
 
 	/// <summary>Whether any mesh contributed to <see cref="BoundsMin"/> - false for a model with none.</summary>
+	/// Dead by CODE: nothing calls it.
 	public bool HasBounds => BoundsMax.X >= BoundsMin.X;
 
 	/// <summary>
@@ -88,6 +89,7 @@ public sealed class LobbyModel
 	/// bounds one at a time, which is what this is for.
 	/// </para>
 	/// </summary>
+	/// Dead by CODE: nothing calls it.
 	public IReadOnlyList<(Vector3 Low, Vector3 High)> MeshBoxes => _meshBoxes;
 
 	private readonly List<(Vector3 Low, Vector3 High)> _meshBoxes = [];
@@ -548,6 +550,7 @@ public sealed class LobbyModel
 	public Quaternion PlacedRotation => _placedRotation;
 
 	/// <summary>Moves every mesh of this model, keeping their relative placement.</summary>
+	/// Dead by CODE: nothing calls it.
 	public void SetOrigin( Vector3 origin )
 	{
 		_placedOrigin = origin;

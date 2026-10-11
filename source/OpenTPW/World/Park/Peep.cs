@@ -10,10 +10,9 @@ namespace OpenTPW;
 /// </para>
 /// <para>
 /// <b>What this is and is not.</b> It carries the needs and the behaviour a guest was saved in, ticks the
-/// needs, and holds the state that <see cref="PeepBehaviour"/> moves them through - eighteen of the
-/// original's twenty-two cases, which is enough to get a guest to the gate, through it, to a ride, onto
-/// it and off again. What is left of <c>FUN_005019f0</c> is the end of going home and the states that
-/// want a world this does not simulate yet.
+/// needs, and holds the state that <see cref="PeepBehaviour"/> moves them through - twenty-one of the
+/// original's twenty-two cases, which gets a guest to the gate, through it, to a ride, onto it, off
+/// again and home. What is left of <c>FUN_005019f0</c> is the litter-bin errand, case 9.
 /// </para>
 /// </summary>
 public sealed class Peep

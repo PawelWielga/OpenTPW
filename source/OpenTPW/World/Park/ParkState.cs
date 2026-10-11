@@ -1432,6 +1432,7 @@ public sealed class ParkState
 	}
 
 	/// <summary>The thing standing behind this one on the same cell, or nought - the original's thing <c>+10</c>.</summary>
+	/// Dead by CODE: only ParkStateTests calls it.
 	public int NextOnCell( int thingId ) => _onCellNext.GetValueOrDefault( thingId );
 
 	/// <summary>
@@ -1732,6 +1733,7 @@ public sealed class ParkState
 	}
 
 	/// <summary>How many cells hold litter, which is what a park's cleanliness comes to.</summary>
+	/// Dead by CODE: only ParkStateTests calls it.
 	public int LitteredCells
 	{
 		get

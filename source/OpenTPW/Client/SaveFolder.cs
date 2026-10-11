@@ -51,7 +51,7 @@ internal static class SaveFolder
 	/// <summary>Whether a park record is for a theme the game has - only those count their tickets (0x005af530).</summary>
 	public static bool IsTheme( string name ) => Themes.Contains( name, StringComparer.OrdinalIgnoreCase );
 
-	/// <summary>Reads save\Config.tcf into the options, if there is one - as the original does before anything else starts (0x00424930).</summary>
+	/// <summary>Reads save\Config.tcf into the options, if there is one - as the original does in WinMain's setup, before its message loop (0x00424930).</summary>
 	public static void LoadConfig()
 	{
 		_unreadConfig = SaveFileSystem;

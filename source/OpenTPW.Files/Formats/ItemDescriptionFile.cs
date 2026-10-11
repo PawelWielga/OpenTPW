@@ -751,7 +751,7 @@ public sealed partial class ItemDescriptionFile
 					break;
 
 				// The decision keys. Each is left NULL when the item's own file does not mention it, so
-				// that the category's value shows through - see the constructor's remarks.
+				// that the category's value shows through - see the constructor's category parameter.
 				case "Info.WhichUIType":
 					_whichUIType = Number( line );
 					break;
@@ -1166,7 +1166,7 @@ public sealed partial class ItemDescriptionFile
 	/// <summary>
 	/// Whether the original's loader refuses this line (<c>FUN_004017a0</c>): a key its schema does not name
 	/// (<c>FUN_00401280</c>, case-sensitive), a whole-number key whose value is not an optional <c>-</c> and digits, a
-	/// float key's not digits with at most one <c>.</c> (<c>0x00401d8b</c>), a negative in a type-5 key, or a type-6
+	/// float key's not an optional <c>-</c> and digits with at most one <c>.</c> (<c>0x00401d8b</c>), a negative in a type-5 key, or a type-6
 	/// value outside <c>[lo, hi)</c>. An array's index is not checked.
 	/// </summary>
 	private static bool IsRefused( string key, string line )

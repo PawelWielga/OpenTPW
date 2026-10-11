@@ -388,8 +388,8 @@ internal sealed class ParkHireScreen : UiWindow
 	/// The figures this game can actually answer, and no others.
 	/// </summary>
 	/// <param name="considering">
-	/// A wage being previewed, which the original subtracts from the balance and adds to the staff
-	/// costs so the effect of hiring is visible before it happens.
+	/// A wage being previewed. It is added to the staff costs shown; the original also takes it off the
+	/// balance shown (message <c>0x401</c>), which this does not.
 	/// </param>
 	private void ShowMoney( int considering = 0 )
 	{

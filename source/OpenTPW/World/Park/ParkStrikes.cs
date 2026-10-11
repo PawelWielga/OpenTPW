@@ -67,9 +67,11 @@ public sealed class ParkStrikes
 	}
 
 	/// <summary>How far a kind's dispute has gone, 0 to <see cref="TopLevel"/>.</summary>
+	/// Dead by CODE: only ParkStrikeTests calls it.
 	public int LevelOf( int kind ) => InRange( kind ) ? _level[kind] : 0;
 
 	/// <summary>The <c>mGameTick</c> of the month's change a kind was last looked at on.</summary>
+	/// Dead by CODE: only ParkStrikeTests calls it.
 	public int StampOf( int kind ) => InRange( kind ) ? _stamp[kind] : 0;
 
 	/// <summary>Whether a kind is on strike - <c>FUN_00509990</c>.</summary>

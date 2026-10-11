@@ -583,6 +583,8 @@ public static class ParkFileWriter
 	private const int LastParticleType = 2;
 
 
+	/// <summary>
+	/// Gives every head hung a sprite slot (<c>docs/exe/saves.md</c>, "OpenTPW's writer, a rider's head"). A head
 	/// on a lookup record the file has a head on keeps that slot; every other takes the lowest slot the file's
 	/// sprite table leaves empty, the kept models' first and then the made things', oldest first. A head the file
 	/// has on a record of a head table that holds none now, or on any record of a thing sold, gives its slot up.

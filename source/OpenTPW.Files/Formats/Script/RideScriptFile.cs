@@ -95,7 +95,7 @@ public sealed record RideInstruction( int Address, Opcode Opcode, IReadOnlyList<
 ///
 /// <para>
 /// This reads a script; it does not run one. <b>Something else does</b> - <c>RideScript</c>, in the game
-/// assembly, which carries 74 of the 106 instructions the opcode table declares and counts what it does
+/// assembly, which carries most of the 106 instructions the opcode table declares (docs/STATUS.md, "Numbers") and counts what it does
 /// not carry rather than guessing at it. Every ride script the game ships both reads here and runs there.
 /// </para>
 ///
@@ -122,7 +122,9 @@ public sealed class RideScriptFile : BaseFormat
 	private const int LimboRecordsOffset = 0x14;
 	private const int BounceRecordsOffset = 0x18;
 	private const int WalkRecordsOffset = 0x1C;
+	// Dead by CODE: nothing calls it.
 	private const int PadOffset = 0x20;
+	// Dead by CODE: nothing calls it.
 	private const int PadLength = 16;
 	private const int LengthOffset = 0x30;
 	private const int BodyOffset = 0x34;

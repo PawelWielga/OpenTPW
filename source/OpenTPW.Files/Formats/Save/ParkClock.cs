@@ -15,8 +15,8 @@ namespace OpenTPW;
 /// <para>
 /// <b>Found by two anchors that have to agree.</b> The module is two dwords between the message centre's closing tag
 /// (<c>SSEM</c>, little-endian) and its own (<c>KOLC</c>): so the second tag has to sit exactly twelve bytes after
-/// the first, as it does in all nine park files read. Only the first dword is taken; the second, a second stopwatch's
-/// reading, is what nothing here reads.
+/// the first, as it does in all nine park files read. <see cref="Reading"/> is the first dword; the second, a second stopwatch's
+/// reading, is read only by <see cref="Put"/>, which moves it by as much as the first.
 /// </para>
 /// </summary>
 public sealed class ParkClock

@@ -44,6 +44,7 @@ public struct Vector3 : IEquatable<Vector3>
 
 	public static readonly Vector3 OneY = new( 0f, 1f, 0f );
 
+	// Dead by CODE: nothing reads it.
 	public static readonly Vector3 OneZ = new( 0f, 0f, 1f );
 
 	public readonly float Length => _internalVector.Length();
@@ -131,6 +132,7 @@ public struct Vector3 : IEquatable<Vector3>
 	public readonly Vector3 WithY( float y ) => new Vector3( X, y, Z );
 	public readonly Vector3 WithZ( float z ) => new Vector3( X, Y, z );
 
+	// Dead by CODE: nothing calls it.
 	public static float GetAngle( Vector3 a, Vector3 b )
 	{
 		float dot = a.Dot( b );
@@ -146,6 +148,7 @@ public struct Vector3 : IEquatable<Vector3>
 
 	public System.Numerics.Vector3 GetSystemVector3() => _internalVector;
 
+	// Dead by CODE: nothing calls it.
 	public static Vector3 OrthoNormalize( Vector3 normal, Vector3 tangent )
 	{
 		normal = normal.Normal;

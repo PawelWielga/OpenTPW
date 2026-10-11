@@ -91,10 +91,10 @@ internal sealed class UiList : UiControl
 	internal (int Left, int Right)[] Columns { get; init; } = [];
 
 	/// <summary>
-	/// How tall a row is, in virtual units. <b>A choice, and marked as one.</b> The original derives it
-	/// from the measured height of the first row widget its factory builds -
-	/// <c>(fontHeight * 0x600) / screenHeight + 6</c> - which is a runtime number this cannot reproduce
-	/// without building a row to measure first.
+	/// How tall a row is, in virtual units. The park-file screens give the height their row factory
+	/// works out, the font's height times <c>0x600</c> over the screen's, plus 6
+	/// (<c>ParkFileScreen.RowHeightFor</c>, <c>FUN_0049f0b0</c>). <b>The default of 44 is a choice, and marked
+	/// as one</b>: every other screen takes it, with no row measured.
 	/// </summary>
 	internal int RowHeight { get; init; } = 44;
 
@@ -131,7 +131,8 @@ internal sealed class UiList : UiControl
 	/// <summary>
 	/// The list's flag <c>0x80</c>: the pointer moving over a row selects it, with no press (<c>FUN_006656a0</c>, from
 	/// the proc's <c>0x10001</c>), and <see cref="SelectionChanged"/> hears it as it does any other selection. Over no
-	/// row the selection stays. The buy and hire screens' lists carry the flag; only the buy screen's sets this.
+	/// row the selection stays. All seven of the original's list records carry the flag (<c>docs/exe/hud.md</c>, "Who acts on
+	/// the click, and who on the release"); here the buy screen's list and the park-file screens' set this.
 	/// </summary>
 	internal bool SelectsUnderPointer { get; init; }
 
@@ -577,7 +578,7 @@ internal sealed class UiList : UiControl
 	/// <summary>
 	/// A left click on the list, as the class answers <c>0x11006</c> for button 0 (<c>FUN_006655a2</c>): the row under
 	/// the click's point is selected if there is one, and then, under the list's flag <c>0x80</c>, which every list
-	/// built here carries, the selected row is activated, whichever it is (<c>0x400</c>). A press alone does nothing
+	/// record of the original carries, the selected row is activated, whichever it is (<c>0x400</c>). A press alone does nothing
 	/// (<c>docs/exe/hud.md</c>, "Who acts on the click, and who on the release").
 	/// </summary>
 	/// <remarks>

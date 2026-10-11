@@ -88,6 +88,7 @@ public sealed class RideState
 	public bool Closed { get; private set; }
 
 	/// <summary>Whether <c>SETBROKE</c> has put the ride out of action.</summary>
+	/// Dead by CODE: only RideStateTests calls it.
 	public bool Broken => _repairBits == BrokenBits;
 
 	/// <summary>

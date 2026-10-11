@@ -84,6 +84,7 @@ public sealed class Voice
 	internal float? Range { get; }
 
 	/// <summary>What each ear is given of it, left and right, once <see cref="Locate"/> has placed it: the pan times the distance's gain.</summary>
+	/// Dead by CODE: only VoicePlacementTests calls it.
 	internal (float Left, float Right) EarGains => (_targetGainLeft, _targetGainRight);
 
 	/// <summary>What the listener's distance last made of it, 0 to 1, before the pan: 1 for a voice with no range.</summary>

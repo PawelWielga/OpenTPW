@@ -90,6 +90,7 @@ public sealed class AdvisorModel
 	}
 
 	/// <summary>How many animations he has, numbered from 1 as the engine numbers them.</summary>
+	/// Dead by CODE: nothing calls it.
 	public int ClipCount => _clips.Length - 1;
 
 	/// <summary>How long clip <paramref name="clip"/> plays for, in the engine's whole milliseconds.</summary>

@@ -30,7 +30,8 @@ namespace OpenTPW;
 ///
 /// The table is track count * 64 bytes and ends exactly where the block begins. That identity
 /// is what makes it safe to trust rather than guess at, and it is the guard this class relies
-/// on: 1189 of 1279 files satisfy it, and the rest are rejected rather than read.
+/// on: all 1189 files that have tracks satisfy it, and a file that failed it would be rejected
+/// rather than read.
 ///
 /// TRACK DESCRIPTORS
 ///
@@ -189,9 +190,10 @@ namespace OpenTPW;
 ///
 /// COVERAGE
 ///
-/// Of the game's 1279 animation files, 1189 have tracks, and 1183 of those declare at least one
-/// channel read here - counted by the flag bits their tracks carry: 768 morph, 686 rotation, 324
-/// UV, 455 position and 404 visibility. The other 6 carry only channels we don't decode.
+/// Of the game's 1279 animation files, 1189 have tracks, and 1181 of those carry at least one
+/// channel read here. Counted by the flag bits their tracks carry: 768 morph, 686 rotation, 324
+/// UV, 455 position, 404 visibility and 47 path progress. The other 8 carry only raw vertex
+/// frames (bit 0x4000), which are skipped.
 ///
 /// The remaining 90 hold no animation at all rather than defeating the parser: 89 declare a
 /// track count of zero, and 1 has no animation block. The table identity above does not fail
@@ -253,7 +255,8 @@ public class AnimationFile : BaseFormat
 
 	/// <summary>
 	/// One mesh's vertex morph, with its own records and its own channel space - see the notes
-	/// on this class. <see cref="ChannelCount"/> is the target mesh's vertex count + 2.
+	/// on this class. <see cref="ChannelCount"/> is the highest channel id plus one, which is the
+	/// target mesh's vertex count + 2 when the track fits its mesh - callers check that.
 	/// </summary>
 	public class MorphTrack
 	{

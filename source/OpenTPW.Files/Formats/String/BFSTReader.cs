@@ -56,10 +56,10 @@ internal sealed class BFSTReader : BaseFormat
 			4 bytes - String offset (from the end of the string count)
 			
 		#For each string (at offset)
-			1 byte - Unknown, always 0x01
+			1 byte - Part type, 0x01 (text) at the start of every shipped string
 			3 bytes - String length
 			n bytes - Each character, specified with an offset in a BFMU file.
-			4 bytes - Padding (may be longer?)
+			0-3 bytes - Zero padding to a multiple of four, then a zero word that ends the string unless more parts follow
 		*/
 
 		var magicNumber = memoryStream.ReadString( 4 );
@@ -90,7 +90,7 @@ internal sealed class BFSTReader : BaseFormat
 			// need to account offset for inital 12 bytes
 			memoryStream.Seek( offset + 12, SeekOrigin.Begin );
 
-			// Unknown - we still want to verify it is 0x1
+			// The part type - every shipped string starts with a text part, 0x1
 			var unknownOne = memoryStream.ReadByte();
 			if ( unknownOne != 1 )
 			{
