@@ -215,6 +215,59 @@ public class ParkCarSoundsTests
 	}
 
 	/// <summary>
+	/// The engine plays at the channel's own number: its variation's 68 times the effects' 75 of a hundred is 51 of
+	/// 127 beside the music's 60, from its start and after every step's apply (<c>docs/exe/audio.md</c>, "A channel's
+	/// volume"; the original's mixer read 51 on the lead boat's channel).
+	/// </summary>
+	[TestMethod]
+	public void TheEnginePlaysAtTheChannelsOwnNumber()
+	{
+		FileSystem = GameData.Required();
+
+		var ready = typeof( Audio ).GetProperty( nameof( Audio.Ready ) )!;
+		List<Voice> before;
+
+		lock ( Audio.Lock )
+			before = [.. Audio.Voices];
+
+		ready.SetValue( null, true );
+
+		ParkAudio? park = null;
+
+		try
+		{
+			park = new ParkAudio( "jungle" );
+
+			var sounds = new ParkCarSounds( new RideScriptScheduler() );
+			var held = sounds.Start( park.Rides!, 194, new Vector3( 435f, 245f, 0f ) );
+
+			Assert.IsNotNull( held );
+			Assert.AreEqual( 68, held.Volume, "the variation's volume" );
+			Assert.AreEqual( 51f / 60f * ParkAudio.MusicVolume, held.Voice.Volume, 0.00001f, "51 of 127 beside the music's 60" );
+			Assert.AreEqual( 0.2805f, held.Voice.Volume, 0.00005f );
+			Assert.AreEqual( 100f, held.Voice.Range, "over the variation's own range" );
+			Assert.AreEqual( -24, held.Pitch, "at rest" );
+
+			// The step's parameter applies the volume again with the pitch.
+			held.Voice.SetVolume( 1f );
+			sounds.Set( held, 16, 30 );
+
+			Assert.AreEqual( 0.2805f, held.Voice.Volume, 0.00005f, "the apply's volume is the channel's number too" );
+			Assert.AreEqual( 68, held.Volume );
+		}
+		finally
+		{
+			park?.Delete();
+			Entity.ApplyDeletions();
+
+			lock ( Audio.Lock )
+				Audio.Voices.RemoveAll( voice => !before.Contains( voice ) );
+
+			ready.SetValue( null, false );
+		}
+	}
+
+	/// <summary>
 	/// <c>FUN_006d2820</c>'s tables read one step past the pitch: 2^((p ± 1) / 96), checked against the table's own
 	/// floats at <c>0x00782f40</c> and <c>0x00783540</c>.
 	/// </summary>

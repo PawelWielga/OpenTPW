@@ -41,6 +41,9 @@ public sealed class ParkCarSounds : ParkBumperCars.ISounds
 		/// <summary>Each slot's value, the next four bytes.</summary>
 		public byte[] Values { get; } = new byte[4];
 
+		/// <summary>The volume last applied, of a hundred, for the census.</summary>
+		public int Volume { get; internal set; }
+
 		/// <summary>The pitch last applied, in 96ths of an octave, for the census.</summary>
 		public int Pitch { get; internal set; }
 	}
@@ -71,16 +74,33 @@ public sealed class ParkCarSounds : ParkBumperCars.ISounds
 		if ( effect == 0 || ParkAudio.Current?.Rides is not { } rides )
 			return null;
 
+		var held = Start( rides, effect, Place( x, z ) );
+
+		if ( held is null )
+			return null;
+
+		var at = held.Voice.Place;
+
+		Log.Info( $"Car sounds: ride 0x{ride:x} slot {slot}: effect {effect} '{held.Voice.Name}' at ({at?.X:0.0},{at?.Y:0.0}), "
+			+ $"volume {held.Volume} playing at {held.Voice.Volume:0.0000}, pitch {held.Pitch}/96 octave, rate {held.Voice.Rate:0.000}" );
+
+		return held;
+	}
+
+	/// <summary>
+	/// Starts an effect of <paramref name="rides"/> as a voice a car holds: its first variation (<c>0x006c3e26</c>;
+	/// 194 has one), looped, over the variation's own range, at the variation's volume as the channel's own number
+	/// (<see cref="Gain"/>). Null for an effect with nothing to play.
+	/// </summary>
+	internal Held? Start( SoundCategory rides, int effect, Vector3 at )
+	{
 		var headers = rides.VariationsOf( effect );
 
 		if ( headers.Count == 0 )
 			return null;
 
 		var header = headers[0];
-		var at = Place( x, z );
 
-		// The first child takes the first variation (0x006c3e26); 194 has one. The volume is the variation's byte
-		// out of 100 - the original multiplies it by its group levels (FUN_006bb860) before QMixer's SetVolume.
 		var held = new Held
 		{
 			Effect = effect,
@@ -88,16 +108,13 @@ public sealed class ParkCarSounds : ParkBumperCars.ISounds
 			Keys = [(byte)rides.ParameterOf( effect ), (byte)header.FirstKey, (byte)header.SecondKey, 0]
 		};
 
-		held.Voice = Audio.Play( rides.PickFrom( effect, 0 ), Level( held, 1, header.Volume ) / 100f, loop: true,
+		held.Voice = Audio.Play( rides.PickFrom( effect, 0 ), Gain( held ), loop: true,
 			bus: AudioBus.Effects, position: at, range: rides.RangeOf( effect, 0 ) )!;
 
 		if ( held.Voice is null )
 			return null;
 
 		Apply( held );
-
-		Log.Info( $"Car sounds: ride 0x{ride:x} slot {slot}: effect {effect} '{held.Voice.Name}' at ({at.X:0.0},{at.Y:0.0}), "
-			+ $"pitch {held.Pitch}/96 octave, rate {held.Voice.Rate:0.000}" );
 
 		return held;
 	}
@@ -163,7 +180,18 @@ public sealed class ParkCarSounds : ParkBumperCars.ISounds
 		// A fade runs on to its end whatever the step sets (the original's voice went 135 ms after its fade began:
 		// docs/exe/audio.md, "The bumper arm's engine"); a volume set here would stop it.
 		if ( !held.Voice.Ending )
-			held.Voice.SetVolume( Level( held, 1, held.Header.Volume ) / 100f );
+			held.Voice.SetVolume( Gain( held ) );
+	}
+
+	/// <summary>
+	/// What the voice plays at: its volume from the controllers or at random, as the channel's whole number of 127
+	/// beside the music's (<see cref="ParkAudio.ChannelGain"/>): 194's 68 is 51 of 127.
+	/// </summary>
+	private float Gain( Held held )
+	{
+		held.Volume = Level( held, 1, held.Header.Volume );
+
+		return ParkAudio.ChannelGain( held.Volume );
 	}
 
 	/// <summary>

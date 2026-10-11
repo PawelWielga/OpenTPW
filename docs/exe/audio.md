@@ -322,8 +322,8 @@ listing's and the files' alone.
 scream's child takes its variation's volume (`ScreamChildVolume`), and a single scream, a guest put off and a
 yawn the picked variation's (`SoundCategory.Play`'s `gain`); the land's own sounds go through the same sum.
 `SCREAMLEVEL` moves the playing child's volume only where its variation names the parameter on its volume, which
-no shipped scream does. The staff's voices and the crowd's take it too (Q268, below). **Not through it yet:** a bumper ride's
-engine, thunder, and every flat effect of the interface.
+no shipped scream does. The staff's voices and the crowd's take it too (Q268, below), and a bumper ride's engine (Q299, below). **Not through it yet:**
+thunder, and every flat effect of the interface.
 
 **Measured here, 2026-10-10** (`q267/confirm.py`, 4 of 4): with the camera on the Belly Bounce `voices` read ten
 scream samples at (525, 250), each at a volume of 0.1925 (35 over 60 of the music's 0.33), 24.26 off at a gain of
@@ -352,6 +352,24 @@ the mix is the crowd's flat voice alone, twenty samples were found at a score of
 of 0.02719, half of 0.0550 by the master; the build before read 0.02074, half of its 0.0420, so the fix is 1.3107 of
 it where 1.310 was owed. The one miss was the check's: `crowd` reads a volume of nought between two samples. Twelve
 bugs put back (`q268/mutations.py`): all twelve fail a test.
+
+**A bumper ride's engine, held in the running original** (Q299; `q299/orig/run.sh`, predicted first in
+`q299/PREDICTION.txt`). The mixer's 3D channels were polled (`mixfreq.py`) for 150 s over a load of a Hot Pot in its
+go (`q257o/orig/hotpot-later2.TPWS`). The lead boat's engine, jungle `cat_rides` 194 (volume 68 and 68, range 100),
+is the channel at a far end of 100 that moves about inside the pot at height nought: it read **51 of 127**,
+`round( 68 x 0.75 )`, on 2,276 lines over five channels as go followed go, and its frequency 41 values from 18408,
+the sample's 22050 at a pitch of -24, to 24930. So the class 194 makes (vtable `0x0070a338`) sends its volume
+through the same scale as a one-shot's. As a go ended the same channel read 30 and then 13 of 127 before it closed,
+the fade. Every other line at a far end of 100 inside the pot was one fixed place, (435, 255) at 64 of 127 (a
+volume of 85), not the engine's and not named here.
+
+**In OpenTPW** (`ParkCarSounds.Gain`; `q299/confirm.py`, fix 5 of 5, control 3 of 3): through a bought Hot Pot's go
+`voices` read the engine at a volume of 0.2805, 51 over 60 of the music's 0.33, sixteen reads of sixteen at twelve
+rates and a range of 100, and `bumpers` and the log's line read volume 68 playing at 0.2805; the build before read
+0.6800, the 68 as a plain hundredth. With the music off and the camera on the pot the game's own mix over the go's
+first 12 s read an rms of 0.00853 against the build before's 0.02056: 0.415 of it, where 0.2805 over 0.68 is
+0.4125. Nine bugs put back (`q299/mutations.py`): seven fail a test, and two fail none, a wrong volume handed to
+the voice as it starts, which the apply that follows in the same call sets right before a test can read it.
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
@@ -463,8 +481,8 @@ so a pitch `p` plays at 2^((p + 1) / 96) of the sample's rate above nought and 2
 247, at volume 68.
 
 **OpenTPW** builds this for the bumper arm (`ParkBumperCars`, `ParkCarSounds`): the lead's engine looped at 68 / 100,
-moved and pitched each tick, faded with 60 taken as milliseconds. The volume's further scale by the groups' levels
-is read ("A channel's volume") and not applied to the engine here. The coasters', tour ride's and go-karts' slots are not
+moved and pitched each tick, faded with 60 taken as milliseconds; its volume is the channel's own number, 51 of 127
+beside the music's 60 ("A channel's volume"). The coasters', tour ride's and go-karts' slots are not
 built.
 
 ## A held voice's next sample

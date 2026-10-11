@@ -824,7 +824,7 @@ public static class DebugConsole
 							+ (car.Smoking ? car.Smoke != ParkBumperCars.NoSmoke ? $"smoke 0x{car.Smoke:x} " : "smoke started " : "smoke none ")
 							+ $"flags 0x{(int)car.Flags:x} riders [{string.Join( ",", car.Riders.Select( rider => $"{rider.Peep}@{rider.Seat}" ) )}] "
 							+ ( car.Voice is ParkCarSounds.Held held
-								? $"sound effect {held.Effect} '{held.Voice.Name}' param {held.Values[1]} pitch {held.Pitch} rate {held.Voice.Rate:0.000} "
+								? $"sound effect {held.Effect} '{held.Voice.Name}' param {held.Values[1]} volume {held.Volume} playing at {held.Voice.Volume:0.0000} pitch {held.Pitch} rate {held.Voice.Rate:0.000} "
 									+ $"at ({held.Voice.Place?.X:0.0},{held.Voice.Place?.Y:0.0}) playing {held.Voice.Playing}"
 								: "sound none" ) );
 					}

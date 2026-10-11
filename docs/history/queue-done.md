@@ -5999,6 +5999,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   of -5 to 4 (`q298/orig/mixfreq2.log`); here twelve put-offs' log lines named six of the ten, `voices` read their
   rates and the gap is counted no more (`q298/confirm.py`, fix 4 of 5, control 5 of 5); twelve bugs put back, all
   twelve fail a test. `docs/exe/audio.md`, "A one-shot's pitch".
+- [x] **Q299. A bumper ride's engine plays at the channel's own number.** Done 2026-10-11 (branch
+  `alexah/423-engine-channel-volume`). I split the old Q299: this is its engine piece, and every other piece is
+  Q300. The original's mixer, polled over a Hot Pot in its go, read the lead boat's engine (jungle `cat_rides` 194,
+  volume 68) at 51 of 127 on 2,276 lines, its frequency from 18408 up (`q299/orig/a-load.log`); here the engine's
+  volume goes through `ParkAudio.ChannelGain` (`ParkCarSounds.Gain`): `voices` read 0.2805 sixteen times of sixteen
+  through a go where the build before read 0.6800, and the game's own mix was 0.415 of that build's, 0.4125 owed
+  (`q299/confirm.py`, fix 5 of 5, control 3 of 3); nine bugs put back, seven fail a test, two a test cannot see.
+  `docs/exe/audio.md`, "A channel's volume".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

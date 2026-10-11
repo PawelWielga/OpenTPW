@@ -115,6 +115,11 @@ whole list):
   again inside a minute, so send and break again. In the mix the put-off's one sample (`bootout.mp2`) scored 0.95
   at four of six logged pitches and 0.64 and 0.68 at the other two, 0.30 at a pitch not played: take 0.5 as the bar
   (`q298/confirm.py`, Q298).
+- **A Hot Pot's engine, read and measured:** `hot_pot(5)` and `in_a_go(120)` (`lib/parkscene.py`), then
+  `camera 435 250 60 180`; `voices` names it `Engine.mp2 Effects placed` with its volume, rate and range, and
+  `bumpers` prints the lead car's `volume N playing at G`. Its pitch moves each tick, so no template finds it in
+  the mix: with `bus music 0` compare the mix's rms over the go's first 12 s between two builds (`q299/confirm.py`,
+  Q299).
 - **The crowd's voice alone in the mix:** `hover 50 24` holds the pointer's cell on the Belly Bounce's queue
   whatever the camera does, so with `bus music 0` and `camera 1100 1100 110 180` the mix is the crowd's flat
   voice and nothing else. `voices` names each sample as `<name> Effects flat`; match each at its six pitches
@@ -198,6 +203,10 @@ GH=766` there, or the pointer is off):
   `bounce.TPWS`: the put-off's channels are the 3D ones with a far end of 100 at 10 of 127, 39 lines in nine
   breaks. Broken on a timer instead, the Bounce's queue is empty at most breaks, and without `all` only a guest
   whose id divides by eight sounds: two lines in 270 s (`q298/orig/run2.sh`, Q298).
+- **Its Hot Pot's engine in the mixer:** `mixfreq.py PID 150` as the `POLL` of a load of
+  `q257o/orig/hotpot-later2.TPWS` (a pot in its go): the engine is the 3D channel at a far end of 100 that moves
+  inside the pot (x 426 to 456, z 244 to 252), 51 of 127, some 2,000 lines as its frequency follows the boat's
+  speed; a fixed channel at (435, 255) is another sound (`q299/orig/run.sh`, Q299).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).
