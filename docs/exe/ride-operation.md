@@ -261,7 +261,7 @@ ticks after the load, where the run that wrote it took 42 sweeps from the same m
 
 **Where OpenTPW differs.** An object waiting for an upgrade is passed over by the search, counted
 (`MECHANIC_UPGRADE_JOB`), and `Repair` on one is counted and does nothing (`RIDE_UPGRADE_COMPLETION`): nothing
-here puts a ride in state 2. Advisor message `0x46` is counted (`MECHANIC_ON_HIS_WAY_MESSAGE`). The coaster's
+here puts a ride in state 2. Advisor message `0x46` is posted with the ride (`advisor-park.md`, "A mechanic on his way"). The coaster's
 circuit test after the open is counted (`OPEN_GUARD_COASTER_TRACK_RECORD`). A thing in the hand is passed
 over. The five "non-openable" log lines are not written.
 

@@ -256,6 +256,12 @@ GH=766` there, or the pointer is off):
   of the State of repair that leaves its whole number under 10, about 13 minutes in; grab `:77` a second later
   for him in his hard hat (`q305/orig/run.sh`, Q305). Here the stock park left alone does the same in 15 to 22
   minutes: grep the log for `Park advisor: post message=66` (`q305/confirm.py`).
+- **Its advisor told a mechanic is on his way, inside a minute:** as the `POLL` of a load of Q265's
+  `bounce.TPWS`, `advisor.py %PID% 90 0x46,0x42 13 & object.py %PID% 90 13 4 7 & sleep 20; scriptvar.py %PID% 13
+  4 1; wait`: one log, both pollers' lines stamped with the tick. Seven ticks after the write the Bounce's
+  `staff` reads 26 and message `0x46`'s record `(tick, 0, 1, 0)` (`q306/orig/run.sh`, Q306). Here
+  `scriptvar 13 VAR_BREAKSTAT 1` once the opening line is over (25 s in) does the same in two seconds: grep the
+  log for `Park advisor: post message=70` (`q306/confirm.py`).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).

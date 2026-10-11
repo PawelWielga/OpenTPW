@@ -3,10 +3,10 @@ using System.Globalization;
 namespace OpenTPW;
 
 /// <summary>
-/// The park's posted messages, category 0, selection mode 2: the door's two and a ride about to break down.
-/// The eight slots, strict tick threshold, helper recheck and per-message histories follow FUN_0059a550;
-/// docs/exe/advisor-park.md, Q90 and "A ride about to break down". Other park messages and the polling
-/// analyser remain unbuilt.
+/// The park's posted messages, category 0, selection mode 2: the door's two, a ride about to break down and a
+/// mechanic on his way to one. The eight slots, strict tick threshold, helper recheck and per-message histories
+/// follow FUN_0059a550; docs/exe/advisor-park.md, Q90, "A ride about to break down" and "A mechanic on his way".
+/// Other park messages and the polling analyser remain unbuilt.
 /// </summary>
 internal sealed class ParkAdvisorMessages
 {
@@ -14,12 +14,17 @@ internal sealed class ParkAdvisorMessages
 	internal const int Closed = 129;
 	/// <summary>Message 0x42, posted by a ride's wear (FUN_004df670, 0x004df8be) with the ride as its subject.</summary>
 	internal const int RideWornOut = 66;
+	/// <summary>Message 0x46, posted by the mechanic's decide (FUN_004da5b0, 0x004da6bf) with the ride he sets off for as its subject.</summary>
+	internal const int MechanicOnHisWay = 70;
 
 	/// <summary>
 	/// A row of the metadata table 0x0076e300: the message, its score's key, its first response and that
 	/// response's sample, how many lines it rotates (+0x28) and how many copies the slots may hold (+0x20).
+	/// <paramref name="GestureRowLine"/> is the one line whose response names a row of the gesture table
+	/// (the response table's +0x0c), -1 where every line's is the random chain.
 	/// </summary>
-	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1 );
+	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
+		int GestureRowLine = -1 );
 	internal static readonly Topic[] DoorTopics =
 	[
 		new( Opened, "ParkNowOpen.Score", 308, 342 ),
@@ -28,7 +33,8 @@ internal sealed class ParkAdvisorMessages
 	internal static readonly Topic[] ParkTopics =
 	[
 		.. DoorTopics,
-		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255 )
+		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255 ),
+		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2 )
 	];
 
 	private sealed class History
@@ -115,6 +121,10 @@ internal sealed class ParkAdvisorMessages
 		var line = (history.Line + 1) % pending.Topic.Lines;
 		var response = pending.Topic.FirstResponse + line;
 		var sample = pending.Topic.FirstSample + line;
+		// A response with a gesture of its own plays that row of the gesture table (FUN_00598bf0); the speaker
+		// here builds the random chain for every line.
+		if ( line == pending.Topic.GestureRowLine )
+			Unimplemented.Report( "ADVISOR_RESPONSE_GESTURE_ROW" );
 		var duration = play( response, sample );
 		_waitUntil = milliseconds + duration + 1000;
 		history.LastTick = gameTick;

@@ -6084,6 +6084,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   advisor's record for `0x42` read never said until tick 4800, the tick of the fall from 12.025 to 9.97, then
   last said 4800, line 0, said; he is up in a hard hat in `a-told.png`. Fifteen bugs put back
   (`q305/mutations.py`): fifteen fail a test, the first round's one survivor after a test was tightened.
+- [x] **Q306. The advisor is told a mechanic is on his way.** A piece of the old Q306 (the writer's
+  leftovers), split by the session: its other pieces are Q307. The decide's post of message `0x46` was counted
+  (`MECHANIC_ON_HIS_WAY_MESSAGE`). **Read** (`advisor-park.md`, "A mechanic on his way"): the post at
+  `0x004da6bf` carries the ride and its item; row 70 is posted only, category 0, score
+  `RidesBreakdownMechanicOnIt.Score` (110), up to 255 copies, responses 204 to 206, samples 202 to 204, mode 2;
+  response 206 names a gesture row. **Built**: `ParkAdvisorMessages.MechanicOnHisWay`, a topic's
+  `GestureRowLine`; `StaffBehaviour.Decide` posts. **Run** (`q306/confirm.py`, 4 of 4, the control 1 of 1): the
+  stock park's Belly Bounce broken through its script, `post message=70 subject=13 score=110 ... queued` on tick
+  887, the tick mechanic 26 found it, and on 888 `response=204 sample=202 line=0`, `saying sp_202.mp2`, the
+  advisor up in `run-fix1/2-told.png`. **The original** (`q306/orig/`, 1 of 1): its Bounce broken the same way,
+  the advisor's record for `0x46` read never said until tick 1201, the tick mechanic 26 was assigned, then last
+  said 1201, line 0, said; he is up in a hard hat in `a-told.png`. Seventeen bugs put back
+  (`q306/mutations.py`): seventeen fail a test, the first round's one survivor (a post stamped with tick
+  nought) after a test was added.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

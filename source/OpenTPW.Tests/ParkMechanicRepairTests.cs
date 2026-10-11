@@ -1,7 +1,9 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace OpenTPW.Tests;
 
@@ -82,6 +84,13 @@ public class ParkMechanicRepairTests
 	private static ParkWorld.CatalogueObject At( ParkWorld.CatalogueObject thing, int x, int y )
 		=> thing with { RawX = x << 8, RawY = y << 8 };
 
+	/// <summary>The advisor's messages on the scores the shipped file sets.</summary>
+	private static ParkAdvisorMessages Advisor()
+		=> new( new SettingsFile( new MemoryStream( Encoding.ASCII.GetBytes(
+			"GeneralAdvisor.MinScoreForConsideration 25\nMessageGroups[0].MinTimeSameMessage 120\n"
+			+ "MessageGroups[0].SayOnlyOnce 0\nParkNowOpen.Score 20\nParkNowClosed.Score 20\n"
+			+ "RidesBreakdownImminent.Score 100\nRidesBreakdownMechanicOnIt.Score 110\n" ) ) ) );
+
 	private static int Counted( string gap ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == gap ).Times;
 
 	private static StaffBehaviour Behaviour( ParkState state, Func<int, RideScript?>? scripts = null, Staff? other = null )
@@ -131,8 +140,8 @@ public class ParkMechanicRepairTests
 
 	/// <summary>
 	/// A ride broken down is found at the decide: the mechanic takes state <c>0xc</c> with the walk's animation and
-	/// no hurry, aims at its entry cell, the ride is assigned to him on the clock, and the advisor's message for
-	/// a ride nobody called him to is counted.
+	/// no hurry, aims at its entry cell, the ride is assigned to him on the clock, and the advisor is posted
+	/// message 0x46 with the ride for a ride nobody called him to.
 	/// </summary>
 	[TestMethod]
 	public void ABrokenRideIsFoundAssignedAndWalkedTo()
@@ -140,7 +149,7 @@ public class ParkMechanicRepairTests
 		var world = World();
 		var state = new ParkState( world );
 		var (member, walk) = MechanicOn( world, state );
-		var message = Counted( "MECHANIC_ON_HIS_WAY_MESSAGE" );
+		var advisor = state.AdvisorMessages = Advisor();
 
 		Change( state, Ride, ride => ride with { State = 1 } );
 
@@ -157,8 +166,39 @@ public class ParkMechanicRepairTests
 		Assert.AreEqual( new FixedVector( PeepNavigator.WaypointCentre( ride.EntryCellX ),
 			PeepNavigator.WaypointCentre( ride.EntryCellY ) ), member.Navigator.Target, "aimed at mEntryPos" );
 		Assert.IsTrue( walk.HasRoute );
-		Assert.AreEqual( 1, Counted( "MECHANIC_ON_HIS_WAY_MESSAGE" ) - message );
+		Assert.IsTrue( advisor.Census().Contains( $"pending=1 attempts=0 threshold=25 slot=70/subject={Ride} " ), advisor.Census() );
+
+		var said = new List<(int, int, int)>();
+
+		advisor.Tick( 1002, 0, ( response, sample ) => { said.Add( (response, sample, 1002) ); return 0; } );
+		CollectionAssert.AreEqual( new[] { (204, 202, 1002) }, said );
+		Assert.IsTrue( advisor.Census().Contains( "message=70/score=110/line=0/lastTick=1002" ), "posted on his decide's tick: " + advisor.Census() );
 		Assert.AreEqual( 1, ride.State, "the search changes nothing of the ride but the assignment" );
+	}
+
+	/// <summary>
+	/// The post carries the decide's own tick: a ride found 404 sweeps after the message was last said is inside
+	/// its 480 and is refused, and one found 480 after is queued.
+	/// </summary>
+	[DataTestMethod]
+	[DataRow( 1004, 0, DisplayName = "404 sweeps after the line: refused" )]
+	[DataRow( 1080, 1, DisplayName = "480 sweeps after: queued" )]
+	public void ThePostIsStampedWithTheDecidesTick( int tick, int pending )
+	{
+		var world = World();
+		var state = new ParkState( world );
+		var (member, walk) = MechanicOn( world, state );
+		var advisor = state.AdvisorMessages = Advisor();
+
+		Assert.IsTrue( advisor.Post( ParkAdvisorMessages.MechanicOnHisWay, 600, Toilet ) );
+		advisor.Tick( 600, 0, ( _, _ ) => 0 );
+		Assert.AreEqual( 0, advisor.PendingCount );
+
+		Change( state, Ride, ride => ride with { State = 1 } );
+		Behaviour( state ).Step( member, walk, playing: null, tick );
+
+		Assert.AreEqual( StaffActivity.GoingToRide, member.Activity, "he sets off whatever the advisor answers" );
+		Assert.AreEqual( pending, advisor.PendingCount );
 	}
 
 	/// <summary>
@@ -182,7 +222,8 @@ public class ParkMechanicRepairTests
 		var world = World();
 		var state = new ParkState( world );
 		var (member, walk) = MechanicOn( world, state );
-		var before = (Counted( "MECHANIC_ON_HIS_WAY_MESSAGE" ), Counted( "MECHANIC_UPGRADE_JOB" ));
+		var advisor = state.AdvisorMessages = Advisor();
+		var before = Counted( "MECHANIC_UPGRADE_JOB" );
 
 		Change( state, thing, it => it with { State = thingState, RequestedService = requested } );
 
@@ -191,8 +232,9 @@ public class ParkMechanicRepairTests
 		Assert.AreEqual( found ? thing : 0, member.ObjectToRepair );
 		Assert.AreEqual( found ? StaffActivity.GoingToRide : StaffActivity.Walking, member.Activity );
 		Assert.AreEqual( found ? Mechanic : 0, Thing( state, thing ).AssignedStaff );
-		Assert.AreEqual( messages, Counted( "MECHANIC_ON_HIS_WAY_MESSAGE" ) - before.Item1 );
-		Assert.AreEqual( upgrades, Counted( "MECHANIC_UPGRADE_JOB" ) - before.Item2 );
+		Assert.AreEqual( messages, advisor.PendingCount );
+		Assert.AreEqual( messages == 1, advisor.Census().Contains( $"slot=70/subject={thing} " ), advisor.Census() );
+		Assert.AreEqual( upgrades, Counted( "MECHANIC_UPGRADE_JOB" ) - before );
 	}
 
 	/// <summary>

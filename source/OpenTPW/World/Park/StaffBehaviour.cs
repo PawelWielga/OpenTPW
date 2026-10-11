@@ -633,9 +633,10 @@ public sealed class StaffBehaviour
 							AssignedStaff = (ushort)staff.ThingId, TimeMarkedForMaintenance = tick
 						} );
 
-						// A ride nobody called him to gets advisor message 0x46 (0x004da6bf), which nothing posts.
+						// A ride nobody called him to gets advisor message 0x46 with the ride as its subject
+						// (0x004da6bf; docs/exe/advisor-park.md, "A mechanic on his way").
 						if ( broken.RequestedService == 0 )
-							Unimplemented.Report( "MECHANIC_ON_HIS_WAY_MESSAGE" );
+							_state.AdvisorMessages?.Post( ParkAdvisorMessages.MechanicOnHisWay, tick, broken.ThingId );
 
 						Log.Info( $"Staff: mechanic {staff.ThingId} found ride {broken.ThingId} that needs fixing, "
 							+ $"walking to it on mGameTick {tick}" );

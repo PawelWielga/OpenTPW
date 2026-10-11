@@ -44,15 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q306. The writer: what else a made record leaves out.** The old Q305's other pieces, each counted or
+- [ ] **Q307. The writer: what else a made record leaves out.** The old Q306's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q306 (`advisor-park.md`, "A mechanic on his way"): response 206's own gesture row is not played
+  (`ADVISOR_RESPONSE_GESTURE_ROW`, counted; no other built response names one). In no game run: lines 205 and
+  206, two rides broken at once, a called ride, a post refused inside the 480 sweeps, a break with the advisor
+  busy, a bought ride. Rows 67 to 69's posters are still not read. Not heard in either game.
   From Q305 (`advisor-park.md`, "A ride about to break down"): the original's advisor wears a yellow hard hat
   for the line and a small arrow button stands beside him; neither is built or decoded (the responses' face
   fields read 5 where a door's read 9; the button is likely the hearer of the event of type `0x18` a line said
   sends, counted `ADVISOR_MESSAGE_SAID_EVENT`, whose hearers are not read). He says it a sweep after the post,
-  the original on the post's tick. The record's item word is not kept. The same shape and not built: message
-  `0x46` (`MECHANIC_ON_HIS_WAY_MESSAGE`, score `RidesBreakdownMechanicOnIt` 110, responses 204 on) and the two
+  the original on the post's tick. The record's item word is not kept. The same shape and not built: the two
   no-mechanic rows (105, 107), whose posters are not read. In no game run: lines 195 and 196, two worn rides at
   once, a post refused inside the 480 sweeps, a worn ride with the advisor busy (the message is then spent
   unsaid, as the door's), a bought ride. The original's line was not heard (its sound off-screen is a null
@@ -166,8 +169,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   original's picture.
   From Q257z (`saves.md`, "OpenTPW's writer, the mechanic's job"; `ride-operation.md`, "The mechanic's
   repair"): an upgrade job is passed over and its completion left (`MECHANIC_UPGRADE_JOB`,
-  `RIDE_UPGRADE_COMPLETION`: nothing here puts a ride in state 2), advisor message `0x46` is counted
-  (`MECHANIC_ON_HIS_WAY_MESSAGE`), and a mechanic put down still goes idle where the original's searches at
+  `RIDE_UPGRADE_COMPLETION`: nothing here puts a ride in state 2), and a mechanic put down still goes idle where the original's searches at
   once (`MECHANIC_PUT_DOWN_JOB_SEARCH`); his repairing picture was not held against
   the original's frames; a called ride, two broken rides, a second mechanic, a ride with no route and a ride
   sold under him were in no game run.

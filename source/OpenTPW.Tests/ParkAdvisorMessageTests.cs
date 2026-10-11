@@ -10,10 +10,11 @@ namespace OpenTPW.Tests;
 [TestClass]
 public class ParkAdvisorMessageTests
 {
-	private static SettingsFile Settings( int open = 26, int close = 26, int threshold = 25, int worn = 100 )
+	private static SettingsFile Settings( int open = 26, int close = 26, int threshold = 25, int worn = 100, int mechanic = 110 )
 		=> new( new MemoryStream( Encoding.ASCII.GetBytes( $"GeneralAdvisor.MinScoreForConsideration {threshold}\n"
 			+ $"MessageGroups[0].MinTimeSameMessage 120\nMessageGroups[0].SayOnlyOnce 0\n"
-			+ $"ParkNowOpen.Score {open}\nParkNowClosed.Score {close}\nRidesBreakdownImminent.Score {worn}\n" ) ) );
+			+ $"ParkNowOpen.Score {open}\nParkNowClosed.Score {close}\nRidesBreakdownImminent.Score {worn}\n"
+			+ $"RidesBreakdownMechanicOnIt.Score {mechanic}\n" ) ) );
 
 	private static void Set( SettingsFile settings, string key, int value )
 	{
@@ -52,6 +53,51 @@ public class ParkAdvisorMessageTests
 		CollectionAssert.AreEqual( new[] { (194, 191), (195, 192), (196, 193), (194, 191) }, said );
 		Assert.IsTrue( messages.Census().Contains( "message=66/score=100/line=0/lastTick=2440" ), messages.Census() );
 	}
+
+	/// <summary>
+	/// Message 0x46's row: responses 204 to 206 are samples 202 to 204, three lines in turn, and the third's own
+	/// gesture row is counted each time it is said.
+	/// </summary>
+	[TestMethod]
+	public void StockMechanicOnHisWayIsSpokenOfInThreeLinesThatWrap()
+	{
+		FileSystem = GameData.Required();
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var said = new List<(int, int)>();
+		var rows = new List<int>();
+		for ( var i = 0; i < 4; ++i )
+		{
+			var tick = 1000 + i * 480;
+			var before = Times( "ADVISOR_RESPONSE_GESTURE_ROW" );
+			Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, tick, 13 ) );
+			Assert.IsTrue( messages.Census().Contains( "pending=1 attempts=" + i + " threshold=25 slot=70/subject=13 " ), messages.Census() );
+			messages.Tick( tick, i * 100000L, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+			rows.Add( Times( "ADVISOR_RESPONSE_GESTURE_ROW" ) - before );
+		}
+		CollectionAssert.AreEqual( new[] { (204, 202), (205, 203), (206, 204), (204, 202) }, said );
+		CollectionAssert.AreEqual( new[] { 0, 0, 1, 0 }, rows, "response 206 alone names a gesture row" );
+		Assert.IsTrue( messages.Census().Contains( "message=70/score=110/line=0/lastTick=2440" ), messages.Census() );
+	}
+
+	/// <summary>A mechanic on his way, 110, is said before a ride about to break down, 100, and each ride has its own slot.</summary>
+	[TestMethod]
+	public void AMechanicOnHisWayIsSaidBeforeAWornRideAndKeepsItsOwnHistory()
+	{
+		FileSystem = GameData.Required();
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, 100, 13 ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 100, 14 ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 100, 15 ), "255 copies" );
+		var said = new List<int>();
+		messages.Tick( 100, 0, ( _, sample ) => { said.Add( sample ); return 0; } );
+		messages.Tick( 101, 2000, ( _, sample ) => { said.Add( sample ); return 0; } );
+		messages.Tick( 102, 4000, ( _, sample ) => { said.Add( sample ); return 0; } );
+		CollectionAssert.AreEqual( new[] { 202, 203, 191 }, said );
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 579, 16 ), "last said on 101: 119 fours of sweeps ago" );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 580, 16 ) );
+	}
+
+	private static int Times( string gap ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == gap ).Times;
 
 	[TestMethod]
 	public void EveryWornRideHasItsOwnSlotWhereADoorHasOne()

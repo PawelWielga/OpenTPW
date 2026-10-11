@@ -431,8 +431,9 @@ Responses 194, 195 and 196 (`0x0076a7f8`, read in the image) are samples and lip
 -1, model and bank word 0, face fields 5 and 0. The transcripts: "we've got trouble boss, a ride is about to break
 down", "look out, she's gonna blow...", "one of your rides is about to break down, take cover...". Mode 2 takes the
 line after the last and starts again past the count (`0x0059a796`, `0x0059a7fa`). The three rows after it in the
-`.sam` are the same shape and are not built: `RidesBreakdownNoMechanics` 105, `BusyMechanics` 107, `MechanicOnIt`
-110 at `0x00fb378c` to `0x00fb3794` (message `0x46`'s score is `0x0059dc90`).
+`.sam` are the same shape: `RidesBreakdownNoMechanics` 105, `BusyMechanics` 107, `MechanicOnIt` 110 at
+`0x00fb378c` to `0x00fb3794`. The last is message `0x46`'s ("A mechanic on his way", below); the first two are
+not built and their posters are not read.
 
 **What follows a line said.** `FUN_0059b620`, after `Advisor_SayResponse`, builds an event of type `0x18`
 (`FUN_0040f740`, vtable `0x006fd828`, whose first slot answers `0x18`) from the response's group, the record's
@@ -463,3 +464,44 @@ of the rule (`run-control`).
 | The event of type `0x18` after a line | sent | counted, `ADVISOR_MESSAGE_SAID_EVENT` |
 | Lines 195 and 196, a second ride's own slot, the 480 sweeps before the same message again | the listing's | built and held by the tests alone |
 
+## A mechanic on his way (message `0x46`, Q306)
+
+**Who posts it.** The mechanic's decide, `FUN_004da5b0`, once the search has named a ride and a route to its
+entry is found (`ride-operation.md`, "The mechanic's repair"): after the assignment (`FUN_004e01f0`), when the
+ride's `+0x64` (called for, `FUN_004e03d0`) is nought and it is not waiting for an upgrade (`FUN_004e03e0`). The
+call is `0x004da6bf`: `FUN_0059b590( 0x46, [mechanic + 0x218], [ride + 0xe], -1, 0, -1 )`, the same shape as
+message `0x42`'s: the record's `+0x00` is the ride's id, its `+0x04` the ride's item, no line asked for, not
+forced, the score the message's own; then `FUN_005194d0` and `FUN_0059a940`.
+
+**Its row** (`0x0076e300 + 70 x 0x38` = `0x0076f250`, `meta_full.json`): posted only, category 0, either game
+mode, score `0x0059dc90` (`MOV EAX,[ECX + 0x254]`, so `0x00fb3794`, `RidesBreakdownMechanicOnIt.Score`; the file
+sets **110**), 255 copies in the slots, first response 204, 3 lines, mode 2. Rows 67 to 69 beside it are posted
+only too, 255 copies each: 67 one line from response 197, 68 three from 198, 69 three from 201.
+
+Responses 204, 205 and 206 (`0x0076a938`, read in the image) are samples and lip files **202, 203, 204**, model
+and bank word 0, face fields 5 and 0, group `0x48`. The gesture of 204 and 205 is -1, the random chain; **206's
+is 26**, row 10 of the gesture table. The transcripts: "one of your rides is broken down but a mechanic is on the
+way to fix it", "don't be alarmed ... a mechanic is on the way", "don't panic ... mechanics are on the way".
+
+**The original** (`q306/orig/run.sh`: Q265's `bounce.TPWS`, `scriptvar.py PID 13 4 1` twenty seconds after the
+load, `advisor.py` and `object.py` polled together; ticks alone are counted): `VAR_BREAKSTAT` written on tick
+1194, the Bounce's state 1 on 1198 with nobody assigned, and on the poll of tick **1201** its assigned member
+read 26 and message `0x46`'s record `(1201, 0, 1, 0)`: last said that tick, line 0, said. The last action's
+duration read 7498 ms. Message `0x42`'s record stayed never said. The frame 1.5 s on (`a-told.png`) has him up
+in the hard hat with the arrow button beside him, as for `0x42`. The ride was open again on tick 1313.
+
+**OpenTPW** (`ParkAdvisorMessages.MechanicOnHisWay`, `StaffBehaviour.Decide`; `q306/confirm.py`, the stock
+park's Belly Bounce broken by `scriptvar 13 VAR_BREAKSTAT 1` 25 s in, 4 predictions of 4): the log read `post
+message=70 subject=13 score=110 threshold=25 tick=887 result=queued pending=1`, then `mechanic 26 found ride 13`
+on the same tick, and on tick 888 `attempt=1 ... response=204 sample=202 line=0` with `playback=started` and a
+duration of 6498 ms, 7498 with the scheduler's second, the original's. `advisor` read `saying sp_202.mp2` and
+`message=70/score=110/line=0/lastTick=888`; he is up in `run-fix1/2-told.png` as the mechanic walks to the shut
+ride. Main's build, off-screen, posted nothing and counted `MECHANIC_ON_HIS_WAY_MESSAGE` once (`run-control`).
+
+| | The original | OpenTPW |
+|---|---|---|
+| The post | from the mechanic's decide, with the ride and its item | built; the item is not kept |
+| When it is said | the tick of the post | a sweep on, as message `0x42` |
+| Response 206's own gesture row | played (`FUN_00598bf0`) | the random chain, counted `ADVISOR_RESPONSE_GESTURE_ROW` |
+| The hard hat and the button beside him | drawn | not built, not decoded |
+| Lines 205 and 206, a second ride's own slot, a called ride's silence | the listing's | built and held by the tests alone |
