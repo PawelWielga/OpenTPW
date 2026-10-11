@@ -8,9 +8,8 @@ namespace OpenTPW;
 /// <b>A ride is ticked like anything else in the park.</b> <c>FUN_0050b360</c> switches on a thing's
 /// model byte and hands model 3 to <c>FUN_004e0b90</c> and then <c>FUN_004e0e00</c>, exactly as it hands
 /// a guest to their needs and then their behaviours. <b>Both halves run</b>, script and all, but not
-/// whole: the first half's breakdown request and worn flag, and the state-0 turn's broken and condemned
-/// transitions, are unbuilt (<c>docs/exe/ride-operation.md</c>, "The first half of the turn" and
-/// "The second half").
+/// whole: the first half's wear (<c>FUN_004df670</c>) and breakdown request are unbuilt
+/// (<c>docs/exe/ride-operation.md</c>, "The first half of the turn").
 /// </para>
 /// <para>
 /// <b>Ride operation is script-driven, and that is why only this much is here.</b> The object holds a
@@ -358,8 +357,8 @@ public sealed class ParkRideOperation
 	/// <b>The failure arm is deliberately NOT reproduced, and it is drastic rather than quiet.</b> When the
 	/// destination will not route the original refuses the dismissal and calls <c>FUN_004df150</c>, which
 	/// <i>closes the ride</i> as <see cref="Close"/> does, after posting a type-<c>0x14</c> message, and only
-	/// when it is open. The player's way to open that one ride again, the ride window's door, is unbuilt, so a
-	/// ride shut over a routing failure would open only when its queue was next measured
+	/// when it is open. A ride shut over a routing failure would be opened again by the ride window's door
+	/// (where <see cref="MayOpen"/> allows), when its queue was next measured
 	/// (<see cref="ReopenAfterRemeasure"/>) or the park's door was shut and opened again. A guest whose
 	/// neighbour will not route is dismissed anyway and drops to <see cref="PeepState.Deciding"/> standing on
 	/// the exit, which is where they are - by the walk off's give-up arm, which keeps
@@ -529,7 +528,7 @@ public sealed class ParkRideOperation
 	/// (<see cref="UseTheToilet"/>) and a sideshow winner's count and cheer, in the original's order; then three times
 	/// the happiness gained since the guest joined the queue, averaged into the object's satisfaction for the day, and
 	/// the object's served count (steps 4, 5 and 7). Counted and not kept: the guest's event history, the park
-	/// analyser's sample and a sideshow's thoughts, win or lose.
+	/// analyser's sample and the event beside a sideshow's thought, win or lose.
 	/// </para>
 	/// <para>
 	/// After the five effects come the object's own terms, on its amount of special ingredient
@@ -974,9 +973,9 @@ public sealed class ParkRideOperation
 	/// log negative and the winner unhappy.
 	/// </para>
 	/// <para>
-	/// <b>The divisor is applied as an integer while the numerator is a float</b>, which is the original's
-	/// <c>FILD</c> / <c>FIDIV</c> pair rather than a tidy-up, and the whole product is truncated toward
-	/// nought by its <c>__ftol</c>.
+	/// <b>The cost and the price are both whole numbers, divided as floating point</b> - the original's
+	/// <c>FILD</c> / <c>FIDIV</c> pair, here in single precision - and the whole product is truncated toward
+	/// nought as its <c>__ftol</c> does.
 	/// </para>
 	/// <para>
 	/// <b>A price or a prize of nought is refused rather than computed</b>, and that is a declared
@@ -1203,8 +1202,10 @@ public sealed class ParkRideOperation
 	public const string OnRideVariable = "VAR_ONRIDE";
 
 	/// <summary>
-	/// How long a go lasts - <c>VAR_DURATION</c>, which the engine writes beside the capacity when a ride
-	/// is opened (<c>FUN_004df8f0</c>, logging "DUR = %d") and a script only ever reads.
+	/// How long a go lasts - <c>VAR_DURATION</c>, which a script only ever reads. It is written beside the
+	/// capacity when a script is bound to a placed object (<see cref="ParkRides"/>) and when the ride window's
+	/// setting is changed. The original's write on an upgrade's completion (<c>FUN_004df8f0</c>, logging
+	/// "DUR = %d") is counted as <c>RIDE_UPGRADE_COMPLETION</c>.
 	/// </summary>
 	public const string DurationVariable = "VAR_DURATION";
 

@@ -5,7 +5,7 @@ namespace OpenTPW;
 /// <c>OBJECT_NAMES.str</c> the executable's own table gives the item (<c>0x007488d8</c>, twelve bytes an item,
 /// walked by <c>FUN_004147f0</c> for the first line and <c>FUN_00414870</c> for the second;
 /// <c>docs/exe/saves.md</c>, "OpenTPW's writer, a thing bought and a thing sold"). A ride's name is two lines,
-/// "Crazy" over "Ape"; every other item's is one, its second row the table's empty row 1.
+/// "Crazy" over "Ape", and so are twelve others' (1431, 1432, 1601 and their like in each theme); every remaining item's is one, its second row the table's empty row 1.
 /// </summary>
 public static class ParkObjectNames
 {

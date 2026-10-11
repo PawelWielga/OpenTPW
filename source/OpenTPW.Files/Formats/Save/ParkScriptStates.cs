@@ -128,8 +128,7 @@ public readonly record struct WrittenScript( int Handle, int Position, int CallI
 /// </para>
 ///
 /// <para>
-/// <b>Three things were measured before any of this was trusted</b>, against
-/// <c>levels/jungle/Easymode.TPWI</c>:
+/// <b>Three things hold in <c>levels/jungle/Easymode.TPWI</c></b> and fix the layout:
 /// </para>
 /// <list type="bullet">
 /// <item>

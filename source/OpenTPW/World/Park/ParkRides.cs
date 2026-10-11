@@ -130,7 +130,7 @@ public sealed class ParkRides : Entity
 	/// <remarks>
 	/// <para>
 	/// <b>The teardown is the one <c>REMOVECHILD</c> and a finished script already go through</b>,
-	/// <see cref="RideScriptScheduler.Destroy"/>, with the mode it is called with while a park is played,
+	/// <see cref="RideScriptScheduler.Destroy"/>, which takes no mode; the engine's teardown is called with one, in play
 	/// <b>7</b>, which sets both bits the teardown reads. <c>0x2</c> spawns the item's
 	/// <c>Info.DestroyParticleEffect</c> over the footprint, for the script named here and not for the ones it
 	/// takes with it; it is counted rather than drawn, because nothing here draws a particle effect in the

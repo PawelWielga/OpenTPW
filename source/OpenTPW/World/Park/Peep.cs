@@ -767,7 +767,8 @@ public sealed class Peep
 	/// guest alone. Case <c>0xe</c>'s roll is
 	/// <c>PeepBehaviour.RollForTheVisit</c>'s, made straight after this; boarding's putting a balloon away is here,
 	/// and leaving's building it again is <see cref="ParkRideOperation.Dismiss"/>'s, which knows the thing left. The
-	/// rest - firing the events a ride raises, paying at the bus stop - reaches into a ride or the event ring, and is
+	/// rest - firing the events a ride raises, a paying guest's stay handed to the park analyser at the bus stop -
+	/// reaches into a ride, the event ring or the analyser, and is
 	/// not built.
 	/// </para>
 	/// </summary>

@@ -229,9 +229,9 @@ public sealed class ParkStaffPool
 		["HANDYMAN_NAMES", "MECHANIC_NAMES", "ENTERTAINER_NAMES", "GUARD_NAMES", "RESEARCHER_NAMES"];
 
 	/// <summary>
-	/// The balance file's own word for each kind, which is <b>irregular</b> and has to be spelled
-	/// exactly: <c>StaffPoolInfo.BeginningNumberOfHandymen</c> but <c>...OfMechanics</c>,
-	/// <c>MaxResearchersInPark</c> but <c>MaxGuardsInPark</c>. A key that does not match returns the
+	/// The balance file's own plural for each kind, the same word in each per-kind <c>StaffPoolInfo</c> key read
+	/// here and neither the kind's name nor the singular of <see cref="TrainingNames"/>: <c>BeginningNumberOfHandymen</c>,
+	/// <c>MaxResearchersInPark</c>. It has to be spelled exactly: a key that does not match returns the
 	/// fallback silently, which is the quiet way to get a park full of the wrong people.
 	/// </summary>
 	private static readonly string[] BalanceNames =
@@ -304,12 +304,6 @@ public sealed class ParkStaffPool
 		}
 	}
 
-	/// <param name="seed">
-	/// Fixed so a run is repeatable. <b>A declared deviation:</b> the original rolls from one global
-	/// LCG on the world object, seeded from play, so its pool differs every game. Reproducing that is
-	/// pointless until something depends on the sequence, and a repeatable pool is what lets a harness
-	/// predict a wage before reading it.
-	/// </param>
 	/// <summary>
 	/// The pool's turn, once a thing sweep - the original's <c>FUN_005084f0</c>, which <c>FUN_004d7b20</c> calls on
 	/// every sweep (<c>0x004d7b30</c>; <c>docs/exe/park-engine.md</c>, "The staff pool's refresh").
@@ -491,6 +485,12 @@ public sealed class ParkStaffPool
 	/// there is no save, the opening pool the original makes as a park is created (<c>FUN_005087d0</c>), rolled and
 	/// marked with <paramref name="gameTick"/>.
 	/// </summary>
+	/// <param name="seed">
+	/// Fixed so a run is repeatable. <b>A declared deviation:</b> the original rolls from one global
+	/// LCG on the world object, seeded from play, so its pool differs every game. Reproducing that is
+	/// pointless until something depends on the sequence, and a repeatable pool is what lets a harness
+	/// predict a wage before reading it.
+	/// </param>
 	public ParkStaffPool( ParkBalance? balance, int seed = 20260920, int gameTick = 0, ParkWorld? saved = null )
 	{
 		_balance = balance;
@@ -635,7 +635,7 @@ public sealed class ParkStaffPool
 
 	/// <summary>
 	/// A name for a new candidate - <c>FUN_00507580</c>: one of the kind's 35 rows is drawn, and drawn again, fifteen
-	/// draws at the most, while the name is in use (<c>FUN_005083f0</c>): a candidate in the pool has it, or, in the
+	/// draws at the most, while the name is in use (<c>FUN_005083f0</c>): a candidate in the pool has it, or a
 	/// member of staff in the park does, of any kind.
 	/// </summary>
 	private (int Row, string Name) RollName( int kind )
@@ -698,8 +698,9 @@ public sealed class ParkStaffPool
 	/// has no such key, and at grade 4 in every shipped file.
 	/// </summary>
 	/// <remarks>
-	/// The global <c>Standard.sam</c> is the only file that sets these (5, 8, 12, 15 and nought for grades 0 to 4;
-	/// the researcher's 8, 12, 15, 18 and nought): no theme or easy file overrides them.
+	/// The global <c>Standard.sam</c> sets these (5, 8, 12, 15 and nought for grades 0 to 4; the researcher's 8, 12,
+	/// 15, 18 and nought) and no theme or easy file overrides them. <c>Online_Standard.sam</c>, which nothing here
+	/// reads, holds a table of its own.
 	/// </remarks>
 	public static int PoundsPerTrainingPoint( ParkBalance? balance, int kind, int grade )
 		=> kind is >= 0 and < Kinds

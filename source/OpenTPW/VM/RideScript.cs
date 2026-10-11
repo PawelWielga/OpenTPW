@@ -2174,7 +2174,7 @@ public sealed class RideScript
 
 			// Riding, for the rides that carry people on the ride itself rather than in cars. This is one
 			// of SIX ways a script reports somebody off - the others are COAST 3, BUMP 2, WALKGET, HOP
-			// with DELHEAD, and TOUR 4 - so implementing it frees exactly the scripts that use it, which
+			// with DELHEAD, and TOUR 4 - and this one serves only the scripts that use it, which
 			// in Lost Kingdom is Bouncy.RSE alone.
 			case Opcode.BOUNCESETNODE:
 				// Raw, with no tag test: the handler stores the operand word itself (0x005555e9), and this stores
@@ -2701,7 +2701,7 @@ public sealed class RideScript
 	/// The leg is a new one, from the off-from node to the off-to node, restamped from now (<c>0x00557276</c>); the
 	/// off-from node is a head where the action is 4, and a rider carried under it has their head taken off its
 	/// node by the slot leaving <see cref="WalkState.Carried"/> (<see cref="WalkHeads"/>). The particle spawn the
-	/// engine performs for action 2 is presentation and is absent for the reason given on <see cref="StepTheWalks"/>.
+	/// engine performs for action 2 (<c>0x00557332</c>) is not built: no Lost Kingdom <c>WALKON</c> passes 2 (<c>docs/exe/ride-operation.md</c>, "The operand mapping").
 	/// </para>
 	/// </summary>
 	private void WalkOff( float now, int handle )

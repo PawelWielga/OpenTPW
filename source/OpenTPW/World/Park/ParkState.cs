@@ -15,12 +15,13 @@ namespace OpenTPW;
 /// each object's takings, costs and nominee.
 /// </para>
 /// <para>
-/// <b>What is deliberately NOT here: per-object dirt.</b> Nothing built writes or reads it: a toilet's dirtying
-/// and its dirt gate are both counted. What a built path writes is kept, seeded from the save, even where the
-/// original's reader is not built: each object's takings and costs and the bank's red tick are read here only by
-/// the console, and each one's remarks name the reader that is missing. A ride's operation reads the per-object
+/// <b>What is not here: a dirt field of its own.</b> A toilet's dirt is its State of repair, which use lowers in
+/// the park's own record (<see cref="ParkRideOperation.WearByUse"/>) and <see cref="IsDirty"/> reads. What a
+/// built path writes is kept, seeded from the save, even where the original's reader is not built: each object's
+/// takings and costs are read by the park file's writer and the censuses, and the bank's red tick by
+/// <see cref="MonthsInTheRed"/> and the console. A ride's operation reads the per-object
 /// nominee and the gate reads the cells' occupant lists; the cells' litter is read only by
-/// <see cref="LitteredCells"/>, because the handyman's litter search is not built (<see cref="StaffBehaviour"/>).
+/// <see cref="LitteredCells"/>, which only tests call, because the handyman's litter search is not built (<see cref="StaffBehaviour"/>).
 /// </para>
 /// </summary>
 public sealed class ParkState
@@ -230,7 +231,7 @@ public sealed class ParkState
 	/// </summary>
 	public IReadOnlyDictionary<int, ParkWorld.MapCell> ChangedRecords => _records;
 
-	/// <summary>Whether any cell has been changed at all - what a rebuild can skip on.</summary>
+	/// <summary>How many cells have been changed since the park was loaded.</summary>
 	public int ChangedCells => _records.Count;
 
 	private readonly List<ParkWorld.CatalogueObject> _objects = [];
@@ -335,7 +336,7 @@ public sealed class ParkState
 
 	/// <summary>
 	/// The objects one search for a ride to fix looks at, in its order - the walk of <c>FUN_004daa90</c>
-	/// (<c>docs/exe/ride-operation.md</c>, "The mechanic's search"). <b>Each search begins one object further
+	/// (<c>docs/exe/ride-operation.md</c>, "The mechanic's repair"). <b>Each search begins one object further
 	/// down the chain than the last</b>: <see cref="MechanicCursor"/> steps to the object after the one it
 	/// names, or to the chain's head where it names none still in the chain, and the walk runs from there right
 	/// round the chain. <b>A search whose step runs off the chain's end looks at nothing</b>: the cursor is left

@@ -7,11 +7,9 @@ namespace OpenTPW;
 /// flags (mesh table pointer at 0x70 is zero). See the notes on <see cref="ModelFile"/> for how
 /// the two kinds relate and for the evidence behind the layout below.
 ///
-/// Layouts marked "confirmed against the engine" below were checked against the original game's
-/// own pointer-relocation routine, which walks a freshly loaded .md2 turning every stored file
-/// offset into an absolute pointer. What it relocates is a pointer and what it skips is not, and
-/// the counts and strides it loops with are the record sizes - so it is a direct statement of
-/// the format rather than an inference from the data.
+/// The original game's own pointer-relocation routine walks a freshly loaded .md2 turning every stored
+/// file offset into an absolute pointer. What it relocates is a pointer and what it skips is not, and
+/// the counts and strides it loops with are the record sizes (FileFormats models.md).
 ///
 /// An animation is a list of TRACKS, each posing one node of the base model over a range of
 /// authoring frames. A track can carry several kinds of channel at once - a fountain's water
@@ -480,7 +478,7 @@ public class AnimationFile : BaseFormat
 	///
 	/// <para>
 	/// <b>An entry is a two-point ramp only when it has exactly two keys.</b>
-	/// Measured over every clip under levels/ on 2026-09-15: of 29,723 entries, 25,332 have two keys and
+	/// Over every clip under levels/, of 29,723 entries, 25,332 have two keys and
 	/// 4,391 do not, running as high as 106 - and those fall in <b>289 of the 670 UV tracks, 43%</b>. A
 	/// two-key entry packs so that its first key index is exactly twice its entry index, so "component 2e,
 	/// two components" and "key 2e, two keys" address the same bytes, and a two-point reading passes every
@@ -740,7 +738,7 @@ public class AnimationFile : BaseFormat
 	/// runs is answered with the declared span times <see cref="MillisecondsPerFrame"/>, truncated
 	/// (0x004733b1-0x004733db), so a machine computing it from keys answers a different question. Across
 	/// the game the two disagree on <b>164 clips</b>: 127 declare longer than their keys cover and 37
-	/// declare shorter, and all 127 are clips <b>our own reader rejects outright</b> - 89 with no tracks
+	/// declare shorter, and all 127 are clips <b>that read as no span here</b> - 89 with no tracks
 	/// at all and 38 with no rotation, UV or readable morph track - which nonetheless declare real and
 	/// sometimes long lengths (the ferries run 600 frames).
 	/// </para>

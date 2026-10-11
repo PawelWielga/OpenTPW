@@ -167,8 +167,8 @@ public sealed class ParkAdmission
 	/// about the price of coming in, and each is read by something that is not the gate: the settle-up, the
 	/// sold-thing eviction, a park shutting. The balance loader places them side by side in its
 	/// <c>PeepInfo</c> block (<c>0x00785058</c>, <c>0x0078505c</c>, <c>0x00785060</c>; see
-	/// <c>docs/exe/park-engine.md</c>, "How a key finds its global"). Moving all three into a holder of
-	/// their own is owed. Splitting them across two homes would be worse than this.
+	/// <c>docs/exe/park-engine.md</c>, "How a key finds its global"). They are kept together here,
+	/// as the loader keeps them, rather than split across two homes.
 	/// </remarks>
 	public int BigHappinessChange { get; }
 
@@ -196,7 +196,7 @@ public sealed class ParkAdmission
 	/// <c>TicketBoothA/B</c>, (47,13) and (48,13) in every theme the game ships.
 	///
 	/// <para>
-	/// <b>These are the cells Alexah saw guests stopped on</b>, four rows short of the archway.
+	/// <b>A guest waiting to be charged stands on one of them</b>, four rows short of the archway.
 	/// <c>FUN_004d8610</c> hands one of them out, and entering <see cref="PeepState.JudgingTheFee"/> turns
 	/// a guest to face a fixed heading chosen by <i>which</i> of the two they are standing on.
 	/// </para>

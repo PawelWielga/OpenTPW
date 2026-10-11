@@ -206,11 +206,11 @@ public sealed class RideScriptScheduler
 	}
 
 	/// <summary>
-	/// Puts back the two globals a park save carries, the tick counter and the next handle (<c>FUN_005597a0</c>
-	/// reads them over <c>DAT_008791a4</c> and <c>DAT_008791a8</c>, <c>0x005598d7</c>), so each loaded script
-	/// takes its turns on the ticks it had and a new one is numbered past every saved one.
+	/// The handle the next new script will be given - the engine's <c>DAT_008791a8</c>, which a park file's header
+	/// holds. <see cref="Restore"/> puts it back with the tick counter, the two globals a park save carries
+	/// (<c>FUN_005597a0</c> reads them over <c>DAT_008791a4</c> and <c>DAT_008791a8</c>, <c>0x005598d7</c>), so each
+	/// loaded script takes its turns on the ticks it had and a new one is numbered past every saved one.
 	/// </summary>
-	/// <summary>The handle the next new script will be given - the engine's <c>DAT_008791a8</c>, which a park file's header holds.</summary>
 	public int NextHandle => _lastId + 1;
 
 	public void Restore( int tick, int nextHandle )

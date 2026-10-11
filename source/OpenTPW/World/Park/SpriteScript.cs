@@ -619,7 +619,7 @@ public sealed class SpriteScript
 
 	/// <summary>
 	/// Runs opcodes until one yields or the budget is spent - <c>FUN_00475010</c>. Only
-	/// <see cref="SpriteOp.Frame"/> yields, and the end word stops, so a turn is "everything up to and including
+	/// <see cref="SpriteOp.Frame"/> and <see cref="SpriteOp.FrameFromLocal"/> yield, and the end word stops, so a turn is "everything up to and including
 	/// the next picture".
 	/// </summary>
 	private void Run()

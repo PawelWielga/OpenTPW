@@ -1,7 +1,8 @@
 namespace OpenTPW;
 
 /// <summary>
-/// A park's sounds - its music, the crowd's voice, its weather, its rides' screams and a guest put off something.
+/// A park's sounds - its music, the crowd's voice, its weather, its rides' screams, the staff's voices, a guest put
+/// off something or yawning, and the sounds placed in the land.
 ///
 /// <para>
 /// The original loads four categories as a park comes up and plays one thing. Its state machine
@@ -563,9 +564,8 @@ public sealed class ParkAudio : Entity
 		if ( !_rides.IsValid )
 			Log.Warning( $"Park audio: {themeName} has no rides category in {root}/Sound, so the rides are silent" );
 
-		// And the guests' voices, which is where the screams are. Loaded now that something asks for
-		// them: the note above says a category with nowhere for its sounds to go is waste, and this one
-		// has somewhere - see Scream.
+		// The staff's voices, played by StaffSound, and after them the guests', which is where the
+		// screams are - see Scream.
 		_staff = new SoundCategory( "global", "global/sound", "staff" );
 
 		if ( !_staff.IsValid )
@@ -610,11 +610,10 @@ public sealed class ParkAudio : Entity
 	/// can establish would be a guess.
 	/// </para>
 	/// <para>
-	/// <b>What keeps the departure defensible is narrow and temporary.</b> Snow is reachable - hallow's
-	/// snow band is 0..25 - but <b>hallow has no saved park file</b>, so it cannot be played at all yet. The moment a
-	/// park other than jungle can be entered, snow and rain will sound identical here where the
-	/// original distinguishes them, and this wants settling by capturing the mix - see
-	/// <c>ParkWeather.Snowing</c>.
+	/// <b>The departure is audible where it snows.</b> Snow is reachable - hallow's snow band is 0..25,
+	/// and <c>Level.CreatePark</c> makes a fresh park for a theme that ships no park file - and there
+	/// snow and rain sound identical here where the original distinguishes them. This wants settling
+	/// by capturing the mix - see <c>ParkWeather.Snowing</c>.
 	/// </para>
 	/// </summary>
 	internal void SetRainLevel( float level )

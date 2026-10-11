@@ -1898,7 +1898,7 @@ public sealed partial class ParkPeople : Entity
 	/// </summary>
 	internal IReadOnlyDictionary<int, Peep> Guests => _byId;
 
-	/// <summary>Every member of staff, in the order the save lists them.</summary>
+	/// <summary>Every member of staff: the newest hire first, then the save's in the order it lists them.</summary>
 	internal IReadOnlyList<Staff> Staff => _staff;
 
 	/// <summary>A person's thoughts, guest or staff, or null for nobody the park holds.</summary>
@@ -2313,11 +2313,8 @@ public sealed partial class ParkPeople : Entity
 					// Bounce held a nominee in 8 of them and the longest unbroken hold was 2, so
 					// nominations clear on their own here. It matches the original's order; it does not
 					// fix an observed freeze.
-					// <b>NOT PINNED BY THE SUITE.</b> ParkTickTests does drive the real turn, but
-					// it asserts the handshake SUCCEEDING, and this fires only on a turn that does not
-					// invite - so no test reaches it. Exercising it wants a STALE nominee, which the
-					// shipped park never produces: over 50 samples the longest hold was 2. It stands on
-					// fidelity to FUN_004e1220's tail and on that measurement, not on coverage.
+					// ParkClosedRideTests drives this call through the ride's own turn, and
+					// ParkRideInviteTests the drop itself.
 					//
 					// A closed ride (mCanLoad nought) runs FUN_004e0450 in Invite's place and invites nobody,
 					// and the watchdog is skipped with it (0x004e13fc).
@@ -2532,8 +2529,9 @@ public sealed partial class ParkPeople : Entity
 			+ $"guests {GateGuestCensus} staffOutside {GateStaffOutside}";
 
 	/// <summary>
-	/// What kind of track an item runs on, for the one gate in <see cref="ParkRideOperation.Invite"/> that
-	/// reads the item rather than the object. Reached the same way <c>ParkRideChooser.ItemFor</c> reaches
+	/// What kind of track an item runs on, for the gates that read the item rather than the object: the ride's
+	/// invite, its opening and reopening, what a guest may be offered, and the staff's own
+	/// (<c>StaffBehaviour.TrackTypeOf</c>). Reached the same way <c>ParkRideChooser.ItemFor</c> reaches
 	/// it, so there is one lookup rather than two that can disagree.
 	/// </summary>
 	private int TrackTypeOf( ParkWorld.CatalogueObject thing )
@@ -3211,7 +3209,7 @@ public sealed partial class ParkPeople : Entity
 	/// <para>
 	/// <b>ONE TERM IS NOT REPRODUCED.</b> The original counts a guest only where <c>FUN_004fa990</c> agrees,
 	/// and that is a predicate on the CELL the guest stands on: handed the guest (<c>MOV ECX,ESI</c>), it
-	/// packs the cell from their position and passes when that cell's <c>mType</c> is 0, 1, 3, 9 or 10,
+	/// packs the cell from the thing's own cell bytes and passes when that cell's <c>mType</c> is 0, 1, 3, 9 or 10,
 	/// through five one-line helpers (<c>FUN_00536310</c> and its neighbours). Every guest is counted here.
 	/// </para>
 	/// </summary>

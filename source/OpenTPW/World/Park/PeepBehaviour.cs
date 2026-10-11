@@ -373,10 +373,11 @@ public sealed class PeepBehaviour
 	/// each is recorded where it happens rather than here.
 	/// </para>
 	/// <para>
-	/// <b>And the give-up path does nothing on purpose.</b> Where the walk reports it cannot get through,
-	/// the original's answer in four of these five cases is to print "Big problem - no way this should
-	/// happen" through its diagnostic call and leave the guest where they are. There is nothing to
-	/// reproduce but the leaving-alone.
+	/// <b>Three states leave a guest who cannot get through where they are.</b> Where the walk reports that in
+	/// <see cref="PeepState.Walking"/>, <see cref="PeepState.HeadingForGate"/> or <see cref="PeepState.Entering"/>,
+	/// the original prints "Big problem - no way this should happen" through its diagnostic call
+	/// (<c>0x00501a3b</c>) and does nothing else, so those cases have no give-up arm. Every other give-up arm is
+	/// described at its own case.
 	/// </para>
 	/// </summary>
 	/// <param name="tick">
@@ -563,7 +564,7 @@ public sealed class PeepBehaviour
 				break;
 
 			// Choosing what to do next - FUN_004fec90, the hub a guest is CONSTRUCTED in and returns to
-			// whenever they finish anything. The seven guests standing in Lost Kingdom's archway are here.
+			// whenever they finish anything. The seven guests the save leaves in Lost Kingdom's archway come here from Entering.
 			case PeepState.Deciding:
 				Decide( peep, walk, tick );
 
@@ -1341,7 +1342,7 @@ public sealed class PeepBehaviour
 	/// <summary>The litter byte from which a deciding guest gets rid of it (<c>0x004fedb3</c>).</summary>
 	public const int LitterFullFrom = 90;
 
-	/// <summary>How near a litter bin must be, in cells, squared and exclusive (<c>0x004fedd8</c>).</summary>
+	/// <summary>How near a litter bin must be, in cells: the squared distance must be under this squared (<c>0x004fedd8</c>).</summary>
 	public const int LitterBinReach = 3;
 
 	/// <summary>The squared distance in cells inside which fireworks are watched, exclusive (<c>FUN_00501020</c>).</summary>
@@ -1796,7 +1797,8 @@ public sealed class PeepBehaviour
 	/// from <see cref="QueueToiletFrom"/> to 80 with a toilet need above <see cref="QueueToiletAbove"/>, thought 4,
 	/// and out unless the thing is a toilet; below <see cref="QueueUnhappyBelow"/>, thought <c>0xb</c>, and out by
 	/// the common leave path.</item>
-	/// <item><b>Within the gap</b>, one turn in ten turns the heading (counted); boredom would put them out once
+	/// <item><b>Within the gap</b>, the turn ends with nothing done but a count. The heading turn is not built: no
+	/// draw is taken and every such turn is counted (<c>QUEUE_TURN_HEADING</c>). Boredom would put them out once
 	/// <see cref="QueueBoredAfter"/> sweeps have passed since they began to stand, and <b>never fires</b>:
 	/// <c>mTimeStartedIdling</c> is stamped on every return to the queue at least eleven sweeps after the spot
 	/// animation that began the gap, so it cannot be a hundred past within thirty. It is counted, not built.</item>
@@ -2021,7 +2023,7 @@ public sealed class PeepBehaviour
 	/// <summary>Which arm of <see cref="ThingRemoved"/> a guest took.</summary>
 	internal enum PutOff
 	{
-		/// <summary>Their destination is something else, so the message changes nothing.</summary>
+		/// <summary>Their destination is something else: only a saved major and the visits naming the thing are dropped.</summary>
 		No,
 
 		/// <summary>They were riding it (state 16 exactly, <c>0x004fb38d</c>).</summary>

@@ -16,7 +16,7 @@ namespace OpenTPW;
 /// </para>
 /// <para>
 /// <b>Counted, not built.</b> The three posts to the advisor (message <c>0x17</c>: a warning, a strike, a
-/// calling-off), who does not speak in a park yet, and the handymen's own cause, the share of the park's
+/// calling-off), who posts only the park's door here (<see cref="ParkAdvisorMessages"/>), and the handymen's own cause, the share of the park's
 /// cells with their dword set, which nothing here reads.
 /// </para>
 /// </summary>
@@ -28,7 +28,7 @@ public sealed class ParkStrikes
 	/// <summary>The months since the park's first sweep before which no kind is considered - the <c>0x18</c> of <c>0x00508fbb</c>.</summary>
 	public const int MonthsBeforeAnyStrike = 24;
 
-	/// <summary>A month as the look measures it: thirty days, the divisor <c>0x1792F8648000</c> in seconds.</summary>
+	/// <summary>A month as the look measures it: thirty days in seconds, the span of the divisor <c>0x1792F8648000</c>, which is in 100-nanosecond units.</summary>
 	public const long SecondsAMonth = 30L * 24 * 60 * 60;
 
 	/// <summary>The level a dispute stops rising at.</summary>
@@ -46,7 +46,7 @@ public sealed class ParkStrikes
 
 	/// <summary>
 	/// <c>mForceStrike</c>: set, the month's look skips its gate and every kind has a cause. Only a save sets it
-	/// in the original; here the console's <c>strike</c> does too.
+	/// in the original; here the console's <c>forcestrike</c> does too.
 	/// </summary>
 	public bool Force { get; set; }
 

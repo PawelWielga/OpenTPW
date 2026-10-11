@@ -31,8 +31,8 @@ namespace OpenTPW;
 /// the far half of the compass is drawn mirrored.
 /// </para>
 /// <para>
-/// <b>Engine and content.</b> Drawing world sprites is engine; it carries the people and their balloons, and
-/// will carry litter and thought bubbles when those arrive. Which sprites exist, and where, is the park's.
+/// <b>Engine and content.</b> Drawing world sprites is engine; it carries the people, their balloons and their
+/// thought bubbles, and does not carry litter. Which sprites exist, and where, is the park's.
 /// </para>
 /// </summary>
 public sealed class ParkGuestSprites : ModelEntity
@@ -156,7 +156,7 @@ public sealed class ParkGuestSprites : ModelEntity
 
 	/// <summary>
 	/// Enough colours to tell the <b>nine</b> kinds of people apart at a glance - see <see cref="DebugFacing"/>.
-	/// <c>FolderFor</c> covers them, 0 to 8, and the balloons, 10, which get no dash; an index past the end clamps.
+	/// <c>FolderFor</c> covers them, 0 to 8, then the thought bubbles, 9, and the balloons, 10, neither of which gets a dash; an index past the end clamps.
 	/// </summary>
 	private static readonly uint[] DebugColours =
 	[
@@ -181,7 +181,7 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// original's table at <c>0x763f88</c> is fourteen bare kind names with no theme among them, and
 	/// <c>Sprites_LoadFolder</c> sweeps each kind under two roots in turn - <c>generic\</c> and the
 	/// current theme's - both feeding one numbering. The archive keeps the two apart: <c>Generic</c>
-	/// holds the eleven kinds below that name it, and each theme holds only costumes, costume heads and
+	/// holds eleven kinds, eight of them named below, and each theme holds only costumes, costume heads and
 	/// entertainers. So exactly one of those two sweeps ever finds anything, and a Jungle park can no
 	/// more number a Fantasy entertainer than it can a second Generic.
 	/// </para>
@@ -449,13 +449,13 @@ public sealed class ParkGuestSprites : ModelEntity
 	}
 
 	/// <summary>
-	/// A quad per sprite, sized to the crowd and rewritten each frame - the arrangement
-	/// <see cref="WeatherSprites"/> uses, and for the same reason: there is no instancing here, so a
-	/// crowd has to be one mesh.
+	/// The quads <see cref="Build"/> allots each person: the sprite, the debug dash, a balloon and a thought bubble.
 	///
 	/// <para>
-	/// Re-run whenever the crowd changes size, not only at load - see <see cref="Add"/> - and when more balloons
-	/// are bursting than it has room for.
+	/// <see cref="Build"/> makes one mesh of a quad per sprite, sized to the crowd and rewritten each frame - the
+	/// arrangement <see cref="WeatherSprites"/> uses, and for the same reason: there is no instancing here, so a
+	/// crowd has to be one mesh. It is re-run whenever the crowd changes size, not only at load - see
+	/// <see cref="Add"/> - and when more balloons are bursting than it has room for.
 	/// </para>
 	/// </summary>
 	private const int QuadsAPerson = 4;
@@ -1327,7 +1327,8 @@ public sealed class ParkGuestSprites : ModelEntity
 
 	/// <summary>
 	/// Every balloon, held and bursting, one line each, where it was last placed: the ground under it plus its
-	/// height. The debug console's <c>guests</c> command prints them after the people.
+	/// height; then one line for each thought bubble showing. The debug console's <c>guests</c> command prints them
+	/// after the people.
 	/// </summary>
 	internal IEnumerable<string> BalloonCensus()
 	{

@@ -67,7 +67,7 @@ public sealed class Thoughts
 	/// <summary>The thought last set, shown or not - <c>mLastThought</c>. Nought before any.</summary>
 	public int Last { get; private set; }
 
-	/// <summary>The park's clock when the bubble last made was made - <c>mTimeBubbleShown</c>.</summary>
+	/// <summary>The park's clock when the last bubble was made, or what a save kept - <c>mTimeBubbleShown</c>.</summary>
 	public int TimeBubbleShown { get; private set; }
 
 	/// <summary>The bubble showing: its bank of the kind and its set there. Null with none.</summary>

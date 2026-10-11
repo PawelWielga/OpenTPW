@@ -122,9 +122,9 @@ public sealed class RideAnimations
 	/// reads the clip's own frame bounds out of its animation block and multiplies by the float at
 	/// <c>0x006fec08</c>, then <b>truncates</b> (<c>0x004733b1</c>-<c>0x004733db</c>) - which is not the
 	/// same as dividing by 30, and see <see cref="AnimationFile.MillisecondsPerFrame"/>. Those two
-	/// disagree far more often than they look like they would: across the levels 129 clips declare a
-	/// longer span than their keys cover and 30 declare a shorter one, so computing it from keys would be
-	/// wrong in both directions - see <see cref="AnimationFile.DeclaredLastFrame"/>.
+	/// disagree far more often than they look like they would: some clips declare a longer span than
+	/// their keys cover and some a shorter one, so computing it from keys would be wrong in both
+	/// directions - the counts are at <see cref="AnimationFile.DeclaredLastFrame"/>.
 	/// </para>
 	/// </summary>
 	public int DurationMilliseconds( int role, int entry )

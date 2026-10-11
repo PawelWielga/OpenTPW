@@ -38,7 +38,7 @@ namespace OpenTPW;
 /// Walking it that way lands exactly on the end of every one of the 84 signs the game holds: for the
 /// 23 that carry artwork the computed offset hits the <c>BILZ</c> magic 23 times out of 23, and for
 /// the 61 that do not it lands precisely on end-of-file 61 times out of 61. The two ink blocks are
-/// what made the header look like it had two fixed sizes - three signs (jelly, zob and C_SCAT) set
+/// why the header comes in two sizes - three signs (jelly, zob and C_SCAT) set
 /// both modes to zero, so both blocks are absent and everything after them shifts down the 40 bytes
 /// that 17337 and 17297 differ by.
 /// </para>

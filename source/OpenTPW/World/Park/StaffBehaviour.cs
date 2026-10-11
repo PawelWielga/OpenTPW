@@ -39,7 +39,9 @@ namespace OpenTPW;
 /// </para>
 /// <para>
 /// <b>What is deliberately not built.</b> A handyman's litter (<c>FUN_004c8ed0</c>): the search is counted where
-/// the original makes it and answers as finding nothing.
+/// the original makes it and answers as finding nothing. Counted the same way, where the original does each: a
+/// mechanic's upgrade job, advisor message <c>0x46</c> for a ride nobody called him to, and a rest area's
+/// <c>VAR_STAFFIN</c> count with its resting-staff list.
 /// </para>
 /// <para>
 /// <b>The strike is built</b>: the arm every decide opens with, the walk to the picket (state 4) and the
@@ -589,8 +591,9 @@ public sealed class StaffBehaviour
 	/// <para>
 	/// <b>Every kind walks about when it has no work.</b> The mechanic and the handyman look for work and, with
 	/// none, set off on a random walk every time; the entertainer and the guard stay on one choice in four, where
-	/// the researcher researches. The handyman's toilet search and the entertainer's look find work; the others
-	/// are counted where the original makes them.
+	/// the researcher researches. The mechanic's search, the handyman's toilet search and the entertainer's look
+	/// find work; the handyman's litter search and the mechanic's upgrade job are counted where the original makes
+	/// them.
 	/// </para>
 	/// </summary>
 	private void Decide( Staff staff, PeepWalk walk, int tick )
@@ -1311,7 +1314,8 @@ public sealed class StaffBehaviour
 	public const int SoundDrawMask = 0xf;
 
 	/// <summary>
-	/// The draw an idle, walking or researching turn opens with, and the effect on one in sixteen
+	/// The draw an idle or walking turn opens with and a researching turn that does not end takes after its work,
+	/// and the effect on one in sixteen
 	/// (<c>docs/exe/ride-operation.md</c>, "Drawn on the way"). The draw is taken whatever the effect.
 	/// </summary>
 	private void DrawForSound( Staff staff, int effect, int tick )
@@ -1356,7 +1360,8 @@ public sealed class StaffBehaviour
 	/// holds each at a hundred.
 	/// </summary>
 	/// <remarks>
-	/// <b>The rest ends when a stat reaches a hundred exactly</b>, which the original tests by truncating
+	/// <b>The rest ends when the rest stat alone reaches a hundred exactly</b> (happiness, raised beside it, is not
+	/// tested), which the original tests by truncating it
 	/// to a byte and comparing against 'd' - the character whose code is 100. It reads as a character in
 	/// the decompiler and is a number. The member is then idle at stamp nought and takes their kind's decide
 	/// in the same sweep (<c>0x00506298</c>).
@@ -1569,7 +1574,8 @@ public sealed class StaffBehaviour
 		var (fromX, fromY) = staff.PatrolFrom;
 		var (toX, toY) = staff.PatrolTo;
 
-		// A rectangle the wrong way round would divide by nought below rather than merely pick badly. Every
+		// A rectangle the wrong way round would divide by nought below where it is one cell short, and pick outside
+		// itself where it is shorter. Every
 		// patrol area the shipped park carries is well formed - ParkStaffStateTests pins that - so no test
 		// here would ever have reached it, which is exactly why it is guarded rather than assumed.
 		if ( toX < fromX || toY < fromY )

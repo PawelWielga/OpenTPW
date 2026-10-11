@@ -65,7 +65,7 @@ public sealed class ParkObjects : Entity
 		public RideAnimations Animations { get; } = animations;
 
 		/// <summary>
-		/// Which catalogue item this is, for a thing the save never named - nought where it did.
+		/// Which catalogue item this is: a placed thing's own, and a fixed item's where it was stood with one - nought for a fixed item stood without.
 		/// <see cref="ParkRides"/> binds scripts by walking the save's object list, so something stood
 		/// without one there would never be given a script; this is how it finds the item to load from.
 		/// </summary>

@@ -424,7 +424,7 @@ public sealed class ParkItemCatalogue
 	public bool TryGet( int id, out Item item ) => _items.TryGetValue( id, out item );
 
 	/// <summary>
-	/// Everything this theme catalogued, in no particular order - what a screen listing what a park may
+	/// Everything this theme catalogued, as the dictionary yields it (the order it was read in while nothing is removed, which RegisterParticleEffects counts on) - what a screen listing what a park may
 	/// buy walks, where <see cref="TryGet"/> answers only for a number already in hand.
 	/// </summary>
 	/// <remarks>

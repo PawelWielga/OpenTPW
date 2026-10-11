@@ -90,8 +90,9 @@ public sealed class SoundCategoryFile
 	/// <param name="GapMax">The longest such wait (<c>u16</c> at <c>+0x12</c>). Four shipped variations
 	/// hold it below <see cref="GapMin"/>, and the original swaps the pair when it draws.</param>
 	/// <param name="GapByParameter">
-	/// The <c>u16</c> at <c>+0x18</c>. With bit 4 set the original takes the wait from the voice's
-	/// parameter rather than at random (<c>0x006c3d80</c>); no scream variation sets it.
+	/// The <c>u16</c> at <c>+0x18</c>, the first controller's mask: bit 1 its volume, bit 2 its pitch. With bit 4
+	/// set the original takes the wait from the voice's parameter rather than at random (<c>0x006c3d80</c>); no
+	/// scream variation sets it.
 	/// </param>
 	/// <param name="Weight">
 	/// The <c>u32</c> at <c>+0x1e</c>, as the original holds it after loading: a variation's own

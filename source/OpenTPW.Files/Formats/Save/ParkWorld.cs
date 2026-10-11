@@ -526,8 +526,7 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// The guest serialiser writes it from the struct's <c>+0x1b8</c>, which lands between
 	/// <c>mTimeStartedIdling</c> at <c>+0x1fc</c> and <c>mToilet</c> at <c>+0x1ac</c> in the alphabetical
 	/// order the block is written in, so it is <c>mTiredness</c>. It stays unread because it is zero on
-	/// every guest in the shipped park and nothing asks for it; the name is recorded so that the next
-	/// reader does not have to derive it twice.
+	/// every guest in the shipped park and nothing asks for it.
 	/// <para>
 	/// <b>The whole block is derived end to end and it closes exactly.</b> Walking the serialiser's own
 	/// field sizes from +398: mArrivalDate 398, mArrivalIndex 402, mBalloonScript 406, mBeenAdmitted 410,
@@ -537,8 +536,7 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// interleaved histories 470-485, mQNext 486, mQPrev 488, mQueueMoveDelay 490, mQueuePos 494,
 	/// mRemainingBalloonLife 495, mSavedMajorDest 499, mSavedState 501, mState 505, mThirst 509,
 	/// mTimeOfLastSpotAnim 513, mTimeStartedIdling 517, mTiredness 521, mToilet 525, mVomit 529 - ending
-	/// on <b>533</b>. Every offset this reader already had is reproduced by that walk, which is what makes
-	/// the ones it did not have trustworthy - except the block's seven need floats: <c>mHappiness</c>,
+	/// on <b>533</b>. The walk fixes every field's offset, the seven need floats' among them: <c>mHappiness</c>,
 	/// <c>mHunger</c>, <c>mLitter</c>, <c>mThirst</c>, <c>mTiredness</c>, <c>mToilet</c> and <c>mVomit</c>
 	/// (see <see cref="ReadGuest"/> for why there are exactly seven). The walk gives those seven an offset
 	/// and an order, not a name: the serialiser tags every need float <c>pv</c>, and none of the seven has a
@@ -1659,8 +1657,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		// The World block does not start at the beginning. An untagged ActionRec block is saved first -
 		// a flag and then a recording, as a length and its bytes - so where World begins is derived from
 		// that length rather than assumed. In the shipped park the length reads 1171, which puts World at
-		// 0x49B; that the dword at offset 4 turned out to be a byte count is itself a check that could
-		// have failed.
+		// 0x49B (FileFormats saves.md).
 		_ = ReadInt32();
 		var recording = ReadInt32();
 

@@ -16,8 +16,9 @@ namespace OpenTPW;
 /// <b>Of the kind-specific half the handyman's toilet job is here</b> (<see cref="ToiletToClean"/>,
 /// <see cref="TimeStartedCleaning"/>)<b>, the entertainer's performance</b>
 /// (<see cref="TimeStartedEntertaining"/>) <b>and the researcher's research</b>
-/// (<see cref="TimeStartedResearching"/>). A handyman's target litter cell, a mechanic's object to repair and a
-/// guard's perp are all saved and all decoded - see <c>ParkWorld.ReadStaff</c> - and none of them is read. See
+/// (<see cref="TimeStartedResearching"/>)<b>, and the mechanic's repair</b> (<see cref="ObjectToRepair"/>,
+/// <see cref="DurationOfRepair"/>). A handyman's target litter cell and a guard's perp are saved - see
+/// <c>ParkWorld.ReadStaff</c> - and neither is read. See
 /// <see cref="StaffBehaviour"/> for which arms that leaves out and why.
 /// </para>
 /// </summary>
@@ -304,7 +305,8 @@ public sealed class Staff
 	///
 	/// <para>
 	/// Three of the eight shared states walk: going somewhere, going to a rest area, and going to the
-	/// strike; and a handyman's walk to a toilet. The rest stand, sit, work or are being carried.
+	/// strike; and so do a handyman's walk to a toilet and a mechanic's walk to a ride. The rest stand, sit, work or
+	/// are being carried.
 	/// </para>
 	/// </summary>
 	public static bool IsAWalkingState( StaffActivity activity ) => activity is

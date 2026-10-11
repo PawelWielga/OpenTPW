@@ -64,7 +64,7 @@ public sealed class RideNodes
 	/// <summary>The item's <see cref="ItemDescriptionFile.DoHeadProcessing"/>.</summary>
 	public bool DoHeadProcessing => _doHeadProcessing;
 
-	/// <summary>The model's own name, for the log.</summary>
+	/// <summary>The model's own name; only the tests' failure messages read it.</summary>
 	public string Stem { get; }
 
 	/// <param name="model">The thing's own model.</param>
@@ -223,7 +223,7 @@ public sealed class RideNodes
 	/// <summary>Its half, <c>0x00701000</c>.</summary>
 	private const double OctantHalf = 0.5;
 
-	/// <summary>A lookup record's runtime flag <c>0x10</c>: its node's file flags carry this, and its direction is read turned about.</summary>
+	/// <summary>The node file flag <c>0x400</c>, whose lookup record carries runtime flag <c>0x10</c>: its direction is read turned about.</summary>
 	private const uint TurnedAbout = 0x400;
 
 	/// <summary>
@@ -463,7 +463,7 @@ public sealed class RideNodes
 	}
 }
 
-/// <summary>What <see cref="RideNodes.Find"/> found.</summary>
+/// <summary>What <see cref="RideNodes.Find"/>, <see cref="RideNodes.FindFacing"/>, <see cref="RideNodes.FindDirection"/> and <see cref="RideNodes.FindHead"/> found.</summary>
 public enum NodeEnd
 {
 	/// <summary>Found, and where the engine stores it.</summary>
@@ -481,7 +481,10 @@ public enum NodeEnd
 	/// <summary>No record has that id in that space: the engine carries on with whatever position it held.</summary>
 	Missing,
 
-	/// <summary>Found with no stored matrix: the engine reads (0, 0, 0) while nothing is attached to it.</summary>
+	/// <summary>
+	/// Found with no matrix, or with one the pose walk never stores: a position reads (0, 0, 0) while nothing is attached
+	/// to it. <see cref="RideNodes.FindDirection"/> answers it only for the matrix never stored.
+	/// </summary>
 	Unposed,
 
 	/// <summary>A negative id, which the engine answers from the centre of the thing's cells.</summary>
