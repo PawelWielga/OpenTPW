@@ -62,7 +62,7 @@ Every use of that int as a delay in OpenTPW is OpenTPW's own: `SoundCategory.Pla
 |---|---|---|
 | no bit `0x4` (for example 0, `0x200`, `0x8`) | One-shot: plays one sample and dies; with bit `0x8` the sample is looped and the voice lives on ("A voice's range", below). Freed at start + length + 250 ms (`0x006bc01b`), or when its channel ends. | 1,067 of the 1,267 records, SINGLESCREAM's 75-90 and 105-109 among them; 30 more carry bit `0x1` and go through a deferred queue first (`0x006b66d0`) |
 | `0x0404` | Held chain, final vtable `0x0070a2e0`. The constructor stores `0x0070a390`, then overwrites it at `0x006bdde5`. | 18 records: kids 71-74, staff 188, and the ambient beds with `0x120404`/`0x170404` |
-| bits `0x4` and `0x2` | Four constructors by the other bits (`0x006b677d`..`0x006b67c3`): with `0x10`, `0x006be680`; else with `0x400`, `FUN_006be610`, **the music's class**, below; else with `0x100`, `0x006be330`; else `0x006be090`, which passes the variation's wait to the mixer channel (`0x006bdf00` → `0x006c5220`). Only the `0x400` one is decoded. | 135 records (`classes.py`): 106 to `0x006be090` (`0x0006`, `0x0206`), 27 to `FUN_006be610` (`0x0406` 16, `0x0606` 11: music 2 in every theme, kids 91, global ambient 33, jungle's rides 204, 216 and 217 among them), 2 to `0x006be680` (`0x0016`), none to `0x006be330` |
+| bits `0x4` and `0x2` | Four constructors by the other bits (`0x006b677d`..`0x006b67c3`): with `0x10`, `0x006be680`; else with `0x400`, `FUN_006be610`, **the music's class**, below; else with `0x100`, `0x006be330`; else `0x006be090`, which draws its variation from all of the effect's and follows each later sample with the variation's wait ("The plain class: any variation, and a silence after a sample", below). The `0x10` and `0x100` ones are not decoded. | 135 records (`classes.py`): 106 to `0x006be090` (`0x0006`, `0x0206`), 27 to `FUN_006be610` (`0x0406` 16, `0x0606` 11: music 2 in every theme, kids 91, global ambient 33, jungle's rides 204, 216 and 217 among them), 2 to `0x006be680` (`0x0016`), none to `0x006be330` |
 
 **The music's class: the parameter picks the variation, and nothing else** (`FUN_006be610`, constructor `FUN_006be660`, vtable `0x0070a498`; fix 4 of the 2026-10-06 review). The voice plays one sample after another. Its slot `+0x38` (`FUN_006be5e0`) reads its first controller's value, the byte at `[[voice+0x4c]+4]`, and hands it to `FUN_006be450`, which is the chain's rule (`0x006c3e00`) again:
 
@@ -559,6 +559,67 @@ child and its pitch", below.
 | `0x006bdf50` | — | Slot `+0x14`, a voice's start: slot `+0x44` (`FUN_006bc410`) fills the requests, volume and pitch among them | Disassembly |
 | `0x006be5e0` | — | Slot `+0x38`: `FUN_006be450` with controller value 0, then the keys | Disassembly |
 | `0x006c0610` | — | The loader's pass over an effect's variations: running totals to weights, zone indices to pointers | Decompiled |
+
+## The plain class: any variation, and a silence after a sample
+
+Read for Q302 (the gulls and the sea, `park.md`, "The land's own sounds") and held in the running original
+(`original/voices.py`, `mixer.py`, `mixfreq.py`; `q302/orig/`).
+
+**The class of flags `0x4` and `0x2` with none of `0x10`, `0x400` and `0x100`** (`FUN_006be090`, constructor
+`FUN_006be0e0`, vtable `0x0070a338`) **is the music's class with two slots changed.** Its slot 0 is the same
+`0x006bde00`, so it plays one sample after another and queues each later one with its sample alone ("A held voice's
+next sample", above): the volume and the pitch are drawn once, as the voice starts (`FUN_006bc410`), and kept.
+
+- **Slot `+0x38` is `FUN_006bc810`: a variation drawn by weight among all of the effect's**, with no zone and no
+  parameter. An effect of one variation takes it. Otherwise the generator steps, and the walk adds each
+  variation's weight (`+0x1e`) and stops at the first running total not below the draw's high word. Asked with 1
+  (slot 0, a sample after the first), on an effect of more than two variations, a draw of the variation before
+  (`+0x45`) is moved on to the next, round to the first. The voice's own start (`FUN_006bbf60`) asks with 0.
+- **Slot `+0x28` is the base `0x006bbb80`**: a parameter set finds its key as any voice's does.
+- **The wait is a silence after the sample** (`0x006bdf00`, slot `+0x48`): with either of the variation's wait
+  words not nought, slot `+0x4c` (`FUN_006bc2d0`, "min + LCG % (max - min)") is drawn and stored in the request at
+  `+0x58` under bit `0x200000` (`FUN_006c5220`, its one caller). The channel's source builder (`FUN_006ba460`)
+  then chains a stage of class `0x0070ab58` after the sample's (`FUN_006c6730`): the wait in milliseconds times the
+  format's rate over a thousand, in bytes, and its read (`0x006c67f0`) passes the sample through to its end and
+  then writes that many bytes of nought before it answers that it has ended. The voice's first sample goes
+  through `FUN_006bc410`, which sets no wait, so the first is followed at once.
+
+**The two shipped users a park's land places** (`lib/sfxmap.py`): global ambient 2, the gulls, one variation of
+two samples at volume 49, a pitch of -2 to 2 and a wait of 0 to 10000; and 3, the sea, three variations of one
+sample each at 33, 55 and 55, no pitch and no wait. Neither is given a range, so each takes its variation's, 100.
+
+**Measured in the original, 2026-10-11** (predicted first, `q302/PREDICTION.txt`, 4 of 4; the shipped park loaded
+from four files whose cameras stand at stepped distances from the sea, `q302/mkfiles.py`, a minute each):
+
+| Listener | The gulls' voice and channel | The sea's |
+|---|---|---|
+| (417, 47, 18), inside both rectangles | at the listener's place; 37 of 127, frequency 21734, gain 1.0000 | at the listener's place; 25 of 127, 22050, gain 1.0000 |
+| (415, 47, 46) | at (415, 47, 31), 15.06 off, gain 0.8919; 37 of 127, 22050 | at (415, 47, 21), 25.06 off, gain 0.8068; 41 of 127, 22050 |
+| (410, 47, 106) | at (410, 47, 31), 75.21 off, gain 0.3330; 37 of 127, 21578 | at (410, 47, 21), 85.21 off, gain 0.2202; 25 of 127, 22050 |
+| (411, 47, 167) | 136 off: flag `0x800`, no channel | 146 off: flag `0x800`, no channel |
+
+Each channel read a far end of 100 and one volume and one frequency for its whole minute, whatever samples went
+by: 37 is the gulls' 49 through the channel's sum, 25 and 41 the sea's 33 and 55, the variation its start drew;
+21578, 21734 and 22050 are a pitch of -2, -1 and 0 ("A voice's two controllers": `22050 x 2^((p - 1) / 96)` below
+nought). Every gain is the law's, `((100 - d) / 98) ^ 0.8`. **Not measured:** how long the silence after a gull is
+(the original's sound off-screen is not paced, and the channel stays open through it), and which sample follows
+which.
+
+**What OpenTPW does** (`ParkAudio.StartFollowing`, `ServeFollowing`, `AnyVariation`, `PlaysFollowing`): a voice
+of this class is a variation drawn as `FUN_006bc810` draws it, a sample of it, the volume and pitch of the first
+kept, and after every sample but the first a silence drawn from its variation's wait, timed on the frame clock
+from the frame the sample is found ended. Built for the land's own type 3 sounds alone; the run is in `park.md`,
+"The land's own sounds". The sample draw's own rule against the sample before (`FUN_006bc680` asked with 1, for a
+variation of more than two samples) is not built, here or for the crowd's and the music's voices.
+
+| Address | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x006be090`, `0x006be0e0`, `0x0070a338` | — | The plain class's maker, constructor and vtable | Disassembly; the vtable read beside `0x0070a498` |
+| `0x006bc810` | — | Slot `+0x38`: a variation by weight among all, never the one before of more than two | Decompiled |
+| `0x006bbf60` | — | A voice's set-up: slot `+0x38` asked with 0, the keys, the first sample | Decompiled |
+| `0x006c5220` | — | The request's wait: bit `0x200000`, the value at `+0x58` | Decompiled; one caller, `0x006bdf35` |
+| `0x006ba460` | — | The channel's source builder: a loop stage under bit `0x40`, a silence stage under `0x200000` | Decompiled |
+| `0x006c6730`, `0x0070ab58`, `0x006c67f0` | — | The silence stage: its length from milliseconds, its vtable, its read | Decompiled, disassembly |
 
 ## A scream's child and its pitch
 

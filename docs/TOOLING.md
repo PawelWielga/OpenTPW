@@ -134,6 +134,13 @@ whole list):
   two voices are the same sample, a part of a second apart unless the command lands on a weather tick's frame: apart,
   `mixmatch.steady` scores 0.77 and tells no gain and the rms is the two powers' sum; together it scores 1.00 at
   twice a voice's gain. Compare the mix's rms between two builds and allow for both (`q301/confirm.py`, Q301).
+- **The gulls and the sea, read and measured:** `camera 400 0 110 180` puts the listener at (400,29,47), inside
+  the gulls' rectangle and 8 from the sea's, with every other placed sound out of range; `camera 400 60 110 180`
+  is 58 and 68 off, and shows the harbour. `placed` prints each following voice's place, distance, law and gain
+  (`gain none` between two samples: poll until it reads `sounding`). The listener is not on whole units, so read a
+  distance before predicting its law. A sea sample opens quietly: match its 1.5 s from 3 s in
+  (`t[3 * 22050:]`), which scores 1.00 where its first second and a half scored 0.20 under a gull
+  (`q302/confirm.py`, Q302).
 - **The crowd's voice alone in the mix:** `hover 50 24` holds the pointer's cell on the Belly Bounce's queue
   whatever the camera does, so with `bus music 0` and `camera 1100 1100 110 180` the mix is the crowd's flat
   voice and nothing else. `voices` names each sample as `<name> Effects flat`; match each at its six pitches
@@ -230,6 +237,11 @@ GH=766` there, or the pointer is off):
   quality written straight to `+0xc` changes nothing, since only a delivered forecast is turned into drops
   (`FUN_005127a0`). A change came inside 35 s of each hold, the computer on seven days; `rainmix.py` beside it
   reads the drops, both rain voices and their channels (`q301/orig/run.sh`, Q301).
+- **Its gulls and its sea:** a file saved here under `camera 400 60 110 180` puts its listener at (417, 47, 18),
+  inside both rectangles; `camera 400 100`, `400 140` and `400 200` step it to 15, 75 and 136 from the gulls'
+  (`q302/files/sea-*.TPWS`). `voices.py` shows effects 2 and 3 (flags word `0x0006`, voice flag `0x1000`) with
+  their rectangles, and `mixfreq.py` their channels at the voices' places: 37 of 127 the gulls, 25 or 41 the
+  sea, a far end of 100. A second effect 2, flagged `0x0606` at (0,0,0), is the music (`q302/orig/run.sh`, Q302).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).

@@ -367,8 +367,9 @@ public class Level
 		GameOptions.Current.ApplySound();
 		var audio = new ParkAudio( ThemeName );
 
-		// And the sounds the land itself carries, started as the level loads: the jungle's waterfall and its river.
-		ParkPlacedObjects.StartSounds( ThemeName, audio.StartPlaced );
+		// And the sounds the land itself carries, started as the level loads: the jungle's waterfall and its river,
+		// and its gulls and its sea, which follow the listener.
+		ParkPlacedObjects.StartSounds( ThemeName, audio.StartPlaced, audio.StartFollowing );
 		load.Mark( "audio" );
 
 		// After the audio, because a park opens with its weather already rolled and that first roll

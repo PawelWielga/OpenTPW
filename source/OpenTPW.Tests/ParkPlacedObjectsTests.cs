@@ -137,7 +137,7 @@ public class ParkPlacedObjectsTests
 		Assert.IsNull( running[0].Aim );
 
 		Assert.AreEqual( 0, Times( "SCAPE_OMP_SOUND_TYPE_1" ), "the sounds are StartSounds' to hand on or count" );
-		Assert.AreEqual( 2, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
+		Assert.AreEqual( 0, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
 		Assert.AreEqual( 0, Times( "PARK_PARTICLE_NOT_STARTED" ) );
 
 		// It is endless and throws a particle a tick out at this density, each living 25 to 30 ticks.
@@ -157,7 +157,7 @@ public class ParkPlacedObjectsTests
 		Assert.AreEqual( 0, ParkPlacedObjects.Start( "fantasy", system ) );
 		Assert.IsFalse( system.Emitters.Any( emitter => emitter.Active ) );
 		Assert.AreEqual( 0, Times( "SCAPE_OMP_SOUND_TYPE_1" ) );
-		Assert.AreEqual( 1, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
+		Assert.AreEqual( 0, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
 	}
 
 	[TestMethod]
@@ -176,7 +176,7 @@ public class ParkPlacedObjectsTests
 
 		Assert.AreEqual( 0, ParkPlacedObjects.Start( "jungle", null ) );
 		Assert.AreEqual( 0, Times( "PARK_PARTICLE_NOT_STARTED" ) );
-		Assert.AreEqual( 2, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
+		Assert.AreEqual( 0, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
 	}
 
 	/// <summary>A file of whole records, each given as its words.</summary>
@@ -350,6 +350,310 @@ public class ParkPlacedObjectsTests
 				Audio.Voices.RemoveAll( voice => !before.Contains( voice ) );
 
 			ready.SetValue( null, false );
+		}
+	}
+
+	[TestMethod]
+	public void ATypeThreeOfTheGlobalCategoryIsHandedOnWithItsRectangle()
+	{
+		// The jungle's gulls' own words, and a made one whose words do not divide: -1500 is -1, 2047 is 1.
+		var file = Of( [3, 0, 2, 362100, 0, 32100, 80000, 100000, -100000], [3, 0, 9, -1500, 0, 2047, 0, 2047, -1500],
+			[3, 1, 4, 0, 0, 0, 0, 1024, 1024] );
+		var handed = new System.Collections.Generic.List<ParkPlacedObjects.Following>();
+
+		Assert.AreEqual( 2, ParkPlacedObjects.StartSounds( file, _ => false, sound => { handed.Add( sound ); return true; } ) );
+
+		CollectionAssert.AreEqual( new[]
+		{
+			new ParkPlacedObjects.Following( 2, 353, 31, 450, -66 ),
+			new ParkPlacedObjects.Following( 9, -1, 1, 0, 0 ),
+		}, handed, "the level's own is never offered" );
+		Assert.AreEqual( 1, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
+		Assert.AreEqual( 0, Times( "SCAPE_OMP_SOUND_TYPE_1" ) );
+	}
+
+	[TestMethod]
+	public void ATypeThreeRefusedOrWithNobodyToTakeItIsCounted()
+	{
+		var file = Of( [3, 0, 2, 0, 0, 0, 0, 1024, 1024], [3, 0, 3, 0, 0, 0, 0, 1024, 1024] );
+
+		Assert.AreEqual( 1, ParkPlacedObjects.StartSounds( file, _ => true, sound => sound.Effect == 3 ) );
+		Assert.AreEqual( 1, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
+
+		Unimplemented.Forget();
+
+		Assert.AreEqual( 0, ParkPlacedObjects.StartSounds( file, _ => true ) );
+		Assert.AreEqual( 2, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
+	}
+
+	[TestMethod]
+	public void EveryParksSeaAndTheJunglesGullsAreHandedOn()
+	{
+		FileSystem = GameData.Required();
+
+		System.Collections.Generic.List<ParkPlacedObjects.Following> Of( string theme )
+		{
+			var handed = new System.Collections.Generic.List<ParkPlacedObjects.Following>();
+
+			ParkPlacedObjects.StartSounds( theme, _ => true, sound => { handed.Add( sound ); return true; } );
+
+			return handed;
+		}
+
+		// As the original's voices' rectangles stand in its memory.
+		CollectionAssert.AreEqual( new[]
+		{
+			new ParkPlacedObjects.Following( 2, 353, 31, 450, -66 ),
+			new ParkPlacedObjects.Following( 3, 372, 21, 567, -174 ),
+		}, Of( "jungle" ) );
+		CollectionAssert.AreEqual( new[] { new ParkPlacedObjects.Following( 3, 370, 29, 565, -166 ) }, Of( "fantasy" ) );
+		CollectionAssert.AreEqual( new[] { new ParkPlacedObjects.Following( 3, 371, 32, 566, -163 ) }, Of( "hallow" ) );
+		CollectionAssert.AreEqual( new[] { new ParkPlacedObjects.Following( 3, 373, 31, 568, -164 ) }, Of( "space" ) );
+		Assert.AreEqual( 0, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
+	}
+
+	[TestMethod]
+	public void AFollowingVoiceStandsAtTheListenersPlaceHeldInsideItsRectangle()
+	{
+		var gulls = new ParkPlacedObjects.Following( 2, 353, 31, 450, -66 );
+
+		// Inside, it is the listener's own place; outside, the nearest point of the rectangle, at the listener's height.
+		Assert.AreEqual( new Vector3( 400f, 10f, 47f ), gulls.Beside( new Vector3( 400f, 10f, 47f ) ) );
+		Assert.AreEqual( new Vector3( 400f, 31f, 47f ), gulls.Beside( new Vector3( 400f, 229f, 47f ) ) );
+		Assert.AreEqual( new Vector3( 450f, 31f, 5f ), gulls.Beside( new Vector3( 546f, 476f, 5f ) ) );
+		Assert.AreEqual( new Vector3( 353f, -66f, 0f ), gulls.Beside( new Vector3( 0f, -500f, 0f ) ) );
+
+		// The same whichever end of a side the record names first.
+		Assert.AreEqual( new Vector3( 450f, 31f, 5f ), new ParkPlacedObjects.Following( 2, 450, -66, 353, 31 ).Beside( new Vector3( 546f, 476f, 5f ) ) );
+	}
+
+	[TestMethod]
+	public void OnlyAnEffectOfThePlainSampleAfterSampleClassFollows()
+	{
+		FileSystem = GameData.Required();
+
+		var ambient = new SoundCategory( "global", "global/sound", "ambient" );
+
+		// The gulls and the sea are flagged 0x0006; the fall is a loop, and the rain, 0x0606, the class a parameter drives.
+		Assert.AreEqual( 0x0006, ambient.FlagsOf( 2 ) );
+		Assert.AreEqual( 0x0006, ambient.FlagsOf( 3 ) );
+		Assert.AreEqual( 0x0606, ambient.FlagsOf( 33 ) );
+
+		Assert.IsTrue( ParkAudio.PlaysFollowing( ambient, 2 ) );
+		Assert.IsTrue( ParkAudio.PlaysFollowing( ambient, 3 ) );
+		Assert.IsFalse( ParkAudio.PlaysFollowing( ambient, 8 ) );
+		Assert.IsFalse( ParkAudio.PlaysFollowing( ambient, 33 ) );
+		Assert.IsFalse( ParkAudio.PlaysFollowing( ambient, 9999 ) );
+		Assert.IsFalse( ParkAudio.PlaysFollowing( null, 2 ) );
+
+		// What the voices are made of: the gulls one variation of two samples at 49, a pitch of -2 to 2 and a wait of
+		// up to ten seconds; the sea three of one sample, at 33, 55 and 55, each heard a hundred off.
+		var gulls = ambient.VariationsOf( 2 ).Single();
+
+		Assert.AreEqual( (2, (49, 49), (-2, 2), 0, 10000, 100f), (gulls.Samples, gulls.Volume, gulls.Pitch, gulls.GapMin, gulls.GapMax, gulls.Range) );
+		CollectionAssert.AreEqual( new[] { 33, 55, 55 }, ambient.VariationsOf( 3 ).Select( header => header.Volume.Low ).ToArray() );
+		Assert.IsTrue( ambient.VariationsOf( 3 ).All( header => header is { Samples: 1, GapMin: 0, GapMax: 0, Range: 100f } ) );
+	}
+
+	private static SoundCategoryFile.Variation Weighing( long weight ) => new( 1, 0, 0, 0, weight, [] );
+
+	[TestMethod]
+	public void AFollowingVoicesVariationIsDrawnByWeightAndNeverTheOneBeforeOfThree()
+	{
+		var random = new Random( 7 );
+		var three = new[] { Weighing( 100 ), Weighing( 300 ), Weighing( 600 ) };
+		var first = new int[3];
+
+		for ( var draw = 0; draw < 10000; ++draw )
+			++first[ParkAudio.AnyVariation( three, -1, random )];
+
+		// A voice's first: by weight alone.
+		Assert.IsTrue( first[0] is > 850 and < 1150 && first[1] is > 2800 and < 3200 && first[2] is > 5800 and < 6200, string.Join( ", ", first ) );
+
+		// A later one: the one before is never drawn again, and its draws go to the next round.
+		var later = new int[3];
+
+		for ( var draw = 0; draw < 10000; ++draw )
+			++later[ParkAudio.AnyVariation( three, 2, random )];
+
+		Assert.AreEqual( 0, later[2] );
+		Assert.IsTrue( later[0] is > 6800 and < 7200 && later[1] is > 2800 and < 3200, string.Join( ", ", later ) );
+
+		for ( var draw = 0; draw < 200; ++draw )
+			Assert.AreNotEqual( 0, ParkAudio.AnyVariation( three, 0, random ) );
+
+		// Of two the one before may come again; one is that one, and none is none.
+		var two = new[] { Weighing( 500 ), Weighing( 500 ) };
+
+		Assert.IsTrue( Enumerable.Range( 0, 200 ).Any( _ => ParkAudio.AnyVariation( two, 0, random ) == 0 ) );
+		Assert.IsTrue( Enumerable.Range( 0, 200 ).Any( _ => ParkAudio.AnyVariation( two, 0, random ) == 1 ) );
+		Assert.AreEqual( 0, ParkAudio.AnyVariation( [Weighing( 5 )], 0, random ) );
+		Assert.AreEqual( -1, ParkAudio.AnyVariation( [], -1, random ) );
+	}
+
+	/// <summary>
+	/// The wiring, with a device stood in: the jungle's gulls and sea become two voices of the park's sound that play
+	/// one sample after another beside the listener, each at the volume and pitch its first drew, the gulls with a
+	/// silence after every sample but the first.
+	/// </summary>
+	[TestMethod]
+	public void TheJunglesGullsAndSeaPlaySampleAfterSampleBesideTheListener()
+	{
+		FileSystem = GameData.Required();
+
+		var ready = typeof( Audio ).GetProperty( nameof( Audio.Ready ) )!;
+		var now = Time.Now;
+		var looksAt = ParkOrbitCameraMode.PointOfInterest;
+
+		Camera.SetCameraMode<ParkOrbitCameraMode>();
+		ParkOrbitCameraMode.PointOfInterest = new Vector3( 400f, 60f, 0f );
+
+		System.Collections.Generic.List<Voice> before;
+
+		lock ( Audio.Lock )
+			before = [.. Audio.Voices];
+
+		ready.SetValue( null, true );
+
+		ParkAudio? park = null;
+
+		try
+		{
+			park = new ParkAudio( "jungle" );
+			Time.Now = 1000f;
+
+			Assert.AreEqual( 4, ParkPlacedObjects.StartSounds( "jungle", park.StartPlaced, park.StartFollowing ) );
+			Assert.AreEqual( 0, Times( "SCAPE_OMP_SOUND_TYPE_3" ) );
+			Assert.AreEqual( 2, park.Following.Count );
+
+			var (gulls, sea) = (park.Following[0], park.Following[1]);
+
+			Assert.AreEqual( (2, 3), (gulls.Sound.Effect, sea.Sound.Effect) );
+			Assert.IsNull( gulls.Voice, "the first sample starts on the park's next pass" );
+
+			park.Update();
+
+			// The first sample: no silence after it, the variation's volume, a pitch drawn from -2 up to 1.
+			Assert.AreEqual( (0, 49, 1, 0), (gulls.Variation, gulls.Kept.Volume, gulls.Samples, gulls.Wait) );
+			Assert.IsTrue( gulls.Kept.Pitch is >= -2 and <= 1, $"pitch {gulls.Kept.Pitch}" );
+			Assert.IsTrue( sea.Kept.Volume is 33 or 55 );
+			Assert.AreEqual( (1, 0, 0), (sea.Samples, sea.Kept.Pitch, sea.Wait) );
+
+			foreach ( var following in park.Following )
+			{
+				var voice = following.Voice!;
+
+				Assert.IsFalse( voice.Loop );
+				Assert.AreEqual( AudioBus.Effects, voice.Bus );
+				Assert.AreEqual( 100f, voice.Range );
+				Assert.AreEqual( ParkAudio.ChannelGain( following.Kept.Volume ), voice.Volume, 1e-6f );
+				Assert.AreEqual( ParkCarSounds.Rate( following.Kept.Pitch ), (float)voice.Rate, 1e-6f );
+
+				// Wherever the listener is, the nearest point of the rectangle to it.
+				Assert.AreEqual( following.Sound.Beside( Camera.Ears ), voice.Place );
+			}
+
+			Assert.AreEqual( 0.2035f, ParkAudio.ChannelGain( 49 ), 1e-6f, "37 of 127 beside the music's 60" );
+			Assert.AreEqual( 0.1375f, ParkAudio.ChannelGain( 33 ), 1e-6f, "25 of 127" );
+
+			// While a sample plays nothing new starts, and the voice goes where the listener does.
+			var (stood, heardFrom) = (gulls.Voice!.Place, Camera.Ears);
+
+			ParkOrbitCameraMode.PointOfInterest = new Vector3( 500f, 0f, 0f );
+			park.Update();
+
+			Assert.AreEqual( (1, 1), (gulls.Samples, sea.Samples) );
+			Assert.AreNotEqual( heardFrom, Camera.Ears );
+			Assert.AreNotEqual( stood, gulls.Voice!.Place );
+
+			foreach ( var following in park.Following )
+				Assert.AreEqual( following.Sound.Beside( Camera.Ears ), following.Voice!.Place );
+
+			var kept = (gulls.Kept, sea.Kept);
+			var waited = false;
+
+			for ( var sample = 2; sample <= 40; ++sample )
+			{
+				var (lastGull, lastSea, variation, wait) = (gulls.Voice!, sea.Voice!, sea.Variation, gulls.Wait);
+
+				lastGull.Stop();
+				lastSea.Stop();
+				park.Update();
+
+				// The sea has no wait: its next sample at once, of another variation, at the voice's own volume.
+				Assert.AreEqual( sample, sea.Samples );
+				Assert.AreNotSame( lastSea, sea.Voice );
+				Assert.AreNotEqual( variation, sea.Variation, "of three, never the one before" );
+				Assert.AreEqual( kept.Item2, sea.Kept );
+				Assert.AreEqual( ParkAudio.ChannelGain( kept.Item2.Volume ), sea.Voice!.Volume, 1e-6f );
+				Assert.AreEqual( 0, sea.Wait );
+
+				// The gulls' first is followed at once; each later one by its own silence, under ten seconds.
+				if ( sample == 2 )
+					Assert.AreEqual( 0, wait );
+
+				if ( wait > 100 )
+				{
+					waited = true;
+
+					Assert.AreSame( lastGull, gulls.Voice, "silent for its wait" );
+
+					Time.Now += (wait / 1000f) - 0.05f;
+					park.Update();
+					Assert.AreSame( lastGull, gulls.Voice, "to the wait's end" );
+
+					Time.Now += 0.1f;
+					park.Update();
+				}
+				else
+				{
+					Time.Now += 0.2f;
+					park.Update();
+				}
+
+				Assert.AreNotSame( lastGull, gulls.Voice );
+				Assert.AreEqual( sample, gulls.Samples );
+				Assert.AreEqual( sample, sea.Samples, "a pass with a sample playing starts none" );
+				Assert.AreEqual( kept.Item1, gulls.Kept, "every sample at what the first drew" );
+				Assert.AreEqual( ParkAudio.ChannelGain( 49 ), gulls.Voice!.Volume, 1e-6f );
+				Assert.AreEqual( ParkCarSounds.Rate( kept.Item1.Pitch ), (float)gulls.Voice!.Rate, 1e-6f );
+				Assert.IsTrue( gulls.Wait is >= 0 and < 10000, $"wait {gulls.Wait}" );
+			}
+
+			Assert.IsTrue( waited );
+
+			// A voice's first variation is a draw too: of forty more seas, some start on the 33 and some on a 55.
+			for ( var more = 0; more < 40; ++more )
+				Assert.IsTrue( park.StartFollowing( sea.Sound ) );
+
+			park.Update();
+
+			var firsts = park.Following.Skip( 2 ).Select( following => (following.Samples, following.Kept.Volume) ).ToArray();
+
+			Assert.IsTrue( firsts.All( first => first.Samples == 1 ) );
+			Assert.IsTrue( firsts.Any( first => first.Volume == 33 ) && firsts.Any( first => first.Volume == 55 ), "both volumes among forty starts" );
+
+			var voices = park.Following.Select( following => following.Voice! ).ToArray();
+
+			park.Delete();
+			Entity.ApplyDeletions();
+			park = null;
+
+			foreach ( var voice in voices )
+				Assert.IsTrue( voice.Ending, "a park that ends fades its land's sounds out" );
+		}
+		finally
+		{
+			park?.Delete();
+			Entity.ApplyDeletions();
+
+			lock ( Audio.Lock )
+				Audio.Voices.RemoveAll( voice => !before.Contains( voice ) );
+
+			ready.SetValue( null, false );
+			Time.Now = now;
+			ParkOrbitCameraMode.PointOfInterest = looksAt;
+			Camera.SetCameraMode<CameraMode>();
 		}
 	}
 

@@ -31,6 +31,9 @@ public sealed class PlacedObjectsFile
 	/// <summary>The type of a record that starts a sound with a range of its own.</summary>
 	public const int RangedSoundType = 1;
 
+	/// <summary>The type of a record that starts a sound kept beside the listener inside a rectangle.</summary>
+	public const int RectangleSoundType = 3;
+
 	private const uint Tag = 0x5f4a424f;
 
 	/// <summary>One record: the fifteen words the loader keeps, nought where the file's record is shorter.</summary>
@@ -59,6 +62,14 @@ public sealed class PlacedObjectsFile
 
 		/// <summary>A type 1's range in whole park units, word 6 doubled over 1024, divided toward nought.</summary>
 		public int Range => Words[6] * 2 / 1024;
+
+		/// <summary>
+		/// A type 3's rectangle in whole park units (<c>0x00550fe5</c>, <c>FUN_0051c5d0</c>): its place's x and z,
+		/// words 3 and 5, then each with its side added, words 7 and 8, every word over 1024 and divided toward
+		/// nought before the sum.
+		/// </summary>
+		public (int X, int Z, int FarX, int FarZ) Rectangle
+			=> (Words[3] / 1024, Words[5] / 1024, Words[3] / 1024 + Words[7] / 1024, Words[5] / 1024 + Words[8] / 1024);
 	}
 
 	/// <summary>Every record, in the file's order. None where the file does not open <c>OBJ_</c>.</summary>

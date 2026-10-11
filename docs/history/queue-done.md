@@ -6027,6 +6027,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   started on one frame (0.141 owed) (`q301/confirm.py`, fix 14 of 14 and 13 of 14, control 3 of 3); twenty bugs
   put back, all twenty fail a test. `docs/exe/weather.md`, "Two rain voices, and how loud each
   is".
+- [x] **Q302. The gulls and the sea are heard.** A piece of the old Q302 (the writer's leftovers), split by the
+  session: its other pieces are Q303. The land's two type 3 sounds were counted, their voice class not decoded.
+  **Read** (`audio.md`, "The plain class: any variation, and a silence after a sample"): class `0x0070a338`
+  (`FUN_006be090`) is the music's with two slots changed: a variation drawn by weight among all of the effect's,
+  never the one before of more than two (`FUN_006bc810`), the volume and pitch drawn once at the start, and the
+  variation's wait a silence after each later sample (`0x006bdf00`, `FUN_006c6730`). **The original**, at four
+  camera files (`q302/orig/`, 4 predictions of 4): the gulls' channel 37 of 127 at one pitch a run (-2, -1 and 0
+  seen), the sea's 25 or 41, each at the listener's place held in its rectangle with the law's gain (1.0000
+  inside, 0.8919 at 15.06, 0.3330 at 75.21) and silenced 136 off. **Built** (`ParkPlacedObjects.Following`,
+  `ParkAudio.StartFollowing`, `ServeFollowing`, `AnyVariation`, `PlaysFollowing`; `placed` prints them).
+  **Run** (`q302/confirm.py`, runs 3 and 4 16 of 16, the control 4 of 4; run 1 9 of 14 and run 2 15 of 16, the
+  misses in `park.md`): `placed` read the gulls 57.87 off at 0.5089 and the sea 67.87 off at 0.4097, then 0.00 at
+  1.0000 and 7.87 at 0.9518; every sea sample was in the game's own mix at 0.1073 where 0.1073 was owed and every
+  gull at 0.0990 to 0.0997 of 0.1017; `SCAPE_OMP_SOUND_TYPE_3` read no more, twice in the control. 31 bugs put
+  back, 31 fail a test (three survived the first tests, which were then made to move the listener and to see the
+  first variation drawn). Tests 2916.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -2115,7 +2115,8 @@ listener being past both rectangles' near edge; both were silenced there.
 mixer's distance law"): `((range - d) / (range - 2)) ^ 0.8`, d over all three axes. Two captures of the
 original's mix had not separated the fall from it (its sample matched at 0.04 at best, the mix 0.04 to 0.07 rms
 with every placed voice silenced); the mixer's own channel was read instead. The class of the gulls' and the
-sea's effects (`0x0006`, `0x006be090`) is not decoded.
+sea's effects (`0x0006`, `0x006be090`) is `audio.md`'s "The plain class: any variation, and a silence after a
+sample".
 
 **What OpenTPW does** (Q264, split by the session: the item's other pieces are Q265). A type 1 record of the
 global category whose effect is a looped one (flag `0x8`) with something to play is started as the park's
@@ -2123,8 +2124,17 @@ sound comes up (`ParkPlacedObjects.StartSounds`, `ParkAudio.StartPlaced`): a loo
 the height the world's third axis, with the record's range, at its variation's volume, 100 for the fall and 50
 for the river. A hundred plays at the music's level times 75 over 60, the two groups' levels as the original's
 channels read them (`ParkAudio.ChannelGain`). The level's own category is not loaded, so its two type 1
-records are counted (`SCAPE_OMP_SOUND_TYPE_1`), and both type 3 (`SCAPE_OMP_SOUND_TYPE_3`). The console's
+records are counted (`SCAPE_OMP_SOUND_TYPE_1`). The console's
 `placed` prints the listener and each of the land's sounds with its distance and gain.
+
+**The gulls and the sea** (Q302, split by the session: the item's other pieces are Q303). A type 3 record of the
+global category whose effect is of the plain sample-after-sample class is started with the park's sound
+(`ParkPlacedObjects.StartSounds`'s second taker, `ParkAudio.StartFollowing`) and served each frame
+(`ServeFollowing`): its voice stands at the listener's place held inside the record's rectangle, at the
+listener's own height (`ParkPlacedObjects.Following.Beside`), with its variation's range, 100, and plays as
+`audio.md`, "The plain class" has it. One refused, and one of the level's own category, is counted
+(`SCAPE_OMP_SOUND_TYPE_3`; no shipped park has either). Every park's file holds the sea, so the other three
+themes start it too; only the jungle was run.
 
 **Run, 2026-10-10** (`q263/confirm.py`, 3 of 3 predictions, written first in `PREDICTION.txt`). Lost Kingdom at
 the tip, the camera on the fall: `unimplemented` reads `4x SCAPE_OMP_SOUND_TYPE_1` and `2x
@@ -2148,6 +2158,29 @@ ambient 8 started at (530,513), range 97, volume 100` and ambient 7's at (511,66
 (`run-fix2/place-1.png` is the fall on the first camera). The control, the tree before the change, has no
 `placed`, counts type 1 four times and has no step of the fall's sample over 0.5 on the first camera
 (`run-control/`).
+
+**Run, 2026-10-11, Q302** (`q302/confirm.py`, predictions written first in `PREDICTION.txt`; the game's own mix
+written to a file, the music's group at nought). Run 3 held 16 of 16 and the control, the tree before, 4 of 4:
+
+| Camera | `placed`: the gulls | `placed`: the sea |
+|---|---|---|
+| `camera 400 60 110 180`, listener (400,89,47) | at (400,31,47), 57.87 off, law and gain 0.5089 | at (400,21,47), 67.87 off, 0.4097 |
+| `camera 400 0 110 180`, listener (400,29,47) | at the listener's own place, 0.00 off, 1.0000 | at (400,21,47), 7.87 off, 0.9518 |
+| `camera 400 400 110 180` | 397.87 off, law 0.0000 | 407.87 off, law and gain 0.0000 |
+
+Over 75 s at the second camera the gulls' fourteen log lines each read volume 49 playing at 0.2035 and the one
+pitch the voice drew (1; -1 in run 2), the first followed by no silence and the rest by 85 to 9913 ms; the sea's
+nine each read 55 playing at 0.2255 (33 at 0.1375 in run 1), no two running of one variation. In the mix every
+sea sample named was found at 1.00 and a gain of 0.1073, the 0.2255 times the master's 0.5 times 0.9518 owed
+(0.0654 in run 1, its 33's), and every gull, read at its pitch, at 0.91 to 0.96 and 0.0990 to 0.0997 where 0.1017
+was owed. The census read `2x SCAPE_OMP_SOUND_TYPE_1` and no type 3 (`run-fix3/sea.png` is the harbour on the
+first camera). The control has no start line, no following sound in `placed`, counts type 3 twice and has a mix
+of exact nought at the same camera. **Run 1 held 9 of 14 and run 2 15 of 16**: the distances were predicted on
+whole units (58.00 where 57.87 was read), a gull between two samples read a gain of nought and then the last
+voice's 1.0000 (the census now prints `none`), a sea sample's quiet first second and a half scored 0.20 under a
+gull (matched from 3 s in it scores 1.00), and my script used a name of the library's. Of 31 bugs put back
+(`q302/mutations.py`), 31 fail a test; three survived the first tests, which were then made to move the
+listener and to see a voice's first variation drawn.
 
 **Not held against the original:** the same camera numbers in both games. The original's camera stands
 further back for the same numbers (Q260), so its listener is elsewhere and its gain with it; what was held is

@@ -1117,11 +1117,153 @@ public sealed class ParkAudio : Entity
 			&& (category.FlagsOf( effect ) & SoundCategory.LoopedFlag) != 0
 			&& category.VariationsOf( effect ).Count > 0;
 
+	/// <summary>
+	/// One of the land's own sounds that is kept beside the listener (a <c>scape.omp</c> type 3; the Lost Kingdom's
+	/// gulls and its sea): a voice of the class that plays one sample after another (<c>FUN_006be090</c>).
+	/// </summary>
+	internal sealed class FollowingVoice( ParkPlacedObjects.Following sound )
+	{
+		/// <summary>The record it was started from.</summary>
+		public ParkPlacedObjects.Following Sound { get; } = sound;
+
+		/// <summary>The variation its sample is of, zero-based, or -1 before its first.</summary>
+		public int Variation { get; set; } = -1;
+
+		/// <summary>The volume, of a hundred, and the pitch its first sample drew, which every later one plays at.</summary>
+		public (int Volume, int Pitch) Kept { get; set; }
+
+		/// <summary>The silence after the sample that is playing, in milliseconds: the variation's wait, none after the first.</summary>
+		public int Wait { get; set; }
+
+		/// <summary>When the last sample was found ended, or null while one plays.</summary>
+		public float? EndedAt { get; set; }
+
+		/// <summary>How many samples it has started since the park began.</summary>
+		public int Samples { get; set; }
+
+		public Voice? Voice { get; set; }
+	}
+
+	/// <summary>The land's own sounds that follow the listener, as they stand.</summary>
+	internal IReadOnlyList<FollowingVoice> Following => _following;
+
+	private readonly List<FollowingVoice> _following = [];
+	private readonly Random _followingRandom = new();
+
+	/// <summary>
+	/// Starts one of the land's own sounds that is kept beside the listener (<c>0x00550fe5</c>): a voice of the
+	/// global <c>cat_ambient</c> that plays one sample after another, moved each frame to the listener's place held
+	/// inside its rectangle. False, and nothing started, for an effect of another class or with nothing to play.
+	/// </summary>
+	internal bool StartFollowing( ParkPlacedObjects.Following sound )
+	{
+		if ( !PlaysFollowing( _ambient, sound.Effect ) )
+			return false;
+
+		_following.Add( new FollowingVoice( sound ) );
+
+		Log.Info( $"Park audio: the land's own ambient {sound.Effect} started, kept inside ({sound.X},{sound.Z}) to ({sound.FarX},{sound.FarZ})" );
+
+		return true;
+	}
+
+	/// <summary>
+	/// Whether <paramref name="effect"/> of <paramref name="category"/> makes the voice that plays one sample after
+	/// another with no parameter (<c>0x006b677d</c>..<c>0x006b67c3</c>: flags <c>0x4</c> and <c>0x2</c>, and none of
+	/// <c>0x10</c>, <c>0x400</c> and <c>0x100</c>), and has a variation to play.
+	/// </summary>
+	internal static bool PlaysFollowing( SoundCategory? category, int effect )
+		=> category is { IsValid: true }
+			&& (category.FlagsOf( effect ) & 0x516) == 0x6
+			&& category.VariationsOf( effect ).Any( header => header.Samples > 0 );
+
+	/// <summary>
+	/// The variation such a voice's next sample is of (<c>FUN_006bc810</c>): a draw by weight among all of the
+	/// effect's, and for a sample after the first, of more than two, never the one before: the next round takes its
+	/// place. -1 with none.
+	/// </summary>
+	internal static int AnyVariation( IReadOnlyList<SoundCategoryFile.Variation> variations, int last, Random random )
+	{
+		if ( variations.Count < 2 )
+			return variations.Count - 1;
+
+		var total = variations.Sum( variation => variation.Weight );
+		var roll = total > 0 ? random.NextInt64( total ) : 0;
+		var drawn = variations.Count - 1;
+
+		for ( var index = 0; index < variations.Count; ++index )
+		{
+			roll -= variations[index].Weight;
+
+			if ( roll < 0 )
+			{
+				drawn = index;
+				break;
+			}
+		}
+
+		return variations.Count > 2 && drawn == last ? (drawn + 1) % variations.Count : drawn;
+	}
+
+	/// <summary>
+	/// Each following voice moved beside the listener (<c>FUN_006bd5f0</c>, each service pass), and its next sample
+	/// started once the last has ended and its wait is over. A voice's first sample draws the volume and pitch it
+	/// keeps (<c>FUN_006bc410</c>); each later one is queued with its sample and the silence that follows it, a draw
+	/// from its variation's wait (<c>0x006bdf00</c>, <c>FUN_006c6730</c>).
+	/// </summary>
+	private void ServeFollowing()
+	{
+		if ( _ambient is not { IsValid: true } )
+			return;
+
+		var ears = Camera.Ears;
+
+		foreach ( var following in _following )
+		{
+			var place = following.Sound.Beside( ears );
+
+			if ( following.Voice is { Playing: true } )
+			{
+				following.Voice.MoveTo( place );
+				continue;
+			}
+
+			following.EndedAt ??= Time.Now;
+
+			if ( Time.Now < following.EndedAt + (following.Wait / 1000f) )
+				continue;
+
+			var headers = _ambient.VariationsOf( following.Sound.Effect );
+			var first = following.Variation < 0;
+			var next = AnyVariation( headers, following.Variation, _followingRandom );
+
+			if ( next < 0 )
+				continue;
+
+			following.Variation = next;
+			following.Kept = HeldSample( headers[next], first, following.Kept, 0, 0, _followingRandom );
+			following.Wait = first ? 0 : ParkScreams.GapMilliseconds( headers[next], _followingRandom );
+			following.EndedAt = null;
+			following.Voice = Audio.Play( _ambient.PickFrom( following.Sound.Effect, next ), ChannelGain( following.Kept.Volume ),
+				bus: AudioBus.Effects, position: place, range: headers[next].Range );
+
+			if ( following.Voice is null )
+				continue;
+
+			following.Voice.SetRate( ParkCarSounds.Rate( following.Kept.Pitch ) );
+			++following.Samples;
+
+			Log.Info( $"Park audio: the land's own ambient {following.Sound.Effect}, sample '{following.Voice.Name}' variation {next + 1} "
+				+ $"volume {following.Kept.Volume} plays {following.Voice.Volume:F4} pitch {following.Kept.Pitch} "
+				+ $"at ({place.X:F0},{place.Y:F0},{place.Z:F0}), {following.Wait} ms of silence after it" );
+		}
+	}
+
 	/// <summary>The land's own sounds as they stand, for the console.</summary>
 	internal string PlacedCensus()
 	{
 		var ears = Camera.Ears;
-		var lines = new List<string> { $"listener ({ears.X:F0},{ears.Y:F0},{ears.Z:F0}), {_placed.Count} placed" };
+		var lines = new List<string> { $"listener ({ears.X:F0},{ears.Y:F0},{ears.Z:F0}), {_placed.Count} placed, {_following.Count} following" };
 
 		foreach ( var (sound, volume, voice) in _placed )
 		{
@@ -1130,6 +1272,21 @@ public sealed class ParkAudio : Entity
 			lines.Add( $"ambient {sound.Effect} at ({sound.Place.X:F0},{sound.Place.Y:F0},{sound.Place.Z:F0}) range {sound.Range:F0} "
 				+ $"volume {volume} distance {distance:F2} law {AudioListener.RangeGain( distance, sound.Range ):F4} "
 				+ $"gain {voice?.DistanceGain ?? -1f:F4} {(voice is null ? "no voice" : voice.IsHeld ? "held" : voice.Playing ? "sounding" : "ended")}" );
+		}
+
+		foreach ( var following in _following )
+		{
+			var sound = following.Sound;
+			var place = sound.Beside( ears );
+			var distance = (place - ears).Length;
+			var range = following.Voice?.Range ?? 0f;
+			var sounding = following.Voice is { Playing: true };
+
+			lines.Add( $"ambient {sound.Effect} follows inside ({sound.X},{sound.Z}) to ({sound.FarX},{sound.FarZ}) "
+				+ $"at ({place.X:F0},{place.Y:F0},{place.Z:F0}) range {range:F0} variation {following.Variation + 1} "
+				+ $"volume {following.Kept.Volume} pitch {following.Kept.Pitch} distance {distance:F2} "
+				+ $"law {AudioListener.RangeGain( distance, range ):F4} gain {(sounding ? $"{following.Voice!.DistanceGain:F4}" : "none")} "
+				+ $"{following.Samples} samples, {(sounding ? $"sounding '{following.Voice!.Name}'" : $"silent for {following.Wait} ms")}" );
 		}
 
 		return string.Join( "; ", lines );
@@ -1167,6 +1324,11 @@ public sealed class ParkAudio : Entity
 		}
 
 		_placed.Clear();
+
+		foreach ( var following in _following )
+			following.Voice?.FadeOut( StopSeconds );
+
+		_following.Clear();
 
 		// The voice was holding the effect - see SoundCategory.Play - so the category has to be told
 		// it may start again, or the next park in this process waits out a delay counted against a
@@ -1250,6 +1412,7 @@ public sealed class ParkAudio : Entity
 		NextCrowdSample();
 		NextRainSample( RainBed, "the rain's bed" );
 		NextRainSample( RainOwn, "the weather's own rain voice" );
+		ServeFollowing();
 
 		if ( _music is not { IsValid: true } )
 			return;

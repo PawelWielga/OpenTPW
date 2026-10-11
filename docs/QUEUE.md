@@ -44,9 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q302. The writer: what else a made record leaves out.** The old Q301's other pieces, each counted or
+- [ ] **Q303. The writer: what else a made record leaves out.** The old Q302's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q302 (`audio.md`, "The plain class: any variation, and a silence after a sample"; `park.md`, "The land's
+  own sounds"): how long the silence after a gull is, and which sample follows which, are not measured in the
+  original (its sound off-screen is not paced); the silence here is timed on the frame clock from the frame a
+  sample is found ended, where the original's is bytes in the channel's own stream; the sample draw's rule
+  against the sample before (`FUN_006bc680` asked with 1, a variation of more than two samples) is built for no
+  held voice; the classes of flags `0x10` and `0x100` (`0x006be680`, `0x006be330`) are not decoded; the
+  original's channels at (450, 160, 0) with a far end of 100 and a new volume and frequency every few seconds
+  are not named; the sea of the other three themes is started by the same code and was in no game run; the
+  call in `Level` is held by the game run alone. Not listened to by a person.
   From Q301 (`weather.md`, "Two rain voices, and how loud each is"): what a level set on the bed's stale handle
   answers after a stop is not read (`FUN_006b5b80`), and here the next shower's first step starts the bed at
   once; the two rain channels read a far end of 95, not their variations' 100: a flat channel's far end is not
@@ -97,11 +106,9 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   mapping of 2.0, 95.0, 0.80 and a volume of 10 of 127. Held by the tests alone, in no game run: thunder, a
   single scream, a guest put off, a yawn; a bumper ride's engine's range is held by a game run and no test (no test
   stands a track ride's script), and its voice is at height nought where its boat floats 30 up. A script's own started sounds (`ADDOBJ`) were not looked at.
-  From Q264 (`audio.md`, "The mixer's distance law"; `park.md`, "The land's own sounds"): the land's two type 3 records
-  (gulls and the sea, a rectangle) and the level's own two type 1 are counted, not played
-  (`SCAPE_OMP_SOUND_TYPE_3`, `SCAPE_OMP_SOUND_TYPE_1`): the level's own `cat_ambient` is not loaded, and the
-  gulls' and sea's voice class (`0x0006`, `0x006be090`) is not decoded, nor why the level's ambient 181 had
-  no voice in the original. A channel's volume read as a whole number of 127 (the fall 75, the music 60), so a
+  From Q264 (`audio.md`, "The mixer's distance law"; `park.md`, "The land's own sounds"): the level's own two type 1
+  records are counted, not played (`SCAPE_OMP_SOUND_TYPE_1`): the level's own `cat_ambient` is not loaded, and
+  why the level's ambient 181 had no voice in the original is not decoded. A channel's volume read as a whole number of 127 (the fall 75, the music 60), so a
   sound effect at a hundred is 1.25 of the music. A voice out of range plays on unheard here, where the original gives its channel up:
   where its sample stands when it is heard again is not decoded. The pan is a plain left and right, not
   QSound's. The orbit camera's point is left at height nought where the ground is high, so the listener's
