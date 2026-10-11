@@ -303,6 +303,7 @@ public class ParkAdvisorMessageTests
 		{
 			people.Delete();
 			Entity.ApplyDeletions();
+			ParkState.ForgetCurrent();
 		}
 	}
 }

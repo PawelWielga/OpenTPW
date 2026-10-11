@@ -23,8 +23,8 @@ namespace OpenTPW.UI;
 ///
 /// <para>
 /// <b>One thing is not built.</b> The stats panel <c>0x1ed</c> and its seven readouts are excitement,
-/// reliability and capacity - simulation values this game does not have, as with the map screen's
-/// overlay. The root's frame is <c>w_big</c>, the frame five screens share, whose first node is
+/// reliability and capacity: none is filled in, and the panel is kept as bare backing art, as the map
+/// screen keeps its two button panels. The root's frame is <c>w_big</c>, the frame five screens share, whose first node is
 /// <c>window4</c>. The row's third column is the original's tick-box, <c>i_boxtick</c> framed from the
 /// row state - see <c>UiList.StateMesh</c>.
 /// </para>

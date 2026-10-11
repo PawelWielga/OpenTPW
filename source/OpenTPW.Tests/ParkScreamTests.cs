@@ -244,7 +244,7 @@ public class ParkScreamTests
 	/// <b>Where <c>SINGLESCREAM</c>'s two branches meet, and where the grid's rows break.</b> The handler takes the
 	/// grid when the second operand is nought or more (<c>0x00555f69</c>, <c>CMP ESI,EDI</c> against a zeroed EDI,
 	/// then <c>JGE</c>; <c>docs/exe/ride-operation.md</c>, the scream family), so a level of exactly nought is grid
-	/// step <c>(0 + 50) / 50</c> = 1: <c>0x4b + 1</c> for band 1 and <c>0x57 + 1</c> for band 8, never the band-only
+	/// step <c>(0 + 50) / 50</c> = 1 at the script's speed word of 50, the loader's (<c>+0xc0</c>, <c>ParkAudio.ScriptSpeed</c>): <c>0x4b + 1</c> for band 1 and <c>0x57 + 1</c> for band 8, never the band-only
 	/// <c>0x69</c> and <c>0x6d</c>. The grid's rows are the bands of <c>FUN_00551320</c> - 1, then under 4, then
 	/// under 8, then the rest - so at Monkey's level 90 (step 2) bands 2 and 3 give <c>0x4f + 2</c>, bands 4 and 7
 	/// give <c>0x53 + 2</c>, and band 8 gives <c>0x57 + 2</c>.

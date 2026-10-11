@@ -92,7 +92,7 @@ public sealed partial class ParkWorld
 	/// serialiser <c>FUN_004db7d0</c> leave one: the thing's place at the middle of its anchor cell, its angle,
 	/// item and date, <paramref name="meshHandle"/>, its flags, the two lines of its name, its script, its track
 	/// ride, <c>mTopLeft</c>, its two ends, <c>mIsTrackRideValid</c> 1, six rings of thirty days, the running fields
-	/// (<see cref="PutObject"/>) its upgrade level and 100 in the float no reader here names. Its links are
+	/// (<see cref="PutObject"/>), its upgrade level and 100 in the float no reader here names. Its links are
 	/// <see cref="PutPeople"/>'s to write.
 	/// </summary>
 	public static byte[] MadeObjectRecord( MadeObject made, int meshHandle )

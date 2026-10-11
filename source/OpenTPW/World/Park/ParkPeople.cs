@@ -2635,7 +2635,7 @@ public sealed partial class ParkPeople : Entity
 	}
 
 	/// <summary>This staff member's walk, for the same.</summary>
-	/// Dead by CODE: only ParkStaffDrawingTests, ParkTickTests, ParkDecidingArmsTests and ParkEvictionTests call it.
+	/// Dead by CODE: only tests call it (ParkStaffDrawingTests, ParkTickTests, ParkDecidingArmsTests, ParkEvictionTests, ParkStaffPlacementTests and ParkStaffRegionEffectsTests).
 	internal PeepWalk? StaffWalkFor( int thingId ) => _staffWalks.GetValueOrDefault( thingId );
 
 	/// <summary>

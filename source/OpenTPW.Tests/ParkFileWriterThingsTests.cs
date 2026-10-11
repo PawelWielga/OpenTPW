@@ -1535,7 +1535,7 @@ public class ParkFileWriterThingsTests
 	/// <summary>
 	/// A channel frozen on frame nought is written as the engine keeps one: its clip time pinned to its start stamp,
 	/// the moment of the freeze (1200), while the third stamp follows the clock to the save's moment (9000), and
-	/// the channel's own 0x2 in the flag word (<see cref="AnimTimeControl.MoveTo"/>, <c>0x004736e7</c>;
+	/// the channel's own 0x2 in the flag word (<see cref="AnimTimeControl.MoveTo"/>, <c>0x004736d3</c>;
 	/// <c>docs/exe/saves.md</c>, "OpenTPW's writer, the objects", a model).
 	/// </summary>
 	[TestMethod]
