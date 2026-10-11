@@ -95,6 +95,46 @@ public class ParkRideInviteTests
 		Assert.AreEqual( 7, park.PersonBeingLoaded( Ride ), "and the ride nominated them" );
 	}
 
+	/// <summary>
+	/// A ride that runs all the time (<c>Info.RunsContinuously</c>, <c>+0x33</c> bit 0) is invited onto while
+	/// it runs, and is still stopped by being full, by a held admit slot and by a nominee.
+	/// </summary>
+	[TestMethod]
+	public void ARideThatRunsAllTheTimeInvitesWhileItRuns()
+	{
+		var always = TheRide() with { Flags = ItemDescriptionFile.RunsContinuouslyFlag };
+
+		var (park, guests, head) = Queued();
+		var script = ReadyScript();
+		script.Set( ParkRideOperation.RunningVariable, 1 );
+		script.Set( ParkRideOperation.OnRideVariable, 1 );
+
+		Assert.AreEqual( 7, new ParkRideOperation( park, guests ).Invite( script, always ), "running, one on of five" );
+		Assert.IsTrue( head.BeenAdmitted );
+		Assert.AreEqual( 7, park.PersonBeingLoaded( Ride ) );
+
+		var (other, otherGuests, otherHead) = Queued();
+		var every = TheRide() with { Flags = unchecked( (ushort)~ItemDescriptionFile.RunsContinuouslyFlag ) };
+
+		Assert.AreEqual( 0, new ParkRideOperation( other, otherGuests ).Invite( script, every ),
+			"every other flag set: still stopped by its run" );
+		Assert.IsFalse( otherHead.BeenAdmitted );
+
+		var (packed, packedGuests, _) = Queued();
+		script.Set( ParkRideOperation.OnRideVariable, 5 );
+		Assert.AreEqual( 0, new ParkRideOperation( packed, packedGuests ).Invite( script, always ), "running and full" );
+
+		var (held, heldGuests, _) = Queued();
+		script.Set( ParkRideOperation.OnRideVariable, 1 );
+		script.Set( ParkRideOperation.AdmitVariable, 99 );
+		Assert.AreEqual( 0, new ParkRideOperation( held, heldGuests ).Invite( script, always ), "the admit slot is held" );
+
+		var (busy, busyGuests, _) = Queued();
+		script.Set( ParkRideOperation.AdmitVariable, 0 );
+		busy.NominateForLoading( Ride, 99 );
+		Assert.AreEqual( 0, new ParkRideOperation( busy, busyGuests ).Invite( script, always ), "a nominee is pending" );
+	}
+
 	/// <summary>Nobody queueing means nobody to invite, and no nomination is left behind.</summary>
 	[TestMethod]
 	public void AnEmptyQueueInvitesNobody()
@@ -132,12 +172,15 @@ public class ParkRideInviteTests
 			"five aboard, room for five" );
 		Assert.IsFalse( packedHead.BeenAdmitted );
 
-		// Mid-run.
+		// Mid-run, on a ride that does not run all the time (the Belly Bounce's own record does).
 		var (running, runningGuests, runningHead) = Queued();
 		var runningScript = ReadyScript();
 		runningScript.Set( ParkRideOperation.RunningVariable, 1 );
+		var stopping = TheRide();
+		stopping = stopping with { Flags = (ushort)(stopping.Flags & ~ItemDescriptionFile.RunsContinuouslyFlag) };
 
-		Assert.AreEqual( 0, new ParkRideOperation( running, runningGuests ).Invite( runningScript, TheRide() ),
+		Assert.AreNotEqual( 0, TheRide().Flags & ItemDescriptionFile.RunsContinuouslyFlag, "the Belly Bounce runs all the time" );
+		Assert.AreEqual( 0, new ParkRideOperation( running, runningGuests ).Invite( runningScript, stopping ),
 			"the ride is running" );
 		Assert.IsFalse( runningHead.BeenAdmitted );
 

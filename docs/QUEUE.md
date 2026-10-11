@@ -44,12 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q304. The writer: what else a made record leaves out.** The old Q303's other pieces, each counted or
+- [ ] **Q305. The writer: what else a made record leaves out.** The old Q304's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q303 (`ride-operation.md`, "A ride's wear"): the Belly Bounce carries one rider at a time here where the
-  original's carries up to five (`Invite` reads no `RunsContinuously`, Q157), so it wears at the least rate, 66
-  steps to a break where the original's took 58; advisor message `0x42` is counted (`RIDE_WORN_OUT_MESSAGE`);
+  From Q304 (`ride-operation.md`, "Opening a ride", "The running test"): how fast a queue boards is not
+  compared (a rider about every five seconds here with the polls' pauses in them, one every three in the
+  original, `q252/orig/a-load.log`), nor how long each rides, nor where on the ride each of the five stands;
+  the original's riders were in its poll, not its picture (its camera stood by the gate). In no game run: a
+  bought Belly Bounce, another item with `Info.RunsContinuously` (which items carry it was not counted), a
+  ride broken with five on. A full Bounce now wears to a break in about 50 steps of 64 sweeps.
+  From Q303 (`ride-operation.md`, "A ride's wear"): advisor message `0x42` is counted (`RIDE_WORN_OUT_MESSAGE`);
   what a ride's script does on `VAR_WORN` was not looked at; the wear's speed is the thing's
   `mOperatingSpeed`, not a script's word (Q155); `FUN_004df640`'s callers (the flag's arm: a ride window's
   reliability) were not read; the sum's stores are a float's where the listing stores one, and were not held
@@ -453,8 +457,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   change of mind (`FUN_00500a50`), which a saved guest can take. `CellReroute` never
   runs `FUN_005108a0`'s diagonal pass after a scan that splices nothing, which is how most routes end.
   `Peep.Tick` leaves out the cell's `RegionFX` term (`FUN_00501650`) on every needs turn.
-  `ParkRideOperation.Invite` reads no `RunsContinuously` (`+0x33` bit 0; the wear and the breakdown request are
-  built, Q303). Count each where the original tests it, and
+  (`ParkRideOperation.Invite`'s `RunsContinuously` is built, Q304.) Count each where the original tests it, and
   put each build without an item in the queue. Confirm: `unimplemented` over a timed run, each name present, predicted
   first.
   - **Note (fork review, 2026-09-30):** `EntertainerConstsPerGrade[g].HappinessEffectOnCell` (4, 8, 12, 16, 20; `Standard.sam`)
@@ -602,7 +605,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   never compared with the original. Read one guest's scores in the original at a known cell (a break in
   `FUN_004fcc30`, or its inputs from memory) beside `why` for the same guest and cell, find the term that differs,
   then file its build. Instruments: `q107/orig/watch.py` and `watch1.log`, `q107/base`.
-  From Q252: **OpenTPW's Belly Bounce carries one rider at a time.** Every `rides` census of every run to hand
+  From Q252 (built since, Q304: `Invite` reads `RunsContinuously`, and it carries five): **OpenTPW's Belly Bounce carried one rider at a time.** Every `rides` census of every run to hand
   reads bouncing 0 or 1, with fifteen queueing (`q252/run2`); the original, given the same file, had five aboard
   twelve seconds after its load, a guest boarding every three (`q252/orig/a-load.log`), and its riders ride 121
   sweeps, or 32 more. So the crowd on the queue is boarding's, not the chooser's alone: read the boarding turn first.

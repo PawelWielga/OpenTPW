@@ -1341,7 +1341,8 @@ public sealed class ParkRideOperation
 	/// <para>
 	/// <b>Four things must be true before it will invite.</b> The admit slot must be empty (the script
 	/// has taken the last rider); the ride must not be full (<c>VAR_CAPACITY</c> above
-	/// <c>VAR_ONRIDE</c>); it must not be mid-run (<c>VAR_RUNNING</c> nought); and it must not already
+	/// <c>VAR_ONRIDE</c>); it must not be mid-run (<c>VAR_RUNNING</c> nought), unless it runs all the time
+	/// (<c>+0x33</c> bit 0, <c>Info.RunsContinuously</c>: <c>0x004e12e3</c>); and it must not already
 	/// hold a nominee. The guest itself must be queueing AND at the front - <c>FUN_00501290</c> is just
 	/// <c>state == InQueue &amp;&amp; mQueuePos == 0</c>.
 	/// </para>
@@ -1356,10 +1357,9 @@ public sealed class ParkRideOperation
 	/// why it is passed in.
 	/// </para>
 	/// <para>
-	/// <b>One arm is not reproduced.</b> The object's <c>+0x68</c> is <c>mCanLoad</c>, refused on here as
-	/// <see cref="ParkRideChoice.CanBeOffered"/> refuses on it. <c>+0x33</c> bit 0 is <c>RunsContinuously</c>,
-	/// from the descriptor's <c>+0x48</c> (<c>docs/exe/ride-operation.md</c>, "Object fields"): the original
-	/// invites <i>while running</i> when it is set, and nothing here reads it.
+	/// The object's <c>+0x68</c> is <c>mCanLoad</c>, refused on here as
+	/// <see cref="ParkRideChoice.CanBeOffered"/> refuses on it (<c>docs/exe/ride-operation.md</c>, "Object
+	/// fields").
 	/// </para>
 	/// </summary>
 	/// <returns>The guest invited, or nought if nobody was.</returns>
@@ -1385,7 +1385,11 @@ public sealed class ParkRideOperation
 			&& trackType is not (ItemDescriptionFile.WaterTrack or ItemDescriptionFile.CoasterTrack) )
 			return 0;
 
-		if ( script[RunningVariable] != 0 || _state.PersonBeingLoaded( ride.ThingId ) != 0 )
+		// Mid-run, unless it is a ride that runs all the time, which is invited onto while it runs.
+		if ( script[RunningVariable] != 0 && (ride.Flags & ItemDescriptionFile.RunsContinuouslyFlag) == 0 )
+			return 0;
+
+		if ( _state.PersonBeingLoaded( ride.ThingId ) != 0 )
 			return 0;
 
 		var head = _state.FirstInQueue( ride.ThingId );

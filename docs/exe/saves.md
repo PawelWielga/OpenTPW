@@ -1178,7 +1178,7 @@ the original writes them, and OpenTPW's load keyed its people by sprite slot. Th
 final build: "thing 14 (script 4 at word 216) holds 1 guests" and "thing 13 (script 3 at word 46) holds 1
 guests", `rides` the Jungle Spray's walk slot 0 carrying guest 50 and guest 51 on the Belly Bounce's node 1,
 `staff` two resting; 40 s on the walker and the rider were off and the next of the queue was riding. **Seen and not this item's:**
-OpenTPW's Belly Bounce carries one rider at a time with fifteen queueing, where the original boarded five from
+OpenTPW's Belly Bounce carried one rider at a time with fifteen queueing (it carries five since Q304), where the original boarded five from
 the same file in twelve seconds (Q222's note). **Not run in the original:** a guest in a walk slot at the save (OpenTPW's own load of one is above). **Not
 run in either game, tested only:** a guest in limbo (no script of the shipped park declares any); a kept
 reading in a variable; a hoarding raised; a clip queued; an object sold; a queue edited; a

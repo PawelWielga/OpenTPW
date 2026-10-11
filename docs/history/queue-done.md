@@ -6060,6 +6060,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the ride's window drew the bar at a fifth and then empty under BROKEN DOWN. 55 bugs put
   back, 55 fail a test (three survived the first tests, which were then made to land on a byte of 9, to stand
   on the riders' line, and to condemn a ride on the turn the ask takes its last life). Tests 2939.
+- [x] **Q304. A ride that runs all the time is invited onto while it runs.** A piece of the old Q304 (the
+  writer's leftovers), split by the session: its other pieces are Q305. The Belly Bounce carried one rider at
+  a time with a queue standing, where the original's carries five. **Read** (`ride-operation.md`, "Opening a
+  ride", "The running test"): `FUN_004e1220` goes on when `VAR_RUNNING` reads nought or the object's `+0x33`
+  bit 0, `Info.RunsContinuously`, is set (`0x004e12e3`); the admit slot, the fullness test and the nominee hold
+  for every ride. **Built**: `ParkRideOperation.Invite` reads the flag. **Run** (`q304/confirm.py`, 4 of 4,
+  the control 1 of 1): `VAR_CAPACITY` 5; `VAR_ONRIDE` 1 to 5 inside 38 s and never more, `VAR_RUNNING` the
+  number on; thirteen wear lines naming 1 to 5 riders, each `1.38 + 0.135 n`; five guests on the ride in
+  `run-fix1/2-onride-5.png`; the build before never above 1 in 112 polls. **The original** (`q304/orig/`,
+  1 of 1): given the file saved here with three on, it read `VAR_ONRIDE` 3 on its first poll, a guest called 5
+  ticks on, and 4 or 5 on for 120 s. Nine bugs put back (`q304/mutations.py`): nine fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
