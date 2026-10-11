@@ -577,7 +577,8 @@ public class ParkScreamChainTests
 					}
 				}
 
-				float Gain( int volume ) => volume / 100f * 0.30f;
+				// The channel's number: the volume times the effects' 75 of a hundred, a half to the even, beside the music's 60.
+				float Gain( int volume ) => (float)Math.Round( volume * 0.75, MidpointRounding.ToEven ) / 60f * 0.33f;
 
 				// No cell under the pointer: nobody is counted, whoever is in the park.
 				pointer.SetValue( null, 0 );
@@ -606,6 +607,7 @@ public class ParkScreamChainTests
 				Assert.IsTrue( samples[0].Contains( first.Name ) );
 				Assert.IsFalse( first.IsPlaced, "flat, as the original plays it at (0,0,0)" );
 				Assert.AreEqual( Gain( 15 ), first.Volume, 0.00001f, "level 13 is volume 15" );
+				Assert.AreEqual( 11f / 60f * 0.33f, park.CrowdVoiceVolume, 0.00001f, "11 of 127 beside the music's 60, as the census reads it" );
 				Assert.AreEqual( park.CrowdVoiceSample.Pitch == 0 ? 1.0 : Math.Pow( 2, (park.CrowdVoiceSample.Pitch + 1) / 96.0 ), first.Rate, 0.00001, "at its drawn pitch" );
 
 				Frame( held: false, GameClock.TickSeconds );

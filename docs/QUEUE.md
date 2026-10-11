@@ -48,13 +48,16 @@ the original.
 (the fee, the visitor count, loads of guests, save and load's decode, the calendar, the shop's window, the gauge,
 the research lab), then the rest of this section in its old order.
 
-- [ ] **Q268. The writer: what else a made record leaves out.** The old Q267's other pieces, each counted or
+- [ ] **Q269. The writer: what else a made record leaves out.** The old Q268's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q267 (`audio.md`, "A channel's volume"): the staff's voices and the crowd's are still at
-  `ParkAudio.CrowdVoiceGain`, 0.30 for a hundred where the channel's number gives 0.4125 (the original's staff
-  channels read 18 and 12 of 127, the files' 24 and 16); a bumper ride's engine (68), thunder
-  (`ThunderVolume`) and the interface's flat effects are not through `ChannelGain` either. No scream was made
+  From Q268 (`audio.md`, "A channel's volume"): the crowd's twin variation draws its volume from 14 to 21 here
+  (10 to 16 of 127), and the original's mixer read 10 and 11 alone in 78 lines with the twin current in 25 of
+  87: read what the voice's slot `+0x40` answers for a variation with no controller before changing the draw.
+  Flat channels at 1, 2, 3 and 4 of 127 in the original are not named. The staff's voices were not measured in
+  the mix (their volumes are `voices`' and the log's). A crowd over 15 was in no game run of either game.
+  From Q267 (`audio.md`, "A channel's volume"): a bumper ride's engine (68), thunder
+  (`ThunderVolume`) and the interface's flat effects are not through `ChannelGain`. No scream was made
   at a level other than 20 in the original. In no game run: a single scream, a guest put off (now 10 of 127
   where it was 0.35), a yawn; the options' two volume sliders do not move `ChannelGain`'s 75 and 60. The
   request mask's bit `0x80000` arm of `FUN_006c5690` (a volume scaled again by `params + 0x9c` over a hundred)
@@ -75,8 +78,7 @@ the research lab), then the rest of this section in its old order.
   (`SCAPE_OMP_SOUND_TYPE_3`, `SCAPE_OMP_SOUND_TYPE_1`): the level's own `cat_ambient` is not loaded, and the
   gulls' and sea's voice class (`0x0006`, `0x006be090`) is not decoded, nor why the level's ambient 181 had
   no voice in the original. A channel's volume read as a whole number of 127 (the fall 75, the music 60), so a
-  sound effect at a hundred is 1.25 of the music; the crowd's voice is still at its measured 0.30 where that
-  gives 0.4125 (`ParkAudio.CrowdVoiceGain`). A voice out of range plays on unheard here, where the original gives its channel up:
+  sound effect at a hundred is 1.25 of the music. A voice out of range plays on unheard here, where the original gives its channel up:
   where its sample stands when it is heard again is not decoded. The pan is a plain left and right, not
   QSound's. The orbit camera's point is left at height nought where the ground is high, so the listener's
   height over a hill was not held against the original's. In no game run: the river in the mix, another

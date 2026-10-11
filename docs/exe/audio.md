@@ -321,8 +321,8 @@ listing's and the files' alone.
 scream's child takes its variation's volume (`ScreamChildVolume`), and a single scream, a guest put off and a
 yawn the picked variation's (`SoundCategory.Play`'s `gain`); the land's own sounds go through the same sum.
 `SCREAMLEVEL` moves the playing child's volume only where its variation names the parameter on its volume, which
-no shipped scream does. **Not through it yet:** the staff's voices and the crowd's (`CrowdVoiceGain`, 0.30 where
-this gives 0.4125 for a hundred), a bumper ride's engine, thunder, and every flat effect of the interface.
+no shipped scream does. The staff's voices and the crowd's take it too (Q268, below). **Not through it yet:** a bumper ride's
+engine, thunder, and every flat effect of the interface.
 
 **Measured here, 2026-10-10** (`q267/confirm.py`, 4 of 4): with the camera on the Belly Bounce `voices` read ten
 scream samples at (525, 250), each at a volume of 0.1925 (35 over 60 of the music's 0.33), 24.26 off at a gain of
@@ -332,6 +332,25 @@ log's volume as 35, the parameter, and eight samples in its mix at 0.1116 each, 
 fix's is 0.550 of it, where 0.1925 over 0.35 is 0.55. Twenty bugs put back (`q267/mutations.py`): 18 fail a test,
 one more after a test line was added, and one fails none, a `SCREAMLEVEL` that sets a flat volume behind the
 test for a controller, which no shipped scream passes.
+
+**The crowd's voice and the staff's, held in the running original** (Q268; `q268/orig/run.sh`, predicted first in
+`q268/PREDICTION.txt`, 3 of 3). The mixer and the crowd's voice were polled together (`mixer.py`, `q236/orig/crowd.py`)
+while the pointer was moved on and off the Belly Bounce's queue. The crowd's voice is the flat channel at the
+listener's own place that Q265 left unnamed: it read 10 of 127 through every stretch the handle `[0x00803aa4]` was
+held at a level of 12 or less (a volume of 14, 10.5 to the even 10), 11 at levels 13 to 15 (a volume of 15), fell to
+1 and was gone through every stretch the handle was nought, five stretches of each in order; its distance gain read
+1.0000, so its final gain is the volume. The staff's channels read 18 of 127 at a far end of 60 and of 75 (24), 12 at
+75 (16), 22 at 70 (30) and 16 at 90 (21). **Not explained:** the twin variation's draw between 14 and 22 was never
+seen, only 10 and 11 in 78 lines with the twin current in 25 of the voice's 87; flat channels at 1, 2 and 3 of 127
+with a far end of 70 or 95 stayed on after the crowd's was let go, and one at 4 of 127 from the park's start.
+
+**In OpenTPW** (`q268/confirm.py`, fix 3 of 4, control 3 of 3): with the pointer's cell held on the queue `crowd`
+read a volume of 14 playing at 0.0550 and 15 at 0.0605, and the staff's 130 log lines 16 at 0.0660, 21 at 0.0880, 24
+at 0.0990 and 30 at 0.1210, each `round( v x 0.75 ) / 60` of the music's 0.33. With the camera 750 units off, where
+the mix is the crowd's flat voice alone, twenty samples were found at a score of 0.97 or better, the lowest at a gain
+of 0.02719, half of 0.0550 by the master; the build before read 0.02074, half of its 0.0420, so the fix is 1.3107 of
+it where 1.310 was owed. The one miss was the check's: `crowd` reads a volume of nought between two samples. Twelve
+bugs put back (`q268/mutations.py`): all twelve fail a test.
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
@@ -466,9 +485,9 @@ So the level does two things. As the class's zone parameter (controller slot 0) 
 
 **Measured in the original** (Proton, off-screen, memory only; `q236/orig/crowd.py`, `a.log`, 75 s), predicted first and as predicted: the level word followed this script's own count of guests within four cells of the pointer's cell at every beat (12 over the Belly Bounce's queue, 0 on empty ground, 1 and 2 as a walker came by); the handle was nought exactly while the level was; the voice is of class `0x0070a498` with keys 7, 7 and both values the level; its variation went between 1 (key 7, mask 1) and 7 (key 0), both with volume bytes 14 and 22. **Not predicted:** once, at level 11, the voice ended by itself and was started again a beat later with a new handle; what ended it was not read. Not measured: the sound itself (no capture was made), state 4's nought, and a level past 15 (the stock park has thirteen guests), so the other five bands are the file's and the listing's alone.
 
-**How loud it is, measured** (Q236b; `q236b/orig/`, `crowdx.py`, `musicx.py`). The scale past the variation's volume is not decoded (`FUN_006bb860`'s group levels, QMixer's own), so it was taken from the original's mix, written to a file by ALSA's `file` plugin. The crowd's clips are 53 to 724 ms long by the map and cannot be picked out under the music, so the music was switched off in the original's own options for the crowd's windows and measured by itself in another: with the pointer over the Belly Bounce's queue (level 9 in memory) 53 samples of variations 1 and 7 matched at a score of 0.6 or better, a first-variation sample at a least-squares gain of 0.036 to 0.046 of the decoded clip; over empty ground (level 0, no handle) one matched. The music's samples read 0.18 to 0.22 against a mono template, which ffmpeg makes 1.41 times the mean of a stereo sample's two channels (checked in OpenTPW's own mix, where a music sample known to play at 0.165 reads 0.117), so 0.26 to 0.31. By sample, the first variation's medians run from 0.022 to 0.046 with a middle of 0.034, where OpenTPW's are one value: **that spread is not explained** (the original may cut a sample at the map's length, which is 35 ms or so short of the decoded clip, or weigh each sample; not read). So a crowd sample at volume 14 is about 0.12 of a music sample at volume 100 (0.09 to 0.17). The options screen's two default volumes taken as plain factors, 75 for sound effects and 60 for music (`sound.sam`, `DefaultVolume`), would give 0.175, just outside that, and are not what was built. The matched samples carry all six pitches. The file is not paced (it runs about 3.6 times faster than the game), so how closely one sample follows another in the original was not measured.
+**How loud it is, measured** (Q236b; `q236b/orig/`, `crowdx.py`, `musicx.py`). The scale past the variation's volume was not decoded then (it is now: "A channel's volume", above, which is what is built), so it was taken from the original's mix, written to a file by ALSA's `file` plugin. The crowd's clips are 53 to 724 ms long by the map and cannot be picked out under the music, so the music was switched off in the original's own options for the crowd's windows and measured by itself in another: with the pointer over the Belly Bounce's queue (level 9 in memory) 53 samples of variations 1 and 7 matched at a score of 0.6 or better, a first-variation sample at a least-squares gain of 0.036 to 0.046 of the decoded clip; over empty ground (level 0, no handle) one matched. The music's samples read 0.18 to 0.22 against a mono template, which ffmpeg makes 1.41 times the mean of a stereo sample's two channels (checked in OpenTPW's own mix, where a music sample known to play at 0.165 reads 0.117), so 0.26 to 0.31. By sample, the first variation's medians run from 0.022 to 0.046 with a middle of 0.034, where OpenTPW's are one value: **that spread is not explained** (the original may cut a sample at the map's length, which is 35 ms or so short of the decoded clip, or weigh each sample; not read). So a crowd sample at volume 14 is about 0.12 of a music sample at volume 100 (0.09 to 0.17). The options screen's two default volumes taken as plain factors, 75 for sound effects and 60 for music (`sound.sam`, `DefaultVolume`), would give 0.175, just outside that; the channel's own number, 10 of 127 beside the music's 60, is 0.167, and the mixer reads exactly that, so the capture's middle of 0.12 was low and is not explained. The matched samples carry all six pitches. The file is not paced (it runs about 3.6 times faster than the game), so how closely one sample follows another in the original was not measured.
 
-**OpenTPW** (`ParkAudio.SetCrowdVoice`, `NextCrowdSample`, `ParkPeople.GuestsNear`): on the music's beat the guests on the cells within four of `ParkPicking.Cell` are counted (nought with no cell), held to 100 and made nought in world state 4. Above nought the voice is held: a flat sample of kids 91 from the first variation, then, as each ends, one from the variation the level's zone gives (`ParkScreams.NextVariation`, the music's rule), its volume and pitch from `ParkAudio.Controlled` (the level on variations 1 to 6, a draw on the twins; the pitch a draw). A new level is the playing sample's volume at once where its variation names parameter 7. At nought the sample is faded over 0.06 s (`Sound_StopFading`'s 60) and the voice let go; started again it begins from the first variation. A variation's volume of 100 plays at `CrowdVoiceGain`, 0.30 beside the music's 0.33, which puts a sample at volume 14 at 0.13 of the music. **Said:** the next sample is started on the frame after the last has ended, where the original's service pass starts it (rate not measured); the voice that ended by itself in Q236's log is not modelled, a held voice here never ends; the count reads each guest's linked cell (`ParkState.CellOf`), the original the cells' own lists. Console: `crowd`.
+**OpenTPW** (`ParkAudio.SetCrowdVoice`, `NextCrowdSample`, `ParkPeople.GuestsNear`): on the music's beat the guests on the cells within four of `ParkPicking.Cell` are counted (nought with no cell), held to 100 and made nought in world state 4. Above nought the voice is held: a flat sample of kids 91 from the first variation, then, as each ends, one from the variation the level's zone gives (`ParkScreams.NextVariation`, the music's rule), its volume and pitch from `ParkAudio.Controlled` (the level on variations 1 to 6, a draw on the twins; the pitch a draw). A new level is the playing sample's volume at once where its variation names parameter 7. At nought the sample is faded over 0.06 s (`Sound_StopFading`'s 60) and the voice let go; started again it begins from the first variation. A sample's volume plays at the channel's own number (`ParkAudio.ChannelGain`): 14 is 10 of 127 beside the music's 60, 0.0550 beside 0.33. **Said:** the next sample is started on the frame after the last has ended, where the original's service pass starts it (rate not measured); the voice that ended by itself in Q236's log is not modelled, a held voice here never ends; the count reads each guest's linked cell (`ParkState.CellOf`), the original the cells' own lists. Console: `crowd`.
 
 ## The staff's voices
 
@@ -503,11 +522,12 @@ nothing or one syllable. No person has listened to them.
 
 **OpenTPW** (`ParkAudio.StaffSound`): a variation evenly, a sample by weight, one placed one-shot on the effects
 group at the member's feet, its rate from the drawn pitch (`ParkCarSounds.Rate`), the blank played as any other.
-**The gain past the byte is not decoded**: it is `ParkAudio.CrowdVoiceGain`, 0.30 for a byte of 100, measured for the
-crowd's flat voice, and a park's placed sounds do not fade with distance here ("The listener", below).
+The byte plays at the channel's own number (`ParkAudio.ChannelGain`, "A channel's volume" above): 24 is 18 of 127
+beside the music's 60, as the original's staff channels read, and the voice is turned down over its variation's own
+range ("The mixer's distance law").
 
-**Measured** (`ride-operation.md`, "The staff's sounds, in both games"): in OpenTPW's mix `TADA.mp2` sits at 0.027 to
-0.031, the byte's 0.21 × 0.30 × the master's 0.5. In the original's, with the camera on the entertainer's patrol,
+**Measured before the channel's number was built** (`ride-operation.md`, "The staff's sounds, in both games"): in
+OpenTPW's mix `TADA.mp2` sat at 0.027 to 0.031, the byte's 0.21 × 0.30 × the master's 0.5, with no distance law. In the original's, with the camera on the entertainer's patrol,
 its envelope is 0.022 to 0.032 of the sample's, where Q236b's crowd samples read 0.022 to 0.046 at bytes 14 to 22:
 the same scale to within the spread, at that one camera. How the original's level falls with distance was not
 measured, and its placed voice matches the sample at 0.24 at best, so the library changes it on the way.

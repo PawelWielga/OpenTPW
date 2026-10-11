@@ -5934,6 +5934,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   guessed 0.077 (the pan's share not counted). Twenty bugs put back: 18 fail a test, a nineteenth after a test
   line was added, and one fails none (a `SCREAMLEVEL` that sets a flat volume behind the test for a
   controller, which no shipped scream passes).
+- [x] **Q268. The staff's voices and the crowd's play at the channel's own number.** Split by the session from
+  the old Q268: its other pieces are Q269. Done 2026-10-10: the stand-in `ParkAudio.CrowdVoiceGain`, 0.30 for a
+  hundred, is gone, and `StaffSound` and the crowd's sample go through `ChannelGain` (`audio.md`, "A channel's
+  volume"). In the running original, predicted first, 3 of 3: its mixer and its crowd's voice polled together
+  with the pointer moved on and off the Belly Bounce's queue read a flat channel at the listener's place at 10
+  of 127 (a volume of 14) and 11 (15) through each of the five stretches the voice's handle was held and none
+  through each it was nought, and the staff's channels 18, 12, 22 and 16 of 127 (24, 16, 30, 21). In the
+  running game, predicted first, 3 of 4: `crowd` read 14 playing at 0.0550 and 15 at 0.0605 over a frame of the
+  queue, the staff's 130 log lines 0.0660, 0.0880, 0.0990 and 0.1210, and twenty crowd samples in the game's own
+  mix, the lowest at 0.02719; the control, main before it, 3 of 3: 0.0480 and 0.0720 for the staff and 0.02074 in
+  the mix, so the fix is 1.3107 of it (1.310 owed). Missed: my check took `crowd`'s nought between two samples
+  for a volume. Twelve bugs put back: all twelve fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

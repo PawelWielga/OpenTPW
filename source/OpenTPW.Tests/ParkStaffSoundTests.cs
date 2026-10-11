@@ -248,7 +248,7 @@ public class ParkStaffSoundTests
 
 	/// <summary>
 	/// <see cref="ParkAudio.StaffSound"/> starts one placed voice of the effect's own samples on the effects bus, at
-	/// the variation's volume over a hundred of <see cref="ParkAudio.CrowdVoiceGain"/> and a rate from its pitch, and
+	/// the variation's volume as the channel's number (16 is 12 of 127, 21 is 16, beside the music's 60 at 0.33) and a rate from its pitch, and
 	/// counts the voiced ones apart from the blank.
 	/// </summary>
 	[TestMethod]
@@ -291,7 +291,7 @@ public class ParkStaffSoundTests
 				Assert.IsTrue( voice.IsPlaced );
 				Assert.AreEqual( AudioBus.Effects, voice.Bus );
 				Assert.IsFalse( voice.Loop );
-				Assert.AreEqual( 0.16f * ParkAudio.CrowdVoiceGain, voice.Volume, 0.0001f );
+				Assert.AreEqual( 12f / 60f * 0.33f, voice.Volume, 0.0001f );
 				Assert.IsTrue( voice.Rate is >= 0.92 and <= 1.08, $"rate {voice.Rate}" );
 				heard.Add( voice.Name );
 				rates.Add( voice.Rate );
@@ -308,7 +308,7 @@ public class ParkStaffSoundTests
 			lock ( Audio.Lock )
 			{
 				Assert.AreEqual( "TADA.mp2", Audio.Voices[^1].Name );
-				Assert.AreEqual( 0.21f * ParkAudio.CrowdVoiceGain, Audio.Voices[^1].Volume, 0.0001f );
+				Assert.AreEqual( 16f / 60f * 0.33f, Audio.Voices[^1].Volume, 0.0001f );
 				Assert.AreEqual( 1.0, Audio.Voices[^1].Rate );
 			}
 

@@ -241,15 +241,6 @@ public sealed class ParkAudio : Entity
 	/// <summary>What <c>Sound_StopFading</c> hands the library (<c>0x3c</c>, <c>0x0051c300</c>), taken as milliseconds.</summary>
 	private const float CrowdVoiceFadeSeconds = 0.06f;
 
-	/// <summary>What a variation's volume of a hundred plays at here, before <see cref="Audio.MasterVolume"/>.</summary>
-	/// <remarks>
-	/// <b>Set by measurement, not decoded</b>: the original's scale past the variation's byte is not read. In a
-	/// capture of its mix a crowd sample at volume 14 sits at about 0.12 of a music sample's gain (0.09 to 0.17), and
-	/// this puts it at <c>0.14 × 0.30 / <see cref="MusicVolume"/></c>, 0.13, here
-	/// (<c>docs/exe/audio.md</c>, "The crowd's voice").
-	/// </remarks>
-	internal const float CrowdVoiceGain = 0.30f;
-
 	/// <summary>
 	/// What the park loop hands the crowd's voice (<c>0x0054f875</c>..<c>0x0054f8b9</c>): the guests counted round the
 	/// pointer's cell, held to a hundred, and nought while the world's state is <see cref="SilentWorldState"/>.
@@ -304,6 +295,9 @@ public sealed class ParkAudio : Entity
 	/// <summary>How many samples the voice has played, and how many times it has been started, for the console.</summary>
 	internal (int Samples, int Starts) CrowdVoicePlays { get; private set; }
 
+	/// <summary>What the crowd's sample is playing at, before <see cref="Audio.MasterVolume"/>; nought with none.</summary>
+	internal float CrowdVoiceVolume => _crowd is { Playing: true } ? _crowd.Volume : 0f;
+
 	private readonly Random _crowdRandom = new();
 	private Voice? _crowd;
 
@@ -354,13 +348,14 @@ public sealed class ParkAudio : Entity
 
 	/// <summary>
 	/// The volume and pitch of a sample of the crowd's voice, from the level or drawn (<c>0x006bbbe0</c>), set on
-	/// <paramref name="voice"/> when there is one. Answers the volume as a gain.
+	/// <paramref name="voice"/> when there is one. Answers the volume as a gain, the channel's own number
+	/// (<see cref="ChannelGain"/>): a volume of 14 is 10 of 127 beside the music's 60.
 	/// </summary>
 	private float ApplyCrowdVoice( Voice? voice, SoundCategoryFile.Variation header )
 	{
 		var volume = Controlled( header, 1, CrowdVoiceParameter, CrowdVoiceLevelNow, _crowdRandom );
 		var pitch = Controlled( header, 2, CrowdVoiceParameter, CrowdVoiceLevelNow, _crowdRandom );
-		var gain = volume / 100f * CrowdVoiceGain;
+		var gain = ChannelGain( volume );
 
 		CrowdVoiceSample = (volume, pitch);
 		voice?.SetVolume( gain );
@@ -825,8 +820,8 @@ public sealed class ParkAudio : Entity
 	/// played as any other.
 	/// </summary>
 	/// <remarks>
-	/// The volume's scale past the byte is <see cref="CrowdVoiceGain"/>, measured for the crowd's flat voice and not
-	/// for a placed one-shot. It is not held back by the repeat delay, which the original does not have.
+	/// The drawn volume plays at the channel's own number (<see cref="ChannelGain"/>): 24 is 18 of 127 beside the
+	/// music's 60. It is not held back by the repeat delay, which the original does not have.
 	/// </remarks>
 	/// <returns>Whether anything started.</returns>
 	internal bool StaffSound( int effect, Vector3 at )
@@ -842,7 +837,7 @@ public sealed class ParkAudio : Entity
 		var variation = _staffRandom.Next( headers.Count );
 		var volume = Controlled( headers[variation], 1, 0, 0, _staffRandom );
 		var pitch = Controlled( headers[variation], 2, 0, 0, _staffRandom );
-		var voice = Audio.Play( _staff.PickFrom( effect, variation ), volume / 100f * CrowdVoiceGain,
+		var voice = Audio.Play( _staff.PickFrom( effect, variation ), ChannelGain( volume ),
 			bus: AudioBus.Effects, position: at, range: _staff.RangeOf( effect, variation ) );
 
 		if ( voice == null )
@@ -851,7 +846,7 @@ public sealed class ParkAudio : Entity
 		voice.SetRate( ParkCarSounds.Rate( pitch ) );
 		StaffSounds = (StaffSounds.Started + 1, StaffSounds.Voiced + (voice.Name.StartsWith( BlankSample ) ? 0 : 1));
 
-		Log.Info( $"Park audio: staff effect 0x{effect:x} sample '{voice.Name}' volume {volume} pitch {pitch} "
+		Log.Info( $"Park audio: staff effect 0x{effect:x} sample '{voice.Name}' volume {volume} plays {voice.Volume:0.0000} pitch {pitch} "
 			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0}) range {voice.Range ?? 0f:0} gain {voice.DistanceGain:0.0000}" );
 
 		return true;

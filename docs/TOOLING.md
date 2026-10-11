@@ -98,6 +98,12 @@ whole list):
   `KidsHD.sdt` and `xKidsHD.sdt`). The gain is the voice's volume times its distance gain times 0.397 with the
   camera at `515 235 60 180`, the master and the pan together, so compare two builds, not a build with a sum.
   `voices` prints each ranged voice's volume (Q267).
+- **The crowd's voice alone in the mix:** `hover 50 24` holds the pointer's cell on the Belly Bounce's queue
+  whatever the camera does, so with `bus music 0` and `camera 1100 1100 110 180` the mix is the crowd's flat
+  voice and nothing else. `voices` names each sample as `<name> Effects flat`; match each at its six pitches
+  (the template read at a rate of `2 ^ ((p + 1) / 96)`, 1 at pitch 0): a hit scores 0.97 to 1.000 and its gain
+  is the voice's volume times the master's 0.5. `crowd` reads a volume of nought between two samples
+  (`q268/confirm.py`, Q268).
 - **The orbit camera's eye is not `zoom` from the point it looks at where the ground is high:** the eye is
   lifted by the ground's height under the point and the point stays at height nought. Over the waterfall
   (ground about 12) `camera 530 513 30 180` puts the eye 38.5 off, not 30. Read `placed`'s listener, do not
@@ -155,6 +161,11 @@ GH=766` there, or the pointer is off):
 - **Its mixer over a ride's screams:** a file saved under `parkrun.original_view( 515, 235 )` puts its listener
   about 50 units from the Belly Bounce, and `POLL='python3 .../mixer.py %PID% 150'` reads the scream channels (a
   mapping of 2.0, 95.0, 0.80 at (525, 250, 0)) and the staff's as they come and go (Q265).
+- **Its crowd's voice in the mixer:** start `mixer.py` and `q236/orig/crowd.py` together after a load and move
+  the pointer on and off the Belly Bounce's queue (`gmove.py 512 384` mid-frame on Q265's `bounce.TPWS`, then
+  `930 200`): the crowd's is the 2D channel at the listener's own place, there while the handle is held and
+  gone while it is nought. Neither log is stamped, so hold them together by the order of their stretches
+  (`q268/orig/run.sh`, Q268).
 - **A camera file's listener is not where the camera was aimed:** `camera 531 513 110 180` saved here reads a
   listener of (546, 50, 476) there. Read it (`voices.py`'s first line) rather than work it out (Q263).
 - **A point's place on its screen** is its park place (x, the height, z) through the matrix at `[0x0087b088]`,

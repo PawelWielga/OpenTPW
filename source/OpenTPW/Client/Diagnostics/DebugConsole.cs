@@ -516,7 +516,7 @@ public static class DebugConsole
 				Reply( ParkAudio.Current is { } crowded
 					? $"crowd: level {crowded.CrowdVoiceLevelNow} from {crowded.CrowdVoiceGuests} guests near cell {crowded.CrowdVoiceCell}"
 						+ $" ({(crowded.CrowdVoiceCell > 0 ? $"{(crowded.CrowdVoiceCell - 1) % ParkWorld.MapSize},{(crowded.CrowdVoiceCell - 1) / ParkWorld.MapSize}" : "none")}),"
-						+ $" {(crowded.CrowdVoiceHeld ? "held" : "not held")}, variation {crowded.CrowdVoiceVariation + 1} volume {crowded.CrowdVoiceSample.Volume}"
+						+ $" {(crowded.CrowdVoiceHeld ? "held" : "not held")}, variation {crowded.CrowdVoiceVariation + 1} volume {crowded.CrowdVoiceSample.Volume} plays {crowded.CrowdVoiceVolume:F4}"
 						+ $" pitch {crowded.CrowdVoiceSample.Pitch}, {crowded.CrowdVoicePlays.Samples} samples, started {crowded.CrowdVoicePlays.Starts} times, tick {GameClock.Ticks}"
 					: "crowd: a park has to be loaded" );
 				break;
