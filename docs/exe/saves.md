@@ -7,7 +7,7 @@ This page is for what the executable does with them.
 Where the original writes what the player changes. Three kinds of file: `save\Config.tcf` holds machine options
 that belong to the installation, `save\users\<N><name>\gms.dat` holds a player profile — progress, tickets, keys and
 the options that belong to a person — and `<playerdir>\<theme>\*.TPWS` holds a park. Every one is
-`[dword version][fixed fields, raw little-endian]` with no tags, lengths or checksums, so a reader that is one field
+`[dword version][fields, raw little-endian]` with no checksum, and no tag or length but `gms.dat`'s two counts and its name lengths and a park file's deflated block and module markers ("Parks: the `.TPWS` container"), so a reader that is one field
 out still produces a plausible-looking result. Traced read-only in Ghidra from `testme.exe`. Paths are relative to the
 game's working directory, whose `save\` OpenTPW maps as `SaveFileSystem` (`<GamePath>/save/`).
 
@@ -167,7 +167,7 @@ The compression is zlib 1.1.3 ("Load Game and Save Game", "The writer").
 ### Loading the modules
 
 `FUN_00415270` reads the inflated body module by module, and after each it checks the tag against the module's
-`SAD_` name (the FileFormats `saves.md` table lists both names). OpenTPW reads none of the modules below.
+`SAD_` name (the FileFormats `saves.md` table lists both names). Of the modules below OpenTPW reads the particles (`ParkParticles`) and the camera (`ParkCameraModule`).
 
 **Particles.** `FUN_0051f680` writes the module, logging `PAR_SaveStatus failed` (`0x0074c1e4`); its one caller
 (`0x0041661e`, in `FUN_004164c0`) passes 0 for the pool, so the pool is always written empty. `FUN_0051f7a0` reads it
@@ -636,7 +636,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | `TRAK` | track rides, their sections and cars | a Hot Pot or another bumper ride bought or sold | patched: a ride with no car is made, taken out or written over ("OpenTPW's writer, a track ride's record"); a bumper ride with a car out is written whole with its cars ("OpenTPW's writer, a track ride's cars"); a ride of a BumperType with no record here and a tracked ride are carried and counted |
 | `FLYR` | the flyers (FileFormats `saves.md`) | nothing built here | carried |
 | `RSSE` | every running script | every script's counter, variables, stack and deadlines; a script for a thing bought, none for one sold | patched |
-| `KAME` | zoom, rotation, flags, two points of interest, a saved rotation | the camera | afresh |
+| `KAME` | zoom, rotation, flags, two points of interest, a saved rotation | the camera | patched: the zoom, the rotation and the point's two ground coordinates; the flags, the point's height, the saved point and the saved rotation the file's |
 | `COAS` | the coasters | nothing: none can be built here | carried |
 | `ADVS` | 360 bytes of the advisor and a buffer | nothing kept here | carried |
 | `SOUN` | two dwords, 84 bytes, then records not decoded | nothing kept here | carried |
@@ -649,19 +649,19 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | Part | Play here changes | A writer here |
 |---|---|---|
 | The header | `mGameTick`, `mParkClosed`, `mNumberOfVisitorsToDate`; the five staff heads and `mFirstObject` as things are made and gone; the arrival vehicles' handles | patched. `mRandomSeed` is carried: the generators here are not the original's |
-| The object controls | an item's standing count and first-build stamp, its researched flags | patched |
+| The object controls | an item's standing count and first-build stamp (nothing here researches an item: its researched flags are the file's) | patched |
 | The staff pool | every candidate, the top-up's counts and mark | written slot for slot from `ParkStaffPool`; an empty slot keeps its bytes and loses `mValid` |
 | The clock and arrival fields | the date, the arrival timer | patched: the timer's mark, count and flag are written; the clock's fields are still the file's (Q241j) |
-| The cells | a path or queue laid or cleared, land, a footprint, the chain of who stands where | patched cell by cell, each record where it lies (every cell has its map and track parts); `mWho` with the things it names; the effects part carried |
+| The cells | a path or queue laid or cleared, land, a footprint, the chain of who stands where | patched cell by cell, each record where it lies (every cell has its map and track parts); `mWho` with the things it names; the effects part written again from the running grid, last of all ("OpenTPW's writer, the region effects") |
 | A guest, a member of staff | everything they do | carried records patched from `ParkPeople`; one made here written whole; one gone left out |
 | A catalogue object | its door, price, counts, rings, queue, script handle | carried records patched; one bought here written whole; one sold left out |
-| The economy thing, the staff HQ | the balance, the loans, the rings; the strikes | patched |
-| The analyser, the research lab, the weather, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar and weather run here | carried, patched where a field is run here |
+| The economy thing, the staff HQ | the balance, the loans, the rings; the strikes | the balance is written; the loans, the rings and the strikes are the file's |
+| The analyser, the research lab, the weather, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar and weather run here | carried, but for the mechanics' HQ's `mNextObject` (model 10, `PutMechanicCursor`); what the weather and the calendar run here is not written |
 
 **What is not settled, and belongs to the build that meets it.** A record made here has bytes no reader here
 names: whether nought is safe in each is to be measured by loading a made guest and a bought ride in the
-original. A person in the middle of a walk carries the original's navigator (177 bytes), which OpenTPW's walk does
-not keep. A park that was never loaded from a file (the fresh world) has nothing to carry: every module would be
+original. A person in the middle of a walk carries the original's navigator (177 bytes), of which OpenTPW's walk keeps
+and writes what "OpenTPW's writer, the people" lists and leaves the rest at nought. A park that was never loaded from a file (the fresh world) has nothing to carry: every module would be
 afresh, the legal text taken from the level's shipped park file.
 
 ### OpenTPW's writer, the first stage
@@ -795,7 +795,7 @@ every bubble 1; the litter and effects sprites their own set's. None differs.
 
 The third stage (Q241h). `ParkPeople.Written` hands the writer every guest and member of staff the park holds,
 and `ParkWorld.PutPeople` puts the thing list together again around them, with the three parts of the file that
-follow the list. It runs last, because it alone changes the body's length.
+follow the list. It runs after the scripts, the track rides and the models are spliced, which lie behind the world in the body, and only the cells' effects (`PutEffects`), which lie ahead of the thing list, follow it: each changes the body's length.
 
 - **The thing list.** A person the file holds and the park still has keeps their record, written over field by
   field. One made here is written whole, ahead of the file's things and newest first, the park's own turn order.
@@ -964,7 +964,7 @@ summons for a guest waiting at the stop to go home (`FUN_004cf3e0`, read; the gu
 
 ### The objects, their scripts and their models
 
-Decoded and measured on 2026-10-08 (Q241i, the decode; nothing of it is built). An object is three records that
+The decode (Q241i); what is built on it is "OpenTPW's writer, the objects" and the sections after it. An object is three records that
 name each other: its thing record in `WRLD`, a script record in `RSSE` and a model slot in `RSYS`. The bytes are
 the FileFormats `saves.md`'s ("The ride script module", "The ride system module"); this is what the original does
 with them and what the writer's next stages must keep.
@@ -1080,7 +1080,7 @@ empty slot and read back so). **OpenTPW was not run**: `ParkWorld` was not asked
 
 The fourth stage (Q252), for the things the file holds; a thing bought or sold is the fifth's ("OpenTPW's
 writer, a thing bought and a thing sold"). Every
-record is written over where it lies: an object's is its fixed 1,099 bytes, a script's tables keep their lengths
+record is written over where it lies: an object's is its fixed 1,099 bytes, a script's tables keep their lengths (but its started-effects list where that is another length, which is spliced)
 and a model's channels their count, so nothing moves, and they go in before the people.
 
 - **The clock moves on** (`ParkRides.Written`, `ParkClock.Put`). The load here puts the file's moment on this
@@ -1097,7 +1097,7 @@ and a model's channels their count, so nothing moves, and they go in before the 
   body and the strings. The effects it has started are written where the list is as long as the file's, and
   spliced in where it is not ("OpenTPW's writer, a script's started effects"). A bounce slot and a walk slot are written
   whole, in use or let go ("OpenTPW's writer, a bounce slot let go", "a walk slot's facing", "a walk slot let go"). **Counted:** a script the file holds no record for (`SAVE_PARK_SCRIPT_MADE_SINCE_THE_LOAD`:
-  a thing bought, a child spawned, and the ferry's and the seaplane's, which a load here makes, two a save), and
+  a thing bought and left out of the file (`SAVE_PARK_OBJECT_BOUGHT`), a child spawned, and the ferry's and the seaplane's, which a load here makes, two a save), and
   a record whose script has ended (`SAVE_PARK_SCRIPT_ENDED`), left the file's.
 - **A model** (`ParkRides.Written`, `ParkThingStates.Put`), into the record that names its thing's script: each
   channel as the engine keeps one. A running channel's clip time and third stamp are the save's moment and its
@@ -1116,7 +1116,7 @@ and a model's channels their count, so nothing moves, and they go in before the 
   the two counts, the operating three, the goods' cost, quality, chance and ingredient, the price, the two
   repair floats, the service request and the two totals. The back cell and size are the file's until the queue
   is edited, and measured off the map from then (`ParkRideChoice.QueueCellsFor`). The rest of the record stays
-  the file's. An object sold is left the file's and counted (`SAVE_PARK_OBJECT_SOLD`).
+  the file's. An object sold is taken out ("OpenTPW's writer, a thing bought and a thing sold"); one the writer cannot take out is left the file's and counted (`SAVE_PARK_OBJECT_SOLD`).
 - **Who is on a thing is written in both halves** (`ParkPeople.Written`): the guest as they are, and a rider with
   no sprite on a thing that keeps none (`mFlags` `0x20`), as admission leaves them.
 - **OpenTPW's load reads the other half back.** `ParkScriptStates` takes limbo, the bounce slots and the walk
@@ -2043,8 +2043,8 @@ and the three lists are empty. Its own Jungle Spray then started and stopped `(3
 
 **Not seen:** what the original then does with a record whose handle is nought (no `KILLOBJ` reached one in
 100 s; on the listing it frees it, and the sweep's move acts on no particle); a two-record list turned round by
-a load (the toilet's two are the same five words; the rule is the reader's listing and the tests). No effect is
-drawn or heard in OpenTPW, and the original draws no smoke on a made kiosk with either file, so the photographs
+a load (the toilet's two are the same five words; the rule is the reader's listing and the tests). No effect was
+drawn or heard in OpenTPW in that run, and the original draws no smoke on a made kiosk with either file, so the photographs
 show the things bought and do not tell the fix from the control. **Not built:** the engine's spawn that fails
 and frees its record (every `ADDOBJ` of a known type keeps one here); the handle `SETOBJPARAM` stores back. The
 emitter itself is "OpenTPW's writer, an emitter started".
@@ -2147,7 +2147,7 @@ Q257n, split by the session: the item's other pieces are Q257p. **An item's `.em
 particle library, not emitters of the thing.** `FUN_0051fa20` (called at `0x00414552` as a park's catalogue is
 read) copies each into the first unnamed template slot, whatever the park holds; Lost Kingdom has two, both in
 `features/speaker1.wad` (the Loudspeaker, item 1417, "Speaker: Wild Beasts" in the buy list), and they are
-templates 101 and 102 of every jungle file. A live emitter comes only from a script: an `ADDOBJ` of type 1 or 2,
+templates 101 and 102 of every jungle file. A thing's live emitter comes from its script, never from its item's files (a broken bumper ride's cars' smoke is `BUMP 8`'s, "OpenTPW's writer, a smoking car"; the land's own waterfall is `scape.omp`'s, `park.md`, "The land's own particles"): an `ADDOBJ` of type 1 or 2,
 whose record keeps the handle, or an `EVENT`, which keeps nothing (`park.md`, "ADDOBJ").
 
 **Measured in the original** (`q257n/orig/`). The reference park with the Loudspeaker marked researched
@@ -2221,7 +2221,7 @@ of the boarding list `+0xc4`** (the handle and the peep); and **the close** (typ
 slot the handle names and fills it from the BumperType's template; then `Bumper_SetPerformance`, the two mesh
 words, the duration ("Set Ride Duration to %d") and the state. A car is read over a fresh pool car: `+0x94`
 and the rider list are cleared, `+0x9c` is the record, the record's car count goes up, its collision object
-is found again from where it floats (or from the saved centre), **its model is made again by `FUN_00463ab0`,
+is found again from where it floats (or from the saved centre), **its model is claimed, not made, by `FUN_00463ab0` (the model table's slot as the ride system module's reader left it, marked `0x10000`),
 handed the handle its `+0x08` holds**, the item's supplemental mesh `+0x04` and flags `0x101`, and its wake's
 from `+0x0c` where the car's flags hold `0x2002000`; the lead (`0x400000`) is named on the record, and the buoy
 is found again by its place. A type 9 puts its peep on the car last read. A type 8 goes through
@@ -2281,8 +2281,7 @@ free, 42 things, no thing 43.
 
 **Read in the runs:** the `buy` reply names no track handle; the model header's cursor is 92 (the original's
 file reads 93, holding a vehicle's model too); the made object's names are two, `The` and `Hot Pot`; and the
-things left after the sale are 41 (the original's file holds 42, not the stock park's 43 with the pot). **Not run in either game, tested only:** a ride with a
-boat out bought, kept or sold (counted and left); a ride kept and written over with other words than the file's
+things left after the sale are 41 (the original's file holds 42, not the stock park's 43 with the pot). **Not run in either game, tested only:** a ride kept and written over with other words than the file's
 (scene `b` saved it untouched); a ride made between two of the file's; a turned ride (the three codes stand on
 the listing: the one file with a turned track ride holds 6 on a Dino Karts). **Not seen in the original:** a
 load of a file whose ride record says open and holds no car. `docs/exe/addresses.md` not regenerated.
@@ -2475,7 +2474,7 @@ every chunk under its handle and put in again in its slot's place**: its record,
 pool order with its riders head first, the leaving list, the boarding list, the close. **A car's `0xac` bytes**
 are the words `Car` keeps, `+0x58` among them now (`Car.Turned`, set by the step in a go and read by a load);
 3 and 2 at `+0x24` and `+0x28`, the lookup records of the model's emitter nodes of ids 2 and 1, looked up in
-its own file; -1 at `+0x2c` and `+0xa4`; the height the boat was last drawn at; and nought elsewhere. The five
+its own file; -1 at `+0xa4`, and at `+0x2c` but for a smoking car's emitter handle ("OpenTPW's writer, a smoking car"); the height the boat was last drawn at; and nought elsewhere. The five
 words after are its arena's centre and its buoy's ride and place, nought with no buoy. **Each car's model and
 its wake's are made records**: the file's cars' slots are given up and each running car takes the lowest empty
 slot, then its wake the next, after the made objects and the queue cells; the two handles go into the car's
@@ -2677,7 +2676,7 @@ place; slot 1 count 220 handle `0xdc0001` effect 58 at (450,6,342). The file, by
 the next count 221; script 11's list `(1, 0xdb006b, 1, 1, 1)`, `(1, 0xda0045, 1, 1, 1)` and script 18's
 `(1, 0xdc0001, 1, 0, 1)`; each new emitter its template's bytes outside the start's words. Loaded here from
 the Load Park list, `emitters` reads seven in use, the three named by scripts 11 and 18, the file's bubbles
-(`0x7a0014`) by script 6, and the frame shows both shops (nothing draws a park's particles here).
+(`0x7a0014`) by script 6, and the frame shows both shops (the build of that run drew no park particle).
 
 **The control, the build before** (1 of 1): no emitter line; the file's module the loaded file's (four in
 use, next count 218) and the three records' handles nought.
@@ -2753,7 +2752,7 @@ a test holds OpenTPW's written emitters against (`orig/a-load.log`, `c-load.log`
 
 **Not seen:** the file's own jet in the original's picture. For the first seconds after a load its camera is
 not yet on the saved view, and the jet from the file lasts under four; a film of both loads (`record.sh`)
-showed the Spray only after that, with the original's own later jets in fix and control alike. OpenTPW draws
+showed the Spray only after that, with the original's own later jets in fix and control alike. The build of that run drew
 no park particle, so its own frames show the Spray and no water. **Not run in either game, tested only:** nodes
 1 and 3 written here (held against the original's own starts), a Spray turned, the Laughing Hyenas. Of 25 bugs
 put back 22 fail a test (`q257w/mutations.py`); the three that fail none are the direction left its own length
@@ -2840,7 +2839,7 @@ they are still in use 55 s on, where the boats stood at the save (`orig/sheet-fi
 
 **Found on the way:** the original ends the go as the ride breaks and lets its riders off within a third of a
 second (the object's turn sets it broken down and shut); built since ("OpenTPW's writer, a broken ride's
-state"). OpenTPW's mechanic still mends nothing.
+state").
 
 **Not run in either game, tested only:** a boat fixed or a ride sold with its smoke in the file; a handle that
 names another effect's emitter; an effect that will not start. Of 35 bugs put back all 35 fail a test, one after a case was added (a file whose particles module did not
@@ -2851,7 +2850,7 @@ fail `confirm.py` (`q257x/mutations.py`, `gmutate.py`). `docs/exe/addresses.md` 
 
 The objects' other rules above are the ten files' and the listing's.
 **Not run in either game:** a guest gone (tested; one run met one), a table grown past its hundred slots, a
-person written on an object's cell, a member of staff resting or in the hand at the save. **Not read:** what `mNextServiceInterval` and the sprite
+person written on an object's cell, a member of staff resting or in the hand at the save. **Not read:** what the sprite
 record's words past `+0xcc` hold, which a made record leaves at nought and the original walked on with. The
 readers of the sound module, the advisor scoring and the UI block were not read, only their writers. What
 `VANT`'s clock is for, what the action recording is read by after a load, and `FUN_005408f0` are not traced. The

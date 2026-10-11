@@ -101,7 +101,7 @@ public sealed class ParkStrikes
 	/// The month's look - <c>FUN_00508e70</c> after its training. Unless <see cref="Force"/> is set it returns when
 	/// the park is shut or any guest is inside it. Past that, each kind with a member whose stamp is not this
 	/// tick is stamped; one on strike has its strike ended and nothing more, and one not on strike is
-	/// considered (<see cref="Consider"/>). So a strike lasts a month.
+	/// considered (<see cref="Consider"/>). So a strike ends at the first later look to pass that return.
 	/// </summary>
 	/// <param name="guestsInside">
 	/// The guests on a counting cell (<c>FUN_004fa990</c>). The original reads the analyser's count, which may be

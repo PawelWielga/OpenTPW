@@ -401,7 +401,7 @@ public static class ParkFileWriter
 
 		people = null;
 
-		// Last: the people change the body's length, and everything above is written where the file has it.
+		// After the modules behind the world are spliced: the people change the world's length, and only the map's effects follow.
 		if ( running.People is { } written )
 		{
 			body = loaded.PutPeople( body, written, edits, running.LetGo, heads, out var report );
