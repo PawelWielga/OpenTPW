@@ -527,6 +527,38 @@ public class ParkScreamChainTests
 	}
 
 	/// <summary>
+	/// <b>A held voice's later samples keep its volume and pitch</b> (<c>docs/exe/audio.md</c>, "A held voice's
+	/// next sample"): the first sample of a voice takes its variation's, a later one what the voice had, on a twin
+	/// as on any other, whatever the level and the generator.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a later sample drawn afresh; the first sample keeping what was there; the two swapped.</remarks>
+	[TestMethod]
+	public void AHeldVoicesLaterSampleKeepsItsVolumeAndPitch()
+	{
+		FileSystem = GameData.Required();
+
+		var file = new SoundCategoryFile( "global/sound", "kids" );
+		var headers = file.ReadVariations()[file.IndexOf( ParkAudio.CrowdVoiceEffect )];
+
+		for ( var seed = 0; seed < 50; ++seed )
+		{
+			var random = new Random( seed );
+
+			foreach ( var variation in new[] { 0, 6, 11 } )
+			{
+				Assert.AreEqual( (14, 3), ParkAudio.HeldSample( headers[variation], first: false, (14, 3), ParkAudio.CrowdVoiceParameter, 100, random ),
+					$"variation {variation + 1}, a later sample" );
+				Assert.AreEqual( (22, 0), ParkAudio.HeldSample( headers[variation], first: false, (22, 0), ParkAudio.CrowdVoiceParameter, 1, random ) );
+			}
+
+			var first = ParkAudio.HeldSample( headers[0], first: true, (99, 99), ParkAudio.CrowdVoiceParameter, 13, random );
+
+			Assert.AreEqual( 15, first.Volume, "a voice's first sample: the first variation's volume at the level" );
+			Assert.IsTrue( first.Pitch is >= 0 and <= 5, "and a drawn pitch" );
+		}
+	}
+
+	/// <summary>
 	/// <b>The crowd's voice, through <c>ParkAudio.OnUpdate</c> as the game runs it</b> (<c>docs/exe/audio.md</c>,
 	/// "The crowd's voice"). On the music's beat the guests within four cells of the pointer's cell are its level.
 	/// Above nought the voice is started, flat, with a sample of kids 91's first variation at the level's volume;
@@ -614,9 +646,11 @@ public class ParkScreamChainTests
 				park.Update();
 				Assert.AreSame( first, Crowd(), "while a sample plays no other is started" );
 
-				// As each ends the next is drawn: at level 13 the first variation again or its twin, the seventh.
+				// As each ends the next is drawn: at level 13 the first variation again or its twin, the seventh,
+				// and each plays at the voice's own volume and pitch, the twin's too.
 				var seen = new HashSet<int>();
 				var pitches = new HashSet<int>();
+				var kept = park.CrowdVoiceSample;
 
 				for ( var i = 0; i < 200; ++i )
 				{
@@ -632,14 +666,35 @@ public class ParkScreamChainTests
 					Assert.IsTrue( samples[park.CrowdVoiceVariation].Contains( next.Name ) );
 					Assert.AreEqual( Gain( park.CrowdVoiceSample.Volume ), next.Volume, 0.00001f );
 					Assert.AreEqual( park.CrowdVoiceSample.Pitch == 0 ? 1.0 : Math.Pow( 2, (park.CrowdVoiceSample.Pitch + 1) / 96.0 ), next.Rate, 0.00001 );
-					pitches.Add( park.CrowdVoiceSample.Pitch );
-					Assert.IsTrue( park.CrowdVoiceVariation == 0 ? park.CrowdVoiceSample.Volume == 15 : park.CrowdVoiceSample.Volume is >= 14 and <= 21 );
+					Assert.AreEqual( kept, park.CrowdVoiceSample, $"variation {park.CrowdVoiceVariation + 1} keeps the voice's volume and pitch" );
+					Assert.AreEqual( Gain( 15 ), next.Volume, 0.00001f );
 					seen.Add( park.CrowdVoiceVariation );
 				}
 
 				Assert.AreEqual( 2, seen.Count, "both the first and its twin in two hundred draws" );
 				Assert.AreEqual( 201, park.CrowdVoicePlays.Samples );
-				CollectionAssert.AreEquivalent( new[] { 0, 1, 2, 3, 4, 5 }, pitches.ToList(), "every pitch from 0 to 5" );
+
+				// A beat's set draws the pitch again on a sample of the first variation, and leaves a twin's alone.
+				for ( var beat = 0; beat < 80; ++beat )
+				{
+					var before = park.CrowdVoiceSample;
+					var sounding = Crowd()!;
+
+					ToTheBeat();
+					Assert.AreSame( sounding, Crowd(), "a beat starts no sample" );
+					Assert.AreEqual( 15, park.CrowdVoiceSample.Volume );
+					Assert.AreEqual( park.CrowdVoiceSample.Pitch == 0 ? 1.0 : Math.Pow( 2, (park.CrowdVoiceSample.Pitch + 1) / 96.0 ), sounding.Rate, 0.00001 );
+
+					if ( park.CrowdVoiceVariation == 6 )
+						Assert.AreEqual( before, park.CrowdVoiceSample, "the twin names no parameter: the set applies nothing" );
+					else
+						pitches.Add( park.CrowdVoiceSample.Pitch );
+
+					sounding.Stop();
+					park.Update();
+				}
+
+				CollectionAssert.AreEquivalent( new[] { 0, 1, 2, 3, 4, 5 }, pitches.ToList(), "every pitch from 0 to 5, drawn on the beats" );
 
 				// A sample of the first variation playing, then the crowd grows past a hundred: its volume at once.
 				while ( park.CrowdVoiceVariation != 0 )

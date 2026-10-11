@@ -32,6 +32,7 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/spritesheet.py <bank.ESP> <out.png> <set>...` | A sprite bank's picture sets with their alpha, each frame over black and over white, and each frame's alpha spread and mean colour: what a particle's picture is before any blend. `wadcat --dump SPR_PA.ESP` and `--dump SPR_PA.TPC` on `esprites.wad` write the two files it reads |
 | `original/voices.py PID [SECS]` | The original's memory: every live sound voice by the service's own list (its effect and flags word, the voice's flags, place, range and rectangle, how far it is from the listener), with the listener first; a block a change. Says which placed sounds are in range and sounding. A `POLL` for `loadfile.sh` |
 | `original/mixer.py PID [SECS]` | The original's memory, inside `QMixer.dll`: the session and its listener, and every open channel's flags, place, distance mapping, volume, the mixer's own distance, and its cone, distance and final gains, with the gain the law gives beside the one read. How loud the mixer is playing a voice, where `voices.py` says only whether it sounds. A `POLL` for `loadfile.sh` |
+| `original/crowdmix.py PID SECS` | The original's memory: the crowd's voice (level, handle, keys, values, the current variation with its weight, the sample record) beside every flat mixer channel's volume of 127, in ONE log stamped with the wall clock and `mGameTick`, a line a change, 20 ms a poll. Use it where `crowd.py` and `mixer.py` would have to be held together by eye; `mixer.py` prints nothing for a change of volume alone. A `POLL` for `loadfile.sh` |
 | `original/mixpairs.py [<mixer.py log>]` | A `mixer.py` log against the category files: every pair of a 3D channel's far end and volume of 127, with the variation volumes of that range that `round( v x 0.75 )` makes it from. Says which effects' channels a log holds, and that none plays at a number the files cannot make |
 | `original/modelboxes.py PID [FIRST LAST]` | The original's memory: each thing's model record's cell rectangle (`+0xc0`, `+0xc4`), whether it has a `.hmp`, the box's middle (where its scream is sounded) and its base height. Read the objects' lines (the stock park's are things 13 to 24): a person's `+0x20` is no model handle, and its line is noise |
 | `original/research.py <in> <out> <item>` | A copy of a jungle park file with one item marked researched, so Instant Action's buy list offers it |
@@ -178,6 +179,11 @@ GH=766` there, or the pointer is off):
   `930 200`): the crowd's is the 2D channel at the listener's own place, there while the handle is held and
   gone while it is nought. Neither log is stamped, so hold them together by the order of their stretches
   (`q268/orig/run.sh`, Q268).
+- **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
+  samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
+  mixer, never a pace or a sample's length in time (Q269).
+- **A mixer channel's frequency** is the word at `+0x1f4` of its record (22050 for the kids' samples at pitch 0);
+  `q269/orig/probe.py` pickles a channel's whole record a poll, which is how a word of it is found (Q269).
 - **A camera file's listener is not where the camera was aimed:** `camera 531 513 110 180` saved here reads a
   listener of (546, 50, 476) there. Read it (`voices.py`'s first line) rather than work it out (Q263).
 - **A point's place on its screen** is its park place (x, the height, z) through the matrix at `[0x0087b088]`,

@@ -340,8 +340,8 @@ listener's own place that Q265 left unnamed: it read 10 of 127 through every str
 held at a level of 12 or less (a volume of 14, 10.5 to the even 10), 11 at levels 13 to 15 (a volume of 15), fell to
 1 and was gone through every stretch the handle was nought, five stretches of each in order; its distance gain read
 1.0000, so its final gain is the volume. The staff's channels read 18 of 127 at a far end of 60 and of 75 (24), 12 at
-75 (16), 22 at 70 (30) and 16 at 90 (21). **Not explained:** the twin variation's draw between 14 and 22 was never
-seen, only 10 and 11 in 78 lines with the twin current in 25 of the voice's 87; flat channels at 1, 2 and 3 of 127
+75 (16), 22 at 70 (30) and 16 at 90 (21). The twin variation's draw between 14 and 22 was never
+seen, only 10 and 11, because none is made ("A held voice's next sample", below). **Not explained:** flat channels at 1, 2 and 3 of 127
 with a far end of 70 or 95 stayed on after the crowd's was let go, and one at 4 of 127 from the park's start.
 
 **In OpenTPW** (`q268/confirm.py`, fix 3 of 4, control 3 of 3): with the pointer's cell held on the queue `crowd`
@@ -466,6 +466,57 @@ moved and pitched each tick, faded with 60 taken as milliseconds. The volume's f
 is read ("A channel's volume") and not applied to the engine here. The coasters', tour ride's and go-karts' slots are not
 built.
 
+## A held voice's next sample
+
+Read for Q269 and measured in the running original (`original/crowdmix.py`, `q269/orig/`).
+
+**A sample that follows another on a held voice is queued with its sample alone.** The class's slot 0
+(`0x006bde00`; vtable `0x0070a498`, the crowd's and the music's) picks the next variation (slot `+0x38`,
+`FUN_006be5e0`: `FUN_006be450` by the zone parameter, then `FUN_006bbf00` for the keys), draws its sample (slot
+`+0x3c`, `FUN_006bc680`), fills a request block through slot `+0x48` (`0x006bdf00`) and queues it on the voice's
+channel (`FUN_006b9a60`). Slot `+0x48` calls `FUN_006bc240`, which sets the sample and its bank (`FUN_006c5190`,
+`FUN_006c51b0`) and two flag bits, then the variation's wait where it has one: **no volume and no pitch**. Those are
+requested in two places only: the voice's first start (slot `+0x14`, `0x006bdf50`, whose slot `+0x44` is
+`FUN_006bc410`: `FUN_006bc090` and `FUN_006bc170`), and the apply (`0x006bbbe0`) a parameter set reaches on a match
+past slot 0. So the channel plays every later sample at the volume and frequency it last had. `FUN_006bbf00` zeroes
+keys 1 to 3 for a variation naming no controller, so while one is current a set matches slot 0 alone and applies
+nothing; `FUN_006bc090`'s draw is reached for such a variation only where it is a voice's first, or a one-shot's.
+
+**Measured** (predicted first, `q269/PREDICTION.txt`; the pointer held on the Belly Bounce's queue, 20 ms a poll):
+
+- The first prediction, from the listing as it was read then, was that a twin draws 14 to 21, and it **failed**:
+  through 242 stretches with the crowd's twin current its channel read 10 of 127 every time, as it did with the
+  first variation current (levels 1 to 12), 427 lines of 427 in a second run.
+- The channel record's word at `+0x1f4` is its frequency: six values, 22050 and 22371, 22533, 22696, 22861, 23026
+  (`22050 x 2^((p + 1) / 96)` for a pitch of 1 to 5), changed 37 times over 449 new samples in 31 s, each time four
+  of `mGameTick` after the last (30 gaps), eight (5) or sixteen (1): the beat, or more than one where a draw
+  repeated or the twin was current, and never with the twin current: predicted before the run.
+- The variations' weights in memory are 5904 and 590, the file's running totals taken apart by the loader
+  (`FUN_006c0610`, under its byte `+0xcc`); the twin was 12% of 423 samples.
+
+**The pace is not in these logs.** Off-screen the original plays into a null device that is not paced: a sample was
+current for 69 ms where its clip's length is 208 on average, so how closely one sample follows another is still not
+measured.
+
+**What OpenTPW does** (`ParkAudio.HeldSample`, `NextCrowdSample`): the crowd's voice keeps one volume and one pitch;
+its first sample sets them, a later one plays at them, and a beat's set draws them again on a variation that names
+the parameter. Held in the running game (`q269/confirm.py`, fix 2 of 4, control 2 of 2): every pair of samples
+started inside one beat shared volume and pitch, 314 of 314; the 27 twin samples' log lines read 14 playing at
+0.0550 and 15 at 0.0605, the voice's own (the level reached 13, which the prediction had not allowed for: its two
+misses), and six twin samples were found in the game's own mix at 0.0273 to 0.0275; the build before read a twin at
+every volume from 14 to 21 and in its mix at up to 0.0413. Eleven bugs put back (`q269/mutations.py`): all eleven fail a test.
+**Not read:** the music's samples (the same class) and a held scream's chain (`FUN_006bdd30`'s own slot 0), which
+here still take a volume and a pitch a sample.
+
+| Address | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x006bde00` | — | Slot 0 of class `0x0070a498`: the next variation, its sample, the requests of slot `+0x48`, queued | Disassembly |
+| `0x006bdf00` | — | Slot `+0x48`: `FUN_006bc240`, then the wait; no volume, no pitch | Disassembly |
+| `0x006bc240` | — | A request block's sample and bank from the voice's sample record | Decompiled |
+| `0x006bdf50` | — | Slot `+0x14`, a voice's start: slot `+0x44` (`FUN_006bc410`) fills the requests, volume and pitch among them | Disassembly |
+| `0x006be5e0` | — | Slot `+0x38`: `FUN_006be450` with controller value 0, then the keys | Disassembly |
+| `0x006c0610` | — | The loader's pass over an effect's variations: running totals to weights, zone indices to pointers | Decompiled |
+
 ## The crowd's voice
 
 Decoded and measured in the original by Q236; built by Q236b (`ParkAudio`, "OpenTPW" below).
@@ -481,13 +532,13 @@ Decoded and measured in the original by Q236; built by Q236b (`ParkAudio`, "Open
 | 1 to 6 | 7, 1 (the volume) | 5904 each | 0-15 to 1, 16-31 to 2, 32-47 to 3, 48-63 to 4, 64-79 to 5, 80-100 to 6, and its own band again to its twin, 7 to 12 |
 | 7 to 12 | 0, 0 | 590 for 7, 5904 for 8 to 12 | the six bands to 1 to 6 only |
 
-So the level does two things. As the class's zone parameter (controller slot 0) it picks each next sample's variation: the band's own variation, or from that one its twin, by weight (5904 to 590 in the first band, even in the others), and from a twin always back. As controller slot 1 of variations 1 to 6 it is the volume: `level × (22 − 14) / 100 + 14` in whole numbers (`FUN_006bc090`, `0x006bc040`), 14 from 1 to 12, 15 from 13, up to 22 at 100, of 100; and because the match is past slot 0 the set applies it to the playing sample at once (`0x006bbb80`, `0x006bbbe0`). A twin names no controller, so its volume is a draw from 14 to 21. The pitch is a draw from 0 to 5 on all twelve.
+So the level does two things. As the class's zone parameter (controller slot 0) it picks each next sample's variation: the band's own variation, or from that one its twin, by weight (5904 to 590 in the first band, even in the others), and from a twin always back. As controller slot 1 of variations 1 to 6 it is the volume: `level × (22 − 14) / 100 + 14` in whole numbers (`FUN_006bc090`, `0x006bc040`), 14 from 1 to 12, 15 from 13, up to 22 at 100, of 100; and because the match is past slot 0 the set applies it to the playing sample at once (`0x006bbb80`, `0x006bbbe0`). A twin names no controller, so a set applies nothing while one is current, and no draw is made for it either: a later sample is queued with neither volume nor pitch ("A held voice's next sample", above), so a twin's plays at what the voice had. The pitch is a draw from 0 to 5, made again by each set that applies.
 
 **Measured in the original** (Proton, off-screen, memory only; `q236/orig/crowd.py`, `a.log`, 75 s), predicted first and as predicted: the level word followed this script's own count of guests within four cells of the pointer's cell at every beat (12 over the Belly Bounce's queue, 0 on empty ground, 1 and 2 as a walker came by); the handle was nought exactly while the level was; the voice is of class `0x0070a498` with keys 7, 7 and both values the level; its variation went between 1 (key 7, mask 1) and 7 (key 0), both with volume bytes 14 and 22. **Not predicted:** once, at level 11, the voice ended by itself and was started again a beat later with a new handle; what ended it was not read. Not measured: the sound itself (no capture was made), state 4's nought, and a level past 15 (the stock park has thirteen guests), so the other five bands are the file's and the listing's alone.
 
 **How loud it is, measured** (Q236b; `q236b/orig/`, `crowdx.py`, `musicx.py`). The scale past the variation's volume was not decoded then (it is now: "A channel's volume", above, which is what is built), so it was taken from the original's mix, written to a file by ALSA's `file` plugin. The crowd's clips are 53 to 724 ms long by the map and cannot be picked out under the music, so the music was switched off in the original's own options for the crowd's windows and measured by itself in another: with the pointer over the Belly Bounce's queue (level 9 in memory) 53 samples of variations 1 and 7 matched at a score of 0.6 or better, a first-variation sample at a least-squares gain of 0.036 to 0.046 of the decoded clip; over empty ground (level 0, no handle) one matched. The music's samples read 0.18 to 0.22 against a mono template, which ffmpeg makes 1.41 times the mean of a stereo sample's two channels (checked in OpenTPW's own mix, where a music sample known to play at 0.165 reads 0.117), so 0.26 to 0.31. By sample, the first variation's medians run from 0.022 to 0.046 with a middle of 0.034, where OpenTPW's are one value: **that spread is not explained** (the original may cut a sample at the map's length, which is 35 ms or so short of the decoded clip, or weigh each sample; not read). So a crowd sample at volume 14 is about 0.12 of a music sample at volume 100 (0.09 to 0.17). The options screen's two default volumes taken as plain factors, 75 for sound effects and 60 for music (`sound.sam`, `DefaultVolume`), would give 0.175, just outside that; the channel's own number, 10 of 127 beside the music's 60, is 0.167, and the mixer reads exactly that, so the capture's middle of 0.12 was low and is not explained. The matched samples carry all six pitches. The file is not paced (it runs about 3.6 times faster than the game), so how closely one sample follows another in the original was not measured.
 
-**OpenTPW** (`ParkAudio.SetCrowdVoice`, `NextCrowdSample`, `ParkPeople.GuestsNear`): on the music's beat the guests on the cells within four of `ParkPicking.Cell` are counted (nought with no cell), held to 100 and made nought in world state 4. Above nought the voice is held: a flat sample of kids 91 from the first variation, then, as each ends, one from the variation the level's zone gives (`ParkScreams.NextVariation`, the music's rule), its volume and pitch from `ParkAudio.Controlled` (the level on variations 1 to 6, a draw on the twins; the pitch a draw). A new level is the playing sample's volume at once where its variation names parameter 7. At nought the sample is faded over 0.06 s (`Sound_StopFading`'s 60) and the voice let go; started again it begins from the first variation. A sample's volume plays at the channel's own number (`ParkAudio.ChannelGain`): 14 is 10 of 127 beside the music's 60, 0.0550 beside 0.33. **Said:** the next sample is started on the frame after the last has ended, where the original's service pass starts it (rate not measured); the voice that ended by itself in Q236's log is not modelled, a held voice here never ends; the count reads each guest's linked cell (`ParkState.CellOf`), the original the cells' own lists. Console: `crowd`.
+**OpenTPW** (`ParkAudio.SetCrowdVoice`, `NextCrowdSample`, `ParkPeople.GuestsNear`): on the music's beat the guests on the cells within four of `ParkPicking.Cell` are counted (nought with no cell), held to 100 and made nought in world state 4. Above nought the voice is held: a flat sample of kids 91 from the first variation, then, as each ends, one from the variation the level's zone gives (`ParkScreams.NextVariation`, the music's rule), at the voice's own volume and pitch (`ParkAudio.HeldSample`): the voice's first sample takes them from `ParkAudio.Controlled` (the level, and a drawn pitch), and a later one keeps them, a twin's too. Each beat's set gives the playing sample the level's volume and a pitch drawn again, at once, where its variation names parameter 7, and nothing on a twin. At nought the sample is faded over 0.06 s (`Sound_StopFading`'s 60) and the voice let go; started again it begins from the first variation. A sample's volume plays at the channel's own number (`ParkAudio.ChannelGain`): 14 is 10 of 127 beside the music's 60, 0.0550 beside 0.33. **Said:** the next sample is started on the frame after the last has ended, where the original's service pass starts it (rate not measured); the voice that ended by itself in Q236's log is not modelled, a held voice here never ends; the count reads each guest's linked cell (`ParkState.CellOf`), the original the cells' own lists. Console: `crowd`.
 
 ## The staff's voices
 

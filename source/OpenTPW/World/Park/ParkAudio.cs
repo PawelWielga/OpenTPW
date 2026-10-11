@@ -286,7 +286,7 @@ public sealed class ParkAudio : Entity
 	/// <summary>The variation the voice's last sample was drawn from, zero-based; -1 with none since it was started.</summary>
 	internal int CrowdVoiceVariation { get; private set; } = -1;
 
-	/// <summary>The last sample's volume, of a hundred, and its pitch in 96ths of an octave.</summary>
+	/// <summary>The voice's volume, of a hundred, and its pitch in 96ths of an octave: what its sample plays at.</summary>
 	internal (int Volume, int Pitch) CrowdVoiceSample { get; private set; }
 
 	/// <summary>How many samples the voice has played, and how many times it has been started, for the console.</summary>
@@ -344,26 +344,37 @@ public sealed class ParkAudio : Entity
 	}
 
 	/// <summary>
-	/// The volume and pitch of a sample of the crowd's voice, from the level or drawn (<c>0x006bbbe0</c>), set on
+	/// The voice's volume and pitch set again, from the level or drawn (<c>0x006bbbe0</c>), and put on
 	/// <paramref name="voice"/> when there is one. Answers the volume as a gain, the channel's own number
 	/// (<see cref="ChannelGain"/>): a volume of 14 is 10 of 127 beside the music's 60.
 	/// </summary>
 	private float ApplyCrowdVoice( Voice? voice, SoundCategoryFile.Variation header )
 	{
-		var volume = Controlled( header, 1, CrowdVoiceParameter, CrowdVoiceLevelNow, _crowdRandom );
-		var pitch = Controlled( header, 2, CrowdVoiceParameter, CrowdVoiceLevelNow, _crowdRandom );
-		var gain = ChannelGain( volume );
+		CrowdVoiceSample = HeldSample( header, first: true, CrowdVoiceSample, CrowdVoiceParameter, CrowdVoiceLevelNow, _crowdRandom );
+		var gain = ChannelGain( CrowdVoiceSample.Volume );
 
-		CrowdVoiceSample = (volume, pitch);
 		voice?.SetVolume( gain );
-		voice?.SetRate( ParkCarSounds.Rate( pitch ) );
+		voice?.SetRate( ParkCarSounds.Rate( CrowdVoiceSample.Pitch ) );
 
 		return gain;
 	}
 
 	/// <summary>
+	/// What a held voice's sample plays at. A voice's first is given its variation's volume and pitch as its
+	/// channel is set up (<c>FUN_006bc410</c>, <see cref="Controlled"/>); each later one is queued with its sample
+	/// alone (<c>0x006bde00</c>, <c>FUN_006bc240</c>), so it plays at what the voice <paramref name="kept"/>, a
+	/// variation with no controller too (<c>docs/exe/audio.md</c>, "A held voice's next sample").
+	/// </summary>
+	internal static (int Volume, int Pitch) HeldSample( SoundCategoryFile.Variation header, bool first,
+		(int Volume, int Pitch) kept, int parameter, int level, Random random )
+		=> first
+			? (Controlled( header, 1, parameter, level, random ), Controlled( header, 2, parameter, level, random ))
+			: kept;
+
+	/// <summary>
 	/// The held voice's next sample once the last has ended, drawn as the music's is (<see cref="NextMusic"/>): the
-	/// level's zone picks the variation. Flat, as the original plays it at (0,0,0), and on a frame's edge, where the
+	/// level's zone picks the variation, and the sample plays at the voice's own volume and pitch
+	/// (<see cref="HeldSample"/>). Flat, as the original plays it at (0,0,0), and on a frame's edge, where the
 	/// original's service pass starts it.
 	/// </summary>
 	private void NextCrowdSample()
@@ -372,20 +383,22 @@ public sealed class ParkAudio : Entity
 			return;
 
 		var headers = _kids.VariationsOf( CrowdVoiceEffect );
+		var first = CrowdVoiceVariation < 0;
 		var next = ParkScreams.NextVariation( headers, CrowdVoiceVariation, CrowdVoiceLevelNow, _crowdRandom );
 
 		if ( next < 0 )
 			return;
 
 		CrowdVoiceVariation = next;
-		_crowd = Audio.Play( _kids.PickFrom( CrowdVoiceEffect, next ), ApplyCrowdVoice( null, headers[next] ),
-			bus: AudioBus.Effects );
+		CrowdVoiceSample = HeldSample( headers[next], first, CrowdVoiceSample, CrowdVoiceParameter, CrowdVoiceLevelNow, _crowdRandom );
+		_crowd = Audio.Play( _kids.PickFrom( CrowdVoiceEffect, next ), ChannelGain( CrowdVoiceSample.Volume ), bus: AudioBus.Effects );
 
 		if ( _crowd is null )
 			return;
 
 		_crowd.SetRate( ParkCarSounds.Rate( CrowdVoiceSample.Pitch ) );
 		CrowdVoicePlays = (CrowdVoicePlays.Samples + 1, CrowdVoicePlays.Starts);
+		Log.Trace( $"Crowd voice: sample '{_crowd.Name}' variation {next + 1} volume {CrowdVoiceSample.Volume} plays {_crowd.Volume:F4} pitch {CrowdVoiceSample.Pitch} on tick {GameClock.Ticks}" );
 	}
 
 	/// <summary>

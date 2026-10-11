@@ -5964,6 +5964,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (Q295); two source comments say what the listing shows. No game run. The gate, alone in a worktree, is in
   `STATUS.md`, "Numbers". Harness `~/.cache/tpw-harnesses/q291/` (`edits.json`, `second-fixes.json`,
   `unproven.json`, `not-checked.json`: 123 notes of what a verifier took from another page or a measurement).
+- [x] **Q269. The crowd's twin keeps the voice's volume and pitch.** Split by the session from the old Q269:
+  its other pieces are Q297. Done 2026-10-11: a held voice's later sample is queued with its sample alone
+  (`0x006bde00`, `FUN_006bc240`), no volume and no pitch, so it plays at what the voice had and no draw is made
+  for a twin (`audio.md`, "A held voice's next sample"); `ParkAudio.HeldSample` is new and `NextCrowdSample`
+  goes through it. In the running original, predicted first: the listing's draw of 14 to 21 FAILED, the
+  channel at 10 of 127 through all 242 stretches the twin was current; then, as predicted, its frequency (the
+  channel's `+0x1f4`) took six values and changed 37 times over 449 new samples, on the beats, never with the
+  twin current. In the running game, predicted first, 2 of 4: 314 of 314 pairs of samples started inside one
+  beat shared volume and pitch, and six twin samples sat in the game's own mix at 0.0273 to 0.0275; the 27 twin
+  lines read 14 at 0.0550 and 15 at 0.0605, the voice's own, where I had said 14 alone (the level reached 13:
+  the two misses); the control, main before it, 2 of 2: a twin at every volume from 14 to 21 and in the mix at
+  up to 0.0413. Eleven bugs put back: all eleven fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

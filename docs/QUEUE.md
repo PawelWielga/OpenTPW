@@ -44,12 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q269. The writer: what else a made record leaves out.** The old Q268's other pieces, each counted or
+- [ ] **Q297. The writer: what else a made record leaves out.** The old Q269's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q268 (`audio.md`, "A channel's volume"): the crowd's twin variation draws its volume from 14 to 21 here
-  (10 to 16 of 127), and the original's mixer read 10 and 11 alone in 78 lines with the twin current in 25 of
-  87: read what the voice's slot `+0x40` answers for a variation with no controller before changing the draw.
+  From Q269 (`audio.md`, "A held voice's next sample"): the music's samples (the same class) and a held
+  scream's chain (`FUN_006bdd30`'s own slot 0, not read) still take a volume and a pitch a sample here. How
+  closely one sample follows another is not measured: the original's null device off-screen is not paced. The
+  original's crowd channel read a far end of 95 in one run and 100 in the next, on a flat channel: not read.
+  A level over 13 was in no game run of either game. Each beat's set draws the pitch again on the playing
+  sample, as the listing and the original's channel say; what that sounds like was not listened to.
+  From Q268 (`audio.md`, "A channel's volume"):
   Flat channels at 1, 2, 3 and 4 of 127 in the original are not named. The staff's voices were not measured in
   the mix (their volumes are `voices`' and the log's). A crowd over 15 was in no game run of either game.
   From Q267 (`audio.md`, "A channel's volume"): a bumper ride's engine (68), thunder
