@@ -212,7 +212,7 @@ The attribute array on disk packs the other way round — see "Axis and handedne
 
 ### How a key finds its global
 
-Decoded 2026-09-23 (`docs/QUEUE.md` Q36), put to two refuters. **The address comes from the key's place in the executable's own table, not from the file's order.** Each balance family is one static object whose vtable slot 0 returns record `i` of a table in `.rdata` (stride `0x3c`: a type dword, then the name) and whose slot 1 (`0x005b0d60`) returns `this + 8`. `FUN_00401030` gives every value record (types 4 to `0xb`) the next dword, starting at slot 1, so record `i`'s global is `this + 8 + 4*slot`. The parser `FUN_004017a0` resolves `Group.Field` through `FUN_00401280`, which searches back from the table's end for the group and then for the field, case-sensitively. Types: 0 section start, 1 section end with the group name, 2/3 an array, 4 int, 5 int ≥ 0, 6 bounded int, 7 float, 8 float ≥ 0, 9 bounded float, `0xa` string, `0xb` a multi-line block, `0xc` the end. A float value (from `0x00401d8b`, Q173) is an optional `-`, then digits with at most one `.`, then whitespace or the line's end, under 100 characters; anything else is a bad line, and whatever follows the whitespace is ignored. It is converted with `atof` and stored as a float (`0x00401e22`).
+Decoded 2026-09-23 (`docs/QUEUE.md` Q36), put to two refuters. **The address comes from the key's place in the executable's own table, not from the file's order.** Each balance family is one static object whose vtable slot 0 returns record `i` of a table in `.data` (stride `0x3c`: a type dword, then the name) and whose slot 1 (`0x005b0d60`) returns `this + 8`. `FUN_00401030` gives every value record (types 4 to `0xb`) the next dword, starting at slot 1, so record `i`'s global is `this + 8 + 4*slot`. The parser `FUN_004017a0` resolves `Group.Field` through `FUN_00401280`, which searches back from the table's end for the group and then for the field, case-sensitively. Types: 0 section start, 1 section end with the group name, 2/3 an array, 4 int, 5 int ≥ 0, 6 bounded int, 7 float, 8 float ≥ 0, 9 bounded float, `0xa` string, `0xb` a multi-line block, `0xc` the end. A float value (from `0x00401d8b`, Q173) is an optional `-`, then digits with at most one `.`, then whitespace or the line's end, under 100 characters; anything else is a bad line, and whatever follows the whitespace is ignored. It is converted with `atof` and stored as a float (`0x00401e22`).
 
 The `PeepInfo` object is at `0x00785040` (built at `0x00402ae0`, table `0x0073fc70`): `0x0078504c` ExitLevel, `0x00785050` ExitLevelVar, `0x00785054` StartingCashVarPc, **`0x00785058` SmallHappinessChange, `0x0078505c` MediumHappinessChange, `0x00785060` BigHappinessChange**, then **`0x00785064` PerfectRide, `0x00785068` GoodRide, `0x0078506c` OKRide, `0x00785070` RideVomitDivisor**, read off the table itself (record by record, Q169): the file lists RideVomitDivisor straight after BigHappinessChange, so fitting file order to addresses goes wrong from there, and the table does not. `FUN_004fdcc0`, the excitement match, is the four's only reader (`ride-operation.md`, "The excitement match"). `FUN_004fe980` confirms the three: its level 0, 1 and 2 return the bytes at `0x00785058`, `0x0078505c` and `0x00785060`. Every reader loads those three as a byte; the four ride keys are read as whole ints. Lost Kingdom offline takes 5, 15 and 25 from `data/levels/Standard.sam`; no jungle file overrides them (online is 3, 10, 25).
 
@@ -647,10 +647,10 @@ a plain Escape opens the game menu (`GameMenu_Open( 0 )`, `0x004a2942`) and the 
 | Caller | What it does |
 |---|---|
 | `FUN_004815d0`, from the save loader `FUN_00414d40` (`0x00415088`) | off, if on |
-| `FUN_004a9180`, the postcard screen's close (`0x004a923a`) | off, if on, when `DAT_00fb3b7c` is not 1 |
-| `FUN_0048ac40` (`0x0048aca4`), from the end-of-park routine `FUN_005168f0`, which sets the world's state to 4 and passes the park gates | off, if on. Then it leaves first person or a ride view, calls `FUN_004e15b0( 0 )`, takes the keys away (`FUN_0040cfa0`), closes the open screen, hides layers 0 and 1 itself (message 6) and puts up a full-screen control, id `0x7472`, handler `0x0048a740`, holding stream `0x0074fb20`: one control, id `0x5a`, (174,500)-(1874,1000), mesh `0xf3a7aff4` |
+| `FUN_004a9180`, the end of the postcard's capture, which the UI pass `FUN_0048a580` calls on the third pass after `FUN_004a9380` and which then opens the postcard's screen (`FUN_004a8c00`) (`0x004a923a`) | off, if on, when `DAT_00fb3b7c` is not 1 |
+| `FUN_0048ac40` (`0x0048aca4`), from the end-of-park routine `FUN_005168f0`, which sets the world's state to 4 and passes the park gates | it leaves first person or a ride view, calls `FUN_004e15b0( 0 )` and takes the keys away (`FUN_0040cfa0`); then off, if on. Then it closes the open screen, hides layers 0 and 1 itself (message 6) and puts up a full-screen control, id `0x7472`, handler `0x0048a740`, holding stream `0x0074fb20`: one control, id `0x5a`, (174,500)-(1874,1000), mesh `0xf3a7aff4` |
 | `FUN_0048ae70` (`0x0048aed4`), from `FUN_00516b00`, which makes the "End" feature | the same, with stream `0x0074faf0` (id `0x321`, (102,536)-(1946,940), mesh `0x706de86b`) and handler `0x0048a970` |
-| the handler `0x0048a740` (`0x0048a7f3`, `0x0048a8d8`) | **on.** A right click with RMB cancel on, 2000 ms or more after the control was made, or a plain Escape: it sends its control message 4, leaves the ride view (`FUN_0042a190`), turns the full-screen view on, loads `0x0074fb20` again into the view's own control, and gives the keys back (`FUN_0040cf60`) |
+| the handler `0x0048a740` (`0x0048a7f3`, `0x0048a8d8`) | **on.** A right click with RMB cancel on, more than 2000 ms after the control was made, or a plain Escape: it sends its control message 4, leaves the ride view (`FUN_0042a190`), turns the full-screen view on, loads `0x0074fb20` again into the view's own control, and gives the keys back (`FUN_0040cf60`) |
 | `FUN_0048adb0` (`0x0048addc`), from `FUN_004815e0` in the load's rebuild `FUN_00415140`, when the saved state is 4 | **on**, if off, and `0x0074fb20` loaded into it |
 
 So an ended park is left in the full-screen view under its banner, and by the handler's state-4 arm nothing brings
@@ -2111,7 +2111,7 @@ after the arrival manager (`0x004d7b30`):
 most while `FUN_005083f0` finds it in use); occupied; the hire list told; the mark; and the lifetime, a
 draw modulo half `StaffTimeoutTime` plus `StaffTimeoutTime`. The keys are the `StaffPoolInfo` block, four bytes each
 from `0x00785284`, in the order of the executable's own key table (handymen, mechanics, entertainers, guards,
-researchers in every group, `0x00740bec` on; `Standard.sam` lists `BeginningNumberOf` mechanics first): `AvgGradeOf` at `0x00785298`, `Max<Kind>` at `0x007852c0`,
+researchers in every group, rows `0x00740990` on (each name four bytes into its row), where `ChanceToGetGreat<Kind>` heads the block and `BeginningNumberOf<Kind>` is its third group, rows `0x00740be8` and values `0x007852ac`; `Standard.sam` lists `BeginningNumberOf` mechanics first): `AvgGradeOf` at `0x00785298`, `Max<Kind>` at `0x007852c0`,
 `Min<Kind>InPool` at `0x007852d4`, `Max<Kind>InPark` at `0x007852e8`, `TimeBetweenStaffUpdates` at `0x00785304`,
 `MaxNumberOfStaffPerUpdate` at `0x00785308`, `StaffTimeoutTime` at `0x0078530c`.
 
@@ -2138,7 +2138,7 @@ on. **Not the original's**: the draws are the pool's own generator, the world's 
 draws at the most, while a candidate in the pool has it or a member of staff in the park does (`FUN_005083f0` walks
 the 32 records, then every staff thing, comparing `FUN_00506860`'s text; here `Staff.Name`, the save's `mName` or the
 candidate's at a hire, Q238); every rolled costume is nought (Q214, counted as
-`ROLLED_STAFF_COSTUME`); a newcomer is put after the last, where the original takes the lowest free slot of its 32; a minimums' round that can add nobody is the last, where
+`ROLLED_STAFF_COSTUME`); a newcomer joins the list after the last, though the slot it is given is the lowest free of the 32 as the original's is (`Candidate.Slot`); a minimums' round that can add nobody is the last, where
 the original's would go round for ever.
 
 **A loaded park's pool is the save's** (Q130c). `FUN_00507850` reads the 32 records through `FUN_005070a0`, then the
@@ -2231,7 +2231,7 @@ pause, a modal flag or an open screen (`0x004881a0`..`0x0048833a`). What keeps a
 | first person | the viewfinder's full-screen layer 1, whose handler `FUN_00488a00` gives it to the camera table, where no row binds a mouse key, and answers its click with RMB cancel on by leaving first person (`hud.md`, "Four ways out of camcorder mode"): entering (`FUN_0042ab20( 2, 1, ... )`, `0x0042ac7f`) calls `FUN_004a2ac0( 0 )`, which hides layer 0 and shows layer 1 | never |
 | a management screen (buy, hire, all staff, visitors, all items, entry price) or any of the nine object windows | built onto the layer by `UI_LoadTree` (`0x004acd62`, `0x0049bf34`, `0x00496643`, `0x0049353e`, `0x00495abe`, `0x00498db5`, `0x0048ceca`), not modal, and none hides the layer. Each root is one plain rectangle - big (186,30)-(2018,1007), medium (248,30)-(1800,1007), small (328,130)-(1720,901) - so the window takes a press anywhere on it | beside the window, and the window stays open; on it, never |
 
-The one test of an open screen on a press's path, `0x00488741`, is in the left and middle buttons' case, after the arm:
+The one test of an open screen on a press's path, `0x00488741`, is in the press case all three buttons share (`0x0048872c`), after the arm (a middle press does nothing more in the case with or without a screen: the next compare, `0x0048874d`, sends it out):
 it keeps the press from the idle click and the mode's button-down slot ("A park screen is open"). A right
 click on a row of the all-staff, visitors or all-items list, or on an object window's preview, moves the camera and
 closes the window (the 500 ms click limit `[0x0077c480]`), never touching the hand. The full-screen view, F3
@@ -2246,7 +2246,7 @@ screen is modal, so the gadget answers beside one. The gadget's body takes a pre
 and its arm, handle and aerial take theirs (`hud.md`, "The arm and the aerial as built"). A right click on a list row and a click on an object window's
 preview move the camera and close the window ("The camera goes to a thing"). `Level.LeftPressTaken` keeps a left press off the park in first person too (Q116): the
 viewfinder layer's `FUN_00488a00` gives a press (`0x10005`) to the key table (`FUN_0040c900`) and every message to
-`FUN_0042a760`, where a left press only sets bit 1 of the camera's button state `DAT_00790aac` (what reads that bit is
+`FUN_0042a760`, where a left press only sets bit 0 of the camera's button state `DAT_00790aac` (what reads that bit is
 not traced here).
 
 **Escape** is the game table's row 0, `0x0040c180`, run on the key's **release**. If the staff/visitor locator
@@ -2305,7 +2305,7 @@ open is `DAT_007c24c8`. Every opener first calls `FUN_00485b40`, which sends the
 global and hands the focus back (`FUN_004862a0`): buy `0x004acd5d`, hire `0x0049bdec`, all staff `0x00496635`, all items
 `0x00495ab0`, visitors `0x00493530`, entry price `0x00498da7`, the object windows' shared opener `0x0048cebb`, park
 status, finances, loans, staff costs and research among its 22 callers, and beside them the game menu (`MenuList_Show`, `0x00493171`), the
-map (`FUN_005f0b40`, `0x005f0bd1`) and first person (`FUN_00481a10`, `0x00481a2b`). The buy opener is the one that
+map (`FUN_005f0b40`, `0x005f0bd1`) and first person (`FUN_00481a10`, `0x00481a2b`). Most look before that call and return at once when their own screen is up: entry price (`DAT_007ca210`, `0x00498d9f`), finances (`DAT_007ca2e8`, `0x0049ac7d`), park status (`DAT_007cb398`, `0x004a52bd`), staff costs (`DAT_007cc2ec`, `0x004b2775`), loans (`DAT_007cb25c`, `0x0049fb55`), research (`DAT_007cc1d8`, `0x004aa4b2`), `FUN_004b7b00` (`DAT_007cc444`, `0x004b7b20`) and the object windows' shared opener (its own `+0x10`, `0x0048cea9`); hire, all staff, all items and visitors have no such test. The buy opener
 looks first: with its screen already up (`DAT_007cc1f8`) it picks the tab again and returns (`0x004acca0`). The
 gadget's category opener `FUN_004a0940` has one gate, the game menu (`FUN_0048c8d0`), so its buttons answer beside an
 open screen and the screen they open replaces it.
@@ -2321,7 +2321,7 @@ open screen and the screen they open replaces it.
 | `DAT_007c24c8` is the screen, and the focus goes to it (`FUN_004862a0`, `0x0048638e`) | `0x00485d02` |
 
 Closing sends the screen's handler message `0x14`, which calls `FUN_00485b70( 0 )`: the global is zeroed and
-`FUN_004862a0` switches the three tables back on (`0x004863af`..`0x004863c5`) and gives the layer the focus.
+`FUN_004862a0` switches the three tables back on (`0x004863af`..`0x004863c5`) and gives the layer the focus. With the coaster bar up (`DAT_007ca1cc`, `0x00486396`) it switches on the `camera` table alone and gives the bar the focus (`0x004863a5`, `FUN_00498a80`).
 
 **The keys go to the screen**, whose handler is `FUN_00488ba0` for every one of them. A key down latches the
 `shortcuts` table (`0x00488c2e`). A key up: a plain Escape closes the screen (message 4 to itself, `0x00488bdd`); a
@@ -2333,7 +2333,7 @@ name boxes (the object window's rename `FUN_0048d370`, the park's `FUN_004990f0`
 screen's opener.
 
 **The pointer.** A press on the screen goes to the screen (its root takes one anywhere on its rectangle; "Whose a right
-press is"). A press on the layer beside it reaches `Park_MouseMessageProc`, whose left and middle case
+press is"). A press on the layer beside it reaches `Park_MouseMessageProc`, whose press case for every button
 (`0x0048872c`) latches the camera table and then tests the screen: `CMP [0x007c24c8]` at `0x00488741` leaves the case,
 so the hover is not taken (`FUN_00486d90`), the idle click `FUN_004879d0` is not run (no window opens, no path tool is
 picked up) and the mode's button-down slot is not called. The hover is skipped the same way on the layer's timer and on
@@ -2342,7 +2342,7 @@ the pointer's entry (`0x00488569`, `0x0048884e`), so the cursor stays the arrow.
 button-up slot (`FUN_0046c210`, `0x00488841`). For the idle mode that is a `RET`. For a carry shell it is `FUN_00524960`, the commit, whose one read
 of the flag the down slot sets (`DAT_008186d8`, `0x00524a77`) gates a sound and nothing else. So with a build tool
 armed or something in the hand, a click beside an open screen still lays the run or puts the thing down. The right
-button is untouched by any of it.
+press goes through the same case and the same test: beside an open screen the mode's right-down slot (`+0xc`) is not called, a `RET 8` in the idle mode and the carry shell (`0x0046c650`), and its arm (`0x0048833a`) is before the case and tests no screen.
 
 **In the original** (the reference park under Proton, each predicted from the listing and read from memory after the
 click or the key, a frame with it; 13 of 13):
@@ -2402,10 +2402,10 @@ whole tens, not on the thing's own position and not on the cell's middle.
 
 **`FUN_0042aab0( x, z, a, b, c )`** zeroes the three terms at `0x00790a88`, `0x00790a8c` and `0x00790a90` (the camera
 update `FUN_0042b1c0` reads and writes them: its scroll), writes the look-at point `0x007908f0` and `0x007908f8` from the
-first two, and writes `0x007909ec`, `0x00790a38` and `0x0074c9bc` only from a pointer that is not null. From here none
+first two (pointers as well: a null first skips both words, `0x0042aad4`, and the second is not tested), and writes `0x007909ec`, `0x00790a38` and `0x0074c9bc` only from a pointer that is not null. From here none
 is, so the spin and the zoom stay.
 
-**Four callers.** Each of the three list screens' handlers answers the list's `0x402` (`hud.md`, "The messages"): the
+**Six call sites.** Two are not followed here: `FUN_0048ce80` (`0x0048ce95`) goes to the thing shown without closing anything, and `FUN_004b5c80` calls it on `0x10006` for the preview of the window `FUN_004b6080` builds (`hud.md`); case 3 of `FUN_0048e0f0` (`0x0048e22c`) passes its second argument. Each of the three list screens' handlers answers the list's `0x402` (`hud.md`, "The messages"): the
 list must exist and the row not be -1, the row's record id comes from `FUN_00664c71`, the thing's id word from
 `FUN_0050b350`, then the call, then message 4 to the screen, which closes it whether or not the thing was found -
 all staff `0x00495feb` (the call `0x0049602f`, the close `0x00496044`), visitors `0x00493483` (`0x004934c5`,
@@ -2616,7 +2616,8 @@ record at `[0x007b9f4c]`. `FUN_004864f0` runs `FUN_00468e50` on it each frame; `
 
 - `FUN_00463060( item, 0xc01, ... )` makes an instance; bit `0x400` takes the record at `+0xd0` where there is one
   (`0x0046309b`), the item's own model otherwise.
-- With a `P` model, `FUN_00468950` looks in each of the two models for the materials named `sign1.tga` and
+- With a `P` model, `FUN_00468950` looks in each of the two models for the materials flagged `0x2` with `0x8` and
+  `0x2` with `0x10` (`0x00468975`, `0x004689a7`), or failing the flags named `sign1.tga` and
   `sign2.tga`; only where all four are found does the instance's `sign1`, `sign2` take the item's own painted boards
   (`0x00468a64`..).
 - The box is the `.hmp`'s six floats (`+0x18`, min then max). With `sx`, `sz` its width and depth:
@@ -2627,11 +2628,14 @@ record at `[0x007b9f4c]`. `FUN_004864f0` runs `FUN_00468e50` on it each frame; `
   left, bottom, width, height, `+0x5c` `scale * sx/2`, `+0x60` `scale * sz/2`, `+0x64` `reach / (reach + hd)`,
   `+0x68` `scale * diagonal`, `+0x6c` `scale * reach`, `+0x70` the clock's last reading.
 - It triggers role 5 (M), entry 0, looped, at speed 1.0, on channel 0 (`FUN_004732a0`, `0x00468e11`).
-- The first angle is the answer of an x87 intrinsic (`FUN_0067b24a`, `0x00468e2f`) whose operands are not traced.
+- The first angle is the angle the last panel left in the record, wrapped to two pi: `fmod( [0x007afd50], 6.2831855 )`
+  (`FUN_0067b24a` is the CRT's `_CIfmod`, `0x00468e2f`; the double is at `0x006fe7d8`). The record is static and its
+  angle is nought in the image, so only the first panel of a run starts from nought.
 
 **`FUN_00468e50` turns and places it each frame.** It copies the kept root matrix back, turns it about y by the angle
 (`FUN_0046f420`: `x' = x cos a + z sin a`, `z' = z cos a - x sin a`), tips it about x by 45 degrees
-(`FUN_0046f240` with 0.7071, -0.7071: `y' = 0.7071 ( y + z' )`), and sets the translation:
+(`FUN_0046f240` with 0.7071, -0.7071: `y' = 0.7071 ( y + z' )`), and adds to the turned matrix's translation
+(`0x00469029`, `0x0046902f`):
 
 ```
 x = left + width / 2 - 0.75 * ( hx cos a + hz sin a )
@@ -2639,7 +2643,8 @@ y = bottom + height / 2 - 0.35 * share * reach - 0.7 * ( hz cos a - hx sin a )
 ```
 
 with `hx`, `hz`, `share`, `reach` the record's `+0x5c`, `+0x60`, `+0x64`, `+0x6c`. Then the matrix's x column is
-multiplied by 0.75 (the screen's 3:4) and its z column by 0.1 (`0x006fe7fc`, `0x006fe800`). So the model turns about
+multiplied by 0.75 (the screen's 3:4; `0x006fe800`, its three rotation rows) and its z column by 0.1 (`0x006fe7fc`, all
+four rows). So the model turns about
 the middle of its footprint for a box whose low corner is its origin, and that middle stands on the panel's middle
 line, under its middle by 0.35 of `share * reach`. The angle then takes `-0.0004` a millisecond off itself
 (`0x006fe804`): **0.4 of a radian a second**, on the clock `FUN_004031e0` reads.
@@ -2737,7 +2742,7 @@ the list is filled.
 **OpenTPW** (Q233b): `ParkFootprintPicture` is control `0x1eb`, a child of the panel; its `Grid` is `FUN_0052c5b0`
 and its `Squares` the paint's arithmetic, on a surface the control's rectangle in whole pixels, drawn at 8/15.
 `ParkBuyScreen.RowSelected` and `Update` keep the waiting row and show it after more than 500 ms;
-`UiList.SelectsUnderPointer` is the flag, set on the buy list, and `WindowStack` sends the move. It differs in two
+`UiList.SelectsUnderPointer` is the flag, set on the buy list and the park file screen's, and `WindowStack` sends the move. It differs in two
 ways, each said at its site (the wait is real time, `Time.WallMilliseconds`, as the original's is); no row is
 selected as the list fills, so the panel stays empty until the pointer has been over a row (Q232); and the hire
 list, which carries the flag too, does not set it. The model and the name row `0x1ec` are not in the panel (Q158).

@@ -1162,7 +1162,7 @@ told by the stack whether a press that landed on the list is still held; whether
 release let go off the control is not decoded. What sends `0x10003` is not traced.
 
 **OpenTPW**: `UiList.SelectsUnderPointer` and `PointerMoved`; `WindowStack` sends the move to the control under the
-pointer on a frame the pointer moved. Only the buy list sets the flag (Q233b); the others' rows are selected by a
+pointer on a frame the pointer moved. The buy list (Q233b) and the park file screen's list (`ParkFileScreen`) set the flag; the others' rows are selected by a
 click alone.
 
 ### A frame worn at two sizes

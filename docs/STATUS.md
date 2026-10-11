@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-10-10. **This header names no branch and no sha, deliberately**: a line in the commit that moves the tip cannot name it. Read the current state from the repository, which cannot lag: `git log --oneline -1`. **`docs/QUEUE.md` is the work queue**, one item per session, taken from the top unless Alexah reorders.
+Last updated: 2026-10-11. **This header names no branch and no sha, deliberately**: a line in the commit that moves the tip cannot name it. Read the current state from the repository, which cannot lag: `git log --oneline -1`. **`docs/QUEUE.md` is the work queue**, one item per session, taken from the top unless Alexah reorders.
 
 ## Works
 
@@ -49,13 +49,13 @@ Last updated: 2026-10-10. **This header names no branch and no sha, deliberately
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q291** (the older decode of `park-engine.md` and `park.md`, read a second time against the listing), then Q269 (the writer: what else a made record leaves out; live pieces: the gulls and the sea, the wear by use, the crowd's twin's draw), then Q241j, Q248, Q260 (the park's lens, decode first), Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13: `docs/CLEANUP-PLAN.md`, untracked.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q269** (the writer: what else a made record leaves out; live pieces: the gulls and the sea, the wear by use, the crowd's twin's draw), then Q241j, Q248, Q260 (the park's lens, decode first), Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13: `docs/CLEANUP-PLAN.md`, untracked.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q13: nothing of it is seen on screen: a closed plan moved into `docs/history/`. No game run.
+- Q291: nothing of it is seen on screen: a reading of two pages against the listing, and no game run. Read once and not twice: the 998 statements that held. Not settled: three statements (Q296), and the 123 things a verifier took from another page or a measurement (`not-checked.json` in the harness folder). The preview's carried-on angle is from the listing alone, not watched in the original (Q295). The second readers' own two corrections were spot-checked by the main session at eight addresses, not read by a third.
 
 
 
@@ -70,9 +70,9 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 | | | measured |
 |---|---|---|
 | Opcodes | **77** of 106 | 2026-10-10, `case Opcode.` labels vs enum members |
-| Tests | **2900**, 0 fail, 0 skip with the game | 2026-10-10, the week-end audit's branch, alone in a worktree |
-| Tests without the game | **967** ran, **1933** skipped, of 2900 | 2026-10-10, the week-end audit's branch |
-| Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 at the week-end audit's branch; the main tree's 121 at Q268) |
+| Tests | **2900**, 0 fail, 0 skip with the game | 2026-10-11, Q291, alone in a worktree |
+| Tests without the game | **967** ran, **1933** skipped, of 2900 | 2026-10-11, Q291 |
+| Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 at Q291, 2026-10-11; the main tree's 121 at Q268) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 
 ## Recent
@@ -115,3 +115,4 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 **2026-10-10 (Q266).** Where a scream is sounded is read (`FUN_00556af0`, the two scream handlers' own: the middle of `FUN_00466b70`'s box) and the stock park's eleven model records read in the running original (`docs/exe/ride-operation.md`, "Where a scream is sounded"). New: `ParkObjects.TrySoundPlace` and `BoxMiddle`, a stood thing's footprint kept; `TryPlacedOrigin` is gone; `SOUND_PLACE_NO_CELL_RECTANGLE` is new. New tool: `original/modelboxes.py`. I split the item: its other pieces are Q267. Harness `~/.cache/tpw-harnesses/q266/`.
 **2026-10-10 (Q267).** A channel's volume is read (`FUN_006c5690`'s bit `0x2`, `FUN_006bb860`, `FUN_006d2980` and its table) and the original's mixer log held against the category files, twelve pairs of twelve (`docs/exe/audio.md`, "A channel's volume"). New: `ParkAudio.ChannelGain`, `ScreamChildVolume`, `NamesOnVolume`, `SoundCategory.Play`'s `gain`; `voices` prints each ranged voice's volume; the stand-in `SingleScreamVolume` and `PlacedVolume` are gone. New tool: `original/mixpairs.py`; a recipe in `TOOLING.md`. I split the item: its other pieces are Q268. Harness `~/.cache/tpw-harnesses/q267/`.
 **2026-10-10 (Q268).** The crowd's voice is named in the original's mixer, the flat channel at the listener's place, polled beside its handle, and the staff's channels read again (`docs/exe/audio.md`, "A channel's volume"). `ParkAudio.CrowdVoiceGain` is gone; new: `ParkAudio.CrowdVoiceVolume`; `crowd` and the staff's log line print what a voice plays at. No new tool; two recipes in `TOOLING.md`. I split the item: its other pieces are Q269. Harness `~/.cache/tpw-harnesses/q268/`.
+**2026-10-11 (Q291).** The older decode of `park-engine.md` and `park.md` is read against the listing: 998 statements held, 33 did not, and two second readers went over the 32 corrections (`docs/QUEUE.md`'s finished entry has the counts). No code but two comments. New: Q295 (an object window's preview starts from the last one's angle) and Q296 (three statements not settled). No new tool; the audit's `s8.py`, dumps and `where.py` were used again from `q291/`. Harness `~/.cache/tpw-harnesses/q291/`.

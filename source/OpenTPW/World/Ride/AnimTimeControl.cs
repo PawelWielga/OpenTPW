@@ -260,9 +260,10 @@ public sealed class AnimTimeControl
 		}
 
 		// Every start clears the held and frozen bits here. The engine's clears them only over a channel
-		// that is not idle, so a start on an idle channel keeps a stale one and its clip stands on its last
-		// frame there - a deviation no Lost Kingdom path reaches (docs/exe/park.md, "Where OpenTPW's
-		// animation state parts from the engine's", difference 5).
+		// that is not idle, so a start on an idle channel keeps a stale one and its clip stands still there,
+		// on its first frame under 0x2 and on its last under 0x4 (0x004736bd) - a deviation no Lost Kingdom
+		// path reaches (docs/exe/park.md, "Where OpenTPW's animation state parts from the engine's",
+		// difference 5).
 		Flags &= ~0x6;
 
 		SubAnim = entry;

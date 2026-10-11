@@ -44,15 +44,6 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q291. The older decode of `park-engine.md` and `park.md` that no review has read.** Left by the week-end
-  audit's stage 8, and first at Alexah's word (2026-10-11). Sixteen areas, 145 blocks written between 2026-09-26
-  and 2026-10-06 that cite an address. Their evidence files are in the harness folder,
-  `audit-2026-10-10/ev/s8b-07.md` to `s8b-23.md`, with every cited function dumped beside them in `ghidra/` (made
-  at `df6c85b7`: make them again if the pages have moved, `s8.py` and `s1/gh_dump.py` there). One `tpw-verify` an
-  area sets each statement against the listing, then a second reader goes over what is applied. The part done
-  found 30 wrong statements in 1,672. A wrong reading that is built into code becomes an item of its own. No game
-  run. Confirm: the count of statements that held and that were corrected, and the gate.
-
 - [ ] **Q269. The writer: what else a made record leaves out.** The old Q268's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
@@ -1043,6 +1034,15 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   each against every file of its kind with the readers (`lib/parkfile.py`, `lib/sfxmap.py`, `lib/md2surf.py`,
   `wadcat`, the `.RSE` corpus); then the site is built. No game run.
 
+- [ ] **Q296. Three statements Q291's verifiers could not settle.** Each is said as fact with no measurement
+  beside it. `park-engine.md`, the object window's preview: "each with one clip in role M" (the Space zone's
+  `megacost.wad` carries `Pmegacostm.MD2` and `PMEGACOSTM1.MD2` both; read which the loader takes). The same
+  page, the footprint picture: "the lowest row of pixels stays clear" (rests on whether `FUN_005f9a80`'s
+  rectangle takes its far edges: read the fill behind `[0x00fa76d0]`'s slot `+0xc`, or measure a frame of the
+  original). `park.md`: "`WALKGET` returns only a rider `WALKOFF` let off (`FUN_00557110`)" (`FUN_00557110`
+  answers a slot in state 4 and `WALKOFF` writes 3: trace the walk update's writes at `0x00557e6c` and
+  `0x00558018`). Confirm: each settled from the listing, the page saying what it shows. No game run.
+
 ## C. Alexah's list: cause known, one session each
 
 - [ ] **Q15. Green line between path cells and on ride signs.** Path textures get the default sampler,
@@ -1095,6 +1095,13 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   Research"). The message box is built; both sites only count (`RESEARCH_BUTTON`, `RESEARCH_SHORTCUT`). Build the two
   boxes at both; the research screen behind them stays counted (blocked: `docs/PLAYER-GAPS.md`). Confirm: R and the
   button in Lost Kingdom, the box photographed beside the original's.
+
+- [ ] **Q295. An object window's preview starts from the angle the last one left.** From Q291. The first angle is
+  `fmod( [0x007afd50], 6.2831855 )` (`0x00468e2f`; `park-engine.md`, the object window's preview): the record is
+  static and its angle nought in the image, so only the first panel of a run starts from nought. The preview here
+  starts every one from nought and counts it (`OBJECT_PREVIEW_START_ANGLE`, `ParkObjectPreview`). Build: keep the
+  last panel's angle for the session and start the next from it. Confirm: two ride windows opened one after the
+  other in both games, the second's first frame photographed, and the angle in the log.
 
 ## D. Alexah's list: decode first, then build (two sessions each)
 

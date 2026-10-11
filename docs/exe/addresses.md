@@ -126,7 +126,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00467d60` | | OpenTPW/World/Lobby/LobbyModel.cs  |
 | `0x00468a64` | FUN_004689f0: FUN_00468950 looks for sign1 and sign2 in the item's model and its P model; all four found, the instance takes the item's boards | OpenTPW/UI/Park/ParkObjectPreview.cs  |
 | `0x00468e11` | FUN_004689f0: the preview instance triggers role 5 (M), entry 0, looped, speed 1.0 | OpenTPW/UI/Park/ParkObjectPreview.cs  |
-| `0x00468e2f` | FUN_004689f0: the preview's first angle, an x87 intrinsic's answer (FUN_0067b24a), operands not traced | OpenTPW/UI/Park/ParkObjectPreview.cs  |
+| `0x00468e2f` | FUN_004689f0: the preview's first angle, the last panel's wrapped to two pi (FUN_0067b24a is `_CIfmod`) | OpenTPW/UI/Park/ParkObjectPreview.cs  |
 | `0x0046a82c` | | OpenTPW/World/Park/ParkObjects.cs  |
 | `0x0046a838` | | OpenTPW/World/Park/ParkObjects.cs  |
 | `0x0046b600` | | OpenTPW.Common/Client/Window.cs  |

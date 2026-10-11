@@ -5946,6 +5946,24 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   mix, the lowest at 0.02719; the control, main before it, 3 of 3: 0.0480 and 0.0720 for the staff and 0.02074 in
   the mix, so the fix is 1.3107 of it (1.310 owed). Missed: my check took `crowd`'s nought between two samples
   for a volume. Twelve bugs put back: all twelve fail a test.
+- [x] **Q291. The older decode of `park-engine.md` and `park.md` that no review has read.** Left by the week-end
+  audit's stage 8, and first at Alexah's word (2026-10-11). Sixteen areas, 145 blocks written between 2026-09-26
+  and 2026-10-06 that cite an address. Their evidence files are in the harness folder,
+  `audit-2026-10-10/ev/s8b-07.md` to `s8b-23.md`, with every cited function dumped beside them in `ghidra/` (made
+  at `df6c85b7`: make them again if the pages have moved, `s8.py` and `s1/gh_dump.py` there). One `tpw-verify` an
+  area sets each statement against the listing, then a second reader goes over what is applied. The part done
+  found 30 wrong statements in 1,672. A wrong reading that is built into code becomes an item of its own. No game
+  run. Confirm: the count of statements that held and that were corrected, and the gate.
+  Done 2026-10-11, `alexah/419-older-decode-second-reading`: sixteen `tpw-verify`, one an area, over the 145
+  blocks as they stand on `main`. **998 statements held; 33 did not** (21 refuted by the listing, 5 that said what
+  OpenTPW's code does not do, 7 beside the blocks), one of them found twice, so 32 corrections: 19 in
+  `park-engine.md`, 12 in `park.md`, one in `hud.md`. Two second readers then tried to refute all 32: 21 held,
+  two were themselves wrong (the staff table's row addresses, four bytes late; "two openers look first", where
+  nine do) and nine were reworded, and two sentences beside them were corrected. Three statements are unproven
+  (Q296). No wrong reading is built into code: the one decode the code does not follow is a counted gap, now read
+  (Q295); two source comments say what the listing shows. No game run. The gate, alone in a worktree, is in
+  `STATUS.md`, "Numbers". Harness `~/.cache/tpw-harnesses/q291/` (`edits.json`, `second-fixes.json`,
+  `unproven.json`, `not-checked.json`: 123 notes of what a verifier took from another page or a measurement).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

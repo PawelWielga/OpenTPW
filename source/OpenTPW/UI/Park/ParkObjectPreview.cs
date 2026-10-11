@@ -169,8 +169,8 @@ internal sealed class ParkObjectPreview
 
 		StartRunning( _animations );
 
-		// The original's first angle is the answer of an x87 intrinsic whose operands are not traced
-		// (FUN_0067b24a, 0x00468e2f); this one starts from nought.
+		// The original's first angle is the one the last panel left, wrapped to two pi (0x00468e2f;
+		// docs/exe/park-engine.md, the object window's preview); this one starts from nought.
 		Unimplemented.Report( "OBJECT_PREVIEW_START_ANGLE" );
 	}
 
