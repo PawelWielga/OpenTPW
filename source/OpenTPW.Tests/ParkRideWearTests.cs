@@ -232,7 +232,7 @@ public class ParkRideWearTests
 	}, instantAction: false );
 
 	[TestMethod]
-	public void ARideUnderTwentyIsToldItIsWornAndUnderTenIsCountedForTheAdvisorOnce() => In( park =>
+	public void ARideUnderTwentyIsToldItIsWornAndUnderTenTheAdvisorIsToldOnce() => In( park =>
 	{
 		park.Script.Set( ParkRideOperation.OnRideVariable, 5 );
 
@@ -243,18 +243,36 @@ public class ParkRideWearTests
 		park.Turn( 128 );
 		Assert.AreEqual( (18.39f, 1), (MathF.Round( park.Thing().StateOfRepair, 3 ), park.Script[ParkRideOperation.WornVariable]) );
 
-		var counted = Times( "RIDE_WORN_OUT_MESSAGE" );
+		var events = Times( "ADVISOR_MESSAGE_SAID_EVENT" );
+		var advisor = park.State.AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
 
 		park.Change( thing => thing with { StateOfRepair = 12.5f } );
 		park.Turn( 192 );
-		Assert.AreEqual( counted, Times( "RIDE_WORN_OUT_MESSAGE" ), "10 is not under 10" );
+		Assert.AreEqual( 0, advisor.PendingCount, "10 is not under 10" );
 
 		park.Change( thing => thing with { StateOfRepair = 11.5f } );
 		park.Turn( 256 );
-		Assert.AreEqual( counted + 1, Times( "RIDE_WORN_OUT_MESSAGE" ), "9 is, and 9 and the wear is 10 or more" );
+		Assert.IsTrue( advisor.Census().Contains( $"pending=1 attempts=0 threshold=25 slot=66/subject={BellyBounce} " ),
+			"9 is, and 9 and the wear is 10 or more: " + advisor.Census() );
 
 		park.Turn( 320 );
-		Assert.AreEqual( counted + 1, Times( "RIDE_WORN_OUT_MESSAGE" ), "told once: 7 and the wear is under 10" );
+		Assert.AreEqual( 1, advisor.PendingCount, "told once: 7 and the wear is under 10" );
+
+		var said = new List<int>();
+
+		advisor.Tick( 321, 0, ( _, sample ) => { said.Add( sample ); return 0; } );
+		CollectionAssert.AreEqual( new[] { 191 }, said );
+		Assert.AreEqual( 1, Times( "ADVISOR_MESSAGE_SAID_EVENT" ) - events );
+
+		park.Change( thing => thing with { StateOfRepair = 11.5f } );
+		park.Turn( 384 );
+		Assert.AreEqual( 0, advisor.PendingCount, "refused: said 63 sweeps before, under the group's 480" );
+
+		park.Change( thing => thing with { StateOfRepair = 11.5f } );
+		park.Turn( 832 );
+		Assert.AreEqual( 1, advisor.PendingCount, "(832 >> 2) - (321 >> 2) is 128" );
+
+		park.Change( thing => thing with { StateOfRepair = 7.39f } );
 		Assert.AreEqual( 0, park.Script[ParkRideOperation.BreakStatVariable], "7 is not nought" );
 	} );
 

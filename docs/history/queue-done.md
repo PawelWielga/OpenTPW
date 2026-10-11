@@ -6071,6 +6071,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `run-fix1/2-onride-5.png`; the build before never above 1 in 112 polls. **The original** (`q304/orig/`,
   1 of 1): given the file saved here with three on, it read `VAR_ONRIDE` 3 on its first poll, a guest called 5
   ticks on, and 4 or 5 on for 120 s. Nine bugs put back (`q304/mutations.py`): nine fail a test.
+- [x] **Q305. The advisor is told of a ride worn under 10.** A piece of the old Q305 (the writer's
+  leftovers), split by the session: its other pieces are Q306. The wear's post of message `0x42` was counted
+  (`RIDE_WORN_OUT_MESSAGE`). **Read** (`advisor-park.md`, "A ride about to break down"): the post at
+  `0x004df8be` carries the thing and its item; row 66 is posted only, category 0, score
+  `RidesBreakdownImminent.Score` (100), up to 255 copies, responses 194 to 196, samples 191 to 193, mode 2; a
+  line said sends an event of type `0x18`. **Built**: `ParkAdvisorMessages.RideWornOut`, a topic's lines and
+  copies, a slot's subject; `ParkRideOperation.WearByRunning` posts. **Run** (`q305/confirm.py`, 4 of 4, the
+  control 1 of 1): the stock park left alone, the Bounce 11.89 to 9.83 on tick 5504, `post message=66 subject=13
+  score=100 ... queued`, and on 5505 `response=194 sample=191 line=0`, `saying sp_191.mp2`, the advisor up in
+  `run-fix1/2-told.png`; five later lines under 10 posted nothing. **The original** (`q305/orig/`, 1 of 1): the
+  advisor's record for `0x42` read never said until tick 4800, the tick of the fall from 12.025 to 9.97, then
+  last said 4800, line 0, said; he is up in a hard hat in `a-told.png`. Fifteen bugs put back
+  (`q305/mutations.py`): fifteen fail a test, the first round's one survivor after a test was tightened.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

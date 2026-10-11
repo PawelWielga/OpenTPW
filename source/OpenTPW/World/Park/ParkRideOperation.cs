@@ -908,11 +908,12 @@ public sealed class ParkRideOperation
 	/// repair and <see cref="ParkRideWear.LifeShare"/> of that of its remaining life, each held to 0..100. The
 	/// wear is nought while <see cref="OnRideVariable"/> reads nought. A State of repair whose byte is below
 	/// <see cref="ParkRideWear.WornBelow"/> has <see cref="WornVariable"/> written 1.
+	/// On the turn the byte falls below <see cref="ParkRideWear.AdvisorBelow"/>, the byte and the wear together
+	/// not below it, the advisor is posted message <c>0x42</c> with the thing as its subject (<c>0x004df8be</c>;
+	/// <see cref="ParkAdvisorMessages.RideWornOut"/>).
 	/// </summary>
 	/// <remarks>
-	/// Counted, not built: the advisor's message <c>0x42</c> on the turn the byte falls below
-	/// <see cref="ParkRideWear.AdvisorBelow"/> (<c>RIDE_WORN_OUT_MESSAGE</c>). The online game's arm, which wears
-	/// nothing, is not built: there is no online game.
+	/// The online game's arm, which wears nothing, is not built: there is no online game.
 	/// </remarks>
 	/// <returns>The thing as the wear leaves it.</returns>
 	internal ParkWorld.CatalogueObject WearByRunning( RideScript script, ParkWorld.CatalogueObject thing,
@@ -950,7 +951,7 @@ public sealed class ParkRideOperation
 			script.Set( WornVariable, 1 );
 
 		if ( repair < ParkRideWear.AdvisorBelow && wear + (float)repair >= ParkRideWear.AdvisorBelow )
-			Unimplemented.Report( "RIDE_WORN_OUT_MESSAGE" );
+			_state.AdvisorMessages?.Post( ParkAdvisorMessages.RideWornOut, gameTick, thing.ThingId );
 
 		return worn;
 	}

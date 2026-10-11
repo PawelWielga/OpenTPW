@@ -10,10 +10,10 @@ namespace OpenTPW.Tests;
 [TestClass]
 public class ParkAdvisorMessageTests
 {
-	private static SettingsFile Settings( int open = 26, int close = 26, int threshold = 25 )
+	private static SettingsFile Settings( int open = 26, int close = 26, int threshold = 25, int worn = 100 )
 		=> new( new MemoryStream( Encoding.ASCII.GetBytes( $"GeneralAdvisor.MinScoreForConsideration {threshold}\n"
 			+ $"MessageGroups[0].MinTimeSameMessage 120\nMessageGroups[0].SayOnlyOnce 0\n"
-			+ $"ParkNowOpen.Score {open}\nParkNowClosed.Score {close}\n" ) ) );
+			+ $"ParkNowOpen.Score {open}\nParkNowClosed.Score {close}\nRidesBreakdownImminent.Score {worn}\n" ) ) );
 
 	private static void Set( SettingsFile settings, string key, int value )
 	{
@@ -34,6 +34,40 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( 0, messages.Attempts );
 		Assert.IsTrue( messages.Census().Contains( "message=128/score=20/line=-1" ) );
 		Assert.IsTrue( messages.Census().Contains( "message=129/score=20/line=-1" ) );
+	}
+
+	[TestMethod]
+	public void StockWornRideIsSpokenOfInThreeLinesThatWrap()
+	{
+		FileSystem = GameData.Required();
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var said = new List<(int, int)>();
+		for ( var i = 0; i < 4; ++i )
+		{
+			var tick = 1000 + i * 480;
+			Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, tick, 13 ) );
+			Assert.IsTrue( messages.Census().Contains( "pending=1 attempts=" + i + " threshold=25 slot=66/subject=13 " ), messages.Census() );
+			messages.Tick( tick, i * 100000L, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		}
+		CollectionAssert.AreEqual( new[] { (194, 191), (195, 192), (196, 193), (194, 191) }, said );
+		Assert.IsTrue( messages.Census().Contains( "message=66/score=100/line=0/lastTick=2440" ), messages.Census() );
+	}
+
+	[TestMethod]
+	public void EveryWornRideHasItsOwnSlotWhereADoorHasOne()
+	{
+		var messages = new ParkAdvisorMessages( Settings() );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, 100, 13 ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, 100, 14 ) );
+		Assert.IsTrue( messages.PostDoor( false, 100 ) );
+		Assert.IsFalse( messages.PostDoor( false, 100 ) );
+		Assert.AreEqual( 3, messages.PendingCount );
+		var said = new List<int>();
+		messages.Tick( 100, 0, ( _, sample ) => { said.Add( sample ); return 0; } );
+		CollectionAssert.AreEqual( new[] { 191 }, said, "100 is over the door's 26" );
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.RideWornOut, 579, 15 ), "said 479 sweeps ago" );
+		Assert.IsTrue( messages.Census().Contains( "slot=66/subject=14 " ), "the second copy stays" );
+		Assert.IsFalse( messages.Census().Contains( "subject=13" ) );
 	}
 
 	[TestMethod]

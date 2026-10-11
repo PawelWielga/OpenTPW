@@ -3,19 +3,32 @@ using System.Globalization;
 namespace OpenTPW;
 
 /// <summary>
-/// Posted park-door messages, category 0, selection mode 2. The eight slots, strict tick threshold,
-/// helper recheck and per-message histories follow FUN_0059a550; docs/exe/advisor-park.md, Q90.
-/// Other park messages and the polling analyser remain unbuilt.
+/// The park's posted messages, category 0, selection mode 2: the door's two and a ride about to break down.
+/// The eight slots, strict tick threshold, helper recheck and per-message histories follow FUN_0059a550;
+/// docs/exe/advisor-park.md, Q90 and "A ride about to break down". Other park messages and the polling
+/// analyser remain unbuilt.
 /// </summary>
 internal sealed class ParkAdvisorMessages
 {
 	internal const int Opened = 128;
 	internal const int Closed = 129;
-	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample );
+	/// <summary>Message 0x42, posted by a ride's wear (FUN_004df670, 0x004df8be) with the ride as its subject.</summary>
+	internal const int RideWornOut = 66;
+
+	/// <summary>
+	/// A row of the metadata table 0x0076e300: the message, its score's key, its first response and that
+	/// response's sample, how many lines it rotates (+0x28) and how many copies the slots may hold (+0x20).
+	/// </summary>
+	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1 );
 	internal static readonly Topic[] DoorTopics =
 	[
 		new( Opened, "ParkNowOpen.Score", 308, 342 ),
 		new( Closed, "ParkNowClosed.Score", 310, 344 )
+	];
+	internal static readonly Topic[] ParkTopics =
+	[
+		.. DoorTopics,
+		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255 )
 	];
 
 	private sealed class History
@@ -25,7 +38,7 @@ internal sealed class ParkAdvisorMessages
 		public bool Said;
 	}
 
-	private sealed record Pending( Topic Topic, int Score );
+	private sealed record Pending( Topic Topic, int Score, int Subject );
 	private readonly SettingsFile _settings;
 	private readonly Dictionary<int, Topic> _topics;
 	private readonly Dictionary<int, History> _histories;
@@ -38,7 +51,7 @@ internal sealed class ParkAdvisorMessages
 	internal ParkAdvisorMessages( SettingsFile settings, IEnumerable<Topic>? topics = null )
 	{
 		_settings = settings;
-		_topics = (topics ?? DoorTopics).ToDictionary( topic => topic.Id );
+		_topics = (topics ?? ParkTopics).ToDictionary( topic => topic.Id );
 		_histories = _topics.Keys.ToDictionary( id => id, _ => new History() );
 	}
 
@@ -47,7 +60,11 @@ internal sealed class ParkAdvisorMessages
 
 	internal bool PostDoor( bool closed, int gameTick ) => Post( closed ? Closed : Opened, gameTick );
 
-	internal bool Post( int id, int gameTick )
+	/// <summary>
+	/// FUN_0059a940 after FUN_0059b590: a message through the accept gate into a slot. <paramref name="subject"/>
+	/// is the thing the record's first word names, nought for none; nothing here reads it but the log.
+	/// </summary>
+	internal bool Post( int id, int gameTick, int subject = 0 )
 	{
 		var topic = _topics[id];
 		var score = Value( topic.ScoreKey );
@@ -59,7 +76,7 @@ internal sealed class ParkAdvisorMessages
 			reason = "cooldown";
 		else if ( history.Said && Value( "MessageGroups[0].SayOnlyOnce" ) != 0 )
 			reason = "said-once";
-		else if ( _slots.Any( slot => slot?.Topic.Id == id ) )
+		else if ( _slots.Count( slot => slot?.Topic.Id == id ) >= topic.MaxInstances )
 			reason = "duplicate";
 		else
 		{
@@ -71,9 +88,9 @@ internal sealed class ParkAdvisorMessages
 					if ( _slots[i]!.Score < _slots[index]!.Score ) index = i;
 				if ( score <= _slots[index]!.Score ) reason = "priority";
 			}
-			if ( reason == "queued" ) _slots[index] = new Pending( topic, score );
+			if ( reason == "queued" ) _slots[index] = new Pending( topic, score, subject );
 		}
-		Log.Info( $"Park advisor: post message={id} score={score} threshold={Threshold} tick={gameTick} result={reason} pending={PendingCount}" );
+		Log.Info( $"Park advisor: post message={id} subject={subject} score={score} threshold={Threshold} tick={gameTick} result={reason} pending={PendingCount}" );
 		return reason == "queued";
 	}
 
@@ -95,7 +112,7 @@ internal sealed class ParkAdvisorMessages
 		if ( score < Threshold ) return;
 
 		var history = _histories[pending.Topic.Id];
-		var line = (history.Line + 1) % 2;
+		var line = (history.Line + 1) % pending.Topic.Lines;
 		var response = pending.Topic.FirstResponse + line;
 		var sample = pending.Topic.FirstSample + line;
 		var duration = play( response, sample );
@@ -104,10 +121,14 @@ internal sealed class ParkAdvisorMessages
 		history.Line = line;
 		history.Said = true;
 		++Attempts;
-		Log.Info( $"Park advisor: attempt={Attempts} message={pending.Topic.Id} score={score} threshold={Threshold} response={response} sample={sample} line={line} tick={gameTick} duration={duration} waitUntil={_waitUntil}" );
+		// The helper then sends an event of type 0x18 carrying the response's group and the record's subject
+		// (FUN_0059b620, FUN_0040f740, FUN_0040fb10); nothing here hears it.
+		Unimplemented.Report( "ADVISOR_MESSAGE_SAID_EVENT" );
+		Log.Info( $"Park advisor: attempt={Attempts} message={pending.Topic.Id} subject={pending.Subject} score={score} threshold={Threshold} response={response} sample={sample} line={line} tick={gameTick} duration={duration} waitUntil={_waitUntil}" );
 	}
 
 	internal string Census() => $"park advisor: pending={PendingCount} attempts={Attempts} threshold={Threshold} "
+		+ string.Concat( _slots.Where( slot => slot != null ).Select( slot => $"slot={slot!.Topic.Id}/subject={slot.Subject} " ) )
 		+ string.Join( " ", _topics.Values.Select( topic =>
 			$"message={topic.Id}/score={Value( topic.ScoreKey )}/line={_histories[topic.Id].Line}/lastTick={_histories[topic.Id].LastTick}" ) );
 }

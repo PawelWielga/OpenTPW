@@ -115,7 +115,9 @@ Each ratio is stored as a float before its floor is added (`0x004df50c`, `0x004d
 life `+0x48` loses `0.02 × w` (`0x00700548`), each held to 0..100 (above 100 is 100, anything else not at least
 nought is nought); `VAR_WORN` (variable 8) is written 1 when `+0x44`'s byte is below 20 (`0x0070059c`), every such
 turn; and when that byte is below 10 (`0x007005a0`) and the byte plus `w` is not, the turn it fell there, advisor
-message `0x42` is posted with the thing's id (`FUN_0059b590`, `FUN_005194d0`).
+message `0x42` is posted (`0x004df8be`: `FUN_0059b590`, `FUN_005194d0`, `FUN_0059a940`), its record's first
+word the thing's id and its second the thing's item, no line asked for, not forced, the score the message's own
+(`advisor-park.md`, "A ride about to break down").
 
 **The breakdown request** is the caller's, on the same turn and on every eighth sweep after it (step 3, above): the
 life's byte or the repair's nought, not a toilet, `VAR_BREAKSTAT` nought: the life loses 5 unless its byte is
@@ -139,7 +141,8 @@ fall to 18.92 (20.98 before it); on tick 5632 the State of repair reached 0.00, 
 read 1 and the life 92.99 (98.03 less the wear's share less 5); a tick on the state was 1; mechanic 26 was assigned
 31 ticks after the break; and on tick 5758, 126 after it, the ride read 100, state 0, every variable nought, the
 life still 92.99. `VAR_RUNNING` read the same number as `VAR_ONRIDE` throughout. Not seen: a second tier, another
-ride, a condemned ride, message `0x42` (the advisor was not read).
+ride, a condemned ride. Message `0x42` was read in a later run (Q305): the advisor's record for it went from
+never said to said on tick 4800, the tick of the fall from 12.025 to 9.97 (`advisor-park.md`).
 
 **In OpenTPW** (`q303/confirm.py`, the stock park left alone on the desktop): 8 predictions of 8. The Belly Bounce
 carried one rider at every wearing sweep, so 66 log lines of `wear 1.515 with 1 on` took it from 100 to 0.010, each
@@ -156,7 +159,7 @@ repair's bar at a fifth, then empty under the BROKEN DOWN sign (`q303/run-fix1/3
 |---|---|---|
 | The wear, every 64th sweep | `FUN_004df670` | built, `ParkRideOperation.WearByRunning`; the speed is the thing's `mOperatingSpeed`, or 50 at nought, as no script here keeps a speed word (Q155) |
 | `VAR_WORN` under 20 | written 1 | built; what a ride's script does on it was not looked at |
-| Advisor message `0x42` under 10 | posted | counted, `RIDE_WORN_OUT_MESSAGE` |
+| Advisor message `0x42` under 10 | posted, and said on the same tick | built (Q305): `ParkAdvisorMessages.RideWornOut`, said a sweep on (`advisor-park.md`, "A ride about to break down") |
 | The breakdown request | every eighth sweep | built, `ParkRideOperation.WearAndAskToBreak` |
 | The online game's rate of nought | `[0x00fb3b7c]` | not built: there is no online game |
 | How many ride at once | a ride that runs all the time is invited onto while it runs (`+0x33` bit 0) | built, `ParkRideOperation.Invite` (Q304): the Belly Bounce carries up to its five ("Opening a ride", "The running test") |

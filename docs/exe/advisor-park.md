@@ -408,3 +408,58 @@ rotation back to line 0, and zero playback-return consumption. Those applicable 
 regression-tested; the actual busy/disabled speaker guards are code-reviewed only, and saved histories
 remain counted. The first score-26 capture was partial because
 its harness deadline was too short for the cooldown step; the completed final run replaces that proof.
+
+## A ride about to break down (message `0x42`, Q305)
+
+**Who posts it.** A ride's wear, `FUN_004df670`, on the turn its State of repair's byte falls below 10 with the
+byte plus the wear not below it (`ride-operation.md`, "A ride's wear"). The call is `0x004df8be`:
+`FUN_0059b590( 0x42, [thing + 0], [thing + 0xe], -1, 0, -1 )`, so the record's `+0x00` is the thing's id, its
+`+0x04` the thing's item, no line is asked for, it is not forced and the score is the message's own; then
+`FUN_005194d0` and `FUN_0059a940`, the same gate and slots as the door's.
+
+**Its row** (`0x0076e300 + 66 × 0x38`, from the emulated table, `meta_full.json`):
+
+| Field | Value |
+|---|---|
+| `+0x00` | 1: posted only, never polled |
+| `+0x08` category, `+0x0c` game mode | 0, 2 (either) |
+| `+0x10` score | `0x0059dc60`: `MOV EAX,[ECX + 0x248]`, so `0x00fb3788`, which the schema walk names `RidesBreakdownImminent.Score` (descriptor `0x0073199c`); the file sets **100** |
+| `+0x20` copies in the slots | 255, where a door's is 1: every worn ride has a slot of its own |
+| `+0x24` first response, `+0x28` lines, `+0x2c` mode | 194, 3, 2 |
+
+Responses 194, 195 and 196 (`0x0076a7f8`, read in the image) are samples and lip files **191, 192, 193**, gesture
+-1, model and bank word 0, face fields 5 and 0. The transcripts: "we've got trouble boss, a ride is about to break
+down", "look out, she's gonna blow...", "one of your rides is about to break down, take cover...". Mode 2 takes the
+line after the last and starts again past the count (`0x0059a796`, `0x0059a7fa`). The three rows after it in the
+`.sam` are the same shape and are not built: `RidesBreakdownNoMechanics` 105, `BusyMechanics` 107, `MechanicOnIt`
+110 at `0x00fb378c` to `0x00fb3794` (message `0x46`'s score is `0x0059dc90`).
+
+**What follows a line said.** `FUN_0059b620`, after `Advisor_SayResponse`, builds an event of type `0x18`
+(`FUN_0040f740`, vtable `0x006fd828`, whose first slot answers `0x18`) from the response's group, the record's
+thing id and its `+0x04`, and sends it (`FUN_0040fb10`), for every message, a door's too. Who hears it is not read.
+
+**The original** (`q305/orig/`, `original/advisor.py`, Q265's `bounce.TPWS` left alone, the computer on seven
+days so ticks alone are counted): the advisor is thing 3. Message `0x42`'s record read last said 0, line -1, said
+0 from the load until tick **4800**, the tick the Belly Bounce's State of repair fell from 12.025 to 9.97 (the
+byte 9, and 9 + 2.055 is not under 10); on that poll it read last said **4800**, line **0**, said 1, and the last
+action's duration 6665 ms. It stayed so through five more falls to 2.4. His slots held message `0x80` at score 20
+the whole run, unsaid, as "Why the stock door is silent" says. In the frame taken 1.5 s on (`a-told.png`) he is up
+at the bottom right **wearing a yellow hard hat**, with a small arrow button beside him.
+
+**OpenTPW** (`ParkAdvisorMessages.RideWornOut`, `ParkRideOperation.WearByRunning`; `q305/confirm.py`, the stock
+park left alone on the desktop, 4 predictions of 4): the wear line of tick 5504 took the Bounce from 11.89 to
+9.83, and the log read `post message=66 subject=13 score=100 threshold=25 tick=5504 result=queued pending=1`, then
+on tick 5505 `attempt=1 ... response=194 sample=191 line=0` with `playback=started` and a duration of 5665 ms,
+6665 with the scheduler's second, the original's. `advisor` read `saying sp_191.mp2` and
+`message=66/score=100/line=0/lastTick=5505`; he is up in `run-fix1/2-told.png`. The five later lines under 10
+posted nothing. Main's build, off-screen, posted nothing and counted `RIDE_WORN_OUT_MESSAGE` once on its own line
+of the rule (`run-control`).
+
+| | The original | OpenTPW |
+|---|---|---|
+| The post | from the wear, with the thing and its item | built; the item is not kept, and nothing reads the subject but the log and `advisor` |
+| When it is said | the tick of the post | a sweep on: the messages' turn is taken before the things' (`ParkPeople`) |
+| The hard hat and the button beside him | drawn | not built, not decoded: the responses' face fields read 5 where a door's read 9 |
+| The event of type `0x18` after a line | sent | counted, `ADVISOR_MESSAGE_SAID_EVENT` |
+| Lines 195 and 196, a second ride's own slot, the 480 sweeps before the same message again | the listing's | built and held by the tests alone |
+

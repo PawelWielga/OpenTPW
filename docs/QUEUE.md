@@ -44,16 +44,26 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q305. The writer: what else a made record leaves out.** The old Q304's other pieces, each counted or
+- [ ] **Q306. The writer: what else a made record leaves out.** The old Q305's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q305 (`advisor-park.md`, "A ride about to break down"): the original's advisor wears a yellow hard hat
+  for the line and a small arrow button stands beside him; neither is built or decoded (the responses' face
+  fields read 5 where a door's read 9; the button is likely the hearer of the event of type `0x18` a line said
+  sends, counted `ADVISOR_MESSAGE_SAID_EVENT`, whose hearers are not read). He says it a sweep after the post,
+  the original on the post's tick. The record's item word is not kept. The same shape and not built: message
+  `0x46` (`MECHANIC_ON_HIS_WAY_MESSAGE`, score `RidesBreakdownMechanicOnIt` 110, responses 204 on) and the two
+  no-mechanic rows (105, 107), whose posters are not read. In no game run: lines 195 and 196, two worn rides at
+  once, a post refused inside the 480 sweeps, a worn ride with the advisor busy (the message is then spent
+  unsaid, as the door's), a bought ride. The original's line was not heard (its sound off-screen is a null
+  device), and ours not listened to by a person.
   From Q304 (`ride-operation.md`, "Opening a ride", "The running test"): how fast a queue boards is not
   compared (a rider about every five seconds here with the polls' pauses in them, one every three in the
   original, `q252/orig/a-load.log`), nor how long each rides, nor where on the ride each of the five stands;
   the original's riders were in its poll, not its picture (its camera stood by the gate). In no game run: a
   bought Belly Bounce, another item with `Info.RunsContinuously` (which items carry it was not counted), a
   ride broken with five on. A full Bounce now wears to a break in about 50 steps of 64 sweeps.
-  From Q303 (`ride-operation.md`, "A ride's wear"): advisor message `0x42` is counted (`RIDE_WORN_OUT_MESSAGE`);
+  From Q303 (`ride-operation.md`, "A ride's wear"):
   what a ride's script does on `VAR_WORN` was not looked at; the wear's speed is the thing's
   `mOperatingSpeed`, not a script's word (Q155); `FUN_004df640`'s callers (the flag's arm: a ride window's
   reliability) were not read; the sum's stores are a float's where the listing stores one, and were not held
