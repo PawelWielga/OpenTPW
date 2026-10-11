@@ -5991,6 +5991,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   0.895 to 1.000 (33 of 34; the one under played beneath the music) and one no line names 0.742 at most (32 of
   32), where my 0.97 bar found 22 of 34. The control, main before it, 3 of 3: no pitch in the log, every
   sample at 1.000 on pitch 0. Eleven bugs put back: all eleven fail a test.
+- [x] **Q298. A kids' one-shot draws its pitch.** Done 2026-10-11 (branch `alexah/422-one-shot-pitch`). I split
+  the old Q298: this is its one-shot piece, and every other piece is Q299. A plain one-shot's request fill is
+  `FUN_006bc410` (vtable `0x0070a3e8`), which draws a pitch from its variation's bytes (`FUN_006bc170`); here a guest
+  put off, a single scream and a yawn are given theirs (`ParkAudio.OneShotRate`, `SoundCategory.Play`'s `rate`).
+  The original's put-off channels (far end 100, 10 of 127) read ten frequencies and no other over 39 lines, a pitch
+  of -5 to 4 (`q298/orig/mixfreq2.log`); here twelve put-offs' log lines named six of the ten, `voices` read their
+  rates and the gap is counted no more (`q298/confirm.py`, fix 4 of 5, control 5 of 5); twelve bugs put back, all
+  twelve fail a test. `docs/exe/audio.md`, "A one-shot's pitch".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

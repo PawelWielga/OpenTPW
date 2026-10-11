@@ -1121,24 +1121,86 @@ public class ParkScreamChainTests
 	}
 
 	/// <summary>
-	/// <b>A one-shot of the kids' whose variation holds a pitch range is counted</b>: the original gives it a
-	/// pitch as it starts and nothing here does. One whose two pitch bytes are alike is not.
+	/// <b>A one-shot of the kids' draws its pitch as it starts</b> (<c>docs/exe/audio.md</c>, "A one-shot's
+	/// pitch"): from its variation's low pitch byte up to, not including, the high one, set on its voice as the
+	/// rate the pitch stands for. A guest put off draws -5 to 4, a single scream of effects 75 to 90 -8 to 7, and
+	/// one whose two bytes are alike (effect 105, a yawn) plays at its sample's own rate. Nothing is counted.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the count taken out; every one-shot counted.</remarks>
+	/// <remarks>
+	/// <b>Mutations:</b> no rate handed to the category; the category sets none; the pitch never drawn; the
+	/// volume's bytes read for it; the high byte drawn too; the rate of the pitch turned over; drawn once and kept;
+	/// drawn twice, one for the line and one for the rate; a yawn or effect 105 handed no rate.
+	/// </remarks>
 	[TestMethod]
-	public void AOneShotWithAPitchRangeIsCounted()
+	public void AOneShotOfTheKidsDrawsItsPitch()
 	{
-		static int Counted() => Unimplemented.Summary.Where( gap => gap.What == "KIDS_ONE_SHOT_PITCH" ).Sum( gap => gap.Times );
+		var file = new SoundCategoryFile( "global/sound", "kids" );
+
+		Assert.AreEqual( (-5, 5), file.ReadVariations()[file.IndexOf( 0x80 )].Single().Pitch, "a guest put off" );
+		Assert.AreEqual( (0, 0), file.ReadVariations()[file.IndexOf( 0x69 )].Single().Pitch, "effect 105" );
+
+		foreach ( var header in file.ReadVariations()[file.IndexOf( 0x7e )] )
+			Assert.AreEqual( (0, 0), header.Pitch, "a yawn" );
+
+		for ( var effect = 0x4b; effect <= 0x5a; ++effect )
+			Assert.AreEqual( (-8, 8), file.ReadVariations()[file.IndexOf( effect )].Single().Pitch, $"effect {effect}" );
 
 		InAPark( "jungle", park =>
 		{
-			var before = Counted();
+			Voice Last()
+			{
+				lock ( Audio.Lock )
+					return Audio.Voices[^1];
+			}
 
-			Assert.IsTrue( park.SingleScream( 1, -1, Here ), "effect 105, pitch bytes 0 and 0" );
-			Assert.AreEqual( before, Counted() );
+			HashSet<int> Drawn( Func<bool> play, int low, int high, float volume )
+			{
+				var seen = new HashSet<int>();
 
-			Assert.IsTrue( park.SingleScream( 1, 90, Here ), "one of effects 75 to 90, pitch bytes -8 and 8" );
-			Assert.AreEqual( before + 1, Counted() );
+				for ( var turn = 0; turn < 400; ++turn )
+				{
+					// Past the repeat delay a single scream waits out here.
+					Time.Now += 30f;
+					Assert.IsTrue( play(), $"turn {turn}" );
+
+					var voice = Last();
+
+					Assert.IsTrue( park.OneShotPitch >= low && park.OneShotPitch < high, $"a pitch of {park.OneShotPitch}" );
+					Assert.AreEqual( ParkCarSounds.Rate( park.OneShotPitch ), (float)voice.Rate, 0.000001f, $"the rate of pitch {park.OneShotPitch}" );
+					Assert.AreEqual( volume, voice.Volume, 1e-6f, "at the volume it had" );
+
+					seen.Add( park.OneShotPitch );
+					voice.Stop();
+				}
+
+				return seen;
+			}
+
+			var putOff = Drawn( () => park.PutOff( Here ), -5, 5, 10f / 60f * 0.33f );
+
+			for ( var pitch = -5; pitch <= 4; ++pitch )
+				Assert.IsTrue( putOff.Contains( pitch ), $"no put-off of 400 drew pitch {pitch}" );
+
+			var scream = Drawn( () => park.SingleScream( 1, 90, Here ), -8, 8, 35f / 60f * 0.33f );
+
+			for ( var pitch = -8; pitch <= 7; ++pitch )
+				Assert.IsTrue( scream.Contains( pitch ), $"no single scream of 400 drew pitch {pitch}" );
+
+			// Each of the two with nothing to draw is asked after a pitch that is not nought, which it must not keep.
+			bool After( Func<bool> play )
+			{
+				while ( park.OneShotPitch == 0 )
+					Assert.IsTrue( park.PutOff( Here ) );
+
+				return play();
+			}
+
+			Assert.AreEqual( 1, Drawn( () => After( () => park.SingleScream( 1, -1, Here ) ), 0, 1, 35f / 60f * 0.33f ).Count, "effect 105" );
+			Assert.AreEqual( 1, Drawn( () => After( () => park.Yawn( Here ) ), 0, 1, 35f / 60f * 0.33f ).Count, "a yawn" );
+
+			Assert.AreEqual( MathF.Pow( 2f, -6f / 96f ), ParkCarSounds.Rate( -5 ), 0.000001f, "a pitch of -5 is six 96ths of an octave down" );
+			Assert.AreEqual( 1f, ParkCarSounds.Rate( 0 ) );
+			Assert.AreEqual( 0, Unimplemented.Summary.Where( gap => gap.What == "KIDS_ONE_SHOT_PITCH" ).Sum( gap => gap.Times ) );
 		} );
 	}
 

@@ -759,13 +759,22 @@ public sealed class ParkAudio : Entity
 	/// <c>FUN_0051bc40</c> after it): the picked variation's own volume, its bytes or a draw between them.
 	/// </summary>
 	private float OneShotGain( SoundCategoryFile.Variation header )
-	{
-		// The original's one-shot is given a pitch too (FUN_006bc410); none is set here.
-		if ( header.Pitch.Low != header.Pitch.High )
-			Unimplemented.Report( "KIDS_ONE_SHOT_PITCH" );
+		=> ChannelGain( Controlled( header, 1, 0, 0, _screamRandom ) );
 
-		return ChannelGain( Controlled( header, 1, 0, 0, _screamRandom ) );
+	/// <summary>
+	/// The rate a one-shot of the kids' category plays at: its pitch, drawn between the picked variation's two
+	/// bytes as its channel is set up (<c>FUN_006bc410</c>: <c>FUN_006bc170</c>; <c>docs/exe/audio.md</c>,
+	/// "A one-shot's pitch"), kept in <see cref="OneShotPitch"/> for the caller's line in the log.
+	/// </summary>
+	private float OneShotRate( SoundCategoryFile.Variation header )
+	{
+		OneShotPitch = Controlled( header, 2, 0, 0, _screamRandom );
+
+		return ParkCarSounds.Rate( OneShotPitch );
 	}
+
+	/// <summary>The pitch, in 96ths of an octave, the last one-shot of the kids' category drew.</summary>
+	internal int OneShotPitch { get; private set; }
 
 	/// <summary>
 	/// Stops a ride screaming - <c>STOPSCREAM</c>: its own chain is cut and forgotten, and no other
@@ -786,7 +795,8 @@ public sealed class ParkAudio : Entity
 	/// <summary>
 	/// <c>SINGLESCREAM</c> - one scream, once, belonging to nobody: the engine keeps no handle for it
 	/// and sets no level (<c>FUN_00551320</c> and <c>FUN_00551560</c>, neither of which touches
-	/// <c>FUN_0051bc40</c>), so it plays at its variation's own volume (<see cref="OneShotGain"/>). See
+	/// <c>FUN_0051bc40</c>), so it plays at its variation's own volume (<see cref="OneShotGain"/>) and at a pitch drawn from it
+	/// (<see cref="OneShotRate"/>: -8 to 7 on effects 75 to 90). See
 	/// <see cref="SingleScreamEffectFor"/> for which one.
 	/// </summary>
 	/// <returns>Whether anything started.</returns>
@@ -803,7 +813,7 @@ public sealed class ParkAudio : Entity
 			return false;
 		}
 
-		var voice = _kids.Play( effect, bus: AudioBus.Effects, position: at, ownRange: true, gain: OneShotGain );
+		var voice = _kids.Play( effect, bus: AudioBus.Effects, position: at, ownRange: true, gain: OneShotGain, rate: OneShotRate );
 
 		if ( voice == null )
 			return false;
@@ -811,7 +821,7 @@ public sealed class ParkAudio : Entity
 		_screamSamples.Add( voice.Name );
 
 		Log.Info( $"Park audio: single scream, band {band} level {level} effect {effect} "
-			+ $"sample '{voice.Name}' volume {voice.Volume:0.0000} at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
+			+ $"sample '{voice.Name}' volume {voice.Volume:0.0000} pitch {OneShotPitch} at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
 
 		return true;
 	}
@@ -826,7 +836,8 @@ public sealed class ParkAudio : Entity
 	/// </summary>
 	/// <remarks>
 	/// The engine sets no level for it (<c>Sound_PlayEffect</c> with no handle, no <c>FUN_0051bc40</c>), as
-	/// for <c>SINGLESCREAM</c>, so it plays at its variation's own volume (<see cref="OneShotGain"/>).
+	/// for <c>SINGLESCREAM</c>, so it plays at its variation's own volume (<see cref="OneShotGain"/>) and at a
+	/// pitch drawn from it (<see cref="OneShotRate"/>: -5 to 4).
 	/// It is not held back by the repeat delay: a sale puts several guests off at once, and the original
 	/// throttles nothing.
 	/// </remarks>
@@ -837,12 +848,12 @@ public sealed class ParkAudio : Entity
 			return false;
 
 		var voice = _kids.Play( PutOffEffect, respectDelay: false, bus: AudioBus.Effects,
-			position: at, ownRange: true, gain: OneShotGain );
+			position: at, ownRange: true, gain: OneShotGain, rate: OneShotRate );
 
 		if ( voice == null )
 			return false;
 
-		Log.Info( $"Park audio: put off, effect {PutOffEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} "
+		Log.Info( $"Park audio: put off, effect {PutOffEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} pitch {OneShotPitch} "
 			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0}) range {voice.Range ?? 0f:0} gain {voice.DistanceGain:0.0000}" );
 
 		return true;
@@ -910,12 +921,12 @@ public sealed class ParkAudio : Entity
 			return false;
 
 		var voice = _kids.Play( YawnEffect, respectDelay: false, bus: AudioBus.Effects,
-			position: at, ownRange: true, gain: OneShotGain );
+			position: at, ownRange: true, gain: OneShotGain, rate: OneShotRate );
 
 		if ( voice == null )
 			return false;
 
-		Log.Info( $"Park audio: yawn, effect {YawnEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} "
+		Log.Info( $"Park audio: yawn, effect {YawnEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} pitch {OneShotPitch} "
 			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
 
 		return true;

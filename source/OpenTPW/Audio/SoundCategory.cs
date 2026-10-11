@@ -137,9 +137,14 @@ public sealed class SoundCategory
 	/// Given, the volume is what it makes of the picked variation's header, and <paramref name="volume"/> is not
 	/// read: the original's voice takes its volume from its variation (<c>FUN_006bc090</c>).
 	/// </param>
+	/// <param name="rate">
+	/// Given, the voice plays at the rate it makes of the picked variation's header, asked after
+	/// <paramref name="gain"/> as the original asks for its pitch after its volume (<c>FUN_006bc410</c>).
+	/// </param>
 	public Voice? Play( int id, float volume = 1f, bool loop = false, float fadeInSeconds = 0f,
 		bool respectDelay = true, AudioBus bus = AudioBus.Effects, Vector3? position = null, float? range = null,
-		bool ownRange = false, Func<SoundCategoryFile.Variation, float>? gain = null )
+		bool ownRange = false, Func<SoundCategoryFile.Variation, float>? gain = null,
+		Func<SoundCategoryFile.Variation, float>? rate = null )
 	{
 		var effect = _effects.FirstOrDefault( candidate => candidate.Id == id );
 
@@ -165,7 +170,12 @@ public sealed class SoundCategory
 			? float.PositiveInfinity
 			: Time.Now + clip.Duration + (float)effect.RepeatDelay.TotalSeconds;
 
-		return Audio.Play( clip, volume, loop, fadeInSeconds, bus, position, range );
+		var voice = Audio.Play( clip, volume, loop, fadeInSeconds, bus, position, range );
+
+		if ( voice != null && rate != null && variation < effect.Headers.Count )
+			voice.SetRate( rate( effect.Headers[variation] ) );
+
+		return voice;
 	}
 
 	/// <summary>

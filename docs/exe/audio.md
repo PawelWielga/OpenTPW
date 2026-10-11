@@ -555,9 +555,8 @@ most on another. The two checks written first each missed on their own terms: on
 mixer steps to the nearest sample, reaches in 22 of 34. Eleven bugs put back (`q297/mutations.py`): all eleven fail
 a test.
 
-**Not built:** a kids' one-shot's pitch (a single scream's bytes are -8 and 8, a guest put off's -5 and 5), counted
-as `KIDS_ONE_SHOT_PITCH`; the parameter set's apply on a playing child (`0x006bbbe0`), which no shipped scream's
-variation asks for.
+**Not built:** the parameter set's apply on a playing child (`0x006bbbe0`), which no shipped scream's variation
+asks for. A kids' one-shot's pitch is "A one-shot's pitch", below.
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
@@ -566,6 +565,58 @@ variation asks for.
 | `0x006c3ae0` | — | The child's request fill: sample, volume, group, pitch, the range's mapping | Disassembly |
 | `0x006bc170` | — | A voice's pitch: by a controller over the variation's bytes `+0x0e`/`+0x0f`, or a draw between them | Decompiled |
 | `0x006c5170` | — | A request's pitch: `+0x24`, flag `0x20` | Decompiled |
+
+## A one-shot's pitch
+
+Read for Q298 and measured in the running original (`original/mixfreq.py`, `q298/orig/`).
+
+**A plain one-shot draws a pitch as it starts.** An effect whose flags word has bit `0x4` clear is made by
+`FUN_006bd7b0` ("A voice's two controllers", above), whose voice (`FUN_006b71d0`) wears vtable `0x0070a3e8`: slot
+`+0x14` is `0x006bd800`, the start a scream's child shares, and slot `+0x44` is `FUN_006bc410`, the channel's set-up.
+That asks for the volume (`FUN_006bc090`, unless the voice holds `0x8000`) and then the pitch (`FUN_006bc170`, unless
+it holds `0x10000`; `FUN_006bbe90`, which makes the voice's flags from the effect's, sets neither). With no
+controller on the pitch the draw is the generator at `0x00fb1f20` modulo the high byte less the low, plus the low:
+from the low byte up to, not including, the high one. `Sound_PlayEffect` with no handle sets nothing afterwards
+(`FUN_004faa00`, a person's sound, is the place and the call alone), so the kids' one-shots play as their variations
+say: **a guest put off (`0x80`, bytes -5 and 5) at a pitch of -5 to 4, a single scream of effects 75 to 90 (-8 and 8)
+at -8 to 7**, and a yawn (`0x7e`) and effects 105, 106, 108 and 109, whose two bytes are both nought, at the sample's
+own rate.
+
+**Measured** (predicted first, `q298/PREDICTION.txt`; Q265's `bounce.TPWS`, the Belly Bounce broken through its
+script's `VAR_BREAKSTAT` so its queue is put out). The put-off's channels are 3D with a far end of 100 at 10 of 127,
+at the queue's cells; no other placed effect of the global or the Lost Kingdom's categories makes that pair. The ten
+frequencies the rule gives for a 22050 Hz sample are 21115, 21268, 21422, 21578 and 21734 (-5 to -1), 22050, and
+22371, 22533, 22696 and 22861 (1 to 4).
+
+- Left alone, with the ride broken every 30 s, two put-offs sounded in 270 s, both at 22050 (`mixfreq.log`): the
+  queue stays empty for a while after a break, and only a guest whose id divides by eight sounds (`0x0050133d`).
+- With the ride broken only once its queue had stood four seconds, and the id's mask byte at `0x0050133f` written
+  nought in the running game so that every guest dismissed sounds (`original/breakq.py`; the sound's own path is
+  not touched), nine breaks in 330 s made **39 lines, at all ten frequencies and no other** (`mixfreq2.log`): 21115
+  (2), 21268 (2), 21422 (4), 21578 (2), 21734 (1), 22050 (1), 22371 (7), 22533 (6), 22696 (7), 22861 (7). None read
+  20963 or 23026, a pitch of -6 or 5. Eleven more lines are the same channels turned down to 4 of 127 as they
+  played, at the same frequencies; what turns them down was not read.
+
+**What OpenTPW does** (`ParkAudio.OneShotRate`, `OneShotPitch`; `SoundCategory.Play`'s `rate`): a single scream, a
+guest put off and a yawn each draw their pitch from the picked variation after their volume, and the voice is set to
+the rate it stands for (`ParkCarSounds.Rate`). Held in the running game (`q298/confirm.py`, fix 4 of 5, control 5 of
+5): twelve put-offs in three breaks of the Belly Bounce, each log line a pitch of -5 to 4 (six values, three below
+nought and nine above), `voices` reading only rates of the ten (0.9576, 0.9786, 0.9857, 1.0219, 1.0293, 1.0368) at a
+volume of 0.0550 as before, and `KIDS_ONE_SHOT_PITCH` counted no more. In the game's own mix the put-off's one sample
+(`bootout.mp2`), matched at every pitch from -8 to 7 over the whole capture, scored 0.948 to 0.951 at four of the
+six pitches the log names, 0.641 and 0.679 at the other two (-5 and 4), and 0.304 at most at the ten it does not:
+the check written first wanted 0.85 at four in five of the named, and missed. The build before read no pitch, a rate
+of 1.0000 every time, the sample at 1.000 on pitch 0 and 0.297 at most on any other, and the gap counted twelve
+times. Twelve bugs put back (`q298/mutations.py`): all twelve fail a test.
+
+**In no game run of either game:** a single scream (the tests alone hold its -8 to 7 here), a yawn's rate, a sale's
+put-off of a rider.
+
+| Address | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x0070a3e8` | — | vtable of a plain one-shot's voice: `+0x14` `0x006bd800`, `+0x40` `0x006bc040`, `+0x44` `FUN_006bc410`, `+0x48` `FUN_006bc240` | Read from the image |
+| `0x006bd7b0` | — | The play entry's one-shot arm: the voice made (`FUN_006b71d0`) and started through slot `+0x10` | Decompiled |
+| `0x0050133d` | — | `FUN_005012f0`'s test of the dismissed guest's id against 7, before kids `0x80` | Disassembly |
 
 ## The crowd's voice
 

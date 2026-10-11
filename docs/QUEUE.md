@@ -44,12 +44,14 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q298. The writer: what else a made record leaves out.** The old Q297's other pieces, each counted or
+- [ ] **Q299. The writer: what else a made record leaves out.** The old Q298's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q297 (`audio.md`, "A scream's child and its pitch"): a kids' one-shot is given no pitch here
-  (`KIDS_ONE_SHOT_PITCH`: a single scream's bytes are -8 and 8, a guest put off's -5 and 5; the rule is
-  `FUN_006bc410`'s, and a pitch below nought was in no run of either game). A scream child's pitch under
+  From Q298 (`audio.md`, "A one-shot's pitch"): in no game run of either game: a single scream
+  (the tests alone hold its -8 to 7), a yawn's rate, a sale's put-off of a rider. The original's put-off channels
+  are turned down to 4 of 127 as they play, by what was not read. The mix check missed its own bar (0.641 and 0.679
+  at two of six logged pitches; why those two score low was not looked at). Not listened to by a person.
+  From Q297 (`audio.md`, "A scream's child and its pitch"): a scream child's pitch under
   `SCREAMLEVEL`'s apply (`0x006bbbe0`) is not built: no shipped scream names its parameter. In no game run:
   bands 2 to 4 (effects 72 to 74), a bought ride. Not listened to by a person. The one-shot's slot `+0x40`
   (`0x006c3d80`) was read for the wait alone.
