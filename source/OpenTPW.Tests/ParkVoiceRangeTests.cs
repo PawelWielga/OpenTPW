@@ -142,7 +142,7 @@ public class ParkVoiceRangeTests
 
 			var at = new Vector3( 515f, 235f, 0f );
 
-			park.Thunder( at + new Vector3( 0f, 0f, 300f ) );
+			Assert.IsTrue( park.Thunder( at + new Vector3( 0f, 0f, 300f ) ) );
 			Assert.AreEqual( 1500f, Last().Range );
 
 			// Each one-shot the engine sets no level for plays at its variation's own volume, as a channel's

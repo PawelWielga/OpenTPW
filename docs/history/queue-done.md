@@ -6007,6 +6007,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   through a go where the build before read 0.6800, and the game's own mix was 0.415 of that build's, 0.4125 owed
   (`q299/confirm.py`, fix 5 of 5, control 3 of 3); nine bugs put back, seven fail a test, two a test cannot see.
   `docs/exe/audio.md`, "A channel's volume".
+- [x] **Q300. Thunder plays at the channel's own number, at a pitch it draws.** Done 2026-10-11 (branch
+  `alexah/424-thunder-at-the-channels-number`). I split the old Q300: this is its thunder piece, and every other
+  piece is Q301. The original's mixer, polled with the weather's `mLightning` held at 1, read 30 thunders, each at
+  64 of 127 over a far end of 1500 at a height of 300, at eight frequencies and no other, 21268 to 22696
+  (`q300/orig/a-load.log`); here thunder takes its variation's volume and draws its pitch (`ParkAudio.Thunder`):
+  thirteen thunders read 0.3520 at pitches of -4 to 3 where the build before read 0.4000 at none, each sample in
+  the game's own mix at its pitch (`q300/confirm.py`, fix 5 of 5, control 4 of 4); eleven bugs put back, all
+  eleven fail a test. `docs/exe/audio.md`, "A channel's volume".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

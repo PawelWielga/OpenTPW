@@ -44,9 +44,14 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q300. The writer: what else a made record leaves out.** The old Q299's other pieces, each counted or
+- [ ] **Q301. The writer: what else a made record leaves out.** The old Q300's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q300 (`audio.md`, "A channel's volume"): a thunder is still held back by the per-effect wait (one bolt of
+  fourteen had none; the original sounded two 12 ticks apart: Q43); the rain's bed and the lobby's own thunder
+  are not through `ChannelGain`; one of the original's thirty thunders opened at 24 of 127 for a second, by what
+  was not read; a real storm was in no run of either game (the original's bolts were a held flag's, these the
+  console's), and the bolt is not made out in this game's frame. Not listened to by a person.
   From Q299 (`audio.md`, "A channel's volume"): the engine's sample was not found in the mix (its pitch moves each
   tick; the mix was measured whole); a wrong volume at the voice's start is seen by no test (the apply follows in
   the same call); the original's channel at (435, 255), 64 of 127 at a far end of 100, is not named. In no game
@@ -67,8 +72,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q268 (`audio.md`, "A channel's volume"):
   Flat channels at 1, 2, 3 and 4 of 127 in the original are not named. The staff's voices were not measured in
   the mix (their volumes are `voices`' and the log's). A crowd over 15 was in no game run of either game.
-  From Q267 (`audio.md`, "A channel's volume"): thunder
-  (`ThunderVolume`) and the interface's flat effects are not through `ChannelGain`. No scream was made
+  From Q267 (`audio.md`, "A channel's volume"): the interface's flat effects are not through `ChannelGain`. No scream was made
   at a level other than 20 in the original. In no game run: a single scream, a guest put off (10 of 127), a yawn; the options' two volume sliders do not move `ChannelGain`'s 75 and 60. The
   request mask's bit `0x80000` arm of `FUN_006c5690` (a volume scaled again by `params + 0x9c` over a hundred)
   is not read.

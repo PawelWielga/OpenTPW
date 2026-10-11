@@ -35,6 +35,7 @@ place to look for tools. Each file's docstring is its manual.
 | `original/crowdmix.py PID SECS` | The original's memory: the crowd's voice (level, handle, keys, values, the current variation with its weight, the sample record) beside every flat mixer channel's volume of 127, in ONE log stamped with the wall clock and `mGameTick`, a line a change, 20 ms a poll. Use it where `crowd.py` and `mixer.py` would have to be held together by eye; `mixer.py` prints nothing for a change of volume alone. A `POLL` for `loadfile.sh` |
 | `original/mixfreq.py PID SECS [2d]` | The original's memory, inside `QMixer.dll`: every open 3D channel's place, far end, volume of 127 and FREQUENCY (`+0x1f4`), a stamped line each time one opens or changes, and at the end a count by far end, volume and frequency. Which pitch each sample of an effect plays at; `2d` reads the flat channels instead. A `POLL` for `loadfile.sh` |
 | `original/breakq.py PID SECS THING [all]` | The original's memory, **written**: breaks a ride (`VAR_BREAKSTAT`) each time it is open with a queue that has stood four seconds, so every break puts a queue out, a line a break. With `all` it first writes nought over the mask byte at `0x0050133f`, so every guest dismissed from a queue plays kids `0x80`, not one in eight. Stop the original afterwards |
+| `original/thingpoke.py PID SECS KIND THING:OFFSET:FMT=VALUE ...` | The original's memory, **written**: holds words of things at given values, written again whenever they read otherwise, a line a write; refuses a thing whose type byte (`+2`) is not KIND. `150 15 7:0x38:B=1` holds the weather's `mLightning`, so bolts and thunder come on a clear day. `thingwords.py` reads the same words. Stop the original afterwards |
 | `original/mixpairs.py [<mixer.py log>]` | A `mixer.py` log against the category files: every pair of a 3D channel's far end and volume of 127, with the variation volumes of that range that `round( v x 0.75 )` makes it from. Says which effects' channels a log holds, and that none plays at a number the files cannot make |
 | `original/modelboxes.py PID [FIRST LAST]` | The original's memory: each thing's model record's cell rectangle (`+0xc0`, `+0xc4`), whether it has a `.hmp`, the box's middle (where its scream is sounded) and its base height. Read the objects' lines (the stock park's are things 13 to 24): a person's `+0x20` is no model handle, and its line is noise |
 | `original/research.py <in> <out> <item>` | A copy of a jungle park file with one item marked researched, so Instant Action's buy list offers it |
@@ -120,6 +121,11 @@ whole list):
   `bumpers` prints the lead car's `volume N playing at G`. Its pitch moves each tick, so no template finds it in
   the mix: with `bus music 0` compare the mix's rms over the go's first 12 s between two builds (`q299/confirm.py`,
   Q299).
+- **Thunder, read and measured:** `bolt 515 235` aims a bolt and its thunder follows inside three seconds, at the
+  bolt's top, which leans up to 50 off: leave nine seconds between bolts or the effect's wait drops one. Its place
+  moves the pan, so match its sample in each channel of the capture apart and take the root of the two gains'
+  squares: over the volume times `voices`' distance gain that is one number, 0.66, for every thunder
+  (`q300/confirm.py`, Q300).
 - **The crowd's voice alone in the mix:** `hover 50 24` holds the pointer's cell on the Belly Bounce's queue
   whatever the camera does, so with `bus music 0` and `camera 1100 1100 110 180` the mix is the crowd's flat
   voice and nothing else. `voices` names each sample as `<name> Effects flat`; match each at its six pitches
@@ -207,6 +213,10 @@ GH=766` there, or the pointer is off):
   `q257o/orig/hotpot-later2.TPWS` (a pot in its go): the engine is the 3D channel at a far end of 100 that moves
   inside the pot (x 426 to 456, z 244 to 252), 51 of 127, some 2,000 lines as its frequency follows the boat's
   speed; a fixed channel at (435, 255) is another sound (`q299/orig/run.sh`, Q299).
+- **Its thunder, without a storm:** `thingpoke.py PID 150 15 7:0x38:B=1` beside `mixfreq.py PID 180` on Q265's
+  `bounce.TPWS`: a bolt every five seconds or so, each thunder a 3D channel at a far end of 1500 and a height of
+  300, 30 in 150 s. The game writes the flag back to nought every 163 ticks, as its weather changes, so it must be
+  held, not written once (`q300/orig/run.sh`, Q300).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).

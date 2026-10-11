@@ -58,14 +58,6 @@ public sealed class ParkAudio : Entity
 	private const int RainEffect = 33;
 
 	/// <summary>
-	/// How loud thunder is, and this one is <b>carried across on evidence rather than chosen</b>: the
-	/// lobby's thunder and a park's are the same recordings. SfxHD.sdt, which the lobby's
-	/// globallobbysfx draws on, holds Thunder2, Thunder3 and Thunder4 as well, two of the three at
-	/// byte-identical sizes to the ambient bank's. So LobbyAudio's measured 0.40 is this park's too.
-	/// </summary>
-	private const float ThunderVolume = 0.40f;
-
-	/// <summary>
 	/// The loudest the rain bed gets, at every drop the balance file allows.
 	///
 	/// <para>
@@ -598,14 +590,26 @@ public sealed class ParkAudio : Entity
 	/// The original plays it as a placed sound - Sound_PlayEffect's fourth, fifth and sixth arguments
 	/// are a position, not the single volume a decompile makes them look like - and the place it
 	/// passes is the bolt's <i>top</i>, three hundred units up. It is heard over its variation's own range, 1500
-	/// (<see cref="SoundCategory.RangeOf"/>).
+	/// (<see cref="SoundCategory.RangeOf"/>). The engine sets no level for it (<c>FUN_00512880</c>: the call
+	/// alone), so it plays at its variation's own volume (<see cref="OneShotGain"/>: 85 is 64 of 127 beside the
+	/// music's 60) and at a pitch drawn from it (<see cref="OneShotRate"/>: -4 to 3).
 	/// </summary>
-	internal void Thunder( Vector3 at )
+	/// <returns>Whether anything started.</returns>
+	internal bool Thunder( Vector3 at )
 	{
-		if ( !Audio.Ready )
-			return;
+		if ( !Audio.Ready || _ambient is not { IsValid: true } )
+			return false;
 
-		_ambient?.Play( ThunderEffect, ThunderVolume, bus: AudioBus.Effects, position: at, ownRange: true );
+		var voice = _ambient.Play( ThunderEffect, bus: AudioBus.Effects, position: at, ownRange: true,
+			gain: OneShotGain, rate: OneShotRate );
+
+		if ( voice == null )
+			return false;
+
+		Log.Info( $"Park audio: thunder, effect {ThunderEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} pitch {OneShotPitch} "
+			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0}) range {voice.Range ?? 0f:0} gain {voice.DistanceGain:0.0000}" );
+
+		return true;
 	}
 
 	/// <summary>
@@ -755,14 +759,14 @@ public sealed class ParkAudio : Entity
 	private readonly Random _screamRandom = new();
 
 	/// <summary>
-	/// A one-shot of the kids' category the engine sets no level for (<c>Sound_PlayEffect</c> with no
+	/// A one-shot the engine sets no level for, the kids' or the ambient's thunder (<c>Sound_PlayEffect</c> with no
 	/// <c>FUN_0051bc40</c> after it): the picked variation's own volume, its bytes or a draw between them.
 	/// </summary>
 	private float OneShotGain( SoundCategoryFile.Variation header )
 		=> ChannelGain( Controlled( header, 1, 0, 0, _screamRandom ) );
 
 	/// <summary>
-	/// The rate a one-shot of the kids' category plays at: its pitch, drawn between the picked variation's two
+	/// The rate a one-shot of the kids' category, or thunder, plays at: its pitch, drawn between the picked variation's two
 	/// bytes as its channel is set up (<c>FUN_006bc410</c>: <c>FUN_006bc170</c>; <c>docs/exe/audio.md</c>,
 	/// "A one-shot's pitch"), kept in <see cref="OneShotPitch"/> for the caller's line in the log.
 	/// </summary>
@@ -773,7 +777,7 @@ public sealed class ParkAudio : Entity
 		return ParkCarSounds.Rate( OneShotPitch );
 	}
 
-	/// <summary>The pitch, in 96ths of an octave, the last one-shot of the kids' category drew.</summary>
+	/// <summary>The pitch, in 96ths of an octave, the last one-shot drew.</summary>
 	internal int OneShotPitch { get; private set; }
 
 	/// <summary>

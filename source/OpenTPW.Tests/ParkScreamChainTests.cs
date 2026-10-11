@@ -1205,6 +1205,54 @@ public class ParkScreamChainTests
 	}
 
 	/// <summary>
+	/// <b>Thunder plays at its variation's own volume and draws its pitch</b> (<c>docs/exe/audio.md</c>, "A
+	/// channel's volume" and "A one-shot's pitch"): the global ambient's effect 32 holds 85 and 85, which is 64 of
+	/// 127 beside the music's 60, and pitch bytes -4 and 4, so a draw of -4 to 3, over a range of 1500.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the old flat 0.40; the volume through no channel's rounding; no rate handed over; the
+	/// high pitch byte drawn too; another effect's bytes read.
+	/// </remarks>
+	[TestMethod]
+	public void ThunderPlaysAtItsVariationsVolumeAndDrawsItsPitch()
+	{
+		var file = new SoundCategoryFile( "global/sound", "ambient" );
+		var header = file.ReadVariations()[file.IndexOf( 32 )].Single();
+
+		Assert.AreEqual( (85, 85), header.Volume );
+		Assert.AreEqual( (-4, 4), header.Pitch );
+		Assert.AreEqual( 1500f, header.Range );
+
+		InAPark( "jungle", park =>
+		{
+			var seen = new HashSet<int>();
+
+			for ( var turn = 0; turn < 400; ++turn )
+			{
+				// Past the repeat delay thunder waits out here.
+				Time.Now += 30f;
+				Assert.IsTrue( park.Thunder( Here + new Vector3( 0f, 0f, 300f ) ), $"turn {turn}" );
+
+				Voice voice;
+
+				lock ( Audio.Lock )
+					voice = Audio.Voices[^1];
+
+				Assert.AreEqual( 64f / 60f * 0.33f, voice.Volume, 1e-6f, "85 is 64 of 127 beside the music's 60" );
+				Assert.AreEqual( 1500f, voice.Range );
+				Assert.IsTrue( park.OneShotPitch >= -4 && park.OneShotPitch < 4, $"a pitch of {park.OneShotPitch}" );
+				Assert.AreEqual( ParkCarSounds.Rate( park.OneShotPitch ), (float)voice.Rate, 0.000001f, $"the rate of pitch {park.OneShotPitch}" );
+
+				seen.Add( park.OneShotPitch );
+				voice.Stop();
+			}
+
+			for ( var pitch = -4; pitch <= 3; ++pitch )
+				Assert.IsTrue( seen.Contains( pitch ), $"no thunder of 400 drew pitch {pitch}" );
+		} );
+	}
+
+	/// <summary>
 	/// <b>A second start over a held scream is refused, and the first screams on held by nothing</b>: the refusal's
 	/// nought goes over the script's handle (<c>0x00555ee6</c>). The script holds no scream after it, its stop finds
 	/// none, the chain let go goes on making children through a later start and stop, and only the park's end cuts it.

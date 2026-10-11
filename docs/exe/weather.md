@@ -249,6 +249,7 @@ Two independent methods agree exactly, and a third confirms it live: the runtime
 | `0x00512ffd` | — | `PUSH 0x1` — the snow branch **stops** `+0x54` | Disassembly |
 
 - **Thunder is POSITIONAL**: `Sound_PlayEffect(0, cat_ambient, 0x20, x, y, z)`, where the position is `mLastLightningLocation` — the **TOP** of the bolt, y = 300. The trailing "float" in the decompile is three `__ftol` arguments, **not** a volume.
+- **Thunder is 64 of 127 at one of eight pitches**: its variation's volume of 85 times the sound effects' 0.75, and a pitch drawn from -4 to 3, read on the original's mixer channels (`audio.md`, "A channel's volume").
 - **Thunder is delayed after the flash** by `ThunderStartsThisFarAway + rand % ThunderRandomiser` weather ticks — light before sound, deliberately.
 - **The selector passed to `FUN_0051bc40` is not a loop selector.** The handle identifies the voice; the selector indexes one of four per-voice control slots whose key byte comes from the sample record, which is why music / kids / rain use 4 / 7 / 8.
 - **The lobby's thunder and a park's are the SAME recordings.** `SfxHD.sdt` also holds Thunder2/3/4, two of the three at byte-identical sizes, so a `ThunderVolume` measured in the lobby carries across on evidence rather than by assumption.

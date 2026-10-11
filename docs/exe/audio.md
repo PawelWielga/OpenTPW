@@ -322,8 +322,8 @@ listing's and the files' alone.
 scream's child takes its variation's volume (`ScreamChildVolume`), and a single scream, a guest put off and a
 yawn the picked variation's (`SoundCategory.Play`'s `gain`); the land's own sounds go through the same sum.
 `SCREAMLEVEL` moves the playing child's volume only where its variation names the parameter on its volume, which
-no shipped scream does. The staff's voices and the crowd's take it too (Q268, below), and a bumper ride's engine (Q299, below). **Not through it yet:**
-thunder, and every flat effect of the interface.
+no shipped scream does. The staff's voices and the crowd's take it too (Q268, below), a bumper ride's engine (Q299, below) and thunder (Q300, below). **Not through it yet:**
+every flat effect of the interface, the rain's bed, and the lobby's own thunder.
 
 **Measured here, 2026-10-10** (`q267/confirm.py`, 4 of 4): with the camera on the Belly Bounce `voices` read ten
 scream samples at (525, 250), each at a volume of 0.1925 (35 over 60 of the music's 0.33), 24.26 off at a gain of
@@ -379,6 +379,28 @@ the voice as it starts, which the apply that follows in the same call sets right
 | `0x006d2980` | — | The wrapper's slot `+0x80`: 0 to 127 through the table to `QSWaveMixSetVolume` | Decompiled |
 | `0x00782e40` | — | 128 words, `n x 258`, 32,767 at 127 | Read |
 | `0x006bc090` | — | A voice's volume from its variation's bytes | Decompiled |
+
+**Thunder, named in the original's mixer and built** (Q300; predicted first, `q300/PREDICTION.txt`, 1 of 1). The
+global ambient's effect 32 is a plain one-shot (flags nought) of one variation: volume bytes 85 and 85, pitch bytes
+-4 and 4, range 1500. `FUN_00512880` plays it by `Sound_PlayEffect` at the bolt's top and sets nothing after it, so
+the volume is `round( 85 x 0.75 )`, 64 of 127, and the pitch a draw of -4 to 3 ("A one-shot's pitch", below). With
+the weather thing's `mLightning` held at 1 in the running original (`original/thingpoke.py`; quality 59, a clear
+day, so the bolts are the flag's and no storm's), `mixfreq.py` over 150 s read **30 thunders, each a 3D channel
+with a far end of 1500 at 64 of 127 and a height of 300**, anywhere on the map, at eight frequencies and no other:
+21268 (2), 21422 (4), 21578 (6), 21734 (4), 22050 (5), 22371 (1), 22533 (6), 22696 (2); none at 21115 or 22861
+(`q300/orig/a-load.log`). One of the thirty opened at 24 of 127 and read 64 a second later, at the same frequency:
+what turned it down was not read. Two thunders sounded 12 ticks apart, so nothing there holds one back for another.
+
+Here (`ParkAudio.Thunder`, through `OneShotGain` and `OneShotRate`): `q300/confirm.py`, fix 5 of 5 and control 4
+of 4, fourteen bolts aimed at the Belly Bounce nine seconds apart. Thirteen thunders' log lines and `voices` read a
+volume of 0.3520 (64 over 60 of the music's 0.33) over 1500, at pitches -4, -3, -2, -1, 0, 2 and 3, and each one's
+sample was in the game's own mix at a score of 0.946 to 1.000, its own pitch the best-matching of twelve tried for
+all thirteen. The mix's gain, a channel at a time, over the volume times the distance gain read a median of 0.6654
+(0.6464 to 0.7038); the build before read 0.4000 and a rate of 1.0000 on every one of eleven, and the same number
+at 0.6636 (0.6533 to 0.6882), so a thunder is 0.88 of what it was. Eleven bugs put back (`q300/mutations.py`): all
+eleven fail a test. **Not done:** one bolt of the fix's fourteen and three of the control's had no thunder, which
+the per-effect wait still holds back here ("How the engine plays an effect", above); a real storm was in no run
+of either game (the original's bolts were the held flag's, these the console's); not listened to by a person.
 
 ## Where positional audio actually lived
 
@@ -598,7 +620,8 @@ from the low byte up to, not including, the high one. `Sound_PlayEffect` with no
 (`FUN_004faa00`, a person's sound, is the place and the call alone), so the kids' one-shots play as their variations
 say: **a guest put off (`0x80`, bytes -5 and 5) at a pitch of -5 to 4, a single scream of effects 75 to 90 (-8 and 8)
 at -8 to 7**, and a yawn (`0x7e`) and effects 105, 106, 108 and 109, whose two bytes are both nought, at the sample's
-own rate.
+own rate. Thunder is the same voice in the ambient category (effect 32, bytes -4 and 4: -4 to 3), held in
+the original's mixer and built by Q300 ("A channel's volume", above).
 
 **Measured** (predicted first, `q298/PREDICTION.txt`; Q265's `bounce.TPWS`, the Belly Bounce broken through its
 script's `VAR_BREAKSTAT` so its queue is put out). The put-off's channels are 3D with a far end of 100 at 10 of 127,
