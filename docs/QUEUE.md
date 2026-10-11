@@ -44,6 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
+- [ ] **Q291. The older decode of `park-engine.md` and `park.md` that no review has read.** Left by the week-end
+  audit's stage 8, and first at Alexah's word (2026-10-11). Sixteen areas, 145 blocks written between 2026-09-26
+  and 2026-10-06 that cite an address. Their evidence files are in the harness folder,
+  `audit-2026-10-10/ev/s8b-07.md` to `s8b-23.md`, with every cited function dumped beside them in `ghidra/` (made
+  at `df6c85b7`: make them again if the pages have moved, `s8.py` and `s1/gh_dump.py` there). One `tpw-verify` an
+  area sets each statement against the listing, then a second reader goes over what is applied. The part done
+  found 30 wrong statements in 1,672. A wrong reading that is built into code becomes an item of its own. No game
+  run. Confirm: the count of statements that held and that were corrected, and the gate.
+
 - [ ] **Q269. The writer: what else a made record leaves out.** The old Q268's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
@@ -1015,6 +1024,24 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   Measure both files' size before and after, and confirm in a fresh session that a matching file brings its rule in
   and a non-matching one does not. Borrowed from Rootstock (github.com/Mazhron/rootstock-os); nothing else of it is
   taken. Alexah's yes 2026-10-01, for after the weekly reset. No game run.
+
+- [ ] **Q292. Cut `docs/VERIFYING.md` to its rules.** At Alexah's word (2026-10-11). The page is 770 lines, each
+  rule with the story of the mistake behind it; `MEMORY-DIET.md` set it 85. Each rule keeps its number and one
+  line of why, and its story moves, as written, to `docs/history/`. No rule is dropped or renumbered: every page
+  and note that cites a rule by number must still find it (grep `rule [0-9]` first). No game run.
+
+- [ ] **Q293. Three `FUN_` labels Ghidra has not disassembled, and nineteen names the docs do not use.** From the
+  week-end audit (stage 1). `ride-operation.md`'s rows on the loans name `FUN_004d0970`, `FUN_004d0a00` and
+  `FUN_004d0810`, which are undefined bytes in the Ghidra project, so nobody has read them there: disassemble at
+  each, read what it does, and correct the rows. And nineteen functions the docs call `FUN_` have a name in the
+  project (the harness folder's `audit-2026-10-10/findings/s1-ghidra-named.tsv`): write the names in the docs.
+  Nothing in Ghidra is named or made a function without Alexah's word. No game run.
+
+- [ ] **Q294. The FileFormats pages changed since 2026-09-26, against the game's files.** Left by the week-end
+  audit's stage 8. 1,557 layout statements on 22 pages, `saves.md` and `models.md` most of them, packed into 56
+  areas (the harness folder's `audit-2026-10-10/ev/s8a-00.md` to `s8a-55.md`). One `tpw-verify` an area checks
+  each against every file of its kind with the readers (`lib/parkfile.py`, `lib/sfxmap.py`, `lib/md2surf.py`,
+  `wadcat`, the `.RSE` corpus); then the site is built. No game run.
 
 ## C. Alexah's list: cause known, one session each
 

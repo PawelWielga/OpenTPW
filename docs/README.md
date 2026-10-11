@@ -18,8 +18,8 @@ Where the project's memory lives. Code says what; these files say why, and what 
 | FileFormats docs clone | File-format facts: the bytes in a shipped file. A separate repo, `OpenTPW.FileFormats` - see "The FileFormats docs clone" below. | Whenever a format fact is found |
 | `history/` | Superseded plans and per-branch ledgers, **verbatim**. Grep it; never read it whole, and never edit it by hand — history is kept as it was written. | The pre-commit hook, which adds to `queue-done.md` and `not-verified.md` |
 
-**One planned file does not exist yet:** **`ARCHITECTURE.md`** (how a frame runs, how a scene is built,
-who owns the tick, init order).
+**No `ARCHITECTURE.md` is written or planned** (how a frame runs, how a scene is built, who owns the tick, init
+order): the memory diet's last step was closed without it.
 
 ## The FileFormats docs clone
 

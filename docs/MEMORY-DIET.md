@@ -66,6 +66,7 @@ repo (versioned, backed up, readable by humans and by any session) or into git h
 5. Distil `verify-every-ordering.md`. Done 2026-09-20 (`61640a9`).
 6. Write `docs/DECISIONS.md` from the three graphics notes. Done 2026-09-24.
 7. Move the open-item files' work into the queue. Done 2026-09-24.
-8. Write `docs/TOOLING.md` from the recipe notes, and `docs/ARCHITECTURE.md`. **Outstanding:** `ARCHITECTURE.md` is not written, and `TOOLING.md` (the tool list, the recipes found by trial, the original under Proton, the executable's routines under unicorn) does not yet hold the recipe notes.
+8. Write `docs/TOOLING.md` from the recipe notes, and `docs/ARCHITECTURE.md`. **Closed 2026-10-11 at Alexah's word:** `ARCHITECTURE.md` is not written, and the method notes stay in memory, where
+sessions already find them. Nothing of this plan is owed.
 
 Each step is one commit and one short session.

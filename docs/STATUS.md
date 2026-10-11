@@ -49,7 +49,7 @@ Last updated: 2026-10-10. **This header names no branch and no sha, deliberately
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q269** (the writer: what else a made record leaves out; live pieces: the gulls and the sea, the wear by use, the crowd's twin's draw), then Q241j, Q248, Q260 (the park's lens, decode first), Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13: `docs/CLEANUP-PLAN.md`, untracked.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q291** (the older decode of `park-engine.md` and `park.md`, read a second time against the listing), then Q269 (the writer: what else a made record leaves out; live pieces: the gulls and the sea, the wear by use, the crowd's twin's draw), then Q241j, Q248, Q260 (the park's lens, decode first), Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13: `docs/CLEANUP-PLAN.md`, untracked.
 
 ## Not verified on screen
 
