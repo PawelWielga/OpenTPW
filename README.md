@@ -6,7 +6,7 @@
         An open-source re-implementation of <a href="https://en.wikipedia.org/wiki/Theme_Park_World">Sim Theme Park / Theme Park World</a>.
     </p>
     <p align="center">
-        <b>OpenTPW</b> · <a href="https://github.com/OpenTPW/OpenTPW.FileFormats">File Formats</a>
+        <b>OpenTPW</b> · <a href="https://github.com/OpenTPW/OpenTPW.FileFormats">File Formats</a> · <a href="https://maexah.github.io/OpenTPW/">Website</a>
     </p>
 </p>
 
@@ -179,6 +179,7 @@ per command. Add a new command to this table.
 - [`docs/QUEUE.md`](docs/QUEUE.md) - the work queue.
 - [`docs/exe/`](docs/exe) - what the original executable does, decoded.
 - [OpenTPW.FileFormats](https://github.com/OpenTPW/OpenTPW.FileFormats) - the game's file formats, documented.
+- [The website](https://maexah.github.io/OpenTPW/) - a fan site for this fork: what works today, and how to get started.
 
 <details>
 <summary>File format support</summary>

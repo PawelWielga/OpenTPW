@@ -176,6 +176,7 @@ until told to stop. The overnight run of 2026-10-06 was fifteen items in one ses
 The two READMEs (this repo's and the FileFormats clone's) are written for players and newcomers (Alexah, 2026-10-02).
 
 - **One layout.** Centred title, a one-line tagline, then a line linking both repos with the current one in bold.
+  This repo's line also links the fan website (Alexah, 2026-10-11).
   Sections in this order: What this is, how far along it is, Quick start, the repo's own sections, Contributing, License.
 - **One voice.** Speak to the reader as "you", in short, plain, present-tense sentences. Say what to do, not how it
   came about: no history, no storytelling. The same thing is said in the same words in both files.
