@@ -6116,6 +6116,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   state read 1, then said, line 0; on its own file of a Hot Pot, its slots held `(13, 1100, -1, 0x45, 107)`
   after the Bounce's break and `0x45` was said on tick 1870. Thirty-five bugs put back
   (`q307/mutations.py`): thirty-five fail a test.
+- [x] **Q308. The advisor wears his line's prop.** Done 2026-10-11. The response table's `+0x14` and `+0x18` are
+  two props, costume ids of his model put on after every clip's start (`FUN_00598dc0`, `FUN_00598ca0`;
+  `exe/advisor-park.md`, "What he wears for a line"): 5 is the hard hat, the prop of every line about a ride
+  breaking down, 9 the ticket hat, the door's. Built: `AdvisorProps`, `AdvisorModel.Wear`,
+  `ParkAdvisorMessages.Topic.Prop` and `PropsOf`. The stock park's Belly Bounce broken through its script, the
+  line began `wearing 5,0`, `advisor` read `wearing=5,0` and the frame shows him in the yellow hard hat with no
+  antennae, as the original's `q306/orig/a-told.png`; main's build drew him bare-headed. Two predictions of
+  three: the hat's pixel count was predicted over 1500 by a colour rule the paler hat met 638 times (6307 by the
+  rule chosen after). 36 bugs put back, 36 fail a test. Tests 2974. I split the item: its other pieces are Q309.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

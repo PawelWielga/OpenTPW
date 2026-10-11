@@ -59,7 +59,7 @@ Only a successful playback-helper return advances that history; the open and clo
 
 These are meanings from the existing `global-speech-transcripts.tsv`, not freshly heard quotations (its
 342 and 345 rows contain apparent transcription errors). All four response records have gesture **−1**, model/bank
-word **0** (global speech bank), face fields **9/0**. Their trailing values **150/151** are not the message
+word **0** (global speech bank), props **9/0**, the ticket hat. Their trailing values **150/151** are not the message
 IDs or `.sam` ordinals. The advice to open a closed park (samples 1–3) is a different message.
 
 ### Why the stock door is silent, and when these lines can speak
@@ -216,8 +216,8 @@ The disassembly computes `advisor + id*0x10 + 0xe0` outright (`LEA EAX,[EDI + 0x
 | `+0x08` | — | Lip file number → `\Speech\lips\sp_%03d.lip` | Format string in the exe |
 | `+0x0c` | — | Gesture: `-1` builds a random animation sequence (`FUN_00598b20`); any other value is a row of the gesture table `0x0076dc18` at value `- 0x10` (`FUN_00598bf0`) | `0x005990e3`, `0x00599383` |
 | `+0x10` | — | Model slot in the low half, bank in the high half (`slot \| bank << 16`). Slot 1 is the park's own advisor model (137 rows). Bank 0 plays through the global speech category (`DAT_00803a34`), any other value through the park's (`DAT_00803a40`); five rows carry bank 1 (ids 1 and 399-402) | `0x005990dd`, `0x00599317` |
-| `+0x14` | — | Face node A | `0x005990fa` |
-| `+0x18` | — | Face node B | `0x00599106` |
+| `+0x14` | — | First prop: a costume id of his model, put on for the line ("What he wears for a line", below) | `0x005990fa`, `0x00598e18` |
+| `+0x18` | — | Second prop, nought for none | `0x00599106`, `0x00598e2d` |
 | `+0x1c` | — | Grouping values — **see the refuted section below**; no instruction reads it through this table's base | xrefs |
 
 ### Response metadata at `0x0076e300` — filled before `WinMain`
@@ -428,7 +428,7 @@ byte plus the wear not below it (`ride-operation.md`, "A ride's wear"). The call
 | `+0x24` first response, `+0x28` lines, `+0x2c` mode | 194, 3, 2 |
 
 Responses 194, 195 and 196 (`0x0076a7f8`, read in the image) are samples and lip files **191, 192, 193**, gesture
--1, model and bank word 0, face fields 5 and 0. The transcripts: "we've got trouble boss, a ride is about to break
+-1, model and bank word 0, props 5 and 0, the hard hat. The transcripts: "we've got trouble boss, a ride is about to break
 down", "look out, she's gonna blow...", "one of your rides is about to break down, take cover...". Mode 2 takes the
 line after the last and starts again past the count (`0x0059a796`, `0x0059a7fa`). The three rows after it in the
 `.sam` are the same shape: `RidesBreakdownNoMechanics` 105, `BusyMechanics` 107, `MechanicOnIt` 110 at
@@ -460,7 +460,8 @@ of the rule (`run-control`).
 |---|---|---|
 | The post | from the wear, with the thing and its item | built; the item is not kept, and nothing reads the subject but the log and `advisor` |
 | When it is said | the tick of the post | a sweep on: the messages' turn is taken before the things' (`ParkPeople`) |
-| The hard hat and the button beside him | drawn | not built, not decoded: the responses' face fields read 5 where a door's read 9 |
+| The hard hat | drawn | built: "What he wears for a line", below |
+| The button beside him | drawn | not built, not decoded |
 | The event of type `0x18` after a line | sent | counted, `ADVISOR_MESSAGE_SAID_EVENT` |
 | Lines 195 and 196, a second ride's own slot, the 480 sweeps before the same message again | the listing's | built and held by the tests alone |
 
@@ -480,7 +481,7 @@ only too, 255 copies each: 67 one line from response 197, 68 three from 198, 69 
 ride broken down and no mechanic to come", below).
 
 Responses 204, 205 and 206 (`0x0076a938`, read in the image) are samples and lip files **202, 203, 204**, model
-and bank word 0, face fields 5 and 0, group `0x48`. The gesture of 204 and 205 is -1, the random chain; **206's
+and bank word 0, props 5 and 0, group `0x48`. The gesture of 204 and 205 is -1, the random chain; **206's
 is 26**, row 10 of the gesture table. The transcripts: "one of your rides is broken down but a mechanic is on the
 way to fix it", "don't be alarmed ... a mechanic is on the way", "don't panic ... mechanics are on the way".
 
@@ -504,7 +505,8 @@ ride. Main's build, off-screen, posted nothing and counted `MECHANIC_ON_HIS_WAY_
 | The post | from the mechanic's decide, with the ride and its item | built; the item is not kept |
 | When it is said | the tick of the post | a sweep on, as message `0x42` |
 | Response 206's own gesture row | played (`FUN_00598bf0`) | the random chain, counted `ADVISOR_RESPONSE_GESTURE_ROW` |
-| The hard hat and the button beside him | drawn | not built, not decoded |
+| The hard hat | drawn | built: "What he wears for a line", below |
+| The button beside him | drawn | not built, not decoded |
 | Lines 205 and 206, a second ride's own slot, a called ride's silence | the listing's | built and held by the tests alone |
 
 ## A ride broken down and no mechanic to come (messages `0x44` and `0x45`, Q307)
@@ -543,7 +545,7 @@ and "a mechanic is on his way" follows from his own decide.
 | `+0x10` score | `0x0059dc70`: `MOV EAX,[ECX + 0x24c]`, `RidesBreakdownNoMechanics.Score`, **105** in the file | `0x0059dc80`: `[ECX + 0x250]`, `RidesBreakdownBusyMechanics.Score`, **107** |
 | `+0x20` copies | 255 | 255 |
 | `+0x24`, `+0x28`, `+0x2c` | first response 198, 3 lines, mode 2 | 201, 3, 2 |
-| Responses (`0x0076a878`, `0x0076a8d8`) | 198 to 200 = samples **196, 197, 198**, gesture -1, face fields 5 and 0, group 70 | 201 to 203 = samples **199, 200, 201**, gesture -1, 5 and 0, group 71 |
+| Responses (`0x0076a878`, `0x0076a8d8`) | 198 to 200 = samples **196, 197, 198**, gesture -1, props 5 and 0, group 70 | 201 to 203 = samples **199, 200, 201**, gesture -1, 5 and 0, group 71 |
 | The transcripts | "a ride is broken down and you don't have any mechanics, you should hire some right away" and two more | "... has broken down and the mechanics are all busy, maybe you should hire some more" and two more |
 
 Row 67 (message `0x43`, one line, response 197, sample 193) has a score function that answers nought
@@ -583,5 +585,76 @@ predictions of 5):
 | The order mechanics are looked at | the chain from `mFirstMechanic` | the staff list's; it decides only between a mechanic already naming the ride and a free one |
 | When it is said | `0x44` on the post's tick; `0x45` 43 ticks after the line before it began | a sweep on; 31 sweeps after the line before it began (why the original waits twelve more is not read) |
 | The event's other two hearers, and a condemned ride's event | the tag system's log, the relay's `FUN_00481530` | counted, `RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT` |
-| The hard hat and the button beside him | drawn | not built, not decoded |
+| The hard hat | drawn | built: "What he wears for a line", below |
+| The button beside him | drawn | not built, not decoded |
 | The second and third lines of each, a mechanic resting or striking, a mechanic already naming the ride | the listing's | built and held by the tests alone |
+
+## What he wears for a line (Q308)
+
+**The response's `+0x14` and `+0x18` are props, not face nodes.** `Advisor_SayResponse` keeps them at `0x00f79684`
+and `0x00f79688`, each read once, by `FUN_00598dc0`. That routine is called from `FUN_00599800` after the line's
+first clip is started (`0x00f79690`, set by the say) and again each time channel 0 takes the next clip
+(`0x00f7968c`, set by `Advisor_Update` at `0x00599a73`), because **every clip of his hides the model's ten add-on
+pieces as it starts**: all fifteen clips of `Advisor.md2` carry the same hide list, nodes 14 and 16 to 24, the
+spatula, the eight hats and the bow tie (`hidelists.py`). `FUN_00598dc0` on the line's model slot (the response's
+`+0x10` low half):
+
+1. hides his five mouths (`0x00f796a0`, found by name by `FUN_0044b2e0`);
+2. calls `FUN_00598ca0` with the first prop, and with the second where it is not nought;
+3. where the clip's word carries `0x10000`, hides the node named `bug head`; and starts the clip word's
+   particles (`0x3e0000`). The random chain's words carry no flag (`FUN_00598b20` stores bare clip numbers).
+
+`FUN_00598ca0( n )` shows and hides pieces by costume id, through `FUN_00429ee0` (show: clears the node's `0x10`)
+and `FUN_00429f60` (hide), which find the node with `FUN_0044b220( model, 0x400, id )`:
+
+| `n` | What it switches |
+|---|---|
+| 0 | shows 19 and 20, his antennae |
+| 1, 2, 4, 5, 6, 7, 9, 10, 11, 13 | hides 19 and 20 |
+| 14 | hides 21, his right hand |
+| -1 | the theme's costume: for each of four pairs filled by `FUN_004080e0` from `ThemeAdvisorCostumes[i]` (`0x00f797a4` the `AddOns`, `0x00f797b4` the `SubOffs`), shows the add-on and hides the sub-off |
+| any but 0 | then shows the piece with id `n` itself, unless the clip's word carries `0x10000` |
+
+His own parts are in no hide list, so antennae hidden for a hat stay hidden until a line whose prop is nought.
+
+**The model's ids** (`md2surf.py`, the lookup records of `Advisor.md2`): 5 `Hardhat`, 6 `Security Hat`, 7
+`Handyman Hat`, 8 `Kiosk Hat`, 9 `Ticket Hat`, 10 `Research Hat`, 11 `Bowler Hat`, 12 `Bowler_BTie`, 13 `Fast
+Food Hat`, 14 `Spatula`, 19 and 20 the antennae, 21 and 22 the hands. The kiosk hat, 8, is the one hat that leaves
+his antennae on.
+
+**The table's props** (`responses.py`, all 610 rows read from the executable on disk):
+
+| Slot | Props | Rows |
+|---|---|---|
+| 0, `Advisor.md2` | 0, 0 | 151 |
+| 0 | 5, 0 the hard hat | 77 |
+| 0 | 6, 0 | 47 |
+| 0 | 7, 0 | 48 |
+| 0 | 8, 0 | 8 |
+| 0 | 9, 0 the ticket hat | 34 |
+| 0 | 10, 0 | 58 |
+| 0 | 11, 12 the bowler and its tie | 32 |
+| 0 | 13, 14 the fast-food hat and the spatula | 18 |
+| 1, the theme's `Advisor_JUN.md2` | -1, 0 | 129 |
+| 1 | 0, 0 | 8 |
+
+Slot 1 is a second model, built by `FUN_00457a90` from the level's own `advisor.wad` (`Advisor_` and the first
+three letters of the theme). Every built park topic's rows are slot 0: the door's 308 to 311 carry (9, 0), the
+rides' 194 to 206 (5, 0). The lobby's 394 carries (0, 0).
+
+**OpenTPW** (`AdvisorProps`, `AdvisorModel.Wear`, `ParkAdvisorMessages.Topic.Prop` and `PropsOf`): as a line
+begins the add-ons are hidden and the response's props put on, once a line rather than once a clip, which comes
+to the same pieces since no clip of his keys an add-on. The speaker's queue, the lobby's lines and the console's
+`say` wear (0, 0). `q308/confirm.py`, the stock park's Belly Bounce broken through its script: the line the
+mechanic's decide posts began `Advisor: sample 202 ... wearing 5,0`, `advisor` read `wearing=5,0`, and in
+`run-fix1/2-told.png` he is up in the yellow hard hat with no antennae, as the original's in `q306/orig/a-told.png`
+(`side-by-side.png`); main's build read no `wearing` and drew him bare-headed with both antennae.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The props of a line | put on after every clip's start | put on as the line begins |
+| The hat's colour | a full yellow | paler: he is lit past his textures (`AdvisorModel`'s light, set against his gloves) |
+| The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows | not built: no built topic names one; counted `ADVISOR_THEME_COSTUME` if one ever does |
+| A clip word's `0x10000` (no prop, the head hidden) and its particles | a gesture row's | not built: the gesture rows are counted, `ADVISOR_RESPONSE_GESTURE_ROW` |
+| The button beside him | drawn | not built, not decoded |
+

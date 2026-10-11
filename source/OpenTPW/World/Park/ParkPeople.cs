@@ -2066,7 +2066,11 @@ public sealed partial class ParkPeople : Entity
 			// Catch-up sweeps share a frame timestamp here; the native running clock may query the OS per call.
 			// GameClock.Now keeps the engine's clamped-frame timing deviation (docs/exe/advisor-park.md).
 			State.AdvisorMessages?.Tick( State.GameTick, (long)(GameClock.Now * 1000),
-				(response, sample) => Advisor.Current?.PlayParkResponse( response, sample ) ?? 0 );
+				(response, sample) =>
+				{
+					var (first, second) = ParkAdvisorMessages.PropsOf( response );
+					return Advisor.Current?.PlayParkResponse( response, sample, first, second ) ?? 0;
+				} );
 
 			// <b>The number handed on is the park's clock, mGameTick, not the 31 ms tick, and that is not
 			// cosmetic.</b> Peep.Tick spreads guests across four slots by (id & 3) == (tick & 3); every 31 ms

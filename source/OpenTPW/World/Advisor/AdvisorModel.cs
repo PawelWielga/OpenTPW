@@ -35,9 +35,6 @@ namespace OpenTPW;
 /// </summary>
 public sealed class AdvisorModel
 {
-	/// <summary>The lowest costume id that is part of him rather than something he puts on.</summary>
-	private const int FirstOwnPartId = 19;
-
 	/// <summary>
 	/// His mouths, in the engine's numbering: shape 1 is his mouth at rest, 2 to 5 the ones he
 	/// talks with. It finds them by name, ignoring case (0x0044b2e0).
@@ -154,6 +151,12 @@ public sealed class AdvisorModel
 		Place();
 	}
 
+	/// <summary>
+	/// Dresses him for a line in its response's two props - see <see cref="AdvisorProps.Wear"/>. Nought and
+	/// nought is the lobby's: no add-on, his antennae on.
+	/// </summary>
+	public void Wear( int first, int second ) => AdvisorProps.Wear( _file, first, second, SetMeshVisible );
+
 	/// <summary>Shows mouth <paramref name="shape"/> (1 to 5) and hides the others.</summary>
 	public void ShowMouth( int shape )
 	{
@@ -172,7 +175,7 @@ public sealed class AdvisorModel
 			var id = _file.Nodes[node].Id;
 
 			if ( id > 0 )
-				SetMeshVisible( node, id >= FirstOwnPartId );
+				SetMeshVisible( node, id >= AdvisorProps.FirstOwnPart );
 		}
 
 		OpenEyes();

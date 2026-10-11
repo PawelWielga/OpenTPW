@@ -26,23 +26,42 @@ internal sealed class ParkAdvisorMessages
 	/// A row of the metadata table 0x0076e300: the message, its score's key, its first response and that
 	/// response's sample, how many lines it rotates (+0x28) and how many copies the slots may hold (+0x20).
 	/// <paramref name="GestureRowLine"/> is the one line whose response names a row of the gesture table
-	/// (the response table's +0x0c), -1 where every line's is the random chain.
+	/// (the response table's +0x0c), -1 where every line's is the random chain. <paramref name="Prop"/> is what
+	/// he wears for every line of it (the response table's +0x14; each built row's +0x18 is nought).
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
-		int GestureRowLine = -1 );
+		int GestureRowLine = -1, int Prop = 0 );
+
+	/// <summary>The ticket hat, the door's lines' prop.</summary>
+	internal const int TicketHat = 9;
+	/// <summary>The hard hat, the prop of every line about a ride breaking down.</summary>
+	internal const int HardHat = 5;
+
 	internal static readonly Topic[] DoorTopics =
 	[
-		new( Opened, "ParkNowOpen.Score", 308, 342 ),
-		new( Closed, "ParkNowClosed.Score", 310, 344 )
+		new( Opened, "ParkNowOpen.Score", 308, 342, Prop: TicketHat ),
+		new( Closed, "ParkNowClosed.Score", 310, 344, Prop: TicketHat )
 	];
 	internal static readonly Topic[] ParkTopics =
 	[
 		.. DoorTopics,
-		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255 ),
-		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255 ),
-		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255 ),
-		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2 )
+		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat ),
+		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat ),
+		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat ),
+		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat )
 	];
+
+	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
+	internal static (int First, int Second) PropsOf( int response )
+	{
+		foreach ( var topic in ParkTopics )
+		{
+			if ( response >= topic.FirstResponse && response < topic.FirstResponse + topic.Lines )
+				return (topic.Prop, 0);
+		}
+
+		return (0, 0);
+	}
 
 	private sealed class History
 	{

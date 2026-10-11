@@ -211,6 +211,9 @@ public sealed class Advisor : Entity
 	/// <summary>Samples waiting their turn, oldest first, each with its cue if it has one.</summary>
 	private readonly Queue<(int Sample, Cue? Cue)> _queue = new();
 
+	/// <summary>The two props of the line he last began, the response table's <c>+0x14</c> and <c>+0x18</c>.</summary>
+	private (int First, int Second) _wearing;
+
 	/// <summary>The cue of the line being said, until it is due - see <see cref="Add(int, bool, float, Action)"/>.</summary>
 	private Action? _cue;
 
@@ -362,8 +365,11 @@ public sealed class Advisor : Entity
 
 	internal void Add( int sample, bool flush ) => Add( sample, flush, cue: null );
 
-	/// <summary>Advisor_SayResponse's direct park path; a busy or disabled speaker returns zero.</summary>
-	internal int PlayParkResponse( int response, int sample )
+	/// <summary>
+	/// Advisor_SayResponse's direct park path; a busy or disabled speaker returns zero. He wears the response's
+	/// two props for the line (<see cref="AdvisorProps"/>).
+	/// </summary>
+	internal int PlayParkResponse( int response, int sample, int firstProp = 0, int secondProp = 0 )
 	{
 		if ( Busy || _paused || !CanSpeak )
 		{
@@ -372,7 +378,7 @@ public sealed class Advisor : Entity
 		}
 		_speech ??= new SoundCategory( "global", "global/Speech", "speech" );
 		if ( !_speech.IsValid ) return 0;
-		Speak( sample, cue: null );
+		Speak( sample, cue: null, firstProp, secondProp );
 		// The response adds clip 15 again after the gesture chain (005994ac); docs/exe/advisor-park.md.
 		Log.Info( $"Advisor: response={response} sample={sample} playback=started" );
 		return ParkResponseDuration( (int)MathF.Round( (_gesturesEndAt - _speakAt) * 1000f ), ClipMilliseconds( EndClip ) );
@@ -490,7 +496,7 @@ public sealed class Advisor : Entity
 	/// 80 of the 641 samples in the bank are a 315-byte stub that is not valid MPEG - response ids
 	/// with nothing recorded - and those simply come back silent, which ends the line at once.
 	/// </summary>
-	private void Speak( int sample, Cue? cue )
+	private void Speak( int sample, Cue? cue, int firstProp = 0, int secondProp = 0 )
 	{
 		// Advisor_SayResponse (0x00599050) says nothing at all while the options have him switched off.
 		if ( !GameOptions.Current.Advisor || _speech is not { IsValid: true } )
@@ -523,8 +529,11 @@ public sealed class Advisor : Entity
 			// He is about to be seen again, so start him from a known face rather than from
 			// whatever the last line's clips left behind - see ResetFace.
 			ResetFace();
+			_figure.Wear( firstProp, secondProp );
 			_shown = true;
 		}
+
+		_wearing = (firstProp, secondProp);
 
 		if ( !_ducked )
 		{
@@ -533,7 +542,7 @@ public sealed class Advisor : Entity
 		}
 
 		Log.Info( $"Advisor: sample {sample} in {LeadInSeconds:0.0}s through clips [{string.Join( ", ", _gestures )}] "
-			+ $"({gesturesMilliseconds}ms), {_queue.Count} more queued" );
+			+ $"({gesturesMilliseconds}ms), {_queue.Count} more queued, wearing {firstProp},{secondProp}" );
 	}
 
 	/// <summary>
@@ -707,7 +716,7 @@ public sealed class Advisor : Entity
 
 		var clip = _sequence.TryLocate( _now - _gesturesStartedAt, out var current, out _ ) ? current : 0;
 
-		return $"{what} paused={_paused} queued={_queue.Count} duck={Audio.DuckLevel:0.00} shown={_shown} clip={clip} mouth={_mouth} "
+		return $"{what} paused={_paused} queued={_queue.Count} duck={Audio.DuckLevel:0.00} shown={_shown} clip={clip} mouth={_mouth} wearing={_wearing.First},{_wearing.Second} "
 			+ $"samples={_speech?.EffectIds.Count() ?? 0}";
 	}
 }

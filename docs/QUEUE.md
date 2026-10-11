@@ -44,9 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q308. The writer: what else a made record leaves out.** The old Q307's other pieces, each counted or
+- [ ] **Q309. The writer: what else a made record leaves out.** The old Q308's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q308 (`advisor-park.md`, "What he wears for a line"): the button beside him is still not built or
+  decoded. The theme's own advisor model (slot 1, `Advisor_JUN.md2`, 137 rows) and its costume (prop -1,
+  `ThemeAdvisorCostumes`) are not built (`ADVISOR_THEME_COSTUME`, counted where a built topic names one: none
+  does). A clip word's `0x10000` and its particles are a gesture row's, not built. The hat is paler than the
+  original's (his light is set against his gloves, not decoded). In no game run: the ticket hat (the door's
+  lines; the tests hold it), a second line after a hat, any other prop. The call from the speaker to the model
+  is held by the game run alone.
   From Q307 (`advisor-park.md`, "A ride broken down and no mechanic to come"): the event's other two hearers
   are not read or built (the kind-17 relay's `FUN_00481530`, for types 7 and 8), nor a condemned ride's event
   (`RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT`, counted). The mechanics are looked at in the staff
@@ -54,14 +61,12 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   it began, this game 31 sweeps: not read. Row 67 (message `0x43`) scores nought and has no constant poster:
   not looked at further. In no game run: lines 199, 200, 202 and 203, a mechanic resting or striking, a
   mechanic already naming the ride that breaks, two mechanics, a condemned ride, a hired mechanic after
-  "you don't have any mechanics". The hard hat and button are still not built. Not heard in either game.
+  "you don't have any mechanics". Not heard in either game.
   From Q306 (`advisor-park.md`, "A mechanic on his way"): response 206's own gesture row is not played
   (`ADVISOR_RESPONSE_GESTURE_ROW`, counted; no other built response names one). In no game run: lines 205 and
   206, two rides broken at once, a called ride, a post refused inside the 480 sweeps, a break with the advisor
   busy, a bought ride. Rows 67 to 69's posters are still not read. Not heard in either game.
-  From Q305 (`advisor-park.md`, "A ride about to break down"): the original's advisor wears a yellow hard hat
-  for the line and a small arrow button stands beside him; neither is built or decoded (the responses' face
-  fields read 5 where a door's read 9; the button is likely the hearer of the event of type `0x18` a line said
+  From Q305 (`advisor-park.md`, "A ride about to break down"): a small arrow button stands beside the original's advisor for the line, not built or decoded (the button is likely the hearer of the event of type `0x18` a line said
   sends, counted `ADVISOR_MESSAGE_SAID_EVENT`, whose hearers are not read). He says it a sweep after the post,
   the original on the post's tick. The record's item word is not kept. The same shape and not built: the two
   no-mechanic rows (105, 107), whose posters are not read. In no game run: lines 195 and 196, two worn rides at

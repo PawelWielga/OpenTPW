@@ -17,6 +17,8 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/parkscene.py` | exec'd after `parkrun.py`: the one-line census readers (`var`, `thing_line`, `staff_line`, `bumper_line`, `field`) and the Hot Pot scenes (`hot_pot`, `in_a_go`, `broken_pot`), so a confirm script does not write them again |
 | `lib/parkfile.py` | The one reader of a park file: `Park` (things, cells, sprites), `track()` (the track-rides module, cars and riders), `models()` (every model record: item, flags, node words, lookup records, channels), `head()` (a sprite), `emitters()`, `emitter_words()` and `emitter_aim()` (the particles module's live emitters by their chains, where one is not its template, and its own velocity at `+0x38`; `parkfile.py -e <file>` prints them). Add a module's reader here, not in an item's folder |
 | `lib/sfxmap.py <data dir> [<cat_..SFX.map> [effect]]` | A sound category's effects and variation headers (flags, parameter, volume, pitch, wait, range), walked as the loader walks them; with the data folder alone, the spread of every variation's range over all 31 files. Importable (`Category`, `categories`) |
+| `lib/responses.py [ID ...]` | The advisor's response table read from `testme.exe` on disk (610 rows: sample, lip file, gesture, model slot and bank, the two props, group): the spread of slots and props, or the rows named. Importable (`rows()`, `off( va )`, which turns any address of the image into a file offset) |
+| `lib/hidelists.py <advisor.wad> <stem>` | Every clip's hide list of a model in a wad (`<stem>m1.md2` on), each node by name: what a clip's start hides |
 | `lib/md2surf.py <wad> <member.md2> [x z]` / `--sweep <data dir>` | A model's header float, lookup records and the faces a point stands on, with the height under a model point; the sweep counts them over every wad. Importable (`Model`): a reader of a `.md2`'s header, lookup table, meshes, vertices and faces to build a model check on |
 | `lib/parkrun-smoke.py <out> <bin> [off]` | The scaffold's own check: enters Lost Kingdom, saves under pause, loads the file back from the Load Park list and compares the three ticks; `off` runs it on the private display |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
@@ -270,6 +272,11 @@ GH=766` there, or the pointer is off):
   holds `0x45` with the Bounce as the first line is still said (`q307/orig/run.sh none|busy`, Q307). Here
   `parkscene.broken_pot()` then `scriptvar 13 VAR_BREAKSTAT 1` once the log reads `mechanic 26 found ride`
   (`q307/confirm.py`).
+- **The advisor in a hat, inside a minute:** the same break (`scriptvar 13 VAR_BREAKSTAT 1` 25 s into the stock
+  park) has him say response 204 in the hard hat two seconds on; grep the log for `Advisor: sample 20` and read
+  `wearing=` in `advisor`. His head is in the frame's lower right: `q308/confirm.py` counts the hat's pixels in
+  the box from 0.77 to 0.93 across and 0.55 to 0.78 down, where R > 200, G > 180, B < 170 and R - B > 60 read
+  6307 with the hat and nought without (Q308).
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).
