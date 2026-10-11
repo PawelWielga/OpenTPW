@@ -389,4 +389,106 @@ public class ParkEntertainerPerformanceTests
 			typeof( ParkState ).GetProperty( nameof( ParkState.Current ) )!.SetValue( null, previousState );
 		}
 	}
+
+	/// <summary>
+	/// What the sweep itself does for a member of staff, seen on the saved entertainer (thing 27) while carried, whose
+	/// behaviour has an empty body, over four sweeps from the park's 755:
+	/// <list type="bullet">
+	/// <item>the bubble call is made on the member's own sweep in four, <c>(id &amp; 3) == (mGameTick &amp; 3)</c>
+	/// (<c>FUN_00505490</c>, <c>0x005054b3</c>..<c>0x005054c0</c>): a bubble 20 sweeps old stays through the sweeps
+	/// that are not theirs and is gone from theirs on;</item>
+	/// <item>a queued interval is handed to the sprite and cleared, and nought queued leaves the sprite's alone
+	/// (<see cref="Peep.NextAnimation"/>): 77 over the saved sprite's 62, kept on every later sweep;</item>
+	/// <item>a sprite on a state's script that kept its frames a direction keeps them, the bank not asked: 9, where
+	/// the bank's set 4 has 17; one with none and no bank is stood, and stays stood with nothing queued;</item>
+	/// <item>the staff pool is told how many of each kind the park employs (<c>FUN_00508000</c>): the save's five
+	/// staff are one a kind, so the top-up of the first sweep leaves 1, 1, 1, 1, 1.</item>
+	/// </list>
+	/// </summary>
+	[TestMethod]
+	public void ACarriedEntertainerStillTakesTheSweepsOwnTurn()
+	{
+		var world = Park();
+		using var clock = new SimulationClockScope();
+		var previousState = ParkState.Current;
+		var previousPeople = ParkPeople.Current;
+		var previousPool = ParkStaffPool.Current;
+		ParkPeople? people = null;
+
+		try
+		{
+			var folder = ParkGuestSprites.BanksIn( data, "esprites/Jungle/Entertainers", 4 );
+			var bank = new SpriteBankFile( new MemoryStream( data.ReadAllBytes(
+				folder.Single( file => file.Contains( "SPR_EX", StringComparison.OrdinalIgnoreCase ) ) ) ) );
+			SpriteBankFile? given = bank;
+			var state = new ParkState( world );
+
+			people = new ParkPeople( world, Balance(), state: state, random: new Random( 1 ),
+				behaviourRandom: new Random( 2 ), rideRandom: new Random( 3 ), staffRandom: new Random( 4 ) )
+			{
+				BankOf = id => id == Entertainer ? given : null
+			};
+
+			var start = state.GameTick;
+			var pool = new ParkStaffPool( Balance(), gameTick: start - 360 );
+			var member = people.Staff.Single( staff => staff.ThingId == Entertainer );
+			var sprite = people.SpriteFor( Entertainer )!;
+			var group = new SpriteStateGroup( 1, 5, 0, 0 );
+
+			Assert.IsTrue( people.PickUp( Entertainer ) );
+			Assert.AreEqual( SpriteScript.DefaultInterval, sprite.Interval, "a saved sprite starts on the default interval, 62" );
+			Assert.AreEqual( 17, bank.Sets[4].FramesPerDirection, "SPR_EX's set 4 is the long one" );
+
+			member.NextAnimation = 0;
+			member.NextInterval = 77;
+			member.Thoughts.Restore( Thoughts.Confused, start - 20, Thoughts.ScriptOf( 0, 9 ) );
+			Assert.IsNotNull( member.Thoughts.Bubble );
+
+			var swept = 0;
+			var gone = false;
+
+			void Sweep()
+			{
+				SimulationClockScope.Frame( 8 * GameClock.TickSeconds );
+				people!.Update();
+				++swept;
+
+				Assert.AreEqual( start + swept, state.GameTick, "one sweep a frame" );
+
+				gone |= (state.GameTick & 3) == (Entertainer & 3);
+				Assert.AreEqual( gone, member.Thoughts.Bubble == null, $"the bubble on mGameTick {state.GameTick}" );
+				Assert.AreEqual( (77, 0), (sprite.Interval, member.NextInterval), $"the interval on mGameTick {state.GameTick}" );
+			}
+
+			// On a state's script with nine frames a direction kept, and a bank that would say 17.
+			sprite.StartState( group, 9 );
+			Sweep();
+
+			Assert.AreEqual( 9, sprite.FramesPerDirection, "the frames kept are kept: the bank is not asked" );
+			Assert.AreEqual( start + 1, pool.Mark, "the pool was topped up on this sweep, 361 past its mark" );
+			CollectionAssert.AreEqual( new[] { 1, 1, 1, 1, 1 }, pool.Written().PeopleInCat.ToArray(), "one of each kind employed" );
+
+			// On a state's script with no frames kept and no bank: stood, and nothing queued takes it off the stand.
+			given = null;
+			sprite.StartState( group, 0 );
+			Sweep();
+
+			Assert.IsFalse( sprite.IsOnAState, "off the state's script" );
+			Assert.IsTrue( sprite.IsOn( SpriteScript.Standing ), "and standing" );
+			Assert.AreEqual( 0, sprite.FramesPerDirection );
+
+			Sweep();
+			Sweep();
+
+			Assert.IsNull( member.Thoughts.Bubble, "four sweeps hold the member's own, which took the bubble" );
+		}
+		finally
+		{
+			typeof( ParkStaffPool ).GetProperty( nameof( ParkStaffPool.Current ) )!.SetValue( null, previousPool );
+			people?.Delete();
+			Entity.ApplyDeletions();
+			typeof( ParkPeople ).GetProperty( "Current", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic )!.SetValue( null, previousPeople );
+			typeof( ParkState ).GetProperty( nameof( ParkState.Current ) )!.SetValue( null, previousState );
+		}
+	}
 }

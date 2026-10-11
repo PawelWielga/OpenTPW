@@ -403,4 +403,81 @@ public class SpriteScriptTests
 		Assert.IsTrue( sprite.Step( 124 ), "and due on the turn after" );
 		Assert.IsTrue( sprite.Shown );
 	}
+
+	/// <summary>
+	/// <b>The first word of every program a person runs sets the drawing flags to <c>0x1200</c>.</b> The
+	/// constructor writes <c>+0xc4</c> nought and a start writes no local, so a sprite made and put on a script
+	/// holds nought until its first turn and <c>0x1200</c> after it (<c>docs/exe/saves.md</c>, "OpenTPW's writer,
+	/// a person's sprite's drawing flags"). In <c>DAT_0074dab8</c> each of the twenty scripts of animations 1 to
+	/// 12 and 17 to 24 opens with the words <c>004766d0, 0x10, 0x1200</c>, so the set is chosen three words in.
+	/// Animation 25, word 1650, is the one with no preamble: it opens with its frame and leaves the flags alone.
+	/// </summary>
+	[TestMethod]
+	public void EveryPersonScriptButTheHeldBalloonsSetsTheDrawFlagsOnItsFirstTurn()
+	{
+		const int heldBalloon = 25;
+		var checkedScripts = 0;
+
+		for ( var animation = 0; animation < SpriteScript.TableSize; ++animation )
+		{
+			var entry = SpriteScript.EntryFor( animation );
+
+			if ( entry == SpriteScript.None )
+				continue;
+
+			var sprite = Fresh();
+
+			Assert.IsTrue( sprite.Start( animation ) );
+			Assert.AreEqual( 0, sprite.DrawFlags, $"animation {animation}: a start writes no flags" );
+
+			sprite.Interval = 1;
+			sprite.ScheduleFrom( 0 );
+
+			Assert.IsTrue( sprite.Step( 62 ), $"animation {animation} took its first turn" );
+
+			if ( animation == heldBalloon )
+			{
+				Assert.AreEqual( 0, sprite.DrawFlags, "the held balloon's script has no preamble" );
+				continue;
+			}
+
+			Assert.AreEqual( 0x1200, sprite.DrawFlags,
+				$"animation {animation}, word {entry}: its first word sets +0xc4 to 0x1200" );
+
+			Assert.IsTrue( SpriteScript.HasInstructionAt( entry + 3 ),
+				$"animation {animation}: the set is chosen three words in, at word {entry + 3}" );
+
+			++checkedScripts;
+		}
+
+		Assert.AreEqual( 20, checkedScripts, "animations 1 to 12 and 17 to 24" );
+	}
+
+	/// <summary>
+	/// <b>A number outside the table names no script, on either side of it.</b> <see cref="SpriteScript.EntryFor"/>'s
+	/// own rule is "where a given animation number starts, or None if it names no script", and
+	/// <c>docs/exe/ride-operation.md</c>'s table of what is not built has "an animation past the table" as not
+	/// started. The table's numbers run from 0 to <see cref="SpriteScript.TableSize"/> less one, so the first
+	/// number past it is <see cref="SpriteScript.TableSize"/> itself and the first before it is -1: both are
+	/// None (-1), neither is read out of the table, and a sprite asked to start one stays on the script it had.
+	/// The last number inside, the held balloon's, still starts at word 1650 (<c>0x0074f480</c>).
+	/// </summary>
+	[TestMethod]
+	public void AnAnimationNumberOutsideTheTableNamesNoScriptAndStartsNothing()
+	{
+		foreach ( var animation in new[] { -1, int.MinValue, SpriteScript.TableSize, SpriteScript.TableSize + 1, int.MaxValue } )
+		{
+			Assert.AreEqual( -1, SpriteScript.EntryFor( animation ),
+				$"animation {animation} is outside the table and names no script" );
+
+			var sprite = Fresh();
+
+			Assert.IsTrue( sprite.Start( SpriteScript.Walking ) );
+			Assert.IsFalse( sprite.Start( animation ), "so nothing can be started on it" );
+			Assert.AreEqual( 42, sprite.Script, "and the sprite keeps the walk it was on" );
+			Assert.IsFalse( sprite.IsOn( animation ) );
+		}
+
+		Assert.AreEqual( 1650, SpriteScript.EntryFor( SpriteScript.TableSize - 1 ), "the last number inside is the held balloon's" );
+	}
 }

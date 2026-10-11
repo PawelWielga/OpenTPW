@@ -321,4 +321,75 @@ public class ParkTrackRideCarsTests
 		Assert.AreEqual( (0x300c009, 1, 7, 0, 0), (car.Word( 0x00 ), car.Word( 0x04 ), car.Word( 0x08 ), car.Word( 0x0c ), car.Word( 0xa8 )) );
 		Assert.AreEqual( (0, 0, 0, 0, 0), (car.CentreX, car.CentreZ, car.BuoyRide, car.BuoyX, car.BuoyZ) );
 	}
+
+	/// <summary>
+	/// Pins the order of the loader's two arena lookups (<c>FUN_00543560</c>, chunk 5; <c>docs/exe/saves.md</c>,
+	/// "OpenTPW's reader, a track ride's cars"): the arena is the first that holds where the car floats, and the one
+	/// that holds the chunk's centre only failing that. Two rides are seated, slot 0 round (<c>0x20a00</c>,
+	/// <c>0x13200</c>) and slot 1 round (<c>0x40a00</c>, <c>0x13200</c>), each the saved place plus half a cell and
+	/// <c>0x20000</c> apart, far past the arena's <c>0x1200</c>. The car floats at the second's centre and its chunk
+	/// gives the first's, so both lookups find an arena and the car's is the second.
+	/// </summary>
+	[TestMethod]
+	public void ACarTakesTheArenaItFloatsInBeforeTheOneRoundItsSavedCentre()
+	{
+		const int Other = 1 | (-1 << 8);
+
+		var cars = new ParkTrackRideTable( new ParkTrackRides( Body(
+			Chunk( 3, HotPotHandle, 0x20400, 0x12c00, 0, 1140, 60, 1, 1, 750, 2 ),
+			Chunk( 3, Other, 0x40400, 0x12c00, 0, 1140, 60, 1, 1, 750, 2 ),
+			Car( HotPotHandle, [(0x00, 0x300c009), (0x34, 0x40a00), (0x38, 0x13200)], 0x20a00, 0x13200, 0, 0, 0 ),
+			Chunk( 6, HotPotHandle ) ) ) ).Cars;
+
+		Assert.AreEqual( (0x20a00, 0x13200), (cars.RideOf( HotPotHandle )!.CentreX, cars.RideOf( HotPotHandle )!.CentreZ) );
+		Assert.AreEqual( (0x40a00, 0x13200), (cars.RideOf( Other )!.CentreX, cars.RideOf( Other )!.CentreZ) );
+		Assert.AreEqual( Other, cars.CarsOf( HotPotHandle ).Single().Arena, "where it floats is looked up before the saved centre" );
+	}
+
+	/// <summary>
+	/// Pins the buoy of a car whose chunk names a ride the table does not hold (<c>FUN_00543560</c>, chunk 5,
+	/// <c>0x00543d9d</c>..<c>0x00543e1d</c>; <c>docs/exe/saves.md</c>, "OpenTPW's reader, a track ride's cars": -1
+	/// where the chunk names no ride, else the id of the named ride's buoy on the chunk's place, nought where none
+	/// does). The chunk's buoy ride is slot 1's handle and only slot 0 is seated: the loader walks the named slot's
+	/// buoy list, which is empty, so no buoy lies on the place and the id is nought - not -1, since a ride is named,
+	/// and the load goes through.
+	/// </summary>
+	[TestMethod]
+	public void ACarWhoseBuoyRideIsAnEmptySlotTakesTheRingsFirstBuoy()
+	{
+		const int Other = 1 | (-1 << 8);
+
+		var cars = new ParkTrackRideTable( new ParkTrackRides( Body(
+			Chunk( 3, HotPotHandle, 0x20400, 0x12c00, 0, 1140, 60, 1, 1, 750, 2 ),
+			Car( HotPotHandle, [(0x00, 0x300c009), (0x34, 0x20a00), (0x38, 0x13200), (0x7c, 6)], 0x20a00, 0x13200, Other, 0x20a00, 0x13200 + 0xc00 ),
+			Chunk( 6, HotPotHandle ) ) ) ).Cars;
+
+		Assert.IsNull( cars.RideOf( Other ), "slot 1 holds no ride" );
+		Assert.AreEqual( 0, cars.CarsOf( HotPotHandle ).Single().Buoy );
+	}
+
+	/// <summary>
+	/// Pins that a loaded rider takes one node of the pool every ride's lists share (<c>FUN_00543560</c>, chunk 9,
+	/// <c>0x00543f24</c>: the head of the free list; <c>docs/exe/saves.md</c>, "OpenTPW's reader, a track ride's
+	/// cars"). The pool is <c>0x5000</c> bytes of <c>0x14</c> a node, 1024 (<c>FUN_00544360</c>), and <c>BUMP 1</c>
+	/// boards a peep only with a free node (<c>docs/exe/park.md</c>, "How a bumper ride ends a go", selector 1). Two
+	/// riders are read onto a car of a ride that is loading, so 1024 - 2 = 1022 peeps board and the next is refused.
+	/// </summary>
+	[TestMethod]
+	public void EachLoadedRiderTakesANodeOfThePoolEveryRideShares()
+	{
+		var cars = new ParkTrackRideTable( new ParkTrackRides( Body(
+			Chunk( 3, HotPotHandle, 0x20400, 0x12c00, 0, 1140, 60, 1, 1, 4350, 1 ),
+			Car( HotPotHandle, [(0x00, 0x300c009), (0x34, 0x20a00), (0x38, 0x13200)], 0x20a00, 0x13200, 0, 0, 0 ),
+			Chunk( 9, HotPotHandle, 40, 1 ), Chunk( 9, HotPotHandle, 41, 2 ),
+			Chunk( 6, HotPotHandle ) ) ) ).Cars;
+
+		Assert.AreEqual( 2, cars.CarsOf( HotPotHandle ).Single().Riders.Count );
+
+		for ( var boarder = 0; boarder < ParkBumperCars.ListNodes - 2; ++boarder )
+			Assert.IsTrue( cars.Board( HotPotHandle, 1000 + boarder ), $"boarder {boarder} has a node" );
+
+		Assert.IsFalse( cars.Board( HotPotHandle, 5000 ), "the two riders hold the pool's last two nodes" );
+		Assert.AreEqual( 1022, cars.RideOf( HotPotHandle )!.Boarding.Count );
+	}
 }

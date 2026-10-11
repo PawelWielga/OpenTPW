@@ -253,4 +253,68 @@ public class ParkQueueJoinTests
 		Assert.AreEqual( 0, park.FirstInQueue( Ride ) );
 		Assert.AreEqual( 0, park.NextInQueue( 7 ) );
 	}
+
+	/// <summary>
+	/// <b>A joiner's <c>mQPrev</c> is written on every join, to nought for an empty queue.</b> <c>FUN_004ddb90</c>
+	/// ends by writing the joiner's <c>mQPrev</c> with the old tail, which is the head it read - nought - when
+	/// nobody was queueing (<c>docs/exe/ride-operation.md</c>, the <c>FUN_004ddb90</c> row: "then the joiner's
+	/// <c>mQPrev</c> (the old tail or 0) and <c>mQNext</c> (0)").
+	///
+	/// <para>
+	/// The stale link is made the way the original makes one: a queue's head is forgotten and nothing else
+	/// (<see cref="ParkState.ClearQueueHead"/>), so the second guest still names the first. Joining another
+	/// thing's empty queue, they are its head with nobody in front: 0, not 7.
+	/// </para>
+	/// </summary>
+	[TestMethod]
+	public void JoiningAnEmptyQueueClearsTheLinkToWhoeverWasInFrontBefore()
+	{
+		const int other = 14;
+
+		var park = Park();
+
+		park.JoinQueue( Ride, 7 );
+		park.JoinQueue( Ride, 8 );
+		park.ClearQueueHead( Ride );
+
+		Assert.AreEqual( 7, park.PreviousInQueue( 8 ), "the link is left standing when the head is forgotten" );
+
+		Assert.AreEqual( 0, park.JoinQueue( other, 8 ), "the first into an empty queue takes place nought" );
+
+		Assert.AreEqual( 8, park.FirstInQueue( other ), "and is its head" );
+		Assert.AreEqual( 0, park.PreviousInQueue( 8 ), "with nobody in front of them: the join wrote the link" );
+		Assert.AreEqual( 0, park.NextInQueue( 8 ), "and nobody behind" );
+	}
+
+	/// <summary>
+	/// <b>A joiner's <c>mQNext</c> is zeroed on every join</b> - the last write of <c>FUN_004ddb90</c>
+	/// (<c>docs/exe/ride-operation.md</c>, the <c>FUN_004ddb90</c> row: "then the joiner's <c>mQPrev</c> (the old
+	/// tail or 0) and <c>mQNext</c> (0)").
+	///
+	/// <para>
+	/// The stale link is made the way the original makes one: a queue's head is forgotten and nothing else
+	/// (<see cref="ParkState.ClearQueueHead"/>), so the dropped head still names the guest behind them. When
+	/// they join another thing's empty queue that queue is one long - them alone - so the place they take is
+	/// 0 and nobody is behind them; a link left standing would walk on into the old chain and count two.
+	/// </para>
+	/// </summary>
+	[TestMethod]
+	public void JoiningClearsTheLinkToWhoeverWasBehindBefore()
+	{
+		const int other = 14;
+
+		var park = Park();
+
+		park.JoinQueue( Ride, 7 );
+		park.JoinQueue( Ride, 8 );
+		park.ClearQueueHead( Ride );
+
+		Assert.AreEqual( 8, park.NextInQueue( 7 ), "the link is left standing when the head is forgotten" );
+
+		Assert.AreEqual( 0, park.JoinQueue( other, 7 ), "the first into an empty queue takes place nought" );
+
+		Assert.AreEqual( 0, park.NextInQueue( 7 ), "nobody is behind the one who has just joined" );
+		Assert.AreEqual( 1, park.QueueLength( other ), "so the queue is the joiner alone" );
+		Assert.AreEqual( -1, park.PositionInQueue( other, 8 ), "and the guest they used to stand in front of is not in it" );
+	}
 }

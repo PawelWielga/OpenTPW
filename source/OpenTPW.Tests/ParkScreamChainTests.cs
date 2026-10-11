@@ -1130,4 +1130,292 @@ public class ParkScreamChainTests
 			Assert.AreEqual( 1, park.ScreamsLetGo, "the scream let go is not reached" );
 		} );
 	}
+
+	/// <summary>
+	/// <c>ParkAudio.OnDelete</c>, "the park is ending: what it has playing fades": the music's sample and the rain's
+	/// looped bed are both told to end as the park is deleted, as the original stops every voice between scenes
+	/// (<c>0x0051bcb0</c>, <see cref="Audio.StopAll"/>). Neither is ending before: the music's first sample is
+	/// started by the park's first update, and the rain's bed by a level above nought.
+	/// </summary>
+	[TestMethod]
+	public void AParkThatEndsFadesItsMusicAndItsRain()
+	{
+		InAPark( "jungle", park =>
+		{
+			park.Update();
+
+			Voice music;
+			List<Voice> dry;
+
+			lock ( Audio.Lock )
+			{
+				music = Audio.Voices.Last( voice => voice.Bus == AudioBus.Music );
+				dry = [.. Audio.Voices];
+			}
+
+			park.SetRainLevel( 1f );
+
+			List<Voice> wet;
+
+			lock ( Audio.Lock )
+				wet = Audio.Voices.Where( voice => !dry.Contains( voice ) ).ToList();
+
+			Assert.AreEqual( 1, wet.Count, "the rain is one voice" );
+
+			var rain = wet[0];
+
+			Assert.IsTrue( rain.Loop, "a looped bed, which never ends by itself" );
+			Assert.AreEqual( AudioBus.Effects, rain.Bus );
+			Assert.IsFalse( music.Ending, "the music plays while the park runs" );
+			Assert.IsFalse( rain.Ending, "and the rain falls" );
+
+			park.Delete();
+
+			Assert.IsTrue( music.Ending, "a park that ends fades its music out" );
+			Assert.IsTrue( rain.Ending, "and its rain" );
+		} );
+	}
+
+	/// <summary>
+	/// <c>ParkAudio.OnDelete</c>, "the park is ending: what it has playing fades": the crowd's voice, started on the
+	/// beat by thirteen guests within four cells of the pointer's cell (<c>docs/exe/audio.md</c>, "The crowd's
+	/// voice"), has its playing sample told to end as the park is deleted, as the original stops every voice
+	/// between scenes (<c>0x0051bcb0</c>, <see cref="Audio.StopAll"/>). The setting is
+	/// <see cref="TheCrowdsVoiceFollowsTheGuestsRoundThePointerOnTheBeat"/>'s.
+	/// </summary>
+	[TestMethod]
+	public void AParkThatEndsFadesTheCrowdsVoice()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+
+		using var stream = new System.IO.MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		var pointer = typeof( ParkPicking ).GetProperty( nameof( ParkPicking.Cell ) )!;
+		var cellBefore = ParkPicking.Cell;
+		var people = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), random: new Random( 1 ),
+			behaviourRandom: new Random( 1 ), rideRandom: new Random( 1 ), staffRandom: new Random( 1 ) );
+
+		try
+		{
+			var samples = SamplesOf( ParkAudio.CrowdVoiceEffect );
+
+			InAPark( "jungle", park =>
+			{
+				for ( var i = 0; i < 13; ++i )
+					Assert.AreNotEqual( 0, people.Admit( 42, 5 ) );
+
+				pointer.SetValue( null, (1 * 128) + 38 + 1 );
+
+				var beat = (GameClock.Ticks | 0x1f) + 1;
+
+				while ( GameClock.Ticks < beat )
+				{
+					Frame( held: false, GameClock.TickSeconds );
+					park.Update();
+				}
+
+				Assert.AreEqual( (13, true, 1), (park.CrowdVoiceLevelNow, park.CrowdVoiceHeld, park.CrowdVoicePlays.Samples),
+					"thirteen near the pointer: the voice held, its first sample playing" );
+
+				Voice? crowd;
+
+				lock ( Audio.Lock )
+					crowd = Audio.Voices.LastOrDefault( voice => voice.Bus == AudioBus.Effects && samples.Any( set => set.Contains( voice.Name ) ) );
+
+				Assert.IsNotNull( crowd );
+				Assert.IsFalse( crowd!.Ending, "it sounds while the park runs" );
+
+				park.Delete();
+
+				Assert.IsTrue( crowd.Ending, "a park that ends fades the crowd's voice out" );
+			} );
+		}
+		finally
+		{
+			pointer.SetValue( null, cellBefore );
+			people.Delete();
+			Entity.ApplyDeletions();
+		}
+	}
+
+	/// <summary>
+	/// <b>A new level reaches the playing sample of any of variations 1 to 6, not the first alone</b>
+	/// (<c>docs/exe/audio.md</c>, "The crowd's voice": "As controller slot 1 of variations 1 to 6 it is the volume:
+	/// level × (22 − 14) / 100 + 14 in whole numbers ... the set applies it to the playing sample at once"). Forty
+	/// guests round the pointer are level 40, whose band, 32-47, is the third variation's: the voice's first sample is
+	/// the first variation's, and the one after it the third's (the first's zones give 32-47 to variation 3 alone), at
+	/// volume 40 × 8 / 100 + 14 = 17, which is 13 of 127 (17 × 0.75 = 12.75). A hundred guests on the next beat are
+	/// level 100, and the same sample, still playing, takes 100 × 8 / 100 + 14 = 22, which is 16 of 127 (16.5 to the
+	/// even), with no new sample started.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutation:</b> the set applied only while the first variation plays (<c>CrowdVoiceVariation &gt; 0</c> for
+	/// <c>&lt; 0</c> in <c>ParkAudio.SetCrowdVoice</c>).
+	/// </remarks>
+	[TestMethod]
+	public void ANewLevelIsThePlayingSamplesVolumeAtOnceOnTheThirdVariationToo()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+
+		using var stream = new System.IO.MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		var levelBefore = Level.Current;
+		var pointer = typeof( ParkPicking ).GetProperty( nameof( ParkPicking.Cell ) )!;
+		var cellBefore = ParkPicking.Cell;
+		var people = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), random: new Random( 1 ),
+			behaviourRandom: new Random( 1 ), rideRandom: new Random( 1 ), staffRandom: new Random( 1 ) );
+
+		try
+		{
+			var samples = SamplesOf( ParkAudio.CrowdVoiceEffect );
+
+			InAPark( "jungle", park =>
+			{
+				Voice? Crowd()
+				{
+					lock ( Audio.Lock )
+						return Audio.Voices.LastOrDefault( voice => voice.Bus == AudioBus.Effects && samples.Any( set => set.Contains( voice.Name ) ) );
+				}
+
+				void ToTheBeat()
+				{
+					var beat = (GameClock.Ticks | 0x1f) + 1;
+
+					while ( GameClock.Ticks < beat )
+					{
+						Frame( held: false, GameClock.TickSeconds );
+						park.Update();
+					}
+				}
+
+				// Forty at the stop, the pointer four cells off both ways: level 40.
+				for ( var i = 0; i < 40; ++i )
+					Assert.AreNotEqual( 0, people.Admit( 42, 5 ) );
+
+				Assert.AreEqual( 40, people.GuestsNear( (1 * 128) + 38 + 1, 4 ), "none of the save's guests stands within four of (38,1)" );
+				pointer.SetValue( null, (1 * 128) + 38 + 1 );
+				ToTheBeat();
+				Assert.AreEqual( (40, true, 0), (park.CrowdVoiceLevelNow, park.CrowdVoiceHeld, park.CrowdVoiceVariation),
+					"started on the beat, its first sample the first variation's" );
+
+				// Off the beat, the first sample ends: the next is the third variation's, whose band holds 40.
+				Frame( held: false, GameClock.TickSeconds );
+				park.Update();
+				Crowd()!.Stop();
+				park.Update();
+				Assert.AreEqual( 2, park.CrowdVoiceVariation, "32-47 is the third variation's band" );
+
+				var playing = Crowd()!;
+
+				Assert.IsTrue( samples[2].Contains( playing.Name ) );
+				Assert.AreEqual( 17, park.CrowdVoiceSample.Volume, "40 x 8 / 100 + 14" );
+				Assert.AreEqual( 13f / 60f * 0.33f, playing.Volume, 0.00001f, "volume 17 is 13 of 127 beside the music's 60" );
+
+				// The crowd grows to a hundred while it plays: its volume on the beat, and no new sample.
+				for ( var i = 0; i < 60; ++i )
+					Assert.AreNotEqual( 0, people.Admit( 42, 5 ) );
+
+				ToTheBeat();
+				Assert.AreEqual( (100, 100), (park.CrowdVoiceLevelNow, park.CrowdVoiceGuests) );
+				Assert.AreSame( playing, Crowd(), "no new sample for a new level" );
+				Assert.AreEqual( 2, park.CrowdVoiceVariation, "and the third variation's still" );
+				Assert.AreEqual( 22, park.CrowdVoiceSample.Volume, "100 x 8 / 100 + 14" );
+				Assert.AreEqual( 16f / 60f * 0.33f, playing.Volume, 0.00001f, "the playing sample takes volume 22, 16 of 127, at once" );
+			} );
+		}
+		finally
+		{
+			pointer.SetValue( null, cellBefore );
+			Level.Current = levelBefore!;
+			people.Delete();
+			Entity.ApplyDeletions();
+		}
+	}
+
+	/// <summary>
+	/// <b>A packed cell in the map's last column is on its own row</b> (<c>FUN_004c8d30( 1, cell, reach, 0 )</c>,
+	/// <see cref="ParkPeople.GuestsNear"/>'s doc comment; a packed cell is <c>y*128 + x + 1</c>). Three guests made
+	/// on (42,5) are 85 columns from column 127. Asked from (127,90) with a reach of 85 they are 85 rows off, the
+	/// square's last row, so all three are counted; asked from (127,91) they are 86 rows off, so none is.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the row taken from the packed cell without the one taken off, which puts column 127 a row down.</remarks>
+	[TestMethod]
+	public void TheGuestsRoundACellInTheLastColumnAreCountedFromItsOwnRow()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+
+		using var stream = new System.IO.MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var people = new ParkPeople( new ParkWorld( new SaveReader( stream ).ReadFile() ), new ParkBalance( "jungle", easyMode: true ),
+			random: new Random( 1 ), behaviourRandom: new Random( 1 ), rideRandom: new Random( 1 ), staffRandom: new Random( 1 ) );
+
+		try
+		{
+			static int Cell( int x, int y ) => (y * 128) + x + 1;
+
+			// What the save's own guests give each cell, so that only the three made here are measured.
+			var onTheEdge = people.GuestsNear( Cell( 127, 90 ), 85 );
+			var pastIt = people.GuestsNear( Cell( 127, 91 ), 85 );
+
+			for ( var i = 0; i < 3; ++i )
+				Assert.AreNotEqual( 0, people.Admit( 42, 5 ) );
+
+			Assert.AreEqual( 3, people.GuestsNear( Cell( 127, 90 ), 85 ) - onTheEdge,
+				"85 columns and 85 rows from (127,90): on the square's corner, counted" );
+			Assert.AreEqual( 0, people.GuestsNear( Cell( 127, 91 ), 85 ) - pastIt,
+				"86 rows from (127,91): outside the square" );
+		}
+		finally
+		{
+			people.Delete();
+			Entity.ApplyDeletions();
+		}
+	}
+
+	/// <summary>
+	/// <b>A guest is counted on the cell the park has them linked into</b>, not the one under their position:
+	/// <c>FUN_004c8d30</c> walks the cells' own lists, and the count here reads each guest's linked cell
+	/// (<c>docs/exe/audio.md</c>, "The crowd's voice", "Said"; <see cref="ParkState.CellOf"/>). One guest made on
+	/// (42,5) and then linked into (42,15), their position left where it was, is one more on (42,15) and none
+	/// more on (42,5).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the linked cell not read, every guest counted where their position is.</remarks>
+	[TestMethod]
+	public void AGuestIsCountedOnTheCellTheParkHasThemLinkedInto()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+
+		using var stream = new System.IO.MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var people = new ParkPeople( new ParkWorld( new SaveReader( stream ).ReadFile() ), new ParkBalance( "jungle", easyMode: true ),
+			random: new Random( 1 ), behaviourRandom: new Random( 1 ), rideRandom: new Random( 1 ), staffRandom: new Random( 1 ) );
+
+		try
+		{
+			static int Cell( int x, int y ) => (y * 128) + x + 1;
+
+			// What the save's own guests give each of the two cells, so that only the one made here is measured.
+			var madeOn = people.GuestsNear( Cell( 42, 5 ), 0 );
+			var linkedInto = people.GuestsNear( Cell( 42, 15 ), 0 );
+
+			var id = people.Admit( 42, 5 );
+
+			Assert.AreNotEqual( 0, id );
+			Assert.AreEqual( 1, people.GuestsNear( Cell( 42, 5 ), 0 ) - madeOn, "made on (42,5) and linked into it" );
+
+			people.State.StandOn( id, 42, 15 );
+
+			Assert.AreEqual( (42, 5), people.Guests[id].Navigator.Position.Cell, "their position has not moved" );
+			Assert.AreEqual( (42, 15), people.State.CellOf( id )!.Value, "the park has them on (42,15)" );
+			Assert.AreEqual( 1, people.GuestsNear( Cell( 42, 15 ), 0 ) - linkedInto, "counted on the cell they are linked into" );
+			Assert.AreEqual( 0, people.GuestsNear( Cell( 42, 5 ), 0 ) - madeOn, "and not on the one under their position" );
+		}
+		finally
+		{
+			people.Delete();
+			Entity.ApplyDeletions();
+		}
+	}
 }

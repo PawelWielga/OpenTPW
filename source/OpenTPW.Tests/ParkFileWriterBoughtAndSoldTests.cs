@@ -1410,4 +1410,100 @@ public class ParkFileWriterBoughtAndSoldTests
 		Assert.IsTrue( catalogue.TryGet( walking[0].CatalogueId, out var spray ) && !spray.DoHeadProcessing );
 		Assert.IsTrue( kept.Models.All( model => model.Heads == null ), "no kept record's lookup records are written" );
 	}
+
+	/// <summary>
+	/// <b>A deadline a script keeps in a variable keeps its distance from the save's moment across a load</b>
+	/// (docs/exe/park.md, "What a kept <c>GETTIME</c> reading is, and what a load does to it"; <c>ParkRides.Moved</c>).
+	/// A Crazy Ape is bought and its <c>VAR_STARTNOW</c> set 7,300 ms ahead, so the file holds it 7,300 ms past its
+	/// own clock and the park loaded from that file holds it 7,300 ms past the load's moment: one reading moved, the
+	/// only one, since no script of the shipped park keeps any. And only where the save's clock reads
+	/// (<c>ParkRides.Resume</c>, "Only where the save's clock reads"): from the same file with its clock module's tag
+	/// spoiled the park still loads, with the reading as the file holds it and none moved.
+	/// </summary>
+	[TestMethod]
+	public void AKeptReadingIsMovedOnlyWhereTheSavesClockReads()
+	{
+		var rides = Bind( shipped );
+		var state = new ParkState( shipped );
+		var ape = Buy( state, rides, CrazyApe, 41, 22 );
+		var handle = rides.ScriptFor( ape.ThingId );
+		var script = rides.Scheduler.Find( handle )!;
+		var slot = script.IndexOf( "VAR_STARTNOW" );
+
+		Assert.IsTrue( slot >= 0 && script.Set( "VAR_STARTNOW", rides.LoadedAt + 7300 ), "the Crazy Ape's script keeps its deadline in VAR_STARTNOW" );
+		Assert.AreEqual( 0, rides.KeptReadingsMoved, "the shipped park keeps none" );
+		script.RestoreHeads( new int[script.HeadSlots] );
+
+		var kept = state.WrittenObjects( shipped, id => true, out var bought, out var gone );
+		Assert.IsTrue( catalogue.TryGet( CrazyApe, out var item ) );
+
+		var things = rides.Written( shipped, kept, ChannelsFor, state.HoardingFor,
+			[new ParkRides.BoughtThing( new ParkWorld.MadeObject( bought[0], "Crazy", "Ape" ), item.Width, item.Depth, "there\\" )], gone, state.BuiltItems )!;
+		var body = ParkFileWriter.Body( shipped, Running( things ), out _, out _ );
+		var loaded = new ParkWorld( body );
+		var clock = loaded.Clock.Reading!.Value;
+
+		Assert.AreEqual( clock + 7300, unchecked((uint)loaded.ScriptStates.For( handle )!.Value.Variables[slot]), "the file holds it 7,300 ms past its own clock" );
+
+		var again = Bind( loaded );
+		var resumed = again.Scheduler.Find( again.ScriptFor( ape.ThingId ) )!;
+
+		Assert.AreEqual( again.LoadedAt + 7300, resumed["VAR_STARTNOW"], "and the load puts it 7,300 ms past its own moment" );
+		Assert.AreEqual( 1, again.KeptReadingsMoved, "one reading moved, the Crazy Ape's" );
+
+		// The clock module as ParkClock finds it: its tag twelve bytes after the message centre's.
+		var unread = (byte[])body.Clone();
+		var tag = -1;
+
+		for ( var at = 12; at + 4 <= unread.Length && tag < 0; ++at )
+		{
+			if ( unread.AsSpan( at, 4 ).SequenceEqual( "KOLC"u8 ) && unread.AsSpan( at - 12, 4 ).SequenceEqual( "SSEM"u8 ) )
+				tag = at;
+		}
+
+		Assert.IsTrue( tag > 0, "the clock module's tag" );
+		unread[tag] = (byte)'X';
+
+		var broken = new ParkWorld( unread );
+
+		Assert.IsNull( broken.Clock.Reading, "the clock no longer reads" );
+		Assert.IsNull( broken.ScriptStates.Problem, "and the scripts still do" );
+
+		var raw = Bind( broken );
+		var left = raw.Scheduler.Find( raw.ScriptFor( ape.ThingId ) )!;
+
+		Assert.AreEqual( unchecked((int)(clock + 7300)), left["VAR_STARTNOW"], "with no clock to measure from, the reading is left as the file holds it" );
+		Assert.AreEqual( 0, raw.KeptReadingsMoved, "and none is counted as moved" );
+	}
+
+	/// <summary>
+	/// A head hung on the node of a model's first lookup record is written as any other: record nought is a record.
+	/// The Crazy Ape's head id 1 is its <c>Head1</c>, node 9 of monkey.md2, whose lookup table starts at node 9
+	/// (the header's ushort at <c>0x46</c>), so its record is 9 - 9 = 0; head id 3 is on record 1
+	/// (<see cref="ApeHeadRecord"/>). Both heads are handed over in head order, each takes a sprite slot, the lowest
+	/// the file leaves empty first (11, then 20), and the model's record counts two attached with the shared
+	/// <c>0x4</c> (docs/exe/saves.md, "What OpenTPW builds" under the walk's heads; <c>FUN_0044b410</c>).
+	/// </summary>
+	[TestMethod]
+	public void AHeadOnTheModelsFirstLookupRecordIsWritten()
+	{
+		var state = new ParkState( shipped );
+		var rides = Bind( shipped );
+		var guests = shipped.People.Where( person => person.Guest != null ).Take( 2 ).Select( person => person.ThingId ).ToArray();
+		var things = ApeWithHeads( state, rides, out _, (1, guests[0]), (3, guests[1]) );
+		var heads = things.Made!.Single().Heads!.Value;
+
+		CollectionAssert.AreEqual( new[] { (0, guests[0]), (ApeHeadRecord[3], guests[1]) }, heads.Hung.ToArray(),
+			"head id 1 hangs on the model's first lookup record, record 0" );
+		CollectionAssert.Contains( heads.Records.ToArray(), 0 );
+
+		var body = ParkFileWriter.Body( shipped, Running( things ), out var report, out _ );
+		var written = new ParkWorld( body );
+		var lookups = Models( written ).LookupsOf( 90 )!.Value;
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( (7, 2, 2), (lookups.Shared, lookups.Attached, report!.Value.Heads) );
+		Assert.AreEqual( 11, lookups.Records[0].Handle, "the first head's sprite slot is on record 0" );
+		Assert.AreEqual( 20, lookups.Records[ApeHeadRecord[3]].Handle );
+	}
 }

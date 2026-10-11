@@ -393,4 +393,40 @@ public class ParkPeopleTests
 				$"a last drop on {drop}, let go on {drop + 1}, brings the next on {next}" );
 		}
 	}
+
+	/// <summary>
+	/// <see cref="ParkPeople.Depart"/> is the other half of <see cref="ParkPeople.Admit"/>, and its own remarks give the
+	/// rule: every list <c>Admit</c> added the guest to has to let go, and <see cref="ParkState.Forget"/> is what takes
+	/// them off the map. So a guest made at the bus stop (42,5) has a walk, an animation and the head of that cell's
+	/// chain (a new thing heads its cell, <c>FUN_004d91f0</c>), and once gone has none of the three: no walk, no
+	/// animation, no cell, and the cell is headed again by whoever headed it before they came (<c>FUN_004d9280</c>,
+	/// the head's removal hands the cell to the next).
+	/// </summary>
+	[TestMethod]
+	public void AGuestGoneHomeIsLetGoByTheWalksTheSpritesAndTheirCell()
+	{
+		var world = World();
+		var state = new ParkState( world );
+		var people = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), null, state );
+
+		var headBefore = (int)state.CellAt( 42, 5 ).Occupant;
+
+		var id = people.Admit( 42, 5 );
+
+		Assert.AreNotEqual( 0, id, "the park should take a guest at the bus stop" );
+		Assert.AreNotEqual( headBefore, id, "a new thing, not the one already there" );
+		Assert.IsNotNull( people.WalkFor( id ), "made with a walk" );
+		Assert.IsNotNull( people.SpriteFor( id ), "made with an animation" );
+		Assert.AreEqual( (42, 5), state.CellOf( id ), "made standing on the bus stop's cell" );
+		Assert.AreEqual( id, (int)state.CellAt( 42, 5 ).Occupant, "and at the head of its chain" );
+
+		Assert.IsTrue( people.Depart( id ) );
+
+		Assert.IsFalse( people.Guests.ContainsKey( id ), "no longer a guest" );
+		Assert.IsNull( people.WalkFor( id ), "the walk is let go" );
+		Assert.IsNull( people.AnyWalkFor( id ), "so the drawing is answered none" );
+		Assert.IsNull( people.SpriteFor( id ), "the animation is let go, and is stepped no more" );
+		Assert.IsNull( state.CellOf( id ), "they are on no cell" );
+		Assert.AreEqual( headBefore, (int)state.CellAt( 42, 5 ).Occupant, "and the cell is headed as it was before they came" );
+	}
 }

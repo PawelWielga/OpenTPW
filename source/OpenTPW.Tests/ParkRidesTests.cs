@@ -761,4 +761,36 @@ public class ParkRidesTests
 		Assert.IsTrue( plain.Count > 0, "the shipped park binds a script that walks nobody, seats nobody and starts no effect" );
 		Assert.IsTrue( plain.All( script => script.Nodes == null ), "and such a script reads no model" );
 	}
+
+	/// <summary>
+	/// <b>A load whose model states will not read brings no <c>TRIGWAITANIM</c> mark back either.</b> The mark answers
+	/// for what channel 0 is playing, so it comes back only with the channels (<c>ParkRides.Resume</c>, "the key and
+	/// the mark only for a thing whose channels Restore puts back"). From a copy of the shipped park with the Belly
+	/// Bounce's record given a mark for role 2 (3, the role plus one, at <c>+0xbc</c>) and the channel module's leading
+	/// tag spoiled, no channel is put back, so the script holds the mark a script starts with, nought, and its wait
+	/// still comes back 63 ms after the load.
+	/// </summary>
+	[TestMethod]
+	public void ALoadWhoseChannelsWillNotReadKeepsNoTriggerMark()
+	{
+		var payload = Payload();
+		var clock = new ParkClock( payload ).Reading!.Value;
+
+		// The Belly Bounce's struct, found as EverySavedWaitMarkTimerAndQueueComesBack finds it.
+		var script = Single( payload, clock + 63, at => at >= 0xa0
+			&& BitConverter.ToInt32( payload, at - 0xa0 + 0x08 ) == 3 && BitConverter.ToInt32( payload, at - 0xa0 + 0x3c ) == 46 ) - 0xa0;
+
+		BitConverter.GetBytes( 3 ).CopyTo( payload, script + 0xbc );
+
+		var tag = System.Text.Encoding.ASCII.GetBytes( "SYSG" );
+
+		payload[Single( payload, BitConverter.ToUInt32( tag ), _ => true )] = (byte)'X';
+
+		var rides = Bind( new ParkWorld( payload ), Catalogue() );
+		var bouncy = rides.Scheduler.Find( rides.ScriptFor( BellyBounceThing ) )!;
+
+		Assert.AreEqual( 0, rides.ChannelsRestored, "no channel put back" );
+		Assert.AreEqual( rides.LoadedAt + 63f, bouncy.WaitDeadline, "its wait still comes back" );
+		Assert.AreEqual( 0, bouncy.AnimationMark, "but not the mark for a clip its channel is not playing" );
+	}
 }

@@ -263,4 +263,46 @@ public class ParkAdvisorMessageTests
 		messages.Tick( 100, 0, (_, _) => 0 );
 		Assert.IsFalse( messages.PostDoor( false, 580 ) );
 	}
+
+	/// <summary>
+	/// The wait after a response is counted in milliseconds of the running clock (<c>FUN_0059a550</c>;
+	/// <c>docs/exe/advisor-park.md</c>: the tick returns early while now is under the last response plus the wait, and
+	/// the wait is the line's length + 1000 ms). With no speaker the length is nought. Frames of two ticks, 62 ms,
+	/// are under the frame clamp, so a sweep falls every 248 ms: the sweep at 248 ms says the first of two posted
+	/// messages, the sweeps at 496, 744, 992 and 1,240 ms are inside the wait that ends at 1,248, and the sweep at
+	/// 1,488 ms says the second.
+	/// </summary>
+	[TestMethod]
+	public void TheSecondMessageWaitsOutOneSecondOfTheClockInMilliseconds()
+	{
+		using var clock = new SimulationClockScope();
+		FileSystem = GameData.Required();
+		var state = new ParkState( null ) { AdvisorMessages = new ParkAdvisorMessages( Settings() ) };
+		var people = new ParkPeople( null, state: state );
+		try
+		{
+			state.SetParkClosed( false );
+			state.SetParkClosed( true );
+			Assert.AreEqual( 2, state.AdvisorMessages.PendingCount );
+			void Sweep()
+			{
+				for ( var frame = 0; frame < 4; ++frame )
+				{
+					SimulationClockScope.Frame( GameClock.TickSeconds * 2 );
+					people.Update();
+				}
+			}
+			Sweep();
+			Assert.AreEqual( (1, 1, 1), (state.GameTick, state.AdvisorMessages.Attempts, state.AdvisorMessages.PendingCount), "248 ms: the first is said" );
+			for ( var i = 0; i < 4; ++i ) Sweep();
+			Assert.AreEqual( (5, 1, 1), (state.GameTick, state.AdvisorMessages.Attempts, state.AdvisorMessages.PendingCount), "1,240 ms: still inside the wait that ends at 1,248" );
+			Sweep();
+			Assert.AreEqual( (6, 2, 0), (state.GameTick, state.AdvisorMessages.Attempts, state.AdvisorMessages.PendingCount), "1,488 ms: the second is said" );
+		}
+		finally
+		{
+			people.Delete();
+			Entity.ApplyDeletions();
+		}
+	}
 }

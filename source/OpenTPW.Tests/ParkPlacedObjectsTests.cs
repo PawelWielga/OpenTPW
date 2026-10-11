@@ -375,4 +375,39 @@ public class ParkPlacedObjectsTests
 			ParkOrbitCameraMode.PointOfInterest = looksAt;
 		}
 	}
+
+	/// <summary>
+	/// <c>ParkAudio.OnDelete</c>: a park's sound that ends stops being <see cref="ParkAudio.Current"/> only where it
+	/// is the current one. Two are made, so the second is current (the constructor's first line); the first ending
+	/// leaves the second current, and the second ending leaves none. Needs no device and none of the game's files:
+	/// with no device the constructor loads nothing.
+	/// </summary>
+	[TestMethod]
+	public void AParkThatEndsIsNoLongerTheCurrentSoundAndAnOlderOneEndingLeavesTheNewerCurrent()
+	{
+		Assert.IsFalse( Audio.Ready, "a test run has no audio device" );
+
+		ParkAudio? older = null;
+		ParkAudio? newer = null;
+
+		try
+		{
+			older = new ParkAudio( "jungle" );
+			newer = new ParkAudio( "jungle" );
+
+			Assert.AreSame( newer, ParkAudio.Current, "the one made last is the current one" );
+
+			older.Delete();
+			Assert.AreSame( newer, ParkAudio.Current, "an older park ending does not take the newer one's place away" );
+
+			newer.Delete();
+			Assert.IsNull( ParkAudio.Current, "the current one ending leaves none" );
+		}
+		finally
+		{
+			older?.Delete();
+			newer?.Delete();
+			Entity.ApplyDeletions();
+		}
+	}
 }

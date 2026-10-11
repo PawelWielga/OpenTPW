@@ -382,4 +382,43 @@ public class ParkFileWriterPoolTests
 
 		Assert.ThrowsException<InvalidOperationException>( () => ParkFileWriter.Body( shipped, AsShipped with { StaffPool = fourKinds } ) );
 	}
+
+	/// <summary>
+	/// The vehicle that is current is whichever of the header's three <c>mArrivalVehicle_Size1..3</c> names the thing
+	/// <c>mCurrentArrivalVehicle</c> holds (<c>docs/exe/saves.md</c>, "OpenTPW's writer, the arrival vehicle, a balloon
+	/// let go and a thought read back"; <c>docs/exe/park.md</c>, "Arrivals": the header's order is the version, the three
+	/// sizes, <c>mBankAccount</c>, then the current one, each of the five a word). The shipped file names only the first,
+	/// thing 15, so a second and a third are written into it: with the second's thing current the park's vehicle is 2,
+	/// with the third's it is 3, both the larger kind, and nothing is counted as a stranger.
+	/// </summary>
+	[TestMethod]
+	public void TheCurrentVehicleIsTheSecondOrTheThirdWhereTheFileNamesItsThing()
+	{
+		// Where mCurrentArrivalVehicle sits: the first byte that moves when it alone is written.
+		var before = ParkFileWriter.Body( shipped, AsShipped );
+		var body = ParkFileWriter.Body( shipped, AsShipped with { Arrival = new ParkFileWriter.ArrivalTimer( 661, 0, false, 0x1234 ) } );
+		var at = Enumerable.Range( 0, before.Length ).First( i => before[i] != body[i] );
+
+		// Size1 is four words before it, past Size2, Size3 and mBankAccount.
+		Assert.AreEqual( 15, (int)BitConverter.ToUInt16( body, at - 8 ), "mArrivalVehicle_Size1, the bus" );
+		Assert.AreEqual( (0, 0), ((int)BitConverter.ToUInt16( body, at - 6 ), (int)BitConverter.ToUInt16( body, at - 4 )), "the file names no second and no third" );
+
+		BitConverter.TryWriteBytes( body.AsSpan( at - 6 ), (ushort)0x21 );
+		BitConverter.TryWriteBytes( body.AsSpan( at - 4 ), (ushort)0x22 );
+		BitConverter.TryWriteBytes( body.AsSpan( at ), (ushort)0x21 );
+
+		var second = new ParkPeople( new ParkWorld( (byte[])body.Clone() ) );
+
+		Assert.AreEqual( 2, second.CurrentVehicle, "the medium crowd's thing is current" );
+		Assert.IsTrue( second.LargerVehicleIsCurrent );
+		TestRun.DeleteEvery<ParkPeople>();
+
+		BitConverter.TryWriteBytes( body.AsSpan( at ), (ushort)0x22 );
+
+		var third = new ParkPeople( new ParkWorld( (byte[])body.Clone() ) );
+
+		Assert.AreEqual( 3, third.CurrentVehicle, "the large crowd's thing is current" );
+		Assert.IsTrue( third.LargerVehicleIsCurrent );
+		Assert.IsFalse( Unimplemented.Summary.Any( gap => gap.What == "SAVED_CURRENT_ARRIVAL_VEHICLE" ), "neither is a stranger to the file" );
+	}
 }

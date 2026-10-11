@@ -853,4 +853,48 @@ public class ParkFileWriterEmitterTests
 		Assert.AreEqual( -1, broken.Cars.Single().Car.Word( 0x2c ) );
 		Assert.AreEqual( 1, Unimplemented.Summary.Single( gap => gap.What == "SAVE_PARK_CAR_SMOKE" ).Times );
 	}
+
+	/// <summary>
+	/// <b>A car has a wake's model only where its flags hold <c>0x2002000</c></b>: the loader makes the wake's from
+	/// the car's <c>+0x0c</c> on those flags alone (<c>FUN_00543560</c>; <c>docs/exe/saves.md</c>, the track rides
+	/// module's loader), so a car without them is written none. A Hot Pot's new boat trails one
+	/// (<c>Bumper_Retarget</c>), and its record is the original's (<c>docs/exe/saves.md</c>, "OpenTPW's writer, a
+	/// track ride's cars"; FileFormats <c>saves.md</c>, "A car's two model records"): item 1141, the ride's 1140
+	/// plus one plus mesh nought, beside the boat's 1142; one node word, <c>0x40</c>; no lookup record and shared
+	/// flags nought; and a channel on no role at speed nought, which nothing starts.
+	/// </summary>
+	[TestMethod]
+	public void ACarIsWrittenAWakesModelOnlyWhereItsFlagsHoldTheWakeBits()
+	{
+		var table = new ParkTrackRideTable();
+		var handle = table.Take( -1 );
+		var cars = table.Cars;
+
+		cars.Place( handle, 0x20a00, 0x13200 );
+		cars.OpenForLoading( handle );
+		var boat = cars.Launch( handle )!;
+
+		Assert.AreNotEqual( ParkBumperCars.CarFlags.None, boat.Flags & ParkBumperCars.CarFlags.Wake, "a Hot Pot's new boat trails a wake" );
+		Assert.IsTrue( catalogue.TryGet( 1140, out var pot ) );
+
+		var record = new SavedTrackRide( handle, 0x20400, 0x12c00, 0, 1140, 60, 1, 1, 750, 2 );
+		var trailing = ParkCarWriter.Track( cars, record, pot, _ => 0u, null, data )!.Cars.Single();
+
+		Assert.AreEqual( 1142, trailing.Model.Item, "the boat's own: the ride's item plus one plus mesh 1" );
+		Assert.IsNotNull( trailing.Wake );
+		Assert.AreEqual( 1141, trailing.Wake!.Item, "the wake's: mesh nought" );
+		Assert.AreEqual( AtRest with { Speed = 0f }, trailing.Wake.Channel, "no role, speed nought" );
+		Assert.IsNotNull( trailing.Wake.Tables );
+		CollectionAssert.AreEqual( new uint[] { 0x40 }, trailing.Wake.Tables!.Value.NodeWords.ToArray() );
+		Assert.AreEqual( (0, 0), (trailing.Wake.Tables.Value.Lookups.Count, trailing.Wake.Tables.Value.Shared) );
+
+		// The same boat without the wake's bits: no second model, so no handle for its +0x0c.
+		boat.Flags &= ~ParkBumperCars.CarFlags.Wake;
+		Assert.AreEqual( 0, (int)boat.Flags & 0x2002000 );
+
+		var bare = ParkCarWriter.Track( cars, record, pot, _ => 0u, null, data )!.Cars.Single();
+
+		Assert.IsNull( bare.Wake );
+		Assert.AreEqual( 1142, bare.Model.Item );
+	}
 }

@@ -678,4 +678,147 @@ public class ParkClosedRideTests
 			Close( park );
 		}
 	}
+
+	/// <summary>
+	/// The last step of the turn's first half, <c>FUN_004e0b90</c> (<c>docs/exe/ride-operation.md</c>, "The first
+	/// half of the turn", step 5): a head who is not queueing is cleared and nothing else is tidied, in every state
+	/// but 3 and 4. So the head is nobody afterwards, and the guest is left as they were: still naming the ride and
+	/// with their happiness of 50 whole, because in states 1 and 2 the completion that follows finds no head to put
+	/// out and takes no <c>MediumHappinessChange</c> off anybody.
+	/// </summary>
+	[TestMethod]
+	[DataRow( 0 )]
+	[DataRow( ParkRideChoice.StateRefusedOne )]
+	[DataRow( 2 )]
+	public void AStaleQueueHeadIsDroppedOnTheTurnOfAThingNotInStateThreeOrFour( int state )
+	{
+		var park = Open();
+
+		try
+		{
+			var head = Queue( park, 1 )[0];
+
+			Change( park, BellyBounce, thing => thing with { State = state } );
+			head.SetState( PeepState.Deciding, tick: 1, new Random( 1 ) );
+
+			Assert.AreEqual( head.ThingId, park.State.FirstInQueue( BellyBounce ), "the head names a guest who queues no longer" );
+
+			park.People.TakeTheRidesTurns( thingTick: 10 );
+
+			Assert.AreEqual( 0, park.State.FirstInQueue( BellyBounce ), $"state {state}: the stale head is cleared" );
+			Assert.AreEqual( BellyBounce, head.MajorDest, $"state {state}: and nothing else is tidied" );
+			Assert.AreEqual( Before, head.Happiness, 0.001f, $"state {state}: dropped, not put out, so nothing is lost" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// <c>FUN_004e0b90</c> returns for states 3 and 4 before its stale-head drop, and <c>FUN_004e0e00</c> sends
+	/// state 3 straight to its return (<c>docs/exe/ride-operation.md</c>, "The first half of the turn", step 2:
+	/// "a state-3 object does nothing at all on its turn"; "The second half", state 3: nothing). So a state-3
+	/// thing whose head has stopped queueing still names that head after its turn.
+	/// </summary>
+	[TestMethod]
+	public void AThingInStateThreeKeepsAStaleQueueHeadOnItsTurn()
+	{
+		var park = Open();
+
+		try
+		{
+			var head = Queue( park, 1 )[0];
+
+			Change( park, BellyBounce, thing => thing with { State = 3 } );
+			head.SetState( PeepState.Deciding, tick: 1, new Random( 1 ) );
+
+			park.People.TakeTheRidesTurns( thingTick: 10 );
+
+			Assert.AreEqual( head.ThingId, park.State.FirstInQueue( BellyBounce ), "state 3 returns before the stale-head drop" );
+			Assert.AreEqual( BellyBounce, head.MajorDest, "and the guest is not touched" );
+			Assert.AreEqual( Before, head.Happiness, 0.001f, "nor put out" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// The watchdog at the tail of <c>FUN_004e1220</c> (<c>0x004e1382</c>), through the ride's own turn: on a turn
+	/// that invites nobody an open ride lets go of a nominee who is not being admitted, and keeps one who is. A
+	/// closed ride (<c>mCanLoad</c> nought) runs the completion and returns at <c>0x004e13fc</c>, so the watchdog is
+	/// not reached and the nominee stands (<c>docs/exe/ride-operation.md</c>, "The closed ride", the completion).
+	/// </summary>
+	[TestMethod]
+	public void AnOpenRidesTurnDropsANomineeWhoIsNotComingToBoard()
+	{
+		var park = Open();
+
+		try
+		{
+			var guest = park.People.Peeps[0];
+
+			guest.SetState( PeepState.BeingAdmitted, tick: 1, new Random( 1 ) );
+			park.State.NominateForLoading( BellyBounce, guest.ThingId );
+			park.People.TakeTheRidesTurns( thingTick: 10 );
+
+			Assert.AreEqual( guest.ThingId, park.State.PersonBeingLoaded( BellyBounce ), "a nominee on their way is kept" );
+
+			guest.SetState( PeepState.Deciding, tick: 1, new Random( 1 ) );
+			Change( park, BellyBounce, thing => thing with { CanLoad = 0 } );
+			park.People.TakeTheRidesTurns( thingTick: 11 );
+
+			Assert.AreEqual( guest.ThingId, park.State.PersonBeingLoaded( BellyBounce ),
+				"a closed ride's turn does not reach the watchdog" );
+
+			Change( park, BellyBounce, thing => thing with { CanLoad = 1 } );
+			park.People.TakeTheRidesTurns( thingTick: 12 );
+
+			Assert.AreEqual( 0, park.State.PersonBeingLoaded( BellyBounce ),
+				"an open ride's turn lets go of a nominee who is not being admitted" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// <c>FUN_004e0e00</c>'s arm for states 1, 2 and 4 is the completion <c>FUN_004e0450</c> and then the dismissal
+	/// <c>FUN_004e1410</c> (<c>docs/exe/ride-operation.md</c>, "The second half"): a ride broken down, waiting for
+	/// an upgrade or condemned still lets off the rider its script names in <c>VAR_LETMEOFF</c>, who is then
+	/// leaving the ride, and the slot is emptied behind them.
+	/// </summary>
+	[TestMethod]
+	[DataRow( ParkRideChoice.StateRefusedOne )]
+	[DataRow( 2 )]
+	[DataRow( ParkRideChoice.StateRefusedFour )]
+	public void ARideOutOfServiceStillLetsOffWhoeverItsScriptReports( int state )
+	{
+		var park = Open();
+
+		try
+		{
+			var rider = park.People.Peeps[0];
+			var script = park.Scripts[BellyBounce];
+
+			rider.MajorDest = BellyBounce;
+			rider.QueuePos = 0;
+			rider.SetState( PeepState.Riding, tick: 1, new Random( 1 ) );
+
+			Change( park, BellyBounce, thing => thing with { State = state, CanLoad = 0 } );
+			Assert.IsTrue( script.Set( ParkRideOperation.DismissVariable, rider.ThingId ), "the script reports its rider" );
+
+			park.People.TakeTheRidesTurns( thingTick: 10 );
+
+			Assert.AreEqual( PeepState.LeavingRide, rider.State, $"state {state}: the rider is let off" );
+			Assert.AreEqual( 0, script[ParkRideOperation.DismissVariable], $"state {state}: and the slot is emptied behind them" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
 }

@@ -710,4 +710,35 @@ public class ParkStrikeTests
 
 		GameCalendar.Rebase();
 	}
+
+	/// <summary>
+	/// The save's five training budgets are the running park's, each in its own place: thing 1 keeps <c>mBudget[0..4]</c>,
+	/// five dwords at 82 of the staff HQ's record, the handymen's, mechanics', entertainers', guards' and researchers' in
+	/// that order (<c>docs/exe/ride-operation.md</c>, "The training, FUN_0050c800"; FileFormats <c>saves.md</c>, "The
+	/// staff HQ"). The shipped file's are all nought, so five the Staff Training Budgets screen can set (0 to 10000 in
+	/// steps of 25) are written into it, and the park that loads it holds those five.
+	/// </summary>
+	[TestMethod]
+	public void TheSavedTrainingBudgetsAreTheParksInTheirOwnOrder()
+	{
+		using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var payload = new SaveReader( stream ).ReadFile();
+
+		// The staff HQ's record: five stamps of 715 twelve bytes apart, each after two noughts.
+		var found = Enumerable.Range( 0, payload.Length - 110 ).Where( at => Enumerable.Range( 0, 5 ).All( i =>
+			BitConverter.ToInt32( payload, at + 22 + (12 * i) ) == 0
+			&& BitConverter.ToInt32( payload, at + 26 + (12 * i) ) == 0
+			&& BitConverter.ToInt32( payload, at + 30 + (12 * i) ) == 715 ) ).ToList();
+
+		Assert.AreEqual( 1, found.Count, "exactly one record holds the five stamps" );
+
+		int[] budgets = [25, 150, 75, 10000, 50];
+
+		for ( var i = 0; i < budgets.Length; ++i )
+			BitConverter.GetBytes( budgets[i] ).CopyTo( payload, found[0] + 82 + (4 * i) );
+
+		var people = new ParkPeople( new ParkWorld( payload ) );
+
+		CollectionAssert.AreEqual( budgets, people.TrainingBudgets, "mBudget[0..4], a kind each" );
+	}
 }

@@ -377,4 +377,53 @@ public class ParkSellTests
 		Assert.AreEqual( 77, Particle( 24 ), "the Round Fountain overrides Features.sam's 78" );
 		Assert.AreEqual( 0, Particle( GatesThing ), "the gates override it to nothing" );
 	}
+
+	/// <summary>
+	/// <b>The death particle is asked for only by a live script whose item names one</b>. The teardown's bit
+	/// <c>0x2</c> spawns <c>Info.DestroyParticleEffect</c> for the script named in the call, nought spawns nothing
+	/// (<c>0x005590f7</c>), and a script that has already gone is not in the registry, so the teardown returns
+	/// before it - <c>docs/exe/park.md</c>, "What selling a thing does to its script". So the gates, running a
+	/// script and declaring effect 0, add nothing to the count; and the Belly Bounce, declaring 75 with its script
+	/// already destroyed, adds nothing either, while its id still comes off the map.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutation:</b> counting the particle where the script is live <i>or</i> the item names an effect counts
+	/// one for the gates and one for the finished Belly Bounce.
+	/// </remarks>
+	[TestMethod]
+	public void ADeathParticleNeedsALiveScriptAndAnEffect()
+	{
+		var world = World();
+		var catalogue = new ParkItemCatalogue( Theme, data );
+		var rides = Bind( world, catalogue );
+
+		var gates = world.Objects.Single( candidate => candidate.ThingId == GatesThing );
+		var bounce = world.Objects.Single( candidate => candidate.ThingId == BellyBounceThing );
+
+		Assert.IsTrue( catalogue.TryGet( gates.CatalogueId, out var gatesItem ), "the gates' item" );
+		Assert.IsTrue( catalogue.TryGet( bounce.CatalogueId, out var bounceItem ), "the Belly Bounce's item" );
+		Assert.IsTrue( rides.BindNew( gates, gatesItem ), "the gates run a script" );
+
+		Assert.AreEqual( 0, gatesItem.DestroyParticleEffect, "the gates declare no death particle" );
+		Assert.AreEqual( 75, bounceItem.DestroyParticleEffect, "the Belly Bounce declares the rides' 75" );
+
+		var gatesScript = rides.ScriptFor( GatesThing );
+		var bounceScript = rides.ScriptFor( BellyBounceThing );
+
+		Assert.IsNotNull( rides.Scheduler.Find( gatesScript ), "the gates' script is live" );
+		Assert.IsNotNull( rides.Scheduler.Find( bounceScript ), "the Belly Bounce's script is live" );
+
+		var particles = TimesReported( "DESTROY_PARTICLE_EFFECT" );
+
+		// A live script, and an item whose effect is nought: torn down, and nothing spawned.
+		Assert.IsTrue( rides.Unbind( GatesThing, gatesItem ), "the gates had a script" );
+		Assert.IsNull( rides.Scheduler.Find( gatesScript ), "which is taken down" );
+		Assert.AreEqual( particles, TimesReported( "DESTROY_PARTICLE_EFFECT" ), "effect nought spawns nothing" );
+
+		// An item with an effect, and a script that has already gone: the id comes off the map, nothing spawned.
+		Assert.IsTrue( rides.Scheduler.Destroy( bounceScript ), "the Belly Bounce's script ends before the sale" );
+		Assert.IsTrue( rides.Unbind( BellyBounceThing, bounceItem ), "it had been given a script" );
+		Assert.AreEqual( 0, rides.ScriptFor( BellyBounceThing ), "its id is off the map" );
+		Assert.AreEqual( particles, TimesReported( "DESTROY_PARTICLE_EFFECT" ), "a finished script spawns nothing" );
+	}
 }

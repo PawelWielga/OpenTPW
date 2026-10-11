@@ -308,4 +308,69 @@ public class ParkGateTests
 		Assert.AreEqual( saved.Position, gate.Position );
 		CollectionAssert.AreEqual( saved.Variables, gate.Variables.ToArray() );
 	}
+
+	/// <summary>
+	/// <b>A gate whose saved script is missing is commanded from the park's flag in an open park too.</b> The rule is
+	/// docs/exe/park-gate.md: "A missing or invalid saved script falls back to initializing the gate command from the
+	/// park flag", and an open park's command is 1 (the open request's write, <c>0x00519f76</c>). The closed case
+	/// above cannot tell the fallback from none, since a fresh script's command is already 0. Every other thing this
+	/// fixture binds has its saved script, so the gate is the one script left at its beginning.
+	/// </summary>
+	[TestMethod]
+	public void MissingSavedGateStateInAnOpenParkIsCommandedOpen()
+	{
+		var world = World();
+		var handle = world.Objects.Single( o => o.ThingId == world.ParkGates ).RideScript;
+		Assert.IsTrue( ((Dictionary<int, SavedScript>)world.ScriptStates.ByHandle).Remove( handle ) );
+		var seed = new Seed( world, closed: false, saved: true, empty: true );
+		var rides = new ParkRides( "jungle", seed, new ParkItemCatalogue( "jungle", data ), data );
+		made.Add( rides );
+		var gate = rides.Scheduler.Find( rides.ScriptFor( seed.ParkGates ) )!;
+		Assert.IsNotNull( gate );
+		Assert.AreEqual( 1, gate["VAR_COMMAND"], "an open park's gate with no saved script is commanded open" );
+		Assert.AreEqual( 1, rides.NotResumed, "and the gate is the one script left at its beginning" );
+	}
+
+	/// <summary>
+	/// Pins that the census counts a guest on the map's edge cells. <c>FUN_004fa990</c> makes <c>y*128+x+1</c> from
+	/// the position's cell bytes and asks that cell's type, accepting {0, 1, 3, 9, 10} (docs/exe/park-gate.md, "Which
+	/// people count as inside"): column 0, row 0 and cell (127, 127) are cells like any other, so one guest on a
+	/// type 1 cell there is a census of 1, with every other guest on a type 30 cell.
+	/// </summary>
+	[TestMethod]
+	public void CensusCountsAGuestOnTheMapsFirstColumnFirstRowAndLastCell()
+	{
+		var (people, state, _) = Park( empty: false );
+		OutsideGuests( people, state );
+		Assert.AreEqual( 0, people.GateGuestCensus, "every guest starts on the type 30 cell" );
+		var subject = people.Peeps[0];
+		foreach ( var (x, y) in new[] { (0, 5), (5, 0), (127, 127) } )
+		{
+			state.SetRecord( x, y, state.Record( x, y ) with { Type = 1 } );
+			subject.Navigator.Position = FixedVector.AtCell( x, y );
+			Assert.AreEqual( 1, people.GateGuestCensus, $"cell ({x}, {y})" );
+		}
+	}
+
+	/// <summary>
+	/// Pins the census's stated departure for a position off the 128 x 128 map: docs/exe/park-gate.md says "for
+	/// malformed off-map managed positions, the census returns false as a safety guard" (the original's byte lookup
+	/// has no such guard). A cell off the map has no record, and no record reads as type 0, which is a counted type,
+	/// so only the guard keeps the count at 0: one guest on a type 1 cell is 1, and the same guest one cell past
+	/// each of the four edges is 0.
+	/// </summary>
+	[TestMethod]
+	public void CensusDoesNotCountAGuestWhosePositionIsOffTheMap()
+	{
+		var (people, state, _) = Park( empty: false );
+		OutsideGuests( people, state );
+		var subject = people.Peeps[0];
+		subject.Navigator.Position = FixedVector.AtCell( 1, 1 );
+		Assert.AreEqual( 1, people.GateGuestCensus, "on the type 1 cell the guest is counted" );
+		foreach ( var (x, y) in new[] { (-1, 5), (5, -1), (128, 5), (5, 128) } )
+		{
+			subject.Navigator.Position = FixedVector.AtCell( x, y );
+			Assert.AreEqual( 0, people.GateGuestCensus, $"cell ({x}, {y}) is off the map" );
+		}
+	}
 }

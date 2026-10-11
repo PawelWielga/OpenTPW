@@ -350,4 +350,112 @@ public class ParkStaffPlacementTests
 		Assert.AreNotEqual( 0, pool.Hire( people, candidate, OnMapX, OnMapY ), "and the park takes them on the map" );
 		Assert.IsNull( pool.Find( candidate.Id ) );
 	}
+
+	/// <summary>
+	/// <b>A hire who plans no route holds a finished path.</b> The mover's constructor <c>FUN_0050ffe0</c> writes 1
+	/// to its finished byte (<c>+0x60</c>, the park file's <c>mPathFinished</c>) and only a route found clears it.
+	/// A guard decides by <c>mGameTick &amp; 3</c>: nought stays (<see cref="ParkPeople.Hire"/> ends in the decide), so
+	/// one hired on sweep 756, one on from the save's 755, stands idle with the flag as the constructor left it.
+	/// </summary>
+	[TestMethod]
+	public void AHireWhoStaysHasAFinishedPathAsTheMoversConstructorLeavesIt()
+	{
+		var (people, _) = Park();
+
+		Assert.AreEqual( 756, people.State.AdvanceGameTick(), "one sweep on from the save's 755: the low two bits are nought" );
+
+		var candidate = new ParkStaffPool.Candidate( Id: 999, Kind: 3, Name: "Test", Grade: 0, Costume: 0, Wage: 1 );
+
+		Assert.AreNotEqual( 0, people.Hire( candidate, OnMapX, OnMapY ) );
+
+		var hired = people.Staff[0];
+
+		Assert.AreEqual( StaffActivity.Idle, hired.Activity, "the guard stays, so no route was asked for" );
+		Assert.IsTrue( hired.Navigator.Finished, "the constructor's finished byte is 1" );
+		Assert.IsFalse( hired.Navigator.CannotReach, "and nothing was given up on" );
+	}
+
+	/// <summary>
+	/// <b>A hire's walk reads the park's block stamps.</b> <c>follow_path</c>'s front (<c>0x0050ed79</c>, the
+	/// <see cref="PeepWalk"/> class remarks): a block stamped after the route was found asks for a fresh route, which
+	/// takes a newer counter value than the stamp, and none found gives up. A guard hired on sweep 755 walks, so
+	/// they hold a route; their own block is then stamped and one step taken.
+	/// </summary>
+	[TestMethod]
+	public void AHiresWalkRePlansWhenItsBlockIsStampedAfterItsRoute()
+	{
+		var (people, _) = Park();
+		var candidate = new ParkStaffPool.Candidate( Id: 999, Kind: 3, Name: "Test", Grade: 0, Costume: 0, Wage: 1 );
+		var hire = people.Hire( candidate, OnMapX, OnMapY );
+
+		Assert.AreNotEqual( 0, hire );
+		Assert.AreEqual( StaffActivity.Walking, people.Staff[0].Activity, "755's low two bits are 3: the guard walks" );
+
+		var walk = people.StaffWalkFor( hire )!;
+		var planned = walk.RouteStamp;
+
+		Assert.AreNotEqual( 0u, planned, "a route found takes a counter value" );
+
+		people.State.StampBlock( OnMapX, OnMapY );
+
+		var stamp = people.State.BlockStamp( OnMapX, OnMapY );
+
+		Assert.IsTrue( stamp > planned, "the block they stand in is newer than their route" );
+
+		var verdict = walk.Step();
+
+		Assert.IsTrue( walk.RouteStamp > stamp || verdict == WalkVerdict.CannotReach,
+			$"re-planned at once - a fresh route, or none and given up: route {walk.RouteStamp}, stamp {stamp}, {verdict}" );
+	}
+
+	/// <summary>
+	/// <b>A hire's sprite is scheduled as it is made</b>, which the original's sprite constructor does
+	/// (<see cref="SpriteScript.ScheduleFrom"/>): due one interval on, the default 0x3e = 62, counted from nought
+	/// here as <see cref="ParkPeople.Admit"/> says at its site. The due test is strict (<c>FUN_00475360</c>,
+	/// <see cref="SpriteScript.Step"/>), so the turn at 62 is sat out.
+	/// </summary>
+	[TestMethod]
+	public void AHiresSpriteComesDueOneIntervalOnAndSitsThatTurnOut()
+	{
+		var (people, _) = Park();
+		var candidate = new ParkStaffPool.Candidate( Id: 999, Kind: 3, Name: "Test", Grade: 0, Costume: 0, Wage: 1 );
+		var hire = people.Hire( candidate, OnMapX, OnMapY );
+
+		Assert.AreNotEqual( 0, hire );
+
+		var sprite = people.SpriteFor( hire )!;
+
+		Assert.AreEqual( 62, sprite.Interval, "the default interval, 0x3e" );
+		Assert.AreEqual( 62, sprite.Due, "nought and one interval" );
+		Assert.IsFalse( sprite.Step( 62 ), "now equals the deadline rather than passing it: the script does not run" );
+		Assert.AreEqual( 0, sprite.Turns );
+	}
+
+	/// <summary>
+	/// <b>A hire is linked into the cell they are made on, at the head of its chain.</b> The original links a
+	/// thing into its cell as it is created (<c>FUN_0050afe0</c>, <see cref="ParkState.StandOn"/>) and the list is
+	/// last in, first out (<see cref="ParkState.EnterCell"/>): the newest is the head and the one before it is
+	/// linked behind. So of two hired on one cell, both are on it and the first stands behind the second.
+	/// </summary>
+	[TestMethod]
+	public void AHireIsLinkedIntoTheirCellAtTheHeadOfItsChain()
+	{
+		var (people, _) = Park();
+		var first = people.Hire( new ParkStaffPool.Candidate( Id: 999, Kind: 3, Name: "Test", Grade: 0, Costume: 0, Wage: 1 ), OnMapX, OnMapY );
+		var second = people.Hire( new ParkStaffPool.Candidate( Id: 998, Kind: 3, Name: "Other", Grade: 0, Costume: 0, Wage: 1 ), OnMapX, OnMapY );
+
+		Assert.AreNotEqual( 0, first );
+		Assert.AreNotEqual( 0, second );
+		Assert.AreNotEqual( first, second );
+
+		foreach ( var hire in new[] { first, second } )
+		{
+			var at = people.State.CellOf( hire );
+
+			Assert.IsTrue( at.HasValue, $"thing {hire} is linked into a cell" );
+			Assert.AreEqual( (OnMapX, OnMapY), (at!.Value.X, at.Value.Y), $"thing {hire} is on the cell they were put down on" );
+		}
+
+		Assert.AreEqual( first, people.State.NextOnCell( second ), "the newest is the head, the one before it behind" );
+	}
 }

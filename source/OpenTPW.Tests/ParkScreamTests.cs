@@ -239,4 +239,27 @@ public class ParkScreamTests
 
 		Assert.IsNull( ParkAudio.NextMusic( jungle, 2, 91, random ), "past every zone the voice waits" );
 	}
+
+	/// <summary>
+	/// <b>Where <c>SINGLESCREAM</c>'s two branches meet, and where the grid's rows break.</b> The handler takes the
+	/// grid when the second operand is nought or more (<c>0x00555f69</c>, <c>CMP ESI,EDI</c> against a zeroed EDI,
+	/// then <c>JGE</c>; <c>docs/exe/ride-operation.md</c>, the scream family), so a level of exactly nought is grid
+	/// step <c>(0 + 50) / 50</c> = 1: <c>0x4b + 1</c> for band 1 and <c>0x57 + 1</c> for band 8, never the band-only
+	/// <c>0x69</c> and <c>0x6d</c>. The grid's rows are the bands of <c>FUN_00551320</c> - 1, then under 4, then
+	/// under 8, then the rest - so at Monkey's level 90 (step 2) bands 2 and 3 give <c>0x4f + 2</c>, bands 4 and 7
+	/// give <c>0x53 + 2</c>, and band 8 gives <c>0x57 + 2</c>.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the branch taken at <c>level &lt;= 0</c>; the second row running to band 4.</remarks>
+	[TestMethod]
+	public void TheGridBeginsAtALevelOfNoughtAndItsRowsBreakAtFourAndEight()
+	{
+		Assert.AreEqual( 0x4c, ParkAudio.SingleScreamEffectFor( 1, 0 ), "a level of nought is the grid's step one, not the band-only branch" );
+		Assert.AreEqual( 0x58, ParkAudio.SingleScreamEffectFor( 8, 0 ), "and so it is for the last row" );
+
+		Assert.AreEqual( 0x51, ParkAudio.SingleScreamEffectFor( 2, 90 ), "2 and 3 share the second row" );
+		Assert.AreEqual( 0x51, ParkAudio.SingleScreamEffectFor( 3, 90 ) );
+		Assert.AreEqual( 0x55, ParkAudio.SingleScreamEffectFor( 4, 90 ), "4 is where the third row begins" );
+		Assert.AreEqual( 0x55, ParkAudio.SingleScreamEffectFor( 7, 90 ), "and 7 is where it ends" );
+		Assert.AreEqual( 0x59, ParkAudio.SingleScreamEffectFor( 8, 90 ), "8 upwards the last" );
+	}
 }

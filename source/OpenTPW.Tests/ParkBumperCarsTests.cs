@@ -712,4 +712,19 @@ public class HotPotScriptTests
 		Assert.IsTrue( started > 0, "the go started" );
 		Assert.AreEqual( 750, cars.RideOf( handle )!.Duration, "VAR_DURATION 25 x 30 track ticks, set by BUMP 13" );
 	}
+
+	/// <summary>
+	/// <c>Bumper_Distance</c>, <c>FUN_00549020</c>, past its bounds: the offsets are "halved together until x is at most
+	/// 0x8000 and z at most 0x7fff, shifted back" (<c>docs/exe/park.md</c>, "Where a bumper ride's cars float"). An x of
+	/// 0x10000 is halved once to 0x8000, whose root is 32768, shifted back: 65536. A z of 0x10000 is halved twice (0x8000
+	/// is still above 0x7fff) to 0x4000, shifted back twice: 65536. And (0x10001, 0x10001) is halved twice to
+	/// (0x4000, 0x4000), whose root is 23170.4, truncated to 23170 and shifted back twice: 92680, not the true 92683.
+	/// </summary>
+	[TestMethod]
+	public void ADistanceAboveItsBoundsIsHalvedTogetherAndShiftedBack()
+	{
+		Assert.AreEqual( 65536, ParkBumperCars.Distance( 0x10000, 0 ), "x halved once and shifted back" );
+		Assert.AreEqual( 65536, ParkBumperCars.Distance( 0, 0x10000 ), "z halved twice and shifted back" );
+		Assert.AreEqual( 92680, ParkBumperCars.Distance( 0x10001, -0x10001 ), "both halved twice, the root truncated before the shift" );
+	}
 }

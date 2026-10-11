@@ -260,4 +260,33 @@ public class ParkCarSoundsTests
 		Assert.AreEqual( (68, 68), engine.Volume );
 		Assert.AreEqual( 0, rides.Effects[rides.IndexOf( 194 )].ParameterId, "no zones to choose, so no key 0" );
 	}
+
+	/// <summary>
+	/// <b>A park built with no sound device loads nothing</b>: <see cref="ParkAudio"/>'s constructor stops before its
+	/// categories ("nothing to load and nothing to play without a device"), so <see cref="ParkAudio.Rides"/> is null,
+	/// as its own comment says ("null with no sound device"), though jungle's <c>cat_rides</c> is on the disc and
+	/// loads when a device is stood in (<see cref="AFadingEngineFadesOnThoughTheStepPitchesIt"/>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the constructor's early return taken out.</remarks>
+	[TestMethod]
+	public void AParkBuiltWithNoSoundDeviceLoadsNoRidesCategory()
+	{
+		FileSystem = GameData.Required();
+
+		Assert.IsFalse( Audio.Ready, "a test run has no audio device" );
+
+		ParkAudio? park = null;
+
+		try
+		{
+			park = new ParkAudio( "jungle" );
+
+			Assert.IsNull( park.Rides, "no device, so no category was loaded" );
+		}
+		finally
+		{
+			park?.Delete();
+			Entity.ApplyDeletions();
+		}
+	}
 }

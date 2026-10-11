@@ -916,4 +916,65 @@ public class ParkHandTests
 
 		return (state, bounce.CatalogueId);
 	}
+
+	/// <summary>
+	/// <b>A worker put down on another cell stands on it</b>: the drop's body (<c>FUN_00505ea0</c>) puts them in the
+	/// centre of the cell and relinks the cell lists (<c>docs/exe/park-engine.md</c>, "The worker (type 6)"), and a
+	/// cell's list is headed by whoever arrived last (<c>FUN_004d91f0</c>). So the cell one to the side of theirs
+	/// names them as its occupant afterwards, they are at its centre - cell * 65536 + 32768 on each axis - and the
+	/// hand is empty.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutation:</b> a put-down that moves the worker without telling the cell leaves the cell naming whoever
+	/// it named before.
+	/// </remarks>
+	[TestMethod]
+	public void AWorkerPutDownHeadsTheListOfTheCellTheyArePutOn()
+	{
+		var people = APark();
+		var member = people.Staff[0];
+		var (cellX, cellY) = member.Navigator.Position.Cell;
+		var dropX = cellX > 0 ? cellX - 1 : cellX + 1;
+
+		Assert.AreNotEqual( member.ThingId, (int)people.State.CellAt( dropX, cellY ).Occupant,
+			"the cell beside theirs does not name them before the put-down" );
+		Assert.IsTrue( people.PickUp( member.ThingId ), "picked up" );
+
+		Assert.IsTrue( people.DropStaff( dropX, cellY ), "the put-down answers that it happened" );
+
+		Assert.AreEqual( member.ThingId, (int)people.State.CellAt( dropX, cellY ).Occupant,
+			"the cell they were put on names them at the head of its list" );
+		Assert.AreEqual( new FixedVector( (dropX << 16) + 0x8000, (cellY << 16) + 0x8000 ), member.Navigator.Position,
+			"and they are at its centre" );
+		Assert.AreEqual( 0, people.CarriedStaff, "and the hand is empty" );
+	}
+
+	/// <summary>
+	/// <b>A put-down that is refused leaves the worker in the hand</b>: the drop (<c>0x0046cc40</c>) reads the cell
+	/// and refuses, "nothing else" (<c>docs/exe/park-engine.md</c>, "The worker (type 6)"). The map is 128 by 128
+	/// cells, so column -1 and row 128 are off it: <see cref="ParkPeople.DropStaff"/> answers false for both, and
+	/// the worker is still carried, still held (state 7) and where they were.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutation:</b> a put-down refused only when nobody is carried AND the cell is off the map moves the
+	/// worker off the map, sets them to work and empties the hand.
+	/// </remarks>
+	[TestMethod]
+	public void AWorkerIsNotPutDownOffTheMap()
+	{
+		var people = APark();
+		var member = people.Staff[0];
+		var (cellX, cellY) = member.Navigator.Position.Cell;
+		var stood = member.Navigator.Position;
+
+		Assert.IsTrue( people.PickUp( member.ThingId ), "picked up" );
+
+		foreach ( var (x, y) in new[] { (-1, cellY), (cellX, 128) } )
+		{
+			Assert.IsFalse( people.DropStaff( x, y ), $"({x},{y}) is off the map and the put-down is refused" );
+			Assert.AreEqual( member.ThingId, people.CarriedStaff, $"the worker is still in the hand after ({x},{y})" );
+			Assert.AreEqual( StaffActivity.Held, member.Activity, $"and still held after ({x},{y})" );
+			Assert.AreEqual( stood, member.Navigator.Position, $"and has not been moved by ({x},{y})" );
+		}
+	}
 }

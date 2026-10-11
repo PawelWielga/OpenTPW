@@ -1474,4 +1474,283 @@ public class ParkStaffBehaviourTests
 
 		Assert.AreEqual( then, member.Activity );
 	}
+
+	/// <summary>
+	/// The two all-staff constants, the strike area and entrance A are read from their own keys -
+	/// <c>AllStaffConstants.RestLevel</c> and <c>HappyHitCosNoRestArea</c>, <c>FixedItemInfo.StrikeAreaStartX</c>,
+	/// <c>StartY</c>, <c>SizeX</c> and <c>SizeY</c> (<c>0x007855ec</c> on) and <c>FixedItemInfo.EntranceAPosX</c> and
+	/// <c>Y</c> (<c>0x007855bc</c>), as <see cref="StaffBehaviour"/>'s own members say and <c>docs/exe/park.md</c>
+	/// lists them.
+	///
+	/// <para>
+	/// <b>Why a balance file of its own.</b> Each fallback is the shipped file's value, in the global file and in
+	/// every theme's, so the shipped game cannot tell a key that is read from a literal. A file whose eight
+	/// values match no fallback and no other key can: 3, 5, (61,23) four by two, and (70,31) are the file's own
+	/// numbers below.
+	/// </para>
+	/// </summary>
+	[TestMethod]
+	public void TheStaffConstantsAndTheFixedCellsAreReadFromTheirOwnKeys()
+	{
+		Log ??= new();
+
+		var before = FileSystem;
+		var root = Directory.CreateTempSubdirectory( "opentpw-staff-consts-" );
+
+		try
+		{
+			Directory.CreateDirectory( Path.Combine( root.FullName, "levels" ) );
+			File.WriteAllText( Path.Combine( root.FullName, "levels", "Standard.sam" ),
+				"AllStaffConstants.RestLevel 3\n"
+				+ "AllStaffConstants.HappyHitCosNoRestArea 5\n"
+				+ "FixedItemInfo.StrikeAreaStartX 61\n"
+				+ "FixedItemInfo.StrikeAreaStartY 23\n"
+				+ "FixedItemInfo.StrikeAreaSizeX 4\n"
+				+ "FixedItemInfo.StrikeAreaSizeY 2\n"
+				+ "FixedItemInfo.EntranceAPosX 70\n"
+				+ "FixedItemInfo.EntranceAPosY 31\n" );
+
+			FileSystem = new BaseFileSystem( root.FullName );
+
+			var behaviour = new StaffBehaviour( new ParkBalance( "jungle" ) );
+
+			Assert.AreEqual( 3, behaviour.RestLevel, "AllStaffConstants.RestLevel" );
+			Assert.AreEqual( 5, behaviour.HappinessHitForNoRestArea, "AllStaffConstants.HappyHitCosNoRestArea" );
+
+			Assert.AreEqual( 61, behaviour.StrikeArea.X, "FixedItemInfo.StrikeAreaStartX" );
+			Assert.AreEqual( 23, behaviour.StrikeArea.Y, "FixedItemInfo.StrikeAreaStartY" );
+			Assert.AreEqual( 4, behaviour.StrikeArea.Across, "FixedItemInfo.StrikeAreaSizeX" );
+			Assert.AreEqual( 2, behaviour.StrikeArea.Down, "FixedItemInfo.StrikeAreaSizeY" );
+
+			Assert.AreEqual( 70, behaviour.EntranceA.X, "FixedItemInfo.EntranceAPosX" );
+			Assert.AreEqual( 31, behaviour.EntranceA.Y, "FixedItemInfo.EntranceAPosY" );
+		}
+		finally
+		{
+			FileSystem = before;
+			root.Delete( recursive: true );
+		}
+	}
+
+	/// <summary>
+	/// Each per-grade staff table is read from its own key at each of the five grades -
+	/// <c>PerGradeStaffConsts[n].IdleDuration</c> (<c>0x00785330</c>, <c>docs/exe/ride-operation.md</c>),
+	/// <c>RecuperationRate</c> and <c>HappinessRecuperationRate</c>, <c>HandymanConstsPerGrade[n].WorkDuration</c>
+	/// (<c>0x007853ec</c>) and <c>DetectionRange</c> (<c>0x007853f0</c>), <c>MechanicConstsPerGrade[n].WorkDuration</c>
+	/// (<c>0x0078542c</c>), <c>EntertainerConstsPerGrade[n].WorkDuration</c> (<c>0x00785398</c>) and
+	/// <c>ActivationDistance</c> (<c>0x007853a0</c>), and <c>ResearcherConstsPerGrade[n].WorkDuration</c>
+	/// (<c>0x00785458</c>) and <c>ResearchAbility</c> (<c>0x0078545c</c>).
+	///
+	/// <para>
+	/// <b>Why a balance file of its own.</b> Nine of the ten fallback tables are the shipped file's own rows, so
+	/// the shipped game cannot tell a table that is read from one that is a literal. Here grade n's row says, in
+	/// the same order, 101 + n, n + 1.5, n + 10.25, 201 + n, 11 + n, 301 + n, 401 + n, 21 + n, 501 + n and
+	/// 31 + n: no value is a fallback's and no two keys share one, so a table read from another's key fails too.
+	/// </para>
+	/// </summary>
+	[TestMethod]
+	public void EachPerGradeTableIsReadFromItsOwnKeyAtEveryGrade()
+	{
+		Log ??= new();
+
+		var before = FileSystem;
+		var root = Directory.CreateTempSubdirectory( "opentpw-staff-grades-" );
+
+		try
+		{
+			Directory.CreateDirectory( Path.Combine( root.FullName, "levels" ) );
+			File.WriteAllText( Path.Combine( root.FullName, "levels", "Standard.sam" ),
+				string.Concat( Enumerable.Range( 0, 5 ).Select( n =>
+					$"PerGradeStaffConsts[{n}].IdleDuration {101 + n}\n"
+					+ $"PerGradeStaffConsts[{n}].RecuperationRate {n + 1}.5\n"
+					+ $"PerGradeStaffConsts[{n}].HappinessRecuperationRate {n + 10}.25\n"
+					+ $"HandymanConstsPerGrade[{n}].WorkDuration {201 + n}\n"
+					+ $"HandymanConstsPerGrade[{n}].DetectionRange {11 + n}\n"
+					+ $"MechanicConstsPerGrade[{n}].WorkDuration {301 + n}\n"
+					+ $"EntertainerConstsPerGrade[{n}].WorkDuration {401 + n}\n"
+					+ $"EntertainerConstsPerGrade[{n}].ActivationDistance {21 + n}\n"
+					+ $"ResearcherConstsPerGrade[{n}].WorkDuration {501 + n}\n"
+					+ $"ResearcherConstsPerGrade[{n}].ResearchAbility {31 + n}\n" ) ) );
+
+			FileSystem = new BaseFileSystem( root.FullName );
+
+			var behaviour = new StaffBehaviour( new ParkBalance( "jungle" ) );
+
+			for ( var grade = 0; grade < 5; ++grade )
+			{
+				Assert.AreEqual( 101 + grade, behaviour.IdleDurationAt( grade ),
+					$"PerGradeStaffConsts[{grade}].IdleDuration" );
+				Assert.AreEqual( grade + 1.5f, behaviour.RecuperationAt( grade ), 0.0001f,
+					$"PerGradeStaffConsts[{grade}].RecuperationRate" );
+				Assert.AreEqual( grade + 10.25f, behaviour.HappinessRecuperationAt( grade ), 0.0001f,
+					$"PerGradeStaffConsts[{grade}].HappinessRecuperationRate" );
+
+				Assert.AreEqual( 201 + grade, behaviour.HandymanWorkDurationAt( grade ),
+					$"HandymanConstsPerGrade[{grade}].WorkDuration" );
+				Assert.AreEqual( 11 + grade, behaviour.HandymanDetectionRangeAt( grade ),
+					$"HandymanConstsPerGrade[{grade}].DetectionRange" );
+
+				Assert.AreEqual( 301 + grade, behaviour.MechanicWorkDurationAt( grade ),
+					$"MechanicConstsPerGrade[{grade}].WorkDuration" );
+
+				Assert.AreEqual( 401 + grade, behaviour.EntertainerWorkDurationAt( grade ),
+					$"EntertainerConstsPerGrade[{grade}].WorkDuration" );
+				Assert.AreEqual( 21 + grade, behaviour.EntertainerActivationDistanceAt( grade ),
+					$"EntertainerConstsPerGrade[{grade}].ActivationDistance" );
+
+				Assert.AreEqual( 501 + grade, behaviour.ResearcherWorkDurationAt( grade ),
+					$"ResearcherConstsPerGrade[{grade}].WorkDuration" );
+				Assert.AreEqual( 31 + grade, behaviour.ResearchAbilityAt( grade ),
+					$"ResearcherConstsPerGrade[{grade}].ResearchAbility" );
+			}
+		}
+		finally
+		{
+			FileSystem = before;
+			root.Delete( recursive: true );
+		}
+	}
+
+	/// <summary>
+	/// The patrol roll, <c>FUN_00506f30</c> (<c>docs/exe/ride-operation.md</c>, "SetRandomDest", step 3): thirty tries
+	/// (<c>uStack_c &lt; 0x1e</c>), each two draws, x before y, and the cell tried is the bottom-left corner plus the
+	/// draw mod (far corner - near corner + 1) on each axis. With every draw 4 in an area from (10,10) to (12,14)
+	/// that is x = 10 + 4 % 3 = 11 and y = 10 + 4 % 5 = 14. With every edge shut no try routes, so the turn asks for
+	/// the idle draw for a sound, the call's pass draw and 2 x 30 = 60 more, 62 in all, thinks <c>0x16</c>
+	/// (<c>0x0050701f</c>) and leaves the guard standing, aimed at the last cell tried.
+	/// </summary>
+	[TestMethod]
+	public void ThePatrolRollTriesThirtyCellsEachACornerPlusADrawModTheSpan()
+	{
+		var world = Park();
+		var saved = world.People.Single( person => person.ThingId == Guard );
+		var member = new Staff( saved.ThingId, saved.Model, saved.Staff!.Value with
+		{
+			State = (int)StaffActivity.Idle, TimeStartedIdling = 0,
+			PatrolBottomLeft = MapStep.CellId( 10, 10 ), PatrolTopRight = MapStep.CellId( 12, 14 )
+		}, saved.Navigator );
+
+		// Neither tired nor in a mood that draws, so the decide takes no draw of its own.
+		member.Happiness = 50f;
+		member.Tiredness = 80f;
+		member.Navigator.Position = new FixedVector( PeepNavigator.WaypointCentre( 48 ), PeepNavigator.WaypointCentre( 22 ) );
+		member.Navigator.Target = member.Navigator.Position;
+
+		Assert.IsFalse( member.Patrols( 48, 22 ), "the guard stands outside the area, so the roll is the first thing asked" );
+
+		// Every edge shut, so no try routes and all thirty are made. No park state: every cell on the map is a candidate.
+		var walk = new PeepWalk( member.Navigator, ( _, _, _ ) => true );
+		var draws = new CountedDraw( 4 );
+
+		new StaffBehaviour( Balance(), draws ).Step( member, walk, playing: null, tick: 1001 );
+
+		Assert.AreEqual( StaffActivity.Idle, member.Activity, "nowhere routed, so the guard stands" );
+		Assert.AreEqual( 0x16, member.Thoughts.Last, "thirty failed tries think 0x16 (0x0050701f)" );
+		Assert.AreEqual( 2 + (2 * 30), draws.Asked,
+			"the turn's draw for a sound, the call's pass draw, then x and y of thirty tries" );
+		Assert.AreEqual( PeepNavigator.WaypointCentre( 11 ), member.Navigator.Target.X, "10 + 4 % 3, the cell's centre" );
+		Assert.AreEqual( PeepNavigator.WaypointCentre( 14 ), member.Navigator.Target.Y, "10 + 4 % 5, the cell's centre" );
+	}
+
+	/// <summary>
+	/// The patrol roll's on-the-map test is <c>FUN_004d8300</c>: x and y each from 0 to 127, both ends in
+	/// (<c>docs/exe/ride-operation.md</c>, "The patrol roll <c>FUN_00506f30</c> takes a cell only when it is on the
+	/// map and path"). So a cell in column 0 or in row 0 is tried like any other: a guard whose area is that one cell
+	/// is aimed at its centre. With every edge shut no try routes, and the aim of the last try is what is left.
+	/// </summary>
+	[DataTestMethod]
+	[DataRow( 0, 5 )]
+	[DataRow( 5, 0 )]
+	public void ThePatrolRollTakesACellInTheMapsFirstColumnOrRow( int cellX, int cellY )
+	{
+		var world = Park();
+		var saved = world.People.Single( person => person.ThingId == Guard );
+		var member = new Staff( saved.ThingId, saved.Model, saved.Staff!.Value with
+		{
+			State = (int)StaffActivity.Idle, TimeStartedIdling = 0,
+			PatrolBottomLeft = MapStep.CellId( cellX, cellY ), PatrolTopRight = MapStep.CellId( cellX, cellY )
+		}, saved.Navigator );
+
+		member.Happiness = 50f;
+		member.Tiredness = 80f;
+		member.Navigator.Position = new FixedVector( PeepNavigator.WaypointCentre( 48 ), PeepNavigator.WaypointCentre( 22 ) );
+		member.Navigator.Target = member.Navigator.Position;
+
+		Assert.IsTrue( member.HasPatrolArea, "one cell is an area" );
+
+		// Every edge shut, so the aim is all that is left of a try. No park state: every cell on the map is a candidate.
+		var walk = new PeepWalk( member.Navigator, ( _, _, _ ) => true );
+
+		new StaffBehaviour( Balance(), new ConstantDraw() ).Step( member, walk, playing: null, tick: 1001 );
+
+		Assert.AreEqual( PeepNavigator.WaypointCentre( cellX ), member.Navigator.Target.X,
+			$"({cellX},{cellY}) is on the map and was tried: the cell's centre, x" );
+		Assert.AreEqual( PeepNavigator.WaypointCentre( cellY ), member.Navigator.Target.Y,
+			$"({cellX},{cellY}) is on the map and was tried: the cell's centre, y" );
+	}
+
+	/// <summary>
+	/// A patrol corner is a cell id, <c>y * 128 + x + 1</c>, and the original takes one off before it splits it:
+	/// the low seven bits are the column and the rest the row (<c>FUN_00506ed0</c>; <c>docs/exe/ride-operation.md</c>,
+	/// "Staff outside their patrol rectangle"). So 1407 = 10 * 128 + 126 + 1 is (126,10) and 2688 = 20 * 128 + 127 + 1
+	/// is (127,20). The last two columns are where the one matters: without it taken off, 1408 and 2689 are already
+	/// in rows 11 and 21. The area is then the two columns 126 and 127 on rows 10 to 20, both ends inside.
+	/// </summary>
+	[TestMethod]
+	public void APatrolCornerOnTheMapsLastColumnsKeepsItsOwnRow()
+	{
+		var saved = Park().People.Single( person => person.ThingId == Researcher );
+		var member = new Staff( saved.ThingId, saved.Model, saved.Staff!.Value with
+		{
+			PatrolBottomLeft = 1407, PatrolTopRight = 2688
+		}, saved.Navigator );
+
+		Assert.IsTrue( member.HasPatrolArea, "two corners are an area" );
+		Assert.AreEqual( (126, 10), member.PatrolFrom, "1407 less one is row 10, column 126" );
+		Assert.AreEqual( (127, 20), member.PatrolTo, "2688 less one is row 20, column 127" );
+
+		Assert.IsTrue( member.Patrols( 126, 10 ), "the near corner is inside" );
+		Assert.IsTrue( member.Patrols( 127, 20 ), "the far corner is inside" );
+		Assert.IsFalse( member.Patrols( 126, 9 ), "the row before the near corner's" );
+		Assert.IsFalse( member.Patrols( 127, 21 ), "the row after the far corner's" );
+		Assert.IsFalse( member.Patrols( 125, 10 ), "the column before the near corner's" );
+	}
+
+	/// <summary>
+	/// <b>A stat moved past either end is written as the end itself</b> (<see cref="Staff.Change"/>). The original
+	/// writes the clamp out inline after every sum: <c>FUN_005061d0</c> (a turn of rest) stores <c>0x42c80000</c>,
+	/// 100.0, when the sum is above a hundred, and <c>FUN_005066a0</c> (a turn of walking) stores 0.0 when it is
+	/// below nought; anything between is stored as it is. So 99.9 rested at grade 3's 0.5 is 100 and not 100.4;
+	/// 0.01 walked for one grade 3 turn, (6 - 3) x 0.012 = 0.036, is 0 and not -0.026; and 50 with 3 added is 53.
+	/// </summary>
+	[DataTestMethod]
+	[DataRow( 99.9f, 0.5f, 100f )]
+	[DataRow( 0.01f, -0.036f, 0f )]
+	[DataRow( 50f, 3f, 53f )]
+	public void AStatThatWouldLeaveTheRangeIsHeldAtAHundredOrAtNought( float stat, float by, float held )
+	{
+		Assert.AreEqual( held, Staff.Change( stat, by ), $"{stat} moved by {by}" );
+	}
+
+	/// <summary>
+	/// The end of a rest sets state 0 with stamp 0 before the kind's decide runs (<c>FUN_00506d10</c>, then
+	/// <c>0x00506298</c>; <c>docs/exe/ride-operation.md</c>, "The staff turn"). So a guard who sat down still
+	/// carrying an idle stamp of 500, and whose decide on sweep 1001 - not a multiple of four - sends them
+	/// walking, walks with stamp nought: the walking setter writes no stamp, so the nought is the rest's own.
+	/// </summary>
+	[TestMethod]
+	public void TheRestEndsAtStampNoughtEvenWhenTheMemberWalksOff()
+	{
+		var (member, walk, state) = OnThePath( Guard, stamp: 500, activity: StaffActivity.Resting );
+
+		member.Tiredness = 99.9f;
+		member.RestArea = 20;
+
+		Assert.AreEqual( 500, member.TimeStartedIdling, "the stamp they sat down with" );
+
+		new StaffBehaviour( Balance(), new Random( 3 ), state ).Step( member, walk, playing: null, tick: 1001 );
+
+		Assert.AreEqual( StaffActivity.Walking, member.Activity, "the guard's decide walks on a sweep that is not a multiple of four" );
+		Assert.AreEqual( 0, member.TimeStartedIdling, "the rest ended in idle at stamp nought before the decide" );
+	}
 }

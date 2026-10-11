@@ -591,4 +591,109 @@ public class ParkHandymanCleanTests
 			Entity.ApplyDeletions();
 		}
 	}
+
+	/// <summary>
+	/// The search looks only at things with the toilet bit (<c>+0x32 &amp; 1</c>, the first test of
+	/// <c>FUN_004d7880</c>'s loop): a request for service on anything else is a mechanic's work, never a
+	/// handyman's (<c>docs/exe/ride-operation.md</c>, "A toilet's dirt", "The request for service"). The thing is
+	/// given toilet 21's entry cell, which the handyman can route to, so only the bit keeps it out: he finds
+	/// nothing, writes nought and walks about, and the thing is nobody's.
+	/// </summary>
+	[TestMethod]
+	public void AThingThatIsNoToiletIsPassedOverThoughItAskedForService()
+	{
+		var world = World();
+		var state = new ParkState( world );
+		var (member, walk) = HandymanOn( world, state );
+		var other = state.Objects.First( thing => !thing.IsToilet && thing.IsPlaced ).ThingId;
+		var entry = Thing( state, Toilet ).EntryPos;
+
+		Change( state, other, thing => thing with { RequestedService = 1, AssignedStaff = 0, EntryPos = entry } );
+
+		new StaffBehaviour( Balance(), new Random( 1 ), state ).Step( member, walk, playing: null, tick: 1001 );
+
+		Assert.AreEqual( 0, member.ToiletToClean, "a thing without the toilet bit is not a handyman's job" );
+		Assert.AreEqual( StaffActivity.Walking, member.Activity );
+		Assert.AreEqual( 0, Thing( state, other ).AssignedStaff, "and it is not assigned to him" );
+	}
+
+	/// <summary>
+	/// The request's test is strict: a toilet that asked for service is taken only when it is nearer than the best
+	/// so far (<c>CMP ESI,[ESP+0x20]; JC</c> at <c>0x004d79a3</c>; <c>docs/exe/ride-operation.md</c>, "A toilet's
+	/// dirt", rule 2). Two clean toilets twenty cells off, 400 squared each and far past grade 3's range of 4:
+	/// the later in the chain is not nearer, so the earlier is kept.
+	/// </summary>
+	[TestMethod]
+	public void OfTwoToiletsThatAskedForServiceAtTheSameDistanceTheEarlierInTheChainIsKept()
+	{
+		var world = World();
+		var state = new ParkState( world );
+		var (member, walk) = HandymanOn( world, state );
+
+		var order = state.ObjectsInChainOrder().Select( thing => thing.ThingId )
+			.Where( id => id is Toilet or NextToilet ).ToArray();
+
+		// Twenty cells across for the one, twenty cells down for the other: 400 squared both.
+		Change( state, order[0], toilet => At( toilet, Stand.X + 20, Stand.Y ) with { RequestedService = 1 } );
+		Change( state, order[1], toilet => At( toilet, Stand.X, Stand.Y + 20 ) with { RequestedService = 1 } );
+
+		new StaffBehaviour( Balance(), new Random( 1 ), state ).Step( member, walk, playing: null, tick: 1001 );
+
+		Assert.AreEqual( order[0], member.ToiletToClean, "an equal distance is not nearer" );
+		Assert.AreEqual( Handyman, Thing( state, order[0] ).AssignedStaff );
+		Assert.AreEqual( 0, Thing( state, order[1] ).AssignedStaff );
+	}
+
+	/// <summary>
+	/// OpenTPW's named deviation (<c>docs/exe/ride-operation.md</c>, "Where OpenTPW differs", "The aim after the
+	/// search"): the original leaves the handyman aimed at the last candidate tested; here he is aimed at the
+	/// winner again, and the case is counted, <c>HANDYMAN_TOILET_AIM_LEFT_ON_A_LATER_TOILET</c>, only where the
+	/// two differ. An ordinary find counts nothing. Then two dirty toilets in range (5 and 10 squared off, under
+	/// grade 3's 16), the later in the chain with an entry cell no step can enter: the earlier wins, he is aimed
+	/// at the earlier's entry with a route, and the case is counted.
+	/// </summary>
+	[TestMethod]
+	public void HeIsAimedAtTheWinnerAgainWhenALaterToiletsRouteFailedAndOnlyThenIsItCounted()
+	{
+		const string gap = "HANDYMAN_TOILET_AIM_LEFT_ON_A_LATER_TOILET";
+
+		// The ordinary find: the last tested is the winner.
+		var world = World();
+		var plain = new ParkState( world );
+		var (finder, open) = HandymanOn( world, plain );
+		var before = Counted( gap );
+
+		Change( plain, Toilet, toilet => toilet with { StateOfRepair = 20f } );
+		new StaffBehaviour( Balance(), new Random( 1 ), plain ).Step( finder, open, playing: null, tick: 1001 );
+
+		Assert.AreEqual( Toilet, finder.ToiletToClean );
+		Assert.AreEqual( before, Counted( gap ), "nothing is counted where the last tested is the winner" );
+
+		// The later toilet's entry is a far cell that no step can enter.
+		var state = new ParkState( world );
+		var (member, _) = HandymanOn( world, state );
+		var edge = new CellEdge( state.Record, ParkPeople.WalkingMode );
+		var walk = new PeepWalk( member.Navigator, ( x, y, direction ) =>
+			MapStep.Beyond( x, y, direction ) == (100, 100) || edge.Blocked( x, y, direction ) );
+
+		var order = state.ObjectsInChainOrder().Select( thing => thing.ThingId )
+			.Where( id => id is Toilet or NextToilet ).ToArray();
+
+		Change( state, order[0], toilet => toilet with { StateOfRepair = 20f } );
+		Change( state, order[1], toilet => toilet with
+		{
+			StateOfRepair = 20f, EntryPos = (ushort)MapStep.CellId( 100, 100 )
+		} );
+
+		new StaffBehaviour( Balance(), new Random( 1 ), state ).Step( member, walk, playing: null, tick: 1001 );
+
+		var winner = Thing( state, order[0] );
+
+		Assert.AreEqual( order[0], member.ToiletToClean, "the later toilet has no route, so the earlier is kept" );
+		Assert.AreEqual( 0, Thing( state, order[1] ).AssignedStaff );
+		Assert.AreEqual( new FixedVector( PeepNavigator.WaypointCentre( winner.EntryCellX ),
+			PeepNavigator.WaypointCentre( winner.EntryCellY ) ), member.Navigator.Target, "aimed at the winner again" );
+		Assert.IsTrue( walk.HasRoute, "with a route to it" );
+		Assert.IsTrue( Counted( gap ) > before, "and the difference from the original is counted" );
+	}
 }

@@ -270,4 +270,80 @@ public class ParkStateTests
 		Assert.AreEqual( 0u, state.BlockStampOf( MapStep.CellId( 47, 22 ) ) );
 		Assert.AreEqual( 0u, state.BlockStampOf( MapStep.CellId( 47, 23 ) ) );
 	}
+
+	/// <summary>
+	/// <b>Taking the LAST one off a cell's list leaves the one in front with nobody behind.</b>
+	/// <c>FUN_004d9280</c> copies the leaver's own next (thing <c>+10</c>) into the previous thing's next, and
+	/// for the tail that is nought - <see cref="ParkState.LeaveCell"/>'s doc comment: it joins up whatever
+	/// stood either side. Two arrive, 7 then 8, so 8 heads the list with 7 behind; 7 walks away, and 8's
+	/// next must read 0, not 7.
+	/// </summary>
+	[TestMethod]
+	public void TheLastOnACellSteppingOffLeavesNobodyBehindTheOneInFront()
+	{
+		var state = new ParkState( parkIsClosed: false, visitorsToDate: 0 );
+
+		state.StandOn( 7, 10, 10 );
+		state.StandOn( 8, 10, 10 );
+
+		Assert.AreEqual( 7, state.NextOnCell( 8 ), "the first to arrive stands behind the second" );
+
+		// The one at the back walks to another cell.
+		state.StandOn( 7, 12, 12 );
+
+		Assert.AreEqual( 8, state.CellAt( 10, 10 ).Occupant, "the head is untouched" );
+		Assert.AreEqual( 0, state.NextOnCell( 8 ), "and nobody stands behind it any more" );
+		Assert.AreEqual( 7, state.CellAt( 12, 12 ).Occupant, "the one who left heads the cell it walked to" );
+	}
+
+	/// <summary>
+	/// <b>Taking the middle one out links the one behind BACK to the one in front, not only forward.</b>
+	/// <c>FUN_004d9280</c> writes the leaver's previous (thing <c>+8</c>) into the next thing's previous, and
+	/// only a thing whose previous is nought is treated as the head - <see cref="ParkState.LeaveCell"/>.
+	/// Three arrive, 7, 8, 9: the list is 9, 8, 7. 8 leaves, so 7's previous is 9; when 7 then leaves it is
+	/// a tail behind 9, and 9's next must read 0. Had 7's back link been dropped it would pass for a head
+	/// the cell does not name, and 9 would go on naming it.
+	/// </summary>
+	[TestMethod]
+	public void TheOneBehindAMiddleLeaverIsLinkedBackToTheOneInFront()
+	{
+		var state = new ParkState( parkIsClosed: false, visitorsToDate: 0 );
+
+		state.StandOn( 7, 10, 10 );
+		state.StandOn( 8, 10, 10 );
+		state.StandOn( 9, 10, 10 );
+
+		// The middle one walks away, and then the one that stood behind it.
+		state.StandOn( 8, 12, 12 );
+		Assert.AreEqual( 7, state.NextOnCell( 9 ), "the two either side are joined up" );
+
+		state.StandOn( 7, 14, 14 );
+
+		Assert.AreEqual( 9, state.CellAt( 10, 10 ).Occupant, "the head never moved" );
+		Assert.AreEqual( 0, state.NextOnCell( 9 ), "and it is alone on its cell, with nobody behind it" );
+		Assert.AreEqual( 7, state.CellAt( 14, 14 ).Occupant, "the last to leave heads the cell it walked to" );
+	}
+
+	/// <summary>
+	/// <b>A thing taken off its cell keeps no link of its own.</b> <c>FUN_004d9280</c> ends by zeroing the
+	/// leaver's previous and next (thing <c>+8</c> and <c>+10</c>) on every path. 8 arrives, then 9, so 9
+	/// heads the cell with 8 behind; 9 is taken off the map (<see cref="ParkState.Forget"/>), which
+	/// promotes 8 to the head and must leave 9's next at 0, not 8.
+	/// </summary>
+	[TestMethod]
+	public void AThingTakenOffTheMapNamesNobodyBehindIt()
+	{
+		var state = new ParkState( parkIsClosed: false, visitorsToDate: 0 );
+
+		state.StandOn( 8, 10, 10 );
+		state.StandOn( 9, 10, 10 );
+
+		Assert.AreEqual( 8, state.NextOnCell( 9 ), "the earlier arrival stands behind the head" );
+
+		state.Forget( 9 );
+
+		Assert.AreEqual( 8, state.CellAt( 10, 10 ).Occupant, "the one behind becomes the head" );
+		Assert.AreEqual( 0, state.NextOnCell( 9 ), "and the one that went no longer names it" );
+		Assert.AreEqual( 0, state.NextOnCell( 8 ), "nor does anybody stand behind the new head" );
+	}
 }

@@ -1481,4 +1481,264 @@ public class ParkFileWriterPeopleTests
 		Assert.ThrowsException<InvalidOperationException>( () => ParkFileWriter.Body( shipped,
 			With( first with { Person = first.Person with { ThingId = shipped.Objects[0].ThingId } } ) ), "an object's id" );
 	}
+
+	/// <summary>
+	/// The sprite a guest saved with none is given again comes due as a sprite just made does: the original's constructor
+	/// sets when it next comes due as the sprite is made (<see cref="SpriteScript.ScheduleFrom"/>), one interval on from
+	/// the clock, and the sprite step's default interval is 62 ms (<c>docs/exe/boot.md</c>, the every-2nd-tick row,
+	/// <c>0x00475360</c>). The load's clock is nought, so it is due at 62, and its script does not run on a turn before that.
+	/// </summary>
+	[TestMethod]
+	public void AGuestGivenASpriteAgainComesDueOneIntervalAfterTheLoad()
+	{
+		var body = ParkFileWriter.Body( shipped, Running( new ParkPeople( shipped ) ) );
+		var held = new ParkWorld( body );
+		var rider = held.People.First( person => person.Model == ParkWorld.GuestModel && person.SpriteSlot != 0 );
+
+		BitConverter.TryWriteBytes( body.AsSpan( body.AsSpan().IndexOf( held.RecordOf( rider.ThingId ) ) + 16 ), 0 );
+		TestRun.DeleteEvery<ParkPeople>();
+
+		var doctored = new ParkWorld( body );
+
+		Assert.AreEqual( 0, doctored.People.Single( person => person.ThingId == rider.ThingId ).SpriteSlot );
+
+		var people = new ParkPeople( doctored );
+		var again = people.SpriteFor( rider.ThingId );
+
+		Assert.IsNotNull( again, "made again" );
+		Assert.AreEqual( 62, again!.Interval, "the default interval" );
+		Assert.AreEqual( 62, again.Due, "due one interval after the load's clock of nought" );
+	}
+
+	/// <summary>
+	/// A guest who is not written standing takes their record from their walk (<c>docs/exe/saves.md</c>, "OpenTPW's
+	/// writer, the people", "A record's fields"): <c>mPreviousX</c>/<c>Y</c> at 224 and 228 are where they stood when
+	/// the tick began (<c>PeepNavigator.Previous</c>, <c>FUN_004fa870</c>), which for one moved since the load is where
+	/// the file had them and not where they are now; <c>mNextAnim</c> at 20 is the animation queued, 7 here;
+	/// <c>mSetDestSuccessfully</c> at 238 is 1 for one a route has been set for; and the navigator's
+	/// <c>mCantReachDest</c> is 1 for one who has given up.
+	/// </summary>
+	[TestMethod]
+	public void AWalkersRecordHoldsWhereTheyStoodTheirQueuedAnimationAndWhatTheirNavigatorGaveUp()
+	{
+		var people = new ParkPeople( shipped );
+		var peep = people.Guests.Values.First();
+		var one = ParkWorld.NavigatorState.One;
+		var stood = peep.Navigator.Position;
+		var now = new FixedVector( (60 * one) + 100, (70 * one) + 200 );
+
+		// Deciding is on no thing and bound for none, so nothing writes them standing.
+		peep.SetState( PeepState.Deciding, 800, new Random( 1 ) );
+		peep.Navigator.Position = now;
+		peep.Navigator.GiveUp();
+		peep.NextAnimation = 7;
+		peep.SetDestSuccessfully = true;
+
+		Assert.IsTrue( stood.X != now.X && stood.Y != now.Y, "moved on both axes, or the two positions cannot be told apart" );
+
+		var written = Written( people, out _ );
+		var read = written.People.Single( person => person.ThingId == peep.ThingId );
+		var record = written.RecordOf( peep.ThingId )!;
+
+		Assert.AreEqual( (int)PeepState.Deciding, read.Guest!.Value.State );
+		Assert.AreEqual( (now.X, now.Y), (read.Navigator.X, read.Navigator.Y), "where they are" );
+		Assert.AreEqual( (stood.X, stood.Y), (BitConverter.ToInt32( record, 224 ), BitConverter.ToInt32( record, 228 )), "mPreviousX and mPreviousY: where they stood" );
+		Assert.AreEqual( 7, BitConverter.ToInt32( record, 20 ), "mNextAnim" );
+		Assert.AreEqual( 1, BitConverter.ToInt32( record, 238 ), "mSetDestSuccessfully" );
+		Assert.AreEqual( 1, read.Navigator.CantReachDest, "mCantReachDest" );
+	}
+
+	/// <summary>
+	/// A guest written deciding where they stand - one queueing for a thing the file does not hold - is written
+	/// standing where they are, whatever the walk holds (<c>ParkPeople.Person</c>'s own rule; <c>docs/exe/saves.md</c>,
+	/// "OpenTPW's writer, the people"): <c>mPreviousX</c>/<c>Y</c> at 224 and 228 are where they are now and not where
+	/// the navigator last stamped them, <c>mNextAnim</c> at 20 is nought though 7 is queued, and
+	/// <c>mSetDestSuccessfully</c> at 238 is nought though a route had been set.
+	/// </summary>
+	[TestMethod]
+	public void AGuestWrittenStandingHasNoPreviousPlaceNoQueuedAnimationAndNoDestinationSet()
+	{
+		var people = new ParkPeople( shipped );
+		var peep = people.Guests.Values.First();
+		var one = ParkWorld.NavigatorState.One;
+		var stood = peep.Navigator.Position;
+		var now = new FixedVector( (60 * one) + 100, (70 * one) + 200 );
+
+		peep.SetState( PeepState.InQueue, 800, new Random( 1 ) );
+		peep.MajorDest = 500;
+		peep.Navigator.Position = now;
+		peep.NextAnimation = 7;
+		peep.SetDestSuccessfully = true;
+
+		Assert.IsTrue( stood.X != now.X && stood.Y != now.Y, "moved on both axes, or the two positions cannot be told apart" );
+
+		var written = Written( people, out _ );
+		var read = written.People.Single( person => person.ThingId == peep.ThingId );
+		var record = written.RecordOf( peep.ThingId )!;
+
+		Assert.AreEqual( (int)PeepState.Deciding, read.Guest!.Value.State, "written deciding, so standing" );
+		Assert.AreEqual( (now.X, now.Y), (BitConverter.ToInt32( record, 224 ), BitConverter.ToInt32( record, 228 )), "mPreviousX and mPreviousY: where they are" );
+		Assert.AreEqual( 0, BitConverter.ToInt32( record, 20 ), "mNextAnim" );
+		Assert.AreEqual( 0, BitConverter.ToInt32( record, 238 ), "mSetDestSuccessfully" );
+	}
+
+	/// <summary>
+	/// A member of staff in the hand whose sprite is on another program is written on the standing program from its
+	/// start: the sprite record's script and its word are both animation 3's entry in the programs' table
+	/// (<c>ParkPeople.Person</c>: one written standing is "on the standing program, whatever the walk and the sprite
+	/// hold"; the original puts the hand's thing down before it writes, <c>FUN_00516c80</c>, step 1, and a start
+	/// writes the script and the word alike, <c>FUN_00475b80</c>).
+	/// </summary>
+	[TestMethod]
+	public void AMemberInTheHandIsWrittenOnTheStandingProgramFromItsStart()
+	{
+		var people = new ParkPeople( shipped );
+		var held = shipped.People.First( person => person.Model == 6 ).ThingId;
+		var standing = SpriteScript.EntryFor( SpriteScript.Standing );
+
+		Assert.AreNotEqual( SpriteScript.None, standing );
+		Assert.IsFalse( people.SpriteFor( held )!.IsOn( SpriteScript.Standing ), "or there is no other program to be taken off" );
+		Assert.IsTrue( people.PickUp( held ) );
+
+		var written = Written( people, out _ );
+		var read = written.People.Single( person => person.ThingId == held );
+		var picture = written.Sprites.Single( sprite => sprite.Slot == read.SpriteSlot );
+
+		Assert.AreEqual( (int)StaffActivity.Idle, read.Staff!.Value.State );
+		Assert.AreEqual( (standing, standing), (picture.Script, picture.Pc), "the standing program, at its first word" );
+	}
+
+	/// <summary>
+	/// A guest the writer does not make decide is written as they are (<c>docs/exe/saves.md</c>, "OpenTPW's writer,
+	/// the people": a record's fields are the FileFormats page's, from <c>ParkPeople</c>): one playing a spot
+	/// animation, state 8, with the state they go back to, <c>mSavedState</c> 7 (wandering), the major they put by,
+	/// <c>mSavedMajorDest</c>, a thing of the file's, and five walking turns in <c>mCount</c>. Every guest of the
+	/// shipped park holds 6, nought and nought there, so the three are set here.
+	/// </summary>
+	[TestMethod]
+	public void AGuestNotDecidingKeepsTheirSavedStateTheMajorPutByAndTheirWalkingTurns()
+	{
+		var people = new ParkPeople( shipped );
+		var peep = people.Guests.Values.First();
+		var thing = shipped.Objects.First( placed => placed.IsVisitable ).ThingId;
+
+		Assert.IsTrue( Level.WrittenThings( shipped ).Contains( thing ), "the thing is the file's, or its handle would be written nought" );
+
+		peep.SetState( PeepState.PlayingSpotAnimation, 800, new Random( 1 ) );
+		peep.SavedState = PeepState.Wandering;
+		peep.SavedMajorDest = thing;
+		peep.WalkingTurns = 5;
+
+		var written = Written( people, out _ );
+		var guest = written.People.Single( person => person.ThingId == peep.ThingId ).Guest!.Value;
+
+		Assert.AreEqual( (8, 7, thing, 5), (guest.State, guest.SavedState, guest.SavedMajorDest, guest.WalkingTurns),
+			"mState, mSavedState, mSavedMajorDest and mCount" );
+		Assert.IsFalse( Unimplemented.Summary.Any( gap => gap.What == "SAVE_PARK_HANDLE_TO_AN_UNWRITTEN_THING" ) );
+	}
+
+	/// <summary>
+	/// The writer's counted deviation (<c>docs/exe/saves.md</c>, "OpenTPW's writer, the people", "Deviations";
+	/// <c>ParkPeople.Written</c>'s own comment): a guest on a thing the file does not hold is written deciding where
+	/// they stand, so with nothing of the queue and nothing put by. The middle one of three queueing for thing 500,
+	/// who has somebody ahead and somebody behind, a move delay of 4, a saved state of 7, a major put by and five
+	/// walking turns, is written with <c>mState</c> and <c>mSavedState</c> 6 (deciding, what a guest is made in) and
+	/// nought in <c>mQNext</c>, <c>mQPrev</c>, <c>mQueueMoveDelay</c>, <c>mSavedMajorDest</c> and <c>mCount</c>.
+	/// </summary>
+	[TestMethod]
+	public void AGuestMadeToDecideIsWrittenWithNoLinksNoDelayAndNothingPutBy()
+	{
+		var people = new ParkPeople( shipped );
+		var queue = people.Guests.Values.Take( 3 ).ToList();
+		var held = shipped.Objects.First( placed => placed.IsVisitable ).ThingId;
+
+		foreach ( var queuer in queue )
+		{
+			queuer.SetState( PeepState.InQueue, 800, new Random( 1 ) );
+			queuer.MajorDest = 500;
+			people.State.JoinQueue( 500, queuer.ThingId );
+		}
+
+		var peep = queue[1];
+
+		peep.QueueMoveDelay = 4;
+		peep.SavedState = PeepState.Wandering;
+		peep.SavedMajorDest = held;
+		peep.WalkingTurns = 5;
+
+		Assert.AreEqual( (queue[2].ThingId, queue[0].ThingId), (people.State.NextInQueue( peep.ThingId ), people.State.PreviousInQueue( peep.ThingId )),
+			"the running queue links them, or the noughts below prove nothing" );
+		Assert.IsTrue( Level.WrittenThings( shipped ).Contains( held ) && !Level.WrittenThings( shipped ).Contains( 500 ) );
+
+		var written = Written( people, out _ );
+		var guest = written.People.Single( person => person.ThingId == peep.ThingId ).Guest!.Value;
+
+		Assert.AreEqual( (6, 6, 0), (guest.State, guest.SavedState, guest.MajorDest), "deciding, with nothing to go back to" );
+		Assert.AreEqual( (0, 0, 0), (guest.QNext, guest.QPrev, guest.QueueMoveDelay), "no links and no delay of a queue they are not in" );
+		Assert.AreEqual( (0, 0), (guest.SavedMajorDest, guest.WalkingTurns), "nothing put by and no turns walked" );
+		Assert.AreEqual( 3, Unimplemented.Summary.Single( gap => gap.What == "SAVE_PARK_GUEST_ON_A_THING" ).Times, "each of the three counted" );
+	}
+
+	/// <summary>
+	/// A member of staff in the hand is written idle where they were picked up (<c>docs/exe/saves.md</c>, "OpenTPW's
+	/// writer, the people", "Deviations": the original puts the hand's thing down before it writes,
+	/// <c>FUN_00516c80</c>, step 1), and one written idle is written with the job dropped, as the mechanic whose ride
+	/// is not written is: state 0 and nought in <c>mRestArea</c>, <c>mToiletToClean</c> and <c>mObjectToRepair</c>,
+	/// though each names a thing the file holds.
+	/// </summary>
+	[TestMethod]
+	public void AMemberInTheHandIsWrittenWithNoRestAreaAndNoJob()
+	{
+		var people = new ParkPeople( shipped );
+		var member = people.Staff.First( staff => staff.Activity == StaffActivity.Walking );
+		var room = shipped.Objects.First( thing => thing.IsRestArea ).ThingId;
+		var job = shipped.Objects.First( placed => placed.IsVisitable ).ThingId;
+		var held = Level.WrittenThings( shipped );
+
+		Assert.IsTrue( held.Contains( room ) && held.Contains( job ), "both are the file's, or their handles are nought whoever holds them" );
+		Assert.IsTrue( people.PickUp( member.ThingId ) );
+
+		member.RestArea = room;
+		member.ToiletToClean = job;
+		member.ObjectToRepair = job;
+
+		var written = people.Written( held.Contains ).Single( person => person.Person.ThingId == member.ThingId ).Person.Staff!.Value;
+
+		Assert.AreEqual( ((int)StaffActivity.Idle, 0, 0, 0), (written.State, written.RestArea, written.ToiletToClean, written.ObjectToRepair) );
+	}
+
+	/// <summary>
+	/// A member of staff who is not written standing is written as they are (<c>docs/exe/saves.md</c>, "OpenTPW's
+	/// writer, the people": a record's fields are from <c>ParkPeople</c>, the four speeds among them): one walking to
+	/// a toilet the file holds keeps the state and <c>mToiletToClean</c>, their <c>mBaseSpeed</c> is the running one,
+	/// and <c>mSetDestSuccessfully</c>, which staff keep none of here, is handed over as null and so left the
+	/// record's (<c>ParkWorld.WrittenPerson</c>): 1 for every member of the shipped park.
+	/// </summary>
+	[TestMethod]
+	public void AMemberAtWorkIsWrittenWithTheirToiletTheirSpeedsAndTheFilesSetDest()
+	{
+		var people = new ParkPeople( shipped );
+		var member = people.Staff.First( staff => staff.Activity == StaffActivity.Walking );
+		var job = shipped.Objects.First( placed => placed.IsVisitable ).ThingId;
+		var held = Level.WrittenThings( shipped );
+
+		Assert.IsTrue( held.Contains( job ) );
+		Assert.AreEqual( 1, BitConverter.ToInt32( shipped.RecordOf( member.ThingId )!, 238 ), "the file's member has been routed, or the last line proves nothing" );
+		Assert.AreNotEqual( 0x1234, shipped.People.Single( person => person.ThingId == member.ThingId ).Pace!.Value.BaseSpeed );
+
+		member.ToiletToClean = job;
+		member.SetActivity( StaffActivity.GoingToLoo, 800 );
+		member.BaseSpeed = 0x1234;
+
+		var handed = people.Written( held.Contains ).Single( person => person.Person.ThingId == member.ThingId );
+
+		Assert.AreEqual( ((int)StaffActivity.GoingToLoo, job), (handed.Person.Staff!.Value.State, handed.Person.Staff.Value.ToiletToClean) );
+		Assert.IsNull( handed.SetDestSuccessfully, "null leaves the record's" );
+
+		var written = Written( people, out _ );
+		var read = written.People.Single( person => person.ThingId == member.ThingId );
+
+		Assert.AreEqual( 0x1234, read.Pace!.Value.BaseSpeed, "mBaseSpeed is the running member's" );
+		Assert.AreEqual( 1, BitConverter.ToInt32( written.RecordOf( member.ThingId )!, 238 ), "mSetDestSuccessfully is the file's still" );
+	}
 }

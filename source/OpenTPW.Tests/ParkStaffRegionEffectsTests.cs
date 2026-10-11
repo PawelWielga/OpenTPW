@@ -284,4 +284,118 @@ public class ParkStaffRegionEffectsTests
 		CollectionAssert.AreEqual( Rebuilt( park ), park.CellEffects.ToArray() );
 		Assert.AreEqual( 2, park.CellEffects[(((41 * ParkWorld.MapSize) + 33) * ParkWorld.EffectWords) + Happiness] );
 	}
+
+	/// <summary>
+	/// <b>A dismissal pays one more month's wage</b> (<c>FUN_00505790</c>, <c>0x00505944</c>;
+	/// <c>docs/exe/ride-operation.md</c>, "The wage"): <c>PerGradeStaffConsts[grade].BaseWage</c> times
+	/// <c>PerTypeStaffConsts[type].PayMultiplier</c>, in <c>Easy_Standard.sam</c>'s numbers, withdrawn from the bank.
+	/// The shipped park's handyman and mechanic are both grade 3, whose base wage is 7, and their multipliers are 9 and
+	/// 23: 63 and 161. The file's balance is 87987, so the bank stands at 87924 after the first and 87763 after the
+	/// second, and a withdrawal writes the last balance too.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the severance nought; the kind test turned, or made to leave out the handyman, who is kind
+	/// nought; the withdrawal not made.
+	/// </remarks>
+	[TestMethod]
+	public void AFiringWithdrawsOneMoreMonthsWageOfTheMembersKindAndGrade()
+	{
+		var bank = new ParkState( shipped );
+		var people = new ParkPeople( shipped, new ParkBalance( "jungle", easyMode: true ), null, bank );
+		var handyman = people.Staff.Single( member => member.Model == 5 ).ThingId;
+		var levelBefore = Level.Current;
+		var poolBefore = ParkStaffPool.Current;
+
+		// The wage is asked of the level's pool, so a level that holds one: the arrangement ParkStaffPoolRefreshTests has.
+		var pool = new ParkStaffPool( new ParkBalance( "jungle", easyMode: true ) );
+		var level = (Level)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
+
+		typeof( Level ).GetProperty( nameof( Level.StaffPool ) )!.SetValue( level, pool );
+		Level.Current = level;
+
+		try
+		{
+			Assert.AreEqual( (87987, 1), (bank.Balance, bank.WithdrawalsEnabled), "the control: the file's balance, and withdrawals on" );
+
+			Assert.IsTrue( people.Fire( handyman ) );
+			Assert.AreEqual( (87987 - (7 * 9), 87987 - (7 * 9)), (bank.Balance, bank.LastBalance), "a grade 3 handyman, 7 x 9" );
+
+			Assert.IsTrue( people.Fire( Mechanic ) );
+			Assert.AreEqual( (87987 - (7 * 9) - (7 * 23), 87987 - (7 * 9) - (7 * 23)), (bank.Balance, bank.LastBalance),
+				"a grade 3 mechanic, 7 x 23" );
+		}
+		finally
+		{
+			Level.Current = levelBefore!;
+			typeof( ParkStaffPool ).GetProperty( nameof( ParkStaffPool.Current ) )!.SetValue( null, poolBefore );
+		}
+	}
+
+	/// <summary>
+	/// <b>A fired member is deleted outright, out of every set</b> (<c>FUN_00505790</c> calls the thing's delete, whose
+	/// message <c>0x1b</c> takes the member out of every set: <c>docs/exe/ride-operation.md</c>, "The wage"). Here the
+	/// sets are the staff list, the walks, the animations and the cell's occupancy, which a hire enters on the cell
+	/// they are put on: after the firing the member has no walk, no animation and stands on no cell.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the walk kept; the animation kept; the cell's occupancy not forgotten.</remarks>
+	[TestMethod]
+	public void AFiredMemberIsTakenOutOfTheWalksTheAnimationsAndTheirCell()
+	{
+		var people = new ParkPeople( shipped, staffRandom: new Random( 1 ) );
+		var state = people.State;
+		var hired = people.Hire( Candidate( 1 ), 30, 60 );
+
+		Assert.AreNotEqual( 0, hired, "the control: the hire was made" );
+		Assert.IsTrue( people.IsStaff( hired ) );
+		Assert.IsNotNull( people.StaffWalkFor( hired ), "the control: a hire has a walk" );
+		Assert.IsNotNull( people.SpriteFor( hired ), "the control: and an animation" );
+		Assert.AreEqual( (30, 60), state.CellOf( hired ), "the control: and stands on the cell they were put on" );
+
+		Assert.IsTrue( people.Fire( hired ) );
+
+		Assert.IsFalse( people.IsStaff( hired ) );
+		Assert.IsNull( people.StaffWalkFor( hired ), "no walk is left" );
+		Assert.IsNull( people.AnyWalkFor( hired ) );
+		Assert.IsNull( people.SpriteFor( hired ), "no animation is left" );
+		Assert.IsNull( state.CellOf( hired ), "and they stand on no cell" );
+		Assert.IsFalse( people.Fire( hired ), "there is nobody to fire twice" );
+	}
+
+	/// <summary>
+	/// <b>A fired member is no longer drawn</b>: the delete takes them out of every set
+	/// (<c>FUN_00505790</c>; <c>docs/exe/ride-operation.md</c>, "The wage"), and the drawn crowd is one. Two are hired
+	/// into a crowd made for no park, which loads nothing and builds no model; the one kept is still in it, which
+	/// shows a hire joins this crowd, and the one fired is not, so there is nobody of theirs left to take out.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the firing leaving the member in the crowd.</remarks>
+	[TestMethod]
+	public void AFiredMemberIsNoLongerInTheDrawnCrowd()
+	{
+		var current = typeof( ParkGuestSprites ).GetProperty( nameof( ParkGuestSprites.Current ),
+			System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic )!;
+		var crowdBefore = ParkGuestSprites.Current;
+		var people = new ParkPeople( shipped, staffRandom: new Random( 1 ) );
+
+		try
+		{
+			var crowd = new ParkGuestSprites( "jungle", null );
+
+			current.SetValue( null, crowd );
+
+			var fired = people.Hire( Candidate( 1 ), 30, 60 );
+			var kept = people.Hire( Candidate( 1 ), 30, 62 );
+
+			Assert.IsTrue( fired != 0 && kept != 0 && fired != kept, "the control: two hires were made" );
+
+			Assert.IsTrue( people.Fire( fired ) );
+
+			Assert.IsFalse( crowd.Remove( fired ), "the firing took them out of the crowd already" );
+			Assert.IsTrue( crowd.Remove( kept ), "the control: a hire joins this crowd, and one not fired is still in it" );
+		}
+		finally
+		{
+			TestRun.DeleteEvery<ParkGuestSprites>();
+			current.SetValue( null, crowdBefore );
+		}
+	}
 }

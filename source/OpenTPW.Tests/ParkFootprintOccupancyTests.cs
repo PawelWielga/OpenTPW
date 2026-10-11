@@ -241,4 +241,43 @@ public class ParkFootprintOccupancyTests
 		Assert.AreEqual( 0, ParkPicking.ThingOn( park, 52, 25 ),
 			"nothing in the park stands at that anchor any more" );
 	}
+
+	/// <summary>
+	/// <b>A thing taken off a cell forgets who stood in front of it.</b> <c>FUN_004d9280</c> ends by zeroing
+	/// the leaver's previous and next (thing <c>+8</c> and <c>+10</c>), so taking the same thing off again
+	/// finds no previous and rewrites nobody's next - <see cref="ParkState.LeaveCell"/>.
+	/// </summary>
+	/// <remarks>
+	/// The guest goes on (10,10) first and the ride over them, so the ride is the guest's previous. The
+	/// guest leaves, then the ride moves to (12,12) on top of a third thing, 9, which is now the ride's
+	/// next. Taking the guest off (10,10) a second time must leave that alone: the ride's next is still 9,
+	/// and taking the ride off (12,12) promotes 9 to the head rather than nought.
+	/// </remarks>
+	[TestMethod]
+	public void AThingAlreadyTakenOffACellCutsNobodysLinkWhenTakenOffAgain()
+	{
+		const int Other = 9;
+
+		var park = Park();
+
+		park.EnterCell( 10, 10, Guest );
+		park.EnterCell( 10, 10, Ride );
+		park.LeaveCell( 10, 10, Guest );
+
+		// The ride moves on top of a third thing on another cell.
+		park.LeaveCell( 10, 10, Ride );
+		park.EnterCell( 12, 12, Other );
+		park.EnterCell( 12, 12, Ride );
+
+		Assert.AreEqual( Other, park.NextOnCell( Ride ), "the third thing stands behind the ride" );
+
+		// The guest is taken off the cell it already left.
+		park.LeaveCell( 10, 10, Guest );
+
+		Assert.AreEqual( Other, park.NextOnCell( Ride ), "which must not cut the link of the thing that used to be in front of it" );
+
+		park.LeaveCell( 12, 12, Ride );
+
+		Assert.AreEqual( Other, park.CellAt( 12, 12 ).Occupant, "so taking the ride off promotes the thing behind it" );
+	}
 }

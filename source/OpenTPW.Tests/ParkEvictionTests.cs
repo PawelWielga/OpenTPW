@@ -503,4 +503,226 @@ public class ParkEvictionTests
 			Close( park );
 		}
 	}
+
+	/// <summary>
+	/// The rest-area arm answers only when the member's rest area (<c>+0x208</c>) is the thing removed -
+	/// <c>FUN_00504c70</c>, <c>docs/exe/park-engine.md</c>, "Selling and the people on it": "Then, when the rest
+	/// area is the thing". So with the Belly Bounce sold, a guard resting in the staff room stays in state 3 with
+	/// the claim on thing 20, and a researcher on the way there stays in state 2 with the same claim.
+	/// </summary>
+	[TestMethod]
+	public void StaffRestingSomewhereElseKeepTheirRestAreaWhenAnotherThingIsSold()
+	{
+		var park = Open();
+
+		try
+		{
+			var resting = park.People.Staff.Single( staff => staff.ThingId == Guard );
+			var going = park.People.Staff.Single( staff => staff.ThingId == Researcher );
+
+			resting.RestArea = StaffRoom;
+			resting.SetActivity( StaffActivity.Resting, tick: 1 );
+			going.RestArea = StaffRoom;
+			going.SetActivity( StaffActivity.GoingToRest, tick: 1 );
+
+			StringAssert.Contains( Sell( park, BellyBounce ), "sold" );
+
+			Assert.AreEqual( StaffActivity.Resting, resting.Activity, "the guard rests on: the staff room still stands" );
+			Assert.AreEqual( StaffRoom, resting.RestArea, "and keeps the claim on it" );
+			Assert.AreEqual( StaffActivity.GoingToRest, going.Activity, "the researcher is still on the way" );
+			Assert.AreEqual( StaffRoom, going.RestArea, "to the same rest area" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// The sale's message makes the rider's sound: the kids' effect <c>0x80</c>, always for a rider
+	/// (<c>FUN_004faa00</c> at <c>0x004fb3f5</c>), and for nobody who was only walking to the thing. On a thing
+	/// whose flags lack <c>0x20</c> admission destroyed the rider's sprite and the eviction makes a new one
+	/// whose position is still nought when the sound reads it (<c>0x004fb3cd</c>), so it plays at the world's
+	/// origin, (0, 0, 0) - <c>docs/exe/park-engine.md</c>, "Selling and the people on it". One rider and one
+	/// guest heading there are therefore one voice, placed at nought, with the put-off's own range of 100.
+	/// </summary>
+	/// <remarks>
+	/// Every visitable thing in Lost Kingdom's save carries <c>0x20</c>, so the Belly Bounce's is taken off by
+	/// hand. A device is stood in as <see cref="ParkVoiceRangeTests"/> stands one in. No ground is loaded, so
+	/// nothing here can be heard at anybody's feet. <b>Mutation:</b> turning the test that passes by a guest
+	/// the message did not choose (<see cref="ParkPeople.ThingRemoved"/>) leaves the sale silent.
+	/// </remarks>
+	[TestMethod]
+	public void ARiderPutOffAThingThatKeepsNoSpriteIsHeardOnceAtTheWorldsOrigin()
+	{
+		var ready = typeof( Audio ).GetProperty( nameof( Audio.Ready ) )!;
+
+		Assert.IsFalse( Audio.Ready, "a test run has no audio device" );
+
+		System.Collections.Generic.List<Voice> before;
+
+		lock ( Audio.Lock )
+			before = [.. Audio.Voices];
+
+		ParkAudio? audio = null;
+		Park? park = null;
+
+		try
+		{
+			ready.SetValue( null, true );
+			audio = new ParkAudio( Theme );
+			park = Open();
+
+			Assert.IsTrue( park.State.TryObject( BellyBounce, out var bounce ) );
+			Assert.AreNotEqual( 0, bounce.Flags & ParkWorld.CatalogueObject.KeepsRidersSpriteFlag,
+				"the save's Belly Bounce keeps its riders' sprites" );
+			Assert.IsTrue( park.State.ReplaceObject( bounce with
+			{
+				Flags = (ushort)( bounce.Flags & ~ParkWorld.CatalogueObject.KeepsRidersSpriteFlag )
+			} ) );
+
+			var rider = Bound( park, 0, BellyBounce, PeepState.Riding );
+			var heading = Bound( park, 3, BellyBounce, PeepState.GoingToRide );
+
+			System.Collections.Generic.List<Voice> quiet;
+
+			lock ( Audio.Lock )
+				quiet = [.. Audio.Voices];
+
+			StringAssert.Contains( Sell( park, BellyBounce ), "sold" );
+
+			System.Collections.Generic.List<Voice> heard;
+
+			lock ( Audio.Lock )
+				heard = Audio.Voices.Where( voice => !quiet.Contains( voice ) ).ToList();
+
+			Assert.AreEqual( PeepState.Deciding, rider.State, "the rider was put off" );
+			Assert.AreEqual( PeepState.Deciding, heading.State, "and so was the guest on the way" );
+			Assert.AreEqual( 1, heard.Count, "the rider is heard, and the guest who was only heading there is not" );
+			Assert.AreEqual( System.Numerics.Vector3.Zero, heard[0].Place, "at the world's origin, where the new sprite still is" );
+			Assert.AreEqual( 100f, heard[0].Range, "the kids' effect 0x80, by its variation's range" );
+		}
+		finally
+		{
+			if ( park != null )
+				Close( park );
+
+			audio?.Delete();
+			Entity.ApplyDeletions();
+
+			lock ( Audio.Lock )
+				Audio.Voices.RemoveAll( voice => !before.Contains( voice ) );
+
+			ready.SetValue( null, false );
+		}
+	}
+
+	/// <summary>
+	/// Of several rest areas a tired member of staff claims the nearest, by the squared distance between cells -
+	/// across squared plus down squared, each measured from the cell they stand in (<c>FUN_00506910</c>;
+	/// <see cref="StaffBehaviour"/>'s <c>GoAndRest</c> states the rule).
+	/// </summary>
+	/// <remarks>
+	/// The guard stands at (39,28) and the park's own staff room at (58,16): 19 across and 12 up, 361 + 144 = 505.
+	/// Three copies of it are stood about the guard, each approached from the staff room's own entry, which the
+	/// guard can route to: one 2 across and 2 down (4 + 4 = 8), one 1 back and 4 down (1 + 16 = 17), one 4 across
+	/// and 1 up (16 + 1 = 17). 8 is the least, so that copy is claimed. Each of the others is the nearest under
+	/// one wrong measure: the second where the down distance does not count or is taken away, or where the
+	/// column is added rather than subtracted; the third where the across distance does not count; the staff
+	/// room itself where the row is added.
+	/// </remarks>
+	[TestMethod]
+	public void ATiredGuardClaimsTheRestAreaNearestBySquaredCellDistance()
+	{
+		var park = Open();
+
+		try
+		{
+			Assert.IsTrue( park.State.TryObject( StaffRoom, out var room ) );
+
+			var tired = park.People.Staff.Single( staff => staff.ThingId == Guard );
+			var walk = park.People.StaffWalkFor( Guard )!;
+			var (x, y) = walk.Position.Cell;
+
+			Assert.AreEqual( (39, 28), (x, y), "where the guard stands in the shipped park" );
+			Assert.AreEqual( (58, 16), (room.CellX, room.CellY), "and the staff room, 505 away" );
+
+			var downAndBack = room with { ThingId = park.State.NextThingId(), RawX = (x - 1) << 8, RawY = (y + 4) << 8 };
+			var near = room with { ThingId = park.State.NextThingId(), RawX = (x + 2) << 8, RawY = (y + 2) << 8 };
+			var acrossAndUp = room with { ThingId = park.State.NextThingId(), RawX = (x + 4) << 8, RawY = (y - 1) << 8 };
+
+			park.State.AddObject( downAndBack );
+			park.State.AddObject( near );
+			park.State.AddObject( acrossAndUp );
+
+			tired.Tiredness = 0f;
+			tired.SetActivity( StaffActivity.Idle, tick: 1 );
+			tired.TimeStartedIdling = 0;
+
+			var behaviour = new StaffBehaviour( new ParkBalance( Theme, easyMode: true ), new Random( 7 ), park.State );
+
+			behaviour.Step( tired, walk, playing: null, tick: 500 );
+
+			Assert.AreEqual( StaffActivity.GoingToRest, tired.Activity, "a tired guard sets off to rest" );
+			Assert.AreEqual( near.ThingId, tired.RestArea,
+				"at the rest area 8 away by squared cells, not at either one 17 away nor the staff room 505 away" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// Of two rest areas equally near, a tired member of staff claims the first in chain order: the original
+	/// follows <c>mNext</c> from <c>mFirstObject</c> and replaces its choice only for one strictly nearer
+	/// (<c>FUN_00506910</c>; <see cref="StaffBehaviour"/>'s <c>GoAndRest</c> states the rule).
+	/// </summary>
+	/// <remarks>
+	/// Two copies of the staff room are stood about the guard, one 2 across and 3 down and one 3 across and 2
+	/// down: 4 + 9 and 9 + 4, 13 each, against the staff room's own 505. A thing built is linked in at the
+	/// chain's head (<c>FUN_00519d80</c>, <see cref="ParkState.AddObject"/>), so the copy added second is met
+	/// first, and it is the one claimed.
+	/// </remarks>
+	[TestMethod]
+	public void OfTwoRestAreasEquallyNearTheFirstInChainOrderIsClaimed()
+	{
+		var park = Open();
+
+		try
+		{
+			Assert.IsTrue( park.State.TryObject( StaffRoom, out var room ) );
+
+			var tired = park.People.Staff.Single( staff => staff.ThingId == Guard );
+			var walk = park.People.StaffWalkFor( Guard )!;
+			var (x, y) = walk.Position.Cell;
+
+			var addedFirst = room with { ThingId = park.State.NextThingId(), RawX = (x + 2) << 8, RawY = (y + 3) << 8 };
+			var addedSecond = room with { ThingId = park.State.NextThingId(), RawX = (x + 3) << 8, RawY = (y + 2) << 8 };
+
+			park.State.AddObject( addedFirst );
+			park.State.AddObject( addedSecond );
+
+			var met = park.State.ObjectsInChainOrder().Where( placed => placed.IsRestArea ).Select( placed => placed.ThingId ).ToArray();
+
+			CollectionAssert.AreEqual( new[] { addedSecond.ThingId, addedFirst.ThingId, StaffRoom }, met,
+				"the chain is walked from its head, where the newest thing is linked" );
+
+			tired.Tiredness = 0f;
+			tired.SetActivity( StaffActivity.Idle, tick: 1 );
+			tired.TimeStartedIdling = 0;
+
+			var behaviour = new StaffBehaviour( new ParkBalance( Theme, easyMode: true ), new Random( 7 ), park.State );
+
+			behaviour.Step( tired, walk, playing: null, tick: 500 );
+
+			Assert.AreEqual( StaffActivity.GoingToRest, tired.Activity, "a tired guard sets off to rest" );
+			Assert.AreEqual( addedSecond.ThingId, tired.RestArea,
+				"at the first of the two 13 away that the chain gives, not the one met after it" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
 }

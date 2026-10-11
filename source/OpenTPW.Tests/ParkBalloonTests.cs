@@ -611,4 +611,37 @@ public class ParkBalloonTests
 	private static int I32( byte[] payload, int at ) => BitConverter.ToInt32( payload, at );
 
 	private static void Put( byte[] payload, int at, int value ) => BitConverter.GetBytes( value ).CopyTo( payload, at );
+
+	/// <summary>
+	/// <b>A guest the park has linked into no cell is asked by the cell under their feet, the whole part of their 16.16
+	/// position</b> - <c>FUN_004fa990</c> reads the integer cell coordinates out of the position (docs/exe/park-gate.md),
+	/// and <see cref="ParkPeople.OnACountingCell"/> falls back to them before the guest's first turn has linked them. In
+	/// the middle of a path cell (type 1, one of the five counted) they count; in the middle of a ride's footprint
+	/// (type 2, not one of them) they do not. A cell off the map reads as type 0, which counts, so a wrong cell shows
+	/// on the footprint.
+	/// </summary>
+	[TestMethod]
+	public void AGuestLinkedIntoNoCellIsAskedByTheWholePartOfTheirPosition()
+	{
+		var world = Park();
+		var people = new ParkPeople( world );
+		var peep = people.Guests.Values.First();
+		var cells = Enumerable.Range( 0, ParkWorld.MapSize * ParkWorld.MapSize )
+			.Select( at => (X: at % ParkWorld.MapSize, Y: at / ParkWorld.MapSize) ).ToArray();
+		var path = cells.First( cell => people.State.Record( cell.X, cell.Y ).Type == 1 );
+		var footprint = cells.First( cell => people.State.Record( cell.X, cell.Y ).Type == 2 );
+
+		people.State.Forget( peep.ThingId );
+		Assert.IsNull( people.State.CellOf( peep.ThingId ), "linked into no cell" );
+
+		peep.Navigator.Position = new FixedVector( (path.X << 16) + 0x8000, (path.Y << 16) + 0x8000 );
+		Assert.IsTrue( people.OnACountingCell( peep ), $"in the middle of the path at {path}" );
+
+		peep.Navigator.Position = new FixedVector( (footprint.X << 16) + 0x8000, (footprint.Y << 16) + 0x8000 );
+		Assert.IsFalse( people.OnACountingCell( peep ), $"in the middle of the footprint at {footprint}" );
+
+		// The far edge of the same cell is still that cell: the fraction is dropped, not rounded.
+		peep.Navigator.Position = new FixedVector( (footprint.X << 16) + 0xffff, (footprint.Y << 16) + 0xffff );
+		Assert.IsFalse( people.OnACountingCell( peep ), $"at the far edge of the footprint at {footprint}" );
+	}
 }

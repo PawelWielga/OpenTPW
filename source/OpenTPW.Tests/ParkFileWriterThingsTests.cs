@@ -1484,4 +1484,92 @@ public class ParkFileWriterThingsTests
 		Assert.AreEqual( shipped.Objects.Count, written.Objects.Count );
 		Assert.IsNull( written.ThingStates( ChannelsFor ).Problem, "the models behind the scripts read" );
 	}
+
+	/// <summary>
+	/// A channel the file gives a clip, stopped since the load by a start on a role its model lacks, is written as
+	/// every idle channel in the files is: role 12, clip nought, nought in its three stamps, at the stop's speed 1.
+	/// Of the flag word the low six bits are the channel's (none here: the stop asked for no loop) and the rest the
+	/// file's, so the file's 0x41 goes out 0x40; with nothing queued the last queue's leftovers are the file's
+	/// (<c>docs/exe/saves.md</c>, "OpenTPW's writer, the objects", a model).
+	/// </summary>
+	[TestMethod]
+	public void AChannelStoppedSinceTheLoadIsWrittenIdleWithNoughtInItsStamps()
+	{
+		var channel = new AnimTimeControl();
+
+		channel.Start( 5, 0, AnimTimeControl.LoopFlag, 1.5f, now: 1000, frames: 30f );
+		channel.Start( 7, 0, 0, 2f, now: 2000, frames: 0f );
+
+		Assert.IsTrue( channel.IsIdle, "a role the model lacks stops the channel" );
+
+		var file = new SavedChannel( 5, 0, 0x41, 1.5f, 1000, 1500, 1500, ParkThingStates.NoRole, 3, 0x9, 0.5f );
+		var written = ParkRides.WrittenChannel( channel, file, moment => (uint)moment, 9000 );
+
+		Assert.AreEqual( new SavedChannel( ParkThingStates.NoRole, 0, 0x40, 1f, 0, 0, 0, ParkThingStates.NoRole, 3, 0x9, 0.5f ), written );
+	}
+
+	/// <summary>
+	/// A channel still on the file's clip from the file's start, and held on neither side, is a running channel and
+	/// not one "held since before the load": of its flag word the low six bits are the channel's own and the rest the
+	/// file's. Here a role nought clip of twenty frames has run past its end and been marked 0x8 since, so the
+	/// file's 0x40 goes out 0x48, with the clip time and the third stamp the save's moment, 3000
+	/// (<c>docs/exe/saves.md</c>, "OpenTPW's writer, the objects", a model, and "OpenTPW's writer, a channel's 0x8").
+	/// </summary>
+	[TestMethod]
+	public void ARunningChannelOnTheFilesClipIsWrittenWithItsOwnLowSixBits()
+	{
+		var channel = new AnimTimeControl();
+
+		channel.Start( 0, 0, 0, 1f, now: 1000, frames: 20f );
+		channel.MoveTo( 3000 );
+		channel.MarkEnded();
+
+		Assert.AreEqual( AnimTimeControl.RoleNoughtEndedFlag, channel.Flags, "marked, and not held" );
+
+		var file = new SavedChannel( 0, 0, 0x40, 1f, 1000, 2000, 2000, ParkThingStates.NoRole, 0, 0, 1f );
+		var written = ParkRides.WrittenChannel( channel, file, moment => (uint)moment, 3000 );
+
+		Assert.AreEqual( new SavedChannel( 0, 0, 0x48, 1f, 1000, 3000, 3000, ParkThingStates.NoRole, 0, 0, 1f ), written );
+	}
+
+	/// <summary>
+	/// A channel frozen on frame nought is written as the engine keeps one: its clip time pinned to its start stamp,
+	/// the moment of the freeze (1200), while the third stamp follows the clock to the save's moment (9000), and
+	/// the channel's own 0x2 in the flag word (<see cref="AnimTimeControl.MoveTo"/>, <c>0x004736e7</c>;
+	/// <c>docs/exe/saves.md</c>, "OpenTPW's writer, the objects", a model).
+	/// </summary>
+	[TestMethod]
+	public void AFrozenChannelIsWrittenWithItsClipTimeOnItsStart()
+	{
+		var channel = new AnimTimeControl();
+
+		channel.Start( 2, 0, 0, 1f, now: 1000, frames: 30f );
+		channel.Start( AnimTimeControl.FreezeAtStart, 0, 0, 1f, now: 1200, frames: 0f );
+
+		var file = new SavedChannel( ParkThingStates.NoRole, 0, 0, 1f, 0, 0, 0, ParkThingStates.NoRole, 0, 0, 1f );
+		var written = ParkRides.WrittenChannel( channel, file, moment => (uint)moment, 9000 );
+
+		Assert.AreEqual( new SavedChannel( 2, 0, 0x2, 1f, 1200, 1200, 9000, ParkThingStates.NoRole, 0, 0, 1f ), written );
+	}
+
+	/// <summary>
+	/// A channel the file has running, held on its last frame since the load, is written as the engine keeps a held
+	/// one and not with the file's clip time: its start the moment of the hold (5000), its clip time a whole clip
+	/// past that - twenty frames at 33.33333206176758 ms a frame, truncated, is 666 ms, so 5666 - its third stamp
+	/// the save's moment (9000), and the hold's 0x14 under the file's high bits, 0x54 (<c>docs/exe/saves.md</c>,
+	/// "OpenTPW's writer, the objects", a model; <see cref="AnimTimeControl.HeldTime"/>, <c>0x00473193</c>).
+	/// </summary>
+	[TestMethod]
+	public void AChannelHeldSinceTheLoadIsWrittenAClipPastItsStart()
+	{
+		var channel = new AnimTimeControl();
+
+		channel.Start( 2, 0, 0, 1f, now: 1000, frames: 20f );
+		channel.Start( AnimTimeControl.HoldAtEnd, 0, 0, 1f, now: 5000, frames: 0f );
+
+		var file = new SavedChannel( 2, 0, 0x40, 1f, 1000, 4000, 4000, ParkThingStates.NoRole, 0, 0, 1f );
+		var written = ParkRides.WrittenChannel( channel, file, moment => (uint)moment, 9000 );
+
+		Assert.AreEqual( new SavedChannel( 2, 0, 0x54, 1f, 5000, 5666, 9000, ParkThingStates.NoRole, 0, 0, 1f ), written );
+	}
 }
