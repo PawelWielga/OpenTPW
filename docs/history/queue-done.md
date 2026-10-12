@@ -6316,6 +6316,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the attempt on tick 923, him in the ticket cap, tag 3, the bar and the entry-price screen in three frames; the
   original, given that file, read its record (923, 0, 1, 0) and its own count 3. `advisor-park.md`, "A shut park
   people wait outside". Tests 3018. I split the item: every other piece of the old Q319 is Q320.
+- [x] **Q320. The advisor speaks of a shut park's shut shops, sideshows and toilets.** Done 2026-10-12: his polled
+  rows 260 to 262 (`ShopsClosed`, `SideshowsClosed`, `ToiletsClosed`; scores `0x005a0370`, `0x005a03d0`,
+  `0x005a0430`: the key's score where more than the bound's per cent of the kind have `mCanLoad` nought, the door
+  not asked), three lines each in the ticket hat, no tag. The stock park shut on tick 785: `poll message=260
+  row=260 days=39 score=75 threshold=25 tick=899 result=post shut=1/1` and the attempt on tick 899, him in the
+  ticket cap beside a bare mast, 261 queued at 70 on 900 and 262 at 75 on 901, then the toilets' line on 943, the
+  sideshows' on 987 and row 1's on 1045; the original, given this game's file of that park, said them on 899,
+  943, 986 and 1043. `advisor-park.md`, "Shut shops, sideshows and toilets". Tests 3019. I split the item:
+  every other piece of the old Q320 is Q321.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

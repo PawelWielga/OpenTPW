@@ -10,10 +10,11 @@ namespace OpenTPW;
 /// docs/exe/advisor-park.md, Q90, "A ride about to break down", "A ride broken down and no mechanic to come",
 /// "A mechanic on his way" and "The line of an opened tag message".
 /// <para>
-/// Three messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Six messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age, and the line about a shut park people
-/// wait outside, scored by how many wait ("A shut park people wait outside"). The other 152 polled rows are
-/// counted, and the other posted messages are unbuilt.
+/// wait outside, scored by how many wait ("A shut park people wait outside"). Three more are scored by the
+/// share of the park's shops, sideshows and toilets that are shut ("Shut shops, sideshows and toilets"). The
+/// other 149 polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -36,6 +37,12 @@ internal sealed class ParkAdvisorMessages
 	internal const int ControlPanel = 185;
 	/// <summary>Message 0x11a, polled: the line about the tips at the bottom of the screen, scored by the park's age in days (0x005a0720).</summary>
 	internal const int ExplainTooltips = 282;
+	/// <summary>Message 0x104, polled: the line about shut shops, scored by the share of the shops that are shut (0x005a0370).</summary>
+	internal const int ShopsClosed = 260;
+	/// <summary>Message 0x105, polled: the line about shut sideshows, scored by the share of the sideshows that are shut (0x005a03d0).</summary>
+	internal const int SideshowsClosed = 261;
+	/// <summary>Message 0x106, polled: the line about shut toilets, scored by the share of the toilets that are shut (0x005a0430).</summary>
+	internal const int ToiletsClosed = 262;
 
 	/// <summary>The tutorial messages' category (a row's +0x08): MessageGroups[1], refused while the Tutorial option is off (FUN_0059c610).</summary>
 	internal const int Tutorial = 1;
@@ -54,17 +61,42 @@ internal sealed class ParkAdvisorMessages
 	/// age in days for the score to be anything but nought, null where the score is the key's alone.
 	/// <paramref name="PerWaitingGuest"/> is the score of row 1 (0x0059c8d0): the key's value for each guest
 	/// waiting for a shut park to open, and nought for an open park or one with no ride and no sideshow.
+	/// <paramref name="ShutShare"/> names the things whose shut share the score of rows 260 to 262 asks, and
+	/// <paramref name="ShutSection"/> the Advisor.sam section whose MoreThanThisPercentClosed that share must be over.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
-		string? AgeSection = null, bool PerWaitingGuest = false );
+		string? AgeSection = null, bool PerWaitingGuest = false, Shut ShutShare = Shut.None, string? ShutSection = null );
+
+	/// <summary>The things a row's score counts shut: none, the shops (0x005a0370), the sideshows (0x005a03d0) or the toilets (0x005a0430).</summary>
+	internal enum Shut
+	{
+		None,
+		Shops,
+		Sideshows,
+		Toilets
+	}
 
 	/// <summary>
 	/// What row 1's score function reads of the running park: whether its door is shut (FUN_004c9050), how many
 	/// things of a ride's item and of a sideshow's stand in it (FUN_004ca8e0 asked for kind 0 and kind 2), and how
-	/// many guests wait for the opening on the two ticket booths' cells (FUN_004c91c0).
+	/// many guests wait for the opening on the two ticket booths' cells (FUN_004c91c0); and what rows 260 to 262's
+	/// read: the things of a shop's item (FUN_004ca8e0 asked for kind 1) and the toilets (FUN_004c9ee0, an object's
+	/// +0x32 &amp; 1), and how many of the shops, the sideshows and the toilets are shut (FUN_004ca9b0 and
+	/// FUN_004c9f90: mCanLoad nought).
 	/// </summary>
-	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen );
+	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
+		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0 )
+	{
+		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
+		internal (int Standing, int Shut) Of( Shut share ) => share switch
+		{
+			Shut.Shops => (Shops, ShopsShut),
+			Shut.Sideshows => (Sideshows, SideshowsShut),
+			Shut.Toilets => (Toilets, ToiletsShut),
+			_ => (0, 0)
+		};
+	}
 
 	/// <summary>The metadata table's rows, 0 to 0x15e.</summary>
 	internal const int Rows = 351;
@@ -114,9 +146,16 @@ internal sealed class ParkAdvisorMessages
 		new( Closed, "ParkNowClosed.Score", 310, 344, Prop: TicketHat, Group: 151 ),
 		new( OpenPark, "OpenPark.ScorePerWaitingPerson", 2, 1, Lines: 3, Prop: TicketHat, Group: 3, Polled: true, PerWaitingGuest: true )
 	];
+	internal static readonly Topic[] ShutTopics =
+	[
+		new( ShopsClosed, "ShopsClosed.Score", 504, 487, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Shops, ShutSection: "ShopsClosed" ),
+		new( SideshowsClosed, "SideshowsClosed.Score", 507, 490, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Sideshows, ShutSection: "SideshowsClosed" ),
+		new( ToiletsClosed, "ToiletsClosed.Score", 510, 493, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Toilets, ShutSection: "ToiletsClosed" )
+	];
 	internal static readonly Topic[] ParkTopics =
 	[
 		.. DoorTopics,
+		.. ShutTopics,
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
 		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 70 ),
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
@@ -303,7 +342,10 @@ internal sealed class ParkAdvisorMessages
 	/// A row's score function (+0x10). The control panel's (0x005a06c0) and the tips' (0x005a0720) are their
 	/// section's Score while the park is more than AfterTime and less than CutoffTime days old, and nought
 	/// otherwise; row 1's (0x0059c8d0) is its key's value for each guest waiting at the booths of a shut park
-	/// that has a ride or a sideshow, and nought otherwise; every other built row's is its key's value.
+	/// that has a ride or a sideshow, and nought otherwise; rows 260 to 262's (0x005a0370, 0x005a03d0, 0x005a0430)
+	/// are their key's value where any of their things stand and more than the section's
+	/// MoreThanThisPercentClosed per cent of them, in whole numbers, are shut, whatever the park's door, and nought
+	/// otherwise; every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
@@ -313,6 +355,12 @@ internal sealed class ParkAdvisorMessages
 			return park.WaitingToOpen * Value( topic.ScoreKey );
 		}
 
+		if ( topic.ShutShare != Shut.None )
+		{
+			var (standing, shut) = _park?.Invoke().Of( topic.ShutShare ) ?? (0, 0);
+			if ( standing == 0 || shut * 100 / standing <= Value( $"{topic.ShutSection}.MoreThanThisPercentClosed" ) ) return 0;
+			return Value( topic.ScoreKey );
+		}
 
 		if ( topic.AgeSection is { } section )
 		{
@@ -398,7 +446,8 @@ internal sealed class ParkAdvisorMessages
 		if ( !_polled.TryGetValue( topic.Id, out var last ) || last != result )
 		{
 			_polled[topic.Id] = result;
-			Log.Info( $"Park advisor: poll message={topic.Id} row={row} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}" );
+			var shut = topic.ShutShare != Shut.None && _park?.Invoke().Of( topic.ShutShare ) is var (standing, closed) ? $" shut={closed}/{standing}" : "";
+			Log.Info( $"Park advisor: poll message={topic.Id} row={row} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}{shut}" );
 		}
 
 		if ( result == "post" ) Post( topic.Id, gameTick );
@@ -486,7 +535,11 @@ internal sealed class ParkAdvisorMessages
 		var pending = _slots[index]!;
 		_slots[index] = null;
 		var score = ScoreOf( pending.Topic, gameTick );
-		if ( score < Threshold ) return;
+		if ( score < Threshold )
+		{
+			Log.Info( $"Park advisor: dropped message={pending.Topic.Id} subject={pending.Subject} queued={pending.Score} score={score} threshold={Threshold} tick={gameTick}" );
+			return;
+		}
 
 		var history = _histories[pending.Topic.Id];
 		var line = (history.Line + 1) % pending.Topic.Lines;

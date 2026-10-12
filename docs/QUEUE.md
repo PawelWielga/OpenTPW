@@ -44,15 +44,19 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q320. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q321. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q319 (`advisor-park.md`, "A shut park people wait outside"): **a shut park's other lines are the cheap
-  next piece**: rows 260 and 261 (`0x005a0370`, `0x005a03d0`: the share of shops and of sideshows
-  `FUN_004ca9b0` answers for, not read) scored in the original's shut park and a line of row 260's held row 1's
-  back 19 ticks; rows 259, 262 and 263 are the same shape (`FUN_004c9ee0`, `FUN_004c9f90`, `FUN_004ca030`,
-  `FUN_004ca0c0` not read); row 2 (`ClosePark`, `0x0059c960`, 99 in an open park with no ride and no sideshow,
-  responses 5 to 7, tag row 4) is read and not built. The count's place in the analyser (`+0x1f0d4`) is not
+  From Q320 (`advisor-park.md`, "Shut shops, sideshows and toilets"): **row 2 is the cheap next piece**
+  (`ClosePark`, `0x0059c960`, 99 in an open park with no ride and no sideshow, responses 5 to 7, tag row 4: read
+  and not built; Full Simulation's empty park is its scene). Rows 259 (`0x005a02f0`: an open park, enough rides,
+  a share of them shut) and 263 (`0x005a0490`: `StaffroomClosed`'s, `FUN_004ca030` and `FUN_004ca0c0` not read)
+  are the same shape as 260 to 262 and not built. The toilets' count's place in the analyser (`+0x1f0e0`) is
+  not kept. In no game run: a shop, sideshow or toilet shut by itself in an open park (no window shuts a shop
+  or a toilet), a share between nought and the whole, each row's second and third lines, a row said again past
+  its cooldown, four waiting (row 1 before the toilets'). What the first run did with row 1's slot is not
+  known (the `dropped` log line came after it). Not heard in either game.
+  From Q319 (`advisor-park.md`, "A shut park people wait outside"): The count's place in the analyser (`+0x1f0d4`) is not
   kept. The entry-price screen's own line (`0x12f`) is not posted. In no game run: lines 3 and 4, the refusal
   inside 480 ticks, a bus at a shut park, the park opened while he speaks (whether anything withdraws message 1
   was not looked for), a tag 3 taking a tag 4's place, Full Simulation's empty park. Not heard in either game.

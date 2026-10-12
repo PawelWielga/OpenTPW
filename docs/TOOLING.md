@@ -101,10 +101,17 @@ whole list):
   there for 200 to 349 sweeps, `gate` ends with `waiting N`, and the advisor's row 1 is polled on tick 923 (768
   and every 155 on): with two or more waiting he says sample 1 in the ticket hat and leaves tag 3, whose bar's
   first button (`click 265 549` with the bar out, the tag at `click 56 441`) opens the entry-price screen
-  (`q319/confirm.py`). **A file of that park saved before tick 899 has the original say a line about shut shops
-  first** (rows 260 to 262 are polled on 899 to 901), which holds row 1's line back to tick 942: save past tick
-  902 (`pause`, `savepark`) for a file both games say it on tick 923 from (`q319/orig/run.sh <file>`, with
-  `CLICKS=0` for no clicks; Q319).
+  (`q319/confirm.py`). **A file of that park saved before tick 899 has both games say a line about shut shops
+  first** (rows 260 to 262 are polled on 899 to 901: sample 487 on tick 899, then the toilets' and the sideshows'
+  lines and row 1's in the order of their scores, each as the wait before it ends), which holds row 1's line back
+  to tick 942 or later: save past tick 902 (`pause`, `savepark`) for a file both games say row 1's on tick 923 from
+  (`q319/orig/run.sh <file>`, with `CLICKS=0` for no clicks; Q319). The four lines in both games:
+  `q320/confirm.py`, `q320/orig/run.sh <file>` (Q320).
+- **The count of unbuilt polled rows is exact, so predict it exactly:** under a `pause` on tick T the stock
+  park's `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is T - 755 less the turns of built rows by then, and a built row
+  comes round every 155 ticks with no log line where its answer has not changed (282 on 760 and 915; 1 on 768
+  and 923; 185 on 877 and 1032; 260 to 262 on 899 to 901 and 1054 to 1056). `q320/probe.py` reads tick against
+  count at a list of pauses (Q320).
 - **Open a bought ride:** `buy <item> <x> <y> 0` answers the thing's id and its queue node's cell; then
   `tool queue <thing>`, `worldclick <the node's cell>`, `worldclick <a path cell beside it>`, `tool off`. For a Hot
   Pot on (41,23): `buy 1140 41 23 0`, node (43,22), path (43,21); four boats are out six seconds on (Q257r).

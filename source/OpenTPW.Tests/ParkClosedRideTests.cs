@@ -657,6 +657,9 @@ public class ParkClosedRideTests
 	/// What the advisor's row 1 reads of the shipped park (<c>FUN_004c9050</c>, <c>FUN_004ca8e0</c>,
 	/// <c>FUN_004c91c0</c>): its door, its things of a ride's item and of a sideshow's, and the guests in state 3
 	/// standing on either ticket booth's cell: not one beside a booth, and not one on a booth judging the fee.
+	/// And what rows 260 to 262 read (<c>FUN_004ca9b0</c>, <c>FUN_004c9ee0</c>, <c>FUN_004c9f90</c>): its shops and
+	/// toilets, and how many of the shops, sideshows and toilets are shut, none in the open park and all once the
+	/// door has shut them.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> every waiting guest counted wherever they stand; every guest on a booth counted; one booth alone; the door's answer turned round; the shops counted as rides.</remarks>
 	[TestMethod]
@@ -674,7 +677,7 @@ public class ParkClosedRideTests
 				guest.SetState( PeepState.Deciding, 800, random );
 			}
 
-			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0 ), park.People.AdvisorFacts() );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets ), park.People.AdvisorFacts() );
 
 			void Put( int index, int x, int y, PeepState state )
 			{
@@ -690,7 +693,14 @@ public class ParkClosedRideTests
 			Assert.AreEqual( 3, park.People.WaitingToOpen );
 
 			park.State.SetParkClosed( true );
-			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3 ), park.People.AdvisorFacts() );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
+				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets ), park.People.AdvisorFacts() );
+
+			// One toilet opened again, and the sideshow: the door's others stay shut.
+			park.People.SetRideClosed( 22, closed: false );
+			park.People.SetRideClosed( 14, closed: false );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
+				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1 ), park.People.AdvisorFacts() );
 			StringAssert.EndsWith( park.People.GateDescription(), " waiting 3" );
 		}
 		finally
@@ -701,6 +711,8 @@ public class ParkClosedRideTests
 
 	/// <summary>The shipped Lost Kingdom park's things of a ride's item and of a sideshow's: the Belly Bounce and the Jungle Spray.</summary>
 	private const int StockRides = 1, StockSideshows = 1;
+	/// <summary>Its things of a shop's item, the Drinks Shop, and its toilets, three Small Toilets; the door shuts each.</summary>
+	private const int StockShops = 1, StockToilets = 3;
 
 	private const int Mechanic = 26;
 
