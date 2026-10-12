@@ -6269,8 +6269,8 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   its load `result=said-once`. The miss: the line's length, 19 to 21 s where under 18.5 was predicted. The
   original (`orig/run.sh`): its stock park's record `(257, 0, 1, 0)` and no slot for 85 s; the fresh-record file
   said on tick 877 where 878 was predicted from its cursor; this game's file read `(866, 0, 1, 0)` and stayed
-  silent. Bugs put back (`mutations.py`, 39): 38 fail a test, four of them after the tests were fixed; the last
-  is the same behaviour (the poll's own ask of the gate, which the post asks again). Tests 3009. I split the
+  silent. Bugs put back (`mutations.py`, 39): all fail a test, five of them after the tests were fixed (the last,
+  the poll's own ask of the gate, by the poll's answer, `PollAnswer`). Tests 3009. I split the
   item: every other piece of the old Q316 is Q317.
 ## B. Docs and comments
 

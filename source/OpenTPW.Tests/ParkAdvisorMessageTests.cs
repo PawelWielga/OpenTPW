@@ -866,7 +866,13 @@ public class ParkAdvisorMessageTests
 		var shipped = On( 110 );
 		shipped.Restore( id => id == ParkAdvisorMessages.ControlPanel ? new ParkWorld.AdvisorHistory( 257, 0, true, 0 ) : null );
 		shipped.Tick( 900, 0, Never );
+		Assert.IsNull( On( 0 ).PollAnswer( ParkAdvisorMessages.ControlPanel ) );
 		Assert.AreEqual( 0, shipped.PendingCount, "said once, by the file" );
+		Assert.AreEqual( "said-once", shipped.PollAnswer( ParkAdvisorMessages.ControlPanel ), "the poll asks the gate itself: the row is no answer, and nothing is posted" );
+		Assert.AreEqual( "no-score", young.PollAnswer( ParkAdvisorMessages.ControlPanel ) );
+		Assert.AreEqual( "tutorial-off", off.PollAnswer( ParkAdvisorMessages.ControlPanel ) );
+		Assert.AreEqual( "under-threshold", under.PollAnswer( ParkAdvisorMessages.ControlPanel ) );
+		Assert.AreEqual( "post", over.PollAnswer( ParkAdvisorMessages.ControlPanel ) );
 
 		// One cursor, two parks: the second goes on from the first's row.
 		var cursor = new ParkAdvisorMessages.PollCursor { Position = 108 };

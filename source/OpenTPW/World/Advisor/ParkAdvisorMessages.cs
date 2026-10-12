@@ -303,6 +303,9 @@ internal sealed class ParkAdvisorMessages
 		return null;
 	}
 
+	/// <summary>What the poll last answered for <paramref name="id"/>, null before its row's first turn.</summary>
+	internal string? PollAnswer( int id ) => _polled.GetValueOrDefault( id );
+
 	/// <summary>
 	/// The tick's first act, FUN_0059c680 asked for one row: the polled row the cursor stands on is scored, the
 	/// cursor moves on, and a row scoring above nought that the gate lets by and above MinScoreForConsideration

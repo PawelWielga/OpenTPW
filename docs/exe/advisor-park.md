@@ -1083,7 +1083,8 @@ days=11 result=post` and the line.
 **The original** (`q316/orig/run.sh`, `advisor.py ... 0xb9,0x11a poll`, three loads in one program; predicted
 first). **Its stock park:** the record read `(257, 0, 1, 0)` from the load and nothing changed in 85 s, more than
 two rounds: no slot held `0xb9`. **The fresh-record file:** from the load, tick 755, the record read `(0, -1, 0,
-0)` with the cursor on row 277; row 185 is the 123rd polled row from there, so tick 878 was predicted, and on
+0)` with the cursor on row 277; row 185 is the 123rd polled row from there, so tick 878 was predicted (once that cursor was read, before any
+later line; before the run only the rule was written), and on
 tick **877**, 31 s on, the record read `(877, 0, 1, 0)`, the action `(114906681, 19164)` and the cursor 186. Its
 wait, 19,164 ms, is inside this game's three (19,998 to 21,665), not the same number as predicted: the chain of
 gestures is drawn. **This game's file of the said line:** `(866, 0, 1, 0)` and the action `(114903768, 21665)`
