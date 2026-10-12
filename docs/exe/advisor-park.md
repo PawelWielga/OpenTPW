@@ -1278,7 +1278,12 @@ mast at (94, 901, 144, 984) and string 7 word for word, and he was up in the gre
 (`orig/a-told.png`). The tag clicked: the bar's data read thing 0, buttons 24 and 0, item 0 and the text, the
 handle 331 to 1151 (`orig/a-bar.png`). The bar's first button clicked: a slot took `0x12f` at 1000 (the
 entry-price screen's own line), the screen is in the frame (`orig/a-button.png`), the handle went back to 331 and
-no tag was held 0.53 s on. **The same scene saved past row 262's turn** (this game's file saved on tick 906,
+no tag was held 0.53 s on. **The first file twice more** (`orig/c-load.log`, `d-load.log`; my first prediction had missed the count, 5 or
+6 for 4, and the tick, so both were made again before each run): the count 4 and the same four guests each time,
+rows 261 and 262 on ticks 900 and 901 each time, and the record said on **tick 939** in both, where the line
+begun on tick 899 read 9,998 ms long and round 1's 10,832 (a line's length is drawn). A fixed tick, 940 to 944,
+missed by one; the relation held on the third run: the tick is 899 and the line's length over 252 ms a tick, and
+the new action began 10,066 ms after the old. **The same scene saved past row 262's turn** (this game's file saved on tick 906,
 `q319/run-fix1/shut.TPWS`; the original meets none of rows 260 to 262 before row 1): the record went from
 (0, -1, 0, 0) to **(923, 0, 1, 0) on tick 923**, the analyser's word to 3 and the live count 3 (guests 29, 35
 and 42), the tag on the same poll line.
