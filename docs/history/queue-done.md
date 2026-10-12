@@ -6343,6 +6343,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   original, given this game's files, read its record said on tick 959 too, and on a park sold bare on tick 1074
   held the message at 94 on tick 1114, as predicted. `advisor-park.md`, "A park with no ride in it". Tests 3022.
   I split the item: every other piece of the old Q322 is Q323.
+- [x] **Q323. The advisor speaks of an open park's shut rides.** Done 2026-10-12: his polled row 259
+  (`RidesClosed`; score `0x005a02f0`: in an open park with at least `AtLeastThisManyRides`, 3, rides and more
+  than `MoreThanThisPercentClosed`, 50, per cent of them shut, `Score`, 80), three lines in the ticket hat and
+  no tag. The stock park with a Crazy Ape and an Aztec Mayhem bought under a pause on tick 895 and left shut:
+  `poll message=259 row=259 days=38 score=80 threshold=25 tick=898 result=post shut=2/3 closed=0` and `attempt=1
+  message=259 ... response=501 sample=484 line=0 tick=898`, him in the green ticket cap beside a bare mast; the
+  original, given this game's file, read its record said on tick 898 too, and neither game said it with one
+  ride bought or with the door shut. `advisor-park.md`, "An open park's shut rides". Tests 3023.
+  I split the item: every other piece of the old Q323 is Q324.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

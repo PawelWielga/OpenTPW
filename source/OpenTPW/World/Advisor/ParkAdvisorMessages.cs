@@ -10,11 +10,12 @@ namespace OpenTPW;
 /// docs/exe/advisor-park.md, Q90, "A ride about to break down", "A ride broken down and no mechanic to come",
 /// "A mechanic on his way" and "The line of an opened tag message".
 /// <para>
-/// Six messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
-/// panel's line and the tips', tutorial messages scored by the park's age, and the line about a shut park people
-/// wait outside, scored by how many wait ("A shut park people wait outside"). Three more are scored by the
-/// share of the park's shops, sideshows and toilets that are shut ("Shut shops, sideshows and toilets"). The
-/// other 149 polled rows are counted, and the other posted messages are unbuilt.
+/// Nine messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
+/// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
+/// nothing to ride and a park with no ride; and four scored by the share of the park's rides, shops, sideshows
+/// and toilets that are shut ("Shut shops, sideshows and toilets", "An open park's shut rides"). The other 146
+/// polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -41,6 +42,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int ControlPanel = 185;
 	/// <summary>Message 0x11a, polled: the line about the tips at the bottom of the screen, scored by the park's age in days (0x005a0720).</summary>
 	internal const int ExplainTooltips = 282;
+	/// <summary>Message 0x103, polled: the line about an open park's shut rides, scored by the share of at least a few rides that are shut (0x005a02f0).</summary>
+	internal const int RidesClosed = 259;
 	/// <summary>Message 0x104, polled: the line about shut shops, scored by the share of the shops that are shut (0x005a0370).</summary>
 	internal const int ShopsClosed = 260;
 	/// <summary>Message 0x105, polled: the line about shut sideshows, scored by the share of the sideshows that are shut (0x005a03d0).</summary>
@@ -71,16 +74,19 @@ internal sealed class ParkAdvisorMessages
 	/// the key's value and this key's for each whole day of the park's age, and nought where one stands.
 	/// <paramref name="ShutShare"/> names the things whose shut share the score of rows 260 to 262 asks, and
 	/// <paramref name="ShutSection"/> the Advisor.sam section whose MoreThanThisPercentClosed that share must be over.
+	/// <paramref name="OpenWithAtLeast"/> is row 259's (0x005a02f0): the key of the least number of its things that
+	/// must stand, in a park whose door is open, for the share to be asked at all; null where neither is asked.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
 		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
-		string? PerDayWithNoRide = null );
+		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null );
 
-	/// <summary>The things a row's score counts shut: none, the shops (0x005a0370), the sideshows (0x005a03d0) or the toilets (0x005a0430).</summary>
+	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0) or the toilets (0x005a0430).</summary>
 	internal enum Shut
 	{
 		None,
+		Rides,
 		Shops,
 		Sideshows,
 		Toilets
@@ -92,14 +98,16 @@ internal sealed class ParkAdvisorMessages
 	/// many guests wait for the opening on the two ticket booths' cells (FUN_004c91c0); and what rows 260 to 262's
 	/// read: the things of a shop's item (FUN_004ca8e0 asked for kind 1) and the toilets (FUN_004c9ee0, an object's
 	/// +0x32 &amp; 1), and how many of the shops, the sideshows and the toilets are shut (FUN_004ca9b0 and
-	/// FUN_004c9f90: mCanLoad nought).
+	/// FUN_004c9f90: mCanLoad nought); and what row 259's reads: how many of the rides are shut (FUN_004ca9b0
+	/// asked for kind 0).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
-		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0 )
+		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
 		{
+			Shut.Rides => (Rides, RidesShut),
 			Shut.Shops => (Shops, ShopsShut),
 			Shut.Sideshows => (Sideshows, SideshowsShut),
 			Shut.Toilets => (Toilets, ToiletsShut),
@@ -158,6 +166,7 @@ internal sealed class ParkAdvisorMessages
 	];
 	internal static readonly Topic[] ShutTopics =
 	[
+		new( RidesClosed, "RidesClosed.Score", 501, 484, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Rides, ShutSection: "RidesClosed", OpenWithAtLeast: "RidesClosed.AtLeastThisManyRides" ),
 		new( ShopsClosed, "ShopsClosed.Score", 504, 487, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Shops, ShutSection: "ShopsClosed" ),
 		new( SideshowsClosed, "SideshowsClosed.Score", 507, 490, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Sideshows, ShutSection: "SideshowsClosed" ),
 		new( ToiletsClosed, "ToiletsClosed.Score", 510, 493, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Toilets, ShutSection: "ToiletsClosed" )
@@ -359,7 +368,8 @@ internal sealed class ParkAdvisorMessages
 	/// where one does; rows 260 to 262's (0x005a0370, 0x005a03d0, 0x005a0430)
 	/// are their key's value where any of their things stand and more than the section's
 	/// MoreThanThisPercentClosed per cent of them, in whole numbers, are shut, whatever the park's door, and nought
-	/// otherwise; every other built row's is its key's value.
+	/// otherwise; row 259's (0x005a02f0) is the same of the rides, and nought besides in a shut park or one with
+	/// fewer rides than its section's AtLeastThisManyRides; every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
@@ -384,6 +394,7 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.ShutShare != Shut.None )
 		{
 			var (standing, shut) = _park?.Invoke().Of( topic.ShutShare ) ?? (0, 0);
+			if ( topic.OpenWithAtLeast is { } least && (_park?.Invoke() is not { Closed: false } || standing < Value( least )) ) return 0;
 			if ( standing == 0 || shut * 100 / standing <= Value( $"{topic.ShutSection}.MoreThanThisPercentClosed" ) ) return 0;
 			return Value( topic.ScoreKey );
 		}
@@ -473,6 +484,7 @@ internal sealed class ParkAdvisorMessages
 		{
 			_polled[topic.Id] = result;
 			var shut = topic.ShutShare != Shut.None && _park?.Invoke().Of( topic.ShutShare ) is var (standing, closed) ? $" shut={closed}/{standing}" : "";
+			if ( topic.OpenWithAtLeast != null && _park?.Invoke() is { } door ) shut += $" closed={(door.Closed ? 1 : 0)}";
 			if ( topic.NothingToRide && _park?.Invoke() is { } facts ) shut = $" closed={(facts.Closed ? 1 : 0)} rides={facts.Rides} sideshows={facts.Sideshows}";
 			if ( topic.PerDayWithNoRide != null && _park?.Invoke() is { } park ) shut = $" rides={park.Rides}";
 			Log.Info( $"Park advisor: poll message={topic.Id} row={row} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}{shut}" );

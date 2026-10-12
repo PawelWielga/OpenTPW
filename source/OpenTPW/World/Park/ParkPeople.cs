@@ -2563,13 +2563,13 @@ public sealed partial class ParkPeople : Entity
 	/// <summary>
 	/// What the advisor's score functions read of the park: the door, the things standing of a ride's item, of a
 	/// sideshow's and of a shop's (FUN_004ca8e0, a thing of type 3 whose item's WhichUIType is the kind asked
-	/// for), the toilets (FUN_004c9ee0, an object's +0x32 &amp; 1), how many of the shops, sideshows and toilets
-	/// are shut (FUN_004ca9b0, FUN_004c9f90: mCanLoad nought), and the guests waiting to be let in.
+	/// for), the toilets (FUN_004c9ee0, an object's +0x32 &amp; 1), how many of the rides, shops, sideshows and
+	/// toilets are shut (FUN_004ca9b0, FUN_004c9f90: mCanLoad nought), and the guests waiting to be let in.
 	/// </summary>
 	internal ParkAdvisorMessages.ParkFacts AdvisorFacts()
 	{
 		var (rides, sideshows, shops, toilets) = (0, 0, 0, 0);
-		var (shopsShut, sideshowsShut, toiletsShut) = (0, 0, 0);
+		var (ridesShut, shopsShut, sideshowsShut, toiletsShut) = (0, 0, 0, 0);
 
 		foreach ( var thing in State.ObjectsInChainOrder() )
 		{
@@ -2583,7 +2583,11 @@ public sealed partial class ParkPeople : Entity
 
 			if ( _behaviour.Catalogue is not { } catalogue || !catalogue.TryGet( thing.CatalogueId, out var item ) ) continue;
 
-			if ( item.UiType == ItemDescriptionFile.Ride ) ++rides;
+			if ( item.UiType == ItemDescriptionFile.Ride )
+			{
+				++rides;
+				ridesShut += shut;
+			}
 			else if ( item.UiType == ItemDescriptionFile.SideShow )
 			{
 				++sideshows;
@@ -2597,7 +2601,7 @@ public sealed partial class ParkPeople : Entity
 		}
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
-			shops, toilets, shopsShut, sideshowsShut, toiletsShut );
+			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut );
 	}
 
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:

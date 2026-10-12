@@ -659,9 +659,10 @@ public class ParkClosedRideTests
 	/// standing on either ticket booth's cell: not one beside a booth, and not one on a booth judging the fee.
 	/// And what rows 260 to 262 read (<c>FUN_004ca9b0</c>, <c>FUN_004c9ee0</c>, <c>FUN_004c9f90</c>): its shops and
 	/// toilets, and how many of the shops, sideshows and toilets are shut, none in the open park and all once the
-	/// door has shut them.
+	/// door has shut them. And what row 259 reads: how many of its rides are shut, the one ride once the door has
+	/// shut it, and still that one with the sideshow and a toilet opened again.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> every waiting guest counted wherever they stand; every guest on a booth counted; one booth alone; the door's answer turned round; the shops counted as rides.</remarks>
+	/// <remarks><b>Mutations:</b> every waiting guest counted wherever they stand; every guest on a booth counted; one booth alone; the door's answer turned round; the shops counted as rides; the shut rides not counted, or counted with the sideshows'.</remarks>
 	[TestMethod]
 	public void TheAdvisorsParkFactsCountTheGuestsWaitingOnTheBoothCells()
 	{
@@ -694,13 +695,13 @@ public class ParkClosedRideTests
 
 			park.State.SetParkClosed( true );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides ), park.People.AdvisorFacts() );
 
 			// One toilet opened again, and the sideshow: the door's others stay shut.
 			park.People.SetRideClosed( 22, closed: false );
 			park.People.SetRideClosed( 14, closed: false );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1 ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides ), park.People.AdvisorFacts() );
 			StringAssert.EndsWith( park.People.GateDescription(), " waiting 3" );
 		}
 		finally

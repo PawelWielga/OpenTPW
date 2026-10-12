@@ -129,8 +129,14 @@ whole list):
 - **The count of unbuilt polled rows is exact, so predict it exactly:** under a `pause` on tick T the stock
   park's `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is T - 755 less the turns of built rows by then, and a built row
   comes round every 155 ticks with no log line where its answer has not changed (282 on 760 and 915; 1 on 768
-  and 923; 2 on 769 and 924; 185 on 877 and 1032; 260 to 262 on 899 to 901 and 1054 to 1056). `q320/probe.py` reads tick against
-  count at a list of pauses (Q320).
+  and 923; 2 on 769 and 924; 62 on 804 and 959; 185 on 877 and 1032; 259 to 262 on 898 to 901 and 1053 to 1056).
+  `q320/probe.py` reads tick against count at a list of pauses (Q320).
+- **An open park with most of its rides shut:** under a `pause` on a tick from 893 to 896, `buy 1101 41 22 0` (a
+  Crazy Ape) and `buy 1104 57 23` (an Aztec Mayhem), their queues left unjoined: three rides, two shut. Saved
+  there, the original starts a second before the advisor's row 259 on tick 898, before any of its other rows has
+  seen the new rides; its row 113 then speaks of the unjoined queue on tick 996. **A line said a second after a
+  load is photographed by a grab loop** started from the Load Park list's frame, every 1.2 s for twenty frames
+  (`q323/orig/run.sh`; frames 3 to 9 hold the line), since `loadfile.sh`'s own come 6 s and 15 s on (Q323).
 - **Open a bought ride:** `buy <item> <x> <y> 0` answers the thing's id and its queue node's cell; then
   `tool queue <thing>`, `worldclick <the node's cell>`, `worldclick <a path cell beside it>`, `tool off`. For a Hot
   Pot on (41,23): `buy 1140 41 23 0`, node (43,22), path (43,21); four boats are out six seconds on (Q257r).

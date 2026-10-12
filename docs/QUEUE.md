@@ -44,9 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q323. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q324. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q323 (`advisor-park.md`, "An open park's shut rides"): **row 113 is the next piece of that scene**
+  (message `0x71`, polled, 87 in a park with a bought ride whose queue is not joined: the original queues or
+  says it on tick 996 and it leaves a tag, "Somewhere in your park, a line is not connected to a path."; its
+  score function is not read). Row 263 (`0x005a0490`, `StaffroomClosed`: 25 per cent, 90) is still not built.
+  In no game run: row 259's second and third lines, the line said again past its cooldown (the test holds
+  each), a ride shut from its own window, a share of exactly half, four rides or more, Full Simulation's
+  rates. Not heard in either game.
   From Q322 (`advisor-park.md`, "A park with no ride in it"): the buy screen's own line (`0xbc`, posted at 1000
   as `FUN_004acc70` builds the screen) is not posted; the row of a tag's item is not selected on the buy screen
   (`TAG_BAR_BUY_ITEM_ROW`, counted; no listed tag names an item); what writes an item's control record's
@@ -58,9 +65,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   third lines, the line said again past its cooldown, a tag 4 and a tag 3 taking each other's place, the park
   shut while he speaks (whether anything withdraws message 2 was not looked for), Full Simulation's empty park
   opened, a sale through the player's own window. Not heard in either game.
-  From Q320 (`advisor-park.md`, "Shut shops, sideshows and toilets"): Rows 259 (`0x005a02f0`: an open park, enough rides,
-  a share of them shut) and 263 (`0x005a0490`: `StaffroomClosed`'s, `FUN_004ca030` and `FUN_004ca0c0` not read)
-  are the same shape as 260 to 262 and not built. The toilets' count's place in the analyser (`+0x1f0e0`) is
+  From Q320 (`advisor-park.md`, "Shut shops, sideshows and toilets"): Row 263 (`0x005a0490`: `StaffroomClosed`'s, `FUN_004ca030` and `FUN_004ca0c0` not read)
+  is the same shape as 260 to 262 and not built. The toilets' count's place in the analyser (`+0x1f0e0`) is
   not kept. In no game run: a shop, sideshow or toilet shut by itself in an open park (no window shuts a shop
   or a toilet), a share between nought and the whole, each row's second and third lines, a row said again past
   its cooldown, four waiting (row 1 before the toilets'). What the first run did with row 1's slot is not
@@ -77,7 +83,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   282's turn, a park past day 79, a park made with no file. This game's wait was 11,665 ms in each run and the
   original's 11,665 and 12,498: what the second second is was not read. The line's end was not seen. Not heard
   in either game.
-  From Q316 (`advisor-park.md`, "The poll, and the control panel's line"): 153 of the 155 polled rows are not
+  From Q316 (`advisor-park.md`, "The poll, and the control panel's line"): 146 of the 155 polled rows are not
   built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; row 281, `GoldTicketExplanation.Score` on a count of one, is the
   nearest); row 0's poster (`Welcome`, posted only in the running table)
   is not read; `meta_full.json`'s row 0 is wrong in two dwords and the file is not corrected; the line's length
