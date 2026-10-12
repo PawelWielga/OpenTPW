@@ -44,9 +44,13 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q318. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q319. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q318 (`advisor-park.md`, "The advisor's turn in the sweep"): in no game run: a ride's own post said on
+  its tick (the wear's `0x42`, the break's `0x44` and `0x45`; a test holds the wear's), a post from the staff
+  pool's or the arrivals' turn (none is built). Whether `0x45`'s 31 sweeps after the line before it (the
+  original's 43) moved was not measured again. Not heard in either game.
   From Q317 (`advisor-park.md`, "The tips' line"): in no run of the original: the Tutorial switch off at row
   282's turn, a park past day 79, a park made with no file. This game's wait was 11,665 ms in each run and the
   original's 11,665 and 12,498: what the second second is was not read. The line's end was not seen. Not heard
@@ -119,8 +123,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   (`ADVISOR_RESPONSE_GESTURE_ROW`, counted; no other built response names one). In no game run: lines 205 and
   206, two rides broken at once, a called ride, a post refused inside the 480 sweeps, a break with the advisor
   busy, a bought ride. Rows 67 to 69's posters are still not read. Not heard in either game.
-  From Q305 (`advisor-park.md`, "A ride about to break down"): he says it a sweep after the post,
-  the original on the post's tick. The record's item word is not kept. The same shape and not built: the two
+  From Q305 (`advisor-park.md`, "A ride about to break down"): the record's item word is not kept. The same shape and not built: the two
   no-mechanic rows (105, 107), whose posters are not read. In no game run: lines 195 and 196, two worn rides at
   once, a post refused inside the 480 sweeps, a worn ride with the advisor busy (the message is then spent
   unsaid, as the door's), a bought ride. The original's line was not heard (its sound off-screen is a null

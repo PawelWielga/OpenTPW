@@ -6296,6 +6296,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   programs, as predicted, its wait 11,665 ms, this game's own, and 12,498, him up (`pic-g05.png`); this game's
   file saved as he said it read as said and stayed silent for 75 s. Bugs put back (`mutations.py`, 24): all fail a test (`mutate.out`).
   Tests 3012. I split the item: every other piece of the old Q317 is Q318.
+- [x] **Q318. The advisor's turn is the sweep's last, so a posted line is said on the post's own tick.** Done
+  2026-10-12. `FUN_0050b360`'s arm `0xb` is his tick, the list is swept newest first and he is thing 3, with
+  only things 2 and 1 (models 10 and 9, no arm) behind him (`exe/advisor-park.md`, "The advisor's turn in the
+  sweep"). Built: the messages' turn is `ParkPeople`'s sweep's last call, where it was the first. Confirmed in
+  the running game, predicted first (`q318/PREDICTION.txt`, two rounds: the first named Q306's `pending` counts,
+  wrong since Q314, and was made again before the second run; `q318/confirm.py fix|control`, 2 of 2 and 1 of 1):
+  the stock park's Belly Bounce broken, `mechanic 26 found ride 13 ... on mGameTick 885`, `post message=70 ...
+  tick=885 result=queued pending=2` and `attempt=1 message=70 ... sample=202 line=0 tick=885`, `advisor`
+  `lastTick=885`, him up in the hard hat (`run-fix2/2-told.png`); main's build found and posted on 894 and said
+  it on 895. The original under Proton (`q318/orig/run.sh`): its record for `0x46` read (1165, 0, 1, 0) with the
+  Bounce's assigned member 26 from tick 1165, and run again 1164 and 1164 (my first range for the tick missed
+  and was reasoned again before the second run). Two tests, in `ParkClosedRideTests`; bugs put back: 5, all
+  fail (`q318/mutate.out`). I split the item: every other piece of the old Q318 is Q319.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

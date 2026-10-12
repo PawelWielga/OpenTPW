@@ -460,7 +460,7 @@ of the rule (`run-control`).
 | | The original | OpenTPW |
 |---|---|---|
 | The post | from the wear, with the thing and its item | built; the item is not kept, and nothing reads the subject but the log and `advisor` |
-| When it is said | the tick of the post | a sweep on: the messages' turn is taken before the things' (`ParkPeople`) |
+| When it is said | the tick of the post | the same: "The advisor's turn in the sweep", below |
 | The hard hat | drawn | built: "What he wears for a line", below |
 | The event of type `0x18` after a line | sent, and heard by the tag system | built: "The tag a line leaves on the aerial", below |
 | Lines 195 and 196, a second ride's own slot, the 480 sweeps before the same message again | the listing's | built and held by the tests alone |
@@ -503,7 +503,7 @@ ride. Main's build, off-screen, posted nothing and counted `MECHANIC_ON_HIS_WAY_
 | | The original | OpenTPW |
 |---|---|---|
 | The post | from the mechanic's decide, with the ride and its item | built; the item is not kept |
-| When it is said | the tick of the post | a sweep on, as message `0x42` |
+| When it is said | the tick of the post | the same: "The advisor's turn in the sweep", below |
 | Response 206's own gesture row | played (`FUN_00598bf0`) | the random chain, counted `ADVISOR_RESPONSE_GESTURE_ROW` |
 | The hard hat | drawn | built: "What he wears for a line", below |
 | Lines 205 and 206, a second ride's own slot, a called ride's silence | the listing's | built and held by the tests alone |
@@ -582,10 +582,47 @@ predictions of 5):
 |---|---|---|
 | The post | from the mechanics' base, hearing the break's event, with the ride and its item | from `BreakDown`, where the event is sent; the item is not kept |
 | The order mechanics are looked at | the chain from `mFirstMechanic` | the staff list's; it decides only between a mechanic already naming the ride and a free one |
-| When it is said | `0x44` on the post's tick; `0x45` 43 ticks after the line before it began | a sweep on; 31 sweeps after the line before it began (why the original waits twelve more is not read) |
+| When it is said | `0x44` on the post's tick; `0x45` 43 ticks after the line before it began | on the post's tick ("The advisor's turn in the sweep", below); `0x45` was 31 sweeps after the line before it began with his turn taken first, not measured again (why the original waits twelve more is not read) |
 | The event's other two hearers, and a condemned ride's event | the tag system's log, the relay's `FUN_00481530` | counted, `RIDE_BROKEN_DOWN_EVENT`, `RIDE_CONDEMNED_EVENT` |
 | The hard hat | drawn | built: "What he wears for a line", below |
 | The second and third lines of each, a mechanic resting or striking, a mechanic already naming the ride | the listing's | built and held by the tests alone |
+
+## The advisor's turn in the sweep (Q318)
+
+The thing sweep (`FUN_00516380`) walks the used list from its head and hands each thing to `FUN_0050b360`, whose
+arm for model `0xb` is the advisor's tick, `FUN_0059a550`: the poll's one row, then the best slot. A thing made is
+linked in at the list's head (`FUN_00516270`), so the sweep runs newest first, and the advisor is thing 3. The
+shipped park's list is 42 to 29, 15, 28 to 4, **3**, 2, 1; things 2 and 1 are models 10 (the mechanics' base) and
+9, and the dispatcher has no arm for either. **His turn is the last a sweep takes**: every guest, member of staff,
+placed object and manager has had its own, so a message any of them posts is said on the tick of the post. A park
+made with no file makes its twelve reserved things in the same order, and whatever is bought or hired later goes
+in at the head.
+
+**The original** (`q318/orig/run.sh`, Q306's run again, twice): Q265's `bounce.TPWS`, its Belly Bounce broken
+through its script 20 s after the load. The advisor's record for `0x46` read (0, -1, 0, 0) and then
+(1165, 0, 1, 0), and the Bounce's assigned member read 0 on tick 1163 and 26 on 1165; the second run read
+(1164, 0, 1, 0) and 26 on 1164. That the two ticks are one was predicted first and held in both; the tick itself
+was guessed at 1190 to 1215 for the first run and missed, and reasoned at 1159 to 1205 for the second
+(`q318/PREDICTION.txt`). The run of 2026-10-11 read 1201 and 1201.
+
+**OpenTPW** (`ParkPeople.OnUpdate`): the messages' turn is the sweep's last call, after the guests', the staff's,
+the arrivals', the staff pool's, the rides' and the gate's retry. `q318/confirm.py`, the stock park's Belly Bounce
+broken 25 s in, predicted first (`q318/PREDICTION.txt`; the first round's `pending` counts were Q306's, wrong since
+Q314, and were predicted again before the second run): the log read `mechanic 26 found ride 13 ... on mGameTick
+885`, `post message=70 subject=13 score=110 threshold=25 tick=885 result=queued pending=2` and `attempt=1
+message=70 subject=13 ... response=204 sample=202 line=0 tick=885`; `advisor` read `pending=1 attempts=1` and
+`message=70/score=110/line=0/lastTick=885`, and he is up in the hard hat in `run-fix2/2-told.png` (the first run
+read 886 three times). Main's build, off-screen, found and posted on 894 and said it on 895 (`run-control`).
+
+| | The original | OpenTPW |
+|---|---|---|
+| A message posted on a thing's turn | said on that tick | the same |
+| A message posted between sweeps (the door's, a tag's opening) | said at the next tick's advisor turn | the same, at that sweep's end |
+| The poll's row | asked on his turn, after every other thing's | the same; the two built rows score by the park's age alone |
+| Things 2 and 1 | after him, with no turn of their own | not things here |
+
+Not run in the game: a ride's own post (the wear's `0x42`, the break's `0x44` and `0x45`; the tests hold the
+wear's on its tick), and whether `0x45`'s 31 sweeps after the line before it moved. Not listened to in either game.
 
 ## What he wears for a line (Q308)
 

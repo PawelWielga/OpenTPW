@@ -776,6 +776,88 @@ public class ParkClosedRideTests
 	}
 
 	/// <summary>
+	/// The advisor's turn is the sweep's last (<c>FUN_0050b360</c>'s arm <c>0xb</c>, thing 3 behind every thing
+	/// made after him), so a message a ride posts on its turn is said on that same tick: a Belly Bounce worn
+	/// under 10 on tick 64.
+	/// </summary>
+	[TestMethod]
+	public void AMessageARidePostsOnItsTurnIsSaidOnTheSameSweep()
+	{
+		var park = Open();
+
+		try
+		{
+			var messages = park.State.AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+
+			Assert.IsTrue( park.Scripts[BellyBounce].Set( ParkRideOperation.OnRideVariable, 5 ) );
+			Change( park, BellyBounce, thing => thing with { StateOfRepair = 11.5f } );
+			park.State.SetGameTick( 63 );
+
+			Time.Paused = false;
+			Time.StepFrames = 0;
+			GameClock.Rebase();
+			Time.Update( 0f );
+			GameClock.Update( paused: false, GameClock.ParkCatchUp );
+
+			for ( var frame = 0; frame < 2000 && park.State.GameTick < 64; ++frame )
+			{
+				Time.Update( 1f / 60f );
+				GameClock.Update( paused: false, GameClock.ParkCatchUp );
+				park.People.Update();
+			}
+
+			Assert.AreEqual( 64, park.State.GameTick, "one sweep" );
+			Assert.IsTrue( messages.Census().Contains( "pending=0 attempts=1 " ), messages.Census() );
+			Assert.IsTrue( messages.Census().Contains( "message=66/score=100/line=0/lastTick=64/said=1/" ), messages.Census() );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// And one a member of staff posts on theirs: the mechanic's decide that takes the broken Bounce posts
+	/// message 0x46, which is never left waiting at a sweep's end.
+	/// </summary>
+	[TestMethod]
+	public void AMessageAMechanicPostsOnHisTurnIsSaidOnTheSameSweep()
+	{
+		var park = Open();
+
+		try
+		{
+			var messages = park.State.AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+
+			Assert.IsTrue( park.Scripts[BellyBounce].Set( ParkRideOperation.BrokenVariable, 1 ) );
+
+			Time.Paused = false;
+			Time.StepFrames = 0;
+			GameClock.Rebase();
+			Time.Update( 0f );
+			GameClock.Update( paused: false, GameClock.ParkCatchUp );
+
+			var first = park.State.GameTick;
+
+			for ( var frame = 0; frame < 6000 && messages.Attempts == 0; ++frame )
+			{
+				Time.Update( 1f / 60f );
+				GameClock.Update( paused: false, GameClock.ParkCatchUp );
+				park.People.Update();
+				Assert.AreEqual( 0, messages.PendingCount, $"left waiting at the end of sweep {park.State.GameTick}: {messages.Census()}" );
+			}
+
+			Assert.AreEqual( BellyBounce, TheMechanic( park ).ObjectToRepair, "the mechanic took it" );
+			Assert.IsTrue( park.State.GameTick > first + 1, "on a later sweep than the break's" );
+			Assert.IsTrue( messages.Census().Contains( $"message=70/score=110/line=0/lastTick={park.State.GameTick}/said=1/" ), messages.Census() );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
 	/// A mechanic whose job already names the ride ends the look: message 0x46 where nobody called him to it
 	/// (<c>+0x64</c>), nothing where somebody did. A condemned ride's event is another, and posts nothing.
 	/// </summary>
