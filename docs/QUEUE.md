@@ -371,6 +371,15 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the pointer back to its default mode before it writes (`FUN_00516c80`, step 1); `WritePark` does not.
   From Q241h: a member of staff in the hand is written idle where they were picked up, and stays in the
   running park's hand; the default mode's install is what puts them down in the original.
+- [ ] **Q327. Full Simulation catch-up: the built advisor lines in a Full Simulation park.** Filed at Alexah's
+  word, 2026-10-12, and placed here by it: after Q241j, whose economy fields a Full Simulation file needs. One
+  session. A Full Simulation park made with no file, saved, and run through each built polled row's scene in
+  both games (rows 1, 2, 62, 113, 185, 259 to 263, 282: `advisor-park.md` has each scene and its turn; the
+  cursor is the program's, not a file's, so predict each turn from it). Say first, from each score function,
+  whether the mode is asked; run those where it could matter (the regular catalogue, the empty park's age and
+  rates), and say in one line why for the rest. Confirm: each line's `poll` and `attempt` lines with a
+  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q326's notes
+  From Q319 to From Q325; take each out of those notes as it is run.
 - [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). `gms.dat`
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest
   file; the quicksave and quickload keys (`<theme>.TPWS`); `restart.INTS` written when the folder has none, and
