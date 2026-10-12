@@ -73,8 +73,10 @@ whole list):
   (`parkfile.advisor_forget( stock, out, 185 )`, copied into the player's jungle folder as the newest): in a fresh
   program he says sample 377 on the first sweep's tick and 110, tick 866 of the stock file, 25.5 s in, for 19 to
   21 s (the log's `Park advisor: poll message=185 ... result=post`). In the original the same file has him say it
-  when its cursor (`advisor.py ... poll`) reaches row 185. A park made with no file says it on tick 267
-  (`q316/confirm.py fresh`, `q316/orig/run.sh`).
+  when its cursor (`advisor.py ... poll`) reaches row 185. A park made with no file says it on tick 267:
+  `SLOT_CONTROL = "7a19"` before `parkrun.py` enters as the second player, whose jungle folder is empty (`7a15` is
+  the first player's name, not a slot); `tutorial off` in the console has the poll answer `tutorial-off`
+  (`q316/confirm.py fresh|nofile|cutoff`, `q316/orig/run.sh`).
 - **A message waiting in the advisor's slots, on demand:** `broken_pot()`, wait for the log's `attempt=N message=70`
   (the mechanic's line for the pot, 6.5 s long), then `scriptvar 13 VAR_BREAKSTAT 1`: the Bounce's `post message=69
   ... result=queued` waits until that line ends. `pause` and `savepark` inside it write a file with the slot taken;

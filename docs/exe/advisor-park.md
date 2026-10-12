@@ -1113,6 +1113,20 @@ said-once after its load. The original (`orig/run3.sh`, a fresh program started 
 loading it again): the record read `(877, 0, 1, 0)`, the tick predicted, 31.05 s after the click, and the wait
 19,164 ms inside the 19,000 to 22,500 predicted.
 
-Not in a game run: the cutoff (a park past tick 1382), the Tutorial option off at the poll, the line cut off, a
-line found by the poll inside another's wait (the tests hold each); a park made with no file was run once and not
-predicted. Not heard in either game.
+**The third round** (the cases the first two left to the tests; `q316/PREDICTION.txt`, written before its
+runs). **A park made with no file** (`confirm.py nofile`, the second player, whose jungle folder is empty; one of
+one): `bare has no park file for this theme, so the park is made fresh`, the clock from nought, `poll ... days=4
+score=0 tick=111 result=no-score`, then `days=11 score=110 tick=267 result=post`, the post and `attempt=1 ...
+sample=377 line=0 tick=267 duration=18997`, him up three seconds on (`run-nofile/1-saying-it.png`). Two runs
+before it proved nothing: the script clicked the first player's name, then stopped on its own print. **The
+Tutorial option off, and the cutoff** (`confirm.py cutoff`, the fresh-record file; three of three): `tutorial
+off` two seconds in, `poll ... days=37 score=110 tick=866 result=tutorial-off`, no post and nobody beside the
+gadget (`run-cutoff/1-tutorial-off.png`); no new line through the row's turns on ticks 1022, 1178 and 1334;
+`tutorial on` on tick 1353, and the next line `days=64 score=0 tick=1490 result=no-score`, no attempt of 185 in
+the run and nobody beside the gadget (`2-past-the-cutoff.png`); saved on tick 1506, the file's record `(0, -1,
+0, 0)`. **The original, given that file** (`orig/run4.sh`): the record read `(0, -1, 0, 0)` from the load and
+nothing changed in 85 s, no slot holding `0xb9`: past day 60 it does not say the line, where the same record on
+day 37 had it said in 31 s.
+
+Not in a game run: a line found by the poll inside another's wait (the test holds it). Not reachable here: the
+line cut off, since nothing built withdraws message 185. The Tutorial option off was not run in the original. Not heard in either game.

@@ -53,9 +53,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   original's is not read (160 then 277 across one, 186 and 186 across another; tick 877 after both loads of the
   fresh-record file); the line's length differs a run
   in both games and was not compared; the cursor is counted in polled rows, so a table read from the executable
-  would have to hand it the row. In no game run: the cutoff, the Tutorial option off at the poll, the line cut
-  off, a line polled inside another's wait (the tests hold each); a park made with no file said it on tick 267
-  in one run, not predicted. `PLAYER-GAPS.md` gap 4's text is older than the breakdown lines. Not heard in
+  would have to hand it the row. In no game run: a line polled inside another's wait (the test holds it), the
+  Tutorial option off in the original; the line cut off is not reachable (nothing built withdraws message 185). `PLAYER-GAPS.md` gap 4's text is older than the breakdown lines. Not heard in
   either game.
   From Q315 (`advisor-park.md`, "The last action in a park file"): a park screen's own line is not posted, so it
   starts no action. In no game run: a withdrawal inside a file's wait (the tests
