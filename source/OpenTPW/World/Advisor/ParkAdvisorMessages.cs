@@ -3,10 +3,12 @@ using System.Globalization;
 namespace OpenTPW;
 
 /// <summary>
-/// The park's posted messages, category 0, selection mode 2: the door's two, a ride about to break down, a
-/// ride broken down with no mechanic to come and a mechanic on his way to one. The eight slots, strict tick
-/// threshold, helper recheck and per-message histories follow FUN_0059a550; docs/exe/advisor-park.md, Q90, "A ride
-/// about to break down", "A ride broken down and no mechanic to come" and "A mechanic on his way".
+/// The park's posted messages, selection mode 2: the door's two, a ride about to break down, a ride broken down
+/// with no mechanic to come and a mechanic on his way to one, category 0, and the tutorial line of an opened tag
+/// message, category 1, which is withdrawn as its bar leaves. The eight slots, strict tick threshold, helper
+/// recheck and per-message histories follow FUN_0059a550, the gate FUN_0059abc0 and the withdrawal FUN_0059aa70;
+/// docs/exe/advisor-park.md, Q90, "A ride about to break down", "A ride broken down and no mechanic to come",
+/// "A mechanic on his way" and "The line of an opened tag message".
 /// Other park messages and the polling analyser remain unbuilt.
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -21,6 +23,11 @@ internal sealed class ParkAdvisorMessages
 	internal const int MechanicsBusy = 69;
 	/// <summary>Message 0x46, posted by the mechanic's decide (FUN_004da5b0, 0x004da6bf) with the ride he sets off for as its subject.</summary>
 	internal const int MechanicOnHisWay = 70;
+	/// <summary>Message 0x11c, posted as a tag's message is put on the bar (FUN_0048d9c0) and withdrawn as the bar leaves (FUN_0048e2f0, 0x1001d8).</summary>
+	internal const int TagMessage = 284;
+
+	/// <summary>The tutorial messages' category (a row's +0x08): MessageGroups[1], refused while the Tutorial option is off (FUN_0059c610).</summary>
+	internal const int Tutorial = 1;
 
 	/// <summary>
 	/// A row of the metadata table 0x0076e300: the message, its score's key, its first response and that
@@ -29,10 +36,11 @@ internal sealed class ParkAdvisorMessages
 	/// (the response table's +0x0c), -1 where every line's is the random chain. <paramref name="Prop"/> is what
 	/// he wears for every line of it (the response table's +0x14; each built row's +0x18 is nought).
 	/// <paramref name="Group"/> is the group of every line of it (the response table's +0x1c), the id of the tag
-	/// a said line leaves (<see cref="ParkTags"/>).
+	/// a said line leaves (<see cref="ParkTags"/>). <paramref name="Category"/> is the row's +0x08, the
+	/// MessageGroups entry of Advisor.sam the gate reads for it.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
-		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag );
+		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0 );
 
 	/// <summary>The ticket hat, the door's lines' prop.</summary>
 	internal const int TicketHat = 9;
@@ -50,7 +58,8 @@ internal sealed class ParkAdvisorMessages
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
 		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 70 ),
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
-		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat, Group: 72 )
+		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat, Group: 72 ),
+		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -70,6 +79,7 @@ internal sealed class ParkAdvisorMessages
 		public int LastTick;
 		public int Line = -1;
 		public bool Said;
+		public int Slaps;
 	}
 
 	private sealed record Pending( Topic Topic, int Score, int Subject );
@@ -77,14 +87,18 @@ internal sealed class ParkAdvisorMessages
 	private readonly Dictionary<int, Topic> _topics;
 	private readonly Dictionary<int, History> _histories;
 	private readonly Pending?[] _slots = new Pending?[8];
+	private readonly Func<bool> _tutorial;
 	private long _waitUntil;
+	private int _saying;
 	internal int Attempts { get; private set; }
 	internal int PendingCount => _slots.Count( slot => slot != null );
 	internal int Threshold => Value( "GeneralAdvisor.MinScoreForConsideration" );
 
-	internal ParkAdvisorMessages( SettingsFile settings, IEnumerable<Topic>? topics = null )
+	/// <param name="tutorial">Whether the Tutorial option is on (0x0078d90d), the player's own where none is given.</param>
+	internal ParkAdvisorMessages( SettingsFile settings, IEnumerable<Topic>? topics = null, Func<bool>? tutorial = null )
 	{
 		_settings = settings;
+		_tutorial = tutorial ?? (() => GameOptions.Current.Tutorial);
 		_topics = (topics ?? ParkTopics).ToDictionary( topic => topic.Id );
 		_histories = _topics.Keys.ToDictionary( id => id, _ => new History() );
 	}
@@ -96,20 +110,30 @@ internal sealed class ParkAdvisorMessages
 
 	/// <summary>
 	/// FUN_0059a940 after FUN_0059b590: a message through the accept gate into a slot. <paramref name="subject"/>
-	/// is the thing the record's first word names, nought for none; nothing here reads it but the log.
+	/// is the thing the record's first word names, nought for none; nothing here reads it but the log. The gate
+	/// (FUN_0059abc0, no post here forced) refuses in this order: a tutorial message with the Tutorial option off;
+	/// one said before and inside its category's MinTimeSameMessage; one said, of a category said only once; one
+	/// cut off as often as its category's DiscardAfterSlaps, where that is not nought; one with all its copies in
+	/// the slots.
 	/// </summary>
 	internal bool Post( int id, int gameTick, int subject = 0 )
 	{
 		var topic = _topics[id];
 		var score = Value( topic.ScoreKey );
 		var history = _histories[id];
+		var group = $"MessageGroups[{topic.Category}]";
+		var slaps = Value( $"{group}.DiscardAfterSlaps" );
 		var reason = "queued";
-		if ( (uint)history.LastTick >> 2 != 0
+		if ( topic.Category == Tutorial && !_tutorial() )
+			reason = "tutorial-off";
+		else if ( (uint)history.LastTick >> 2 != 0
 			&& unchecked(((uint)gameTick >> 2) - ((uint)history.LastTick >> 2))
-				< (uint)Value( "MessageGroups[0].MinTimeSameMessage" ) )
+				< (uint)Value( $"{group}.MinTimeSameMessage" ) )
 			reason = "cooldown";
-		else if ( history.Said && Value( "MessageGroups[0].SayOnlyOnce" ) != 0 )
+		else if ( history.Said && Value( $"{group}.SayOnlyOnce" ) != 0 )
 			reason = "said-once";
+		else if ( slaps != 0 && slaps <= history.Slaps )
+			reason = "slapped";
 		else if ( _slots.Count( slot => slot?.Topic.Id == id ) >= topic.MaxInstances )
 			reason = "duplicate";
 		else
@@ -126,6 +150,39 @@ internal sealed class ParkAdvisorMessages
 		}
 		Log.Info( $"Park advisor: post message={id} subject={subject} score={score} threshold={Threshold} tick={gameTick} result={reason} pending={PendingCount}" );
 		return reason == "queued";
+	}
+
+	/// <summary>
+	/// FUN_0059aa70: every slot holding <paramref name="id"/> is emptied, and where he is saying it (inside the
+	/// last line's time and its second) <paramref name="stop"/> cuts him off (Advisor_StopSpeaking), the message
+	/// is no longer said, it has been cut off once more and the wait is over. Says whether it did either.
+	/// </summary>
+	/// <remarks>
+	/// The kept message the original also forgets here (the advisor's +0x16d0, a tutorial one of this id, raised
+	/// again by FUN_0059ab50) is kept by nothing in this game.
+	/// </remarks>
+	internal bool Withdraw( int id, long milliseconds, Action stop )
+	{
+		var cleared = 0;
+		for ( var i = 0; i < _slots.Length; ++i )
+		{
+			if ( _slots[i]?.Topic.Id != id ) continue;
+			_slots[i] = null;
+			++cleared;
+		}
+
+		var history = _histories[id];
+		var cut = milliseconds < _waitUntil && _saying == id;
+		if ( cut )
+		{
+			stop();
+			history.Said = false;
+			++history.Slaps;
+			_waitUntil = milliseconds;
+		}
+
+		Log.Info( $"Park advisor: withdraw message={id} cleared={cleared} cut={(cut ? 1 : 0)} slaps={history.Slaps} pending={PendingCount}" );
+		return cleared > 0 || cut;
 	}
 
 	/// <summary>
@@ -159,6 +216,7 @@ internal sealed class ParkAdvisorMessages
 		history.LastTick = gameTick;
 		history.Line = line;
 		history.Said = true;
+		_saying = pending.Topic.Id;
 		++Attempts;
 		// The helper then sends an event of type 0x18 carrying the response's group and the record's subject
 		// (FUN_0059b620, FUN_0040f740, FUN_0040fb10); its one hearer is the tag system (FUN_00509bf0).
@@ -169,5 +227,5 @@ internal sealed class ParkAdvisorMessages
 	internal string Census() => $"park advisor: pending={PendingCount} attempts={Attempts} threshold={Threshold} "
 		+ string.Concat( _slots.Where( slot => slot != null ).Select( slot => $"slot={slot!.Topic.Id}/subject={slot.Subject} " ) )
 		+ string.Join( " ", _topics.Values.Select( topic =>
-			$"message={topic.Id}/score={Value( topic.ScoreKey )}/line={_histories[topic.Id].Line}/lastTick={_histories[topic.Id].LastTick}" ) );
+			$"message={topic.Id}/score={Value( topic.ScoreKey )}/line={_histories[topic.Id].Line}/lastTick={_histories[topic.Id].LastTick}/said={(_histories[topic.Id].Said ? 1 : 0)}/slaps={_histories[topic.Id].Slaps}" ) );
 }

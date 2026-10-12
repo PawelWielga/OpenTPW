@@ -90,7 +90,8 @@ public class ParkMechanicRepairTests
 			"GeneralAdvisor.MinScoreForConsideration 25\nMessageGroups[0].MinTimeSameMessage 120\n"
 			+ "MessageGroups[0].SayOnlyOnce 0\nParkNowOpen.Score 20\nParkNowClosed.Score 20\n"
 			+ "RidesBreakdownImminent.Score 100\nRidesBreakdownNoMechanics.Score 105\n"
-			+ "RidesBreakdownBusyMechanics.Score 107\nRidesBreakdownMechanicOnIt.Score 110\n" ) ) ) );
+			+ "RidesBreakdownBusyMechanics.Score 107\nRidesBreakdownMechanicOnIt.Score 110\n"
+			+ "MessageGroups[0].DiscardAfterSlaps 0\nMessageGroups[1].MinTimeSameMessage 0\nMessageGroups[1].SayOnlyOnce 1\nMessageGroups[1].DiscardAfterSlaps 3\nHelpMessage.Score 1000\n" ) ) ) );
 
 	private static int Counted( string gap ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == gap ).Times;
 

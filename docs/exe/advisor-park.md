@@ -160,9 +160,9 @@ The response is `FUN_0059c240( message ) + index` (`0x0059b798`..`0x0059b79f`), 
 
 | # | Reason | Where |
 |---|---|---|
-| 1 | A global flag `DAT_0078d90d` gating a class of messages | `FUN_0059c610` |
+| 1 | The options screen's Tutorial switch off (`DAT_0078d90d` nought, written from control `0x1d4c2` at `0x004a3704`) refuses a message whose row's category is 1, the tutorial messages | `FUN_0059c610` |
 | 2 | A per-message cooldown: elapsed vs `MessageGroups[category].MinTimeSameMessage` from `Advisor.sam`, tested only when `FUN_0041a980` is non-zero | `FUN_0059c390` / `FUN_0041a980` / `FUN_0041a990` |
-| 3 | When NOT forced: "say once" already said (counter `+0xe8`), and a cap on how often a withdraw has cut him off saying it (counter `+0xec` against the category's `DiscardAfterSlaps`) | `FUN_0059c410`, `FUN_0059c570` |
+| 3 | When NOT forced: the category's `SayOnlyOnce` is set and the message's said byte `+0xe8` is; then the category's `DiscardAfterSlaps` is not nought and is at or under the message's `+0xec`, how often a withdraw has cut him off saying it (category 10, a row not found, is never refused for it) | `FUN_0059c410`, `FUN_0059c570` |
 | 4 | A cap on how many copies of one id may sit in the eight slots | `FUN_0059c320` |
 | 5 | A rotation check against counter `+0xe4`, and mode 0 running out of lines | `FUN_0059c490` / `FUN_0059c2b0` |
 
@@ -773,3 +773,75 @@ with the tag where over 30% was. Main's build said the same line, moved nothing 
 | The sounds' loudness | not measured | each at its variation's own volume, as the boot's |
 | The tags in a park file | written and read | written and read (`saves.md`, "OpenTPW's writer, the aerial's tags") |
 | The other two events (`0x19`, the postcard's) | heard | nothing sends them here |
+
+## The line of an opened tag message (message `0x11c`, Q312)
+
+**The post.** Showing a tag's message on the bar (`FUN_0048d9c0`, `hud.md`, "The message bar") calls
+`FUN_00486b00( 0x11c )`: `FUN_0059b590( 0x11c, thing 0, 0, line -1, not forced, score -1 )`, then `FUN_005194d0`
+and `FUN_0059a940`, the same gate and slots as every post. The bar's turn as the arm starts in with it
+(`FUN_0048e2f0`, `0x1001d8`) calls `FUN_00486b40( 0x11c )`, the withdrawal. `FUN_004a2590`, which sends the arm
+in before it sends it out, comes before the post in `FUN_0048d9c0`, so a second tag opened over the first
+withdraws and then posts.
+
+**Row 284** (`0x00772120`, from the emulated table): posted only, category **1**, either game mode, score
+`0x0059e8c0` (`MOV EAX,[ECX + 0x328]`, so `0x00fb3868`), one copy in the slots, first response 544, one line, mode
+2. Response 544 is sample 561, lip 561, the random gesture chain, model slot 0, no prop, group 383 (no tag):
+"these messages help you stay on top of new developments; to look at related information, or to close or delete
+the message, click on the buttons".
+
+**The score is `HelpMessage.Score`, 1000 in the file.** In the schema's descriptor list (`0x0072e210`, 60 bytes
+a row) a section's fields come BEFORE its type 1 row, a type 0 row after it; counting four bytes a field from
+`RidesBreakdownImminent.Score` at `+0x248` (descriptor `0x0073199c`) puts `HelpMessage.Score` at `+0x328` and
+`HelpMessage.ContextHelpScore` at `+0x32c`, and `FUN_0059ab50` reads the second as `DAT_00fb386c`. Both are 1000
+in the file, so the slot's score in the running original does not tell the two apart; the walk does.
+
+**The category** is `MessageGroups[1]`, "Tutorial messages": `MinTimeSameMessage` 0, `SayOnlyOnce` 1,
+`DiscardAfterSlaps` 3. The gate refuses it with the Tutorial option off, once he has said it, and once he has
+been cut off saying it three times (the table under "The accept gate").
+
+**The withdrawal, `FUN_0059aa70( id )`.** (1) Where the advisor's byte `+0x16e4` is set, the message's category is
+1 and `+0x16dc` is the id, the byte is cleared: the kept message at `+0x16d0`, which `FUN_0059ab50` raises again,
+forced, at `HelpMessage.ContextHelpScore` (its one caller `FUN_00488ba0`; who sets the byte is not read). (2) Every
+occupied slot whose message is the id is emptied. (3) The message being said is `+0x16ec` while the clock
+(`FUN_00402d80`) is under `+0xd8 + +0xdc`, the last line's start and its length and second, and `0x160`
+otherwise; where that is the id: `Advisor_StopSpeaking`, the message's said byte `+0xe8` cleared, its `+0xec` one
+up, and `+0xdc` nought, so the next sweep may say a line. The tick stores `+0x16ec` with each line said
+(`0x0059a86a`).
+
+So he explains the message bar the first time a tag is opened; let finish, he never says it again in that park;
+shut up by the bar folding away, he starts again at the next opening, and after three such cuts not at all.
+
+### The original (`q312/orig/run.sh a|b`, `original/advisor.py`; predicted first, five of five)
+
+Q265's `bounce.TPWS`, its Belly Bounce broken 20 s after the load, the mechanic's tag clicked four seconds after
+it came. **Let finish (a):** 7.2 s after the mechanic's line began slot 0 read (thing 0, line -1, `0x11c`, score
+**1000**); 0.47 s on, as that line's 7498 ms ended, the record read (tick 1210, line 0, said 1, slaps 0) and the
+action 13332 ms; the tags held stayed one. The bar folded 25 s after the click and opened again: no slot held
+`0x11c` in the 14 s after and the record did not change. **Cut off (b):** the bar folded 10 s into the line:
+record (1202, 0, **said 0, slaps 1**), the action's length **0**. Opened again: in a slot and said 0.1 s on (tick
+1262, said 1, slaps 1); folded: slaps 2; opened, said on tick 1303, folded: slaps 3; a fourth opening: no slot
+held it in 12 s. In the frame he is up beside the bar with no hat (`q312/side-by-side.png`).
+
+### OpenTPW (Q312: `ParkAdvisorMessages.TagMessage`, `Withdraw`, a topic's `Category`; `ParkGadget.WithdrawBarLine`)
+
+`q312/confirm.py a|b|off|control`, the stock park's Bounce broken 25 s in and the tag clicked four seconds after
+the mechanic's line began; predicted first, seven of seven (a twice, the first run's third lost to the script's
+own log window, the log itself as predicted). The click logged `Park advisor: post message=284 subject=0
+score=1000 threshold=25 tick=891 result=queued pending=1`; 2.8 s on, `attempt=2 message=284 subject=0 score=1000
+threshold=25 response=544 sample=561 line=0 tick=905 duration=12332`, a second under the original's 13332 as
+every line's is (the second is added to the wait); `advisor` read `saying sp_561.mp2` and
+`message=284/.../said=1/slaps=0`. Folded after the line: `withdraw message=284 cleared=0 cut=0 slaps=0`; opened
+again: `result=said-once`. **Cut (b):** folded three seconds into the line: `withdraw message=284 cleared=0 cut=1
+slaps=1`, `Advisor: cut off mid-line`, `advisor` reading `quiet` and `said=0/slaps=1` a second on; each of the
+next two openings said it again on the next sweep (attempts 3 and 4, `playback=started`), cut to slaps 2 and 3;
+the fourth opening logged `result=slapped`. **`tutorial off`** in the console: `result=tutorial-off` and no
+attempt. Main's build named message 284 nowhere and counted `TAG_MESSAGE_BAR_ADVISOR_LINE`.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The said byte and the cuts | the advisor thing's records, in the park file | the running park's, from nought at every entry: said once a visit (the saved histories are not read) |
+| The kept message (`+0x16d0`, `FUN_0059ab50`) | forgotten by a withdrawal of its id | kept by nothing here |
+| The Tutorial option | read at each post | the same; the console's `tutorial on|off` sets it in memory |
+| The cut | `Advisor_StopSpeaking` | the same call (`Advisor.StopSpeaking`), with its cry where his voice had started |
+| The other 39 screens' lines (`0xbc` to `0xd5`, `0x11d` to `0x135`) | posted as each opens | not posted (`UI.ParkLines`) |
+

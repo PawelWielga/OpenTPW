@@ -1500,6 +1500,15 @@ public static class DebugConsole
 				Reply( $"rmbcancel: {(GameOptions.Current.RmbCancel ? "on" : "off")}" );
 				break;
 
+			// The Options switch "Tutorial", in memory only, as rmbcancel's: the advisor's gate reads it at each post
+			// of a tutorial message.
+			case "tutorial":
+				if ( parts.Length > 1 )
+					GameOptions.Current.Tutorial = parts[1] == "on";
+
+				Reply( $"tutorial: {(GameOptions.Current.Tutorial ? "on" : "off")}" );
+				break;
+
 			// Where the pointer is and the control under it, so a real press can be predicted before it is made. In a park,
 			// also the cursor, the help row the world gives it, and whose a right press there would be: the interface's, or
 			// the park's, which arms the quick click.

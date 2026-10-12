@@ -6177,6 +6177,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   and one that did not compile fail since the tests were tightened, and one was the same program). Tests 2991
   with the game. I split the item: its other pieces are Q312.
   Harness `~/.cache/tpw-harnesses/q311/`.
+- [x] **Q312. The advisor says the message bar's line, and the bar leaving cuts him off.** Done 2026-10-11.
+  Showing a tag's message posts advisor message `0x11c` (`FUN_0048d9c0`, `FUN_00486b00`) and the bar's turn as
+  the arm starts in withdraws it (`FUN_0048e2f0`, `FUN_00486b40`). Row 284: posted only, category 1, the
+  tutorial messages, score `0x0059e8c0` = `HelpMessage.Score` 1000 (the schema's fields come before their
+  section's row), one copy, response 544 = sample 561, one line. The gate (`FUN_0059abc0`) refuses a tutorial
+  message with the Tutorial option off (`0x0078d90d`), once said (`SayOnlyOnce`) and once cut off three times
+  (`DiscardAfterSlaps`); the withdrawal (`FUN_0059aa70`) empties its slots and, where he is saying it, stops
+  him, clears the said byte, counts the cut and ends the wait (`exe/advisor-park.md`, "The line of an opened
+  tag message"). Built: `ParkAdvisorMessages.TagMessage`, `Tutorial`, `Withdraw`, a topic's `Category`, the
+  gate's three tests by category; `ParkGadget.WithdrawBarLine` and `Park`; `advisor` prints each message's
+  `said` and `slaps`; the console's `tutorial on|off`. `TAG_MESSAGE_BAR_ADVISOR_LINE` is gone. The original,
+  predicted first, five of five (`q312/orig/run.sh a|b`): the slot read `0x11c` at 1000, he said it as the
+  mechanic's line ended (action 13332 ms), a later opening posted nothing; folded 10 s into the line the record
+  read said 0, slaps 1 and the action's length 0, the next opening had him say it again 0.1 s on, and after
+  three cuts a fourth opening posted nothing. This game, predicted first, seven of seven (`q312/confirm.py`):
+  `post message=284 subject=0 score=1000 ... result=queued`, `attempt=2 ... response=544 sample=561 line=0 ...
+  duration=12332`, then `result=said-once`; cut, `withdraw message=284 cleared=0 cut=1 slaps=1` to 3 and
+  `result=slapped`; `tutorial off`, `result=tutorial-off`; main's build names message 284 nowhere. Bugs put
+  back: 43, all fail a test (42 of 44 the first round; one test tightened, one bug the same program but for a
+  log line). Tests 2995. I split the item: every other piece of the old Q312 is Q313.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

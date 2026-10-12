@@ -44,13 +44,21 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q312. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q313. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q312 (`advisor-park.md`, "The line of an opened tag message"): the said byte and the cuts are the
+  running park's, from nought at every entry, where the original's are the advisor's records in the park file
+  (the saved histories are not read); the kept message (`+0x16d0`, raised again by `FUN_0059ab50` from
+  `FUN_00488ba0`) is not built and who sets its byte `+0x16e4` is not read; the other 39 screens' lines
+  (`0xbc` to `0xd5`, `0x11d` to `0x135`) are not posted; whether the original's advisor cries out when a
+  withdrawal cuts him off was not heard (ours does, `Advisor.StopSpeaking`). In no game run: a second tag
+  opened over the first, the erase button with him speaking (the tests hold each), the options screen's own
+  switch (the console's set it). Not listened to by a person in either game.
   From Q311 (`hud.md`, "The message bar"): the bar's buttons of every type but 3 are not built
   (`TAG_BAR_BUTTON`; `FUN_0048e0f0`'s nineteen other arms, of which only the camera's is read), and types `0x12`
-  and `0x14` are not dressed (the files behind the nodes `b_loan` and `b_pkinfo` are not looked up); advisor
-  message `0x11c` is counted, not said (`TAG_MESSAGE_BAR_ADVISOR_LINE`); the bar's children are shown all at
+  and `0x14` are not dressed (the files behind the nodes `b_loan` and `b_pkinfo` are not looked up); the bar's
+  children are shown all at
   once; the buttons' depths are not kept; the tag on show swells on real milliseconds, a round in 0.7 s where
   the original's frames make it 0.9. At 1280 x 720 the bar's text is in a smaller face than the original's at
   1024 x 768 and breaks its lines later (which face a font slot takes at a window's size is not this item's).

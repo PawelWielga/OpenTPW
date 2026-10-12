@@ -292,6 +292,12 @@ GH=766` there, or the pointer is off):
   original `tags.py` beside `advisor.py` reads the same rectangles. **`loadfile.sh` comes back some twenty
   seconds after its click**, so a frame taken as it returns is not a "before": use its own `-2-loaded.png`. And
   with no tag the red top rests over the lowest tag's place, so a colour count in that box says little (Q309).
+- **The advisor cut off his line, in both games:** the same break and click post message `0x11c` (the message
+  bar's own tutorial line, 13 s long), and the tag clicked again while he says it withdraws it. In the original
+  `advisor.py %PID% 150 0x11c,0x46` reads the slot, then the record's said byte and its slaps, and the action's
+  length going to nought (`q312/orig/run.sh b`); here the log's `Park advisor: post`, `attempt` and `withdraw`
+  lines and `advisor`'s `said=/slaps=` (`q312/confirm.py`). The console's `tutorial on|off` is the Options
+  switch in memory. **Take a log mark BEFORE the click whose line is wanted**, not after its reply (Q312).
 - **A tag opened on the message bar:** in the original, the tag stands at (84, 909, 154, 974) of the 2048 x 1536
   layout, so at 1024 x 768 `gmove.py 59 471` and a click opens it; with the bar out its first button is at
   (283, 586) and its erase button at (283, 694), and the camcorder button at (130, 707). `bar.py` beside

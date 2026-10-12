@@ -655,6 +655,7 @@ internal sealed class ParkGadget : UiWindow
 		if ( _onArm == _bar )
 		{
 			Tags?.Shut();
+			WithdrawBarLine();
 			Log.Info( "Park gadget: message bar: off the arm" );
 		}
 
@@ -749,9 +750,9 @@ internal sealed class ParkGadget : UiWindow
 	/// the erase button unless the second button declines.
 	/// </summary>
 	/// <remarks>
-	/// The advisor's message 0x11c the original posts with it (FUN_00486b00) and withdraws as the bar leaves is a
-	/// screen's line, which no screen here says: counted, <c>TAG_MESSAGE_BAR_ADVISOR_LINE</c>. With the arm already
-	/// carrying something the original folds it away and sends it out again; here the new panel is on it at once.
+	/// The advisor is posted message 0x11c with it (FUN_00486b00), after the arm's fold has withdrawn the one of a
+	/// bar already out (FUN_004a2590, the bar's 0x1001d8). With the arm already carrying something the original
+	/// folds it away and sends it out again; here the new panel is on it at once.
 	/// </remarks>
 	private void OpenTag( ParkTags tags, ParkTags.Tag tag )
 	{
@@ -766,7 +767,11 @@ internal sealed class ParkGadget : UiWindow
 		if ( !tags.Open( tag, Time.WallMilliseconds ) )
 			return;
 
-		Unimplemented.Report( "TAG_MESSAGE_BAR_ADVISOR_LINE" );
+		if ( _onArm == _bar )
+			WithdrawBarLine();
+
+		if ( Park is { AdvisorMessages: { } lines } park )
+			lines.Post( ParkAdvisorMessages.TagMessage, park.GameTick );
 
 		_barText.Text = tag.Text;
 		Dress( _barFirst, tag.Row.Button1 );
@@ -781,6 +786,13 @@ internal sealed class ParkGadget : UiWindow
 
 		Log.Info( $"Park gadget: message bar: tag {tag.Row.Id} subject {tag.Subject} item {tag.Item} {BarCensus()}" );
 	}
+
+	/// <summary>
+	/// The bar's turn as the arm starts in with it (FUN_0048e2f0, 0x1001d8): the advisor's message 0x11c is
+	/// withdrawn (FUN_00486b40), which cuts him off where he is saying it.
+	/// </summary>
+	private void WithdrawBarLine()
+		=> Park?.AdvisorMessages?.Withdraw( ParkAdvisorMessages.TagMessage, (long)(GameClock.Now * 1000), () => Advisor.Current?.StopSpeaking() );
 
 	private static void Dress( UiButton button, int type )
 	{
@@ -883,6 +895,11 @@ internal sealed class ParkGadget : UiWindow
 
 	/// <summary>The tags the mast shows: the running park's, or the list a test hands the gadget.</summary>
 	internal ParkTags? Tags { get => _tagsGiven ?? Level.Current?.ParkState?.Tags; set => _tagsGiven = value; }
+
+	private ParkState? _parkGiven;
+
+	/// <summary>The running park whose advisor hears of the message bar: the level's, or one a test gives.</summary>
+	internal ParkState? Park { get => _parkGiven ?? Level.Current?.ParkState; set => _parkGiven = value; }
 	private int _tagChangesShown = -1;
 	private int _tagsHeard;
 

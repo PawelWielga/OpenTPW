@@ -276,8 +276,8 @@ public class ParkGadgetPressTests
 	/// <remarks>
 	/// <b>Mutations:</b> the bar not shown; the arm's travel the camcorder's 645; the handle not moved; the text not
 	/// set; the first button undressed; the second shown for nought; the erase button hidden; the tag's timers left
-	/// running; no swell; the swell in the census; a second click opening again; the slide or the advisor's line
-	/// uncounted; the camcorder's panel shown with the bar.
+	/// running; no swell; the swell in the census; a second click opening again; the slide uncounted; the advisor
+	/// not posted his line, or it left in the slots as the arm folds; the camcorder's panel shown with the bar.
 	/// </remarks>
 	[TestMethod]
 	public void ATagsLeftClickPutsItsMessageOnTheArm()
@@ -285,7 +285,8 @@ public class ParkGadgetPressTests
 		var (stack, gadget) = AGadget();
 		var tags = gadget.Tags = new ParkTags();
 		var slides = Times( "GADGET_ARM_SLIDE" );
-		var lines = Times( "TAG_MESSAGE_BAR_ADVISOR_LINE" );
+		var lines = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		gadget.Park = new ParkState( null ) { AdvisorMessages = lines };
 
 		Frame( stack, false, new Vector2( 1000, 100 ), 1.0f );
 		var tag = tags.Said( 72, 13, 1000 )!;
@@ -298,7 +299,8 @@ public class ParkGadgetPressTests
 		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
 
 		Assert.AreEqual( (true, true, tag), (gadget.BarOut, gadget.ArmOut, tags.OnShow) );
-		Assert.AreEqual( (slides + 1, lines + 1), (Times( "GADGET_ARM_SLIDE" ), Times( "TAG_MESSAGE_BAR_ADVISOR_LINE" )) );
+		Assert.AreEqual( slides + 1, Times( "GADGET_ARM_SLIDE" ) );
+		StringAssert.Contains( lines.Census(), "pending=1 attempts=0 threshold=25 slot=284/subject=0 ", "the advisor is posted message 0x11c" );
 		Assert.AreEqual( new UI.UiRect( 331, 1069, 1181, 1495 ), Find( gadget, 0x21 ).Rect, "the arm 820 out" );
 		Assert.AreEqual( new UI.UiRect( 1151, 1058, 1304, 1503 ), Find( gadget, 0x23 ).Rect, "and the handle with it" );
 		Assert.AreEqual( (new UI.UiRect( 486, 1112, 1101, 1453 ), true), (Find( gadget, 0x10d2d ).Rect, Find( gadget, 0x10d2d ).Visible) );
@@ -340,6 +342,7 @@ public class ParkGadgetPressTests
 		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
 		Assert.AreEqual( (false, false, null, 1), (gadget.BarOut, gadget.ArmOut, tags.OnShow, tags.Standing.Count), "the tag on show clicked again folds the arm away" );
 		Assert.AreEqual( slides + 2, Times( "GADGET_ARM_SLIDE" ) );
+		StringAssert.Contains( lines.Census(), "pending=0 attempts=0 ", "and it is withdrawn as the bar leaves" );
 		Assert.AreEqual( new UI.UiRect( 331, 1069, 361, 1495 ), Find( gadget, 0x21 ).Rect );
 		Assert.AreEqual( new UI.UiRect( 331, 1058, 484, 1503 ), Find( gadget, 0x23 ).Rect );
 		Assert.IsFalse( Find( gadget, 0x10d2d ).Visible );
@@ -348,7 +351,70 @@ public class ParkGadgetPressTests
 		Assert.AreEqual( new UI.UiRect( 84, 909, 154, 974 ), Find( gadget, 900 ).Rect, "and the tag is still" );
 
 		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
-		Assert.AreEqual( (true, tag, lines + 2), (gadget.BarOut, tags.OnShow, Times( "TAG_MESSAGE_BAR_ADVISOR_LINE" )), "and a third click opens it again" );
+		Assert.AreEqual( (true, tag), (gadget.BarOut, tags.OnShow), "and a third click opens it again" );
+		StringAssert.Contains( lines.Census(), "pending=1 attempts=0 threshold=25 slot=284/subject=0 " );
+	}
+
+	/// <summary>
+	/// <b>The bar leaving the arm cuts the advisor off its line</b> (<c>FUN_0048e2f0</c>'s 0x1001d8,
+	/// <c>FUN_00486b40</c>): folded away while he says message 0x11c, the message is cut off, on the game's clock,
+	/// and may be posted again; a second tag opened over the first withdraws before it posts
+	/// (<c>FUN_0048d9c0</c>: <c>FUN_004a2590</c>, then <c>FUN_00486b00</c>); the erase button withdraws too; after
+	/// three cuts an opening posts nothing.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> no withdrawal at the fold, at the erase or at a second tag's opening; the post before the
+	/// withdrawal; the wall clock for the game's.
+	/// </remarks>
+	[TestMethod]
+	public void TheBarLeavingTheArmCutsTheAdvisorOffItsLine()
+	{
+		using var clock = new SimulationClockScope();
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags();
+		var lines = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var park = gadget.Park = new ParkState( null ) { AdvisorMessages = lines };
+		var said = 0;
+		int Play( int response, int sample ) { ++said; return 9000; }
+
+		for ( var i = 0; i < 7; ++i )
+			park.AdvanceGameTick();
+
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.0f );
+		tags.Said( 72, 13, 1000 );
+		tags.Said( 150, 0, 1000 );
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.1f );
+
+		// The wall clock far past the line's end: the cut is judged on the game's clock, which stands at nought.
+		Time.PinWall( 60000 );
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		lines.Tick( park.GameTick, 0, Play );
+		StringAssert.Contains( lines.Census(), $"message=284/score=1000/line=0/lastTick={park.GameTick}/said=1/slaps=0" );
+		Assert.AreEqual( 7, park.GameTick );
+
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		Assert.IsFalse( gadget.BarOut );
+		StringAssert.Contains( lines.Census(), "/said=0/slaps=1", "folded away while he says it" );
+
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		StringAssert.Contains( lines.Census(), "pending=1 attempts=1 threshold=25 slot=284/subject=0 ", "and posted again at the next opening" );
+		lines.Tick( park.GameTick, 0, Play );
+
+		// The second tag opened over the first: withdrawn, a cut, then posted.
+		Assert.IsTrue( stack.ClickAt( 119, 866 ) );
+		Assert.AreEqual( (true, 150), (gadget.BarOut, tags.OnShow!.Row.Id) );
+		StringAssert.Contains( lines.Census(), "pending=1 attempts=2 threshold=25 slot=284/subject=0 " );
+		StringAssert.Contains( lines.Census(), "/said=0/slaps=2" );
+		lines.Tick( park.GameTick, 0, Play );
+		Assert.AreEqual( 3, said );
+
+		Assert.IsTrue( stack.ClickAt( 565, 1387 ), "the erase button" );
+		Assert.IsFalse( gadget.BarOut );
+		StringAssert.Contains( lines.Census(), "/said=0/slaps=3" );
+
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		Assert.IsTrue( gadget.BarOut );
+		StringAssert.Contains( lines.Census(), "pending=0 attempts=3 ", "cut off three times, it is posted no more" );
 	}
 
 	/// <summary>

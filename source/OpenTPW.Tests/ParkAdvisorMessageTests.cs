@@ -15,7 +15,8 @@ public class ParkAdvisorMessageTests
 			+ $"MessageGroups[0].MinTimeSameMessage 120\nMessageGroups[0].SayOnlyOnce 0\n"
 			+ $"ParkNowOpen.Score {open}\nParkNowClosed.Score {close}\nRidesBreakdownImminent.Score {worn}\n"
 			+ "RidesBreakdownNoMechanics.Score 105\nRidesBreakdownBusyMechanics.Score 107\n"
-			+ $"RidesBreakdownMechanicOnIt.Score {mechanic}\n" ) ) );
+			+ $"RidesBreakdownMechanicOnIt.Score {mechanic}\n"
+			+ "MessageGroups[0].DiscardAfterSlaps 0\nMessageGroups[1].MinTimeSameMessage 0\nMessageGroups[1].SayOnlyOnce 1\nMessageGroups[1].DiscardAfterSlaps 3\nHelpMessage.Score 1000\n" ) ) );
 
 	private static void Set( SettingsFile settings, string key, int value )
 	{
@@ -371,6 +372,146 @@ public class ParkAdvisorMessageTests
 		{
 			people.Delete();
 			Entity.ApplyDeletions();
+		}
+	}
+
+	/// <summary>
+	/// <b>Message 0x11c, the line of an opened tag message</b> (row 284 of 0x0076e300: posted only, category 1, score
+	/// 0x0059e8c0 = <c>HelpMessage.Score</c>, one copy, response 544 = sample 561, one line): said once, and never
+	/// posted again once he has said it through (<c>FUN_0059abc0</c>, MessageGroups[1].SayOnlyOnce). Its response's
+	/// group, 383, leaves no tag. A withdrawal after the line and its second cuts nothing.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the category nought; the score another's; the response or sample another's; two lines; a
+	/// group that leaves a tag; a withdrawal after the wait cutting him off; the said flag not kept.
+	/// </remarks>
+	[TestMethod]
+	public void TheLineOfAnOpenedTagMessageIsATutorialLineSaidOnce()
+	{
+		FileSystem = GameData.Required();
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var said = new List<(int, int)>();
+		var groups = new List<(int, int)>();
+		var stops = 0;
+
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.TagMessage, 1208 ) );
+		StringAssert.Contains( messages.Census(), "pending=1 attempts=0 threshold=25 slot=284/subject=0 " );
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.TagMessage, 1208 ), "one copy in the slots" );
+		messages.Tick( 1210, 5000, ( response, sample ) => { said.Add( (response, sample) ); return 12332; }, ( group, subject ) => groups.Add( (group, subject) ) );
+		CollectionAssert.AreEqual( new[] { (544, 561) }, said );
+		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
+		StringAssert.Contains( messages.Census(), "message=284/score=1000/line=0/lastTick=1210/said=1/slaps=0" );
+		Assert.AreEqual( (0, 0), ParkAdvisorMessages.PropsOf( 544 ) );
+
+		// 5000 + 12332 + 1000: the last millisecond he is saying it is 18331.
+		Assert.IsFalse( messages.Withdraw( ParkAdvisorMessages.TagMessage, 18332, () => ++stops ), "the line and its second are over" );
+		Assert.AreEqual( 0, stops );
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.TagMessage, 1400 ), "said once" );
+		for ( var tick = 1401; tick < 1500; ++tick )
+			messages.Tick( tick, tick * 248L, ( _, _ ) => throw new Exception( "said twice" ) );
+		StringAssert.Contains( messages.Census(), "pending=0 attempts=1 " );
+		StringAssert.Contains( messages.Census(), "message=284/score=1000/line=0/lastTick=1210/said=1/slaps=0" );
+	}
+
+	/// <summary>
+	/// <b>A withdrawal</b> (<c>FUN_0059aa70</c>): every slot holding the message is emptied; where he is saying it,
+	/// inside the line's time and its second, he is cut off, the message is no longer said, it is cut off once more
+	/// and the wait is over, so a post is taken again and said on the next sweep. After as many cuts as its
+	/// category's DiscardAfterSlaps, 3 for a tutorial message, the gate refuses it; a category whose
+	/// DiscardAfterSlaps is nought is never refused for them.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the slot left; a cut outside the wait, or of another message's line; no stop; the said flag
+	/// left; the slaps not counted, or counted with no cut; the wait left running; the cap 2 or 4, or read for
+	/// category 0's nought as a cap; the other messages' slots emptied too.
+	/// </remarks>
+	[TestMethod]
+	public void AWithdrawnMessageLeavesTheSlotsAndCutsHimOffWhereHeIsSayingIt()
+	{
+		var messages = new ParkAdvisorMessages( Settings( worn: 2000 ) );
+		var said = new List<int>();
+		var stops = 0;
+		int Play( int response, int sample ) { said.Add( response ); return 9000; }
+
+		// Withdrawn before it is said: the slot alone, and the worn ride's stays.
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.TagMessage, 100 ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, 100, 13 ) );
+		Assert.IsTrue( messages.Withdraw( ParkAdvisorMessages.TagMessage, 0, () => ++stops ) );
+		StringAssert.Contains( messages.Census(), "pending=1 attempts=0 threshold=25 slot=66/subject=13 " );
+		StringAssert.Contains( messages.Census(), "message=284/score=1000/line=-1/lastTick=0/said=0/slaps=0" );
+		Assert.IsFalse( messages.Withdraw( ParkAdvisorMessages.TagMessage, 0, () => ++stops ), "nothing to withdraw" );
+
+		// While he says another message's line, a withdrawal cuts nothing.
+		messages.Tick( 100, 1000, Play );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.TagMessage, 101 ) );
+		Assert.IsTrue( messages.Withdraw( ParkAdvisorMessages.TagMessage, 2000, () => ++stops ) );
+		Assert.AreEqual( 0, stops );
+		StringAssert.Contains( messages.Census(), "/said=0/slaps=0" );
+
+		// Said from 11000 (the worn ride's wait ends at 1000 + 9000 + 1000), cut at 14000.
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.TagMessage, 102 ) );
+		messages.Tick( 103, 10999, Play );
+		messages.Tick( 104, 11000, Play );
+		CollectionAssert.AreEqual( new[] { 194, 544 }, said );
+		Assert.IsTrue( messages.Withdraw( ParkAdvisorMessages.TagMessage, 14000, () => ++stops ) );
+		Assert.AreEqual( 1, stops );
+		StringAssert.Contains( messages.Census(), "message=284/score=1000/line=0/lastTick=104/said=0/slaps=1" );
+		Assert.IsFalse( messages.Withdraw( ParkAdvisorMessages.TagMessage, 14001, () => ++stops ), "the wait is over: nothing more to cut" );
+		Assert.AreEqual( 1, stops );
+
+		// Posted again and said on the next sweep, with no wait; the last millisecond of a line is still a cut.
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.TagMessage, 105 ) );
+		messages.Tick( 105, 14000, Play );
+		Assert.AreEqual( 3, said.Count );
+		Assert.IsTrue( messages.Withdraw( ParkAdvisorMessages.TagMessage, 23999, () => ++stops ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.TagMessage, 106 ), "two cuts are under the three" );
+		messages.Tick( 106, 23999, Play );
+		Assert.IsTrue( messages.Withdraw( ParkAdvisorMessages.TagMessage, 24000, () => ++stops ) );
+		Assert.AreEqual( 3, stops );
+		StringAssert.Contains( messages.Census(), "message=284/score=1000/line=0/lastTick=106/said=0/slaps=3" );
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.TagMessage, 107 ), "discarded after three" );
+		CollectionAssert.AreEqual( new[] { 194, 544, 544, 544 }, said, "its one line each time" );
+		StringAssert.Contains( messages.Census(), "pending=0 attempts=4 " );
+
+		// Category 0's DiscardAfterSlaps is nought: cut off four times, the worn ride's message is still taken.
+		for ( var i = 0; i < 4; ++i )
+		{
+			Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, 2000 + i * 600, 13 ), $"post {i}" );
+			messages.Tick( 2000 + i * 600, 100000 + i, Play );
+			Assert.IsTrue( messages.Withdraw( ParkAdvisorMessages.RideWornOut, 100000 + i, () => ++stops ) );
+		}
+		Assert.AreEqual( 7, stops );
+		StringAssert.Contains( messages.Census(), "/said=0/slaps=4" );
+	}
+
+	/// <summary>
+	/// <b>The Tutorial option off refuses a tutorial message and no other</b> (<c>FUN_0059abc0</c>'s first test,
+	/// the byte at 0x0078d90d and <c>FUN_0059c610</c>), read at each post.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the option not read; read once at the making; refusing category 0 too; the sense turned round.</remarks>
+	[TestMethod]
+	public void TheTutorialOptionOffRefusesATutorialMessageAlone()
+	{
+		var on = false;
+		var messages = new ParkAdvisorMessages( Settings(), tutorial: () => on );
+
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.TagMessage, 100 ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, 100, 13 ) );
+		on = true;
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.TagMessage, 101 ) );
+
+		var before = GameOptions.Current;
+		try
+		{
+			GameOptions.Current = new GameOptions { Tutorial = false };
+			var players = new ParkAdvisorMessages( Settings() );
+			Assert.IsFalse( players.Post( ParkAdvisorMessages.TagMessage, 100 ), "the player's own option where none is given" );
+			GameOptions.Current = new GameOptions { Tutorial = true };
+			Assert.IsTrue( players.Post( ParkAdvisorMessages.TagMessage, 100 ) );
+		}
+		finally
+		{
+			GameOptions.Current = before;
 		}
 	}
 

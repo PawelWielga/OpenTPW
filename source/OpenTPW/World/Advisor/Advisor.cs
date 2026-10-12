@@ -433,7 +433,7 @@ public sealed class Advisor : Entity
 	/// finishes. So a line still waiting to be said goes quietly, and so does one already said
 	/// while he finishes the clips he talks through.
 	/// </summary>
-	private void StopSpeaking()
+	internal void StopSpeaking()
 	{
 		var busy = Busy;
 		var sounding = Dismiss( CutOffSeconds );

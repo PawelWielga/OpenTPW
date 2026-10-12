@@ -29,7 +29,8 @@ namespace OpenTPW.UI;
 /// <item>
 /// <b>The line a screen posts as it opens is not said here.</b> What the original's screens post is a
 /// message id, not a response id; the message's metadata gives its first response and the response
-/// table its sample. Which of those lines this game should say, and when, is not built.
+/// table its sample. Of those lines only the message bar's is posted, by <see cref="ParkGadget"/> through
+/// <see cref="ParkAdvisorMessages"/>.
 /// </item>
 /// </list>
 /// </para>
