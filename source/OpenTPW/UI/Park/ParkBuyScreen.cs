@@ -98,6 +98,34 @@ internal sealed class ParkBuyScreen : UiWindow
 
 	private static readonly UiColour HeadingColour = new( 255, 239, 0 );
 
+	private ParkState? _parkGiven;
+
+	/// <summary>The running park whose advisor hears of this screen: the level's, or one a test gives.</summary>
+	internal ParkState? Park { get => _parkGiven ?? Level.Current?.ParkState; set => _parkGiven = value; }
+
+	// The park whose advisor this screen has asked for its line, none before it is first shown.
+	private ParkState? _asked;
+
+	/// <summary>
+	/// The opener's last act on a screen it has just built (FUN_004acc70, 0x004ad1e2): the advisor is posted
+	/// message 0xbc (FUN_00486b00), the screen's own line. A screen already open is asked for nothing more.
+	/// </summary>
+	protected internal override void Shown()
+	{
+		if ( _asked != null || Park is not { AdvisorMessages: { } lines } park )
+			return;
+
+		_asked = park;
+		lines.Post( ParkAdvisorMessages.BuyScreen, park.GameTick );
+	}
+
+	/// <summary>
+	/// The screen's destroy (FUN_004ac270, event 0x14): the advisor's message 0xbc is withdrawn (FUN_00486b40),
+	/// which cuts him off where he is saying it.
+	/// </summary>
+	protected internal override void Closed()
+		=> _asked?.AdvisorMessages?.Withdraw( ParkAdvisorMessages.BuyScreen, (long)(GameClock.Now * 1000), () => Advisor.Current?.StopSpeaking() );
+
 	/// <param name="openOn">The tab to open on (FUN_004acc70's first argument), null for the one last left on.</param>
 	public ParkBuyScreen( WindowStack stack, int? openOn = null ) : base( stack )
 	{

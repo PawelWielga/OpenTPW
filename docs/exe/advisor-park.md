@@ -880,7 +880,7 @@ attempt. Main's build named message 284 nowhere and counted `TAG_MESSAGE_BAR_ADV
 | The kept message (`+0x16d0`, `FUN_0059ab50`) | forgotten by a withdrawal of its id | kept by nothing here |
 | The Tutorial option | read at each post | the same; the console's `tutorial on|off` sets it in memory |
 | The cut | `Advisor_StopSpeaking` | the same call (`Advisor.StopSpeaking`), with its cry where his voice had started |
-| The other 39 screens' lines (`0xbc` to `0xd5`, `0x11d` to `0x135`) | posted as each opens | not posted |
+| The other 39 screens' lines (`0xbc` to `0xd5`, `0x11d` to `0x135`) | posted as each opens | the buy screen's `0xbc` is ("The buy screen's own line"); the other 38 are not posted |
 
 ## The records in a park file (Q313)
 
@@ -1554,10 +1554,10 @@ message 62, no attempt, no tag by tick 1000, the count one more.
 | The ride sold, the sideshow left | said on tick 959, line 0, in the hard hat | the same |
 | After row 2's line | queued on its turn, said as row 2's wait ends, a second tag above tag 4 | the same (968 and 961: the wait is the drawn line's) |
 | The tag and the bar | row 64, part 2, string 67; button 9 opens the buy screen on its rides tab, tag off, arm in | the same |
-| The buy screen's own line | `0xbc` posted at 1000 as the screen is built, and said | not posted (no screen's line is) |
+| The buy screen's own line | `0xbc` posted at 1000 as the screen is built, and said | the same ("The buy screen's own line") |
 | The ride count | the items' control records' `+0x18` | the ride things standing |
 
-**Not built or not seen.** The buy screen's line. The row of a tag's item selected on the buy screen
+**Not built or not seen.** The row of a tag's item selected on the buy screen
 (`TAG_BAR_BUY_ITEM_ROW`). In no game run: lines 2 and 3 (samples 180 and 181; the test holds the turn), the line
 said again past its 120 quarter-ticks, a shut park with no ride, a park under its 26th day (the test holds 25 and
 28), Full Simulation's empty park, button types `0xa` to `0xc` and the button with the buy screen open (the test
@@ -1813,3 +1813,83 @@ staff room does to a tired member of staff was not looked for in either game (he
 `CanLoad`). In no game run: a share between nought and the whole (the test holds the bound), the line said again
 past its 120 quarter-ticks (the test holds it; the original stayed silent on tick 1057), a staff room bought,
 Full Simulation. The original's sound was not recorded or measured; neither game was heard by ear.
+
+## The buy screen's own line (message `0xbc`, Q328)
+
+**The post.** The buy screen's opener, `FUN_004acc70( tab, item )`, has two halves. With the screen open
+(`DAT_007cc1f8` not nought) it fills the list again, puts the tab's button down, selects the item's row and
+returns: nothing is posted. Otherwise it builds the screen and its last act, at `0x004ad1e2`, is
+`FUN_00486b00( 0xbc )`, reached even where the layout did not load. Its seven callers are the bar's four button
+types, the gadget's button (`FUN_004a0940`), `FUN_0049b650` and one in no function (`0x004816ea`).
+
+**The withdrawal.** The screen's handler, `FUN_004ac270`, on event `0x14` (the screen destroyed) noughts
+`DAT_007cc1f8` and calls `FUN_00486b40( 0xbc )`: the same withdrawal as the message bar's ("The line of an opened
+tag message"), so a screen closed while he says the line cuts him off, clears the said byte and counts a cut.
+Every way the screen goes is that event: its exit button, a purchase (the handler closes the screen itself),
+another park screen opened over it.
+
+**Row 188** (`0x00770c20`) is row 284's twin: posted only, category 1, either game mode, score `0x0059e8c0`
+(`HelpMessage.Score`, 1000), one copy, first response 407, one line. Response 407 is sample 380, lip 380, the
+random gesture chain, model slot 0, no prop, group 383 (no tag); the transcript's row 380, 16.0 s: "this is where
+you can buy stuff to building your park just click on something on the list to buy it click those buttons above
+the list to choose from rides sideshows shops and miscellaneous items to hire staff click the button on the right
+edge of the panel".
+`Easymode.TPWI` holds no record of it (it holds the hire screen's, `0xbd`, as cut off once on tick 55), so the
+shipped park says it at the screen's first opening.
+
+**Also in the handler, read and not built.** A row's click that buys closes the screen and posts `0xc9` where
+the item's `+0x4c` is nought and `FUN_004824d0( 0x80, 0 )` answers nought, and `0xce` otherwise; the two land
+rows post `0x15a` (row -1) and `0x159` (row -2). Read in the decompiler alone.
+
+### The original (`q328/orig/run.sh <file> a|b|c`, `original/advisor.py ... 0xbc,0xbd`, `tags.py`; predicted first, six of six)
+
+The stock file (`q325/stock.TPWS`), the gadget's buy button clicked at (114, 590) and the screen's exit button at
+(965, 430). **Let finish (a):** a slot read (thing 0, line -1, `0xbc`, 1000) on tick 862 and 0.18 s on the
+record read (863, 0, 1, 0) with an action of 20831 ms; no tag was held; in the frame he is up at the lower right
+with his antennae and no hat, "Buy Ride" open (`orig/a-speaking.png`). Closed 27 s on and opened again: no slot
+held `0xbc` and the record did not change in 10 s. **Cut off (b):** said on tick 864; closed 6 s into the line:
+(864, 0, **0, 1**), the action's length 0. Opened: in a slot on tick 912 and said on 913 (19998 ms); closed:
+slaps 2; said on tick 959; closed: slaps 3; a fourth opening: nothing in 10 s. **This game's file (c)**, saved
+after it said the line on tick 784 (`q328/run-saved/Q329.TPWS`): the record read (784, 0, 1, 0) and an action
+of 19997 from the load, the click opened the screen, no slot held `0xbc` in 11 s and nobody is up
+(`orig/c-open.png`).
+
+### OpenTPW (`ParkAdvisorMessages.BuyScreen`; `ParkBuyScreen.Shown`, `Closed`)
+
+A second posted tutorial topic, row 284's with response 407 and sample 380. `ParkBuyScreen.Shown` posts it the
+first time the screen is shown, to the running park's advisor, and `Closed` withdraws it from that park's; a
+screen already open is asked for nothing more, as the opener's first half asks nothing. Its record is read from
+and written to a park file with the other built messages' ("The records in a park file").
+
+`q328/confirm.py a|b|off|saved|control`, the stock park, both buttons clicked for real; predicted first
+(`q328/PREDICTION.txt`), eleven of eleven on `run-a2`, `run-b`, `run-off`, `run-saved` and `run-control`
+(`run-a1` two of three: the script's own click missed the exit button, which is centred with its screen in a
+window wider than 4:3). The click logged `Park advisor: post message=188 subject=0 score=1000 threshold=25
+tick=783 result=queued pending=2`, the file's waiting `0x80` the other; then `attempt=1 message=188 subject=0
+score=1000 threshold=25 response=407 sample=380 line=0 tick=784 duration=18998` (the three said in `run-b`
+18998, 19831 and 20665, where the original's three actions were 20831, 19998 and 19997: the chain is drawn, and
+the original's number holds a second more); `advisor` read `saying sp_380.mp2 ... wearing=0,0` and
+`message=188/score=1000/line=0/lastTick=784/said=1/slaps=0`, `tags` `standing=0`, `windows` `ParkBuyScreen tab
+0`, and in the frame he is up at the lower right with no hat beside "Buy Ride" (`run-a2/1-speaking.png`).
+Closed after the line: `withdraw message=188 cleared=0 cut=0 slaps=0`; opened again on tick 880:
+`result=said-once`. **Cut (b):** closed three seconds in: `withdraw message=188 cleared=0 cut=1 slaps=1`,
+`advisor` reading `quiet` a second on and the frame without him (`run-b/2-cut.png`); the next two openings said
+it again 0.1 s on (ticks 818 and 840), cut to slaps 2 and 3; the fourth logged `result=slapped`. **`tutorial
+off`:** `result=tutorial-off`, no attempt. **Saved and loaded back:** `restored message=188 line=0 lastTick=784
+said=1 slaps=0`, and the click on tick 881 `result=said-once`. **Main's build:** the screen opens and no log line
+names message 188.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The post | the opener, on a screen it has just built | `Shown`, the first time |
+| The withdrawal | the screen's destroy (event `0x14`) | `Closed` |
+| The stock park's first opening | said a tick after the click, no hat, no tag | the same |
+| Closed in the line | cut off, said 0, a cut counted; three cuts and no more | the same |
+| A purchase's `0xc9` and `0xce`, the land rows' `0x159` and `0x15a` | posted | not posted |
+| The other 38 screens' lines | posted as each opens | not posted |
+
+**Not built or not seen.** The handler's four other posts. In no game run: a purchase or another screen's
+opening cutting the line (the test holds the close, whatever closes it), the bar's buy button posting it (the
+same `Shown`; Q322's run of the original saw it), a park left with the screen open, Full Simulation (the row's
+mode word is row 284's, either mode). The original's hire screen's record in the shipped file (`0xbd`, cut off
+once) says its withdrawal is the same shape; not read. Not heard in either game.

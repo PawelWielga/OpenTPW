@@ -4,19 +4,20 @@ namespace OpenTPW;
 
 /// <summary>
 /// The park's posted messages, selection mode 2: the door's two, a ride about to break down, a ride broken down
-/// with no mechanic to come and a mechanic on his way to one, category 0, and the tutorial line of an opened tag
-/// message, category 1, which is withdrawn as its bar leaves. The eight slots, strict tick threshold, helper
-/// recheck and per-message histories follow FUN_0059a550, the gate FUN_0059abc0 and the withdrawal FUN_0059aa70;
-/// docs/exe/advisor-park.md, Q90, "A ride about to break down", "A ride broken down and no mechanic to come",
-/// "A mechanic on his way" and "The line of an opened tag message".
+/// with no mechanic to come and a mechanic on his way to one, category 0, and two tutorial lines, category 1:
+/// an opened tag message's, withdrawn as its bar leaves, and the buy screen's own, withdrawn as the screen
+/// closes. The eight slots, strict tick threshold, helper recheck and per-message histories follow
+/// FUN_0059a550, the gate FUN_0059abc0 and the withdrawal FUN_0059aa70; docs/exe/advisor-park.md, Q90, "A ride
+/// about to break down", "A ride broken down and no mechanic to come", "A mechanic on his way", "The line of
+/// an opened tag message" and "The buy screen's own line".
 /// <para>
-/// Ten messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Eleven messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
-/// nothing to ride and a park with no ride; and four scored by the share of the park's rides, shops, sideshows
-/// and toilets that are shut ("Shut shops, sideshows and toilets", "An open park's shut rides"); and the line
-/// about a queue not joined to a path ("A queue not joined to a path"). The other 145 polled rows are counted,
-/// and the other posted messages are unbuilt.
+/// nothing to ride and a park with no ride; five scored by the share of the park's rides, shops, sideshows,
+/// toilets and staff rooms that are shut ("Shut shops, sideshows and toilets", "An open park's shut rides",
+/// "A shut staff room"); and the line about a queue not joined to a path ("A queue not joined to a path"). The
+/// other 144 polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -41,6 +42,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int MechanicOnHisWay = 70;
 	/// <summary>Message 0x11c, posted as a tag's message is put on the bar (FUN_0048d9c0) and withdrawn as the bar leaves (FUN_0048e2f0, 0x1001d8).</summary>
 	internal const int TagMessage = 284;
+	/// <summary>Message 0xbc, posted as the buy screen is built (FUN_004acc70) and withdrawn as it is destroyed (FUN_004ac270, event 0x14).</summary>
+	internal const int BuyScreen = 188;
 	/// <summary>Message 0xb9, polled: the line about the control panel, scored by the park's age in days (0x005a06c0).</summary>
 	internal const int ControlPanel = 185;
 	/// <summary>Message 0x11a, polled: the line about the tips at the bottom of the screen, scored by the park's age in days (0x005a0720).</summary>
@@ -199,6 +202,7 @@ internal sealed class ParkAdvisorMessages
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
 		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat, Group: 72 ),
 		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial ),
+		new( BuyScreen, "HelpMessage.Score", 407, 380, Lines: 1, Category: Tutorial ),
 		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" ),
 		new( ExplainTooltips, "TutorialExplainTooltips.Score", 542, 559, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialExplainTooltips" )
 	];

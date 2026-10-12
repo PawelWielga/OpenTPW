@@ -134,6 +134,14 @@ whole list):
   the game under test reads. **Waiting on `loadfile.sh`'s log for a record**, leave out the first start's
   lines, which hold the same record: `grep -v "^ *0\.00 s" log | grep -q ...` (`q322/confirm.py`,
   `q322/scene.py <out> <bin> <name> <tick> <things>`, `q322/orig/run.sh <file>`; Q322).
+- **The buy screen opened and closed by real clicks, in both games, and its advisor line:** the gadget's buy
+  button is layout point (229, 1181) and the screen's exit button (1930, 859). In the original (1024 x 768) they
+  are `gmove.py 114 590` and `965 430`. In OpenTPW the gadget keeps to the window's left, but **a park screen is
+  centred in a window wider than 4:3**: scale the layout by the window's height over 1536, then add half of the
+  window's width less 2048 times that scale to a screen's x (at 1280 x 720 the exit button is `click 1065 403`,
+  not 905). The stock park says the screen's own line (sample 380, about 19 s) a tick after its first opening;
+  close inside it and he is cut off, and after three cuts he is asked no more (`q328/confirm.py a|b|off|saved`,
+  `q328/orig/run.sh <file> a|b|c`; Q328).
 - **The count of unbuilt polled rows is exact, so predict it exactly:** under a `pause` on tick T the stock
   park's `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is T - 755 less the turns of built rows by then, and a built row
   comes round every 155 ticks with no log line where its answer has not changed (282 on 760 and 915; 1 on 768

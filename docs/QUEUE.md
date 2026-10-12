@@ -44,9 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q328. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q329. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q328 (`advisor-park.md`, "The buy screen's own line"): the buy screen's handler's four other posts are
+  not built (`0xc9` or `0xce` at a purchase, `0x159` and `0x15a` at the land rows; read in the decompiler
+  alone), nor the other 38 screens' lines (the hire screen's `0xbd` next: the shipped file holds it cut off
+  once). In no game run: a purchase or another screen's opening cutting the line, the message bar's buy button
+  posting it, a park left with the screen open, Full Simulation. He stands at the lower right with a park
+  screen open in both games; where he stands with none was not compared. Not heard in either game.
   From Q326 (`ride-operation.md`, "A shut staff room and a tired member"): in no game run: a member of
   another kind, a second staff room nearer and open, a room shut while a member rests in it, Full Simulation.
   The original's frame does not show the room (its saved view); `VAR_STAFFIN` and the resting-staff list stay
@@ -66,8 +72,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q323 (`advisor-park.md`, "An open park's shut rides"): in no game run: row 259's second and third lines, the line said again past its cooldown (the test holds
   each), a ride shut from its own window, a share of exactly half, four rides or more, Full Simulation's
   rates. Not heard in either game.
-  From Q322 (`advisor-park.md`, "A park with no ride in it"): the buy screen's own line (`0xbc`, posted at 1000
-  as `FUN_004acc70` builds the screen) is not posted; the row of a tag's item is not selected on the buy screen
+  From Q322 (`advisor-park.md`, "A park with no ride in it"): the row of a tag's item is not selected on the buy screen
   (`TAG_BAR_BUY_ITEM_ROW`, counted; no listed tag names an item); what writes an item's control record's
   standing count (`+0x18`) is not read. In no game run: lines 2 and 3, the line said again past its cooldown,
   a shut park with no ride, a park under its 26th day, Full Simulation's empty park, button types `0xa` to
@@ -114,8 +119,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q313 (`advisor-park.md`, "The records in a park file"): in no game run: a rotation or a cooldown carried
   across a load, a file with cuts, Alexah's own parks. The two calls in `Level` are held by the game runs alone.
   From Q312 (`advisor-park.md`, "The line of an opened tag message"): the kept message (`+0x16d0`, raised again by `FUN_0059ab50` from
-  `FUN_00488ba0`) is not built; the other 39 screens' lines
-  (`0xbc` to `0xd5`, `0x11d` to `0x135`) are not posted; whether the original's advisor cries out when a
+  `FUN_00488ba0`) is not built; the other 38 screens' lines
+  (`0xbd` to `0xd5`, `0x11d` to `0x135`) are not posted; whether the original's advisor cries out when a
   withdrawal cuts him off was not heard (ours does, `Advisor.StopSpeaking`). In no game run: a second tag
   opened over the first, the erase button with him speaking (the tests hold each), the options screen's own
   switch (the console's set it). Not listened to by a person in either game.
@@ -380,7 +385,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   cursor is the program's, not a file's, so predict each turn from it). Say first, from each score function,
   whether the mode is asked; run those where it could matter (the regular catalogue, the empty park's age and
   rates), and say in one line why for the rest. Confirm: each line's `poll` and `attempt` lines with a
-  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q328's notes
+  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q329's notes
   From Q319 to From Q325; take each out of those notes as it is run.
 - [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). `gms.dat`
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest

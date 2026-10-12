@@ -6383,6 +6383,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   lines of 197 and state 0 at 100.0 on tick 1088. `ride-operation.md`, "A shut staff room and a tired member".
   Tests 3027.
   I split the item: every other piece of the old Q326 is Q328.
+- [x] **Q328. The advisor explains the buy screen the first time it is opened.** Done 2026-10-12: one piece of
+  the old Q328, the buy screen's own line. The opener `FUN_004acc70` posts message `0xbc` on a screen it has
+  just built and on no other, and the screen's handler `FUN_004ac270` withdraws it on event `0x14`, its
+  destroy; row 188 is row 284's twin (posted only, category 1, `HelpMessage.Score` 1000, one copy, response 407
+  = sample 380, one line, no prop, no tag), and the shipped file holds no record of it. Built:
+  `ParkAdvisorMessages.BuyScreen`, posted by `ParkBuyScreen.Shown` the first time and withdrawn by `Closed`.
+  The stock park's buy button clicked: `post message=188 subject=0 score=1000 threshold=25 tick=783
+  result=queued pending=2`, `attempt=1 message=188 ... response=407 sample=380 line=0 tick=784
+  duration=18998`, him up with no hat beside "Buy Ride"; closed in the line `withdraw message=188 cleared=0
+  cut=1 slaps=1`, the fourth opening `result=slapped`; saved and loaded back `result=said-once`. The original:
+  in a slot at 1000 on tick 862 and said on 863, (864, 0, 0, 1) at its cut, silent after three, and silent on
+  this game's saved file. `advisor-park.md`, "The buy screen's own line". Tests 3029.
+  I split the item: every other piece of the old Q328 is Q329.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
