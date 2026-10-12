@@ -44,20 +44,27 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q316. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q317. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q315 (`advisor-park.md`, "The last action in a park file"): a screen's line (`ParkLines`, the gadget's
-  opening line among them) is said past the messages, so it starts no action and none is written for it, where
-  the original's is a message through the slots. In no game run: a withdrawal inside a file's wait (the tests
+  From Q316 (`advisor-park.md`, "The poll, and the control panel's line"): 155 of the 156 polled rows are not
+  built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; row 282, `TutorialExplainTooltips`, is the same score function as
+  the built one, row 281 `GoldTicketExplanation`, row 0 `Welcome`); what moves the cursor through a load of the
+  original's is not read (160 then 277 across one, 186 and 186 across another; tick 877 after both loads of the
+  fresh-record file); the line's length differs a run
+  in both games and was not compared; the cursor is counted in polled rows, so a table read from the executable
+  would have to hand it the row. In no game run: the cutoff, the Tutorial option off at the poll, the line cut
+  off, a line polled inside another's wait (the tests hold each); a park made with no file said it on tick 267
+  in one run, not predicted. `PLAYER-GAPS.md` gap 4's text is older than the breakdown lines. Not heard in
+  either game.
+  From Q315 (`advisor-park.md`, "The last action in a park file"): a park screen's own line is not posted, so it
+  starts no action. In no game run: a withdrawal inside a file's wait (the tests
   hold it), a file with a wait of nought, a park made fresh saved before any line, Alexah's own parks. The two
   calls in `Level` are held by the game runs alone. Not heard in either game.
   From Q314 (`advisor-park.md`, "The slots in a park file"): the kept message, `mRequestedLastTutorial`,
   `mTimeSig`, `mSoundId` and `mNextAvailableQueuePos` are carried and what reads them is not described; a slot
   let go keeps the file's older bytes, not the said message's; a taken slot of an unbuilt message is counted and
-  never said (`PARK_ADVISOR_SAVED_SLOT_NOT_BUILT`; no stored file holds one). The line said on the first sweep
-  after a load is refused by the speaker here, the gadget's opening line having him, where the original's is
-  heard: whether the original says an opening line at a load at all was not looked at. In no game run: the door
+  never said (`PARK_ADVISOR_SAVED_SLOT_NOT_BUILT`; no stored file holds one). In no game run: the door
   shut and opened after a load (the test holds `duplicate`), eight slots full, Alexah's own parks. The two calls
   in `Level` are held by the game runs alone. Not heard in either game.
   From Q313 (`advisor-park.md`, "The records in a park file"): in no game run: a rotation or a cooldown carried

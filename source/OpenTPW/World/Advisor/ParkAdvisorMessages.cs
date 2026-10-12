@@ -9,7 +9,11 @@ namespace OpenTPW;
 /// recheck and per-message histories follow FUN_0059a550, the gate FUN_0059abc0 and the withdrawal FUN_0059aa70;
 /// docs/exe/advisor-park.md, Q90, "A ride about to break down", "A ride broken down and no mechanic to come",
 /// "A mechanic on his way" and "The line of an opened tag message".
-/// Other park messages and the polling analyser remain unbuilt.
+/// <para>
+/// One message is polled, not posted: the control panel's line, a tutorial message scored by the park's age
+/// (FUN_0059c680, "The poll, and the control panel's line"). The other 155 polled rows are counted, and the
+/// other posted messages are unbuilt.
+/// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
 {
@@ -25,6 +29,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int MechanicOnHisWay = 70;
 	/// <summary>Message 0x11c, posted as a tag's message is put on the bar (FUN_0048d9c0) and withdrawn as the bar leaves (FUN_0048e2f0, 0x1001d8).</summary>
 	internal const int TagMessage = 284;
+	/// <summary>Message 0xb9, polled: the line about the control panel, scored by the park's age in days (0x005a06c0).</summary>
+	internal const int ControlPanel = 185;
 
 	/// <summary>The tutorial messages' category (a row's +0x08): MessageGroups[1], refused while the Tutorial option is off (FUN_0059c610).</summary>
 	internal const int Tutorial = 1;
@@ -37,10 +43,29 @@ internal sealed class ParkAdvisorMessages
 	/// he wears for every line of it (the response table's +0x14; each built row's +0x18 is nought).
 	/// <paramref name="Group"/> is the group of every line of it (the response table's +0x1c), the id of the tag
 	/// a said line leaves (<see cref="ParkTags"/>). <paramref name="Category"/> is the row's +0x08, the
-	/// MessageGroups entry of Advisor.sam the gate reads for it.
+	/// MessageGroups entry of Advisor.sam the gate reads for it. <paramref name="PollPosition"/> is where the row
+	/// stands among the table's polled rows (those whose +0x00 is nought), -1 for a row that is posted only.
+	/// <paramref name="AgeSection"/> names the Advisor.sam section whose AfterTime and CutoffTime bound the park's
+	/// age in days for the score to be anything but nought, null where the score is the key's alone.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
-		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0 );
+		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, int PollPosition = -1,
+		string? AgeSection = null );
+
+	/// <summary>How many rows of the metadata table are polled, one a tick in the table's order (FUN_0059c680).</summary>
+	internal const int PolledRows = 156;
+
+	/// <summary>
+	/// Which polled row the next tick looks at: the dword at 0x00fb3540, nought as the program starts
+	/// (FUN_0059bea0), in no park file and set again by no park, so a park takes it as the last one left it.
+	/// </summary>
+	internal sealed class PollCursor
+	{
+		public int Position;
+	}
+
+	/// <summary>The running program's own cursor.</summary>
+	internal static readonly PollCursor ProgramCursor = new();
 
 	/// <summary>The ticket hat, the door's lines' prop.</summary>
 	internal const int TicketHat = 9;
@@ -59,7 +84,8 @@ internal sealed class ParkAdvisorMessages
 		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 70 ),
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
 		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat, Group: 72 ),
-		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial )
+		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial ),
+		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, PollPosition: 110, AgeSection: "TutorialUIPanel" )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -91,6 +117,11 @@ internal sealed class ParkAdvisorMessages
 	// The slots a park file's message this game cannot say stands in: taken, and never said or written over.
 	private readonly bool[] _carried = new bool[ParkWorld.AdvisorSlots];
 	private readonly Func<bool> _tutorial;
+	private readonly PollCursor _cursor;
+	// What the poll last answered for each polled message, so the log holds a line a change.
+	private readonly Dictionary<int, string> _polled = [];
+	// The tick of the last sweep or post, which the census scores each message at.
+	private int _lastTick;
 	// The last action (the advisor's +0xd8, +0xdc, +0x16ec): the moment the last line said began, how long he
 	// waits from it, and the message it was. The moment is null until a line is said or a file's is taken.
 	private long? _started;
@@ -102,9 +133,12 @@ internal sealed class ParkAdvisorMessages
 	internal int Threshold => Value( "GeneralAdvisor.MinScoreForConsideration" );
 
 	/// <param name="tutorial">Whether the Tutorial option is on (0x0078d90d), the player's own where none is given.</param>
-	internal ParkAdvisorMessages( SettingsFile settings, IEnumerable<Topic>? topics = null, Func<bool>? tutorial = null )
+	/// <param name="cursor">The poll's cursor; the game hands every park <see cref="ProgramCursor"/>, and with none given the poll starts at the table's first row.</param>
+	internal ParkAdvisorMessages( SettingsFile settings, IEnumerable<Topic>? topics = null, Func<bool>? tutorial = null,
+		PollCursor? cursor = null )
 	{
 		_settings = settings;
+		_cursor = cursor ?? new PollCursor();
 		_tutorial = tutorial ?? (() => GameOptions.Current.Tutorial);
 		_topics = (topics ?? ParkTopics).ToDictionary( topic => topic.Id );
 		_histories = _topics.Keys.ToDictionary( id => id, _ => new History() );
@@ -218,37 +252,98 @@ internal sealed class ParkAdvisorMessages
 	// Missing or malformed settings are installation errors, not permission to invent scores.
 	private int Value( string key ) => int.Parse( _settings[key], CultureInfo.InvariantCulture );
 
+	/// <summary>
+	/// Whole days since mGameTick nought: FUN_004f8800 over 0xC92A69C000, the tick times
+	/// <see cref="GameCalendar.Rate"/> over four, in whole seconds, whatever date the calendar began on.
+	/// </summary>
+	internal static int DaysSinceTheFirstSweep( int tick )
+		=> (int)((long)(uint)tick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond / 86400);
+
+	/// <summary>
+	/// A row's score function (+0x10). The control panel's (0x005a06c0) is its section's Score while the park
+	/// is more than AfterTime and less than CutoffTime days old, and nought otherwise; every other built row's
+	/// is its key's value.
+	/// </summary>
+	internal int ScoreOf( Topic topic, int gameTick )
+	{
+		if ( topic.AgeSection is { } section )
+		{
+			var days = DaysSinceTheFirstSweep( gameTick );
+			if ( days <= Value( $"{section}.AfterTime" ) || days >= Value( $"{section}.CutoffTime" ) ) return 0;
+		}
+
+		return Value( topic.ScoreKey );
+	}
+
 	internal bool PostDoor( bool closed, int gameTick ) => Post( closed ? Closed : Opened, gameTick );
 
 	/// <summary>
-	/// FUN_0059a940 after FUN_0059b590: a message through the accept gate into a slot. <paramref name="subject"/>
-	/// is the thing the record's first word names, nought for none; nothing here reads it but the log. The gate
-	/// (FUN_0059abc0, no post here forced) refuses in this order: a tutorial message with the Tutorial option off;
-	/// one said before and inside its category's MinTimeSameMessage; one said, of a category said only once; one
-	/// cut off as often as its category's DiscardAfterSlaps, where that is not nought; one with all its copies in
-	/// the slots.
+	/// The accept gate, FUN_0059abc0 with nothing forced: null where it lets <paramref name="topic"/> by, and
+	/// otherwise why not, in its own order: a tutorial message with the Tutorial option off; one said before and
+	/// inside its category's MinTimeSameMessage; one said, of a category said only once; one cut off as often as
+	/// its category's DiscardAfterSlaps, where that is not nought; one with all its copies in the slots.
+	/// </summary>
+	private string? Refusal( Topic topic, int gameTick )
+	{
+		var history = _histories[topic.Id];
+		var group = $"MessageGroups[{topic.Category}]";
+		var slaps = Value( $"{group}.DiscardAfterSlaps" );
+		if ( topic.Category == Tutorial && !_tutorial() )
+			return "tutorial-off";
+		if ( (uint)history.LastTick >> 2 != 0
+			&& unchecked(((uint)gameTick >> 2) - ((uint)history.LastTick >> 2))
+				< (uint)Value( $"{group}.MinTimeSameMessage" ) )
+			return "cooldown";
+		if ( history.Said && Value( $"{group}.SayOnlyOnce" ) != 0 )
+			return "said-once";
+		if ( slaps != 0 && slaps <= history.Slaps )
+			return "slapped";
+		if ( _slots.Count( slot => slot?.Topic.Id == topic.Id ) >= topic.MaxInstances )
+			return "duplicate";
+		return null;
+	}
+
+	/// <summary>
+	/// The tick's first act, FUN_0059c680 asked for one row: the polled row the cursor stands on is scored, the
+	/// cursor moves on, and a row scoring above nought that the gate lets by and above MinScoreForConsideration
+	/// is posted about no thing, as any post is. A polled row of no built topic is counted.
+	/// </summary>
+	private void Poll( int gameTick )
+	{
+		var position = _cursor.Position;
+		_cursor.Position = (position + 1) % PolledRows;
+		Topic? topic = null;
+		foreach ( var candidate in _topics.Values )
+			if ( candidate.PollPosition == position ) topic = candidate;
+		if ( topic == null )
+		{
+			Unimplemented.Report( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" );
+			return;
+		}
+
+		var score = ScoreOf( topic, gameTick );
+		var result = score <= 0 ? "no-score" : Refusal( topic, gameTick ) ?? (score > Threshold ? "post" : "under-threshold");
+		if ( !_polled.TryGetValue( topic.Id, out var last ) || last != result )
+		{
+			_polled[topic.Id] = result;
+			Log.Info( $"Park advisor: poll message={topic.Id} position={position} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}" );
+		}
+
+		if ( result == "post" ) Post( topic.Id, gameTick );
+	}
+
+	/// <summary>
+	/// FUN_0059a940 after FUN_0059b590: a message through the accept gate (<see cref="Refusal"/>) into a slot,
+	/// at its score function's answer. <paramref name="subject"/> is the thing the record's first word names,
+	/// nought for none; nothing here reads it but the log.
 	/// </summary>
 	internal bool Post( int id, int gameTick, int subject = 0 )
 	{
+		_lastTick = gameTick;
 		var topic = _topics[id];
-		var score = Value( topic.ScoreKey );
-		var history = _histories[id];
-		var group = $"MessageGroups[{topic.Category}]";
-		var slaps = Value( $"{group}.DiscardAfterSlaps" );
-		var reason = "queued";
-		if ( topic.Category == Tutorial && !_tutorial() )
-			reason = "tutorial-off";
-		else if ( (uint)history.LastTick >> 2 != 0
-			&& unchecked(((uint)gameTick >> 2) - ((uint)history.LastTick >> 2))
-				< (uint)Value( $"{group}.MinTimeSameMessage" ) )
-			reason = "cooldown";
-		else if ( history.Said && Value( $"{group}.SayOnlyOnce" ) != 0 )
-			reason = "said-once";
-		else if ( slaps != 0 && slaps <= history.Slaps )
-			reason = "slapped";
-		else if ( _slots.Count( slot => slot?.Topic.Id == id ) >= topic.MaxInstances )
-			reason = "duplicate";
-		else
+		var score = ScoreOf( topic, gameTick );
+		var reason = Refusal( topic, gameTick ) ?? "queued";
+		if ( reason == "queued" )
 		{
 			var index = -1;
 			for ( var i = 0; i < _slots.Length && index < 0; ++i )
@@ -299,12 +394,14 @@ internal sealed class ParkAdvisorMessages
 	}
 
 	/// <summary>
-	/// One world sweep. Playback returns the response duration (zero when the speaker cannot start).
+	/// One world sweep: the poll's one row, then, past the wait, the best slot. Playback returns the response duration (zero when the speaker cannot start).
 	/// The helper still succeeds after a zero playback return; its score recheck alone can reject here.
 	/// <paramref name="said"/> hears the event a said line sends, with the response's group and the subject.
 	/// </summary>
 	internal void Tick( int gameTick, long milliseconds, Func<int, int, int> play, Action<int, int>? said = null )
 	{
+		_lastTick = gameTick;
+		Poll( gameTick );
 		if ( milliseconds < WaitUntil ) return;
 		var index = -1;
 		for ( var i = 0; i < _slots.Length; ++i )
@@ -313,7 +410,7 @@ internal sealed class ParkAdvisorMessages
 
 		var pending = _slots[index]!;
 		_slots[index] = null;
-		var score = Value( pending.Topic.ScoreKey );
+		var score = ScoreOf( pending.Topic, gameTick );
 		if ( score < Threshold ) return;
 
 		var history = _histories[pending.Topic.Id];
@@ -341,6 +438,6 @@ internal sealed class ParkAdvisorMessages
 	internal string Census() => $"park advisor: pending={PendingCount} attempts={Attempts} threshold={Threshold} "
 		+ string.Concat( _slots.Where( slot => slot != null ).Select( slot => $"slot={slot!.Topic.Id}/subject={slot.Subject} " ) )
 		+ string.Join( " ", _topics.Values.Select( topic =>
-			$"message={topic.Id}/score={Value( topic.ScoreKey )}/line={_histories[topic.Id].Line}/lastTick={_histories[topic.Id].LastTick}/said={(_histories[topic.Id].Said ? 1 : 0)}/slaps={_histories[topic.Id].Slaps}" ) )
-		+ $" action={(_started is { } started ? $"{started}+{_duration}" : "none")}/playing={_playing}";
+			$"message={topic.Id}/score={ScoreOf( topic, _lastTick )}/line={_histories[topic.Id].Line}/lastTick={_histories[topic.Id].LastTick}/said={(_histories[topic.Id].Said ? 1 : 0)}/slaps={_histories[topic.Id].Slaps}" ) )
+		+ $" action={(_started is { } started ? $"{started}+{_duration}" : "none")}/playing={_playing} poll={_cursor.Position}";
 }

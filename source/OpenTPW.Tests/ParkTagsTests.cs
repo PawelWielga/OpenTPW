@@ -43,7 +43,7 @@ public class ParkTagsTests
 		CollectionAssert.AreEqual( new[] { 68, 70, 71, 72, 150, 151 }, ParkTags.Rows.Select( row => row.Id ).ToArray() );
 		CollectionAssert.AreEqual( new[] { 383, 68, 68, 68, 151, 150 }, ParkTags.Rows.Select( row => row.Key ).ToArray() );
 		Assert.IsTrue( ParkTags.Rows.All( row => row.Picture == 1 && row.Life == 30000 ) );
-		CollectionAssert.AreEqual( new[] { 150, 151, 68, 70, 71, 72, ParkTags.NoTag }, ParkAdvisorMessages.ParkTopics.Select( topic => topic.Group ).ToArray(),
+		CollectionAssert.AreEqual( new[] { 150, 151, 68, 70, 71, 72, ParkTags.NoTag, ParkTags.NoTag }, ParkAdvisorMessages.ParkTopics.Select( topic => topic.Group ).ToArray(),
 			"each built topic's lines' group" );
 	}
 

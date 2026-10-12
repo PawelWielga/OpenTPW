@@ -40,8 +40,7 @@ namespace OpenTPW.UI;
 /// <para>
 /// <b>Engine and content.</b> The menu, the message box, the options screen and all the window handling
 /// are engine, and are the same code in both scenes. This file is the park's content: which choices it
-/// has, in what order, what each one does, the lines it has the advisor say (<see cref="ParkLines"/>),
-/// and holding him while a window pauses the game.
+/// has, in what order, what each one does, and holding the advisor while a window pauses the game.
 /// </para>
 /// </summary>
 internal sealed class ParkFrontEnd : Panel
@@ -157,9 +156,6 @@ internal sealed class ParkFrontEnd : Panel
 	private readonly ParkViewfinder _viewfinder;
 
 	private bool _quitting;
-
-	/// <summary>Whether the line a park opens with has been said - see <see cref="ParkLines.ExplainGadget"/>.</summary>
-	private bool _explained;
 
 	/// <param name="themeName">
 	/// Which park this is, so Restart Park can load the same one again rather than guessing at it.
@@ -508,24 +504,6 @@ internal sealed class ParkFrontEnd : Panel
 		// callers, Advisor_StopSpeaking twice and Advisor_StopQuietly, none of which is the pause. So he
 		// stands behind the menu here too - see Advisor's class remarks.
 		advisor.Paused = _stack.AnyPausing;
-
-		// The line a park opens with, said from the first running frame rather than from the constructor -
-		// but NOT because the constructor would talk over the loading screen. Add only queues; nothing is
-		// ever said outside Advisor.OnUpdate, and
-		// no entity updates while a level is still being built, so queueing it there would have behaved
-		// identically. It sits here because this is where the once-a-visit latch belongs, beside the pause
-		// it has to respect.
-		//
-		// The latch is set BEFORE the line is queued, so a line he never voices - switched off in the
-		// options, where Advisor.Speak drops it - still spends the "once". That is the original's own
-		// behaviour, not an oversight: Advisor_SayResponse (0x00599050) returns 0 with the switch off and
-		// the tick writes mLastActionStarted and the per-message counters regardless, spending the once on
-		// the offer rather than on anything being heard.
-		if ( !_explained && !advisor.Paused )
-		{
-			_explained = true;
-			ParkLines.ExplainGadget();
-		}
 	}
 
 	/// <summary>

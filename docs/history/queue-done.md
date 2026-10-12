@@ -6251,6 +6251,27 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   tick 893, 6.21 s on, the record read `(893, 0, 1, 0)`, the new action began 205 ms after the saved wait's end
   and the second tag stood (the length read 8,332 where 8,331 was predicted). Bugs put back (`mutations.py`,
   41): all fail a test, two of them after the tests were fixed (the stopwatch handed over with the clock moved, and the message playing written as two bytes). Tests 3007. I split the item: every other piece of the old Q315 is Q316.
+- [x] **Q316. The control panel's line is the advisor's polled message, said once a park.** Done 2026-10-12.
+  The tick's first act is the poll (`FUN_0059c680`): one polled row of the metadata table a tick, 156 of the 351,
+  from a cursor that is the program's (`0x00fb3540`), and a row scoring above nought that the gate lets by and
+  above the threshold is posted. Row 185, message `0xb9`, is the line this game said at every entry: a tutorial
+  message scored `TutorialUIPanel.Score` on days 11 to 59 of a park (`0x005a06c0`), and the shipped park's file
+  holds it as said on tick 257, so Lost Kingdom's Instant Action never says it (`exe/advisor-park.md`, "The poll,
+  and the control panel's line"). Built: `ParkAdvisorMessages.Poll`, `ScoreOf`, `Refusal`, `PollCursor`,
+  `ProgramCursor`, the topic `ControlPanel`; `UI.ParkLines` and its line at every entry are gone;
+  `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is new. Confirmed, predicted first (`q316/confirm.py stock|fresh|control`,
+  four of four, three of four, the control one of one): the stock park logged `poll message=185 position=110
+  days=37 score=110 threshold=25 tick=866 result=said-once`, `advisor` quiet and nobody beside the gadget four
+  seconds in (`run-stock1/1-four-seconds-in.png`), and a mechanic's line begun at four seconds was heard, where
+  main's build had him up saying sample 377 and refused it; the stock file with the record made fresh logged the
+  post and `attempt=1 message=185 ... response=404 sample=377 line=0 tick=866`, him up
+  (`run-fresh3/1-saying-it.png`), the saved file's record `(866, 0, 1, 0)` and its action playing 185, and after
+  its load `result=said-once`. The miss: the line's length, 19 to 21 s where under 18.5 was predicted. The
+  original (`orig/run.sh`): its stock park's record `(257, 0, 1, 0)` and no slot for 85 s; the fresh-record file
+  said on tick 877 where 878 was predicted from its cursor; this game's file read `(866, 0, 1, 0)` and stayed
+  silent. Bugs put back (`mutations.py`, 39): 38 fail a test, four of them after the tests were fixed; the last
+  is the same behaviour (the poll's own ask of the gate, which the post asks again). Tests 3009. I split the
+  item: every other piece of the old Q316 is Q317.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

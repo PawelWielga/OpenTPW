@@ -16,7 +16,7 @@ public class ParkAdvisorMessageTests
 			+ $"ParkNowOpen.Score {open}\nParkNowClosed.Score {close}\nRidesBreakdownImminent.Score {worn}\n"
 			+ "RidesBreakdownNoMechanics.Score 105\nRidesBreakdownBusyMechanics.Score 107\n"
 			+ $"RidesBreakdownMechanicOnIt.Score {mechanic}\n"
-			+ "MessageGroups[0].DiscardAfterSlaps 0\nMessageGroups[1].MinTimeSameMessage 0\nMessageGroups[1].SayOnlyOnce 1\nMessageGroups[1].DiscardAfterSlaps 3\nHelpMessage.Score 1000\n" ) ) );
+			+ "MessageGroups[0].DiscardAfterSlaps 0\nMessageGroups[1].MinTimeSameMessage 0\nMessageGroups[1].SayOnlyOnce 1\nMessageGroups[1].DiscardAfterSlaps 3\nHelpMessage.Score 1000\nTutorialUIPanel.AfterTime 10\nTutorialUIPanel.CutoffTime 60\nTutorialUIPanel.Score 110\n" ) ) );
 
 	private static void Set( SettingsFile settings, string key, int value )
 	{
@@ -129,7 +129,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 7, written.Count );
+		Assert.AreEqual( 8, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -152,9 +152,13 @@ public class ParkAdvisorMessageTests
 		var state = new ParkState( null ) { AdvisorMessages = messages };
 		state.SetParkClosed( true );
 		state.SetParkClosed( false );
-		for ( var i = 0; i < 1000; ++i ) messages.Tick( i, i * 248, (_, _) => throw new Exception( "stock speech" ) );
+		// The one line of the thousand sweeps is the poll's: the control panel's, a fresh park's on its day 11.
+		var polled = new List<(int, int, int)>();
+		for ( var i = 0; i < 1000; ++i )
+			messages.Tick( i, i * 248, ( response, sample ) => { polled.Add( (i, response, sample) ); return response == 404 ? 15400 : throw new Exception( "stock speech" ); } );
+		CollectionAssert.AreEqual( new[] { (266, 404, 377) }, polled );
 		Assert.AreEqual( 2, messages.PendingCount );
-		Assert.AreEqual( 0, messages.Attempts );
+		Assert.AreEqual( 1, messages.Attempts );
 		Assert.IsTrue( messages.Census().Contains( "message=128/score=20/line=-1" ) );
 		Assert.IsTrue( messages.Census().Contains( "message=129/score=20/line=-1" ) );
 	}
@@ -759,5 +763,152 @@ public class ParkAdvisorMessageTests
 			Entity.ApplyDeletions();
 			ParkState.ForgetCurrent();
 		}
+	}
+
+	private static int Counted( string gap ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == gap ).Times;
+
+	/// <summary>
+	/// <b>Message 0xb9, the control panel's line, is polled</b> (row 185 of 0x0076e300: polled, category 1, score
+	/// 0x005a06c0, one copy, response 404 = sample 377, one line; <c>FUN_0059c680</c>): each sweep scores the one
+	/// polled row the cursor stands on, of 156, and this one, the 111th, scores <c>TutorialUIPanel.Score</c> while
+	/// the park is more than AfterTime and less than CutoffTime whole days old. Posted, it is said on the same
+	/// sweep, about no thing and with no tag, and never again.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the position another; the cycle a row longer or shorter; the cursor not moved on; the
+	/// day's bounds at or past their ends; the day a sweep's; the score nought or under the threshold posted;
+	/// the gate not asked; the category nought; the response or sample another's; the unbuilt rows not counted.
+	/// </remarks>
+	[TestMethod]
+	public void TheControlPanelsLineIsPolledOnThePollsOwnRowAndSaidOnce()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor();
+		var messages = new ParkAdvisorMessages( Settings(), cursor: cursor );
+		var said = new List<(int, int, int)>();
+		var groups = new List<(int, int)>();
+		int Play( int response, int sample ) { said.Add( (cursor.Position, response, sample) ); return 15400; }
+		var unbuilt = Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" );
+
+		Assert.AreEqual( 156, ParkAdvisorMessages.PolledRows );
+		Assert.AreEqual( 10, ParkAdvisorMessages.DaysSinceTheFirstSweep( 253 ) );
+		Assert.AreEqual( 11, ParkAdvisorMessages.DaysSinceTheFirstSweep( 254 ) );
+		Assert.AreEqual( 59, ParkAdvisorMessages.DaysSinceTheFirstSweep( 1382 ) );
+		Assert.AreEqual( 60, ParkAdvisorMessages.DaysSinceTheFirstSweep( 1383 ) );
+		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel );
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 253 ), "day 10 is not after 10" );
+		Assert.AreEqual( 110, messages.ScoreOf( topic, 254 ) );
+		Assert.AreEqual( 110, messages.ScoreOf( topic, 1382 ) );
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1383 ), "day 60 is not before 60" );
+
+		// A whole round on day 11 from the table's first row: the 111th sweep's row alone is built, and is said.
+		for ( var i = 0; i < 156; ++i )
+		{
+			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
+			Assert.AreEqual( (i + 1) % 156, cursor.Position );
+		}
+		CollectionAssert.AreEqual( new[] { (111, 404, 377) }, said );
+		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
+		Assert.AreEqual( unbuilt + 155, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		StringAssert.Contains( messages.Census(), "message=185/score=110/line=0/lastTick=364/said=1/slaps=0" );
+		StringAssert.Contains( messages.Census(), "/playing=185 poll=0" );
+		Assert.AreEqual( 185, messages.WrittenAction( 1000, 0 ).Playing );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 364, 0, true, 0 ), messages.Written()[185] );
+
+		// Round after round, said once.
+		for ( var i = 0; i < 400; ++i )
+			messages.Tick( 500 + i, (500 + i) * 250L, ( _, _ ) => throw new Exception( "said twice" ) );
+		Assert.AreEqual( 1, messages.Attempts );
+		Assert.AreEqual( 0, messages.PendingCount );
+	}
+
+	/// <summary>
+	/// The poll's bounds and its gate: on the row's sweep a park of ten days or of sixty is not posted, nor one
+	/// whose file says the line was said, nor one with the Tutorial option off, nor a score not above
+	/// MinScoreForConsideration; a second park takes the cursor where the first left it; and a row found while
+	/// he waits out another line stands in a slot until the wait is over.
+	/// </summary>
+	[TestMethod]
+	public void ThePollAsksTheAgeTheGateAndTheThreshold()
+	{
+		ParkAdvisorMessages On( int position, SettingsFile? settings = null, bool tutorial = true )
+			=> new( settings ?? Settings(), tutorial: () => tutorial, cursor: new ParkAdvisorMessages.PollCursor { Position = position } );
+		static int Never( int response, int sample ) => throw new Exception( $"said {response}" );
+
+		var young = On( 110 );
+		young.Tick( 253, 0, Never );
+		Assert.AreEqual( 0, young.PendingCount, "day 10" );
+		var old = On( 110 );
+		old.Tick( 1383, 0, Never );
+		Assert.AreEqual( 0, old.PendingCount, "day 60" );
+		var beside = On( 109 );
+		beside.Tick( 900, 0, Never );
+		Assert.AreEqual( 0, beside.PendingCount, "the row before" );
+		var after = On( 111 );
+		after.Tick( 900, 0, Never );
+		Assert.AreEqual( 0, after.PendingCount, "the row after" );
+
+		var off = On( 110, tutorial: false );
+		off.Tick( 900, 0, Never );
+		Assert.AreEqual( 0, off.PendingCount, "the Tutorial option off" );
+
+		var low = Settings();
+		Set( low, "TutorialUIPanel.Score", 25 );
+		var under = On( 110, low );
+		under.Tick( 900, 0, Never );
+		Assert.AreEqual( 0, under.PendingCount, "25 is not above 25" );
+		Set( low, "TutorialUIPanel.Score", 26 );
+		var over = On( 110, low );
+		var heard = 0;
+		over.Tick( 900, 0, ( _, _ ) => { ++heard; return 1000; } );
+		Assert.AreEqual( 1, heard, "26 is" );
+
+		// The shipped park's own record: said on tick 257.
+		var shipped = On( 110 );
+		shipped.Restore( id => id == ParkAdvisorMessages.ControlPanel ? new ParkWorld.AdvisorHistory( 257, 0, true, 0 ) : null );
+		shipped.Tick( 900, 0, Never );
+		Assert.AreEqual( 0, shipped.PendingCount, "said once, by the file" );
+
+		// One cursor, two parks: the second goes on from the first's row.
+		var cursor = new ParkAdvisorMessages.PollCursor { Position = 108 };
+		var first = new ParkAdvisorMessages( Settings(), cursor: cursor );
+		first.Tick( 900, 0, Never );
+		first.Tick( 901, 0, Never );
+		var second = new ParkAdvisorMessages( Settings(), cursor: cursor );
+		heard = 0;
+		second.Tick( 900, 0, ( response, _ ) => { Assert.AreEqual( 404, response ); ++heard; return 1000; } );
+		Assert.AreEqual( 1, heard );
+		Assert.AreEqual( 111, cursor.Position );
+
+		// Found inside another line's wait, it stands in a slot and is said as the wait ends.
+		var busy = On( 109 );
+		busy.Post( ParkAdvisorMessages.MechanicOnHisWay, 899, 13 );
+		busy.Tick( 899, 1000, ( _, _ ) => 6000 );
+		busy.Tick( 900, 1250, Never );
+		StringAssert.Contains( busy.Census(), "pending=1 attempts=1 threshold=25 slot=185/subject=0 " );
+		busy.Tick( 901, 7999, Never );
+		heard = 0;
+		busy.Tick( 902, 8000, ( response, _ ) => { Assert.AreEqual( 404, response ); ++heard; return 1000; } );
+		Assert.AreEqual( 1, heard );
+		// The score is the function's at the post and at the tick's second look, not the key's: a post outside
+		// the days stands at nought and is never said, and one found on day 59 and still waiting on day 60 is let go unsaid.
+		var early = On( 0 );
+		Assert.IsTrue( early.Post( ParkAdvisorMessages.ControlPanel, 100 ) );
+		early.Tick( 101, 0, Never );
+		StringAssert.Contains( early.Census(), "pending=1 attempts=0 threshold=25 slot=185/subject=0 " );
+		var late = On( 109 );
+		late.Post( ParkAdvisorMessages.MechanicOnHisWay, 1381, 13 );
+		late.Tick( 1381, 1000, ( _, _ ) => 6000 );
+		late.Tick( 1382, 1250, Never );
+		StringAssert.Contains( late.Census(), "pending=1 attempts=1 threshold=25 slot=185/subject=0 " );
+		late.Tick( 1383, 8000, Never );
+		StringAssert.Contains( late.Census(), "pending=0 attempts=1 " );
+
+		// A score of nought is no answer whatever the threshold.
+		var none = Settings( threshold: -1 );
+		var nought = On( 110, none );
+		nought.Tick( 253, 0, Never );
+		Assert.AreEqual( 0, nought.PendingCount, "nought is not above nought" );
+
+		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 	}
 }

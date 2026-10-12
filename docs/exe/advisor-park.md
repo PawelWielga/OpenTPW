@@ -343,7 +343,7 @@ The ids seen so far: `0xbc` when buy opens, `0xbd` when hire opens, `0xc6` and `
 |---|---|
 | The loader that fills `0x0076e300` | **Found** and emulated: the static initializer at `0x005a0a50` (above); the 40 screen-posted ids are posted-only rows of one line each |
 | The u16 at message `+0x00` | Unknown — it is written by `FUN_0059c0a0` but is not the gating id |
-| `Welcome` (section 2) | Looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
+| `Welcome` (section 2) | Row 0 of the metadata table is polled and its score function (`0x0059c8c0`, `MOV EAX,[ECX + 0xa0]`) is `Welcome.Score`; the shipped park's file holds message 0 as said on tick 1. Its line looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
 | Responses 399-402 | All carry sample 1, an `OpenPark` line — the same stub shape |
 
 ## Q90b — the posted door path (2026-10-03)
@@ -842,7 +842,7 @@ attempt. Main's build named message 284 nowhere and counted `TAG_MESSAGE_BAR_ADV
 | The kept message (`+0x16d0`, `FUN_0059ab50`) | forgotten by a withdrawal of its id | kept by nothing here |
 | The Tutorial option | read at each post | the same; the console's `tutorial on|off` sets it in memory |
 | The cut | `Advisor_StopSpeaking` | the same call (`Advisor.StopSpeaking`), with its cry where his voice had started |
-| The other 39 screens' lines (`0xbc` to `0xd5`, `0x11d` to `0x135`) | posted as each opens | not posted (`UI.ParkLines`) |
+| The other 39 screens' lines (`0xbc` to `0xd5`, `0x11d` to `0x135`) | posted as each opens | not posted |
 
 ## The records in a park file (Q313)
 
@@ -951,7 +951,7 @@ alone: no `0x45` in any slot or record.
 | A slot let go | its other bytes stand as they were | the file's bytes stand; a message said here leaves the file's older bytes, not its own |
 | The shipped park's opening message at 20 | waits for ever and refuses the next | the same |
 | The last action's start and length, `mMessagePlaying` | on the second stopwatch, saved and set again | read and written: "The last action in a park file", below |
-| The line said at once after a load | heard | refused by the speaker while the gadget's opening line is said (the tag and the record are as the original's) |
+| The line said at once after a load | heard | heard: no line is said at a park's entry any more ("The poll, and the control panel's line", below) |
 
 Not in a game run: the door shut and opened again after a load (the test holds `duplicate`), a taken slot of an
 unbuilt message, a full eight slots. The two calls in `Level` are held by the game runs alone.
@@ -1006,8 +1006,103 @@ its load.
 | The message playing | read by a withdrawal inside the wait | the same |
 | A withdrawal's cut | the duration nought, the start as it was | the same |
 | The stopwatch | its own, unscaled; parts from the clock when the clock's rate is not 1 | the file's second dword moved with the clock: this game's clock has one rate |
-| A screen's line (`ParkLines`), the gadget's opening line among them | said through the slots, so it starts an action | said past the messages: it starts no action and is written as none |
+| The control panel's line | a polled message through the slots, so it starts an action | the same ("The poll, and the control panel's line", below) |
 
 Not in a game run: a withdrawal inside a file's wait (the tests hold it), a file with a wait of nought, a park
 made fresh saved before any line, Alexah's own parks. The two calls in `Level` are held by the game runs alone.
 Not heard in either game.
+
+## The poll, and the control panel's line (message `0xb9`, Q316)
+
+**The poll.** The tick's first act, before its wait is looked at, is `FUN_0059c680( 1 )` on the balance object
+(`0x0059a58b`, `ECX = 0x00fb3540`): from the row its first dword names, the cursor, it walks the metadata table,
+wrapping past row `0x15e`, until it has scored ONE row whose `+0x00` is nought, and leaves the cursor on the row
+after. A row is scored by its function (`+0x10`) where its mode (`+0x0c`) fits the game, and -1 otherwise; a score
+above nought of a message the gate (`FUN_0059abc0`, not forced) lets by makes that message the answer, and
+anything else answers `0x160`, no message. The tick then scores the answer again (`FUN_0059bf20`, -1 for `0x160`)
+and, where that is above `MinScoreForConsideration` (`0x0059a5f5`, `JLE` past), posts it as any post: about thing
+nought, line -1, not forced, no score given (`FUN_0059b590`, `FUN_0059a940`). So a polled message waits in the
+slots with the posted ones, and is said on the same tick where no wait is on.
+
+**156 of the 351 rows are polled** (the emulated table, `+0x00` nought): 0-32, 58-65, 71-82, 85-92, 98, 100-105,
+107-124, 140-141, 144-160, 169-173, 185, 238-257, 259-265, 267-269, 274-276, 278-282, 314, 316-317 and 347-350. A
+round is therefore 156 ticks, 39 seconds. **The cursor is the program's, not the park's:** `FUN_0059bea0` stores
+nought in it as the balance object is first built, nothing else stores it but the poll, and the advisor's
+serialiser does not write it ("The slots in a park file"), so a park entered or loaded takes it where the last
+one left it.
+
+**Row 185, message `0xb9`:** polled, category 1 (the tutorial messages: said once, refused with the Tutorial
+option off, dropped after three cuts), either game mode, one copy, first response 404, one line. Response 404 is
+sample 377, lip 377, the random gesture chain, model slot 0, no prop, group 383 (no tag): "see the control panel
+over there at the bottom left part of the screen...". It is the 111th polled row.
+
+**Its score, `0x005a06c0`** (in no Ghidra function): `FUN_004f8800`'s time since `mGameTick` nought
+(`ride-operation.md`, "The 24 months") over `0xC92A69C000` by `__alldiv`, whole days; `JLE` to nought against
+`[ECX + 0x5dc]`, `JGE` to nought against `[ECX + 0x5e0]`, else `[ECX + 0x5e4]`. Walked from the schema
+(`lib/advisorschema.py`) those are `TutorialUIPanel.AfterTime`, `.CutoffTime` and `.Score`: 10, 60 and 110 in
+`Advisor.sam`. A tick is 3,750 funny seconds, a day 23.04 ticks: **the line is owed from tick 254 to tick 1382 of
+a park**, and is said on the first of those ticks the cursor stands on row 185. Row 282's (`0x005a0720`, message
+`0x11a`) is the same function on `TutorialExplainTooltips` (20, 80, 100), and row 281's (`0x005a0780`) is
+`GoldTicketExplanation.Score` on a count of one: neither is built.
+
+**What the shipped park holds.** `Easymode.TPWI`'s record of `0xb9` is (257, line 0, said 1, slaps 0): its makers'
+park said the line on its eleventh day, and the file begins on tick 755. So **Instant Action's Lost Kingdom never
+says it**: every poll of row 185 scores 110 and is refused by the gate as said once. `0x11a` is there as said on
+tick 605, 348 ticks later: two rounds and the 38 polled rows between the two.
+
+### OpenTPW (`ParkAdvisorMessages.Poll`, `ScoreOf`, `Refusal`, `PollCursor`; topic `ControlPanel`)
+
+Each sweep's `Tick` polls first: the cursor counts the polled rows, 0 to 155, and is the program's
+(`ParkAdvisorMessages.ProgramCursor`, handed to every park by `Level`). The one built polled row stands at 110;
+each of the other 155 is counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`. A topic's score is its function's
+(`ScoreOf`: the age's bounds for the control panel's, the key's value for the rest), asked at the poll, at the
+post and at the tick's recheck (`FUN_0059b620` calls `FUN_0059c0a0`). The poll logs a line a change of its
+answer: `Park advisor: poll message=185 position=110 days=... score=... tick=... result=...`. **The line a park
+was entered with is gone:** `UI.ParkLines.ExplainGadget` said sample 377 past the messages at every entry and
+every load, which the original never does.
+
+`q316/confirm.py stock|fresh|control`, predicted first (`q316/PREDICTION.txt`). **The stock park** (four of
+four): `restored message=185 line=0 lastTick=257 said=1 slaps=0`; one poll line, `position=110 days=37 score=110
+threshold=25 tick=866 result=said-once`, the first sweep's tick 756 and 110; no `sample=377` in the log, `advisor`
+quiet four seconds in and nobody beside the gadget (`run-stock1/1-four-seconds-in.png`); the Bounce broken at four
+seconds, the mechanic's line was heard, `duration=6498` and `playback=started`, him up in the hard hat
+(`2-the-mechanics-line.png`). **Main's build** (the control, one of one): `saying sp_377.mp2` four seconds in, him
+up (`run-control/1-four-seconds-in.png`), no poll line, and the same mechanic's line `duration=0` and
+`playback=refused`. **The stock file with the record of `0xb9` made fresh** (`parkfile.advisor_forget`; three of
+four in `run-fresh3`): `poll ... tick=866 result=post`, `post message=185 subject=0 score=110 ... result=queued
+pending=2` and `attempt=1 message=185 ... response=404 sample=377 line=0 tick=866`, all on that tick, 25.5 s in;
+three seconds on `saying sp_377.mp2`, him up with no hat and no tag (`run-fresh3/1-saying-it.png`). The miss is
+the line's length: predicted 15,400 to 18,500 ms, it read 19,830, 18,998 and 20,665 in three runs (the random
+gesture chain's). `savepark` under the pause: the file's record `(866, 0, 1, 0)`, its action's wait the line's
+and a second, its message playing 185, and no other byte of thing 3 moved. Loaded from the Load Park list:
+`restored message=185 line=0 lastTick=866 said=1 slaps=0`, the next poll of it `tick=1022 result=said-once` (the
+cursor carried through the load: 866 and 156), and no second attempt. **A park made with no file** (a run whose
+file did not read, `run-madefresh`, not predicted): `tick=111 days=4 score=0 result=no-score`, then `tick=267
+days=11 result=post` and the line.
+
+**The original** (`q316/orig/run.sh`, `advisor.py ... 0xb9,0x11a poll`, three loads in one program; predicted
+first). **Its stock park:** the record read `(257, 0, 1, 0)` from the load and nothing changed in 85 s, more than
+two rounds: no slot held `0xb9`. **The fresh-record file:** from the load, tick 755, the record read `(0, -1, 0,
+0)` with the cursor on row 277; row 185 is the 123rd polled row from there, so tick 878 was predicted, and on
+tick **877**, 31 s on, the record read `(877, 0, 1, 0)`, the action `(114906681, 19164)` and the cursor 186. Its
+wait, 19,164 ms, is inside this game's three (19,998 to 21,665), not the same number as predicted: the chain of
+gestures is drawn. **This game's file of the said line:** `(866, 0, 1, 0)` and the action `(114903768, 21665)`
+from the load, unchanged in 85 s, and no slot held `0xb9`. Between two of its lines 380 ticks apart the cursor
+moved two rounds and 70 polled rows: one row a tick. **Filmed** (`orig/run2.sh`, a fresh program started on the
+fresh-record file and loading it again): said on tick 877 again, 31.0 s after the click, the wait 20,832 ms, and
+four seconds into the line he is up at the lower right with his antennae and no hat (`orig/fresh2-t05.png`), as
+here (`run-fresh3/1-saying-it.png`).
+
+| | The original | OpenTPW |
+|---|---|---|
+| The poll | one polled row a tick, of 156, the cursor the program's | the same, counted in polled rows |
+| The control panel's line | row 185: days 11 to 59 of a park, said once | the same |
+| The stock park | never said: its file holds it as said | the same |
+| A file with the record fresh | said on the tick the cursor reaches row 185 (877 from row 277) | the same (866 from the table's first row) |
+| The other 155 polled rows | scored each round | counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
+| The cursor through a load | read 160 and then 277 across one load, 186 and 186 across another, and the line came on tick 877 after both loads of the fresh-record file: not read | carried as it stands |
+| The line's wait | the response's length and a second | the same; the length differs a run, as the gesture chain does |
+
+Not in a game run: the cutoff (a park past tick 1382), the Tutorial option off at the poll, the line cut off, a
+line found by the poll inside another's wait (the tests hold each); a park made with no file was run once and not
+predicted. Not heard in either game.

@@ -212,9 +212,8 @@ public class Level
 	/// of the park's own terrain.wad, through the same model and texture path the lobby already uses.
 	/// </para>
 	/// <para>
-	/// The advisor is handed lines from two places: <see cref="UI.ParkLines"/> for the park's screens, and
-	/// <see cref="ParkAdvisorMessages"/> for the park-door messages, which it scores through eight slots. The
-	/// original's other park messages and its polling analyser are not built.
+	/// The advisor is handed a park's lines by <see cref="ParkAdvisorMessages"/>, which scores its built messages
+	/// through eight slots and polls one. The original's other park messages are not built.
 	/// </para>
 	/// </summary>
 	private void SetupParkEntities()
@@ -283,7 +282,7 @@ public class Level
 		ParkState = new ParkState( park )
 		{
 			RegionEffects = ParkRegionEffects.From( Balance ),
-			AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) )
+			AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ), cursor: ParkAdvisorMessages.ProgramCursor )
 		};
 		Log.Info( $"{ThemeName}: the park's clock starts at mGameTick {ParkState.GameTick}" );
 		ParkState.Tags.Strings = TagStrings()?.Parts;
@@ -392,7 +391,7 @@ public class Level
 		// while he talks, and the teardown runs in the order things were made, so a park's sound and its
 		// weather end before he does. Advisor_Update runs from a park's loop (0x0054f9f9) exactly as it
 		// runs from the lobby's (0x0054e6df) - he is the same speaker in both scenes, and what differs is
-		// who hands him lines: UI.ParkLines for its screens, ParkAdvisorMessages for its door.
+		// who hands him lines: a park's are ParkAdvisorMessages'.
 		_ = new Advisor();
 		load.Mark( "advisor" );
 

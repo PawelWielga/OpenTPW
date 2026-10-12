@@ -292,9 +292,9 @@ from the crossing. So the arrival path they would take is the one the shipped sa
 ## 4. The advisor says one line in a park, and nothing after it
 
 - [ ] **Seen:** the advisor is a constant presence in the original and says nothing here while you play.
-- **Lives:** `docs/exe/advisor-park.md`; a park's lines are `UI/Park/ParkLines.cs`, which says one (`ExplainGadget`), and
-  `World/Advisor/ParkAdvisorMessages.cs`, which posts the door's opened and closed messages (Q90b): silent with the shipped
-  `Advisor.sam`, whose score of 20 for each is under the threshold of 25.
+- **Lives:** `docs/exe/advisor-park.md`; a park's lines are `World/Advisor/ParkAdvisorMessages.cs`'s: the door's opened and closed messages (Q90b), silent with
+  the shipped `Advisor.sam`, whose score of 20 for each is under the threshold of 25; the breakdown lines (Q305 to Q307), the
+  message bar's (Q312) and the control panel's, which is polled and which the stock park's file holds as said (Q316).
 - **The "needs simulation" blocker was refuted:** his acceptance gate consults no world state, and the HUD
   it waited on exists. This is buildable today.
 - **Do not transcribe anything first:** every global speech line is already transcribed in
