@@ -40,10 +40,18 @@ public class ParkTagsTests
 		Assert.AreEqual( unlisted + 1, Times( "TAG_ROW_NOT_LISTED" ) );
 		Assert.AreEqual( 1, tags.Standing.Count );
 
-		CollectionAssert.AreEqual( new[] { 68, 70, 71, 72, 150, 151 }, ParkTags.Rows.Select( row => row.Id ).ToArray() );
-		CollectionAssert.AreEqual( new[] { 383, 68, 68, 68, 151, 150 }, ParkTags.Rows.Select( row => row.Key ).ToArray() );
-		Assert.IsTrue( ParkTags.Rows.All( row => row.Picture == 1 && row.Life == 30000 ) );
-		CollectionAssert.AreEqual( new[] { 150, 151, 68, 70, 71, 72, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag }, ParkAdvisorMessages.ParkTopics.Select( topic => topic.Group ).ToArray(),
+		CollectionAssert.AreEqual( new[] { 3, 68, 70, 71, 72, 150, 151 }, ParkTags.Rows.Select( row => row.Id ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 4, 383, 68, 68, 68, 151, 150 }, ParkTags.Rows.Select( row => row.Key ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 2, 1, 1, 1, 1, 1, 1 }, ParkTags.Rows.Select( row => row.Picture ).ToArray() );
+		Assert.IsTrue( ParkTags.Rows.All( row => row.Life == 30000 ) );
+
+		// The shut park's line: part 2, the entry-price button, no thing.
+		var waiting = tags.Said( 3, 0, 6000 );
+		Assert.IsNotNull( waiting );
+		Assert.AreEqual( (3, 4, 2, 7, 0x18, 0, 0, 0, 36000L),
+			(waiting.Row.Id, waiting.Row.Key, waiting.Row.Picture, waiting.Row.String, waiting.Row.Button1, waiting.Row.Button2, waiting.Row.Kind, waiting.Subject, waiting.HideAt) );
+		Assert.AreEqual( 2, tags.Standing.Count );
+		CollectionAssert.AreEqual( new[] { 150, 151, 3, 68, 70, 71, 72, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag }, ParkAdvisorMessages.ParkTopics.Select( topic => topic.Group ).ToArray(),
 			"each built topic's lines' group" );
 	}
 

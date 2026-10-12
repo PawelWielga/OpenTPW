@@ -838,7 +838,13 @@ cell (0: the bar stays); 4 `FUN_004868d0( &item )` (0; not read); 9 to `0xc` `FU
 `0xd` to `0x11` `FUN_0049bdd0( 0..4 )` (2); `0x12` `FUN_0049fb30` (2); `0x13` `FUN_004aa480`, research (2); `0x14`
 `FUN_004a52a0` (2); `0x15` `FUN_004b2750` (2); `0x16` `FUN_004b7b00` (2); `0x17` `FUN_004dfe30( 1 )` on the
 thing, the call for a mechanic (1); `0x18` `FUN_00498d80`, the entry price screen (2); `0x1a` and `0x1b`
-`FUN_004d2df0` and `FUN_004d2ec0` on the thing `FUN_00519610` answers (2). None but 3 is read further.
+`FUN_004d2df0` and `FUN_004d2ec0` on the thing `FUN_00519610` answers (2). None but 3 and `0x18` is read further.
+`FUN_00498d80` is the entry-price screen's builder: nothing where the screen is open already (`[0x007ca210]`),
+else the screen with the Finance category's last screen noted as 10 (`FUN_004a0810( 3, 10 )`) and its own advisor
+message, `0x12f`, posted. On its answer of 2 the bar's handler posts the mast `0x100002` for the tag with nought
+(hidden, and off half a second on) and folds the arm away. **Built** (Q319, `ParkGadget.BarButton`): the tag of
+the advisor's row 1 carries it (`advisor-park.md`, "A shut park people wait outside"), and in the original its
+click read as that: a slot took `0x12f`, the handle went back to 331 and no tag was held 0.53 s on.
 
 **The stream at `0x007502b8`** is seven rows of four shorts, a change of the control's left, top, right and bottom:
 three of (-2, -2, 2, 2), three of (2, 2, -2, -2) and the end mark `0xd8f3`. The tag on show swells two a side a
@@ -911,7 +917,7 @@ its tag was gone 33 s after it came.
 | The arm's sounds (`0x1c` as it starts, `0xc2` as it is in) | played | not played (Q230) |
 | The panel's children as it comes out | each shown as its right edge passes the body's | all at once |
 | The bar's text | the middle panel's, over the right slice | the same lettering; the right slice is put in the tree before the middle one so that it is drawn under it. At 1280 x 720 font 6 is a smaller face than the original's at 1024 x 768, so the line breaks fall later |
-| The two stacked buttons | 21 types | dressed for every type whose mesh is a file of `ui.wad` (not `b_loan` and `b_pkinfo`, nodes of files not looked up); only type 3 acts, the rest counted `TAG_BAR_BUTTON` |
+| The two stacked buttons | 21 types | dressed for every type whose mesh is a file of `ui.wad` (not `b_loan` and `b_pkinfo`, nodes of files not looked up); types 3 and `0x18` act, the rest counted `TAG_BAR_BUTTON` |
 | Advisor message `0x11c` | posted with the bar, withdrawn as it leaves | the same (`advisor-park.md`, "The line of an opened tag message") |
 | The tag on show | swells by the stream, a step every 100 ms on the frame's clock | the same steps on real milliseconds, so a round is 0.7 s where the original's frames make it 0.9 |
 | The buttons' depths | one more at every showing | not kept |

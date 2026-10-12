@@ -731,6 +731,7 @@ topics' rows:
 | 70 | no mechanics (198 to 200) | 68 | 1 | 72 | 3, 0 | 30000 | 2 |
 | 71 | the mechanics all busy (201 to 203) | 68 | 1 | 73 | 3, 0 | 30000 | 2 |
 | 72 | a mechanic on his way (204 to 206) | 68 | 1 | 74 | 3, 0 | 30000 | 2 |
+| 3 | a shut park people wait outside (2 to 4) | 4 | 2 | 7 | 24, 0 | 30000 | 0 |
 | 150 | the park open (308, 309) | 151 | 1 | 149 | 0, 0 | 30000 | 0 |
 | 151 | the park shut (310, 311) | 150 | 1 | 150 | 0, 0 | 30000 | 0 |
 
@@ -1097,7 +1098,7 @@ says it**: every poll of row 185, the first on tick 877, scores 110 and is refus
 
 Each sweep's `Tick` polls first, from the cursor's row, which is the program's (`ParkAdvisorMessages.ProgramCursor`,
 handed to every park by `Level`), set from a loaded file's dword (`Park advisor: restored poll cursor row=...`)
-and written to `savepark`'s file. The built polled rows are 185 and 282 ("The tips' line", below); each of the other 153 is counted
+and written to `savepark`'s file. The built polled rows are 185, 282 ("The tips' line", below) and 1 ("A shut park people wait outside", below); each of the other 152 is counted
 `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`. A topic's score is its function's (`ScoreOf`: the age's bounds for the
 control panel's, the key's value for the rest), asked at the poll, at the post and at the tick's recheck
 (`FUN_0059b620` calls `FUN_0059c0a0`). The poll logs a line a change of its answer: `Park advisor: poll
@@ -1153,7 +1154,7 @@ have come 122 ticks after the save.
 | A file with the record fresh | said on tick 877 | said on tick 877 |
 | The Tutorial option off | not posted; said a round on once it is on | not posted (the turn after was run past the cutoff) |
 | Past day 60 | not said | not said |
-| The other polled rows | scored each round | row 282 built (below); 153 counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
+| The other polled rows | scored each round | rows 282 and 1 built (below); 152 counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
 | The line's wait | the response's length and a second | the same; the length differs a run in both, as the gesture chain does |
 
 Not in a game run: a line found by the poll inside another's wait (the test holds it). No case in either game:
@@ -1182,7 +1183,7 @@ said once, and from tick 1845 scores nought.
 ### OpenTPW (`ParkAdvisorMessages.ExplainTooltips`, a second topic with `Polled` and an `AgeSection`)
 
 A row of `ParkTopics` and nothing else: the poll, the score by the park's age, the gate, the records, the slots
-and the action are Q312's to Q316's. `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is counted for 153 rows a round.
+and the action are Q312's to Q316's. `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` was counted for 153 rows a round then, and is for 152 since row 1 was built.
 
 **Predicted first** (`q317/PREDICTION.txt`, `q317/confirm.py stock|control|fresh|nofile|cutoff`; twelve of
 twelve, every number written before any build or run). **The stock park** (four of four): `restored message=282
@@ -1220,3 +1221,92 @@ action (114877440, 11665) and the cursor 16 from the load on, tick 782, and unch
 
 Not in a game run of the original: the Tutorial switch off at this row's turn, a park past day 79, a park made
 with no file. Not heard in either game. The line's end was not seen.
+
+## A shut park people wait outside (message 1, Q319)
+
+**Row 1, message 1:** polled, category 0 (the same message no sooner than 120 quarter-ticks on), either game mode,
+one copy, first response 2, three lines in turn. Responses 2 to 4 are samples 1 to 3, the random gesture chain,
+model slot 0, prop 9 (the ticket hat), group 3. It is the first polled row of a round: from the shipped park's
+cursor, 277, its turns are ticks 768, 923, 1078 and every 155 on.
+
+**Its score, `0x0059c8d0`** (a function made in Ghidra; `ECX` the balance object, `0x00fb3540`):
+
+1. The park open (`FUN_004c9050`, `mParkClosed` nought): nought.
+2. `FUN_004ca8e0( 0, 0 )` and `FUN_004ca8e0( 2, 0 )` both under 1: nought. The routine walks the world's thing
+   list and counts the things of type 3 whose item's `+0x4ac` (`Info.WhichUIType`) is the kind asked for, 0 a
+   ride and 2 a sideshow (for a ride, only at the level asked for or over: the thing's byte `+0x50`, against
+   nought here). So a shut park with nothing to ride is told nothing.
+3. Otherwise `FUN_004c91c0()` times `[ECX + 0xa4]`, `OpenPark.ScorePerWaitingPerson` (`lib/advisorschema.py`), 20
+   in `Advisor.sam`. `FUN_004c91c0` takes the two ticket booths' cells (`FUN_004d8610( 0 )` and `( 1 )`), walks
+   each cell's own list of things (the cell's `+0x24`, then each thing's `+0xa`) and counts those of type 1 whose
+   `mState` (`+0x220`) is 3, waiting for the opening; it leaves the count in the analyser's `+0x1f0d4` and sets
+   the byte after it. A guest who has paid and one who has not are both in state 3 there.
+
+`MinScoreForConsideration` is 25, so **one guest waiting is not enough and two are**. The tag its line leaves is
+row 3 of the tag table: key 4 (it takes the place of row 2's tag, "close your park"), picture 2, string 7 ("People
+want to come in but your park is closed. You should think about opening up."), the bar's first button of type
+`0x18`, no second, thirty seconds.
+
+**Row 2, message 2, `ClosePark`** (`0x0059c960`, read and not built): with the park open and neither a ride nor a
+sideshow standing, `[ECX + 0xa8]`, `ClosePark.Score`, 99; responses 5 to 7, group 4.
+
+**Rows 259 to 263 score in a shut park too, and are not built** (functions made in Ghidra, read from their
+listings alone): row 259 (`0x005a02f0`) wants the park open, at least `[ECX + 0x57c]` rides, and more than
+`[ECX + 0x580]` per cent of them answered for by `FUN_004ca9b0( 0 )`; rows 260 and 261 (`0x005a0370`,
+`0x005a03d0`) the same share of the things of kind 1 (shops) and of kind 2 (sideshows), with no test of the door;
+rows 262 and 263 (`0x005a0430`, `0x005a0490`) a share of two other counts (`FUN_004c9ee0` and `FUN_004c9f90`,
+`FUN_004ca030` and `FUN_004ca0c0`, not read). What `FUN_004ca9b0` counts was not read; the door shuts every ride,
+shop and sideshow, and in the original's shut park rows 261 and 262 were posted at 70 and 75 on ticks 900 and 901
+and a line was begun on tick 899, row 260's turn (below).
+
+### OpenTPW (`ParkAdvisorMessages.OpenPark`, `ParkFacts`, a topic's `PerWaitingGuest`; `ParkPeople.WaitingToOpen`, `AdvisorFacts`; tag row 3; `ParkGadget.BarButton`'s type `0x18`)
+
+A third polled topic, whose score asks the park: `ParkPeople` hands each sweep's `Tick` its `AdvisorFacts`, the
+door, the things standing of a ride's item and of a sideshow's (`ParkState.ObjectsInChainOrder`, the catalogue's
+`UiType`), and `WaitingToOpen`, the guests in `PeepState.WaitingForOpening` whose position's cell is either
+booth's. The console's `gate` ends with `waiting N`. `ParkTags.Rows` lists row 3. **The bar's button of type
+`0x18` is built** (`hud.md`, "The message bar"): it opens the entry-price screen and takes its tag off as the
+erase button does.
+
+**The original first** (`q319/PREDICTION.txt`; `q319/orig/run.sh`, `original/waiting.py` beside `advisor.py`,
+`tags.py` and `bar.py`). This game's file of the stock park with its door shut on the entry-price screen on tick
+787 and saved on tick 803 (`q319/scene1/shut.TPWS`): on **tick 923** the analyser's word went from -999 to 4, the
+live count of state 3 on the booths' cells read 4, and a slot took message 1 at **80**. It was **said on tick
+942**, not 923: the action's start had moved on tick 899 with a length of 10,832 ms, row 260's turn, and that
+wait ended as tick 942 began. The record then read (942, 0, 1, 0), one tag stood at (84, 909, 154, 974) with the
+mast at (94, 901, 144, 984) and string 7 word for word, and he was up in the green ticket cap
+(`orig/a-told.png`). The tag clicked: the bar's data read thing 0, buttons 24 and 0, item 0 and the text, the
+handle 331 to 1151 (`orig/a-bar.png`). The bar's first button clicked: a slot took `0x12f` at 1000 (the
+entry-price screen's own line), the screen is in the frame (`orig/a-button.png`), the handle went back to 331 and
+no tag was held 0.53 s on. **The same scene saved past row 262's turn** (this game's file saved on tick 906,
+`q319/run-fix1/shut.TPWS`; the original meets none of rows 260 to 262 before row 1): the record went from
+(0, -1, 0, 0) to **(923, 0, 1, 0) on tick 923**, the analyser's word to 3 and the live count 3 (guests 29, 35
+and 42), the tag on the same poll line.
+
+**This game** (`q319/confirm.py fix|control`; five of six by the script on the first run, the sixth its own
+fault: it read `advisor`'s last line where `wearing=9,0` is on the line before; six of six with the same numbers
+on the final code, `run-fix2`; `side-by-side.png` holds the original's three frames over this game's). The stock park, the door shut on tick 785: the
+poll of tick 768 read `score=0 ... result=no-score`; saved under a pause on tick 906 with `waiting 3`; then `poll
+message=1 row=1 days=40 score=60 threshold=25 tick=923 result=post`, `post ... result=queued` and `attempt=1
+message=1 subject=0 score=60 threshold=25 response=2 sample=1 line=0 tick=923` on one tick, `saying sp_001.mp2
+... wearing=9,0`, him up in the green cap (`run-fix1/1-told.png`), `tags` reading `tag=3/picture=2/subject=0`
+with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked (`click 56 441`): `message bar:
+tag 3 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=b_entry/help=236 second=hidden
+erase=mb_erase` and the text (`2-bar.png`). The button clicked (`click 265 549`): `button type 24 opens the
+entry-price screen and takes tag 3 off`, `windows` listing `ParkEntryPriceScreen`, `standing=0` and `out=0` 0.7 s
+on, no `TAG_BAR_BUTTON` counted (`3-screen.png`). **Main's build** (one of one, on the private display): no poll
+line of message 1, no attempt, no tag at tick 941.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 1 | polled; nought with the park open or nothing to ride; 20 a guest waiting at the booths | the same |
+| The same file, three waiting | queued and said on tick 923 | the same |
+| The tag and the bar | row 3, part 2, string 7; button `0x18` opens the entry-price screen, tag off, arm in | the same |
+| A shut park's other lines | rows 260 to 262 score, and a line of row 260's delayed row 1's by 19 ticks | not built: counted with the other polled rows, so row 1's line is said at once |
+| Row 2, `ClosePark` | 99 in an open park with no ride and no sideshow | not built, counted |
+| The count's place | left in the analyser's `+0x1f0d4` | not kept |
+
+**Not built or not seen.** Rows 2 and 259 to 263. Lines 3 and 4 (samples 2 and 3) were in no game run, nor the
+refusal inside 480 ticks, a second load of guests (whether a bus comes to a shut park was in no run),
+a park opened while he says it (whether anything withdraws message 1 was not looked for), a tag 3 taking the place of a tag 4, or Full Simulation's empty park. The entry-price screen's own
+line, `0x12f`, is not posted here (`hud.md`). Not heard in either game.

@@ -722,6 +722,7 @@ internal sealed class ParkGadget : UiWindow
 	/// <summary>The bar's button that puts the camera on the tag's thing, mb_locate: types 3 and 4 (FUN_0048e610).</summary>
 	private const int LocateThing = 3;
 	private const int LocateItem = 4;
+	private const int EntryPrice = 0x18;
 
 	/// <summary>
 	/// A bar button's mesh and help row by its type, the tag row's +0x10 or +0x14 (FUN_0048e610). A type not here
@@ -736,7 +737,7 @@ internal sealed class ParkGadget : UiWindow
 		0x13 => ("mb_resrch", 0x213),
 		0x15 => ("b_staffcost", 0x215),
 		0x17 => ("mb_callmech", 0x217),
-		0x18 => ("b_entry", 0xec),
+		EntryPrice => ("b_entry", 0xec),
 		0x1a => ("mb_accept", -1),
 		ParkTags.DeclineButton => ("mb_decline", -1),
 		_ => null
@@ -806,8 +807,9 @@ internal sealed class ParkGadget : UiWindow
 	/// <summary>
 	/// One of the bar's two stacked buttons (FUN_0048e2f0, 0x10d30 and 0x10d2f, to FUN_0048e0f0 with the button's
 	/// type, the tag's thing and its item). Type 3 puts the camera on the thing's cell (FUN_004867b0) and leaves the
-	/// bar out. Every other type opens a screen or answers an offer, none of it built: counted,
-	/// <c>TAG_BAR_BUTTON</c>, and nothing more.
+	/// bar out. Type 0x18 opens the entry-price screen (FUN_00498d80) and answers 2: the tag on show is taken off
+	/// the mast as the erase button takes it, and the arm folded away. Every other type opens a screen or answers
+	/// an offer, none of it built: counted, <c>TAG_BAR_BUTTON</c>, and nothing more.
 	/// </summary>
 	private void BarButton( bool first )
 	{
@@ -819,6 +821,16 @@ internal sealed class ParkGadget : UiWindow
 		if ( type == LocateThing )
 		{
 			ParkOrbitCameraMode.GoToThing( tag.Subject );
+			return;
+		}
+
+		if ( type == EntryPrice )
+		{
+			Log.Info( $"Park gadget: message bar: button type {type} opens the entry-price screen and takes tag {tag.Row.Id} off" );
+			// Screen 10 of the Finance category; nothing where it is open already ([0x007ca210]).
+			if ( !Stack.Windows.Any( window => window is ParkEntryPriceScreen ) )
+				ParkCategoryScreens.Show( Stack, ParkCategoryScreens.Finance, 10 );
+			EraseTag();
 			return;
 		}
 

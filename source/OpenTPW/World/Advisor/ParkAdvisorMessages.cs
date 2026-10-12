@@ -10,13 +10,16 @@ namespace OpenTPW;
 /// docs/exe/advisor-park.md, Q90, "A ride about to break down", "A ride broken down and no mechanic to come",
 /// "A mechanic on his way" and "The line of an opened tag message".
 /// <para>
-/// One message is polled, not posted: the control panel's line, a tutorial message scored by the park's age
-/// (FUN_0059c680, "The poll, and the control panel's line"). The other 154 polled rows are counted, and the
-/// other posted messages are unbuilt.
+/// Three messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// panel's line and the tips', tutorial messages scored by the park's age, and the line about a shut park people
+/// wait outside, scored by how many wait ("A shut park people wait outside"). The other 152 polled rows are
+/// counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
 {
+	/// <summary>Message 1, polled: the line about a shut park people wait outside, scored by how many wait at the ticket booths (0x0059c8d0).</summary>
+	internal const int OpenPark = 1;
 	internal const int Opened = 128;
 	internal const int Closed = 129;
 	/// <summary>Message 0x42, posted by a ride's wear (FUN_004df670, 0x004df8be) with the ride as its subject.</summary>
@@ -49,10 +52,19 @@ internal sealed class ParkAdvisorMessages
 	/// +0x00 is nought, so that the poll scores it; a row's number is its message's id.
 	/// <paramref name="AgeSection"/> names the Advisor.sam section whose AfterTime and CutoffTime bound the park's
 	/// age in days for the score to be anything but nought, null where the score is the key's alone.
+	/// <paramref name="PerWaitingGuest"/> is the score of row 1 (0x0059c8d0): the key's value for each guest
+	/// waiting for a shut park to open, and nought for an open park or one with no ride and no sideshow.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
-		string? AgeSection = null );
+		string? AgeSection = null, bool PerWaitingGuest = false );
+
+	/// <summary>
+	/// What row 1's score function reads of the running park: whether its door is shut (FUN_004c9050), how many
+	/// things of a ride's item and of a sideshow's stand in it (FUN_004ca8e0 asked for kind 0 and kind 2), and how
+	/// many guests wait for the opening on the two ticket booths' cells (FUN_004c91c0).
+	/// </summary>
+	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen );
 
 	/// <summary>The metadata table's rows, 0 to 0x15e.</summary>
 	internal const int Rows = 351;
@@ -99,7 +111,8 @@ internal sealed class ParkAdvisorMessages
 	internal static readonly Topic[] DoorTopics =
 	[
 		new( Opened, "ParkNowOpen.Score", 308, 342, Prop: TicketHat, Group: 150 ),
-		new( Closed, "ParkNowClosed.Score", 310, 344, Prop: TicketHat, Group: 151 )
+		new( Closed, "ParkNowClosed.Score", 310, 344, Prop: TicketHat, Group: 151 ),
+		new( OpenPark, "OpenPark.ScorePerWaitingPerson", 2, 1, Lines: 3, Prop: TicketHat, Group: 3, Polled: true, PerWaitingGuest: true )
 	];
 	internal static readonly Topic[] ParkTopics =
 	[
@@ -152,6 +165,8 @@ internal sealed class ParkAdvisorMessages
 	private long? _started;
 	private int _duration;
 	private int _playing;
+	// The running park as the last sweep handed it, none before the first.
+	private Func<ParkFacts>? _park;
 	private long WaitUntil => (_started ?? 0) + _duration;
 	internal int Attempts { get; private set; }
 	internal int PendingCount => _slots.Count( slot => slot != null ) + _carried.Count( carried => carried );
@@ -287,10 +302,18 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>
 	/// A row's score function (+0x10). The control panel's (0x005a06c0) and the tips' (0x005a0720) are their
 	/// section's Score while the park is more than AfterTime and less than CutoffTime days old, and nought
-	/// otherwise; every other built row's is its key's value.
+	/// otherwise; row 1's (0x0059c8d0) is its key's value for each guest waiting at the booths of a shut park
+	/// that has a ride or a sideshow, and nought otherwise; every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
+		if ( topic.PerWaitingGuest )
+		{
+			if ( _park?.Invoke() is not { Closed: true } park || (park.Rides < 1 && park.Sideshows < 1) ) return 0;
+			return park.WaitingToOpen * Value( topic.ScoreKey );
+		}
+
+
 		if ( topic.AgeSection is { } section )
 		{
 			var days = DaysSinceTheFirstSweep( gameTick );
@@ -446,10 +469,13 @@ internal sealed class ParkAdvisorMessages
 	/// One world sweep: the poll's one row, then, past the wait, the best slot. Playback returns the response duration (zero when the speaker cannot start).
 	/// The helper still succeeds after a zero playback return; its score recheck alone can reject here.
 	/// <paramref name="said"/> hears the event a said line sends, with the response's group and the subject.
+	/// <paramref name="park"/> answers what a score function reads of the running park; with none, such a score is nought.
 	/// </summary>
-	internal void Tick( int gameTick, long milliseconds, Func<int, int, int> play, Action<int, int>? said = null )
+	internal void Tick( int gameTick, long milliseconds, Func<int, int, int> play, Action<int, int>? said = null,
+		Func<ParkFacts>? park = null )
 	{
 		_lastTick = gameTick;
+		_park = park;
 		Poll( gameTick );
 		if ( milliseconds < WaitUntil ) return;
 		var index = -1;

@@ -529,6 +529,49 @@ public class ParkGadgetPressTests
 		Assert.AreEqual( (buttons + 3, looked), (Times( "TAG_BAR_BUTTON" ), ParkOrbitCameraMode.PointOfInterest) );
 	}
 
+	/// <summary>
+	/// <b>The bar's entry-price button</b> (<c>FUN_0048e0f0</c>, type 0x18, which answers 2): the shut park's tag
+	/// shows part 2 of the tag's picture and dresses the bar's first button as <c>b_entry</c>; its click hides the
+	/// tag at once, takes it off the mast half a second on and folds the arm away, and is not counted as unbuilt.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the button counted as unbuilt; the tag left; the tag off at once; the arm left out; the button not dressed; the screen not opened.</remarks>
+	[TestMethod]
+	public void TheEntryPriceButtonTakesItsTagOffAndFoldsTheArm()
+	{
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags();
+		var buttons = Times( "TAG_BAR_BUTTON" );
+
+		var tag = tags.Said( 3, 0, 1000 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.1f );
+		Assert.AreEqual( (2, true), (Find( gadget, 900 ).Frame, Find( gadget, 900 ).Visible) );
+		Time.PinWall( 2000 );
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		Assert.AreEqual( (true, tag), (gadget.BarOut, tags.OnShow) );
+		Assert.AreEqual( (true, 0xec, false, true),
+			(Find( gadget, 0x10d30 ).Visible, Find( gadget, 0x10d30 ).HelpText, Find( gadget, 0x10d2f ).Visible, Find( gadget, 0x10d2e ).Visible),
+			"b_entry, no second button, and the erase button" );
+
+		Assert.IsTrue( stack.ClickAt( 565, 1172 ), "b_entry" );
+		Assert.AreEqual( (true, 1, false, false, null, buttons),
+			(tag.Hidden, tags.Standing.Count, gadget.BarOut, gadget.ArmOut, tags.OnShow, Times( "TAG_BAR_BUTTON" )), "hidden at once, the arm in, nothing counted" );
+		Assert.AreEqual( 1, stack.Windows.Count( window => window is UI.ParkEntryPriceScreen ), "the entry-price screen opened" );
+		Frame( stack, false, new Vector2( 1000, 100 ), 2.49f );
+		Assert.AreEqual( 1, tags.Standing.Count );
+		Frame( stack, false, new Vector2( 1000, 100 ), 2.51f );
+		Assert.AreEqual( 0, tags.Standing.Count, "and off half a second on" );
+
+		// With the screen open already the button builds no second one, and takes its tag off all the same.
+		var screen = stack.Windows.Single( window => window is UI.ParkEntryPriceScreen );
+		var again = tags.Said( 3, 0, 3000 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 3.1f );
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		Assert.AreEqual( again, tags.OnShow );
+		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
+		Assert.AreSame( screen, stack.Windows.Single( window => window is UI.ParkEntryPriceScreen ), "the screen that was open" );
+		Assert.AreEqual( (true, false), (again.Hidden, gadget.BarOut) );
+	}
+
 	private static (UI.WindowStack Stack, UI.ParkGadget Gadget) AGadget()
 	{
 		var stack = new UI.WindowStack();

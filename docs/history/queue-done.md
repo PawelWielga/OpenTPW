@@ -6309,6 +6309,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Bounce's assigned member 26 from tick 1165, and run again 1164 and 1164 (my first range for the tick missed
   and was reasoned again before the second run). Two tests, in `ParkClosedRideTests`; bugs put back: 5, all
   fail (`q318/mutate.out`). I split the item: every other piece of the old Q318 is Q319.
+- [x] **Q319. The advisor tells the player to open a shut park people wait outside.** Done 2026-10-12: his polled
+  row 1 (`OpenPark`, score `0x0059c8d0`: 20 a guest in state 3 on the ticket booths' cells of a shut park with a
+  ride or a sideshow), its tag (row 3) and the message bar's entry-price button (type `0x18`). The stock park
+  shut on tick 785 with three waiting: `poll message=1 row=1 days=40 score=60 threshold=25 tick=923 result=post`,
+  the attempt on tick 923, him in the ticket cap, tag 3, the bar and the entry-price screen in three frames; the
+  original, given that file, read its record (923, 0, 1, 0) and its own count 3. `advisor-park.md`, "A shut park
+  people wait outside". Tests 3018. I split the item: every other piece of the old Q319 is Q320.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

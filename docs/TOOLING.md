@@ -42,6 +42,7 @@ place to look for tools. Each file's docstring is its manual.
 | `original/advisor.py PID SECS MESSAGE[,MESSAGE...] [THING]` | The original's memory: the park advisor (the thing `FUN_005194d0` answers): each named message's own record (the tick last said, the line, said, slaps), the eight slots (subject thing, line asked for, message, score), the last action's start and duration, and a thing's State of repair beside them, a line a change with `mGameTick`. Says whether and when he was told a message and whether he said it. A last argument `poll` ends each line with the poll's cursor (`[0x00fb3540]`, the row of the metadata table the next tick starts from; Q316). A `POLL` for `loadfile.sh` |
 | `original/advisortable.py PID [meta_full.json]` | The original's memory: the advisor's metadata table as the running game holds it (the image holds zeros): the polled rows as ranges with their count, a few rows' places in a round, and every dword where it differs from the emulated table (two, both row 0's). A `POLL` for `loadfile.sh` |
 | `original/bytehold.py PID SECS ADDR=VALUE [TICK ADDR=VALUE]` | The original's memory, **written**: holds one byte of the image at a value, and at another once `mGameTick` passes a tick, a line a write. The Options screen's Tutorial switch is `0x0078d90d`. Stop the original afterwards |
+| `original/waiting.py PID SECS` | The original's memory: the park analyser's count of guests waiting for a shut park to open (its `+0x1f0d4`, written each time the advisor's row 1 is scored past its two early ends, -999 before), beside the same count taken live (things of type 1 in state 3 on the two ticket booths' cells, by id), `mParkClosed` and every guest's state, a line a change with the wall clock and `mGameTick`. A `POLL` for `loadfile.sh` |
 | `original/tags.py PID SECS` | The original's memory: the tags on the gadget's aerial (how many are held, each one's control rectangle on the 2048 x 1536 layout and its text, the mast's rectangle, the tag on the bar), a line a change with the wall clock and `mGameTick`. Says when a line leaves a tag, where it stands and when it goes. A `POLL` for `loadfile.sh` |
 | `original/bar.py PID SECS` | The original's memory: the message bar (its rectangle, shown bit, parent, its data's thing, button types, item and text, each child's rectangle), the tag on show and the one being put on show, the gadget's body with its children two deep, the arm's handle, and each tag's rectangle, shown bit, timer byte and whether a stream plays on it, the changed parts a change with the wall clock and `mGameTick`. Says what a click on a tag, on the bar or on the camcorder button does to the arm, step by step. A `POLL` for `loadfile.sh` |
 | `original/breakq.py PID SECS THING [all]` | The original's memory, **written**: breaks a ride (`VAR_BREAKSTAT`) each time it is open with a queue that has stood four seconds, so every break puts a queue out, a line a break. With `all` it first writes nought over the mask byte at `0x0050133f`, so every guest dismissed from a queue plays kids `0x80`, not one in eight. Stop the original afterwards |
@@ -94,6 +95,16 @@ whole list):
   both games then say the waiting message when the wait ends, about six seconds after the load, not a tick after
   it. `parkfile.py -a <file>` says how many milliseconds of the wait a file was saved with, and
   `q257x/orig/broken-by-the-original.TPWS` is a file of the original's own saved inside one (959 ms) (Q315).
+- **A shut park, and the advisor's line about it:** `screen 10` opens the entry-price screen, `control 4f3b1`
+  answers the door's place, and a real click there shuts the park (no console command does); Escape closes the
+  screen. Done inside eight seconds of the stock park's entry (by tick 800), the guests still at the booths wait
+  there for 200 to 349 sweeps, `gate` ends with `waiting N`, and the advisor's row 1 is polled on tick 923 (768
+  and every 155 on): with two or more waiting he says sample 1 in the ticket hat and leaves tag 3, whose bar's
+  first button (`click 265 549` with the bar out, the tag at `click 56 441`) opens the entry-price screen
+  (`q319/confirm.py`). **A file of that park saved before tick 899 has the original say a line about shut shops
+  first** (rows 260 to 262 are polled on 899 to 901), which holds row 1's line back to tick 942: save past tick
+  902 (`pause`, `savepark`) for a file both games say it on tick 923 from (`q319/orig/run.sh <file>`, with
+  `CLICKS=0` for no clicks; Q319).
 - **Open a bought ride:** `buy <item> <x> <y> 0` answers the thing's id and its queue node's cell; then
   `tool queue <thing>`, `worldclick <the node's cell>`, `worldclick <a path cell beside it>`, `tool off`. For a Hot
   Pot on (41,23): `buy 1140 41 23 0`, node (43,22), path (43,21); four boats are out six seconds on (Q257r).

@@ -653,6 +653,55 @@ public class ParkClosedRideTests
 		}
 	}
 
+	/// <summary>
+	/// What the advisor's row 1 reads of the shipped park (<c>FUN_004c9050</c>, <c>FUN_004ca8e0</c>,
+	/// <c>FUN_004c91c0</c>): its door, its things of a ride's item and of a sideshow's, and the guests in state 3
+	/// standing on either ticket booth's cell: not one beside a booth, and not one on a booth judging the fee.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> every waiting guest counted wherever they stand; every guest on a booth counted; one booth alone; the door's answer turned round; the shops counted as rides.</remarks>
+	[TestMethod]
+	public void TheAdvisorsParkFactsCountTheGuestsWaitingOnTheBoothCells()
+	{
+		var park = Open();
+
+		try
+		{
+			var random = new Random( 1 );
+			var guests = park.People.Peeps;
+			foreach ( var guest in guests )
+			{
+				guest.Navigator.Position = FixedVector.AtCell( 60, 60 );
+				guest.SetState( PeepState.Deciding, 800, random );
+			}
+
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0 ), park.People.AdvisorFacts() );
+
+			void Put( int index, int x, int y, PeepState state )
+			{
+				guests[index].Navigator.Position = FixedVector.AtCell( x, y );
+				guests[index].SetState( state, 800, random );
+			}
+
+			Put( 0, 47, 13, PeepState.WaitingForOpening );
+			Put( 1, 48, 13, PeepState.WaitingForOpening );
+			Put( 2, 48, 13, PeepState.WaitingForOpening );
+			Put( 3, 48, 12, PeepState.WaitingForOpening );
+			Put( 4, 47, 13, PeepState.JudgingTheFee );
+			Assert.AreEqual( 3, park.People.WaitingToOpen );
+
+			park.State.SetParkClosed( true );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3 ), park.People.AdvisorFacts() );
+			StringAssert.EndsWith( park.People.GateDescription(), " waiting 3" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>The shipped Lost Kingdom park's things of a ride's item and of a sideshow's: the Belly Bounce and the Jungle Spray.</summary>
+	private const int StockRides = 1, StockSideshows = 1;
+
 	private const int Mechanic = 26;
 
 	private static Staff TheMechanic( Park park ) => park.People.Staff.Single( member => member.ThingId == Mechanic );
@@ -809,6 +858,52 @@ public class ParkClosedRideTests
 			Assert.AreEqual( 64, park.State.GameTick, "one sweep" );
 			Assert.IsTrue( messages.Census().Contains( "pending=0 attempts=1 " ), messages.Census() );
 			Assert.IsTrue( messages.Census().Contains( "message=66/score=100/line=0/lastTick=64/said=1/" ), messages.Census() );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// The sweep hands the advisor the park: with the shipped park shut and three guests waiting on the booths'
+	/// cells, the sweep whose poll stands on row 1 says message 1 at 60.
+	/// </summary>
+	[TestMethod]
+	public void TheSweepHandsTheAdvisorTheParkSoAShutParksLineIsSaid()
+	{
+		var park = Open();
+
+		try
+		{
+			var messages = park.State.AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ),
+				cursor: new ParkAdvisorMessages.PollCursor { Row = 1 } );
+			var random = new Random( 1 );
+			park.State.SetParkClosed( true );
+			foreach ( var (guest, x) in new[] { (0, 47), (1, 48), (2, 48) } )
+			{
+				park.People.Peeps[guest].Navigator.Position = FixedVector.AtCell( x, 13 );
+				park.People.Peeps[guest].SetState( PeepState.WaitingForOpening, park.State.GameTick, random );
+			}
+
+			var before = park.People.WaitingToOpen;
+			Time.Paused = false;
+			Time.StepFrames = 0;
+			GameClock.Rebase();
+			Time.Update( 0f );
+			GameClock.Update( paused: false, GameClock.ParkCatchUp );
+			var first = park.State.GameTick;
+
+			for ( var frame = 0; frame < 2000 && park.State.GameTick < first + 1; ++frame )
+			{
+				Time.Update( 1f / 60f );
+				GameClock.Update( paused: false, GameClock.ParkCatchUp );
+				park.People.Update();
+			}
+
+			var waiting = park.People.WaitingToOpen;
+			Assert.IsTrue( before >= 3 && waiting >= 3, $"{before} then {waiting} waiting" );
+			Assert.IsTrue( messages.Census().Contains( $"message=1/score={20 * waiting}/line=0/lastTick={first + 1}/said=1/" ), messages.Census() );
 		}
 		finally
 		{

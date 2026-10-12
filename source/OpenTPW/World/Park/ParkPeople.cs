@@ -2226,7 +2226,8 @@ public sealed partial class ParkPeople : Entity
 					var item = State.TryObject( subject, out var about ) ? about.CatalogueId : 0;
 					var name = _behaviour.Catalogue is { } catalogue && catalogue.TryGet( item, out var named ) ? named.Name : null;
 					State.Tags.Said( group, subject, Time.WallMilliseconds, item, name );
-				} );
+				},
+				AdvisorFacts );
 		}
 
 		if ( dropped == 0 )
@@ -2550,6 +2551,37 @@ public sealed partial class ParkPeople : Entity
 
 	internal int GateGuestCensus => _peeps.Count( peep => InsideGateCensus( peep.Navigator ) );
 
+	/// <summary>
+	/// The guests waiting for the park to open, FUN_004c91c0: those in <see cref="PeepState.WaitingForOpening"/>
+	/// standing on either ticket booth's cell, whether or not they have paid.
+	/// </summary>
+	internal int WaitingToOpen => _behaviour.Admission is { } admission
+		? _peeps.Count( peep => peep.State == PeepState.WaitingForOpening
+			&& (peep.Navigator.Position.Cell == admission.TicketBoothA || peep.Navigator.Position.Cell == admission.TicketBoothB) )
+		: 0;
+
+	/// <summary>
+	/// What the advisor's row 1 reads of the park: the door, the things standing of a ride's item and of a
+	/// sideshow's (FUN_004ca8e0, a thing of type 3 whose item's WhichUIType is the kind asked for), and the
+	/// guests waiting to be let in.
+	/// </summary>
+	internal ParkAdvisorMessages.ParkFacts AdvisorFacts()
+	{
+		var (rides, sideshows) = (0, 0);
+
+		if ( _behaviour.Catalogue is { } catalogue )
+		{
+			foreach ( var thing in State.ObjectsInChainOrder() )
+			{
+				if ( !catalogue.TryGet( thing.CatalogueId, out var item ) ) continue;
+				if ( item.UiType == ItemDescriptionFile.Ride ) ++rides;
+				else if ( item.UiType == ItemDescriptionFile.SideShow ) ++sideshows;
+			}
+		}
+
+		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen );
+	}
+
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:
 	// Fire removes immediately; the original marks +3 then drains deletion after the retry. See park-gate.md.
 	internal int GateStaffOutside => _staff.Count( member => member.Model is >= 4 and <= 8
@@ -2589,7 +2621,7 @@ public sealed partial class ParkPeople : Entity
 	internal string GateDescription()
 		=> $"gate {_gateThing} closed {(State.ParkIsClosed ? 1 : 0)} tick {State.GameTick} "
 			+ $"command {GateScript?[ParkRides.GateCommand] ?? -1} status {GateScript?[ParkRides.GateState] ?? -1} "
-			+ $"guests {GateGuestCensus} staffOutside {GateStaffOutside}";
+			+ $"guests {GateGuestCensus} staffOutside {GateStaffOutside} waiting {WaitingToOpen}";
 
 	/// <summary>
 	/// What kind of track an item runs on, for the gates that read the item rather than the object: the ride's
