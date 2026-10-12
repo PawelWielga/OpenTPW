@@ -385,4 +385,46 @@ public class ParkCameraToThingTests
 		Assert.AreEqual( new Vector3( 510f, 230f, 0f ), ParkOrbitCameraMode.PointOfInterest );
 		Assert.IsFalse( _stack.Windows.Contains( window ) );
 	}
+	/// <summary>
+	/// <b>The message bar's mb_locate puts the camera on the tag's thing and leaves the bar out</b>
+	/// (<c>FUN_0048e0f0</c>'s case 3, <c>FUN_004867b0</c>), and the bar's meshes are the wad's own.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the button not wired; the item, not the thing; the arm folded away by it; a slice's or a
+	/// button's mesh misnamed.
+	/// </remarks>
+	[TestMethod]
+	public void TheBarsLocateButtonGoesToTheTagsThing()
+	{
+		var gadget = new ParkGadget( _stack );
+		_stack.Open( gadget );
+
+		var tags = gadget.Tags = new ParkTags();
+		tags.Said( 72, 13, 1000, 1100, "Belly Bounce" );
+		Frame( false, new Vector2( 1000, 100 ), 1.1f );
+
+		Assert.IsTrue( _stack.ClickAt( 119, 941 ) );
+		Assert.IsTrue( gadget.BarOut );
+
+		// The bar's meshes are files of ui.wad: its slices, its erase button and every button the table dresses.
+		Assert.AreEqual( ("mb_locate", 516), ParkGadget.BarButtonLook( 3 ) );
+		Assert.AreEqual( ("mb_locate", 515), ParkGadget.BarButtonLook( 4 ) );
+		Assert.IsNull( ParkGadget.BarButtonLook( 0 ) );
+		Assert.AreEqual( ("mb_accept", -1), ParkGadget.BarButtonLook( 0x1a ) );
+		Assert.AreEqual( ("mb_decline", -1), ParkGadget.BarButtonLook( 0x1b ) );
+		Assert.IsNull( ParkGadget.BarButtonLook( 0x1c ) );
+		var meshes = new[] { ParkGadget.BarLeftMesh, ParkGadget.BarMiddleMesh, ParkGadget.BarRightMesh, ParkGadget.BarEraseMesh }
+			.Concat( Enumerable.Range( 0, 0x20 ).Select( type => ParkGadget.BarButtonLook( type )?.Mesh ).OfType<string>() ).Distinct().ToArray();
+		Assert.AreEqual( 12, meshes.Length );
+		foreach ( var mesh in meshes )
+			Assert.IsTrue( new ModelFile( $"ui/{mesh}.md2" ).Meshes.Any(), mesh );
+
+		Assert.AreEqual( Start, ParkOrbitCameraMode.PointOfInterest );
+		Assert.IsTrue( _stack.ClickAt( 565, 1172 ) );
+		Assert.AreEqual( new Vector3( 510f, 230f, 0f ), ParkOrbitCameraMode.PointOfInterest, "the Belly Bounce's cell's corner, not item 1100's anything" );
+		Assert.AreEqual( (true, 1), (gadget.BarOut, tags.Standing.Count), "and the bar stays" );
+
+		static UiControl Find( UiControl control, int id )
+			=> control.Id == id ? control : control.Children.Select( child => Find( child, id ) ).FirstOrDefault( found => found != null )!;
+	}
 }

@@ -49,18 +49,20 @@ namespace OpenTPW.UI;
 /// that panel's two buttons takes off again.
 /// </para>
 /// <para>
-/// <b>The message bar is not built.</b> It has a stream of its own at 0x007501a0 - a
-/// messagel/messagem/messager three-slice with an mb_erase button and two stacked buttons - and the arm would
-/// carry it exactly as it carries the camcorder panel. A tag's left click is what puts a message on it
-/// (FUN_0048d9c0), and that click is counted, <c>TAG_MESSAGE_BAR</c> (docs/exe/hud.md, "The message bar").
+/// <b>The message bar</b> has a stream of its own at 0x007501a0 - a messagel/messagem/messager three-slice with
+/// two stacked buttons and an mb_erase button under them - and the arm carries it as it carries the camcorder
+/// panel, 820 out where the bar is 615 wide. A tag's left click puts its message on it (FUN_0048d9c0): the tag's
+/// text, its row's two buttons, of which mb_locate puts the camera on the tag's thing, and the erase button, which
+/// takes the tag off. The same tag clicked again, its right click, its going or the retract button folds the arm
+/// away (docs/exe/hud.md, "The message bar").
 /// </para>
 /// <para>
 /// <b>The aerial (0x2d, 0x2e) is the messages control.</b> Each tag a said line leaves (<see cref="ParkTags"/>)
 /// is a msgtag icon on the mast, which lifts the red top by the icon's height and ten (LAB_004a11e0, 0x100001); a
 /// right click on a tag hides it and takes it off half a second on, and one on the top deletes them all
-/// (FUN_004a1190) - its help row says so. A tag's left click opens the message bar, which is not built: counted,
-/// <c>TAG_MESSAGE_BAR</c>. The top and the tags above one taken off are put down at once, where the original
-/// plays them down (the streams at 0x007502f0 and 0x00752e48).
+/// (FUN_004a1190) - its help row says so. A tag's left click opens the message bar, and the tag on show swells
+/// and shrinks (the stream at 0x007502b8). The top and the tags above one taken off are put down at once, where
+/// the original plays them down (the streams at 0x007502f0 and 0x00752e48).
 /// </para>
 /// <para>
 /// <b>The body, the arm and the aerial stop the pointer</b>, as every shown control of the original's does: the body
@@ -100,6 +102,16 @@ internal sealed class ParkGadget : UiWindow
 
 	private readonly UiButton _retract;
 	private readonly UiControl _carried;
+
+	/// <summary>The message bar 0x10d2d, its text's panel 0x10d32 and its buttons 0x10d30, 0x10d2f and 0x10d2e.</summary>
+	private readonly UiControl _bar;
+	private readonly UiControl _barText;
+	private readonly UiButton _barFirst;
+	private readonly UiButton _barSecond;
+	private readonly UiButton _barErase;
+
+	/// <summary>What the arm carries out: the camcorder panel, the message bar, or nothing with the arm in.</summary>
+	private UiControl? _onArm;
 	private readonly UiMesh? _armMesh;
 	private readonly UiMesh? _armEndMesh;
 
@@ -110,8 +122,20 @@ internal sealed class ParkGadget : UiWindow
 	/// </summary>
 	private const int ArmTravel = 645;
 
-	/// <summary>Whether the arm is out, at the stream's own rectangles. See <see cref="PutArm"/>.</summary>
-	internal bool ArmOut { get; private set; } = true;
+	/// <summary>
+	/// How far the arm goes out with the message bar: ten steps of a tenth of the bar's width, the body's right edge
+	/// less the arm's left, and a hundred (0x004a16d7): (615 + 439 - 331 + 100) / 10 is 82.
+	/// </summary>
+	private const int BarTravel = 820;
+
+	/// <summary>How far out the arm's right edge stands now.</summary>
+	private int _armTravel = ArmTravel;
+
+	/// <summary>Whether the arm is out. See <see cref="PutArm"/>.</summary>
+	internal bool ArmOut => _onArm != null;
+
+	/// <summary>Whether the arm is out with the message bar on it.</summary>
+	internal bool BarOut => _onArm == _bar;
 
 	/// <summary>The body's outline - the stream's op 4 sub-op 4 on 0x1d, 23 points at 0x00752ac8.</summary>
 	private static readonly UiPoint[] BodyOutline =
@@ -304,7 +328,7 @@ internal sealed class ParkGadget : UiWindow
 			HelpText = 481,
 			Mesh = UiMesh.Get( "b_retract" ),
 			Depth = 7,
-			Clicked = CloseArm
+			Clicked = () => CloseArm()
 		} );
 
 		// What the arm carries, out of the camcorder panel's own stream at 0x00751720, which FUN_00498b50
@@ -335,7 +359,44 @@ internal sealed class ParkGadget : UiWindow
 			Clicked = SendPostcard
 		} );
 
-		PutArm( false );
+		// The message bar, stream 0x007501a0 (FUN_0048d8b0), at the place the arm's handler gives it out: its left
+		// the arm's left less its own width and fifty, then the arm's 820, and its middle on the arm's (0x004a1613),
+		// so (486,1112) where the stream has (458,1101). Three slices, the middle one a label in font 6 whose text
+		// rectangle is the stream's; the two stacked buttons carry no mesh until a message is shown.
+		_bar = _arm.Add( new UiControl
+		{
+			Id = 0x10d2d,
+			Rect = new UiRect( 486, 1112, 1101, 1453 ),
+			PinAcross = Anchor.Left,
+			PinDown = VerticalAnchor.Bottom
+		} );
+
+		// Each is pinned to the body's corner, as the arm's own pieces are: half the bar lies in the screen's middle third.
+		_bar.Add( new UiControl { Id = 0x10d31, Rect = new UiRect( 486, 1112, 651, 1453 ), Mesh = UiMesh.Get( BarLeftMesh ), PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
+
+		// The right slice goes in before the middle one, whose lettering runs on over it: the stream has it after.
+		_bar.Add( new UiControl { Id = 0x10d33, Rect = new UiRect( 863, 1112, 1101, 1453 ), Mesh = UiMesh.Get( BarRightMesh ), PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
+
+		_barText = _bar.Add( new UiControl
+		{
+			Id = 0x10d32,
+			Rect = new UiRect( 651, 1112, 863, 1453 ),
+			Mesh = UiMesh.Get( BarMiddleMesh ),
+			TextRect = new UiRect( 637, 1129, 1084, 1433 ),
+			Font = BarFont,
+			TextAcross = TextAlign.Start,
+			TextDown = TextAlign.Start,
+			TextWraps = true,
+			PinAcross = Anchor.Left,
+			PinDown = VerticalAnchor.Bottom
+		} );
+
+		_barFirst = _bar.Add( new UiButton { Id = 0x10d30, Rect = new UiRect( 514, 1121, 617, 1224 ), Clicked = () => BarButton( first: true ), PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
+		_barSecond = _bar.Add( new UiButton { Id = 0x10d2f, Rect = new UiRect( 514, 1229, 617, 1331 ), Clicked = () => BarButton( first: false ), PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
+		_barErase = _bar.Add( new UiButton { Id = 0x10d2e, Rect = new UiRect( 514, 1336, 617, 1439 ), Mesh = UiMesh.Get( BarEraseMesh ), Clicked = EraseTag, PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
+
+		_onArm = carried;
+		PutArm( null );
 
 		// The six round buttons' panel, 0x25: the last of the body's children, so it answers before the arm where
 		// the two meet.
@@ -577,62 +638,207 @@ internal sealed class ParkGadget : UiWindow
 	/// click meant. Toggling here as well would put the arm back where it started.
 	/// </para>
 	/// </summary>
-	private void ShowArm() => SlideArm( _camcorder.IsDown );
+	private void ShowArm() => SlideArm( _camcorder.IsDown ? _carried : null );
 
 	/// <summary>
-	/// The arm sent out or in while the park runs, which the original slides and this does at once: each is counted as
-	/// <c>GADGET_ARM_SLIDE</c>. The build's own <see cref="PutArm"/> is no slide and counts none.
+	/// The arm sent out with a panel or in while the park runs, which the original slides and this does at once: each
+	/// is counted as <c>GADGET_ARM_SLIDE</c>. The build's own <see cref="PutArm"/> is no slide and counts none. The
+	/// message bar leaving the arm has no tag on show (the bar's 0x1001d8).
 	/// </summary>
-	private void SlideArm( bool isOut )
+	private void SlideArm( UiControl? panel )
 	{
-		if ( isOut == ArmOut )
+		if ( panel == _onArm )
 			return;
 
 		Unimplemented.Report( "GADGET_ARM_SLIDE" );
-		PutArm( isOut );
+
+		if ( _onArm == _bar )
+		{
+			Tags?.Shut();
+			Log.Info( "Park gadget: message bar: off the arm" );
+		}
+
+		PutArm( panel );
 	}
 
 	/// <summary>
-	/// Puts the arm out, at the stream's rectangles, or in, where FUN_004a1d70 builds it: its right edge
-	/// <see cref="ArmTravel"/> to the left, and its end and handle moved as far, so the handle hugs the body's right
-	/// edge and the rest lies behind the body.
+	/// Puts the arm out with a panel, or in, where FUN_004a1d70 builds it: its right edge <see cref="ArmTravel"/> out
+	/// with the camcorder panel, the stream's rectangles, and <see cref="BarTravel"/> with the message bar, its end and
+	/// handle moved as far; in, the handle hugs the body's right edge and the rest lies behind the body.
 	/// </summary>
 	/// <remarks>
-	/// <b>Not the original's in three ways.</b> It slides: LAB_004a14f0, the handler on the arm, works a state in the
-	/// control's own +0x134, and neither how far a step nor how long is traced, so the arm is out or in
-	/// (<see cref="SlideArm"/> counts it). In, the arm and
-	/// its end draw nothing here, since how the original draws a mesh on a narrowed control is not traced; every point
-	/// of both rectangles is inside the body's outline or the handle's, so they are behind those two either way. And
-	/// the retract button is hidden with what the arm carries, where the original switches it off and keeps it behind
-	/// the handle.
+	/// <b>Not the original's in four ways.</b> It slides: the handler on the arm, 0x004a14f0, moves its right edge a
+	/// step on a 20 ms timer, ten steps, and here the arm is out or in at once (<see cref="SlideArm"/> counts it). Its
+	/// travel there is a tenth of the panel's width and 208, ten times: the bar's 820 is that, and the camcorder
+	/// panel's is the stream's 645 where the original's handle was measured 520 out. In, the arm and its end draw
+	/// nothing here, since how the original draws a mesh on a narrowed control is not traced; every point of both
+	/// rectangles is inside the body's outline or the handle's, so they are behind those two either way. And the
+	/// retract button is hidden with what the arm carries, where the original switches it off and keeps it behind the
+	/// handle (docs/exe/hud.md, "The arm's handler").
 	/// </remarks>
-	private void PutArm( bool isOut )
+	private void PutArm( UiControl? panel )
 	{
-		if ( isOut == ArmOut )
+		if ( panel == _onArm )
 			return;
 
-		ArmOut = isOut;
+		_onArm = panel;
 
-		var travel = isOut ? ArmTravel : -ArmTravel;
+		var travel = panel == null ? 0 : panel == _bar ? BarTravel : ArmTravel;
+		var move = travel - _armTravel;
 
-		_arm.Rect = _arm.Rect with { Right = _arm.Rect.Right + travel };
-		_armEnd.Move( travel, 0 );
+		_armTravel = travel;
+		_arm.Rect = _arm.Rect with { Right = _arm.Rect.Right + move };
+		_armEnd.Move( move, 0 );
 
-		_arm.Mesh = isOut ? _armMesh : null;
-		_armEnd.Mesh = isOut ? _armEndMesh : null;
-		_retract.Visible = isOut;
-		_carried.Visible = isOut;
+		_arm.Mesh = panel != null ? _armMesh : null;
+		_armEnd.Mesh = panel != null ? _armEndMesh : null;
+		_retract.Visible = panel != null;
+		_carried.Visible = panel == _carried;
+		_bar.Visible = panel == _bar;
 	}
 
 	/// <summary>
-	/// Folds the arm away and lifts the camcorder button with it - FUN_004a25f0, whose one argument is
-	/// that lift: it fetches control 0x27 and puts it back up.
+	/// Folds the arm away - FUN_004a25f0, whose one argument lifts the camcorder button with it: it fetches control
+	/// 0x27 and puts it back up. The message bar's own ways in pass nought, and the button stays as it is.
 	/// </summary>
-	private void CloseArm()
+	private void CloseArm( bool liftsCamcorder = true )
 	{
-		SlideArm( false );
-		_camcorder.IsDown = false;
+		SlideArm( null );
+
+		if ( liftsCamcorder )
+			_camcorder.IsDown = false;
 	}
+
+	/// <summary>The bar's three slices, the stream's messagel, messagem and messager by their files, and its erase button's.</summary>
+	internal const string BarLeftMesh = "f_tagl";
+	internal const string BarMiddleMesh = "f_tagm";
+	internal const string BarRightMesh = "f_tagr";
+	internal const string BarEraseMesh = "mb_erase";
+
+	/// <summary>FONTTINY/SMALL/BIG slot 6, the label skin FUN_0048d8b0 gives the bar's middle panel.</summary>
+	private const int BarFont = 6;
+
+	/// <summary>The bar's button that puts the camera on the tag's thing, mb_locate: types 3 and 4 (FUN_0048e610).</summary>
+	private const int LocateThing = 3;
+	private const int LocateItem = 4;
+
+	/// <summary>
+	/// A bar button's mesh and help row by its type, the tag row's +0x10 or +0x14 (FUN_0048e610). A type not here
+	/// shows no button; mb_accept and mb_decline are given no help row. Types 0x12 and 0x14 name the nodes b_loan and
+	/// b_pkinfo, which no file of ui.wad is called: they are not here, and no listed row carries them.
+	/// </summary>
+	internal static (string Mesh, int Help)? BarButtonLook( int type ) => type switch
+	{
+		LocateThing => ("mb_locate", 0x204),
+		LocateItem => ("mb_locate", 0x203),
+		>= 9 and <= 0x11 => ("mb_buy", 0x200 + type),
+		0x13 => ("mb_resrch", 0x213),
+		0x15 => ("b_staffcost", 0x215),
+		0x17 => ("mb_callmech", 0x217),
+		0x18 => ("b_entry", 0xec),
+		0x1a => ("mb_accept", -1),
+		ParkTags.DeclineButton => ("mb_decline", -1),
+		_ => null
+	};
+
+	/// <summary>
+	/// A tag's left click (FUN_0048dae0, 0x10006 with the left button): sound 0xc0, then the arm folded away where
+	/// this tag's message is the one on show, or its message put on the bar (FUN_0048d9c0): the tag's timers
+	/// stopped, the bar handed the text, the two buttons' types, the thing and the item, and the arm sent out with
+	/// it. The bar's own turn as the arm starts out (0x1001d9) writes the text, dresses the two buttons and shows
+	/// the erase button unless the second button declines.
+	/// </summary>
+	/// <remarks>
+	/// The advisor's message 0x11c the original posts with it (FUN_00486b00) and withdraws as the bar leaves is a
+	/// screen's line, which no screen here says: counted, <c>TAG_MESSAGE_BAR_ADVISOR_LINE</c>. With the arm already
+	/// carrying something the original folds it away and sends it out again; here the new panel is on it at once.
+	/// </remarks>
+	private void OpenTag( ParkTags tags, ParkTags.Tag tag )
+	{
+		UiSounds.TagClick();
+
+		if ( tags.OnShow == tag )
+		{
+			CloseArm( liftsCamcorder: false );
+			return;
+		}
+
+		if ( !tags.Open( tag, Time.WallMilliseconds ) )
+			return;
+
+		Unimplemented.Report( "TAG_MESSAGE_BAR_ADVISOR_LINE" );
+
+		_barText.Text = tag.Text;
+		Dress( _barFirst, tag.Row.Button1 );
+		Dress( _barSecond, tag.Row.Button2 );
+		_barErase.Visible = tag.Row.Button2 != ParkTags.DeclineButton;
+
+		if ( _onArm != _bar )
+		{
+			Unimplemented.Report( "GADGET_ARM_SLIDE" );
+			PutArm( _bar );
+		}
+
+		Log.Info( $"Park gadget: message bar: tag {tag.Row.Id} subject {tag.Subject} item {tag.Item} {BarCensus()}" );
+	}
+
+	private static void Dress( UiButton button, int type )
+	{
+		var look = BarButtonLook( type );
+
+		button.Mesh = look is { } found ? UiMesh.Get( found.Mesh ) : null;
+		button.HelpText = look?.Help ?? -1;
+		button.Visible = look != null;
+	}
+
+	/// <summary>
+	/// One of the bar's two stacked buttons (FUN_0048e2f0, 0x10d30 and 0x10d2f, to FUN_0048e0f0 with the button's
+	/// type, the tag's thing and its item). Type 3 puts the camera on the thing's cell (FUN_004867b0) and leaves the
+	/// bar out. Every other type opens a screen or answers an offer, none of it built: counted,
+	/// <c>TAG_BAR_BUTTON</c>, and nothing more.
+	/// </summary>
+	private void BarButton( bool first )
+	{
+		if ( Tags?.OnShow is not { } tag )
+			return;
+
+		var type = first ? tag.Row.Button1 : tag.Row.Button2;
+
+		if ( type == LocateThing )
+		{
+			ParkOrbitCameraMode.GoToThing( tag.Subject );
+			return;
+		}
+
+		Unimplemented.Report( "TAG_BAR_BUTTON" );
+		Log.Info( $"Park gadget: message bar: button type {type} is not built, so nothing more happens" );
+	}
+
+	/// <summary>
+	/// The bar's erase button (0x10d2e): the tag on show is hidden at once and taken off the mast half a second on
+	/// (the mast's 0x100002 with nought), and the arm folded away.
+	/// </summary>
+	private void EraseTag()
+	{
+		if ( Tags is not { OnShow: { } tag } tags )
+			return;
+
+		tags.Hide( tag, Time.WallMilliseconds );
+		CloseArm( liftsCamcorder: false );
+	}
+
+	/// <summary>
+	/// How far the tag on show stands out past its own rectangle each way: the stream at 0x007502b8, played on it
+	/// while its message is on the bar (FUN_0065e72d with 100): two more a step for three steps, two fewer for
+	/// three, a step at rest, and round again, a step every 100 ms.
+	/// </summary>
+	internal static int Swell( long sinceOpened ) => (int)(sinceOpened / 100 % 7) switch { 1 or 5 => 2, 2 or 4 => 4, 3 => 6, _ => 0 };
+
+	/// <summary>The bar, its text and buttons and the arm's handle, for the debug console's <c>tags</c>.</summary>
+	internal string BarCensus() => $"bar: out={(BarOut ? 1 : 0)} rect={Edges( _bar.Rect )} arm={Edges( _arm.Rect )} handle={Edges( _armEnd.Children[0].Rect )}"
+		+ $" first={Button( _barFirst )} second={Button( _barSecond )} erase={Button( _barErase )} camcorder={(_camcorder.IsDown ? 1 : 0)} text=\"{(BarOut ? _barText.Text : null)}\"";
+
+	private static string Button( UiButton button ) => button.Visible ? $"{button.Mesh?.Name ?? "none"}/help={button.HelpText}" : "hidden";
 
 	/// <summary>
 	/// b_1person, the panel's id 99: into first person through FUN_00481a10, and the arm closes behind it.
@@ -670,6 +876,8 @@ internal sealed class ParkGadget : UiWindow
 	private readonly UiControl _mast;
 	private readonly UiControl _mastTop;
 	private readonly List<UiControl> _tagControls = [];
+	/// <summary>Each tag control's own rectangle, which the tag on show swells past.</summary>
+	private readonly List<UiRect> _tagRects = [];
 	private ParkTags? _tagsGiven;
 	private ParkTags? _tagsShown;
 
@@ -689,7 +897,27 @@ internal sealed class ParkGadget : UiWindow
 		if ( tags == null ) return;
 
 		tags.Tick( Time.WallMilliseconds );
-		if ( tags == _tagsShown && tags.Changes == _tagChangesShown ) return;
+
+		// The tag on show gone, by its own going or another park's list: the bar leaves with it (FUN_0048dae0, message 5).
+		if ( BarOut && tags.OnShow == null )
+			CloseArm( liftsCamcorder: false );
+
+		if ( tags != _tagsShown || tags.Changes != _tagChangesShown )
+			BuildTags( tags );
+
+		// The tag on show, swelling and shrinking about its own rectangle.
+		for ( var i = 0; i < _tagControls.Count; ++i )
+		{
+			var tag = tags.Standing[i];
+			var swell = tag == tags.OnShow ? Swell( Time.WallMilliseconds - tag.OpenedAt ) : 0;
+			var own = _tagRects[i];
+
+			_tagControls[i].Rect = new UiRect( own.Left - swell, own.Top - swell, own.Right + swell, own.Bottom + swell );
+		}
+	}
+
+	private void BuildTags( ParkTags tags )
+	{
 
 		// The new tag's sound, effect 0x1e of the interface's own category (FUN_0048eb20).
 		if ( tags == _tagsShown && tags.Made > _tagsHeard ) UiSounds.NewTag();
@@ -702,6 +930,7 @@ internal sealed class ParkGadget : UiWindow
 		}
 
 		_tagControls.Clear();
+		_tagRects.Clear();
 		_tagsShown = tags;
 		_tagChangesShown = tags.Changes;
 
@@ -715,6 +944,7 @@ internal sealed class ParkGadget : UiWindow
 			var tag = standing[i];
 			var left = (MastLeft + MastRight - TagWidth) / 2;
 			var tagTop = MastBottom - 8 - TagStep * (i + 1) + 8;
+			_tagRects.Add( new UiRect( left, tagTop, left + TagWidth, tagTop + TagHeight ) );
 			_tagControls.Add( _mast.Add( new UiControl
 			{
 				Id = 900 + i,
@@ -726,14 +956,15 @@ internal sealed class ParkGadget : UiWindow
 				Visible = !tag.Hidden,
 				PinAcross = Anchor.Left,
 				PinDown = VerticalAnchor.Bottom,
-				LeftClicked = () =>
+				LeftClicked = () => OpenTag( tags, tag ),
+				// Hidden, the arm folded away where its message is on show, and off the mast half a second on.
+				RightClicked = () =>
 				{
-					// Sound 0xc0, then the message bar on the arm with the tag's text and buttons (FUN_0048d9c0).
-					UiSounds.TagClick();
-					Unimplemented.Report( "TAG_MESSAGE_BAR" );
-					Log.Info( $"Park gadget: tag {tag.Row.Id} left clicked - the message bar is not built, so nothing opens" );
-				},
-				RightClicked = () => tags.Hide( tag, Time.WallMilliseconds )
+					tags.Hide( tag, Time.WallMilliseconds );
+
+					if ( tags.OnShow == tag )
+						CloseArm( liftsCamcorder: false );
+				}
 			} ) );
 		}
 
@@ -742,7 +973,7 @@ internal sealed class ParkGadget : UiWindow
 
 	/// <summary>Where the mast, its top and each tag stand on the virtual screen, for the debug console's <c>tags</c>.</summary>
 	internal string AerialCensus() => $"aerial: mast={Edges( _mast.Rect )} top={Edges( _mastTop.Rect )} "
-		+ string.Join( " ", _tagControls.Select( control => $"tag{control.Id}={Edges( control.Rect )}/frame={control.Frame}/shown={(control.Visible ? 1 : 0)}" ) );
+		+ string.Join( " ", _tagControls.Select( ( control, i ) => $"tag{control.Id}={Edges( _tagRects[i] )}/frame={control.Frame}/shown={(control.Visible ? 1 : 0)}" ) );
 
 	private static string Edges( UiRect rect ) => $"{rect.Left},{rect.Top},{rect.Right},{rect.Bottom}";
 

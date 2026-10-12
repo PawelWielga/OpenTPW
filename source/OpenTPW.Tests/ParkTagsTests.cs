@@ -167,4 +167,62 @@ public class ParkTagsTests
 		Assert.AreEqual( 0, tags.Standing.Count );
 		StringAssert.Contains( tags.Census( 2200 ), "standing=0" );
 	}
+	/// <summary>
+	/// <b>A tag whose message is put on the bar stops its two timers</b> (<c>FUN_0048d9c0</c>): it is the tag on
+	/// show, no longer hides at its life's end and starts no particle; a tag whose second button declines keeps
+	/// them; the bar's leaving, or the tag's going, leaves no tag on show.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the timers left running; the particle's timer left; a declining tag's stopped; the same tag
+	/// opened twice; a tag not standing opened; the tag on show kept after it is taken off; after the bar leaves.
+	/// </remarks>
+	[TestMethod]
+	public void AnOpenedTagStopsItsTimers()
+	{
+		var tags = new ParkTags();
+		var particle = Times( "TAG_ENDING_PARTICLE" );
+		var opened = tags.Said( 72, 13, 1000 )!;
+		var left = tags.Said( 150, 0, 1000 )!;
+
+		Assert.IsTrue( opened.TimersRun );
+		Assert.IsNull( tags.OnShow );
+		var changes = tags.Changes;
+		Assert.IsTrue( tags.Open( opened, 3000 ) );
+		Assert.AreEqual( (opened, false, long.MaxValue, 3000L), (tags.OnShow, opened.TimersRun, opened.HideAt, opened.OpenedAt) );
+		Assert.AreEqual( changes + 1, tags.Changes );
+		Assert.IsFalse( tags.Open( opened, 4000 ), "the tag on show is not opened again" );
+		Assert.AreEqual( 3000L, opened.OpenedAt );
+		StringAssert.Contains( tags.Census( 5000 ), "tag=72/picture=1/subject=13/age=4000/hidden=0/item=0/slot=0/life=30000/timers=0/open=1/" );
+		StringAssert.Contains( tags.Census( 5000 ), "tag=150/picture=1/subject=0/age=4000/hidden=0/item=0/slot=1/life=30000/timers=1/open=0/" );
+
+		tags.Tick( 26000 );
+		Assert.AreEqual( particle + 1, Times( "TAG_ENDING_PARTICLE" ), "the tag left alone starts its particle, the opened one none" );
+		tags.Tick( 31000 );
+		tags.Tick( 31500 );
+		Assert.AreEqual( (1, opened, false), (tags.Standing.Count, tags.Standing[0], opened.Hidden), "the tag left alone is gone and the opened one stands" );
+		Assert.IsFalse( tags.Open( left, 32000 ), "a tag off the mast is not opened" );
+		Assert.AreEqual( opened, tags.OnShow );
+
+		tags.Shut();
+		Assert.IsNull( tags.OnShow );
+		tags.Tick( 500000 );
+		Assert.AreEqual( (1, false), (tags.Standing.Count, opened.Hidden), "its timers stay stopped with the bar gone" );
+
+		// Taken off while on show: a mechanic's line takes the about-to-break tag's place.
+		var worn = tags.Said( 68, 14, 600000 )!;
+		Assert.IsTrue( tags.Open( worn, 600100 ) );
+		tags.Said( 72, 14, 600200 );
+		Assert.IsNull( tags.OnShow, "the tag on show taken off leaves none" );
+
+		// A tag that declines an offer keeps its timers when opened.
+		var offers = new ParkTags( [new ParkTags.Row( 5, ParkTags.NoTag, 1, 0, 0x1a, 0x1b, 30000, 0 )] );
+		var offer = offers.Said( 5, 0, 1000 )!;
+		Assert.IsTrue( offers.Open( offer, 2000 ) );
+		Assert.AreEqual( (true, 31000L), (offer.TimersRun, offer.HideAt) );
+		offers.Tick( 31000 );
+		Assert.IsTrue( offer.Hidden );
+		Assert.AreEqual( offer, offers.OnShow, "hidden and still on show until it is off the mast" );
+		offers.Tick( 31500 );
+		Assert.AreEqual( (0, null), (offers.Standing.Count, offers.OnShow) );
+	}
 }

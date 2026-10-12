@@ -220,11 +220,12 @@ public class ParkGadgetPressTests
 	}
 
 	/// <summary>
-	/// <b>A tag's right click hides it, its left click is the message bar's, and the top's right click takes every
-	/// tag off, the oldest first, a tenth of a second apart</b> (<c>FUN_0048dae0</c>, <c>FUN_004a1190</c>).
+	/// <b>A tag's right click hides it, its left click opens the message bar and takes nothing off, and the top's
+	/// right click takes every tag off, the oldest first, a tenth of a second apart</b> (<c>FUN_0048dae0</c>,
+	/// <c>FUN_004a1190</c>).
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> a tag's right click doing nothing; taking it off at once; the left click not counted; the
+	/// <b>Mutations:</b> a tag's right click doing nothing; taking it off at once; the left click opening nothing; the
 	/// top's right click doing nothing; taking every tag at once; the newest first.
 	/// </remarks>
 	[TestMethod]
@@ -239,12 +240,11 @@ public class ParkGadgetPressTests
 		Frame( stack, false, new Vector2( 1000, 100 ), 2.0f );
 		Assert.AreEqual( 902, Under( gadget, 119, 790 ) );
 
-		var bar = Times( "TAG_MESSAGE_BAR" );
 		Input.Mouse = new() { Left = true, LeftWentDown = true, Position = new Vector2( 119, 790 ) };
 		stack.Update();
 		Input.Mouse = new() { Position = new Vector2( 119, 790 ) };
 		stack.Update();
-		Assert.AreEqual( bar + 1, Times( "TAG_MESSAGE_BAR" ), "the left click asks for the bar" );
+		Assert.AreEqual( (true, tags.Standing[2]), (gadget.BarOut, tags.OnShow), "the left click puts its message on the bar" );
 		Assert.AreEqual( 3, tags.Standing.Count( tag => !tag.Hidden ), "and takes nothing off" );
 
 		Frame( stack, true, new Vector2( 119, 790 ), 3.00f );
@@ -265,6 +265,202 @@ public class ParkGadgetPressTests
 		Frame( stack, false, new Vector2( 1000, 100 ), 5.28f );
 		Assert.AreEqual( 0, tags.Standing.Count, "and the next a tenth after" );
 		Assert.AreEqual( new UI.UiRect( 77, 848, 161, 976 ), Find( gadget, 0x2e ).Rect, "the top back on the body" );
+	}
+
+	/// <summary>
+	/// <b>A tag's left click puts its message on the bar and the bar on the arm</b> (<c>FUN_0048d9c0</c>, the arm's
+	/// <c>0x004a14f0</c>): the arm 820 out, the bar at (486,1112)-(1101,1453) with the tag's text, its first button
+	/// dressed by the row's type and its second hidden for nought, the erase button shown; the tag swells and
+	/// shrinks while on show and stands past its life; the same tag clicked again folds the arm away.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the bar not shown; the arm's travel the camcorder's 645; the handle not moved; the text not
+	/// set; the first button undressed; the second shown for nought; the erase button hidden; the tag's timers left
+	/// running; no swell; the swell in the census; a second click opening again; the slide or the advisor's line
+	/// uncounted; the camcorder's panel shown with the bar.
+	/// </remarks>
+	[TestMethod]
+	public void ATagsLeftClickPutsItsMessageOnTheArm()
+	{
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags();
+		var slides = Times( "GADGET_ARM_SLIDE" );
+		var lines = Times( "TAG_MESSAGE_BAR_ADVISOR_LINE" );
+
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.0f );
+		var tag = tags.Said( 72, 13, 1000 )!;
+		tag.Text = "A ride has broken down.";
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.1f );
+		Assert.IsFalse( Find( gadget, 0x10d2d ).Visible, "no bar until a tag is opened" );
+		Assert.IsNull( Under( gadget, 565, 1172 ) );
+
+		Time.PinWall( 3000 );
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+
+		Assert.AreEqual( (true, true, tag), (gadget.BarOut, gadget.ArmOut, tags.OnShow) );
+		Assert.AreEqual( (slides + 1, lines + 1), (Times( "GADGET_ARM_SLIDE" ), Times( "TAG_MESSAGE_BAR_ADVISOR_LINE" )) );
+		Assert.AreEqual( new UI.UiRect( 331, 1069, 1181, 1495 ), Find( gadget, 0x21 ).Rect, "the arm 820 out" );
+		Assert.AreEqual( new UI.UiRect( 1151, 1058, 1304, 1503 ), Find( gadget, 0x23 ).Rect, "and the handle with it" );
+		Assert.AreEqual( (new UI.UiRect( 486, 1112, 1101, 1453 ), true), (Find( gadget, 0x10d2d ).Rect, Find( gadget, 0x10d2d ).Visible) );
+		Assert.AreEqual( ("A ride has broken down.", 6, new UI.UiRect( 637, 1129, 1084, 1433 )),
+			(Find( gadget, 0x10d32 ).Text, Find( gadget, 0x10d32 ).Font, Find( gadget, 0x10d32 ).TextRect) );
+		Assert.AreEqual( (true, 516), (Find( gadget, 0x10d30 ).Visible, Find( gadget, 0x10d30 ).HelpText), "mb_locate, \"Left-click to go there\"" );
+		Assert.IsFalse( Find( gadget, 0x10d2f ).Visible, "a second button of type nought is not shown" );
+		Assert.IsTrue( Find( gadget, 0x10d2e ).Visible, "the erase button" );
+		Assert.IsFalse( Find( gadget, 0x62 ).Visible, "the camcorder's panel is not on the arm" );
+		Assert.IsTrue( Find( gadget, 0x24 ).Visible, "the retract button" );
+		Assert.AreEqual( 0x10d30, Under( gadget, 565, 1172 ) );
+		Assert.AreEqual( 0x10d2e, Under( gadget, 565, 1387 ) );
+		Assert.AreNotEqual( 0x10d2f, Under( gadget, 565, 1280 ), "the hidden button takes no pointer" );
+		StringAssert.Contains( gadget.BarCensus(), "bar: out=1 rect=486,1112,1101,1453 arm=331,1069,1181,1495 handle=1151,1058,1304,1503" );
+		StringAssert.Contains( gadget.BarCensus(), "second=hidden" );
+		StringAssert.Contains( gadget.BarCensus(), "text=\"A ride has broken down.\"" );
+
+		// The stream at 0x007502b8: 0, 2, 4, 6, 4, 2, 0 a side, a step every 100 ms, from the opening.
+		foreach ( var (at, swell) in new[] { (3.05f, 0), (3.15f, 2), (3.25f, 4), (3.35f, 6), (3.45f, 4), (3.55f, 2), (3.65f, 0), (3.75f, 0), (3.85f, 2), (4.05f, 6) } )
+		{
+			Frame( stack, false, new Vector2( 1000, 100 ), at );
+			Assert.AreEqual( new UI.UiRect( 84 - swell, 909 - swell, 154 + swell, 974 + swell ), Find( gadget, 900 ).Rect, $"the tag on show at {at}" );
+		}
+
+		StringAssert.Contains( gadget.AerialCensus(), "tag900=84,909,154,974/", "the census reads the tag's own rectangle" );
+
+		// A second tag, not on show, keeps its own rectangle beside the swelling one.
+		tags.Said( 150, 0, 4000 );
+		Frame( stack, false, new Vector2( 1000, 100 ), 4.05f );
+		Assert.AreEqual( new UI.UiRect( 78, 903, 160, 980 ), Find( gadget, 900 ).Rect );
+		Assert.AreEqual( new UI.UiRect( 84, 834, 154, 899 ), Find( gadget, 901 ).Rect, "only the tag on show swells" );
+		Frame( stack, false, new Vector2( 1000, 100 ), 34.1f );
+		Frame( stack, false, new Vector2( 1000, 100 ), 34.7f );
+
+		Frame( stack, false, new Vector2( 1000, 100 ), 45.0f );
+		Assert.AreEqual( (1, false, true), (tags.Standing.Count, tag.Hidden, gadget.BarOut), "an opened tag stands past its thirty seconds" );
+
+		Time.PinWall( 46000 );
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		Assert.AreEqual( (false, false, null, 1), (gadget.BarOut, gadget.ArmOut, tags.OnShow, tags.Standing.Count), "the tag on show clicked again folds the arm away" );
+		Assert.AreEqual( slides + 2, Times( "GADGET_ARM_SLIDE" ) );
+		Assert.AreEqual( new UI.UiRect( 331, 1069, 361, 1495 ), Find( gadget, 0x21 ).Rect );
+		Assert.AreEqual( new UI.UiRect( 331, 1058, 484, 1503 ), Find( gadget, 0x23 ).Rect );
+		Assert.IsFalse( Find( gadget, 0x10d2d ).Visible );
+		StringAssert.Contains( gadget.BarCensus(), "bar: out=0 " );
+		Frame( stack, false, new Vector2( 1000, 100 ), 46.35f );
+		Assert.AreEqual( new UI.UiRect( 84, 909, 154, 974 ), Find( gadget, 900 ).Rect, "and the tag is still" );
+
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		Assert.AreEqual( (true, tag, lines + 2), (gadget.BarOut, tags.OnShow, Times( "TAG_MESSAGE_BAR_ADVISOR_LINE" )), "and a third click opens it again" );
+	}
+
+	/// <summary>
+	/// <b>The bar's ways off the arm</b> (<c>FUN_0048e2f0</c>, <c>FUN_0048dae0</c>): the erase button hides the tag
+	/// on show at once, takes it off half a second on and folds the arm away; the tag's right click the same; the tag
+	/// taken off by a later line; the retract button, which also lifts the camcorder button; and the camcorder
+	/// button, which puts its own panel on the arm or folds it away, and stays down while a tag takes the arm.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> erase leaving the tag; taking it off at once; leaving the arm out; the right click leaving
+	/// the arm out; a tag gone and its bar left; the camcorder's panel and the bar both shown; the camcorder button
+	/// lifted by a tag's click, or left down by the retract button; a button of an unbuilt type uncounted, or
+	/// folding the arm; a declining tag's erase button shown.
+	/// </remarks>
+	[TestMethod]
+	public void TheBarLeavesTheArmWithItsTag()
+	{
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 5, ParkTags.NoTag, 1, 0, 9, ParkTags.DeclineButton, 30000, 0 ),
+			new ParkTags.Row( 6, ParkTags.NoTag, 1, 0, 4, 0, 30000, 0 )] );
+		var camcorder = (UI.UiButton)Find( gadget, 0x27 );
+
+		// Erase.
+		var tag = tags.Said( 72, 13, 1000 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.1f );
+		Time.PinWall( 2000 );
+		stack.ClickAt( 119, 941 );
+		Assert.IsTrue( gadget.BarOut );
+		Assert.IsTrue( stack.ClickAt( 565, 1387 ), "mb_erase" );
+		Assert.AreEqual( (true, 1, false, null), (tag.Hidden, tags.Standing.Count, gadget.BarOut, tags.OnShow), "hidden at once, the arm in" );
+		Frame( stack, false, new Vector2( 1000, 100 ), 2.49f );
+		Assert.AreEqual( 1, tags.Standing.Count );
+		Frame( stack, false, new Vector2( 1000, 100 ), 2.51f );
+		Assert.AreEqual( 0, tags.Standing.Count, "and off half a second on" );
+
+		// The tag's own right click.
+		tag = tags.Said( 72, 13, 3000 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 3.1f );
+		stack.ClickAt( 119, 941 );
+		Assert.IsTrue( gadget.BarOut );
+		Frame( stack, true, new Vector2( 119, 941 ), 4.00f );
+		Frame( stack, false, new Vector2( 119, 941 ), 4.08f );
+		Assert.AreEqual( (true, false, null), (tag.Hidden, gadget.BarOut, tags.OnShow), "the right click hides it and folds the arm away" );
+		Frame( stack, false, new Vector2( 1000, 100 ), 4.7f );
+		Assert.AreEqual( 0, tags.Standing.Count );
+
+		// Taken off by a later line.
+		var worn = tags.Said( 68, 13, 5000 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 5.1f );
+		stack.ClickAt( 119, 941 );
+		Assert.AreEqual( (true, worn), (gadget.BarOut, tags.OnShow) );
+		tags.Said( 72, 13, 6000 );
+		Frame( stack, false, new Vector2( 1000, 100 ), 6.1f );
+		Assert.AreEqual( (false, false), (gadget.BarOut, gadget.ArmOut), "the tag on show gone, the bar goes with it" );
+
+		// The camcorder button and the retract button.
+		stack.ClickAt( 119, 941 );
+		Assert.IsTrue( gadget.BarOut );
+		Assert.IsTrue( stack.ClickAt( 261, 1414 ), "the camcorder button" );
+		Assert.AreEqual( (false, true, true, null), (gadget.BarOut, gadget.ArmOut, camcorder.IsDown, tags.OnShow), "its panel takes the arm" );
+		Assert.AreEqual( (true, false), (Find( gadget, 0x62 ).Visible, Find( gadget, 0x10d2d ).Visible) );
+		Assert.AreEqual( new UI.UiRect( 976, 1058, 1129, 1503 ), Find( gadget, 0x23 ).Rect );
+
+		stack.ClickAt( 119, 941 );
+		Assert.AreEqual( (true, true), (gadget.BarOut, camcorder.IsDown), "a tag takes the arm and the camcorder button stays down" );
+		Assert.AreEqual( (false, true), (Find( gadget, 0x62 ).Visible, Find( gadget, 0x10d2d ).Visible) );
+		Assert.AreEqual( new UI.UiRect( 1151, 1058, 1304, 1503 ), Find( gadget, 0x23 ).Rect );
+		Assert.IsTrue( stack.ClickAt( 261, 1414 ), "the camcorder button, up" );
+		Assert.AreEqual( (false, false, false, null), (gadget.BarOut, gadget.ArmOut, camcorder.IsDown, tags.OnShow) );
+
+		// The bar's own ways in leave the camcorder button as it is: erase, with the button down.
+		stack.ClickAt( 261, 1414 );
+		stack.ClickAt( 119, 941 );
+		Assert.AreEqual( (true, true), (gadget.BarOut, camcorder.IsDown) );
+		Assert.IsTrue( stack.ClickAt( 565, 1387 ), "mb_erase" );
+		Assert.AreEqual( (false, false, true), (gadget.BarOut, gadget.ArmOut, camcorder.IsDown), "erase folds the arm and leaves the camcorder button down" );
+		Assert.IsTrue( stack.ClickAt( 261, 1414 ), "up again, with nothing out" );
+		Assert.AreEqual( (false, false), (gadget.ArmOut, camcorder.IsDown) );
+		Frame( stack, false, new Vector2( 1000, 100 ), 6.7f );
+		Assert.AreEqual( 0, tags.Standing.Count );
+		tags.Said( 72, 13, 6800 );
+		Frame( stack, false, new Vector2( 1000, 100 ), 6.9f );
+
+		stack.ClickAt( 261, 1414 );
+		stack.ClickAt( 119, 941 );
+		Assert.AreEqual( (true, true), (gadget.BarOut, camcorder.IsDown) );
+		Assert.IsTrue( stack.ClickAt( 389, 1426 ), "the retract button" );
+		Assert.AreEqual( (false, false, false, null), (gadget.BarOut, gadget.ArmOut, camcorder.IsDown, tags.OnShow), "which lifts the camcorder button too" );
+		Assert.AreEqual( 1, tags.Standing.Count, "and leaves the tag" );
+
+		// A tag whose buttons are not built: an offer to buy, and to decline.
+		var buttons = Times( "TAG_BAR_BUTTON" );
+		var offer = tags.Said( 5, 0, 7000 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 7.1f );
+		Assert.IsTrue( stack.ClickAt( 119, 866 ), "the second tag up" );
+		Assert.AreEqual( offer, tags.OnShow );
+		Assert.AreEqual( (true, 0x209, true, -1, false),
+			(Find( gadget, 0x10d30 ).Visible, Find( gadget, 0x10d30 ).HelpText, Find( gadget, 0x10d2f ).Visible, Find( gadget, 0x10d2f ).HelpText, Find( gadget, 0x10d2e ).Visible),
+			"mb_buy, mb_decline, and no erase button beside a decline" );
+		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
+		Assert.IsTrue( stack.ClickAt( 565, 1280 ) );
+		Assert.AreEqual( (buttons + 2, true), (Times( "TAG_BAR_BUTTON" ), gadget.BarOut), "each counted, and the bar left out" );
+		Assert.AreNotEqual( 0x10d2e, Under( gadget, 565, 1387 ), "the hidden erase button takes no pointer" );
+
+		// mb_locate of the other type, which goes by the item (FUN_004868d0, not read): counted, and the camera left.
+		var looked = ParkOrbitCameraMode.PointOfInterest;
+		var byItem = tags.Said( 6, 13, 7200 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 7.3f );
+		Assert.IsTrue( stack.ClickAt( 119, 791 ), "the third tag up" );
+		Assert.AreEqual( (byItem, 515), (tags.OnShow, Find( gadget, 0x10d30 ).HelpText) );
+		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
+		Assert.AreEqual( (buttons + 3, looked), (Times( "TAG_BAR_BUTTON" ), ParkOrbitCameraMode.PointOfInterest) );
 	}
 
 	private static (UI.WindowStack Stack, UI.ParkGadget Gadget) AGadget()

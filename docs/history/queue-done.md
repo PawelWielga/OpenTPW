@@ -6152,6 +6152,31 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (84, 909, 154, 974) on tick 934 with our text, then none 30.53 s on; a bought Hot Pot's record is the
   original's own but for the 233 bytes it leaves unwritten; main's build wrote four bytes of nought. Seven
   predictions of seven. 55 bugs put back: 50 fail a test, and the other five once their tests were fixed. Tests 2987. I split the item: its other pieces are Q311.
+- [x] **Q311. A tag's left click opens the message bar.** Done 2026-10-11. The click plays sound `0xc0` and
+  hands the tag to `FUN_0048d9c0`: its two timers are stopped unless its second button declines, so **an opened
+  tag does not time out**; the bar (stream `0x007501a0`) is given the tag's text, thing, two button types and
+  item, and the arm asked for it (`FUN_004a2590`). The arm's handler `0x004a14f0` is read whole: a panel is put
+  at the arm's left less its width and fifty and comes out ten steps of a tenth of (its width + 208), 20 ms
+  apart, so the bar stands at (486, 1112, 1101, 1453) and the handle 820 out. The bar's handler `FUN_0048e2f0`
+  dresses the two stacked buttons by type (`FUN_0048e610`), shows `mb_erase` unless the second declines, and
+  plays the stream at `0x007502b8` on the tag, which swells and shrinks; `mb_locate` puts the camera on the
+  tag's thing and leaves the bar; erase hides the tag, takes it off half a second on and folds the arm; the tag
+  on show clicked again folds it (`exe/hud.md`, "The message bar"). Built: `ParkGadget.OpenTag`, `BarButton`,
+  `EraseTag`, `Swell`, `BarCensus`, `PutArm` with a panel; `ParkTags.Open`, `Shut`, `OnShow`, a tag's
+  `TimersRun`; `tags` prints the bar. `TAG_MESSAGE_BAR` is gone; `TAG_MESSAGE_BAR_ADVISOR_LINE` and
+  `TAG_BAR_BUTTON` are new. The original, predicted first, seven of seven (`original/bar.py`): the bar's data
+  read thing 13, buttons 3 and 0, item 1100 and the text, its rectangle ended at (486, 1112, 1101, 1453) with the
+  handle at 1151, the tag's timer byte read 0 and the tag was held 70 s after it came; locate moved the view and
+  left the bar; a second click folded the arm; erase had none held 0.53 s on. Here, the stock park's Bounce
+  broken and its tag clicked, seven of seven twice: the log's `message bar: tag 72 subject 13 item 1100 bar:
+  out=1 rect=486,1112,1101,1453 arm=331,1069,1181,1495 handle=1151,1058,1304,1503 first=mb_locate/help=516
+  second=hidden erase=mb_erase/help=-1`, `tags` `timers=0/open=1`, the frame's text box 94.8% black with white
+  lettering where it was 0.6%, the tag standing 40 s on, `Camera: to thing 13 on cell (51,23)`, `out=0` at the
+  second click, `hidden=1` at erase and `standing=0` 0.8 s on; main's build counted `TAG_MESSAGE_BAR` and its
+  tag was gone 33 s after it came. Bugs put back: 60, every one failing a test (56 of 61 at first; four survivors
+  and one that did not compile fail since the tests were tightened, and one was the same program). Tests 2991
+  with the game. I split the item: its other pieces are Q312.
+  Harness `~/.cache/tpw-harnesses/q311/`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

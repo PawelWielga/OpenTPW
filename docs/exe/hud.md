@@ -794,17 +794,128 @@ list's rules and the mast's). The other two branches are an event of type `0x19`
 (ids `0x17b` / `0x17c` / `0x17d`, "Postcard sent", "Postcard to outbox", "Postcard failed"). `FUN_0048ef70` is
 the **save-file loader**, not a live poster - it reads 0x21c-byte records through `FUN_005f5e20`. The cap is
 **ten** (`DAT_00750610`, with the string `mb_erase` immediately after it at `0x00750614`). The tags are built
-(`ParkTags`); the bar a tag's left click opens is not (`TAG_MESSAGE_BAR`).
+(`ParkTags`), and so is the bar a tag's left click opens (below).
 
 **A screen's advisor line is not posted here.** `FUN_00486b00` runs into the advisor's own message system
 (`FUN_0059b590`, `FUN_0059a940`); the bar keeps a separate list (`DAT_007cb2c8`, posted by
 `FUN_0048eb20`). They talk in one direction only: showing a bar message (`FUN_0048d9c0`) posts advisor
 message **0x11c** and calls `FUN_004a2590` to put the bar on the arm.
 
-State globals: `DAT_007ca098` the bar's tree, `DAT_007ca090` the message on show, `DAT_007ca09c` how many
-are held. Handler `LAB_0048e2f0` (not a Ghidra function): 0x10d30 and 0x10d2f go to `FUN_0048e0f0` — a
-jump table that opens whichever screen the message is about — and 0x10d2e erases the current one and
-retracts the arm via `FUN_004a25f0(0)`.
+State globals: `DAT_007ca098` the bar's tree, `DAT_007ca090` the tag whose message is on show, `DAT_007ca094` the
+tag being put on show, `DAT_007ca09c` how many tags are held.
+
+### Showing a message, `FUN_0048d9c0`
+
+A tag's left click (`FUN_0048dae0`, `0x10006` with button 0) plays sound `0xc0`, and then: the tag on show
+(`[0x007ca090]`) folds the arm away (`FUN_004a25f0( 0 )`); any other is handed to `FUN_0048d9c0`:
+
+1. Where the tag's byte `+0x134` is set (its timers run) and its second button is not `0x1b`, timers `0x80080`
+   and `0x80081` are stopped and the byte cleared, and its particle killed. **A tag once opened does not time
+   out.** A tag whose second button declines keeps its timers.
+2. The bar's data words are written from the tag's: the text (the tag's word 2 to the bar's 1), the thing (3 to 2),
+   the first button's type (5 to 3), the second's (6 to 4), the item (8 to 5).
+3. `FUN_004a2590( bar, 1 )` asks the arm for the bar, `[0x007ca094]` is the tag, and advisor message `0x11c` is
+   posted (`FUN_00486b00`).
+
+### The bar's handler, `FUN_0048e2f0`
+
+| Message | What it does |
+|---|---|
+| `0x1001d9`, the arm starts out with it | the middle panel's text is the bar's word 1; `FUN_0048e610` dresses `0x10d30` by word 3 and `0x10d2f` by word 4; `0x10d2e` wears `mb_erase` and is shown, unless word 4 is `0x1b`, when it has no mesh and is hidden; each button's depth goes up one; `[0x007ca090]` takes `[0x007ca094]`; and the stream at `0x007502b8` is played on that tag at 100 (`FUN_0065e72d`) |
+| `0x1d` with 1, the arm fully out | `[0x007ca094]` is cleared |
+| `0x1001d8`, the arm starts in | the tag's stream is stopped (`FUN_0065e897`), advisor message `0x11c` is withdrawn (`FUN_00486b40`), `[0x007ca090]` is cleared |
+| `0x100` from `0x10d2e` | the tag on show is hidden, the mast is posted `0x100002` with it and nought (off half a second on), and the arm folded away |
+| `0x100` from `0x10d30` or `0x10d2f` | `FUN_0048e0f0( type, thing, item )`: on an answer of 1 the arm is folded away; on 2 the mast is sent `0x100002` for the tag and the arm folded away; on nought nothing more |
+
+**A button's look, `FUN_0048e610`** (the type, the mesh's node, the help row put in the control's `+0x90`): 3
+`mb_locate` `0x204`; 4 `mb_locate` `0x203`; 9 to `0x11` `mb_buy`, `0x200` and the type; `0x12` `b_loan` `0x212`;
+`0x13` `mb_resrch` `0x213`; `0x14` `b_pkinfo` `0x214`; `0x15` `b_staffcost` `0x215`; `0x17` `mb_callmech`
+`0x217`; `0x18` `b_entry` `0xec`; `0x1a` `mb_accept` and `0x1b` `mb_decline`, no row; `0x16` leaves the button as
+it was; any other type takes the mesh off and hides it. Rows 515 and 516 both read "Left-click to go there".
+
+**A button's act, `FUN_0048e0f0`** (its answer in brackets): 3 `FUN_004867b0( thing )`, the camera to the thing's
+cell (0: the bar stays); 4 `FUN_004868d0( &item )` (0; not read); 9 to `0xc` `FUN_004acc70( 0..3, item )` (2);
+`0xd` to `0x11` `FUN_0049bdd0( 0..4 )` (2); `0x12` `FUN_0049fb30` (2); `0x13` `FUN_004aa480`, research (2); `0x14`
+`FUN_004a52a0` (2); `0x15` `FUN_004b2750` (2); `0x16` `FUN_004b7b00` (2); `0x17` `FUN_004dfe30( 1 )` on the
+thing, the call for a mechanic (1); `0x18` `FUN_00498d80`, the entry price screen (2); `0x1a` and `0x1b`
+`FUN_004d2df0` and `FUN_004d2ec0` on the thing `FUN_00519610` answers (2). None but 3 is read further.
+
+**The stream at `0x007502b8`** is seven rows of four shorts, a change of the control's left, top, right and bottom:
+three of (-2, -2, 2, 2), three of (2, 2, -2, -2) and the end mark `0xd8f3`. The tag on show swells two a side a
+step for three steps, shrinks the same, rests a step and goes round again.
+
+### The arm's handler, `0x004a14f0`
+
+In no function; a jump table over messages `0xa` to `0x100`. The arm's byte `+0x134` is its state: 0 at rest, 2
+going out, 3 coming in, 4 coming in for a panel waiting.
+
+- **`0xa`, out with a panel.** In any state but 0 the panel is kept in the arm's data word 2 and nothing more is
+  done. At rest: timer `0x80080` is armed at 20 ms and the arm's `+0x130` set to ten; the panel is linked under
+  the arm (`FUN_0065f447`) three depths under its own; its rectangle is put at the arm's left less its own width
+  and fifty, its middle on the arm's (`0x004a1613`), and each of its children is shown once its right edge is past
+  the arm's left (`FUN_004a1440`); **the step is a tenth of the panel's width, the body's right edge less the
+  arm's left, and a hundred** (`0x004a16d7`, a whole division); the retract button `0x24` is switched on; sound
+  `0x1c` is played (`FUN_0051bfc0`); and the panel is sent `0x1001d9`.
+- **`0xb`, in.** With a panel carried: the panel is sent `0x1001d8`, the step is a tenth of the arm's left less
+  the handle's (`[0x007cb2d0]`), the retract button is switched off and sound `0x1c` played; the state is 3, or 4
+  where the message's word is -1.
+- **Timer `0x80080`.** While `+0x130` is over nought it goes down one and the arm's right edge moves a step; the
+  arm's resize (message `0x13`) moves the panel as far (`FUN_0065c7fe`) and shows it and its children by their
+  right edges. At nought the timer stops: coming in, the panel is hidden and unlinked, sent `0x1d` with nought,
+  and sound `0xc2` played; going out, the panel is sent `0x1d` with 1. The state is 0, and a panel waiting in
+  word 2 is posted `0xa`.
+- **`0x100` from `0x24`,** the retract button: `0xb`, or with the arm already coming in the waiting panel is
+  forgotten; then control `0x27`, the camcorder button, is put up.
+
+`FUN_004a2590( panel )`: nothing with a panel already waiting; else the arm is sent `0xb` and posted `0xa` with
+the panel, so a panel replaces the one carried by the arm coming in and going out again. `FUN_004a25f0( lift )`:
+`0xb`, or the waiting panel forgotten while the arm comes in; with `lift`, the camcorder button is put up. The
+camcorder panel's own handler (`FUN_00498ad0`) has no arm for `0x1001d8`, so a tag that takes the arm from it
+leaves the camcorder button down, and that button's next click, up, folds away whatever the arm carries
+(`FUN_00498bd0`).
+
+### The original (`q311/orig/run.sh`, `original/bar.py`; predicted first, seven of seven)
+
+Q265's `bounce.TPWS`, its Belly Bounce broken through its script 20 s after the load; the mechanic's tag came at
+24.1 s. Left clicked seven seconds on: `[0x007ca090]` and `[0x007ca094]` read the tag's control; the bar's data
+read thing 13, buttons 3 and 0, item 1100 and "Your Belly Bounce ride has broken down, and a mechanic is on his
+way to fix it."; its rectangle went from (-334, 1112, 281, 1453) to **(486, 1112, 1101, 1453)** and the handle's
+left from 331 to **1151**, in steps of 82 inside 0.2 s; `[0x007ca094]` cleared 20 ms after the last. The tag's
+`+0x134` read 0 from the click, and **the tag was still held 70 s after it came**, where an unopened one goes at
+30.5 s. Its rectangle went (84, 909, 154, 974), then 2, 4, 6, 4 and 2 wider a side and back, a round every 0.9 s
+(a step is 100 ms rounded up to the game's 31 ms frames). `mb_locate` clicked: the view moved onto the Bounce,
+the bar and the tag stayed (the frame's help bar reads "Left-click to go there"). The tag clicked again: on show
+read 0, the bar and the handle went back in six polls, the tag stayed and stopped swelling. Clicked a third time
+and `mb_erase` clicked: the tag's shown bit read 0 at once, none was held 0.53 s on, the arm in. **The camcorder
+button** after it: the handle stopped at 851, 520 out, a tenth of (319 + 108 + 100) ten times, where the
+stream's rectangles and this game's arm have it 645 out.
+
+### OpenTPW (Q311: `ParkGadget.OpenTag`, `BarButton`, `EraseTag`, `PutArm`, `Swell`; `ParkTags.Open`, `Shut`, `OnShow`)
+
+`q311/confirm.py`, the stock park's Belly Bounce broken 25 s in and the mechanic's tag clicked three seconds
+after his line, seven predictions of seven twice and the control's one: the log read `Park gadget: message bar:
+tag 72 subject 13 item 1100 bar: out=1 rect=486,1112,1101,1453 arm=331,1069,1181,1495
+handle=1151,1058,1304,1503 first=mb_locate/help=516 second=hidden erase=mb_erase/help=-1 camcorder=0` and the
+text; `tags` read `timers=0/open=1`; the text's box in the frame went from 0.6% black to 94.8% with white
+lettering in its top third; 40 s after the tag came it stood with the bar out; with the camera sent away,
+`mb_locate` logged `Camera: to thing 13 on cell (51,23), point of interest (510,230)` and left the bar; the tag
+clicked again read `bar: out=0` and `handle=331,1058,484,1503` with the tag standing; opened a third time and
+erased, `tags` read `hidden=1` and `out=0` at once and `standing=0` 0.8 s on. `side-by-side.png` holds the
+original's frame, this game's and main's. Main's build counted `TAG_MESSAGE_BAR` at the click, drew nothing and
+its tag was gone 33 s after it came.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The arm's way out and in | ten steps 20 ms apart | at once, counted `GADGET_ARM_SLIDE` (Q230); so a tag's right click is never refused as the one being put on show, and a panel takes another's place with no fold between |
+| The arm's travel | a tenth of the panel's width and 208, ten times: 820 with the bar, 520 with the camcorder panel | 820 with the bar; the camcorder panel's is still the stream's 645 (Q230) |
+| The arm's sounds (`0x1c` as it starts, `0xc2` as it is in) | played | not played (Q230) |
+| The panel's children as it comes out | each shown as its right edge passes the body's | all at once |
+| The bar's text | the middle panel's, over the right slice | the same lettering; the right slice is put in the tree before the middle one so that it is drawn under it. At 1280 x 720 font 6 is a smaller face than the original's at 1024 x 768, so the line breaks fall later |
+| The two stacked buttons | 21 types | dressed for every type whose mesh is a file of `ui.wad` (not `b_loan` and `b_pkinfo`, nodes of files not looked up); only type 3 acts, the rest counted `TAG_BAR_BUTTON` |
+| Advisor message `0x11c` | posted with the bar, withdrawn as it leaves | counted, `TAG_MESSAGE_BAR_ADVISOR_LINE` (no screen's line is said here) |
+| The tag on show | swells by the stream, a step every 100 ms on the frame's clock | the same steps on real milliseconds, so a round is 0.7 s where the original's frames make it 0.9 |
+| The buttons' depths | one more at every showing | not kept |
+| A tag opened, in a park file | written with its whole life, and a load starts its timers again | the same (`ParkTags.Restore`) |
 
 ## The help rows, from the game's own UIHELPTEXT.str
 

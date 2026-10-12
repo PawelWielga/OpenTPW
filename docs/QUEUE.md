@@ -44,9 +44,19 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q311. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q312. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q311 (`hud.md`, "The message bar"): the bar's buttons of every type but 3 are not built
+  (`TAG_BAR_BUTTON`; `FUN_0048e0f0`'s nineteen other arms, of which only the camera's is read), and types `0x12`
+  and `0x14` are not dressed (the files behind the nodes `b_loan` and `b_pkinfo` are not looked up); advisor
+  message `0x11c` is counted, not said (`TAG_MESSAGE_BAR_ADVISOR_LINE`); the bar's children are shown all at
+  once; the buttons' depths are not kept; the tag on show swells on real milliseconds, a round in 0.7 s where
+  the original's frames make it 0.9. At 1280 x 720 the bar's text is in a smaller face than the original's at
+  1024 x 768 and breaks its lines later (which face a font slot takes at a window's size is not this item's).
+  In no game run: a tag's right click with the bar out, a tag taken off by a later line with the bar out, the
+  camcorder button or a park screen with the bar out, two tags, a tag that declines (the tests hold each). The
+  arm's slide, its sounds and the camcorder panel's travel are Q230's.
   From Q310 (`saves.md`, "OpenTPW's writer, the aerial's tags"): a tag's text is written for kinds 0 and 2
   alone (`TAG_TEXT_KIND`; `FUN_00509e10` has 37), its name the item's `Info.Name`, held on items 1100 and 1140
   (what fills the item record's `+0x410` is not read); what item 2984 is on a guest's tag is not decoded; a
@@ -54,15 +64,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   are nought. The call from the said line with the subject's item and name, and the strings' load, are held by
   the game runs alone. In no game run: two tags in a file, a hidden tag written, a tag of a row not listed put
   back and taken off by a later line. The new tag's sound at a load was not heard.
-  From Q309 (`advisor-park.md`, "The tag a line leaves on the aerial"): the message bar a tag's left click opens
-  is not built (`TAG_MESSAGE_BAR`: the bar's stream, the tag's text by its kind, the two buttons, `mb_locate`
-  first, and advisor message `0x11c`), nor the particle five seconds before a tag's end (`TAG_ENDING_PARTICLE`,
+  From Q309 (`advisor-park.md`, "The tag a line leaves on the aerial"): the particle five seconds before a
+  tag's end is not built (`TAG_ENDING_PARTICLE`,
   effect `0x5b`: the interface draws no particle in a park). Only the six rows the built topics name are listed
   (`TAG_ROW_NOT_LISTED`; the table is the executable's, 382 rows). The red top and the later tags are put down at once, not played down (the streams at
   `0x007502f0` and `0x00752e48`). The two sounds play at their variations' own volume, not measured against the
   original's mix. Events `0x19` and the postcard's are sent by nothing here. Whether a tag's timers run under
   the original's menu pause is not measured. In no game run: a second tag, a tag taking another's place, the
-  door's tags, either right click, the left click (the tests hold each). Not heard in either game.
+  door's tags, either right click (the tests hold each). Not heard in either game.
   From Q308 (`advisor-park.md`, "What he wears for a line"): the theme's own advisor model (slot 1, `Advisor_JUN.md2`, 137 rows) and its costume (prop -1,
   `ThemeAdvisorCostumes`) are not built (`ADVISOR_THEME_COSTUME`, counted where a built topic names one: none
   does). A clip word's `0x10000` and its particles are a gesture row's, not built. The hat is paler than the
@@ -704,6 +713,12 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the states, the step and its clock, and how a mesh is drawn on a narrowed control; measure the slide's length in the
   original's frames; then build it on `Time.Delta` (rule 10). Confirm: frames every 50 ms of the arm going out, beside
   the original's.
+  From Q311 (`hud.md`, "The arm's handler", read whole there): ten steps on timer `0x80080`, 20 ms apart; the
+  step out is a tenth of the panel's width and 208, in a tenth of the arm's left less the handle's; sound `0x1c`
+  as either starts and `0xc2` as the arm is in; a panel's children are shown as their right edges pass the
+  body's. The original's handle was measured 520 out with the camcorder panel, where `ArmTravel` is 645, and
+  820 with the message bar, which is built at that. Left: the mesh on a narrowed control, the slide and its
+  sounds built, the camcorder panel's travel and place (`original/bar.py` reads all three).
 - [ ] **Q231. Under an open park screen: F1, the wheel and the release. Decode first.** Found by Q115
   (`park-engine.md`, "A park screen is open"). The screens' key handler answers a plain F1 let go by calling
   `FUN_005194d0` on the world and `FUN_0059ab50` on what it answers (`0x00488bfb`), not traced; nothing here reads F1 in

@@ -768,8 +768,8 @@ with the tag where over 30% was. Main's build said the same line, moved nothing 
 | The times | the interface's timers, real milliseconds | the same clock (`Time.WallMilliseconds`), from the gadget's update |
 | The red top and the later tags as one goes | played down (streams `0x007502f0`, `0x00752e48`) | put down at once |
 | The particle five seconds before the end | effect `0x5b` over the tag | counted, `TAG_ENDING_PARTICLE` |
-| A left click | sound `0xc0`, the message bar on the arm with the text and the buttons | the sound, then counted, `TAG_MESSAGE_BAR` |
-| The tag's text | written from the row's string by its kind (`FUN_00509e10`), 37 kinds | kinds 0 and 2, the two the six rows use: the row of `TAG_SYSTEM.str`, and for kind 2 the item's `Info.Name` where its parameter 0 stands; any other kind, and a kind 2 about no item, is counted, `TAG_TEXT_KIND`, and empty. Read by the park file and `tags` alone: no bar shows it |
+| A left click | sound `0xc0`, the message bar on the arm with the text and the buttons | the same (`hud.md`, "The message bar"), and an opened tag's timers stop there as here |
+| The tag's text | written from the row's string by its kind (`FUN_00509e10`), 37 kinds | kinds 0 and 2, the two the six rows use: the row of `TAG_SYSTEM.str`, and for kind 2 the item's `Info.Name` where its parameter 0 stands; any other kind, and a kind 2 about no item, is counted, `TAG_TEXT_KIND`, and empty. Shown on the message bar, written to a park file and read by `tags` |
 | The sounds' loudness | not measured | each at its variation's own volume, as the boot's |
 | The tags in a park file | written and read | written and read (`saves.md`, "OpenTPW's writer, the aerial's tags") |
 | The other two events (`0x19`, the postcard's) | heard | nothing sends them here |

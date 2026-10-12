@@ -13,6 +13,10 @@ namespace OpenTPW;
 /// docs/exe/saves.md, "OpenTPW's writer, the aerial's tags"): each one's id, text, whole life, picture, buttons,
 /// thing and item, and a load puts each back with its whole life before it.
 /// </para>
+/// <para>
+/// <b>A tag's left click puts its message on the bar</b> (<see cref="Open"/>, FUN_0048d9c0), which stops the
+/// tag's two timers: a tag once opened stands until it is taken off. docs/exe/hud.md, "The message bar".
+/// </para>
 /// </summary>
 internal sealed class ParkTags
 {
@@ -45,6 +49,8 @@ internal sealed class ParkTags
 	internal const int OffAfterHidden = 500;
 	/// <summary>How long after the one before it each tag goes when the top is right clicked (LAB_004a11e0, 0x100003).</summary>
 	internal const int DeleteAllStep = 100;
+	/// <summary>The second button that declines an offer, mb_decline: a tag carrying it keeps its timers when opened (FUN_0048d9c0).</summary>
+	internal const int DeclineButton = 0x1b;
 
 	/// <summary>The table the game's running language keeps the tags' strings in (DAT_0078ba90).</summary>
 	internal const string StringsPath = "Language/English/TAG_SYSTEM.str";
@@ -68,6 +74,10 @@ internal sealed class ParkTags
 		/// <summary>Hidden and still holding its place on the mast.</summary>
 		internal bool Hidden { get; set; }
 		internal bool Warned { get; set; }
+		/// <summary>The control's +0x134: its two timers run. Set as a tag with a life is made, cleared as it is opened.</summary>
+		internal bool TimersRun { get; set; }
+		/// <summary>When its message was last put on the bar.</summary>
+		internal long OpenedAt { get; set; }
 	}
 
 	private readonly List<Tag> _tags = [];
@@ -84,6 +94,8 @@ internal sealed class ParkTags
 	internal int Changes { get; private set; }
 	/// <summary>How many tags the list has taken, for the new tag's sound.</summary>
 	internal int Made { get; private set; }
+	/// <summary>The tag whose message the bar shows (DAT_007ca090), or none.</summary>
+	internal Tag? OnShow { get; private set; }
 
 	/// <summary>
 	/// A line of response group <paramref name="group"/> about <paramref name="subject"/>, a thing of item
@@ -128,7 +140,12 @@ internal sealed class ParkTags
 
 		var slot = Enumerable.Range( 0, Most ).First( free => _tags.All( tag => tag.Slot != free ) );
 		var made = new Tag { Row = row, Subject = subject, Item = item, Text = text, Slot = slot, Born = now };
-		if ( row.Life > 0 ) made.HideAt = now + row.Life;
+		if ( row.Life > 0 )
+		{
+			made.HideAt = now + row.Life;
+			made.TimersRun = true;
+		}
+
 		_tags.Add( made );
 		++Changes;
 		++Made;
@@ -191,12 +208,42 @@ internal sealed class ParkTags
 			Log.Info( $"Park tags: {saved.Count} of the file's put back, standing {_tags.Count}" );
 	}
 
+	/// <summary>
+	/// A tag's message put on the bar (FUN_0048d9c0): its two timers are stopped, unless its second button is
+	/// <see cref="DeclineButton"/>, so it no longer hides at its life's end; it is the tag on show until
+	/// <see cref="Shut"/> or its going. False, and nothing done, for the tag already on show or one not standing.
+	/// </summary>
+	internal bool Open( Tag tag, long now )
+	{
+		if ( tag == OnShow || !_tags.Contains( tag ) ) return false;
+
+		if ( tag.TimersRun && tag.Row.Button2 != DeclineButton )
+		{
+			tag.TimersRun = false;
+			tag.HideAt = long.MaxValue;
+		}
+
+		OnShow = tag;
+		tag.OpenedAt = now;
+		++Changes;
+		Log.Info( $"Park tags: tag {tag.Row.Id} subject {tag.Subject} opened, timers {(tag.TimersRun ? 1 : 0)}" );
+		return true;
+	}
+
+	/// <summary>The bar taken off the arm (the bar's 0x1001d8): no tag is on show.</summary>
+	internal void Shut()
+	{
+		if ( OnShow == null ) return;
+		OnShow = null;
+		++Changes;
+	}
+
 	/// <summary>The timers' turn: a tag's particle five seconds before its end, its hiding at its end, and its going.</summary>
 	internal void Tick( long now )
 	{
 		foreach ( var tag in _tags.ToArray() )
 		{
-			if ( !tag.Warned && tag.Row.Life > 0 && now >= tag.Born + tag.Row.Life - WarningBeforeTheEnd )
+			if ( tag.TimersRun && !tag.Warned && now >= tag.Born + tag.Row.Life - WarningBeforeTheEnd )
 			{
 				tag.Warned = true;
 				// Effect 0x5b over the tag's middle (FUN_0048dae0, timer 0x80081); the interface draws no particle here.
@@ -227,6 +274,7 @@ internal sealed class ParkTags
 	private void TakeOff( Tag tag )
 	{
 		_tags.Remove( tag );
+		if ( tag == OnShow ) OnShow = null;
 		++Changes;
 		Log.Info( $"Park tags: tag {tag.Row.Id} subject {tag.Subject} off, standing {_tags.Count}" );
 	}
@@ -234,5 +282,5 @@ internal sealed class ParkTags
 	internal string Census( long now ) => $"tags: standing={_tags.Count} "
 		+ string.Join( " ", _tags.Select( tag =>
 			$"tag={tag.Row.Id}/picture={tag.Row.Picture}/subject={tag.Subject}/age={now - tag.Born}/hidden={(tag.Hidden ? 1 : 0)}"
-			+ $"/item={tag.Item}/slot={tag.Slot}/life={tag.Row.Life}/text=\"{tag.Text}\"" ) );
+			+ $"/item={tag.Item}/slot={tag.Slot}/life={tag.Row.Life}/timers={(tag.TimersRun ? 1 : 0)}/open={(tag == OnShow ? 1 : 0)}/text=\"{tag.Text}\"" ) );
 }
