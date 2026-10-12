@@ -6252,25 +6252,31 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   and the second tag stood (the length read 8,332 where 8,331 was predicted). Bugs put back (`mutations.py`,
   41): all fail a test, two of them after the tests were fixed (the stopwatch handed over with the clock moved, and the message playing written as two bytes). Tests 3007. I split the item: every other piece of the old Q315 is Q316.
 - [x] **Q316. The control panel's line is the advisor's polled message, said once a park.** Done 2026-10-12.
-  The tick's first act is the poll (`FUN_0059c680`): one polled row of the metadata table a tick, 156 of the 351,
-  from a cursor that is the program's (`0x00fb3540`), and a row scoring above nought that the gate lets by and
-  above the threshold is posted. Row 185, message `0xb9`, is the line this game said at every entry: a tutorial
+  The tick's first act is the poll (`FUN_0059c680`): one polled row of the metadata table a tick, 155 of the 351
+  in the running table, from a cursor (`0x00fb3540`) that the save's advisor-scoring module holds and the load
+  reads back (`FUN_0059c890`, `FUN_0059c860`), and a row scoring above nought that the gate lets by and above
+  the threshold is posted. Row 185, message `0xb9`, is the line this game said at every entry: a tutorial
   message scored `TutorialUIPanel.Score` on days 11 to 59 of a park (`0x005a06c0`), and the shipped park's file
   holds it as said on tick 257, so Lost Kingdom's Instant Action never says it (`exe/advisor-park.md`, "The poll,
-  and the control panel's line"). Built: `ParkAdvisorMessages.Poll`, `ScoreOf`, `Refusal`, `PollCursor`,
-  `ProgramCursor`, the topic `ControlPanel`; `UI.ParkLines` and its line at every entry are gone;
-  `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is new. Confirmed, predicted first (`q316/confirm.py stock|fresh|control`,
-  four of four, three of four, the control one of one): the stock park logged `poll message=185 position=110
-  days=37 score=110 threshold=25 tick=866 result=said-once`, `advisor` quiet and nobody beside the gadget four
-  seconds in (`run-stock1/1-four-seconds-in.png`), and a mechanic's line begun at four seconds was heard, where
-  main's build had him up saying sample 377 and refused it; the stock file with the record made fresh logged the
-  post and `attempt=1 message=185 ... response=404 sample=377 line=0 tick=866`, him up
-  (`run-fresh3/1-saying-it.png`), the saved file's record `(866, 0, 1, 0)` and its action playing 185, and after
-  its load `result=said-once`. The first round failed on the line's length (19 to 21 s where under 18.5 was predicted) and wrote the original's tick only after its cursor was read; a second round, every number written before either run, held: this game four of four (`run-fresh4`, tick 866, 18,998 ms), the original on tick 877 as predicted (`orig/run3.sh`). A third round, predicted first, ran the cases left to tests: a park made with no file said the line on tick 267 (`run-nofile`), the Tutorial option off read `tutorial-off` on tick 866 and the cutoff `days=64 ... tick=1490 result=no-score` (`run-cutoff`, three of three), and the original given that run's file, saved on tick 1506 with the record fresh, stayed silent for 85 s (`orig/run4.sh`). The
-  original (`orig/run.sh`): its stock park's record `(257, 0, 1, 0)` and no slot for 85 s; the fresh-record file
-  said on tick 877 where 878 was predicted from its cursor; this game's file read `(866, 0, 1, 0)` and stayed
-  silent. Bugs put back (`mutations.py`, 39): all fail a test, five of them after the tests were fixed (the last,
-  the poll's own ask of the gate, by the poll's answer, `PollAnswer`). Tests 3009. I split the
+  and the control panel's line"; FileFormats `saves.md`, "Advisor scoring"). Built: `ParkAdvisorMessages.Poll`,
+  `ScoreOf`, `Refusal`, `PollAnswer`, `PollCursor`, `ProgramCursor`, `RestoreCursor`, the topic `ControlPanel`;
+  `ParkWorld.AdvisorPollCursorOf` and `PutAdvisorPollCursor`; `UI.ParkLines` and its line at every entry are
+  gone; `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is new. The first build was wrong in two things, a round of 156 and a
+  cursor in no file, and five rounds of predictions found it (`q316/PREDICTION.txt`): the first failed on the
+  line's length; the fourth, the original's tick with its Tutorial switch held off through one turn, read 1032
+  where 1033 was predicted, and that tick was the round. Confirmed on the corrected build, predicted first
+  (`q316/confirm.py stock|fresh|nofile|cutoff|early`, thirteen of thirteen): the stock park logged `restored poll
+  cursor row=277` and `poll message=185 row=185 days=38 score=110 threshold=25 tick=877 result=said-once`,
+  `advisor` quiet and nobody beside the gadget four seconds in (`run5-stock/1-four-seconds-in.png`), a mechanic's
+  line begun there heard, where main's build had him up saying sample 377 and refused it; the stock file with
+  the record made fresh had the post and `attempt=1 message=185 ... sample=377 line=0 tick=877`, him up
+  (`run5-fresh/1-saying-it.png`), the saved file's record `(877, 0, 1, 0)` and its cursor the census's, and
+  said-once on tick 1032 after its load; a park made with no file said it on tick 265; with the Tutorial option
+  off `tick=877 result=tutorial-off`, and past day 60 `tick=1497 result=no-score`. The original (`orig/`): its
+  stock park silent for 85 s; the fresh-record file said on tick 877 in three programs; its switch held off, no
+  line on 877 and the line on 1032; and this game's file saved on tick 800 before the line said on tick 877, as
+  predicted before the run. Bugs put back (`mutations.py`, 47): all fail a test (`mutate5.out`, `mutate6.out`;
+  a 48th sat on a line that did nothing and is removed). Tests 3011. I split the
   item: every other piece of the old Q316 is Q317.
 ## B. Docs and comments
 

@@ -297,6 +297,9 @@ public class Level
 			// His last action is timed on the file's second stopwatch; a file whose clock did not read keeps none.
 			if ( advised.AdvisorActionOf() is { } action && advised.Clock.Second is { } stopwatch )
 				ParkState.AdvisorMessages.RestoreAction( action, stopwatch, (long)(GameClock.Now * 1000) );
+			// The poll goes on from the file's row; a park made fresh keeps the program's.
+			if ( advised.AdvisorPollCursorOf() is { } row )
+				ParkState.AdvisorMessages.RestoreCursor( row );
 		}
 		load.Mark( "park state" );
 
@@ -669,7 +672,8 @@ public class Level
 				var action = messages.WrittenAction( stopwatch, (long)(GameClock.Now * 1000) );
 				Log.Info( $"Save: advisor action written: started {action.Started} duration {action.Duration} playing {action.Playing} stopwatch {stopwatch}" );
 				return action;
-			} : null );
+			} : null,
+			state.AdvisorMessages?.PollRow );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;

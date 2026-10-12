@@ -47,15 +47,13 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q317. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q316 (`advisor-park.md`, "The poll, and the control panel's line"): 155 of the 156 polled rows are not
+  From Q316 (`advisor-park.md`, "The poll, and the control panel's line"): 154 of the 155 polled rows are not
   built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; row 282, `TutorialExplainTooltips`, is the same score function as
-  the built one, row 281 `GoldTicketExplanation`, row 0 `Welcome`); what moves the cursor through a load of the
-  original's is not read (160 then 277 across one, 186 and 186 across another; tick 877 after both loads of the
-  fresh-record file); the line's length differs a run
-  in both games and was not compared; the cursor is counted in polled rows, so a table read from the executable
-  would have to hand it the row. In no game run: a line polled inside another's wait (the test holds it), the
-  Tutorial option off in the original; the line cut off is not reachable (nothing built withdraws message 185). `PLAYER-GAPS.md` gap 4's text is older than the breakdown lines. Not heard in
-  either game.
+  the built one, row 281 `GoldTicketExplanation`); row 0's poster (`Welcome`, posted only in the running table)
+  is not read; `meta_full.json`'s row 0 is wrong in two dwords and the file is not corrected; the line's length
+  differs a run in both games and was not compared; a file's cursor below nought is refused here, where the
+  original would read before its table. In no game run: a line polled inside another's wait (the test holds
+  it). `PLAYER-GAPS.md` gap 4's text is older than the breakdown lines. Not heard in either game.
   From Q315 (`advisor-park.md`, "The last action in a park file"): a park screen's own line is not posted, so it
   starts no action. In no game run: a withdrawal inside a file's wait (the tests
   hold it), a file with a wait of nought, a park made fresh saved before any line, Alexah's own parks. The two

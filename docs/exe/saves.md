@@ -641,7 +641,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | `ADVS` | 360 bytes of the advisor and a buffer | nothing kept here | carried |
 | `SOUN` | two dwords, 84 bytes, then records not decoded | nothing kept here | carried |
 | `CHTS` | two bytes | nothing | carried |
-| `ADSC` | one dword | nothing | carried |
+| `ADSC` | one dword: the row the advisor's poll starts from (`advisor-park.md`, "The poll, and the control panel's line") | the poll's cursor | written (Q316) |
 | The UI block | a count and 540 bytes for each tag standing on the aerial | each tag as it stands ("OpenTPW's writer, the aerial's tags") | written |
 
 **Inside `WRLD`:**

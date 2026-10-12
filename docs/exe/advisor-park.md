@@ -227,7 +227,7 @@ Stride `0x38`, validated by `row+0x04 == id`, with a linear-scan fallback bounde
 | Address / offset | Original name | What it is | Evidence |
 |---|---|---|---|
 | `0x0076e300` | — | Metadata table, stride `0x38`, filled by the static initializer at `0x005a0a50` | Zeros in the image |
-| `+0x00` | — | Nought: the row is polled every 351-row cycle; otherwise posted only | `FUN_0059c680` |
+| `+0x00` | — | Nought: the row is polled, one of 155, a turn every 155 ticks; otherwise posted only | `FUN_0059c680` |
 | `0x772fcc` | — | Upper bound of the linear-scan fallback (351 rows) | |
 | `+0x04` | — | Id (used to validate a row) | |
 | `+0x08` | — | Category | |
@@ -343,7 +343,7 @@ The ids seen so far: `0xbc` when buy opens, `0xbd` when hire opens, `0xc6` and `
 |---|---|
 | The loader that fills `0x0076e300` | **Found** and emulated: the static initializer at `0x005a0a50` (above); the 40 screen-posted ids are posted-only rows of one line each |
 | The u16 at message `+0x00` | Unknown — it is written by `FUN_0059c0a0` but is not the gating id |
-| `Welcome` (section 2) | Row 0 of the metadata table is polled and its score function (`0x0059c8c0`, `MOV EAX,[ECX + 0xa0]`) is `Welcome.Score`; the shipped park's file holds message 0 as said on tick 1. Its line looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
+| `Welcome` (section 2) | Row 0 of the metadata table is posted only in the running game (the emulated table has it polled), its score function (`0x0059c8c0`, `MOV EAX,[ECX + 0xa0]`) is `Welcome.Score`, and the shipped park's file holds message 0 as said on tick 1; its poster is not read. Its line looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
 | Responses 399-402 | All carry sample 1, an `OpenPark` line — the same stub shape |
 
 ## Q90b — the posted door path (2026-10-03)
@@ -1015,8 +1015,8 @@ Not heard in either game.
 ## The poll, and the control panel's line (message `0xb9`, Q316)
 
 **The poll.** The tick's first act, before its wait is looked at, is `FUN_0059c680( 1 )` on the balance object
-(`0x0059a58b`, `ECX = 0x00fb3540`): from the row its first dword names, the cursor, it walks the metadata table,
-wrapping past row `0x15e`, until it has scored ONE row whose `+0x00` is nought, and leaves the cursor on the row
+(`0x0059a58b`, `ECX = 0x00fb3540`): from the row its first dword names, the cursor, nought again past row `0x15e`,
+it walks the metadata table until it has scored ONE row whose `+0x00` is nought, and leaves the cursor on the row
 after. A row is scored by its function (`+0x10`) where its mode (`+0x0c`) fits the game, and -1 otherwise; a score
 above nought of a message the gate (`FUN_0059abc0`, not forced) lets by makes that message the answer, and
 anything else answers `0x160`, no message. The tick then scores the answer again (`FUN_0059bf20`, -1 for `0x160`)
@@ -1024,17 +1024,24 @@ and, where that is above `MinScoreForConsideration` (`0x0059a5f5`, `JLE` past), 
 nought, line -1, not forced, no score given (`FUN_0059b590`, `FUN_0059a940`). So a polled message waits in the
 slots with the posted ones, and is said on the same tick where no wait is on.
 
-**156 of the 351 rows are polled** (the emulated table, `+0x00` nought): 0-32, 58-65, 71-82, 85-92, 98, 100-105,
-107-124, 140-141, 144-160, 169-173, 185, 238-257, 259-265, 267-269, 274-276, 278-282, 314, 316-317 and 347-350. A
-round is therefore 156 ticks, 39 seconds. **The cursor is the program's, not the park's:** `FUN_0059bea0` stores
-nought in it as the balance object is first built, nothing else stores it but the poll, and the advisor's
-serialiser does not write it ("The slots in a park file"), so a park entered or loaded takes it where the last
-one left it.
+**155 of the 351 rows are polled**, read from the running original (`original/advisortable.py`): 1-32, 58-65,
+71-82, 85-92, 98, 100-105, 107-124, 140-141, 144-160, 169-173, 185, 238-257, 259-265, 267-269, 274-276, 278-282,
+314, 316-317 and 347-350. A round is 155 ticks. **The emulated table is wrong in one row:** `meta_full.json` has
+row 0's `+0x00` and `+0x0c` nought, and the live table holds 1 and 2 there (posted only, either mode); its other
+4,912 dwords are the live table's. Every row's id is its row.
+
+**The cursor is in the park file.** `FUN_0059bea0` stores nought in it as the balance object is first built; the
+save's advisor-scoring module is that one dword (`FUN_0059c890`, between the cheats' `STHC` and its own `CSDA`),
+and the load reads it back into the same place (`FUN_0059c860`, from `FUN_00415270` at `0x00415d21`). So a park
+goes on from the row its file was saved on, and a park made with no file from wherever the program's cursor
+stands. `Easymode.TPWI` holds 277, the row after the last its makers' park scored: its record of `0x11a`, row
+282, is said on tick 605, and 150 ticks on, the file's tick 755, the 150th polled row after it is row 276.
 
 **Row 185, message `0xb9`:** polled, category 1 (the tutorial messages: said once, refused with the Tutorial
 option off, dropped after three cuts), either game mode, one copy, first response 404, one line. Response 404 is
 sample 377, lip 377, the random gesture chain, model slot 0, no prop, group 383 (no tag): "see the control panel
-over there at the bottom left part of the screen...". It is the 111th polled row.
+over there at the bottom left part of the screen...". 109 polled rows stand before it. Nothing withdraws it: each
+of the 53 calls of the withdrawal (`FUN_00486b40`, `FUN_0059aa70`) pushes a constant, and none is `0xb9`.
 
 **Its score, `0x005a06c0`** (in no Ghidra function): `FUN_004f8800`'s time since `mGameTick` nought
 (`ride-operation.md`, "The 24 months") over `0xC92A69C000` by `__alldiv`, whole days; `JLE` to nought against
@@ -1047,86 +1054,70 @@ a park**, and is said on the first of those ticks the cursor stands on row 185. 
 
 **What the shipped park holds.** `Easymode.TPWI`'s record of `0xb9` is (257, line 0, said 1, slaps 0): its makers'
 park said the line on its eleventh day, and the file begins on tick 755. So **Instant Action's Lost Kingdom never
-says it**: every poll of row 185 scores 110 and is refused by the gate as said once. `0x11a` is there as said on
-tick 605, 348 ticks later: two rounds and the 38 polled rows between the two.
+says it**: every poll of row 185, the first on tick 877, scores 110 and is refused by the gate as said once.
 
-### OpenTPW (`ParkAdvisorMessages.Poll`, `ScoreOf`, `Refusal`, `PollCursor`; topic `ControlPanel`)
+### OpenTPW (`ParkAdvisorMessages.Poll`, `ScoreOf`, `Refusal`, `PollCursor`, `RestoreCursor`; `ParkWorld.AdvisorPollCursorOf`, `PutAdvisorPollCursor`; topic `ControlPanel`)
 
-Each sweep's `Tick` polls first: the cursor counts the polled rows, 0 to 155, and is the program's
-(`ParkAdvisorMessages.ProgramCursor`, handed to every park by `Level`). The one built polled row stands at 110;
-each of the other 155 is counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`. A topic's score is its function's
-(`ScoreOf`: the age's bounds for the control panel's, the key's value for the rest), asked at the poll, at the
-post and at the tick's recheck (`FUN_0059b620` calls `FUN_0059c0a0`). The poll logs a line a change of its
-answer: `Park advisor: poll message=185 position=110 days=... score=... tick=... result=...`. **The line a park
-was entered with is gone:** `UI.ParkLines.ExplainGadget` said sample 377 past the messages at every entry and
-every load, which the original never does.
+Each sweep's `Tick` polls first, from the cursor's row, which is the program's (`ParkAdvisorMessages.ProgramCursor`,
+handed to every park by `Level`), set from a loaded file's dword (`Park advisor: restored poll cursor row=...`)
+and written to `savepark`'s file. The one built polled row is 185; each of the other 154 is counted
+`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`. A topic's score is its function's (`ScoreOf`: the age's bounds for the
+control panel's, the key's value for the rest), asked at the poll, at the post and at the tick's recheck
+(`FUN_0059b620` calls `FUN_0059c0a0`). The poll logs a line a change of its answer: `Park advisor: poll
+message=185 row=185 days=... score=... tick=... result=...`. **The line a park was entered with is gone:**
+`UI.ParkLines.ExplainGadget` said sample 377 past the messages at every entry and every load, which the original
+never does.
 
-`q316/confirm.py stock|fresh|control`, predicted first (`q316/PREDICTION.txt`). **The stock park** (four of
-four): `restored message=185 line=0 lastTick=257 said=1 slaps=0`; one poll line, `position=110 days=37 score=110
-threshold=25 tick=866 result=said-once`, the first sweep's tick 756 and 110; no `sample=377` in the log, `advisor`
-quiet four seconds in and nobody beside the gadget (`run-stock1/1-four-seconds-in.png`); the Bounce broken at four
-seconds, the mechanic's line was heard, `duration=6498` and `playback=started`, him up in the hard hat
-(`2-the-mechanics-line.png`). **Main's build** (the control, one of one): `saying sp_377.mp2` four seconds in, him
-up (`run-control/1-four-seconds-in.png`), no poll line, and the same mechanic's line `duration=0` and
-`playback=refused`. **The stock file with the record of `0xb9` made fresh** (`parkfile.advisor_forget`; three of
-four in `run-fresh3`): `poll ... tick=866 result=post`, `post message=185 subject=0 score=110 ... result=queued
-pending=2` and `attempt=1 message=185 ... response=404 sample=377 line=0 tick=866`, all on that tick, 25.5 s in;
-three seconds on `saying sp_377.mp2`, him up with no hat and no tag (`run-fresh3/1-saying-it.png`). The miss is
-the line's length: predicted 15,400 to 18,500 ms, it read 19,830, 18,998 and 20,665 in three runs (the random
-gesture chain's). `savepark` under the pause: the file's record `(866, 0, 1, 0)`, its action's wait the line's
-and a second, its message playing 185, and no other byte of thing 3 moved. Loaded from the Load Park list:
-`restored message=185 line=0 lastTick=866 said=1 slaps=0`, the next poll of it `tick=1022 result=said-once` (the
-cursor carried through the load: 866 and 156), and no second attempt. **A park made with no file** (a run whose
-file did not read, `run-madefresh`, not predicted): `tick=111 days=4 score=0 result=no-score`, then `tick=267
-days=11 result=post` and the line.
+**How this was reached** (`q316/PREDICTION.txt`, five rounds, each written before its runs). The first build
+counted the cursor in polled rows from nought at the program's start, of 156, and said the fresh-record file's
+line on tick 866. Its predictions of that build held, and two things failed: the line's length (guessed under
+18.5 s, read 19 to 21 s), and, in the fourth round, the original's tick after its Tutorial switch was held off
+through one turn (`orig/run5.sh`, `original/bytehold.py`): predicted 1033, read **1032**. That one tick was the
+round, 155 and not 156, which the live table then showed (row 0), and the same reading explained why the original
+had said the fresh-record file's line on tick 877 after every load: its cursor came from the file. The build was
+corrected and everything run again.
 
-**The original** (`q316/orig/run.sh`, `advisor.py ... 0xb9,0x11a poll`, three loads in one program; predicted
-first). **Its stock park:** the record read `(257, 0, 1, 0)` from the load and nothing changed in 85 s, more than
-two rounds: no slot held `0xb9`. **The fresh-record file:** from the load, tick 755, the record read `(0, -1, 0,
-0)` with the cursor on row 277; row 185 is the 123rd polled row from there, so tick 878 was predicted (once that cursor was read, before any
-later line; before the run only the rule was written), and on
-tick **877**, 31 s on, the record read `(877, 0, 1, 0)`, the action `(114906681, 19164)` and the cursor 186. Its
-wait, 19,164 ms, is inside this game's three (19,998 to 21,665), not the same number as predicted: the chain of
-gestures is drawn. **This game's file of the said line:** `(866, 0, 1, 0)` and the action `(114903768, 21665)`
-from the load, unchanged in 85 s, and no slot held `0xb9`. Between two of its lines 380 ticks apart the cursor
-moved two rounds and 70 polled rows: one row a tick. **Filmed** (`orig/run2.sh`, a fresh program started on the
-fresh-record file and loading it again): said on tick 877 again, 31.0 s after the click, the wait 20,832 ms, and
-four seconds into the line he is up at the lower right with his antennae and no hat (`orig/fresh2-t05.png`), as
-here (`run-fresh3/1-saying-it.png`).
+**The corrected build** (`q316/confirm.py stock|fresh|nofile|cutoff|early`, the fifth round, thirteen of
+thirteen; `run5-*`). **The stock park** (four of four): `restored poll cursor row=277`, `restored message=185
+line=0 lastTick=257 said=1 slaps=0`, one poll line, `row=185 days=38 score=110 threshold=25 tick=877
+result=said-once`; no `sample=377`, `advisor` quiet and nobody beside the gadget four seconds in
+(`run5-stock/1-four-seconds-in.png`); the Bounce broken at four seconds, the mechanic's line was heard,
+`duration=6498` and `playback=started`. Main's build before the item (the control, `run-control`): `saying
+sp_377.mp2` four seconds in, him up, and the same mechanic's line `duration=0`, `playback=refused`. **The stock
+file with the record of `0xb9` made fresh** (`parkfile.advisor_forget`; four of four): the post and `attempt=1
+message=185 ... response=404 sample=377 line=0` on tick **877**, the original's own tick for that file, the
+length 20,664 ms; him up with no hat and no tag (`run5-fresh/1-saying-it.png`); saved under the pause, the
+record `(877, 0, 1, 0)`, the message playing 185, the advisor-scoring dword 257, the census's `poll=`, and no
+other byte of thing 3 moved; loaded back, the record and the cursor restored and the next poll of it `tick=1032
+days=44 result=said-once`. **A park made with no file** (the second player, whose jungle folder is empty; one of
+one): `row=185 days=4 score=0 tick=110 result=no-score`, then `days=11 score=110 tick=265 result=post` and the
+line, him up (`run5-nofile/1-saying-it.png`). **The Tutorial option off, and the cutoff** (three of three):
+`tutorial off` two seconds in, `tick=877 result=tutorial-off`, nobody beside the gadget; no line through the
+turns on 1032, 1187 and 1342; `tutorial on`, and `days=64 score=0 tick=1497 result=no-score`, no attempt of 185
+in the run (`run5-cutoff/2-past-the-cutoff.png`). **Saved before the line** (one of one): paused on tick 800,
+the file's dword 59, the census's.
+
+**The original** (`q316/orig/`, `advisor.py ... 0xb9,0x11a poll`). Its stock park (`run.sh`): the record `(257,
+0, 1, 0)` and no slot holding `0xb9` for 85 s; its cursor read 59 on tick 800, as this game's does. The
+fresh-record file: said on tick 877 in each of three programs (`run.sh`, `run2.sh`, `run3.sh`; the third
+predicted before its run), the wait 19,164 to 20,832 ms, him up at the lower right with his antennae and no hat
+(`fresh2-t05.png`), as here. The Tutorial switch held off (`run5.sh`): no line on tick 877 and no slot; switched
+on on tick 901, the line on tick 1032. A file of this game's saved on tick 1506 with the record fresh
+(`run4.sh`): silent for 85 s, past day 60. **This game's file saved on tick 800 before the line** (`run7.sh`,
+predicted before its run): said on tick **877** exactly; with the stale 277 the build before wrote, it would
+have come 122 ticks after the save.
 
 | | The original | OpenTPW |
 |---|---|---|
-| The poll | one polled row a tick, of 156, the cursor the program's | the same, counted in polled rows |
+| The poll | one polled row a tick, of 155, from the cursor's row | the same |
+| The cursor | the program's dword, saved with a park and read back | the same: `ProgramCursor`, the file's advisor-scoring dword |
 | The control panel's line | row 185: days 11 to 59 of a park, said once | the same |
-| The stock park | never said: its file holds it as said | the same |
-| A file with the record fresh | said on the tick the cursor reaches row 185 (877 from row 277) | the same (866 from the table's first row) |
-| The other 155 polled rows | scored each round | counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
-| The cursor through a load | read 160 and then 277 across one load, 186 and 186 across another, and the line came on tick 877 after both loads of the fresh-record file: not read | carried as it stands |
-| The line's wait | the response's length and a second | the same; the length differs a run, as the gesture chain does |
+| The stock park | never said: its file holds it as said | the same; the row's first turn on tick 877 in both |
+| A file with the record fresh | said on tick 877 | said on tick 877 |
+| The Tutorial option off | not posted; said a round on once it is on | not posted (the turn after was run past the cutoff) |
+| Past day 60 | not said | not said |
+| The other 154 polled rows | scored each round | counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
+| The line's wait | the response's length and a second | the same; the length differs a run in both, as the gesture chain does |
 
-**The second round** (`q316/PREDICTION.txt`, written before either run, every number fixed beforehand). The first
-round failed twice as a prediction: the line's length was guessed at 15,400 to 18,500 ms and read 18,998 to
-20,665, and the original's tick was written only once its cursor had been read. So both were predicted again
-from the first round's readings and run again. This game (`run-fresh4`, four of four): the post and the attempt
-on tick 866, the length 18,998 inside the 18,000 to 21,500 predicted, the file's record `(866, 0, 1, 0)`, and
-said-once after its load. The original (`orig/run3.sh`, a fresh program started on the fresh-record file and
-loading it again): the record read `(877, 0, 1, 0)`, the tick predicted, 31.05 s after the click, and the wait
-19,164 ms inside the 19,000 to 22,500 predicted.
-
-**The third round** (the cases the first two left to the tests; `q316/PREDICTION.txt`, written before its
-runs). **A park made with no file** (`confirm.py nofile`, the second player, whose jungle folder is empty; one of
-one): `bare has no park file for this theme, so the park is made fresh`, the clock from nought, `poll ... days=4
-score=0 tick=111 result=no-score`, then `days=11 score=110 tick=267 result=post`, the post and `attempt=1 ...
-sample=377 line=0 tick=267 duration=18997`, him up three seconds on (`run-nofile/1-saying-it.png`). Two runs
-before it proved nothing: the script clicked the first player's name, then stopped on its own print. **The
-Tutorial option off, and the cutoff** (`confirm.py cutoff`, the fresh-record file; three of three): `tutorial
-off` two seconds in, `poll ... days=37 score=110 tick=866 result=tutorial-off`, no post and nobody beside the
-gadget (`run-cutoff/1-tutorial-off.png`); no new line through the row's turns on ticks 1022, 1178 and 1334;
-`tutorial on` on tick 1353, and the next line `days=64 score=0 tick=1490 result=no-score`, no attempt of 185 in
-the run and nobody beside the gadget (`2-past-the-cutoff.png`); saved on tick 1506, the file's record `(0, -1,
-0, 0)`. **The original, given that file** (`orig/run4.sh`): the record read `(0, -1, 0, 0)` from the load and
-nothing changed in 85 s, no slot holding `0xb9`: past day 60 it does not say the line, where the same record on
-day 37 had it said in 31 s.
-
-Not in a game run: a line found by the poll inside another's wait (the test holds it). Not reachable here: the
-line cut off, since nothing built withdraws message 185. The Tutorial option off was not run in the original. Not heard in either game.
+Not in a game run: a line found by the poll inside another's wait (the test holds it). No case in either game:
+the line cut off. Not heard in either game.

@@ -231,6 +231,29 @@ public class ParkFileWriterThingsTests
 		Assert.AreEqual( new ParkWorld.AdvisorAction( ShippedSecondClock + 3500, 7498, 70 ), written.AdvisorActionOf() );
 	}
 
+	/// <summary>
+	/// The advisor's poll cursor is the advisor-scoring module's dword, between the cheats' tag and its own: 277 in
+	/// the shipped park, the row after the last its makers' park scored. Written, it alone moves; not given, the
+	/// file's stands; and a body with no such module reads none.
+	/// </summary>
+	[TestMethod]
+	public void TheAdvisorsPollCursorIsTheAdvisorScoringModulesDword()
+	{
+		Assert.AreEqual( 277, shipped.AdvisorPollCursorOf() );
+		CollectionAssert.AreEqual( payload, ParkFileWriter.Body( shipped, Carried ), "not given: the file's" );
+
+		var body = ParkFileWriter.Body( shipped, Carried with { AdvisorPollCursor = 0x01020304 } );
+		Assert.AreEqual( 0x01020304, new ParkWorld( body ).AdvisorPollCursorOf() );
+		var moved = Enumerable.Range( 0, payload.Length ).Where( at => body[at] != payload[at] ).ToArray();
+		Assert.AreEqual( 4, moved.Length, "four distinct bytes, and no other" );
+		Assert.AreEqual( "STHC", System.Text.Encoding.ASCII.GetString( body, moved[0] - 4, 4 ) );
+		Assert.AreEqual( "CSDA", System.Text.Encoding.ASCII.GetString( body, moved[3] + 1, 4 ) );
+
+		var none = new byte[64];
+		ParkWorld.PutAdvisorPollCursor( none, 5 );
+		Assert.IsTrue( none.All( one => one == 0 ) );
+	}
+
 	/// <summary>The reader takes limbo, the bounce slots and the walk slots, with the struct's counts beside them, from where the page puts them.</summary>
 	[TestMethod]
 	public void TheReaderTakesTheRidersTables()

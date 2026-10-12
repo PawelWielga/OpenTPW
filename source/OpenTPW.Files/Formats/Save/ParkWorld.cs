@@ -2752,6 +2752,38 @@ public sealed partial class ParkWorld : IParkInitialState
 		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( AdvisorAt + AdvisorPlayingAt, 4 ), action.Playing );
 	}
 
+	/// <summary>
+	/// Where the advisor-scoring module's one dword sits in <paramref name="data"/>: between the cheats' tag
+	/// (<c>STHC</c>) and its own (<c>CSDA</c>), the last such place; -1 where there is none.
+	/// </summary>
+	private static int AdvisorScoringAt( byte[] data )
+	{
+		for ( var at = data.Length - 12; at >= 0; --at )
+		{
+			if ( data[at] == (byte)'S' && data[at + 1] == (byte)'T' && data[at + 2] == (byte)'H' && data[at + 3] == (byte)'C'
+				&& data[at + 8] == (byte)'C' && data[at + 9] == (byte)'S' && data[at + 10] == (byte)'D' && data[at + 11] == (byte)'A' )
+				return at + 4;
+		}
+
+		return -1;
+	}
+
+	/// <summary>
+	/// The advisor's poll cursor as the file holds it: the advisor-scoring module's dword (<c>FUN_0059c890</c>), the
+	/// row of the metadata table the next tick's poll starts from (the dword at <c>0x00fb3540</c>); null where the
+	/// file holds no such module. <c>docs/exe/advisor-park.md</c>, "The poll, and the control panel's line".
+	/// </summary>
+	public int? AdvisorPollCursorOf() => AdvisorScoringAt( _data ) is >= 0 and var at ? ReadInt32At( at ) : null;
+
+	/// <summary>Writes the advisor's poll cursor over the file's in <paramref name="body"/>; a body with no such module is left alone.</summary>
+	public static void PutAdvisorPollCursor( byte[] body, int row )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+
+		if ( AdvisorScoringAt( body ) is >= 0 and var at )
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( at, 4 ), row );
+	}
+
 	/// <summary>The model number of the staff HQ - see <see cref="StaffHqState"/>.</summary>
 	private const int StaffHqModel = 9;
 

@@ -40,6 +40,8 @@ place to look for tools. Each file's docstring is its manual.
 | `original/mixfreq.py PID SECS [2d]` | The original's memory, inside `QMixer.dll`: every open 3D channel's place, far end, volume of 127 and FREQUENCY (`+0x1f4`), a stamped line each time one opens or changes, and at the end a count by far end, volume and frequency. Which pitch each sample of an effect plays at; `2d` reads the flat channels instead. A `POLL` for `loadfile.sh` |
 | `original/rainmix.py PID SECS` | The original's memory: the weather thing's quality, forecast, drops, target and its own rain handle, the global rain handle, the two rain voices (controller keys and values, the current variation's volume bytes) and every flat mixer channel under 40 of 127 with its frequency, in ONE stamped log, a line a change. How loud the rain is and what sets it; `crowdmix.py` is the same for the crowd's voice. A `POLL` for `loadfile.sh` |
 | `original/advisor.py PID SECS MESSAGE[,MESSAGE...] [THING]` | The original's memory: the park advisor (the thing `FUN_005194d0` answers): each named message's own record (the tick last said, the line, said, slaps), the eight slots (subject thing, line asked for, message, score), the last action's start and duration, and a thing's State of repair beside them, a line a change with `mGameTick`. Says whether and when he was told a message and whether he said it. A last argument `poll` ends each line with the poll's cursor (`[0x00fb3540]`, the row of the metadata table the next tick starts from; Q316). A `POLL` for `loadfile.sh` |
+| `original/advisortable.py PID [meta_full.json]` | The original's memory: the advisor's metadata table as the running game holds it (the image holds zeros): the polled rows as ranges with their count, a few rows' places in a round, and every dword where it differs from the emulated table (two, both row 0's). A `POLL` for `loadfile.sh` |
+| `original/bytehold.py PID SECS ADDR=VALUE [TICK ADDR=VALUE]` | The original's memory, **written**: holds one byte of the image at a value, and at another once `mGameTick` passes a tick, a line a write. The Options screen's Tutorial switch is `0x0078d90d`. Stop the original afterwards |
 | `original/tags.py PID SECS` | The original's memory: the tags on the gadget's aerial (how many are held, each one's control rectangle on the 2048 x 1536 layout and its text, the mast's rectangle, the tag on the bar), a line a change with the wall clock and `mGameTick`. Says when a line leaves a tag, where it stands and when it goes. A `POLL` for `loadfile.sh` |
 | `original/bar.py PID SECS` | The original's memory: the message bar (its rectangle, shown bit, parent, its data's thing, button types, item and text, each child's rectangle), the tag on show and the one being put on show, the gadget's body with its children two deep, the arm's handle, and each tag's rectangle, shown bit, timer byte and whether a stream plays on it, the changed parts a change with the wall clock and `mGameTick`. Says what a click on a tag, on the bar or on the camcorder button does to the arm, step by step. A `POLL` for `loadfile.sh` |
 | `original/breakq.py PID SECS THING [all]` | The original's memory, **written**: breaks a ride (`VAR_BREAKSTAT`) each time it is open with a queue that has stood four seconds, so every break puts a queue out, a line a break. With `all` it first writes nought over the mask byte at `0x0050133f`, so every guest dismissed from a queue plays kids `0x80`, not one in eight. Stop the original afterwards |
@@ -70,13 +72,15 @@ whole list):
   holding the control panel's line, message `0xb9`, as said, so a line posted in the first seconds is heard. The
   older scripts' 23 s waits after a load are no longer needed.
 - **The control panel's line, on demand:** enter a file whose record of `0xb9` is fresh
-  (`parkfile.advisor_forget( stock, out, 185 )`, copied into the player's jungle folder as the newest): in a fresh
-  program he says sample 377 on the first sweep's tick and 110, tick 866 of the stock file, 25.5 s in, for 19 to
-  21 s (the log's `Park advisor: poll message=185 ... result=post`). In the original the same file has him say it
-  when its cursor (`advisor.py ... poll`) reaches row 185. A park made with no file says it on tick 267:
+  (`parkfile.advisor_forget( stock, out, 185 )`, copied into the player's jungle folder as the newest): he says
+  sample 377 on tick 877 in both games, 30 s in, for 19 to 21 s (the log's `Park advisor: poll message=185 ...
+  result=post`): the poll's cursor is the file's (row 277 in the stock file; `advisor.py ... poll` prints the
+  original's). A park made with no file, in a fresh program, says it on tick 265:
   `SLOT_CONTROL = "7a19"` before `parkrun.py` enters as the second player, whose jungle folder is empty (`7a15` is
   the first player's name, not a slot); `tutorial off` in the console has the poll answer `tutorial-off`
-  (`q316/confirm.py fresh|nofile|cutoff`, `q316/orig/run.sh`).
+  (`q316/confirm.py fresh|nofile|cutoff|early`, `q316/orig/run.sh`). In the original the Tutorial switch is the byte
+  `0x0078d90d`: `bytehold.py %PID% 110 0x0078d90d=0 900 0x0078d90d=1` beside `advisor.py` holds it off through a
+  load and until tick 900 (`q316/orig/run5.sh`).
 - **A message waiting in the advisor's slots, on demand:** `broken_pot()`, wait for the log's `attempt=N message=70`
   (the mechanic's line for the pot, 6.5 s long), then `scriptvar 13 VAR_BREAKSTAT 1`: the Bounce's `post message=69
   ... result=queued` waits until that line ends. `pause` and `savepark` inside it write a file with the slot taken;

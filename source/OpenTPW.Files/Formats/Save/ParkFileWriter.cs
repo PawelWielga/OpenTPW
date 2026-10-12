@@ -59,7 +59,7 @@ public static class ParkFileWriter
 	/// (<see cref="ParkWorld.PutAdvisorHistories"/>); every other message's, and all of them where it is null, are the file's.
 	/// <see cref="AdvisorSlots"/> is the advisor's eight slots (<see cref="ParkWorld.PutAdvisorSlots"/>); a null slot's, and all
 	/// of them where it is null, are the file's. <see cref="AdvisorAction"/> answers the advisor's last action
-	/// (<see cref="ParkWorld.PutAdvisorAction"/>) for the second stopwatch's reading the file is written with
+	/// (<see cref="ParkWorld.PutAdvisorAction"/>; <see cref="AdvisorPollCursor"/> is his poll's row, <see cref="ParkWorld.PutAdvisorPollCursor"/>) for the second stopwatch's reading the file is written with
 	/// (<see cref="ParkClock.SecondAt"/>); the file's where it is null or the file's clock did not read.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
@@ -70,7 +70,8 @@ public static class ParkFileWriter
 		IReadOnlyList<ParkTagRecords.Record>? Tags = null,
 		IReadOnlyDictionary<int, ParkWorld.AdvisorHistory>? AdvisorHistories = null,
 		IReadOnlyList<ParkWorld.AdvisorSlot?>? AdvisorSlots = null,
-		Func<uint, ParkWorld.AdvisorAction>? AdvisorAction = null );
+		Func<uint, ParkWorld.AdvisorAction>? AdvisorAction = null,
+		int? AdvisorPollCursor = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -237,6 +238,10 @@ public static class ParkFileWriter
 		if ( running.AdvisorAction is { } action
 			&& (running.Things is { } timed ? loaded.Clock.SecondAt( timed.Clock ) : loaded.Clock.Second) is { } second )
 			loaded.PutAdvisorAction( body, action( second ) );
+
+		// The advisor-scoring module's dword; the file's own where none is given.
+		if ( running.AdvisorPollCursor is { } row )
+			ParkWorld.PutAdvisorPollCursor( body, row );
 
 		things = null;
 

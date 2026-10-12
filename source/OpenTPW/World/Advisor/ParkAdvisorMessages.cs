@@ -11,7 +11,7 @@ namespace OpenTPW;
 /// "A mechanic on his way" and "The line of an opened tag message".
 /// <para>
 /// One message is polled, not posted: the control panel's line, a tutorial message scored by the park's age
-/// (FUN_0059c680, "The poll, and the control panel's line"). The other 155 polled rows are counted, and the
+/// (FUN_0059c680, "The poll, and the control panel's line"). The other 154 polled rows are counted, and the
 /// other posted messages are unbuilt.
 /// </para>
 /// </summary>
@@ -43,25 +43,47 @@ internal sealed class ParkAdvisorMessages
 	/// he wears for every line of it (the response table's +0x14; each built row's +0x18 is nought).
 	/// <paramref name="Group"/> is the group of every line of it (the response table's +0x1c), the id of the tag
 	/// a said line leaves (<see cref="ParkTags"/>). <paramref name="Category"/> is the row's +0x08, the
-	/// MessageGroups entry of Advisor.sam the gate reads for it. <paramref name="PollPosition"/> is where the row
-	/// stands among the table's polled rows (those whose +0x00 is nought), -1 for a row that is posted only.
+	/// MessageGroups entry of Advisor.sam the gate reads for it. <paramref name="Polled"/> is whether the row's
+	/// +0x00 is nought, so that the poll scores it; a row's number is its message's id.
 	/// <paramref name="AgeSection"/> names the Advisor.sam section whose AfterTime and CutoffTime bound the park's
 	/// age in days for the score to be anything but nought, null where the score is the key's alone.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
-		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, int PollPosition = -1,
+		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
 		string? AgeSection = null );
 
-	/// <summary>How many rows of the metadata table are polled, one a tick in the table's order (FUN_0059c680).</summary>
-	internal const int PolledRows = 156;
+	/// <summary>The metadata table's rows, 0 to 0x15e.</summary>
+	internal const int Rows = 351;
 
 	/// <summary>
-	/// Which polled row the next tick looks at: the dword at 0x00fb3540, nought as the program starts
-	/// (FUN_0059bea0), in no park file and set again by no park, so a park takes it as the last one left it.
+	/// The rows the poll scores, those whose +0x00 is nought in the running original's table (0x0076e300, filled
+	/// before WinMain): 155 of the 351, so a round of the poll is 155 ticks.
+	/// </summary>
+	private static readonly (int First, int Last)[] PolledRanges =
+	[
+		(1, 32), (58, 65), (71, 82), (85, 92), (98, 98), (100, 105), (107, 124), (140, 141), (144, 160), (169, 173),
+		(185, 185), (238, 257), (259, 265), (267, 269), (274, 276), (278, 282), (314, 314), (316, 317), (347, 350)
+	];
+
+	internal static bool IsPolled( int row )
+	{
+		foreach ( var (first, last) in PolledRanges )
+			if ( row >= first && row <= last ) return true;
+		return false;
+	}
+
+	/// <summary>How many rows are polled, the ticks of one round.</summary>
+	internal static readonly int PolledRows = PolledRanges.Sum( range => range.Last - range.First + 1 );
+
+	/// <summary>
+	/// The row the next tick's poll starts from: the dword at 0x00fb3540, nought as the program starts
+	/// (FUN_0059bea0), written to a park file as its advisor-scoring module (FUN_0059c890) and read back from it
+	/// (FUN_0059c860), so a loaded park goes on from its file's row and a park made with no file from wherever the
+	/// last park left it.
 	/// </summary>
 	internal sealed class PollCursor
 	{
-		public int Position;
+		public int Row;
 	}
 
 	/// <summary>The running program's own cursor.</summary>
@@ -85,7 +107,7 @@ internal sealed class ParkAdvisorMessages
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
 		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat, Group: 72 ),
 		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial ),
-		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, PollPosition: 110, AgeSection: "TutorialUIPanel" )
+		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -133,7 +155,7 @@ internal sealed class ParkAdvisorMessages
 	internal int Threshold => Value( "GeneralAdvisor.MinScoreForConsideration" );
 
 	/// <param name="tutorial">Whether the Tutorial option is on (0x0078d90d), the player's own where none is given.</param>
-	/// <param name="cursor">The poll's cursor; the game hands every park <see cref="ProgramCursor"/>, and with none given the poll starts at the table's first row.</param>
+	/// <param name="cursor">The poll's cursor; the game hands every park <see cref="ProgramCursor"/>, and with none given the poll starts at row nought.</param>
 	internal ParkAdvisorMessages( SettingsFile settings, IEnumerable<Topic>? topics = null, Func<bool>? tutorial = null,
 		PollCursor? cursor = null )
 	{
@@ -306,19 +328,40 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>What the poll last answered for <paramref name="id"/>, null before its row's first turn.</summary>
 	internal string? PollAnswer( int id ) => _polled.GetValueOrDefault( id );
 
+	/// <summary>The row the next poll starts from, as a park file's advisor-scoring module holds it.</summary>
+	internal int PollRow => _cursor.Row;
+
 	/// <summary>
-	/// The tick's first act, FUN_0059c680 asked for one row: the polled row the cursor stands on is scored, the
-	/// cursor moves on, and a row scoring above nought that the gate lets by and above MinScoreForConsideration
-	/// is posted about no thing, as any post is. A polled row of no built topic is counted.
+	/// Takes a park file's poll cursor (<see cref="ParkWorld.AdvisorPollCursorOf"/>), as the load reads the dword
+	/// back into the program's own (FUN_0059c860). A row below nought, which the original would read the table
+	/// before its start by, is refused. Says whether it was taken.
+	/// </summary>
+	internal bool RestoreCursor( int row )
+	{
+		if ( row < 0 )
+		{
+			Log.Warning( $"Park advisor: the file's poll cursor {row} is below the table, so the cursor stays on row {_cursor.Row}" );
+			return false;
+		}
+
+		Log.Info( $"Park advisor: restored poll cursor row={row} (it stood on {_cursor.Row})" );
+		_cursor.Row = row;
+		return true;
+	}
+
+	/// <summary>
+	/// The tick's first act, FUN_0059c680 asked for one row: from the cursor's row, nought again past the last,
+	/// the first polled row is scored and the cursor left on the row after it; a row scoring above nought that
+	/// the gate lets by and above MinScoreForConsideration is posted about no thing, as any post is. A polled
+	/// row of no built topic is counted.
 	/// </summary>
 	private void Poll( int gameTick )
 	{
-		var position = _cursor.Position;
-		_cursor.Position = (position + 1) % PolledRows;
-		Topic? topic = null;
-		foreach ( var candidate in _topics.Values )
-			if ( candidate.PollPosition == position ) topic = candidate;
-		if ( topic == null )
+		var row = _cursor.Row;
+		while ( !IsPolled( row ) )
+			row = row + 1 >= Rows ? 0 : row + 1;
+		_cursor.Row = row + 1;
+		if ( !_topics.TryGetValue( row, out var topic ) || !topic.Polled )
 		{
 			Unimplemented.Report( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" );
 			return;
@@ -329,7 +372,7 @@ internal sealed class ParkAdvisorMessages
 		if ( !_polled.TryGetValue( topic.Id, out var last ) || last != result )
 		{
 			_polled[topic.Id] = result;
-			Log.Info( $"Park advisor: poll message={topic.Id} position={position} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}" );
+			Log.Info( $"Park advisor: poll message={topic.Id} row={row} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}" );
 		}
 
 		if ( result == "post" ) Post( topic.Id, gameTick );
@@ -442,5 +485,5 @@ internal sealed class ParkAdvisorMessages
 		+ string.Concat( _slots.Where( slot => slot != null ).Select( slot => $"slot={slot!.Topic.Id}/subject={slot.Subject} " ) )
 		+ string.Join( " ", _topics.Values.Select( topic =>
 			$"message={topic.Id}/score={ScoreOf( topic, _lastTick )}/line={_histories[topic.Id].Line}/lastTick={_histories[topic.Id].LastTick}/said={(_histories[topic.Id].Said ? 1 : 0)}/slaps={_histories[topic.Id].Slaps}" ) )
-		+ $" action={(_started is { } started ? $"{started}+{_duration}" : "none")}/playing={_playing} poll={_cursor.Position}";
+		+ $" action={(_started is { } started ? $"{started}+{_duration}" : "none")}/playing={_playing} poll={_cursor.Row}";
 }

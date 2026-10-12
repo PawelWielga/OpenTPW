@@ -156,7 +156,7 @@ public class ParkAdvisorMessageTests
 		var polled = new List<(int, int, int)>();
 		for ( var i = 0; i < 1000; ++i )
 			messages.Tick( i, i * 248, ( response, sample ) => { polled.Add( (i, response, sample) ); return response == 404 ? 15400 : throw new Exception( "stock speech" ); } );
-		CollectionAssert.AreEqual( new[] { (266, 404, 377) }, polled );
+		CollectionAssert.AreEqual( new[] { (264, 404, 377) }, polled );
 		Assert.AreEqual( 2, messages.PendingCount );
 		Assert.AreEqual( 1, messages.Attempts );
 		Assert.IsTrue( messages.Census().Contains( "message=128/score=20/line=-1" ) );
@@ -769,15 +769,15 @@ public class ParkAdvisorMessageTests
 
 	/// <summary>
 	/// <b>Message 0xb9, the control panel's line, is polled</b> (row 185 of 0x0076e300: polled, category 1, score
-	/// 0x005a06c0, one copy, response 404 = sample 377, one line; <c>FUN_0059c680</c>): each sweep scores the one
-	/// polled row the cursor stands on, of 156, and this one, the 111th, scores <c>TutorialUIPanel.Score</c> while
-	/// the park is more than AfterTime and less than CutoffTime whole days old. Posted, it is said on the same
-	/// sweep, about no thing and with no tag, and never again.
+	/// 0x005a06c0, one copy, response 404 = sample 377, one line; <c>FUN_0059c680</c>): each sweep scores the first
+	/// polled row from the cursor's, of 155, and this one, the 110th from row nought, scores
+	/// <c>TutorialUIPanel.Score</c> while the park is more than AfterTime and less than CutoffTime whole days old.
+	/// Posted, it is said on the same sweep, about no thing and with no tag, and never again.
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> the position another; the cycle a row longer or shorter; the cursor not moved on; the
-	/// day's bounds at or past their ends; the day a sweep's; the score nought or under the threshold posted;
-	/// the gate not asked; the category nought; the response or sample another's; the unbuilt rows not counted.
+	/// <b>Mutations:</b> a polled row more or fewer; the cursor not moved on, or not wrapped; the day's bounds at
+	/// or past their ends; the day a sweep's; the score nought or under the threshold posted; the gate not asked;
+	/// the category nought; the response or sample another's; the unbuilt rows not counted.
 	/// </remarks>
 	[TestMethod]
 	public void TheControlPanelsLineIsPolledOnThePollsOwnRowAndSaidOnce()
@@ -786,10 +786,15 @@ public class ParkAdvisorMessageTests
 		var messages = new ParkAdvisorMessages( Settings(), cursor: cursor );
 		var said = new List<(int, int, int)>();
 		var groups = new List<(int, int)>();
-		int Play( int response, int sample ) { said.Add( (cursor.Position, response, sample) ); return 15400; }
+		int Play( int response, int sample ) { said.Add( (cursor.Row, response, sample) ); return 15400; }
 		var unbuilt = Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" );
 
-		Assert.AreEqual( 156, ParkAdvisorMessages.PolledRows );
+		Assert.AreEqual( 155, ParkAdvisorMessages.PolledRows );
+		Assert.AreEqual( 351, ParkAdvisorMessages.Rows );
+		Assert.IsFalse( ParkAdvisorMessages.IsPolled( 0 ), "row nought is posted only in the running table" );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 1 ) && ParkAdvisorMessages.IsPolled( 185 ) && ParkAdvisorMessages.IsPolled( 350 ) );
+		Assert.IsFalse( ParkAdvisorMessages.IsPolled( 184 ) || ParkAdvisorMessages.IsPolled( 186 ) || ParkAdvisorMessages.IsPolled( 284 ) );
+		Assert.AreEqual( 109, Enumerable.Range( 0, 185 ).Count( ParkAdvisorMessages.IsPolled ), "109 polled rows stand before row 185" );
 		Assert.AreEqual( 10, ParkAdvisorMessages.DaysSinceTheFirstSweep( 253 ) );
 		Assert.AreEqual( 11, ParkAdvisorMessages.DaysSinceTheFirstSweep( 254 ) );
 		Assert.AreEqual( 59, ParkAdvisorMessages.DaysSinceTheFirstSweep( 1382 ) );
@@ -800,25 +805,55 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( 110, messages.ScoreOf( topic, 1382 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 1383 ), "day 60 is not before 60" );
 
-		// A whole round on day 11 from the table's first row: the 111th sweep's row alone is built, and is said.
-		for ( var i = 0; i < 156; ++i )
-		{
+		// A whole round on day 11 from row nought: the 110th sweep's row alone is built, and is said; the round
+		// ends on the row past the table's last.
+		for ( var i = 0; i < 155; ++i )
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
-			Assert.AreEqual( (i + 1) % 156, cursor.Position );
-		}
-		CollectionAssert.AreEqual( new[] { (111, 404, 377) }, said );
+		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 155, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
-		StringAssert.Contains( messages.Census(), "message=185/score=110/line=0/lastTick=364/said=1/slaps=0" );
-		StringAssert.Contains( messages.Census(), "/playing=185 poll=0" );
+		Assert.AreEqual( unbuilt + 154, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( 351, cursor.Row );
+		Assert.AreEqual( 351, messages.PollRow );
+		StringAssert.Contains( messages.Census(), "message=185/score=110/line=0/lastTick=363/said=1/slaps=0" );
+		StringAssert.Contains( messages.Census(), "/playing=185 poll=351" );
 		Assert.AreEqual( 185, messages.WrittenAction( 1000, 0 ).Playing );
-		Assert.AreEqual( new ParkWorld.AdvisorHistory( 364, 0, true, 0 ), messages.Written()[185] );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 363, 0, true, 0 ), messages.Written()[185] );
+
+		// Past the last row the poll begins again at row 1, the first polled.
+		messages.Tick( 409, 409 * 250L, ( _, _ ) => throw new Exception( "said twice" ) );
+		Assert.AreEqual( 2, cursor.Row );
 
 		// Round after round, said once.
 		for ( var i = 0; i < 400; ++i )
 			messages.Tick( 500 + i, (500 + i) * 250L, ( _, _ ) => throw new Exception( "said twice" ) );
 		Assert.AreEqual( 1, messages.Attempts );
 		Assert.AreEqual( 0, messages.PendingCount );
+	}
+
+	/// <summary>
+	/// The cursor is the park file's: the shipped park's row 277 has row 185 scored on the 122nd sweep, tick 877
+	/// of a park whose first sweep is 756; a row below the table is refused.
+	/// </summary>
+	[TestMethod]
+	public void AParkFilesPollCursorIsTakenAndGoneOnFrom()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 40 };
+		var messages = new ParkAdvisorMessages( Settings(), cursor: cursor );
+		Assert.IsTrue( messages.RestoreCursor( 277 ) );
+		Assert.AreEqual( 277, cursor.Row );
+		var said = new List<int>();
+		for ( var tick = 756; tick < 1100; ++tick )
+			messages.Tick( tick, tick * 250L, ( response, _ ) => { said.Add( tick ); return 1000; } );
+		CollectionAssert.AreEqual( new[] { 877 }, said );
+
+		// A row past the table's end begins again at row 1.
+		Assert.IsTrue( messages.RestoreCursor( 1000 ) );
+		messages.Tick( 1100, 1100 * 250L, ( _, _ ) => throw new Exception( "said twice" ) );
+		Assert.AreEqual( 2, cursor.Row );
+
+		Assert.IsFalse( messages.RestoreCursor( -1 ) );
+		Assert.AreEqual( messages.PollRow, cursor.Row );
+		Assert.IsTrue( cursor.Row >= 0 );
 	}
 
 	/// <summary>
@@ -830,40 +865,45 @@ public class ParkAdvisorMessageTests
 	[TestMethod]
 	public void ThePollAsksTheAgeTheGateAndTheThreshold()
 	{
-		ParkAdvisorMessages On( int position, SettingsFile? settings = null, bool tutorial = true )
-			=> new( settings ?? Settings(), tutorial: () => tutorial, cursor: new ParkAdvisorMessages.PollCursor { Position = position } );
+		ParkAdvisorMessages On( int row, SettingsFile? settings = null, bool tutorial = true )
+			=> new( settings ?? Settings(), tutorial: () => tutorial, cursor: new ParkAdvisorMessages.PollCursor { Row = row } );
 		static int Never( int response, int sample ) => throw new Exception( $"said {response}" );
 
-		var young = On( 110 );
+		var young = On( 185 );
 		young.Tick( 253, 0, Never );
 		Assert.AreEqual( 0, young.PendingCount, "day 10" );
-		var old = On( 110 );
+		var old = On( 185 );
 		old.Tick( 1383, 0, Never );
 		Assert.AreEqual( 0, old.PendingCount, "day 60" );
-		var beside = On( 109 );
+		var beside = On( 173 );
 		beside.Tick( 900, 0, Never );
-		Assert.AreEqual( 0, beside.PendingCount, "the row before" );
-		var after = On( 111 );
+		Assert.AreEqual( 0, beside.PendingCount, "the polled row before" );
+		var after = On( 186 );
 		after.Tick( 900, 0, Never );
-		Assert.AreEqual( 0, after.PendingCount, "the row after" );
+		Assert.AreEqual( 0, after.PendingCount, "the polled row after, 238" );
+		Assert.AreEqual( 239, after.PollRow );
+		var from = On( 174 );
+		var heard = 0;
+		from.Tick( 900, 0, ( _, _ ) => { ++heard; return 1000; } );
+		Assert.AreEqual( 1, heard, "rows 174 to 184 are not polled: the sweep's row is 185" );
 
-		var off = On( 110, tutorial: false );
+		var off = On( 185, tutorial: false );
 		off.Tick( 900, 0, Never );
 		Assert.AreEqual( 0, off.PendingCount, "the Tutorial option off" );
 
 		var low = Settings();
 		Set( low, "TutorialUIPanel.Score", 25 );
-		var under = On( 110, low );
+		var under = On( 185, low );
 		under.Tick( 900, 0, Never );
 		Assert.AreEqual( 0, under.PendingCount, "25 is not above 25" );
 		Set( low, "TutorialUIPanel.Score", 26 );
-		var over = On( 110, low );
-		var heard = 0;
+		var over = On( 185, low );
+		heard = 0;
 		over.Tick( 900, 0, ( _, _ ) => { ++heard; return 1000; } );
 		Assert.AreEqual( 1, heard, "26 is" );
 
 		// The shipped park's own record: said on tick 257.
-		var shipped = On( 110 );
+		var shipped = On( 185 );
 		shipped.Restore( id => id == ParkAdvisorMessages.ControlPanel ? new ParkWorld.AdvisorHistory( 257, 0, true, 0 ) : null );
 		shipped.Tick( 900, 0, Never );
 		Assert.IsNull( On( 0 ).PollAnswer( ParkAdvisorMessages.ControlPanel ) );
@@ -875,7 +915,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( "post", over.PollAnswer( ParkAdvisorMessages.ControlPanel ) );
 
 		// One cursor, two parks: the second goes on from the first's row.
-		var cursor = new ParkAdvisorMessages.PollCursor { Position = 108 };
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 172 };
 		var first = new ParkAdvisorMessages( Settings(), cursor: cursor );
 		first.Tick( 900, 0, Never );
 		first.Tick( 901, 0, Never );
@@ -883,10 +923,10 @@ public class ParkAdvisorMessageTests
 		heard = 0;
 		second.Tick( 900, 0, ( response, _ ) => { Assert.AreEqual( 404, response ); ++heard; return 1000; } );
 		Assert.AreEqual( 1, heard );
-		Assert.AreEqual( 111, cursor.Position );
+		Assert.AreEqual( 186, cursor.Row );
 
 		// Found inside another line's wait, it stands in a slot and is said as the wait ends.
-		var busy = On( 109 );
+		var busy = On( 173 );
 		busy.Post( ParkAdvisorMessages.MechanicOnHisWay, 899, 13 );
 		busy.Tick( 899, 1000, ( _, _ ) => 6000 );
 		busy.Tick( 900, 1250, Never );
@@ -895,13 +935,14 @@ public class ParkAdvisorMessageTests
 		heard = 0;
 		busy.Tick( 902, 8000, ( response, _ ) => { Assert.AreEqual( 404, response ); ++heard; return 1000; } );
 		Assert.AreEqual( 1, heard );
+
 		// The score is the function's at the post and at the tick's second look, not the key's: a post outside
 		// the days stands at nought and is never said, and one found on day 59 and still waiting on day 60 is let go unsaid.
 		var early = On( 0 );
 		Assert.IsTrue( early.Post( ParkAdvisorMessages.ControlPanel, 100 ) );
 		early.Tick( 101, 0, Never );
 		StringAssert.Contains( early.Census(), "pending=1 attempts=0 threshold=25 slot=185/subject=0 " );
-		var late = On( 109 );
+		var late = On( 173 );
 		late.Post( ParkAdvisorMessages.MechanicOnHisWay, 1381, 13 );
 		late.Tick( 1381, 1000, ( _, _ ) => 6000 );
 		late.Tick( 1382, 1250, Never );
@@ -911,10 +952,12 @@ public class ParkAdvisorMessageTests
 
 		// A score of nought is no answer whatever the threshold.
 		var none = Settings( threshold: -1 );
-		var nought = On( 110, none );
+		var nought = On( 185, none );
 		nought.Tick( 253, 0, Never );
 		Assert.AreEqual( 0, nought.PendingCount, "nought is not above nought" );
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
+		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
+		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 }
