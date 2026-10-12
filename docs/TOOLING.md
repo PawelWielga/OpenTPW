@@ -111,10 +111,21 @@ whole list):
   from 912 to 919, `sell 13` (the Belly Bounce), `sell 14` (the Jungle Spray), `resume`: row 2 is polled on tick
   924 (769 and every 155 on) and he says sample 4 in the ticket hat and leaves tag 4, whose bar's first button
   opens the entry-price screen as tag 3's does. `savepark` under that pause writes a file the original says the
-  line on tick 924 from too, and then a second line this game does not build (row 62's, on tick 968). The
+  line on tick 924 from too, and then row 62's (on tick 968; this game as row 2's wait ends, 961). The
   original's line lasts from 2.5 s to 13 s after the load's click, before `loadfile.sh`'s own frames: put
   `(sleep 6; import -window root -display :77 out.png) &` in its `POLL` (`q321/confirm.py`, `q321/orig/run.sh`
   with `GRAB=1`; Q321).
+- **A park with no ride, and the advisor's line about it:** the same pause with `sell 13` alone: row 62 is
+  polled on tick 959 (804 and every 155 on) and he says sample 179 in the hard hat and leaves tag 64, whose
+  bar's first button opens the buy screen on its rides tab (`windows` names the buy screen's tab; open it with
+  `control 0x26`'s middle and click `control 0x1fd`'s for the shops tab first, so the button has a tab to
+  change). The score grows by 3 a day, so sell later for another number (both sold on tick 1074: 94 in the
+  original's slot on tick 1114). `advisor` scores each topic on the tick it is ASKED, not the tick it was said.
+  **The original's words for a tag are the american folder's**, which can differ from the English one's that
+  this game reads (string 67: "now is" and "now's"): take the words to predict from `strdump` on the folder
+  the game under test reads. **Waiting on `loadfile.sh`'s log for a record**, leave out the first start's
+  lines, which hold the same record: `grep -v "^ *0\.00 s" log | grep -q ...` (`q322/confirm.py`,
+  `q322/scene.py <out> <bin> <name> <tick> <things>`, `q322/orig/run.sh <file>`; Q322).
 - **The count of unbuilt polled rows is exact, so predict it exactly:** under a `pause` on tick T the stock
   park's `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is T - 755 less the turns of built rows by then, and a built row
   comes round every 155 ticks with no log line where its answer has not changed (282 on 760 and 915; 1 on 768

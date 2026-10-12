@@ -98,7 +98,8 @@ internal sealed class ParkBuyScreen : UiWindow
 
 	private static readonly UiColour HeadingColour = new( 255, 239, 0 );
 
-	public ParkBuyScreen( WindowStack stack ) : base( stack )
+	/// <param name="openOn">The tab to open on (FUN_004acc70's first argument), null for the one last left on.</param>
+	public ParkBuyScreen( WindowStack stack, int? openOn = null ) : base( stack )
 	{
 		// Not modal and not pausing - see the class remarks. Built onto the park's own layer (0x004acd62): the gadget
 		// answers beside it, and what a press beside it does is UiWindow.ParkScreen's to say.
@@ -256,11 +257,17 @@ internal sealed class ParkBuyScreen : UiWindow
 		} );
 
 		_list.Build();
-		Show( _lastTab );
+		Show( openOn ?? _lastTab );
 
 		// The opener letters the corner itself, as the tick does (FUN_004acc70, 0x004acdae).
 		_money.Text = MoneyText();
 	}
+
+	/// <summary>What FUN_004acc70 does with the screen already open: the list filled with <paramref name="tab"/>'s items and its button put down.</summary>
+	internal void PickTab( int tab ) => Show( tab );
+
+	/// <summary>The tab shown.</summary>
+	internal int Tab => _tab;
 
 	/// <summary>
 	/// Fills the list with one tab's items - the original's <c>FUN_004aaf70</c>, whose filter is the

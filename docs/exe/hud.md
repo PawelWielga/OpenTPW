@@ -838,7 +838,8 @@ cell (0: the bar stays); 4 `FUN_004868d0( &item )` (0; not read); 9 to `0xc` `FU
 `0xd` to `0x11` `FUN_0049bdd0( 0..4 )` (2); `0x12` `FUN_0049fb30` (2); `0x13` `FUN_004aa480`, research (2); `0x14`
 `FUN_004a52a0` (2); `0x15` `FUN_004b2750` (2); `0x16` `FUN_004b7b00` (2); `0x17` `FUN_004dfe30( 1 )` on the
 thing, the call for a mechanic (1); `0x18` `FUN_00498d80`, the entry price screen (2); `0x1a` and `0x1b`
-`FUN_004d2df0` and `FUN_004d2ec0` on the thing `FUN_00519610` answers (2). None but 3 and `0x18` is read further.
+`FUN_004d2df0` and `FUN_004d2ec0` on the thing `FUN_00519610` answers (2). None but 3, 9 to `0xc` and `0x18` is
+read further; 9 to `0xc`, the buy screen on a tab, are in `advisor-park.md`, "A park with no ride in it".
 `FUN_00498d80` is the entry-price screen's builder: nothing where the screen is open already (`[0x007ca210]`),
 else the screen with the Finance category's last screen noted as 10 (`FUN_004a0810( 3, 10 )`) and its own advisor
 message, `0x12f`, posted. On its answer of 2 the bar's handler posts the mast `0x100002` for the tag with nought

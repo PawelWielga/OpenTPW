@@ -23,6 +23,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int OpenPark = 1;
 	/// <summary>Message 2, polled: the line about an open park with nothing to ride, scored where neither a ride nor a sideshow stands (0x0059c960).</summary>
 	internal const int ClosePark = 2;
+	/// <summary>Row 62, polled: a park with no ride in it.</summary>
+	internal const int BuildRides = 0x3e;
 	internal const int Opened = 128;
 	internal const int Closed = 129;
 	/// <summary>Message 0x42, posted by a ride's wear (FUN_004df670, 0x004df8be) with the ride as its subject.</summary>
@@ -65,12 +67,15 @@ internal sealed class ParkAdvisorMessages
 	/// waiting for a shut park to open, and nought for an open park or one with no ride and no sideshow.
 	/// <paramref name="NothingToRide"/> is the score of row 2 (0x0059c960): the key's value in an open park with
 	/// no ride and no sideshow, and nought otherwise.
+	/// <paramref name="PerDayWithNoRide"/> makes the score row 62's (0x0059dad0): in a park where no ride stands
+	/// the key's value and this key's for each whole day of the park's age, and nought where one stands.
 	/// <paramref name="ShutShare"/> names the things whose shut share the score of rows 260 to 262 asks, and
 	/// <paramref name="ShutSection"/> the Advisor.sam section whose MoreThanThisPercentClosed that share must be over.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
-		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null );
+		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
+		string? PerDayWithNoRide = null );
 
 	/// <summary>The things a row's score counts shut: none, the shops (0x005a0370), the sideshows (0x005a03d0) or the toilets (0x005a0430).</summary>
 	internal enum Shut
@@ -161,6 +166,7 @@ internal sealed class ParkAdvisorMessages
 	[
 		.. DoorTopics,
 		.. ShutTopics,
+		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
 		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 70 ),
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
@@ -348,7 +354,9 @@ internal sealed class ParkAdvisorMessages
 	/// section's Score while the park is more than AfterTime and less than CutoffTime days old, and nought
 	/// otherwise; row 1's (0x0059c8d0) is its key's value for each guest waiting at the booths of a shut park
 	/// that has a ride or a sideshow, and nought otherwise; row 2's (0x0059c960) is its key's value in an open
-	/// park with neither, and nought otherwise; rows 260 to 262's (0x005a0370, 0x005a03d0, 0x005a0430)
+	/// park with neither, and nought otherwise; row 62's (0x0059dad0) is its key's value and its per-day key's
+	/// for each whole day of the park's age where no ride stands, whatever the door and the sideshows, and nought
+	/// where one does; rows 260 to 262's (0x005a0370, 0x005a03d0, 0x005a0430)
 	/// are their key's value where any of their things stand and more than the section's
 	/// MoreThanThisPercentClosed per cent of them, in whole numbers, are shut, whatever the park's door, and nought
 	/// otherwise; every other built row's is its key's value.
@@ -365,6 +373,12 @@ internal sealed class ParkAdvisorMessages
 		{
 			if ( _park?.Invoke() is not { Closed: false } park || park.Rides >= 1 || park.Sideshows >= 1 ) return 0;
 			return Value( topic.ScoreKey );
+		}
+
+		if ( topic.PerDayWithNoRide is { } perDay )
+		{
+			if ( _park?.Invoke() is not { Rides: < 1 } ) return 0;
+			return Value( topic.ScoreKey ) + Value( perDay ) * DaysSinceTheFirstSweep( gameTick );
 		}
 
 		if ( topic.ShutShare != Shut.None )
@@ -460,6 +474,7 @@ internal sealed class ParkAdvisorMessages
 			_polled[topic.Id] = result;
 			var shut = topic.ShutShare != Shut.None && _park?.Invoke().Of( topic.ShutShare ) is var (standing, closed) ? $" shut={closed}/{standing}" : "";
 			if ( topic.NothingToRide && _park?.Invoke() is { } facts ) shut = $" closed={(facts.Closed ? 1 : 0)} rides={facts.Rides} sideshows={facts.Sideshows}";
+			if ( topic.PerDayWithNoRide != null && _park?.Invoke() is { } park ) shut = $" rides={park.Rides}";
 			Log.Info( $"Park advisor: poll message={topic.Id} row={row} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}{shut}" );
 		}
 

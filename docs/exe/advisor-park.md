@@ -1440,8 +1440,7 @@ tag 4 was gone. The record never moved again through tick 1089, past the row's n
 **Not predicted: the original says a second line.** On tick 959, row 62's turn, a slot took message `0x3e` at 73,
 and it was said on tick 968 in both runs, as row 2's wait ended, in the hard hat (`orig/a-2-loaded.png`), leaving a
 second tag above the first ("Your park has no rides in it. Perhaps now is a good time to build some?"). Row 62 is
-polled, category 0, one copy, three lines from response 182 (samples 179 to 181, prop 5, group 64); its score
-function, at `0x0059dad0`, is in no function of the listing and was not read.
+"A park with no ride in it", below.
 
 **This game** (`q321/confirm.py fix|control|ride`; eight of eight on the first run, `run-fix1`, on the desktop).
 The stock park left open, the two sold under a pause on tick 916: `poll message=2 row=2 days=33 score=0
@@ -1464,10 +1463,103 @@ Bounce left standing** (`run-ride`, off-screen): tick 769's poll line alone, no 
 | Row 2 | polled; `ClosePark.Score` in an open park with no ride and no sideshow | the same |
 | The same scene | said on tick 924, line 0, in the ticket hat | the same |
 | The tag and the bar | row 4, part 2, string 8; button `0x18` opens the entry-price screen, tag off, arm in | the same |
-| The line after it | row 62's, `0x3e` at 73, queued on tick 959 and said on 968 with a tag of its own | not built, counted with the unbuilt polled rows |
+| The line after it | row 62's, `0x3e` at 73, queued on tick 959 and said on 968 with a tag of its own | the same, said as row 2's wait ends ("A park with no ride in it", below) |
 
-**Not built or not seen.** Row 62. In no game run: lines 2 and 3 (samples 5 and 6; the test holds the turn), the
+**Not built or not seen.** In no game run: lines 2 and 3 (samples 5 and 6; the test holds the turn), the
 line said again past its 120 quarter-ticks, a tag 4 taking a tag 3's place or the other way, the park shut while he
 speaks (whether anything withdraws message 2 was not looked for), Full Simulation's empty park opened, a ride or a
 sideshow sold by the player's own window. The original was not given a file with one of the two left standing. Not
 heard in either game.
+
+## A park with no ride in it (message `0x3e`, Q322)
+
+**Row 62, message `0x3e`, `RidesBuildRides`:** polled, category 0, either game mode, one copy, first response
+182, three lines in turn. Responses 182 to 184 are samples 179 to 181: the random gesture chain, model slot 0, prop
+5 (the hard hat), group 64. It is the poll's 35th row of a round: from the shipped park's cursor, 277, its turns
+are ticks 804, 959, 1114 and every 155 on.
+
+**Its score, `0x0059dad0`** (a function made in Ghidra; `ECX` the balance object):
+
+1. `FUN_004ca7b0( 0, 1 )` on the park analyser (`FUN_00519510`) other than nought: nought. The routine (in no
+   function of the listing; read as disassembly) walks the catalogue's items (`FUN_00412e60`, `FUN_00412e70` on
+   `0x007890a0`) and counts those whose `Info.WhichUIType` (`+0x4ac`) is the kind asked for, 0 a ride, and whose
+   control record (`FUN_004d3d80`; `hud.md`, "What the buy list actually filters on") counts at least one standing
+   (`+0x18` above nought); its second argument, 1 here, leaves the item's `+0xc4` unasked. So one ride of any item
+   standing is enough for nought. What writes the record's `+0x18` is not read: the runs below have it fall to
+   nought when the park's one ride is sold.
+2. Otherwise `[ECX + 0x230]` plus `[ECX + 0x234]` times the park's age in whole days (`FUN_004f8800` over
+   `0xC92A69C000`, as the control panel's line counts them): `RidesBuildRides.Score` and
+   `RidesBuildRides.AdditionalPerDay` (`lib/advisorschema.py`), **-50 and 3** in `Advisor.sam`, whose own note
+   reads "This is negative so that it won't start nagging you straight away".
+
+The door is not asked, nor the sideshows, the shops or anybody. A day is 23.04 ticks and
+`MinScoreForConsideration` 25, so **a park with no ride is told from its 26th day on** (28; the 25th day's 25 is
+not above 25): from tick 600. On tick 959 it is 73, on tick 1114 it is 94.
+
+**Its tag** is row 64 of the tag table: key 383 (it takes no tag's place), picture 2, string 67, the bar's first
+button of type 9, no second, thirty seconds. **Button types 9 to `0xc`** are `FUN_004acc70( type - 9, item )`,
+the buy screen's opener: with the screen open already it fills the list with that tab's items (`FUN_004aaf70`) and
+puts the tab's button down (`0x1fb`, `0x1fd`, `0x1fa`, `0x1fc`); otherwise it builds the screen on that tab; either
+way, where the item is not nought it selects that item's row (`FUN_00664d2a`, `FUN_00665739`), and the fresh
+build posts the screen's own line, `0xbc`. The act answers 2: the tag is taken off and the arm folded away.
+
+**String 67 differs between the two language folders.** `Language/English/TAG_SYSTEM.str` reads "Perhaps now's a
+good time to build some?" and `Language/american`'s, which the reference install reads (`saves.md`, "The list is the
+folder"), "Perhaps now is a good time". `strdump` prints both. OpenTPW reads the English folder.
+
+### OpenTPW (`ParkAdvisorMessages.BuildRides`, a topic's `PerDayWithNoRide`; tag row 64; `ParkGadget.BarButton`'s types 9 to `0xc`)
+
+An eighth polled topic, scored from the same `ParkFacts` as rows 1 and 2: where the facts count no ride, its
+key's value plus the per-day key's for each day of `DaysSinceTheFirstSweep`. The facts count the ride things
+standing, where the original counts the ride items with one standing: the same nought. Its poll line ends
+` rides=N`. `ParkTags.Rows` lists row 64. The bar's buttons of types 9 to `0xc` open `ParkBuyScreen` on the tab
+the type names (`openOn`), or pick it on the one open (`PickTab`), and take the tag off as the entry-price
+button does; a tag that names an item counts `TAG_BAR_BUY_ITEM_ROW` (no listed row does). The console's
+`windows` names the buy screen's tab.
+
+**The original first** (`q322/PREDICTION.txt`, round 1; `q322/orig/run.sh <file>`, `advisor.py ...
+0x3e,0x2,0xbc,0x11c poll` beside `tags.py` and `bar.py`), on two files of this game's it had not been given,
+eight of eight. *The Belly Bounce alone sold* under a pause on tick 916, the Jungle Spray standing
+(`q322/scene-a/ride-sold.TPWS`; `orig/a-load.log`): message 2's record never moved; `0x3e`'s went from (0, -1, 0,
+0) to **(959, 0, 1, 0) on tick 959** with no slot seen holding it, one tag with it at (84, 909, 154, 974) and the
+mast at (94, 901, 144, 984); half a second into the line he is up in the yellow hard hat (`orig/a-2-loaded.png`,
+`loadfile.sh`'s own frame: mine was taken too soon). The tag clicked: the bar's data read thing 0, buttons 9 and
+0, item 0 and the text. The button clicked on tick 1060: "Buy Ride", the rides tab down, four rides listed
+(`orig/a-button.png`), no tag held by tick 1062, and a slot took `0xbc` at 1000, said on tick 1061. *Both sold
+on tick 1074*, past row 62's turn on 959 (`scene-b/late.TPWS`; `orig/b-load.log`): row 2's line on tick 1079; **on
+tick 1114 a slot held `0x3e` at 94**, the score's number for the park's 48th day; said on tick 1123 as row 2's
+wait ended (length 10832), a second tag at (84, 834, 154, 899) and the mast up to 826.
+
+**This game** (`q322/confirm.py ride|both|spray|control`). *The Bounce alone sold* (`run-ride2`, on the desktop,
+six of six; `run-ride1` four of six, both misses the prediction's: the census scores a topic on the tick it is
+asked, 76 on the 42nd day, and the bar's words are the English folder's): `poll message=62 row=62 days=34 score=0
+threshold=25 tick=804 result=no-score rides=1` before the sale, then `poll message=62 row=62 days=41 score=73
+threshold=25 tick=959 result=post rides=0`, the post queued and `attempt=1 message=62 subject=0 score=73
+threshold=25 response=182 sample=179 line=0 tick=959` on one tick; `saying sp_179.mp2 ... wearing=5,0`, him up in
+the yellow hard hat (`run-ride2/1-told.png`), `tags` reading `tag=64/picture=2/subject=0` with
+`mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked: `message bar: tag 64 subject 0 item 0
+bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=521 second=hidden erase=mb_erase` and the text
+(`2-bar.png`). The button clicked, the buy screen having been left on its shops tab (`windows` read `ParkBuyScreen
+tab 1`): `button type 9 opens the buy screen on tab 0 and takes tag 64 off`, `windows` reading `ParkBuyScreen tab
+0`, `standing=0`, neither gap counted, and the frame "Buy Ride" with the original's four rides (`3-screen.png`).
+`PARK_ADVISOR_POLLED_ROW_NOT_BUILT` under the sale's pause on tick 917 was 153, the rule's (`TOOLING.md`, recipes)
+with tick 804 a built turn. *Both sold* (`run-both`, off-screen): row 2's line on tick 924 (duration 8165), `0x3e`
+queued at 73 on tick 959 and said on tick 961, the tick row 2's wait ended, then two tags, tag 4 at
+(84,909,154,974) and tag 64 at (84,834,154,899), the mast (94,826,144,984). *The Spray alone sold* (`run-spray`,
+off-screen): tick 804's poll line alone, no attempt. **Main's build** (`run-control`, off-screen): no poll line of
+message 62, no attempt, no tag by tick 1000, the count one more.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 62 | polled; nought with a ride standing, else -50 and 3 a day of the park's age | the same |
+| The ride sold, the sideshow left | said on tick 959, line 0, in the hard hat | the same |
+| After row 2's line | queued on its turn, said as row 2's wait ends, a second tag above tag 4 | the same (968 and 961: the wait is the drawn line's) |
+| The tag and the bar | row 64, part 2, string 67; button 9 opens the buy screen on its rides tab, tag off, arm in | the same |
+| The buy screen's own line | `0xbc` posted at 1000 as the screen is built, and said | not posted (no screen's line is) |
+| The ride count | the items' control records' `+0x18` | the ride things standing |
+
+**Not built or not seen.** The buy screen's line. The row of a tag's item selected on the buy screen
+(`TAG_BAR_BUY_ITEM_ROW`). In no game run: lines 2 and 3 (samples 180 and 181; the test holds the turn), the line
+said again past its 120 quarter-ticks, a shut park with no ride, a park under its 26th day (the test holds 25 and
+28), Full Simulation's empty park, button types `0xa` to `0xc` and the button with the buy screen open (the test
+holds `0xb` and the open screen), a ride bought after the line. Not heard in either game.

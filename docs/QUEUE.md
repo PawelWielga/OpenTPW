@@ -44,13 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q322. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q323. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q321 (`advisor-park.md`, "An open park with nothing to ride"): **row 62 is the next piece of that scene**
-  (message `0x3e`, polled, 73 in the same bare park, responses 182 to 184 = samples 179 to 181, prop 5, group
-  64: the original says it as row 2's wait ends and it leaves a second tag, "Your park has no rides in it";
-  its score, `0x0059dad0`, is in no function of the listing and not read). In no game run: row 2's second and
+  From Q322 (`advisor-park.md`, "A park with no ride in it"): the buy screen's own line (`0xbc`, posted at 1000
+  as `FUN_004acc70` builds the screen) is not posted; the row of a tag's item is not selected on the buy screen
+  (`TAG_BAR_BUY_ITEM_ROW`, counted; no listed tag names an item); what writes an item's control record's
+  standing count (`+0x18`) is not read. In no game run: lines 2 and 3, the line said again past its cooldown,
+  a shut park with no ride, a park under its 26th day, Full Simulation's empty park, button types `0xa` to
+  `0xc`, the button with the buy screen open (the tests hold each), a ride bought after the line. Not heard in
+  either game.
+  From Q321 (`advisor-park.md`, "An open park with nothing to ride"): in no game run: row 2's second and
   third lines, the line said again past its cooldown, a tag 4 and a tag 3 taking each other's place, the park
   shut while he speaks (whether anything withdraws message 2 was not looked for), Full Simulation's empty park
   opened, a sale through the player's own window. Not heard in either game.

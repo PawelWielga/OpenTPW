@@ -548,7 +548,7 @@ public static class DebugConsole
 			// only way to say whether the island panel or the game menu is up.
 			case "windows":
 				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault() is { } shown
-					? $"windows: {(shown.Windows.Count == 0 ? "none" : string.Join( ", ", shown.Windows.Select( window => window.GetType().Name ) ))}"
+					? $"windows: {(shown.Windows.Count == 0 ? "none" : string.Join( ", ", shown.Windows.Select( window => window is UI.ParkBuyScreen buy ? $"{nameof( UI.ParkBuyScreen )} tab {buy.Tab}" : window.GetType().Name ) ))}"
 						+ (shown.Covered ? " - under the full-screen view" : "")
 					: "windows: no window stack" );
 				break;

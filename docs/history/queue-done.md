@@ -6333,6 +6333,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   green ticket cap with tag 4 on the mast; the original, given this game's file of that park, read its record
   said on tick 924 too, twice, with the tag at the same rectangle. `advisor-park.md`, "An open park with nothing
   to ride". Tests 3020. I split the item: every other piece of the old Q321 is Q322.
+- [x] **Q322. The advisor tells the player a park has no rides in it.** Done 2026-10-12: his polled row 62
+  (`RidesBuildRides`; score `0x0059dad0`: with no ride standing `Score`, -50, and `AdditionalPerDay`, 3, a day of
+  the park's age, whatever the door and the sideshows), three lines in the hard hat, tag row 64 with the buy
+  button, and the bar's buttons of types 9 to `0xc`, which open the buy screen on a tab. The stock park's Bounce
+  sold under a pause on tick 917: `poll message=62 row=62 days=41 score=73 threshold=25 tick=959 result=post
+  rides=0` and `attempt=1 message=62 ... response=182 sample=179 line=0 tick=959`, him in the yellow hard hat with
+  tag 64 on the mast, and its button's click opened "Buy Ride" from a screen left on its shops tab; the
+  original, given this game's files, read its record said on tick 959 too, and on a park sold bare on tick 1074
+  held the message at 94 on tick 1114, as predicted. `advisor-park.md`, "A park with no ride in it". Tests 3022.
+  I split the item: every other piece of the old Q322 is Q323.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

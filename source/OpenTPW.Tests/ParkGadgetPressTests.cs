@@ -433,7 +433,7 @@ public class ParkGadgetPressTests
 	public void TheBarLeavesTheArmWithItsTag()
 	{
 		var (stack, gadget) = AGadget();
-		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 5, ParkTags.NoTag, 1, 0, 9, ParkTags.DeclineButton, 30000, 0 ),
+		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 5, ParkTags.NoTag, 1, 0, 0xd, ParkTags.DeclineButton, 30000, 0 ),
 			new ParkTags.Row( 6, ParkTags.NoTag, 1, 0, 4, 0, 30000, 0 )] );
 		var camcorder = (UI.UiButton)Find( gadget, 0x27 );
 
@@ -505,13 +505,13 @@ public class ParkGadgetPressTests
 		Assert.AreEqual( (false, false, false, null), (gadget.BarOut, gadget.ArmOut, camcorder.IsDown, tags.OnShow), "which lifts the camcorder button too" );
 		Assert.AreEqual( 1, tags.Standing.Count, "and leaves the tag" );
 
-		// A tag whose buttons are not built: an offer to buy, and to decline.
+		// A tag whose buttons are not built: an offer to hire, and to decline.
 		var buttons = Times( "TAG_BAR_BUTTON" );
 		var offer = tags.Said( 5, 0, 7000 )!;
 		Frame( stack, false, new Vector2( 1000, 100 ), 7.1f );
 		Assert.IsTrue( stack.ClickAt( 119, 866 ), "the second tag up" );
 		Assert.AreEqual( offer, tags.OnShow );
-		Assert.AreEqual( (true, 0x209, true, -1, false),
+		Assert.AreEqual( (true, 0x20d, true, -1, false),
 			(Find( gadget, 0x10d30 ).Visible, Find( gadget, 0x10d30 ).HelpText, Find( gadget, 0x10d2f ).Visible, Find( gadget, 0x10d2f ).HelpText, Find( gadget, 0x10d2e ).Visible),
 			"mb_buy, mb_decline, and no erase button beside a decline" );
 		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
@@ -527,6 +527,60 @@ public class ParkGadgetPressTests
 		Assert.AreEqual( (byItem, 515), (tags.OnShow, Find( gadget, 0x10d30 ).HelpText) );
 		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
 		Assert.AreEqual( (buttons + 3, looked), (Times( "TAG_BAR_BUTTON" ), ParkOrbitCameraMode.PointOfInterest) );
+	}
+
+	/// <summary>
+	/// <b>The bar's buy button</b> (<c>FUN_0048e0f0</c>, types 9 to 0xc, which answer 2): the no-rides tag shows
+	/// part 2 of the tag's picture and dresses the bar's first button as <c>mb_buy</c>; its click opens the buy
+	/// screen on the rides tab whatever tab it was last left on, hides the tag at once and folds the arm away, and
+	/// is not counted as unbuilt. With the buy screen open on another tab the click picks the type's tab on that
+	/// screen and opens no second one.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the button counted as unbuilt; the tag left; the arm left out; the screen not opened, opened on the tab last left, or opened twice; the open screen's tab left, or a new screen put in its place; the tab the type itself; the item's row counted for no item, or never.</remarks>
+	[TestMethod]
+	public void TheBuyButtonOpensTheBuyScreenOnItsTabAndTakesItsTagOff()
+	{
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 7, ParkTags.NoTag, 1, 0, 0xb, 0, 30000, 0 )] );
+		var buttons = Times( "TAG_BAR_BUTTON" );
+		var rows = Times( "TAG_BAR_BUY_ITEM_ROW" );
+
+		// The screen last left on its shops tab.
+		var earlier = new UI.ParkBuyScreen( stack, 1 );
+		stack.Open( earlier );
+		Assert.AreEqual( 1, earlier.Tab );
+		stack.Close( earlier );
+
+		var tag = tags.Said( 64, 0, 1000 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 1.1f );
+		Assert.AreEqual( (2, true), (Find( gadget, 900 ).Frame, Find( gadget, 900 ).Visible) );
+		Time.PinWall( 2000 );
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		Assert.AreEqual( (true, tag), (gadget.BarOut, tags.OnShow) );
+		Assert.AreEqual( (true, 0x209, false, true),
+			(Find( gadget, 0x10d30 ).Visible, Find( gadget, 0x10d30 ).HelpText, Find( gadget, 0x10d2f ).Visible, Find( gadget, 0x10d2e ).Visible),
+			"mb_buy, no second button, and the erase button" );
+
+		Assert.IsTrue( stack.ClickAt( 565, 1172 ), "mb_buy" );
+		Assert.AreEqual( (true, false, false, null, buttons),
+			(tag.Hidden, gadget.BarOut, gadget.ArmOut, tags.OnShow, Times( "TAG_BAR_BUTTON" )), "hidden at once, the arm in, nothing counted" );
+		var screens = stack.Windows.OfType<UI.ParkBuyScreen>().ToArray();
+		Assert.AreEqual( (1, 0, rows), (screens.Length, screens[0].Tab, Times( "TAG_BAR_BUY_ITEM_ROW" )), "the buy screen, on its rides tab; a tag of no item asks for no row" );
+		var opened = screens[0];
+
+		// The screen open: a tag of type 0xb picks the sideshows tab on it.
+		Frame( stack, false, new Vector2( 1000, 100 ), 2.6f );
+		Assert.AreEqual( 0, tags.Standing.Count );
+		var second = tags.Said( 7, 0, 3000, item: 1303 )!;
+		Frame( stack, false, new Vector2( 1000, 100 ), 3.1f );
+		Time.PinWall( 3500 );
+		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
+		Assert.AreEqual( second, tags.OnShow );
+		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
+		screens = stack.Windows.OfType<UI.ParkBuyScreen>().ToArray();
+		Assert.AreEqual( (1, 2, true, buttons), (screens.Length, screens[0].Tab, second.Hidden, Times( "TAG_BAR_BUTTON" )) );
+		Assert.AreSame( opened, screens[0], "the screen that was open, not a new one in its place" );
+		Assert.AreEqual( rows + 1, Times( "TAG_BAR_BUY_ITEM_ROW" ), "the item's row is not selected: counted" );
 	}
 
 	/// <summary>

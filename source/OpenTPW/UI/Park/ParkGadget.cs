@@ -723,6 +723,9 @@ internal sealed class ParkGadget : UiWindow
 	private const int LocateThing = 3;
 	private const int LocateItem = 4;
 	private const int EntryPrice = 0x18;
+	/// <summary>The bar's buttons that open the buy screen, mb_buy: types 9 to 0xc, a tab each from the first (FUN_0048e0f0).</summary>
+	private const int BuyFirstTab = 9;
+	private const int BuyLastTab = 0xc;
 
 	/// <summary>
 	/// A bar button's mesh and help row by its type, the tag row's +0x10 or +0x14 (FUN_0048e610). A type not here
@@ -808,8 +811,11 @@ internal sealed class ParkGadget : UiWindow
 	/// One of the bar's two stacked buttons (FUN_0048e2f0, 0x10d30 and 0x10d2f, to FUN_0048e0f0 with the button's
 	/// type, the tag's thing and its item). Type 3 puts the camera on the thing's cell (FUN_004867b0) and leaves the
 	/// bar out. Type 0x18 opens the entry-price screen (FUN_00498d80) and answers 2: the tag on show is taken off
-	/// the mast as the erase button takes it, and the arm folded away. Every other type opens a screen or answers
-	/// an offer, none of it built: counted, <c>TAG_BAR_BUTTON</c>, and nothing more.
+	/// the mast as the erase button takes it, and the arm folded away. Types 9 to 0xc open the buy screen on the
+	/// tab the type less 9 names, or pick that tab on the one already open (FUN_004acc70), and answer 2 as well;
+	/// the row of the tag's item the original then selects is counted where a tag names one,
+	/// <c>TAG_BAR_BUY_ITEM_ROW</c>. Every other type opens a screen or answers an offer, none of it built: counted,
+	/// <c>TAG_BAR_BUTTON</c>, and nothing more.
 	/// </summary>
 	private void BarButton( bool first )
 	{
@@ -830,6 +836,19 @@ internal sealed class ParkGadget : UiWindow
 			// Screen 10 of the Finance category; nothing where it is open already ([0x007ca210]).
 			if ( !Stack.Windows.Any( window => window is ParkEntryPriceScreen ) )
 				ParkCategoryScreens.Show( Stack, ParkCategoryScreens.Finance, 10 );
+			EraseTag();
+			return;
+		}
+
+		if ( type is >= BuyFirstTab and <= BuyLastTab )
+		{
+			Log.Info( $"Park gadget: message bar: button type {type} opens the buy screen on tab {type - BuyFirstTab} and takes tag {tag.Row.Id} off" );
+			if ( Stack.Windows.OfType<ParkBuyScreen>().FirstOrDefault() is { } open )
+				open.PickTab( type - BuyFirstTab );
+			else
+				Stack.Open( new ParkBuyScreen( Stack, type - BuyFirstTab ) );
+			if ( tag.Item != 0 )
+				Unimplemented.Report( "TAG_BAR_BUY_ITEM_ROW" );
 			EraseTag();
 			return;
 		}
