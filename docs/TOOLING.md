@@ -69,6 +69,14 @@ Each was found by trial in the item named, and cost a run to find.
 whole list):
 
 - **`camera x y zoom yaw` takes world units**, a cell times ten (Q257n).
+- **A tired member of staff, from the first sweeps of a load** (Q326): write the member's rest into the file, the
+  float at the staff record's `+499` (`parkfile.thing_set( src, dst, 28, 499, '<f', 1.5 )`), where the console's
+  `staffrest` and a write to the original's memory each need a run already going. The stock file's guard 28 is
+  idle on stamp 752, so he is tired on tick 763 in both games, is in the Staff Room on tick 891 and up again on
+  1088 (grade 3, 0.5 a tick). His walk is 128 ticks, half a minute: a script that watches it needs more than
+  150 s from the load to the rest's end. `thingwords.py %PID% 170 28:0x19c:i:state 28:0x208:H:restarea
+  28:0x1fc:f:rest` and `object.py %PID% 170 20 0` (the room's `VAR_STAFFIN`) read the original's side
+  (`q326/orig/run.sh`).
 - **The speaker is free from the entry to a park or a load** (Q316): the stock park says no opening line, its file
   holding the control panel's line, message `0xb9`, as said, so a line posted in the first seconds is heard. The
   older scripts' 23 s waits after a load are no longer needed.

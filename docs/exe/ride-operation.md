@@ -2867,6 +2867,51 @@ to its memory, none to disk):
 Not run in the original: the other four kinds' hires, a tired member whose route to a rest area fails (the flag
 was cleared instead), and the mechanic's, handyman's and entertainer's too-tired gates.
 
+### A shut staff room and a tired member (Q326)
+
+**A shut staff room takes a tired member of staff in as an open one does.** Nothing on the way reads the room's
+`mCanLoad` (`+0x68`):
+
+- the search `FUN_00506910` walks the live chain from `[world + 0x1da746]` and keeps the nearest thing with
+  `+0x32 & 2`, by squared cell distance; the flag is its only test;
+- its caller, the tired arm of `FUN_00506a40`, routes to that thing's `mEntryPos` (`+0x36`) and, routed, stores
+  the thing in `mRestArea` (`+0x208`) and sets state 2;
+- the arrival `FUN_00505fe0` adds one to the room's script variable 0 (`VAR_STAFFIN`), sets state 3 and tells the
+  resting-staff list;
+- the rest's turn `FUN_005061d0` adds the grade's `RecuperationRate` to the rest (`+0x1fc`) and its
+  `HappinessRecuperationRate` to the happiness (`+0x1f8`), and at a rest byte of 100 puts the member out
+  (`FUN_00506d10`, the variable one less) into the kind's decide.
+
+`mCanLoad` on a staff room is read by the advisor's row 263 alone (`advisor-park.md`, "A shut staff room").
+
+**OpenTPW** is the same and was before the look: `StaffBehaviour.GoAndRest` asks `IsRestArea` and `IsPlaced`, and
+neither the arrival nor `Rest` asks the room anything. `VAR_STAFFIN` and the list stay unbuilt
+(`REST_AREA_OCCUPANCY`).
+
+**The scene** is a file: Q325's `room-shut.TPWS` (the stock file, thing 20's `mCanLoad` nought) with guard 28's
+rest, the float at his record's `+499`, written 1.5 for 79.0 (`parkfile.thing_set`; `q326/tired-shut.TPWS`). The
+file holds him idle on stamp 752, grade 3, so his decide is on tick 763, and grade 3 recovers 0.5 a turn: 197
+turns to 100.
+
+| | this game (`q326/run-shut2`) | the original (`q326/orig/a-load.log`) |
+|---|---|---|
+| Thing 20 | `state 3 canload 0 ... flags 0x22` at every reading | `mCanLoad` 0 on every line |
+| Tired, and sets off | `is tired on mGameTick 763, rest 1.500, and sets off for rest area 20` | state 2, `+0x208` 20 on tick 763 |
+| The walk | `GoingToRest` at every reading to tick 890, rest 1.500 | state 2 on every line to tick 889, rest 1.5, from (39,28) to (58,15) |
+| In the room | `Resting`, rest 2.000 on tick 892 (the control read 1.500 on 891) | state 3 on tick 891 with the room's variable 0 gone 0 to 1; rest 2.0 on 892 |
+| The rest | 20.500 on tick 929: 0.5 a tick | 0.5 a tick on 197 lines of 197 |
+| Up again | `ends the rest on mGameTick 1088 and decides` | state 0 and rest 100.0 on tick 1088, the variable back to 0 |
+
+Predicted before any run (`q326/PREDICTION.txt`): this game six of six on its second run (the first was cut short
+by the script, whose loop ended while he still walked, and which misread a census field: one of six, no
+prediction changed), the original five of five on its first. `REST_AREA_OCCUPANCY` grew by two, the arrival and
+the end. **The control**, the same file with the room open (`tired-open.TPWS`, off-screen): the same tired line on tick 763, `canload 1` throughout, Resting at 1.500 on tick 891 and the rest's end on tick 1088, as predicted (`run-open`, on the desktop: the off-screen try's click on the list's row did not land, on a machine at a load of 60). **The
+photograph** (`run-shut2/2-resting-in-the-shut-room.png`) shows the park from far off, the guard a few pixels at
+the Staff Room's door; the original's saved view does not take the room in, so its proof is its memory alone.
+
+Not run: a member of another kind, a second staff room nearer and open (the search takes the nearest whatever
+its door, by the listing), a room shut while a member rests in it, Full Simulation.
+
 ### The strike - `FUN_00508e70`, `FUN_00508f70`, `FUN_00509360`, and states 4 and 5
 
 Decoded for Q138 and measured in the original (below); built by Q138b ("The strike, in both games", below).

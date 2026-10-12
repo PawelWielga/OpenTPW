@@ -6373,6 +6373,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   with a wait of 4,998, and neither game said it on the stock file. `advisor-park.md`, "A shut staff room".
   Tests 3026.
   I split the item: every other piece of the old Q325 is Q326.
+- [x] **Q326. A shut staff room takes a tired member of staff in.** Done 2026-10-12: the look the old Q325 left
+  owing, and no code changed. The search `FUN_00506910` takes the nearest thing with `+0x32 & 2`, and neither
+  it, the tired arm of `FUN_00506a40`, the arrival `FUN_00505fe0` nor the rest's turn `FUN_005061d0` reads
+  `mCanLoad`; `GoAndRest` asked nothing of it already. The scene is Q325's file with guard 28's rest 1.5.
+  `Staff: 28 is tired on mGameTick 763, rest 1.500, and sets off for rest area 20`, thing 20 `canload 0`
+  throughout, Resting at 2.000 on tick 892, 0.5 a tick, `ends the rest on mGameTick 1088`; the original, given
+  that file, read state 2 on tick 763, state 3 on 891 with the room's `VAR_STAFFIN` 0 to 1, 0.5 a tick on 197
+  lines of 197 and state 0 at 100.0 on tick 1088. `ride-operation.md`, "A shut staff room and a tired member".
+  Tests 3027.
+  I split the item: every other piece of the old Q326 is Q328.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

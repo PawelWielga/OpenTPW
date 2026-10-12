@@ -97,6 +97,50 @@ public class ParkRestAreaTests
 			"walking to the object's own cell would put them inside the furniture" );
 	}
 
+	/// <summary>
+	/// A shut staff room is searched for, walked to and rested in as an open one is: the search
+	/// <c>FUN_00506910</c>, the arrival <c>FUN_00505fe0</c> and the rest's turn <c>FUN_005061d0</c> read no
+	/// <c>mCanLoad</c> (<c>docs/exe/ride-operation.md</c>, "A shut staff room and a tired member").
+	/// </summary>
+	[TestMethod]
+	public void AShutRestAreaTakesATiredGuardInAsAnOpenOneDoes()
+	{
+		var world = Park();
+		var state = new ParkState( world );
+
+		state.ReplaceObject( world.Objects.Single( o => o.ThingId == RestAreaThing ) with { CanLoad = 0 } );
+
+		var behaviour = new StaffBehaviour( Balance(), new Random( 7 ), state );
+		var member = ParkPeople.StaffIn( world ).Single( staff => staff.ThingId == Guard );
+		var walk = new PeepWalk( member.Navigator, CellEdge.For( world, ParkPeople.WalkingMode ).Blocked );
+
+		member.Tiredness = 1.5f;
+		member.SetActivity( StaffActivity.Idle, tick: 1 );
+		member.TimeStartedIdling = 0;
+
+		behaviour.Step( member, walk, playing: null, tick: 500 );
+
+		Assert.AreEqual( 0, state.ObjectsInChainOrder().Single( o => o.ThingId == RestAreaThing ).CanLoad,
+			"the room the search walks is the shut one" );
+		Assert.AreEqual( (StaffActivity.GoingToRest, RestAreaThing), (member.Activity, member.RestArea),
+			"a shut rest area is found and claimed" );
+
+		var tick = 500;
+
+		while ( member.Activity == StaffActivity.GoingToRest && tick < 3000 )
+			behaviour.Step( member, walk, playing: null, ++tick );
+
+		Assert.AreEqual( (StaffActivity.Resting, RestAreaThing), (member.Activity, member.RestArea),
+			"and arrived at, it is rested in" );
+
+		var arrivedWith = member.Tiredness;
+
+		behaviour.Step( member, walk, playing: null, ++tick );
+		behaviour.Step( member, walk, playing: null, ++tick );
+
+		Assert.AreEqual( arrivedWith + 1f, member.Tiredness, 0.0001f, "grade 3 recovers 0.5 a turn there" );
+	}
+
 	/// <summary>The researcher does the same, so this is the shared arm rather than one member's luck.</summary>
 	[TestMethod]
 	public void SoDoesTheResearcher()

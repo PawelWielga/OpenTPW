@@ -1626,6 +1626,11 @@ public sealed class StaffBehaviour
 	/// original measures it: it follows <c>mNext</c> from <c>mFirstObject</c>, the park's live objects. So a
 	/// thing sold is never offered, since the destructor has taken it off the chain.
 	/// </para>
+	/// <para>
+	/// <b>A shut rest area is taken as an open one is.</b> The search asks the flag alone, and neither it, the
+	/// arrival nor the rest's turn reads <c>mCanLoad</c> (<c>docs/exe/ride-operation.md</c>, "A shut staff room
+	/// and a tired member").
+	/// </para>
 	/// </summary>
 	private bool GoAndRest( Staff staff, PeepWalk walk )
 	{

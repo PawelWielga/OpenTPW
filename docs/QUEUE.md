@@ -44,13 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q326. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q328. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q326 (`ride-operation.md`, "A shut staff room and a tired member"): in no game run: a member of
+  another kind, a second staff room nearer and open, a room shut while a member rests in it, Full Simulation.
+  The original's frame does not show the room (its saved view); `VAR_STAFFIN` and the resting-staff list stay
+  unbuilt (`REST_AREA_OCCUPANCY`).
   From Q325 (`advisor-park.md`, "A shut staff room"): a staff room's own window is not built (the original's,
-  `FUN_004b4fc0`, has no door); response 513's lip file 0 is not read; **what a shut staff room does to a
-  tired member of staff was not looked for in either game** (here `GoAndRest` does not ask `CanLoad`; load
-  `q325/room-shut.TPWS` in the original with a member's rest low and watch). Thirteen other responses name
+  `FUN_004b4fc0`, has no door); response 513's lip file 0 is not read. Thirteen other responses name
   `z_error.mp2` (0, 429, 517 to 519, 550, 572, 573, 588 to 591, 599): their rows are not read. In no game run:
   a share between nought and the whole, the line again past its cooldown (the test holds each), a staff room
   bought, Full Simulation. The original's sound was not measured; neither game was heard by ear.
@@ -378,7 +380,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   cursor is the program's, not a file's, so predict each turn from it). Say first, from each score function,
   whether the mode is asked; run those where it could matter (the regular catalogue, the empty park's age and
   rates), and say in one line why for the rest. Confirm: each line's `poll` and `attempt` lines with a
-  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q326's notes
+  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q328's notes
   From Q319 to From Q325; take each out of those notes as it is run.
 - [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). `gms.dat`
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest
