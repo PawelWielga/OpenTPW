@@ -34,6 +34,7 @@ internal sealed class ParkTags
 	internal static readonly Row[] Rows =
 	[
 		new( 3, 4, 2, 7, 24, 0, 30000, 0 ),
+		new( 4, 3, 2, 8, 24, 0, 30000, 0 ),
 		new( 68, NoTag, 1, 71, 3, 0, 30000, 2 ),
 		new( 70, 68, 1, 72, 3, 0, 30000, 2 ),
 		new( 71, 68, 1, 73, 3, 0, 30000, 2 ),

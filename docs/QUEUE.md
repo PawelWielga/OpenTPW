@@ -44,12 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q321. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q322. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q320 (`advisor-park.md`, "Shut shops, sideshows and toilets"): **row 2 is the cheap next piece**
-  (`ClosePark`, `0x0059c960`, 99 in an open park with no ride and no sideshow, responses 5 to 7, tag row 4: read
-  and not built; Full Simulation's empty park is its scene). Rows 259 (`0x005a02f0`: an open park, enough rides,
+  From Q321 (`advisor-park.md`, "An open park with nothing to ride"): **row 62 is the next piece of that scene**
+  (message `0x3e`, polled, 73 in the same bare park, responses 182 to 184 = samples 179 to 181, prop 5, group
+  64: the original says it as row 2's wait ends and it leaves a second tag, "Your park has no rides in it";
+  its score, `0x0059dad0`, is in no function of the listing and not read). In no game run: row 2's second and
+  third lines, the line said again past its cooldown, a tag 4 and a tag 3 taking each other's place, the park
+  shut while he speaks (whether anything withdraws message 2 was not looked for), Full Simulation's empty park
+  opened, a sale through the player's own window. Not heard in either game.
+  From Q320 (`advisor-park.md`, "Shut shops, sideshows and toilets"): Rows 259 (`0x005a02f0`: an open park, enough rides,
   a share of them shut) and 263 (`0x005a0490`: `StaffroomClosed`'s, `FUN_004ca030` and `FUN_004ca0c0` not read)
   are the same shape as 260 to 262 and not built. The toilets' count's place in the analyser (`+0x1f0e0`) is
   not kept. In no game run: a shop, sideshow or toilet shut by itself in an open park (no window shuts a shop

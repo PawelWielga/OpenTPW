@@ -107,10 +107,18 @@ whole list):
   to tick 942 or later: save past tick 902 (`pause`, `savepark`) for a file both games say row 1's on tick 923 from
   (`q319/orig/run.sh <file>`, with `CLICKS=0` for no clicks; Q319). The four lines in both games:
   `q320/confirm.py`, `q320/orig/run.sh <file>` (Q320).
+- **An open park with nothing to ride, and the advisor's line about it:** in the stock park `pause` on a tick
+  from 912 to 919, `sell 13` (the Belly Bounce), `sell 14` (the Jungle Spray), `resume`: row 2 is polled on tick
+  924 (769 and every 155 on) and he says sample 4 in the ticket hat and leaves tag 4, whose bar's first button
+  opens the entry-price screen as tag 3's does. `savepark` under that pause writes a file the original says the
+  line on tick 924 from too, and then a second line this game does not build (row 62's, on tick 968). The
+  original's line lasts from 2.5 s to 13 s after the load's click, before `loadfile.sh`'s own frames: put
+  `(sleep 6; import -window root -display :77 out.png) &` in its `POLL` (`q321/confirm.py`, `q321/orig/run.sh`
+  with `GRAB=1`; Q321).
 - **The count of unbuilt polled rows is exact, so predict it exactly:** under a `pause` on tick T the stock
   park's `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is T - 755 less the turns of built rows by then, and a built row
   comes round every 155 ticks with no log line where its answer has not changed (282 on 760 and 915; 1 on 768
-  and 923; 185 on 877 and 1032; 260 to 262 on 899 to 901 and 1054 to 1056). `q320/probe.py` reads tick against
+  and 923; 2 on 769 and 924; 185 on 877 and 1032; 260 to 262 on 899 to 901 and 1054 to 1056). `q320/probe.py` reads tick against
   count at a list of pauses (Q320).
 - **Open a bought ride:** `buy <item> <x> <y> 0` answers the thing's id and its queue node's cell; then
   `tool queue <thing>`, `worldclick <the node's cell>`, `worldclick <a path cell beside it>`, `tool off`. For a Hot

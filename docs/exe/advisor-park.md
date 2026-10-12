@@ -1247,8 +1247,7 @@ row 3 of the tag table: key 4 (it takes the place of row 2's tag, "close your pa
 want to come in but your park is closed. You should think about opening up."), the bar's first button of type
 `0x18`, no second, thirty seconds.
 
-**Row 2, message 2, `ClosePark`** (`0x0059c960`, read and not built): with the park open and neither a ride nor a
-sideshow standing, `[ECX + 0xa8]`, `ClosePark.Score`, 99; responses 5 to 7, group 4.
+**Row 2, message 2, `ClosePark`**, is "An open park with nothing to ride", below.
 
 **Rows 259 to 263 are the same shape** (functions made in Ghidra): rows 260 to 262 are read and built ("Shut
 shops, sideshows and toilets", below); row 259 (`0x005a02f0`) wants the park open, at least `[ECX + 0x57c]` rides
@@ -1305,10 +1304,10 @@ line of message 1, no attempt, no tag at tick 941.
 | The same file, three waiting | queued and said on tick 923 | the same |
 | The tag and the bar | row 3, part 2, string 7; button `0x18` opens the entry-price screen, tag off, arm in | the same |
 | A shut park's other lines | rows 260 to 262 score, and a line of row 260's delayed row 1's by 19 ticks | the same ("Shut shops, sideshows and toilets", below) |
-| Row 2, `ClosePark` | 99 in an open park with no ride and no sideshow | not built, counted |
+| Row 2, `ClosePark` | 99 in an open park with no ride and no sideshow | the same ("An open park with nothing to ride", below) |
 | The count's place | left in the analyser's `+0x1f0d4` | not kept |
 
-**Not built or not seen.** Rows 2, 259 and 263. Lines 3 and 4 (samples 2 and 3) were in no game run, nor the
+**Not built or not seen.** Rows 259 and 263. Lines 3 and 4 (samples 2 and 3) were in no game run, nor the
 refusal inside 480 ticks, a second load of guests (whether a bus comes to a shut park was in no run),
 a park opened while he says it (whether anything withdraws message 1 was not looked for), a tag 3 taking the place of a tag 4, or Full Simulation's empty park. The entry-price screen's own
 line, `0x12f`, is not posted here (`hud.md`). Not heard in either game.
@@ -1403,3 +1402,72 @@ open park (no window shuts a shop or a toilet here: the tests hold the score), a
 whole, each row's second and third lines, a row said again past its 120 quarter-ticks, four waiting in this game.
 What the first run did with row 1's slot is not known. The date on the gadget is not the same in the two games'
 frames (the calendar's, Q149). Not heard in either game.
+
+## An open park with nothing to ride (message 2, Q321)
+
+**Row 2, message 2, `ClosePark`:** polled, category 0, either game mode, one copy, first response 5, three lines
+in turn. Responses 5 to 7 are samples 4 to 6 ("there isn't much to do in your park yet, you might want to close it
+until you've built some more stuff" and two longer ways of saying it): the random gesture chain, model slot 0, prop
+9 (the ticket hat), group 4. It is the poll's second row of a round: from the shipped park's cursor, 277, its turns
+are ticks 769, 924, 1079 and every 155 on.
+
+**Its score, `0x0059c960`** (`ECX` the balance object): with the park open (`FUN_004c9050` answering other than
+nought, the test row 1 leaves on) and `FUN_004ca8e0( 0, 0 )` and `FUN_004ca8e0( 2, 0 )` both under 1, neither a
+ride nor a sideshow standing, `[ECX + 0xa8]`, `ClosePark.Score` (`lib/advisorschema.py`), 99 in `Advisor.sam`;
+otherwise nought. Nobody is counted: shops, toilets and whoever waits or walks about change nothing.
+
+**Its tag** is row 4 of the tag table: key 3 (it takes the place of row 1's tag, as that takes its), picture 2,
+string 8 ("There isn't much to do in your park yet. You might want to close it until you've built some more
+things."), the bar's first button of type `0x18`, no second, thirty seconds.
+
+### OpenTPW (`ParkAdvisorMessages.ClosePark`, a topic's `NothingToRide`; tag row 4)
+
+A seventh polled topic, scored from the same `ParkFacts` as row 1: its key's value where the door is open and the
+facts count no ride and no sideshow. Its poll line ends ` closed=N rides=N sideshows=N`. `ParkTags.Rows` lists row
+4; its bar's button is row 3's, built in Q319.
+
+**The original first** (`q321/PREDICTION.txt`; `q321/orig/run.sh`, `advisor.py ... 0x2,0x1,0x12f,0x11c poll`
+beside `tags.py` and `bar.py`). This game's file of the stock park, open, with the Belly Bounce and the Jungle
+Spray sold under a pause on tick 917 and saved there (`q321/scene1/bare.TPWS`), twice (`orig/a-load.log`,
+`b-load.log`; five of six, then two of two): the record went from (0, -1, 0, 0) to **(924, 0, 1, 0) on tick 924**,
+with no slot ever holding it; on the same poll line one tag stood at (84, 909, 154, 974) with the mast at (94, 901,
+144, 984) and string 8 word for word; six seconds after the load he is up in the green ticket cap
+(`orig/b-line-6s.png`; the first run's frames came after the line, so that prediction was run again). The tag
+clicked: the bar's data read thing 0, buttons 24 and 0, item 0 and the text, the handle 331 to 1151
+(`orig/a-bar.png`). The bar's first button clicked: a slot took `0x12f` at 1000, the handle went back to 331 and
+tag 4 was gone. The record never moved again through tick 1089, past the row's next turn on 1079.
+
+**Not predicted: the original says a second line.** On tick 959, row 62's turn, a slot took message `0x3e` at 73,
+and it was said on tick 968 in both runs, as row 2's wait ended, in the hard hat (`orig/a-2-loaded.png`), leaving a
+second tag above the first ("Your park has no rides in it. Perhaps now is a good time to build some?"). Row 62 is
+polled, category 0, one copy, three lines from response 182 (samples 179 to 181, prop 5, group 64); its score
+function, at `0x0059dad0`, is in no function of the listing and was not read.
+
+**This game** (`q321/confirm.py fix|control|ride`; eight of eight on the first run, `run-fix1`, on the desktop).
+The stock park left open, the two sold under a pause on tick 916: `poll message=2 row=2 days=33 score=0
+threshold=25 tick=769 result=no-score closed=0 rides=1 sideshows=1` before the sale, then `poll message=2 row=2
+days=40 score=99 threshold=25 tick=924 result=post closed=0 rides=0 sideshows=0`, the post queued and `attempt=1
+message=2 subject=0 score=99 threshold=25 response=5 sample=4 line=0 tick=924` on one tick; `saying sp_004.mp2 ...
+wearing=9,0`, him up in the green ticket cap over a park with neither (`run-fix1/1-told.png`), `tags` reading
+`tag=4/picture=2/subject=0` with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked:
+`message bar: tag 4 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=b_entry/help=236 second=hidden
+erase=mb_erase` and the text (`2-bar.png`), the bar's own line `0x11c` queued behind his. The button clicked:
+`button type 24 opens the entry-price screen and takes tag 4 off`, `windows` listing `ParkEntryPriceScreen`,
+`standing=0`, `withdraw message=284 cleared=1 cut=0` (`3-screen.png`). No other line by tick 1000, and `poll
+message=2 ... score=99 ... tick=1079 result=cooldown`. The count of `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` under the
+sale's pause was 153, the rule's (`TOOLING.md`, recipes) with tick 769 a built turn. **Main's build**
+(`run-control`, off-screen): no poll line of message 2, no attempt, no tag by tick 960, the count one more. **The
+Bounce left standing** (`run-ride`, off-screen): tick 769's poll line alone, no attempt.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 2 | polled; `ClosePark.Score` in an open park with no ride and no sideshow | the same |
+| The same scene | said on tick 924, line 0, in the ticket hat | the same |
+| The tag and the bar | row 4, part 2, string 8; button `0x18` opens the entry-price screen, tag off, arm in | the same |
+| The line after it | row 62's, `0x3e` at 73, queued on tick 959 and said on 968 with a tag of its own | not built, counted with the unbuilt polled rows |
+
+**Not built or not seen.** Row 62. In no game run: lines 2 and 3 (samples 5 and 6; the test holds the turn), the
+line said again past its 120 quarter-ticks, a tag 4 taking a tag 3's place or the other way, the park shut while he
+speaks (whether anything withdraws message 2 was not looked for), Full Simulation's empty park opened, a ride or a
+sideshow sold by the player's own window. The original was not given a file with one of the two left standing. Not
+heard in either game.

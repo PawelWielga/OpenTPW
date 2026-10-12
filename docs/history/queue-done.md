@@ -6325,6 +6325,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   sideshows' on 987 and row 1's on 1045; the original, given this game's file of that park, said them on 899,
   943, 986 and 1043. `advisor-park.md`, "Shut shops, sideshows and toilets". Tests 3019. I split the item:
   every other piece of the old Q320 is Q321.
+- [x] **Q321. The advisor tells the player to close an open park with nothing to ride.** Done 2026-10-12: his
+  polled row 2 (`ClosePark`; score `0x0059c960`: `ClosePark.Score`, 99, in an open park with no ride and no
+  sideshow), three lines in the ticket hat, tag row 4 with the entry-price button. The stock park's Bounce and
+  Spray sold under a pause on tick 916: `poll message=2 row=2 days=40 score=99 threshold=25 tick=924 result=post
+  closed=0 rides=0 sideshows=0` and `attempt=1 message=2 ... response=5 sample=4 line=0 tick=924`, him in the
+  green ticket cap with tag 4 on the mast; the original, given this game's file of that park, read its record
+  said on tick 924 too, twice, with the tag at the same rectangle. `advisor-park.md`, "An open park with nothing
+  to ride". Tests 3020. I split the item: every other piece of the old Q321 is Q322.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
