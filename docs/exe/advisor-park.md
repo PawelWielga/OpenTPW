@@ -950,8 +950,64 @@ alone: no `0x45` in any slot or record.
 | A taken slot of any other kind | the same | counted, kept taken, written back as the file's |
 | A slot let go | its other bytes stand as they were | the file's bytes stand; a message said here leaves the file's older bytes, not its own |
 | The shipped park's opening message at 20 | waits for ever and refuses the next | the same |
-| The last action's start and length, `mMessagePlaying` | on the second stopwatch, saved and set again | carried as the file's: this game keeps no second stopwatch, so a file saved as he speaks lets the next line start at once in either game |
+| The last action's start and length, `mMessagePlaying` | on the second stopwatch, saved and set again | read and written: "The last action in a park file", below |
 | The line said at once after a load | heard | refused by the speaker while the gadget's opening line is said (the tag and the record are as the original's) |
 
 Not in a game run: the door shut and opened again after a load (the test holds `duplicate`), a taken slot of an
 unbuilt message, a full eight slots. The two calls in `Level` are held by the game runs alone.
+
+## The last action in a park file (Q315)
+
+**Three fields time his wait, and all three are saved.** The tick (`FUN_0059a550`) returns while the second
+stopwatch (`FUN_00402d80`) reads under `mLastActionStarted + mLastActionDuration` (`+0xd8`, `+0xdc`), an unsigned
+compare; a line said stores the stopwatch's reading, the line's length and 1000, and the message's id in
+`mMessagePlaying` (`+0x16ec`). The withdrawal (`FUN_0059aa70`) cuts him off only inside that wait and only where
+`mMessagePlaying` is its message, and then stores nought in the duration alone: the start stands. The constructor
+(`FUN_00599e70`) stores nought in the start and the duration and does not write `mMessagePlaying`. The serialiser
+writes the three with the thing ("The slots in a park file", above), and the clock module holds the stopwatch
+they are read against, which a load makes read the file's again (`park-engine.md`, the clock's table,
+`FUN_00402e80`): **a park saved as he speaks goes on waiting after its load for what was left of the line.**
+
+**What the files hold** (`q315/sweep.py`, the same 21 stored files of the original): two were saved inside the
+wait, `q257x/orig/broken-by-the-original.TPWS` (start 115,150,244, wait 7,498, playing `0x46`, stopwatch
+115,156,783: 959 ms left) and a Full Simulation autosave (28,196 ms left, playing 0); in the other nineteen the
+wait was over, by 134 ms to fifteen minutes. Five hold a wait of nought, a withdrawal's cut.
+
+### OpenTPW (`ParkClock.Second`, `SecondAt`; `ParkWorld.AdvisorActionOf`, `PutAdvisorAction`; `ParkAdvisorMessages.RestoreAction`, `WrittenAction`)
+
+The messages keep the start as a moment of this game's clock, the wait and the message playing. A load moves the
+file's start onto this clock by its distance from the file's stopwatch (`Level`, logged `Park advisor: restored
+action started=... left=...`), as a saved script's deadline is moved (`ParkRides.Moved`); `savepark` writes the
+start back as a reading of the stopwatch the file is written with, which `ParkClock.Put` moves with the clock.
+An advisor with no file's action who has said nothing writes the constructor's noughts.
+
+`q315/confirm.py theirs|fix|control`, predicted first: one of one, three of three and the control one of one.
+The original's own file entered: `restored action started=115150244 duration=7498 playing=70
+stopwatch=115156783 at=6556 left=959`. The stock park entered: `started=114820087 duration=10832 playing=282 ...
+left=-45367`. Q314's scene (a Hot Pot broken, and the Belly Bounce broken as the mechanic's line for the pot is
+said), saved under the pause 1,507 ms into the line: `Save: advisor action written: started 114902772 duration
+7498 playing 70 stopwatch 114904279`, the file's three fields and its `KOLC` second dword the same, and no other
+byte of thing 3 outside the slots and the records moved. Loaded from the Load Park list: `restored action ...
+left=5991`; a second in one tag stood (`run-fix1/2-inside-the-wait.png`); the attempt of `0x45` came 6,206 ms
+after the load's moment, on tick 893, 25 ticks after the load's 868, and tag 71 stood beside the pot's
+(`3-after-the-wait.png`). Main's build wrote the stock file's action, attempted `0x45` on the first tick after
+its load and had both tags a second in.
+
+**The original, given that file** (`q315/orig/run.sh`, predicted first; the length was predicted 8,331 and read
+8,332): from the load, tick 868, its action read `(114902772, 7498)`, its slots `(0, 13, 1100, -1, '0x45', 107)`
+and the opening's, the record of `0x45` `(0, -1, 0, 0)`, one tag held. 6.21 s of wall time on, tick 893, the
+record read `(893, 0, 1, 0)`, the action `(114910475, 8332)`, a start 205 ms after the saved wait's end, and the
+second tag stood at (84,834,154,899). Q314's file, saved with the stock's action, was said a quarter second after
+its load.
+
+| | The original | OpenTPW |
+|---|---|---|
+| A file saved inside the wait | waits what was left, then says the best slot | the same; the same tick in the run above |
+| The message playing | read by a withdrawal inside the wait | the same |
+| A withdrawal's cut | the duration nought, the start as it was | the same |
+| The stopwatch | its own, unscaled; parts from the clock when the clock's rate is not 1 | the file's second dword moved with the clock: this game's clock has one rate |
+| A screen's line (`ParkLines`), the gadget's opening line among them | said through the slots, so it starts an action | said past the messages: it starts no action and is written as none |
+
+Not in a game run: a withdrawal inside a file's wait (the tests hold it), a file with a wait of nought, a park
+made fresh saved before any line, Alexah's own parks. The two calls in `Level` are held by the game runs alone.
+Not heard in either game.

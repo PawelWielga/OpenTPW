@@ -206,6 +206,31 @@ public class ParkFileWriterThingsTests
 		Assert.AreEqual( new ParkFileWriter.ThingsWritten( 14, 14, 0, 161 ), things );
 	}
 
+	/// <summary>
+	/// With the things written the clock is moved, and the advisor's last action is asked for with the second
+	/// stopwatch moved by as much, the reading the file then holds: an action begun 1,500 ms before the save
+	/// lies 1,500 under the file's stopwatch.
+	/// </summary>
+	[TestMethod]
+	public void TheAdvisorsActionIsAskedForWithTheStopwatchTheFileHolds()
+	{
+		var asked = new List<uint>();
+		var body = ParkFileWriter.Body( shipped, Carried with
+		{
+			Things = AsTheFile() with { Clock = ShippedClock + 5000 },
+			AdvisorAction = second =>
+			{
+				asked.Add( second );
+				return new ParkWorld.AdvisorAction( second - 1500, 7498, 70 );
+			}
+		} );
+
+		CollectionAssert.AreEqual( new[] { ShippedSecondClock + 5000 }, asked );
+		var written = new ParkWorld( body );
+		Assert.AreEqual( ShippedSecondClock + 5000, written.Clock.Second );
+		Assert.AreEqual( new ParkWorld.AdvisorAction( ShippedSecondClock + 3500, 7498, 70 ), written.AdvisorActionOf() );
+	}
+
 	/// <summary>The reader takes limbo, the bounce slots and the walk slots, with the struct's counts beside them, from where the page puts them.</summary>
 	[TestMethod]
 	public void TheReaderTakesTheRidersTables()

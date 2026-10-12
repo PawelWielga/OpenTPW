@@ -45,6 +45,20 @@ public sealed class ParkClock
 	public uint? Reading { get; private set; }
 
 	/// <summary>
+	/// The second stopwatch's reading at the save, in milliseconds - the second dword, the game clock's
+	/// <c>+0x74</c> (<c>FUN_00402e60</c>, <c>0x00402e73</c>), which the advisor's last action is timed on. Null
+	/// where the module was refused.
+	/// </summary>
+	public uint? Second => Reading != null && _at >= 0 ? BitConverter.ToUInt32( _data, _at + 4 ) : null;
+
+	/// <summary>
+	/// The second stopwatch's reading where the clock reads <paramref name="reading"/>: the two run together in
+	/// the game, and a file's second lies wherever play left it from the first. Null where the module was refused.
+	/// </summary>
+	public uint? SecondAt( uint reading )
+		=> Reading is { } saved && Second is { } second ? unchecked(second + (reading - saved)) : null;
+
+	/// <summary>
 	/// Reads the module out of the inflated payload - what <see cref="SaveReader.ReadFile"/> hands back, and the same
 	/// array <see cref="ParkWorld"/> is given.
 	/// </summary>
@@ -72,22 +86,19 @@ public sealed class ParkClock
 
 	/// <summary>
 	/// Writes <paramref name="reading"/> over the clock's in <paramref name="body"/>, a copy of the payload this was
-	/// read from, and moves the second stopwatch's by as much: the two run together in the game, and a file's
-	/// second lies wherever play left it from the first.
+	/// read from, and moves the second stopwatch's by as much (<see cref="SecondAt"/>).
 	/// </summary>
 	/// <exception cref="InvalidOperationException">The module was refused, so its place is not known.</exception>
 	public void Put( byte[] body, uint reading )
 	{
 		ArgumentNullException.ThrowIfNull( body );
 
-		if ( Reading is not { } saved || _at < 0 )
+		if ( Reading == null || _at < 0 )
 			throw new InvalidOperationException( $"the park file's clock was not read: {Problem}" );
-
-		var second = BitConverter.ToUInt32( _data, _at + 4 );
 
 		System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian( body.AsSpan( _at, 4 ), reading );
 		System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian( body.AsSpan( _at + 4, 4 ),
-			unchecked(second + (reading - saved)) );
+			SecondAt( reading )!.Value );
 	}
 
 	/// <summary>The module's start: right after an <c>SSEM</c> tag with a <c>KOLC</c> tag the module's size after it.</summary>

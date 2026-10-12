@@ -58,7 +58,9 @@ public static class ParkFileWriter
 	/// where it is null. <see cref="AdvisorHistories"/> is the advisor's records of the messages named
 	/// (<see cref="ParkWorld.PutAdvisorHistories"/>); every other message's, and all of them where it is null, are the file's.
 	/// <see cref="AdvisorSlots"/> is the advisor's eight slots (<see cref="ParkWorld.PutAdvisorSlots"/>); a null slot's, and all
-	/// of them where it is null, are the file's.
+	/// of them where it is null, are the file's. <see cref="AdvisorAction"/> answers the advisor's last action
+	/// (<see cref="ParkWorld.PutAdvisorAction"/>) for the second stopwatch's reading the file is written with
+	/// (<see cref="ParkClock.SecondAt"/>); the file's where it is null or the file's clock did not read.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -67,7 +69,8 @@ public static class ParkFileWriter
 		IReadOnlyList<short>? Effects = null, int? MechanicCursor = null,
 		IReadOnlyList<ParkTagRecords.Record>? Tags = null,
 		IReadOnlyDictionary<int, ParkWorld.AdvisorHistory>? AdvisorHistories = null,
-		IReadOnlyList<ParkWorld.AdvisorSlot?>? AdvisorSlots = null );
+		IReadOnlyList<ParkWorld.AdvisorSlot?>? AdvisorSlots = null,
+		Func<uint, ParkWorld.AdvisorAction>? AdvisorAction = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -229,6 +232,11 @@ public static class ParkFileWriter
 
 		if ( running.AdvisorSlots is { } waiting )
 			loaded.PutAdvisorSlots( body, waiting );
+
+		// The second stopwatch is written moved with the clock, which is written with the things alone.
+		if ( running.AdvisorAction is { } action
+			&& (running.Things is { } timed ? loaded.Clock.SecondAt( timed.Clock ) : loaded.Clock.Second) is { } second )
+			loaded.PutAdvisorAction( body, action( second ) );
 
 		things = null;
 

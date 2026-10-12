@@ -120,6 +120,60 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
+	/// The shipped park's advisor began his last line at 114,820,087 on the second stopwatch, which the file's
+	/// clock module holds at 114,876,286, waits 10,832 ms from it and was saying message 0x11a: a wait long over.
+	/// The second stopwatch moves with the clock.
+	/// </summary>
+	[TestMethod]
+	public void TheShippedParksAdvisorActionIsReadAgainstItsSecondStopwatch()
+	{
+		Assert.AreEqual( new ParkWorld.AdvisorAction( 114820087, 10832, 0x11a ), shipped.AdvisorActionOf() );
+		Assert.AreEqual( 114876286u, shipped.Clock.Second );
+		Assert.AreEqual( 114876286u, shipped.Clock.SecondAt( shipped.Clock.Reading!.Value ) );
+		Assert.AreEqual( 114876286u + 5000, shipped.Clock.SecondAt( shipped.Clock.Reading!.Value + 5000 ) );
+		Assert.AreEqual( 114876286u - 7, shipped.Clock.SecondAt( shipped.Clock.Reading!.Value - 7 ) );
+	}
+
+	/// <summary>
+	/// The advisor's last action is written over the file's and read back: the start and the wait at 196 and 200
+	/// of his thing and the message playing in its last dword, 5842, and no other byte of the file moves. It is
+	/// asked for with the second stopwatch's reading the file holds, the file's own where the clock is not
+	/// written; with none asked for the file's stands.
+	/// </summary>
+	[TestMethod]
+	public void TheAdvisorsActionIsWrittenOverTheFilesOwn()
+	{
+		var asked = new List<uint>();
+		ParkWorld.AdvisorAction Action( uint second )
+		{
+			asked.Add( second );
+			return new ParkWorld.AdvisorAction( second - 0x1234, 0x05060708, 0x01020346 );
+		}
+
+		var mine = Inflate( ParkFileWriter.Write( shipped, Played with { AdvisorAction = Action } ) );
+		var theirs = Inflate( ParkFileWriter.Write( shipped, Played ) );
+		var written = Read( ParkFileWriter.Write( shipped, Played with { AdvisorAction = Action } ) );
+
+		Assert.IsNull( written.Problem );
+		CollectionAssert.AreEqual( new[] { 114876286u, 114876286u }, asked );
+		Assert.AreEqual( new ParkWorld.AdvisorAction( 114876286u - 0x1234, 0x05060708, 0x01020346 ), written.AdvisorActionOf() );
+		Assert.AreEqual( shipped.AdvisorActionOf(), Read( ParkFileWriter.Write( shipped, Played ) ).AdvisorActionOf() );
+
+		Assert.AreEqual( theirs.Length, mine.Length );
+		var at = written.AdvisorAt;
+		var started = BitConverter.GetBytes( 114876286u - 0x1234 );
+		CollectionAssert.AreEqual( new byte[] { started[0], started[1], started[2], started[3], 8, 7, 6, 5 }, mine[(at + 196)..(at + 204)],
+			"mLastActionStarted, mLastActionDuration" );
+		CollectionAssert.AreEqual( new byte[] { 0x46, 3, 2, 1 }, mine[(at + 5842)..(at + 5846)], "mMessagePlaying" );
+		var differing = Enumerable.Range( 0, mine.Length ).Where( i => mine[i] != theirs[i] ).ToList();
+		Assert.IsTrue( differing.Count >= 6 );
+		Assert.IsTrue( differing.All( i => (i >= at + 196 && i < at + 204) || (i >= at + 5842 && i < at + 5846) ), "the three dwords and no more" );
+		Assert.AreEqual( shipped.AdvisorSlotOf( 2 ), written.AdvisorSlotOf( 2 ) );
+		Assert.AreEqual( shipped.AdvisorHistoryOf( 0 ), written.AdvisorHistoryOf( 0 ) );
+		Assert.AreEqual( shipped.AdvisorHistoryOf( 350 ), written.AdvisorHistoryOf( 350 ) );
+	}
+
+	/// <summary>
 	/// The advisor's slots are written over the file's and read back: a taken one whole, twenty-one bytes at
 	/// 24 + 21 a slot of his thing; of an empty one its valid byte alone; a null one not at all; and no other
 	/// byte of the file moves.

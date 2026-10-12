@@ -44,12 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q315. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q316. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q314 (`advisor-park.md`, "The slots in a park file"): the last action's start and length and
-  `mMessagePlaying` are carried as the file's (this game keeps no second stopwatch, the clock module's second
-  dword), so a file saved as he speaks lets the next line start at once; the kept message, `mRequestedLastTutorial`,
+  From Q315 (`advisor-park.md`, "The last action in a park file"): a screen's line (`ParkLines`, the gadget's
+  opening line among them) is said past the messages, so it starts no action and none is written for it, where
+  the original's is a message through the slots. In no game run: a withdrawal inside a file's wait (the tests
+  hold it), a file with a wait of nought, a park made fresh saved before any line, Alexah's own parks. The two
+  calls in `Level` are held by the game runs alone. Not heard in either game.
+  From Q314 (`advisor-park.md`, "The slots in a park file"): the kept message, `mRequestedLastTutorial`,
   `mTimeSig`, `mSoundId` and `mNextAvailableQueuePos` are carried and what reads them is not described; a slot
   let go keeps the file's older bytes, not the said message's; a taken slot of an unbuilt message is counted and
   never said (`PARK_ADVISOR_SAVED_SLOT_NOT_BUILT`; no stored file holds one). The line said on the first sweep

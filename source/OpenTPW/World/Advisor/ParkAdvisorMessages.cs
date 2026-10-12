@@ -91,8 +91,12 @@ internal sealed class ParkAdvisorMessages
 	// The slots a park file's message this game cannot say stands in: taken, and never said or written over.
 	private readonly bool[] _carried = new bool[ParkWorld.AdvisorSlots];
 	private readonly Func<bool> _tutorial;
-	private long _waitUntil;
-	private int _saying;
+	// The last action (the advisor's +0xd8, +0xdc, +0x16ec): the moment the last line said began, how long he
+	// waits from it, and the message it was. The moment is null until a line is said or a file's is taken.
+	private long? _started;
+	private int _duration;
+	private int _playing;
+	private long WaitUntil => (_started ?? 0) + _duration;
 	internal int Attempts { get; private set; }
 	internal int PendingCount => _slots.Count( slot => slot != null ) + _carried.Count( carried => carried );
 	internal int Threshold => Value( "GeneralAdvisor.MinScoreForConsideration" );
@@ -184,6 +188,33 @@ internal sealed class ParkAdvisorMessages
 		return written;
 	}
 
+	/// <summary>
+	/// Takes a park file's last action, as the original's advisor is read back whole and its second stopwatch
+	/// made to read the file's again (FUN_00402e80): the wait a file was saved inside goes on for what was left
+	/// of it, and a withdrawal inside it still finds the message he was saying. <paramref name="stopwatch"/> is
+	/// the file's second stopwatch and <paramref name="milliseconds"/> the load's moment here. Says how many
+	/// milliseconds of the wait are left, nought or less for one that is over.
+	/// </summary>
+	internal long RestoreAction( ParkWorld.AdvisorAction saved, uint stopwatch, long milliseconds )
+	{
+		_started = milliseconds + unchecked((int)(saved.Started - stopwatch));
+		_duration = unchecked((int)saved.Duration);
+		_playing = saved.Playing;
+		var left = WaitUntil - milliseconds;
+		Log.Info( $"Park advisor: restored action started={saved.Started} duration={saved.Duration} playing={saved.Playing} stopwatch={stopwatch} at={milliseconds} left={left}" );
+		return left;
+	}
+
+	/// <summary>
+	/// The last action as a park file's advisor holds it (<see cref="ParkWorld.PutAdvisorAction"/>), its start a
+	/// reading of the second stopwatch, which reads <paramref name="stopwatch"/> at <paramref name="milliseconds"/>
+	/// here. Before any line is said and with no file's taken it is the constructor's, noughts (FUN_00599e70).
+	/// </summary>
+	internal ParkWorld.AdvisorAction WrittenAction( uint stopwatch, long milliseconds )
+		=> _started is { } started
+			? new ParkWorld.AdvisorAction( unchecked(stopwatch - (uint)(int)(milliseconds - started)), unchecked((uint)_duration), _playing )
+			: default;
+
 	// Missing or malformed settings are installation errors, not permission to invent scores.
 	private int Value( string key ) => int.Parse( _settings[key], CultureInfo.InvariantCulture );
 
@@ -254,13 +285,13 @@ internal sealed class ParkAdvisorMessages
 		}
 
 		var history = _histories[id];
-		var cut = milliseconds < _waitUntil && _saying == id;
+		var cut = milliseconds < WaitUntil && _playing == id;
 		if ( cut )
 		{
 			stop();
 			history.Said = false;
 			++history.Slaps;
-			_waitUntil = milliseconds;
+			_duration = 0;
 		}
 
 		Log.Info( $"Park advisor: withdraw message={id} cleared={cleared} cut={(cut ? 1 : 0)} slaps={history.Slaps} pending={PendingCount}" );
@@ -274,7 +305,7 @@ internal sealed class ParkAdvisorMessages
 	/// </summary>
 	internal void Tick( int gameTick, long milliseconds, Func<int, int, int> play, Action<int, int>? said = null )
 	{
-		if ( milliseconds < _waitUntil ) return;
+		if ( milliseconds < WaitUntil ) return;
 		var index = -1;
 		for ( var i = 0; i < _slots.Length; ++i )
 			if ( _slots[i] is { } slot && (index < 0 || slot.Score > _slots[index]!.Score) ) index = i;
@@ -294,20 +325,22 @@ internal sealed class ParkAdvisorMessages
 		if ( line == pending.Topic.GestureRowLine )
 			Unimplemented.Report( "ADVISOR_RESPONSE_GESTURE_ROW" );
 		var duration = play( response, sample );
-		_waitUntil = milliseconds + duration + 1000;
+		_started = milliseconds;
+		_duration = duration + 1000;
 		history.LastTick = gameTick;
 		history.Line = line;
 		history.Said = true;
-		_saying = pending.Topic.Id;
+		_playing = pending.Topic.Id;
 		++Attempts;
 		// The helper then sends an event of type 0x18 carrying the response's group and the record's subject
 		// (FUN_0059b620, FUN_0040f740, FUN_0040fb10); its one hearer is the tag system (FUN_00509bf0).
 		said?.Invoke( pending.Topic.Group, pending.Subject );
-		Log.Info( $"Park advisor: attempt={Attempts} message={pending.Topic.Id} subject={pending.Subject} score={score} threshold={Threshold} response={response} sample={sample} line={line} tick={gameTick} duration={duration} waitUntil={_waitUntil}" );
+		Log.Info( $"Park advisor: attempt={Attempts} message={pending.Topic.Id} subject={pending.Subject} score={score} threshold={Threshold} response={response} sample={sample} line={line} tick={gameTick} duration={duration} waitUntil={WaitUntil}" );
 	}
 
 	internal string Census() => $"park advisor: pending={PendingCount} attempts={Attempts} threshold={Threshold} "
 		+ string.Concat( _slots.Where( slot => slot != null ).Select( slot => $"slot={slot!.Topic.Id}/subject={slot.Subject} " ) )
 		+ string.Join( " ", _topics.Values.Select( topic =>
-			$"message={topic.Id}/score={Value( topic.ScoreKey )}/line={_histories[topic.Id].Line}/lastTick={_histories[topic.Id].LastTick}/said={(_histories[topic.Id].Said ? 1 : 0)}/slaps={_histories[topic.Id].Slaps}" ) );
+			$"message={topic.Id}/score={Value( topic.ScoreKey )}/line={_histories[topic.Id].Line}/lastTick={_histories[topic.Id].LastTick}/said={(_histories[topic.Id].Said ? 1 : 0)}/slaps={_histories[topic.Id].Slaps}" ) )
+		+ $" action={(_started is { } started ? $"{started}+{_duration}" : "none")}/playing={_playing}";
 }

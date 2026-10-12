@@ -534,6 +534,78 @@ public class ParkAdvisorMessageTests
 	}
 
 	/// <summary>
+	/// <b>The last action in a park file</b>: a file saved inside the wait after a line carries the wait on for
+	/// what was left of it by the file's own second stopwatch, and nothing is said before it ends; the action is
+	/// handed back to a save as readings of that stopwatch, the same until a line is said; a line said makes it
+	/// that line's start, its length and a second, and its message. A wait long over lets the first sweep speak,
+	/// and an advisor with no file's action and nothing said hands back noughts.
+	/// </summary>
+	[TestMethod]
+	public void AParkFilesLastActionCarriesTheWaitOn()
+	{
+		var messages = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( default( ParkWorld.AdvisorAction ), messages.WrittenAction( 123456, 50000 ) );
+		StringAssert.Contains( messages.Census(), " action=none/playing=0" );
+
+		// Saved 5,000 ms into a wait of 8,000: 3,000 are left from the load, at 50,000 here.
+		var file = new ParkWorld.AdvisorAction( 115150244, 8000, ParkAdvisorMessages.MechanicOnHisWay );
+		Assert.AreEqual( 3000, messages.RestoreAction( file, 115155244, 50000 ) );
+		StringAssert.Contains( messages.Census(), " action=45000+8000/playing=70" );
+		Assert.AreEqual( file, messages.WrittenAction( 115155244, 50000 ) );
+		Assert.AreEqual( file, messages.WrittenAction( 115155244 + 2500, 52500 ), "the stopwatch and this game's clock move together" );
+
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicsBusy, 900, 13 ) );
+		var said = new List<int>();
+		messages.Tick( 901, 50000, ( response, _ ) => { said.Add( response ); return 4000; } );
+		messages.Tick( 912, 52999, ( response, _ ) => { said.Add( response ); return 4000; } );
+		Assert.AreEqual( 0, said.Count, "inside the file's wait" );
+		Assert.AreEqual( 0, messages.Attempts );
+		messages.Tick( 913, 53000, ( response, _ ) => { said.Add( response ); return 4000; } );
+		CollectionAssert.AreEqual( new[] { 201 }, said );
+		Assert.AreEqual( new ParkWorld.AdvisorAction( 115155244 + 3000, 5000, ParkAdvisorMessages.MechanicsBusy ),
+			messages.WrittenAction( 115155244 + 4000, 54000 ), "the line's start, its length and a second, and its message" );
+		StringAssert.Contains( messages.Census(), " action=53000+5000/playing=69" );
+
+		// A wait long over, the shipped park's: the first sweep speaks.
+		var over = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( -45367, over.RestoreAction( new ParkWorld.AdvisorAction( 114820087, 10832, 0x11a ), 114876286, 700 ) );
+		Assert.IsTrue( over.Post( ParkAdvisorMessages.MechanicsBusy, 900, 13 ) );
+		over.Tick( 901, 700, ( response, _ ) => { said.Add( response ); return 0; } );
+		Assert.AreEqual( 2, said.Count );
+		Assert.AreEqual( new ParkWorld.AdvisorAction( 114876286, 1000, ParkAdvisorMessages.MechanicsBusy ), over.WrittenAction( 114876286, 700 ) );
+
+		// A start the file's stopwatch has not reached yet waits the whole of it, as the original's compare does.
+		var ahead = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( 8100, ahead.RestoreAction( new ParkWorld.AdvisorAction( 1100, 8000, 0 ), 1000, 0 ) );
+	}
+
+	/// <summary>
+	/// A withdrawal inside a file's wait finds the message the file says he was saying: he is cut off, it is
+	/// cut off once more, and the action's wait is written as nought with its start as it was
+	/// (<c>FUN_0059aa70</c> stores nought at <c>+0xdc</c> alone). A withdrawal of any other message, or after the
+	/// wait, cuts nothing.
+	/// </summary>
+	[TestMethod]
+	public void AWithdrawalInsideAFilesWaitCutsTheMessageTheFileNames()
+	{
+		var messages = new ParkAdvisorMessages( Settings() );
+		var stops = 0;
+		messages.RestoreAction( new ParkWorld.AdvisorAction( 2000, 12000, ParkAdvisorMessages.TagMessage ), 7000, 100000 );
+		Assert.IsFalse( messages.Withdraw( ParkAdvisorMessages.Opened, 100001, () => ++stops ), "another message's line" );
+		Assert.AreEqual( 0, stops );
+		Assert.IsTrue( messages.Withdraw( ParkAdvisorMessages.TagMessage, 106999, () => ++stops ) );
+		Assert.AreEqual( 1, stops );
+		StringAssert.Contains( messages.Census(), "message=284/score=1000/line=-1/lastTick=0/said=0/slaps=1" );
+		Assert.AreEqual( new ParkWorld.AdvisorAction( 2000, 0, ParkAdvisorMessages.TagMessage ), messages.WrittenAction( 14000, 107000 ) );
+		Assert.IsFalse( messages.Withdraw( ParkAdvisorMessages.TagMessage, 107000, () => ++stops ), "the wait is over" );
+
+		var late = new ParkAdvisorMessages( Settings() );
+		late.RestoreAction( new ParkWorld.AdvisorAction( 2000, 12000, ParkAdvisorMessages.TagMessage ), 7000, 100000 );
+		Assert.IsFalse( late.Withdraw( ParkAdvisorMessages.TagMessage, 107000, () => ++stops ), "the last millisecond of the wait is 106,999" );
+		Assert.AreEqual( 1, stops );
+	}
+
+	/// <summary>
 	/// <b>A withdrawal</b> (<c>FUN_0059aa70</c>): every slot holding the message is emptied; where he is saying it,
 	/// inside the line's time and its second, he is cut off, the message is no longer said, it is cut off once more
 	/// and the wait is over, so a post is taken again and said on the next sweep. After as many cuts as its

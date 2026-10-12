@@ -295,6 +295,9 @@ public class Level
 		{
 			Log.Info( $"{ThemeName}: {ParkState.AdvisorMessages.Restore( advised.AdvisorHistoryOf )} of the advisor's built messages have a record in the file" );
 			Log.Info( $"{ThemeName}: {ParkState.AdvisorMessages.RestoreSlots( advised.AdvisorSlotOf )} of the file's waiting advisor messages are taken up" );
+			// His last action is timed on the file's second stopwatch; a file whose clock did not read keeps none.
+			if ( advised.AdvisorActionOf() is { } action && advised.Clock.Second is { } stopwatch )
+				ParkState.AdvisorMessages.RestoreAction( action, stopwatch, (long)(GameClock.Now * 1000) );
 		}
 		load.Mark( "park state" );
 
@@ -661,7 +664,13 @@ public class Level
 			loaded.Tags.Problem == null ? state.Tags.Written() : null,
 			state.AdvisorMessages?.Written(),
 			// A waiting message's second word is its thing's item (FUN_0059b590's callers hand it [ride + 0xe]).
-			state.AdvisorMessages?.WrittenSlots( subject => state.TryObject( subject, out var about ) ? about.CatalogueId : 0 ) );
+			state.AdvisorMessages?.WrittenSlots( subject => state.TryObject( subject, out var about ) ? about.CatalogueId : 0 ),
+			state.AdvisorMessages is { } messages ? stopwatch =>
+			{
+				var action = messages.WrittenAction( stopwatch, (long)(GameClock.Now * 1000) );
+				Log.Info( $"Save: advisor action written: started {action.Started} duration {action.Duration} playing {action.Playing} stopwatch {stopwatch}" );
+				return action;
+			} : null );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;

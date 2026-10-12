@@ -2712,6 +2712,46 @@ public sealed partial class ParkWorld : IParkInitialState
 		}
 	}
 
+	/// <summary>
+	/// The advisor's last action: the second stopwatch's reading as he began the last line he said
+	/// (<c>mLastActionStarted</c>), how long he waits from it before the next, the line's length and a second
+	/// (<c>mLastActionDuration</c>, nought once a withdrawal has cut him off), and the message it was
+	/// (<c>mMessagePlaying</c>); <c>docs/exe/advisor-park.md</c>, "The last action in a park file".
+	/// </summary>
+	public readonly record struct AdvisorAction( uint Started, uint Duration, int Playing );
+
+	/// <summary>Where <c>mLastActionStarted</c> sits in the advisor's record; <c>mLastActionDuration</c> is the dword after it.</summary>
+	private const int AdvisorActionAt = 196;
+
+	/// <summary>Where <c>mMessagePlaying</c> sits in the advisor's record, its last dword.</summary>
+	private const int AdvisorPlayingAt = 5842;
+
+	/// <summary>The advisor's last action as the file holds it; null where the file holds no advisor.</summary>
+	public AdvisorAction? AdvisorActionOf()
+	{
+		if ( AdvisorAt < 0 )
+			return null;
+
+		return new AdvisorAction( unchecked((uint)ReadInt32At( AdvisorAt + AdvisorActionAt )),
+			unchecked((uint)ReadInt32At( AdvisorAt + AdvisorActionAt + 4 )), ReadInt32At( AdvisorAt + AdvisorPlayingAt ) );
+	}
+
+	/// <summary>
+	/// Writes the advisor's last action over the file's in <paramref name="body"/>, a copy of this park's own.
+	/// A park with no advisor is left alone.
+	/// </summary>
+	public void PutAdvisorAction( byte[] body, AdvisorAction action )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+
+		if ( AdvisorAt < 0 )
+			return;
+
+		System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian( body.AsSpan( AdvisorAt + AdvisorActionAt, 4 ), action.Started );
+		System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian( body.AsSpan( AdvisorAt + AdvisorActionAt + 4, 4 ), action.Duration );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( AdvisorAt + AdvisorPlayingAt, 4 ), action.Playing );
+	}
+
 	/// <summary>The model number of the staff HQ - see <see cref="StaffHqState"/>.</summary>
 	private const int StaffHqModel = 9;
 

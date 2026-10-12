@@ -6231,6 +6231,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   file (`orig/run.sh`, three of three): its slots read `(0, 13, 1100, -1, '0x45', 107)` and the opening's from the
   load, and on tick 861 the record of `0x45` read `(861, 0, 1, 0)`, the slot was let go and the same tag stood at
   the same rectangle. Bugs put back (`mutations.py`, 55): 54 fail a test, six of them after the tests were fixed; the last is the same code (a thing id written as four bytes lies under the second word). Tests 3002. I split the item: every other piece of the old Q314 is Q315.
+- [x] **Q315. The advisor's wait after a line is kept in the park's file.** Done 2026-10-12.
+  The tick (`FUN_0059a550`) waits while the second stopwatch reads under `mLastActionStarted +
+  mLastActionDuration`, a said line stores the three fields, a withdrawal (`FUN_0059aa70`) reads
+  `mMessagePlaying` inside the wait and stores nought in the duration alone, and a load makes the stopwatch read
+  the file's again; two of the original's 21 stored files were saved inside the wait (`exe/advisor-park.md`, "The
+  last action in a park file"; FileFormats `saves.md`, "The advisor (model 11)", "His wait"). Built:
+  `ParkClock.Second` and `SecondAt`, `ParkWorld.AdvisorAction`, `AdvisorActionOf`, `PutAdvisorAction`,
+  `ParkFileWriter.Running.AdvisorAction`, `ParkAdvisorMessages.RestoreAction` and `WrittenAction`; `Level` reads
+  the action at a load and hands it to `savepark`; `advisor` ends with it. Confirmed, predicted first
+  (`q315/confirm.py theirs|fix|control`, one of one, three of three, the control one of one): the original's own
+  file saved inside the wait read `restored action started=115150244 duration=7498 playing=70 ... left=959`; the
+  Bounce broken as the mechanic's line for a broken Hot Pot was said and the park saved 1,507 ms into the line,
+  `advisor action written: started 114902772 duration 7498 playing 70 stopwatch 114904279`, the file's fields and
+  its `KOLC` second dword the same; loaded from the Load Park list, `left=5991`, one tag a second in
+  (`run-fix1/2-inside-the-wait.png`), the attempt of `0x45` 6,206 ms after the load on tick 893 and tag 71 beside
+  the pot's (`3-after-the-wait.png`), where main's build attempted it on the first tick. The original, given that
+  file (`orig/run.sh`): its action read `(114902772, 7498)` from the load with `0x45` waiting and one tag, and on
+  tick 893, 6.21 s on, the record read `(893, 0, 1, 0)`, the new action began 205 ms after the saved wait's end
+  and the second tag stood (the length read 8,332 where 8,331 was predicted). Bugs put back (`mutations.py`,
+  41): all fail a test, two of them after the tests were fixed (the stopwatch handed over with the clock moved, and the message playing written as two bytes). Tests 3007. I split the item: every other piece of the old Q315 is Q316.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
