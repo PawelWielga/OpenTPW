@@ -6211,6 +6211,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`ours-side-by-side.png`). The original, given that file (`orig/run.sh`, two of two): its record read
   `(911, 0, 1, 0)` from the load, and the tag's click put the bar out with no slot holding `0x11c` and no
   advisor. Bugs put back: 39 of 39 fail a test (`q313/mutations.py`; one run again in a form that compiles). Tests: 2998 with the game. I split the item: its other pieces are Q314.
+- [x] **Q314. A message waiting for the advisor is kept in the park's file.** Done 2026-10-12.
+  The advisor's serialiser names every field (`FUN_00599f60`, a slot by `FUN_0059ba30`): after the thing's sixteen
+  bytes `mTimeSig` and `mSoundId`, the eight slots of twenty-one bytes at `24 + 21 n` (`mThingId`, `mSecondary`,
+  `mMessage`, `mScore`, `mValid`, `mResponseNo`, `mOverrideOnlyOnce`, `mScoreOverridden`),
+  `mNextAvailableQueuePos`, the last action's start and length on the second stopwatch, the records, the kept
+  message, `mRequestedLastTutorial` and `mMessagePlaying`; in 21 stored files of the original twenty hold one
+  taken slot, the park's opening at a score of 20, which waits for ever and refuses the next (`exe/advisor-park.md`,
+  "The slots in a park file"; FileFormats `saves.md`, "The advisor (model 11)"). Built: `ParkWorld.AdvisorSlot`,
+  `AdvisorSlotOf`, `PutAdvisorSlots`, `ParkFileWriter.Running.AdvisorSlots`, `ParkAdvisorMessages.RestoreSlots`
+  and `WrittenSlots`; `Level` reads them at a load and hands them to `savepark`.
+  `PARK_ADVISOR_SAVED_SLOT_NOT_BUILT` is new. Confirmed, predicted first (`q314/confirm.py fix|control`, four of
+  four, the control one of one): the stock park entered with `restored slot=2 message=128 ... score=20` and
+  `pending=1`; the Bounce broken as the mechanic's line for a broken Hot Pot was said, `post message=69 subject=13
+  score=107 ... pending=2`; saved under the pause, the file's slot 0 read `0d004c040000450000006b00000001ffffffff0000`,
+  the record the original's memory held in Q307's run; loaded from the Load Park list, `attempt=1 message=69
+  subject=13 ... tick=861` on the first sweep and tag 71 on the aerial beside the pot's (`run-fix1/2-loaded.png`),
+  where main's build wrote no slot and after its load said nothing and left one tag. The original, given that
+  file (`orig/run.sh`, three of three): its slots read `(0, 13, 1100, -1, '0x45', 107)` and the opening's from the
+  load, and on tick 861 the record of `0x45` read `(861, 0, 1, 0)`, the slot was let go and the same tag stood at
+  the same rectangle. Bugs put back (`mutations.py`, 55): 54 fail a test, six of them after the tests were fixed; the last is the same code (a thing id written as four bytes lies under the second word). Tests 3002. I split the item: every other piece of the old Q314 is Q315.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

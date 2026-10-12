@@ -800,7 +800,7 @@ been cut off saying it three times (the table under "The accept gate").
 
 **The withdrawal, `FUN_0059aa70( id )`.** (1) Where the advisor's byte `+0x16e4` is set, the message's category is
 1 and `+0x16dc` is the id, the byte is cleared: the kept message at `+0x16d0`, which `FUN_0059ab50` raises again,
-forced, at `HelpMessage.ContextHelpScore` (its one caller `FUN_00488ba0`; who sets the byte is not read). (2) Every
+forced, at `HelpMessage.ContextHelpScore` (its one caller `FUN_00488ba0`). The byte is the kept record's own `mValid`: a raise of a message `FUN_0059c500` answers 1 for copies the whole record there before the gate is asked (`FUN_0059a940`). (2) Every
 occupied slot whose message is the id is emptied. (3) The message being said is `+0x16ec` while the clock
 (`FUN_00402d80`) is under `+0xd8 + +0xdc`, the last line's start and its length and second, and `0x160`
 otherwise; where that is the id: `Advisor_StopSpeaking`, the message's said byte `+0xe8` cleared, its `+0xec` one
@@ -881,8 +881,77 @@ with no record of `0x11c`: a slot held it at the click and he said it.
 |---|---|---|
 | The records of the seven built messages | read and written with the thing | the same |
 | The other 344 records | the same | carried: the file's own bytes are written back |
-| The eight slots, the last action's start and length, the kept message | written with the thing | carried as the file's; a message waiting in a slot at a save is not written, and none is taken up at a load (where the slots lie in the file is not read) |
+| The eight slots | written with the thing | the same ("The slots in a park file", below) |
+| The last action's start and length, the message playing, the kept message | written with the thing | carried as the file's |
 | A park made with no file | the constructor's | the same |
 
 Not in a game run: a rotation carried across a load (the test holds line 1 after the file's 0), the cooldown from a
 file's tick, a file with cuts, Alexah's own parks. The two calls in `Level` are held by the game runs alone.
+
+## The slots in a park file (Q314)
+
+**The serialiser, `FUN_00599f60`,** names every field it writes, and writes them in this order after the thing's
+sixteen bytes (`FUN_0050b090`): `mTimeSig` (`+0x0c`, by `FUN_0041a860`), `mSoundId` (`+0x10`), the eight slots
+(`+0x14` on, each by `FUN_0059ba30`), `mNextAvailableQueuePos` (`+0xd4`), `mLastActionStarted` (`+0xd8`),
+`mLastActionDuration` (`+0xdc`), the 351 `mHistory[i]` (`+0xe0`, sixteen bytes each, whole), the kept message
+(`+0x16d0`, by `FUN_0059ba30` again), `mRequestedLastTutorial` (`+0x16e8`, one byte) and `mMessagePlaying`
+(`+0x16ec`). `FUN_0059ba30` writes a message record ("The message record", above) as twenty-one bytes, not
+memory's twenty-four: `mThingId` (two bytes), `mSecondary`, `mMessage`, `mScore`, `mValid` (one byte),
+`mResponseNo`, `mOverrideOnlyOnce` and `mScoreOverridden` (a byte each). So the file's record is 5,846 bytes
+where memory's is `0x16f0`, a slot is at `24 + 21 n` of it, and the histories begin at 204 (FileFormats `saves.md`,
+"The advisor (model 11)").
+
+**The two times are readings of the second stopwatch** (`FUN_00402d80` is `FUN_00403150`), which the clock module
+saves and a load sets again (`park-engine.md`, the clock's table): `Easymode.TPWI`'s action began at 114,820,087
+and lasted 10,832 ms, and its file's stopwatch reads 114,876,286, so the wait a file holds is over or not by the
+file's own clock, whatever the computer's.
+
+**What the files hold** (`q314/sweep.py`, 21 stored files of the original): twenty hold one taken slot and one
+holds none; the taken slot is always message `0x80`, the park's opening, at a score of 20, line -1, neither byte
+set, in slot 2 (sixteen files) or slot 0 (four). It is under `MinScoreForConsideration`, 25, so the tick never
+says it and never lets it go, and while it stands the gate's count of copies (test 4, one copy for `0x80`)
+refuses every later post of the park's opening. A slot let go keeps its other bytes (the shipped file's slots 0
+and 1 read messages `0xbc` and `0x15a` at 1000 with `mValid` nought); slots never used are `CD` throughout.
+`mTimeSig`, `mSoundId` and `mNextAvailableQueuePos` are nought in all 21.
+
+### OpenTPW (`ParkWorld.AdvisorSlotOf`, `PutAdvisorSlots`; `ParkAdvisorMessages.RestoreSlots`, `WrittenSlots`)
+
+A load puts each taken slot's message into the same slot of the park's messages with its file's score, subject and
+second word (`Level`, logged `Park advisor: restored slot=...`), and `savepark` writes the eight slots back: a
+waiting message whole, as `FUN_0059b590` builds an unforced post with no score given, its second word the
+subject's item; of an empty slot the `mValid` byte alone. A taken slot this game cannot say (a message of no built
+topic, a line asked for by number, a forced post, a score the poster gave) is counted
+`PARK_ADVISOR_SAVED_SLOT_NOT_BUILT`, keeps its slot, is said by nothing and is written back as the file's: no
+stored file holds one.
+
+`q314/confirm.py fix|control`, predicted first, four of four and the control one of one. Entering the stock park
+logged `restored slot=2 message=128 subject=0 secondary=0 score=20` and `advisor` read `pending=1`. A Hot Pot
+bought and broken, the Belly Bounce was broken as the mechanic's line for the pot was being said: `post message=69
+subject=13 score=107 ... result=queued pending=2`. `savepark` under the pause logged `advisor slot 0 written:
+message 69 thing 13 secondary 1100 score 107` and `advisor slot 2 written: message 128 ...`; the file's slot 0 read
+`0d00 4c040000 45000000 6b000000 01 ffffffff 00 00`, the record the original's own memory held in Q307's run
+(thing 13, 1100, line -1, `0x45`, 107), and every other byte of the eight slots was the shipped file's. Loaded
+from the Load Park list: both slots restored, and on the first sweep `attempt=1 message=69 subject=13 score=107
+... response=201 sample=199 line=0 tick=861`, tag 71 on the aerial at (84,834,154,899) beside the pot's
+(`run-fix1/2-loaded.png`); the speaker refused the sample, the gadget's opening line having him. Main's build read
+`pending=0` on entry, wrote no slot (its file's slot 0 the shipped file's) and after its load made no attempt and
+left one tag.
+
+**The original, given that file** (`q314/orig/run.sh`, predicted first, three of three): from the load, tick 860,
+its slots read `(0, 13, 1100, -1, '0x45', 107)` and `(2, 0, 0, -1, '0x80', 20)` and its action the file's; a
+quarter of a second on, tick 861, the record of `0x45` read `(861, 0, 1, 0)`, slot 0 was let go, the action was
+8,331 ms long and a second tag stood at (84,834,154,899) reading "The Belly Bounce ride has broken down and all
+your mechanics are busy. Maybe you should hire some more?". Its control is Q313's load of a file with slot 2
+alone: no `0x45` in any slot or record.
+
+| | The original | OpenTPW |
+|---|---|---|
+| A waiting message of a built topic | read and written with the thing | the same |
+| A taken slot of any other kind | the same | counted, kept taken, written back as the file's |
+| A slot let go | its other bytes stand as they were | the file's bytes stand; a message said here leaves the file's older bytes, not its own |
+| The shipped park's opening message at 20 | waits for ever and refuses the next | the same |
+| The last action's start and length, `mMessagePlaying` | on the second stopwatch, saved and set again | carried as the file's: this game keeps no second stopwatch, so a file saved as he speaks lets the next line start at once in either game |
+| The line said at once after a load | heard | refused by the speaker while the gadget's opening line is said (the tag and the record are as the original's) |
+
+Not in a game run: the door shut and opened again after a load (the test holds `duplicate`), a taken slot of an
+unbuilt message, a full eight slots. The two calls in `Level` are held by the game runs alone.

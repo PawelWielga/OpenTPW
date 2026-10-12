@@ -2646,6 +2646,72 @@ public sealed partial class ParkWorld : IParkInitialState
 		}
 	}
 
+	/// <summary>
+	/// One of the advisor's eight slots, a message waiting to be said, twenty-one bytes as <c>FUN_0059ba30</c>
+	/// writes one: the thing it is about (<c>mThingId</c>), that thing's item (<c>mSecondary</c>), the message,
+	/// its score, whether the slot is taken (<c>mValid</c>), the line asked for (<c>mResponseNo</c>, -1 for the
+	/// rotation's), and the two bytes of a forced post and a score the poster gave (<c>mOverrideOnlyOnce</c>,
+	/// <c>mScoreOverridden</c>); <c>docs/exe/advisor-park.md</c>, "The slots in a park file".
+	/// </summary>
+	public readonly record struct AdvisorSlot( int Thing, int Secondary, int Message, int Score, bool Valid, int Line,
+		bool OverrideOnlyOnce, bool ScoreOverridden );
+
+	/// <summary>Where the first slot sits in the advisor's record, after the thing's sixteen bytes, <c>mTimeSig</c> and <c>mSoundId</c>.</summary>
+	private const int AdvisorSlotsAt = 24;
+
+	/// <summary>A slot's size in a file.</summary>
+	private const int AdvisorSlotSize = 21;
+
+	/// <summary>How many slots the advisor has.</summary>
+	public const int AdvisorSlots = 8;
+
+	/// <summary>
+	/// The advisor's slot <paramref name="index"/> as the file holds it, taken or not; null where the file holds
+	/// no advisor or he has no such slot.
+	/// </summary>
+	public AdvisorSlot? AdvisorSlotOf( int index )
+	{
+		if ( AdvisorAt < 0 || index < 0 || index >= AdvisorSlots )
+			return null;
+
+		var at = AdvisorAt + AdvisorSlotsAt + (AdvisorSlotSize * index);
+		return new AdvisorSlot( ReadUInt16At( at ), ReadInt32At( at + 2 ), ReadInt32At( at + 6 ), ReadInt32At( at + 10 ),
+			ReadByteAt( at + 14 ) != 0, ReadInt32At( at + 15 ), ReadByteAt( at + 19 ) != 0, ReadByteAt( at + 20 ) != 0 );
+	}
+
+	/// <summary>
+	/// Writes the advisor's slots over the file's in <paramref name="body"/>, a copy of this park's own, slot by
+	/// slot: a taken one whole, of an empty one its <c>mValid</c> byte alone (the original leaves a said message's
+	/// other bytes standing), and a null one not at all. A park with no advisor is left alone.
+	/// </summary>
+	public void PutAdvisorSlots( byte[] body, IReadOnlyList<AdvisorSlot?> slots )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+		ArgumentNullException.ThrowIfNull( slots );
+
+		if ( AdvisorAt < 0 )
+			return;
+
+		for ( var index = 0; index < AdvisorSlots && index < slots.Count; ++index )
+		{
+			if ( slots[index] is not { } slot )
+				continue;
+
+			var at = AdvisorAt + AdvisorSlotsAt + (AdvisorSlotSize * index);
+			body[at + 14] = (byte)(slot.Valid ? 1 : 0);
+			if ( !slot.Valid )
+				continue;
+
+			System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian( body.AsSpan( at, 2 ), (ushort)slot.Thing );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( at + 2, 4 ), slot.Secondary );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( at + 6, 4 ), slot.Message );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( at + 10, 4 ), slot.Score );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( at + 15, 4 ), slot.Line );
+			body[at + 19] = (byte)(slot.OverrideOnlyOnce ? 1 : 0);
+			body[at + 20] = (byte)(slot.ScoreOverridden ? 1 : 0);
+		}
+	}
+
 	/// <summary>The model number of the staff HQ - see <see cref="StaffHqState"/>.</summary>
 	private const int StaffHqModel = 9;
 

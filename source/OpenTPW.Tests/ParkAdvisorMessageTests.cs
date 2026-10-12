@@ -25,6 +25,77 @@ public class ParkAdvisorMessageTests
 	}
 
 	/// <summary>
+	/// A park file's waiting messages stand in the advisor's slots from the load on: the shipped park's opening
+	/// at 20 waits unsaid under the threshold and refuses the door's next post as its one copy; a waiting message
+	/// over the threshold is said on the first sweep with its file's subject; a message of no built topic, or one
+	/// asking for a line, keeps its slot and is never said; and the slots are handed back to a save as they
+	/// stand, a post made here with its thing's item.
+	/// </summary>
+	[TestMethod]
+	public void AParkFilesWaitingMessagesStandInTheSlots()
+	{
+		var file = new Dictionary<int, ParkWorld.AdvisorSlot>
+		{
+			[0] = new( 13, 1100, ParkAdvisorMessages.MechanicsBusy, 107, true, -1, false, false ),
+			[1] = new( 0, 0, 188, 1000, false, -1, false, false ),
+			[2] = new( 0, 0, ParkAdvisorMessages.Opened, 20, true, -1, false, false ),
+			[3] = new( 0, 0, 188, 1000, true, -1, false, false ),
+			[5] = new( 14, 1140, ParkAdvisorMessages.RideWornOut, 100, true, 1, false, false )
+		};
+		var messages = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( 2, messages.RestoreSlots( index => file.TryGetValue( index, out var slot ) ? slot : null ) );
+		Assert.AreEqual( 4, messages.PendingCount, "two to say and two carried" );
+		StringAssert.Contains( messages.Census(), "slot=69/subject=13 slot=128/subject=0 " );
+
+		var asRead = messages.WrittenSlots( _ => 7 );
+		Assert.AreEqual( 8, asRead.Count );
+		Assert.AreEqual( file[0], asRead[0] );
+		Assert.AreEqual( default( ParkWorld.AdvisorSlot ), asRead[1] );
+		Assert.AreEqual( file[2], asRead[2] );
+		Assert.IsNull( asRead[3], "an unbuilt message's slot is the file's" );
+		Assert.AreEqual( default( ParkWorld.AdvisorSlot ), asRead[4] );
+		Assert.IsNull( asRead[5], "a line asked for by number is the file's" );
+
+		Assert.IsFalse( messages.PostDoor( closed: false, 900 ), "the file's copy is the one copy the slots may hold" );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, 900, 14 ), "the first free slot is 1" );
+		var written = messages.WrittenSlots( thing => thing == 14 ? 1140 : 0 );
+		Assert.AreEqual( new ParkWorld.AdvisorSlot( 14, 1140, ParkAdvisorMessages.RideWornOut, 100, true, -1, false, false ), written[1] );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 900, 15 ) );
+		Assert.AreEqual( 15, messages.WrittenSlots( _ => 0 )[4]!.Value.Thing, "slot 3 is taken by the file's: the next free is 4" );
+
+		var said = new List<(int Response, int Sample)>();
+		var subjects = new List<(int Group, int Subject)>();
+		for ( var sweep = 0; sweep < 6; ++sweep )
+			messages.Tick( 901 + sweep, 100000L * (sweep + 1), ( response, sample ) => { said.Add( (response, sample) ); return 0; },
+				( group, subject ) => subjects.Add( (group, subject) ) );
+		CollectionAssert.AreEqual( new[] { (204, 202), (201, 199), (194, 191) }, said, "by score: 110, 107, 100; the opening at 20 never" );
+		CollectionAssert.AreEqual( new[] { (72, 15), (71, 13), (68, 14) }, subjects );
+		Assert.AreEqual( 3, messages.PendingCount, "the opening and the two carried wait on" );
+		var after = messages.WrittenSlots( _ => 0 );
+		Assert.AreEqual( file[2], after[2] );
+		Assert.AreEqual( default( ParkWorld.AdvisorSlot ), after[0] );
+
+		var none = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( 0, none.RestoreSlots( _ => null ) );
+		Assert.IsTrue( none.PostDoor( closed: false, 900 ) );
+		Assert.AreEqual( new ParkWorld.AdvisorSlot( 0, 0, ParkAdvisorMessages.Opened, 26, true, -1, false, false ), none.WrittenSlots( _ => 7 )[0],
+			"a message about no thing has no item" );
+	}
+
+	/// <summary>With every slot taken and none of them one this game can say, a post has no slot to take.</summary>
+	[TestMethod]
+	public void APostTakesNoSlotACarriedMessageStandsIn()
+	{
+		var messages = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( 0, messages.RestoreSlots( _ => new ParkWorld.AdvisorSlot( 0, 0, 188, 1, true, -1, false, false ) ) );
+		Assert.AreEqual( 8, messages.PendingCount );
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.RideWornOut, 900, 14 ) );
+		var forced = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( 0, forced.RestoreSlots( index => new ParkWorld.AdvisorSlot( 0, 0, ParkAdvisorMessages.Opened, 30, true, -1, index % 2 == 0, index % 2 == 1 ) ) );
+		Assert.AreEqual( 8, forced.PendingCount );
+	}
+
+	/// <summary>
 	/// A park file's records are the advisor's own from the load on: a tutorial line said is not said again, one
 	/// cut off three times is discarded, a line said inside its cooldown is refused and after it the next line
 	/// of the rotation is said; a message the file has no record of keeps the constructor's; and the records are

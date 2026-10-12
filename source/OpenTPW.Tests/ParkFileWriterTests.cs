@@ -104,6 +104,63 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
+	/// The shipped park's advisor holds one waiting message, the park's opening at a score of 20 in slot 2;
+	/// slots 0 and 1 keep a said message's bytes with the slot let go, and he has eight slots and no more.
+	/// </summary>
+	[TestMethod]
+	public void TheShippedParksAdvisorSlotsAreRead()
+	{
+		Assert.AreEqual( new ParkWorld.AdvisorSlot( 0, 0, 128, 20, true, -1, false, false ), shipped.AdvisorSlotOf( 2 ) );
+		Assert.AreEqual( new ParkWorld.AdvisorSlot( 0, 0, 188, 1000, false, -1, false, false ), shipped.AdvisorSlotOf( 0 ) );
+		Assert.AreEqual( new ParkWorld.AdvisorSlot( 0, 0, 346, 1000, false, -1, false, false ), shipped.AdvisorSlotOf( 1 ) );
+		Assert.AreEqual( 1, Enumerable.Range( 0, ParkWorld.AdvisorSlots ).Count( index => shipped.AdvisorSlotOf( index )!.Value.Valid ) );
+		Assert.AreEqual( 0xcdcd, shipped.AdvisorSlotOf( 7 )!.Value.Thing );
+		Assert.IsNull( shipped.AdvisorSlotOf( 8 ) );
+		Assert.IsNull( shipped.AdvisorSlotOf( -1 ) );
+	}
+
+	/// <summary>
+	/// The advisor's slots are written over the file's and read back: a taken one whole, twenty-one bytes at
+	/// 24 + 21 a slot of his thing; of an empty one its valid byte alone; a null one not at all; and no other
+	/// byte of the file moves.
+	/// </summary>
+	[TestMethod]
+	public void TheAdvisorsSlotsAreWrittenOverTheFilesOwn()
+	{
+		var busy = new ParkWorld.AdvisorSlot( 13, 1100, 0x45, 107, true, -1, false, false );
+		var odd = new ParkWorld.AdvisorSlot( 0x1234, -2, 0x46, -3, true, 2, true, false );
+		var given = new ParkWorld.AdvisorSlot( 1, 2, 3, 4, true, 5, false, true );
+		var slots = new ParkWorld.AdvisorSlot?[] { busy, null, default( ParkWorld.AdvisorSlot ), odd, given };
+		var mine = Inflate( ParkFileWriter.Write( shipped, Played with { AdvisorSlots = slots } ) );
+		var theirs = Inflate( ParkFileWriter.Write( shipped, Played ) );
+		var written = Read( ParkFileWriter.Write( shipped, Played with { AdvisorSlots = slots } ) );
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( busy, written.AdvisorSlotOf( 0 ) );
+		Assert.AreEqual( shipped.AdvisorSlotOf( 1 ), written.AdvisorSlotOf( 1 ) );
+		Assert.AreEqual( shipped.AdvisorSlotOf( 2 )!.Value with { Valid = false }, written.AdvisorSlotOf( 2 ) );
+		Assert.AreEqual( odd, written.AdvisorSlotOf( 3 ) );
+		Assert.AreEqual( given, written.AdvisorSlotOf( 4 ) );
+		Assert.AreEqual( shipped.AdvisorSlotOf( 5 ), written.AdvisorSlotOf( 5 ) );
+		var untouched = Read( ParkFileWriter.Write( shipped, Played with { AdvisorSlots = new ParkWorld.AdvisorSlot?[] { null, null, null } } ) );
+		Assert.AreEqual( shipped.AdvisorSlotOf( 2 ), untouched.AdvisorSlotOf( 2 ), "a null slot is the file's, taken as it was" );
+
+		Assert.AreEqual( theirs.Length, mine.Length );
+		var at = written.AdvisorAt + 24;
+		CollectionAssert.AreEqual( new byte[] { 13, 0, 0x4c, 4, 0, 0, 0x45, 0, 0, 0, 107, 0, 0, 0, 1, 0xff, 0xff, 0xff, 0xff, 0, 0 },
+			mine[at..(at + 21)], "mThingId, mSecondary, mMessage, mScore, mValid, mResponseNo, mOverrideOnlyOnce, mScoreOverridden" );
+		CollectionAssert.AreEqual( new byte[] { 0x34, 0x12, 0xfe, 0xff, 0xff, 0xff, 0x46, 0, 0, 0, 0xfd, 0xff, 0xff, 0xff, 1, 2, 0, 0, 0, 1, 0 },
+			mine[(at + 63)..(at + 84)] );
+		var differing = Enumerable.Range( 0, mine.Length ).Where( i => mine[i] != theirs[i] ).ToList();
+		Assert.IsTrue( differing.All( i => (i >= at && i < at + 21) || i == at + 42 + 14 || (i >= at + 63 && i < at + 105) ),
+			"only slots 0, 3 and 4 and slot 2's valid byte" );
+		Assert.AreEqual( 1, mine[at + 84 + 20] );
+		Assert.AreEqual( 0, mine[at + 84 + 19] );
+		Assert.IsTrue( differing.Contains( at + 42 + 14 ) );
+		Assert.AreEqual( shipped.AdvisorHistoryOf( 0xb9 ), written.AdvisorHistoryOf( 0xb9 ) );
+	}
+
+	/// <summary>
 	/// The advisor's records named are written over the file's and read back; the three bytes after a said byte,
 	/// every record not named and the rest of his thing stay the file's; a message he keeps no record of is
 	/// written nowhere; with none handed over the file's own stand.

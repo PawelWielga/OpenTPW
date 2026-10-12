@@ -82,16 +82,19 @@ internal sealed class ParkAdvisorMessages
 		public int Slaps;
 	}
 
-	private sealed record Pending( Topic Topic, int Score, int Subject );
+	/// <summary>A taken slot. <paramref name="Secondary"/> is the record's second word where a park file gave it, null for a post made here.</summary>
+	private sealed record Pending( Topic Topic, int Score, int Subject, int? Secondary = null );
 	private readonly SettingsFile _settings;
 	private readonly Dictionary<int, Topic> _topics;
 	private readonly Dictionary<int, History> _histories;
-	private readonly Pending?[] _slots = new Pending?[8];
+	private readonly Pending?[] _slots = new Pending?[ParkWorld.AdvisorSlots];
+	// The slots a park file's message this game cannot say stands in: taken, and never said or written over.
+	private readonly bool[] _carried = new bool[ParkWorld.AdvisorSlots];
 	private readonly Func<bool> _tutorial;
 	private long _waitUntil;
 	private int _saying;
 	internal int Attempts { get; private set; }
-	internal int PendingCount => _slots.Count( slot => slot != null );
+	internal int PendingCount => _slots.Count( slot => slot != null ) + _carried.Count( carried => carried );
 	internal int Threshold => Value( "GeneralAdvisor.MinScoreForConsideration" );
 
 	/// <param name="tutorial">Whether the Tutorial option is on (0x0078d90d), the player's own where none is given.</param>
@@ -131,6 +134,56 @@ internal sealed class ParkAdvisorMessages
 		=> _histories.ToDictionary( pair => pair.Key,
 			pair => new ParkWorld.AdvisorHistory( pair.Value.LastTick, pair.Value.Line, pair.Value.Said, pair.Value.Slaps ) );
 
+	/// <summary>
+	/// Takes a park file's waiting messages into the slots they stand in (<paramref name="saved"/> answers null
+	/// for a file with no advisor), as the original's advisor is read back whole with its thing: a built message
+	/// with its file's score, subject and second word. A taken slot this game cannot say - a message of no built
+	/// topic, a line asked for by number, a forced post or a score the poster gave - is counted and stays taken,
+	/// said by nothing and written back as the file's. Says how many were taken to be said.
+	/// </summary>
+	internal int RestoreSlots( Func<int, ParkWorld.AdvisorSlot?> saved )
+	{
+		var taken = 0;
+		for ( var index = 0; index < _slots.Length; ++index )
+		{
+			if ( saved( index ) is not { Valid: true } slot ) continue;
+			if ( !_topics.TryGetValue( slot.Message, out var topic ) || slot.Line >= 0 || slot.OverrideOnlyOnce || slot.ScoreOverridden )
+			{
+				Unimplemented.Report( "PARK_ADVISOR_SAVED_SLOT_NOT_BUILT" );
+				_carried[index] = true;
+				Log.Info( $"Park advisor: carried slot={index} message={slot.Message} subject={slot.Thing} score={slot.Score}" );
+				continue;
+			}
+
+			_slots[index] = new Pending( topic, slot.Score, slot.Thing, slot.Secondary );
+			++taken;
+			Log.Info( $"Park advisor: restored slot={index} message={slot.Message} subject={slot.Thing} secondary={slot.Secondary} score={slot.Score}" );
+		}
+
+		return taken;
+	}
+
+	/// <summary>
+	/// The eight slots as a park file's advisor holds them (<see cref="ParkWorld.PutAdvisorSlots"/>): a waiting
+	/// message as FUN_0059b590 builds an unforced post with no score given, its second word the file's or, for
+	/// one posted here about a thing, that thing's item by <paramref name="itemOf"/>; an empty slot not taken;
+	/// null for a slot a file's unbuilt message stands in.
+	/// </summary>
+	internal IReadOnlyList<ParkWorld.AdvisorSlot?> WrittenSlots( Func<int, int> itemOf )
+	{
+		var written = new ParkWorld.AdvisorSlot?[_slots.Length];
+		for ( var index = 0; index < _slots.Length; ++index )
+		{
+			if ( _carried[index] ) continue;
+			written[index] = _slots[index] is { } slot
+				? new ParkWorld.AdvisorSlot( slot.Subject, slot.Secondary ?? (slot.Subject != 0 ? itemOf( slot.Subject ) : 0),
+					slot.Topic.Id, slot.Score, true, -1, false, false )
+				: default( ParkWorld.AdvisorSlot );
+		}
+
+		return written;
+	}
+
 	// Missing or malformed settings are installation errors, not permission to invent scores.
 	private int Value( string key ) => int.Parse( _settings[key], CultureInfo.InvariantCulture );
 
@@ -166,13 +219,14 @@ internal sealed class ParkAdvisorMessages
 			reason = "duplicate";
 		else
 		{
-			var index = Array.FindIndex( _slots, slot => slot == null );
+			var index = -1;
+			for ( var i = 0; i < _slots.Length && index < 0; ++i )
+				if ( _slots[i] == null && !_carried[i] ) index = i;
 			if ( index < 0 )
 			{
-				index = 0;
-				for ( var i = 1; i < _slots.Length; ++i )
-					if ( _slots[i]!.Score < _slots[index]!.Score ) index = i;
-				if ( score <= _slots[index]!.Score ) reason = "priority";
+				for ( var i = 0; i < _slots.Length; ++i )
+					if ( _slots[i] is { } held && (index < 0 || held.Score < _slots[index]!.Score) ) index = i;
+				if ( index < 0 || score <= _slots[index]!.Score ) reason = "priority";
 			}
 			if ( reason == "queued" ) _slots[index] = new Pending( topic, score, subject );
 		}

@@ -292,7 +292,10 @@ public class Level
 			Log.Warning( $"{ThemeName}: the file's aerial tags did not read - {unread}" );
 		// The advisor's records of the built messages are the file's; a park made fresh keeps FUN_00599e70's.
 		if ( park?.Save is { } advised )
+		{
 			Log.Info( $"{ThemeName}: {ParkState.AdvisorMessages.Restore( advised.AdvisorHistoryOf )} of the advisor's built messages have a record in the file" );
+			Log.Info( $"{ThemeName}: {ParkState.AdvisorMessages.RestoreSlots( advised.AdvisorSlotOf )} of the file's waiting advisor messages are taken up" );
+		}
 		load.Mark( "park state" );
 
 		Research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue );
@@ -656,7 +659,9 @@ public class Level
 			written.Contains( state.MechanicCursor ) ? state.MechanicCursor : 0,
 			// The aerial's tags end the file (FUN_0048ee50). A file whose own block did not read keeps its bytes.
 			loaded.Tags.Problem == null ? state.Tags.Written() : null,
-			state.AdvisorMessages?.Written() );
+			state.AdvisorMessages?.Written(),
+			// A waiting message's second word is its thing's item (FUN_0059b590's callers hand it [ride + 0xe]).
+			state.AdvisorMessages?.WrittenSlots( subject => state.TryObject( subject, out var about ) ? about.CatalogueId : 0 ) );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;
@@ -679,6 +684,12 @@ public class Level
 		{
 			if ( history != ParkWorld.AdvisorHistory.Fresh )
 				Log.Info( $"Save: advisor message {message} written: line {history.Line} lastTick {history.LastTick} said {(history.Said ? 1 : 0)} slaps {history.Slaps}" );
+		}
+
+		for ( var index = 0; index < (running.AdvisorSlots?.Count ?? 0); ++index )
+		{
+			if ( running.AdvisorSlots![index] is { Valid: true } slot )
+				Log.Info( $"Save: advisor slot {index} written: message {slot.Message} thing {slot.Thing} secondary {slot.Secondary} score {slot.Score}" );
 		}
 
 		foreach ( var tag in running.Tags ?? [] )
