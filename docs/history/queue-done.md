@@ -6278,6 +6278,24 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   predicted before the run. Bugs put back (`mutations.py`, 47): all fail a test (`mutate5.out`, `mutate6.out`;
   a 48th sat on a line that did nothing and is removed). Tests 3011. I split the
   item: every other piece of the old Q316 is Q317.
+- [x] **Q317. The line about the tips is the advisor's second polled message.** Done 2026-10-12.
+  Row 282 of the metadata table, message `0x11a`: polled, a tutorial message, one line, response 542 = sample
+  559, no prop and no tag; its score (`0x005a0720`, read in Ghidra) is the control panel's function on
+  `TutorialExplainTooltips`, so `Score` 100 on days 21 to 79 of a park; the image holds no `PUSH 0x11a`, so the
+  poll is its one way in; the shipped park's file holds it as said on tick 605 (`exe/advisor-park.md`, "The
+  tips' line"). Built: the topic `ParkAdvisorMessages.ExplainTooltips`, one row of `ParkTopics`; 153 rows a round
+  are counted now. Confirmed in the running game, predicted before any build or run (`q317/PREDICTION.txt`,
+  `q317/confirm.py stock|control|fresh|nofile|cutoff`, twelve of twelve): the stock park logged `poll message=282
+  row=282 days=32 score=100 threshold=25 tick=760 result=said-once`, `advisor` quiet and nobody beside the gadget
+  (`run-stock1/1-four-seconds-in.png`), the gap's count 43 on tick 799 where main's build read 44 and no poll
+  line; the stock file with the record made fresh had `attempt=1 message=282 ... response=542 sample=559 line=0
+  tick=760 duration=10665`, him up (`run-fresh1/1-saying-it.png`), the saved file's record (760, 0, 1, 0) with no
+  other byte of thing 3 moved, and said-once on tick 915 after its load; a park made with no file scored nought
+  on tick 148 and said it on tick 613; the Tutorial option off read `tick=915 result=tutorial-off`, and past day
+  79 `tick=1845 result=no-score`. The original (`q317/orig/`): the fresh-record file said on tick 760 in two
+  programs, as predicted, its wait 11,665 ms, this game's own, and 12,498, him up (`pic-g05.png`); this game's
+  file saved as he said it read as said and stayed silent for 75 s. Bugs put back (`mutations.py`, 24): all fail a test (`mutate.out`).
+  Tests 3012. I split the item: every other piece of the old Q317 is Q318.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -31,6 +31,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int TagMessage = 284;
 	/// <summary>Message 0xb9, polled: the line about the control panel, scored by the park's age in days (0x005a06c0).</summary>
 	internal const int ControlPanel = 185;
+	/// <summary>Message 0x11a, polled: the line about the tips at the bottom of the screen, scored by the park's age in days (0x005a0720).</summary>
+	internal const int ExplainTooltips = 282;
 
 	/// <summary>The tutorial messages' category (a row's +0x08): MessageGroups[1], refused while the Tutorial option is off (FUN_0059c610).</summary>
 	internal const int Tutorial = 1;
@@ -107,7 +109,8 @@ internal sealed class ParkAdvisorMessages
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
 		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat, Group: 72 ),
 		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial ),
-		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" )
+		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" ),
+		new( ExplainTooltips, "TutorialExplainTooltips.Score", 542, 559, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialExplainTooltips" )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -282,9 +285,9 @@ internal sealed class ParkAdvisorMessages
 		=> (int)((long)(uint)tick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond / 86400);
 
 	/// <summary>
-	/// A row's score function (+0x10). The control panel's (0x005a06c0) is its section's Score while the park
-	/// is more than AfterTime and less than CutoffTime days old, and nought otherwise; every other built row's
-	/// is its key's value.
+	/// A row's score function (+0x10). The control panel's (0x005a06c0) and the tips' (0x005a0720) are their
+	/// section's Score while the park is more than AfterTime and less than CutoffTime days old, and nought
+	/// otherwise; every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
 	{

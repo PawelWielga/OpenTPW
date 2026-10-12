@@ -81,6 +81,11 @@ whole list):
   (`q316/confirm.py fresh|nofile|cutoff|early`, `q316/orig/run.sh`). In the original the Tutorial switch is the byte
   `0x0078d90d`: `bytehold.py %PID% 110 0x0078d90d=0 900 0x0078d90d=1` beside `advisor.py` holds it off through a
   load and until tick 900 (`q316/orig/run5.sh`).
+- **The tips' line, on demand, a second after a load** (Q317): a file whose record of `0x11a` is fresh
+  (`parkfile.advisor_forget( stock, out, 282 )`) has him say sample 559 on tick 760 in both games, the fifth sweep
+  after the stock file's load, for 10.7 s. `loadfile.sh`'s own frames come 12 s and 21 s after its click, too late
+  for a line that short: start a grabber of `:77` that waits for the `-1-load-list.png` frame and then grabs every
+  1.2 s (`q317/orig/run2.sh`).
 - **A message waiting in the advisor's slots, on demand:** `broken_pot()`, wait for the log's `attempt=N message=70`
   (the mechanic's line for the pot, 6.5 s long), then `scriptvar 13 VAR_BREAKSTAT 1`: the Bounce's `post message=69
   ... result=queued` waits until that line ends. `pause` and `savepark` inside it write a file with the slot taken;

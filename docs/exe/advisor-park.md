@@ -1049,8 +1049,8 @@ of the 53 calls of the withdrawal (`FUN_00486b40`, `FUN_0059aa70`) pushes a cons
 (`lib/advisorschema.py`) those are `TutorialUIPanel.AfterTime`, `.CutoffTime` and `.Score`: 10, 60 and 110 in
 `Advisor.sam`. A tick is 3,750 funny seconds, a day 23.04 ticks: **the line is owed from tick 254 to tick 1382 of
 a park**, and is said on the first of those ticks the cursor stands on row 185. Row 282's (`0x005a0720`, message
-`0x11a`) is the same function on `TutorialExplainTooltips` (20, 80, 100), and row 281's (`0x005a0780`) is
-`GoldTicketExplanation.Score` on a count of one: neither is built.
+`0x11a`) is the same function on `TutorialExplainTooltips` (20, 80, 100), built in "The tips' line", below, and
+row 281's (`0x005a0780`) is `GoldTicketExplanation.Score` on a count of one, not built.
 
 **What the shipped park holds.** `Easymode.TPWI`'s record of `0xb9` is (257, line 0, said 1, slaps 0): its makers'
 park said the line on its eleventh day, and the file begins on tick 755. So **Instant Action's Lost Kingdom never
@@ -1060,7 +1060,7 @@ says it**: every poll of row 185, the first on tick 877, scores 110 and is refus
 
 Each sweep's `Tick` polls first, from the cursor's row, which is the program's (`ParkAdvisorMessages.ProgramCursor`,
 handed to every park by `Level`), set from a loaded file's dword (`Park advisor: restored poll cursor row=...`)
-and written to `savepark`'s file. The one built polled row is 185; each of the other 154 is counted
+and written to `savepark`'s file. The built polled rows are 185 and 282 ("The tips' line", below); each of the other 153 is counted
 `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`. A topic's score is its function's (`ScoreOf`: the age's bounds for the
 control panel's, the key's value for the rest), asked at the poll, at the post and at the tick's recheck
 (`FUN_0059b620` calls `FUN_0059c0a0`). The poll logs a line a change of its answer: `Park advisor: poll
@@ -1116,8 +1116,70 @@ have come 122 ticks after the save.
 | A file with the record fresh | said on tick 877 | said on tick 877 |
 | The Tutorial option off | not posted; said a round on once it is on | not posted (the turn after was run past the cutoff) |
 | Past day 60 | not said | not said |
-| The other 154 polled rows | scored each round | counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
+| The other polled rows | scored each round | row 282 built (below); 153 counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
 | The line's wait | the response's length and a second | the same; the length differs a run in both, as the gesture chain does |
 
 Not in a game run: a line found by the poll inside another's wait (the test holds it). No case in either game:
 the line cut off. Not heard in either game.
+
+## The tips' line (message `0x11a`, Q317)
+
+**Row 282, message `0x11a`:** polled, category 1 (the tutorial messages), either game mode, one copy, first
+response 542, one line. Response 542 is sample 559, lip 559, the random gesture chain, model slot 0, no prop, group
+383 (no tag): "if you're curious about a button or an icon just point at it with the cursor and check out the tip
+that appears at the bottom of the screen". 147 polled rows stand before it in a round. The image holds no
+`PUSH 0x11a` (`68 1a 01 00 00`; the same search for `0x11c` finds its three), so nothing posts or withdraws it by
+a constant: the poll is its one way in.
+
+**Its score, `0x005a0720`** (in no Ghidra function), is the control panel's listing byte for byte but its three
+offsets: whole days since `mGameTick` nought, `JLE` to nought against `[ECX + 0x5e8]`, `JGE` to nought against
+`[ECX + 0x5ec]`, else `[ECX + 0x5f0]`: `TutorialExplainTooltips.AfterTime`, `.CutoffTime` and `.Score`
+(`lib/advisorschema.py`), 20, 80 and 100 in `Advisor.sam`. **The line is owed from tick 484 to tick 1843 of a
+park**, days 21 to 79.
+
+**What the shipped park holds.** `Easymode.TPWI`'s record of `0x11a` is (605, line 0, said 1, slaps 0), and it is
+the message its last action names as playing. From the file's cursor, 277, row 282 is the fifth row scored: tick
+760, then every 155 ticks. So Instant Action's Lost Kingdom never says it either: it scores 100 and is refused as
+said once, and from tick 1845 scores nought.
+
+### OpenTPW (`ParkAdvisorMessages.ExplainTooltips`, a second topic with `Polled` and an `AgeSection`)
+
+A row of `ParkTopics` and nothing else: the poll, the score by the park's age, the gate, the records, the slots
+and the action are Q312's to Q316's. `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is counted for 153 rows a round.
+
+**Predicted first** (`q317/PREDICTION.txt`, `q317/confirm.py stock|control|fresh|nofile|cutoff`; twelve of
+twelve, every number written before any build or run). **The stock park** (four of four): `restored message=282
+line=0 lastTick=605 said=1 slaps=0`, `poll message=282 row=282 days=32 score=100 threshold=25 tick=760
+result=said-once`, row 185's line on tick 877 as before, no `sample=559`, `advisor` quiet and nobody beside the
+gadget four seconds in (`run-stock1/1-four-seconds-in.png`), and the gap's count 43 at a pause on tick 799, one a
+sweep less the one turn of row 282. **Main's build** (the control): no poll line of 282, and 44 on tick 799.
+**The stock file with the record of `0x11a` made fresh** (`parkfile.advisor_forget`; four of four): `result=post`,
+`post ... result=queued pending=2` and `attempt=1 message=282 subject=0 score=100 threshold=25 response=542
+sample=559 line=0 tick=760 duration=10665` on one tick; three seconds on `saying sp_559.mp2`, `playing=282`, no
+tag, and him up with his antennae and no hat (`run-fresh1/1-saying-it.png`); saved under the pause on tick 782,
+the record (760, 0, 1, 0), the action's duration 11,665, playing 282, no slot holding it, no other byte of thing
+3 moved; loaded back, the record restored and `days=39 ... tick=915 result=said-once`, no second attempt. **A park
+made with no file** (one of one): `days=6 score=0 tick=148 result=no-score`, nothing logged on its turns of ticks
+303 and 458, then `days=26 score=100 tick=613 result=post` and the line, after the control panel's on tick 265.
+**The Tutorial option off, and the cutoff** (two of two, on the private display): after `tutorial off` on tick
+772, `tick=915 result=tutorial-off` and nothing through tick 1705; switched on, `days=80 score=0 tick=1845
+result=no-score`, the score asked before the gate.
+
+**The original** (`q317/orig/run.sh`, `run2.sh`; `advisor.py ... 0x11a,0xb9 poll`). The fresh-record file, in two
+programs: the record (0, -1, 0, 0) and the cursor 277 at the load, tick 755, and **(760, 0, 1, 0) on tick 760**,
+as predicted, the cursor then 283; the action's duration 11,665 in one program, this game's own number, and 12,498
+in the other. Him up at the lower right with his antennae and no hat 3.3 s after the line began
+(`orig/pic-g05.png`). This game's file saved as he said it (`saying-it.TPWS`): the record (760, 0, 1, 0), the
+action (114877440, 11665) and the cursor 16 from the load on, tick 782, and unchanged with no slot holding
+`0x11a` for 75 s.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 282 | polled; days 21 to 79 of a park; said once | the same |
+| The stock park | never said: its file holds it as said on tick 605 | the same; the row's first turn on tick 760 |
+| A file with the record fresh | said on tick 760 | said on tick 760 |
+| The line's wait | 11,665 and 12,498 ms in two programs | 11,665 ms in each of three runs |
+| Past day 79 | not read in the original | no score, said or not |
+
+Not in a game run of the original: the Tutorial switch off at this row's turn, a park past day 79, a park made
+with no file. Not heard in either game. The line's end was not seen.

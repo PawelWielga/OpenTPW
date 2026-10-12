@@ -44,12 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q317. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q318. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q316 (`advisor-park.md`, "The poll, and the control panel's line"): 154 of the 155 polled rows are not
-  built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; row 282, `TutorialExplainTooltips`, is the same score function as
-  the built one, row 281 `GoldTicketExplanation`); row 0's poster (`Welcome`, posted only in the running table)
+  From Q317 (`advisor-park.md`, "The tips' line"): in no run of the original: the Tutorial switch off at row
+  282's turn, a park past day 79, a park made with no file. This game's wait was 11,665 ms in each run and the
+  original's 11,665 and 12,498: what the second second is was not read. The line's end was not seen. Not heard
+  in either game.
+  From Q316 (`advisor-park.md`, "The poll, and the control panel's line"): 153 of the 155 polled rows are not
+  built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; row 281, `GoldTicketExplanation.Score` on a count of one, is the
+  nearest); row 0's poster (`Welcome`, posted only in the running table)
   is not read; `meta_full.json`'s row 0 is wrong in two dwords and the file is not corrected; the line's length
   differs a run in both games and was not compared; a file's cursor below nought is refused here, where the
   original would read before its table. In no game run: a line polled inside another's wait (the test holds
