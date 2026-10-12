@@ -6352,6 +6352,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   original, given this game's file, read its record said on tick 898 too, and neither game said it with one
   ride bought or with the door shut. `advisor-park.md`, "An open park's shut rides". Tests 3023.
   I split the item: every other piece of the old Q323 is Q324.
+- [x] **Q324. The advisor speaks of a queue not joined to a path.** Done 2026-10-12: his polled row 113
+  (`QueueUnconnected`; score `0x0059ef60`: `Score`, 87, where `FUN_004ccb00` finds a choosable thing with a
+  queue whose back is not connected, the builder's object passed over), two lines with no prop, and tag 135
+  about no thing, whose camera button does nothing. The stock park with an Aztec Mayhem bought under a pause on
+  tick 895 and its queue left unjoined: `poll message=113 row=113 days=43 score=87 threshold=25 tick=996
+  result=post unjoined=43` and `attempt=1 message=113 ... response=288 sample=312 line=0 tick=996`, him up with
+  no hat and the tag on the raised mast; the original, given this game's file, read its record said on tick 996
+  too and stood the tag at the same rectangle for 30.54 s, and neither game said it with nothing bought.
+  `advisor-park.md`, "A queue not joined to a path". Tests 3025.
+  I split the item: every other piece of the old Q324 is Q325.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

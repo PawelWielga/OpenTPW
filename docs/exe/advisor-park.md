@@ -1098,7 +1098,7 @@ says it**: every poll of row 185, the first on tick 877, scores 110 and is refus
 
 Each sweep's `Tick` polls first, from the cursor's row, which is the program's (`ParkAdvisorMessages.ProgramCursor`,
 handed to every park by `Level`), set from a loaded file's dword (`Park advisor: restored poll cursor row=...`)
-and written to `savepark`'s file. The built polled rows are 185, 282 ("The tips' line", below), 1 ("A shut park people wait outside", below) and 260 to 262 ("Shut shops, sideshows and toilets", below), 2, 62 and 259 (their sections, below); each of the other 146 is counted
+and written to `savepark`'s file. The built polled rows are 185, 282 ("The tips' line", below), 1 ("A shut park people wait outside", below) and 260 to 262 ("Shut shops, sideshows and toilets", below), 2, 62, 259 and 113 (their sections, below); each of the other 145 is counted
 `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`. A topic's score is its function's (`ScoreOf`: the age's bounds for the
 control panel's, the key's value for the rest), asked at the poll, at the post and at the tick's recheck
 (`FUN_0059b620` calls `FUN_0059c0a0`). The poll logs a line a change of its answer: `Park advisor: poll
@@ -1154,7 +1154,7 @@ have come 122 ticks after the save.
 | A file with the record fresh | said on tick 877 | said on tick 877 |
 | The Tutorial option off | not posted; said a round on once it is on | not posted (the turn after was run past the cutoff) |
 | Past day 60 | not said | not said |
-| The other polled rows | scored each round | rows 282, 1, 2, 62 and 259 to 262 built (below); 146 counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
+| The other polled rows | scored each round | rows 282, 1, 2, 62, 113 and 259 to 262 built (below); 145 counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
 | The line's wait | the response's length and a second | the same; the length differs a run in both, as the gesture chain does |
 
 Not in a game run: a line found by the poll inside another's wait (the test holds it). No case in either game:
@@ -1183,7 +1183,7 @@ said once, and from tick 1845 scores nought.
 ### OpenTPW (`ParkAdvisorMessages.ExplainTooltips`, a second topic with `Polled` and an `AgeSection`)
 
 A row of `ParkTopics` and nothing else: the poll, the score by the park's age, the gate, the records, the slots
-and the action are Q312's to Q316's. `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` was counted for 153 rows a round then, and is for 146 since rows 1, 2, 62 and 259 to 262 were built.
+and the action are Q312's to Q316's. `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` was counted for 153 rows a round then, and is for 145 since rows 1, 2, 62, 113 and 259 to 262 were built.
 
 **Predicted first** (`q317/PREDICTION.txt`, `q317/confirm.py stock|control|fresh|nofile|cutoff`; twelve of
 twelve, every number written before any build or run). **The stock park** (four of four): `restored message=282
@@ -1624,7 +1624,7 @@ in the green ticket cap beside a bare mast, the Crazy Ape and the Aztec Mayhem b
 **Seen and not predicted.** In all three the original then spoke of the unjoined queues: on tick 996, row 113's
 turn (message `0x71`), a slot took `0x71` at 87 where he was speaking, and where he was free a tag stood from
 that tick, "Somewhere in your park, a line is not connected to a path." (the mast at (94, 901, 144, 984)). Row
-113 is not read and not built; it is counted with the other polled rows.
+113 is read and built in "A queue not joined to a path", below.
 
 | | The original | OpenTPW |
 |---|---|---|
@@ -1632,8 +1632,103 @@ that tick, "Somewhere in your park, a line is not connected to a path." (the mas
 | Three rides, two bought and left shut | said on tick 898, line 0, in the ticket hat, no tag | the same |
 | Two rides, one shut | not said | not said |
 | The door shut, three rides shut | not said; the shops' line on tick 899 | the same |
-| Row 113, an unjoined queue | queued or said on tick 996, with a tag | not built, counted |
+| Row 113, an unjoined queue | queued or said on tick 996, with a tag | the same ("A queue not joined to a path", below) |
 
-**Not built or not seen.** Row 113. In no game run: lines 2 and 3 (samples 485 and 486; the test holds the
+**Not built or not seen.** In no game run: lines 2 and 3 (samples 485 and 486; the test holds the
 turn), the line said again past its 120 quarter-ticks (the test holds it), a ride shut from its own window, a
 share of exactly half, four rides or more, Full Simulation's rates. Not heard in either game.
+
+## A queue not joined to a path (message `0x71`, Q324)
+
+**Row 113:** polled, category 0, either game mode, up to 255 copies, two lines in turn. Its responses are 288 and
+289, samples 312 and 313 ("you have a line that isn't connected to a path, visitors can't get to it"; "you have a
+place to line up but no way to get to it, it's not connected to a path"): the random gesture chain, model slot 0,
+no prop, group 135. From the shipped park's cursor, 277, its turns are ticks 841 and 996, and every 155 on.
+
+**Its score** (`0x0059ef60`; `ECX` the balance object): `FUN_004ccb00( &id, 0 )` on the park analyser
+(`FUN_00519510`), the thing it answers stored in the balance object's `+4`, and where that is not nought the score
+is `[ECX + 0x388]`, `QueueUnconnected.Score`, 87. Neither the park's door nor any count is asked.
+
+**`FUN_004ccb00( &id, all )`** walks the world's thing list (`FUN_00516130`, `FUN_00516160`) and answers the first
+thing that is all of:
+
+1. of type 3 (`+2`);
+2. one a guest may choose, with a queue laid on the ground: `+0x32 & 4` and `+0x32 & 8` (`ride-operation.md`, the
+   flag byte);
+3. not connected at the back of its queue: `FUN_004de4a0` answers nought (`ride-operation.md`, "the back of the
+   queue connected");
+4. where `all` is nought, as the score asks: not the builder's object, `DAT_008186ac` (`FUN_00527930`).
+
+Nought where there is none.
+
+**The builder's object, `DAT_008186ac`.** Three places write it: the build dispatcher's click on a queue cell
+(`0x00524c3d`: the object that cell's queue serves), `FUN_005276d0` (the thing the interface has selected,
+`DAT_007c2654`, or the thing its own entry record names where that item's `+0x288` is 1; it stores nought where
+nothing is selected), and the map's start, which noughts it (`FUN_0052f050`). `FUN_005276d0` has nineteen
+callers, in the dispatcher, the footprint applier and the object windows; **they are not read**, so when the word
+goes back to nought after a queue is laid is not known. It read nought for 75 s of a park loaded from a file.
+
+**The line is about no thing.** Nothing was found to read the balance object's `+4`: no instruction names
+`0x00fb3544`, and the tick's post of a polled answer pushes thing nought (`0x0059a5fd`, "The poll", above). The
+original's slot held `0x71` with thing nought at 87 (`q323/orig/c-load.log`). So the tag is row 135's with no
+thing: key 383, picture 0, string 134 ("Somewhere in your park, a queue is not connected to a path." in the
+English folder, "a line" in the american one), the bar's first button of type 3, no second, 30 seconds. **Its
+button does nothing:** type 3 puts the camera on the tag's thing (`FUN_004867b0`), which returns at once for
+thing nought.
+
+### OpenTPW (`ParkAdvisorMessages.QueueUnconnected`, a topic's `QueueNotJoined`; `ParkFacts.UnjoinedQueue`; tag row 135)
+
+A tenth polled topic. `ParkPeople.AdvisorFacts` names the first object of the chain that a guest may choose, has
+a queue path and whose back is not connected (`ParkRideOperation.BackOfQueueConnected`), and the score is the
+key's value where it names one. Its poll line ends ` unjoined=N`, the thing. **A deviation:** the object passed
+over is the one the queue tool is armed for (`ParkBuildMode.Serves`), from the tool's arming to its putting
+away; the original's word is also set from the interface's selected thing and may outlast the tool, which is not
+read. The console's `buy` arms no tool, as a load in the original leaves the word nought.
+
+**The scene.** The stock park, open; under a pause on the first tick at or past 893 an Aztec Mayhem is bought
+and left as bought (`buy 1104 57 23`, thing 43), its queue of one cell joined to nothing, and the park saved.
+
+**This game** (`q324/PREDICTION.txt`, written before any run; `q324/confirm.py fix|control|joined|armed`). *The
+Mayhem bought* (`run-fix2`, on the desktop, five of five): paused on tick 895, thing 43 `canload 0`; `poll
+message=113 row=113 days=36 score=0 threshold=25 tick=841 result=no-score unjoined=0`, then `poll message=113
+row=113 days=43 score=87 threshold=25 tick=996 result=post unjoined=43`, the post queued and `attempt=1
+message=113 subject=0 score=87 threshold=25 response=288 sample=312 line=0 tick=996` on one tick; 1.5 s on
+`saying sp_312.mp2 ... wearing=0,0`, `tags: standing=1 tag=135/picture=0/subject=0`, the mast at 94,901,144,984
+and the tag at 84,909,154,974, and him up with his antennae and no hat, the tag on the raised mast and the
+Mayhem behind its hoardings (`run-fix2/1-queue-line.png`); the tag clicked, `message bar: tag 135 subject 0
+item 0 bar: out=1 ... first=mb_locate/help=516 second=hidden erase=mb_erase` with the English words on the bar
+(`2-bar.png`), and its first button's click logged no camera line and left the bar out.
+`PARK_ADVISOR_POLLED_ROW_NOT_BUILT` read 134 on tick 895 and 248 on tick 1018, the rule's (`TOOLING.md`,
+recipes) with ticks 841 and 996 built turns. **The first run** (`run-fix1`, three of five) missed twice for one
+reason, the prediction's own: it left out the row's turn on tick 841, so it named one poll line where there are
+two and each count one too many; the line, the tag and the bar were as predicted, and the prediction was made
+again before `run-fix2`. *Nothing bought* (`run-joined`, off-screen): the one poll line of 113 is tick 841's,
+no attempt, 248 on tick 1018. *The queue tool armed for thing 43 under the pause* (`run-armed`, off-screen): no
+line on tick 996, no attempt before `tool off` on tick 1022, then `poll message=113 row=113 days=49 score=87
+threshold=25 tick=1151 result=post unjoined=43` and attempt 1 there. **Main's build** (`run-control`,
+off-screen): no poll line of 113, no attempt, the counts 137 on tick 897 and 249 on tick 1017.
+
+**The original on each run's own file** (`q324/orig/run.sh <file>`: `advisor.py ... 0x71 poll`, `tags.py` and
+`tpwmem.py watch 008186ac` in one log, the display grabbed every 1.4 s from the Load Park list on; five of
+five). *The Mayhem bought* (`run-fix2/queue-fix.TPWS`; `orig/a-load.log`): record `0x71` went from (0, -1, 0, 0)
+to **(996, 0, 1, 0) on tick 996**, the action's length 8,331; one tag from that tick at (84, 909, 154, 974), the
+mast at (94, 901, 144, 984), "Somewhere in your park, a line is not connected to a path.", gone 30.54 s on; he is
+up with his antennae and no hat, the tag on the raised mast (`orig/a-g21.png`); `[0x008186ac]` read nought
+throughout. *Nothing bought* (`run-joined/queue-joined.TPWS`; `orig/b-load.log`): the record unmoved and no tag
+in 75 s.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 113 | polled; `QueueUnconnected.Score` where a choosable thing's queue is not joined at its back | the same |
+| A ride bought and its queue left unjoined | said on tick 996, line 0, no prop, tag 135 about no thing | the same |
+| Every queue joined | not said | not said |
+| The tag's words | the american folder's, "a line" | the English folder's, "a queue" |
+| The tag's camera button | returns at once on thing nought (read, not clicked) | does nothing |
+| The object passed over | the builder's object, `DAT_008186ac` | the queue tool's thing while the tool is armed |
+
+**Not built or not seen.** When the builder's object goes back to nought (the nineteen callers of
+`FUN_005276d0`); a ride bought with the mouse in the original, its queue tool put away, and whether the line is
+then held back. What reads the balance object's `+4`. In no game run: line 2 (sample 313; the test holds the
+turn), the line said again past its 120 quarter-ticks (the test holds it), a queue cut off from an open ride
+(`ride-operation.md`: the ride stays open), two rides unjoined, the tag's button clicked in the original, the
+line posted while he speaks (255 copies), Full Simulation. Not heard in either game.

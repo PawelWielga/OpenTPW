@@ -44,13 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q324. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q325. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q323 (`advisor-park.md`, "An open park's shut rides"): **row 113 is the next piece of that scene**
-  (message `0x71`, polled, 87 in a park with a bought ride whose queue is not joined: the original queues or
-  says it on tick 996 and it leaves a tag, "Somewhere in your park, a line is not connected to a path."; its
-  score function is not read). Row 263 (`0x005a0490`, `StaffroomClosed`: 25 per cent, 90) is still not built.
+  From Q324 (`advisor-park.md`, "A queue not joined to a path"): **the object the line passes over is not the
+  original's**: here the thing the queue tool is armed for, there the builder's object `DAT_008186ac`, set from
+  the interface's selected thing too (`FUN_005276d0`, nineteen callers not read) and perhaps kept after the
+  tool is put away; buy a ride with the mouse in the original, put the tool away and watch the word and row
+  113. What reads the balance object's `+4` is not found. In no game run: line 2, the line said again past its
+  cooldown (the test holds each), a queue cut off from an open ride, two rides unjoined, the tag's button
+  clicked in the original, the line posted while he speaks, Full Simulation. Not heard in either game.
+  From Q323 (`advisor-park.md`, "An open park's shut rides"): Row 263 (`0x005a0490`, `StaffroomClosed`: 25 per
+  cent, 90) is still not built.
   In no game run: row 259's second and third lines, the line said again past its cooldown (the test holds
   each), a ride shut from its own window, a share of exactly half, four rides or more, Full Simulation's
   rates. Not heard in either game.

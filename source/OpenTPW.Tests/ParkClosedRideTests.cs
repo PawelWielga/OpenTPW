@@ -710,6 +710,83 @@ public class ParkClosedRideTests
 		}
 	}
 
+	/// <summary>
+	/// What the advisor's row 113 reads of the park (<c>FUN_004ccb00</c> asked with nought): the first thing a
+	/// guest may choose that has a queue whose back is not joined to a path, none in the shipped park, the Belly
+	/// Bounce once its queue's back cell links only to the cell ahead, none while the queue tool is armed for it,
+	/// and none for a thing with no queue whose entrance has no path before it.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the connected queue answered; the tool's thing not passed over, or every thing passed over while a tool is armed; a thing with no queue answered; a thing no guest may choose answered; the last found answered, not the first.</remarks>
+	[TestMethod]
+	public void TheAdvisorsParkFactsNameARideWhoseQueueIsNotJoined()
+	{
+		var park = Open();
+
+		try
+		{
+			Assert.AreEqual( 0, park.People.AdvisorFacts().UnjoinedQueue, "every queue joined as shipped" );
+
+			// A thing with no queue and no path before its entrance is not asked.
+			var spray = Thing( park, 14 );
+			Assert.IsFalse( spray.HasQueuePath );
+			var facing = spray.Angle switch { 0 => 0x10, 90 => 0x04, 180 => 0x01, _ => 0x40 };
+			var (x, y) = MapStep.CellAt( spray.EntryPos );
+			var (bx, by) = ParkBuilding.Step( x, y, CellEdge.Opposite( facing ) );
+			var beyond = park.State.Record( bx, by );
+			park.State.SetRecord( bx, by, beyond with { Type = 0 } );
+			Assert.IsFalse( ParkRideOperation.BackOfQueueConnected( park.World, spray ) );
+			Assert.AreEqual( 0, park.People.AdvisorFacts().UnjoinedQueue );
+			park.State.SetRecord( bx, by, beyond );
+
+			var back = park.State.Record( BackX, BackY );
+			park.State.SetRecord( BackX, BackY, back with { Neighbours = 0x04 } );
+			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
+			Assert.AreEqual( park.People.AdvisorFacts() with { UnjoinedQueue = 0 },
+				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets ), "nothing else moved" );
+
+			// The queue tool armed for it passes it over; armed for another thing, or put away, it does not.
+			ParkBuildMode.Arm( ParkBuildMode.Queue, BellyBounce );
+			Assert.AreEqual( 0, park.People.AdvisorFacts().UnjoinedQueue );
+			ParkBuildMode.Arm( ParkBuildMode.Queue, 14 );
+			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
+			ParkBuildMode.Arm( ParkBuildMode.Path );
+			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
+			ParkBuildMode.Disarm();
+			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
+
+			// With two unjoined, the first of the chain is the one named.
+			var sprayFlags = Thing( park, 14 ).Flags;
+			Change( park, 14, thing => thing with { Flags = (ushort)(thing.Flags | 0x08) } );
+			Assert.IsTrue( Thing( park, 14 ).HasQueuePath );
+			var (sprayBack, _) = ParkRideChoice.QueueCellsFor( park.World, Thing( park, 14 ) );
+			Assert.AreNotEqual( 0, sprayBack );
+			var (sx, sy) = MapStep.CellAt( sprayBack );
+			var sprayCell = park.State.Record( sx, sy );
+			park.State.SetRecord( sx, sy, sprayCell with { Neighbours = sprayCell.Direction } );
+			Assert.IsFalse( ParkRideOperation.BackOfQueueConnected( park.World, Thing( park, 14 ) ), "the Spray, given a queue, joins nothing" );
+			var chain = park.State.ObjectsInChainOrder().Where( thing => thing.ThingId is BellyBounce or 14 ).Select( thing => thing.ThingId ).ToArray();
+			Assert.AreEqual( 2, chain.Length );
+			Assert.AreEqual( chain[0], park.People.AdvisorFacts().UnjoinedQueue );
+			ParkBuildMode.Arm( ParkBuildMode.Queue, chain[0] );
+			Assert.AreEqual( chain[1], park.People.AdvisorFacts().UnjoinedQueue, "the tool's thing passed over, the next is named" );
+			ParkBuildMode.Disarm();
+			Change( park, 14, thing => thing with { Flags = sprayFlags } );
+			park.State.SetRecord( sx, sy, sprayCell );
+
+			// A thing no guest may choose is not asked.
+			Change( park, BellyBounce, thing => thing with { Flags = (ushort)(thing.Flags & ~0x04) } );
+			Assert.IsFalse( Thing( park, BellyBounce ).IsVisitable );
+			Assert.AreEqual( 0, park.People.AdvisorFacts().UnjoinedQueue );
+
+			park.State.SetRecord( BackX, BackY, back );
+		}
+		finally
+		{
+			ParkBuildMode.Disarm();
+			Close( park );
+		}
+	}
+
 	/// <summary>The shipped Lost Kingdom park's things of a ride's item and of a sideshow's: the Belly Bounce and the Jungle Spray.</summary>
 	private const int StockRides = 1, StockSideshows = 1;
 	/// <summary>Its things of a shop's item, the Drinks Shop, and its toilets, three Small Toilets; the door shuts each.</summary>

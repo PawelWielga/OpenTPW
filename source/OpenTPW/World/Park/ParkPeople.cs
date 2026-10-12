@@ -2564,16 +2564,29 @@ public sealed partial class ParkPeople : Entity
 	/// What the advisor's score functions read of the park: the door, the things standing of a ride's item, of a
 	/// sideshow's and of a shop's (FUN_004ca8e0, a thing of type 3 whose item's WhichUIType is the kind asked
 	/// for), the toilets (FUN_004c9ee0, an object's +0x32 &amp; 1), how many of the rides, shops, sideshows and
-	/// toilets are shut (FUN_004ca9b0, FUN_004c9f90: mCanLoad nought), and the guests waiting to be let in.
+	/// toilets are shut (FUN_004ca9b0, FUN_004c9f90: mCanLoad nought), the guests waiting to be let in, and the
+	/// first thing a guest may choose that has a queue whose back is not joined to a path (FUN_004ccb00 asked
+	/// with nought: an object's +0x32 &amp; 4 and &amp; 8, FUN_004de4a0 nought), the object the builder holds
+	/// passed over (FUN_00527930).
 	/// </summary>
+	/// <remarks>
+	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
+	/// selected and keeps after the tool is put away; here it is the thing the queue tool is armed for, and no
+	/// other (docs/exe/advisor-park.md, "A queue not joined to a path").
+	/// </remarks>
 	internal ParkAdvisorMessages.ParkFacts AdvisorFacts()
 	{
 		var (rides, sideshows, shops, toilets) = (0, 0, 0, 0);
 		var (ridesShut, shopsShut, sideshowsShut, toiletsShut) = (0, 0, 0, 0);
+		var unjoined = 0;
 
 		foreach ( var thing in State.ObjectsInChainOrder() )
 		{
 			var shut = thing.CanLoad == 0 ? 1 : 0;
+
+			if ( unjoined == 0 && thing.IsVisitable && thing.HasQueuePath && thing.ThingId != ParkBuildMode.Serves
+				&& !ParkRideOperation.BackOfQueueConnected( _behaviour.Park, thing ) )
+				unjoined = thing.ThingId;
 
 			if ( thing.IsToilet )
 			{
@@ -2601,7 +2614,7 @@ public sealed partial class ParkPeople : Entity
 		}
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
-			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut );
+			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined );
 	}
 
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:

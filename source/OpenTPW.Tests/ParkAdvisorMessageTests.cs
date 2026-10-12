@@ -19,7 +19,7 @@ public class ParkAdvisorMessageTests
 			+ "MessageGroups[0].DiscardAfterSlaps 0\nMessageGroups[1].MinTimeSameMessage 0\nMessageGroups[1].SayOnlyOnce 1\nMessageGroups[1].DiscardAfterSlaps 3\nHelpMessage.Score 1000\nTutorialUIPanel.AfterTime 10\nTutorialUIPanel.CutoffTime 60\nTutorialUIPanel.Score 110\nTutorialExplainTooltips.AfterTime 20\nTutorialExplainTooltips.CutoffTime 80\nTutorialExplainTooltips.Score 100\nOpenPark.ScorePerWaitingPerson 20\nClosePark.Score 99\nRidesBuildRides.Score -50\nRidesBuildRides.AdditionalPerDay 3\n"
 			+ "ShopsClosed.MoreThanThisPercentClosed 25\nShopsClosed.Score 75\nSideshowsClosed.MoreThanThisPercentClosed 25\nSideshowsClosed.Score 70\n"
 			+ "ToiletsClosed.MoreThanThisPercentClosed 20\nToiletsClosed.Score 75\n"
-			+ "RidesClosed.AtLeastThisManyRides 3\nRidesClosed.MoreThanThisPercentClosed 50\nRidesClosed.Score 80\n" ) ) );
+			+ "RidesClosed.AtLeastThisManyRides 3\nRidesClosed.MoreThanThisPercentClosed 50\nRidesClosed.Score 80\nQueueUnconnected.Score 87\n" ) ) );
 
 	private static void Set( SettingsFile settings, string key, int value )
 	{
@@ -132,7 +132,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 16, written.Count );
+		Assert.AreEqual( 17, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -815,7 +815,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 146, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 145, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -1274,6 +1274,92 @@ public class ParkAdvisorMessageTests
 	}
 
 	/// <summary>
+	/// Row 113, message 0x71, is polled and scored by a queue not joined to a path (0x0059ef60):
+	/// QueueUnconnected.Score where the park hands in a ride whose queue is unjoined, and nought with none,
+	/// whatever the door and the counts. It is two lines with no prop, said on its poll's sweep about no thing,
+	/// which leaves tag 135; refused inside its cooldown and saying its second line past it.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the score given with no queue unjoined, or refused with one; the door or the rides
+	/// asked; the row's key, response, sample, lines, copies, prop or group another's; the row not polled; the
+	/// thing handed on as the line's subject.
+	/// </remarks>
+	[TestMethod]
+	public void AQueueNotJoinedToAPathIsPolledAndSpokenOf()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 113 };
+		var settings = Settings();
+		var messages = new ParkAdvisorMessages( settings, cursor: cursor );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 2, Sideshows: 1, WaitingToOpen: 0 );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		void Sweep( int at, long milliseconds )
+			=> messages.Tick( at, milliseconds, ( response, sample ) => { said.Add( (at, response, sample) ); return 5000; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+
+		var queue = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.QueueUnconnected );
+		Assert.AreEqual( (113, 288, 312, 2, 255, 0, true, 135, 0, -1),
+			(queue.Id, queue.FirstResponse, queue.FirstSample, queue.Lines, queue.MaxInstances, queue.Category, queue.Polled, queue.Group, queue.Prop, queue.GestureRowLine) );
+		Assert.AreEqual( ("QueueUnconnected.Score", true), (queue.ScoreKey, queue.QueueNotJoined) );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 113 ) );
+		Assert.AreEqual( (0, 0), ParkAdvisorMessages.PropsOf( 288 ) );
+		Assert.AreEqual( (0, 0), ParkAdvisorMessages.PropsOf( 289 ) );
+		Assert.AreEqual( 0, messages.ScoreOf( queue, 100 ), "before any sweep has handed the park in" );
+		foreach ( var other in ParkAdvisorMessages.ParkTopics.Where( one => one.Id != ParkAdvisorMessages.QueueUnconnected ) )
+			Assert.IsFalse( other.QueueNotJoined, $"row {other.Id} asks no queue" );
+
+		// The first sweep hands the park in: every queue joined.
+		Sweep( 1, 0 );
+		Assert.AreEqual( ("no-score", 114, 0), (messages.PollAnswer( 113 ), cursor.Row, said.Count) );
+
+		int Score( ParkAdvisorMessages.ParkFacts park )
+		{
+			facts = park;
+			return messages.ScoreOf( queue, 1 );
+		}
+
+		var joined = new ParkAdvisorMessages.ParkFacts( false, 2, 1, 0 );
+		Assert.AreEqual( 87, Score( joined with { UnjoinedQueue = 44 } ) );
+		Assert.AreEqual( 87, Score( joined with { UnjoinedQueue = 1 } ) );
+		Assert.AreEqual( 87, Score( joined with { Closed = true, UnjoinedQueue = 44 } ), "the door is not asked" );
+		Assert.AreEqual( 87, Score( new ParkAdvisorMessages.ParkFacts( false, 0, 0, 0, UnjoinedQueue: 44 ) ), "the counts are not asked" );
+		Assert.AreEqual( 0, Score( joined ), "no queue unjoined" );
+		Assert.AreEqual( 0, Score( joined with { Rides = 3, RidesShut = 3, Shops = 1, ShopsShut = 1, Toilets = 1, ToiletsShut = 1, WaitingToOpen = 9 } ), "a shut ride is not an unjoined queue" );
+		Set( settings, "QueueUnconnected.Score", 31 );
+		Set( settings, "RidesClosed.Score", 1 );
+		Assert.AreEqual( 31, Score( joined with { UnjoinedQueue = 44 } ), "the score is its own key's" );
+		Set( settings, "QueueUnconnected.Score", 87 );
+		Set( settings, "RidesClosed.Score", 80 );
+
+		// A ride's queue unjoined: the line is said on its poll's sweep, about no thing, and leaves tag 135.
+		facts = joined with { UnjoinedQueue = 44 };
+		cursor.Row = 113;
+		Sweep( 996, 100_000 );
+		CollectionAssert.AreEqual( new[] { (996, 288, 312) }, said );
+		CollectionAssert.AreEqual( new[] { (135, 0) }, groups );
+		Assert.AreEqual( ("post", 114, 0), (messages.PollAnswer( 113 ), cursor.Row, messages.PendingCount) );
+		StringAssert.Contains( messages.Census(), "message=113/score=87/line=0/lastTick=996/said=1/slaps=0" );
+
+		// Refused inside 120 quarter-sweeps of its line (996 is in quarter 249), and past them it says its second
+		// line, and then its first again.
+		cursor.Row = 113;
+		Sweep( 1475, 300_000 );
+		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 113 ), said.Count) );
+		cursor.Row = 113;
+		Sweep( 1476, 300_250 );
+		Assert.AreEqual( (1476, 289, 313), said[^1] );
+		cursor.Row = 113;
+		Sweep( 2000, 600_000 );
+		Assert.AreEqual( (2000, 288, 312), said[^1] );
+
+		// The queue joined, its next turn scores nought.
+		facts = joined;
+		cursor.Row = 113;
+		Sweep( 3000, 900_000 );
+		Assert.AreEqual( ("no-score", 3), (messages.PollAnswer( 113 ), said.Count) );
+	}
+
+	/// <summary>
 	/// The cursor is the park file's: the shipped park's row 277 has row 282 scored on the fifth sweep, tick 760
 	/// of a park whose first sweep is 756, and row 185 on the 122nd, tick 877; a row below the table is refused.
 	/// </summary>
@@ -1401,7 +1487,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 9, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 10, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>

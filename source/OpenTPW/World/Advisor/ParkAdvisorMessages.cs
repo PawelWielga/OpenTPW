@@ -10,12 +10,13 @@ namespace OpenTPW;
 /// docs/exe/advisor-park.md, Q90, "A ride about to break down", "A ride broken down and no mechanic to come",
 /// "A mechanic on his way" and "The line of an opened tag message".
 /// <para>
-/// Nine messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Ten messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
 /// nothing to ride and a park with no ride; and four scored by the share of the park's rides, shops, sideshows
-/// and toilets that are shut ("Shut shops, sideshows and toilets", "An open park's shut rides"). The other 146
-/// polled rows are counted, and the other posted messages are unbuilt.
+/// and toilets that are shut ("Shut shops, sideshows and toilets", "An open park's shut rides"); and the line
+/// about a queue not joined to a path ("A queue not joined to a path"). The other 145 polled rows are counted,
+/// and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -26,6 +27,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int ClosePark = 2;
 	/// <summary>Row 62, polled: a park with no ride in it.</summary>
 	internal const int BuildRides = 0x3e;
+	/// <summary>Message 0x71, polled: the line about a queue not joined to a path, scored where a ride's queue is found unjoined (0x0059ef60).</summary>
+	internal const int QueueUnconnected = 0x71;
 	internal const int Opened = 128;
 	internal const int Closed = 129;
 	/// <summary>Message 0x42, posted by a ride's wear (FUN_004df670, 0x004df8be) with the ride as its subject.</summary>
@@ -76,11 +79,13 @@ internal sealed class ParkAdvisorMessages
 	/// <paramref name="ShutSection"/> the Advisor.sam section whose MoreThanThisPercentClosed that share must be over.
 	/// <paramref name="OpenWithAtLeast"/> is row 259's (0x005a02f0): the key of the least number of its things that
 	/// must stand, in a park whose door is open, for the share to be asked at all; null where neither is asked.
+	/// <paramref name="QueueNotJoined"/> is the score of row 113 (0x0059ef60): the key's value where the park
+	/// holds a ride whose queue is not joined to a path, and nought otherwise.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
 		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
-		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null );
+		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false );
 
 	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0) or the toilets (0x005a0430).</summary>
 	internal enum Shut
@@ -99,10 +104,12 @@ internal sealed class ParkAdvisorMessages
 	/// read: the things of a shop's item (FUN_004ca8e0 asked for kind 1) and the toilets (FUN_004c9ee0, an object's
 	/// +0x32 &amp; 1), and how many of the shops, the sideshows and the toilets are shut (FUN_004ca9b0 and
 	/// FUN_004c9f90: mCanLoad nought); and what row 259's reads: how many of the rides are shut (FUN_004ca9b0
-	/// asked for kind 0).
+	/// asked for kind 0); and what row 113's reads: the thing FUN_004ccb00 answers, a ride whose queue is not
+	/// joined to a path, nought for none.
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
-		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0 )
+		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
+		int UnjoinedQueue = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -176,6 +183,7 @@ internal sealed class ParkAdvisorMessages
 		.. DoorTopics,
 		.. ShutTopics,
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
+		new( QueueUnconnected, "QueueUnconnected.Score", 288, 312, MaxInstances: 255, Group: 135, Polled: true, QueueNotJoined: true ),
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
 		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 70 ),
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
@@ -369,7 +377,8 @@ internal sealed class ParkAdvisorMessages
 	/// are their key's value where any of their things stand and more than the section's
 	/// MoreThanThisPercentClosed per cent of them, in whole numbers, are shut, whatever the park's door, and nought
 	/// otherwise; row 259's (0x005a02f0) is the same of the rides, and nought besides in a shut park or one with
-	/// fewer rides than its section's AtLeastThisManyRides; every other built row's is its key's value.
+	/// fewer rides than its section's AtLeastThisManyRides; row 113's (0x0059ef60) is its key's value where a
+	/// ride's queue is not joined to a path, and nought otherwise; every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
@@ -390,6 +399,9 @@ internal sealed class ParkAdvisorMessages
 			if ( _park?.Invoke() is not { Rides: < 1 } ) return 0;
 			return Value( topic.ScoreKey ) + Value( perDay ) * DaysSinceTheFirstSweep( gameTick );
 		}
+
+		if ( topic.QueueNotJoined )
+			return _park?.Invoke() is { UnjoinedQueue: not 0 } ? Value( topic.ScoreKey ) : 0;
 
 		if ( topic.ShutShare != Shut.None )
 		{
@@ -487,6 +499,7 @@ internal sealed class ParkAdvisorMessages
 			if ( topic.OpenWithAtLeast != null && _park?.Invoke() is { } door ) shut += $" closed={(door.Closed ? 1 : 0)}";
 			if ( topic.NothingToRide && _park?.Invoke() is { } facts ) shut = $" closed={(facts.Closed ? 1 : 0)} rides={facts.Rides} sideshows={facts.Sideshows}";
 			if ( topic.PerDayWithNoRide != null && _park?.Invoke() is { } park ) shut = $" rides={park.Rides}";
+			if ( topic.QueueNotJoined && _park?.Invoke() is { } queues ) shut = $" unjoined={queues.UnjoinedQueue}";
 			Log.Info( $"Park advisor: poll message={topic.Id} row={row} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}{shut}" );
 		}
 
