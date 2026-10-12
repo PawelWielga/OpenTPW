@@ -85,6 +85,65 @@ public class ParkFileWriterTests
 		Assert.AreEqual( 175.007f, saved.PointZ, 0.001f );
 	}
 
+	/// <summary>
+	/// The shipped park's advisor, thing 3: he has said message 0xb9 on tick 257, been cut off once saying 0xbd,
+	/// and never said the mechanic's line; he keeps 351 records and no more.
+	/// </summary>
+	[TestMethod]
+	public void TheShippedParksAdvisorRecordsAreRead()
+	{
+		Assert.IsTrue( shipped.AdvisorAt > 0 );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 257, 0, true, 0 ), shipped.AdvisorHistoryOf( 0xb9 ) );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 55, 0, false, 1 ), shipped.AdvisorHistoryOf( 0xbd ) );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 16, 0, true, 0 ), shipped.AdvisorHistoryOf( 0x143 ) );
+		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, shipped.AdvisorHistoryOf( 0x46 ) );
+		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, shipped.AdvisorHistoryOf( 350 ) );
+		Assert.IsNull( shipped.AdvisorHistoryOf( 351 ) );
+		Assert.IsNull( shipped.AdvisorHistoryOf( -1 ) );
+		Assert.AreEqual( 345, Enumerable.Range( 0, ParkWorld.AdvisorMessages ).Count( id => shipped.AdvisorHistoryOf( id ) == ParkWorld.AdvisorHistory.Fresh ) );
+	}
+
+	/// <summary>
+	/// The advisor's records named are written over the file's and read back; the three bytes after a said byte,
+	/// every record not named and the rest of his thing stay the file's; a message he keeps no record of is
+	/// written nowhere; with none handed over the file's own stand.
+	/// </summary>
+	[TestMethod]
+	public void TheAdvisorsRecordsAreWrittenOverTheFilesOwn()
+	{
+		var histories = new Dictionary<int, ParkWorld.AdvisorHistory>
+		{
+			[0x46] = new( 880, 1, true, 0 ),
+			[0x11c] = new( 911, 0, false, 2 ),
+			[0xb9] = ParkWorld.AdvisorHistory.Fresh,
+			[351] = new( 7, 7, true, 7 ),
+			[-1] = new( 7, 7, true, 7 )
+		};
+		var written = Read( ParkFileWriter.Write( shipped, Played with { AdvisorHistories = histories } ) );
+		var plain = Read( ParkFileWriter.Write( shipped, Played ) );
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 880, 1, true, 0 ), written.AdvisorHistoryOf( 0x46 ) );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, false, 2 ), written.AdvisorHistoryOf( 0x11c ) );
+		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written.AdvisorHistoryOf( 0xb9 ) );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 55, 0, false, 1 ), written.AdvisorHistoryOf( 0xbd ) );
+		Assert.AreEqual( shipped.AdvisorHistoryOf( 0xb9 ), plain.AdvisorHistoryOf( 0xb9 ) );
+		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, plain.AdvisorHistoryOf( 0x46 ) );
+
+		Assert.AreEqual( plain.AdvisorAt, written.AdvisorAt );
+		var mine = Inflate( ParkFileWriter.Write( shipped, Played with { AdvisorHistories = histories } ) );
+		var theirs = Inflate( ParkFileWriter.Write( shipped, Played ) );
+		Assert.AreEqual( theirs.Length, mine.Length );
+		int At( int message ) => written.AdvisorAt + 0xcc + (16 * message);
+		var named = new[] { 0x46, 0x11c, 0xb9 };
+		var differing = Enumerable.Range( 0, mine.Length ).Where( i => mine[i] != theirs[i] ).ToList();
+		Assert.IsTrue( differing.Count > 0 );
+		Assert.IsTrue( differing.All( i => named.Any( id => i >= At( id ) && i < At( id ) + 16 && (i - At( id )) is not (9 or 10 or 11) ) ),
+			"only the named records' four fields change" );
+		CollectionAssert.AreEqual( new byte[] { 0x70, 0x03, 0, 0, 1, 0, 0, 0, 1, 0xcd, 0xcd, 0xcd, 0, 0, 0, 0 }, mine[At( 0x46 )..(At( 0x46 ) + 16)] );
+		CollectionAssert.AreEqual( new byte[] { 0x8f, 0x03, 0, 0, 0, 0, 0, 0, 0, 0xcd, 0xcd, 0xcd, 2, 0, 0, 0 }, mine[At( 0x11c )..(At( 0x11c ) + 16)] );
+	}
+
 	[TestMethod]
 	public void AWrittenParkReadsBackWithTheRunningParksNumbers()
 	{

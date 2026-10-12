@@ -44,12 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q313. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q314. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q312 (`advisor-park.md`, "The line of an opened tag message"): the said byte and the cuts are the
-  running park's, from nought at every entry, where the original's are the advisor's records in the park file
-  (the saved histories are not read); the kept message (`+0x16d0`, raised again by `FUN_0059ab50` from
+  From Q313 (`advisor-park.md`, "The records in a park file"): the advisor's eight slots, his last action's
+  start and length and the kept message are carried as the file's, where in the thing's record they lie is not
+  read, so a message waiting at a save is not written and none is taken up at a load; the 204 bytes before the
+  records and the 26 after are not described. In no game run: a rotation or a cooldown carried across a load,
+  a file with cuts, Alexah's own parks. The two calls in `Level` are held by the game runs alone.
+  From Q312 (`advisor-park.md`, "The line of an opened tag message"): the kept message (`+0x16d0`, raised again by `FUN_0059ab50` from
   `FUN_00488ba0`) is not built and who sets its byte `+0x16e4` is not read; the other 39 screens' lines
   (`0xbc` to `0xd5`, `0x11d` to `0x135`) are not posted; whether the original's advisor cries out when a
   withdrawal cuts him off was not heard (ours does, `Advisor.StopSpeaking`). In no game run: a second tag

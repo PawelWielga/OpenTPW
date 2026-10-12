@@ -290,8 +290,9 @@ public class Level
 
 		if ( park?.Save?.Tags.Problem is { } unread )
 			Log.Warning( $"{ThemeName}: the file's aerial tags did not read - {unread}" );
-		// Saved advisor histories are not restored yet; fresh histories follow FUN_00599e70.
-		if ( park?.Save != null ) Unimplemented.Report( "PARK_ADVISOR_SAVED_HISTORY" );
+		// The advisor's records of the built messages are the file's; a park made fresh keeps FUN_00599e70's.
+		if ( park?.Save is { } advised )
+			Log.Info( $"{ThemeName}: {ParkState.AdvisorMessages.Restore( advised.AdvisorHistoryOf )} of the advisor's built messages have a record in the file" );
 		load.Mark( "park state" );
 
 		Research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue );
@@ -654,7 +655,8 @@ public class Level
 			WrittenEffects( loaded, state, written.Contains, asTheFile: things == null ),
 			written.Contains( state.MechanicCursor ) ? state.MechanicCursor : 0,
 			// The aerial's tags end the file (FUN_0048ee50). A file whose own block did not read keeps its bytes.
-			loaded.Tags.Problem == null ? state.Tags.Written() : null );
+			loaded.Tags.Problem == null ? state.Tags.Written() : null,
+			state.AdvisorMessages?.Written() );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;
@@ -672,6 +674,12 @@ public class Level
 
 		if ( SaveFolder.WritePark( player.Slot, player.Name, theme, name, file ) is not { } path )
 			return null;
+
+		foreach ( var (message, history) in running.AdvisorHistories ?? new Dictionary<int, ParkWorld.AdvisorHistory>() )
+		{
+			if ( history != ParkWorld.AdvisorHistory.Fresh )
+				Log.Info( $"Save: advisor message {message} written: line {history.Line} lastTick {history.LastTick} said {(history.Said ? 1 : 0)} slaps {history.Slaps}" );
+		}
 
 		foreach ( var tag in running.Tags ?? [] )
 			Log.Info( $"Save: aerial tag {tag.Id} written: thing {tag.Thing} item {tag.Item} life {tag.Life} picture {tag.Picture} "

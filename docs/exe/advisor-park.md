@@ -369,7 +369,7 @@ Fresh Ghidra follow-up in the same private, identity-checked Q90 project resolve
 The per-message cooldown reads the incremented `ParkState.GameTick`, shifted by two. The response wait
 reads one `GameClock.Now` instant for all catch-up sweeps in a frame. That clock inherits OpenTPW's
 existing clamped-frame timing deviation; it is not the synthetic tick number multiplied by 31 ms.
-Saved advisor histories remain unbuilt and loads count `PARK_ADVISOR_SAVED_HISTORY`. Other posted park
+A park file's records are read at a load ("The records in a park file", below). Other posted park
 messages, the analyser and withdrawal/slap paths are outside Q90b; no claim of a complete park advisor.
 
 Evidence is in `~/.cache/tpw-harnesses/q90b/`; fresh executable queries remain in `q90/q90b-*.txt`.
@@ -403,10 +403,9 @@ replacement, waits and real catch-up ticking. All 14 restored defects fail (`mut
 Independent applied-code review found the extra end-clip duration and catch-up-clock errors; both
 were corrected and their restored defects fail. `SimulationClockScope` isolates the new tick tests.
 
-Not confirmed on screen: saved advisor histories, full-slot eviction, the exact cooldown boundary,
+Not confirmed on screen: full-slot eviction, the exact cooldown boundary,
 rotation back to line 0, and zero playback-return consumption. Those applicable to the new path are
-regression-tested; the actual busy/disabled speaker guards are code-reviewed only, and saved histories
-remain counted. The first score-26 capture was partial because
+regression-tested; the actual busy/disabled speaker guards are code-reviewed only. The first score-26 capture was partial because
 its harness deadline was too short for the cooldown step; the completed final run replaces that proof.
 
 ## A ride about to break down (message `0x42`, Q305)
@@ -839,9 +838,51 @@ attempt. Main's build named message 284 nowhere and counted `TAG_MESSAGE_BAR_ADV
 
 | | The original | OpenTPW |
 |---|---|---|
-| The said byte and the cuts | the advisor thing's records, in the park file | the running park's, from nought at every entry: said once a visit (the saved histories are not read) |
+| The said byte and the cuts | the advisor thing's records, in the park file | the same, for the built messages ("The records in a park file") |
 | The kept message (`+0x16d0`, `FUN_0059ab50`) | forgotten by a withdrawal of its id | kept by nothing here |
 | The Tutorial option | read at each post | the same; the console's `tutorial on|off` sets it in memory |
 | The cut | `Advisor_StopSpeaking` | the same call (`Advisor.StopSpeaking`), with its cry where his voice had started |
 | The other 39 screens' lines (`0xbc` to `0xd5`, `0x11d` to `0x135`) | posted as each opens | not posted (`UI.ParkLines`) |
 
+## The records in a park file (Q313)
+
+The advisor is a thing: `FUN_005156a0` (`0x00515920`) allocates `0x16f0` bytes, constructs it with `FUN_00599e70`
+and keeps its id at the world's `+0x1da71c`, which `FUN_005194d0` answers. So every message's record ("The
+per-message record", above) is written with the thing and read back with it, and what he has said, the line he is
+on, the tick and the cuts all last across a save. In a park file he is thing 3, model 11, 5,846 bytes, and message
+`id`'s record is at the thing record's `+0xcc + id * 0x10`, memory's `+0xe0` (FileFormats `saves.md`, "The advisor
+(model 11)"): 6,318 records in eighteen stored files of the original, none odd (`lib/parkfile.py -a`).
+`q257x/orig/broken-by-the-original.TPWS`, saved by the original after its mechanic's line, holds `0x46` as
+(1815, line 0, said 1, slaps 0); Alexah's Lost Kingdom park holds `0x11c` as said 0, slaps 3: cut off three times
+and never to be said again there.
+
+### OpenTPW (`ParkWorld.AdvisorHistoryOf`, `PutAdvisorHistories`; `ParkAdvisorMessages.Restore`, `Written`)
+
+A load hands each built message's record to the park's messages (`Level`, logged `Park advisor: restored
+message=...`), and `savepark` writes the seven built messages' records over the file's, the three bytes after a
+said byte and every other message's record left the file's. `PARK_ADVISOR_SAVED_HISTORY` is gone.
+
+`q313/confirm.py fix|control`, predicted first, four of four twice and the control one of one twice: the stock
+park's Bounce broken, the mechanic's line said on tick 880 and the tag's line on 911, the bar folded, `savepark`.
+The save logged `advisor message 70 written: line 0 lastTick 880 said 1 slaps 0` and `advisor message 284 written:
+line 0 lastTick 911 said 1 slaps 0`; the file's thing 3 held those two records and every other byte of its 5,846
+was the shipped file's. Loaded from the Load Park list: `restored message=70 line=0 lastTick=880 said=1 slaps=0`,
+the same for 284, `advisor` reading both, and the tag clicked 23 s on logged `post message=284 ...
+result=said-once` with the bar out and nobody beside it. Main's build wrote both records fresh, counted
+`PARK_ADVISOR_SAVED_HISTORY`, and after its load said the line again, the advisor up beside the bar
+(`q313/ours-side-by-side.png`).
+
+**The original, given that file** (`q313/orig/run.sh`, predicted first, two of two): `advisor.py`'s one line in
+90 s read `'0x11c': (911, 0, 1, 0), '0x46': (880, 0, 1, 0)` from the load on; the tag clicked 27 s on put the bar
+out, no slot ever held `0x11c` and no advisor came up (`orig/fix-clicked.png`). Its control is Q312's run a, a file
+with no record of `0x11c`: a slot held it at the click and he said it.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The records of the seven built messages | read and written with the thing | the same |
+| The other 344 records | the same | carried: the file's own bytes are written back |
+| The eight slots, the last action's start and length, the kept message | written with the thing | carried as the file's; a message waiting in a slot at a save is not written, and none is taken up at a load (where the slots lie in the file is not read) |
+| A park made with no file | the constructor's | the same |
+
+Not in a game run: a rotation carried across a load (the test holds line 1 after the file's 0), the cooldown from a
+file's tick, a file with cuts, Alexah's own parks. The two calls in `Level` are held by the game runs alone.

@@ -1166,7 +1166,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		[8] = 509,   // researcher
 		[9] = 103,   // the strike system
 		[10] = 18,   // the mechanics' HQ
-		[11] = 5846,
+		[11] = 5846,  // the advisor
 		[12] = 16,
 		[13] = 73544,
 		[14] = 4190,
@@ -2039,6 +2039,8 @@ public sealed partial class ParkWorld : IParkInitialState
 				MechanicHqAt = start;
 				MechanicCursor = ReadUInt16At( start + MechanicHqNextObjectAt );   // mNextObject
 			}
+			else if ( model == AdvisorModel )
+				AdvisorAt = start;
 
 			_things.Add( new( id, model ) );
 			_records.Add( new( id, model, start, size ) );
@@ -2579,6 +2581,69 @@ public sealed partial class ParkWorld : IParkInitialState
 
 		System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(
 			body.AsSpan( MechanicHqAt + MechanicHqNextObjectAt, 2 ), unchecked((ushort)cursor) );
+	}
+
+	/// <summary>
+	/// One message's record in the advisor thing, sixteen bytes: the <c>mGameTick</c> he last said it on, the line
+	/// he said (-1 before any), whether it has been said, and how often a withdrawal has cut him off saying it
+	/// (the gate's <c>FUN_0059abc0</c> reads all four; <c>docs/exe/advisor-park.md</c>, "The records in a park file").
+	/// </summary>
+	public readonly record struct AdvisorHistory( int LastTick, int Line, bool Said, int Slaps )
+	{
+		/// <summary>A record as the constructor leaves it (<c>FUN_00599e70</c>).</summary>
+		public static readonly AdvisorHistory Fresh = new( 0, -1, false, 0 );
+	}
+
+	/// <summary>The model number of the advisor - thing 3 in every park file, which the header does not name.</summary>
+	private const int AdvisorModel = 11;
+
+	/// <summary>Where the first message's record sits in the advisor's record; each is sixteen bytes.</summary>
+	private const int AdvisorHistoriesAt = 0xcc;
+
+	/// <summary>How many messages the advisor keeps a record of (the metadata table's rows, <c>0x0076e300</c>).</summary>
+	public const int AdvisorMessages = 351;
+
+	/// <summary>Where the advisor's record lies in the body, or -1 with none.</summary>
+	public int AdvisorAt { get; private set; } = -1;
+
+	/// <summary>
+	/// The advisor's record of <paramref name="message"/> as the file holds it; null where the file holds no
+	/// advisor or the advisor no such message.
+	/// </summary>
+	public AdvisorHistory? AdvisorHistoryOf( int message )
+	{
+		if ( AdvisorAt < 0 || message < 0 || message >= AdvisorMessages )
+			return null;
+
+		var at = AdvisorAt + AdvisorHistoriesAt + (16 * message);
+		return new AdvisorHistory( ReadInt32At( at ), ReadInt32At( at + 4 ), ReadByteAt( at + 8 ) != 0, ReadInt32At( at + 12 ) );
+	}
+
+	/// <summary>
+	/// Writes the advisor's records of the messages named over the file's in <paramref name="body"/>, a copy of
+	/// this park's own: the tick, the line, the said byte (the three bytes after it are left the file's, as the
+	/// original leaves them unwritten) and the cuts. A park with no advisor, and a message he keeps no record of,
+	/// are left alone.
+	/// </summary>
+	public void PutAdvisorHistories( byte[] body, IReadOnlyDictionary<int, AdvisorHistory> histories )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+		ArgumentNullException.ThrowIfNull( histories );
+
+		if ( AdvisorAt < 0 )
+			return;
+
+		foreach ( var (message, history) in histories )
+		{
+			if ( message < 0 || message >= AdvisorMessages )
+				continue;
+
+			var at = AdvisorAt + AdvisorHistoriesAt + (16 * message);
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( at, 4 ), history.LastTick );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( at + 4, 4 ), history.Line );
+			body[at + 8] = (byte)(history.Said ? 1 : 0);
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( at + 12, 4 ), history.Slaps );
+		}
 	}
 
 	/// <summary>The model number of the staff HQ - see <see cref="StaffHqState"/>.</summary>

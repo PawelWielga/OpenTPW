@@ -55,14 +55,16 @@ public static class ParkFileWriter
 	/// <see cref="MechanicCursor"/> is the object the mechanics' search last began on
 	/// (<see cref="ParkWorld.PutMechanicCursor"/>); the file's where it is null.
 	/// <see cref="Tags"/> is the tags standing on the gadget's aerial (<see cref="ParkTagRecords.Put"/>); the file's
-	/// where it is null.
+	/// where it is null. <see cref="AdvisorHistories"/> is the advisor's records of the messages named
+	/// (<see cref="ParkWorld.PutAdvisorHistories"/>); every other message's, and all of them where it is null, are the file's.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
 		IReadOnlyList<ParkWorld.WrittenPerson>? People = null, ParkWorld.WrittenStaffPool? StaffPool = null,
 		ArrivalTimer? Arrival = null, RunningThings? Things = null, IReadOnlyList<ParkWorld.WrittenSprite>? LetGo = null,
 		IReadOnlyList<short>? Effects = null, int? MechanicCursor = null,
-		IReadOnlyList<ParkTagRecords.Record>? Tags = null );
+		IReadOnlyList<ParkTagRecords.Record>? Tags = null,
+		IReadOnlyDictionary<int, ParkWorld.AdvisorHistory>? AdvisorHistories = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -218,6 +220,9 @@ public static class ParkFileWriter
 
 		if ( running.MechanicCursor is { } cursor )
 			loaded.PutMechanicCursor( body, cursor );
+
+		if ( running.AdvisorHistories is { } histories )
+			loaded.PutAdvisorHistories( body, histories );
 
 		things = null;
 

@@ -24,6 +24,55 @@ public class ParkAdvisorMessageTests
 		settings.Entries[index] = new SettingsPair( key, value.ToString() );
 	}
 
+	/// <summary>
+	/// A park file's records are the advisor's own from the load on: a tutorial line said is not said again, one
+	/// cut off three times is discarded, a line said inside its cooldown is refused and after it the next line
+	/// of the rotation is said; a message the file has no record of keeps the constructor's; and the records are
+	/// handed back to a save as they stand.
+	/// </summary>
+	[TestMethod]
+	public void AParkFilesRecordsAreTheAdvisorsOwn()
+	{
+		var saved = new Dictionary<int, ParkWorld.AdvisorHistory>
+		{
+			[ParkAdvisorMessages.TagMessage] = new( 911, 0, true, 0 ),
+			[ParkAdvisorMessages.MechanicOnHisWay] = new( 880, 0, true, 0 ),
+			[ParkAdvisorMessages.RideWornOut] = new( 0, -1, false, 0 ),
+			[ParkAdvisorMessages.Opened] = new( 0, 1, false, 0 )
+		};
+		var messages = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( 3, messages.Restore( id => saved.TryGetValue( id, out var record ) ? record : null ) );
+		StringAssert.Contains( messages.Census(), "message=284/score=1000/line=0/lastTick=911/said=1/slaps=0" );
+		StringAssert.Contains( messages.Census(), "message=70/score=110/line=0/lastTick=880/said=1/slaps=0" );
+		StringAssert.Contains( messages.Census(), "message=128/score=26/line=1/lastTick=0/said=0/slaps=0" );
+		StringAssert.Contains( messages.Census(), "message=129/score=26/line=-1/lastTick=0/said=0/slaps=0" );
+
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.TagMessage, 1079 ), "said once, in the file" );
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 880 + 476, 13 ), "inside the 120 fours of sweeps" );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 880 + 480, 13 ) );
+		var said = new List<(int, int)>();
+		messages.Tick( 1360, 0, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		CollectionAssert.AreEqual( new[] { (205, 203) }, said, "the line after the file's" );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.Opened, 1400 ) );
+		messages.Tick( 1400, 100000, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
+
+		var written = messages.Written();
+		Assert.AreEqual( 7, written.Count );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
+		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
+
+		var cut = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( 1, cut.Restore( id => id == ParkAdvisorMessages.TagMessage ? new ParkWorld.AdvisorHistory( 16604, 0, false, 3 ) : null ) );
+		Assert.IsFalse( cut.Post( ParkAdvisorMessages.TagMessage, 19004 ), "cut off three times, in the file" );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 16604, 0, false, 3 ), cut.Written()[ParkAdvisorMessages.TagMessage] );
+
+		var fresh = new ParkAdvisorMessages( Settings() );
+		Assert.AreEqual( 0, fresh.Restore( _ => null ) );
+		Assert.IsTrue( fresh.Post( ParkAdvisorMessages.TagMessage, 1079 ) );
+	}
+
 	[TestMethod]
 	public void StockDoorPostsBothMessagesButSpeaksNeitherAndRetainsSlots()
 	{

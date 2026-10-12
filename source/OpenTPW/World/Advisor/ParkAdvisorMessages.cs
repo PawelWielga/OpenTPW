@@ -103,6 +103,34 @@ internal sealed class ParkAdvisorMessages
 		_histories = _topics.Keys.ToDictionary( id => id, _ => new History() );
 	}
 
+	/// <summary>
+	/// Takes each built message's record from a park file's advisor (<paramref name="saved"/> answers null for
+	/// one the file does not hold, which stays as it is), as the original's advisor is read back whole with its
+	/// thing. Says how many records were taken that the constructor would not have left.
+	/// </summary>
+	internal int Restore( Func<int, ParkWorld.AdvisorHistory?> saved )
+	{
+		var taken = 0;
+		foreach ( var (id, history) in _histories )
+		{
+			if ( saved( id ) is not { } record ) continue;
+			history.LastTick = record.LastTick;
+			history.Line = record.Line;
+			history.Said = record.Said;
+			history.Slaps = record.Slaps;
+			if ( record == ParkWorld.AdvisorHistory.Fresh ) continue;
+			++taken;
+			Log.Info( $"Park advisor: restored message={id} line={record.Line} lastTick={record.LastTick} said={(record.Said ? 1 : 0)} slaps={record.Slaps}" );
+		}
+
+		return taken;
+	}
+
+	/// <summary>Each built message's record as a park file's advisor holds it (<see cref="ParkWorld.PutAdvisorHistories"/>).</summary>
+	internal IReadOnlyDictionary<int, ParkWorld.AdvisorHistory> Written()
+		=> _histories.ToDictionary( pair => pair.Key,
+			pair => new ParkWorld.AdvisorHistory( pair.Value.LastTick, pair.Value.Line, pair.Value.Said, pair.Value.Slaps ) );
+
 	// Missing or malformed settings are installation errors, not permission to invent scores.
 	private int Value( string key ) => int.Parse( _settings[key], CultureInfo.InvariantCulture );
 

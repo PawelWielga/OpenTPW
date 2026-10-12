@@ -3093,6 +3093,14 @@ made to ask for the cheats' tag as well (`q310/mutations.py`, `mutate.out`, `mut
 original's own file and the Hot Pot were run again on that build (`run-fix2`, `run-theirs2`, `run-pot2`).
 `docs/exe/addresses.md` not regenerated.
 
+### OpenTPW's writer, the advisor's records
+
+**Q313: the advisor's records of the seven built messages are written over the file's, and a load reads them
+back.** The layout, the runs here and the original's load of the file are `advisor-park.md`, "The records in a
+park file"; the bytes are FileFormats `saves.md`, "The advisor (model 11)". `ParkFileWriter.Running.AdvisorHistories`
+names the records; `ParkWorld.PutAdvisorHistories` writes a record's tick, line, said byte and cuts where the
+thing lies, before any record of the body moves. Everything else of the thing is the file's.
+
 ## What OpenTPW builds
 
 | Piece | File |

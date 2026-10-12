@@ -6197,6 +6197,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `result=slapped`; `tutorial off`, `result=tutorial-off`; main's build names message 284 nowhere. Bugs put
   back: 43, all fail a test (42 of 44 the first round; one test tightened, one bug the same program but for a
   log line). Tests 2995. I split the item: every other piece of the old Q312 is Q313.
+- [x] **Q313. What the advisor has said is kept in the park's file.** Done 2026-10-12.
+  The advisor is a thing (`FUN_005156a0`: `0x16f0` bytes, constructed by `FUN_00599e70`, its id at the world's
+  `+0x1da71c`), so every message's record is written and read with it: thing 3, model 11, the record of message
+  `id` at `+0xcc + id * 0x10`, the tick, the line, the said byte and the cuts; 6,318 records in eighteen stored
+  files of the original, none odd (`exe/advisor-park.md`, "The records in a park file"; FileFormats `saves.md`,
+  "The advisor (model 11)"). Built: `ParkWorld.AdvisorHistory`, `AdvisorHistoryOf`, `PutAdvisorHistories`,
+  `ParkFileWriter.Running.AdvisorHistories`, `ParkAdvisorMessages.Restore` and `Written`; `Level` reads them at
+  a load and hands them to `savepark`. `PARK_ADVISOR_SAVED_HISTORY` is gone. Confirmed, predicted first
+  (`q313/confirm.py fix|control`, four of four twice, the control one of one twice): the tag's line said on tick
+  911, saved, loaded from the Load Park list: `restored message=284 line=0 lastTick=911 said=1 slaps=0`, the
+  tag's click `result=said-once`, the bar out and nobody beside it, where main's build said it again
+  (`ours-side-by-side.png`). The original, given that file (`orig/run.sh`, two of two): its record read
+  `(911, 0, 1, 0)` from the load, and the tag's click put the bar out with no slot holding `0x11c` and no
+  advisor. Bugs put back: 39 of 39 fail a test (`q313/mutations.py`; one run again in a form that compiles). Tests: 2998 with the game. I split the item: its other pieces are Q314.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
