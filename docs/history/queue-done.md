@@ -6266,7 +6266,7 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   main's build had him up saying sample 377 and refused it; the stock file with the record made fresh logged the
   post and `attempt=1 message=185 ... response=404 sample=377 line=0 tick=866`, him up
   (`run-fresh3/1-saying-it.png`), the saved file's record `(866, 0, 1, 0)` and its action playing 185, and after
-  its load `result=said-once`. The miss: the line's length, 19 to 21 s where under 18.5 was predicted. The
+  its load `result=said-once`. The first round failed on the line's length (19 to 21 s where under 18.5 was predicted) and wrote the original's tick only after its cursor was read; a second round, every number written before either run, held: this game four of four (`run-fresh4`, tick 866, 18,998 ms), the original on tick 877 as predicted (`orig/run3.sh`). The
   original (`orig/run.sh`): its stock park's record `(257, 0, 1, 0)` and no slot for 85 s; the fresh-record file
   said on tick 877 where 878 was predicted from its cursor; this game's file read `(866, 0, 1, 0)` and stayed
   silent. Bugs put back (`mutations.py`, 39): all fail a test, five of them after the tests were fixed (the last,

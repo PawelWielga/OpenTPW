@@ -1104,6 +1104,15 @@ here (`run-fresh3/1-saying-it.png`).
 | The cursor through a load | read 160 and then 277 across one load, 186 and 186 across another, and the line came on tick 877 after both loads of the fresh-record file: not read | carried as it stands |
 | The line's wait | the response's length and a second | the same; the length differs a run, as the gesture chain does |
 
+**The second round** (`q316/PREDICTION.txt`, written before either run, every number fixed beforehand). The first
+round failed twice as a prediction: the line's length was guessed at 15,400 to 18,500 ms and read 18,998 to
+20,665, and the original's tick was written only once its cursor had been read. So both were predicted again
+from the first round's readings and run again. This game (`run-fresh4`, four of four): the post and the attempt
+on tick 866, the length 18,998 inside the 18,000 to 21,500 predicted, the file's record `(866, 0, 1, 0)`, and
+said-once after its load. The original (`orig/run3.sh`, a fresh program started on the fresh-record file and
+loading it again): the record read `(877, 0, 1, 0)`, the tick predicted, 31.05 s after the click, and the wait
+19,164 ms inside the 19,000 to 22,500 predicted.
+
 Not in a game run: the cutoff (a park past tick 1382), the Tutorial option off at the poll, the line cut off, a
 line found by the poll inside another's wait (the tests hold each); a park made with no file was run once and not
 predicted. Not heard in either game.
