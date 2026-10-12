@@ -44,9 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q325. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q326. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q325 (`advisor-park.md`, "A shut staff room"): a staff room's own window is not built (the original's,
+  `FUN_004b4fc0`, has no door); response 513's lip file 0 is not read; **what a shut staff room does to a
+  tired member of staff was not looked for in either game** (here `GoAndRest` does not ask `CanLoad`; load
+  `q325/room-shut.TPWS` in the original with a member's rest low and watch). Thirteen other responses name
+  `z_error.mp2` (0, 429, 517 to 519, 550, 572, 573, 588 to 591, 599): their rows are not read. In no game run:
+  a share between nought and the whole, the line again past its cooldown (the test holds each), a staff room
+  bought, Full Simulation. The original's sound was not measured; neither game was heard by ear.
   From Q324 (`advisor-park.md`, "A queue not joined to a path"): **the object the line passes over is not the
   original's**: here the thing the queue tool is armed for, there the builder's object `DAT_008186ac`, set from
   the interface's selected thing too (`FUN_005276d0`, nineteen callers not read) and perhaps kept after the
@@ -54,9 +61,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   113. What reads the balance object's `+4` is not found. In no game run: line 2, the line said again past its
   cooldown (the test holds each), a queue cut off from an open ride, two rides unjoined, the tag's button
   clicked in the original, the line posted while he speaks, Full Simulation. Not heard in either game.
-  From Q323 (`advisor-park.md`, "An open park's shut rides"): Row 263 (`0x005a0490`, `StaffroomClosed`: 25 per
-  cent, 90) is still not built.
-  In no game run: row 259's second and third lines, the line said again past its cooldown (the test holds
+  From Q323 (`advisor-park.md`, "An open park's shut rides"): in no game run: row 259's second and third lines, the line said again past its cooldown (the test holds
   each), a ride shut from its own window, a share of exactly half, four rides or more, Full Simulation's
   rates. Not heard in either game.
   From Q322 (`advisor-park.md`, "A park with no ride in it"): the buy screen's own line (`0xbc`, posted at 1000
@@ -70,8 +75,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   third lines, the line said again past its cooldown, a tag 4 and a tag 3 taking each other's place, the park
   shut while he speaks (whether anything withdraws message 2 was not looked for), Full Simulation's empty park
   opened, a sale through the player's own window. Not heard in either game.
-  From Q320 (`advisor-park.md`, "Shut shops, sideshows and toilets"): Row 263 (`0x005a0490`: `StaffroomClosed`'s, `FUN_004ca030` and `FUN_004ca0c0` not read)
-  is the same shape as 260 to 262 and not built. The toilets' count's place in the analyser (`+0x1f0e0`) is
+  From Q320 (`advisor-park.md`, "Shut shops, sideshows and toilets"): The toilets' count's place in the analyser (`+0x1f0e0`) is
   not kept. In no game run: a shop, sideshow or toilet shut by itself in an open park (no window shuts a shop
   or a toilet), a share between nought and the whole, each row's second and third lines, a row said again past
   its cooldown, four waiting (row 1 before the toilets'). What the first run did with row 1's slot is not

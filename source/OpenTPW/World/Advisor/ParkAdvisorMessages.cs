@@ -53,6 +53,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int SideshowsClosed = 261;
 	/// <summary>Message 0x106, polled: the line about shut toilets, scored by the share of the toilets that are shut (0x005a0430).</summary>
 	internal const int ToiletsClosed = 262;
+	/// <summary>Message 0x107, polled: the line about shut staff rooms, scored by the share of the staff rooms that are shut (0x005a0490).</summary>
+	internal const int StaffroomClosed = 263;
 
 	/// <summary>The tutorial messages' category (a row's +0x08): MessageGroups[1], refused while the Tutorial option is off (FUN_0059c610).</summary>
 	internal const int Tutorial = 1;
@@ -75,7 +77,7 @@ internal sealed class ParkAdvisorMessages
 	/// no ride and no sideshow, and nought otherwise.
 	/// <paramref name="PerDayWithNoRide"/> makes the score row 62's (0x0059dad0): in a park where no ride stands
 	/// the key's value and this key's for each whole day of the park's age, and nought where one stands.
-	/// <paramref name="ShutShare"/> names the things whose shut share the score of rows 260 to 262 asks, and
+	/// <paramref name="ShutShare"/> names the things whose shut share the score of rows 260 to 263 asks, and
 	/// <paramref name="ShutSection"/> the Advisor.sam section whose MoreThanThisPercentClosed that share must be over.
 	/// <paramref name="OpenWithAtLeast"/> is row 259's (0x005a02f0): the key of the least number of its things that
 	/// must stand, in a park whose door is open, for the share to be asked at all; null where neither is asked.
@@ -87,14 +89,15 @@ internal sealed class ParkAdvisorMessages
 		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
 		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false );
 
-	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0) or the toilets (0x005a0430).</summary>
+	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490).</summary>
 	internal enum Shut
 	{
 		None,
 		Rides,
 		Shops,
 		Sideshows,
-		Toilets
+		Toilets,
+		StaffRooms
 	}
 
 	/// <summary>
@@ -104,12 +107,13 @@ internal sealed class ParkAdvisorMessages
 	/// read: the things of a shop's item (FUN_004ca8e0 asked for kind 1) and the toilets (FUN_004c9ee0, an object's
 	/// +0x32 &amp; 1), and how many of the shops, the sideshows and the toilets are shut (FUN_004ca9b0 and
 	/// FUN_004c9f90: mCanLoad nought); and what row 259's reads: how many of the rides are shut (FUN_004ca9b0
-	/// asked for kind 0); and what row 113's reads: the thing FUN_004ccb00 answers, a ride whose queue is not
+	/// asked for kind 0); and what row 263's reads: the staff rooms (FUN_004ca030, an object's +0x32 &amp; 2) and how
+	/// many of them are shut (FUN_004ca0c0); and what row 113's reads: the thing FUN_004ccb00 answers, a ride whose queue is not
 	/// joined to a path, nought for none.
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
-		int UnjoinedQueue = 0 )
+		int UnjoinedQueue = 0, int StaffRooms = 0, int StaffRoomsShut = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -118,6 +122,7 @@ internal sealed class ParkAdvisorMessages
 			Shut.Shops => (Shops, ShopsShut),
 			Shut.Sideshows => (Sideshows, SideshowsShut),
 			Shut.Toilets => (Toilets, ToiletsShut),
+			Shut.StaffRooms => (StaffRooms, StaffRoomsShut),
 			_ => (0, 0)
 		};
 	}
@@ -176,7 +181,12 @@ internal sealed class ParkAdvisorMessages
 		new( RidesClosed, "RidesClosed.Score", 501, 484, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Rides, ShutSection: "RidesClosed", OpenWithAtLeast: "RidesClosed.AtLeastThisManyRides" ),
 		new( ShopsClosed, "ShopsClosed.Score", 504, 487, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Shops, ShutSection: "ShopsClosed" ),
 		new( SideshowsClosed, "SideshowsClosed.Score", 507, 490, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Sideshows, ShutSection: "SideshowsClosed" ),
-		new( ToiletsClosed, "ToiletsClosed.Score", 510, 493, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Toilets, ShutSection: "ToiletsClosed" )
+		new( ToiletsClosed, "ToiletsClosed.Score", 510, 493, Lines: 3, Prop: TicketHat, Polled: true, ShutShare: Shut.Toilets, ShutSection: "ToiletsClosed" ),
+
+		// Row 263's one response names sample 638, the bank's z_error.mp2, as thirteen other responses do: the line was
+		// never recorded. No screen of the original shuts a staff room, so only a park file can make the row score
+		// (docs/exe/advisor-park.md, "A shut staff room").
+		new( StaffroomClosed, "StaffroomClosed.Score", 513, 638, Lines: 1, Polled: true, ShutShare: Shut.StaffRooms, ShutSection: "StaffroomClosed" )
 	];
 	internal static readonly Topic[] ParkTopics =
 	[
@@ -373,7 +383,7 @@ internal sealed class ParkAdvisorMessages
 	/// that has a ride or a sideshow, and nought otherwise; row 2's (0x0059c960) is its key's value in an open
 	/// park with neither, and nought otherwise; row 62's (0x0059dad0) is its key's value and its per-day key's
 	/// for each whole day of the park's age where no ride stands, whatever the door and the sideshows, and nought
-	/// where one does; rows 260 to 262's (0x005a0370, 0x005a03d0, 0x005a0430)
+	/// where one does; rows 260 to 263's (0x005a0370, 0x005a03d0, 0x005a0430, 0x005a0490)
 	/// are their key's value where any of their things stand and more than the section's
 	/// MoreThanThisPercentClosed per cent of them, in whole numbers, are shut, whatever the park's door, and nought
 	/// otherwise; row 259's (0x005a02f0) is the same of the rides, and nought besides in a shut park or one with

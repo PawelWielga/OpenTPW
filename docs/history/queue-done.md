@@ -6362,6 +6362,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   too and stood the tag at the same rectangle for 30.54 s, and neither game said it with nothing bought.
   `advisor-park.md`, "A queue not joined to a path". Tests 3025.
   I split the item: every other piece of the old Q324 is Q325.
+- [x] **Q325. The advisor speaks of a shut staff room.** Done 2026-10-12: his polled row 263
+  (`StaffroomClosed`; score `0x005a0490`: `Score`, 90, where more than 25 per cent of the things with
+  `+0x32 & 2` have `mCanLoad` nought, whatever the door), one line with no prop and no tag, whose sample, 638,
+  is the speech bank's `z_error.mp2`: the line was never recorded, and no screen of either game shuts a staff
+  room (dead by content), so the scene is the stock file with thing 20's `mCanLoad` nought. `poll message=263
+  row=263 days=39 score=90 threshold=25 tick=902 result=post shut=1/1` and `attempt=1 message=263 ...
+  response=513 sample=638 line=0 tick=902 duration=3998`, him up with his antennae beside a bare mast and the
+  sound in the game's own mix at 0.998; the original, given that file, read its record said on tick 902 too
+  with a wait of 4,998, and neither game said it on the stock file. `advisor-park.md`, "A shut staff room".
+  Tests 3026.
+  I split the item: every other piece of the old Q325 is Q326.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

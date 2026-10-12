@@ -2564,7 +2564,8 @@ public sealed partial class ParkPeople : Entity
 	/// What the advisor's score functions read of the park: the door, the things standing of a ride's item, of a
 	/// sideshow's and of a shop's (FUN_004ca8e0, a thing of type 3 whose item's WhichUIType is the kind asked
 	/// for), the toilets (FUN_004c9ee0, an object's +0x32 &amp; 1), how many of the rides, shops, sideshows and
-	/// toilets are shut (FUN_004ca9b0, FUN_004c9f90: mCanLoad nought), the guests waiting to be let in, and the
+	/// toilets are shut (FUN_004ca9b0, FUN_004c9f90: mCanLoad nought), the staff rooms (FUN_004ca030, an object's
+	/// +0x32 &amp; 2) and those of them shut (FUN_004ca0c0), the guests waiting to be let in, and the
 	/// first thing a guest may choose that has a queue whose back is not joined to a path (FUN_004ccb00 asked
 	/// with nought: an object's +0x32 &amp; 4 and &amp; 8, FUN_004de4a0 nought), the object the builder holds
 	/// passed over (FUN_00527930).
@@ -2578,6 +2579,7 @@ public sealed partial class ParkPeople : Entity
 	{
 		var (rides, sideshows, shops, toilets) = (0, 0, 0, 0);
 		var (ridesShut, shopsShut, sideshowsShut, toiletsShut) = (0, 0, 0, 0);
+		var (staffRooms, staffRoomsShut) = (0, 0);
 		var unjoined = 0;
 
 		foreach ( var thing in State.ObjectsInChainOrder() )
@@ -2592,6 +2594,12 @@ public sealed partial class ParkPeople : Entity
 			{
 				++toilets;
 				toiletsShut += shut;
+			}
+
+			if ( thing.IsRestArea )
+			{
+				++staffRooms;
+				staffRoomsShut += shut;
 			}
 
 			if ( _behaviour.Catalogue is not { } catalogue || !catalogue.TryGet( thing.CatalogueId, out var item ) ) continue;
@@ -2614,7 +2622,7 @@ public sealed partial class ParkPeople : Entity
 		}
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
-			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined );
+			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut );
 	}
 
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:

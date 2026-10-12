@@ -1251,8 +1251,7 @@ want to come in but your park is closed. You should think about opening up."), t
 
 **Rows 259 to 263 are the same shape** (functions made in Ghidra): rows 260 to 262 are read and built ("Shut
 shops, sideshows and toilets", below); row 259 (`0x005a02f0`) is "An open park's shut rides", below;
-row 263 (`0x005a0490`) a share of two other counts (`FUN_004ca030`, `FUN_004ca0c0`, not read; its keys are
-`StaffroomClosed`'s, more than 25 per cent and a score of 90) and is not built.
+row 263 (`0x005a0490`) is "A shut staff room", below.
 
 ### OpenTPW (`ParkAdvisorMessages.OpenPark`, `ParkFacts`, a topic's `PerWaitingGuest`; `ParkPeople.WaitingToOpen`, `AdvisorFacts`; tag row 3; `ParkGadget.BarButton`'s type `0x18`)
 
@@ -1394,9 +1393,9 @@ wait as the third wait ends, and held on the third run and on the original's.
 | Four waiting | row 1 before the toilets' (943, 977, 1021) | not in a run (the tests hold the order by score) |
 | A tag | none | none |
 | Row 259 | scores by the rides | built ("An open park's shut rides") |
-| Row 263 | scores by `StaffroomClosed`'s counts | not built, counted |
+| Row 263 | scores by `StaffroomClosed`'s counts | built ("A shut staff room", below) |
 
-**Not built or not seen.** Row 263. The toilets' count's place in the analyser (`+0x1f0e0`, and the
+**Not built or not seen.** The toilets' count's place in the analyser (`+0x1f0e0`, and the
 `FUN_0041a960` it is handed to) is not kept. In no game run: a shop, a sideshow or a toilet shut by itself in an
 open park (no window shuts a shop or a toilet here: the tests hold the score), a share between nought and the
 whole, each row's second and third lines, a row said again past its 120 quarter-ticks, four waiting in this game.
@@ -1732,3 +1731,85 @@ then held back. What reads the balance object's `+4`. In no game run: line 2 (sa
 turn), the line said again past its 120 quarter-ticks (the test holds it), a queue cut off from an open ride
 (`ride-operation.md`: the ride stays open), two rides unjoined, the tag's button clicked in the original, the
 line posted while he speaks (255 copies), Full Simulation. Not heard in either game.
+
+## A shut staff room (message `0x107`, Q325)
+
+**Row 263:** polled, category 0, either game mode, one copy, **one line**. Its response is 513: the random
+gesture chain, model slot 0, props 0 and 0, group 383, so no hat and no tag, and lip file 0 where a spoken line's
+is its sample's number. **Its sample is 638, the speech bank's `z_error.mp2`**: 0.435 s at an rms of 0.47 and a
+peak of full scale, where a spoken line's rms is 0.12 to 0.14. It is the bank's stand-in for a line never
+recorded, and fourteen responses name it: 0, 429, 513, 517 to 519, 550, 572, 573, 588 to 591 and 599 (the
+samples after it, 639 to 641, are his three cries). From the shipped park's cursor, 277, the row's turns are tick
+902, the one after row 262's, and every 155 on.
+
+**Its score** (`0x005a0490`; `ECX` the balance object):
+
+1. the staff rooms standing are `FUN_004ca030`: things of type 3 with `+0x32 & 2`; nought with none;
+2. those of them shut are `FUN_004ca0c0`: the same things for which `FUN_004e0440` answers, `mCanLoad` nought;
+3. `shut * 100 / standing`, a whole number (`IDIV`), must be more than `[ECX + 0x5a0]`,
+   `StaffroomClosed.MoreThanThisPercentClosed`, 25 (`JLE` to nought);
+4. the score is `[ECX + 0x5a4]`, `StaffroomClosed.Score`, 90. The park's door is not asked.
+
+**Nothing a player does shuts a staff room, so the row is dead by content.** The staff room's window
+(`FUN_004b4fc0`) calls neither the door `FUN_0048ccf0`, whose four callers are the ride's, the shop's, the
+sideshow's and the toilet's windows, nor the mechanic's call `FUN_0048ce50` (the ride's and the toilet's). The
+park's door closes only things with `+0x32 & 4`, and the Staff Room's flags are `0x22`. It is in state 3, never
+offered, so it takes no state-0 turn, breaks down for nobody and asks for no upgrade (`ride-operation.md`, "Where
+an object's state comes from"). The constructor closes only a thing with a queue. That leaves a park file, whose
+`mCanLoad` both games read as written: which fits a line that was never recorded.
+
+### OpenTPW (`ParkAdvisorMessages.StaffroomClosed`, `Shut.StaffRooms`; `ParkFacts.StaffRooms`, `StaffRoomsShut`)
+
+An eleventh polled topic, the last of `ShutTopics`: the same share as rows 260 to 262, of the things
+`ParkWorld`'s `IsRestArea` names. `ParkPeople.AdvisorFacts` counts them and those whose `CanLoad` is nought. Its
+one line plays `z_error.mp2` as the original's does.
+
+**The scene** is a file: the stock `Easymode.TPWI` with one byte changed, thing 20's `mCanLoad` (its record's
+`+214`) from 1 to 0 (`parkfile.thing_set`; `q325/room-shut.TPWS`), loaded from the Load Park list. Its clock
+starts on tick 755.
+
+**This game** (`q325/PREDICTION.txt`, written before any run; `q325/confirm.py fix|control|open`; three desktop
+runs, three, five and six of six). `objects` read thing 20 `state 3 canload 0 ... flags 0x22` and the thirteen
+others `canload 1`; `poll message=263 row=263 days=39 score=90 threshold=25 tick=902 result=post shut=1/1`, the
+post queued and `attempt=1 message=263 subject=0 score=90 threshold=25 response=513 sample=638 line=0 tick=902
+duration=3998` on one tick, the run's only attempt; `Advisor: sample 638 in 0.8s through clips [14, 1, 15]
+(2332ms) ... wearing 0,0`; 1.2 s on `wearing=0,0`, `tags: standing=0`, and him up with his antennae and no hat
+beside a bare mast (`run-fix3/1-room-line.png`); rows 259 to 262 `no-score` on ticks 898 to 901; on tick 1057
+`poll message=263 ... days=45 score=90 ... result=cooldown shut=1/1`. `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` grew
+by 234 between ticks 756 and 1006, the ticks less the sixteen built turns. **The game's own mix** (`AUDIO_FILE`,
+`mixmatch.py`) holds `z_error.mp2` once in each run, matched at 0.998 with a gain of 0.261, 0.6 s after the
+script first read tick 898 or later, where the three seconds before tick 890 match at 0.23. **Main's build**
+(`run-control`, off-screen, the same file): no poll line of 263, no attempt, the count one more. **The stock park
+as shipped** (`run-open`, off-screen): `score=0 ... tick=902 result=no-score shut=0/1`, no attempt.
+
+**The original on the same file** (`q325/orig/run.sh`: `advisor.py ... 0x107 poll`, `tags.py` and `object.py`
+on thing 20, the display grabbed every 1.4 s; six of six, the length on its second prediction). Thing 20 read
+`state 3, canload 0` from the load on and nothing opened it; record `0x107` went from (0, -1, 0, 0) to **(902,
+0, 1, 0) on tick 902**, 37.35 s after the load, with no slot seen holding it; the action's length read 4,998,
+this game's 3,998 and the wait's thousand; no tag in 80 s; he is up with his antennae and no hat beside a bare
+mast 2.3 s after the tick (`orig/a-g29.png`). The same original left running read the record still (902, 0, 1,
+0) on tick 1251, past the row's turn on 1057. **The stock file itself** (`stock.TPWS`; `orig/d-load.log`):
+`canload 1`, and the record unmoved with the log stamped to tick 964.
+
+**The predictions that missed.** The line's length: I wrote 4,998 and 3,332 for this game, taking clip 15 for
+1,666 ms by subtracting an old log's chain from its duration and forgetting the thousand
+`Advisor.ParkResponseDuration` adds; clip 15 is 666 ms and clip 1 1,666, so the chain is 2,332 and the duration
+3,998. Made again before the second run, and before any run of the original, whose 4,998 it then gave. The
+sound's window: first a bound I had no measurement for (the quiet window read 0.31 where I wrote under 0.3), then
+a window opened too late, since the script learns of a tick by a console reply up to a second after it; opened
+from tick 898, it held.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 263 | polled; `StaffroomClosed.Score` where more than a quarter of the staff rooms are shut | the same |
+| The stock park, its Staff Room's `mCanLoad` nought in the file | said on tick 902, line 0, no prop, no tag, a wait of 4,998 | the same, a wait of 4,998 |
+| The stock park as shipped | not said | not said |
+| The line's sound | response 513's sample, 638, `z_error.mp2` (read, not heard) | `z_error.mp2`, in the mix |
+| A staff room shut by the player | no screen does it | no screen does it |
+
+**Not built or not seen.** A staff room's own window is not built, in which the original has no door either.
+The response's lip file 0 is not read: the sample's own number is looked for here and none is found. What a shut
+staff room does to a tired member of staff was not looked for in either game (here `GoAndRest` does not ask
+`CanLoad`). In no game run: a share between nought and the whole (the test holds the bound), the line said again
+past its 120 quarter-ticks (the test holds it; the original stayed silent on tick 1057), a staff room bought,
+Full Simulation. The original's sound was not recorded or measured; neither game was heard by ear.
