@@ -12,7 +12,7 @@ namespace OpenTPW;
 /// "A mechanic on his way", "The line of an opened tag message", "The buy screen's own line" and "The hire
 /// screen's own line".
 /// <para>
-/// Twenty-two messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Twenty-three messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
 /// nothing to ride and a park with no ride; five scored by the share of the park's rides, shops, sideshows,
@@ -22,10 +22,11 @@ namespace OpenTPW;
 /// "Broken rides and no mechanic"); the line about more rides than the mechanics can keep ("More rides than the
 /// mechanics can keep"); the lines about a poor selection of rides, of shops, of sideshows and
 /// of features ("A poor selection of rides", "A poor selection of shops", "A poor selection of sideshows", "A
-/// poor selection of features"); the lines about a park with rides and no shop and one with shops and no
-/// sideshow ("A park with rides and no shop", "A park with shops and no sideshow"); and the lines about too few
+/// poor selection of features"); the lines about a park with rides and no shop, one with shops and no
+/// sideshow and one with sideshows and no feature ("A park with rides and no shop", "A park with shops and no
+/// sideshow", "A park with sideshows and no feature"); and the lines about too few
 /// shops and too few sideshows for the park's size ("Too few shops for the park's size", "Too few sideshows for
-/// the park's size"). The other 133 polled rows are counted, and the other posted messages are unbuilt.
+/// the park's size"). The other 132 polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -51,6 +52,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int BuildShops = 0x49;
 	/// <summary>Message 0x4d, polled: the line about a park with shops and no sideshow, scored by the park's age in days (0x0059e070).</summary>
 	internal const int BuildSideshows = 0x4d;
+	/// <summary>Message 0x51, polled: the line about a park with sideshows and no feature, scored by the park's age in days (0x0059e2e0).</summary>
+	internal const int BuildFeatures = 0x51;
 	/// <summary>Message 0x4e, polled: the line about too few sideshows for the park's size, whose score sets the kinds of ride standing against the kinds of sideshow (0x0059e110).</summary>
 	internal const int BuildMoreSideshows = 0x4e;
 	/// <summary>Message 0x4a, polled: the line about too few shops for the park's size, whose score sets the kinds of shop standing against themselves (0x0059de80).</summary>
@@ -136,6 +139,8 @@ internal sealed class ParkAdvisorMessages
 	/// until <see cref="DaysForObjects"/> days after the newest object was made.
 	/// <paramref name="PerDayWithNoSideshow"/> makes the score row 77's (0x0059e070): row 73's a kind on, in a
 	/// park where a kind of shop stands and no kind of sideshow.
+	/// <paramref name="PerDayWithNoFeature"/> makes the score row 81's (0x0059e2e0): row 77's a kind on, in a
+	/// park where a kind of sideshow stands and no kind of feature.
 	/// <paramref name="ShopsPerRide"/> makes the score row 74's (0x0059de80), and names its section: the key's
 	/// value where a kind of shop stands, <see cref="DaysForObjects"/> days after the newest object was made, the
 	/// kinds of shop standing times the section's ShopsPerRideRatio are more than the kinds of shop standing, and
@@ -151,12 +156,12 @@ internal sealed class ParkAdvisorMessages
 		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false,
 		bool PerWornRideWithNoMechanic = false, bool PerBrokenRideWithNoMechanic = false, string? RidesAMechanic = null,
 		string? PoorSelection = null, Shut PoorOf = Shut.Rides, string? PerDayWithNoShop = null, string? ShopsPerRide = null,
-		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null );
+		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null, string? PerDayWithNoFeature = null );
 
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
 
-	/// <summary>The key of the whole days since the newest object was made that rows 60, 71, 73 to 75 and 77 to 79's scores wait for (the balance object's +0x634).</summary>
+	/// <summary>The key of the whole days since the newest object was made that rows 60, 71, 73 to 75, 77 to 79 and 81's scores wait for (the balance object's +0x634).</summary>
 	internal const string DaysForObjects = "WaitingTimes.DaysForObjects";
 
 	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490); the features are counted shut by none, and are a poor selection's alone (0x0059e1c0).</summary>
@@ -309,6 +314,10 @@ internal sealed class ParkAdvisorMessages
 		new( BuildShops, "ShopsBuildShops.Score", 211, 209, Prop: HardHat, Group: 75, Polled: true, PerDayWithNoShop: "ShopsBuildShops.AdditionalPerDay" ),
 		new( BuildMoreShops, "ShopsBuildMoreShops.Score", 213, 211, Prop: HardHat, Group: 76, Polled: true, ShopsPerRide: "ShopsBuildMoreShops" ),
 		new( BuildSideshows, "SideshowsBuildSideshows.Score", 219, 217, Prop: HardHat, Group: 79, Polled: true, PerDayWithNoSideshow: "SideshowsBuildSideshows.AdditionalPerDay" ),
+
+		// Row 81's one response names the theme's own advisor model and its costume, as row 79's two do: said
+		// bare-headed, the costume counted (docs/exe/advisor-park.md, "A park with sideshows and no feature").
+		new( BuildFeatures, "FeaturesBuildFeatures.Score", 226, 224, Lines: 1, Prop: AdvisorProps.ThemeCostume, Group: 83, Polled: true, PerDayWithNoFeature: "FeaturesBuildFeatures.AdditionalPerDay" ),
 		new( BuildMoreSideshows, "SideshowsBuildMoreSideshows.Score", 221, 219, Prop: HardHat, Group: 80, Polled: true, SideshowsPerRide: "SideshowsBuildMoreSideshows" ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
 		new( QueueUnconnected, "QueueUnconnected.Score", 288, 312, MaxInstances: 255, Group: 135, Polled: true, QueueNotJoined: true ),
@@ -527,7 +536,8 @@ internal sealed class ParkAdvisorMessages
 	/// row 73's (0x0059dde0) is nought where no kind of ride stands, until DaysForObjects days after the newest
 	/// object was made, and where a kind of shop stands, and then its key's value and its per-day key's for each
 	/// whole day of the park's age; row 77's (0x0059e070) is the same a kind on, nought where no kind of shop
-	/// stands and where a kind of sideshow does;
+	/// stands and where a kind of sideshow does, and row 81's (0x0059e2e0) the same a kind on again, nought where
+	/// no kind of sideshow stands and where a kind of feature does;
 	/// row 74's (0x0059de80) is nought where no kind of shop stands and until DaysForObjects days after the newest
 	/// object was made, nought unless the kinds of shop standing times its section's ShopsPerRideRatio are more
 	/// than the kinds of shop standing, which the shipped ratio, 0.15, never is, and nought unless the bank holds
@@ -570,6 +580,13 @@ internal sealed class ParkAdvisorMessages
 			if ( _park?.Invoke() is not { ShopKindsStanding: > 0, SideshowKindsStanding: < 1 } plain ) return 0;
 			if ( plain.DaysSinceObjectBuilt < Value( DaysForObjects ) ) return 0;
 			return Value( topic.ScoreKey ) + Value( showless ) * DaysSinceTheFirstSweep( gameTick );
+		}
+
+		if ( topic.PerDayWithNoFeature is { } featureless )
+		{
+			if ( _park?.Invoke() is not { SideshowKindsStanding: > 0, FeatureKindsStanding: < 1 } drab ) return 0;
+			if ( drab.DaysSinceObjectBuilt < Value( DaysForObjects ) ) return 0;
+			return Value( topic.ScoreKey ) + Value( featureless ) * DaysSinceTheFirstSweep( gameTick );
 		}
 
 		if ( topic.ShopsPerRide is { } crowded )
@@ -703,6 +720,8 @@ internal sealed class ParkAdvisorMessages
 			shut = $" ridekinds={bare.RideKindsStanding} shopkinds={bare.ShopKindsStanding} sincebuild={bare.DaysSinceObjectBuilt}";
 		if ( topic.PerDayWithNoSideshow != null && _park?.Invoke() is { } plain )
 			shut = $" shopkinds={plain.ShopKindsStanding} sideshowkinds={plain.SideshowKindsStanding} sincebuild={plain.DaysSinceObjectBuilt}";
+		if ( topic.PerDayWithNoFeature != null && _park?.Invoke() is { } drab )
+			shut = $" sideshowkinds={drab.SideshowKindsStanding} featurekinds={drab.FeatureKindsStanding} sincebuild={drab.DaysSinceObjectBuilt}";
 		if ( topic.ShopsPerRide is { } crowded && _park?.Invoke() is { } sized )
 			shut = FormattableString.Invariant( $" shopkinds={sized.ShopKindsStanding} ratio={Fraction( $"{crowded}.ShopsPerRideRatio" )} balance={sized.Balance} sincebuild={sized.DaysSinceObjectBuilt}" );
 		if ( topic.SideshowsPerRide is { } showy && _park?.Invoke() is { } fair )

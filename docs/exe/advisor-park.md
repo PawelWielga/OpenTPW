@@ -1897,7 +1897,7 @@ advisor score function: rows 60 (`0x0059d990`), 71 (`0x0059dca0`), 73 (`0x0059dd
 74's are read ("A poor selection of rides", "A poor selection of shops", "A park with rides and no shop", "Too few
 shops for the park's size", below), and so are rows 75's, 77's, 78's and 79's since ("A poor selection of
 sideshows", "A park with shops and no sideshow", "Too few sideshows for the park's size", "A poor selection of
-features"); **row 81's is not**.
+features"), and row 81's ("A park with sideshows and no feature").
 
 **Measured in files**, twelve the original wrote: in ten the stamp is the newest standing object's own build
 date (`+22` of its record: the shipped park's is thing 15's, tick 604; a park with a ride bought on tick 924
@@ -2089,7 +2089,7 @@ list's click does nothing under it.)
 | The tag and the bar | row 62, part 2, string 65; button 9 builds the buy screen on its rides tab, tag off | the same |
 
 **Not built or not seen.** Rows 71 and 73 are "A poor selection of shops" and "A park with rides and no shop",
-below, row 74 "Too few shops for the park's size" and row 75 "A poor selection of sideshows"; rows 77 and 78 are "A park with shops and no sideshow" and "Too few sideshows for the park's size"; the two other rows that read the newest build (79 and 81) are not built and their score functions not read. **The original's stamp moved with nothing bought**: in run a's
+below, row 74 "Too few shops for the park's size" and row 75 "A poor selection of sideshows"; rows 77 and 78 are "A park with shops and no sideshow" and "Too few sideshows for the park's size"; rows 79 and 81 are "A poor selection of features" and "A park with sideshows and no feature". **The original's stamp moved with nothing bought**: in run a's
 park, left running, `mLastObjectBuilt` went to tick 1400's on tick 1400 (read in run b's log, before its load);
 what was made then is not read (the vehicle summons and the "End" feature are the constructor's callers, "The
 newest build"), and here nothing moves it, so past such a moment this game's row 60 would speak again where
@@ -2629,7 +2629,7 @@ to a pointer on tick 1217 and the tag was gone on 1219, the frame "Buy Sideshow"
 **Not built or not seen.** The original's stamp moves with nothing bought, twice in 370 s, 340 ticks apart, in
 every load: the ferry and the seaplane, each made at its first summons, which stamps here too ("What moves it
 with nothing bought"). **Where this game's draw is the bus it still says row 77's line 1,085 ticks before the
-original does** (1124 for 2209 in `late30`), and rows 60, 71, 73 and 75 the same way. Row 76 is read above and not built; row 78 is "Too few sideshows for the park's size", below; rows 79 and 81 are not read. In no game run: line 2
+original does** (1124 for 2209 in `late30`), and rows 60, 71, 73 and 75 the same way. Row 76 is read above and not built; row 78 is "Too few sideshows for the park's size", below; rows 79 and 81 are "A poor selection of features" and "A park with sideshows and no feature", below. In no game run: line 2
 (sample 218; the test holds the turn), the line said again past its 120 quarter-ticks, a golden-ticket shop or
 sideshow standing (no Lost Kingdom one costs a ticket), a sideshow built after the line (the test's last step),
 the bar's button with the buy screen open, a park made with no file, Full Simulation: the mode is not asked by
@@ -2756,8 +2756,8 @@ the shipped game says the line, which needs Full Simulation and its research (th
 breakpoint and run g are its evidence in the original); line 2 (sample 220; the test holds the turn), the line
 said again past its 120 quarter-ticks, day 29 in the original, a golden-ticket ride or sideshow standing, a
 sideshow built after the line, the bar's button with the buy screen open, a park made with no file. Row 79 is
-"A poor selection of features", below; row 81 is not read, and row 76 is read and not built. Not heard in either
-game.
+"A poor selection of features", below, and row 81 "A park with sideshows and no feature"; row 76 is read and not
+built. Not heard in either game.
 
 ## A poor selection of features (message `0x4f`, Q344)
 
@@ -2865,7 +2865,117 @@ tick 1221: **five kinds of eight, as this game counts them**. *The shipped keys*
 222; the test holds the turn), the line said again past its 120 quarter-ticks, day 29 in the original, no kind of
 feature on offer, a golden-ticket feature, a feature built after the line, the bar's button with the buy screen
 open, a park made with no file, Full Simulation (the row asks neither mode: not asked). Whether slot 1's model is
-a second file of the same fly or the same model dressed was not read. Row 81 is not read, and row 76 is read and
+a second file of the same fly or the same model dressed was not read. Row 81 is "A park with sideshows and no feature", below, and row 76 is read and
+not built. Not heard in either game.
+
+## A park with sideshows and no feature (message `0x51`, Q345)
+
+**Row 81, message `0x51`, `FeaturesBuildFeatures`:** polled, category 0, either game mode, one copy, first
+response 226, **one line**. Response 226 is sample 224 ("Imagine a world without features: no trees, fountains,
+statues. That's what your park is like, it has no features. Maybe you should build some"): the random gesture
+chain, **model slot 1 and prop -1, the theme's own advisor and its costume**, as row 79's two, group 83. It is two
+polled rows after row 79 (row 80, `FeaturesResearchMore`, `0x0059e260`, is polled and not read): from the
+shipped park's cursor its turns are ticks 818, 973, 1128, 1283, 1438, 1593, 1748 and every 155 on.
+
+**Its score, `0x0059e2e0`** (loose code, disassembled for this; `ECX` the balance object) is row 77's a kind
+on, each step on the park analyser (`FUN_00519510`):
+
+1. The kinds of sideshow standing, `0x004ca7b0( 2, 0 )`. None: nought. The rides and the shops are not asked.
+2. The whole days since the newest build, `0x004c9070`, under `[ECX + 0x634]`, `WaitingTimes.DaysForObjects`,
+   **30** (a signed `JL`): nought.
+3. The kinds of feature standing, `0x004ca7b0( 3, 0 )`: any, nought. A toilet, a bin, a camera and a staff room
+   are each a feature (`Info.WhichUIType` 3).
+4. Otherwise `[ECX + 0x2b0]` plus `[ECX + 0x2b4]` times the park's age in whole days (`FUN_004f8800` over
+   `0xC92A69C000`, as rows 62, 73 and 77 count them): `FeaturesBuildFeatures.Score` and
+   `FeaturesBuildFeatures.AdditionalPerDay` (`lib/advisorschema.py`), **-40 and 1** in `Advisor.sam`.
+
+The door is not asked, nor what is on offer. The score starts forty in debt and gains one a day: 15 on tick 1283
+(day 55) and 22 on tick 1438 (day 62) are not above `MinScoreForConsideration`, 25; day 66 is the first that is,
+and **29 on tick 1593 (day 69)** the first of its turns it can be said on; 35 on tick 1748.
+
+**Its tag** is row 83 of the tag table: key 383, picture 2, string 85, the bar's first button of type 12 (the buy
+screen on its fourth tab, the features'; help row 524), no second, thirty seconds. String 85 reads "Your park
+isn't as pretty as it might be. It would look better if you put down some features." in the English folder this
+game reads, and "... as it could be. ..." in the american one the original reads.
+
+### OpenTPW (`ParkAdvisorMessages.BuildFeatures`, a topic's `PerDayWithNoFeature`; tag row 83)
+
+A twenty-third polled topic, scored as the original scores it: `PerDayWithNoFeature` names the per-day key, and
+the facts it reads (`SideshowKindsStanding`, `FeatureKindsStanding`, `DaysSinceObjectBuilt`) were kept already.
+The poll line ends ` sideshowkinds=N featurekinds=N sincebuild=N`. `ParkTags.Rows` lists row 83.
+
+**A deviation, said at the topic's row: the line is said bare-headed**, as row 79's is. Response 226 names the
+theme's own advisor and costume, which are not built ("What he wears for a line"); this game says the line with
+the one model, no hat and both antennae, and counts `ADVISOR_THEME_COSTUME`. The original says it as the fly in
+the Lost Kingdom's explorer's hat, no antennae (`q345/orig/a-g4.png`). Unlike row 79's, **this line is said under
+the shipped keys**, so a shipped park with a sideshow and no feature shows the difference from day 66.
+
+**The scenes** (`q345/scene.py`, one run of the stock park; `lib/stockscene.py` for the last; `mk.py`, `mk2.py`):
+every feature sold (things 17 to 24) on tick 1434 and the park saved then (*early*) and on tick 1584 (*nofeat*);
+a Litter Bin bought back (*feat*); the bin and the Jungle Spray sold (*noside*); and the features sold on tick
+1276 (*early2*). The stamp is written into copies: `nofeat30` tick 901's (day 30 on tick 1593), `nofeat29` tick
+902's, `feat30` and `noside30` 901's, `early30` 746's (day 30 on tick 1438), `early2-30` 591's (day 30 on 1283).
+
+**Predicted first** (`q345/PREDICTION.txt`), both games, two rounds, each written before its runs. Not
+predictions, and said there: the listing, the keys, the row, the tag, the strings. **One miss, of the check and
+not of the rule**: in `early30` the spent bus is summoned again on tick 1438, the row's own turn, and both games
+drew a larger vehicle there, which stamps the newest build before the tick's poll (this game's ferry, `no-score
+... sincebuild=0`; the original's stamp moved on tick 1438 too). Round two's file is saved between two
+summonses.
+
+**This game** (`q345/confirm.py <mode>`; the first on the desktop, the rest off-screen). *nofeat30* (`run-fix1`,
+six of six on its first run): `poll message=81 row=81 days=69 score=29 threshold=25 tick=1593 result=post
+sideshowkinds=1 featurekinds=0 sincebuild=30`, `post message=81 ... result=queued` and `attempt=1 message=81
+subject=0 score=29 threshold=25 response=226 sample=224 line=0 tick=1593`; `saying sp_224.mp2 ... wearing=-1,0`,
+`1x ADVISOR_THEME_COSTUME`, him up with no hat over a park with no feature in it (`1-line.png`), `tags` reading
+`tag=83/picture=2/subject=0` with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked:
+`message bar: tag 83 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=524 second=hidden
+erase=mb_erase` and the text. The button clicked: `button type 12 opens the buy screen on tab 3 and takes tag 83
+off`, `windows` reading `ParkBuyScreen tab 3`, and the frame "Buy Miscellaneous Items" (`3-screen.png`).
+*early2-30* (`run-early2`): `days=55 score=15 threshold=25 tick=1283 result=under-threshold sideshowkinds=1
+featurekinds=0 sincebuild=30`, nothing posted or tried by tick 1312. *feat30* (`run-feat`): `score=0 ...
+tick=1593 result=no-score sideshowkinds=1 featurekinds=1 sincebuild=30`. *noside30* (`run-noside`): `no-score
+sideshowkinds=0 featurekinds=0`. *nofeat29* (`run-d29`): `score=0 ... tick=1593 result=no-score ...
+sincebuild=29`; the seaplane was then made on tick 1600 and stamped, so nothing was said on tick 1748, as the
+prediction's "unless" has it: **a day short and said a turn later was not seen in this game** (the test holds
+it). None of the silent runs said the line or left tag 83 by tick 1610.
+
+**Main's build** on `nofeat30` (`run-control`): no line of message 81, no attempt, no tag by tick 1621.
+
+**The original** (`q345/orig/run.sh <file>`: `advisor.py ... 0x51,0x52,0x50,0x4f,... poll` beside
+`thingwords.py` on the stamp, `tags.py`, `bar.py` and `screens.py`; seven loads of this game's files, the shipped
+`Advisor.sam`). *nofeat30* (run a): message `0x51`'s record went from fresh to **(1593, 0, 1, 0) on tick 1593**,
+2.9 s after the load's click; one tag with it at (84, 909, 154, 974), the mast at (94, 901, 144, 984), its text
+the american string 85; he is up in the explorer's hat (`orig/a-g4.png`); its stamp moved on tick 1600, a
+vehicle made, as this game's summons falls. Run a's clicks came as the tag's thirty seconds ended and opened
+nothing; run a2 clicked sooner: the bar's data read thing 0, buttons 12 and 0, item 0 and the text, `screens.py`'s
+buy screen went from `0x0` to a pointer on tick 1703 and the tag was gone on 1705, the frame "Buy Miscellaneous
+Items" with the same ten rows as this game's (`orig/a2-button.png`). *nofeat29* (run b): fresh on tick 1593; its
+stamp moved on tick 1600 and the run ended fresh. *nofeat29 with the stamp held at the file's value* (run g;
+`thingpoke.py`, **a write to the original's memory**): fresh on tick 1593, **(1748, 0, 1, 0) on tick 1748** with
+the same tag. *feat30* (run c) and *noside30* (run d): fresh through the runs' ends; run d left a tag on tick
+1744, row 77's turn. *early30* (run e): the stamp moved on tick 1438 and the record stayed fresh. *early2-30*
+(run f): fresh, no tag and the file's stamp on tick 1318, the pollers' first reading; the stamp moved on tick
+1435. Message `0x52` (row 82, `FeaturesNoToilets`) stayed fresh in every run, with no toilet in six of them.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 81 | polled; nought with no kind of sideshow standing, until 30 days after the newest build, and with a kind of feature standing; then `Score` and `AdditionalPerDay` a day of the park's age | the same |
+| No feature, a sideshow, day 30, tick 1593 | said on tick 1593, the one line | the same (score 29) |
+| Tick 1283 | not said | the same (`score=15 ... under-threshold`) |
+| A feature standing, and no sideshow | not said | the same (`no-score`) |
+| Day 29 | not said on tick 1593; with the stamp held, said on tick 1748 | nought on tick 1593; tick 1748 not seen (a vehicle's stamp on 1600) |
+| A vehicle made on the row's own turn | the stamp moves and the row is silent | the same |
+| Who says it | the fly in the theme's explorer's hat, no antennae | **the fly bare-headed, both antennae** (`ADVISOR_THEME_COSTUME`) |
+| The tag and the bar | row 83, part 2, string 85; button 12 builds the buy screen on its features tab, tag off | the same |
+| The tag's words | the american folder's, "... as it could be. ..." | the English folder's, "... as it might be. ..." |
+
+**Not built or not seen.** The theme's own advisor model and its costume ("A poor selection of features",
+above). In no game run: the line said again past its 120 quarter-ticks (the test holds that it is the one line
+again), score 22 on tick 1438 (a summons falls on that tick), day 29 said a turn later in this game, a
+golden-ticket sideshow or feature, a feature built after the line, the bar's button with the buy screen open, a
+park made with no file, Full Simulation (the row asks neither mode: not asked). Why the original's row 82 is
+silent in a park with no toilet is not read (`0x0059e380`), nor row 80's score (`0x0059e260`); row 76 is read and
 not built. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)

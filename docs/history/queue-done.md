@@ -6678,6 +6678,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   is up). **A deviation: this game says the line bare-headed, the original in the theme's explorer's hat**
   (`ADVISOR_THEME_COSTUME`, filed under Q345). 65 bugs put back, all fail a test. `advisor-park.md`, "A poor
   selection of features".
+- [x] **Q345. The advisor tells a park with sideshows and no feature to build some, once it is old enough.** (2026-10-13;
+  I split the item: this is one piece, Q346 the rest.) Row 81, message `0x51`, `FeaturesBuildFeatures` (score
+  `0x0059e2e0`, loose code disassembled): row 77's rule a kind on, nought with no kind of sideshow standing,
+  until 30 days after the newest build and with a kind of feature standing; then `Score` (-40) and
+  `AdditionalPerDay` (1) a day of the park's age, so day 66 is the first above the advisor's 25. One line
+  (response 226, sample 224), tag row 83 (string 85, the buy button of type 12). Confirmed in both games on this
+  game's files of the stock park with its eight features sold (`q345/PREDICTION.txt`, two rounds): `score=29 ...
+  tick=1593 result=post sideshowkinds=1 featurekinds=0 sincebuild=30`, tag 83 and "Buy Miscellaneous Items"
+  (`q345/run-fix1`, six of six), the original's record `(1593, 0, 1, 0)` on tick 1593 with the same tag and
+  screen; both silent on tick 1283 (15, under the threshold), with a feature standing, with no sideshow and a
+  day short; the original, its stamp held, said the day-short file's line on tick 1748. One miss, the check's:
+  a vehicle is made on tick 1438, the row's own turn, in both games. **A deviation: this game says the line
+  bare-headed, the original in the theme's explorer's hat** (`ADVISOR_THEME_COSTUME`, filed under Q346), and
+  this line the shipped game does say. 60 bugs put back, all fail a test. `advisor-park.md`, "A park with
+  sideshows and no feature".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

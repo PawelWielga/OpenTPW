@@ -84,6 +84,15 @@ whole list):
   (`result=under-threshold` here, a fresh record there). A whole-number share's edge is one key apart: 62 silent
   and 63 said pins five kinds of eight in both games. **The leavers' summons in this game is not on a fixed tick**
   (1093 in Q341's runs, 1139 in Q344's): a day-29 check asks whether a stamp came before the row's next turn.
+- **A polled row whose first sayable turn is late** (Q345, row 81 on tick 1593): one scene run saves the park
+  at each tick wanted (`q345/scene.py`: `save()` then a copy, as often as needed; a purchase and a sale between
+  saves make the controls), so four files cost one run. **A spent bus is summoned again on a fixed tick of the
+  stock park (1264, 1438, 1600 here) and both games may draw a ferry or seaplane there, which stamps the newest
+  build**: read the scene run's `summoned` lines and save between two of them, never just before one that falls
+  on the row's turn. A day-short file is seen said a turn later only in the original with its stamp held
+  (`EXTRA="python3 -u .../thingpoke.py %PID% 150 13 5:0x21c30:Q=<stamp>"`). **A tag lives thirty seconds**: after
+  `loadfile.sh` returns (some 20 s after the click) a `run.sh` that takes frames first clicks a tag that is
+  ending; `WAIT60=0 SECS60=0 CLICKS=1` clicks in time, and `GRAB=1` has the frames of him speaking.
 - **Four kinds of ride in an Instant Action park** (Q343): `stockscene.py ... 912 "buy 1101 41 22 0" "buy 1102 70
   40 0" "buy 1104 55 30 0"` (a Crazy Ape, a Rocky Racers and an Aztec Mayhem beside the stock Belly Bounce, each
   left shut as bought, which both games count as a kind standing). The Instant Action catalogue holds no fifth.
