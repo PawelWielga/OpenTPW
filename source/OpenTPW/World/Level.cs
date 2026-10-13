@@ -304,6 +304,8 @@ public class Level
 		load.Mark( "park state" );
 
 		Research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue );
+		if ( Research is { } researched )
+			Log.Info( researched.Summary );
 
 		_ = new ParkGround( ThemeName, park );
 		load.Mark( "ground" );

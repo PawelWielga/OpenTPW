@@ -6500,6 +6500,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   main's build wrote tick 604's. The original, given each file, read this game's stamp (tick 804's, tick
   803's, tick 604's) and drew the Ape. Every prediction held in one round; 20 bugs put back, 20 fail a test;
   3038 tests. `docs/exe/advisor-park.md`, "The newest build".
+- [x] **Q335. The advisor tells a park with a poor selection of rides to build more.** Done 2026-10-13: one
+  piece of the old Q335. Row 60, message `0x3c`, `RidesPoorSelection`, is polled; its score (`0x0059d990`,
+  loose code, disassembled) is nought where no kind of ride is on offer (`0x004ca450`: the catalogue's ride
+  items researched and costing no golden ticket), until `WaitingTimes.DaysForObjects`, 30, whole days after
+  `mLastObjectBuilt` (`0x004c9070`), and with fewer than `MoreRidesThan`, 3, rides, and then `Score`, 30,
+  where the kinds standing (`0x004ca7b0`) are under `PoorerThan`, 30, per cent of those on offer, in whole
+  numbers. Responses 176 to 178 are samples 173 to 175, no prop, group 62: tag row 62, string 65, the buy
+  button. Built: `ParkAdvisorMessages.PoorSelection`, a topic's `PoorSelection`, `DaysForObjects`,
+  `ParkFacts.RideKindsOnOffer`, `RideKindsStanding` and `DaysSinceObjectBuilt`, `ParkState.DaysSinceObjectBuilt`,
+  `ParkPeople.RideKinds`, tag row 62. The stock park with two more Belly Bounces bought and the stamp written
+  692 ticks back: `poll message=60 row=60 days=41 score=30 threshold=25 tick=957 result=post kinds=1/4 rides=3
+  sincebuild=30`, said on tick 957 as sample 173, him up with his antennae and tag 62 on the mast, the bar's
+  button opening "Buy Ride"; day 29 said on tick 1112; three kinds on offer, two kinds standing and two rides
+  silent; main's build silent. The original, given each file: said on tick 957 with the same tag, bar and buy
+  screen, day 29 on tick 1112, the three others silent through tick 1114. Every prediction held in one round;
+  61 bugs put back, each failing a test (one after a test was tightened); 3040 tests. `docs/exe/advisor-park.md`, "A poor selection of
+  rides". I split the item: every other piece of the old Q335 is Q336.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

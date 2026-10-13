@@ -938,6 +938,13 @@ public sealed class ParkState
 		=> unchecked((int)((ParkWorld.StaffState.FileTimeOf( CalendarNow ) - LastStaffHired) / TimeSpan.TicksPerDay));
 
 	/// <summary>
+	/// Whole days since the newest object was made - <c>0x004c9070</c>: now less <see cref="LastObjectBuilt"/> over
+	/// 864,000,000,000, a signed 64-bit divide whose low 32 bits are the answer.
+	/// </summary>
+	public int DaysSinceObjectBuilt
+		=> unchecked((int)((ParkWorld.StaffState.FileTimeOf( CalendarNow ) - LastObjectBuilt) / TimeSpan.TicksPerDay));
+
+	/// <summary>
 	/// How many whole days old a thing is on the park's calendar - <c>FUN_004dd670</c>: <c>( now − built ) /
 	/// 864,000,000,000</c>, a signed 64-bit divide whose low 32 bits are the answer. A stamp in the future is
 	/// negative, and less than a day ahead is nought. The ride score compares it unsigned; the object window

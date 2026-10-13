@@ -123,6 +123,8 @@ public sealed partial class ParkPeople : Entity
 	/// </para>
 	/// </summary>
 	private readonly System.Func<int, RideScript?>? _scriptFor;
+	/// <summary>Which items the park has researched, the save's word first: what the advisor's facts count the kinds of ride on offer by.</summary>
+	private readonly ParkResearch? _research;
 
 	private readonly int _gateThing;
 
@@ -187,6 +189,7 @@ public sealed partial class ParkPeople : Entity
 		Random? behaviourRandom = null, Random? rideRandom = null, Random? staffRandom = null )
 	{
 		_scriptFor = scriptFor;
+		_research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue );
 		_gateThing = park?.ParkGates ?? 0;
 		_banks = banks ?? new ParkSpriteBanks( 0, 0, 0 );
 		_arrivalRandom = random ?? new Random();
@@ -2579,7 +2582,11 @@ public sealed partial class ParkPeople : Entity
 	/// (FUN_004ca3a0: a thing of a ride's item whose State of repair's whole number is under the limit row 5's
 	/// score hands it, or whose mState is 1, broken down) and the rides broken down (FUN_004ca310: a thing of a
 	/// ride's item whose mState is 1); and the whole days since the newest member of staff was made
-	/// (FUN_004c90d0, <see cref="ParkState.DaysSinceStaffHired"/>).
+	/// (FUN_004c90d0, <see cref="ParkState.DaysSinceStaffHired"/>); and the kinds of ride on offer (0x004ca450
+	/// asked with nought: a catalogue item of a ride's kind whose control record is researched and whose
+	/// GoldenTicketCost is nought), those of them of which a thing stands (0x004ca7b0 asked with nought and
+	/// nought: the control record's count above nought) and the whole days since the newest object was made
+	/// (0x004c9070, <see cref="ParkState.DaysSinceObjectBuilt"/>). With no catalogue no kind is counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2640,8 +2647,14 @@ public sealed partial class ParkPeople : Entity
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
 			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut,
-			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired );
+			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired,
+			RideKinds( item => _research?.IsResearched( item.Id ) == true ), RideKinds( item => State.BuiltOf( item.Id ).Standing > 0 ),
+			State.DaysSinceObjectBuilt );
 	}
+
+	/// <summary>The catalogue's items of a ride's kind that cost no golden ticket and that <paramref name="counted"/> holds for (0x004ca450, 0x004ca7b0).</summary>
+	private int RideKinds( Func<ParkItemCatalogue.Item, bool> counted )
+		=> _behaviour.Catalogue?.All.Count( item => item.UiType == ItemDescriptionFile.Ride && item.GoldenTicketCost == 0 && counted( item ) ) ?? 0;
 
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:
 	// Fire removes immediately; the original marks +3 then drains deletion after the retry. See park-gate.md.

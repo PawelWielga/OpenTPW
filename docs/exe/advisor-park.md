@@ -1483,9 +1483,10 @@ are ticks 804, 959, 1114 and every 155 on.
    function of the listing; read as disassembly) walks the catalogue's items (`FUN_00412e60`, `FUN_00412e70` on
    `0x007890a0`) and counts those whose `Info.WhichUIType` (`+0x4ac`) is the kind asked for, 0 a ride, and whose
    control record (`FUN_004d3d80`; `hud.md`, "What the buy list actually filters on") counts at least one standing
-   (`+0x18` above nought); its second argument, 1 here, leaves the item's `+0xc4` unasked. So one ride of any item
-   standing is enough for nought. What writes the record's `+0x18` is not read: the runs below have it fall to
-   nought when the park's one ride is sold.
+   (`+0x18` above nought); its second argument, 1 here, leaves the item's `+0xc4`, its `GoldenTicketCost`,
+   unasked. So one ride of any item standing is enough for nought. The record's `+0x18` is the object
+   constructor's and destructor's (`0x004db6d0`, `0x004dd0e1`): the runs below have it fall to nought when the
+   park's one ride is sold.
 2. Otherwise `[ECX + 0x230]` plus `[ECX + 0x234]` times the park's age in whole days (`FUN_004f8800` over
    `0xC92A69C000`, as the control panel's line counts them): `RidesBuildRides.Score` and
    `RidesBuildRides.AdditionalPerDay` (`lib/advisorschema.py`), **-50 and 3** in `Advisor.sam`, whose own note
@@ -1906,7 +1907,7 @@ calendar's now each time `AddObject` takes a thing made (a purchase, a move's pu
 mLastObjectBuilt stamped <date> on mGameTick N`. A sale leaves it. The writer puts it back into the analyser's
 record. **Not the original's in one way**: the ferry and the seaplane stand from the load here, so the first
 summons of one the file names no thing for makes nothing and moves no stamp; it is counted,
-`VEHICLE_MADE_BUILD_STAMP`. Nothing reads the stamp here yet: none of the nine rows is built.
+`VEHICLE_MADE_BUILD_STAMP`. One of the nine rows reads it here, row 60 ("A poor selection of rides", below).
 
 **Predicted first** (`q334/PREDICTION.txt`), both games; every prediction held in one round. Not predictions,
 and said there: the twelve files above.
@@ -1935,13 +1936,119 @@ over the file's value**: every load left the file's standing.
 | A load | the file's | the same |
 | A file saved here after a purchase, and after its sale | reads this game's stamp | written at 73,516 |
 | A vehicle made at its first summons | stamps it | counted (`VEHICLE_MADE_BUILD_STAMP`) |
-| The nine rows that read it | scored | not built, not read |
+| The nine rows that read it | scored | row 60 built ("A poor selection of rides"); the other eight not built, not read |
 
-**Not built or not seen.** The nine rows and the routine at `0x004c9070`. In no game run: a move's put-down
+**Not built or not seen.** Eight of the nine rows (row 60 is "A poor selection of rides", below). In no game run: a move's put-down
 (the same `AddObject`; no test puts one down either, a put-down needing the scene's objects), a purchase made in
 the original by hand (two of its own files hold one), a sale made in the original (read, and the two saves), a
 ferry's first summons, a park made with no file, Full Simulation: the mode is not asked by the constructor's
 tail.
+
+## A poor selection of rides (message `0x3c`, Q335)
+
+**Row 60, message `0x3c`, `RidesPoorSelection`:** polled, category 0, either game mode, one copy, first response
+176, three lines in turn. Responses 176 to 178 are samples 173 to 175 ("I don't mean to be critical, but you
+don't have a very good selection of rides in the park"): the random gesture chain, model slot 0, no prop, group
+62. It is two polled rows before row 62: from the shipped park's cursor its turns are ticks 802, 957, 1112 and
+every 155 on.
+
+**Its score, `0x0059d990`** (loose code, disassembled for this; `ECX` the balance object), each step on the park
+analyser (`FUN_00519510`):
+
+1. The kinds of ride on offer, `0x004ca450( 0 )`: the catalogue's items (`FUN_00412e60`, `FUN_00412e70` on
+   `0x007890a0`) whose `Info.WhichUIType` (`+0x4ac`) is nought, a ride, whose control record (`FUN_004d3d80`) is
+   researched (`+0x10`) and whose `UsageInfo.GoldenTicketCost` (`+0xc4`) is nought; its argument, nought here,
+   would count the golden-ticket rides too. None: nought.
+2. The whole days since the newest build, `0x004c9070` ("The newest build", above), under `[ECX + 0x634]`,
+   `WaitingTimes.DaysForObjects`, **30** (a signed `JL`): nought.
+3. The rides standing, `FUN_004ca8e0( 0, 0 )`, under `[ECX + 0x224]`, `RidesPoorSelection.MoreRidesThan`, **3**:
+   nought. So three rides are enough, whatever the key's name.
+4. The kinds standing, `0x004ca7b0( 0, 0 )`: the ride items of step 1's two tests whose control record counts at
+   least one standing (`+0x18` above nought; the object's constructor and destructor keep it, `0x004db6d0` and
+   `0x004dd0e1`), researched or not. Times 100 over step 1's count, an unsigned whole division, not under
+   `[ECX + 0x220]`, `RidesPoorSelection.PoorerThan`, **30**: nought.
+5. Otherwise `[ECX + 0x228]`, `RidesPoorSelection.Score`, **30**.
+
+The door is not asked, nor whether a ride is open. `MinScoreForConsideration` is 25, so the row speaks wherever
+it scores. **The shipped park offers four kinds** (the Belly Bounce, the Crazy Ape, the Rocky Racers and the
+Aztec Mayhem: the regular catalogue's Eruption and Jurassic Tours are researched and cost a golden ticket, the
+rest are not researched), in Instant Action's catalogue and the regular one alike, so there one kind standing is 25 and poor,
+and two are 50 and not.
+
+**Its tag** is row 62 of the tag table: key 383, picture 2, string 65, the bar's first button of type 9 (the buy
+screen on its rides tab, "A park with no ride in it"), no second, thirty seconds. String 65 reads the same in
+both language folders: "Your selection of rides isn't so good. You should build some more."
+
+### OpenTPW (`ParkAdvisorMessages.PoorSelection`, a topic's `PoorSelection`, `DaysForObjects`; `ParkFacts.RideKindsOnOffer`, `RideKindsStanding`, `DaysSinceObjectBuilt`; `ParkState.DaysSinceObjectBuilt`; `ParkPeople.RideKinds`; tag row 62)
+
+A fifteenth polled topic, scored from the same `ParkFacts`, which now carry the kinds of ride on offer (the
+catalogue's ride items with no golden ticket that `ParkResearch` holds researched, the save's word first), the
+kinds standing (those `ParkState.BuiltOf` counts one of, the control record's own count) and the whole days since
+`ParkState.LastObjectBuilt`, the first reader of that stamp. The poll line ends ` kinds=K/T rides=N
+sincebuild=N`. `ParkTags.Rows` lists row 62; the bar's button of type 9 was built for row 62's message.
+
+**The scene** (`q335/scene.py`, `q335/mk.py`): the stock park paused on tick 916 with two Belly Bounces bought
+on (41,22) and (70,40) as things 43 and 44 and left shut, saved: three rides of one kind, the mechanic kept. A
+purchase stamps the analyser with now, so the stamp is written into copies of the file afterwards
+(`parkfile.thing_set( src, dst, 5, 73516, '<q', filetime )`): `poor30.TPWS` the stamp of tick 265, 692 ticks
+before row 60's turn on tick 957, and `poor29.TPWS` the stamp of tick 266. Beside them `offer3.TPWS`, `poor30`
+with the Aztec Mayhem's control record's researched byte nought (`original/research.py ... 1104 0`: three on
+offer); `two30.TPWS`, Q333's park of the Bounce and two Crazy Apes with the same stamp (two kinds); and
+`rides2.TPWS`, one Bounce bought (two rides).
+
+**Predicted first** (`q335/PREDICTION.txt`), both games on files neither had been given; every prediction held,
+in one round. Not predictions, and said there: the four kinds on offer, read from a test's printout.
+
+**This game** (`q335/confirm.py fix|d29|offer3|two|rides2|control`). *`poor30`* (`run-fix1`, on the desktop, six
+of six on its first run, and `run-fix2` on the commit's build): `poll message=60 row=60 days=41 score=30
+threshold=25 tick=957 result=post kinds=1/4 rides=3 sincebuild=30`, `post message=60 ... result=queued` and
+`attempt=1 message=60 subject=0 score=30 threshold=25 response=176 sample=173 line=0 tick=957`; `saying
+sp_173.mp2 ... wearing=0,0`, him up with his antennae (`1-line.png`), `tags` reading `tag=62/picture=2/subject=0`
+with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked: `message bar: tag 62 subject 0
+item 0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=521 second=hidden erase=mb_erase` and the text
+(`2-bar.png`). The button clicked: `button type 9 opens the buy screen on tab 0 and takes tag 62 off`, `windows`
+reading `ParkBuyScreen tab 0`, `standing=0`, and the frame "Buy Ride" listing the four on offer
+(`3-screen.png`). *`poor29`* (`run-d29`, off-screen): `score=0 ... tick=957 result=no-score kinds=1/4 rides=3
+sincebuild=29`, then `days=48 score=30 ... tick=1112 result=post ... sincebuild=36`, said on that tick after
+rows 113's and 259's lines (996, 1053). *`offer3`*: `no-score kinds=1/3 rides=3 sincebuild=30`. *`two30`*:
+`no-score kinds=2/4 rides=3 sincebuild=30`. *`rides2`*: `no-score kinds=1/4 rides=2 sincebuild=30`; none of
+the three said it by tick 975. **Main's build** on `poor30` (`run-control`): no line of message 60, no attempt,
+no tag by tick 975.
+
+**The original** (`q335/orig/run.sh <file>`, `advisor.py ... 0x3c,0x3e,0x7,0x71,0x103,0xbc,0x11c poll` beside
+`thingwords.py ... 5:0x21c30:Q:lastbuilt`, `tags.py`, `bar.py` and `screens.py`; two programs, five loads).
+*`poor30`* (run a): message `0x3c`'s record went from (0, -1, 0, 0) to **(957, 0, 1, 0) on tick 957**, one tag
+with it at (84, 909, 154, 974), the mast at (94, 901, 144, 984), its text string 65; he is up with no hat
+(`orig/a-told.png`). The tag clicked: the bar's data read thing 0, buttons 9 and 0, item 0 and the text
+(`orig/a-bar.png`). The button clicked: `screens.py`'s buy screen went from `0x0` to a pointer on tick 1053, the
+frame "Buy Ride" listing the same four rides (`orig/a-button.png`). *`poor29`* (run b2, a fresh program): the
+record fresh through ticks 996 and 1053 and **(1112, 0, 1, 0) on tick 1112**. *`offer3`* (run c): the stamp
+read 125921521500000000, the file's; record fresh and no slot through tick 1115. *`two30`* (run d) and
+*`rides2`* (run e): fresh and no slot through tick 1114. Each said row 113's line on tick 996 and, with three
+rides, row 259's on 1053, as this game does. (Run b loaded nothing: run a had left the buy screen up, and the
+list's click does nothing under it.)
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 60 | polled; nought with no kind on offer, until 30 days after the newest build, and under three rides; then 30 where the kinds standing are under 30 per cent of those on offer | the same |
+| Three Bounces, four kinds on offer, day 30 | said on tick 957, line 0, no hat | the same |
+| Day 29 | nought on tick 957; said on tick 1112 | the same |
+| Three kinds on offer (33 per cent) | not said | the same (`kinds=1/3`) |
+| Two kinds standing (50 per cent) | not said | the same (`kinds=2/4`) |
+| Two rides | not said | the same (`rides=2`) |
+| The tag and the bar | row 62, part 2, string 65; button 9 builds the buy screen on its rides tab, tag off | the same |
+
+**Not built or not seen.** The eight other rows that read the newest build (71, 73 to 75, 77 to 79 and 81) are
+not built and their score functions not read. **The original's stamp moved with nothing bought**: in run a's
+park, left running, `mLastObjectBuilt` went to tick 1400's on tick 1400 (read in run b's log, before its load);
+what was made then is not read (the vehicle summons and the "End" feature are the constructor's callers, "The
+newest build"), and here nothing moves it, so past such a moment this game's row 60 would speak again where
+the original's waits thirty days more. In no game run: lines 2 and 3 (samples 174 and 175; the test holds the
+turn), the line said again past its 120 quarter-ticks, a golden-ticket ride standing or on offer, a kind
+researched in the park (no research is built), a thing built after the line (the stamp then silences the row
+for thirty days, the test's last step), the bar's button with the buy screen open, a park made with no file,
+Full Simulation: the mode is not asked by row 60's score, and its catalogue offers the same four on the shipped
+save. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 

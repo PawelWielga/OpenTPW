@@ -50,7 +50,7 @@ place to look for tools. Each file's docstring is its manual.
 | `original/thingpoke.py PID SECS KIND THING:OFFSET:FMT=VALUE ...` | The original's memory, **written**: holds words of things at given values, written again whenever they read otherwise, a line a write; refuses a thing whose type byte (`+2`) is not KIND. `150 15 7:0x38:B=1` holds the weather's `mLightning`, so bolts and thunder come on a clear day. `thingwords.py` reads the same words. Stop the original afterwards |
 | `original/mixpairs.py [<mixer.py log>]` | A `mixer.py` log against the category files: every pair of a 3D channel's far end and volume of 127, with the variation volumes of that range that `round( v x 0.75 )` makes it from. Says which effects' channels a log holds, and that none plays at a number the files cannot make |
 | `original/modelboxes.py PID [FIRST LAST]` | The original's memory: each thing's model record's cell rectangle (`+0xc0`, `+0xc4`), whether it has a `.hmp`, the box's middle (where its scream is sounded) and its base height. Read the objects' lines (the stock park's are things 13 to 24): a person's `+0x20` is no model handle, and its line is noise |
-| `original/research.py <in> <out> <item>` | A copy of a jungle park file with one item marked researched, so Instant Action's buy list offers it |
+| `original/research.py <in> <out> <item> [0]` | A copy of a jungle park file with one item marked researched, so Instant Action's buy list offers it; with a last `0`, marked not researched, which both games keep for an item whose research costs nothing (Q335) |
 | `original/original.sh`, `tpwmem.py`, `gmove.py`, `record.sh`, `watch.sh` | Starting, reading, clicking, filming and watchpointing the original ("The original under Proton", below) |
 | `original/timens.py SECONDS CMD...` | A command run in a time namespace where the computer has been up SECONDS: the original's park clock without a restart (warning 1, below). **It fails outside the VS Code sandbox** (`PermissionError` on `/proc/self/setgroups`, tried 2026-10-10), so a session started from a plain terminal cannot use it as it is |
 | `original/kwinwl-start.sh` | A private display on `:78` drawn by the graphics card (`kwin_wayland --virtual` with Xwayland) for the original, where Xvfb draws by software. `:78` is `parkrun.py`'s too. **Not run since it was written**: try it before leaning on it |
@@ -154,6 +154,18 @@ whole list):
   screen on its mechanics' tab. The same park says row 113's line on tick 996 and row 259's on 1053 in both
   games. In the original `thingwords.py %PID% SECS 5:0x21c38:Q:lasthire` reads the stamp; `hire <candidate> <x>
   <y>` in this game's console stamps it (`candidates` lists the pool), and the log says so.
+- **A poor selection of rides, and the advisor's line about it** (Q335): row 60 wants three rides, under 30 per
+  cent of the kinds on offer standing (the shipped park offers four: one kind is 25, two are 50) and thirty days
+  since the newest build, the analyser's `mLastObjectBuilt` at thing 5's record's `+73516`
+  (`parkfile.thing_set( src, dst, 5, 73516, '<q', parkfile.filetime( tick ) )`; a purchase stamps it with now, so
+  it is written back after the scene is saved). `q335/scene.py <out> <bin> base1 2` is the stock park paused on
+  tick 916 with `buy 1100 41 22 0` and `buy 1100 70 40 0`; `q335/mk.py` writes the stamp of tick 265 (day 30 on
+  the row's turn, tick 957; 802 and every 155) and of 266 (day 29), and `offer3`, the Aztec Mayhem not
+  researched (`research.py ... 1104 0`: three on offer, 33 per cent, silent). Both games say sample 173 with no
+  hat on tick 957 and leave tag 62, whose bar's first button builds the buy screen on its rides tab. **Load a
+  second file into the original only after closing the screen a click opened, or stop it first**: with the buy
+  screen up the list's click loads nothing, and the next run's pollers then log the wrong park. **A log of
+  several loads is read a stretch at a time**, cut wherever `mGameTick` falls back.
 - **Broken rides and no mechanic, and the advisor's line about it** (Q332): **a ride bought and never opened
   does not break** when `scriptvar <thing> VAR_BREAKSTAT 1` is written, so break open ones: the stock Bounce
   (13), a Hot Pot (`parkscene.hot_pot()`) and an Aztec Mayhem with its queue joined and guests sent. Each break

@@ -43,9 +43,11 @@ public sealed class ParkResearch
 				++Seeded;
 		}
 
-		Log.Info( $"Research: {_items.Values.Count( entry => entry.Researched )} of {_items.Count} items researched, "
-			+ $"{FromSave} from the save's records and {Seeded} seeded from their files" );
 	}
+
+	/// <summary>How many items are researched and where their flags came from, for the log.</summary>
+	public string Summary => $"Research: {_items.Values.Count( entry => entry.Researched )} of {_items.Count} items researched, "
+		+ $"{FromSave} from the save's records and {Seeded} seeded from their files";
 
 	/// <summary>Whether the item is researched - the flag the buy list lists by. An item nobody knows is not.</summary>
 	public bool IsResearched( int itemId ) => _items.TryGetValue( itemId, out var entry ) && entry.Researched;

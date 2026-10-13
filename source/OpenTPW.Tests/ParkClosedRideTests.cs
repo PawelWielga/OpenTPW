@@ -741,7 +741,7 @@ public class ParkClosedRideTests
 				guest.SetState( PeepState.Deciding, 800, random );
 			}
 
-			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired ), park.People.AdvisorFacts() );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt ), park.People.AdvisorFacts() );
 
 			void Put( int index, int x, int y, PeepState state )
 			{
@@ -758,13 +758,13 @@ public class ParkClosedRideTests
 
 			park.State.SetParkClosed( true );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt ), park.People.AdvisorFacts() );
 
 			// One toilet opened again, and the sideshow: the door's others stay shut.
 			park.People.SetRideClosed( 22, closed: false );
 			park.People.SetRideClosed( 14, closed: false );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt ), park.People.AdvisorFacts() );
 
 			// The door left the staff room open; shut by itself, it alone is one more shut.
 			var before = park.People.AdvisorFacts();
@@ -810,7 +810,7 @@ public class ParkClosedRideTests
 			park.State.SetRecord( BackX, BackY, back with { Neighbours = 0x04 } );
 			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
 			Assert.AreEqual( park.People.AdvisorFacts() with { UnjoinedQueue = 0 },
-				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired ), "nothing else moved" );
+				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt ), "nothing else moved" );
 
 			// The queue tool armed for it passes it over; armed for another thing, or put away, it does not.
 			ParkBuildMode.Arm( ParkBuildMode.Queue, BellyBounce );
@@ -863,8 +863,99 @@ public class ParkClosedRideTests
 	private const int StockStaffRooms = 1, StaffRoom = 20;
 	/// <summary>The shipped park is entered on tick 755 and its newest member was made on tick 648: 401,250 calendar seconds, four whole days.</summary>
 	private const int StockDaysSinceStaffHired = 4;
+	/// <summary>The shipped park's kinds of ride on offer: the Belly Bounce, the Crazy Ape, the Rocky Racers and the Aztec Mayhem, the four researched that cost no golden ticket.</summary>
+	private const int StockRideKindsOnOffer = 4;
+	/// <summary>Its newest object was made on tick 604: 566,250 calendar seconds before tick 755, six whole days.</summary>
+	private const int StockDaysSinceObjectBuilt = 6;
+	private const int CrazyApe = 1101, RockyRacers = 1102, AztecMayhem = 1104, Eruption = 1112, SunGod = 1106;
+
+	/// <summary>
+	/// What the advisor's row 60 reads of the park (0x004ca450, 0x004ca7b0, 0x004c9070): the kinds of ride on offer
+	/// are the catalogue's items of a ride's kind that the park has researched and that cost no golden ticket, in
+	/// the regular catalogue and Instant Action's alike; the kinds standing are those of them a thing stands of,
+	/// however many (the park's own count of each item, the control record's); and the days are counted from the
+	/// newest object's making.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the golden-ticket rides on offer, or counted standing; the unresearched on offer; every ride a kind; a kind sold still standing; the sideshows' kinds counted; the days the staff's; the research not kept, or every item's own file's.</remarks>
+	private static int AztecMayhemResearchCost( Park park )
+		=> park.Catalogue.TryGet( AztecMayhem, out var item ) ? item.ResearchCost : -1;
+
+	[TestMethod]
+	public void TheAdvisorCountsTheKindsOfRideOnOfferAndStanding()
+	{
+		var park = Open();
+
+		try
+		{
+			var research = new ParkResearch( park.World.ObjectControlRecords, park.Catalogue );
+			var rides = park.Catalogue.All.Where( item => item.UiType == ItemDescriptionFile.Ride ).ToArray();
+			CollectionAssert.AreEquivalent( new[] { 1100, CrazyApe, RockyRacers, AztecMayhem },
+				rides.Where( item => item.GoldenTicketCost == 0 && research.IsResearched( item.Id ) ).Select( item => item.Id ).ToArray() );
+			Assert.IsTrue( park.Catalogue.TryGet( Eruption, out var eruption ) && eruption.GoldenTicketCost > 0 && research.IsResearched( Eruption ), "researched, and a golden ticket's" );
+			Assert.IsTrue( park.Catalogue.TryGet( SunGod, out var sun ) && sun.GoldenTicketCost == 0 && !research.IsResearched( SunGod ), "no golden ticket, and not researched" );
+			var instant = new ParkItemCatalogue( Theme, data, instantAction: true );
+			Assert.AreEqual( 4, instant.All.Count( item => item.UiType == ItemDescriptionFile.Ride && item.GoldenTicketCost == 0
+				&& new ParkResearch( park.World.ObjectControlRecords, instant ).IsResearched( item.Id ) ), "Instant Action's catalogue offers the same four" );
+
+			(int OnOffer, int Standing, int Rides, int Days) Read()
+			{
+				var facts = park.People.AdvisorFacts();
+				return (facts.RideKindsOnOffer, facts.RideKindsStanding, facts.Rides, facts.DaysSinceObjectBuilt);
+			}
+
+			Assert.AreEqual( (4, 1, 1, StockDaysSinceObjectBuilt), Read() );
+			Assert.AreNotEqual( park.State.DaysSinceStaffHired, park.State.DaysSinceObjectBuilt );
+
+			// A second Belly Bounce is a ride more and no kind more; an Ape is a kind; a golden-ticket ride is not.
+			var bounce = Thing( park, BellyBounce );
+			park.State.SetGameTick( 900 );
+			park.State.AddObject( bounce with { ThingId = park.State.NextThingId() } );
+			Assert.AreEqual( (4, 1, 2, 0), Read(), "the days are counted from the newest build" );
+			park.State.AddObject( bounce with { ThingId = park.State.NextThingId(), CatalogueId = CrazyApe } );
+			Assert.AreEqual( (4, 2, 3, 0), Read() );
+			park.State.AddObject( bounce with { ThingId = park.State.NextThingId(), CatalogueId = Eruption } );
+			Assert.AreEqual( (4, 2, 4, 0), Read() );
+			park.State.AddObject( bounce with { ThingId = park.State.NextThingId(), CatalogueId = SunGod } );
+			Assert.AreEqual( (4, 3, 5, 0), Read(), "a kind standing that is not on offer is still a kind standing" );
+			park.State.SetGameTick( 900 + 692 );
+			Assert.AreEqual( 30, Read().Days );
+			park.State.SetGameTick( 900 + 691 );
+			Assert.AreEqual( 29, Read().Days );
+
+			// A sale takes a kind away with its last thing, and no sooner.
+			var apes = park.State.Objects.Where( thing => thing.CatalogueId == CrazyApe ).Select( thing => thing.ThingId ).ToArray();
+			park.State.AddObject( bounce with { ThingId = park.State.NextThingId(), CatalogueId = CrazyApe } );
+			Assert.AreEqual( (4, 3, 6), (Read().OnOffer, Read().Standing, Read().Rides) );
+			Assert.IsTrue( park.State.RemoveObject( apes[0] ) );
+			Assert.AreEqual( (4, 3, 5), (Read().OnOffer, Read().Standing, Read().Rides) );
+			Assert.IsTrue( park.State.RemoveObject( park.State.Objects.Single( thing => thing.CatalogueId == CrazyApe ).ThingId ) );
+			Assert.AreEqual( (4, 2, 4), (Read().OnOffer, Read().Standing, Read().Rides), "a kind built once and sold stands no more" );
+
+			var bare = new ParkPeople( park.World, new ParkBalance( Theme, easyMode: true ), gateStatus: null, new ParkState( park.World ) );
+			Assert.AreEqual( (0, 0), (bare.AdvisorFacts().RideKindsOnOffer, bare.AdvisorFacts().RideKindsStanding), "no catalogue handed in" );
+			bare.Delete();
+
+			// The save's word is the flag: the Aztec Mayhem's file asks no research, and a file that holds it unresearched offers three.
+			using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+			var bytes = new SaveReader( stream ).ReadFile();
+			var ids = park.World.ObjectControlRecords.Select( record => record.ItemId ).ToArray();
+			var table = Enumerable.Range( 0, bytes.Length - ids.Length * 32 )
+				.Single( at => Enumerable.Range( 0, 10 ).All( i => BitConverter.ToInt32( bytes, at + 32 * i ) == ids[i] ) );
+			Assert.AreEqual( 0, AztecMayhemResearchCost( park ) );
+			bytes[table + 32 * Array.IndexOf( ids, AztecMayhem ) + 0x10] = 0;
+			var held = new ParkWorld( bytes );
+			var fewer = new ParkPeople( held, new ParkBalance( Theme, easyMode: true ), gateStatus: null, new ParkState( held ), park.Catalogue );
+			Assert.AreEqual( (3, 1), (fewer.AdvisorFacts().RideKindsOnOffer, fewer.AdvisorFacts().RideKindsStanding) );
+			fewer.Delete();
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
 
 	private const int Mechanic = 26;
+
 
 	private static Staff TheMechanic( Park park ) => park.People.Staff.Single( member => member.ThingId == Mechanic );
 
