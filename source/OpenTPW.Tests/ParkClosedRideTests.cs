@@ -657,9 +657,11 @@ public class ParkClosedRideTests
 	/// What row 5's score function reads of the stock park (<c>FUN_004c9960</c> asked for type 4,
 	/// <c>FUN_004ca3a0</c> handed <c>StaffHireMechanics1.PoorerStateThan</c>, 25): its one mechanic, none once he is
 	/// fired, and its rides worn: the Belly Bounce once its State of repair's whole number is under 25, or once it
-	/// is broken down whatever its repair, and never the Jungle Spray, a sideshow, however worn.
+	/// is broken down whatever its repair, and never the Jungle Spray, a sideshow, however worn. And what row 6's
+	/// reads (<c>FUN_004ca310</c>): its rides broken down, the Belly Bounce in state 1 and in no other, however
+	/// worn, and never the Jungle Spray.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> a ride at the limit counted; the repair not cut to a whole number; a broken ride not counted, or counted twice; a condemned ride counted; a sideshow counted; the limit nought; every member of staff a mechanic; the fired mechanic still counted.</remarks>
+	/// <remarks><b>Mutations:</b> a ride at the limit counted; the repair not cut to a whole number; a broken ride not counted, or counted twice; a condemned ride counted; a sideshow counted; the limit nought; every member of staff a mechanic; the fired mechanic still counted; a worn ride counted broken; a condemned ride or a broken sideshow counted broken; the broken ride not counted.</remarks>
 	[TestMethod]
 	public void TheAdvisorsParkFactsCountTheMechanicsAndTheWornRides()
 	{
@@ -668,6 +670,7 @@ public class ParkClosedRideTests
 		try
 		{
 			(int Mechanics, int Worn) Read() => (park.People.AdvisorFacts().Mechanics, park.People.AdvisorFacts().RidesWorn);
+			int Broken() => park.People.AdvisorFacts().RidesBroken;
 			void Wear( int thing, float repair, int? state = null )
 			{
 				Assert.IsTrue( park.State.TryObject( thing, out var worn ) );
@@ -687,13 +690,19 @@ public class ParkClosedRideTests
 			Assert.AreEqual( (1, 1), Read(), "24.99 is cut to 24" );
 			Wear( 14, 3f );
 			Assert.AreEqual( (1, 1), Read(), "the Jungle Spray is a sideshow" );
+			Assert.AreEqual( 0, Broken(), "a worn ride is not a broken one" );
 			Assert.IsTrue( park.State.TryObject( BellyBounce, out var bounce ) );
 			Wear( BellyBounce, 24f, ParkRideChoice.StateRefusedOne );
 			Assert.AreEqual( (1, 1), Read(), "worn and broken down is one ride" );
+			Assert.AreEqual( 1, Broken() );
 			Wear( BellyBounce, 100f );
 			Assert.AreEqual( (1, 1), Read(), "broken down, whatever its repair" );
+			Assert.AreEqual( 1, Broken() );
+			Wear( 14, 3f, ParkRideChoice.StateRefusedOne );
+			Assert.AreEqual( 1, Broken(), "a broken sideshow is no ride" );
 			Wear( BellyBounce, 100f, ParkRideChoice.StateRefusedFour );
 			Assert.AreEqual( (1, 0), Read(), "condemned is not broken down" );
+			Assert.AreEqual( 0, Broken() );
 			Wear( BellyBounce, 100f, bounce.State );
 			Assert.AreEqual( (1, 0), Read() );
 

@@ -541,7 +541,7 @@ public class ParkGadgetPressTests
 	public void TheBuyButtonOpensTheBuyScreenOnItsTabAndTakesItsTagOff()
 	{
 		var (stack, gadget) = AGadget();
-		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 8, ParkTags.NoTag, 1, 0, 0xb, 0, 30000, 0 )] );
+		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 6, ParkTags.NoTag, 1, 0, 0xb, 0, 30000, 0 )] );
 		var buttons = Times( "TAG_BAR_BUTTON" );
 		var rows = Times( "TAG_BAR_BUY_ITEM_ROW" );
 
@@ -571,7 +571,7 @@ public class ParkGadgetPressTests
 		// The screen open: a tag of type 0xb picks the sideshows tab on it.
 		Frame( stack, false, new Vector2( 1000, 100 ), 2.6f );
 		Assert.AreEqual( 0, tags.Standing.Count );
-		var second = tags.Said( 8, 0, 3000, item: 1303 )!;
+		var second = tags.Said( 6, 0, 3000, item: 1303 )!;
 		Frame( stack, false, new Vector2( 1000, 100 ), 3.1f );
 		Time.PinWall( 3500 );
 		Assert.IsTrue( stack.ClickAt( 119, 941 ) );

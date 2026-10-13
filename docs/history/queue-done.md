@@ -6443,6 +6443,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   predicted to speak too, from a part-read listing, and did not; predicted again and held. `advisor-park.md`,
   "Worn rides and no mechanic". Tests 3035.
   I split the item: every other piece of the old Q331 is Q332.
+- [x] **Q332. The advisor tells a park with broken rides and no mechanic to hire one.** Done 2026-10-12: one
+  piece of the old Q332. Row 6's score (`0x0059ca80`, loose code): nought where `FUN_004c9960( 4 )` counts a
+  mechanic, else `StaffHireMechanics2.ScorePerBrokenRide`, 10, for each ride broken down (`0x004ca310`: a ride
+  item's thing whose `mState` is 1); three lines in the hard hat, the second with a gesture row, tag row 8
+  (string 12, button 14). Built: `ParkAdvisorMessages.HireMechanicsBroken`, a topic's
+  `PerBrokenRideWithNoMechanic`, `ParkFacts.RidesBroken`, tag row 8, `PollFacts`. A file of the stock park with
+  its mechanic fired and the Belly Bounce, a Hot Pot and an Aztec Mayhem broken down, saved on tick 1231:
+  `poll message=6 row=6 days=53 score=30 threshold=25 tick=1238 result=post broken=3 mechanics=0`, `attempt=1
+  message=6 ... response=17 sample=16 line=0 tick=1238`, him up in the yellow hard hat with tag 8 on the mast;
+  the tag's bar read string 12, and its button's click logged `button type 14 opens the hire screen on tab 1
+  and takes tag 8 off`, the frame "Hire Mechanics". Two broken: `under-threshold` at 20; main's build: nothing.
+  The original, given the same files: message 6's record (1238, 0, 1, 0) on tick 1238, the same tag and
+  rectangle, buttons 14 and 0, the hire screen built on tab 1, and silent with two broken. Not predicted: it
+  then said row 124's line (tick 1317) and row 7's (from tick 1394), which this game does not build.
+  `advisor-park.md`, "Broken rides and no mechanic". Tests 3036.
+  I split the item: every other piece of the old Q332 is Q333.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

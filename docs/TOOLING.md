@@ -135,6 +135,18 @@ whole list):
   tab (`hiretab`); `loadfile.sh` comes back some twenty seconds after its click, so a frame of a line said three
   seconds in is grabbed from the `POLL` (`q331/orig/run.sh` with `GRAB=1`; `STOP=0` keeps the original up for
   the next file). The same file has both games say row 113's line, the unjoined queue's, on tick 996.
+- **Broken rides and no mechanic, and the advisor's line about it** (Q332): **a ride bought and never opened
+  does not break** when `scriptvar <thing> VAR_BREAKSTAT 1` is written, so break open ones: the stock Bounce
+  (13), a Hot Pot (`parkscene.hot_pot()`) and an Aztec Mayhem with its queue joined and guests sent. Each break
+  with no mechanic posts `0x44` (one line, the others inside its cooldown), and three shut rides of three have
+  row 259 speak on its turn (898 and every 155): to keep both out of the way, buy two Crazy Apes before tick
+  895 so row 259 is said then, sell them, break the rides past tick 1086 and save a few ticks before row 6's
+  turn on 1238 (928 and every 155). With three broken he says sample 16 in the hard hat and leaves tag 8, whose
+  bar's first button builds the hire screen on its mechanics' tab; with two, nothing. The original, given the
+  file, says it on tick 1238 too, then row 124's line on tick 1317 and row 7's from tick 1394 (`q332/scene.py
+  <out> <bin> <name> <N>`, `q332/confirm.py`, `q332/orig/run.sh <file>`). **`loadfile.sh` cannot load a second
+  file into an original left with a park screen open** (its clicks open no menu and the log holds only the old
+  park's first lines): close the screen, or `loadfile.sh stop` and start fresh.
 - **A park with no ride, and the advisor's line about it:** the same pause with `sell 13` alone: row 62 is
   polled on tick 959 (804 and every 155 on) and he says sample 179 in the hard hat and leaves tag 64, whose
   bar's first button opens the buy screen on its rides tab (`windows` names the buy screen's tab; open it with

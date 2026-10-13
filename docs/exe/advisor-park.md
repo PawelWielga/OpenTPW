@@ -1154,7 +1154,7 @@ have come 122 ticks after the save.
 | A file with the record fresh | said on tick 877 | said on tick 877 |
 | The Tutorial option off | not posted; said a round on once it is on | not posted (the turn after was run past the cutoff) |
 | Past day 60 | not said | not said |
-| The other polled rows | scored each round | rows 282, 1, 2, 62, 113 and 259 to 262 built (below); 145 counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
+| The other polled rows | scored each round | rows 282, 1, 2, 5, 6, 62, 113 and 259 to 263 built (below); 142 counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
 | The line's wait | the response's length and a second | the same; the length differs a run in both, as the gesture chain does |
 
 Not in a game run: a line found by the poll inside another's wait (the test holds it). No case in either game:
@@ -1596,15 +1596,16 @@ always built again on the tab asked for and posts its own line, `0xbd`. The act 
 and the arm folded away. Fifteen rows of the tag table carry one: rows 7 to 9 and 152 and 154 type 14, rows 10
 to 12 type 13, rows 13 to 15 type 16, row 16 type 15, rows 17 to 19 type 17 (`lib/tagtable.py`).
 
-**The two rows after it, read and not built.** Row 6 (`0x0059ca80`, message 6, tag 8): nought with a mechanic,
-else `FUN_004ca310`'s count (not read) times `StaffHireMechanics2.ScorePerBrokenRide`, 10 (`+0xc4`). Row 7
-(`0x0059cac0`, message 7, tag 9): nought while `FUN_004c90d0` answers fewer days than `WaitingTimes.DaysForStaff`,
-30 (`+0x630`); else the rides (`FUN_004ca8e0( 0, 0 )`) less the mechanics times
+**The two rows after it.** Row 6 (`0x0059ca80`, message 6, tag 8) is built: "Broken rides and no mechanic",
+below. Row 7 (`0x0059cac0`, message 7, tag 9), read and not built: nought while `FUN_004c90d0` answers fewer days
+than `WaitingTimes.DaysForStaff`, 30 (`+0x630`); else the rides (`FUN_004ca8e0( 0, 0 )`) less the mechanics times
 `StaffHireMechanics3.IdealNumberOfRidesPerMechanic`, 4 (`+0xc8`), where that is above nought, times
 `ScorePerExtraRide`, 10 (`+0xcc`). **`FUN_004c90d0` does not count from tick nought**: it takes whole days
 (`0xC92A69C000`) from a stamp the analyser keeps at its `+0x21c38`, which its constructor `FUN_004c58c0` and
 `FUN_004c76d0` write (the latter's one caller is `FUN_00504b90`, not read) and a park file carries
-(`FUN_004c5d70`). What the stamp marks is not read.
+(`FUN_004c5d70`). What the stamp marks is not read. **Measured since (Q332's runs):** on a file of this game's
+whose mechanic was fired about tick 770, row 7 scored nought on its turn on tick 1239 and 30 (three rides, no
+mechanic) on its next, tick 1394, in two programs: the thirty days, 691 ticks, ended between the two.
 
 ### OpenTPW (`ParkAdvisorMessages.HireMechanics`, a topic's `PerWornRideWithNoMechanic`, `WornBelow`; `ParkFacts.Mechanics`, `RidesWorn`; tag row 7; `ParkGadget.BarButton`'s types `0xd` to `0x11`; `ParkHireScreen`'s `openOn`)
 
@@ -1660,9 +1661,9 @@ prediction was made again from that (fresh in runs b, c and d too) and held.
 | Six at 24, the mechanic kept | not said | the same (`no-score`) |
 | The tag and the bar | row 7, part 2, string 11; button 14 builds the hire screen on its mechanics' tab, tag off, arm in | the same |
 | The hire screen's own line | `0xbd` posted at 1000 as the screen is built, and said | the same (said on tick 961, as row 5's wait ended) |
-| Rows 6 and 7 | scored on their turns (nought here) | not built: counted with the other polled rows |
+| Rows 6 and 7 | scored on their turns (nought here) | row 6 built since ("Broken rides and no mechanic"); row 7 counted with the other polled rows |
 
-**Not built or not seen.** Rows 6 and 7, and the ten other staff rows, 8 to 17 (their scores not read; row 14's
+**Not built or not seen.** Row 7, and the ten other staff rows, 8 to 17 (their scores not read; row 14's
 line is the theme advisor's). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
 turn), the line said again past its 120 quarter-ticks, a broken ride counted (the test holds it, and a ride
 breaking with no mechanic posts `0x44` besides), a ride worn under 25 by running, button types `0xd` and `0xf`
@@ -1670,6 +1671,93 @@ to `0x11` and the button with the hire screen open (the test holds each), a mech
 the line, Full Simulation. In this game's run the tag was clicked while he still spoke and in the original's
 after: the bar's own line, `0x11c`, was said there (tick 1033) and withdrawn unsaid here. Not heard in either
 game.
+
+## Broken rides and no mechanic (message 6, Q332)
+
+**Row 6, message 6, `StaffHireMechanics2`:** polled, category 0, either game mode, one copy, first response 17,
+three lines in turn. Responses 17 to 19 are samples 16 to 18, model slot 0, prop 5 (the hard hat), group 8; the
+first and third are the random gesture chain and the second, response 18, names gesture row 21. It is the row
+after row 5: from the shipped park's cursor its turns are ticks 773, 928, 1083 and every 155 on.
+
+**Its score, `0x0059ca80`** (loose code, read as disassembly; `ECX` the balance object):
+
+1. `FUN_004c9960( 4 )` on the park analyser above nought, a mechanic in the park: nought, as row 5's.
+2. Otherwise `0x004ca310` on the analyser times `[ECX + 0xc4]`, `StaffHireMechanics2.ScorePerBrokenRide`
+   (`lib/advisorschema.py`), **10** in `Advisor.sam`. The routine (loose code) walks the object chain as
+   `0x004ca3a0` does and counts each object whose item's `Info.WhichUIType` (`+0x4ac`) is nought, a ride, and
+   which `FUN_004e0370` answers for: `mState` 1, broken down. The State of repair is not read.
+
+The door is not asked. `MinScoreForConsideration` is 25, so **two broken rides are not enough and three are**
+(30). Row 5 counts the same three at 5 each, 15, and is not said for them.
+
+**Its tag** is row 8 of the tag table: key 383, picture 2, string 12, the bar's first button of type 14 (the hire
+screen on its mechanics' tab, "Worn rides and no mechanic"), no second, thirty seconds. String 12 reads the same
+in both language folders: "The rides are breaking down but you have no mechanics. You should hire some!"
+
+### OpenTPW (`ParkAdvisorMessages.HireMechanicsBroken`, a topic's `PerBrokenRideWithNoMechanic`; `ParkFacts.RidesBroken`; tag row 8; `PollFacts`)
+
+A thirteenth polled topic, scored from the same `ParkFacts`: where the facts count no mechanic, its key's value
+for each ride they count broken. `ParkPeople.AdvisorFacts` counts, of the ride things, each whose state is 1.
+Its poll line ends ` broken=N mechanics=N` (`PollFacts` makes every polled row's ending). `ParkTags.Rows` lists
+row 8. The second line's gesture row is counted (`ADVISOR_RESPONSE_GESTURE_ROW`), as the mechanic's third's is.
+
+**The scene** (`q332/scene.py <out> <bin> <name> <N>`): a ride bought and never opened does not break when its
+script is told to, so the three broken rides are three open ones. The stock park, mechanic 26 fired; two Crazy
+Apes bought and left shut, so that row 259's line is said on tick 898 and is inside its cooldown afterwards,
+then sold; a Hot Pot on (41,23) and an Aztec Mayhem on (57,23) bought, joined and ridden; past tick 1086 the
+Belly Bounce, the pot and the Mayhem broken by their scripts (`VAR_BREAKSTAT`), the first break's line
+(`0x44`) left to end, and the park saved under a pause on tick 1231, seven ticks before row 6's turn.
+`broken3.TPWS` holds three broken rides, no tag and message 6 never said; `broken2.TPWS` two, saved on tick 1230.
+
+**Predicted first** (`q332/PREDICTION.txt`), both games on files neither had been given. One thing was seen
+before the predictions were written, and the file says so: while the scene was being found, this game's build
+polled row 6 at 30 in a live park and said response 17.
+
+**This game** (`q332/confirm.py fix|two|control`). *`broken3`* (`run-fix1`, on the desktop, six of six on its
+first run; `run-fix2` on the commit's build): `poll message=5 row=5 days=53 score=15 threshold=25 tick=1237
+result=under-threshold worn=3 mechanics=0`, `poll message=6 row=6 days=53 score=30 threshold=25 tick=1238
+result=post broken=3 mechanics=0`, `post message=6 subject=0 score=30 threshold=25 tick=1238 result=queued
+pending=2` and `attempt=1 message=6 subject=0 score=30 threshold=25 response=17 sample=16 line=0 tick=1238
+duration=7332`; `saying sp_016.mp2 ... wearing=5,0`, him up in the yellow hard hat (`1-line.png`), `tags`
+reading `tag=8/picture=2/subject=0` with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag
+clicked: `message bar: tag 8 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=526
+second=hidden erase=mb_erase` and the text (`2-bar.png`). The button clicked: `button type 14 opens the hire
+screen on tab 1 and takes tag 8 off`, `windows` reading `ParkHireScreen tab 1 ... left on 2,4,10`,
+`standing=0`, and the frame "Hire Mechanics" (`3-screen.png`). *`broken2`* (`run-two`, off-screen): `score=20
+... result=under-threshold broken=2 mechanics=0` on tick 1238, no attempt and no tag on tick 1273. **Main's
+build** on `broken3` (`run-control`, off-screen): no line of message 6, no attempt, no tag by tick 1273.
+
+**The original** (`q332/orig/run.sh <file>`, `advisor.py ... 0x5,0x6,0x7,0x44,0x103,0xbd,0x11c poll` beside
+`tags.py`, `bar.py` and `screens.py`). *`broken3`* (run a): message 6's record went from (0, -1, 0, 0) to
+**(1238, 0, 1, 0) on tick 1238**, its wait 8,331 ms where this game's is 8,332, one tag with it at (84, 909,
+154, 974), the mast at (94, 901, 144, 984), its text string 12; three and six seconds after the load's click he
+is up in the yellow hard hat with the tag on the mast (`orig/a-g2.png`, `a-g4.png`). The tag clicked: the bar's
+data read thing 0, buttons 14 and 0, item 0 and the text. The button clicked: `screens.py` went from `left
+1,3,10 ... hire 0x0 hiretab 0` to `left 2,3,10 ... hire 0x47be440 hiretab 1` on tick 1370, the frame "Hire
+Mechanics" with the second tab down (`orig/a-button.png`). Message 5's record stayed fresh throughout, and no
+other message took a slot before tick 1238. *`broken2`* (run b, a fresh program): message 6's record fresh
+through tick 1394.
+
+**Seen in the original and not predicted.** In both runs it said a line on tick 1317 that this game does not
+build: the poll's cursor stood on row 125 after it, so row 124's (`0x0059f220`, responses 300 and 301, sample
+334, "the buzz about your park has started to die down"; its score is not read). And row 7 took a slot at 30
+on tick 1394 in run a and was said on tick 1447, after the hire screen's line; in run b it was said on tick
+1394 itself ("Worn rides and no mechanic", above).
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 6 | polled; nought with a mechanic, else 10 for each ride broken down | the same |
+| Three rides broken, no mechanic | said on tick 1238, line 0, in the hard hat | the same |
+| Two broken | not said | the same (`under-threshold`) |
+| The tag and the bar | row 8, part 2, string 12; button 14 builds the hire screen on its mechanics' tab, tag off | the same |
+| Rows 124 and 7, later in that park | said (ticks 1317 and 1394) | not built: counted with the other polled rows |
+
+**Not built or not seen.** Rows 7 and 124. In no game run: lines 2 and 3 (samples 17 and 18; the test holds the
+turn and the second's gesture row, which is counted, not played), the line said again past its 120
+quarter-ticks, a mechanic kept (he mends the rides before a turn; the test holds `no-score`) or hired from the
+screen after the line, a broken sideshow beside the rides (the test holds it), Full Simulation: the mode is not
+asked by row 6's score. A second file loaded into the original with the hire screen left open did not load
+(the first run b); it was run again in a fresh program. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 
