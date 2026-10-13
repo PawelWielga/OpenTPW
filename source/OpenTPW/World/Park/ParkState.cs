@@ -730,6 +730,7 @@ public sealed class ParkState
 		// file is considered in exactly the order the file's chain gives.
 		_firstObject = park.FirstObject;
 		MechanicCursor = park.Save?.MechanicCursor ?? 0;
+		LastStaffHired = park.Save?.LastStaffHired ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 
 		foreach ( var thing in park.Objects )
 			_nextObject[thing.ThingId] = thing.NextObject;
@@ -889,6 +890,31 @@ public sealed class ParkState
 	public DateTime CalendarNow
 		=> GameCalendar.Epoch.AddTicks( (long)(uint)GameTick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond
 			* TimeSpan.TicksPerSecond );
+
+	/// <summary>
+	/// The park's calendar as the newest member of staff was made, a <c>FILETIME</c>: the park analyser's
+	/// <c>mLastStaffHired</c> (<c>+0x21c38</c>), the file's own at a load (<see cref="ParkWorld.LastStaffHired"/>)
+	/// and the calendar's start in a park made with no file, whose analyser is made on tick nought
+	/// (<c>FUN_004c58c0</c>).
+	/// </summary>
+	public long LastStaffHired { get; private set; }
+
+	/// <summary>
+	/// A member of staff has been made: the staff constructor's tail stamps the analyser with now
+	/// (<c>FUN_00504b90</c>, <c>FUN_004c76d0</c>), whatever their kind.
+	/// </summary>
+	internal void StampStaffHired()
+	{
+		LastStaffHired = ParkWorld.StaffState.FileTimeOf( CalendarNow );
+		Log.Info( $"Park: mLastStaffHired stamped {CalendarNow:d/M/yyyy HH:mm:ss} on mGameTick {GameTick}" );
+	}
+
+	/// <summary>
+	/// Whole days since the newest member of staff was made - <c>FUN_004c90d0</c>: now less
+	/// <see cref="LastStaffHired"/> over 864,000,000,000, a signed 64-bit divide whose low 32 bits are the answer.
+	/// </summary>
+	public int DaysSinceStaffHired
+		=> unchecked((int)((ParkWorld.StaffState.FileTimeOf( CalendarNow ) - LastStaffHired) / TimeSpan.TicksPerDay));
 
 	/// <summary>
 	/// How many whole days old a thing is on the park's calendar - <c>FUN_004dd670</c>: <c>( now − built ) /

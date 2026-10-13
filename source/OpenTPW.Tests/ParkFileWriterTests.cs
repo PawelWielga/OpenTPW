@@ -384,8 +384,8 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
-	/// The level's half: the running park's clock, door, count and cash and the orbit camera's view, written into the
-	/// player's folder for the theme under the name given.
+	/// The level's half: the running park's clock, door, count and cash, the analyser's stamp of the newest hire and
+	/// the orbit camera's view, written into the player's folder for the theme under the name given.
 	/// </summary>
 	[TestMethod]
 	public void TheLevelWritesTheRunningParkIntoThePlayersFolder()
@@ -398,6 +398,7 @@ public class ParkFileWriterTests
 		state.Deposit( 111 );
 		state.Admit();
 		state.Admit();
+		state.StampStaffHired();
 
 		ParkOrbitCameraMode.Zoom = 80f;
 		ParkOrbitCameraMode.Yaw = 0.75f;
@@ -413,6 +414,8 @@ public class ParkFileWriterTests
 		Assert.AreEqual( 1, written.ParkClosed );
 		Assert.AreEqual( 2, written.NumberOfVisitorsToDate );
 		Assert.AreEqual( 88098, written.Economy!.Value.Balance );
+		Assert.AreNotEqual( shipped.LastStaffHired, written.LastStaffHired );
+		Assert.AreEqual( ParkWorld.StaffState.FileTimeOf( new DateTime( 2000, 1, 1 ).AddSeconds( 900 * 3750 ) ), written.LastStaffHired, "mLastStaffHired, stamped on tick 900" );
 		Assert.AreEqual( new ParkCameraModule.View( 80f, -0.75f, 310f, 220f ), written.Camera.Saved, "the rotation turns the other way" );
 
 		Assert.AreEqual( "My Park", SaveFolder.SavedParks( 0, "Test", "jungle" ).Single().Name, "the Load Park screen's list" );

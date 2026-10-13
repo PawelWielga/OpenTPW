@@ -1596,16 +1596,8 @@ always built again on the tab asked for and posts its own line, `0xbd`. The act 
 and the arm folded away. Fifteen rows of the tag table carry one: rows 7 to 9 and 152 and 154 type 14, rows 10
 to 12 type 13, rows 13 to 15 type 16, row 16 type 15, rows 17 to 19 type 17 (`lib/tagtable.py`).
 
-**The two rows after it.** Row 6 (`0x0059ca80`, message 6, tag 8) is built: "Broken rides and no mechanic",
-below. Row 7 (`0x0059cac0`, message 7, tag 9), read and not built: nought while `FUN_004c90d0` answers fewer days
-than `WaitingTimes.DaysForStaff`, 30 (`+0x630`); else the rides (`FUN_004ca8e0( 0, 0 )`) less the mechanics times
-`StaffHireMechanics3.IdealNumberOfRidesPerMechanic`, 4 (`+0xc8`), where that is above nought, times
-`ScorePerExtraRide`, 10 (`+0xcc`). **`FUN_004c90d0` does not count from tick nought**: it takes whole days
-(`0xC92A69C000`) from a stamp the analyser keeps at its `+0x21c38`, which its constructor `FUN_004c58c0` and
-`FUN_004c76d0` write (the latter's one caller is `FUN_00504b90`, not read) and a park file carries
-(`FUN_004c5d70`). What the stamp marks is not read. **Measured since (Q332's runs):** on a file of this game's
-whose mechanic was fired about tick 770, row 7 scored nought on its turn on tick 1239 and 30 (three rides, no
-mechanic) on its next, tick 1394, in two programs: the thirty days, 691 ticks, ended between the two.
+**The two rows after it.** Row 6 (`0x0059ca80`, message 6, tag 8): "Broken rides and no mechanic", below. Row 7
+(`0x0059cac0`, message 7, tag 9): "More rides than the mechanics can keep", below.
 
 ### OpenTPW (`ParkAdvisorMessages.HireMechanics`, a topic's `PerWornRideWithNoMechanic`, `WornBelow`; `ParkFacts.Mechanics`, `RidesWorn`; tag row 7; `ParkGadget.BarButton`'s types `0xd` to `0x11`; `ParkHireScreen`'s `openOn`)
 
@@ -1650,8 +1642,9 @@ off-screen): `score=25 ... result=under-threshold worn=5 mechanics=0`, no attemp
 tab down (`orig/a-button.png`), a slot took `0xbd` at 1000 and it was said on tick 1051. *`worn5`* (run c) and
 *`kept6`* (run d): message 5's record fresh through tick 1053 in each. **Row 7 did not speak in any of the
 four**, where I had predicted, from a part-read listing and marked as the weakest, that six rides and no
-mechanic would have it queued at 60 on tick 929: its days are counted from the analyser's stamp, above. The
-prediction was made again from that (fresh in runs b, c and d too) and held.
+mechanic would have it queued at 60 on tick 929: its days are counted from the analyser's `mLastStaffHired`
+("More rides than the mechanics can keep"). The prediction was made again from that (fresh in runs b, c and d
+too) and held.
 
 | | The original | OpenTPW |
 |---|---|---|
@@ -1661,9 +1654,9 @@ prediction was made again from that (fresh in runs b, c and d too) and held.
 | Six at 24, the mechanic kept | not said | the same (`no-score`) |
 | The tag and the bar | row 7, part 2, string 11; button 14 builds the hire screen on its mechanics' tab, tag off, arm in | the same |
 | The hire screen's own line | `0xbd` posted at 1000 as the screen is built, and said | the same (said on tick 961, as row 5's wait ended) |
-| Rows 6 and 7 | scored on their turns (nought here) | row 6 built since ("Broken rides and no mechanic"); row 7 counted with the other polled rows |
+| Rows 6 and 7 | scored on their turns (nought here) | each built since, in its own section below |
 
-**Not built or not seen.** Row 7, and the ten other staff rows, 8 to 17 (their scores not read; row 14's
+**Not built or not seen.** The ten other staff rows, 8 to 17 (their scores not read; row 14's
 line is the theme advisor's). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
 turn), the line said again past its 120 quarter-ticks, a broken ride counted (the test holds it, and a ride
 breaking with no mechanic posts `0x44` besides), a ride worn under 25 by running, button types `0xd` and `0xf`
@@ -1740,9 +1733,10 @@ through tick 1394.
 
 **Seen in the original and not predicted.** In both runs it said a line on tick 1317 that this game does not
 build: the poll's cursor stood on row 125 after it, so row 124's (`0x0059f220`, responses 300 and 301, sample
-334, "the buzz about your park has started to die down"; its score is not read). And row 7 took a slot at 30
+334, "the buzz about your park has started to die down"; its score is not read, and its two responses name
+model slot 1 and prop -1, the theme's own advisor and costume, which are not built). And row 7 took a slot at 30
 on tick 1394 in run a and was said on tick 1447, after the hire screen's line; in run b it was said on tick
-1394 itself ("Worn rides and no mechanic", above).
+1394 itself ("More rides than the mechanics can keep", below).
 
 | | The original | OpenTPW |
 |---|---|---|
@@ -1750,14 +1744,133 @@ on tick 1394 in run a and was said on tick 1447, after the hire screen's line; i
 | Three rides broken, no mechanic | said on tick 1238, line 0, in the hard hat | the same |
 | Two broken | not said | the same (`under-threshold`) |
 | The tag and the bar | row 8, part 2, string 12; button 14 builds the hire screen on its mechanics' tab, tag off | the same |
-| Rows 124 and 7, later in that park | said (ticks 1317 and 1394) | not built: counted with the other polled rows |
+| Row 7, later in that park | nought on tick 1239, said on tick 1394 | the same, since Q333 (`q333/confirm.py b3`) |
+| Row 124, later in that park | said (tick 1317) | not built: counted with the other polled rows |
 
-**Not built or not seen.** Rows 7 and 124. In no game run: lines 2 and 3 (samples 17 and 18; the test holds the
+**Not built or not seen.** Row 124. In no game run: lines 2 and 3 (samples 17 and 18; the test holds the
 turn and the second's gesture row, which is counted, not played), the line said again past its 120
 quarter-ticks, a mechanic kept (he mends the rides before a turn; the test holds `no-score`) or hired from the
 screen after the line, a broken sideshow beside the rides (the test holds it), Full Simulation: the mode is not
 asked by row 6's score. A second file loaded into the original with the hire screen left open did not load
 (the first run b); it was run again in a fresh program. Not heard in either game.
+
+## More rides than the mechanics can keep (message 7, Q333)
+
+**Row 7, message 7, `StaffHireMechanics3`:** polled, category 0, either game mode, one copy, first response 20,
+three lines in turn. Responses 20 to 22 are **samples 20 to 22** (the bank's sample 19 is no response's of
+these rows, so the samples are not one less than the responses as rows 5 and 6's are), the random gesture chain,
+model slot 0, prop 5 (the hard hat), group 9. It is the row after row 6: from the shipped park's cursor its turns
+are ticks 774, 929, 1084 and every 155 on.
+
+**Its score, `0x0059cac0`** (loose code, read as disassembly; `ECX` the balance object):
+
+1. `FUN_004c90d0` on the park analyser under `[ECX + 0x630]`, `WaitingTimes.DaysForStaff`, **30** in
+   `Advisor.sam` (a signed `JGE`): nought.
+2. Otherwise the rides, `FUN_004ca8e0( 0, 0 )`, less the mechanics, `FUN_004c9960( 4 )`, times `[ECX + 0xc8]`,
+   `StaffHireMechanics3.IdealNumberOfRidesPerMechanic`, **4**; nought unless that is above nought, and then it
+   times `[ECX + 0xcc]`, `StaffHireMechanics3.ScorePerExtraRide`, **10**.
+
+The door is not asked, nor whether a ride is open, worn or broken. `MinScoreForConsideration` is 25, so **three
+rides over what the mechanics keep are enough and two are not**: with no mechanic three rides, with one seven.
+
+**The days are counted from the newest hire.** `FUN_004c90d0` (loose code) is the calendar's now (`FUN_004f8690`
+on world `+0x2a0`) less the analyser's `+0x21c38` (`FUN_005fc550`), over 864,000,000,000 (`0x0067c320`), the
+low dword answered. The analyser's serialiser `FUN_004c5d70` names `+0x21c38` **`mLastStaffHired`**: the last of
+six eight-byte stamps at the record's end (`mLastStrike` `+0x21c10`, `mLastPuke`, `mLastPrank`,
+`mParkLastOpened`, `mLastObjectBuilt` `+0x21c30`, then it), before `mMostPaidForTicket`, `mLargestBusLoad` and
+`mLongestStay`; in a park file it is the eight bytes at 73,524 of thing 5's record (the FileFormats saves page,
+"The park analyser"). Two things write it: the analyser's constructor `FUN_004c58c0`, which stamps all six with
+the calendar's now as the park is made, and `FUN_004c76d0`, whose one caller is the staff constructor's tail
+`FUN_00504b90`, the routine that stamps the member's own `mTimeHired` (`saves.md`). A load makes every thing
+again, each by its constructor and then its record, and **the stamp left standing after a load is the file's**,
+not the load's own now: the original's memory read the file's after each of four loads (`thingwords.py ...
+5:0x21c38:Q`; in which order the load's staff and its analyser are made is not read).
+
+**Measured in files**, nine the original wrote (`q333/tail.py`): `mLastStaffHired` equals the newest `mTimeHired`
+of the file's staff in all eight that hold staff, Alexah's Full Simulation parks with their own hires among
+them, and is the calendar's start in the ninth, saved on tick 4 with nobody hired. The shipped park's is
+2000-01-29 03:00, its researcher's, tick 648 at 3,750 calendar seconds a tick. A day is 23.04 ticks, so **692
+ticks after a hire is the thirtieth day and 691 is the twenty-ninth**: the shipped park's row 7 can score from
+tick 1340, which is why Q332's park heard nought on tick 1239 and 30 on tick 1394.
+
+**Its tag** is row 9 of the tag table: key 383, picture 2, string 13, the bar's first button of type 14 (the hire
+screen on its mechanics' tab, "Worn rides and no mechanic"), no second, thirty seconds. String 13 reads the same
+in both language folders: "There aren't enough mechanics to service all the rides. Maybe you should think about
+hiring some more."
+
+### OpenTPW (`ParkAdvisorMessages.HireMoreMechanics`, a topic's `RidesAMechanic`, `DaysForStaff`; `ParkFacts.DaysSinceStaffHired`; `ParkState.LastStaffHired`, `StampStaffHired`, `DaysSinceStaffHired`; `ParkWorld.LastStaffHired`, `PutLastStaffHired`; tag row 9)
+
+A fourteenth polled topic, scored from the same `ParkFacts`, which now carry the whole days since the newest
+hire. `ParkState` keeps the stamp: the file's at a load (`ParkWorld.LastStaffHired`), the calendar's start in a
+park made with no file, and the calendar's now at every hire (`ParkPeople.Hire` calls `StampStaffHired`, which
+logs `Park: mLastStaffHired stamped <date> on mGameTick N`). The writer puts it back into the analyser's record
+(`ParkFileWriter.Running.LastStaffHired`); the rest of the analyser is still the file's. The poll line ends
+` rides=N mechanics=N sincehire=N`. `ParkTags.Rows` lists row 9.
+
+**The scene** (`q333/scene.py`, `q333/mk.py`): the stock park paused on tick 915, mechanic 26 fired, two Crazy
+Apes bought on (41,22) and (70,40) as things 43 and 44 and left shut, saved: `base.TPWS`, three rides, no
+mechanic, the shipped stamp. From it, the stamp written into the file (`parkfile.thing_set( src, dst, 5, 73524,
+'<q', filetime )`): `days30.TPWS` the stamp of tick 237, 692 ticks before row 7's turn on tick 929, and
+`days29.TPWS` the stamp of tick 238. And `hired.TPWS`, written by this game: `days30` loaded, a guard hired
+under the load's pause on tick 916, saved (`q333/confirm.py mkhired`).
+
+**Predicted first** (`q333/PREDICTION.txt`), both games on files neither had been given; every prediction held,
+in one round. Not a prediction, and said there: the original's two answers on `q332/broken3.TPWS`, seen in Q332.
+
+**This game** (`q333/confirm.py fix|d29|base|hired|b3|control|mkhired`). *`days30`* (`run-fix1`, on the desktop,
+six of six on its first run): `poll message=7 row=7 days=40 score=30 threshold=25 tick=929 result=post rides=3
+mechanics=0 sincehire=30`, `post message=7 subject=0 score=30 threshold=25 tick=929 result=queued pending=2` and
+`attempt=1 message=7 subject=0 score=30 threshold=25 response=20 sample=20 line=0 tick=929`; `saying sp_020.mp2
+... wearing=5,0`, him up in the yellow hard hat (`1-line.png`), `tags` reading `tag=9/picture=2/subject=0` with
+`mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked: `message bar: tag 9 subject 0 item 0
+bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=526 second=hidden erase=mb_erase` and the text
+(`2-bar.png`). The button clicked: `button type 14 opens the hire screen on tab 1 and takes tag 9 off`,
+`windows` reading `ParkHireScreen tab 1`, `standing=0`, and the frame "Hire Mechanics" (`3-screen.png`).
+*`days29`* (`run-d29`, off-screen): `score=0 ... tick=929 result=no-score rides=3 mechanics=0 sincehire=29`, then
+`days=47 score=30 ... tick=1084 result=post ... sincehire=36`, queued on that tick and said on tick 1094, as
+row 259's line ended. *`base`* (`run-base`): `no-score ... sincehire=12` on tick 929, nothing by tick 962.
+*`mkhired`* (`run-mkhired`): `hire: 'Scott Newman-Bale' is thing 45`, `Park: mLastStaffHired stamped 9/2/2000
+18:10:00 on mGameTick 916`, and the file's analyser's stamp that `FILETIME`, the new member's own `mTimeHired`,
+its other five stamps and three dwords the file's. *`hired`* (`run-hired`): the clock starts on 916 and
+`no-score ... sincehire=0` on tick 929. *`q332/broken3.TPWS`* (`run-b3`): `no-score ... sincehire=25` on tick
+1239 and `days=60 score=30 ... tick=1394 result=post ... sincehire=32`, said on that tick. **Main's build** on
+`days30` (`run-control`): no line of message 7, no attempt, no tag by tick 962.
+
+**The original** (`q333/orig/run.sh <file>`, `advisor.py ... 0x5,0x6,0x7,0x71,0x103,0xbd,0x11c poll` beside
+`thingwords.py ... 5:0x21c38:Q:lasthire`, `tags.py`, `bar.py` and `screens.py`; two programs, four loads).
+*`days30`* (run a): the analyser's stamp read 125920471500000000, the file's; message 7's record went from (0,
+-1, 0, 0) to **(929, 0, 1, 0) on tick 929**, one tag with it at (84, 909, 154, 974), the mast at (94, 901, 144,
+984), its text string 13; six seconds after the load's click he is up in the yellow hard hat with the tag on the
+mast (`orig/a-g4.png`). The tag clicked: the bar's data read thing 0, buttons 14 and 0, item 0 and the text
+(`orig/a-bar.png`). The button clicked: `screens.py` went from `left 1,3,10 ... hire 0x0 hiretab 0` to `left
+2,3,10 ... hire 0x47bb3c0 hiretab 1` on tick 1050, the frame "Hire Mechanics" with the second tab down
+(`orig/a-button.png`). *`days29`* (run b, a fresh program): the stamp 125920509000000000; message 7's record
+fresh on tick 929; **a slot took message 7 at 30 on tick 1084** and it was said on tick 1096. *`base`* (run c):
+the stamp 125935884000000000, the shipped one; record fresh and no slot through tick 1053. *`hired`* (run d):
+**the stamp 125945934000000000, tick 916's, this game's own**; record fresh and no slot through tick 1053. In
+all four it said row 113's line on tick 996 and, where the run reached it, row 259's on tick 1053, as this game
+does.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 7 | polled; nought until 30 days after the newest hire, then 10 for each ride over four a mechanic | the same |
+| Three rides, no mechanic, day 30 | said on tick 929, line 0, in the hard hat | the same |
+| Day 29 | nought on tick 929; a slot at 30 on tick 1084, said on 1096 | the same, said on 1094 |
+| The shipped stamp (day 12) | not said | the same (`no-score`) |
+| A file saved after a hire here | reads this game's stamp; not said | the same (`sincehire=0`) |
+| The tag and the bar | row 9, part 2, string 13; button 14 builds the hire screen on its mechanics' tab, tag off | the same |
+| The analyser's other stamps | each written as its event happens (`mLastObjectBuilt` moves at a purchase) | the file's: not kept, not written |
+
+**Not built or not seen.** The analyser's five other stamps, `mLifetimeVisitors` and the three records after
+them are not kept here and go out as the file's: `hired.TPWS` holds two rides bought here and the shipped
+`mLastObjectBuilt`; what reads each is not read. Whether a staff candidate the original makes for the hire
+screen's preview, or anything but a hire, runs the staff constructor is not read (the eight files agree with a
+hire alone). In no game run: lines 2 and 3 (samples 21 and 22; the test holds the turn), the line said again past
+its 120 quarter-ticks, a mechanic kept (three rides are under his four: the test holds seven rides and one
+mechanic, and eleven and two), a mechanic hired from the screen after the line (the stamp then silences the row
+for thirty days, the test's last step), a hire made in the original by hand, a park made with no file, Full
+Simulation: the mode is not asked by row 7's score. This game said the line of `days29` two ticks before the
+original (1094, 1096): the wait after row 259's line, not measured further. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 

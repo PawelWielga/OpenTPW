@@ -717,6 +717,8 @@ public sealed partial class ParkPeople : Entity
 
 		var member = new global::OpenTPW.Staff( thingId, model, state, navigator, pace, MapStep.CellId( cellX, cellY ) );
 
+		State.StampStaffHired();
+
 		// An entertainer's and a guard's constructor stamps their effect round the cell they are made on.
 		if ( ParkRegionEffects.OfStaff( model ) is { } effect )
 			State.StampEffect( effect, cellX, cellY );
@@ -2571,7 +2573,8 @@ public sealed partial class ParkPeople : Entity
 	/// passed over (FUN_00527930); and the mechanics (FUN_004c9960 asked for type 4) and the rides worn
 	/// (FUN_004ca3a0: a thing of a ride's item whose State of repair's whole number is under the limit row 5's
 	/// score hands it, or whose mState is 1, broken down) and the rides broken down (FUN_004ca310: a thing of a
-	/// ride's item whose mState is 1).
+	/// ride's item whose mState is 1); and the whole days since the newest member of staff was made
+	/// (FUN_004c90d0, <see cref="ParkState.DaysSinceStaffHired"/>).
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2632,7 +2635,7 @@ public sealed partial class ParkPeople : Entity
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
 			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut,
-			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken );
+			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired );
 	}
 
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:

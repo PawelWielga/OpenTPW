@@ -2041,6 +2041,11 @@ public sealed partial class ParkWorld : IParkInitialState
 			}
 			else if ( model == AdvisorModel )
 				AdvisorAt = start;
+			else if ( model == AnalyserModel )
+			{
+				AnalyserAt = start;
+				LastStaffHired = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastStaffHiredAt, 8 ) );
+			}
 
 			_things.Add( new( id, model ) );
 			_records.Add( new( id, model, start, size ) );
@@ -2581,6 +2586,41 @@ public sealed partial class ParkWorld : IParkInitialState
 
 		System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(
 			body.AsSpan( MechanicHqAt + MechanicHqNextObjectAt, 2 ), unchecked((ushort)cursor) );
+	}
+
+	/// <summary>
+	/// The park analyser's <c>mLastStaffHired</c> - model 13, thing 5 in every park file, which the header's
+	/// <c>mAnalyser</c> names: the park's calendar as the newest member of staff was made, a <c>FILETIME</c>
+	/// (<see cref="StaffState.FileTimeOf"/>; the staff constructor's tail, <c>FUN_004c76d0</c>). Null where the
+	/// file holds no such thing (<c>docs/exe/advisor-park.md</c>, "More rides than the mechanics can keep").
+	/// </summary>
+	public long? LastStaffHired { get; private set; }
+
+	/// <summary>Where the analyser's record lies in the body, or -1 with none.</summary>
+	public int AnalyserAt { get; private set; } = -1;
+
+	/// <summary>The model number of the park analyser - see <see cref="LastStaffHired"/>.</summary>
+	private const int AnalyserModel = 13;
+
+	/// <summary>
+	/// Where <c>mLastStaffHired</c> sits in the analyser's record of 73,544 bytes: eight bytes, the last of its
+	/// six stamps, before the three dwords that end it (<c>FUN_004c5d70</c>).
+	/// </summary>
+	private const int AnalyserLastStaffHiredAt = 73524;
+
+	/// <summary>
+	/// Writes the analyser's <c>mLastStaffHired</c> over the file's in <paramref name="body"/>, a copy of this
+	/// park's own. A park with no such thing is left alone.
+	/// </summary>
+	public void PutLastStaffHired( byte[] body, long lastStaffHired )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+
+		if ( AnalyserAt < 0 )
+			return;
+
+		System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(
+			body.AsSpan( AnalyserAt + AnalyserLastStaffHiredAt, 8 ), lastStaffHired );
 	}
 
 	/// <summary>

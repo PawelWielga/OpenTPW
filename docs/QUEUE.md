@@ -44,20 +44,26 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q333. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q334. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q333 (`advisor-park.md`, "More rides than the mechanics can keep"): the analyser's five other stamps
+  (`mLastStrike`, `mLastPuke`, `mLastPrank`, `mParkLastOpened`, `mLastObjectBuilt`), `mLifetimeVisitors` and
+  the three records after them are not kept and go out as the file's (the FileFormats saves page lists them;
+  what reads each is not read: `mLastObjectBuilt` is the nearest, moved by a purchase in the original's own
+  file `q257x/orig/broken-by-the-original.TPWS`). Whether anything but a hire runs the staff constructor (a
+  candidate made for the hire screen) is not read. In no game run: lines 2 and 3, the line said again past its
+  cooldown, seven rides and one mechanic, a mechanic hired from the screen after the line (the tests hold
+  each), a hire made in the original by hand, a park made with no file, Full Simulation. This game said the
+  line of `days29` on tick 1094 and the original on 1096. Not heard in either game.
   From Q332 (`advisor-park.md`, "Broken rides and no mechanic"): row 124 is not built (`0x0059f220`, not read;
   responses 300 and 301, sample 334, "the buzz about your park has started to die down": the original said it
-  on tick 1317 of the scene's file, twice), nor row 7 (below: it scored nought on tick 1239 and 30 on tick 1394
-  of a file whose mechanic was fired about tick 770, so its thirty days ended between; `q332/broken3.TPWS` is
-  the file to watch the stamp on). Response 18's gesture row, 21, is counted, not played. In no game run:
+  on tick 1317 of the scene's file, twice; both responses name model slot 1 and prop -1, the theme's own
+  advisor and costume, which are not built either). Response 18's gesture row, 21, is counted, not played. In no game run:
   lines 2 and 3, the line said again past its cooldown, a mechanic kept or hired after the line, a broken
   sideshow beside the rides (the tests hold each), Full Simulation. Not heard in either game.
-  From Q331 (`advisor-park.md`, "Worn rides and no mechanic"): row 7 is read and not built (the rides less four
-  a mechanic, times 10, once `FUN_004c90d0` answers 30 days, which it counts from the analyser's stamp
-  `+0x21c38`: what `FUN_00504b90` stamps there is not read), nor the ten other staff rows, 8 to 17 (tags 10 to
-  19, each with a hire button). In no game run: lines 2 and 3, the line said again past its cooldown, a broken ride counted, a
+  From Q331 (`advisor-park.md`, "Worn rides and no mechanic"): the ten other staff rows, 8 to 17, are not built
+  (tags 10 to 19, each with a hire button). In no game run: lines 2 and 3, the line said again past its cooldown, a broken ride counted, a
   ride worn under 25 by running, button types `0xd` and `0xf` to `0x11`, the button with the hire screen open
   (the tests hold each), a mechanic hired after the line, Full Simulation. Not heard in either game.
   From Q330 (`hud.md`, "The six round buttons"): what serves Restart Park's request (`FUN_005508b0( 1 )`) is

@@ -6459,6 +6459,32 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   then said row 124's line (tick 1317) and row 7's (from tick 1394), which this game does not build.
   `advisor-park.md`, "Broken rides and no mechanic". Tests 3036.
   I split the item: every other piece of the old Q332 is Q333.
+- [x] **Q333. The advisor tells a park with more rides than its mechanics keep to hire more, thirty days after
+  the newest hire.** Done 2026-10-12: one piece of the old Q333. Row 7's score (`0x0059cac0`, loose code):
+  nought while `FUN_004c90d0` answers fewer than `WaitingTimes.DaysForStaff`, 30; else the rides less four a
+  mechanic (`StaffHireMechanics3.IdealNumberOfRidesPerMechanic`), times `ScorePerExtraRide`, 10, where above
+  nought; three lines in the hard hat (responses 20 to 22, samples 20 to 22), tag row 9 (string 13, button
+  14). **The days are counted from the analyser's `+0x21c38`, `mLastStaffHired`** by its serialiser's own name
+  (`FUN_004c5d70`), the record's `+73524`, stamped with the calendar's now by the staff constructor's tail
+  (`FUN_00504b90`, `FUN_004c76d0`) and by the analyser's constructor; in the nine files the original wrote it
+  is the newest `mTimeHired` of the file's staff, the shipped park's tick 648. Built:
+  `ParkAdvisorMessages.HireMoreMechanics`, a topic's `RidesAMechanic`, `ParkFacts.DaysSinceStaffHired`,
+  `ParkState.LastStaffHired` (the file's at a load, stamped at a hire), `ParkWorld.LastStaffHired` and
+  `PutLastStaffHired` (the writer), tag row 9. A file of the stock park with its mechanic fired, two Crazy Apes
+  bought and the stamp written as tick 237's, saved on tick 915: `poll message=7 row=7 days=40 score=30
+  threshold=25 tick=929 result=post rides=3 mechanics=0 sincehire=30`, `attempt=1 message=7 ... response=20
+  sample=20 line=0 tick=929`, him up in the yellow hard hat with tag 9 on the mast; the tag's bar read string
+  13, and its button's click logged `button type 14 opens the hire screen on tab 1 and takes tag 9 off`, the
+  frame "Hire Mechanics". The stamp of tick 238: `no-score ... sincehire=29` on tick 929 and posted at 30 on
+  tick 1084; the shipped stamp: `sincehire=12`; a guard hired here on tick 916 and the park saved:
+  `mLastStaffHired stamped 9/2/2000 18:10:00 on mGameTick 916`, the file's stamp his own `mTimeHired`, and
+  loaded back `sincehire=0`; Q332's `broken3.TPWS`: nought on tick 1239 and 30 on tick 1394; main's build:
+  nothing. The original, given the same files: message 7's record (929, 0, 1, 0) on tick 929, the same tag and
+  rectangle, buttons 14 and 0, the hire screen built on tab 1; with tick 238's stamp fresh on 929 and a slot at
+  30 on tick 1084; fresh with the shipped stamp; and given this game's file saved after the hire its analyser
+  read this game's stamp and the row stayed silent. Every prediction held in one round (seen before, and said:
+  the original's two answers on `broken3.TPWS`). Tests 3037 with the game (one new test, three widened); 51
+  bugs put back, each failing a test. I split the item: every other piece of the old Q333 is Q334.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

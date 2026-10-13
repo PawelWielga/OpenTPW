@@ -741,7 +741,7 @@ public class ParkClosedRideTests
 				guest.SetState( PeepState.Deciding, 800, random );
 			}
 
-			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1 ), park.People.AdvisorFacts() );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired ), park.People.AdvisorFacts() );
 
 			void Put( int index, int x, int y, PeepState state )
 			{
@@ -758,13 +758,13 @@ public class ParkClosedRideTests
 
 			park.State.SetParkClosed( true );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1 ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired ), park.People.AdvisorFacts() );
 
 			// One toilet opened again, and the sideshow: the door's others stay shut.
 			park.People.SetRideClosed( 22, closed: false );
 			park.People.SetRideClosed( 14, closed: false );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1 ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired ), park.People.AdvisorFacts() );
 
 			// The door left the staff room open; shut by itself, it alone is one more shut.
 			var before = park.People.AdvisorFacts();
@@ -810,7 +810,7 @@ public class ParkClosedRideTests
 			park.State.SetRecord( BackX, BackY, back with { Neighbours = 0x04 } );
 			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
 			Assert.AreEqual( park.People.AdvisorFacts() with { UnjoinedQueue = 0 },
-				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1 ), "nothing else moved" );
+				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired ), "nothing else moved" );
 
 			// The queue tool armed for it passes it over; armed for another thing, or put away, it does not.
 			ParkBuildMode.Arm( ParkBuildMode.Queue, BellyBounce );
@@ -861,6 +861,8 @@ public class ParkClosedRideTests
 	private const int StockShops = 1, StockToilets = 3;
 	/// <summary>Its staff rooms, the one Staff Room, thing 20, which the door does not shut.</summary>
 	private const int StockStaffRooms = 1, StaffRoom = 20;
+	/// <summary>The shipped park is entered on tick 755 and its newest member was made on tick 648: 401,250 calendar seconds, four whole days.</summary>
+	private const int StockDaysSinceStaffHired = 4;
 
 	private const int Mechanic = 26;
 

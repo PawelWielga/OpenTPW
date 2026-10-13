@@ -1400,8 +1400,11 @@ public class ParkFileWriterPeopleTests
 	/// <summary>
 	/// <c>mTimeHired</c> is read as a <c>FILETIME</c>: the shipped four were made on tick 15 and the researcher on 648,
 	/// at 3,750 seconds of the calendar a tick. A hire is stamped with the park's calendar, the file's keep theirs, and
-	/// a load reads both back.
+	/// a load reads both back. The park analyser's <c>mLastStaffHired</c> is the newest member's: the shipped
+	/// file's the researcher's, a hire's its own, written and read back, and the days the advisor's row 7 counts
+	/// from it are whole days of 23.04 ticks.
 	/// </summary>
+	/// <remarks><b>Mutations:</b> the hire not stamping the analyser; the stamp not written, or not read back; the stamp read from another of the analyser's six; the days counted from tick nought, or rounded up.</remarks>
 	[TestMethod]
 	public void TimeHiredIsTheParksCalendarAsAMemberIsMade()
 	{
@@ -1412,14 +1415,33 @@ public class ParkFileWriterPeopleTests
 			shipped.People.Where( person => person.Staff != null ).Select( person => ParkWorld.StaffState.HiredWhenOf( person.Staff!.Value.TimeHired )!.Value ).ToList() );
 		Assert.AreEqual( 0x1bf546e1d0a1900, ParkWorld.StaffState.FileTimeOf( start.AddSeconds( 15 * 3750 ) ) );
 		Assert.IsNull( ParkWorld.StaffState.HiredWhenOf( -1 ) );
+		Assert.AreEqual( start.AddSeconds( 648 * 3750 ), ParkWorld.StaffState.HiredWhenOf( shipped.LastStaffHired!.Value ), "mLastStaffHired is the researcher's own stamp" );
 
 		var people = new ParkPeople( shipped );
+
+		Assert.AreEqual( shipped.LastStaffHired, people.State.LastStaffHired );
+		Assert.AreEqual( (shipped.GameTick - 648) * 3750 / 86400, people.State.DaysSinceStaffHired );
+		people.State.SetGameTick( 648 + 691 );
+		Assert.AreEqual( 29, people.State.DaysSinceStaffHired, "691 ticks are 2,591,250 seconds, short of thirty days" );
+		people.State.SetGameTick( 648 + 692 );
+		Assert.AreEqual( 30, people.State.DaysSinceStaffHired );
+		people.State.SetGameTick( shipped.GameTick );
+
 		var hire = people.Hire( new ParkStaffPool.Candidate( Id: 999, Kind: 4, Name: "Ada Test", Grade: 2, Costume: 0, Wage: 69 ), 47, 21 );
 		var stamp = ParkWorld.StaffState.FileTimeOf( start.AddSeconds( shipped.GameTick * 3750L ) );
 
 		Assert.AreEqual( stamp, people.Staff.Single( member => member.ThingId == hire ).TimeHired );
+		Assert.AreEqual( (stamp, 0), (people.State.LastStaffHired, people.State.DaysSinceStaffHired), "a hire stamps the analyser too" );
 
 		var written = Written( people, out _ );
+
+		Assert.AreEqual( shipped.LastStaffHired, written.LastStaffHired, "the file's where the writer is given none" );
+
+		var stamped = new ParkWorld( ParkFileWriter.Body( shipped, Running( people ) with { LastStaffHired = people.State.LastStaffHired } ) );
+
+		Assert.IsNull( stamped.Problem );
+		Assert.AreEqual( stamp, stamped.LastStaffHired, "mLastStaffHired at 73524 of the analyser's record" );
+		Assert.AreEqual( stamp, new ParkState( stamped ).LastStaffHired );
 
 		foreach ( var person in written.People.Where( person => person.Staff != null ) )
 		{

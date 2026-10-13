@@ -33,6 +33,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireMechanics = 5;
 	/// <summary>Message 6, polled: the line about rides breaking down in a park with no mechanic, scored by how many rides are broken down (0x0059ca80).</summary>
 	internal const int HireMechanicsBroken = 6;
+	/// <summary>Message 7, polled: the line about more rides than the mechanics can keep (0x0059cac0).</summary>
+	internal const int HireMoreMechanics = 7;
 	/// <summary>Row 62, polled: a park with no ride in it.</summary>
 	internal const int BuildRides = 0x3e;
 	/// <summary>Message 0x71, polled: the line about a queue not joined to a path, scored where a ride's queue is found unjoined (0x0059ef60).</summary>
@@ -99,12 +101,18 @@ internal sealed class ParkAdvisorMessages
 	/// ride worn or broken down in a park with no mechanic, and nought in a park with one.
 	/// <paramref name="PerBrokenRideWithNoMechanic"/> is the score of row 6 (0x0059ca80): the key's value for each
 	/// ride broken down in a park with no mechanic, and nought in a park with one.
+	/// <paramref name="RidesAMechanic"/> makes the score row 7's (0x0059cac0): it names the key of how many rides
+	/// a mechanic keeps, and the score is the key's value for each ride over what the park's mechanics keep, and
+	/// nought until <see cref="DaysForStaff"/> days after the newest member of staff was made.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
 		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
 		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false,
-		bool PerWornRideWithNoMechanic = false, bool PerBrokenRideWithNoMechanic = false );
+		bool PerWornRideWithNoMechanic = false, bool PerBrokenRideWithNoMechanic = false, string? RidesAMechanic = null );
+
+	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
+	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
 
 	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490).</summary>
 	internal enum Shut
@@ -129,11 +137,14 @@ internal sealed class ParkAdvisorMessages
 	/// joined to a path, nought for none; and what row 5's reads: the mechanics (FUN_004c9960 asked for type 4: a
 	/// thing of that type whose +3 is nought) and the rides worn (FUN_004ca3a0: a thing of a ride's item whose
 	/// State of repair's whole number is under <see cref="WornBelow"/>, or which is broken down); and what row
-	/// 6's reads: the rides broken down (FUN_004ca310: a thing of a ride's item whose mState is 1).
+	/// 6's reads: the rides broken down (FUN_004ca310: a thing of a ride's item whose mState is 1); and what row
+	/// 7's reads: the whole days since the newest member of staff was made (FUN_004c90d0, from the analyser's
+	/// mLastStaffHired).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
-		int UnjoinedQueue = 0, int StaffRooms = 0, int StaffRoomsShut = 0, int Mechanics = 0, int RidesWorn = 0, int RidesBroken = 0 )
+		int UnjoinedQueue = 0, int StaffRooms = 0, int StaffRoomsShut = 0, int Mechanics = 0, int RidesWorn = 0, int RidesBroken = 0,
+		int DaysSinceStaffHired = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -214,6 +225,7 @@ internal sealed class ParkAdvisorMessages
 		.. ShutTopics,
 		new( HireMechanics, "StaffHireMechanics1.ScorePerWornRide", 14, 13, Lines: 3, Prop: HardHat, Group: 7, Polled: true, PerWornRideWithNoMechanic: true ),
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
+		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
 		new( QueueUnconnected, "QueueUnconnected.Score", 288, 312, MaxInstances: 255, Group: 135, Polled: true, QueueNotJoined: true ),
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
@@ -417,7 +429,9 @@ internal sealed class ParkAdvisorMessages
 	/// ride's queue is not joined to a path, and nought otherwise; row 5's (0x0059ca30) is its key's value for
 	/// each ride worn or broken down in a park with no mechanic, and nought in a park with one; row 6's
 	/// (0x0059ca80) is its key's value for each ride broken down in a park with no mechanic, and nought in a
-	/// park with one; every other built row's is its key's value.
+	/// park with one; row 7's (0x0059cac0) is nought until DaysForStaff days after the newest member of staff
+	/// was made, and then its key's value for each ride over those its mechanics keep, where there is one;
+	/// every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
@@ -444,6 +458,13 @@ internal sealed class ParkAdvisorMessages
 
 		if ( topic.PerBrokenRideWithNoMechanic )
 			return _park?.Invoke() is { Mechanics: < 1 } broken ? broken.RidesBroken * Value( topic.ScoreKey ) : 0;
+
+		if ( topic.RidesAMechanic is { } kept )
+		{
+			if ( _park?.Invoke() is not { } staffed || staffed.DaysSinceStaffHired < Value( DaysForStaff ) ) return 0;
+			var over = staffed.Rides - staffed.Mechanics * Value( kept );
+			return over > 0 ? over * Value( topic.ScoreKey ) : 0;
+		}
 
 		if ( topic.QueueNotJoined )
 			return _park?.Invoke() is { UnjoinedQueue: not 0 } ? Value( topic.ScoreKey ) : 0;
@@ -527,6 +548,7 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.QueueNotJoined && _park?.Invoke() is { } queues ) shut = $" unjoined={queues.UnjoinedQueue}";
 		if ( topic.PerWornRideWithNoMechanic && _park?.Invoke() is { } wear ) shut = $" worn={wear.RidesWorn} mechanics={wear.Mechanics}";
 		if ( topic.PerBrokenRideWithNoMechanic && _park?.Invoke() is { } breaks ) shut = $" broken={breaks.RidesBroken} mechanics={breaks.Mechanics}";
+		if ( topic.RidesAMechanic != null && _park?.Invoke() is { } staffed ) shut = $" rides={staffed.Rides} mechanics={staffed.Mechanics} sincehire={staffed.DaysSinceStaffHired}";
 		return shut;
 	}
 
