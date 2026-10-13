@@ -44,9 +44,21 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q340. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q341. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q340 (`advisor-park.md`, "A park with shops and no sideshow"): **the nearest piece is now what moves the
+  original's `mLastObjectBuilt` with nothing bought**: in all eight loads, near tick 1094 (1069 to 1139) and
+  again 270 to 340 ticks on (1408, 1434), twelve ticks after a load of tick 1082, so an event of the park
+  (`watch.sh` on the analyser's `+0x21c30` in `q340/late30.TPWS`: it is written 3.8 s after the load's click).
+  Until it is built this game says rows 60, 71, 73, 75 and 77 up to 1,085 ticks before the original does
+  (row 77: tick 1124 for 2209). Row 76 (`0x0059dfd0`, `SideshowsResearchMore`, Score 75, tag row 78 with the
+  bar's button of type 19) is read and waits for the research: `FUN_004c9960( 8 )`, `0x00503b30` and
+  `FUN_00503980` on `FUN_00519550( 2 )` are not read. Rows 78, 79 and 81 are not read (row 78's score is
+  `0x0059e110`; its keys from `+0x294`, `SideshowsBuildMoreSideshows.SideshowsPerRideRatio`: probably row 74's
+  shape). In no game run: line 2, the line again past its cooldown, a golden-ticket shop or sideshow, a
+  sideshow built after the line (the test holds each), the bar's button with the buy screen open, a park made
+  with no file, Full Simulation. Not heard in either game.
   From Q339 (`advisor-park.md`, "A poor selection of sideshows"): the four other rows that read the newest
   build are not built or read (77 to 79 and 81), nor is row 76 (`0x0059dfd0`, not a reader of it by Q334's
   list; `SideshowsResearchMore` by its key's place, `+0x288`, Score 75: `disassemble_at` first). Row 77's keys

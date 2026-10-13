@@ -6602,6 +6602,28 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `APoorSelectionOfSideshowsIsPolledThirtyDaysAfterTheNewestBuild` and
   `TheAdvisorCountsTheKindsOfSideshowOnOfferAndStanding`. `docs/exe/advisor-park.md`, "A poor selection of
   sideshows". No new tool; one recipe. I split the item: every other piece of the old Q339 is Q340.
+- [x] **Q340. The advisor tells a park with shops and no sideshow to build some, once it is old enough.**
+  Done 2026-10-13: one piece of the old Q340. Row 77, message `0x4d`, `SideshowsBuildSideshows`, is polled; its
+  score (`0x0059e070`, loose code, disassembled) is row 73's a kind on: nought where no kind of shop stands
+  (`0x004ca7b0( 1, 0 )`), until `WaitingTimes.DaysForObjects`, 30, whole days after `mLastObjectBuilt`, and
+  where a kind of sideshow stands (`0x004ca7b0( 2, 0 )`); then `Score`, -70, and `AdditionalPerDay`, 2, for
+  each whole day of the park's age, so 14 on day 42, not above the least score, and 26 on day 48. Responses 219
+  and 220 are samples 217 and 218, the hard hat, group 79: tag row 79, string 81, the buy button of type 11.
+  Row 76's score (`0x0059dfd0`, `SideshowsResearchMore`) is read too and not built: it asks the research.
+  Built: `ParkAdvisorMessages.BuildSideshows`, a topic's `PerDayWithNoSideshow`, tag row 79. The scene is the
+  stock park with its Jungle Spray sold and the stamp written: `poll message=77 row=77 days=42 score=14
+  threshold=25 tick=969 result=under-threshold shopkinds=1 sideshowkinds=0 sincebuild=30`, then `days=48
+  score=26 ... tick=1124 result=post`, said on tick 1124 as sample 217, him up in the yellow hard hat with tag
+  79 on the mast, the bar's button opening "Buy Sideshow" with the two on offer; day 29 said on tick 1279; a
+  sideshow standing, no shop and main's build silent. The original, eight loads: **its stamp moved with nothing
+  bought in every one** (near tick 1094, and again on 1408 and 1434), so its record stayed fresh in the first
+  six; left alone on `late30` it said the line on tick 2209, 692 ticks past the last move, in the hard hat with
+  the same tag; with the stamp held at the file's value (`thingpoke.py`, a write to its memory) it said it on
+  tick 1124, the tag at the same rectangle, its buy screen built on the sideshows with the same two. Predicted
+  first (`q340/PREDICTION.txt`), three rounds: this game's lines all held; the original's missed twice by the
+  line named weakest, then held. 58 bugs put back, all fail a test first round (`q340/mutate.out`). Test
+  `AParkWithShopsAndNoSideshowIsToldToBuildSomeOnceItIsOldEnough`. `docs/exe/advisor-park.md`, "A park with
+  shops and no sideshow". No new tool; one recipe. I split the item: every other piece of the old Q340 is Q341.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

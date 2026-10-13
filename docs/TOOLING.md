@@ -78,6 +78,13 @@ whole list):
   (`q338/orig/run.sh`, `SAM=`). The loader takes a float as written (`ShopsPerRideRatio 1.5`). A run in which
   nothing is said prints no line after its first: add `EXTRA='python3 -u .../thingwords.py %PID% 60 29:0x8:H
   35:0x8:H 31:0x8:H'` so guests' places stamp its ticks.
+- **A row that waits thirty days from the newest build, in the original** (Q340): its stamp
+  (`thingwords.py ... 5:0x21c30:Q:lastbuilt`) moves with nothing bought near tick 1070 to 1140 and again some
+  340 ticks on, in every load of a stock-park file, so a turn after tick 1069 is not said there. Either put the
+  turn before it (Q335 to Q339's turns, 957 to 967, are), or hold the stamp at the file's value for a
+  like-for-like and say so: `EXTRA='python3 -u .../thingpoke.py %PID% 110 13 5:0x21c30:Q=<stamp>'` in
+  `q340/orig/run.sh` (the analyser, thing 5, is of type 13; `Q` works). Left alone it speaks on its first turn
+  692 ticks past the last move (tick 2209 in `q340/late30.TPWS`: `SECS=370 WAITN=720`).
 - **A row no shipped park can score** (Q339): change its key in both games (above) AND, where the count is of
   kinds on offer, mark items researched in the file with `original/research.py`: the original keeps a
   sideshow's researched byte as written, as a shop's (four on its "Buy Sideshow" list). Each run of the
