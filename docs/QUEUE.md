@@ -44,12 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q330. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q331. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q329 (`advisor-park.md`, "The hire screen's own line"): the gadget's buy button always opens the buy
-  screen, where the original's opens whichever of buy and hire was last left on (`FUN_004a0940`,
-  `DAT_007cb28c`; said at the button, a deviation): build the remembered category. The bar's five hire buttons
+  From Q330 (`hud.md`, "The six round buttons"): what serves Restart Park's request (`FUN_005508b0( 1 )`) is
+  not read; it keeps the category in both games, measured. In no game run: Full Simulation, the Information
+  and Finance categories (their seed and their openers' notes are read, not put to the original; Information
+  is seeded 4 here, the declared deviation), a key that opens a screen. Exit To Lobby in the original writes
+  `autosave.TPWS`; this game writes none.
+  From Q329 (`advisor-park.md`, "The hire screen's own line"): the bar's five hire buttons
   (types `0xd` to `0x11`) are not built. In no game run: a candidate chosen while he speaks (what the
   original's handler does to the screen at a row's click was not read), the opener asked for the tab shown
   with the screen open, a park left with the screen open, Full Simulation. Not heard in either game.
@@ -391,7 +394,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   cursor is the program's, not a file's, so predict each turn from it). Say first, from each score function,
   whether the mode is asked; run those where it could matter (the regular catalogue, the empty park's age and
   rates), and say in one line why for the rest. Confirm: each line's `poll` and `attempt` lines with a
-  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q330's notes
+  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q331's notes
   From Q319 to From Q325; take each out of those notes as it is run.
 - [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). `gms.dat`
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest

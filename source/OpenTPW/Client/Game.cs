@@ -180,6 +180,8 @@ internal static class Game
 			var parkFile = _parkFileAsked;
 			_parkFileAsked = null;
 
+			UI.ParkCategoryScreens.ParkAsked( fromAPark: Level.Current.Kind == Level.Scene.Park );
+
 			Level.Current.Unload();
 			LoadPark( themeName, parkFile );
 

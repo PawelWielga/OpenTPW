@@ -108,10 +108,13 @@ internal sealed class ParkBuyScreen : UiWindow
 
 	/// <summary>
 	/// The opener's last act on a screen it has just built (FUN_004acc70, 0x004ad1e2): the advisor is posted
-	/// message 0xbc (FUN_00486b00), the screen's own line. A screen already open is asked for nothing more.
+	/// message 0xbc (FUN_00486b00), the screen's own line. A screen already open is asked for nothing more. Its
+	/// first act (0x004acc8f) leaves the gadget's category on buy.
 	/// </summary>
 	protected internal override void Shown()
 	{
+		ParkCategoryScreens.Remember( ParkCategoryScreens.Building, ParkCategoryScreens.Buy );
+
 		if ( _asked != null || Park is not { AdvisorMessages: { } lines } park )
 			return;
 

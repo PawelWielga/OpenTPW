@@ -6411,6 +6411,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   said on 889, (892, 0, 0, 2) at its cut, silent after the next, and silent on this game's saved file.
   `advisor-park.md`, "The hire screen's own line". Tests 3031.
   I split the item: every other piece of the old Q329 is Q330.
+- [x] **Q330. The gadget's Buy button opens whichever of buy and hire was last left on.** Done 2026-10-12: one
+  piece of the old Q330. `FUN_004a0940( 1 )` reads `DAT_007cb28c`, whose writers are the gadget's builder's seed
+  (`0x004a1db4`, state 9 alone) and each screen's opener through `FUN_004a0810` (buy's first act `0x004acc8f`,
+  hire's `0x0049bdf5`). Built: `ParkCategoryScreens.Remember`, `Seed`, `ParkAsked`, `LeftOn`, its `Open` and
+  `Show` for buy and hire; the screens' `Shown` remember; `windows` ends `; left on N,N,N`. The stock park, real
+  clicks: `left on 1,4,10`, buy; the sibling button, `left on 2,4,10`; the gadget's button 3 s into his line with
+  hire up, `Park gadget: category 1 is left on screen 2`, `withdraw message=189 cleared=0 cut=1 slaps=2`, a post
+  on tick 815 and `attempt=3 message=189 ... tick=816`, him up beside "Hire Cleaners"; hire again after a save
+  and a load from the list and after Restart Park; buy after the lobby and the park again. The original, four
+  fresh programs: `DAT_007cb28c` 1, 1, 2 at the hire button, the hire screen built again and `0xbd` (891, 0, 0,
+  2) then (920, 0, 1, 2) at the gadget's click in his line, 2 and hire after a load from the list and after
+  Restart Park, 1 and buy after Exit To Lobby and the park again. Restart Park was predicted wrong (the seed),
+  predicted again and run again in both games. `hud.md`, "The six round buttons". Tests 3032.
+  I split the item: every other piece of the old Q330 is Q331.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

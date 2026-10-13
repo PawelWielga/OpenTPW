@@ -44,6 +44,7 @@ place to look for tools. Each file's docstring is its manual.
 | `original/bytehold.py PID SECS ADDR=VALUE [TICK ADDR=VALUE]` | The original's memory, **written**: holds one byte of the image at a value, and at another once `mGameTick` passes a tick, a line a write. The Options screen's Tutorial switch is `0x0078d90d`. Stop the original afterwards |
 | `original/waiting.py PID SECS` | The original's memory: the park analyser's count of guests waiting for a shut park to open (its `+0x1f0d4`, written each time the advisor's row 1 is scored past its two early ends, -999 before), beside the same count taken live (things of type 1 in state 3 on the two ticket booths' cells, by id), `mParkClosed` and every guest's state, a line a change with the wall clock and `mGameTick`. A `POLL` for `loadfile.sh` |
 | `original/tags.py PID SECS` | The original's memory: the tags on the gadget's aerial (how many are held, each one's control rectangle on the 2048 x 1536 layout and its text, the mast's rectangle, the tag on the bar), a line a change with the wall clock and `mGameTick`. Says when a line leaves a tag, where it stands and when it goes. A `POLL` for `loadfile.sh` |
+| `original/screens.py PID SECS` | The original's memory: what the gadget's three category buttons are left on (`[0x007cb28c]`, `[0x007cb2a0]`, `[0x007cb290]`) and which park screen is up (the open screen `[0x007c24c8]`, the buy screen `[0x007cc1f8]`, the hire screen `[0x007ca308]`, each pointer printed, so a screen destroyed and built again shows), a line a change with the wall clock and `mGameTick`. Says what a click opened without a frame. A `POLL` for `loadfile.sh` |
 | `original/bar.py PID SECS` | The original's memory: the message bar (its rectangle, shown bit, parent, its data's thing, button types, item and text, each child's rectangle), the tag on show and the one being put on show, the gadget's body with its children two deep, the arm's handle, and each tag's rectangle, shown bit, timer byte and whether a stream plays on it, the changed parts a change with the wall clock and `mGameTick`. Says what a click on a tag, on the bar or on the camcorder button does to the arm, step by step. A `POLL` for `loadfile.sh` |
 | `original/breakq.py PID SECS THING [all]` | The original's memory, **written**: breaks a ride (`VAR_BREAKSTAT`) each time it is open with a queue that has stood four seconds, so every break puts a queue out, a line a break. With `all` it first writes nought over the mask byte at `0x0050133f`, so every guest dismissed from a queue plays kids `0x80`, not one in eight. Stop the original afterwards |
 | `original/thingpoke.py PID SECS KIND THING:OFFSET:FMT=VALUE ...` | The original's memory, **written**: holds words of things at given values, written again whenever they read otherwise, a line a write; refuses a thing whose type byte (`+2`) is not KIND. `150 15 7:0x38:B=1` holds the weather's `mLightning`, so bolts and thunder come on a clear day. `thingwords.py` reads the same words. Stop the original afterwards |
@@ -145,10 +146,20 @@ whole list):
 - **The hire screen reached by real clicks, in both games, and its advisor line:** the buy screen's button to
   hire is layout point (1917, 634) and the hire screen's exit button (1930, 859), both a park screen's (centred,
   the recipe above); in the original `gmove.py 958 317` and `965 430`. The same point on the hire screen is its
-  button back to buy, so know which screen is up before clicking it. **The original's gadget button opens
-  whichever of buy and hire was last left on** (a global of the running program: stop the original between runs),
-  OpenTPW's always buy. The stock file holds the hire line cut off once, so two cuts silence it
+  button back to buy, so know which screen is up before clicking it. **The gadget's button opens whichever of
+  buy and hire was last left on, in both games** (Q330; in the original a global of the running program, kept
+  over a load from the list and over Restart Park: stop the original between runs, or leave it on buy). The
+  stock file holds the hire line cut off once, so two cuts silence it
   (`q329/confirm.py a|b|off|saved`, `q329/orig/run.sh <file> a|b|c`; Q329).
+- **Restart Park and Exit To Lobby by real clicks, in both games:** in the original Escape, then the menu's
+  Restart Park row at `gmove.py 510 228` and the question's tick at `708 283` (25 s to the restarted park), or
+  Exit To Lobby at `510 573` (no question; 30 s to the lobby, then `660 58` clicked twice enters the park as
+  `loadfile.sh` does). **Exit To Lobby writes `autosave.TPWS` into the reference player's jungle folder and
+  rewrites `gms.dat` with the same bytes**: `loadfile.sh stop` then says the sum changed; take the autosave out
+  (it is the newest file there, so the next start would enter the park on it) and the sum is the one before.
+  In OpenTPW `menu`, a click on `control 3`'s middle, then on `control 9873c9`'s, the question's tick (Return
+  through XTEST does not answer it); `lobby` and `park jungle` are the console's way out and in
+  (`q330/confirm.py fix|restart`, `q330/orig/run.sh <file> r|l`; Q330).
 - **The count of unbuilt polled rows is exact, so predict it exactly:** under a `pause` on tick T the stock
   park's `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is T - 755 less the turns of built rows by then, and a built row
   comes round every 155 ticks with no log line where its answer has not changed (282 on 760 and 915; 1 on 768

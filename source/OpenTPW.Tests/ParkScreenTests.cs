@@ -26,6 +26,9 @@ public class ParkScreenTests
 	private static readonly Vector2 Info = new( 346, 1192 );
 	private static readonly Vector2 Camcorder = new( 261, 1414 );
 
+	/// <summary>The buy screen's button to hire, and the hire screen's button to buy: one point of the layout.</summary>
+	private static readonly Vector2 Sibling = new( 1917, 634 );
+
 	/// <summary>The buy screen's bare frame, at its left edge, where none of its controls is.</summary>
 	private static readonly Vector2 Frame = new( 200, 500 );
 
@@ -54,11 +57,13 @@ public class ParkScreenTests
 		Input.TextCaptured = false;
 		Unimplemented.Forget();
 		Time.Now = 100f;
+		UI.ParkCategoryScreens.Seed();
 	}
 
 	[TestCleanup]
 	public void PutItAllBack()
 	{
+		UI.ParkCategoryScreens.Seed();
 		ParkBuildMode.Forget();
 		ParkCamcorderCameraMode.Forget();
 		Camera.SetCameraMode<CameraMode>();
@@ -251,6 +256,68 @@ public class ParkScreenTests
 		{
 			Time.PinWall( null );
 		}
+	}
+
+	/// <summary>
+	/// <b>The gadget's Buy button opens whichever of buy and hire was last left on</b> (<c>FUN_004a0940( 1 )</c> on
+	/// <c>DAT_007cb28c</c>): each screen's opener leaves the category on its own screen, whoever asked for it
+	/// (<c>FUN_004a0810</c> at <c>0x004acc8f</c> and <c>0x0049bdf5</c>), the gadget's builder puts it back on buy as a
+	/// park is entered from the front end, and the button with the hire screen up builds the hire screen again.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the button always buy; always hire; the hire screen not remembered; the buy screen not
+	/// remembered, so hire sticks; a screen remembered as it is made, not as it is opened; the seed leaving hire; a
+	/// park loaded from a park seeding too; a park entered from the lobby not seeding; the button with the hire
+	/// screen up leaving it as it is.
+	/// </remarks>
+	[TestMethod]
+	public void TheBuyButtonOpensWhicheverOfBuyAndHireWasLastLeftOn()
+	{
+		var stack = APark();
+
+		void CloseTheScreen() => stack.Close( stack.Windows.Single( window => window.ParkScreen ) );
+
+		Click( stack, Buy );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkBuyScreen", Names( stack ), "a park entered: buy" );
+		Assert.AreEqual( UI.ParkCategoryScreens.Buy, UI.ParkCategoryScreens.LeftOn( UI.ParkCategoryScreens.Building ) );
+
+		Click( stack, Sibling );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkHireScreen", Names( stack ), "the buy screen's button to hire" );
+		Assert.AreEqual( UI.ParkCategoryScreens.Hire, UI.ParkCategoryScreens.LeftOn( UI.ParkCategoryScreens.Building ) );
+
+		CloseTheScreen();
+		Click( stack, Buy );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkHireScreen", Names( stack ), "left on hire, so the button opens hire" );
+
+		// With the hire screen up the opener destroys it and builds another.
+		var up = stack.Windows.Single( window => window.ParkScreen );
+		Click( stack, Buy );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkHireScreen", Names( stack ) );
+		Assert.AreNotSame( up, stack.Windows.Single( window => window.ParkScreen ), "a hire screen built again" );
+
+		Click( stack, Sibling );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkBuyScreen", Names( stack ), "the hire screen's button to buy" );
+		CloseTheScreen();
+		Click( stack, Buy );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkBuyScreen", Names( stack ), "left on buy again" );
+
+		// A hire screen opened any other way is remembered too, and one made and never opened is not.
+		stack.Open( new UI.ParkHireScreen( stack ) );
+		CloseTheScreen();
+		_ = new UI.ParkBuyScreen( stack );
+		Click( stack, Buy );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkHireScreen", Names( stack ) );
+
+		// A park loaded from a park's own menu keeps it; one entered from the front end starts on buy.
+		CloseTheScreen();
+		UI.ParkCategoryScreens.ParkAsked( fromAPark: true );
+		Click( stack, Buy );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkHireScreen", Names( stack ), "kept over a load from the menu" );
+
+		CloseTheScreen();
+		UI.ParkCategoryScreens.ParkAsked( fromAPark: false );
+		Click( stack, Buy );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkBuyScreen", Names( stack ), "a park entered from the lobby" );
 	}
 
 	/// <summary>

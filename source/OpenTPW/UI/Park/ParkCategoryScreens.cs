@@ -24,8 +24,14 @@ namespace OpenTPW.UI;
 /// </summary>
 internal static class ParkCategoryScreens
 {
-	/// <summary>The buy/hire pair, seeded to <b>1</b> - already built, and reached by its own button.</summary>
+	/// <summary>The buy/hire pair, seeded to <b>1</b>, buy.</summary>
 	public const int Building = 1;
+
+	/// <summary>The buy screen's number in <see cref="Building"/>.</summary>
+	public const int Buy = 1;
+
+	/// <summary>The hire screen's number in <see cref="Building"/>.</summary>
+	public const int Hire = 2;
 
 	/// <summary>Park status, staff, items and visitors. Seeded to <b>3</b>, park status.</summary>
 	public const int Information = 2;
@@ -49,16 +55,48 @@ internal static class ParkCategoryScreens
 	/// </remarks>
 	private static readonly Dictionary<int, int> LastLeftOn = new()
 	{
-		[Building] = 1,
+		[Building] = Buy,
 		[Information] = 4,
 		[Finance] = 10
 	};
+
+	/// <summary>
+	/// The gadget's builder's seed (FUN_004a1d70, 0x004a1db4): every category back on its first screen.
+	/// </summary>
+	public static void Seed()
+	{
+		LastLeftOn[Building] = Buy;
+		LastLeftOn[Information] = 4;
+		LastLeftOn[Finance] = 10;
+	}
+
+	/// <summary>
+	/// A park is about to be built. The gadget's builder runs in state 9, as a park is entered from the front end,
+	/// so a park loaded or restarted from a park's own menu keeps what the one before it left
+	/// (docs/exe/hud.md, "The six round buttons").
+	/// </summary>
+	public static void ParkAsked( bool fromAPark )
+	{
+		if ( !fromAPark )
+			Seed();
+	}
+
+	/// <summary>
+	/// A screen's opener's own note that its category is left on it (FUN_004a0810): the buy screen's first act
+	/// (0x004acc8f) and the hire screen's (0x0049bdf5), whoever asked for the screen.
+	/// </summary>
+	public static void Remember( int category, int screen ) => LastLeftOn[category] = screen;
+
+	/// <summary>The screen a category is left on, in the original's numbering.</summary>
+	public static int LeftOn( int category ) => LastLeftOn[category];
 
 	/// <summary>Opens whichever screen a category was last left on.</summary>
 	public static void Open( WindowStack stack, int category )
 	{
 		if ( !LastLeftOn.TryGetValue( category, out var screen ) )
 			return;
+
+		Log.Info( $"Park gadget: category {category} is left on screen {screen}" );
 
 		Show( stack, category, screen );
 	}
@@ -73,6 +111,20 @@ internal static class ParkCategoryScreens
 
 		switch ( screen )
 		{
+			// With the buy screen up its opener only picks its tab again (0x004acca0), so nothing is closed or
+			// opened.
+			case Buy:
+				if ( !stack.Windows.Any( window => window is ParkBuyScreen ) )
+					stack.Open( new ParkBuyScreen( stack ) );
+
+				return;
+
+			// The hire screen's opener first destroys the park screen that is open (FUN_00485b40), a hire screen
+			// too, and builds its own again.
+			case Hire:
+				stack.Open( new ParkHireScreen( stack ) );
+				return;
+
 			case 4:
 				stack.Open( new ParkStaffScreen( stack ) );
 				return;

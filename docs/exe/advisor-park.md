@@ -1946,10 +1946,9 @@ screen is made new each time it is opened here, and opening it closes the park s
 screen's button withdraws `0xbc` first, as the original's. Its record is read from and written to a park file
 with the other built messages' ("The records in a park file"), so the shipped park's cut stands from the start.
 
-**A deviation, said at the gadget's button (`ParkGadget`):** the button always opens the buy screen, where the
-original's opens whichever of the two was last left on. So a second opening of the hire screen here goes
-through the buy screen, which says and is cut off in its own line on the way; the original's goes straight to
-hire.
+The gadget's button opens whichever of the two was last left on, as the original's (`hud.md`, "The six round
+buttons"; Q330), so a second opening of the hire screen goes straight to hire. The runs below were made before
+that, when the button always opened buy and a second opening went through the buy screen.
 
 `q329/confirm.py a|b|off|saved|control`, the stock park, the three buttons clicked for real; predicted first
 (`q329/PREDICTION.txt`), fifteen of fifteen on `run-a1`, `run-b`, `run-off`, `run-saved` and `run-control`, and

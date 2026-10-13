@@ -318,10 +318,13 @@ internal sealed class ParkHireScreen : UiWindow
 	/// The opener's last act on a screen it has built (FUN_0049bdd0, 0x0049c800): the advisor is posted message
 	/// 0xbd (FUN_00486b00), the screen's own line; a tab picked on the open screen asks for nothing more. And the
 	/// list follows the pool while the screen is open: a candidate who joins it gets a row and one whose time runs
-	/// out loses theirs, as the original's pool tells the hire list (<c>FUN_00481550</c>).
+	/// out loses theirs, as the original's pool tells the hire list (<c>FUN_00481550</c>). Before any of it the
+	/// opener leaves the gadget's category on hire (0x0049bdf5).
 	/// </summary>
 	protected internal override void Shown()
 	{
+		ParkCategoryScreens.Remember( ParkCategoryScreens.Building, ParkCategoryScreens.Hire );
+
 		if ( _asked == null && Park is { AdvisorMessages: { } lines } park )
 		{
 			_asked = park;

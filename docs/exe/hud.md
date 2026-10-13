@@ -268,6 +268,52 @@ It does nothing at all when `FUN_0048c8d0()` returns 1, which needs **both** `DA
 like a bug, and is not"). This is why the 17
 shortcut actions and the gadget's button count never reconciled — they are not meant to.
 
+**Who writes the three globals (Q330).** Besides the seed (`0x004a1db4`) their one writer is
+`FUN_004a0810( category, screen )`, and its ten callers are the ten screens' openers, each for its own screen. The
+buy opener's is its first act, `(1, 1)` at `0x004acc8f`, before it looks whether its screen is up; the hire
+opener's is `(1, 2)` at `0x0049bdf5`, after `FUN_00485b40` has destroyed the park screen that is open. So a
+category is left on a screen whoever opened it: the sibling's button, the message bar's, the gadget's own. The
+hire opener asked for -1 always builds, so the gadget's button with the hire screen up destroys it and builds it
+again, which withdraws `0xbd` and posts it again (a cut while he says it, and the line said again); the buy
+opener with its screen up picks its tab again and no more.
+
+**The seed is the entry from the front end and nothing else.** `FUN_004a1d70` is called by `FUN_00489f50`, that
+by `FUN_004813e0`, and that by `Game_StateMachine` at `0x0054ed25`, state 9, alone. A park loaded from the
+park's own Load Park list keeps what the park before it left, and so does Restart Park. Restart Park is
+measured, not read: its confirm `FUN_0048b5b0` asks `FUN_005508b0( 1 )`, and what serves that was not read to
+its end (my guess from the part read, that it passes state 9, was wrong).
+
+Measured in the original, the stock file in four fresh programs, each predicted first (`q330/PREDICTION.txt`;
+`q330/orig/run.sh <file> a|b|r|l`, `original/screens.py` beside `advisor.py`; nine of ten, the miss Restart
+Park's, predicted again and run again):
+
+| What was done | `DAT_007cb28c` | Screen up |
+|---|---|---|
+| the park entered | 1 | none |
+| the gadget's button | 1 | buy |
+| the buy screen's button to hire | 2 | hire; `0xbd` (55, 0, 0, 1) to (891, 0, 1, 1) |
+| the gadget's button 4 s into his line | 2 | another hire screen (`0x46cee10` to `0x46cedf0`); `0xbd` (891, 0, 0, 2) on tick 919, (920, 0, 1, 2) on 920 |
+| exit, the gadget's button | 2 | hire, nobody speaking (three cuts) |
+| the hire screen's button to buy | 1 | buy |
+| exit, the gadget's button | 1 | buy |
+| hire, exit, the same file loaded from the list, the gadget's button | 2 | hire |
+| hire, exit, Restart Park (the clock back from 916 to under 882), the gadget's button | 2 | hire |
+| hire, exit, Exit To Lobby, the park entered again, the gadget's button | 1 (written as the clock read 0) | buy |
+
+**OpenTPW** (`ParkCategoryScreens`): `ParkBuyScreen.Shown` and `ParkHireScreen.Shown` remember their screen,
+the gadget's button opens the one remembered (`Open`), and `Game` seeds the three as a park is asked for from a
+scene that is not a park (`ParkAsked`). Information is still seeded 4, the declared deviation. The stock park,
+real clicks, predicted first (`q330/confirm.py fix|control|restart`): nine of nine and the control. `windows`
+ends `; left on 1,4,10`; the button logs `Park gadget: category 1 is left on screen 2` after the hire screen
+was up; clicked 3 s into his line with hire up, `withdraw message=189 cleared=0 cut=1 slaps=2`, a post on tick
+815 and `attempt=3 message=189 ... tick=816`; left on hire it opens hire after `savepark` and a load from the
+list, and after Restart Park; after `lobby` and the park again `left on 1,4,10` and it opens buy. Main's build
+opened buy after hire and logged no such line. Sixteen bugs put back, sixteen caught
+(`q330/mutations.py`); the one line no test reaches is `Game`'s own call, which the load, restart and lobby
+runs hold. Not run: Full Simulation; the Information and Finance categories in either game (their four built
+screens remember through `ParkCategoryScreens.Show` alone, so the message bar's entry-price button does, and
+their seed is not put to the original); a key that opens a screen.
+
 ### The nine screens behind Info, Money and Research — censused 2026-09-21
 
 Every one located, with its builder, its layout stream, its refresh callback, the size of the builder
