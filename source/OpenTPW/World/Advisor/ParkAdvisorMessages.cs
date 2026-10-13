@@ -308,15 +308,15 @@ internal sealed class ParkAdvisorMessages
 		new( PoorShopSelection, "ShopsPoorSelection.Score", 207, 205, Group: 73, Polled: true, PoorSelection: "ShopsPoorSelection", PoorOf: Shut.Shops ),
 		new( PoorSideshowSelection, "SideshowsPoorSelection.Score", 215, 213, Group: 77, Polled: true, PoorSelection: "SideshowsPoorSelection", PoorOf: Shut.Sideshows ),
 
-		// Row 79's two responses name the theme's own advisor model and its costume, which are not built: the line is
-		// said by the one model, bare-headed, and the costume counted (docs/exe/advisor-park.md, "A poor selection of features").
+		// Row 79's two responses name the theme's own advisor model and its costume (docs/exe/advisor-park.md,
+		// "A poor selection of features").
 		new( PoorFeatureSelection, "FeaturesPoorSelection.Score", 223, 221, Prop: AdvisorProps.ThemeCostume, Group: 81, Polled: true, PoorSelection: "FeaturesPoorSelection", PoorOf: Shut.Features ),
 		new( BuildShops, "ShopsBuildShops.Score", 211, 209, Prop: HardHat, Group: 75, Polled: true, PerDayWithNoShop: "ShopsBuildShops.AdditionalPerDay" ),
 		new( BuildMoreShops, "ShopsBuildMoreShops.Score", 213, 211, Prop: HardHat, Group: 76, Polled: true, ShopsPerRide: "ShopsBuildMoreShops" ),
 		new( BuildSideshows, "SideshowsBuildSideshows.Score", 219, 217, Prop: HardHat, Group: 79, Polled: true, PerDayWithNoSideshow: "SideshowsBuildSideshows.AdditionalPerDay" ),
 
-		// Row 81's one response names the theme's own advisor model and its costume, as row 79's two do: said
-		// bare-headed, the costume counted (docs/exe/advisor-park.md, "A park with sideshows and no feature").
+		// Row 81's one response names the theme's own advisor model and its costume, as row 79's two do
+		// (docs/exe/advisor-park.md, "A park with sideshows and no feature").
 		new( BuildFeatures, "FeaturesBuildFeatures.Score", 226, 224, Lines: 1, Prop: AdvisorProps.ThemeCostume, Group: 83, Polled: true, PerDayWithNoFeature: "FeaturesBuildFeatures.AdditionalPerDay" ),
 		new( BuildMoreSideshows, "SideshowsBuildMoreSideshows.Score", 221, 219, Prop: HardHat, Group: 80, Polled: true, SideshowsPerRide: "SideshowsBuildMoreSideshows" ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
@@ -343,6 +343,14 @@ internal sealed class ParkAdvisorMessages
 
 		return (0, 0);
 	}
+
+	/// <summary>
+	/// The model slot <paramref name="response"/>'s row names (the response table's <c>+0x10</c>, low half): 1, the
+	/// park's own advisor, for a built topic that wears the theme's costume, as every row with that prop is on
+	/// that slot; nought for any other.
+	/// </summary>
+	internal static int SlotOf( int response )
+		=> PropsOf( response ).First == AdvisorProps.ThemeCostume ? Advisor.ThemeSlot : 0;
 
 	private sealed class History
 	{

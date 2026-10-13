@@ -674,12 +674,14 @@ his antennae on.
 | 1 | 0, 0 | 8 |
 
 Slot 1 is a second model, built by `FUN_00457a90` from the level's own `advisor.wad` (`Advisor_` and the first
-three letters of the theme). Every built park topic's rows are slot 0: the door's 308 to 311 carry (9, 0), the
-rides' 194 to 206 (5, 0). The lobby's 394 carries (0, 0).
+three letters of the theme): "The theme's own advisor and its costume", below. The built park topics' rows are
+slot 0 but rows 79's and 81's: the door's 308 to 311 carry (9, 0), the rides' 194 to 206 (5, 0). The lobby's 394
+carries (0, 0).
 
 **OpenTPW** (`AdvisorProps`, `AdvisorModel.Wear`, `ParkAdvisorMessages.Topic.Prop` and `PropsOf`): as a line
-begins the add-ons are hidden and the response's props put on, once a line rather than once a clip, which comes
-to the same pieces since no clip of his keys an add-on. The speaker's queue, the lobby's lines and the console's
+begins the nodes of its first clip's hide list are hidden and the response's props put on, once a line rather
+than once a clip, which comes to the same pieces since no clip of his keys an add-on and clips 1 to 15 of each
+model carry one list. The speaker's queue, the lobby's lines and the console's
 `say` wear (0, 0). `q308/confirm.py`, the stock park's Belly Bounce broken through its script: the line the
 mechanic's decide posts began `Advisor: sample 202 ... wearing 5,0`, `advisor` read `wearing=5,0`, and in
 `run-fix1/2-told.png` he is up in the yellow hard hat with no antennae, as the original's in `q306/orig/a-told.png`
@@ -689,8 +691,78 @@ mechanic's decide posts began `Advisor: sample 202 ... wearing 5,0`, `advisor` r
 |---|---|---|
 | The props of a line | put on after every clip's start | put on as the line begins |
 | The hat's colour | a full yellow | paler: he is lit past his textures (`AdvisorModel`'s light, set against his gloves) |
-| The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows: in Lost Kingdom the fly in an explorer's hat, no antennae (`q344/orig/a-told.png`) | not built: the one built topic that names it, row 79's, says its line bare-headed and counts `ADVISOR_THEME_COSTUME` ("A poor selection of features") |
+| The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows: in Lost Kingdom the fly in an explorer's hat, no antennae (`q344/orig/a-told.png`) | the same, paler ("The theme's own advisor and its costume", below) |
 | A clip word's `0x10000` (no prop, the head hidden) and its particles | a gesture row's | not built: the gesture rows are counted, `ADVISOR_RESPONSE_GESTURE_ROW` |
+
+## The theme's own advisor and its costume (Q346)
+
+**Two models, one on the screen.** `FUN_00457a90`, a park's start, calls `FUN_00429ba0( folder, textures, stem,
+slot )` twice: slot 0 from `Global\Advisor` with no stem (`Advisor.md2`), and slot 1 from the level's own
+`Advisor` folder with the stem `Advisor_` and the theme's first three letters (`_strncat( ..., 3 )`), its
+textures looked for in the global advisor's folder too. `FUN_00429ba0` indexes everything by `slot * 0xb0`, so
+both models get the one placing (translate 0.6, -0.6, 0.2), the one root scale and the one light. The lobby makes
+slot 0 alone.
+
+`Advisor_SayResponse` keeps the response's `+0x10` low half at `0x00f79674` (`0x00599100`) and starts the line's
+first clip on that slot's model (`FUN_00429e90( clip, slot )` at `0x005993d5`); every later read of the model is
+through `FUN_00429fe0( [0x00f79674] )`: the next clip (`0x005999fa`), the mouths (`0x00599b5a` on; the five
+mouths and the head are found by name for each slot by `FUN_005989c0`, at `0x00f796a0 + slot * 20` and
+`0x00f79698 + slot * 4`), the props (`FUN_00598dc0`, `FUN_00598ca0`) and the kill (`Advisor_KillModel( slot )`).
+So a line's model is its response's, for the whole line, and the other is not drawn.
+
+**The clip lengths are the park's model's.** `FUN_005989c0` fills the twenty lengths at `0x00f796c8` once, from
+slot 1's model where there is one and slot 0's otherwise, and sets clip 14's to nought. The random chain
+(`FUN_00598b20`) picks every line's clips by that table, whichever slot the line is on. In Lost Kingdom it makes
+no difference to a line of clips 1 to 15: the two models' fifteen lengths are the same to the millisecond (1666,
+2500, 3333, 4166, 5000, 7500, 9166, 10000, 10833, 12500, 3333, 5000, 11000, 1000, 666; the game's own log line
+at a park's start, `q346/run-fix1`).
+
+**Lost Kingdom's model.** `Advisor_JUN.md2` is 29 nodes, 18 of them meshes, with twenty clips. It is a whole
+fly of its own with no antennae: eyes, eyelids, five mouths of the same names, body, hands, and `Ticket`, `MAP`,
+`Ticket2`, `Pith Helmet` and `Mutant Eye`. Its lookup records (`md2surf.py`): 21 and 22 the hands, **4 the pith
+helmet** and 18 the mutant eye in the costume space `0x400`; 1 to 3 `T_Particle1` to `3` and 4 to 6 `Rotate1` to
+`3` in the space `0x100`. Clips 1 to 15 each hide the same twelve nodes as they start: `Ticket`, `MAP`,
+`Ticket2`, `Pith Helmet`, `Mutant Eye`, the six particle and rotate nodes and `Wave01` (`hidelists.py`); 16 to
+20, the golden ticket's, differ. Its helmet and map textures are in the level's wad (`Pith_Brown`, `Pith_Side`,
+`Map`, `Mapback`), the rest in the global advisor's.
+
+**The costume.** `FUN_004080e0` copies four pairs from the balance object, `0x007856f4 + 8i` to `0x00f797a4 +
+4i` (the `AddOns`) and `0x007856f8 + 8i` to `0x00f797b4 + 4i` (the `SubOffs`): the keys
+`ThemeAdvisorCostumes[i].AddOns` and `.SubOffs` of the theme's `Standard.sam`. `FUN_00598ca0( -1 )` walks the
+four in turn: an add-on that is not nought is shown (unless the clip's word carries `0x10000`), then a sub-off
+that is not nought is hidden, both on the line's own slot in the space `0x400`; it then asks for the piece -1,
+which no model has. Lost Kingdom's file: `[0].AddOns 4`, `[0].SubOffs 19`, `[1].SubOffs 20`. So on slot 1 the
+pith helmet goes on, and the two sub-offs, the lobby model's antennae, find no node in `Advisor_JUN.md2`. All 129
+rows of the table with the prop -1 are slot 1's.
+
+**OpenTPW** (`Advisor`'s `_themeFigure`, `_speaker` and `_costume`, `AdvisorProps.CostumeOf` and `Switched`,
+`ParkAdvisorMessages.SlotOf`): a park's advisor loads `levels/<theme>/advisor/Advisor_<THE>.md2` beside the
+lobby's model, a line plays on the model its response's slot names and that one alone is drawn, the prop -1 puts
+on the balance's four pairs, and the chain's clip lengths are the theme's model's where there is one. A built
+topic's slot is 1 where its prop is -1.
+
+`q346/confirm.py fix` (`q345/nofeat30.TPWS`, the stock park with no feature; all four predictions held, the
+guess about the clip lengths among them): at the park's start `Advisor: the theme's own model is
+levels/jungle/advisor/Advisor_JUN.md2, its costume 4/19 0/20 0/0 0/0`; row 81's line on tick 1593 began
+`Advisor: sample 224 ... wearing -1,0 on model slot 1`, `advisor` read `saying sp_224.mp2 ... wearing=-1,0
+slot=1`, no `ADVISOR_THEME_COSTUME` was counted, and `run-fix1/1-line.png` shows the fly in the pith helmet with
+no antennae, as the original's saying the same line of the same file (`q345/orig/a-g4.png`; `side-by-side.png`).
+The line over and the Belly Bounce broken through its script, the mechanic's line began `... wearing 5,0 on model
+slot 0` and `3-hardhat.png` shows the lobby's fly in the hard hat. Main's build (`run-control2`): `wearing -1,0`,
+`1x ADVISOR_THEME_COSTUME`, the fly bare-headed with both antennae. Helmet-coloured pixels in the head's box:
+5862 against the control's nought.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Who says a slot 1 line | the level's own model, alone on the screen | the same |
+| The costume | four pairs of the theme's `Standard.sam`, put on after every clip's start | the same pairs, put on as the line begins |
+| The helmet's colour | tan, with a grey band | **paler: yellow with a white band**, as the hard hat is paler (`AdvisorModel`'s light, set against the lobby model's gloves) |
+| The chain's clip lengths | the park's model's, for both slots | the same |
+| Clips 16 to 20, the map, the tickets and the mutant eye | the golden ticket's lines (`scenes.md`, "Gesture table") | not built: no built topic names a gesture row of theirs |
+
+Not run: the original, this session (its frames of this file are Q344's and Q345's); a slot 0 line straight
+after a slot 1 line in the original; the three other themes' models and costumes (not measured); Full
+Simulation (the model is the level's in either mode: not asked). Not heard in either game.
 
 ## The tag a line leaves on the aerial (Q309)
 
@@ -1735,7 +1807,7 @@ through tick 1394.
 **Seen in the original and not predicted.** In both runs it said a line on tick 1317 that this game does not
 build: the poll's cursor stood on row 125 after it, so row 124's (`0x0059f220`, responses 300 and 301, sample
 334, "the buzz about your park has started to die down"; its score is not read, and its two responses name
-model slot 1 and prop -1, the theme's own advisor and costume, which are not built). And row 7 took a slot at 30
+model slot 1 and prop -1, the theme's own advisor and costume). And row 7 took a slot at 30
 on tick 1394 in run a and was said on tick 1447, after the hire screen's line; in run b it was said on tick
 1394 itself ("More rides than the mechanics can keep", below).
 
@@ -2800,11 +2872,10 @@ whose section's least number is `MoreFeaturesThan`. `ParkPeople.AdvisorFacts` co
 and asks `ParkPeople.Kinds` for the kinds, as it does for the shops and the sideshows. The poll line ends `
 kinds=K/T features=N sincebuild=N`. `ParkTags.Rows` lists row 81.
 
-**A deviation, said at the topic's row: the line is said bare-headed.** The responses' model slot 1 and prop -1
-are the theme's own advisor and costume, which are not built ("What he wears for a line"); this game says the
-line with the one model, no hat and both antennae, and counts `ADVISOR_THEME_COSTUME`. The original's figure for
-the line is the same fly in the Lost Kingdom's explorer's hat, no antennae (`q344/orig/a-told.png`). Under the
-shipped keys neither game says the line, so no shipped park shows the difference.
+**Who says it.** The responses' model slot 1 and prop -1 are the theme's own advisor and costume: in Lost
+Kingdom the fly in the explorer's hat, no antennae (`q344/orig/a-told.png`), in both games since Q346 ("The
+theme's own advisor and its costume"). This item's own runs, below, were of the build before that, which said the
+line with the lobby's model, bare-headed, and counted `ADVISOR_THEME_COSTUME`.
 
 **The scenes**: Q338's `shop30.TPWS` (the stock park on tick 915, the stamp of tick 273: day 30 on tick 971) and
 `feat29.TPWS`, the same with the stamp of tick 280 (`q344/mk.py`). **Seven `Advisor.sam`**, the section's three
@@ -2858,14 +2929,13 @@ tick 1221: **five kinds of eight, as this game counts them**. *The shipped keys*
 | `Score` 25 | not said | the same (`under-threshold`) |
 | `MoreFeaturesThan` 8, and 9 | said on tick 971, and not said | the same |
 | Day 29 | not run | nought on tick 971; said on tick 1126 |
-| Who says it | the fly in the theme's explorer's hat, no antennae | **the fly bare-headed, both antennae** (`ADVISOR_THEME_COSTUME`) |
+| Who says it | the fly in the theme's explorer's hat, no antennae | the same since Q346 (row 81's line seen, not this one) |
 | The tag and the bar | row 81, part 2, string 83; button 12 builds the buy screen on its features tab, tag off | the same |
 
-**Not built or not seen.** The theme's own advisor model and its costume (above). In no game run: line 2 (sample
+**Not built or not seen.** In no game run: line 2 (sample
 222; the test holds the turn), the line said again past its 120 quarter-ticks, day 29 in the original, no kind of
 feature on offer, a golden-ticket feature, a feature built after the line, the bar's button with the buy screen
-open, a park made with no file, Full Simulation (the row asks neither mode: not asked). Whether slot 1's model is
-a second file of the same fly or the same model dressed was not read. Row 81 is "A park with sideshows and no feature", below, and row 76 is read and
+open, a park made with no file, Full Simulation (the row asks neither mode: not asked). Row 81 is "A park with sideshows and no feature", below, and row 76 is read and
 not built. Not heard in either game.
 
 ## A park with sideshows and no feature (message `0x51`, Q345)
@@ -2904,11 +2974,11 @@ A twenty-third polled topic, scored as the original scores it: `PerDayWithNoFeat
 the facts it reads (`SideshowKindsStanding`, `FeatureKindsStanding`, `DaysSinceObjectBuilt`) were kept already.
 The poll line ends ` sideshowkinds=N featurekinds=N sincebuild=N`. `ParkTags.Rows` lists row 83.
 
-**A deviation, said at the topic's row: the line is said bare-headed**, as row 79's is. Response 226 names the
-theme's own advisor and costume, which are not built ("What he wears for a line"); this game says the line with
-the one model, no hat and both antennae, and counts `ADVISOR_THEME_COSTUME`. The original says it as the fly in
-the Lost Kingdom's explorer's hat, no antennae (`q345/orig/a-g4.png`). Unlike row 79's, **this line is said under
-the shipped keys**, so a shipped park with a sideshow and no feature shows the difference from day 66.
+**Who says it.** Response 226 names the theme's own advisor and costume: the fly in the Lost Kingdom's
+explorer's hat, no antennae (`q345/orig/a-g4.png`), in both games since Q346 ("The theme's own advisor and its
+costume", whose run is of this line). Unlike row 79's, **this line is said under the shipped keys**, from day 66
+of a shipped park with a sideshow and no feature. This item's own runs, below, were of the build before, which
+said it with the lobby's model, bare-headed, and counted `ADVISOR_THEME_COSTUME`.
 
 **The scenes** (`q345/scene.py`, one run of the stock park; `lib/stockscene.py` for the last; `mk.py`, `mk2.py`):
 every feature sold (things 17 to 24) on tick 1434 and the park saved then (*early*) and on tick 1584 (*nofeat*);
@@ -2966,12 +3036,11 @@ the same tag. *feat30* (run c) and *noside30* (run d): fresh through the runs' e
 | A feature standing, and no sideshow | not said | the same (`no-score`) |
 | Day 29 | not said on tick 1593; with the stamp held, said on tick 1748 | nought on tick 1593; tick 1748 not seen (a vehicle's stamp on 1600) |
 | A vehicle made on the row's own turn | the stamp moves and the row is silent | the same |
-| Who says it | the fly in the theme's explorer's hat, no antennae | **the fly bare-headed, both antennae** (`ADVISOR_THEME_COSTUME`) |
+| Who says it | the fly in the theme's explorer's hat, no antennae | the same since Q346, the helmet paler (`q346/side-by-side.png`) |
 | The tag and the bar | row 83, part 2, string 85; button 12 builds the buy screen on its features tab, tag off | the same |
 | The tag's words | the american folder's, "... as it could be. ..." | the English folder's, "... as it might be. ..." |
 
-**Not built or not seen.** The theme's own advisor model and its costume ("A poor selection of features",
-above). In no game run: the line said again past its 120 quarter-ticks (the test holds that it is the one line
+**Not built or not seen.** In no game run: the line said again past its 120 quarter-ticks (the test holds that it is the one line
 again), score 22 on tick 1438 (a summons falls on that tick), day 29 said a turn later in this game, a
 golden-ticket sideshow or feature, a feature built after the line, the bar's button with the buy screen open, a
 park made with no file, Full Simulation (the row asks neither mode: not asked). Why the original's row 82 is

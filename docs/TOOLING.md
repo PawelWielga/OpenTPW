@@ -524,6 +524,14 @@ GH=766` there, or the pointer is off):
   `wearing=` in `advisor`. His head is in the frame's lower right: `q308/confirm.py` counts the hat's pixels in
   the box from 0.77 to 0.93 across and 0.55 to 0.78 down, where R > 200, G > 180, B < 170 and R - B > 60 read
   6307 with the hat and nought without (Q308).
+- **The theme's own advisor in his costume, inside a minute:** load `q345/nofeat30.TPWS` (the stock park with no
+  feature, saved on tick 1584): row 81's line, a slot 1 response with the prop -1, is said on tick 1593, nine
+  ticks in, in both games; grep the log for `on model slot 1` and read `wearing=-1,0 slot=1` in `advisor`. Break
+  the Bounce once `advisor` reads `shown=False` for a slot 0 line straight after it (`q346/confirm.py
+  fix|control`; the original's frames of the file are `q345/orig/a-g*.png`). `q346/confirm.py` counts the
+  helmet's pixels in the box from 0.70 to 0.95 across and 0.62 to 0.85 down, where R > 150, G > 110, B < 170 and
+  R - B > 50 read 5862 with the helmet and nought with the lobby's fly bare-headed; do not look for `slot=` alone
+  in `advisor`, whose park half prints the advisor's eight slots (Q346).
 - **A park file with a tag in it, and what a load does with it:** break the Bounce as above, wait for the
   line, `savepark`: `parkfile.py -t <file>` prints the block's records, and five of the original's own files hold
   one to set beside it (`q257x/orig/broken-by-the-original.TPWS`, id 72 about a Hot Pot; `q253/orig/

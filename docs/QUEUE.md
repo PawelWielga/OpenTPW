@@ -44,22 +44,27 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q346. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q347. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q345 (`advisor-park.md`, "A park with sideshows and no feature"): **row 81's line is said bare-headed
-  too, and the shipped game says this one** (a park with a sideshow and no feature, from day 66), so the theme's
-  own advisor and costume now show in a shipped park. The original's row 82 (`0x0059e380`,
+  From Q346 (`advisor-park.md`, "The theme's own advisor and its costume"): **the pith helmet is paler than the
+  original's**, yellow with a white band where the original's is tan with a grey one, as the hard hat is paler:
+  `AdvisorModel`'s light is set against the lobby model's gloves, and the original's light (26.67, -26.67, 800
+  at `FUN_00429ba0`) is not decoded into a space. Clips 16 to 20 of the theme's model (the map, the tickets, the
+  mutant eye, the golden ticket's gesture rows) are not built. Which model a line plays on, the costume handed
+  to it and the chain's lengths are `Advisor`'s, which no test reaches: the game run is their proof. Not run:
+  the original this session (its frames are Q344's and Q345's), a slot 0 line straight after a slot 1 line in
+  the original, the three other themes' models and costumes, Full Simulation (not asked: the model is the
+  level's in either mode). Not heard in either game.
+  From Q345 (`advisor-park.md`, "A park with sideshows and no feature"): the original's row 82 (`0x0059e380`,
   `FeaturesNoToilets`, Score 90) stayed fresh in six loads of a park with no toilet: not read. Row 80
   (`0x0059e260`, `FeaturesResearchMore`) is not read; row 76 waits for the research. In no game run: the line
   again past its cooldown, score 22 on tick 1438 (a summons falls on that tick in both games), day 29 said a
   turn later in this game (a vehicle's stamp came first; the original's was held by a write), a golden-ticket
   sideshow or feature, a feature built after the line, the bar's button with the buy screen open, a park made
   with no file, Full Simulation (not asked: the row reads neither mode). Not heard in either game.
-  From Q344 (`advisor-park.md`, "A poor selection of features"): **row 79's line is said bare-headed**: the
-  theme's own advisor and costume (model slot 1, prop -1; in Lost Kingdom the fly in an explorer's hat, no
-  antennae, `q344/orig/a-told.png`) are not built, `ADVISOR_THEME_COSTUME` counted; whether slot 1 is a second
-  model file or the one model dressed is not read (Q308's note, below in this file). Row 81 is built (Q345),
+  From Q344 (`advisor-park.md`, "A poor selection of features"): **row 79's line is the theme's own
+  advisor's** (model slot 1, prop -1; built, Q346). Row 81 is built (Q345),
   and row 76 waits for the research. In no game run: line 2, the line again past its cooldown, day 29
   in the original, no kind of feature on offer, a golden-ticket feature, a feature built after the line, the
   bar's button with the buy screen open, a park made with no file, Full Simulation (not asked: the row reads
@@ -270,8 +275,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the original's menu pause is not measured. In no game run: a second tag, a tag taking another's place, the
   door's tags, either right click (the tests hold each). Not heard in either game.
   From Q308 (`advisor-park.md`, "What he wears for a line"): the theme's own advisor model (slot 1, `Advisor_JUN.md2`, 137 rows) and its costume (prop -1,
-  `ThemeAdvisorCostumes`) are not built (`ADVISOR_THEME_COSTUME`, counted where a built topic names one: row
-  79's does, Q344, and its line is said bare-headed). A clip word's `0x10000` and its particles are a gesture row's, not built. The hat is paler than the
+  `ThemeAdvisorCostumes`) are built (Q346). A clip word's `0x10000` and its particles are a gesture row's, not built. The hat is paler than the
   original's (his light is set against his gloves, not decoded). In no game run: the ticket hat (the door's
   lines; the tests hold it), a second line after a hat, any other prop. The call from the speaker to the model
   is held by the game run alone.

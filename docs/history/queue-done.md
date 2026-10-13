@@ -6693,6 +6693,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   bare-headed, the original in the theme's explorer's hat** (`ADVISOR_THEME_COSTUME`, filed under Q346), and
   this line the shipped game does say. 60 bugs put back, all fail a test. `advisor-park.md`, "A park with
   sideshows and no feature".
+- [x] **Q346. A line of the park's own advisor is said by the theme's model in its costume.** (2026-10-13;
+  split from the bundle below, which is Q347.) Slot 1 is a second whole model from the level's `advisor.wad`
+  (`FUN_00457a90`), a line plays on the model its response's slot names (`0x005993d5`) and the prop -1 puts on
+  the four `ThemeAdvisorCostumes` pairs of the theme's `Standard.sam` (`FUN_004080e0`, `FUN_00598ca0`): in Lost
+  Kingdom `Advisor_JUN.md2` in its pith helmet. `q346/confirm.py fix`, four of four: row 81's line on tick 1593
+  began `wearing -1,0 on model slot 1`, no `ADVISOR_THEME_COSTUME` counted, the fly in the helmet with no
+  antennae as the original's (`run-fix1/1-line.png` beside `q345/orig/a-g4.png`), and the mechanic's line after
+  it `wearing 5,0 on model slot 0`; main's build bare-headed, counted once. 5862 helmet pixels against nought.
+  41 of 41 bugs put back fail a test (`advisor-park.md`, "The theme's own advisor and its costume").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

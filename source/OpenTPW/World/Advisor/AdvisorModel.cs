@@ -54,9 +54,13 @@ public sealed class AdvisorModel
 
 	private readonly int[] _mouths;
 
-	public AdvisorModel( string modelPath, string textureDirectory )
+	/// <param name="sharedTextureDirectory">
+	/// Where a texture the model names and its own wad does not ship is looked for: a theme's advisor wears
+	/// the global advisor's face and gloves.
+	/// </param>
+	public AdvisorModel( string modelPath, string textureDirectory, string? sharedTextureDirectory = null )
 	{
-		_model = new LobbyModel( modelPath, textureDirectory, Vector3.Zero );
+		_model = new LobbyModel( modelPath, textureDirectory, Vector3.Zero, sharedTextureDirectory: sharedTextureDirectory );
 		_file = new ModelFile( modelPath );
 
 		foreach ( var entity in _model.Entities )
@@ -152,10 +156,12 @@ public sealed class AdvisorModel
 	}
 
 	/// <summary>
-	/// Dresses him for a line in its response's two props - see <see cref="AdvisorProps.Wear"/>. Nought and
-	/// nought is the lobby's: no add-on, his antennae on.
+	/// Dresses him for a line that starts on <paramref name="clip"/>, in its response's two props - see
+	/// <see cref="AdvisorProps.Wear"/>. Nought and nought is the lobby's: no add-on, his antennae on.
+	/// <paramref name="costume"/> is the theme's, for the prop -1.
 	/// </summary>
-	public void Wear( int first, int second ) => AdvisorProps.Wear( _file, first, second, SetMeshVisible );
+	internal void Wear( int clip, int first, int second, IReadOnlyList<(int AddOn, int SubOff)>? costume = null )
+		=> AdvisorProps.Wear( _file, clip >= 1 && clip < _clips.Length ? _clips[clip]?.HideList ?? [] : [], first, second, costume, SetMeshVisible );
 
 	/// <summary>Shows mouth <paramref name="shape"/> (1 to 5) and hides the others.</summary>
 	public void ShowMouth( int shape )

@@ -103,6 +103,9 @@ public sealed class Advisor : Entity
 	/// <summary>The clip he starts every line with. Counted as taking no time - see the class remarks.</summary>
 	private const int StartClip = 14;
 
+	/// <summary>The model slot of the park's own advisor; slot 0 is the one every scene has.</summary>
+	internal const int ThemeSlot = 1;
+
 	/// <summary>The clip he finishes every line with.</summary>
 	private const int EndClip = 15;
 
@@ -189,6 +192,20 @@ public sealed class Advisor : Entity
 	private static SoundCategory? _speech;
 	private AdvisorModel? _figure;
 	private bool _figureFailed;
+
+	/// <summary>
+	/// The park's own advisor, model slot 1: <c>Advisor_</c> and the theme's first three letters, from the
+	/// level's <c>advisor.wad</c> (<c>FUN_00457a90</c>). The lobby has none.
+	/// </summary>
+	private AdvisorModel? _themeFigure;
+
+	/// <summary>The theme's costume, what the prop -1 puts on (<see cref="AdvisorProps.CostumeOf"/>).</summary>
+	private readonly (int AddOn, int SubOff)[] _costume;
+
+	/// <summary>The model the line being said plays on, by its response's slot (the response table's <c>+0x10</c>).</summary>
+	private AdvisorModel? _speaker;
+
+	private int _slot;
 	private bool _shown;
 
 	/// <summary>
@@ -239,14 +256,20 @@ public sealed class Advisor : Entity
 
 	private bool _ducked;
 
-	public Advisor()
+	/// <param name="theme">The park's theme, whose own advisor is model slot 1; null in the lobby, which has none.</param>
+	/// <param name="balance">The park's balance, which names the theme's costume.</param>
+	public Advisor( string? theme = null, ParkBalance? balance = null )
 	{
 		Current = this;
+		_costume = AdvisorProps.CostumeOf( key => balance?.Int( key ) ?? 0 );
 
 		// Loaded here, during level setup, and not on his first update: a model is entities, and an
 		// entity joins Entity.All the moment it is made - which, from inside an update, is the list
 		// Level.Update is walking at the time.
 		LoadFigure();
+
+		if ( theme != null )
+			LoadThemeFigure( theme.ToLowerInvariant() );
 	}
 
 	protected override void OnUpdate()
@@ -301,8 +324,8 @@ public sealed class Advisor : Entity
 		// Drawn while he is held, not only while he is running - see the class remarks. What takes him off
 		// the screen is Dismiss clearing _shown, which is the quiet stop and the crying one, and those are
 		// the two the original removes his model for. A pause is not one of them.
-		if ( _shown && _figure != null )
-			_figure.Draw();
+		if ( _shown && _speaker != null )
+			_speaker.Draw();
 	}
 
 	/// <summary>
@@ -367,9 +390,9 @@ public sealed class Advisor : Entity
 
 	/// <summary>
 	/// Advisor_SayResponse's direct park path; a busy or disabled speaker returns zero. He wears the response's
-	/// two props for the line (<see cref="AdvisorProps"/>).
+	/// two props for the line (<see cref="AdvisorProps"/>), on the model its slot names.
 	/// </summary>
-	internal int PlayParkResponse( int response, int sample, int firstProp = 0, int secondProp = 0 )
+	internal int PlayParkResponse( int response, int sample, int firstProp = 0, int secondProp = 0, int slot = 0 )
 	{
 		if ( Busy || _paused || !CanSpeak )
 		{
@@ -378,7 +401,7 @@ public sealed class Advisor : Entity
 		}
 		_speech ??= new SoundCategory( "global", "global/Speech", "speech" );
 		if ( !_speech.IsValid ) return 0;
-		Speak( sample, cue: null, firstProp, secondProp );
+		Speak( sample, cue: null, firstProp, secondProp, slot );
 		// The response adds clip 15 again after the gesture chain (005994ac); docs/exe/advisor-park.md.
 		Log.Info( $"Advisor: response={response} sample={sample} playback=started" );
 		return ParkResponseDuration( (int)MathF.Round( (_gesturesEndAt - _speakAt) * 1000f ), ClipMilliseconds( EndClip ) );
@@ -496,7 +519,7 @@ public sealed class Advisor : Entity
 	/// 80 of the 641 samples in the bank are a 315-byte stub that is not valid MPEG - response ids
 	/// with nothing recorded - and those simply come back silent, which ends the line at once.
 	/// </summary>
-	private void Speak( int sample, Cue? cue, int firstProp = 0, int secondProp = 0 )
+	private void Speak( int sample, Cue? cue, int firstProp = 0, int secondProp = 0, int slot = 0 )
 	{
 		// Advisor_SayResponse (0x00599050) says nothing at all while the options have him switched off.
 		if ( !GameOptions.Current.Advisor || _speech is not { IsValid: true } )
@@ -519,17 +542,21 @@ public sealed class Advisor : Entity
 		_gesturesEndAt = _speakAt + (gesturesMilliseconds / 1000f);
 
 		// What he is seen doing is the clips at their full lengths, clip 14 included, starting now.
-		_sequence = new ClipSequence( _gestures, clip => _figure?.ClipMilliseconds( clip ) ?? 0 );
+		// The line's clips are started on the model its slot names (0x005993d5), and that one alone is on the screen.
+		_slot = slot;
+		_speaker = slot == ThemeSlot ? _themeFigure : _figure;
+
+		_sequence = new ClipSequence( _gestures, clip => _speaker?.ClipMilliseconds( clip ) ?? 0 );
 		_gesturesStartedAt = _now;
 
 		_lips = LipFile.TryLoad( $"global/Speech/lips/sp_{sample:000}.lip", out var lips ) ? lips : null;
 
-		if ( _figure != null )
+		if ( _speaker != null )
 		{
 			// He is about to be seen again, so start him from a known face rather than from
 			// whatever the last line's clips left behind - see ResetFace.
 			ResetFace();
-			_figure.Wear( firstProp, secondProp );
+			_speaker.Wear( StartClip, firstProp, secondProp, _costume );
 			_shown = true;
 		}
 
@@ -542,7 +569,7 @@ public sealed class Advisor : Entity
 		}
 
 		Log.Info( $"Advisor: sample {sample} in {LeadInSeconds:0.0}s through clips [{string.Join( ", ", _gestures )}] "
-			+ $"({gesturesMilliseconds}ms), {_queue.Count} more queued, wearing {firstProp},{secondProp}" );
+			+ $"({gesturesMilliseconds}ms), {_queue.Count} more queued, wearing {firstProp},{secondProp} on model slot {slot}" );
 	}
 
 	/// <summary>
@@ -597,13 +624,17 @@ public sealed class Advisor : Entity
 		return total;
 	}
 
+	/// <summary>
+	/// How long a clip is taken to last as a line's clips are picked: the park's own model's where there is one,
+	/// whichever model the line plays on, and the lobby's otherwise (<c>FUN_005989c0</c> fills the table once).
+	/// </summary>
 	private int ClipMilliseconds( int clip )
-		=> clip == StartClip || _figure == null ? 0 : _figure.ClipMilliseconds( clip );
+		=> clip == StartClip ? 0 : (_themeFigure ?? _figure)?.ClipMilliseconds( clip ) ?? 0;
 
 	/// <summary>Plays his clips one after another and moves his mouth - Advisor_Update's other half.</summary>
 	private void Animate()
 	{
-		if ( _figure == null || !_shown )
+		if ( _speaker == null || !_shown )
 			return;
 
 		// Each clip starts when the one before it ends and the last holds its final frame - asked of
@@ -611,7 +642,7 @@ public sealed class Advisor : Entity
 		var sinceGesturesStarted = _now - _gesturesStartedAt;
 
 		if ( _sequence.TryLocate( sinceGesturesStarted, out var clip, out var intoClip ) )
-			_figure.Pose( clip, intoClip );
+			_speaker.Pose( clip, intoClip );
 
 		// Timed by where the sound itself has got to, not by the game's clock - see Voice.Position.
 		var talking = _voice is { Playing: true } voice && _lips != null
@@ -643,7 +674,7 @@ public sealed class Advisor : Entity
 			return;
 
 		_mouth = shape;
-		_figure?.ShowMouth( shape );
+		_speaker?.ShowMouth( shape );
 	}
 
 	/// <summary>
@@ -659,7 +690,7 @@ public sealed class Advisor : Entity
 	/// </summary>
 	private void ResetFace()
 	{
-		_figure?.OpenEyes();
+		_speaker?.OpenEyes();
 		_mouth = 0;
 	}
 
@@ -676,6 +707,25 @@ public sealed class Advisor : Entity
 		{
 			_figureFailed = true;
 			Log.Warning( $"Advisor: model would not load - {e.Message}" );
+		}
+	}
+
+	private void LoadThemeFigure( string theme )
+	{
+		var folder = $"levels/{theme}/advisor";
+		var path = $"{folder}/Advisor_{theme[..Math.Min( theme.Length, 3 )].ToUpperInvariant()}.md2";
+
+		try
+		{
+			_themeFigure = new AdvisorModel( path, $"{folder}/textures", "global/advisor/textures" );
+			Log.Info( $"Advisor: the theme's own model is {path}, its costume "
+				+ string.Join( " ", _costume.Select( pair => $"{pair.AddOn}/{pair.SubOff}" ) )
+				+ $", clips 1 to 15 last [{string.Join( ", ", Enumerable.Range( 1, 15 ).Select( _themeFigure.ClipMilliseconds ) )}] ms"
+				+ $" and the lobby model's [{string.Join( ", ", Enumerable.Range( 1, 15 ).Select( clip => _figure?.ClipMilliseconds( clip ) ?? 0 ) )}]" );
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"Advisor: the theme's own model {path} would not load - {e.Message}" );
 		}
 	}
 
@@ -716,7 +766,7 @@ public sealed class Advisor : Entity
 
 		var clip = _sequence.TryLocate( _now - _gesturesStartedAt, out var current, out _ ) ? current : 0;
 
-		return $"{what} paused={_paused} queued={_queue.Count} duck={Audio.DuckLevel:0.00} shown={_shown} clip={clip} mouth={_mouth} wearing={_wearing.First},{_wearing.Second} "
+		return $"{what} paused={_paused} queued={_queue.Count} duck={Audio.DuckLevel:0.00} shown={_shown} clip={clip} mouth={_mouth} wearing={_wearing.First},{_wearing.Second} slot={_slot} "
 			+ $"samples={_speech?.EffectIds.Count() ?? 0}";
 	}
 }

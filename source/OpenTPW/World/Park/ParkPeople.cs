@@ -2272,7 +2272,7 @@ public sealed partial class ParkPeople : Entity
 				(response, sample) =>
 				{
 					var (first, second) = ParkAdvisorMessages.PropsOf( response );
-					return Advisor.Current?.PlayParkResponse( response, sample, first, second ) ?? 0;
+					return Advisor.Current?.PlayParkResponse( response, sample, first, second, ParkAdvisorMessages.SlotOf( response ) ) ?? 0;
 				},
 				(group, subject) =>
 				{
