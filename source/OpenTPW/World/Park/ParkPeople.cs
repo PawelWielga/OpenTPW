@@ -1111,6 +1111,9 @@ public sealed partial class ParkPeople : Entity
 	/// <summary>The things the save's <c>mArrivalVehicle_Size1..3</c> name, nought where it names none.</summary>
 	private readonly int[] _vehicleThings;
 
+	/// <summary>Which of the three vehicles this park has made at a summons, the file naming no thing for it.</summary>
+	private readonly bool[] _vehicleMade = new bool[3];
+
 	/// <summary>Which of the three vehicles is current, 1 to 3, or nought - the slot <c>mCurrentArrivalVehicle</c>'s thing is in.</summary>
 	internal int CurrentVehicle => _arrivalVehicle;
 
@@ -1696,10 +1699,15 @@ public sealed partial class ParkPeople : Entity
 			Log.Info( $"People: the {ParkFixedItems.VehicleName( _arrivalVehicle )} summoned on mGameTick {State.GameTick}"
 				+ (size == 0 ? ", at random" : "") );
 
-			// A vehicle the file names no thing for is made by the original here, by the object constructor, whose
-			// tail stamps the analyser's mLastObjectBuilt (FUN_004db090, 0x004db7a3). Here it stands already.
-			if ( _vehicleThings[_arrivalVehicle - 1] == 0 )
-				Unimplemented.Report( "VEHICLE_MADE_BUILD_STAMP" );
+			// A vehicle the file names no thing for is made by the original here, once, by the object constructor,
+			// whose tail stamps the analyser's mLastObjectBuilt (FUN_004db090, 0x004db7a3). Here it stands already
+			// and is given no thing, so the stamp is all that is made of it: a file written after names none.
+			if ( _vehicleThings[_arrivalVehicle - 1] == 0 && !_vehicleMade[_arrivalVehicle - 1] )
+			{
+				_vehicleMade[_arrivalVehicle - 1] = true;
+				State.VehicleMade();
+				Unimplemented.Report( "VEHICLE_MADE_NO_THING" );
+			}
 
 			// One that is stood at its first spin already, unloading, has done its drive in: it is current and no more.
 			if ( VehicleScript( _arrivalVehicle ) is { } stood && stood[VehicleState] == VehicleIsUnloading )

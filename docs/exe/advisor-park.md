@@ -1907,9 +1907,11 @@ one of the 124 objects standing, a thing built and since sold.
 `ParkState` keeps the stamp: the file's at a load, the calendar's start in a park made with no file, and the
 calendar's now each time `AddObject` takes a thing made (a purchase, a move's put-down), which logs `Park:
 mLastObjectBuilt stamped <date> on mGameTick N`. A sale leaves it. The writer puts it back into the analyser's
-record. **Not the original's in one way**: the ferry and the seaplane stand from the load here, so the first
-summons of one the file names no thing for makes nothing and moves no stamp; it is counted,
-`VEHICLE_MADE_BUILD_STAMP`. Four of the nine rows read it here, rows 60, 71, 73 and 74 ("A poor selection of
+record. **A vehicle the file names no thing for stamps it at its first summons** (`ParkPeople.Summon`,
+`ParkState.VehicleMade`; "What moves it with nothing bought", below), once a vehicle. **Not the original's in
+one way**: the ferry and the seaplane stand from the load here and the summons gives the made one no thing, so a
+file written after names none and a load of it makes the vehicle, and stamps, again; it is counted,
+`VEHICLE_MADE_NO_THING`. Four of the nine rows read it here, rows 60, 71, 73 and 74 ("A poor selection of
 rides", "A poor selection of shops", "A park with rides and no shop" and "Too few shops for the park's size",
 below).
 
@@ -1939,15 +1941,55 @@ over the file's value**: every load left the file's standing.
 | A sale | leaves it (no writer) | the same |
 | A load | the file's | the same |
 | A file saved here after a purchase, and after its sale | reads this game's stamp | written at 73,516 |
-| A vehicle made at its first summons | stamps it | counted (`VEHICLE_MADE_BUILD_STAMP`) |
+| A vehicle made at its first summons | stamps it, and its slot holds the new thing | stamps it, once a vehicle; no thing is made (`VEHICLE_MADE_NO_THING`) |
+| Which vehicle a leaver's summons draws | `% 3` of the save's seed: the third in every load of one file | this game's own generator: any of the three, the bus stamping nothing |
 | The nine rows that read it | scored | rows 60, 71, 73 and 74 built ("A poor selection of rides", "A poor selection of shops", "A park with rides and no shop", "Too few shops for the park's size"); the other five not built, not read |
 
 **Not built or not seen.** Five of the nine rows (row 74 is "Too few shops for the park's size"; rows 60, 71 and 73 are "A poor selection of rides", "A poor
 selection of shops" and "A park with rides and no shop", below). In no game run: a move's put-down
 (the same `AddObject`; no test puts one down either, a put-down needing the scene's objects), a purchase made in
 the original by hand (two of its own files hold one), a sale made in the original (read, and the two saves), a
-ferry's first summons, a park made with no file, Full Simulation: the mode is not asked by the constructor's
-tail.
+ferry's first summons (run since: below), a park made with no file, Full Simulation: the mode is not asked by
+the constructor's tail.
+
+### What moves it with nothing bought (Q341)
+
+**The arrival vehicle made at its first summons.** In every load of a stock-park file the original's stamp moved
+with nothing bought (Q335 to Q340). A breakpoint on `FUN_004c7680` in the running original (`brk.sh 0x004c7680`,
+`q340/late30.TPWS`, saved on tick 1082) stopped on tick 1425 with the return addresses `0x004db7a8`, the object
+constructor's tail, and `0x0051a583`, the summons `FUN_0051a2f0` after its `CALL FUN_004db090`; under them
+`0x004cf52b`, the arrival manager's tail, whose call at `0x004cf526` is the summons at random for a leaver with
+no vehicle current (`park.md`, "The spent vehicle"). The world's four vehicle words read beside the stamp
+(`worldwords.py ... 0x1da72a 0x1da72c 0x1da72e 0x1da730`, the same file again): at the load `size1` 15, the
+bus, and `size2`, `size3` and the current vehicle nought; on tick 1094 `size3` and the current vehicle became
+14 and the stamp tick 1094's; on tick 1419 `size2` and the current vehicle became 55 and the stamp tick 1419's;
+through tick 2069, with the current vehicle changing six times more, and in the run before through tick 2447,
+no slot and no stamp moved again. **So a file moves the stamp at most once for each vehicle it names no thing
+for**: the stock file names the bus alone, so twice.
+
+**OpenTPW.** `Summon` stamps (`ParkState.VehicleMade`) where the vehicle made current has no thing in the file
+and has not been made in this park, and counts `VEHICLE_MADE_NO_THING` for the thing it does not make.
+**Predicted first** (`q341/PREDICTION.txt`): the original's three rounds held on every line (the second's run was cut at tick 2069 by my next load, not
+left to 2700 as written); this game's run held
+three of five, the two misses my own arithmetic (the stamp of tick 432 written wrong, and the days from tick
+1093 to 1124, one, not nought) and one line the log does not repeat (a poll whose result has not changed).
+*This game* (`q341/confirm.py fix`, `run-fix1`, on the desktop): `late30` loaded on tick 1082; `People: the
+seaplane summoned on mGameTick 1093, at random` and then `Park: mLastObjectBuilt stamped 17/2/2000 10:32:30 on
+mGameTick 1093`, the only stamp through tick 1285; row 77 polled on tick 1124 at `score=0 ... sincebuild=1`
+and never said, no tag on the mast (`1-quiet.png`); `1x VEHICLE_MADE_NO_THING`; the file saved after holds
+125952571500000000, tick 1093's, at the analyser's `+73516`. *Main's build* (`run-control`): the draw was the
+bus, no stamp, and row 77 said on tick 1124 with tag 79 standing (the seaplane drawn and the old gap counted
+is Q340's `run-late1`). *The original given this game's file* (`orig/c-load.log`): it read 125952571500000000
+at the load on tick 1146, and on tick 1147 made its own third vehicle (thing 14) and stamped that tick's: the
+file names no thing for the seaplane this game summoned.
+
+**Not the same in the two games.** The draw: the original's is `% 3` of the save's seed and moved the
+stamp on tick 1094 in every load of `late30`, the third vehicle's slot where the slots were read; this game's
+generator is its own, and drew the seaplane twice, the ferry and the bus in four runs, each on tick 1093, a tick before the original's. A bus drawn
+makes nothing, so one run in three still says a thirty-day row early. The second vehicle is made here when the
+draw or a load's size next names it, in the original on tick 1419 to 1434. No thing is made or written for the
+vehicle (above). **Not run:** a load of sixty-one's own summons in the running game (the test holds it), the
+second vehicle's stamp in the running game, a park made with no file, Full Simulation.
 
 ## A poor selection of rides (message `0x3c`, Q335)
 
@@ -2578,14 +2620,13 @@ to a pointer on tick 1217 and the tag was gone on 1219, the frame "Buy Sideshow"
 | Day 29 of the stamp | not said on tick 1124 (the stamp moved on 1094) | `no-score ... sincebuild=29`; said on 1279 |
 | A sideshow standing; no shop | not said | the same (`sideshowkinds=1`; `shopkinds=0`) |
 | The tag and the bar | row 79, part 2, string 81; button 11 builds the buy screen on its sideshows tab, tag off | the same |
-| **The stamp, nothing bought** | **moves near tick 1094 and again near tick 1434, so the line is first said on tick 2209** | **nothing moves it: said on tick 1124** |
+| **The stamp, nothing bought** | **moves near tick 1094 and again near tick 1434, so the line is first said on tick 2209** | moves where a leaver's summons draws the ferry or the seaplane (tick 1093 in `late30`), and not where it draws the bus: said on tick 1124 then ("What moves it with nothing bought") |
 | A golden-ticket shop or sideshow | no kind standing | the same (`ParkPeople.Kinds`; by test alone) |
 
-**Not built or not seen.** **In a park left to run this game says row 77's line 1,085 ticks before the
-original does** (1124 for 2209 in `late30`), and rows 60, 71, 73 and 75 the same way, because the original's
-stamp moves with nothing bought and this game's does not: twice in 370 s, 340 ticks apart, in every load; what
-is made then is still not read ("The newest build": the constructor's callers are the vehicle summons and the
-"End" feature). Row 76 is read above and not built; rows 78, 79 and 81 are not read. In no game run: line 2
+**Not built or not seen.** The original's stamp moves with nothing bought, twice in 370 s, 340 ticks apart, in
+every load: the ferry and the seaplane, each made at its first summons, which stamps here too ("What moves it
+with nothing bought"). **Where this game's draw is the bus it still says row 77's line 1,085 ticks before the
+original does** (1124 for 2209 in `late30`), and rows 60, 71, 73 and 75 the same way. Row 76 is read above and not built; rows 78, 79 and 81 are not read. In no game run: line 2
 (sample 218; the test holds the turn), the line said again past its 120 quarter-ticks, a golden-ticket shop or
 sideshow standing (no Lost Kingdom one costs a ticket), a sideshow built after the line (the test's last step),
 the bar's button with the buy screen open, a park made with no file, Full Simulation: the mode is not asked by

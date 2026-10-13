@@ -1099,7 +1099,8 @@ public class ParkTickTests
 	/// <b>Mutations:</b> a scripted vehicle's load made at stop B; leavers held at the road by a ferry; guests running
 	/// for the ferry at 3; no walk to the pair while the vehicle moves on; a vehicle at 2 sent on with its load still
 	/// dropping; a vehicle spent with its load held never forgotten; the tail run before the manager; the leavers'
-	/// summons always the bus.
+	/// summons always the bus; a made vehicle stamping nothing; one stamping at every summons; the bus stamping; the
+	/// stamp a tick off.
 	/// </remarks>
 	[TestMethod]
 	public void ALargerVehicleIsNobodysBusAndEachSummonsDrawsItsOwn()
@@ -1141,11 +1142,29 @@ public class ParkTickTests
 			var admission = people.Admission!;
 			var cells = PeepBehaviour.StopCells( admission.BusStopA );
 
+			// The original makes a vehicle the file names no thing for at its first summons, and the constructor stamps
+			// the analyser's mLastObjectBuilt with the calendar's now: once a vehicle, and never for the bus, which the
+			// file names. No thing is made here, which is counted beside each stamp.
+			long Stamp() => people.State.LastObjectBuilt;
+			int NoThing() => Unimplemented.Summary.Where( gap => gap.What == "VEHICLE_MADE_NO_THING" ).Sum( gap => gap.Times );
+
+			var fileStamp = Stamp();
+			var noThing = NoThing();
+
+			Assert.AreEqual( world.LastObjectBuilt, fileStamp, "the file's stamp stands before any summons" );
+
 			// Sixty-one come by the third vehicle, summoned on the sweep that finds none.
 			Assert.AreEqual( 3, people.ForceArrival( 61 ), "sixty-one come by the third vehicle" );
 			Sweep( people );
 			Assert.IsTrue( people.LargerVehicleIsCurrent, "the load's own vehicle is current" );
 			Assert.AreEqual( 1, Triggered(), "and triggered" );
+
+			var ferryStamp = Stamp();
+
+			Assert.AreNotEqual( fileStamp, ferryStamp, "the third vehicle, made at its first summons, moves the newest build" );
+			Assert.AreEqual( ParkWorld.StaffState.FileTimeOf( new DateTime( 2000, 1, 1 ).AddSeconds( people.State.GameTick * 3750L ) ), ferryStamp,
+				"to the calendar of the sweep that summoned it" );
+			Assert.AreEqual( noThing + 1, NoThing(), "and the thing it is not given is counted" );
 
 			// A park file holds the load and not this vehicle, which the file names no thing for: counted, and none written.
 			var reported = Unimplemented.Summary.Where( gap => gap.What == "SAVE_PARK_ARRIVAL_VEHICLE" ).Sum( gap => gap.Times );
@@ -1209,26 +1228,41 @@ public class ParkTickTests
 				Assert.AreNotEqual( ParkPeople.NoVehicle, people.VehicleStatus(), "one is current again" );
 				Assert.IsFalse( people.LargerVehicleIsCurrent, "and it is the bus, the vehicle for a load of two" );
 				Assert.AreEqual( 1, Triggered(), "triggered" );
+				Assert.AreEqual( ferryStamp, Stamp(), $"round {round}: the bus, which the file names, is not made and stamps nothing" );
 			}
+
+			Assert.AreEqual( noThing + 1, NoThing(), "nor is anything counted for it" );
 
 			// No load: the summons is the leaver's, one of the three at random.
 			var drawn = new List<bool>();
 
-			// The original makes a vehicle the file names no thing for at its first summons, and the constructor
-			// stamps the analyser's mLastObjectBuilt: counted here for the ferry and the seaplane, never for the bus.
-			int Made() => Unimplemented.Summary.Where( gap => gap.What == "VEHICLE_MADE_BUILD_STAMP" ).Sum( gap => gap.Times );
+			// The second vehicle is made the first time it is drawn, and the third, made for the load above, never again.
+			var seaplaneMade = 0;
 
 			for ( var round = 0; round < 24; ++round )
 			{
-				var before = Made();
+				var (before, counted) = (Stamp(), NoThing());
 
 				people.HoldTheLoad( 0 );
 				Plays( 6 );
 				Sweep( people );
 				Assert.AreNotEqual( ParkPeople.NoVehicle, people.VehicleStatus(), "a vehicle is summoned for the leaver" );
 				drawn.Add( people.LargerVehicleIsCurrent );
-				Assert.AreEqual( people.LargerVehicleIsCurrent ? 1 : 0, Made() - before, $"round {round}: a made vehicle's build stamp is counted" );
+
+				if ( people.CurrentVehicle == 2 && seaplaneMade++ == 0 )
+				{
+					Assert.AreNotEqual( before, Stamp(), $"round {round}: the second vehicle's first summons moves the newest build" );
+					Assert.AreEqual( counted + 1, NoThing(), $"round {round}: and is counted" );
+				}
+				else
+				{
+					Assert.AreEqual( before, Stamp(), $"round {round}: vehicle {people.CurrentVehicle}, made already or named by the file, stamps nothing" );
+					Assert.AreEqual( counted, NoThing(), $"round {round}: and nothing is counted" );
+				}
 			}
+
+			Assert.IsTrue( seaplaneMade > 1, $"the second vehicle is drawn more than once ({seaplaneMade})" );
+			Assert.IsTrue( drawn.Count( larger => larger ) > seaplaneMade, "and the third again" );
 
 			Assert.IsTrue( drawn.Contains( true ) && drawn.Contains( false ),
 				$"the leavers' summons draws the bus and the larger vehicles alike ({drawn.Count( larger => larger )} of 24 larger)" );

@@ -1629,7 +1629,8 @@ The save agrees from the other side: its header fields are named `mArrivalVehicl
 **The vehicle thing is made on demand.** Where the slot is empty, `FUN_0051a2f0` looks the feature up
 by name, allocates `0x450` bytes, calls `FUN_004db090( 1, <name>, 0, 0 )`, takes the id from
 `FUN_0050b350` and caches it. If the pick is unavailable it falls back through the other two by
-bitmask, and if all three fail it dies with `"Fatal error: Could not find either the bus or the plane
+bitmask (measured: the slot words change as it is made, and the analyser's newest-build stamp with them,
+`advisor-park.md`, "What moves it with nothing bought"), and if all three fail it dies with `"Fatal error: Could not find either the bus or the plane
 feature"`. A missing feature gives `"Could not find the 'vehicle_name was here' feature"` — the
 placeholder is the shipped string.
 

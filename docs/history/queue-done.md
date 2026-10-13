@@ -6624,6 +6624,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   line named weakest, then held. 58 bugs put back, all fail a test first round (`q340/mutate.out`). Test
   `AParkWithShopsAndNoSideshowIsToldToBuildSomeOnceItIsOldEnough`. `docs/exe/advisor-park.md`, "A park with
   shops and no sideshow". No new tool; one recipe. I split the item: every other piece of the old Q340 is Q341.
+- [x] **Q341. A ferry or seaplane made at its first summons stamps the newest build.**
+  Done 2026-10-13: one piece of the old Q341, what moves the original's `mLastObjectBuilt` with nothing bought.
+  A breakpoint on the stamp's routine in the running original (`brk.sh 0x004c7680`, `q340/late30.TPWS`) stopped
+  on tick 1425 called from the object constructor's tail (`0x004db7a8`) under the vehicle summons
+  (`0x0051a583`, `FUN_0051a2f0`) under the arrival manager's tail (`0x004cf52b`: a leaver's summons at random);
+  the world's slots (`worldwords.py`) read `size3` made on tick 1094 and `size2` on 1419, each with the stamp,
+  and nothing after through tick 2447. Built: `ParkPeople.Summon` stamps through `ParkState.VehicleMade` where
+  the vehicle has no thing in the file and has not been made in this park; `VEHICLE_MADE_NO_THING` counts the
+  thing it is not given (`VEHICLE_MADE_BUILD_STAMP` is gone). In the game (`q341/confirm.py fix`, `run-fix1`,
+  three of five as predicted, the two misses my arithmetic): the seaplane summoned at random on tick 1093, `Park:
+  mLastObjectBuilt stamped 17/2/2000 10:32:30 on mGameTick 1093`, row 77 polled at `sincebuild=1` on 1124 and
+  not said, no tag (`1-quiet.png`), the written file's stamp tick 1093's; main's build said the line on 1124
+  (`run-control`). The original read this game's stamp at the load and made its own third vehicle a tick on
+  (`orig/c-load.log`). Twelve bugs put back, twelve fail (`q341/mutate.out`). Test:
+  `ALargerVehicleIsNobodysBusAndEachSummonsDrawsItsOwn`, extended. `docs/exe/advisor-park.md`, "What moves it
+  with nothing bought". New tools `original/brk.sh` and `original/worldwords.py`; one recipe. I split the item:
+  every other piece of the old Q341 is Q342.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

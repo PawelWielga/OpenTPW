@@ -931,6 +931,12 @@ public sealed class ParkState
 	}
 
 	/// <summary>
+	/// An arrival vehicle has been made at its first summons: the summons makes it with the object constructor,
+	/// whose tail stamps the analyser as it does for a thing bought (<c>FUN_0051a2f0</c>, <c>0x0051a57e</c>).
+	/// </summary>
+	internal void VehicleMade() => StampObjectBuilt();
+
+	/// <summary>
 	/// Whole days since the newest member of staff was made - <c>FUN_004c90d0</c>: now less
 	/// <see cref="LastStaffHired"/> over 864,000,000,000, a signed 64-bit divide whose low 32 bits are the answer.
 	/// </summary>

@@ -44,15 +44,24 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q341. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q342. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q340 (`advisor-park.md`, "A park with shops and no sideshow"): **the nearest piece is now what moves the
-  original's `mLastObjectBuilt` with nothing bought**: in all eight loads, near tick 1094 (1069 to 1139) and
+  From Q341 (`advisor-park.md`, "What moves it with nothing bought"): **the made vehicle is given no thing**
+  (counted, `VEHICLE_MADE_NO_THING`): the original's summons makes a thing and puts its id in the slot
+  (`+0x1da72e`, `+0x1da730`; `mArrivalVehicle_Size2`, `_Size3` in the file), so the original loading a file
+  this game wrote after a summons makes the vehicle again and stamps a tick after the load
+  (`q341/orig/c-load.log`: 1146, 1147), and this game loading its own does the same at the next summons; it
+  goes with the vehicle's own thing and the current vehicle written (Q26c, `SAVE_PARK_ARRIVAL_VEHICLE`).
+  **The leavers' draw is this game's own generator**, the original's `% 3` of the save's seed (`+0x1da708`):
+  the original drew the third vehicle on tick 1094 in every load of `q340/late30.TPWS`, this game the
+  seaplane, the ferry or the bus on tick 1093 (a tick early, not looked into), and the bus stamps nothing, so
+  one run in three still says rows 60, 71, 73, 75 and 77 early; what else draws on that seed between a load
+  and the summons is not read. In no game run: the second vehicle's stamp in this game, a load of sixty-one's
+  summons, a park made with no file, Full Simulation.
+  From Q340 (`advisor-park.md`, "A park with shops and no sideshow"): the original's `mLastObjectBuilt` moved with nothing bought in all eight loads, near tick 1094 (1069 to 1139) and
   again 270 to 340 ticks on (1408, 1434), twelve ticks after a load of tick 1082, so an event of the park
-  (`watch.sh` on the analyser's `+0x21c30` in `q340/late30.TPWS`: it is written 3.8 s after the load's click).
-  Until it is built this game says rows 60, 71, 73, 75 and 77 up to 1,085 ticks before the original does
-  (row 77: tick 1124 for 2209). Row 76 (`0x0059dfd0`, `SideshowsResearchMore`, Score 75, tag row 78 with the
+  (read since, Q341: the arrival vehicle made at its first summons, above). Row 76 (`0x0059dfd0`, `SideshowsResearchMore`, Score 75, tag row 78 with the
   bar's button of type 19) is read and waits for the research: `FUN_004c9960( 8 )`, `0x00503b30` and
   `FUN_00503980` on `FUN_00519550( 2 )` are not read. Rows 78, 79 and 81 are not read (row 78's score is
   `0x0059e110`; its keys from `+0x294`, `SideshowsBuildMoreSideshows.SideshowsPerRideRatio`: probably row 74's
@@ -103,8 +112,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   `mLastObjectBuilt` are not built or read (rows 73 to 75, 77 to 79 and 81; score functions
   `0x0059dde0` to `0x0059e2e0`, all undefined bytes: disassemble first; `0x004c9070`, row 60's
   `0x0059d990` and row 71's `0x0059dca0` are read); a
-  ferry or seaplane made at its first summons does not move the stamp (counted, `VEHICLE_MADE_BUILD_STAMP`;
-  it goes with the made vehicle's own thing, Q26c). In no game run: a move's put-down, a purchase or a sale
+  ferry or seaplane made at its first summons moves the stamp since Q341 (its own thing is not made: above,
+  and Q26c). In no game run: a move's put-down, a purchase or a sale
   made in the original by hand, a park made with no file, Full Simulation.
   From Q333 (`advisor-park.md`, "More rides than the mechanics can keep"): the analyser's four other stamps
   (`mLastStrike`, `mLastPuke`, `mLastPrank`, `mParkLastOpened`), `mLifetimeVisitors` and
