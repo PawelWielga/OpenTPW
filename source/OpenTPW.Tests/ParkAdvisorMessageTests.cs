@@ -20,7 +20,8 @@ public class ParkAdvisorMessageTests
 			+ "ShopsClosed.MoreThanThisPercentClosed 25\nShopsClosed.Score 75\nSideshowsClosed.MoreThanThisPercentClosed 25\nSideshowsClosed.Score 70\n"
 			+ "ToiletsClosed.MoreThanThisPercentClosed 20\nToiletsClosed.Score 75\n"
 			+ "StaffroomClosed.MoreThanThisPercentClosed 25\nStaffroomClosed.Score 90\n"
-			+ "RidesClosed.AtLeastThisManyRides 3\nRidesClosed.MoreThanThisPercentClosed 50\nRidesClosed.Score 80\nQueueUnconnected.Score 87\n" ) ) );
+			+ "RidesClosed.AtLeastThisManyRides 3\nRidesClosed.MoreThanThisPercentClosed 50\nRidesClosed.Score 80\nQueueUnconnected.Score 87\n"
+			+ "StaffHireMechanics1.ScorePerWornRide 5\nStaffHireMechanics1.PoorerStateThan 25\n" ) ) );
 
 	private static void Set( SettingsFile settings, string key, int value )
 	{
@@ -133,7 +134,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 20, written.Count );
+		Assert.AreEqual( 21, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -930,7 +931,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 144, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 143, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -1179,6 +1180,79 @@ public class ParkAdvisorMessageTests
 		facts = facts with { Rides = 1 };
 		Round( 2400 + 480 );
 		Assert.AreEqual( ("no-score", 4), (messages.PollAnswer( 62 ), said.Count) );
+	}
+
+	/// <summary>
+	/// Row 5, message 5, is polled and scored by the park (0x0059ca30): nought where a mechanic is in the park, and
+	/// otherwise <c>StaffHireMechanics1.ScorePerWornRide</c>, 5, for each ride worn or broken down: 25 for five,
+	/// which is not above the threshold, and 30 for six, which is. The line is said in the hard hat with tag 7,
+	/// whose bar carries the hire button of type 0xe, then not again inside its category's 120 quarter-sweeps. The
+	/// limit a ride is worn under is the section's <c>PoorerStateThan</c>.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the mechanics not asked, or one needed; the worn rides not counted, or every ride counted;
+	/// the key another's; the row not polled; the lines, the response, the sample, the prop or the group another's;
+	/// tag 7's row another's; the limit another key's.
+	/// </remarks>
+	[TestMethod]
+	public void WornRidesInAParkWithNoMechanicArePolledAndToldToHireOne()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 5 };
+		var messages = new ParkAdvisorMessages( Settings(), cursor: cursor );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 7, Sideshows: 1, WaitingToOpen: 0, Shops: 1, Toilets: 3, Mechanics: 1, RidesWorn: 6 );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		void Round( int at )
+		{
+			cursor.Row = 5;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 5000; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+		}
+
+		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireMechanics );
+		Assert.AreEqual( (5, "StaffHireMechanics1.ScorePerWornRide", true, 14, 13, 3, 1, 0, true, 7, ParkAdvisorMessages.HardHat),
+			(topic.Id, topic.ScoreKey, topic.PerWornRideWithNoMechanic, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop) );
+		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.PerWornRideWithNoMechanic ) );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 5 ) );
+		Assert.AreEqual( 25, messages.WornBelow, "StaffHireMechanics1.PoorerStateThan" );
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 927 ), "before any sweep has handed the park in" );
+		foreach ( var response in new[] { 14, 15, 16 } )
+			Assert.AreEqual( (ParkAdvisorMessages.HardHat, 0), ParkAdvisorMessages.PropsOf( response ) );
+		var row = ParkTags.Rows.Single( one => one.Id == 7 );
+		Assert.AreEqual( (ParkTags.NoTag, 2, 11, 0xe, 0, 30000, 0), (row.Key, row.Picture, row.String, row.Button1, row.Button2, row.Life, row.Kind) );
+
+		// A mechanic in the park: nought, however many rides are worn.
+		Round( 927 );
+		Assert.AreEqual( (0, "no-score", 6, 0), (messages.ScoreOf( topic, 927 ), messages.PollAnswer( 5 ), cursor.Row, said.Count) );
+
+		// None: the key for each worn ride, whatever else the park holds.
+		facts = facts with { Mechanics = 0, RidesWorn = 0 };
+		Round( 928 );
+		Assert.AreEqual( (0, "no-score"), (messages.ScoreOf( topic, 928 ), messages.PollAnswer( 5 )), "no mechanic and nothing worn" );
+		facts = facts with { RidesWorn = 1 };
+		Assert.AreEqual( 5, messages.ScoreOf( topic, 928 ) );
+		facts = facts with { RidesWorn = 5 };
+		Round( 929 );
+		Assert.AreEqual( (25, "under-threshold", 0), (messages.ScoreOf( topic, 929 ), messages.PollAnswer( 5 ), said.Count), "25 is not above 25" );
+		facts = facts with { RidesWorn = 6, Closed = true, Rides = 6 };
+		Assert.AreEqual( 30, messages.ScoreOf( topic, 932 ) );
+		Round( 932 );
+		CollectionAssert.AreEqual( new[] { (932, 14, 13) }, said );
+		CollectionAssert.AreEqual( new[] { (7, 0) }, groups );
+		StringAssert.Contains( messages.Census(), "message=5/score=30/line=0/lastTick=932/said=1/slaps=0" );
+
+		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the next line is said.
+		Round( 932 + 479 );
+		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 5 ), said.Count) );
+		Round( 932 + 480 );
+		Round( 932 + 960 );
+		Round( 932 + 1440 );
+		CollectionAssert.AreEqual( new[] { (932, 14, 13), (1412, 15, 14), (1892, 16, 15), (2372, 14, 13) }, said, "three lines in turn, then the first again" );
+
+		// A mechanic hired: nought again.
+		facts = facts with { Mechanics = 1 };
+		Round( 2372 + 480 );
+		Assert.AreEqual( ("no-score", 4), (messages.PollAnswer( 5 ), said.Count) );
 	}
 
 	/// <summary>
@@ -1693,7 +1767,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 11, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 12, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>

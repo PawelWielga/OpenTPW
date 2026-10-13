@@ -654,6 +654,59 @@ public class ParkClosedRideTests
 	}
 
 	/// <summary>
+	/// What row 5's score function reads of the stock park (<c>FUN_004c9960</c> asked for type 4,
+	/// <c>FUN_004ca3a0</c> handed <c>StaffHireMechanics1.PoorerStateThan</c>, 25): its one mechanic, none once he is
+	/// fired, and its rides worn: the Belly Bounce once its State of repair's whole number is under 25, or once it
+	/// is broken down whatever its repair, and never the Jungle Spray, a sideshow, however worn.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a ride at the limit counted; the repair not cut to a whole number; a broken ride not counted, or counted twice; a condemned ride counted; a sideshow counted; the limit nought; every member of staff a mechanic; the fired mechanic still counted.</remarks>
+	[TestMethod]
+	public void TheAdvisorsParkFactsCountTheMechanicsAndTheWornRides()
+	{
+		var park = Open();
+
+		try
+		{
+			(int Mechanics, int Worn) Read() => (park.People.AdvisorFacts().Mechanics, park.People.AdvisorFacts().RidesWorn);
+			void Wear( int thing, float repair, int? state = null )
+			{
+				Assert.IsTrue( park.State.TryObject( thing, out var worn ) );
+				park.State.ReplaceObject( worn with { StateOfRepair = repair, State = state ?? worn.State } );
+			}
+
+			Assert.AreEqual( (1, 0), Read(), "as shipped" );
+			Wear( BellyBounce, 3f );
+			Assert.AreEqual( (1, 0), Read(), "with no advisor there is no limit to be under" );
+			park.State.AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+			Assert.AreEqual( (1, 1), Read(), "the limit is the advisor's own" );
+			Wear( BellyBounce, 25.0f );
+			Assert.AreEqual( (1, 0), Read(), "25 is not under 25" );
+			Wear( BellyBounce, 25.9f );
+			Assert.AreEqual( (1, 0), Read(), "nor is 25.9, cut to 25" );
+			Wear( BellyBounce, 24.99f );
+			Assert.AreEqual( (1, 1), Read(), "24.99 is cut to 24" );
+			Wear( 14, 3f );
+			Assert.AreEqual( (1, 1), Read(), "the Jungle Spray is a sideshow" );
+			Assert.IsTrue( park.State.TryObject( BellyBounce, out var bounce ) );
+			Wear( BellyBounce, 24f, ParkRideChoice.StateRefusedOne );
+			Assert.AreEqual( (1, 1), Read(), "worn and broken down is one ride" );
+			Wear( BellyBounce, 100f );
+			Assert.AreEqual( (1, 1), Read(), "broken down, whatever its repair" );
+			Wear( BellyBounce, 100f, ParkRideChoice.StateRefusedFour );
+			Assert.AreEqual( (1, 0), Read(), "condemned is not broken down" );
+			Wear( BellyBounce, 100f, bounce.State );
+			Assert.AreEqual( (1, 0), Read() );
+
+			Assert.IsTrue( park.People.Fire( Mechanic ) );
+			Assert.AreEqual( (0, 0), Read(), "fired" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
 	/// What the advisor's row 1 reads of the shipped park (<c>FUN_004c9050</c>, <c>FUN_004ca8e0</c>,
 	/// <c>FUN_004c91c0</c>): its door, its things of a ride's item and of a sideshow's, and the guests in state 3
 	/// standing on either ticket booth's cell: not one beside a booth, and not one on a booth judging the fee.
@@ -679,7 +732,7 @@ public class ParkClosedRideTests
 				guest.SetState( PeepState.Deciding, 800, random );
 			}
 
-			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms ), park.People.AdvisorFacts() );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1 ), park.People.AdvisorFacts() );
 
 			void Put( int index, int x, int y, PeepState state )
 			{
@@ -696,13 +749,13 @@ public class ParkClosedRideTests
 
 			park.State.SetParkClosed( true );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1 ), park.People.AdvisorFacts() );
 
 			// One toilet opened again, and the sideshow: the door's others stay shut.
 			park.People.SetRideClosed( 22, closed: false );
 			park.People.SetRideClosed( 14, closed: false );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1 ), park.People.AdvisorFacts() );
 
 			// The door left the staff room open; shut by itself, it alone is one more shut.
 			var before = park.People.AdvisorFacts();
@@ -748,7 +801,7 @@ public class ParkClosedRideTests
 			park.State.SetRecord( BackX, BackY, back with { Neighbours = 0x04 } );
 			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
 			Assert.AreEqual( park.People.AdvisorFacts() with { UnjoinedQueue = 0 },
-				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms ), "nothing else moved" );
+				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1 ), "nothing else moved" );
 
 			// The queue tool armed for it passes it over; armed for another thing, or put away, it does not.
 			ParkBuildMode.Arm( ParkBuildMode.Queue, BellyBounce );

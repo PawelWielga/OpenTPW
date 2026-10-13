@@ -964,7 +964,7 @@ its tag was gone 33 s after it came.
 | The arm's sounds (`0x1c` as it starts, `0xc2` as it is in) | played | not played (Q230) |
 | The panel's children as it comes out | each shown as its right edge passes the body's | all at once |
 | The bar's text | the middle panel's, over the right slice | the same lettering; the right slice is put in the tree before the middle one so that it is drawn under it. At 1280 x 720 font 6 is a smaller face than the original's at 1024 x 768, so the line breaks fall later |
-| The two stacked buttons | 21 types | dressed for every type whose mesh is a file of `ui.wad` (not `b_loan` and `b_pkinfo`, nodes of files not looked up); types 3 and `0x18` act, the rest counted `TAG_BAR_BUTTON` |
+| The two stacked buttons | 21 types | dressed for every type whose mesh is a file of `ui.wad` (not `b_loan` and `b_pkinfo`, nodes of files not looked up); types 3, 9 to `0x11` and `0x18` act (`advisor-park.md`, "A park with no ride in it", "Worn rides and no mechanic"), the rest counted `TAG_BAR_BUTTON` |
 | Advisor message `0x11c` | posted with the bar, withdrawn as it leaves | the same (`advisor-park.md`, "The line of an opened tag message") |
 | The tag on show | swells by the stream, a step every 100 ms on the frame's clock | the same steps on real milliseconds, so a round is 0.7 s where the original's frames make it 0.9 |
 | The buttons' depths | one more at every showing | not kept |

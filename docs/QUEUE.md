@@ -44,16 +44,22 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q331. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q332. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q331 (`advisor-park.md`, "Worn rides and no mechanic"): rows 6 and 7 are read and not built (row 6:
+  `FUN_004ca310`'s count, not read, times 10 with no mechanic; row 7: the rides less four a mechanic, times 10,
+  once `FUN_004c90d0` answers 30 days, which it counts from the analyser's stamp `+0x21c38`: what
+  `FUN_00504b90` stamps there is not read), nor the ten other staff rows, 8 to 17 (tags 10 to 19, each with a
+  hire button). In no game run: lines 2 and 3, the line said again past its cooldown, a broken ride counted, a
+  ride worn under 25 by running, button types `0xd` and `0xf` to `0x11`, the button with the hire screen open
+  (the tests hold each), a mechanic hired after the line, Full Simulation. Not heard in either game.
   From Q330 (`hud.md`, "The six round buttons"): what serves Restart Park's request (`FUN_005508b0( 1 )`) is
   not read; it keeps the category in both games, measured. In no game run: Full Simulation, the Information
   and Finance categories (their seed and their openers' notes are read, not put to the original; Information
   is seeded 4 here, the declared deviation), a key that opens a screen. Exit To Lobby in the original writes
   `autosave.TPWS`; this game writes none.
-  From Q329 (`advisor-park.md`, "The hire screen's own line"): the bar's five hire buttons
-  (types `0xd` to `0x11`) are not built. In no game run: a candidate chosen while he speaks (what the
+  From Q329 (`advisor-park.md`, "The hire screen's own line"): in no game run: a candidate chosen while he speaks (what the
   original's handler does to the screen at a row's click was not read), the opener asked for the tab shown
   with the screen open, a park left with the screen open, Full Simulation. Not heard in either game.
   From Q328 (`advisor-park.md`, "The buy screen's own line"): the buy screen's handler's four other posts are

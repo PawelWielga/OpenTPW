@@ -12,13 +12,14 @@ namespace OpenTPW;
 /// "A mechanic on his way", "The line of an opened tag message", "The buy screen's own line" and "The hire
 /// screen's own line".
 /// <para>
-/// Eleven messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Twelve messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
 /// nothing to ride and a park with no ride; five scored by the share of the park's rides, shops, sideshows,
 /// toilets and staff rooms that are shut ("Shut shops, sideshows and toilets", "An open park's shut rides",
-/// "A shut staff room"); and the line about a queue not joined to a path ("A queue not joined to a path"). The
-/// other 144 polled rows are counted, and the other posted messages are unbuilt.
+/// "A shut staff room"); the line about a queue not joined to a path ("A queue not joined to a path"); and the
+/// line about worn rides in a park with no mechanic ("Worn rides and no mechanic"). The other 143 polled rows
+/// are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -27,6 +28,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int OpenPark = 1;
 	/// <summary>Message 2, polled: the line about an open park with nothing to ride, scored where neither a ride nor a sideshow stands (0x0059c960).</summary>
 	internal const int ClosePark = 2;
+	/// <summary>Message 5, polled: the line about worn rides in a park with no mechanic, scored by how many rides are worn or broken down (0x0059ca30).</summary>
+	internal const int HireMechanics = 5;
 	/// <summary>Row 62, polled: a park with no ride in it.</summary>
 	internal const int BuildRides = 0x3e;
 	/// <summary>Message 0x71, polled: the line about a queue not joined to a path, scored where a ride's queue is found unjoined (0x0059ef60).</summary>
@@ -89,11 +92,14 @@ internal sealed class ParkAdvisorMessages
 	/// must stand, in a park whose door is open, for the share to be asked at all; null where neither is asked.
 	/// <paramref name="QueueNotJoined"/> is the score of row 113 (0x0059ef60): the key's value where the park
 	/// holds a ride whose queue is not joined to a path, and nought otherwise.
+	/// <paramref name="PerWornRideWithNoMechanic"/> is the score of row 5 (0x0059ca30): the key's value for each
+	/// ride worn or broken down in a park with no mechanic, and nought in a park with one.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
 		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
-		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false );
+		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false,
+		bool PerWornRideWithNoMechanic = false );
 
 	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490).</summary>
 	internal enum Shut
@@ -115,11 +121,13 @@ internal sealed class ParkAdvisorMessages
 	/// FUN_004c9f90: mCanLoad nought); and what row 259's reads: how many of the rides are shut (FUN_004ca9b0
 	/// asked for kind 0); and what row 263's reads: the staff rooms (FUN_004ca030, an object's +0x32 &amp; 2) and how
 	/// many of them are shut (FUN_004ca0c0); and what row 113's reads: the thing FUN_004ccb00 answers, a ride whose queue is not
-	/// joined to a path, nought for none.
+	/// joined to a path, nought for none; and what row 5's reads: the mechanics (FUN_004c9960 asked for type 4: a
+	/// thing of that type whose +3 is nought) and the rides worn (FUN_004ca3a0: a thing of a ride's item whose
+	/// State of repair's whole number is under <see cref="WornBelow"/>, or which is broken down).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
-		int UnjoinedQueue = 0, int StaffRooms = 0, int StaffRoomsShut = 0 )
+		int UnjoinedQueue = 0, int StaffRooms = 0, int StaffRoomsShut = 0, int Mechanics = 0, int RidesWorn = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -198,6 +206,7 @@ internal sealed class ParkAdvisorMessages
 	[
 		.. DoorTopics,
 		.. ShutTopics,
+		new( HireMechanics, "StaffHireMechanics1.ScorePerWornRide", 14, 13, Lines: 3, Prop: HardHat, Group: 7, Polled: true, PerWornRideWithNoMechanic: true ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
 		new( QueueUnconnected, "QueueUnconnected.Score", 288, 312, MaxInstances: 255, Group: 135, Polled: true, QueueNotJoined: true ),
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
@@ -256,6 +265,8 @@ internal sealed class ParkAdvisorMessages
 	internal int Attempts { get; private set; }
 	internal int PendingCount => _slots.Count( slot => slot != null ) + _carried.Count( carried => carried );
 	internal int Threshold => Value( "GeneralAdvisor.MinScoreForConsideration" );
+	/// <summary>The State of repair a ride is worn under for row 5's score, the limit its function hands FUN_004ca3a0 ([ECX + 0xc0]).</summary>
+	internal int WornBelow => Value( "StaffHireMechanics1.PoorerStateThan" );
 
 	/// <param name="tutorial">Whether the Tutorial option is on (0x0078d90d), the player's own where none is given.</param>
 	/// <param name="cursor">The poll's cursor; the game hands every park <see cref="ProgramCursor"/>, and with none given the poll starts at row nought.</param>
@@ -396,7 +407,9 @@ internal sealed class ParkAdvisorMessages
 	/// MoreThanThisPercentClosed per cent of them, in whole numbers, are shut, whatever the park's door, and nought
 	/// otherwise; row 259's (0x005a02f0) is the same of the rides, and nought besides in a shut park or one with
 	/// fewer rides than its section's AtLeastThisManyRides; row 113's (0x0059ef60) is its key's value where a
-	/// ride's queue is not joined to a path, and nought otherwise; every other built row's is its key's value.
+	/// ride's queue is not joined to a path, and nought otherwise; row 5's (0x0059ca30) is its key's value for
+	/// each ride worn or broken down in a park with no mechanic, and nought in a park with one; every other
+	/// built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
@@ -417,6 +430,9 @@ internal sealed class ParkAdvisorMessages
 			if ( _park?.Invoke() is not { Rides: < 1 } ) return 0;
 			return Value( topic.ScoreKey ) + Value( perDay ) * DaysSinceTheFirstSweep( gameTick );
 		}
+
+		if ( topic.PerWornRideWithNoMechanic )
+			return _park?.Invoke() is { Mechanics: < 1 } worn ? worn.RidesWorn * Value( topic.ScoreKey ) : 0;
 
 		if ( topic.QueueNotJoined )
 			return _park?.Invoke() is { UnjoinedQueue: not 0 } ? Value( topic.ScoreKey ) : 0;
@@ -518,6 +534,7 @@ internal sealed class ParkAdvisorMessages
 			if ( topic.NothingToRide && _park?.Invoke() is { } facts ) shut = $" closed={(facts.Closed ? 1 : 0)} rides={facts.Rides} sideshows={facts.Sideshows}";
 			if ( topic.PerDayWithNoRide != null && _park?.Invoke() is { } park ) shut = $" rides={park.Rides}";
 			if ( topic.QueueNotJoined && _park?.Invoke() is { } queues ) shut = $" unjoined={queues.UnjoinedQueue}";
+			if ( topic.PerWornRideWithNoMechanic && _park?.Invoke() is { } wear ) shut = $" worn={wear.RidesWorn} mechanics={wear.Mechanics}";
 			Log.Info( $"Park advisor: poll message={topic.Id} row={row} days={DaysSinceTheFirstSweep( gameTick )} score={score} threshold={Threshold} tick={gameTick} result={result}{shut}" );
 		}
 

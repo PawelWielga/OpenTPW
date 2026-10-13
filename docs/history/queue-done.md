@@ -6425,6 +6425,24 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Restart Park, 1 and buy after Exit To Lobby and the park again. Restart Park was predicted wrong (the seed),
   predicted again and run again in both games. `hud.md`, "The six round buttons". Tests 3032.
   I split the item: every other piece of the old Q330 is Q331.
+- [x] **Q331. The advisor tells a park with worn rides and no mechanic to hire one, and the message bar's hire
+  button opens the hire screen.** Done 2026-10-12: one piece of the old Q331. Row 5's score (`0x0059ca30`, a
+  function made): nought where `FUN_004c9960( 4 )` counts a mechanic, else `StaffHireMechanics1.ScorePerWornRide`,
+  5, for each ride whose State of repair's whole number is under `PoorerStateThan`, 25, or which is broken down
+  (`0x004ca3a0`); three lines in the hard hat, tag row 7, whose bar's button of type 14 is
+  `FUN_0049bdd0( 1 )`. Built: `ParkAdvisorMessages.HireMechanics`, a topic's `PerWornRideWithNoMechanic`,
+  `WornBelow`, `ParkFacts.Mechanics` and `RidesWorn`, tag row 7, `ParkGadget.BarButton`'s types `0xd` to `0x11`,
+  `ParkHireScreen`'s `openOn` and `Tab`. A file of the stock park with five more rides bought, the mechanic
+  fired and six rides at 24: `poll message=5 row=5 days=40 score=30 threshold=25 tick=927 result=post worn=6
+  mechanics=0`, `attempt=1 message=5 ... response=14 sample=13 line=0 tick=927`, him up in the yellow hard hat
+  with tag 7 on the mast; the tag's bar read string 11 with `first=mb_buy/help=526`, and its click logged `button
+  type 14 opens the hire screen on tab 1 and takes tag 7 off`, `windows` reading `ParkHireScreen tab 1`, the frame
+  "Hire Mechanics". One ride at 25: `under-threshold`; the mechanic kept: `no-score`; main's build: nothing. The
+  original, given the same three files: message 5's record (927, 0, 1, 0) on tick 927, twice, the same tag and
+  rectangle, buttons 14 and 0, the hire screen built on tab 1, and silent on the other two files. Its row 7 was
+  predicted to speak too, from a part-read listing, and did not; predicted again and held. `advisor-park.md`,
+  "Worn rides and no mechanic". Tests 3035.
+  I split the item: every other piece of the old Q331 is Q332.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

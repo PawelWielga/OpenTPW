@@ -720,6 +720,9 @@ internal sealed class ParkGadget : UiWindow
 	/// <summary>The bar's buttons that open the buy screen, mb_buy: types 9 to 0xc, a tab each from the first (FUN_0048e0f0).</summary>
 	private const int BuyFirstTab = 9;
 	private const int BuyLastTab = 0xc;
+	/// <summary>The bar's buttons that open the hire screen, mb_buy too: types 0xd to 0x11, a tab each from the cleaners' (FUN_0048e0f0).</summary>
+	private const int HireFirstTab = 0xd;
+	private const int HireLastTab = 0x11;
 
 	/// <summary>
 	/// A bar button's mesh and help row by its type, the tag row's +0x10 or +0x14 (FUN_0048e610). A type not here
@@ -808,7 +811,9 @@ internal sealed class ParkGadget : UiWindow
 	/// the mast as the erase button takes it, and the arm folded away. Types 9 to 0xc open the buy screen on the
 	/// tab the type less 9 names, or pick that tab on the one already open (FUN_004acc70), and answer 2 as well;
 	/// the row of the tag's item the original then selects is counted where a tag names one,
-	/// <c>TAG_BAR_BUY_ITEM_ROW</c>. Every other type opens a screen or answers an offer, none of it built: counted,
+	/// <c>TAG_BAR_BUY_ITEM_ROW</c>. Types 0xd to 0x11 open the hire screen on the tab the type less 0xd names
+	/// (FUN_0049bdd0, which destroys the park screen that is open first, the hire screen too, so the screen is
+	/// always built), and answer 2. Every other type opens a screen or answers an offer, none of it built: counted,
 	/// <c>TAG_BAR_BUTTON</c>, and nothing more.
 	/// </summary>
 	private void BarButton( bool first )
@@ -843,6 +848,14 @@ internal sealed class ParkGadget : UiWindow
 				Stack.Open( new ParkBuyScreen( Stack, type - BuyFirstTab ) );
 			if ( tag.Item != 0 )
 				Unimplemented.Report( "TAG_BAR_BUY_ITEM_ROW" );
+			EraseTag();
+			return;
+		}
+
+		if ( type is >= HireFirstTab and <= HireLastTab )
+		{
+			Log.Info( $"Park gadget: message bar: button type {type} opens the hire screen on tab {type - HireFirstTab} and takes tag {tag.Row.Id} off" );
+			Stack.Open( new ParkHireScreen( Stack, Park, type - HireFirstTab ) );
 			EraseTag();
 			return;
 		}

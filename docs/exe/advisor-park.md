@@ -1563,6 +1563,114 @@ said again past its 120 quarter-ticks, a shut park with no ride, a park under it
 28), Full Simulation's empty park, button types `0xa` to `0xc` and the button with the buy screen open (the test
 holds `0xb` and the open screen), a ride bought after the line. Not heard in either game.
 
+## Worn rides and no mechanic (message 5, Q331)
+
+**Row 5, message 5, `StaffHireMechanics1`:** polled, category 0, either game mode, one copy, first response 14,
+three lines in turn. Responses 14 to 16 are samples 13 to 15: the random gesture chain, model slot 0, prop 5 (the
+hard hat), group 7. It is the poll's fifth row of a round: from the shipped park's cursor, 277, its turns are
+ticks 772, 927, 1082 and every 155 on.
+
+**Its score, `0x0059ca30`** (a function made in Ghidra; `ECX` the balance object):
+
+1. `FUN_004c9960( 4 )` on the park analyser (`FUN_00519510`) above nought: nought. The routine walks the thing
+   list and counts the things whose type byte (`+2`) is the one asked for, of the five staff kinds, and whose
+   `+3` is nought (`park-gate.md`: a fired member is marked there until it is taken out). Type 4 is the mechanic.
+2. Otherwise `0x004ca3a0( [ECX + 0xc0] )` times `[ECX + 0xbc]`: `StaffHireMechanics1.PoorerStateThan` and
+   `StaffHireMechanics1.ScorePerWornRide` (`lib/advisorschema.py`), **25 and 5** in `Advisor.sam`. The routine
+   (in no function of the listing; read as disassembly) walks the object chain (the world's `+0x1da746`, each
+   object's `+0xc`) and, of the objects whose item's `Info.WhichUIType` (`+0x4ac`) is nought, a ride, counts
+   each whose State of repair (`+0x44`) cut to a whole number and its low byte is **under** the limit, and each
+   that is broken down whatever its repair (`FUN_004e0370`: `mState` 1), once.
+
+The door is not asked, nor whether a ride is open. `MinScoreForConsideration` is 25, so **five worn rides are not
+enough and six are** (30).
+
+**Its tag** is row 7 of the tag table: key 383 (it takes no tag's place), picture 2, string 11, the bar's first
+button of type 14, no second, thirty seconds. String 11 reads the same in both language folders: "Your rides are
+starting to wear out but you don't have any mechanics. You should think about hiring some."
+
+**Button types `0xd` to `0x11`** are `FUN_0049bdd0( type - 0xd )`, the hire screen's opener ("The hire screen's
+own line"): the tabs in order are the cleaners', the mechanics', the entertainers', the guards' and the
+scientists'. The opener first destroys the park screen that is open, the hire screen too, so the screen is
+always built again on the tab asked for and posts its own line, `0xbd`. The act answers 2: the tag is taken off
+and the arm folded away. Fifteen rows of the tag table carry one: rows 7 to 9 and 152 and 154 type 14, rows 10
+to 12 type 13, rows 13 to 15 type 16, row 16 type 15, rows 17 to 19 type 17 (`lib/tagtable.py`).
+
+**The two rows after it, read and not built.** Row 6 (`0x0059ca80`, message 6, tag 8): nought with a mechanic,
+else `FUN_004ca310`'s count (not read) times `StaffHireMechanics2.ScorePerBrokenRide`, 10 (`+0xc4`). Row 7
+(`0x0059cac0`, message 7, tag 9): nought while `FUN_004c90d0` answers fewer days than `WaitingTimes.DaysForStaff`,
+30 (`+0x630`); else the rides (`FUN_004ca8e0( 0, 0 )`) less the mechanics times
+`StaffHireMechanics3.IdealNumberOfRidesPerMechanic`, 4 (`+0xc8`), where that is above nought, times
+`ScorePerExtraRide`, 10 (`+0xcc`). **`FUN_004c90d0` does not count from tick nought**: it takes whole days
+(`0xC92A69C000`) from a stamp the analyser keeps at its `+0x21c38`, which its constructor `FUN_004c58c0` and
+`FUN_004c76d0` write (the latter's one caller is `FUN_00504b90`, not read) and a park file carries
+(`FUN_004c5d70`). What the stamp marks is not read.
+
+### OpenTPW (`ParkAdvisorMessages.HireMechanics`, a topic's `PerWornRideWithNoMechanic`, `WornBelow`; `ParkFacts.Mechanics`, `RidesWorn`; tag row 7; `ParkGadget.BarButton`'s types `0xd` to `0x11`; `ParkHireScreen`'s `openOn`)
+
+A twelfth polled topic, scored from the same `ParkFacts`: where the facts count no mechanic, its key's value for
+each ride they count worn. `ParkPeople.AdvisorFacts` counts the staff list's mechanics (a fired member leaves
+that list at once) and, of the ride things, each whose State of repair's whole number is under the advisor's
+`WornBelow` or whose state is 1. Its poll line ends ` worn=N mechanics=N`. `ParkTags.Rows` lists row 7. The
+bar's buttons of types `0xd` to `0x11` open a new `ParkHireScreen` on the tab the type names (`openOn`; the
+stack closes the park screen that is open) and take the tag off as the buy buttons do. The console's `windows`
+names the hire screen's tab.
+
+**The scene** (`q331/scene.py fired|kept`, `q331/worn.py`): the stock park paused on tick 915, mechanic 26 fired
+(`fired`), a Crazy Ape on (41,22), an Aztec Mayhem on (57,23) and three more Crazy Apes on (70,40), (30,60) and
+(60,60) bought as things 43 to 47 and left shut, saved; then the six rides' State of repair written into the
+file (the float at an object's record's `+1074`): `worn6.TPWS` six at 24, `worn5.TPWS` five at 24 and thing 47
+at 25, `kept6.TPWS` the mechanic kept and six at 24.
+
+**Predicted first** (`q331/PREDICTION.txt`), both games on files neither had been given.
+
+**This game** (`q331/confirm.py fix|five|kept|control`). *`worn6`* (`run-fix1`, on the desktop, six of six on its
+first run): `poll message=5 row=5 days=40 score=30 threshold=25 tick=927 result=post worn=6 mechanics=0`, `post
+message=5 subject=0 score=30 threshold=25 tick=927 result=queued pending=2` and `attempt=1 message=5 subject=0
+score=30 threshold=25 response=14 sample=13 line=0 tick=927 duration=7332`; `saying sp_013.mp2 ... wearing=5,0`,
+him up in the yellow hard hat (`1-line.png`), `tags` reading `tag=7/picture=2/subject=0` with
+`mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked: `message bar: tag 7 subject 0 item 0
+bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=526 second=hidden erase=mb_erase` and the text
+(`2-bar.png`). The button clicked, in a program whose hire screen had never been opened: `button type 14 opens
+the hire screen on tab 1 and takes tag 7 off`, `windows` reading `ParkHireScreen tab 1 ... left on 2,4,10`,
+`standing=0`, `withdraw message=284 cleared=1 cut=0`, `post message=189 ... result=queued`, no `TAG_BAR_BUTTON`
+counted, and the frame "Hire Mechanics" with the second tab down (`3-screen.png`). *`worn5`* (`run-five`,
+off-screen): `score=25 ... result=under-threshold worn=5 mechanics=0`, no attempt and no tag on tick 950.
+*`kept6`* (`run-kept`, off-screen): `score=0 ... result=no-score worn=6 mechanics=1`, no attempt, no tag.
+**Main's build** on `worn6` (`run-control`, off-screen): no line of message 5, no attempt, no tag by tick 950.
+
+**The original** (`q331/orig/run.sh <file>`, `advisor.py ... 0x5,0x6,0x7,0xbd,0x11c poll` beside `tags.py`,
+`bar.py` and `screens.py`; four programs' loads). *`worn6`* (runs a and b): message 5's record went from (0, -1,
+0, 0) to **(927, 0, 1, 0) on tick 927** in both, one tag with it at (84, 909, 154, 974), the mast at (94, 901,
+144, 984), its text string 11; four and a half seconds after the load's click he is up in the yellow hard hat
+(`orig/b-g4.png`). The tag clicked: the bar's data read thing 0, buttons 14 and 0, item 0 and the text
+(`orig/a-bar.png`). The button clicked: `screens.py` went from `left 1,3,10 ... hire 0x0 hiretab 0` to `left
+2,3,10 screen 0x46c1ec0 ... hire 0x46c1ec0 hiretab 1` on tick 1050, the frame "Hire Mechanics" with the second
+tab down (`orig/a-button.png`), a slot took `0xbd` at 1000 and it was said on tick 1051. *`worn5`* (run c) and
+*`kept6`* (run d): message 5's record fresh through tick 1053 in each. **Row 7 did not speak in any of the
+four**, where I had predicted, from a part-read listing and marked as the weakest, that six rides and no
+mechanic would have it queued at 60 on tick 929: its days are counted from the analyser's stamp, above. The
+prediction was made again from that (fresh in runs b, c and d too) and held.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 5 | polled; nought with a mechanic, else 5 for each ride under 25 or broken down | the same |
+| Six rides at 24, no mechanic | said on tick 927, line 0, in the hard hat | the same |
+| Five at 24 and one at 25 | not said | the same (`under-threshold`) |
+| Six at 24, the mechanic kept | not said | the same (`no-score`) |
+| The tag and the bar | row 7, part 2, string 11; button 14 builds the hire screen on its mechanics' tab, tag off, arm in | the same |
+| The hire screen's own line | `0xbd` posted at 1000 as the screen is built, and said | the same (said on tick 961, as row 5's wait ended) |
+| Rows 6 and 7 | scored on their turns (nought here) | not built: counted with the other polled rows |
+
+**Not built or not seen.** Rows 6 and 7, and the ten other staff rows, 8 to 17 (their scores not read; row 14's
+line is the theme advisor's). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
+turn), the line said again past its 120 quarter-ticks, a broken ride counted (the test holds it, and a ride
+breaking with no mechanic posts `0x44` besides), a ride worn under 25 by running, button types `0xd` and `0xf`
+to `0x11` and the button with the hire screen open (the test holds each), a mechanic hired from the screen after
+the line, Full Simulation. In this game's run the tag was clicked while he still spoke and in the original's
+after: the bar's own line, `0x11c`, was said there (tick 1033) and withdrawn unsaid here. Not heard in either
+game.
+
 ## An open park's shut rides (message `0x103`, Q323)
 
 **Row 259:** polled, category 0, either game mode, one copy, three lines in turn. Its responses are 501 to 503,
@@ -1980,7 +2088,7 @@ and no log line names message 189.
 
 **Not built or not seen.** In no game run: a candidate chosen while he speaks (here the same `Closed`; what the original's
 handler does to the screen at a row's click was not read for this item), the bar's
-five hire buttons (types `0xd` to `0x11`, not built), the opener asked for the tab shown with the screen open
+five hire buttons (types `0xd` to `0x11`; built since, "Worn rides and no mechanic"), the opener asked for the tab shown with the screen open
 (a rebuild, reached by a bar button alone), a park left with the screen open, Full Simulation (the row's mode
 word is row 188's, either mode). The American strings name the first tab "Hire Janitors", the English "Hire
 Cleaners": the reference install reads the American. Not heard in either game.

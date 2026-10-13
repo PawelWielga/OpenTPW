@@ -2568,7 +2568,9 @@ public sealed partial class ParkPeople : Entity
 	/// +0x32 &amp; 2) and those of them shut (FUN_004ca0c0), the guests waiting to be let in, and the
 	/// first thing a guest may choose that has a queue whose back is not joined to a path (FUN_004ccb00 asked
 	/// with nought: an object's +0x32 &amp; 4 and &amp; 8, FUN_004de4a0 nought), the object the builder holds
-	/// passed over (FUN_00527930).
+	/// passed over (FUN_00527930); and the mechanics (FUN_004c9960 asked for type 4) and the rides worn
+	/// (FUN_004ca3a0: a thing of a ride's item whose State of repair's whole number is under the limit row 5's
+	/// score hands it, or whose mState is 1, broken down).
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2581,6 +2583,8 @@ public sealed partial class ParkPeople : Entity
 		var (ridesShut, shopsShut, sideshowsShut, toiletsShut) = (0, 0, 0, 0);
 		var (staffRooms, staffRoomsShut) = (0, 0);
 		var unjoined = 0;
+		var ridesWorn = 0;
+		var wornBelow = State.AdvisorMessages?.WornBelow ?? 0;
 
 		foreach ( var thing in State.ObjectsInChainOrder() )
 		{
@@ -2608,6 +2612,8 @@ public sealed partial class ParkPeople : Entity
 			{
 				++rides;
 				ridesShut += shut;
+				if ( ((int)thing.StateOfRepair & 0xff) < wornBelow || thing.State == ParkRideChoice.StateRefusedOne )
+					++ridesWorn;
 			}
 			else if ( item.UiType == ItemDescriptionFile.SideShow )
 			{
@@ -2622,7 +2628,8 @@ public sealed partial class ParkPeople : Entity
 		}
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
-			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut );
+			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut,
+			_staff.Count( member => member.Model == MechanicModel ), ridesWorn );
 	}
 
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:

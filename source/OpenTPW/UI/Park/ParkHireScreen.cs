@@ -76,8 +76,12 @@ internal sealed class ParkHireScreen : UiWindow
 
 	private static readonly UiColour HeadingColour = new( 255, 239, 0 );
 
+	/// <summary>The tab the screen shows, 0 the cleaners' to 4 the scientists' ([0x007ca30c]).</summary>
+	internal int Tab => _kind;
+
 	/// <param name="park">The running park whose advisor hears of this screen, null for the level's.</param>
-	public ParkHireScreen( WindowStack stack, ParkState? park = null ) : base( stack )
+	/// <param name="openOn">The tab to open on (FUN_0049bdd0's argument), null for the one last left on (its -1).</param>
+	public ParkHireScreen( WindowStack stack, ParkState? park = null, int? openOn = null ) : base( stack )
 	{
 		_parkGiven = park;
 
@@ -241,7 +245,7 @@ internal sealed class ParkHireScreen : UiWindow
 		} );
 
 		_list.Build();
-		Show( _lastKind );
+		Show( openOn ?? _lastKind );
 
 		// Reached every time this screen opens, and not one of them answerable yet: three of the four
 		// mini-balance figures need a monthly history this game does not keep, the portrait needs the
