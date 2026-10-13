@@ -2586,7 +2586,8 @@ public sealed partial class ParkPeople : Entity
 	/// asked with nought: a catalogue item of a ride's kind whose control record is researched and whose
 	/// GoldenTicketCost is nought), those of them of which a thing stands (0x004ca7b0 asked with nought and
 	/// nought: the control record's count above nought) and the whole days since the newest object was made
-	/// (0x004c9070, <see cref="ParkState.DaysSinceObjectBuilt"/>). With no catalogue no kind is counted.
+	/// (0x004c9070, <see cref="ParkState.DaysSinceObjectBuilt"/>); and the bank's balance (FUN_005195d0's
+	/// thing's +0xc, <see cref="ParkState.Balance"/>). With no catalogue no kind is counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2651,7 +2652,7 @@ public sealed partial class ParkPeople : Entity
 			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut,
 			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired,
 			RideKinds( item => _research?.IsResearched( item.Id ) == true ), RideKinds( item => State.BuiltOf( item.Id ).Standing > 0 ),
-			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing );
+			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing, State.Balance );
 	}
 
 	/// <summary>The catalogue's items of a ride's kind that cost no golden ticket and that <paramref name="counted"/> holds for (0x004ca450, 0x004ca7b0).</summary>

@@ -6554,6 +6554,29 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   bugs put back: 54 failed first, the last after the test read row 62's poll line. Test
   `AParkWithRidesAndNoShopIsToldToBuildSomeThirtyDaysAfterTheNewestBuild`. `docs/exe/advisor-park.md`, "A park
   with rides and no shop". I split the item: every other piece of the old Q337 is Q338.
+- [x] **Q338. The advisor's line about too few shops for the park's size is scored as the original scores it,
+  which is never.** Done 2026-10-13: one piece of the old Q338. Row 74, message `0x4a`, `ShopsBuildMoreShops`,
+  is polled; its score (`0x0059de80`, loose code, disassembled) is nought where no kind of shop stands
+  (`0x004ca7b0( 1, 0 )`), until `WaitingTimes.DaysForObjects`, 30, whole days after `mLastObjectBuilt`, unless
+  the kinds of shop standing, asked for a second time where the key names the rides, times
+  `ShopsPerRideRatio`, 0.15, are more than the kinds of shop standing, and unless the bank holds more than
+  `WealthMoreThan`, 20000; then `Score`, 70. So under the shipped ratio it never scores. Responses 213 and 214
+  are samples 211 and 212, the hard hat, group 76: tag row 76, string 78, the buy button of type 10. Built as
+  the original's, the slip kept: `ParkAdvisorMessages.BuildMoreShops`, a topic's `ShopsPerRide`,
+  `ParkFacts.Balance`, tag row 76. The scene is Q337's stock park with the stamp written 692 ticks back: `poll
+  message=74 row=74 days=41 score=0 threshold=25 tick=966 result=no-score shopkinds=1 ratio=0.15 balance=88112
+  sincebuild=30`, nobody beside the gadget; with the ratio written 1.5 in a private game folder's `Advisor.sam`,
+  `score=70 ... result=post`, said on tick 966 as sample 211, him up in the yellow hard hat with tag 76 on the
+  mast, the bar's button opening "Buy Shop"; day 29 said on tick 1121; `WealthMoreThan` over the bank not said;
+  main's build silent. The original: its record fresh through tick 1111 under the shipped ratio; under 1.5 said
+  on tick 966, the same tag at the same rectangle, its buy screen built on the shops; silent with the wealth
+  limit over the bank. Predicted first (`q338/PREDICTION.txt`); one run missed by a file I made a tick off
+  (round 1b). 66 bugs put back: 65 failed first; the last, the first test not asked, cannot differ from
+  the rule (nought is not more than nought), so that test is folded into the ratio's and 60 of 60 fail on the
+  code as committed (`q338/mutate-round1.out`, `mutate.out`). Test
+  `TooFewShopsForTheParksSizeSetsTheShopsAgainstThemselvesAndIsNeverSaidUnderTheShippedRatio`.
+  `docs/exe/advisor-park.md`, "Too few shops for the park's size". New tool `lib/gamefolder.py` and
+  `parkrun.py`'s `GAME_FOLDER`. I split the item: every other piece of the old Q338 is Q339.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

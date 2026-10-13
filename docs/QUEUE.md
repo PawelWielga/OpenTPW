@@ -44,9 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q338. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q339. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q338 (`advisor-park.md`, "Too few shops for the park's size"): the five other rows that read the newest
+  build are not built or read (75, 77 to 79 and 81; row 75's score is `0x0059df30`: `disassemble_at` first, and
+  name its keys with `advisorschema.py` from `+0x27c` on, `SideshowsPoorSelection`). **Row 74 counts no ride**:
+  whether to mend it (the rides counted, as its key names them) is Alexah's call, not asked; as built it is the
+  original's and never speaks. In no game run: line 2, the line again past its cooldown, day 29 in the original,
+  a ratio of exactly one, a golden-ticket shop standing, a park made with no file, Full Simulation. Not heard in
+  either game.
   From Q337 (`advisor-park.md`, "A park with rides and no shop"): **the original's `mLastObjectBuilt` moved
   twice more with nothing bought**, to tick 1158's on tick 1158 in `q337/shop30.TPWS` and to tick 1170's on
   tick 1170 in `q337/noride30.TPWS` (`q337/orig/c-load.log`, `d-load.log`); still not read (below). The six
