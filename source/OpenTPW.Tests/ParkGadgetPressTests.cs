@@ -591,7 +591,7 @@ public class ParkGadgetPressTests
 	/// another the click builds the screen again on the type's tab (<c>FUN_0049bdd0</c> destroys the open park
 	/// screen first), and each of the five types names its own tab.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the button counted as unbuilt; the tag left; the arm left out; the screen not opened, or opened on the tab last left; the tab the type itself, or one off; the open screen kept; a type past 0x11 built; row 7's button another's.</remarks>
+	/// <remarks><b>Mutations:</b> the button counted as unbuilt; the tag left; the arm left out; the screen not opened, or opened on the tab last left; the tab the type itself, or one off; the open screen kept; a type past 0x11 a hire button, hidden or not; row 7's button another's.</remarks>
 	[TestMethod]
 	public void TheHireButtonOpensTheHireScreenOnItsTabAndTakesItsTagOff()
 	{
@@ -612,6 +612,8 @@ public class ParkGadgetPressTests
 		Assert.IsTrue( stack.ClickAt( 119, 941 ) );
 		Assert.AreEqual( (true, tag), (gadget.BarOut, tags.OnShow) );
 		Assert.AreEqual( ("mb_buy", 0x20e), UI.ParkGadget.BarButtonLook( 0xe ) );
+		CollectionAssert.AreEqual( new int?[] { null, 0, 1, 2, 3, 4, null, null },
+			Enumerable.Range( 0xc, 8 ).Select( UI.ParkGadget.HireTabOf ).ToArray(), "types 0xc to 0x13: the five hire buttons and no other" );
 		Assert.AreEqual( (true, 0x20e, false, true),
 			(Find( gadget, 0x10d30 ).Visible, Find( gadget, 0x10d30 ).HelpText, Find( gadget, 0x10d2f ).Visible, Find( gadget, 0x10d2e ).Visible),
 			"mb_buy with type 0xe's help row, no second button, and the erase button" );

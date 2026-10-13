@@ -724,6 +724,9 @@ internal sealed class ParkGadget : UiWindow
 	private const int HireFirstTab = 0xd;
 	private const int HireLastTab = 0x11;
 
+	/// <summary>The hire screen's tab a bar button's type opens, 0 the cleaners' to 4 the scientists', null for a type that is no hire button (FUN_0048e0f0).</summary>
+	internal static int? HireTabOf( int type ) => type is >= HireFirstTab and <= HireLastTab ? type - HireFirstTab : null;
+
 	/// <summary>
 	/// A bar button's mesh and help row by its type, the tag row's +0x10 or +0x14 (FUN_0048e610). A type not here
 	/// shows no button; mb_accept and mb_decline are given no help row. Types 0x12 and 0x14 name the nodes b_loan and
@@ -852,10 +855,10 @@ internal sealed class ParkGadget : UiWindow
 			return;
 		}
 
-		if ( type is >= HireFirstTab and <= HireLastTab )
+		if ( HireTabOf( type ) is { } hireTab )
 		{
-			Log.Info( $"Park gadget: message bar: button type {type} opens the hire screen on tab {type - HireFirstTab} and takes tag {tag.Row.Id} off" );
-			Stack.Open( new ParkHireScreen( Stack, Park, type - HireFirstTab ) );
+			Log.Info( $"Park gadget: message bar: button type {type} opens the hire screen on tab {hireTab} and takes tag {tag.Row.Id} off" );
+			Stack.Open( new ParkHireScreen( Stack, Park, hireTab ) );
 			EraseTag();
 			return;
 		}
