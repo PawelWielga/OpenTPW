@@ -1908,10 +1908,9 @@ one of the 124 objects standing, a thing built and since sold.
 calendar's now each time `AddObject` takes a thing made (a purchase, a move's put-down), which logs `Park:
 mLastObjectBuilt stamped <date> on mGameTick N`. A sale leaves it. The writer puts it back into the analyser's
 record. **A vehicle the file names no thing for stamps it at its first summons** (`ParkPeople.Summon`,
-`ParkState.VehicleMade`; "What moves it with nothing bought", below), once a vehicle. **Not the original's in
-one way**: the ferry and the seaplane stand from the load here and the summons gives the made one no thing, so a
-file written after names none and a load of it makes the vehicle, and stamps, again; it is counted,
-`VEHICLE_MADE_NO_THING`. Four of the nine rows read it here, rows 60, 71, 73 and 74 ("A poor selection of
+`ParkPeople.MakeVehicle`; "What moves it with nothing bought", below), once a vehicle: the summons makes the
+vehicle's thing through `AddObject`, and a file written after names it, so a load of it makes and stamps nothing
+(Q342; `saves.md`, "OpenTPW's writer, a vehicle made at its summons"). Four of the nine rows read it here, rows 60, 71, 73 and 74 ("A poor selection of
 rides", "A poor selection of shops", "A park with rides and no shop" and "Too few shops for the park's size",
 below).
 
@@ -1941,7 +1940,7 @@ over the file's value**: every load left the file's standing.
 | A sale | leaves it (no writer) | the same |
 | A load | the file's | the same |
 | A file saved here after a purchase, and after its sale | reads this game's stamp | written at 73,516 |
-| A vehicle made at its first summons | stamps it, and its slot holds the new thing | stamps it, once a vehicle; no thing is made (`VEHICLE_MADE_NO_THING`) |
+| A vehicle made at its first summons | stamps it, and its slot holds the new thing | the same (Q342): an object on cell (0,0), written with its slot |
 | Which vehicle a leaver's summons draws | `% 3` of the save's seed: the third in every load of one file | this game's own generator: any of the three, the bus stamping nothing |
 | The nine rows that read it | scored | rows 60, 71, 73 and 74 built ("A poor selection of rides", "A poor selection of shops", "A park with rides and no shop", "Too few shops for the park's size"); the other five not built, not read |
 
@@ -1967,8 +1966,10 @@ through tick 2069, with the current vehicle changing six times more, and in the 
 no slot and no stamp moved again. **So a file moves the stamp at most once for each vehicle it names no thing
 for**: the stock file names the bus alone, so twice.
 
-**OpenTPW.** `Summon` stamps (`ParkState.VehicleMade`) where the vehicle made current has no thing in the file
-and has not been made in this park, and counts `VEHICLE_MADE_NO_THING` for the thing it does not make.
+**OpenTPW.** `Summon` makes the thing where the vehicle made current has none (`ParkPeople.MakeVehicle`,
+through `ParkState.AddObject`, which stamps); as Q341 built it, the stamp alone was made and
+`VEHICLE_MADE_NO_THING` counted the thing, which Q342 makes (`saves.md`, "OpenTPW's writer, a vehicle made at its
+summons"). The runs below are Q341's.
 **Predicted first** (`q341/PREDICTION.txt`): the original's three rounds held on every line (the second's run was cut at tick 2069 by my next load, not
 left to 2700 as written); this game's run held
 three of five, the two misses my own arithmetic (the stamp of tick 432 written wrong, and the days from tick
@@ -1987,8 +1988,8 @@ file names no thing for the seaplane this game summoned.
 stamp on tick 1094 in every load of `late30`, the third vehicle's slot where the slots were read; this game's
 generator is its own, and drew the seaplane twice, the ferry and the bus in four runs, each on tick 1093, a tick before the original's. A bus drawn
 makes nothing, so one run in three still says a thirty-day row early. The second vehicle is made here when the
-draw or a load's size next names it, in the original on tick 1419 to 1434. No thing is made or written for the
-vehicle (above). **Not run:** a load of sixty-one's own summons in the running game (the test holds it), the
+draw or a load's size next names it, in the original on tick 1419 to 1434. The vehicle's thing is made and
+written since Q342. **Not run:** a load of sixty-one's own summons in the running game (the test holds it), the
 second vehicle's stamp in the running game, a park made with no file, Full Simulation.
 
 ## A poor selection of rides (message `0x3c`, Q335)

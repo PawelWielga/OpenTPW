@@ -919,8 +919,7 @@ public class ParkTickTests
 		// Seeded, so the vehicle the summons draws and the cells the walks end on are the same every run.
 		var people = new ParkPeople( world, new ParkBalance( Theme, easyMode: true ),
 			() => ParkRides.GateIsOpen, new ParkState( world ), catalogue,
-			thingId => thingId is var id && (id == busThing || id == seaplaneThing || id == ferryThing)
-				? script : rides.Scheduler.Find( rides.ScriptFor( thingId ) ),
+			thingId => IsAVehicle( thingId ) ? script : rides.Scheduler.Find( rides.ScriptFor( thingId ) ),
 			random: new Random( 3 ), behaviourRandom: new Random( 3 ) );
 
 		void Plays( int status )
@@ -1099,8 +1098,10 @@ public class ParkTickTests
 	/// <b>Mutations:</b> a scripted vehicle's load made at stop B; leavers held at the road by a ferry; guests running
 	/// for the ferry at 3; no walk to the pair while the vehicle moves on; a vehicle at 2 sent on with its load still
 	/// dropping; a vehicle spent with its load held never forgotten; the tail run before the manager; the leavers'
-	/// summons always the bus; a made vehicle stamping nothing; one stamping at every summons; the bus stamping; the
-	/// stamp a tick off.
+	/// summons always the bus; a made vehicle stamping nothing; one made at every summons; the bus made; the
+	/// stamp a tick off; a made vehicle given no thing, an id in use, the bus's item, a cell of its own, an end of
+	/// nought, left off the object list or the cell's, its script left under the stand-in id; its slot or the
+	/// current vehicle written nought, or written with a thing the file leaves out.
 	/// </remarks>
 	[TestMethod]
 	public void ALargerVehicleIsNobodysBusAndEachSummonsDrawsItsOwn()
@@ -1118,10 +1119,10 @@ public class ParkTickTests
 
 		StandVehicles( ("bus", busThing), ("seaplane", seaplaneThing), ("ferry", ferryThing) );
 
+		var state = new ParkState( world );
 		var people = new ParkPeople( world, new ParkBalance( Theme, easyMode: true ),
-			() => ParkRides.GateIsOpen, new ParkState( world ), catalogue,
-			thingId => thingId is var id && (id == busThing || id == seaplaneThing || id == ferryThing)
-				? script : rides.Scheduler.Find( rides.ScriptFor( thingId ) ),
+			() => ParkRides.GateIsOpen, state, catalogue,
+			thingId => IsAVehicle( thingId ) ? script : rides.Scheduler.Find( rides.ScriptFor( thingId ) ),
 			random: new Random( 5 ), behaviourRandom: new Random( 5 ), rideRandom: new Random( 5 ),
 			staffRandom: new Random( 5 ) );
 
@@ -1144,14 +1145,16 @@ public class ParkTickTests
 
 			// The original makes a vehicle the file names no thing for at its first summons, and the constructor stamps
 			// the analyser's mLastObjectBuilt with the calendar's now: once a vehicle, and never for the bus, which the
-			// file names. No thing is made here, which is counted beside each stamp.
+			// file names.
 			long Stamp() => people.State.LastObjectBuilt;
-			int NoThing() => Unimplemented.Summary.Where( gap => gap.What == "VEHICLE_MADE_NO_THING" ).Sum( gap => gap.Times );
 
 			var fileStamp = Stamp();
-			var noThing = NoThing();
+			var highest = Math.Max( world.Things.Max( thing => thing.ThingId ), people.Peeps.Max( peep => peep.ThingId ) );
+			var firstObject = state.ObjectsInChainOrder().First().ThingId;
 
 			Assert.AreEqual( world.LastObjectBuilt, fileStamp, "the file's stamp stands before any summons" );
+			Assert.AreEqual( (busThing, 0, 0), (people.VehicleThings[0], people.VehicleThings[1], people.VehicleThings[2]), "the file names the bus alone" );
+			Assert.AreEqual( busThing, state.CellAt( 0, 0 ).Occupant, "which heads the corner cell's list" );
 
 			// Sixty-one come by the third vehicle, summoned on the sweep that finds none.
 			Assert.AreEqual( 3, people.ForceArrival( 61 ), "sixty-one come by the third vehicle" );
@@ -1164,14 +1167,43 @@ public class ParkTickTests
 			Assert.AreNotEqual( fileStamp, ferryStamp, "the third vehicle, made at its first summons, moves the newest build" );
 			Assert.AreEqual( ParkWorld.StaffState.FileTimeOf( new DateTime( 2000, 1, 1 ).AddSeconds( people.State.GameTick * 3750L ) ), ferryStamp,
 				"to the calendar of the sweep that summoned it" );
-			Assert.AreEqual( noThing + 1, NoThing(), "and the thing it is not given is counted" );
 
-			// A park file holds the load and not this vehicle, which the file names no thing for: counted, and none written.
-			var reported = Unimplemented.Summary.Where( gap => gap.What == "SAVE_PARK_ARRIVAL_VEHICLE" ).Sum( gap => gap.Times );
-			var timer = people.WrittenArrival( _ => true );
+			// And it is a thing: an object of the ferry's item on the corner cell, as the original's own files hold one
+			// (saves.md, "OpenTPW's writer, a vehicle made at its summons"), at the head of the object list and of the
+			// cell's, with the stood model and script under it.
+			var ferry = people.VehicleThings[2];
 
-			Assert.AreEqual( (61, true, 0), (timer.PeopleOnBus, timer.Offloading, timer.CurrentVehicle) );
-			Assert.AreEqual( reported + 1, Unimplemented.Summary.Single( gap => gap.What == "SAVE_PARK_ARRIVAL_VEHICLE" ).Times );
+			Assert.IsTrue( ferry > highest, $"thing {ferry} is an id nothing has used ({highest} the highest)" );
+			Assert.AreEqual( (busThing, 0), (people.VehicleThings[0], people.VehicleThings[1]), "the third slot, and no other" );
+			Assert.IsTrue( state.TryObject( ferry, out var made61 ), "an object of the park's" );
+			Assert.AreEqual( (1604, 0, 0, 0, 1, 1, 1), (made61.CatalogueId, made61.RawX, made61.RawY, made61.Angle, (int)made61.TopLeft, (int)made61.EntryPos, (int)made61.ExitPos),
+				"the ferry's item on cell (0,0), facing nought, its corner and both ends that cell" );
+			Assert.AreEqual( (3, 1, 0, 50, 100, 50, 100f, 100f), (made61.State, made61.CanLoad, (int)made61.Flags, made61.QualityOfGoods, made61.ChanceOfWinning,
+				made61.AmountOfSpecialIngredient, made61.StateOfRepair, made61.RemainingLife), "state 3, its door open, no flag, and the constructor's starting numbers" );
+			Assert.AreEqual( (0, 0, 0, 0, 0, 0), (made61.PricePerUse, made61.CostOfGoods, made61.OperatingSpeed, made61.OperatingCapacity, made61.OperatingDuration, made61.TrackRide) );
+			Assert.AreEqual( ParkWorld.BuiltWhen.At( state.CalendarNow ), made61.Built, "dated the sweep it was made on" );
+			CollectionAssert.AreEqual( new[] { ferry, firstObject }, state.ObjectsInChainOrder().Take( 2 ).Select( thing => thing.ThingId ).ToArray(),
+				"the head of the object list, before the head there was" );
+			Assert.AreEqual( ferry, state.CellAt( 0, 0 ).Occupant, "and of the corner cell's list" );
+			Assert.AreEqual( ferry, ParkFixedItems.Current!.ThingFor( "ferry" ), "the stood ferry is that thing" );
+			Assert.AreEqual( seaplaneThing, ParkFixedItems.Current.ThingFor( "seaplane" ), "and the seaplane is not" );
+
+			// A park file holds the load, the vehicle's slot and the vehicle as current, where its thing is written;
+			// where the writer leaves the thing out both are nought, and counted.
+			int Unwritten() => Unimplemented.Summary.Where( gap => gap.What == "SAVE_PARK_ARRIVAL_VEHICLE" ).Sum( gap => gap.Times );
+
+			var reported = Unwritten();
+
+			Assert.AreEqual( new ParkFileWriter.ArrivalTimer( people.ArrivalMark, 61, true, ferry, (busThing, 0, ferry) ), people.WrittenArrival( _ => true ) );
+			Assert.AreEqual( reported, Unwritten(), "nothing is counted" );
+
+			Assert.AreEqual( new ParkFileWriter.ArrivalTimer( people.ArrivalMark, 61, true, 0, (busThing, 0, 0) ), people.WrittenArrival( thing => thing != ferry ),
+				"a thing the file leaves out is neither its current vehicle nor in its slot" );
+			Assert.AreEqual( reported + 1, Unwritten(), "counted once" );
+
+			Assert.AreEqual( new ParkFileWriter.ArrivalTimer( people.ArrivalMark, 61, true ), people.WrittenArrival(),
+				"written without the things, the slots and the current vehicle are left the file's" );
+			Assert.AreEqual( reported + 2, Unwritten(), "and the vehicle that is current is counted" );
 
 			// Whatever it reports, a vehicle that is not the bus holds nobody at the road.
 			foreach ( var status in new[] { 1, 2, 3 } )
@@ -1229,9 +1261,10 @@ public class ParkTickTests
 				Assert.IsFalse( people.LargerVehicleIsCurrent, "and it is the bus, the vehicle for a load of two" );
 				Assert.AreEqual( 1, Triggered(), "triggered" );
 				Assert.AreEqual( ferryStamp, Stamp(), $"round {round}: the bus, which the file names, is not made and stamps nothing" );
+				Assert.AreEqual( (busThing, 0, ferry), (people.VehicleThings[0], people.VehicleThings[1], people.VehicleThings[2]), $"round {round}: and no slot moves" );
 			}
 
-			Assert.AreEqual( noThing + 1, NoThing(), "nor is anything counted for it" );
+			Assert.AreEqual( ferry, state.ObjectsInChainOrder().First().ThingId, "nothing more is on the object list" );
 
 			// No load: the summons is the leaver's, one of the three at random.
 			var drawn = new List<bool>();
@@ -1241,7 +1274,7 @@ public class ParkTickTests
 
 			for ( var round = 0; round < 24; ++round )
 			{
-				var (before, counted) = (Stamp(), NoThing());
+				var (before, slots, head) = (Stamp(), people.VehicleThings.ToArray(), state.ObjectsInChainOrder().First().ThingId);
 
 				people.HoldTheLoad( 0 );
 				Plays( 6 );
@@ -1251,13 +1284,20 @@ public class ParkTickTests
 
 				if ( people.CurrentVehicle == 2 && seaplaneMade++ == 0 )
 				{
+					var seaplane = people.VehicleThings[1];
+
 					Assert.AreNotEqual( before, Stamp(), $"round {round}: the second vehicle's first summons moves the newest build" );
-					Assert.AreEqual( counted + 1, NoThing(), $"round {round}: and is counted" );
+					Assert.IsTrue( seaplane > ferry && state.TryObject( seaplane, out var second ) && second.CatalogueId == 1602,
+						$"round {round}: and makes thing {seaplane}, the seaplane's item" );
+					Assert.AreEqual( (busThing, ferry), (people.VehicleThings[0], people.VehicleThings[2]) );
+					Assert.AreEqual( (seaplane, seaplane), (state.ObjectsInChainOrder().First().ThingId, (int)state.CellAt( 0, 0 ).Occupant), "the head of both lists" );
+					Assert.AreEqual( seaplane, ParkFixedItems.Current.ThingFor( "seaplane" ) );
 				}
 				else
 				{
 					Assert.AreEqual( before, Stamp(), $"round {round}: vehicle {people.CurrentVehicle}, made already or named by the file, stamps nothing" );
-					Assert.AreEqual( counted, NoThing(), $"round {round}: and nothing is counted" );
+					CollectionAssert.AreEqual( slots, people.VehicleThings.ToArray(), $"round {round}: and nothing is made" );
+					Assert.AreEqual( head, state.ObjectsInChainOrder().First().ThingId );
 				}
 			}
 
@@ -1572,6 +1612,10 @@ public class ParkTickTests
 	/// constructor: <see cref="ParkPeople"/> finds a vehicle's script through <see cref="ParkFixedItems.Current"/>,
 	/// and the real one builds every fixed item's model, which no test can.
 	/// </summary>
+	/// <summary>Whether the park's fixed items name a vehicle by this thing now: a made vehicle's thing is not the one it was stood as.</summary>
+	private static bool IsAVehicle( int thing )
+		=> ParkFixedItems.Current is { } items && new[] { "bus", "seaplane", "ferry" }.Any( name => items.ThingFor( name ) == thing );
+
 	private static void StandVehicles( params (string Name, int Thing)[] vehicles )
 	{
 		var items = (ParkFixedItems)RuntimeHelpers.GetUninitializedObject( typeof( ParkFixedItems ) );

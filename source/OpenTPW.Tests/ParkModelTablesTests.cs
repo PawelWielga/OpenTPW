@@ -127,6 +127,7 @@ public class ParkModelTablesTests
 		Assert.AreEqual( 17, lookups.Count( lookup => lookup == (0x21, -1) ), "the seventeen heads: placed, childless" );
 		Assert.AreEqual( 7, lookups.Count( lookup => lookup == (0x29, -1) ), "the noses and the destroy marker: posed all the same" );
 		Assert.AreEqual( ParkModelTables.SharedHasPosition | ParkModelTables.SharedHeadsHidden, ParkModelTables.SharedFlags( model ) );
+		Assert.AreEqual( ParkModelTables.SharedHasPosition, ParkModelTables.SharedFlags( model, vehicle: true ), "an arrival vehicle's model is loaded without the heads' bit" );
 	}
 
 	/// <summary>A clip taken off leaves its nodes unmarked and shown, a transform-only node's hidden bit apart.</summary>

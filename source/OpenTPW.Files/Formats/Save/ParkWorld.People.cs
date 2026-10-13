@@ -336,7 +336,8 @@ public sealed partial class ParkWorld
 	/// <para>
 	/// <b>An object made</b> goes into the thing list among the made, newest first, and to the head of the object
 	/// list (<c>mFirstObject</c>, <c>mNext</c>), as the original's constructor puts one; onto its anchor cell's
-	/// chain behind whoever stands there; and into set <c>0xb</c>, the day's change. <b>An object gone</b> is left
+	/// chain behind whoever stands there and before the file's things that are no person, as the original's files
+	/// hold a vehicle made on the corner cell; and into set <c>0xb</c>, the day's change. <b>An object gone</b> is left
 	/// out of all four.
 	/// </para>
 	/// </summary>
@@ -621,7 +622,7 @@ public sealed partial class ParkWorld
 			touched.Add( cell );
 		}
 
-		// An object made stands on its anchor cell, behind whoever stands there.
+		// An object made stands on its anchor cell, behind whoever stands there and before the file's own things.
 		var objectsOn = new Dictionary<int, List<int>>();
 
 		foreach ( var (id, record) in madeObjects )
@@ -689,14 +690,15 @@ public sealed partial class ParkWorld
 		foreach ( var cell in touched )
 		{
 			// Whoever has come onto the cell heads it, the newest first; whoever the file had there and is there
-			// still follows in the file's order; then the file's things that are no person.
+			// still follows in the file's order; then the objects made there, the newest first, and the file's
+			// things that are no person: a vehicle made on the corner cell stands before the vehicles the file has there.
 			var here = peopleOn.GetValueOrDefault( cell ) ?? [];
 			var before = stood.GetValueOrDefault( cell ) ?? [];
 			var chain = here.Where( id => !before.Contains( id ) ).ToList();
 
 			chain.AddRange( before.Where( here.Contains ) );
-			chain.AddRange( (others.GetValueOrDefault( cell ) ?? []).Where( id => !goneObjects.Contains( id ) ) );
 			chain.AddRange( objectsOn.GetValueOrDefault( cell ) ?? [] );
+			chain.AddRange( (others.GetValueOrDefault( cell ) ?? []).Where( id => !goneObjects.Contains( id ) ) );
 
 			for ( var i = 0; i < chain.Count; ++i )
 			{

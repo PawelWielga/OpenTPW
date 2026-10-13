@@ -6641,6 +6641,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `ALargerVehicleIsNobodysBusAndEachSummonsDrawsItsOwn`, extended. `docs/exe/advisor-park.md`, "What moves it
   with nothing bought". New tools `original/brk.sh` and `original/worldwords.py`; one recipe. I split the item:
   every other piece of the old Q341 is Q342.
+- [x] **Q342. A vehicle made at its first summons is a thing, and a written file names it.** (2026-10-13;
+  I split the item: this is its first piece, Q343 the rest.) The summons makes an object of the vehicle's item on
+  cell (0,0), as the original's (`FUN_0051a2f0` calls `FUN_004db090( 1, item, 0, 0 )`): the head of the object
+  list and of the corner cell's, stamped, the stood model and script put under it; a file written after holds
+  its record, script and model (a fixed item's: `0x361`, cell (48,17), `FUN_004dd500`), the header's slot and
+  the current vehicle. `VEHICLE_MADE_NO_THING` is gone; `VEHICLE_MADE_NO_ITEM` is new. Confirmed in the game on
+  `q340/late30.TPWS` three times (`q342/run-fix1`..`3`: the ferry twice, the seaplane once, thing 43 on tick
+  1093, the last run nine predictions of nine), each file read beside the original's own records, loaded back
+  here, and two loaded by the original under Proton, which kept slot and vehicle, made nothing and forgot the
+  seaplane on tick 1211 and the ferry on 1265, the ticks this game does. 53 bugs put back, all fail a test.
+  `saves.md`, "OpenTPW's writer, a vehicle made at its summons".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

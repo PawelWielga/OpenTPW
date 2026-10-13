@@ -8,6 +8,21 @@ public sealed partial class ParkThingStates
 	public const int PlacedObjectFlags = 0x32f;
 
 	/// <summary>
+	/// The flags the object constructor makes the model of a fixed item with, an item whose description sets
+	/// <c>Info.DontApplyOffset</c> (its <c>+0x38</c>): the gates, the lights and the three arrival vehicles
+	/// (<c>FUN_004dd500</c>).
+	/// </summary>
+	public const int FixedItemFlags = 0x361;
+
+	/// <summary>
+	/// The cell a fixed item with no place of its own is made on (<c>FUN_004dd500</c>: the item's
+	/// <c>Info.EngineMapOffsetOverrideX</c> and <c>Y</c>, or <c>DAT_00785594</c> and <c>DAT_00785598</c> where they
+	/// are nought, as a vehicle's are), as the lights' and each vehicle's record holds it in every Lost Kingdom file
+	/// to hand, one cell square.
+	/// </summary>
+	public const int FixedItemCellX = 48, FixedItemCellY = 17;
+
+	/// <summary>
 	/// The slots the models made since the load take, the oldest first, once <paramref name="gone"/> are empty:
 	/// each the lowest empty slot, or a new one past the last where none is (<c>FUN_00463060</c>'s cursor,
 	/// <c>DAT_007aedf4</c>, which every park file to hand holds at its lowest empty slot).
@@ -56,11 +71,16 @@ public sealed partial class ParkThingStates
 	/// makes the model afresh and keeps the fresh model's own tables where the record's counts differ from them
 	/// (<c>FUN_004647a0</c>), so a node its clip has hidden is shown again and none is marked as a clip's.
 	/// </para>
+	/// <para>
+	/// <b>An arrival vehicle's</b> (<paramref name="vehicle"/>) is a fixed item's: <see cref="FixedItemFlags"/>, on
+	/// (<see cref="FixedItemCellX"/>, <see cref="FixedItemCellY"/>) whatever cell its object is on, one cell square.
+	/// </para>
 	/// </summary>
 	public static byte[] MadeRecord( int item, int cellX, int cellY, int across, int down, int scriptHandle,
 		uint hoardingFlags, float hoardingProgress, int angle, IReadOnlyList<SavedChannel> channels,
-		ModelTables? tables = null )
-		=> Record( item, cellX, cellY, across, down, PlacedObjectFlags, scriptHandle, hoardingFlags, hoardingProgress,
+		ModelTables? tables = null, bool vehicle = false )
+		=> Record( item, vehicle ? FixedItemCellX : cellX, vehicle ? FixedItemCellY : cellY, vehicle ? 1 : across, vehicle ? 1 : down,
+			vehicle ? FixedItemFlags : PlacedObjectFlags, scriptHandle, hoardingFlags, hoardingProgress,
 			angle, tables?.NodeWords ?? [], tables?.Lookups ?? [], tables?.Shared ?? 0, channels );
 
 	/// <summary>The flags a bumper ride's launch makes a car's model with (<c>Bumper_LaunchCar</c>, <c>0x00549fa5</c>).</summary>

@@ -585,7 +585,7 @@ public class Level
 			var (lineA, lineB) = ParkObjectNames.Lines( thing.CatalogueId, names )!.Value;
 
 			return new ParkRides.BoughtThing( new ParkWorld.MadeObject( thing, lineA, lineB ), item.Width, item.Depth,
-				"data\\" + item.Directory.Replace( '/', '\\' ).TrimEnd( '\\' ) + "\\" );
+				"data\\" + item.Directory.Replace( '/', '\\' ).TrimEnd( '\\' ) + "\\", ParkFixedItems.IsVehicle( thing.CatalogueId ) );
 		} ).ToList();
 
 		var things = rides?.Written( loaded, objects,
@@ -798,7 +798,8 @@ public class Level
 		{
 			Log.Info( $"Save: the arrival timer's mark {arrival.TimeSig}, "
 				+ (arrival.Offloading ? $"a load held with {arrival.PeopleOnBus} still to drop" : "no load held")
-				+ (arrival.CurrentVehicle is { } vehicle ? $", mCurrentArrivalVehicle {vehicle}" : ", the vehicle left the file's") );
+				+ (arrival.CurrentVehicle is { } vehicle ? $", mCurrentArrivalVehicle {vehicle}" : ", the vehicle left the file's")
+				+ (arrival.Vehicles is var (size1, size2, size3) ? $", mArrivalVehicle_Size1..3 {size1} {size2} {size3}" : "") );
 		}
 
 		if ( peopleWritten is { } report )

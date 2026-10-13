@@ -315,6 +315,16 @@ public class ParkRegionEffectsTests
 		CollectionAssert.AreEqual( new short[] { 0, 0, 0, 20, 0 }, At( written.CellEffects, 46, 27 ) );
 		Assert.AreEqual( 7, written.CellAt( 46, 27 ).Status );
 		Assert.IsTrue( written.Objects.Any( thing => thing.ThingId == camera.ThingId ) );
+
+		// The camera's model record is a bought thing's, on its own cell with the placer's flags: only an arrival
+		// vehicle's is a fixed item's.
+		var cameraModel = BitConverter.GetBytes( CameraItem ).Concat( BitConverter.GetBytes( 46 ) ).Concat( BitConverter.GetBytes( 27 ) ).ToArray();
+		using var saved = new MemoryStream( File.ReadAllBytes( Path.Combine( Jungle, "Effects.TPWS" ) ) );
+		var body = new SaveReader( saved ).ReadFile();
+		var at = body.AsSpan().IndexOf( cameraModel );
+
+		Assert.IsTrue( at > 0, "the camera's model record names its item and its cell" );
+		Assert.AreEqual( ParkThingStates.PlacedObjectFlags, BitConverter.ToInt32( body, at + 0x14 ) );
 		Assert.IsFalse( written.Objects.Any( thing => thing.ThingId == Toilet ) );
 		Assert.IsTrue( ParkState.IsDirty( written.Objects.Single( thing => thing.ThingId == Toilet + 1 ) ), "the dirtied toilet's record" );
 

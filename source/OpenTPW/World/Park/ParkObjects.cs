@@ -692,6 +692,13 @@ public sealed class ParkObjects : Entity
 	public void Stand( int thingId, LobbyModel model, RideAnimations animations, int catalogueId = 0 )
 		=> _standing[thingId] = new Standing( model, animations, catalogueId );
 
+	/// <summary>Puts what stands as <paramref name="from"/> under <paramref name="to"/>: a vehicle made a thing at its summons.</summary>
+	internal void Restand( int from, int to )
+	{
+		if ( _standing.Remove( from, out var standing ) )
+			_standing[to] = standing;
+	}
+
 	/// <summary>
 	/// Everything standing here, with the catalogue item it was stood as. <see cref="ParkRides"/> binds
 	/// scripts by walking the save's own object list, which cannot reach a thing the file never named -

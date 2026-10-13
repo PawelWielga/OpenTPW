@@ -1784,7 +1784,9 @@ of nobody and still sends its vehicle (neither reached in Lost Kingdom; a load t
 and the ferry
 and the seaplane, stood as the park loads where the original makes each at its first summons: they stand at their
 first spin at status 2 from the start, in view at the arrivals' stop, and a first summons finds the drive in done
-and sets no trigger (`ParkPeople.Summon`; making them on demand is Q26c's). (The second load in the older measurement above dropped on the sweep that called
+and sets no trigger (`ParkPeople.Summon`; making the model and the script on demand is Q26c's). The THING is made at
+that summons, an object on cell (0,0) as the original's, and the stood model and script go under it (Q342; `saves.md`,
+"OpenTPW's writer, a vehicle made at its summons"). (The second load in the older measurement above dropped on the sweep that called
 it because the spent bus was then sent round again: Q131b took that out.)
 
 ### The headcount score

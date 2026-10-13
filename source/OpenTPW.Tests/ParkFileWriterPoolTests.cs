@@ -312,7 +312,7 @@ public class ParkFileWriterPoolTests
 		var none = new ParkPeople( shipped );
 
 		Assert.AreEqual( 0, none.CurrentVehicle );
-		Assert.AreEqual( new ParkFileWriter.ArrivalTimer( 661, 0, false, 0 ), none.WrittenArrival( _ => true ), "none current is written as nought" );
+		Assert.AreEqual( new ParkFileWriter.ArrivalTimer( 661, 0, false, 0, (bus, 0, 0) ), none.WrittenArrival( _ => true ), "none current is written as nought" );
 		Assert.IsNull( none.WrittenArrival().CurrentVehicle, "and left the file's without the things" );
 
 		// Two bytes of the header move, and nothing else.
@@ -342,6 +342,26 @@ public class ParkFileWriterPoolTests
 		var cleared = new ParkWorld( ParkFileWriter.Body( withBus, AsShipped with { Arrival = new ParkPeople( shipped ).WrittenArrival( _ => true ) } ) );
 
 		Assert.AreEqual( 0, cleared.CurrentArrivalVehicle );
+	}
+
+	/// <summary>
+	/// <b>The three slots are written each in its own place</b> (<c>mArrivalVehicle_Size1..3</c>), and left the
+	/// file's where none are handed over.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a slot not written; two written in each other's place; the slots written where none were given.</remarks>
+	[TestMethod]
+	public void TheThreeVehicleSlotsAreWrittenEachInItsOwnPlace()
+	{
+		var written = Written( AsShipped with { Arrival = new ParkFileWriter.ArrivalTimer( 661, 0, false, 9, (7, 8, 9) ) } );
+
+		Assert.AreEqual( (7, 8, 9, 9),
+			(written.ArrivalVehicleForSmallCrowd, written.ArrivalVehicleForMediumCrowd, written.ArrivalVehicleForLargeCrowd, written.CurrentArrivalVehicle) );
+
+		var left = new ParkWorld( ParkFileWriter.Body( written, AsShipped with { Arrival = new ParkFileWriter.ArrivalTimer( 661, 0, false ) } ) );
+
+		Assert.AreEqual( (7, 8, 9, 9),
+			(left.ArrivalVehicleForSmallCrowd, left.ArrivalVehicleForMediumCrowd, left.ArrivalVehicleForLargeCrowd, left.CurrentArrivalVehicle),
+			"with none handed over the file's stand" );
 	}
 
 	/// <summary>

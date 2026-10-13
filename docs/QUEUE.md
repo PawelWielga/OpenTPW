@@ -44,16 +44,21 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q342. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q343. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q341 (`advisor-park.md`, "What moves it with nothing bought"): **the made vehicle is given no thing**
-  (counted, `VEHICLE_MADE_NO_THING`): the original's summons makes a thing and puts its id in the slot
-  (`+0x1da72e`, `+0x1da730`; `mArrivalVehicle_Size2`, `_Size3` in the file), so the original loading a file
-  this game wrote after a summons makes the vehicle again and stamps a tick after the load
-  (`q341/orig/c-load.log`: 1146, 1147), and this game loading its own does the same at the next summons; it
-  goes with the vehicle's own thing and the current vehicle written (Q26c, `SAVE_PARK_ARRIVAL_VEHICLE`).
-  **The leavers' draw is this game's own generator**, the original's `% 3` of the save's seed (`+0x1da708`):
+  From Q342 (`saves.md`, "OpenTPW's writer, a vehicle made at its summons"): the made vehicle's id is one past
+  the highest used, the original's the id last freed (14 where this game gave 43; Q26c). Its model and script
+  stand from the load under an id of the scene's own and its script's handle is taken then, where the original
+  makes all three at the summons and starts the script from its top (Q26c). **The original's ferry's rings
+  hold numbers** (`q257x/orig/fixed-by-the-original.TPWS`, thing 32, `+289` on); what counts into a vehicle's
+  rings is not read, and this game's are nought. The default cell a fixed item's model is made on
+  (`DAT_00785594`, `DAT_00785598`: 48 and 17 in every Lost Kingdom record) is not traced to its key, and no
+  other theme's is measured. In no game run: the second vehicle made in one park (the test holds it), a load
+  of sixty-one's own summons, a file with both made loaded in the original, a park made with no file, Full
+  Simulation (the summons is the arrival manager's in both modes: not asked).
+  From Q341 (`advisor-park.md`, "What moves it with nothing bought"): **the leavers' draw is this game's own
+  generator**, the original's `% 3` of the save's seed (`+0x1da708`):
   the original drew the third vehicle on tick 1094 in every load of `q340/late30.TPWS`, this game the
   seaplane, the ferry or the bus on tick 1093 (a tick early, not looked into), and the bus stamps nothing, so
   one run in three still says rows 60, 71, 73, 75 and 77 early; what else draws on that seed between a load
@@ -1429,10 +1434,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   rest 43 on); `ParkState.NextThingId` never uses one twice, said at the site, so a load's ids part from the
   original's once anybody has gone.
   Build create-on-demand and the bus / ferry / plane ordering; the pause between loads is built (Q68b).
-  From Q255: a ferry or a seaplane that is current at a save is written as none and counted
-  (`SAVE_PARK_ARRIVAL_VEHICLE`) where the file names no thing for its size, as every Lost Kingdom file to hand
-  does: the thing made on demand is what gives the writer a handle to write (`saves.md`, "OpenTPW's writer, the
-  arrival vehicle").
+  From Q342: the THING is made on demand now, an object on cell (0,0) the writer writes (`saves.md`,
+  "OpenTPW's writer, a vehicle made at its summons"); the model and the script still stand from the load, and
+  the id is not the original's.
 - [ ] **Q27. Pushing the mouse at the screen edge does not scroll.** The "push scroll" option exists and
   is read by nothing. `ParkOrbitCameraMode.Update` scrolls from keys only. Decode the camera
   binding table at `0x00748158` (`park-engine.md`, "The park camera"), then build.

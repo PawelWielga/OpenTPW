@@ -145,11 +145,13 @@ public static class ParkFileWriter
 	/// An object bought since the load with its other two records (<c>docs/exe/saves.md</c>, "OpenTPW's writer, a
 	/// thing bought and a thing sold"): its footprint in cells for its model's record, its script as it runs (null
 	/// for a thing with none), and its model's channels, hoarding and two tables (null declares none), with the
-	/// riders' heads hung on its nodes, each written into the tables' lookup records.
+	/// riders' heads hung on its nodes, each written into the tables' lookup records. <paramref name="Vehicle"/>
+	/// is an arrival vehicle made at its summons, whose model's record is a fixed item's
+	/// (<see cref="ParkThingStates.MadeRecord"/>).
 	/// </summary>
 	public sealed record MadeThing( ParkWorld.MadeObject Object, int Across, int Down, MadeScript? Script,
 		IReadOnlyList<SavedChannel> Channels, uint HoardingFlags = 0, float HoardingProgress = 0f,
-		ParkThingStates.ModelTables? Tables = null, WrittenHeads? Heads = null );
+		ParkThingStates.ModelTables? Tables = null, WrittenHeads? Heads = null, bool Vehicle = false );
 
 	/// <summary>What was done with <see cref="RunningThings"/>: the records written over, the script tables left the file's, the things made and taken out, and each queue cell's new handle beside the one it gave up.</summary>
 	public readonly record struct ThingsWritten( int Objects, int Scripts, int ScriptTablesLeft, int Models,
@@ -170,10 +172,12 @@ public static class ParkFileWriter
 	/// <summary>
 	/// The arrival timer as it is written: the <c>mGameTick</c> the next load's wait is counted from
 	/// (<c>mTimeSig</c>), how many of a load held are still to drop (<c>mPeopleOnBus</c>), whether one is held
-	/// (<c>mOffloading</c>), and the thing of the vehicle that is current (the header's
-	/// <c>mCurrentArrivalVehicle</c>), nought with none and null to leave the file's.
+	/// (<c>mOffloading</c>), the thing of the vehicle that is current (the header's
+	/// <c>mCurrentArrivalVehicle</c>), nought with none and null to leave the file's, and the three vehicles'
+	/// things (<c>mArrivalVehicle_Size1..3</c>), null to leave the file's.
 	/// </summary>
-	public readonly record struct ArrivalTimer( int TimeSig, int PeopleOnBus, bool Offloading, int? CurrentVehicle = null );
+	public readonly record struct ArrivalTimer( int TimeSig, int PeopleOnBus, bool Offloading, int? CurrentVehicle = null,
+		(int Size1, int Size2, int Size3)? Vehicles = null );
 
 	/// <summary>
 	/// The inflated body of the file: a copy of <paramref name="loaded"/>'s with <paramref name="running"/> written
@@ -226,7 +230,7 @@ public static class ParkFileWriter
 			loaded.PutStaffPool( body, pool );
 
 		if ( running.Arrival is { } arrival )
-			loaded.PutArrival( body, arrival.TimeSig, arrival.PeopleOnBus, arrival.Offloading, arrival.CurrentVehicle );
+			loaded.PutArrival( body, arrival.TimeSig, arrival.PeopleOnBus, arrival.Offloading, arrival.CurrentVehicle, arrival.Vehicles );
 
 		if ( running.MechanicCursor is { } cursor )
 			loaded.PutMechanicCursor( body, cursor );
@@ -352,7 +356,7 @@ public static class ParkFileWriter
 					madeModels.Add( (slots[i], ParkThingStates.MadeRecord( placed.CatalogueId, cell % ParkWorld.MapSize,
 						cell / ParkWorld.MapSize, thing.Across, thing.Down, handle, thing.HoardingFlags,
 						thing.HoardingProgress, placed.Angle, thing.Channels,
-						heads != null ? WithHeads( thing, madeHeadSlots ) : thing.Tables )) );
+						heads != null ? WithHeads( thing, madeHeadSlots ) : thing.Tables, thing.Vehicle )) );
 
 					if ( thing.Script is { } script )
 						scriptRecords.Add( (handle, ParkScriptStates.MadeRecord( script, slots[i] + 1, loaded.ScriptStates.StructSize )) );

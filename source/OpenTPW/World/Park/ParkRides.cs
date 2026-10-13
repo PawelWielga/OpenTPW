@@ -68,6 +68,25 @@ public sealed class ParkRides : Entity
 	public static ParkRides? Current { get; private set; }
 
 	/// <summary>
+	/// Puts the script bound to <paramref name="from"/>, and every script it has spawned, under
+	/// <paramref name="to"/>: a vehicle made a thing at its summons.
+	/// </summary>
+	internal void Rebind( int from, int to )
+	{
+		if ( _scripts.Remove( from, out var id ) )
+			_scripts[to] = id;
+
+		if ( _animated.Remove( from ) )
+			_animated.Add( to );
+
+		foreach ( var script in Scheduler.Scripts )
+		{
+			if ( script.ThingId == from )
+				script.ThingId = to;
+		}
+	}
+
+	/// <summary>
 	/// Gives a newly built thing its script, the way the load gives one to everything the save placed.
 	/// Answers whether it got one - an item with no <c>.RSE</c> is ordinary data, not a failure.
 	/// </summary>
@@ -461,6 +480,11 @@ public sealed class ParkRides : Entity
 				script.ThingId = thingId;
 
 				script.Animations = PlayersFor( thingId, item );
+
+				// A thing the file does not name has no file's words to start from: a fresh model's, as a thing
+				// bought has, which a park file written after the vehicle is made a thing holds.
+				if ( TableModel( catalogueId ) is { } fresh )
+					script.Animations.Nodes = new ParkModelTables.Running( fresh.Model, script.Animations.ChannelCount );
 
 				if ( script.Animations.Loaded > 0 )
 					_animated.Add( thingId );
@@ -989,14 +1013,15 @@ public sealed class ParkRides : Entity
 			if ( animations?.Nodes is { } kept && TableModel( placed.CatalogueId ) is { } model && kept.Count == model.Model.Nodes.Count )
 			{
 				tables = new ParkThingStates.ModelTables( kept.Words( animations.NodeFrames() ),
-					ParkModelTables.Lookups( model.Model, model.DoHeadProcessing ), ParkModelTables.SharedFlags( model.Model ) );
+					ParkModelTables.Lookups( model.Model, model.DoHeadProcessing ), ParkModelTables.SharedFlags( model.Model, thing.Vehicle ) );
 			}
 			else
 				Unimplemented.Report( "SAVE_PARK_MADE_MODEL_TABLES" );
 
 			made.Add( new ParkFileWriter.MadeThing( thing.Object, thing.Across, thing.Down, record, channels,
 				raised?.Flags ?? 0, raised?.Progress ?? 0f, tables,
-				tables != null && _scripts.TryGetValue( placed.ThingId, out var own ) ? WrittenHeads( Scheduler.Find( own ), placed.CatalogueId ) : null ) );
+				tables != null && _scripts.TryGetValue( placed.ThingId, out var own ) ? WrittenHeads( Scheduler.Find( own ), placed.CatalogueId ) : null,
+				thing.Vehicle ) );
 		}
 
 		var goneHandles = new HashSet<int>( (gone ?? new HashSet<int>()).SelectMany( loaded.ScriptStates.HandlesOf ) );
@@ -1098,9 +1123,10 @@ public sealed class ParkRides : Entity
 
 	/// <summary>
 	/// An object bought since the load, for <see cref="Written"/>: its record and name, its item's footprint in cells
-	/// and the folder its script was loaded from, as the engine keeps one (<c>data\levels\jungle\Rides\monkey\</c>).
+	/// and the folder its script was loaded from, as the engine keeps one (<c>data\levels\jungle\Rides\monkey\</c>);
+	/// <paramref name="Vehicle"/> for an arrival vehicle made at its summons.
 	/// </summary>
-	internal readonly record struct BoughtThing( ParkWorld.MadeObject Object, int Across, int Down, string Directory );
+	internal readonly record struct BoughtThing( ParkWorld.MadeObject Object, int Across, int Down, string Directory, bool Vehicle = false );
 
 	/// <summary>A channel with nothing started on it and nothing queued, at speed 1: what a made model's record starts from.</summary>
 	private static readonly SavedChannel MadeChannel =

@@ -1108,44 +1108,54 @@ public sealed partial class ParkPeople : Entity
 		return sprite;
 	}
 
-	/// <summary>The things the save's <c>mArrivalVehicle_Size1..3</c> name, nought where it names none.</summary>
+	/// <summary>The things the save's <c>mArrivalVehicle_Size1..3</c> name, and each made at its summons since; nought for a vehicle not made yet.</summary>
 	private readonly int[] _vehicleThings;
 
-	/// <summary>Which of the three vehicles this park has made at a summons, the file naming no thing for it.</summary>
-	private readonly bool[] _vehicleMade = new bool[3];
+	/// <summary>The three vehicles' slots as a park file holds them, <c>mArrivalVehicle_Size1..3</c>: each one's thing, nought where none is made.</summary>
+	internal IReadOnlyList<int> VehicleThings => _vehicleThings;
 
 	/// <summary>Which of the three vehicles is current, 1 to 3, or nought - the slot <c>mCurrentArrivalVehicle</c>'s thing is in.</summary>
 	internal int CurrentVehicle => _arrivalVehicle;
 
 	/// <summary>
-	/// The arrival timer as a park file holds it: the mark, the count still to drop, whether a load is held, and
-	/// the vehicle that is current, as the thing the file's <c>mArrivalVehicle_Size1..3</c> names for it
-	/// (<c>mCurrentArrivalVehicle</c>), nought with none.
+	/// The arrival timer as a park file holds it: the mark, the count still to drop, whether a load is held, the
+	/// three vehicles' things (<c>mArrivalVehicle_Size1..3</c>) and the vehicle that is current, as the thing its
+	/// slot names (<c>mCurrentArrivalVehicle</c>), nought with none.
 	///
 	/// <para>
-	/// The handle and the vehicle's script are one state (<c>FUN_0051a690</c>), so the handle is written only with
-	/// the scripts: where <paramref name="written"/> is null it is left the file's. <b>A vehicle that is current and
-	/// is not a thing of the file is counted</b> (<c>SAVE_PARK_ARRIVAL_VEHICLE</c>) and written as none: the ferry
-	/// and the seaplane where the file names neither, which are stood here and made on demand by the original. A
-	/// load it held is then brought by the vehicle its size summons.
+	/// The handles and the vehicles' scripts are one state (<c>FUN_0051a690</c>), so they are written only with
+	/// the scripts: where <paramref name="written"/> is null they are left the file's. A vehicle made at its
+	/// summons is written with its thing (<see cref="MakeVehicle"/>). <b>A vehicle whose thing is not in the file
+	/// being written is counted</b> (<c>SAVE_PARK_ARRIVAL_VEHICLE</c>) and its slot written as none, and as no
+	/// vehicle current where it was: one this park could make no thing for, or whose made thing the writer leaves
+	/// out. A load it held is then brought by the vehicle its size summons.
 	/// </para>
 	/// </summary>
 	/// <param name="written">Whether a thing that is no person is in the file being written; null where the things go out as the file's.</param>
 	internal ParkFileWriter.ArrivalTimer WrittenArrival( Func<int, bool>? written = null )
 	{
-		int? current = written != null ? 0 : null;
-
-		if ( _arrivalVehicle != 0 )
+		if ( written == null )
 		{
-			var thing = _vehicleThings[_arrivalVehicle - 1];
+			if ( _arrivalVehicle != 0 )
+				Unimplemented.Report( "SAVE_PARK_ARRIVAL_VEHICLE" );
 
-			if ( written != null && thing != 0 && written( thing ) )
-				current = thing;
-			else
+			return new ParkFileWriter.ArrivalTimer( _arrivalMark, _arrivalsRemaining, _offloading );
+		}
+
+		var slots = new int[_vehicleThings.Length];
+
+		for ( var vehicle = 1; vehicle <= slots.Length; ++vehicle )
+		{
+			var thing = _vehicleThings[vehicle - 1];
+
+			if ( thing != 0 && written( thing ) )
+				slots[vehicle - 1] = thing;
+			else if ( thing != 0 || vehicle == _arrivalVehicle )
 				Unimplemented.Report( "SAVE_PARK_ARRIVAL_VEHICLE" );
 		}
 
-		return new ParkFileWriter.ArrivalTimer( _arrivalMark, _arrivalsRemaining, _offloading, current );
+		return new ParkFileWriter.ArrivalTimer( _arrivalMark, _arrivalsRemaining, _offloading,
+			_arrivalVehicle != 0 ? slots[_arrivalVehicle - 1] : 0, (slots[0], slots[1], slots[2]) );
 	}
 
 	/// <summary>How long a load waits after the last, in fours of sweeps - <c>Arrival.TimeBetweenArrivals</c>, 150.</summary>
@@ -1681,9 +1691,10 @@ public sealed partial class ParkPeople : Entity
 	/// triggered, which starts its script's circuit from its last spin.
 	/// </summary>
 	/// <remarks>
-	/// <b>Not the original's in two ways.</b> All three vehicles are stood as the park loads here, where the
-	/// original makes one at its first summons and starts it from its script's top by <c>VAR_STATUS</c> 1
-	/// (<c>0x0051a5ed</c>, the same call with the other variable). The ferry and the seaplane so stand at their first
+	/// <b>Not the original's in two ways.</b> All three vehicles' models and scripts are stood as the park loads
+	/// here, where the original makes one at its first summons and starts it from its script's top by
+	/// <c>VAR_STATUS</c> 1 (<c>0x0051a5ed</c>, the same call with the other variable); the thing itself is made at
+	/// that summons here too (<see cref="MakeVehicle"/>). The ferry and the seaplane so stand at their first
 	/// spin, at status 2, from the start, and a first summons finds the drive in already done: it makes the vehicle
 	/// current and sets no trigger, which would send it on empty. And the original falls back through the other two
 	/// when the wanted one's feature is missing; here a vehicle with no script is current all the same.
@@ -1699,15 +1710,8 @@ public sealed partial class ParkPeople : Entity
 			Log.Info( $"People: the {ParkFixedItems.VehicleName( _arrivalVehicle )} summoned on mGameTick {State.GameTick}"
 				+ (size == 0 ? ", at random" : "") );
 
-			// A vehicle the file names no thing for is made by the original here, once, by the object constructor,
-			// whose tail stamps the analyser's mLastObjectBuilt (FUN_004db090, 0x004db7a3). Here it stands already
-			// and is given no thing, so the stamp is all that is made of it: a file written after names none.
-			if ( _vehicleThings[_arrivalVehicle - 1] == 0 && !_vehicleMade[_arrivalVehicle - 1] )
-			{
-				_vehicleMade[_arrivalVehicle - 1] = true;
-				State.VehicleMade();
-				Unimplemented.Report( "VEHICLE_MADE_NO_THING" );
-			}
+			if ( _vehicleThings[_arrivalVehicle - 1] == 0 )
+				_vehicleThings[_arrivalVehicle - 1] = MakeVehicle( _arrivalVehicle );
 
 			// One that is stood at its first spin already, unloading, has done its drive in: it is current and no more.
 			if ( VehicleScript( _arrivalVehicle ) is { } stood && stood[VehicleState] == VehicleIsUnloading )
@@ -1719,6 +1723,38 @@ public sealed partial class ParkPeople : Entity
 			Log.Warning( $"People: the {ParkFixedItems.VehicleName( _arrivalVehicle )}'s script "
 				+ $"declares no {VehicleTrigger}, so it cannot be triggered" );
 		}
+	}
+
+	/// <summary>
+	/// Makes the thing of a vehicle the file names none for, as the summons does through the object constructor
+	/// (<c>FUN_0051a2f0</c>, <c>FUN_004db090</c>; <c>docs/exe/saves.md</c>, "OpenTPW's writer, a vehicle made at its
+	/// summons"): an object of the vehicle's item on cell (0,0), facing nought, its two ends that cell, at the head
+	/// of the object list and of the cell's own, which stamps the analyser's <c>mLastObjectBuilt</c>. The model and
+	/// the script stood under a stand-in id since the load take the new thing's (<see cref="ParkFixedItems.Made"/>).
+	/// Answers the thing, or nought where this park has no such item: counted, and nothing is made.
+	/// </summary>
+	/// <remarks>
+	/// <b>A deviation:</b> the id is <see cref="ParkState.NextThingId"/>'s, one past the highest used, where the
+	/// original takes the id last freed.
+	/// </remarks>
+	private int MakeVehicle( int vehicle )
+	{
+		if ( _behaviour.Catalogue is not { } catalogue || !catalogue.TryGet( ParkFixedItems.VehicleItem( vehicle ), out var item ) )
+		{
+			Unimplemented.Report( "VEHICLE_MADE_NO_ITEM" );
+			return 0;
+		}
+
+		var corner = MapStep.CellId( 0, 0 );
+		var thing = State.NextThingId();
+
+		State.AddObject( ParkBuilding.Constructed( item, thing, 0, 0, 0, corner, corner, ParkWorld.BuiltWhen.At( State.CalendarNow ) ) );
+		State.EnterCell( 0, 0, thing );
+		ParkFixedItems.Current?.Made( vehicle, thing );
+
+		Log.Info( $"People: the {ParkFixedItems.VehicleName( vehicle )} is made thing {thing} on mGameTick {State.GameTick}" );
+
+		return thing;
 	}
 
 	/// <summary>

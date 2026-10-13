@@ -342,9 +342,10 @@ public static class ParkModelTables
 	/// <summary>
 	/// The lookup records' shared flags on a bought thing's model with nothing attached:
 	/// <see cref="SharedHasPosition"/>, <see cref="SharedWalkable"/>, and <see cref="SharedHeadsHidden"/> where a
-	/// record is a head's. An arrival vehicle's model is loaded without the last (the ferry's records read so).
+	/// record is a head's. An arrival vehicle's model (<paramref name="vehicle"/>) is loaded without the last: the
+	/// bus's, the seaplane's and the ferry's records read so.
 	/// </summary>
-	public static int SharedFlags( ModelFile model )
+	public static int SharedFlags( ModelFile model, bool vehicle = false )
 	{
 		ArgumentNullException.ThrowIfNull( model );
 
@@ -360,7 +361,7 @@ public static class ParkModelTables
 			if ( (file & 0x2) != 0 )
 				shared |= SharedWalkable;
 
-			if ( (file & HeadFlag) != 0 )
+			if ( (file & HeadFlag) != 0 && !vehicle )
 				shared |= SharedHeadsHidden;
 		}
 

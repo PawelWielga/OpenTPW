@@ -688,7 +688,7 @@ over the copy, never the one held.
   candidates and the arrival timer theirs ("the staff pool and the arrival timer"), the file's objects, scripts
   and models as they run the fourth's ("OpenTPW's writer, the objects"); a thing bought and a thing sold the
   fifth's; a queue cell's model the sixth's; the arrival vehicle, a balloon let go and a thought read back
-  the seventh's; a model record's two tables, a rider's head and a made object's flags and corner their own
+  the seventh's; a vehicle made at its summons its own section's; a model record's two tables, a rider's head and a made object's flags and corner their own
   sections' below; the rest is Q257e and Q241j.
 - **Where.** `Level.WritePark( name )` writes `<player's folder>/<theme>/<name>.TPWS`, replacing a file of that
   name in another case. The console's `savepark <name>` is its one caller; the Save Park screen's OK stays counted
@@ -1372,10 +1372,10 @@ of the three `mArrivalVehicle_Size1..3` name, and `FUN_0051a690` reads that thin
 (`park.md`, "Arrivals"), so the handle and the script are one state.
 - **Written** (`ParkPeople.WrittenArrival`, `ParkWorld.PutArrival`): the thing the file names for the current
   vehicle's size, nought with none current, and only with the things, whose scripts go out as they run; without
-  them the handle is left the file's. **Counted, and written as none** (`SAVE_PARK_ARRIVAL_VEHICLE`): a vehicle
-  the file names no thing for, which is the ferry and the seaplane in a park that has only had the bus (they
-  are stood here from the load; the original makes each at its first summons, Q26c), and any vehicle where the
-  things are the file's.
+  them the handle is left the file's. A ferry or seaplane made at its summons is a thing since Q342 and is
+  written with it ("OpenTPW's writer, a vehicle made at its summons", below). **Counted, and written as none**
+  (`SAVE_PARK_ARRIVAL_VEHICLE`): a vehicle whose thing the writer leaves out, and any vehicle where the things
+  are the file's.
 - **Read back** (`ParkPeople`'s constructor): the size whose thing the handle is becomes current, and its
   script is resumed with the others, so its status is the save's. A handle that is none of the three is
   counted and none is current (`SAVED_CURRENT_ARRIVAL_VEHICLE`).
@@ -3100,6 +3100,98 @@ back.** The layout, the runs here and the original's load of the file are `advis
 park file"; the bytes are FileFormats `saves.md`, "The advisor (model 11)". `ParkFileWriter.Running.AdvisorHistories`
 names the records; `ParkWorld.PutAdvisorHistories` writes a record's tick, line, said byte and cuts where the
 thing lies, before any record of the body moves. Everything else of the thing is the file's.
+
+### OpenTPW's writer, a vehicle made at its summons
+
+**Q342: the ferry or seaplane made at its first summons is a thing of the park, and a file written after holds it
+as the original's own files hold one.**
+
+**What the original makes** (`park.md`, "The vehicle thing is made on demand"). `FUN_0051a2f0` calls the object
+constructor as `FUN_004db090( 1, item, 0, 0 )` (`0x0051a57e`: the packed cell 1, which is cell (0,0), the item's
+id from its description, and two noughts) and caches the new thing's id in the size's slot. The constructor
+builds the model in `FUN_004dd500`, which has two arms by the item's `+0x38`, `Info.DontApplyOffset`, set by the
+six fixed items alone: with it the model is made with flags `0x361` on the cell the item's
+`Info.EngineMapOffsetOverrideX` and `Y` name (`+0x20`, `+0x24`; the gates' 45 and 16), or on `DAT_00785594` and
+`DAT_00785598` where they are nought, with the item's two footprint overrides; without it, with `0x32f` on the
+thing's own `mTopLeft` cell. A vehicle's `.sam` sets neither override and costs nothing
+(`Upgrades[0].CostOfUpgrade 0`), so the constructor's withdrawal is nought.
+
+**What the original's files hold** (three written by the original with a vehicle made:
+`q257x/orig/fixed-by-the-original.TPWS`, seaplane thing 44 and ferry 32; `q253/orig/sold-by-the-original.TPWS`,
+40 and 32; `q252/orig/ctl-written-by-the-original.TPWS`, ferry 68; `parkfile.py -v` prints each):
+- the header's `mArrivalVehicle_Size2` or `_Size3` names the thing, and `mCurrentArrivalVehicle` while it is
+  current;
+- **its object record is an ordinary object's on the corner cell**: `mX` and `mY` `0x0080`, angle nought, the
+  item, the date of the summons, flags nought, `mState` 3, `mTopLeft`, `mEntryPos` and `mExitPos` all 1,
+  `mCanLoad` 1, quality 50, chance 100, ingredient 50, the three floats 100, and its name's first line
+  ("Seaplane", "Ferry") with the words between and after its characters whatever the stack held;
+- it heads `mFirstObject`'s list, the newest first, and **cell (0,0)'s chain**, where every fixed thing stands:
+  `mWho` is the newest vehicle and the chain runs ferry, seaplane, bus, lights, gates and on down to thing 1;
+- **its model record is a fixed item's**: flags `0x361`, cell (48,17), one cell square, as the bus's and the
+  lights' are in every Lost Kingdom file; its lookup records' shared flags are `0x1`, without the heads' `0x2`.
+
+**Built.** `ParkPeople.Summon` makes the thing where the slot is nought (`MakeVehicle`):
+`ParkBuilding.Constructed( item, id, 0, 0, 0, 1, 1 )` through `ParkState.AddObject`, which links it at the head
+of the object list and stamps `mLastObjectBuilt` as the constructor's tail does, and `EnterCell( 0, 0 )`. The
+model and the script that have stood since the load under an id of the scene's own go under the new thing
+(`ParkFixedItems.Made`, `ParkObjects.Restand`, `ParkRides.Rebind`). The writer then writes it as a thing bought
+("OpenTPW's writer, a thing bought and a thing sold"), with three differences: its model's record is a fixed
+item's (`ParkThingStates.MadeRecord`'s `vehicle`: `FixedItemFlags`, `FixedItemCellX` and `Y`, one cell, and
+`ParkModelTables.SharedFlags` without the heads' bit); a made object stands on its cell's chain before the
+file's things that are no person (`ParkWorld.PutPeople`); and the header's three slots are written with the
+current vehicle (`ParkPeople.WrittenArrival`, `ParkWorld.PutArrival`). `VEHICLE_MADE_NO_THING` is gone. Counted:
+`VEHICLE_MADE_NO_ITEM`, a park with no description for the vehicle, where nothing is made;
+`SAVE_PARK_ARRIVAL_VEHICLE`, a vehicle whose thing the writer leaves out, its slot and the current vehicle then
+written nought.
+
+**Predicted first** (`q342/PREDICTION.txt`). Round 1 held but for one line my own script misread; reading its
+file beside the original's then found what no prediction named, the model record written as a bought thing's
+(`0x32f`, cell (0,0), no tables), and after that mend one bit more (the shared flags read 3, the original's 1).
+The last run, on the final build, held nine of nine.
+
+**This game** (`q342/confirm.py`, three runs on the desktop, `q340/late30.TPWS`, saved on tick 1082 with 41
+things, the highest 42). Each run: `People: the ferry summoned on mGameTick 1093, at random`, `Park:
+mLastObjectBuilt stamped 17/2/2000 10:32:30 on mGameTick 1093`, `fixed item 'ferry' was thing 65532 and is thing
+43`, `People: the ferry is made thing 43 on mGameTick 1093` (the seaplane in the third run, from 65531);
+`arrivals` ended "current vehicle 3 (ferry, thing 43) status 1" and `vehicles` read the script running under
+thing 43. Saved on tick 1100 to 1102: "1 things bought written whole" and "mCurrentArrivalVehicle 43,
+mArrivalVehicle_Size1..3 15 0 43" (15 43 0 the seaplane's). The file: slots, current vehicle and `mFirstObject`
+as that line; the object list 43, 15, 24...; cell (0,0)'s chain 43, 15, 12, 11...; **thing 43's record equal to
+the original's own of the item in every byte outside its links, date, model handle, name's unwritten words,
+script handle and rings**; the seaplane's model record (`run-fix3`) the original's length, 135 bytes, and equal
+outside its script handle, node words and channel. One gap counted at the save, the script of the vehicle not
+yet made (`SAVE_PARK_SCRIPT_MADE_SINCE_THE_LOAD`; main's build counts both). Loaded back from the Load Park
+list: `fixed item 'ferry' is thing 43, catalogue 1604`, "the save's current arrival vehicle is thing 43,
+vehicle 3 (ferry)", nothing made and nothing stamped, and the vehicle drove on and was spent, the ferry on tick
+1265 and the seaplane on 1211. *Main's build* (Q341's own file, `q341/run-fix1/q341-fix.TPWS`): slots 15, 0, 0,
+no current vehicle, `mFirstObject` 15.
+
+**The original given the file** (`q342/orig/run.sh`, `worldwords.py` on the vehicle words, `thingwords.py` on
+the stamp, `object.py` on thing 43 with its script's first variables). *The ferry's* (`a`, round 1's file):
+from the first poll `size3` 43, the current vehicle 43 and `mFirstObject` 43, the stamp tick 1093's; the
+script's status went 1, 2 on tick 1161, 3, 4, 5, and 6 on 1264, and on 1265 the vehicle was forgotten and the
+bus current; no slot and no stamp moved in 150 s. *The seaplane's* (`b`, the final build's): `size2` 43 and
+current; status 6 on tick 1210 and forgotten on 1211, the tick this game forgets it on; the bus current on 1264
+for its load; and on tick 1460 the original made **its own** third vehicle, thing 41, `size3` going from 0 to
+41 with the stamp on that tick and not before, `size2` still 43. Its frames show the park drawn and running
+(`orig/a-quiet.png`). Q341's file, with no thing written, had the original make the vehicle again a tick after
+its load.
+
+| | The original | OpenTPW |
+|---|---|---|
+| A vehicle's first summons | makes an object on cell (0,0), slot and stamp with it | the same |
+| Its id | the id last freed (14, 41) | one past the highest used (43) |
+| Its model and script | made then, the script from its top | stood since the load under the scene's id, put under the thing then (Q26c) |
+| A file written after | slot, current vehicle, record, script, a fixed item's model | the same |
+| That file loaded | the vehicle current on its thing, nothing made | the same, in both games |
+| Its rings | the ferry's hold numbers | nought: what counts into them is not read |
+
+**Not built or not seen.** The id, the standing from the load and the rings (above; Q343, Q26c). The default
+cell's two globals are not traced to their key, and no other theme's vehicle record is measured. The first
+round of bugs put back (42) ran before the model record's mend; the eleven for the mend ran after it. In no
+game run: both vehicles made in one park (the test holds it), a load of sixty-one's own summons, the ferry's
+file of the final build in the original (round 1's ferry file and the final build's seaplane file were), a
+park made with no file, Full Simulation.
 
 ## What OpenTPW builds
 

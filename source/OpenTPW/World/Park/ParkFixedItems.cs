@@ -115,6 +115,35 @@ public sealed class ParkFixedItems : Entity
 		_ => "bus"
 	};
 
+	/// <summary>The catalogue item a vehicle is, 1 to 3: the bus, the seaplane and the ferry.</summary>
+	internal static int VehicleItem( int vehicle ) => vehicle switch
+	{
+		2 => SeaplaneCatalogueId,
+		3 => FerryCatalogueId,
+		_ => BusCatalogueId
+	};
+
+	/// <summary>Whether a catalogue item is one of the three arrival vehicles.</summary>
+	internal static bool IsVehicle( int catalogueId ) => catalogueId is BusCatalogueId or SeaplaneCatalogueId or FerryCatalogueId;
+
+	/// <summary>
+	/// A vehicle stood under an id of this class's own has been made a thing at its summons
+	/// (<c>ParkPeople.MakeVehicle</c>): its model, its animations and its script go under the new thing.
+	/// </summary>
+	internal void Made( int vehicle, int thing )
+	{
+		var item = VehicleName( vehicle );
+
+		if ( !_thingOf.TryGetValue( item, out var stood ) || stood == thing )
+			return;
+
+		ParkObjects.Current?.Restand( stood, thing );
+		ParkRides.Current?.Rebind( stood, thing );
+		_thingOf[item] = thing;
+
+		Log.Info( $"{ThemeName}: fixed item '{item}' was thing {stood} and is thing {thing}" );
+	}
+
 	/// <summary>
 	/// The gate's two sign panels, kept only so that they can be let go of again. They are painted
 	/// for this park rather than loaded by path, so nothing else holds them - see <see cref="OnDelete"/>.
@@ -139,8 +168,8 @@ public sealed class ParkFixedItems : Entity
 
 		// The three vehicles, which are not scenery - see the remarks on this class. Lost Kingdom's save
 		// names only the bus; the ferry and the seaplane are given ids below and stood anyway, so all three
-		// run their own scripts. The original makes a vehicle only when a crowd first needs it -
-		// docs/QUEUE.md Q26c.
+		// run their own scripts, and each takes a thing of the park's at its first summons (Made). The
+		// original makes the whole vehicle only then - docs/QUEUE.md Q26c.
 		("bus", false, world => ThingByCatalogue( world, BusCatalogueId )),
 		("ferry", false, world => ThingByCatalogue( world, FerryCatalogueId )),
 		("seaplane", false, world => ThingByCatalogue( world, SeaplaneCatalogueId ))
