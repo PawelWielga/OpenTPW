@@ -12,7 +12,7 @@ namespace OpenTPW;
 /// "A mechanic on his way", "The line of an opened tag message", "The buy screen's own line" and "The hire
 /// screen's own line".
 /// <para>
-/// Fifteen messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Sixteen messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
 /// nothing to ride and a park with no ride; five scored by the share of the park's rides, shops, sideshows,
@@ -20,8 +20,8 @@ namespace OpenTPW;
 /// "A shut staff room"); the line about a queue not joined to a path ("A queue not joined to a path"); and the
 /// lines about worn rides and about broken rides in a park with no mechanic ("Worn rides and no mechanic",
 /// "Broken rides and no mechanic"); the line about more rides than the mechanics can keep ("More rides than the
-/// mechanics can keep"); and the line about a poor selection of rides ("A poor selection of rides"). The other
-/// 140 polled rows are counted, and the other posted messages are unbuilt.
+/// mechanics can keep"); and the lines about a poor selection of rides and of shops ("A poor selection of rides", "A poor
+/// selection of shops"). The other 139 polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -38,6 +38,7 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireMoreMechanics = 7;
 	/// <summary>Message 0x3c, polled: the line about a poor selection of rides, scored where few of the kinds of ride on offer stand (0x0059d990).</summary>
 	internal const int PoorSelection = 0x3c;
+	internal const int PoorShopSelection = 0x47;
 	/// <summary>Row 62, polled: a park with no ride in it.</summary>
 	internal const int BuildRides = 0x3e;
 	/// <summary>Message 0x71, polled: the line about a queue not joined to a path, scored where a ride's queue is found unjoined (0x0059ef60).</summary>
@@ -111,18 +112,20 @@ internal sealed class ParkAdvisorMessages
 	/// whose MoreRidesThan is the least number of rides that must stand and whose PoorerThan the share, in whole
 	/// per cent, of the kinds of ride on offer that the kinds standing must be under for the key's value, and the
 	/// score is nought until <see cref="DaysForObjects"/> days after the newest object was made.
+	/// <paramref name="PoorOf"/> is whose kinds that score asks: the rides', or the shops' for row 71's
+	/// (0x0059dca0), whose section's least number is MoreShopsThan.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
 		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
 		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false,
 		bool PerWornRideWithNoMechanic = false, bool PerBrokenRideWithNoMechanic = false, string? RidesAMechanic = null,
-		string? PoorSelection = null );
+		string? PoorSelection = null, Shut PoorOf = Shut.Rides );
 
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
 
-	/// <summary>The key of the whole days since the newest object was made that row 60's score waits for (the balance object's +0x634).</summary>
+	/// <summary>The key of the whole days since the newest object was made that rows 60 and 71's scores wait for (the balance object's +0x634).</summary>
 	internal const string DaysForObjects = "WaitingTimes.DaysForObjects";
 
 	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490).</summary>
@@ -153,12 +156,15 @@ internal sealed class ParkAdvisorMessages
 	/// mLastStaffHired); and what row 60's reads: the kinds of ride on offer (0x004ca450 asked with nought: a
 	/// catalogue item of a ride's kind that is researched and costs no golden ticket), those of them of which a
 	/// thing stands (0x004ca7b0 asked with nought and nought) and the whole days since the newest object was made
-	/// (0x004c9070, from the analyser's mLastObjectBuilt).
+	/// (0x004c9070, from the analyser's mLastObjectBuilt); and what row 71's reads: the kinds of shop on offer
+	/// (0x004ca510: a catalogue item of a shop's kind that is researched, a golden ticket's or not) and those of
+	/// which a thing stands (0x004ca7b0 asked with one and nought, which passes over a golden ticket's).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
 		int UnjoinedQueue = 0, int StaffRooms = 0, int StaffRoomsShut = 0, int Mechanics = 0, int RidesWorn = 0, int RidesBroken = 0,
-		int DaysSinceStaffHired = 0, int RideKindsOnOffer = 0, int RideKindsStanding = 0, int DaysSinceObjectBuilt = 0 )
+		int DaysSinceStaffHired = 0, int RideKindsOnOffer = 0, int RideKindsStanding = 0, int DaysSinceObjectBuilt = 0,
+		int ShopKindsOnOffer = 0, int ShopKindsStanding = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -170,6 +176,14 @@ internal sealed class ParkAdvisorMessages
 			Shut.StaffRooms => (StaffRooms, StaffRoomsShut),
 			_ => (0, 0)
 		};
+
+		/// <summary>
+		/// What a poor selection's score reads of <paramref name="of"/>: its kinds on offer and standing, how many
+		/// of its things stand, the key of the least number of them in its section, and its word in the poll line.
+		/// </summary>
+		internal (int OnOffer, int Standing, int Things, string Least, string Word) Kinds( Shut of ) => of == Shut.Shops
+			? (ShopKindsOnOffer, ShopKindsStanding, Shops, "MoreShopsThan", "shops")
+			: (RideKindsOnOffer, RideKindsStanding, Rides, "MoreRidesThan", "rides");
 	}
 
 	/// <summary>The metadata table's rows, 0 to 0x15e.</summary>
@@ -241,6 +255,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
 		new( PoorSelection, "RidesPoorSelection.Score", 176, 173, Lines: 3, Group: 62, Polled: true, PoorSelection: "RidesPoorSelection" ),
+		new( PoorShopSelection, "ShopsPoorSelection.Score", 207, 205, Group: 73, Polled: true, PoorSelection: "ShopsPoorSelection", PoorOf: Shut.Shops ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
 		new( QueueUnconnected, "QueueUnconnected.Score", 288, 312, MaxInstances: 255, Group: 135, Polled: true, QueueNotJoined: true ),
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
@@ -449,6 +464,7 @@ internal sealed class ParkAdvisorMessages
 	/// row 60's (0x0059d990) is nought where no kind of ride is on offer, until DaysForObjects days after the
 	/// newest object was made, and with fewer rides than its section's MoreRidesThan, and then its key's value
 	/// where the kinds standing are under its section's PoorerThan per cent, in whole numbers, of those on offer;
+	/// row 71's (0x0059dca0) is the same of the shops, its least number its section's MoreShopsThan;
 	/// every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
@@ -486,9 +502,11 @@ internal sealed class ParkAdvisorMessages
 
 		if ( topic.PoorSelection is { } selection )
 		{
-			if ( _park?.Invoke() is not { RideKindsOnOffer: > 0 } offered || offered.DaysSinceObjectBuilt < Value( DaysForObjects ) ) return 0;
-			if ( offered.Rides < Value( $"{selection}.MoreRidesThan" ) ) return 0;
-			return offered.RideKindsStanding * 100 / offered.RideKindsOnOffer < Value( $"{selection}.PoorerThan" ) ? Value( topic.ScoreKey ) : 0;
+			if ( _park?.Invoke() is not { } offered ) return 0;
+			var kinds = offered.Kinds( topic.PoorOf );
+			if ( kinds.OnOffer <= 0 || offered.DaysSinceObjectBuilt < Value( DaysForObjects ) ) return 0;
+			if ( kinds.Things < Value( $"{selection}.{kinds.Least}" ) ) return 0;
+			return kinds.Standing * 100 / kinds.OnOffer < Value( $"{selection}.PoorerThan" ) ? Value( topic.ScoreKey ) : 0;
 		}
 
 		if ( topic.QueueNotJoined )
@@ -574,7 +592,11 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.PerWornRideWithNoMechanic && _park?.Invoke() is { } wear ) shut = $" worn={wear.RidesWorn} mechanics={wear.Mechanics}";
 		if ( topic.PerBrokenRideWithNoMechanic && _park?.Invoke() is { } breaks ) shut = $" broken={breaks.RidesBroken} mechanics={breaks.Mechanics}";
 		if ( topic.RidesAMechanic != null && _park?.Invoke() is { } staffed ) shut = $" rides={staffed.Rides} mechanics={staffed.Mechanics} sincehire={staffed.DaysSinceStaffHired}";
-		if ( topic.PoorSelection != null && _park?.Invoke() is { } offered ) shut = $" kinds={offered.RideKindsStanding}/{offered.RideKindsOnOffer} rides={offered.Rides} sincebuild={offered.DaysSinceObjectBuilt}";
+		if ( topic.PoorSelection != null && _park?.Invoke() is { } offered )
+		{
+			var kinds = offered.Kinds( topic.PoorOf );
+			shut = $" kinds={kinds.Standing}/{kinds.OnOffer} {kinds.Word}={kinds.Things} sincebuild={offered.DaysSinceObjectBuilt}";
+		}
 		return shut;
 	}
 

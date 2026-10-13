@@ -6517,6 +6517,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   screen, day 29 on tick 1112, the three others silent through tick 1114. Every prediction held in one round;
   61 bugs put back, each failing a test (one after a test was tightened); 3040 tests. `docs/exe/advisor-park.md`, "A poor selection of
   rides". I split the item: every other piece of the old Q335 is Q336.
+- [x] **Q336. The advisor tells a park with a poor selection of shops to build more.** Done 2026-10-13: one
+  piece of the old Q336. Row 71, message `0x47`, `ShopsPoorSelection`, is polled; its score (`0x0059dca0`,
+  loose code, disassembled) is row 60's with the shops' counts: nought where no kind of shop is on offer
+  (`0x004ca510`: the catalogue's shop items researched, a golden ticket's or not), until
+  `WaitingTimes.DaysForObjects`, 30, whole days after `mLastObjectBuilt`, and with fewer than `MoreShopsThan`,
+  2, shops, and then `Score`, 50, where the kinds standing (`0x004ca7b0( 1, 0 )`, which passes over a golden
+  ticket's) are under `PoorerThan`, 25, per cent of those on offer, in whole numbers. Responses 207 and 208 are
+  samples 205 and 206, no prop, group 73: tag row 73, string 75, the buy button of type 10. Built:
+  `ParkAdvisorMessages.PoorShopSelection`, a topic's `PoorOf`, `ParkFacts.ShopKindsOnOffer`,
+  `ShopKindsStanding` and `Kinds`, `ParkPeople.ShopKinds`, tag row 73. The shipped park offers three kinds of
+  shop, so one standing is 33 and the row cannot score there; the scene is the stock park with a second Drinks
+  Shop bought, two more shops marked researched in the file and the stamp written 692 ticks back: `poll
+  message=71 row=71 days=41 score=50 threshold=25 tick=963 result=post kinds=1/5 shops=2 sincebuild=30`, said
+  on tick 963 as sample 205, him up with his antennae and tag 73 on the mast, the bar's button opening "Buy
+  Shop" with the five on offer; day 29 said on tick 1118; four kinds on offer, two kinds standing and one shop
+  silent; main's build silent. The original, given the same five files: said on tick 963 with the same tag,
+  bar and "Buy Shop", on 1118 for day 29, silent on the other three. Every prediction held in one round, both
+  games. 69 bugs put back, each failing a test in the first round. Tests 3042 with the game; 1023 ran and 2019
+  skipped without. Harness `~/.cache/tpw-harnesses/q336/`. I split the item: its
+  other pieces are Q337.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

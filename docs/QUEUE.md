@@ -44,9 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q336. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q337. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q336 (`advisor-park.md`, "A poor selection of shops"): **the original's `mLastObjectBuilt` moved again
+  with nothing bought**, to tick 1085's on tick 1085 in `q336/shops1.TPWS` (`q336/orig/e-load.log`), and not
+  in `offer4` or `two30` through tick 1135; still not read (below). The seven other rows that read the newest
+  build are not built or read (73 to 75, 77 to 79 and 81; by their keys' places `ShopsResearchMore` and
+  `ShopsBuildShops` are near: name each with `advisorschema.py` after `disassemble_at`). In no game run: line
+  2, the line again past its cooldown, a golden-ticket shop (none in Lost Kingdom; the test holds both of its
+  rules), a thing built after the line, the bar's button with the buy screen open, a park made with no file,
+  Full Simulation. Not heard in either game.
   From Q335 (`advisor-park.md`, "A poor selection of rides"): **the original's `mLastObjectBuilt` moved to
   tick 1400's on tick 1400 with nothing bought**, in `q335/poor30.TPWS` left running (`q335/orig/b-load.log`,
   before its load); what was made is not read (the constructor's callers are the vehicle summons and the "End"
@@ -55,10 +63,10 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   cooldown, a golden-ticket ride standing or on offer, a thing built after the line, the bar's button with the
   buy screen open (the tests hold each but the last), a park made with no file, Full Simulation. Not heard in
   either game.
-  From Q334 (`advisor-park.md`, "The newest build"): eight advisor rows that read the days since
-  `mLastObjectBuilt` are not built or read (rows 71, 73 to 75, 77 to 79 and 81; score functions
-  `0x0059dca0` to `0x0059e2e0`, all undefined bytes: disassemble first; `0x004c9070` and row 60's
-  `0x0059d990` are read); a
+  From Q334 (`advisor-park.md`, "The newest build"): seven advisor rows that read the days since
+  `mLastObjectBuilt` are not built or read (rows 73 to 75, 77 to 79 and 81; score functions
+  `0x0059dde0` to `0x0059e2e0`, all undefined bytes: disassemble first; `0x004c9070`, row 60's
+  `0x0059d990` and row 71's `0x0059dca0` are read); a
   ferry or seaplane made at its first summons does not move the stamp (counted, `VEHICLE_MADE_BUILD_STAMP`;
   it goes with the made vehicle's own thing, Q26c). In no game run: a move's put-down, a purchase or a sale
   made in the original by hand, a park made with no file, Full Simulation.

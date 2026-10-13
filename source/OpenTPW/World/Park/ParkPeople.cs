@@ -2645,16 +2645,30 @@ public sealed partial class ParkPeople : Entity
 			}
 		}
 
+		var shopKinds = ShopKinds( _behaviour.Catalogue?.All ?? [], id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
+
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
 			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut,
 			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired,
 			RideKinds( item => _research?.IsResearched( item.Id ) == true ), RideKinds( item => State.BuiltOf( item.Id ).Standing > 0 ),
-			State.DaysSinceObjectBuilt );
+			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing );
 	}
 
 	/// <summary>The catalogue's items of a ride's kind that cost no golden ticket and that <paramref name="counted"/> holds for (0x004ca450, 0x004ca7b0).</summary>
 	private int RideKinds( Func<ParkItemCatalogue.Item, bool> counted )
 		=> _behaviour.Catalogue?.All.Count( item => item.UiType == ItemDescriptionFile.Ride && item.GoldenTicketCost == 0 && counted( item ) ) ?? 0;
+
+	/// <summary>
+	/// The kinds of shop the advisor's row 71 reads of <paramref name="items"/>: on offer, the items of a shop's
+	/// kind that are researched, a golden ticket's or not (0x004ca510); standing, those of a shop's kind that
+	/// cost no golden ticket and of which a thing stands, researched or not (0x004ca7b0 asked with one and nought).
+	/// </summary>
+	internal static (int OnOffer, int Standing) ShopKinds( IEnumerable<ParkItemCatalogue.Item> items, Func<int, bool> researched, Func<int, int> standing )
+	{
+		var shops = items.Where( item => item.UiType == ParkRideOperation.ShopUiType ).ToArray();
+
+		return (shops.Count( item => researched( item.Id ) ), shops.Count( item => item.GoldenTicketCost == 0 && standing( item.Id ) > 0 ));
+	}
 
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:
 	// Fire removes immediately; the original marks +3 then drains deletion after the retry. See park-gate.md.

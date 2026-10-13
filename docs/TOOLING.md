@@ -154,6 +154,18 @@ whole list):
   screen on its mechanics' tab. The same park says row 113's line on tick 996 and row 259's on 1053 in both
   games. In the original `thingwords.py %PID% SECS 5:0x21c38:Q:lasthire` reads the stamp; `hire <candidate> <x>
   <y>` in this game's console stamps it (`candidates` lists the pool), and the log says so.
+- **A poor selection of shops, and the advisor's line about it** (Q336): row 71 wants two shops, under 25 per
+  cent of the kinds of shop on offer standing, and thirty days since the newest build. **The shipped park
+  offers three kinds, so it cannot score there**: mark two more researched in the file first
+  (`original/research.py <in> <out> 1206`, then `1212`: five on offer, one kind is 20; both games keep a byte
+  written 1 for a shop whose research costs money). `q336/scene.py <out> <bin> base1 1203` is the stock park
+  paused on tick 917 with `buy 1203 41 22 0` (a shop on that cell stands open); `q336/mk.py` marks the shops and
+  writes the stamp of tick 271 (day 30 on the row's turn, tick 963; 808 and every 155) and of 272 (day 29).
+  Both games say sample 205 with no hat on tick 963 and leave tag 73, whose bar's first button builds the buy
+  screen on its shops tab ("Buy Shop"). **In the original the frame of him is taken with `GRAB=1`**
+  (`a-g10.png`): `run.sh`'s own `told` shot comes after `loadfile.sh` returns, twenty seconds on, when a
+  fourteen-second line is over. **A silent file's proof of its tick is the next load's log**, whose first lines
+  are the park before it (`c`'s park is read at tick 1136 in `d-load.log`).
 - **A poor selection of rides, and the advisor's line about it** (Q335): row 60 wants three rides, under 30 per
   cent of the kinds on offer standing (the shipped park offers four: one kind is 25, two are 50) and thirty days
   since the newest build, the analyser's `mLastObjectBuilt` at thing 5's record's `+73516`
