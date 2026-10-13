@@ -78,6 +78,12 @@ whole list):
   row) as the `POLL` of a `loadfile.sh` load: `fctrl` 0x27f is 53-bit precision, so `FILD`, `FMUL float ptr` is a
   double of the float key (five times the float nearest 0.2 is more than one). The same hit gives the row's turn
   (its tick) and both sides of the compare.
+- **A polled row whose shipped score is under the advisor's 25** (Q344, row 79's `Score` 20): neither game can
+  say it as shipped, so both are run under a raised `Score` beside the key whose edge is asked (`q344/confirm.py`,
+  `q344/orig/run.sh` with `POORER=`, `MORE=`, `SCORE=`); `Score` 25 is the control that the limit is strict
+  (`result=under-threshold` here, a fresh record there). A whole-number share's edge is one key apart: 62 silent
+  and 63 said pins five kinds of eight in both games. **The leavers' summons in this game is not on a fixed tick**
+  (1093 in Q341's runs, 1139 in Q344's): a day-29 check asks whether a stamp came before the row's next turn.
 - **Four kinds of ride in an Instant Action park** (Q343): `stockscene.py ... 912 "buy 1101 41 22 0" "buy 1102 70
   40 0" "buy 1104 55 30 0"` (a Crazy Ape, a Rocky Racers and an Aztec Mayhem beside the stock Belly Bounce, each
   left shut as bought, which both games count as a kind standing). The Instant Action catalogue holds no fifth.

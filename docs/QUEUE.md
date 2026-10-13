@@ -44,9 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q344. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q345. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q344 (`advisor-park.md`, "A poor selection of features"): **row 79's line is said bare-headed**: the
+  theme's own advisor and costume (model slot 1, prop -1; in Lost Kingdom the fly in an explorer's hat, no
+  antennae, `q344/orig/a-told.png`) are not built, `ADVISOR_THEME_COSTUME` counted; whether slot 1 is a second
+  model file or the one model dressed is not read (Q308's note, below in this file). Row 81 (`0x0059e2e0`) is
+  not read, and row 76 waits for the research. In no game run: line 2, the line again past its cooldown, day 29
+  in the original, no kind of feature on offer, a golden-ticket feature, a feature built after the line, the
+  bar's button with the buy screen open, a park made with no file, Full Simulation (not asked: the row reads
+  neither mode). Not heard in either game.
   From Q343 (`advisor-park.md`, "Too few sideshows for the park's size"): **the one park in which the shipped
   game says row 78's line was run in neither game**: five kinds of ride to one of sideshow, which needs Full
   Simulation and its research (the test holds it; Q327's catch-up is where it belongs). Rows 79 (`0x0059e1c0`)
@@ -253,8 +261,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the original's menu pause is not measured. In no game run: a second tag, a tag taking another's place, the
   door's tags, either right click (the tests hold each). Not heard in either game.
   From Q308 (`advisor-park.md`, "What he wears for a line"): the theme's own advisor model (slot 1, `Advisor_JUN.md2`, 137 rows) and its costume (prop -1,
-  `ThemeAdvisorCostumes`) are not built (`ADVISOR_THEME_COSTUME`, counted where a built topic names one: none
-  does). A clip word's `0x10000` and its particles are a gesture row's, not built. The hat is paler than the
+  `ThemeAdvisorCostumes`) are not built (`ADVISOR_THEME_COSTUME`, counted where a built topic names one: row
+  79's does, Q344, and its line is said bare-headed). A clip word's `0x10000` and its particles are a gesture row's, not built. The hat is paler than the
   original's (his light is set against his gloves, not decoded). In no game run: the ticket hat (the door's
   lines; the tests hold it), a second line after a hat, any other prop. The call from the speaker to the model
   is held by the game run alone.

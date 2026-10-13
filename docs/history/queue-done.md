@@ -6665,6 +6665,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   ride, and four), with the ride sold, with the sideshow sold, with the wealth limit over the bank and at four
   kinds under 0.25; both said it at three kinds under 0.33333334. 62 bugs put back, all fail a test (one after
   the test's bank went further into the red). `advisor-park.md`, "Too few sideshows for the park's size".
+- [x] **Q344. The advisor's line about a poor selection of features is scored as the original scores it, which the shipped game never says.** (2026-10-13;
+  I split the item: this is one piece, Q345 the rest.) Row 79, message `0x4f`, `FeaturesPoorSelection` (score
+  `0x0059e1c0`, loose code disassembled): row 75's sum of the features, nought with no kind on offer, until 30
+  days after the newest build, with fewer than `MoreFeaturesThan` (5) features and where the kinds standing are
+  `PoorerThan` (20) per cent or more of those on offer; then `Score`, 20, which is not over the advisor's 25, so
+  no shipped park hears it. Confirmed in both games under a changed `Advisor.sam` (`q344/PREDICTION.txt`): at 63
+  and a score of 26 on the stock park, `score=26 ... tick=971 result=post kinds=5/8 features=8`, tag 81 and "Buy
+  Miscellaneous Items" (`q344/run-fix1`), the original's record `(971, 0, 1, 0)` on tick 971 with the same tag
+  and screen; both silent at 62, at a score of 25, under the shipped keys and at nine features, both said it at
+  eight. Three misses of mine, none the rule's (the help text's number, the summons' tick in the day-29 run, who
+  is up). **A deviation: this game says the line bare-headed, the original in the theme's explorer's hat**
+  (`ADVISOR_THEME_COSTUME`, filed under Q345). 65 bugs put back, all fail a test. `advisor-park.md`, "A poor
+  selection of features".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

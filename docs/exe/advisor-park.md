@@ -689,7 +689,7 @@ mechanic's decide posts began `Advisor: sample 202 ... wearing 5,0`, `advisor` r
 |---|---|---|
 | The props of a line | put on after every clip's start | put on as the line begins |
 | The hat's colour | a full yellow | paler: he is lit past his textures (`AdvisorModel`'s light, set against his gloves) |
-| The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows | not built: no built topic names one; counted `ADVISOR_THEME_COSTUME` if one ever does |
+| The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows: in Lost Kingdom the fly in an explorer's hat, no antennae (`q344/orig/a-told.png`) | not built: the one built topic that names it, row 79's, says its line bare-headed and counts `ADVISOR_THEME_COSTUME` ("A poor selection of features") |
 | A clip word's `0x10000` (no prop, the head hidden) and its particles | a gesture row's | not built: the gesture rows are counted, `ADVISOR_RESPONSE_GESTURE_ROW` |
 
 ## The tag a line leaves on the aerial (Q309)
@@ -1895,8 +1895,9 @@ advisor score function: rows 60 (`0x0059d990`), 71 (`0x0059dca0`), 73 (`0x0059dd
 (`0x0059df30`), 77 (`0x0059e070`), 78 (`0x0059e110`), 79 (`0x0059e1c0`) and 81 (`0x0059e2e0`), found by their
 `CALL` bytes in the file on disk; those functions are undefined bytes too, and of them rows 60's, 71's, 73's and
 74's are read ("A poor selection of rides", "A poor selection of shops", "A park with rides and no shop", "Too few
-shops for the park's size", below), and so are rows 75's, 77's and 78's since ("A poor selection of sideshows", "A
-park with shops and no sideshow", "Too few sideshows for the park's size"); **rows 79's and 81's are not**.
+shops for the park's size", below), and so are rows 75's, 77's, 78's and 79's since ("A poor selection of
+sideshows", "A park with shops and no sideshow", "Too few sideshows for the park's size", "A poor selection of
+features"); **row 81's is not**.
 
 **Measured in files**, twelve the original wrote: in ten the stamp is the newest standing object's own build
 date (`+22` of its record: the shipped park's is thing 15's, tick 604; a park with a ride bought on tick 924
@@ -2754,8 +2755,118 @@ more. In f and h a tag stood from tick 996, row 113's, the bought rides' queues 
 the shipped game says the line, which needs Full Simulation and its research (the test holds it, and the
 breakpoint and run g are its evidence in the original); line 2 (sample 220; the test holds the turn), the line
 said again past its 120 quarter-ticks, day 29 in the original, a golden-ticket ride or sideshow standing, a
-sideshow built after the line, the bar's button with the buy screen open, a park made with no file. Rows 79 and
-81 are not read, and row 76 is read and not built. Not heard in either game.
+sideshow built after the line, the bar's button with the buy screen open, a park made with no file. Row 79 is
+"A poor selection of features", below; row 81 is not read, and row 76 is read and not built. Not heard in either
+game.
+
+## A poor selection of features (message `0x4f`, Q344)
+
+**Row 79, message `0x4f`, `FeaturesPoorSelection`:** polled, category 0, either game mode, one copy, first
+response 223, two lines in turn. Responses 223 and 224 are samples 221 and 222 ("You don't have a very good
+selection of features, you know: trees, fountains, statues, things to make your park look nice. Maybe you need to
+build some more. You can find them in the miscellaneous items list on the buy screen"; "The park has precious few
+features. It's like Nebraska with a gate ..."): the random gesture chain, **model slot 1 and prop -1, the theme's
+own advisor and its costume**, group 81. It is the polled row after row 78: from the shipped park's cursor its
+turns are ticks 816, 971, 1126 and every 155 on.
+
+**Its score, `0x0059e1c0`** (loose code, disassembled for this; `ECX` the balance object) is row 75's with a 3
+for each 2, each step on the park analyser (`FUN_00519510`):
+
+1. The kinds of feature on offer, `0x004ca5d0` (loose code, the twin of `0x004ca570` with a 3 for the 2): the
+   catalogue's items whose `Info.WhichUIType` (`+0x4ac`) is 3, a feature, and whose control record is researched
+   (`+0x10`), a golden ticket's or not. None: nought.
+2. The whole days since the newest build, `0x004c9070`, under `[ECX + 0x634]`, `WaitingTimes.DaysForObjects`,
+   **30** (a signed `JL`): nought.
+3. The features standing, `FUN_004ca8e0( 3, 0 )`, under `[ECX + 0x2a4]`, `FeaturesPoorSelection.MoreFeaturesThan`,
+   **5** (a signed `JL`): nought.
+4. The kinds of feature standing, `0x004ca7b0( 3, 0 )`, times 100 and divided by step 1's count (`DIV`, whole
+   numbers), not below `[ECX + 0x2a0]`, `FeaturesPoorSelection.PoorerThan`, **20** (`JNC`): nought.
+5. Otherwise `[ECX + 0x2a8]`, `FeaturesPoorSelection.Score`, **20**.
+
+**So the shipped game never says the line, in any park**: a polled row is posted only where its score is over
+`GeneralAdvisor.MinScoreForConsideration`, 25, and the row's whole score is 20. The stock park does not reach the
+score either: eight kinds of feature are researched in its file (items 1401, 1402, 1403, 1406, 1411, 1413, 1425
+and 1428, the same eight in both catalogues), five of them stand (the toilet, 1402, three times, 1413 twice,
+1403, 1406 and 1411), eight things, and five of eight are 62.
+
+**Its tag** is row 81 of the tag table: key 383, picture 2, string 83 ("If you built some more features your
+park would look better, and your visitors might be happier."), the bar's first button of type 12 (the buy screen
+on its fourth tab, the features'), no second, thirty seconds.
+
+### OpenTPW (`ParkAdvisorMessages.PoorFeatureSelection`, `PoorOf: Shut.Features`; `ParkFacts.Features`, `FeatureKindsOnOffer`, `FeatureKindsStanding`; tag row 81)
+
+A twenty-second polled topic, scored as the original scores it: row 60's topic field with `PoorOf` the features,
+whose section's least number is `MoreFeaturesThan`. `ParkPeople.AdvisorFacts` counts the things of a feature's item
+and asks `ParkPeople.Kinds` for the kinds, as it does for the shops and the sideshows. The poll line ends `
+kinds=K/T features=N sincebuild=N`. `ParkTags.Rows` lists row 81.
+
+**A deviation, said at the topic's row: the line is said bare-headed.** The responses' model slot 1 and prop -1
+are the theme's own advisor and costume, which are not built ("What he wears for a line"); this game says the
+line with the one model, no hat and both antennae, and counts `ADVISOR_THEME_COSTUME`. The original's figure for
+the line is the same fly in the Lost Kingdom's explorer's hat, no antennae (`q344/orig/a-told.png`). Under the
+shipped keys neither game says the line, so no shipped park shows the difference.
+
+**The scenes**: Q338's `shop30.TPWS` (the stock park on tick 915, the stamp of tick 273: day 30 on tick 971) and
+`feat29.TPWS`, the same with the stamp of tick 280 (`q344/mk.py`). **Seven `Advisor.sam`**, the section's three
+keys: the shipped one (20, 5, 20); *63* (`PoorerThan` 63, `Score` 26); *62* (62, 26); *Score 25* and *Score 20*
+under 63; *eight* and *nine* (`MoreFeaturesThan` 8 and 9 under 63 and 26). This game reads a changed one from a
+private game folder; the original's own is swapped for a run and put back (`q344/orig/run.sh`).
+
+**Predicted first** (`q344/PREDICTION.txt`), both games, written before any run. Not predictions, and said there:
+the listing, the keys, this game's own count of eight, five and eight. **Three misses, each mine and none the
+rule's**: the buy button's help text on the features' tab is 524 where I wrote 523; the leavers' summons in the
+day-29 run came on tick 1139 where I wrote 1093, so that run's check was written again and the run made again;
+and who is up in the original is the fly in the theme's hat, where I guessed another figure.
+
+**This game** (`q344/confirm.py <mode>`; the first two on the desktop, the rest off-screen). *63*
+(`run-fix1`, four of five, the miss the help text's number): `poll message=79 row=79 days=42 score=26
+threshold=25 tick=971 result=post kinds=5/8 features=8 sincebuild=30`, `post message=79 ... result=queued` and
+`attempt=1 message=79 subject=0 score=26 threshold=25 response=223 sample=221 line=0 tick=971`; `saying
+sp_221.mp2 ... wearing=-1,0`, `1x ADVISOR_THEME_COSTUME`, him up with no hat (`1-line.png`), `tags` reading
+`tag=81/picture=2/subject=0` with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked:
+`message bar: tag 81 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=524 second=hidden
+erase=mb_erase` and the text. The button clicked: `button type 12 opens the buy screen on tab 3 and takes tag 81
+off`, `windows` reading `ParkBuyScreen tab 3`, and the frame "Buy Miscellaneous Items" (`3-screen.png`). *The
+shipped keys* (`run-stock1`): `score=0 ... tick=971 result=no-score kinds=5/8 features=8 sincebuild=30`, nobody
+up and the mast bare by tick 1000 (`1-end.png`). *62* (`run-p62`): the same nought. *Score 25* (`run-s25`):
+`score=25 ... result=under-threshold`, no post. *Score 20* (`run-s20`): `score=20 ... result=under-threshold`.
+*Eight* (`run-m8`): `score=26 ... result=post`, said on tick 971. *Nine* (`run-m9`): `score=0 ... no-score`.
+*63 on `feat29`* (`run-d29`): `score=0 ... tick=971 result=no-score ... sincebuild=29`, then `days=48 score=26 ...
+tick=1126 result=post ... sincebuild=36`, said on that tick; no vehicle was made before it. None of the silent
+runs said the line or left tag 81 by tick 999.
+
+**Main's build** under 63 (`run-control`): no line of message 79, no attempt, no tag by tick 1001.
+
+**The original** (`q344/orig/run.sh <file>` with `POORER=`, `MORE=` and `SCORE=`: `advisor.py ...
+0x4f,0x4e,0x4d,0x50,... poll` beside `tags.py`, `bar.py`, `screens.py` and two guests' places for the ticks; six
+programs, each started on its own `Advisor.sam`, all on `shop30`). *63* (run a): message `0x4f`'s record went
+from fresh to **(971, 0, 1, 0) on tick 971**, 14.6 s after the load's click; one tag with it at (84, 909, 154,
+974), the mast at (94, 901, 144, 984), its text string 83; he is up in the explorer's hat (`orig/a-told.png`).
+The tag clicked: the bar's data read thing 0, buttons 12 and 0, item 0 and the text. The button clicked:
+`screens.py`'s buy screen went from `0x0` to a pointer on tick 1066 and the tag was gone on 1068, the frame "Buy
+Miscellaneous Items" with the same ten rows as this game's (`orig/a-button.png`). *62* (run b): fresh through
+tick 1221: **five kinds of eight, as this game counts them**. *The shipped keys* (run c): fresh through 1096.
+*Score 25* (run d): fresh through 1226: 25 is not over 25. *Eight* (run e): (971, 0, 1, 0) on tick 971. *Nine*
+(run f): fresh through 1219: **eight features**.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 79 | polled; nought with no kind of feature on offer, until 30 days after the newest build, with fewer than `MoreFeaturesThan` features, and where the kinds standing are `PoorerThan` per cent or more of those on offer; then `Score` | the same |
+| The shipped keys (20, 5, 20) | not said: the stock park's share is 62, and 20 is not over 25 | the same (`score=0`; `score=20 ... under-threshold` under 63) |
+| `PoorerThan` 63, `Score` 26, day 30 | said on tick 971, line 0 | the same (score 26) |
+| 62 | not said | the same |
+| `Score` 25 | not said | the same (`under-threshold`) |
+| `MoreFeaturesThan` 8, and 9 | said on tick 971, and not said | the same |
+| Day 29 | not run | nought on tick 971; said on tick 1126 |
+| Who says it | the fly in the theme's explorer's hat, no antennae | **the fly bare-headed, both antennae** (`ADVISOR_THEME_COSTUME`) |
+| The tag and the bar | row 81, part 2, string 83; button 12 builds the buy screen on its features tab, tag off | the same |
+
+**Not built or not seen.** The theme's own advisor model and its costume (above). In no game run: line 2 (sample
+222; the test holds the turn), the line said again past its 120 quarter-ticks, day 29 in the original, no kind of
+feature on offer, a golden-ticket feature, a feature built after the line, the bar's button with the buy screen
+open, a park made with no file, Full Simulation (the row asks neither mode: not asked). Whether slot 1's model is
+a second file of the same fly or the same model dressed was not read. Row 81 is not read, and row 76 is read and
+not built. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 

@@ -2640,7 +2640,7 @@ public sealed partial class ParkPeople : Entity
 	/// </remarks>
 	internal ParkAdvisorMessages.ParkFacts AdvisorFacts()
 	{
-		var (rides, sideshows, shops, toilets) = (0, 0, 0, 0);
+		var (rides, sideshows, shops, toilets, features) = (0, 0, 0, 0, 0);
 		var (ridesShut, shopsShut, sideshowsShut, toiletsShut) = (0, 0, 0, 0);
 		var (staffRooms, staffRoomsShut) = (0, 0);
 		var unjoined = 0;
@@ -2688,16 +2688,22 @@ public sealed partial class ParkPeople : Entity
 				++shops;
 				shopsShut += shut;
 			}
+			else if ( item.UiType == ItemDescriptionFile.Feature )
+			{
+				++features;
+			}
 		}
 
 		var shopKinds = Kinds( _behaviour.Catalogue?.All ?? [], ParkRideOperation.ShopUiType, id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
 		var sideshowKinds = Kinds( _behaviour.Catalogue?.All ?? [], ItemDescriptionFile.SideShow, id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
+		var featureKinds = Kinds( _behaviour.Catalogue?.All ?? [], ItemDescriptionFile.Feature, id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
 			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut,
 			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired,
 			RideKinds( item => _research?.IsResearched( item.Id ) == true ), RideKinds( item => State.BuiltOf( item.Id ).Standing > 0 ),
-			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing, State.Balance, sideshowKinds.OnOffer, sideshowKinds.Standing );
+			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing, State.Balance, sideshowKinds.OnOffer, sideshowKinds.Standing,
+			features, featureKinds.OnOffer, featureKinds.Standing );
 	}
 
 	/// <summary>The catalogue's items of a ride's kind that cost no golden ticket and that <paramref name="counted"/> holds for (0x004ca450, 0x004ca7b0).</summary>
@@ -2705,9 +2711,9 @@ public sealed partial class ParkPeople : Entity
 		=> _behaviour.Catalogue?.All.Count( item => item.UiType == ItemDescriptionFile.Ride && item.GoldenTicketCost == 0 && counted( item ) ) ?? 0;
 
 	/// <summary>
-	/// The kinds of shop the advisor's row 71 reads of <paramref name="items"/>, and of sideshow its row 75, by
-	/// <paramref name="uiType"/>: on offer, the items of that kind that are researched, a golden ticket's or not
-	/// (0x004ca510, 0x004ca570); standing, those of that kind that cost no golden ticket and of which a thing
+	/// The kinds of shop the advisor's row 71 reads of <paramref name="items"/>, of sideshow its row 75 and of
+	/// feature its row 79, by <paramref name="uiType"/>: on offer, the items of that kind that are researched, a
+	/// golden ticket's or not (0x004ca510, 0x004ca570, 0x004ca5d0); standing, those of that kind that cost no golden ticket and of which a thing
 	/// stands, researched or not (0x004ca7b0 asked with the kind and nought).
 	/// </summary>
 	internal static (int OnOffer, int Standing) Kinds( IEnumerable<ParkItemCatalogue.Item> items, int uiType, Func<int, bool> researched, Func<int, int> standing )

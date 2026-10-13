@@ -12,7 +12,7 @@ namespace OpenTPW;
 /// "A mechanic on his way", "The line of an opened tag message", "The buy screen's own line" and "The hire
 /// screen's own line".
 /// <para>
-/// Twenty-one messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Twenty-two messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
 /// nothing to ride and a park with no ride; five scored by the share of the park's rides, shops, sideshows,
@@ -20,12 +20,12 @@ namespace OpenTPW;
 /// "A shut staff room"); the line about a queue not joined to a path ("A queue not joined to a path"); and the
 /// lines about worn rides and about broken rides in a park with no mechanic ("Worn rides and no mechanic",
 /// "Broken rides and no mechanic"); the line about more rides than the mechanics can keep ("More rides than the
-/// mechanics can keep"); the lines about a poor selection of rides, of shops and of sideshows ("A poor selection
-/// of rides", "A poor selection of shops", "A poor selection of sideshows"); the lines about a park with rides
-/// and no shop and one with shops and no sideshow ("A park with rides and no shop", "A park with shops and no
-/// sideshow"); and the lines about too few shops and too few sideshows for the park's size ("Too few shops for
-/// the park's size", "Too few sideshows for the park's size"). The other 134 polled rows are counted, and the
-/// other posted messages are unbuilt.
+/// mechanics can keep"); the lines about a poor selection of rides, of shops, of sideshows and
+/// of features ("A poor selection of rides", "A poor selection of shops", "A poor selection of sideshows", "A
+/// poor selection of features"); the lines about a park with rides and no shop and one with shops and no
+/// sideshow ("A park with rides and no shop", "A park with shops and no sideshow"); and the lines about too few
+/// shops and too few sideshows for the park's size ("Too few shops for the park's size", "Too few sideshows for
+/// the park's size"). The other 133 polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -45,6 +45,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int PoorShopSelection = 0x47;
 	/// <summary>Message 0x4b, polled: the line about a poor selection of sideshows, scored where few of the kinds of sideshow on offer stand (0x0059df30).</summary>
 	internal const int PoorSideshowSelection = 0x4b;
+	/// <summary>Message 0x4f, polled: the line about a poor selection of features, scored where few of the kinds of feature on offer stand (0x0059e1c0).</summary>
+	internal const int PoorFeatureSelection = 0x4f;
 	/// <summary>Message 0x49, polled: the line about a park with rides and no shop, scored by the park's age in days (0x0059dde0).</summary>
 	internal const int BuildShops = 0x49;
 	/// <summary>Message 0x4d, polled: the line about a park with shops and no sideshow, scored by the park's age in days (0x0059e070).</summary>
@@ -128,7 +130,7 @@ internal sealed class ParkAdvisorMessages
 	/// score is nought until <see cref="DaysForObjects"/> days after the newest object was made.
 	/// <paramref name="PoorOf"/> is whose kinds that score asks: the rides', or the shops' for row 71's
 	/// (0x0059dca0), whose section's least number is MoreShopsThan, or the sideshows' for row 75's (0x0059df30),
-	/// whose is MoreSideshowsThan.
+	/// whose is MoreSideshowsThan, or the features' for row 79's (0x0059e1c0), whose is MoreFeaturesThan.
 	/// <paramref name="PerDayWithNoShop"/> makes the score row 73's (0x0059dde0): in a park where a kind of ride
 	/// stands and no kind of shop the key's value and this key's for each whole day of the park's age, and nought
 	/// until <see cref="DaysForObjects"/> days after the newest object was made.
@@ -154,10 +156,10 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
 
-	/// <summary>The key of the whole days since the newest object was made that rows 60, 71, 73 to 75, 77 and 78's scores wait for (the balance object's +0x634).</summary>
+	/// <summary>The key of the whole days since the newest object was made that rows 60, 71, 73 to 75 and 77 to 79's scores wait for (the balance object's +0x634).</summary>
 	internal const string DaysForObjects = "WaitingTimes.DaysForObjects";
 
-	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490).</summary>
+	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490); the features are counted shut by none, and are a poor selection's alone (0x0059e1c0).</summary>
 	internal enum Shut
 	{
 		None,
@@ -165,7 +167,8 @@ internal sealed class ParkAdvisorMessages
 		Shops,
 		Sideshows,
 		Toilets,
-		StaffRooms
+		StaffRooms,
+		Features
 	}
 
 	/// <summary>
@@ -191,14 +194,18 @@ internal sealed class ParkAdvisorMessages
 	/// row 73's reads: the kinds of ride and of shop of which a thing stands and the days since the newest object;
 	/// and what row 74's reads besides: the bank's balance (FUN_005195d0's thing's +0xc); and what row 75's
 	/// reads: the kinds of sideshow on offer (0x004ca570: a catalogue item of a sideshow's kind that is researched,
-	/// a golden ticket's or not) and those of which a thing stands (0x004ca7b0 asked with two and nought).
+	/// a golden ticket's or not) and those of which a thing stands (0x004ca7b0 asked with two and nought); and
+	/// what row 79's reads: the things of a feature's item (FUN_004ca8e0 asked for kind 3), the kinds of feature
+	/// on offer (0x004ca5d0: a catalogue item of a feature's kind that is researched, a golden ticket's or not)
+	/// and those of which a thing stands (0x004ca7b0 asked with three and nought).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
 		int UnjoinedQueue = 0, int StaffRooms = 0, int StaffRoomsShut = 0, int Mechanics = 0, int RidesWorn = 0, int RidesBroken = 0,
 		int DaysSinceStaffHired = 0, int RideKindsOnOffer = 0, int RideKindsStanding = 0, int DaysSinceObjectBuilt = 0,
 		int ShopKindsOnOffer = 0, int ShopKindsStanding = 0, int Balance = 0,
-		int SideshowKindsOnOffer = 0, int SideshowKindsStanding = 0 )
+		int SideshowKindsOnOffer = 0, int SideshowKindsStanding = 0,
+		int Features = 0, int FeatureKindsOnOffer = 0, int FeatureKindsStanding = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -219,6 +226,7 @@ internal sealed class ParkAdvisorMessages
 		{
 			Shut.Shops => (ShopKindsOnOffer, ShopKindsStanding, Shops, "MoreShopsThan", "shops"),
 			Shut.Sideshows => (SideshowKindsOnOffer, SideshowKindsStanding, Sideshows, "MoreSideshowsThan", "sideshows"),
+			Shut.Features => (FeatureKindsOnOffer, FeatureKindsStanding, Features, "MoreFeaturesThan", "features"),
 			_ => (RideKindsOnOffer, RideKindsStanding, Rides, "MoreRidesThan", "rides")
 		};
 	}
@@ -294,6 +302,10 @@ internal sealed class ParkAdvisorMessages
 		new( PoorSelection, "RidesPoorSelection.Score", 176, 173, Lines: 3, Group: 62, Polled: true, PoorSelection: "RidesPoorSelection" ),
 		new( PoorShopSelection, "ShopsPoorSelection.Score", 207, 205, Group: 73, Polled: true, PoorSelection: "ShopsPoorSelection", PoorOf: Shut.Shops ),
 		new( PoorSideshowSelection, "SideshowsPoorSelection.Score", 215, 213, Group: 77, Polled: true, PoorSelection: "SideshowsPoorSelection", PoorOf: Shut.Sideshows ),
+
+		// Row 79's two responses name the theme's own advisor model and its costume, which are not built: the line is
+		// said by the one model, bare-headed, and the costume counted (docs/exe/advisor-park.md, "A poor selection of features").
+		new( PoorFeatureSelection, "FeaturesPoorSelection.Score", 223, 221, Prop: AdvisorProps.ThemeCostume, Group: 81, Polled: true, PoorSelection: "FeaturesPoorSelection", PoorOf: Shut.Features ),
 		new( BuildShops, "ShopsBuildShops.Score", 211, 209, Prop: HardHat, Group: 75, Polled: true, PerDayWithNoShop: "ShopsBuildShops.AdditionalPerDay" ),
 		new( BuildMoreShops, "ShopsBuildMoreShops.Score", 213, 211, Prop: HardHat, Group: 76, Polled: true, ShopsPerRide: "ShopsBuildMoreShops" ),
 		new( BuildSideshows, "SideshowsBuildSideshows.Score", 219, 217, Prop: HardHat, Group: 79, Polled: true, PerDayWithNoSideshow: "SideshowsBuildSideshows.AdditionalPerDay" ),
@@ -510,7 +522,8 @@ internal sealed class ParkAdvisorMessages
 	/// newest object was made, and with fewer rides than its section's MoreRidesThan, and then its key's value
 	/// where the kinds standing are under its section's PoorerThan per cent, in whole numbers, of those on offer;
 	/// row 71's (0x0059dca0) is the same of the shops, its least number its section's MoreShopsThan, and row
-	/// 75's (0x0059df30) the same of the sideshows, its least number its section's MoreSideshowsThan;
+	/// 75's (0x0059df30) the same of the sideshows, its least number its section's MoreSideshowsThan, and row
+	/// 79's (0x0059e1c0) the same of the features, its least number its section's MoreFeaturesThan;
 	/// row 73's (0x0059dde0) is nought where no kind of ride stands, until DaysForObjects days after the newest
 	/// object was made, and where a kind of shop stands, and then its key's value and its per-day key's for each
 	/// whole day of the park's age; row 77's (0x0059e070) is the same a kind on, nought where no kind of shop
