@@ -49,6 +49,7 @@ place to look for tools. Each file's docstring is its manual.
 | `original/screens.py PID SECS` | The original's memory: what the gadget's three category buttons are left on (`[0x007cb28c]`, `[0x007cb2a0]`, `[0x007cb290]`) and which park screen is up (the open screen `[0x007c24c8]`, the buy screen `[0x007cc1f8]`, the hire screen `[0x007ca308]`, each pointer printed, so a screen destroyed and built again shows) and the hire screen's tab (`[0x007ca30c]`, `hiretab`, 0 the cleaners' to 4 the scientists'), a line a change with the wall clock and `mGameTick`. Says what a click opened without a frame. A `POLL` for `loadfile.sh` |
 | `original/bar.py PID SECS` | The original's memory: the message bar (its rectangle, shown bit, parent, its data's thing, button types, item and text, each child's rectangle), the tag on show and the one being put on show, the gadget's body with its children two deep, the arm's handle, and each tag's rectangle, shown bit, timer byte and whether a stream plays on it, the changed parts a change with the wall clock and `mGameTick`. Says what a click on a tag, on the bar or on the camcorder button does to the arm, step by step. A `POLL` for `loadfile.sh` |
 | `original/breakq.py PID SECS THING [all]` | The original's memory, **written**: breaks a ride (`VAR_BREAKSTAT`) each time it is open with a queue that has stood four seconds, so every break puts a queue out, a line a break. With `all` it first writes nought over the mask byte at `0x0050133f`, so every guest dismissed from a queue plays kids `0x80`, not one in eight. Stop the original afterwards |
+| `original/inside.py PID SECS [LEVEL]` | The original's memory: the guests inside the park as the analyser counts them (`FUN_004c9130`: a guest on a cell of type 0, 1, 3, 9 or 10) and those of them whose toilet need is over LEVEL (60 unless given), with their ids, the share in whole per cent the advisor's row 82 sets against 25, and the door, a line a change with `mGameTick`. Says who the advisor's and the gate's counts hold on a tick. A `POLL` for `loadfile.sh` (Q347) |
 | `original/worldwords.py PID SECS OFFSET[:FMT[:NAME]] ...` | The original's memory: any words of the world (`[0x0080239c]` + OFFSET), a line a change with `mGameTick`: the arrival vehicle that is current and the three slots' things are `0x1da72a:H:current 0x1da72c:H:size1 0x1da72e:H:size2 0x1da730:H:size3`. A `POLL` for `loadfile.sh`; `thingwords.py` reads a thing's |
 | `original/brk.sh ADDR [HITS] [SECS] [WORDS]` | Who CALLS a routine of the original: a hardware breakpoint through `gdb`, attached and detached again; at each hit `mGameTick`, the registers and the stack's words that point into the game's code, nearest first (the first is the caller's return address; read each in Ghidra, a real one follows a `CALL`). `watch.sh` says who writes an address, this says why. `BRK_PRINT='printf "fctrl %x st0 %.17g st1 %.17g\n", $fctrl, (double)$st0, (double)$st1'` adds one gdb line a hit: the x87's control word and stack at a compare |
 | `original/thingpoke.py PID SECS KIND THING:OFFSET:FMT=VALUE ...` | The original's memory, **written**: holds words of things at given values, written again whenever they read otherwise, a line a write; refuses a thing whose type byte (`+2`) is not KIND. `150 15 7:0x38:B=1` holds the weather's `mLightning`, so bolts and thunder come on a clear day. `thingwords.py` reads the same words. Stop the original afterwards |
@@ -585,6 +586,14 @@ GH=766` there, or the pointer is off):
   status and trigger) say whether it kept the vehicle: `q342/orig/run.sh` (Q342).
 - **`parkfile.models()` is keyed by a model's HANDLE**, the object record's `+54`, which is its slot plus one:
   taking one off reads the record before it (Q342).
+- **A park whose guests need a toilet, with none standing:** `lib/stockscene.py ... 960 "sell 21" "sell 22" "sell
+  23" "toilet 70"` (the stock park's toilets are things 21 to 23, its thirteen guests 29 and 31 to 42, all inside
+  on tick 962; `toilet <n> <guest>` sets one). The advisor's row 82 is polled on tick 974 (819 and every 155 on)
+  and says sample 225 where over a quarter of the guests inside are over 60. Only guests whose id divides by
+  four (32, 36, 40) gain a point every sixteen ticks, in both games, and guests come and go, so the share
+  moves by itself in a long run: read it with `original/inside.py` or
+  this game's poll line. A runtime cell's record in the original is `[0x008023a0] + (y * 128 + x) * 68`, the
+  packed id LESS ONE (Q347).
 
 ## The original under Proton
 

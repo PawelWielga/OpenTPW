@@ -3043,9 +3043,124 @@ the same tag. *feat30* (run c) and *noside30* (run d): fresh through the runs' e
 **Not built or not seen.** In no game run: the line said again past its 120 quarter-ticks (the test holds that it is the one line
 again), score 22 on tick 1438 (a summons falls on that tick), day 29 said a turn later in this game, a
 golden-ticket sideshow or feature, a feature built after the line, the bar's button with the buy screen open, a
-park made with no file, Full Simulation (the row asks neither mode: not asked). Why the original's row 82 is
-silent in a park with no toilet is not read (`0x0059e380`), nor row 80's score (`0x0059e260`); row 76 is read and
-not built. Not heard in either game.
+park made with no file, Full Simulation (the row asks neither mode: not asked). Row 82 is silent in those parks
+because few of their guests need a toilet ("A park with no toilet", below). Row 80's score (`0x0059e260`) is not
+read; row 76 is read and not built. Not heard in either game.
+
+## A park with no toilet (message `0x52`, Q347)
+
+**Row 82, message `0x52`, `FeaturesNoToilets`:** polled, category 0, either game mode, one copy, first response
+227, **three lines**. Responses 227 to 229 are samples 225 to 227 ("You don't have any bathrooms in the park and
+visitors are leaving when they need to go ...", "You don't have any bathrooms, and when visitors need to go
+they're just, well, going elsewhere ...", "Your park is really hopping, and I don't mean busy ..."): the random
+gesture chain, model slot 0 and props 0 and 0, the lobby's fly bare-headed, group 84. It is the polled row after
+row 81: from the shipped park's cursor its turns are ticks 819, 974, 1129, 1284, 1439, 1594 and every 155 on.
+
+**Its score, `0x0059e380`** (loose code, disassembled for this; `ECX` the balance object), each step on the park
+analyser (`FUN_00519510`):
+
+1. The door, `FUN_004c9050` (`mParkClosed` nought, `FUN_0051a280`). A shut park: nought.
+2. The toilets, `FUN_004c9ee0` (row 262's count: an object's `+0x32 & 1`). Any, open or shut: nought.
+3. The guests inside whose toilet need is over a level, `0x004c9290` (loose code) handed the low byte of
+   `[ECX + 0x2b8]`: every thing of type 1 that `FUN_004fa990` passes (a cell of type 0, 1, 3, 9 or 10, as
+   `park-gate.md` has it) whose need, the float at `+0x1ac` cut to a whole number (`0x0067a830`) and to its low
+   byte, is above that byte (an unsigned `JBE` at `0x004c9305`).
+4. The guests inside, `FUN_004c9130`. None: nought.
+5. The first count times 100 over the second, a whole-number `IDIV`: at or under `[ECX + 0x2bc]` (a signed
+   `JLE`), nought; otherwise `[ECX + 0x2c0]`.
+
+The three keys are `FeaturesNoToilets.NeedingMoreThan`, `.MorePeopleThanThisNeeding` and `.Score`
+(`lib/advisorschema.py`), **60, 25 and 90** in `Advisor.sam`. The park's age, the newest build and what else
+stands are not asked: an open park with no toilet scores 90 on the row's turn whenever more than a quarter of
+the guests inside it are over 60, and 90 is well above `MinScoreForConsideration`.
+
+**Why it is rarely heard.** A guest is made with a need of 0 to 29 (`guest-arrivals.md`), only a guest in four
+gains a point every sixteen ticks, and one over 80 sets off out of the park (`ride-operation.md`). In Q345's runs,
+whose files had toilets until tick 1434 or 1584, the record stayed fresh: this game's poll of the same
+`q345/nofeat30.TPWS` read `needing=0/22` on tick 1594 (`q347/run-old`).
+
+**Its tag** is row 84 of the tag table: key 383, picture 2, string 86, the bar's first button of type 12 (the buy
+screen on its fourth tab; help row 524), no second, thirty seconds. String 86 reads "Your park needs some
+toilets, so your visitors have somewhere to go." in the English folder this game reads, and "... some bathrooms
+..." in the american one the original reads.
+
+### OpenTPW (`ParkAdvisorMessages.NoToilets`, a topic's `NeedingToiletWithNone`, `ToiletNeedOver`; `ParkFacts.GuestsInside`, `GuestsNeedingToilet`; tag row 84)
+
+A twenty-fourth polled topic, scored as the original scores it. `ParkPeople.AdvisorFacts` counts the guests on a
+counting cell (`GateGuestCensus`'s test) and those of them whose `Toilet`, cut to a whole number's low byte, is
+over the advisor's level; with no advisor there is no level and none is counted. The poll line ends ` closed=N
+toilets=N needing=N/N`. `ParkTags.Rows` lists row 84.
+
+**The scenes** (`q347/scene.py`, `mkscenes.sh`; the stock park paused on tick 962 to 965, thirteen guests inside,
+the console's `sell` and `toilet`): *need13*, the three toilets sold and every guest's need 70; *need3* and
+*need4*, the toilets sold, every guest at 10 and three or four at 70; *lvl60*, the toilets sold and every guest at
+60; *stand*, the toilets standing and every guest at 70; *shut13*, need13 with the door shut by a click on the
+entry-price screen. **The console's `toilet` writes a need no play has made**: the files are instruments, read by
+both games.
+
+**Predicted first** (`q347/PREDICTION.txt`), both games, three rounds, each written before its runs. Not
+predictions, and said there: the listing, the keys, the row, the tag, the strings.
+
+**This game** (`q347/confirm.py <mode>`; the first on the desktop, the rest off-screen). *need13* (`run-fix1`,
+five of five on its first run): `poll message=82 row=82 days=42 score=90 threshold=25 tick=974 result=post
+closed=0 toilets=0 needing=13/13`, `post message=82 ... result=queued` and `attempt=1 message=82 subject=0
+score=90 threshold=25 response=227 sample=225 line=0 tick=974`; `saying sp_225.mp2 ... wearing=0,0 slot=0`, him
+up bare-headed with his antennae over a park with no toilet (`1-line.png`), `tags` reading
+`tag=84/picture=2/subject=0` with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked:
+`message bar: tag 84 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=524 second=hidden
+erase=mb_erase` and the text. The button clicked: `button type 12 opens the buy screen on tab 3 and takes tag 84
+off`, `windows` reading `ParkBuyScreen tab 3`, and the frame "Buy Miscellaneous Items" (`3-screen.png`).
+*need3* (`run-need3`): `score=0 ... tick=974 result=no-score closed=0 toilets=0 needing=3/13`, 23 per cent.
+*need4* (`run-need4`): `score=90 ... result=post ... needing=4/13`, 30 per cent, said on tick 974. *lvl60*
+(`run-lvl60`): `no-score ... needing=0/13`; left to tick 1304 (`run-long`) it said nothing. *stand*
+(`run-stand`): `no-score closed=0 toilets=3 needing=13/13`. *shut13* (`run-shut`): `no-score closed=1 toilets=0
+needing=13/13`. None of the silent runs said the line or left tag 84 by tick 990.
+
+**Main's build** on *need13* (`run-control`): no line of message 82, no attempt, no tag by tick 1003.
+
+**The original** (`q347/orig/run.sh <file>`: `advisor.py ... 0x52,0x51,... poll` beside `thingwords.py` on four
+guests' needs, `tags.py`, `bar.py` and `screens.py`; ten loads of this game's files, the shipped `Advisor.sam`).
+*need13* (run a): message `0x52`'s record went from fresh to **(974, 0, 1, 0) on tick 974**, 3.7 s after the
+load's click; one tag with it at (84, 909, 154, 974), the mast at (94, 901, 144, 984), its text the american
+string 86; he is up bare-headed with his antennae (`orig/a-g3.png`). Run a2 clicked the tag and the bar's
+button: the bar's data read thing 0, buttons 12 and 0, item 0 and the text, `screens.py`'s buy screen went from
+`0x0` to a pointer on tick 1091 and the tag was gone on 1093, the frame "Buy Miscellaneous Items" with "Small
+bathroom" unticked (`orig/a2-button.png`). *need3* (run b2): fresh through tick 1184. *need4* (run c): **(974, 0,
+1, 0) on tick 974** with the same tag. *stand* (run e): fresh through tick 1104. *shut13* (run f): fresh through
+tick 1184, message `0x81` waiting in a slot. The first load of *need3* (run b) loaded nothing: run a2 had left
+the buy screen up and the load's clicks went into it.
+
+*lvl60*, four loads. Guests 32, 36 and 40 read 61 from tick 976 and the others 60 throughout, in each. Run d:
+fresh on ticks 974 and 1129 and **said on tick 1284**, which was not predicted; run d2: fresh through tick 1479.
+Runs d3 and d4 were made with `original/inside.py`, written for this, which counts the guests inside and those
+over 60 as the listing above has the analyser count them: 13 inside and none over on tick 964, as this game's
+`gate` census and poll line read of the same file; 3 of 13 from tick 976; **3 of 12, a share of 25, at the turn
+of tick 1129, and the record stayed fresh**; 2 of 10 and 2 of 11 at tick 1284, fresh; 1 of 13 and 1 of 15 at
+tick 1439, fresh; never over 25 and never said, through ticks 1528 and 1538. What stood in run d on tick 1284 was
+not counted: guest 32 read 80 there, so three were over 60, and the rule needs eleven or fewer inside. The
+tool's first two runs are void (`orig/round3-wrong-cell/`): it read the cell beside each guest's, the runtime
+cell array being indexed by the packed id less one (`0x004fa9b6`).
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 82 | polled; nought in a shut park, with a toilet standing and with nobody inside; then `Score` where the guests inside over `NeedingMoreThan` are more than `MorePeopleThanThisNeeding` per cent of them | the same |
+| No toilet, 13 of 13 at 70, tick 974 | said on tick 974, line 1 | the same (score 90) |
+| 4 of 13 (30) | said on tick 974 | the same |
+| 3 of 13 (23) | not said | the same (`no-score ... needing=3/13`) |
+| 3 of 12 (25) | not said (runs d3, d4, tick 1129) | the test holds one of four; not seen in a run |
+| Every guest at 60 | not said on tick 974; three guests then gain a point every sixteen ticks, and one run of four said it on tick 1284 | not said on tick 974, nor through tick 1304 in one run |
+| The toilets standing, the park shut | not said | the same (`toilets=3`, `closed=1`) |
+| Who says it | the lobby's fly, bare-headed | the same |
+| The tag and the bar | row 84, part 2, string 86; button 12 builds the buy screen on its features tab, tag off | the same |
+| The tag's words | the american folder's, "... some bathrooms ..." | the English folder's, "... some toilets ..." |
+
+**Not built or not seen.** In no game run: lines 2 and 3 and the first again past the 120 quarter-ticks (the test
+holds them), a guest outside the park (the test holds that they are neither count), a need past 255, a park made
+with no file, Full Simulation (the row asks neither mode: not asked). **Left alone, this game's guests and the
+original's do not come and go alike**, so a long run of one file need not speak on the same turn in both: only
+the turn straight after a load was compared. Rows 83 and 84 are posted, not polled, and who posts them is not
+read: row 83's one response, 230, is sample 227 again with group 85, and row 84's score, `0x0059e410`, is
+`FeaturesFarToToilets.Score` alone (60). Row 80's score (`0x0059e260`) is not read. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 

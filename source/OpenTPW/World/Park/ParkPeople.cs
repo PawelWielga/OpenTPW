@@ -2631,7 +2631,9 @@ public sealed partial class ParkPeople : Entity
 	/// GoldenTicketCost is nought), those of them of which a thing stands (0x004ca7b0 asked with nought and
 	/// nought: the control record's count above nought) and the whole days since the newest object was made
 	/// (0x004c9070, <see cref="ParkState.DaysSinceObjectBuilt"/>); and the bank's balance (FUN_005195d0's
-	/// thing's +0xc, <see cref="ParkState.Balance"/>). With no catalogue no kind is counted.
+	/// thing's +0xc, <see cref="ParkState.Balance"/>); and the guests inside the park (FUN_004c9130,
+	/// <see cref="GateGuestCensus"/>) with those of them whose toilet need is over the advisor's level
+	/// (0x004c9290). With no catalogue no kind is counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2646,6 +2648,16 @@ public sealed partial class ParkPeople : Entity
 		var unjoined = 0;
 		var (ridesWorn, ridesBroken) = (0, 0);
 		var wornBelow = State.AdvisorMessages?.WornBelow ?? 0;
+		// The need is taken as its whole number's low byte, as the original compares it (0x004c9301); with no
+		// advisor there is no level to be over.
+		var toiletNeedOver = State.AdvisorMessages?.ToiletNeedOver ?? 0xff;
+		var (inside, needing) = (0, 0);
+		foreach ( var peep in _peeps )
+		{
+			if ( !InsideGateCensus( peep.Navigator ) ) continue;
+			++inside;
+			if ( ((int)peep.Toilet & 0xff) > toiletNeedOver ) ++needing;
+		}
 
 		foreach ( var thing in State.ObjectsInChainOrder() )
 		{
@@ -2703,7 +2715,7 @@ public sealed partial class ParkPeople : Entity
 			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired,
 			RideKinds( item => _research?.IsResearched( item.Id ) == true ), RideKinds( item => State.BuiltOf( item.Id ).Standing > 0 ),
 			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing, State.Balance, sideshowKinds.OnOffer, sideshowKinds.Standing,
-			features, featureKinds.OnOffer, featureKinds.Standing );
+			features, featureKinds.OnOffer, featureKinds.Standing, inside, needing );
 	}
 
 	/// <summary>The catalogue's items of a ride's kind that cost no golden ticket and that <paramref name="counted"/> holds for (0x004ca450, 0x004ca7b0).</summary>

@@ -44,9 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q347. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q348. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q347 (`advisor-park.md`, "A park with no toilet"): **left alone, this game's guests and the original's
+  do not come and go alike**: of four loads of `q347/lvl60.TPWS` the original said row 82's line on tick 1284
+  in one (three of eleven or fewer inside over 60: not counted in that run) and this game's one run was silent
+  through tick 1304; only the turn straight after a load was compared. Rows 83 and 84 (`FeaturesFarToToilets`,
+  score `0x0059e410`) are posted and who posts them is not read; row 80 (`0x0059e260`) is not read. In no game
+  run: lines 2 and 3, the line again past its cooldown, a share of exactly 25 in this game (3 of 12 was silent
+  in the original; the test holds 1 of 4), a guest outside the park, a park made with no file, Full Simulation
+  (not asked: the row reads neither mode). Not heard in either game.
   From Q346 (`advisor-park.md`, "The theme's own advisor and its costume"): **the pith helmet is paler than the
   original's**, yellow with a white band where the original's is tan with a grey one, as the hard hat is paler:
   `AdvisorModel`'s light is set against the lobby model's gloves, and the original's light (26.67, -26.67, 800
@@ -56,8 +64,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the original this session (its frames are Q344's and Q345's), a slot 0 line straight after a slot 1 line in
   the original, the three other themes' models and costumes, Full Simulation (not asked: the model is the
   level's in either mode). Not heard in either game.
-  From Q345 (`advisor-park.md`, "A park with sideshows and no feature"): the original's row 82 (`0x0059e380`,
-  `FeaturesNoToilets`, Score 90) stayed fresh in six loads of a park with no toilet: not read. Row 80
+  From Q345 (`advisor-park.md`, "A park with sideshows and no feature"): row 80
   (`0x0059e260`, `FeaturesResearchMore`) is not read; row 76 waits for the research. In no game run: the line
   again past its cooldown, score 22 on tick 1438 (a summons falls on that tick in both games), day 29 said a
   turn later in this game (a vehicle's stamp came first; the original's was held by a write), a golden-ticket

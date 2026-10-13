@@ -6702,6 +6702,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   antennae as the original's (`run-fix1/1-line.png` beside `q345/orig/a-g4.png`), and the mechanic's line after
   it `wearing 5,0 on model slot 0`; main's build bare-headed, counted once. 5862 helmet pixels against nought.
   41 of 41 bugs put back fail a test (`advisor-park.md`, "The theme's own advisor and its costume").
+- [x] **Q347. The advisor tells an open park with no toilet to build some when over a quarter of its guests need one.**
+  (2026-10-13; split from the bundle below, which is Q348.) Row 82, message `0x52`, `FeaturesNoToilets`, is
+  polled (`0x0059e380`): nought in a shut park, with a toilet standing and with nobody inside, and otherwise
+  `Score`, 90, where the guests inside whose toilet need is over `NeedingMoreThan`, 60 (`0x004c9290`), are more
+  than `MorePeopleThanThisNeeding`, 25, per cent of them; three lines, bare-headed, tag 84. `q347/confirm.py
+  fix`, five of five: the stock park with its toilets sold and thirteen guests at 70 read `poll message=82 ...
+  score=90 ... tick=974 result=post closed=0 toilets=0 needing=13/13` and said response 227 on tick 974, the tag
+  and the bar's button opening "Buy Miscellaneous Items" (`run-fix1/1-line.png`, `3-screen.png`); the original
+  given the same file said it on tick 974 with the same tag and screen (`orig/a-g3.png`, `a2-button.png`). 4 of
+  13 said and 3 of 13 not, in both games; the toilets standing and the door shut silent in both; main's build
+  silent. 67 of 67 bugs put back fail a test (`advisor-park.md`, "A park with no toilet").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

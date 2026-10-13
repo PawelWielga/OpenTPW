@@ -30,6 +30,7 @@ public class ParkAdvisorMessageTests
 			+ "SideshowsPoorSelection.PoorerThan 15\nSideshowsPoorSelection.MoreSideshowsThan 2\nSideshowsPoorSelection.Score 45\n"
 			+ "FeaturesPoorSelection.PoorerThan 20\nFeaturesPoorSelection.MoreFeaturesThan 5\nFeaturesPoorSelection.Score 20\n"
 			+ "FeaturesBuildFeatures.Score -40\nFeaturesBuildFeatures.AdditionalPerDay 1\n"
+			+ "FeaturesNoToilets.Score 90\nFeaturesNoToilets.NeedingMoreThan 60\nFeaturesNoToilets.MorePeopleThanThisNeeding 25\n"
 			+ "ShopsBuildMoreShops.ShopsPerRideRatio 0.15\nShopsBuildMoreShops.WealthMoreThan 20000\nShopsBuildMoreShops.Score 70\n"
 			+ "SideshowsBuildMoreSideshows.SideshowsPerRideRatio 0.2\nSideshowsBuildMoreSideshows.WealthMoreThan 20000\nSideshowsBuildMoreSideshows.Score 80\n" ) ) );
 
@@ -147,7 +148,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 32, written.Count );
+		Assert.AreEqual( 33, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -944,7 +945,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 132, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 131, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -2064,6 +2065,111 @@ public class ParkAdvisorMessageTests
 	}
 
 	/// <summary>
+	/// Row 82, message 0x52, is polled (0x0059e380): nought in a shut park, nought where a toilet stands, nought
+	/// with no guest inside, and otherwise FeaturesNoToilets.Score, 90, where the guests inside whose toilet need
+	/// is over NeedingMoreThan, 60, are more than MorePeopleThanThisNeeding, 25, per cent of them in whole numbers:
+	/// four of thirteen, 30, score, and three, 23, do not. Three lines in turn, bare-headed, with tag 84, whose bar
+	/// carries the buy button of type 12.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the door, the toilets or the guests inside not asked, or asked the other way; the share
+	/// taken of the needing, or not in whole numbers, or 25 enough; the two keys each other's; the level's low
+	/// byte not taken; the row not polled; two lines or four; the response, the sample, the prop or the group
+	/// another's; tag 84's row another's; the poll line's words.
+	/// </remarks>
+	[TestMethod]
+	public void AnOpenParkWithNoToiletIsToldToBuildSomeWhenEnoughOfItsGuestsNeedOne()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 82 };
+		var settings = Settings();
+		var messages = new ParkAdvisorMessages( settings, cursor: cursor );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 3, Sideshows: 1, WaitingToOpen: 0, Shops: 2, Toilets: 0,
+			DaysSinceObjectBuilt: 0, Features: 4, FeatureKindsStanding: 3, GuestsInside: 13, GuestsNeedingToilet: 3 );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		void Round( int at )
+		{
+			cursor.Row = 82;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 5000; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+		}
+
+		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.NoToilets );
+		Assert.AreEqual( (0x52, "FeaturesNoToilets.Score", "FeaturesNoToilets", 227, 225, 3, 1, 0, true, 84, 0, -1),
+			(topic.Id, topic.ScoreKey, topic.NeedingToiletWithNone, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.NeedingToiletWithNone != null ), "no other row is scored so" );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 82 ) );
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "before any sweep has handed the park in" );
+		Assert.AreEqual( ((0, 0), (0, 0), (0, 0)), (ParkAdvisorMessages.PropsOf( 227 ), ParkAdvisorMessages.PropsOf( 228 ), ParkAdvisorMessages.PropsOf( 229 )) );
+		Assert.AreEqual( (0, 0, 0), (ParkAdvisorMessages.SlotOf( 227 ), ParkAdvisorMessages.SlotOf( 228 ), ParkAdvisorMessages.SlotOf( 229 )), "the lobby's model says it, not the theme's" );
+		var row = ParkTags.Rows.Single( one => one.Id == 84 );
+		Assert.AreEqual( (ParkTags.NoTag, 2, 86, 12, 0, 30000, 0), (row.Key, row.Picture, row.String, row.Button1, row.Button2, row.Life, row.Kind) );
+		Assert.AreEqual( 60, messages.ToiletNeedOver );
+
+		// Three of thirteen need one: 23 per cent is not more than 25.
+		Round( 1594 );
+		Assert.AreEqual( (0, "no-score", 83, 0), (messages.ScoreOf( topic, 1594 ), messages.PollAnswer( 82 ), cursor.Row, said.Count) );
+		Assert.AreEqual( " closed=0 toilets=0 needing=3/13", messages.PollFacts( topic ), "the poll line names what the score read" );
+
+		// Four of thirteen, 30, is; one of four, 25, is not, and two of seven, 28 in whole numbers, is.
+		facts = facts with { GuestsNeedingToilet = 4 };
+		Assert.AreEqual( 90, messages.ScoreOf( topic, 1594 ) );
+		facts = facts with { GuestsInside = 4, GuestsNeedingToilet = 1 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "25 per cent is not more than 25" );
+		facts = facts with { GuestsInside = 103, GuestsNeedingToilet = 26 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "25.2 per cent is 25 in whole numbers" );
+		facts = facts with { GuestsInside = 7, GuestsNeedingToilet = 2 };
+		Assert.AreEqual( 90, messages.ScoreOf( topic, 1594 ) );
+		Assert.AreEqual( 90, messages.ScoreOf( topic, 3 ), "the park's age is not asked" );
+		facts = facts with { DaysSinceObjectBuilt = 500, Rides = 0, Sideshows = 0, Shops = 0, Features = 0, FeatureKindsStanding = 0, ToiletsShut = 5, WaitingToOpen = 9 };
+		Assert.AreEqual( 90, messages.ScoreOf( topic, 1594 ), "what else stands, the newest build and who waits outside are not asked" );
+
+		// A shut park, a toilet standing and a park with nobody inside are each nought.
+		facts = facts with { Closed = true };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "a shut park" );
+		Assert.AreEqual( " closed=1 toilets=0 needing=2/7", messages.PollFacts( topic ) );
+		facts = facts with { Closed = false, Toilets = 1 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "one toilet standing, shut or not" );
+		Assert.AreEqual( " closed=0 toilets=1 needing=2/7", messages.PollFacts( topic ) );
+		facts = facts with { Toilets = 0, GuestsInside = 0, GuestsNeedingToilet = 0 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "nobody inside" );
+		facts = facts with { GuestsInside = 0, GuestsNeedingToilet = 5 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "nobody inside is asked before the share is taken" );
+		facts = facts with { GuestsInside = 13, GuestsNeedingToilet = 4 };
+
+		// Said on its turn, its three lines in turn and then the first again, each leaving tag 84.
+		Round( 1594 );
+		Assert.AreEqual( "post", messages.PollAnswer( 82 ) );
+		// The wait is 120 fours of sweeps: tick 1594 is in four 398, so 2071, in four 517, is inside it and 2072 is not.
+		Round( 2071 );
+		Round( 2072 );
+		Round( 2552 );
+		Round( 3032 );
+		CollectionAssert.AreEqual( new[] { (1594, 227, 225), (2072, 228, 226), (2552, 229, 227), (3032, 227, 225) }, said );
+		CollectionAssert.AreEqual( new[] { (84, 0), (84, 0), (84, 0), (84, 0) }, groups );
+
+		// The keys are each its own, and the level is its low byte.
+		Set( settings, "FeaturesNoToilets.Score", 91 );
+		Assert.AreEqual( 91, messages.ScoreOf( topic, 1594 ) );
+		Set( settings, "FeaturesNoToilets.Score", 90 );
+		Set( settings, "FeaturesNoToilets.MorePeopleThanThisNeeding", 30 );
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "four of thirteen is 30" );
+		Set( settings, "FeaturesNoToilets.MorePeopleThanThisNeeding", 29 );
+		Assert.AreEqual( 90, messages.ScoreOf( topic, 1594 ) );
+		Set( settings, "FeaturesNoToilets.MorePeopleThanThisNeeding", 25 );
+		Set( settings, "FeaturesNoToilets.NeedingMoreThan", 61 );
+		Assert.AreEqual( (61, 90), (messages.ToiletNeedOver, messages.ScoreOf( topic, 1594 )), "the level is the counter's, not the score's" );
+		Set( settings, "FeaturesNoToilets.NeedingMoreThan", 0x13c );
+		Assert.AreEqual( 0x3c, messages.ToiletNeedOver );
+		Set( settings, "FeaturesNoToilets.NeedingMoreThan", 60 );
+		Set( settings, "FeaturesBuildFeatures.Score", 77 );
+		Set( settings, "ToiletsClosed.Score", 78 );
+		Assert.AreEqual( 90, messages.ScoreOf( topic, 1594 ), "rows 81's and 262's keys are theirs" );
+		Set( settings, "FeaturesBuildFeatures.Score", -40 );
+		Set( settings, "ToiletsClosed.Score", 75 );
+	}
+
+	/// <summary>
 	/// Row 81, message 0x51, is polled (0x0059e2e0): nought where no kind of sideshow stands, nought until
 	/// WaitingTimes.DaysForObjects whole days after the newest object was made, nought where a kind of feature
 	/// stands, and otherwise FeaturesBuildFeatures.Score, -40, and AdditionalPerDay, 1, for each whole day of the
@@ -3083,7 +3189,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 23, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 24, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>
