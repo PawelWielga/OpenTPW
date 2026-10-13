@@ -142,6 +142,13 @@ whole list):
   not 905). The stock park says the screen's own line (sample 380, about 19 s) a tick after its first opening;
   close inside it and he is cut off, and after three cuts he is asked no more (`q328/confirm.py a|b|off|saved`,
   `q328/orig/run.sh <file> a|b|c`; Q328).
+- **The hire screen reached by real clicks, in both games, and its advisor line:** the buy screen's button to
+  hire is layout point (1917, 634) and the hire screen's exit button (1930, 859), both a park screen's (centred,
+  the recipe above); in the original `gmove.py 958 317` and `965 430`. The same point on the hire screen is its
+  button back to buy, so know which screen is up before clicking it. **The original's gadget button opens
+  whichever of buy and hire was last left on** (a global of the running program: stop the original between runs),
+  OpenTPW's always buy. The stock file holds the hire line cut off once, so two cuts silence it
+  (`q329/confirm.py a|b|off|saved`, `q329/orig/run.sh <file> a|b|c`; Q329).
 - **The count of unbuilt polled rows is exact, so predict it exactly:** under a `pause` on tick T the stock
   park's `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` is T - 755 less the turns of built rows by then, and a built row
   comes round every 155 ticks with no log line where its answer has not changed (282 on 760 and 915; 1 on 768

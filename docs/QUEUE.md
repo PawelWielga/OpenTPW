@@ -44,13 +44,19 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q329. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q330. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q329 (`advisor-park.md`, "The hire screen's own line"): the gadget's buy button always opens the buy
+  screen, where the original's opens whichever of buy and hire was last left on (`FUN_004a0940`,
+  `DAT_007cb28c`; said at the button, a deviation): build the remembered category. The bar's five hire buttons
+  (types `0xd` to `0x11`) are not built. In no game run: a candidate chosen while he speaks (what the
+  original's handler does to the screen at a row's click was not read), the opener asked for the tab shown
+  with the screen open, a park left with the screen open, Full Simulation. Not heard in either game.
   From Q328 (`advisor-park.md`, "The buy screen's own line"): the buy screen's handler's four other posts are
   not built (`0xc9` or `0xce` at a purchase, `0x159` and `0x15a` at the land rows; read in the decompiler
-  alone), nor the other 38 screens' lines (the hire screen's `0xbd` next: the shipped file holds it cut off
-  once). In no game run: a purchase or another screen's opening cutting the line, the message bar's buy button
+  alone), nor the other 37 screens' lines (`0xbe` to `0xd5`, `0x11d` to `0x135`; find each opener's post and
+  its handler's withdrawal). In no game run: a purchase cutting the line, the message bar's buy button
   posting it, a park left with the screen open, Full Simulation. He stands at the lower right with a park
   screen open in both games; where he stands with none was not compared. Not heard in either game.
   From Q326 (`ride-operation.md`, "A shut staff room and a tired member"): in no game run: a member of
@@ -119,8 +125,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q313 (`advisor-park.md`, "The records in a park file"): in no game run: a rotation or a cooldown carried
   across a load, a file with cuts, Alexah's own parks. The two calls in `Level` are held by the game runs alone.
   From Q312 (`advisor-park.md`, "The line of an opened tag message"): the kept message (`+0x16d0`, raised again by `FUN_0059ab50` from
-  `FUN_00488ba0`) is not built; the other 38 screens' lines
-  (`0xbd` to `0xd5`, `0x11d` to `0x135`) are not posted; whether the original's advisor cries out when a
+  `FUN_00488ba0`) is not built; the other 37 screens' lines
+  (`0xbe` to `0xd5`, `0x11d` to `0x135`) are not posted; whether the original's advisor cries out when a
   withdrawal cuts him off was not heard (ours does, `Advisor.StopSpeaking`). In no game run: a second tag
   opened over the first, the erase button with him speaking (the tests hold each), the options screen's own
   switch (the console's set it). Not listened to by a person in either game.
@@ -385,7 +391,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   cursor is the program's, not a file's, so predict each turn from it). Say first, from each score function,
   whether the mode is asked; run those where it could matter (the regular catalogue, the empty park's age and
   rates), and say in one line why for the rest. Confirm: each line's `poll` and `attempt` lines with a
-  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q329's notes
+  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q330's notes
   From Q319 to From Q325; take each out of those notes as it is run.
 - [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). `gms.dat`
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest

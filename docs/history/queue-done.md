@@ -6396,6 +6396,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   in a slot at 1000 on tick 862 and said on 863, (864, 0, 0, 1) at its cut, silent after three, and silent on
   this game's saved file. `advisor-park.md`, "The buy screen's own line". Tests 3029.
   I split the item: every other piece of the old Q328 is Q329.
+- [x] **Q329. The advisor explains the hire screen the first time it is opened.** Done 2026-10-12: one piece of
+  the old Q329, the hire screen's own line. The opener `FUN_0049bdd0` posts message `0xbd` as the last act of
+  a screen it has built (`0x0049c800`), and the screen's handler `FUN_0049b650` withdraws it on event `0x14`,
+  its destroy; row 189 is row 188's twin (posted only, category 1, `HelpMessage.Score` 1000, one copy, response
+  408 = sample 381, one line, no prop, no tag), and the shipped file holds it cut off once on tick 55, so two
+  cuts silence it. Built: `ParkAdvisorMessages.HireScreen`, posted by `ParkHireScreen.Shown` the first time
+  and withdrawn by `Closed`. The stock park's buy button and then the buy screen's hire button clicked:
+  `withdraw message=188 cleared=0 cut=1 slaps=1`, `post message=189 subject=0 score=1000 threshold=25 tick=793
+  result=queued pending=2`, `attempt=2 message=189 ... response=408 sample=381 line=0 tick=794
+  duration=18165`, him up with no hat beside "Hire Cleaners"; closed in the line `withdraw message=189
+  cleared=0 cut=1 slaps=2`, the third opening `result=slapped`; saved and loaded back `result=said-once`. The
+  original: `0xbc` cut to (862, 0, 0, 1) at the hire button's click, `0xbd` in a slot at 1000 on tick 888 and
+  said on 889, (892, 0, 0, 2) at its cut, silent after the next, and silent on this game's saved file.
+  `advisor-park.md`, "The hire screen's own line". Tests 3031.
+  I split the item: every other piece of the old Q329 is Q330.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

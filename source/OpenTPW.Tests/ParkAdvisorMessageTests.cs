@@ -41,9 +41,9 @@ public class ParkAdvisorMessageTests
 		var file = new Dictionary<int, ParkWorld.AdvisorSlot>
 		{
 			[0] = new( 13, 1100, ParkAdvisorMessages.MechanicsBusy, 107, true, -1, false, false ),
-			[1] = new( 0, 0, 189, 1000, false, -1, false, false ),
+			[1] = new( 0, 0, 190, 1000, false, -1, false, false ),
 			[2] = new( 0, 0, ParkAdvisorMessages.Opened, 20, true, -1, false, false ),
-			[3] = new( 0, 0, 189, 1000, true, -1, false, false ),
+			[3] = new( 0, 0, 190, 1000, true, -1, false, false ),
 			[5] = new( 14, 1140, ParkAdvisorMessages.RideWornOut, 100, true, 1, false, false )
 		};
 		var messages = new ParkAdvisorMessages( Settings() );
@@ -91,7 +91,7 @@ public class ParkAdvisorMessageTests
 	public void APostTakesNoSlotACarriedMessageStandsIn()
 	{
 		var messages = new ParkAdvisorMessages( Settings() );
-		Assert.AreEqual( 0, messages.RestoreSlots( _ => new ParkWorld.AdvisorSlot( 0, 0, 189, 1, true, -1, false, false ) ) );
+		Assert.AreEqual( 0, messages.RestoreSlots( _ => new ParkWorld.AdvisorSlot( 0, 0, 190, 1, true, -1, false, false ) ) );
 		Assert.AreEqual( 8, messages.PendingCount );
 		Assert.IsFalse( messages.Post( ParkAdvisorMessages.RideWornOut, 900, 14 ) );
 		var forced = new ParkAdvisorMessages( Settings() );
@@ -133,7 +133,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 19, written.Count );
+		Assert.AreEqual( 20, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -556,6 +556,66 @@ public class ParkAdvisorMessageTests
 		cut.Tick( 814, 8000, ( response, sample ) => { said.Add( (response, sample) ); return 18998; } );
 		CollectionAssert.AreEqual( new[] { (407, 380), (407, 380) }, said );
 		StringAssert.Contains( cut.Census(), "message=188/score=1000/line=0/lastTick=814/said=1/slaps=1" );
+	}
+
+	/// <summary>
+	/// <b>Message 0xbd, the hire screen's own line</b> (row 189 of 0x0076e300, row 188's twin: posted only, category
+	/// 1, score 0x0059e8c0 = <c>HelpMessage.Score</c>, one copy, response 408 = sample 381, one line, no prop, group
+	/// 383): said once, refused with the Tutorial option off, a record apart from the buy screen's; and the shipped
+	/// park's record of it, cut off once on tick 55, leaves it two more cuts.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the category nought; the score another's; the response or sample the buy screen's; two
+	/// lines; a prop; a group that leaves a tag; two copies; the message's id the buy screen's.
+	/// </remarks>
+	[TestMethod]
+	public void TheHireScreensOwnLineIsATutorialLineSaidOnce()
+	{
+		FileSystem = GameData.Required();
+		var on = true;
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ), tutorial: () => on );
+		var said = new List<(int, int)>();
+		var groups = new List<(int, int)>();
+
+		Assert.AreEqual( 0xbd, ParkAdvisorMessages.HireScreen );
+		on = false;
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.HireScreen, 800 ), "a tutorial message, with the Tutorial option off" );
+		on = true;
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.HireScreen, 800 ) );
+		StringAssert.Contains( messages.Census(), "pending=1 attempts=0 threshold=25 slot=189/subject=0 " );
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.HireScreen, 800 ), "one copy in the slots" );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.BuyScreen, 800 ), "the buy screen's is another message" );
+		Assert.IsTrue( messages.Withdraw( ParkAdvisorMessages.BuyScreen, 0, () => { } ) );
+		StringAssert.Contains( messages.Census(), "pending=1 attempts=0 threshold=25 slot=189/subject=0 " );
+
+		messages.Tick( 801, 5000, ( response, sample ) => { said.Add( (response, sample) ); return 18331; }, ( group, subject ) => groups.Add( (group, subject) ) );
+		CollectionAssert.AreEqual( new[] { (408, 381) }, said );
+		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
+		StringAssert.Contains( messages.Census(), "message=189/score=1000/line=0/lastTick=801/said=1/slaps=0" );
+		StringAssert.Contains( messages.Census(), "message=188/score=1000/line=-1/lastTick=0/said=0/slaps=0" );
+		Assert.AreEqual( (0, 0), ParkAdvisorMessages.PropsOf( 408 ) );
+
+		Assert.IsFalse( messages.Post( ParkAdvisorMessages.HireScreen, 1400 ), "said once" );
+		for ( var tick = 1401; tick < 1500; ++tick )
+			messages.Tick( tick, tick * 248L, ( _, _ ) => throw new Exception( "said twice" ) );
+		StringAssert.Contains( messages.Census(), "pending=0 attempts=1 " );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 801, 0, true, 0 ), messages.Written()[ParkAdvisorMessages.HireScreen], "and kept in a park's file" );
+
+		// The shipped park's record: cut off once. Said and cut twice more, its one line each time, and then no more.
+		var shipped = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ), tutorial: () => true );
+		Assert.AreEqual( 1, shipped.Restore( id => id == ParkAdvisorMessages.HireScreen ? new ParkWorld.AdvisorHistory( 55, 0, false, 1 ) : null ) );
+		said.Clear();
+		Assert.IsTrue( shipped.Post( ParkAdvisorMessages.HireScreen, 800 ) );
+		shipped.Tick( 801, 5000, ( response, sample ) => { said.Add( (response, sample) ); return 18331; } );
+		Assert.IsTrue( shipped.Withdraw( ParkAdvisorMessages.HireScreen, 8000, () => { } ) );
+		StringAssert.Contains( shipped.Census(), "message=189/score=1000/line=0/lastTick=801/said=0/slaps=2" );
+		Assert.IsTrue( shipped.Post( ParkAdvisorMessages.HireScreen, 813 ) );
+		shipped.Tick( 814, 8000, ( response, sample ) => { said.Add( (response, sample) ); return 18331; } );
+		CollectionAssert.AreEqual( new[] { (408, 381), (408, 381) }, said );
+		Assert.IsTrue( shipped.Withdraw( ParkAdvisorMessages.HireScreen, 11000, () => { } ) );
+		StringAssert.Contains( shipped.Census(), "message=189/score=1000/line=0/lastTick=814/said=0/slaps=3" );
+		Assert.IsFalse( shipped.Post( ParkAdvisorMessages.HireScreen, 826 ), "cut off three times" );
+		Assert.AreEqual( new ParkWorld.AdvisorHistory( 814, 0, false, 3 ), shipped.Written()[ParkAdvisorMessages.HireScreen] );
 	}
 
 	/// <summary>

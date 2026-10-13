@@ -170,6 +170,90 @@ public class ParkScreenTests
 	}
 
 	/// <summary>
+	/// <b>The hire screen asks the advisor for its own line as it opens and takes it back as it closes</b>: the opener
+	/// posts message 0xbd on a screen it has built (<c>FUN_0049bdd0</c>, <c>0x0049c800</c>), and the screen's destroy
+	/// withdraws it (<c>FUN_0049b650</c>, event 0x14), which empties its slot and, while he says it, cuts him off on
+	/// the game's clock. The buy screen's own button to it closes the buy screen first, so the buy screen's line is
+	/// taken back as the hire screen's is asked for.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> no post at the opening; a post as the screen is made, before it is opened, or on tick nought;
+	/// a post each time an open screen is shown again; no withdrawal at the close; the buy screen's id for either; the
+	/// wall clock for the game's.
+	/// </remarks>
+	[TestMethod]
+	public void TheHireScreenAsksTheAdvisorForItsLineAsItOpensAndTakesItBackAsItCloses()
+	{
+		using var clock = new SimulationClockScope();
+		var stack = APark();
+		var lines = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var park = new ParkState( null ) { AdvisorMessages = lines };
+		var said = new List<int>();
+		int Play( int response, int sample ) { said.Add( sample ); return 9000; }
+
+		// The park's 22nd day, where the control panel's line scores: the census scores each message on the last tick
+		// the advisor was handed, so it names the tick of the post.
+		for ( var i = 0; i < 500; ++i )
+			park.AdvanceGameTick();
+
+		// The wall clock far past any line's end: a cut is judged on the game's clock, which stands at nought.
+		Time.PinWall( 60000 );
+
+		try
+		{
+			var first = new UI.ParkHireScreen( stack, park );
+			StringAssert.Contains( lines.Census(), "pending=0 attempts=0 ", "made, and not yet opened" );
+			StringAssert.Contains( lines.Census(), "message=185/score=0/" );
+			stack.Open( first );
+			StringAssert.Contains( lines.Census(), "pending=1 attempts=0 threshold=25 slot=189/subject=0 " );
+			StringAssert.Contains( lines.Census(), "message=185/score=110/", "posted on the park's own tick" );
+
+			// Closed before he says it: the slot alone.
+			stack.Close( first );
+			StringAssert.Contains( lines.Census(), "pending=0 attempts=0 " );
+			StringAssert.Contains( lines.Census(), "message=189/score=1000/line=-1/lastTick=0/said=0/slaps=0" );
+
+			// Opened, said, and closed while he says it.
+			var second = new UI.ParkHireScreen( stack, park );
+			stack.Open( second );
+			lines.Tick( park.GameTick, 0, Play );
+			StringAssert.Contains( lines.Census(), "pending=0 attempts=1 " );
+			StringAssert.Contains( lines.Census(), "message=189/score=1000/line=0/lastTick=500/said=1/slaps=0" );
+			stack.Close( second );
+			StringAssert.Contains( lines.Census(), "message=189/score=1000/line=0/lastTick=500/said=0/slaps=1", "cut off" );
+			StringAssert.Contains( lines.Census(), "message=188/score=1000/line=-1/lastTick=0/said=0/slaps=0", "the buy screen's record is not this one's" );
+
+			// A screen already open asks for nothing more: he has been cut off, so a post would be taken.
+			var third = new UI.ParkHireScreen( stack, park );
+			stack.Open( third );
+			Assert.IsTrue( lines.Withdraw( ParkAdvisorMessages.HireScreen, 0, () => { } ) );
+			StringAssert.Contains( lines.Census(), "pending=0 attempts=1 " );
+			third.Shown();
+			StringAssert.Contains( lines.Census(), "pending=0 attempts=1 ", "shown again" );
+			stack.Close( third );
+
+			// From the buy screen by its own button: the buy screen's line is cut off and the hire screen's said.
+			var buy = new UI.ParkBuyScreen( stack ) { Park = park };
+			stack.Open( buy );
+			park.AdvanceGameTick();
+			lines.Tick( park.GameTick, 0, Play );
+			StringAssert.Contains( lines.Census(), "message=188/score=1000/line=0/lastTick=501/said=1/slaps=0" );
+			stack.Close( buy );
+			stack.Open( new UI.ParkHireScreen( stack, park ) );
+			StringAssert.Contains( lines.Census(), "message=188/score=1000/line=0/lastTick=501/said=0/slaps=1" );
+			StringAssert.Contains( lines.Census(), "pending=1 attempts=2 threshold=25 slot=189/subject=0 " );
+			park.AdvanceGameTick();
+			lines.Tick( park.GameTick, 0, Play );
+			StringAssert.Contains( lines.Census(), "message=189/score=1000/line=0/lastTick=502/said=1/slaps=1" );
+			CollectionAssert.AreEqual( new[] { 381, 380, 381 }, said );
+		}
+		finally
+		{
+			Time.PinWall( null );
+		}
+	}
+
+	/// <summary>
 	/// <b>The Buy button with the buy screen already up closes and opens nothing</b>: the opener only picks its tab
 	/// again (<c>0x004acca0</c>), so the screen that was open is the screen that is open.
 	/// </summary>

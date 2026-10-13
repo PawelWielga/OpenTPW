@@ -76,8 +76,11 @@ internal sealed class ParkHireScreen : UiWindow
 
 	private static readonly UiColour HeadingColour = new( 255, 239, 0 );
 
-	public ParkHireScreen( WindowStack stack ) : base( stack )
+	/// <param name="park">The running park whose advisor hears of this screen, null for the level's.</param>
+	public ParkHireScreen( WindowStack stack, ParkState? park = null ) : base( stack )
 	{
+		_parkGiven = park;
+
 		// Not modal and not pausing - the same reading as the buy screen: nothing in either builder asks
 		// for a pause, unlike the map screen, which plainly does. Built onto the park's own layer (0x0049bf34).
 		ParkScreen = true;
@@ -303,12 +306,28 @@ internal sealed class ParkHireScreen : UiWindow
 
 	private void LogOrder() => Log.Info( $"Hire list: kind {_kind}, {_list.Census()}" );
 
+	private readonly ParkState? _parkGiven;
+
+	/// <summary>The running park whose advisor hears of this screen: the one it was made with, or the level's.</summary>
+	private ParkState? Park => _parkGiven ?? Level.Current?.ParkState;
+
+	// The park whose advisor this screen has asked for its line, none before it is first shown.
+	private ParkState? _asked;
+
 	/// <summary>
-	/// The list follows the pool while the screen is open: a candidate who joins it gets a row and one whose time
-	/// runs out loses theirs, as the original's pool tells the hire list (<c>FUN_00481550</c>).
+	/// The opener's last act on a screen it has built (FUN_0049bdd0, 0x0049c800): the advisor is posted message
+	/// 0xbd (FUN_00486b00), the screen's own line; a tab picked on the open screen asks for nothing more. And the
+	/// list follows the pool while the screen is open: a candidate who joins it gets a row and one whose time runs
+	/// out loses theirs, as the original's pool tells the hire list (<c>FUN_00481550</c>).
 	/// </summary>
 	protected internal override void Shown()
 	{
+		if ( _asked == null && Park is { AdvisorMessages: { } lines } park )
+		{
+			_asked = park;
+			lines.Post( ParkAdvisorMessages.HireScreen, park.GameTick );
+		}
+
 		_following = Level.Current?.StaffPool;
 
 		if ( _following == null )
@@ -318,8 +337,14 @@ internal sealed class ParkHireScreen : UiWindow
 		_following.Left += Left;
 	}
 
+	/// <summary>
+	/// The screen's destroy (FUN_0049b650, event 0x14): the advisor's message 0xbd is withdrawn (FUN_00486b40),
+	/// which cuts him off where he is saying it.
+	/// </summary>
 	protected internal override void Closed()
 	{
+		_asked?.AdvisorMessages?.Withdraw( ParkAdvisorMessages.HireScreen, (long)(GameClock.Now * 1000), () => Advisor.Current?.StopSpeaking() );
+
 		if ( _following == null )
 			return;
 
