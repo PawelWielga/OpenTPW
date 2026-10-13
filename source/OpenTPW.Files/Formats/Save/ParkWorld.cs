@@ -1766,6 +1766,52 @@ public sealed partial class ParkWorld : IParkInitialState
 	public readonly record struct ObjectControl( int ItemId, bool Researched, int TierResearched, int Standing = 0,
 		uint FirstBuilt = 0 );
 
+	/// <summary>
+	/// One of the research lab's projects (FileFormats <c>saves.md</c>, "The research lab"): the item it would
+	/// research (<c>mObjId</c>), the kind of research it is (<c>mCat</c>: 0 to 3 are the item's
+	/// <c>WhichUIType</c>, a ride, a shop, a sideshow or a feature, and 4 is every other project), its group and
+	/// upgrade level, what it costs in research points and how many have been put to it. A project done stays
+	/// in the list.
+	/// </summary>
+	public readonly record struct ResearchProject( int ItemId, int Category, int Group, int UpgradeLevel, float Cost,
+		float Done );
+
+	/// <summary>
+	/// The lab's projects, the first <c>mNumProjects</c> of its 256, in the file's order; none where the file
+	/// holds no lab.
+	/// </summary>
+	public IReadOnlyList<ResearchProject> ResearchProjects { get; private set; } = [];
+
+	/// <summary>The model number of the research lab, the thing the header's <c>mResearchLab</c> names.</summary>
+	private const int ResearchLabModel = 14;
+
+	/// <summary>How many projects the lab's record holds, used or not (<c>FUN_00502dc0</c>).</summary>
+	private const int ResearchProjectSlots = 256;
+
+	/// <summary>A project's bytes in the file: 2, 4, 1, 1, 4 and 4 (<c>FUN_00504210</c>).</summary>
+	private const int ResearchProjectSize = 16;
+
+	/// <summary>Where the projects begin in the lab's record of 4,190 bytes.</summary>
+	private const int ResearchProjectsAt = 16;
+
+	/// <summary>Where <c>mNumProjects</c> sits in the lab's record, after the projects and the five kinds' thirteen bytes each.</summary>
+	private const int ResearchProjectCountAt = 4177;
+
+	// The original reads the count unchecked; one past the array is held to it.
+	private ResearchProject[] ReadResearchProjects( int start )
+	{
+		var projects = new ResearchProject[Math.Clamp( ReadInt32At( start + ResearchProjectCountAt ), 0, ResearchProjectSlots )];
+
+		for ( var i = 0; i < projects.Length; ++i )
+		{
+			var at = start + ResearchProjectsAt + i * ResearchProjectSize;
+			projects[i] = new ResearchProject( ReadUInt16At( at ), ReadInt32At( at + 2 ), ReadByteAt( at + 6 ), ReadByteAt( at + 7 ),
+				ReadSingleAt( at + 8 ), ReadSingleAt( at + 12 ) );
+		}
+
+		return projects;
+	}
+
 	/// <summary>The used records, the first <c>mNumObjectControls</c> of the 150, in the file's order.</summary>
 	public IReadOnlyList<ObjectControl> ObjectControlRecords { get; private set; } = [];
 
@@ -2041,6 +2087,8 @@ public sealed partial class ParkWorld : IParkInitialState
 			}
 			else if ( model == AdvisorModel )
 				AdvisorAt = start;
+			else if ( model == ResearchLabModel )
+				ResearchProjects = ReadResearchProjects( start );
 			else if ( model == AnalyserModel )
 			{
 				AnalyserAt = start;

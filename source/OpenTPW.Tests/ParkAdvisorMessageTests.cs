@@ -30,6 +30,8 @@ public class ParkAdvisorMessageTests
 			+ "SideshowsPoorSelection.PoorerThan 15\nSideshowsPoorSelection.MoreSideshowsThan 2\nSideshowsPoorSelection.Score 45\n"
 			+ "FeaturesPoorSelection.PoorerThan 20\nFeaturesPoorSelection.MoreFeaturesThan 5\nFeaturesPoorSelection.Score 20\n"
 			+ "FeaturesBuildFeatures.Score -40\nFeaturesBuildFeatures.AdditionalPerDay 1\n"
+			+ "FeaturesResearchMore.Score 60\nSideshowsResearchMore.Score 75\n"
+			+ "MessageGroups[4].MinTimeSameMessage 900\nMessageGroups[4].SayOnlyOnce 0\nMessageGroups[4].DiscardAfterSlaps 0\n"
 			+ "FeaturesNoToilets.Score 90\nFeaturesNoToilets.NeedingMoreThan 60\nFeaturesNoToilets.MorePeopleThanThisNeeding 25\n"
 			+ "ShopsBuildMoreShops.ShopsPerRideRatio 0.15\nShopsBuildMoreShops.WealthMoreThan 20000\nShopsBuildMoreShops.Score 70\n"
 			+ "SideshowsBuildMoreSideshows.SideshowsPerRideRatio 0.2\nSideshowsBuildMoreSideshows.WealthMoreThan 20000\nSideshowsBuildMoreSideshows.Score 80\n" ) ) );
@@ -148,7 +150,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 33, written.Count );
+		Assert.AreEqual( 34, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -945,7 +947,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 131, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 130, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -1847,7 +1849,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( AdvisorProps.ThemeCostume, -1 );
 		foreach ( var response in new[] { 223, 224 } )
 			Assert.AreEqual( (-1, 0), ParkAdvisorMessages.PropsOf( response ) );
-		Assert.AreEqual( (0, 0), (ParkAdvisorMessages.PropsOf( 222 ).First - ParkAdvisorMessages.HardHat, ParkAdvisorMessages.PropsOf( 225 ).First), "the costume is rows 223 and 224's alone" );
+		Assert.AreEqual( (0, 0), (ParkAdvisorMessages.PropsOf( 222 ).First - ParkAdvisorMessages.HardHat, ParkAdvisorMessages.PropsOf( 225 ).First - ParkAdvisorMessages.ResearchHat), "the costume is rows 223 and 224's alone" );
 		var row = ParkTags.Rows.Single( one => one.Id == 81 );
 		Assert.AreEqual( (ParkTags.NoTag, 2, 83, 12, 0, 30000, 0), (row.Key, row.Picture, row.String, row.Button1, row.Button2, row.Life, row.Kind) );
 		Assert.AreEqual( (11, 2, 5, "MoreFeaturesThan", "features"), facts.Kinds( ParkAdvisorMessages.Shut.Features ) );
@@ -2170,6 +2172,125 @@ public class ParkAdvisorMessageTests
 	}
 
 	/// <summary>
+	/// Row 80, message 0x50, is polled (0x0059e260): nought with no researcher on the staff, nought where no kind
+	/// of feature stands, nought where the lab holds no project of a feature's kind left undone, nought unless the
+	/// kinds of feature standing are as many as the kinds on offer, and otherwise FeaturesResearchMore.Score, 60.
+	/// One line, in the research hat, with tag 82, whose bar carries no button; its category is the fourth, whose
+	/// wait between two sayings is 900 fours of sweeps. The row is Full Simulation's alone (its +0x0c is nought):
+	/// in Instant Action the poll (FUN_0059c680) does not score it, and answers -1.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the researchers, the kinds standing or the lab's projects not asked, or asked the other
+	/// way; the kinds standing let be fewer, or more, than those on offer; the park's age, the newest build or
+	/// the door asked; the row not polled; two lines; the response, the sample, the prop, the group or the
+	/// category another's; tag 82's row another's; the wait category nought's; the poll line's words; the row
+	/// scored in Instant Action, or not in Full Simulation; the console's hold not taken, or not let go.
+	/// </remarks>
+	[TestMethod]
+	public void AParkWithEveryFeatureOnOfferBuiltIsToldToResearchMore()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 80 };
+		var settings = Settings();
+		var instant = false;
+		var messages = new ParkAdvisorMessages( settings, cursor: cursor, instantAction: () => instant );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 3, Sideshows: 1, WaitingToOpen: 0, Shops: 2, Toilets: 3,
+			DaysSinceObjectBuilt: 0, Features: 11, FeatureKindsOnOffer: 8, FeatureKindsStanding: 7, Researchers: 1, FeatureProjectsUnfinished: 11 );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		void Round( int at )
+		{
+			cursor.Row = 80;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 5000; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+		}
+
+		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ResearchMoreFeatures );
+		Assert.AreEqual( (0x50, "FeaturesResearchMore.Score", true, 225, 223, 1, 1, 4, true, 82, 10, -1),
+			(topic.Id, topic.ScoreKey, topic.EveryFeatureBuilt, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+		Assert.AreEqual( (4, 10), (ParkAdvisorMessages.ResearchMore, ParkAdvisorMessages.ResearchHat) );
+		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.EveryFeatureBuilt ), "no other row is scored so" );
+		Assert.AreEqual( (true, 1), (topic.FullSimulationOnly, ParkAdvisorMessages.ParkTopics.Count( one => one.FullSimulationOnly )), "every other built row is either game's" );
+		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.Category == ParkAdvisorMessages.ResearchMore ), "no other built row is of its category" );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 80 ) );
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 972 ), "before any sweep has handed the park in" );
+		Assert.AreEqual( ((-1, 0), (10, 0), (-1, 0)), (ParkAdvisorMessages.PropsOf( 224 ), ParkAdvisorMessages.PropsOf( 225 ), ParkAdvisorMessages.PropsOf( 226 )), "the hat is response 225's alone" );
+		Assert.AreEqual( 0, ParkAdvisorMessages.SlotOf( 225 ), "the lobby's model says it, not the theme's" );
+		CollectionAssert.AreEqual( new[] { (19, false), (20, false), (10, true) }, AdvisorProps.Switched( 10 ).ToArray(), "the hat hides both antennae" );
+		var row = ParkTags.Rows.Single( one => one.Id == 82 );
+		Assert.AreEqual( (ParkTags.NoTag, 2, 84, 0, 0, 30000, 0), (row.Key, row.Picture, row.String, row.Button1, row.Button2, row.Life, row.Kind) );
+
+		// Seven kinds of the eight on offer stand: not every one.
+		Round( 972 );
+		Assert.AreEqual( (0, "no-score", 81, 0), (messages.ScoreOf( topic, 972 ), messages.PollAnswer( 80 ), cursor.Row, said.Count) );
+		Assert.AreEqual( " researchers=1 kinds=7/8 unfinished=11", messages.PollFacts( topic ), "the poll line names what the score read" );
+
+		// All eight score; nine of eight, which no park holds, do not: the two are asked to be equal.
+		facts = facts with { FeatureKindsStanding = 8 };
+		Assert.AreEqual( 60, messages.ScoreOf( topic, 972 ) );
+		facts = facts with { FeatureKindsStanding = 9 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 972 ), "more than are on offer is not as many" );
+		facts = facts with { FeatureKindsStanding = 8 };
+		Assert.AreEqual( 60, messages.ScoreOf( topic, 3 ), "the park's age is not asked" );
+		facts = facts with { DaysSinceObjectBuilt = 500, Closed = true, Rides = 0, Sideshows = 0, Shops = 0, Toilets = 0, Features = 0, Balance = -90000, Mechanics = 0 };
+		Assert.AreEqual( 60, messages.ScoreOf( topic, 972 ), "the newest build, the door, what else stands, the bank and the mechanics are not asked" );
+		facts = facts with { Researchers = 3, FeatureProjectsUnfinished = 1, Mechanics = 2 };
+		Assert.AreEqual( 60, messages.ScoreOf( topic, 972 ), "one project and three researchers are a project and a researcher" );
+
+		// No researcher, no kind standing and no project left are each nought.
+		facts = facts with { Researchers = 0 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 972 ), "no researcher, whatever mechanics there are" );
+		Assert.AreEqual( " researchers=0 kinds=8/8 unfinished=1", messages.PollFacts( topic ) );
+		facts = facts with { Researchers = 1, FeatureProjectsUnfinished = 0 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 972 ), "nothing left to research" );
+		Assert.AreEqual( " researchers=1 kinds=8/8 unfinished=0", messages.PollFacts( topic ) );
+		facts = facts with { FeatureProjectsUnfinished = 2, FeatureKindsOnOffer = 0, FeatureKindsStanding = 0 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 972 ), "none standing of none on offer is not every one built" );
+		facts = facts with { FeatureKindsOnOffer = 1, FeatureKindsStanding = 1 };
+		Assert.AreEqual( 60, messages.ScoreOf( topic, 972 ), "one kind of one" );
+		facts = facts with { FeatureKindsOnOffer = 8, FeatureKindsStanding = 8 };
+
+		// In Instant Action the row is not scored at all, whatever the park holds; the score function is not what
+		// refuses it. The console's hold is taken before the player's own game, and let go again.
+		instant = true;
+		Round( 972 );
+		Assert.AreEqual( ("other-game", 81, 0, 0), (messages.PollAnswer( 80 ), cursor.Row, said.Count, messages.PendingCount) );
+		Assert.AreEqual( 60, messages.ScoreOf( topic, 972 ), "the poll refuses the row, not its score" );
+		Assert.IsTrue( messages.InstantAction );
+		messages.InstantActionHeld = false;
+		Assert.IsFalse( messages.InstantAction, "held to Full Simulation's" );
+		instant = false;
+		messages.InstantActionHeld = true;
+		Assert.IsTrue( messages.InstantAction, "held to Instant Action's" );
+		Round( 972 );
+		Assert.AreEqual( ("other-game", 0), (messages.PollAnswer( 80 ), said.Count) );
+		messages.InstantActionHeld = null;
+		Assert.IsFalse( messages.InstantAction, "let go: the player's own" );
+
+		// Said on its turn with its one line and tag 82, and again only 900 fours of sweeps on: tick 972 is in four
+		// 243, so 4571, in four 1142, is inside the wait and 4572 is not; category nought's 120 would let 1452 by.
+		Round( 972 );
+		Assert.AreEqual( "post", messages.PollAnswer( 80 ) );
+		Round( 1452 );
+		Assert.AreEqual( "cooldown", messages.PollAnswer( 80 ) );
+		Round( 4571 );
+		Round( 4572 );
+		CollectionAssert.AreEqual( new[] { (972, 225, 223), (4572, 225, 223) }, said );
+		CollectionAssert.AreEqual( new[] { (82, 0), (82, 0) }, groups );
+
+		// The key is its own.
+		Set( settings, "FeaturesResearchMore.Score", 61 );
+		Assert.AreEqual( 61, messages.ScoreOf( topic, 972 ) );
+		Set( settings, "FeaturesResearchMore.Score", 60 );
+		Set( settings, "SideshowsResearchMore.Score", 77 );
+		Set( settings, "FeaturesPoorSelection.Score", 78 );
+		Set( settings, "FeaturesBuildFeatures.Score", 79 );
+		Assert.AreEqual( 60, messages.ScoreOf( topic, 972 ), "rows 76's, 79's and 81's keys are theirs" );
+		Set( settings, "SideshowsResearchMore.Score", 75 );
+		Set( settings, "FeaturesPoorSelection.Score", 20 );
+		Set( settings, "FeaturesBuildFeatures.Score", -40 );
+	}
+
+	/// <summary>
 	/// Row 81, message 0x51, is polled (0x0059e2e0): nought where no kind of sideshow stands, nought until
 	/// WaitingTimes.DaysForObjects whole days after the newest object was made, nought where a kind of feature
 	/// stands, and otherwise FeaturesBuildFeatures.Score, -40, and AdditionalPerDay, 1, for each whole day of the
@@ -2209,7 +2330,7 @@ public class ParkAdvisorMessageTests
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 81 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 1593 ), "before any sweep has handed the park in" );
 		Assert.AreEqual( (AdvisorProps.ThemeCostume, 0), ParkAdvisorMessages.PropsOf( 226 ) );
-		Assert.AreEqual( (0, 0), (ParkAdvisorMessages.PropsOf( 225 ).First, ParkAdvisorMessages.PropsOf( 227 ).First), "the costume is response 226's, not its neighbours'" );
+		Assert.AreEqual( (0, 0), (ParkAdvisorMessages.PropsOf( 225 ).First - ParkAdvisorMessages.ResearchHat, ParkAdvisorMessages.PropsOf( 227 ).First), "the costume is response 226's, not its neighbours'" );
 		var row = ParkTags.Rows.Single( one => one.Id == 83 );
 		Assert.AreEqual( (ParkTags.NoTag, 2, 85, 12, 0, 30000, 0), (row.Key, row.Picture, row.String, row.Button1, row.Button2, row.Life, row.Kind) );
 
@@ -3189,7 +3310,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 24, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 25, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>

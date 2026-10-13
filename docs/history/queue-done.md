@@ -6713,6 +6713,25 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   given the same file said it on tick 974 with the same tag and screen (`orig/a-g3.png`, `a2-button.png`). 4 of
   13 said and 3 of 13 not, in both games; the toilets standing and the door shut silent in both; main's build
   silent. 67 of 67 bugs put back fail a test (`advisor-park.md`, "A park with no toilet").
+- [x] **Q348. The advisor's line about every feature built, and more to research, is scored as the original scores it: in Full Simulation alone.**
+  (2026-10-13; split from the bundle below, which is Q349.) Row 80, message `0x50`, `FeaturesResearchMore`, is
+  polled (`0x0059e260`): nought with no researcher, with no kind of feature standing, with no feature's project
+  left undone in the lab (`FUN_00503b30( 3 )`) and unless the kinds standing are as many as those on offer, and
+  otherwise `Score`, 60; one line, sample 223, in the research hat, tag row 82 with no bar button, category 4.
+  **Its `+0x0c` is nought, so the poll scores it in game type 0 alone** (`FUN_0059c680`), which this game's poll
+  now asks of a row (`result=other-game`). The lab's projects are read from the park file (FileFormats
+  `saves.md`, "The research lab", measured in nine files). **Round 1 was built without the mode and the
+  original caught it**: given the same file it stayed silent over two turns where this game spoke. Proof, round
+  2 (`q348/PREDICTION.txt`, every line held): the stock park with all eight kinds of feature on offer built
+  logged `poll message=80 row=80 days=42 score=-1 threshold=25 tick=972 result=other-game researchers=1
+  kinds=8/8 unfinished=11` and said nothing; with the console's `advisorgame full`, `score=60 ... result=post`
+  and `attempt=1 message=80 ... response=225 sample=223 line=0 tick=972`, him up in the research hat with tag 82
+  and the bar's text (`run-fix2/1-line.png`, `2-bar.png`); seven kinds, no researcher and no project left each
+  `no-score`. The original given the same files: fresh over ticks 972 and 1127 untouched, and with its game type
+  held at 0 from tick 1113 the record **(1127, 0, 1, 0) on tick 1127**, the same tag, hat and words
+  (`orig/e-g4.png`, `e-bar.png`); the three others fresh under the same hold. Main's build: no line of message
+  80. 85 bugs put back, 85 fail (`q348/mutations.py`). `docs/exe/advisor-park.md`, "Every feature built, and
+  more to research".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

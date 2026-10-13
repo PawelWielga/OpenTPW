@@ -303,7 +303,7 @@ public class Level
 		}
 		load.Mark( "park state" );
 
-		Research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue );
+		Research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects );
 		if ( Research is { } researched )
 			Log.Info( researched.Summary );
 

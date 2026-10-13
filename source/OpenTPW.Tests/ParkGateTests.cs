@@ -46,6 +46,7 @@ public class ParkGateTests
 		public IReadOnlyList<ParkWorld.MapCell> Cells => source.Cells;
 		public ParkWorld.ArrivalBlock Arrival => source.Arrival;
 		public IReadOnlyList<ParkWorld.ObjectControl> ObjectControlRecords => source.ObjectControlRecords;
+		public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects => source.ResearchProjects;
 		public int ParkGates => source.ParkGates;
 		public int TrafficLights => source.TrafficLights;
 		public int FirstObject => source.FirstObject;

@@ -130,6 +130,48 @@ public class ParkResearchTests
 			Assert.AreEqual( item.ResearchCost == 0, research.IsResearched( item.Id ), item.Name );
 	}
 
+	/// <summary>
+	/// The lab's projects are read from the park file (<c>FUN_00502dc0</c>, <c>FUN_00504210</c>): the shipped
+	/// Lost Kingdom park holds twenty-four, eleven of a feature's kind, and <see cref="ParkResearch.Unfinished"/>
+	/// counts those of a kind whose points are under their cost (<c>FUN_00503b30</c>).
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the count read from another offset, or all 256 taken; a project's fields each read from
+	/// its neighbour's place; a project of any kind counted; one with its points at or over its cost counted; the
+	/// cost set against nought.
+	/// </remarks>
+	[TestMethod]
+	public void TheShippedParksLabHoldsTwentyFourProjectsElevenOfThemFeatures()
+	{
+		var data = GameData.Required();
+		var park = ShippedPark( data );
+		var projects = park.ResearchProjects;
+
+		Assert.AreEqual( 24, projects.Count );
+		Assert.AreEqual( new ParkWorld.ResearchProject( 1140, 0, 3, 0, 700f, 0f ), projects[0] );
+		Assert.AreEqual( new ParkWorld.ResearchProject( 1150, 0, 1, 0, 600f, 30f ), projects[1] );
+		Assert.AreEqual( new ParkWorld.ResearchProject( 1414, 3, 1, 0, 250f, 7.5f ), projects[8] );
+		Assert.AreEqual( new ParkWorld.ResearchProject( 1419, 3, 3, 0, 600f, 0f ), projects[18] );
+		Assert.AreEqual( new ParkWorld.ResearchProject( 1307, 2, 3, 0, 800f, 0f ), projects[23] );
+		CollectionAssert.AreEqual( new[] { 8, 3, 2, 11 }, Enumerable.Range( 0, 4 ).Select( kind => projects.Count( project => project.Category == kind ) ).ToArray() );
+		Assert.IsTrue( projects.All( project => project.Done < project.Cost && project.UpgradeLevel == 0 ) );
+
+		var catalogue = new ParkItemCatalogue( "jungle", data, instantAction: true );
+		var research = new ParkResearch( park.ObjectControlRecords, catalogue, projects );
+		CollectionAssert.AreEqual( new[] { 8, 3, 2, 11, 0 }, Enumerable.Range( 0, 5 ).Select( research.Unfinished ).ToArray() );
+		Assert.AreEqual( 0, new ParkResearch( park.ObjectControlRecords, catalogue ).Unfinished( ItemDescriptionFile.Feature ), "with no projects handed in" );
+
+		// A project is unfinished while its points are under its cost, and is its own kind's alone.
+		ParkWorld.ResearchProject Feature( float cost, float done ) => new( 1414, ItemDescriptionFile.Feature, 1, 0, cost, done );
+		int Left( params ParkWorld.ResearchProject[] lab ) => new ParkResearch( [], catalogue, lab ).Unfinished( ItemDescriptionFile.Feature );
+		Assert.AreEqual( 1, Left( Feature( 250f, 249.5f ) ) );
+		Assert.AreEqual( 0, Left( Feature( 250f, 250f ) ), "done at its cost" );
+		Assert.AreEqual( 0, Left( Feature( 250f, 300f ) ) );
+		Assert.AreEqual( 1, Left( Feature( 0.5f, 0f ) ), "a cost under one point" );
+		Assert.AreEqual( 0, Left( Feature( 0f, 0f ) ), "nought is not under nought" );
+		Assert.AreEqual( 2, Left( Feature( 250f, 0f ), Feature( 250f, 250f ), Feature( 300f, 7.5f ), new( 1304, ItemDescriptionFile.SideShow, 1, 0, 700f, 9f ), new( 1140, ItemDescriptionFile.Ride, 3, 0, 700f, 0f ) ) );
+	}
+
 	[TestMethod]
 	public void LostKingdomsTabsListWhatTheOriginalShowed()
 	{

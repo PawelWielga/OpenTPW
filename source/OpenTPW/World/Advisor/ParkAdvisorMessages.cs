@@ -12,7 +12,7 @@ namespace OpenTPW;
 /// "A mechanic on his way", "The line of an opened tag message", "The buy screen's own line" and "The hire
 /// screen's own line".
 /// <para>
-/// Twenty-four messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Twenty-five messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
 /// nothing to ride and a park with no ride; five scored by the share of the park's rides, shops, sideshows,
@@ -25,9 +25,11 @@ namespace OpenTPW;
 /// poor selection of features"); the lines about a park with rides and no shop, one with shops and no
 /// sideshow and one with sideshows and no feature ("A park with rides and no shop", "A park with shops and no
 /// sideshow", "A park with sideshows and no feature"); the line about a park with no toilet whose guests need
-/// one ("A park with no toilet"); and the lines about too few
+/// one ("A park with no toilet"); the line about a park with every kind of feature on offer built, told to
+/// research more, which is Full Simulation's alone ("Every feature built, and more to research"); and the lines
+/// about too few
 /// shops and too few sideshows for the park's size ("Too few shops for the park's size", "Too few sideshows for
-/// the park's size"). The other 131 polled rows are counted, and the other posted messages are unbuilt.
+/// the park's size"). The other 130 polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -53,6 +55,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int BuildShops = 0x49;
 	/// <summary>Message 0x4d, polled: the line about a park with shops and no sideshow, scored by the park's age in days (0x0059e070).</summary>
 	internal const int BuildSideshows = 0x4d;
+	/// <summary>Message 0x50, polled: the line about a park with every kind of feature on offer built, scored where a researcher is on the staff and the lab holds a feature not yet researched (0x0059e260).</summary>
+	internal const int ResearchMoreFeatures = 0x50;
 	/// <summary>Message 0x51, polled: the line about a park with sideshows and no feature, scored by the park's age in days (0x0059e2e0).</summary>
 	internal const int BuildFeatures = 0x51;
 	/// <summary>Message 0x52, polled: the line about a park with no toilet, scored by the share of the guests inside who need one (0x0059e380).</summary>
@@ -98,6 +102,9 @@ internal sealed class ParkAdvisorMessages
 
 	/// <summary>The tutorial messages' category (a row's +0x08): MessageGroups[1], refused while the Tutorial option is off (FUN_0059c610).</summary>
 	internal const int Tutorial = 1;
+
+	/// <summary>The category of the lines that tell the player to research more: MessageGroups[4], fifteen minutes between two sayings of one.</summary>
+	internal const int ResearchMore = 4;
 
 	/// <summary>
 	/// A row of the metadata table 0x0076e300: the message, its score's key, its first response and that
@@ -155,6 +162,11 @@ internal sealed class ParkAdvisorMessages
 	/// <paramref name="NeedingToiletWithNone"/> makes the score row 82's (0x0059e380), and names its section: the
 	/// key's value in an open park where no toilet stands and more than the section's MorePeopleThanThisNeeding
 	/// per cent, in whole numbers, of the guests inside have a toilet need over its NeedingMoreThan.
+	/// <paramref name="EveryFeatureBuilt"/> is the score of row 80 (0x0059e260): the key's value in a park with a
+	/// researcher where a kind of feature stands, the lab holds a project of a feature's kind that is not done, and
+	/// the kinds of feature standing are as many as the kinds on offer; nought otherwise.
+	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
+	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
@@ -163,7 +175,7 @@ internal sealed class ParkAdvisorMessages
 		bool PerWornRideWithNoMechanic = false, bool PerBrokenRideWithNoMechanic = false, string? RidesAMechanic = null,
 		string? PoorSelection = null, Shut PoorOf = Shut.Rides, string? PerDayWithNoShop = null, string? ShopsPerRide = null,
 		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null, string? PerDayWithNoFeature = null,
-		string? NeedingToiletWithNone = null );
+		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false );
 
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
@@ -211,7 +223,9 @@ internal sealed class ParkAdvisorMessages
 	/// on offer (0x004ca5d0: a catalogue item of a feature's kind that is researched, a golden ticket's or not)
 	/// and those of which a thing stands (0x004ca7b0 asked with three and nought); and what row 82's reads: the
 	/// guests inside the park (FUN_004c9130: a guest on a cell FUN_004fa990 passes) and those of them whose toilet
-	/// need's whole number is over <see cref="ToiletNeedOver"/> (0x004c9290).
+	/// need's whole number is over <see cref="ToiletNeedOver"/> (0x004c9290); and what row 80's reads: the
+	/// researchers (FUN_004c9960 asked for type 8) and the lab's projects of a feature's kind that are not done
+	/// (0x004ca690: FUN_00503b30 asked for kind 3 on the lab, a project whose mResearchDone is under its mCost).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -220,7 +234,7 @@ internal sealed class ParkAdvisorMessages
 		int ShopKindsOnOffer = 0, int ShopKindsStanding = 0, int Balance = 0,
 		int SideshowKindsOnOffer = 0, int SideshowKindsStanding = 0,
 		int Features = 0, int FeatureKindsOnOffer = 0, int FeatureKindsStanding = 0,
-		int GuestsInside = 0, int GuestsNeedingToilet = 0 )
+		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -287,6 +301,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int TicketHat = 9;
 	/// <summary>The hard hat, the prop of every line about a ride breaking down.</summary>
 	internal const int HardHat = 5;
+	/// <summary>The research hat, costume id 10.</summary>
+	internal const int ResearchHat = 10;
 
 	internal static readonly Topic[] DoorTopics =
 	[
@@ -329,6 +345,7 @@ internal sealed class ParkAdvisorMessages
 		// (docs/exe/advisor-park.md, "A park with sideshows and no feature").
 		new( BuildFeatures, "FeaturesBuildFeatures.Score", 226, 224, Lines: 1, Prop: AdvisorProps.ThemeCostume, Group: 83, Polled: true, PerDayWithNoFeature: "FeaturesBuildFeatures.AdditionalPerDay" ),
 		new( NoToilets, "FeaturesNoToilets.Score", 227, 225, Lines: 3, Group: 84, Polled: true, NeedingToiletWithNone: "FeaturesNoToilets" ),
+		new( ResearchMoreFeatures, "FeaturesResearchMore.Score", 225, 223, Lines: 1, Prop: ResearchHat, Group: 82, Category: ResearchMore, Polled: true, EveryFeatureBuilt: true, FullSimulationOnly: true ),
 		new( BuildMoreSideshows, "SideshowsBuildMoreSideshows.Score", 221, 219, Prop: HardHat, Group: 80, Polled: true, SideshowsPerRide: "SideshowsBuildMoreSideshows" ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
 		new( QueueUnconnected, "QueueUnconnected.Score", 288, 312, MaxInstances: 255, Group: 135, Polled: true, QueueNotJoined: true ),
@@ -380,6 +397,7 @@ internal sealed class ParkAdvisorMessages
 	// The slots a park file's message this game cannot say stands in: taken, and never said or written over.
 	private readonly bool[] _carried = new bool[ParkWorld.AdvisorSlots];
 	private readonly Func<bool> _tutorial;
+	private readonly Func<bool> _instantAction;
 	private readonly PollCursor _cursor;
 	// What the poll last answered for each polled message, so the log holds a line a change.
 	private readonly Dictionary<int, string> _polled = [];
@@ -401,11 +419,22 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>The toilet need a guest is over for row 82's score, the byte its function hands 0x004c9290 ([ECX + 0x2b8]'s low byte).</summary>
 	internal int ToiletNeedOver => Value( "FeaturesNoToilets.NeedingMoreThan" ) & 0xff;
 
+	/// <summary>
+	/// The game type the debug console holds the poll to, whatever the player's is: true Instant Action's, false
+	/// Full Simulation's, null the player's own. An instrument: nothing in the game sets it.
+	/// </summary>
+	internal bool? InstantActionHeld { get; set; }
+
+	/// <summary>Whether the poll takes the game for Instant Action's.</summary>
+	internal bool InstantAction => InstantActionHeld ?? _instantAction();
+
 	/// <param name="tutorial">Whether the Tutorial option is on (0x0078d90d), the player's own where none is given.</param>
 	/// <param name="cursor">The poll's cursor; the game hands every park <see cref="ProgramCursor"/>, and with none given the poll starts at row nought.</param>
+	/// <param name="instantAction">Whether the game type is Instant Action's (0x00fb3b7c reads 2), the player's own where none is given.</param>
 	internal ParkAdvisorMessages( SettingsFile settings, IEnumerable<Topic>? topics = null, Func<bool>? tutorial = null,
-		PollCursor? cursor = null )
+		PollCursor? cursor = null, Func<bool>? instantAction = null )
 	{
+		_instantAction = instantAction ?? (() => Level.InstantAction);
 		_settings = settings;
 		_cursor = cursor ?? new PollCursor();
 		_tutorial = tutorial ?? (() => GameOptions.Current.Tutorial);
@@ -570,6 +599,9 @@ internal sealed class ParkAdvisorMessages
 	/// row 82's (0x0059e380) is nought in a shut park, where a toilet stands and with no guest inside, and then its
 	/// key's value where the guests inside whose toilet need is over its section's NeedingMoreThan are more than its
 	/// section's MorePeopleThanThisNeeding per cent of them, in whole numbers;
+	/// row 80's (0x0059e260) is nought with no researcher, with no kind of feature standing, with no project of a
+	/// feature's kind left undone in the lab, and unless the kinds of feature standing are as many as the kinds
+	/// on offer, and then its key's value;
 	/// every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
@@ -617,6 +649,12 @@ internal sealed class ParkAdvisorMessages
 		{
 			if ( _park?.Invoke() is not { Closed: false, Toilets: 0, GuestsInside: not 0 } crossed ) return 0;
 			return crossed.GuestsNeedingToilet * 100 / crossed.GuestsInside > Value( $"{unrelieved}.MorePeopleThanThisNeeding" ) ? Value( topic.ScoreKey ) : 0;
+		}
+
+		if ( topic.EveryFeatureBuilt )
+		{
+			if ( _park?.Invoke() is not { Researchers: > 0, FeatureKindsStanding: > 0, FeatureProjectsUnfinished: > 0 } built ) return 0;
+			return built.FeatureKindsStanding == built.FeatureKindsOnOffer ? Value( topic.ScoreKey ) : 0;
 		}
 
 		if ( topic.ShopsPerRide is { } crowded )
@@ -754,6 +792,8 @@ internal sealed class ParkAdvisorMessages
 			shut = $" sideshowkinds={drab.SideshowKindsStanding} featurekinds={drab.FeatureKindsStanding} sincebuild={drab.DaysSinceObjectBuilt}";
 		if ( topic.NeedingToiletWithNone != null && _park?.Invoke() is { } crossed )
 			shut = $" closed={(crossed.Closed ? 1 : 0)} toilets={crossed.Toilets} needing={crossed.GuestsNeedingToilet}/{crossed.GuestsInside}";
+		if ( topic.EveryFeatureBuilt && _park?.Invoke() is { } built )
+			shut = $" researchers={built.Researchers} kinds={built.FeatureKindsStanding}/{built.FeatureKindsOnOffer} unfinished={built.FeatureProjectsUnfinished}";
 		if ( topic.ShopsPerRide is { } crowded && _park?.Invoke() is { } sized )
 			shut = FormattableString.Invariant( $" shopkinds={sized.ShopKindsStanding} ratio={Fraction( $"{crowded}.ShopsPerRideRatio" )} balance={sized.Balance} sincebuild={sized.DaysSinceObjectBuilt}" );
 		if ( topic.SideshowsPerRide is { } showy && _park?.Invoke() is { } fair )
@@ -764,8 +804,9 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>
 	/// The tick's first act, FUN_0059c680 asked for one row: from the cursor's row, nought again past the last,
 	/// the first polled row is scored and the cursor left on the row after it; a row scoring above nought that
-	/// the gate lets by and above MinScoreForConsideration is posted about no thing, as any post is. A polled
-	/// row of no built topic is counted.
+	/// the gate lets by and above MinScoreForConsideration is posted about no thing, as any post is. A row for
+	/// Full Simulation alone is not scored in Instant Action: its answer is -1 there, which is above nothing. A
+	/// polled row of no built topic is counted.
 	/// </summary>
 	private void Poll( int gameTick )
 	{
@@ -779,8 +820,9 @@ internal sealed class ParkAdvisorMessages
 			return;
 		}
 
-		var score = ScoreOf( topic, gameTick );
-		var result = score <= 0 ? "no-score" : Refusal( topic, gameTick ) ?? (score > Threshold ? "post" : "under-threshold");
+		var otherGame = topic.FullSimulationOnly && InstantAction;
+		var score = otherGame ? -1 : ScoreOf( topic, gameTick );
+		var result = otherGame ? "other-game" : score <= 0 ? "no-score" : Refusal( topic, gameTick ) ?? (score > Threshold ? "post" : "under-threshold");
 		if ( !_polled.TryGetValue( topic.Id, out var last ) || last != result )
 		{
 			_polled[topic.Id] = result;

@@ -14,7 +14,7 @@ namespace OpenTPW;
 ///
 /// <para>
 /// <b>Research completing is not built</b> (<c>FUN_00504630</c>, which sets the flag and the tier): this game has no
-/// research, and nothing here changes after the load. The points a researcher would hand the lab are counted where
+/// research, and nothing here changes after the load, the lab's projects (<see cref="Unfinished"/>) included. The points a researcher would hand the lab are counted where
 /// the original hands them, <c>RESEARCH_POINTS_TO_THE_LAB</c> in <see cref="StaffBehaviour"/>.
 /// </para>
 /// </summary>
@@ -28,9 +28,15 @@ public sealed class ParkResearch
 	/// <inheritdoc cref="FromSave"/>
 	public int Seeded { get; }
 
+	private readonly IReadOnlyList<ParkWorld.ResearchProject> _projects;
+
 	/// <param name="records">The save's records, <see cref="ParkWorld.ObjectControlRecords"/>.</param>
-	public ParkResearch( IEnumerable<ParkWorld.ObjectControl> records, ParkItemCatalogue catalogue )
+	/// <param name="projects">The save's lab's projects, <see cref="ParkWorld.ResearchProjects"/>; none where no file gave any.</param>
+	public ParkResearch( IEnumerable<ParkWorld.ObjectControl> records, ParkItemCatalogue catalogue,
+		IReadOnlyList<ParkWorld.ResearchProject>? projects = null )
 	{
+		_projects = projects ?? [];
+
 		foreach ( var record in records )
 		{
 			if ( _items.TryAdd( record.ItemId, (record.Researched, record.TierResearched) ) )
@@ -51,6 +57,13 @@ public sealed class ParkResearch
 
 	/// <summary>Whether the item is researched - the flag the buy list lists by. An item nobody knows is not.</summary>
 	public bool IsResearched( int itemId ) => _items.TryGetValue( itemId, out var entry ) && entry.Researched;
+
+	/// <summary>
+	/// How many of the lab's projects of <paramref name="kind"/>, a project's <c>mCat</c>, are not done: the
+	/// points put to them are under their cost (<c>FUN_00503b30</c>). They are the file's, as nothing here
+	/// researches.
+	/// </summary>
+	public int Unfinished( int kind ) => _projects.Count( project => project.Category == kind && project.Done < project.Cost );
 
 	/// <summary>The upgrade tier researched, 0 to 2 (<c>+0x14</c>); nothing reads it yet.</summary>
 	public int TierResearched( int itemId ) => _items.TryGetValue( itemId, out var entry ) ? entry.Tier : 0;

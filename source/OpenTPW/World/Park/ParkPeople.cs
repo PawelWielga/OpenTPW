@@ -189,7 +189,7 @@ public sealed partial class ParkPeople : Entity
 		Random? behaviourRandom = null, Random? rideRandom = null, Random? staffRandom = null )
 	{
 		_scriptFor = scriptFor;
-		_research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue );
+		_research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects );
 		_gateThing = park?.ParkGates ?? 0;
 		_banks = banks ?? new ParkSpriteBanks( 0, 0, 0 );
 		_arrivalRandom = random ?? new Random();
@@ -949,6 +949,7 @@ public sealed partial class ParkPeople : Entity
 
 	/// <summary>A mechanic's thing model - see <see cref="Staff.Model"/>.</summary>
 	private const int MechanicModel = 4;
+	private const int ResearcherModel = 8;
 
 	/// <summary>Who is being carried, for the debug console.</summary>
 	internal int CarriedStaff => _carriedStaff;
@@ -2633,7 +2634,9 @@ public sealed partial class ParkPeople : Entity
 	/// (0x004c9070, <see cref="ParkState.DaysSinceObjectBuilt"/>); and the bank's balance (FUN_005195d0's
 	/// thing's +0xc, <see cref="ParkState.Balance"/>); and the guests inside the park (FUN_004c9130,
 	/// <see cref="GateGuestCensus"/>) with those of them whose toilet need is over the advisor's level
-	/// (0x004c9290). With no catalogue no kind is counted.
+	/// (0x004c9290); and the researchers (FUN_004c9960 asked for type 8) and the lab's projects of a feature's
+	/// kind that are not done (0x004ca690, <see cref="ParkResearch.Unfinished"/>). With no catalogue no kind is
+	/// counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2715,7 +2718,8 @@ public sealed partial class ParkPeople : Entity
 			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired,
 			RideKinds( item => _research?.IsResearched( item.Id ) == true ), RideKinds( item => State.BuiltOf( item.Id ).Standing > 0 ),
 			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing, State.Balance, sideshowKinds.OnOffer, sideshowKinds.Standing,
-			features, featureKinds.OnOffer, featureKinds.Standing, inside, needing );
+			features, featureKinds.OnOffer, featureKinds.Standing, inside, needing,
+			_staff.Count( member => member.Model == ResearcherModel ), _research?.Unfinished( ItemDescriptionFile.Feature ) ?? 0 );
 	}
 
 	/// <summary>The catalogue's items of a ride's kind that cost no golden ticket and that <paramref name="counted"/> holds for (0x004ca450, 0x004ca7b0).</summary>

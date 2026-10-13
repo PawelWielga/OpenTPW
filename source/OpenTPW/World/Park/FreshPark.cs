@@ -33,6 +33,8 @@ public sealed class FreshPark : IParkInitialState
 	public int CurrentArrivalVehicle => 0;
 	public ParkWorld.ArrivalBlock Arrival => new( 0, 0, 5, 0, false, true );
 	public IReadOnlyList<ParkWorld.ObjectControl> ObjectControlRecords { get; }
+	// The lab's projects are not made here: the original's world setup fills them from the catalogue, which is not read.
+	public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects => [];
 
 	public FreshPark( string theme, ParkBalance balance, ParkItemCatalogue catalogue, BaseFileSystem? files = null )
 	{
@@ -42,6 +44,7 @@ public sealed class FreshPark : IParkInitialState
 		Things = Array.AsReadOnly( models.Select( (model, at) => new ParkThingIdentity( at + 1, model ) ).ToArray() );
 		Objects = Array.AsReadOnly( new[] { FixedObject( catalogue, "gates", ParkGates, 0 ),
 			FixedObject( catalogue, "lights", TrafficLights, ParkGates ) } );
+		Unimplemented.Report( "FRESH_PARK_RESEARCH_PROJECTS" );
 		ObjectControlRecords = Array.AsReadOnly( catalogue.All
 			.Select( item => new ParkWorld.ObjectControl( item.Id, item.ResearchCost == 0, 0,
 				// The two fixed objects are counted as the original's constructor counts them, made on tick nought.

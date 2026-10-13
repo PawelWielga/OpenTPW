@@ -1503,6 +1503,22 @@ public static class DebugConsole
 
 			// The Options switch "Tutorial", in memory only, as rmbcancel's: the advisor's gate reads it at each post
 			// of a tutorial message.
+			// The game type the park advisor's poll takes: `advisorgame full` holds it to Full Simulation's and
+			// `advisorgame instant` to Instant Action's, whatever the player's is; `advisorgame own` lets go. An
+			// instrument, the twin of holding the original's 0x00fb3b7c: no screen of the game does it.
+			case "advisorgame":
+				if ( ParkState.Current?.AdvisorMessages is not { } polling )
+				{
+					Reply( "advisorgame: a park has to be loaded" );
+					break;
+				}
+
+				if ( parts.Length > 1 )
+					polling.InstantActionHeld = parts[1] switch { "full" => false, "instant" => true, _ => null };
+
+				Reply( $"advisorgame: {(polling.InstantAction ? "instant" : "full")} held={(polling.InstantActionHeld is { } gameHeld ? (gameHeld ? "instant" : "full") : "none")}" );
+				break;
+
 			case "tutorial":
 				if ( parts.Length > 1 )
 					GameOptions.Current.Tutorial = parts[1] == "on";

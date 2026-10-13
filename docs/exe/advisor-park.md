@@ -2938,13 +2938,146 @@ feature on offer, a golden-ticket feature, a feature built after the line, the b
 open, a park made with no file, Full Simulation (the row asks neither mode: not asked). Row 81 is "A park with sideshows and no feature", below, and row 76 is read and
 not built. Not heard in either game.
 
+## Every feature built, and more to research (message `0x50`, Q348)
+
+**Row 80, message `0x50`, `FeaturesResearchMore`:** polled, **category 4** (`MessageGroups[4]`: the same message
+no sooner than 900 quarter-ticks on, "Fifteen minutes between each time you're told to go and research more
+stuff" in `Advisor.sam`'s own words), **game mode 0: Full Simulation's alone**, one copy, first response 225,
+**one line**. Response 225 is sample 223 (the transcripts file has it "the build all of the available features
+maybe you should research some more"): the random gesture chain, model slot 0, props 10 and 0, the lobby's fly
+in the research hat (costume id 10, FileFormats `models.md`), group 82. It is the polled row after row 79: from
+the shipped park's cursor its turns are ticks 817, 972, 1127 and every 155 on.
+
+**The mode is the poll's test, not the score's** (`FUN_0059c680`, "The poll", above): a row whose `+0x0c` is
+nought is scored only where the game type `0x00fb3b7c` reads 0, and answers -1 where it reads 2, Instant
+Action's. Thirty-one polled rows are so: 18 to 21, 23 to 27, 61, 63 to 65, 72, 76, 80, 101, 102, 171, 274 to 276,
+278 to 281, 314, 316, 317, 347 and 348 (`meta_full.json`); the twenty-four built before this one are all mode 2.
+**So the shipped Lost Kingdom park, an Instant Action one, never hears this line**, whatever stands in it.
+
+**Its score, `0x0059e260`** (loose code, disassembled for this; `ECX` the balance object), each step on the park
+analyser (`FUN_00519510`):
+
+1. The researchers, `FUN_004c9960( 8 )` (the count rows 5 to 7 ask with 4 for the mechanics: a thing whose type
+   byte is 8 and whose `+3` is nought). None: nought.
+2. The kinds of feature standing, `0x004ca7b0( 3, 0 )` (row 79's count). None: nought.
+3. The lab's projects of a feature's kind left undone, `0x004ca690` (loose code): the lab is the thing the
+   world's `+0x1da722` names (`FUN_00519550`), and `FUN_00503b30( 3 )` on it counts, of its first `mNumProjects`
+   (`+0x145c`) projects of twenty bytes from `+0xc`, those whose `mCat` (`+4`) is 3 and whose `mResearchDone`
+   (`+0x10`) is under their `mCost` (`+0xc`), two floats set against each other on the x87 (`0x00503b55`). Asked
+   with 5 it counts every kind's. None: nought.
+4. The kinds of feature on offer, `0x004ca5d0( 0 )` (row 79's count). Not as many as stand (a `JNZ` at
+   `0x0059e2ca`): nought. Otherwise `[ECX + 0x2ac]`, `FeaturesResearchMore.Score`, **60** in `Advisor.sam`
+   (`lib/advisorschema.py`).
+
+The park's age, the newest build, the door and the bank are not asked. Row 76's function (`0x0059dfd0`, "A park
+with shops and no sideshow", above) is this one of the sideshows with one test more, and is mode 0 too.
+
+**The lab's projects are in the park file** (the lab's serialiser `FUN_00502dc0`: 256 projects by
+`FUN_00504210`, five kinds' records by `FUN_00504760`, then `mNumProjects`, `mWorkLoad`,
+`mMostExpensiveProject` and `mLabActive`; the bytes are FileFormats `saves.md`, "The research lab"). The shipped
+Lost Kingdom park's lab holds **24 projects: 8 of rides, 3 of shops, 2 of sideshows and 11 of features**, none
+done, and the eleven are exactly the features of the Instant Action catalogue its controls hold unresearched;
+the eight researched are items 1401 to 1403, 1406, 1411, 1413, 1425 and 1428, of which five stand.
+
+**The original's lab runs in an Instant Action park**: project 8, a feature (the Stone Head, cost 250), read 7.5
+points on tick 962 and gained 1.5 every 20 ticks through every run below (`thingwords.py ... 6:0xbc:f`), 30.0 on
+tick 1260.
+
+**Its tag** is row 82 of the tag table: key 383, picture 2, string 84, **no bar button** (both nought), thirty
+seconds. String 84 reads "All the available features have been built. Maybe you should research some more?" in
+the English folder this game reads and in the american one the original reads.
+
+### OpenTPW (`ParkAdvisorMessages.ResearchMoreFeatures`, a topic's `EveryFeatureBuilt`, `FullSimulationOnly`; `InstantAction`, `InstantActionHeld`; `ParkFacts.Researchers`, `FeatureProjectsUnfinished`; `ParkWorld.ResearchProjects`; `ParkResearch.Unfinished`; tag row 82)
+
+A twenty-fifth polled topic, and the first that is one game's alone: the poll does not score a
+`FullSimulationOnly` row in Instant Action and logs `score=-1 ... result=other-game`. `ParkWorld` reads the lab's
+used projects from the file, `ParkResearch.Unfinished( kind )` counts those not done, and
+`ParkPeople.AdvisorFacts` hands the score the researchers on the staff and the features' count. The poll line
+ends ` researchers=N kinds=K/T unfinished=N`. `ParkTags.Rows` lists row 82.
+
+**The lab's projects are the file's, and stay so**: nothing here researches (`ParkResearch`), so a project is
+never finished and a kind never comes on offer. **A park made with no file has no project**
+(`FRESH_PARK_RESEARCH_PROJECTS`, counted: the original's world setup fills the lab from the catalogue, which is
+not read), so the row scores nought in the one kind of park whose game it is, until that is built (Q349).
+
+**The console's `advisorgame full|instant|own`** holds the poll's game type, whatever the player's is. It is an
+instrument, the twin of holding the original's `0x00fb3b7c`: no screen of either game does it.
+
+**The scenes** (`lib/stockscene.py`; the stock park paused on tick 962 to 964): *all8*, a Small Bush (1401), a
+Small Tree (1425) and a Tiny Rock (1428) bought, so that all eight kinds on offer stand; *seven*, the first two
+alone; *nores*, all8 with the researcher fired; *done*, all8 with the eleven feature projects' `mResearchDone`
+written up to their `mCost` (`parkfile.thing_set` on thing 6).
+
+**Predicted first** (`q348/PREDICTION.txt`), both games, two rounds. **Round 1 missed in the original, and the
+miss is what found the mode**: built without it, this game said the line on tick 972 of *all8* as predicted,
+and the original given the same file kept message `0x50`'s record fresh through tick 1260, over two turns
+(`orig/round1/a-load.log`). The row's `+0x0c` was read after that. Round 2 was written before its runs, and
+every line of it held in both games.
+
+**This game** (`q348/confirm.py <mode>`; the first two on the desktop and off it, the rest off-screen). *all8*
+with nothing held (`run-instant`): `poll message=80 row=80 days=42 score=-1 threshold=25 tick=972
+result=other-game researchers=1 kinds=8/8 unfinished=11`, no attempt and no tag by tick 1003. *all8* with
+`advisorgame full` (`run-fix2`, four of four on its first run): `score=60 ... tick=972 result=post researchers=1
+kinds=8/8 unfinished=11`, `post message=80 ... result=queued` and `attempt=1 message=80 subject=0 score=60
+threshold=25 response=225 sample=223 line=0 tick=972`; `saying sp_223.mp2 ... wearing=10,0 slot=0`, him up in
+the white spiked hair of the research hat (`1-line.png`), `tags` reading `tag=82/picture=2/subject=0` with
+`mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked: `message bar: tag 82 subject 0 item
+0 bar: out=1 rect=486,1112,1101,1453 ... first=hidden second=hidden erase=mb_erase` and the text
+(`2-bar.png`). Held the same way: *seven* (`run-seven`) `score=0 ... result=no-score researchers=1 kinds=7/8
+unfinished=11`; *nores* (`run-nores`) `no-score researchers=0 kinds=8/8 unfinished=11`; *done* (`run-done`)
+`no-score researchers=1 kinds=8/8 unfinished=0`. The stock park with nothing held (`run-stock`): `score=-1 ...
+tick=817 result=other-game researchers=1 kinds=5/8 unfinished=11`. None of the silent runs said the line or
+left tag 82.
+
+**Main's build** on *all8* (`run-control`): no line of message 80, no attempt, no tag by tick 1001.
+
+**The original** (`q348/orig/run.sh <file>`: `advisor.py ... 0x50,... poll` beside `thingwords.py` on the lab
+and the researcher, `tags.py` and `bar.py`; with `HOLD=1` `bytehold.py` leaves the game type's low byte at 2
+until `mGameTick` passes 1112, holds it at 0, and puts 2 back on tick 1148: a write to its memory, over the
+row's second turn). *all8* untouched (round 1's run a): fresh over ticks 972 and 1127, through 1260. *all8*
+held (run e): fresh over tick 972, the byte written on tick 1113, and message `0x50`'s record **(1127, 0, 1, 0)
+on tick 1127**; one tag with it at (84, 909, 154, 974), the mast at (94, 901, 144, 984), its text string 84;
+he is up in the same white spiked hair (`orig/e-g4.png`). The tag clicked: the bar's data read thing 0, buttons
+0 and 0, item 0 and the text, and the bar is drawn with the bomb button and no other (`orig/e-bar.png`).
+Message `0x11c` waited in a slot at 1000 from tick 1140. Rows 63, 64, 65, 72 and 76, Full Simulation's too and
+polled inside the hold, stayed fresh. *seven* held (run f): fresh through tick 1240. *nores* held (run g; the
+researcher's thing reads no type): fresh through tick 1151. *done* held (run h; project 8 read 250.0 of 250.0):
+fresh through tick 1144.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 80 in an Instant Action park | never scored: fresh over two turns with all eight kinds built | the same (`score=-1 ... result=other-game`) |
+| Row 80 with the game type held to Full Simulation's | `Score` where a researcher is on the staff, a kind of feature stands, a feature's project is left undone and the kinds standing are as many as those on offer | the same |
+| All eight kinds, a researcher, eleven projects | said on the row's turn (tick 1127, the first inside the hold) | the same (tick 972, score 60) |
+| Seven kinds of eight | not said | the same (`kinds=7/8`) |
+| No researcher | not said | the same (`researchers=0`) |
+| Every feature project done | not said | the same (`unfinished=0`) |
+| Who says it | the lobby's fly in the research hat | the same |
+| The tag and the bar | row 82, part 2, string 84; no button but the bomb | the same |
+| The lab's projects | the file's, and worked on from the load, 1.5 points every 20 ticks on project 8 | the file's, read and never changed |
+
+**Not built or not seen.** In no game run: **a Full Simulation park** (the row's only game: this game's has no
+file and no project, `FRESH_PARK_RESEARCH_PROJECTS`; it belongs to Q327's catch-up), the line again past its
+900 quarter-ticks (the test holds it), a kind standing that is not on offer, a project finished by the
+original's own research and what that does to the kinds on offer, the other three themes' labs. Of the lab's
+record this game reads the projects alone: the five kinds' effort, output, current project and highest group,
+`mWorkLoad`, `mMostExpensiveProject` and `mLabActive` are named and not read. The hold's turn in the two games
+is not the same turn (972 here, 1127 there): the original's byte was not held through its load, which reads
+the game type for its catalogue. Row 76 (`SideshowsResearchMore`) and the other twenty-nine polled rows of mode
+0 are not built. **Rows 83 and 84 are posted and no poster is found**: row 83's score is the stub
+`FUN_005d60c0`, which answers nought, row 84's (`0x0059e410`) answers `FeaturesFarToToilets.Score` alone, and
+neither `0x53` nor `0x54` is handed to `FUN_0059b590` or `FUN_0059bf20` by any defined code, nor stored into a
+record on the stack by a `MOV` of either number; an event of type `0x19` carries a message's number too
+(`FUN_0040f7a0`, heard at `FUN_0059b060`'s case `0x19`), and its four builders are the challenge manager's. That
+nothing posts them is not proven. Not heard in either game.
+
 ## A park with sideshows and no feature (message `0x51`, Q345)
 
 **Row 81, message `0x51`, `FeaturesBuildFeatures`:** polled, category 0, either game mode, one copy, first
 response 226, **one line**. Response 226 is sample 224 ("Imagine a world without features: no trees, fountains,
 statues. That's what your park is like, it has no features. Maybe you should build some"): the random gesture
 chain, **model slot 1 and prop -1, the theme's own advisor and its costume**, as row 79's two, group 83. It is two
-polled rows after row 79 (row 80, `FeaturesResearchMore`, `0x0059e260`, is polled and not read): from the
+polled rows after row 79 (row 80, `FeaturesResearchMore`, is "Every feature built, and more to research", above): from the
 shipped park's cursor its turns are ticks 818, 973, 1128, 1283, 1438, 1593, 1748 and every 155 on.
 
 **Its score, `0x0059e2e0`** (loose code, disassembled for this; `ECX` the balance object) is row 77's a kind
@@ -3044,8 +3177,8 @@ the same tag. *feat30* (run c) and *noside30* (run d): fresh through the runs' e
 again), score 22 on tick 1438 (a summons falls on that tick), day 29 said a turn later in this game, a
 golden-ticket sideshow or feature, a feature built after the line, the bar's button with the buy screen open, a
 park made with no file, Full Simulation (the row asks neither mode: not asked). Row 82 is silent in those parks
-because few of their guests need a toilet ("A park with no toilet", below). Row 80's score (`0x0059e260`) is not
-read; row 76 is read and not built. Not heard in either game.
+because few of their guests need a toilet ("A park with no toilet", below). Row 80 is "Every feature built, and
+more to research", above; row 76 is read and not built. Not heard in either game.
 
 ## A park with no toilet (message `0x52`, Q347)
 
@@ -3160,7 +3293,8 @@ with no file, Full Simulation (the row asks neither mode: not asked). **Left alo
 original's do not come and go alike**, so a long run of one file need not speak on the same turn in both: only
 the turn straight after a load was compared. Rows 83 and 84 are posted, not polled, and who posts them is not
 read: row 83's one response, 230, is sample 227 again with group 85, and row 84's score, `0x0059e410`, is
-`FeaturesFarToToilets.Score` alone (60). Row 80's score (`0x0059e260`) is not read. Not heard in either game.
+`FeaturesFarToToilets.Score` alone (60); what was looked for of their posters is in "Every feature built, and
+more to research", above, with row 80. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 

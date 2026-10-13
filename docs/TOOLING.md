@@ -594,6 +594,18 @@ GH=766` there, or the pointer is off):
   moves by itself in a long run: read it with `original/inside.py` or
   this game's poll line. A runtime cell's record in the original is `[0x008023a0] + (y * 128 + x) * 68`, the
   packed id LESS ONE (Q347).
+- **An advisor line that is Full Simulation's alone, said in the stock Instant Action park, in both games**
+  (Q348): read the row's `+0x0c` in `meta_full.json` FIRST (nought: the poll scores it in game type 0 alone, and
+  31 polled rows are so). This game: the console's `advisorgame full` given paused after the load, before the
+  row's turn (`advisorgame own` lets go). The original: `bytehold.py %PID% 47 0x00fb3b7c=2 1112 0x00fb3b7c=0`,
+  then `bytehold.py %PID% 4 0x00fb3b7c=2` to put it back, holds the game type at 0 from tick 1113 over the row's
+  turn; never through the load, which reads the game type for its catalogue, so use the row's second turn after
+  the load (155 ticks on, 41.5 s from the click). Every Full Simulation row polled inside the hold is scored too:
+  name them to `advisor.py`. The stock park's eight features on offer all standing: `lib/stockscene.py ... 960
+  "buy 1401 45 25 0" "buy 1425 46 25 0" "buy 1428 45 26 0"`; its researcher is thing 30 and its lab thing 6,
+  whose projects `thingwords.py %PID% SECS 6:0x145c:I:projects 6:0xbc:f:done8` reads (project n's `mCost` is at
+  `0x18 + 20 n`, its `mResearchDone` four on) and `parkfile.thing_set( src, dst, 6, 16 + 16 * n + 12, '<f', cost
+  )` finishes in a file.
 
 ## The original under Proton
 

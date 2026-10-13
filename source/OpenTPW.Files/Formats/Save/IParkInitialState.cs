@@ -30,6 +30,7 @@ public interface IParkInitialState
 	int CurrentArrivalVehicle { get; }
 	ParkWorld.ArrivalBlock Arrival { get; }
 	IReadOnlyList<ParkWorld.ObjectControl> ObjectControlRecords { get; }
+	IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects { get; }
 }
 
 /// <summary>A reserved world-table slot, including managers that have no drawable object.</summary>

@@ -44,14 +44,24 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q348. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q349. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q348 (`advisor-park.md`, "Every feature built, and more to research"): **a park made with no file has
+  no research project** (`FRESH_PARK_RESEARCH_PROJECTS`, counted: the original's world setup fills the lab from
+  the catalogue, not read), so row 80 scores nought in Full Simulation, its only game, until that is built; and
+  nothing here researches, so a file's projects never finish. Of the lab's record the five kinds' records,
+  `mWorkLoad`, `mMostExpensiveProject` and `mLabActive` are named and not read. **Thirty polled rows of mode 0
+  are unbuilt** (18 to 21, 23 to 27, 61, 63 to 65, 72, 76, 101, 102, 171, 274 to 276, 278 to 281, 314, 316, 317,
+  347, 348); row 76 is row 80's shape of the sideshows with `FUN_00503980` besides. **Rows 83 and 84 have no
+  poster found** (row 83's score is a stub answering nought): not proven dead. In no game run: a Full
+  Simulation park (Q327), the line again past its 900 quarter-ticks, a project finished by the original's own
+  research. Not heard in either game.
   From Q347 (`advisor-park.md`, "A park with no toilet"): **left alone, this game's guests and the original's
   do not come and go alike**: of four loads of `q347/lvl60.TPWS` the original said row 82's line on tick 1284
   in one (three of eleven or fewer inside over 60: not counted in that run) and this game's one run was silent
   through tick 1304; only the turn straight after a load was compared. Rows 83 and 84 (`FeaturesFarToToilets`,
-  score `0x0059e410`) are posted and who posts them is not read; row 80 (`0x0059e260`) is not read. In no game
+  score `0x0059e410`) are posted and who posts them is not read; row 80 is built (Q348). In no game
   run: lines 2 and 3, the line again past its cooldown, a share of exactly 25 in this game (3 of 12 was silent
   in the original; the test holds 1 of 4), a guest outside the park, a park made with no file, Full Simulation
   (not asked: the row reads neither mode). Not heard in either game.
@@ -512,7 +522,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q327. Full Simulation catch-up: the built advisor lines in a Full Simulation park.** Filed at Alexah's
   word, 2026-10-12, and placed here by it: after Q241j, whose economy fields a Full Simulation file needs. One
   session. A Full Simulation park made with no file, saved, and run through each built polled row's scene in
-  both games (rows 1, 2, 62, 113, 185, 259 to 263, 282: `advisor-park.md` has each scene and its turn; the
+  both games (rows 1, 2, 62, 113, 185, 259 to 263, 282, and row 80, which is Full Simulation's alone and needs
+  the fresh park's lab filled first, Q349: `advisor-park.md` has each scene and its turn; the
   cursor is the program's, not a file's, so predict each turn from it). Say first, from each score function,
   whether the mode is asked; run those where it could matter (the regular catalogue, the empty park's age and
   rates), and say in one line why for the rest. Confirm: each line's `poll` and `attempt` lines with a
