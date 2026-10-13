@@ -2044,7 +2044,7 @@ list's click does nothing under it.)
 | The tag and the bar | row 62, part 2, string 65; button 9 builds the buy screen on its rides tab, tag off | the same |
 
 **Not built or not seen.** Rows 71 and 73 are "A poor selection of shops" and "A park with rides and no shop",
-below, and row 74 "Too few shops for the park's size"; the five other rows that read the newest build (75, 77 to 79 and 81) are not built and their score functions not read. **The original's stamp moved with nothing bought**: in run a's
+below, row 74 "Too few shops for the park's size" and row 75 "A poor selection of sideshows"; the four other rows that read the newest build (77 to 79 and 81) are not built and their score functions not read. **The original's stamp moved with nothing bought**: in run a's
 park, left running, `mLastObjectBuilt` went to tick 1400's on tick 1400 (read in run b's log, before its load);
 what was made then is not read (the vehicle summons and the "End" feature are the constructor's callers, "The
 newest build"), and here nothing moves it, so past such a moment this game's row 60 would speak again where
@@ -2354,6 +2354,120 @@ shop standing under a ratio above one (the test; row 73's park), a golden-ticket
 with no file, Full Simulation: the mode is not asked by row 74's score. What the line would have been worth with
 the rides counted, as its key names them, is not built: that would be a mend of the original, and is not this
 game's to make without Alexah's word. Not heard in either game.
+
+## A poor selection of sideshows (message `0x4b`, Q339)
+
+**Row 75, message `0x4b`, `SideshowsPoorSelection`:** polled, category 0, either game mode, one copy, first response
+215, two lines in turn. Responses 215 and 216 are samples 213 and 214 ("You don't have a very good selection of
+sideshows ... maybe you should build some more"; "You don't have the best selection of sideshows I've ever seen.
+Have you given any thought to building more?"): the random gesture chain, model slot 0, no prop, group 77. It is
+the polled row after row 74: from the shipped park's cursor its turns are ticks 812, 967, 1122 and every 155 on.
+
+**Its score, `0x0059df30`** (loose code, disassembled for this; `ECX` the balance object) is rows 60's and 71's
+with the sideshows' counts, each step on the park analyser (`FUN_00519510`):
+
+1. The kinds of sideshow on offer, `0x004ca570` (its one argument is not read; loose code, the twin of
+   `0x004ca510` with a 2 for the 1): the catalogue's items whose `Info.WhichUIType` (`+0x4ac`) is 2, a sideshow,
+   and whose control record is researched (`+0x10`). It does not ask the golden ticket. None: nought.
+2. The whole days since the newest build, `0x004c9070`, under `[ECX + 0x634]`, `WaitingTimes.DaysForObjects`,
+   **30** (a signed `JL`): nought.
+3. The sideshows standing, `FUN_004ca8e0( 2, 0 )`, under `[ECX + 0x280]`,
+   `SideshowsPoorSelection.MoreSideshowsThan`, **2**: nought.
+4. The kinds standing, `0x004ca7b0( 2, 0 )`: the sideshow items whose control record counts at least one
+   standing and whose `GoldenTicketCost` is nought, researched or not. Times 100 over step 1's count, an unsigned
+   whole division, not under `[ECX + 0x27c]`, `SideshowsPoorSelection.PoorerThan`, **15**: nought.
+5. Otherwise `[ECX + 0x284]`, `SideshowsPoorSelection.Score`, **45**.
+
+The door is not asked, nor whether a sideshow is open. **No Lost Kingdom park can score it under the shipped
+15**: the theme has five sideshows (the Jungle Spray 1303, the Laughing Hyenas 1304, the Strength Bird 1305, the
+Giant Puzzle 1307 and the Arcade 1309, which Instant Action's catalogue leaves out for want of an `Easy_` file)
+and none costs a golden ticket, so with everything researched one kind standing is 20 per cent, and with no kind
+standing there is no sideshow to be two of. The shipped save has two researched, the Jungle Spray and the
+Strength Bird: one kind standing is 50.
+
+**Its tag** is row 77 of the tag table: key 383, picture 2, string 79, the bar's first button of type 11 (the buy
+screen on its sideshows tab; help row 523, "Left-click to buy sideshows"), no second, thirty seconds. String 79
+reads "Your park doesn't have a great selection of sideshows. You should build some more."
+
+### OpenTPW (`ParkAdvisorMessages.PoorSideshowSelection`, `PoorOf: Shut.Sideshows`; `ParkFacts.SideshowKindsOnOffer`, `SideshowKindsStanding`; `ParkPeople.Kinds`; tag row 77)
+
+A nineteenth polled topic, rows 60's and 71's rule asked of the sideshows: `ParkFacts.Kinds` answers the
+sideshows' kinds on offer and standing, the sideshows and the least-number key `MoreSideshowsThan`.
+`ParkPeople.Kinds` (the old `ShopKinds`, now asked with the kind) counts them from the catalogue's items, the
+research flags and the park's own count of each item standing, with the original's two tests of the golden
+ticket. The poll line ends ` kinds=K/T sideshows=N sincebuild=N`. `ParkTags.Rows` lists row 77; the bar's button
+of type 11 was built with row 62's message's.
+
+**The scene** (`q339/scene.py`, `q339/mk.py`): the stock park paused on tick 916 with a second Jungle Spray
+bought on (41,22) as thing 43, saved. Into copies the Laughing Hyenas and the Giant Puzzle are marked researched
+(`original/research.py`: four on offer, all Instant Action's catalogue has) and the stamp written: `four30.TPWS`
+the stamp of tick 275, 692 ticks before row 75's turn on tick 967, and `four29.TPWS` the stamp of tick 276.
+Beside them `two30.TPWS`, the stamp alone (two on offer); `bird30.TPWS`, a Strength Bird bought in place of the
+Spray (two kinds of four); and `one30.TPWS`, nothing bought (one sideshow). **Three `Advisor.sam`**: the shipped
+one; *poor26*, `SideshowsPoorSelection.PoorerThan` 26, under which one kind of four, 25, is poor; *poor25*, under
+which it is not. This game reads a changed one from a private game folder (`lib/gamefolder.py`); the original's
+own is swapped for a run and put back (`q339/orig/run.sh`, `SAM=`).
+
+**Predicted first** (`q339/PREDICTION.txt`), both games, before any run of either, the scene runs included; every
+prediction held, in one round. Not predictions, and said there: the listing, and the two kinds on offer and the
+theme's five sideshows, read from a test's printout and the wads.
+
+**This game** (`q339/confirm.py fix|edge|stock|d29|two|bird|one|control`). *poor26 on `four30`* (`run-fix1`, on
+the desktop, five of five on its first run; `run-fix2` on the commit's build): `poll message=75 row=75 days=41
+score=45 threshold=25 tick=967 result=post kinds=1/4 sideshows=2 sincebuild=30`, `post message=75 ...
+result=queued` and `attempt=1 message=75 subject=0 score=45 threshold=25 response=215 sample=213 line=0
+tick=967`; `saying sp_213.mp2 ... wearing=0,0`, him up with his antennae (`1-line.png`), `tags` reading
+`tag=77/picture=2/subject=0` with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked:
+`message bar: tag 77 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=523 second=hidden
+erase=mb_erase` and the text (`2-bar.png`). The button clicked: `button type 11 opens the buy screen on tab 2
+and takes tag 77 off`, `windows` reading `ParkBuyScreen tab 2`, and the frame "Buy Sideshow" listing the four on
+offer (`3-screen.png`). The rest off-screen. *poor25* (`run-edge`) and *the shipped 15* (`run-stock`), both on
+`four30`: `score=0 ... tick=967 result=no-score kinds=1/4 sideshows=2 sincebuild=30`, not said by ticks 998 and
+995. *poor26 on `four29`* (`run-d29`): `no-score ... sincebuild=29` on 967, then `days=48 score=45 ... tick=1122
+result=post kinds=1/4 sideshows=2 sincebuild=36`, said on that tick. *`two30`*: `no-score kinds=1/2 sideshows=2
+sincebuild=30`. *`bird30`*: `no-score kinds=2/4 sideshows=2 sincebuild=30`. *`one30`*: `no-score kinds=1/4
+sideshows=1 sincebuild=30`; none of the three said it by tick 995.
+
+**Main's build** under poor26 on `four30` (`run-control`): no line of message 75, no attempt, no tag by tick 997.
+
+**The original** (`q339/orig/run.sh <file>` with `SAM=stock|poor26|poor25`, `advisor.py ...
+0x4b,0x4c,0x4d,0x4a,0x49,0x47,0x3c,0x3e,0x71,0xbc,0x11c poll` beside `tags.py`, `bar.py`, `screens.py` and, in the
+silent runs, `thingwords.py` on three guests' places to stamp the ticks; seven programs, each started on its own
+`Advisor.sam`). *poor26 on `four30`* (run a): message `0x4b`'s record went from (0, -1, 0, 0) to **(967, 0, 1, 0)
+on tick 967**, 13.54 s after the load's click; one tag with it at (84, 909, 154, 974), the mast at (94, 901,
+144, 984), its text string 79; he is up with no hat (`orig/a-g10.png`). The tag clicked: the bar's data read
+thing 0, buttons 11 and 0, item 0 and the text. The button clicked: `screens.py`'s buy screen went from `0x0` to
+a pointer on tick 1060 and the tag was gone by 1062, the frame "Buy Sideshow" listing the same four
+(`orig/a-button.png`): **the original keeps a sideshow's researched byte as written.** *poor26 on `four29`* (run
+b): the record fresh on ticks 971 and 984 and **(1122, 0, 1, 0) on tick 1122**, the tag with it. *poor25 on
+`four30`* (run c): fresh, no slot and no tag through tick 1240. *poor26 on `two30`* (run d), *`bird30`* (run e)
+and *`one30`* (run f): the same through ticks 1238, 1241 and 1230. *The shipped 15 on `four30`* (run g): the same
+through tick 1242. Rows 76 and 77 (`0x4c`, `0x4d`) stayed fresh in all seven, and so did the rest read, but the message bar's and the buy
+screen's own lines at run a's two clicks (`0x11c` on tick 1041, `0xbc` on 1061), as this game posts them.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 75 | polled; nought with no kind of sideshow on offer, until 30 days after the newest build, and under two sideshows; then 45 where the kinds standing are under 15 per cent of those on offer | the same |
+| The shipped 15, one kind of four | never said | the same (`score=0 ... kinds=1/4`) |
+| `PoorerThan` 26, two Jungle Sprays, four on offer, day 30 | said on tick 967, line 0, no hat | the same (score 45) |
+| `PoorerThan` 25 (25 per cent is not under 25) | not said | the same |
+| Day 29 | fresh on tick 967; said on tick 1122 | the same |
+| Two on offer (50 per cent) | not said | the same (`kinds=1/2`) |
+| Two kinds standing (50 per cent) | not said | the same (`kinds=2/4`) |
+| One sideshow | not said | the same (`sideshows=1`) |
+| The tag and the bar | row 77, part 2, string 79; button 11 builds the buy screen on its sideshows tab, tag off | the same |
+| A golden-ticket sideshow | on offer once researched; never a kind standing | the same (`ParkPeople.Kinds`; by test alone) |
+
+**Not built or not seen.** The row is said in no Lost Kingdom park under the shipped key, in either game: every
+run in which it speaks is under a changed `Advisor.sam`. The four other rows that read the newest build (77 to
+79 and 81) are not built and their score functions not read, nor is row 76's (`0x0059dfd0`,
+`SideshowsResearchMore` by its key's place; it stayed fresh in every run). Whether the original's
+`mLastObjectBuilt` moved in these runs was not polled ("A poor selection of shops", above, has it moving with
+nothing bought). In no game run: line 2 (sample 214; the test holds the turn), the line said again past its 120
+quarter-ticks, a golden-ticket sideshow (no Lost Kingdom sideshow costs one), the Arcade (the regular
+catalogue's fifth: one kind of five is 20), a kind researched in the park (no research is built; the files'
+bytes were written), a thing built after the line, the bar's button with the buy screen open, a park made with
+no file, Full Simulation: the mode is not asked by row 75's score. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 

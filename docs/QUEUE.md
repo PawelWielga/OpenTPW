@@ -44,9 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q339. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q340. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q339 (`advisor-park.md`, "A poor selection of sideshows"): the four other rows that read the newest
+  build are not built or read (77 to 79 and 81), nor is row 76 (`0x0059dfd0`, not a reader of it by Q334's
+  list; `SideshowsResearchMore` by its key's place, `+0x288`, Score 75: `disassemble_at` first). Row 77's keys
+  are next in the schema (`SideshowsBuildSideshows`, Score -70: probably row 62's or 73's shape of the
+  sideshows; name them with `advisorschema.py` from `+0x28c` on). Whether the original's `mLastObjectBuilt`
+  moved in Q339's runs was not polled. In no game run: the line under the shipped key (it cannot score in Lost
+  Kingdom), line 2, the line again past its cooldown, a golden-ticket sideshow, the Arcade standing or on offer,
+  a thing built after the line, the bar's button with the buy screen open, a park made with no file, Full
+  Simulation. Not heard in either game.
   From Q338 (`advisor-park.md`, "Too few shops for the park's size"): the five other rows that read the newest
   build are not built or read (75, 77 to 79 and 81; row 75's score is `0x0059df30`: `disassemble_at` first, and
   name its keys with `advisorschema.py` from `+0x27c` on, `SideshowsPoorSelection`). **Row 74 counts no ride**:

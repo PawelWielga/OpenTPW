@@ -78,6 +78,11 @@ whole list):
   (`q338/orig/run.sh`, `SAM=`). The loader takes a float as written (`ShopsPerRideRatio 1.5`). A run in which
   nothing is said prints no line after its first: add `EXTRA='python3 -u .../thingwords.py %PID% 60 29:0x8:H
   35:0x8:H 31:0x8:H'` so guests' places stamp its ticks.
+- **A row no shipped park can score** (Q339): change its key in both games (above) AND, where the count is of
+  kinds on offer, mark items researched in the file with `original/research.py`: the original keeps a
+  sideshow's researched byte as written, as a shop's (four on its "Buy Sideshow" list). Each run of the
+  original on a changed `Advisor.sam` is a program of its own (about three minutes): put the silent ones in one
+  background chain with `EXTRA=` `thingwords.py` on three guests' places, and read each log's last tick.
 - **A park with a ride and no shop is the stock park with thing 16 sold** (Q337): `sell 16` under a pause takes
   the Drinks Shop, its only shop; `sell 13` takes the Belly Bounce, its only ride. A sale leaves
   `mLastObjectBuilt`, so the days since the build are still set by writing the stamp into the file

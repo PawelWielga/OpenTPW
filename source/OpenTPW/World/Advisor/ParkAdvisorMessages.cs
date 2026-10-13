@@ -39,6 +39,8 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>Message 0x3c, polled: the line about a poor selection of rides, scored where few of the kinds of ride on offer stand (0x0059d990).</summary>
 	internal const int PoorSelection = 0x3c;
 	internal const int PoorShopSelection = 0x47;
+	/// <summary>Message 0x4b, polled: the line about a poor selection of sideshows, scored where few of the kinds of sideshow on offer stand (0x0059df30).</summary>
+	internal const int PoorSideshowSelection = 0x4b;
 	/// <summary>Message 0x49, polled: the line about a park with rides and no shop, scored by the park's age in days (0x0059dde0).</summary>
 	internal const int BuildShops = 0x49;
 	/// <summary>Message 0x4a, polled: the line about too few shops for the park's size, whose score sets the kinds of shop standing against themselves (0x0059de80).</summary>
@@ -117,7 +119,8 @@ internal sealed class ParkAdvisorMessages
 	/// per cent, of the kinds of ride on offer that the kinds standing must be under for the key's value, and the
 	/// score is nought until <see cref="DaysForObjects"/> days after the newest object was made.
 	/// <paramref name="PoorOf"/> is whose kinds that score asks: the rides', or the shops' for row 71's
-	/// (0x0059dca0), whose section's least number is MoreShopsThan.
+	/// (0x0059dca0), whose section's least number is MoreShopsThan, or the sideshows' for row 75's (0x0059df30),
+	/// whose is MoreSideshowsThan.
 	/// <paramref name="PerDayWithNoShop"/> makes the score row 73's (0x0059dde0): in a park where a kind of ride
 	/// stands and no kind of shop the key's value and this key's for each whole day of the park's age, and nought
 	/// until <see cref="DaysForObjects"/> days after the newest object was made.
@@ -136,7 +139,7 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
 
-	/// <summary>The key of the whole days since the newest object was made that rows 60, 71, 73 and 74's scores wait for (the balance object's +0x634).</summary>
+	/// <summary>The key of the whole days since the newest object was made that rows 60, 71, 73, 74 and 75's scores wait for (the balance object's +0x634).</summary>
 	internal const string DaysForObjects = "WaitingTimes.DaysForObjects";
 
 	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490).</summary>
@@ -171,13 +174,16 @@ internal sealed class ParkAdvisorMessages
 	/// (0x004ca510: a catalogue item of a shop's kind that is researched, a golden ticket's or not) and those of
 	/// which a thing stands (0x004ca7b0 asked with one and nought, which passes over a golden ticket's); and what
 	/// row 73's reads: the kinds of ride and of shop of which a thing stands and the days since the newest object;
-	/// and what row 74's reads besides: the bank's balance (FUN_005195d0's thing's +0xc).
+	/// and what row 74's reads besides: the bank's balance (FUN_005195d0's thing's +0xc); and what row 75's
+	/// reads: the kinds of sideshow on offer (0x004ca570: a catalogue item of a sideshow's kind that is researched,
+	/// a golden ticket's or not) and those of which a thing stands (0x004ca7b0 asked with two and nought).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
 		int UnjoinedQueue = 0, int StaffRooms = 0, int StaffRoomsShut = 0, int Mechanics = 0, int RidesWorn = 0, int RidesBroken = 0,
 		int DaysSinceStaffHired = 0, int RideKindsOnOffer = 0, int RideKindsStanding = 0, int DaysSinceObjectBuilt = 0,
-		int ShopKindsOnOffer = 0, int ShopKindsStanding = 0, int Balance = 0 )
+		int ShopKindsOnOffer = 0, int ShopKindsStanding = 0, int Balance = 0,
+		int SideshowKindsOnOffer = 0, int SideshowKindsStanding = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -194,9 +200,12 @@ internal sealed class ParkAdvisorMessages
 		/// What a poor selection's score reads of <paramref name="of"/>: its kinds on offer and standing, how many
 		/// of its things stand, the key of the least number of them in its section, and its word in the poll line.
 		/// </summary>
-		internal (int OnOffer, int Standing, int Things, string Least, string Word) Kinds( Shut of ) => of == Shut.Shops
-			? (ShopKindsOnOffer, ShopKindsStanding, Shops, "MoreShopsThan", "shops")
-			: (RideKindsOnOffer, RideKindsStanding, Rides, "MoreRidesThan", "rides");
+		internal (int OnOffer, int Standing, int Things, string Least, string Word) Kinds( Shut of ) => of switch
+		{
+			Shut.Shops => (ShopKindsOnOffer, ShopKindsStanding, Shops, "MoreShopsThan", "shops"),
+			Shut.Sideshows => (SideshowKindsOnOffer, SideshowKindsStanding, Sideshows, "MoreSideshowsThan", "sideshows"),
+			_ => (RideKindsOnOffer, RideKindsStanding, Rides, "MoreRidesThan", "rides")
+		};
 	}
 
 	/// <summary>The metadata table's rows, 0 to 0x15e.</summary>
@@ -269,6 +278,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
 		new( PoorSelection, "RidesPoorSelection.Score", 176, 173, Lines: 3, Group: 62, Polled: true, PoorSelection: "RidesPoorSelection" ),
 		new( PoorShopSelection, "ShopsPoorSelection.Score", 207, 205, Group: 73, Polled: true, PoorSelection: "ShopsPoorSelection", PoorOf: Shut.Shops ),
+		new( PoorSideshowSelection, "SideshowsPoorSelection.Score", 215, 213, Group: 77, Polled: true, PoorSelection: "SideshowsPoorSelection", PoorOf: Shut.Sideshows ),
 		new( BuildShops, "ShopsBuildShops.Score", 211, 209, Prop: HardHat, Group: 75, Polled: true, PerDayWithNoShop: "ShopsBuildShops.AdditionalPerDay" ),
 		new( BuildMoreShops, "ShopsBuildMoreShops.Score", 213, 211, Prop: HardHat, Group: 76, Polled: true, ShopsPerRide: "ShopsBuildMoreShops" ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
@@ -482,7 +492,8 @@ internal sealed class ParkAdvisorMessages
 	/// row 60's (0x0059d990) is nought where no kind of ride is on offer, until DaysForObjects days after the
 	/// newest object was made, and with fewer rides than its section's MoreRidesThan, and then its key's value
 	/// where the kinds standing are under its section's PoorerThan per cent, in whole numbers, of those on offer;
-	/// row 71's (0x0059dca0) is the same of the shops, its least number its section's MoreShopsThan;
+	/// row 71's (0x0059dca0) is the same of the shops, its least number its section's MoreShopsThan, and row
+	/// 75's (0x0059df30) the same of the sideshows, its least number its section's MoreSideshowsThan;
 	/// row 73's (0x0059dde0) is nought where no kind of ride stands, until DaysForObjects days after the newest
 	/// object was made, and where a kind of shop stands, and then its key's value and its per-day key's for each
 	/// whole day of the park's age;

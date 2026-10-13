@@ -6577,6 +6577,31 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `TooFewShopsForTheParksSizeSetsTheShopsAgainstThemselvesAndIsNeverSaidUnderTheShippedRatio`.
   `docs/exe/advisor-park.md`, "Too few shops for the park's size". New tool `lib/gamefolder.py` and
   `parkrun.py`'s `GAME_FOLDER`. I split the item: every other piece of the old Q338 is Q339.
+- [x] **Q339. The advisor's line about a poor selection of sideshows is scored as the original scores it, which
+  no Lost Kingdom park can.** Done 2026-10-13: one piece of the old Q339. Row 75, message `0x4b`,
+  `SideshowsPoorSelection`, is polled; its score (`0x0059df30`, loose code, disassembled) is rows 60's and 71's
+  of the sideshows: nought where no kind of sideshow is on offer (`0x004ca570`: researched, a golden ticket's or
+  not), until `WaitingTimes.DaysForObjects`, 30, whole days after `mLastObjectBuilt`, and with fewer than
+  `MoreSideshowsThan`, 2, sideshows (`FUN_004ca8e0( 2, 0 )`); then `Score`, 45, where the kinds standing
+  (`0x004ca7b0( 2, 0 )`) times 100 over those on offer are under `PoorerThan`, 15. Lost Kingdom has five
+  sideshows and none costs a golden ticket, so one kind standing is 20 at the least and the row never scores
+  there. Responses 215 and 216 are samples 213 and 214, no prop, group 77: tag row 77, string 79, the buy button
+  of type 11. Built: `ParkAdvisorMessages.PoorSideshowSelection`, `PoorOf: Shut.Sideshows`,
+  `ParkFacts.SideshowKindsOnOffer` and `SideshowKindsStanding`, `ParkPeople.Kinds` (the old `ShopKinds`, asked
+  with the kind), tag row 77. The scene is the stock park with a second Jungle Spray bought, two more sideshows
+  marked researched and the stamp written 692 ticks back: `poll message=75 row=75 days=41 score=0 threshold=25
+  tick=967 result=no-score kinds=1/4 sideshows=2 sincebuild=30` under the shipped key and under 25; with
+  `PoorerThan` written 26 in a private game folder's `Advisor.sam`, `score=45 ... result=post`, said on tick 967
+  as sample 213, him up with his antennae and tag 77 on the mast, the bar's button opening "Buy Sideshow" with
+  the four on offer; day 29 said on tick 1122; two on offer, two kinds standing and one sideshow not said;
+  main's build silent. The original, its own `Advisor.sam` swapped for each of seven runs and put back: under 26
+  said on tick 967, the same tag at the same rectangle, its buy screen built on the sideshows with the same
+  four; day 29 said on tick 1122; under 25, under the shipped 15, and on the three other files its record fresh
+  through tick 1230 at the least. Predicted first (`q339/PREDICTION.txt`), one round, all held. 64 bugs put
+  back, all fail a test first round (`q339/mutate.out`). Tests
+  `APoorSelectionOfSideshowsIsPolledThirtyDaysAfterTheNewestBuild` and
+  `TheAdvisorCountsTheKindsOfSideshowOnOfferAndStanding`. `docs/exe/advisor-park.md`, "A poor selection of
+  sideshows". No new tool; one recipe. I split the item: every other piece of the old Q339 is Q340.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

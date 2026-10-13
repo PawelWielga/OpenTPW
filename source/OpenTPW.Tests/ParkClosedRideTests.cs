@@ -741,7 +741,7 @@ public class ParkClosedRideTests
 				guest.SetState( PeepState.Deciding, 800, random );
 			}
 
-			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance ), park.People.AdvisorFacts() );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1 ), park.People.AdvisorFacts() );
 
 			void Put( int index, int x, int y, PeepState state )
 			{
@@ -758,13 +758,13 @@ public class ParkClosedRideTests
 
 			park.State.SetParkClosed( true );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1 ), park.People.AdvisorFacts() );
 
 			// One toilet opened again, and the sideshow: the door's others stay shut.
 			park.People.SetRideClosed( 22, closed: false );
 			park.People.SetRideClosed( 14, closed: false );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1 ), park.People.AdvisorFacts() );
 
 			// The door left the staff room open; shut by itself, it alone is one more shut.
 			var before = park.People.AdvisorFacts();
@@ -810,7 +810,7 @@ public class ParkClosedRideTests
 			park.State.SetRecord( BackX, BackY, back with { Neighbours = 0x04 } );
 			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
 			Assert.AreEqual( park.People.AdvisorFacts() with { UnjoinedQueue = 0 },
-				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance ), "nothing else moved" );
+				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1 ), "nothing else moved" );
 
 			// The queue tool armed for it passes it over; armed for another thing, or put away, it does not.
 			ParkBuildMode.Arm( ParkBuildMode.Queue, BellyBounce );
@@ -871,6 +871,9 @@ public class ParkClosedRideTests
 	private const int StockShopKindsOnOffer = 3;
 	/// <summary>The shipped park's bank balance, which row 74's score reads.</summary>
 	private const int StockBalance = 87987;
+	/// <summary>The shipped park's kinds of sideshow on offer: the Jungle Spray and the Strength Bird, the two researched of Lost Kingdom's five.</summary>
+	private const int StockSideshowKindsOnOffer = 2;
+	private const int JungleSpray = 1303, LaughingHyenas = 1304, StrengthBird = 1305, GiantPuzzle = 1307, Arcade = 1309;
 	private const int DrinksShop = 1203, BurgerShop = 1207, BalloonShop = 1209, IceCreamShop = 1206, FriesShop = 1212;
 	private const int CrazyApe = 1101, RockyRacers = 1102, AztecMayhem = 1104, Eruption = 1112, SunGod = 1106;
 
@@ -1016,15 +1019,93 @@ public class ParkClosedRideTests
 			var golden = shops.Single( item => item.Id == BalloonShop ) with { GoldenTicketCost = 1 };
 			var items = shops.Where( item => item.Id != BalloonShop ).Append( golden )
 				.Append( park.Catalogue.All.First( item => item.UiType == ItemDescriptionFile.Ride ) ).ToArray();
-			Assert.AreEqual( (3, 1), ParkPeople.ShopKinds( items, research.IsResearched, id => id == DrinksShop ? 2 : 0 ) );
-			Assert.AreEqual( (3, 1), ParkPeople.ShopKinds( items, research.IsResearched, id => id is DrinksShop or BalloonShop ? 1 : 0 ), "the golden-ticket shop stands and is no kind" );
-			Assert.AreEqual( (3, 2), ParkPeople.ShopKinds( items, research.IsResearched, id => id is DrinksShop or FriesShop ? 1 : 0 ), "the unresearched kind stands" );
-			Assert.AreEqual( (1, 0), ParkPeople.ShopKinds( items, id => id is BalloonShop or 1100, _ => 0 ), "the golden-ticket shop alone on offer; the ride is none" );
-			Assert.AreEqual( (0, 0), ParkPeople.ShopKinds( [], research.IsResearched, _ => 1 ) );
+			Assert.AreEqual( (3, 1), ParkPeople.Kinds( items, ParkRideOperation.ShopUiType, research.IsResearched, id => id == DrinksShop ? 2 : 0 ) );
+			Assert.AreEqual( (3, 1), ParkPeople.Kinds( items, ParkRideOperation.ShopUiType, research.IsResearched, id => id is DrinksShop or BalloonShop ? 1 : 0 ), "the golden-ticket shop stands and is no kind" );
+			Assert.AreEqual( (3, 2), ParkPeople.Kinds( items, ParkRideOperation.ShopUiType, research.IsResearched, id => id is DrinksShop or FriesShop ? 1 : 0 ), "the unresearched kind stands" );
+			Assert.AreEqual( (1, 0), ParkPeople.Kinds( items, ParkRideOperation.ShopUiType, id => id is BalloonShop or 1100, _ => 0 ), "the golden-ticket shop alone on offer; the ride is none" );
+			Assert.AreEqual( (0, 0), ParkPeople.Kinds( [], ParkRideOperation.ShopUiType, research.IsResearched, _ => 1 ) );
 
 			var bare = new ParkPeople( park.World, new ParkBalance( Theme, easyMode: true ), gateStatus: null, new ParkState( park.World ) );
 			Assert.AreEqual( (0, 0), (bare.AdvisorFacts().ShopKindsOnOffer, bare.AdvisorFacts().ShopKindsStanding), "no catalogue handed in" );
 			bare.Delete();
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
+	/// What the advisor's row 75 reads of the park (0x004ca570, 0x004ca7b0 asked for a sideshow's): the kinds of
+	/// sideshow on offer are the catalogue's items of a sideshow's kind that the park has researched, a golden
+	/// ticket's among them; the kinds standing are the sideshow items a thing stands of that cost no golden
+	/// ticket, researched or not; the sideshows are the things of a sideshow's item.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the shops' kinds counted for the sideshows', or the sideshows' for the shops'; the unresearched on offer; a golden-ticket sideshow not on offer, or counted standing; every sideshow a kind; a kind sold still standing; the two counts changed over.</remarks>
+	[TestMethod]
+	public void TheAdvisorCountsTheKindsOfSideshowOnOfferAndStanding()
+	{
+		var park = Open();
+
+		try
+		{
+			var research = new ParkResearch( park.World.ObjectControlRecords, park.Catalogue );
+			var sideshows = park.Catalogue.All.Where( item => item.UiType == ItemDescriptionFile.SideShow ).ToArray();
+			CollectionAssert.AreEquivalent( new[] { JungleSpray, LaughingHyenas, StrengthBird, GiantPuzzle, Arcade }, sideshows.Select( item => item.Id ).ToArray(), "the regular catalogue's five" );
+			Assert.IsTrue( sideshows.All( item => item.GoldenTicketCost == 0 ), "no Lost Kingdom sideshow costs a golden ticket" );
+			CollectionAssert.AreEquivalent( new[] { JungleSpray, StrengthBird }, sideshows.Where( item => research.IsResearched( item.Id ) ).Select( item => item.Id ).ToArray() );
+			var instant = new ParkItemCatalogue( Theme, data, instantAction: true );
+			CollectionAssert.AreEquivalent( new[] { JungleSpray, LaughingHyenas, StrengthBird, GiantPuzzle },
+				instant.All.Where( item => item.UiType == ItemDescriptionFile.SideShow ).Select( item => item.Id ).ToArray(), "Instant Action's catalogue leaves the Arcade out" );
+
+			(int OnOffer, int Standing, int Sideshows) Read()
+			{
+				var facts = park.People.AdvisorFacts();
+				return (facts.SideshowKindsOnOffer, facts.SideshowKindsStanding, facts.Sideshows);
+			}
+
+			(int OnOffer, int Standing, int Shops) Shops()
+			{
+				var facts = park.People.AdvisorFacts();
+				return (facts.ShopKindsOnOffer, facts.ShopKindsStanding, facts.Shops);
+			}
+
+			Assert.AreEqual( (StockSideshowKindsOnOffer, 1, 1), Read() );
+			Assert.AreEqual( (StockShopKindsOnOffer, 1, 1), Shops() );
+
+			// A second Jungle Spray is a sideshow more and no kind more; another sideshow is a kind; a shop or a ride is neither.
+			var spray = park.State.Objects.Single( thing => thing.CatalogueId == JungleSpray );
+			park.State.AddObject( spray with { ThingId = park.State.NextThingId() } );
+			Assert.AreEqual( (StockSideshowKindsOnOffer, 1, 2), Read() );
+			park.State.AddObject( spray with { ThingId = park.State.NextThingId(), CatalogueId = LaughingHyenas } );
+			park.State.AddObject( spray with { ThingId = park.State.NextThingId(), CatalogueId = Arcade } );
+			Assert.AreEqual( (StockSideshowKindsOnOffer, 3, 4), Read(), "a kind standing counts, on offer or not" );
+			Assert.AreEqual( (StockShopKindsOnOffer, 1, 1), Shops(), "a sideshow is no shop and no kind of one" );
+			park.State.AddObject( spray with { ThingId = park.State.NextThingId(), CatalogueId = BurgerShop } );
+			park.State.AddObject( spray with { ThingId = park.State.NextThingId(), CatalogueId = CrazyApe } );
+			Assert.AreEqual( (StockSideshowKindsOnOffer, 3, 4), Read(), "a shop and a ride are no sideshow and no kind of one" );
+			Assert.AreEqual( (StockShopKindsOnOffer, 2, 2), Shops() );
+
+			// A sale takes a kind away with its last thing, and no sooner.
+			park.State.AddObject( spray with { ThingId = park.State.NextThingId(), CatalogueId = LaughingHyenas } );
+			var hyenas = park.State.Objects.Where( thing => thing.CatalogueId == LaughingHyenas ).Select( thing => thing.ThingId ).ToArray();
+			Assert.AreEqual( (StockSideshowKindsOnOffer, 3, 5), Read() );
+			Assert.IsTrue( park.State.RemoveObject( hyenas[0] ) );
+			Assert.AreEqual( (StockSideshowKindsOnOffer, 3, 4), Read() );
+			Assert.IsTrue( park.State.RemoveObject( hyenas[1] ) );
+			Assert.AreEqual( (StockSideshowKindsOnOffer, 2, 3), Read(), "a kind built and sold stands no more" );
+
+			// The rule on items of its own: a golden-ticket sideshow is on offer once researched, and is never a kind standing; a shop is asked for by its own kind.
+			var golden = sideshows.Single( item => item.Id == GiantPuzzle ) with { GoldenTicketCost = 1 };
+			var shop = park.Catalogue.All.Single( item => item.Id == DrinksShop );
+			var items = sideshows.Where( item => item.Id != GiantPuzzle ).Append( golden ).Append( shop ).ToArray();
+			bool Offered( int id ) => id is JungleSpray or GiantPuzzle or DrinksShop;
+			Assert.AreEqual( (2, 1), ParkPeople.Kinds( items, ItemDescriptionFile.SideShow, Offered, id => id == JungleSpray ? 2 : 0 ) );
+			Assert.AreEqual( (2, 1), ParkPeople.Kinds( items, ItemDescriptionFile.SideShow, Offered, id => id is JungleSpray or GiantPuzzle or DrinksShop ? 1 : 0 ), "the golden-ticket sideshow and the shop stand and are no kind" );
+			Assert.AreEqual( (2, 2), ParkPeople.Kinds( items, ItemDescriptionFile.SideShow, Offered, id => id is JungleSpray or Arcade ? 1 : 0 ), "the unresearched kind stands" );
+			Assert.AreEqual( (1, 0), ParkPeople.Kinds( items, ItemDescriptionFile.SideShow, id => id is GiantPuzzle or DrinksShop, _ => 0 ), "the golden-ticket sideshow alone on offer" );
+			Assert.AreEqual( (1, 1), ParkPeople.Kinds( items, ParkRideOperation.ShopUiType, Offered, _ => 1 ), "the shops' count of the same items is the one shop" );
+			Assert.AreEqual( (0, 0), ParkPeople.Kinds( [], ItemDescriptionFile.SideShow, Offered, _ => 1 ) );
 		}
 		finally
 		{

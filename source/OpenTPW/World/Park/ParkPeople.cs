@@ -2646,13 +2646,14 @@ public sealed partial class ParkPeople : Entity
 			}
 		}
 
-		var shopKinds = ShopKinds( _behaviour.Catalogue?.All ?? [], id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
+		var shopKinds = Kinds( _behaviour.Catalogue?.All ?? [], ParkRideOperation.ShopUiType, id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
+		var sideshowKinds = Kinds( _behaviour.Catalogue?.All ?? [], ItemDescriptionFile.SideShow, id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
 			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut,
 			_staff.Count( member => member.Model == MechanicModel ), ridesWorn, ridesBroken, State.DaysSinceStaffHired,
 			RideKinds( item => _research?.IsResearched( item.Id ) == true ), RideKinds( item => State.BuiltOf( item.Id ).Standing > 0 ),
-			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing, State.Balance );
+			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing, State.Balance, sideshowKinds.OnOffer, sideshowKinds.Standing );
 	}
 
 	/// <summary>The catalogue's items of a ride's kind that cost no golden ticket and that <paramref name="counted"/> holds for (0x004ca450, 0x004ca7b0).</summary>
@@ -2660,15 +2661,16 @@ public sealed partial class ParkPeople : Entity
 		=> _behaviour.Catalogue?.All.Count( item => item.UiType == ItemDescriptionFile.Ride && item.GoldenTicketCost == 0 && counted( item ) ) ?? 0;
 
 	/// <summary>
-	/// The kinds of shop the advisor's row 71 reads of <paramref name="items"/>: on offer, the items of a shop's
-	/// kind that are researched, a golden ticket's or not (0x004ca510); standing, those of a shop's kind that
-	/// cost no golden ticket and of which a thing stands, researched or not (0x004ca7b0 asked with one and nought).
+	/// The kinds of shop the advisor's row 71 reads of <paramref name="items"/>, and of sideshow its row 75, by
+	/// <paramref name="uiType"/>: on offer, the items of that kind that are researched, a golden ticket's or not
+	/// (0x004ca510, 0x004ca570); standing, those of that kind that cost no golden ticket and of which a thing
+	/// stands, researched or not (0x004ca7b0 asked with the kind and nought).
 	/// </summary>
-	internal static (int OnOffer, int Standing) ShopKinds( IEnumerable<ParkItemCatalogue.Item> items, Func<int, bool> researched, Func<int, int> standing )
+	internal static (int OnOffer, int Standing) Kinds( IEnumerable<ParkItemCatalogue.Item> items, int uiType, Func<int, bool> researched, Func<int, int> standing )
 	{
-		var shops = items.Where( item => item.UiType == ParkRideOperation.ShopUiType ).ToArray();
+		var ofKind = items.Where( item => item.UiType == uiType ).ToArray();
 
-		return (shops.Count( item => researched( item.Id ) ), shops.Count( item => item.GoldenTicketCost == 0 && standing( item.Id ) > 0 ));
+		return (ofKind.Count( item => researched( item.Id ) ), ofKind.Count( item => item.GoldenTicketCost == 0 && standing( item.Id ) > 0 ));
 	}
 
 	// FUN_00516380 requires thing byte +3 == 0, not the staff activity. This list contains live staff:
