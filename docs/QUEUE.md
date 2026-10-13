@@ -44,9 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q343. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q344. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q343 (`advisor-park.md`, "Too few sideshows for the park's size"): **the one park in which the shipped
+  game says row 78's line was run in neither game**: five kinds of ride to one of sideshow, which needs Full
+  Simulation and its research (the test holds it; Q327's catch-up is where it belongs). Rows 79 (`0x0059e1c0`)
+  and 81 (`0x0059e2e0`) are not read, and row 76 waits for the research. In no game run: line 2, the line again
+  past its cooldown, day 29 in the original, a golden-ticket ride or sideshow, a sideshow built after the line,
+  the bar's button with the buy screen open, a park made with no file. Not heard in either game.
   From Q342 (`saves.md`, "OpenTPW's writer, a vehicle made at its summons"): the made vehicle's id is one past
   the highest used, the original's the id last freed (14 where this game gave 43; Q26c). Its model and script
   stand from the load under an id of the scene's own and its script's handle is taken then, where the original
@@ -68,9 +74,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   again 270 to 340 ticks on (1408, 1434), twelve ticks after a load of tick 1082, so an event of the park
   (read since, Q341: the arrival vehicle made at its first summons, above). Row 76 (`0x0059dfd0`, `SideshowsResearchMore`, Score 75, tag row 78 with the
   bar's button of type 19) is read and waits for the research: `FUN_004c9960( 8 )`, `0x00503b30` and
-  `FUN_00503980` on `FUN_00519550( 2 )` are not read. Rows 78, 79 and 81 are not read (row 78's score is
-  `0x0059e110`; its keys from `+0x294`, `SideshowsBuildMoreSideshows.SideshowsPerRideRatio`: probably row 74's
-  shape). In no game run: line 2, the line again past its cooldown, a golden-ticket shop or sideshow, a
+  `FUN_00503980` on `FUN_00519550( 2 )` are not read. Rows 79 and 81 are not read (row 78 is built, Q343). In no game run: line 2, the line again past its cooldown, a golden-ticket shop or sideshow, a
   sideshow built after the line (the test holds each), the bar's button with the buy screen open, a park made
   with no file, Full Simulation. Not heard in either game.
   From Q339 (`advisor-park.md`, "A poor selection of sideshows"): the four other rows that read the newest

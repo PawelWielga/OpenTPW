@@ -6652,6 +6652,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   here, and two loaded by the original under Proton, which kept slot and vehicle, made nothing and forgot the
   seaplane on tick 1211 and the ferry on 1265, the ticks this game does. 53 bugs put back, all fail a test.
   `saves.md`, "OpenTPW's writer, a vehicle made at its summons".
+- [x] **Q343. The advisor tells a park with too few sideshows for its rides to build more.** (2026-10-13;
+  I split the item: this is one piece, Q344 the rest.) Row 78, message `0x4e`, `SideshowsBuildMoreSideshows`
+  (score `0x0059e110`, loose code disassembled): nought with no kind of sideshow standing, until 30 days after
+  the newest build, unless the kinds of ride standing times `SideshowsPerRideRatio` (0.2, a float; the product a
+  double, the x87's control word `0x27f` at the compare) are more than the kinds of sideshow, and unless the bank
+  holds over 20000; then 80. Five kinds of ride to one of sideshow, so never in Instant Action, whose catalogue
+  holds four. Confirmed in both games under a changed `Advisor.sam`, every prediction held first time
+  (`q343/PREDICTION.txt`): ratio 1.5 on the stock park, `score=80 ... tick=970 result=post sideshowkinds=1
+  ridekinds=1 ratio=1.5`, the hard hat, tag 80, "Buy Sideshow" (`q343/run-fix1`), the original's record
+  `(970, 0, 1, 0)` on tick 970 with the same tag and screen; both silent under the shipped ratio (one kind of
+  ride, and four), with the ride sold, with the sideshow sold, with the wealth limit over the bank and at four
+  kinds under 0.25; both said it at three kinds under 0.33333334. 62 bugs put back, all fail a test (one after
+  the test's bank went further into the red). `advisor-park.md`, "Too few sideshows for the park's size".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

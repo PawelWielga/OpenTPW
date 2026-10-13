@@ -1895,7 +1895,8 @@ advisor score function: rows 60 (`0x0059d990`), 71 (`0x0059dca0`), 73 (`0x0059dd
 (`0x0059df30`), 77 (`0x0059e070`), 78 (`0x0059e110`), 79 (`0x0059e1c0`) and 81 (`0x0059e2e0`), found by their
 `CALL` bytes in the file on disk; those functions are undefined bytes too, and of them rows 60's, 71's, 73's and
 74's are read ("A poor selection of rides", "A poor selection of shops", "A park with rides and no shop", "Too few
-shops for the park's size", below); **the other five are not**.
+shops for the park's size", below), and so are rows 75's, 77's and 78's since ("A poor selection of sideshows", "A
+park with shops and no sideshow", "Too few sideshows for the park's size"); **rows 79's and 81's are not**.
 
 **Measured in files**, twelve the original wrote: in ten the stamp is the newest standing object's own build
 date (`+22` of its record: the shipped park's is thing 15's, tick 604; a park with a ride bought on tick 924
@@ -2087,7 +2088,7 @@ list's click does nothing under it.)
 | The tag and the bar | row 62, part 2, string 65; button 9 builds the buy screen on its rides tab, tag off | the same |
 
 **Not built or not seen.** Rows 71 and 73 are "A poor selection of shops" and "A park with rides and no shop",
-below, row 74 "Too few shops for the park's size" and row 75 "A poor selection of sideshows"; the four other rows that read the newest build (77 to 79 and 81) are not built and their score functions not read. **The original's stamp moved with nothing bought**: in run a's
+below, row 74 "Too few shops for the park's size" and row 75 "A poor selection of sideshows"; rows 77 and 78 are "A park with shops and no sideshow" and "Too few sideshows for the park's size"; the two other rows that read the newest build (79 and 81) are not built and their score functions not read. **The original's stamp moved with nothing bought**: in run a's
 park, left running, `mLastObjectBuilt` went to tick 1400's on tick 1400 (read in run b's log, before its load);
 what was made then is not read (the vehicle summons and the "End" feature are the constructor's callers, "The
 newest build"), and here nothing moves it, so past such a moment this game's row 60 would speak again where
@@ -2627,11 +2628,134 @@ to a pointer on tick 1217 and the tag was gone on 1219, the frame "Buy Sideshow"
 **Not built or not seen.** The original's stamp moves with nothing bought, twice in 370 s, 340 ticks apart, in
 every load: the ferry and the seaplane, each made at its first summons, which stamps here too ("What moves it
 with nothing bought"). **Where this game's draw is the bus it still says row 77's line 1,085 ticks before the
-original does** (1124 for 2209 in `late30`), and rows 60, 71, 73 and 75 the same way. Row 76 is read above and not built; rows 78, 79 and 81 are not read. In no game run: line 2
+original does** (1124 for 2209 in `late30`), and rows 60, 71, 73 and 75 the same way. Row 76 is read above and not built; row 78 is "Too few sideshows for the park's size", below; rows 79 and 81 are not read. In no game run: line 2
 (sample 218; the test holds the turn), the line said again past its 120 quarter-ticks, a golden-ticket shop or
 sideshow standing (no Lost Kingdom one costs a ticket), a sideshow built after the line (the test's last step),
 the bar's button with the buy screen open, a park made with no file, Full Simulation: the mode is not asked by
 row 77's score. Not heard in either game.
+
+## Too few sideshows for the park's size (message `0x4e`, Q343)
+
+**Row 78, message `0x4e`, `SideshowsBuildMoreSideshows`:** polled, category 0, either game mode, one copy, first
+response 221, two lines in turn. Responses 221 and 222 are samples 219 and 220 ("You don't have many sideshows
+for a park this size, maybe you should build some more"; "... I'm worried that you could be looking at widespread
+sideshow shortages in the future. Don't laugh, it could happen ..."): the random gesture chain, model slot 0,
+**prop 5, the hard hat**, group 80. It is the polled row after row 77: from the shipped park's cursor its turns
+are ticks 815, 970, 1125 and every 155 on.
+
+**Its score, `0x0059e110`** (loose code, disassembled for this; `ECX` the balance object) is row 74's with the
+second count the one its key names, each step on the park analyser (`FUN_00519510`):
+
+1. The kinds of sideshow standing, `0x004ca7b0( 2, 0 )`, kept in a local. None: nought. A park with no
+   sideshow is row 77's.
+2. The whole days since the newest build, `0x004c9070`, under `[ECX + 0x634]`, `WaitingTimes.DaysForObjects`,
+   **30** (a signed `JL`): nought.
+3. **The kinds of ride standing, `0x004ca7b0( 0, 0 )`** (`0x0059e157`: `PUSH 0`, `PUSH 0`), times the float
+   `[ECX + 0x294]`, `SideshowsBuildMoreSideshows.SideshowsPerRideRatio`, **0.2**, compared with step 1's count
+   (`FILD` the sideshows' kinds, `FILD` the rides', `FMUL`, `FCOMPP`, `TEST AH,0x41`, `JNZ`): not more than it,
+   nought. Where row 74 asks for the shops twice, this row does count the rides.
+4. The bank's balance (`FUN_005195d0`'s thing's `+0xc`, `FUN_006ad810`) not over `[ECX + 0x298]`,
+   `SideshowsBuildMoreSideshows.WealthMoreThan`, **20000** (a signed `JLE`): nought.
+5. Otherwise `[ECX + 0x29c]`, `SideshowsBuildMoreSideshows.Score`, **80**.
+
+**The product is a double of the float key.** A breakpoint on the `FCOMPP` (`0x0059e17b`) in the original
+running the stock park (`q343/orig/fpu-load.log`) stopped on ticks 970 and 1125 with the x87's control word
+**`0x27f`**, 53-bit precision, `ST0` 0.20000000298023224 (one kind of ride times the float nearest 0.2) and `ST1`
+1 (one kind of sideshow). So five kinds of ride times that float are 1.0000000149, which **is more than one kind
+of sideshow**; rounded to a float the product would be one, and not more. Under the shipped ratio the row scores
+at five kinds of ride to each kind of sideshow.
+
+**So in an Instant Action park the row can never score**: its catalogue holds four kinds of ride (items 1100,
+1101, 1102 and 1104), and four times 0.2 is under one. The Full Simulation catalogue holds seventeen, and there
+five kinds of ride beside one kind of sideshow, thirty days after the newest build and with more than 20000 in
+the bank, score 80. The door is not asked.
+
+**Its tag** is row 80 of the tag table: key 383, picture 2, string 82, the bar's first button of type 11 (the buy
+screen on its sideshows tab), no second, thirty seconds. String 82 reads "You haven't got many sideshows for a
+park of this size. Maybe you should build some more?" in `Language/English` and "You don't have many sideshows
+..." in the american folder the reference install reads.
+
+### OpenTPW (`ParkAdvisorMessages.BuildMoreSideshows`, a topic's `SideshowsPerRide`; tag row 80)
+
+A twenty-first polled topic, scored as the original scores it. The topic field `SideshowsPerRide` names the
+section; the score reads `ParkFacts.SideshowKindsStanding`, `RideKindsStanding`, `DaysSinceObjectBuilt` and
+`Balance`, all kept for earlier rows. The ratio is read as a float and the product taken in a double, as the x87
+takes it. The poll line ends ` sideshowkinds=N ridekinds=N ratio=R balance=N sincebuild=N`. `ParkTags.Rows` lists
+row 80.
+
+**The scenes**: Q338's `shop30.TPWS` (the stock park on tick 915, one kind each of ride, shop and sideshow, the
+stamp of tick 273); `show29.TPWS`, the same with the stamp of tick 279, 691 ticks before row 78's turn; Q340's
+`noside30.TPWS` (the Jungle Spray sold); and three made for this with `lib/stockscene.py`, each with the stamp of
+tick 278: `noride30` (the Belly Bounce sold), `three30` (a Crazy Ape and a Rocky Racers bought and left shut:
+three kinds of ride) and `four30` (an Aztec Mayhem too: four, all the mode offers). **Five `Advisor.sam`**: the
+shipped one; *1.5*; *rich*, 1.5 and `WealthMoreThan` 999999; *0.33333334*, the float `0x3eaaaaab`, whose three
+times is 1.0000000298 as a double and one as a float; *0.25*, a float exactly. This game reads a changed one from
+a private game folder; the original's own is swapped for a run and put back (`q343/orig/run.sh`).
+
+**Predicted first** (`q343/PREDICTION.txt`), both games, in two rounds, each written before its runs; round 2
+after the breakpoint's one look at the original. Every prediction held on its first run in both games. Not
+predictions, and said there: the listing, the control word, the catalogue's four kinds.
+
+**This game** (`q343/confirm.py <mode>`; the first two on the desktop, the rest off-screen). *The shipped ratio*
+(`run-stock1`): `poll message=78 row=78 days=42 score=0 threshold=25 tick=970 result=no-score sideshowkinds=1
+ridekinds=1 ratio=0.2 balance=88112 sincebuild=30`, no attempt and no tag by tick 999, nobody beside the gadget
+and the mast bare (`1-end.png`). *1.5* (`run-fix1`, five of five): `poll message=78 row=78 days=42 score=80
+threshold=25 tick=970 result=post sideshowkinds=1 ridekinds=1 ratio=1.5 balance=88112 sincebuild=30`, `post
+message=78 ... result=queued` and `attempt=1 message=78 subject=0 score=80 threshold=25 response=221 sample=219
+line=0 tick=970`; `saying sp_219.mp2 ... wearing=5,0`, him up in the yellow hard hat (`1-line.png`), `tags`
+reading `tag=80/picture=2/subject=0` with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag
+clicked: `message bar: tag 80 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=523
+second=hidden erase=mb_erase` and the text. The button clicked: `button type 11 opens the buy screen on tab 2 and
+takes tag 80 off`, `windows` reading `ParkBuyScreen tab 2`, and the frame "Buy Sideshow" (`3-screen.png`). *1.5 on
+`show29`* (`run-d29`): `score=0 ... tick=970 result=no-score ... sincebuild=29`, then `days=48 score=80 ...
+tick=1125 result=post ... sincebuild=36`, said on that tick (the leavers' summons of tick 1093 drew the bus; a
+ferry or a seaplane made there would have stamped the build and kept it silent, as the prediction says). *rich*
+(`run-rich`): `score=0 ... ratio=1.5 balance=88112 sincebuild=30`. *1.5 on `noride30`* (`run-noride`): `score=0
+... sideshowkinds=1 ridekinds=0 ratio=1.5 balance=88857`. *1.5 on `noside30`* (`run-noside`): `score=0 ...
+sideshowkinds=0 ridekinds=1 ratio=1.5 balance=89862`. *The shipped ratio on `four30`* (`run-four`): `score=0 ...
+sideshowkinds=1 ridekinds=4 ratio=0.2 balance=82872`. *0.33333334 on `three30`* (`run-third`): `score=80 ...
+tick=970 result=post sideshowkinds=1 ridekinds=3 ratio=0.33333334 balance=85362 sincebuild=30`, said on that
+tick. *0.25 on `four30`* (`run-quarter`): `score=0 ... ridekinds=4 ratio=0.25`. None of the silent runs said the
+line or left tag 80 by tick 998.
+
+**Main's build** under 1.5 (`run-control`): no line of message 78, no attempt, no tag by tick 998.
+
+**The original** (`q343/orig/run.sh <file>` with `RATIO=` and `WEALTH=`: `advisor.py ... 0x4e,0x4d,0x4c,0x4f,...
+poll` beside `tags.py`, `bar.py`, `screens.py` and two guests' places for the ticks; eight programs, each started
+on its own `Advisor.sam`). *The shipped ratio, `shop30`* (run a): message `0x4e`'s record stayed (0, -1, 0, 0),
+no slot took it and no tag stood, through tick 1159. *1.5* (run b): the record went from fresh to **(970, 0, 1,
+0) on tick 970**, 14.95 s after the load's click; one tag with it at (84, 909, 154, 974), the mast at (94, 901,
+144, 984), its text the american string 82; he is up in the yellow hard hat (`orig/b-g11.png`), the bank reading
+88,112 as this game's. The tag clicked: the bar's data read thing 0, buttons 11 and 0, item 0 and the text. The
+button clicked: `screens.py`'s buy screen went from `0x0` to a pointer on tick 1049 and the tag was gone on 1052,
+the frame "Buy Sideshow" with the Jungle Spray and the Strength Bird (`orig/b-button.png`). *rich* (run c): fresh
+through tick 1149. *1.5 on `noride30`* (run d): fresh through tick 1194, row 62's line about a park with no ride
+said on 959: **the rides are counted**, where the sideshows set against themselves would have spoken. *1.5 on
+`noside30`* (run e): fresh through 1217. *The shipped ratio on `four30`* (run f): fresh through 1200. *0.33333334
+on `three30`* (run g): **(970, 0, 1, 0) on tick 970**, the tag with it: **the product is not rounded to a float**,
+and a ride bought and left shut is a kind standing. *0.25 on `four30`* (run h): fresh through 1200: equal is not
+more. In f and h a tag stood from tick 996, row 113's, the bought rides' queues joined to nothing.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 78 | polled; nought with no kind of sideshow standing, until 30 days after the newest build, unless the kinds of ride times the ratio are more than the kinds of sideshow, and unless the bank is over 20000; then 80 | the same |
+| The shipped ratio, 0.2, one kind of ride | not said | the same (`score=0 ... ratio=0.2`) |
+| The shipped ratio, four kinds of ride | not said | the same (`ridekinds=4`) |
+| A ratio of 1.5, day 30 | said on tick 970, line 0, the hard hat | the same (score 80) |
+| The same with the ride sold, or the sideshow | not said | the same |
+| Three kinds of ride under 0.33333334 | said on tick 970 | the same |
+| Four kinds under 0.25 | not said | the same |
+| Day 29 | not run | nought on tick 970; said on tick 1125 |
+| `WealthMoreThan` over the bank | not said | the same |
+| The tag and the bar | row 80, part 2, string 82; button 11 builds the buy screen on its sideshows tab, tag off | the same |
+| The tag's words | the american folder's, "You don't have many sideshows ..." | the English folder's, "You haven't got many sideshows ..." |
+
+**Not built or not seen.** In no game run: **five kinds of ride under the shipped ratio**, the one park in which
+the shipped game says the line, which needs Full Simulation and its research (the test holds it, and the
+breakpoint and run g are its evidence in the original); line 2 (sample 220; the test holds the turn), the line
+said again past its 120 quarter-ticks, day 29 in the original, a golden-ticket ride or sideshow standing, a
+sideshow built after the line, the bar's button with the buy screen open, a park made with no file. Rows 79 and
+81 are not read, and row 76 is read and not built. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 
