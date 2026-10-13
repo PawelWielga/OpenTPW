@@ -6485,6 +6485,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   read this game's stamp and the row stayed silent. Every prediction held in one round (seen before, and said:
   the original's two answers on `broken3.TPWS`). Tests 3037 with the game (one new test, three widened); 51
   bugs put back, each failing a test. I split the item: every other piece of the old Q333 is Q334.
+- [x] **Q334. A written park holds the day its newest object was made.** Done 2026-10-13: one piece of the old
+  Q334. The analyser's `+0x21c30`, `mLastObjectBuilt` (the record's `+73516`), is stamped with the calendar's
+  now by `FUN_004c7680`, whose one caller is the object constructor's tail (`FUN_004db090`, `0x004db7a3`), on
+  every object made; nothing a sale runs writes it. In twelve files the original wrote it is the newest
+  standing object's own build date in ten and newer than every standing object in Alexah's two biggest saves.
+  Its one reader is the loose routine at `0x004c9070`, called by nine advisor score functions (rows 60, 71, 73
+  to 75, 77 to 79, 81), not read. Built: `ParkState.LastObjectBuilt` (the file's at a load, stamped in
+  `AddObject`), `ParkWorld.LastObjectBuilt` and `PutLastObjectBuilt`, `ParkFileWriter.Running.LastObjectBuilt`;
+  a vehicle the original would make at its summons is counted (`VEHICLE_MADE_BUILD_STAMP`). The stock park
+  paused on tick 804 and a Crazy Ape bought: `Park: mLastObjectBuilt stamped 4/2/2000 21:30:00 on mGameTick
+  804`, one line, the Ape in the frame, and the file's `+73516` 125941734000000000, thing 43's own date, the
+  record's other bytes the shipped file's; bought on 803 and sold on 825, the file still holds tick 803's;
+  main's build wrote tick 604's. The original, given each file, read this game's stamp (tick 804's, tick
+  803's, tick 604's) and drew the Ape. Every prediction held in one round; 20 bugs put back, 20 fail a test;
+  3038 tests. `docs/exe/advisor-park.md`, "The newest build".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

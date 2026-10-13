@@ -44,14 +44,19 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q334. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q335. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q333 (`advisor-park.md`, "More rides than the mechanics can keep"): the analyser's five other stamps
-  (`mLastStrike`, `mLastPuke`, `mLastPrank`, `mParkLastOpened`, `mLastObjectBuilt`), `mLifetimeVisitors` and
+  From Q334 (`advisor-park.md`, "The newest build"): the nine advisor rows that read the days since
+  `mLastObjectBuilt` are not built or read (rows 60, 71, 73 to 75, 77 to 79 and 81; score functions
+  `0x0059d990` to `0x0059e2e0` and the routine `0x004c9070`, all undefined bytes: disassemble first); a
+  ferry or seaplane made at its first summons does not move the stamp (counted, `VEHICLE_MADE_BUILD_STAMP`;
+  it goes with the made vehicle's own thing, Q26c). In no game run: a move's put-down, a purchase or a sale
+  made in the original by hand, a park made with no file, Full Simulation.
+  From Q333 (`advisor-park.md`, "More rides than the mechanics can keep"): the analyser's four other stamps
+  (`mLastStrike`, `mLastPuke`, `mLastPrank`, `mParkLastOpened`), `mLifetimeVisitors` and
   the three records after them are not kept and go out as the file's (the FileFormats saves page lists them;
-  what reads each is not read: `mLastObjectBuilt` is the nearest, moved by a purchase in the original's own
-  file `q257x/orig/broken-by-the-original.TPWS`). Whether anything but a hire runs the staff constructor (a
+  what reads and writes each is not read: search the image for each one's displacement, as Q334 did). Whether anything but a hire runs the staff constructor (a
   candidate made for the hire screen) is not read. In no game run: lines 2 and 3, the line said again past its
   cooldown, seven rides and one mechanic, a mechanic hired from the screen after the line (the tests hold
   each), a hire made in the original by hand, a park made with no file, Full Simulation. This game said the

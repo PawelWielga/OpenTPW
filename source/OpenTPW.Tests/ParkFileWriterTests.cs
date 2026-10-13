@@ -558,6 +558,8 @@ public class ParkFileWriterTests
 			var record = written.RecordOf( ape )!;
 
 			Assert.IsNull( written.Problem );
+			Assert.AreEqual( ParkWorld.StaffState.FileTimeOf( new DateTime( 2000, 1, 1 ).AddSeconds( 900 * 3750 ) ), written.LastObjectBuilt, "mLastObjectBuilt, stamped as the things were bought on tick 900" );
+			Assert.AreEqual( shipped.LastStaffHired, written.LastStaffHired );
 			Assert.AreEqual( (1101, 91, rides.ScriptFor( ape )), (made.CatalogueId, made.MeshInstance, made.RideScript) );
 			Assert.AreEqual( "Crazy", Encoding.Unicode.GetString( [.. Enumerable.Range( 0, 5 ).SelectMany( i => record.AsSpan( 60 + (i * 4), 2 ).ToArray() )] ) );
 			Assert.AreEqual( "Ape", Encoding.Unicode.GetString( [.. Enumerable.Range( 0, 3 ).SelectMany( i => record.AsSpan( 62 + (i * 4), 2 ).ToArray() )] ) );

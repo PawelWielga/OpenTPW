@@ -2045,6 +2045,7 @@ public sealed partial class ParkWorld : IParkInitialState
 			{
 				AnalyserAt = start;
 				LastStaffHired = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastStaffHiredAt, 8 ) );
+				LastObjectBuilt = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastObjectBuiltAt, 8 ) );
 			}
 
 			_things.Add( new( id, model ) );
@@ -2621,6 +2622,34 @@ public sealed partial class ParkWorld : IParkInitialState
 
 		System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(
 			body.AsSpan( AnalyserAt + AnalyserLastStaffHiredAt, 8 ), lastStaffHired );
+	}
+
+	/// <summary>
+	/// The park analyser's <c>mLastObjectBuilt</c>: the park's calendar as the newest object was made, a
+	/// <c>FILETIME</c> (the object constructor's tail, <c>FUN_004c7680</c>), whether that object still stands or
+	/// not. Null where the file holds no analyser (<c>docs/exe/advisor-park.md</c>, "The newest build").
+	/// </summary>
+	public long? LastObjectBuilt { get; private set; }
+
+	/// <summary>
+	/// Where <c>mLastObjectBuilt</c> sits in the analyser's record: eight bytes, the fifth of its six stamps, the
+	/// one before <c>mLastStaffHired</c> (<c>FUN_004c5d70</c>).
+	/// </summary>
+	private const int AnalyserLastObjectBuiltAt = 73516;
+
+	/// <summary>
+	/// Writes the analyser's <c>mLastObjectBuilt</c> over the file's in <paramref name="body"/>, a copy of this
+	/// park's own. A park with no such thing is left alone.
+	/// </summary>
+	public void PutLastObjectBuilt( byte[] body, long lastObjectBuilt )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+
+		if ( AnalyserAt < 0 )
+			return;
+
+		System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(
+			body.AsSpan( AnalyserAt + AnalyserLastObjectBuiltAt, 8 ), lastObjectBuilt );
 	}
 
 	/// <summary>

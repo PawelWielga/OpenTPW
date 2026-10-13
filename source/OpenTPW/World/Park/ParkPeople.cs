@@ -1693,6 +1693,11 @@ public sealed partial class ParkPeople : Entity
 			Log.Info( $"People: the {ParkFixedItems.VehicleName( _arrivalVehicle )} summoned on mGameTick {State.GameTick}"
 				+ (size == 0 ? ", at random" : "") );
 
+			// A vehicle the file names no thing for is made by the original here, by the object constructor, whose
+			// tail stamps the analyser's mLastObjectBuilt (FUN_004db090, 0x004db7a3). Here it stands already.
+			if ( _vehicleThings[_arrivalVehicle - 1] == 0 )
+				Unimplemented.Report( "VEHICLE_MADE_BUILD_STAMP" );
+
 			// One that is stood at its first spin already, unloading, has done its drive in: it is current and no more.
 			if ( VehicleScript( _arrivalVehicle ) is { } stood && stood[VehicleState] == VehicleIsUnloading )
 				return;

@@ -1214,13 +1214,20 @@ public class ParkTickTests
 			// No load: the summons is the leaver's, one of the three at random.
 			var drawn = new List<bool>();
 
+			// The original makes a vehicle the file names no thing for at its first summons, and the constructor
+			// stamps the analyser's mLastObjectBuilt: counted here for the ferry and the seaplane, never for the bus.
+			int Made() => Unimplemented.Summary.Where( gap => gap.What == "VEHICLE_MADE_BUILD_STAMP" ).Sum( gap => gap.Times );
+
 			for ( var round = 0; round < 24; ++round )
 			{
+				var before = Made();
+
 				people.HoldTheLoad( 0 );
 				Plays( 6 );
 				Sweep( people );
 				Assert.AreNotEqual( ParkPeople.NoVehicle, people.VehicleStatus(), "a vehicle is summoned for the leaver" );
 				drawn.Add( people.LargerVehicleIsCurrent );
+				Assert.AreEqual( people.LargerVehicleIsCurrent ? 1 : 0, Made() - before, $"round {round}: a made vehicle's build stamp is counted" );
 			}
 
 			Assert.IsTrue( drawn.Contains( true ) && drawn.Contains( false ),

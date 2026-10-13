@@ -70,6 +70,13 @@ Each was found by trial in the item named, and cost a run to find.
 whole list):
 
 - **`camera x y zoom yaw` takes world units**, a cell times ten (Q257n).
+- **`step N` steps frames, not ticks** (Q334): twenty of them moved the park's clock two ticks. To let ticks pass
+  under a script, `resume`, wait on `tick()`, and `pause` again.
+- **Who writes and who reads a field of a big thing** (Q334): `search_bytes` on its displacement's four bytes
+  (`30 1c 02 00` for the analyser's `+0x21c30`) lists every instruction that names it, in a function or not; a
+  routine nothing is seen to call is called from undefined bytes, found by scanning `testme.exe` on disk for
+  `e8` and a relative target (`responses.off( va )` turns an address into a file offset), and the caller's row
+  of the advisor's table is the one whose score address is the nearest at or below the call.
 - **A tired member of staff, from the first sweeps of a load** (Q326): write the member's rest into the file, the
   float at the staff record's `+499` (`parkfile.thing_set( src, dst, 28, 499, '<f', 1.5 )`), where the console's
   `staffrest` and a write to the original's memory each need a run already going. The stock file's guard 28 is

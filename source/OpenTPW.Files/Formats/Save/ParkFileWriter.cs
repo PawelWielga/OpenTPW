@@ -62,7 +62,8 @@ public static class ParkFileWriter
 	/// (<see cref="ParkWorld.PutAdvisorAction"/>; <see cref="AdvisorPollCursor"/> is his poll's row, <see cref="ParkWorld.PutAdvisorPollCursor"/>) for the second stopwatch's reading the file is written with
 	/// (<see cref="ParkClock.SecondAt"/>); the file's where it is null or the file's clock did not read.
 	/// <see cref="LastStaffHired"/> is the analyser's stamp of the newest hire (<see cref="ParkWorld.PutLastStaffHired"/>);
-	/// the file's where it is null.
+	/// the file's where it is null. <see cref="LastObjectBuilt"/> is its stamp of the newest object made
+	/// (<see cref="ParkWorld.PutLastObjectBuilt"/>); the file's where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -73,7 +74,7 @@ public static class ParkFileWriter
 		IReadOnlyDictionary<int, ParkWorld.AdvisorHistory>? AdvisorHistories = null,
 		IReadOnlyList<ParkWorld.AdvisorSlot?>? AdvisorSlots = null,
 		Func<uint, ParkWorld.AdvisorAction>? AdvisorAction = null,
-		int? AdvisorPollCursor = null, long? LastStaffHired = null );
+		int? AdvisorPollCursor = null, long? LastStaffHired = null, long? LastObjectBuilt = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -232,6 +233,9 @@ public static class ParkFileWriter
 
 		if ( running.LastStaffHired is { } hired )
 			loaded.PutLastStaffHired( body, hired );
+
+		if ( running.LastObjectBuilt is { } newest )
+			loaded.PutLastObjectBuilt( body, newest );
 
 		if ( running.AdvisorHistories is { } histories )
 			loaded.PutAdvisorHistories( body, histories );

@@ -865,6 +865,61 @@ public class ParkFileWriterBoughtAndSoldTests
 		Assert.IsTrue( things.Contains( ape.ThingId ) && !things.Contains( DrinksShop ) && !things.Contains( camera.ThingId ) && things.Contains( 18 ) );
 	}
 
+	/// <summary>
+	/// The park analyser's <c>mLastObjectBuilt</c> is the calendar as the newest object was made: the shipped file's
+	/// is tick 604's, its newest object's own stamp; a thing bought moves it to now, a sale leaves it, and the writer
+	/// puts it at 73516 of the analyser's record, the five stamps beside it the file's.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the purchase not stamping; a sale stamping, or putting the file's back; the stamp not written, not read back, or read or written at another of the analyser's six; a park's own taken from the calendar's start with a file in hand.</remarks>
+	[TestMethod]
+	public void LastObjectBuiltIsTheParksCalendarAsAnObjectIsMade()
+	{
+		var start = new DateTime( 2000, 1, 1 );
+		var file = ParkWorld.StaffState.FileTimeOf( start.AddSeconds( 604 * 3750 ) );
+
+		Assert.AreEqual( file, shipped.LastObjectBuilt, "the shipped park's is tick 604's" );
+		Assert.AreEqual( start.AddSeconds( 604 * 3750 ), shipped.Objects.Max( thing => thing.Built.ToDateTime()!.Value ), "its newest object's own stamp" );
+		Assert.AreNotEqual( shipped.LastStaffHired, shipped.LastObjectBuilt );
+
+		var state = new ParkState( shipped );
+
+		Assert.AreEqual( file, state.LastObjectBuilt, "a load keeps the file's" );
+
+		state.SetGameTick( 916 );
+
+		var ape = Buy( state, null, CrazyApe, 41, 22 );
+		var stamp = ParkWorld.StaffState.FileTimeOf( start.AddSeconds( 916 * 3750 ) );
+
+		Assert.AreEqual( stamp, state.LastObjectBuilt, "a purchase stamps the analyser with now" );
+
+		state.SetGameTick( 950 );
+		ParkBuilding.Sell( state, shipped, catalogue, null, null, ape.ThingId );
+		ParkBuilding.Sell( state, shipped, catalogue, null, null, DrinksShop );
+
+		Assert.AreEqual( stamp, state.LastObjectBuilt, "a sale leaves it: the stamp outlives the thing it was made for" );
+
+		var plain = new ParkWorld( ParkFileWriter.Body( shipped, Running( Things() ) ) );
+
+		Assert.AreEqual( file, plain.LastObjectBuilt, "the file's where the writer is given none" );
+
+		var body = ParkFileWriter.Body( shipped, Running( Things() ) with { LastObjectBuilt = state.LastObjectBuilt } );
+		var written = new ParkWorld( body );
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( stamp, written.LastObjectBuilt );
+		Assert.AreEqual( stamp, new ParkState( written ).LastObjectBuilt );
+		Assert.AreEqual( shipped.LastStaffHired, written.LastStaffHired, "the stamp after it is the file's" );
+		Assert.AreEqual( stamp, BitConverter.ToInt64( body, written.AnalyserAt + 73516 ), "mLastObjectBuilt at 73516 of the analyser's record" );
+
+		var theirs = ParkFileWriter.Body( shipped, Running( Things() ) );
+
+		for ( var at = 0; at < 73544; at++ )
+		{
+			if ( at is < 73516 or >= 73524 )
+				Assert.AreEqual( theirs[shipped.AnalyserAt + at], body[written.AnalyserAt + at], $"the analyser's byte {at} is the file's" );
+		}
+	}
+
 	/// <summary>The two lines of an item's name are the executable's rows of the game's own table.</summary>
 	[TestMethod]
 	public void AnItemsNameIsItsRowsOfTheTable()

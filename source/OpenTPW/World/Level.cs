@@ -673,7 +673,7 @@ public class Level
 				Log.Info( $"Save: advisor action written: started {action.Started} duration {action.Duration} playing {action.Playing} stopwatch {stopwatch}" );
 				return action;
 			} : null,
-			state.AdvisorMessages?.PollRow, state.LastStaffHired );
+			state.AdvisorMessages?.PollRow, state.LastStaffHired, state.LastObjectBuilt );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;

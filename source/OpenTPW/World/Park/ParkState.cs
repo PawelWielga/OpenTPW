@@ -409,7 +409,8 @@ public sealed class ParkState
 
 	/// <summary>
 	/// Adds something built, and links it into the object chain at the <b>head</b> - the original's
-	/// <c>FUN_00519d80</c>, whose only caller is the object constructor.
+	/// <c>FUN_00519d80</c>, whose only caller is the object constructor - and stamps the analyser as that
+	/// constructor's tail does (<see cref="StampObjectBuilt"/>).
 	/// </summary>
 	/// <remarks>
 	/// Without the link the thing stands, draws and runs its script, and is still never offered to
@@ -424,6 +425,8 @@ public sealed class ParkState
 
 		_nextObject[placed.ThingId] = _firstObject;
 		_firstObject = placed.ThingId;
+
+		StampObjectBuilt();
 	}
 
 	/// <summary>
@@ -731,6 +734,7 @@ public sealed class ParkState
 		_firstObject = park.FirstObject;
 		MechanicCursor = park.Save?.MechanicCursor ?? 0;
 		LastStaffHired = park.Save?.LastStaffHired ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
+		LastObjectBuilt = park.Save?.LastObjectBuilt ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 
 		foreach ( var thing in park.Objects )
 			_nextObject[thing.ThingId] = thing.NextObject;
@@ -907,6 +911,23 @@ public sealed class ParkState
 	{
 		LastStaffHired = ParkWorld.StaffState.FileTimeOf( CalendarNow );
 		Log.Info( $"Park: mLastStaffHired stamped {CalendarNow:d/M/yyyy HH:mm:ss} on mGameTick {GameTick}" );
+	}
+
+	/// <summary>
+	/// The park's calendar as the newest object was made, a <c>FILETIME</c>: the park analyser's
+	/// <c>mLastObjectBuilt</c> (<c>+0x21c30</c>), the file's own at a load (<see cref="ParkWorld.LastObjectBuilt"/>)
+	/// and the calendar's start in a park made with no file (<c>FUN_004c58c0</c>). A sale leaves it standing.
+	/// </summary>
+	public long LastObjectBuilt { get; private set; }
+
+	/// <summary>
+	/// An object has been made, bought or put down from a move: the object constructor's tail stamps the analyser
+	/// with now (<c>FUN_004db090</c>, <c>0x004db7a3</c>, <c>FUN_004c7680</c>).
+	/// </summary>
+	private void StampObjectBuilt()
+	{
+		LastObjectBuilt = ParkWorld.StaffState.FileTimeOf( CalendarNow );
+		Log.Info( $"Park: mLastObjectBuilt stamped {CalendarNow:d/M/yyyy HH:mm:ss} on mGameTick {GameTick}" );
 	}
 
 	/// <summary>

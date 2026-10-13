@@ -1859,11 +1859,11 @@ does.
 | The shipped stamp (day 12) | not said | the same (`no-score`) |
 | A file saved after a hire here | reads this game's stamp; not said | the same (`sincehire=0`) |
 | The tag and the bar | row 9, part 2, string 13; button 14 builds the hire screen on its mechanics' tab, tag off | the same |
-| The analyser's other stamps | each written as its event happens (`mLastObjectBuilt` moves at a purchase) | the file's: not kept, not written |
+| The analyser's other stamps | each written as its event happens | `mLastObjectBuilt` kept and written ("The newest build", below); the other four the file's |
 
-**Not built or not seen.** The analyser's five other stamps, `mLifetimeVisitors` and the three records after
-them are not kept here and go out as the file's: `hired.TPWS` holds two rides bought here and the shipped
-`mLastObjectBuilt`; what reads each is not read. Whether a staff candidate the original makes for the hire
+**Not built or not seen.** Four of the analyser's five other stamps (`mLastStrike`, `mLastPuke`, `mLastPrank`,
+`mParkLastOpened`), `mLifetimeVisitors` and the three records after them are not kept here and go out as the
+file's; what reads each is not read. `mLastObjectBuilt` is "The newest build", below. Whether a staff candidate the original makes for the hire
 screen's preview, or anything but a hire, runs the staff constructor is not read (the eight files agree with a
 hire alone). In no game run: lines 2 and 3 (samples 21 and 22; the test holds the turn), the line said again past
 its 120 quarter-ticks, a mechanic kept (three rides are under his four: the test holds seven rides and one
@@ -1871,6 +1871,77 @@ mechanic, and eleven and two), a mechanic hired from the screen after the line (
 for thirty days, the test's last step), a hire made in the original by hand, a park made with no file, Full
 Simulation: the mode is not asked by row 7's score. This game said the line of `days29` two ticks before the
 original (1094, 1096): the wait after row 259's line, not measured further. Not heard in either game.
+
+## The newest build (the analyser's `mLastObjectBuilt`, Q334)
+
+**The analyser's `+0x21c30` is the calendar as the newest object was made**, standing still or not. It is the
+eight bytes at 73,516 of thing 5's record, the stamp before `mLastStaffHired` (`FUN_004c5d70` names it).
+
+**What writes it.** `FUN_004c7680` (`ECX` the analyser): the calendar's now, `FUN_004f8690` on world `+0x2a0`,
+stored to `+0x21c30` and `+0x21c34`. Its one caller is the **object constructor's tail**, `FUN_004db090` at
+`0x004db7a3`, on the analyser `FUN_00519510` answers; the tail is reached on both arms of the test before it
+(`0x004db716`) and the function has one `RET`, so every object made stamps it. The image holds the displacement
+`30 1c 02 00` seven times: the analyser's constructor `FUN_004c58c0` (twice: all six stamps set to now as the
+park is made), the serialiser `FUN_004c5d70` (twice), this routine, its reader (below) and `FUN_005179c0`, which
+zeroes the six. **Nothing a sale runs writes it.** The object constructor has five callers: the placer
+`FUN_00529e10` (a purchase, and a move's put-down), the world's set-up `FUN_005156a0` (twice, the two fixed
+items, on tick nought), the vehicle summons `FUN_0051a2f0` (a vehicle whose slot is empty is made at its first
+summons, `park.md`, "The vehicle thing is made on demand") and `FUN_00516b00` (the "End" feature).
+
+**What reads it.** One routine, loose and undefined bytes at `0x004c9070`: the twin of `FUN_004c90d0`
+("More rides than the mechanics can keep"), the whole days since the stamp. Nine calls reach it, each in an
+advisor score function: rows 60 (`0x0059d990`), 71 (`0x0059dca0`), 73 (`0x0059dde0`), 74 (`0x0059de80`), 75
+(`0x0059df30`), 77 (`0x0059e070`), 78 (`0x0059e110`), 79 (`0x0059e1c0`) and 81 (`0x0059e2e0`), found by their
+`CALL` bytes in the file on disk; those functions are undefined bytes too and **are not read**.
+
+**Measured in files**, twelve the original wrote: in ten the stamp is the newest standing object's own build
+date (`+22` of its record: the shipped park's is thing 15's, tick 604; a park with a ride bought on tick 924
+holds tick 924's), and in Alexah's two saves of the longest-played jungle park it is a month newer than every
+one of the 124 objects standing, a thing built and since sold.
+
+### OpenTPW (`ParkState.LastObjectBuilt`, `AddObject`; `ParkWorld.LastObjectBuilt`, `PutLastObjectBuilt`; `ParkFileWriter.Running.LastObjectBuilt`)
+
+`ParkState` keeps the stamp: the file's at a load, the calendar's start in a park made with no file, and the
+calendar's now each time `AddObject` takes a thing made (a purchase, a move's put-down), which logs `Park:
+mLastObjectBuilt stamped <date> on mGameTick N`. A sale leaves it. The writer puts it back into the analyser's
+record. **Not the original's in one way**: the ferry and the seaplane stand from the load here, so the first
+summons of one the file names no thing for makes nothing and moves no stamp; it is counted,
+`VEHICLE_MADE_BUILD_STAMP`. Nothing reads the stamp here yet: none of the nine rows is built.
+
+**Predicted first** (`q334/PREDICTION.txt`), both games; every prediction held in one round. Not predictions,
+and said there: the twelve files above.
+
+**This game** (`q334/confirm.py bought|sold|control`). *bought* (`run-bought1`, on the desktop, three of three
+on its first run): the stock park paused on tick 804, no stamp line before; `buy 1101 41 22 0` built thing 43
+and logged one line, `Park: mLastObjectBuilt stamped 4/2/2000 21:30:00 on mGameTick 804`; the frame shows the
+Crazy Ape standing (`1-park.png`); the file's analyser's `+73516` is 125941734000000000, tick 804's and thing
+43's own build date, and the record's other bytes are the shipped file's (five bytes differ, 73,517 to 73,521).
+*sold* (`run-sold2`, off-screen): bought on tick 803, sold on 825, one stamp line; the file's stamp tick 803's,
+its newest object's date tick 604's. *Main's build* (`run-control`): no line, and the file holds tick 604's
+beside thing 43's own date of tick 804. (`run-sold1` missed its own script's wait, `step 20` being frames: the
+sale came on tick 806; its stamp facts were the same.)
+
+**The original** (`q334/orig/run.sh <file>`, `thingwords.py ... 5:0x21c30:Q 5:0x21c38:Q`; one program, each
+file loaded twice, at its start and from the list). *bought*: `+0x21c30` read 125941734000000000 from 0.75 s
+after the load's click and the same 512 ticks on, `+0x21c38` the shipped 125935884000000000, and its frame
+shows the Ape behind its hoardings (`orig/a-end.png`). *sold*: 125941696500000000, tick 803's, with no such
+object in the park. *control*: 125934234000000000, tick 604's. **A load's own object constructors do not stamp
+over the file's value**: every load left the file's standing.
+
+| | The original | OpenTPW |
+|---|---|---|
+| A thing bought or put down | the analyser's stamp is now | the same |
+| A sale | leaves it (no writer) | the same |
+| A load | the file's | the same |
+| A file saved here after a purchase, and after its sale | reads this game's stamp | written at 73,516 |
+| A vehicle made at its first summons | stamps it | counted (`VEHICLE_MADE_BUILD_STAMP`) |
+| The nine rows that read it | scored | not built, not read |
+
+**Not built or not seen.** The nine rows and the routine at `0x004c9070`. In no game run: a move's put-down
+(the same `AddObject`; no test puts one down either, a put-down needing the scene's objects), a purchase made in
+the original by hand (two of its own files hold one), a sale made in the original (read, and the two saves), a
+ferry's first summons, a park made with no file, Full Simulation: the mode is not asked by the constructor's
+tail.
 
 ## An open park's shut rides (message `0x103`, Q323)
 
