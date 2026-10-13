@@ -453,6 +453,26 @@ public sealed partial class ItemDescriptionFile
 	public int ResearchCost => _researchCost ?? _category?.ResearchCost ?? 0;
 
 	/// <summary>
+	/// What researching a later tier costs, <paramref name="tier"/> 1 or 2 - <c>Upgrades[tier].CostOfResearch</c>,
+	/// descriptor <c>+0x180 + tier * 0x40</c>. Above nought is an upgrade the lab can be given
+	/// (<c>FUN_00504580</c>; <c>docs/exe/park-engine.md</c>, "A fresh world's research lab").
+	/// </summary>
+	public int UpgradeResearchCostAt( int tier )
+		=> _upgradeResearchCost[tier - 1] ?? _category?.UpgradeResearchCostAt( tier ) ?? 0;
+
+	/// <summary>
+	/// The kind of research the item's project is - <c>Research.Category</c>, descriptor <c>+0x17c</c>: 0 a ride,
+	/// 1 a shop, 2 a sideshow, 3 a feature, 4 an upgrade, by the files' own comments.
+	/// </summary>
+	public int ResearchCategory => _researchCategory ?? _category?.ResearchCategory ?? 0;
+
+	/// <summary>
+	/// The item's research group - <c>Research.Group</c>, the descriptor's byte at <c>+0x178</c>: a kind's
+	/// projects come up for research a group at a time.
+	/// </summary>
+	public int ResearchGroup => _researchGroup ?? _category?.ResearchGroup ?? 0;
+
+	/// <summary>
 	/// What the ride window's three sliders may be set to, and what a newly built one starts from
 	/// (<c>ParkBuilding.StartingSettings</c>).
 	///
@@ -568,6 +588,12 @@ public sealed partial class ItemDescriptionFile
 	private int? _buildPrice;
 
 	private int? _researchCost;
+
+	private readonly int?[] _upgradeResearchCost = new int?[Tiers - 1];
+
+	private int? _researchCategory;
+
+	private int? _researchGroup;
 
 	private int? _whichUIType;
 	private int? _isChoosable;
@@ -742,18 +768,26 @@ public sealed partial class ItemDescriptionFile
 					_wearRate[2] = Number( line );
 					break;
 
-				// Research is unbuilt, and these are the keys of its the Instant Action layer sets, counted where
-				// they are read rather than stored for nothing to use. Slot nought's research cost is read: it is
-				// what seeds the researched flag. See ResearchCost.
+				// What the lab's projects are made of: ResearchCost, UpgradeResearchCostAt, ResearchCategory, ResearchGroup.
 
 				case "Upgrades[0].CostOfResearch":
 					_researchCost = Number( line );
 					break;
 
 				case "Upgrades[1].CostOfResearch":
+					_upgradeResearchCost[0] = Number( line );
+					break;
+
 				case "Upgrades[2].CostOfResearch":
+					_upgradeResearchCost[1] = Number( line );
+					break;
+
+				case "Research.Category":
+					_researchCategory = Number( line );
+					break;
+
 				case "Research.Group":
-					Unimplemented.Report( "ITEM_RESEARCH_KEYS" );
+					_researchGroup = Number( line );
 					break;
 
 				case "Info.Id":

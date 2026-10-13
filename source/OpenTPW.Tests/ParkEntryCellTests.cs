@@ -448,7 +448,8 @@ public class ParkEntryCellTests
 
 		foreach ( var item in catalogue.All )
 		{
-			if ( item.UiType != 0 )
+			// An upgrade is listed with the rides and is no ride: its research is of kind 4.
+			if ( item.UiType != 0 || item.ResearchCategory == ParkResearch.Upgrade )
 				continue;
 
 			++rides;

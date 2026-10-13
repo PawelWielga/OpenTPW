@@ -120,7 +120,7 @@ public class ParkBoughtFlagsAndCornerTests
 		Assert.AreEqual( 0x2c, bounce.ObjectFlags & 0x2c, "a ride a guest may choose, with a queue, that keeps its riders' sprites" );
 		Assert.AreEqual( 1, catalogue.All.Count( item => (item.ObjectFlags & 0x40) != 0 ), "one item holds litter" );
 		Assert.AreEqual( 1, catalogue.All.Count( item => (item.ObjectFlags & 0x2) != 0 ), "one is a rest area" );
-		Assert.AreEqual( 1, catalogue.All.Count( item => item.MapOffsetX != 0 || item.MapOffsetY != 0 ), "one has an offset" );
+		Assert.AreEqual( "1427 5x5rck,1501 mammtunn", string.Join( ",", catalogue.All.Where( item => item.MapOffsetX != 0 || item.MapOffsetY != 0 ).Select( item => $"{item.Id} {item.Stem}" ) ), "the rock, and one upgrade, have an offset" );
 	}
 
 	/// <summary>Every placed object of the shipped park holds the corner its item and its angle give.</summary>

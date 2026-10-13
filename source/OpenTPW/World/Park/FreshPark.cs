@@ -33,8 +33,7 @@ public sealed class FreshPark : IParkInitialState
 	public int CurrentArrivalVehicle => 0;
 	public ParkWorld.ArrivalBlock Arrival => new( 0, 0, 5, 0, false, true );
 	public IReadOnlyList<ParkWorld.ObjectControl> ObjectControlRecords { get; }
-	// The lab's projects are not made here: the original's world setup fills them from the catalogue, which is not read.
-	public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects => [];
+	public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects { get; }
 
 	public FreshPark( string theme, ParkBalance balance, ParkItemCatalogue catalogue, BaseFileSystem? files = null )
 	{
@@ -44,9 +43,10 @@ public sealed class FreshPark : IParkInitialState
 		Things = Array.AsReadOnly( models.Select( (model, at) => new ParkThingIdentity( at + 1, model ) ).ToArray() );
 		Objects = Array.AsReadOnly( new[] { FixedObject( catalogue, "gates", ParkGates, 0 ),
 			FixedObject( catalogue, "lights", TrafficLights, ParkGates ) } );
-		Unimplemented.Report( "FRESH_PARK_RESEARCH_PROJECTS" );
+		var (projects, tiers) = ParkResearch.FreshLab( catalogue.All );
+		ResearchProjects = projects;
 		ObjectControlRecords = Array.AsReadOnly( catalogue.All
-			.Select( item => new ParkWorld.ObjectControl( item.Id, item.ResearchCost == 0, 0,
+			.Select( item => new ParkWorld.ObjectControl( item.Id, item.ResearchCost == 0, tiers.GetValueOrDefault( item.Id ),
 				// The two fixed objects are counted as the original's constructor counts them, made on tick nought.
 				Objects.Count( placed => placed.CatalogueId == item.Id ) ) ).ToArray() );
 
@@ -131,5 +131,7 @@ public sealed class FreshPark : IParkInitialState
 	public string Census() => $"fresh park: {ThingCount} things, {Objects.Count} objects, {People.Count} peeps, "
 		+ $"{Cells.Count} cells; closed {ParkClosed}, fee {Economy!.Value.AdmissionFee}, cash {Economy.Value.Balance}; "
 		+ $"gate {ParkGates}, lights {TrafficLights}; APR [{string.Join( ",", Economy.Value.Loans.Select( l => l.AprPercent ) )}]; "
-		+ $"repayments [{string.Join( ",", Economy.Value.Loans.Select( l => l.MonthlyRepayment ) )}]";
+		+ $"repayments [{string.Join( ",", Economy.Value.Loans.Select( l => l.MonthlyRepayment ) )}]; "
+		+ $"lab {ResearchProjects.Count} projects, by kind [{string.Join( ",", Enumerable.Range( 0, 5 ).Select( kind => ResearchProjects.Count( project => project.Category == kind ) ) )}], "
+		+ $"{ObjectControlRecords.Count( control => control.TierResearched == 2 )} items with no tier left to research";
 }

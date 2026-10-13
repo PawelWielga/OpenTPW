@@ -44,13 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q349. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q350. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q348 (`advisor-park.md`, "Every feature built, and more to research"): **a park made with no file has
-  no research project** (`FRESH_PARK_RESEARCH_PROJECTS`, counted: the original's world setup fills the lab from
-  the catalogue, not read), so row 80 scores nought in Full Simulation, its only game, until that is built; and
-  nothing here researches, so a file's projects never finish. Of the lab's record the five kinds' records,
+  From Q349 (`park-engine.md`, "A fresh world's research lab"): **a fresh park's lab has its projects and
+  nothing else**: the five kinds' effort, output, current project and highest group, `mWorkLoad`,
+  `mMostExpensiveProject` and `mLabActive` are decoded (`FUN_00502d60`, `FUN_00503330`) and not made, as no
+  reader of them is built; a finished project's next upgrade (event `0x11`, `FUN_00503d40`) is not made; an
+  upgrade item is catalogued and nothing builds one; every item is taken as loaded (`+0x508`). In no game run:
+  row 80 in the original's own fresh park (it was not driven to hire and build), the other three themes' fresh
+  labs, a fresh park saved (`SAVE_PARK_WITH_NO_FILE`). Not heard in either game.
+  From Q348 (`advisor-park.md`, "Every feature built, and more to research"): nothing here researches, so a
+  park's projects never finish. Of the lab's record the five kinds' records,
   `mWorkLoad`, `mMostExpensiveProject` and `mLabActive` are named and not read. **Thirty polled rows of mode 0
   are unbuilt** (18 to 21, 23 to 27, 61, 63 to 65, 72, 76, 101, 102, 171, 274 to 276, 278 to 281, 314, 316, 317,
   347, 348); row 76 is row 80's shape of the sideshows with `FUN_00503980` besides. **Rows 83 and 84 have no

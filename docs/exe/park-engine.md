@@ -263,7 +263,7 @@ OpenTPW (Q178b): `Level.InstantAction` gives both the balance's `Easy_Standard.s
 `ParkItemCatalogue` leaves out an item whose wad has no `Easy_` file and lays the file over the item's own
 (`ItemDescriptionFile.Overlay`), 50 items. `Info.NewAttractionDecayTime` falls back to 1. `Upgrades[0].CostOfResearch` is
 read (the researched seed, Q201b) and each tier's `WearRate` kept (`ItemDescriptionFile.WearRateAt`, Q303); the
-other research keys are counted (`ITEM_RESEARCH_KEYS`). **A refused line leaves out what its file describes - the item,
+other research keys are read for the lab ("A fresh world's research lab", below). **A refused line leaves out what its file describes - the item,
 or the whole folder for a category file - logged with the file's name and counted once (`ITEM_VALUE_REFUSED`), where
 the original quits** (Alexah, 2026-09-30).
 
@@ -1053,6 +1053,88 @@ zero skips. Review of the applied core used exact relayed excerpts because the v
 sandbox could not start; its missing-terminator finding was fixed and tested. Other consumer
 changes were checked mechanically as type-only edits. Park saving, synthetic arrival-vehicle
 render objects, and the cosmetic RNG sequence remain separate existing limitations.
+
+### A fresh world's research lab
+
+Q349. The lab is the thing of model 14 (thing 6 of a fresh world, `FUN_00502d20`, which starts each of the five
+kinds at current project -1 and highest group 1). Its setup, `FUN_00502d60`, runs in every world's making, before
+any park file is laid over it: no project, the dearest -1, `mWorkLoad` `Research.StartingWorkLoad`
+(`[0x00785580]`, 85), `mLabActive` whether a researcher is on the staff, then the fill and the kinds' turn.
+
+**The fill, `FUN_005031a0`**, walks the catalogue (`0x007890a0`, in its own order) and, for each item whose
+model loaded (`+0x508` nought) and whose `Info.WhichUIType` (`+0x4ac`) is under 4, gives the lab at most one
+project of twenty bytes:
+
+- **Research that costs anything** (`Upgrades[0].CostOfResearch`, `+0x180`, not nought): the item's own project,
+  `mCat` its `Research.Category` (`+0x17c`), group the byte of its `Research.Group` (`+0x178`), upgrade level
+  0, `mCost` the cost as a float, `mResearchDone` nought.
+- **Research that costs nothing**: the control record is marked researched (`+0x10`), and `FUN_00504580` looks
+  for an upgrade, unless the item's `Research.Category` is 4. From the tier after the record's (`+0x14`), while
+  under 3: a tier whose `Upgrades[tier].CostOfResearch` (`+0x180 + tier * 0x40`) is above nought is the project,
+  `mCat` 4, group 0, level the tier, at that cost; a tier that costs nothing is written to the record as
+  researched and the next looked at. **So an item with no upgrade is left at tier 2, a ride with one at tier 0
+  with its first upgrade in the lab, and an item of kind 4 with no cost untouched.**
+
+`mMostExpensiveProject` (`+0x1464`) is the first project strictly dearer than every one before it. Then
+`FUN_00503330`, a kind at a time: `effort` is `ResearchCategories[kind].Effort` (`0x00785568`) capped at 100,
+`output` is `effort * 100 / the efforts' sum * mWorkLoad / 100` in whole numbers, the current project the first
+of the kind not done whose group is at or under the kind's highest, and `FUN_00503b80` raises the highest group
+while the share done of the projects at or under it is at least the dword at `0x00785540 + 4 * group`
+(`ResearchTech[group].PercentageForThisTech` by its place before the efforts; the key is not walked from the
+schema). The lab also listens for event `0x11` (`FUN_00503d40`): a project finished asks `FUN_00504580`
+for the item's next upgrade.
+
+**The catalogue's order** is the item folders `rides`, `features`, `upgrades`, `shops`, `sideshow`, and each
+folder's items by their names in capitals (`SUPBOG` before `S_PLANT`): the order of the control records and
+the projects in three `restart.INTS` files of the original's (jungle, fantasy, hallow, written on Windows) and
+in one it wrote here under Proton. The three items of `upgrades` are catalogued with the rest, `Info.WhichUIType`
+0 and `Research.Category` 4, seventy items in Lost Kingdom's Full Simulation.
+
+**The original's own fresh Lost Kingdom park** (Alexah's `restart.INTS`, tick nought; `lib/parkfile.py -l`):
+48 projects, 11 of rides, 5 of shops, 3 of sideshows, 20 of features and 9 of kind 4 (six rides' first
+upgrades and the three upgrade items), none begun; the kinds' efforts 100, 15, 30, 15 and 10, outputs 49, 6,
+14, 6 and 4, current projects 4, 41, 46, 17 and 0, each highest group 1; `mWorkLoad` 85, the dearest project 3
+(item 1190, 1300), `mLabActive` 0; 70 control records, 28 researched, 13 of them at tier 2.
+
+**OpenTPW** (`ParkResearch.FreshLab`, `FreshPark.ResearchProjects`, `ItemDescriptionFile.ResearchCategory`,
+`ResearchGroup`, `UpgradeResearchCostAt`; `ParkItemCatalogue.Folders`): the fresh park's projects and its
+control records' tiers are the fill's, and the catalogue lists the five folders in that order with each
+folder's items by their names in capitals, the upgrades among them. The park's first line ends `lab 48
+projects, by kind [11,5,3,20,9], 13 items with no tier left to research`. Every item is taken as loaded. **Not
+made: the five kinds' records, `mWorkLoad`, `mMostExpensiveProject` and `mLabActive`**, which nothing here reads
+(`advisor-park.md`, "Every feature built, and more to research"); nothing researches, and the event's upgrade
+project is not made.
+
+**Predicted first** (`q349/PREDICTION.txt`). The test pins the 48 projects and the 70 control records of
+Alexah's file, in order. **This game** (`q349/confirm.py`; a player folder with no `gms.dat`, so a fresh Full
+Simulation park, paused on tick 8): the line above, `catalogued 70 items`, neither gap counted. With scientist
+#21 hired and one of each of the eight researched features bought (`run-fix1`, the desktop): `poll message=80
+row=80 days=2 score=60 threshold=25 tick=50 result=post researchers=1 kinds=8/8 unfinished=20`, queued and said
+on tick 50 (`attempt=1 ... response=225 sample=223 line=0`), the fly in the research hat over the empty park
+with tag 82 on the aerial (`1-line.png`). **One number of the prediction was wrong, mine: `days=0`**, where
+tick 50 is the third day. Nothing bought (`run-bare`): `score=0 ... result=no-score researchers=0 kinds=0/8
+unfinished=20`, silent to tick 80. Main's build on the fix scene (`run-control`): `catalogued 67 items`, no lab
+in the line, `FRESH_PARK_RESEARCH_PROJECTS` counted, `no-score researchers=1 kinds=8/8 unfinished=0`, silent.
+
+**The original under Proton** (`original/freshfs.sh`'s steps, `q349/orig/`): a player folder holding Alexah's
+Full Simulation `gms.dat` and no park file, picked in the lobby, went straight into Lost Kingdom, made the park
+(`a-2-park.png`: the empty park, $50000) and wrote `restart.INTS`. Its lab prints line for line as Alexah's
+file's, its 70 control records are the same in order, flag and tier, and the lab's record differs only past
+byte 784, the 208 unused projects, which are memory never written. Live on tick 175 the lab read 48 projects,
+work load 85, dearest 3, inactive, project 0 item 1100 at 250.
+
+| | The original | OpenTPW |
+|---|---|---|
+| A fresh Lost Kingdom world's projects | 48, in the catalogue's order | the same 48 in the same order |
+| Its control records | 70; 13 researched items at tier 2 | the same 70 in the same order, flag and tier |
+| The kinds' records, work load, dearest, active | made (above) | not made |
+| Row 80 in a fresh Full Simulation park | not run | said on its first turn, tick 50, with a researcher and all eight kinds |
+
+**Not built or not seen.** The original was not driven to hire a researcher and build the eight features, so
+row 80's line in its own fresh park is not seen there; no file of this game's was loaded in the original (a
+fresh park is not saved, `SAVE_PARK_WITH_NO_FILE`). The other three themes' fresh labs are measured in the
+original's two other files and not made here in any run. An upgrade item is catalogued and nothing builds one.
+Not heard in either game.
 
 ### Entering and leaving first person: a click on the ground
 

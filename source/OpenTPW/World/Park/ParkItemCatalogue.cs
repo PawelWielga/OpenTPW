@@ -126,7 +126,11 @@ public sealed class ParkItemCatalogue
 		int ObjectFlags = 0, int MapOffsetX = 0, int MapOffsetY = 0,
 
 		// Each tier's wear rate and red lines - ItemDescriptionFile.WearRateAt. See WearAt.
-		IReadOnlyList<ParkRideWear.Tier>? WearTiers = null )
+		IReadOnlyList<ParkRideWear.Tier>? WearTiers = null,
+
+		// What the lab's project for it is made of: the kind of research, its group and what researching each later
+		// tier costs - ItemDescriptionFile.ResearchCategory, ResearchGroup and UpgradeResearchCostAt. See ParkResearch.FreshLab.
+		int ResearchCategory = 0, int ResearchGroup = 0, int UpgradeResearchCost1 = 0, int UpgradeResearchCost2 = 0 )
 	{
 		/// <summary>The bonus of one step of the age, nought past the third - <see cref="ItemDescriptionFile.NewBonusAt"/>.</summary>
 		public int NewBonusAt( int step ) => step switch { 0 => NewBonus0, 1 => NewBonus1, 2 => NewBonus2, _ => 0 };
@@ -175,11 +179,12 @@ public sealed class ParkItemCatalogue
 	public int Count => _items.Count;
 
 	/// <summary>
-	/// The folders holding free-standing items. <c>upgrades</c> is deliberately not among them: its
-	/// contents are tunnels and jumps that attach to a ride rather than stand on their own, and no park
-	/// the game ships places one as an object.
+	/// The folders holding items, in the order the original catalogues them, and each folder's items by their
+	/// names in capitals: the order of a fresh world's control records and lab projects
+	/// (<c>docs/exe/park-engine.md</c>, "A fresh world's research lab"). <c>upgrades</c> holds the tunnels and jumps
+	/// that attach to a ride: no buy list shows one until it is researched, and no shipped park places one.
 	/// </summary>
-	private static readonly string[] Folders = ["features", "shops", "rides", "sideshow"];
+	private static readonly string[] Folders = ["rides", "features", "upgrades", "shops", "sideshow"];
 
 	/// <summary>
 	/// Where the items are read from. A running game passes nothing and gets the one it mounted; a test
@@ -194,7 +199,7 @@ public sealed class ParkItemCatalogue
 	/// <summary>
 	/// Whether this is Instant Action's catalogue: each item's <c>Easy_&lt;stem&gt;.sam</c> laid over its own file, and
 	/// an item whose wad has none left out, as the original does in game type 2 (<c>FUN_00413930</c>,
-	/// <c>0x00413ac4</c>; <c>park-engine.md</c>, "How a key finds its global"). In Lost Kingdom that leaves 50 of 67.
+	/// <c>0x00413ac4</c>; <c>park-engine.md</c>, "How a key finds its global"). In Lost Kingdom that leaves 50 of 70.
 	/// </summary>
 	public bool InstantAction { get; }
 
@@ -241,7 +246,7 @@ public sealed class ParkItemCatalogue
 
 			// Every item is catalogued from its category and its own file and, in Instant Action, its Easy_ file
 			// last; there an item whose wad has no Easy_ file is left out before it is read (0x00413ac4).
-			foreach ( var directory in directories )
+			foreach ( var directory in directories.OrderBy( directory => Path.GetFileName( directory ).ToUpperInvariant(), StringComparer.Ordinal ) )
 			{
 				var stem = Path.GetFileName( directory );
 
@@ -358,7 +363,10 @@ public sealed class ParkItemCatalogue
 					description.ObjectFlags, description.MapOffset.X, description.MapOffset.Y,
 					[.. Enumerable.Range( 0, ItemDescriptionFile.Tiers ).Select( tier => new ParkRideWear.Tier(
 						description.WearRateAt( tier ), description.RedLineSpeedAt( tier ),
-						description.RedLineCapacityAt( tier ) ) )] );
+						description.RedLineCapacityAt( tier ) ) )],
+					ResearchCategory: description.ResearchCategory, ResearchGroup: description.ResearchGroup,
+					UpgradeResearchCost1: description.UpgradeResearchCostAt( 1 ),
+					UpgradeResearchCost2: description.UpgradeResearchCostAt( 2 ) );
 
 			return true;
 		}

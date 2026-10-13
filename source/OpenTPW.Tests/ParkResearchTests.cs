@@ -131,6 +131,113 @@ public class ParkResearchTests
 	}
 
 	/// <summary>
+	/// A fresh world's lab is filled from the catalogue (<c>FUN_005031a0</c>, <c>FUN_00504580</c>;
+	/// <c>docs/exe/park-engine.md</c>, "A fresh world's research lab"). The projects and the control records pinned
+	/// here are those of a jungle <c>restart.INTS</c> the original wrote for a new Full Simulation park, on tick
+	/// nought, in the file's order.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> an item no buy list shows given a project; the catalogue's order lost; an item's own
+	/// project made of kind 4, or with no group; an upgrade's project given the item's own kind, its group or
+	/// level nought; the second tier's cost taken for the first's; an item with no upgrade left at tier 0 or 1;
+	/// a researched ride with an upgrade left at tier 2; the fresh park handed no project, or tier nought.
+	/// </remarks>
+	[TestMethod]
+	public void AFreshLostKingdomWorldsLabIsTheOriginalsFortyEightProjects()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+		var catalogue = new ParkItemCatalogue( "jungle", data );
+		var park = new FreshPark( "jungle", new ParkBalance( "jungle", easyMode: false ), catalogue, data );
+
+		(int Item, int Kind, int Group, int Level, int Cost)[] original =
+		[
+			(1100, 4, 0, 1, 250), (1140, 0, 3, 0, 700), (1185, 0, 2, 0, 1050), (1190, 0, 4, 0, 1300), (1150, 0, 1, 0, 600), (1106, 0, 1, 0, 550),
+			(1108, 0, 2, 0, 500), (1180, 0, 1, 0, 800), (1101, 4, 0, 1, 200), (1109, 0, 2, 0, 700), (1102, 4, 0, 1, 150), (1113, 0, 2, 0, 400),
+			(1110, 0, 4, 0, 700), (1170, 4, 0, 1, 150), (1104, 4, 0, 1, 150), (1112, 4, 0, 1, 250), (1160, 0, 3, 0, 800), (1414, 3, 1, 0, 250),
+			(1429, 3, 1, 0, 300), (1424, 3, 0, 0, 300), (1423, 3, 1, 0, 300), (1422, 3, 2, 0, 300), (1427, 3, 1, 0, 300), (1426, 3, 1, 0, 300),
+			(1400, 3, 1, 0, 350), (1418, 3, 1, 0, 300), (1421, 3, 2, 0, 400), (1430, 3, 2, 0, 300), (1405, 3, 1, 0, 450), (1431, 3, 2, 0, 450),
+			(1417, 3, 1, 0, 300), (1433, 3, 1, 0, 300), (1434, 3, 1, 0, 300), (1435, 3, 1, 0, 300), (1407, 3, 1, 0, 350), (1420, 3, 2, 0, 400),
+			(1419, 3, 3, 0, 600), (1500, 4, 0, 0, 1000), (1501, 4, 0, 0, 1250), (1502, 4, 0, 0, 1200), (1202, 1, 3, 0, 550), (1212, 1, 1, 0, 450),
+			(1211, 1, 2, 0, 550), (1206, 1, 2, 0, 500), (1208, 1, 3, 0, 650), (1309, 2, 2, 0, 700), (1304, 2, 1, 0, 700), (1307, 2, 3, 0, 800),
+		];
+
+		CollectionAssert.AreEqual( original.Select( row => new ParkWorld.ResearchProject( row.Item, row.Kind, row.Group, row.Level, row.Cost, 0f ) ).ToArray(),
+			park.ResearchProjects.ToArray() );
+		CollectionAssert.AreEqual( new[] { 11, 5, 3, 20, 9 }, Enumerable.Range( 0, 5 ).Select( kind => park.ResearchProjects.Count( project => project.Category == kind ) ).ToArray() );
+
+		(int Item, bool Researched, int Tier)[] controls =
+		[
+			(1100, true, 0), (1140, false, 0), (1185, false, 0), (1190, false, 0), (1150, false, 0), (1106, false, 0), (1108, false, 0),
+			(1180, false, 0), (1101, true, 0), (1109, false, 0), (100, true, 0), (1102, true, 0), (1113, false, 0), (1110, false, 0),
+			(1170, true, 0), (1104, true, 0), (1112, true, 0), (1160, false, 0), (1414, false, 0), (1428, true, 2), (1429, false, 0),
+			(1424, false, 0), (1423, false, 0), (1422, false, 0), (1427, false, 0), (1426, false, 0), (1400, false, 0), (1600, true, 0),
+			(1401, true, 2), (1418, false, 0), (1413, true, 2), (1605, true, 0), (1604, true, 0), (1403, true, 2), (1601, true, 0),
+			(101, true, 0), (102, true, 0), (1421, false, 0), (1603, true, 0), (1430, false, 0), (1405, false, 0), (1406, true, 2),
+			(1602, true, 0), (1431, false, 0), (1417, false, 0), (1433, false, 0), (1434, false, 0), (1435, false, 0), (1411, true, 2),
+			(1407, false, 0), (1420, false, 0), (1419, false, 0), (1425, true, 2), (1402, true, 2), (1500, false, 0), (1501, false, 0),
+			(1502, false, 0), (1209, true, 2), (1207, true, 2), (1203, true, 2), (1202, false, 0), (1212, false, 0), (1211, false, 0),
+			(1206, false, 0), (1208, false, 0), (1309, false, 0), (1304, false, 0), (1303, true, 2), (1307, false, 0), (1305, true, 2),
+		];
+
+		CollectionAssert.AreEqual( controls, park.ObjectControlRecords.Select( control => (control.ItemId, control.Researched, control.TierResearched) ).ToArray() );
+		Assert.AreEqual( 13, park.ObjectControlRecords.Count( control => control.TierResearched == 2 ) );
+
+		var research = new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects );
+		CollectionAssert.AreEqual( new[] { 11, 5, 3, 20, 9 }, Enumerable.Range( 0, 5 ).Select( research.Unfinished ).ToArray() );
+		Assert.AreEqual( 2, research.TierResearched( 1428 ) );
+		Assert.AreEqual( 0, research.TierResearched( 1100 ) );
+	}
+
+	/// <summary>
+	/// The fill's rule an item at a time (<c>FUN_005031a0</c>, <c>FUN_00504580</c>): an item whose research costs
+	/// anything gives its own project; one that costs nothing gives the first later tier that costs anything, as a
+	/// project of kind 4, and is left at the tier before it; a tier costing nothing is passed over.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the tier test made "not nought" (a negative cost then makes a project); the second tier
+	/// never looked at; the tier left one too high or too low; an item of kind 4 with no cost given an upgrade or
+	/// a tier; an item of <c>WhichUIType</c> 4 let in, or one of 3 kept out; a cost of nought taken as a project; an
+	/// item's own cost below nought given none; a key never taken from the folder's file.
+	/// </remarks>
+	[TestMethod]
+	public void AFreshLabGivesEachItemItsOwnProjectOrItsFirstUpgradeThatCostsAnything()
+	{
+		ParkItemCatalogue.Item Item( int id, int uiType, int cost, int kind = 0, int group = 0, int first = 0, int second = 0 )
+			=> new ParkItemCatalogue.Item( id, $"Item {id}", "", "", 1, 1, null, uiType ) with
+			{
+				ResearchCost = cost, ResearchCategory = kind, ResearchGroup = group, UpgradeResearchCost1 = first, UpgradeResearchCost2 = second
+			};
+
+		var (projects, tiers) = ParkResearch.FreshLab(
+		[
+			Item( 1, 0, 700, kind: 0, group: 3, first: 100, second: 200 ),
+			Item( 2, 0, 0, first: 250, second: 300 ),
+			Item( 3, 0, 0, first: 0, second: 300 ),
+			Item( 4, 0, 0, first: -5, second: 0 ),
+			Item( 5, 4, 900, kind: 2 ),
+			Item( 6, 3, 0, kind: 4, first: 80 ),
+			Item( 7, 3, 1000, kind: 4 ),
+			Item( 8, 3, 0, kind: 3 ),
+			Item( 9, 3, -5, kind: 3, group: 1 ),
+		] );
+
+		CollectionAssert.AreEqual( new ParkWorld.ResearchProject[]
+		{
+			new( 1, 0, 3, 0, 700f, 0f ), new( 2, 4, 0, 1, 250f, 0f ), new( 3, 4, 0, 2, 300f, 0f ), new( 7, 4, 0, 0, 1000f, 0f ),
+			new( 9, 3, 1, 0, -5f, 0f ),
+		}, projects.ToArray() );
+		CollectionAssert.AreEquivalent( new[] { (2, 0), (3, 1), (4, 2), (8, 2) }, tiers.Select( pair => (pair.Key, pair.Value) ).ToArray() );
+
+		// An item's file says only what differs from its folder's: each of the lab's keys falls back to it.
+		var folder = new ItemDescriptionFile( "Research.Category 2\nResearch.Group 3\nUpgrades[1].CostOfResearch 70\nUpgrades[2].CostOfResearch 90\n" );
+		var inherits = new ItemDescriptionFile( "Info.Id 1\n", folder );
+		var restates = new ItemDescriptionFile( "Info.Id 2\nResearch.Category 1\nResearch.Group 4\nUpgrades[1].CostOfResearch 0\nUpgrades[2].CostOfResearch 5\n", folder );
+		Assert.AreEqual( (2, 3, 70, 90), (inherits.ResearchCategory, inherits.ResearchGroup, inherits.UpgradeResearchCostAt( 1 ), inherits.UpgradeResearchCostAt( 2 )) );
+		Assert.AreEqual( (1, 4, 0, 5), (restates.ResearchCategory, restates.ResearchGroup, restates.UpgradeResearchCostAt( 1 ), restates.UpgradeResearchCostAt( 2 )) );
+	}
+
+	/// <summary>
 	/// The lab's projects are read from the park file (<c>FUN_00502dc0</c>, <c>FUN_00504210</c>): the shipped
 	/// Lost Kingdom park holds twenty-four, eleven of a feature's kind, and <see cref="ParkResearch.Unfinished"/>
 	/// counts those of a kind whose points are under their cost (<c>FUN_00503b30</c>).

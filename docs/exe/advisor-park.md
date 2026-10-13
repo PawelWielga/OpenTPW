@@ -2996,9 +2996,10 @@ used projects from the file, `ParkResearch.Unfinished( kind )` counts those not 
 ends ` researchers=N kinds=K/T unfinished=N`. `ParkTags.Rows` lists row 82.
 
 **The lab's projects are the file's, and stay so**: nothing here researches (`ParkResearch`), so a project is
-never finished and a kind never comes on offer. **A park made with no file has no project**
-(`FRESH_PARK_RESEARCH_PROJECTS`, counted: the original's world setup fills the lab from the catalogue, which is
-not read), so the row scores nought in the one kind of park whose game it is, until that is built (Q349).
+never finished and a kind never comes on offer. **A park made with no file has the projects the original's
+world setup gives it** (Q349; `park-engine.md`, "A fresh world's research lab"): 48 in Lost Kingdom, 20 of them
+features', so the row speaks in the one kind of park whose game it is, on tick 50 of a fresh one with a
+researcher hired and all eight kinds of feature built.
 
 **The console's `advisorgame full|instant|own`** holds the poll's game type, whatever the player's is. It is an
 instrument, the twin of holding the original's `0x00fb3b7c`: no screen of either game does it.
@@ -3056,8 +3057,8 @@ fresh through tick 1144.
 | The tag and the bar | row 82, part 2, string 84; no button but the bomb | the same |
 | The lab's projects | the file's, and worked on from the load, 1.5 points every 20 ticks on project 8 | the file's, read and never changed |
 
-**Not built or not seen.** In no game run: **a Full Simulation park** (the row's only game: this game's has no
-file and no project, `FRESH_PARK_RESEARCH_PROJECTS`; it belongs to Q327's catch-up), the line again past its
+**Not built or not seen.** A Full Simulation park, the row's only game, was run in this game alone and since
+(Q349, above); in no game run: the line again past its
 900 quarter-ticks (the test holds it), a kind standing that is not on offer, a project finished by the
 original's own research and what that does to the kinds on offer, the other three themes' labs. Of the lab's
 record this game reads the projects alone: the five kinds' effort, output, current project and highest group,

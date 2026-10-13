@@ -675,7 +675,9 @@ public class ParkCamcorderWalkTests
 		{
 			foreach ( var item in new ParkItemCatalogue( theme, data ).All )
 			{
-				var ride = item.Directory.Contains( "/rides/", StringComparison.OrdinalIgnoreCase );
+				// An upgrade's file does not say it cannot be ridden, as a ride's does not.
+				var ride = item.Directory.Contains( "/rides/", StringComparison.OrdinalIgnoreCase )
+					|| item.Directory.Contains( "/upgrades/", StringComparison.OrdinalIgnoreCase );
 
 				Assert.AreEqual( !ride, item.CannotRide, $"{theme} '{item.Name}' in {item.Directory}" );
 

@@ -54,7 +54,8 @@ public class ParkTrackTypeTests
 		// Found by name rather than by number, because the catalogue number is not what is under test.
 		var all = Enumerable.Range( 1000, 700 )
 			.Select( id => byName.TryGet( id, out var item ) ? item : default )
-			.Where( item => item.Id != 0 )
+			// The karts' and the water ride's upgrades name their ride's track, and are no ride.
+			.Where( item => item.Id != 0 && item.ResearchCategory != ParkResearch.Upgrade )
 			.ToArray();
 
 		var carTracks = all.Where( i => i.TrackType == ItemDescriptionFile.CarTrack ).ToArray();

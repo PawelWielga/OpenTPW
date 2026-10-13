@@ -14,7 +14,7 @@ namespace OpenTPW;
 ///
 /// <para>
 /// <b>Research completing is not built</b> (<c>FUN_00504630</c>, which sets the flag and the tier): this game has no
-/// research, and nothing here changes after the load, the lab's projects (<see cref="Unfinished"/>) included. The points a researcher would hand the lab are counted where
+/// research, and nothing here changes after the load or after a fresh world is made (<see cref="FreshLab"/>), the lab's projects (<see cref="Unfinished"/>) included. The points a researcher would hand the lab are counted where
 /// the original hands them, <c>RESEARCH_POINTS_TO_THE_LAB</c> in <see cref="StaffBehaviour"/>.
 /// </para>
 /// </summary>
@@ -64,6 +64,45 @@ public sealed class ParkResearch
 	/// researches.
 	/// </summary>
 	public int Unfinished( int kind ) => _projects.Count( project => project.Category == kind && project.Done < project.Cost );
+
+	/// <summary>The kind of research an upgrade's project is, whatever its item's own (<c>0x005045fc</c>).</summary>
+	public const int Upgrade = 4;
+
+	/// <summary>
+	/// The lab of a world just made, and the upgrade tier each item's control record is left at: world setup's fill
+	/// (<c>FUN_005031a0</c>; <c>docs/exe/park-engine.md</c>, "A fresh world's research lab"). Every item a buy list
+	/// can show (<c>Info.WhichUIType</c> under 4), in the catalogue's order, gives at most one project: its own
+	/// research where that costs anything, and otherwise the first later tier whose research costs anything, as a
+	/// project of kind 4. A tier costing nothing is passed over and counted researched (<c>FUN_00504580</c>), so an
+	/// item with no upgrade is left at tier 2; an item of kind 4 has no upgrade and is left at 0.
+	/// </summary>
+	public static (IReadOnlyList<ParkWorld.ResearchProject> Projects, IReadOnlyDictionary<int, int> Tiers) FreshLab(
+		IEnumerable<ParkItemCatalogue.Item> items )
+	{
+		var projects = new List<ParkWorld.ResearchProject>();
+		var tiers = new Dictionary<int, int>();
+
+		foreach ( var item in items.Where( item => item.UiType < Upgrade ) )
+		{
+			if ( item.ResearchCost != 0 )
+			{
+				projects.Add( new( item.Id, item.ResearchCategory, item.ResearchGroup, 0, item.ResearchCost, 0 ) );
+				continue;
+			}
+
+			if ( item.ResearchCategory == Upgrade )
+				continue;
+
+			int[] later = [item.UpgradeResearchCost1, item.UpgradeResearchCost2];
+			var next = Array.FindIndex( later, cost => cost > 0 );
+			tiers[item.Id] = next < 0 ? later.Length : next;
+
+			if ( next >= 0 )
+				projects.Add( new( item.Id, Upgrade, 0, next + 1, later[next], 0 ) );
+		}
+
+		return (projects, tiers);
+	}
 
 	/// <summary>The upgrade tier researched, 0 to 2 (<c>+0x14</c>); nothing reads it yet.</summary>
 	public int TierResearched( int itemId ) => _items.TryGetValue( itemId, out var entry ) ? entry.Tier : 0;

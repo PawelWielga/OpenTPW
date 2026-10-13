@@ -6732,6 +6732,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`orig/e-g4.png`, `e-bar.png`); the three others fresh under the same hold. Main's build: no line of message
   80. 85 bugs put back, 85 fail (`q348/mutations.py`). `docs/exe/advisor-park.md`, "Every feature built, and
   more to research".
+- [x] **Q349. A park made with no file has the research projects the original's world setup gives it.**
+  (2026-10-13; split from the bundle below, which is Q350.) The lab's fill is `FUN_005031a0` (`park-engine.md`,
+  "A fresh world's research lab"): each catalogue item a buy list can show gives one project, its own where its
+  research costs anything and otherwise its first upgrade that costs anything, of kind 4 (`FUN_00504580`), an
+  item with no upgrade left at tier 2. **The catalogue's order is the original's too**: rides, features,
+  upgrades, shops, sideshow, each folder by its names in capitals, the three upgrade items among them (70
+  items). Proof (`q349/PREDICTION.txt`): the fresh park's 48 projects and 70 control records are those of
+  Alexah's jungle `restart.INTS`, in order (the test pins them); a fresh Full Simulation park logged `lab 48
+  projects, by kind [11,5,3,20,9], 13 items with no tier left to research`, and with a scientist hired and the
+  eight researched features bought `poll message=80 row=80 days=2 score=60 threshold=25 tick=50 result=post
+  researchers=1 kinds=8/8 unfinished=20`, said on tick 50 in the research hat with tag 82 (`run-fix1/1-line.png`;
+  my `days=0` was wrong); nothing bought `no-score researchers=0 kinds=0/8 unfinished=20`; main's build
+  `unfinished=0`, silent. **The original under Proton made its own fresh park** and wrote a `restart.INTS` with
+  the same 48 projects and 70 records (`q349/orig/`). 54 bugs put back, 54 caught (52 first round, two after
+  the test grew). Not done: row 80 in the original's own fresh park, a file of this game's loaded there (a fresh
+  park is not saved).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

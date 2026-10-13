@@ -114,16 +114,16 @@ public class ParkEasyCatalogueTests
 	}
 
 	[TestMethod]
-	public void TheWearKeysAreKeptAndTheResearchKeysCounted()
+	public void TheWearKeysAndTheResearchKeysAreKept()
 	{
-		Write( "shops/fries/easy_Fries.sam", "Upgrades[0].WearRate 3\nUpgrades[2].WearRate 1\nResearch.Group 2\n" );
+		Write( "shops/fries/easy_Fries.sam", "Upgrades[0].WearRate 3\nUpgrades[2].WearRate 1\nResearch.Group 2\nResearch.Category 1\nUpgrades[1].CostOfResearch 40\nUpgrades[2].CostOfResearch 50\n" );
 		Unimplemented.Forget();
 
 		Assert.IsTrue( Catalogue( instantAction: true ).TryGet( 1201, out var fries ) );
 
 		Assert.AreEqual( (3, 0, 1), (fries.WearAt( 0 ).Rate, fries.WearAt( 1 ).Rate, fries.WearAt( 2 ).Rate) );
 		Assert.IsFalse( Unimplemented.Summary.Any( one => one.What == "ITEM_WEAR_RATE" ) );
-		Assert.AreEqual( 1, Unimplemented.Summary.Single( one => one.What == "ITEM_RESEARCH_KEYS" ).Times );
+		Assert.AreEqual( (1, 2, 40, 50), (fries.ResearchCategory, fries.ResearchGroup, fries.UpgradeResearchCost1, fries.UpgradeResearchCost2) );
 	}
 
 	[TestMethod]
@@ -135,7 +135,7 @@ public class ParkEasyCatalogueTests
 		var standard = new ParkItemCatalogue( "jungle", data );
 
 		Assert.AreEqual( 50, easy.Count, "park-engine.md: 50 of Lost Kingdom's item wads hold an Easy_ file" );
-		Assert.AreEqual( 67, standard.Count );
+		Assert.AreEqual( 70, standard.Count, "the three upgrades with them" );
 
 		var shops = easy.All.Where( item => item.UiType == 1 ).Select( item => item.Name ).ToList();
 
