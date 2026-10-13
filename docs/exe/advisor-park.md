@@ -1893,8 +1893,9 @@ summons, `park.md`, "The vehicle thing is made on demand") and `FUN_00516b00` (t
 ("More rides than the mechanics can keep"), the whole days since the stamp. Nine calls reach it, each in an
 advisor score function: rows 60 (`0x0059d990`), 71 (`0x0059dca0`), 73 (`0x0059dde0`), 74 (`0x0059de80`), 75
 (`0x0059df30`), 77 (`0x0059e070`), 78 (`0x0059e110`), 79 (`0x0059e1c0`) and 81 (`0x0059e2e0`), found by their
-`CALL` bytes in the file on disk; those functions are undefined bytes too, and of them rows 60's and 71's are
-read ("A poor selection of rides", "A poor selection of shops", below); **the other seven are not**.
+`CALL` bytes in the file on disk; those functions are undefined bytes too, and of them rows 60's, 71's and 73's
+are read ("A poor selection of rides", "A poor selection of shops", "A park with rides and no shop", below);
+**the other six are not**.
 
 **Measured in files**, twelve the original wrote: in ten the stamp is the newest standing object's own build
 date (`+22` of its record: the shipped park's is thing 15's, tick 604; a park with a ride bought on tick 924
@@ -1908,8 +1909,8 @@ calendar's now each time `AddObject` takes a thing made (a purchase, a move's pu
 mLastObjectBuilt stamped <date> on mGameTick N`. A sale leaves it. The writer puts it back into the analyser's
 record. **Not the original's in one way**: the ferry and the seaplane stand from the load here, so the first
 summons of one the file names no thing for makes nothing and moves no stamp; it is counted,
-`VEHICLE_MADE_BUILD_STAMP`. Two of the nine rows read it here, rows 60 and 71 ("A poor selection of rides" and
-"A poor selection of shops", below).
+`VEHICLE_MADE_BUILD_STAMP`. Three of the nine rows read it here, rows 60, 71 and 73 ("A poor selection of
+rides", "A poor selection of shops" and "A park with rides and no shop", below).
 
 **Predicted first** (`q334/PREDICTION.txt`), both games; every prediction held in one round. Not predictions,
 and said there: the twelve files above.
@@ -1938,10 +1939,10 @@ over the file's value**: every load left the file's standing.
 | A load | the file's | the same |
 | A file saved here after a purchase, and after its sale | reads this game's stamp | written at 73,516 |
 | A vehicle made at its first summons | stamps it | counted (`VEHICLE_MADE_BUILD_STAMP`) |
-| The nine rows that read it | scored | rows 60 and 71 built ("A poor selection of rides", "A poor selection of shops"); the other seven not built, not read |
+| The nine rows that read it | scored | rows 60, 71 and 73 built ("A poor selection of rides", "A poor selection of shops", "A park with rides and no shop"); the other six not built, not read |
 
-**Not built or not seen.** Seven of the nine rows (rows 60 and 71 are "A poor selection of rides" and "A poor
-selection of shops", below). In no game run: a move's put-down
+**Not built or not seen.** Six of the nine rows (rows 60, 71 and 73 are "A poor selection of rides", "A poor
+selection of shops" and "A park with rides and no shop", below). In no game run: a move's put-down
 (the same `AddObject`; no test puts one down either, a put-down needing the scene's objects), a purchase made in
 the original by hand (two of its own files hold one), a sale made in the original (read, and the two saves), a
 ferry's first summons, a park made with no file, Full Simulation: the mode is not asked by the constructor's
@@ -2041,8 +2042,8 @@ list's click does nothing under it.)
 | Two rides | not said | the same (`rides=2`) |
 | The tag and the bar | row 62, part 2, string 65; button 9 builds the buy screen on its rides tab, tag off | the same |
 
-**Not built or not seen.** Row 71 is "A poor selection of shops", below; the seven other rows that read the
-newest build (73 to 75, 77 to 79 and 81) are not built and their score functions not read. **The original's stamp moved with nothing bought**: in run a's
+**Not built or not seen.** Rows 71 and 73 are "A poor selection of shops" and "A park with rides and no shop",
+below; the six other rows that read the newest build (74, 75, 77 to 79 and 81) are not built and their score functions not read. **The original's stamp moved with nothing bought**: in run a's
 park, left running, `mLastObjectBuilt` went to tick 1400's on tick 1400 (read in run b's log, before its load);
 what was made then is not read (the vehicle summons and the "End" feature are the constructor's callers, "The
 newest build"), and here nothing moves it, so past such a moment this game's row 60 would speak again where
@@ -2155,6 +2156,97 @@ written), a thing built after the line, the bar's button with the buy screen ope
 Full Simulation: the mode is not asked by row 71's score, and the regular catalogue's two more shops (the Steak
 Restaurant and the Gift Shop) are not researched on the shipped save. The shipped park cannot reach the row at
 all without research: three kinds on offer. Not heard in either game.
+
+## A park with rides and no shop (message `0x49`, Q337)
+
+**Row 73, message `0x49`, `ShopsBuildShops`:** polled, category 0, either game mode, one copy, first response
+211, two lines in turn. Responses 211 and 212 are samples 209 and 210 ("The park hasn't got any shops, have you
+considered building some?"; "Your park hasn't got any shops, have you thought of adding some? ..."): the random
+gesture chain, model slot 0, **prop 5, the hard hat**, group 75. It is two polled rows after row 71: from the
+shipped park's cursor its turns are ticks 810, 965, 1120 and every 155 on.
+
+**Its score, `0x0059dde0`** (loose code, disassembled for this; `ECX` the balance object), each step on the park
+analyser (`FUN_00519510`):
+
+1. The kinds of ride standing, `0x004ca7b0( 0, 0 )`: the ride items whose control record counts at least one
+   standing and whose `GoldenTicketCost` is nought. None: nought. A park with no ride is row 62's.
+2. The whole days since the newest build, `0x004c9070`, under `[ECX + 0x634]`, `WaitingTimes.DaysForObjects`,
+   **30**: nought.
+3. The kinds of shop standing, `0x004ca7b0( 1, 0 )`, the same count of the shop items: any, nought. A shop
+   that costs a golden ticket is no kind standing, so a park whose only shops are such is told it has none.
+4. Otherwise `[ECX + 0x268]` plus `[ECX + 0x26c]` times the park's age in whole days (`FUN_004f8800` over
+   `0xC92A69C000`, as row 62 counts them): `ShopsBuildShops.Score` and `ShopsBuildShops.AdditionalPerDay`
+   (`lib/advisorschema.py`), **50 and 2** in `Advisor.sam`.
+
+The door is not asked, nor the sideshows, nor what is on offer. The score is never under 50 once it is anything,
+so the thirty days are its whole wait: 132 on tick 965 (day 41), 146 on tick 1120 (day 48).
+
+**Its tag** is row 75 of the tag table: key 383, picture 2, string 77, the bar's first button of type 10 (the buy
+screen on its shops tab), no second, thirty seconds. String 77 reads "You haven't built any shops yet, and your
+visitors are just itching to buy things."
+
+### OpenTPW (`ParkAdvisorMessages.BuildShops`, a topic's `PerDayWithNoShop`; tag row 75)
+
+A seventeenth polled topic. The topic field `PerDayWithNoShop` names the per-day key; the score reads
+`ParkFacts.RideKindsStanding`, `ShopKindsStanding` and `DaysSinceObjectBuilt`, all kept for rows 60 and 71, and
+the park's age as row 62 does. The poll line ends ` ridekinds=N shopkinds=N sincebuild=N`. `ParkTags.Rows` lists
+row 75; the bar's button of type 10 was built with row 62's message's.
+
+**The scene** (`q337/scene.py`, `q337/mk.py`): the stock park paused on tick 914 with its one shop, the Drinks
+Shop (thing 16), sold, saved by main's build. Into copies of the file the stamp is written: `noshop30.TPWS` the
+stamp of tick 273, 692 ticks before row 73's turn on tick 965, and `noshop29.TPWS` the stamp of tick 274. Beside
+them `shop30.TPWS`, nothing sold, and `noride30.TPWS`, the Belly Bounce (thing 13) sold too, each with tick
+273's stamp.
+
+**Predicted first** (`q337/PREDICTION.txt`), both games on files neither had been given, the scene runs
+included; one round, and every line of it held.
+
+**This game** (`q337/confirm.py fix|d29|shop|noride|control`). *`noshop30`* (`run-fix1`, on the desktop, six of
+six on its first run; `run-fix2` on the commit's build): `poll message=73 row=73 days=41 score=132 threshold=25
+tick=965 result=post ridekinds=1 shopkinds=0 sincebuild=30`, `post message=73 ... result=queued` and `attempt=1
+message=73 subject=0 score=132 threshold=25 response=211 sample=209 line=0 tick=965`; `saying sp_209.mp2 ...
+wearing=5,0`, him up in the yellow hard hat (`1-line.png`), `tags` reading `tag=75/picture=2/subject=0` with
+`mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked: `message bar: tag 75 subject 0 item
+0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_buy/help=522 second=hidden erase=mb_erase` and the text
+(`2-bar.png`). The button clicked: `button type 10 opens the buy screen on tab 1 and takes tag 75 off`,
+`windows` reading `ParkBuyScreen tab 1`, `standing=0`, and the frame "Buy Shop" listing the three on offer
+(`3-screen.png`). *`noshop29`* (`run-d29`, off-screen): `score=0 ... tick=965 result=no-score ridekinds=1
+shopkinds=0 sincebuild=29`, then `days=48 score=146 ... tick=1120 result=post ... sincebuild=36`, said on that
+tick. *`shop30`*: `no-score ridekinds=1 shopkinds=1 sincebuild=30`. *`noride30`*: `no-score ridekinds=0
+shopkinds=0 sincebuild=30`; neither said it by tick 994.
+
+**Main's build** on `noshop30` (`run-control`): no line of message 73, no attempt, no tag by tick 993.
+
+**The original** (`q337/orig/run.sh <file>`, `advisor.py ... 0x49,0x47,0x48,0x4a,0x4b,0x3c,0x3e,0x3f,0x2,0x71,0xbc,0x11c
+poll` beside `thingwords.py ... 5:0x21c30:Q:lastbuilt`, `tags.py`, `bar.py` and `screens.py`; four programs, four
+loads). *`noshop30`* (run a): message `0x49`'s record went from (0, -1, 0, 0) to **(965, 0, 1, 0) on tick 965**,
+one tag with it at (84, 909, 154, 974), the mast at (94, 901, 144, 984), its text string 77; he is up in the
+yellow hard hat (`orig/a-g10.png`). The tag clicked: the bar's data read thing 0, buttons 10 and 0, item 0 and
+the text (`orig/a-bar.png`). The button clicked: `screens.py`'s buy screen went from `0x0` to a pointer on tick
+1055 and the tag was gone on 1057, the frame "Buy Shop" listing the same three shops (`orig/a-button.png`).
+*`noshop29`* (run b): the record fresh until **(1120, 0, 1, 0) on tick 1120**, the same tag with it.
+*`shop30`* (run c): no record of the twelve moved and no slot changed through tick 1158. *`noride30`* (run
+d): row 62's record went to (959, 0, 1, 0) on tick 959 with its own tag, as "A park with no ride in it" has it,
+and `0x49`'s stayed fresh through tick 1170. Rows 72 and 74 (`0x48`, `0x4a`) stayed fresh in all four.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 73 | polled; nought with no kind of ride standing, until 30 days after the newest build, and with a kind of shop standing; then 50 and 2 for each day of the park's age | the same |
+| The Drinks Shop sold, day 30 | said on tick 965, line 0, the hard hat | the same (score 132) |
+| Day 29 | nought on tick 965; said on tick 1120 | the same (score 146) |
+| A shop standing | not said | the same (`shopkinds=1`) |
+| No ride either | not said; row 62's line on tick 959 | the same (`ridekinds=0`) |
+| The tag and the bar | row 75, part 2, string 77; button 10 builds the buy screen on its shops tab, tag off | the same |
+| A golden-ticket shop or ride | no kind standing | the same (`ParkPeople.ShopKinds`, `RideKinds`; by test alone) |
+
+**Not built or not seen.** **The original's stamp moved with nothing bought twice more**: to tick 1158's on
+tick 1158 in run c's park and to tick 1170's on tick 1170 in run d's, the last line of each log (Q336's moved
+on 1085, Q335's on 1400); what was made is still not read ("The newest build"), and here nothing moves it, so
+past such a moment this game's row 73 would go on speaking where the original's waits thirty days more. In no
+game run: line 2 (sample 210; the test holds the turn), the line said again past its 120 quarter-ticks, a
+golden-ticket shop or ride standing (no Lost Kingdom shop costs one), a shop built after the line (the test's
+last step), the bar's button with the buy screen open, a park made with no file, Full Simulation: the mode is
+not asked by row 73's score. Not heard in either game.
 
 ## An open park's shut rides (message `0x103`, Q323)
 

@@ -70,6 +70,10 @@ Each was found by trial in the item named, and cost a run to find.
 whole list):
 
 - **`camera x y zoom yaw` takes world units**, a cell times ten (Q257n).
+- **A park with a ride and no shop is the stock park with thing 16 sold** (Q337): `sell 16` under a pause takes
+  the Drinks Shop, its only shop; `sell 13` takes the Belly Bounce, its only ride. A sale leaves
+  `mLastObjectBuilt`, so the days since the build are still set by writing the stamp into the file
+  (`parkfile.thing_set` on thing 5, `+73516`; `q337/mk.py`).
 - **`step N` steps frames, not ticks** (Q334): twenty of them moved the park's clock two ticks. To let ticks pass
   under a script, `resume`, wait on `tick()`, and `pause` again.
 - **Who writes and who reads a field of a big thing** (Q334): `search_bytes` on its displacement's four bytes

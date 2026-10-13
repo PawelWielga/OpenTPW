@@ -6537,6 +6537,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   games. 69 bugs put back, each failing a test in the first round. Tests 3042 with the game; 1023 ran and 2019
   skipped without. Harness `~/.cache/tpw-harnesses/q336/`. I split the item: its
   other pieces are Q337.
+- [x] **Q337. The advisor tells a park with rides and no shop to build some.** Done 2026-10-13: one piece of
+  the old Q337. Row 73, message `0x49`, `ShopsBuildShops`, is polled; its score (`0x0059dde0`, loose code,
+  disassembled) is nought where no kind of ride stands (`0x004ca7b0( 0, 0 )`), until
+  `WaitingTimes.DaysForObjects`, 30, whole days after `mLastObjectBuilt`, and where a kind of shop stands
+  (`0x004ca7b0( 1, 0 )`, which passes over a golden ticket's), and then `Score`, 50, and `AdditionalPerDay`,
+  2, for each whole day of the park's age. Responses 211 and 212 are samples 209 and 210, the hard hat, group
+  75: tag row 75, string 77, the buy button of type 10. Built: `ParkAdvisorMessages.BuildShops`, a topic's
+  `PerDayWithNoShop`, tag row 75. The scene is the stock park with its Drinks Shop sold and the stamp written
+  692 ticks back: `poll message=73 row=73 days=41 score=132 threshold=25 tick=965 result=post ridekinds=1
+  shopkinds=0 sincebuild=30`, said on tick 965 as sample 209, him up in the yellow hard hat with tag 75 on the
+  mast, the bar's button opening "Buy Shop" with the three on offer; day 29 said on tick 1120 at 146; a shop
+  standing and no ride standing not said; main's build silent. The original, given each file, read its record
+  said on tick 965 and on tick 1120, stood the same tag at the same rectangle, built its buy screen on the
+  shops, and stayed silent on the other two. Predicted first, one round, all held (`q337/PREDICTION.txt`). 55
+  bugs put back: 54 failed first, the last after the test read row 62's poll line. Test
+  `AParkWithRidesAndNoShopIsToldToBuildSomeThirtyDaysAfterTheNewestBuild`. `docs/exe/advisor-park.md`, "A park
+  with rides and no shop". I split the item: every other piece of the old Q337 is Q338.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

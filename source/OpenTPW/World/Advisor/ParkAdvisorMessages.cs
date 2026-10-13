@@ -39,6 +39,8 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>Message 0x3c, polled: the line about a poor selection of rides, scored where few of the kinds of ride on offer stand (0x0059d990).</summary>
 	internal const int PoorSelection = 0x3c;
 	internal const int PoorShopSelection = 0x47;
+	/// <summary>Message 0x49, polled: the line about a park with rides and no shop, scored by the park's age in days (0x0059dde0).</summary>
+	internal const int BuildShops = 0x49;
 	/// <summary>Row 62, polled: a park with no ride in it.</summary>
 	internal const int BuildRides = 0x3e;
 	/// <summary>Message 0x71, polled: the line about a queue not joined to a path, scored where a ride's queue is found unjoined (0x0059ef60).</summary>
@@ -114,18 +116,21 @@ internal sealed class ParkAdvisorMessages
 	/// score is nought until <see cref="DaysForObjects"/> days after the newest object was made.
 	/// <paramref name="PoorOf"/> is whose kinds that score asks: the rides', or the shops' for row 71's
 	/// (0x0059dca0), whose section's least number is MoreShopsThan.
+	/// <paramref name="PerDayWithNoShop"/> makes the score row 73's (0x0059dde0): in a park where a kind of ride
+	/// stands and no kind of shop the key's value and this key's for each whole day of the park's age, and nought
+	/// until <see cref="DaysForObjects"/> days after the newest object was made.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
 		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
 		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
 		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false,
 		bool PerWornRideWithNoMechanic = false, bool PerBrokenRideWithNoMechanic = false, string? RidesAMechanic = null,
-		string? PoorSelection = null, Shut PoorOf = Shut.Rides );
+		string? PoorSelection = null, Shut PoorOf = Shut.Rides, string? PerDayWithNoShop = null );
 
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
 
-	/// <summary>The key of the whole days since the newest object was made that rows 60 and 71's scores wait for (the balance object's +0x634).</summary>
+	/// <summary>The key of the whole days since the newest object was made that rows 60, 71 and 73's scores wait for (the balance object's +0x634).</summary>
 	internal const string DaysForObjects = "WaitingTimes.DaysForObjects";
 
 	/// <summary>The things a row's score counts shut: none, the rides (0x005a02f0), the shops (0x005a0370), the sideshows (0x005a03d0), the toilets (0x005a0430) or the staff rooms (0x005a0490).</summary>
@@ -158,7 +163,8 @@ internal sealed class ParkAdvisorMessages
 	/// thing stands (0x004ca7b0 asked with nought and nought) and the whole days since the newest object was made
 	/// (0x004c9070, from the analyser's mLastObjectBuilt); and what row 71's reads: the kinds of shop on offer
 	/// (0x004ca510: a catalogue item of a shop's kind that is researched, a golden ticket's or not) and those of
-	/// which a thing stands (0x004ca7b0 asked with one and nought, which passes over a golden ticket's).
+	/// which a thing stands (0x004ca7b0 asked with one and nought, which passes over a golden ticket's); and what
+	/// row 73's reads: the kinds of ride and of shop of which a thing stands and the days since the newest object.
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -256,6 +262,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
 		new( PoorSelection, "RidesPoorSelection.Score", 176, 173, Lines: 3, Group: 62, Polled: true, PoorSelection: "RidesPoorSelection" ),
 		new( PoorShopSelection, "ShopsPoorSelection.Score", 207, 205, Group: 73, Polled: true, PoorSelection: "ShopsPoorSelection", PoorOf: Shut.Shops ),
+		new( BuildShops, "ShopsBuildShops.Score", 211, 209, Prop: HardHat, Group: 75, Polled: true, PerDayWithNoShop: "ShopsBuildShops.AdditionalPerDay" ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
 		new( QueueUnconnected, "QueueUnconnected.Score", 288, 312, MaxInstances: 255, Group: 135, Polled: true, QueueNotJoined: true ),
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
@@ -465,6 +472,9 @@ internal sealed class ParkAdvisorMessages
 	/// newest object was made, and with fewer rides than its section's MoreRidesThan, and then its key's value
 	/// where the kinds standing are under its section's PoorerThan per cent, in whole numbers, of those on offer;
 	/// row 71's (0x0059dca0) is the same of the shops, its least number its section's MoreShopsThan;
+	/// row 73's (0x0059dde0) is nought where no kind of ride stands, until DaysForObjects days after the newest
+	/// object was made, and where a kind of shop stands, and then its key's value and its per-day key's for each
+	/// whole day of the park's age;
 	/// every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
@@ -485,6 +495,13 @@ internal sealed class ParkAdvisorMessages
 		{
 			if ( _park?.Invoke() is not { Rides: < 1 } ) return 0;
 			return Value( topic.ScoreKey ) + Value( perDay ) * DaysSinceTheFirstSweep( gameTick );
+		}
+
+		if ( topic.PerDayWithNoShop is { } shopless )
+		{
+			if ( _park?.Invoke() is not { RideKindsStanding: > 0, ShopKindsStanding: < 1 } bare ) return 0;
+			if ( bare.DaysSinceObjectBuilt < Value( DaysForObjects ) ) return 0;
+			return Value( topic.ScoreKey ) + Value( shopless ) * DaysSinceTheFirstSweep( gameTick );
 		}
 
 		if ( topic.PerWornRideWithNoMechanic )
@@ -597,6 +614,8 @@ internal sealed class ParkAdvisorMessages
 			var kinds = offered.Kinds( topic.PoorOf );
 			shut = $" kinds={kinds.Standing}/{kinds.OnOffer} {kinds.Word}={kinds.Things} sincebuild={offered.DaysSinceObjectBuilt}";
 		}
+		if ( topic.PerDayWithNoShop != null && _park?.Invoke() is { } bare )
+			shut = $" ridekinds={bare.RideKindsStanding} shopkinds={bare.ShopKindsStanding} sincebuild={bare.DaysSinceObjectBuilt}";
 		return shut;
 	}
 

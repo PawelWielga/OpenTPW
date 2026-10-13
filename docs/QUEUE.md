@@ -44,9 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q337. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q338. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q337 (`advisor-park.md`, "A park with rides and no shop"): **the original's `mLastObjectBuilt` moved
+  twice more with nothing bought**, to tick 1158's on tick 1158 in `q337/shop30.TPWS` and to tick 1170's on
+  tick 1170 in `q337/noride30.TPWS` (`q337/orig/c-load.log`, `d-load.log`); still not read (below). The six
+  other rows that read the newest build are not built or read (74, 75, 77 to 79 and 81; row 72, `0x0059dd40`,
+  not a reader of it, is undefined bytes whose first test is a count asked with 8). In no game run: line 2,
+  the line again past its cooldown, a golden-ticket shop or ride standing, a shop built after the line (the
+  test holds each), the bar's button with the buy screen open, a park made with no file, Full Simulation. Not
+  heard in either game.
   From Q336 (`advisor-park.md`, "A poor selection of shops"): **the original's `mLastObjectBuilt` moved again
   with nothing bought**, to tick 1085's on tick 1085 in `q336/shops1.TPWS` (`q336/orig/e-load.log`), and not
   in `offer4` or `two30` through tick 1135; still not read (below). The seven other rows that read the newest
