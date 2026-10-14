@@ -26,10 +26,11 @@ namespace OpenTPW;
 /// sideshow and one with sideshows and no feature ("A park with rides and no shop", "A park with shops and no
 /// sideshow", "A park with sideshows and no feature"); the line about a park with no toilet whose guests need
 /// one ("A park with no toilet"); the line about a park with every kind of feature on offer built, told to
-/// research more, which is Full Simulation's alone ("Every feature built, and more to research"); and the lines
+/// research more, and the one about every kind of sideshow, both Full Simulation's alone ("Every feature built,
+/// and more to research", "Every sideshow built, and more to research"); and the lines
 /// about too few
 /// shops and too few sideshows for the park's size ("Too few shops for the park's size", "Too few sideshows for
-/// the park's size"). The other 130 polled rows are counted, and the other posted messages are unbuilt.
+/// the park's size"). The other 129 polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -55,6 +56,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int BuildShops = 0x49;
 	/// <summary>Message 0x4d, polled: the line about a park with shops and no sideshow, scored by the park's age in days (0x0059e070).</summary>
 	internal const int BuildSideshows = 0x4d;
+	/// <summary>Message 0x4c, polled: the line about a park with every kind of sideshow on offer built, scored where a researcher is on the staff, the lab holds a sideshow not yet researched and its sideshow research is getting no work (0x0059dfd0).</summary>
+	internal const int ResearchMoreSideshows = 0x4c;
 	/// <summary>Message 0x50, polled: the line about a park with every kind of feature on offer built, scored where a researcher is on the staff and the lab holds a feature not yet researched (0x0059e260).</summary>
 	internal const int ResearchMoreFeatures = 0x50;
 	/// <summary>Message 0x51, polled: the line about a park with sideshows and no feature, scored by the park's age in days (0x0059e2e0).</summary>
@@ -165,6 +168,8 @@ internal sealed class ParkAdvisorMessages
 	/// <paramref name="EveryFeatureBuilt"/> is the score of row 80 (0x0059e260): the key's value in a park with a
 	/// researcher where a kind of feature stands, the lab holds a project of a feature's kind that is not done, and
 	/// the kinds of feature standing are as many as the kinds on offer; nought otherwise.
+	/// <paramref name="EverySideshowBuilt"/> is the score of row 76 (0x0059dfd0): row 80's of the sideshows, and
+	/// nought besides where the lab's sideshow research is getting any work at all.
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -175,7 +180,8 @@ internal sealed class ParkAdvisorMessages
 		bool PerWornRideWithNoMechanic = false, bool PerBrokenRideWithNoMechanic = false, string? RidesAMechanic = null,
 		string? PoorSelection = null, Shut PoorOf = Shut.Rides, string? PerDayWithNoShop = null, string? ShopsPerRide = null,
 		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null, string? PerDayWithNoFeature = null,
-		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false );
+		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false,
+		bool EverySideshowBuilt = false );
 
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
@@ -225,7 +231,11 @@ internal sealed class ParkAdvisorMessages
 	/// guests inside the park (FUN_004c9130: a guest on a cell FUN_004fa990 passes) and those of them whose toilet
 	/// need's whole number is over <see cref="ToiletNeedOver"/> (0x004c9290); and what row 80's reads: the
 	/// researchers (FUN_004c9960 asked for type 8) and the lab's projects of a feature's kind that are not done
-	/// (0x004ca690: FUN_00503b30 asked for kind 3 on the lab, a project whose mResearchDone is under its mCost).
+	/// (0x004ca690: FUN_00503b30 asked for kind 3 on the lab, a project whose mResearchDone is under its mCost);
+	/// and what row 76's reads besides: the lab's projects of a sideshow's kind that are not done (0x004ca670,
+	/// the same asked for kind 2) and how much of the lab's work that kind is getting (FUN_00503980 asked for
+	/// kind 2: <see cref="ParkResearch.Rate"/>), with the two numbers the rate sets against each other, the
+	/// staff's researchers' ability added up (FUN_004c9e60) and the most a park's could be (FUN_004c9ed0).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -234,7 +244,8 @@ internal sealed class ParkAdvisorMessages
 		int ShopKindsOnOffer = 0, int ShopKindsStanding = 0, int Balance = 0,
 		int SideshowKindsOnOffer = 0, int SideshowKindsStanding = 0,
 		int Features = 0, int FeatureKindsOnOffer = 0, int FeatureKindsStanding = 0,
-		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0 )
+		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
+		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -346,6 +357,7 @@ internal sealed class ParkAdvisorMessages
 		new( BuildFeatures, "FeaturesBuildFeatures.Score", 226, 224, Lines: 1, Prop: AdvisorProps.ThemeCostume, Group: 83, Polled: true, PerDayWithNoFeature: "FeaturesBuildFeatures.AdditionalPerDay" ),
 		new( NoToilets, "FeaturesNoToilets.Score", 227, 225, Lines: 3, Group: 84, Polled: true, NeedingToiletWithNone: "FeaturesNoToilets" ),
 		new( ResearchMoreFeatures, "FeaturesResearchMore.Score", 225, 223, Lines: 1, Prop: ResearchHat, Group: 82, Category: ResearchMore, Polled: true, EveryFeatureBuilt: true, FullSimulationOnly: true ),
+		new( ResearchMoreSideshows, "SideshowsResearchMore.Score", 217, 215, Prop: ResearchHat, Group: 78, Category: ResearchMore, Polled: true, EverySideshowBuilt: true, FullSimulationOnly: true ),
 		new( BuildMoreSideshows, "SideshowsBuildMoreSideshows.Score", 221, 219, Prop: HardHat, Group: 80, Polled: true, SideshowsPerRide: "SideshowsBuildMoreSideshows" ),
 		new( BuildRides, "RidesBuildRides.Score", 182, 179, Lines: 3, Prop: HardHat, Group: 64, Polled: true, PerDayWithNoRide: "RidesBuildRides.AdditionalPerDay" ),
 		new( QueueUnconnected, "QueueUnconnected.Score", 288, 312, MaxInstances: 255, Group: 135, Polled: true, QueueNotJoined: true ),
@@ -657,6 +669,12 @@ internal sealed class ParkAdvisorMessages
 			return built.FeatureKindsStanding == built.FeatureKindsOnOffer ? Value( topic.ScoreKey ) : 0;
 		}
 
+		if ( topic.EverySideshowBuilt )
+		{
+			if ( _park?.Invoke() is not { Researchers: > 0, SideshowKindsStanding: > 0, SideshowProjectsUnfinished: > 0, SideshowResearchRate: 0 } shown ) return 0;
+			return shown.SideshowKindsStanding == shown.SideshowKindsOnOffer ? Value( topic.ScoreKey ) : 0;
+		}
+
 		if ( topic.ShopsPerRide is { } crowded )
 		{
 			if ( _park?.Invoke() is not { } sized || sized.DaysSinceObjectBuilt < Value( DaysForObjects ) ) return 0;
@@ -794,6 +812,8 @@ internal sealed class ParkAdvisorMessages
 			shut = $" closed={(crossed.Closed ? 1 : 0)} toilets={crossed.Toilets} needing={crossed.GuestsNeedingToilet}/{crossed.GuestsInside}";
 		if ( topic.EveryFeatureBuilt && _park?.Invoke() is { } built )
 			shut = $" researchers={built.Researchers} kinds={built.FeatureKindsStanding}/{built.FeatureKindsOnOffer} unfinished={built.FeatureProjectsUnfinished}";
+		if ( topic.EverySideshowBuilt && _park?.Invoke() is { } shown )
+			shut = $" researchers={shown.Researchers} kinds={shown.SideshowKindsStanding}/{shown.SideshowKindsOnOffer} unfinished={shown.SideshowProjectsUnfinished} rate={shown.SideshowResearchRate} ability={shown.ResearchAbility}/{shown.MostResearchAbility}";
 		if ( topic.ShopsPerRide is { } crowded && _park?.Invoke() is { } sized )
 			shut = FormattableString.Invariant( $" shopkinds={sized.ShopKindsStanding} ratio={Fraction( $"{crowded}.ShopsPerRideRatio" )} balance={sized.Balance} sincebuild={sized.DaysSinceObjectBuilt}" );
 		if ( topic.SideshowsPerRide is { } showy && _park?.Invoke() is { } fair )

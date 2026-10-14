@@ -44,21 +44,31 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q350. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q351. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q350 (`advisor-park.md`, "Every sideshow built, and more to research"): **the bar's research button
+  does nothing** (type `0x13`, `FUN_004aa480`: the research screen, and in Instant Action a box reading
+  "Research is automatic in Instant Action mode."; counted, `TAG_BAR_BUTTON`). **The training lines are
+  unbuilt**: with the stock researcher at grade 0 the original says "Your researchers could do their job better
+  and faster if you trained them." on tick 1109 (`StaffTrainResearchers`, tag string 37, button 21; four twins
+  by their keys, `StaffTrainMechanics`, `Handymen`, `Guards`, `Entertainers`; none read), which made row 76's
+  line wait there and not here. A kind's current project and highest group, `mMostExpensiveProject` and
+  `mLabActive` are not made; the lab's own turn (`FUN_00503430`: 0.9 points every 20 ticks to a sideshow from
+  ability 6) is not read. In no game run: line 2, the line again past its 900 quarter-ticks, the row in the
+  original's own Full Simulation park. Not heard in either game.
   From Q349 (`park-engine.md`, "A fresh world's research lab"): **a fresh park's lab has its projects and
-  nothing else**: the five kinds' effort, output, current project and highest group, `mWorkLoad`,
+  the kinds' efforts and outputs** (Q350): each kind's current project and highest group,
   `mMostExpensiveProject` and `mLabActive` are decoded (`FUN_00502d60`, `FUN_00503330`) and not made, as no
   reader of them is built; a finished project's next upgrade (event `0x11`, `FUN_00503d40`) is not made; an
   upgrade item is catalogued and nothing builds one; every item is taken as loaded (`+0x508`). In no game run:
   row 80 in the original's own fresh park (it was not driven to hire and build), the other three themes' fresh
   labs, a fresh park saved (`SAVE_PARK_WITH_NO_FILE`). Not heard in either game.
   From Q348 (`advisor-park.md`, "Every feature built, and more to research"): nothing here researches, so a
-  park's projects never finish. Of the lab's record the five kinds' records,
-  `mWorkLoad`, `mMostExpensiveProject` and `mLabActive` are named and not read. **Thirty polled rows of mode 0
-  are unbuilt** (18 to 21, 23 to 27, 61, 63 to 65, 72, 76, 101, 102, 171, 274 to 276, 278 to 281, 314, 316, 317,
-  347, 348); row 76 is row 80's shape of the sideshows with `FUN_00503980` besides. **Rows 83 and 84 have no
+  park's projects never finish. Of the lab's record a kind's current project and highest group,
+  `mWorkLoad`, `mMostExpensiveProject` and `mLabActive` are named and not read. **Twenty-nine polled rows of mode 0
+  are unbuilt** (18 to 21, 23 to 27, 61, 63 to 65, 72, 101, 102, 171, 274 to 276, 278 to 281, 314, 316, 317,
+  347, 348); row 76 is built (Q350). **Rows 83 and 84 have no
   poster found** (row 83's score is a stub answering nought): not proven dead. In no game run: a Full
   Simulation park (Q327), the line again past its 900 quarter-ticks, a project finished by the original's own
   research. Not heard in either game.
@@ -80,21 +90,21 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the original, the three other themes' models and costumes, Full Simulation (not asked: the model is the
   level's in either mode). Not heard in either game.
   From Q345 (`advisor-park.md`, "A park with sideshows and no feature"): row 80
-  (`0x0059e260`, `FeaturesResearchMore`) is not read; row 76 waits for the research. In no game run: the line
+  (`0x0059e260`, `FeaturesResearchMore`) is not read; row 76 is built (Q350). In no game run: the line
   again past its cooldown, score 22 on tick 1438 (a summons falls on that tick in both games), day 29 said a
   turn later in this game (a vehicle's stamp came first; the original's was held by a write), a golden-ticket
   sideshow or feature, a feature built after the line, the bar's button with the buy screen open, a park made
   with no file, Full Simulation (not asked: the row reads neither mode). Not heard in either game.
   From Q344 (`advisor-park.md`, "A poor selection of features"): **row 79's line is the theme's own
   advisor's** (model slot 1, prop -1; built, Q346). Row 81 is built (Q345),
-  and row 76 waits for the research. In no game run: line 2, the line again past its cooldown, day 29
+  and row 76 is built (Q350). In no game run: line 2, the line again past its cooldown, day 29
   in the original, no kind of feature on offer, a golden-ticket feature, a feature built after the line, the
   bar's button with the buy screen open, a park made with no file, Full Simulation (not asked: the row reads
   neither mode). Not heard in either game.
   From Q343 (`advisor-park.md`, "Too few sideshows for the park's size"): **the one park in which the shipped
   game says row 78's line was run in neither game**: five kinds of ride to one of sideshow, which needs Full
   Simulation and its research (the test holds it; Q327's catch-up is where it belongs). Rows 79 (`0x0059e1c0`)
-  and 81 (`0x0059e2e0`) are not read, and row 76 waits for the research. In no game run: line 2, the line again
+  and 81 (`0x0059e2e0`) are not read, and row 76 is built (Q350). In no game run: line 2, the line again
   past its cooldown, day 29 in the original, a golden-ticket ride or sideshow, a sideshow built after the line,
   the bar's button with the buy screen open, a park made with no file. Not heard in either game.
   From Q342 (`saves.md`, "OpenTPW's writer, a vehicle made at its summons"): the made vehicle's id is one past
@@ -122,7 +132,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   sideshow built after the line (the test holds each), the bar's button with the buy screen open, a park made
   with no file, Full Simulation. Not heard in either game.
   From Q339 (`advisor-park.md`, "A poor selection of sideshows"): the four other rows that read the newest
-  build are not built or read (77 to 79 and 81), nor is row 76 (`0x0059dfd0`, not a reader of it by Q334's
+  build are not built or read (77 to 79 and 81), and row 76 is built since, Q350 (`0x0059dfd0`, not a reader of it by Q334's
   list; `SideshowsResearchMore` by its key's place, `+0x288`, Score 75: `disassemble_at` first). Row 77's keys
   are next in the schema (`SideshowsBuildSideshows`, Score -70: probably row 62's or 73's shape of the
   sideshows; name them with `advisorschema.py` from `+0x28c` on). Whether the original's `mLastObjectBuilt`

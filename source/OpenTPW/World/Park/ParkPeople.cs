@@ -189,7 +189,7 @@ public sealed partial class ParkPeople : Entity
 		Random? behaviourRandom = null, Random? rideRandom = null, Random? staffRandom = null )
 	{
 		_scriptFor = scriptFor;
-		_research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects );
+		_research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects, park.ResearchKinds );
 		_gateThing = park?.ParkGates ?? 0;
 		_banks = banks ?? new ParkSpriteBanks( 0, 0, 0 );
 		_arrivalRandom = random ?? new Random();
@@ -2712,6 +2712,8 @@ public sealed partial class ParkPeople : Entity
 		var shopKinds = Kinds( _behaviour.Catalogue?.All ?? [], ParkRideOperation.ShopUiType, id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
 		var sideshowKinds = Kinds( _behaviour.Catalogue?.All ?? [], ItemDescriptionFile.SideShow, id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
 		var featureKinds = Kinds( _behaviour.Catalogue?.All ?? [], ItemDescriptionFile.Feature, id => _research?.IsResearched( id ) == true, id => State.BuiltOf( id ).Standing );
+		// Every researcher on the staff's list (FUN_004c9e60 walks mFirstResearcher), by their grade.
+		var ability = _staff.Where( member => member.Model == ResearcherModel ).Sum( member => _staffBehaviour.ResearchAbilityAt( member.PayGrade ) );
 
 		return new ParkAdvisorMessages.ParkFacts( State.ParkIsClosed, rides, sideshows, WaitingToOpen,
 			shops, toilets, shopsShut, sideshowsShut, toiletsShut, ridesShut, unjoined, staffRooms, staffRoomsShut,
@@ -2719,8 +2721,17 @@ public sealed partial class ParkPeople : Entity
 			RideKinds( item => _research?.IsResearched( item.Id ) == true ), RideKinds( item => State.BuiltOf( item.Id ).Standing > 0 ),
 			State.DaysSinceObjectBuilt, shopKinds.OnOffer, shopKinds.Standing, State.Balance, sideshowKinds.OnOffer, sideshowKinds.Standing,
 			features, featureKinds.OnOffer, featureKinds.Standing, inside, needing,
-			_staff.Count( member => member.Model == ResearcherModel ), _research?.Unfinished( ItemDescriptionFile.Feature ) ?? 0 );
+			_staff.Count( member => member.Model == ResearcherModel ), _research?.Unfinished( ItemDescriptionFile.Feature ) ?? 0,
+			_research?.Unfinished( ItemDescriptionFile.SideShow ) ?? 0,
+			_research?.Rate( ItemDescriptionFile.SideShow, ability, MostResearchAbility ) ?? 0, ability, MostResearchAbility );
 	}
+
+	/// <summary>
+	/// The most research a park's staff could do at once, which a kind's rate sets the staff's against
+	/// (FUN_004c9ed0): <c>StaffPoolInfo.MaxResearchersInPark</c> times the top grade's <c>ResearchAbility</c>.
+	/// </summary>
+	private int MostResearchAbility
+		=> ParkStaffPool.MostInPark( _balance, ParkStaffPool.Kinds - 1 ) * _staffBehaviour.ResearchAbilityAt( ParkWorld.StaffState.PayGrades - 1 );
 
 	/// <summary>The catalogue's items of a ride's kind that cost no golden ticket and that <paramref name="counted"/> holds for (0x004ca450, 0x004ca7b0).</summary>
 	private int RideKinds( Func<ParkItemCatalogue.Item, bool> counted )

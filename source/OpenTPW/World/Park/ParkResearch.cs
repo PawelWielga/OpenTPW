@@ -14,7 +14,7 @@ namespace OpenTPW;
 ///
 /// <para>
 /// <b>Research completing is not built</b> (<c>FUN_00504630</c>, which sets the flag and the tier): this game has no
-/// research, and nothing here changes after the load or after a fresh world is made (<see cref="FreshLab"/>), the lab's projects (<see cref="Unfinished"/>) included. The points a researcher would hand the lab are counted where
+/// research, and nothing here changes after the load or after a fresh world is made (<see cref="FreshLab"/>), the lab's projects (<see cref="Unfinished"/>) and its kinds' outputs (<see cref="Rate"/>) included. The points a researcher would hand the lab are counted where
 /// the original hands them, <c>RESEARCH_POINTS_TO_THE_LAB</c> in <see cref="StaffBehaviour"/>.
 /// </para>
 /// </summary>
@@ -31,11 +31,15 @@ public sealed class ParkResearch
 	private readonly IReadOnlyList<ParkWorld.ResearchProject> _projects;
 
 	/// <param name="records">The save's records, <see cref="ParkWorld.ObjectControlRecords"/>.</param>
+	private readonly IReadOnlyList<ParkWorld.ResearchKind> _kinds;
+
 	/// <param name="projects">The save's lab's projects, <see cref="ParkWorld.ResearchProjects"/>; none where no file gave any.</param>
+	/// <param name="kinds">The save's lab's kinds' records, <see cref="ParkWorld.ResearchKinds"/>; none where no file gave any.</param>
 	public ParkResearch( IEnumerable<ParkWorld.ObjectControl> records, ParkItemCatalogue catalogue,
-		IReadOnlyList<ParkWorld.ResearchProject>? projects = null )
+		IReadOnlyList<ParkWorld.ResearchProject>? projects = null, IReadOnlyList<ParkWorld.ResearchKind>? kinds = null )
 	{
 		_projects = projects ?? [];
+		_kinds = kinds ?? [];
 
 		foreach ( var record in records )
 		{
@@ -64,6 +68,33 @@ public sealed class ParkResearch
 	/// researches.
 	/// </summary>
 	public int Unfinished( int kind ) => _projects.Count( project => project.Category == kind && project.Done < project.Cost );
+
+	/// <summary>
+	/// How much of the lab's work a kind of research is getting from the researchers on the staff
+	/// (<c>FUN_00503980</c>; <c>docs/exe/advisor-park.md</c>, "Every sideshow built, and more to research"): the
+	/// kind's output times the share, in whole per cent, that <paramref name="ability"/>, the staff's researchers'
+	/// <c>ResearchAbility</c> added up, is of <paramref name="most"/>, the most researchers a park may employ
+	/// times the top grade's ability, over a hundred; each division a whole number's. Nought with no such most.
+	/// The outputs are the file's or the fresh world's, as no screen here changes a kind's effort.
+	/// </summary>
+	public int Rate( int kind, int ability, int most )
+		=> most == 0 || kind < 0 || kind >= _kinds.Count ? 0
+			: (int)((uint)_kinds[kind].Output * ((uint)(ability * 100) / (uint)most) / 100);
+
+	/// <summary>
+	/// A fresh world's five kinds' records (<c>FUN_00503330</c>): each kind's effort is its
+	/// <c>ResearchCategories[kind].Effort</c> held to 100, and its output that effort's share of the five in whole
+	/// per cent, times <paramref name="workLoad"/>, <c>Research.StartingWorkLoad</c>, over a hundred; nought
+	/// where the efforts add up to nothing.
+	/// </summary>
+	public static IReadOnlyList<ParkWorld.ResearchKind> FreshKinds( IEnumerable<int> efforts, int workLoad )
+	{
+		var held = efforts.Select( effort => (uint)effort > 99 ? 100u : (uint)effort ).ToArray();
+		var sum = (uint)held.Sum( effort => effort );
+
+		return held.Select( effort => new ParkWorld.ResearchKind( (int)effort,
+			sum == 0 ? 0 : (int)(effort * 100 / sum * (uint)workLoad / 100) ) ).ToArray();
+	}
 
 	/// <summary>The kind of research an upgrade's project is, whatever its item's own (<c>0x005045fc</c>).</summary>
 	public const int Upgrade = 4;

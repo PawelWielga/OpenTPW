@@ -279,6 +279,54 @@ public class ParkResearchTests
 		Assert.AreEqual( 2, Left( Feature( 250f, 0f ), Feature( 250f, 250f ), Feature( 300f, 7.5f ), new( 1304, ItemDescriptionFile.SideShow, 1, 0, 700f, 9f ), new( 1140, ItemDescriptionFile.Ride, 3, 0, 700f, 0f ) ) );
 	}
 
+	/// <summary>
+	/// The lab's five kinds' efforts and outputs are the park file's, and a fresh world's are the original's own
+	/// (<c>FUN_00503330</c>; its fresh Lost Kingdom park's file holds 100, 15, 30, 15, 10 and 49, 6, 14, 6, 4).
+	/// <see cref="ParkResearch.Rate"/> is how much of the lab's work a kind gets from the researchers on the staff
+	/// (<c>FUN_00503980</c>): the output times their share, in whole per cent, of the most a park's could be.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> a kind's record read from its neighbour's place, or as twelve or sixteen bytes; the output
+	/// read where the effort is; an effort not held to 100, or held to 99; the share of the efforts not taken in
+	/// whole per cent before the work load; the work load not divided by a hundred; the rate's share not a whole
+	/// number's, or rounded up; the rate of another kind; no most answering anything but nought.
+	/// </remarks>
+	[TestMethod]
+	public void TheLabsKindsOutputsAreTheFilesAndAFreshWorldsAndAKindsRateIsTheStaffsShareOfIt()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+		var shipped = ShippedPark( data );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 49 ), new( 15, 6 ), new( 30, 14 ), new( 25, 11 ), new( 0, 0 ) }, shipped.ResearchKinds.ToArray() );
+
+		var catalogue = new ParkItemCatalogue( "jungle", data );
+		var fresh = new FreshPark( "jungle", new ParkBalance( "jungle", easyMode: false ), catalogue, data );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 49 ), new( 15, 6 ), new( 30, 14 ), new( 15, 6 ), new( 10, 4 ) }, fresh.ResearchKinds.ToArray() );
+		StringAssert.EndsWith( fresh.Census(), "the kinds' efforts [100,15,30,15,10] and outputs [49,6,14,6,4]" );
+
+		// The shipped park's efforts make the shipped park's outputs, so the rule is the file's own.
+		CollectionAssert.AreEqual( shipped.ResearchKinds.ToArray(), ParkResearch.FreshKinds( [100, 15, 30, 25, 0], 85 ).ToArray() );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 28 ), new( 100, 28 ), new( 100, 28 ) }, ParkResearch.FreshKinds( [100, 250, -1], 85 ).ToArray(), "an effort is held to 100, a negative one too: the compare is unsigned" );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 99, 49 ), new( 100, 50 ) }, ParkResearch.FreshKinds( [99, 100], 100 ).ToArray() );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 0, 0 ), new( 0, 0 ) }, ParkResearch.FreshKinds( [0, 0], 85 ).ToArray(), "no effort at all" );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 1, 28 ), new( 2, 56 ) }, ParkResearch.FreshKinds( [1, 2], 85 ).ToArray(), "33 and 66 per cent of 85, each a whole number's" );
+
+		var research = new ParkResearch( shipped.ObjectControlRecords, catalogue, shipped.ResearchProjects, shipped.ResearchKinds );
+		// Instant Action's Lost Kingdom: six researchers of the top grade's 20 are the most, 120.
+		Assert.AreEqual( 1, research.Rate( ItemDescriptionFile.SideShow, 12, 120 ), "the shipped park's one researcher of grade 2: 14 x 10 / 100" );
+		Assert.AreEqual( 0, research.Rate( ItemDescriptionFile.SideShow, 9, 120 ), "of grade 1: 14 x 7 / 100" );
+		Assert.AreEqual( 0, research.Rate( ItemDescriptionFile.SideShow, 6, 120 ) );
+		Assert.AreEqual( 0, research.Rate( ItemDescriptionFile.SideShow, 0, 120 ), "no researcher" );
+		Assert.AreEqual( 1, research.Rate( ItemDescriptionFile.SideShow, 10, 120 ), "8.33 per cent is 8, and 14 x 8 is over a hundred" );
+		Assert.AreEqual( 14, research.Rate( ItemDescriptionFile.SideShow, 120, 120 ) );
+		Assert.AreEqual( 15, research.Rate( ItemDescriptionFile.SideShow, 131, 120 ), "more than the most is not held" );
+		Assert.AreEqual( 4, research.Rate( ItemDescriptionFile.Ride, 12, 120 ), "49 x 10 / 100" );
+		Assert.AreEqual( 0, research.Rate( 4, 120, 120 ), "a kind given no effort" );
+		Assert.AreEqual( 0, research.Rate( ItemDescriptionFile.SideShow, 12, 0 ), "no most to set them against" );
+		Assert.AreEqual( 0, research.Rate( 5, 12, 120 ) );
+		Assert.AreEqual( 0, new ParkResearch( shipped.ObjectControlRecords, catalogue, shipped.ResearchProjects ).Rate( ItemDescriptionFile.SideShow, 120, 120 ), "with no kinds handed in" );
+	}
+
 	[TestMethod]
 	public void LostKingdomsTabsListWhatTheOriginalShowed()
 	{

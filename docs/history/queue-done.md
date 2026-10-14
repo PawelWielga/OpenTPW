@@ -6748,6 +6748,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the same 48 projects and 70 records (`q349/orig/`). 54 bugs put back, 54 caught (52 first round, two after
   the test grew). Not done: row 80 in the original's own fresh park, a file of this game's loaded there (a fresh
   park is not saved).
+- [x] **Q350. The advisor tells a park with every kind of sideshow built to research more, while its lab gives
+  sideshows no work.** Done 2026-10-13, split from the catch-all by the session (`advisor-park.md`, "Every
+  sideshow built, and more to research"). Row 76 (`0x0059dfd0`, `SideshowsResearchMore`, Full Simulation's
+  alone) is row 80's of the sideshows with one test more: nought where `FUN_00503980` answers above nought, the
+  sideshows' output times the staff's researchers' ability as a whole per cent of the most a park's could be,
+  over a hundred. The lab's kinds' efforts and outputs are read from the file and made for a fresh world. **The
+  number:** the stock park with both sideshows on offer built and its researcher written to grade 0 logged
+  `poll message=76 row=76 days=42 score=75 threshold=25 tick=968 result=post researchers=1 kinds=2/2
+  unfinished=2 rate=0 ability=6/120` and said it in the research hat with tag 78 (`q350/run-fix1`); grade 1
+  said (`ability=9/120`), the shipped grade 2 not (`rate=1 ability=12/120`); the original given the same files
+  said it on its turn at grade 1, tick 1123, after another line at grade 0, and not at grade 2. A fresh Full
+  Simulation park said it on tick 46 with one scientist (`ability=3/60`) and not with two (`rate=1
+  ability=8/60`). 86 bugs put back, 86 caught (84 at once, one after a new test, one rewritten).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

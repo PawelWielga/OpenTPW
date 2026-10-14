@@ -1782,6 +1782,31 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// </summary>
 	public IReadOnlyList<ResearchProject> ResearchProjects { get; private set; } = [];
 
+	/// <summary>
+	/// One of the lab's five kinds of research (FileFormats <c>saves.md</c>, "The research lab"; a kind is a
+	/// project's <c>mCat</c>): the effort the kind is given, 0 to 100, and its output, its share of the lab's
+	/// work load by that effort (<c>FUN_00503330</c>). The kind's current project and highest group follow them
+	/// in the file and are not read.
+	/// </summary>
+	public readonly record struct ResearchKind( int Effort, int Output );
+
+	/// <summary>The lab's five kinds' records, in the file's order; none where the file holds no lab.</summary>
+	public IReadOnlyList<ResearchKind> ResearchKinds { get; private set; } = [];
+
+	/// <summary>How many kinds of research the lab keeps a record of.</summary>
+	public const int ResearchKindCount = 5;
+
+	/// <summary>A kind's bytes in the file: 4, 4, 4 and 1 (<c>FUN_00504760</c>).</summary>
+	private const int ResearchKindSize = 13;
+
+	/// <summary>Where the kinds' records begin in the lab's record, after the 256 projects.</summary>
+	private const int ResearchKindsAt = 4112;
+
+	private ResearchKind[] ReadResearchKinds( int start )
+		=> Enumerable.Range( 0, ResearchKindCount )
+			.Select( kind => start + ResearchKindsAt + kind * ResearchKindSize )
+			.Select( at => new ResearchKind( ReadInt32At( at ), ReadInt32At( at + 4 ) ) ).ToArray();
+
 	/// <summary>The model number of the research lab, the thing the header's <c>mResearchLab</c> names.</summary>
 	private const int ResearchLabModel = 14;
 
@@ -2088,7 +2113,10 @@ public sealed partial class ParkWorld : IParkInitialState
 			else if ( model == AdvisorModel )
 				AdvisorAt = start;
 			else if ( model == ResearchLabModel )
+			{
 				ResearchProjects = ReadResearchProjects( start );
+				ResearchKinds = ReadResearchKinds( start );
+			}
 			else if ( model == AnalyserModel )
 			{
 				AnalyserAt = start;

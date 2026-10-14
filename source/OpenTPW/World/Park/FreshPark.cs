@@ -34,6 +34,7 @@ public sealed class FreshPark : IParkInitialState
 	public ParkWorld.ArrivalBlock Arrival => new( 0, 0, 5, 0, false, true );
 	public IReadOnlyList<ParkWorld.ObjectControl> ObjectControlRecords { get; }
 	public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects { get; }
+	public IReadOnlyList<ParkWorld.ResearchKind> ResearchKinds { get; }
 
 	public FreshPark( string theme, ParkBalance balance, ParkItemCatalogue catalogue, BaseFileSystem? files = null )
 	{
@@ -45,6 +46,9 @@ public sealed class FreshPark : IParkInitialState
 			FixedObject( catalogue, "lights", TrafficLights, ParkGates ) } );
 		var (projects, tiers) = ParkResearch.FreshLab( catalogue.All );
 		ResearchProjects = projects;
+		ResearchKinds = ParkResearch.FreshKinds(
+			Enumerable.Range( 0, ParkWorld.ResearchKindCount ).Select( kind => balance.Int( $"ResearchCategories[{kind}].Effort" ) ),
+			balance.Int( "Research.StartingWorkLoad" ) );
 		ObjectControlRecords = Array.AsReadOnly( catalogue.All
 			.Select( item => new ParkWorld.ObjectControl( item.Id, item.ResearchCost == 0, tiers.GetValueOrDefault( item.Id ),
 				// The two fixed objects are counted as the original's constructor counts them, made on tick nought.
@@ -133,5 +137,6 @@ public sealed class FreshPark : IParkInitialState
 		+ $"gate {ParkGates}, lights {TrafficLights}; APR [{string.Join( ",", Economy.Value.Loans.Select( l => l.AprPercent ) )}]; "
 		+ $"repayments [{string.Join( ",", Economy.Value.Loans.Select( l => l.MonthlyRepayment ) )}]; "
 		+ $"lab {ResearchProjects.Count} projects, by kind [{string.Join( ",", Enumerable.Range( 0, 5 ).Select( kind => ResearchProjects.Count( project => project.Category == kind ) ) )}], "
-		+ $"{ObjectControlRecords.Count( control => control.TierResearched == 2 )} items with no tier left to research";
+		+ $"{ObjectControlRecords.Count( control => control.TierResearched == 2 )} items with no tier left to research, "
+		+ $"the kinds' efforts [{string.Join( ",", ResearchKinds.Select( kind => kind.Effort ) )}] and outputs [{string.Join( ",", ResearchKinds.Select( kind => kind.Output ) )}]";
 }

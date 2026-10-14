@@ -106,6 +106,12 @@ whole list):
 - **Four kinds of ride in an Instant Action park** (Q343): `stockscene.py ... 912 "buy 1101 41 22 0" "buy 1102 70
   40 0" "buy 1104 55 30 0"` (a Crazy Ape, a Rocky Racers and an Aztec Mayhem beside the stock Belly Bounce, each
   left shut as bought, which both games count as a kind standing). The Instant Action catalogue holds no fifth.
+- **A member of staff's grade written in a file, and the second tag's click** (Q350): `parkfile.thing_set( src,
+  dst, 30, 398, '<i', grade )` writes the stock researcher's `mCurrentPayGrade`, which the original reads back at
+  his `+0x1e4` (`thingwords.py ... 30:0x1e4:I`). **A stock park whose researcher is of grade 0 hears a training
+  line on tick 1109 in the original**, so a line said after it waits some twenty ticks and its tag is the second
+  on the mast: click it at game point (59, 433), not the first tag's (59, 471). A run that ends with a box or a
+  screen open (the bar's research button leaves one) breaks the next `loadfile.sh` load: make it the chain's last.
 - **A balance key changed in both games** (Q338): this game from a private folder (`lib/gamefolder.py`, then
   `GAME_FOLDER` before `parkrun.py`; an off-screen run wants a folder of its own beside the desktop's). The
   original reads `~/Games/TPW-original/Data/Advisor/Advisor.sam` as it starts: stop it, check the file's sum is

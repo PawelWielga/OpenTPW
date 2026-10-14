@@ -1100,10 +1100,13 @@ upgrades and the three upgrade items), none begun; the kinds' efforts 100, 15, 3
 `ResearchGroup`, `UpgradeResearchCostAt`; `ParkItemCatalogue.Folders`): the fresh park's projects and its
 control records' tiers are the fill's, and the catalogue lists the five folders in that order with each
 folder's items by their names in capitals, the upgrades among them. The park's first line ends `lab 48
-projects, by kind [11,5,3,20,9], 13 items with no tier left to research`. Every item is taken as loaded. **Not
-made: the five kinds' records, `mWorkLoad`, `mMostExpensiveProject` and `mLabActive`**, which nothing here reads
-(`advisor-park.md`, "Every feature built, and more to research"); nothing researches, and the event's upgrade
-project is not made.
+projects, by kind [11,5,3,20,9], 13 items with no tier left to research, the kinds' efforts [100,15,30,15,10] and
+outputs [49,6,14,6,4]`. Every item is taken as loaded. **The five kinds' efforts and outputs are made as
+`FUN_00503330` makes them** (`ParkResearch.FreshKinds`, Q350; a loaded park's are its file's,
+`ParkWorld.ResearchKinds`), for the advisor's row 76, which reads the sideshows' (`advisor-park.md`, "Every
+sideshow built, and more to research"). **Not made: each kind's current project and highest group, `mWorkLoad`
+beyond its use in the outputs, `mMostExpensiveProject` and `mLabActive`**, which nothing here reads; nothing
+researches, and the event's upgrade project is not made.
 
 **Predicted first** (`q349/PREDICTION.txt`). The test pins the 48 projects and the 70 control records of
 Alexah's file, in order. **This game** (`q349/confirm.py`; a player folder with no `gms.dat`, so a fresh Full

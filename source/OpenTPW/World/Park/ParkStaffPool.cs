@@ -735,8 +735,11 @@ public sealed class ParkStaffPool
 	}
 
 	/// <summary>How many of a kind the park may employ at once - <c>StaffPoolInfo.Max&lt;Kind&gt;InPark</c>.</summary>
-	public int MostInPark( int kind )
-		=> _balance?.Int( $"StaffPoolInfo.Max{BalanceNames[kind]}InPark", 15 ) ?? 15;
+	public int MostInPark( int kind ) => MostInPark( _balance, kind );
+
+	/// <inheritdoc cref="MostInPark(int)"/>
+	public static int MostInPark( ParkBalance? balance, int kind )
+		=> balance?.Int( $"StaffPoolInfo.Max{BalanceNames[kind]}InPark", 15 ) ?? 15;
 
 	/// <summary>The pool as lines, for the debug console.</summary>
 	public IEnumerable<string> Census()

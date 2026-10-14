@@ -2577,8 +2577,8 @@ screen's own lines at run a's two clicks (`0x11c` on tick 1041, `0xbc` on 1061),
 
 **Not built or not seen.** The row is said in no Lost Kingdom park under the shipped key, in either game: every
 run in which it speaks is under a changed `Advisor.sam`. The four other rows that read the newest build (77 to
-79 and 81) are not built and their score functions not read, nor is row 76's (`0x0059dfd0`,
-`SideshowsResearchMore` by its key's place; it stayed fresh in every run). Whether the original's
+79 and 81) are built since, each under its own heading below, and row 76 (`SideshowsResearchMore`, which stayed
+fresh in every run here) is "Every sideshow built, and more to research". Whether the original's
 `mLastObjectBuilt` moved in these runs was not polled ("A poor selection of shops", above, has it moving with
 nothing bought). In no game run: line 2 (sample 214; the test holds the turn), the line said again past its 120
 quarter-ticks, a golden-ticket sideshow (no Lost Kingdom sideshow costs one), the Arcade (the regular
@@ -2617,16 +2617,7 @@ screen on its sideshows tab; help row 523), no second, thirty seconds. String 81
 sideshows yet. Now might be a good time to invest in some." in the English folder this game reads, and "Your
 park doesn't have any sideshows yet. ..." in the american one the original reads.
 
-**Row 76, message `0x4c`, `SideshowsResearchMore`, is read and not built** (`0x0059dfd0`, loose code,
-disassembled for this): nought where `FUN_004c9960( 8 )` on the analyser counts none (the count rows 5 to 7 ask
-with 4 for the mechanics; what 8 names is not read); nought with no kind of sideshow standing,
-`0x004ca7b0( 2, 0 )`; nought where `0x004ca670` answers nought (`FUN_00519550( 2 )`, then `0x00503b30` on what
-it answers: not read); nought where `FUN_00503980` on `FUN_00519550( 2 )` answers above nought (an unsigned
-`JA`; not read); nought unless the kinds standing equal the kinds on offer, `0x004ca570`; otherwise
-`[ECX + 0x288]`, `SideshowsResearchMore.Score`, 75. Its responses 217 and 218 are samples 215 and 216 ("You've
-pretty much built all of the sideshows that are currently available. Have you thought about researching some
-more?"), props 10 and 0, group 78: tag row 78, string 80, the bar's first button of type 19. By its words and
-`FUN_00519550` it asks the research, which this game does not run, so it waits for the lab.
+**Row 76, message `0x4c`, `SideshowsResearchMore`,** is "Every sideshow built, and more to research", below.
 
 ### OpenTPW (`ParkAdvisorMessages.BuildSideshows`, a topic's `PerDayWithNoSideshow`; tag row 79)
 
@@ -2701,7 +2692,7 @@ to a pointer on tick 1217 and the tag was gone on 1219, the frame "Buy Sideshow"
 **Not built or not seen.** The original's stamp moves with nothing bought, twice in 370 s, 340 ticks apart, in
 every load: the ferry and the seaplane, each made at its first summons, which stamps here too ("What moves it
 with nothing bought"). **Where this game's draw is the bus it still says row 77's line 1,085 ticks before the
-original does** (1124 for 2209 in `late30`), and rows 60, 71, 73 and 75 the same way. Row 76 is read above and not built; row 78 is "Too few sideshows for the park's size", below; rows 79 and 81 are "A poor selection of features" and "A park with sideshows and no feature", below. In no game run: line 2
+original does** (1124 for 2209 in `late30`), and rows 60, 71, 73 and 75 the same way. Row 76 is "Every sideshow built, and more to research", below; row 78 is "Too few sideshows for the park's size", below; rows 79 and 81 are "A poor selection of features" and "A park with sideshows and no feature", below. In no game run: line 2
 (sample 218; the test holds the turn), the line said again past its 120 quarter-ticks, a golden-ticket shop or
 sideshow standing (no Lost Kingdom one costs a ticket), a sideshow built after the line (the test's last step),
 the bar's button with the buy screen open, a park made with no file, Full Simulation: the mode is not asked by
@@ -2828,8 +2819,8 @@ the shipped game says the line, which needs Full Simulation and its research (th
 breakpoint and run g are its evidence in the original); line 2 (sample 220; the test holds the turn), the line
 said again past its 120 quarter-ticks, day 29 in the original, a golden-ticket ride or sideshow standing, a
 sideshow built after the line, the bar's button with the buy screen open, a park made with no file. Row 79 is
-"A poor selection of features", below, and row 81 "A park with sideshows and no feature"; row 76 is read and not
-built. Not heard in either game.
+"A poor selection of features", below, and row 81 "A park with sideshows and no feature"; row 76 is "Every
+sideshow built, and more to research". Not heard in either game.
 
 ## A poor selection of features (message `0x4f`, Q344)
 
@@ -2935,8 +2926,8 @@ tick 1221: **five kinds of eight, as this game counts them**. *The shipped keys*
 **Not built or not seen.** In no game run: line 2 (sample
 222; the test holds the turn), the line said again past its 120 quarter-ticks, day 29 in the original, no kind of
 feature on offer, a golden-ticket feature, a feature built after the line, the bar's button with the buy screen
-open, a park made with no file, Full Simulation (the row asks neither mode: not asked). Row 81 is "A park with sideshows and no feature", below, and row 76 is read and
-not built. Not heard in either game.
+open, a park made with no file, Full Simulation (the row asks neither mode: not asked). Row 81 is "A park with sideshows and no feature", below, and row 76 is "Every
+sideshow built, and more to research". Not heard in either game.
 
 ## Every feature built, and more to research (message `0x50`, Q348)
 
@@ -2969,8 +2960,8 @@ analyser (`FUN_00519510`):
    `0x0059e2ca`): nought. Otherwise `[ECX + 0x2ac]`, `FeaturesResearchMore.Score`, **60** in `Advisor.sam`
    (`lib/advisorschema.py`).
 
-The park's age, the newest build, the door and the bank are not asked. Row 76's function (`0x0059dfd0`, "A park
-with shops and no sideshow", above) is this one of the sideshows with one test more, and is mode 0 too.
+The park's age, the newest build, the door and the bank are not asked. Row 76's function (`0x0059dfd0`, "Every
+sideshow built, and more to research", below) is this one of the sideshows with one test more, and is mode 0 too.
 
 **The lab's projects are in the park file** (the lab's serialiser `FUN_00502dc0`: 256 projects by
 `FUN_00504210`, five kinds' records by `FUN_00504760`, then `mNumProjects`, `mWorkLoad`,
@@ -3064,13 +3055,151 @@ original's own research and what that does to the kinds on offer, the other thre
 record this game reads the projects alone: the five kinds' effort, output, current project and highest group,
 `mWorkLoad`, `mMostExpensiveProject` and `mLabActive` are named and not read. The hold's turn in the two games
 is not the same turn (972 here, 1127 there): the original's byte was not held through its load, which reads
-the game type for its catalogue. Row 76 (`SideshowsResearchMore`) and the other twenty-nine polled rows of mode
-0 are not built. **Rows 83 and 84 are posted and no poster is found**: row 83's score is the stub
+the game type for its catalogue. Row 76 (`SideshowsResearchMore`) is built since, below; the other twenty-nine
+polled rows of mode 0 are not. **Rows 83 and 84 are posted and no poster is found**: row 83's score is the stub
 `FUN_005d60c0`, which answers nought, row 84's (`0x0059e410`) answers `FeaturesFarToToilets.Score` alone, and
 neither `0x53` nor `0x54` is handed to `FUN_0059b590` or `FUN_0059bf20` by any defined code, nor stored into a
 record on the stack by a `MOV` of either number; an event of type `0x19` carries a message's number too
 (`FUN_0040f7a0`, heard at `FUN_0059b060`'s case `0x19`), and its four builders are the challenge manager's. That
 nothing posts them is not proven. Not heard in either game.
+
+## Every sideshow built, and more to research (message `0x4c`, Q350)
+
+**Row 76, message `0x4c`, `SideshowsResearchMore`:** polled, category 4 (the same message no sooner than 900
+quarter-ticks on), **game mode 0: Full Simulation's alone** ("Every feature built, and more to research", above),
+one copy, first response 217, **two lines**. Responses 217 and 218 are samples 215 and 216 ("You've pretty much
+built all of the sideshows that are currently available. Have you thought about researching some more?"): the
+random gesture chain, model slot 0, props 10 and 0, the lobby's fly in the research hat, group 78. It is the
+polled row four before row 80: from the shipped park's cursor its turns are ticks 813, 968, 1123 and every 155 on.
+
+**Its score, `0x0059dfd0`** (loose code, disassembled; `ECX` the balance object) is row 80's of the sideshows
+with one test more:
+
+1. The researchers, `FUN_004c9960( 8 )`. None: nought.
+2. The kinds of sideshow standing, `0x004ca7b0( 2, 0 )`. None: nought.
+3. The lab's projects of a sideshow's kind left undone, `0x004ca670` (`FUN_00503b30( 2 )` on the lab). None:
+   nought.
+4. **How much of the lab's work the sideshows are getting, `FUN_00503980( 2 )` on the lab. Above nought (a `JA`
+   at `0x0059e03a`): nought.**
+5. The kinds of sideshow on offer, `0x004ca570`. Not as many as stand: nought. Otherwise `[ECX + 0x288]`,
+   `SideshowsResearchMore.Score`, **75**.
+
+**The rate, `FUN_00503980( kind )`**, in unsigned whole numbers throughout:
+`output x ( ability x 100 / most ) / 100`.
+
+- `output` is the kind's record's second dword, the lab's `+0x1410 + 16 x kind`. A kind's record is sixteen
+  bytes from `+0x140c`: effort, output, current project, highest group (thirteen in the file; FileFormats
+  `saves.md`, "The research lab"). The outputs are made by the kinds' turn `FUN_00503330`, whose one caller is
+  the lab's setup (`park-engine.md`, "A fresh world's research lab"): the effort's share of the five efforts in
+  whole per cent, times `mWorkLoad`, over a hundred. The shipped park's are 49, 6, 14, 11 and 0.
+- `ability` is `FUN_004c9e60`: over the world's list of researchers (`mFirstResearcher`, `+0x1da742`, each
+  member's next at `+0x210`), the sum of `ResearcherConstsPerGrade[grade].ResearchAbility` (`0x0078545c + 12 x`
+  the member's `+0x1e4`), the points a researcher hands the lab every 20 ticks.
+- `most` is `FUN_004c9ed0`: `StaffPoolInfo.MaxResearchersInPark` (`0x007852f8`) times the top grade's ability
+  (`0x0078548c`, the table's row 4). Nought is not tested: the division would fault.
+
+So the line is for a lab whose sideshow research is getting **less than one whole unit**. In Instant Action's
+Lost Kingdom (`Easy_Standard.sam`: abilities 6, 9, 12, 16 and 20, six researchers at the most, so 120) the
+sideshows' 14 is nought for one researcher of grade 0 (5 per cent) or 1 (7 per cent) and 1 from grade 2 (10 per
+cent): **the shipped park's own researcher, of grade 2, keeps the line unsaid in any game**. In Full Simulation
+(`Standard.sam`: 2 to 6, ten at the most, so 60) it is nought until the abilities on the staff add up to 5.
+**The rate is not the research**: with the one researcher of grade 0 the original's lab put 0.9 points to its
+sideshow project every 20 ticks through every run below while the rate read nought and the line was said.
+
+**Its tag** is row 78 of the tag table: key 383, picture 2, string 80, the bar's first button of type `0x13`
+(`mb_resrch`, help row 531; its act is `FUN_004aa480`, the research screen), no second, thirty seconds. String
+80 reads "All the available sideshows have now been built. Perhaps it's time to research some more?" in the
+English folder this game reads and in the american one the original reads.
+
+### OpenTPW (`ParkAdvisorMessages.ResearchMoreSideshows`, a topic's `EverySideshowBuilt`; `ParkFacts.SideshowProjectsUnfinished`, `SideshowResearchRate`, `ResearchAbility`, `MostResearchAbility`; `ParkResearch.Rate`, `FreshKinds`; `ParkWorld.ResearchKinds`; tag row 78)
+
+A twenty-sixth polled topic and the second that is Full Simulation's alone. `ParkWorld` reads the lab's five
+kinds' efforts and outputs from the file, a fresh park makes them as the kinds' turn does, `ParkResearch.Rate`
+is `FUN_00503980`, and `ParkPeople.AdvisorFacts` hands the score the sideshows' rate with the two numbers it
+was made of. The poll line ends ` researchers=N kinds=K/T unfinished=N rate=R ability=A/M`. `ParkTags.Rows`
+lists row 78, and the bar wears the research button.
+
+**DEVIATION: the bar's research button does nothing here.** The research screen is not built, so the click is
+counted (`TAG_BAR_BUTTON`) and the tag stays; the original opens its research screen and takes the tag off.
+**The outputs never change here**: no screen sets a kind's effort, so they are the file's or the fresh world's.
+
+**The scenes** (`lib/stockscene.py`; the stock park paused on tick 962 to 964): *both*, a Strength Bird (1305)
+bought beside the stock Jungle Spray, so that both kinds on offer stand, the researcher (thing 30) of grade 2 as
+shipped; *g1* and *g0*, the same with his `mCurrentPayGrade` written 1 and 0 (`parkfile.thing_set`, the staff
+record's `+398`); *one0*, grade 0 with no Bird; *done0*, *g0* with the lab's two sideshow projects written done;
+*nores*, *both* with him fired.
+
+**Predicted first** (`q350/PREDICTION.txt`), both games, before any run. Every prediction of this game held on
+its first run. Of the original's, the scores all held; **two things about run a were not foreseen and are said
+below**: a second line that made row 76's wait, and my click landing on that line's tag.
+
+**This game** (`q350/confirm.py <mode>`, `advisorgame full` given paused; *fix* on the desktop, the rest
+off-screen). *g0* (`run-fix1`): `poll message=76 row=76 days=42 score=75 threshold=25 tick=968 result=post
+researchers=1 kinds=2/2 unfinished=2 rate=0 ability=6/120`, `post message=76 ... result=queued` and `attempt=1
+message=76 subject=0 score=75 threshold=25 response=217 sample=215 line=0 tick=968`; `saying sp_215.mp2 ...
+wearing=10,0 slot=0`, him up in the research hat's white spiked hair (`1-line.png`), `tags` reading
+`tag=78/picture=2/subject=0` with `mast=94,901,144,984` and `tag900=84,909,154,974/frame=2`. The tag clicked:
+`message bar: tag 78 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ... first=mb_resrch/help=531
+second=hidden erase=mb_erase` and the text, the bar drawn with the bulb button over the bomb (`2-bar.png`). The
+button clicked: `button type 19 is not built, so nothing more happens`, `TAG_BAR_BUTTON` counted once.
+*g1* (`run-g1`): the same line at `ability=9/120`, said on 968. *both* (`run-g2`): `score=0 ... result=no-score
+researchers=1 kinds=2/2 unfinished=2 rate=1 ability=12/120`. *one0*: `no-score ... kinds=1/2 ... rate=0
+ability=6/120`. *done0*: `kinds=2/2 unfinished=0`. *nores*: `researchers=0 ... ability=0/120`. *g0* with nothing
+held (`run-instant`): `score=-1 ... result=other-game`. None of the silent runs said the line or left tag 78.
+Main's build on *g0* (`run-control`): no line of message 76, no attempt, no tag.
+
+**A fresh Full Simulation park, the row's own game** (`q350/fresh.py`, `lib/freshpark.py`; no `advisorgame`
+given): the park's first line ends `the kinds' efforts [100,15,30,15,10] and outputs [49,6,14,6,4]`, the
+original's own fresh park's. With the pool's scientist of grade 1 hired and both sideshows on offer bought
+(`run-fresh-one`, on the desktop): `poll message=76 row=76 days=1 score=75 threshold=25 tick=46 result=post
+researchers=1 kinds=2/2 unfinished=3 rate=0 ability=3/60`, said, tag 78. With the pool's second, of grade 3,
+hired as well (`run-fresh-many`): `score=0 ... result=no-score researchers=2 ... rate=1 ability=8/60`, silent.
+Main's build (`run-fresh-control`): no line of message 76.
+
+**The original** (`q350/orig/run.sh <file>` with `HOLD=1`: `advisor.py ... 0x4c,... poll` beside `thingwords.py`
+on the lab's sideshow output and project 22 and on the researcher's type and grade (`30:0x1e4`), `tags.py`,
+`bar.py`, `screens.py`; `bytehold.py` holds the game type's low byte at 0 from tick 1113 to about 1145, a write
+to its memory, over the row's turn on tick 1123). The researcher's `+0x1e4` read the grade written in every
+run, and the lab's `+0x1430` 14.
+
+- *g1* (run b2): fresh over tick 968; message `0x4c`'s record **(1123, 0, 1, 0) on tick 1123**, one tag with it
+  at (84, 909, 154, 974), the mast at (94, 901, 144, 984), its text string 80.
+- *both*, grade 2 (run c): fresh through tick 1240, no tag.
+- *g0* (runs a, a2): on tick 1123 a slot took `0x4c` at 75, and the record moved on tick 1144 and 1142, **after
+  another line**: on tick 1109, before the hold, the original said "Your researchers could do their job better
+  and faster if you trained them." (tag string 37, the bar's button 21; `StaffTrainResearchers` by its key, a
+  polled row of either game that this game has not built), and row 76's line waited for it. The second tag
+  stood above the first, at (84, 834, 154, 899). He is up in the same white spiked hair (`orig/a2-g3.png`).
+  The second tag clicked (a2): the bar's data read thing 0, buttons 19 and 0, item 0 and the text, drawn with
+  the bulb button over the bomb (`orig/a2-bar.png`). The bulb clicked, with the game type back at Instant
+  Action's: a box reading "Research is automatic in Instant Action mode." (`orig/a2-button.png`), and the tag
+  went half a second on.
+- *one0* (run d), *done0* (run e; project 22 read 700.0 of 700), *nores* (run f; thing 30 reads no type): fresh
+  through ticks 1229, 1229 and 1141. Runs d and e said the training line on tick 1109 too.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 76 in an Instant Action park | never scored (fresh over tick 968 in every run) | the same (`score=-1 ... result=other-game`) |
+| Both kinds, one researcher of grade 1, two projects | said on the row's turn (tick 1123, the first inside the hold) | the same (tick 968, score 75, `rate=0 ability=9/120`) |
+| The same, grade 0 | scored 75 on its turn, said 19 to 21 ticks on, after the training line | said on its turn: the training line is not built |
+| The same, grade 2, the shipped researcher | not said | the same (`rate=1 ability=12/120`) |
+| One kind of two | not said | the same (`kinds=1/2`) |
+| Every sideshow project done | not said | the same (`unfinished=0`) |
+| No researcher | not said | the same (`researchers=0`) |
+| Who says it | the lobby's fly in the research hat | the same |
+| The tag and the bar | row 78, part 2, string 80; the research button and the bomb | the same |
+| The research button | the research screen's opener: in Instant Action a box of one line, and the tag off | counted, nothing opens, the tag stays |
+| A fresh Full Simulation park | not run | said on tick 46 with one scientist, silent with two whose abilities make 8 of 60 |
+
+**Not built or not seen.** The research button's act and its Instant Action box (`FUN_004aa480`, not read);
+the training line of a park whose researchers are poorly graded (`StaffTrainResearchers`, and its four twins of
+the other kinds by their keys: not read), which the original said in every run with the grade-0 researcher. In
+no game run: line 2 (sample 216; the test holds the turn), the line again past its 900 quarter-ticks, the row in
+the original's own Full Simulation park (its turn was reached only by holding the game type in an Instant
+Action one), a kind's effort changed on the research screen and the outputs after it, a `most` of nought. The
+hold's turn in the two games is not the same turn (968 here, 1123 there), as for row 80. What the lab's own
+turn does with a kind's output (`FUN_00503430`: 0.9 points every 20 ticks to project 22 from a researcher of
+ability 6, 1.8 at grade 2 by run c) is not read. Not heard in either game.
 
 ## A park with sideshows and no feature (message `0x51`, Q345)
 
@@ -3179,7 +3308,7 @@ again), score 22 on tick 1438 (a summons falls on that tick), day 29 said a turn
 golden-ticket sideshow or feature, a feature built after the line, the bar's button with the buy screen open, a
 park made with no file, Full Simulation (the row asks neither mode: not asked). Row 82 is silent in those parks
 because few of their guests need a toilet ("A park with no toilet", below). Row 80 is "Every feature built, and
-more to research", above; row 76 is read and not built. Not heard in either game.
+more to research", above, and row 76 "Every sideshow built, and more to research". Not heard in either game.
 
 ## A park with no toilet (message `0x52`, Q347)
 

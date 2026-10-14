@@ -31,6 +31,7 @@ public interface IParkInitialState
 	ParkWorld.ArrivalBlock Arrival { get; }
 	IReadOnlyList<ParkWorld.ObjectControl> ObjectControlRecords { get; }
 	IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects { get; }
+	IReadOnlyList<ParkWorld.ResearchKind> ResearchKinds { get; }
 }
 
 /// <summary>A reserved world-table slot, including managers that have no drawable object.</summary>
