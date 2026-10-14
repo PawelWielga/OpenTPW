@@ -6878,6 +6878,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `UiRadioGroup.Put`, used by the hire, buy, all-items and all-staff fills; the original's hire and buy fills were hit
   once a step (`brk.sh`), and this game's log held one fill a step where main's held two on each opening
   (`hud.md`, "A tab put down by the opener fills nothing").
+- [x] **Q365. The all-staff and all-items screens rewrite their rows every two seconds.** The original's tab
+  handlers fill as Q364's do (`brk.sh`: one fill a step, none for the tab already down), and both screens rewrite their
+  rows in place on timer `0x80083` (`FUN_00495da0` mask `0x1a`; `FUN_004955e0` masks `0x1e` and `0x3e`, misc never),
+  which this game did not. Built `ParkStaffScreen.Update` and `ParkItemsScreen.Update`, the staff meters set at the
+  opening and a tab alone; ten rewrites in 21 s, the mechanic's happiness 85 then 84 on screen, main's build none
+  (`hud.md`, "How allstaff and allitems keep their rows current").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -509,6 +509,8 @@ GH=766` there, or the pointer is off):
   screen's tab (667,123) to (900,700) it crosses rows 0 to 4 and leaves the fifth picked. To put the pointer away
   from a list, go straight across, then straight down, outside it: `gmove.py 1000 123`, then `gmove.py 1000 700`.
   The hire screen: the gadget's Buy (113,590), then the buy screen's b_allstaff (958,317); the mechanics' tab (667,123).
+  All staff and all items (Q365): the keys S and A (`xdotool keydown`/`keyup` on `:77`; they act on the release, from
+  the park or over a screen); all staff's mechanics' tab (665,121), all items' shops' tab (786,123).
 - **The game menu:** Escape with no tool in hand opens it **and pauses the game**; never sleep under it. Load
   (510,50) then the first row (400,123), the newest file; Save (510,140), type the name, Return; Options
   (510,400), the quality track (512,276), OK (898,688).

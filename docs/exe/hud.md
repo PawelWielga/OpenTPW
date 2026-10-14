@@ -1637,6 +1637,53 @@ same file and route (`q364/run-fix1`) the log held one fill line a step, `Hire l
 where main's build logged it twice (`run-control1`), and the all-staff and all-items screens one `filling` line on
 opening and one on a tab.
 
+**The all-staff and all-items screens, read and measured 2026-10-14 (Q365).** Their tab handlers fill on `0x101` with a
+fourth word of 1 alone, as the hire and buy ones: `FUN_004960a0` (each tab one `FUN_00481bc0` walk with the row adder
+`0x00496320`, either inline or through `FUN_00496400`, then the label `FUN_00496570` and the kind's meter
+`FUN_004964d0`) and `FUN_00495360` (each tab one sub-builder: rides `FUN_00494ec0`, shops `FUN_00494c70`, sideshows
+`FUN_00494250`, misc `FUN_00495110`). The all-items opener puts its tab down before it even installs its handler; the
+all-staff opener installs its handler first, and the put-down reaches it as message 1 all the same. In the original
+(`q365/orig/a`, `q353/grades.TPWS`, `brk.sh` on the four `CALL`s `0x00496870`, `0x004961cf`, `0x00495b4d`,
+`0x004953f0`): **S** opened all-staff with one hit at its opener's fill (through the `allstaff` stub `0x0040c52a`), the
+mechanics' tab one, the same tab again none; **A** opened all-items with one hit at its rides fill (the `allitems` stub
+`0x0040c51a`, from the screen's own handler running the shortcuts alone, `0x00488c1e`), the shops' tab one, the same
+tab again none (`q365/orig/a-six.png`). This game's fills were already these.
+
+**The shortcuts' screen rows are not built here.** Rows 4 and 5 of the shortcuts table are `A` (`allitems`) and `S`
+(`allstaff`), modifier nought, on the key's release; the original opens each screen from the park and from over any
+screen. This game binds `InputButton.AllAttractions` and `AllStaff` and nothing reads them, and no gap is counted: R
+alone is counted (`RESEARCH_SHORTCUT`). The other rows were not read here.
+
+#### How allstaff and allitems keep their rows current
+
+Read and measured 2026-10-14 (Q365). Both screens rewrite their rows in place every two seconds on timer `0x80083`,
+as allpeeps does ("How allpeeps keeps itself current"), and nothing else between a fill and the next:
+
+- **allstaff.** The opener arms the timer once (`FUN_0065ef90( 0x80083, 2000 )`, `0x00496b84`); a tab does not. On it
+  the screen's callback (`FUN_00495da0`, message `0x10`) walks the rows from the last to the first and hands
+  `FUN_006644ea` each member's status, wage, skill and happiness with the column mask **`0x1a`**: the status, the skill
+  and the happiness are written, the name and the wage stay as the fill wrote them. `FUN_006644ea` writes the masked
+  cells and nothing else, so a row's colour and place stand.
+- **allitems.** Each tab loads its own list tree, whose handler `FUN_004955e0` arms the timer as the tree is shown
+  (message `0x15`, `0x0049560c`): **a tab starts the timer again**. On it, by the remembered tab (`[0x007ca154]`, which each
+  sub-builder writes), the rides' and shops' rows are rewritten under mask **`0x1e`** and the sideshows' under
+  **`0x3e`**: every column but the name. The miscellaneous tab has no case and is never rewritten.
+- **The meters** are set by the opener (both) and by a tab (the kind's, `FUN_004964d0`) and by nothing else.
+
+Seen in the original: between `q365/orig/a-shops` and `a-shops2`, nine seconds with no fill, the Drinks Shop's row
+went from 1 customer, $10 and $20 to 4, $40 and $50.
+
+**OpenTPW** (Q365): `ParkStaffScreen.Update` and `ParkItemsScreen.Update` are the two callbacks, on a `UiTimer` of
+2000 ms of real time: the staff one stamped at the opening, the items one again at each tab; each logs `Staff list:
+kind K, N rows rewritten, meters K/A, row 0 ...` or `Items list: tab T, N rows rewritten, row 0 ...`. The staff
+meters are set at the opening and a tab, where they were set every frame. On `q353/grades.TPWS` (`q365/run-fix2`, the
+final game binary; frames `run-fix2/four.png`): ten rewrites of the one mechanic in the 21 s after the opening, his
+happiness 85 then 84 on screen and in the line, his wage 92 and the meters 880/895 in all ten, his status and
+happiness the `staff` census's; three rewrites of the Drinks Shop in the 7 s after the shops' tab, none on the
+miscellaneous tab. Main's build (`run-control2`) wrote none. Most of the items columns are empty here
+(`ALL_ITEMS_MONTHLY_HISTORY`, `ALL_ITEMS_EXCITEMENT`), so on screen the rides' state of repair and remaining life are
+what the rewrite moves.
+
 **The skill bar `0x2482`** ((722, 536)-(957, 575), type 9) is built at nought (`0x0049c335`) and written in one place,
 message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<
 10) / 5` of 1024 (`0x0049b8dc`), the grade the candidate record's byte `+8`. A grade 4 fills four fifths.

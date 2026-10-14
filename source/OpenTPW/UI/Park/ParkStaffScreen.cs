@@ -68,6 +68,12 @@ internal sealed class ParkStaffScreen : UiWindow
 	/// <summary>The original's own meter scale - see the class remarks.</summary>
 	private const int MeterFull = 1024;
 
+	/// <summary>How often the rows are rewritten, in milliseconds of real time: <c>FUN_0065ef90( 0x80083, 2000 )</c>.</summary>
+	private const long RefreshEvery = 2000;
+
+	/// <summary>The rewrite's timer, running from the screen's opening; a tab does not restart it.</summary>
+	private readonly UiTimer _refresh = new( RefreshEvery );
+
 	private readonly UiList _list;
 	private readonly UiRadioGroup _tabs;
 	private readonly UiControl _kindLabel;
@@ -195,6 +201,11 @@ internal sealed class ParkStaffScreen : UiWindow
 
 		_list.Build();
 		Show( _lastKind );
+
+		// Every member of staff's meter is set once, as the screen opens (FUN_00496620, FUN_004c7cc0): no tab or
+		// timer moves it. A mean over nobody reads nought, as the gadget's gauge does for a park with no guests.
+		if ( ParkPeople.Current is { } people )
+			_allHappiness.Value = Scaled( people.Staff );
 	}
 
 	private static UiControl Label( int id, UiRect rect )
@@ -221,7 +232,6 @@ internal sealed class ParkStaffScreen : UiWindow
 			}
 		};
 
-	/// <summary>Fills the list with everyone of one kind - the original's <c>FUN_00496d20</c>.</summary>
 	/// <summary>
 	/// The list's right click (<c>0x402</c>, <c>0x00495feb</c>): the camera to the row's member of staff, then the screen
 	/// closed (message 4, <c>0x00496044</c>).
@@ -232,6 +242,10 @@ internal sealed class ParkStaffScreen : UiWindow
 		Stack.Close( this );
 	}
 
+	/// <summary>
+	/// Fills the list with everyone of one kind (the opener's or a tab's <c>FUN_00481bc0</c> with the row adder
+	/// <c>0x00496320</c>), and sets the kind's meter, as the opener and each tab do (<c>FUN_004964d0</c>).
+	/// </summary>
 	private void Show( int kind )
 	{
 		_kind = Math.Clamp( kind, 0, Tabs.Length - 1 );
@@ -247,26 +261,14 @@ internal sealed class ParkStaffScreen : UiWindow
 		if ( ParkPeople.Current is not { } people )
 			return;
 
-		var pool = Level.Current?.StaffPool;
-
 		foreach ( var member in people.Staff )
 		{
-			if ( ParkStaffPool.KindFor( member.Model ) != _kind )
-				continue;
-
-			var name = member.Name.Length > 0 ? member.Name : $"{ParkStaffPool.NameOfKind( _kind )} {member.ThingId}";
-			var wage = pool?.WageFor( _kind, member.PayGrade ) ?? 0;
-
-			_list.Add( new UiList.Row( member.ThingId, name, 0, Values:
-			[
-				$"{member.Activity}",
-				$"{wage}",
-				$"{member.PayGrade}",
-				$"{(int)member.Happiness}"
-			] ) );
+			if ( ParkStaffPool.KindFor( member.Model ) == _kind )
+				_list.Add( RowOf( member ) );
 		}
 
-		ShowMeters();
+		_kindHappiness.Value = Scaled( people.Staff
+			.Where( member => ParkStaffPool.KindFor( member.Model ) == _kind ) );
 
 		// The status column shows the activity's own name rather than the game's word for it: the
 		// original letters that column from a table this project has not found, and an English enum
@@ -274,23 +276,51 @@ internal sealed class ParkStaffScreen : UiWindow
 		Unimplemented.Report( "STAFF_STATUS_TEXT" );
 	}
 
-	/// <summary>
-	/// The two meters: the chosen kind's mean happiness, and every member of staff's.
-	/// </summary>
-	/// <remarks>
-	/// Both read nought where nobody is employed, rather than resting anywhere else - a mean over an
-	/// empty set is not a reading, and the gauge on the gadget already takes the same view of a park
-	/// with no guests in it.
-	/// </remarks>
-	private void ShowMeters()
+	/// <summary>A member of staff's row: name, status, the wage the park pays, skill and happiness.</summary>
+	private UiList.Row RowOf( Staff member )
 	{
-		if ( ParkPeople.Current is not { } people )
+		var name = member.Name.Length > 0 ? member.Name : $"{ParkStaffPool.NameOfKind( _kind )} {member.ThingId}";
+		var wage = Level.Current?.StaffPool?.WageFor( _kind, member.PayGrade ) ?? 0;
+
+		return new UiList.Row( member.ThingId, name, 0, Values:
+		[
+			$"{member.Activity}",
+			$"{wage}",
+			$"{member.PayGrade}",
+			$"{(int)member.Happiness}"
+		] );
+	}
+
+	/// <summary>
+	/// Every two seconds (timer <c>0x80083</c>, armed by the opener), each row's status, skill and happiness rewritten
+	/// where it stands, from the last row to the first: <c>FUN_00495da0</c> hands <c>FUN_006644ea</c> the column mask
+	/// <c>0x1a</c>, so the name and the wage stay as the fill wrote them. Nothing is added, removed or re-sorted, and the
+	/// meters are not touched (<c>docs/exe/hud.md</c>, "How allstaff and allitems keep their rows current").
+	/// </summary>
+	protected internal override void Update()
+	{
+		if ( _refresh.Owed( Stack.HoldsTimers ) == 0 || ParkPeople.Current is not { } people )
 			return;
 
-		_kindHappiness.Value = Scaled( people.Staff
-			.Where( member => ParkStaffPool.KindFor( member.Model ) == _kind ) );
+		var rewritten = 0;
 
-		_allHappiness.Value = Scaled( people.Staff );
+		for ( var index = _list.Rows.Count - 1; index >= 0; --index )
+		{
+			var row = _list.Rows[index];
+
+			if ( people.Staff.FirstOrDefault( member => member.ThingId == row.Id ) is not { } member
+				|| row.Values is not { Count: 4 } old )
+			{
+				continue;
+			}
+
+			var now = RowOf( member ).Values!;
+			_list.Replace( index, row with { Values = [now[0], old[1], now[2], now[3]] } );
+			++rewritten;
+		}
+
+		Log.Info( $"Staff list: kind {_kind}, {rewritten} rows rewritten, meters {_kindHappiness.Value}/{_allHappiness.Value}"
+			+ (_list.Rows.Count > 0 ? $", row 0 {_list.Rows[0].Id} {string.Join( " ", _list.Rows[0].Values! )}" : "") );
 	}
 
 	/// <summary>A mean happiness on the original's own 0-1024 scale - <c>(v &lt;&lt; 10) / 100</c>.</summary>
@@ -302,6 +332,4 @@ internal sealed class ParkStaffScreen : UiWindow
 			? 0
 			: (int)(members.Average( member => member.Happiness ) * MeterFull / 100);
 	}
-
-	protected internal override void Update() => ShowMeters();
 }

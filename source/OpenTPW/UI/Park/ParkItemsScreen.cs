@@ -92,6 +92,15 @@ internal sealed class ParkItemsScreen : UiWindow
 
 	private int _tab;
 
+	/// <summary>How often a tab's rows are rewritten, in milliseconds of real time: <c>FUN_0065ef90( 0x80083, 2000 )</c>.</summary>
+	private const long RefreshEvery = 2000;
+
+	/// <summary>
+	/// The rewrite's timer. Each tab loads its own list tree in the original, whose handler arms the timer as the tree
+	/// is shown (message <c>0x15</c>, <c>FUN_004955e0</c>), so a tab starts it again.
+	/// </summary>
+	private UiTimer _refresh = new( RefreshEvery );
+
 	/// <summary>Which tab the screen was last left on - the original keeps the same in a global.</summary>
 	private static int _lastTab;
 
@@ -262,6 +271,7 @@ internal sealed class ParkItemsScreen : UiWindow
 
 		_title.Text = Localization.Get( tab.Title );
 		_tabs.Put( tab.Id );
+		_refresh = new UiTimer( RefreshEvery );
 
 		Log.Info( $"Items list: tab {_tab}, filling" );
 
@@ -322,13 +332,7 @@ internal sealed class ParkItemsScreen : UiWindow
 				continue;
 			}
 
-			// Rides fill the two floats the ride window reads back. Everything else stays empty, the customers and
-			// satisfaction columns that ParkObjectRings holds among them; see the class remarks.
-			var values = tab.Index == 0
-				? new[] { "", "", $"{(int)placed.StateOfRepair}", $"{(int)placed.RemainingLife}" }
-				: new string[tab.Columns - 1];
-
-			chosen.Add( new UiList.Row( placed.ThingId, item.Name, 0, Values: values,
+			chosen.Add( new UiList.Row( placed.ThingId, item.Name, 0, Values: ValuesOf( tab, placed ),
 				Colour: ParkClosedStatus.Colour( ParkClosedStatus.For( level.Park, placed, item.TrackType ) ) ) );
 		}
 
@@ -338,5 +342,51 @@ internal sealed class ParkItemsScreen : UiWindow
 		// read yet either.
 		Unimplemented.Report( "ALL_ITEMS_MONTHLY_HISTORY" );
 		Unimplemented.Report( "ALL_ITEMS_EXCITEMENT" );
+	}
+
+	/// <summary>
+	/// A placed object's columns after its name. Rides fill the two floats the ride window reads back. Everything else
+	/// stays empty, the customers and satisfaction columns that ParkObjectRings holds among them; see the class remarks.
+	/// </summary>
+	private static string[] ValuesOf( Tab tab, ParkWorld.CatalogueObject placed )
+		=> tab.Index == 0
+			? ["", "", $"{(int)placed.StateOfRepair}", $"{(int)placed.RemainingLife}"]
+			: new string[tab.Columns - 1];
+
+	/// <summary>
+	/// Every two seconds, on the rides', shops' and sideshows' tabs, each row's columns after the name rewritten where it
+	/// stands, from the last row to the first (<c>FUN_004955e0</c>: masks <c>0x1e</c> and, for the sideshows,
+	/// <c>0x3e</c>). The name and the row's colour stay as the fill wrote them, nothing is added, removed or re-sorted,
+	/// and the miscellaneous tab is not rewritten (<c>docs/exe/hud.md</c>, "How allstaff and allitems keep their rows
+	/// current").
+	/// </summary>
+	protected internal override void Update()
+	{
+		if ( _refresh.Owed( Stack.HoldsTimers ) == 0 )
+			return;
+
+		var tab = Tabs[_tab];
+
+		if ( tab.Index == ItemDescriptionFile.Feature || Level.Current?.ParkState is not { } state )
+			return;
+
+		var list = _lists[tab.Columns];
+		var objects = state.Objects.ToList();
+		var rewritten = 0;
+
+		for ( var index = list.Rows.Count - 1; index >= 0; --index )
+		{
+			var row = list.Rows[index];
+			var at = objects.FindIndex( placed => placed.ThingId == row.Id );
+
+			if ( at < 0 )
+				continue;
+
+			list.Replace( index, row with { Values = ValuesOf( tab, objects[at] ) } );
+			++rewritten;
+		}
+
+		Log.Info( $"Items list: tab {_tab}, {rewritten} rows rewritten"
+			+ (list.Rows.Count > 0 ? $", row 0 {list.Rows[0].Id} {string.Join( " ", list.Rows[0].Values! )}" : "") );
 	}
 }

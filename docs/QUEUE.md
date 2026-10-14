@@ -44,13 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q365. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q366. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q364 (`hud.md`, "A tab put down by the opener fills nothing"): the all-items and all-staff screens' own fills in
-  the original were not hit with `brk.sh` (their openers put the tab down by the same `FUN_0066a295`); their tab
-  handlers (`FUN_00495360`, `FUN_004960a0`) are not read. In no game run: Full Simulation (not asked: the screens are
-  either mode's).
+  From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): **the shortcuts' screen rows are neither
+  built nor counted**: A (all items) and S (all staff) open their screens in the original, from the park and over a
+  screen, and do nothing here (`InputButton.AllAttractions`, `AllStaff` read by nothing); the table's other rows were not
+  read. A row's status is the activity's English name (`STAFF_STATUS_TEXT`) and its skill and happiness numbers where
+  the original draws bars; most items columns are empty (`ALL_ITEMS_MONTHLY_HISTORY`, `ALL_ITEMS_EXCITEMENT`), so the
+  rewrite moves only the rides' two here. What the original does to these two lists as a member or an object comes or
+  goes with the screen open is not read (allpeeps' `0x1b`/`0x1c`). In no game run: the sideshows' tab rewritten, the
+  timer held under a message box, Full Simulation (not asked: the screens are either mode's).
   From Q363 (`render-states.md`, "Texture addressing"): **a texture one model wraps and another clamps keeps each
   material's own way here** (`TEXTURE_WRAP_SHARED`, five in the lobby and the stock park), where the original's one
   texture per folder and name takes every user's bits for as long as it is loaded. The interface's meshes (`UiMesh`
