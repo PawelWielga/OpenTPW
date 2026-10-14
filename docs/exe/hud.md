@@ -568,7 +568,7 @@ run, then built as above and run again.
 | The loans button in Instant Action | grey | disabled: the click does nothing |
 | The gadget's Money button, then the entry price's staff-costs button | the screen (runs c, d) | the same; the Money button afterwards opens it (`category 3 is left on screen 9`) |
 | Budgets 25, 0, 50 and the flag unset, the screen opened | `+0x20` 0 to 1 at the opening, Staff costs "$ 75" (run d) | `evertrained 0` to `1`, `staffcosts $ 75` (`run-bud2`) |
-| The month's change with the mechanics' 75 | thing 26's `+0x1e8` 0 to 15 on tick 1383 (run b; 0 to 10 with 50 set, run a) | `through 0` to `through 15`, a withdrawal of 75 then the wages 27, 69, 36, 45, 75, on this game's own month, tick 1879 or so (`run-month2`, the final build; `run-month1` the build before the opening's write-back, the same) |
+| The month's change with the mechanics' 75 | thing 26's `+0x1e8` 0 to 15 on tick 1383 (run b; 0 to 10 with 50 set, run a) | `through 0` to `through 15`, a withdrawal of 75 then the wages 27, 69, 36, 45, 75, on this game's own month, tick 1879 or so (`run-month2`, the final build; `run-month1` the build before the opening's write-back, the same); photographed either side in `run-month3/before-after.png`: 1/31/2000 at $86657, 2/1/2000 at $86360, each the `money` line's balance |
 | Main's build, the same tag and button | | `button type 21 is not built`, `TAG_BAR_BUTTON` (`run-control`) |
 
 `side-by-side.png` holds both screens with the mechanics at 75. Fifty bugs put back, fifty caught at the first round
