@@ -1616,8 +1616,26 @@ it. The hire list sets it; the other lists count the pick (`LIST_FIRST_ROW_SELEC
 Staff costs until the next pick. On the same file (`q356/run-fix2`) the opening logged `Hire list: added 7,11, row 11
 picked` and `Hire screen: candidate 11 grade 3, skill bar 614 of 1024, staff costs 502`, the bar 0.606 with Chris
 Battson's row highlighted, and the mechanics' tab `added 3,8,10, row 8 picked`, candidate 8 grade 2, 409, staff costs
-554 (Karl Fitzhugh's $ 115 for Chris's $ 63). The opening fills the list twice (the tab group's `Select` raises its own
-handler, which fills again) and one pick is taken.
+554 (Karl Fitzhugh's $ 115 for Chris's $ 63).
+
+#### A tab put down by the opener fills nothing
+
+Read and measured 2026-10-14 (Q364). Each tabbed screen's opener fills its list itself and then puts its tab down with
+`FUN_0066a295` (hire `FUN_0049bdd0`, buy `FUN_004acc70`, all items `FUN_00495aa0`, all staff `FUN_00496620`). That
+call lifts the old button and puts the new one down through `Button_SetDown( down, 1 )`, which posts the button only
+message 1 (`FUN_00658ccc`); the tab handlers fill on `0x101` with a fourth word of 1 (`FUN_0049bc80`, `FUN_004aca60`),
+which a click sends. **Measured in the original** (`q364/orig/a`, `brk.sh` on the hire fill `0x0049b5b0` and the buy
+fill `0x004aaf70`, `q353/grades.TPWS`): the gadget's Buy one buy fill (return `0x004ad15d`), b_allstaff one hire fill
+(`0x0049c20d`), the mechanics' tab one (`0x0049bcd6`), b_allthings one buy fill: four hits for four steps. A click on the tab
+already down fills nothing (`q364/orig/b`): the janitors' tab as the screen opened, then the mechanics' tab a second
+time, no hit either time.
+
+**OpenTPW** (Q364): `UiRadioGroup.Put` is `FUN_0066a295`, a button put down with no handler told; `Select` is a click,
+`Put` and then the handler. The hire, buy, all-items and all-staff screens' fills call `Put`, so each fills once as it
+opens and once a tab, where `Select` there had the handler fill again inside the fill: twice on every opening. On the
+same file and route (`q364/run-fix1`) the log held one fill line a step, `Hire list: added 7,11, row 11 picked` once
+where main's build logged it twice (`run-control1`), and the all-staff and all-items screens one `filling` line on
+opening and one on a tab.
 
 **The skill bar `0x2482`** ((722, 536)-(957, 575), type 9) is built at nought (`0x0049c335`) and written in one place,
 message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<

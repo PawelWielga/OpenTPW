@@ -44,9 +44,13 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q364. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q365. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q364 (`hud.md`, "A tab put down by the opener fills nothing"): the all-items and all-staff screens' own fills in
+  the original were not hit with `brk.sh` (their openers put the tab down by the same `FUN_0066a295`); their tab
+  handlers (`FUN_00495360`, `FUN_004960a0`) are not read. In no game run: Full Simulation (not asked: the screens are
+  either mode's).
   From Q363 (`render-states.md`, "Texture addressing"): **a texture one model wraps and another clamps keeps each
   material's own way here** (`TEXTURE_WRAP_SHARED`, five in the lobby and the stock park), where the original's one
   texture per folder and name takes every user's bits for as long as it is loaded. The interface's meshes (`UiMesh`
@@ -82,9 +86,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   (`FUN_00595920`, type `0x13`) is not compared with this game's full-scale path, nor its rounding (this game's
   truncates). Three type `0x12` files are LZSS and Fan_stalk's, Bowler_Btie's and s_disc's 8 x 8 copies throw in
   this game's LZSS reader.
-  From Q356 (`hud.md`, "The first row is picked as a list fills"): the other lists' pick is Q232's. **The opening
-  fills the hire list twice** here (the tab group's `Select` in `ParkHireScreen.Show` raises its own handler), where
-  the original fills it once: one pick is taken either way, and nothing else was seen to differ. A list emptied before
+  From Q356 (`hud.md`, "The first row is picked as a list fills"): the other lists' pick is Q232's. The opening fills it once (Q364). A list emptied before
   its pick is taken is handed -1, where the original's handler goes on with a stale word. In no game run: an empty
   tab, a candidate joining an empty list with the screen open, Full Simulation (not asked).
   From Q353 (`hud.md`, "The stat bars' skin"): the `.wct` reader's red is Q354's (the header's scales); the hire

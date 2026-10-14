@@ -261,7 +261,9 @@ internal sealed class ParkItemsScreen : UiWindow
 		var tab = Tabs[_tab];
 
 		_title.Text = Localization.Get( tab.Title );
-		_tabs.Select( tab.Id );
+		_tabs.Put( tab.Id );
+
+		Log.Info( $"Items list: tab {_tab}, filling" );
 
 		foreach ( var (shape, list) in _lists )
 		{

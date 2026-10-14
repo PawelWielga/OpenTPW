@@ -718,6 +718,67 @@ public class ParkScreenTests
 		people.SetValue( null, peopleBefore );
 	}
 
+	/// <summary>
+	/// <b>A tabbed screen fills its list once as it opens, once again a tab, and not for the tab already down</b>: each
+	/// opener fills its list and then puts its tab down with <c>FUN_0066a295</c>, which does not reach the tab handler
+	/// that fills on a click. The original's hire and buy fills were hit once each at an opening and once at a tab, and
+	/// not at a click on the tab already down (<c>q364/orig</c>).
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> putting the tab down tells the handler, so the opening fills twice; a tab's click fills nothing;
+	/// a click on the tab already down fills again.
+	/// </remarks>
+	[TestMethod]
+	[DataRow( "hire", "Hire list: added " )]
+	[DataRow( "buy", "Buy list: tab " )]
+	[DataRow( "items", "Items list: tab " )]
+	[DataRow( "staff", "Staff list: kind " )]
+	public void ATabbedScreenFillsItsListOnceAsItOpensOnceATabAndNotForTheTabAlreadyDown( string which, string fill )
+	{
+		var stack = APark();
+		AParkOver( stack );
+
+		var fills = 0;
+		void Count( Logger.Level severity, string line ) => fills += line.StartsWith( fill ) ? 1 : 0;
+
+		Logger.OnLog += Count;
+
+		try
+		{
+			UI.UiWindow screen = which switch
+			{
+				"hire" => new UI.ParkHireScreen( stack ),
+				"buy" => new UI.ParkBuyScreen( stack ),
+				"items" => new UI.ParkItemsScreen( stack ),
+				_ => new UI.ParkStaffScreen( stack )
+			};
+
+			stack.Open( screen );
+			Pointer( stack, Grass, left: false );
+
+			Assert.AreEqual( 1, fills, "the opening fills once" );
+
+			static IEnumerable<UI.UiControl> Under( UI.UiControl control ) => control.Children.Concat( control.Children.SelectMany( Under ) );
+
+			var tabs = Under( screen.Root ).OfType<UI.UiRadioGroup>().Single();
+			var tab = tabs.Children.OfType<UI.UiButton>().First( option => option.Id != tabs.Selected ).Rect;
+
+			Click( stack, new Vector2( (tab.Left + tab.Right) / 2f, (tab.Top + tab.Bottom) / 2f ) );
+			Pointer( stack, Grass, left: false );
+
+			Assert.AreEqual( 2, fills, "and a tab once more" );
+
+			Click( stack, new Vector2( (tab.Left + tab.Right) / 2f, (tab.Top + tab.Bottom) / 2f ) );
+			Pointer( stack, Grass, left: false );
+
+			Assert.AreEqual( 2, fills, "and the tab already down not at all" );
+		}
+		finally
+		{
+			Logger.OnLog -= Count;
+		}
+	}
+
 	private static Level AParkOver( UI.WindowStack stack )
 	{
 		var park = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );

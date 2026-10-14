@@ -540,17 +540,29 @@ internal sealed class UiRadioGroup : UiControl
 		return option;
 	}
 
+	/// <summary>A click on an option: it is put down and the group's handler told.</summary>
 	public void Select( int id )
 	{
+		if ( Put( id ) )
+			SelectionChanged?.Invoke();
+	}
+
+	/// <summary>
+	/// Puts one option down and lifts the rest without telling the handler - the original's <c>FUN_0066a295</c>, which a
+	/// screen calls on its own tabs after filling its list; the button posts itself only a redraw (<c>Button_SetDown</c>
+	/// with message 1), never the click its screen's handler fills on. False where it was already down.
+	/// </summary>
+	public bool Put( int id )
+	{
 		if ( id == Selected )
-			return;
+			return false;
 
 		Selected = id;
 
 		foreach ( var option in Children.OfType<UiButton>() )
 			option.IsDown = option.Id == id;
 
-		SelectionChanged?.Invoke();
+		return true;
 	}
 }
 

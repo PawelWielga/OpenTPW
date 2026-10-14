@@ -312,7 +312,7 @@ internal sealed class ParkBuyScreen : UiWindow
 		var chosen = Tabs[_tab];
 
 		_title.Text = Localization.Get( chosen.Title );
-		_tabs.Select( chosen.Id );
+		_tabs.Put( chosen.Id );
 
 		_list.Clear();
 

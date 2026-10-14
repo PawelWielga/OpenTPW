@@ -237,8 +237,10 @@ internal sealed class ParkStaffScreen : UiWindow
 		_kind = Math.Clamp( kind, 0, Tabs.Length - 1 );
 		_lastKind = _kind;
 
-		_tabs.Select( Tabs[_kind].Id );
+		_tabs.Put( Tabs[_kind].Id );
 		_kindLabel.Text = Localization.Text( KindHappiness[_kind] );
+
+		Log.Info( $"Staff list: kind {_kind}, filling" );
 
 		_list.Clear();
 

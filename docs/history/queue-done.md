@@ -6873,6 +6873,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `0x004626fb`); 2,572 of the 2,573 material runs whose UVs leave the texture carry one. Built in `LobbyModel` and
   `test.shader` (`s_ColorClamp`); Lost Kingdom's outer river banks lose their pale line, 451 pixels on main, 38 here,
   none in the original (`render-states.md`, "Texture addressing").
+- [x] **Q364. A tabbed screen fills its list once as it opens.** The original's openers fill and then put the tab
+  down with `FUN_0066a295`, which tells no handler; this game's `Select` there had the handler fill again. Built
+  `UiRadioGroup.Put`, used by the hire, buy, all-items and all-staff fills; the original's hire and buy fills were hit
+  once a step (`brk.sh`), and this game's log held one fill a step where main's held two on each opening
+  (`hud.md`, "A tab put down by the opener fills nothing").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

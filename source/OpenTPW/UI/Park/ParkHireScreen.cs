@@ -317,7 +317,7 @@ internal sealed class ParkHireScreen : UiWindow
 		var tab = Tabs[_kind];
 
 		_title.Text = Localization.Get( tab.Title );
-		_tabs.Select( tab.Id );
+		_tabs.Put( tab.Id );
 
 		_list.Clear();
 
