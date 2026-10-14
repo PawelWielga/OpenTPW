@@ -211,3 +211,4 @@ the model's texture).
 | The narrowed rule: `MATERIAL_ALPHA_WITHOUT_0X2` | 54 | 54 (my check's regex missed it once) |
 | Fix against main, two close views, guests boxed out | no floor border; under 1,500 pixels | 681 (the sign), 629 (the roof, the doors) |
 | The Staff Room's eaves in the original (`cmp-roof.png`) | a smooth fringe, as the fix's, not main's sawtooth | as predicted, at a quarter of this game's resolution |
+| The same on the final build (`run-fix11`, the original on its own file, `orig/g`) | 19 of 19, 54, the floor band under 100, the eaves over 200 and a fringe | 19, 54, 0, 217 on the eave line, a fringe |

@@ -135,12 +135,24 @@ public partial class Texture : Asset
 	/// </summary>
 	private void UpdateFromWct( string path, TextureFlags flags )
 	{
+		var (image, alpha) = ReadWct( path );
+
+		CreateTexture( path, image.Data, (uint)image.Width, (uint)image.Height, flags, alpha );
+	}
+
+	/// <summary>
+	/// A .wct's pixels and alpha, read through <see cref="FileSystem"/> with no device: the alpha its file's
+	/// (<see cref="TextureFile.Alpha"/>). A file that could not be read is opaque, and so is its stand-in
+	/// (<see cref="NotFound"/>), the original's notfound.tga. Logs each cut-out texture.
+	/// </summary>
+	internal static (TextureData Image, TextureAlpha Alpha) ReadWct( string path )
+	{
 		var file = new TextureFile( path );
-		var textureFileData = file.IsValid ? file.Data : NotFound( path );
+		var image = file.IsValid ? file.Data : NotFound( path );
 
 		if ( file.Alpha == TextureAlpha.CutOut )
 		{
-			var pixels = textureFileData.Data;
+			var pixels = image.Data;
 			int clear = 0, under = 0;
 
 			for ( int i = 3; i < pixels.Length; i += 4 )
@@ -152,16 +164,8 @@ public partial class Texture : Asset
 			Log.Info( $"Texture: '{path}' reads its alpha chunk by its bit count, header byte 1 nought: {clear} of {pixels.Length / 4} texels clear, {under} under {CutOutAlphaReference}" );
 		}
 
-		CreateTexture( path, textureFileData.Data, (uint)textureFileData.Width, (uint)textureFileData.Height, flags,
-			AlphaOf( file, textureFileData.Data ) );
+		return (image, file.Alpha);
 	}
-
-	/// <summary>
-	/// A .wct's alpha: its file's (<see cref="TextureFile.Alpha"/>), or <see cref="Classify"/>'s count of the stand-in's
-	/// pixels where the file could not be read.
-	/// </summary>
-	internal static TextureAlpha AlphaOf( TextureFile file, byte[] pixels )
-		=> file.IsValid ? file.Alpha : Classify( pixels );
 
 	/// <summary>
 	/// What the original draws in place of a texture it cannot load.

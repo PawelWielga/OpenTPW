@@ -55,15 +55,15 @@ Last updated: 2026-10-14. **This header names no branch and no sha, deliberately
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q359: seen (`q359/`, `run-fix9` the final build, `run-control9` main): the stock park's Staff Room eaves at `camera 555 170 30 180` a smooth straw fringe, as the original's frame of the same file on the real screen (`orig/f-2-full.png`, `cmp-roof.png`), where main's are a sawtooth (217 pixels differ, all on the eave line, `cmp10-eaves.png`); no floor border differs (0 in the Belly Bounce's band, `cmp9-red.png`); every model's log line as `predict.py` gives it (19 of 19) and `54x MATERIAL_ALPHA_WITHOUT_0X2`. Seen and not shipped: the texture's alpha alone opens sky round every floor here (`cmp-bellyclose.png`) where the original's frame is green (Q360). Not seen: the Belly Bounce's sign and the toilets' doors in the original (too small at its distance), the advisor's mouths up close, the lobby's islands, the other three themes, Full Simulation (not asked).
+- Q359: seen (`q359/`, `run-fix11` the final build, `run-control11` the build before): the stock park's Staff Room eaves at `camera 555 170 30 180` a smooth straw fringe, as the original's frame of `run-fix11`'s own file on the real screen (`orig/g-2-full.png`, `cmp-roof.png`), where the build before draws a sawtooth (217 pixels differ, all on the eave line, `cmp11-eaves.png`); no floor border differs (0 in the Belly Bounce's band, `cmp11-bellyclose.png`); every model's log line as `predict.py` gives it (19 of 19) and `54x MATERIAL_ALPHA_WITHOUT_0X2`. Seen and not shipped: the texture's alpha alone opens sky round every floor here (`cmp-bellyclose.png`) where the original's frame is green (Q360). Not seen: the Belly Bounce's sign and the toilets' doors in the original (too small at its distance), the advisor's mouths up close, the lobby's islands, the other three themes, Full Simulation (not asked).
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **77** of 106 | 2026-10-10, `case Opcode.` labels vs enum members |
-| Tests | **3092**, 0 fail, 0 skip with the game | 2026-10-14, Q359, alone in a worktree |
-| Tests without the game | **1042** ran, **2050** skipped, of 3092 | 2026-10-14, Q359 |
+| Tests | **3093**, 0 fail, 0 skip with the game | 2026-10-14, Q359, alone in a worktree |
+| Tests without the game | **1042** ran, **2051** skipped, of 3093 | 2026-10-14, Q359 |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

@@ -40,7 +40,6 @@ public class LobbyModelAlphaTests
 
 		Assert.AreEqual( TextureAlpha.Graded, sign.Alpha, "gk_sign1: byte 1 set" );
 		Assert.IsTrue( Partial( sign ) * 20 < sign.Data.Width * sign.Data.Height, "and too few partly-clear texels for a count to call it graded" );
-		Assert.AreEqual( TextureAlpha.Graded, Texture.AlphaOf( sign, sign.Data.Data ), "a texture takes the file's, not the count's" );
 		Assert.AreEqual( TextureAlpha.CutOut, bank.Alpha, "jri_bnk4: byte 1 nought" );
 		Assert.AreEqual( TextureAlpha.Opaque, top.Alpha, "tp_top: no alpha chunk" );
 		Assert.AreEqual( TextureAlpha.Graded, floor.Alpha, "m_grass1: byte 1 set" );
@@ -60,6 +59,34 @@ public class LobbyModelAlphaTests
 		Assert.AreEqual( 0x31u, Flags( 2 ), "tp_top: solid, its 0x2 taken out" );
 		Assert.AreEqual( 0x31u, Flags( 3 ), "the floor's border: solid, the deviation" );
 		Assert.AreEqual( 0x31u | Translucent | CutOut, Flags( 4 ), "a substituted sign: see-through, cut out" );
+	}
+
+	/// <summary>
+	/// <b>A .wct texture takes its file's alpha</b>, read as a texture is (<c>Texture.ReadWct</c>, the whole of its load
+	/// but the upload): <c>gk_sign1</c> graded where its pixels alone would be cut out, <c>jri_bnk4</c> cut out,
+	/// <c>tp_top</c> opaque; a texture the game does not have is the original's stand-in, opaque as its pixels are.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the load by the pixel count; a missing file taken as cut out.</remarks>
+	[TestMethod]
+	public void AWctTextureTakesItsFilesAlpha()
+	{
+		var was = FileSystem;
+		FileSystem = data;
+
+		try
+		{
+			Assert.AreEqual( TextureAlpha.Graded, Texture.ReadWct( "levels/jungle/sharetex/gk_sign1.wct" ).Alpha, "gk_sign1: the file's, not the count's" );
+			Assert.AreEqual( TextureAlpha.CutOut, Texture.ReadWct( "levels/jungle/terrain/textures/jri_bnk4.wct" ).Alpha, "jri_bnk4" );
+			Assert.AreEqual( TextureAlpha.Opaque, Texture.ReadWct( "levels/jungle/rides/totem/textures/tp_top.wct" ).Alpha, "tp_top" );
+
+			var missing = Texture.ReadWct( "levels/jungle/sharetex/opentpw-no-such.wct" );
+			Assert.AreEqual( TextureAlpha.Opaque, missing.Alpha, "a missing file: opaque" );
+			Assert.AreEqual( TextureAlpha.Opaque, Texture.Classify( missing.Image.Data ), "as its stand-in's pixels are" );
+		}
+		finally
+		{
+			FileSystem = was;
+		}
 	}
 
 	/// <summary>
