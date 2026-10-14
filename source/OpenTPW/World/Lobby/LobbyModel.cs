@@ -173,6 +173,10 @@ public sealed class LobbyModel
 		var opaque = opaqueFrames?.Invoke( modelFile ) ?? NoFrames;
 		var meshCount = modelFile.Meshes.Count;
 
+		var supplied = clips is { Count: > 0 };
+		var animations = supplied ? clips!.ToArray() : LoadAnimations( modelPath );
+		var wrapping = WrapFrames( modelFile, animations );
+
 		Entities = new ModelEntity[meshCount];
 		Offsets = new Vector3[meshCount];
 
@@ -215,7 +219,7 @@ public sealed class LobbyModel
 					Normal = mesh.Normals[i],
 					TexCoords = mesh.TexCoords[i],
 					TexIndex = (int)mesh.Vertices[i].TextureIndex,
-					MatFlags = MaterialFlagsFor( mesh, textures, substituted, (int)mesh.Vertices[i].TextureIndex, opaque )
+					MatFlags = MaterialFlagsFor( mesh, textures, substituted, (int)mesh.Vertices[i].TextureIndex, opaque, wrapping )
 				} );
 			}
 
@@ -224,6 +228,9 @@ public sealed class LobbyModel
 
 			for ( int i = 0; i < mesh.Materials.Length && i < textures.Count; ++i )
 			{
+				if ( !string.IsNullOrEmpty( mesh.Materials[i].Name ) && !substituted[i] )
+					NoteTextureWay( textures[i], Wraps( mesh.Materials[i], wrapping ) );
+
 				if ( !string.IsNullOrEmpty( mesh.Materials[i].Name ) && !substituted[i]
 					&& textures[i].Alpha != TextureAlpha.Opaque && MadeOpaque( mesh.Materials[i], opaque ) )
 					alphaMadeOpaque.Add( $"{mesh.Name.TrimEnd( '\0' )}:{mesh.Materials[i].Name} {textures[i].Alpha}" );
@@ -321,9 +328,6 @@ public sealed class LobbyModel
 			// duplicate is not worth throwing a whole island away for.
 			_nodeOffsets[name] = new Vector3( placed.M41, placed.M43, placed.M42 );
 		}
-
-		var supplied = clips is { Count: > 0 };
-		var animations = supplied ? clips!.ToArray() : LoadAnimations( modelPath );
 
 		Clips = animations;
 		Paths = modelFile.Paths;
@@ -823,6 +827,78 @@ public sealed class LobbyModel
 		=> (material.Flags & OpaqueBit) != 0 || opaque.Contains( material.FrameOffset );
 
 	/// <summary>
+	/// Marks a vertex whose texture is sampled clamped to its edge. Must match FLAG_CLAMP in content/shaders/test.shader;
+	/// a high bit of ours, as <see cref="CutOutAlphaFlag"/> is.
+	/// </summary>
+	internal const uint ClampFlag = 0x20000;
+
+	/// <summary>
+	/// A frame's wrap bits: <c>0x10</c> ORs <c>0x10000</c> into each of its textures' flags, <c>0x20</c>
+	/// <c>0x20000</c> (<c>FUN_00575e10</c>), and either one sets the stage's ADDRESS to WRAP where every other
+	/// texture is CLAMPed (<c>FUN_00581790</c>, <c>0x005678cf</c>; docs/exe/render-states.md).
+	/// </summary>
+	internal const uint WrapBits = 0x30;
+
+	/// <summary>
+	/// The frames whose textures wrap: those the file gives a wrap bit, and every frame a material of a mesh with a
+	/// UV track names, which the loader ORs <c>0x8030</c> into before the textures load (<c>0x004626fb</c>).
+	/// </summary>
+	internal static IReadOnlySet<uint> WrapFrames( ModelFile modelFile, IEnumerable<AnimationFile> animations )
+	{
+		var scrolled = animations
+			.SelectMany( animation => animation.UvTracks.Select( track => track.TargetIndex ) )
+			.Where( index => index >= 0 && index < modelFile.Meshes.Count )
+			.ToHashSet();
+
+		var frames = new HashSet<uint>();
+
+		for ( int m = 0; m < modelFile.Meshes.Count; ++m )
+		{
+			foreach ( var material in modelFile.Meshes[m].Materials )
+			{
+				if ( material.FrameOffset == 0 || ((material.Flags & WrapBits) == 0 && !scrolled.Contains( m )) )
+					continue;
+
+				if ( frames.Add( material.FrameOffset ) && (material.Flags & WrapBits) == 0 )
+					Log.Info( $"{modelFile.Meshes[m].Name.TrimEnd( '\0' )}:{material.Name} wraps by its mesh's UV track alone" );
+			}
+		}
+
+		return frames;
+	}
+
+	/// <summary>Whether a material's texture wraps: its frame is one of <see cref="WrapFrames"/>, or its own word has a wrap bit.</summary>
+	internal static bool Wraps( ModelFile.MaterialData material, IReadOnlySet<uint> wrapping )
+		=> (material.Flags & WrapBits) != 0 || wrapping.Contains( material.FrameOffset );
+
+	/// <summary>Each texture path loaded so far, and whether a material sampled it wrapped (bit 1) or clamped (bit 2).</summary>
+	private static readonly Dictionary<string, int> TextureWays = new( StringComparer.OrdinalIgnoreCase );
+
+	/// <summary>
+	/// Counts a texture one model wraps and another clamps. The original keeps one texture object per folder and name
+	/// (<c>FUN_00575870</c>) and ORs the wrap bits into it for good, so there every user of such a texture wraps while
+	/// it is loaded; here each material keeps its own way (<c>TEXTURE_WRAP_SHARED</c>).
+	/// </summary>
+	private static void NoteTextureWay( Texture texture, bool wraps )
+	{
+		if ( string.IsNullOrEmpty( texture.Path ) )
+			return;
+
+		lock ( TextureWays )
+		{
+			TextureWays.TryGetValue( texture.Path, out var ways );
+			var now = ways | (wraps ? 1 : 2);
+			TextureWays[texture.Path] = now;
+
+			if ( now == 3 && ways != 3 )
+			{
+				Log.Info( $"{texture.Path}: wrapped by one model and clamped by another" );
+				Unimplemented.Report( "TEXTURE_WRAP_SHARED" );
+			}
+		}
+	}
+
+	/// <summary>
 	/// Whether a material's alpha is tested and blended: its texture has an alpha (<see cref="Texture.Alpha"/>) and the
 	/// material is not <c>0x800</c>, as the original's state word gives it (<c>FUN_00581790</c>; docs/exe/render-states.md):
 	/// the material's <c>0x2</c> plays no part. The loader sets <c>0x800</c> on a built thing's floor, whose clear border
@@ -845,12 +921,16 @@ public sealed class LobbyModel
 
 	/// <summary>
 	/// The flag word a vertex carries: what the file gave its material with the see-through bit taken from
-	/// <see cref="SeeThrough"/>, plus <see cref="CutOutAlphaFlag"/> where its texture's alpha is not graded.
+	/// <see cref="SeeThrough"/>, plus <see cref="CutOutAlphaFlag"/> where its texture's alpha is not graded and
+	/// <see cref="ClampFlag"/> where its texture does not wrap (<see cref="Wraps"/>).
 	/// </summary>
 	internal static uint MaterialFlagsFor( ModelFile.Mesh mesh, List<Texture> textures, bool[] substituted,
-		int material, IReadOnlySet<uint>? opaque = null )
+		int material, IReadOnlySet<uint>? opaque = null, IReadOnlySet<uint>? wrapping = null )
 	{
 		var flags = mesh.Materials[material].Flags & ~TranslucentFlag;
+
+		if ( !Wraps( mesh.Materials[material], wrapping ?? NoFrames ) )
+			flags |= ClampFlag;
 
 		if ( !SeeThrough( mesh, textures, substituted, material, opaque ) )
 			return flags;
@@ -921,8 +1001,7 @@ public sealed class LobbyModel
 
 			var material = new Material<ObjectUniformBuffer>( "content/shaders/test.shader", flags );
 
-			// Sampled with Wrap, where the original's addressing is CLAMP (docs/exe/render-states.md): a cut-out texture whose
-			// opposite edge is clear loses a texel line at this one, a river bank's outer edge (docs/exe/textures.md).
+			// Wrap, and the clamped twin Material.Set binds beside it for the vertices carrying ClampFlag.
 			material.Set( "Color", [.. textures] );
 
 			return new Model( vertices, [.. indices], material );

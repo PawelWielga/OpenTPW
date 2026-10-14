@@ -148,6 +148,10 @@ fragment {
     layout( set = 1, binding = 31 ) uniform texture2D Color31;
     layout( set = 1, binding = 32 ) uniform sampler s_Color;
 
+    // The same filter clamped to the texture's edge, bound by Material.Set beside s_Color: a vertex
+    // carrying FLAG_CLAMP samples with it.
+    layout( set = 1, binding = 33 ) uniform sampler s_ColorClamp;
+
     // Set by LobbyModel where a material carries the file's bit of the same value and its texture an
     // alpha (LobbyModel.SeeThrough), and by UiMesh on every interface vertex.
     const uint FLAG_TRANSLUCENT = 2;
@@ -169,6 +173,19 @@ fragment {
     const float GRADED_ALPHA_REFERENCE = 16.0 / 255.0;
     const float CUTOUT_ALPHA_REFERENCE = 240.0 / 255.0;
 
+    // Not from the file: set by LobbyModel where the original clamps the material's texture, its frame
+    // carrying neither wrap bit (LobbyModel.Wraps). Nothing else sets it, so the paths, the ground and
+    // the interface keep the sampler their caller bound.
+    const uint FLAG_CLAMP = 0x20000;
+
+    vec4 SampleColor(texture2D colour, vec2 uv)
+    {
+        if ((outMatFlags & FLAG_CLAMP) != 0)
+            return texture(sampler2D(colour, s_ColorClamp), uv);
+
+        return texture(sampler2D(colour, s_Color), uv);
+    }
+
     void main()
     {
         vec2 finalTexCoords = vs_out.vTexCoords;
@@ -185,38 +202,38 @@ fragment {
 
         vec4 vTextureSample = vec4(1, 0, 1, 1);
 
-        if ( texIndex == 0 ) vTextureSample = texture( sampler2D( Color0, s_Color ), finalTexCoords);
-        if ( texIndex == 1 ) vTextureSample = texture( sampler2D( Color1, s_Color ), finalTexCoords);
-        if ( texIndex == 2 ) vTextureSample = texture( sampler2D( Color2, s_Color ), finalTexCoords);
-        if ( texIndex == 3 ) vTextureSample = texture( sampler2D( Color3, s_Color ), finalTexCoords);
-        if ( texIndex == 4 ) vTextureSample = texture( sampler2D( Color4, s_Color ), finalTexCoords);
-        if ( texIndex == 5 ) vTextureSample = texture( sampler2D( Color5, s_Color ), finalTexCoords);
-        if ( texIndex == 6 ) vTextureSample = texture( sampler2D( Color6, s_Color ), finalTexCoords);
-        if ( texIndex == 7 ) vTextureSample = texture( sampler2D( Color7, s_Color ), finalTexCoords);
-        if ( texIndex == 8 ) vTextureSample = texture( sampler2D( Color8, s_Color ), finalTexCoords);
-        if ( texIndex == 9 ) vTextureSample = texture( sampler2D( Color9, s_Color ), finalTexCoords);
-        if ( texIndex == 10 ) vTextureSample = texture( sampler2D( Color10, s_Color ), finalTexCoords);
-        if ( texIndex == 11 ) vTextureSample = texture( sampler2D( Color11, s_Color ), finalTexCoords);
-        if ( texIndex == 12 ) vTextureSample = texture( sampler2D( Color12, s_Color ), finalTexCoords);
-        if ( texIndex == 13 ) vTextureSample = texture( sampler2D( Color13, s_Color ), finalTexCoords);
-        if ( texIndex == 14 ) vTextureSample = texture( sampler2D( Color14, s_Color ), finalTexCoords);
-        if ( texIndex == 15 ) vTextureSample = texture( sampler2D( Color15, s_Color ), finalTexCoords);
-        if ( texIndex == 16 ) vTextureSample = texture( sampler2D( Color16, s_Color ), finalTexCoords);
-        if ( texIndex == 17 ) vTextureSample = texture( sampler2D( Color17, s_Color ), finalTexCoords);
-        if ( texIndex == 18 ) vTextureSample = texture( sampler2D( Color18, s_Color ), finalTexCoords);
-        if ( texIndex == 19 ) vTextureSample = texture( sampler2D( Color19, s_Color ), finalTexCoords);
-        if ( texIndex == 20 ) vTextureSample = texture( sampler2D( Color20, s_Color ), finalTexCoords);
-        if ( texIndex == 21 ) vTextureSample = texture( sampler2D( Color21, s_Color ), finalTexCoords);
-        if ( texIndex == 22 ) vTextureSample = texture( sampler2D( Color22, s_Color ), finalTexCoords);
-        if ( texIndex == 23 ) vTextureSample = texture( sampler2D( Color23, s_Color ), finalTexCoords);
-        if ( texIndex == 24 ) vTextureSample = texture( sampler2D( Color24, s_Color ), finalTexCoords);
-        if ( texIndex == 25 ) vTextureSample = texture( sampler2D( Color25, s_Color ), finalTexCoords);
-        if ( texIndex == 26 ) vTextureSample = texture( sampler2D( Color26, s_Color ), finalTexCoords);
-        if ( texIndex == 27 ) vTextureSample = texture( sampler2D( Color27, s_Color ), finalTexCoords);
-        if ( texIndex == 28 ) vTextureSample = texture( sampler2D( Color28, s_Color ), finalTexCoords);
-        if ( texIndex == 29 ) vTextureSample = texture( sampler2D( Color29, s_Color ), finalTexCoords);
-        if ( texIndex == 30 ) vTextureSample = texture( sampler2D( Color30, s_Color ), finalTexCoords);
-        if ( texIndex == 31 ) vTextureSample = texture( sampler2D( Color31, s_Color ), finalTexCoords);
+        if ( texIndex == 0 ) vTextureSample = SampleColor(Color0, finalTexCoords);
+        if ( texIndex == 1 ) vTextureSample = SampleColor(Color1, finalTexCoords);
+        if ( texIndex == 2 ) vTextureSample = SampleColor(Color2, finalTexCoords);
+        if ( texIndex == 3 ) vTextureSample = SampleColor(Color3, finalTexCoords);
+        if ( texIndex == 4 ) vTextureSample = SampleColor(Color4, finalTexCoords);
+        if ( texIndex == 5 ) vTextureSample = SampleColor(Color5, finalTexCoords);
+        if ( texIndex == 6 ) vTextureSample = SampleColor(Color6, finalTexCoords);
+        if ( texIndex == 7 ) vTextureSample = SampleColor(Color7, finalTexCoords);
+        if ( texIndex == 8 ) vTextureSample = SampleColor(Color8, finalTexCoords);
+        if ( texIndex == 9 ) vTextureSample = SampleColor(Color9, finalTexCoords);
+        if ( texIndex == 10 ) vTextureSample = SampleColor(Color10, finalTexCoords);
+        if ( texIndex == 11 ) vTextureSample = SampleColor(Color11, finalTexCoords);
+        if ( texIndex == 12 ) vTextureSample = SampleColor(Color12, finalTexCoords);
+        if ( texIndex == 13 ) vTextureSample = SampleColor(Color13, finalTexCoords);
+        if ( texIndex == 14 ) vTextureSample = SampleColor(Color14, finalTexCoords);
+        if ( texIndex == 15 ) vTextureSample = SampleColor(Color15, finalTexCoords);
+        if ( texIndex == 16 ) vTextureSample = SampleColor(Color16, finalTexCoords);
+        if ( texIndex == 17 ) vTextureSample = SampleColor(Color17, finalTexCoords);
+        if ( texIndex == 18 ) vTextureSample = SampleColor(Color18, finalTexCoords);
+        if ( texIndex == 19 ) vTextureSample = SampleColor(Color19, finalTexCoords);
+        if ( texIndex == 20 ) vTextureSample = SampleColor(Color20, finalTexCoords);
+        if ( texIndex == 21 ) vTextureSample = SampleColor(Color21, finalTexCoords);
+        if ( texIndex == 22 ) vTextureSample = SampleColor(Color22, finalTexCoords);
+        if ( texIndex == 23 ) vTextureSample = SampleColor(Color23, finalTexCoords);
+        if ( texIndex == 24 ) vTextureSample = SampleColor(Color24, finalTexCoords);
+        if ( texIndex == 25 ) vTextureSample = SampleColor(Color25, finalTexCoords);
+        if ( texIndex == 26 ) vTextureSample = SampleColor(Color26, finalTexCoords);
+        if ( texIndex == 27 ) vTextureSample = SampleColor(Color27, finalTexCoords);
+        if ( texIndex == 28 ) vTextureSample = SampleColor(Color28, finalTexCoords);
+        if ( texIndex == 29 ) vTextureSample = SampleColor(Color29, finalTexCoords);
+        if ( texIndex == 30 ) vTextureSample = SampleColor(Color30, finalTexCoords);
+        if ( texIndex == 31 ) vTextureSample = SampleColor(Color31, finalTexCoords);
 
         vec3 vShading = g_oUbo.g_flParkLight > 0.5 ? vParkLight : vDiffuse + vAmbient;
         vec3 vOutColor = vTextureSample.xyz * vShading;

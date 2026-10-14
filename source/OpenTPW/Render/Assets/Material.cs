@@ -298,8 +298,22 @@ public partial class Material : Asset
 	}
 
 	/// <param name="sampler">How the textures are sampled - wrapping, unless the caller knows better.</param>
+	/// <remarks>
+	/// Binds <c>s_{name}Clamp</c> beside it, the same filter clamped to the edge, for a shader that picks per vertex
+	/// (<c>test.shader</c>'s FLAG_CLAMP); a shader without it ignores the binding.
+	/// </remarks>
 	public void Set( string name, Texture[] texture, SamplerType sampler = SamplerType.AnisotropicWrap )
 	{
+		var clampKey = "s_" + name + "Clamp";
+		var clampSampler = Samplers[(int)SamplerType.Anisotropic];
+
+		if ( !_boundResources.TryGetValue( clampKey, out var existingClamp ) || existingClamp != clampSampler )
+		{
+			_boundResources[clampKey] = clampSampler;
+			_resourceSetsDirty = true;
+			_bindings++;
+		}
+
 		for ( int i = 0; i < texture.Length; i++ )
 		{
 			var key = name + $"{i}";

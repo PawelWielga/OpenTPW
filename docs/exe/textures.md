@@ -40,10 +40,10 @@ either way.
 **The river's banks.** Each river mesh of `levels/jungle/terrain/base.MD2` draws `jri_bnk4` to `6` under `0x2`; their
 river side is clear (`jri_bnk4`: 962 of 16,384 texels, its bottom row all clear, its top row opaque). Before Q358 the
 banks were opaque and drew a black seam between the water and the near bank; the original under Proton, given the same
-file, draws none, and neither does this game now (`q358/side-by-side.png`). This game binds a model's textures with
-Wrap (`Material.Set`'s default) where the original's addressing is CLAMP (`render-states.md`): the bank's opaque top
-edge blends in its clear bottom row and the cut-out test drops it, so **a thin pale line runs along each bank's outer
-edge** here, which the original does not draw (filed, Q361).
+file, draws none, and neither does this game now (`q358/side-by-side.png`). Their frames carry no wrap bit (`0x3`), so
+the original clamps them (`render-states.md`, "Texture addressing"), and so does this game since Q363: sampled with
+Wrap, the bank's opaque top edge took in its clear bottom row and the cut-out test dropped it, a thin pale line along
+each bank's outer edge (451 line pixels on main's frame, 38 since, none in the original's: `q363/side-by-side.png`).
 
 ## What a floor's clear border shows
 

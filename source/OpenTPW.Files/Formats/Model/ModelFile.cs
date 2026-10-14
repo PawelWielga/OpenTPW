@@ -293,10 +293,10 @@ public partial class ModelFile : BaseFormat
 		/// <summary>
 		/// The material's bit <c>0x2</c>, which nothing draws by: the original's state word for a material reads no bit of
 		/// this word but <c>0x800</c> (<c>FUN_00581790</c>) and takes the alpha from the texture (docs/exe/render-states.md,
-		/// "The four state words"), and so does <c>LobbyModel.SeeThrough</c>. Bit 0 is set on every material. The engine
-		/// ORs 0x8030 into this word itself for the materials of any mesh carrying a UV animation (<c>0x004626fb</c>), but
-		/// 0x10 and 0x20 are not a pair: each occurs without the other. The engine carries 0x40 into the model's header flags at 0x30; what
-		/// 0x10 and 0x20 select is not known (FileFormats models.md, "Material flags").
+		/// "The four state words"), and so does <c>LobbyModel.SeeThrough</c>. Bit 0 is set on every material. 0x10 and 0x20
+		/// make the frame's textures wrap as they load (<c>FUN_00575e10</c>), each without the other as well, and every other
+		/// texture is clamped (<c>LobbyModel.Wraps</c>); the engine ORs 0x8030 into this word itself for the materials of any
+		/// mesh carrying a UV animation (<c>0x004626fb</c>). The engine carries 0x40 into the model's header flags at 0x30.
 		/// </summary>
 		public bool IsTranslucent => (Flags & 0x2) != 0;
 	}

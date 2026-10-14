@@ -44,9 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q363. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q364. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q363 (`render-states.md`, "Texture addressing"): **a texture one model wraps and another clamps keeps each
+  material's own way here** (`TEXTURE_WRAP_SHARED`, five in the lobby and the stock park), where the original's one
+  texture per folder and name takes every user's bits for as long as it is loaded. The interface's meshes (`UiMesh`
+  picks its own sampler), the ground, the paths and the hoardings were not compared (paths and signs: Q15). The
+  renderer's mode `[0x008bd524]` is taken as 1 (hardware), not read in the running original. In no game run: the
+  lobby's islands up close (the Space island's `sen_pnl` panels now clamped, its gate's wrapped), an item outside
+  the stock park, the object window's preview, the other three themes, Full Simulation (not asked: the models are
+  the level's).
   From Q362 (`textures.md`, "Which materials the loader makes opaque"): seen only in the stock park. **Not photographed
   in either game**: the lobby's Space island (`sfl_cnr3`, `sho_top1`..`4`, now see-through), the floors newly opaque
   (`totem`, `puzzle`, `minecart`, `mumbo`'s planks, `s_plant`), the `P` models' roots in the object window (`Pgokarts`,
@@ -58,8 +66,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   (`ParkObjects`), which `ProceduralBase.FloorMesh` matches on every Lost Kingdom item. Which routine draws a
   procedural base each frame and which items take flag `0x1` beyond the table are not read further. Not run: the other
   three themes, Full Simulation (not asked: the models are the level's).
-  From Q358 (`textures.md`, "The loader"): the reference is byte 1 since Q359. **A thin pale line runs along each river bank's outer edge**: a model's textures are sampled with Wrap where the
-  original's addressing is CLAMP (`render-states.md`); measure every model's UVs before changing it. In no game
+  From Q358 (`textures.md`, "The loader"): the reference is byte 1 since Q359. The thin pale line along each river bank's outer edge is gone (Q363). In no game
   run: the lobby's islands up close (the reference player opens only Lost Kingdom), the message box (`ipan`), the
   Hot Pot, the Jungle Spray's bench and the other shops' alpha, Full Simulation (not asked: the textures are the
   level's).
@@ -1442,14 +1449,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 
 - [ ] **Q15. Green line between path cells and on ride signs.** Path textures get the default sampler,
   `AnisotropicWrap` = Wrap (`ParkPaths.Build`, through `Material.Set`'s array form). Sign halves are bound the same way
-  by `LobbyModel` and wrap too (`SignTexture.TryBuild`). The original clamps at every site
-  (`render-states.md`, "Texture addressing is CLAMP"). With wrap plus mipmaps, a tile's edge samples the far edge. Use clamp
-  where the original does. Confirm: screenshot two paths in a column, a crossroads and a ride sign,
+  by `LobbyModel` and wrap or clamp by their frame's bits (`SignTexture.TryBuild`). The original clamps every texture
+  whose frame carries no wrap bit (`render-states.md`, "Texture addressing"). With wrap plus mipmaps, a tile's edge
+  samples the far edge. Use clamp where the original does: the path tiles' and the ground's textures are not models,
+  so read first what the original binds for them. Confirm: screenshot two paths in a column, a crossroads and a ride sign,
   before and after.
-  Every model texture is unclamped too (the 2026-09-26 staleness audit): `LobbyModel` asks `TextureFlags.Repeat`,
-  as `ParkPaths` and `ParkGround` do, but all three bind an array, which `Material.Set` samples as Wrap whatever
-  the flag; `Texture.SamplerFor`'s Mirror is used only for a texture bound alone. Check that a model's UVs stay inside 0 to 1 before clamping it, since six
-  register-pushed sites are not covered (`render-states.md`); the sea keeps its wrap.
+  A model's texture clamps unless its frame wraps (Q363). `ParkPaths` and `ParkGround` bind an array, which
+  `Material.Set` samples as Wrap whatever the flag; `Texture.SamplerFor`'s Mirror is used only for a texture bound
+  alone; the sea keeps its wrap.
 - [ ] **Q17. Camcorder mode can strafe.** `ParkCamcorderCameraMode.Walk` passes
   `Input.Right` into `Step`. `park-engine.md`, "Walking on the ground is swept against the cell edges", decodes the sweep by two velocities but not the
   keys. Remove the strafe. Confirm: press the strafe key, the stand position in the `camcorder` census
@@ -1554,7 +1561,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   control exists; signs read fixed names (`ParkFixedItems.BuildSign`, `ParkObjects.BuildSign`,
   `LobbyIsland.DisplayNames`). Decode where the original edits the name and what it writes, then build the
   control and make the three sign painters read the save's name.
-- [ ] **Q29. Parity with the original's hardware renderer.** `render-states.md`, "Texture addressing is CLAMP", counts the
+- [ ] **Q29. Parity with the original's hardware renderer.** `render-states.md`, "Texture addressing", counts the
   MIN/MAG/MIPFILTER and LOD-bias sites but does not decode their values; no shade-mode row exists; ZFUNC
   is LESSEQUAL there and Less here. The renderer lights per pixel with 16x anisotropic filtering and
   full mipmaps (`test.shader`'s fragment `main`, `Material.CreateSampler`). Decode the values, then match them. Confirm:

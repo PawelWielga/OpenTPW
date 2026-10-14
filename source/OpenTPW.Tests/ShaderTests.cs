@@ -54,10 +54,25 @@ public class ShaderTests
 		for ( var slot = 0; slot < Material.TextureSlots; ++slot )
 		{
 			StringAssert.Contains( text, $"binding = {slot} ) uniform texture2D Color{slot};" );
-			StringAssert.Contains( text, $"if ( texIndex == {slot} ) vTextureSample = texture( sampler2D( Color{slot}, s_Color )" );
+			StringAssert.Contains( text, $"if ( texIndex == {slot} ) vTextureSample = SampleColor(Color{slot}, finalTexCoords);" );
 		}
 
 		StringAssert.Contains( text, $"binding = {Material.TextureSlots} ) uniform sampler s_Color;" );
 		Assert.IsFalse( text.Contains( $"Color{Material.TextureSlots};" ), "no slot past them" );
+	}
+
+	/// <summary>
+	/// A vertex carrying <see cref="LobbyModel.ClampFlag"/> samples with the clamped twin <c>Material.Set</c> binds after
+	/// the slots' sampler; every other vertex with the sampler its caller bound.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the flag's value apart from LobbyModel's; the samplers swapped.</remarks>
+	[TestMethod]
+	public void TheModelShaderSamplesAClampedVertexWithTheClampedSampler()
+	{
+		var text = File.ReadAllText( Path.Combine( AppContext.BaseDirectory, "content", "shaders", "test.shader" ) );
+
+		StringAssert.Contains( text, $"binding = {Material.TextureSlots + 1} ) uniform sampler s_ColorClamp;" );
+		StringAssert.Contains( text, $"const uint FLAG_CLAMP = 0x{LobbyModel.ClampFlag:x};" );
+		StringAssert.Contains( text, "if ((outMatFlags & FLAG_CLAMP) != 0)\n            return texture(sampler2D(colour, s_ColorClamp), uv);\n\n        return texture(sampler2D(colour, s_Color), uv);" );
 	}
 }

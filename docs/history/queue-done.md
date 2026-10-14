@@ -6868,6 +6868,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`ProceduralBase`); 54 of 54 Lost Kingdom item models' floor and count agree with the original's; 44 materials made
   opaque in the stock park, `MATERIAL_ALPHA_WITHOUT_0X2` gone, the waterfall under the bridge see-through as the
   original's (`textures.md`, "Which materials the loader makes opaque").
+- [x] **Q363. A model's texture clamped unless its frame wraps.** The original clamps stage 0 and sets WRAP only for
+  a texture whose frame carries `0x10` or `0x20`, or whose mesh scrolls its UVs (`FUN_00575e10`, `0x005678cf`,
+  `0x004626fb`); 2,572 of the 2,573 material runs whose UVs leave the texture carry one. Built in `LobbyModel` and
+  `test.shader` (`s_ColorClamp`); Lost Kingdom's outer river banks lose their pale line, 451 pixels on main, 38 here,
+  none in the original (`render-states.md`, "Texture addressing").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

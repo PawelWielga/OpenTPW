@@ -145,33 +145,40 @@ the park `base.md2` through `LobbyModel`, and the ground itself is drawn by `Par
 **Trap when sweeping `.md2`:** an animation file has `meshPtr` (`+0x70`) `== 0` and must be skipped, or
 its matrices are read as flag words and come out as float bit patterns.
 
-## Texture addressing is CLAMP, and nothing in the image ever wraps
+## Texture addressing: CLAMP, and WRAP where a frame asks for it
 
 | Address / value | Original name | What it is | Evidence |
 |---|---|---|---|
-| `0x00566ce3` | `D3DTSS_ADDRESS = 3 = D3DTADDRESS_CLAMP` | Stage 0, in the renderer's own init block | `PUSH 0x3` / `PUSH 0xc` / `PUSH 0x0` before `CALL [ECX + 0xa0]` |
-| `0x00566dae` | `D3DTSS_ADDRESS = 3` | The same write, on the stage that block's register holds | Disassembly |
+| `0x00566ce3`, `0x00566dae` | `D3DTSS_ADDRESS = 3 = D3DTADDRESS_CLAMP` | The device's init (`FUN_00566840`): stage 0 clamped | `PUSH 0x3` / `PUSH 0xc` / `PUSH 0x0` before `CALL [ECX + 0xa0]` (`IDirect3DDevice3::SetTextureStageState`) |
+| `0x005678cf` → `FUN_00567a70` | — | The state word's applier (`FUN_00567620`): bit `0x400000` sets stage 0's `ADDRESS` to `1`, `D3DTADDRESS_WRAP`, and clear sets it back to `3`, CLAMP, whenever the bit changes | Disassembly: `FUN_00567a70( word, stage 0, mask 0x400000, state 0xc, set 1, clear 3 )` |
+| `Texture_BlendStateWord` (`0x00590c40`), `FUN_00581790` | — | Put `0x400000` in a material's word when its texture's flags (`+8`) hold `0x10000` or `0x20000` (the first only where the renderer is `[0x008bd524]` 1) | Decompile |
+| `FUN_00575e10` | — | Loads a frame's textures; after each, the frame's word `0x10` ORs `0x10000` and `0x20` ORs `0x20000` into the texture's flags; its byte 1's `0x20` asks the load for `0x8030000` | Decompile |
+| `FUN_00575c60` | — | Called for a frame from a model's load (`FUN_00579e00`, `0x00579f7a`); a frame already loaded has `0x30000` ORed into all its textures where its word holds `0x30` | Decompile |
+| `0x004626fb` | — | `FUN_00461f10` ORs `0x8030` into the frame word of every material of a mesh a UV track scrolls, before the same function loads the textures (`0x00462740`, `0x00462771`) | Disassembly |
+| `FUN_00575870` | — | The texture cache: one texture per folder and name, counted by its users, so the bits above stay on it for every model using it | Decompile |
+| `FUN_00590350` | — | A texture without `0x30000` is packed into a shared page with a half-texel inset (the reason it must clamp); one with it is not | Decompile |
 
-Swept across **all 104 calls through the device vtable's `+0xa0`** (`SetTextureStageState`): 98 push a
-literal state, and the only **two** that write `D3DTSS_ADDRESS` (`0xc`) both write **3,
-`D3DTADDRESS_CLAMP`**. **No site writes `ADDRESSU` (`0xd`) or `ADDRESSV` (`0xe`) at all.**
+So **a model's texture is clamped unless its frame carries `0x10` or `0x20`, or its mesh scrolls its UVs**, and then
+it wraps in both directions, the stage having one address mode for both. The data agrees without exception: of the
+12,951 material uses of the 838 static models, 2,573 reach a texture coordinate past 0 or 1 by more than 0.01, and
+2,572 of those carry a wrap bit; the other names no texture (FileFormats `models.md`, "Bits 0x10 and 0x20"). The sweep
+of every `SetTextureStageState` call: 98 push a literal state, two write `ADDRESS` (the init's CLAMP), none `ADDRESSU`
+or `ADDRESSV`; the six through a register are the init block's counter (four) and `FUN_00567a70`; `SetRenderState`
+(`+0x58`, 88 calls) is never handed the old address states 3, `0x2c` or `0x2d`.
 
-The literal states that do appear are the positive control that the sweep can see a state when there
-is one: `TEXCOORDINDEX` ×15, `COLORARG1` ×14, `COLOROP` ×13, `ALPHAOP` ×12, `ALPHAARG2` ×10,
-`COLORARG2` ×8, `ALPHAARG1` ×7, `MINFILTER` ×4, `MAGFILTER` and `MIPFILTER` ×3 each, `ADDRESS` ×2,
-and one each of the four `BUMPENVMAT` slots, `BUMPENVLSCALE`, `BUMPENVLOFFSET` and `MIPMAPLODBIAS` —
-98 in total.
+**What this game does** (Q363): `LobbyModel.WrapFrames` and `Wraps` take the frames with a wrap bit and those of a
+scrolled mesh; every other material's vertices carry `LobbyModel.ClampFlag`, and `test.shader` samples them with
+`s_ColorClamp`, the clamped twin `Material.Set` binds beside `s_Color`. Lost Kingdom's outer river banks
+(`jri_bnk4` to `6`, word `0x3`) now keep their top edge, where a wrapped sample took in their clear bottom row and the
+cut-out dropped a thin pale line (`q363/side-by-side.png`: 451 line pixels on main, 38 here, none in the original).
+**Deviation, counted:** each material here keeps its own way where the original's shared texture takes the bits any
+of its users gave it; a texture path one model wraps and another clamps is counted `TEXTURE_WRAP_SHARED` (five in
+the lobby and the stock park: the lobby's `hgt_rai1`, `sen_pnl1`, `sen_pnl2`, `Sen_pnl4` and the jungle's
+`m_grass3`). The interface's meshes (`UiMesh`), the ground, the paths and the hoardings keep the sampler their
+callers bind, which were not compared.
 
-**Bounded:** 6 of the 104 push the state through a register (four of them inside that same init
-block, where it is the block's own counter) and are not covered. So this is "no literal site ever
-asks for wrapping", not "the engine cannot wrap".
-
-**What it does not license.** OpenTPW's lobby sea is a 10,000-unit plane whose UVs the shader computes
-as `position * 0.05`, so it runs hundreds of tiles wide and `CLAMP` would stretch a single texel over
-the whole ocean. The original's sea is its own mesh with authored UVs, which is why clamping costs it
-nothing there. Porting this constant onto that plane would be a faithful-looking change that wrecks
-the picture — the sea's `TextureFlags.Wrap` stays, and re-sourcing the sea from the original's mesh is
-where this becomes relevant.
+**The lobby sea.** OpenTPW's lobby sea is a 10,000-unit plane whose UVs the shader computes as `position * 0.05`, so
+it runs hundreds of tiles wide; it keeps `TextureFlags.Wrap`. The original's sea is its own mesh with authored UVs.
 
 ## Three back-to-front sorts — which OpenTPW does not do
 
