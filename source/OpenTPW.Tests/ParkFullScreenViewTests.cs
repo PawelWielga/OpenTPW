@@ -388,6 +388,40 @@ public class ParkFullScreenViewTests
 		Assert.IsTrue( ParkCamcorderCameraMode.Active, "and C goes down into first person" );
 	}
 
+	/// <summary>
+	/// <b>A and S held scroll the orbit camera nowhere, and W held scrolls it</b>: A and S are the shortcuts' all-items
+	/// and all-staff rows (<c>ParkOrbitCameraMode.ScrollAxes</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the camera reading <c>Input.Forward</c> and <c>Input.Right</c> again scrolls on A and S.</remarks>
+	[TestMethod]
+	public void AAndSHeldScrollTheOrbitCameraNowhere()
+	{
+		var stack = APark();
+		var park = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
+		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( park, Level.Scene.Park );
+		typeof( Level ).GetField( "_windows", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( park, stack );
+		Level.Current = park;
+		Camera.SetCameraMode<ParkOrbitCameraMode>();
+		var delta = Time.Delta;
+		Time.Delta = 0.1f;
+
+		try
+		{
+			var from = ParkOrbitCameraMode.PointOfInterest;
+			WorldFrame( stack, park, Down( Key.A ), Down( Key.S ) );
+			WorldFrame( stack, park );
+			Assert.AreEqual( from, ParkOrbitCameraMode.PointOfInterest, "A and S held" );
+
+			WorldFrame( stack, park, Up( Key.A ), Up( Key.S ), Down( Key.W ) );
+			WorldFrame( stack, park, Up( Key.W ) );
+			Assert.AreNotEqual( from, ParkOrbitCameraMode.PointOfInterest, "W held" );
+		}
+		finally
+		{
+			Time.Delta = delta;
+		}
+	}
+
 	/// <summary>A park's interface: the real front end over a real stack, its gadget and viewfinder up.</summary>
 	private static UI.WindowStack APark()
 	{

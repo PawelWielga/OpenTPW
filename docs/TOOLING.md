@@ -511,6 +511,10 @@ GH=766` there, or the pointer is off):
   The hire screen: the gadget's Buy (113,590), then the buy screen's b_allstaff (958,317); the mechanics' tab (667,123).
   All staff and all items (Q365): the keys S and A (`xdotool keydown`/`keyup` on `:77`; they act on the release, from
   the park or over a screen); all staff's mechanics' tab (665,121), all items' shops' tab (786,123).
+- **The shortcuts' keys in the original** (Q366, `q366/orig/run.sh`): B H I A S V F L T G and Space plain, S and V with
+  Ctrl held (`xdotool keydown Control_L` around the key). **L opens nothing in Instant Action**, so an Escape sent after it
+  opens the game menu and the next key falls on the menu: close a screen only where one opened. The gadget's
+  Information button (173,596) and Money button (107,650) of 1024 x 768 (halve both the stream's x and y).
 - **The game menu:** Escape with no tool in hand opens it **and pauses the game**; never sleep under it. Load
   (510,50) then the first row (400,123), the newest file; Save (510,140), type the name, Return; Options
   (510,400), the quality track (512,276), OK (898,688).

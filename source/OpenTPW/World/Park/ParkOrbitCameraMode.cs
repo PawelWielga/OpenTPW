@@ -1,3 +1,4 @@
+using NeoVeldrid;
 using System.Numerics;
 
 namespace OpenTPW;
@@ -212,7 +213,9 @@ public sealed class ParkOrbitCameraMode : CameraMode
 
 		// Scroll the point of interest across the ground, in whatever direction the camera faces, so
 		// that "forward" means forward on the screen rather than forward on the map.
-		if ( keys && (Input.Forward != 0f || Input.Right != 0f) )
+		var (forward, right) = ScrollAxes( Input.Keyboard.KeysDown );
+
+		if ( keys && (forward != 0f || right != 0f) )
 		{
 			var scroll = ScrollSpeed * Time.Delta;
 
@@ -220,13 +223,21 @@ public sealed class ParkOrbitCameraMode : CameraMode
 			// along, so forward scrolls the view forward at every yaw - including the one camcorder mode
 			// hands back, which need not be a multiple of pi/4.
 			PointOfInterest += new Vector3(
-				((Input.Forward * -MathF.Sin( Yaw )) + (Input.Right * MathF.Cos( Yaw ))) * scroll,
-				((Input.Forward * MathF.Cos( Yaw )) + (Input.Right * MathF.Sin( Yaw ))) * scroll,
+				((forward * -MathF.Sin( Yaw )) + (right * MathF.Cos( Yaw ))) * scroll,
+				((forward * MathF.Cos( Yaw )) + (right * MathF.Sin( Yaw ))) * scroll,
 				0f );
 		}
 
 		Place( GroundUnderPoi() );
 	}
+
+	/// <summary>
+	/// Which way the held keys scroll the view: W forward and D right, and nothing back or left. <b>Not the
+	/// original's</b>, whose camera table binds the arrows and the keypad (<c>0x00748158</c>); and A and S are its
+	/// shortcuts' all-items and all-staff rows (<c>ParkFrontEnd.ShortcutRow</c>), so here they scroll nothing.
+	/// </summary>
+	internal static (float Forward, float Right) ScrollAxes( IReadOnlyCollection<Key> down )
+		=> (down.Contains( Key.W ) ? 1f : 0f, down.Contains( Key.D ) ? 1f : 0f);
 
 	/// <summary>
 	/// Swings the eye around the point of interest and looks back at it.

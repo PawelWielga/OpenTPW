@@ -44,13 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q366. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q367. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): **the shortcuts' screen rows are neither
-  built nor counted**: A (all items) and S (all staff) open their screens in the original, from the park and over a
-  screen, and do nothing here (`InputButton.AllAttractions`, `AllStaff` read by nothing); the table's other rows were not
-  read. A row's status is the activity's English name (`STAFF_STATUS_TEXT`) and its skill and happiness numbers where
+  From Q366 (`hud.md`, "The shortcuts' screen rows"): **the staff and visitor locators** (`FUN_004b3f60`, Ctrl+S and
+  Ctrl+V, a panel at the gadget's foot in the original) and the postcard row are counted, not built (`STAFF_LOCATOR`,
+  `VISITOR_LOCATOR`, `POSTCARD_SHORTCUT`). W and D still scroll the orbit camera, the original's camera table binding the
+  arrows and the keypad (`ParkOrbitCameraMode.ScrollAxes`; Alexah kept them, 2026-10-14). In no game run: L in Full
+  Simulation (counted there), a shortcut under an object window, Ctrl+P in the original.
+  From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): A row's status is the activity's English name (`STAFF_STATUS_TEXT`) and its skill and happiness numbers where
   the original draws bars; most items columns are empty (`ALL_ITEMS_MONTHLY_HISTORY`, `ALL_ITEMS_EXCITEMENT`), so the
   rewrite moves only the rides' two here. What the original does to these two lists as a member or an object comes or
   goes with the screen open is not read (allpeeps' `0x1b`/`0x1c`). In no game run: the sideshows' tab rewritten, the

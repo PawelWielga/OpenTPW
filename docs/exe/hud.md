@@ -1649,10 +1649,24 @@ mechanics' tab one, the same tab again none; **A** opened all-items with one hit
 `0x0040c51a`, from the screen's own handler running the shortcuts alone, `0x00488c1e`), the shops' tab one, the same
 tab again none (`q365/orig/a-six.png`). This game's fills were already these.
 
-**The shortcuts' screen rows are not built here.** Rows 4 and 5 of the shortcuts table are `A` (`allitems`) and `S`
-(`allstaff`), modifier nought, on the key's release; the original opens each screen from the park and from over any
-screen. This game binds `InputButton.AllAttractions` and `AllStaff` and nothing reads them, and no gap is counted: R
-alone is counted (`RESEARCH_SHORTCUT`). The other rows were not read here.
+**The shortcuts' screen rows** (Q366; their keys and what each opener does first are in `park-engine.md`, "The park
+management gadget"). Measured in the original under Proton (`q366/orig/a`..`c`, `q353/grades.TPWS`, Instant Action), a
+frame a key: A all items, and the Information button after it all items again; S, B, H, V, T and G all staff, buy, hire,
+all visitors, Staff Training Budgets and the entry price, each in the last one's place; Space the map, and A over the map
+nothing; I park status, F finances; L nothing, and the Money button after F and L finances; Ctrl+S and Ctrl+V a locator
+panel at the gadget's foot. Ctrl+P was not pressed (the postcard writes a picture out).
+
+**OpenTPW** (Q366): `ParkFrontEnd.ShortcutRow` is the table, a key let go matched on its key and its modifiers alike, and
+`ShortcutKey` runs rows 1 to 15 where the original's table is heard: over the park, and under a park screen; not under
+the game menu, a message box, the options screen, the map or the full-screen view; in first person the postcard's row
+alone. A screen row calls `ParkCategoryScreens.Show`, the opener the category buttons reach, so the category is left on
+it; Space opens the map as its button does. Park status, finances, research, the two locators and the postcard are
+counted (`PARK_STATUS_SCREEN`, `FINANCE_SCREEN`, `RESEARCH_SHORTCUT`, `STAFF_LOCATOR`, `VISITOR_LOCATOR`,
+`POSTCARD_SHORTCUT`), loans as `LOANS_SCREEN` outside Instant Action and not at all inside it; G with the entry price up
+leaves it as it is. The orbit camera's W and D still scroll it, which the original's does not (its camera table binds the
+arrows and the keypad); A and S scroll it no longer. On the stock park (`q366/run-fix2`, the final game binary): each
+key's `Park keys: shortcut row N, name` line and the screen `windows` named, a frame a screen (`run-fix2/1-items-by-A.png`
+to `9-map.png`); A held a second left the camera's point where it was, W held a second moved it 200 units.
 
 #### How allstaff and allitems keep their rows current
 

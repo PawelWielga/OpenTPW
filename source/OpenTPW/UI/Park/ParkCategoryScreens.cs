@@ -110,6 +110,13 @@ internal static class ParkCategoryScreens
 	/// </summary>
 	public static void Show( WindowStack stack, int category, int screen )
 	{
+		// The loans opener returns at once in Instant Action, before it notes itself (game type 2, 0x0049fb8e).
+		if ( screen == 8 && Level.InstantAction )
+		{
+			Log.Info( "Park gadget: loans are refused in Instant Action" );
+			return;
+		}
+
 		LastLeftOn[category] = screen;
 
 		switch ( screen )
@@ -147,8 +154,11 @@ internal static class ParkCategoryScreens
 
 				return;
 
+			// The entry price's opener does nothing with its screen up ([0x007ca210], 0x00498d9f).
 			case 10:
-				stack.Open( new ParkEntryPriceScreen( stack ) );
+				if ( !stack.Windows.Any( window => window is ParkEntryPriceScreen ) )
+					stack.Open( new ParkEntryPriceScreen( stack ) );
+
 				return;
 		}
 

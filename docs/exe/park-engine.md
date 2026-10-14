@@ -705,25 +705,36 @@ the park every right press while it is set.
 
 Each row's `+0x0c` is a 16-byte thunk (`MOV ECX,0x007b51f0; CALL x; MOV EAX,1; RET`) into a SECOND layer of stubs, and those are what reach real code:
 
-| Row | Reaches |
-|---|---|
-| `menu` | `GameMenu_Open(0)` — already named, the decode's control |
-| `buy` | `FUN_004acc70(&temp, -1)` |
-| `hire` | `FUN_0049bdd0(-1)` |
-| `parkstatus` | `FUN_004a52a0` |
-| `allitems` | `FUN_00495aa0(0, -1)` |
-| `allstaff` | `FUN_00496620(0, -1)` |
-| `allpeeps` | `FUN_00493530(0)` |
-| `financeinfo` | `FUN_0049ac60` |
-| `loans` | `FUN_0049fb30` |
-| `staffcosts` | `FUN_004b2750` |
-| `entryprice` | `FUN_00498d80` |
-| `research` | `FUN_004aa480` |
-| `map` | `FUN_005f0b40` (ECX = `0x00F86DB8`) |
-| `staffloc` | `FUN_004b3f60([0x007c2658])` if `[0x007cc3c0]`, else `FUN_004b3f60(0)` |
-| `peeploc` | `FUN_004b3f60([0x007c2658])` if `[0x007cc418]`, else `JMP FUN_004b4280` |
-| `postcard` | `FUN_004a9380` |
-| `camcorder` | `FUN_00481a10` |
+The keys are each row's `+0x02` and `+0x04`, read from the rows at `0x00748378` (Q366); no row of the camera or game
+table ahead of them in the chain has the same key and modifier.
+
+| Row | Key | Reaches |
+|---|---|---|
+| `menu` | Escape | `GameMenu_Open(0)` — already named, the decode's control |
+| `buy` | B | `FUN_004acc70(&temp, -1)` |
+| `hire` | H | `FUN_0049bdd0(-1)` |
+| `parkstatus` | I | `FUN_004a52a0` |
+| `allitems` | A | `FUN_00495aa0(0, -1)` |
+| `allstaff` | S | `FUN_00496620(0, -1)` |
+| `allpeeps` | V | `FUN_00493530(0)` |
+| `financeinfo` | F | `FUN_0049ac60` |
+| `loans` | L | `FUN_0049fb30` |
+| `staffcosts` | T | `FUN_004b2750` |
+| `entryprice` | G | `FUN_00498d80` |
+| `research` | R | `FUN_004aa480` |
+| `map` | Space (`0x20`) | `FUN_005f0b40` (ECX = `0x00F86DB8`) |
+| `staffloc` | Ctrl+S | `FUN_004b3f60([0x007c2658])` if `[0x007cc3c0]`, else `FUN_004b3f60(0)` |
+| `peeploc` | Ctrl+V | `FUN_004b3f60([0x007c2658])` if `[0x007cc418]`, else `JMP FUN_004b4280` |
+| `postcard` | Ctrl+P | `FUN_004a9380` |
+| `camcorder` | C | `FUN_00481a10` |
+
+**What each opener does first** (Q366, read up to its `FUN_004a0810( category, screen )`, which every one of the ten
+calls): park status (`[0x007cb398]`), finances (`[0x007ca2e8]`), staff costs (`[0x007cc2ec]`, `0x004b2772`) and the
+entry price (`[0x007ca210]`, `0x00498d9f`) return at once with their screen up; **loans returns at once with its screen
+up or in Instant Action** (`[0x00fb3b7c] == 2`, `0x0049fb8e`), before it closes a screen or notes itself; buy notes itself
+first and, with its screen up, only picks the tab (`0x004acca0`); hire, all items, all staff and all visitors close the
+open park screen (`FUN_00485b40`) and build their own again. Measured in the original (`q366/orig/a`..`c`, Instant
+Action): L opened nothing, and the Money button after F and L opened finances.
 
 **`-1` is a REMEMBERED TAB, not "nothing selected".** `FUN_0049bdd0` rebuilds the screen when `param_1 == -1`, then does `if (param_1 == -1) param_1 = DAT_007ca30c;` and switches five ways on that (cases 0-4) to choose both a title string (`0x8b`-`0x8f`) and a control id (`0x2490`/`0x2493`/`0x2492`/`0x2494`/`0x2491`). So hire has **five tabs** and `-1` means "open on the tab it was left on"; passing a real index when the screen already exists only re-titles and re-selects instead of rebuilding.
 

@@ -192,7 +192,7 @@ internal sealed class ParkFrontEnd : Panel
 	/// 0x00488921) and only latches a row on its press, so a held Escape, its repeats included, does nothing until it
 	/// comes up (<c>docs/exe/scenes.md</c>, "The park Escape route"). The menu and the viewfinder take the key on its
 	/// release too. The build keys are read in <see cref="Level"/>, and the camcorder key by the camera modes.
-	/// R is the shortcuts table's research row - see <see cref="ResearchKey"/>.
+	/// The shortcuts table's other rows are <see cref="ShortcutKey"/>'s.
 	/// <para>
 	/// F3 let go with no modifier held is the game table's row 4 (key 0x72, <c>0x0040c4b0</c>), the full-screen view's
 	/// toggle - see <see cref="ToggleFullScreen"/>. While the view is on every key is its control's
@@ -212,30 +212,132 @@ internal sealed class ParkFrontEnd : Panel
 				MenuKey( _stack.Windows.Count > 0 ? _stack.Windows[^1] : null, release.Plain );
 			else if ( release.Key == Key.F3 && release.Plain )
 				ToggleFullScreen();
-			else if ( release.Key == Key.R && release.Plain )
-				ResearchKey( _stack.Windows.Count > 0 ? _stack.Windows[^1] : null );
+			else if ( ShortcutRow( release ) is > 0 and var row )
+				ShortcutKey( _stack.Windows.Count > 0 ? _stack.Windows[^1] : null, row );
 		}
 	}
 
 	/// <summary>
-	/// R let go with no modifier held, the shortcuts table's row 11 (key 0x52, <c>0x0040c5b0</c>), which runs
-	/// <c>FUN_004aa480</c>, the gadget's Research button's own function: a message box in Instant Action or with no
-	/// researcher hired, else the research screen (<c>docs/exe/hud.md</c>, "The nine screens behind Info, Money and
-	/// Research"). None of the three is built, so the key is counted where the table is heard: over the park with
-	/// nothing in front, and under a park screen, whose handler runs the shortcuts' table alone
-	/// (<c>FUN_00488ba0</c>, <c>0x00488c13</c>). The game menu, a message box, the options screen and the map keep
-	/// their keys, and in first person the viewfinder's layer answers only the camcorder's and the postcard's rows
-	/// (<c>0x00488a00</c>).
+	/// The shortcuts table's names, by row (<c>0x00748378</c>, 17 rows of 20 bytes; <c>docs/exe/park-engine.md</c>,
+	/// "Keyboard bindings and the shortcut tables").
 	/// </summary>
-	private static void ResearchKey( UiWindow? front )
+	internal static readonly string[] ShortcutNames =
+	[
+		"menu", "buy", "hire", "parkstatus", "allitems", "allstaff", "allpeeps", "financeinfo", "loans", "staffcosts",
+		"entryprice", "research", "map", "staffloc", "peeploc", "postcard", "camcorder"
+	];
+
+	/// <summary>
+	/// The shortcuts table's row a key let go matches, or -1: its key and its modifier byte both equal, the first row
+	/// that does (<c>FUN_0040c990</c>). Every row names no modifier but the two locators and the postcard, which name Ctrl
+	/// alone (<c>0x0c</c>). Row 0 (Escape) is <see cref="MenuKey"/>'s and row 16 (C) the camera modes'.
+	/// </summary>
+	internal static int ShortcutRow( Input.KeyRelease release )
 	{
+		if ( release.ControlAlone )
+		{
+			return release.Key switch
+			{
+				Key.S => 13,
+				Key.V => 14,
+				Key.P => 15,
+				_ => -1
+			};
+		}
+
+		if ( !release.Plain )
+			return -1;
+
+		return release.Key switch
+		{
+			Key.Escape => 0,
+			Key.B => 1,
+			Key.H => 2,
+			Key.I => 3,
+			Key.A => 4,
+			Key.S => 5,
+			Key.V => 6,
+			Key.F => 7,
+			Key.L => 8,
+			Key.T => 9,
+			Key.G => 10,
+			Key.R => 11,
+			Key.Space => 12,
+			Key.C => 16,
+			_ => -1
+		};
+	}
+
+	/// <summary>
+	/// A shortcuts table's row let go, rows 1 to 15. Each row's handler is a stub into the same opener the gadget's
+	/// button reaches, the tab it was left on with it (<c>-1</c>), and every opener notes itself as its category's screen
+	/// (<c>FUN_004a0810</c>), so a row opens what <see cref="ParkCategoryScreens.Show"/> opens and the category button
+	/// opens it next. The map's row is <c>FUN_005f0b40</c>, the map button's. Park status, finances, loans and research
+	/// are not built and are counted where they would open (loans refuse in Instant Action); so are the staff and visitor
+	/// locators (<c>FUN_004b3f60</c>) and the postcard (<c>FUN_004a9380</c>).
+	/// <para>
+	/// The table is heard over the park with nothing in front, and under a park screen, whose handler runs the
+	/// shortcuts' table alone (<c>FUN_00488ba0</c>, <c>0x00488c13</c>): there a row opens its screen in that one's place.
+	/// The game menu, a message box, the options screen and the map keep their keys, and in first person the
+	/// viewfinder's layer answers only the camcorder's and the postcard's rows (<c>0x00488a00</c>).
+	/// </para>
+	/// </summary>
+	private void ShortcutKey( UiWindow? front, int row )
+	{
+		if ( row is 0 or 16 )
+			return;
+
 		if ( front is GameMenu or ParkMapScreen or { Modal: true } )
 			return;
 
-		if ( ParkCamcorderCameraMode.Active )
+		if ( ParkCamcorderCameraMode.Active && row != 15 )
 			return;
 
-		Unimplemented.Report( "RESEARCH_SHORTCUT" );
+		Log.Info( $"Park keys: shortcut row {row}, {ShortcutNames[row]}" );
+
+		switch ( row )
+		{
+			case 1:
+				ParkCategoryScreens.Show( _stack, ParkCategoryScreens.Building, ParkCategoryScreens.Buy );
+				break;
+
+			case 2:
+				ParkCategoryScreens.Show( _stack, ParkCategoryScreens.Building, ParkCategoryScreens.Hire );
+				break;
+
+			// Park status 3, all items 5, all staff 4, all visitors 6.
+			case 3 or 4 or 5 or 6:
+				ParkCategoryScreens.Show( _stack, ParkCategoryScreens.Information, row switch { 3 => 3, 4 => 5, 5 => 4, _ => 6 } );
+				break;
+
+			// Finances 7, loans 8, staff costs 9, the entry price 10.
+			case 7 or 8 or 9 or 10:
+				ParkCategoryScreens.Show( _stack, ParkCategoryScreens.Finance, row );
+				break;
+
+			// FUN_004aa480, the gadget's Research button's own function: a message box in Instant Action or with no
+			// researcher hired, else the research screen (docs/exe/hud.md, "The nine screens behind Info, Money and
+			// Research"). None of the three is built.
+			case 11:
+				Unimplemented.Report( "RESEARCH_SHORTCUT" );
+				break;
+
+			case 12:
+				_stack.Open( new ParkMapScreen( _stack ) );
+				break;
+
+			case 13:
+				Unimplemented.Report( "STAFF_LOCATOR" );
+				break;
+
+			case 14:
+				Unimplemented.Report( "VISITOR_LOCATOR" );
+				break;
+
+			case 15:
+				Unimplemented.Report( "POSTCARD_SHORTCUT" );
+				break;
+		}
 	}
 
 	/// <summary>

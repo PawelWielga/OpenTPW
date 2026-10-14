@@ -11,8 +11,9 @@ namespace OpenTPW.Tests;
 /// <summary>
 /// The park's reached paths that are counted and do nothing more: the game menu's Save Game and Publish
 /// Park, the gadget's postcard button, and R, the shortcuts table's research row (<c>0x0040c5b0</c>, into
-/// <c>FUN_004aa480</c>). Each is counted where the player reaches it and only there. See <c>ParkFrontEnd.NotYet</c>,
-/// <c>ParkFrontEnd.ResearchKey</c> and <c>ParkGadget.SendPostcard</c>.
+/// <c>FUN_004aa480</c>). Each is counted where the player reaches it and only there; and the shortcuts table's other
+/// rows, which open their screens or are counted. See <c>ParkFrontEnd.NotYet</c>, <c>ParkFrontEnd.ShortcutKey</c> and
+/// <c>ParkGadget.SendPostcard</c>.
 ///
 /// <para>
 /// <b>The frame is the game's own</b>: SDL's key events through <see cref="Input.UpdateFrom"/> and the real stack's
@@ -155,7 +156,7 @@ public class ParkCountedPathsTests
 	/// full-screen view, and not in first person.
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> each gate taken out of <c>ResearchKey</c>, or the full-screen view's branch reading R, counts
+	/// <b>Mutations:</b> each gate taken out of <c>ShortcutKey</c>, or the full-screen view's branch reading R, counts
 	/// on its line; a park screen refused leaves the first at nought.
 	/// </remarks>
 	[TestMethod]
@@ -194,6 +195,146 @@ public class ParkCountedPathsTests
 
 		Press( stack, Key.R );
 		Assert.AreEqual( 2, Times( "RESEARCH_SHORTCUT" ), "and over the park again: counted" );
+	}
+
+	/// <summary>
+	/// <b>A key let go matches the shortcuts table's row whose key and modifier byte both equal it</b> (<c>0x00748378</c>,
+	/// <c>FUN_0040c990</c>): fourteen rows name no modifier, the two locators and the postcard Ctrl alone.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> any row's key changed; Ctrl taken as no modifier; a modifier left out of the match.</remarks>
+	[TestMethod]
+	public void EachShortcutRowIsTheOriginalsKeyAndModifier()
+	{
+		Key[] plain = [Key.Escape, Key.B, Key.H, Key.I, Key.A, Key.S, Key.V, Key.F, Key.L, Key.T, Key.G, Key.R, Key.Space];
+
+		for ( var row = 0; row < plain.Length; row++ )
+			Assert.AreEqual( row, UI.ParkFrontEnd.ShortcutRow( new Input.KeyRelease( plain[row], Input.Modifiers.None ) ), plain[row].ToString() );
+
+		Assert.AreEqual( 16, UI.ParkFrontEnd.ShortcutRow( new Input.KeyRelease( Key.C, Input.Modifiers.None ) ) );
+		Assert.AreEqual( (13, 14, 15), (Row( Key.S, Input.Modifiers.Control ), Row( Key.V, Input.Modifiers.Control ), Row( Key.P, Input.Modifiers.Control )) );
+		Assert.AreEqual( (-1, -1, -1, -1, -1, -1),
+			(Row( Key.P, Input.Modifiers.None ), Row( Key.A, Input.Modifiers.Control ), Row( Key.A, Input.Modifiers.Shift ),
+			Row( Key.S, Input.Modifiers.Alt ), Row( Key.S, Input.Modifiers.Control | Input.Modifiers.Shift ), Row( Key.W, Input.Modifiers.None )) );
+		Assert.AreEqual( (17, "allitems", "allstaff", "map"),
+			(UI.ParkFrontEnd.ShortcutNames.Length, UI.ParkFrontEnd.ShortcutNames[4], UI.ParkFrontEnd.ShortcutNames[5], UI.ParkFrontEnd.ShortcutNames[12]) );
+
+		static int Row( Key key, Input.Modifiers held ) => UI.ParkFrontEnd.ShortcutRow( new Input.KeyRelease( key, held ) );
+	}
+
+	/// <summary>
+	/// <b>Each screen row opens the screen its category button would, in the open one's place, and leaves the
+	/// category on it</b> (each opener's <c>FUN_004a0810</c>), the entry price's left as it is with it up; Space opens the
+	/// map, which keeps its keys; the rows whose screen is not built are counted, park status leaving its category on 3,
+	/// and loans do nothing in Instant Action (<c>0x0049fb8e</c>).
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> a row sent to another screen; A and S exchanged; a category left where it was; the map row left
+	/// out; the map's gate taken out; a counted row's name changed or its count left out; loans heard in Instant Action;
+	/// the entry price built again with it up.
+	/// </remarks>
+	[TestMethod]
+	public void EachScreenRowOpensTheScreenItsCategoryButtonWould()
+	{
+		var stack = APark();
+
+		UI.ParkCategoryScreens.Seed();
+
+		(Key Key, string Screen, int Category, int LeftOn)[] rows =
+		[
+			(Key.B, "ParkBuyScreen", UI.ParkCategoryScreens.Building, 1),
+			(Key.H, "ParkHireScreen", UI.ParkCategoryScreens.Building, 2),
+			(Key.A, "ParkItemsScreen", UI.ParkCategoryScreens.Information, 5),
+			(Key.S, "ParkStaffScreen", UI.ParkCategoryScreens.Information, 4),
+			(Key.V, "ParkVisitorsScreen", UI.ParkCategoryScreens.Information, 6),
+			(Key.T, "ParkStaffCostsScreen", UI.ParkCategoryScreens.Finance, 9),
+			(Key.G, "ParkEntryPriceScreen", UI.ParkCategoryScreens.Finance, 10)
+		];
+
+		foreach ( var row in rows )
+		{
+			Press( stack, row.Key );
+			Assert.AreEqual( $"ParkGadget, ParkViewfinder, {row.Screen}", Names( stack ), row.Key.ToString() );
+			Assert.AreEqual( row.LeftOn, UI.ParkCategoryScreens.LeftOn( row.Category ), row.Key.ToString() );
+		}
+
+		var price = stack.Windows[^1];
+		Press( stack, Key.G );
+		Assert.AreSame( price, stack.Windows[^1], "G with the entry price up: the screen that was open" );
+
+		Press( stack, Key.Escape );
+		Press( stack, Key.Space );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkMapScreen", Names( stack ), "Space: the map" );
+		Press( stack, Key.A );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkMapScreen", Names( stack ), "A over the map: the map's" );
+		Press( stack, Key.Escape );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ) );
+
+		foreach ( var key in new[] { Key.I, Key.F, Key.L } )
+			Press( stack, key );
+
+		WithControl( stack, Key.S );
+		WithControl( stack, Key.V );
+		WithControl( stack, Key.P );
+
+		Assert.IsTrue( Level.InstantAction, "no player: Instant Action" );
+		Assert.AreEqual( (1, 1, 0, 1, 1, 1),
+			(Times( "PARK_STATUS_SCREEN" ), Times( "FINANCE_SCREEN" ), Times( "LOANS_SCREEN" ), Times( "STAFF_LOCATOR" ), Times( "VISITOR_LOCATOR" ), Times( "POSTCARD_SHORTCUT" )) );
+		Assert.AreEqual( (3, 7), (UI.ParkCategoryScreens.LeftOn( UI.ParkCategoryScreens.Information ), UI.ParkCategoryScreens.LeftOn( UI.ParkCategoryScreens.Finance )), "loans left nothing" );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "nothing opened" );
+
+		UI.ParkCategoryScreens.Seed();
+	}
+
+	/// <summary>
+	/// <b>The screen rows are heard where R is and nowhere else</b>: not under a modal window, the game menu or the
+	/// full-screen view; in first person only the postcard's row, which the viewfinder's layer answers (<c>0x00488a00</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the modal gate, the menu gate or the first-person gate taken out; the postcard refused in first person.</remarks>
+	[TestMethod]
+	public void TheScreenRowsAreHeardOnlyWhereTheShortcutsTableIsRun()
+	{
+		var stack = APark();
+		var box = new AWindow( stack, modal: true, parkScreen: false );
+
+		stack.Open( box );
+		Press( stack, Key.S );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, AWindow", Names( stack ), "under a modal window: the window's" );
+		stack.Close( box );
+
+		OpenMenu( stack );
+		Press( stack, Key.S );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, GameMenu", Names( stack ), "under the game menu: the menu's" );
+		Press( stack, Key.Escape );
+
+		Press( stack, Key.F3 );
+		Press( stack, Key.S );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "under the full-screen view: not heard" );
+		Press( stack, Key.F3 );
+
+		InFirstPerson( true );
+		Press( stack, Key.S );
+		WithControl( stack, Key.P );
+		Assert.AreEqual( ("ParkGadget, ParkViewfinder", 1), (Names( stack ), Times( "POSTCARD_SHORTCUT" )), "in first person: the postcard alone" );
+		InFirstPerson( false );
+
+		Press( stack, Key.S );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkStaffScreen", Names( stack ), "over the park: the staff" );
+
+		UI.ParkCategoryScreens.Seed();
+	}
+
+	/// <summary>
+	/// <b>W and D scroll the orbit camera and A and S do not</b>: those two are the shortcuts' all-items and all-staff
+	/// rows (<c>ParkOrbitCameraMode.ScrollAxes</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> A or S given back their scroll; W or D taken away.</remarks>
+	[TestMethod]
+	public void OnlyWAndDScrollTheOrbitCamera()
+	{
+		Assert.AreEqual( (0f, 0f), ParkOrbitCameraMode.ScrollAxes( [Key.A, Key.S] ), "A and S" );
+		Assert.AreEqual( (1f, 0f), ParkOrbitCameraMode.ScrollAxes( [Key.W] ) );
+		Assert.AreEqual( (0f, 1f), ParkOrbitCameraMode.ScrollAxes( [Key.D] ) );
+		Assert.AreEqual( (1f, 1f), ParkOrbitCameraMode.ScrollAxes( [Key.W, Key.A, Key.S, Key.D] ), "all four" );
 	}
 
 	/// <summary>
@@ -261,6 +402,14 @@ public class ParkCountedPathsTests
 	{
 		Frame( stack, Down( key ) );
 		Frame( stack, Up( key ) );
+	}
+
+	/// <summary>A key let go with Ctrl held, and Ctrl let go after it.</summary>
+	private static void WithControl( UI.WindowStack stack, Key key )
+	{
+		Frame( stack, Down( Key.ControlLeft ), Down( key ) );
+		Frame( stack, Up( key ) );
+		Frame( stack, Up( Key.ControlLeft ) );
 	}
 
 	/// <summary>Puts first person up or down, as entering and leaving it do, without a camera to move.</summary>

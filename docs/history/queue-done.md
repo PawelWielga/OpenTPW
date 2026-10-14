@@ -6884,6 +6884,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   which this game did not. Built `ParkStaffScreen.Update` and `ParkItemsScreen.Update`, the staff meters set at the
   opening and a tab alone; ten rewrites in 21 s, the mechanic's happiness 85 then 84 on screen, main's build none
   (`hud.md`, "How allstaff and allitems keep their rows current").
+- [x] **Q366. The shortcuts table's screen rows open their screens.** The table's 17 rows read (`0x00748378`: B H I A
+  S V F L T G R Space, Ctrl+S/V/P, C) and every opener's first steps (loans refuses in Instant Action, `0x0049fb8e`).
+  Built `ParkFrontEnd.ShortcutRow` and `ShortcutKey`: A S B H V T G open their screens through `ParkCategoryScreens.Show`,
+  Space the map, the rest counted; A and S no longer scroll the orbit camera (Alexah's choice; W and D still do). On the
+  stock park each key's row line and screen, a frame each; the original's frame a key the same, L nothing (`hud.md`,
+  "The shortcuts' screen rows").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

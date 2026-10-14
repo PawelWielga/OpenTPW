@@ -14,6 +14,11 @@ namespace OpenTPW;
 /// <see cref="Menu"/> is not one of them: both scenes read Escape from its release instead.
 /// </para>
 /// <para>
+/// <b>The shortcuts table's fifteen screen rows are read by key, not through these</b>: the park takes B, H, I, A, S, V,
+/// F, L, T, G, R, Space and Ctrl with S, V or P from <see cref="Input.Releases"/>, as it takes Escape
+/// (<c>ParkFrontEnd.ShortcutRow</c>), so their bindings here stay unread.
+/// </para>
+/// <para>
 /// <b>This is not a defect list.</b> Some of the thirty-one wait on features that do not exist yet - there
 /// is no research and no time control to speed up - and they are declared ahead of those on
 /// purpose, because the binding is what the options screen offers and the original ships all of them. The
@@ -139,10 +144,6 @@ public enum InputButton
 	/// Research (R)
 	/// Manages park research.
 	/// </summary>
-	/// <remarks>
-	/// Read by nothing: the park takes R from <see cref="Input.Releases"/>, as it takes Escape, and counts it
-	/// (<c>ParkFrontEnd.ResearchKey</c>).
-	/// </remarks>
 	[DefaultKey( Key.R )]
 	Research,
 
