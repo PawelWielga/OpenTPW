@@ -42,7 +42,7 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
 | `original/loadfile.sh load <file> <outdir> <tag>` / `stop` | A park file loaded in the original from its Load Park list, off-screen, with frames; `POLL=` starts a memory reader just before the click. It starts the original only when it is not running, so a second file is 35 s where the first is 123 s |
 | `original/screenpark.sh <file> <outdir> <tag>` | A park file entered by the original on the REAL screen (`VERIFYING.md` rule 128: off-screen draws no sign), for a picture: the file made the newest in the reference player's jungle folder, the welcome and the player clicked, frames `<tag>-1..3` at 1024 x 768 and `-N-full` at 1920 x 1440 from 35 s on, then the original stopped, the file taken out and `save/` checked. 2.5 minutes a file; the camera is the file's own (Q357) |
-| `original/groundcell.py PID SECS X,Y[:X2,Y2]=+MASK\|-MASK\|t@X,Y ...` | The original's memory, WRITTEN: the park ground's heightfield cell words (flags low, texture index high) ORed, cleared or given another cell's texture, held; prints the heightfield's size and each write. A `POLL` for `loadfile.sh`. A write after a load changes nothing on screen: the ground is built at the load (Q359) |
+| `original/groundcell.py PID SECS X,Y[:X2,Y2]=+MASK\|-MASK\|t@X,Y ...` | The original's memory, WRITTEN: the park ground's heightfield cell words (flags low, texture index high) ORed, cleared or given another cell's texture, held; prints the base model's and the terrain pass's heightfields (the same one), the render word `[0x008bcbc8]`, the size and each write. `HF=engine` writes the terrain pass's own pointer, `READ=X,Y[:X2,Y2]` prints those cells' words first, `AFTER=FILE` holds the writes until a frame is taken. A `POLL` for `loadfile.sh`, or run beside a park already loaded. The ground is rebuilt every frame: `+0x1` opens a black hole on the next one (Q360) |
 | `original/heads.py PID SECS ITEM` | The original's memory: every model of an item with its lookup state (shared flags, heads attached, each record holding one) and each head's sprite, place, scale and frame, a line a change. A `POLL` for `loadfile.sh` |
 | `original/emitters.py PID SECS` | The original's memory: the particle system's live emitters by the used chain (slot, count, handle, effect, place, aim, life, particles alive), a block a change and the particle counts a second. A `POLL` for `loadfile.sh` |
 | `original/scriptvar.py PID THING [INDEX [VALUE]]` | A ride script's variables in the running original, by thing: read, or **written** (the one tool that writes its memory). It is how a ride is broken on demand |
@@ -681,6 +681,11 @@ GH=766` there, or the pointer is off):
   units on as `parkrun.original_view` gives for the Load Park list: `camera 585 235 110 180` put world (585, 241)
   mid-frame and `camera 595 175 110 180` the Staff Room (Q359, `q359/orig/e-2.png`, `f-2.png`); screen x runs against
   world x there. Under `loadfile.sh` the view is the list's, nearer again.
+- **Aiming a poke of the original's ground cells** (Q360): the view `loadfile.sh` leaves on Q359's file is about
+  ninety pixels a cell, and screen x runs AGAINST the cell's x (the Belly Bounce at x 51..53 mid-frame, the path at x 56
+  left of it). Read the visible range first: the terrain object `[0x00879d60]`, rows `+0x128`..`+0x12c`, a row's cells
+  `+0x130 + r`..`+0x1b0 + r` (signed bytes); then `groundcell.py` with `READ=` over the box, and poke inside both. Grab
+  the off-screen original's frames as `loadfile.sh` does (`import -window root -display :77`), a pair before for noise.
 - **A model's materials, their textures' alpha and their `0x2` bit, predicted from the files:** `q359/predict.py
   [model ...]` (from `q359/materials.txt`, `wct2raw` run over every jungle, lobby and global advisor model ONE AT A
   TIME: parallel runs abort and thin the list) gives the line each model logs at its load; `q359/flips.py` lists the

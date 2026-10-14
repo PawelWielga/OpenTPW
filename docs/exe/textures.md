@@ -27,8 +27,10 @@ out, graded), `Texture.Alpha` takes it for a `.wct` and counts the pixels only f
 `FUN_00575160`'s rule), and a model's material is cut at 240 or graded at 16 by it; a material with `0x2` over a texture
 with no chunk draws solid, as the original's state word gives it. **What still deviates: the material's `0x2` gates the
 alpha** (`LobbyModel.SeeThrough`). A texture with an alpha under a material without `0x2` draws solid here, counted
-once a material use a model load (`MATERIAL_ALPHA_WITHOUT_0X2`, 54 in the stock park with the lobby), because this
-game draws no ground under a footprint (below, "What a floor's clear border shows"). Of the jungle's, the lobby's and
+once a material use a model load (`MATERIAL_ALPHA_WITHOUT_0X2`, 54 in the stock park with the lobby): at a floor
+plate that solid draw is the original's picture, as neither game draws ground under a footprint and the original
+draws the plate's clear texels (below, "What a floor's clear border shows"); which of its rules does so is not
+read. Of the jungle's, the lobby's and
 the global advisor's `0x2` uses, 99 of 555 change reference (`q359/flips.py`): in the stock park the Belly Bounce's sign
 (`gk_sign1`, `gk_sign2`), the toilets' door (`j_wc2`), the Staff Room's roof (`strawroof`) and the advisor's four mouths
 go from 240 to 16 (their byte 1 is set; their partly-clear texels are under a twentieth), and his Kiosk hat and the
@@ -44,7 +46,7 @@ banks were opaque and drew a black seam between the water and the near bank; the
 file, draws none, and neither does this game now (`q358/side-by-side.png`). This game binds a model's textures with
 Wrap (`Material.Set`'s default) where the original's addressing is CLAMP (`render-states.md`): the bank's opaque top
 edge blends in its clear bottom row and the cut-out test drops it, so **a thin pale line runs along each bank's outer
-edge** here, which the original does not draw (filed, Q360).
+edge** here, which the original does not draw (filed, Q361).
 
 ## What a floor's clear border shows
 
@@ -58,18 +60,29 @@ here by the texture alone, the same border shows the sky's clear colour** (`q359
 no ground under a footprint (`ParkObjects.CoversGround`), so nothing lies under the clear texels. That is why the
 `0x2` gate stays (Q359), and what the old note "removing the gate exposed holes" was.
 
-**The original marks those cells too, and what it draws there is not read.** `FUN_005365d0` (and `FUN_005366e0`) ask
-`FUN_00535dd0` for a cell's ground tile, which answers 8 for cell types 2, 4, 7, 9, 10, 21 and 30 (a built thing's
-footprint is 4, 9 and 10); `FUN_00450470` hands that to `FUN_0046df50`, which ORs `0x101` into the heightfield cell's
-flag word (`[[0x007a0854] + 0x6c] + 0x2c`, four bytes a cell, the flag word low and the ground's texture index high)
-and clears `0x80`, leaving the texture index. Read in the running original (`original/groundcell.py`, `q359/orig/b-load.log`):
-ten of the Belly Bounce's twelve cells hold flags `0x0303` to `0x034b` and texture words 11 down to 0, one a cell, and
-its two middle cells `0x0103` over ground textures 27 and 57; open grass holds `0x0002` or `0x0102`. Whether the
-ground's drawer skips a cell by `0x1` is not read: its drawer is not found (`FUN_0045bf90` is the terrain's hit test,
-which skips a cell with bit `0x2`; `FUN_0044e5b0` sets a flag nothing reads), and a cell's words written into the running
-original after a load changed nothing on screen, its path tile copied onto grass included (`orig/c`, `orig/d`): the ground
-is built at a load. So either the original draws ground under a footprint or its floors' clear texels are drawn, and
-the frames at this distance cannot tell green ground from the plate's own painted green.
+**The original draws no ground under a footprint either, and draws the floor's clear texels** (Q360). `FUN_005365d0`
+(and `FUN_005366e0`) ask `FUN_00535dd0` for a cell's ground tile, which answers 8 for cell types 2, 4, 7, 9, 10, 21 and
+30 (a built thing's footprint is 4, 9 and 10); `FUN_00450470` hands that to `FUN_0046df50`, which ORs `0x101` into the
+heightfield cell's flag word (`[[0x007a0854] + 0x6c] + 0x2c`, four bytes a cell, the flag word low and the ground's
+texture index high) and clears `0x80`. The ground's drawer is the terrain pass `FUN_0056f670`, called by the scene's
+draw `FUN_00576a00` (`0x00576c8b`) every frame: it builds the ground's vertices afresh from `[[0x00879d60]] + 0x2c`
+over each row's visible columns (`+0x128`..`+0x12c` the rows, `+0x130 + r`..`+0x1b0 + r` a row's cells) and skips a
+cell whose flag word has `0x1` (`0x0056f9ce`); its texture fetch `FUN_0056f090` skips the same cells. The second pass
+`FUN_00570d90` is a layer of its own heights and colour, off in the park (`[0x008bcbc8]` is `0x01444100`: no `0x10000`).
+
+Read in the running original (`original/groundcell.py`, `q360/orig/`), on Q359's `run-fix3` file: the terrain pass's
+heightfield is the base model's (`0x10db4e50` both); every one of the Belly Bounce's twelve cells has `0x1` (`0x0303`
+to `0x0363`, its two middle cells `0x0103`); open grass holds `0x0002` or `0x0102`. **Bit `0x1` written on four grass
+cells left of the Belly Bounce opened a black hole two cells square on the next frame** (`c-2.png` against `c-1.png`,
+the box's mean (0, 0, 0) against (80.5, 121.9, 40.4), 15,496 of its 30,000 pixels under 8 against 6): behind the ground
+is the frame's clear colour, black. **With `0x1` on all twelve of its cells, so no ground under it, the Belly Bounce's
+floor border is green** (`a-2-loaded.png`), as it is with the bit cleared and the ground drawn under it
+(`a-3-later.png`); the 37 pixels under 8 in its box in each frame are the trench's and the queue's, none on the
+border. So the original draws the plate's clear texels, its painted grass, where this game's texture alone would cut
+them; which of its rules draws them solid (the material's `0x2`, as this game's gate does, or another) is not read.
+In the original's park view screen x runs against the cell's x: the path at x 56 lies left of the Belly Bounce at
+51..53. Every cell Q359 poked lay outside the pass's visible range on that view (rows 13..32, row 23's cells 45..63),
+so its pokes were not unread, only unseen.
 
 ## The header's scales, and the order they are handed on (`0x00564e20`)
 
@@ -207,8 +220,18 @@ the model's texture).
 |---|---|---|
 | The log's disagreeing materials in the stock park, against `predict.py` | round 1: every line; round 2: 19 of 19 | missed 3 of 19 (the predictor's list lacked two terrain meshes and the global advisor); then 19 of 19, three times |
 | The texture by itself, the floors (`cmp-bellyclose.png`) | the park's ground shows through the borders | **missed**: the sky shows; the original's frame shows green (P6, held) |
-| Two pokes of the original's cell words (`orig/b`, `orig/c`, `orig/d`) | a hole or a path tile | void twice: the ground is built at a load |
+| Two pokes of the original's cell words (`orig/b`, `orig/c`, `orig/d`) | a hole or a path tile | void twice: the poked cells lay off the frame (Q360) |
 | The narrowed rule: `MATERIAL_ALPHA_WITHOUT_0X2` | 54 | 54 (my check's regex missed it once) |
 | Fix against main, two close views, guests boxed out | no floor border; under 1,500 pixels | 681 (the sign), 629 (the roof, the doors) |
 | The Staff Room's eaves in the original (`cmp-roof.png`) | a smooth fringe, as the fix's, not main's sawtooth | as predicted, at a quarter of this game's resolution |
 | The same on the final build (`run-fix11`, the original on its own file, `orig/g`) | 19 of 19, 54, the floor band under 100, the eaves over 200 and a fringe | 19, 54, 0, 217 on the eave line, a fringe |
+
+## Predicted first (`q360/PREDICTION.txt`)
+
+| | Predicted | Measured |
+|---|---|---|
+| The terrain pass's heightfield against the base model's; the render word | the same; `0x10000` clear | both `0x10db4e50`; `0x01444100` |
+| `0x1` written on four grass cells, frame before and after (`orig/a`, then `orig/c`) | a hole, not green | **missed** in `a`: my aim, the cells off the frame's right edge; held in `c`: black, (0, 0, 0) |
+| Why `a` showed nothing, guessed before reading | the pass not run; then no cell visited | **missed** twice: it runs each frame, rows 13..32 visited |
+| A path cell's texture word copied onto grass | a path tile | **missed**: my control, that word is the ground under the path |
+| The Belly Bounce's box with no ground under its floor (`a-2`) and with it (`a-3`) | no pixel under 8 | 37 in each, the trench's and the queue's, none on the border: the border green both times |

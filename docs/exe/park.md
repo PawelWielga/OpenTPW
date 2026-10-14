@@ -149,7 +149,7 @@ An item is a `.wad` under `features/`, `shops/`, `rides/` or `sideshow/`, standi
 
 The model is authored with its **footprint's corner at its own origin** — a 1x1 toilet's floor spans 0..10, the 3x3 fountain's 0..30, the 2x2 staff room's 0..20 — read from node `WorldTransform`, never from bounds, which are node-local and say only how big a mesh is.
 
-**Every item's model opens with a flat floor plate as wide as its whole footprint** — `J_WC`, `wf_floor`, `js_base`, `cn_floor01`, `jb_floor`, `jc_base` — and all 44 footprint cells carry a real ground index, so the ground must skip them or the two fight for the same depth. The original ORs `0x101` into those cells' flag words (`FUN_0046df50`) and keeps their texture word; whether its ground's drawer skips them is not read, and its frame shows green where a plate's border is clear (`textures.md`, "What a floor's clear border shows").
+**Every item's model opens with a flat floor plate as wide as its whole footprint** — `J_WC`, `wf_floor`, `js_base`, `cn_floor01`, `jb_floor`, `jc_base` — and all 44 footprint cells carry a real ground index, so the ground must skip them or the two fight for the same depth. The original ORs `0x101` into those cells' flag words (`FUN_0046df50`) and keeps their texture word, and its terrain pass skips every cell with `0x1` (`FUN_0056f670`), so it draws no ground under a footprint; its frame still shows green where a plate's border is clear, the plate's own texels (Q360, `textures.md`, "What a floor's clear border shows").
 
 ## `.sgn` — one layout, walked in order
 

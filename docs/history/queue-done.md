@@ -6850,6 +6850,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `0x2` over a texture with no chunk solid. 99 of 555 `0x2` uses change: the Staff Room's eaves are a smooth fringe as
   the original's, not main's sawtooth (`q359/cmp-roof.png`). The texture's alpha by itself opened sky round every
   floor (the ground is not drawn under a footprint here): the `0x2` gate stays, counted (54 in the stock park).
+- [x] **Q360. The original draws no ground under a footprint, and draws its floors' clear texels.** Decode only,
+  Q359's piece (`textures.md`, "What a floor's clear border shows"). The terrain pass `FUN_0056f670` rebuilds the
+  ground each frame and skips a cell with `0x1` (`0x0056f9ce`): bit `0x1` on four grass cells of the running original
+  opened a black hole on the next frame (`q360/orig/c-2.png`, 15,496 pixels under 8 against 6), and with no ground
+  under it the Belly Bounce's floor border stays green (`a-2-loaded.png`). So this game's solid floors are the
+  original's picture; the rule that makes them solid there is Q361's.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
