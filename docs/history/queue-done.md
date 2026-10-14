@@ -6856,6 +6856,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   opened a black hole on the next frame (`q360/orig/c-2.png`, 15,496 pixels under 8 against 6), and with no ground
   under it the Belly Bounce's floor border stays green (`a-2-loaded.png`). So this game's solid floors are the
   original's picture; the rule that makes them solid there is Q361's.
+- [x] **Q361. The original's model loader makes a procedural base's floor materials opaque.** Decode only,
+  Q360's piece (`textures.md`, "What a floor's clear border shows"). `ProceduralBase_SkirtFlags` (`0x0046aa10`, from
+  `ProceduralBase_Build` in the object model loader `FUN_004629d0`) sets material `0x800` on every floor triangle's
+  material but material 0 on an inner cell (`Footprint_EdgeMask`, `0x0052c420`), and `0x800` draws the opaque word
+  `0x1256`. In the running original the Belly Bounce's nine floor materials read `0x0801`/`0x0821` (the file `0x1`),
+  its body's none, and 174 of 174 loaded floor materials carry it (`q361/floormats.txt`); a read watch saw nothing
+  read them while the park draws, and clearing them changed nothing on screen (`q361/orig/k-2.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

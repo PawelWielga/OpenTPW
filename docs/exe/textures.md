@@ -28,9 +28,9 @@ out, graded), `Texture.Alpha` takes it for a `.wct` and counts the pixels only f
 with no chunk draws solid, as the original's state word gives it. **What still deviates: the material's `0x2` gates the
 alpha** (`LobbyModel.SeeThrough`). A texture with an alpha under a material without `0x2` draws solid here, counted
 once a material use a model load (`MATERIAL_ALPHA_WITHOUT_0X2`, 54 in the stock park with the lobby): at a floor
-plate that solid draw is the original's picture, as neither game draws ground under a footprint and the original
-draws the plate's clear texels (below, "What a floor's clear border shows"); which of its rules does so is not
-read. Of the jungle's, the lobby's and
+plate that solid draw is the original's picture, by another rule: the original sets material `0x800` on a
+procedural base's floor at its model's load, and `0x800` draws opaque (below, "What a floor's clear border shows",
+Q361). Of the jungle's, the lobby's and
 the global advisor's `0x2` uses, 99 of 555 change reference (`q359/flips.py`): in the stock park the Belly Bounce's sign
 (`gk_sign1`, `gk_sign2`), the toilets' door (`j_wc2`), the Staff Room's roof (`strawroof`) and the advisor's four mouths
 go from 240 to 16 (their byte 1 is set; their partly-clear texels are under a twentieth), and his Kiosk hat and the
@@ -79,7 +79,37 @@ is the frame's clear colour, black. **With `0x1` on all twelve of its cells, so 
 floor border is green** (`a-2-loaded.png`), as it is with the bit cleared and the ground drawn under it
 (`a-3-later.png`); the 37 pixels under 8 in its box in each frame are the trench's and the queue's, none on the
 border. So the original draws the plate's clear texels, its painted grass, where this game's texture alone would cut
-them; which of its rules draws them solid (the material's `0x2`, as this game's gate does, or another) is not read.
+them.
+
+**It draws them because it sets the floor's materials `0x800` when the model loads** (Q361). The object model loader
+`FUN_004629d0`, given flag `0x1` and a model exported "with 'has procedural base'" (its `+0x30` has `0x8`, else it logs
+`0x0074d774`), calls `ProceduralBase_Build` (`0x0046a5a0`), which finds the floor mesh (`+0x2c`, marked `0x4000`) and
+calls `ProceduralBase_SkirtFlags` (`0x0046aa10`, "Has %d flipped and %d non-flipped skirt textures"). That walks the
+floor's triangles against `Footprint_EdgeMask` (`0x0052c420`: a 16 x 16 byte mask, 1 on a footprint cell of type 4, 9,
+10 or 23 with a neighbour outside the footprint): a triangle of material 0 on an inner cell CLEARS the material's
+`0x800` (`0x0046ac11`), every other triangle SETS it (`0x0046ac1e`), so a material's last triangle decides. The flag
+word is the `.md2` material's own (the file holds `0x1`), and `0x800` is the bit `FUN_00581790` turns into the opaque
+word `0x1256` (`0x00581820`; `render-states.md`). `Mesh_SetMaterialsOpaque` (`0x0046a550`) sets or clears it over a
+whole mesh (the loader's flag `0x2000`, not looked into further). Nothing else in the code ORs `0x800` into a material.
+
+Read in the running original on `q359/run-fix3/q359-fix.TPWS` (`q361/`): the Belly Bounce's floor mesh holds nine
+material groups (`m_grass1`, `m_grass2` four times, `m_grass3` twice, `ss_PATH` twice), every one `0x0801` or
+`0x0821`, and its body's (`Bd_42` to `Bd_muth2`) `0x0001` to `0x0031`, none with `0x800`; **of every loaded model's
+materials over a floor texture (`m_grass*`, `mj_grass*`, `ss_gplnk*`, `J_wc1`, `cn_grass`, `sq_grass1`), 174 of 174
+carry `0x800`** (`original/floormats.py`; per texture the cache's reference count but `m_grass3`, 23 against 19, not
+looked into); no loaded floor's material 0 lies on inner cells alone. While the park draws, nothing reads those
+materials, their texture's flags or the footprint cells' texture words (a read watchpoint on each, 15 s, against
+`mGameTick` and the Belly Bounce's body texture, both read at once); `m_grass1`'s cached texture has no surface
+(`+0x0c` -1, `+0x18` nought). Holding the textures' `0x300` additive, the footprint cells' texture words or the
+floor's `0x800` cleared changed nothing on screen (`orig/belly-4.png`, `h-3.png`, `k-2.png`): the floor's draw state
+is made at the load, and **which routine draws a procedural base each frame is not read**. The texture cache
+(`[0x0087a268]`, 4,096 entries of {folder, name, texture, refs}, the count at `+0x10000`) holds `m_grass1` once,
+`data\levels\jungle\sharetex\m_grass1.TGA`, flags `0x11070281` (graded, version 2, `0x40000` from the loader's `0x20`,
+`0x30000` from materials' `0x10`/`0x20`).
+
+So this game's `0x2` gate gives the original's picture on every floor plate the stock park loads, by a different
+rule; where the two part is a material without `0x2` and with an alpha on a mesh that is not a procedural base's
+floor (the original draws its alpha), and a floor's material 0 on inner cells alone (none loaded here).
 In the original's park view screen x runs against the cell's x: the path at x 56 lies left of the Belly Bounce at
 51..53. Every cell Q359 poked lay outside the pass's visible range on that view (rows 13..32, row 23's cells 45..63),
 so its pokes were not unread, only unseen.
@@ -235,3 +265,15 @@ the model's texture).
 | Why `a` showed nothing, guessed before reading | the pass not run; then no cell visited | **missed** twice: it runs each frame, rows 13..32 visited |
 | A path cell's texture word copied onto grass | a path tile | **missed**: my control, that word is the ground under the path |
 | The Belly Bounce's box with no ground under its floor (`a-2`) and with it (`a-3`) | no pixel under 8 | 37 in each, the trench's and the queue's, none on the border: the border green both times |
+
+## Predicted first (`q361/PREDICTION.txt`)
+
+| | Predicted | Measured |
+|---|---|---|
+| `m_grass1` in the original's texture cache | once, `sharetex`, `0x11000280` | once, `sharetex`, `0x11070281`: `0x40000`, `0x30000` and `0x1` not foreseen |
+| The floor textures' `0x300` held opaque, cut, additive (`orig/belly-4.png`) | cut darkens the fringe; additive (the control) changes the plate | **missed**: nothing changed, the control too: the floor reads no texture flags while the park draws |
+| Four page records outside the cache held additive (`g-4.png`) | the floors change | **missed**: they are not the floors |
+| The Belly Bounce's cells given a grass cell's texture word (`h-3.png`) | the plate the same | as predicted |
+| A read watch on the floor's first material object | no read in 15 s | none; nor of its material record, which holds `0x0801` |
+| Every loaded material over a floor texture | over nine in ten with `0x800` | 174 of 174 |
+| The floor's nine materials held without `0x800` (`k-2.png`) | the plate the same (built at the load) | as predicted |

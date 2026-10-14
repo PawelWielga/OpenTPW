@@ -67,6 +67,9 @@ place to look for tools. Each file's docstring is its manual.
 | `original/breakq.py PID SECS THING [all]` | The original's memory, **written**: breaks a ride (`VAR_BREAKSTAT`) each time it is open with a queue that has stood four seconds, so every break puts a queue out, a line a break. With `all` it first writes nought over the mask byte at `0x0050133f`, so every guest dismissed from a queue plays kids `0x80`, not one in eight. Stop the original afterwards |
 | `original/inside.py PID SECS [LEVEL]` | The original's memory: the guests inside the park as the analyser counts them (`FUN_004c9130`: a guest on a cell of type 0, 1, 3, 9 or 10) and those of them whose toilet need is over LEVEL (60 unless given), with their ids, the share in whole per cent the advisor's row 82 sets against 25, and the door, a line a change with `mGameTick`. Says who the advisor's and the gate's counts hold on a tick. A `POLL` for `loadfile.sh` (Q347) |
 | `original/worldwords.py PID SECS OFFSET[:FMT[:NAME]] ...` | The original's memory: any words of the world (`[0x0080239c]` + OFFSET), a line a change with `mGameTick`: the arrival vehicle that is current and the three slots' things are `0x1da72a:H:current 0x1da72c:H:size1 0x1da72e:H:size2 0x1da730:H:size3`. A `POLL` for `loadfile.sh`; `thingwords.py` reads a thing's |
+| `original/texcache.py PID SECS [NAME=+MASK\|-MASK\|=VALUE\|@ADDR=...]` | The original's texture cache (`[0x0087a268]`): every texture with its folder, refs and each record's flags word (`0x100` cut, `0x200` graded, `0x300` additive), `LIST=substr` to narrow; given NAME (`m_grass*` a prefix) or a raw record `@0x...`, holds the `0x300` bits (`=`) or ORs/clears a mask for SECS and restores them, `DONE=FILE` touched once the writes stand. A texture whose flags no draw reads (Q361: a procedural base's floor) changes nothing |
+| `original/floormats.py PID NAME...` | The original's memory: every model material whose texture is a named cache entry (its source record, found by walking texture -> slot -> material object -> record), its flag word (`0x800` drawn opaque), counted by texture. Keep only words with bit `0x1` and nothing above `0x8f3`: the rest are other structures (Q361: 174 of 174 floor materials with `0x800`) |
+| `original/pointsat.py PID HEX...` | Every dword of the original's writable memory pointing at the given addresses (`OFFS=N`: or up to N bytes before them), ~10 s: run it on its own output to walk a pointer chain up |
 | `original/brk.sh ADDR [HITS] [SECS] [WORDS]` | Who CALLS a routine of the original: a hardware breakpoint through `gdb`, attached and detached again; at each hit `mGameTick`, the registers and the stack's words that point into the game's code, nearest first (the first is the caller's return address; read each in Ghidra, a real one follows a `CALL`). `watch.sh` says who writes an address, this says why. `BRK_PRINT='printf "fctrl %x st0 %.17g st1 %.17g\n", $fctrl, (double)$st0, (double)$st1'` adds one gdb line a hit: the x87's control word and stack at a compare |
 | `original/thingpoke.py PID SECS KIND THING:OFFSET:FMT=VALUE ...` | The original's memory, **written**: holds words of things at given values, written again whenever they read otherwise, a line a write; refuses a thing whose type byte (`+2`) is not KIND. `150 15 7:0x38:B=1` holds the weather's `mLightning`, so bolts and thunder come on a clear day. `thingwords.py` reads the same words. Stop the original afterwards |
 | `original/mixpairs.py [<mixer.py log>]` | A `mixer.py` log against the category files: every pair of a 3D channel's far end and volume of 127, with the variation volumes of that range that `round( v x 0.75 )` makes it from. Says which effects' channels a log holds, and that none plays at a number the files cannot make |
@@ -86,6 +89,12 @@ structure, and hand it to `loadfile.sh` through `POLL`.
 ## Recipes
 
 Each was found by trial in the item named, and cost a run to find.
+
+- **Does the original's draw use this at all** (Q361): before poking a texture's or a material's flags to see what
+  changes, read-watch the word (`WATCH=rwatch watch.sh ADDR 4 4 15`) beside a control that is read (`mGameTick`, or a
+  texture of the same model that is drawn). A poke of a word nothing reads changes nothing and proves nothing; the
+  floors' did, two rounds running. Find the word by its pointers: `texcache.py` for the texture record, `pointsat.py`
+  up to its material slot, material object and source record (`floormats.py` does all three).
 
 - **A sign's board beside the original's** (Q357): Lost Kingdom's park gate, from inside the park. This game:
   `camera 480 140 80 180` and `step 2` under `pause`, saved; the original given that file through
@@ -736,7 +745,7 @@ The harness, named by file here (`CLAUDE.local.md` says where it lives):
 | `gmove.py align` / `gmove.py X Y [click]` | Lines the game's cursor up with the pointer, and glides in small steps |
 | `record.sh start NAME` / `stop` | Films the off-screen display, lossless, 30 frames a second, with the wall clock at its start |
 | `record.sh frames NAME FROM TO` / `sheet NAME FROM TO` | Every frame of the film between two of its seconds, each with its wall-clock time, or the same as one contact sheet |
-| `watch.sh 'EXPR' SIZE [HITS] [SECS]` | Which code writes a piece of memory: a hardware watchpoint through `gdb`, attached and detached again |
+| `watch.sh 'EXPR' SIZE [HITS] [SECS]` | Which code writes a piece of memory: a hardware watchpoint through `gdb`, attached and detached again. `WATCH=rwatch` asks who READS it instead (`awatch` both): a silence is evidence only beside a control that fires, `mGameTick` (`'*(unsigned*)0x80239c + 0x1da70c'`) is read at once (Q361) |
 
 **Film what lasts under a second.** A timed still misses it: a balloon's burst lasts a second there, and Q255's
 three stills caught none of it. Start `record.sh` before the click and pull the frames after; a frame's wall-clock

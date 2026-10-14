@@ -44,18 +44,22 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q361. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q362. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q360 (`textures.md`, "What a floor's clear border shows"): **the material's `0x2` still gates the alpha**
-  (`LobbyModel.SeeThrough`, `MATERIAL_ALPHA_WITHOUT_0X2`, 54 in the stock park). Neither game draws ground under a
-  footprint, and the original draws a floor plate's clear texels (green in its frame with no ground under them), as
-  this game's gate does; Q359's reading that the original takes a texture's alpha whatever the material is wrong for
-  those floors. Decode first: which of the original's rules draws a floor's material solid (`FUN_00574bd0`'s state
-  word against the floor's material, `FUN_00581790`), then keep, narrow or replace the gate; the 99 `0x2` uses Q359
-  moved are the check. Not run: the other three themes, the lobby's islands up close, Full Simulation (not asked: the
-  textures and materials are the level's). The advisor's mouths are graded now (not looked at closely), his Kiosk hat
-  solid.
+  From Q361 (`textures.md`, "What a floor's clear border shows"): **the original draws a floor plate solid because
+  its model loader sets the floor's materials `0x800`** (`ProceduralBase_SkirtFlags`, `0x0046aa10`: every triangle of
+  a procedural base's floor sets it, but material 0 on an inner footprint cell clears it; 174 of 174 loaded floor
+  materials carry it), not by `0x2`. This game's `0x2` gate (`LobbyModel.SeeThrough`, `MATERIAL_ALPHA_WITHOUT_0X2`,
+  54 in the stock park) gives the same picture on every loaded floor and parts from the original elsewhere: build
+  the original's rule (the floor mesh's materials opaque by the edge mask, every other material by its texture's
+  alpha whatever `0x2`), count first which of the 54 are not a procedural base's floor (those draw their alpha in
+  the original), and rewrite `SeeThrough`'s comment, which says the
+  original draws any such alpha. Which routine draws a procedural base each frame is not read (nothing reads its
+  materials, textures' flags or cells' words while the park draws); the loader's flag `0x2000`
+  (`Mesh_SetMaterialsOpaque`) and which items take flag `0x1` are not looked into. Not run: the other three themes,
+  the lobby's islands up close, Full Simulation (not asked: the textures and materials are the level's). The advisor's mouths are
+  graded (not looked at closely), his Kiosk hat solid.
   From Q358 (`textures.md`, "The loader"): the reference is byte 1 since Q359. **A thin pale line runs along each river bank's outer edge**: a model's textures are sampled with Wrap where the
   original's addressing is CLAMP (`render-states.md`); measure every model's UVs before changing it. In no game
   run: the lobby's islands up close (the reference player opens only Lost Kingdom), the message box (`ipan`), the
