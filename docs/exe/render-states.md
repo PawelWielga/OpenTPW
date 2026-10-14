@@ -76,7 +76,8 @@ Built by `Texture_BlendStateWord` at `0x00590c40`, switching on the engine textu
 | `FUN_00575160` | — | The other formats': counts texels whose alpha is strictly between `0` and `0xf0`, and sets the "graded" bit when that count reaches `truncate(float(0.05) * width * height)`; `__ftol` truncates the threshold before the comparison at `0x005755c7`. A 4-byte source sets the cut-out bit whatever its alpha | Disassembly |
 | `0x00701720` | — | The `0.05` multiplier used by that test | Data at that address |
 | `0x00581820` | — | The only bit of the `.md2` **material** flag word the draw path tests: `0x800`, which forces the opaque word | Disassembly |
-| `ProceduralBase_SkirtFlags` (`0x0046aa10`) | — | The one writer of material `0x800` at a model's load: every triangle of a procedural base's floor sets it on its material, but material 0 on an inner footprint cell clears it (`textures.md`, "What a floor's clear border shows", Q361); `Mesh_SetMaterialsOpaque` (`0x0046a550`) sets or clears it over a whole mesh | Decompile; read in the running original |
+| `ProceduralBase_SkirtFlags` (`0x0046aa10`) | — | Sets material `0x800` on each triangle's material of a procedural base's floor, and clears it for material 0 on a footprint cell whose edge mask is nought; on every load that runs it, `Mesh_SetMaterialsOpaque` follows and sets it on them all (`textures.md`, "Which materials the loader makes opaque") | Decompilation (Q361, Q362) |
+| `Mesh_SetMaterialsOpaque` (`0x0046a550`) | — | The writer that decides: loader flag `0x2000` (`0x00462c71`) sets `0x800` on every material of the floor mesh `FUN_00469a80` picked, or of the root mesh, and of an item's `P` model's root (`0x00462ca7`) | Decompilation; the original's memory (Q362) |
 
 The inspected draw routine `FUN_00581790` does not read source material `0x2` as an alpha gate.
 This is a bounded observation, not proof that the bit is unused elsewhere. Texture flags are
@@ -107,15 +108,16 @@ sixteen-byte steps. `00575c60` retains those pointers and invokes `00575e10` imm
 
 **Strong inference:** the inspected original path does not justify treating source material
 `0x2` as the alpha-enable semantic used by `ModelFile.MaterialData.IsTranslucent` and
-`LobbyModel.MaterialFlagsFor`. The current gate remains an empirical compatibility workaround.
+`LobbyModel.MaterialFlagsFor`. OpenTPW took the gate out in Q362 (below).
 Prior observations that removing it makes holes do not prove the original bit's meaning.
 
-**Settled since (Q361):** the original draws a floor plate opaque because its loader sets the floor's materials `0x800`
-(`ProceduralBase_SkirtFlags`, above), not by `0x2`; 174 of 174 loaded floor materials carry it.
+**Settled since (Q362):** OpenTPW draws a material's alpha by its texture and `0x800` alone, `0x2` playing no part:
+`0x800` is the file's or the loader's (`Mesh_SetMaterialsOpaque`, above; `textures.md`, "Which materials the loader makes
+opaque"). The gate is gone; Q361's 174 of 174 floor materials are that loader's.
 
-**Settled since (Q359):** the holes are this game's own. A floor plate's clear border shows what lies under the
-footprint, and this game draws no ground there (`textures.md`, "What a floor's clear border shows"), so the gate
-stays for a material without `0x2`, counted; the reference is the texture's header since then.
+**Settled since (Q359):** the holes were this game's own: a floor plate's clear border shows what lies under the
+footprint, and neither game draws ground there (`textures.md`, "What a floor's clear border shows"); the reference is the
+texture's header since then.
 
 **Unknown then:** why those holes occur. Texture decoding, another setup path, runtime mutation,
 caching and the comparison scene remain possible explanations. This static trace did not

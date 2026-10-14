@@ -157,14 +157,20 @@ public sealed class LobbyModel
 	/// <see cref="RideAnimations.AllClips"/>.
 	/// </para>
 	/// </param>
+	/// <param name="opaqueFrames">
+	/// The frames whose materials the original's loader sets <c>0x800</c> on, drawn opaque whatever their texture's
+	/// alpha (<see cref="ProceduralBase"/>), or null for a model it loads without flag <c>0x2000</c>.
+	/// </param>
 	public LobbyModel( string modelPath, string textureDirectory, Vector3 origin, float scale = 1f,
 		IReadOnlyDictionary<string, Texture>? textureOverrides = null,
 		MaterialFlags materialFlags = MaterialFlags.None,
 		string? sharedTextureDirectory = null,
-		IReadOnlyList<AnimationFile>? clips = null )
+		IReadOnlyList<AnimationFile>? clips = null,
+		Func<ModelFile, IReadOnlySet<uint>>? opaqueFrames = null )
 	{
 		var modelFile = new ModelFile( modelPath );
 		_file = modelFile;
+		var opaque = opaqueFrames?.Invoke( modelFile ) ?? NoFrames;
 		var meshCount = modelFile.Meshes.Count;
 
 		Entities = new ModelEntity[meshCount];
@@ -175,9 +181,8 @@ public sealed class LobbyModel
 		var models = new Model?[meshCount][];
 		var meshVertices = new Vertex[meshCount][];
 
-		// The materials whose texture's alpha and 0x2 bit disagree, for the log below: an alpha left solid (the
-		// counted deviation, SeeThrough) or a 0x2 over an opaque texture, drawn solid as the original does.
-		var alphaUnlikeTheBit = new List<string>();
+		// The materials whose texture's alpha is drawn solid by 0x800, for the log below.
+		var alphaMadeOpaque = new List<string>();
 
 		for ( int meshIndex = 0; meshIndex < meshCount; ++meshIndex )
 		{
@@ -210,23 +215,18 @@ public sealed class LobbyModel
 					Normal = mesh.Normals[i],
 					TexCoords = mesh.TexCoords[i],
 					TexIndex = (int)mesh.Vertices[i].TextureIndex,
-					MatFlags = MaterialFlagsFor( mesh, textures, substituted, (int)mesh.Vertices[i].TextureIndex )
+					MatFlags = MaterialFlagsFor( mesh, textures, substituted, (int)mesh.Vertices[i].TextureIndex, opaque )
 				} );
 			}
 
 			meshVertices[meshIndex] = [.. vertices];
-			models[meshIndex] = BuildModels( mesh, meshVertices[meshIndex], textures, substituted, materialFlags );
+			models[meshIndex] = BuildModels( mesh, meshVertices[meshIndex], textures, substituted, materialFlags, opaque );
 
 			for ( int i = 0; i < mesh.Materials.Length && i < textures.Count; ++i )
 			{
-				if ( string.IsNullOrEmpty( mesh.Materials[i].Name ) || substituted[i]
-					|| (textures[i].Alpha != TextureAlpha.Opaque) == mesh.Materials[i].IsTranslucent )
-					continue;
-
-				alphaUnlikeTheBit.Add( $"{mesh.Name.TrimEnd( '\0' )}:{mesh.Materials[i].Name} {textures[i].Alpha}" );
-
-				if ( textures[i].Alpha != TextureAlpha.Opaque )
-					Unimplemented.Report( "MATERIAL_ALPHA_WITHOUT_0X2" );
+				if ( !string.IsNullOrEmpty( mesh.Materials[i].Name ) && !substituted[i]
+					&& textures[i].Alpha != TextureAlpha.Opaque && MadeOpaque( mesh.Materials[i], opaque ) )
+					alphaMadeOpaque.Add( $"{mesh.Name.TrimEnd( '\0' )}:{mesh.Materials[i].Name} {textures[i].Alpha}" );
 			}
 
 			// The mesh's place in the model's node tree, not just its own transform - a mesh
@@ -298,8 +298,8 @@ public sealed class LobbyModel
 			};
 		}
 
-		if ( alphaUnlikeTheBit.Count > 0 )
-			Log.Info( $"{modelPath}: {alphaUnlikeTheBit.Count} material(s) whose texture's alpha and 0x2 bit disagree - {string.Join( ", ", alphaUnlikeTheBit )}" );
+		if ( opaqueFrames != null || alphaMadeOpaque.Count > 0 )
+			Log.Info( $"{modelPath}: {opaque.Count} frame(s) set 0x800, {alphaMadeOpaque.Count} material(s) whose texture's alpha is drawn opaque - {string.Join( ", ", alphaMadeOpaque )}" );
 
 		_origin = origin;
 		_placedOrigin = origin;
@@ -813,20 +813,23 @@ public sealed class LobbyModel
 	/// </summary>
 	private const uint TranslucentFlag = 0x2;
 
+	private static readonly IReadOnlySet<uint> NoFrames = new HashSet<uint>();
+
+	/// <summary>The material word's bit the original draws opaque whatever the texture holds (<c>FUN_00581790</c>).</summary>
+	private const uint OpaqueBit = 0x800;
+
+	/// <summary>Whether a material carries <c>0x800</c>: its file's word, or its frame set by the loader.</summary>
+	private static bool MadeOpaque( ModelFile.MaterialData material, IReadOnlySet<uint> opaque )
+		=> (material.Flags & OpaqueBit) != 0 || opaque.Contains( material.FrameOffset );
+
 	/// <summary>
-	/// Whether a material's alpha is tested and blended: the material carries bit 0x2 and its texture has an alpha
-	/// (<see cref="Texture.Alpha"/>). A substituted texture is a sign, see-through whatever it holds.
-	///
-	/// <para>
-	/// <b>A deviation.</b> The original's state word is the texture's alone (<c>FUN_00581790</c> reads no material bit but
-	/// <c>0x800</c>; docs/exe/render-states.md), so it draws the alpha of a texture under a material without 0x2 too.
-	/// Here that alpha is left solid and counted, once a material use a model load (<c>MATERIAL_ALPHA_WITHOUT_0X2</c>):
-	/// those are mostly the floor plates of rides and shops, whose clear border shows whatever lies under the
-	/// footprint, and this game draws no ground there (<see cref="ParkObjects.CoversGround"/>) where the original's
-	/// frame shows green (docs/exe/textures.md, "What a floor's clear border shows").
-	/// </para>
+	/// Whether a material's alpha is tested and blended: its texture has an alpha (<see cref="Texture.Alpha"/>) and the
+	/// material is not <c>0x800</c>, as the original's state word gives it (<c>FUN_00581790</c>; docs/exe/render-states.md):
+	/// the material's <c>0x2</c> plays no part. The loader sets <c>0x800</c> on a built thing's floor, whose clear border
+	/// is painted grass (<see cref="ProceduralBase"/>). A substituted texture is a sign, see-through whatever it holds.
 	/// </summary>
-	internal static bool SeeThrough( ModelFile.Mesh mesh, List<Texture> textures, bool[] substituted, int material )
+	internal static bool SeeThrough( ModelFile.Mesh mesh, List<Texture> textures, bool[] substituted, int material,
+		IReadOnlySet<uint>? opaque = null )
 	{
 		if ( material < 0 || material >= textures.Count || material >= mesh.Materials.Length )
 			return false;
@@ -837,7 +840,7 @@ public sealed class LobbyModel
 		if ( textures[material].Alpha == TextureAlpha.Opaque )
 			return false;
 
-		return mesh.Materials[material].IsTranslucent;
+		return !MadeOpaque( mesh.Materials[material], opaque ?? NoFrames );
 	}
 
 	/// <summary>
@@ -845,11 +848,11 @@ public sealed class LobbyModel
 	/// <see cref="SeeThrough"/>, plus <see cref="CutOutAlphaFlag"/> where its texture's alpha is not graded.
 	/// </summary>
 	internal static uint MaterialFlagsFor( ModelFile.Mesh mesh, List<Texture> textures, bool[] substituted,
-		int material )
+		int material, IReadOnlySet<uint>? opaque = null )
 	{
 		var flags = mesh.Materials[material].Flags & ~TranslucentFlag;
 
-		if ( !SeeThrough( mesh, textures, substituted, material ) )
+		if ( !SeeThrough( mesh, textures, substituted, material, opaque ) )
 			return flags;
 
 		flags |= TranslucentFlag;
@@ -886,7 +889,7 @@ public sealed class LobbyModel
 	/// mesh turns out to be all of the other - which most meshes are.
 	/// </summary>
 	private static Model?[] BuildModels( ModelFile.Mesh mesh, Vertex[] vertices,
-		List<Texture> textures, bool[] substituted, MaterialFlags materialFlags )
+		List<Texture> textures, bool[] substituted, MaterialFlags materialFlags, IReadOnlySet<uint> opaque )
 	{
 		var solid = new List<uint>( mesh.Indices.Length );
 		var translucent = new List<uint>();
@@ -902,7 +905,7 @@ public sealed class LobbyModel
 			// A substituted sign goes into the see-through half for the same reason it is given the
 			// bit in MaterialFlagsFor - it has to blend over finished solid geometry rather than
 			// into it, and its own ride is some of what it blends over.
-			var seeThrough = SeeThrough( mesh, textures, substituted, material );
+			var seeThrough = SeeThrough( mesh, textures, substituted, material, opaque );
 
 			var into = seeThrough ? translucent : solid;
 

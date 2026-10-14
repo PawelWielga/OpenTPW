@@ -267,7 +267,8 @@ public sealed class ParkQueues : Entity
 			// Queue pieces keep their own art beside them - the jungle's six jpa_que textures - and fall
 			// back to the theme's shared archive for anything else, the way a built item does.
 			var model = new LobbyModel( $"{directory}/{piece}.MD2", $"{directory}/textures", Vector3.Zero,
-				sharedTextureDirectory: $"levels/{theme}/sharetex" );
+				sharedTextureDirectory: $"levels/{theme}/sharetex",
+				opaqueFrames: ProceduralBase.ForQueuePiece );
 
 			// The same angle to both, or the model is turned about one point and stood at another. For a
 			// one-cell piece either angle covers the same cell, so a mismatch does not show as a piece in

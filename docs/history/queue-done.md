@@ -6863,6 +6863,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `0x1256`. In the running original the Belly Bounce's nine floor materials read `0x0801`/`0x0821` (the file `0x1`),
   its body's none, and 174 of 174 loaded floor materials carry it (`q361/floormats.txt`); a read watch saw nothing
   read them while the park draws, and clearing them changed nothing on screen (`q361/orig/k-2.png`).
+- [x] **Q362. The original's floor rule in place of the `0x2` gate.** A material's alpha is drawn unless it is `0x800`,
+  set by the loader (`0x2000`, `Mesh_SetMaterialsOpaque`) on the floor `FUN_00469a80` picks or the root
+  (`ProceduralBase`); 54 of 54 Lost Kingdom item models' floor and count agree with the original's; 44 materials made
+  opaque in the stock park, `MATERIAL_ALPHA_WITHOUT_0X2` gone, the waterfall under the bridge see-through as the
+  original's (`textures.md`, "Which materials the loader makes opaque").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

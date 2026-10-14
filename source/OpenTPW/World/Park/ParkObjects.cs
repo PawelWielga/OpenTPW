@@ -353,7 +353,8 @@ public sealed class ParkObjects : Entity
 			var model = new LobbyModel( $"{item.Directory}/{item.Stem}.MD2", $"{item.Directory}/textures", Vector3.Zero,
 				textureOverrides: sign,
 				sharedTextureDirectory: $"levels/{ThemeName.ToLowerInvariant()}/sharetex",
-				clips: animations.AllClips );
+				clips: animations.AllClips,
+				opaqueFrames: file => ProceduralBase.ForItem( file, item.Shape ) );
 
 			// Put away whatever building it left behind before it is stood anywhere.
 			PoseAsBuilt( model, item );

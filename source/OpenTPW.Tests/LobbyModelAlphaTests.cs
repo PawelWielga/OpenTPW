@@ -7,8 +7,8 @@ using System.Runtime.CompilerServices;
 namespace OpenTPW.Tests;
 
 /// <summary>
-/// A model material's alpha: its reference is its texture's (<c>docs/exe/textures.md</c>, "The loader"), and whether
-/// it is drawn at all is still the material's bit <c>0x2</c>, a deviation (<c>LobbyModel.SeeThrough</c>).
+/// A model material's alpha: its reference is its texture's (<c>docs/exe/textures.md</c>, "The loader"), and it is drawn
+/// unless the material is <c>0x800</c>, by its file or by the loader's floor rule (<c>LobbyModel.SeeThrough</c>).
 /// </summary>
 [TestClass]
 public class LobbyModelAlphaTests
@@ -25,13 +25,15 @@ public class LobbyModelAlphaTests
 	/// <b>The reference is the header's byte 1, not a count of the pixels.</b> <c>gk_sign1</c>, the Belly Bounce's sign,
 	/// has byte 1 set and 753 partly-clear texels of 16,384, under the twentieth a count calls graded: it is drawn graded
 	/// (no cut-out mark). <c>jri_bnk4</c>, a river bank, has byte 1 nought: cut out. <c>tp_top</c> has no alpha chunk:
-	/// solid under its <c>0x2</c>. <c>m_grass1</c>, a floor's border, has an alpha under a material without <c>0x2</c>:
-	/// solid here, the counted deviation. A sign's texture is see-through whatever the material says.
+	/// solid under its <c>0x2</c>. <c>m_grass1</c>, a floor's border, under a material without <c>0x2</c>: see-through on
+	/// its own, solid where its frame is one the loader made <c>0x800</c>, and solid by a file's own <c>0x800</c>; a
+	/// <c>0x2</c> does not keep it see-through then. A sign's texture is see-through whatever the material says.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the reference by the pixel count; the 0x2 gate dropped; a 0x2 over an opaque texture
-	/// left see-through; the file's own 0x2 kept on a solid material; the sign's exception dropped.</remarks>
+	/// <remarks><b>Mutations:</b> the reference by the pixel count; the 0x2 gate put back; the loader's frames ignored;
+	/// the file's 0x800 ignored; a 0x2 over an opaque texture left see-through; the file's own 0x2 kept on a solid
+	/// material; the sign's exception dropped.</remarks>
 	[TestMethod]
-	public void AMaterialsAlphaReferenceIsItsTexturesHeaderAndItsBitStillGatesIt()
+	public void AMaterialsAlphaReferenceIsItsTexturesHeaderAndOnly0x800DrawsItSolid()
 	{
 		var sign = Read( "levels/jungle/sharetex/gk_sign1.wct" );
 		var bank = Read( "levels/jungle/terrain/textures/jri_bnk4.wct" );
@@ -46,19 +48,23 @@ public class LobbyModelAlphaTests
 
 		var mesh = new ModelFile.Mesh
 		{
-			Materials = [Mat( 0x33 ), Mat( 0x33 ), Mat( 0x33 ), Mat( 0x31 ), Mat( 0x31 )]
+			Materials = [Mat( 0x33 ), Mat( 0x33 ), Mat( 0x33 ), Mat( 0x31, 0x100 ), Mat( 0x31 ), Mat( 0x33, 0x108 ), Mat( 0x831, 0x110 )]
 		};
-		var textures = new List<Texture> { Of( sign.Alpha ), Of( bank.Alpha ), Of( top.Alpha ), Of( floor.Alpha ), Of( TextureAlpha.Opaque ) };
+		var textures = new List<Texture> { Of( sign.Alpha ), Of( bank.Alpha ), Of( top.Alpha ), Of( floor.Alpha ), Of( TextureAlpha.Opaque ),
+			Of( floor.Alpha ), Of( floor.Alpha ) };
 		var substituted = new bool[OpenTPW.Material.TextureSlots];
 		substituted[4] = true;
+		var loaderMade = new HashSet<uint> { 0x108 };
 
-		uint Flags( int material ) => LobbyModel.MaterialFlagsFor( mesh, textures, substituted, material );
+		uint Flags( int material ) => LobbyModel.MaterialFlagsFor( mesh, textures, substituted, material, loaderMade );
 
 		Assert.AreEqual( 0x31u | Translucent, Flags( 0 ), "the sign: see-through, graded" );
 		Assert.AreEqual( 0x31u | Translucent | CutOut, Flags( 1 ), "the bank: see-through, cut out" );
 		Assert.AreEqual( 0x31u, Flags( 2 ), "tp_top: solid, its 0x2 taken out" );
-		Assert.AreEqual( 0x31u, Flags( 3 ), "the floor's border: solid, the deviation" );
+		Assert.AreEqual( 0x31u | Translucent, Flags( 3 ), "m_grass1 without 0x2 or 0x800: see-through, graded" );
 		Assert.AreEqual( 0x31u | Translucent | CutOut, Flags( 4 ), "a substituted sign: see-through, cut out" );
+		Assert.AreEqual( 0x31u, Flags( 5 ), "m_grass1 under 0x2 on a frame the loader made 0x800: solid" );
+		Assert.AreEqual( 0x831u, Flags( 6 ), "m_grass1 under the file's own 0x800: solid" );
 	}
 
 	/// <summary>
@@ -110,7 +116,7 @@ public class LobbyModelAlphaTests
 
 	private static int Partial( TextureFile file ) => file.Data.Data.Where( ( b, i ) => i % 4 == 3 && b > 0 && b < 240 ).Count();
 
-	private static ModelFile.MaterialData Mat( uint flags ) => new() { Flags = flags, Name = "m" };
+	private static ModelFile.MaterialData Mat( uint flags, uint frame = 0 ) => new() { Flags = flags, Name = "m", FrameOffset = frame };
 
 	/// <summary>A texture as a load would leave it, made without a device.</summary>
 	private static Texture Of( TextureAlpha alpha )

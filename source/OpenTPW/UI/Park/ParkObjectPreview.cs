@@ -250,7 +250,8 @@ internal sealed class ParkObjectPreview
 			var model = new LobbyModel( path, $"{item.Directory}/textures", Vector3.Zero,
 				textureOverrides: sign,
 				sharedTextureDirectory: $"levels/{objects.ThemeName.ToLowerInvariant()}/sharetex",
-				clips: animations.AllClips );
+				clips: animations.AllClips,
+				opaqueFrames: file => isPModel ? ProceduralBase.ForPModel( file ) : ProceduralBase.ForItem( file, item.Shape ) );
 
 			// A fresh instance of the item's own model is the built thing, with what its building left put away.
 			if ( !isPModel )

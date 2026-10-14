@@ -40,6 +40,11 @@ public sealed class HeightfieldFile
 
 	public int CellsY { get; private init; }
 
+	/// <summary>Where cell (0, 0)'s near corner lies, at +0x08 and +0x0C: nought in every park the game ships.</summary>
+	public float OriginX { get; private init; }
+
+	public float OriginY { get; private init; }
+
 	/// <summary>How wide and deep one cell is in world units. 10.0 in every park the game ships.</summary>
 	public float CellSizeX { get; private init; }
 
@@ -205,6 +210,8 @@ public sealed class HeightfieldFile
 
 		CellsX = (int)ReadUInt32( data, offset + 0x18 );
 		CellsY = (int)ReadUInt32( data, offset + 0x1c );
+		OriginX = ReadSingle( data, offset + 0x08 );
+		OriginY = ReadSingle( data, offset + 0x0c );
 		CellSizeX = ReadSingle( data, offset + 0x10 );
 		CellSizeY = ReadSingle( data, offset + 0x14 );
 		HeightLow = ReadSingle( data, offset + 0x20 );

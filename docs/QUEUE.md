@@ -44,22 +44,20 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q362. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q363. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q361 (`textures.md`, "What a floor's clear border shows"): **the original draws a floor plate solid because
-  its model loader sets the floor's materials `0x800`** (`ProceduralBase_SkirtFlags`, `0x0046aa10`: every triangle of
-  a procedural base's floor sets it, but material 0 on an inner footprint cell clears it; 174 of 174 loaded floor
-  materials carry it), not by `0x2`. This game's `0x2` gate (`LobbyModel.SeeThrough`, `MATERIAL_ALPHA_WITHOUT_0X2`,
-  54 in the stock park) gives the same picture on every loaded floor and parts from the original elsewhere: build
-  the original's rule (the floor mesh's materials opaque by the edge mask, every other material by its texture's
-  alpha whatever `0x2`), count first which of the 54 are not a procedural base's floor (those draw their alpha in
-  the original), and rewrite `SeeThrough`'s comment, which says the
-  original draws any such alpha. Which routine draws a procedural base each frame is not read (nothing reads its
-  materials, textures' flags or cells' words while the park draws); the loader's flag `0x2000`
-  (`Mesh_SetMaterialsOpaque`) and which items take flag `0x1` are not looked into. Not run: the other three themes,
-  the lobby's islands up close, Full Simulation (not asked: the textures and materials are the level's). The advisor's mouths are
-  graded (not looked at closely), his Kiosk hat solid.
+  From Q362 (`textures.md`, "Which materials the loader makes opaque"): seen only in the stock park. **Not photographed
+  in either game**: the lobby's Space island (`sfl_cnr3`, `sho_top1`..`4`, now see-through), the floors newly opaque
+  (`totem`, `puzzle`, `minecart`, `mumbo`'s planks, `s_plant`), the `P` models' roots in the object window (`Pgokarts`,
+  `Pwateride`, `Pcoaster3`'s leaves), the alphas newly drawn on no floor (`jfe_rck1`/`2`, `mumbo`'s tongue, `coaster1`'s
+  leaves). Behind the bridge's see-through waterfall this game shows greener ground than the original's dark (not
+  looked into). Type-3 items' pieces (`FUN_0042fad0`, flags `0x1013405`) are not loaded here. The original's stop of the
+  floor walk past the ground's last cell is not kept (no Lost Kingdom mesh reaches past 502 units of its 850). Material `0x2`'s depth-write role
+  (`render-states.md`, the 2026-10-03 trace) is not looked into. The hoardings still take mesh 0 for the floor
+  (`ParkObjects`), which `ProceduralBase.FloorMesh` matches on every Lost Kingdom item. Which routine draws a
+  procedural base each frame and which items take flag `0x1` beyond the table are not read further. Not run: the other
+  three themes, Full Simulation (not asked: the models are the level's).
   From Q358 (`textures.md`, "The loader"): the reference is byte 1 since Q359. **A thin pale line runs along each river bank's outer edge**: a model's textures are sampled with Wrap where the
   original's addressing is CLAMP (`render-states.md`); measure every model's UVs before changing it. In no game
   run: the lobby's islands up close (the reference player opens only Lost Kingdom), the message box (`ipan`), the

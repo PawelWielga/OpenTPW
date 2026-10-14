@@ -25,12 +25,9 @@ texture as it loads (`Texture: '...' reads its alpha chunk by its bit count, hea
 K under 240`). Since Q359 the reference is the original's: `TextureFile.Alpha` is the three states above (opaque, cut
 out, graded), `Texture.Alpha` takes it for a `.wct` and counts the pixels only for another format (`Texture.Classify`,
 `FUN_00575160`'s rule), and a model's material is cut at 240 or graded at 16 by it; a material with `0x2` over a texture
-with no chunk draws solid, as the original's state word gives it. **What still deviates: the material's `0x2` gates the
-alpha** (`LobbyModel.SeeThrough`). A texture with an alpha under a material without `0x2` draws solid here, counted
-once a material use a model load (`MATERIAL_ALPHA_WITHOUT_0X2`, 54 in the stock park with the lobby): at a floor
-plate that solid draw is the original's picture, by another rule: the original sets material `0x800` on a
-procedural base's floor at its model's load, and `0x800` draws opaque (below, "What a floor's clear border shows",
-Q361). Of the jungle's, the lobby's and
+with no chunk draws solid, as the original's state word gives it. Since Q362 **a material's alpha is drawn unless the material is `0x800`**, its file's or the loader's (below, "Which
+materials the loader makes opaque"), and its `0x2` plays no part (`LobbyModel.SeeThrough`), as the original's state word
+reads no other bit. Of the jungle's, the lobby's and
 the global advisor's `0x2` uses, 99 of 555 change reference (`q359/flips.py`): in the stock park the Belly Bounce's sign
 (`gk_sign1`, `gk_sign2`), the toilets' door (`j_wc2`), the Staff Room's roof (`strawroof`) and the advisor's four mouths
 go from 240 to 16 (their byte 1 is set; their partly-clear texels are under a twentieth), and his Kiosk hat and the
@@ -107,12 +104,64 @@ is made at the load, and **which routine draws a procedural base each frame is n
 `data\levels\jungle\sharetex\m_grass1.TGA`, flags `0x11070281` (graded, version 2, `0x40000` from the loader's `0x20`,
 `0x30000` from materials' `0x10`/`0x20`).
 
-So this game's `0x2` gate gives the original's picture on every floor plate the stock park loads, by a different
-rule; where the two part is a material without `0x2` and with an alpha on a mesh that is not a procedural base's
-floor (the original draws its alpha), and a floor's material 0 on inner cells alone (none loaded here).
 In the original's park view screen x runs against the cell's x: the path at x 56 lies left of the Belly Bounce at
 51..53. Every cell Q359 poked lay outside the pass's visible range on that view (rows 13..32, row 23's cells 45..63),
 so its pokes were not unread, only unseen.
+
+## Which materials the loader makes opaque
+
+**Loader flag `0x2000` decides, after the skirt pass** (Q362). Right after `ProceduralBase_Build` (`0x00462c69`), the
+loader `FUN_004629d0`, asked with `0x2000` (`0x00462c71`), calls `Mesh_SetMaterialsOpaque( model, mesh, 1 )`
+(`0x0046a550`): `0x800` on every material of the floor mesh `[model + 8] + 0x2c`, or of the root mesh (header `+0x78`)
+where no floor was found, unless that node is flagged `0x200`; then the same on the root mesh of the item's `P` model,
+if it loaded one (`[+0xd0]`, `0x00462ca7`), with no floor search. So `ProceduralBase_SkirtFlags`' clears never survive
+on a load that runs it. A material's flag word is its frame-table entry's: the bit reaches every material of the model
+naming the same texture (`m_grass1` on another mesh of the Belly Bounce would be opaque too).
+
+| Who loads | Flags | `0x1` (base) | `0x2000` | Footprint |
+|---|---|---|---|---|
+| The catalogue, an ordinary item (`FUN_00413c10`, `0x00414175`) | `0xb24a9` (`0x4b24a9`) | yes | yes | the item's picture |
+| The catalogue, a fixed item (`Info.DontApplyOffset`, `0x00414192`) | `0x50c00` (`0x450c00`) | no | no | — |
+| The catalogue, an item's supplementary models (`0x0041437e`; the bumper boats' here) | `0xc0` | no | no | — |
+| Queue pieces (`FUN_00522900`) | `0x12423` | yes | yes | 1 x 1 at `0x00816d68`, kind nought |
+| Type-3 items' pieces (`FUN_0042fad0`) | `0x1013405` | yes | yes | none |
+| `FUN_00430130`, `FUN_00522aa0`/`c60`/`e40`, `FUN_005d7fd0` | `0xc0`, `0x10422`, `0x422`, `0xc0`/`0x40c0` | no | no | — |
+
+**The floor is the mesh with most base vertices** (`FUN_00469a80`, its count mode). It walks the nodes from the root,
+a node before its children, skips one flagged `0x200` (not its children), counts nothing on one flagged `0x20000`, and
+takes each vertex through its node's matrix into model space (the file's axes, y up). A vertex counts when its height
+is within 0.01 of nought and its x and z are each within 0.01 of a cell line of the park's grid (`[0x007a0854] + 0x6c`:
+origin nought, cells of 10 in all four parks; a coordinate under the origin taken as nought), on a side of its cell
+the footprint's outline runs along: `ProceduralBase_Build` gives each cell of the picture an edge bit per side where
+the cell's kind (its low four bits) and that neighbour's differ in being nought (`1` low z, `2` low x, `4` high z, `8`
+high x; past the picture is out), and a vertex on the cell's low x line asks `2`, high x `8`, low z `1`, high z `4`. A
+cell past the picture's last is its last, asked from the far side. Header bit `0x100` would count every corner (no file
+stores it). The first mesh to hold more than every one before it is the floor; `[model + 8] + 0xc` is the count over
+all meshes. With no outline (a queue piece's kind-nought cell, no footprint) nothing counts and the root is taken.
+
+**Measured in the original** (`original/floormesh.py` on `q359/run-fix3/q359-fix.TPWS`, `q362/floormesh-b.txt`): it loads
+every catalogue item on offer, and **54 of 54 Lost Kingdom item models agree with OpenTPW's `ProceduralBase.FloorMesh` on
+the count and the floor** (`q362/sweep.txt`): every floor is the item's mesh 0, its count the outline's corners (the Belly
+Bounce 14, Sign 1 14, the 2 x 1 Log 6); the park gate, a fixed item, counts 0. Every floor's and root's material word
+carries `0x800` (the Belly Bounce's `0x801`/`0x821`, Ptotem's `0x0803` with `0x2`), the seven queue pieces count 0 with
+their root's `0x0831` (`jpa_que1`/`2`/`3`), and `jpa_que5`/`jpa_que6` on their second mesh have none (`0x0011` to `0x0033`).
+The terrain (`base.MD2`, header `0x3`, not loaded by `FUN_004629d0`) keeps `dk_water3`'s word `0x8031`, no `0x800`.
+
+**OpenTPW** (`ProceduralBase`) builds the same for a placed item (its `Info.Shape`), the object window's preview (the
+item's own model the same way, a `P` model by its root) and a queue piece; a fixed item and the bumper boats' extra
+models are given none, and no type-3 piece is loaded here. Each such load logs `<model>: N frame(s) set 0x800, K
+material(s) whose texture's alpha is drawn opaque`. In the stock park K adds to 44 over 15 loads, the 54 old
+alpha-without-`0x2` uses less the terrain's four `dk_water3` and the lobby Space island's six (`sfl_cnr3`,
+`sho_top1`..`4`), which now draw their alpha. **On screen** (`q362/run-fix-4` the final build, `run-control-2` main's): the
+waterfall sheet under the jungle's bridge (`Object12`, `dk_water3` alone) is see-through where main drew it solid dark
+blue, 5,017 pixels at `camera 530 560 40 180`, blue minus red 92 to 38; the original's frame of the same saved park reads
+18 there (`q362/side-by-side-fall.png`). The low pool's east end (`surface27`) changes 501 pixels the same way.
+
+**Across Lost Kingdom's catalogue** (`q362/sweep.txt`): newly opaque are the floors whose materials carry `0x2` (`totem`,
+`puzzle`, `minecart`, `mumbo`'s planks, `s_plant`'s base) and the `P` models' roots (`Pgokarts`'
+flags and sign, `Pwateride`'s exit, `Pcoaster3`'s ground with its bamboo and palm leaves); newly see-through are
+alphas on no floor without `0x2` (the rocks' `jfe_rck1`/`2`, `mumbo`'s tongue, `coaster1`'s `E_15_LEAF`/`E_16_LEAF`).
+None of these stands in the stock park; none was photographed in either game.
 
 ## The header's scales, and the order they are handed on (`0x00564e20`)
 
@@ -277,3 +326,18 @@ the model's texture).
 | A read watch on the floor's first material object | no read in 15 s | none; nor of its material record, which holds `0x0801` |
 | Every loaded material over a floor texture | over nine in ten with `0x800` | 174 of 174 |
 | The floor's nine materials held without `0x800` (`k-2.png`) | the plate the same (built at the load) | as predicted |
+
+## Predicted first (`q362/PREDICTION.txt`)
+
+| Prediction | Predicted | Read |
+|---|---|---|
+| `dk_water3`'s material word in the original | no `0x800` | `0x8031` |
+| The queue pieces' `jpa_que1`/`2`, `m_grass1` | `0x800` | all |
+| The floor picks against the original's | the stock models' 8 | 54 of 54 agree |
+| `jpa_que5`/`6` | no `0x800` | none |
+| The stock park's opaque materials, `MATERIAL_ALPHA_WITHOUT_0X2` | 44 over 11 models; 0 (main 54) | as predicted |
+| The raised pool seen, over a third of its box changing | changes | missed: it lies under the ground (89 pixels, the waterfall's) |
+| The waterfall under the bridge | over 500 pixels, bluer in main | 5,017; 92 to 38 |
+| The low pool | over 1,000 pixels | missed: 501, at its east end alone |
+| The original under the bridge | nearer the fix | 18 against 31 (main 77) |
+| The mutations | — | 20 put back, 17 fail a test; 3 cannot differ on Lost Kingdom's data |

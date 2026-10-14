@@ -111,6 +111,12 @@ public partial class ModelFile : BaseFormat
 		/// </summary>
 		public int PathId { get; set; }
 
+		/// <summary>The node's first child, from the record's +0x0C, or -1 where it has none.</summary>
+		public int FirstChild { get; set; } = -1;
+
+		/// <summary>The node's next sibling, from the record's +0x08, or -1 where it is the last.</summary>
+		public int NextSibling { get; set; } = -1;
+
 		/// <summary>
 		/// Where this node sits on a face of its parent mesh, from its id record's pointer at +0x0C, or null where the
 		/// record has none (FileFormats models.md, "Which records have a position"). Set on the records whose flag
@@ -171,6 +177,16 @@ public partial class ModelFile : BaseFormat
 	/// <see cref="Meshes"/> is empty in that case - see the notes on this class.
 	/// </summary>
 	public bool IsAnimation { get; private set; }
+
+	/// <summary>
+	/// The header's flag word at 0x30 as the file stores it (FileFormats models.md, "Shared header"): bit
+	/// <c>0x8</c> is a model exported with a procedural base, bit <c>0x100</c> makes every base vertex count
+	/// (<c>FUN_00469a80</c>; no file stores it).
+	/// </summary>
+	public uint HeaderFlags { get; private set; }
+
+	/// <summary>The root node, the header's 0x78 (the one node with no parent), or -1 where it names none.</summary>
+	public int RootNode { get; private set; } = -1;
 
 	public ModelFile( Stream stream )
 	{
@@ -275,12 +291,11 @@ public partial class ModelFile : BaseFormat
 		public uint Flags;
 
 		/// <summary>
-		/// The material's bit <c>0x2</c>, under which alone <c>LobbyModel.SeeThrough</c> draws a texture's alpha: a
-		/// deviation, as the original's state word for a material reads no bit of this word but <c>0x800</c>
-		/// (<c>FUN_00581790</c>) and takes the alpha from the texture (docs/exe/render-states.md, "The four state
-		/// words"). Bit 0 is set on every material. The engine ORs 0x8030 into this word itself
-		/// for the materials of any mesh carrying a UV animation (<c>0x004626fb</c>), but 0x10 and 0x20 are not a
-		/// pair: each occurs without the other. The engine carries 0x40 into the model's header flags at 0x30; what
+		/// The material's bit <c>0x2</c>, which nothing draws by: the original's state word for a material reads no bit of
+		/// this word but <c>0x800</c> (<c>FUN_00581790</c>) and takes the alpha from the texture (docs/exe/render-states.md,
+		/// "The four state words"), and so does <c>LobbyModel.SeeThrough</c>. Bit 0 is set on every material. The engine
+		/// ORs 0x8030 into this word itself for the materials of any mesh carrying a UV animation (<c>0x004626fb</c>), but
+		/// 0x10 and 0x20 are not a pair: each occurs without the other. The engine carries 0x40 into the model's header flags at 0x30; what
 		/// 0x10 and 0x20 select is not known (FileFormats models.md, "Material flags").
 		/// </summary>
 		public bool IsTranslucent => (Flags & 0x2) != 0;
@@ -305,6 +320,9 @@ public partial class ModelFile : BaseFormat
 
 			if ( meshTableOffset >= stream.Length )
 				throw new InvalidDataException( $"Mesh table offset {meshTableOffset} is past the end of this {stream.Length} byte file" );
+
+			reader.BaseStream.Seek( 0x30, SeekOrigin.Begin );
+			HeaderFlags = reader.ReadUInt32();
 
 			reader.BaseStream.Seek( 0x50, SeekOrigin.Begin );
 			uint off2 = reader.ReadUInt32();
@@ -659,6 +677,8 @@ public partial class ModelFile : BaseFormat
 		}
 
 		var parents = new int[nodeCount];
+		var siblings = new int[nodeCount];
+		var children = new int[nodeCount];
 		var local = new Matrix4x4[nodeCount];
 
 		for ( int node = 0; node < nodeCount; ++node )
@@ -667,13 +687,15 @@ public partial class ModelFile : BaseFormat
 
 			if ( record < 0 || record + 0x50 > stream.Length )
 			{
-				parents[node] = -1;
+				parents[node] = siblings[node] = children[node] = -1;
 				local[node] = Matrix4x4.Identity;
 				continue;
 			}
 
 			stream.Seek( record + 0x04, SeekOrigin.Begin );
 			parents[node] = NodeAt( reader.ReadUInt32() );
+			siblings[node] = NodeAt( reader.ReadUInt32() );
+			children[node] = NodeAt( reader.ReadUInt32() );
 
 			stream.Seek( record + 0x10, SeekOrigin.Begin );
 			local[node] = new Matrix4x4(
@@ -712,6 +734,9 @@ public partial class ModelFile : BaseFormat
 			Meshes[i].WorldTransform = World( i, nodeCount );
 		}
 
+		stream.Seek( 0x78, SeekOrigin.Begin );
+		RootNode = NodeAt( reader.ReadUInt32() );
+
 		Nodes = new List<Node>( nodeCount );
 
 		for ( int node = 0; node < nodeCount; ++node )
@@ -748,6 +773,8 @@ public partial class ModelFile : BaseFormat
 					// costs one walk up each remaining chain rather than a second pass over the tree.
 					WorldTransform = World( node, nodeCount ),
 					ParentIndex = parents[node],
+					FirstChild = children[node],
+					NextSibling = siblings[node],
 					Flags = flags,
 					Name = name,
 					PathId = pathId
