@@ -139,6 +139,37 @@ public class TextureDecodeTests
 		}
 	}
 
+	/// <summary>
+	/// <b>A texture takes its alpha chunk when its bit count is 32, whatever byte 1 says</b> (<c>0x00564c72</c>;
+	/// <c>docs/exe/textures.md</c>, "The loader, <c>FUN_00564c00</c>"). <c>jri_bnk4.wct</c>, a river bank of the jungle's
+	/// terrain, has byte 1 nought over a 32-bit count and a chunk: 962 of its 16,384 texels are clear, and the original
+	/// draws it cut out. <c>b_1person.wct</c> has byte 1 set: its alpha is read too and drawn graded.
+	/// <c>b_NEWwin.wct</c> has byte 1 set over a 24-bit count and no chunk: opaque, where reading by byte 1 throws;
+	/// <c>ridestatbar.wct</c> has neither, and nothing to cut.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the chunk read by byte 1; by a bit count of 24 or more; cut-out taken for every chunk
+	/// read; cut-out taken for every byte 1 of nought.</remarks>
+	[TestMethod]
+	public void ATexturesAlphaIsReadByItsBitCount()
+	{
+		TextureFile Read( string path ) => new( new MemoryStream( data.ReadAllBytes( path ) ) );
+		int Clear( TextureData texture ) => texture.Data.Where( ( b, i ) => i % 4 == 3 && b == 0 ).Count();
+
+		var bank = Read( "levels/jungle/terrain/textures/jri_bnk4.wct" );
+		Assert.AreEqual( 962, Clear( bank.Data ), "jri_bnk4's clear texels" );
+		Assert.IsTrue( bank.CutOutAlpha, "jri_bnk4's alpha is cut out: byte 1 nought" );
+
+		var person = Read( "ui/stexture/b_1person.wct" );
+		Assert.IsTrue( Clear( person.Data ) > 0, "b_1person's alpha is read" );
+		Assert.IsFalse( person.CutOutAlpha, "b_1person's alpha is graded: byte 1 set" );
+
+		var window = Read( "levels/hallow/rides/bumper/stexture/b_NEWwin.wct" );
+		Assert.IsTrue( window.IsValid && window.Data.Data.Where( ( b, i ) => i % 4 == 3 ).All( b => b == 255 ), "b_NEWwin decodes opaque" );
+		Assert.IsFalse( window.CutOutAlpha, "b_NEWwin has no alpha chunk" );
+
+		Assert.IsFalse( Read( "ui/textures/ridestatbar.wct" ).CutOutAlpha, "ridestatbar has byte 1 nought and no alpha chunk" );
+	}
+
 	[TestMethod]
 	public void EveryTextureTheJungleTerrainNamesDecodes()
 	{

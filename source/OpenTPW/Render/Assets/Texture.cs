@@ -141,6 +141,20 @@ public partial class Texture : Asset
 		var file = new TextureFile( path );
 		var textureFileData = file.IsValid ? file.Data : NotFound( path );
 
+		if ( file.CutOutAlpha )
+		{
+			var pixels = textureFileData.Data;
+			int clear = 0, under = 0;
+
+			for ( int i = 3; i < pixels.Length; i += 4 )
+			{
+				clear += pixels[i] == 0 ? 1 : 0;
+				under += pixels[i] < CutOutAlphaReference ? 1 : 0;
+			}
+
+			Log.Info( $"Texture: '{path}' reads its alpha chunk by its bit count, header byte 1 nought: {clear} of {pixels.Length / 4} texels clear, {under} under {CutOutAlphaReference}" );
+		}
+
 		CreateTexture( path, textureFileData.Data, (uint)textureFileData.Width, (uint)textureFileData.Height, flags );
 	}
 

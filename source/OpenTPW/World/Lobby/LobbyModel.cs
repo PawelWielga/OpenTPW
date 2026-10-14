@@ -876,6 +876,9 @@ public sealed class LobbyModel
 				return null;
 
 			var material = new Material<ObjectUniformBuffer>( "content/shaders/test.shader", flags );
+
+			// Sampled with Wrap, where the original's addressing is CLAMP (docs/exe/render-states.md): a cut-out texture whose
+			// opposite edge is clear loses a texel line at this one, a river bank's outer edge (docs/exe/textures.md).
 			material.Set( "Color", [.. textures] );
 
 			return new Model( vertices, [.. indices], material );

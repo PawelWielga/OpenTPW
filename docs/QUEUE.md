@@ -44,9 +44,19 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q358. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q359. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q358 (`textures.md`, "The loader"): **the alpha is read and this game's own rule draws it**: a world
+  material's alpha counts only under the `.md2` flag `0x2`, where the original draws every `.wct` with an alpha chunk
+  cut out, or graded under a byte 1 set (`FUN_00574bd0`), whatever the material (but `0x800`); the reference is
+  this game's pixel count, not byte 1. Ten Lost Kingdom textures under materials without `0x2` (floors: `ss_PATH`,
+  `ss_gplnk2`, `pp_grsph`, `wr_darkpath`...) are cut in the original and drawn whole here (`lib/alphauses.py`).
+  **A thin pale line runs along each river bank's outer edge**: a model's textures are sampled with Wrap where the
+  original's addressing is CLAMP (`render-states.md`); measure every model's UVs before changing it. In no game
+  run: the lobby's islands up close (the reference player opens only Lost Kingdom), the message box (`ipan`), the
+  Hot Pot, the Jungle Spray's bench and the other shops' alpha, Full Simulation (not asked: the textures are the
+  level's).
   From Q357 (`textures.md`, "A sign's artwork"): **the original under Proton letters no name on Lost Kingdom's
   park gate**, where this game letters "Lost Kingdom" (the Windows screenshot's Wonder Land board has its name:
   Wine's GDI fonts are not looked into). This game's gate slab top is 1.27 to 1.34 times the original's (the light
@@ -55,13 +65,10 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   instruction by instruction. The lobby's boards were not photographed in either game (the player buttons cover
   them in the original's orbit). In no game run: the ride boards (the coasters', `sign1`), the other three themes'
   parks, Full Simulation (not asked: the boards are the level's).
-  From Q355 (`textures.md`, "The loader, `FUN_00564c00`, and the alpha chunk"): **the original reads a `.wct`'s
-  alpha chunk when its bit count is 32**, not by the byte at offset 1: 236 shipped files (233 LZSS, among them
-  terrain textures) have an alpha this game drops, and `stexture\b_NEWwin.wct` throws here where the original
-  draws it opaque. Count first which are drawn in Lost Kingdom and with what blend; `lib/wctcensus.py` lists them.
-  The LZSS codec (`FUN_00595920`, type `0x13`) is not compared with this game's
-  full-scale path, nor its rounding (this game's truncates). Three type `0x12` files are LZSS and Fan_stalk's,
-  Bowler_Btie's and s_disc's 8 x 8 copies throw in this game's LZSS reader.
+  From Q355 (`textures.md`, "The loader"): the alpha chunk by the bit count is built (Q358). The LZSS codec
+  (`FUN_00595920`, type `0x13`) is not compared with this game's full-scale path, nor its rounding (this game's
+  truncates). Three type `0x12` files are LZSS and Fan_stalk's, Bowler_Btie's and s_disc's 8 x 8 copies throw in
+  this game's LZSS reader.
   From Q356 (`hud.md`, "The first row is picked as a list fills"): the other lists' pick is Q232's. **The opening
   fills the hire list twice** here (the tab group's `Select` in `ParkHireScreen.Show` raises its own handler), where
   the original fills it once: one pick is taken either way, and nothing else was seen to differ. A list emptied before

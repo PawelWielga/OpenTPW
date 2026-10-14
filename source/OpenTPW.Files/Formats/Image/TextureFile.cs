@@ -15,6 +15,12 @@ public partial class TextureFile : BaseFormat
 	/// </summary>
 	public bool IsValid { get; private set; }
 
+	/// <summary>
+	/// A .wct whose alpha chunk was read under a header byte 1 of nought, which the original's texture flags draw cut out
+	/// (alpha reference 240) rather than graded (16) - <c>FUN_00574bd0</c>. Nothing draws by it; the texture's load logs it.
+	/// </summary>
+	public bool CutOutAlpha { get; private set; }
+
 	static float ComputeDequantizationScaleY( int n ) => 1.0f - ((float)n * -0.5f);
 	static float ComputeDequantizationScaleCbCr( int n ) => 1.0f - ((float)n * -0.25f);
 	static float ComputeDequantizationScaleA( int n ) => (float)n + 1.0f;
@@ -50,12 +56,15 @@ public partial class TextureFile : BaseFormat
 		//
 		// Read header
 		//
+		var flags = (TextureFlags)binaryReader.ReadByte();
+
+		// Byte 1 does not decide the alpha. Set over an alpha chunk, the original's texture flags take the graded alpha
+		// reference (16) over the cut-out one (240), FUN_00574bd0 (docs/exe/textures.md, "The loader, `FUN_00564c00`").
+		var graded = binaryReader.ReadByte() != 0;
+
 		var fileData = new TextureFileData()
 		{
-			Flags = (TextureFlags)binaryReader.ReadByte(),
-			// The original reads the alpha chunk when the bit count is 32 (0x00564c72) and passes over this byte: 237
-			// shipped files differ (docs/exe/textures.md, "The alpha chunk").
-			HasAlphaChannel = binaryReader.ReadByte() == 0x01,
+			Flags = flags,
 			BitsPerPixel = binaryReader.ReadByte(),
 			Version = binaryReader.ReadByte(),
 			Width = binaryReader.ReadInt16(),
@@ -73,6 +82,11 @@ public partial class TextureFile : BaseFormat
 
 			Checksum = binaryReader.ReadInt32()
 		};
+
+		// The alpha chunk is read, and the image given its alpha, when the bit count is 32 (0x00564c72); without one
+		// the image is opaque.
+		fileData.HasAlphaChannel = fileData.BitsPerPixel == 32;
+		CutOutAlpha = fileData.HasAlphaChannel && !graded;
 
 		//
 		// Read blocks

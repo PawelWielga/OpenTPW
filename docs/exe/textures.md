@@ -1,17 +1,45 @@
 # The `.wct` decode
 
 What the original does with a `.wct` file's bytes (the bytes themselves: the FileFormats clone, `formats/texture.md`).
-Read in Ghidra on `/testme.exe`, read only (Q354, Q355, Q357).
+Read in Ghidra on `/testme.exe`, read only (Q354, Q355, Q357, Q358).
 
 ## The loader, `FUN_00564c00`, and the alpha chunk
 
 It reads the 28-byte header, refuses a type other than `0x12` or `0x13`, reads the colour chunk, and reads the alpha
-chunk **when the bit count (header byte 2) is 32** (`0x00564c72`); the byte at offset 1 is tested and passed over (a
-`JNZ` round a `NOP`, `0x00564cc0`), and the version is masked to its low two bits. The alpha chunk is the codec's
-sixth argument: none, and the image is opaque. **OpenTPW** decides by the byte at offset 1 (said at its site in
-`TextureFile.ReadFromStream`): in 236 shipped files it is 0 over a 32-bit count and an alpha chunk, whose alpha this
-game drops (233 of type `0x13`), and `stexture\b_NEWwin.wct` has it 1 with no chunk, which throws here (FileFormats,
-`texture.md`). Not built (Q358).
+chunk **when the bit count (header byte 2) is 32** (`0x00564c72`) into `+0x20`; the byte at offset 1 is tested and
+passed over there (a `JNZ` round a `NOP`, `0x00564cc0`), and the version is masked to its low two bits. The alpha chunk
+is the codec's sixth argument (`0x00564eb3`): none, and the image is opaque.
+
+**Byte 1 chooses the alpha reference.** The texture's caller `FUN_00574bd0`, on a `.wct` that loaded, sets the flags
+`[0x0087a24c]` to `0x24`, to `0x25` when the alpha chunk was read (`+0x20` not nought), and to `0x27` when header byte
+1 (`+5`) is set as well, then ORs in the masked version shifted 8; the pixel classifier `FUN_00575160` is not run for a
+`.wct` (it is the other formats' path). `FUN_005755f0` turns bit `0x2` into the texture's `0x200` and, without it, bit
+`0x1` into `0x100`, so a `.wct` with an alpha chunk draws **cut out** (state word `0x2756`, reference 240) under a byte 1
+of nought and **graded** (`0x556`, reference 16) under one set, and one without a chunk opaque (`render-states.md`,
+"The four state words"). Of the 236 files whose alpha chunk sits under a byte 1 of nought (FileFormats, `texture.md`),
+every one draws cut out in the original.
+
+**OpenTPW** (Q358) reads the alpha chunk by the bit count, so those 236 decode with their alpha (233 of type `0x13`)
+and `stexture\b_NEWwin.wct` (byte 1 set, 24-bit, no chunk) decodes opaque where it threw; `TextureFile.CutOutAlpha` is
+the chunk under a byte 1 of nought, and `Texture` logs each such texture as it loads (`Texture: '...' reads its alpha
+chunk by its bit count, header byte 1 nought: N of M texels clear, K under 240`). What draws the alpha is still this
+game's own rule, not the one above: a world material's alpha counts only where its `.md2` flag word has `0x2`, and the
+reference is chosen by `Texture.HasGradedAlpha`'s count of the pixels, not by byte 1. In Lost Kingdom's models 25 of the
+textures sit under materials with `0x2` (among them the terrain's river banks `jri_bnk4` to `6`, the Hot Pot's
+`pp_hood`, `pp_rockd`, `pp_rockw`, the Jungle Spray's bench `ss_fabric`) and 10 under materials without it (floors:
+`ss_PATH`, `ss_gplnk2`, `pp_grsph`, `wr_darkpath` and six more), which the original cuts and this game draws whole;
+the lobby's islands have five under `0x2` (`Sen_ant1`, `sho_leg1`, `sho_sup1`, `hoc_swp1`, `htr_rot2`)
+(`q358/join.py` over 751 models of the jungle's wads, `lobby.wad` and `ui.wad`). The path tile `jpa_tju2` is drawn by
+`ParkPaths` with no flag, opaque. The interface keys a texture's black out before any of this, so `ipan.wct` (the
+training screen's rows, the message box) draws the same either way.
+
+**The river's banks.** Each river mesh of `levels/jungle/terrain/base.MD2` draws `jri_bnk4` to `6` under `0x2`; their
+river side is clear (`jri_bnk4`: 962 of 16,384 texels, its bottom row all clear, its top row opaque). Before Q358 the
+banks were opaque and drew a black seam between the water and the near bank; the original under Proton, given the same
+file, draws none, and neither does this game now (`q358/side-by-side.png`). This game binds a model's textures with
+Wrap (`Material.Set`'s default) where the original's addressing is CLAMP (`render-states.md`): the bank's opaque top
+edge blends in its clear bottom row and the cut-out test drops it, so **a thin pale line runs along each bank's outer
+edge** here, which the original does not draw (filed, Q359).
 
 ## The header's scales, and the order they are handed on (`0x00564e20`)
 
@@ -131,3 +159,14 @@ the model's texture).
 | The gate's board, round 2 | (24.7, 30.5, 41.8) within 8% | (24.4, 30.5, 42.4) |
 | Against the original, round 2 | each channel within 15%, B / R over 1.4 | (0.946, 1.125, 1.087), B / R 1.74 (the original's 1.51) |
 | Main's build | no board line, (22.3, 23.8, 29.2) within 5% | as predicted (`run-control`) |
+
+## Predicted first (`q358/PREDICTION.txt`)
+
+| | Predicted | Measured |
+|---|---|---|
+| `wct2raw` over the 8,396 shipped `.wct` | 236 change, in alpha alone; `b_NEWwin.wct` decodes | as predicted; 8,393 decode where main's 8,392 |
+| The log's lines in the stock park | `jri_bnk4` 962 clear and 1,230 under 240, `jri_bnk5` 1,888 and 2,145, `jri_bnk6` 1,033 and 1,258, `ipan` 5,273 and 6,008, `Sen_ant1` 3,199 and 3,682; none from main | as predicted, and eight more the census names (`run-fix-7`, the final build) |
+| The river's left bend, `camera 480 465 110 180`, share under 45 a channel | under 0.012; main's over 0.025 | 0.0058; main's 0.0363 |
+| The Staff Training Budgets screen against main's | under 60 pixels differ | 28, at its bottom edge |
+| The near bank's seam, the original's frame of the same file (`seam.py`) | round 1: the bend; rounds 2 to 5: a level, a share, a run under 15 | **missed four times**: its view frames the long reach; it is lit darker; its rocks' outlines touch the water; its run was 15 |
+| The same, round 6: longest run of seam columns | the original under 25 (its four longest under 60); the fix under 10, main over 25 | 15 (6 + 8 + 9 + 15 = 38); 4; 51; on the final build (`run-fix-7`, `orig/g`) 15 (38) and 4 |

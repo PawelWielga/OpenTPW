@@ -6841,6 +6841,10 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   6), and the board packs the codec's blue into red (`FUN_005ecb40`). All 23 boards within 1 of `wctorig.py`; the
   gate's board (24.4, 30.5, 42.4) in the game against the original's (25.8, 27.1, 39.0) and main's (22.3, 23.8,
   29.2); Wonder Land's board cream as the Windows screenshot's.
+- [x] **Q358. A `.wct`'s alpha chunk read by its bit count.** From Q355 (`textures.md`, "The loader"). The original reads
+  the chunk when the bit count is 32 (`0x00564c72`); header byte 1 picks graded over cut out (`FUN_00574bd0`). 236
+  files change, in alpha alone; `b_NEWwin.wct` decodes. The river banks' black seam is gone in the stock park, as in
+  the original's frame of the same file: longest run of seam columns 4 here, 15 there, main's 51.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

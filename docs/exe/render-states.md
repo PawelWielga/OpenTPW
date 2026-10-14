@@ -6,8 +6,9 @@ difference between opaque, cut-out, graded and additive geometry is one of four 
 matter more than the rest. **CULLMODE is set to `D3DCULL_NONE` once at startup and never rewritten** —
 nothing in the game is one-sided. **See-through geometry still writes depth** — none of the four
 material words disables depth writes. And the choice between a cut-out (hard-edged) and a graded
-(soft) alpha reference normally follows a **pixel classifier**, subject to material-load options
-and the material `0x800` opaque override described below.
+(soft) alpha reference follows, for a `.wct`, **its alpha chunk and its header byte 1**, and for any other
+format a **pixel classifier**, subject to material-load options and the material `0x800` opaque override
+described below.
 
 ## Device and how a state reaches it
 
@@ -71,7 +72,8 @@ Built by `Texture_BlendStateWord` at `0x00590c40`, switching on the engine textu
 
 | Address / value | Original name | What it is | Evidence |
 |---|---|---|---|
-| `FUN_00575160` | — | Counts texels whose alpha is strictly between `0` and `0xf0`, and sets the "graded" bit when that count reaches `truncate(float(0.05) * width * height)`; `__ftol` truncates the threshold before the comparison at `0x005755c7` | Disassembly |
+| `FUN_00574bd0` | — | On a `.wct` that loaded (`FUN_00564c00`), sets the flags `[0x0087a24c]` without the classifier: `0x24`, `0x25` with an alpha chunk read (cut out: `0x100`), `0x27` with header byte 1 set as well (graded: `0x200`); `textures.md`, "The loader" (Q358) | Decompile |
+| `FUN_00575160` | — | The other formats': counts texels whose alpha is strictly between `0` and `0xf0`, and sets the "graded" bit when that count reaches `truncate(float(0.05) * width * height)`; `__ftol` truncates the threshold before the comparison at `0x005755c7`. A 4-byte source sets the cut-out bit whatever its alpha | Disassembly |
 | `0x00701720` | — | The `0.05` multiplier used by that test | Data at that address |
 | `0x00581820` | — | The only bit of the `.md2` **material** flag word the draw path tests: `0x800`, which forces the opaque word | Disassembly |
 
