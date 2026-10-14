@@ -45,13 +45,17 @@ The fan website is at https://maexah.github.io/OpenTPW/ . It is its own project:
   ids and titles, in order) of the commit being pushed. So those two files are public words: a queue title is
   read by visitors as it is written. The hook never refuses a push. It says so when it did not publish, which
   happens while the website's own repo holds work that is not pushed yet.
-- **Some of what the website says is kept by hand, and the task that changes what a player can do changes it.**
-  Alexah, 2026-10-11: "Then update the website. Don't ask, just do it from now on please." When a ride, shop or
-  sideshow starts to run for guests, when a player can do or see something new in a park (rides break down,
-  saving a park, finishing a game), or when a land opens, the same session, after the item is merged:
+- **Some of what the website says is kept by hand, and the task that changes it changes it.**
+  Alexah, 2026-10-11: "Then update the website. Don't ask, just do it from now on please." Each land's page
+  holds an overview of six fixed systems (Guests, Building, Staff, Breakdowns, Advisor, Saving and finishing),
+  one line each, and it never grows (Alexah, 2026-10-13: "I see absolutely no reason to be adding to it like we
+  have been"). So the website changes only when a ride, shop or sideshow starts to run for guests, when one of
+  those six systems starts to work or works further (a park can be saved, a game can be finished), or when a
+  land opens. A new advisor message, button or screen inside a system that already works changes nothing there.
+  When it does change, the same session, after the item is merged:
   1. changes the words in the website's repo (its `README.md`, "Changing what the site says", names the place
-     for each: the `running` list, a land's `today` lines, the park notice), short and plain, saying nothing the
-     engine does not do;
+     for each: the `running` list, that system's one `today` line, the park notice), short and plain, saying
+     nothing the engine does not do, and rewording the line, never adding one;
   2. builds it, runs its two tests, looks at the preview's pictures, and has one separate read-only agent run
      the page (the website's rule 12);
   3. commits there and pushes its `main`, which publishes; no yes is asked for this push (the website's rule 1
@@ -60,7 +64,7 @@ The fan website is at https://maexah.github.io/OpenTPW/ . It is its own project:
      words; GitHub Pages takes a minute or two) and says so in the report.
   This covers the website's words for that task and nothing else: a new page, the look or a screenshot is
   website work with its own yes, and **a push of this repo's `main` still needs its fresh yes** (rule 1).
-  A task that changes nothing a player can do changes nothing there; the Ride Status board follows by itself.
+  Most tasks change nothing there; the Ride Status board follows by itself.
 
 ## Subagents
 
