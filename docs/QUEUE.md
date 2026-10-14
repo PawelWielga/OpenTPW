@@ -44,16 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q355. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q356. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q354 (`textures.md`, "The zlib codec"): **a type `0x12` texture goes down `TextureFile`'s half-scale
-  path, not the original's codec** (`FUN_00593ab0`: plain D4 rows then columns, no pi/6): a row's end texels decode
-  wrong, so each stat bar's first 3% is dark where the original's is red; `lib/wctorig.py` is the original's codec in
-  Python to build and check against (every `ui.wad` texture with it, then the screens). **A sign's artwork takes its
-  four floats as they are** (6, 10, 2, 6) where `SignFile` puts them through the header's formulas: `wctorig.py`
-  makes `Jun_isle.sgn` 1.4 times brighter; compare with the original's lobby first. The LZSS codec (`FUN_00595920`,
-  type `0x13`) is not compared with this game's full-scale path.
+  From Q355 (`textures.md`, "The loader, `FUN_00564c00`, and the alpha chunk"): **the original reads a `.wct`'s
+  alpha chunk when its bit count is 32**, not by the byte at offset 1: 236 shipped files (233 LZSS, among them
+  terrain textures) have an alpha this game drops, and `stexture\b_NEWwin.wct` throws here where the original
+  draws it opaque. Count first which are drawn in Lost Kingdom and with what blend; `lib/wctcensus.py` lists them.
+  **A sign's artwork takes its four floats as they are** (6, 10, 2, 6) where `SignFile` puts them through the
+  header's formulas: `wctorig.py` makes the four lobby signs 1.47 to 1.52 times brighter and yellower; compare
+  with the original's lobby first. The LZSS codec (`FUN_00595920`, type `0x13`) is not compared with this game's
+  full-scale path, nor its rounding (this game's truncates). Three type `0x12` files are LZSS and Fan_stalk's,
+  Bowler_Btie's and s_disc's 8 x 8 copies throw in this game's LZSS reader.
   From Q353 (`hud.md`, "The stat bars' skin"): the `.wct` reader's red is Q354's (the header's scales). **The
   hire list's first row is picked as it fills** in the original, on opening and on a tab (`HIRE_LIST_FIRST_ROW_PICKED`;
   somewhere under `FUN_006649d5`/`FUN_0066403b`, not read), and its label then reads "Skill" where this game's

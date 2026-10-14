@@ -6814,6 +6814,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `its ramp (125,84,51) (248,109,0) (255,217,2) (91,254,0)`. Three predictions missed, recorded in
   `q354/PREDICTION.txt`: texel 1 (the half-scale path, filed under Q355), my own r - g clause, and the control's
   count. Five bugs put back, five caught.
+- [x] **Q355. A type `0x12` texture is decoded by the original's zlib codec.** Done 2026-10-13, split from the
+  catch-all by the session (`textures.md`, "The zlib codec"). `FUN_00593ab0`: plain D4 over every row and then every
+  column, smooth first and detail second, wrapping, no pi/6; rounded to nearest. `TextureFile.DecodeZlibCodec` is
+  it; the LZSS path is untouched. **The number:** of the 986 zlib `.wct` in the game, 983 decode within 1 a channel
+  of `wctorig.py` (827 to the byte; the other three differ in the alpha alone, the loader's rule, Q356), and all
+  7,406 LZSS files that decode are the same bytes as main's. `ridestatbar.wct`'s texel 1 is (250, 0, 0) where main
+  decoded (125, 84, 51) and the original draws (255, 14, 0); the training screen's 80% bar is red to its left end,
+  (254, 4, 4) against the original's (221, 42, 0) and main's (82, 40, 8), within 16 a channel at seven points
+  (`run-fix2`, the final build; `side-by-side.png`), the log's `its ramp (250,0,0) (242,97,0) (248,208,0)
+  (93,241,1)`. Two predictions missed, recorded in `q355/PREDICTION.txt`: the three alpha files (the loader's rule,
+  found then) and three files I said would decode (they throw on main too). 17 bugs put back, 17 caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

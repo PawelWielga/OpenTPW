@@ -591,8 +591,8 @@ and z four apiece, `FUN_00477c00`). The control hands it its value through the s
 
 So each part is CROPPED, never squashed: a short bar shows only the ramp's left end, and only a full one its green
 and its dark right edge; the empty part is drawn too, a bar at nought all track. The texture (`ui.wad`,
-`textures\ridestatbar.wct`, 32 by 32; `stexture\` holds a copy) is, as this game decodes it, a colour ramp in its
-first sixteen rows and a grey track (`3a3a3a`, darker at both edges) in the rest. The original's bar covers the
+`textures\ridestatbar.wct`, 32 by 32; `stexture\` holds a copy) is a colour ramp in its first sixteen rows and a
+grey track (56, `383838`) in the rest. The original's bar covers the
 control's whole rectangle (rows 118 to 137 where the layout gives 117.5 to 137 at 1024 by 768), and the colour half
 bleeds into the top rows of the track.
 
@@ -601,7 +601,7 @@ The two parts over the whole rectangle as the table; the training screen hands i
 hire screen `((grade & 0xff) << 10) / 5` as the row under the pointer is picked (its list's flag `0x80`, stream
 flags `0x291`, as the buy screen's); the object window's two built bars their percentage.
 
-**Deviations, each said at its site.** **The ramp's ends are not the original's**: the ramp runs (Q354; `textures.md`, the header's scales) red, orange, yellow, green as the original's, within 18 a channel along the 80% bar, but its first and last texels decode brownish and blue-green where the original's are red and green (the zlib codec's half-scale path, `textures.md`), so the first 3% of a bar is dark and each bar's red share short of the original's. The original's track is 49 grey where this game draws the texture's 58. The
+**Deviations, each said at its site.** The ramp runs red, orange, yellow, green as the original's (Q354, the header's scales; Q355, the original's zlib codec: `textures.md`), within 16 a channel along the 80% bar and red to its left end ((254, 4, 4), the original's (221, 42, 0); `q355/side-by-side.png`). The original's track is 49 grey where this game draws the texture's 56. The
 hire list's first row is not picked as it fills (above), so the bar stands at nought until the pointer passes a row,
 and keeps that pick through a change of tab where the original's is the new tab's first row.
 

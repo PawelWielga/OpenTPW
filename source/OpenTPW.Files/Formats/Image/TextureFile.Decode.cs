@@ -66,7 +66,8 @@ partial class TextureFile
 		}
 	}
 
-	private bool DecodeChannel( ref ImageDecodeState state, int size, ref byte[] pSrc, ref List<float> outputBuffer, float dequantizationScale, bool isHalfScale, bool isAlpha = false )
+	/// <summary>One channel of a type <c>0x13</c> (LZSS) image; type <c>0x12</c> is <see cref="DecodeZlibCodec"/>.</summary>
+	private bool DecodeChannel( ref ImageDecodeState state, int size, ref byte[] pSrc, ref List<float> outputBuffer, float dequantizationScale )
 	{
 		int count = size * (size / 2);
 		int index = 0;
@@ -102,9 +103,6 @@ partial class TextureFile
 		//
 		// Step 2: decode rows
 		//
-		if ( isHalfScale )
-			dequantizationScale *= MathF.PI * 1/6f;
-
 		D4Coefficients coefs = new( dequantizationScale );
 		for ( int i = 0; i < size; i++ )
 		{
@@ -113,11 +111,7 @@ partial class TextureFile
 			// Index lookup
 			( index, component ) =>
 			{
-				int baseIndex;
-				if ( isHalfScale )
-					baseIndex = index / 2;
-				else
-					baseIndex = index * 2;
+				int baseIndex = index * 2;
 
 				return component switch
 				{
@@ -130,11 +124,7 @@ partial class TextureFile
 			// Output index lookup
 			( index, component ) =>
 			{
-				int baseIndex;
-				if ( isHalfScale )
-					baseIndex = index;
-				else
-					baseIndex = index * 2;
+				int baseIndex = index * 2;
 
 				return component switch
 				{
@@ -143,7 +133,7 @@ partial class TextureFile
 					_ => throw new NotImplementedException(),
 				};
 			},
-			ref state.DequantizationBuffer, ref state.RowDecodeBuffer, i * size, (isHalfScale) ? size : size / 2, coefs );
+			ref state.DequantizationBuffer, ref state.RowDecodeBuffer, i * size, size / 2, coefs );
 		}
 
 		//
@@ -153,7 +143,7 @@ partial class TextureFile
 		for ( int i = 0; i < size; ++i )
 		{
 			int sOffset = 0;
-			int wOffset = isAlpha && isHalfScale ? (size * size) : size * (size / 2);
+			int wOffset = size * (size / 2);
 			int colOffset = i;
 			D4InverseTransform(
 

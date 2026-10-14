@@ -296,7 +296,7 @@ public sealed class SignFile : BaseFormat
 
 		var fileData = new TextureFile.TextureFileData()
 		{
-			// Left half-scale because that is how the chunks are encoded: the colour chunk's 98304
+			// Type 0x12's zlib codec, as the original decodes a sign's artwork: the colour chunk's 98304
 			// bytes are a full-size 256x256 luma plus two half-size chroma planes.
 			Flags = TextureFile.TextureFlags.None,
 			HasAlphaChannel = true,
