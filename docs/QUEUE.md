@@ -44,17 +44,26 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q367. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q368. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q367 (`hud.md`, "The all-items rows: a number, then bars"): **the shops' and sideshows' last month's profit,
+  total profit and satisfaction bar are not worked out** (`FUN_004e1c70`, `FUN_004e1c60`, `FUN_004e1e30`;
+  `ALL_ITEMS_MONTHLY_HISTORY`); the original's sideshow rows stand Jungle Spray then Strength Bird, this game's the
+  other way (the fill's walk order, not read); the items rows are this game's 44 units tall where the original's
+  factory measures its font (`0x007ca158`), so its bars are 24 units here; its headings are bare here where the
+  original frames them (`FUN_00486660`, font `[0x00750d58]`, 255, 239, 0, help rows from `0x69`, `FUN_00494ec0`;
+  `q367/side-by-side.png`). The all-staff list's skill and happiness
+  are still numbers where the original draws bars (`STAFF_STATUS_TEXT`'s screen; its styler not read). In no game
+  run: a track ride's row (the fill's `0x2000` walk, `0x00493eb0`), a value past 255, Full Simulation (not asked:
+  the screen is either mode's), the other three themes.
   From Q366 (`hud.md`, "The shortcuts' screen rows"): **the staff and visitor locators** (`FUN_004b3f60`, Ctrl+S and
   Ctrl+V, a panel at the gadget's foot in the original) and the postcard row are counted, not built (`STAFF_LOCATOR`,
   `VISITOR_LOCATOR`, `POSTCARD_SHORTCUT`). W and D still scroll the orbit camera, the original's camera table binding the
   arrows and the keypad (`ParkOrbitCameraMode.ScrollAxes`; Alexah kept them, 2026-10-14). In no game run: L in Full
   Simulation (counted there), a shortcut under an object window, Ctrl+P in the original.
   From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): A row's status is the activity's English name (`STAFF_STATUS_TEXT`) and its skill and happiness numbers where
-  the original draws bars; most items columns are empty (`ALL_ITEMS_MONTHLY_HISTORY`, `ALL_ITEMS_EXCITEMENT`), so the
-  rewrite moves only the rides' two here. What the original does to these two lists as a member or an object comes or
+  the original draws bars; the items columns are Q367's. What the original does to these two lists as a member or an object comes or
   goes with the screen open is not read (allpeeps' `0x1b`/`0x1c`). In no game run: the sideshows' tab rewritten, the
   timer held under a message box, Full Simulation (not asked: the screens are either mode's).
   From Q363 (`render-states.md`, "Texture addressing"): **a texture one model wraps and another clamps keeps each

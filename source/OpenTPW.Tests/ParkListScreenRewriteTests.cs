@@ -169,18 +169,18 @@ public class ParkListScreenRewriteTests
 		var ride = state.Objects.First( placed => list.Rows.Any( row => row.Id == placed.ThingId ) );
 		var at = list.Rows.ToList().FindIndex( row => row.Id == ride.ThingId );
 		var name = list.Rows[at].Name;
-		var opened = list.Rows[at].Values!.ToArray();
+		var opened = list.Rows[at].Numbers!.ToArray();
 		var repair = (int)ride.StateOfRepair == 40 ? 60f : 40f;
 
 		state.ReplaceObject( ride with { StateOfRepair = repair } );
 
 		Time.PinWall( 6999 );
 		screen.Update();
-		CollectionAssert.AreEqual( opened, list.Rows[at].Values!.ToArray(), "1999 ms: not rewritten" );
+		CollectionAssert.AreEqual( opened, list.Rows[at].Numbers!.ToArray(), "1999 ms: not rewritten" );
 
 		Time.PinWall( 7000 );
 		screen.Update();
-		Assert.AreEqual( $"{(int)repair}", list.Rows[at].Values![2], "the state of repair rewritten" );
+		Assert.AreEqual( ((int)repair << 10) / 100, list.Rows[at].Numbers![3], "the state of repair's bar rewritten" );
 		Assert.AreEqual( name, list.Rows[at].Name, "the name as the fill wrote it" );
 		Assert.AreEqual( 1, Rewrites( "Items list" ) );
 
@@ -202,5 +202,89 @@ public class ParkListScreenRewriteTests
 		Time.PinWall( 20000 );
 		screen.Update();
 		Assert.AreEqual( 2, Rewrites( "Items list" ), "the miscellaneous tab is never rewritten" );
+	}
+
+	/// <summary>
+	/// <b>Each tab's second column is the customers of the last thirty finished days, a number, and the rides'
+	/// excitement, state of repair and remaining life and the sideshows' excitement are bars</b>, each
+	/// <c>((value &amp; 0xff) &lt;&lt; 10) / 100</c> of 1024, as the fill <c>FUN_00493cd0</c> and the rewrite
+	/// <c>FUN_004955e0</c> hand them; the shops' and sideshows' satisfaction bars are left unfilled and counted.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the customers not written, or today's taken in, or more than thirty days; a bar's low byte not
+	/// taken; the repair and the life exchanged; the excitement left out; the rides' bars in the shops' columns; the
+	/// sideshows' excitement not a bar; the count left on the rides' tab.
+	/// </remarks>
+	[TestMethod]
+	public void TheItemsRowsAreTheCustomersAsANumberAndTheBarsAsTheOriginalHandsThem()
+	{
+		Assert.AreEqual( 1024, ParkItemsScreen.Bar( 100 ) );
+		Assert.AreEqual( 890, ParkItemsScreen.Bar( 87 ) );
+		Assert.AreEqual( 1024, ParkItemsScreen.Bar( 356 ), "the low byte alone" );
+		Assert.AreEqual( 2611, ParkItemsScreen.Bar( -1 ), "255 of it, held by the bar" );
+
+		typeof( ParkItemsScreen ).GetField( "_lastTab", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, 0 );
+
+		// The Belly Bounce given thirty-two finished days of 1 to 32 customers and 1000 today, a repair of 87.9 and a
+		// life of 300: the column is days 3 to 32, 525; the repair's bar 87's, the life's its low byte 44's.
+		var bounce = state.Objects.Single( placed => placed.ThingId == 13 );
+		var rings = state.RingsFor( 13 );
+
+		for ( var day = 1; day <= 32; ++day )
+		{
+			rings.Customers.Today = day;
+			rings.Roll();
+		}
+
+		rings.Customers.Today = 1000;
+		state.ReplaceObject( bounce with { StateOfRepair = 87.9f, RemainingLife = 300f } );
+		bounce = state.Objects.Single( placed => placed.ThingId == 13 );
+
+		var screen = new ParkItemsScreen( stack );
+		var lists = Field<Dictionary<int, UiList>>( screen, "_lists" );
+		var rides = lists[5];
+		var at = rides.Rows.ToList().FindIndex( row => row.Id == 13 );
+		Assert.IsTrue( at >= 0, "the Belly Bounce is listed" );
+
+		var catalogue = level.Catalogue!;
+		catalogue.TryGet( bounce.CatalogueId, out var item );
+
+		// Its excitement is 40 (the `spend` census), 409 of 1024.
+		Assert.AreEqual( 40, ParkRideScore.ExcitementOf( bounce, item, state.TrackRides ) );
+		CollectionAssert.AreEqual( new[] { 0, 525, 409, 890, 450 }, rides.Rows[at].Numbers!.ToArray() );
+		CollectionAssert.AreEqual( new[] { "525", "", "", "" }, rides.Rows[at].Values!.ToArray() );
+		CollectionAssert.AreEqual( new[] { false, false, true, true, true }, rides.BarColumns );
+		CollectionAssert.AreEqual( new[] { 868, 1167, 1466 },
+			rides.Children.OfType<ParkObjectWindow.UiStatBar>().Select( bar => bar.Rect.Left ).Distinct().ToArray() );
+
+		var counted = Unimplemented.Summary.FirstOrDefault( entry => entry.What == "ALL_ITEMS_MONTHLY_HISTORY" ).Times;
+		var show = typeof( ParkItemsScreen ).GetMethod( "Show", Private )!;
+
+		show.Invoke( screen, [1] );
+		var shops = lists[5];
+		CollectionAssert.AreEqual( new[] { false, false, false, false, true }, shops.BarColumns, "the shops' one bar" );
+		CollectionAssert.AreEqual( new[] { 1466 },
+			shops.Children.OfType<ParkObjectWindow.UiStatBar>().Select( bar => bar.Rect.Left ).Distinct().ToArray(),
+			"its cells made again: the rides' three bars gone" );
+		Assert.IsTrue( shops.Rows.Count > 0, "the stock park has shops" );
+		Assert.IsTrue( shops.Rows.All( row => row.Numbers![2] == UiList.NoBar && row.Numbers[4] == UiList.NoBar ) );
+		Assert.AreEqual( counted + 1, Unimplemented.Summary.First( entry => entry.What == "ALL_ITEMS_MONTHLY_HISTORY" ).Times );
+
+		show.Invoke( screen, [2] );
+		var sideshows = lists[6];
+		CollectionAssert.AreEqual( new[] { false, false, true, false, false, true }, sideshows.BarColumns );
+		Assert.IsTrue( sideshows.Rows.Count > 0, "the stock park has sideshows" );
+
+		foreach ( var row in sideshows.Rows )
+		{
+			var placed = state.Objects.Single( each => each.ThingId == row.Id );
+			catalogue.TryGet( placed.CatalogueId, out var game );
+			Assert.AreEqual( ((ParkRideScore.ExcitementOf( placed, game, state.TrackRides ) & 0xff) << 10) / 100, row.Numbers![2] );
+			Assert.AreEqual( UiList.NoBar, row.Numbers[5] );
+		}
+
+		show.Invoke( screen, [0] );
+		Assert.AreEqual( counted + 2, Unimplemented.Summary.First( entry => entry.What == "ALL_ITEMS_MONTHLY_HISTORY" ).Times,
+			"the rides' tab works out every column" );
 	}
 }

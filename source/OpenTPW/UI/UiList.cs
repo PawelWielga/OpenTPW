@@ -129,6 +129,22 @@ internal sealed class UiList : UiControl
 	internal string? StateMesh { get; init; }
 
 	/// <summary>
+	/// Which columns are bars, by column: a <see cref="ParkObjectWindow.UiStatBar"/> in the column, inset
+	/// <see cref="BarInset"/> from the row's top and bottom, filled from the row's <see cref="Row.Numbers"/> in the
+	/// original's 0 to 1024 (<see cref="NoBar"/> leaves it unfilled). The all-items screen's styler (<c>FUN_00494690</c>)
+	/// skins its bar cells so. Set it, then <see cref="Build"/> again: the cells are made by it.
+	/// </summary>
+	internal bool[] BarColumns { get; set; } = [];
+
+	/// <summary>How far a bar cell stands in from its row's top and bottom: <c>FUN_00485e30( cell, 0, 10 )</c>.</summary>
+	internal const int BarInset = 10;
+
+	/// <summary>A bar column's number for a value the row has none of: the bar is left unfilled.</summary>
+	internal const int NoBar = int.MinValue;
+
+	private bool IsBar( int column ) => column < BarColumns.Length && BarColumns[column];
+
+	/// <summary>
 	/// The list's flag <c>0x80</c>: the pointer moving over a row selects it, with no press (<c>FUN_006656a0</c>, from
 	/// the proc's <c>0x10001</c>), and <see cref="SelectionChanged"/> hears it as it does any other selection. Over no
 	/// row the selection stays. All seven of the original's list records carry the flag (<c>docs/exe/hud.md</c>, "Who acts on
@@ -199,6 +215,16 @@ internal sealed class UiList : UiControl
 					: (RowArea.Left, RowArea.Right);
 
 				var isState = StateMesh != null && column == Columns.Length - 1 && Columns.Length > 2;
+
+				if ( IsBar( column ) )
+				{
+					cells[column] = Add( new ParkObjectWindow.UiStatBar
+					{
+						Rect = new UiRect( left, top + BarInset, right, top + RowHeight - BarInset )
+					} );
+
+					continue;
+				}
 
 				cells[column] = Add( new UiControl
 				{
@@ -578,6 +604,15 @@ internal sealed class UiList : UiControl
 
 			for ( var column = 1; column < last; ++column )
 			{
+				if ( cells[column] is ParkObjectWindow.UiStatBar bar )
+				{
+					var units = row.Numbers is { } numbers && column < numbers.Count ? numbers[column] : NoBar;
+
+					bar.Known = units != NoBar;
+					bar.Units = bar.Known ? units : 0;
+					continue;
+				}
+
 				cells[column].Text = row.Values is { } values
 					? column - 1 < values.Count ? values[column - 1] : null
 					: column == 1 ? row.Value.ToString() : null;

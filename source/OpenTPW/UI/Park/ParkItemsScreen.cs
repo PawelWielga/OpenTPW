@@ -25,12 +25,11 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
-/// <b>What this can actually answer, and what stays blank.</b> Rides fill <i>Name</i>, <i>State Of
-/// Repair</i> and <i>Remaining Life</i> - the two floats the ride window already reads - and leave
-/// <i>Users Last Month</i> and <i>Excitement</i> empty, the first the customers ring's last thirty finished days,
-/// which <see cref="ParkObjectRings"/> keeps and this screen does not read yet, and the second <c>FUN_004e0860</c>,
-/// which <see cref="ParkRideScore.ExcitementOf"/> works out and this screen does not read yet either. Shops and sideshows
-/// fill only their name, for the same two reasons. <b>Miscellaneous items fill both their columns</b>,
+/// <b>What this can actually answer, and what stays blank.</b> Every tab's second column is the customers of the
+/// last thirty finished days, a number; the rides' Excitement, State Of Repair and Remaining Life and the
+/// sideshows' Excitement are bars (<see cref="NumbersOf(int, ParkWorld.CatalogueObject, ParkItemCatalogue.Item, ParkState)"/>).
+/// The shops' and sideshows' Profit Last Month, Total Profit and Customer Satisfaction stay empty, a bar unfilled
+/// for the last. <b>Miscellaneous items fill both their columns</b>,
 /// because <i>Number Owned</i> is a count of what is standing. A blank column is an honest gap; a
 /// plausible wrong one is not - putting an object's gross takings under "Total Profit" would be a
 /// different quantity wearing that label, which is the mistake the hire screen's own remarks warn of.
@@ -40,7 +39,7 @@ internal sealed class ParkItemsScreen : UiWindow
 {
 	/// <summary>How the four tabs are laid out, in the tab order <c>FUN_00495aa0</c>'s switch uses.</summary>
 	private readonly record struct Tab( int Index, int Id, int Help, string Mesh, UIStrings Title,
-		int FirstHeading, int Columns, UiRect Rect );
+		int FirstHeading, int Columns, UiRect Rect, bool[] Bars );
 
 	/// <remarks>
 	/// <b>Each tab's rect is the stream's own, NOT a stride from the first one.</b> The ids are not in
@@ -52,10 +51,15 @@ internal sealed class ParkItemsScreen : UiWindow
 	[
 		// b_srides is asked for by its first NODE name, b_sride, which is not the file's - the same
 		// divergence ParkFrontEnd.Meshes lists. The other three resolve to their file names.
-		new( 0, 0x12c4ba, 101, "b_srides",   UIStrings.AllRides,     82, 5, new UiRect( 1283, 195, 1386, 297 ) ),
-		new( 1, 0x12c4bc, 102, "b_sshop",    UIStrings.AllShops,     87, 5, new UiRect( 1521, 195, 1623, 297 ) ),
-		new( 2, 0x12c4bb, 103, "b_sshow",    UIStrings.AllSideshows, 92, 6, new UiRect( 1402, 195, 1504, 297 ) ),
-		new( 3, 0x12c4bd, 104, "b_sfeature", UIStrings.AllMiscItems, 98, 2, new UiRect( 1640, 195, 1742, 297 ) ),
+		// The bars are the columns the styler FUN_00494690 skins with ridestatbar.wct, by tab: the rides' excitement,
+		// state of repair and remaining life, the shops' satisfaction, the sideshows' excitement and satisfaction.
+		new( 0, 0x12c4ba, 101, "b_srides",   UIStrings.AllRides,     82, 5, new UiRect( 1283, 195, 1386, 297 ),
+			[false, false, true, true, true] ),
+		new( 1, 0x12c4bc, 102, "b_sshop",    UIStrings.AllShops,     87, 5, new UiRect( 1521, 195, 1623, 297 ),
+			[false, false, false, false, true] ),
+		new( 2, 0x12c4bb, 103, "b_sshow",    UIStrings.AllSideshows, 92, 6, new UiRect( 1402, 195, 1504, 297 ),
+			[false, false, true, false, false, true] ),
+		new( 3, 0x12c4bd, 104, "b_sfeature", UIStrings.AllMiscItems, 98, 2, new UiRect( 1640, 195, 1742, 297 ), [] ),
 	];
 
 	/// <summary>The five-column tree at <c>0x750ab8</c> - rides and shops.</summary>
@@ -283,6 +287,10 @@ internal sealed class ParkItemsScreen : UiWindow
 
 		var chosen = _lists[tab.Columns];
 
+		// Rides and shops share a tree here, and their bars stand in different columns: the cells are made again.
+		chosen.BarColumns = tab.Bars;
+		chosen.Build();
+
 		// The headings, which change with the tab even where the shape does not - rides and shops share
 		// a tree and name its five columns differently.
 		for ( var column = 0; column < tab.Columns; ++column )
@@ -332,26 +340,57 @@ internal sealed class ParkItemsScreen : UiWindow
 				continue;
 			}
 
-			chosen.Add( new UiList.Row( placed.ThingId, item.Name, 0, Values: ValuesOf( tab, placed ),
-				Colour: ParkClosedStatus.Colour( ParkClosedStatus.For( level.Park, placed, item.TrackType ) ) ) );
+			var numbers = NumbersOf( tab.Index, placed, item, state );
+
+			chosen.Add( new UiList.Row( placed.ThingId, item.Name, 0, Values: ValuesOf( tab, numbers ),
+				Colour: ParkClosedStatus.Colour( ParkClosedStatus.For( level.Park, placed, item.TrackType ) ),
+				Numbers: numbers ) );
+
+			Log.Info( $"Items list: tab {_tab}, row {placed.ThingId} {item.Name}: {Census( numbers )}" );
 		}
 
-		// Named rather than left quietly blank: "last month", satisfaction and "total profit", whose day rings,
-		// mTotalTakings and mTotalCosts ParkState keeps and this screen does not read yet, and "excitement",
-		// FUN_004e0860 in the refresh FUN_004955e0, which ParkRideScore.ExcitementOf works out and this screen does not
-		// read yet either.
-		Unimplemented.Report( "ALL_ITEMS_MONTHLY_HISTORY" );
-		Unimplemented.Report( "ALL_ITEMS_EXCITEMENT" );
+		// Named rather than left quietly blank: the shops' and sideshows' profit last month and total profit
+		// (FUN_004e1c70, FUN_004e1c60) and their satisfaction bar (FUN_004e1e30, the satisfaction ring's average), which
+		// this screen does not work out.
+		if ( tab.Index != 0 )
+			Unimplemented.Report( "ALL_ITEMS_MONTHLY_HISTORY" );
 	}
 
 	/// <summary>
-	/// A placed object's columns after its name. Rides fill the two floats the ride window reads back. Everything else
-	/// stays empty, the customers and satisfaction columns that ParkObjectRings holds among them; see the class remarks.
+	/// A placed object's row by column, as the fill <c>FUN_00493cd0</c> and the rewrite <c>FUN_004955e0</c> hand it: the
+	/// name's nought, then the customers of the last thirty finished days (<c>FUN_00495c20</c> on the ring
+	/// <c>+0x1a8</c>, <c>__ftol</c>'d), and each bar's <c>((value &amp; 0xff) &lt;&lt; 10) / 100</c>: the excitement
+	/// (<c>FUN_004e0860( 0 )</c>), the state of repair <c>+0x44</c> and the remaining life <c>+0x48</c>, each float
+	/// truncated. A column this screen does not work out is <see cref="UiList.NoBar"/>.
 	/// </summary>
-	private static string[] ValuesOf( Tab tab, ParkWorld.CatalogueObject placed )
-		=> tab.Index == 0
-			? ["", "", $"{(int)placed.StateOfRepair}", $"{(int)placed.RemainingLife}"]
-			: new string[tab.Columns - 1];
+	internal static int[] NumbersOf( int tab, ParkWorld.CatalogueObject placed, ParkItemCatalogue.Item item, ParkState state )
+	{
+		var customers = state.RingsFor( placed.ThingId ).Customers.LastDays( CustomersDays );
+		var excitement = Bar( ParkRideScore.ExcitementOf( placed, item, state.TrackRides ) );
+
+		return tab switch
+		{
+			0 => [0, customers, excitement, Bar( (int)placed.StateOfRepair ), Bar( (int)placed.RemainingLife )],
+			1 => [0, customers, UiList.NoBar, UiList.NoBar, UiList.NoBar],
+			_ => [0, customers, excitement, UiList.NoBar, UiList.NoBar, UiList.NoBar]
+		};
+	}
+
+	/// <summary>A value as a bar's 0 to 1024: its low byte as a percentage.</summary>
+	internal static int Bar( int value ) => ((value & 0xff) << 10) / 100;
+
+	/// <summary>How many finished days the customers column adds up: <c>PUSH 0x1e</c> (<c>0x004956ca</c>).</summary>
+	private const int CustomersDays = 30;
+
+	/// <summary>
+	/// The columns after the name as text: the customers printed as a whole number, every other column empty (a bar,
+	/// or a figure not worked out).
+	/// </summary>
+	private static string[] ValuesOf( Tab tab, int[] numbers )
+		=> [.. Enumerable.Range( 1, tab.Columns - 1 ).Select( column => column == 1 ? $"{numbers[1]}" : "" )];
+
+	private static string Census( int[] numbers )
+		=> string.Join( " ", numbers.Skip( 1 ).Select( number => number == UiList.NoBar ? "-" : $"{number}" ) );
 
 	/// <summary>
 	/// Every two seconds, on the rides', shops' and sideshows' tabs, each row's columns after the name rewritten where it
@@ -372,6 +411,7 @@ internal sealed class ParkItemsScreen : UiWindow
 
 		var list = _lists[tab.Columns];
 		var objects = state.Objects.ToList();
+		var catalogue = Level.Current?.Catalogue;
 		var rewritten = 0;
 
 		for ( var index = list.Rows.Count - 1; index >= 0; --index )
@@ -382,11 +422,18 @@ internal sealed class ParkItemsScreen : UiWindow
 			if ( at < 0 )
 				continue;
 
-			list.Replace( index, row with { Values = ValuesOf( tab, objects[at] ) } );
+			var placed = objects[at];
+
+			if ( catalogue == null || !catalogue.TryGet( placed.CatalogueId, out var item ) )
+				continue;
+
+			var numbers = NumbersOf( tab.Index, placed, item, state );
+
+			list.Replace( index, row with { Values = ValuesOf( tab, numbers ), Numbers = numbers } );
 			++rewritten;
 		}
 
 		Log.Info( $"Items list: tab {_tab}, {rewritten} rows rewritten"
-			+ (list.Rows.Count > 0 ? $", row 0 {list.Rows[0].Id} {string.Join( " ", list.Rows[0].Values! )}" : "") );
+			+ (list.Rows.Count > 0 ? $", row 0 {list.Rows[0].Id} {Census( [.. list.Rows[0].Numbers!] )}" : "") );
 	}
 }

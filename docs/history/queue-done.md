@@ -6890,6 +6890,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Space the map, the rest counted; A and S no longer scroll the orbit camera (Alexah's choice; W and D still do). On the
   stock park each key's row line and screen, a frame each; the original's frame a key the same, L nothing (`hud.md`,
   "The shortcuts' screen rows").
+- [x] **Q367. The all-items rows' customers column and their bars.** The rows' cells and values read (styler
+  `FUN_00494690`, factory `FUN_004944d0`, fill `FUN_00493cd0`, rewrite `FUN_004955e0`). Built `UiList.BarColumns` and
+  `ParkItemsScreen.NumbersOf`: every tab's customers of the last thirty finished days as a number, the rides'
+  excitement, State of repair and remaining life and the sideshows' excitement as `ridestatbar.wct` bars,
+  `((value & 0xff) << 10) / 100`. On `q353/grades.TPWS` the Belly Bounce's row `3 409 962 1013` beside its `rings`,
+  `spend` and window lines, the bars 0.40, 0.944 and 1.0 of their width; the original's frame the same shape, its
+  bars its own object's values (`hud.md`, "The all-items rows: a number, then bars").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -493,4 +493,48 @@ public class UiListTests
 		Assert.AreEqual( 0, told, "and nothing told" );
 		Assert.AreEqual( counted + 1, Times( "LIST_FIRST_ROW_SELECTED" ), "the first add counted, the second not" );
 	}
+
+	/// <summary>
+	/// <b>A bar column holds a stat bar, not text</b>, inset ten units from its row's top and bottom
+	/// (<c>FUN_00485e30( cell, 0, 10 )</c>) and filled from the row's number in the original's 0 to 1024, held there;
+	/// <see cref="UiList.NoBar"/> leaves it unfilled; a text column beside it keeps its text; and a list built again with
+	/// other bar columns makes its cells again.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> no inset; the number not handed to the bar; NoBar drawn as nought; a bar column lettered too;
+	/// the cells not made again.
+	/// </remarks>
+	[TestMethod]
+	public void ABarColumnHoldsAStatBarInsetTenUnitsAndFilledFromTheRowsNumber()
+	{
+		var list = new UiList
+		{
+			RowArea = new UiRect( 0, 100, 300, 188 ),
+			Columns = [(0, 100), (100, 200), (200, 300)],
+			BarColumns = [false, false, true]
+		};
+
+		list.Build();
+		list.Add( new UiList.Row( 1, "one", 0, Values: ["7", ""], Numbers: [0, 7, 512] ) );
+		list.Add( new UiList.Row( 2, "two", 0, Values: ["8", ""], Numbers: [0, 8, UiList.NoBar] ) );
+
+		var bars = list.Children.OfType<ParkObjectWindow.UiStatBar>().ToArray();
+		Assert.AreEqual( 2, bars.Length, "a bar a visible row" );
+		Assert.AreEqual( new UiRect( 200, 110, 300, 134 ), bars[0].Rect, "the column across, ten in from the row's 44" );
+		Assert.IsTrue( bars[0].Known );
+		Assert.AreEqual( 0.5f, bars[0].At, "512 of 1024" );
+		Assert.IsNull( bars[0].Text, "a bar is never lettered" );
+		Assert.IsFalse( bars[1].Known, "no number, no fill" );
+
+		var text = list.Children.First( cell => cell is not ParkObjectWindow.UiStatBar && cell.Rect.Left == 100 && cell.Rect.Top == 100 );
+		Assert.AreEqual( "7", text.Text, "the column beside it lettered" );
+
+		list.Replace( 0, list.Rows[0] with { Numbers = [0, 7, 4000] } );
+		Assert.AreEqual( 1f, bars[0].At, "held to 1024" );
+
+		list.BarColumns = [false, true, false];
+		list.Build();
+		Assert.AreEqual( 100, list.Children.OfType<ParkObjectWindow.UiStatBar>().First().Rect.Left, "made again in the new column" );
+		Assert.AreEqual( 2, list.Children.OfType<ParkObjectWindow.UiStatBar>().Count() );
+	}
 }

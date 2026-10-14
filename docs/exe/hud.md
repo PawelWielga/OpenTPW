@@ -1694,9 +1694,46 @@ meters are set at the opening and a tab, where they were set every frame. On `q3
 final game binary; frames `run-fix2/four.png`): ten rewrites of the one mechanic in the 21 s after the opening, his
 happiness 85 then 84 on screen and in the line, his wage 92 and the meters 880/895 in all ten, his status and
 happiness the `staff` census's; three rewrites of the Drinks Shop in the 7 s after the shops' tab, none on the
-miscellaneous tab. Main's build (`run-control2`) wrote none. Most of the items columns are empty here
-(`ALL_ITEMS_MONTHLY_HISTORY`, `ALL_ITEMS_EXCITEMENT`), so on screen the rides' state of repair and remaining life are
-what the rewrite moves.
+miscellaneous tab. Main's build (`run-control2`) wrote none. Since Q367 the rewrite moves the customers and the bars
+below; the shops' and sideshows' money and satisfaction are not worked out here (`ALL_ITEMS_MONTHLY_HISTORY`).
+
+#### The all-items rows: a number, then bars
+
+Read 2026-10-14 (Q367). Each tab's sub-builder hands `FUN_006639cb` a row factory and a styler, which make every row's
+cells by the remembered tab: rides (`FUN_004944d0` and `FUN_00494690`) a name label, a number painter
+(`FUN_0048fde0`) and three type-9 bars; shops a number, two money cells (`FUN_00490250`) and a bar; sideshows a number,
+a bar, two money cells and a bar; miscellaneous a number. Every bar wears `ridestatbar.wct` (`FUN_00477ff0`, "The stat
+bars' skin") and is inset 10 units from its row's top and bottom (`FUN_00485e30( cell, 0, 10 )`). The fill's adder
+(`FUN_00493cd0`, through `FUN_00481bc0( 0x80, ... )`) and the rewrite (`FUN_004955e0`) hand the same values:
+
+| Column | Rides | Shops | Sideshows |
+|---|---|---|---|
+| 1 | customers | customers | customers |
+| 2 | excitement bar | last month's profit `$` | excitement bar |
+| 3 | State of repair bar | total profit `$` | last month's profit `$` |
+| 4 | remaining life bar | satisfaction bar | total profit `$` |
+| 5 | | | satisfaction bar |
+
+The customers are the ring `+0x1a8`'s last min( filled, 30 ) finished days added (`FUN_00495c20`, `PUSH 0x1e` at
+`0x004956ca`), `__ftol`'d, a number. The excitement is `FUN_004e0860( 0 )` (`ParkRideScore.ExcitementOf`), the State
+of repair `+0x44` (`0x00495715`), the remaining life `+0x48` (`FUN_004dd6d0`), last month's profit `FUN_004e1c70`,
+the total `FUN_004e1c60` and the satisfaction `FUN_004e1e30`.
+
+Every bar is `((value & 0xff) << 10) / 100` of 1024, a float truncated first (`__ftol`), so a value past 255 shows its
+low byte. Measured in the original on `q353/grades.TPWS` (`q367/orig/a-*.png`, `object.py` on thing 13): the Belly
+Bounce's row "5" with bars of 0.403, 0.925 and 0.993 of their width, its repair 92.32 and life 99.85 at the frame
+(942 and 1013 of 1024); the sideshows' excitement bars 0.308 (Jungle Spray, 30) and 0.28 (Strength Bird, 27).
+
+**OpenTPW** (Q367): `ParkItemsScreen.NumbersOf` is the row by column, `UiList.BarColumns` the bar cells (a
+`ParkObjectWindow.UiStatBar` inset `BarInset`), made again at each tab since rides and shops share a tree here; each
+fill logs `Items list: tab T, row N <name>: <columns>`, `-` for a column not worked out. On the same file, paused at
+the load (`q367/run-fix4`, the final game binary): `row 13 Belly Bounce: 3 409 962 1013` beside `rings 13` last30 3,
+`spend` excitement 40 and the ride window's repair 94.375 and life 99.887505; the bars 0.40, 0.944 and 1.0 of their
+width; the Drinks Shop `1 - - -` with its satisfaction cell black; the sideshows `0 276 - - -` and `0 307 - - -`
+(bars 0.27, 0.30). Main's build (`run-control1`) left the customers and excitement blank and lettered 94 and 99.
+**Not built**: the shops' and sideshows' money columns and satisfaction bars (`ALL_ITEMS_MONTHLY_HISTORY`); the
+original's sideshow rows stand Jungle Spray then Strength Bird, this game's the other way (the walk's order, not
+looked into); the row height is this game's 44 where the original's factory measures its font (`0x007ca158`).
 
 **The skill bar `0x2482`** ((722, 536)-(957, 575), type 9) is built at nought (`0x0049c335`) and written in one place,
 message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<
