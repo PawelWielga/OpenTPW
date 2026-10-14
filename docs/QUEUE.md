@@ -44,16 +44,22 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q351. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q352. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q351 (`advisor-park.md`, "Staff nobody has trained"): **the bar's staff-costs button does nothing**
+  (type 21, `b_staffcost`: the original opens its Staff Training Budgets screen and takes the tag off;
+  counted, `TAG_BAR_BUTTON`, the screen `STAFF_COSTS_SCREEN`), so no screen here sets a budget and the lines
+  can only be stopped by training nobody can buy. The gesture rows of responses 82, 84 and 90 are counted
+  (`ADVISOR_RESPONSE_GESTURE_ROW`). **The handymen's cap is paler than the original's**, as the other hats
+  are (the advisor's light, below). In no game run: lines 2 and 3 of any row, a line again past its 120
+  quarter-ticks, two members of a kind, a budget below nought, a budget set on the original's own screen, a
+  park made with no file, Full Simulation (not asked: the rows are either game's and read neither). Not
+  heard in either game.
   From Q350 (`advisor-park.md`, "Every sideshow built, and more to research"): **the bar's research button
   does nothing** (type `0x13`, `FUN_004aa480`: the research screen, and in Instant Action a box reading
-  "Research is automatic in Instant Action mode."; counted, `TAG_BAR_BUTTON`). **The training lines are
-  unbuilt**: with the stock researcher at grade 0 the original says "Your researchers could do their job better
-  and faster if you trained them." on tick 1109 (`StaffTrainResearchers`, tag string 37, button 21; four twins
-  by their keys, `StaffTrainMechanics`, `Handymen`, `Guards`, `Entertainers`; none read), which made row 76's
-  line wait there and not here. A kind's current project and highest group, `mMostExpensiveProject` and
+  "Research is automatic in Instant Action mode."; counted, `TAG_BAR_BUTTON`). The training lines are
+  built (Q351), so row 76's line now waits for the researchers' here as there: not run again. A kind's current project and highest group, `mMostExpensiveProject` and
   `mLabActive` are not made; the lab's own turn (`FUN_00503430`: 0.9 points every 20 ticks to a sideshow from
   ability 6) is not read. In no game run: line 2, the line again past its 900 quarter-ticks, the row in the
   original's own Full Simulation park. Not heard in either game.

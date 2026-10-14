@@ -2723,7 +2723,15 @@ public sealed partial class ParkPeople : Entity
 			features, featureKinds.OnOffer, featureKinds.Standing, inside, needing,
 			_staff.Count( member => member.Model == ResearcherModel ), _research?.Unfinished( ItemDescriptionFile.Feature ) ?? 0,
 			_research?.Unfinished( ItemDescriptionFile.SideShow ) ?? 0,
-			_research?.Rate( ItemDescriptionFile.SideShow, ability, MostResearchAbility ) ?? 0, ability, MostResearchAbility );
+			_research?.Rate( ItemDescriptionFile.SideShow, ability, MostResearchAbility ) ?? 0, ability, MostResearchAbility,
+			new ParkAdvisorMessages.StaffTraining( Training( 0 ), Training( 1 ), Training( 2 ), Training( 3 ), Training( 4 ) ) );
+
+		// One kind's members, budget and grades added up, as rows 28 to 32's scores read them.
+		ParkAdvisorMessages.KindTraining Training( int kind )
+		{
+			var members = _staff.Where( member => ParkStaffPool.KindFor( member.Model ) == kind ).ToList();
+			return new ParkAdvisorMessages.KindTraining( members.Count, TrainingBudgets[kind], members.Sum( member => member.PayGrade ) );
+		}
 	}
 
 	/// <summary>

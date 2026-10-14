@@ -6761,6 +6761,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   said it on its turn at grade 1, tick 1123, after another line at grade 0, and not at grade 2. A fresh Full
   Simulation park said it on tick 46 with one scientist (`ability=3/60`) and not with two (`rate=1
   ability=8/60`). 86 bugs put back, 86 caught (84 at once, one after a new test, one rewritten).
+- [x] **Q351. The advisor tells a kind of staff nobody has trained to train them.** Done 2026-10-13, split from
+  the catch-all by the session (`advisor-park.md`, "Staff nobody has trained"). Rows 28 to 32 (`0x0059d620` to
+  `0x0059d7a0`, `StaffTrainMechanics`, `Handymen`, `Guards`, `Entertainers`, `Researchers`, either game) score
+  their section's 30 where the kind has a member, its monthly training budget at the staff HQ is nought or
+  less, and its grades added up are under `WorseThan`, 1, as a whole per cent of five a member: every member
+  of grade 0. **The number:** the stock park with all five members written to grade 0 logged `poll message=28
+  row=28 days=47 score=30 threshold=25 tick=1105 result=post members=1 budget=0 grades=0 share=0` and the same
+  of rows 29 to 32 on ticks 1106 to 1109, and said all five in the table's order on ticks 1105, 1163, 1190,
+  1217 and 1268, in the hard hat, the handymen's cap, the guards' cap, the theme's fly in its helmet and the
+  research hat, tags 30 to 34 (`q351/run-fix1`, `run-fix2`); the original given the same file said them on
+  1105, 1165, 1192, 1219 and 1269 in the same hats with the same tags. All five at grade 1: none said, in
+  both. A budget of 25 for the handymen and 50 for the entertainers: those two silent and the other three
+  said, in both. Seventy bugs put back, seventy caught (68 at first; two after two test lines).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

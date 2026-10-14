@@ -112,6 +112,18 @@ whole list):
   line on tick 1109 in the original**, so a line said after it waits some twenty ticks and its tag is the second
   on the mast: click it at game point (59, 433), not the first tag's (59, 471). A run that ends with a box or a
   screen open (the bar's research button leaves one) breaks the next `loadfile.sh` load: make it the chain's last.
+- **Every kind of staff written untrained, a training budget in a file, and the top tag of several** (Q351):
+  the stock staff are things 25 (handyman), 26 (mechanic), 27 (entertainer), 28 (guard) and 30 (researcher);
+  `thing_set( src, dst, 1, 82 + 4 * kind, '<i', budget )` writes the staff HQ's `mBudget[kind]` (0 handymen, 1
+  mechanics, 2 entertainers, 3 guards, 4 researchers), which the original reads back at thing 1's `+0xc + 4 *
+  kind` (`thingwords.py ... 1:0xc:i`). With all five at grade 0 both games say five lines from tick 1105 to
+  about 1269 (41 s), and **a tag lives thirty seconds, so the first is gone before the fifth is said**: click
+  within a second of reading where the tags stand, never after another console call. The newest tag is the
+  topmost: in the original at game point (59, 471 - 37.5 x (held - 1)), here from `tags`' topmost `tagNNN=`
+  rectangle, its middle over four times 0.9375 (`q351/confirm.py`, `q351/orig/run.sh`). Take a tag's words
+  from `strdump` on the folder the game under test reads: strings 34 and 37 differ ("cleaners" and
+  "scientists" in English, "janitors" and "researchers" in american). A run whose pollers see no change prints
+  no tick after the load: give `thingwords.py` a word that moves (a mechanic's state, `26:0x19c:I`).
 - **A balance key changed in both games** (Q338): this game from a private folder (`lib/gamefolder.py`, then
   `GAME_FOLDER` before `parkrun.py`; an off-screen run wants a folder of its own beside the desktop's). The
   original reads `~/Games/TPW-original/Data/Advisor/Advisor.sam` as it starts: stop it, check the file's sum is

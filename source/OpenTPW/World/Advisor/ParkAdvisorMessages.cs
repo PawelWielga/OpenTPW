@@ -12,7 +12,7 @@ namespace OpenTPW;
 /// "A mechanic on his way", "The line of an opened tag message", "The buy screen's own line" and "The hire
 /// screen's own line".
 /// <para>
-/// Twenty-five messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// Thirty messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
 /// nothing to ride and a park with no ride; five scored by the share of the park's rides, shops, sideshows,
@@ -30,7 +30,8 @@ namespace OpenTPW;
 /// and more to research", "Every sideshow built, and more to research"); and the lines
 /// about too few
 /// shops and too few sideshows for the park's size ("Too few shops for the park's size", "Too few sideshows for
-/// the park's size"). The other 129 polled rows are counted, and the other posted messages are unbuilt.
+/// the park's size"); and five about a kind of staff nobody has trained ("Staff nobody has trained"). The
+/// other 124 polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -45,6 +46,16 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireMechanicsBroken = 6;
 	/// <summary>Message 7, polled: the line about more rides than the mechanics can keep (0x0059cac0).</summary>
 	internal const int HireMoreMechanics = 7;
+	/// <summary>Message 0x1c, polled: the line about mechanics nobody has trained, scored where the park has one, their training budget is nought and their grades are low (0x0059d620).</summary>
+	internal const int TrainMechanics = 0x1c;
+	/// <summary>Message 0x1d, polled: the same of the handymen (0x0059d680).</summary>
+	internal const int TrainHandymen = 0x1d;
+	/// <summary>Message 0x1e, polled: the same of the guards (0x0059d6e0).</summary>
+	internal const int TrainGuards = 0x1e;
+	/// <summary>Message 0x1f, polled: the same of the entertainers (0x0059d740).</summary>
+	internal const int TrainEntertainers = 0x1f;
+	/// <summary>Message 0x20, polled: the same of the researchers (0x0059d7a0).</summary>
+	internal const int TrainResearchers = 0x20;
 	/// <summary>Message 0x3c, polled: the line about a poor selection of rides, scored where few of the kinds of ride on offer stand (0x0059d990).</summary>
 	internal const int PoorSelection = 0x3c;
 	internal const int PoorShopSelection = 0x47;
@@ -170,6 +181,13 @@ internal sealed class ParkAdvisorMessages
 	/// the kinds of feature standing are as many as the kinds on offer; nought otherwise.
 	/// <paramref name="EverySideshowBuilt"/> is the score of row 76 (0x0059dfd0): row 80's of the sideshows, and
 	/// nought besides where the lab's sideshow research is getting any work at all.
+	/// <paramref name="Untrained"/> makes the score rows 28 to 32's (0x0059d620 to 0x0059d7a0), and names its
+	/// section: the key's value where a member of <paramref name="StaffKind"/>, a kind in
+	/// <see cref="ParkStaffPool"/>'s order, is on the staff, the kind's monthly training budget is nought or less,
+	/// and the kind's grades added up are under the section's WorseThan per cent, in whole numbers, of the top
+	/// grade for every member; nought otherwise.
+	/// <paramref name="SecondGestureRowLine"/> is a second line whose response names a row of the gesture table,
+	/// -1 for none.
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -181,7 +199,7 @@ internal sealed class ParkAdvisorMessages
 		string? PoorSelection = null, Shut PoorOf = Shut.Rides, string? PerDayWithNoShop = null, string? ShopsPerRide = null,
 		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null, string? PerDayWithNoFeature = null,
 		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false,
-		bool EverySideshowBuilt = false );
+		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1 );
 
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
@@ -235,7 +253,8 @@ internal sealed class ParkAdvisorMessages
 	/// and what row 76's reads besides: the lab's projects of a sideshow's kind that are not done (0x004ca670,
 	/// the same asked for kind 2) and how much of the lab's work that kind is getting (FUN_00503980 asked for
 	/// kind 2: <see cref="ParkResearch.Rate"/>), with the two numbers the rate sets against each other, the
-	/// staff's researchers' ability added up (FUN_004c9e60) and the most a park's could be (FUN_004c9ed0).
+	/// staff's researchers' ability added up (FUN_004c9e60) and the most a park's could be (FUN_004c9ed0); and
+	/// what rows 28 to 32's read: each kind of staff's <see cref="KindTraining"/>.
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -245,7 +264,8 @@ internal sealed class ParkAdvisorMessages
 		int SideshowKindsOnOffer = 0, int SideshowKindsStanding = 0,
 		int Features = 0, int FeatureKindsOnOffer = 0, int FeatureKindsStanding = 0,
 		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
-		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0 )
+		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
+		StaffTraining Staff = default )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -268,6 +288,31 @@ internal sealed class ParkAdvisorMessages
 			Shut.Sideshows => (SideshowKindsOnOffer, SideshowKindsStanding, Sideshows, "MoreSideshowsThan", "sideshows"),
 			Shut.Features => (FeatureKindsOnOffer, FeatureKindsStanding, Features, "MoreFeaturesThan", "features"),
 			_ => (RideKindsOnOffer, RideKindsStanding, Rides, "MoreRidesThan", "rides")
+		};
+	}
+
+	/// <summary>
+	/// What rows 28 to 32's scores read of one kind of staff: its members (FUN_004c9960: a thing of the kind's type
+	/// whose +3 is nought), its monthly training budget (the staff HQ's +0xc and on, a kind each) and its members'
+	/// grades added up (FUN_004c9c00 adds each thing of the type's +0x1e4).
+	/// </summary>
+	internal readonly record struct KindTraining( int Members, int Budget, int Grades )
+	{
+		/// <summary>The grades as a whole per cent of the top grade for every member, nought with no member (FUN_004c9c00: the sum times 100 over five times the members).</summary>
+		internal int GradeShare => Members == 0 ? 0 : Grades * 100 / (Members * ParkWorld.StaffState.PayGrades);
+	}
+
+	/// <summary>The five kinds of staff's <see cref="KindTraining"/>, in <see cref="ParkStaffPool"/>'s order.</summary>
+	internal readonly record struct StaffTraining( KindTraining Handymen, KindTraining Mechanics, KindTraining Entertainers, KindTraining Guards, KindTraining Researchers )
+	{
+		internal KindTraining Of( int kind ) => kind switch
+		{
+			0 => Handymen,
+			1 => Mechanics,
+			2 => Entertainers,
+			3 => Guards,
+			4 => Researchers,
+			_ => default
 		};
 	}
 
@@ -314,6 +359,10 @@ internal sealed class ParkAdvisorMessages
 	internal const int HardHat = 5;
 	/// <summary>The research hat, costume id 10.</summary>
 	internal const int ResearchHat = 10;
+	/// <summary>The handymen's cap, costume id 7: the prop of every line about their training.</summary>
+	internal const int HandymanCap = 7;
+	/// <summary>The guards' cap, costume id 6: the prop of every line about their training.</summary>
+	internal const int GuardCap = 6;
 
 	internal static readonly Topic[] DoorTopics =
 	[
@@ -341,6 +390,14 @@ internal sealed class ParkAdvisorMessages
 		new( HireMechanics, "StaffHireMechanics1.ScorePerWornRide", 14, 13, Lines: 3, Prop: HardHat, Group: 7, Polled: true, PerWornRideWithNoMechanic: true ),
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
+
+		// Rows 28 to 32, one a kind of staff in the table's own order. The entertainers' three responses name the
+		// theme's own advisor model and its costume (docs/exe/advisor-park.md, "Staff nobody has trained").
+		new( TrainMechanics, "StaffTrainMechanics.Score", 82, 80, Lines: 3, GestureRowLine: 0, SecondGestureRowLine: 2, Prop: HardHat, Group: 30, Polled: true, Untrained: "StaffTrainMechanics", StaffKind: 1 ),
+		new( TrainHandymen, "StaffTrainHandymen.Score", 85, 83, Lines: 3, Prop: HandymanCap, Group: 31, Polled: true, Untrained: "StaffTrainHandymen", StaffKind: 0 ),
+		new( TrainGuards, "StaffTrainGuards.Score", 88, 86, Lines: 3, GestureRowLine: 2, Prop: GuardCap, Group: 32, Polled: true, Untrained: "StaffTrainGuards", StaffKind: 3 ),
+		new( TrainEntertainers, "StaffTrainEntertainers.Score", 91, 89, Lines: 3, Prop: AdvisorProps.ThemeCostume, Group: 33, Polled: true, Untrained: "StaffTrainEntertainers", StaffKind: 2 ),
+		new( TrainResearchers, "StaffTrainResearchers.Score", 94, 92, Lines: 3, Prop: ResearchHat, Group: 34, Polled: true, Untrained: "StaffTrainResearchers", StaffKind: 4 ),
 		new( PoorSelection, "RidesPoorSelection.Score", 176, 173, Lines: 3, Group: 62, Polled: true, PoorSelection: "RidesPoorSelection" ),
 		new( PoorShopSelection, "ShopsPoorSelection.Score", 207, 205, Group: 73, Polled: true, PoorSelection: "ShopsPoorSelection", PoorOf: Shut.Shops ),
 		new( PoorSideshowSelection, "SideshowsPoorSelection.Score", 215, 213, Group: 77, Polled: true, PoorSelection: "SideshowsPoorSelection", PoorOf: Shut.Sideshows ),
@@ -614,6 +671,9 @@ internal sealed class ParkAdvisorMessages
 	/// row 80's (0x0059e260) is nought with no researcher, with no kind of feature standing, with no project of a
 	/// feature's kind left undone in the lab, and unless the kinds of feature standing are as many as the kinds
 	/// on offer, and then its key's value;
+	/// rows 28 to 32's (0x0059d620 to 0x0059d7a0) are nought with no member of their kind of staff, with a training
+	/// budget for the kind above nought, and unless the kind's grades are under its section's WorseThan per cent
+	/// of the top grade's, in whole numbers, and then its key's value;
 	/// every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
@@ -673,6 +733,12 @@ internal sealed class ParkAdvisorMessages
 		{
 			if ( _park?.Invoke() is not { Researchers: > 0, SideshowKindsStanding: > 0, SideshowProjectsUnfinished: > 0, SideshowResearchRate: 0 } shown ) return 0;
 			return shown.SideshowKindsStanding == shown.SideshowKindsOnOffer ? Value( topic.ScoreKey ) : 0;
+		}
+
+		if ( topic.Untrained is { } untrained )
+		{
+			if ( _park?.Invoke() is not { } employing || employing.Staff.Of( topic.StaffKind ) is not { Members: > 0, Budget: <= 0 } kind ) return 0;
+			return kind.GradeShare < Value( $"{untrained}.WorseThan" ) ? Value( topic.ScoreKey ) : 0;
 		}
 
 		if ( topic.ShopsPerRide is { } crowded )
@@ -814,6 +880,8 @@ internal sealed class ParkAdvisorMessages
 			shut = $" researchers={built.Researchers} kinds={built.FeatureKindsStanding}/{built.FeatureKindsOnOffer} unfinished={built.FeatureProjectsUnfinished}";
 		if ( topic.EverySideshowBuilt && _park?.Invoke() is { } shown )
 			shut = $" researchers={shown.Researchers} kinds={shown.SideshowKindsStanding}/{shown.SideshowKindsOnOffer} unfinished={shown.SideshowProjectsUnfinished} rate={shown.SideshowResearchRate} ability={shown.ResearchAbility}/{shown.MostResearchAbility}";
+		if ( topic.Untrained != null && _park?.Invoke() is { } employing && employing.Staff.Of( topic.StaffKind ) is var kind )
+			shut = $" members={kind.Members} budget={kind.Budget} grades={kind.Grades} share={kind.GradeShare}";
 		if ( topic.ShopsPerRide is { } crowded && _park?.Invoke() is { } sized )
 			shut = FormattableString.Invariant( $" shopkinds={sized.ShopKindsStanding} ratio={Fraction( $"{crowded}.ShopsPerRideRatio" )} balance={sized.Balance} sincebuild={sized.DaysSinceObjectBuilt}" );
 		if ( topic.SideshowsPerRide is { } showy && _park?.Invoke() is { } fair )
@@ -946,7 +1014,7 @@ internal sealed class ParkAdvisorMessages
 		var sample = pending.Topic.FirstSample + line;
 		// A response with a gesture of its own plays that row of the gesture table (FUN_00598bf0); the speaker
 		// here builds the random chain for every line.
-		if ( line == pending.Topic.GestureRowLine )
+		if ( line == pending.Topic.GestureRowLine || line == pending.Topic.SecondGestureRowLine )
 			Unimplemented.Report( "ADVISOR_RESPONSE_GESTURE_ROW" );
 		var duration = play( response, sample );
 		_started = milliseconds;

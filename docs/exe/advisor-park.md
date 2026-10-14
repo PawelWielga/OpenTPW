@@ -2066,6 +2066,114 @@ draw or a load's size next names it, in the original on tick 1419 to 1434. The v
 written since Q342. **Not run:** a load of sixty-one's own summons in the running game (the test holds it), the
 second vehicle's stamp in the running game, a park made with no file, Full Simulation.
 
+## Staff nobody has trained (messages `0x1c` to `0x20`, Q351)
+
+**Rows 28 to 32, `StaffTrainMechanics`, `StaffTrainHandymen`, `StaffTrainGuards`, `StaffTrainEntertainers` and
+`StaffTrainResearchers`:** polled, category 0, either game mode (`+0x0c` is 2), one copy, three lines each. From
+the shipped park's cursor their turns are five ticks running: 950 to 954, 1105 to 1109 and every 155 on.
+
+| Row | Score | Staff type | Budget | Keys | Responses = samples | Props, slot | Gesture rows | Tag (string) |
+|---|---|---|---|---|---|---|---|---|
+| 28 | `0x0059d620` | 4, mechanic | HQ `+0x10` | `+0x194`, `+0x198` | 82 to 84 = 80 to 82 | 5 (hard hat), 0 | 82 and 84 (23) | 30 (33) |
+| 29 | `0x0059d680` | 5, handyman | HQ `+0x0c` | `+0x19c`, `+0x1a0` | 85 to 87 = 83 to 85 | 7 (a cap with a band), 0 | none | 31 (34) |
+| 30 | `0x0059d6e0` | 7, guard | HQ `+0x18` | `+0x1a4`, `+0x1a8` | 88 to 90 = 86 to 88 | 6 (a police cap), 0 | 90 (25) | 32 (35) |
+| 31 | `0x0059d740` | 6, entertainer | HQ `+0x14` | `+0x1ac`, `+0x1b0` | 91 to 93 = 89 to 91 | -1 (the theme's costume), **1** | none | 33 (36) |
+| 32 | `0x0059d7a0` | 8, researcher | HQ `+0x1c` | `+0x1b4`, `+0x1b8` | 94 to 96 = 92 to 94 | 10 (research hat), 0 | none | 34 (37) |
+
+**The score** (five copies of one listing, loose code, disassembled; `ECX` the balance object):
+
+1. The members of the type, `FUN_004c9960( type )` (a thing of the type whose `+3` is nought). None: nought.
+2. **The kind's monthly training budget**, a dword of the staff HQ (`FUN_00519450`, thing 1; `mBudget[0..4]` from
+   `+0xc`, the handymen's, mechanics', entertainers', guards' and researchers': `ride-operation.md`, "The
+   month's change"). Above nought (a `JG`): nought. A budget is training already.
+3. `FUN_004c9c00( type )`: over every thing of the type (its `+3` not asked), the grades (`+0x1e4`) added up,
+   times 100, over five times how many there are: the staff's grades as a whole per cent of five a member. Not
+   under the section's `WorseThan` (a signed compare, `JGE`): nought. Otherwise the section's `Score`.
+
+`Advisor.sam` gives every section `WorseThan` 1 and `Score` 30. **So a kind is told to train while it has a
+member, no budget, and every member of grade 0**: one grade among fewer than twenty-one members is already one
+whole per cent. The park's age, its door and the newest hire are not asked.
+
+**The tags** are rows 30 to 34 of the tag table: key 383, picture 2, strings 33 to 37, the bar's first button
+of type 21 (`b_staffcost`, help row 533; its act opens the Staff Training Budgets screen), no second, thirty
+seconds. The English folder this game reads says "Training your cleaners would make them more efficient." and
+"Your scientists could do their job better and faster if you trained them." where the american one the original
+reads says "janitors" and "researchers"; the other three are the same words in both.
+
+### OpenTPW (`ParkAdvisorMessages.TrainMechanics` to `TrainResearchers`, a topic's `Untrained`, `StaffKind`, `SecondGestureRowLine`; `KindTraining`, `StaffTraining`, `ParkFacts.Staff`; tag rows 30 to 34)
+
+Five polled topics more, thirty-one in all. `ParkPeople.AdvisorFacts` hands the score each kind's members, its
+budget (`TrainingBudgets`, the file's) and its members' grades added up. The poll line ends ` members=N budget=N
+grades=N share=N`. A response that names a gesture row is counted (`ADVISOR_RESPONSE_GESTURE_ROW`), as before.
+
+**DEVIATION: the bar's staff-costs button does nothing here.** The Staff Training Budgets screen is not built
+(`STAFF_COSTS_SCREEN`), so the click is counted (`TAG_BAR_BUTTON`) and the tag stays; the original opens the
+screen and takes the tag off. **The handymen's cap is paler than the original's**, as the hard hat and the pith
+helmet are ("The theme's own advisor and its costume").
+
+**The scenes** (`q350/both.TPWS`, the stock park saved on tick 963 with one member of each kind; written with
+`parkfile.thing_set`): *all0*, all five members' `mCurrentPayGrade` (the record's `+398`) written 0; *g1all*,
+all five written 1; *bud2*, *all0* with the HQ's `mBudget[0]` (thing 1's `+82`, the handymen's) written 25 and
+`mBudget[2]` (`+90`, the entertainers') 50; *res0*, `q350/g0.TPWS`, the researcher alone at 0.
+
+**Predicted first** (`q351/PREDICTION.txt`), both games. Round 1: the polls, the scores, who is said and who is
+not, the hats and the button all held in both games. **Two of this game's checks missed, both the prediction's
+own**: it gave the five lines too few ticks, so it expected five tags standing where the first's thirty seconds
+were up before the fifth line (four stood, in both games), and it took the tag's words from the american
+folder. Round 2's check of the tag's click then missed on a race of its own (a tag's time ran out between the
+reading and the click); round 1's run holds that click.
+
+**This game** (`q351/confirm.py <mode>`; *fix* on the desktop, the rest off-screen). *all0* (`run-fix1`,
+`run-fix2`): `poll message=28 row=28 days=47 score=30 threshold=25 tick=1105 result=post members=1 budget=0
+grades=0 share=0`, and the same of 29 to 32 on ticks 1106 to 1109; all five said, in the table's order, on
+ticks 1105, 1163, 1190, 1217 and 1268 (1265 in the second run: a line's length is its drawn gesture chain's),
+`wearing 5,0`, `7,0`, `6,0` on model slot 0, `-1,0 on model slot 1`, `10,0` on slot 0, the first counting
+`ADVISOR_RESPONSE_GESTURE_ROW`; the hard hat, the cap, the police cap, the theme's fly in the pith helmet and
+the research hat's hair (`run-fix2/hats.png`). Tags 31 to 34 stood a second after the fifth, the newest on top.
+The top tag clicked (`run-fix1`): `message bar: tag 34 subject 0 item 0 bar: out=1 ... first=b_staffcost/help=533
+second=hidden erase=mb_erase` and the words (`4-bar.png`); the button clicked: `button type 21 is not built, so
+nothing more happens`, `TAG_BAR_BUTTON` counted once. *res0*: rows 28 to 31 `score=0 ... result=no-score
+members=1 budget=0 grades=3 share=60`, row 32 posted and said on tick 1109, tag 34 alone. *g1all*: five
+`no-score ... grades=1 share=20`, nothing said by tick 1138. *bud2*: row 29 `no-score members=1 budget=25
+grades=0 share=0`, row 31 `budget=50`; 82, 88 and 94 said (ticks 1105, 1169, 1196), tags 30, 32 and 34. Main's
+build on *all0* (`run-control`): no line of messages 28 to 32, no attempt, no tag.
+
+**The original** (`q351/orig/run.sh <file>`: `advisor.py ... 0x1c,0x1d,0x1e,0x1f,0x20,0x11c poll` beside
+`thingwords.py` on the five grades and the HQ's five budgets, `tags.py`, `bar.py`, `screens.py`). The grades
+and the budgets read as written in every run (`bud0` 25, `bud2` 50 in run c).
+
+- *all0* (runs a, a2): message `0x1c`'s record **(1105, 0, 1, 0) on tick 1105**, the slots taking `0x1d`,
+  `0x1e`, `0x1f` and `0x20` at 30 on ticks 1106 to 1109, and their records moving on ticks **1165, 1192, 1219
+  and 1269**, the table's order. Each left its tag, the first gone on tick 1226, so four stood at the fifth,
+  the newest on top at (84, 684, 154, 749). He wears the hard hat, a brown cap with a maroon band, a police cap
+  and the theme's pith helmet (`orig/a-hats.png`). The top tag clicked (a2): the bar's data read thing 0,
+  buttons 21 and 0 and the researchers' words; its first button clicked: the Finance category left on 9, a
+  screen up, headed "Staff Training Budgets" with five rows of $ 0 (`orig/a2-button.png`), and the tag off.
+- *g1all* (run b): all five records fresh and no tag for the 90 s read (`orig/b-end.png`).
+- *bud2* (run c): `0x1c` on tick 1105, `0x1e` on 1164, `0x20` on 1191, their three tags; `0x1d` and `0x1f`
+  never in a slot and fresh to the end (tick 1314).
+- *res0*: Q350's runs a, d and e, the researchers' line on tick 1109 ("Every sideshow built, and more to
+  research").
+
+| | The original | OpenTPW |
+|---|---|---|
+| Every kind at grade 0, no budget | all five said, table order: ticks 1105, 1165, 1192, 1219, 1269 | the same: 1105, 1163, 1190, 1217, 1268 |
+| Every kind at grade 1 | none said | the same (`share=20`) |
+| A budget for the handymen and the entertainers | those two not said; the other three on 1105, 1164, 1191 | the same: 1105, 1169, 1196 (`budget=25`, `budget=50`) |
+| The researcher alone at grade 0 | the researchers' line on 1109 | the same |
+| What he wears | hard hat, cap, police cap, the theme's fly in its helmet, research hat | the same, the cap paler |
+| The tags | rows 30 to 34, four standing at the fifth line, the newest on top | the same |
+| The bar | button 21 and the bomb | the same (`b_staffcost`, help 533) |
+| The bar's button | opens the Staff Training Budgets screen, the tag off | counted, nothing opens, the tag stays |
+
+**Not built or not seen.** The Staff Training Budgets screen. The gesture rows of responses 82, 84 and 90
+(counted). In no game run: lines 2 and 3 of any row, a line again past its 120 quarter-ticks' wait, two members
+of a kind (the tests hold the sum and the share), twenty-one members with one grade, a budget below nought, a
+budget set on the original's own screen, the researchers' line's hat in this item's frames of the original
+(Q350's `a2-g3.png` shows it), a park made with no file, Full Simulation (not asked: the rows are either
+game's and read neither). Run b printed no tick after the load, as nothing it read changed: that the poll
+passed tick 1109 there is taken from its 90 s, not read. Not heard in either game.
+
 ## A poor selection of rides (message `0x3c`, Q335)
 
 **Row 60, message `0x3c`, `RidesPoorSelection`:** polled, category 0, either game mode, one copy, first response
@@ -3167,8 +3275,8 @@ run, and the lab's `+0x1430` 14.
 - *both*, grade 2 (run c): fresh through tick 1240, no tag.
 - *g0* (runs a, a2): on tick 1123 a slot took `0x4c` at 75, and the record moved on tick 1144 and 1142, **after
   another line**: on tick 1109, before the hold, the original said "Your researchers could do their job better
-  and faster if you trained them." (tag string 37, the bar's button 21; `StaffTrainResearchers` by its key, a
-  polled row of either game that this game has not built), and row 76's line waited for it. The second tag
+  and faster if you trained them." (tag string 37, the bar's button 21; `StaffTrainResearchers`, row 32: "Staff
+  nobody has trained"), and row 76's line waited for it. The second tag
   stood above the first, at (84, 834, 154, 899). He is up in the same white spiked hair (`orig/a2-g3.png`).
   The second tag clicked (a2): the bar's data read thing 0, buttons 19 and 0, item 0 and the text, drawn with
   the bulb button over the bomb (`orig/a2-bar.png`). The bulb clicked, with the game type back at Instant
@@ -3181,7 +3289,7 @@ run, and the lab's `+0x1430` 14.
 |---|---|---|
 | Row 76 in an Instant Action park | never scored (fresh over tick 968 in every run) | the same (`score=-1 ... result=other-game`) |
 | Both kinds, one researcher of grade 1, two projects | said on the row's turn (tick 1123, the first inside the hold) | the same (tick 968, score 75, `rate=0 ability=9/120`) |
-| The same, grade 0 | scored 75 on its turn, said 19 to 21 ticks on, after the training line | said on its turn: the training line is not built |
+| The same, grade 0 | scored 75 on its turn, said 19 to 21 ticks on, after the training line | said on its turn in Q350's runs, before the training line was built (Q351) |
 | The same, grade 2, the shipped researcher | not said | the same (`rate=1 ability=12/120`) |
 | One kind of two | not said | the same (`kinds=1/2`) |
 | Every sideshow project done | not said | the same (`unfinished=0`) |
@@ -3192,8 +3300,8 @@ run, and the lab's `+0x1430` 14.
 | A fresh Full Simulation park | not run | said on tick 46 with one scientist, silent with two whose abilities make 8 of 60 |
 
 **Not built or not seen.** The research button's act and its Instant Action box (`FUN_004aa480`, not read);
-the training line of a park whose researchers are poorly graded (`StaffTrainResearchers`, and its four twins of
-the other kinds by their keys: not read), which the original said in every run with the grade-0 researcher. In
+the training line of a park whose researchers are poorly graded, which the original said in every run with
+the grade-0 researcher (built, Q351: "Staff nobody has trained"). In
 no game run: line 2 (sample 216; the test holds the turn), the line again past its 900 quarter-ticks, the row in
 the original's own Full Simulation park (its turn was reached only by holding the game type in an Instant
 Action one), a kind's effort changed on the research screen and the outputs after it, a `most` of nought. The
