@@ -6825,6 +6825,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`run-fix2`, the final build; `side-by-side.png`), the log's `its ramp (250,0,0) (242,97,0) (248,208,0)
   (93,241,1)`. Two predictions missed, recorded in `q355/PREDICTION.txt`: the three alpha files (the loader's rule,
   found then) and three files I said would decode (they throw on main too). 17 bugs put back, 17 caught.
+- [x] **Q356. The hire list picks its first row as it fills.** Done 2026-10-14, split from the catch-all by the
+  session (`hud.md`, "The first row is picked as a list fills"). The list's add picks the top row at a count of 1 and
+  POSTS `0x401` with its index (`FUN_0066403b`, `0x006643d4`; `FUN_00658ccc` queues it); the hire screen's handler reads
+  the row at that index after the fill, so the row sorted first. `UiList.PicksFirstRow` and `TakePosted`; the label
+  `0x2483` reads UITEXT 146, "Skill"; the picked wage stays in Staff costs. `HIRE_LIST_FIRST_ROW_PICKED` is gone.
+  **The number:** on `q353/grades.TPWS` the opening picked candidate 11, Chris Battson, grade 3 and sorted first,
+  though slot 7 went in first: `skill bar 614 of 1024, staff costs 502`, the bar 0.606, row 0 highlighted (80.5
+  against row 1's 7.7); the mechanics' tab candidate 8, 409, 554; main's build picked nothing (`run-fix2`, the final
+  build; `run-control`). The original on the same file: Chris Battson highlighted, the bar 0.617, $ 63, its first
+  candidate handed over (slot 0, grade 1, $ 36) standing second. One prediction missed, the opening's two fills,
+  recorded in `q356/PREDICTION.txt`. 14 bugs put back, 14 caught (one after the test read the staff costs).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

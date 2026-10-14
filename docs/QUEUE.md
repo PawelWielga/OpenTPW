@@ -44,7 +44,7 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q356. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q357. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
   From Q355 (`textures.md`, "The loader, `FUN_00564c00`, and the alpha chunk"): **the original reads a `.wct`'s
@@ -56,11 +56,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   with the original's lobby first. The LZSS codec (`FUN_00595920`, type `0x13`) is not compared with this game's
   full-scale path, nor its rounding (this game's truncates). Three type `0x12` files are LZSS and Fan_stalk's,
   Bowler_Btie's and s_disc's 8 x 8 copies throw in this game's LZSS reader.
-  From Q353 (`hud.md`, "The stat bars' skin"): the `.wct` reader's red is Q354's (the header's scales). **The
-  hire list's first row is picked as it fills** in the original, on opening and on a tab (`HIRE_LIST_FIRST_ROW_PICKED`;
-  somewhere under `FUN_006649d5`/`FUN_0066403b`, not read), and its label then reads "Skill" where this game's
-  letters the name, grade and wage. **The original's pool showed five handymen** on `q353/grades.TPWS` where this
-  game's showed two (not looked into). The track is 49 grey there and 58 here. In no game run: the object window's
+  From Q356 (`hud.md`, "The first row is picked as a list fills"): the other lists' pick is Q232's. **The opening
+  fills the hire list twice** here (the tab group's `Select` in `ParkHireScreen.Show` raises its own handler), where
+  the original fills it once: one pick is taken either way, and nothing else was seen to differ. A list emptied before
+  its pick is taken is handed -1, where the original's handler goes on with a stale word. In no game run: an empty
+  tab, a candidate joining an empty list with the screen open, Full Simulation (not asked).
+  From Q353 (`hud.md`, "The stat bars' skin"): the `.wct` reader's red is Q354's (the header's scales); the hire
+  list's first-row pick and its "Skill" are built (Q356), and the original's five handymen were its pool's top-up on
+  tick 1083, after this game's clicks (Q356). The track is 49 grey there and 58 here. In no game run: the object window's
   bars in the original, a full bar, the other three themes.
   From Q352 (`hud.md`, "The Staff Training Budgets screen"): **the account's Cash in, Other costs and Balance
   are empty** on it and on the hire screen: the analyser's three month rings (`+0x1fc94`, `+0x1f7f4`,
@@ -1010,6 +1013,10 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the hire list carries the flag too and does not set it, and the three list screens' trees carry it (`0x291`). With
   no first row selected, the buy screen's panel stays empty until the pointer has been over a row, where the
   original's shows the top row half a second after the list fills.
+  From Q356 (`hud.md`, "The first row is picked as a list fills"): the pick is built for the hire list
+  (`UiList.PicksFirstRow`, its `0x401` posted and taken by the screen's `Update`); a list sets it once its screen's
+  handler of `0x401` is read. `gmove.py` glides diagonally and the pointer over a list picks: check the pointer's
+  path in the original's visitors runs (the second and tenth rows) before looking for anything else.
 
 - [ ] **Q247. A loaded park is built again behind the loading screen, and the list has no scrollbar.** Left by
   Q241c (`saves.md`, "OpenTPW's Load Park"). The original reads a park file over the running park, with no loading

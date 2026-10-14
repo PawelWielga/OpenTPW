@@ -11,7 +11,7 @@ chunk **when the bit count (header byte 2) is 32** (`0x00564c72`); the byte at o
 sixth argument: none, and the image is opaque. **OpenTPW** decides by the byte at offset 1 (said at its site in
 `TextureFile.ReadFromStream`): in 236 shipped files it is 0 over a 32-bit count and an alpha chunk, whose alpha this
 game drops (233 of type `0x13`), and `stexture\b_NEWwin.wct` has it 1 with no chunk, which throws here (FileFormats,
-`texture.md`). Not built (Q356).
+`texture.md`). Not built (Q357).
 
 ## The header's scales, and the order they are handed on (`0x00564e20`)
 
@@ -73,7 +73,7 @@ the same transform and colour) **as they are**, as the multipliers: 6, 10, 2 and
 times 6, Cb 10, Cr 2. OpenTPW's `SignFile` makes them 16-bit scales and puts them through the header's formulas (4,
 3.5, 1.5, 7), and decodes them with the zlib codec above. Through `wctorig.py` the four lobby signs come out 1.47 to
 1.52 times brighter than OpenTPW draws them, and yellower (`q355/sgn/Jun_isle-main-fix-orig.png`); neither has been
-compared with the original's lobby (Q356). The codec moved each sign's mean by -2.5 to -3.9%.
+compared with the original's lobby (Q357). The codec moved each sign's mean by -2.5 to -3.9%.
 
 ## Predicted first (`q354/PREDICTION.txt`)
 

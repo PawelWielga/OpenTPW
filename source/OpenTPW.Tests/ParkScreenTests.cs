@@ -648,6 +648,76 @@ public class ParkScreenTests
 		Assert.AreEqual( 0f, bar.At, "at nought until a row is picked" );
 	}
 
+	/// <summary>
+	/// <b>The hire list picks its first row as it fills, on opening and on a tab</b> (<c>FUN_0066403b</c> at a count of
+	/// 1, its <c>0x401</c> posted): the skill bar stands at nought until the screen's next frame takes the pick, then at
+	/// the grade of the candidate sorted first by name, not of the one handed over first; the label reads UITEXT 146.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the hire list not picking; the pick taken nowhere; the label left empty or lettered with the
+	/// candidate; the bar set from the candidate added first; the picked wage not kept in the staff costs.
+	/// </remarks>
+	[TestMethod]
+	public void TheHireListPicksItsFirstRowAsItFillsAndTheSkillBarShowsTheRowSortedFirst()
+	{
+		var stack = APark();
+		var park = AParkOver( stack );
+
+		using var stream = FileSystem.OpenRead( "levels/jungle/Easymode.TPWI" );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		var pool = Level.StaffPoolFor( world, new ParkBalance( "jungle", easyMode: true ), world.GameTick );
+
+		typeof( Level ).GetProperty( nameof( Level.StaffPool ) )!.SetValue( park, pool );
+		typeof( Level ).GetProperty( nameof( Level.ParkState ) )!.SetValue( park, new ParkState( parkIsClosed: false, visitorsToDate: 0, balance: 1000 ) );
+
+		// No staff in the park, so the staff costs shown are the picked wage alone.
+		var people = typeof( ParkPeople ).GetProperty( "Current", BindingFlags.Static | BindingFlags.NonPublic )!;
+		var peopleBefore = people.GetValue( null );
+		people.SetValue( null, null );
+
+		// The list's text compare is on plain character values, and equal names stand as handed over.
+		ParkStaffPool.Candidate First( int kind ) => pool.OfKind( kind ).OrderBy( person => person.Name, System.StringComparer.Ordinal ).First();
+
+		// A kind whose first candidate in slot order is not the first by name, and is of another grade.
+		var kinds = Enumerable.Range( 0, 5 ).Where( kind => pool.OfKind( kind ).Any() ).ToArray();
+		var telling = kinds.First( kind => pool.OfKind( kind ).First().Grade != First( kind ).Grade );
+		var other = kinds.First( kind => kind != telling && First( kind ).Grade != First( telling ).Grade );
+
+		var hire = new UI.ParkHireScreen( stack, openOn: telling );
+
+		stack.Open( hire );
+
+		static IEnumerable<UI.UiControl> Under( UI.UiControl control ) => control.Children.Concat( control.Children.SelectMany( Under ) );
+
+		var list = Under( hire.Root ).OfType<UI.UiList>().Single( control => control.Id == 0x248e );
+		var bar = Under( hire.Root ).OfType<UI.ParkObjectWindow.UiStatBar>().Single( control => control.Id == 0x2482 );
+		var label = Under( hire.Root ).Single( control => control.Id == 0x2483 );
+		var costs = Under( hire.Root ).Single( control => control.Id == 0x248c );
+
+		Assert.AreEqual( "Skill", label.Text, "UITEXT 146" );
+		Assert.AreEqual( First( telling ).Id, list.Selected, "the top row picked as the list filled" );
+		Assert.AreEqual( 0f, bar.At, "the pick posted, not yet taken" );
+
+		Pointer( stack, Grass, left: false );
+		Assert.AreEqual( UI.ParkHireScreen.SkillUnits( First( telling ).Grade ) / 1024f, bar.At, "taken: the row sorted first" );
+		Pointer( stack, Grass, left: false );
+		Assert.AreEqual( $"{First( telling ).Wage}", costs.Text, "its wage in the staff costs, standing frame on frame" );
+
+		// The tabs' ids by kind, the stream's: cleaners, mechanics, entertainers, guards, scientists.
+		int[] tabIds = [0x2490, 0x2493, 0x2492, 0x2494, 0x2491];
+		var tab = Under( hire.Root ).Single( control => control.Id == tabIds[other] ).Rect;
+		Click( stack, new Vector2( (tab.Left + tab.Right) / 2f, (tab.Top + tab.Bottom) / 2f ) );
+		Pointer( stack, Grass, left: false );
+
+		Assert.AreEqual( other, hire.Tab );
+		Assert.AreEqual( First( other ).Id, list.Selected );
+		Assert.AreEqual( UI.ParkHireScreen.SkillUnits( First( other ).Grade ) / 1024f, bar.At, "a tab picks its first row again" );
+		Assert.AreEqual( "Skill", label.Text, "and the label stands" );
+		Assert.AreEqual( $"{First( other ).Wage}", costs.Text );
+
+		people.SetValue( null, peopleBefore );
+	}
+
 	private static Level AParkOver( UI.WindowStack stack )
 	{
 		var park = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );

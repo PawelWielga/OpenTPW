@@ -57,7 +57,9 @@ internal sealed class ParkHireScreen : UiWindow
 	private readonly UiControl _title;
 	private readonly UiControl _money;
 	private readonly UiControl _staffCosts;
-	private readonly UiControl _chosen;
+
+	/// <summary>The picked candidate's wage, which message <c>0x401</c> adds to the staff costs shown until the next pick.</summary>
+	private int _considering;
 
 	/// <summary>The picked candidate's skill, <c>0x2482</c>, set only as a row is picked (<c>0x401</c>).</summary>
 	private readonly ParkObjectWindow.UiStatBar _skill;
@@ -149,13 +151,16 @@ internal sealed class ParkHireScreen : UiWindow
 			Known = true
 		} );
 
-		_chosen = info.Add( new UiControl
+		// UITEXT 146, "Skill", put on the label once as it is built (FUN_00485b00( 0x92 ), 0x0049c2c8); nothing
+		// writes it again.
+		info.Add( new UiControl
 		{
 			Id = 0x2483,
 			Rect = new UiRect( 283, 536, 679, 575 ),
 			Font = 6,
 			TextColour = UiColour.White,
-			TextAcross = TextAlign.Start
+			TextAcross = TextAlign.Start,
+			Text = Localization.Text( 146 )
 		} );
 
 		var balancePanel = Root.Add( new UiControl
@@ -197,6 +202,9 @@ internal sealed class ParkHireScreen : UiWindow
 			// Flag 0x80 in the stream (0x291): the row under the pointer is the selection, which is what shows a
 			// candidate's grade and skill bar before the click that chooses them.
 			SelectsUnderPointer = true,
+
+			// The add's pick of the first row, as the list fills on opening and on a tab; taken in Update.
+			PicksFirstRow = true,
 
 			// The screen's handler keeps the list's 0x406 (0x0049b85e).
 			SortChanged = word => _sort = word
@@ -310,23 +318,23 @@ internal sealed class ParkHireScreen : UiWindow
 
 		_title.Text = Localization.Get( tab.Title );
 		_tabs.Select( tab.Id );
-		_chosen.Text = null;
 
 		_list.Clear();
 
+		var added = new List<int>();
+
 		if ( Level.Current?.StaffPool is { } pool )
 		{
+			// The first goes into the empty list picked, its 0x401 posted for Update to take.
 			foreach ( var person in pool.OfKind( _kind ) )
+			{
 				_list.Add( new UiList.Row( person.Id, person.Name, person.Wage ) );
+				added.Add( person.Id );
+			}
 		}
 
-		// The original's fill (FUN_0049b5b0) leaves its first row picked, which shows that candidate's skill bar
-		// as the screen opens and as a tab is changed; where in its list that pick is made is not read. Here no row
-		// is picked until the pointer passes over one, and the bar keeps the last pick.
-		Unimplemented.Report( "HIRE_LIST_FIRST_ROW_PICKED" );
-
 		LogOrder();
-		ShowMoney();
+		Log.Info( $"Hire list: added {string.Join( ",", added )}, row {_list.Selected} picked" );
 	}
 
 	private void LogOrder() => Log.Info( $"Hire list: kind {_kind}, {_list.Census()}" );
@@ -393,9 +401,9 @@ internal sealed class ParkHireScreen : UiWindow
 	private void Left( int candidateId ) => _list.Remove( candidateId );
 
 	/// <summary>
-	/// A candidate was highlighted. The original previews the cost here - message <c>0x401</c> adds
-	/// this wage to the staff-costs row and takes it off the balance, so the player sees what hiring
-	/// would do before they do it.
+	/// A candidate was highlighted, by the pointer or by the fill's pick of the first row. The original previews the
+	/// cost here - message <c>0x401</c> adds this wage to the staff-costs row and takes it off the balance, so the
+	/// player sees what hiring would do before they do it - and sets the skill bar. Both stand until the next pick.
 	/// </summary>
 	private void Selected( int candidateId )
 	{
@@ -407,10 +415,10 @@ internal sealed class ParkHireScreen : UiWindow
 			if ( person.Id != candidateId )
 				continue;
 
-			_chosen.Text = $"{person.Name}   grade {person.Grade}   {person.Wage} a month";
 			_skill.Units = SkillUnits( person.Grade );
-			Log.Info( $"Hire screen: candidate {person.Id} grade {person.Grade}, skill bar {SkillUnits( person.Grade )} of 1024" );
-			ShowMoney( person.Wage );
+			_considering = person.Wage;
+			ShowMoney();
+			Log.Info( $"Hire screen: candidate {person.Id} grade {person.Grade}, skill bar {SkillUnits( person.Grade )} of 1024, staff costs {_staffCosts.Text}" );
 
 			return;
 		}
@@ -438,18 +446,18 @@ internal sealed class ParkHireScreen : UiWindow
 	/// <summary>
 	/// The figures this game can actually answer, and no others.
 	/// </summary>
-	/// <param name="considering">
-	/// A wage being previewed. It is added to the staff costs shown; the original also takes it off the
+	/// <remarks>
+	/// The picked candidate's wage is added to the staff costs shown; the original also takes it off the
 	/// balance shown (message <c>0x401</c>), which this does not.
-	/// </param>
-	private void ShowMoney( int considering = 0 )
+	/// </remarks>
+	private void ShowMoney()
 	{
 		if ( Level.Current?.ParkState is not { } state )
 			return;
 
 		_money.Text = $"{state.Balance}";
 
-		var monthly = considering;
+		var monthly = _considering;
 
 		if ( ParkPeople.Current is { } people && Level.Current?.StaffPool is { } pool )
 		{
@@ -465,5 +473,10 @@ internal sealed class ParkHireScreen : UiWindow
 		_staffCosts.Text = $"{monthly}";
 	}
 
-	protected internal override void Update() => ShowMoney();
+	/// <summary>Takes the list's posted pick, as the original's loop hands the screen its queued <c>0x401</c>, then the money.</summary>
+	protected internal override void Update()
+	{
+		_list.TakePosted();
+		ShowMoney();
+	}
 }

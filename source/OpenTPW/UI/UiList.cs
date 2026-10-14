@@ -286,6 +286,7 @@ internal sealed class UiList : UiControl
 	/// that is the original's sorted insert (<c>list+0x48 &amp; 0x10</c>): before the first row it
 	/// <see cref="SortsBefore"/>, so after every row equal to it, or at the end. Nothing already in the list
 	/// moves, re-sorts or is scrolled to, and the selection keeps its index. A list with no sort takes it at the end.
+	/// The first row into an empty list is picked (<see cref="FirstRow"/>).
 	/// </summary>
 	internal int Add( Row row )
 	{
@@ -483,13 +484,54 @@ internal sealed class UiList : UiControl
 
 	/// <summary>
 	/// The original's add selects the first row of an empty list (<c>FUN_0066403b</c>: <c>FUN_0066525c( 0 )</c> once
-	/// the count reaches 1), and its visitors list opens with a row highlighted (<c>docs/exe/hud.md</c>, "A right click
-	/// on a list"): counted, not built.
+	/// the count reaches 1): the visible window's first row, whose INDEX is posted with <c>0x401</c>
+	/// (<c>FUN_00658ccc</c> queues it). Built where <see cref="PicksFirstRow"/> is set; the other lists count it
+	/// (<c>docs/exe/hud.md</c>, "The first row is picked as a list fills").
 	/// </summary>
 	private void FirstRow()
 	{
-		if ( _rows.Count == 1 )
+		if ( _rows.Count != 1 )
+			return;
+
+		if ( !PicksFirstRow )
+		{
 			Unimplemented.Report( "LIST_FIRST_ROW_SELECTED" );
+			return;
+		}
+
+		// Slot 0 is under the visible count and the row count, so FUN_0066525c takes the top row's index, and posts
+		// only when that moves the selection.
+		if ( _selected == _scrollTop )
+			return;
+
+		_selected = _scrollTop;
+		_posted = _selected;
+	}
+
+	/// <summary>
+	/// Builds the add's pick of the first row (<see cref="FirstRow"/>) for this list. Its <c>0x401</c> is posted, so
+	/// <see cref="SelectionChanged"/> hears it only when the screen calls <see cref="TakePosted"/>, after the fill.
+	/// </summary>
+	internal bool PicksFirstRow { get; init; }
+
+	// The index the add's pick posted, -1 for none waiting.
+	private int _posted = -1;
+
+	/// <summary>
+	/// Hands a posted pick to <see cref="SelectionChanged"/>: the row standing at the posted index now, which after a
+	/// sorted fill is the row sorted first, not the one added first, as the screen's handler reads the row by the
+	/// message's index (<c>0x0049b894</c>). Where no row stands there (a list emptied before the take) the original's
+	/// reader <c>FUN_00664c71</c> writes nothing and the handler goes on with a stale word; here it is handed -1.
+	/// </summary>
+	internal void TakePosted()
+	{
+		if ( _posted < 0 )
+			return;
+
+		var index = _posted;
+		_posted = -1;
+
+		SelectionChanged?.Invoke( index < _rows.Count ? _rows[index].Id : -1 );
 	}
 
 	/// <summary>

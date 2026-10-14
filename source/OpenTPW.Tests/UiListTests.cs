@@ -428,4 +428,69 @@ public class UiListTests
 		wage.Clicked!();
 		Assert.AreEqual( 2, list.SortWord );
 	}
+
+	/// <summary>
+	/// <b>A list that picks its first row selects the top row as the first row goes into it, and posts it</b>
+	/// (<c>FUN_0066403b</c>: <c>FUN_0066525c( 0 )</c> at a count of 1, <c>0x401</c> queued): nothing is told during
+	/// the fill, and the take names the row standing at that index once the fill is over, the one sorted first.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the pick left out; the pick told at once (the first added named); the take naming the row
+	/// added first; the take naming it twice; the pick made on every add; the pick past the top row's index.
+	/// </remarks>
+	[TestMethod]
+	public void AListThatPicksItsFirstRowPostsTheTopRowAndNamesTheRowSortedFirst()
+	{
+		var list = new UiList
+		{
+			RowArea = new UiRect( 0, 0, 100, 440 ),
+			Columns = [(0, 60), (60, 100)],
+			TextColumns = [true, false],
+			PicksFirstRow = true
+		};
+
+		var told = new System.Collections.Generic.List<int>();
+		list.SelectionChanged = told.Add;
+		list.Build();
+		list.SetSort( 1 );
+
+		// Slot order, as the hire screen's fill hands them over: the first added sorts last.
+		list.Add( new UiList.Row( 7, "Rajan Tande", 45 ) );
+		list.Add( new UiList.Row( 11, "Chris Battson", 63 ) );
+		list.Add( new UiList.Row( 12, "Andy Buchanan", 63 ) );
+
+		Assert.AreEqual( 0, told.Count, "posted, not told during the fill" );
+		Assert.AreEqual( 12, list.Selected, "the index stands at the top row, now Andy Buchanan's" );
+
+		list.TakePosted();
+		CollectionAssert.AreEqual( new[] { 12 }, told, "the take names the row at the posted index" );
+
+		list.TakePosted();
+		Assert.AreEqual( 1, told.Count, "once" );
+
+		list.Clear();
+		list.Add( new UiList.Row( 3, "Rob O'Farrell", 92 ) );
+		list.Add( new UiList.Row( 8, "Karl Fitzhugh", 115 ) );
+		list.TakePosted();
+		CollectionAssert.AreEqual( new[] { 12, 8 }, told, "a fill after a clear picks again" );
+	}
+
+	/// <summary>A list that does not pick its first row selects nothing as it fills and counts the original's pick.</summary>
+	/// <remarks><b>Mutations:</b> every list picking; the count left out.</remarks>
+	[TestMethod]
+	public void AListThatDoesNotPickItsFirstRowCountsThePick()
+	{
+		var counted = Times( "LIST_FIRST_ROW_SELECTED" );
+		var told = 0;
+		var list = new UiList { RowArea = new UiRect( 0, 0, 100, 440 ), Columns = [(0, 100)], SelectionChanged = _ => ++told };
+
+		list.Build();
+		list.Add( Row( 100, 1 ) );
+		list.Add( Row( 101, 2 ) );
+		list.TakePosted();
+
+		Assert.AreEqual( -1, list.Selected, "nothing picked" );
+		Assert.AreEqual( 0, told, "and nothing told" );
+		Assert.AreEqual( counted + 1, Times( "LIST_FIRST_ROW_SELECTED" ), "the first add counted, the second not" );
+	}
 }

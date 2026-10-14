@@ -667,8 +667,9 @@ Read first-hand for the build (Q200b, 2026-09-30):
   values keep the order they came in, and an arrival not yet numbered (visitor 0) goes after the other noughts and
   before every numbered visitor.
 - **An add that makes the count 1 selects the first row** (`FUN_0066525c( 0 )` in `FUN_0066403b`). The original's
-  visitors list opens with a row highlighted, not always the first ("A right click on a list"); OpenTPW counts the
-  add's selection and builds none (`LIST_FIRST_ROW_SELECTED`, `docs/QUEUE.md` Q232).
+  visitors list opens with a row highlighted, not always the first ("A right click on a list"). OpenTPW builds the
+  pick for the hire list ("The first row is picked as a list fills") and counts it for the others
+  (`LIST_FIRST_ROW_SELECTED`, `docs/QUEUE.md` Q232).
 - **`FUN_0066525c( slot )`** selects `slot + top` when `slot < visible` and `slot < count`; otherwise, with
   `list+0x48 & 0x100` clear, it returns and the old index stands, and with it set it selects nothing. This list's
   flags are `0x291`, the bit clear ("A right click on a list"); OpenTPW still counts that branch
@@ -1581,14 +1582,42 @@ build that puts it there shows the same figure twice, once correctly as `0x2496`
 **The two cost rows are red.** `FUN_0065c5d5( 0xff, 0, 0, 0xff )` is called while `0x248d`/`0x248c` and
 `0x248a`/`0x248b` are the current control, and never for `0x2488`/`0x2489` or `0x2486`/`0x2487`.
 
-**The first row is picked when the list is filled (measured, not read).** `FUN_0049b5b0` clears the list
-(`FUN_006649d5`), adds a row a candidate of the tab's kind (`FUN_0066403b`) and repaints (`FUN_00663324`, which
-selects nothing); none of its own calls is the select, yet the original given `q353/grades.TPWS` opened the screen
-with its first row highlighted, the label reading "Skill", the portrait drawn and the skill bar at that
-candidate's grade, the pointer away from the list, and did the same on the mechanics' tab (`q353/orig/a-hire.png`,
-`a-tab.png`). Where in the list that pick is made is not read; this game picks no row until the pointer passes over
-one (`HIRE_LIST_FIRST_ROW_PICKED`). The row id pushed is the candidate's SLOT INDEX (0 to 0x1f), which is what
-`FUN_00507bd0` takes back.
+#### The first row is picked as a list fills
+
+Read 2026-10-14 (Q356). **The list's own add picks it.** `FUN_0066403b`, once its count reaches 1, calls
+`FUN_0066525c( 0 )` (`0x006643d4`), which selects slot 0 plus the top row (`+0x14c`) and, where that moves the
+selection, hands `0x401` with the list's id and the selected INDEX to `FUN_00658ccc`, which QUEUES it (`FUN_006697e3`, a
+ring of four-word messages): posted, not sent. The clear `FUN_006649d5` sets `+0x14c` to -1 and the top row to 0 and
+posts nothing, so every fill after a clear picks again. `FUN_0049b5b0` (called by the opener `FUN_0049bdd0` and by the
+tab handler `FUN_0049bc80`, which does nothing else but set the title) clears the list and adds the tab's candidates in
+slot order through the sorted insert, and the selection stays an index, so when the screen's handler `FUN_0049b650`
+takes the message (`0x0049b869`) the row at index 0 is the one sorted FIRST, read back by the index (`FUN_00664c71`,
+`0x0049b894`): the skill bar, Staff costs (`DAT_007ca2fc` plus that wage) and the balance are that row's, and the
+highlight is on it. Where the index names no row `FUN_00664c71` answers 0 and writes nothing, and the handler goes on
+with a stale word. The row id pushed is the candidate's SLOT INDEX (0 to 0x1f), which is what `FUN_00507bd0` takes
+back: the pool `[0x007cf83c]`, 32 records of 0x14 bytes, `+0` the kind, `+4` the name's row (`FUN_005074a0`), `+8` the
+grade, `+10` in use.
+
+**The label `0x2483` reads UITEXT 146, "Skill"**, put on once by the builder (`FUN_00485b00( 0x92 )`, `0x0049c2c8`, the
+only `PUSH 0x2483`); nothing letters a candidate there.
+
+**Measured in the original** (Q356, `q356/orig/`, `q353/grades.TPWS`, the pool read by `staffpool.py`): opened on the
+janitors on tick 1106 with slots 0 (grade 1, $ 36), 11, 18 and 19 (grade 3): Chris Battson (slot 11) stood first and
+was highlighted, the bar at 0.617 and Staff costs $ 63, not those of slot 0, handed over first and standing second. On
+the mechanics' tab Alex Cullum stood first and was highlighted, $ 92, the bar 0.209 (also the first handed over). Q353's
+`a-tab.png` highlights its fifth row because `gmove.py` glides diagonally, and its way down from the tab crossed rows 0
+to 4 ("The pointer over a list"). The original's pool at the load was this game's exactly; slot 7 timed out on tick 1066
+and the top-up on tick 1083 added ten, which is why Q353's original, clicked after it, showed five janitors to this
+game's two.
+
+**OpenTPW** (Q356): `UiList.PicksFirstRow` builds the add's pick, the top row selected as the first row goes in and its
+index posted; `TakePosted` hands the row standing at that index to `SelectionChanged` when the screen's `Update` calls
+it. The hire list sets it; the other lists count the pick (`LIST_FIRST_ROW_SELECTED`, Q232). The picked wage stays in
+Staff costs until the next pick. On the same file (`q356/run-fix2`) the opening logged `Hire list: added 7,11, row 11
+picked` and `Hire screen: candidate 11 grade 3, skill bar 614 of 1024, staff costs 502`, the bar 0.606 with Chris
+Battson's row highlighted, and the mechanics' tab `added 3,8,10, row 8 picked`, candidate 8 grade 2, 409, staff costs
+554 (Karl Fitzhugh's $ 115 for Chris's $ 63). The opening fills the list twice (the tab group's `Select` raises its own
+handler, which fills again) and one pick is taken.
 
 **The skill bar `0x2482`** ((722, 536)-(957, 575), type 9) is built at nought (`0x0049c335`) and written in one place,
 message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<
