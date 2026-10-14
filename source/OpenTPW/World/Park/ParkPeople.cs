@@ -216,6 +216,8 @@ public sealed partial class ParkPeople : Entity
 		{
 			for ( var kind = 0; kind < TrainingBudgets.Length && kind < hq.Budgets.Count; ++kind )
 				TrainingBudgets[kind] = hq.Budgets[kind];
+
+			HaveEverTrained = hq.HaveEverTrained;
 		}
 
 		// One past the highest the file used, for anybody who arrives later. Objects and people share the
@@ -774,10 +776,35 @@ public sealed partial class ParkPeople : Entity
 
 	/// <summary>
 	/// Thing 1's monthly training budgets, <c>mBudget[0..4]</c>, one a kind in <see cref="ParkStaffPool"/>'s order -
-	/// read from the save's staff HQ, and nought where it has none. Nothing here writes them: the original sets them
-	/// only on the Staff Training Budgets screen, which is not built.
+	/// read from the save's staff HQ, and nought where it has none. The Staff Training Budgets screen sets them
+	/// (<see cref="SetTrainingBudget"/>), as the original's alone does.
 	/// </summary>
 	internal int[] TrainingBudgets { get; } = new int[ParkWorld.StaffHqState.Kinds];
+
+	/// <summary>Thing 1's <c>mHaveEverTrained</c> (<c>+0x20</c>): a kind has been given a budget over nought.</summary>
+	internal bool HaveEverTrained { get; private set; }
+
+	/// <summary>
+	/// The Staff Training Budgets screen's spinner was given a value, by a press or as the screen opens (its handler's
+	/// message <c>0x800</c>, <c>0x004b2534</c>): the kind's budget is the value, nought for one below nought, and a
+	/// value over nought sets <see cref="HaveEverTrained"/>, which nothing there clears.
+	/// </summary>
+	internal void SetTrainingBudget( int kind, int value )
+	{
+		TrainingBudgets[kind] = Math.Max( value, 0 );
+
+		if ( value > 0 )
+			HaveEverTrained = true;
+
+		Log.Info( $"Staff: training budget {kind} set to {TrainingBudgets[kind]}, budgets {string.Join( ",", TrainingBudgets )} evertrained {(HaveEverTrained ? 1 : 0)}" );
+	}
+
+	/// <summary>One kind's members, budget and grades added up, as the advisor's rows 28 to 32 and the Staff Training Budgets screen's skill bars read them.</summary>
+	internal ParkAdvisorMessages.KindTraining TrainingOf( int kind )
+	{
+		var members = _staff.Where( member => ParkStaffPool.KindFor( member.Model ) == kind ).ToList();
+		return new ParkAdvisorMessages.KindTraining( members.Count, TrainingBudgets[kind], members.Sum( member => member.PayGrade ) );
+	}
 
 	/// <summary>Thing 1's strike records, read from the save's staff HQ and looked at as each month turns.</summary>
 	internal ParkStrikes Strikes { get; }
@@ -2724,14 +2751,7 @@ public sealed partial class ParkPeople : Entity
 			_staff.Count( member => member.Model == ResearcherModel ), _research?.Unfinished( ItemDescriptionFile.Feature ) ?? 0,
 			_research?.Unfinished( ItemDescriptionFile.SideShow ) ?? 0,
 			_research?.Rate( ItemDescriptionFile.SideShow, ability, MostResearchAbility ) ?? 0, ability, MostResearchAbility,
-			new ParkAdvisorMessages.StaffTraining( Training( 0 ), Training( 1 ), Training( 2 ), Training( 3 ), Training( 4 ) ) );
-
-		// One kind's members, budget and grades added up, as rows 28 to 32's scores read them.
-		ParkAdvisorMessages.KindTraining Training( int kind )
-		{
-			var members = _staff.Where( member => ParkStaffPool.KindFor( member.Model ) == kind ).ToList();
-			return new ParkAdvisorMessages.KindTraining( members.Count, TrainingBudgets[kind], members.Sum( member => member.PayGrade ) );
-		}
+			new ParkAdvisorMessages.StaffTraining( TrainingOf( 0 ), TrainingOf( 1 ), TrainingOf( 2 ), TrainingOf( 3 ), TrainingOf( 4 ) ) );
 	}
 
 	/// <summary>
@@ -3625,7 +3645,8 @@ public sealed partial class ParkPeople : Entity
 				+ $"base {member.BaseSpeed} purpose {member.PurposeSpeed} adjustor {member.AdjustorSpeed} "
 				+ $"pace {member.PreviousSpeed:0.0000} speed {nav.MaxSpeed} restExact {member.Tiredness:0.000} "
 				// The cell recorded for them, where an entertainer's or a guard's region effect stands.
-				+ $"recorded {(MapStep.IsCellId( member.RecordedCell ) ? $"({MapStep.CellAt( member.RecordedCell ).X},{MapStep.CellAt( member.RecordedCell ).Y})" : "none")}";
+				+ $"recorded {(MapStep.IsCellId( member.RecordedCell ) ? $"({MapStep.CellAt( member.RecordedCell ).X},{MapStep.CellAt( member.RecordedCell ).Y})" : "none")} "
+				+ $"through {member.PercentageThroughGrade}";
 		}
 	}
 }

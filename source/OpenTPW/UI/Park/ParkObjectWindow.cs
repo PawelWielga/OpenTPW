@@ -706,7 +706,7 @@ internal sealed class ParkObjectWindow : UiWindow
 	/// green-to-red scheme that would state a judgement about the value the game never makes here.
 	/// </para>
 	/// </remarks>
-	private sealed class UiStatBar : UiControl
+	internal sealed class UiStatBar : UiControl
 	{
 		private static Texture? _track;
 		private static Texture? _fill;

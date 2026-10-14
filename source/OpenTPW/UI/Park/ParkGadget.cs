@@ -717,6 +717,8 @@ internal sealed class ParkGadget : UiWindow
 	private const int LocateThing = 3;
 	private const int LocateItem = 4;
 	private const int EntryPrice = 0x18;
+	/// <summary>The bar's button that opens the Staff Training Budgets screen, b_staffcost (FUN_0048e0f0 to FUN_004b2750).</summary>
+	private const int StaffCosts = 0x15;
 	/// <summary>The bar's buttons that open the buy screen, mb_buy: types 9 to 0xc, a tab each from the first (FUN_0048e0f0).</summary>
 	private const int BuyFirstTab = 9;
 	private const int BuyLastTab = 0xc;
@@ -738,7 +740,7 @@ internal sealed class ParkGadget : UiWindow
 		LocateItem => ("mb_locate", 0x203),
 		>= 9 and <= 0x11 => ("mb_buy", 0x200 + type),
 		0x13 => ("mb_resrch", 0x213),
-		0x15 => ("b_staffcost", 0x215),
+		StaffCosts => ("b_staffcost", 0x215),
 		0x17 => ("mb_callmech", 0x217),
 		EntryPrice => ("b_entry", 0xec),
 		0x1a => ("mb_accept", -1),
@@ -816,7 +818,8 @@ internal sealed class ParkGadget : UiWindow
 	/// the row of the tag's item the original then selects is counted where a tag names one,
 	/// <c>TAG_BAR_BUY_ITEM_ROW</c>. Types 0xd to 0x11 open the hire screen on the tab the type less 0xd names
 	/// (FUN_0049bdd0, which destroys the park screen that is open first, the hire screen too, so the screen is
-	/// always built), and answer 2. Every other type opens a screen or answers an offer, none of it built: counted,
+	/// always built), and answer 2. Type 0x15 opens the Staff Training Budgets screen (FUN_004b2750, nothing where
+	/// it is open already) and answers 2. Every other type opens a screen or answers an offer, none of it built: counted,
 	/// <c>TAG_BAR_BUTTON</c>, and nothing more.
 	/// </summary>
 	private void BarButton( bool first )
@@ -838,6 +841,14 @@ internal sealed class ParkGadget : UiWindow
 			// Screen 10 of the Finance category; nothing where it is open already ([0x007ca210]).
 			if ( !Stack.Windows.Any( window => window is ParkEntryPriceScreen ) )
 				ParkCategoryScreens.Show( Stack, ParkCategoryScreens.Finance, 10 );
+			EraseTag();
+			return;
+		}
+
+		if ( type == StaffCosts )
+		{
+			Log.Info( $"Park gadget: message bar: button type {type} opens the Staff Training Budgets screen and takes tag {tag.Row.Id} off" );
+			ParkCategoryScreens.Show( Stack, ParkCategoryScreens.Finance, ParkCategoryScreens.StaffCosts );
 			EraseTag();
 			return;
 		}

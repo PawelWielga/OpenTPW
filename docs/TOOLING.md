@@ -27,6 +27,8 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/hidelists.py <advisor.wad> <stem>` | Every clip's hide list of a model in a wad (`<stem>m1.md2` on), each node by name: what a clip's start hides |
 | `lib/md2surf.py <wad> <member.md2> [x z]` / `--sweep <data dir>` | A model's header float, lookup records and the faces a point stands on, with the height under a model point; the sweep counts them over every wad. Importable (`Model`): a reader of a `.md2`'s header, lookup table, meshes, vertices and faces to build a model check on |
 | `lib/parkrun-smoke.py <out> <bin> [off]` | The scaffold's own check: enters Lost Kingdom, saves under pause, loads the file back from the Load Park list and compares the three ticks; `off` runs it on the private display |
+| `lib/uistream.py <VA>` | A compiled UI layout stream of `testme.exe` on disk walked to its balanced close (`hud.md`, "The opcodes"): every control's type, flags, id and rect, its mesh hash, text rect, help row and outline, indented by its parent, each close printed. It does not read ops 9 and 10 (a list's scrollbar): a stream with a list stops there |
+| `meshhash.py <hash> ...` | A layout stream's mesh hashes turned back into the `ui.wad` model to load, by file stem or by a model's first node name (`w_park` is the node `window3`) |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
 | `original/loadfile.sh load <file> <outdir> <tag>` / `stop` | A park file loaded in the original from its Load Park list, off-screen, with frames; `POLL=` starts a memory reader just before the click. It starts the original only when it is not running, so a second file is 35 s where the first is 123 s |
@@ -124,6 +126,17 @@ whole list):
   from `strdump` on the folder the game under test reads: strings 34 and 37 differ ("cleaners" and
   "scientists" in English, "janitors" and "researchers" in american). A run whose pollers see no change prints
   no tick after the load: give `thingwords.py` a word that moves (a mechanic's state, `26:0x19c:I`).
+- **The Staff Training Budgets screen, in both games, with no tag** (Q352): the gadget's Money button, then the
+  entry-price screen's staff-costs button. Here: `control 2a` gives the Money button's place, then points of the
+  2048 x 1536 layout through the screen's own scale (`q352/confirm.py`'s `topix`: a wide window centres a
+  screen): the staff-costs button (1619, 354); on the screen a row's minus at x 955 and plus at x 1316, the rows'
+  middles y 254, 409, 563, 717, 871; the entry button (1739, 626), the tick (1752, 861). The original
+  (`q352/orig/run2.sh`): the Money button at game point (107, 645), the staff-costs button (810, 177), a row's
+  minus (478, y) and plus (658, y) with y 127, 204, 281, 358, 435. `budgets` reads this game's five, the flag and
+  the screen; `thingwords.py ... 1:0xc:i 1:0x10:i 1:0x14:i 1:0x18:i 1:0x1c:i 1:0x20:B` the original's. **Opening
+  the screen writes every budget back, so it sets `mHaveEverTrained` by itself**: read the flag before it. A
+  tag's count taken from the log before the load's click is stale (`run.sh`'s `held`): click a tag only after a
+  fresh `tags.py` line. This game's month turns about 715 ticks after a load, not on the file's calendar (Q241j).
 - **A balance key changed in both games** (Q338): this game from a private folder (`lib/gamefolder.py`, then
   `GAME_FOLDER` before `parkrun.py`; an off-screen run wants a folder of its own beside the desktop's). The
   original reads `~/Games/TPW-original/Data/Advisor/Advisor.sam` as it starts: stop it, check the file's sum is

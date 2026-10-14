@@ -675,7 +675,8 @@ public class Level
 				Log.Info( $"Save: advisor action written: started {action.Started} duration {action.Duration} playing {action.Playing} stopwatch {stopwatch}" );
 				return action;
 			} : null,
-			state.AdvisorMessages?.PollRow, state.LastStaffHired, state.LastObjectBuilt );
+			state.AdvisorMessages?.PollRow, state.LastStaffHired, state.LastObjectBuilt,
+			people != null ? (people.TrainingBudgets.ToArray(), people.HaveEverTrained) : null );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;

@@ -2055,6 +2055,17 @@ public static class DebugConsole
 			// them printed, "the plus button charged one more" is a measurement rather than a picture.
 			// Then the bank's other four, which the original's memory shows beside a drink's +10: the year's profit,
 			// the balance the last withdrawal left, the tick it entered the red and whether withdrawals are on.
+			// Thing 1's training budgets and whether one was ever set, each kind's skill as the Staff Training
+			// Budgets screen's bars read it, and the screen's own census where it is open.
+			case "budgets":
+				Reply( ParkPeople.Current is { } trained
+					? $"budgets {string.Join( ",", trained.TrainingBudgets )} evertrained {(trained.HaveEverTrained ? 1 : 0)} "
+						+ $"skill {string.Join( ",", Enumerable.Range( 0, ParkStaffPool.Kinds ).Select( kind => trained.TrainingOf( kind ).GradeShare ) )}"
+						+ (Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows.OfType<UI.ParkStaffCostsScreen>().FirstOrDefault() is { } costs
+							? $"; screen: {costs.Census()}" : "; screen: not open")
+					: "budgets: a park has to be loaded" );
+				break;
+
 			case "money":
 				Reply( Level.Current?.ParkState is { } purse
 					? $"money balance {purse.Balance} takings {purse.Takings} " +

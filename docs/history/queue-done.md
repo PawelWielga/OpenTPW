@@ -6774,6 +6774,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   1105, 1165, 1192, 1219 and 1269 in the same hats with the same tags. All five at grade 1: none said, in
   both. A budget of 25 for the handymen and 50 for the entertainers: those two silent and the other three
   said, in both. Seventy bugs put back, seventy caught (68 at first; two after two test lines).
+- [x] **Q352. The Staff Training Budgets screen sets each kind of staff's training budget, and a saved park holds it.**
+  Done 2026-10-13, split from the catch-all by the session (`hud.md`, "The Staff Training Budgets screen";
+  `saves.md`, "OpenTPW's writer, the training budgets"). Screen 9 of the Money category (`FUN_004b2750`, stream
+  `0x00756400`, handler `0x004b24b0`): a row a kind, each a spinner over 0 to 10000 in steps of 25 on thing 1's
+  `mBudget`, with the kind's skill bar; opened by the training tags' bar button (type 21), by the entry-price
+  screen's button and by the gadget's Money button once left on it. A value over nought sets
+  `mHaveEverTrained`, and the opening writes every budget back. The writer writes the five budgets and the flag.
+  **The number:** with `q351/all0.TPWS` the bar's button logged `button type 21 opens the Staff Training Budgets
+  screen and takes tag 30 off`; the mechanics' plus three times logged `budgets 0,25,0,0,0 evertrained 1`,
+  `0,50,0,0,0`, `0,75,0,0,0`, the Staff costs row `$ 75`; the saved file's thing 1 read (0, 75, 0, 0, 0) at `+82`
+  and 1 at `+102`; row 28 was polled `tick=1260 result=no-score members=1 budget=75` (`q352/run-fix2`). The
+  original given the same file and presses read thing 1's `+0x10` 25, 50, 75 and `+0x20` 0 to 1, "$ 75" in its
+  row and its Staff costs; given this game's file it read 75 and 1 and its mechanic's training went 0 to 15 on
+  tick 1383. Two predictions missed, both mine (this game's month is not on the file's calendar; the Staff costs
+  row is not empty at the opening, which the original's run showed and the build then took). Fifty bugs put
+  back, fifty caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

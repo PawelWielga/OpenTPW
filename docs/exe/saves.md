@@ -655,7 +655,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | The cells | a path or queue laid or cleared, land, a footprint, the chain of who stands where | patched cell by cell, each record where it lies (every cell has its map and track parts); `mWho` with the things it names; the effects part written again from the running grid, last of all ("OpenTPW's writer, the region effects") |
 | A guest, a member of staff | everything they do | carried records patched from `ParkPeople`; one made here written whole; one gone left out |
 | A catalogue object | its door, price, counts, rings, queue, script handle | carried records patched; one bought here written whole; one sold left out |
-| The economy thing, the staff HQ | the balance, the loans, the rings; the strikes | the balance is written; the loans, the rings and the strikes are the file's |
+| The economy thing, the staff HQ | the balance, the loans, the rings; the strikes, the training budgets | the balance is written, and the staff HQ's five budgets and `mHaveEverTrained` ("OpenTPW's writer, the training budgets"); the loans, the rings and the strikes are the file's |
 | The analyser, the research lab, the weather, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar and weather run here | carried, but for the mechanics' HQ's `mNextObject` (model 10, `PutMechanicCursor`) and the analyser's `mLastStaffHired` (model 13, `PutLastStaffHired`: the calendar as the newest member of staff was made, which the advisor's row 7 counts its thirty days from; `advisor-park.md`, "More rides than the mechanics can keep"; the original read this game's stamp from a file saved after a hire here, Q333) and its `mLastObjectBuilt` (`PutLastObjectBuilt`: the calendar as the newest object was made, a sale leaving it; `advisor-park.md`, "The newest build"; the original read this game's from files saved after a purchase and after its sale, Q334); the analyser's four other stamps and its counts, and what the weather and the calendar run here, are not written |
 
 **What is not settled, and belongs to the build that meets it.** A record made here has bytes no reader here
@@ -3192,6 +3192,31 @@ round of bugs put back (42) ran before the model record's mend; the eleven for t
 game run: both vehicles made in one park (the test holds it), a load of sixty-one's own summons, the ferry's
 file of the final build in the original (round 1's ferry file and the final build's seaplane file were), a
 park made with no file, Full Simulation.
+
+### OpenTPW's writer, the training budgets
+
+Q352. The staff HQ (thing 1, model 9, 103 bytes; FileFormats `saves.md`, "The staff HQ") is written with the
+running park's five `mBudget`, the dwords at its `+82`, and `mHaveEverTrained`, the byte at `+102`
+(`ParkWorld.PutTrainingBudgets`, handed `ParkPeople.TrainingBudgets` and `HaveEverTrained` by
+`ParkFileWriter.Running.Training`); its strike fields are still the file's. In memory they are thing 1's `+0xc`
+to `+0x1c` and `+0x20`, which only the Staff Training Budgets screen writes (`hud.md`, "The Staff Training
+Budgets screen"). A load reads both (`StaffHqState.Budgets`, `HaveEverTrained`).
+
+**The bytes beside the original's own.** No file of the original's with a budget set was made: its own values
+were read in its memory. With `q351/all0.TPWS` loaded and the mechanics' plus pressed three times on its screen,
+thing 1 read `+0xc` 0, `+0x10` 75, `+0x14` to `+0x1c` 0 and `+0x20` 1 (`q352/orig/a-load.log`). This game given
+the same file and the same presses wrote a file whose thing 1 reads (0, 75, 0, 0, 0) at `+82` and 1 at `+102`
+(`q352/run-fix2`, `parkfile.Park.at( 1 )`), where the file loaded read five noughts and 0.
+
+**The file in the original** (`q352/set75.TPWS`, this game's, saved on tick 1164; `q352/orig/run.sh`, `run2.sh`):
+thing 1 read 75 at `+0x10` and 1 at `+0x20` from the first read, as the park was entered on it and again loaded
+from the list (runs b, c); its screen showed "$ 75" in the mechanics' row (`orig/c-screen.png`); and on tick 1383,
+the month's change, the mechanic's `mPercentageThroughGrade` (thing 26's `+0x1e8`) went 0 to 15, 75 over 5 a
+point (run b). This game given its own file read `budgets 0,75,0,0,0 evertrained 1` and trained the same 15 at
+its own month's change (`q352/run-month1`).
+
+Not written: the strike records (the file's), and nothing else of thing 1. Not run: a park made with no file
+saved (`SAVE_PARK_WITH_NO_FILE`), a file with all five budgets set.
 
 ## What OpenTPW builds
 

@@ -2106,9 +2106,11 @@ Five polled topics more, thirty-one in all. `ParkPeople.AdvisorFacts` hands the 
 budget (`TrainingBudgets`, the file's) and its members' grades added up. The poll line ends ` members=N budget=N
 grades=N share=N`. A response that names a gesture row is counted (`ADVISOR_RESPONSE_GESTURE_ROW`), as before.
 
-**DEVIATION: the bar's staff-costs button does nothing here.** The Staff Training Budgets screen is not built
-(`STAFF_COSTS_SCREEN`), so the click is counted (`TAG_BAR_BUTTON`) and the tag stays; the original opens the
-screen and takes the tag off. **The handymen's cap is paler than the original's**, as the hard hat and the pith
+**The bar's staff-costs button opens the Staff Training Budgets screen and takes the tag off** (Q352;
+`hud.md`, "The Staff Training Budgets screen"), as the original's: a budget set there is the one these rows read,
+and the mechanics' row was polled `score=0 ... tick=1260 result=no-score members=1 budget=75` after 75 was set
+on tick 1110 or so (`q352/run-fix2`). The runs below are of the build before that screen, where the click was
+counted (`TAG_BAR_BUTTON`). **The handymen's cap is paler than the original's**, as the hard hat and the pith
 helmet are ("The theme's own advisor and its costume").
 
 **The scenes** (`q350/both.TPWS`, the stock park saved on tick 963 with one member of each kind; written with
@@ -2164,9 +2166,9 @@ and the budgets read as written in every run (`bud0` 25, `bud2` 50 in run c).
 | What he wears | hard hat, cap, police cap, the theme's fly in its helmet, research hat | the same, the cap paler |
 | The tags | rows 30 to 34, four standing at the fifth line, the newest on top | the same |
 | The bar | button 21 and the bomb | the same (`b_staffcost`, help 533) |
-| The bar's button | opens the Staff Training Budgets screen, the tag off | counted, nothing opens, the tag stays |
+| The bar's button | opens the Staff Training Budgets screen, the tag off | the same since Q352; in these runs counted, nothing opened |
 
-**Not built or not seen.** The Staff Training Budgets screen. The gesture rows of responses 82, 84 and 90
+**Not built or not seen.** The gesture rows of responses 82, 84 and 90
 (counted). In no game run: lines 2 and 3 of any row, a line again past its 120 quarter-ticks' wait, two members
 of a kind (the tests hold the sum and the share), twenty-one members with one grade, a budget below nought, a
 budget set on the original's own screen, the researchers' line's hat in this item's frames of the original

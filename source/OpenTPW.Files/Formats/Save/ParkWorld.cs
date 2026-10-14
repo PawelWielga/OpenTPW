@@ -406,8 +406,9 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// </summary>
 	/// <param name="ForceStrike"><c>mForceStrike</c>: not nought makes every month's look find a cause.</param>
 	/// <param name="Strikes">The five strike records, or null for five of noughts, as the constructor leaves them (<c>FUN_005089c0</c>).</param>
+	/// <param name="HaveEverTrained"><c>mHaveEverTrained</c>: set as the Staff Training Budgets screen first gives a kind a budget over nought (<c>0x004b25d0</c>).</param>
 	public readonly record struct StaffHqState( IReadOnlyList<int> Budgets, int ForceStrike = 0,
-		IReadOnlyList<StrikeRecord>? Strikes = null )
+		IReadOnlyList<StrikeRecord>? Strikes = null, bool HaveEverTrained = false )
 	{
 		/// <summary>How many budgets and strike records the record holds, one a kind of staff.</summary>
 		public const int Kinds = 5;
@@ -2104,7 +2105,10 @@ public sealed partial class ParkWorld : IParkInitialState
 				EconomyAt = start;
 			}
 			else if ( model == StaffHqModel )
+			{
 				StaffHq = ReadStaffHq( start );
+				StaffHqAt = start;
+			}
 			else if ( model == MechanicHqModel )
 			{
 				MechanicHqAt = start;
@@ -2941,6 +2945,9 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// <summary>Where <c>mBudget[0]</c> sits in the staff HQ's record, after the strike fields.</summary>
 	private const int StaffHqBudgetsAt = 82;
 
+	/// <summary>Where <c>mHaveEverTrained</c> sits in the staff HQ's record, its last byte.</summary>
+	private const int StaffHqHaveEverTrainedAt = 102;
+
 	/// <summary>The staff HQ's strike fields and five training budgets, from the record at <paramref name="start"/>.</summary>
 	private StaffHqState ReadStaffHq( int start )
 	{
@@ -2955,7 +2962,32 @@ public sealed partial class ParkWorld : IParkInitialState
 			budgets[i] = ReadInt32At( start + StaffHqBudgetsAt + (4 * i) );   // mBudget[i]
 		}
 
-		return new StaffHqState( budgets, ReadInt32At( start + StaffHqForceStrikeAt ), strikes );
+		return new StaffHqState( budgets, ReadInt32At( start + StaffHqForceStrikeAt ), strikes,
+			_data[start + StaffHqHaveEverTrainedAt] != 0 );
+	}
+
+	/// <summary>Where the staff HQ's record lies in the body, or -1 with none.</summary>
+	public int StaffHqAt { get; private set; } = -1;
+
+	/// <summary>
+	/// Writes the staff HQ's five <c>mBudget</c> and its <c>mHaveEverTrained</c> over the file's in
+	/// <paramref name="body"/>, a copy of this park's own. A park with no such thing is left alone.
+	/// </summary>
+	public void PutTrainingBudgets( byte[] body, IReadOnlyList<int> budgets, bool haveEverTrained )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+		ArgumentNullException.ThrowIfNull( budgets );
+
+		if ( StaffHqAt < 0 )
+			return;
+
+		for ( var i = 0; i < StaffHqState.Kinds && i < budgets.Count; ++i )
+		{
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(
+				body.AsSpan( StaffHqAt + StaffHqBudgetsAt + (4 * i), 4 ), budgets[i] );
+		}
+
+		body[StaffHqAt + StaffHqHaveEverTrainedAt] = (byte)(haveEverTrained ? 1 : 0);
 	}
 
 	/// <summary>

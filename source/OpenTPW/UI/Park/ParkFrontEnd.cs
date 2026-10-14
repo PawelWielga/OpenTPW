@@ -123,6 +123,10 @@ internal sealed class ParkFrontEnd : Panel
 		"b_finance", "b_loans", "b_staffcost", "b_door", "b_plus", "b_minus",
 		"b_parkinfo", "b_kids",
 
+		// The Staff Training Budgets screen, stream 0x00756400 - see <see cref="ParkStaffCostsScreen"/>. w_park
+		// is the node "window3".
+		"w_park", "f_train", "b_entry", "h_handy", "h_mech", "h_enter", "h_guard", "h_resrcher",
+
 		// THE SCREEN FRAMES, found by hashing the models' NODE names rather than their file names.
 		// w_big is the node "window4" and w_small the node "window1"; f_varibox is the boxed number the
 		// entry-price spinner sits in.

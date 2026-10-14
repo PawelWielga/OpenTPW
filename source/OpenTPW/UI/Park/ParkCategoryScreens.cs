@@ -39,6 +39,9 @@ internal static class ParkCategoryScreens
 	/// <summary>Finances, loans, staff costs and the entry price. Seeded to <b>10</b>, the entry price.</summary>
 	public const int Finance = 3;
 
+	/// <summary>The Staff Training Budgets screen's number in <see cref="Finance"/>.</summary>
+	public const int StaffCosts = 9;
+
 	/// <summary>
 	/// Which screen each category is currently left on, in the original's own numbering:
 	/// 1 buy, 2 hire, 3 park status, 4 all staff, 5 all items, 6 all visitors, 7 finances, 8 loans,
@@ -137,13 +140,20 @@ internal static class ParkCategoryScreens
 				stack.Open( new ParkVisitorsScreen( stack ) );
 				return;
 
+			// The staff costs' opener does nothing with its screen up ([0x007cc2ec], 0x004b2772).
+			case StaffCosts:
+				if ( !stack.Windows.Any( window => window is ParkStaffCostsScreen ) )
+					stack.Open( new ParkStaffCostsScreen( stack ) );
+
+				return;
+
 			case 10:
 				stack.Open( new ParkEntryPriceScreen( stack ) );
 				return;
 		}
 
 		// Everything else is counted rather than drawn. Each is named, because "not built" tells
-		// nobody what to build - and each names what it is waiting on, because five of these are not
+		// nobody what to build - and each names what it is waiting on, because four of these are not
 		// screens this project is choosing to skip: they rest on simulation that does not exist.
 		var (name, waiting) = screen switch
 		{
@@ -153,7 +163,6 @@ internal static class ParkCategoryScreens
 			6 => ("ALL_VISITORS_SCREEN", "nothing - it is built and opened above"),
 			7 => ("FINANCE_SCREEN", "the monthly cash-in and cost ring buffers, and the year graph"),
 			8 => ("LOANS_SCREEN", "the loan display and borrowing controls; the saved mLoans[] records are read"),
-			9 => ("STAFF_COSTS_SCREEN", "training budgets, other costs and loan repayments"),
 			_ => ("RESEARCH_SCREEN", "researchers, research groups and per-group research points")
 		};
 

@@ -3868,7 +3868,7 @@ first sweep and lose `mProfitThisYear` (decoded, not measured; `QUEUE.md` Q149).
 
 **The training, `FUN_0050c800`.** Thing 1 keeps five monthly budgets, `mBudget[0..4]` at `+0xc` (file 82; FileFormats
 `saves.md`, "The staff HQ"), the handymen's, mechanics', entertainers', guards' and researchers' in that order, set on
-the Staff Training Budgets screen only (0 to 10000 in steps of 25, `FUN_004b2750`; `hud.md`). It walks every thing
+the Staff Training Budgets screen only (0 to 10000 in steps of 25, `FUN_004b2750`; `hud.md`, "The Staff Training Budgets screen": built, Q352). It walks every thing
 twice: once counting the staff of each model, then calling `CStaff::TrainMe` (`FUN_00505a10`) on every member with
 budget / count, a signed division (`0x0050c945`..`0x0050c97c`). Neither pass writes a budget, which stays set from
 month to month; what the division leaves over is never taken; and nothing tests the budget, so a nought budget still
@@ -3948,7 +3948,7 @@ analyser's training and staff totals (`STAFF_TRAINING_ANALYSER_TOTAL`,
 `STAFF_WAGE_ANALYSER_TOTAL`), and the end of a park six months in the red with the advisor's record `0x6a`
 (`BANK_PARK_ENDS_IN_THE_RED`, `ADVISOR_PARK_ENDED_IN_THE_RED`). A grade with no `PoundsPerTrainingPoint`, which the
 original divides by unguarded and no shipped file has below grade 4, is counted (`STAFF_TRAINING_NO_POINT_COST`) and
-buys nothing. No screen sets the budgets or buys a loan yet, so both keep what the save holds. OpenTPW's calendar
+buys nothing. The Staff Training Budgets screen sets the budgets (Q352; `hud.md`); no screen buys a loan yet, so the loans keep what the save holds. OpenTPW's calendar
 counts from nought (Q149), so its first month's change is 1 February, 177 s in, where the original's after the same
 load is 1 March.
 

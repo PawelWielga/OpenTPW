@@ -44,18 +44,24 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q352. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q353. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q351 (`advisor-park.md`, "Staff nobody has trained"): **the bar's staff-costs button does nothing**
-  (type 21, `b_staffcost`: the original opens its Staff Training Budgets screen and takes the tag off;
-  counted, `TAG_BAR_BUTTON`, the screen `STAFF_COSTS_SCREEN`), so no screen here sets a budget and the lines
-  can only be stopped by training nobody can buy. The gesture rows of responses 82, 84 and 90 are counted
+  From Q352 (`hud.md`, "The Staff Training Budgets screen"): **the account's Cash in, Other costs and Balance
+  are empty** on it and on the hire screen: the analyser's three month rings (`+0x1fc94`, `+0x1f7f4`,
+  `+0x1f5a4`) are not kept, read from a file or written (`MONTHLY_ACCOUNT_HISTORY`, `ANALYSER_MONTH_CLOSE`).
+  **The skill bars are a flat green**, the original's `ridestatbar.wct` red to green (the object window's bars
+  too). The screen's lettering is smaller than the original's at this window size (not looked into). The
+  finances and loans screens its buttons go to are not built. What reads `mHaveEverTrained` was not looked for.
+  No file of the original's own with a budget was made (its memory was read). **This game's month does not
+  turn on the file's calendar** (Q241j: 715 ticks after a load, where the original's turned on 1383). In no
+  game run: Full Simulation (the loans button enabled there), a budget at 10000, the three other themes.
+  From Q351 (`advisor-park.md`, "Staff nobody has trained"): the bar's staff-costs button is built (Q352).
+  The gesture rows of responses 82, 84 and 90 are counted
   (`ADVISOR_RESPONSE_GESTURE_ROW`). **The handymen's cap is paler than the original's**, as the other hats
   are (the advisor's light, below). In no game run: lines 2 and 3 of any row, a line again past its 120
-  quarter-ticks, two members of a kind, a budget below nought, a budget set on the original's own screen, a
-  park made with no file, Full Simulation (not asked: the rows are either game's and read neither). Not
-  heard in either game.
+  quarter-ticks, two members of a kind, a park made with no file, Full Simulation (not asked: the rows are
+  either game's and read neither). Not heard in either game.
   From Q350 (`advisor-park.md`, "Every sideshow built, and more to research"): **the bar's research button
   does nothing** (type `0x13`, `FUN_004aa480`: the research screen, and in Instant Action a box reading
   "Research is automatic in Instant Action mode."; counted, `TAG_BAR_BUTTON`). The training lines are

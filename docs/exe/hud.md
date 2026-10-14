@@ -459,12 +459,12 @@ behaviour.
   automatic in Instant Action mode."*) when the game type `DAT_00fb3b7c` is 2, and UITEXT `0x1d3` (*"You need to hire
   some scientists before you can carry out any research!"*) when `mFirstResearcher` (`+0x1da742`) is nought.
 
-**Four are built and five are blocked on simulation this project does not have.** Built: **entryprice**,
-**allpeeps**, **allstaff** and **allitems**. Blocked: **loans** (taking and repaying a loan: `ParkWorld.EconomyState.Loans` reads the save's `mLoans[]`
+**Five are built and four are blocked on simulation this project does not have.** Built: **entryprice**,
+**allpeeps**, **allstaff**, **allitems** and **staffcosts** ("The Staff Training Budgets screen", below). Blocked: **loans** (taking and repaying a loan: `ParkWorld.EconomyState.Loans` reads the save's `mLoans[]`
 records, `ParkState` keeps them and the month's change pays the bought ones' instalments (`TurnTheMonth`); taking one is not built), **financeinfo** (the
-money-in/out split and the graph history), **staffcosts** (training budgets, other costs, loan payments) and
+money-in/out split and the graph history) and
 **parkstatus** (Top 3 Thoughts, arrival rate, park rating, multi-year history), each counted when opened
-(`LOANS_SCREEN`, `FINANCE_SCREEN`, `STAFF_COSTS_SCREEN`, `PARK_STATUS_SCREEN`), and **research** (`mResearchDone`,
+(`LOANS_SCREEN`, `FINANCE_SCREEN`, `PARK_STATUS_SCREEN`), and **research** (`mResearchDone`,
 `mResearchGroup`, `mFirstResearcher`, and per-group research points), whose gadget button only logs, and counts
 each click as `RESEARCH_BUTTON`: neither the screen nor its two message boxes is built. The key reaches the same
 function: the shortcuts' row 11 is `R` (`0x52`) with no modifier, handler `0x0040c5b0` (`MOV ECX, 0x007b51f0; CALL
@@ -472,14 +472,109 @@ function: the shortcuts' row 11 is `R` (`0x52`) with no modifier, handler `0x004
 under a park screen, not under the game menu, a message box, the options, the map, the full-screen view or first
 person.
 
-The original's staffcosts screen, headed "Staff Training Budgets", has one row a kind (handymen, mechanics,
-entertainers, guards, researchers), each a minus, a budget and a plus over 0 to 10000 in steps of 25
-(`FUN_004b2750`), writing thing 1's `mBudget` as the plus is pressed; the budgets are spent at each month's change
-(`ride-operation.md`, "The month's change"). Its mini-balance's Staff costs row read $0, then $25 after one press,
-where the month's wages were 538 (measured, not decoded).
-
-So the three buttons are not one job: **Info has 3 of 4 built, Money 1 of 4, and Research is
+So the three buttons are not one job: **Info has 3 of 4 built, Money 2 of 4, and Research is
 none.**
+
+### The Staff Training Budgets screen (Q352)
+
+Screen 9 of the Money category, `staffcosts`. Read 2026-10-13: the builder `FUN_004b2750` (decompiled, its calls
+read as disassembly), the handler at `0x004b24b0` (loose code, read by `disassemble`; nothing written or named),
+the stream at `0x00756400` (walked to its balanced close; `lib/uistream.py`), its fourteen mesh hashes resolved
+(`meshhash.py`), and `FUN_004c9c00`.
+
+**The opener.** With its screen up (`DAT_007cc2ec`) it does nothing. Otherwise it destroys the park screen that is
+open (`FUN_00485b40`), leaves the category on it (`FUN_004a0810( 3, 9 )`) and loads the tree. Its callers are the
+category opener (`FUN_004a0940`), the entry-price, finance and loans screens' handlers (`0x00498d5f`, `0x0049a1a4`,
+`0x0049f82e`), the message bar's button of type `0x15` (`FUN_0048e0f0`, `0x0048e206`) and the finance sub-panel's
+`0x1b5b` (`FUN_00497a70`). No key was found for it.
+
+**The stream.** Rects on the 2048 x 1536 layout.
+
+| Id | Type | Rect | Mesh | Help | What it is |
+|---|---|---|---|---|---|
+| `0x2d9` | 1 | (208, 30)-(1840, 1007) | `w_park` (the node `window3`, `0xf76e4349`) | | the frame |
+| `0x2da` | 1 | (805, 74)-(1277, 153) | | | the title, UITEXT 147 through `UI_SetTitle` (`0x004b3293`) |
+| -1 | 2 | (1711, 820)-(1794, 903) | `b_okay` | 1 | close |
+| `0x2db` | 2 | (1688, 575)-(1790, 677) | `b_entry` | 176 | to the entry price (`FUN_00498d80`) |
+| `0x2dc` | 2 | (1688, 467)-(1790, 570) | `b_finance` | 175 | to the finances (`FUN_0049ac60`) |
+| `0x2dd` | 2 | (1688, 360)-(1790, 462) | `b_loans` | 174 | to the loans (`FUN_0049fb30`); **disabled in game type 2**, Instant Action (vtable `+0x14` with 0, `0x004b32eb`) |
+| `0x2de` | 1 | (267, 183)-(765, 411) | `!frame` | 177 | the month's account |
+| `0x2e3`, `0x2e6`, `0x2e1`, `0x2e5` | 1, flags 3 | x 284-561; y 195, 246, 297, 349 | | | labels, UITEXT 357, 358, 359, 361: Cash in, - Staff costs, - Other costs, Balance |
+| `0x2e2`, `0x2df`, `0x2e0`, `0x2e4` | 1, flags 3 | x 591-755; the same four rows | | | their figures, right-aligned (`FUN_0065c428( 2, 1 )`) |
+| `0x2e7`, `0x2ec`, `0x2ea`, `0x2eb`, `0x2ed` | 12 | (770, y)-(1670, y + 149); y 183, 337, 491, 645, 799 | `f_train` | 164, 165, 166, 167, 168 | a spinner a kind: handymen, mechanics, entertainers, guards, researchers, top to bottom |
+
+The stream lists the five spinners in the order `0x2e7`, `0x2ea`, `0x2eb`, `0x2ec`, `0x2ed`, not their order down
+the screen. Each holds, 154 down a row (a unit more or less here and there): the text rect (996, 233)-(1273, 278);
+op `0xf`, `b_minus`, (925, 224)-(985, 285); op `0xe`, `b_plus`, (1286, 224)-(1346, 285); `0x2e8`, type 9, the
+skill bar, (1376, 235)-(1592, 274), help 169 to 173 down the screen; and `0x2e9`, the kind's picture, (800, 203)-(902, 306):
+`h_handy`, `h_mech`, `h_enter`, `h_guard`, `h_resrcher`. The two cost rows are red (`FUN_0065c5d5( 0xff, 0, 0,
+0xff )`), every figure font 6, a spinner's text black and centred.
+
+**The builder.** Each spinner is given the range 0 to 10000 (`FUN_0066a5c4`), the step 25 (`FUN_0066a68d`), the
+number skin that letters "$ 75" (`FUN_00490250`) and its kind's budget, thing 1's `mBudget` (`FUN_00519450`, `+0xc`
+for `0x2e7`, `+0x10` `0x2ec`, `+0x14` `0x2ea`, `+0x18` `0x2eb`, `+0x1c` `0x2ed`). Each bar is given the skin
+`ridestatbar.wct` and `( FUN_004c9c00( model ) << 10 ) / 100` of 1024, the models 5, 4, 6, 7, 8 in the rows' order:
+`FUN_004c9c00` adds the grades (`+0x1e4`) of every thing of the model, times 100, over five a member, nought with
+no member. The bars are set here and not again. The account's four figures are the hire screen's ("The mini-balance
+is a MONTHLY ACCOUNT"): the analyser's newest month of cash in, of staff costs, of all costs less those, and cash in
+less all costs, the three sums kept in `DAT_007cc2d4`, `DAT_007cc2e0` and `DAT_007cc2dc`, with `DAT_007cc2e4` the
+other costs.
+
+**The handler.**
+
+- `0x800`, a spinner's value, ids `0x2e7` to `0x2ed`: the kind's budget is the value, **nought for a value below
+  nought** (`SETL`/`DEC`/`AND`, `0x004b2544`), written at once; **a value over nought sets thing 1's `+0x20`,
+  `mHaveEverTrained`** (`0x004b25d0`), which nothing here clears. Then, and for ids `0x2e8` and `0x2e9` too, the
+  refresh: figure `0x2df` is **the five budgets added up** (`0x004b266a`), and `0x2e4` is the kept cash in less
+  that sum less the kept other costs (`0x004b2695`).
+- `0x100`, a click: -1 closes; `0x2db`, `0x2dc`, `0x2dd` open the entry price, the finances, the loans.
+- `5` closes; `0x14` forgets the screen (`DAT_007cc2ec`).
+
+**Opening it is a change of every budget (measured, not read).** A spinner given its first value tells the
+handler as a press does. So the Staff costs row never shows the analyser's month: it reads the five budgets added
+up from the opening, and a file whose budgets are over nought with `mHaveEverTrained` unset has it set by the
+opening alone. The original, off-screen (`q352/orig/run2.sh`): given `q352/set75.TPWS` (the mechanics' 75) it read
+"$ 75" and "-$ 11750" on 27 February, weeks before the month's change (run c); given `q351/bud2.TPWS` (25 and 50
+written by hand, the flag nought) thing 1's `+0x20` went 0 to 1 on tick 1095, the tick the screen came up, the row
+"$ 75" (run d). What reads `mHaveEverTrained` was not looked for.
+
+**OpenTPW** (`ParkStaffCostsScreen`; `ParkCategoryScreens.StaffCosts`; `ParkPeople.SetTrainingBudget`,
+`HaveEverTrained`, `TrainingOf`; `ParkGadget`'s bar button of type `0x15`; the console's `budgets`). The stream's
+frame, title (lettered as `UI_SetTitle` letters one), buttons, account panel and five rows; a press of a spinner's
+button writes the budget as the handler does; the opening writes each back; the bars are `ParkObjectWindow.UiStatBar`.
+The month's change spends what is set (`ride-operation.md`, "The month's change"), the advisor's rows 28 to 32 read
+it (`advisor-park.md`, "Staff nobody has trained"), and a saved park holds it (`saves.md`, "OpenTPW's writer, the
+training budgets").
+
+**Deviations, each said at its site.** The account's Cash in, Other costs and Balance are empty: nothing here
+keeps the analyser's months (`MONTHLY_ACCOUNT_HISTORY`, counted as the screen opens). **The bars are a flat green**
+where the original's show `ridestatbar.wct`, red to green, as far as the value (`UiStatBar`'s own choice, in the
+object window too). The lettering in the panel and the spinners is smaller than the original's at this window
+size (not looked into). The finances and the loans are not built, so those two buttons close the screen and count
+(`FINANCE_SCREEN`; `LOANS_SCREEN` in Full Simulation).
+
+**Predicted first, both games** (`q352/PREDICTION.txt`, three rounds; `q352/confirm.py <out> <bin>
+fix|money|bud2|month|control`, `q352/orig/run.sh` and `run2.sh`). Two predictions missed, both mine: the month's
+change at the original's tick 1383 in this game, whose calendar counts from the park's making (Q241j), and the
+Staff costs row empty at the opening, which this game matched and the original did not: found by the original's
+run, then built as above and run again.
+
+| | The original | OpenTPW |
+|---|---|---|
+| The training tag's bar button, `q351/all0.TPWS` | the category left on 9, the screen up, five "$ 0", the tag off (Q351's a2, run a) | `button type 21 opens the Staff Training Budgets screen and takes tag 30 off`, `left on 1,4,9`, `opened, budgets $ 0,$ 0,$ 0,$ 0,$ 0 skill 0,0,0,0,0 staffcosts $ 0 loans off` (`run-fix2`) |
+| The mechanics' plus, three times | thing 1's `+0x10` 25, 50, 75, `+0x20` 0 to 1 at the first; "$ 75", Staff costs "$ 75", Balance "-$ 11750" (`orig/a-c3-mech-plus3.png`) | `budgets 0,25,0,0,0 evertrained 1`, `0,50,0,0,0`, `0,75,0,0,0`; `staffcosts $ 75` (`run-fix2/3-budgets.png`) |
+| The handymen's plus, then minus twice | `+0xc` 25, then 0; `+0x20` still 1 | 25, 0, 0; `evertrained 1` |
+| The stock staff's bars | four at 60 per cent, the researchers' at 40 (Q198's `o12.png`) | `skill 60,60,60,60,40` (`run-money2/1-screen.png`) |
+| The loans button in Instant Action | grey | disabled: the click does nothing |
+| The gadget's Money button, then the entry price's staff-costs button | the screen (runs c, d) | the same; the Money button afterwards opens it (`category 3 is left on screen 9`) |
+| Budgets 25, 0, 50 and the flag unset, the screen opened | `+0x20` 0 to 1 at the opening, Staff costs "$ 75" (run d) | `evertrained 0` to `1`, `staffcosts $ 75` (`run-bud2`) |
+| The month's change with the mechanics' 75 | thing 26's `+0x1e8` 0 to 15 on tick 1383 (run b; 0 to 10 with 50 set, run a) | `through 0` to `through 15`, a withdrawal of 75 then the wages 27, 69, 36, 45, 75, on this game's own month (`run-month1`, the build before the opening's write-back, whose month is the same code) |
+| Main's build, the same tag and button | | `button type 21 is not built`, `TAG_BAR_BUTTON` (`run-control`) |
+
+`side-by-side.png` holds both screens with the mechanics at 75. Fifty bugs put back, fifty caught at the first round
+(`q352/mutations.py`); the one line no test reaches is `Level`'s hand-over of the budgets to the writer, which
+`run-fix2`'s file holds. Not run: Full Simulation (the loans button enabled there; the test holds only
+Instant Action's), a budget at 10000 in either game (the test holds the end), the screen in the three other themes.
 
 ### How allpeeps keeps itself current: rows updated in place, never cleared (Q200)
 
