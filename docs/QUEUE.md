@@ -44,13 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q354. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q355. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q353 (`hud.md`, "The stat bars' skin"): **the `.wct` reader loses the red of `ridestatbar.wct`**: the
-  original's ramp is red, orange, yellow, green ((255, 14, 0) at its second texel), `TextureFile` gives (107, 104,
-  0) at the same brightness; its scales are Y 6, Cb 10, Cr 2, as nine other files' (`happygrad.wct` among them);
-  2,089 of 8,375 have Cb and Cr unequal, so that is not the cause alone. Read the original's decode first. **The
+  From Q354 (`textures.md`, "The zlib codec"): **a type `0x12` texture goes down `TextureFile`'s half-scale
+  path, not the original's codec** (`FUN_00593ab0`: plain D4 rows then columns, no pi/6): a row's end texels decode
+  wrong, so each stat bar's first 3% is dark where the original's is red; `lib/wctorig.py` is the original's codec in
+  Python to build and check against (every `ui.wad` texture with it, then the screens). **A sign's artwork takes its
+  four floats as they are** (6, 10, 2, 6) where `SignFile` puts them through the header's formulas: `wctorig.py`
+  makes `Jun_isle.sgn` 1.4 times brighter; compare with the original's lobby first. The LZSS codec (`FUN_00595920`,
+  type `0x13`) is not compared with this game's full-scale path.
+  From Q353 (`hud.md`, "The stat bars' skin"): the `.wct` reader's red is Q354's (the header's scales). **The
   hire list's first row is picked as it fills** in the original, on opening and on a tab (`HIRE_LIST_FIRST_ROW_PICKED`;
   somewhere under `FUN_006649d5`/`FUN_0066403b`, not read), and its label then reads "Skill" where this game's
   letters the name, grade and wage. **The original's pool showed five handymen** on `q353/grades.TPWS` where this

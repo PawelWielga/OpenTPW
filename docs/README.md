@@ -81,6 +81,7 @@ own source rots within days — the fact lives here and the code points at it, n
 | `exe/ride-hoardings.md` | The hoardings a ride raises and lowers: the generated mesh, its four texture choices, vertices and UVs (Q91, Q91b). |
 | `exe/guest-arrivals.md` | A new guest's initial values (happiness, thirst, hunger, toilet need), the draw order, and the visitor count (Q85, Q146). |
 | `exe/ride-window-door.md` | An ordinary ride's door and its closed display (Q92). |
+| `exe/textures.md` | The `.wct` decode: the order the header's scales are handed on, the zlib codec's transform and colour, a sign's artwork (Q354). |
 
 Rule: a fact is written here **once**. Code comments and commit messages point at the row; they do not
 repeat it. A confidence marker — unknown, unverified, refuted — is part of the fact and travels with it.

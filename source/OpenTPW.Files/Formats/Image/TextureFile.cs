@@ -59,8 +59,10 @@ public partial class TextureFile : BaseFormat
 			Width = binaryReader.ReadInt16(),
 			Height = binaryReader.ReadInt16(),
 			YChannelQuantizationScale = binaryReader.ReadInt16(),
-			CbChannelQuantizationScale = binaryReader.ReadInt16(),
+			// Cr's scale comes before Cb's: the original hands them on as Y, offset 12, offset 10, and both of its
+			// decoders take the second channel (Cb, x1.772) with the first of those (0x00564e20).
 			CrChannelQuantizationScale = binaryReader.ReadInt16(),
+			CbChannelQuantizationScale = binaryReader.ReadInt16(),
 			AChannelQuantizationScale = binaryReader.ReadInt16(),
 
 			ColorChunkSize = binaryReader.ReadInt32(),

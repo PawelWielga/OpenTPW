@@ -710,9 +710,8 @@ internal sealed class ParkObjectWindow : UiWindow
 	/// <c>v = value / 1024 x 100</c>, held to 0 to 100, u = v / 100).
 	/// </para>
 	/// <para>
-	/// <b>The colours are this game's reading of the file, and they are not the original's</b>: its ramp runs red,
-	/// orange, yellow, green ((255, 14, 0) at the second texel), where <c>TextureFile</c> decodes the same texels as
-	/// olive to yellow ((107, 104, 0)) at the same brightness. The fault is the reader's, not this bar's.
+	/// The ramp runs red, orange, yellow, green, as the original draws it; its left-most texels and its track are not
+	/// quite the original's (<c>docs/exe/hud.md</c>, "The stat bars' skin").
 	/// </para>
 	/// </remarks>
 	internal sealed class UiStatBar : UiControl
@@ -747,12 +746,19 @@ internal sealed class ParkObjectWindow : UiWindow
 			if ( _skin == null )
 			{
 				_skin = new Texture( Skin );
-				Log.Info( $"UI: the stat bars' skin {Skin} is {_skin.Width}x{_skin.Height}" );
+				Log.Info( $"UI: the stat bars' skin {Skin} is {_skin.Width}x{_skin.Height}, its ramp {Ramp( new TextureFile( Skin ).Data )}" );
 			}
 
 			foreach ( var (where, uvs) in Parts( Pixels, At ) )
 				Paint( where, uvs );
 		}
+
+		/// <summary>The decoded colours of the ramp's row 4 at texels 1, 4, 8 and 24, for the log.</summary>
+		private static string Ramp( TextureData data ) => string.Join( " ", new[] { 1, 4, 8, 24 }.Select( x =>
+		{
+			var i = (4 * data.Width + x) * 4;
+			return i + 2 < data.Data.Length ? $"({data.Data[i]},{data.Data[i + 1]},{data.Data[i + 2]})" : "(none)";
+		} ) );
 
 		/// <summary>
 		/// The skin's two quads over a box (top-left origin): the filled part and the rest, each with the part of the

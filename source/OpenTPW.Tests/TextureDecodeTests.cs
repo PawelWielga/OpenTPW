@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -92,6 +93,33 @@ public class TextureDecodeTests
 	/// the decode agrees with the header about how big it is.
 	/// </para>
 	/// </summary>
+	/// <summary>
+	/// <b>The header's scale at offset 10 is Cr's and the one at 12 is Cb's</b> (<c>0x00564e20</c> hands them to
+	/// the decoder as Y, offset 12, offset 10; <c>docs/exe/hud.md</c>, "The stat bars' skin"). <c>ridestatbar.wct</c>
+	/// is the file whose two differ most among those measured on the original's screen (10 and 2): its ramp runs
+	/// orange, yellow, green there, (255, 103, 0) at texel 4, (255, 206, 0) at 8 and (90, 251, 0) at 24.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the two scales read the other way round; Cr's scale taken for both.</remarks>
+	[TestMethod]
+	public void TheStatBarsRampDecodesToTheOriginalsColours()
+	{
+		var texture = new TextureFile( new MemoryStream( data.ReadAllBytes( "ui/textures/ridestatbar.wct" ) ) ).Data;
+
+		(int R, int G, int B) At( int x )
+		{
+			var i = (4 * texture.Width + x) * 4;
+			return (texture.Data[i], texture.Data[i + 1], texture.Data[i + 2]);
+		}
+
+		foreach ( var (x, want) in new[] { (4, (255, 103, 0)), (8, (255, 206, 0)), (24, (90, 251, 0)) } )
+		{
+			var got = At( x );
+
+			Assert.IsTrue( Math.Abs( got.R - want.Item1 ) <= 15 && Math.Abs( got.G - want.Item2 ) <= 15 && Math.Abs( got.B - want.Item3 ) <= 15,
+				$"texel {x} decoded {got}, the original's {want}" );
+		}
+	}
+
 	[TestMethod]
 	public void EveryTextureTheJungleTerrainNamesDecodes()
 	{

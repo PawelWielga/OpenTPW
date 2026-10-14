@@ -6803,6 +6803,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   of nine predictions missed, all recorded in `q353/PREDICTION.txt`: three mine in round 1 (the halves swapped, a
   click that chose), and in the original its colours (red to green, where this game's reader decodes olive to
   green) and its first row picked as the list fills. Twenty-one bugs put back, twenty-one caught.
+- [x] **Q354. The `.wct` header's scale at offset 10 is read as Cr's and the one at 12 as Cb's.** Done 2026-10-13,
+  split from the catch-all by the session (`textures.md`). The texture loader hands the header's scales on as Y,
+  offset 12, offset 10, A (`0x00564e20`), and both codecs decode the second channel, the one turned into blue, with
+  the first of those; OpenTPW read them the other way round. In `ui.wad` 442 textures change, and none of the 473
+  whose two scales are equal. **The number:** `ridestatbar.wct`'s texels 4, 8 and 24 decode (248, 109, 0), (255,
+  217, 2), (91, 254, 0), where the original draws (255, 103, 0), (255, 206, 0), (90, 251, 0) and main decoded
+  (184, 182, 0), (229, 255, 0), (140, 255, 0); the training screen's 80% bar is within 18 a channel of the
+  original's frame at seven points (`run-fix2`, the final build; main's 90 and 86 off at its red end), the log's
+  `its ramp (125,84,51) (248,109,0) (255,217,2) (91,254,0)`. Three predictions missed, recorded in
+  `q354/PREDICTION.txt`: texel 1 (the half-scale path, filed under Q355), my own r - g clause, and the control's
+  count. Five bugs put back, five caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

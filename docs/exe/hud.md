@@ -548,7 +548,7 @@ training budgets").
 
 **Deviations, each said at its site.** The account's Cash in, Other costs and Balance are empty: nothing here
 keeps the analyser's months (`MONTHLY_ACCOUNT_HISTORY`, counted as the screen opens). The bars wear
-`ridestatbar.wct` (Q353, "The stat bars' skin", below), in this game's reading of its colours. The lettering in the panel and the spinners is smaller than the original's at this window
+`ridestatbar.wct` (Q353, "The stat bars' skin", below). The lettering in the panel and the spinners is smaller than the original's at this window
 size (not looked into). The finances and the loans are not built, so those two buttons close the screen and count
 (`FINANCE_SCREEN`; `LOANS_SCREEN` in Full Simulation).
 
@@ -601,12 +601,7 @@ The two parts over the whole rectangle as the table; the training screen hands i
 hire screen `((grade & 0xff) << 10) / 5` as the row under the pointer is picked (its list's flag `0x80`, stream
 flags `0x291`, as the buy screen's); the object window's two built bars their percentage.
 
-**Deviations, each said at its site.** **The colours are not the original's**: its ramp runs red, orange, yellow,
-green ((255, 14, 0) at the second texel, (255, 103, 0) at the fifth, (255, 206, 0) at the ninth, (90, 251, 0) at the
-twenty-fifth), where `TextureFile` decodes the same texels (107, 104, 0), (184, 182, 0), (229, 255, 0), (140, 255, 0):
-the brightness agrees and the red difference is lost. The header's scales are Y 6, Cb 10, Cr 2, shared by ten files
-(`ridestatbar` and `happygrad` in both folders among them); 2,089 of the 8,375 `.wct` files in the wads have Cb and Cr
-unequal, so that alone is not the cause. The original's track is 49 grey where this game draws the texture's 58. The
+**Deviations, each said at its site.** **The ramp's ends are not the original's**: the ramp runs (Q354; `textures.md`, the header's scales) red, orange, yellow, green as the original's, within 18 a channel along the 80% bar, but its first and last texels decode brownish and blue-green where the original's are red and green (the zlib codec's half-scale path, `textures.md`), so the first 3% of a bar is dark and each bar's red share short of the original's. The original's track is 49 grey where this game draws the texture's 58. The
 hire list's first row is not picked as it fills (above), so the bar stands at nought until the pointer passes a row,
 and keeps that pick through a change of tab where the original's is the new tab's first row.
 
