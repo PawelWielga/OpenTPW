@@ -44,15 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q359. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q360. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q358 (`textures.md`, "The loader"): **the alpha is read and this game's own rule draws it**: a world
-  material's alpha counts only under the `.md2` flag `0x2`, where the original draws every `.wct` with an alpha chunk
-  cut out, or graded under a byte 1 set (`FUN_00574bd0`), whatever the material (but `0x800`); the reference is
-  this game's pixel count, not byte 1. Ten Lost Kingdom textures under materials without `0x2` (floors: `ss_PATH`,
-  `ss_gplnk2`, `pp_grsph`, `wr_darkpath`...) are cut in the original and drawn whole here (`lib/alphauses.py`).
-  **A thin pale line runs along each river bank's outer edge**: a model's textures are sampled with Wrap where the
+  From Q359 (`textures.md`, "What a floor's clear border shows"): **the material's `0x2` still gates the alpha**
+  (`LobbyModel.SeeThrough`, `MATERIAL_ALPHA_WITHOUT_0X2`, 54 in the stock park): the original draws a texture's
+  alpha whatever the material, and a floor plate's clear border then shows what is under the footprint, which here
+  is nothing (the sky's colour) and in the original's frame green. Decode first: find the original's ground drawer
+  and whether it skips a cell `FUN_0046df50` gave `0x101` (a cell's words written after a load change nothing: the
+  ground is built at a load; poke them before the load, or read the drawer), then draw the ground (or not) and drop the
+  gate. Not run: the other three themes, the lobby's islands up close, Full Simulation (not asked: the textures and
+  materials are the level's). The advisor's mouths are graded now (not looked at closely), his Kiosk hat solid.
+  From Q358 (`textures.md`, "The loader"): the reference is byte 1 since Q359. **A thin pale line runs along each river bank's outer edge**: a model's textures are sampled with Wrap where the
   original's addressing is CLAMP (`render-states.md`); measure every model's UVs before changing it. In no game
   run: the lobby's islands up close (the reference player opens only Lost Kingdom), the message box (`ipan`), the
   Hot Pot, the Jungle Spray's bench and the other shops' alpha, Full Simulation (not asked: the textures are the

@@ -80,11 +80,11 @@ partial class Texture
 		NativeTexture = cached.NativeTexture;
 		NativeTextureView = cached.NativeTextureView;
 
-		// Everything the loading road assigns. HasGradedAlpha is a property of the pixels these
+		// Everything the loading road assigns. Alpha is a property of the file or the pixels these
 		// handles hold, so a shared texture has to answer the same as the one that loaded it - left
-		// out, every one of them read as a cut-out. The other four are the same argument: the
+		// out, every one of them read as opaque. The other four are the same argument: the
 		// sampler its flags asked for, the size, and the path it came from.
-		HasGradedAlpha = cached.HasGradedAlpha;
+		Alpha = cached.Alpha;
 		SamplerType = cached.SamplerType;
 		Width = cached.Width;
 		Height = cached.Height;

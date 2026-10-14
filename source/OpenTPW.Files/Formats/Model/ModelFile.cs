@@ -270,44 +270,18 @@ public partial class ModelFile : BaseFormat
 		/// The material's flag word, read from the first four bytes of its texture-list entry - so
 		/// it belongs to the texture within this model rather than to the material alone, and two
 		/// materials naming the same texture share it. Bit 0 is set on every material in the game.
-		/// See <see cref="IsTranslucent"/> for the only bit we act on.
+		/// See <see cref="IsTranslucent"/> for what is known of it.
 		/// </summary>
 		public uint Flags;
 
 		/// <summary>
-		/// Whether OpenTPW currently permits alpha for this material, using source bit 0x2.
-		///
-		/// An empirical compatibility gate, not a verified original flag meaning; the bounded
-		/// load-to-draw trace is in docs/exe/render-states.md. The following correlations do not
-		/// establish authoring intent. Of the 246 material
-		/// uses in lobby.wad, 232 name a texture that ships in the same wad; across those the bit
-		/// agrees with the texture header's own alpha-channel byte in 224 cases and disagrees in
-		/// eight. Compare against that byte and not against the bit depth: sen_ant1 is stored
-		/// 32-bit but declares no alpha channel, so the two questions give different answers.
-		///
-		/// That tightness is a property of the lobby, not a general one, and it matters as soon as
-		/// anything past the lobby is drawn. Across all 12,773 resolvable material uses in the
-		/// game, the bit still implies an alpha channel 87% of the time, but only 56% of the
-		/// textures that carry one set it - a great deal of the game's 32-bit ground and path art
-		/// is drawn opaque. That correlation alone does not establish the flag's purpose.
-		///
-		/// The eight have been interpreted as authoring choices; that remains unverified. Six
-		/// carry an alpha channel and are drawn opaque anyway - the Space hoarding's four sign faces and
-		/// the two Box meshes sharing sfl_cnr3. The other two set the bit over a texture with no
-		/// alpha channel at all: base.md2's Sea, the lobby's own water surface, and the Space
-		/// antenna's stalk.
-		///
-		/// 61 of the 246 carry the bit, and they are mostly not glass. The ripple ring on all four
-		/// islands, the Sea, and the antenna's cone are the genuinely see-through ones; the rest is
-		/// cut-out art that needs its alpha tested rather than blended - every palm frond
-		/// (jtr_plm1), the Fantasy grass blades and sunflower, the Hallow bushes and tree, the
-		/// gate rails and fences, the butterflies and the bats. Anything acting on this bit has to
-		/// serve both, which is why the shader still discards near-zero alpha.
-		///
-		/// Bit 0 is the only one set on every material. The engine ORs 0x8030 into this word itself
-		/// for the materials of any mesh carrying a UV animation (<c>0x004626fb</c>), but 0x10 and 0x20 are
-		/// not a pair: each occurs without the other. The engine carries 0x40 into the model's header flags
-		/// at 0x30; what 0x10 and 0x20 select is not known (FileFormats models.md, "Material flags").
+		/// The material's bit <c>0x2</c>, under which alone <c>LobbyModel.SeeThrough</c> draws a texture's alpha: a
+		/// deviation, as the original's state word for a material reads no bit of this word but <c>0x800</c>
+		/// (<c>FUN_00581790</c>) and takes the alpha from the texture (docs/exe/render-states.md, "The four state
+		/// words"). Bit 0 is set on every material. The engine ORs 0x8030 into this word itself
+		/// for the materials of any mesh carrying a UV animation (<c>0x004626fb</c>), but 0x10 and 0x20 are not a
+		/// pair: each occurs without the other. The engine carries 0x40 into the model's header flags at 0x30; what
+		/// 0x10 and 0x20 select is not known (FileFormats models.md, "Material flags").
 		/// </summary>
 		public bool IsTranslucent => (Flags & 0x2) != 0;
 	}

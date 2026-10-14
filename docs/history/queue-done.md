@@ -6845,6 +6845,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the chunk when the bit count is 32 (`0x00564c72`); header byte 1 picks graded over cut out (`FUN_00574bd0`). 236
   files change, in alpha alone; `b_NEWwin.wct` decodes. The river banks' black seam is gone in the stock park, as in
   the original's frame of the same file: longest run of seam columns 4 here, 15 there, main's 51.
+- [x] **Q359. A see-through material's alpha reference is its texture's header.** From Q358 (`textures.md`, "The
+  loader"). Cut at 240 under a byte 1 of nought, graded at 16 under one set (`FUN_00574bd0`), not by a pixel count; a
+  `0x2` over a texture with no chunk solid. 99 of 555 `0x2` uses change: the Staff Room's eaves are a smooth fringe as
+  the original's, not main's sawtooth (`q359/cmp-roof.png`). The texture's alpha by itself opened sky round every
+  floor (the ground is not drawn under a footprint here): the `0x2` gate stays, counted (54 in the stock park).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

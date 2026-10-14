@@ -20,18 +20,23 @@ of nought and **graded** (`0x556`, reference 16) under one set, and one without 
 every one draws cut out in the original.
 
 **OpenTPW** (Q358) reads the alpha chunk by the bit count, so those 236 decode with their alpha (233 of type `0x13`)
-and `stexture\b_NEWwin.wct` (byte 1 set, 24-bit, no chunk) decodes opaque where it threw; `TextureFile.CutOutAlpha` is
-the chunk under a byte 1 of nought, and `Texture` logs each such texture as it loads (`Texture: '...' reads its alpha
-chunk by its bit count, header byte 1 nought: N of M texels clear, K under 240`). What draws the alpha is still this
-game's own rule, not the one above: a world material's alpha counts only where its `.md2` flag word has `0x2`, and the
-reference is chosen by `Texture.HasGradedAlpha`'s count of the pixels, not by byte 1. In Lost Kingdom's models 25 of the
-textures sit under materials with `0x2` (among them the terrain's river banks `jri_bnk4` to `6`, the Hot Pot's
-`pp_hood`, `pp_rockd`, `pp_rockw`, the Jungle Spray's bench `ss_fabric`) and 10 under materials without it (floors:
-`ss_PATH`, `ss_gplnk2`, `pp_grsph`, `wr_darkpath` and six more), which the original cuts and this game draws whole;
-the lobby's islands have five under `0x2` (`Sen_ant1`, `sho_leg1`, `sho_sup1`, `hoc_swp1`, `htr_rot2`)
-(`q358/join.py` over 751 models of the jungle's wads, `lobby.wad` and `ui.wad`). The path tile `jpa_tju2` is drawn by
-`ParkPaths` with no flag, opaque. The interface keys a texture's black out before any of this, so `ipan.wct` (the
-training screen's rows, the message box) draws the same either way.
+and `stexture\b_NEWwin.wct` (byte 1 set, 24-bit, no chunk) decodes opaque where it threw; `Texture` logs each cut-out
+texture as it loads (`Texture: '...' reads its alpha chunk by its bit count, header byte 1 nought: N of M texels clear,
+K under 240`). Since Q359 the reference is the original's: `TextureFile.Alpha` is the three states above (opaque, cut
+out, graded), `Texture.Alpha` takes it for a `.wct` and counts the pixels only for another format (`Texture.Classify`,
+`FUN_00575160`'s rule), and a model's material is cut at 240 or graded at 16 by it; a material with `0x2` over a texture
+with no chunk draws solid, as the original's state word gives it. **What still deviates: the material's `0x2` gates the
+alpha** (`LobbyModel.SeeThrough`). A texture with an alpha under a material without `0x2` draws solid here, counted
+once a material use a model load (`MATERIAL_ALPHA_WITHOUT_0X2`, 54 in the stock park with the lobby), because this
+game draws no ground under a footprint (below, "What a floor's clear border shows"). Of the jungle's, the lobby's and
+the global advisor's `0x2` uses, 99 of 555 change reference (`q359/flips.py`): in the stock park the Belly Bounce's sign
+(`gk_sign1`, `gk_sign2`), the toilets' door (`j_wc2`), the Staff Room's roof (`strawroof`) and the advisor's four mouths
+go from 240 to 16 (their byte 1 is set; their partly-clear texels are under a twentieth), and his Kiosk hat and the
+lobby's `Sea` draw solid. Each model logs the materials whose texture's alpha and `0x2` disagree (`<model>: N
+material(s) whose texture's alpha and 0x2 bit disagree - mesh:material Alpha, ...`), as `q359/predict.py` predicts
+them from the files. The path tile `jpa_tju2` is drawn by `ParkPaths` with no flag, opaque. The interface keys a
+texture's black out before any of this, so `ipan.wct` (the training screen's rows, the message box) draws the same
+either way.
 
 **The river's banks.** Each river mesh of `levels/jungle/terrain/base.MD2` draws `jri_bnk4` to `6` under `0x2`; their
 river side is clear (`jri_bnk4`: 962 of 16,384 texels, its bottom row all clear, its top row opaque). Before Q358 the
@@ -39,7 +44,32 @@ banks were opaque and drew a black seam between the water and the near bank; the
 file, draws none, and neither does this game now (`q358/side-by-side.png`). This game binds a model's textures with
 Wrap (`Material.Set`'s default) where the original's addressing is CLAMP (`render-states.md`): the bank's opaque top
 edge blends in its clear bottom row and the cut-out test drops it, so **a thin pale line runs along each bank's outer
-edge** here, which the original does not draw (filed, Q359).
+edge** here, which the original does not draw (filed, Q360).
+
+## What a floor's clear border shows
+
+Every ride's, shop's and sideshow's model opens with a floor plate as wide as its footprint (`park.md`), and most of
+those plates' textures carry an alpha under a material without `0x2`: a run into the stock park loads 54 such uses,
+six of them the lobby's Space island (`m_grass1` and `m_grass2` at the Belly Bounce, the Jungle Spray's `mj_grass*` and `ss_gplnk*`, the
+toilets' `J_wc1`, the terrain's `dk_water3`...). Their border is painted grass at alpha nought (`m_grass1`: 3,328 of
+16,384 texels clear, its top and left edges), so the original's state word drops it, and the original's frame of the
+same file shows green there, the dirt meeting the park's ground (`q359/orig/a-2-full.png`, `orig-crops.png`). **Drawn
+here by the texture alone, the same border shows the sky's clear colour** (`q359/cmp-bellyclose.png`): this game draws
+no ground under a footprint (`ParkObjects.CoversGround`), so nothing lies under the clear texels. That is why the
+`0x2` gate stays (Q359), and what the old note "removing the gate exposed holes" was.
+
+**The original marks those cells too, and what it draws there is not read.** `FUN_005365d0` (and `FUN_005366e0`) ask
+`FUN_00535dd0` for a cell's ground tile, which answers 8 for cell types 2, 4, 7, 9, 10, 21 and 30 (a built thing's
+footprint is 4, 9 and 10); `FUN_00450470` hands that to `FUN_0046df50`, which ORs `0x101` into the heightfield cell's
+flag word (`[[0x007a0854] + 0x6c] + 0x2c`, four bytes a cell, the flag word low and the ground's texture index high)
+and clears `0x80`, leaving the texture index. Read in the running original (`original/groundcell.py`, `q359/orig/b-load.log`):
+ten of the Belly Bounce's twelve cells hold flags `0x0303` to `0x034b` and texture words 11 down to 0, one a cell, and
+its two middle cells `0x0103` over ground textures 27 and 57; open grass holds `0x0002` or `0x0102`. Whether the
+ground's drawer skips a cell by `0x1` is not read: its drawer is not found (`FUN_0045bf90` is the terrain's hit test,
+which skips a cell with bit `0x2`; `FUN_0044e5b0` sets a flag nothing reads), and a cell's words written into the running
+original after a load changed nothing on screen, its path tile copied onto grass included (`orig/c`, `orig/d`): the ground
+is built at a load. So either the original draws ground under a footprint or its floors' clear texels are drawn, and
+the frames at this distance cannot tell green ground from the plate's own painted green.
 
 ## The header's scales, and the order they are handed on (`0x00564e20`)
 
@@ -170,3 +200,14 @@ the model's texture).
 | The Staff Training Budgets screen against main's | under 60 pixels differ | 28, at its bottom edge |
 | The near bank's seam, the original's frame of the same file (`seam.py`) | round 1: the bend; rounds 2 to 5: a level, a share, a run under 15 | **missed four times**: its view frames the long reach; it is lit darker; its rocks' outlines touch the water; its run was 15 |
 | The same, round 6: longest run of seam columns | the original under 25 (its four longest under 60); the fix under 10, main over 25 | 15 (6 + 8 + 9 + 15 = 38); 4; 51; on the final build (`run-fix-7`, `orig/g`) 15 (38) and 4 |
+
+## Predicted first (`q359/PREDICTION.txt`)
+
+| | Predicted | Measured |
+|---|---|---|
+| The log's disagreeing materials in the stock park, against `predict.py` | round 1: every line; round 2: 19 of 19 | missed 3 of 19 (the predictor's list lacked two terrain meshes and the global advisor); then 19 of 19, three times |
+| The texture by itself, the floors (`cmp-bellyclose.png`) | the park's ground shows through the borders | **missed**: the sky shows; the original's frame shows green (P6, held) |
+| Two pokes of the original's cell words (`orig/b`, `orig/c`, `orig/d`) | a hole or a path tile | void twice: the ground is built at a load |
+| The narrowed rule: `MATERIAL_ALPHA_WITHOUT_0X2` | 54 | 54 (my check's regex missed it once) |
+| Fix against main, two close views, guests boxed out | no floor border; under 1,500 pixels | 681 (the sign), 629 (the roof, the doors) |
+| The Staff Room's eaves in the original (`cmp-roof.png`) | a smooth fringe, as the fix's, not main's sawtooth | as predicted, at a quarter of this game's resolution |

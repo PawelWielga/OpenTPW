@@ -4,6 +4,17 @@ namespace OpenTPW;
 
 public record struct TextureData( int Width, int Height, byte[] Data );
 
+/// <summary>
+/// The three alpha states the original's texture flags give a texture (<c>docs/exe/render-states.md</c>, "The four state
+/// words"): no alpha test, the test at 240 of 255 (<c>0x100</c>) or at 16 (<c>0x200</c>), both blending.
+/// </summary>
+public enum TextureAlpha
+{
+	Opaque,
+	CutOut,
+	Graded
+}
+
 public partial class TextureFile : BaseFormat
 {
 	public TextureData Data { get; set; }
@@ -16,10 +27,10 @@ public partial class TextureFile : BaseFormat
 	public bool IsValid { get; private set; }
 
 	/// <summary>
-	/// A .wct whose alpha chunk was read under a header byte 1 of nought, which the original's texture flags draw cut out
-	/// (alpha reference 240) rather than graded (16) - <c>FUN_00574bd0</c>. Nothing draws by it; the texture's load logs it.
+	/// How the original draws this .wct's alpha, by its texture flags (<c>FUN_00574bd0</c>): opaque without an alpha
+	/// chunk, cut out (reference 240) with one under a header byte 1 of nought, graded (16) with one under a byte 1 set.
 	/// </summary>
-	public bool CutOutAlpha { get; private set; }
+	public TextureAlpha Alpha { get; private set; }
 
 	static float ComputeDequantizationScaleY( int n ) => 1.0f - ((float)n * -0.5f);
 	static float ComputeDequantizationScaleCbCr( int n ) => 1.0f - ((float)n * -0.25f);
@@ -86,7 +97,7 @@ public partial class TextureFile : BaseFormat
 		// The alpha chunk is read, and the image given its alpha, when the bit count is 32 (0x00564c72); without one
 		// the image is opaque.
 		fileData.HasAlphaChannel = fileData.BitsPerPixel == 32;
-		CutOutAlpha = fileData.HasAlphaChannel && !graded;
+		Alpha = !fileData.HasAlphaChannel ? TextureAlpha.Opaque : graded ? TextureAlpha.Graded : TextureAlpha.CutOut;
 
 		//
 		// Read blocks

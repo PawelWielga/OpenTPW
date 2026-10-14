@@ -175,6 +175,10 @@ public sealed class LobbyModel
 		var models = new Model?[meshCount][];
 		var meshVertices = new Vertex[meshCount][];
 
+		// The materials whose texture's alpha and 0x2 bit disagree, for the log below: an alpha left solid (the
+		// counted deviation, SeeThrough) or a 0x2 over an opaque texture, drawn solid as the original does.
+		var alphaUnlikeTheBit = new List<string>();
+
 		for ( int meshIndex = 0; meshIndex < meshCount; ++meshIndex )
 		{
 			var mesh = modelFile.Meshes[meshIndex];
@@ -212,6 +216,18 @@ public sealed class LobbyModel
 
 			meshVertices[meshIndex] = [.. vertices];
 			models[meshIndex] = BuildModels( mesh, meshVertices[meshIndex], textures, substituted, materialFlags );
+
+			for ( int i = 0; i < mesh.Materials.Length && i < textures.Count; ++i )
+			{
+				if ( string.IsNullOrEmpty( mesh.Materials[i].Name ) || substituted[i]
+					|| (textures[i].Alpha != TextureAlpha.Opaque) == mesh.Materials[i].IsTranslucent )
+					continue;
+
+				alphaUnlikeTheBit.Add( $"{mesh.Name.TrimEnd( '\0' )}:{mesh.Materials[i].Name} {textures[i].Alpha}" );
+
+				if ( textures[i].Alpha != TextureAlpha.Opaque )
+					Unimplemented.Report( "MATERIAL_ALPHA_WITHOUT_0X2" );
+			}
 
 			// The mesh's place in the model's node tree, not just its own transform - a mesh
 			// parented to a dummy node stores only its offset from that node. Right-multiplying
@@ -281,6 +297,9 @@ public sealed class LobbyModel
 				Position = offset + origin,
 			};
 		}
+
+		if ( alphaUnlikeTheBit.Count > 0 )
+			Log.Info( $"{modelPath}: {alphaUnlikeTheBit.Count} material(s) whose texture's alpha and 0x2 bit disagree - {string.Join( ", ", alphaUnlikeTheBit )}" );
 
 		_origin = origin;
 		_placedOrigin = origin;
@@ -781,32 +800,59 @@ public sealed class LobbyModel
 	/// set, so the high bits are ours. Must match FLAG_CUTOUT in content/shaders/test.shader.
 	///
 	/// Marked for cut-out art rather than for gradients, so the hard cut is only ever applied where
-	/// a texture has positively been classified. test.shader is shared with the interface, and
-	/// <see cref="UiMesh"/> marks every one of its own vertices see-through while having no texture
-	/// classification to offer; flagged the other way round, the whole front end would fall through to
-	/// the cut-out reference and lose the soft edge off every button.
+	/// a texture says so. test.shader is shared with the interface, and <see cref="UiMesh"/> marks
+	/// every one of its own vertices see-through while handing no texture's alpha on; flagged the
+	/// other way round, the whole front end would fall through to the cut-out reference and lose the
+	/// soft edge off every button.
 	/// </summary>
 	private const uint CutOutAlphaFlag = 0x10000;
 
 	/// <summary>
-	/// The see-through bit of a material's flags - see <see cref="ModelFile.MaterialData.IsTranslucent"/>.
+	/// The shader's see-through bit, test.shader's FLAG_TRANSLUCENT, and the file's bit of the same value
+	/// (<see cref="ModelFile.MaterialData.IsTranslucent"/>): set where <see cref="SeeThrough"/> says, cleared elsewhere.
 	/// </summary>
 	private const uint TranslucentFlag = 0x2;
 
 	/// <summary>
-	/// The flag word a vertex carries: what the file gave its material, plus
-	/// <see cref="CutOutAlphaFlag"/> when that material's texture turns out to be a cut-out mask
-	/// rather than a real gradient - see <see cref="Texture.HasGradedAlpha"/>.
+	/// Whether a material's alpha is tested and blended: the material carries bit 0x2 and its texture has an alpha
+	/// (<see cref="Texture.Alpha"/>). A substituted texture is a sign, see-through whatever it holds.
 	///
-	/// An empirical compatibility gate: source bit 0x2 is not established as the original's
-	/// alpha-enable semantic. Removing this gate reportedly exposed holes; the cause remains
-	/// unverified. The original load path also has material overrides absent here.
-	/// See docs/exe/render-states.md for the bounded trace and required live comparison.
+	/// <para>
+	/// <b>A deviation.</b> The original's state word is the texture's alone (<c>FUN_00581790</c> reads no material bit but
+	/// <c>0x800</c>; docs/exe/render-states.md), so it draws the alpha of a texture under a material without 0x2 too.
+	/// Here that alpha is left solid and counted, once a material use a model load (<c>MATERIAL_ALPHA_WITHOUT_0X2</c>):
+	/// those are mostly the floor plates of rides and shops, whose clear border shows whatever lies under the
+	/// footprint, and this game draws no ground there (<see cref="ParkObjects.CoversGround"/>) where the original's
+	/// frame shows green (docs/exe/textures.md, "What a floor's clear border shows").
+	/// </para>
 	/// </summary>
-	private static uint MaterialFlagsFor( ModelFile.Mesh mesh, List<Texture> textures, bool[] substituted,
+	internal static bool SeeThrough( ModelFile.Mesh mesh, List<Texture> textures, bool[] substituted, int material )
+	{
+		if ( material < 0 || material >= textures.Count || material >= mesh.Materials.Length )
+			return false;
+
+		if ( material < substituted.Length && substituted[material] )
+			return true;
+
+		if ( textures[material].Alpha == TextureAlpha.Opaque )
+			return false;
+
+		return mesh.Materials[material].IsTranslucent;
+	}
+
+	/// <summary>
+	/// The flag word a vertex carries: what the file gave its material with the see-through bit taken from
+	/// <see cref="SeeThrough"/>, plus <see cref="CutOutAlphaFlag"/> where its texture's alpha is not graded.
+	/// </summary>
+	internal static uint MaterialFlagsFor( ModelFile.Mesh mesh, List<Texture> textures, bool[] substituted,
 		int material )
 	{
-		var flags = mesh.Materials[material].Flags;
+		var flags = mesh.Materials[material].Flags & ~TranslucentFlag;
+
+		if ( !SeeThrough( mesh, textures, substituted, material ) )
+			return flags;
+
+		flags |= TranslucentFlag;
 
 		// A substituted texture is a sign, and the original makes a sign see-through as it swaps the
 		// texture in rather than trusting what the model was authored with: it ORs the bit into the
@@ -820,17 +866,14 @@ public sealed class LobbyModel
 		// the bit they draw as opaque rectangles. The other fifteen are
 		// solid art whose only partly-clear texels are the 1.6% the .wct codec rings around a hard
 		// edge, so nothing visible changes for them.
-		if ( material < substituted.Length && substituted[material] )
-			flags |= TranslucentFlag;
-
-		return material < textures.Count && !textures[material].HasGradedAlpha
+		return textures[material].Alpha != TextureAlpha.Graded
 			? flags | CutOutAlphaFlag
 			: flags;
 	}
 
 	/// <summary>
 	/// Splits one mesh into its solid half and its see-through half, as two models over the same
-	/// vertices - see <see cref="ModelFile.MaterialData.IsTranslucent"/> for which is which.
+	/// vertices - see <see cref="SeeThrough"/> for which is which.
 	///
 	/// The split has to be by triangle rather than by mesh, because a mesh can be some of each:
 	/// the Space island's antenna is a translucent dish and cone on a solid stalk, and its island
@@ -859,9 +902,7 @@ public sealed class LobbyModel
 			// A substituted sign goes into the see-through half for the same reason it is given the
 			// bit in MaterialFlagsFor - it has to blend over finished solid geometry rather than
 			// into it, and its own ride is some of what it blends over.
-			var seeThrough = material >= 0 && material < mesh.Materials.Length
-				&& (mesh.Materials[material].IsTranslucent
-					|| (material < substituted.Length && substituted[material]));
+			var seeThrough = SeeThrough( mesh, textures, substituted, material );
 
 			var into = seeThrough ? translucent : solid;
 

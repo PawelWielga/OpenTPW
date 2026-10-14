@@ -109,7 +109,11 @@ sixteen-byte steps. `00575c60` retains those pointers and invokes `00575e10` imm
 `LobbyModel.MaterialFlagsFor`. The current gate remains an empirical compatibility workaround.
 Prior observations that removing it makes holes do not prove the original bit's meaning.
 
-**Unknown:** why those holes occur. Texture decoding, another setup path, runtime mutation,
+**Settled since (Q359):** the holes are this game's own. A floor plate's clear border shows what lies under the
+footprint, and this game draws no ground there (`textures.md`, "What a floor's clear border shows"), so the gate
+stays for a material without `0x2`, counted; the reference is the texture's header since then.
+
+**Unknown then:** why those holes occur. Texture decoding, another setup path, runtime mutation,
 caching and the comparison scene remain possible explanations. This static trace did not
 compare matching original/OpenTPW frames or live texture flags. It changes documentation and
 comments only. Before altering rendering, independently capture the same disagreeing material's

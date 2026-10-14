@@ -157,17 +157,17 @@ public class TextureDecodeTests
 
 		var bank = Read( "levels/jungle/terrain/textures/jri_bnk4.wct" );
 		Assert.AreEqual( 962, Clear( bank.Data ), "jri_bnk4's clear texels" );
-		Assert.IsTrue( bank.CutOutAlpha, "jri_bnk4's alpha is cut out: byte 1 nought" );
+		Assert.AreEqual( TextureAlpha.CutOut, bank.Alpha, "jri_bnk4's alpha is cut out: byte 1 nought" );
 
 		var person = Read( "ui/stexture/b_1person.wct" );
 		Assert.IsTrue( Clear( person.Data ) > 0, "b_1person's alpha is read" );
-		Assert.IsFalse( person.CutOutAlpha, "b_1person's alpha is graded: byte 1 set" );
+		Assert.AreEqual( TextureAlpha.Graded, person.Alpha, "b_1person's alpha is graded: byte 1 set" );
 
 		var window = Read( "levels/hallow/rides/bumper/stexture/b_NEWwin.wct" );
 		Assert.IsTrue( window.IsValid && window.Data.Data.Where( ( b, i ) => i % 4 == 3 ).All( b => b == 255 ), "b_NEWwin decodes opaque" );
-		Assert.IsFalse( window.CutOutAlpha, "b_NEWwin has no alpha chunk" );
+		Assert.AreEqual( TextureAlpha.Opaque, window.Alpha, "b_NEWwin has no alpha chunk" );
 
-		Assert.IsFalse( Read( "ui/textures/ridestatbar.wct" ).CutOutAlpha, "ridestatbar has byte 1 nought and no alpha chunk" );
+		Assert.AreEqual( TextureAlpha.Opaque, Read( "ui/textures/ridestatbar.wct" ).Alpha, "ridestatbar has byte 1 nought and no alpha chunk" );
 	}
 
 	[TestMethod]

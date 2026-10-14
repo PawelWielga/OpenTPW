@@ -87,22 +87,22 @@ public class TextureSamplerTests
 	/// </summary>
 	/// <remarks>
 	/// The two rows carry opposite values, and between them every value differs from what a texture that
-	/// copied nothing would read - the default sampler, 0 by 0, no path, a cut-out - so each copy is pinned on
+	/// copied nothing would read - the default sampler, 0 by 0, no path, opaque - so each copy is pinned on
 	/// its own, and so is copying rather than assuming. A texture taken over is not registered, so
 	/// <see cref="Asset.All"/> is the same length afterwards.
 	/// <b>Mutations:</b> taking any one of the five copies out of <c>TryAdoptCached</c>, or replacing one with
 	/// a constant, fails the assertion that names it.
 	/// </remarks>
 	[DataTestMethod]
-	[DataRow( TextureFlags.Wrap, SamplerType.AnisotropicWrap, 64, 32, true )]
-	[DataRow( TextureFlags.PointFilter, SamplerType.Point, 16, 8, false )]
+	[DataRow( TextureFlags.Wrap, SamplerType.AnisotropicWrap, 64, 32, TextureAlpha.Graded )]
+	[DataRow( TextureFlags.PointFilter, SamplerType.Point, 16, 8, TextureAlpha.CutOut )]
 	public void ACachedTextureIsDrawnTheWayTheLoadedOneWas( TextureFlags flags, SamplerType sampler, int width,
-		int height, bool graded )
+		int height, TextureAlpha alpha )
 	{
 		// Nowhere on disk, so only the cache can answer it.
 		var path = $"opentpw-tests/lobby/{flags}.wct";
 
-		var loaded = Loaded( path, flags, sampler, (uint)width, (uint)height, graded );
+		var loaded = Loaded( path, flags, sampler, (uint)width, (uint)height, alpha );
 
 		Asset.All.Add( loaded );
 
@@ -118,7 +118,7 @@ public class TextureSamplerTests
 			Assert.AreEqual( (uint)width, served.Width, "its width" );
 			Assert.AreEqual( (uint)height, served.Height, "its height" );
 			Assert.AreEqual( path, served.Path, "the path it came from" );
-			Assert.AreEqual( graded, served.HasGradedAlpha, "graded or cut out, as the pixels it shares are" );
+			Assert.AreEqual( alpha, served.Alpha, "graded or cut out, as the texture it shares is" );
 			Assert.AreEqual( registered, Asset.All.Count, "and it is not registered a second time" );
 		}
 		finally
@@ -132,7 +132,7 @@ public class TextureSamplerTests
 	/// reaches the GPU, and each property a load assigns is set the way the load would set it.
 	/// </summary>
 	private static Texture Loaded( string path, TextureFlags flags, SamplerType sampler, uint width, uint height,
-		bool graded )
+		TextureAlpha alpha )
 	{
 		var texture = (Texture)RuntimeHelpers.GetUninitializedObject( typeof( Texture ) );
 
@@ -140,7 +140,7 @@ public class TextureSamplerTests
 		Set( texture, nameof( Texture.SamplerType ), sampler );
 		Set( texture, nameof( Texture.Width ), width );
 		Set( texture, nameof( Texture.Height ), height );
-		Set( texture, nameof( Texture.HasGradedAlpha ), graded );
+		Set( texture, nameof( Texture.Alpha ), alpha );
 
 		texture.Path = path;
 

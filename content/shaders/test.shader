@@ -148,13 +148,13 @@ fragment {
     layout( set = 1, binding = 31 ) uniform texture2D Color31;
     layout( set = 1, binding = 32 ) uniform sampler s_Color;
 
-    // The only bit of a material's flag word we act on - see ModelFile.MaterialData.IsTranslucent
-    // for how it was established and for what is known about the rest.
+    // Set by LobbyModel where a material carries the file's bit of the same value and its texture an
+    // alpha (LobbyModel.SeeThrough), and by UiMesh on every interface vertex.
     const uint FLAG_TRANSLUCENT = 2;
 
-    // Not from the file: set by LobbyModel when a material's texture turns out to be a cut-out
-    // mask rather than a real gradient - see Texture.HasGradedAlpha. The file only ever uses the
-    // flag word's low byte, so the high bits are ours to carry this in.
+    // Not from the file: set by LobbyModel where that texture's alpha is cut out rather than
+    // graded - see Texture.Alpha. The file only ever uses the flag word's low byte, so the high
+    // bits are ours to carry this in.
     //
     // Anything that has NOT been classified takes the low reference. This shader is shared with
     // the interface, which marks all of its own vertices see-through and classifies no textures,
@@ -221,23 +221,12 @@ fragment {
         vec3 vShading = g_oUbo.g_flParkLight > 0.5 ? vParkLight : vDiffuse + vAmbient;
         vec3 vOutColor = vTextureSample.xyz * vShading;
 
-        // A material the model marks translucent keeps its texture's alpha; anything else is solid
-        // whatever its texture happens to carry. Plenty of opaque art ships with an alpha channel
-        // - six of the Space island's materials do - and taking the alpha from all of them ate
-        // holes in geometry the game draws whole.
+        // A see-through material keeps its texture's alpha; anything else is solid.
         bool bTranslucent = (outMatFlags & FLAG_TRANSLUCENT) != 0;
 
-        // Most of what the flag marks is cut-out art rather than glass - every palm frond, the
-        // grass, the bushes, the bats - so the test has to stay. Which reference it uses is the
-        // original's own call, taken from the texture rather than from the model: art whose alpha
-        // is effectively binary is cut hard, and a real gradient is cut low enough to keep its
-        // faint end.
-        //
-        // Measured over the lobby, every see-through material lands on the low reference: the
-        // .wct codec rings a halo of partly-clear texels around each hard edge, and those are
-        // exactly what the original counts. The high reference is reached only by art whose
-        // header switches its alpha channel off, which decodes fully opaque and clears any
-        // reference at all.
+        // Which reference the test uses is the texture's, as the original's state word is: a .wct
+        // with its header's byte 1 nought is cut at 240, one with it set is graded at 16
+        // (docs/exe/textures.md, "The loader").
         float flAlphaReference = (outMatFlags & FLAG_CUTOUT) != 0
             ? CUTOUT_ALPHA_REFERENCE
             : GRADED_ALPHA_REFERENCE;

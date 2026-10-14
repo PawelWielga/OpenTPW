@@ -38,7 +38,7 @@ namespace OpenTPW.UI;
 /// </summary>
 internal sealed class UiMesh
 {
-	/// <summary>The see-through bit of a material's flags - see ModelFile.MaterialData.IsTranslucent.</summary>
+	/// <summary>The shader's see-through bit, test.shader's FLAG_TRANSLUCENT.</summary>
 	private const uint TranslucentFlag = 0x2;
 
 	private static readonly Dictionary<string, UiMesh?> Loaded = new( StringComparer.OrdinalIgnoreCase );

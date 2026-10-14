@@ -26,14 +26,11 @@ public partial class Texture : Asset
 	public bool Adopted { get; private set; }
 
 	/// <summary>
-	/// Whether this texture's alpha is a real gradient rather than a cut-out mask.
-	///
-	/// The current classifier counts partly-clear pixels and requires at least one twentieth
-	/// of the area. This differs at the rounding boundary from the original's truncated
-	/// threshold, and omits its material-load overrides; see docs/exe/render-states.md.
-	/// The result selects the low or high alpha reference after the material's current gate.
+	/// How this texture's alpha is drawn: a .wct's is its file's (<see cref="TextureFile.Alpha"/>, the original's
+	/// <c>FUN_00574bd0</c>); any other's is <see cref="Classify"/>'s count of its pixels. A model's material takes its
+	/// alpha test from this alone (<c>LobbyModel</c>).
 	/// </summary>
-	public bool HasGradedAlpha { get; private set; }
+	public TextureAlpha Alpha { get; private set; }
 
 	/// <summary>
 	/// The alpha a cut-out texel has to reach to be drawn at all, 240 of 255. The original sets
@@ -141,7 +138,7 @@ public partial class Texture : Asset
 		var file = new TextureFile( path );
 		var textureFileData = file.IsValid ? file.Data : NotFound( path );
 
-		if ( file.CutOutAlpha )
+		if ( file.Alpha == TextureAlpha.CutOut )
 		{
 			var pixels = textureFileData.Data;
 			int clear = 0, under = 0;
@@ -155,8 +152,16 @@ public partial class Texture : Asset
 			Log.Info( $"Texture: '{path}' reads its alpha chunk by its bit count, header byte 1 nought: {clear} of {pixels.Length / 4} texels clear, {under} under {CutOutAlphaReference}" );
 		}
 
-		CreateTexture( path, textureFileData.Data, (uint)textureFileData.Width, (uint)textureFileData.Height, flags );
+		CreateTexture( path, textureFileData.Data, (uint)textureFileData.Width, (uint)textureFileData.Height, flags,
+			AlphaOf( file, textureFileData.Data ) );
 	}
+
+	/// <summary>
+	/// A .wct's alpha: its file's (<see cref="TextureFile.Alpha"/>), or <see cref="Classify"/>'s count of the stand-in's
+	/// pixels where the file could not be read.
+	/// </summary>
+	internal static TextureAlpha AlphaOf( TextureFile file, byte[] pixels )
+		=> file.IsValid ? file.Alpha : Classify( pixels );
 
 	/// <summary>
 	/// What the original draws in place of a texture it cannot load.
@@ -285,22 +290,26 @@ public partial class Texture : Asset
 	}
 
 	/// <summary>
-	/// OpenTPW's current test for a gradient - see <see cref="HasGradedAlpha"/>. Texels that are
-	/// fully clear don't count, because a cut-out mask is mostly those; it is the partly-clear
-	/// ones that tell a gradient from a mask.
+	/// The alpha of a texture that is not a .wct, from its pixels, as the original's classifier <c>FUN_00575160</c> takes
+	/// it for the other formats: graded when the texels strictly between nought and 240 are a twentieth of the area or
+	/// more, cut out otherwise. One whose every texel is opaque is <see cref="TextureAlpha.Opaque"/> here where the
+	/// original cuts a four-byte source out: a test at 240 drops none of its texels either way.
 	/// </summary>
-	private static bool IsGraded( byte[] data )
+	internal static TextureAlpha Classify( byte[] data )
 	{
 		var texels = data.Length / 4;
 		var partial = 0;
+		var opaque = true;
 
 		for ( int i = 3; i < data.Length; i += 4 )
 		{
 			if ( data[i] > 0 && data[i] < CutOutAlphaReference )
 				++partial;
+
+			opaque &= data[i] == 255;
 		}
 
-		return partial * 20 >= texels;
+		return opaque ? TextureAlpha.Opaque : partial * 20 >= texels ? TextureAlpha.Graded : TextureAlpha.CutOut;
 	}
 
 	/// <summary>
@@ -326,7 +335,8 @@ public partial class Texture : Asset
 		return SamplerType.AnisotropicRepeat;
 	}
 
-	private void CreateTexture( string debugName, byte[] data, uint width, uint height, TextureFlags flags )
+	private void CreateTexture( string debugName, byte[] data, uint width, uint height, TextureFlags flags,
+		TextureAlpha? alpha = null )
 	{
 		Requested = flags;
 
@@ -337,7 +347,7 @@ public partial class Texture : Asset
 
 		PreprocessTextureData( ref data, ref width, ref height, flags );
 
-		HasGradedAlpha = IsGraded( data );
+		Alpha = alpha ?? Classify( data );
 
 		SamplerType = SamplerFor( flags );
 

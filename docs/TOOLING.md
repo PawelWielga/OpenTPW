@@ -36,11 +36,13 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/alphauses.py <materials.txt> [<dump> <wads.txt>]` | Every model material of the jungle's wads, `lobby.wad` and `ui.wad` naming a `.wct` whose alpha chunk sits under a header byte 1 of nought (the original draws it cut out), split by the material's `0x2` bit, the one this game's world shader lets alpha through on. `materials.txt` is `wct2raw <model.md2>` over a model dump, `q358/materials.txt` the 751 (Q358) |
 | `lib/seam.py <frame.png> x0 x1 y0 y1` | A dark seam between water and its near bank, column by column in a window: the share of seam columns, the median ratio of the darkest pixel below the water to the water's and the bank's, and the longest run of neighbouring seam columns. Compares frames of two games lit differently, where a fixed level does not (Q358) |
 | `lib/screendiff.py <a.png> <b.png> [x0 y0 x1 y1]` | Pixels differing by more than 40 between two frames inside a box, and where: a screen that should not change, checked against the control's frame (Q358) |
+| `lib/diffpic.py <a.png> <b.png> <out.png> [x0 y0 x1 y1]` | Two frames side by side and a third, the second dimmed with every pixel differing by more than 40 a channel in red: where a change lies and its shape, and the count (Q359) |
 | `lib/barshare.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar measured in a frame of either game, by its layout rectangle: the share of its middle row in colour, the share grey, the colour's mean r - g, the last coloured pixel, the grey's mean, and the pixel an eighth of the way |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
 | `original/loadfile.sh load <file> <outdir> <tag>` / `stop` | A park file loaded in the original from its Load Park list, off-screen, with frames; `POLL=` starts a memory reader just before the click. It starts the original only when it is not running, so a second file is 35 s where the first is 123 s |
 | `original/screenpark.sh <file> <outdir> <tag>` | A park file entered by the original on the REAL screen (`VERIFYING.md` rule 128: off-screen draws no sign), for a picture: the file made the newest in the reference player's jungle folder, the welcome and the player clicked, frames `<tag>-1..3` at 1024 x 768 and `-N-full` at 1920 x 1440 from 35 s on, then the original stopped, the file taken out and `save/` checked. 2.5 minutes a file; the camera is the file's own (Q357) |
+| `original/groundcell.py PID SECS X,Y[:X2,Y2]=+MASK\|-MASK\|t@X,Y ...` | The original's memory, WRITTEN: the park ground's heightfield cell words (flags low, texture index high) ORed, cleared or given another cell's texture, held; prints the heightfield's size and each write. A `POLL` for `loadfile.sh`. A write after a load changes nothing on screen: the ground is built at the load (Q359) |
 | `original/heads.py PID SECS ITEM` | The original's memory: every model of an item with its lookup state (shared flags, heads attached, each record holding one) and each head's sprite, place, scale and frame, a line a change. A `POLL` for `loadfile.sh` |
 | `original/emitters.py PID SECS` | The original's memory: the particle system's live emitters by the used chain (slot, count, handle, effect, place, aim, life, particles alive), a block a change and the particle counts a second. A `POLL` for `loadfile.sh` |
 | `original/scriptvar.py PID THING [INDEX [VALUE]]` | A ride script's variables in the running original, by thing: read, or **written** (the one tool that writes its memory). It is how a ride is broken on demand |
@@ -675,6 +677,14 @@ GH=766` there, or the pointer is off):
   press, picks it; the mechanics' tab (667, 123) (`q353/orig/run.sh`). In this game the same through
   `q353/confirm.py`, the control's place by the console's `control 26`; a click on a hire row CHOOSES the
   candidate and closes the screen, so hover. `lib/barshare.py` measures each bar.
+- **A park file entered through `screenpark.sh` (the player's click) is framed on the camera's own point**, not 65
+  units on as `parkrun.original_view` gives for the Load Park list: `camera 585 235 110 180` put world (585, 241)
+  mid-frame and `camera 595 175 110 180` the Staff Room (Q359, `q359/orig/e-2.png`, `f-2.png`); screen x runs against
+  world x there. Under `loadfile.sh` the view is the list's, nearer again.
+- **A model's materials, their textures' alpha and their `0x2` bit, predicted from the files:** `q359/predict.py
+  [model ...]` (from `q359/materials.txt`, `wct2raw` run over every jungle, lobby and global advisor model ONE AT A
+  TIME: parallel runs abort and thin the list) gives the line each model logs at its load; `q359/flips.py` lists the
+  `0x2` uses whose reference the header moves (Q359).
 - **Lost Kingdom's river in both games** (Q358): `camera 480 465 110 180` (`parkrun.py`'s `original_view( 480, 400 )`),
   `step 2`, then `save()`; `original/screenpark.sh` on that file. The original's saved view stands nearer than this
   game's and frames the long reach (78 water pixels across at x 300 of its 1024 x 768 frame, this game's 36 at x 530),
