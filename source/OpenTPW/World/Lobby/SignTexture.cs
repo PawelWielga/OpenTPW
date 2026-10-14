@@ -55,6 +55,9 @@ public static class SignTexture
 			? CropBoard( image )
 			: new byte[BoardWidth * BoardHeight * 4];
 
+		if ( sign.Image is not null )
+			Log.Info( $"{signPath}: the board's artwork, mean colour {MeanColour( board )} before its lettering" );
+
 		var (first, second) = SplitName( parkName );
 
 		if ( string.IsNullOrEmpty( second ) )
@@ -87,12 +90,43 @@ public static class SignTexture
 			: (parkName[..space], parkName[(space + 1)..]);
 	}
 
-	private static byte[] CropBoard( TextureData image )
+	/// <summary>The board's mean red, green, blue and alpha, each to one place: what a run's log is checked by.</summary>
+	private static string MeanColour( byte[] board )
+	{
+		var sums = new long[4];
+
+		for ( int i = 0; i < board.Length; ++i )
+			sums[i % 4] += board[i];
+
+		var pixels = board.Length / 4;
+
+		return $"({string.Join( ", ", sums.Select( sum => (sum / (double)pixels).ToString( "0.0", System.Globalization.CultureInfo.InvariantCulture ) ) )})";
+	}
+
+	/// <summary>
+	/// The artwork's top rows, with red and blue exchanged as the original's board holds them: its sign codec writes
+	/// blue, green, red after the alpha (<c>FUN_005e7990</c>, <c>0x005e7d03</c>), and the board is packed with that
+	/// first colour byte in a texel's red (<c>FUN_005ecb40</c>; <c>docs/exe/textures.md</c>, "A sign's artwork").
+	/// The inks go through the same packer and are read in its order already (<see cref="SignFile.LineColour"/>).
+	/// Internal so that a test can read a board without a renderer.
+	/// </summary>
+	internal static byte[] CropBoard( TextureData image )
 	{
 		var board = new byte[BoardWidth * BoardHeight * 4];
 
 		for ( int y = 0; y < BoardHeight; ++y )
-			Array.Copy( image.Data, y * image.Width * 4, board, y * BoardWidth * 4, BoardWidth * 4 );
+		{
+			for ( int x = 0; x < BoardWidth; ++x )
+			{
+				var from = ((y * image.Width) + x) * 4;
+				var to = ((y * BoardWidth) + x) * 4;
+
+				board[to] = image.Data[from + 2];
+				board[to + 1] = image.Data[from + 1];
+				board[to + 2] = image.Data[from];
+				board[to + 3] = image.Data[from + 3];
+			}
+		}
 
 		return board;
 	}

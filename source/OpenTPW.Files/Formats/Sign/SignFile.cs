@@ -306,10 +306,12 @@ public sealed class SignFile : BaseFormat
 			Width = Size,
 			Height = Size,
 
-			YChannelQuantizationScale = (short)BitConverter.ToSingle( data, quantisation ),
-			CbChannelQuantizationScale = (short)BitConverter.ToSingle( data, quantisation + 4 ),
-			CrChannelQuantizationScale = (short)BitConverter.ToSingle( data, quantisation + 8 ),
-			AChannelQuantizationScale = (short)BitConverter.ToSingle( data, quantisation + 12 ),
+			// The four floats are the codec's multipliers as they are, Y, Cb, Cr, then the alpha's (FUN_005e7990
+			// hands them on at 0x005e7cb9 and 0x005e7ced): 6, 10, 2 and 6 in every shipped sign.
+			YMultiplier = BitConverter.ToSingle( data, quantisation ),
+			CbMultiplier = BitConverter.ToSingle( data, quantisation + 4 ),
+			CrMultiplier = BitConverter.ToSingle( data, quantisation + 8 ),
+			AMultiplier = BitConverter.ToSingle( data, quantisation + 12 ),
 
 			ColorChunkSize = colorChunkSize,
 			AlphaChunkSize = alphaChunkSize,

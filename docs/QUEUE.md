@@ -44,16 +44,22 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q357. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q358. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q357 (`textures.md`, "A sign's artwork"): **the original under Proton letters no name on Lost Kingdom's
+  park gate**, where this game letters "Lost Kingdom" (the Windows screenshot's Wonder Land board has its name:
+  Wine's GDI fonts are not looked into). This game's gate slab top is 1.27 to 1.34 times the original's (the light
+  or the model's LZSS texture, not looked into). Which of the board's two modes the original takes is not read
+  (mode 1 copies the bytes as they are). `FUN_00592730`'s transform is not compared with `FUN_00593ab0`'s
+  instruction by instruction. The lobby's boards were not photographed in either game (the player buttons cover
+  them in the original's orbit). In no game run: the ride boards (the coasters', `sign1`), the other three themes'
+  parks, Full Simulation (not asked: the boards are the level's).
   From Q355 (`textures.md`, "The loader, `FUN_00564c00`, and the alpha chunk"): **the original reads a `.wct`'s
   alpha chunk when its bit count is 32**, not by the byte at offset 1: 236 shipped files (233 LZSS, among them
   terrain textures) have an alpha this game drops, and `stexture\b_NEWwin.wct` throws here where the original
   draws it opaque. Count first which are drawn in Lost Kingdom and with what blend; `lib/wctcensus.py` lists them.
-  **A sign's artwork takes its four floats as they are** (6, 10, 2, 6) where `SignFile` puts them through the
-  header's formulas: `wctorig.py` makes the four lobby signs 1.47 to 1.52 times brighter and yellower; compare
-  with the original's lobby first. The LZSS codec (`FUN_00595920`, type `0x13`) is not compared with this game's
+  The LZSS codec (`FUN_00595920`, type `0x13`) is not compared with this game's
   full-scale path, nor its rounding (this game's truncates). Three type `0x12` files are LZSS and Fan_stalk's,
   Bowler_Btie's and s_disc's 8 x 8 copies throw in this game's LZSS reader.
   From Q356 (`hud.md`, "The first row is picked as a list fills"): the other lists' pick is Q232's. **The opening

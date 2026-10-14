@@ -60,12 +60,13 @@ public partial class TextureFile : BaseFormat
 			Version = binaryReader.ReadByte(),
 			Width = binaryReader.ReadInt16(),
 			Height = binaryReader.ReadInt16(),
-			YChannelQuantizationScale = binaryReader.ReadInt16(),
-			// Cr's scale comes before Cb's: the original hands them on as Y, offset 12, offset 10, and both of its
-			// decoders take the second channel (Cb, x1.772) with the first of those (0x00564e20).
-			CrChannelQuantizationScale = binaryReader.ReadInt16(),
-			CbChannelQuantizationScale = binaryReader.ReadInt16(),
-			AChannelQuantizationScale = binaryReader.ReadInt16(),
+			// The header's four scales made multipliers as the loader makes them (0x00564e20). Cr's scale comes before
+			// Cb's: the original hands them on as Y, offset 12, offset 10, and both of its decoders take the second
+			// channel (Cb, x1.772) with the first of those.
+			YMultiplier = ComputeDequantizationScaleY( binaryReader.ReadInt16() ),
+			CrMultiplier = ComputeDequantizationScaleCbCr( binaryReader.ReadInt16() ),
+			CbMultiplier = ComputeDequantizationScaleCbCr( binaryReader.ReadInt16() ),
+			AMultiplier = ComputeDequantizationScaleA( binaryReader.ReadInt16() ),
 
 			ColorChunkSize = binaryReader.ReadInt32(),
 			AlphaChunkSize = binaryReader.ReadInt32(),
@@ -127,12 +128,12 @@ public partial class TextureFile : BaseFormat
 		var outputA = Enumerable.Repeat( 255f, size * size ).ToList();
 
 		var state = new ImageDecodeState( size );
-		DecodeChannel( ref state, size, ref colorData, ref outputY, ComputeDequantizationScaleY( fileData.YChannelQuantizationScale ) );
-		DecodeChannel( ref state, size / 2, ref colorData, ref outputCb, ComputeDequantizationScaleCbCr( fileData.CbChannelQuantizationScale ) );
-		DecodeChannel( ref state, size / 2, ref colorData, ref outputCr, ComputeDequantizationScaleCbCr( fileData.CrChannelQuantizationScale ) );
+		DecodeChannel( ref state, size, ref colorData, ref outputY, fileData.YMultiplier );
+		DecodeChannel( ref state, size / 2, ref colorData, ref outputCb, fileData.CbMultiplier );
+		DecodeChannel( ref state, size / 2, ref colorData, ref outputCr, fileData.CrMultiplier );
 
 		if ( fileData.HasAlphaChannel )
-			DecodeChannel( ref state, size, ref alphaData, ref outputA, ComputeDequantizationScaleA( fileData.AChannelQuantizationScale ) );
+			DecodeChannel( ref state, size, ref alphaData, ref outputA, fileData.AMultiplier );
 
 		uint alignedWidth = GetAlignedSize( (uint)fileData.Width );
 		uint alignedHeight = GetAlignedSize( (uint)fileData.Height );

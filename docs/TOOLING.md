@@ -30,13 +30,14 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/uistream.py <VA>` | A compiled UI layout stream of `testme.exe` on disk walked to its balanced close (`hud.md`, "The opcodes"): every control's type, flags, id and rect, its mesh hash, text rect, help row and outline, indented by its parent, each close printed. It does not read ops 9 and 10 (a list's scrollbar): a stream with a list stops there |
 | `meshhash.py <hash> ...` | A layout stream's mesh hashes turned back into the `ui.wad` model to load, by file stem or by a model's first node name (`w_park` is the node `window3`) |
 | `lib/wctpng.py <wad> <member> <out.png>` | One `.wct` texture out of a wad as this game's reader decodes it (`wct2raw`), a PNG and an 8x copy, with its header's version, size and scales (it prints offset 10 as "Cb" and 12 as "Cr": offset 10 is Cr's, `exe/textures.md`); the member matched by the end of its path (`'textures\\ridestatbar.wct'`). The colours are the reader's, the original's codec since Q355 |
-| `lib/wctorig.py <file.wct\|file.sgn> [out.png]` | A type `0x12` `.wct`, or a `.sgn`'s artwork, decoded the ORIGINAL's way (`FUN_00593ab0`, `FUN_00592730`; `exe/textures.md`): the reference to check `TextureFile` against (983 of the 986 zlib files within 1, Q355). Writes an RGBA PNG and an 8x copy. Takes the alpha chunk by its size, not by the bit count as the original (Q357). LZSS (`0x13`) is not done (Q354) |
+| `lib/wctorig.py <file.wct\|file.sgn> [out.png]` | A type `0x12` `.wct`, or a `.sgn`'s artwork, decoded the ORIGINAL's way (`FUN_00593ab0`, `FUN_00592730`; `exe/textures.md`): the reference to check `TextureFile` against (983 of the 986 zlib files within 1, Q355). Writes an RGBA PNG and an 8x copy. Takes the alpha chunk by its size, not by the bit count as the original (Q358). A sign comes out in the codec's order: the original's board holds it with red and blue exchanged (Q357). LZSS (`0x13`) is not done (Q354) |
 | `wct2raw/` (a project: `dotnet wct2raw/bin/Debug/net10.0/wct2raw.dll`) `<in.wct\|in.sgn> <out.rgba>` / `--batch <list> <outdir>` | `.wct` textures or a sign's artwork through the repo's own `TextureFile`/`SignFile`: width, height, RGBA. `--batch` decodes every path in a list in parallel to `<outdir>/<line>.rgba` (8,396 in 6 s), failures on stderr; copy the project beside a worktree of main (its `ProjectReference`) for the control (`q355/wct2raw-main`) |
 | `lib/wctcensus.py <dir>` | Every `.wct` under a folder (`wadcat --dump .wct` run inside one folder a wad, as names repeat across wads: `q355/alldump`, 8,375, and its `loose/`, the 41 loose files' 21 names; `all.list`) counted by type, colour codec, alpha byte, bit count and alpha chunk, an example of each. `q355/compare.py` is the decode against `wctorig.py` and main to copy |
 | `lib/barshare.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar measured in a frame of either game, by its layout rectangle: the share of its middle row in colour, the share grey, the colour's mean r - g, the last coloured pixel, the grey's mean, and the pixel an eighth of the way |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
 | `original/loadfile.sh load <file> <outdir> <tag>` / `stop` | A park file loaded in the original from its Load Park list, off-screen, with frames; `POLL=` starts a memory reader just before the click. It starts the original only when it is not running, so a second file is 35 s where the first is 123 s |
+| `original/screenpark.sh <file> <outdir> <tag>` | A park file entered by the original on the REAL screen (`VERIFYING.md` rule 128: off-screen draws no sign), for a picture: the file made the newest in the reference player's jungle folder, the welcome and the player clicked, frames `<tag>-1..3` at 1024 x 768 and `-N-full` at 1920 x 1440 from 35 s on, then the original stopped, the file taken out and `save/` checked. 2.5 minutes a file; the camera is the file's own (Q357) |
 | `original/heads.py PID SECS ITEM` | The original's memory: every model of an item with its lookup state (shared flags, heads attached, each record holding one) and each head's sprite, place, scale and frame, a line a change. A `POLL` for `loadfile.sh` |
 | `original/emitters.py PID SECS` | The original's memory: the particle system's live emitters by the used chain (slot, count, handle, effect, place, aim, life, particles alive), a block a change and the particle counts a second. A `POLL` for `loadfile.sh` |
 | `original/scriptvar.py PID THING [INDEX [VALUE]]` | A ride script's variables in the running original, by thing: read, or **written** (the one tool that writes its memory). It is how a ride is broken on demand |
@@ -80,6 +81,13 @@ structure, and hand it to `loadfile.sh` through `POLL`.
 ## Recipes
 
 Each was found by trial in the item named, and cost a run to find.
+
+- **A sign's board beside the original's** (Q357): Lost Kingdom's park gate, from inside the park. This game:
+  `camera 480 140 80 180` and `step 2` under `pause`, saved; the original given that file through
+  `original/screenpark.sh` frames the same board nearer (its camera stands closer for the same numbers).
+  `q357/measure.py <frame> orig|ours` reads two lettering-free patches of its face and the slab's top. The lobby's
+  boards are no use: in the original's orbit the player buttons cover them, and this game's `island N` frames
+  them small and mid-flight. In the original the pointer on a screen edge scrolls the camera.
 
 **In OpenTPW, through the console** (`OPENTPW_DEBUG_CONSOLE=1`; the `case` labels in `DebugConsole.cs` are the
 whole list):

@@ -1,7 +1,7 @@
 # The `.wct` decode
 
 What the original does with a `.wct` file's bytes (the bytes themselves: the FileFormats clone, `formats/texture.md`).
-Read in Ghidra on `/testme.exe`, read only (Q354, Q355).
+Read in Ghidra on `/testme.exe`, read only (Q354, Q355, Q357).
 
 ## The loader, `FUN_00564c00`, and the alpha chunk
 
@@ -11,7 +11,7 @@ chunk **when the bit count (header byte 2) is 32** (`0x00564c72`); the byte at o
 sixth argument: none, and the image is opaque. **OpenTPW** decides by the byte at offset 1 (said at its site in
 `TextureFile.ReadFromStream`): in 236 shipped files it is 0 over a 32-bit count and an alpha chunk, whose alpha this
 game drops (233 of type `0x13`), and `stexture\b_NEWwin.wct` has it 1 with no chunk, which throws here (FileFormats,
-`texture.md`). Not built (Q357).
+`texture.md`). Not built (Q358).
 
 ## The header's scales, and the order they are handed on (`0x00564e20`)
 
@@ -68,12 +68,36 @@ and doubled before, are crisp as in the original's frame (`q355/gadget-orig-fix-
 
 ## A sign's artwork (`FUN_005e7990`)
 
-A `.sgn`'s four floats at `+0x0C` are handed to the codec's slot 3 (`0x005987b0` -> `0x00592000` -> `FUN_00592730`,
-the same transform and colour) **as they are**, as the multipliers: 6, 10, 2 and 6 in every shipped sign, so Y
-times 6, Cb 10, Cr 2. OpenTPW's `SignFile` makes them 16-bit scales and puts them through the header's formulas (4,
-3.5, 1.5, 7), and decodes them with the zlib codec above. Through `wctorig.py` the four lobby signs come out 1.47 to
-1.52 times brighter than OpenTPW draws them, and yellower (`q355/sgn/Jun_isle-main-fix-orig.png`); neither has been
-compared with the original's lobby (Q357). The codec moved each sign's mean by -2.5 to -3.9%.
+Type 4, the only one shipped, reads six dwords after width, height and type: four floats, then the two chunk sizes. The
+colour chunk goes to the codec's slot 3 (`0x005987b0` -> `0x00592000`, its colour flag set -> `FUN_00592730( w, h,
+data, out, v0, v1, v2 )`, `0x005e7cb9`) and the alpha chunk to the same slot with the flag clear and `v3`
+(`0x005e7ced`). **The floats are the multipliers as they are**, no formula: `FUN_00592730` reads the Y plane times
+`v0` into `+0x2c`, the second plane times `v1` into `+0x1c` and the third times `v2` into `+0xc`; `FUN_005935a0` takes
+`+0x1c` times 1.772 into blue and `+0xc` times 1.402 into red. So Y times 6, Cb 10, Cr 2 and the alpha 6, in all 23
+shipped boards. Its rows and columns go through `FUN_00592b80`, `FUN_00592c50` and `FUN_005933a0`, not compared with
+`FUN_00593ab0`'s instruction by instruction; the decode below agrees with the screen.
+
+**The board holds the artwork with red and blue exchanged.** `FUN_005935a0` writes each texel blue, green, red;
+`FUN_005e7990` puts the alpha before them (`0x005e7d03`: A, B, G, R); the sign's board (`FUN_005ecb40`, its mode 2)
+packs a texel as `byte0 << 12 | byte1 << 8 | byte2 << 4 | byte3`, A4R4G4B4, so the codec's blue is drawn as red and
+its red as blue. The inks go through the same packer with their file byte 0 in byte 1, which is why a line's ink is
+read red, green, blue, opacity. The board's mode 1 copies the bytes as they are; which mode a board takes is not read.
+Witnesses: the Windows screenshot `content/ReferenceScreenshots/ParkPicker/ParkPickerReference.jpg` shows Wonder Land's
+board pale cream, the exchanged decode (the codec's own order is pale cyan); the original under Proton draws Lost
+Kingdom's park gate blue-grey (the codec's order is brown). Under Proton the original letters no name on that board
+(the Windows screenshot's board has its name; Wine's GDI fonts are not looked into).
+
+**OpenTPW** (Q357): `SignFile` hands the four floats on as the multipliers, and `SignTexture.CropBoard` exchanges red
+and blue as it cuts the board. All 23 boards decode within 1 a channel of `wctorig.py` (`q357/allsgn/sweep.py`), and
+all 8,392 `.wct` files that decode are the same to the byte as before. Each board's mean colour is logged as it is
+painted: Lost Kingdom's gate and island (64.3, 67.5, 82.6), Halloween (41.7, 34.7, 38.8), Wonder Land (232.1, 240.1,
+178.3), Space (51.1, 27.7, 98.0), where the header's formulas and the codec's order gave the gate (56.0, 44.1, 45.2).
+Through the alpha's 6 where the formula gave 7, four boards (the three `sign1` boards and the Jelly's) lie a shade
+under opaque throughout (232 to 254); the eleven other solid ones are 253 or 254 on 2.3% of texels where they read
+down to 77. The gate seen from inside the park (`camera 480 140 80 180`) measures (24.4, 30.5, 42.4) on its board's
+plain stone here, (22.3, 23.8, 29.2) on main, and (25.8, 27.1, 39.0) in the original (`q357/side-by-side.png`,
+`board-close.png`). This game's slab top beside it is 1.27 to 1.34 times the original's (not looked into: the light or
+the model's texture).
 
 ## Predicted first (`q354/PREDICTION.txt`)
 
@@ -96,3 +120,14 @@ compared with the original's lobby (Q357). The codec moved each sign's mean by -
 | The training screen's log line | `its ramp (250,0,0) (242,97,0) (248,208,0) (93,241,1)` | as predicted (`run-fix2`, the final build) |
 | Its 80% bar's left end | R over 200, within 45 of the original's (221, 42, 0) | (254, 4, 4); main's (82, 40, 8) (`run-control`) |
 | Each bar's mean r - g | nearer the original's than Q354's | 16.3, 183.2, 60.3, 110.2 (original 9.4, 179.4, 56.4, 104.9) |
+
+## Predicted first (`q357/PREDICTION.txt`)
+
+| | Predicted | Measured |
+|---|---|---|
+| The five boards' log lines (round 2) | `wctorig.py`'s means, red and blue exchanged | as predicted, each exact (`run-fix2`, the final build) |
+| The gate's board, round 1 (the floats alone) | (32.9, 36.4, 41.5), the whole board's ratio | **missed**: (29.8, 30.5, 35.7): a patch moves by its own texels, and the screen adds a constant |
+| Against the original, round 1 | R and G within 10%, B 10 to 25% under | **missed**: B 30% under: the board's exchange, not foreseen |
+| The gate's board, round 2 | (24.7, 30.5, 41.8) within 8% | (24.4, 30.5, 42.4) |
+| Against the original, round 2 | each channel within 15%, B / R over 1.4 | (0.946, 1.125, 1.087), B / R 1.74 (the original's 1.51) |
+| Main's build | no board line, (22.3, 23.8, 29.2) within 5% | as predicted (`run-control`) |

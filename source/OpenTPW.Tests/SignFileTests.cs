@@ -204,6 +204,76 @@ public class SignFileTests
 	}
 
 	/// <summary>
+	/// A board's four floats are the codec's multipliers as they are (Y 6, Cb 10, Cr 2, alpha 6), not the header
+	/// scales a <c>.wct</c> turns into multipliers (which make them 4, 3.5, 1.5 and 7). Lost Kingdom's gate board's
+	/// mean, and its texel at (100, 60), are what the original's codec gives (<c>wctorig.py</c>,
+	/// <c>docs/exe/textures.md</c>, "A sign's artwork"); through the header's formulas the mean is
+	/// (56.0, 44.1, 45.2) and the texel (60, 47, 48).
+	/// </summary>
+	[TestMethod]
+	public void ABoardsFourFloatsAreTheCodecsMultipliersAsTheyAre()
+	{
+		var image = new SignFile( "levels/jungle/features/gates/gates.sgn" ).Image;
+
+		Assert.IsNotNull( image, "Lost Kingdom's gate board" );
+
+		var sums = new double[4];
+		var pixels = SignFile.Size * SignFile.ArtworkHeight;
+
+		for ( int i = 0; i < pixels * 4; ++i )
+			sums[i % 4] += image.Value.Data[i];
+
+		CollectionAssert.AreEqual( new[] { 82.6, 67.5, 64.3, 255.0 }, sums.Select( sum => Math.Round( sum / pixels, 1 ) ).ToArray(),
+			"the board's mean red, green, blue and alpha" );
+		var texel = ((60 * SignFile.Size) + 100) * 4;
+
+		CollectionAssert.AreEqual( new byte[] { 88, 73, 67, 255 }, image.Value.Data[texel..(texel + 4)], "its texel at (100, 60)" );
+
+		// The gate's board is opaque at either alpha multiplier; Lost Kingdom's sign1 is a shade under, 246 at 6
+		// where 7 clamps it to 255.
+		Assert.AreEqual( 246.0, MeanAlpha( new SignFile( "levels/jungle/features/sign1/sign1.sgn" ).Image!.Value.Data ), "sign1's mean alpha" );
+	}
+
+	/// <summary>The mean alpha of a board's first <see cref="SignFile.ArtworkHeight"/> rows, to one place.</summary>
+	private static double MeanAlpha( byte[] data )
+	{
+		var pixels = SignFile.Size * SignFile.ArtworkHeight;
+		var sum = 0.0;
+
+		for ( int i = 3; i < pixels * 4; i += 4 )
+			sum += data[i];
+
+		return Math.Round( sum / pixels, 1 );
+	}
+
+	/// <summary>
+	/// The board holds the artwork with red and blue exchanged, as the original's does: its codec writes blue, green,
+	/// red and its board packs the first of them into a texel's red (<c>docs/exe/textures.md</c>, "A sign's
+	/// artwork"). Lost Kingdom's gate board is then bluish, as the original draws it, where the codec's own order is
+	/// brown; the texel is the one <see cref="ABoardsFourFloatsAreTheCodecsMultipliersAsTheyAre"/> reads.
+	/// </summary>
+	[TestMethod]
+	public void TheBoardHoldsTheArtworkWithRedAndBlueExchanged()
+	{
+		var board = SignTexture.CropBoard( new SignFile( "levels/jungle/features/gates/gates.sgn" ).Image!.Value );
+
+		var sums = new double[4];
+		var pixels = SignFile.Size * SignFile.ArtworkHeight;
+
+		for ( int i = 0; i < board.Length; ++i )
+			sums[i % 4] += board[i];
+
+		CollectionAssert.AreEqual( new[] { 64.3, 67.5, 82.6, 255.0 }, sums.Select( sum => Math.Round( sum / pixels, 1 ) ).ToArray(),
+			"the board's mean red, green, blue and alpha" );
+
+		var texel = ((60 * SignFile.Size) + 100) * 4;
+
+		CollectionAssert.AreEqual( new byte[] { 67, 73, 88, 255 }, board[texel..(texel + 4)], "its texel at (100, 60)" );
+		Assert.AreEqual( 246.0, MeanAlpha( SignTexture.CropBoard( new SignFile( "levels/jungle/features/sign1/sign1.sgn" ).Image!.Value ) ),
+			"sign1's board keeps its alpha" );
+	}
+
+	/// <summary>
 	/// A painted board is either solid art or a deliberate cut-out, and there is nothing in between.
 	///
 	/// <para>
@@ -215,12 +285,12 @@ public class SignFileTests
 	/// what their alpha holds decides whether that is right for them.
 	/// </para>
 	/// <para>
-	/// It is. Fifteen of the twenty-three are solid art carrying 1.6% partly-clear texels
-	/// that never go below alpha 77 - the same figure on every one of them, unrelated artwork
-	/// included, which is the <c>.wct</c> codec's ringing around a hard edge rather than anything
-	/// authored. The other eight reach alpha <b>0</b> across 5% to 43% of the board: they are shaped
-	/// art - the Bumper Cars, Candy Cabin, Cat Coaster, Ferris Wheel and the rest - that without the bit
-	/// draws as an opaque rectangle with the cut-out it was authored with ignored.
+	/// It is. Fifteen of the twenty-three are solid art that never goes below alpha 232: eleven are opaque
+	/// but for 2.3% of texels at 253 or 254, the codec's ringing round a hard edge, and four (the
+	/// <c>sign1</c> boards of three themes and the Jelly's) lie a shade under opaque throughout, as the
+	/// original's codec decodes them with the sign's alpha multiplier of 6. The other eight reach alpha
+	/// <b>0</b>: they are shaped art - the Bumper Cars, Candy Cabin, Cat Coaster, Ferris Wheel and the
+	/// rest - that without the bit draws as an opaque rectangle with the cut-out it was authored with ignored.
 	/// </para>
 	/// <para>
 	/// Only the rows the board is cut from are measured. The image decodes into a 256x256 buffer
@@ -231,10 +301,9 @@ public class SignFileTests
 	[TestMethod]
 	public void APaintedBoardIsEitherSolidOrADeliberateCutOut()
 	{
-		// Solid art rings a couple of per cent of partly-clear texels around its edges and never
-		// reaches alpha 0; shaped art does reach 0, over a far larger share. A board sitting between
-		// the two would be artwork quietly fading out, which nothing in the game does.
-		const double RimFraction = 2.0;
+		// Solid art never goes far below opaque; shaped art reaches alpha 0. A board sitting between the
+		// two would be artwork quietly fading out, which nothing in the game does.
+		const int SolidFloor = 224;
 
 		var between = new List<string>();
 		var solid = 0;
@@ -246,39 +315,27 @@ public class SignFileTests
 				continue;
 
 			var lowest = 255;
-			var partial = 0;
-			var drawn = 0;
 
 			for ( int y = 0; y < SignFile.ArtworkHeight && y < image.Height; ++y )
 			{
 				var row = y * image.Width * 4;
 
 				for ( int x = 0; x < image.Width; ++x )
-				{
-					var alpha = image.Data[row + (x * 4) + 3];
-
-					lowest = Math.Min( lowest, alpha );
-					++drawn;
-
-					if ( alpha < 255 )
-						++partial;
-				}
+					lowest = Math.Min( lowest, image.Data[row + (x * 4) + 3] );
 			}
-
-			var fraction = 100.0 * partial / drawn;
 
 			if ( lowest == 0 )
 				++cutOut;
-			else if ( fraction <= RimFraction )
+			else if ( lowest >= SolidFloor )
 				++solid;
 			else
-				between.Add( $"{Path.GetFileName( path )} min={lowest} under255={fraction:F1}%" );
+				between.Add( $"{Path.GetFileName( path )} min={lowest}" );
 		}
 
 		Assert.AreEqual( 0, between.Count,
 			$"{between.Count} painted boards are neither solid nor a cut-out: {string.Join( " | ", between.Take( 25 ) )}" );
 
-		Assert.AreEqual( 15, solid, "painted boards that are solid but for the codec's rim" );
+		Assert.AreEqual( 15, solid, "painted boards that never go below alpha 224" );
 		Assert.AreEqual( 8, cutOut, "painted boards shaped by a real cut-out" );
 	}
 }

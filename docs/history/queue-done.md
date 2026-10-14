@@ -6836,6 +6836,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   build; `run-control`). The original on the same file: Chris Battson highlighted, the bar 0.617, $ 63, its first
   candidate handed over (slot 0, grade 1, $ 36) standing second. One prediction missed, the opening's two fills,
   recorded in `q356/PREDICTION.txt`. 14 bugs put back, 14 caught (one after the test read the staff costs).
+- [x] **Q357. A sign's artwork: its four floats as they are, red and blue exchanged on its board.** From Q355
+  (`textures.md`, "A sign's artwork"). `FUN_00592730` takes the floats as the multipliers (Y 6, Cb 10, Cr 2, alpha
+  6), and the board packs the codec's blue into red (`FUN_005ecb40`). All 23 boards within 1 of `wctorig.py`; the
+  gate's board (24.4, 30.5, 42.4) in the game against the original's (25.8, 27.1, 39.0) and main's (22.3, 23.8,
+  29.2); Wonder Land's board cream as the Windows screenshot's.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

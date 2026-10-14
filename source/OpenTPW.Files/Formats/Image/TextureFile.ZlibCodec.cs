@@ -26,15 +26,15 @@ public partial class TextureFile
 	static byte[] DecodeZlibCodec( TextureFileData fileData, byte[] color, byte[] alpha, int n )
 	{
 		var position = 0;
-		var luma = Plane( color, ref position, n, ComputeDequantizationScaleY( fileData.YChannelQuantizationScale ) );
-		var cb = Plane( color, ref position, n / 2, ComputeDequantizationScaleCbCr( fileData.CbChannelQuantizationScale ) );
-		var cr = Plane( color, ref position, n / 2, ComputeDequantizationScaleCbCr( fileData.CrChannelQuantizationScale ) );
+		var luma = Plane( color, ref position, n, fileData.YMultiplier );
+		var cb = Plane( color, ref position, n / 2, fileData.CbMultiplier );
+		var cr = Plane( color, ref position, n / 2, fileData.CrMultiplier );
 
 		float[]? opacity = null;
 		if ( fileData.HasAlphaChannel )
 		{
 			var alphaPosition = 0;
-			opacity = Plane( alpha, ref alphaPosition, n, ComputeDequantizationScaleA( fileData.AChannelQuantizationScale ) );
+			opacity = Plane( alpha, ref alphaPosition, n, fileData.AMultiplier );
 		}
 
 		var pixels = new byte[fileData.Width * fileData.Height * 4];
