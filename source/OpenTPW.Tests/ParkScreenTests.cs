@@ -624,6 +624,30 @@ public class ParkScreenTests
 	}
 
 	/// <summary>A park whose windows are this stack, made the current level.</summary>
+	/// <summary>
+	/// <b>The hire screen's list picks the row under the pointer, and its skill bar stands at nought until a row is
+	/// picked</b>: the list's stream flags are <c>0x291</c>, flag <c>0x80</c> among them, and the bar <c>0x2482</c> is
+	/// built at nought (<c>0x0049c335</c>) and set only by message <c>0x401</c>, a pick.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the list picking only on a press; no bar; the bar unknown, or full, as it opens.</remarks>
+	[TestMethod]
+	public void TheHireScreensListPicksTheRowUnderThePointerAndItsSkillBarStandsAtNoughtUntilOne()
+	{
+		var stack = APark();
+		var hire = new UI.ParkHireScreen( stack );
+
+		stack.Open( hire );
+
+		static IEnumerable<UI.UiControl> Under( UI.UiControl control ) => control.Children.Concat( control.Children.SelectMany( Under ) );
+
+		var list = Under( hire.Root ).OfType<UI.UiList>().Single( control => control.Id == 0x248e );
+		var bar = Under( hire.Root ).OfType<UI.ParkObjectWindow.UiStatBar>().Single( control => control.Id == 0x2482 );
+
+		Assert.IsTrue( list.SelectsUnderPointer, "flag 0x80" );
+		Assert.IsTrue( bar.Known, "drawn as it opens" );
+		Assert.AreEqual( 0f, bar.At, "at nought until a row is picked" );
+	}
+
 	private static Level AParkOver( UI.WindowStack stack )
 	{
 		var park = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );

@@ -547,9 +547,8 @@ it (`advisor-park.md`, "Staff nobody has trained"), and a saved park holds it (`
 training budgets").
 
 **Deviations, each said at its site.** The account's Cash in, Other costs and Balance are empty: nothing here
-keeps the analyser's months (`MONTHLY_ACCOUNT_HISTORY`, counted as the screen opens). **The bars are a flat green**
-where the original's show `ridestatbar.wct`, red to green, as far as the value (`UiStatBar`'s own choice, in the
-object window too). The lettering in the panel and the spinners is smaller than the original's at this window
+keeps the analyser's months (`MONTHLY_ACCOUNT_HISTORY`, counted as the screen opens). The bars wear
+`ridestatbar.wct` (Q353, "The stat bars' skin", below), in this game's reading of its colours. The lettering in the panel and the spinners is smaller than the original's at this window
 size (not looked into). The finances and the loans are not built, so those two buttons close the screen and count
 (`FINANCE_SCREEN`; `LOANS_SCREEN` in Full Simulation).
 
@@ -575,6 +574,58 @@ run, then built as above and run again.
 (`q352/mutations.py`); the one line no test reaches is `Level`'s hand-over of the budgets to the writer, which
 `run-fix2`'s file holds. Not run: Full Simulation (the loans button enabled there; the test holds only
 Instant Action's), a budget at 10000 in either game (the test holds the end), the screen in the three other themes.
+
+### The stat bars' skin, `ridestatbar.wct` (Q353)
+
+Every type-9 bar of the park's screens is given the same skin, `FUN_00477ff0( "ridestatbar.wct" )` (`0x00750e00`;
+46 calls: the object window's four, the training screen's five, the hire screen's one and the others' bars), an
+object of vtable `0x006feeb8` holding two quads in a 100 by 100 space, four vertices a block of `0x30` bytes (x, y
+and z four apiece, `FUN_00477c00`). The control hands it its value through the skin's `+0xc` with flag 8
+(`FUN_0066d885`, the value held to 0 to `0x400`); there (`0x00478593`) `v = value x 0.0009765625 x 100`, held to
+0 to 100, and:
+
+| Quad | x | u | v band |
+|---|---|---|---|
+| filled | 0 to v | 0 to v / 100 | 0.5 to 1 |
+| the rest | v to 100 | v / 100 to 1 | 0 to 0.5 |
+
+So each part is CROPPED, never squashed: a short bar shows only the ramp's left end, and only a full one its green
+and its dark right edge; the empty part is drawn too, a bar at nought all track. The texture (`ui.wad`,
+`textures\ridestatbar.wct`, 32 by 32; `stexture\` holds a copy) is, as this game decodes it, a colour ramp in its
+first sixteen rows and a grey track (`3a3a3a`, darker at both edges) in the rest. The original's bar covers the
+control's whole rectangle (rows 118 to 137 where the layout gives 117.5 to 137 at 1024 by 768), and the colour half
+bleeds into the top rows of the track.
+
+**OpenTPW** (`ParkObjectWindow.UiStatBar`, `Parts`; `Units` for the original's 0 to 1024; `ParkHireScreen.SkillUnits`).
+The two parts over the whole rectangle as the table; the training screen hands its bars `(share << 10) / 100`, the
+hire screen `((grade & 0xff) << 10) / 5` as the row under the pointer is picked (its list's flag `0x80`, stream
+flags `0x291`, as the buy screen's); the object window's two built bars their percentage.
+
+**Deviations, each said at its site.** **The colours are not the original's**: its ramp runs red, orange, yellow,
+green ((255, 14, 0) at the second texel, (255, 103, 0) at the fifth, (255, 206, 0) at the ninth, (90, 251, 0) at the
+twenty-fifth), where `TextureFile` decodes the same texels (107, 104, 0), (184, 182, 0), (229, 255, 0), (140, 255, 0):
+the brightness agrees and the red difference is lost. The header's scales are Y 6, Cb 10, Cr 2, shared by ten files
+(`ridestatbar` and `happygrad` in both folders among them); 2,089 of the 8,375 `.wct` files in the wads have Cb and Cr
+unequal, so that alone is not the cause. The original's track is 49 grey where this game draws the texture's 58. The
+hire list's first row is not picked as it fills (above), so the bar stands at nought until the pointer passes a row,
+and keeps that pick through a change of tab where the original's is the new tab's first row.
+
+**Predicted first, both games** (`q353/PREDICTION.txt`; `q353/confirm.py <out> <bin> fix|control`,
+`q353/orig/run.sh`, `q353/measure.py <png> <rect>...` for a bar's coloured share). The file `q353/grades.TPWS` is
+`q351/all0.TPWS` with the five grades 4, 1, 0, 3, 2 written (staff record `+398`). Round 1 missed three of four, all
+mine: the halves swapped (this game's quad puts texture y 0 at the bottom of its rectangle) and a click on a hire row
+that chose the candidate and closed the screen (the list did not pick under the pointer).
+
+| | The original (`orig/a-*.png`) | OpenTPW (`run-fix4`, the final build; `run-fix2` and `run-fix3` the same) |
+|---|---|---|
+| The training screen's bars, grades 4, 1, 0, 3, 2 | coloured 0.811, 0.189, 0, 0.604, 0.406 of each bar, the rest grey | `skill 80,20,0,60,40`; 0.808, 0.202, 0, 0.606, 0.404 (`1-train.png`); `UI: the stat bars' skin ui/textures/ridestatbar.wct is 32x32` |
+| The hire screen opened | the first row picked, the bar 0.617 | no row picked, the bar all grey (`2-hire.png`), `STAFF_SKILL_BAR` gone |
+| The pointer over the first row | the bar unchanged | `Hire screen: candidate 11 grade 3, skill bar 614 of 1024`, 0.606 (`3-picked.png`) |
+| The mechanics' tab | the bar 0.409, the first mechanic's | 0.606 kept (`4-tab.png`) |
+
+The original's list held five handymen (Andy Buchanan, Chris Battson, Jan Svarovsky, Jon Taylor, Paul Carpenter)
+where this game's, on the same file, held two (Chris Battson, Rajan Tande): not looked into. Not run: the object
+window's bars in the original (no route there was driven), a full bar, the other three themes.
 
 ### How allpeeps keeps itself current: rows updated in place, never cleared (Q200)
 
@@ -1535,10 +1586,18 @@ build that puts it there shows the same figure twice, once correctly as `0x2496`
 **The two cost rows are red.** `FUN_0065c5d5( 0xff, 0, 0, 0xff )` is called while `0x248d`/`0x248c` and
 `0x248a`/`0x248b` are the current control, and never for `0x2488`/`0x2489` or `0x2486`/`0x2487`.
 
-**Nothing is selected when the screen opens.** `FUN_0049b5b0` fills the list and commits; it never
-calls the select. The info panel, the skill bar and the portrait are blank until the player picks
-somebody, so a build that opens with a filled panel is wrong. The row id pushed is the candidate's
-SLOT INDEX (0 to 0x1f), which is what `FUN_00507bd0` takes back.
+**The first row is picked when the list is filled (measured, not read).** `FUN_0049b5b0` clears the list
+(`FUN_006649d5`), adds a row a candidate of the tab's kind (`FUN_0066403b`) and repaints (`FUN_00663324`, which
+selects nothing); none of its own calls is the select, yet the original given `q353/grades.TPWS` opened the screen
+with its first row highlighted, the label reading "Skill", the portrait drawn and the skill bar at that
+candidate's grade, the pointer away from the list, and did the same on the mechanics' tab (`q353/orig/a-hire.png`,
+`a-tab.png`). Where in the list that pick is made is not read; this game picks no row until the pointer passes over
+one (`HIRE_LIST_FIRST_ROW_PICKED`). The row id pushed is the candidate's SLOT INDEX (0 to 0x1f), which is what
+`FUN_00507bd0` takes back.
+
+**The skill bar `0x2482`** ((722, 536)-(957, 575), type 9) is built at nought (`0x0049c335`) and written in one place,
+message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<
+10) / 5` of 1024 (`0x0049b8dc`), the grade the candidate record's byte `+8`. A grade 4 fills four fifths.
 
 **The walk is corroborated three ways**: the tab help rows, the resolved mesh names, and each screen's
 own tab-index switch all give the same ordering, and it matches UITEXT 119–122 and 139–143.

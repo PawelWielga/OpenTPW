@@ -58,6 +58,13 @@ internal sealed class ParkHireScreen : UiWindow
 	private readonly UiControl _money;
 	private readonly UiControl _staffCosts;
 	private readonly UiControl _chosen;
+
+	/// <summary>The picked candidate's skill, <c>0x2482</c>, set only as a row is picked (<c>0x401</c>).</summary>
+	private readonly ParkObjectWindow.UiStatBar _skill;
+
+	/// <summary>A grade as the skill bar is handed it, <c>((grade &amp; 0xff) &lt;&lt; 10) / 5</c> of 1024 (<c>0x0049b8dc</c>).</summary>
+	internal static int SkillUnits( int grade ) => ((grade & 0xff) << 10) / 5;
+
 	private readonly UiRadioGroup _tabs;
 
 	private int _kind;
@@ -125,14 +132,21 @@ internal sealed class ParkHireScreen : UiWindow
 			Mesh = UiMesh.Get( "f_staffpic" )
 		} );
 
-		// Who is selected, and their skill. The bar 0x2482 is drawn by the original as
-		// (grade << 10) / 5 into a ridestatbar skin - so even a top-grade candidate fills only four
-		// fifths of it. That is the original's arithmetic, not a bug; the bar itself is not built.
+		// Who is selected, and their skill. The bar 0x2482 is built at nought (0x0049c335) and set only as a
+		// row is picked (message 0x401, 0x0049b8f8), to (grade << 10) / 5 - so even a top-grade candidate fills
+		// only four fifths of it. That is the original's arithmetic, not a bug.
 		var info = Root.Add( new UiControl
 		{
 			Id = 0x2481,
 			Rect = new UiRect( 259, 521, 971, 600 ),
 			Mesh = UiMesh.Get( "f_staffinfo" )
+		} );
+
+		_skill = info.Add( new ParkObjectWindow.UiStatBar
+		{
+			Id = 0x2482,
+			Rect = new UiRect( 722, 536, 957, 575 ),
+			Known = true
 		} );
 
 		_chosen = info.Add( new UiControl
@@ -179,6 +193,10 @@ internal sealed class ParkHireScreen : UiWindow
 			TextColumns = [true, false],
 			Activated = Chose,
 			SelectionChanged = Selected,
+
+			// Flag 0x80 in the stream (0x291): the row under the pointer is the selection, which is what shows a
+			// candidate's grade and skill bar before the click that chooses them.
+			SelectsUnderPointer = true,
 
 			// The screen's handler keeps the list's 0x406 (0x0049b85e).
 			SortChanged = word => _sort = word
@@ -247,13 +265,11 @@ internal sealed class ParkHireScreen : UiWindow
 		_list.Build();
 		Show( openOn ?? _lastKind );
 
-		// Reached every time this screen opens, and not one of them answerable yet: three of the four
-		// mini-balance figures need a monthly history this game does not keep, the portrait needs the
-		// candidate's own actor rendered into its frame, and the skill bar needs the ridestatbar skin
-		// driven by (grade << 10) / 5. Counted rather than left quietly blank.
+		// Reached every time this screen opens, and not answerable yet: three of the four mini-balance
+		// figures need a monthly history this game does not keep, and the portrait needs the candidate's own
+		// actor rendered into its frame. Counted rather than left quietly blank.
 		Unimplemented.Report( "MONTHLY_ACCOUNT_HISTORY" );
 		Unimplemented.Report( "STAFF_PORTRAIT_ACTOR" );
-		Unimplemented.Report( "STAFF_SKILL_BAR" );
 	}
 
 	/// <summary>What the original letters the two outgoing rows in - <c>FUN_0065c5d5( 0xff, 0, 0, 0xff )</c>.</summary>
@@ -303,6 +319,11 @@ internal sealed class ParkHireScreen : UiWindow
 			foreach ( var person in pool.OfKind( _kind ) )
 				_list.Add( new UiList.Row( person.Id, person.Name, person.Wage ) );
 		}
+
+		// The original's fill (FUN_0049b5b0) leaves its first row picked, which shows that candidate's skill bar
+		// as the screen opens and as a tab is changed; where in its list that pick is made is not read. Here no row
+		// is picked until the pointer passes over one, and the bar keeps the last pick.
+		Unimplemented.Report( "HIRE_LIST_FIRST_ROW_PICKED" );
 
 		LogOrder();
 		ShowMoney();
@@ -387,6 +408,8 @@ internal sealed class ParkHireScreen : UiWindow
 				continue;
 
 			_chosen.Text = $"{person.Name}   grade {person.Grade}   {person.Wage} a month";
+			_skill.Units = SkillUnits( person.Grade );
+			Log.Info( $"Hire screen: candidate {person.Id} grade {person.Grade}, skill bar {SkillUnits( person.Grade )} of 1024" );
 			ShowMoney( person.Wage );
 
 			return;

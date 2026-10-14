@@ -44,14 +44,22 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q353. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q354. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q353 (`hud.md`, "The stat bars' skin"): **the `.wct` reader loses the red of `ridestatbar.wct`**: the
+  original's ramp is red, orange, yellow, green ((255, 14, 0) at its second texel), `TextureFile` gives (107, 104,
+  0) at the same brightness; its scales are Y 6, Cb 10, Cr 2, as nine other files' (`happygrad.wct` among them);
+  2,089 of 8,375 have Cb and Cr unequal, so that is not the cause alone. Read the original's decode first. **The
+  hire list's first row is picked as it fills** in the original, on opening and on a tab (`HIRE_LIST_FIRST_ROW_PICKED`;
+  somewhere under `FUN_006649d5`/`FUN_0066403b`, not read), and its label then reads "Skill" where this game's
+  letters the name, grade and wage. **The original's pool showed five handymen** on `q353/grades.TPWS` where this
+  game's showed two (not looked into). The track is 49 grey there and 58 here. In no game run: the object window's
+  bars in the original, a full bar, the other three themes.
   From Q352 (`hud.md`, "The Staff Training Budgets screen"): **the account's Cash in, Other costs and Balance
   are empty** on it and on the hire screen: the analyser's three month rings (`+0x1fc94`, `+0x1f7f4`,
   `+0x1f5a4`) are not kept, read from a file or written (`MONTHLY_ACCOUNT_HISTORY`, `ANALYSER_MONTH_CLOSE`).
-  **The skill bars are a flat green**, the original's `ridestatbar.wct` red to green (the object window's bars
-  too). The screen's lettering is smaller than the original's at this window size (not looked into). The
+  The skill bars wear `ridestatbar.wct` (Q353). The screen's lettering is smaller than the original's at this window size (not looked into). The
   finances and loans screens its buttons go to are not built. What reads `mHaveEverTrained` was not looked for.
   No file of the original's own with a budget was made (its memory was read). **This game's month does not
   turn on the file's calendar** (Q241j: 715 ticks after a load, where the original's turned on 1383). In no

@@ -153,7 +153,7 @@ internal sealed class ParkStaffCostsScreen : UiWindow
 				Rect = new UiRect( 1376, 235 + down, 1592, 274 + down ),
 				HelpText = row.BarHelp,
 				Known = true,
-				At = (people?.TrainingOf( kind ).GradeShare ?? 0) / 100f
+				Units = ((people?.TrainingOf( kind ).GradeShare ?? 0) << 10) / 100
 			} );
 
 			// The spinner's op 0xf and op 0xe children, minus on the left and plus on the right.

@@ -6790,6 +6790,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   tick 1383. Two predictions missed, both mine (this game's month is not on the file's calendar; the Staff costs
   row is not empty at the opening, which the original's run showed and the build then took). Fifty bugs put
   back, fifty caught.
+- [x] **Q353. The park screens' skill bars wear the original's `ridestatbar.wct`, and the hire screen's bar is
+  built.** Done 2026-10-13, split from the catch-all by the session (`hud.md`, "The stat bars' skin"). Every
+  type-9 bar is `FUN_00477ff0`'s skin: two quads over the whole rectangle, the filled part showing the texture's
+  colour half from its left edge to the value and the rest its grey half from the value on, each cropped
+  (`0x00478593`); the hire screen's `0x2482` is `((grade & 0xff) << 10) / 5`, set by message `0x401` alone, and its
+  list picks the row under the pointer (flag `0x80`). `STAFF_SKILL_BAR` is gone; `HIRE_LIST_FIRST_ROW_PICKED`
+  counts the original's pick as the list fills. **The number:** with `q353/grades.TPWS` (grades 4, 1, 0, 3, 2) the
+  training screen logged `skill 80,20,0,60,40` and its bars were coloured 0.808, 0.202, 0, 0.606, 0.404 of their
+  width, the rest grey (`run-fix4`, the final build); the hire bar grey, then `candidate 11 grade 3, skill bar 614 of 1024` and
+  0.606 under the pointer. The original's bars read 0.811, 0.189, 0, 0.604, 0.406 (`q353/orig/a-train.png`). Five
+  of nine predictions missed, all recorded in `q353/PREDICTION.txt`: three mine in round 1 (the halves swapped, a
+  click that chose), and in the original its colours (red to green, where this game's reader decodes olive to
+  green) and its first row picked as the list fills. Twenty-one bugs put back, twenty-one caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

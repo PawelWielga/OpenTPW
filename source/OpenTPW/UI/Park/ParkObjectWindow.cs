@@ -701,18 +701,38 @@ internal sealed class ParkObjectWindow : UiWindow
 	/// entry as a plain number, each to its own painter (<c>0x004adf28</c>, <c>0x004ae0da</c>); only Age is given a
 	/// string.
 	/// <para>
-	/// <b>The colour is chosen, not measured.</b> The original's gauge skin is not something this
-	/// project has read; what IS read is the proportion. So the fill is one flat colour rather than a
-	/// green-to-red scheme that would state a judgement about the value the game never makes here.
+	/// <b>Every one of these bars wears <c>ridestatbar.wct</c></b> (<c>FUN_00477ff0</c>, the skin object
+	/// <c>0x006feeb8</c>): the object window's four, the Staff Training Budgets screen's five and the hire
+	/// screen's one. The skin is two quads over the control's whole rectangle: the filled part, left of the
+	/// value, shows the texture's colour ramp from its left edge to the value, and the rest shows its grey track
+	/// from the value to its right edge. Each part is cropped, never squashed, so a short bar shows only the
+	/// ramp's left end and only a full one its green and its dark right edge (<c>0x00478593</c>:
+	/// <c>v = value / 1024 x 100</c>, held to 0 to 100, u = v / 100).
+	/// </para>
+	/// <para>
+	/// <b>The colours are this game's reading of the file, and they are not the original's</b>: its ramp runs red,
+	/// orange, yellow, green ((255, 14, 0) at the second texel), where <c>TextureFile</c> decodes the same texels as
+	/// olive to yellow ((107, 104, 0)) at the same brightness. The fault is the reader's, not this bar's.
 	/// </para>
 	/// </remarks>
 	internal sealed class UiStatBar : UiControl
 	{
-		private static Texture? _track;
-		private static Texture? _fill;
+		/// <summary>The skin <c>FUN_00477ff0</c> is handed by every caller (<c>0x00750e00</c>), 32 x 32 in <c>ui.wad</c>.</summary>
+		private const string Skin = "ui/textures/ridestatbar.wct";
+
+		private static Texture? _skin;
 
 		/// <summary>How much of the row is filled, 0 to 1.</summary>
 		internal float At { get; set; }
+
+		/// <summary>
+		/// The value in the original's own units, 0 to 1024, held there as the control's setter holds it
+		/// (<c>FUN_0066d885</c>): what the training and hire screens hand their bars.
+		/// </summary>
+		internal int Units
+		{
+			set => At = Math.Clamp( value, 0, 0x400 ) / 1024f;
+		}
 
 		/// <summary>Whether a value was set at all - an unfilled bar and a zero one are different things.</summary>
 		internal bool Known { get; set; }
@@ -724,30 +744,41 @@ internal sealed class ParkObjectWindow : UiWindow
 			if ( !Known )
 				return;
 
-			_track ??= new Texture( [0x18, 0x20, 0x18, 0xFF], 1, 1 );
-			_fill ??= new Texture( [0x30, 0xC0, 0x40, 0xFF], 1, 1 );
+			if ( _skin == null )
+			{
+				_skin = new Texture( Skin );
+				Log.Info( $"UI: the stat bars' skin {Skin} is {_skin.Width}x{_skin.Height}" );
+			}
 
-			var box = Pixels;
-
-			// Inset so the gauge reads as a bar sitting in the row rather than as a filled cell.
-			var inset = box.Height * 0.25f;
-			var y = box.Y + inset;
-			var height = box.Height - (inset * 2f);
-			var filled = box.Width * Math.Clamp( At, 0f, 1f );
-
-			Paint( _track, box.X, y, box.Width, height );
-			Paint( _fill, box.X, y, filled, height );
+			foreach ( var (where, uvs) in Parts( Pixels, At ) )
+				Paint( where, uvs );
 		}
 
-		private static void Paint( Texture texture, float x, float y, float width, float height )
+		/// <summary>
+		/// The skin's two quads over a box (top-left origin): the filled part and the rest, each with the part of the
+		/// texture it shows. As this game samples the skin, texture y 0.5 to 1 is the colours and 0 to 0.5 the grey.
+		/// </summary>
+		internal static (Rectangle Where, Rectangle Uvs)[] Parts( PixelRect box, float at )
 		{
-			if ( width <= 0f || height <= 0f )
+			var filled = Math.Clamp( at, 0f, 1f );
+			var split = box.Width * filled;
+
+			return
+			[
+				(new Rectangle( box.X, box.Y, split, box.Height ), new Rectangle( 0f, 0.5f, filled, 0.5f )),
+				(new Rectangle( box.X + split, box.Y, box.Width - split, box.Height ), new Rectangle( filled, 0f, 1f - filled, 0.5f ))
+			];
+		}
+
+		private static void Paint( Rectangle where, Rectangle uvs )
+		{
+			if ( where.Width <= 0f || where.Height <= 0f )
 				return;
 
-			Material.UI.Set( "Color", texture );
+			Material.UI.Set( "Color", _skin! );
 
 			using ( _ = new Graphics.Scope( Screen.Size ) )
-				Graphics.Quad( new Rectangle( x, Screen.Height - y - height, width, height ), Material.UI );
+				Graphics.Quad( new Rectangle( where.X, Screen.Height - where.Y - where.Height, where.Width, where.Height ), uvs, Material.UI );
 		}
 	}
 

@@ -29,6 +29,8 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/parkrun-smoke.py <out> <bin> [off]` | The scaffold's own check: enters Lost Kingdom, saves under pause, loads the file back from the Load Park list and compares the three ticks; `off` runs it on the private display |
 | `lib/uistream.py <VA>` | A compiled UI layout stream of `testme.exe` on disk walked to its balanced close (`hud.md`, "The opcodes"): every control's type, flags, id and rect, its mesh hash, text rect, help row and outline, indented by its parent, each close printed. It does not read ops 9 and 10 (a list's scrollbar): a stream with a list stops there |
 | `meshhash.py <hash> ...` | A layout stream's mesh hashes turned back into the `ui.wad` model to load, by file stem or by a model's first node name (`w_park` is the node `window3`) |
+| `lib/wctpng.py <wad> <member> <out.png>` | One `.wct` texture out of a wad as this game's reader decodes it (`wct2raw`), a PNG and an 8x copy, with its header's version, size and Y/Cb/Cr/A scales; the member matched by the end of its path (`'textures\\ridestatbar.wct'`). The colours are the reader's, not proven the original's (Q353) |
+| `lib/barshare.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar measured in a frame of either game, by its layout rectangle: the share of its middle row in colour, the share grey, the colour's mean r - g, the last coloured pixel, the grey's mean, and the pixel an eighth of the way |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
 | `original/loadfile.sh load <file> <outdir> <tag>` / `stop` | A park file loaded in the original from its Load Park list, off-screen, with frames; `POLL=` starts a memory reader just before the click. It starts the original only when it is not running, so a second file is 35 s where the first is 123 s |
@@ -646,6 +648,14 @@ GH=766` there, or the pointer is off):
   whose projects `thingwords.py %PID% SECS 6:0x145c:I:projects 6:0xbc:f:done8` reads (project n's `mCost` is at
   `0x18 + 20 n`, its `mResearchDone` four on) and `parkfile.thing_set( src, dst, 6, 16 + 16 * n + 12, '<f', cost
   )` finishes in a file.
+- **The skill bars and the hire screen's, in both games, at chosen grades** (Q353): write the five stock staff's
+  grades into a file (`parkfile.thing_set( src, dst, thing, 398, '<i', grade )` for things 25, 26, 27, 28, 30;
+  `q353/grades.TPWS` is 4, 1, 0, 3, 2). In the original after `loadfile.sh` (1024 x 768 points): the Money button
+  (107, 645), the entry-price screen's staff-costs button (810, 177): the training screen; the Buy button (113,
+  590), the buy screen's b_allstaff (958, 317): the hire screen; the hire list's first row (693, 231), with no
+  press, picks it; the mechanics' tab (667, 123) (`q353/orig/run.sh`). In this game the same through
+  `q353/confirm.py`, the control's place by the console's `control 26`; a click on a hire row CHOOSES the
+  candidate and closes the screen, so hover. `lib/barshare.py` measures each bar.
 
 ## The original under Proton
 
