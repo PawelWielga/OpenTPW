@@ -3213,7 +3213,7 @@ thing 1 read 75 at `+0x10` and 1 at `+0x20` from the first read, as the park was
 from the list (runs b, c); its screen showed "$ 75" in the mechanics' row (`orig/c-screen.png`); and on tick 1383,
 the month's change, the mechanic's `mPercentageThroughGrade` (thing 26's `+0x1e8`) went 0 to 15, 75 over 5 a
 point (run b). This game given its own file read `budgets 0,75,0,0,0 evertrained 1` and trained the same 15 at
-its own month's change (`q352/run-month1`).
+its own month's change (`q352/run-month2`).
 
 Not written: the strike records (the file's), and nothing else of thing 1. Not run: a park made with no file
 saved (`SAVE_PARK_WITH_NO_FILE`), a file with all five budgets set.
