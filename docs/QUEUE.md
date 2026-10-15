@@ -44,12 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q378. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q379. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q377 (`hud.md`, "The rows' font and height"): the rows are the factories'. The hire and buy lists' own factories
-  are not read (both still 44 here). The reference original draws at 640 x 480, so its rows were compared only there;
-  in no game run: this game at another font set than 2, the original at 1024 x 768, Full Simulation (not asked: the
+  From Q378 (`hud.md`, "The rows' font and height"): the hire and buy rows are the factories'. Seen beside the
+  original's and filed already: the "$ " before a price and a wage and the empty box of a row with no state (Q158's
+  "From Q238", "From Q130e"), the buy list's first row picked (Q232). In no game run: a hire or buy tab past its visible rows, this game at
+  another font set than 2, Full Simulation (not asked: the screens are either mode's), the other three themes.
+  From Q377 (`hud.md`, "The rows' font and height"): the rows are the factories'; the hire and buy lists' are Q378's.
+  The original stands at 800 x 600 since, where its rows are this game's 39; in no game run: this game at another font set than 2, the original at 1024 x 768, Full Simulation (not asked: the
   screens are either mode's), the other three themes.
   From Q376 (`hud.md`, "The pointer over a list"): every list follows the pointer. In no game run: the original's
   all-staff list with two members of a kind, a row bought, sold, come or gone under a pointer at rest (no move, no

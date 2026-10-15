@@ -6959,6 +6959,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Proton held 56, 41 and 41 at 640 x 480 (`q377/orig/a`); this game at 1280 x 720 logged 56, 39 and 39, its lettering
   55.45 and 38.4 units apart and 1.17 to 1.25 times main's in height (`q377/run-fix1`, 5 of 5; control 3 of 3).
   Mutations 11 of 11.
+- [x] **Q378. The hire and buy rows are lettered in font 7 at their factories' heights, as the original's** (a piece of
+  the old Q378, split by Claude; the rest is Q379). The hire factory `FUN_0049bbb0` and the buy factory `FUN_004ad240`
+  keep font 7's height x `0x600` over the screen's, plus 6, at `[0x007ca314]` and `[0x007cc200]`; their stylers letter in
+  font 7. The original under Proton held 39 and 39 at its 800 x 600 (`q378/orig/a`), its wages and prices 38 and 39
+  units apart; this game at 1280 x 720 logged 39 and 39 in font 7, 12 and 11 visible, its lettering 38.4 units apart
+  and 1.11 times main's in height (`q378/run-fix1`, 4 of 4; control 3 of 3 after a miss of my measure).
+  Mutations 8 of 8.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

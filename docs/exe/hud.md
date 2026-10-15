@@ -1994,15 +1994,18 @@ build (`run-control1`) drew no picture and counted `VISITOR_COLUMN_117_UNNAMED` 
 
 #### The rows' font and height
 
-Read 2026-10-15 (Q377). **The three lists' rows are lettered in font slot 7**, and their height is the row factory's:
+Read 2026-10-15 (Q377; the hire and buy lists Q378). **The five lists' rows are lettered in font slot 7**, and their height is
+the row factory's:
 
 | List | Factory | Height | Kept at | Styler, every cell in |
 |---|---|---|---|---|
 | visitors | `FUN_004938c0` | `0x38`, 56: font `[0x007508b4]` is measured and its answer thrown away (`0x004938fa` writes 56 whatever it was) | `[0x007ca140]` | `FUN_004939d0`, font `[0x007508b4]` |
 | all staff | `0x00496c10` (no function) | font `[0x00751184]`'s height x `0x600` / `[0x00faa5c0]` + 6 | `[0x007ca170]` | `FUN_00496d20`, font `[0x00751184]` |
 | all items | `FUN_004944d0` | font `[0x00750d54]`'s height x `0x600` / `[0x00faa5c0]` + 6 | `[0x007ca158]` | `FUN_00494690`, font `[0x00750d54]` |
+| hire | `FUN_0049bbb0` (the opener hands `0x0049c870`, a jump to it) | font `[0x007523dc]`'s height x `0x600` / `[0x00faa5c0]` + 6 | `[0x007ca314]` | `FUN_0049c880`, font `[0x007523dc]` |
+| buy | `FUN_004ad240` | font `[0x00755134]`'s height x `0x600` / `[0x00faa5c0]` + 6 | `[0x007cc200]` | `FUN_004ad340`, font `[0x00755134]` (the third cell a tick-box mesh) |
 
-The three font words are 7 (the heading's word beside each is 8, Q370), and the rule is the park-file screens' own
+The five font words are 7 and only read (the heading's word beside each is 8, Q370), and the rule is the park-file screens' own
 (`FUN_0049f0b0`, `saves.md`). The list takes the height as handed (`FUN_00663718`: `+0x170`) and fits
 `(bottom - top) / height` rows (`+0x172`, again in `FUN_00664ba8`), as `UiList.VisibleRows`. `[0x00faa5c0]` is the
 screen's height and `[0x0078b534]` the font set (`FUN_00485a70`: `0x0078b54c + (slot + set x 13) x 0x18`).
@@ -2014,6 +2017,9 @@ screen's height and `[0x0078b534]` the font set (`FUN_00485a70`: `0x0078b54c + (
 items rows 20.4 to 20.6 (41 units). At its own 800 x 600 and 1024 x 768 (`Data/Resolution.sam`, `q377/orig/c` and `b`): `[0x00faa5c0]` 600 and
 768, sets 2 and 3, and the staff, items and Load Park heights 39 and 34 (GAME9.bf4, 13; GAME10.bf4, 14), the visitors'
 56 in both; the rows 56 units apart in both frames.
+At 800 x 600 with `q353/grades.TPWS` (Q378, `q378/orig/a`): `[0x007cc200]` and `[0x007ca314]` 0 after the load, 39 once
+the gadget's Buy and then `b_allstaff` built each screen; the frames' wages and prices 38 and 39 units apart
+(`listcells.ink` on the number column: a name's descender moves a band's middle).
 
 **OpenTPW** (Q377): `UiList.RowHeightFor` and `RowHeightOf( font )`, the font of the current set; the staff and items
 lists `RowFont` 7 at `RowHeightOf( 7 )`, the visitors `RowFont` 7 at `0x38`. At this game's 1280 x 720 window (set 2,
@@ -2025,6 +2031,11 @@ visible` and the 6- and 2-column shapes the same; the frames' lettering 55.45 un
 in the four handymen's and the eight misc rows (`listcells.ink`), 1.17 to 1.25 times main's lettering in height; the
 pointer at a slot's middle by the new height picked slot 2 in all three. Main's build (`run-control1`) lettered thirteen
 visitors rows 44.8 apart, all in font 6.
+The hire and buy lists the same (Q378): `RowFont` 7 at `RowHeightOf( 7 )`, logged `Hire list: rows of 39 units in font 7,
+12 visible` and `Buy list: rows of 39 units in font 7, 11 visible` on the stock park (`q378/run-fix1`, the final game
+binary); the three candidates' wages and the four rides' prices 38.4 units apart, 1.11 times main's lettering in height,
+and the pointer at slot 2's middle by 39 picked candidate 8 and ride 1101. Main's build (`run-control2`): 44.8 apart.
+No list takes `UiList`'s default of 44 now.
 
 #### The list headings' frames
 

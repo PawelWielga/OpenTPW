@@ -83,6 +83,9 @@ internal sealed class ParkHireScreen : UiWindow
 	/// <summary>The headings' font slot and colour, as the opener hands them to <c>FUN_00486660</c> (<c>[0x007523e0]</c>).</summary>
 	private const int HeadingFont = 8;
 
+	/// <summary>The rows' font slot, the row factory's and the styler's (<c>[0x007523dc]</c>).</summary>
+	private const int RowFont = 7;
+
 	private static readonly UiColour HeadingColour = new( 255, 239, 0 );
 
 	/// <summary>The tab the screen shows, 0 the cleaners' to 4 the scientists' ([0x007ca30c]).</summary>
@@ -196,6 +199,11 @@ internal sealed class ParkHireScreen : UiWindow
 			// TWO columns - name and wage. See the class remarks. The name is text and the wage a number (0x0049c0cf).
 			Columns = [(1043, 1456), (1477, 1724)],
 			TextColumns = [true, false],
+
+			// The row factory FUN_0049bbb0 measures its rows from font 7 ([0x007523dc], kept at [0x007ca314]), and the
+			// styler FUN_0049c880 letters each cell in it.
+			RowFont = RowFont,
+			RowHeight = UiList.RowHeightOf( RowFont ),
 			Activated = Chose,
 			SelectionChanged = Selected,
 
@@ -212,6 +220,7 @@ internal sealed class ParkHireScreen : UiWindow
 
 		// Handed over while the list is still empty, so it sorts nothing (0x0049c0f0).
 		_list.SetSort( _sort );
+		Log.Info( $"Hire list: {_list.RowsCensus()}" );
 
 		// UITEXT 144 and 145, "Candidate Name" and "Monthly Wage"; the rects are the stream's.
 		_list.AddHeading( 0, new UiRect( 1039, 331, 1460, 436 ), Localization.Text( 144 ), "!cbut", HeadingFont, HeadingColour, 159 )

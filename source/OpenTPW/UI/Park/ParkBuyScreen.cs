@@ -96,6 +96,9 @@ internal sealed class ParkBuyScreen : UiWindow
 	/// <summary>The headings' font slot and colour, as the opener hands them to <c>FUN_00486660</c> (<c>[0x00755138]</c>).</summary>
 	private const int HeadingFont = 8;
 
+	/// <summary>The rows' font slot, the row factory's and the styler's (<c>[0x00755134]</c>).</summary>
+	private const int RowFont = 7;
+
 	private static readonly UiColour HeadingColour = new( 255, 239, 0 );
 
 	private ParkState? _parkGiven;
@@ -198,6 +201,11 @@ internal sealed class ParkBuyScreen : UiWindow
 			// The name is text; the price and the state are numbers (0x004ad033).
 			TextColumns = [true, false, false],
 			StateMesh = "i_boxtick",
+
+			// The row factory FUN_004ad240 measures its rows from font 7 ([0x00755134], kept at [0x007cc200]), and the
+			// styler FUN_004ad340 letters each cell in it.
+			RowFont = RowFont,
+			RowHeight = UiList.RowHeightOf( RowFont ),
 			SelectsUnderPointer = true,
 			Activated = Chose,
 			SelectionChanged = RowSelected,
@@ -208,6 +216,7 @@ internal sealed class ParkBuyScreen : UiWindow
 
 		// Handed over while the list is still empty, so it sorts nothing (0x004ad057).
 		_list.SetSort( _sort );
+		Log.Info( $"Buy list: {_list.RowsCensus()}" );
 
 		// UITEXT 123, 124 and 138; the rects are the stream's.
 		(int Text, int Help, UiRect Rect)[] headings =

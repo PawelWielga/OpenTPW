@@ -605,9 +605,9 @@ public class ParkListScreenRewriteTests
 	}
 
 	/// <summary>
-	/// <b>The visitors, all-staff and all-items rows are lettered in font 7</b>, the visitors' 0x38 tall
-	/// (<c>FUN_004938c0</c>) and the others' as tall as their factories measure font 7 (<c>0x00496c10</c>,
-	/// <c>FUN_004944d0</c>; <c>docs/exe/hud.md</c>, "The rows' font and height").
+	/// <b>The visitors, hire, buy, all-staff and all-items rows are lettered in font 7</b>, the visitors' 0x38 tall
+	/// (<c>FUN_004938c0</c>) and the others' as tall as their factories measure font 7 (<c>FUN_0049bbb0</c>,
+	/// <c>FUN_004ad240</c>, <c>0x00496c10</c>, <c>FUN_004944d0</c>; <c>docs/exe/hud.md</c>, "The rows' font and height").
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> any list left at font 6 or at 44; the visitors measured as the others; the others fixed at 0x38.
@@ -623,8 +623,13 @@ public class ParkListScreenRewriteTests
 		var visitors = Field<UiList>( new ParkVisitorsScreen( stack ), "_list" );
 		var staff = Field<UiList>( new ParkStaffScreen( stack ), "_list" );
 		var items = Field<Dictionary<int, UiList>>( new ParkItemsScreen( stack ), "_lists" );
+		var hire = Field<UiList>( new ParkHireScreen( stack ), "_list" );
+		var buy = Field<UiList>( new ParkBuyScreen( stack ), "_list" );
 
-		foreach ( var (list, height, name) in new[] { (visitors, 0x38, "visitors"), (staff, measured, "staff") }
+		foreach ( var (list, height, name) in new[]
+			{
+				(visitors, 0x38, "visitors"), (staff, measured, "staff"), (hire, measured, "hire"), (buy, measured, "buy")
+			}
 			.Concat( items.Select( each => (each.Value, measured, $"items {each.Key}") ) ) )
 		{
 			Assert.AreEqual( (7, height), (list.RowFont, list.RowHeight), name );

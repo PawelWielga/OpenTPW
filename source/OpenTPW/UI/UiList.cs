@@ -91,9 +91,9 @@ internal sealed class UiList : UiControl
 	internal (int Left, int Right)[] Columns { get; init; } = [];
 
 	/// <summary>
-	/// How tall a row is, in virtual units. The park-file, all-staff and all-items screens give the height their
-	/// row factory measures from the font (<see cref="RowHeightOf"/>), the visitors screen its factory's fixed 56.
-	/// <b>The default of 44 is a choice, and marked as one</b>: every other screen takes it, with no row measured.
+	/// How tall a row is, in virtual units. The park-file, hire, buy, all-staff and all-items screens give the height
+	/// their row factory measures from the font (<see cref="RowHeightOf"/>), the visitors screen its factory's fixed 56.
+	/// <b>The default of 44 is a choice, and marked as one</b>: no screen takes it, and no row of the original's measures it.
 	/// </summary>
 	internal int RowHeight { get; init; } = 44;
 
