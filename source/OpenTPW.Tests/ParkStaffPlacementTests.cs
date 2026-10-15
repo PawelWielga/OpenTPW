@@ -201,6 +201,75 @@ public class ParkStaffPlacementTests
 	}
 
 	/// <summary>
+	/// <b>A hire patrols the whole map</b>: the staff constructor <c>FUN_00504b90</c> writes cells 1 and <c>0x4000</c>
+	/// at <c>+0x20a</c> and <c>+0x20c</c> (<c>docs/exe/hud.md</c>, "The all-staff status words"), which unpack to
+	/// (0,0) and (127,127). So a walking hire letters Idle, by the area's own test and not by having none.
+	/// </summary>
+	[TestMethod]
+	public void AHirePatrolsTheWholeMapAsTheConstructorWritesIt()
+	{
+		var (people, _) = Park();
+		var candidate = new ParkStaffPool.Candidate( Id: 999, Kind: 3, Name: "Test", Grade: 0, Costume: 0, Wage: 1 );
+
+		Assert.AreNotEqual( 0, people.Hire( candidate, OnMapX, OnMapY ) );
+
+		var hired = people.Staff[0];
+
+		Assert.AreEqual( (1, 0x4000), (hired.PatrolBottomLeft, hired.PatrolTopRight), "the constructor's two words" );
+		Assert.AreEqual( ((0, 0), (127, 127)), (hired.PatrolFrom, hired.PatrolTo) );
+		Assert.IsTrue( hired.HasPatrolArea && hired.PatrolsWholeMap );
+		Assert.AreEqual( StaffActivity.Walking, hired.Activity, "755's low two bits are 3: the guard walks" );
+		Assert.AreEqual( 0, hired.StatusRow, "a walk over the whole map letters Idle" );
+	}
+
+	/// <summary>
+	/// <b>A hire at a dead end takes the patrol roll</b> (<c>docs/exe/ride-operation.md</c>, "SetRandomDest": the
+	/// linked walk's dead end is <c>FUN_00506f30</c> for staff, <c>0x004f9d8e</c>), over the whole map. The Belly
+	/// Bounce's queue tail cut as <see cref="ParkStrandedTests"/> cuts it leaves (49,22) one link, the one its own
+	/// direction strikes out, and a guard hired there on tick 755 walks. The draws are all 4: the roll's thirty tries
+	/// are each (4,4), grass, so none is a path or aimed at, the guard thinks <c>0x16</c> and stands. With no area the
+	/// roll answers at once and nothing is thought.
+	/// </summary>
+	[TestMethod]
+	public void AHireAtADeadEndTakesThePatrolRollOverTheWholeMap()
+	{
+		using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		var state = new ParkState( world );
+
+		state.SetRecord( 48, 22, state.Record( 48, 22 ) with { Type = CellEdge.Nothing, Neighbours = 0 } );
+		state.SetRecord( 49, 22, state.Record( 49, 22 ) with { Neighbours = 0x04 } );
+		Assert.AreNotEqual( CellEdge.Path, state.Record( 4, 4 ).Type, "every try's cell is not a path" );
+
+		var draws = new CountedDraw( 4 );
+		var people = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), null, state, staffRandom: draws );
+		var candidate = new ParkStaffPool.Candidate( Id: 999, Kind: 3, Name: "Test", Grade: 0, Costume: 0, Wage: 1 );
+
+		Assert.AreNotEqual( 0, people.Hire( candidate, 49, 22 ) );
+
+		var hired = people.Staff[0];
+
+		Assert.AreEqual( 0x16, hired.Thoughts.Last, "thirty tries found no path cell (0x0050701f)" );
+		Assert.AreEqual( StaffActivity.Idle, hired.Activity, "and the guard stands" );
+		Assert.IsTrue( draws.Asked >= 2 * 30, $"x and y of thirty tries, {draws.Asked} draws" );
+		Assert.AreEqual( (PeepNavigator.WaypointCentre( 49 ), PeepNavigator.WaypointCentre( 22 )),
+			(hired.Navigator.Target.X, hired.Navigator.Target.Y), "a try off the paths is not aimed at" );
+	}
+
+	/// <summary>Answers one value and counts how often it was asked.</summary>
+	private sealed class CountedDraw( int value ) : System.Random
+	{
+		public int Asked { get; private set; }
+
+		public override int Next()
+		{
+			++Asked;
+
+			return value;
+		}
+	}
+
+	/// <summary>
 	/// <b>A drop the park refuses keeps the candidate on the cursor and in the pool</b>, as the original's
 	/// place-staff click leaves its mode installed, and the next click that lands hires the same person.
 	/// </summary>

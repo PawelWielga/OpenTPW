@@ -2816,7 +2816,8 @@ rest's end and the hire. Read again in the listing first, and all of it as writt
 **Every kind's constructor ends in its decide**, not the guard's and the researcher's alone: the mechanic's
 `FUN_004d9eb0` at `0x004d9fc4` (after its own `SetState( 0 )`), the handyman's `FUN_004d6b60` at `0x004d6c73`, the
 entertainer's `FUN_004d4340` at `0x004d4430`. **The staff constructor `FUN_00504b90` sets rest and happiness to 100,
-`+0xc2` to 0 and `+0xc0` to 60 below grade 3 and 100 from it**; the entertainer's writes 60 again (`0x004d43fa`); the
+`+0xc2` to 0 and `+0xc0` to 60 below grade 3 and 100 from it, the rest area `+0x208` to 0 and the patrol corners
+`+0x20a` and `+0x20c` to 1 and `0x4000`, the whole map**; the entertainer's writes 60 again (`0x004d43fa`); the
 person base under it leaves `+0xc8` at 0.0. So a hire's base is 140 before their first sweep and their speed eases up
 from nought. **"Too tired to work" is asked in four kinds' decides**: the mechanic's, the handyman's and the entertainer's
 decides before their searches (`0x004da5c7`, `0x004d7113`, `0x004d46e0`: the entertainer's draw mod 3 is skipped
@@ -2824,7 +2825,9 @@ with the look, and the handyman's `+0x21a` is not written), and the researcher's
 (`0x00502bca`, `0x00502afd`, `0x00502cad`, `0x005026f6`), where it leaves the state as it was. The guard's decide has none; a guard is asked only as a chase starts (`FUN_004d6260`, `0x004d6264`), where one too tired logs "Too tired to chase kids" and is not sent.
 
 In OpenTPW: `StaffBehaviour.TiredOrCarryingOn` (`FUN_00506a40` past the strike), `TooTiredToWork`, `Rest`'s decide,
-`Hired`; `Staff.Pace` on `Peep.Ease`, the park's sweep calling it before the stamp; the shared setter's hurry. The
+`Hired`, a hire patrolling the whole map (Q380), so a linked walk's dead end takes the patrol roll for them, which logs
+`Staff: N patrol roll to (x,y) on try T` or thinks `0x16`; `Staff.Pace` on `Peep.Ease`, the park's sweep calling it
+before the stamp; the shared setter's hurry. The
 `staff` census prints `base`, `purpose`, `adjustor`, `pace`, `speed` and `restExact`, and the console's `staffrest
 <thing> <0-100>` sets a member's rest.
 

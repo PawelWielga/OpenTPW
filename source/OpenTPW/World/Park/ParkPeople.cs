@@ -711,12 +711,13 @@ public sealed partial class ParkPeople : Entity
 			PathCount: 0, PathTotalCount: 0, PathBufferCount: 0,
 			BufferedDistance: 0, TailDistance: 0, TotalDistance: 0, StuckBits: 0 );
 
-		// Idle, with no patrol area - nought and nought is the whole map, which is what a staff member
-		// hired without one keeps. Their training starts at the grade they were hired at.
+		// Idle, patrolling the whole map as the constructor leaves them (FUN_00504b90). Their training starts at
+		// the grade they were hired at.
 		var state = new ParkWorld.StaffState(
 			State: (int)StaffActivity.Idle, PayGrade: candidate.Grade,
 			Happiness: 100f, Tiredness: 100f, JobsDone: 0,
-			PatrolBottomLeft: 0, PatrolTopRight: 0, RestArea: 0,
+			PatrolBottomLeft: global::OpenTPW.Staff.WholeMapBottomLeft,
+			PatrolTopRight: global::OpenTPW.Staff.WholeMapTopRight, RestArea: 0,
 			PercentageThroughGrade: 0, TimeStartedIdling: 0, Name: candidate.Name,
 			TimeHired: ParkWorld.StaffState.FileTimeOf( State.CalendarNow ) );
 

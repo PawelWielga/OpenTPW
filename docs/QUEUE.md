@@ -44,13 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q380. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q381. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q379 (`hud.md`, "The all-staff status words"): **a member hired here carries no patrol area, nought and nought,
-  where the original's constructor `FUN_00504b90` writes cells 1 to `0x4000`**: the status takes it as the whole map (a
-  deviation said at `Staff.PatrolsWholeMap`), and a file written here holds the nought the original's `FUN_00506ed0`
-  puts outside every cell. A member of state 2 or 3 with no rest area faults the original (`FUN_00505fe0`,
+  From Q380 (`hud.md`, "The all-staff status words"; `saves.md`, "What a made record leaves at nought"): a hire carries
+  the whole map. A record with no area, nought and nought (a test's, or a file this game wrote before Q380), is still
+  taken as the whole map here where the original's `FUN_00506ed0` puts it outside every cell (a deviation said at
+  `Staff.Patrols` and `PatrolsWholeMap`). In no game run: a patrol roll that routes from a dead end (no stock cell
+  found), a hire in Full Simulation (not asked: the hire is either mode's), the other three themes.
+  From Q379 (`hud.md`, "The all-staff status words"): the hire's patrol area is Q380's. A member of state 2 or 3 with no rest area faults the original (`FUN_00505fe0`,
   `FUN_00506d10` read thing `[+0x208]`), and this game takes it on (not looked into). In no game run: state 6, a kind's
   own job states but `0xe` and `0xf`, a status changed under the open screen's rewrite (tested only), Full Simulation
   (not asked: the screen is either mode's), the other three themes.

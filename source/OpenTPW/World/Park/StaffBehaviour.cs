@@ -1597,7 +1597,11 @@ public sealed class StaffBehaviour
 				PeepNavigator.WaypointCentre( x ), PeepNavigator.WaypointCentre( y ) );
 
 			if ( walk.PlanRoute( WanderBlocked ) )
+			{
+				Log.Info( $"Staff: {staff.ThingId} patrol roll to ({x},{y}) on try {attempt + 1}" );
+
 				return true;
+			}
 		}
 
 		// Thought 0x16 beside the log line (0x0050701f).

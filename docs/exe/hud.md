@@ -1896,8 +1896,9 @@ Resting, Picked up, On strike, Patrolling, Idle; scene B (4, 0, `0xe`, 3, `0xf`)
 Working. A member of state 2 or 3 with no rest area faults the original (`0x00505fe0`'s and `FUN_00506d10`'s read of
 thing `[+0x208]`), so state 2 was not photographed there.
 
-**OpenTPW** (Q379): `Staff.StatusRow` and `PatrolsWholeMap`, `ParkStaffScreen.StatusOf`; a member with no area at all
-(this game's hire, `ParkPeople.Hire`) is taken as the whole map, where the original's constructor writes it. The fill's
+**OpenTPW** (Q379): `Staff.StatusRow` and `PatrolsWholeMap`, `ParkStaffScreen.StatusOf`; a hire carries the whole map
+as the constructor writes it (Q380: `ParkPeople.Hire`, `Staff.WholeMapBottomLeft` and `WholeMapTopRight`), and a member
+with no area at all, a record built with none, is taken as the whole map too: a deviation. The fill's
 log line quotes the word: `Staff list: kind K, row <thing> <name>: "<status>" <wage> <skill bar> <happiness bar>`. On
 the same scenes, paused at the load (`q379/run-fixA4`, `run-fixB4`, the final game binary): A `"Resting"`, `"Picked
 up"`, `"On strike"`, `"Patrolling"`, `"Idle"` with the census Resting, Held, OnStrike, Walking, Walking; B `"On

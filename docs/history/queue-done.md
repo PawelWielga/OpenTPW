@@ -6973,6 +6973,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Patrolling, Idle and On strike, Idle, Working, Resting, Working (`q379/orig/bA`, `cB`); this game the same on the
   same scenes, paused (`q379/run-fixA4`, `run-fixB4`, 5 of 5; control 2 of 2 after a miss of my prediction).
   Mutations 13 of 13.
+- [x] **Q380. A hire patrols the whole map, cells 1 to `0x4000`, as the original's constructor writes it** (a piece of
+  the old Q380, split by Claude; the rest is Q381). `ParkPeople.Hire` writes `FUN_00504b90`'s two words, so a written
+  file holds 1 and 16384 as every free member of the original's own files does (none of 130 holds 0 and 0), and a
+  linked walk's dead end takes the patrol roll for a hire. This game, paused on the stock park with the queue tail cut
+  (`q380/run-fix2`, the final binary, 5 of 5; control `run-control1` 2 of 2): `patrol (0, 0)-(127, 127)`, the file's 1 16384, the hire
+  on (49,22) thinking `0x16` under a "?". The original given each file (`q380/orig/afix`, `bfix`, `acontrol`): both hires Idle,
+  where main's 0 and 0 lettered them Patrolling. Mutations 6 of 6. Tests 3127.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

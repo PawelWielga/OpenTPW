@@ -189,6 +189,8 @@ public class ParkFileWriterPeopleTests
 		Assert.AreEqual( (peep.Navigator.Position.X, peep.Navigator.Position.Y), (madeGuest.Navigator.X, madeGuest.Navigator.Y) );
 		Assert.AreEqual( ("Ada Test", 2, member.Happiness, member.Tiredness, (int)member.Activity),
 			(madeHire.Staff!.Value.Name, madeHire.Staff.Value.PayGrade, madeHire.Staff.Value.Happiness, madeHire.Staff.Value.Tiredness, madeHire.Staff.Value.State) );
+		Assert.AreEqual( (1, 0x4000), (madeHire.Staff.Value.PatrolBottomLeft, madeHire.Staff.Value.PatrolTopRight),
+			"the whole map, as the constructor writes it and the original's own files hold it" );
 
 		var picture = written.Sprites.Single( sprite => sprite.Slot == madeGuest.SpriteSlot );
 		var script = people.SpriteFor( guest )!;

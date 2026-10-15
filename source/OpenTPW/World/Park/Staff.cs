@@ -284,10 +284,19 @@ public sealed class Staff
 	public (int X, int Y) PatrolTo => ((PatrolTopRight - 1) & 0x7f, (PatrolTopRight - 1) >> 7);
 
 	/// <summary>
+	/// The patrol corners of the whole map, cells 1 to <c>0x4000</c>: what the staff constructor <c>FUN_00504b90</c>
+	/// writes at <c>+0x20a</c> and <c>+0x20c</c>, so what every hire carries (<see cref="ParkPeople.Hire"/>).
+	/// </summary>
+	public const int WholeMapBottomLeft = 1;
+
+	/// <inheritdoc cref="WholeMapBottomLeft"/>
+	public const int WholeMapTopRight = ParkWorld.MapSize * ParkWorld.MapSize;
+
+	/// <summary>
 	/// Whether a cell is inside this staff member's patrol area - <c>FUN_00506ed0</c>. A staff member with
-	/// no area at all is at home anywhere here; the original's test has no case for it and puts them
-	/// outside every cell, a deviation. Every member Lost Kingdom's save holds carries one; a member hired here
-	/// carries none (<c>ParkPeople.Hire</c>), and whether the original's hire sets one is not decoded.
+	/// no area at all, nought and nought, is at home anywhere here; the original's test has no case for it and puts
+	/// them outside every cell, a deviation. No member the original writes carries none, and neither does a hire
+	/// here: only a record read or built with none.
 	/// </summary>
 	public bool Patrols( int x, int y )
 	{
@@ -303,10 +312,11 @@ public sealed class Staff
 	/// <summary>
 	/// Whether the patrol area is the whole map, as <c>FUN_00506eb0</c> asks: cells 1 to <c>0x4000</c>, the original's
 	/// constructor's (<c>FUN_00504b90</c>) and its patrol button's clear (<c>FUN_00506e90</c>). No area at all, nought and
-	/// nought, is this game's hire's (<see cref="ParkPeople.Hire"/>) where the original's constructor writes the whole
-	/// map, so it is taken as the whole map too: a deviation.
+	/// nought, is taken as the whole map too, as <see cref="Patrols"/> takes it: a deviation, where the original's test
+	/// answers not the whole map.
 	/// </summary>
-	public bool PatrolsWholeMap => !HasPatrolArea || (PatrolBottomLeft == 1 && PatrolTopRight == 0x4000);
+	public bool PatrolsWholeMap => !HasPatrolArea
+		|| (PatrolBottomLeft == WholeMapBottomLeft && PatrolTopRight == WholeMapTopRight);
 
 	/// <summary>
 	/// The row of <c>STAFFSTATES.str</c> (Idle, Patrolling, Working, Resting, On strike, Picked up) that letters this

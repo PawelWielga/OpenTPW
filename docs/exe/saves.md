@@ -813,7 +813,10 @@ follow the list. It runs after the scripts, the track rides and the models are s
   force, formation, axes, mode, last progress and timestamp, `mSpriteUnderRideCtrl`, the event ring, a guest's
   tiredness, and a guest's `mLastRecordedMapId` (a member of staff's is written: "OpenTPW's writer, the staff's
   region effects"). A hire's `mTimeHired` is the park's calendar as they were made ("`mTimeHired`",
-  below).
+  below). **A hire's patrol corners are 1 and 16384**, the whole map, as the constructor `FUN_00504b90` writes them
+  (Q380): every member of the original's files who is not fenced in carries them, and none carries nought and nought,
+  which the original's area test `FUN_00506ed0` puts outside every cell (given such a file, the original letters a
+  walking hire Patrolling and its patrol roll fails: `q380/orig/acontrol`).
 - **The chains.** A person is written on the cell their `mX` and `mY` name. Whoever has come onto a cell heads
   its chain, the newest first; whoever the file had there and is there still follows in the file's order; then
   the file's things that are no person. `mWho` is written for each cell whose head changes.
