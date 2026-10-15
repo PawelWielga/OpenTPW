@@ -39,7 +39,8 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/diffpic.py <a.png> <b.png> <out.png> [x0 y0 x1 y1]` | Two frames side by side and a third, the second dimmed with every pixel differing by more than 40 a channel in red: where a change lies and its shape, and the count (Q359) |
 | `lib/barshare.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar measured in a frame of either game, by its layout rectangle: the share of its middle row in colour, the share grey, the colour's mean r - g, the last coloured pixel, the grey's mean, and the pixel an eighth of the way. **A black cell counts as grey** (spread under 12): judge "nothing drawn" by the grey's mean, under 5 there and 49 to 58 on a drawn track (Q367). **It reads a
 `happygrad.wct` bar about 0.02 short** (its greyish-teal texels spread 30 or less): use `barsplit.py` for that one (Q369) |
-| `lib/barsplit.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar's fill by where its grey track starts (the first pixel of the middle row, from the left, with a spread of 12 or less and a mean of 40 to 75), as a share of the width: right for any ramp, `happygrad.wct`'s too, and blind to a highlighted row's band past the bar's end (Q369) |
+| `lib/barsplit.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar's fill by where its grey track starts (the first pixel of the middle row, from the left, with a spread of 12 or less and a mean of 40 to 75), as a share of the width: right for any ramp, `happygrad.wct`'s too, and blind to a highlighted row's band past the bar's end (Q369). **A lettered number's anti-aliased edge passes its track test**: where a cell may hold text, not a bar, judge "no bar" by `listcells.colour` (Q371) |
+| `lib/listcells.py <png> <y0> <y1> <x0,x1> ...` | A list row's cells in a frame of either game, virtual units: `aligns( png, y0, y1, cols )` where each column's white lettering stands in the row band (start, end, middle as shares of the column, and `left`/`centre`/`right`), `bars( png, ys, x0, x1, h )` `barsplit.py` down a column of bars, `colour( png, ys, x0, x1, h )` each bar rect's middle row in colour (spread over 60: a ramp is, lettering is not). The visitors list's alignments in both games (Q371) |
 | `lib/rectcolour.py <png> <x0> <y0> <x1> <y1> ...` | What fills a framed control in a frame of either game, by its layout rectangle (its outer 4 per cent left out): the shares of yellow lettering, white, teal (`!cbut`'s body) and black, and the mean colour, a line a rectangle. A heading framed or bare, its lettering yellow or white (Q370) |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
@@ -524,7 +525,10 @@ GH=766` there, or the pointer is off):
   tabs (Q369, `q369/orig/run.sh`): (605,121), (665,121), (724,121), (783,121), (843,121). A member's skill and
   happiness in its memory: `thingwords.py` on `T:0x1e4:I` (grade), `T:0x1e8:B` (percentage), `T:0x1f8:f`
   (happiness), started after the load with its start stamped, since its times count from its own start. All items' four tabs (Q370, `q370/orig/run.sh`): rides (667,123), sideshows (726,123), shops
-  (786,123), misc (845,123); V opens the visitors over a screen.
+  (786,123), misc (845,123); V opens the visitors over a screen. A guest's row in the original's memory (Q371, `q371/orig/run.sh` with `POLL=1`): the number `+0x1d8`, the cash
+  `+0x1a0`, the rides `+0x1c4`, the happiness the float `+0x19c` (`thingwords.py ... 38:0x19c:f`); in a park file the
+  guest record's `+402` (`mArrivalIndex`), `+414` (cash), `+422` (happiness, a float), for `parkfile.thing_set`. The
+  original's visitors rows stand 55.8 units apart from (virtual) y 340.
 - **The shortcuts' keys in the original** (Q366, `q366/orig/run.sh`): B H I A S V F L T G and Space plain, S and V with
   Ctrl held (`xdotool keydown Control_L` around the key). **L opens nothing in Instant Action**, so an Escape sent after it
   opens the game menu and the next key falls on the menu: close a screen only where one opened. The gadget's

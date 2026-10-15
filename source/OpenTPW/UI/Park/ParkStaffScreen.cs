@@ -123,9 +123,8 @@ internal sealed class ParkStaffScreen : UiWindow
 			// (0x0049602f).
 			RowRightClicked = GoTo,
 
-			// The stream's own op 0xb record. The builder right-aligns columns 2, 3 and 4 and leaves
-			// nought and one reading from the left - FUN_006636b2( n, rightAligned ) - which is what
-			// UiList does by default for every column but the first, so only column 1 is overridden.
+			// The stream's own op 0xb record. Columns 2, 3 and 4 right-aligned, nought and one from the left; the
+			// styler FUN_00496d20's own FUN_0065c428 calls are not read.
 			Columns = [(299, 711), (729, 999), (1017, 1217), (1231, 1471), (1488, 1728)],
 			ColumnAligns = [TextAlign.Start, TextAlign.Start, TextAlign.End, TextAlign.End, TextAlign.End],
 

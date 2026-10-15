@@ -44,14 +44,19 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q371. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q372. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q371 (`hud.md`, "The visitors rows: a number, a money cell, a bar"): the visitors' number, cash and happiness are
+  built. **Not built**: the time in park cell (`FUN_00490e60`, its setter `0x00490ff0`: hours, UITEXT `0x1ba`/`0x1bb`,
+  its other words not read) and the thought's icon (`ti_hungry`, `+0x30`), both counted; the row height from the font
+  (the original's rows 55.8 units apart, this game's 44); the alignment message `0xc00`'s handler (read from the frame
+  only); the all-staff styler's own alignments (`FUN_00496d20`, not read). In no game run: a guest with negative cash,
+  a happiness past 255, Full Simulation (not asked: the screen is either mode's).
   From Q370 (`hud.md`, "The list headings' frames"): the headings are framed; the original's lettering is larger and
   wraps "Monthly Wage". Seen beside the original in `q370/side-by-side.png`, not read and not counted: **the original's
   misc tab lists a row an object** (each with its kind's count, by name) where this game's lists a row a kind; the
-  visitors' rows letter the visitor number 0 for the file's guests (the original's 1 to 10), the cash without its
-  "$ ", the happiness as a number where the original draws a bar, and the list has no scrollbar (the original's has).
+  visitors list has no scrollbar (the original's has); its number, cash and happiness cells are built (Q371).
   From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height from the font
   (`[0x007ca170]`), the status's own words (`STAFF_STATUS_TEXT`: the table `[0x0078baa4]`, read by the row adder
   `0x00496320`), the list's sort word (`FUN_006659af( [0x0075118c], 0 )`). Five other callers hand the stat bars'

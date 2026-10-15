@@ -106,11 +106,10 @@ internal sealed class UiList : UiControl
 	/// leaves the default: the name reads from the left and every number from the right.
 	/// </summary>
 	/// <remarks>
-	/// <b>The default is not a rule, and treating it as one gets two screens wrong.</b> The original
-	/// sets this per column, through <c>FUN_006636b2( column, rightAligned )</c> - and the visitor
-	/// list calls it with <b>1 for all six</b>, its name column included, where the item list uses 0
-	/// for the name and 1 for the rest and the staff list 0 for its first two columns. So a hardcoded
-	/// "column nought reads from the left" is right three times and wrong once.
+	/// <b>The default is not a rule.</b> The original sets this per cell in each screen's styler, through
+	/// <c>FUN_0065c428( across, down )</c> on the cell (2 to the right, 1 centred, nothing set the left): the visitors
+	/// list centres its number and pushes its cash right (<c>FUN_004939d0</c>). <c>FUN_006636b2</c> is the column's
+	/// type, text or number, not its alignment.
 	/// </remarks>
 	internal TextAlign[] ColumnAligns { get; init; } = [];
 

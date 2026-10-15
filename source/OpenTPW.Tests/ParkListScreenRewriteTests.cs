@@ -452,6 +452,74 @@ public class ParkListScreenRewriteTests
 	}
 
 	/// <summary>
+	/// <b>The visitors rows letter a visitor number of nought "New Visitor", the cash as a money cell, and draw the
+	/// happiness as a bar in <c>happygrad.wct</c> inset 8</b>, the number centred, the cash to the right and the rides
+	/// from the left (the styler <c>FUN_004939d0</c>, the adder <c>FUN_00493800</c>; <c>docs/exe/hud.md</c>, "The visitors
+	/// rows").
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> nought lettered "0"; the cash a bare number; the happiness not a byte or not a bar; the bar in
+	/// the ride bars' skin or inset 10; the number or the cash aligned otherwise; the rewrite lettering the old way.
+	/// </remarks>
+	[TestMethod]
+	public void TheVisitorsRowsLetterNewVisitorTheCashAsMoneyAndTheHappinessAsABar()
+	{
+		var guests = people.Peeps.ToArray();
+		var numbered = guests[0];
+		var fresh = guests[1];
+
+		numbered.VisitorNumber = 7;
+		numbered.Cash = -55;
+		numbered.Happiness = 300.75f;
+		fresh.VisitorNumber = 0;
+		fresh.Cash = 306;
+		fresh.Happiness = 33.9f;
+
+		foreach ( var other in guests.Skip( 2 ) )
+			other.VisitorNumber = 1;
+
+		Time.PinWall( 1000 );
+
+		var screen = new ParkVisitorsScreen( stack );
+		var list = Field<UiList>( screen, "_list" );
+
+		stack.Open( screen );
+
+		var row = list.Rows.Single( each => each.Id == numbered.ThingId );
+		Assert.AreEqual( "7", row.Name );
+		Assert.AreEqual( "-$ 55", row.Values![0], "the cash in a money cell" );
+		Assert.AreEqual( 450, row.Numbers![5], "((300 & 0xff) << 10) / 100" );
+		Assert.AreEqual( "", row.Values[4], "the happiness lettered nowhere" );
+
+		Assert.AreEqual( fresh.ThingId, list.Rows[0].Id, "nought sorts first" );
+		Assert.AreEqual( "New Visitor", list.Rows[0].Name );
+		Assert.AreEqual( "$ 306", list.Rows[0].Values![0] );
+		Assert.AreEqual( 337, list.Rows[0].Numbers![5], "(33 << 10) / 100" );
+
+		var bars = list.Children.OfType<ParkObjectWindow.UiStatBar>().ToArray();
+		var top = bars.Min( bar => bar.Rect.Top );
+		var first = bars.Where( bar => bar.Rect.Top == top ).ToArray();
+
+		Assert.AreEqual( 1, first.Length, "one bar cell a row" );
+		Assert.AreEqual( (1478, ParkObjectWindow.UiStatBar.HappyGrad), (first[0].Rect.Left, first[0].Skin), "the happiness" );
+		Assert.AreEqual( 315 + 8, top, "inset 8 from the row's top" );
+		Assert.AreEqual( 337, first[0].Units, "the first row's bar filled" );
+
+		CollectionAssert.AreEqual(
+			new[] { TextAlign.Centre, TextAlign.End, TextAlign.Centre, TextAlign.Start, TextAlign.Start, TextAlign.End },
+			list.ColumnAligns, "the number and time centred, the cash right, the rides left" );
+
+		fresh.Happiness = 90.5f;
+		Time.PinWall( 3000 );
+		screen.Update();
+
+		Assert.AreEqual( 921, list.Rows[0].Numbers![5], "the rewrite: (90 << 10) / 100" );
+		Assert.AreEqual( 921, first[0].Units );
+		Assert.IsTrue( lines.Any( line => line.StartsWith( "Visitors list: " ) && line.Contains( " rows rewritten, row 0 " )
+			&& line.EndsWith( "New Visitor: $ 306 0 921" ) ), "the rewrite's log line" );
+	}
+
+	/// <summary>
 	/// A money cell letters UITEXT 449 and the figure, or 450 and the figure without its sign under nought
 	/// (<c>0x004903e0</c>).
 	/// </summary>

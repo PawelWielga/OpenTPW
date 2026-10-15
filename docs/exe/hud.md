@@ -1814,6 +1814,43 @@ own tab-index switch all give the same ordering, and it matches UITEXT 119–122
 **The root frame mesh `0xf76e4200` is `w_big.MD2`, node `window4`.** The hash is over a node name, which is why
 searching file stems never finds it; see the resolution table above for the method.
 
+#### The visitors rows: a number, a money cell, a bar
+
+Read 2026-10-14 (Q371). The visitors opener `FUN_00493530` hands `FUN_006639cb` the factory `FUN_004938c0` and the
+styler `FUN_004939d0`, which makes the six cells, each in the font `[0x007508b4]`:
+
+| Column | Cell | Alignment | The adder `FUN_00493800` hands |
+|---|---|---|---|
+| Visitor Number | `FUN_00490c30` (vtable `0x006ff470`, setter `0x00490dc0`): UITEXT `0x1c9` (457, "New Visitor") at nought, else `"%d"` | `FUN_0065c428( 1, 1 )` | `+0x1d8` |
+| Cash Remaining | a money cell `FUN_00490250` ("The all-items rows", above) | `( 2, 1 )` | `+0x1a0` |
+| Time In Park | `FUN_00490e60` (vtable `0x006ff4a0`, setter `0x00490ff0`): by hours, UITEXT `0x1bb` past 48 and `0x1ba` past 24 with the hours / 24, more below | `( 1, 1 )` | `FUN_004fd950`'s span `__alldiv` 36,000,000,000 (100 ns units: hours) |
+| Rides Ridden | the number painter `FUN_0048fde0` | none set | `+0x1c4` |
+| ? | the mesh `ti_hungry`, inset `( 4, 0 )` | | `+0x30` less 1, or 999 at nought |
+| Happiness | a bar in `happygrad.wct` (`FUN_00477ff0`), inset `( 0, 8 )` | | `((__ftol( +0x19c ) & 0xff) << 10) / 100` (`0x00493870`) |
+
+`FUN_0065c428( across, down )` posts `0xc00` with the two bytes to the cell's text; its handler sits behind a jump table
+and is not read. **Measured in the original's frame instead** (`q371/measure.py`'s `aligns`, the lettering's extent in
+its column): the number centred (its middle 0.495 of the column), the cash to the right (its end 0.976), the rides from
+the left (its start 0.032), as `( 2, 1 )` reads right on the park status screen above. The time cell's other words and
+the thought's frames are not read.
+
+Measured in the original under Proton on `q371/visitors.TPWS` (`q353/grades.TPWS` with five guests' happiness written
+at the guest record's `+422` and thing 42's `mArrivalIndex` at `+402` written 0; `q371/orig/b`, `thingwords.py` on
+`+0x19c`): thing 42 letters "New Visitor" and sorts first, visitor 1 "$ 306"; its ten bars measure 0.5, 0.125, 0.3,
+0.758, 1.0, 0.792, 0.525, 0.558, 0.583 and 0.5 of their width against its polled happiness's bars 0.5, 0.119, 0.289 to
+0.31, 0.75, 1.0, 0.789, 0.52, 0.55, 0.569 to 0.59 and 0.5 (`barsplit.py`). A guest's happiness moves as its park runs:
+run a, unpolled, read four bars off the file's by 0.06 to 0.14.
+
+**OpenTPW** (Q371): `ParkVisitorsScreen.RowOf` and `NumberText`, the list's `ColumnAligns`, `BarColumns`, `BarSkins`
+and `BarInset` 8. Each fill logs `Visitors list: row <thing> <number>: <cash> <rides> <happiness bar>`, and each
+rewrite `N rows rewritten, row 0` the same way. On the same file, paused at the load (`q371/run-fix1`, the final game
+binary): `row 42 New Visitor: $ 684 0 512`, `row 38 1: $ 306 1 122`, ... `row 37 4: $ 570 0 1024`, sorted 42 first;
+its bars 0.5, 0.125, 0.33, 0.902, 1.0, 0.714, 0.527 and 0.5 (the file's happiness); the number centred (0.497), the cash
+right (0.974), the rides left (0.034) (`q371/side-by-side.png`: the original, this, main). Main's build (`run-control2`)
+lettered 0 and the cash and happiness as bare numbers, every one from the right, and drew no bar. **Not built**: the
+time in park and the thought's icon (`VISITOR_TIME_IN_PARK`, `VISITOR_COLUMN_117_UNNAMED`); the row height from the font
+(the original's rows 55.8 units apart, this game's 44); the first row picked as the list fills (Q232); the scrollbar.
+
 #### The list headings' frames
 
 Read 2026-10-14 (Q370). **Every list's opener letters and frames its headings through `FUN_00486660`**, as the hire and

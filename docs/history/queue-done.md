@@ -6913,6 +6913,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   0 and each column's help row (staff `0x77` to `0x7b`, visitors `0x81` to `0x86`, the items' by tab), as each opener
   hands them. On the stock park every one of the 29 headings logged `!cbut 8 <help> "<text>"` and drew teal 0.854 to
   0.99 with yellow lettering, as the original's (0.80 to 0.985; `q370/side-by-side.png`); main's were white on black.
+- [x] **Q371. The visitors rows' number, cash and happiness cells, as the original's styler makes them** (a piece of
+  the old Q371, split by Claude; the rest is Q372). Built from `FUN_004939d0`: a visitor number of nought lettered
+  "New Visitor" (UITEXT 457), the cash a money cell, the happiness a `happygrad.wct` bar inset 8, the number centred,
+  the cash right and the rides left. On `q371/visitors.TPWS` all 13 fill lines read as the file (`row 42 New Visitor: $
+  684 0 512` first), the bars within 0.007 of their figures, as the original's within 0.03 of its polled happiness
+  (`q371/side-by-side.png`); main's lettered 0 and bare numbers, all from the right, and no bar.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -18,10 +18,8 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
-/// <b>All six columns read from the RIGHT, the name column included</b>, and that is one place the
-/// list widget's own default is wrong: <c>FUN_006636b2</c> is called with 1 for all six here where the
-/// staff and item screens pass 0 for their first. The first column is a visitor NUMBER rather than a
-/// name, which is presumably why.
+/// <b>All six columns are numbers</b>: <c>FUN_006636b2</c> types each column 1, numeric, where the staff and item
+/// screens type their first 0, text. The first column is a visitor NUMBER rather than a name.
 /// </para>
 ///
 /// <para>
@@ -32,6 +30,12 @@ namespace OpenTPW.UI;
 /// that column unnamed too; its row adder fills it from the guest's last thought (<c>0x0049385a</c>), which
 /// <see cref="Peep.Thoughts"/> keeps and this column does not show. Each is headed as the game heads it and left empty. Rides Ridden is the guest's
 /// <see cref="Peep.NumRides"/> (<c>0x00493850</c>).
+/// </para>
+///
+/// <para>
+/// <b>The styler <c>FUN_004939d0</c> makes the other cells</b>: the visitor number a cell lettering UITEXT 457 at nought
+/// (<c>FUN_00490c30</c>, its setter <c>0x00490dc0</c>), the cash a money cell (<c>FUN_00490250</c>), and the happiness a
+/// bar in <c>happygrad.wct</c> inset 8 (<c>FUN_00477ff0</c>, <c>FUN_00485e30( cell, 0, 8 )</c>). See <see cref="RowOf"/>.
 /// </para>
 /// </summary>
 internal sealed class ParkVisitorsScreen : UiWindow
@@ -112,12 +116,18 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			},
 			Columns = [(297, 689), (701, 948), (966, 1213), (1233, 1358), (1372, 1474), (1478, 1718)],
 
-			// All six from the right - see the class remarks.
+			// The styler's FUN_0065c428( across, 1 ) on each cell: the number and the time centred, the cash to the right,
+			// the rides ridden left where the styler sets nothing - as the original's frame letters them.
 			ColumnAligns =
 			[
-				TextAlign.End, TextAlign.End, TextAlign.End,
-				TextAlign.End, TextAlign.End, TextAlign.End
-			]
+				TextAlign.Centre, TextAlign.End, TextAlign.Centre,
+				TextAlign.Start, TextAlign.Start, TextAlign.End
+			],
+
+			// The styler's happiness cell, inset 8 (FUN_004939d0).
+			BarColumns = [false, false, false, false, false, true],
+			BarSkins = [null, null, null, null, null, ParkObjectWindow.UiStatBar.HappyGrad],
+			BarInset = 8
 		} );
 
 		// Handed over while the list is still empty, so it sorts nothing.
@@ -192,7 +202,12 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			return;
 
 		foreach ( var guest in _people.Peeps )
-			_list.Add( RowOf( guest ) );
+		{
+			var row = RowOf( guest );
+
+			_list.Add( row );
+			Log.Info( $"Visitors list: row {Census( row )}" );
+		}
 
 		LogOrder();
 	}
@@ -211,19 +226,28 @@ internal sealed class ParkVisitorsScreen : UiWindow
 
 	/// <summary>A guest's row - the original's row adder <c>FUN_00493800</c>.</summary>
 	/// <remarks>
-	/// Every column is a number, and the list sorts on it. The original's happiness is its whole part as a bar,
-	/// <c>(byte) &lt;&lt; 10 / 100</c> (<c>0x00493870</c>), which stands in the same order as the whole part.
+	/// Every column is a number, and the list sorts on it. The visitor number letters UITEXT 457 at nought
+	/// (<c>0x00490dc0</c>) and <c>"%d"</c> otherwise; the cash is a money cell's text; the happiness is its whole part's
+	/// low byte as a bar, <c>((x &amp; 0xff) &lt;&lt; 10) / 100</c> of 1024 (<c>0x00493870</c>).
 	/// </remarks>
 	private static UiList.Row RowOf( Peep guest )
-		=> new( guest.ThingId, $"{guest.VisitorNumber}", guest.VisitorNumber, Values:
+		=> new( guest.ThingId, NumberText( guest.VisitorNumber ), guest.VisitorNumber, Values:
 		[
-			$"{guest.Cash}",
+			ParkItemsScreen.Money( guest.Cash ),
 			"",
 			$"{guest.NumRides}",
 			"",
-			$"{(int)guest.Happiness}"
+			""
 		],
-		Numbers: [guest.VisitorNumber, guest.Cash, 0, guest.NumRides, 0, (int)guest.Happiness] );
+		Numbers: [guest.VisitorNumber, guest.Cash, 0, guest.NumRides, 0, ParkItemsScreen.Bar( (int)guest.Happiness )] );
+
+	/// <summary>The visitor number's cell (<c>FUN_00490c30</c>'s setter <c>0x00490dc0</c>): "New Visitor" at nought.</summary>
+	private static string NumberText( int number )
+		=> number == 0 ? Localization.Get( UIStrings.NewVisitor ) : $"{number}";
+
+	/// <summary>A row for the log: id, the number's text, the cash's, the rides ridden and the happiness bar.</summary>
+	private static string Census( UiList.Row row )
+		=> $"{row.Id} {row.Name}: {row.Values![0]} {row.Values[2]} {row.Numbers![5]}";
 
 	/// <summary>A guest was made while the list is open: their row goes in by sort order (<c>FUN_00493c50</c>).</summary>
 	private void Arrived( Peep guest )
@@ -258,11 +282,19 @@ internal sealed class ParkVisitorsScreen : UiWindow
 		if ( _people == null )
 			return;
 
+		var rewritten = 0;
+
 		for ( var index = _list.Rows.Count - 1; index >= 0; --index )
 		{
 			if ( _people.Guests.TryGetValue( _list.Rows[index].Id, out var guest ) )
+			{
 				_list.Replace( index, RowOf( guest ) );
+				++rewritten;
+			}
 		}
+
+		if ( _list.Rows.Count > 0 )
+			Log.Info( $"Visitors list: {rewritten} rows rewritten, row 0 {Census( _list.Rows[0] )}" );
 	}
 
 	protected internal override void Closed()
