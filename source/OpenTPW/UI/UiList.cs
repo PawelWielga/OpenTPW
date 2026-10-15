@@ -305,6 +305,30 @@ internal sealed class UiList : UiControl
 			PinDown = VerticalAnchor
 		} );
 
+	/// <summary>
+	/// The headings' font slot as the all-staff, all-items and visitors openers hand it to <c>FUN_00486660</c>: each
+	/// screen's own word (<c>[0x00751188]</c>, <c>[0x00750d58]</c>, <c>[0x007508b8]</c>), 8 in each and written by nothing.
+	/// </summary>
+	internal const int HeadingFont = 8;
+
+	/// <summary>The colour every list opener hands <c>FUN_00486660</c>: 255, 239, 0.</summary>
+	internal static readonly UiColour HeadingColour = new( 255, 239, 0 );
+
+	/// <summary>
+	/// A heading as the all-staff, all-items and visitors openers make it (<c>FUN_00496620</c>, <c>FUN_00494ec0</c> and its
+	/// three twins, <c>FUN_00493530</c>): <c>FUN_00486660</c>'s frame <c>!cbut</c>, <see cref="HeadingFont"/>,
+	/// <see cref="HeadingColour"/> and the help row handed over.
+	/// </summary>
+	internal UiButton AddFramedHeading( int column, UiRect rect, string text, int help )
+		=> AddHeading( column, rect, text, "!cbut", HeadingFont, HeadingColour, help );
+
+	/// <summary>The headings, in column order: <c>mesh font help "text"</c> each, for the screens' log lines.</summary>
+	internal string HeadingsCensus()
+		=> string.Join( ", ", Children.OfType<UiButton>()
+			.Where( heading => heading.Id >= 0x10 && heading.Id < 0x10 + 8 )
+			.OrderBy( heading => heading.Id )
+			.Select( heading => $"{heading.Mesh?.Name ?? "bare"} {heading.Font} {heading.HelpText} \"{heading.Text}\"" ) );
+
 	/// <summary>Empties the list - the original's <c>FUN_006649d5</c>.</summary>
 	internal void Clear()
 	{

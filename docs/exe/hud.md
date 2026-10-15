@@ -1760,7 +1760,7 @@ cell's text; `rings` now prints the total takings beside the total costs. On `q3
 bars 0.532, 0.505, 0.485 (`q368/side-by-side.png`); main's build (`run-control2`) lettered nothing and counted
 `ALL_ITEMS_MONTHLY_HISTORY`, which is gone. **Not built**: the original's sideshow rows stand Jungle Spray then
 Strength Bird, this game's the other way (the walk's order, not looked into); the row height is this game's 44 where the
-original's factory measures its font (`0x007ca158`); the headings are bare here where the original frames them.
+original's factory measures its font (`0x007ca158`); the headings are framed (Q370, "The list headings' frames").
 
 #### The all-staff rows: a money cell, then bars
 
@@ -1799,8 +1799,8 @@ kind K, row <thing> <name>: <status> <wage> <skill bar> <happiness bar>`, and th
 880`, `26 ... 92 296 880`, `27 ... 36 194 880`, `28 ... 105 614 901`, `30 ... 125 430 921`; the frames' skill bars 0.92,
 0.292, 0.195, 0.602, 0.425 and happiness bars 0.866, 0.866, 0.866, 0.884, 0.902 (`barsplit.py`); the meters 0.846 and
 0.863 with a grey rest; "$ 81" (`1-handymen.png`). Main's build (`run-control1`) lettered the grade and the happiness as
-numbers and filled its meters from the bottom. **Not built**: the headings' frames (`FUN_00486660`, font
-`[0x00751188]`, 255, 239, 0, help rows `0x77` to `0x7b`), the row height from the font, the status's own words
+numbers and filled its meters from the bottom. The headings are framed (Q370, "The list headings' frames"). **Not
+built**: the row height from the font, the status's own words
 (`STAFF_STATUS_TEXT`: the adder reads them from the table `[0x0078baa4]` by `FUN_005064f0`'s state, a 1 read as 0 where
 `FUN_00506eb0` answers nought), and the list's sort word (`FUN_006659af( [0x0075118c], 0 )`).
 
@@ -1813,6 +1813,38 @@ own tab-index switch all give the same ordering, and it matches UITEXT 119–122
 
 **The root frame mesh `0xf76e4200` is `w_big.MD2`, node `window4`.** The hash is over a node name, which is why
 searching file stems never finds it; see the resolution table above for the method.
+
+#### The list headings' frames
+
+Read 2026-10-14 (Q370). **Every list's opener letters and frames its headings through `FUN_00486660`**, as the hire and
+buy lists' ("A list's order", above): the label skin, the nine-slice frame `!cbut`, the text centred both ways, the font
+slot and colour handed over and the help row at `+0x90`. The all-staff opener `FUN_00496620`, the four all-items tab
+builders (`FUN_00494ec0` rides, `FUN_00494c70` shops, `FUN_00494250` sideshows, `FUN_00495110` misc) and the visitors'
+opener `FUN_00493530` each hand font slot 8 from a word of their own that nothing writes (`[0x00751188]`, `[0x00750d58]`,
+`[0x007508b8]`) and the colour 255, 239, 0. Only the help rows differ (`UIHELPTEXT.str`, each "Left-click to sort the
+list by ..." its column):
+
+| List | Help rows |
+|---|---|
+| all staff | `0x77` to `0x7b` (119 to 123) |
+| visitors | `0x81` to `0x86` (129 to 134) |
+| items, rides | `0x69` to `0x6d` (105 to 109) |
+| items, shops | `0x69`, `0x248` to `0x24b` (105, 584 to 587) |
+| items, sideshows | `0x69`, `0x248`, `0x6b`, `0x249` to `0x24b` (105, 584, 107, 585 to 587) |
+| items, misc | `0x69`, `0x24c` (105, 588) |
+
+Measured in the original under Proton (`q369/orig/b-1-handymen.png`, `q367/orig/a-*.png`, `q370/orig/a-visitors.png`
+and `a-misc.png`, `rectcolour.py` on each heading's rectangle): teal 0.80 to 0.985 of each, yellow lettering in each.
+
+**OpenTPW** (Q370): `UiList.AddFramedHeading`, `HeadingFont`, `HeadingColour`; the items screen sets each tab's help
+rows with its headings' text. Each opening logs `Staff list: headings` or `Visitors list: headings`, and each items tab
+`Items list: headings of tab N:`, every heading as `mesh font help "text"`. On the stock park (`q370/run-fix2`, the final
+game binary): `Staff list: headings !cbut 8 119 "Name", ... !cbut 8 123 "Happiness"`, the visitors' `129` to `134`, and
+the four tabs' rows as the table; all 29 headings teal 0.854 to 0.99 with yellow lettering and no white
+(`q370/side-by-side.png`). Main's build (`run-control1`) lettered them white on black. **Not built**: the original's
+lettering is larger and wraps "Monthly Wage" where this game's fits one line of its smaller font (the park screens'
+lettering, a deviation Q352 filed); the headings still sort nothing on the all-staff and all-items lists
+(`LIST_HEADING_SORT_NOT_BUILT`).
 
 ### The node name is not the file name — measured
 

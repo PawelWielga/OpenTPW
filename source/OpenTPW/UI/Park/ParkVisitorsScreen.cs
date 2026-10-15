@@ -123,8 +123,14 @@ internal sealed class ParkVisitorsScreen : UiWindow
 		// Handed over while the list is still empty, so it sorts nothing.
 		_list.SetSort( _sort );
 
+		// Framed by FUN_00486660 with help rows 0x81 to 0x86 (0x00493682).
 		for ( var column = 0; column < Headings.Length; ++column )
-			_list.AddHeading( column, Headings[column], Localization.Text( 113 + column ) ).Clicked += LogOrder;
+		{
+			_list.AddFramedHeading( column, Headings[column], Localization.Text( 113 + column ), 0x81 + column ).Clicked
+				+= LogOrder;
+		}
+
+		Log.Info( $"Visitors list: headings {_list.HeadingsCensus()}" );
 
 		Root.Add( CrossLink( 0x1e49b, 360, 136, "b_allthings", 5 ) );
 		Root.Add( CrossLink( 0x1e499, 467, 137, "b_parkinfo", 3 ) );

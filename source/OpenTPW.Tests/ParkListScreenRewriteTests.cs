@@ -10,8 +10,8 @@ namespace OpenTPW.Tests;
 
 /// <summary>
 /// The all-staff and all-items screens rewrite their rows in place every two seconds of real time, as the original's
-/// timer <c>0x80083</c> does (<c>docs/exe/hud.md</c>, "How allstaff and allitems keep their rows current"). Reads the
-/// shipped park; skipped without the game (<see cref="GameData"/>).
+/// timer <c>0x80083</c> does (<c>docs/exe/hud.md</c>, "How allstaff and allitems keep their rows current"), and frame
+/// their headings as its openers do. Reads the shipped park; skipped without the game (<see cref="GameData"/>).
 /// </summary>
 [TestClass]
 public class ParkListScreenRewriteTests
@@ -395,6 +395,60 @@ public class ParkListScreenRewriteTests
 		Assert.AreEqual( state.TakingsFor( sideshow ) - state.CostsFor( sideshow ), sideshowRow.Numbers[4] );
 		Assert.AreEqual( 491, sideshowRow.Numbers[5] );
 		CollectionAssert.AreEqual( new[] { "", "$ 52", "" }, new[] { sideshowRow.Values![1], sideshowRow.Values[2], sideshowRow.Values[4] } );
+	}
+
+	/// <summary>
+	/// <b>The all-staff, all-items and visitors lists' headings are framed as the original's openers frame them</b>
+	/// (<c>FUN_00486660</c>): <c>!cbut</c>, font slot 8, 255, 239, 0, the text centred, and each column's own help row,
+	/// the items' by tab (<c>docs/exe/hud.md</c>, "The list headings' frames").
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> a screen's headings bare; another font or colour; a help row off by one, or the items' rides' rows
+	/// kept on the shops' tab; the sideshows' third column's help taken from the shops'. Another frame's name is the
+	/// game's to catch: a mesh loads only beside the renderer, and the screens log each heading's.
+	/// </remarks>
+	[TestMethod]
+	public void TheStaffItemsAndVisitorsListsFrameTheirHeadingsWithEachColumnsHelpRow()
+	{
+		static void Framed( UiList list, int first, int[] helps, string screen )
+		{
+			for ( var column = 0; column < helps.Length; ++column )
+			{
+				var heading = list.Children.OfType<UiButton>().Single( each => each.Id == 0x10 + column );
+				var at = $"{screen} column {column}";
+
+				Assert.AreEqual( 8, heading.Font, at );
+				Assert.AreEqual( new UiColour( 255, 239, 0 ), heading.TextColour, at );
+				// Centred only where a frame is named (UiList.AddHeading); the frame itself needs the renderer to load.
+				Assert.AreEqual( TextAlign.Centre, heading.TextAcross, at );
+				Assert.AreEqual( helps[column], heading.HelpText, at );
+				Assert.AreEqual( Localization.Text( first + column ), heading.Text, at );
+			}
+		}
+
+		var staff = new ParkStaffScreen( stack );
+		Framed( Field<UiList>( staff, "_list" ), 101, [119, 120, 121, 122, 123], "staff" );
+
+		var visitors = new ParkVisitorsScreen( stack );
+		Framed( Field<UiList>( visitors, "_list" ), 113, [129, 130, 131, 132, 133, 134], "visitors" );
+
+		typeof( ParkItemsScreen ).GetField( "_lastTab", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, 0 );
+		var items = new ParkItemsScreen( stack );
+		var lists = Field<Dictionary<int, UiList>>( items, "_lists" );
+		var show = typeof( ParkItemsScreen ).GetMethod( "Show", Private )!;
+
+		Framed( lists[5], 82, [105, 106, 107, 108, 109], "rides" );
+
+		show.Invoke( items, [1] );
+		Framed( lists[5], 87, [105, 584, 585, 586, 587], "shops" );
+
+		show.Invoke( items, [2] );
+		Framed( lists[6], 92, [105, 584, 107, 585, 586, 587], "sideshows" );
+
+		show.Invoke( items, [3] );
+		Framed( lists[2], 98, [105, 588], "misc" );
+
+		Assert.IsTrue( lines.Any( line => line.StartsWith( "Staff list: headings " ) && line.Contains( " 8 119 \"Name\"" ) ), "the staff's log line" );
 	}
 
 	/// <summary>

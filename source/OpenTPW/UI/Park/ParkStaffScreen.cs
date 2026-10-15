@@ -135,8 +135,11 @@ internal sealed class ParkStaffScreen : UiWindow
 			BarInset = MeterInset
 		} );
 
+		// Framed by FUN_00486660 with help rows 0x77 to 0x7b (0x00496713).
 		for ( var column = 0; column < Headings.Length; ++column )
-			_list.AddHeading( column, Headings[column], Localization.Text( 101 + column ) );
+			_list.AddFramedHeading( column, Headings[column], Localization.Text( 101 + column ), 0x77 + column );
+
+		Log.Info( $"Staff list: headings {_list.HeadingsCensus()}" );
 
 		_tabs = _list.Add( new UiRadioGroup
 		{

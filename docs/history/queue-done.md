@@ -6908,6 +6908,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the meters `0x32c`/`0x32d` the same skin, no longer `UiMeter`. On `q369/skill.TPWS`: `row 25 Duke Mighten: Walking 81
   942 880` and the other four kinds' rows as predicted, the original's bars within 0.012 of the same figures and
   lettering "$ 81" (`q369/orig/b`, `barsplit.py`).
+- [x] **Q370. The all-staff, all-items and visitors lists' headings framed** (a piece of the old Q370, split by
+  Claude; the rest is Q371). Built: `UiList.AddFramedHeading`, `FUN_00486660`'s frame `!cbut`, font slot 8, 255, 239,
+  0 and each column's help row (staff `0x77` to `0x7b`, visitors `0x81` to `0x86`, the items' by tab), as each opener
+  hands them. On the stock park every one of the 29 headings logged `!cbut 8 <help> "<text>"` and drew teal 0.854 to
+  0.99 with yellow lettering, as the original's (0.80 to 0.985; `q370/side-by-side.png`); main's were white on black.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -36,7 +36,7 @@ internal sealed class ParkItemsScreen : UiWindow
 {
 	/// <summary>How the four tabs are laid out, in the tab order <c>FUN_00495aa0</c>'s switch uses.</summary>
 	private readonly record struct Tab( int Index, int Id, int Help, string Mesh, UIStrings Title,
-		int FirstHeading, int Columns, UiRect Rect, bool[] Bars );
+		int FirstHeading, int Columns, UiRect Rect, bool[] Bars, int[] Helps );
 
 	/// <remarks>
 	/// <b>Each tab's rect is the stream's own, NOT a stride from the first one.</b> The ids are not in
@@ -50,13 +50,16 @@ internal sealed class ParkItemsScreen : UiWindow
 		// divergence ParkFrontEnd.Meshes lists. The other three resolve to their file names.
 		// The bars are the columns the styler FUN_00494690 skins with ridestatbar.wct, by tab: the rides' excitement,
 		// state of repair and remaining life, the shops' satisfaction, the sideshows' excitement and satisfaction.
+		// The help rows are each tab builder's, handed to FUN_00486660 with its heading: FUN_00494ec0, FUN_00494c70,
+		// FUN_00494250 and FUN_00495110.
 		new( 0, 0x12c4ba, 101, "b_srides",   UIStrings.AllRides,     82, 5, new UiRect( 1283, 195, 1386, 297 ),
-			[false, false, true, true, true] ),
+			[false, false, true, true, true], [0x69, 0x6a, 0x6b, 0x6c, 0x6d] ),
 		new( 1, 0x12c4bc, 102, "b_sshop",    UIStrings.AllShops,     87, 5, new UiRect( 1521, 195, 1623, 297 ),
-			[false, false, false, false, true] ),
+			[false, false, false, false, true], [0x69, 0x248, 0x249, 0x24a, 0x24b] ),
 		new( 2, 0x12c4bb, 103, "b_sshow",    UIStrings.AllSideshows, 92, 6, new UiRect( 1402, 195, 1504, 297 ),
-			[false, false, true, false, false, true] ),
-		new( 3, 0x12c4bd, 104, "b_sfeature", UIStrings.AllMiscItems, 98, 2, new UiRect( 1640, 195, 1742, 297 ), [] ),
+			[false, false, true, false, false, true], [0x69, 0x248, 0x6b, 0x249, 0x24a, 0x24b] ),
+		new( 3, 0x12c4bd, 104, "b_sfeature", UIStrings.AllMiscItems, 98, 2, new UiRect( 1640, 195, 1742, 297 ), [],
+			[0x69, 0x24c] ),
 	];
 
 	/// <summary>The five-column tree at <c>0x750ab8</c> - rides and shops.</summary>
@@ -213,8 +216,9 @@ internal sealed class ParkItemsScreen : UiWindow
 			RowRightClicked = GoTo
 		} );
 
+		// Framed by FUN_00486660; the text and the help row are the tab's (Show).
 		for ( var column = 0; column < headings.Length; ++column )
-			list.AddHeading( column, headings[column], string.Empty );
+			list.AddFramedHeading( column, headings[column], string.Empty, -1 );
 
 		list.Build();
 
@@ -289,15 +293,20 @@ internal sealed class ParkItemsScreen : UiWindow
 		chosen.Build();
 
 		// The headings, which change with the tab even where the shape does not - rides and shops share
-		// a tree and name its five columns differently.
+		// a tree and name its five columns differently, and help with different rows.
 		for ( var column = 0; column < tab.Columns; ++column )
 		{
 			foreach ( var child in chosen.Children )
 			{
 				if ( child.Id == 0x10 + column )
+				{
 					child.Text = Localization.Text( tab.FirstHeading + column );
+					child.HelpText = tab.Helps[column];
+				}
 			}
 		}
+
+		Log.Info( $"Items list: headings of tab {_tab}: {chosen.HeadingsCensus()}" );
 
 		if ( Level.Current is not { } level || level.ParkState is not { } state
 			|| level.Catalogue is not { } catalogue )

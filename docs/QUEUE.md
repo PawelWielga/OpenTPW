@@ -44,11 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q370. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q371. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the headings bare where the original frames them
-  (`FUN_00486660`, font `[0x00751188]`, 255, 239, 0, help rows `0x77` to `0x7b`), the row height from the font
+  From Q370 (`hud.md`, "The list headings' frames"): the headings are framed; the original's lettering is larger and
+  wraps "Monthly Wage". Seen beside the original in `q370/side-by-side.png`, not read and not counted: **the original's
+  misc tab lists a row an object** (each with its kind's count, by name) where this game's lists a row a kind; the
+  visitors' rows letter the visitor number 0 for the file's guests (the original's 1 to 10), the cash without its
+  "$ ", the happiness as a number where the original draws a bar, and the list has no scrollbar (the original's has).
+  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height from the font
   (`[0x007ca170]`), the status's own words (`STAFF_STATUS_TEXT`: the table `[0x0078baa4]`, read by the row adder
   `0x00496320`), the list's sort word (`FUN_006659af( [0x0075118c], 0 )`). Five other callers hand the stat bars'
   skin `happygrad.wct` (`FUN_004939d0`, `FUN_004afc10`, `FUN_004b1040`, `FUN_004b53c0`, `FUN_004b6c20`): which
@@ -61,9 +65,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q367 (`hud.md`, "The all-items rows: a number, then bars"): the shops' and sideshows' money and satisfaction
   are built (Q368); the original's sideshow rows stand Jungle Spray then Strength Bird, this game's the
   other way (the fill's walk order, not read); the items rows are this game's 44 units tall where the original's
-  factory measures its font (`0x007ca158`), so its bars are 24 units here; its headings are bare here where the
-  original frames them (`FUN_00486660`, font `[0x00750d58]`, 255, 239, 0, help rows from `0x69`, `FUN_00494ec0`;
-  `q367/side-by-side.png`). The all-staff list's skill and happiness
+  factory measures its font (`0x007ca158`), so its bars are 24 units here; its headings are framed
+  (Q370). The all-staff list's skill and happiness
   are bars (Q369). In no game
   run: a track ride's row (the fill's `0x2000` walk, `0x00493eb0`), a value past 255, Full Simulation (not asked:
   the screen is either mode's), the other three themes.
