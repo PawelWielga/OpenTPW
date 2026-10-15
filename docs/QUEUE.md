@@ -44,9 +44,13 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q375. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q376. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q375 (`hud.md`, "The miscellaneous tab: a row an object, and each tab's sort"): the all-items lists pick their
+  first row. Whether their trees carry flag `0x80` (the highlight following a moving pointer) is not read, and this
+  game's do not follow it. In no game run: an empty tab, a row bought or sold with the tab open, Full Simulation (not
+  asked: the screen is either mode's), the other three themes.
   From Q374 (`hud.md`, "The miscellaneous tab: a row an object, and each tab's sort"): the misc list picks no first row
   as it fills, where the original's picks it (the other lists' pick, Q232). In no game run: a misc object bought or sold
   with the tab open, Full Simulation (not asked: the screen is either mode's), the other three themes.
@@ -1087,6 +1091,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   (`UiList.PicksFirstRow`, its `0x401` posted and taken by the screen's `Update`); a list sets it once its screen's
   handler of `0x401` is read. `gmove.py` glides diagonally and the pointer over a list picks: check the pointer's
   path in the original's visitors runs (the second and tenth rows) before looking for anything else.
+  From Q375 (`hud.md`, "The miscellaneous tab: a row an object, and each tab's sort"): the pick is built for the
+  four all-items lists too (their handler has no `0x401` arm); the all-staff and visitors lists still count it.
 
 - [ ] **Q247. A loaded park is built again behind the loading screen, and the list has no scrollbar.** Left by
   Q241c (`saves.md`, "OpenTPW's Load Park"). The original reads a park file over the running park, with no loading

@@ -307,6 +307,68 @@ public class ParkCameraToThingTests
 	}
 
 	/// <summary>
+	/// <b>Each all-items tab picks its first row as it fills</b>, the row sorted first (<c>FUN_0066403b</c>'s
+	/// <c>FUN_0066525c( 0 )</c>; the handler <c>FUN_00495360</c> has no <c>0x401</c> arm), keeps the index over a
+	/// heading's re-sort, and a right click that misses every row goes to that row's thing.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no pick; the pick on the row added first; the pick dropped by a re-sort; the miss counted.</remarks>
+	[TestMethod]
+	public void EachItemsTabPicksItsFirstRowAndARightClickMissingEveryRowGoesThere()
+	{
+		var picks = Times( "LIST_FIRST_ROW_SELECTED" );
+		var misses = Times( "LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED" );
+		var sorts = (int[])typeof( ParkItemsScreen ).GetField( "_sorts", BindingFlags.Static | BindingFlags.NonPublic )!.GetValue( null )!;
+
+		try
+		{
+			var screen = new ParkItemsScreen( _stack );
+			_stack.Open( screen );
+			var show = typeof( ParkItemsScreen ).GetMethod( "Show", Private )!;
+			var lists = (Dictionary<int, UiList>)typeof( ParkItemsScreen ).GetField( "_lists", Private )!.GetValue( screen )!;
+
+			foreach ( var (tab, shape) in new[] { (0, 5), (1, 5), (2, 6), (3, 2) } )
+			{
+				show.Invoke( screen, [tab] );
+				Assert.IsTrue( lists[shape].Rows.Count > 0, $"tab {tab} has rows" );
+				Assert.AreEqual( lists[shape].Rows[0].Id, lists[shape].Selected, $"tab {tab}: the row sorted first" );
+			}
+
+			var misc = lists[2];
+			Assert.AreEqual( "Litter Bin", misc.Rows[0].Name );
+			Assert.AreNotEqual( misc.Rows[0].Id, misc.Rows[^1].Id );
+
+			((UiButton)misc.Children.Single( child => child.Id == 0x10 )).Clicked!();
+			Assert.AreEqual( "Staff Room", misc.Rows[0].Name );
+			Assert.AreEqual( misc.Rows[0].Id, misc.Selected, "the index kept: the new top row" );
+
+			// Filled again falling: the Litter Bin goes in first and stands last; the pick is the index, the Staff Room.
+			show.Invoke( screen, [0] );
+			show.Invoke( screen, [3] );
+			Assert.AreEqual( "Litter Bin", misc.Rows[^1].Name );
+			Assert.AreEqual( "Staff Room", misc.Rows[0].Name );
+			Assert.AreEqual( misc.Rows[0].Id, misc.Selected, "the row sorted first, not the one added first" );
+
+			Assert.AreEqual( picks, Times( "LIST_FIRST_ROW_SELECTED" ), "no tab counts the pick" );
+
+			var room = misc.Rows[0].Id;
+			var cell = ParkOrbitCameraMode.CellOfThing( room, null, _state )!.Value;
+			Assert.AreNotEqual( Start, Corner( cell ) );
+
+			var below = RowMiddle( misc, misc.Rows.Count + 1 );
+			misc.RightClickedAt( below.X, below.Y );
+
+			Assert.AreEqual( Corner( cell ), ParkOrbitCameraMode.PointOfInterest, "the miss goes to the picked row's thing" );
+			Assert.IsFalse( _stack.Windows.Contains( screen ) );
+			Assert.AreEqual( misses, Times( "LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED" ), "not counted" );
+		}
+		finally
+		{
+			Array.Fill( sorts, 1 );
+			ParkOrbitCameraMode.PointOfInterest = Start;
+		}
+	}
+
+	/// <summary>
 	/// <b>Each all-items tab keeps its own sort for the session</b> (<c>[0x00750d5c]</c> to <c>[0x00750d68]</c>, each 1,
 	/// written on <c>0x406</c> by the remembered tab, <c>0x004954eb</c>): the name clicked on the miscellaneous tab
 	/// turns it to -1 and the rows about; the rides' tab stays by name rising, and the miscellaneous one opened again

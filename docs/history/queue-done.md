@@ -6938,6 +6938,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   On the stock park the eight rows, the Name click's `sort -1` kept across a tab, the bought rows standing first and
   the right click's camera read as predicted (`run-fix3`, 9 of 9, after two rounds my scene missed); main's lettered
   five rows; the original the same eight, order and right click (`q374/orig/a`). Mutations 10 of 11, m11 equivalent.
+- [x] **Q375. The all-items lists pick their first row as they fill, as the original's** (a piece of the old Q375,
+  split by Claude; the rest is Q376). The handler `FUN_00495360` has no `0x401` arm, so the add's pick is the highlight
+  alone: the row sorted first, kept at the top over a re-sort, and a right click below every row goes to its thing.
+  On the stock park the four tabs' picks, the re-sort's and the right click's camera read as predicted (`q375/run-fix1`,
+  8 of 8); main's highlighted nothing and counted both (2 of 2); the original highlighted row 0 on each tab and after
+  the heading, and its right click below the rows went to the Staff Room (`q375/orig/a`). Mutations 4 of 4.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

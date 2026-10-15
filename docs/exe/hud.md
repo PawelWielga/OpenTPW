@@ -672,7 +672,7 @@ Read first-hand for the build (Q200b, 2026-09-30):
   before every numbered visitor.
 - **An add that makes the count 1 selects the first row** (`FUN_0066525c( 0 )` in `FUN_0066403b`). The original's
   visitors list opens with a row highlighted, not always the first ("A right click on a list"). OpenTPW builds the
-  pick for the hire list ("The first row is picked as a list fills") and counts it for the others
+  pick for the hire and all-items lists ("The first row is picked as a list fills") and counts it for the others
   (`LIST_FIRST_ROW_SELECTED`, `docs/QUEUE.md` Q232).
 - **`FUN_0066525c( slot )`** selects `slot + top` when `slot < visible` and `slot < count`; otherwise, with
   `list+0x48 & 0x100` clear, it returns and the old index stands, and with it set it selects nothing. This list's
@@ -1507,8 +1507,10 @@ tenth on two others; what chooses it is not decoded, `docs/QUEUE.md` Q232), and 
 its tenth row went to that row's guest, not to an eleventh row's.
 
 **OpenTPW**: `UiList.RightClickedAt`, called by `WindowStack.RightClick` with the press's point, and
-`UiList.RowRightClicked`. The strip under the last whole row is no row's for either button. A list here opens with no
-row selected, so a miss before any row is chosen names nothing: counted, `LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED`.
+`UiList.RowRightClicked`. The strip under the last whole row is no row's for either button. The hire and all-items
+lists pick their first row as they fill ("The first row is picked as a list fills"), so there a miss names that row; the
+others open with no row selected, and a miss before any row is chosen names nothing: counted,
+`LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED`.
 
 **With flag `0x80` set, `0x400` is posted once, on the click** (`FUN_006655a2`, from `0x11006`), and once more on a
 double click's second press (`FUN_006656fa`); nothing posts it on a bare press ("Who acts on the click, and who on
@@ -1617,7 +1619,7 @@ game's two.
 
 **OpenTPW** (Q356): `UiList.PicksFirstRow` builds the add's pick, the top row selected as the first row goes in and its
 index posted; `TakePosted` hands the row standing at that index to `SelectionChanged` when the screen's `Update` calls
-it. The hire list sets it; the other lists count the pick (`LIST_FIRST_ROW_SELECTED`, Q232). The picked wage stays in
+it. The hire and all-items lists set it; the other lists count the pick (`LIST_FIRST_ROW_SELECTED`, Q232). The picked wage stays in
 Staff costs until the next pick. On the same file (`q356/run-fix2`) the opening logged `Hire list: added 7,11, row 11
 picked` and `Hire screen: candidate 11 grade 3, skill bar 614 of 1024, staff costs 502`, the bar 0.606 with Chris
 Battson's row highlighted, and the mechanics' tab `added 3,8,10, row 8 picked`, candidate 8 grade 2, 409, staff costs
@@ -1795,9 +1797,22 @@ Toilet 3, 20 Staff Room 1`, eight rows lettered (`4-misc.png`); the Name heading
 (`5-misc-falling.png`), kept across the rides' tab; `tab 1, sort 1: 44 Balloon Shop 0, 16 Drinks Shop 0` and `tab 2, sort
 1: 43 Giant Puzzle 0, 14 Jungle Spray 0`, each bought row added last and standing first; the right click on row 2
 `Camera: to thing 19 on cell (40,29)`, the screen shut (`7-camera.png`). Main's build (`run-control2`) lettered five rows,
-a row a kind, and counted the right click (`ALL_ITEMS_MISC_ROW_RIGHT_CLICK`, which is gone). **Not built**: the
-original picks the first row as the list fills ("The first row is picked as a list fills"); this game's miscellaneous
-list picks none.
+a row a kind, and counted the right click (`ALL_ITEMS_MISC_ROW_RIGHT_CLICK`, which is gone).
+
+**Every tab picks its first row as it fills** (Q375). The add's pick ("The first row is picked as a list fills") posts
+`0x401`, and the handler `FUN_00495360` has no arm for it (it goes to the default, `FUN_0065f66e`): the pick is the
+highlight alone. It is an index, so the row highlighted is the one sorted first, it stays at the top over a heading's
+re-sort, and the right click (`0x402`, the selected index) on a point below every row goes to that row's thing.
+Measured in the original (`q375/orig/a`, `q353/grades.TPWS`; `rectcolour.py`'s teal share of row 0's name cell, row 1's
+nought each time): rides 0.935, shops 0.931, sideshows 0.93, misc 0.949, and 0.939 after the Name heading with the Staff
+Room on top; the pointer brought up from under the list to below the rows and a right click shut the screen with the view
+on the Staff Room. **OpenTPW**: `ParkItemsScreen.BuildList` sets `UiList.PicksFirstRow`; nothing takes the posted pick,
+and the `Items order` line ends `; picked N`. On the stock park with the Giant Puzzle and the Balloon Shop bought
+(`q375/run-fix1`, the final game binary): picked 13, 44 (the Balloon Shop, added after the Drinks Shop), 43, 17, and 20
+after the heading; row 0's teal 0.959, 0.971, 0.965, 0.968, 0.965, row 1's nought; the right click below the rows
+`Camera: to thing 20 on cell (58,16)`, the screen shut, neither `LIST_FIRST_ROW_SELECTED` nor
+`LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED` counted. Main's build (`run-control1`): no highlight, the screen left open, the
+miss counted once and the pick four times.
 
 #### The all-staff rows: a money cell, then bars
 

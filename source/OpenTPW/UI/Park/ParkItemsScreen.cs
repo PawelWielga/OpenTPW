@@ -219,6 +219,10 @@ internal sealed class ParkItemsScreen : UiWindow
 			RowArea = rows,
 			Columns = edges,
 
+			// The add picks the top row as the first goes in (FUN_0066403b), so each fill highlights the row sorted first.
+			// The screen's handler FUN_00495360 has no 0x401 arm: nothing takes the pick, and it is the highlight alone.
+			PicksFirstRow = true,
+
 			// A right click on the list moves the camera to the selected row's thing and closes the screen (0x00495584).
 			RowRightClicked = GoTo,
 			SortChanged = word => _sorts[_tab] = word,
@@ -359,8 +363,8 @@ internal sealed class ParkItemsScreen : UiWindow
 		LogOrder( chosen );
 	}
 
-	/// <summary>The rows in the order they stand, after a fill and a heading's click.</summary>
-	private void LogOrder( UiList list ) => Log.Info( $"Items order: tab {_tab}, {list.Census()}" );
+	/// <summary>The rows in the order they stand, after a fill and a heading's click, and the row picked.</summary>
+	private void LogOrder( UiList list ) => Log.Info( $"Items order: tab {_tab}, {list.Census()}; picked {list.Selected}" );
 
 	/// <summary>
 	/// A placed object's row by column, as the fill <c>FUN_00493cd0</c> and the rewrite <c>FUN_004955e0</c> hand it: the

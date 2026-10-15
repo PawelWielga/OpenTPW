@@ -780,8 +780,8 @@ internal sealed class UiList : UiControl
 	/// misses every row still names the row already selected, and names nothing only when none is.
 	/// </summary>
 	/// <remarks>
-	/// The original's list opens with a row selected and highlighted (<see cref="FirstRow"/>, not built), so there a
-	/// miss before any row was chosen names that row. Here it names nothing: counted.
+	/// The original's list opens with a row selected and highlighted (<see cref="FirstRow"/>), so there a miss before
+	/// any row was chosen names that row. A list without <see cref="PicksFirstRow"/> names nothing: counted.
 	/// </remarks>
 	internal override void RightClickedAt( float x, float y )
 	{
