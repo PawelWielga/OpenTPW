@@ -23,18 +23,17 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
-/// <b>Two of the six columns are left blank.</b> Time In Park is decoded - a quarter of the park hours since the
-/// guest's arrival stamp <c>+0x1d4</c> (<c>FUN_004fd950</c>, <c>0x0049383e</c>) - which <see cref="Peep.ArrivalDate"/>
-/// keeps and this column does not show. The fifth column is
-/// stranger: <b>UITEXT row 117 is literally <c>"?"</c> in the shipped string file</b>, so the original ships
-/// that column unnamed too; its row adder fills it from the guest's last thought (<c>0x0049385a</c>), which
-/// <see cref="Peep.Thoughts"/> keeps and this column does not show. Each is headed as the game heads it and left empty. Rides Ridden is the guest's
-/// <see cref="Peep.NumRides"/> (<c>0x00493850</c>).
+/// <b>The fifth column is left blank.</b> <b>UITEXT row 117 is literally <c>"?"</c> in the shipped string file</b>, so
+/// the original ships that column unnamed too; its row adder fills it from the guest's last thought (<c>0x0049385a</c>),
+/// which <see cref="Peep.Thoughts"/> keeps and this column does not show. It is headed as the game heads it and left
+/// empty. Rides Ridden is the guest's <see cref="Peep.NumRides"/> (<c>0x00493850</c>); Time In Park is
+/// <see cref="HoursIn"/>, lettered by <see cref="TimeText"/>.
 /// </para>
 ///
 /// <para>
 /// <b>The styler <c>FUN_004939d0</c> makes the other cells</b>: the visitor number a cell lettering UITEXT 457 at nought
-/// (<c>FUN_00490c30</c>, its setter <c>0x00490dc0</c>), the cash a money cell (<c>FUN_00490250</c>), and the happiness a
+/// (<c>FUN_00490c30</c>, its setter <c>0x00490dc0</c>), the time in park hours or days (<c>FUN_00490e60</c>, its setter
+/// <c>0x00490ff0</c>), the cash a money cell (<c>FUN_00490250</c>), and the happiness a
 /// bar in <c>happygrad.wct</c> inset 8 (<c>FUN_00477ff0</c>, <c>FUN_00485e30( cell, 0, 8 )</c>). See <see cref="RowOf"/>.
 /// </para>
 /// </summary>
@@ -105,13 +104,13 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			// A right click on the list moves the camera to the selected row's guest and closes the screen (0x004934c5).
 			RowRightClicked = GoTo,
 
-			// The screen's handler keeps the list's 0x406 (0x00493479). Time In Park and the fifth column are not
-			// built, so a sort on either leaves the rows as they stand: counted.
+			// The screen's handler keeps the list's 0x406 (0x00493479). The fifth column is not built, so a sort on it
+			// leaves the rows as they stand: counted.
 			SortChanged = word =>
 			{
 				_sort = word;
 
-				if ( Math.Abs( word ) is 3 or 5 )
+				if ( Math.Abs( word ) == 5 )
 					Unimplemented.Report( "VISITOR_SORT_ON_UNBUILT_COLUMN" );
 			},
 			Columns = [(297, 689), (701, 948), (966, 1213), (1233, 1358), (1372, 1474), (1478, 1718)],
@@ -167,7 +166,6 @@ internal sealed class ParkVisitorsScreen : UiWindow
 		}
 
 		// Counted once, as the screen opens - not once a frame. See RefreshEvery.
-		Unimplemented.Report( "VISITOR_TIME_IN_PARK" );
 		Unimplemented.Report( "VISITOR_COLUMN_117_UNNAMED" );
 	}
 
@@ -203,7 +201,7 @@ internal sealed class ParkVisitorsScreen : UiWindow
 
 		foreach ( var guest in _people.Peeps )
 		{
-			var row = RowOf( guest );
+			var row = RowOf( guest, _people.State.GameTick, rewrite: false );
 
 			_list.Add( row );
 			Log.Info( $"Visitors list: row {Census( row )}" );
@@ -224,35 +222,74 @@ internal sealed class ParkVisitorsScreen : UiWindow
 		Stack.Close( this );
 	}
 
-	/// <summary>A guest's row - the original's row adder <c>FUN_00493800</c>.</summary>
+	/// <summary>
+	/// A guest's row - the original's row adder <c>FUN_00493800</c>, or with <paramref name="rewrite"/> the two-second
+	/// rewrite's own copy of it (<c>0x00493270</c>).
+	/// </summary>
 	/// <remarks>
 	/// Every column is a number, and the list sorts on it. The visitor number letters UITEXT 457 at nought
-	/// (<c>0x00490dc0</c>) and <c>"%d"</c> otherwise; the cash is a money cell's text; the happiness is its whole part's
-	/// low byte as a bar, <c>((x &amp; 0xff) &lt;&lt; 10) / 100</c> of 1024 (<c>0x00493870</c>).
+	/// (<c>0x00490dc0</c>) and <c>"%d"</c> otherwise; the cash is a money cell's text; the time in park is the hours at
+	/// the park's clock <paramref name="gameTick"/>; the happiness is its whole part's low byte as a bar,
+	/// <c>((x &amp; 0xff) &lt;&lt; 10) / 100</c> of 1024 (<c>0x00493870</c>).
+	/// <para>
+	/// <b>The rewrite shifts the stay back left by two</b> (<c>SHL EAX, 2</c> at <c>0x004932db</c>) where the adder does
+	/// not, so a row letters four times its hours from the first rewrite on, as the original's does.
+	/// </para>
 	/// </remarks>
-	private static UiList.Row RowOf( Peep guest )
-		=> new( guest.ThingId, NumberText( guest.VisitorNumber ), guest.VisitorNumber, Values:
+	private static UiList.Row RowOf( Peep guest, int gameTick, bool rewrite )
+	{
+		var stay = guest.StayAt( gameTick );
+		var hours = HoursIn( rewrite ? stay << 2 : stay );
+
+		return new( guest.ThingId, NumberText( guest.VisitorNumber ), guest.VisitorNumber, Values:
 		[
 			ParkItemsScreen.Money( guest.Cash ),
-			"",
+			TimeText( hours ),
 			$"{guest.NumRides}",
 			"",
 			""
 		],
-		Numbers: [guest.VisitorNumber, guest.Cash, 0, guest.NumRides, 0, ParkItemsScreen.Bar( (int)guest.Happiness )] );
+		Numbers: [guest.VisitorNumber, guest.Cash, hours, guest.NumRides, 0, ParkItemsScreen.Bar( (int)guest.Happiness )] );
+	}
+
+	/// <summary>
+	/// A stay's whole park hours (<c>0x00493834</c>): <c>FUN_004f8730</c> takes it times <c>mFunnySecsPerRealSec</c>,
+	/// over four, times 10,000,000 in 64 bits (<c>__allmul</c>, which wraps), and the adder divides that by
+	/// 36,000,000,000 (<c>__alldiv</c>, signed) and keeps the low half. A guest stamped after the clock has a stay near
+	/// 2<sup>30</sup>: four sweeps ahead the wrap gives 93,661,950 hours at the shipped rate, and the rewrite's four
+	/// times that stay -137,761,755, as the original's.
+	/// </summary>
+	internal static int HoursIn( uint stay )
+		=> unchecked( (int)((long)((ulong)GameCalendar.Rate * stay / GameCalendar.AdvancesPerSecond * 10_000_000)
+			/ 36_000_000_000) );
+
+	/// <summary>
+	/// The time in park cell (<c>FUN_00490e60</c>'s setter <c>0x00490ff0</c>): past 48 hours UITEXT 443 ("days") and past
+	/// 24 UITEXT 442 ("day"), each with the hours over 24 as parameter 8; else UITEXT 441 ("hours") with the hours as
+	/// parameter 11. A negative count is handed as its size and a sign word that the writer (<c>0x006add40</c>, which
+	/// prints the value <c>"%d"</c>) does not read, so it letters without its sign: the rewrite's wrap of a guest
+	/// stamped after the clock does.
+	/// </summary>
+	internal static string TimeText( int hours )
+		=> hours > 48 ? Localization.Format( 443, (8, $"{hours / 24}") )
+			: hours > 24 ? Localization.Format( 442, (8, $"{hours / 24}") )
+			: Localization.Format( 441, (11, $"{(hours < 0 ? unchecked( -hours ) : hours)}") );
 
 	/// <summary>The visitor number's cell (<c>FUN_00490c30</c>'s setter <c>0x00490dc0</c>): "New Visitor" at nought.</summary>
 	private static string NumberText( int number )
 		=> number == 0 ? Localization.Get( UIStrings.NewVisitor ) : $"{number}";
 
-	/// <summary>A row for the log: id, the number's text, the cash's, the rides ridden and the happiness bar.</summary>
+	/// <summary>
+	/// A row for the log: id, the number's text, the cash's, the time in park's with its hours, the rides ridden and the
+	/// happiness bar.
+	/// </summary>
 	private static string Census( UiList.Row row )
-		=> $"{row.Id} {row.Name}: {row.Values![0]} {row.Values[2]} {row.Numbers![5]}";
+		=> $"{row.Id} {row.Name}: {row.Values![0]} {row.Values[1]} ({row.Numbers![2]} h) {row.Values[2]} {row.Numbers[5]}";
 
 	/// <summary>A guest was made while the list is open: their row goes in by sort order (<c>FUN_00493c50</c>).</summary>
 	private void Arrived( Peep guest )
 	{
-		var at = _list.Add( RowOf( guest ) );
+		var at = _list.Add( RowOf( guest, _people!.State.GameTick, rewrite: false ) );
 
 		Log.Info( $"Visitors list: row added for guest {guest.ThingId} (visitor {guest.VisitorNumber}) at {at} - "
 			+ $"{_list.Rows.Count} rows, top row {_list.ScrollTop}" );
@@ -288,7 +325,7 @@ internal sealed class ParkVisitorsScreen : UiWindow
 		{
 			if ( _people.Guests.TryGetValue( _list.Rows[index].Id, out var guest ) )
 			{
-				_list.Replace( index, RowOf( guest ) );
+				_list.Replace( index, RowOf( guest, _people.State.GameTick, rewrite: true ) );
 				++rewritten;
 			}
 		}

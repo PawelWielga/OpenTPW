@@ -637,8 +637,9 @@ player put it.** Three paths change it:
   selects that guest's row and scrolls to it (`FUN_00665739`, the one direct writer of the top row besides the
   constructor and the clear). Then it arms timer `0x80083` at 2000 ms (`FUN_0065ef90`, `FUN_0065f024`).
 - **The timer, every two seconds** (message `0x10` with id `0x80083`, `0x00493270`). For each existing row, from the
-  last to row 0, it fetches the row's guest (`FUN_00664c71`), works out the same six values the row adder does, and
-  writes them into that row (`FUN_006644ea( row, values, 0x3f, row == 0, -1 )`). Row 0's call redraws the visible
+  last to row 0, it fetches the row's guest (`FUN_00664c71`), works out the same six values the row adder does, but
+  for one: **the time in park from the stay shifted back left by two** (`SHL EAX, 2` at `0x004932db`), four times the
+  adder's hours ("The visitors rows", below), and writes them into that row (`FUN_006644ea( row, values, 0x3f, row == 0, -1 )`). Row 0's call redraws the visible
   rows from the top row `list+0x154`. **Nothing is added, removed, re-sorted or scrolled**: a row keeps its place from
   its last sort or insert even when the value it was sorted on has changed.
 - **A guest arriving or going.** The guest constructor `FUN_004faec0` broadcasts message `0x1c` (`0x004fb2fd`) and the
@@ -1446,8 +1447,8 @@ the two land rows are sorted in with the rest (`FUN_004aaf70` adds them through 
 whenever a sort is set, `HeadingClicked` is `FUN_00665a44` and `Sort` `FUN_006628f4`; a heading is a button
 (`AddHeading`). The hire, buy and visitors screens each keep their word in a static for the session. The all-staff
 and all-items lists are given no sort, stand as added, and count a heading's click (`LIST_HEADING_SORT_NOT_BUILT`).
-A sort on the visitors' Time In Park or fifth column, neither built, leaves the rows as they stand
-(`VISITOR_SORT_ON_UNBUILT_COLUMN`). The buy list's rows are handed over in name order, where the original walks its
+A sort on the visitors' fifth column, not built, leaves the rows as they stand (`VISITOR_SORT_ON_UNBUILT_COLUMN`); Time
+In Park sorts on its hours (Q372). The buy list's rows are handed over in name order, where the original walks its
 catalogue (`FUN_00412e60`): that shows only among rows equal on the sorted column.
 
 **Measured, both games side by side** (Q130e, 2026-10-07, each predicted first; `q130e/`). The original, on the save's
@@ -1823,7 +1824,7 @@ styler `FUN_004939d0`, which makes the six cells, each in the font `[0x007508b4]
 |---|---|---|---|
 | Visitor Number | `FUN_00490c30` (vtable `0x006ff470`, setter `0x00490dc0`): UITEXT `0x1c9` (457, "New Visitor") at nought, else `"%d"` | `FUN_0065c428( 1, 1 )` | `+0x1d8` |
 | Cash Remaining | a money cell `FUN_00490250` ("The all-items rows", above) | `( 2, 1 )` | `+0x1a0` |
-| Time In Park | `FUN_00490e60` (vtable `0x006ff4a0`, setter `0x00490ff0`): by hours, UITEXT `0x1bb` past 48 and `0x1ba` past 24 with the hours / 24, more below | `( 1, 1 )` | `FUN_004fd950`'s span `__alldiv` 36,000,000,000 (100 ns units: hours) |
+| Time In Park | `FUN_00490e60` (vtable `0x006ff4a0`, setter `0x00490ff0`): by hours, below | `( 1, 1 )` | `FUN_004fd950`'s stay through `FUN_004f8730`, `__alldiv` 36,000,000,000: hours |
 | Rides Ridden | the number painter `FUN_0048fde0` | none set | `+0x1c4` |
 | ? | the mesh `ti_hungry`, inset `( 4, 0 )` | | `+0x30` less 1, or 999 at nought |
 | Happiness | a bar in `happygrad.wct` (`FUN_00477ff0`), inset `( 0, 8 )` | | `((__ftol( +0x19c ) & 0xff) << 10) / 100` (`0x00493870`) |
@@ -1831,8 +1832,35 @@ styler `FUN_004939d0`, which makes the six cells, each in the font `[0x007508b4]
 `FUN_0065c428( across, down )` posts `0xc00` with the two bytes to the cell's text; its handler sits behind a jump table
 and is not read. **Measured in the original's frame instead** (`q371/measure.py`'s `aligns`, the lettering's extent in
 its column): the number centred (its middle 0.495 of the column), the cash to the right (its end 0.976), the rides from
-the left (its start 0.032), as `( 2, 1 )` reads right on the park status screen above. The time cell's other words and
-the thought's frames are not read.
+the left (its start 0.032), as `( 2, 1 )` reads right on the park status screen above. The thought's frames are not read.
+
+**The time in park** (read 2026-10-14, Q372). The stay is `FUN_004fd950`: `mGameTick` less the guest's `+0x1d4`, taken
+unsigned and shifted right by two (`SHR` at `0x004fd963`). `FUN_004f8730` on the park calendar (world `+0x2a0`, its
+`+0x1c` `mFunnySecsPerRealSec`, 15000) makes it 100 ns units: `__allmul( rate, stay )`, over four, `__allmul` by
+10,000,000, a 64-bit product that wraps; the adder `__alldiv`s that by 36,000,000,000, signed (`0x0049383e`), and keeps the
+low half: whole hours. **The two-second rewrite (`0x00493270`) shifts the stay back left by two first** (`SHL EAX, 2` at
+`0x004932db`), so from the first rewrite on a row letters four times the hours its fill did; an arrival's row (`0x1c`,
+`FUN_00493c50`) goes through the adder, on the tick the guest is stamped. The setter `0x00490ff0` (on a message with
+`0x80`) letters through `FUN_006acd60` on `[0x0078ba94]` with one `VARM` variable, whose type word is the string's
+parameter number:
+
+| Hours | UITEXT | Parameter |
+|---|---|---|
+| past 48 | `0x1bb` (443, "{8} days") | 8: the hours / 24 (`MUL 0xaaaaaaab`, `SHR 4`) |
+| past 24 | `0x1ba` (442, "{8} day") | 8: the hours / 24, so 48 hours is "2 day" |
+| else | `0x1b9` (441, "{11} hours") | 11: the hours, a negative one `NEG`'d with the variable's sign word set |
+
+The variable's writer (`0x006add40`, its vtable `0x006ff170` slot 0) prints the value word `"%d"` and never reads the
+sign word, so a negative count letters its size. **A guest stamped after the clock** has a stay near 2^30: the adder
+letters 93,661,950 hours four sweeps ahead ("3902581 days"), and the rewrite's four times that stay wraps past the sign,
+-137,761,755, lettered "137761755 hours". The list sorts the column on the signed hours.
+
+Measured in the original under Proton on `q372/time.TPWS` (`q371/visitors.TPWS`, tick 963, with eight guests' `+398`
+written; `q372/orig/b`, `thingwords.py` polling its clock): 0.58 s after V, at its tick 1056, the ten rows read the
+adder's words exactly ("4 days", "1 day", "1 day", "2 day", "3 days", "3 days", "9 days", "3902538 days", "23 hours",
+"4 days"); 7 s on, the rewrite's at 1080 ("18 days", "5 days", "9 days", "9 days", "13 days", "13 days", "39 days",
+".37765797 hours", "5 days", "18 days": a nine-digit count clipped at both ends of its cell); the Time In Park heading's
+click sorted the rewrite's numbers, the wrapped guest first. The time is centred (0.317 to 0.65 of its column).
 
 Measured in the original under Proton on `q371/visitors.TPWS` (`q353/grades.TPWS` with five guests' happiness written
 at the guest record's `+422` and thing 42's `mArrivalIndex` at `+402` written 0; `q371/orig/b`, `thingwords.py` on
@@ -1843,13 +1871,21 @@ run a, unpolled, read four bars off the file's by 0.06 to 0.14.
 
 **OpenTPW** (Q371): `ParkVisitorsScreen.RowOf` and `NumberText`, the list's `ColumnAligns`, `BarColumns`, `BarSkins`
 and `BarInset` 8. Each fill logs `Visitors list: row <thing> <number>: <cash> <rides> <happiness bar>`, and each
-rewrite `N rows rewritten, row 0` the same way. On the same file, paused at the load (`q371/run-fix1`, the final game
+rewrite `N rows rewritten, row 0` the same way (the time added since, below). On the same file, paused at the load (`q371/run-fix1`, the final game
 binary): `row 42 New Visitor: $ 684 0 512`, `row 38 1: $ 306 1 122`, ... `row 37 4: $ 570 0 1024`, sorted 42 first;
 its bars 0.5, 0.125, 0.33, 0.902, 1.0, 0.714, 0.527 and 0.5 (the file's happiness); the number centred (0.497), the cash
 right (0.974), the rides left (0.034) (`q371/side-by-side.png`: the original, this, main). Main's build (`run-control2`)
 lettered 0 and the cash and happiness as bare numbers, every one from the right, and drew no bar. **Not built**: the
-time in park and the thought's icon (`VISITOR_TIME_IN_PARK`, `VISITOR_COLUMN_117_UNNAMED`); the row height from the font
-(the original's rows 55.8 units apart, this game's 44); the first row picked as the list fills (Q232); the scrollbar.
+thought's icon (`VISITOR_COLUMN_117_UNNAMED`); the row height from the font (the original's rows 55.8 units apart, this
+game's 44); the first row picked as the list fills (Q232); the scrollbar.
+
+**OpenTPW** (Q372): `Peep.StayAt`, `ParkVisitorsScreen.HoursIn` and `TimeText`; `RowOf`'s `rewrite` shifts the stay.
+The log's row reads `<cash> <time> (<hours> h) <rides> <bar>`. On `q372/time.TPWS`, paused at the load's tick 964
+(`q372/run-fix3`, the final game binary): the fills `row 42 New Visitor: $ 684 3 days (79 h) 0 512`, `38 ... 5 hours
+(5 h)`, `40 23 hours`, `34 1 day (25 h)`, `37 2 day (48 h)`, `36 2 days (50 h)`, `41 8 days`, `33 3902537 days
+(93660909 h)`, `32 0 hours`; the rewrite's row 0 `13 days (316 h)`; the heading's click `sort 3`, `33 7 -137765918`
+first, then 0, 20, 95, 100, 195, 200, 316, 316, 320, 325, 329, 833 hours (`2-by-time.png`). Main's build lettered no
+time and counted `VISITOR_TIME_IN_PARK` and the sort. This game's smaller lettering fits the nine digits in the cell.
 
 #### The list headings' frames
 

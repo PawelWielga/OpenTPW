@@ -6919,6 +6919,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the cash right and the rides left. On `q371/visitors.TPWS` all 13 fill lines read as the file (`row 42 New Visitor: $
   684 0 512` first), the bars within 0.007 of their figures, as the original's within 0.03 of its polled happiness
   (`q371/side-by-side.png`); main's lettered 0 and bare numbers, all from the right, and no bar.
+- [x] **Q372. The visitors rows' Time In Park cell, as the original's adder, rewrite and setter make it** (a piece of
+  the old Q372, split by Claude; the rest is Q373). Built from `FUN_004fd950`, `FUN_004f8730` and the setter
+  `0x00490ff0`: the stay's whole park hours lettered "N hours" to 24, "N day" to 48, then "N days"; the two-second rewrite
+  four times the hours (`SHL` at `0x004932db`); a negative count by its size; the column sorts. On `q372/time.TPWS` the 13
+  fills and the rewrite read as the formula at tick 964 (`run-fix3`, 7 of 7), and the original's frames read the adder's
+  words before its first rewrite and the rewrite's after it, all ten rows each (`q372/orig/b`); main's lettered no time.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

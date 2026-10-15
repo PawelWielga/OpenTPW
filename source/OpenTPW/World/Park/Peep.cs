@@ -358,6 +358,12 @@ public sealed class Peep
 	public int ArrivalDate { get; }
 
 	/// <summary>
+	/// The stay at a park clock - <c>FUN_004fd950</c>: the clock less <see cref="ArrivalDate"/>, taken unsigned, in fours
+	/// of sweeps.
+	/// </summary>
+	public uint StayAt( int gameTick ) => (uint)(gameTick - ArrivalDate) >> 2;
+
+	/// <summary>
 	/// The park's clock when the guest last began a one-off animation, so that its end can be noticed -
 	/// <c>mTimeOfLastSpotAnim</c> (<c>+0x208</c>).
 	/// </summary>

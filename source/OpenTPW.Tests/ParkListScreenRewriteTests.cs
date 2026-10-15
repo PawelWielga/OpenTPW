@@ -73,6 +73,8 @@ public class ParkListScreenRewriteTests
 
 	private int Rewrites( string screen ) => lines.Count( line => line.StartsWith( screen ) && line.Contains( "rows rewritten" ) );
 
+	private static int Times( string what ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == what ).Times;
+
 	private static T Field<T>( object screen, string name ) => (T)screen.GetType().GetField( name, Private )!.GetValue( screen )!;
 
 	/// <summary>
@@ -510,13 +512,99 @@ public class ParkListScreenRewriteTests
 			list.ColumnAligns, "the number and time centred, the cash right, the rides left" );
 
 		fresh.Happiness = 90.5f;
+		state.SetGameTick( fresh.ArrivalDate + 4 * 30 );
 		Time.PinWall( 3000 );
 		screen.Update();
 
 		Assert.AreEqual( 921, list.Rows[0].Numbers![5], "the rewrite: (90 << 10) / 100" );
 		Assert.AreEqual( 921, first[0].Units );
 		Assert.IsTrue( lines.Any( line => line.StartsWith( "Visitors list: " ) && line.Contains( " rows rewritten, row 0 " )
-			&& line.EndsWith( "New Visitor: $ 306 0 921" ) ), "the rewrite's log line" );
+			&& line.EndsWith( "New Visitor: $ 306 5 days (125 h) 0 921" ) ), "the rewrite's log line: its stay times four" );
+	}
+
+	/// <summary>
+	/// <b>A guest's time in park is the stay's whole park hours, lettered in hours up to 24, then "day" to 48, then
+	/// "days"</b>, each in days the hours over 24 (the adder <c>0x00493834</c>, the setter <c>0x00490ff0</c>; <c>docs/exe/hud.md</c>,
+	/// "The visitors rows"); the two-second rewrite letters four times the hours (<c>0x004932db</c>), and the list sorts
+	/// on the hours.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the stay not in fours of sweeps, or signed; the rate not over four; the hours rounded; the
+	/// product not wrapped in 64 bits; a bound at 24 or 48 taken as reached; the days not the hours over 24; "day" and
+	/// "days" swapped; a negative count lettered with its sign; the rewrite's stay not shifted back, or the fill's
+	/// shifted; the column's number not the hours; a sort on it still counted.
+	/// </remarks>
+	[TestMethod]
+	public void TheVisitorsTimeInParkIsItsHoursThenADayThenDays()
+	{
+		Assert.AreEqual( GameCalendar.DefaultRate, GameCalendar.Rate, "the shipped park's rate" );
+
+		// stay x 15000 / 4 / 3600: 23 is 23.96 hours, 24 is 25, 47 is 48.96, 48 is 50.
+		CollectionAssert.AreEqual( new[] { 0, 23, 25, 48, 50, 1041 },
+			new uint[] { 0, 23, 24, 47, 48, 1000 }.Select( ParkVisitorsScreen.HoursIn ).ToArray() );
+
+		// Stamped after the clock: the stay is unsigned, and stay x 3750 x 10,000,000 wraps in 64 bits; the rewrite's
+		// stay, four times, wraps past the sign.
+		Assert.AreEqual( 93661950, ParkVisitorsScreen.HoursIn( unchecked( (uint)-4 ) >> 2 ) );
+		Assert.AreEqual( 93660909, ParkVisitorsScreen.HoursIn( unchecked( (uint)-4000 ) >> 2 ) );
+		Assert.AreEqual( -137761755, ParkVisitorsScreen.HoursIn( unchecked( (uint)-4 ) >> 2 << 2 ) );
+
+		CollectionAssert.AreEqual(
+			new[] { "0 hours", "1 hours", "24 hours", "1 day", "1 day", "2 day", "2 days", "2 days", "3 days", "43 days" },
+			new[] { 0, 1, 24, 25, 47, 48, 49, 71, 72, 1041 }.Select( ParkVisitorsScreen.TimeText ).ToArray() );
+
+		// A negative count letters its size: the writer prints the value word and not the sign word.
+		Assert.AreEqual( "137761755 hours", ParkVisitorsScreen.TimeText( -137761755 ) );
+
+		var guests = people.Peeps.ToArray();
+		var tick = guests.Max( guest => guest.ArrivalDate ) + 4 * 23;
+
+		// FUN_004fd950 takes the difference unsigned before the shift: a stamp after the clock is a stay near 2^30.
+		Assert.AreEqual( 0x3fffffffu, guests[0].StayAt( guests[0].ArrivalDate - 4 ) );
+		Assert.AreEqual( 23u, guests[0].StayAt( guests[0].ArrivalDate + 4 * 23 + 3 ) );
+
+		state.SetGameTick( tick );
+		Time.PinWall( 1000 );
+
+		var screen = new ParkVisitorsScreen( stack );
+		var list = Field<UiList>( screen, "_list" );
+
+		foreach ( var guest in guests )
+		{
+			var row = list.Rows.Single( each => each.Id == guest.ThingId );
+			var hours = (int)((long)((uint)(tick - guest.ArrivalDate) >> 2) * 15000 / 4 / 3600);
+
+			Assert.AreEqual( hours, row.Numbers![2], $"guest {guest.ThingId}" );
+			Assert.AreEqual( ParkVisitorsScreen.TimeText( hours ), row.Values![1] );
+		}
+
+		Assert.IsTrue( list.Rows.Any( row => row.Values![1] == "23 hours" ), "the last to arrive" );
+
+		// The two-second rewrite shifts each stay back left by two (0x004932db): four times the hours.
+		Time.PinWall( 3000 );
+		screen.Update();
+
+		foreach ( var guest in guests )
+		{
+			var row = list.Rows.Single( each => each.Id == guest.ThingId );
+			var hours = (int)((long)((uint)(tick - guest.ArrivalDate) >> 2 << 2) * 15000 / 4 / 3600);
+
+			Assert.AreEqual( hours, row.Numbers![2], $"guest {guest.ThingId} rewritten" );
+			Assert.AreEqual( ParkVisitorsScreen.TimeText( hours ), row.Values![1] );
+		}
+
+		Assert.IsTrue( list.Rows.Any( row => row.Values![1] == "3 days" ), "the last to arrive, 95 hours" );
+
+		var counted = Times( "VISITOR_SORT_ON_UNBUILT_COLUMN" );
+
+		((UiButton)list.Children.Single( child => child.Id == 0x12 )).Clicked!();
+
+		var hoursInOrder = list.Rows.Select( row => row.Numbers![2] ).ToArray();
+		Assert.IsTrue( hoursInOrder.Zip( hoursInOrder.Skip( 1 ), ( a, b ) => a <= b ).All( ordered => ordered ), "by hours" );
+		Assert.IsTrue( hoursInOrder.Distinct().Count() > 1, "and the hours differ" );
+		Assert.AreEqual( counted, Times( "VISITOR_SORT_ON_UNBUILT_COLUMN" ), "a sort on the time counts nothing" );
+
+		typeof( ParkVisitorsScreen ).GetField( "_sort", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, 1 );
 	}
 
 	/// <summary>

@@ -86,7 +86,7 @@ place to look for tools. Each file's docstring is its manual.
 | `original/kwinwl-start.sh` | A private display on `:78` drawn by the graphics card (`kwin_wayland --virtual` with Xwayland) for the original, where Xvfb draws by software. `:78` is `parkrun.py`'s too. **Not run since it was written**: try it before leaning on it |
 | `q119/lib.py` | What `parkrun.py` is built on: the launch, the console pipe, XTEST clicks and keys, the frame grab. Use it through `parkrun.py` |
 | `gen_addresses.py` | Regenerating `docs/exe/addresses.md` |
-| `wadcat`, `strdump`, `nodenames/` | A wad's entries, a string table's lines, a UI wad's node names (`CLAUDE.local.md`) |
+| `wadcat`, `strdump`, `nodenames/` | A wad's entries, a string table's lines, a UI wad's node names (`CLAUDE.local.md`). `strdump` prints every part of a row, a parameter as `{Pn}` (since Q372: a row that starts with one, as UITEXT 441 "{P11} hours", read blank before); name the table under the data folder, `Language/English/UITEXT.str` |
 
 **A poller of the original's memory is the one thing still written an item at a time** (`q257r/orig/cars.py`,
 `q257x/orig/smoke.py` for a car's smoke handle, its emitter and its node's place, `q257t/orig/chan.py` for a car's model's channel stamps, `q253/orig/look.py`; a model's heads are `original/heads.py`, above): each reads its own structures. Start from the newest that reads the same
@@ -528,7 +528,10 @@ GH=766` there, or the pointer is off):
   (786,123), misc (845,123); V opens the visitors over a screen. A guest's row in the original's memory (Q371, `q371/orig/run.sh` with `POLL=1`): the number `+0x1d8`, the cash
   `+0x1a0`, the rides `+0x1c4`, the happiness the float `+0x19c` (`thingwords.py ... 38:0x19c:f`); in a park file the
   guest record's `+402` (`mArrivalIndex`), `+414` (cash), `+422` (happiness, a float), for `parkfile.thing_set`. The
-  original's visitors rows stand 55.8 units apart from (virtual) y 340.
+  original's visitors rows stand 55.8 units apart from (virtual) y 340. **Its rows change two seconds after V**: the
+  rewrite is not the adder (the time in park four times, Q372), so a frame of what the opening fill letters is taken
+  within 2 s of the key, before moving the pointer away (`q372/orig/run.sh` with `EARLY=1`: 0.58 s). The guest's
+  `mArrivalDate` is `+0x1d4` live and `+398` in a file; poll a happiness beside it, which moves, for the clock.
 - **The shortcuts' keys in the original** (Q366, `q366/orig/run.sh`): B H I A S V F L T G and Space plain, S and V with
   Ctrl held (`xdotool keydown Control_L` around the key). **L opens nothing in Instant Action**, so an Escape sent after it
   opens the game menu and the next key falls on the menu: close a screen only where one opened. The gadget's

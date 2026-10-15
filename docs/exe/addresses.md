@@ -241,6 +241,8 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0048f4a6` | | OpenTPW/UI/VirtualScreen.cs  |
 | `0x0048f830` | | OpenTPW/UI/UiText.cs  |
 | `0x0048ff8f` | The number painter FUN_0048fde0's handler: swprintf "%d" of the value, the ride window's Users last month | OpenTPW/UI/Park/ParkObjectWindow.cs  |
+| `0x00490dc0` | Visitor number cell FUN_00490c30's setter: UITEXT 457 "New Visitor" at nought, else "%d" | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
+| `0x00490ff0` | Time in park cell FUN_00490e60's setter: past 48 hours UITEXT 443, past 24 UITEXT 442 (each the hours / 24), else 441 with the hours | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x00491ab0` | | OpenTPW/UI/UiText.cs  |
 | `0x00492180` | | OpenTPW/UI/HelpBar.cs  |
 | `0x00492d80` | | OpenTPW/UI/Screens/GameMenu.cs OpenTPW/UI/UiSounds.cs  |
@@ -249,13 +251,16 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00492f60` | | OpenTPW/UI/Screens/GameMenu.cs  |
 | `0x00493171` | MenuList_Show: closes the open park screen (FUN_00485b40) before the menu is shown | OpenTPW.Tests/ParkScreenTests.cs OpenTPW/UI/Screens/GameMenu.cs OpenTPW/UI/UiWindow.cs  |
 | `0x00493270` | All-visitors handler, the 2000 ms timer 0x80083: each existing row rewritten in place by FUN_006644ea, no clear or scroll | OpenTPW.Tests/UiListTests.cs OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
+| `0x004932db` | All-visitors rewrite (0x00493270): SHL EAX, 2 - the stay shifted back left by two before FUN_004f8730, four times the adder's hours | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
+| `0x00493479` | Visitors handler: message 0x406 stores the sort word (column + 1, negated descending) in DAT_007508bc | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x00493483` | Visitors handler's 0x402 arm: the row's guest id, FUN_004867b0, then message 4 | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x004934c5` | Visitors handler: a right-clicked row (0x402) moves the camera to that guest (FUN_004867b0) | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x004934da` | Visitors handler: message 4 closes the screen after a right-clicked row | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x0049353e` | Visitors screen FUN_00493530: UI_LoadTree onto the park's layer 0 | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
-| `0x0049383e` | All-visitors row adder FUN_00493800: Time In Park, the park time since the arrival stamp over 36,000,000,000 | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
+| `0x00493834` | All-visitors row adder FUN_00493800: FUN_004f8730 on the park calendar (world +0x2a0) turns the stay into 100 ns units | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x00493850` | All-visitors row adder FUN_00493800: Rides Ridden is mNumRides +0x1c4 | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x0049385a` | FUN_00493800: the "?" column is the last thought +0x30 less one, 999 for none | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
+| `0x00493870` | All-visitors row adder FUN_00493800: the happiness bar ((ftol( +0x19c ) & 0xff) << 10) / 100 | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x00495554` | All-items handler's 0x402 arm: the row's thing id, FUN_004867b0, then message 4 | OpenTPW/UI/Park/ParkItemsScreen.cs  |
 | `0x00495584` | All-items handler: a right-clicked row (0x402) moves the camera to that thing (FUN_004867b0) | OpenTPW/UI/Park/ParkItemsScreen.cs  |
 | `0x00495599` | All-items handler: message 4 closes the screen after a right-clicked row | OpenTPW/UI/Park/ParkItemsScreen.cs  |
@@ -1223,6 +1228,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0066c5a4` | A polygon region's contains test: the crossings count, in whole virtual units | OpenTPW/UI/UiControl.cs  |
 | `0x0067a830` | __ftol: chop, FISTP qword, the low dword in EAX; the integer indefinite's low dword is nought | OpenTPW.Files/Formats/Model/AnimationFile.cs OpenTPW/World/Park/PeepBehaviour.cs  |
 | `0x006804da` | The runtime's start-up: the FPU at 53-bit precision | OpenTPW/World/Park/ParkRideScore.cs  |
+| `0x006add40` | The VARM number variable's writer (vtable 0x006ff170 slot 0): the value word "%d", the sign word unread | OpenTPW/UI/Park/ParkVisitorsScreen.cs  |
 | `0x006b0680` | | OpenTPW/UI/BitmapFont.cs  |
 | `0x006b15f0` | | OpenTPW/UI/BitmapFont.cs  |
 | `0x006b4aa0` | | OpenTPW/UI/BitmapFont.cs  |
