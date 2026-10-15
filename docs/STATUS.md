@@ -49,21 +49,21 @@ Last updated: 2026-10-15. **This header names no branch and no sha, deliberately
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q384** (the writer: what else a made record leaves out; the leavers' draw on the save's seed is its nearest piece, then the analyser's month rings the two account panels wait for, the research button's screen, the analyser's four other stamps and the staff rows 8 to 17), then Q241j, Q327 (Full Simulation catch-up, at Alexah's word), Q248, Q260 (the park's lens, decode first), Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13: `docs/CLEANUP-PLAN.md`, untracked.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q385** (the writer: what else a made record leaves out; the leavers' draw on the save's seed is its nearest piece, then the analyser's month rings the two account panels wait for, the research button's screen, the analyser's four other stamps and the staff rows 8 to 17), then Q241j, Q327 (Full Simulation catch-up, at Alexah's word), Q248, Q260 (the park's lens, decode first), Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13: `docs/CLEANUP-PLAN.md`, untracked.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q383: seen (`q383/`, `run-fix3` the final game binary `4279f85a`, `run-control1` main's, on the desktop): the stock park paused, a shop and a sideshow bought; the shape lines `aligned Start Centre End End End` (5), `... End End` (6), `aligned Start Centre` (2); every count's middle 0.488 to 0.518 of its column on rides, shops and sideshows and 0.495 to 0.498 on all eight misc rows, the money's 0.873 to 0.906 (`side-by-side.png`: the original, this, main); main's build lettered every count from the right. The original at 800 x 600 (`orig/a`): counts 0.472 to 0.495, money 0.83 to 0.88. Not seen: the hire and buy lists' alignments cell by cell, Full Simulation (not asked: the screens are either mode's), the other three themes. Round 1's three misses were my measure (`PREDICTION.txt`).
+- Q384: seen (`q384/`, `run-fix1` the final game binary `df198a8c`, `run-control1` main's, on the desktop): the stock park paused, the buy screen by the gadget's button and the hire screen by its `b_allstaff`; the shape lines `Buy list: ..., aligned Start End` and `Hire list: ..., aligned Start End`; four buy rows, the names from 0.000 to 0.016 of their column, the prices ending 0.969 to 0.979; three hire rows, the names from 0.000 to 0.005, the wages ending 0.966 to 0.974 (`fix1-lists.png`); main's build measured the same. The original at 800 x 600 (`orig/b`): every price ending 0.951, every wage 0.968, the names from 0.000 to 0.010 (`orig/a-lists.png`). Not seen: Full Simulation (not asked: the screens are either mode's), the other three themes. O1 missed on my measure, a "$ " price's middle (`PREDICTION.txt`).
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **77** of 106 | 2026-10-10, `case Opcode.` labels vs enum members |
-| Tests | **3130**, 0 fail, 0 skip with the game | 2026-10-15, Q383, alone in a worktree |
-| Tests without the game | **1045** ran, **2085** skipped, of 3130 | 2026-10-15, Q383 |
+| Tests | **3131**, 0 fail, 0 skip with the game | 2026-10-15, Q384, alone in a worktree |
+| Tests without the game | **1045** ran, **2086** skipped, of 3131 | 2026-10-15, Q384 |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

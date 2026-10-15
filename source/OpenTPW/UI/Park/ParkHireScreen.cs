@@ -201,8 +201,10 @@ internal sealed class ParkHireScreen : UiWindow
 			TextColumns = [true, false],
 
 			// The row factory FUN_0049bbb0 measures its rows from font 7 ([0x007523dc], kept at [0x007ca314]), and the
-			// styler FUN_0049c880 letters each cell in it.
+			// styler FUN_0049c880 letters each cell in it. It leaves the name's label at its default, from the left, and sets
+			// the wage from the right (FUN_0065c428( 2, 1 ), 0x0049c94d).
 			RowFont = RowFont,
+			ColumnAligns = [TextAlign.Start, TextAlign.End],
 			RowHeight = UiList.RowHeightOf( RowFont ),
 			Activated = Chose,
 			SelectionChanged = Selected,
@@ -220,7 +222,7 @@ internal sealed class ParkHireScreen : UiWindow
 
 		// Handed over while the list is still empty, so it sorts nothing (0x0049c0f0).
 		_list.SetSort( _sort );
-		Log.Info( $"Hire list: {_list.RowsCensus()}" );
+		Log.Info( $"Hire list: {_list.RowsCensus()}, aligned {string.Join( ' ', _list.ColumnAligns )}" );
 
 		// UITEXT 144 and 145, "Candidate Name" and "Monthly Wage"; the rects are the stream's.
 		_list.AddHeading( 0, new UiRect( 1039, 331, 1460, 436 ), Localization.Text( 144 ), "!cbut", HeadingFont, HeadingColour, 159 )

@@ -203,8 +203,10 @@ internal sealed class ParkBuyScreen : UiWindow
 			StateMesh = "i_boxtick",
 
 			// The row factory FUN_004ad240 measures its rows from font 7 ([0x00755134], kept at [0x007cc200]), and the
-			// styler FUN_004ad340 letters each cell in it.
+			// styler FUN_004ad340 letters each cell in it. It leaves the name's label at its default, from the left, sets the
+			// price from the right (FUN_0065c428( 2, 1 ), 0x004ad428) and hands the tick-box a mesh alone, no lettering.
 			RowFont = RowFont,
+			ColumnAligns = [TextAlign.Start, TextAlign.End],
 			RowHeight = UiList.RowHeightOf( RowFont ),
 			SelectsUnderPointer = true,
 			Activated = Chose,
@@ -216,7 +218,7 @@ internal sealed class ParkBuyScreen : UiWindow
 
 		// Handed over while the list is still empty, so it sorts nothing (0x004ad057).
 		_list.SetSort( _sort );
-		Log.Info( $"Buy list: {_list.RowsCensus()}" );
+		Log.Info( $"Buy list: {_list.RowsCensus()}, aligned {string.Join( ' ', _list.ColumnAligns )}" );
 
 		// UITEXT 123, 124 and 138; the rects are the stream's.
 		(int Text, int Help, UiRect Rect)[] headings =

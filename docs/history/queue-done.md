@@ -7001,6 +7001,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   and a sideshow bought (`q383/run-fix3`, the final binary; control `run-control1` 2 of 2): every count's middle 0.488 to
   0.518 of its column on the four tabs, the money 0.873 to 0.906. The original (`q383/orig/a`): 0.472 to 0.495, the
   money 0.83 to 0.88. Mutations 8 of 8. Tests 3130.
+- [x] **Q384. The hire and buy lists' cells aligned as their stylers set them.** `FUN_0049c880` and `FUN_004ad340`
+  leave the name at ( 0, 1 ) and set the wage and the price ( 2, 1 ); the buy list's tick-box is a mesh with no
+  lettering. `ParkHireScreen` and `ParkBuyScreen` set `ColumnAligns` Start, End and log them (`aligned Start End`),
+  which main's default already drew: `q384/run-fix1` and `run-control1` measure the same, the names from 0.000 to
+  0.016, the prices ending 0.969 to 0.979, the wages 0.966 to 0.974; the original at 800 x 600 (`q384/orig/b`) every
+  price ending 0.951 and wage 0.968. Mutations 9 of 9.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

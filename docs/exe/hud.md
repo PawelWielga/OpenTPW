@@ -1977,6 +1977,8 @@ The stylers, each call on the cell just made (`ESI`, the listing; the decompiler
 | all items `FUN_00494690`, every tab | ( 0, 1 ) | **the count `( 1, 1 )`, centred** (`0x00494780`, `0x00494822`...); each money cell `( 2, 1 )`; the bars none |
 | all staff `FUN_00496d20` | ( 0, 1 ) | the status ( 0, 1 ); the wage `( 2, 1 )` (`0x00496e39`); the bars none |
 | visitors `FUN_004939d0` | | above: the number and the time `( 1, 1 )`, the cash `( 2, 1 )`, the rides ridden ( 0, 1 ) |
+| hire `FUN_0049c880` | ( 0, 1 ) | the wage (the money cell `FUN_00490250`) `( 2, 1 )` (`0x0049c94d`) |
+| buy `FUN_004ad340` | ( 0, 1 ), colour 255, 255, 255, 255 | the price (`FUN_004904c0`, vtable `0x006ff3e0`, built at ( 0, 1 )) `( 2, 1 )` (`0x004ad428`); the third cell the `i_boxtick` mesh alone, no skin and no font, so nothing lettered |
 
 Measured in the original under Proton at 800 x 600 (`q383/orig/a`, `q353/grades.TPWS`; `listcells.aligns`, white 110):
 the count's middle 0.477 of its column on the rides tab, 0.472 shops, 0.483 and 0.478 sideshows, 0.494 to 0.495 on all
@@ -1988,9 +1990,16 @@ sideshow bought, paused (`q383/run-fix3`, the final game binary): every count ce
 shops, sideshows) and 0.495 to 0.498 (misc, eight rows); the money cells' middles 0.873 to 0.906 (`q383/side-by-side.png`:
 the original, this, main). Main's build (`run-control1`) lettered every count from the right. `ParkStaffScreen` already
 letters the name and status from the left and the wage from the right; this game's `TextDown` is the middle by default.
-The Hebrew swap is not kept (no Hebrew data ships). In no game run: the hire and buy stylers' (`FUN_0049c880`,
-`FUN_004ad340`: one `( 2, 1 )` each) compared cell by cell, Full Simulation (not asked: the screens are either mode's),
-the other three themes.
+The Hebrew swap is not kept (no Hebrew data ships).
+
+**The hire and buy lists** (Q384): `ParkHireScreen` and `ParkBuyScreen` set `ColumnAligns` Start, End, which
+`UiList`'s default already gave, and their shape lines end `aligned Start End`. The stock park, paused, the buy screen
+by the gadget's button and the hire screen by its `b_allstaff` (`q384/run-fix1`, the final game binary): four buy rows,
+the names from 0.000 to 0.016 of their column, the prices ending 0.969 to 0.979; three hire rows, the names from 0.000
+to 0.005, the wages ending 0.966 to 0.974. Main's build (`run-control1`) measured the same to the third place. The
+original at 800 x 600 (`q384/orig/b`, `q353/grades.TPWS`): the names from 0.000 to 0.010, every price ending 0.951 and
+every wage 0.968, a "$ " before each (Q158's "From Q238"; `q384/fix1-lists.png`, `orig/a-lists.png`). In no game run:
+Full Simulation (not asked: the screens are either mode's), the other three themes.
 
 #### The visitors rows: a number, a money cell, a bar
 

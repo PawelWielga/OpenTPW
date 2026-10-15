@@ -44,12 +44,14 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q384. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q385. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q384 (`hud.md`, "How a list's cells are aligned"): the hire and buy lists' alignments are compared cell by cell.
+  In no game run: Full Simulation (not asked: the screens are either mode's), the other three themes.
   From Q383 (`hud.md`, "How a list's cells are aligned"): every all-items count is centred. The language `0x40d`
-  (Hebrew) swap of left and right is not kept (no Hebrew data ships). In no game run: the hire and buy stylers'
-  alignments compared cell by cell, Full Simulation (not asked: the screens are either mode's), the other three themes.
+  (Hebrew) swap of left and right is not kept (no Hebrew data ships). In no game run: Full Simulation (not asked: the
+  screens are either mode's), the other three themes.
   From Q382 (`hud.md`, "The all-staff list's first row"): the list picks its first row. The original's right click
   below the rows shut the screen and moved the view, onto which member is not read (no reader of its camera). In no
   game run: a member hired or gone with the screen open (where the index then stands), Full Simulation (not asked:

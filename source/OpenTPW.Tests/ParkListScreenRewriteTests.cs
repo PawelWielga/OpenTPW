@@ -833,6 +833,39 @@ public class ParkListScreenRewriteTests
 	}
 
 	/// <summary>
+	/// <b>The hire and buy lists letter the name from the left and the wage or the price from the right</b>, as their
+	/// stylers <c>FUN_0049c880</c> and <c>FUN_004ad340</c> leave the name's label at its default and hand the figure
+	/// <c>FUN_0065c428( 2, 1 )</c>; the buy list's tick-box is a mesh with no lettering (<c>docs/exe/hud.md</c>, "How a
+	/// list's cells are aligned").
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> either name centred or from the right; either figure centred or from the left; the tick-box
+	/// lettered.
+	/// </remarks>
+	[TestMethod]
+	public void TheHireAndBuyListsSetTheirFiguresFromTheRight()
+	{
+		var hire = Field<UiList>( new ParkHireScreen( stack ), "_list" );
+		var buy = Field<UiList>( new ParkBuyScreen( stack ), "_list" );
+
+		// The first slot's cell at a column's left edge.
+		static UiControl Cell( UiList list, int column ) => list.Children
+			.Single( child => child.Rect.Left == list.Columns[column].Left && child.Font == list.RowFont
+				&& child.Rect.Top == list.RowArea.Top );
+
+		Assert.AreEqual( (TextAlign.Start, TextAlign.End), (Cell( hire, 0 ).TextAcross, Cell( hire, 1 ).TextAcross ),
+			"hire: the name from the left, the wage from the right" );
+		Assert.AreEqual( (TextAlign.Start, TextAlign.End), (Cell( buy, 0 ).TextAcross, Cell( buy, 1 ).TextAcross ),
+			"buy: the name from the left, the price from the right" );
+
+		// A row with a state, owned: its tick-box is framed by it and lettered with nothing.
+		buy.Clear();
+		buy.Add( new UiList.Row( 1, "Belly Bounce", 500, 1 ) );
+		Assert.AreEqual( (1, true), (Cell( buy, 2 ).Frame, Cell( buy, 2 ).Visible), "buy: the tick-box framed by the state" );
+		Assert.IsTrue( string.IsNullOrEmpty( Cell( buy, 2 ).Text ), "buy: the tick-box letters nothing" );
+	}
+
+	/// <summary>
 	/// <b>A visitors row shows the guest's last thought as a part of <c>thoughts.MD2</c></b>, the thought less one, or 999,
 	/// past every part, with none (the adder <c>0x0049385a</c>, the rewrite <c>0x0049330c</c>); the cell is the column inset 4
 	/// across (<c>FUN_00485e30( cell, 4, 0 )</c>), and the list sorts on its number (<c>docs/exe/hud.md</c>, "The visitors
