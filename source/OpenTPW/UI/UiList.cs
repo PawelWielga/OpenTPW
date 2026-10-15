@@ -91,12 +91,23 @@ internal sealed class UiList : UiControl
 	internal (int Left, int Right)[] Columns { get; init; } = [];
 
 	/// <summary>
-	/// How tall a row is, in virtual units. The park-file screens give the height their row factory
-	/// works out, the font's height times <c>0x600</c> over the screen's, plus 6
-	/// (<c>ParkFileScreen.RowHeightFor</c>, <c>FUN_0049f0b0</c>). <b>The default of 44 is a choice, and marked
-	/// as one</b>: every other screen takes it, with no row measured.
+	/// How tall a row is, in virtual units. The park-file, all-staff and all-items screens give the height their
+	/// row factory measures from the font (<see cref="RowHeightOf"/>), the visitors screen its factory's fixed 56.
+	/// <b>The default of 44 is a choice, and marked as one</b>: every other screen takes it, with no row measured.
 	/// </summary>
 	internal int RowHeight { get; init; } = 44;
+
+	/// <summary>
+	/// A row's height on the virtual screen, as a row factory works it out from the font it letters the row in
+	/// (<c>FUN_0049f0b0</c>, <c>FUN_004944d0</c>, <c>0x00496c10</c>): the font's height times <c>0x600</c> over the
+	/// screen's height, plus 6. The font here is one of a set drawn for a screen height of its own, so that height
+	/// stands for the screen's. No font answers the default.
+	/// </summary>
+	internal static int RowHeightFor( int? fontHeight, int screenHeight )
+		=> fontHeight is { } height && screenHeight > 0 ? (height * 0x600 / screenHeight) + 6 : 44;
+
+	/// <summary>The factory's height for a row lettered in font <paramref name="font"/> of the current set.</summary>
+	internal static int RowHeightOf( int font ) => RowHeightFor( UiFonts.Get( font )?.LineHeight, UiFonts.SetScreenHeight );
 
 	/// <summary>Which font the rows are lettered in.</summary>
 	internal int RowFont { get; init; } = 6;
@@ -352,6 +363,9 @@ internal sealed class UiList : UiControl
 			.Where( heading => heading.Id >= 0x10 && heading.Id < 0x10 + 8 )
 			.OrderBy( heading => heading.Id )
 			.Select( heading => $"{heading.Mesh?.Name ?? "bare"} {heading.Font} {heading.HelpText} \"{heading.Text}\"" ) );
+
+	/// <summary>The rows' height, font and how many fit, for the screens' log lines.</summary>
+	internal string RowsCensus() => $"rows of {RowHeight} units in font {RowFont}, {VisibleRows} visible";
 
 	/// <summary>Empties the list - the original's <c>FUN_006649d5</c>.</summary>
 	internal void Clear()

@@ -605,6 +605,39 @@ public class ParkListScreenRewriteTests
 	}
 
 	/// <summary>
+	/// <b>The visitors, all-staff and all-items rows are lettered in font 7</b>, the visitors' 0x38 tall
+	/// (<c>FUN_004938c0</c>) and the others' as tall as their factories measure font 7 (<c>0x00496c10</c>,
+	/// <c>FUN_004944d0</c>; <c>docs/exe/hud.md</c>, "The rows' font and height").
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> any list left at font 6 or at 44; the visitors measured as the others; the others fixed at 0x38.
+	/// </remarks>
+	[TestMethod]
+	public void TheListsRowsAreLetteredInFont7AtTheirFactoriesHeights()
+	{
+		var measured = UiList.RowHeightFor( UiFonts.Get( 7 )!.LineHeight, UiFonts.SetScreenHeight );
+		Assert.AreEqual( measured, UiList.RowHeightOf( 7 ) );
+		Assert.AreNotEqual( 44, measured, "no set's font 7 makes the default" );
+		Assert.AreNotEqual( 0x38, measured, "nor the visitors' height" );
+
+		var visitors = Field<UiList>( new ParkVisitorsScreen( stack ), "_list" );
+		var staff = Field<UiList>( new ParkStaffScreen( stack ), "_list" );
+		var items = Field<Dictionary<int, UiList>>( new ParkItemsScreen( stack ), "_lists" );
+
+		foreach ( var (list, height, name) in new[] { (visitors, 0x38, "visitors"), (staff, measured, "staff") }
+			.Concat( items.Select( each => (each.Value, measured, $"items {each.Key}") ) ) )
+		{
+			Assert.AreEqual( (7, height), (list.RowFont, list.RowHeight), name );
+			Assert.AreEqual( (list.RowArea.Bottom - list.RowArea.Top) / height, list.VisibleRows, $"{name}: rows that fit" );
+
+			// The second slot's cells stand a row lower, lettered in the row font.
+			var text = list.Children.Where( child => child.Font == 7 && child.Rect.Top == list.RowArea.Top + height ).ToArray();
+			Assert.IsTrue( text.Length > 0, $"{name}: the second slot's lettered cells" );
+			Assert.IsTrue( text.All( cell => cell.Rect.Bottom == list.RowArea.Top + (2 * height) ), $"{name}: a row tall" );
+		}
+	}
+
+	/// <summary>
 	/// <b>A visitors row shows the guest's last thought as a part of <c>thoughts.MD2</c></b>, the thought less one, or 999,
 	/// past every part, with none (the adder <c>0x0049385a</c>, the rewrite <c>0x0049330c</c>); the cell is the column inset 4
 	/// across (<c>FUN_00485e30( cell, 4, 0 )</c>), and the list sorts on its number (<c>docs/exe/hud.md</c>, "The visitors

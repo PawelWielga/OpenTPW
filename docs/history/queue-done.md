@@ -6952,6 +6952,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   misses (3 of 3); the original moved the visitors' and the misc tab's highlight to the row hovered and its right click
   went to that row's security camera (`q376/orig/a`; its staff list has one row a kind in every scene, so not run there).
   Mutations 6 of 6.
+- [x] **Q377. The visitors, all-staff and all-items rows are lettered in font 7 at their factories' heights, as the
+  original's** (a piece of the old Q377, split by Claude; the rest is Q378). The visitors' factory `FUN_004938c0` makes
+  every row 56 units, its font measured and thrown away; the staff's (`0x00496c10`) and the items' (`FUN_004944d0`) font
+  7's height x `0x600` over the screen's, plus 6; the three stylers letter every cell in font 7. The original under
+  Proton held 56, 41 and 41 at 640 x 480 (`q377/orig/a`); this game at 1280 x 720 logged 56, 39 and 39, its lettering
+  55.45 and 38.4 units apart and 1.17 to 1.25 times main's in height (`q377/run-fix1`, 5 of 5; control 3 of 3).
+  Mutations 11 of 11.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

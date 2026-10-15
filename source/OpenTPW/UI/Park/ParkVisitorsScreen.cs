@@ -58,6 +58,9 @@ internal sealed class ParkVisitorsScreen : UiWindow
 	/// </summary>
 	private const long RefreshEvery = 2000;
 
+	/// <summary>The font the rows are lettered in, the screen's font slot 7.</summary>
+	private const int RowFont = 7;
+
 	/// <summary>
 	/// The thought column's mesh: <c>ui.wad</c>'s <c>thoughts.MD2</c>, which the original files under its first node's
 	/// name, <c>ti_hungry</c> (<c>FUN_00489060</c>), the name the styler asks for. Its seventeen parts are thoughts 1 to
@@ -110,6 +113,11 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			Mesh = UiMesh.Get( "list_kids" ),
 			RowArea = new UiRect( 294, 315, 1720, 914 ),
 
+			// The row factory FUN_004938c0 measures font 7 and keeps none of it: every row is 0x38 tall (0x004938fa).
+			// The styler FUN_004939d0 letters each cell in font 7 ([0x007508b4]).
+			RowFont = RowFont,
+			RowHeight = 0x38,
+
 			// A right click on the list moves the camera to the selected row's guest and closes the screen (0x004934c5).
 			RowRightClicked = GoTo,
 
@@ -150,6 +158,7 @@ internal sealed class ParkVisitorsScreen : UiWindow
 		}
 
 		Log.Info( $"Visitors list: headings {_list.HeadingsCensus()}" );
+		Log.Info( $"Visitors list: {_list.RowsCensus()}" );
 
 		Root.Add( CrossLink( 0x1e49b, 360, 136, "b_allthings", 5 ) );
 		Root.Add( CrossLink( 0x1e499, 467, 137, "b_parkinfo", 3 ) );

@@ -1782,8 +1782,8 @@ cell's text; `rings` now prints the total takings beside the total costs. On `q3
 `row 14 Jungle Spray: 0 307 -120 -600 491`, the frames lettering "$ 165", "$ 3766", "$ 0", "-$ 120", "-$ 600" and the
 bars 0.532, 0.505, 0.485 (`q368/side-by-side.png`); main's build (`run-control2`) lettered nothing and counted
 `ALL_ITEMS_MONTHLY_HISTORY`, which is gone. The original's sideshow rows stand Jungle Spray then Strength Bird by its
-sort, the name rising (Q374, below). **Not built**: the row height is this game's 44 where the
-original's factory measures its font (`0x007ca158`); the headings are framed (Q370, "The list headings' frames").
+sort, the name rising (Q374, below). The rows' font and height are the factory's (Q377, "The rows' font and
+height"); the headings are framed (Q370, "The list headings' frames").
 
 #### The miscellaneous tab: a row an object, and each tab's sort
 
@@ -1854,7 +1854,7 @@ The screen's two meters (`0x32c`, `0x32d`) are the same skin in `happygrad.wct`,
 `0x00496a49`), not the gauge's `meter.wct`: horizontal, the ramp to the value and the grey track after it. The
 texture (`ui.wad`, `textures\happygrad.wct`, 32 by 32) is laid out as `ridestatbar.wct`, a ramp from cyan through
 orange to yellow in one half and the grey track in the other. The factory measures the row's height from its font
-(`[0x007ca170]`, as the items rows' `0x007ca158`); here it is 44.
+(`[0x007ca170]`, as the items rows' `0x007ca158`), and so does this game (Q377, "The rows' font and height").
 
 Measured in the original under Proton on `q369/skill.TPWS` (`q353/grades.TPWS` with the percentages 60, 45, 99, 0, 13
 written at the staff record's `+480`; `q369/orig/b`, `thingwords.py` on `+0x1e4`, `+0x1e8` and `+0x1f8`): its rows
@@ -1871,7 +1871,7 @@ kind K, row <thing> <name>: <status> <wage> <skill bar> <happiness bar>`, and th
 0.292, 0.195, 0.602, 0.425 and happiness bars 0.866, 0.866, 0.866, 0.884, 0.902 (`barsplit.py`); the meters 0.846 and
 0.863 with a grey rest; "$ 81" (`1-handymen.png`). Main's build (`run-control1`) lettered the grade and the happiness as
 numbers and filled its meters from the bottom. The headings are framed (Q370, "The list headings' frames"). **Not
-built**: the row height from the font, the status's own words
+built**: the status's own words
 (`STAFF_STATUS_TEXT`: the adder reads them from the table `[0x0078baa4]` by `FUN_005064f0`'s state, a 1 read as 0 where
 `FUN_00506eb0` answers nought), and the list's sort word (`FUN_006659af( [0x0075118c], 0 )`).
 
@@ -1971,9 +1971,9 @@ rewrite `N rows rewritten, row 0` the same way (the time added since, below). On
 binary): `row 42 New Visitor: $ 684 0 512`, `row 38 1: $ 306 1 122`, ... `row 37 4: $ 570 0 1024`, sorted 42 first;
 its bars 0.5, 0.125, 0.33, 0.902, 1.0, 0.714, 0.527 and 0.5 (the file's happiness); the number centred (0.497), the cash
 right (0.974), the rides left (0.034) (`q371/side-by-side.png`: the original, this, main). Main's build (`run-control2`)
-lettered 0 and the cash and happiness as bare numbers, every one from the right, and drew no bar. **Not built**: the
-row height from the font (the original's rows 55.8 units apart, this
-game's 44); the first row picked as the list fills (Q232); the scrollbar.
+lettered 0 and the cash and happiness as bare numbers, every one from the right, and drew no bar. The rows are 56 units
+apart, as the original's 55.8 (Q377, "The rows' font and height"). **Not built**: the first row picked as the list fills
+(Q232); the scrollbar.
 
 **OpenTPW** (Q372): `Peep.StayAt`, `ParkVisitorsScreen.HoursIn` and `TimeText`; `RowOf`'s `rewrite` shifts the stay.
 The log's row reads `<cash> <time> (<hours> h) <rides> <bar>`. On `q372/time.TPWS`, paused at the load's tick 964
@@ -1991,6 +1991,38 @@ past the mesh's last part), `ParkVisitorsScreen.ThoughtsMesh` and `ThoughtPart`;
 sad, bad and none on the last three; the "?" heading's click `sort 5`, `40 37 33 35 41 32 34 42 36 38 39 29 31`, drawn
 hungry to confused, then five without (`q373/side-by-side.png`: the original's sorted column, then this game's). Main's
 build (`run-control1`) drew no picture and counted `VISITOR_COLUMN_117_UNNAMED` and `VISITOR_SORT_ON_UNBUILT_COLUMN`.
+
+#### The rows' font and height
+
+Read 2026-10-15 (Q377). **The three lists' rows are lettered in font slot 7**, and their height is the row factory's:
+
+| List | Factory | Height | Kept at | Styler, every cell in |
+|---|---|---|---|---|
+| visitors | `FUN_004938c0` | `0x38`, 56: font `[0x007508b4]` is measured and its answer thrown away (`0x004938fa` writes 56 whatever it was) | `[0x007ca140]` | `FUN_004939d0`, font `[0x007508b4]` |
+| all staff | `0x00496c10` (no function) | font `[0x00751184]`'s height x `0x600` / `[0x00faa5c0]` + 6 | `[0x007ca170]` | `FUN_00496d20`, font `[0x00751184]` |
+| all items | `FUN_004944d0` | font `[0x00750d54]`'s height x `0x600` / `[0x00faa5c0]` + 6 | `[0x007ca158]` | `FUN_00494690`, font `[0x00750d54]` |
+
+The three font words are 7 (the heading's word beside each is 8, Q370), and the rule is the park-file screens' own
+(`FUN_0049f0b0`, `saves.md`). The list takes the height as handed (`FUN_00663718`: `+0x170`) and fits
+`(bottom - top) / height` rows (`+0x172`, again in `FUN_00664ba8`), as `UiList.VisibleRows`. `[0x00faa5c0]` is the
+screen's height and `[0x0078b534]` the font set (`FUN_00485a70`: `0x0078b54c + (slot + set x 13) x 0x18`).
+
+**Measured in the original under Proton** (`q377/orig/a`, `q373/thought.TPWS` loaded, V, S, A, read with `tpwmem.py`):
+`[0x00faa5c0]` 480 and `[0x00faa5c4]` 640, set 1, so **the reference original draws at 640 x 480**, its frames scaled to
+1024 x 768; `[0x007ca140]` 56 once V is up, `[0x007ca170]` 41 once S is, `[0x007ca158]` 41 once A is (GAME8.bf4, 11 tall:
+11 x 1536 / 480 + 6), `[0x007cb24c]` 41. Its frames: the visitors rows 27.9 pixels apart (55.8 units), ten shown; the
+items rows 20.4 to 20.6 (41 units).
+
+**OpenTPW** (Q377): `UiList.RowHeightFor` and `RowHeightOf( font )`, the font of the current set; the staff and items
+lists `RowFont` 7 at `RowHeightOf( 7 )`, the visitors `RowFont` 7 at `0x38`. At this game's 1280 x 720 window (set 2,
+font 7 GAME9.bf4, 13 tall) that is 39 units, where the original at 640 x 480 has 41: the same rule at another size.
+Each screen logs `<list>: rows of H units in font F, N visible` as it is built. In the stock park with every pool
+candidate hired, paused (`q377/run-fix1`, the final game binary): `Visitors list: rows of 56 units in font 7, 10 visible`,
+`Staff list: rows of 39 units in font 7, 9 visible`, `Items list: the 5-column shape, rows of 39 units in font 7, 11
+visible` and the 6- and 2-column shapes the same; the frames' lettering 55.45 units apart in ten visitors rows and 38.4
+in the four handymen's and the eight misc rows (`listcells.ink`), 1.17 to 1.25 times main's lettering in height; the
+pointer at a slot's middle by the new height picked slot 2 in all three. Main's build (`run-control1`) lettered thirteen
+visitors rows 44.8 apart, all in font 6.
 
 #### The list headings' frames
 

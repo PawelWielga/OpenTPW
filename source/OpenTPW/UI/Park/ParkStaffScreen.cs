@@ -74,6 +74,9 @@ internal sealed class ParkStaffScreen : UiWindow
 	/// <summary>How often the rows are rewritten, in milliseconds of real time: <c>FUN_0065ef90( 0x80083, 2000 )</c>.</summary>
 	private const long RefreshEvery = 2000;
 
+	/// <summary>The font the rows are lettered in, the screen's font slot 7.</summary>
+	private const int RowFont = 7;
+
 	/// <summary>The rewrite's timer, running from the screen's opening; a tab does not restart it.</summary>
 	private readonly UiTimer _refresh = new( RefreshEvery );
 
@@ -119,6 +122,11 @@ internal sealed class ParkStaffScreen : UiWindow
 			Mesh = UiMesh.Get( "list_allstaff" ),
 			RowArea = new UiRect( 294, 418, 1734, 777 ),
 
+			// The row factory at 0x00496c10 measures its rows from font 7 ([0x00751184], kept at [0x007ca170]), and the
+			// styler FUN_00496d20 letters each cell in it.
+			RowFont = RowFont,
+			RowHeight = UiList.RowHeightOf( RowFont ),
+
 			// A right click on the list moves the camera to the selected row's member of staff and closes the screen
 			// (0x0049602f).
 			RowRightClicked = GoTo,
@@ -143,6 +151,7 @@ internal sealed class ParkStaffScreen : UiWindow
 			_list.AddFramedHeading( column, Headings[column], Localization.Text( 101 + column ), 0x77 + column );
 
 		Log.Info( $"Staff list: headings {_list.HeadingsCensus()}" );
+		Log.Info( $"Staff list: {_list.RowsCensus()}" );
 
 		_tabs = _list.Add( new UiRadioGroup
 		{

@@ -145,10 +145,10 @@ public class ParkLoadScreenTests
 	[TestMethod]
 	public void ARowsHeightComesFromItsFont()
 	{
-		Assert.AreEqual( 41, UI.ParkLoadScreen.RowHeightFor( 11, 480 ), "the original's own at 640 by 480, read from 0x007cb24c" );
-		Assert.AreEqual( 40, UI.ParkLoadScreen.RowHeightFor( 17, 768 ) );
-		Assert.AreEqual( 44, UI.ParkLoadScreen.RowHeightFor( 15, 600 ) );
-		Assert.AreEqual( 44, UI.ParkLoadScreen.RowHeightFor( null, 768 ), "no font: the list's own height" );
+		Assert.AreEqual( 41, UI.UiList.RowHeightFor( 11, 480 ), "the original's own at 640 by 480, read from 0x007cb24c" );
+		Assert.AreEqual( 40, UI.UiList.RowHeightFor( 17, 768 ) );
+		Assert.AreEqual( 44, UI.UiList.RowHeightFor( 15, 600 ) );
+		Assert.AreEqual( 44, UI.UiList.RowHeightFor( null, 768 ), "no font: the list's own height" );
 	}
 
 	/// <summary>

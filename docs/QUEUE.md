@@ -44,9 +44,13 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q377. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q378. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q377 (`hud.md`, "The rows' font and height"): the rows are the factories'. The hire and buy lists' own factories
+  are not read (both still 44 here). The reference original draws at 640 x 480, so its rows were compared only there;
+  in no game run: this game at another font set than 2, the original at 1024 x 768, Full Simulation (not asked: the
+  screens are either mode's), the other three themes.
   From Q376 (`hud.md`, "The pointer over a list"): every list follows the pointer. In no game run: the original's
   all-staff list with two members of a kind, a row bought, sold, come or gone under a pointer at rest (no move, no
   pick, in this game as `WindowStack` sends a move only on a frame the pointer moved), Full Simulation (not asked: the
@@ -66,16 +70,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   where this game's fits. In no game run: an arrival's row with the screen open (its stay nought in either game), Full
   Simulation (not asked: the screen is either mode's), the other three themes.
   From Q371 (`hud.md`, "The visitors rows: a number, a money cell, a bar"): the visitors' number, cash and happiness are
-  built, and the time in park (Q372) and the thought (Q373). **Not built**: the row height from the font
-  (the original's rows 55.8 units apart, this game's 44); the alignment message `0xc00`'s handler (read from the frame
+  built, and the time in park (Q372) and the thought (Q373), and the row height (Q377). **Not built**: the alignment message `0xc00`'s handler (read from the frame
   only); the all-staff styler's own alignments (`FUN_00496d20`, not read). In no game run: a guest with negative cash,
   a happiness past 255, Full Simulation (not asked: the screen is either mode's).
   From Q370 (`hud.md`, "The list headings' frames"): the headings are framed; the original's lettering is larger and
   wraps "Monthly Wage". Seen beside the original in `q370/side-by-side.png`, not read and not counted: the misc tab's
   row an object is built (Q374); the visitors list has no scrollbar (the original's has); its number, cash and
   happiness cells are built (Q371).
-  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height from the font
-  (`[0x007ca170]`), the status's own words (`STAFF_STATUS_TEXT`: the table `[0x0078baa4]`, read by the row adder
+  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height is built (Q377); the status's own words (`STAFF_STATUS_TEXT`: the table `[0x0078baa4]`, read by the row adder
   `0x00496320`), the list's sort word (`FUN_006659af( [0x0075118c], 0 )`). Five other callers hand the stat bars'
   skin `happygrad.wct` (`FUN_004939d0`, `FUN_004afc10`, `FUN_004b1040`, `FUN_004b53c0`, `FUN_004b6c20`): which
   screens' bars these are and what this game draws there is not looked at. The all-staff meters' every-member value is
@@ -85,8 +87,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q368 (`hud.md`, "The all-items rows: a number, then bars"): in no game run: a figure moved by a sale in this
   game's frame, a ring of fewer than thirty days with a satisfaction that is not nought, a satisfaction past 255.
   From Q367 (`hud.md`, "The all-items rows: a number, then bars"): the shops' and sideshows' money and satisfaction
-  are built (Q368); the sideshow rows stand by name, as the original's (Q374); the items rows are this game's 44 units tall where the original's
-  factory measures its font (`0x007ca158`), so its bars are 24 units here; its headings are framed
+  are built (Q368); the sideshow rows stand by name, as the original's (Q374); the items rows are the factory's font-7 height (Q377); its headings are framed
   (Q370). The all-staff list's skill and happiness
   are bars (Q369). In no game
   run: a track ride's row (the fill's `0x2000` walk, `0x00493eb0`), a value past 255, Full Simulation (not asked:

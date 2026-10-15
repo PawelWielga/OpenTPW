@@ -72,7 +72,7 @@ internal abstract class ParkFileScreen : UiWindow
 			TextColumns = [true, true],
 			ColumnAligns = [TextAlign.Start, TextAlign.End],
 			RowFont = RowFont,
-			RowHeight = RowHeightFor( UiFonts.Get( RowFont )?.LineHeight, UiFonts.SetScreenHeight ),
+			RowHeight = UiList.RowHeightOf( RowFont ),
 
 			// The list's flags carry 0x80.
 			SelectsUnderPointer = true,
@@ -92,14 +92,6 @@ internal abstract class ParkFileScreen : UiWindow
 
 	/// <summary>A click on a row, the list's <c>0x400</c>, with the row's id.</summary>
 	protected abstract void RowClicked( int row );
-
-	/// <summary>
-	/// A row's height on the virtual screen, as the row factory works it out from the font it letters the row in
-	/// (<c>FUN_0049f0b0</c>): the font's height times <c>0x600</c> over the screen's height, plus 6. The font here is
-	/// one of a set drawn for a screen height of its own, so that height stands for the screen's.
-	/// </summary>
-	internal static int RowHeightFor( int? fontHeight, int screenHeight )
-		=> fontHeight is { } height && screenHeight > 0 ? (height * 0x600 / screenHeight) + 6 : 44;
 
 	/// <summary>The saved parks of whoever is playing, for this theme.</summary>
 	/// <remarks>

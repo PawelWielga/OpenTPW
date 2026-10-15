@@ -99,6 +99,9 @@ internal sealed class ParkItemsScreen : UiWindow
 	/// <summary>How often a tab's rows are rewritten, in milliseconds of real time: <c>FUN_0065ef90( 0x80083, 2000 )</c>.</summary>
 	private const long RefreshEvery = 2000;
 
+	/// <summary>The font the rows are lettered in, the screen's font slot 7.</summary>
+	private const int RowFont = 7;
+
 	/// <summary>
 	/// The rewrite's timer. Each tab loads its own list tree in the original, whose handler arms the timer as the tree
 	/// is shown (message <c>0x15</c>, <c>FUN_004955e0</c>), so a tab starts it again.
@@ -219,6 +222,11 @@ internal sealed class ParkItemsScreen : UiWindow
 			RowArea = rows,
 			Columns = edges,
 
+			// The row factory FUN_004944d0 measures its rows from font 7 ([0x00750d54], kept at [0x007ca158]), and the
+			// styler FUN_00494690 letters each cell in it.
+			RowFont = RowFont,
+			RowHeight = UiList.RowHeightOf( RowFont ),
+
 			// The add picks the top row as the first goes in (FUN_0066403b), so each fill highlights the row sorted first.
 			// The screen's handler FUN_00495360 has no 0x401 arm: nothing takes the pick, and it is the highlight alone.
 			PicksFirstRow = true,
@@ -240,6 +248,7 @@ internal sealed class ParkItemsScreen : UiWindow
 			list.AddFramedHeading( column, headings[column], string.Empty, -1 ).Clicked += () => LogOrder( list );
 
 		list.Build();
+		Log.Info( $"Items list: the {columns}-column shape, {list.RowsCensus()}" );
 
 		_lists[columns] = list;
 	}
