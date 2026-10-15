@@ -3689,8 +3689,8 @@ queue cell, the charge through `TakeAt`); `ParkState.Take` is the gate fee; `Par
 `FUN_004e1920`, and `ParkRideOperation.ShopCostOfGoods` is `FUN_004e1b40`, its terms as floats and its sum and product
 in double ("What a thing is worth to a guest", "Where OpenTPW differs", the FPU's row), with the object's saved cost of goods
 (Q97). The four bank fields are seeded from the save, and the year's change zeroes the profit
-(`ParkState.TurnTheYear`, on `GameCalendar.YearRolled`). Counted, not built: the analyser's money in and out
-(`BANK_ANALYSER_MONEY_IN`, `_MONEY_OUT`), the gate fee's analyser totals and challenge post
+(`ParkState.TurnTheYear`, on `GameCalendar.YearRolled`). The analyser's money in and out are kept (Q385; `hud.md`, "The
+mini-balance is a MONTHLY ACCOUNT"). Counted, not built: the gate fee's analyser totals and challenge post
 (`GATE_FEE_ANALYSER_TOTALS`, `GATE_FEE_CHALLENGE_POST`), the booking's (`COST_OF_GOODS_CHALLENGE_POST`), the purchase's golden-ticket arm (`PURCHASE_GOLDEN_TICKET_ARM`, on
 every such purchase, as the purchase does not ask the player's `RideIds`) and a kart or water ride's track at a sale
 (`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row is built (`hud.md`, "The mystery row"); a click on it is refused whatever tickets the player holds and counted, `MYSTERY_RIDE_PURCHASE`, as its ticket test is not built (Q141).
@@ -3943,12 +3943,12 @@ $88137 (`0-before-month.png`, `1-after-month.png`).
 
 **OpenTPW** (Q198b). `Level` sends the month's change in the original's order: `ParkPeople.TrainTheStaff` (thing 1:
 the budgets read from the save's staff HQ, `ParkWorld.StaffHq`; each kind's budget over its members, signed;
-`ParkPeople.Train` is `TrainMe`), `ParkState.TurnTheMonth` (the analyser's close, counted `ANALYSER_MONTH_CLOSE`; the
+`ParkPeople.Train` is `TrainMe`), `ParkState.TurnTheMonth` (the analyser's close: its three money rings closed, Q385,
+the rest counted `ANALYSER_MONTH_CLOSE`; the
 batch deposited, the bought loans paid with the unsigned division, and `MonthsInTheRed` as `FUN_004f88b0` and the
 thirty-day divisor count it), then `ParkPeople.PayTheWages` (`ParkStaffPool.WageFrom` through `ParkState.Spend`, in
 ascending thing id). The strike look thing 1 makes after the training is built (`ParkStrikes.Look`, Q138b). Counted, not built: the
-analyser's training and staff totals (`STAFF_TRAINING_ANALYSER_TOTAL`,
-`STAFF_WAGE_ANALYSER_TOTAL`), and the end of a park six months in the red with the advisor's record `0x6a`
+analyser's training total (`STAFF_TRAINING_ANALYSER_TOTAL`; its staff total is kept, Q385), and the end of a park six months in the red with the advisor's record `0x6a`
 (`BANK_PARK_ENDS_IN_THE_RED`, `ADVISOR_PARK_ENDED_IN_THE_RED`). A grade with no `PoundsPerTrainingPoint`, which the
 original divides by unguarded and no shipped file has below grade 4, is counted (`STAFF_TRAINING_NO_POINT_COST`) and
 buys nothing. The Staff Training Budgets screen sets the budgets (Q352; `hud.md`); no screen buys a loan yet, so the loans keep what the save holds. OpenTPW's calendar

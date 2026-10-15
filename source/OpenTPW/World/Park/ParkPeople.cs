@@ -882,7 +882,8 @@ public sealed partial class ParkPeople : Entity
 	/// <summary>
 	/// The month's change reaches each member of staff, the last to hear it - message <c>0xc</c>, whose handler
 	/// withdraws a month's wage (<c>FUN_00504c70</c>, <see cref="ParkStaffPool.WageFrom"/>) in ascending thing id,
-	/// with nothing tested first: a member resting, in the hand or hired this month pays the whole month.
+	/// with nothing tested first: a member resting, in the hand or hired this month pays the whole month. Each wage goes
+	/// onto the analyser's month of staff costs too (<see cref="ParkState.AddStaffCost"/>).
 	/// </summary>
 	public void PayTheWages()
 	{
@@ -893,8 +894,10 @@ public sealed partial class ParkPeople : Entity
 			if ( kind < 0 )
 				continue;
 
-			_behaviour.State.Spend( ParkStaffPool.WageFrom( _balance, kind, member.PayGrade ) );
-			Unimplemented.Report( "STAFF_WAGE_ANALYSER_TOTAL" );
+			var wage = ParkStaffPool.WageFrom( _balance, kind, member.PayGrade );
+
+			_behaviour.State.Spend( wage );
+			_behaviour.State.AddStaffCost( wage );
 		}
 	}
 
@@ -905,7 +908,7 @@ public sealed partial class ParkPeople : Entity
 	/// <b>It is <see cref="Depart"/> for staff, and the worker is deleted outright rather than walked
 	/// out</b> - <c>FUN_00505790</c> charges, spawns a particle and calls the thing's delete, with no
 	/// state change and no walk to the gate. The severance is exactly one wage, by the same expression
-	/// the monthly charge uses.
+	/// the monthly charge uses, and goes onto the analyser's month of staff costs as a wage does.
 	/// </remarks>
 	internal bool Fire( int thingId )
 	{
@@ -936,6 +939,7 @@ public sealed partial class ParkPeople : Entity
 		ParkGuestSprites.Current?.Remove( thingId );
 
 		_behaviour.State.Spend( severance );
+		_behaviour.State.AddStaffCost( severance );
 
 		Log.Info( $"People: dismissed thing {thingId}, a grade {member.PayGrade} " +
 			$"{ParkStaffPool.NameOfKind( kind ).ToLowerInvariant()} - one month's wage of {severance} paid, " +

@@ -2126,6 +2126,9 @@ public sealed partial class ParkWorld : IParkInitialState
 				AnalyserAt = start;
 				LastStaffHired = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastStaffHiredAt, 8 ) );
 				LastObjectBuilt = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastObjectBuiltAt, 8 ) );
+				MonthCosts = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthCostsRing ), ParkMonthRing.Size ) );
+				MonthStaffCosts = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthStaffCostsRing ), ParkMonthRing.Size ) );
+				MonthCashIn = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthCashInRing ), ParkMonthRing.Size ) );
 			}
 
 			_things.Add( new( id, model ) );
@@ -2702,6 +2705,46 @@ public sealed partial class ParkWorld : IParkInitialState
 
 		System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(
 			body.AsSpan( AnalyserAt + AnalyserLastStaffHiredAt, 8 ), lastStaffHired );
+	}
+
+	/// <summary>
+	/// The park analyser's month of every withdrawal (<c>+0x1f5a0</c>), its ring of 144 closed months behind it; null
+	/// where the file holds no analyser or the ring does not read (<see cref="ParkMonthRing.Read"/>).
+	/// </summary>
+	public ParkMonthRing? MonthCosts { get; private set; }
+
+	/// <summary>The park analyser's month of wages and severances (<c>+0x1f7f0</c>), as <see cref="MonthCosts"/>.</summary>
+	public ParkMonthRing? MonthStaffCosts { get; private set; }
+
+	/// <summary>The park analyser's month of every deposit (<c>+0x1fc90</c>), as <see cref="MonthCosts"/>.</summary>
+	public ParkMonthRing? MonthCashIn { get; private set; }
+
+	/// <summary>
+	/// Where the analyser's first int ring (<c>+0x1f100</c>) starts in its record: the sixteen of
+	/// <c>FUN_004c5d70</c>'s read lie one after another from here, <see cref="ParkMonthRing.Size"/> bytes apiece, in
+	/// every park file measured (<c>saves.md</c>, "The park analyser").
+	/// </summary>
+	private const int AnalyserIntRingsAt = 62598;
+
+	/// <summary>The money rings' places among those sixteen: <c>+0x1f5a0</c>, <c>+0x1f7f0</c>, <c>+0x1fc90</c>.</summary>
+	private const int MonthCostsRing = 2, MonthStaffCostsRing = 3, MonthCashInRing = 5;
+
+	private static int AnalyserMonthRingAt( int ring ) => AnalyserIntRingsAt + ring * ParkMonthRing.Size;
+
+	/// <summary>
+	/// Writes the analyser's three money rings over the file's in <paramref name="body"/>, a copy of this park's own.
+	/// A park with no analyser is left alone.
+	/// </summary>
+	public void PutMonthRings( byte[] body, ParkMonthRing costs, ParkMonthRing staffCosts, ParkMonthRing cashIn )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+
+		if ( AnalyserAt < 0 )
+			return;
+
+		costs.Write( body.AsSpan( AnalyserAt + AnalyserMonthRingAt( MonthCostsRing ), ParkMonthRing.Size ) );
+		staffCosts.Write( body.AsSpan( AnalyserAt + AnalyserMonthRingAt( MonthStaffCostsRing ), ParkMonthRing.Size ) );
+		cashIn.Write( body.AsSpan( AnalyserAt + AnalyserMonthRingAt( MonthCashInRing ), ParkMonthRing.Size ) );
 	}
 
 	/// <summary>

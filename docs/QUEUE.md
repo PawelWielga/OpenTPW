@@ -44,9 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q385. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q386. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q385 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the analyser's other thirteen int rings (the month-end
+  balance, gate takings, training, the shops' and sideshows' takings, visitors and more) are not kept, and a written
+  file keeps the file's bytes for them (`ANALYSER_MONTH_CLOSE`, `GATE_FEE_ANALYSER_TOTALS`,
+  `STAFF_TRAINING_ANALYSER_TOTAL`). A park made with no file starts the rings empty and is not written
+  (`SAVE_PARK_WITH_NO_FILE`). The original closes a month on the first tick after loading a file this game saved past
+  its own first month (this game's calendar, Q149). In no game run: a loan taken or paid (no screen), a month with
+  withdrawals off, a ring gone round 144 months, Full Simulation (not asked: the account is either mode's), the other
+  three themes.
   From Q384 (`hud.md`, "How a list's cells are aligned"): the hire and buy lists' alignments are compared cell by cell.
   In no game run: Full Simulation (not asked: the screens are either mode's), the other three themes.
   From Q383 (`hud.md`, "How a list's cells are aligned"): every all-items count is centred. The language `0x40d`
@@ -165,9 +173,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   list's first-row pick and its "Skill" are built (Q356), and the original's five handymen were its pool's top-up on
   tick 1083, after this game's clicks (Q356). The track is 49 grey there and 58 here. In no game run: the object window's
   bars in the original, a full bar, the other three themes.
-  From Q352 (`hud.md`, "The Staff Training Budgets screen"): **the account's Cash in, Other costs and Balance
-  are empty** on it and on the hire screen: the analyser's three month rings (`+0x1fc94`, `+0x1f7f4`,
-  `+0x1f5a4`) are not kept, read from a file or written (`MONTHLY_ACCOUNT_HISTORY`, `ANALYSER_MONTH_CLOSE`).
+  From Q352 (`hud.md`, "The Staff Training Budgets screen"): the account's Cash in, Other costs and Balance are
+  built, on it and on the hire screen (Q385).
   The skill bars wear `ridestatbar.wct` (Q353). The screen's lettering is smaller than the original's at this window size (not looked into). The
   finances and loans screens its buttons go to are not built. What reads `mHaveEverTrained` was not looked for.
   No file of the original's own with a budget was made (its memory was read). **This game's month does not

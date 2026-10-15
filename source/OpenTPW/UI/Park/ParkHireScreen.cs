@@ -22,18 +22,11 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
-/// <b>What is not filled in.</b> The mini-balance block (<c>0x2485</c>, help row 163, "indicates the
-/// financial effects of hiring the selected person") is a monthly account, and not the park's cash.
-/// The original reads three monthly ring buffers off the park analyser - cash in, staff costs and
-/// total costs - and fills the rows as cash in, staff costs, total-minus-staff for other costs, and
-/// cash-in-minus-total for the balance. This game keeps no monthly history, so only the staff bill can
-/// be answered, and it is answered from the wages actually being paid.
-/// </para>
-///
-/// <para>
-/// The other three rows stay blank: the park's cash under "Balance" would be a different quantity
-/// wearing that row's label, the same figure as the money readout shown again as a month's net it is
-/// not. All four cells are still built, so the panel keeps the shape the original has.
+/// <b>The mini-balance is last month's account, not the park's cash.</b> The block (<c>0x2485</c>, help row 163,
+/// "indicates the financial effects of hiring the selected person") reads the park analyser's newest closed month of
+/// cash in, staff costs and all costs as the screen opens (<c>FUN_0049bdd0</c>): cash in, staff costs, all costs less
+/// staff costs, and cash in less all costs. A pick (<c>0x401</c>) adds the candidate's wage to the staff costs and
+/// takes it off the balance; nothing else moves them while the screen is up.
 /// </para>
 /// </summary>
 internal sealed class ParkHireScreen : UiWindow
@@ -58,8 +51,10 @@ internal sealed class ParkHireScreen : UiWindow
 	private readonly UiControl _money;
 	private readonly UiControl _staffCosts;
 
-	/// <summary>The picked candidate's wage, which message <c>0x401</c> adds to the staff costs shown until the next pick.</summary>
-	private int _considering;
+	/// <summary>The account's three months as the screen opened: <c>DAT_007ca2f0</c>, <c>DAT_007ca2fc</c>, <c>DAT_007ca2f8</c>.</summary>
+	private readonly int _cashIn, _monthStaffCosts, _monthCosts;
+
+	private readonly UiControl _cashInFigure, _otherCosts, _balanceFigure;
 
 	/// <summary>The picked candidate's skill, <c>0x2482</c>, set only as a row is picked (<c>0x401</c>).</summary>
 	private readonly ParkObjectWindow.UiStatBar _skill;
@@ -182,12 +177,21 @@ internal sealed class ParkHireScreen : UiWindow
 		balancePanel.Add( Label( 0x248a, new UiRect( 283, 816, 679, 861 ), UIStrings.OtherCosts, Cost ) );
 		balancePanel.Add( Label( 0x2486, new UiRect( 283, 868, 679, 912 ), UIStrings.Balance ) );
 
-		// All four value cells are built and three of them stay empty - see the class remarks. Only the
-		// staff bill is a figure this game can answer.
-		balancePanel.Add( Figure( 0x2489, new UiRect( 722, 714, 957, 759 ) ) );
+		// The account's figures, the analyser's newest month as the screen opens (FUN_0049bdd0) - see the class remarks.
+		_cashInFigure = balancePanel.Add( Figure( 0x2489, new UiRect( 722, 714, 957, 759 ) ) );
 		_staffCosts = balancePanel.Add( Figure( 0x248c, new UiRect( 722, 765, 957, 810 ), Cost ) );
-		balancePanel.Add( Figure( 0x248b, new UiRect( 722, 816, 957, 861 ), Cost ) );
-		balancePanel.Add( Figure( 0x2487, new UiRect( 722, 868, 957, 912 ) ) );
+		_otherCosts = balancePanel.Add( Figure( 0x248b, new UiRect( 722, 816, 957, 861 ), Cost ) );
+		_balanceFigure = balancePanel.Add( Figure( 0x2487, new UiRect( 722, 868, 957, 912 ) ) );
+
+		if ( Level.Current?.ParkState is { } state )
+		{
+			_cashIn = state.MonthCashIn.Newest;
+			_monthStaffCosts = state.MonthStaffCosts.Newest;
+			_monthCosts = state.MonthCosts.Newest;
+		}
+
+		ShowAccount( 0 );
+		Log.Info( $"Hire screen: opened, {Account()}" );
 
 		_list = Root.Add( new UiList
 		{
@@ -284,10 +288,8 @@ internal sealed class ParkHireScreen : UiWindow
 		_list.Build();
 		Show( openOn ?? _lastKind );
 
-		// Reached every time this screen opens, and not answerable yet: three of the four mini-balance
-		// figures need a monthly history this game does not keep, and the portrait needs the candidate's own
-		// actor rendered into its frame. Counted rather than left quietly blank.
-		Unimplemented.Report( "MONTHLY_ACCOUNT_HISTORY" );
+		// Reached every time this screen opens, and not answerable yet: the portrait needs the candidate's own actor
+		// rendered into its frame. Counted rather than left quietly blank.
 		Unimplemented.Report( "STAFF_PORTRAIT_ACTOR" );
 	}
 
@@ -414,7 +416,8 @@ internal sealed class ParkHireScreen : UiWindow
 	/// <summary>
 	/// A candidate was highlighted, by the pointer or by the fill's pick of the first row. The original previews the
 	/// cost here - message <c>0x401</c> adds this wage to the staff-costs row and takes it off the balance, so the
-	/// player sees what hiring would do before they do it - and sets the skill bar. Both stand until the next pick.
+	/// player sees what hiring would do before they do it (<see cref="ShowAccount"/>) - and sets the skill bar. Both
+	/// stand until the next pick.
 	/// </summary>
 	private void Selected( int candidateId )
 	{
@@ -427,9 +430,8 @@ internal sealed class ParkHireScreen : UiWindow
 				continue;
 
 			_skill.Units = SkillUnits( person.Grade );
-			_considering = person.Wage;
-			ShowMoney();
-			Log.Info( $"Hire screen: candidate {person.Id} grade {person.Grade}, skill bar {SkillUnits( person.Grade )} of 1024, staff costs {_staffCosts.Text}" );
+			ShowAccount( person.Wage );
+			Log.Info( $"Hire screen: candidate {person.Id} grade {person.Grade}, skill bar {SkillUnits( person.Grade )} of 1024, {Account()}" );
 
 			return;
 		}
@@ -455,39 +457,30 @@ internal sealed class ParkHireScreen : UiWindow
 	}
 
 	/// <summary>
-	/// The figures this game can actually answer, and no others.
+	/// The account with <paramref name="wage"/> hired: the opening's fill (<c>FUN_0049bdd0</c>) with nought, and a
+	/// pick's (<c>0x401</c>, <c>FUN_0049b650</c>) with the candidate's wage, which goes onto the staff costs and comes
+	/// off the balance. Each figure in the money skin (<c>FUN_00490250</c>): "$ 1500", "-$ 11675".
 	/// </summary>
-	/// <remarks>
-	/// The picked candidate's wage is added to the staff costs shown; the original also takes it off the
-	/// balance shown (message <c>0x401</c>), which this does not.
-	/// </remarks>
-	private void ShowMoney()
+	private void ShowAccount( int wage )
 	{
-		if ( Level.Current?.ParkState is not { } state )
-			return;
+		var other = unchecked(_monthCosts - _monthStaffCosts);
 
-		_money.Text = $"{state.Balance}";
-
-		var monthly = _considering;
-
-		if ( ParkPeople.Current is { } people && Level.Current?.StaffPool is { } pool )
-		{
-			foreach ( var member in people.Staff )
-			{
-				var kind = ParkStaffPool.KindFor( member.Model );
-
-				if ( kind >= 0 )
-					monthly += pool.WageFor( kind, member.PayGrade );
-			}
-		}
-
-		_staffCosts.Text = $"{monthly}";
+		_cashInFigure.Text = ParkItemsScreen.Money( _cashIn );
+		_staffCosts.Text = ParkItemsScreen.Money( unchecked(_monthStaffCosts + wage) );
+		_otherCosts.Text = ParkItemsScreen.Money( other );
+		_balanceFigure.Text = ParkItemsScreen.Money( unchecked(_cashIn - wage - _monthStaffCosts - other) );
 	}
 
-	/// <summary>Takes the list's posted pick, as the original's loop hands the screen its queued <c>0x401</c>, then the money.</summary>
+	/// <summary>The account as it reads, for the log: cash in, staff costs, other costs, balance.</summary>
+	internal string Account()
+		=> $"cash in {_cashInFigure.Text}, staff costs {_staffCosts.Text}, other costs {_otherCosts.Text}, balance {_balanceFigure.Text}";
+
+	/// <summary>Takes the list's posted pick, as the original's loop hands the screen its queued <c>0x401</c>, then the park's cash.</summary>
 	protected internal override void Update()
 	{
 		_list.TakePosted();
-		ShowMoney();
+
+		if ( Level.Current?.ParkState is { } state )
+			_money.Text = $"{state.Balance}";
 	}
 }

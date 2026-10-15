@@ -633,6 +633,43 @@ public class ParkBankTests
 	}
 
 	/// <summary>
+	/// <b>The analyser's money rings keep the month and close it at the month's change</b>: a deposit and a gate fee
+	/// onto cash in, a withdrawal onto all costs (none while withdrawals are off), each wage onto staff costs and all
+	/// costs (a severance's, which needs the level's staff pool, is held by the game run); the close before the bank's batch deposit and the wages, which open the new month
+	/// (<c>FUN_004c7720</c> after the training and before the bank's turn; <c>FUN_00504c70</c>, <c>FUN_00505790</c>).
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the gate fee not onto cash in; a withdrawal counted while withdrawals are off; the wage not onto
+	/// staff costs; the close after the wages; a ring not closed.
+	/// </remarks>
+	[TestMethod]
+	public void TheAnalysersMoneyRingsKeepTheMonthAndCloseItAtTheMonthsChange()
+	{
+		var (bank, people) = Month();
+		int[] Totals() => [bank.MonthCashIn.Total, bank.MonthStaffCosts.Total, bank.MonthCosts.Total];
+		int[] Newest() => [bank.MonthCashIn.Newest, bank.MonthStaffCosts.Newest, bank.MonthCosts.Newest];
+
+		CollectionAssert.AreEqual( new[] { 200, 538, 538 }, Totals(), "the file's month so far" );
+		CollectionAssert.AreEqual( new[] { 1500, 0, 13175 }, Newest(), "and its last month" );
+
+		bank.Deposit( 40 );
+		bank.Take( 25 );
+		bank.Spend( 100 );
+		bank.WithdrawalsEnabled = 0;
+		bank.Spend( 1000 );
+		bank.WithdrawalsEnabled = 1;
+
+		CollectionAssert.AreEqual( new[] { 265, 538, 638 }, Totals() );
+
+		var batch = bank.BatchBalance;
+
+		TurnTheMonth( bank, people );
+
+		CollectionAssert.AreEqual( new[] { 265, 538, 638 }, Newest(), "the month closed before the bank's turn and the wages" );
+		CollectionAssert.AreEqual( new[] { batch, 538, 538 }, Totals(), "the batch and the five wages open the next" );
+	}
+
+	/// <summary>
 	/// <b>A training budget is withdrawn and buys the member points</b>: the mechanics' 25, the one step up the
 	/// original was measured with, took 563 at 5.1 and moved the grade-3 mechanic 0 to 1 (25 / 15).
 	/// </summary>

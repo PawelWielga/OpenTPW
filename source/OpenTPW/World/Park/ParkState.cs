@@ -735,6 +735,9 @@ public sealed class ParkState
 		MechanicCursor = park.Save?.MechanicCursor ?? 0;
 		LastStaffHired = park.Save?.LastStaffHired ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 		LastObjectBuilt = park.Save?.LastObjectBuilt ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
+		MonthCosts = park.Save?.MonthCosts?.Copy() ?? new();
+		MonthStaffCosts = park.Save?.MonthStaffCosts?.Copy() ?? new();
+		MonthCashIn = park.Save?.MonthCashIn?.Copy() ?? new();
 
 		foreach ( var thing in park.Objects )
 			_nextObject[thing.ThingId] = thing.NextObject;
@@ -904,6 +907,24 @@ public sealed class ParkState
 	public long LastStaffHired { get; private set; }
 
 	/// <summary>
+	/// The park analyser's month of every withdrawal (<c>+0x1f5a0</c>) and its closed months, the file's at a load and
+	/// empty in a park made with no file (<c>FUN_004c58c0</c>); <see cref="Spend"/> adds to it.
+	/// </summary>
+	public ParkMonthRing MonthCosts { get; private set; } = new();
+
+	/// <summary>The analyser's month of wages and severances (<c>+0x1f7f0</c>), as <see cref="MonthCosts"/>; <see cref="AddStaffCost"/> adds to it.</summary>
+	public ParkMonthRing MonthStaffCosts { get; private set; } = new();
+
+	/// <summary>The analyser's month of every deposit (<c>+0x1fc90</c>), as <see cref="MonthCosts"/>; <see cref="Deposit"/> and <see cref="Take"/> add to it.</summary>
+	public ParkMonthRing MonthCashIn { get; private set; } = new();
+
+	/// <summary>
+	/// A wage or a severance paid: onto the analyser's month of staff costs, after the withdrawal and whether or not it
+	/// was made (<c>FUN_00504c70</c>, <c>FUN_00505790</c>).
+	/// </summary>
+	internal void AddStaffCost( int wage ) => MonthStaffCosts.Add( wage );
+
+	/// <summary>
 	/// A member of staff has been made: the staff constructor's tail stamps the analyser with now
 	/// (<c>FUN_00504b90</c>, <c>FUN_004c76d0</c>), whatever their kind.
 	/// </summary>
@@ -1040,8 +1061,8 @@ public sealed class ParkState
 	/// the deposit's adds, and onto the gate's running total, which only this moves (<c>docs/exe/ride-operation.md</c>, "The cost of goods and the park's money").
 	/// </summary>
 	/// <remarks>
-	/// Counted, not built: the park analyser's month cash in and gate takings (<c>+0x1fc90</c>, <c>+0x1fee0</c>),
-	/// its lifetime visitors and dearest ticket, and the message that counts a new visitor toward a challenge of
+	/// Onto the park analyser's month cash in (<see cref="MonthCashIn"/>). Counted, not built: its month gate takings
+	/// (<c>+0x1fee0</c>), its lifetime visitors and dearest ticket, and the message that counts a new visitor toward a challenge of
 	/// type 11, which takes it only while one is on.
 	/// </remarks>
 	public void Take( int fee )
@@ -1053,10 +1074,10 @@ public sealed class ParkState
 		}
 
 		Takings += fee;
+		MonthCashIn.Add( fee );
 
 		Log.Info( $"Bank: admission {fee}, balance {Balance}, profit {ProfitThisYear}" );
 
-		Unimplemented.Report( "BANK_ANALYSER_MONEY_IN" );
 		Unimplemented.Report( "GATE_FEE_ANALYSER_TOTALS" );
 		Unimplemented.Report( "GATE_FEE_CHALLENGE_POST" );
 	}
@@ -1076,8 +1097,7 @@ public sealed class ParkState
 	/// In its order (<c>docs/exe/ride-operation.md</c>, "The cost of goods and the park's money"): nothing at all while <see cref="WithdrawalsEnabled"/> is nought; the balance less
 	/// the cost; <see cref="TurnEnteredRed"/> stamped when that is below nought and the old <see cref="LastBalance"/>
 	/// is not; <see cref="LastBalance"/> the new balance; and <see cref="ProfitThisYear"/> less the cost. A cost of
-	/// nought still writes the last balance. Counted, not built: the park analyser's month money out
-	/// (<c>+0x1f5a0</c>).
+	/// nought still writes the last balance; the cost goes onto the park analyser's month of costs (<see cref="MonthCosts"/>).
 	/// </para>
 	/// </summary>
 	public void Spend( int cost )
@@ -1098,7 +1118,7 @@ public sealed class ParkState
 			Balance = balance;
 			LastBalance = balance;
 
-			Unimplemented.Report( "BANK_ANALYSER_MONEY_OUT" );
+			MonthCosts.Add( cost );
 
 			ProfitThisYear -= cost;
 		}
@@ -1116,7 +1136,7 @@ public sealed class ParkState
 	/// balance <i>and</i> <see cref="Takings"/>, which is what the gates have taken; a deposit that went
 	/// through there would report gate money the park never took. It moves the balance and
 	/// <see cref="ProfitThisYear"/>, has no gate and writes no <see cref="LastBalance"/>; its size check goes to a
-	/// bare <c>RET</c> and refuses nothing. Counted, not built: the park analyser's month cash in (<c>+0x1fc90</c>).
+	/// bare <c>RET</c> and refuses nothing. It goes onto the park analyser's month cash in (<see cref="MonthCashIn"/>).
 	/// </para>
 	/// </summary>
 	public void Deposit( int amount )
@@ -1124,8 +1144,7 @@ public sealed class ParkState
 		unchecked
 		{
 			Balance += amount;
-
-			Unimplemented.Report( "BANK_ANALYSER_MONEY_IN" );
+			MonthCashIn.Add( amount );
 
 			ProfitThisYear += amount;
 		}
@@ -1221,8 +1240,9 @@ public sealed class ParkState
 
 	/// <summary>
 	/// The month's change reaches the park analyser (thing 5) and then the bank (thing 8) - message <c>0xc</c>
-	/// (<c>docs/exe/ride-operation.md</c>, "The month's change"). The analyser's close of the month is counted. The
-	/// bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
+	/// (<c>docs/exe/ride-operation.md</c>, "The month's change"). The analyser's close (<c>FUN_004c7720</c>) closes its
+	/// three money rings, all costs, staff costs and cash in, in that order, and its other rings and samples are counted
+	/// (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
 	/// instalment withdrawn, its months repaid counted, <see cref="ProfitThisYear"/> given the principal's share back
 	/// by the original's unsigned division, and the loan closed at its period; then, with the balance and
 	/// <see cref="LastBalance"/> both below nought, the whole thirty-day months since <see cref="TurnEnteredRed"/> -
@@ -1230,6 +1250,10 @@ public sealed class ParkState
 	/// </summary>
 	public void TurnTheMonth()
 	{
+		MonthCosts.Close();
+		MonthStaffCosts.Close();
+		MonthCashIn.Close();
+		Log.Info( $"Park: analyser month closed, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, cash in {MonthCashIn.Newest}" );
 		Unimplemented.Report( "ANALYSER_MONTH_CLOSE" );
 
 		var batch = BatchBalance;

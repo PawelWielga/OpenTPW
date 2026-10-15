@@ -26,9 +26,10 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
-/// <b>The month's account is not kept.</b> The panel's cash in, other costs and balance are the analyser's newest
-/// month of cash in and of all costs, which nothing here keeps: they are left empty and counted,
-/// <c>MONTHLY_ACCOUNT_HISTORY</c>, as the hire screen's are.
+/// <b>The month's account is last month's, the hire screen's.</b> The panel's cash in and other costs are the
+/// analyser's newest closed month of cash in and of all costs less staff costs, read as the screen opens; the staff
+/// costs are the budgets added up and the balance the cash in less those and the other costs, after every change
+/// (<c>0x004b266a</c>, <c>0x004b2695</c>).
 /// </para>
 /// </summary>
 internal sealed class ParkStaffCostsScreen : UiWindow
@@ -61,6 +62,11 @@ internal sealed class ParkStaffCostsScreen : UiWindow
 
 	private readonly UiControl[] _budgets = new UiControl[Rows.Length];
 	private readonly UiControl _staffCosts;
+
+	/// <summary>The kept cash in and other costs, <c>DAT_007cc2d4</c> and <c>DAT_007cc2e4</c>.</summary>
+	private readonly int _cashIn, _otherCosts;
+
+	private readonly UiControl _cashInFigure, _otherFigure, _balance;
 
 	public ParkStaffCostsScreen( WindowStack stack ) : base( stack )
 	{
@@ -116,10 +122,19 @@ internal sealed class ParkStaffCostsScreen : UiWindow
 		account.Add( Label( 0x2e1, new UiRect( 284, 297, 561, 342 ), UIStrings.OtherCosts, Cost ) );
 		account.Add( Label( 0x2e5, new UiRect( 284, 349, 561, 393 ), UIStrings.Balance ) );
 
-		account.Add( Figure( 0x2e2, new UiRect( 591, 195, 755, 240 ) ) );
+		_cashInFigure = account.Add( Figure( 0x2e2, new UiRect( 591, 195, 755, 240 ) ) );
 		_staffCosts = account.Add( Figure( 0x2df, new UiRect( 591, 246, 755, 291 ), Cost ) );
-		account.Add( Figure( 0x2e0, new UiRect( 591, 297, 755, 342 ), Cost ) );
-		account.Add( Figure( 0x2e4, new UiRect( 591, 349, 755, 393 ) ) );
+		_otherFigure = account.Add( Figure( 0x2e0, new UiRect( 591, 297, 755, 342 ), Cost ) );
+		_balance = account.Add( Figure( 0x2e4, new UiRect( 591, 349, 755, 393 ) ) );
+
+		if ( Level.Current?.ParkState is { } state )
+		{
+			_cashIn = state.MonthCashIn.Newest;
+			_otherCosts = unchecked(state.MonthCosts.Newest - state.MonthStaffCosts.Newest);
+		}
+
+		_cashInFigure.Text = ParkItemsScreen.Money( _cashIn );
+		_otherFigure.Text = ParkItemsScreen.Money( _otherCosts );
 
 		var people = ParkPeople.Current;
 
@@ -168,14 +183,12 @@ internal sealed class ParkStaffCostsScreen : UiWindow
 			} );
 		}
 
-		Unimplemented.Report( "MONTHLY_ACCOUNT_HISTORY" );
-
 		if ( people != null )
 		{
 			for ( var kind = 0; kind < Rows.Length; ++kind )
 				people.SetTrainingBudget( kind, people.TrainingBudgets[kind] );
 
-			_staffCosts.Text = Money( people.TrainingBudgets.Sum() );
+			ShowCosts( people.TrainingBudgets.Sum() );
 		}
 
 		Show();
@@ -183,11 +196,12 @@ internal sealed class ParkStaffCostsScreen : UiWindow
 		Log.Info( $"Staff Training Budgets: opened, {Census()}" );
 	}
 
-	/// <summary>The screen as it stands, for the log and the console: each row's budget and its bar's whole per cent (-1 for a bar not drawn), and the staff costs row.</summary>
+	/// <summary>The screen as it stands, for the log and the console: each row's budget and its bar's whole per cent (-1 for a bar not drawn), the staff costs row, the loans button, and the account's four figures.</summary>
 	internal string Census()
 		=> $"budgets {string.Join( ",", _budgets.Select( budget => budget.Text ) )} "
 			+ $"skill {string.Join( ",", _budgets.Select( budget => budget.Children.OfType<ParkObjectWindow.UiStatBar>().First() ).Select( bar => bar.Known ? (int)MathF.Round( bar.At * 100f ) : -1 ) )} "
-			+ $"staffcosts {_staffCosts.Text ?? "empty"} loans {(Root!.Children.OfType<UiButton>().First( button => button.Id == 0x2dd ).Enabled ? "on" : "off")}";
+			+ $"staffcosts {_staffCosts.Text ?? "empty"} loans {(Root!.Children.OfType<UiButton>().First( button => button.Id == 0x2dd ).Enabled ? "on" : "off")} "
+			+ $"account {_cashInFigure.Text} / {_staffCosts.Text} / {_otherFigure.Text} / {_balance.Text}";
 
 	/// <summary>One of a spinner's two buttons.</summary>
 	private UiButton Nudge( UiRect rect, string mesh, int kind, int by )
@@ -203,11 +217,18 @@ internal sealed class ParkStaffCostsScreen : UiWindow
 				people.SetTrainingBudget( kind, Math.Clamp( people.TrainingBudgets[kind] + by, Lowest, Highest ) );
 
 				// The handler's own refresh after a change: the five budgets added up into the staff costs row.
-				_staffCosts.Text = Money( people.TrainingBudgets.Sum() );
+				ShowCosts( people.TrainingBudgets.Sum() );
 
 				Show();
 			}
 		};
+
+	/// <summary>The handler's refresh: the staff costs row the budgets added up, the balance the kept cash in less them and the kept other costs.</summary>
+	private void ShowCosts( int budgets )
+	{
+		_staffCosts.Text = Money( budgets );
+		_balance.Text = ParkItemsScreen.Money( unchecked(_cashIn - budgets - _otherCosts) );
+	}
 
 	/// <summary>One of the three buttons to this category's other screens.</summary>
 	private UiButton CrossLink( int id, UiRect rect, int help, string mesh, int screen )

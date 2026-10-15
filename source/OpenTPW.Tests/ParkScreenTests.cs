@@ -701,7 +701,7 @@ public class ParkScreenTests
 		Pointer( stack, Grass, left: false );
 		Assert.AreEqual( UI.ParkHireScreen.SkillUnits( First( telling ).Grade ) / 1024f, bar.At, "taken: the row sorted first" );
 		Pointer( stack, Grass, left: false );
-		Assert.AreEqual( $"{First( telling ).Wage}", costs.Text, "its wage in the staff costs, standing frame on frame" );
+		Assert.AreEqual( UI.ParkItemsScreen.Money( First( telling ).Wage ), costs.Text, "its wage in the staff costs, standing frame on frame" );
 
 		// The tabs' ids by kind, the stream's: cleaners, mechanics, entertainers, guards, scientists.
 		int[] tabIds = [0x2490, 0x2493, 0x2492, 0x2494, 0x2491];
@@ -713,8 +713,86 @@ public class ParkScreenTests
 		Assert.AreEqual( First( other ).Id, list.Selected );
 		Assert.AreEqual( UI.ParkHireScreen.SkillUnits( First( other ).Grade ) / 1024f, bar.At, "a tab picks its first row again" );
 		Assert.AreEqual( "Skill", label.Text, "and the label stands" );
-		Assert.AreEqual( $"{First( other ).Wage}", costs.Text );
+		Assert.AreEqual( UI.ParkItemsScreen.Money( First( other ).Wage ), costs.Text );
 
+		people.SetValue( null, peopleBefore );
+	}
+
+	/// <summary>
+	/// <b>The hire and training screens' account is the analyser's last closed month</b> (<c>FUN_0049bdd0</c>,
+	/// <c>FUN_004b2750</c>): in the shipped park cash in 1500, staff costs nought and all costs 13175, so "$ 1500",
+	/// "$ 0", "$ 13175", "-$ 11675" as the hire screen opens; a pick adds the candidate's wage to the staff costs and
+	/// takes it off the balance; the training screen's staff costs are its budgets, its balance the cash in less them
+	/// and the other costs (the original with the mechanics at 75: "-$ 11750", <c>hud.md</c>, Q352's table). A dismissal's
+	/// severance goes onto the month's staff costs (<c>FUN_00505790</c>).
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the cash in and costs rings swapped; the other costs all costs; the balance without the other
+	/// costs; the wage not taken off the balance; the training balance without the budgets; the figures read live
+	/// rather than as the screen opens; a severance not a staff cost.
+	/// </remarks>
+	[TestMethod]
+	public void TheHireAndTrainingScreensAccountIsTheAnalysersLastClosedMonth()
+	{
+		var stack = APark();
+		var park = AParkOver( stack );
+
+		using var stream = FileSystem.OpenRead( "levels/jungle/Easymode.TPWI" );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		var pool = Level.StaffPoolFor( world, new ParkBalance( "jungle", easyMode: true ), world.GameTick );
+		var state = new ParkState( world );
+
+		typeof( Level ).GetProperty( nameof( Level.StaffPool ) )!.SetValue( park, pool );
+		typeof( Level ).GetProperty( nameof( Level.ParkState ) )!.SetValue( park, state );
+
+		var people = typeof( ParkPeople ).GetProperty( "Current", BindingFlags.Static | BindingFlags.NonPublic )!;
+		var peopleBefore = people.GetValue( null );
+		people.SetValue( null, null );
+
+		static IEnumerable<UI.UiControl> Under( UI.UiControl control ) => control.Children.Concat( control.Children.SelectMany( Under ) );
+		string Figures( UI.UiWindow screen, params int[] ids ) => string.Join( " / ", ids.Select( id => Under( screen.Root ).Single( control => control.Id == id ).Text ) );
+
+		var hire = new UI.ParkHireScreen( stack, openOn: 1 );
+		stack.Open( hire );
+
+		Assert.AreEqual( "$ 1500 / $ 0 / $ 13175 / -$ 11675", Figures( hire, 0x2489, 0x248c, 0x248b, 0x2487 ), "as it opens" );
+
+		// The month's money moves after the opening; the figures stand.
+		state.Deposit( 100 );
+		Pointer( stack, Grass, left: false );
+
+		var picked = pool.Candidates.Single( person => person.Id == Under( hire.Root ).OfType<UI.UiList>().Single( control => control.Id == 0x248e ).Selected );
+		Assert.AreEqual( $"$ 1500 / $ {picked.Wage} / $ 13175 / -$ {11675 + picked.Wage}", Figures( hire, 0x2489, 0x248c, 0x248b, 0x2487 ), "a pick" );
+
+		stack.Close( hire );
+
+		var shipped = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), null, state );
+
+		Assert.AreEqual( "$ 1500 / $ 0 / $ 13175 / -$ 11675", Figures( new UI.ParkStaffCostsScreen( stack ), 0x2e2, 0x2df, 0x2e0, 0x2e4 ), "budgets of nought" );
+
+		shipped.SetTrainingBudget( 1, 75 );
+		Assert.AreEqual( "$ 1500 / $ 75 / $ 13175 / -$ 11750", Figures( new UI.ParkStaffCostsScreen( stack ), 0x2e2, 0x2df, 0x2e0, 0x2e4 ), "the mechanics at 75" );
+
+		// A dismissal's severance, one wage, goes onto the month's staff costs and all costs (FUN_00505790).
+		var mechanic = shipped.Staff.Single( member => member.Model == 4 );
+		var severance = pool.WageFor( ParkStaffPool.KindFor( mechanic.Model ), mechanic.PayGrade );
+
+		Assert.IsTrue( severance > 0 );
+		Assert.IsTrue( shipped.Fire( mechanic.ThingId ) );
+		Assert.AreEqual( (538 + severance, 538 + severance), (state.MonthStaffCosts.Total, state.MonthCosts.Total), "a severance is a staff cost" );
+
+		// A month closed with staff costs in it: the other costs are all costs less them, on both screens.
+		state.Spend( 40 );
+		state.TurnTheMonth();
+
+		var staffMonth = 538 + severance;
+
+		Assert.AreEqual( $"$ 300 / $ {staffMonth} / $ 40 / -$ {staffMonth + 40 - 300}",
+			Figures( new UI.ParkHireScreen( stack, openOn: 1 ), 0x2489, 0x248c, 0x248b, 0x2487 ), "the next month's account" );
+		Assert.AreEqual( "$ 300 / $ 75 / $ 40 / $ 185", Figures( new UI.ParkStaffCostsScreen( stack ), 0x2e2, 0x2df, 0x2e0, 0x2e4 ) );
+
+		shipped.Delete();
+		Entity.ApplyDeletions();
 		people.SetValue( null, peopleBefore );
 	}
 

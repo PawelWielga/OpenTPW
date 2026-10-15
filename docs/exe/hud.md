@@ -546,8 +546,7 @@ The month's change spends what is set (`ride-operation.md`, "The month's change"
 it (`advisor-park.md`, "Staff nobody has trained"), and a saved park holds it (`saves.md`, "OpenTPW's writer, the
 training budgets").
 
-**Deviations, each said at its site.** The account's Cash in, Other costs and Balance are empty: nothing here
-keeps the analyser's months (`MONTHLY_ACCOUNT_HISTORY`, counted as the screen opens). The bars wear
+**Deviations, each said at its site.** The account is built (Q385, "The mini-balance is a MONTHLY ACCOUNT"). The bars wear
 `ridestatbar.wct` (Q353, "The stat bars' skin", below). The lettering in the panel and the spinners is smaller than the original's at this window
 size (not looked into). The finances and the loans are not built, so those two buttons close the screen and count
 (`FINANCE_SCREEN`; `LOANS_SCREEN` in Full Simulation).
@@ -1602,11 +1601,37 @@ of goods among them), pushed on the month's change (`FUN_004c7720`; `ride-operat
     0x2487 Balance     <- DAT_007ca2f0 - DAT_007ca2f8
 
 A negative index reads `index + count`, and only when the wrapped byte is set - a ring that has not
-filled once yet. **The balance row is last month's net, so the park's cash does not belong in it**; a
+filled once yet; the count is tested first, and a count of nought reads nought (`0x0049c54f`). The figures are read
+once, as the screen opens; nothing rereads them while it stands. **A pick (`0x401`) moves two of them**: the staff costs
+read `DAT_007ca2fc` plus the candidate's wage (`FUN_005077f0`) and the balance `DAT_007ca2f0` less the wage less
+`DAT_007ca2fc` less `DAT_007ca300`, the kept other costs: cash in less all costs less the wage. Every figure is the
+money skin's (`FUN_00490250`): "$ 1500", "-$ 11675". **The balance row is last month's net, so the park's cash does not belong in it**; a
 build that puts it there shows the same figure twice, once correctly as `0x2496` and once mislabelled.
 
 **The two cost rows are red.** `FUN_0065c5d5( 0xff, 0, 0, 0xff )` is called while `0x248d`/`0x248c` and
 `0x248a`/`0x248b` are the current control, and never for `0x2488`/`0x2489` or `0x2486`/`0x2487`.
+
+**What feeds the three months** (read 2026-10-15, Q385; every writer of the offsets, a scan of the image's operands):
+
+| Total | Added by |
+|---|---|
+| `+0x1fc90` cash in | every deposit (`FUN_004d0190`), the bank's month turn's batch (`FUN_004d0370`), the gate fee (`FUN_004d0600`, which adds to the gate's `+0x1fee0` too) and a loan taken (`FUN_004d0750`) |
+| `+0x1f5a0` all costs | every withdrawal made (`FUN_004d01f0`, nothing while `+0x114` is nought), a loan's instalment (`FUN_004d0370`) and a loan paid off (`FUN_004d0850`) |
+| `+0x1f7f0` staff costs | a member's monthly wage (`FUN_00504c70` on message `0xc`) and a dismissal's (`FUN_00505790`), each after its withdrawal and whether or not that was made |
+
+The close (`FUN_004c7720`, the analyser's turn of the month, after thing 1's training and before the bank's turn and
+the wages) pushes each total into its ring (`FUN_004ce290`: the slot one on, nought past the last with the wrapped byte
+set, the total written there) and zeroes it; the constructor (`FUN_004c58c0`) leaves each slot -1, each count 144.
+The rings' place in a park file is `saves.md`, "The park analyser": in the shipped park one month is closed, cash in
+1500, staff costs 0, all costs 13175, so the original's hire screen opens on "$ 1500", "$ 0", "$ 13175", "-$ 11675".
+
+**OpenTPW** (Q385). `ParkMonthRing` is a ring; `ParkState.MonthCashIn`, `MonthStaffCosts` and `MonthCosts` are the
+three, the file's at a load (`ParkWorld`) and empty in a park made with no file; `Deposit` and `Take` add to cash in,
+`Spend` to all costs, `AddStaffCost` (from `PayTheWages` and `Fire`) to staff costs; `TurnTheMonth` closes them first;
+the writer writes them back (`ParkWorld.PutMonthRings`). The hire screen (`ParkHireScreen.ShowAccount`) and the training
+screen read the newest month as they open. The analyser's other thirteen int rings, its gate takings, training and
+shop and sideshow totals are not kept (`ANALYSER_MONTH_CLOSE`, `GATE_FEE_ANALYSER_TOTALS`,
+`STAFF_TRAINING_ANALYSER_TOTAL`), and a written file keeps the file's bytes for them.
 
 #### The first row is picked as a list fills
 

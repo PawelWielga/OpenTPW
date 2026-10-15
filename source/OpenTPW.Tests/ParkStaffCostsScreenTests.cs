@@ -92,7 +92,7 @@ public class ParkStaffCostsScreenTests
 
 		stack.Open( screen );
 
-		Assert.AreEqual( "budgets $ 0,$ 0,$ 0,$ 0,$ 0 skill 60,60,60,60,40 staffcosts $ 0 loans off", screen.Census() );
+		Assert.AreEqual( "budgets $ 0,$ 0,$ 0,$ 0,$ 0 skill 60,60,60,60,40 staffcosts $ 0 loans off account $ 0 / $ 0 / $ 0 / $ 0", screen.Census() );
 		Assert.IsFalse( people.HaveEverTrained, "five budgets of nought written back train nobody" );
 
 		// A minus at nought.
@@ -108,7 +108,7 @@ public class ParkStaffCostsScreenTests
 
 		CollectionAssert.AreEqual( new[] { 25, 50, 75, 100, 125 }, people.TrainingBudgets, "a row a kind, top to bottom" );
 		Assert.IsTrue( people.HaveEverTrained );
-		Assert.AreEqual( "budgets $ 25,$ 50,$ 75,$ 100,$ 125 skill 60,60,60,60,40 staffcosts $ 375 loans off", screen.Census() );
+		Assert.AreEqual( "budgets $ 25,$ 50,$ 75,$ 100,$ 125 skill 60,60,60,60,40 staffcosts $ 375 loans off account $ 0 / $ 375 / $ 0 / -$ 375", screen.Census() );
 
 		stack.ClickAt( Minus, RowMiddles[0] );
 		stack.ClickAt( Minus, RowMiddles[0] );
@@ -149,7 +149,7 @@ public class ParkStaffCostsScreenTests
 
 		Assert.IsTrue( people.HaveEverTrained );
 		CollectionAssert.AreEqual( new[] { 25, 0, 50, 0, 0 }, people.TrainingBudgets );
-		Assert.AreEqual( "budgets $ 25,$ 0,$ 50,$ 0,$ 0 skill 60,60,60,60,40 staffcosts $ 75 loans off", screen.Census() );
+		Assert.AreEqual( "budgets $ 25,$ 0,$ 50,$ 0,$ 0 skill 60,60,60,60,40 staffcosts $ 75 loans off account $ 0 / $ 75 / $ 0 / -$ 75", screen.Census() );
 	}
 
 	/// <summary>
@@ -193,7 +193,7 @@ public class ParkStaffCostsScreenTests
 
 		Assert.AreEqual( 9, ParkCategoryScreens.LeftOn( ParkCategoryScreens.Finance ) );
 		Assert.AreEqual( 0, Times( "STAFF_COSTS_SCREEN" ) );
-		Assert.AreEqual( 1, Times( "MONTHLY_ACCOUNT_HISTORY" ), "the month's account is counted as the screen opens" );
+		Assert.AreEqual( 0, Times( "MONTHLY_ACCOUNT_HISTORY" ), "the month's account is built" );
 
 		ParkCategoryScreens.Show( stack, ParkCategoryScreens.Finance, ParkCategoryScreens.StaffCosts );
 		Assert.AreSame( screen, stack.Windows.OfType<ParkStaffCostsScreen>().Single(), "nothing with its screen up" );

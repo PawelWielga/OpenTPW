@@ -7007,6 +7007,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   which main's default already drew: `q384/run-fix1` and `run-control1` measure the same, the names from 0.000 to
   0.016, the prices ending 0.969 to 0.979, the wages 0.966 to 0.974; the original at 800 x 600 (`q384/orig/b`) every
   price ending 0.951 and wage 0.968. Mutations 9 of 9.
+- [x] **Q385. The analyser's three month money rings, kept, read, written and shown.** All costs `+0x1f5a0`, staff
+  costs `+0x1f7f0` and cash in `+0x1fc90` are fed as the original's bank and staff feed them, closed at the month's
+  change (`FUN_004c7720`), read from and written to a park file (thing 5, 62,598 on, 589 bytes a ring: 513 of 513
+  files), and the hire and training screens' accounts read the newest month. `q385/run-fix4` (the final build): the
+  stock park's "$ 1500 / $ 0 / $ 13175 / -$ 11675", a pick's wage on both rows, the close (costs 828, staff 538, cash
+  in 1065), a severance, the next month's account and the file read back; the original on the stock park the same
+  four with the same $63 pick, and on this game's file its rings as written. Mutations 25 of 25 after a test round.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
