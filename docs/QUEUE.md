@@ -44,12 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q376. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q377. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q376 (`hud.md`, "The pointer over a list"): every list follows the pointer. In no game run: the original's
+  all-staff list with two members of a kind, a row bought, sold, come or gone under a pointer at rest (no move, no
+  pick, in this game as `WindowStack` sends a move only on a frame the pointer moved), Full Simulation (not asked: the
+  screens are either mode's), the other three themes.
   From Q375 (`hud.md`, "The miscellaneous tab: a row an object, and each tab's sort"): the all-items lists pick their
-  first row. Whether their trees carry flag `0x80` (the highlight following a moving pointer) is not read, and this
-  game's do not follow it. In no game run: an empty tab, a row bought or sold with the tab open, Full Simulation (not
+  first row, and follow the pointer (Q376). In no game run: an empty tab, a row bought or sold with the tab open, Full Simulation (not
   asked: the screen is either mode's), the other three themes.
   From Q374 (`hud.md`, "The miscellaneous tab: a row an object, and each tab's sort"): the misc list picks no first row
   as it fills, where the original's picks it (the other lists' pick, Q232). In no game run: a misc object bought or sold

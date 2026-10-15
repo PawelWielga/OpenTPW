@@ -223,6 +223,10 @@ internal sealed class ParkItemsScreen : UiWindow
 			// The screen's handler FUN_00495360 has no 0x401 arm: nothing takes the pick, and it is the highlight alone.
 			PicksFirstRow = true,
 
+			// Each tab's list record carries flag 0x80 (0x00750ab8, 0x00750ba0, 0x00750ca0): the row under the moving
+			// pointer is picked, the highlight alone as the add's pick is.
+			SelectsUnderPointer = true,
+
 			// A right click on the list moves the camera to the selected row's thing and closes the screen (0x00495584).
 			RowRightClicked = GoTo,
 			SortChanged = word => _sorts[_tab] = word,

@@ -2835,10 +2835,9 @@ the list is filled.
 **OpenTPW** (Q233b): `ParkFootprintPicture` is control `0x1eb`, a child of the panel; its `Grid` is `FUN_0052c5b0`
 and its `Squares` the paint's arithmetic, on a surface the control's rectangle in whole pixels, drawn at 8/15.
 `ParkBuyScreen.RowSelected` and `Update` keep the waiting row and show it after more than 500 ms;
-`UiList.SelectsUnderPointer` is the flag, set on the buy list and the park file screen's, and `WindowStack` sends the move. It differs in two
+`UiList.SelectsUnderPointer` is the flag, set on every list (`hud.md`, "The pointer over a list"), and `WindowStack` sends the move. It differs in two
 ways, each said at its site (the wait is real time, `Time.WallMilliseconds`, as the original's is); no row is
-selected as the list fills, so the panel stays empty until the pointer has been over a row (Q232); and the hire
-list, which carries the flag too, does not set it. The model and the name row `0x1ec` are not in the panel (Q158).
+selected as the list fills, so the panel stays empty until the pointer has been over a row (Q232). The model and the name row `0x1ec` are not in the panel (Q158).
 The console's `footprint` prints the row shown, the row waiting, the cells and the block's place.
 
 **Confirmed in Lost Kingdom** (2026-10-06, a 1280 by 720 window, the pointer moved by XTEST, each number predicted

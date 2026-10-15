@@ -167,7 +167,7 @@ internal sealed class UiList : UiControl
 	/// The list's flag <c>0x80</c>: the pointer moving over a row selects it, with no press (<c>FUN_006656a0</c>, from
 	/// the proc's <c>0x10001</c>), and <see cref="SelectionChanged"/> hears it as it does any other selection. Over no
 	/// row the selection stays. All seven of the original's list records carry the flag (<c>docs/exe/hud.md</c>, "Who acts on
-	/// the click, and who on the release"); here the buy screen's list and the park-file screens' set this.
+	/// the click, and who on the release"), and every list here sets this.
 	/// </summary>
 	internal bool SelectsUnderPointer { get; init; }
 
@@ -769,8 +769,11 @@ internal sealed class UiList : UiControl
 	/// </summary>
 	internal override void PointerMoved( float x, float y, bool held )
 	{
-		if ( SelectsUnderPointer && !held && RowAt( x, y ) is var index and >= 0 )
-			Select( index );
+		if ( !SelectsUnderPointer || held || RowAt( x, y ) is not (var index and >= 0) || index == _selected )
+			return;
+
+		Log.Info( $"List 0x{Id:x}: row {_rows[index].Id} at {index} picked under the pointer" );
+		Select( index );
 	}
 
 	/// <summary>

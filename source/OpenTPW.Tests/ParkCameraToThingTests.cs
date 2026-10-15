@@ -307,6 +307,106 @@ public class ParkCameraToThingTests
 	}
 
 	/// <summary>
+	/// <b>The visitors, all-staff and all-items lists pick the row under the moving pointer</b>: each tree's list record
+	/// carries flag <c>0x80</c> (<c>0x00750716</c>, <c>0x00750e5e</c>, <c>0x00750ab8</c>, <c>0x00750ba0</c>,
+	/// <c>0x00750ca0</c>), so <c>FUN_006656a0</c> selects the row the pointer rests on with no press, and a right click
+	/// that then misses every row names it (<c>FUN_0066563d</c>). Through the stack: a frame of the pointer alone on
+	/// the last row shown, a frame of it on the strip under the rows, then the right click there.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> any one of the three lists not following the pointer; a move under a held button picking.</remarks>
+	[TestMethod]
+	public void TheVisitorsStaffAndItemsListsPickTheRowUnderThePointer()
+	{
+		for ( var n = 0; n < 4; ++n )
+			Assert.AreNotEqual( 0, _people.Admit( 42 + n, 5 + n ) );
+
+		var picks = 0;
+		void Heard( Logger.Level severity, string line ) => picks += line.Contains( " picked under the pointer" ) ? 1 : 0;
+		Logger.OnLog += Heard;
+		object? lastKind = null;
+
+		// One frame of the stack with the pointer's move as the frame's own, as the window's input hands it.
+		void Move( bool right, Vector2 at, float now )
+		{
+			var from = Input.Mouse.Position;
+			Time.PinWall( (long)System.MathF.Round( now * 1000f ) );
+			Input.Mouse = new() { Right = right, RightWentDown = right && !Input.Mouse.Right, Position = at, Delta = at - from };
+			_stack.Update();
+		}
+
+		void Hover( UiWindow screen, UiList list, string what, System.Func<int, Vector3> cornerOf, float now )
+		{
+			ParkOrbitCameraMode.PointOfInterest = Start;
+			Assert.IsTrue( list.SelectsUnderPointer, $"{what}: flag 0x80" );
+			Assert.IsTrue( list.Rows.Count >= 2, $"{what}: two rows at least" );
+
+			var last = Math.Min( list.Rows.Count, list.VisibleRows ) - 1;
+			var id = list.Rows[last].Id;
+			Assert.AreNotEqual( Start, cornerOf( id ), what );
+
+			// A press held on the list keeps the pick where it was (0x006656ba).
+			Move( false, RowMiddle( list, 0 ), now - 0.1f );
+			var before = list.Selected;
+			Assert.AreEqual( list.Rows[0].Id, before, $"{what}: the first row under the pointer" );
+			Move( true, RowMiddle( list, 0 ), now );
+			Move( true, RowMiddle( list, last ), now + 0.6f );
+			Assert.AreEqual( before, list.Selected, $"{what}: held" );
+			Move( false, RowMiddle( list, last ), now + 0.7f );
+			ParkOrbitCameraMode.PointOfInterest = Start;
+
+			Move( false, RowMiddle( list, 0 ) + new Vector2( 1, 1 ), now + 1f );
+			Move( false, RowMiddle( list, last ), now + 1.1f );
+			Assert.AreEqual( id, list.Selected, $"{what}: the row under the pointer" );
+
+			// The strip at the foot of the row area, under the last whole row.
+			var below = new Vector2( RowMiddle( list, 0 ).X, list.RowArea.Bottom - 3 );
+			Move( false, below, now + 1.2f );
+			Assert.AreEqual( id, list.Selected, $"{what}: a point over no row leaves it" );
+
+			Move( true, below, now + 1.3f );
+			Move( false, below, now + 1.4f );
+			Assert.AreEqual( cornerOf( id ), ParkOrbitCameraMode.PointOfInterest, $"{what}: the miss goes to the row under the pointer" );
+			Assert.IsFalse( _stack.Windows.Contains( screen ), $"{what}: and the screen closed" );
+		}
+
+		try
+		{
+			var visitors = new ParkVisitorsScreen( _stack );
+			_stack.Open( visitors );
+			Hover( visitors, (UiList)typeof( ParkVisitorsScreen ).GetField( "_list", Private )!.GetValue( visitors )!, "visitors",
+				id => Corner( _people.Guests[id].Navigator.Position.Cell ), 30f );
+
+			// Two more of one kind on two cells, and the kind with the most members shown, so the list has rows to choose between.
+			Assert.AreNotEqual( 0, _people.Hire( new ParkStaffPool.Candidate( Id: 998, Kind: 1, Name: "Ada Test", Grade: 0, Costume: 0, Wage: 69 ), 47, 21 ) );
+			Assert.AreNotEqual( 0, _people.Hire( new ParkStaffPool.Candidate( Id: 999, Kind: 1, Name: "Bo Test", Grade: 0, Costume: 0, Wage: 69 ), 55, 30 ) );
+			var kinds = typeof( ParkStaffScreen ).GetField( "_lastKind", BindingFlags.Static | BindingFlags.NonPublic )!;
+			lastKind = kinds.GetValue( null );
+			kinds.SetValue( null, _people.Staff.GroupBy( each => ParkStaffPool.KindFor( each.Model ) ).MaxBy( group => group.Count() )!.Key );
+
+			var staff = new ParkStaffScreen( _stack );
+			_stack.Open( staff );
+			Hover( staff, (UiList)typeof( ParkStaffScreen ).GetField( "_list", Private )!.GetValue( staff )!, "staff",
+				id => Corner( _people.Staff.Single( each => each.ThingId == id ).Navigator.Position.Cell ), 40f );
+
+			var items = new ParkItemsScreen( _stack );
+			_stack.Open( items );
+			typeof( ParkItemsScreen ).GetMethod( "Show", Private )!.Invoke( items, [3] );
+			Hover( items, ((Dictionary<int, UiList>)typeof( ParkItemsScreen ).GetField( "_lists", Private )!.GetValue( items )!)[2],
+				"misc", id => Corner( ParkOrbitCameraMode.CellOfThing( id, null, _state )!.Value ), 50f );
+
+			// The first row and the last on the visitors and the staff; the last alone on the tab that picked its first.
+			Assert.AreEqual( 5, picks, "one log line a pick" );
+		}
+		finally
+		{
+			Logger.OnLog -= Heard;
+			if ( lastKind != null )
+				typeof( ParkStaffScreen ).GetField( "_lastKind", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, lastKind );
+			ParkOrbitCameraMode.PointOfInterest = Start;
+		}
+	}
+
+	/// <summary>
 	/// <b>Each all-items tab picks its first row as it fills</b>, the row sorted first (<c>FUN_0066403b</c>'s
 	/// <c>FUN_0066525c( 0 )</c>; the handler <c>FUN_00495360</c> has no <c>0x401</c> arm), keeps the index over a
 	/// heading's re-sort, and a right click that misses every row goes to that row's thing.

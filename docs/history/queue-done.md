@@ -6944,6 +6944,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   On the stock park the four tabs' picks, the re-sort's and the right click's camera read as predicted (`q375/run-fix1`,
   8 of 8); main's highlighted nothing and counted both (2 of 2); the original highlighted row 0 on each tab and after
   the heading, and its right click below the rows went to the Staff Room (`q375/orig/a`). Mutations 4 of 4.
+- [x] **Q376. The visitors, all-staff and all-items lists follow the pointer, as the original's** (a piece of the old
+  Q376, split by Claude; the rest is Q377). Their five tree records carry flag `0x80` (type 7, flags `0x291`) and no
+  handler of theirs has a `0x401` arm, so the row under the moving pointer is picked, the highlight alone, and a right
+  click on the strip under the rows names it. On the stock park the three lists' picks, highlights and right clicks read
+  as predicted (`q376/run-fix1`, 10 of 10); main's highlighted nothing on the visitors or the staff and counted both
+  misses (3 of 3); the original moved the visitors' and the misc tab's highlight to the row hovered and its right click
+  went to that row's security camera (`q376/orig/a`; its staff list has one row a kind in every scene, so not run there).
+  Mutations 6 of 6.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

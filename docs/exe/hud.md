@@ -938,9 +938,9 @@ clears the stamp; a slider's thumb keeps its press too and leaves the stamp alon
 `UiList.LeftClickedAt` selects the row under the point and activates the selected row (`FUN_006655a2` under flag
 `0x80`; all seven list records carry it: buy `0x91`, the rest `0x291`, none `0x8` or `0x100`), and
 `LeftDoubleClicked` activates it again (`FUN_006656fa`); `UiList.StraySpoilsAClick` is false, for either button.
-The original's selected row is the one last hovered, so there a click that misses every row activates that one: here
-only a list that follows the pointer does so (the buy list and the park-file screens'), and any other's miss is counted,
-`LIST_CLICK_MISS_SELECTION_NOT_UNDER_POINTER`. A screen that answers no activation is counted,
+The original's selected row is the one last hovered, so there a click that misses every row activates that one, and so
+it does here, as every list follows the pointer (Q376). A `UiList` made without the flag would count its miss,
+`LIST_CLICK_MISS_SELECTION_NOT_UNDER_POINTER`; no screen's is. A screen that answers no activation is counted,
 `LIST_ROW_ACTIVATED_UNANSWERED`: the visitors, all-staff and all-items lists, the first of which opens a visitor's
 window in the original. The game menu's rows, the lobby's player slots and Quit Game answer `LeftClicked` and
 `RightClicked`, the preview `LeftClicked`, and a slider's track pages towards a click of either button
@@ -1475,8 +1475,25 @@ told by the stack whether a press that landed on the list is still held; whether
 release let go off the control is not decoded. What sends `0x10003` is not traced.
 
 **OpenTPW**: `UiList.SelectsUnderPointer` and `PointerMoved`; `WindowStack` sends the move to the control under the
-pointer on a frame the pointer moved. The buy list (Q233b) and the park file screen's list (`ParkFileScreen`) set the flag; the others' rows are selected by a
-click alone.
+pointer on a frame the pointer moved. Every list sets the flag: the buy list (Q233b), the park file screen's
+(`ParkFileScreen`), the hire list (Q356), and the visitors, all-staff and all-items lists (Q376). A pick under the pointer
+logs `List 0x<id>: row <id> at <index> picked under the pointer`.
+
+**The visitors, all-staff and all-items lists follow the pointer** (Q376). Their tree records carry the flag
+(`0x00750716`, `0x00750e5e`, `0x00750ab8`, `0x00750ba0`, `0x00750ca0`: type 7, flags `0x291`), and none of their
+handlers has a `0x401` arm (the visitors' `0x00493230`: `0x400`, `0x402`, `0x406`; the all-staff's `FUN_00495da0`: the
+same three; the all-items' `FUN_00495360`, "The miscellaneous tab", below), so the pick is the highlight alone, and a
+right click on the strip under the rows names the row last hovered. **Measured in the original** (`q376/orig/a`,
+`q373/thought.TPWS`; `rectcolour.py`'s teal share of each row's first cell): the visitors list opened with row 0
+highlighted (0.934), and the pointer brought along row 2's band from the left of the list moved it there (0, 0, 0.917);
+the misc tab, row 0 at its opening (0.949), row 2 under the pointer (0.811), still row 2 with the pointer brought round
+outside the list to the strip under the rows (0.917), and a right click there shut the screen with the view on a
+security camera. The all-staff list was not run in the original: every scene has one member a kind, which the add's
+pick has highlighted already. **OpenTPW** (`q376/run-fix1`, the final game binary, the stock park paused, the pointer
+put on a row by XTEST): `List 0x1e497: row 40 at 2`, `List 0x321: row 25 at 0`, `List 0x190: row 19 at 2`, each row's
+teal 0.92 and every other row's nought, nothing picked on the strip, and the right click there `Camera: to thing` 40, 25
+and 19, each screen shut. Main's build (`run-control1`): no highlight on the visitors or the staff, the misc tab's row 0
+kept, and its right click to thing 17; the other two counted `LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED`.
 
 ### A frame worn at two sizes
 
@@ -1503,13 +1520,15 @@ every row still names the row selected before. All five trees of the three list 
 the rows leaves the selection where it was.
 
 **In the original**: the visitors list opens with one row highlighted (the first on one opening, the second and the
-tenth on two others; what chooses it is not decoded, `docs/QUEUE.md` Q232), and a quick right click on the strip under
+tenth on two others; what chooses it is not decoded, `docs/QUEUE.md` Q232: the pointer resting over the list is one
+candidate, as the list follows it, Q376), and a quick right click on the strip under
 its tenth row went to that row's guest, not to an eleventh row's.
 
 **OpenTPW**: `UiList.RightClickedAt`, called by `WindowStack.RightClick` with the press's point, and
-`UiList.RowRightClicked`. The strip under the last whole row is no row's for either button. The hire and all-items
-lists pick their first row as they fill ("The first row is picked as a list fills"), so there a miss names that row; the
-others open with no row selected, and a miss before any row is chosen names nothing: counted,
+`UiList.RowRightClicked`. The strip under the last whole row is no row's for either button. Every list follows the pointer ("The pointer
+over a list"), so a miss names the row last hovered. The hire and all-items lists pick their first row as they fill
+("The first row is picked as a list fills"), so there a miss before any hover names that row; the others open with no
+row selected, and a miss before any row is hovered or chosen names nothing: counted,
 `LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED`.
 
 **With flag `0x80` set, `0x400` is posted once, on the click** (`FUN_006655a2`, from `0x11006`), and once more on a

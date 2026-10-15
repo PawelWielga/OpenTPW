@@ -123,6 +123,10 @@ internal sealed class ParkStaffScreen : UiWindow
 			// (0x0049602f).
 			RowRightClicked = GoTo,
 
+			// The tree's list record carries flag 0x80 (0x00750e5e): the row under the moving pointer is picked. The
+			// screen's handler FUN_00495da0 has no 0x401 arm, so the pick is the highlight alone.
+			SelectsUnderPointer = true,
+
 			// The stream's own op 0xb record. Columns 2, 3 and 4 right-aligned, nought and one from the left; the
 			// styler FUN_00496d20's own FUN_0065c428 calls are not read.
 			Columns = [(299, 711), (729, 999), (1017, 1217), (1231, 1471), (1488, 1728)],

@@ -113,6 +113,10 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			// A right click on the list moves the camera to the selected row's guest and closes the screen (0x004934c5).
 			RowRightClicked = GoTo,
 
+			// The tree's list record carries flag 0x80 (0x00750716): the row under the moving pointer is picked. The
+			// screen's handler (0x00493230) has no 0x401 arm, so the pick is the highlight alone.
+			SelectsUnderPointer = true,
+
 			// The screen's handler keeps the list's 0x406 (0x00493479).
 			SortChanged = word => _sort = word,
 			Columns = [(297, 689), (701, 948), (966, 1213), (1233, 1358), (1372, 1474), (1478, 1718)],
