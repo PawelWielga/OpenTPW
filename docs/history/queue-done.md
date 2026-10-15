@@ -6902,6 +6902,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   bar (`FUN_004e1e30`) and the money cell's "$ "/"-$ " (`0x004903e0`); `ALL_ITEMS_MONTHLY_HISTORY` gone. On
   `q368/money.TPWS`: `row 16 Drinks Shop: 1 165 3766 542` and `row 14 Jungle Spray: 0 307 -120 -600 491`, the original's
   memory the same at its load's tick 963 and its frames lettered alike (`q368/side-by-side.png`).
+- [x] **Q369. The all-staff rows' money cell and bars, and its two meters as stat bars** (a piece of the old Q369,
+  split by Claude; the rest is Q370). Built: the styler `FUN_00496d20`'s cells, the wage "$ 81", the skill
+  (`FUN_00506550`, `(grade x 100 + pct) / 5`) in `ridestatbar.wct` and the happiness in `happygrad.wct`, each inset 8;
+  the meters `0x32c`/`0x32d` the same skin, no longer `UiMeter`. On `q369/skill.TPWS`: `row 25 Duke Mighten: Walking 81
+  942 880` and the other four kinds' rows as predicted, the original's bars within 0.012 of the same figures and
+  lettering "$ 81" (`q369/orig/b`, `barsplit.py`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

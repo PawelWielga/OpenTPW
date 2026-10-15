@@ -132,12 +132,18 @@ internal sealed class UiList : UiControl
 	/// Which columns are bars, by column: a <see cref="ParkObjectWindow.UiStatBar"/> in the column, inset
 	/// <see cref="BarInset"/> from the row's top and bottom, filled from the row's <see cref="Row.Numbers"/> in the
 	/// original's 0 to 1024 (<see cref="NoBar"/> leaves it unfilled). The all-items screen's styler (<c>FUN_00494690</c>)
-	/// skins its bar cells so. Set it, then <see cref="Build"/> again: the cells are made by it.
+	/// and the all-staff screen's (<c>FUN_00496d20</c>) skin their bar cells so. Set it, then <see cref="Build"/> again:
+	/// the cells are made by it.
 	/// </summary>
 	internal bool[] BarColumns { get; set; } = [];
 
-	/// <summary>How far a bar cell stands in from its row's top and bottom: <c>FUN_00485e30( cell, 0, 10 )</c>.</summary>
-	internal const int BarInset = 10;
+	/// <summary>A bar column's texture, by column, where it is not <see cref="ParkObjectWindow.UiStatBar.RideStatBar"/>:
+	/// the all-staff styler's happiness wears <c>happygrad.wct</c>.</summary>
+	internal string?[] BarSkins { get; init; } = [];
+
+	/// <summary>How far a bar cell stands in from its row's top and bottom: <c>FUN_00485e30( cell, 0, 10 )</c> on the
+	/// all-items rows, <c>( cell, 0, 8 )</c> on the all-staff rows.</summary>
+	internal int BarInset { get; init; } = 10;
 
 	/// <summary>A bar column's number for a value the row has none of: the bar is left unfilled.</summary>
 	internal const int NoBar = int.MinValue;
@@ -220,7 +226,8 @@ internal sealed class UiList : UiControl
 				{
 					cells[column] = Add( new ParkObjectWindow.UiStatBar
 					{
-						Rect = new UiRect( left, top + BarInset, right, top + RowHeight - BarInset )
+						Rect = new UiRect( left, top + BarInset, right, top + RowHeight - BarInset ),
+						Skin = column < BarSkins.Length && BarSkins[column] is { } skin ? skin : ParkObjectWindow.UiStatBar.RideStatBar
 					} );
 
 					continue;

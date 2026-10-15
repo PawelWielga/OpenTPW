@@ -702,10 +702,11 @@ internal sealed class ParkObjectWindow : UiWindow
 	/// string.
 	/// <para>
 	/// <b>Every one of these bars wears <c>ridestatbar.wct</c></b> (<c>FUN_00477ff0</c>, the skin object
-	/// <c>0x006feeb8</c>): the object window's four, the Staff Training Budgets screen's five and the hire
-	/// screen's one. The skin is two quads over the control's whole rectangle: the filled part, left of the
-	/// value, shows the texture's colour ramp from its left edge to the value, and the rest shows its grey track
-	/// from the value to its right edge. Each part is cropped, never squashed, so a short bar shows only the
+	/// <c>0x006feeb8</c>): the object window's four, the Staff Training Budgets screen's five, the hire
+	/// screen's one and the all-staff rows' skill. The all-staff screen hands the same skin <c>happygrad.wct</c>
+	/// for its rows' happiness and its two meters (<see cref="Skin"/>). The skin is two quads over the control's
+	/// whole rectangle: the filled part, left of the value, shows the texture's colour ramp from its left edge to
+	/// the value, and the rest shows its grey track from the value to its right edge. Each part is cropped, never squashed, so a short bar shows only the
 	/// ramp's left end and only a full one its green and its dark right edge (<c>0x00478593</c>:
 	/// <c>v = value / 1024 x 100</c>, held to 0 to 100, u = v / 100).
 	/// </para>
@@ -716,10 +717,20 @@ internal sealed class ParkObjectWindow : UiWindow
 	/// </remarks>
 	internal sealed class UiStatBar : UiControl
 	{
-		/// <summary>The skin <c>FUN_00477ff0</c> is handed by every caller (<c>0x00750e00</c>), 32 x 32 in <c>ui.wad</c>.</summary>
-		private const string Skin = "ui/textures/ridestatbar.wct";
+		/// <summary>The texture <c>FUN_00477ff0</c> is handed by most callers (<c>0x00750e00</c>), 32 x 32 in <c>ui.wad</c>.</summary>
+		internal const string RideStatBar = "ui/textures/ridestatbar.wct";
 
-		private static Texture? _skin;
+		/// <summary>The all-staff screen's happiness texture (<c>0x007508c0</c>), laid out as <see cref="RideStatBar"/>: its
+		/// colour ramp in one half, the grey track in the other.</summary>
+		internal const string HappyGrad = "ui/textures/happygrad.wct";
+
+		/// <summary>Which texture the caller hands the skin: <see cref="RideStatBar"/> unless it says otherwise.</summary>
+		internal string Skin { get; init; } = RideStatBar;
+
+		/// <summary>Each texture loaded once and shared.</summary>
+		private static readonly Dictionary<string, Texture> Skins = [];
+
+		private Texture? _skin;
 
 		/// <summary>How much of the row is filled, 0 to 1.</summary>
 		internal float At { get; set; }
@@ -730,8 +741,15 @@ internal sealed class ParkObjectWindow : UiWindow
 		/// </summary>
 		internal int Units
 		{
-			set => At = Math.Clamp( value, 0, 0x400 ) / 1024f;
+			get => _units;
+			set
+			{
+				_units = value;
+				At = Math.Clamp( value, 0, 0x400 ) / 1024f;
+			}
 		}
+
+		private int _units;
 
 		/// <summary>Whether a value was set at all - an unfilled bar and a zero one are different things.</summary>
 		internal bool Known { get; set; }
@@ -743,14 +761,14 @@ internal sealed class ParkObjectWindow : UiWindow
 			if ( !Known )
 				return;
 
-			if ( _skin == null )
+			if ( _skin == null && !Skins.TryGetValue( Skin, out _skin ) )
 			{
-				_skin = new Texture( Skin );
+				Skins[Skin] = _skin = new Texture( Skin );
 				Log.Info( $"UI: the stat bars' skin {Skin} is {_skin.Width}x{_skin.Height}, its ramp {Ramp( new TextureFile( Skin ).Data )}" );
 			}
 
 			foreach ( var (where, uvs) in Parts( Pixels, At ) )
-				Paint( where, uvs );
+				Paint( _skin, where, uvs );
 		}
 
 		/// <summary>The decoded colours of the ramp's row 4 at texels 1, 4, 8 and 24, for the log.</summary>
@@ -776,12 +794,12 @@ internal sealed class ParkObjectWindow : UiWindow
 			];
 		}
 
-		private static void Paint( Rectangle where, Rectangle uvs )
+		private static void Paint( Texture skin, Rectangle where, Rectangle uvs )
 		{
 			if ( where.Width <= 0f || where.Height <= 0f )
 				return;
 
-			Material.UI.Set( "Color", _skin! );
+			Material.UI.Set( "Color", skin );
 
 			using ( _ = new Graphics.Scope( Screen.Size ) )
 				Graphics.Quad( new Rectangle( where.X, Screen.Height - where.Y - where.Height, where.Width, where.Height ), uvs, Material.UI );

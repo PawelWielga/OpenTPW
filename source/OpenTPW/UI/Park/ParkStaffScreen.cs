@@ -19,16 +19,19 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
-/// <b>The two meters are <c>happygrad.wct</c>, not the gauge's skin.</b> <c>FUN_00496620</c> loads that
-/// texture by name for both - <c>0x32c</c> the mean over all staff, <c>0x32d</c> the mean over the
+/// <b>The two meters are stat bars in <c>happygrad.wct</c>, not the gauge's skin.</b> <c>FUN_00496620</c> hands
+/// both the stat bars' skin (<c>FUN_00477ff0</c>) with that texture, each inset 8 from its top and bottom
+/// (<c>FUN_00485e30( meter, 0, 8 )</c>) - <c>0x32c</c> the mean over all staff, <c>0x32d</c> the mean over the
 /// chosen kind - and scales each by <c>(v &lt;&lt; 10) / 100</c>, so the bar's full scale is
-/// <b>1024</b> against a percentage. That is reproduced rather than simplified.
+/// <b>1024</b> against a percentage.
 /// </para>
 ///
 /// <para>
 /// <b>The name is the member's own</b> (<see cref="Staff.Name"/>): the save's <c>mName</c>, or the candidate's
 /// at a hire. One with none, which only a test makes, shows the kind and the thing id in the game's own words
-/// for the kind (<c>STAFF_TYPES.str</c>). The wage is the one the park is paying and the skill is the grade.
+/// for the kind (<c>STAFF_TYPES.str</c>). <b>The row's cells are the styler <c>FUN_00496d20</c>'s</b>: the name and
+/// the status labels, the wage the park is paying in a money cell (<c>FUN_00490250</c>, "$ 81"), the skill a bar in
+/// <c>ridestatbar.wct</c> and the happiness a bar in <c>happygrad.wct</c>, both inset 8 (<see cref="NumbersOf"/>).
 /// </para>
 /// </summary>
 internal sealed class ParkStaffScreen : UiWindow
@@ -77,8 +80,8 @@ internal sealed class ParkStaffScreen : UiWindow
 	private readonly UiList _list;
 	private readonly UiRadioGroup _tabs;
 	private readonly UiControl _kindLabel;
-	private readonly UiMeter _kindHappiness;
-	private readonly UiMeter _allHappiness;
+	private readonly ParkObjectWindow.UiStatBar _kindHappiness;
+	private readonly ParkObjectWindow.UiStatBar _allHappiness;
 
 	private int _kind;
 
@@ -124,7 +127,12 @@ internal sealed class ParkStaffScreen : UiWindow
 			// nought and one reading from the left - FUN_006636b2( n, rightAligned ) - which is what
 			// UiList does by default for every column but the first, so only column 1 is overridden.
 			Columns = [(299, 711), (729, 999), (1017, 1217), (1231, 1471), (1488, 1728)],
-			ColumnAligns = [TextAlign.Start, TextAlign.Start, TextAlign.End, TextAlign.End, TextAlign.End]
+			ColumnAligns = [TextAlign.Start, TextAlign.Start, TextAlign.End, TextAlign.End, TextAlign.End],
+
+			// The styler's skill and happiness cells, each inset 8 (FUN_00496d20).
+			BarColumns = [false, false, false, true, true],
+			BarSkins = [null, null, null, null, ParkObjectWindow.UiStatBar.HappyGrad],
+			BarInset = MeterInset
 		} );
 
 		for ( var column = 0; column < Headings.Length; ++column )
@@ -170,21 +178,8 @@ internal sealed class ParkStaffScreen : UiWindow
 
 		panel.Add( Label( 0x32b, new UiRect( 654, 883, 1177, 928 ) ) ).Text = Localization.Text( 106 );
 
-		_kindHappiness = panel.Add( new UiMeter
-		{
-			Id = 0x32d,
-			Rect = new UiRect( 1191, 832, 1567, 877 ),
-			Skin = "ui/textures/happygrad.wct",
-			Max = MeterFull
-		} );
-
-		_allHappiness = panel.Add( new UiMeter
-		{
-			Id = 0x32c,
-			Rect = new UiRect( 1191, 883, 1567, 928 ),
-			Skin = "ui/textures/happygrad.wct",
-			Max = MeterFull
-		} );
+		_kindHappiness = panel.Add( Meter( 0x32d, new UiRect( 1191, 832, 1567, 877 ) ) );
+		_allHappiness = panel.Add( Meter( 0x32c, new UiRect( 1191, 883, 1567, 928 ) ) );
 
 		Root.Add( CrossLink( 0x32f, 360, 125, "b_kids", 6 ) );
 		Root.Add( CrossLink( 0x330, 467, 126, "b_allthings", 5 ) );
@@ -205,8 +200,21 @@ internal sealed class ParkStaffScreen : UiWindow
 		// Every member of staff's meter is set once, as the screen opens (FUN_00496620, FUN_004c7cc0): no tab or
 		// timer moves it. A mean over nobody reads nought, as the gadget's gauge does for a park with no guests.
 		if ( ParkPeople.Current is { } people )
-			_allHappiness.Value = Scaled( people.Staff );
+			_allHappiness.Units = Scaled( people.Staff );
 	}
+
+	/// <summary>A meter: the stat bars' skin in <c>happygrad.wct</c>, inset 8 from the stream's rect (<c>FUN_00496620</c>).</summary>
+	private static ParkObjectWindow.UiStatBar Meter( int id, UiRect rect )
+		=> new()
+		{
+			Id = id,
+			Rect = new UiRect( rect.Left, rect.Top + MeterInset, rect.Right, rect.Bottom - MeterInset ),
+			Skin = ParkObjectWindow.UiStatBar.HappyGrad,
+			Known = true
+		};
+
+	/// <summary>How far the meters and the rows' bars stand in from their top and bottom: <c>FUN_00485e30( cell, 0, 8 )</c>.</summary>
+	private const int MeterInset = 8;
 
 	private static UiControl Label( int id, UiRect rect )
 		=> new()
@@ -264,10 +272,14 @@ internal sealed class ParkStaffScreen : UiWindow
 		foreach ( var member in people.Staff )
 		{
 			if ( ParkStaffPool.KindFor( member.Model ) == _kind )
-				_list.Add( RowOf( member ) );
+			{
+				var row = RowOf( member );
+				_list.Add( row );
+				Log.Info( $"Staff list: kind {_kind}, row {Census( row )}" );
+			}
 		}
 
-		_kindHappiness.Value = Scaled( people.Staff
+		_kindHappiness.Units = Scaled( people.Staff
 			.Where( member => ParkStaffPool.KindFor( member.Model ) == _kind ) );
 
 		// The status column shows the activity's own name rather than the game's word for it: the
@@ -276,20 +288,42 @@ internal sealed class ParkStaffScreen : UiWindow
 		Unimplemented.Report( "STAFF_STATUS_TEXT" );
 	}
 
-	/// <summary>A member of staff's row: name, status, the wage the park pays, skill and happiness.</summary>
+	/// <summary>
+	/// A member of staff's row: name, status, the wage the park pays as a money cell's text, and the skill's and the
+	/// happiness's bars, with <see cref="NumbersOf"/> for the numbers.
+	/// </summary>
 	private UiList.Row RowOf( Staff member )
 	{
 		var name = member.Name.Length > 0 ? member.Name : $"{ParkStaffPool.NameOfKind( _kind )} {member.ThingId}";
-		var wage = Level.Current?.StaffPool?.WageFor( _kind, member.PayGrade ) ?? 0;
+		var numbers = NumbersOf( member, Level.Current?.StaffPool?.WageFor( _kind, member.PayGrade ) ?? 0 );
 
 		return new UiList.Row( member.ThingId, name, 0, Values:
 		[
 			$"{member.Activity}",
-			$"{wage}",
-			$"{member.PayGrade}",
-			$"{(int)member.Happiness}"
-		] );
+			ParkItemsScreen.Money( numbers[2] ),
+			"",
+			""
+		], Numbers: numbers );
 	}
+
+	/// <summary>
+	/// A member's row by column as the row adder (<c>0x00496320</c>) hands it: the name's and the status's nought, the
+	/// wage (<c>FUN_00506870</c>), the skill's bar <c>(skill &lt;&lt; 10) / 100</c> (<see cref="SkillOf"/>) and the
+	/// happiness's <c>((happiness &amp; 0xff) &lt;&lt; 10) / 100</c>, the float <c>+0x1f8</c> truncated.
+	/// </summary>
+	internal static int[] NumbersOf( Staff member, int wage )
+		=> [0, 0, wage, (SkillOf( member ) << 10) / 100, ParkItemsScreen.Bar( (int)member.Happiness )];
+
+	/// <summary>
+	/// A member's skill, 0 to 100 through the grades and past it in a grade-4 member's training (<c>FUN_00506550</c>):
+	/// <c>__ftol( (grade - percentage x -0.01) x 20 )</c>, which is this whole division for every grade and every
+	/// byte of <c>mPercentageThroughGrade</c> at every precision the FPU may be set to.
+	/// </summary>
+	internal static int SkillOf( Staff member ) => (member.PayGrade * 100 + (member.PercentageThroughGrade & 0xff)) / 5;
+
+	/// <summary>A row for the log: id, name, status, wage, skill bar, happiness bar.</summary>
+	private static string Census( UiList.Row row )
+		=> $"{row.Id} {row.Name}: {row.Values![0]} {row.Numbers![2]} {row.Numbers[3]} {row.Numbers[4]}";
 
 	/// <summary>
 	/// Every two seconds (timer <c>0x80083</c>, armed by the opener), each row's status, skill and happiness rewritten
@@ -309,18 +343,22 @@ internal sealed class ParkStaffScreen : UiWindow
 			var row = _list.Rows[index];
 
 			if ( people.Staff.FirstOrDefault( member => member.ThingId == row.Id ) is not { } member
-				|| row.Values is not { Count: 4 } old )
+				|| row.Values is not { Count: 4 } old || row.Numbers is not { Count: 5 } numbers )
 			{
 				continue;
 			}
 
-			var now = RowOf( member ).Values!;
-			_list.Replace( index, row with { Values = [now[0], old[1], now[2], now[3]] } );
+			var now = RowOf( member );
+			_list.Replace( index, row with
+			{
+				Values = [now.Values![0], old[1], now.Values[2], now.Values[3]],
+				Numbers = [0, 0, numbers[2], now.Numbers![3], now.Numbers[4]]
+			} );
 			++rewritten;
 		}
 
-		Log.Info( $"Staff list: kind {_kind}, {rewritten} rows rewritten, meters {_kindHappiness.Value}/{_allHappiness.Value}"
-			+ (_list.Rows.Count > 0 ? $", row 0 {_list.Rows[0].Id} {string.Join( " ", _list.Rows[0].Values! )}" : "") );
+		Log.Info( $"Staff list: kind {_kind}, {rewritten} rows rewritten, meters {_kindHappiness.Units}/{_allHappiness.Units}"
+			+ (_list.Rows.Count > 0 ? $", row 0 {Census( _list.Rows[0] )}" : "") );
 	}
 
 	/// <summary>A mean happiness on the original's own 0-1024 scale - <c>(v &lt;&lt; 10) / 100</c>.</summary>

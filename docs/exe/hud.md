@@ -577,8 +577,10 @@ Instant Action's), a budget at 10000 in either game (the test holds the end), th
 
 ### The stat bars' skin, `ridestatbar.wct` (Q353)
 
-Every type-9 bar of the park's screens is given the same skin, `FUN_00477ff0( "ridestatbar.wct" )` (`0x00750e00`;
-46 calls: the object window's four, the training screen's five, the hire screen's one and the others' bars), an
+Every type-9 bar of the park's screens is given the same skin, `FUN_00477ff0( texture )`: 38 of its 46 calls hand it
+`"ridestatbar.wct"` (`0x00750e00`: the object window's four, the training screen's five, the hire screen's one and
+the others' bars) and 8 `"happygrad.wct"` (`0x007508c0`: the all-staff screen's three, "The all-staff rows", below,
+and one each in `FUN_004939d0`, `FUN_004afc10`, `FUN_004b1040`, `FUN_004b53c0` and `FUN_004b6c20`). It is an
 object of vtable `0x006feeb8` holding two quads in a 100 by 100 space, four vertices a block of `0x30` bytes (x, y
 and z four apiece, `FUN_00477c00`). The control hands it its value through the skin's `+0xc` with flag 8
 (`FUN_0066d885`, the value held to 0 to `0x400`); there (`0x00478593`) `v = value x 0.0009765625 x 100`, held to
@@ -596,7 +598,8 @@ grey track (56, `383838`) in the rest. The original's bar covers the
 control's whole rectangle (rows 118 to 137 where the layout gives 117.5 to 137 at 1024 by 768), and the colour half
 bleeds into the top rows of the track.
 
-**OpenTPW** (`ParkObjectWindow.UiStatBar`, `Parts`; `Units` for the original's 0 to 1024; `ParkHireScreen.SkillUnits`).
+**OpenTPW** (`ParkObjectWindow.UiStatBar`, `Parts`; `Units` for the original's 0 to 1024; `Skin` the texture handed,
+`ridestatbar.wct` unless the caller says otherwise; `ParkHireScreen.SkillUnits`).
 The two parts over the whole rectangle as the table; the training screen hands its bars `(share << 10) / 100`, the
 hire screen `((grade & 0xff) << 10) / 5` as the row under the pointer is picked (its list's flag `0x80`, stream
 flags `0x291`, as the buy screen's); the object window's two built bars their percentage.
@@ -1758,6 +1761,48 @@ bars 0.532, 0.505, 0.485 (`q368/side-by-side.png`); main's build (`run-control2`
 `ALL_ITEMS_MONTHLY_HISTORY`, which is gone. **Not built**: the original's sideshow rows stand Jungle Spray then
 Strength Bird, this game's the other way (the walk's order, not looked into); the row height is this game's 44 where the
 original's factory measures its font (`0x007ca158`); the headings are bare here where the original frames them.
+
+#### The all-staff rows: a money cell, then bars
+
+Read 2026-10-14 (Q369). The opener `FUN_00496620` hands `FUN_006639cb` the row factory `0x00496c10` and the styler
+`FUN_00496d20`, which make each row's five cells: the name and the status as labels, the wage a money cell
+(`FUN_00490250`, "The all-items rows", above: "$ 81"), the skill a bar in `ridestatbar.wct` and the happiness a bar in
+`happygrad.wct`, both inset 8 from the row's top and bottom (`FUN_00485e30( cell, 0, 8 )`). The row adder
+`0x00496320` hands them:
+
+- **the wage** `FUN_00506870`: a table by kind (`[0x00785380]`, types 5, 4, 6, 7, 8 as 0 to 4) times one by grade
+  (`[0x0078532c + grade x 16]`), which this game reads as `PerTypeStaffConsts[kind].PayMultiplier` times
+  `PerGradeStaffConsts[grade].BaseWage` (`ParkStaffPool.WageFor`): 81 for the grade-4 handyman in both games;
+- **the skill's bar** `(skill << 10) / 100`, the skill `FUN_00506550`: `__ftol( (grade - pct x -0.01) x 20 )`, the
+  grade `+0x1e4` and `mPercentageThroughGrade` the byte `+0x1e8` (the double `-0.01` at `0x00700838`, the float 20 at
+  `0x00700840`). That is `(grade x 100 + pct) / 5` exactly, for every grade 0 to 4 and every byte, with the FPU at 24,
+  53 or 64 bits (`q369/skillfp.py`): 0 to 100 through the grades, to 131 past it, which the control holds at 1024;
+- **the happiness's bar** `((__ftol( +0x1f8 ) & 0xff) << 10) / 100`, as the all-items bars.
+
+The screen's two meters (`0x32c`, `0x32d`) are the same skin in `happygrad.wct`, each inset 8 (`0x0049698d`,
+`0x00496a49`), not the gauge's `meter.wct`: horizontal, the ramp to the value and the grey track after it. The
+texture (`ui.wad`, `textures\happygrad.wct`, 32 by 32) is laid out as `ridestatbar.wct`, a ramp from cyan through
+orange to yellow in one half and the grey track in the other. The factory measures the row's height from its font
+(`[0x007ca170]`, as the items rows' `0x007ca158`); here it is 44.
+
+Measured in the original under Proton on `q369/skill.TPWS` (`q353/grades.TPWS` with the percentages 60, 45, 99, 0, 13
+written at the staff record's `+480`; `q369/orig/b`, `thingwords.py` on `+0x1e4`, `+0x1e8` and `+0x1f8`): its rows
+letter "$ 81" and draw the skill bars 0.925, 0.283, 0.192, 0.608 and 0.417 of their width (942, 296, 194, 614 and 430 of
+1024), and the happiness bars 0.85, 0.817, 0.817, 0.858 and 0.817 against its polled happiness at the frames (0.850,
+0.819, 0.829, 0.850, 0.819); its meters 0.828 with a grey rest. Measured by where the grey track starts
+(`barsplit.py`): `barshare.py`'s colour count drops `happygrad.wct`'s greyish-teal texels and reads them 0.02 short.
+
+**OpenTPW** (Q369): `ParkStaffScreen.NumbersOf` and `SkillOf`; `UiList.BarSkins` and `BarInset` the styler's skin and
+inset; `ParkObjectWindow.UiStatBar.Skin` the texture handed; the meters are `UiStatBar`s. Each fill logs `Staff list:
+kind K, row <thing> <name>: <status> <wage> <skill bar> <happiness bar>`, and the rewrite its row 0 the same way. On
+`q369/skill.TPWS`, paused at the load (`q369/run-fix2`, the final game binary): `row 25 Duke Mighten: Walking 81 942
+880`, `26 ... 92 296 880`, `27 ... 36 194 880`, `28 ... 105 614 901`, `30 ... 125 430 921`; the frames' skill bars 0.92,
+0.292, 0.195, 0.602, 0.425 and happiness bars 0.866, 0.866, 0.866, 0.884, 0.902 (`barsplit.py`); the meters 0.846 and
+0.863 with a grey rest; "$ 81" (`1-handymen.png`). Main's build (`run-control1`) lettered the grade and the happiness as
+numbers and filled its meters from the bottom. **Not built**: the headings' frames (`FUN_00486660`, font
+`[0x00751188]`, 255, 239, 0, help rows `0x77` to `0x7b`), the row height from the font, the status's own words
+(`STAFF_STATUS_TEXT`: the adder reads them from the table `[0x0078baa4]` by `FUN_005064f0`'s state, a 1 read as 0 where
+`FUN_00506eb0` answers nought), and the list's sort word (`FUN_006659af( [0x0075118c], 0 )`).
 
 **The skill bar `0x2482`** ((722, 536)-(957, 575), type 9) is built at nought (`0x0049c335`) and written in one place,
 message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<

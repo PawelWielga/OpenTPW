@@ -44,9 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q369. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q370. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the headings bare where the original frames them
+  (`FUN_00486660`, font `[0x00751188]`, 255, 239, 0, help rows `0x77` to `0x7b`), the row height from the font
+  (`[0x007ca170]`), the status's own words (`STAFF_STATUS_TEXT`: the table `[0x0078baa4]`, read by the row adder
+  `0x00496320`), the list's sort word (`FUN_006659af( [0x0075118c], 0 )`). Five other callers hand the stat bars'
+  skin `happygrad.wct` (`FUN_004939d0`, `FUN_004afc10`, `FUN_004b1040`, `FUN_004b53c0`, `FUN_004b6c20`): which
+  screens' bars these are and what this game draws there is not looked at. The all-staff meters' every-member value is
+  this game's mean `x 1024 / 100` where the opener `__ftol`s `FUN_004c7cc0`'s answer with no scaling in the decompiler's
+  output (the listing not read; both games' meters read about 0.83 to 0.86). In no game run: a grade-4 member past 100,
+  a member with no name, Full Simulation (not asked: the screen is either mode's), the other three themes.
   From Q368 (`hud.md`, "The all-items rows: a number, then bars"): in no game run: a figure moved by a sale in this
   game's frame, a ring of fewer than thirty days with a satisfaction that is not nought, a satisfaction past 255.
   From Q367 (`hud.md`, "The all-items rows: a number, then bars"): the shops' and sideshows' money and satisfaction
@@ -55,7 +64,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   factory measures its font (`0x007ca158`), so its bars are 24 units here; its headings are bare here where the
   original frames them (`FUN_00486660`, font `[0x00750d58]`, 255, 239, 0, help rows from `0x69`, `FUN_00494ec0`;
   `q367/side-by-side.png`). The all-staff list's skill and happiness
-  are still numbers where the original draws bars (`STAFF_STATUS_TEXT`'s screen; its styler not read). In no game
+  are bars (Q369). In no game
   run: a track ride's row (the fill's `0x2000` walk, `0x00493eb0`), a value past 255, Full Simulation (not asked:
   the screen is either mode's), the other three themes.
   From Q366 (`hud.md`, "The shortcuts' screen rows"): **the staff and visitor locators** (`FUN_004b3f60`, Ctrl+S and
@@ -63,8 +72,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   `VISITOR_LOCATOR`, `POSTCARD_SHORTCUT`). W and D still scroll the orbit camera, the original's camera table binding the
   arrows and the keypad (`ParkOrbitCameraMode.ScrollAxes`; Alexah kept them, 2026-10-14). In no game run: L in Full
   Simulation (counted there), a shortcut under an object window, Ctrl+P in the original.
-  From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): A row's status is the activity's English name (`STAFF_STATUS_TEXT`) and its skill and happiness numbers where
-  the original draws bars; the items columns are Q367's. What the original does to these two lists as a member or an object comes or
+  From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): A row's status is the activity's English name (`STAFF_STATUS_TEXT`); its skill and happiness are bars (Q369);
+  the items columns are Q367's. What the original does to these two lists as a member or an object comes or
   goes with the screen open is not read (allpeeps' `0x1b`/`0x1c`). In no game run: the sideshows' tab rewritten, the
   timer held under a message box, Full Simulation (not asked: the screens are either mode's).
   From Q363 (`render-states.md`, "Texture addressing"): **a texture one model wraps and another clamps keeps each

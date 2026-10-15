@@ -37,7 +37,9 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/seam.py <frame.png> x0 x1 y0 y1` | A dark seam between water and its near bank, column by column in a window: the share of seam columns, the median ratio of the darkest pixel below the water to the water's and the bank's, and the longest run of neighbouring seam columns. Compares frames of two games lit differently, where a fixed level does not (Q358) |
 | `lib/screendiff.py <a.png> <b.png> [x0 y0 x1 y1]` | Pixels differing by more than 40 between two frames inside a box, and where: a screen that should not change, checked against the control's frame (Q358) |
 | `lib/diffpic.py <a.png> <b.png> <out.png> [x0 y0 x1 y1]` | Two frames side by side and a third, the second dimmed with every pixel differing by more than 40 a channel in red: where a change lies and its shape, and the count (Q359) |
-| `lib/barshare.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar measured in a frame of either game, by its layout rectangle: the share of its middle row in colour, the share grey, the colour's mean r - g, the last coloured pixel, the grey's mean, and the pixel an eighth of the way. **A black cell counts as grey** (spread under 12): judge "nothing drawn" by the grey's mean, under 5 there and 49 to 58 on a drawn track (Q367) |
+| `lib/barshare.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar measured in a frame of either game, by its layout rectangle: the share of its middle row in colour, the share grey, the colour's mean r - g, the last coloured pixel, the grey's mean, and the pixel an eighth of the way. **A black cell counts as grey** (spread under 12): judge "nothing drawn" by the grey's mean, under 5 there and 49 to 58 on a drawn track (Q367). **It reads a
+`happygrad.wct` bar about 0.02 short** (its greyish-teal texels spread 30 or less): use `barsplit.py` for that one (Q369) |
+| `lib/barsplit.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar's fill by where its grey track starts (the first pixel of the middle row, from the left, with a spread of 12 or less and a mean of 40 to 75), as a share of the width: right for any ramp, `happygrad.wct`'s too, and blind to a highlighted row's band past the bar's end (Q369) |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
 | `original/loadfile.sh load <file> <outdir> <tag>` / `stop` | A park file loaded in the original from its Load Park list, off-screen, with frames; `POLL=` starts a memory reader just before the click. It starts the original only when it is not running, so a second file is 35 s where the first is 123 s |
@@ -517,7 +519,10 @@ GH=766` there, or the pointer is off):
   from a list, go straight across, then straight down, outside it: `gmove.py 1000 123`, then `gmove.py 1000 700`.
   The hire screen: the gadget's Buy (113,590), then the buy screen's b_allstaff (958,317); the mechanics' tab (667,123).
   All staff and all items (Q365): the keys S and A (`xdotool keydown`/`keyup` on `:77`; they act on the release, from
-  the park or over a screen); all staff's mechanics' tab (665,121), all items' shops' tab (786,123).
+  the park or over a screen); all staff's mechanics' tab (665,121), all items' shops' tab (786,123). All staff's five
+  tabs (Q369, `q369/orig/run.sh`): (605,121), (665,121), (724,121), (783,121), (843,121). A member's skill and
+  happiness in its memory: `thingwords.py` on `T:0x1e4:I` (grade), `T:0x1e8:B` (percentage), `T:0x1f8:f`
+  (happiness), started after the load with its start stamped, since its times count from its own start.
 - **The shortcuts' keys in the original** (Q366, `q366/orig/run.sh`): B H I A S V F L T G and Space plain, S and V with
   Ctrl held (`xdotool keydown Control_L` around the key). **L opens nothing in Instant Action**, so an Escape sent after it
   opens the game menu and the next key falls on the menu: close a screen only where one opened. The gadget's

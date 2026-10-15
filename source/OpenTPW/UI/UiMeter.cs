@@ -30,10 +30,9 @@ namespace OpenTPW.UI;
 internal sealed class UiMeter : UiControl
 {
 	/// <summary>
-	/// The skin the original gives it. <b>Which skin is the CALLER's, not this class's</b>: the
-	/// gadget's gauge takes <c>meter.wct</c> (<c>FUN_00477870</c>), and the staff screen's two take
-	/// <c>happygrad.wct</c> - <c>FUN_00496620</c> loads that one by name for both of its meters. A
-	/// single hardcoded skin here would have painted the staff screen in the gauge's artwork.
+	/// The skin the original gives it: the gadget's gauge takes <c>meter.wct</c> (<c>FUN_00477870</c>). The
+	/// all-staff screen's two meters are not this skin but the stat bars' (<see cref="ParkObjectWindow"/>'s
+	/// <c>UiStatBar</c>, <c>FUN_00477ff0</c>).
 	/// </summary>
 	public string Skin { get; init; } = "ui/textures/meter.wct";
 

@@ -101,11 +101,12 @@ public class ParkListScreenRewriteTests
 
 		var screen = new ParkStaffScreen( stack );
 		var list = Field<UiList>( screen, "_list" );
-		var kindMeter = Field<UiMeter>( screen, "_kindHappiness" );
-		var allMeter = Field<UiMeter>( screen, "_allHappiness" );
+		var kindMeter = Field<ParkObjectWindow.UiStatBar>( screen, "_kindHappiness" );
+		var allMeter = Field<ParkObjectWindow.UiStatBar>( screen, "_allHappiness" );
 		var row = list.Rows.ToList().FindIndex( each => each.Id == member.ThingId );
 		var opened = list.Rows[row].Values!.ToArray();
-		var (kindAtOpening, allAtOpening) = (kindMeter.Value, allMeter.Value);
+		var openedNumbers = list.Rows[row].Numbers!.ToArray();
+		var (kindAtOpening, allAtOpening) = (kindMeter.Units, allMeter.Units);
 
 		var activity = System.Enum.GetValues<StaffActivity>().First( each => each != member.Activity );
 
@@ -116,20 +117,25 @@ public class ParkListScreenRewriteTests
 		Time.PinWall( 6999 );
 		screen.Update();
 		CollectionAssert.AreEqual( opened, list.Rows[row].Values!.ToArray(), "1999 ms: not rewritten" );
-		Assert.AreEqual( kindAtOpening, kindMeter.Value, "the kind's meter stands between rewrites" );
-		Assert.AreEqual( allAtOpening, allMeter.Value, "and every member's" );
+		CollectionAssert.AreEqual( openedNumbers, list.Rows[row].Numbers!.ToArray(), "nor its bars" );
+		Assert.AreEqual( kindAtOpening, kindMeter.Units, "the kind's meter stands between rewrites" );
+		Assert.AreEqual( allAtOpening, allMeter.Units, "and every member's" );
 
 		Time.PinWall( 7000 );
 		screen.Update();
 		var now = list.Rows[row].Values!;
+		var numbers = list.Rows[row].Numbers!;
 		Assert.AreNotEqual( $"{activity}", opened[0] );
 		Assert.AreEqual( $"{activity}", now[0], "the status rewritten" );
 		Assert.AreEqual( opened[1], now[1], "the wage as the fill wrote it" );
-		Assert.AreEqual( $"{grade}", now[2], "the skill rewritten" );
-		Assert.AreEqual( $"{(int)member.Happiness}", now[3], "the happiness rewritten" );
+		Assert.AreEqual( openedNumbers[2], numbers[2], "and its number" );
+		Assert.AreEqual( (ParkStaffScreen.SkillOf( member ) << 10) / 100, numbers[3], "the skill's bar rewritten" );
+		Assert.AreNotEqual( openedNumbers[3], numbers[3] );
+		Assert.AreEqual( (((int)member.Happiness & 0xff) << 10) / 100, numbers[4], "the happiness's bar rewritten" );
+		Assert.AreNotEqual( openedNumbers[4], numbers[4] );
 		Assert.AreEqual( member.ThingId, list.Rows[row].Id );
-		Assert.AreEqual( kindAtOpening, kindMeter.Value, "the rewrite leaves the kind's meter" );
-		Assert.AreEqual( allAtOpening, allMeter.Value, "and every member's" );
+		Assert.AreEqual( kindAtOpening, kindMeter.Units, "the rewrite leaves the kind's meter" );
+		Assert.AreEqual( allAtOpening, allMeter.Units, "and every member's" );
 		Assert.AreEqual( 1, Rewrites( "Staff list" ) );
 
 		// A tab at 7500: the timer keeps the opening's phase, so the next rewrite is at 9000.
@@ -137,7 +143,7 @@ public class ParkListScreenRewriteTests
 		var tabs = Field<UiRadioGroup>( screen, "_tabs" );
 		tabs.Select( tabs.Children.OfType<UiButton>().First( option => option.Id != tabs.Selected ).Id );
 		screen.Update();
-		Assert.AreEqual( allAtOpening, allMeter.Value, "a tab sets the kind's meter alone" );
+		Assert.AreEqual( allAtOpening, allMeter.Units, "a tab sets the kind's meter alone" );
 
 		Time.PinWall( 8999 );
 		screen.Update();
@@ -146,6 +152,65 @@ public class ParkListScreenRewriteTests
 		Time.PinWall( 9000 );
 		screen.Update();
 		Assert.AreEqual( 2, Rewrites( "Staff list" ), "9000 ms: two seconds from the last, not from the tab" );
+	}
+
+	/// <summary>
+	/// <b>The all-staff row's cells are the styler <c>FUN_00496d20</c>'s</b>: the wage lettered as a money cell, the skill a
+	/// bar in <c>ridestatbar.wct</c> and the happiness a bar in <c>happygrad.wct</c>, each inset 8, filled from the row
+	/// adder's <c>(skill &lt;&lt; 10) / 100</c> and <c>((happiness &amp; 0xff) &lt;&lt; 10) / 100</c>; and the two meters
+	/// are the same skin in <c>happygrad.wct</c>, inset 8 (<c>docs/exe/hud.md</c>, "The all-staff rows: a money cell, then
+	/// bars").
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the skill as the grade's fifths alone; the percentage left out or not a byte; the happiness not
+	/// a byte; the wage as a bare number; the happiness in the ride bars' skin; an inset of 10; the meters not inset or
+	/// in the ride bars' skin.
+	/// </remarks>
+	[TestMethod]
+	public void TheStaffRowsLetterTheWageAsMoneyAndDrawSkillAndHappinessAsTheOriginalsBars()
+	{
+		var member = people.Staff[0];
+		var kind = ParkStaffPool.KindFor( member.Model );
+
+		member.PayGrade = 3;
+		member.PercentageThroughGrade = 0x10f;
+		member.Happiness = 300.75f;
+
+		typeof( ParkStaffScreen ).GetField( "_lastKind", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, kind );
+
+		var screen = new ParkStaffScreen( stack );
+		var list = Field<UiList>( screen, "_list" );
+		var row = list.Rows.First( each => each.Id == member.ThingId );
+		var wage = level.StaffPool!.WageFor( kind, 3 );
+
+		Assert.AreEqual( 63, ParkStaffScreen.SkillOf( member ), "(3 x 100 + 15) / 5: the percentage's low byte" );
+		CollectionAssert.AreEqual( new[] { 0, 0, wage, 645, 450 }, row.Numbers!.ToArray(),
+			"the skill's (63 << 10) / 100 and the happiness's ((300 & 0xff) << 10) / 100" );
+		Assert.AreEqual( $"$ {wage}", row.Values![1], "the wage in a money cell" );
+
+		member.PayGrade = 4;
+		member.PercentageThroughGrade = 99;
+		Assert.AreEqual( 99, ParkStaffScreen.SkillOf( member ), "(400 + 99) / 5 truncated" );
+
+		var bars = list.Children.OfType<ParkObjectWindow.UiStatBar>().ToArray();
+		var top = bars.Min( bar => bar.Rect.Top );
+		var first = bars.Where( bar => bar.Rect.Top == top ).OrderBy( bar => bar.Rect.Left ).ToArray();
+
+		Assert.AreEqual( 2, first.Length, "two bar cells a row" );
+		Assert.AreEqual( (1231, ParkObjectWindow.UiStatBar.RideStatBar), (first[0].Rect.Left, first[0].Skin), "the skill" );
+		Assert.AreEqual( (1488, ParkObjectWindow.UiStatBar.HappyGrad), (first[1].Rect.Left, first[1].Skin), "the happiness" );
+		Assert.AreEqual( 418 + 8, top, "inset 8 from the row's top" );
+		Assert.AreEqual( member.ThingId, list.Rows[0].Id, "the member stands first" );
+		Assert.AreEqual( 645, first[0].Units, "the first row's skill bar filled" );
+		Assert.AreEqual( 450, first[1].Units, "and its happiness bar" );
+
+		foreach ( var (name, rect) in new[] { ("_kindHappiness", new UiRect( 1191, 840, 1567, 869 )), ("_allHappiness", new UiRect( 1191, 891, 1567, 920 )) } )
+		{
+			var meter = Field<ParkObjectWindow.UiStatBar>( screen, name );
+			Assert.AreEqual( rect, meter.Rect, $"{name} inset 8" );
+			Assert.AreEqual( ParkObjectWindow.UiStatBar.HappyGrad, meter.Skin, name );
+			Assert.IsTrue( meter.Known, $"{name} drawn at any value" );
+		}
 	}
 
 	/// <summary>
