@@ -7048,6 +7048,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `visitors 26`, the gate's 668 = 200 + 26 x 18, written 26, 26, [0, 26]; main's build wrote 8, 25, [0]. The original
   given the file read them, closed 26 into its third slot and lettered "Total park visitors 26" on its park status
   screen; main's file, 8. 20 bugs put back, all caught after a test line (Level's call).
+- [x] **Q390. The analyser's guests inside and rides at each close, kept in their rings.** The 10th int ring
+  (`+0x205d0`, `FUN_004c7fa0`: guests on a cell of type 0, 1, 3, 9 or 10) and the 12th (`+0x20a70`, `FUN_004c8070`:
+  objects whose item is `WhichUIType` 0, whatever their state) sampled at the close around the lifetime visitors;
+  `ParkState.MonthGuestsInside`, `MonthRides`, `RidesStanding`, the file's at a load, written. In all 188 untouched park
+  files of 587 the 12th is the file's rides; in 586 the 10th is at most its guests.
+  `q390/run-fix1` (the final build, the stock park with a Crazy Ape bought): the close on tick 1470 `guests inside 24`
+  (the census 29 just after), `rides 2`, written [0, 24] and [1, 2]; main's build wrote [0] and [1] a slot behind. The
+  original given the file read them and its own close pushed 24 and 2; main's file, a slot behind. 20 bugs put back,
+  all caught after a test change (a feature made a Crazy Ape).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

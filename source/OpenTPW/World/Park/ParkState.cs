@@ -737,7 +737,9 @@ public sealed class ParkState
 		LastObjectBuilt = park.Save?.LastObjectBuilt ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 		MonthBalance = park.Save?.MonthBalance?.Copy() ?? new();
 		MonthParkValue = park.Save?.MonthParkValue?.Copy() ?? new();
+		MonthGuestsInside = park.Save?.MonthGuestsInside?.Copy() ?? new();
 		MonthVisitors = park.Save?.MonthVisitors?.Copy() ?? new();
+		MonthRides = park.Save?.MonthRides?.Copy() ?? new();
 		LifetimeVisitors = park.Save?.LifetimeVisitors ?? 0;
 		MostPaidForTicket = park.Save?.MostPaidForTicket ?? 0;
 		MonthCosts = park.Save?.MonthCosts?.Copy() ?? new();
@@ -934,6 +936,31 @@ public sealed class ParkState
 	public ParkMonthRing MonthVisitors { get; private set; } = new();
 
 	/// <summary>
+	/// The park analyser's ring of the guests inside the park at each month's close (<c>+0x205d0</c>, <c>FUN_004c7fa0</c>),
+	/// as <see cref="MonthBalance"/>; <see cref="TurnTheMonth"/> samples it after the money rings, before the lifetime visitors.
+	/// </summary>
+	public ParkMonthRing MonthGuestsInside { get; private set; } = new();
+
+	/// <summary>
+	/// The park analyser's ring of the rides standing at each month's close (<c>+0x20a70</c>, <see cref="RidesStanding"/>),
+	/// as <see cref="MonthBalance"/>; <see cref="TurnTheMonth"/> samples it after the lifetime visitors, before the park value.
+	/// </summary>
+	public ParkMonthRing MonthRides { get; private set; } = new();
+
+	/// <summary>
+	/// The objects whose item is a ride's kind (<c>Info.WhichUIType</c> 0), whatever their state - <c>FUN_004c8070</c>,
+	/// which walks the thing list for things of type 3 whose item's <c>+0x4ac</c> is nought. An item
+	/// <paramref name="catalogue"/> does not name is not counted.
+	/// </summary>
+	/// <remarks>
+	/// The original keeps its last count (<c>+0x1f0c8</c>) and gives it again to a caller asking within as many quarter
+	/// ticks as it names; the close names nought. This counts afresh every time (a deviation of the same quarter tick at most).
+	/// </remarks>
+	public int RidesStanding( ParkItemCatalogue? catalogue )
+		=> catalogue == null ? 0 : ObjectsInChainOrder().Count( thing => catalogue.TryGet( thing.CatalogueId, out var item )
+			&& item.UiType == ItemDescriptionFile.Ride );
+
+	/// <summary>
 	/// The park analyser's <c>mLifetimeVisitors</c> (<c>+0x21c08</c>): one for every admission fee <see cref="Take"/>
 	/// takes, nought or not; the file's at a load and nought in a park made with no file (<c>FUN_004c58c0</c>). Not the
 	/// header's <see cref="VisitorsToDate"/>, which counts arrivals.
@@ -970,10 +997,10 @@ public sealed class ParkState
 	/// <summary>The analyser's month of what the sideshows have charged (<c>+0x20380</c>), as <see cref="MonthCosts"/>; <see cref="AddSideshowTakings"/> adds to it.</summary>
 	public ParkMonthRing MonthSideshowTakings { get; private set; } = new();
 
-	/// <summary>The analyser's eight money rings, its park value and its lifetime visitors as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
+	/// <summary>The analyser's eight money rings, its park value, its guests inside, its lifetime visitors and its rides as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
 	public ParkWorld.MonthRingSet MonthRings
 		=> new( MonthBalance, MonthParkValue, MonthCosts, MonthStaffCosts, MonthTraining, MonthCashIn, MonthGateTakings, MonthShopTakings, MonthSideshowTakings,
-			MonthVisitors );
+			MonthGuestsInside, MonthVisitors, MonthRides );
 
 	/// <summary>
 	/// A wage or a severance paid: onto the analyser's month of staff costs, after the withdrawal and whether or not it
@@ -1318,14 +1345,19 @@ public sealed class ParkState
 	/// The month's change reaches the park analyser (thing 5) and then the bank (thing 8) - message <c>0xc</c>
 	/// (<c>docs/exe/ride-operation.md</c>, "The month's change"). The analyser's close (<c>FUN_004c7720</c>) samples the
 	/// bank's <see cref="Balance"/> into its first ring, then closes its seven money rings, all costs, staff costs,
-	/// training, cash in, gate, shop and sideshow takings, in that order, then samples <see cref="LifetimeVisitors"/> and the
-	/// <see cref="ParkValue"/> of <paramref name="catalogue"/>'s items, and its other rings and samples are counted (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
+	/// training, cash in, gate, shop and sideshow takings, in that order, then samples <paramref name="guestsInside"/>,
+	/// <see cref="LifetimeVisitors"/>, the <see cref="RidesStanding"/> and the <see cref="ParkValue"/> of
+	/// <paramref name="catalogue"/>'s items, and its other rings and samples are counted (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
 	/// instalment withdrawn, its months repaid counted, <see cref="ProfitThisYear"/> given the principal's share back
 	/// by the original's unsigned division, and the loan closed at its period; then, with the balance and
 	/// <see cref="LastBalance"/> both below nought, the whole thirty-day months since <see cref="TurnEnteredRed"/> -
 	/// at six the park ends, counted.
 	/// </summary>
-	public void TurnTheMonth( ParkItemCatalogue? catalogue )
+	/// <param name="guestsInside">
+	/// The guests on a counting cell (<c>FUN_004c7fa0</c> asked with nought, so counted afresh unless the same quarter tick
+	/// already counted them).
+	/// </param>
+	public void TurnTheMonth( ParkItemCatalogue? catalogue, int guestsInside = 0 )
 	{
 		MonthBalance.Push( Balance );
 		MonthCosts.Close();
@@ -1335,9 +1367,12 @@ public sealed class ParkState
 		MonthGateTakings.Close();
 		MonthShopTakings.Close();
 		MonthSideshowTakings.Close();
+		MonthGuestsInside.Push( guestsInside );
 		MonthVisitors.Push( LifetimeVisitors );
+		MonthRides.Push( RidesStanding( catalogue ) );
 		MonthParkValue.Push( ParkValue.Of( this, catalogue ) );
-		Log.Info( $"Park: analyser month closed, balance {MonthBalance.Newest}, park value {MonthParkValue.Newest}, visitors {MonthVisitors.Newest}, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
+		Log.Info( $"Park: analyser month closed, balance {MonthBalance.Newest}, park value {MonthParkValue.Newest}, guests inside {MonthGuestsInside.Newest}, "
+			+ $"visitors {MonthVisitors.Newest}, rides {MonthRides.Newest}, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
 			+ $"training {MonthTraining.Newest}, cash in {MonthCashIn.Newest}, gate {MonthGateTakings.Newest}, "
 			+ $"shops {MonthShopTakings.Newest}, sideshows {MonthSideshowTakings.Newest}" );
 		Unimplemented.Report( "ANALYSER_MONTH_CLOSE" );

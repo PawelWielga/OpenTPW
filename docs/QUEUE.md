@@ -44,9 +44,17 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q390. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q391. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q390 (`hud.md`, "The guests inside and the rides at a close"): the 10th and 12th rings are kept. Nothing here
+  reads them: the park status screen (`PARK_STATUS_SCREEN`), which graphs the 10th beside the 13th to 16th, is not
+  built; nothing reads the 12th. The analyser's other four int rings, the 13th (`+0x20cc0`, from `FUN_004cf3e0`), the
+  14th's float (`FUN_004c7bb0`), the 15th (a mean of `FUN_004cef30`) and the 16th (`FUN_004cceb0`), are still the file's
+  bytes (`ANALYSER_MONTH_CLOSE`), and so are the two counts' kept answers (`+0x1f0b8` to `+0x1f0cc`). An upgrade placed
+  in an Instant Action park is not catalogued here, so not counted as a ride. In no game run: a ride condemned or
+  broken at a close (tested only), an upgrade placed, a ring gone round 144 months, Full Simulation (not asked: the
+  rings are either mode's), the other three themes.
   From Q389 (`hud.md`, "The lifetime visitors"): the count, the dearest and the 11th ring are kept. Nothing here reads
   them: the park status screen (`PARK_STATUS_SCREEN`, which letters the count) and the golden tickets (Q141) are not
   built; the gate fee's challenge message is counted (`GATE_FEE_CHALLENGE_POST`). The analyser's other six int rings

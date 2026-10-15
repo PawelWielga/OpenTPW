@@ -1631,7 +1631,7 @@ count 144. The same close samples the analyser's other nine rings, which no add 
 before any other ring (`FUN_006ad810` on the bank, `FUN_005195d0`'s thing `+0xc`, into `+0x1f100`'s next slot; its own
 total `+0x1f100` is never written and reads 0 in every file), and after the seven money rings the other seven in this
 order (read 2026-10-15, Q389, `0x004c788c`..`0x004c7a7a`; not ring order): the month total `+0x20cc0` closed as a money
-ring is (`+0x20cc0`, added by `FUN_004cf3e0`), `FUN_004c7fa0` (`+0x205d0`), the lifetime visitors `+0x21c08`
+ring is (`+0x20cc0`, added by `FUN_004cf3e0`), `FUN_004c7fa0` (`+0x205d0`; it and the 12th below, "The guests inside and the rides at a close"), the lifetime visitors `+0x21c08`
 (`+0x20820`, below, "The lifetime visitors"), `FUN_004c8070` (`+0x20a70`), `FUN_004c7bb0`'s float (`+0x20f10`),
 `FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value", below), a mean of `FUN_004cef30` (`+0x21160`) and
 `FUN_004cceb0` (`+0x213b0`); the others not read further.
@@ -1663,8 +1663,9 @@ file this game wrote before Q385 kept the costs. **The park value ring is kept t
 file's at a load, `ParkMonthRing.Push( ParkValue.Of( ... ) )` after the seven money rings in `TurnTheMonth`, written as the
 2nd ring (below, "The park value"). **And the lifetime visitors' ring** (Q389): `MonthVisitors`, the file's at a load,
 `ParkMonthRing.Push( LifetimeVisitors )` after the money rings and before the park value, written as the 11th (below,
-"The lifetime visitors"). The analyser's other six int rings are not kept (`ANALYSER_MONTH_CLOSE`), and a written file
-keeps the file's bytes for them.
+"The lifetime visitors"). **And the guests inside' and the rides' rings** (Q390): `MonthGuestsInside` and `MonthRides`,
+written as the 10th and 12th (below, "The guests inside and the rides at a close"). The analyser's other four int rings
+are not kept (`ANALYSER_MONTH_CLOSE`), and a written file keeps the file's bytes for them.
 
 #### The park value
 
@@ -1732,6 +1733,48 @@ written to 26 took 18 fees before its close on tick 1474 (`Park: lifetime visito
 wrote the file's 8, 25 and [0]. The original given this game's file read 26, 26, [0, 26], closed 26 into its third slot
 at once, and its park status screen lettered "Total park visitors 26" (`q389/orig/a-2-status.png`); given main's file,
 "8" (`c-2-status.png`).
+
+#### The guests inside and the rides at a close
+
+Read 2026-10-15 (Q390). **The month's close samples two counts into the 10th and 12th int rings**, each a thiscall on
+the analyser with one argument, a number of quarter ticks, asked with nought (`PUSH EBP`, `0x004c78b1` and
+`0x004c7929`), so counted afresh unless the same quarter tick counted already; each keeps its answer as the park value
+does (`FUN_004c7fa0`: stamp `+0x1f0b8`, count `+0x1f0bc`, flag `+0x1f0c0`; `FUN_004c8070`: `+0x1f0c4`, `+0x1f0c8`,
+`+0x1f0cc`), and the serialiser writes them.
+
+- **`FUN_004c7fa0`, the guests inside** (`+0x205d0`, its slot `+0x20814`, months `+0x205d4`; `0x004c78c1`..`0x004c78f1`):
+  the used thing list (`FUN_00516130`, `FUN_00516160`) walked for things of kind 1 (`+2`, guests) on whose cell
+  (`+5` x, `+7` y) `FUN_004fa990` passes, a type 1, 3, 9, 10 or 0 (`FUN_00536310`, `20`, `40`, `50`, `90`): the count
+  the gate's close takes (`FUN_004c9130`, `park-gate.md`), the music's crowd (`FUN_004c81e0`) and the strike's look
+  (`FUN_00508e70`, asked with 5).
+- **`FUN_004c8070`, the rides standing** (`+0x20a70`, slot `+0x20cb4`, months `+0x20a74`; `0x004c7933`..`0x004c7964`):
+  the same list walked for things of kind 3 whose item (`FUN_00412e90` on `+0xe`) has `+0x4ac`, `Info.WhichUIType`,
+  nought; nothing else of the object is asked, so a ride shut, broken or condemned counts, and so does a placed upgrade
+  (the `upgrades` folder's category is 0).
+
+Neither month so far is written. **Readers**: the park status screen's graph (`FUN_004a4b90` and its draw, bit `8` of
+`DAT_00753c48` from its fourth series button, `0x4a68bf`) plots the 10th beside the 13th (`+0x20cc0`), the 14th's float
+(`+0x20f10`), the 15th (`+0x21160`) and the 16th (`+0x213b0`); its labels are not read. **Nothing reads the 12th**: its
+every operand is the constructor's, the close's, the serialiser's and the load factory's (`FUN_005179c0`, which empties
+every ring before the read, `FUN_0051ae30`).
+
+**Measured** (`q390/sweep.py`): the shipped `Easymode.TPWI` holds the 10th one month closed on 0 and the 12th on 1, the
+Belly Bounce; over all 587 park files on hand both months so far are 0; in all 188 whose park value sums to their 2nd
+ring's newest month (untouched since their close) the 12th's newest is the file's kind-3 things of `WhichUIType` 0; the
+10th's newest is at most the file's guests in 586 (the exception, `q253/orig/sold-by-the-original.TPWS`, closed on 30
+and holds 27 guests).
+
+**OpenTPW** (Q390). `ParkState.MonthGuestsInside` and `MonthRides`, the file's at a load and empty in a park made with
+no file; `TurnTheMonth` pushes `ParkPeople.GateGuestCensus` and `ParkState.RidesStanding` (the chain's objects whose
+catalogue item is `UiType` 0) after the money rings, around the lifetime visitors, before the park value; the writer
+writes both (`PutMonthRings`); `money` prints them. Each count is taken afresh where the original's can be one of the
+same quarter tick (said at `RidesStanding`). Nothing here reads them: the park status screen is not built
+(`PARK_STATUS_SCREEN`). An upgrade placed in an Instant Action park is not catalogued here (no `Easy_` file), so it is
+not counted (none ships placed in Lost Kingdom's file). **Confirmed** (`q390/`): the stock park with a Crazy Ape bought
+closed on tick 1470 with `guests inside 24` (the `guests` census 29 a moment on) and `rides 2`, and wrote [0, 24] and
+[1, 2]; main's build left the file's [0] and [1] a slot behind the money rings. The original given this game's file read
+[0, 24] and [1, 2] and its own close at once pushed 24 and 2, its own counts of the same park (`q390/orig/a-load.log`,
+`side-by-side.png`).
 
 #### The first row is picked as a list fills
 

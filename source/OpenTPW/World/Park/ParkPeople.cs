@@ -886,7 +886,7 @@ public sealed partial class ParkPeople : Entity
 	public static void TurnTheMonth( ParkPeople? people, ParkState? state, ParkItemCatalogue? catalogue )
 	{
 		people?.TrainTheStaff();
-		state?.TurnTheMonth( catalogue );
+		state?.TurnTheMonth( catalogue, people?.GateGuestCensus ?? 0 );
 		people?.PayTheWages();
 	}
 
