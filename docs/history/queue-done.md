@@ -6987,6 +6987,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   control `run-control2` 2 of 2): `sort 1` Chris, Duke, Paul, Rajan; Monthly Wage `sort 3` Rajan $ 45 then the three
   at $ 63 in name order; again `-3`; Current Status `sort 2`, the three Idle then Duke; kept when opened again. The
   original given the file (`q381/orig/a`): the same five orders. Mutations 6 of 6. Tests 3128.
+- [x] **Q382. The all-staff list picks its first row as it fills and keeps it over a sort, as the original's** (a piece
+  of the old Q382, split by Claude; the rest is Q383). `ParkStaffScreen` sets `UiList.PicksFirstRow`; the handler
+  `FUN_00495da0` has no `0x401` arm, so the pick is the highlight alone. This game, paused on Q381's scene
+  (`q382/run-fix1`, the final binary; control `run-control1` 2 of 2): picked 45, 43, 45, 45 over the sorts, 26 on the
+  mechanics' tab, 45 back; row 0 teal 0.94 to 0.96 in six frames, rows 1 and 2 nought; a right click below the rows
+  went to thing 45 and shut the screen, nothing counted. The original (`q382/orig/a`): row 0 teal 0.95 on each fill
+  and sort. Mutations 4 of 4. Tests 3129.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -524,7 +524,9 @@ GH=766` there, or the pointer is off):
   To hover ONE row (Q376, `q376/orig/run.sh`'s `row`): from there across to (105,700), up to the row's band at x 105,
   left of every list, then straight in to x 250; the visitors' rows stand at y 170 + 27.9k, all items' at 222 + 20.4k.
   `rectcolour.py` reads the highlight on a 1024 x 768 frame in virtual units: (300, 2y-16, 680, 2y+16) for a visitors
-  row centred at y, (275, 432 + 40.8k, 640, 468 + 40.8k) for an items row.
+  row centred at y, (275, 432 + 40.8k, 640, 468 + 40.8k) for an items row, (300, 420 + 39k, 700, 452 + 39k) for an
+  all-staff row in either game's frame (Q382). A right click on the all-staff list below its rows: (300,700), then up to
+  (300,360), crossing no row of four (Q382, `q382/orig/run.sh`).
   The hire screen: the gadget's Buy (113,590), then the buy screen's b_allstaff (958,317); the mechanics' tab (667,123).
   All staff and all items (Q365): the keys S and A (`xdotool keydown`/`keyup` on `:77`; they act on the release, from
   the park or over a screen); all staff's mechanics' tab (665,121), all items' shops' tab (786,123). All staff's five

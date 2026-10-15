@@ -672,7 +672,7 @@ Read first-hand for the build (Q200b, 2026-09-30):
   before every numbered visitor.
 - **An add that makes the count 1 selects the first row** (`FUN_0066525c( 0 )` in `FUN_0066403b`). The original's
   visitors list opens with a row highlighted, not always the first ("A right click on a list"). OpenTPW builds the
-  pick for the hire and all-items lists ("The first row is picked as a list fills") and counts it for the others
+  pick for the hire, all-items and all-staff lists ("The first row is picked as a list fills") and counts it for the others
   (`LIST_FIRST_ROW_SELECTED`, `docs/QUEUE.md` Q232).
 - **`FUN_0066525c( slot )`** selects `slot + top` when `slot < visible` and `slot < count`; otherwise, with
   `list+0x48 & 0x100` clear, it returns and the old index stands, and with it set it selects nothing. This list's
@@ -1638,7 +1638,7 @@ game's two.
 
 **OpenTPW** (Q356): `UiList.PicksFirstRow` builds the add's pick, the top row selected as the first row goes in and its
 index posted; `TakePosted` hands the row standing at that index to `SelectionChanged` when the screen's `Update` calls
-it. The hire and all-items lists set it; the other lists count the pick (`LIST_FIRST_ROW_SELECTED`, Q232). The picked wage stays in
+it. The hire, all-items and all-staff (Q382) lists set it; the other lists count the pick (`LIST_FIRST_ROW_SELECTED`, Q232). The picked wage stays in
 Staff costs until the next pick. On the same file (`q356/run-fix2`) the opening logged `Hire list: added 7,11, row 11
 picked` and `Hire screen: candidate 11 grade 3, skill bar 614 of 1024, staff costs 502`, the bar 0.606 with Chris
 Battson's row highlighted, and the mechanics' tab `added 3,8,10, row 8 picked`, candidate 8 grade 2, 409, staff costs
@@ -1887,8 +1887,7 @@ Measured in the original under Proton (`q381/orig/a`, `orig/a-rows.png`), given 
 the three cleaners of the pool hired in falling name order (`q381/run-fix2/q381-fix.TPWS`; the four walking, `mState`
 1): the cleaners' tab opened Chris Battson, Duke Mighten, Paul Brooke, Rajan Tande; Monthly Wage, Rajan at $ 45 and the
 three at $ 63 in name order; again, those three as they stood and Rajan last; Current Status, the three Idle as they
-stood and Duke, Patrolling, last; Escape and S again, the same. Its list highlights row 0 throughout (the add's pick,
-Q232), where this game's all-staff list picks no first row (filed).
+stood and Duke, Patrolling, last; Escape and S again, the same. Its list highlights row 0 throughout (the add's pick: "The all-staff list's first row", below).
 
 **OpenTPW** (Q381): `ParkStaffScreen._sort`, handed to `UiList.SetSort` before the fill and kept by `SortChanged`;
 `TextColumns` the name and the status. Each fill and heading click logs `Staff list: kind K, sort W, N rows: ...`. On
@@ -1897,6 +1896,25 @@ Brooke, 43 Rajan Tande; `sort 3`: 43 Rajan 45, 45 63, 25 63, 44 63; `sort -3`: 4
 25, and `sort 2` again opened anew; no `LIST_HEADING_SORT_NOT_BUILT` (`q381/fix2-rows.png`). Main's build
 (`run-control2`): 45, 44, 43, 25 as hired (a hire goes in at the staff list's head) in all five frames, and
 `3x LIST_HEADING_SORT_NOT_BUILT`.
+
+#### The all-staff list's first row
+
+Read 2026-10-15 (Q382). The list's own add picks the top row as the first goes in ("The first row is picked as a list
+fills"), and the screen's handler `FUN_00495da0` has no `0x401` arm: its arms are `0x10` (the rewrite), 5, `0x100`,
+`0x14`, `0x15`, `0x400`, `0x402` and `0x406`, and its default `FUN_00488ba0` hands `0x401` on to `FUN_0065f66e`. So the
+pick is the highlight alone, as the all-items screen's is: an index, the row sorted first, kept at the top over a
+heading's re-sort, and the right click (`0x402`, the selected index, `0x00495feb`) on a point below every row goes to
+that row's member. Measured in the original (`q382/orig/a`, given `q381/run-fix2/q381-fix.TPWS`; `rectcolour.py`'s teal
+share of row k's name cell, virtual 300, 420 + 39k, 700, 452 + 39k): row 0 0.953 on the cleaners' tab, 0.956 on the
+mechanics' (one row), 0.953 back on the cleaners', 0.953 after Current Status and 0.947 after it again, Duke Mighten then
+first; rows 1 and 2 nought each time. A right click below the four rows shut the screen and moved the view.
+
+**OpenTPW** (Q382): `ParkStaffScreen` sets `UiList.PicksFirstRow`; nothing takes the posted pick, and the `Staff list:
+kind K, sort W, N rows: ...` line ends `; picked N`. On Q381's scene, paused (`q382/run-fix1`, the final game binary):
+picked 45 (sort 1), 43 (sort 3), 45 (sort -3), 45 (sort 2), 26 (the mechanics' tab), 45 (the cleaners' again); row 0's
+teal 0.941 to 0.956, rows 1 and 2 nought; the right click below the rows `Camera: to thing 45 on cell (47,21)`, the
+screen shut, neither `LIST_FIRST_ROW_SELECTED` nor `LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED` counted. Main's build
+(`run-control1`): no highlight, the screen left open, the miss counted once and the pick three times.
 
 #### The all-staff status words
 

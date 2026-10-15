@@ -260,6 +260,68 @@ public class ParkCameraToThingTests
 	}
 
 	/// <summary>
+	/// <b>Each all-staff tab picks its first row as it fills</b>, the row sorted first (<c>FUN_0066403b</c>'s
+	/// <c>FUN_0066525c( 0 )</c>; the handler <c>FUN_00495da0</c> has no <c>0x401</c> arm), keeps the index over a
+	/// heading's re-sort, and a right click that misses every row goes to that row's member.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no pick; the pick on the row added first; the pick dropped by a re-sort; the miss counted.</remarks>
+	[TestMethod]
+	public void EachStaffTabPicksItsFirstRowAndARightClickMissingEveryRowGoesThere()
+	{
+		var picks = Times( "LIST_FIRST_ROW_SELECTED" );
+		var misses = Times( "LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED" );
+		var sort = typeof( ParkStaffScreen ).GetField( "_sort", BindingFlags.Static | BindingFlags.NonPublic )!;
+		var kinds = typeof( ParkStaffScreen ).GetField( "_lastKind", BindingFlags.Static | BindingFlags.NonPublic )!;
+		var lastKind = kinds.GetValue( null );
+
+		try
+		{
+			// Two mechanics hired in falling name order: each goes in at the staff list's head, so Zed is added last.
+			Assert.AreNotEqual( 0, _people.Hire( new ParkStaffPool.Candidate( Id: 998, Kind: 1, Name: "Ada Test", Grade: 0, Costume: 0, Wage: 69 ), 47, 21 ) );
+			Assert.AreNotEqual( 0, _people.Hire( new ParkStaffPool.Candidate( Id: 999, Kind: 1, Name: "Zed Test", Grade: 0, Costume: 0, Wage: 69 ), 55, 30 ) );
+			kinds.SetValue( null, 1 );
+
+			var screen = new ParkStaffScreen( _stack );
+			_stack.Open( screen );
+			var list = (UiList)typeof( ParkStaffScreen ).GetField( "_list", Private )!.GetValue( screen )!;
+			var show = typeof( ParkStaffScreen ).GetMethod( "Show", Private )!;
+
+			Assert.IsTrue( list.Rows.Count >= 2, "two mechanics at least" );
+			Assert.AreEqual( "Ada Test", list.Rows[0].Name, "by name rising" );
+			Assert.AreEqual( list.Rows[0].Id, list.Selected, "the row sorted first, not the one added first" );
+
+			for ( var kind = 0; kind < 5; ++kind )
+			{
+				show.Invoke( screen, [kind] );
+				Assert.AreEqual( list.Rows.Count > 0 ? list.Rows[0].Id : -1, list.Selected, $"tab {kind}: the row sorted first" );
+			}
+
+			show.Invoke( screen, [1] );
+
+			// The name again, falling: Zed goes to the top, and the index kept names him.
+			((UiButton)list.Children.Single( child => child.Id == 0x10 )).Clicked!();
+			Assert.AreEqual( "Zed Test", list.Rows[0].Name );
+			Assert.AreEqual( list.Rows[0].Id, list.Selected, "the index kept: the new top row" );
+
+			Assert.AreEqual( picks, Times( "LIST_FIRST_ROW_SELECTED" ), "no tab counts the pick" );
+
+			var zed = _people.Staff.Single( each => each.ThingId == list.Rows[0].Id );
+			var below = RowMiddle( list, list.Rows.Count + 1 );
+			list.RightClickedAt( below.X, below.Y );
+
+			Assert.AreEqual( Corner( zed.Navigator.Position.Cell ), ParkOrbitCameraMode.PointOfInterest, "the miss goes to the picked row's member" );
+			Assert.IsFalse( _stack.Windows.Contains( screen ) );
+			Assert.AreEqual( misses, Times( "LIST_RIGHT_CLICK_FIRST_ROW_NOT_SELECTED" ), "not counted" );
+		}
+		finally
+		{
+			sort.SetValue( null, 1 );
+			kinds.SetValue( null, lastKind );
+			ParkOrbitCameraMode.PointOfInterest = Start;
+		}
+	}
+
+	/// <summary>
 	/// The all-items lists: a ride's row goes to the ride, and so does a miscellaneous row to its object. The
 	/// miscellaneous tab holds a row a placed object, by name, each with its item's standing count (the adder
 	/// <c>0x004941e0</c>), sorted on the name as the tab's word <c>[0x00750d68]</c> starts: the stock park's eight.
@@ -394,8 +456,8 @@ public class ParkCameraToThingTests
 			Hover( items, ((Dictionary<int, UiList>)typeof( ParkItemsScreen ).GetField( "_lists", Private )!.GetValue( items )!)[2],
 				"misc", id => Corner( ParkOrbitCameraMode.CellOfThing( id, null, _state )!.Value ), 50f );
 
-			// The first row and the last on the visitors and the staff; the last alone on the tab that picked its first.
-			Assert.AreEqual( 5, picks, "one log line a pick" );
+			// The first row and the last on the visitors; the last alone on the staff and the tab, which picked their first.
+			Assert.AreEqual( 4, picks, "one log line a pick" );
 		}
 		finally
 		{

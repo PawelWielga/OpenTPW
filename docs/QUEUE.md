@@ -44,13 +44,15 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q382. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q383. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q381 (`hud.md`, "The all-staff list's sort"): the list sorts. **Seen beside the original's**: its all-staff
-  list highlights row 0 as it fills and after every sort, where this game's picks no first row (counted,
-  `LIST_FIRST_ROW_SELECTED`). In no game run: the skill or the happiness heading clicked, a member hired or gone with
-  the screen open, a status changed by the rewrite after a sort (tested only in the original's frames, where none
+  From Q382 (`hud.md`, "The all-staff list's first row"): the list picks its first row. The original's right click
+  below the rows shut the screen and moved the view, onto which member is not read (no reader of its camera). In no
+  game run: a member hired or gone with the screen open (where the index then stands), Full Simulation (not asked:
+  the screen is either mode's), the other three themes.
+  From Q381 (`hud.md`, "The all-staff list's sort"): the list sorts; its first-row pick is Q382's. In no game run: the
+  skill or the happiness heading clicked, a member hired or gone with the screen open, a status changed by the rewrite after a sort (tested only in the original's frames, where none
   changed), Full Simulation (not asked: the screen is either mode's), the other three themes.
   From Q380 (`hud.md`, "The all-staff status words"; `saves.md`, "What a made record leaves at nought"): a hire carries
   the whole map. A record with no area, nought and nought (a test's, or a file this game wrote before Q380), is still

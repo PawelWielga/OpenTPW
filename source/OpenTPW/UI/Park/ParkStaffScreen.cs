@@ -145,8 +145,13 @@ internal sealed class ParkStaffScreen : UiWindow
 			// as numbers.
 			TextColumns = [true, true],
 
-			// The tree's list record carries flag 0x80 (0x00750e5e): the row under the moving pointer is picked. The
-			// screen's handler FUN_00495da0 has no 0x401 arm, so the pick is the highlight alone.
+			// The add picks the top row as the first goes in (FUN_0066403b), so each fill highlights the row sorted first,
+			// and a heading's re-sort keeps the index. The screen's handler FUN_00495da0 has no 0x401 arm (its default
+			// FUN_00488ba0 hands it to FUN_0065f66e): nothing takes the pick, and it is the highlight alone.
+			PicksFirstRow = true,
+
+			// The tree's list record carries flag 0x80 (0x00750e5e): the row under the moving pointer is picked, the
+			// highlight alone as the add's pick is.
 			SelectsUnderPointer = true,
 
 			// The stream's own op 0xb record. Columns 2, 3 and 4 right-aligned, nought and one from the left; the
@@ -321,7 +326,7 @@ internal sealed class ParkStaffScreen : UiWindow
 		LogOrder();
 	}
 
-	private void LogOrder() => Log.Info( $"Staff list: kind {_kind}, {_list.Census()}" );
+	private void LogOrder() => Log.Info( $"Staff list: kind {_kind}, {_list.Census()}; picked {_list.Selected}" );
 
 	/// <summary>The status words' table, the one the boot loads as <c>mUIStaffStates</c> (table <c>0x3ed</c>).</summary>
 	internal const string StatusTable = "Language/English/STAFFSTATES.str";
