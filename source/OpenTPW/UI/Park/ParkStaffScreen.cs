@@ -296,11 +296,24 @@ internal sealed class ParkStaffScreen : UiWindow
 
 		_kindHappiness.Units = Scaled( people.Staff
 			.Where( member => ParkStaffPool.KindFor( member.Model ) == _kind ) );
+	}
 
-		// The status column shows the activity's own name rather than the game's word for it: the
-		// original letters that column from a table this project has not found, and an English enum
-		// name is a stand-in for it.
-		Unimplemented.Report( "STAFF_STATUS_TEXT" );
+	/// <summary>The status words' table, the one the boot loads as <c>mUIStaffStates</c> (table <c>0x3ed</c>).</summary>
+	internal const string StatusTable = "Language/English/STAFFSTATES.str";
+
+	private static StringFile? _statusWords;
+
+	/// <summary>
+	/// A member's status as the row adder letters it: row <see cref="Staff.StatusRow"/> of <c>STAFFSTATES.str</c>, read
+	/// from <c>[0x0078baa4]</c> by <c>FUN_006ace60</c>, which answers nothing for a row past the table's end.
+	/// </summary>
+	internal static string StatusOf( Staff member )
+	{
+		_statusWords ??= new StringFile( StatusTable );
+
+		var row = member.StatusRow;
+
+		return row < _statusWords.Entries.Length ? _statusWords[row] : string.Empty;
 	}
 
 	/// <summary>
@@ -314,7 +327,7 @@ internal sealed class ParkStaffScreen : UiWindow
 
 		return new UiList.Row( member.ThingId, name, 0, Values:
 		[
-			$"{member.Activity}",
+			StatusOf( member ),
 			ParkItemsScreen.Money( numbers[2] ),
 			"",
 			""
@@ -338,7 +351,7 @@ internal sealed class ParkStaffScreen : UiWindow
 
 	/// <summary>A row for the log: id, name, status, wage, skill bar, happiness bar.</summary>
 	private static string Census( UiList.Row row )
-		=> $"{row.Id} {row.Name}: {row.Values![0]} {row.Numbers![2]} {row.Numbers[3]} {row.Numbers[4]}";
+		=> $"{row.Id} {row.Name}: \"{row.Values![0]}\" {row.Numbers![2]} {row.Numbers[3]} {row.Numbers[4]}";
 
 	/// <summary>
 	/// Every two seconds (timer <c>0x80083</c>, armed by the opener), each row's status, skill and happiness rewritten

@@ -750,6 +750,13 @@ GH=766` there, or the pointer is off):
   click and each row's picture by those at the last two-second rewrite before the frame: the rewrite changes a row's
   value in place and moves nothing, so a thought that changed after the click stands out of order (`q373/orig/b`). The
   "?" heading is the 1024 x 768 point (711, 128).
+- **A member of staff held in a state, in both games** (Q379): write the state into a copy of the file
+  (`parkfile.thing_set( src, dst, thing, 483, '<i', state )`, `q379/mkscene.py`), load it, and in the original hold
+  `+0x19c` with `thingpoke.py PID 60 <type> <thing>:0x19c:I=<state>`, one call a kind (type 5 handyman, 4 mechanic, 6
+  entertainer, 7 guard, 8 researcher). Three traps, each a run: a strike (4, 5) ends at once unless the staff HQ's flag
+  for the kind is set (thing 1, `+22 + 12 x kind + 4`); **state 2 or 3 with no rest area faults the original**
+  (`FUN_00505fe0`, `FUN_00506d10` read thing `[+0x208]`): use 3 with the rest written (`+499`) and held (`+0x1fc:f`) at 10
+  so the rest never ends; and this game's sweeps before `load()`'s pause end an idle or a job whose stamp is long past.
 
 ## The original under Proton
 

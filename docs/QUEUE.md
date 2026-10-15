@@ -44,9 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q379. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q380. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q379 (`hud.md`, "The all-staff status words"): **a member hired here carries no patrol area, nought and nought,
+  where the original's constructor `FUN_00504b90` writes cells 1 to `0x4000`**: the status takes it as the whole map (a
+  deviation said at `Staff.PatrolsWholeMap`), and a file written here holds the nought the original's `FUN_00506ed0`
+  puts outside every cell. A member of state 2 or 3 with no rest area faults the original (`FUN_00505fe0`,
+  `FUN_00506d10` read thing `[+0x208]`), and this game takes it on (not looked into). In no game run: state 6, a kind's
+  own job states but `0xe` and `0xf`, a status changed under the open screen's rewrite (tested only), Full Simulation
+  (not asked: the screen is either mode's), the other three themes.
   From Q378 (`hud.md`, "The rows' font and height"): the hire and buy rows are the factories'. Seen beside the
   original's and filed already: the "$ " before a price and a wage and the empty box of a row with no state (Q158's
   "From Q238", "From Q130e"), the buy list's first row picked (Q232). In no game run: a hire or buy tab past its visible rows, this game at
@@ -80,8 +87,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   wraps "Monthly Wage". Seen beside the original in `q370/side-by-side.png`, not read and not counted: the misc tab's
   row an object is built (Q374); the visitors list has no scrollbar (the original's has); its number, cash and
   happiness cells are built (Q371).
-  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height is built (Q377); the status's own words (`STAFF_STATUS_TEXT`: the table `[0x0078baa4]`, read by the row adder
-  `0x00496320`), the list's sort word (`FUN_006659af( [0x0075118c], 0 )`). Five other callers hand the stat bars'
+  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height is built (Q377); the status's own words are Q379's; the list's sort word (`FUN_006659af( [0x0075118c], 0 )`). Five other callers hand the stat bars'
   skin `happygrad.wct` (`FUN_004939d0`, `FUN_004afc10`, `FUN_004b1040`, `FUN_004b53c0`, `FUN_004b6c20`): which
   screens' bars these are and what this game draws there is not looked at. The all-staff meters' every-member value is
   this game's mean `x 1024 / 100` where the opener `__ftol`s `FUN_004c7cc0`'s answer with no scaling in the decompiler's
@@ -100,7 +106,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   `VISITOR_LOCATOR`, `POSTCARD_SHORTCUT`). W and D still scroll the orbit camera, the original's camera table binding the
   arrows and the keypad (`ParkOrbitCameraMode.ScrollAxes`; Alexah kept them, 2026-10-14). In no game run: L in Full
   Simulation (counted there), a shortcut under an object window, Ctrl+P in the original.
-  From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): A row's status is the activity's English name (`STAFF_STATUS_TEXT`); its skill and happiness are bars (Q369);
+  From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): A row's status is the game's own word (Q379); its skill and happiness are bars (Q369);
   the items columns are Q367's. What the original does to these two lists as a member or an object comes or
   goes with the screen open is not read (allpeeps' `0x1b`/`0x1c`). In no game run: the sideshows' tab rewritten, the
   timer held under a message box, Full Simulation (not asked: the screens are either mode's).

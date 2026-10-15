@@ -110,7 +110,7 @@ public class ParkListScreenRewriteTests
 		var openedNumbers = list.Rows[row].Numbers!.ToArray();
 		var (kindAtOpening, allAtOpening) = (kindMeter.Units, allMeter.Units);
 
-		var activity = System.Enum.GetValues<StaffActivity>().First( each => each != member.Activity );
+		var activity = member.Activity == StaffActivity.Held ? StaffActivity.Idle : StaffActivity.Held;
 
 		member.PayGrade = grade;
 		member.Happiness = member.Happiness < 50 ? 90 : 10;
@@ -127,8 +127,8 @@ public class ParkListScreenRewriteTests
 		screen.Update();
 		var now = list.Rows[row].Values!;
 		var numbers = list.Rows[row].Numbers!;
-		Assert.AreNotEqual( $"{activity}", opened[0] );
-		Assert.AreEqual( $"{activity}", now[0], "the status rewritten" );
+		Assert.AreNotEqual( ParkStaffScreen.StatusOf( member ), opened[0] );
+		Assert.AreEqual( ParkStaffScreen.StatusOf( member ), now[0], "the status rewritten" );
 		Assert.AreEqual( opened[1], now[1], "the wage as the fill wrote it" );
 		Assert.AreEqual( openedNumbers[2], numbers[2], "and its number" );
 		Assert.AreEqual( (ParkStaffScreen.SkillOf( member ) << 10) / 100, numbers[3], "the skill's bar rewritten" );
@@ -213,6 +213,69 @@ public class ParkListScreenRewriteTests
 			Assert.AreEqual( ParkObjectWindow.UiStatBar.HappyGrad, meter.Skin, name );
 			Assert.IsTrue( meter.Known, $"{name} drawn at any value" );
 		}
+	}
+
+	/// <summary>
+	/// <b>The all-staff list letters each member's status from <c>STAFFSTATES.str</c> as the row adder picks its row</b>
+	/// (<c>FUN_005064f0</c>): Idle, a walk Patrolling, or Idle where the patrol area is the whole map (<c>FUN_00506eb0</c>,
+	/// cells 1 to <c>0x4000</c>; or none, this game's hire's), a rest and the way to it Resting, a strike and the way to it On
+	/// strike, carried Picked up, anything else Working (<c>docs/exe/hud.md</c>, "The all-staff status words").
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the activity's own name; a walk always Patrolling; the whole map's corners not both tested; no area
+	/// read as an area; the way to a rest or a strike Working; Waiting not Working; the rows shifted by one.
+	/// </remarks>
+	[TestMethod]
+	public void TheStaffListLettersEachStatusFromTheGamesOwnTableAsTheOriginalsAdder()
+	{
+		CollectionAssert.AreEqual( new[] { "Idle", "Patrolling", "Working", "Resting", "On strike", "Picked up" },
+			new StringFile( ParkStaffScreen.StatusTable ).Entries, "the table's six rows" );
+
+		var patrolling = people.Staff.First( each => each.HasPatrolArea && !each.PatrolsWholeMap );
+		var anywhere = people.Staff.First( each => each.PatrolBottomLeft == 1 && each.PatrolTopRight == 0x4000 );
+
+		void Set( Staff member, StaffActivity activity ) => typeof( Staff ).GetProperty( nameof( Staff.Activity ) )!.SetValue( member, activity );
+
+		void Patrol( Staff member, int from, int to )
+		{
+			typeof( Staff ).GetField( $"<{nameof( Staff.PatrolBottomLeft )}>k__BackingField", Private )!.SetValue( member, from );
+			typeof( Staff ).GetField( $"<{nameof( Staff.PatrolTopRight )}>k__BackingField", Private )!.SetValue( member, to );
+		}
+
+		var words = new Dictionary<StaffActivity, string>
+		{
+			[StaffActivity.Idle] = "Idle", [StaffActivity.Walking] = "Patrolling", [StaffActivity.GoingToRest] = "Resting",
+			[StaffActivity.Resting] = "Resting", [StaffActivity.GoingOnStrike] = "On strike", [StaffActivity.OnStrike] = "On strike",
+			[StaffActivity.Waiting] = "Working", [StaffActivity.Held] = "Picked up", [StaffActivity.GoingToLoo] = "Working",
+			[StaffActivity.Cleaning] = "Working", [StaffActivity.GoingToRide] = "Working", [StaffActivity.Repairing] = "Working",
+			[StaffActivity.Performing] = "Working", [StaffActivity.Researching] = "Working"
+		};
+
+		foreach ( var (activity, word) in words )
+		{
+			Set( patrolling, activity );
+			Assert.AreEqual( word, ParkStaffScreen.StatusOf( patrolling ), $"{activity}, a patrol area" );
+		}
+
+		Set( anywhere, StaffActivity.Walking );
+		Assert.AreEqual( "Idle", ParkStaffScreen.StatusOf( anywhere ), "a walk with cells 1 to 0x4000 for an area" );
+
+		Patrol( anywhere, 1, 0x3fff );
+		Assert.AreEqual( "Patrolling", ParkStaffScreen.StatusOf( anywhere ), "short of the last cell" );
+
+		Patrol( anywhere, 2, 0x4000 );
+		Assert.AreEqual( "Patrolling", ParkStaffScreen.StatusOf( anywhere ), "short of the first cell" );
+
+		Patrol( anywhere, 0, 0 );
+		Assert.AreEqual( "Idle", ParkStaffScreen.StatusOf( anywhere ), "no area, as a hire here" );
+
+		Set( anywhere, StaffActivity.Held );
+		var kind = ParkStaffPool.KindFor( anywhere.Model );
+		typeof( ParkStaffScreen ).GetField( "_lastKind", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, kind );
+
+		var list = Field<UiList>( new ParkStaffScreen( stack ), "_list" );
+		Assert.AreEqual( "Picked up", list.Rows.First( each => each.Id == anywhere.ThingId ).Values![0], "the row's status cell" );
+		Assert.IsTrue( lines.Any( line => line.Contains( $"row {anywhere.ThingId} " ) && line.Contains( ": \"Picked up\" " ) ), "and its log line" );
 	}
 
 	/// <summary>

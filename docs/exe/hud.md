@@ -1870,10 +1870,40 @@ kind K, row <thing> <name>: <status> <wage> <skill bar> <happiness bar>`, and th
 880`, `26 ... 92 296 880`, `27 ... 36 194 880`, `28 ... 105 614 901`, `30 ... 125 430 921`; the frames' skill bars 0.92,
 0.292, 0.195, 0.602, 0.425 and happiness bars 0.866, 0.866, 0.866, 0.884, 0.902 (`barsplit.py`); the meters 0.846 and
 0.863 with a grey rest; "$ 81" (`1-handymen.png`). Main's build (`run-control1`) lettered the grade and the happiness as
-numbers and filled its meters from the bottom. The headings are framed (Q370, "The list headings' frames"). **Not
-built**: the status's own words
-(`STAFF_STATUS_TEXT`: the adder reads them from the table `[0x0078baa4]` by `FUN_005064f0`'s state, a 1 read as 0 where
-`FUN_00506eb0` answers nought), and the list's sort word (`FUN_006659af( [0x0075118c], 0 )`).
+numbers and filled its meters from the bottom. The headings are framed (Q370, "The list headings' frames"); the
+status's words are Q379's (below). **Not built**: the list's sort word (`FUN_006659af( [0x0075118c], 0 )`).
+
+#### The all-staff status words
+
+Read 2026-10-15 (Q379). The row adder `0x00496320` letters the status cell with a row of the table `[0x0078baa4]`
+through `FUN_006ace60` (nothing for a row past the table's end or not a string) and `FUN_00485ac0`. That word is
+`0x0078b530 + 0x574`: the boot's `FUN_00419710` (called from `WinMain_Main` `0x0045ab6a` with `ECX` `0x0078b530`)
+loads table `0x3ed` into `+0x574` and names it `mUIStaffStates` / `STAFFSTATES::TableID` in its failure message
+(`0x00419a57`; UITEXT, table `0x3ee`, at `+0x564` is `[0x0078ba94]`, the same `0x10` apart). The table is
+`Language/English/STAFFSTATES.str`: 0 Idle, 1 Patrolling, 2 Working, 3 Resting, 4 On strike, 5 Picked up.
+
+The row is `FUN_005064f0` on `mState` (`+0x19c`): 0 to 0, 1 to 1, 2 and 3 to 3, 4 and 5 to 4, 7 to 5, and every
+other state (6, and each kind's own jobs from 8 up) to 2. A 1 is then read as 0 where `FUN_00506eb0` answers nought
+(`0x0049636b`): the patrol area's two words `+0x20a` and `+0x20c` are 1 and `0x4000`, cells 1 to `0x4000`, the whole
+map, which the constructor `FUN_00504b90` writes and the patrol button's clear (`FUN_004b5b50` with nought,
+`FUN_00506e90`) writes back. So a member walking with no patrol area of their own reads Idle. The two-second rewrite
+(`FUN_00495da0`, `0x00495e41`) reads the same table.
+
+Measured in the original under Proton (`q379/orig/bA`, `cB`): `q369/skill.TPWS` with the five members' `mState`
+written (`q379/mkscene.py`) and each held by `thingpoke.py` on `+0x19c`, the staff HQ's strike flag set for the kind on
+strike and a resting member's rest held at 10. Scene A (3, 7, 5, 1, 1; the researcher's area 1 to 16384) letters
+Resting, Picked up, On strike, Patrolling, Idle; scene B (4, 0, `0xe`, 3, `0xf`) On strike, Idle, Working, Resting,
+Working. A member of state 2 or 3 with no rest area faults the original (`0x00505fe0`'s and `FUN_00506d10`'s read of
+thing `[+0x208]`), so state 2 was not photographed there.
+
+**OpenTPW** (Q379): `Staff.StatusRow` and `PatrolsWholeMap`, `ParkStaffScreen.StatusOf`; a member with no area at all
+(this game's hire, `ParkPeople.Hire`) is taken as the whole map, where the original's constructor writes it. The fill's
+log line quotes the word: `Staff list: kind K, row <thing> <name>: "<status>" <wage> <skill bar> <happiness bar>`. On
+the same scenes, paused at the load (`q379/run-fixA4`, `run-fixB4`, the final game binary): A `"Resting"`, `"Picked
+up"`, `"On strike"`, `"Patrolling"`, `"Idle"` with the census Resting, Held, OnStrike, Walking, Walking; B `"On
+strike"`, `"Patrolling"`, `"Idle"`, `"Resting"`, `"Working"` with GoingOnStrike, Walking, Idle, Resting, Researching (B's
+mechanic and entertainer change state in the sweeps before the pause). Main's build (`run-controlA2`) lettered the
+activities' names and counted `STAFF_STATUS_TEXT` five times.
 
 **The skill bar `0x2482`** ((722, 536)-(957, 575), type 9) is built at nought (`0x0049c335`) and written in one place,
 message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<

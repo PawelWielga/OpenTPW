@@ -301,6 +301,29 @@ public sealed class Staff
 	}
 
 	/// <summary>
+	/// Whether the patrol area is the whole map, as <c>FUN_00506eb0</c> asks: cells 1 to <c>0x4000</c>, the original's
+	/// constructor's (<c>FUN_00504b90</c>) and its patrol button's clear (<c>FUN_00506e90</c>). No area at all, nought and
+	/// nought, is this game's hire's (<see cref="ParkPeople.Hire"/>) where the original's constructor writes the whole
+	/// map, so it is taken as the whole map too: a deviation.
+	/// </summary>
+	public bool PatrolsWholeMap => !HasPatrolArea || (PatrolBottomLeft == 1 && PatrolTopRight == 0x4000);
+
+	/// <summary>
+	/// The row of <c>STAFFSTATES.str</c> (Idle, Patrolling, Working, Resting, On strike, Picked up) that letters this
+	/// member's status in the all-staff list: <c>FUN_005064f0</c> on <c>mState</c>, a walk read as Idle when the patrol
+	/// area is the whole map (the row adder <c>0x0049636b</c>; <c>docs/exe/hud.md</c>, "The all-staff status words").
+	/// </summary>
+	public int StatusRow => Activity switch
+	{
+		StaffActivity.Idle => 0,
+		StaffActivity.Walking => PatrolsWholeMap ? 0 : 1,
+		StaffActivity.GoingToRest or StaffActivity.Resting => 3,
+		StaffActivity.GoingOnStrike or StaffActivity.OnStrike => 4,
+		StaffActivity.Held => 5,
+		_ => 2
+	};
+
+	/// <summary>
 	/// Whether a staff member in this state should be given a turn of <see cref="PeepWalk"/>.
 	///
 	/// <para>

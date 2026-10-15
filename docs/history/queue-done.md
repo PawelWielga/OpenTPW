@@ -6966,6 +6966,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   units apart; this game at 1280 x 720 logged 39 and 39 in font 7, 12 and 11 visible, its lettering 38.4 units apart
   and 1.11 times main's in height (`q378/run-fix1`, 4 of 4; control 3 of 3 after a miss of my measure).
   Mutations 8 of 8.
+- [x] **Q379. The all-staff list letters each status in the game's own words, as the original's** (a piece of the old
+  Q379, split by Claude; the rest is Q380). The row adder reads `STAFFSTATES.str` (`[0x0078baa4]`, the boot's table
+  `0x3ed`) by `FUN_005064f0`'s row, a walk read as Idle where the patrol area is the whole map (`FUN_00506eb0`, cells 1
+  to `0x4000`). The original under Proton, each member's state held, lettered Resting, Picked up, On strike,
+  Patrolling, Idle and On strike, Idle, Working, Resting, Working (`q379/orig/bA`, `cB`); this game the same on the
+  same scenes, paused (`q379/run-fixA4`, `run-fixB4`, 5 of 5; control 2 of 2 after a miss of my prediction).
+  Mutations 13 of 13.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
