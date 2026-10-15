@@ -44,9 +44,14 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q381. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q382. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q381 (`hud.md`, "The all-staff list's sort"): the list sorts. **Seen beside the original's**: its all-staff
+  list highlights row 0 as it fills and after every sort, where this game's picks no first row (counted,
+  `LIST_FIRST_ROW_SELECTED`). In no game run: the skill or the happiness heading clicked, a member hired or gone with
+  the screen open, a status changed by the rewrite after a sort (tested only in the original's frames, where none
+  changed), Full Simulation (not asked: the screen is either mode's), the other three themes.
   From Q380 (`hud.md`, "The all-staff status words"; `saves.md`, "What a made record leaves at nought"): a hire carries
   the whole map. A record with no area, nought and nought (a test's, or a file this game wrote before Q380), is still
   taken as the whole map here where the original's `FUN_00506ed0` puts it outside every cell (a deviation said at
@@ -89,7 +94,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   wraps "Monthly Wage". Seen beside the original in `q370/side-by-side.png`, not read and not counted: the misc tab's
   row an object is built (Q374); the visitors list has no scrollbar (the original's has); its number, cash and
   happiness cells are built (Q371).
-  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height is built (Q377); the status's own words are Q379's; the list's sort word (`FUN_006659af( [0x0075118c], 0 )`). Five other callers hand the stat bars'
+  From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height is built (Q377); the status's own words are Q379's; the list's sort is Q381's. Five other callers hand the stat bars'
   skin `happygrad.wct` (`FUN_004939d0`, `FUN_004afc10`, `FUN_004b1040`, `FUN_004b53c0`, `FUN_004b6c20`): which
   screens' bars these are and what this game draws there is not looked at. The all-staff meters' every-member value is
   this game's mean `x 1024 / 100` where the opener `__ftol`s `FUN_004c7cc0`'s answer with no scaling in the decompiler's

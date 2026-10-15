@@ -1445,9 +1445,9 @@ the two land rows are sorted in with the rest (`FUN_004aaf70` adds them through 
 
 **OpenTPW** (Q130e): `UiList` keeps the column and direction (`SetSort`, `SortWord`), `Add` is the sorted insert
 whenever a sort is set, `HeadingClicked` is `FUN_00665a44` and `Sort` `FUN_006628f4`; a heading is a button
-(`AddHeading`). The hire, buy and visitors screens each keep their word in a static for the session, the all-items
-screen one a tab (Q374). The all-staff list is given no sort, stands as added, and counts a heading's click
-(`LIST_HEADING_SORT_NOT_BUILT`).
+(`AddHeading`). The hire, buy, visitors and all-staff screens each keep their word in a static for the session, the
+all-items screen one a tab (Q374). A list built with headings and no sort, which only a test builds, counts a heading's
+click (`LIST_HEADING_SORT_NOT_BUILT`).
 Time In Park sorts on its hours (Q372), the "?" column on its thought's part (Q373). The buy list's rows are
 handed over in name order, where the original walks its catalogue (`FUN_00412e60`): that shows only among rows equal
 on the sorted column.
@@ -1871,7 +1871,32 @@ kind K, row <thing> <name>: <status> <wage> <skill bar> <happiness bar>`, and th
 0.292, 0.195, 0.602, 0.425 and happiness bars 0.866, 0.866, 0.866, 0.884, 0.902 (`barsplit.py`); the meters 0.846 and
 0.863 with a grey rest; "$ 81" (`1-handymen.png`). Main's build (`run-control1`) lettered the grade and the happiness as
 numbers and filled its meters from the bottom. The headings are framed (Q370, "The list headings' frames"); the
-status's words are Q379's (below). **Not built**: the list's sort word (`FUN_006659af( [0x0075118c], 0 )`).
+status's words are Q379's (below); the list's sort is Q381's ("The all-staff list's sort", below).
+
+#### The all-staff list's sort
+
+Read 2026-10-15 (Q381). The opener `FUN_00496620` sets the five columns' types (`FUN_006636b2`, `0x004966a9` to
+`0x004966d5`): the name and the status 0, text; the wage, the skill and the happiness 1, numbers. After the handler
+(`0x004966f6`) it hands the screen's own word `[0x0075118c]` to `FUN_006659af( word, 0 )` while the list is still
+empty (`0x004966fb`), and the handler `FUN_00495da0` stores message `0x406`'s value there (`0x00495fe0`). The word is 1
+in the file, the name rising, and is one word for all five tabs: each tab's fill goes through the sorted insert under it
+("A list's order", above). The status sorts on the word the cell letters, the skill and the happiness on their bars'
+units, the wage on the wage.
+
+Measured in the original under Proton (`q381/orig/a`, `orig/a-rows.png`), given this game's file of the stock park with
+the three cleaners of the pool hired in falling name order (`q381/run-fix2/q381-fix.TPWS`; the four walking, `mState`
+1): the cleaners' tab opened Chris Battson, Duke Mighten, Paul Brooke, Rajan Tande; Monthly Wage, Rajan at $ 45 and the
+three at $ 63 in name order; again, those three as they stood and Rajan last; Current Status, the three Idle as they
+stood and Duke, Patrolling, last; Escape and S again, the same. Its list highlights row 0 throughout (the add's pick,
+Q232), where this game's all-staff list picks no first row (filed).
+
+**OpenTPW** (Q381): `ParkStaffScreen._sort`, handed to `UiList.SetSort` before the fill and kept by `SortChanged`;
+`TextColumns` the name and the status. Each fill and heading click logs `Staff list: kind K, sort W, N rows: ...`. On
+the same scene, paused (`q381/run-fix2`, the final game binary): `sort 1`: 45 Chris Battson, 25 Duke Mighten, 44 Paul
+Brooke, 43 Rajan Tande; `sort 3`: 43 Rajan 45, 45 63, 25 63, 44 63; `sort -3`: 45, 25, 44, 43; `sort 2`: 45, 44, 43,
+25, and `sort 2` again opened anew; no `LIST_HEADING_SORT_NOT_BUILT` (`q381/fix2-rows.png`). Main's build
+(`run-control2`): 45, 44, 43, 25 as hired (a hire goes in at the staff list's head) in all five frames, and
+`3x LIST_HEADING_SORT_NOT_BUILT`.
 
 #### The all-staff status words
 
@@ -2097,8 +2122,7 @@ game binary): `Staff list: headings !cbut 8 119 "Name", ... !cbut 8 123 "Happine
 the four tabs' rows as the table; all 29 headings teal 0.854 to 0.99 with yellow lettering and no white
 (`q370/side-by-side.png`). Main's build (`run-control1`) lettered them white on black. **Not built**: the original's
 lettering is larger and wraps "Monthly Wage" where this game's fits one line of its smaller font (the park screens'
-lettering, a deviation Q352 filed); the headings still sort nothing on the all-staff list
-(`LIST_HEADING_SORT_NOT_BUILT`); the all-items ones sort (Q374).
+lettering, a deviation Q352 filed); the all-items headings sort (Q374), and the all-staff ones (Q381).
 
 ### The node name is not the file name — measured
 

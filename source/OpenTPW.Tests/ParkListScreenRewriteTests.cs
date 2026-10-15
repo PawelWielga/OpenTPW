@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using OpenTPW.UI;
 using System.Collections.Generic;
 using System.IO;
@@ -154,6 +155,91 @@ public class ParkListScreenRewriteTests
 		Time.PinWall( 9000 );
 		screen.Update();
 		Assert.AreEqual( 2, Rewrites( "Staff list" ), "9000 ms: two seconds from the last, not from the tab" );
+	}
+
+	/// <summary>
+	/// <b>The all-staff list keeps one sort for the session, the name rising at first</b> (<c>[0x0075118c]</c>, 1, handed
+	/// to <c>FUN_006659af</c> by the opener <c>0x004966fb</c> and written on <c>0x406</c> at <c>0x00495fe0</c>): a kind's
+	/// rows stand in name order whatever order they were hired in, capitals before small letters; Monthly Wage clicked
+	/// sorts by wage rising with equal wages as they stood, again falling; Current Status sorts as text; and the screen
+	/// opened again, on another tab, keeps the word.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> no sort handed over; the word not kept; the status sorted as a number; the wage as text; the
+	/// sort started at another column.
+	/// </remarks>
+	[TestMethod]
+	public void TheStaffListSortsByNameThenByTheHeadingClickedAndKeepsItsSort()
+	{
+		var sort = typeof( ParkStaffScreen ).GetField( "_sort", BindingFlags.Static | BindingFlags.NonPublic )!;
+		var lastKind = typeof( ParkStaffScreen ).GetField( "_lastKind", BindingFlags.Static | BindingFlags.NonPublic )!;
+		var counted = Times( "LIST_HEADING_SORT_NOT_BUILT" );
+
+		try
+		{
+			Assert.AreEqual( 1, (int)sort.GetValue( null )! );
+
+			// Hired out of name order: "Zed", then "bea" (a small letter, after every capital), then "Abe".
+			foreach ( var (id, name, grade, x) in new[] { (997, "Zed Test", 0, 47), (998, "bea Test", 0, 50), (999, "Abe Test", 2, 55) } )
+				Assert.AreNotEqual( 0, people.Hire( new ParkStaffPool.Candidate( Id: id, Kind: 0, Name: name, Grade: grade, Costume: 0, Wage: 0 ), x, 30 ) );
+
+			lastKind.SetValue( null, 0 );
+			var screen = new ParkStaffScreen( stack );
+			var list = Field<UiList>( screen, "_list" );
+
+			string[] Names() => list.Rows.Select( row => row.Name ).ToArray();
+			UiButton Heading( int column ) => (UiButton)list.Children.Single( child => child.Id == 0x10 + column );
+
+			var names = Names();
+			Assert.AreEqual( 4, names.Length, "the stock handyman and three hires" );
+			CollectionAssert.AreEqual( names.OrderBy( name => name, StringComparer.Ordinal ).ToArray(), names, "by name rising" );
+			Assert.AreEqual( "Abe Test", names[0] );
+			Assert.AreEqual( "bea Test", names[^1], "a small letter after every capital" );
+
+			// OrderBy and OrderByDescending keep equal rows as they stood, as FUN_006628f4 does.
+			var byName = list.Rows.ToArray();
+
+			Heading( 2 ).Clicked!();
+			Assert.AreEqual( 3, (int)sort.GetValue( null )!, "the wage, rising: kept" );
+			var rising = byName.OrderBy( row => row.Numbers![2] ).Select( row => row.Name ).ToArray();
+			CollectionAssert.AreEqual( rising, Names(), "by wage rising, equal wages in name order" );
+			Assert.IsTrue( Names().ToList().IndexOf( "Zed Test" ) + 1 == Names().ToList().IndexOf( "bea Test" ), "the two of grade 0 side by side, Zed first" );
+			Assert.AreNotEqual( "Abe Test", Names()[0], "a dearer wage than grade 0's" );
+
+			Heading( 2 ).Clicked!();
+			Assert.AreEqual( -3, (int)sort.GetValue( null )! );
+			var falling = list.Rows.ToArray();
+			CollectionAssert.AreEqual( falling.OrderByDescending( row => row.Numbers![2] ).ToArray(), falling, "falling" );
+			Assert.IsTrue( Names().ToList().IndexOf( "Zed Test" ) + 1 == Names().ToList().IndexOf( "bea Test" ), "equal wages still as they stood" );
+
+			Heading( 1 ).Clicked!();
+			Assert.AreEqual( 2, (int)sort.GetValue( null )! );
+			var statuses = list.Rows.Select( row => row.Values![0] ).ToArray();
+			CollectionAssert.AreEqual( statuses.OrderBy( status => status, StringComparer.Ordinal ).ToArray(), statuses, "the status as text" );
+
+			Heading( 2 ).Clicked!();
+			Heading( 2 ).Clicked!();
+			lastKind.SetValue( null, 1 );
+			var again = Field<UiList>( new ParkStaffScreen( stack ), "_list" );
+			Assert.AreEqual( -3, again.SortWord, "kept by another opening, on another tab" );
+
+			// A mechanic of grade 2 is paid three digits, "$ 115", which as text would stand before "$ 92".
+			foreach ( var (id, name, grade, x) in new[] { (995, "Cy Test", 1, 47), (996, "Di Test", 2, 50) } )
+				Assert.AreNotEqual( 0, people.Hire( new ParkStaffPool.Candidate( Id: id, Kind: 1, Name: name, Grade: grade, Costume: 0, Wage: 0 ), x, 31 ) );
+
+			sort.SetValue( null, 3 );
+			var mechanics = Field<UiList>( new ParkStaffScreen( stack ), "_list" );
+			var paid = mechanics.Rows.Select( row => row.Numbers![2] ).ToArray();
+			Assert.IsTrue( paid.Any( wage => wage >= 100 ) && paid.Any( wage => wage < 100 ), "two and three digits" );
+			CollectionAssert.AreEqual( paid.Order().ToArray(), paid, "the wage sorted as a number" );
+
+			Assert.AreEqual( counted, Times( "LIST_HEADING_SORT_NOT_BUILT" ), "no click counted" );
+		}
+		finally
+		{
+			sort.SetValue( null, 1 );
+			lastKind.SetValue( null, 0 );
+		}
 	}
 
 	/// <summary>

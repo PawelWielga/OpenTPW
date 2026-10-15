@@ -6980,6 +6980,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`q380/run-fix2`, the final binary, 5 of 5; control `run-control1` 2 of 2): `patrol (0, 0)-(127, 127)`, the file's 1 16384, the hire
   on (49,22) thinking `0x16` under a "?". The original given each file (`q380/orig/afix`, `bfix`, `acontrol`): both hires Idle,
   where main's 0 and 0 lettered them Patrolling. Mutations 6 of 6. Tests 3127.
+- [x] **Q381. The all-staff list sorts by its headings, the name first, and keeps its sort, as the original's** (a piece
+  of the old Q381, split by Claude; the rest is Q382). `ParkStaffScreen` hands the list the screen's word
+  `[0x0075118c]` (1, `0x004966fb`) and keeps `0x406` in it (`0x00495fe0`); the name and the status sort as text. This
+  game, paused on the stock park with three cleaners hired in falling name order (`q381/run-fix2`, the final binary;
+  control `run-control2` 2 of 2): `sort 1` Chris, Duke, Paul, Rajan; Monthly Wage `sort 3` Rajan $ 45 then the three
+  at $ 63 in name order; again `-3`; Current Status `sort 2`, the three Idle then Duke; kept when opened again. The
+  original given the file (`q381/orig/a`): the same five orders. Mutations 6 of 6. Tests 3128.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

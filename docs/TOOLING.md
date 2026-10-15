@@ -528,7 +528,9 @@ GH=766` there, or the pointer is off):
   The hire screen: the gadget's Buy (113,590), then the buy screen's b_allstaff (958,317); the mechanics' tab (667,123).
   All staff and all items (Q365): the keys S and A (`xdotool keydown`/`keyup` on `:77`; they act on the release, from
   the park or over a screen); all staff's mechanics' tab (665,121), all items' shops' tab (786,123). All staff's five
-  tabs (Q369, `q369/orig/run.sh`): (605,121), (665,121), (724,121), (783,121), (843,121). A member's skill and
+  tabs (Q369, `q369/orig/run.sh`): (605,121), (665,121), (724,121), (783,121), (843,121). Its headings (Q381, `q381/orig/run.sh`): Name (252,180),
+  Current Status (432,180), Monthly Wage (558,180), reached straight down from (x,123); this game's are controls
+  `0x10` to `0x14`. To hire several of a kind here, read `candidates`: it letters handymen **"Cleaner"**. A member's skill and
   happiness in its memory: `thingwords.py` on `T:0x1e4:I` (grade), `T:0x1e8:B` (percentage), `T:0x1f8:f`
   (happiness), started after the load with its start stamped, since its times count from its own start. All items' four tabs (Q370, `q370/orig/run.sh`): rides (667,123), sideshows (726,123), shops
   (786,123), misc (845,123); V opens the visitors over a screen. All items' Name heading (Q374, `q374/orig/run.sh`):

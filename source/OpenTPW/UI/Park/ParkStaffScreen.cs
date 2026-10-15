@@ -91,6 +91,13 @@ internal sealed class ParkStaffScreen : UiWindow
 	/// <summary>Which tab the screen was last left on - the original keeps the same in a global.</summary>
 	private static int _lastKind;
 
+	/// <summary>
+	/// The list's sort, kept for the session and shared by the five tabs: the column + 1, negated when descending - the
+	/// original's <c>[0x0075118c]</c>, which starts at 1, the name ascending, and which the handler's <c>0x406</c> writes
+	/// (<c>0x00495fe0</c>).
+	/// </summary>
+	private static int _sort = 1;
+
 	public ParkStaffScreen( WindowStack stack ) : base( stack )
 	{
 		// Built onto the park's own layer (0x00496643) - see UiWindow.ParkScreen.
@@ -131,6 +138,13 @@ internal sealed class ParkStaffScreen : UiWindow
 			// (0x0049602f).
 			RowRightClicked = GoTo,
 
+			// The screen's handler keeps the list's 0x406 (0x00495fe0).
+			SortChanged = word => _sort = word,
+
+			// FUN_006636b2 from the opener: the name and the status sorted as text, the wage, the skill and the happiness
+			// as numbers.
+			TextColumns = [true, true],
+
 			// The tree's list record carries flag 0x80 (0x00750e5e): the row under the moving pointer is picked. The
 			// screen's handler FUN_00495da0 has no 0x401 arm, so the pick is the highlight alone.
 			SelectsUnderPointer = true,
@@ -146,9 +160,15 @@ internal sealed class ParkStaffScreen : UiWindow
 			BarInset = MeterInset
 		} );
 
+		// Handed over while the list is still empty, so it sorts nothing (0x004966fb).
+		_list.SetSort( _sort );
+
 		// Framed by FUN_00486660 with help rows 0x77 to 0x7b (0x00496713).
 		for ( var column = 0; column < Headings.Length; ++column )
-			_list.AddFramedHeading( column, Headings[column], Localization.Text( 101 + column ), 0x77 + column );
+		{
+			_list.AddFramedHeading( column, Headings[column], Localization.Text( 101 + column ), 0x77 + column ).Clicked
+				+= LogOrder;
+		}
 
 		Log.Info( $"Staff list: headings {_list.HeadingsCensus()}" );
 		Log.Info( $"Staff list: {_list.RowsCensus()}" );
@@ -267,7 +287,8 @@ internal sealed class ParkStaffScreen : UiWindow
 
 	/// <summary>
 	/// Fills the list with everyone of one kind (the opener's or a tab's <c>FUN_00481bc0</c> with the row adder
-	/// <c>0x00496320</c>), and sets the kind's meter, as the opener and each tab do (<c>FUN_004964d0</c>).
+	/// <c>0x00496320</c>), and sets the kind's meter, as the opener and each tab do (<c>FUN_004964d0</c>). Each row goes
+	/// through the list's sorted insert under the kept sort, <see cref="_sort"/>.
 	/// </summary>
 	private void Show( int kind )
 	{
@@ -296,7 +317,11 @@ internal sealed class ParkStaffScreen : UiWindow
 
 		_kindHappiness.Units = Scaled( people.Staff
 			.Where( member => ParkStaffPool.KindFor( member.Model ) == _kind ) );
+
+		LogOrder();
 	}
+
+	private void LogOrder() => Log.Info( $"Staff list: kind {_kind}, {_list.Census()}" );
 
 	/// <summary>The status words' table, the one the boot loads as <c>mUIStaffStates</c> (table <c>0x3ed</c>).</summary>
 	internal const string StatusTable = "Language/English/STAFFSTATES.str";

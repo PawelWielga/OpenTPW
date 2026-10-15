@@ -459,8 +459,8 @@ internal sealed class UiList : UiControl
 	/// which now names a different row.
 	/// </summary>
 	/// <remarks>
-	/// Every list of the original's carries the sort flag <c>0x10</c>. One whose screen has given it no sort here
-	/// (the all-staff and all-items lists) does not sort: counted.
+	/// Every list of the original's carries the sort flag <c>0x10</c>, and every screen here hands its list a sort. A
+	/// list built with headings and no sort, which only a test builds, does not sort: counted.
 	/// </remarks>
 	internal void HeadingClicked( int column )
 	{
