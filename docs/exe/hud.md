@@ -2011,7 +2011,9 @@ screen's height and `[0x0078b534]` the font set (`FUN_00485a70`: `0x0078b54c + (
 `[0x00faa5c0]` 480 and `[0x00faa5c4]` 640, set 1, so **the reference original draws at 640 x 480**, its frames scaled to
 1024 x 768; `[0x007ca140]` 56 once V is up, `[0x007ca170]` 41 once S is, `[0x007ca158]` 41 once A is (GAME8.bf4, 11 tall:
 11 x 1536 / 480 + 6), `[0x007cb24c]` 41. Its frames: the visitors rows 27.9 pixels apart (55.8 units), ten shown; the
-items rows 20.4 to 20.6 (41 units).
+items rows 20.4 to 20.6 (41 units). At its own 800 x 600 and 1024 x 768 (`Data/Resolution.sam`, `q377/orig/c` and `b`): `[0x00faa5c0]` 600 and
+768, sets 2 and 3, and the staff, items and Load Park heights 39 and 34 (GAME9.bf4, 13; GAME10.bf4, 14), the visitors'
+56 in both; the rows 56 units apart in both frames.
 
 **OpenTPW** (Q377): `UiList.RowHeightFor` and `RowHeightOf( font )`, the font of the current set; the staff and items
 lists `RowFont` 7 at `RowHeightOf( 7 )`, the visitors `RowFont` 7 at `0x38`. At this game's 1280 x 720 window (set 2,

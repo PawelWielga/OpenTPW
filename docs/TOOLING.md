@@ -46,7 +46,8 @@ place to look for tools. Each file's docstring is its manual.
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
 | `original/loadfile.sh load <file> <outdir> <tag>` / `stop` | A park file loaded in the original from its Load Park list, off-screen, with frames; `POLL=` starts a memory reader just before the click. It starts the original only when it is not running, so a second file is 35 s where the first is 123 s |
-| `original/screenpark.sh <file> <outdir> <tag>` | A park file entered by the original on the REAL screen (`VERIFYING.md` rule 128: off-screen draws no sign), for a picture: the file made the newest in the reference player's jungle folder, the welcome and the player clicked, frames `<tag>-1..3` at 1024 x 768 and `-N-full` at 1920 x 1440 from 35 s on, then the original stopped, the file taken out and `save/` checked. 2.5 minutes a file; the camera is the file's own (Q357) |
+| `original/screenpark.sh <file> <outdir> <tag>` | A park file entered by the original on the REAL screen (`VERIFYING.md` rule 128: off-screen draws no sign), for a picture: the file made the newest in the reference player's jungle folder, the welcome and the player clicked, frames `<tag>-1..3` at 1024 x 768 and `-N-full` at 1920 x 1440 from 35 s on, then the original stopped, the file taken out and `save/` checked. 2.5 minutes a file; the camera is the file's own (Q357). Its two player clicks are 3 s apart: at 1.2 s the second fell inside the lobby's island flight at 1024 x 768 and the park was never entered (Q377) |
+| `original/resolution.sh 800\|1024\|640\|...\|off\|show` | The reference original's resolution, by writing `Data/Resolution.sam` (the disc's `_Resolution.sam` renamed turns the override on; `off` removes it and the Options screen's 640 x 480 rules). **It stands at 800 x 600** (Q377). Run it with the original stopped; check with `tpwmem.py read 00faa5c0:h` |
 | `original/groundcell.py PID SECS X,Y[:X2,Y2]=+MASK\|-MASK\|t@X,Y ...` | The original's memory, WRITTEN: the park ground's heightfield cell words (flags low, texture index high) ORed, cleared or given another cell's texture, held; prints the base model's and the terrain pass's heightfields (the same one), the render word `[0x008bcbc8]`, the size and each write. `HF=engine` writes the terrain pass's own pointer, `READ=X,Y[:X2,Y2]` prints those cells' words first, `AFTER=FILE` holds the writes until a frame is taken. A `POLL` for `loadfile.sh`, or run beside a park already loaded. The ground is rebuilt every frame: `+0x1` opens a black hole on the next one (Q360) |
 | `original/heads.py PID SECS ITEM` | The original's memory: every model of an item with its lookup state (shared flags, heads attached, each record holding one) and each head's sprite, place, scale and frame, a line a change. A `POLL` for `loadfile.sh` |
 | `original/emitters.py PID SECS` | The original's memory: the particle system's live emitters by the used chain (slot, count, handle, effect, place, aim, life, particles alive), a block a change and the particle counts a second. A `POLL` for `loadfile.sh` |
@@ -536,9 +537,9 @@ GH=766` there, or the pointer is off):
   smallest name below the stock one to make a row that is added last and must sort first (`q374/confirm.py`). A guest's row in the original's memory (Q371, `q371/orig/run.sh` with `POLL=1`): the number `+0x1d8`, the cash
   `+0x1a0`, the rides `+0x1c4`, the happiness the float `+0x19c` (`thingwords.py ... 38:0x19c:f`); in a park file the
   guest record's `+402` (`mArrivalIndex`), `+414` (cash), `+422` (happiness, a float), for `parkfile.thing_set`. The
-  original's visitors rows stand 55.8 units apart from (virtual) y 340. **The reference original draws at 640 x 480**
-  (`[0x00faa5c0]` 480, `[0x00faa5c4]` 640, font set `[0x0078b534]` 1; Q377) and its frames are scaled to 1024 x 768: a
-  measure that rests on the font set (a list's row height, a font's size) is the 640 x 480 one's. **Its rows change two seconds after V**: the
+  original's visitors rows stand 55.8 units apart from (virtual) y 340. **The reference original's resolution
+  sets its font set** ("The original under Proton", "Resolution"; Q377): at its standing 800 x 600 a list's row height
+  and a font's size are this game's at its 1280 x 720 window. **Its rows change two seconds after V**: the
   rewrite is not the adder (the time in park four times, Q372), so a frame of what the opening fill letters is taken
   within 2 s of the key, before moving the pointer away (`q372/orig/run.sh` with `EARLY=1`: 0.58 s). The guest's
   `mArrivalDate` is `+0x1d4` live and `+398` in a file; poll a happiness beside it, which moves, for the clock.
@@ -811,6 +812,20 @@ the game's cursor clamps onto the pointer. Glide rather than jump, and hold the 
 **Coordinates:** the game's 4:3 picture fills the screen's height and is centred. On a screen S_w × S_h, with the game
 at height H, a game point (x, y) is at screen ((S_w − S_h·4/3)/2 + x·S_h/H, y·S_h/H). Off-screen at 1024 × 768 it
 fills the screen.
+
+**Resolution** (Q377). `Data/Resolution.sam` in the reference install sets the game's own resolution (1 512 x 384 to
+7 2048 x 1536; absent, the Options screen's, which is 640 x 480 for the reference player); `resolution.sh` writes it.
+**It stands at 800 x 600**, Res 3, from 2026-10-15: font set 2 (`[0x0078b534]`), the set this game draws with at the
+harness's 1280 x 720 window, so lettering and every font-measured size (a list's rows: 39 units in both) compare like
+with like. Measured at 640, 800 and 1024 (`q377/orig`): the clock TRUE and 30 fps at 1024 off-screen; `loadfile.sh`,
+`gmove.py` hovers and clicks, a right click and `screenpark.sh` (after its 3 s fix) all work at each; the frames stay
+1024 x 768 off-screen and the 3D view's framing is the same (the gate's box at the file's camera, 1024 against 640:
+383 pixels differ, a running park's own). **What differs**: the fonts (640: set 1; 800: 2; 1024: 3, so lettering and
+a list's rows are larger or smaller than this game's), the frame's sharpness (640 and 800 are scaled up to
+1024 x 768, which blurs a glyph's edges: `listcells.ink` reads a band's height only on a native frame), and at 1024 the
+game's cursor is drawn MAGENTA. Take `resolution.sh 1024` for a native, sharp frame (a bar's edge, a texture), and
+put it back to 800 after. A number of the original's measured before 2026-10-15 that rests on its fonts is the
+640 x 480 one's.
 
 ### Warnings, most important first
 
