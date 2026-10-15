@@ -105,6 +105,19 @@ public sealed class ParkObjectRings
 		Satisfaction.Roll();
 	}
 
+	/// <summary>
+	/// The profit of the last <paramref name="days"/> finished days - <c>FUN_004e1c70</c>: the takings ring's days added
+	/// less the costs ring's, each day unsigned, the difference truncated by <c>__ftol</c> and its low half kept.
+	/// </summary>
+	public int ProfitOfLastDays( int days )
+		=> unchecked((int)(Takings.SumOfLastDays( days ) - Costs.SumOfLastDays( days )));
+
+	/// <summary>
+	/// The customers' satisfaction over the last <paramref name="days"/> finished days - <c>FUN_004e1e30</c>: fifty
+	/// plus the satisfaction ring's average, fifty while it holds no finished day (<c>0x004e1f06</c>).
+	/// </summary>
+	public int SatisfactionOfLastDays( int days ) => 50 + (Satisfaction.AverageOfLastDays( days ) ?? 0);
+
 	/// <summary>The debug console's line for <c>rings</c>: both counts, then each ring in the roll's order.</summary>
 	public string Census()
 		=> $"customers {NumCustomers} walk-aways {NumWalkAways} | customers {Customers.Census()} "
@@ -197,14 +210,36 @@ public sealed class ParkObjectRings
 		/// Each day is added as an unsigned 32-bit figure and the total truncated by <c>__ftol</c>, whose low half
 		/// is kept (<c>0x004adefd</c>..<c>0x004adf20</c>).
 		/// </remarks>
-		public int LastDays( int days )
+		public int LastDays( int days ) => unchecked((int)SumOfLastDays( days ));
+
+		/// <summary><see cref="LastDays"/> before its truncation: each day added as an unsigned 32-bit figure.</summary>
+		public long SumOfLastDays( int days )
 		{
 			var total = 0L;
 
 			for ( var i = 0; i < Math.Min( days, Filled ); ++i )
 				total += (uint)DaysAgo( i );
 
-			return unchecked((int)total);
+			return total;
+		}
+
+		/// <summary>
+		/// The last <paramref name="days"/> finished days' average, each day a signed figure, truncated toward nought
+		/// (<c>FUN_004e1e30</c>: <c>FIADD</c>, <c>FDIVR</c>, <c>__ftol</c>); null while the ring holds no finished day.
+		/// </summary>
+		public int? AverageOfLastDays( int days )
+		{
+			var count = Math.Min( days, Filled );
+
+			if ( count <= 0 )
+				return null;
+
+			var total = 0.0;
+
+			for ( var i = 0; i < count; ++i )
+				total += DaysAgo( i );
+
+			return (int)(total / count);
 		}
 	}
 }

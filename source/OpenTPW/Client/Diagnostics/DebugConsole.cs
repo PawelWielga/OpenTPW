@@ -2002,7 +2002,7 @@ public static class DebugConsole
 				Reply( $"openthing: asked for thing {(int)Argument( 1 )}" );
 				break;
 
-			// What each object keeps of its days: its mTotalCosts (ParkState.CostsFor), then from ParkObjectRings its two
+			// What each object keeps of its days: its mTotalCosts and mTotalTakings (ParkState.CostsFor, TakingsFor), then from ParkObjectRings its two
 			// lifetime counts and each ring's today, entry, wrap and last finished days, newest first. `rings <thingId>` shows one; the header gives the
 			// calendar's day count, which steps once each day's change.
 			case "rings":
@@ -2015,6 +2015,7 @@ public static class DebugConsole
 				var ledgers = days.Objects
 					.Where( thing => parts.Length < 2 || thing.ThingId == (int)Argument( 1 ) )
 					.Select( thing => $"thing {thing.ThingId,2} total costs {days.CostsFor( thing.ThingId )} "
+						+ $"total takings {days.TakingsFor( thing.ThingId )} "
 						+ days.RingsFor( thing.ThingId ).Census() )
 					.ToArray();
 

@@ -44,12 +44,13 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q368. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q369. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q367 (`hud.md`, "The all-items rows: a number, then bars"): **the shops' and sideshows' last month's profit,
-  total profit and satisfaction bar are not worked out** (`FUN_004e1c70`, `FUN_004e1c60`, `FUN_004e1e30`;
-  `ALL_ITEMS_MONTHLY_HISTORY`); the original's sideshow rows stand Jungle Spray then Strength Bird, this game's the
+  From Q368 (`hud.md`, "The all-items rows: a number, then bars"): in no game run: a figure moved by a sale in this
+  game's frame, a ring of fewer than thirty days with a satisfaction that is not nought, a satisfaction past 255.
+  From Q367 (`hud.md`, "The all-items rows: a number, then bars"): the shops' and sideshows' money and satisfaction
+  are built (Q368); the original's sideshow rows stand Jungle Spray then Strength Bird, this game's the
   other way (the fill's walk order, not read); the items rows are this game's 44 units tall where the original's
   factory measures its font (`0x007ca158`), so its bars are 24 units here; its headings are bare here where the
   original frames them (`FUN_00486660`, font `[0x00750d58]`, 255, 239, 0, help rows from `0x69`, `FUN_00494ec0`;

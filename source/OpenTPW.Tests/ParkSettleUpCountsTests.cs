@@ -158,6 +158,55 @@ public class ParkSettleUpCountsTests
 	}
 
 	/// <summary>
+	/// <b>The all-items screen's last month and satisfaction</b> (<c>FUN_004e1c70</c>, <c>FUN_004e1e30</c>): the takings'
+	/// last thirty finished days less the costs', each day unsigned, and fifty plus the satisfaction's average truncated
+	/// toward nought, fifty while no day has finished.
+	/// </summary>
+	[TestMethod]
+	public void LastMonthsProfitAndSatisfactionAreTheLastThirtyFinishedDays()
+	{
+		var rings = new ParkObjectRings();
+
+		rings.Takings.Today = 500;
+		rings.Satisfaction.Today = 90;
+		Assert.AreEqual( 0, rings.ProfitOfLastDays( 30 ), "today is no finished day" );
+		Assert.AreEqual( 50, rings.SatisfactionOfLastDays( 30 ), "fifty with no finished day" );
+
+		// Three finished days of 10, 20 and 31, and today's 90 not among them: 61 / 3, not over thirty.
+		var young = new ParkObjectRings();
+
+		foreach ( var each in new[] { 10, 20, 31 } )
+		{
+			young.Satisfaction.Today = each;
+			young.Roll();
+		}
+
+		young.Satisfaction.Today = 90;
+		Assert.AreEqual( 70, young.SatisfactionOfLastDays( 30 ) );
+
+		// Thirty-one days: the first, 1000 taken at a satisfaction of 100, falls out of the thirty.
+		for ( var day = 0; day < 31; ++day )
+		{
+			rings.Takings.Today = day == 0 ? 1000 : 10;
+			rings.Costs.Today = 4;
+			rings.Satisfaction.Today = day == 0 ? 100 : day % 2 == 0 ? -7 : 2;
+			rings.Roll();
+		}
+
+		Assert.AreEqual( 30 * 10 - 30 * 4, rings.ProfitOfLastDays( 30 ) );
+		Assert.AreEqual( 10 - 4, rings.ProfitOfLastDays( 1 ) );
+
+		// Fifteen days of -7 and fifteen of 2: -75 / 30 = -2.5, truncated to -2.
+		Assert.AreEqual( 48, rings.SatisfactionOfLastDays( 30 ) );
+
+		// A day's costs of -1 are 4294967295 unsigned: the difference's low half.
+		rings.Takings.Today = 0;
+		rings.Costs.Today = -1;
+		rings.Roll();
+		Assert.AreEqual( unchecked((int)(29L * 10 - (29L * 4 + 0xffffffffL))), rings.ProfitOfLastDays( 30 ) );
+	}
+
+	/// <summary>
 	/// <b>A day's satisfaction averages each visit in, as the original measured it</b> (<c>FUN_004e1e00</c>): 18 then
 	/// 18 is 18; 45 then 15 is 30. A day at nought takes the next visit whole, and a halving truncates toward nought.
 	/// </summary>

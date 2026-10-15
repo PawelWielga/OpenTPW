@@ -257,8 +257,44 @@ public class ParkListScreenRewriteTests
 		CollectionAssert.AreEqual( new[] { 868, 1167, 1466 },
 			rides.Children.OfType<ParkObjectWindow.UiStatBar>().Select( bar => bar.Rect.Left ).Distinct().ToArray() );
 
-		var counted = Unimplemented.Summary.FirstOrDefault( entry => entry.What == "ALL_ITEMS_MONTHLY_HISTORY" ).Times;
 		var show = typeof( ParkItemsScreen ).GetMethod( "Show", Private )!;
+
+		// The first shop and the first sideshow: twenty-eight days to push the file's out of the thirty, the first of them
+		// 7 taken at a satisfaction of -30, then two finished days of 40 taken against 10 and 25 spent and of satisfaction
+		// -20 and -25, and today 70 against 100.
+		show.Invoke( screen, [1] );
+		var shop = lists[5].Rows[0].Id;
+		show.Invoke( screen, [2] );
+		var sideshow = lists[6].Rows[0].Id;
+
+		foreach ( var id in new[] { shop, sideshow } )
+		{
+			var each = state.RingsFor( id );
+			var totalBefore = state.TakingsFor( id ) - state.CostsFor( id );
+
+			for ( var day = 0; day < 28; ++day )
+			{
+				if ( day == 0 )
+				{
+					state.TakeAt( id, 7 );
+					each.Satisfaction.Today = -30;
+				}
+
+				each.Roll();
+			}
+
+			for ( var day = 0; day < 2; ++day )
+			{
+				state.TakeAt( id, 40 );
+				state.BookCostOfGoods( id, day == 0 ? 10 : 25 );
+				each.Satisfaction.Today = day == 0 ? -20 : -25;
+				each.Roll();
+			}
+
+			state.TakeAt( id, 70 );
+			state.BookCostOfGoods( id, 100 );
+			Assert.AreEqual( totalBefore + 157 - 135, state.TakingsFor( id ) - state.CostsFor( id ) );
+		}
 
 		show.Invoke( screen, [1] );
 		var shops = lists[5];
@@ -266,9 +302,16 @@ public class ParkListScreenRewriteTests
 		CollectionAssert.AreEqual( new[] { 1466 },
 			shops.Children.OfType<ParkObjectWindow.UiStatBar>().Select( bar => bar.Rect.Left ).Distinct().ToArray(),
 			"its cells made again: the rides' three bars gone" );
-		Assert.IsTrue( shops.Rows.Count > 0, "the stock park has shops" );
-		Assert.IsTrue( shops.Rows.All( row => row.Numbers![2] == UiList.NoBar && row.Numbers[4] == UiList.NoBar ) );
-		Assert.AreEqual( counted + 1, Unimplemented.Summary.First( entry => entry.What == "ALL_ITEMS_MONTHLY_HISTORY" ).Times );
+
+		// Last month 87 - 35 = 52 (today's not among it; 45 over twenty-nine days); the total the file's and today's; the
+		// satisfaction 50 plus -75 / 30 truncated toward nought, 48, a bar of 491 (floored 481; over twenty-nine days 501).
+		var shopRow = shops.Rows.Single( row => row.Id == shop );
+		var shopTotal = state.TakingsFor( shop ) - state.CostsFor( shop );
+		CollectionAssert.AreEqual( new[] { 0, state.RingsFor( shop ).Customers.LastDays( 30 ), 52, shopTotal, 491 },
+			shopRow.Numbers!.ToArray() );
+		Assert.AreEqual( "$ 52", shopRow.Values![1] );
+		Assert.AreEqual( ParkItemsScreen.Money( shopTotal ), shopRow.Values[2] );
+		Assert.AreEqual( "", shopRow.Values[3], "the satisfaction is a bar" );
 
 		show.Invoke( screen, [2] );
 		var sideshows = lists[6];
@@ -280,11 +323,24 @@ public class ParkListScreenRewriteTests
 			var placed = state.Objects.Single( each => each.ThingId == row.Id );
 			catalogue.TryGet( placed.CatalogueId, out var game );
 			Assert.AreEqual( ((ParkRideScore.ExcitementOf( placed, game, state.TrackRides ) & 0xff) << 10) / 100, row.Numbers![2] );
-			Assert.AreEqual( UiList.NoBar, row.Numbers[5] );
 		}
 
-		show.Invoke( screen, [0] );
-		Assert.AreEqual( counted + 2, Unimplemented.Summary.First( entry => entry.What == "ALL_ITEMS_MONTHLY_HISTORY" ).Times,
-			"the rides' tab works out every column" );
+		var sideshowRow = sideshows.Rows.Single( row => row.Id == sideshow );
+		Assert.AreEqual( 52, sideshowRow.Numbers![3] );
+		Assert.AreEqual( state.TakingsFor( sideshow ) - state.CostsFor( sideshow ), sideshowRow.Numbers[4] );
+		Assert.AreEqual( 491, sideshowRow.Numbers[5] );
+		CollectionAssert.AreEqual( new[] { "", "$ 52", "" }, new[] { sideshowRow.Values![1], sideshowRow.Values[2], sideshowRow.Values[4] } );
+	}
+
+	/// <summary>
+	/// A money cell letters UITEXT 449 and the figure, or 450 and the figure without its sign under nought
+	/// (<c>0x004903e0</c>).
+	/// </summary>
+	[TestMethod]
+	public void AMoneyCellIsTheDollarAndTheFigureOrTheMinusDollarAndItsSize()
+	{
+		Assert.AreEqual( "$ 0", ParkItemsScreen.Money( 0 ) );
+		Assert.AreEqual( "$ 1234", ParkItemsScreen.Money( 1234 ) );
+		Assert.AreEqual( "-$ 55", ParkItemsScreen.Money( -55 ) );
 	}
 }

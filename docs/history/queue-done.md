@@ -6897,6 +6897,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `((value & 0xff) << 10) / 100`. On `q353/grades.TPWS` the Belly Bounce's row `3 409 962 1013` beside its `rings`,
   `spend` and window lines, the bars 0.40, 0.944 and 1.0 of their width; the original's frame the same shape, its
   bars its own object's values (`hud.md`, "The all-items rows: a number, then bars").
+- [x] **Q368. The all-items shops' and sideshows' money and satisfaction columns** (a piece of the old Q368, split by
+  Claude; the rest is Q369). Built: last month's profit (`FUN_004e1c70`), the total (`FUN_004e1c60`), the satisfaction
+  bar (`FUN_004e1e30`) and the money cell's "$ "/"-$ " (`0x004903e0`); `ALL_ITEMS_MONTHLY_HISTORY` gone. On
+  `q368/money.TPWS`: `row 16 Drinks Shop: 1 165 3766 542` and `row 14 Jungle Spray: 0 307 -120 -600 491`, the original's
+  memory the same at its load's tick 963 and its frames lettered alike (`q368/side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

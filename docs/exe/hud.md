@@ -1694,8 +1694,7 @@ meters are set at the opening and a tab, where they were set every frame. On `q3
 final game binary; frames `run-fix2/four.png`): ten rewrites of the one mechanic in the 21 s after the opening, his
 happiness 85 then 84 on screen and in the line, his wage 92 and the meters 880/895 in all ten, his status and
 happiness the `staff` census's; three rewrites of the Drinks Shop in the 7 s after the shops' tab, none on the
-miscellaneous tab. Main's build (`run-control2`) wrote none. Since Q367 the rewrite moves the customers and the bars
-below; the shops' and sideshows' money and satisfaction are not worked out here (`ALL_ITEMS_MONTHLY_HISTORY`).
+miscellaneous tab. Main's build (`run-control2`) wrote none. Since Q367 and Q368 the rewrite moves every column below.
 
 #### The all-items rows: a number, then bars
 
@@ -1717,7 +1716,27 @@ bars' skin") and is inset 10 units from its row's top and bottom (`FUN_00485e30(
 The customers are the ring `+0x1a8`'s last min( filled, 30 ) finished days added (`FUN_00495c20`, `PUSH 0x1e` at
 `0x004956ca`), `__ftol`'d, a number. The excitement is `FUN_004e0860( 0 )` (`ParkRideScore.ExcitementOf`), the State
 of repair `+0x44` (`0x00495715`), the remaining life `+0x48` (`FUN_004dd6d0`), last month's profit `FUN_004e1c70`,
-the total `FUN_004e1c60` and the satisfaction `FUN_004e1e30`.
+the total `FUN_004e1c60` and the satisfaction `FUN_004e1e30`, read 2026-10-14 (Q368) on the object's day rings
+(`ride-operation.md`, "The object's six day rings": each `mTemp`, `mData[30]`, `mCurrentEntry`, `mNumEntries`,
+`mWrappedAround`):
+
+- **Last month's profit** (`FUN_004e1c70`): the takings ring's (`+0x70`, days at `+0x74`) last min( filled, 30 )
+  finished days added, less the costs ring's (`+0xf8`, days at `+0xfc`), each day loaded as an unsigned 32-bit figure
+  (`FILD qword` with a nought high half, `0x004e1d21`), the difference `__ftol`'d (`0x004e1de9`). Today's is not among them.
+- **The total** (`FUN_004e1c60`): `mTotalTakings` `+0x180` less `mTotalCosts` `+0x184`, a 32-bit `SUB`.
+- **The satisfaction** (`FUN_004e1e30`): 50 plus the satisfaction ring's (`+0x340`, days at `+0x344`) last min( filled,
+  30 ) days added as signed figures (`FIADD`), over their count (`FDIVR`), `__ftol`'d toward nought (`0x004e1ef1`); 50 when
+  the ring holds no finished day (`0x004e1f06`). Its bar is the bar rule below.
+- **A money cell** (`FUN_00490250`, vtable `0x006ff3b0`, its setter slot 3 `0x004903e0`) letters UITEXT `0x1c1` ("$ ")
+  and the figure, or under nought `0x1c2` ("-$ ") and the figure without its sign (`CDQ`, `XOR`, `SUB`), through
+  `FUN_006acd60` on the table `[0x0078ba94]` with one `VARM` variable; the variable's type word (`0xd`, `0x13`) names the
+  placeholder, and its writer (`0x006add40`) prints the value `"%d"` (`0x0074f9d8`, wide).
+
+Measured in the original under Proton (`q368/orig/a`, `q368/money.TPWS`: `mkscene.py` wrote the Drinks Shop's and Jungle
+Spray's days and totals into `q353/grades.TPWS`; `original/money.py` polling): at the load's tick 963 the Drinks Shop
+165, 3766, 53; the Jungle Spray -120, -600, 48; the Strength Bird, its rings empty, 0, 0, 50. Its frames letter "$ 165",
+"$ 3766", "-$ 100", "-$ 580", "$ 10" and "$ 10" (a sale each by then, as the poll read), right-aligned, and its
+satisfaction bars measure 0.526, 0.491 and 0.509 of their width (542, 491 and 512 of 1024).
 
 Every bar is `((value & 0xff) << 10) / 100` of 1024, a float truncated first (`__ftol`), so a value past 255 shows its
 low byte. Measured in the original on `q353/grades.TPWS` (`q367/orig/a-*.png`, `object.py` on thing 13): the Belly
@@ -1731,9 +1750,14 @@ the load (`q367/run-fix4`, the final game binary): `row 13 Belly Bounce: 3 409 9
 `spend` excitement 40 and the ride window's repair 94.375 and life 99.887505; the bars 0.40, 0.944 and 1.0 of their
 width; the Drinks Shop `1 - - -` with its satisfaction cell black; the sideshows `0 276 - - -` and `0 307 - - -`
 (bars 0.27, 0.30). Main's build (`run-control1`) left the customers and excitement blank and lettered 94 and 99.
-**Not built**: the shops' and sideshows' money columns and satisfaction bars (`ALL_ITEMS_MONTHLY_HISTORY`); the
-original's sideshow rows stand Jungle Spray then Strength Bird, this game's the other way (the walk's order, not
-looked into); the row height is this game's 44 where the original's factory measures its font (`0x007ca158`).
+**OpenTPW** (Q368): `ParkObjectRings.ProfitOfLastDays` and `SatisfactionOfLastDays`, `ParkItemsScreen.Money` the
+cell's text; `rings` now prints the total takings beside the total costs. On `q368/money.TPWS`, paused at the load
+(`q368/run-fix2`, the final game binary): `row 16 Drinks Shop: 1 165 3766 542`, `row 43 Strength Bird: 0 276 0 0 512`,
+`row 14 Jungle Spray: 0 307 -120 -600 491`, the frames lettering "$ 165", "$ 3766", "$ 0", "-$ 120", "-$ 600" and the
+bars 0.532, 0.505, 0.485 (`q368/side-by-side.png`); main's build (`run-control2`) lettered nothing and counted
+`ALL_ITEMS_MONTHLY_HISTORY`, which is gone. **Not built**: the original's sideshow rows stand Jungle Spray then
+Strength Bird, this game's the other way (the walk's order, not looked into); the row height is this game's 44 where the
+original's factory measures its font (`0x007ca158`); the headings are bare here where the original frames them.
 
 **The skill bar `0x2482`** ((722, 536)-(957, 575), type 9) is built at nought (`0x0049c335`) and written in one place,
 message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<

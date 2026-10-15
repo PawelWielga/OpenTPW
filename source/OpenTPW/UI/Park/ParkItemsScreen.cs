@@ -27,12 +27,9 @@ namespace OpenTPW.UI;
 /// <para>
 /// <b>What this can actually answer, and what stays blank.</b> Every tab's second column is the customers of the
 /// last thirty finished days, a number; the rides' Excitement, State Of Repair and Remaining Life and the
-/// sideshows' Excitement are bars (<see cref="NumbersOf(int, ParkWorld.CatalogueObject, ParkItemCatalogue.Item, ParkState)"/>).
-/// The shops' and sideshows' Profit Last Month, Total Profit and Customer Satisfaction stay empty, a bar unfilled
-/// for the last. <b>Miscellaneous items fill both their columns</b>,
-/// because <i>Number Owned</i> is a count of what is standing. A blank column is an honest gap; a
-/// plausible wrong one is not - putting an object's gross takings under "Total Profit" would be a
-/// different quantity wearing that label, which is the mistake the hire screen's own remarks warn of.
+/// sideshows' Excitement are bars (<see cref="NumbersOf(int, ParkWorld.CatalogueObject, ParkItemCatalogue.Item, ParkState)"/>);
+/// the shops' and sideshows' Profit Last Month and Total Profit are money, and their Customer Satisfaction a bar.
+/// <b>Miscellaneous items fill both their columns</b>, because <i>Number Owned</i> is a count of what is standing.
 /// </para>
 /// </summary>
 internal sealed class ParkItemsScreen : UiWindow
@@ -348,46 +345,56 @@ internal sealed class ParkItemsScreen : UiWindow
 
 			Log.Info( $"Items list: tab {_tab}, row {placed.ThingId} {item.Name}: {Census( numbers )}" );
 		}
-
-		// Named rather than left quietly blank: the shops' and sideshows' profit last month and total profit
-		// (FUN_004e1c70, FUN_004e1c60) and their satisfaction bar (FUN_004e1e30, the satisfaction ring's average), which
-		// this screen does not work out.
-		if ( tab.Index != 0 )
-			Unimplemented.Report( "ALL_ITEMS_MONTHLY_HISTORY" );
 	}
 
 	/// <summary>
 	/// A placed object's row by column, as the fill <c>FUN_00493cd0</c> and the rewrite <c>FUN_004955e0</c> hand it: the
 	/// name's nought, then the customers of the last thirty finished days (<c>FUN_00495c20</c> on the ring
-	/// <c>+0x1a8</c>, <c>__ftol</c>'d), and each bar's <c>((value &amp; 0xff) &lt;&lt; 10) / 100</c>: the excitement
-	/// (<c>FUN_004e0860( 0 )</c>), the state of repair <c>+0x44</c> and the remaining life <c>+0x48</c>, each float
-	/// truncated. A column this screen does not work out is <see cref="UiList.NoBar"/>.
+	/// <c>+0x1a8</c>, <c>__ftol</c>'d), each bar's <c>((value &amp; 0xff) &lt;&lt; 10) / 100</c>: the excitement
+	/// (<c>FUN_004e0860( 0 )</c>), the state of repair <c>+0x44</c>, the remaining life <c>+0x48</c>, each float
+	/// truncated, and the satisfaction (<c>FUN_004e1e30</c>); and the money as it stands: the last thirty finished
+	/// days' profit (<c>FUN_004e1c70</c>) and the total, <c>mTotalTakings</c> less <c>mTotalCosts</c>
+	/// (<c>FUN_004e1c60</c>).
 	/// </summary>
 	internal static int[] NumbersOf( int tab, ParkWorld.CatalogueObject placed, ParkItemCatalogue.Item item, ParkState state )
 	{
-		var customers = state.RingsFor( placed.ThingId ).Customers.LastDays( CustomersDays );
+		var rings = state.RingsFor( placed.ThingId );
+		var customers = rings.Customers.LastDays( CustomersDays );
 		var excitement = Bar( ParkRideScore.ExcitementOf( placed, item, state.TrackRides ) );
 
-		return tab switch
-		{
-			0 => [0, customers, excitement, Bar( (int)placed.StateOfRepair ), Bar( (int)placed.RemainingLife )],
-			1 => [0, customers, UiList.NoBar, UiList.NoBar, UiList.NoBar],
-			_ => [0, customers, excitement, UiList.NoBar, UiList.NoBar, UiList.NoBar]
-		};
+		if ( tab == 0 )
+			return [0, customers, excitement, Bar( (int)placed.StateOfRepair ), Bar( (int)placed.RemainingLife )];
+
+		var lastMonth = rings.ProfitOfLastDays( CustomersDays );
+		var total = unchecked(state.TakingsFor( placed.ThingId ) - state.CostsFor( placed.ThingId ));
+		var satisfaction = Bar( rings.SatisfactionOfLastDays( CustomersDays ) );
+
+		return tab == 1
+			? [0, customers, lastMonth, total, satisfaction]
+			: [0, customers, excitement, lastMonth, total, satisfaction];
 	}
 
 	/// <summary>A value as a bar's 0 to 1024: its low byte as a percentage.</summary>
 	internal static int Bar( int value ) => ((value & 0xff) << 10) / 100;
 
-	/// <summary>How many finished days the customers column adds up: <c>PUSH 0x1e</c> (<c>0x004956ca</c>).</summary>
+	/// <summary>How many finished days the customers column adds up (<c>PUSH 0x1e</c>, <c>0x004956ca</c>), and the profit
+	/// and satisfaction (<c>MOV EDX,0x1e</c>, <c>0x004e1c9b</c>; <c>MOV EBP,0x1e</c>, <c>0x004e1e38</c>).</summary>
 	private const int CustomersDays = 30;
 
 	/// <summary>
-	/// The columns after the name as text: the customers printed as a whole number, every other column empty (a bar,
-	/// or a figure not worked out).
+	/// The columns after the name as text: the customers printed as a whole number, a bar's column empty, and a money
+	/// column as its cell (<c>FUN_00490250</c>, <c>0x004903e0</c>) letters it: UITEXT <c>0x1c1</c> and the figure, or
+	/// <c>0x1c2</c> and the figure without its sign when it is under nought, each <c>"%d"</c>.
 	/// </summary>
 	private static string[] ValuesOf( Tab tab, int[] numbers )
-		=> [.. Enumerable.Range( 1, tab.Columns - 1 ).Select( column => column == 1 ? $"{numbers[1]}" : "" )];
+		=> [.. Enumerable.Range( 1, tab.Columns - 1 ).Select( column =>
+			column == 1 ? $"{numbers[1]}"
+			: tab.Bars[column] ? ""
+			: Money( numbers[column] ) )];
+
+	/// <summary>A money cell's text (<see cref="ValuesOf"/>).</summary>
+	internal static string Money( int value )
+		=> Localization.Get( value < 0 ? UIStrings.NegativeDollar : UIStrings.Dollar ) + unchecked(value < 0 ? -value : value);
 
 	private static string Census( int[] numbers )
 		=> string.Join( " ", numbers.Skip( 1 ).Select( number => number == UiList.NoBar ? "-" : $"{number}" ) );
