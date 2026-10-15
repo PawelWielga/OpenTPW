@@ -634,23 +634,26 @@ public class ParkBankTests
 
 	/// <summary>
 	/// <b>The analyser's money rings keep the month and close it at the month's change</b>: a deposit and a gate fee
-	/// onto cash in, a withdrawal onto all costs (none while withdrawals are off), each wage onto staff costs and all
-	/// costs (a severance's, which needs the level's staff pool, is held by the game run); the close before the bank's batch deposit and the wages, which open the new month
-	/// (<c>FUN_004c7720</c> after the training and before the bank's turn; <c>FUN_00504c70</c>, <c>FUN_00505790</c>).
+	/// onto cash in, the gate fee onto the gate takings too, a withdrawal onto all costs (none while withdrawals are off),
+	/// each wage onto staff costs and all costs (a severance's, which needs the level's staff pool, is held by the game
+	/// run), a training share onto training whether or not its withdrawal is made; the close after the training and
+	/// before the bank's batch deposit and the wages, which open the new month (<c>FUN_004c7720</c>; <c>FUN_00504c70</c>,
+	/// <c>FUN_00505790</c>, <c>FUN_00505a10</c>, <c>FUN_004d0600</c>).
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> the gate fee not onto cash in; a withdrawal counted while withdrawals are off; the wage not onto
-	/// staff costs; the close after the wages; a ring not closed.
+	/// <b>Mutations:</b> the gate fee not onto cash in; the gate fee not onto the gate takings; a deposit onto the gate
+	/// takings; a withdrawal counted while withdrawals are off; the wage not onto staff costs; the training not onto
+	/// training; the close after the wages; a ring not closed; a ring handed to the writer as another.
 	/// </remarks>
 	[TestMethod]
 	public void TheAnalysersMoneyRingsKeepTheMonthAndCloseItAtTheMonthsChange()
 	{
 		var (bank, people) = Month();
-		int[] Totals() => [bank.MonthCashIn.Total, bank.MonthStaffCosts.Total, bank.MonthCosts.Total];
-		int[] Newest() => [bank.MonthCashIn.Newest, bank.MonthStaffCosts.Newest, bank.MonthCosts.Newest];
+		int[] Totals() => [bank.MonthCashIn.Total, bank.MonthStaffCosts.Total, bank.MonthCosts.Total, bank.MonthGateTakings.Total, bank.MonthTraining.Total];
+		int[] Newest() => [bank.MonthCashIn.Newest, bank.MonthStaffCosts.Newest, bank.MonthCosts.Newest, bank.MonthGateTakings.Newest, bank.MonthTraining.Newest];
 
-		CollectionAssert.AreEqual( new[] { 200, 538, 538 }, Totals(), "the file's month so far" );
-		CollectionAssert.AreEqual( new[] { 1500, 0, 13175 }, Newest(), "and its last month" );
+		CollectionAssert.AreEqual( new[] { 200, 538, 538, 200, 0 }, Totals(), "the file's month so far" );
+		CollectionAssert.AreEqual( new[] { 1500, 0, 13175, 0, 0 }, Newest(), "and its last month" );
 
 		bank.Deposit( 40 );
 		bank.Take( 25 );
@@ -659,14 +662,31 @@ public class ParkBankTests
 		bank.Spend( 1000 );
 		bank.WithdrawalsEnabled = 1;
 
-		CollectionAssert.AreEqual( new[] { 265, 538, 638 }, Totals() );
+		CollectionAssert.AreEqual( new[] { 265, 538, 638, 225, 0 }, Totals() );
+
+		people.TrainingBudgets[1] = 25;
+		bank.MonthShopTakings.Add( 7 );
+		bank.MonthSideshowTakings.Add( 9 );
 
 		var batch = bank.BatchBalance;
 
 		TurnTheMonth( bank, people );
 
-		CollectionAssert.AreEqual( new[] { 265, 538, 638 }, Newest(), "the month closed before the bank's turn and the wages" );
-		CollectionAssert.AreEqual( new[] { batch, 538, 538 }, Totals(), "the batch and the five wages open the next" );
+		CollectionAssert.AreEqual( new[] { 265, 538, 663, 225, 25 }, Newest(), "the training in the month, closed before the bank's turn and the wages" );
+		Assert.AreEqual( (7, 0, 9, 0), (bank.MonthShopTakings.Newest, bank.MonthShopTakings.Total, bank.MonthSideshowTakings.Newest, bank.MonthSideshowTakings.Total),
+			"the shops' and sideshows' months closed with them" );
+
+		var set = bank.MonthRings;
+
+		CollectionAssert.AreEqual(
+			new[] { bank.MonthCosts, bank.MonthStaffCosts, bank.MonthTraining, bank.MonthCashIn, bank.MonthGateTakings, bank.MonthShopTakings, bank.MonthSideshowTakings },
+			new[] { set.Costs, set.StaffCosts, set.Training, set.CashIn, set.GateTakings, set.ShopTakings, set.SideshowTakings }, "the writer is handed each ring as itself" );
+		CollectionAssert.AreEqual( new[] { batch, 538, 538, 0, 0 }, Totals(), "the batch and the five wages open the next" );
+
+		bank.WithdrawalsEnabled = 0;
+		people.TrainTheStaff();
+
+		Assert.AreEqual( (25, 538), (bank.MonthTraining.Total, bank.MonthCosts.Total), "the training kept, its withdrawal not made" );
 	}
 
 	/// <summary>

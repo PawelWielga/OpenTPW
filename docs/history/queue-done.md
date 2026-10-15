@@ -7014,6 +7014,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   stock park's "$ 1500 / $ 0 / $ 13175 / -$ 11675", a pick's wage on both rows, the close (costs 828, staff 538, cash
   in 1065), a severance, the next month's account and the file read back; the original on the stock park the same
   four with the same $63 pick, and on this game's file its rings as written. Mutations 25 of 25 after a test round.
+- [x] **Q386. The analyser's training, gate, shop and sideshow month rings, kept, read and written.** Training
+  `+0x1fa40`, gate takings `+0x1fee0`, shop takings `+0x20130` and sideshow takings `+0x20380` are fed as the original's
+  training, gate fee and charge feed them, closed with the other three at the month's change, read from and written to
+  a park file (rings 5 and 7 to 9 of sixteen; 612 of 616 files on hand hold all sixteen on one slot, the four that do not
+  this game's own). `q386/run-fix1` (the final build): the stock park's close on tick 1474 (training 25, gate 650, shops
+  240, sideshows 160, together the 1050 cash in) and the file read back; main's build left them on another slot. The
+  original given the file read it as written and graphed the three takings on its Financial Information screen at 650,
+  242 and 163 to the pixel. Mutations 19 of 19 after a test round (two rings swapped alike, the shops' close, the set).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

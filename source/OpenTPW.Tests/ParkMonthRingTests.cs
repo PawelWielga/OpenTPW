@@ -90,42 +90,46 @@ public class ParkMonthRingTests
 	}
 
 	/// <summary>
-	/// <b>The shipped park's three money rings</b>, thing 5's record at 62,598 plus 589 a ring: one month closed, all
-	/// costs 13175, staff costs 0, cash in 1500; the month so far 538, 538 and 200. Written back changed, they read back
-	/// as written, and the other thirteen rings and the slots never filled (<c>0xcdcdcdcd</c>) are the file's bytes.
+	/// <b>The shipped park's seven money rings</b>, thing 5's record at 62,598 plus 589 a ring: one month closed, all
+	/// costs 13175, staff costs 0, training 0, cash in 1500, gate, shop and sideshow takings 0; the month so far 538,
+	/// 538, 0, 200, 200, 0 and 0. Written back changed, each reads back as written in its own place, and the other nine
+	/// rings and the slots never filled (<c>0xcdcdcdcd</c>) are the file's bytes.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the rings' start a ring out; the costs and cash-in places swapped; the writer not handed the rings.</remarks>
+	/// <remarks><b>Mutations:</b> the rings' start a ring out; two rings' places swapped, read and written alike; a ring not written; the writer not handed the rings.</remarks>
 	[TestMethod]
 	public void TheShippedParksMoneyRingsReadAndWriteBack()
 	{
 		var shipped = Shipped();
+		ParkMonthRing[] Rings( ParkWorld park ) => [park.MonthCosts!, park.MonthStaffCosts!, park.MonthTraining!, park.MonthCashIn!,
+			park.MonthGateTakings!, park.MonthShopTakings!, park.MonthSideshowTakings!];
 
-		Assert.AreEqual( (13175, 538), (shipped.MonthCosts!.Newest, shipped.MonthCosts.Total) );
-		Assert.AreEqual( (0, 538), (shipped.MonthStaffCosts!.Newest, shipped.MonthStaffCosts.Total) );
-		Assert.AreEqual( (1500, 200), (shipped.MonthCashIn!.Newest, shipped.MonthCashIn.Total) );
+		CollectionAssert.AreEqual( new[] { 13175, 0, 0, 1500, 0, 0, 0 }, Rings( shipped ).Select( ring => ring.Newest ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 538, 538, 0, 200, 200, 0, 0 }, Rings( shipped ).Select( ring => ring.Total ).ToArray() );
 
-		var costs = shipped.MonthCosts.Copy();
-		var staff = shipped.MonthStaffCosts.Copy();
-		var cash = shipped.MonthCashIn.Copy();
+		var copies = Rings( shipped ).Select( ring => ring.Copy() ).ToArray();
 
-		costs.Add( 1 );
-		costs.Close();
-		staff.Add( 2 );
-		cash.Add( 3 );
+		copies[0].Add( 1 );
+		copies[0].Close();
+
+		for ( var i = 1; i < copies.Length; ++i )
+			copies[i].Add( i + 1 );
 
 		var body = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
-			MonthRings: (costs, staff, cash) ) );
-		var written = new ParkWorld( body );
+			MonthRings: new( copies[0], copies[1], copies[2], copies[3], copies[4], copies[5], copies[6] ) ) );
+		var written = Rings( new ParkWorld( body ) );
 
-		Assert.AreEqual( (1, 539, 0), (written.MonthCosts!.Current, written.MonthCosts.Newest, written.MonthCosts.Total) );
-		Assert.AreEqual( (0, 540), (written.MonthStaffCosts!.Newest, written.MonthStaffCosts.Total) );
-		Assert.AreEqual( (1500, 203), (written.MonthCashIn!.Newest, written.MonthCashIn.Total) );
+		Assert.AreEqual( (1, 539, 0), (written[0].Current, written[0].Newest, written[0].Total) );
+		CollectionAssert.AreEqual( new[] { 0, 0, 1500, 0, 0, 0 }, written.Skip( 1 ).Select( ring => ring.Newest ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 540, 3, 204, 205, 6, 7 }, written.Skip( 1 ).Select( ring => ring.Total ).ToArray(), "each ring in its own place" );
 
 		var original = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value ) );
 		var differ = Enumerable.Range( 0, body.Length ).Where( at => body[at] != original[at] ).ToArray();
 		var rings = shipped.AnalyserAt + 62598;
 
-		Assert.IsTrue( differ.All( at => at >= rings + 2 * ParkMonthRing.Size && at < rings + 6 * ParkMonthRing.Size ), "only the costs, staff and cash-in rings' bytes" );
+		Assert.IsTrue( differ.All( at => at >= rings + 2 * ParkMonthRing.Size && at < rings + 9 * ParkMonthRing.Size ), "only the seven money rings' bytes" );
+		CollectionAssert.AreEqual( new[] { 0, 540, 3, 204, 205, 6, 7 },
+			Enumerable.Range( 2, 7 ).Select( ring => System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( body.AsSpan( rings + ring * ParkMonthRing.Size + 9 ) ) ).ToArray(),
+			"each month so far at its ring's own place: the 3rd to the 9th" );
 		Assert.AreEqual( unchecked((int)0xcdcdcdcd), System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( body.AsSpan( rings + 2 * ParkMonthRing.Size + 13 + 2 * 4 ) ), "a slot never filled stays the file's" );
 	}
 }

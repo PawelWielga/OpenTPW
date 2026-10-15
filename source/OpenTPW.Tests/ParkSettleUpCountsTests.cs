@@ -65,11 +65,11 @@ public class ParkSettleUpCountsTests
 
 	/// <summary>
 	/// Lets one guest off <paramref name="thingId"/> through <see cref="ParkRideOperation.Dismiss"/>, won
-	/// (<paramref name="won"/>, the settle-up's <c>+0x1f1</c>) or lost, into <paramref name="park"/>.
+	/// (<paramref name="won"/>, the settle-up's <c>+0x1f1</c>) or lost, into <paramref name="park"/>; the file's thing, or <paramref name="priced"/>.
 	/// </summary>
-	private void LetOff( ParkState park, Peep peep, int thingId, bool won )
+	private void LetOff( ParkState park, Peep peep, int thingId, bool won, ParkWorld.CatalogueObject? priced = null )
 	{
-		var thing = Park().Objects.Single( o => o.ThingId == thingId );
+		var thing = priced ?? Park().Objects.Single( o => o.ThingId == thingId );
 		var script = Script();
 
 		peep.SetState( PeepState.Riding, tick: 1, new Random( 1 ) );
@@ -80,6 +80,34 @@ public class ParkSettleUpCountsTests
 		Assert.IsTrue( new ParkRideOperation( park, new Dictionary<int, Peep> { [peep.ThingId] = peep }, Mood() )
 			.Dismiss( script, thing, tick: 9, new Random( 1 ), catalogue: new ParkItemCatalogue( "jungle", Data() ) ),
 			"the guest should have been let off" );
+	}
+
+	/// <summary>
+	/// <b>A shop's and a sideshow's charge go onto the park analyser's month of their takings, a ride's onto
+	/// neither</b> (<c>FUN_004e16b0</c> by the descriptor's <c>+0x4ac</c>, <c>0x004e1711</c>, <c>0x004e18a6</c>): the
+	/// Drinks Shop's 30 onto the shops', the Jungle Spray's 20 onto the sideshows', each after its deposit onto cash in;
+	/// the Belly Bounce, a ride, charged at 15, onto cash in alone.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the shop's price onto the sideshows'; a ride's onto the shops'; the arms not taken.</remarks>
+	[TestMethod]
+	public void AShopsAndASideshowsChargeGoOntoTheirMonthsTakings()
+	{
+		var world = Park();
+		var park = new ParkState( world );
+		var bounce = park.Objects.Single( o => o.ThingId == BellyBounce ) with { PricePerUse = 15 };
+
+		(int, int, int) Months() => (park.MonthShopTakings.Total, park.MonthSideshowTakings.Total, park.MonthCashIn.Total);
+
+		Assert.AreEqual( (0, 0, 200), Months(), "the file's month so far" );
+
+		LetOff( park, Riding( 50f, 50f ), DrinksShop, won: true );
+		Assert.AreEqual( (30, 0, 230), Months(), "the Drinks Shop's 30" );
+
+		LetOff( park, Riding( 50f, 50f ), JungleSpray, won: true );
+		Assert.AreEqual( (30, 20, 250), Months(), "the Jungle Spray's 20" );
+
+		LetOff( park, Riding( 50f, 50f ), BellyBounce, won: true, bounce );
+		Assert.AreEqual( (30, 20, 265), Months(), "a ride's 15 onto cash in alone" );
 	}
 
 	private static ParkState EmptyPark() => new( parkIsClosed: false, visitorsToDate: 0 );

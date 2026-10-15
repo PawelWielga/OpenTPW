@@ -44,13 +44,18 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q386. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q387. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From Q385 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the analyser's other thirteen int rings (the month-end
-  balance, gate takings, training, the shops' and sideshows' takings, visitors and more) are not kept, and a written
-  file keeps the file's bytes for them (`ANALYSER_MONTH_CLOSE`, `GATE_FEE_ANALYSER_TOTALS`,
-  `STAFF_TRAINING_ANALYSER_TOTAL`). A park made with no file starts the rings empty and is not written
+  From Q386 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the finances screen (`FUN_0049a2e0`, F or the Money
+  button's `b_finance`) is not built, so nothing here reads the training, gate, shop and sideshow rings; the original
+  reads them from this game's file. In no game run: a training share with withdrawals off (tested only), a grade-4
+  member's training, a ring gone round 144 months, Full Simulation (not asked: the rings are either mode's), the other
+  three themes.
+  From Q385 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the analyser's other nine int rings (the month-end
+  balance, `+0x1f350`, the lifetime visitors and more; Q386 named each) are not kept, nor its lifetime visitors and
+  dearest ticket, and a written file keeps the file's bytes for them (`ANALYSER_MONTH_CLOSE`,
+  `GATE_FEE_ANALYSER_TOTALS`). A park made with no file starts the rings empty and is not written
   (`SAVE_PARK_WITH_NO_FILE`). The original closes a month on the first tick after loading a file this game saved past
   its own first month (this game's calendar, Q149). In no game run: a loan taken or paid (no screen), a month with
   withdrawals off, a ring gone round 144 months, Full Simulation (not asked: the account is either mode's), the other

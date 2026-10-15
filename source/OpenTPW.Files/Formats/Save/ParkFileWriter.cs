@@ -65,8 +65,8 @@ public static class ParkFileWriter
 	/// the file's where it is null. <see cref="LastObjectBuilt"/> is its stamp of the newest object made
 	/// (<see cref="ParkWorld.PutLastObjectBuilt"/>); the file's where it is null. <see cref="Training"/> is the staff
 	/// HQ's five training budgets and whether one was ever set (<see cref="ParkWorld.PutTrainingBudgets"/>); the
-	/// file's where it is null. <see cref="MonthRings"/> is the analyser's three money rings, all costs, staff costs
-	/// and cash in (<see cref="ParkWorld.PutMonthRings"/>); the file's where it is null.
+	/// file's where it is null. <see cref="MonthRings"/> is the analyser's seven money rings
+	/// (<see cref="ParkWorld.PutMonthRings"/>); the file's where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -79,7 +79,7 @@ public static class ParkFileWriter
 		Func<uint, ParkWorld.AdvisorAction>? AdvisorAction = null,
 		int? AdvisorPollCursor = null, long? LastStaffHired = null, long? LastObjectBuilt = null,
 		(IReadOnlyList<int> Budgets, bool HaveEverTrained)? Training = null,
-		(ParkMonthRing Costs, ParkMonthRing StaffCosts, ParkMonthRing CashIn)? MonthRings = null );
+		ParkWorld.MonthRingSet? MonthRings = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -247,7 +247,7 @@ public static class ParkFileWriter
 			loaded.PutLastObjectBuilt( body, newest );
 
 		if ( running.MonthRings is { } rings )
-			loaded.PutMonthRings( body, rings.Costs, rings.StaffCosts, rings.CashIn );
+			loaded.PutMonthRings( body, rings );
 
 		if ( running.Training is { } training )
 			loaded.PutTrainingBudgets( body, training.Budgets, training.HaveEverTrained );

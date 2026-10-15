@@ -2075,7 +2075,11 @@ public static class DebugConsole
 						$"withdrawals {purse.WithdrawalsEnabled} " +
 						$"month cashin {purse.MonthCashIn.Total}/{purse.MonthCashIn.Newest} " +
 						$"staff {purse.MonthStaffCosts.Total}/{purse.MonthStaffCosts.Newest} " +
-						$"costs {purse.MonthCosts.Total}/{purse.MonthCosts.Newest} slot {purse.MonthCosts.Current}"
+						$"costs {purse.MonthCosts.Total}/{purse.MonthCosts.Newest} slot {purse.MonthCosts.Current} " +
+						$"training {purse.MonthTraining.Total}/{purse.MonthTraining.Newest} " +
+						$"gate {purse.MonthGateTakings.Total}/{purse.MonthGateTakings.Newest} " +
+						$"shops {purse.MonthShopTakings.Total}/{purse.MonthShopTakings.Newest} " +
+						$"sideshows {purse.MonthSideshowTakings.Total}/{purse.MonthSideshowTakings.Newest}"
 					: "money: a park has to be loaded" );
 				break;
 

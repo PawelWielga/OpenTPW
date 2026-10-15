@@ -738,6 +738,10 @@ public sealed class ParkState
 		MonthCosts = park.Save?.MonthCosts?.Copy() ?? new();
 		MonthStaffCosts = park.Save?.MonthStaffCosts?.Copy() ?? new();
 		MonthCashIn = park.Save?.MonthCashIn?.Copy() ?? new();
+		MonthTraining = park.Save?.MonthTraining?.Copy() ?? new();
+		MonthGateTakings = park.Save?.MonthGateTakings?.Copy() ?? new();
+		MonthShopTakings = park.Save?.MonthShopTakings?.Copy() ?? new();
+		MonthSideshowTakings = park.Save?.MonthSideshowTakings?.Copy() ?? new();
 
 		foreach ( var thing in park.Objects )
 			_nextObject[thing.ThingId] = thing.NextObject;
@@ -918,11 +922,39 @@ public sealed class ParkState
 	/// <summary>The analyser's month of every deposit (<c>+0x1fc90</c>), as <see cref="MonthCosts"/>; <see cref="Deposit"/> and <see cref="Take"/> add to it.</summary>
 	public ParkMonthRing MonthCashIn { get; private set; } = new();
 
+	/// <summary>The analyser's month of training paid (<c>+0x1fa40</c>), as <see cref="MonthCosts"/>; <see cref="AddTrainingCost"/> adds to it.</summary>
+	public ParkMonthRing MonthTraining { get; private set; } = new();
+
+	/// <summary>The analyser's month of admission fees (<c>+0x1fee0</c>), as <see cref="MonthCosts"/>; <see cref="Take"/> adds to it.</summary>
+	public ParkMonthRing MonthGateTakings { get; private set; } = new();
+
+	/// <summary>The analyser's month of what the shops have charged (<c>+0x20130</c>), as <see cref="MonthCosts"/>; <see cref="AddShopTakings"/> adds to it.</summary>
+	public ParkMonthRing MonthShopTakings { get; private set; } = new();
+
+	/// <summary>The analyser's month of what the sideshows have charged (<c>+0x20380</c>), as <see cref="MonthCosts"/>; <see cref="AddSideshowTakings"/> adds to it.</summary>
+	public ParkMonthRing MonthSideshowTakings { get; private set; } = new();
+
+	/// <summary>The analyser's seven money rings as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
+	public ParkWorld.MonthRingSet MonthRings
+		=> new( MonthCosts, MonthStaffCosts, MonthTraining, MonthCashIn, MonthGateTakings, MonthShopTakings, MonthSideshowTakings );
+
 	/// <summary>
 	/// A wage or a severance paid: onto the analyser's month of staff costs, after the withdrawal and whether or not it
 	/// was made (<c>FUN_00504c70</c>, <c>FUN_00505790</c>).
 	/// </summary>
 	internal void AddStaffCost( int wage ) => MonthStaffCosts.Add( wage );
+
+	/// <summary>
+	/// A member's training paid: onto the analyser's month of training, after the withdrawal and whether or not it was
+	/// made (<c>FUN_00505a10</c>).
+	/// </summary>
+	internal void AddTrainingCost( int share ) => MonthTraining.Add( share );
+
+	/// <summary>A shop's charge, after its deposit: onto the analyser's month of shop takings (<c>FUN_004e16b0</c>, <c>0x004e1711</c>).</summary>
+	internal void AddShopTakings( int price ) => MonthShopTakings.Add( price );
+
+	/// <summary>A sideshow's charge, after its deposit: onto the analyser's month of sideshow takings (<c>FUN_004e16b0</c>, <c>0x004e18a6</c>).</summary>
+	internal void AddSideshowTakings( int price ) => MonthSideshowTakings.Add( price );
 
 	/// <summary>
 	/// A member of staff has been made: the staff constructor's tail stamps the analyser with now
@@ -1061,9 +1093,9 @@ public sealed class ParkState
 	/// the deposit's adds, and onto the gate's running total, which only this moves (<c>docs/exe/ride-operation.md</c>, "The cost of goods and the park's money").
 	/// </summary>
 	/// <remarks>
-	/// Onto the park analyser's month cash in (<see cref="MonthCashIn"/>). Counted, not built: its month gate takings
-	/// (<c>+0x1fee0</c>), its lifetime visitors and dearest ticket, and the message that counts a new visitor toward a challenge of
-	/// type 11, which takes it only while one is on.
+	/// Onto the park analyser's month cash in (<see cref="MonthCashIn"/>) and its month gate takings
+	/// (<see cref="MonthGateTakings"/>). Counted, not built: its lifetime visitors and dearest ticket (<c>FUN_004c7520</c>),
+	/// and the message that counts a new visitor toward a challenge of type 11, which takes it only while one is on.
 	/// </remarks>
 	public void Take( int fee )
 	{
@@ -1075,6 +1107,7 @@ public sealed class ParkState
 
 		Takings += fee;
 		MonthCashIn.Add( fee );
+		MonthGateTakings.Add( fee );
 
 		Log.Info( $"Bank: admission {fee}, balance {Balance}, profit {ProfitThisYear}" );
 
@@ -1241,7 +1274,8 @@ public sealed class ParkState
 	/// <summary>
 	/// The month's change reaches the park analyser (thing 5) and then the bank (thing 8) - message <c>0xc</c>
 	/// (<c>docs/exe/ride-operation.md</c>, "The month's change"). The analyser's close (<c>FUN_004c7720</c>) closes its
-	/// three money rings, all costs, staff costs and cash in, in that order, and its other rings and samples are counted
+	/// seven money rings, all costs, staff costs, training, cash in, gate, shop and sideshow takings, in that order, and
+	/// its other rings and samples are counted
 	/// (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
 	/// instalment withdrawn, its months repaid counted, <see cref="ProfitThisYear"/> given the principal's share back
 	/// by the original's unsigned division, and the loan closed at its period; then, with the balance and
@@ -1252,8 +1286,14 @@ public sealed class ParkState
 	{
 		MonthCosts.Close();
 		MonthStaffCosts.Close();
+		MonthTraining.Close();
 		MonthCashIn.Close();
-		Log.Info( $"Park: analyser month closed, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, cash in {MonthCashIn.Newest}" );
+		MonthGateTakings.Close();
+		MonthShopTakings.Close();
+		MonthSideshowTakings.Close();
+		Log.Info( $"Park: analyser month closed, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
+			+ $"training {MonthTraining.Newest}, cash in {MonthCashIn.Newest}, gate {MonthGateTakings.Newest}, "
+			+ $"shops {MonthShopTakings.Newest}, sideshows {MonthSideshowTakings.Newest}" );
 		Unimplemented.Report( "ANALYSER_MONTH_CLOSE" );
 
 		var batch = BatchBalance;

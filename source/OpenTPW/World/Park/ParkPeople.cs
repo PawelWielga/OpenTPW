@@ -852,7 +852,7 @@ public sealed partial class ParkPeople : Entity
 			return;
 
 		_behaviour.State.Spend( share );
-		Unimplemented.Report( "STAFF_TRAINING_ANALYSER_TOTAL" );
+		_behaviour.State.AddTrainingCost( share );
 
 		var cost = ParkStaffPool.PoundsPerTrainingPoint( _balance, kind, member.PayGrade );
 

@@ -1611,17 +1611,33 @@ build that puts it there shows the same figure twice, once correctly as `0x2496`
 **The two cost rows are red.** `FUN_0065c5d5( 0xff, 0, 0, 0xff )` is called while `0x248d`/`0x248c` and
 `0x248a`/`0x248b` are the current control, and never for `0x2488`/`0x2489` or `0x2486`/`0x2487`.
 
-**What feeds the three months** (read 2026-10-15, Q385; every writer of the offsets, a scan of the image's operands):
+**What feeds the money months** (read 2026-10-15, Q385 and Q386; every writer of the offsets, a scan of the image's operands):
 
 | Total | Added by |
 |---|---|
 | `+0x1fc90` cash in | every deposit (`FUN_004d0190`), the bank's month turn's batch (`FUN_004d0370`), the gate fee (`FUN_004d0600`, which adds to the gate's `+0x1fee0` too) and a loan taken (`FUN_004d0750`) |
 | `+0x1f5a0` all costs | every withdrawal made (`FUN_004d01f0`, nothing while `+0x114` is nought), a loan's instalment (`FUN_004d0370`) and a loan paid off (`FUN_004d0850`) |
 | `+0x1f7f0` staff costs | a member's monthly wage (`FUN_00504c70` on message `0xc`) and a dismissal's (`FUN_00505790`), each after its withdrawal and whether or not that was made |
+| `+0x1fa40` training | a member's training share (`FUN_00505a10`, from thing 1's month turn), after its withdrawal and whether or not that was made; nothing at grade 4 |
+| `+0x1fee0` gate takings | the gate fee alone (`FUN_004d0600`, which adds it to cash in first) |
+| `+0x20130` shop takings | a shop's charge (`FUN_004e16b0` where the item's descriptor `+0x4ac` is 1, `0x004e1711`), after its deposit onto cash in |
+| `+0x20380` sideshow takings | a sideshow's charge (the same, `+0x4ac` 2, `0x004e18a6`); a ride's (0) goes onto neither |
 
 The close (`FUN_004c7720`, the analyser's turn of the month, after thing 1's training and before the bank's turn and
-the wages) pushes each total into its ring (`FUN_004ce290`: the slot one on, nought past the last with the wrapped byte
-set, the total written there) and zeroes it; the constructor (`FUN_004c58c0`) leaves each slot -1, each count 144.
+the wages) pushes each total into its ring (`FUN_004ce290` for all costs, staff costs, training and cash in; the same
+steps written out in line for the gate, shop and sideshow takings: the slot one on, nought past the last with the
+wrapped byte set, the total written there) and zeroes it; the constructor (`FUN_004c58c0`) leaves each slot -1, each
+count 144. The same close samples the analyser's other nine rings, which no add feeds: the bank's balance
+(`FUN_006ad810`, `+0x1f100`), `FUN_004c7db0`'s figure (`+0x1f350`), `FUN_004c7fa0` (`+0x205d0`), the lifetime visitors
+`+0x21c08` (`+0x20820`), `FUN_004c8070` (`+0x20a70`), the month total `+0x20cc0` (`+0x20cc0`, added by
+`FUN_004cf3e0`), `FUN_004c7bb0`'s float (`+0x20f10`), a mean of `FUN_004cef30` (`+0x21160`) and `FUN_004cceb0`
+(`+0x213b0`); not read further.
+
+**The finances screen graphs eight of them** (`FUN_0049a2e0`, its range `DAT_007ca2ec` 12, 36 or 144 months; the rings
+picked by the bits of `DAT_00751fa0`, 1 at the start: 1 the balance, 2 `+0x1f350`, 4 cash in, 8 gate takings, `0x10`
+shop takings, `0x20` sideshow takings, `0x40` all costs, `0x80` staff costs; `FUN_0049a7b0` takes the largest month
+of those picked for the scale through `FUN_004801d0`). Bits 1 and 2 and the other six do not stand together: a row of
+one group ticked clears the other's. Training has no row.
 The rings' place in a park file is `saves.md`, "The park analyser": in the shipped park one month is closed, cash in
 1500, staff costs 0, all costs 13175, so the original's hire screen opens on "$ 1500", "$ 0", "$ 13175", "-$ 11675".
 
@@ -1629,9 +1645,13 @@ The rings' place in a park file is `saves.md`, "The park analyser": in the shipp
 three, the file's at a load (`ParkWorld`) and empty in a park made with no file; `Deposit` and `Take` add to cash in,
 `Spend` to all costs, `AddStaffCost` (from `PayTheWages` and `Fire`) to staff costs; `TurnTheMonth` closes them first;
 the writer writes them back (`ParkWorld.PutMonthRings`). The hire screen (`ParkHireScreen.ShowAccount`) and the training
-screen read the newest month as they open. The analyser's other thirteen int rings, its gate takings, training and
-shop and sideshow totals are not kept (`ANALYSER_MONTH_CLOSE`, `GATE_FEE_ANALYSER_TOTALS`,
-`STAFF_TRAINING_ANALYSER_TOTAL`), and a written file keeps the file's bytes for them.
+screen read the newest month as they open. **The other four money rings are kept the same way** (Q386):
+`MonthTraining` (`AddTrainingCost`, from `ParkPeople.Train` after its `Spend`), `MonthGateTakings` (`Take`),
+`MonthShopTakings` and `MonthSideshowTakings` (`AddShopTakings`, `AddSideshowTakings`, from the charge by the item's
+`UiType`); `TurnTheMonth` closes the seven in the close's order and the writer writes them (`ParkWorld.MonthRingSet`).
+Nothing here reads them: the finances screen is not built, and the original's reads them from a file this game wrote.
+The analyser's other nine int rings are not kept (`ANALYSER_MONTH_CLOSE`), nor its lifetime visitors and dearest
+ticket (`GATE_FEE_ANALYSER_TOTALS`, `FUN_004c7520`), and a written file keeps the file's bytes for them.
 
 #### The first row is picked as a list fills
 

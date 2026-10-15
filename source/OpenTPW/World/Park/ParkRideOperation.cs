@@ -1257,8 +1257,9 @@ public sealed class ParkRideOperation
 	/// <b>A guest pays on LEAVING, not on boarding</b>: read the price from the object (<c>mPricePerUse</c>,
 	/// <c>+0x194</c>), bank it and credit the object (<c>FUN_004e16b0</c>, <see cref="ParkState.TakeAt"/>), play a
 	/// sound at the guest, and subtract the price from the guest's cash at <c>+0x1a0</c>. A price of nought skips all
-	/// of it - which is this park's one ride, priced free; the Jungle Spray charges 20 and the Drinks Shop 30. Counted,
-	/// not built: the sound, and a shop's or sideshow's month totals in the park analyser and its challenge posts.
+	/// of it - which is this park's one ride, priced free; the Jungle Spray charges 20 and the Drinks Shop 30. A shop's or
+	/// sideshow's price goes onto the park analyser's month of its takings. Counted, not built: the sound and the
+	/// challenge posts.
 	/// </para>
 	/// <para>
 	/// <b>There is no affordability test and no clamp, and both are the original's.</b> It subtracts
@@ -1278,11 +1279,15 @@ public sealed class ParkRideOperation
 		_state.TakeAt( ride.ThingId, price );
 
 		// FUN_004e16b0's shop and sideshow arms add the price to the park analyser's month totals (+0x20130, 0x004e1711;
-		// +0x20380, 0x004e18a6), which the month's change pushes into its 144-month rings, and post it to the
-		// challenge manager, which takes it only while a challenge of that type is on. A ride's does neither.
+		// +0x20380, 0x004e18a6) and post it to the challenge manager, which takes it only while a challenge of that type
+		// is on. A ride's does neither.
 		if ( uiType is ShopUiType or SideshowUiType )
 		{
-			Unimplemented.Report( "CHARGE_ANALYSER_MONTH_TOTAL" );
+			if ( uiType == ShopUiType )
+				_state.AddShopTakings( price );
+			else
+				_state.AddSideshowTakings( price );
+
 			Unimplemented.Report( "CHARGE_CHALLENGE_POST" );
 		}
 

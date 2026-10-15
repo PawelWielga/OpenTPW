@@ -2129,6 +2129,10 @@ public sealed partial class ParkWorld : IParkInitialState
 				MonthCosts = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthCostsRing ), ParkMonthRing.Size ) );
 				MonthStaffCosts = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthStaffCostsRing ), ParkMonthRing.Size ) );
 				MonthCashIn = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthCashInRing ), ParkMonthRing.Size ) );
+				MonthTraining = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthTrainingRing ), ParkMonthRing.Size ) );
+				MonthGateTakings = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthGateTakingsRing ), ParkMonthRing.Size ) );
+				MonthShopTakings = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthShopTakingsRing ), ParkMonthRing.Size ) );
+				MonthSideshowTakings = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthSideshowTakingsRing ), ParkMonthRing.Size ) );
 			}
 
 			_things.Add( new( id, model ) );
@@ -2719,6 +2723,18 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// <summary>The park analyser's month of every deposit (<c>+0x1fc90</c>), as <see cref="MonthCosts"/>.</summary>
 	public ParkMonthRing? MonthCashIn { get; private set; }
 
+	/// <summary>The park analyser's month of training paid (<c>+0x1fa40</c>), as <see cref="MonthCosts"/>.</summary>
+	public ParkMonthRing? MonthTraining { get; private set; }
+
+	/// <summary>The park analyser's month of admission fees (<c>+0x1fee0</c>), as <see cref="MonthCosts"/>.</summary>
+	public ParkMonthRing? MonthGateTakings { get; private set; }
+
+	/// <summary>The park analyser's month of what the shops have charged (<c>+0x20130</c>), as <see cref="MonthCosts"/>.</summary>
+	public ParkMonthRing? MonthShopTakings { get; private set; }
+
+	/// <summary>The park analyser's month of what the sideshows have charged (<c>+0x20380</c>), as <see cref="MonthCosts"/>.</summary>
+	public ParkMonthRing? MonthSideshowTakings { get; private set; }
+
 	/// <summary>
 	/// Where the analyser's first int ring (<c>+0x1f100</c>) starts in its record: the sixteen of
 	/// <c>FUN_004c5d70</c>'s read lie one after another from here, <see cref="ParkMonthRing.Size"/> bytes apiece, in
@@ -2726,25 +2742,42 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// </summary>
 	private const int AnalyserIntRingsAt = 62598;
 
-	/// <summary>The money rings' places among those sixteen: <c>+0x1f5a0</c>, <c>+0x1f7f0</c>, <c>+0x1fc90</c>.</summary>
-	private const int MonthCostsRing = 2, MonthStaffCostsRing = 3, MonthCashInRing = 5;
+	/// <summary>
+	/// The money rings' places among those sixteen: <c>+0x1f5a0</c>, <c>+0x1f7f0</c>, <c>+0x1fa40</c>, <c>+0x1fc90</c>,
+	/// <c>+0x1fee0</c>, <c>+0x20130</c>, <c>+0x20380</c>.
+	/// </summary>
+	private const int MonthCostsRing = 2, MonthStaffCostsRing = 3, MonthTrainingRing = 4, MonthCashInRing = 5,
+		MonthGateTakingsRing = 6, MonthShopTakingsRing = 7, MonthSideshowTakingsRing = 8;
 
 	private static int AnalyserMonthRingAt( int ring ) => AnalyserIntRingsAt + ring * ParkMonthRing.Size;
 
 	/// <summary>
-	/// Writes the analyser's three money rings over the file's in <paramref name="body"/>, a copy of this park's own.
+	/// The park analyser's seven money rings, in the order its month's close takes them (<c>FUN_004c7720</c>): all
+	/// costs, staff costs, training, cash in, gate takings, shop takings and sideshow takings.
+	/// </summary>
+	public readonly record struct MonthRingSet( ParkMonthRing Costs, ParkMonthRing StaffCosts, ParkMonthRing Training,
+		ParkMonthRing CashIn, ParkMonthRing GateTakings, ParkMonthRing ShopTakings, ParkMonthRing SideshowTakings );
+
+	/// <summary>
+	/// Writes the analyser's seven money rings over the file's in <paramref name="body"/>, a copy of this park's own.
 	/// A park with no analyser is left alone.
 	/// </summary>
-	public void PutMonthRings( byte[] body, ParkMonthRing costs, ParkMonthRing staffCosts, ParkMonthRing cashIn )
+	public void PutMonthRings( byte[] body, MonthRingSet rings )
 	{
 		ArgumentNullException.ThrowIfNull( body );
 
 		if ( AnalyserAt < 0 )
 			return;
 
-		costs.Write( body.AsSpan( AnalyserAt + AnalyserMonthRingAt( MonthCostsRing ), ParkMonthRing.Size ) );
-		staffCosts.Write( body.AsSpan( AnalyserAt + AnalyserMonthRingAt( MonthStaffCostsRing ), ParkMonthRing.Size ) );
-		cashIn.Write( body.AsSpan( AnalyserAt + AnalyserMonthRingAt( MonthCashInRing ), ParkMonthRing.Size ) );
+		void Put( ParkMonthRing ring, int at ) => ring.Write( body.AsSpan( AnalyserAt + AnalyserMonthRingAt( at ), ParkMonthRing.Size ) );
+
+		Put( rings.Costs, MonthCostsRing );
+		Put( rings.StaffCosts, MonthStaffCostsRing );
+		Put( rings.Training, MonthTrainingRing );
+		Put( rings.CashIn, MonthCashInRing );
+		Put( rings.GateTakings, MonthGateTakingsRing );
+		Put( rings.ShopTakings, MonthShopTakingsRing );
+		Put( rings.SideshowTakings, MonthSideshowTakingsRing );
 	}
 
 	/// <summary>
