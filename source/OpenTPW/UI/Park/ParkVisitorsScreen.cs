@@ -23,18 +23,20 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
-/// <b>The fifth column is left blank.</b> <b>UITEXT row 117 is literally <c>"?"</c> in the shipped string file</b>, so
-/// the original ships that column unnamed too; its row adder fills it from the guest's last thought (<c>0x0049385a</c>),
-/// which <see cref="Peep.Thoughts"/> keeps and this column does not show. It is headed as the game heads it and left
-/// empty. Rides Ridden is the guest's <see cref="Peep.NumRides"/> (<c>0x00493850</c>); Time In Park is
-/// <see cref="HoursIn"/>, lettered by <see cref="TimeText"/>.
+/// <b>The fifth column is the guest's last thought, as a picture.</b> <b>UITEXT row 117 is literally <c>"?"</c> in the
+/// shipped string file</b>, so the original heads it so too; the cell shows the part of <c>thoughts.MD2</c> its value
+/// numbers, the last thought less one (<see cref="ThoughtPart"/>). Rides Ridden is the guest's
+/// <see cref="Peep.NumRides"/> (<c>0x00493850</c>); Time In Park is <see cref="HoursIn"/>, lettered by
+/// <see cref="TimeText"/>.
 /// </para>
 ///
 /// <para>
 /// <b>The styler <c>FUN_004939d0</c> makes the other cells</b>: the visitor number a cell lettering UITEXT 457 at nought
 /// (<c>FUN_00490c30</c>, its setter <c>0x00490dc0</c>), the time in park hours or days (<c>FUN_00490e60</c>, its setter
 /// <c>0x00490ff0</c>), the cash a money cell (<c>FUN_00490250</c>), and the happiness a
-/// bar in <c>happygrad.wct</c> inset 8 (<c>FUN_00477ff0</c>, <c>FUN_00485e30( cell, 0, 8 )</c>). See <see cref="RowOf"/>.
+/// bar in <c>happygrad.wct</c> inset 8 (<c>FUN_00477ff0</c>, <c>FUN_00485e30( cell, 0, 8 )</c>), and the thought the mesh
+/// the game files under its first node's name, <c>ti_hungry</c>, which is <c>thoughts.MD2</c>, inset 4 across
+/// (<c>FUN_00485e30( cell, 4, 0 )</c>). See <see cref="RowOf"/>.
 /// </para>
 /// </summary>
 internal sealed class ParkVisitorsScreen : UiWindow
@@ -55,6 +57,13 @@ internal sealed class ParkVisitorsScreen : UiWindow
 	/// "How allpeeps keeps itself current".
 	/// </summary>
 	private const long RefreshEvery = 2000;
+
+	/// <summary>
+	/// The thought column's mesh: <c>ui.wad</c>'s <c>thoughts.MD2</c>, which the original files under its first node's
+	/// name, <c>ti_hungry</c> (<c>FUN_00489060</c>), the name the styler asks for. Its seventeen parts are thoughts 1 to
+	/// 17's pictures, hungry first and confused last.
+	/// </summary>
+	internal const string ThoughtsMesh = "thoughts";
 
 	private readonly UiList _list;
 
@@ -104,15 +113,8 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			// A right click on the list moves the camera to the selected row's guest and closes the screen (0x004934c5).
 			RowRightClicked = GoTo,
 
-			// The screen's handler keeps the list's 0x406 (0x00493479). The fifth column is not built, so a sort on it
-			// leaves the rows as they stand: counted.
-			SortChanged = word =>
-			{
-				_sort = word;
-
-				if ( Math.Abs( word ) == 5 )
-					Unimplemented.Report( "VISITOR_SORT_ON_UNBUILT_COLUMN" );
-			},
+			// The screen's handler keeps the list's 0x406 (0x00493479).
+			SortChanged = word => _sort = word,
 			Columns = [(297, 689), (701, 948), (966, 1213), (1233, 1358), (1372, 1474), (1478, 1718)],
 
 			// The styler's FUN_0065c428( across, 1 ) on each cell: the number and the time centred, the cash to the right,
@@ -126,7 +128,11 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			// The styler's happiness cell, inset 8 (FUN_004939d0).
 			BarColumns = [false, false, false, false, false, true],
 			BarSkins = [null, null, null, null, null, ParkObjectWindow.UiStatBar.HappyGrad],
-			BarInset = 8
+			BarInset = 8,
+
+			// The styler's thought cell (FUN_004939d0): the mesh filed as "ti_hungry", inset 4 across.
+			MeshColumns = [null, null, null, null, ThoughtsMesh, null],
+			MeshInset = 4
 		} );
 
 		// Handed over while the list is still empty, so it sorts nothing.
@@ -164,9 +170,6 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			_people.GuestArrived += Arrived;
 			_people.GuestLeaving += Leaving;
 		}
-
-		// Counted once, as the screen opens - not once a frame. See RefreshEvery.
-		Unimplemented.Report( "VISITOR_COLUMN_117_UNNAMED" );
 	}
 
 	private UiButton CrossLink( int id, int top, int help, string mesh, int screen )
@@ -249,8 +252,19 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			"",
 			""
 		],
-		Numbers: [guest.VisitorNumber, guest.Cash, hours, guest.NumRides, 0, ParkItemsScreen.Bar( (int)guest.Happiness )] );
+		Numbers:
+		[
+			guest.VisitorNumber, guest.Cash, hours, guest.NumRides, ThoughtPart( guest.Thoughts.Last ),
+			ParkItemsScreen.Bar( (int)guest.Happiness )
+		] );
 	}
+
+	/// <summary>
+	/// The thought cell's value (the adder's <c>0x0049385a</c>, the rewrite's <c>0x0049330c</c>): the last thought less
+	/// one, the part of <see cref="ThoughtsMesh"/> it shows, or 999 with none. Thoughts 18 to 22 and 999 are past its
+	/// last part, so the cell shows nothing; the list sorts the column on this number.
+	/// </summary>
+	internal static int ThoughtPart( int thought ) => thought == 0 ? 999 : thought - 1;
 
 	/// <summary>
 	/// A stay's whole park hours (<c>0x00493834</c>): <c>FUN_004f8730</c> takes it times <c>mFunnySecsPerRealSec</c>,
@@ -280,11 +294,12 @@ internal sealed class ParkVisitorsScreen : UiWindow
 		=> number == 0 ? Localization.Get( UIStrings.NewVisitor ) : $"{number}";
 
 	/// <summary>
-	/// A row for the log: id, the number's text, the cash's, the time in park's with its hours, the rides ridden and the
-	/// happiness bar.
+	/// A row for the log: id, the number's text, the cash's, the time in park's with its hours, the rides ridden, the
+	/// thought's part and the happiness bar.
 	/// </summary>
 	private static string Census( UiList.Row row )
-		=> $"{row.Id} {row.Name}: {row.Values![0]} {row.Values[1]} ({row.Numbers![2]} h) {row.Values[2]} {row.Numbers[5]}";
+		=> $"{row.Id} {row.Name}: {row.Values![0]} {row.Values[1]} ({row.Numbers![2]} h) {row.Values[2]} "
+			+ $"part {row.Numbers[4]} {row.Numbers[5]}";
 
 	/// <summary>A guest was made while the list is open: their row goes in by sort order (<c>FUN_00493c50</c>).</summary>
 	private void Arrived( Peep guest )

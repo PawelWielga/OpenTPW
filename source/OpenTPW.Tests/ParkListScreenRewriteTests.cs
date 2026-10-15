@@ -519,7 +519,7 @@ public class ParkListScreenRewriteTests
 		Assert.AreEqual( 921, list.Rows[0].Numbers![5], "the rewrite: (90 << 10) / 100" );
 		Assert.AreEqual( 921, first[0].Units );
 		Assert.IsTrue( lines.Any( line => line.StartsWith( "Visitors list: " ) && line.Contains( " rows rewritten, row 0 " )
-			&& line.EndsWith( "New Visitor: $ 306 5 days (125 h) 0 921" ) ), "the rewrite's log line: its stay times four" );
+			&& line.EndsWith( "New Visitor: $ 306 5 days (125 h) 0 part 999 921" ) ), "the rewrite's log line: its stay times four" );
 	}
 
 	/// <summary>
@@ -595,14 +595,91 @@ public class ParkListScreenRewriteTests
 
 		Assert.IsTrue( list.Rows.Any( row => row.Values![1] == "3 days" ), "the last to arrive, 95 hours" );
 
-		var counted = Times( "VISITOR_SORT_ON_UNBUILT_COLUMN" );
-
 		((UiButton)list.Children.Single( child => child.Id == 0x12 )).Clicked!();
 
 		var hoursInOrder = list.Rows.Select( row => row.Numbers![2] ).ToArray();
 		Assert.IsTrue( hoursInOrder.Zip( hoursInOrder.Skip( 1 ), ( a, b ) => a <= b ).All( ordered => ordered ), "by hours" );
 		Assert.IsTrue( hoursInOrder.Distinct().Count() > 1, "and the hours differ" );
-		Assert.AreEqual( counted, Times( "VISITOR_SORT_ON_UNBUILT_COLUMN" ), "a sort on the time counts nothing" );
+
+		typeof( ParkVisitorsScreen ).GetField( "_sort", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, 1 );
+	}
+
+	/// <summary>
+	/// <b>A visitors row shows the guest's last thought as a part of <c>thoughts.MD2</c></b>, the thought less one, or 999,
+	/// past every part, with none (the adder <c>0x0049385a</c>, the rewrite <c>0x0049330c</c>); the cell is the column inset 4
+	/// across (<c>FUN_00485e30( cell, 4, 0 )</c>), and the list sorts on its number (<c>docs/exe/hud.md</c>, "The visitors
+	/// rows").
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the part the thought itself, nought or less one with none; the column's number nought; the mesh another
+	/// or in another column; the cell not inset, inset down too, not made, not framed or lettered; a sort on it counted.
+	/// </remarks>
+	[TestMethod]
+	public void TheVisitorsRowsShowTheLastThoughtAsAPartOfTheThoughtsMesh()
+	{
+		Assert.AreEqual( 999, ParkVisitorsScreen.ThoughtPart( 0 ) );
+		Assert.AreEqual( 0, ParkVisitorsScreen.ThoughtPart( 1 ), "hungry, the first part" );
+		Assert.AreEqual( 16, ParkVisitorsScreen.ThoughtPart( Thoughts.Confused ), "confused, the last" );
+
+		// The parts are the model's meshes, in order: the original files the model under the first one's name.
+		var parts = new ModelFile( $"ui/{ParkVisitorsScreen.ThoughtsMesh}.md2" ).Meshes
+			.Select( each => each.Name.TrimEnd( '\0' ) ).ToArray();
+		Assert.AreEqual( 17, parts.Length );
+		Assert.AreEqual( ("ti_hungry", "ti_sick", "ti_confused"), (parts[0], parts[13], parts[16]), "thoughts 1, 0xe and 0x11" );
+
+		var guests = people.Peeps.ToArray();
+		var thoughts = new[] { 1, 0, 0xe, 0x12 };
+
+		for ( var each = 0; each < guests.Length; ++each )
+			guests[each].Thoughts.Restore( thoughts[each % thoughts.Length], 0 );
+
+		Time.PinWall( 1000 );
+
+		var unnamed = Times( "VISITOR_COLUMN_117_UNNAMED" );
+		var sorts = Times( "VISITOR_SORT_ON_UNBUILT_COLUMN" );
+		var screen = new ParkVisitorsScreen( stack );
+		var list = Field<UiList>( screen, "_list" );
+
+		stack.Open( screen );
+		Assert.AreEqual( unnamed, Times( "VISITOR_COLUMN_117_UNNAMED" ), "the column is built: nothing counted" );
+
+		foreach ( var guest in guests )
+		{
+			var row = list.Rows.Single( each => each.Id == guest.ThingId );
+			Assert.AreEqual( ParkVisitorsScreen.ThoughtPart( guest.Thoughts.Last ), row.Numbers![4], $"guest {guest.ThingId}" );
+			Assert.AreEqual( "", row.Values![3], "the thought lettered nowhere" );
+		}
+
+		CollectionAssert.AreEqual( new[] { null, null, null, null, ParkVisitorsScreen.ThoughtsMesh, null }, list.MeshColumns );
+
+		// The column (1372, 1474), inset 4 across and none down.
+		var cells = list.Children.Where( child => child.Rect.Left == 1372 + 4 ).ToArray();
+		Assert.AreEqual( list.VisibleRows, cells.Length, "one thought cell a row" );
+		Assert.AreEqual( (1474 - 4, 315, 315 + list.RowHeight),
+			(cells[0].Rect.Right, cells[0].Rect.Top, cells[0].Rect.Bottom), "the column inset 4 across" );
+
+		var first = cells.MinBy( cell => cell.Rect.Top )!;
+		Assert.AreEqual( list.Rows[0].Numbers![4], first.Frame, "the first row's part" );
+		Assert.IsNull( first.Text );
+
+		// The rewrite takes the thought as it stands.
+		var top = guests.Single( guest => guest.ThingId == list.Rows[0].Id );
+		top.Thoughts.Restore( 9, 0 );
+		Time.PinWall( 3000 );
+		screen.Update();
+
+		Assert.AreEqual( 8, list.Rows[0].Numbers![4], "happy, part 8" );
+		Assert.AreEqual( 8, first.Frame );
+		Assert.IsTrue( lines.Any( line => line.StartsWith( "Visitors list: " ) && line.Contains( " rows rewritten, row 0 " )
+			&& line.Contains( " part 8 " ) ), "the rewrite's log line" );
+
+		// The "?" heading sorts on the part: none (999) last.
+		((UiButton)list.Children.Single( child => child.Id == 0x14 )).Clicked!();
+
+		var sorted = list.Rows.Select( row => row.Numbers![4] ).ToArray();
+		Assert.IsTrue( sorted.Zip( sorted.Skip( 1 ), ( a, b ) => a <= b ).All( ordered => ordered ), "by the part" );
+		Assert.AreEqual( 999, sorted[^1] );
+		Assert.AreEqual( sorts, Times( "VISITOR_SORT_ON_UNBUILT_COLUMN" ), "a sort on the thought counts nothing" );
 
 		typeof( ParkVisitorsScreen ).GetField( "_sort", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, 1 );
 	}

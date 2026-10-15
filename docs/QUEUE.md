@@ -44,16 +44,19 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q373. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q374. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q373 (`hud.md`, "The thought"): the thought cell is built. In no game run: thoughts 19 to 22, a thought changed
+  under this game's open screen (its two-second rewrite is tested, not run), Full Simulation (not asked: the screen is
+  either mode's), the other three themes.
   From Q372 (`hud.md`, "The visitors rows", "The time in park"): the time in park is built. Its rate is
   `GameCalendar.Rate`, the clock constructor's, where the original's is the park calendar's own `+0x1c` (the save's
   clock block is not read: Q149). The original's larger lettering clips a nine-digit count at both ends of its cell,
   where this game's fits. In no game run: an arrival's row with the screen open (its stay nought in either game), Full
   Simulation (not asked: the screen is either mode's), the other three themes.
   From Q371 (`hud.md`, "The visitors rows: a number, a money cell, a bar"): the visitors' number, cash and happiness are
-  built, and the time in park (Q372). **Not built**: the thought's icon (`ti_hungry`, `+0x30`), counted; the row height from the font
+  built, and the time in park (Q372) and the thought (Q373). **Not built**: the row height from the font
   (the original's rows 55.8 units apart, this game's 44); the alignment message `0xc00`'s handler (read from the frame
   only); the all-staff styler's own alignments (`FUN_00496d20`, not read). In no game run: a guest with negative cash,
   a happiness past 255, Full Simulation (not asked: the screen is either mode's).

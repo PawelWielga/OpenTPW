@@ -41,6 +41,7 @@ place to look for tools. Each file's docstring is its manual.
 `happygrad.wct` bar about 0.02 short** (its greyish-teal texels spread 30 or less): use `barsplit.py` for that one (Q369) |
 | `lib/barsplit.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar's fill by where its grey track starts (the first pixel of the middle row, from the left, with a spread of 12 or less and a mean of 40 to 75), as a share of the width: right for any ramp, `happygrad.wct`'s too, and blind to a highlighted row's band past the bar's end (Q369). **A lettered number's anti-aliased edge passes its track test**: where a cell may hold text, not a bar, judge "no bar" by `listcells.colour` (Q371) |
 | `lib/listcells.py <png> <y0> <y1> <x0,x1> ...` | A list row's cells in a frame of either game, virtual units: `aligns( png, y0, y1, cols )` where each column's white lettering stands in the row band (start, end, middle as shares of the column, and `left`/`centre`/`right`), `bars( png, ys, x0, x1, h )` `barsplit.py` down a column of bars, `colour( png, ys, x0, x1, h )` each bar rect's middle row in colour (spread over 60: a ramp is, lettering is not). The visitors list's alignments in both games (Q371) |
+| `lib/texmatch.py <png> <x0> <y0> <x1> <y1> <texture.png>...` | Which of a set of textures a frame of either game draws in a cell, virtual units: the box round the cell's light pixels, each texture's opaque box stretched onto it, scored by the mean colour difference on the texture's darker (icon) pixels; `match()` answers the best, its score and the next best's, or None for no picture. **Read the margin**: a thought's thumbs-up and thumbs-down differ by 2 to 4 in the original's frames, every other pair by 8 or more. The visitors' thought cells in both games, the textures from `wctpng.py` (Q373) |
 | `lib/rectcolour.py <png> <x0> <y0> <x1> <y1> ...` | What fills a framed control in a frame of either game, by its layout rectangle (its outer 4 per cent left out): the shares of yellow lettering, white, teal (`!cbut`'s body) and black, and the mean colour, a line a rectangle. A heading framed or bare, its lettering yellow or white (Q370) |
 | `lib/mutate.py <mutations.py>` | Putting an item's bugs back, in parallel, in copies of the tree (`WORKFLOW.md`, "Verifying") |
 | `lib/stryker.sh <project> <File.cs>...` | Mechanical bugs in a file, Stryker.NET |
@@ -734,6 +735,11 @@ GH=766` there, or the pointer is off):
   x 100..450, y 200..420), never by a fixed darkness level: the original's terrain is lit darker and its rocks'
   outlines touch the water. Every saved file of the same scene differs in bytes (the park runs before the pause).
   The lobby's player slot opens only Lost Kingdom for the reference player: the other islands are seen far off.
+- **A list sorted in the original, whose values move as its park runs** (Q373): stamp the heading's click in the run's
+  log (`echo "== click $(date +%s.%N)"`) beside `thingwords.py`'s poll, and judge the ORDER by the values polled at the
+  click and each row's picture by those at the last two-second rewrite before the frame: the rewrite changes a row's
+  value in place and moves nothing, so a thought that changed after the click stands out of order (`q373/orig/b`). The
+  "?" heading is the 1024 x 768 point (711, 128).
 
 ## The original under Proton
 

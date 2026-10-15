@@ -1447,9 +1447,9 @@ the two land rows are sorted in with the rest (`FUN_004aaf70` adds them through 
 whenever a sort is set, `HeadingClicked` is `FUN_00665a44` and `Sort` `FUN_006628f4`; a heading is a button
 (`AddHeading`). The hire, buy and visitors screens each keep their word in a static for the session. The all-staff
 and all-items lists are given no sort, stand as added, and count a heading's click (`LIST_HEADING_SORT_NOT_BUILT`).
-A sort on the visitors' fifth column, not built, leaves the rows as they stand (`VISITOR_SORT_ON_UNBUILT_COLUMN`); Time
-In Park sorts on its hours (Q372). The buy list's rows are handed over in name order, where the original walks its
-catalogue (`FUN_00412e60`): that shows only among rows equal on the sorted column.
+Time In Park sorts on its hours (Q372), the "?" column on its thought's part (Q373). The buy list's rows are
+handed over in name order, where the original walks its catalogue (`FUN_00412e60`): that shows only among rows equal
+on the sorted column.
 
 **Measured, both games side by side** (Q130e, 2026-10-07, each predicted first; `q130e/`). The original, on the save's
 own sixteen candidates (every photograph before `mGameTick` 858, when the first times out), and OpenTPW with the park
@@ -1826,13 +1826,39 @@ styler `FUN_004939d0`, which makes the six cells, each in the font `[0x007508b4]
 | Cash Remaining | a money cell `FUN_00490250` ("The all-items rows", above) | `( 2, 1 )` | `+0x1a0` |
 | Time In Park | `FUN_00490e60` (vtable `0x006ff4a0`, setter `0x00490ff0`): by hours, below | `( 1, 1 )` | `FUN_004fd950`'s stay through `FUN_004f8730`, `__alldiv` 36,000,000,000: hours |
 | Rides Ridden | the number painter `FUN_0048fde0` | none set | `+0x1c4` |
-| ? | the mesh `ti_hungry`, inset `( 4, 0 )` | | `+0x30` less 1, or 999 at nought |
+| ? | a type-6 cell wearing the mesh filed as `ti_hungry`, `thoughts.MD2`, inset `( 4, 0 )`: below | | `+0x30` less 1, or 999 at nought |
 | Happiness | a bar in `happygrad.wct` (`FUN_00477ff0`), inset `( 0, 8 )` | | `((__ftol( +0x19c ) & 0xff) << 10) / 100` (`0x00493870`) |
 
 `FUN_0065c428( across, down )` posts `0xc00` with the two bytes to the cell's text; its handler sits behind a jump table
 and is not read. **Measured in the original's frame instead** (`q371/measure.py`'s `aligns`, the lettering's extent in
 its column): the number centred (its middle 0.495 of the column), the cash to the right (its end 0.976), the rides from
-the left (its start 0.032), as `( 2, 1 )` reads right on the park status screen above. The thought's frames are not read.
+the left (its start 0.032), as `( 2, 1 )` reads right on the park status screen above.
+
+**The thought** (read 2026-10-15, Q373). The factory `FUN_004938c0` makes the row's fifth cell a **type 6** control
+(`FUN_0065dd7b( 6, 1, 4, ... )` at `0x0049399b`: `FUN_0066d9e0`, vtable `0x00705c58`), where the others are type 1. Its
+value setter (vtable `+0x1c`, `0x0066da4d`) keeps the value at `+0x13c`, hands it to the text and the skin as the **state
+word** (flag 1, data `+4`), then calls the base's (`0x00661525`, flag `0x80` alone, which a mesh skin passes over). The
+styler's `FUN_00659bc9( "ti_hungry" )` clones a template from the list `[0x00faa610]`: `FUN_00489060` files every
+`ui.wad` model whose name has no `!` under its first node's name as a mesh skin (`FUN_00476a90`, vtable `0x006fee10`),
+so `ti_hungry` is **`thoughts.MD2`**, seventeen nodes, each wearing its own `ti_*.wct`:
+
+| Part | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Node | hungry | thirsty | hungthir | toilet | good | costhigh | litter | superhappy | happy | normal | sad | bored | angry | sick | scared | queuetoolong | confused |
+
+(each `ti_` and the node's name; `ti_costhigh` wears `ti_bad`, `ti_superhappy` `ti_suhappy`, `ti_queuetoolong`
+`ti_queuebad`). The skin's `+0xc` (`0x00476f10`, `0x00476e80`) shows the node its state and frame (`+0xa`, nought here)
+count to down the model's node list and hides the one before (`|= 0x8010`); a count past the last node shows nothing.
+So thoughts 1 to 17 show parts 0 to 16, and 18 to 22 and none (999) show nothing. `FUN_00485e30( cell, 4, 0 )` is
+`FUN_0065a43e( 4, 0, -4, 0 )`: four units in from the left and right, none from the top and bottom. The two-second
+rewrite hands the same value (`0x0049330c`) and, as for every column, moves no row.
+
+Measured in the original under Proton on `q373/thought.TPWS` (`q371/visitors.TPWS` with ten guests' `mLastThought`
+written at the record's `+386`; `q373/orig/a` and `b`, `thingwords.py` on `+0x30`): 0.58 s after V the ten cells were
+confused, bored, hungry, bad, thirsty, none, bored, toilet, hungthir and bad, each its guest's polled thought less one
+(18 none), four of them already moved off the file's by its running park (`lib/texmatch.py`, the icon's pixels against
+the 17 textures). The "?" heading's click sorted on the thought as it stood then: a guest whose thought went from 3 to 6
+after the click stood between the thirsty and the toilet rows, drawn bad from the next rewrite on (`q373/orig/b`).
 
 **The time in park** (read 2026-10-14, Q372). The stay is `FUN_004fd950`: `mGameTick` less the guest's `+0x1d4`, taken
 unsigned and shifted right by two (`SHR` at `0x004fd963`). `FUN_004f8730` on the park calendar (world `+0x2a0`, its
@@ -1876,7 +1902,7 @@ binary): `row 42 New Visitor: $ 684 0 512`, `row 38 1: $ 306 1 122`, ... `row 37
 its bars 0.5, 0.125, 0.33, 0.902, 1.0, 0.714, 0.527 and 0.5 (the file's happiness); the number centred (0.497), the cash
 right (0.974), the rides left (0.034) (`q371/side-by-side.png`: the original, this, main). Main's build (`run-control2`)
 lettered 0 and the cash and happiness as bare numbers, every one from the right, and drew no bar. **Not built**: the
-thought's icon (`VISITOR_COLUMN_117_UNNAMED`); the row height from the font (the original's rows 55.8 units apart, this
+row height from the font (the original's rows 55.8 units apart, this
 game's 44); the first row picked as the list fills (Q232); the scrollbar.
 
 **OpenTPW** (Q372): `Peep.StayAt`, `ParkVisitorsScreen.HoursIn` and `TimeText`; `RowOf`'s `rewrite` shifts the stay.
@@ -1886,6 +1912,15 @@ The log's row reads `<cash> <time> (<hours> h) <rides> <bar>`. On `q372/time.TPW
 (93660909 h)`, `32 0 hours`; the rewrite's row 0 `13 days (316 h)`; the heading's click `sort 3`, `33 7 -137765918`
 first, then 0, 20, 95, 100, 195, 200, 316, 316, 320, 325, 329, 833 hours (`2-by-time.png`). Main's build lettered no
 time and counted `VISITOR_TIME_IN_PARK` and the sort. This game's smaller lettering fits the nine digits in the cell.
+
+**OpenTPW** (Q373): `UiList.MeshColumns` and `MeshInset` (a mesh cell framed by the row's number for its column, nothing
+past the mesh's last part), `ParkVisitorsScreen.ThoughtsMesh` and `ThoughtPart`; the log's row reads `... <rides> part
+<part> <bar>`. On `q373/thought.TPWS`, paused at the load's tick 964 (`q373/run-fix1`, the final game binary): the fills
+`row 42 New Visitor: ... 0 part 16 512`, `38 ... part 999`, `40 part 0`, `34 part 13`, `37 part 1`, `36 part 17`, `41 part
+8`, `33 part 3`, `32 part 10`, `35 part 5`; the frame's cells confused, none, hungry, sick, thirsty, none, happy, toilet,
+sad, bad and none on the last three; the "?" heading's click `sort 5`, `40 37 33 35 41 32 34 42 36 38 39 29 31`, drawn
+hungry to confused, then five without (`q373/side-by-side.png`: the original's sorted column, then this game's). Main's
+build (`run-control1`) drew no picture and counted `VISITOR_COLUMN_117_UNNAMED` and `VISITOR_SORT_ON_UNBUILT_COLUMN`.
 
 #### The list headings' frames
 

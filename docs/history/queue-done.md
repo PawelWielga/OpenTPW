@@ -6925,6 +6925,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   four times the hours (`SHL` at `0x004932db`); a negative count by its size; the column sorts. On `q372/time.TPWS` the 13
   fills and the rewrite read as the formula at tick 964 (`run-fix3`, 7 of 7), and the original's frames read the adder's
   words before its first rewrite and the rewrite's after it, all ten rows each (`q372/orig/b`); main's lettered no time.
+- [x] **Q373. The visitors rows' thought cell, as the original's styler, type-6 cell and mesh skin make it** (a piece
+  of the old Q373, split by Claude; the rest is Q374). Built from `FUN_004939d0`, the type-6 setter `0x0066da4d` and the
+  mesh skin `0x00476e80`: the cell shows part `+0x30 - 1` of `thoughts.MD2` (the mesh filed as `ti_hungry`), nothing for
+  999 or past part 16, inset 4 across; the column sorts on it. On `q373/thought.TPWS` the 13 fills, the frame's cells and
+  the "?" sort read as predicted (`run-fix1`, 8 of 8), and the original's ten cells each matched its polled thought
+  (`q373/orig/a`, `b`); main's drew none. Mutations 12 of 12.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

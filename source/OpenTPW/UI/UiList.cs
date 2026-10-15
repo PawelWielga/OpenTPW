@@ -150,6 +150,20 @@ internal sealed class UiList : UiControl
 	private bool IsBar( int column ) => column < BarColumns.Length && BarColumns[column];
 
 	/// <summary>
+	/// Which columns draw a mesh in place of text, by column: the mesh's part numbered by the row's <see cref="Row.Numbers"/>
+	/// for that column, and nothing for a number past its last part. The visitors' styler (<c>FUN_004939d0</c>) skins its
+	/// fifth cell, a type-6 control, with <c>thoughts.MD2</c>; that control's value is its skin's state (<c>0x0066da4d</c>),
+	/// and the skin shows the part its state and frame count to (<c>0x00476e80</c>).
+	/// </summary>
+	internal string?[] MeshColumns { get; init; } = [];
+
+	/// <summary>How far a mesh cell stands in from its column's left and right: <c>FUN_00485e30( cell, 4, 0 )</c> on the
+	/// visitors' thought.</summary>
+	internal int MeshInset { get; init; }
+
+	private string? MeshOf( int column ) => column < MeshColumns.Length ? MeshColumns[column] : null;
+
+	/// <summary>
 	/// The list's flag <c>0x80</c>: the pointer moving over a row selects it, with no press (<c>FUN_006656a0</c>, from
 	/// the proc's <c>0x10001</c>), and <see cref="SelectionChanged"/> hears it as it does any other selection. Over no
 	/// row the selection stays. All seven of the original's list records carry the flag (<c>docs/exe/hud.md</c>, "Who acts on
@@ -227,6 +241,17 @@ internal sealed class UiList : UiControl
 					{
 						Rect = new UiRect( left, top + BarInset, right, top + RowHeight - BarInset ),
 						Skin = column < BarSkins.Length && BarSkins[column] is { } skin ? skin : ParkObjectWindow.UiStatBar.RideStatBar
+					} );
+
+					continue;
+				}
+
+				if ( MeshOf( column ) is { } picture )
+				{
+					cells[column] = Add( new UiControl
+					{
+						Rect = new UiRect( left + MeshInset, top, right - MeshInset, top + RowHeight ),
+						Mesh = UiMesh.Get( picture )
 					} );
 
 					continue;
@@ -640,6 +665,12 @@ internal sealed class UiList : UiControl
 
 					bar.Known = units != NoBar;
 					bar.Units = bar.Known ? units : 0;
+					continue;
+				}
+
+				if ( MeshOf( column ) != null )
+				{
+					cells[column].Frame = row.Numbers is { } parts && column < parts.Count ? parts[column] : 0;
 					continue;
 				}
 
