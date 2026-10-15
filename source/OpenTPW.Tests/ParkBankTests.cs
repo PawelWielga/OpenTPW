@@ -698,6 +698,47 @@ public class ParkBankTests
 	}
 
 	/// <summary>
+	/// <b>The analyser counts every admission fee taken and keeps the dearest</b> (<c>FUN_004c7520</c>, from
+	/// <c>FUN_004d0600</c>): the shipped file's 8 and 25 at a load, one more a fee whether it is nought or not, the dearest
+	/// raised only by a fee above it; the month's close samples the count into the 11th ring after the money rings
+	/// (<c>+0x20820</c>, <c>0x004c792a</c>) and leaves the count as it stands. A park made with no file starts at nought,
+	/// nought and an empty ring (<c>FUN_004c58c0</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the count not raised, or raised twice; the dearest raised by any fee, or never; the dearest compared at or above; the count zeroed by the close; the ring not pushed, or pushed the gate takings; the file's count, dearest or ring not read; the writer handed another ring as the visitors.</remarks>
+	[TestMethod]
+	public void TheAnalyserCountsEveryAdmissionAndClosesTheCountIntoItsEleventhRing()
+	{
+		var fresh = Bank();
+
+		Assert.AreEqual( (0, 0, -1, 0), (fresh.LifetimeVisitors, fresh.MostPaidForTicket, fresh.MonthVisitors.Current, fresh.MonthVisitors.Newest), "no file" );
+
+		var (bank, people) = Month();
+
+		Assert.AreEqual( (8, 25, 0, 0, 0), (bank.LifetimeVisitors, bank.MostPaidForTicket, bank.MonthVisitors.Current, bank.MonthVisitors.Newest, bank.MonthVisitors.Total),
+			"the shipped file's eight admissions, its 25, and one month closed on nought" );
+
+		bank.Take( 25 );
+		bank.Take( 0 );
+		Assert.AreEqual( (10, 25), (bank.LifetimeVisitors, bank.MostPaidForTicket), "a fee of nought is an admission too" );
+
+		bank.Take( 30 );
+		bank.Take( 26 );
+		bank.Take( 30 );
+		Assert.AreEqual( (13, 30), (bank.LifetimeVisitors, bank.MostPaidForTicket), "the dearest kept" );
+
+		TurnTheMonth( bank, people );
+
+		Assert.AreEqual( (1, 13, 0), (bank.MonthVisitors.Current, bank.MonthVisitors.Newest, bank.MonthVisitors.Total), "the count sampled at the close" );
+		Assert.AreEqual( (13, 30), (bank.LifetimeVisitors, bank.MostPaidForTicket), "and left as it stands" );
+		Assert.AreSame( bank.MonthVisitors, bank.MonthRings.Visitors, "the writer is handed the ring as itself" );
+
+		bank.Take( 25 );
+		TurnTheMonth( bank, people );
+
+		Assert.AreEqual( (2, 14), (bank.MonthVisitors.Current, bank.MonthVisitors.Newest) );
+	}
+
+	/// <summary>
 	/// <b>A training budget is withdrawn and buys the member points</b>: the mechanics' 25, the one step up the
 	/// original was measured with, took 563 at 5.1 and moved the grade-3 mechanic 0 to 1 (25 / 15).
 	/// </summary>

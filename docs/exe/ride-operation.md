@@ -3690,8 +3690,8 @@ queue cell, the charge through `TakeAt`); `ParkState.Take` is the gate fee; `Par
 in double ("What a thing is worth to a guest", "Where OpenTPW differs", the FPU's row), with the object's saved cost of goods
 (Q97). The four bank fields are seeded from the save, and the year's change zeroes the profit
 (`ParkState.TurnTheYear`, on `GameCalendar.YearRolled`). The analyser's money in and out are kept (Q385), and its gate, shop and sideshow takings
-(Q386; `hud.md`, "The mini-balance is a MONTHLY ACCOUNT"). Counted, not built: the gate fee's lifetime visitors and
-dearest ticket and its challenge post (`GATE_FEE_ANALYSER_TOTALS`, `GATE_FEE_CHALLENGE_POST`), the booking's (`COST_OF_GOODS_CHALLENGE_POST`), the purchase's golden-ticket arm (`PURCHASE_GOLDEN_TICKET_ARM`, on
+(Q386; `hud.md`, "The mini-balance is a MONTHLY ACCOUNT"), and the gate fee's lifetime visitors and dearest ticket
+(Q389; `hud.md`, "The lifetime visitors"). Counted, not built: the gate fee's challenge post (`GATE_FEE_CHALLENGE_POST`), the booking's (`COST_OF_GOODS_CHALLENGE_POST`), the purchase's golden-ticket arm (`PURCHASE_GOLDEN_TICKET_ARM`, on
 every such purchase, as the purchase does not ask the player's `RideIds`) and a kart or water ride's track at a sale
 (`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row is built (`hud.md`, "The mystery row"); a click on it is refused whatever tickets the player holds and counted, `MYSTERY_RIDE_PURCHASE`, as its ticket test is not built (Q141).
 

@@ -7039,6 +7039,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   worn), written as [23977, 23899]; main's build left the ring on slot 0. The original given the file closed at once
   and summed 23894, the file's own figure exactly, and graphed three park value points; main's file two. 21 bugs put
   back, 20 caught by a test, the 21st (Level's call) by the run's close line.
+- [x] **Q389. The analyser's lifetime visitors and dearest ticket, kept, and their ring.** `mLifetimeVisitors`
+  (`+0x21c08`) one more and `mMostPaidForTicket` (`+0x21c40`) raised by every admission fee (`FUN_004c7520`), the count
+  sampled into the 11th int ring (`+0x20820`) at the close; `ParkState.LifetimeVisitors`, `MostPaidForTicket`,
+  `MonthVisitors`, the file's at a load, written. In all 584 park files the ring never falls and stands at most at the
+  count; in all 578 on one slot the gate's month so far is the count less that month, times one fee.
+  `q389/run-fix1` (the final build, the stock park with its fee written to 26): 18 fees before the close on tick 1474,
+  `visitors 26`, the gate's 668 = 200 + 26 x 18, written 26, 26, [0, 26]; main's build wrote 8, 25, [0]. The original
+  given the file read them, closed 26 into its third slot and lettered "Total park visitors 26" on its park status
+  screen; main's file, 8. 20 bugs put back, all caught after a test line (Level's call).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

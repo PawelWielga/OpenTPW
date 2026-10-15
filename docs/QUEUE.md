@@ -44,18 +44,23 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q389. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q390. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q389 (`hud.md`, "The lifetime visitors"): the count, the dearest and the 11th ring are kept. Nothing here reads
+  them: the park status screen (`PARK_STATUS_SCREEN`, which letters the count) and the golden tickets (Q141) are not
+  built; the gate fee's challenge message is counted (`GATE_FEE_CHALLENGE_POST`). The analyser's other six int rings
+  are still the file's bytes (`ANALYSER_MONTH_CLOSE`); the 10th (`FUN_004c7fa0`) and the 12th (`FUN_004c8070`) stand
+  beside it in the close. In no game run: a fee of nought, a fee lowered below the dearest, a ring gone round 144
+  months, Full Simulation (not asked: the gate fee is either mode's), the other three themes.
   From Q388 (`hud.md`, "The park value"): the park value ring is kept. Nothing here reads it (no finances or loans
   screen); the original's kept answer (`+0x1f0e8` to `+0x1f0f0`) is the file's bytes, and this game sums afresh where
   the original's close can reuse a sum of the same quarter tick. In no game run: an upgraded or condemned object, a
   cell bought outside the park, a ring gone round 144 months, Full Simulation (not asked: the ring is either mode's),
   the other three themes.
-  From Q387 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the balance ring is kept. The analyser's other seven
-  int rings are not (`ANALYSER_MONTH_CLOSE`), so a file this game writes past a month holds them a slot behind the
-  money rings; the lifetime visitors (`+0x20820` from `+0x21c08`, which `GATE_FEE_ANALYSER_TOTALS` would feed) is the
-  nearest. The finances screen is not built here. In no game run: a balance below
+  From Q387 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the balance ring is kept. The analyser's other
+  int rings are not (`ANALYSER_MONTH_CLOSE`; the lifetime visitors' is kept, Q389), so a file this game writes past a
+  month holds them a slot behind the money rings. The finances screen is not built here. In no game run: a balance below
   nought at a close, a loan's instalment in the month (no screen), a ring gone round 144 months, Full Simulation (not
   asked: the ring is either mode's), the other three themes.
   From Q386 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the finances screen (`FUN_0049a2e0`, F or the Money
@@ -64,9 +69,9 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   member's training, a ring gone round 144 months, Full Simulation (not asked: the rings are either mode's), the other
   three themes.
   From Q385 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the analyser's other nine int rings (the month-end
-  balance, `+0x1f350`, the lifetime visitors and more; Q386 named each) are not kept, nor its lifetime visitors and
-  dearest ticket, and a written file keeps the file's bytes for them (`ANALYSER_MONTH_CLOSE`,
-  `GATE_FEE_ANALYSER_TOTALS`). A park made with no file starts the rings empty and is not written
+  balance, `+0x1f350`, the lifetime visitors and more; Q386 named each; Q387, Q388 and Q389 keep three, and the
+  lifetime visitors and dearest ticket) are not kept, and a written file keeps the file's bytes for them
+  (`ANALYSER_MONTH_CLOSE`). A park made with no file starts the rings empty and is not written
   (`SAVE_PARK_WITH_NO_FILE`). The original closes a month on the first tick after loading a file this game saved past
   its own first month (this game's calendar, Q149). In no game run: a loan taken or paid (no screen), a month with
   withdrawals off, a ring gone round 144 months, Full Simulation (not asked: the account is either mode's), the other

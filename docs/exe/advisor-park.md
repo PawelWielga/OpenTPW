@@ -1935,8 +1935,8 @@ does.
 | The analyser's other stamps | each written as its event happens | `mLastObjectBuilt` kept and written ("The newest build", below); the other four the file's |
 
 **Not built or not seen.** Four of the analyser's five other stamps (`mLastStrike`, `mLastPuke`, `mLastPrank`,
-`mParkLastOpened`), `mLifetimeVisitors` and the three records after them are not kept here and go out as the
-file's; what reads each is not read. `mLastObjectBuilt` is "The newest build", below. Whether a staff candidate the original makes for the hire
+`mParkLastOpened`), `mLargestBusLoad` and `mLongestStay` are not kept here and go out as the file's; what reads each
+is not read. `mLifetimeVisitors` and `mMostPaidForTicket` are kept (Q389; `hud.md`, "The lifetime visitors"). `mLastObjectBuilt` is "The newest build", below. Whether a staff candidate the original makes for the hire
 screen's preview, or anything but a hire, runs the staff constructor is not read (the eight files agree with a
 hire alone). In no game run: lines 2 and 3 (samples 21 and 22; the test holds the turn), the line said again past
 its 120 quarter-ticks, a mechanic kept (three rides are under his four: the test holds seven rides and one

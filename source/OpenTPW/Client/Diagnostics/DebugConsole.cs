@@ -2075,6 +2075,7 @@ public static class DebugConsole
 						$"withdrawals {purse.WithdrawalsEnabled} " +
 						$"month balance {purse.MonthBalance.Newest} slot {purse.MonthBalance.Current} " +
 						$"park value {ParkValue.Of( purse, Level.Current.Catalogue )} ring {purse.MonthParkValue.Newest} slot {purse.MonthParkValue.Current} " +
+						$"lifetime visitors {purse.LifetimeVisitors} ring {purse.MonthVisitors.Newest} slot {purse.MonthVisitors.Current} most paid {purse.MostPaidForTicket} " +
 						$"cashin {purse.MonthCashIn.Total}/{purse.MonthCashIn.Newest} " +
 						$"staff {purse.MonthStaffCosts.Total}/{purse.MonthStaffCosts.Newest} " +
 						$"costs {purse.MonthCosts.Total}/{purse.MonthCosts.Newest} slot {purse.MonthCosts.Current} " +

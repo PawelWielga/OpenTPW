@@ -1629,12 +1629,12 @@ steps written out in line for the gate, shop and sideshow takings: the slot one 
 wrapped byte set, the total written there) and zeroes it; the constructor (`FUN_004c58c0`) leaves each slot -1, each
 count 144. The same close samples the analyser's other nine rings, which no add feeds: **the bank's balance first**,
 before any other ring (`FUN_006ad810` on the bank, `FUN_005195d0`'s thing `+0xc`, into `+0x1f100`'s next slot; its own
-total `+0x1f100` is never written and reads 0 in every file), and after the seven money rings the other eight, in ring
-order `FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value": a sweep of every cell's features and each standing
-object's upgrade values, kept at `+0x1f0ec`, not read further), `FUN_004c7fa0` (`+0x205d0`), the lifetime visitors
-`+0x21c08` (`+0x20820`), `FUN_004c8070` (`+0x20a70`), the month total `+0x20cc0` (`+0x20cc0`, added by
-`FUN_004cf3e0`), `FUN_004c7bb0`'s float (`+0x20f10`), a mean of `FUN_004cef30` (`+0x21160`) and `FUN_004cceb0`
-(`+0x213b0`); not read further.
+total `+0x1f100` is never written and reads 0 in every file), and after the seven money rings the other seven in this
+order (read 2026-10-15, Q389, `0x004c788c`..`0x004c7a7a`; not ring order): the month total `+0x20cc0` closed as a money
+ring is (`+0x20cc0`, added by `FUN_004cf3e0`), `FUN_004c7fa0` (`+0x205d0`), the lifetime visitors `+0x21c08`
+(`+0x20820`, below, "The lifetime visitors"), `FUN_004c8070` (`+0x20a70`), `FUN_004c7bb0`'s float (`+0x20f10`),
+`FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value", below), a mean of `FUN_004cef30` (`+0x21160`) and
+`FUN_004cceb0` (`+0x213b0`); the others not read further.
 
 **The finances screen graphs eight of them** (`FUN_0049a2e0`, its range `DAT_007ca2ec` 12, 36 or 144 months; the rings
 picked by the bits of `DAT_00751fa0`, 1 at the start: 1 the balance, 2 `+0x1f350`, 4 cash in, 8 gate takings, `0x10`
@@ -1661,9 +1661,10 @@ cash in less its all costs in 572; the one other (`q252/orig/ctl-written-by-the-
 month the shipped file's month so far unchanged where its balance fell 494 more, by every sign a month taken over from a
 file this game wrote before Q385 kept the costs. **The park value ring is kept too** (Q388): `MonthParkValue`, the
 file's at a load, `ParkMonthRing.Push( ParkValue.Of( ... ) )` after the seven money rings in `TurnTheMonth`, written as the
-2nd ring (below, "The park value"). The analyser's other seven int rings are not kept (`ANALYSER_MONTH_CLOSE`), nor its
-lifetime visitors and dearest ticket (`GATE_FEE_ANALYSER_TOTALS`, `FUN_004c7520`), and a written file keeps the file's
-bytes for them.
+2nd ring (below, "The park value"). **And the lifetime visitors' ring** (Q389): `MonthVisitors`, the file's at a load,
+`ParkMonthRing.Push( LifetimeVisitors )` after the money rings and before the park value, written as the 11th (below,
+"The lifetime visitors"). The analyser's other six int rings are not kept (`ANALYSER_MONTH_CLOSE`), and a written file
+keeps the file's bytes for them.
 
 #### The park value
 
@@ -1697,6 +1698,40 @@ the shipped park and its untouched copies; the others were worn or built on afte
 `ParkItemCatalogue.Item.UpgradeCostAt` (`ItemDescriptionFile.UpgradeCostAt` for tiers 1 and 2); it takes the sum afresh
 every time where the original's close can reuse one of the same quarter tick (said at the site). Nothing here reads the
 ring: the finances screen and the loans screen are not built.
+
+#### The lifetime visitors
+
+Read 2026-10-15 (Q389). **`mLifetimeVisitors` (`+0x21c08`) counts the admission fees taken**: `FUN_004c7520`, called by
+the gate fee `FUN_004d0600` after its deposit and its gate takings, adds one to it whatever the fee, nought included,
+and raises `mMostPaidForTicket` (`+0x21c40`) to the fee where the fee is above it (a signed compare, `0x004c754f`);
+then it sends the challenge manager its message `0x1a` (`ride-operation.md`, the fee's row). Nothing else writes either
+but the constructor `FUN_004c58c0` (nought, nought) and the serialiser `FUN_004c5d70`. It is not the header's
+`mNumberOfVisitorsToDate`, which counts arrivals. **The month's close samples it into the 11th int ring** (`+0x20820`,
+its slot `+0x20a64`, months `+0x20824`; `0x004c7904`..`0x004c792a`): the count as it stands, its month so far
+`+0x20820` never written. **Its readers**: the park status screen (`FUN_004a52a0`, I) letters it as "Total park
+visitors" (`0x4a68ca`, `FUN_004c94c0`), as it opens and on its one-second timer (`0x004a48b3`), beside "People in park"
+(`FUN_004c9130`); the golden tickets' Local 0 and Local 5 (`FUN_004d4bc0`; Local 5 through `FUN_004c94d0`, the only
+reader of the ring: the count less the month that many back); and a challenge's test at `0x005a0557` (the count
+against `GoldenTicketLocal`'s `Visitors` times a float of its own, `+0x5b8`; not read further). **Nothing reads
+`mMostPaidForTicket`**: the image's every operand `+0x21c40` is the constructor's, the serialiser's two and
+`FUN_004c7520`'s.
+
+**Measured** (`lib/ringsweep.py`, `q389/ratio.py`): the shipped `Easymode.TPWI` holds 8 and 25, the 11th ring one month
+closed on 0, and its gate month so far is 200, eight fees of 25. Over all 584 park files on hand the 11th ring never
+falls, its newest month is at most `mLifetimeVisitors` and its month so far is 0; in all 578 where it stands on the gate
+ring's slot, the gate's month so far is `mLifetimeVisitors` less the ring's newest month, times one fee (25 in 561, 20
+in 4, no admission since in 13), never above `mMostPaidForTicket`.
+
+**OpenTPW** (Q389). `ParkState.LifetimeVisitors` and `MostPaidForTicket`, the file's at a load (`ParkWorld`) and nought
+in a park made with no file; `Take`, the gate fee, raises them as `FUN_004c7520` does; `TurnTheMonth` pushes the count
+into `MonthVisitors`; the writer writes all three (`ParkWorld.PutLifetimeVisitors`, `PutMonthRings`); `money` prints
+them. The challenge message is counted (`GATE_FEE_CHALLENGE_POST`). Nothing here reads them: the park status screen is
+not built (`PARK_STATUS_SCREEN`), nor the golden tickets (Q141). **Confirmed** (`q389/`): the stock park with its fee
+written to 26 took 18 fees before its close on tick 1474 (`Park: lifetime visitors 9` .. `26, most paid for a ticket
+26`), closed `visitors 26` with the gate's 668 = 200 + 26 x 18, and wrote 26, 26 and the ring [0, 26]; main's build
+wrote the file's 8, 25 and [0]. The original given this game's file read 26, 26, [0, 26], closed 26 into its third slot
+at once, and its park status screen lettered "Total park visitors 26" (`q389/orig/a-2-status.png`); given main's file,
+"8" (`c-2-status.png`).
 
 #### The first row is picked as a list fills
 

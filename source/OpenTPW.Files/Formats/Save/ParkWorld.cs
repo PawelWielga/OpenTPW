@@ -2135,6 +2135,9 @@ public sealed partial class ParkWorld : IParkInitialState
 				MonthGateTakings = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthGateTakingsRing ), ParkMonthRing.Size ) );
 				MonthShopTakings = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthShopTakingsRing ), ParkMonthRing.Size ) );
 				MonthSideshowTakings = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthSideshowTakingsRing ), ParkMonthRing.Size ) );
+				MonthVisitors = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthVisitorsRing ), ParkMonthRing.Size ) );
+				LifetimeVisitors = ReadInt32At( start + AnalyserLifetimeVisitorsAt );
+				MostPaidForTicket = ReadInt32At( start + AnalyserMostPaidForTicketAt );
 			}
 
 			_things.Add( new( id, model ) );
@@ -2750,6 +2753,42 @@ public sealed partial class ParkWorld : IParkInitialState
 	public ParkMonthRing? MonthSideshowTakings { get; private set; }
 
 	/// <summary>
+	/// The park analyser's 11th int ring (<c>+0x20820</c>): <see cref="LifetimeVisitors"/> as each month was closed;
+	/// its month so far is never written. Null as <see cref="MonthCosts"/>.
+	/// </summary>
+	public ParkMonthRing? MonthVisitors { get; private set; }
+
+	/// <summary>
+	/// The park analyser's <c>mLifetimeVisitors</c> (<c>+0x21c08</c>): one for every admission fee taken
+	/// (<c>FUN_004c7520</c>). Null where the file holds no analyser.
+	/// </summary>
+	public int? LifetimeVisitors { get; private set; }
+
+	/// <summary>
+	/// The park analyser's <c>mMostPaidForTicket</c> (<c>+0x21c40</c>): the dearest admission fee taken, a signed
+	/// compare (<c>FUN_004c7520</c>). Null where the file holds no analyser.
+	/// </summary>
+	public int? MostPaidForTicket { get; private set; }
+
+	/// <summary>Where <c>mLifetimeVisitors</c> and <c>mMostPaidForTicket</c> sit in the analyser's record (<c>FUN_004c5d70</c>).</summary>
+	private const int AnalyserLifetimeVisitorsAt = 73480, AnalyserMostPaidForTicketAt = 73532;
+
+	/// <summary>
+	/// Writes the analyser's <c>mLifetimeVisitors</c> and <c>mMostPaidForTicket</c> over the file's in
+	/// <paramref name="body"/>, a copy of this park's own. A park with no analyser is left alone.
+	/// </summary>
+	public void PutLifetimeVisitors( byte[] body, int lifetimeVisitors, int mostPaidForTicket )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+
+		if ( AnalyserAt < 0 )
+			return;
+
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( AnalyserAt + AnalyserLifetimeVisitorsAt, 4 ), lifetimeVisitors );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( body.AsSpan( AnalyserAt + AnalyserMostPaidForTicketAt, 4 ), mostPaidForTicket );
+	}
+
+	/// <summary>
 	/// Where the analyser's first int ring (<c>+0x1f100</c>) starts in its record: the sixteen of
 	/// <c>FUN_004c5d70</c>'s read lie one after another from here, <see cref="ParkMonthRing.Size"/> bytes apiece, in
 	/// every park file measured (<c>saves.md</c>, "The park analyser").
@@ -2758,23 +2797,24 @@ public sealed partial class ParkWorld : IParkInitialState
 
 	/// <summary>
 	/// The rings' places among those sixteen: <c>+0x1f100</c>, <c>+0x1f350</c>, <c>+0x1f5a0</c>, <c>+0x1f7f0</c>, <c>+0x1fa40</c>,
-	/// <c>+0x1fc90</c>, <c>+0x1fee0</c>, <c>+0x20130</c>, <c>+0x20380</c>.
+	/// <c>+0x1fc90</c>, <c>+0x1fee0</c>, <c>+0x20130</c>, <c>+0x20380</c>, and the lifetime visitors' <c>+0x20820</c>.
 	/// </summary>
 	private const int MonthBalanceRing = 0, MonthParkValueRing = 1, MonthCostsRing = 2, MonthStaffCostsRing = 3, MonthTrainingRing = 4, MonthCashInRing = 5,
-		MonthGateTakingsRing = 6, MonthShopTakingsRing = 7, MonthSideshowTakingsRing = 8;
+		MonthGateTakingsRing = 6, MonthShopTakingsRing = 7, MonthSideshowTakingsRing = 8, MonthVisitorsRing = 10;
 
 	private static int AnalyserMonthRingAt( int ring ) => AnalyserIntRingsAt + ring * ParkMonthRing.Size;
 
 	/// <summary>
-	/// The park analyser's eight money rings and its park value, in ring order: the bank's balance, the park value, all
-	/// costs, staff costs, training, cash in, gate takings, shop takings and sideshow takings. Its month's close
-	/// (<c>FUN_004c7720</c>) takes the park value after the sideshow takings.
+	/// The park analyser's eight money rings, its park value and its lifetime visitors, in ring order: the bank's balance,
+	/// the park value, all costs, staff costs, training, cash in, gate takings, shop takings, sideshow takings and, the
+	/// 11th, the lifetime visitors. Its month's close (<c>FUN_004c7720</c>) takes the lifetime visitors and then the park
+	/// value after the sideshow takings.
 	/// </summary>
 	public readonly record struct MonthRingSet( ParkMonthRing Balance, ParkMonthRing ParkValue, ParkMonthRing Costs, ParkMonthRing StaffCosts, ParkMonthRing Training,
-		ParkMonthRing CashIn, ParkMonthRing GateTakings, ParkMonthRing ShopTakings, ParkMonthRing SideshowTakings );
+		ParkMonthRing CashIn, ParkMonthRing GateTakings, ParkMonthRing ShopTakings, ParkMonthRing SideshowTakings, ParkMonthRing Visitors );
 
 	/// <summary>
-	/// Writes the analyser's eight money rings and its park value over the file's in <paramref name="body"/>, a copy of this park's own.
+	/// Writes the analyser's eight money rings, its park value and its lifetime visitors over the file's in <paramref name="body"/>, a copy of this park's own.
 	/// A park with no analyser is left alone.
 	/// </summary>
 	public void PutMonthRings( byte[] body, MonthRingSet rings )
@@ -2795,6 +2835,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		Put( rings.GateTakings, MonthGateTakingsRing );
 		Put( rings.ShopTakings, MonthShopTakingsRing );
 		Put( rings.SideshowTakings, MonthSideshowTakingsRing );
+		Put( rings.Visitors, MonthVisitorsRing );
 	}
 
 	/// <summary>

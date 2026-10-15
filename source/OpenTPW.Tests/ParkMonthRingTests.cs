@@ -123,7 +123,7 @@ public class ParkMonthRingTests
 			copies[i].Add( i );
 
 		var body = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
-			MonthRings: new( copies[0], copies[1], copies[2], copies[3], copies[4], copies[5], copies[6], copies[7], copies[8] ) ) );
+			MonthRings: new( copies[0], copies[1], copies[2], copies[3], copies[4], copies[5], copies[6], copies[7], copies[8], shipped.MonthVisitors!.Copy() ) ) );
 		var written = Rings( new ParkWorld( body ) );
 
 		Assert.AreEqual( (1, 4242, 0), (written[0].Current, written[0].Newest, written[0].Total), "the balance pushed, its month so far untouched" );
@@ -144,5 +144,43 @@ public class ParkMonthRingTests
 			"each month so far at its ring's own place: the 3rd to the 9th" );
 		Assert.AreEqual( unchecked((int)0xcdcdcdcd), System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( body.AsSpan( rings + 2 * ParkMonthRing.Size + 13 + 2 * 4 ) ), "a slot never filled stays the file's" );
 		Assert.AreEqual( unchecked((int)0xcdcdcdcd), System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( body.AsSpan( rings + 9 * ParkMonthRing.Size + 13 + 4 ) ), "the 10th ring the file's" );
+	}
+
+	/// <summary>
+	/// <b>The shipped park's lifetime visitors, its dearest ticket and their ring</b>: thing 5's record at 73,480 and
+	/// 73,532, 8 and 25, and the 11th int ring at 62,598 + 10 x 589, one month closed on nought, no month so far. Written
+	/// back changed, each reads back as written, at its own place and nowhere else.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the count or the dearest read or written a dword out, or each as the other; the 11th ring read or written as the 10th or the 12th; the writer not handed the two.</remarks>
+	[TestMethod]
+	public void TheShippedParksLifetimeVisitorsReadAndWriteBack()
+	{
+		var shipped = Shipped();
+		var visits = shipped.MonthVisitors!;
+
+		Assert.AreEqual( (8, 25), (shipped.LifetimeVisitors, shipped.MostPaidForTicket) );
+		Assert.AreEqual( (0, 0, 0), (visits.Current, visits.Newest, visits.Total) );
+
+		var ring = visits.Copy();
+		ring.Push( 4321 );
+
+		var same = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
+			MonthRings: new( shipped.MonthBalance!, shipped.MonthParkValue!, shipped.MonthCosts!, shipped.MonthStaffCosts!, shipped.MonthTraining!,
+				shipped.MonthCashIn!, shipped.MonthGateTakings!, shipped.MonthShopTakings!, shipped.MonthSideshowTakings!, ring ), Visitors: (99, 31) ) );
+		var written = new ParkWorld( same );
+
+		Assert.AreEqual( (99, 31), (written.LifetimeVisitors, written.MostPaidForTicket) );
+		Assert.AreEqual( (1, 4321, 0), (written.MonthVisitors!.Current, written.MonthVisitors.Newest, written.MonthVisitors.Total) );
+
+		var original = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value ) );
+		var differ = Enumerable.Range( 0, same.Length ).Where( at => same[at] != original[at] ).ToArray();
+		var record = shipped.AnalyserAt;
+		var eleventh = record + 62598 + 10 * ParkMonthRing.Size;
+
+		Assert.IsTrue( differ.Length > 0 && differ.All( at => at >= eleventh && at < eleventh + ParkMonthRing.Size
+			|| at >= record + 73480 && at < record + 73484 || at >= record + 73532 && at < record + 73536 ), "the 11th ring and the two dwords alone" );
+		Assert.AreEqual( 99, System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( same.AsSpan( record + 73480 ) ) );
+		Assert.AreEqual( 31, System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( same.AsSpan( record + 73532 ) ) );
+		Assert.AreEqual( 4321, System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( same.AsSpan( eleventh + 13 + 4 ) ), "the count at the 11th ring's slot 1" );
 	}
 }

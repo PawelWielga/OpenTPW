@@ -65,8 +65,10 @@ public static class ParkFileWriter
 	/// the file's where it is null. <see cref="LastObjectBuilt"/> is its stamp of the newest object made
 	/// (<see cref="ParkWorld.PutLastObjectBuilt"/>); the file's where it is null. <see cref="Training"/> is the staff
 	/// HQ's five training budgets and whether one was ever set (<see cref="ParkWorld.PutTrainingBudgets"/>); the
-	/// file's where it is null. <see cref="MonthRings"/> is the analyser's eight money rings and its park value
-	/// (<see cref="ParkWorld.PutMonthRings"/>); the file's where it is null.
+	/// file's where it is null. <see cref="MonthRings"/> is the analyser's eight money rings, its park value and its
+	/// lifetime visitors (<see cref="ParkWorld.PutMonthRings"/>); the file's where it is null. <see cref="Visitors"/> is
+	/// the analyser's lifetime visitors and dearest ticket (<see cref="ParkWorld.PutLifetimeVisitors"/>); the file's
+	/// where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -79,7 +81,7 @@ public static class ParkFileWriter
 		Func<uint, ParkWorld.AdvisorAction>? AdvisorAction = null,
 		int? AdvisorPollCursor = null, long? LastStaffHired = null, long? LastObjectBuilt = null,
 		(IReadOnlyList<int> Budgets, bool HaveEverTrained)? Training = null,
-		ParkWorld.MonthRingSet? MonthRings = null );
+		ParkWorld.MonthRingSet? MonthRings = null, (int Lifetime, int MostPaidForTicket)? Visitors = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -248,6 +250,9 @@ public static class ParkFileWriter
 
 		if ( running.MonthRings is { } rings )
 			loaded.PutMonthRings( body, rings );
+
+		if ( running.Visitors is { } visitors )
+			loaded.PutLifetimeVisitors( body, visitors.Lifetime, visitors.MostPaidForTicket );
 
 		if ( running.Training is { } training )
 			loaded.PutTrainingBudgets( body, training.Budgets, training.HaveEverTrained );

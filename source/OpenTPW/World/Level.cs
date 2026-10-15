@@ -677,7 +677,7 @@ public class Level
 			} : null,
 			state.AdvisorMessages?.PollRow, state.LastStaffHired, state.LastObjectBuilt,
 			people != null ? (people.TrainingBudgets.ToArray(), people.HaveEverTrained) : null,
-			state.MonthRings );
+			state.MonthRings, (state.LifetimeVisitors, state.MostPaidForTicket) );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;

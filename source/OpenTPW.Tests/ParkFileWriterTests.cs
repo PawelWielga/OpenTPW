@@ -384,8 +384,9 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
-	/// The level's half: the running park's clock, door, count and cash, the analyser's stamp of the newest hire and
-	/// the orbit camera's view, written into the player's folder for the theme under the name given.
+	/// The level's half: the running park's clock, door, count and cash, the analyser's stamp of the newest hire, its
+	/// lifetime visitors and dearest ticket, and the orbit camera's view, written into the player's folder for the theme
+	/// under the name given.
 	/// </summary>
 	[TestMethod]
 	public void TheLevelWritesTheRunningParkIntoThePlayersFolder()
@@ -399,6 +400,7 @@ public class ParkFileWriterTests
 		state.Admit();
 		state.Admit();
 		state.StampStaffHired();
+		state.Take( 27 );
 
 		ParkOrbitCameraMode.Zoom = 80f;
 		ParkOrbitCameraMode.Yaw = 0.75f;
@@ -413,7 +415,8 @@ public class ParkFileWriterTests
 		Assert.AreEqual( 900, written.GameTick );
 		Assert.AreEqual( 1, written.ParkClosed );
 		Assert.AreEqual( 2, written.NumberOfVisitorsToDate );
-		Assert.AreEqual( 88098, written.Economy!.Value.Balance );
+		Assert.AreEqual( 88098 + 27, written.Economy!.Value.Balance );
+		Assert.AreEqual( (9, 27), (written.LifetimeVisitors, written.MostPaidForTicket), "the shipped 8 and 25, one fee of 27 on" );
 		Assert.AreNotEqual( shipped.LastStaffHired, written.LastStaffHired );
 		Assert.AreEqual( ParkWorld.StaffState.FileTimeOf( new DateTime( 2000, 1, 1 ).AddSeconds( 900 * 3750 ) ), written.LastStaffHired, "mLastStaffHired, stamped on tick 900" );
 		Assert.AreEqual( new ParkCameraModule.View( 80f, -0.75f, 310f, 220f ), written.Camera.Saved, "the rotation turns the other way" );
