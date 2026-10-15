@@ -274,10 +274,9 @@ internal sealed class UiList : UiControl
 					Mesh = isState ? UiMesh.Get( StateMesh! ) : null,
 					Font = RowFont,
 
-					// The name reads from the left and the numbers from the right, which is how the
-					// original's own columns are skinned - a label for column nought and a right
-					// aligned value cell for the rest. A screen whose own layout data says otherwise
-					// overrides it per column; see ColumnAligns.
+					// The name from the left and the rest from the right, where a screen's styler sets no
+					// ColumnAligns. The original's cells stand at ( 0, 1 ), from the left, until a styler's
+					// FUN_0065c428 moves them (FUN_0048fc40), and most stylers set their figures ( 2, 1 ).
 					TextAcross = column < ColumnAligns.Length
 						? ColumnAligns[column]
 						: column == 0 ? TextAlign.Start : TextAlign.End,

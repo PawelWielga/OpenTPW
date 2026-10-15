@@ -44,9 +44,12 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q383. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q384. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q383 (`hud.md`, "How a list's cells are aligned"): every all-items count is centred. The language `0x40d`
+  (Hebrew) swap of left and right is not kept (no Hebrew data ships). In no game run: the hire and buy stylers'
+  alignments compared cell by cell, Full Simulation (not asked: the screens are either mode's), the other three themes.
   From Q382 (`hud.md`, "The all-staff list's first row"): the list picks its first row. The original's right click
   below the rows shut the screen and moved the view, onto which member is not read (no reader of its camera). In no
   game run: a member hired or gone with the screen open (where the index then stands), Full Simulation (not asked:
@@ -89,8 +92,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   where this game's fits. In no game run: an arrival's row with the screen open (its stay nought in either game), Full
   Simulation (not asked: the screen is either mode's), the other three themes.
   From Q371 (`hud.md`, "The visitors rows: a number, a money cell, a bar"): the visitors' number, cash and happiness are
-  built, and the time in park (Q372) and the thought (Q373), and the row height (Q377). **Not built**: the alignment message `0xc00`'s handler (read from the frame
-  only); the all-staff styler's own alignments (`FUN_00496d20`, not read). In no game run: a guest with negative cash,
+  built, and the time in park (Q372) and the thought (Q373), and the row height (Q377). The alignment message `0xc00` and the all-staff styler's alignments are read (Q383). In no game run: a guest with negative cash,
   a happiness past 255, Full Simulation (not asked: the screen is either mode's).
   From Q370 (`hud.md`, "The list headings' frames"): the headings are framed; the original's lettering is larger and
   wraps "Monthly Wage". Seen beside the original in `q370/side-by-side.png`, not read and not counted: the misc tab's

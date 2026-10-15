@@ -1959,6 +1959,39 @@ own tab-index switch all give the same ordering, and it matches UITEXT 119–122
 **The root frame mesh `0xf76e4200` is `w_big.MD2`, node `window4`.** The hash is over a node name, which is why
 searching file stems never finds it; see the resolution table above for the method.
 
+#### How a list's cells are aligned
+
+Read 2026-10-15 (Q383). `FUN_0065c428( across, down )` posts `0xc00` to the control's text (`+0x98`) and skin (`+0x9c`)
+with the two bytes at the message's `+4` and `+5`. A label's skin (vtable `0x006ff320`; the label `FUN_0048f6a0`, the
+number painter `FUN_0048fde0` and the money cell `FUN_00490250` alike) takes it in its slot `+0xc`, `FUN_0048fc40`:
+flag `0x400` stores the across byte at `+0xd8`, `0x800` the down byte at `+0xd9`. Each constructor writes 0 and 1 there,
+so **a cell no styler aligns stands at ( 0, 1 ): from the left, in the middle**. `LabelSkin_Draw` (`0x0048f862`) hands
+the across byte to the text renderer as 0 left, 1 centre, 2 right, after `FUN_004925a0` swaps 0 and 2 where the
+language is `0x40d` (Hebrew; English never is), and the down byte as 0 top, 1 middle, 2 bottom (`FUN_006aeb10`: the
+renderer's `+0xa4` and `+0xa0`).
+
+The stylers, each call on the cell just made (`ESI`, the listing; the decompiler drops it):
+
+| Styler | Name | Then |
+|---|---|---|
+| all items `FUN_00494690`, every tab | ( 0, 1 ) | **the count `( 1, 1 )`, centred** (`0x00494780`, `0x00494822`...); each money cell `( 2, 1 )`; the bars none |
+| all staff `FUN_00496d20` | ( 0, 1 ) | the status ( 0, 1 ); the wage `( 2, 1 )` (`0x00496e39`); the bars none |
+| visitors `FUN_004939d0` | | above: the number and the time `( 1, 1 )`, the cash `( 2, 1 )`, the rides ridden ( 0, 1 ) |
+
+Measured in the original under Proton at 800 x 600 (`q383/orig/a`, `q353/grades.TPWS`; `listcells.aligns`, white 110):
+the count's middle 0.477 of its column on the rides tab, 0.472 shops, 0.483 and 0.478 sideshows, 0.494 to 0.495 on all
+eight misc rows; the money cells' middles 0.83 to 0.88; the names from 0.000 to 0.012.
+
+**OpenTPW** (Q383): `ParkItemsScreen.BuildList` sets `ColumnAligns` Start, Centre, then End, and its shape line ends
+`aligned Start Centre End End End` (5), `... End` (6) and `aligned Start Centre` (2). On the stock park with a shop and a
+sideshow bought, paused (`q383/run-fix3`, the final game binary): every count centred, its middle 0.488 to 0.518 (rides,
+shops, sideshows) and 0.495 to 0.498 (misc, eight rows); the money cells' middles 0.873 to 0.906 (`q383/side-by-side.png`:
+the original, this, main). Main's build (`run-control1`) lettered every count from the right. `ParkStaffScreen` already
+letters the name and status from the left and the wage from the right; this game's `TextDown` is the middle by default.
+The Hebrew swap is not kept (no Hebrew data ships). In no game run: the hire and buy stylers' (`FUN_0049c880`,
+`FUN_004ad340`: one `( 2, 1 )` each) compared cell by cell, Full Simulation (not asked: the screens are either mode's),
+the other three themes.
+
 #### The visitors rows: a number, a money cell, a bar
 
 Read 2026-10-14 (Q371). The visitors opener `FUN_00493530` hands `FUN_006639cb` the factory `FUN_004938c0` and the
@@ -1973,8 +2006,8 @@ styler `FUN_004939d0`, which makes the six cells, each in the font `[0x007508b4]
 | ? | a type-6 cell wearing the mesh filed as `ti_hungry`, `thoughts.MD2`, inset `( 4, 0 )`: below | | `+0x30` less 1, or 999 at nought |
 | Happiness | a bar in `happygrad.wct` (`FUN_00477ff0`), inset `( 0, 8 )` | | `((__ftol( +0x19c ) & 0xff) << 10) / 100` (`0x00493870`) |
 
-`FUN_0065c428( across, down )` posts `0xc00` with the two bytes to the cell's text; its handler sits behind a jump table
-and is not read. **Measured in the original's frame instead** (`q371/measure.py`'s `aligns`, the lettering's extent in
+`FUN_0065c428( across, down )` posts `0xc00` with the two bytes to the cell's text and skin ("How a list's cells are
+aligned", above: 0 left, 1 centre, 2 right). **Measured in the original's frame as well** (`q371/measure.py`'s `aligns`, the lettering's extent in
 its column): the number centred (its middle 0.495 of the column), the cash to the right (its end 0.976), the rides from
 the left (its start 0.032), as `( 2, 1 )` reads right on the park status screen above.
 

@@ -240,7 +240,11 @@ internal sealed class ParkItemsScreen : UiWindow
 			SortChanged = word => _sorts[_tab] = word,
 
 			// Every sub-builder's FUN_006636b2( 0, 0 ): the name is sorted as text.
-			TextColumns = [true]
+			TextColumns = [true],
+
+			// The styler FUN_00494690 leaves the name's label at its default, from the left, centres every tab's count
+			// (FUN_0065c428( 1, 1 ), 0x00494780) and sets the money cells from the right ( 2, 1 ); the bars take none.
+			ColumnAligns = [TextAlign.Start, TextAlign.Centre, .. Enumerable.Repeat( TextAlign.End, columns - 2 )]
 		} );
 
 		// Framed by FUN_00486660; the text and the help row are the tab's (Show).
@@ -248,7 +252,7 @@ internal sealed class ParkItemsScreen : UiWindow
 			list.AddFramedHeading( column, headings[column], string.Empty, -1 ).Clicked += () => LogOrder( list );
 
 		list.Build();
-		Log.Info( $"Items list: the {columns}-column shape, {list.RowsCensus()}" );
+		Log.Info( $"Items list: the {columns}-column shape, {list.RowsCensus()}, aligned {string.Join( ' ', list.ColumnAligns )}" );
 
 		_lists[columns] = list;
 	}

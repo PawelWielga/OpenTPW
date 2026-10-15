@@ -6994,6 +6994,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   mechanics' tab, 45 back; row 0 teal 0.94 to 0.96 in six frames, rows 1 and 2 nought; a right click below the rows
   went to thing 45 and shut the screen, nothing counted. The original (`q382/orig/a`): row 0 teal 0.95 on each fill
   and sort. Mutations 4 of 4. Tests 3129.
+- [x] **Q383. The all-items lists centre their count column, as the original's** (a piece of the old Q383, split by
+  Claude; the rest is Q384). The styler `FUN_00494690` centres every tab's count (`FUN_0065c428( 1, 1 )`); the `0xc00`
+  handler (`FUN_0048fc40`, `LabelSkin_Draw`) reads 0 left, 1 centre, 2 right, a cell left alone ( 0, 1 ); the all-staff
+  styler's are this game's already (`hud.md`, "How a list's cells are aligned"). This game, the stock park with a shop
+  and a sideshow bought (`q383/run-fix3`, the final binary; control `run-control1` 2 of 2): every count's middle 0.488 to
+  0.518 of its column on the four tabs, the money 0.873 to 0.906. The original (`q383/orig/a`): 0.472 to 0.495, the
+  money 0.83 to 0.88. Mutations 8 of 8. Tests 3130.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

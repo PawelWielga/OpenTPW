@@ -792,6 +792,47 @@ public class ParkListScreenRewriteTests
 	}
 
 	/// <summary>
+	/// <b>Each all-items tab letters the name from the left, centres the count and sets the money from the right</b>, as
+	/// the styler <c>FUN_00494690</c> hands <c>FUN_0065c428</c>; the all-staff styler <c>FUN_00496d20</c> leaves the name
+	/// and the status at a label's default, from the left, and sets the wage from the right (<c>docs/exe/hud.md</c>, "How
+	/// a list's cells are aligned").
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the count from the right or the left; the money centred; the name centred; the staff's status or
+	/// wage moved.
+	/// </remarks>
+	[TestMethod]
+	public void TheItemsListsCentreTheCountAndTheStaffListSetsTheWageFromTheRight()
+	{
+		typeof( ParkItemsScreen ).GetField( "_lastTab", BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, 0 );
+		var screen = new ParkItemsScreen( stack );
+		var items = Field<Dictionary<int, UiList>>( screen, "_lists" );
+		var show = typeof( ParkItemsScreen ).GetMethod( "Show", Private )!;
+		var staff = Field<UiList>( new ParkStaffScreen( stack ), "_list" );
+
+		// The first slot's cells, by their column: how a lettered one is aligned, and null for a bar.
+		static TextAlign?[] Lettered( UiList list ) => [.. list.Columns.Select( column => list.Children
+			.Where( child => child.Rect.Left == column.Left && (child.Font == list.RowFont || child is ParkObjectWindow.UiStatBar)
+				&& child.Rect.Top >= list.RowArea.Top && child.Rect.Top < list.RowArea.Top + list.RowHeight )
+			.Select( child => child is ParkObjectWindow.UiStatBar ? (TextAlign?)null : child.TextAcross )
+			.Single() )];
+
+		TextAlign? start = TextAlign.Start, centre = TextAlign.Centre, end = TextAlign.End, bar = null;
+
+		show.Invoke( screen, [0] );
+		CollectionAssert.AreEqual( new[] { start, centre, bar, bar, bar }, Lettered( items[5] ), "rides" );
+		show.Invoke( screen, [1] );
+		CollectionAssert.AreEqual( new[] { start, centre, end, end, bar }, Lettered( items[5] ), "shops: the money from the right" );
+		show.Invoke( screen, [2] );
+		CollectionAssert.AreEqual( new[] { start, centre, bar, end, end, bar }, Lettered( items[6] ), "sideshows" );
+		show.Invoke( screen, [3] );
+		CollectionAssert.AreEqual( new[] { start, centre }, Lettered( items[2] ), "misc" );
+
+		CollectionAssert.AreEqual( new[] { start, start, end, bar, bar }, Lettered( staff ),
+			"staff: the name and the status from the left, the wage from the right" );
+	}
+
+	/// <summary>
 	/// <b>A visitors row shows the guest's last thought as a part of <c>thoughts.MD2</c></b>, the thought less one, or 999,
 	/// past every part, with none (the adder <c>0x0049385a</c>, the rewrite <c>0x0049330c</c>); the cell is the column inset 4
 	/// across (<c>FUN_00485e30( cell, 4, 0 )</c>), and the list sorts on its number (<c>docs/exe/hud.md</c>, "The visitors

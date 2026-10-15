@@ -130,7 +130,7 @@ internal sealed class ParkVisitorsScreen : UiWindow
 			Columns = [(297, 689), (701, 948), (966, 1213), (1233, 1358), (1372, 1474), (1478, 1718)],
 
 			// The styler's FUN_0065c428( across, 1 ) on each cell: the number and the time centred, the cash to the right,
-			// the rides ridden left where the styler sets nothing - as the original's frame letters them.
+			// the rides ridden at a number cell's default, from the left (FUN_0048fde0) - as the original's frame letters them.
 			ColumnAligns =
 			[
 				TextAlign.Centre, TextAlign.End, TextAlign.Centre,

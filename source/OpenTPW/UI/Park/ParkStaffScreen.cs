@@ -154,8 +154,8 @@ internal sealed class ParkStaffScreen : UiWindow
 			// highlight alone as the add's pick is.
 			SelectsUnderPointer = true,
 
-			// The stream's own op 0xb record. Columns 2, 3 and 4 right-aligned, nought and one from the left; the
-			// styler FUN_00496d20's own FUN_0065c428 calls are not read.
+			// The stream's own op 0xb record. The styler FUN_00496d20 leaves the name's and the status's labels at their
+			// default, from the left, and sets the wage from the right (FUN_0065c428( 2, 1 ), 0x00496e39); the bars take none.
 			Columns = [(299, 711), (729, 999), (1017, 1217), (1231, 1471), (1488, 1728)],
 			ColumnAligns = [TextAlign.Start, TextAlign.Start, TextAlign.End, TextAlign.End, TextAlign.End],
 
