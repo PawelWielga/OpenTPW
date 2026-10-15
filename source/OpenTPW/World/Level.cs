@@ -1147,15 +1147,9 @@ public class Level
 		if ( Kind == Scene.Park && GameCalendar.DayRolled )
 			ParkState?.RollTheDay();
 
-		// Then the month's change and the year's, which the calendar sends after the day's in the same tick. The
-		// original's month goes to thing 1's training, the analyser, the bank and then each wage, in ascending thing id
-		// (docs/exe/ride-operation.md, "The month's change").
+		// Then the month's change and the year's, which the calendar sends after the day's in the same tick.
 		if ( Kind == Scene.Park && GameCalendar.MonthRolled )
-		{
-			ParkPeople.Current?.TrainTheStaff();
-			ParkState?.TurnTheMonth();
-			ParkPeople.Current?.PayTheWages();
-		}
+			ParkPeople.TurnTheMonth( ParkPeople.Current, ParkState );
 
 		if ( Kind == Scene.Park && GameCalendar.YearRolled )
 			ParkState?.TurnTheYear();

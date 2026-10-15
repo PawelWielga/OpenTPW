@@ -2073,7 +2073,8 @@ public static class DebugConsole
 						$"fee {purse.AdmissionFee} gate {(purse.ParkIsClosed ? "shut" : "open")} " +
 						$"profit {purse.ProfitThisYear} last {purse.LastBalance} red {purse.TurnEnteredRed} " +
 						$"withdrawals {purse.WithdrawalsEnabled} " +
-						$"month cashin {purse.MonthCashIn.Total}/{purse.MonthCashIn.Newest} " +
+						$"month balance {purse.MonthBalance.Newest} slot {purse.MonthBalance.Current} " +
+						$"cashin {purse.MonthCashIn.Total}/{purse.MonthCashIn.Newest} " +
 						$"staff {purse.MonthStaffCosts.Total}/{purse.MonthStaffCosts.Newest} " +
 						$"costs {purse.MonthCosts.Total}/{purse.MonthCosts.Newest} slot {purse.MonthCosts.Current} " +
 						$"training {purse.MonthTraining.Total}/{purse.MonthTraining.Newest} " +

@@ -32,14 +32,23 @@ public sealed class ParkMonthRing
 	/// <summary>The month's change: the total into the next slot, round to the first past the last, and the total nought.</summary>
 	public void Close()
 	{
+		Push( Total );
+		Total = 0;
+	}
+
+	/// <summary>
+	/// The month's change for a ring that samples a figure rather than adding up a month: <paramref name="value"/> into
+	/// the next slot, round to the first past the last, the total left as it is (the bank's balance, <c>FUN_004c7720</c>).
+	/// </summary>
+	public void Push( int value )
+	{
 		if ( ++Current >= Months )
 		{
 			Current = 0;
 			Wrapped = true;
 		}
 
-		_months[Current] = Total;
-		Total = 0;
+		_months[Current] = value;
 	}
 
 	/// <summary>

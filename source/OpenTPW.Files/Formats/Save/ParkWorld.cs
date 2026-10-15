@@ -2126,6 +2126,7 @@ public sealed partial class ParkWorld : IParkInitialState
 				AnalyserAt = start;
 				LastStaffHired = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastStaffHiredAt, 8 ) );
 				LastObjectBuilt = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastObjectBuiltAt, 8 ) );
+				MonthBalance = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthBalanceRing ), ParkMonthRing.Size ) );
 				MonthCosts = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthCostsRing ), ParkMonthRing.Size ) );
 				MonthStaffCosts = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthStaffCostsRing ), ParkMonthRing.Size ) );
 				MonthCashIn = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthCashInRing ), ParkMonthRing.Size ) );
@@ -2712,6 +2713,12 @@ public sealed partial class ParkWorld : IParkInitialState
 	}
 
 	/// <summary>
+	/// The park analyser's first int ring (<c>+0x1f100</c>): the bank's balance as each month was closed, the close's
+	/// first sample (<c>FUN_004c7720</c>); its month so far is never written. Null as <see cref="MonthCosts"/>.
+	/// </summary>
+	public ParkMonthRing? MonthBalance { get; private set; }
+
+	/// <summary>
 	/// The park analyser's month of every withdrawal (<c>+0x1f5a0</c>), its ring of 144 closed months behind it; null
 	/// where the file holds no analyser or the ring does not read (<see cref="ParkMonthRing.Read"/>).
 	/// </summary>
@@ -2743,23 +2750,23 @@ public sealed partial class ParkWorld : IParkInitialState
 	private const int AnalyserIntRingsAt = 62598;
 
 	/// <summary>
-	/// The money rings' places among those sixteen: <c>+0x1f5a0</c>, <c>+0x1f7f0</c>, <c>+0x1fa40</c>, <c>+0x1fc90</c>,
-	/// <c>+0x1fee0</c>, <c>+0x20130</c>, <c>+0x20380</c>.
+	/// The money rings' places among those sixteen: <c>+0x1f100</c>, <c>+0x1f5a0</c>, <c>+0x1f7f0</c>, <c>+0x1fa40</c>,
+	/// <c>+0x1fc90</c>, <c>+0x1fee0</c>, <c>+0x20130</c>, <c>+0x20380</c>.
 	/// </summary>
-	private const int MonthCostsRing = 2, MonthStaffCostsRing = 3, MonthTrainingRing = 4, MonthCashInRing = 5,
+	private const int MonthBalanceRing = 0, MonthCostsRing = 2, MonthStaffCostsRing = 3, MonthTrainingRing = 4, MonthCashInRing = 5,
 		MonthGateTakingsRing = 6, MonthShopTakingsRing = 7, MonthSideshowTakingsRing = 8;
 
 	private static int AnalyserMonthRingAt( int ring ) => AnalyserIntRingsAt + ring * ParkMonthRing.Size;
 
 	/// <summary>
-	/// The park analyser's seven money rings, in the order its month's close takes them (<c>FUN_004c7720</c>): all
-	/// costs, staff costs, training, cash in, gate takings, shop takings and sideshow takings.
+	/// The park analyser's eight money rings, in the order its month's close takes them (<c>FUN_004c7720</c>): the
+	/// bank's balance, all costs, staff costs, training, cash in, gate takings, shop takings and sideshow takings.
 	/// </summary>
-	public readonly record struct MonthRingSet( ParkMonthRing Costs, ParkMonthRing StaffCosts, ParkMonthRing Training,
+	public readonly record struct MonthRingSet( ParkMonthRing Balance, ParkMonthRing Costs, ParkMonthRing StaffCosts, ParkMonthRing Training,
 		ParkMonthRing CashIn, ParkMonthRing GateTakings, ParkMonthRing ShopTakings, ParkMonthRing SideshowTakings );
 
 	/// <summary>
-	/// Writes the analyser's seven money rings over the file's in <paramref name="body"/>, a copy of this park's own.
+	/// Writes the analyser's eight money rings over the file's in <paramref name="body"/>, a copy of this park's own.
 	/// A park with no analyser is left alone.
 	/// </summary>
 	public void PutMonthRings( byte[] body, MonthRingSet rings )
@@ -2771,6 +2778,7 @@ public sealed partial class ParkWorld : IParkInitialState
 
 		void Put( ParkMonthRing ring, int at ) => ring.Write( body.AsSpan( AnalyserAt + AnalyserMonthRingAt( at ), ParkMonthRing.Size ) );
 
+		Put( rings.Balance, MonthBalanceRing );
 		Put( rings.Costs, MonthCostsRing );
 		Put( rings.StaffCosts, MonthStaffCostsRing );
 		Put( rings.Training, MonthTrainingRing );

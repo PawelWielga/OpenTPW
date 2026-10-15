@@ -1627,8 +1627,11 @@ The close (`FUN_004c7720`, the analyser's turn of the month, after thing 1's tra
 the wages) pushes each total into its ring (`FUN_004ce290` for all costs, staff costs, training and cash in; the same
 steps written out in line for the gate, shop and sideshow takings: the slot one on, nought past the last with the
 wrapped byte set, the total written there) and zeroes it; the constructor (`FUN_004c58c0`) leaves each slot -1, each
-count 144. The same close samples the analyser's other nine rings, which no add feeds: the bank's balance
-(`FUN_006ad810`, `+0x1f100`), `FUN_004c7db0`'s figure (`+0x1f350`), `FUN_004c7fa0` (`+0x205d0`), the lifetime visitors
+count 144. The same close samples the analyser's other nine rings, which no add feeds: **the bank's balance first**,
+before any other ring (`FUN_006ad810` on the bank, `FUN_005195d0`'s thing `+0xc`, into `+0x1f100`'s next slot; its own
+total `+0x1f100` is never written and reads 0 in every file), and after the seven money rings the other eight, in ring
+order `FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value": a sweep of every cell's features and each standing
+object's upgrade values, kept at `+0x1f0ec`, not read further), `FUN_004c7fa0` (`+0x205d0`), the lifetime visitors
 `+0x21c08` (`+0x20820`), `FUN_004c8070` (`+0x20a70`), the month total `+0x20cc0` (`+0x20cc0`, added by
 `FUN_004cf3e0`), `FUN_004c7bb0`'s float (`+0x20f10`), a mean of `FUN_004cef30` (`+0x21160`) and `FUN_004cceb0`
 (`+0x213b0`); not read further.
@@ -1650,8 +1653,15 @@ screen read the newest month as they open. **The other four money rings are kept
 `MonthShopTakings` and `MonthSideshowTakings` (`AddShopTakings`, `AddSideshowTakings`, from the charge by the item's
 `UiType`); `TurnTheMonth` closes the seven in the close's order and the writer writes them (`ParkWorld.MonthRingSet`).
 Nothing here reads them: the finances screen is not built, and the original's reads them from a file this game wrote.
-The analyser's other nine int rings are not kept (`ANALYSER_MONTH_CLOSE`), nor its lifetime visitors and dearest
-ticket (`GATE_FEE_ANALYSER_TOTALS`, `FUN_004c7520`), and a written file keeps the file's bytes for them.
+**The balance ring is kept too** (Q387): `MonthBalance`, the file's at a load, `ParkMonthRing.Push( Balance )` first in
+`TurnTheMonth`, so after the training's withdrawal and before the bank's batch, the instalments and the wages, as
+`Level`'s month turn calls them; written as the 1st ring. Measured in 579 park files: where its slot is the money
+rings' (573; the six others are this game's own, written before it), each closed month is the last plus that month's
+cash in less its all costs in 572; the one other (`q252/orig/ctl-written-by-the-original.TPWS`) holds as its second
+month the shipped file's month so far unchanged where its balance fell 494 more, by every sign a month taken over from a
+file this game wrote before Q385 kept the costs. The analyser's other eight int rings are not
+kept (`ANALYSER_MONTH_CLOSE`), nor its lifetime visitors and dearest ticket (`GATE_FEE_ANALYSER_TOTALS`, `FUN_004c7520`),
+and a written file keeps the file's bytes for them.
 
 #### The first row is picked as a list fills
 

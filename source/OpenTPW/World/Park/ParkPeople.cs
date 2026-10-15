@@ -880,6 +880,17 @@ public sealed partial class ParkPeople : Entity
 	}
 
 	/// <summary>
+	/// The month's change as the original's calendar sends it: thing 1's training, then the analyser and the bank, then
+	/// each wage, in ascending thing id (<c>docs/exe/ride-operation.md</c>, "The month's change").
+	/// </summary>
+	public static void TurnTheMonth( ParkPeople? people, ParkState? state )
+	{
+		people?.TrainTheStaff();
+		state?.TurnTheMonth();
+		people?.PayTheWages();
+	}
+
+	/// <summary>
 	/// The month's change reaches each member of staff, the last to hear it - message <c>0xc</c>, whose handler
 	/// withdraws a month's wage (<c>FUN_00504c70</c>, <see cref="ParkStaffPool.WageFrom"/>) in ascending thing id,
 	/// with nothing tested first: a member resting, in the hand or hired this month pays the whole month. Each wage goes

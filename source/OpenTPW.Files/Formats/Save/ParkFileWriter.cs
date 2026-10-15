@@ -65,7 +65,7 @@ public static class ParkFileWriter
 	/// the file's where it is null. <see cref="LastObjectBuilt"/> is its stamp of the newest object made
 	/// (<see cref="ParkWorld.PutLastObjectBuilt"/>); the file's where it is null. <see cref="Training"/> is the staff
 	/// HQ's five training budgets and whether one was ever set (<see cref="ParkWorld.PutTrainingBudgets"/>); the
-	/// file's where it is null. <see cref="MonthRings"/> is the analyser's seven money rings
+	/// file's where it is null. <see cref="MonthRings"/> is the analyser's eight money rings
 	/// (<see cref="ParkWorld.PutMonthRings"/>); the file's where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,

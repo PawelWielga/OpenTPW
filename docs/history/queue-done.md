@@ -7022,6 +7022,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   240, sideshows 160, together the 1050 cash in) and the file read back; main's build left them on another slot. The
   original given the file read it as written and graphed the three takings on its Financial Information screen at 650,
   242 and 163 to the pixel. Mutations 19 of 19 after a test round (two rings swapped alike, the shops' close, the set).
+- [x] **Q387. The analyser's month-end balance ring, kept, read and written.** The close (`FUN_004c7720`) samples the
+  bank's balance into ring 1 (`+0x1f100`) first, before the seven money rings; `MonthBalance` is the file's at a load,
+  pushed first in `TurnTheMonth` (after the training, before the bank's batch and the wages, now one method,
+  `ParkPeople.TurnTheMonth`, that `Level` and the tests call) and written. 581 park files: where ring 1 stands on the
+  money rings' slot, each month is the last plus cash in less costs in 573 of 574 (`lib/ringsweep.py`).
+  `q387/run-fix1` (the final build): the close on tick 1474 sampled 88587 = 88325 + 970 - 708, written as
+  [88325, 88587]; main's build left the ring on slot 0. The original given the file graphed three balance points,
+  88049 its own newest; main's file two. 11 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -735,6 +735,7 @@ public sealed class ParkState
 		MechanicCursor = park.Save?.MechanicCursor ?? 0;
 		LastStaffHired = park.Save?.LastStaffHired ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 		LastObjectBuilt = park.Save?.LastObjectBuilt ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
+		MonthBalance = park.Save?.MonthBalance?.Copy() ?? new();
 		MonthCosts = park.Save?.MonthCosts?.Copy() ?? new();
 		MonthStaffCosts = park.Save?.MonthStaffCosts?.Copy() ?? new();
 		MonthCashIn = park.Save?.MonthCashIn?.Copy() ?? new();
@@ -911,6 +912,12 @@ public sealed class ParkState
 	public long LastStaffHired { get; private set; }
 
 	/// <summary>
+	/// The park analyser's ring of the bank's <see cref="Balance"/> at each month's close (<c>+0x1f100</c>), the file's at
+	/// a load and empty in a park made with no file; <see cref="TurnTheMonth"/> samples it first.
+	/// </summary>
+	public ParkMonthRing MonthBalance { get; private set; } = new();
+
+	/// <summary>
 	/// The park analyser's month of every withdrawal (<c>+0x1f5a0</c>) and its closed months, the file's at a load and
 	/// empty in a park made with no file (<c>FUN_004c58c0</c>); <see cref="Spend"/> adds to it.
 	/// </summary>
@@ -934,9 +941,9 @@ public sealed class ParkState
 	/// <summary>The analyser's month of what the sideshows have charged (<c>+0x20380</c>), as <see cref="MonthCosts"/>; <see cref="AddSideshowTakings"/> adds to it.</summary>
 	public ParkMonthRing MonthSideshowTakings { get; private set; } = new();
 
-	/// <summary>The analyser's seven money rings as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
+	/// <summary>The analyser's eight money rings as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
 	public ParkWorld.MonthRingSet MonthRings
-		=> new( MonthCosts, MonthStaffCosts, MonthTraining, MonthCashIn, MonthGateTakings, MonthShopTakings, MonthSideshowTakings );
+		=> new( MonthBalance, MonthCosts, MonthStaffCosts, MonthTraining, MonthCashIn, MonthGateTakings, MonthShopTakings, MonthSideshowTakings );
 
 	/// <summary>
 	/// A wage or a severance paid: onto the analyser's month of staff costs, after the withdrawal and whether or not it
@@ -1273,9 +1280,9 @@ public sealed class ParkState
 
 	/// <summary>
 	/// The month's change reaches the park analyser (thing 5) and then the bank (thing 8) - message <c>0xc</c>
-	/// (<c>docs/exe/ride-operation.md</c>, "The month's change"). The analyser's close (<c>FUN_004c7720</c>) closes its
-	/// seven money rings, all costs, staff costs, training, cash in, gate, shop and sideshow takings, in that order, and
-	/// its other rings and samples are counted
+	/// (<c>docs/exe/ride-operation.md</c>, "The month's change"). The analyser's close (<c>FUN_004c7720</c>) samples the
+	/// bank's <see cref="Balance"/> into its first ring, then closes its seven money rings, all costs, staff costs,
+	/// training, cash in, gate, shop and sideshow takings, in that order, and its other rings and samples are counted
 	/// (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
 	/// instalment withdrawn, its months repaid counted, <see cref="ProfitThisYear"/> given the principal's share back
 	/// by the original's unsigned division, and the loan closed at its period; then, with the balance and
@@ -1284,6 +1291,7 @@ public sealed class ParkState
 	/// </summary>
 	public void TurnTheMonth()
 	{
+		MonthBalance.Push( Balance );
 		MonthCosts.Close();
 		MonthStaffCosts.Close();
 		MonthTraining.Close();
@@ -1291,7 +1299,7 @@ public sealed class ParkState
 		MonthGateTakings.Close();
 		MonthShopTakings.Close();
 		MonthSideshowTakings.Close();
-		Log.Info( $"Park: analyser month closed, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
+		Log.Info( $"Park: analyser month closed, balance {MonthBalance.Newest}, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
 			+ $"training {MonthTraining.Newest}, cash in {MonthCashIn.Newest}, gate {MonthGateTakings.Newest}, "
 			+ $"shops {MonthShopTakings.Newest}, sideshows {MonthSideshowTakings.Newest}" );
 		Unimplemented.Report( "ANALYSER_MONTH_CLOSE" );

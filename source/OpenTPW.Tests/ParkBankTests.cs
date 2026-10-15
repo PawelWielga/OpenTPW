@@ -636,12 +636,13 @@ public class ParkBankTests
 	/// <b>The analyser's money rings keep the month and close it at the month's change</b>: a deposit and a gate fee
 	/// onto cash in, the gate fee onto the gate takings too, a withdrawal onto all costs (none while withdrawals are off),
 	/// each wage onto staff costs and all costs (a severance's, which needs the level's staff pool, is held by the game
-	/// run), a training share onto training whether or not its withdrawal is made; the close after the training and
+	/// run), a training share onto training whether or not its withdrawal is made; the bank's balance sampled first at the
+	/// close; the close after the training and
 	/// before the bank's batch deposit and the wages, which open the new month (<c>FUN_004c7720</c>; <c>FUN_00504c70</c>,
 	/// <c>FUN_00505790</c>, <c>FUN_00505a10</c>, <c>FUN_004d0600</c>).
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> the gate fee not onto cash in; the gate fee not onto the gate takings; a deposit onto the gate
+	/// <b>Mutations:</b> the balance sampled after the bank's turn or before the training; the gate fee not onto cash in; the gate fee not onto the gate takings; a deposit onto the gate
 	/// takings; a withdrawal counted while withdrawals are off; the wage not onto staff costs; the training not onto
 	/// training; the close after the wages; a ring not closed; a ring handed to the writer as another.
 	/// </remarks>
@@ -654,6 +655,7 @@ public class ParkBankTests
 
 		CollectionAssert.AreEqual( new[] { 200, 538, 538, 200, 0 }, Totals(), "the file's month so far" );
 		CollectionAssert.AreEqual( new[] { 1500, 0, 13175, 0, 0 }, Newest(), "and its last month" );
+		Assert.AreEqual( (0, 88325, 0), (bank.MonthBalance.Current, bank.MonthBalance.Newest, bank.MonthBalance.Total), "the file's balance at its first close" );
 
 		bank.Deposit( 40 );
 		bank.Take( 25 );
@@ -668,9 +670,15 @@ public class ParkBankTests
 		bank.MonthShopTakings.Add( 7 );
 		bank.MonthSideshowTakings.Add( 9 );
 
+		bank.BatchBalance = 70;
+
 		var batch = bank.BatchBalance;
+		var balance = bank.Balance;
 
 		TurnTheMonth( bank, people );
+
+		Assert.AreEqual( (1, balance - 25, 0), (bank.MonthBalance.Current, bank.MonthBalance.Newest, bank.MonthBalance.Total),
+			"the balance sampled after the training, before the bank's turn and the wages" );
 
 		CollectionAssert.AreEqual( new[] { 265, 538, 663, 225, 25 }, Newest(), "the training in the month, closed before the bank's turn and the wages" );
 		Assert.AreEqual( (7, 0, 9, 0), (bank.MonthShopTakings.Newest, bank.MonthShopTakings.Total, bank.MonthSideshowTakings.Newest, bank.MonthSideshowTakings.Total),
@@ -679,8 +687,8 @@ public class ParkBankTests
 		var set = bank.MonthRings;
 
 		CollectionAssert.AreEqual(
-			new[] { bank.MonthCosts, bank.MonthStaffCosts, bank.MonthTraining, bank.MonthCashIn, bank.MonthGateTakings, bank.MonthShopTakings, bank.MonthSideshowTakings },
-			new[] { set.Costs, set.StaffCosts, set.Training, set.CashIn, set.GateTakings, set.ShopTakings, set.SideshowTakings }, "the writer is handed each ring as itself" );
+			new[] { bank.MonthBalance, bank.MonthCosts, bank.MonthStaffCosts, bank.MonthTraining, bank.MonthCashIn, bank.MonthGateTakings, bank.MonthShopTakings, bank.MonthSideshowTakings },
+			new[] { set.Balance, set.Costs, set.StaffCosts, set.Training, set.CashIn, set.GateTakings, set.ShopTakings, set.SideshowTakings }, "the writer is handed each ring as itself" );
 		CollectionAssert.AreEqual( new[] { batch, 538, 538, 0, 0 }, Totals(), "the batch and the five wages open the next" );
 
 		bank.WithdrawalsEnabled = 0;
@@ -818,13 +826,8 @@ public class ParkBankTests
 		return (bank, new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), null, bank ));
 	}
 
-	/// <summary>The month's change in <see cref="Level"/>'s order.</summary>
-	private static void TurnTheMonth( ParkState bank, ParkPeople people )
-	{
-		people.TrainTheStaff();
-		bank.TurnTheMonth();
-		people.PayTheWages();
-	}
+	/// <summary>The month's change as <see cref="Level"/> sends it.</summary>
+	private static void TurnTheMonth( ParkState bank, ParkPeople people ) => ParkPeople.TurnTheMonth( people, bank );
 
 	/// <summary>
 	/// <b>A purchase is a withdrawal of the item's price</b>, and one with a golden-ticket cost is counted, as its

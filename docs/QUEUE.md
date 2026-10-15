@@ -44,9 +44,16 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q387. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q388. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q387 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the balance ring is kept. The analyser's other eight
+  int rings are not (`ANALYSER_MONTH_CLOSE`), so a file this game writes past a month holds them a slot behind the
+  money rings; the park value (`+0x1f350`, `FUN_004c7db0`, the finances screen's "Park value" row, a sweep of every
+  cell's features and each object's upgrades) is the nearest, then the lifetime visitors (`+0x20820` from `+0x21c08`,
+  which `GATE_FEE_ANALYSER_TOTALS` would feed). The finances screen is not built here. In no game run: a balance below
+  nought at a close, a loan's instalment in the month (no screen), a ring gone round 144 months, Full Simulation (not
+  asked: the ring is either mode's), the other three themes.
   From Q386 (`hud.md`, "The mini-balance is a MONTHLY ACCOUNT"): the finances screen (`FUN_0049a2e0`, F or the Money
   button's `b_finance`) is not built, so nothing here reads the training, gate, shop and sideshow rings; the original
   reads them from this game's file. In no game run: a training share with withdrawals off (tested only), a grade-4
