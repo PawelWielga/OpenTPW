@@ -44,9 +44,12 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q374. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q375. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q374 (`hud.md`, "The miscellaneous tab: a row an object, and each tab's sort"): the misc list picks no first row
+  as it fills, where the original's picks it (the other lists' pick, Q232). In no game run: a misc object bought or sold
+  with the tab open, Full Simulation (not asked: the screen is either mode's), the other three themes.
   From Q373 (`hud.md`, "The thought"): the thought cell is built. In no game run: thoughts 19 to 22, a thought changed
   under this game's open screen (its two-second rewrite is tested, not run), Full Simulation (not asked: the screen is
   either mode's), the other three themes.
@@ -61,9 +64,9 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   only); the all-staff styler's own alignments (`FUN_00496d20`, not read). In no game run: a guest with negative cash,
   a happiness past 255, Full Simulation (not asked: the screen is either mode's).
   From Q370 (`hud.md`, "The list headings' frames"): the headings are framed; the original's lettering is larger and
-  wraps "Monthly Wage". Seen beside the original in `q370/side-by-side.png`, not read and not counted: **the original's
-  misc tab lists a row an object** (each with its kind's count, by name) where this game's lists a row a kind; the
-  visitors list has no scrollbar (the original's has); its number, cash and happiness cells are built (Q371).
+  wraps "Monthly Wage". Seen beside the original in `q370/side-by-side.png`, not read and not counted: the misc tab's
+  row an object is built (Q374); the visitors list has no scrollbar (the original's has); its number, cash and
+  happiness cells are built (Q371).
   From Q369 (`hud.md`, "The all-staff rows: a money cell, then bars"): the row height from the font
   (`[0x007ca170]`), the status's own words (`STAFF_STATUS_TEXT`: the table `[0x0078baa4]`, read by the row adder
   `0x00496320`), the list's sort word (`FUN_006659af( [0x0075118c], 0 )`). Five other callers hand the stat bars'
@@ -75,8 +78,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q368 (`hud.md`, "The all-items rows: a number, then bars"): in no game run: a figure moved by a sale in this
   game's frame, a ring of fewer than thirty days with a satisfaction that is not nought, a satisfaction past 255.
   From Q367 (`hud.md`, "The all-items rows: a number, then bars"): the shops' and sideshows' money and satisfaction
-  are built (Q368); the original's sideshow rows stand Jungle Spray then Strength Bird, this game's the
-  other way (the fill's walk order, not read); the items rows are this game's 44 units tall where the original's
+  are built (Q368); the sideshow rows stand by name, as the original's (Q374); the items rows are this game's 44 units tall where the original's
   factory measures its font (`0x007ca158`), so its bars are 24 units here; its headings are framed
   (Q370). The all-staff list's skill and happiness
   are bars (Q369). In no game

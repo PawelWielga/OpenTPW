@@ -1445,8 +1445,9 @@ the two land rows are sorted in with the rest (`FUN_004aaf70` adds them through 
 
 **OpenTPW** (Q130e): `UiList` keeps the column and direction (`SetSort`, `SortWord`), `Add` is the sorted insert
 whenever a sort is set, `HeadingClicked` is `FUN_00665a44` and `Sort` `FUN_006628f4`; a heading is a button
-(`AddHeading`). The hire, buy and visitors screens each keep their word in a static for the session. The all-staff
-and all-items lists are given no sort, stand as added, and count a heading's click (`LIST_HEADING_SORT_NOT_BUILT`).
+(`AddHeading`). The hire, buy and visitors screens each keep their word in a static for the session, the all-items
+screen one a tab (Q374). The all-staff list is given no sort, stands as added, and counts a heading's click
+(`LIST_HEADING_SORT_NOT_BUILT`).
 Time In Park sorts on its hours (Q372), the "?" column on its thought's part (Q373). The buy list's rows are
 handed over in name order, where the original walks its catalogue (`FUN_00412e60`): that shows only among rows equal
 on the sorted column.
@@ -1759,9 +1760,44 @@ cell's text; `rings` now prints the total takings beside the total costs. On `q3
 (`q368/run-fix2`, the final game binary): `row 16 Drinks Shop: 1 165 3766 542`, `row 43 Strength Bird: 0 276 0 0 512`,
 `row 14 Jungle Spray: 0 307 -120 -600 491`, the frames lettering "$ 165", "$ 3766", "$ 0", "-$ 120", "-$ 600" and the
 bars 0.532, 0.505, 0.485 (`q368/side-by-side.png`); main's build (`run-control2`) lettered nothing and counted
-`ALL_ITEMS_MONTHLY_HISTORY`, which is gone. **Not built**: the original's sideshow rows stand Jungle Spray then
-Strength Bird, this game's the other way (the walk's order, not looked into); the row height is this game's 44 where the
+`ALL_ITEMS_MONTHLY_HISTORY`, which is gone. The original's sideshow rows stand Jungle Spray then Strength Bird by its
+sort, the name rising (Q374, below). **Not built**: the row height is this game's 44 where the
 original's factory measures its font (`0x007ca158`); the headings are framed (Q370, "The list headings' frames").
+
+#### The miscellaneous tab: a row an object, and each tab's sort
+
+Read 2026-10-15 (Q374). The miscellaneous sub-builder `FUN_00495110` fills through `FUN_00481bc0( 0x400, 0x004941e0 )`:
+bit `0x400` is `FUN_00482040( 3, adder )`, which walks every thing of type 3 whose `FUN_004e2710` word is nought and whose
+item's `Info.WhichUIType` (`+0x4ac`) is 3, the rides' walk (`0x80`) with the kind changed. **The adder `0x004941e0` makes
+a row an object**: the cells are the object's name (`FUN_00486280`, the name the other tabs' adder `FUN_00493cd0`
+letters) and its item's standing count, the control record's `+0x18` (`FUN_004ca8c0` over `FUN_004d3d80`, keyed by the
+thing's item word `+0xe`); the row's data is the thing (`FUN_0066403b( cells, thing, -1, 0 )`). So two Small Toilets are
+two rows, each "3" where three stand. The list's right click (`0x00495554`) has no case by tab: a miscellaneous row
+goes to its object as a ride's does.
+
+**Each tab keeps its own sort**, as the hire, buy and visitors screens keep theirs ("A list's order"): the sub-builders
+hand `FUN_006659af( word, 0 )` the words `[0x00750d5c]` (rides), `[0x00750d60]` (shops), `[0x00750d64]` (sideshows) and
+`[0x00750d68]` (miscellaneous), each 1 in the file, the name rising; the screen's handler `FUN_00495360` stores `0x406`'s
+value in the word of the remembered tab (`[0x007ca154]`, the jump table at `0x004955c8` from `0x004954f9`). Every
+sub-builder makes column 0 text (`FUN_006636b2( 0, 0 )`).
+
+Measured in the original under Proton (`q374/orig/a`, `q353/grades.TPWS`): the miscellaneous tab lettered Litter Bin 1,
+Round Fountain 1, Security Camera 2 twice, Small Toilet 3 three times and Staff Room 1, the first row picked; a click on
+Name stood them the other way, Staff Room first; the rides' tab and back kept that; the sideshows' tab stood Jungle Spray
+above Strength Bird; a right click on the third row shut the screen with the view on a security camera.
+
+**OpenTPW** (Q374): `ParkItemsScreen.Show`'s miscellaneous arm adds a row a placed object, keyed by its thing, with
+`ParkState.BuiltOf( item ).Standing`; `_sorts` holds the four words, handed over as each tab fills, and the lists' column
+0 is text. Each fill and heading click logs `Items order: tab T, sort W, N rows: ...`. On the stock park with a Giant
+Puzzle and a Balloon Shop bought under pause (`q374/run-fix3`, the final game binary): `tab 3, sort 1, 8 rows: 17 Litter
+Bin 1, 24 Round Fountain 1, 19 Security Camera 2, 18 Security Camera 2, 23 Small Toilet 3, 22 Small Toilet 3, 21 Small
+Toilet 3, 20 Staff Room 1`, eight rows lettered (`4-misc.png`); the Name heading's click `sort -1`, Staff Room first
+(`5-misc-falling.png`), kept across the rides' tab; `tab 1, sort 1: 44 Balloon Shop 0, 16 Drinks Shop 0` and `tab 2, sort
+1: 43 Giant Puzzle 0, 14 Jungle Spray 0`, each bought row added last and standing first; the right click on row 2
+`Camera: to thing 19 on cell (40,29)`, the screen shut (`7-camera.png`). Main's build (`run-control2`) lettered five rows,
+a row a kind, and counted the right click (`ALL_ITEMS_MISC_ROW_RIGHT_CLICK`, which is gone). **Not built**: the
+original picks the first row as the list fills ("The first row is picked as a list fills"); this game's miscellaneous
+list picks none.
 
 #### The all-staff rows: a money cell, then bars
 
@@ -1951,8 +1987,8 @@ game binary): `Staff list: headings !cbut 8 119 "Name", ... !cbut 8 123 "Happine
 the four tabs' rows as the table; all 29 headings teal 0.854 to 0.99 with yellow lettering and no white
 (`q370/side-by-side.png`). Main's build (`run-control1`) lettered them white on black. **Not built**: the original's
 lettering is larger and wraps "Monthly Wage" where this game's fits one line of its smaller font (the park screens'
-lettering, a deviation Q352 filed); the headings still sort nothing on the all-staff and all-items lists
-(`LIST_HEADING_SORT_NOT_BUILT`).
+lettering, a deviation Q352 filed); the headings still sort nothing on the all-staff list
+(`LIST_HEADING_SORT_NOT_BUILT`); the all-items ones sort (Q374).
 
 ### The node name is not the file name — measured
 

@@ -2525,9 +2525,6 @@ their right click to `UiList.RowRightClicked` (`hud.md`, "A right click on a lis
 the object window's preview answers `Clicked` and `RightClicked`. Differences, each said at its site:
 
 - **The scroll terms**: this camera keeps none, so nothing is zeroed.
-- **The miscellaneous tab** of the all-items list holds a row for each item type with a count, not a row a thing, so
-  its right click goes nowhere: counted, `ALL_ITEMS_MISC_ROW_RIGHT_CLICK`. What the original's rows there are is not
-  decoded (`FUN_00495110` fills them through `FUN_00481bc0( 0x400, 0x004941e0 )`).
 - **The preview's left click** is the 500 ms click, as the original's (`hud.md`, "Who acts on the click, and who on
   the release").
 - **In first person** the original's two words are where the viewer stands, and no screen is open there; here only

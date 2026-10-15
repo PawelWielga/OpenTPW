@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenTPW.UI;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -259,12 +260,13 @@ public class ParkCameraToThingTests
 	}
 
 	/// <summary>
-	/// The all-items lists: a ride's row goes to the ride; the miscellaneous tab's rows are item types here, so its
-	/// right click is counted and the screen stays.
+	/// The all-items lists: a ride's row goes to the ride, and so does a miscellaneous row to its object. The
+	/// miscellaneous tab holds a row a placed object, by name, each with its item's standing count (the adder
+	/// <c>0x004941e0</c>), sorted on the name as the tab's word <c>[0x00750d68]</c> starts: the stock park's eight.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the items lists not wired; the miscellaneous tab's row id taken for a thing.</remarks>
+	/// <remarks><b>Mutations:</b> the items lists not wired; a row a kind; the count 1 a row; no sort word handed over.</remarks>
 	[TestMethod]
-	public void ARightClickOnARidesRowGoesToTheRideAndTheMiscellaneousTabIsCounted()
+	public void ARightClickOnARidesRowGoesToTheRideAndAMiscellaneousRowToItsObject()
 	{
 		var screen = new ParkItemsScreen( _stack );
 		_stack.Open( screen );
@@ -288,15 +290,64 @@ public class ParkCameraToThingTests
 		typeof( ParkItemsScreen ).GetMethod( "Show", Private )!.Invoke( again, [3] );
 
 		var misc = ((Dictionary<int, UiList>)typeof( ParkItemsScreen ).GetField( "_lists", Private )!.GetValue( again )!)[2];
-		Assert.IsTrue( misc.Rows.Count >= 1, "the park owns a miscellaneous item" );
 
-		var before = Times( "ALL_ITEMS_MISC_ROW_RIGHT_CLICK" );
-		at = RowMiddle( misc, 0 );
+		Assert.AreEqual( "Litter Bin 1, Round Fountain 1, Security Camera 2, Security Camera 2, Small Toilet 3, Small Toilet 3, "
+			+ "Small Toilet 3, Staff Room 1", string.Join( ", ", misc.Rows.Select( row => $"{row.Name} {row.Value}" ) ) );
+		Assert.AreEqual( 8, misc.Rows.Select( row => row.Id ).Distinct().Count(), "a row a thing" );
+
+		var camera = misc.Rows[2].Id;
+		var cell = ParkOrbitCameraMode.CellOfThing( camera, null, _state )!.Value;
+		Assert.AreNotEqual( Start, Corner( cell ) );
+
+		at = RowMiddle( misc, 2 );
 		misc.RightClickedAt( at.X, at.Y );
 
-		Assert.AreEqual( before + 1, Times( "ALL_ITEMS_MISC_ROW_RIGHT_CLICK" ) );
-		Assert.AreEqual( Start, ParkOrbitCameraMode.PointOfInterest, "a type is nowhere to go" );
-		Assert.IsTrue( _stack.Windows.Contains( again ) );
+		Assert.AreEqual( Corner( cell ), ParkOrbitCameraMode.PointOfInterest, "a miscellaneous row goes to its object" );
+		Assert.IsFalse( _stack.Windows.Contains( again ) );
+	}
+
+	/// <summary>
+	/// <b>Each all-items tab keeps its own sort for the session</b> (<c>[0x00750d5c]</c> to <c>[0x00750d68]</c>, each 1,
+	/// written on <c>0x406</c> by the remembered tab, <c>0x004954eb</c>): the name clicked on the miscellaneous tab
+	/// turns it to -1 and the rows about; the rides' tab stays by name rising, and the miscellaneous one opened again
+	/// stands falling.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> one word for every tab; the word not kept; the name sorted as a number.</remarks>
+	[TestMethod]
+	public void EachItemsTabKeepsItsOwnSort()
+	{
+		var sorts = (int[])typeof( ParkItemsScreen ).GetField( "_sorts", BindingFlags.Static | BindingFlags.NonPublic )!.GetValue( null )!;
+
+		try
+		{
+			var screen = new ParkItemsScreen( _stack );
+			_stack.Open( screen );
+			var show = typeof( ParkItemsScreen ).GetMethod( "Show", Private )!;
+			var lists = (Dictionary<int, UiList>)typeof( ParkItemsScreen ).GetField( "_lists", Private )!.GetValue( screen )!;
+
+			static string[] Names( UiList list ) => list.Rows.Select( row => row.Name ).ToArray();
+
+			show.Invoke( screen, [3] );
+			Assert.AreEqual( 1, lists[2].SortWord );
+			Assert.AreEqual( "Litter Bin", Names( lists[2] )[0] );
+
+			((UiButton)lists[2].Children.Single( child => child.Id == 0x10 )).Clicked!();
+			Assert.AreEqual( -1, sorts[3], "the miscellaneous tab's word" );
+			Assert.AreEqual( "Staff Room", Names( lists[2] )[0] );
+
+			show.Invoke( screen, [0] );
+			var rides = Names( lists[5] );
+			Assert.AreEqual( 1, lists[5].SortWord, "the rides' own word" );
+			CollectionAssert.AreEqual( rides.OrderBy( name => name, StringComparer.Ordinal ).ToArray(), rides, "by name rising" );
+
+			show.Invoke( screen, [3] );
+			Assert.AreEqual( -1, lists[2].SortWord );
+			Assert.AreEqual( "Staff Room", Names( lists[2] )[0], "kept" );
+		}
+		finally
+		{
+			Array.Fill( sorts, 1 );
+		}
 	}
 
 	/// <summary>

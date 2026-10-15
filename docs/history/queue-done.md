@@ -6931,6 +6931,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   999 or past part 16, inset 4 across; the column sorts on it. On `q373/thought.TPWS` the 13 fills, the frame's cells and
   the "?" sort read as predicted (`run-fix1`, 8 of 8), and the original's ten cells each matched its polled thought
   (`q373/orig/a`, `b`); main's drew none. Mutations 12 of 12.
+- [x] **Q374. The all-items miscellaneous tab a row an object, and each tab's own sort, as the original's** (a piece
+  of the old Q374, split by Claude; the rest is Q375). Read from `FUN_00495110`, the walk `FUN_00482040( 3, ... )` and the
+  adder `0x004941e0`: a row a placed object, its name and its item's control record `+0x18`, keyed by the thing, so its
+  right click goes to it (`0x00495554`); the four tabs' sort words `[0x00750d5c]` to `[0x00750d68]`, each 1, kept by tab.
+  On the stock park the eight rows, the Name click's `sort -1` kept across a tab, the bought rows standing first and
+  the right click's camera read as predicted (`run-fix3`, 9 of 9, after two rounds my scene missed); main's lettered
+  five rows; the original the same eight, order and right click (`q374/orig/a`). Mutations 10 of 11, m11 equivalent.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

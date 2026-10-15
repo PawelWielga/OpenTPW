@@ -29,7 +29,7 @@ namespace OpenTPW.UI;
 /// last thirty finished days, a number; the rides' Excitement, State Of Repair and Remaining Life and the
 /// sideshows' Excitement are bars (<see cref="NumbersOf(int, ParkWorld.CatalogueObject, ParkItemCatalogue.Item, ParkState)"/>);
 /// the shops' and sideshows' Profit Last Month and Total Profit are money, and their Customer Satisfaction a bar.
-/// <b>Miscellaneous items fill both their columns</b>, because <i>Number Owned</i> is a count of what is standing.
+/// <b>Miscellaneous items are a row an object</b>, each <i>Number Owned</i> its item's count of what is standing.
 /// </para>
 /// </summary>
 internal sealed class ParkItemsScreen : UiWindow
@@ -107,6 +107,13 @@ internal sealed class ParkItemsScreen : UiWindow
 
 	/// <summary>Which tab the screen was last left on - the original keeps the same in a global.</summary>
 	private static int _lastTab;
+
+	/// <summary>
+	/// Each tab's sort, kept for the session: the column + 1, negated when descending - the original's
+	/// <c>[0x00750d5c]</c>, <c>[0x00750d60]</c>, <c>[0x00750d64]</c> and <c>[0x00750d68]</c>, each 1, the name ascending,
+	/// and each written by the screen's handler on the list's <c>0x406</c> by the remembered tab (<c>0x004954eb</c>).
+	/// </summary>
+	private static readonly int[] _sorts = [1, 1, 1, 1];
 
 	public ParkItemsScreen( WindowStack stack ) : base( stack )
 	{
@@ -213,12 +220,16 @@ internal sealed class ParkItemsScreen : UiWindow
 			Columns = edges,
 
 			// A right click on the list moves the camera to the selected row's thing and closes the screen (0x00495584).
-			RowRightClicked = GoTo
+			RowRightClicked = GoTo,
+			SortChanged = word => _sorts[_tab] = word,
+
+			// Every sub-builder's FUN_006636b2( 0, 0 ): the name is sorted as text.
+			TextColumns = [true]
 		} );
 
 		// Framed by FUN_00486660; the text and the help row are the tab's (Show).
 		for ( var column = 0; column < headings.Length; ++column )
-			list.AddFramedHeading( column, headings[column], string.Empty, -1 );
+			list.AddFramedHeading( column, headings[column], string.Empty, -1 ).Clicked += () => LogOrder( list );
 
 		list.Build();
 
@@ -229,18 +240,9 @@ internal sealed class ParkItemsScreen : UiWindow
 	/// The list's right click (<c>0x402</c>, <c>0x00495554</c>): the camera to the row's thing, then the screen closed
 	/// (message 4, <c>0x00495599</c>).
 	/// </summary>
-	/// <remarks>
-	/// The miscellaneous tab's rows here are item types with a count, not things, so there is nothing to go to: counted,
-	/// and the screen stays.
-	/// </remarks>
+	/// <remarks>The handler has no case by tab: a miscellaneous row goes to its object as a ride's does.</remarks>
 	private void GoTo( int thing )
 	{
-		if ( Tabs[_tab].Index == ItemDescriptionFile.Feature )
-		{
-			Unimplemented.Report( "ALL_ITEMS_MISC_ROW_RIGHT_CLICK" );
-			return;
-		}
-
 		ParkOrbitCameraMode.GoToThing( thing );
 		Stack.Close( this );
 	}
@@ -292,6 +294,9 @@ internal sealed class ParkItemsScreen : UiWindow
 		chosen.BarColumns = tab.Bars;
 		chosen.Build();
 
+		// Handed over while the list is still empty, so it sorts nothing (FUN_006659af( word, 0 )).
+		chosen.SetSort( _sorts[_tab] );
+
 		// The headings, which change with the tab even where the shape does not - rides and shops share
 		// a tree and name its five columns differently, and help with different rows.
 		for ( var column = 0; column < tab.Columns; ++column )
@@ -316,25 +321,21 @@ internal sealed class ParkItemsScreen : UiWindow
 
 		if ( tab.Index == ItemDescriptionFile.Feature )
 		{
-			// Miscellaneous items are counted rather than listed one by one, because their two columns
-			// are Name and Number Owned - a row per bin would make that second column read 1 for ever.
-			var owned = new Dictionary<int, int>();
-
+			// A row a placed object, as the other tabs, each with its item's standing count: the adder 0x004941e0
+			// hands the object's name and its control record's +0x18 (FUN_004ca8c0), the row keyed by the thing.
 			foreach ( var placed in state.Objects )
 			{
 				if ( placed.IsPlaced && catalogue.TryGet( placed.CatalogueId, out var each )
 					&& each.UiType == tab.Index )
 				{
-					owned[placed.CatalogueId] = owned.GetValueOrDefault( placed.CatalogueId ) + 1;
+					var owned = state.BuiltOf( placed.CatalogueId ).Standing;
+
+					chosen.Add( new UiList.Row( placed.ThingId, each.Name, owned ) );
+					Log.Info( $"Items list: tab {_tab}, row {placed.ThingId} {each.Name}: owned {owned}" );
 				}
 			}
 
-			foreach ( var (id, count) in owned.OrderBy( entry => entry.Key ) )
-			{
-				if ( catalogue.TryGet( id, out var item ) )
-					chosen.Add( new UiList.Row( id, item.Name, count ) );
-			}
-
+			LogOrder( chosen );
 			return;
 		}
 
@@ -354,7 +355,12 @@ internal sealed class ParkItemsScreen : UiWindow
 
 			Log.Info( $"Items list: tab {_tab}, row {placed.ThingId} {item.Name}: {Census( numbers )}" );
 		}
+
+		LogOrder( chosen );
 	}
+
+	/// <summary>The rows in the order they stand, after a fill and a heading's click.</summary>
+	private void LogOrder( UiList list ) => Log.Info( $"Items order: tab {_tab}, {list.Census()}" );
 
 	/// <summary>
 	/// A placed object's row by column, as the fill <c>FUN_00493cd0</c> and the rewrite <c>FUN_004955e0</c> hand it: the
