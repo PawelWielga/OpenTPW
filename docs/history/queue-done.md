@@ -7030,6 +7030,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `q387/run-fix1` (the final build): the close on tick 1474 sampled 88587 = 88325 + 970 - 708, written as
   [88325, 88587]; main's build left the ring on slot 0. The original given the file graphed three balance points,
   88049 its own newest; main's file two. 11 bugs put back, all caught.
+- [x] **Q388. The analyser's park value ring, summed, kept, read and written.** The park value (`FUN_004c7db0`): every
+  cell inside the park by `mType` (0: 2, path 3, 2: 1, queue 5, 9: 6, 10: 1) and 50 for a counted track record, every
+  object not condemned by its tiers' `CostOfUpgrade` times its repair cut to a byte over 100. `ParkValue`;
+  `MonthParkValue`, the file's at a load, pushed after the money rings in `TurnTheMonth`, written as ring 2. The shipped
+  park sums to its own ring's 23977 from the file alone (`lib/parkfile.park_value`, `lib/itemcosts.py`).
+  `q388/run-fix2` (the final build): the close on tick 1474 summed 23899 (cells 19527, objects 4372, the Belly Bounce
+  worn), written as [23977, 23899]; main's build left the ring on slot 0. The original given the file closed at once
+  and summed 23894, the file's own figure exactly, and graphed three park value points; main's file two. 21 bugs put
+  back, 20 caught by a test, the 21st (Level's call) by the run's close line.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

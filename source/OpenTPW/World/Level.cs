@@ -1149,7 +1149,7 @@ public class Level
 
 		// Then the month's change and the year's, which the calendar sends after the day's in the same tick.
 		if ( Kind == Scene.Park && GameCalendar.MonthRolled )
-			ParkPeople.TurnTheMonth( ParkPeople.Current, ParkState );
+			ParkPeople.TurnTheMonth( ParkPeople.Current, ParkState, Catalogue );
 
 		if ( Kind == Scene.Park && GameCalendar.YearRolled )
 			ParkState?.TurnTheYear();

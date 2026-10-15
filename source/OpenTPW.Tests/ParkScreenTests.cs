@@ -783,7 +783,7 @@ public class ParkScreenTests
 
 		// A month closed with staff costs in it: the other costs are all costs less them, on both screens.
 		state.Spend( 40 );
-		state.TurnTheMonth();
+		state.TurnTheMonth( null );
 
 		var staffMonth = 538 + severance;
 

@@ -1659,9 +1659,44 @@ Nothing here reads them: the finances screen is not built, and the original's re
 rings' (573; the six others are this game's own, written before it), each closed month is the last plus that month's
 cash in less its all costs in 572; the one other (`q252/orig/ctl-written-by-the-original.TPWS`) holds as its second
 month the shipped file's month so far unchanged where its balance fell 494 more, by every sign a month taken over from a
-file this game wrote before Q385 kept the costs. The analyser's other eight int rings are not
-kept (`ANALYSER_MONTH_CLOSE`), nor its lifetime visitors and dearest ticket (`GATE_FEE_ANALYSER_TOTALS`, `FUN_004c7520`),
-and a written file keeps the file's bytes for them.
+file this game wrote before Q385 kept the costs. **The park value ring is kept too** (Q388): `MonthParkValue`, the
+file's at a load, `ParkMonthRing.Push( ParkValue.Of( ... ) )` after the seven money rings in `TurnTheMonth`, written as the
+2nd ring (below, "The park value"). The analyser's other seven int rings are not kept (`ANALYSER_MONTH_CLOSE`), nor its
+lifetime visitors and dearest ticket (`GATE_FEE_ANALYSER_TOTALS`, `FUN_004c7520`), and a written file keeps the file's
+bytes for them.
+
+#### The park value
+
+`FUN_004c7db0` (read 2026-10-15, Q388), a thiscall on the analyser with one argument, a number of quarter ticks. Its
+answer is kept at `+0x1f0ec`, stamped at `+0x1f0e8` with `mGameTick` (`FUN_0041a960`) and flagged at `+0x1f0f0`: with
+the flag set and the argument at or over the quarter ticks since the stamp (`FUN_0041a990`, `(tick >> 2) - (stamp >> 2)`,
+unsigned) the kept answer is given again. Its two callers: the month's close (`0x004c79a7`, argument nought, so a fresh
+sum unless one was taken in the same quarter tick), which pushes it into the 2nd int ring, `+0x1f350` (its slot
+`+0x1f594`, its months `+0x1f354`), and the loans screen's test of a loan (`FUN_004d06b0`, argument `0x14`), which
+weighs the value (times the float 1.0 at `0x00700370`) less what the bought loans still owe against the loan's record;
+not read further. The analyser's serialiser
+`FUN_004c5d70` writes the three kept fields too. The sum:
+
+- **Every cell** of the 128 x 128 runtime array (world `+0x2d8`, `0x44` bytes, id `y*128+x+1`) whose `mFlags & 0x40`
+  (outside the park) is clear adds by `mType`: 0 adds 2, 1 (path) 3, 2 adds 1, 3 (queue) 5, 9 adds 6 (both the `3 or 9`
+  test and its own), 10 adds 1, every other nought (`0x004c7e24`..`0x004c7e7d`; `FUN_005d60c0`, which would add 10,
+  answers nought). **And 50 where its track record counts** (`FUN_005363f0`): the record the cell's first word names,
+  or for a type 12 or 17 its parent's (`+0x10`; none with no parent), of type 11, 13, 16, 18 or 25.
+- **Every object on the chain** (`mFirstObject`, world `+0x1da746`, linked at `+0xc`) but a condemned one (`mState` 4,
+  `FUN_004e0380`) adds the item's `CostOfUpgrade` (descriptor `+0x1b8 + 0x40 k`) for every tier `k` from nought to its
+  `mUpgradeLevel` (`+0x50`), times `__ftol( State of repair, +0x44 ) & 0xff`, over 100, a signed whole division.
+
+**Measured.** From the file alone (`lib/parkfile.park_value` with `lib/itemcosts`), the shipped `Easymode.TPWI` sums to
+its own ring's one closed month, 23977: cells 19527 (2362 of type 0, 78 path, 4 queue, 8 of type 9, one of type 10, and
+290 track cells, 216 of type 12 whose parent is a 25 and 74 of 25), objects 4450 at full repair (the fountain 150, three
+toilets 100, the staff room 500, two cameras 250, a bin 100, the Drinks Shop 650, the Jungle Spray 1750, the Belly
+Bounce 500; the gate and the two fixed items nought). Of 581 park files on hand 186 sum to their ring's newest month,
+the shipped park and its untouched copies; the others were worn or built on after their last close.
+
+**OpenTPW** (Q388). `ParkValue.Of` is the sum, from `ParkState.Record` and `ObjectsInChainOrder`, the tiers' costs
+`ParkItemCatalogue.Item.UpgradeCostAt` (`ItemDescriptionFile.UpgradeCostAt` for tiers 1 and 2); it takes the sum afresh
+every time where the original's close can reuse one of the same quarter tick (said at the site). Nothing here reads the
+ring: the finances screen and the loans screen are not built.
 
 #### The first row is picked as a list fills
 

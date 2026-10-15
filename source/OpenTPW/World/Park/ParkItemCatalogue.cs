@@ -130,8 +130,14 @@ public sealed class ParkItemCatalogue
 
 		// What the lab's project for it is made of: the kind of research, its group and what researching each later
 		// tier costs - ItemDescriptionFile.ResearchCategory, ResearchGroup and UpgradeResearchCostAt. See ParkResearch.FreshLab.
-		int ResearchCategory = 0, int ResearchGroup = 0, int UpgradeResearchCost1 = 0, int UpgradeResearchCost2 = 0 )
+		int ResearchCategory = 0, int ResearchGroup = 0, int UpgradeResearchCost1 = 0, int UpgradeResearchCost2 = 0,
+
+		// What upgrading to each later tier costs - ItemDescriptionFile.UpgradeCostAt. See UpgradeCostAt.
+		int UpgradeCost1 = 0, int UpgradeCost2 = 0 )
 	{
+		/// <summary>A tier's <c>CostOfUpgrade</c>: tier nought's is <see cref="BuildPrice"/>, nought past the third.</summary>
+		public int UpgradeCostAt( int tier ) => tier switch { 0 => BuildPrice, 1 => UpgradeCost1, 2 => UpgradeCost2, _ => 0 };
+
 		/// <summary>The bonus of one step of the age, nought past the third - <see cref="ItemDescriptionFile.NewBonusAt"/>.</summary>
 		public int NewBonusAt( int step ) => step switch { 0 => NewBonus0, 1 => NewBonus1, 2 => NewBonus2, _ => 0 };
 
@@ -366,7 +372,8 @@ public sealed class ParkItemCatalogue
 						description.RedLineCapacityAt( tier ) ) )],
 					ResearchCategory: description.ResearchCategory, ResearchGroup: description.ResearchGroup,
 					UpgradeResearchCost1: description.UpgradeResearchCostAt( 1 ),
-					UpgradeResearchCost2: description.UpgradeResearchCostAt( 2 ) );
+					UpgradeResearchCost2: description.UpgradeResearchCostAt( 2 ),
+					UpgradeCost1: description.UpgradeCostAt( 1 ), UpgradeCost2: description.UpgradeCostAt( 2 ) );
 
 			return true;
 		}

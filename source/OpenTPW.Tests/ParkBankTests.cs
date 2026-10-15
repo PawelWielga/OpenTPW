@@ -780,16 +780,16 @@ public class ParkBankTests
 
 		bank.BatchBalance = 50;
 		bank.SetLoan( 3, new ParkWorld.LoanState( 1, 10000, 0, 36, 277, Bought: 1, MonthsRepaid: 34, 0 ) );
-		bank.TurnTheMonth();
+		bank.TurnTheMonth( null );
 
 		Assert.AreEqual( (1000 + 50 - 277, 0, 35, 1), (bank.Balance, bank.BatchBalance, bank.Loans[3].MonthsRepaid, bank.Loans[3].Bought) );
 		Assert.AreEqual( 50 - 119304646, bank.ProfitThisYear );
 
-		bank.TurnTheMonth();
+		bank.TurnTheMonth( null );
 
 		Assert.AreEqual( (0, 0), (bank.Loans[3].MonthsRepaid, bank.Loans[3].Bought), "repaid at its period" );
 
-		bank.TurnTheMonth();
+		bank.TurnTheMonth( null );
 
 		Assert.AreEqual( 1000 + 50 - 277 - 277, bank.Balance, "and paid no more" );
 	}
@@ -808,12 +808,12 @@ public class ParkBankTests
 			bank.AdvanceGameTick();
 
 		var before = Times( "BANK_PARK_ENDS_IN_THE_RED" );
-		bank.TurnTheMonth();
+		bank.TurnTheMonth( null );
 
 		Assert.AreEqual( (5, before), (bank.MonthsInTheRed(), Times( "BANK_PARK_ENDS_IN_THE_RED" )) );
 
 		bank.AdvanceGameTick();
-		bank.TurnTheMonth();
+		bank.TurnTheMonth( null );
 
 		Assert.AreEqual( (6, before + 1), (bank.MonthsInTheRed(), Times( "BANK_PARK_ENDS_IN_THE_RED" )) );
 	}
@@ -827,7 +827,7 @@ public class ParkBankTests
 	}
 
 	/// <summary>The month's change as <see cref="Level"/> sends it.</summary>
-	private static void TurnTheMonth( ParkState bank, ParkPeople people ) => ParkPeople.TurnTheMonth( people, bank );
+	private void TurnTheMonth( ParkState bank, ParkPeople people ) => ParkPeople.TurnTheMonth( people, bank, Catalogue() );
 
 	/// <summary>
 	/// <b>A purchase is a withdrawal of the item's price</b>, and one with a golden-ticket cost is counted, as its

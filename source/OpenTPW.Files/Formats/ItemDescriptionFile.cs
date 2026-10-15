@@ -461,6 +461,14 @@ public sealed partial class ItemDescriptionFile
 		=> _upgradeResearchCost[tier - 1] ?? _category?.UpgradeResearchCostAt( tier ) ?? 0;
 
 	/// <summary>
+	/// What upgrading to a later tier costs, <paramref name="tier"/> 1 or 2 - <c>Upgrades[tier].CostOfUpgrade</c>,
+	/// descriptor <c>+0x1b8 + tier * 0x40</c>; tier nought's is <see cref="BuildPrice"/>. The park value adds every tier
+	/// up to an object's own (<c>FUN_004c7db0</c>; <c>docs/exe/hud.md</c>, "The park value").
+	/// </summary>
+	public int UpgradeCostAt( int tier )
+		=> _upgradeCost[tier - 1] ?? _category?.UpgradeCostAt( tier ) ?? 0;
+
+	/// <summary>
 	/// The kind of research the item's project is - <c>Research.Category</c>, descriptor <c>+0x17c</c>: 0 a ride,
 	/// 1 a shop, 2 a sideshow, 3 a feature, 4 an upgrade, by the files' own comments.
 	/// </summary>
@@ -590,6 +598,7 @@ public sealed partial class ItemDescriptionFile
 	private int? _researchCost;
 
 	private readonly int?[] _upgradeResearchCost = new int?[Tiers - 1];
+	private readonly int?[] _upgradeCost = new int?[Tiers - 1];
 
 	private int? _researchCategory;
 
@@ -998,6 +1007,14 @@ public sealed partial class ItemDescriptionFile
 				// Slot nought only - the later two are upgrade tiers, not the purchase. See BuildPrice.
 				case "Upgrades[0].CostOfUpgrade":
 					_buildPrice = Number( line );
+					break;
+
+				case "Upgrades[1].CostOfUpgrade":
+					_upgradeCost[0] = Number( line );
+					break;
+
+				case "Upgrades[2].CostOfUpgrade":
+					_upgradeCost[1] = Number( line );
 					break;
 
 				// The ride window's three sliders: what they may be set to, and where they start. The

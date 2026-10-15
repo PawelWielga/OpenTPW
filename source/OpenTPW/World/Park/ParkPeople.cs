@@ -883,10 +883,10 @@ public sealed partial class ParkPeople : Entity
 	/// The month's change as the original's calendar sends it: thing 1's training, then the analyser and the bank, then
 	/// each wage, in ascending thing id (<c>docs/exe/ride-operation.md</c>, "The month's change").
 	/// </summary>
-	public static void TurnTheMonth( ParkPeople? people, ParkState? state )
+	public static void TurnTheMonth( ParkPeople? people, ParkState? state, ParkItemCatalogue? catalogue )
 	{
 		people?.TrainTheStaff();
-		state?.TurnTheMonth();
+		state?.TurnTheMonth( catalogue );
 		people?.PayTheWages();
 	}
 
