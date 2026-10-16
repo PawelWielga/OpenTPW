@@ -2724,7 +2724,8 @@ public sealed partial class ParkPeople : Entity
 	/// kind that are not done (0x004ca690, <see cref="ParkResearch.Unfinished"/>), and of a ride's (0x004ca630); and the map's developed cells
 	/// (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and this month's misbehaving kids (FUN_004c94a0 asked with
 	/// nought, <see cref="ParkState.MisbehavingKids"/>); and the guests inside under <see cref="ParkAdvisorMessages.UnhappyBelow"/>
-	/// happiness, each one's truncated to its low byte (FUN_004c9750). With no catalogue no kind is counted.
+	/// happiness, each one's truncated to its low byte (FUN_004c9750); and the staff pool's researchers to hire
+	/// (FUN_00508380 asked for kind four). With no catalogue no kind is counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2815,7 +2816,8 @@ public sealed partial class ParkPeople : Entity
 			_research?.Rate( ItemDescriptionFile.SideShow, ability, MostResearchAbility ) ?? 0, ability, MostResearchAbility,
 			new ParkAdvisorMessages.StaffTraining( TrainingOf( 0 ), TrainingOf( 1 ), TrainingOf( 2 ), TrainingOf( 3 ), TrainingOf( 4 ) ),
 			State.DevelopedCells(), State.MisbehavingKids.Month, unhappy, State.LitterShare(), State.MisbehavingKids.GotAwayThisMonth,
-			_research?.Unfinished( ItemDescriptionFile.Ride ) ?? 0 );
+			_research?.Unfinished( ItemDescriptionFile.Ride ) ?? 0,
+			ParkStaffPool.Current?.OfKind( ParkStaffPool.Kinds - 1 ).Count() ?? 0 );
 	}
 
 	/// <summary>

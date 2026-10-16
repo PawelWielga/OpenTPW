@@ -778,6 +778,35 @@ public class ParkClosedRideTests
 	}
 
 	/// <summary>
+	/// What the advisor's row 17 reads of the park besides (0x0059cfe0): the staff pool's researchers to hire
+	/// (<c>FUN_00508380</c> asked for kind four, a slot whose <c>mValid</c> is set), the shipped park's three of sixteen
+	/// candidates; and its researchers' ability added up and the most it could be, 12 and 120.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> another kind's candidates counted, or every candidate; the count not dropping as one is taken.</remarks>
+	[TestMethod]
+	public void TheAdvisorsParkFactsCountTheResearchersToHire()
+	{
+		var park = Open();
+		var pool = new ParkStaffPool( new ParkBalance( Theme, easyMode: true ), gameTick: park.World.GameTick, saved: park.World );
+
+		try
+		{
+			Assert.AreEqual( 16, pool.Candidates.Count );
+			Assert.AreEqual( (3, 1, 12, 120), (park.People.AdvisorFacts().ResearcherCandidates, park.People.AdvisorFacts().Researchers,
+				park.People.AdvisorFacts().ResearchAbility, park.People.AdvisorFacts().MostResearchAbility) );
+			Assert.IsTrue( pool.Take( pool.OfKind( 1 ).First().Id, out _ ) );
+			Assert.AreEqual( 3, park.People.AdvisorFacts().ResearcherCandidates, "a mechanic taken is not a researcher" );
+			Assert.IsTrue( pool.Take( pool.OfKind( 4 ).First().Id, out _ ) );
+			Assert.AreEqual( 2, park.People.AdvisorFacts().ResearcherCandidates );
+		}
+		finally
+		{
+			ParkStaffPool.ForgetCurrent();
+			Close( park );
+		}
+	}
+
+	/// <summary>
 	/// What the advisor's row 82 reads of the park (0x0059e380): the guests inside it (<c>FUN_004c9130</c>: those
 	/// on a cell <c>FUN_004fa990</c> passes) and those of them whose toilet need, cut to a whole number and to its
 	/// low byte, is over the advisor's FeaturesNoToilets.NeedingMoreThan, 60 (<c>0x004c9290</c>).

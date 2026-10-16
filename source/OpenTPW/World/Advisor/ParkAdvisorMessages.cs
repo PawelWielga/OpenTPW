@@ -65,6 +65,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireResearchers = 0xf;
 	/// <summary>Message 0x10, polled: the line about every kind of ride built and no researcher (0x0059cf50).</summary>
 	internal const int HireResearchersAllBuilt = 0x10;
+	/// <summary>Message 0x11, polled: the line about research too slow for the months the park has run, with researchers to hire (0x0059cfe0).</summary>
+	internal const int HireMoreResearchers = 0x11;
 	/// <summary>Message 0x1c, polled: the line about mechanics nobody has trained, scored where the park has one, their training budget is nought and their grades are low (0x0059d620).</summary>
 	internal const int TrainMechanics = 0x1c;
 	/// <summary>Message 0x1d, polled: the same of the handymen (0x0059d680).</summary>
@@ -247,6 +249,10 @@ internal sealed class ParkAdvisorMessages
 	/// over the section's Most; nought otherwise.
 	/// <paramref name="EveryRideBuilt"/> is the score of row 16 (0x0059cf50): in the same park, the key's value where the
 	/// kinds of ride standing are as many as the kinds on offer, none of none too; nought otherwise.
+	/// <paramref name="SlowResearch"/> makes the score row 17's (0x0059cfe0), and names its section: in an open park whose
+	/// staff's research could be any at all, at least the section's MonthsIntoGameForConsideration whole months of thirty
+	/// days since mGameTick nought, with a researcher and a researcher to hire, the key's value where the researchers'
+	/// ability added up, in whole per cent of the most, is under the section's SlowerThan; nought otherwise.
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -262,7 +268,7 @@ internal sealed class ParkAdvisorMessages
 		string? CellsAHandyman = null, string? CellsAGuard = null, string? KidsWithNoGuard = null,
 		string? MorePranksters = null, string? BusyWithNoEntertainer = null, string? BusyWithNoGuard = null,
 		string? LitterWithNoHandyman = null, bool Filthy = false, string? GotAwayMoreThan = null,
-		string? MostRidesBuilt = null, bool EveryRideBuilt = false );
+		string? MostRidesBuilt = null, bool EveryRideBuilt = false, string? SlowResearch = null );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -329,7 +335,8 @@ internal sealed class ParkAdvisorMessages
 	/// reads alone; and what rows 8 and 9's read besides: the litter share (FUN_004ccdf0, <see cref="ParkState.LitterShare"/>);
 	/// and what row 98's reads alone: this month's misbehaving kids who got away (FUN_004c94a0 asked with one); and what
 	/// rows 15 and 16's read besides: the lab's projects of a ride's kind that are not done (0x004ca630, FUN_00503b30 asked
-	/// for kind nought).
+	/// for kind nought); and what row 17's reads besides: the staff pool's researchers to hire (FUN_00508380 asked for kind
+	/// four: a slot whose mValid is set).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -341,7 +348,7 @@ internal sealed class ParkAdvisorMessages
 		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
 		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
 		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0, int GuestsUnhappy = 0, int LitterShare = 0,
-		int KidsGotAway = 0, int RideProjectsUnfinished = 0 )
+		int KidsGotAway = 0, int RideProjectsUnfinished = 0, int ResearcherCandidates = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -478,6 +485,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireEntertainers, "StaffHireEntertainers1.ScorePerExtraBusyPoint", 41, 41, Lines: 3, Prop: AdvisorProps.ThemeCostume, Group: 16, Polled: true, BusyWithNoEntertainer: "StaffHireEntertainers1" ),
 		new( HireResearchers, "StaffHireResearchers1.PointsPerExtraPct", 44, 44, Lines: 3, Prop: ResearchHat, Group: 17, Polled: true, MostRidesBuilt: "StaffHireResearchers1" ),
 		new( HireResearchersAllBuilt, "StaffHireResearchers2.Score", 47, 47, Lines: 2, Prop: ResearchHat, Group: 18, Polled: true, EveryRideBuilt: true ),
+		new( HireMoreResearchers, "StaffHireResearchers3.Score", 49, 49, Lines: 3, Prop: ResearchHat, Group: 19, Category: ResearchMore, Polled: true, SlowResearch: "StaffHireResearchers3" ),
 
 		// Row 264's one response is in the guards' cap; its group, 0x17f, has no row in the tag table, so it leaves no tag
 		// (docs/exe/advisor-park.md, "Lots of pranks").
@@ -726,6 +734,13 @@ internal sealed class ParkAdvisorMessages
 		=> (int)((long)(uint)tick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond / 86400);
 
 	/// <summary>
+	/// Whole months of thirty days since mGameTick nought: FUN_004f8800 over 0x17920F8648000 (0x0059d041), as
+	/// <see cref="DaysSinceTheFirstSweep"/> counts days.
+	/// </summary>
+	internal static int MonthsSinceTheFirstSweep( int tick )
+		=> (int)((long)(uint)tick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond / (30 * 86400));
+
+	/// <summary>
 	/// A row's score function (+0x10). The control panel's (0x005a06c0) and the tips' (0x005a0720) are their
 	/// section's Score while the park is more than AfterTime and less than CutoffTime days old, and nought
 	/// otherwise; row 1's (0x0059c8d0) is its key's value for each guest waiting at the booths of a shut park
@@ -775,7 +790,9 @@ internal sealed class ParkAdvisorMessages
 	/// rows 15 and 16's (0x0059cea0, 0x0059cf50) are nought in a shut park, with a researcher and with no project of a
 	/// ride's kind left undone in the lab, and then row 15's is its key's value for each whole per cent of the kinds of
 	/// ride on offer standing over its section's Most, nought with none on offer or all of them standing, and row 16's is
-	/// its key's value where the kinds standing are as many as those on offer;
+	/// its key's value where the kinds standing are as many as those on offer; row 17's (0x0059cfe0) is its key's value
+	/// in an open park run for its section's months, with a researcher and one to hire, whose research is slower than
+	/// its section's SlowerThan, and nought otherwise;
 	/// the staff rows' and the pranksters' are their sections', each said on its Topic;
 	/// every other built row's is its key's value.
 	/// </summary>
@@ -926,6 +943,16 @@ internal sealed class ParkAdvisorMessages
 			return share > most ? (share - most) * Value( topic.ScoreKey ) : 0;
 		}
 
+		if ( topic.SlowResearch is { } slow )
+		{
+			// The most comes before the months, and the researchers before those to hire (0x0059d00a to 0x0059d07f); the share
+			// is an unsigned divide, so a most of nought is nought before it.
+			if ( _park?.Invoke() is not { Closed: false, MostResearchAbility: > 0 } lab ) return 0;
+			if ( MonthsSinceTheFirstSweep( gameTick ) < Value( $"{slow}.MonthsIntoGameForConsideration" ) ) return 0;
+			if ( lab.Researchers < 1 || lab.ResearcherCandidates < 1 ) return 0;
+			return (uint)lab.ResearchAbility * 100 / (uint)lab.MostResearchAbility < (uint)Value( $"{slow}.SlowerThan" ) ? Value( topic.ScoreKey ) : 0;
+		}
+
 		if ( topic.BusyWithNoEntertainer is { } busy )
 		{
 			// The share answers nought with nobody inside (FUN_004c9750); the crowd is the music's, and nothing keeps the score from going below nought.
@@ -1053,6 +1080,8 @@ internal sealed class ParkAdvisorMessages
 			shut = $" closed={(escaped.Closed ? 1 : 0)} guards={escaped.Staff.Guards.Members} gotaway={escaped.KidsGotAway}";
 		if ( (topic.MostRidesBuilt != null || topic.EveryRideBuilt) && _park?.Invoke() is { } unresearched )
 			shut = $" closed={(unresearched.Closed ? 1 : 0)} researchers={unresearched.Researchers} unfinished={unresearched.RideProjectsUnfinished} kinds={unresearched.RideKindsStanding}/{unresearched.RideKindsOnOffer}";
+		if ( topic.SlowResearch != null && _park?.Invoke() is { } lab )
+			shut = $" closed={(lab.Closed ? 1 : 0)} months={MonthsSinceTheFirstSweep( _lastTick )} researchers={lab.Researchers} candidates={lab.ResearcherCandidates} ability={lab.ResearchAbility}/{lab.MostResearchAbility}";
 		if ( topic.BusyWithNoEntertainer != null && _park?.Invoke() is { } busyPark )
 			shut = $" closed={(busyPark.Closed ? 1 : 0)} entertainers={busyPark.Staff.Entertainers.Members} inside={busyPark.GuestsInside} unhappy={busyPark.GuestsUnhappy} crowd={ParkAudio.CrowdLevel( busyPark.GuestsInside )}";
 		if ( topic.BusyWithNoGuard != null && _park?.Invoke() is { } thronged )

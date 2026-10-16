@@ -7194,6 +7194,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   main's build silent. The original given the files: `0x10` (783, 0, 1, 0) on 783, the white hair on film; `0xf` (782, 0,
   1, 0) on 782 with `Most` 50; the others unmoved to 1461. 38 bugs put back, 37 caught; the one left, more taken as at
   least, scores nought at the least either way.
+- [x] **Q422. The advisor's row 17, research too slow with researchers to hire.** `0x0059cfe0`: nought in a shut park,
+  with a most of nought (`FUN_004c9ed0`), under `MonthsIntoGameForConsideration` 15 whole months of thirty days
+  (`FUN_004f8800` over `0x17920F8648000`), with no researcher, or with none to hire in the staff pool (`FUN_00508380( 4 )`);
+  then `StaffHireResearchers3.Score` 50 where the researchers' ability, whole per cent of the most, is under `SlowerThan`
+  14. Category 4, three lines in the research hat; tag 19, string 23, the researchers' hire button (`advisor-park.md`,
+  "Research too slow, and researchers to hire"). Confirmed with the months key 1 in both games: `stock.TPWS` `poll
+  message=17 row=17 days=34 score=50 threshold=25 tick=784 result=post closed=0 months=1 researchers=1 candidates=3
+  ability=12/120`, said (`sample=49`, `wearing=10,0`), tag 19's bar lettered string 23, its button opening "Hire
+  Scientists"; the key 2 and the shipped 15 `no-score ... months=1`; no researcher to hire `candidates=0`, `no-score`;
+  main's build silent; the key 2 run on, said on 1404. The original: `0x11` (784, 0, 1, 0) on 784, string 23's tag, the
+  white hair on film; the other three unmoved to 960, the key 2's then said on 1404. 31 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

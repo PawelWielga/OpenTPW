@@ -2548,7 +2548,7 @@ park is starting to get busy. Maybe you should hire some?" (`Language/american`'
 
 **The other staff rows** (read for the order of the next pieces): rows 8 and 9 ("Litter and no handyman", above) and
 row 11 ("A busy park with no guard", above) are built, and rows 15 and 16 ("Most or every kind of ride built, and no
-researcher", below); row 17 (`StaffHireResearchers3`, category 4) reads the months into the game.
+researcher", below), and row 17 ("Research too slow, and researchers to hire", below).
 
 ### OpenTPW (`ParkAdvisorMessages.HireEntertainers`, a topic's `BusyWithNoEntertainer`; `ParkFacts.GuestsUnhappy`; tag row 16)
 
@@ -2698,7 +2698,95 @@ new ones. Maybe you should hire some researchers?". `q421/side-by-side.png` sets
 seen under the threshold), lines 2 and 3 of row 15 and row 16's second line here (the test holds the turn; the original
 said row 16's second on 1403), none on offer (row 16's 90, tested only), a researcher hired after the line, Full
 Simulation (not asked: the rows are either mode's), the other three themes. Not heard in either game. The last staff row,
-17 (`0x0059cfe0`, category 4), is not built (Q420).
+17 (`0x0059cfe0`, category 4), is built (Q422, below).
+
+## Research too slow, and researchers to hire (message `0x11`, Q422)
+
+**Row 17, message `0x11`, `StaffHireResearchers3`** (the emulated table, `meta_full.json`): polled, **category 4** (the
+same message no sooner than 900 quarter-ticks on, "Every sideshow built, and more to research", below), either game mode
+(`+0x0c` 2), one copy, selection 2, score function `0x0059cfe0`, first response 49, **three lines**. Responses 49 to 51
+are **samples 49 to 51**, the random gesture chain, model slot 0, prop 10 (the scientist's white hair), group 19. From the
+shipped park's cursor its turn is one after row 16's: tick 784, then every 155. The transcripts
+(`global-speech-transcripts.tsv`): "in other news development cycles are lagging behind expectations that means research
+is too slow you should hire some more researchers", "the research is taking a long time you might speed things up by
+hiring more researchers", "your research is way behind schedule you could speed things up if you hired more researchers".
+
+**Its score** (undefined bytes, read with Ghidra's `PseudoDisassembler`, nothing written; `ECX` the balance object, kept in
+`ESI`), each step on the park analyser (`FUN_00519510`) unless named:
+
+1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
+2. **The most a park's researchers could do, `FUN_004c9ed0`** (`StaffPoolInfo.MaxResearchersInPark` times the top grade's
+   `ResearchAbility`, "Every sideshow built, and more to research", below), kept in `EDI`: nought (`JZ`), nought.
+3. **The months into the game**: `FUN_004f8800` on the park calendar (world `+0x2a0`), the calendar's now less its start,
+   which is `mGameTick` times `mFunnySecsPerRealSec` over four, in whole seconds, whatever date the park began on; then
+   over `0x17920F8648000` (`0x0067c320`, a signed 64-bit divide), **thirty days**. Under `[ESI + 0x120]`,
+   **`MonthsIntoGameForConsideration`, 15** (a signed `JL`): nought. At Lost Kingdom's 3,750 calendar seconds a tick a
+   month is 691.2 ticks: **the first ends between ticks 691 and 692, and fifteen are tick 10,368**.
+4. The researchers, `FUN_004c9960( 8 )`: none, nought.
+5. **The staff pool's researchers to hire, `FUN_00508380( 4 )`** (loose code; `ECX` the world, whose first member is the
+   pool: 32 records of `0x14` bytes, each `+0` the kind and `+0xa` `mValid`; the FileFormats saves page, "The staff pool"):
+   the slots in use of kind 4. None, nought. A candidate in the player's hand (`mOnPointer`) still counts.
+6. **The researchers' ability added up, `FUN_004c9e60`**, times 100, over the most (an unsigned `DIV`): not under
+   `[ESI + 0x124]`, **`SlowerThan`, 14** (`JNC`), nought; otherwise `[ESI + 0x128]`, **`Score`, 50**.
+
+So the line asks for research slower than 14 per cent of the most, in a park fifteen months old with a researcher on the
+staff and another to hire. **The shipped park is one month old** (tick 768): its researcher of grade 2 is 12 of
+Instant Action's 120 (10 per cent) and its pool holds three researchers (slots 0 to 2), so only the months keep it
+unsaid. Nothing about the research itself is asked: neither the lab's projects nor whether any is left.
+
+**Its tag** is row 19 of the tag table: key 383, picture 2, string 23, the bar's first button of type 17 (the hire screen
+on its researchers' tab, the fifth), no second, thirty seconds. String 23 reads "Your research is taking a long time. You
+might speed things up by hiring more scientists." (`Language/american`'s, its letters shifted, "researchers").
+
+### OpenTPW (`ParkAdvisorMessages.HireMoreResearchers`, a topic's `SlowResearch`, `MonthsSinceTheFirstSweep`; `ParkFacts.ResearcherCandidates`; tag row 19)
+
+The topic is scored from `ParkFacts`, which now carry the staff pool's researchers to hire (`ParkStaffPool.OfKind`, kind
+4, of `ParkStaffPool.Current`) beside the researchers, their ability and the most row 76 already reads; the months are
+counted from the poll's tick as `DaysSinceTheFirstSweep` counts days. The poll line ends ` closed=N months=M
+researchers=N candidates=C ability=A/M`. `ParkTags.Rows` lists row 19.
+
+**The scenes**: `stock.TPWS` (`lib/stockscene.py`, the stock park paused on 771, nothing done) and `nohire.TPWS`, the same
+with the pool's three researchers' `mValid` cleared (`parkfile.pool_set`). **The line is said in both games only with
+`MonthsIntoGameForConsideration` set to 1** ("A balance key changed in both games", `TOOLING.md`): the park's clock would
+have to stand past tick 10,368, past every candidate's time in the pool (about 600 ticks).
+
+**Predicted first** (`q422/PREDICTION.txt`). Every prediction held, in one round, in both games.
+
+**This game** (`q422/confirm.py fix|month2|shipped|nohire|control`, on the desktop; the final build `4461798e`): *`fix`*
+(the key 1, `run-fix1`): `poll message=17 row=17 days=34 score=50 threshold=25 tick=784 result=post closed=0 months=1
+researchers=1 candidates=3 ability=12/120`, said on that tick, the first line of the run (`attempt=1 message=17 subject=0
+score=50 threshold=25 response=49 sample=49 line=0 tick=784`), `saying sp_049.mp2 ... wearing=10,0`: him up in the white
+hair (`1-line.png`). The tag clicked: `message bar: tag 19 subject 0 item 0 bar: out=1`, `first=mb_buy/help=529
+second=hidden erase=mb_erase` and string 23 (`2-bar.png`). The button clicked: `button type 17 opens the hire screen on
+tab 4 and takes tag 19 off`, "Hire Scientists" listing the three (`3-screen.png`). *`month2`* (the key 2, `run-month21`):
+`score=0 ... tick=784 result=no-score closed=0 months=1 researchers=1 candidates=3 ability=12/120`, silent to 962; run on
+(`run-month2l1`), `score=50 ... tick=1404 result=post ... months=2 ... candidates=1`, said on 1404, the first turn past
+1383, where the second month of thirty days ends (`1-end.png`). *`shipped`* (`run-shipped1`): the same line, silent to 963. *`nohire`* (the key
+1, `run-nohire1`): `... no-score ... candidates=0 ...`, silent to 963. **Main's build** (`run-control1`): no line of
+message 17 to 962, the row counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`.
+
+**The original** (`q422/orig/run.sh <file>`, `advisor.py ... 0x11 poll` beside `tags.py`; a fresh program each, off-screen;
+`SAM=m1|m2` writes the key into the reference install's `Advisor.sam` for the run and puts the shipped file back).
+*`stock`* with the key 1 (run a, filmed): **`0x11`'s record from (0, -1, 0, 0) to (784, 0, 1, 0) on tick 784**, one tag
+lettered string 23 of `Language/american`, "Your research is taking a long time. You might speed things up by hiring more
+researchers."; the film shows him up in the white hair with the tag on the aerial (`orig/a-hair.png`). *`stock`* with
+the key 2 (run b), with the shipped key (run c) and *`nohire`* with the key 1 (run d): the record unmoved to tick 960,
+no tag of string 23. Past it, not predicted: run b's to (1404, 0, 1, 0) on 1404, as this game's; run d's to (1094, 0, 1,
+0) on 1094, the first turn after the pool's top-up on 1083 (which candidates joined is not read); run c's unmoved to its
+end frame's 23 June 2000, about tick 4,000. `q422/side-by-side.png` sets this game's line beside the original's.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 17 | polled, category 4; nought shut, with a most of nought, under the key's months of thirty days, with no researcher or none to hire; 50 under 14 per cent | the same |
+| The stock park, the key 1 | said on 784, line 0, the scientist's hair; tag 19, string 23 | the same (50, `months=1`) |
+| The key 2, or the shipped 15 | not said on 784 | the same (`no-score`, `months=1`) |
+| The key 2, run on | said on 1404, the second month's first turn | the same (`months=2`) |
+| No researcher to hire, the key 1 | not said | the same (`candidates=0`) |
+| The tag and the bar | row 19, part 2; button 17 builds the hire screen on its researchers' tab | the same ("Hire Scientists", the fifth tab) |
+
+**Not built or not seen.** In no game run: the line with the shipped key (fifteen months: tested only), research at 14
+per cent or more (tested only), a most of nought (tested only), lines 2 and 3 (the test holds the turn), a researcher hired
+after the line, Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game.
 
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 
