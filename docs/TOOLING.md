@@ -112,6 +112,14 @@ structure, and hand it to `loadfile.sh` through `POLL`.
 
 Each was found by trial in the item named, and cost a run to find.
 
+- **A person's window in the original, and the locators in either game** (Q429, `q429/orig/run.sh`, `q429/confirm.py`):
+  off-screen after `loadfile.sh load`, Ctrl+V, the visitors' button (359, 641), then the strip (380, 505) of the
+  1024 x 768 frame opens the visitor's window; its OK is (816, 378), as the staff member's (Ctrl+S, the mechanics'
+  button (360, 613), the strip). The window folds the arm, so the locator is closed after it. In either game, Ctrl+S
+  with the visitors' locator still out leaves the staff locator closed and its buttons find nobody: press Escape first.
+  An advisor message's row in `q177/skeptic-analyser/meta_full.json` is at `0x76e300 + id x 56` (the response at
+  `+0x24`), then `lib/responses.py <response>` for its sample.
+
 - **A message box in either game, and its cross** (Q410, `q410/confirm.py`, `q410/orig/run.sh`): here the console's
   `windows` ends "MessageBox" while one is up (the reply begins `[dbg] windows:`), and `control 9873c8` finds its
   bottom place to click; R and the gadget's Research button (`control 2b`) open one in an Instant Action park. In the

@@ -48,6 +48,12 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q429 (`hud.md`, "The person's windows"): both windows are decoded, so the nearest piece is building the
+  visitor's window (`VISITOR_WINDOW`; from the strip's click, a guest's world click and a visitors row's `0x400`, which
+  counts `LIST_ROW_ACTIVATED_UNANSWERED`), then the staff member's (`STAFF_WINDOW`: its verbs and the patrol tool make it
+  the larger; Q31b lists it among the seven). Not run in the original: a thought shown, either window's verbs, arrows
+  or name edit, either opened from the world or a list, Full Simulation (not asked: the windows are either mode's), the
+  other three themes. Not heard.
   From Q428 (`hud.md`, "The camcorder button's line"): the line is built. The locators' last piece is still the strip's
   click, the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`: `FUN_004b6080`, `FUN_004b79b0`, not yet decoded; the
   employee window is Q31's), the nearest. In no game run: a tag taking the arm from the camcorder panel and a panel

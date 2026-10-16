@@ -7269,6 +7269,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   one line, response 565, sample 583, no tag. Proved by `q428/run-fix2` (five of five on the final build): `post
   message=305 ... result=queued`, sample 583 said beside the panel, cut by the up, the postcard button and the camera
   button to slaps 3, then `result=slapped`, as the original's 0x131 went in `q428/orig/` (`q428/side-by-side.png`).
+- [x] **Q429. The person's windows, the visitor's and the staff member's (a piece of Q420). Decode first.** Done
+  2026-10-16, the decode: `hud.md`, "The person's windows". The visitor's (`FUN_004b79b0`, stream `0x007575e0`): eight
+  rows (cash, four times the stay, rides, purchases, sideshows played and won, a happiness bar, the `KIDSTATES` word),
+  the thought, the person's model, four buttons, advisor line `0x12e`; the staff member's (`FUN_004b6080`, `0x00756f48`):
+  six rows, FIRE, PICK UP and the patrol toggle (map tool `0x36`), the name's edit, lines `0xc0`, `0xd4`, `0xc1`. Proved
+  in the original under Proton (`q429/orig/run.sh`, twelve of twelve): "Visitor #13" with "11 days" then "12 days" and
+  the bar 0.567 for 56.0, `0x12e` said and cut by OK; "Mike Cooper", "45 days", bars 0.841 and 0.652, `0xd4` said first.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

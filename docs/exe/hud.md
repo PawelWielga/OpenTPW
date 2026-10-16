@@ -2300,6 +2300,94 @@ frame`, `locator` ended `patrol=48`, and `strip`'s drawn census held `| patrol 4
 one; the lift is the tools', tested), a fence drawn in play (the patrol tool is the staff window's `0x510`, map tool `0x36`, not built: `STAFF_WINDOW`), Full Simulation (not
 asked: the locators are either mode's), the other three themes.
 
+#### The person's windows: the visitor's and the staff member's (Q429)
+
+Read 2026-10-16 (Q429, decode only; nothing is built). Two of the object windows' nine (`park-engine.md`, "The
+per-object management screen is nine screens"), both on the shared base `FUN_0048cea0( stream, handler, preview,
+stats, 0 )`, each a park screen (`FUN_00485b70`: the arm folds, so a locator out is put away; the camera and game
+tables go off). **Who opens them**: the world click on a guest or a member (`FUN_004879d0`, categories 7 and 8 to `c`),
+the locator strip's left click (`FUN_004b3c10`, `0x10006` button 0: the visitor's for any type but 4 to 8), the
+object dispatcher `FUN_00486920`, and a row's `0x400` in the visitors list (`0x0049351e`), the all-staff list
+(`0x00496088`) and the staff room's (`0x004b5267`). The windows are statics: the visitor's at `0x007cc408` (its tree
+`[0x007cc418]`, which Ctrl+V tests), vtable `0x006fff40`; the staff member's at `0x007cc3b0` (tree `[0x007cc3c0]`), vtable
+`0x006ffe50`. The person is `[0x007c2658]`, set by `FUN_0048ca00`, which also counts the things of the window's class
+(visitor 1, staff `0x40`).
+
+**The visitor's** (`FUN_004b79b0`; stream `0x007575e0`, handler `FUN_004b7720`). The builder posts advisor message
+`0x12e` and plays `cat_kids` effect `0x81`; the destroy (`0x14`) withdraws `0x12e`. The stream (`lib/uistream.py`;
+meshes by `meshhash.py`, help rows UIHELPTEXT), 2048 x 1536:
+
+| Id | Rect | What |
+|---|---|---|
+| `0x371f` | (328,130)-(1720,901) | the root; `window1` in `w_small` |
+| `0x3736` | (749,174)-(1221,253) | the title, "Visitor #{P24}" (UITEXT 456, `+0x1d8`) or "New Visitor" (457) at nought; not editable |
+| `0x3722` | (456,267)-(720,531) | the preview, `!frame` |
+| `0x3723` | (745,265)-(1521,709) | the stats, `!frame`: two columns of eight rows, the labels at x 778 and the figures at x 1170 |
+| `0x3734`, `0x3735` | (641,720)-(1352,856), (676,739)-(780,819) | the thought: `Ethoughts3` in `ethoughts` with its text rect (817,760)-(1314,805), help 95; inside it a type-6 icon wearing `thoughts.MD2` |
+| `0x3720`, `0x3721` | (1591,234), (1580,322) | `b_arup` (help 98, the previous visitor), `b_ardown` (97, the next) |
+| `0x3737`, `0x3738` | (1568,411), (1568,518) | `b_locate` (99: `FUN_004b3f60( person )`, the visitors' locator on them), `b_kids` (100: the visitors list, `FUN_00493530`) |
+| `-2` | (1591,714) | `b_okay` (1): the close |
+
+The stats fill (vtable `+0xc`, `FUN_004b6c20`) letters the labels in font 6: UITEXT 70 Cash remaining, 71 Time in park,
+72 Rides ridden, 75 Purchases made, 73 Sideshows played, 74 Sideshows won, 76 Happiness, 77 Current status. The figures
+(the refresh, vtable `+0x14`, `FUN_004b72a0`, at the show and on the timer `0x80080` every 4,000 ms) are the visitors
+list's cells ("The visitors rows", below): a money cell of `+0x1a0`; the time cell (`FUN_00490e60`) of **four times the
+stay** (`FUN_004fd950` shifted left by two before `FUN_004f8730`, as the list's rewrite); numbers of `+0x1c4`, `+0x1c8`,
+`+0x1cc` and `+0x1d0`; a `happygrad.wct` bar inset 10 of `((__ftol( +0x19c ) & 0xff) << 10) / 100`; and the status, row
+`+0x220` of `KIDSTATES.str` (`[0x0078baa0]`, table `0x3ec`, `mUIKidStates`), row 16 "Using: {P0}" with the name of the
+thing whose id is `+0x1dc` (`FUN_004e2780`). The thought is part `+0x30` less one, or 999 at nought (none shown), and row
+`+0x30` of `THOUGHTS.str` (`[0x0078ba9c]`). The title is set at the show (vtable `+4`, `0x004b7660`) and again by the
+refresh while the window's kept number `this[9]` is nought, so a new visitor's title turns to their number once given.
+The preview (vtable `+0x18`, `0x004b6b90`) is `FUN_00486530`: a copy of the person's model (`FUN_00475cf0` on `+0xc`) set
+in the panel's rect, a fourth word 12.0 kept at the copy's `+0xa4` (not followed), copied from the live model again
+on every `0x1e` (`FUN_00486610`). Its click goes to the person and closes the window (the base's `0x0048d1a0`).
+
+**The staff member's** (`FUN_004b6080`; stream `0x00756f48`, handler `FUN_004b5cb0`). The builder posts `0xc0` and
+gives the preview `FUN_004b5c80` (the camera to the member, the window kept); the destroy withdraws `0xc0` and `0xd4`.
+
+| Id | Rect | What |
+|---|---|---|
+| `0x50a` | (328,130)-(1720,901) | the root, `window1` |
+| `0x520` | (749,174)-(1221,253) | the title, the member's name (`FUN_00506860`); help 85, a click to edit it (`FUN_0048d290`, vtable `+0x30` sets the name, `+0x34` reads it) |
+| `0x511` | (386,280)-(650,544) | the preview |
+| `0x512` | (665,280)-(1538,623) | the stats: six rows, labels at x 688, figures at x 1193 |
+| `0x50c`, `0x50e`, `0x510` | (380,694), (539,694), (1401,694) | `b_fire` (89), `b_pick` (88), `b_route` (86, a toggle, flags `0x11`, second help 87) |
+| `0x50d`, `0x50f` | (1591,234), (1580,322) | `b_arup` (92), `b_ardown` (91) |
+| `0x521`, `0x50b` | (1568,411), (1568,518) | `b_locate` (93), `b_allstaff` (94: the all-staff list on the member's kind, `FUN_00496620( FUN_00506490() )`) |
+| `-1` | (1591,714) | `b_okay` |
+
+The labels (vtable `+0xc`, `FUN_004b53c0`): UITEXT 64 Employed for, 65 Monthly wage, 67 Skill, 69 Happiness, 68 Energy,
+66 Current status. The refresh (`FUN_004b58b0`): "{P8} days" (UITEXT 443, the plural at any count) of `FUN_00505b70`, the
+days since `mTimeHired` (`saves.md`); a money cell of the wage `FUN_00506870`; a `ridestatbar.wct` bar of the skill
+`FUN_00506550` (`<< 10) / 100`); a `happygrad.wct` bar of `+0x1f8`; a `ridestatbar.wct` bar of `+0x1fc`, the rest (500
+until the first refresh); the status picture `0x51f` (`staffstat`, `FUN_00485ec0`) and the `STAFFSTATES` word
+(`FUN_00485f00`, `[0x0078baa4]`) of `FUN_005064f0`, its 1 read as 0 where the member has no patrol area
+(`FUN_00506eb0`). The show (vtable `+4`, `FUN_004b5ab0`): the title, the preview (scale word 8.0), the refresh, the patrol
+toggle down with advisor message `0xd4` posted where an area is set, and PICK UP enabled by `FUN_00505bd0` (again every
+`0x1e`). The open (vtable `+0`, `0x004b5a60`) hides both arrows (`UI_SetVisible( 0 )`) with fewer than two staff. **The verbs**: FIRE is the
+dismissal `FUN_00505790`, behind a message box on UITEXT `0x18d` when `[0x0078d90f]` is set (the box's yes,
+`FUN_004b6070`, dismisses), then the window closes; PICK UP keeps the member (`[0x007c2650]`), picks them up
+(`FUN_00505c50`) and closes; the patrol toggle down (`FUN_004b5b50( 1 )`) keeps the member, puts map tool `0x36` in the
+hand, closes the window and posts `0xc1`; up clears the area (`FUN_00506e90`).
+
+**The advisor's four lines** (the metadata table, `q177`'s `meta_full.json`, rows of 56 bytes from `0x0076e300`): `0x12e`,
+`0xc0`, `0xc1` and `0xd4` are each posted-only, one line, the Tutorial category, no tag, responses 562, 411, 412 and
+431, samples 580 (the visitor's screen and the buttons on its right edge), 384 (the employee's screen, its three verbs,
+the name's edit and the buttons on the right edge), 385 (how to draw a patrol area) and 457 (how to cancel one), by
+their transcripts in `global-speech-transcripts.tsv`.
+
+**The original** (`q429/orig/run.sh`, `q325/stock.TPWS` off-screen; predicted first, twelve of twelve,
+`q429/PREDICTION.txt`): Ctrl+V, the visitors' button, the strip: `[0x007cc418]` set, the locator put away, "Visitor
+#13" ($ 684, "11 days" at tick ~917 and "12 days" after a refresh, where the stay alone reads "2 day"; four noughts; the
+bar 0.567 for 56.0; "Lining up for a ride", row 11 of the reference install's `american` table), no thought, the
+visitor's model in the preview (`orig/a-1-visitor.png`, `a-1b-visitor-4s.png`); `0x12e` said on 918 and cut by OK on 962.
+Ctrl+S, the mechanics' button, the strip: "Mike Cooper", "45 days", "$ 161", bars 0.61, 0.841 (`+0x1f8` 84.97) and 0.652
+(`+0x1fc` 65.3), "Patrolling" (`a-3b-staff-4s.png`); `0xd4` said first, on 1041, `0xc0` waiting behind it, both gone at
+OK. Not run: a thought shown, the verbs, the arrows, the name's edit, a visitor's or member's window from the world click
+or a list. **OpenTPW**: nothing built; the strip's click counts `STAFF_WINDOW` or `VISITOR_WINDOW`, a member's world click
+`STAFF_WINDOW`, a list row's `0x400` `LIST_ROW_ACTIVATED_UNANSWERED`, and a visitor's world click reaches nothing
+counted (Q31's note).
+
 #### How allstaff and allitems keep their rows current
 
 Read and measured 2026-10-14 (Q365). Both screens rewrite their rows in place every two seconds on timer `0x80083`,
