@@ -2433,6 +2433,68 @@ no tag (`orig/c-end.png`). `q418/side-by-side.png` sets this game's bar beside t
 turn), a kid getting away in play (nothing here counts one), a shut park (the test holds it scoring), Full Simulation
 (not asked: the row is either mode's), the other three themes. Not heard in either game.
 
+## Kids who got away from a guard (message `0x16`, Q423)
+
+**Row 22, message `0x16`, `StaffGuardBuildCamera`** (the emulated table, `meta_full.json`, at `0x0076e7d0`): polled,
+category 0, either game mode (`+0x0c` 2), score function `0x0059d3b0`, one copy, first response 64, **three lines**,
+selection 2. Responses 64 to 66 are **samples 64 to 66**, the random gesture chain, model slot 0, prop 6 (the guards'
+cap), group 24. Every row from 14 to 29 is polled, so from the shipped park's cursor its turn is five after row 17's:
+tick 789, then every 155. The transcripts (`global-speech-transcripts.tsv`): "if you build some security cameras your
+guards would be more efficient" (3.7 s), "your guards are not as efficient as they could be you should think about
+installing some security cameras" (5.5 s), "i'm confident you could boost the productivity of your guards by taking
+advantage of the latest technological advancements that means build some security cameras" (8.7 s).
+
+**Its score, `0x0059d3b0`** (undefined bytes, read with Ghidra's `PseudoDisassembler`, nothing written; `ECX` the balance
+object, kept in `ESI`): `PUSH 7`, the park analyser (`FUN_00519510`), **the guards, `FUN_004c9960( 7 )`**: none (`JZ`),
+nought. Then `PUSH 1`, the analyser again, **this month's kids who got away, `FUN_004c94a0( 1 )`** (`+0x21c00`, the count
+row 98 reads), against `[ESI + 0x15c]`, **`AcceptableTrouble`, 4**: not more (`JLE`), nought; otherwise `[ESI + 0x160]`,
+**`Score`, 45**, whatever the count. **Nothing else is asked**: not `mParkClosed`, not the caught kids. The keys
+(`lib/advisorschema.py`) are `StaffGuardBuildCamera.AcceptableTrouble` (schema kind 5, an integer compared signed here)
+and `.Score`, `Advisor.sam`'s lines 119 and 120. So a park whose guards let five kids get away in a month is told to build
+security cameras, and row 98 (more than one got away, with or without a guard) asks the same count.
+
+**Its tag** is row 24 of the tag table (`lib/tagtable.py`): key 383, picture 0, string 28, the bar's first button of type
+12 (the buy screen on its fourth tab, the features, where the Security Camera is), no second, thirty seconds. String 28
+reads "If you built some security cameras it would help your guards do their job."
+
+### OpenTPW (`ParkAdvisorMessages.BuildCameras`, a topic's `GotAwayWithAGuard`; tag row 24)
+
+A topic scored from `ParkFacts`: the guards (`Staff.Guards.Members`) and `KidsGotAway`, both already read by rows 12 and 98.
+The poll line ends ` closed=N guards=N gotaway=N`. `ParkTags.Rows` lists row 24. Nothing here counts a kid who got away
+(the chase waits on the pranks, `DECIDE_PRANK_*`), so the count comes from the file.
+
+**The scenes** (`q423/mkkids.py`, the analyser's three counts written as Q418's): `five.TPWS` (the shipped file, its guard
+kept, five got away), `four.TPWS` (the same, four) and `noguard.TPWS` (Q413's `noguard.TPWS`, five got away).
+
+**Predicted first** (`q423/PREDICTION.txt`). Every prediction held, in both games.
+
+**This game** (`q423/confirm.py fix|under|noguard|control`, on the desktop; the final build `86e3d6d2`): *`five`*
+(`run-fix1`): `poll message=22 row=22 days=34 score=45 threshold=25 tick=789 result=post closed=0 guards=1 gotaway=5`,
+said on that tick, the first line of the run (`attempt=1 message=22 subject=0 score=45 threshold=25 response=64 sample=64
+line=0 tick=789`), `saying sp_064.mp2 ... wearing=6,0`, him in the guards' cap (`1-line.png`). The tag clicked: `message
+bar: tag 24 subject 0 item 0 bar: out=1`, `first=mb_buy/help=524 second=hidden` and string 28 (`2-bar.png`). The button
+clicked: `button type 12 opens the buy screen on tab 3 and takes tag 24 off`, "Buy Miscellaneous Items" listing the
+Security Camera at 250 (`3-screen.png`). *`four`* (`run-under1`): `score=0 ... tick=789 result=no-score closed=0 guards=1
+gotaway=4`, silent to 961 but for row 98's line on 828. *`noguard`* (`run-noguard1`): `... no-score closed=0 guards=0
+gotaway=5`, the same. **Main's build** on `five` (`run-control1`): no line of message 22 to 963.
+
+**The original** (`q423/orig/run.sh <file>`, `advisor.py ... 0x16,0x62 poll` beside `tags.py`; a fresh program each,
+off-screen). *`five`* (run a): **`0x16`'s record from (0, -1, 0, 0) at the load to (789, 0, 1, 0) on tick 789**, one tag
+lettered string 28 from 789, him in the guards' cap (`orig/a-told.png`); row 98's on 828. *`four`* (run b): the record
+unmoved to tick 960, no tag of string 28; row 98's on 828. *`noguard`* (run c): the same, to 16 April (`orig/c-end.png`).
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 22 | polled; with a guard, 45 where this month's got-away kids are more than 4; neither the door nor the caught kids asked | the same |
+| A guard, five got away | said on tick 789, line 0, in the guards' cap; tag 24, string 28 | the same (45) |
+| A guard, four got away | not said | the same (`no-score`) |
+| No guard, five got away | not said | the same (`guards=0`) |
+| The tag and the bar | row 24, picture 0; button 12, the buy screen's features | the same (the Security Camera listed) |
+
+**Not built or not seen.** In no game run: lines 2 and 3 (the test holds the turn), a shut park (the test holds it
+scoring), a kid getting away in play (nothing here counts one), two guards or more (tested only), Full Simulation (not
+asked: the row is either mode's), the other three themes. Not heard in either game.
+
 ## A park too big for its guards (message `0xd`, Q412)
 
 **Row 13, message `0xd`, `StaffHireGuards3`:** polled, category 0, either game mode (the row's `+0x0c` is 2), one

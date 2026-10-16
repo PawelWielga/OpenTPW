@@ -7205,6 +7205,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Scientists"; the key 2 and the shipped 15 `no-score ... months=1`; no researcher to hire `candidates=0`, `no-score`;
   main's build silent; the key 2 run on, said on 1404. The original: `0x11` (784, 0, 1, 0) on 784, string 23's tag, the
   white hair on film; the other three unmoved to 960, the key 2's then said on 1404. 31 bugs put back, all caught.
+- [x] **Q423. The advisor's row 22, kids who got away from a guard.** `0x0059d3b0`: nought with no guard
+  (`FUN_004c9960( 7 )`), then `StaffGuardBuildCamera.Score` 45 where this month's kids who got away (`FUN_004c94a0( 1 )`)
+  are more than `AcceptableTrouble` 4; neither the door nor the caught kids asked. Category 0, three lines in the guards'
+  cap; tag 24, string 28, the buy screen's features button (`advisor-park.md`, "Kids who got away from a guard").
+  Confirmed in both games: `five.TPWS` (the stock park, its guard, five got away) `poll message=22 row=22 days=34
+  score=45 threshold=25 tick=789 result=post closed=0 guards=1 gotaway=5`, said (`sample=64`, `wearing=6,0`), tag 24's bar
+  lettered string 28, its button opening the features tab with the Security Camera; four got away `no-score ... gotaway=4`;
+  no guard `no-score ... guards=0`; main's build silent. The original: `0x16` (789, 0, 1, 0) on 789, string 28's tag, the
+  guards' cap; the other two unmoved to 960. 31 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

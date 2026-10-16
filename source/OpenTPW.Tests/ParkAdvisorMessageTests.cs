@@ -31,6 +31,7 @@ public class ParkAdvisorMessageTests
 			+ "StaffHireGuards2.Score 10\nStaffHireGuards2.AdditionalPerMisbehavingKid 5\n"
 			+ "LotsOfPranks.MorePrankstersThan 2\nLotsOfPranks.Score 100\n"
 			+ "GeneralLaxSecurity.MoreThanThisGotAway 1\nGeneralLaxSecurity.ScorePerGetAway 20\n"
+			+ "StaffGuardBuildCamera.AcceptableTrouble 4\nStaffGuardBuildCamera.Score 45\n"
 			+ "StaffHireGuards3.IdealDevelopedCellsPerGuard 750\nStaffHireGuards3.ScorePerExtra10Cells 1\nStaffHireGuards3.MinCellsForConsideration 500\n"
 			+ "StaffHireEntertainers1.AtLeastThisBusy 35\nStaffHireEntertainers1.ScorePerExtraBusyPoint 3\n"
 			+ "StaffHireResearchers1.Most 70\nStaffHireResearchers1.PointsPerExtraPct 5\nStaffHireResearchers2.Score 90\n"
@@ -165,7 +166,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 52, written.Count );
+		Assert.AreEqual( 53, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -962,7 +963,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 112, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 111, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -2097,6 +2098,103 @@ public class ParkAdvisorMessageTests
 		Round( 24768 );
 		CollectionAssert.AreEqual( new[] { (13968, 50, 50), (17568, 51, 51), (21168, 49, 49), (24768, 50, 50) }, said, "three lines in turn" );
 		CollectionAssert.AreEqual( new[] { (19, 0), (19, 0), (19, 0), (19, 0) }, groups );
+	}
+
+	/// <summary>
+	/// Row 22, message 0x16, is polled and scored by the park (0x0059d3b0): nought with no guard on the staff, else
+	/// StaffGuardBuildCamera.Score where this month's kids who got away are more than its AcceptableTrouble, nought
+	/// otherwise, asking neither the door nor the caught kids. Three lines in turn in the guards' cap, no gesture row, and
+	/// tag 24, picture 0, string 28, the bar's button the buy screen's features.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the guards' test dropped, inverted or made at least two; more than taken as at least; the count to
+	/// pass another key's or a constant; the score another key's or multiplied by the count; a shut park made nought;
+	/// the caught kids read for those who got away; the row not polled; the lines, the response, the sample, the prop or
+	/// the group another's; the poll line naming another row's facts; the tag row's picture, string or buttons another's.
+	/// </remarks>
+	[TestMethod]
+	public void KidsWhoGotAwayWithAGuardAreToldToBuildCameras()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 22 };
+		var settings = Settings();
+		var messages = new ParkAdvisorMessages( settings, cursor: cursor );
+		var guard = new ParkAdvisorMessages.KindTraining( Members: 1, Budget: 0, Grades: 2 );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 3, Sideshows: 1, WaitingToOpen: 0,
+			Staff: new( guard with { Members = 4 }, guard with { Members = 5 }, default, guard, default ),
+			MisbehavingKids: 2, KidsGotAway: 4 );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		void Round( int at )
+		{
+			cursor.Row = 22;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 8200; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+		}
+
+		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.BuildCameras );
+		Assert.AreEqual( (0x16, "StaffGuardBuildCamera.Score", "StaffGuardBuildCamera", 64, 64, 3, 1, 0, true, 24, ParkAdvisorMessages.GuardCap, -1),
+			(topic.Id, topic.ScoreKey, topic.GotAwayWithAGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.GotAwayWithAGuard != null ) );
+		Assert.IsNull( topic.GotAwayMoreThan );
+		Assert.IsFalse( topic.FullSimulationOnly, "the row's +0x0c is 2" );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 22 ) );
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 828 ), "before any sweep has handed the park in" );
+		foreach ( var response in new[] { 64, 65, 66 } )
+			Assert.AreEqual( (ParkAdvisorMessages.GuardCap, 0), ParkAdvisorMessages.PropsOf( response ) );
+		var row = ParkTags.Rows.Single( one => one.Id == 24 );
+		Assert.AreEqual( (ParkTags.NoTag, 0, 28, 12, 0, 30000, 0), (row.Key, row.Picture, row.String, row.Button1, row.Button2, row.Life, row.Kind) );
+
+		// Four got away with a guard: nought, for four is not more than four.
+		Round( 828 );
+		Assert.AreEqual( (0, "no-score", 23, 0), (messages.ScoreOf( topic, 828 ), messages.PollAnswer( 22 ), cursor.Row, said.Count) );
+		Assert.AreEqual( " closed=0 guards=1 gotaway=4", messages.PollFacts( topic ), "the poll line names what the score read" );
+
+		// Five: the key's 45, not five times anything, said, the first line, and tag 24 left.
+		facts = facts with { KidsGotAway = 5 };
+		Round( 829 );
+		Assert.AreEqual( (45, "post", 1), (messages.ScoreOf( topic, 829 ), messages.PollAnswer( 22 ), said.Count), "5 is more than 4" );
+		StringAssert.Contains( messages.Census(), "message=22/score=45/line=0/lastTick=829/said=1/slaps=0" );
+		CollectionAssert.AreEqual( new[] { (24, 0) }, groups );
+		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the random chain" );
+
+		// Each gate: no guard is nought, a shut park is not asked, nor the caught kids.
+		Assert.AreEqual( 0, Score( facts with { Staff = facts.Staff with { Guards = guard with { Members = 0 } }, KidsGotAway = 40 } ), "no guard" );
+		Assert.AreEqual( 45, Score( facts with { Staff = facts.Staff with { Guards = guard with { Members = 3 } } } ), "three guards" );
+		Assert.AreEqual( 45, Score( facts with { Closed = true } ), "a shut park" );
+		Assert.AreEqual( " closed=1 guards=1 gotaway=5", Facts( facts with { Closed = true } ) );
+		Assert.AreEqual( 0, Score( facts with { MisbehavingKids = 40, KidsGotAway = 4 } ), "the caught kids are not the count" );
+		Assert.AreEqual( 45, Score( facts with { KidsGotAway = 400 } ), "the score is the key's, however many" );
+		Set( settings, "StaffGuardBuildCamera.AcceptableTrouble", 5 );
+		Assert.AreEqual( (0, 45), (Score( facts ), Score( facts with { KidsGotAway = 6 } )), "the count to pass is the key's" );
+		Set( settings, "StaffGuardBuildCamera.AcceptableTrouble", 4 );
+		Set( settings, "StaffGuardBuildCamera.Score", 7 );
+		Assert.AreEqual( 7, Score( facts ) );
+		Set( settings, "StaffGuardBuildCamera.Score", 45 );
+		int Score( ParkAdvisorMessages.ParkFacts park )
+		{
+			var held = facts;
+			facts = park;
+			var score = messages.ScoreOf( topic, 829 );
+			facts = held;
+			return score;
+		}
+		string Facts( ParkAdvisorMessages.ParkFacts park )
+		{
+			var held = facts;
+			facts = park;
+			var line = messages.PollFacts( topic );
+			facts = held;
+			return line;
+		}
+
+		// The three lines in turn, then the first again.
+		Round( 1309 );
+		Round( 1789 );
+		Round( 2269 );
+		CollectionAssert.AreEqual( new[] { (829, 64, 64), (1309, 65, 65), (1789, 66, 66), (2269, 64, 64) }, said, "three lines in turn" );
+		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "no line has a gesture row" );
+		CollectionAssert.AreEqual( new[] { (24, 0), (24, 0), (24, 0), (24, 0) }, groups );
 	}
 
 	/// <summary>
@@ -4513,7 +4611,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 43, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 44, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>

@@ -67,6 +67,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireResearchersAllBuilt = 0x10;
 	/// <summary>Message 0x11, polled: the line about research too slow for the months the park has run, with researchers to hire (0x0059cfe0).</summary>
 	internal const int HireMoreResearchers = 0x11;
+	/// <summary>Message 0x16, polled: the line about security cameras, scored where a guard is on the staff and this month's kids who got away are more than a number (0x0059d3b0).</summary>
+	internal const int BuildCameras = 0x16;
 	/// <summary>Message 0x1c, polled: the line about mechanics nobody has trained, scored where the park has one, their training budget is nought and their grades are low (0x0059d620).</summary>
 	internal const int TrainMechanics = 0x1c;
 	/// <summary>Message 0x1d, polled: the same of the handymen (0x0059d680).</summary>
@@ -243,6 +245,9 @@ internal sealed class ParkAdvisorMessages
 	/// <paramref name="GotAwayMoreThan"/> makes the score row 98's (0x0059e840), and is the key of the count to pass:
 	/// where this month's kids who got away are more than it, that count times the key's value, shut or open, guarded
 	/// or not; nought otherwise.
+	/// <paramref name="GotAwayWithAGuard"/> makes the score row 22's (0x0059d3b0), and names its section: with a guard on
+	/// the staff, the key's value where this month's kids who got away are more than the section's AcceptableTrouble,
+	/// shut or open; nought otherwise.
 	/// <paramref name="MostRidesBuilt"/> makes the score row 15's (0x0059cea0), and names its section: in an open park
 	/// with no researcher whose lab holds a project of a ride's kind that is not done, where a kind of ride is on offer
 	/// and the kinds standing are not as many, the key's value for each whole per cent of the kinds on offer standing
@@ -268,7 +273,8 @@ internal sealed class ParkAdvisorMessages
 		string? CellsAHandyman = null, string? CellsAGuard = null, string? KidsWithNoGuard = null,
 		string? MorePranksters = null, string? BusyWithNoEntertainer = null, string? BusyWithNoGuard = null,
 		string? LitterWithNoHandyman = null, bool Filthy = false, string? GotAwayMoreThan = null,
-		string? MostRidesBuilt = null, bool EveryRideBuilt = false, string? SlowResearch = null );
+		string? MostRidesBuilt = null, bool EveryRideBuilt = false, string? SlowResearch = null,
+		string? GotAwayWithAGuard = null );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -333,7 +339,8 @@ internal sealed class ParkAdvisorMessages
 	/// developed cells (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and what row 12's reads besides: this
 	/// month's misbehaving kids (FUN_004c94a0 asked with nought, <see cref="ParkState.MisbehavingKids"/>), which row 264's
 	/// reads alone; and what rows 8 and 9's read besides: the litter share (FUN_004ccdf0, <see cref="ParkState.LitterShare"/>);
-	/// and what row 98's reads alone: this month's misbehaving kids who got away (FUN_004c94a0 asked with one); and what
+	/// and what row 98's reads alone, and row 22's beside the guards: this month's misbehaving kids who got away
+	/// (FUN_004c94a0 asked with one); and what
 	/// rows 15 and 16's read besides: the lab's projects of a ride's kind that are not done (0x004ca630, FUN_00503b30 asked
 	/// for kind nought); and what row 17's reads besides: the staff pool's researchers to hire (FUN_00508380 asked for kind
 	/// four: a slot whose mValid is set).
@@ -486,6 +493,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireResearchers, "StaffHireResearchers1.PointsPerExtraPct", 44, 44, Lines: 3, Prop: ResearchHat, Group: 17, Polled: true, MostRidesBuilt: "StaffHireResearchers1" ),
 		new( HireResearchersAllBuilt, "StaffHireResearchers2.Score", 47, 47, Lines: 2, Prop: ResearchHat, Group: 18, Polled: true, EveryRideBuilt: true ),
 		new( HireMoreResearchers, "StaffHireResearchers3.Score", 49, 49, Lines: 3, Prop: ResearchHat, Group: 19, Category: ResearchMore, Polled: true, SlowResearch: "StaffHireResearchers3" ),
+		new( BuildCameras, "StaffGuardBuildCamera.Score", 64, 64, Lines: 3, Prop: GuardCap, Group: 24, Polled: true, GotAwayWithAGuard: "StaffGuardBuildCamera" ),
 
 		// Row 264's one response is in the guards' cap; its group, 0x17f, has no row in the tag table, so it leaves no tag
 		// (docs/exe/advisor-park.md, "Lots of pranks").
@@ -930,6 +938,13 @@ internal sealed class ParkAdvisorMessages
 			return escaped.KidsGotAway > Value( lax ) ? escaped.KidsGotAway * Value( topic.ScoreKey ) : 0;
 		}
 
+		if ( topic.GotAwayWithAGuard is { } watched )
+		{
+			// The guards come before the kids, and the door is not asked (0x0059d3b0): this month's kids who got away (FUN_004c94a0 asked with one).
+			if ( _park?.Invoke() is not { } guarded || guarded.Staff.Guards.Members < 1 ) return 0;
+			return guarded.KidsGotAway > Value( $"{watched}.AcceptableTrouble" ) ? Value( topic.ScoreKey ) : 0;
+		}
+
 		if ( topic.MostRidesBuilt != null || topic.EveryRideBuilt )
 		{
 			// The door, the researchers and the lab's rides left undone come before the kinds (0x0059ceab to 0x0059cee8).
@@ -1078,6 +1093,8 @@ internal sealed class ParkAdvisorMessages
 			shut = $" closed={(pranked.Closed ? 1 : 0)} guards={pranked.Staff.Guards.Members} kids={pranked.MisbehavingKids}";
 		if ( topic.GotAwayMoreThan != null && _park?.Invoke() is { } escaped )
 			shut = $" closed={(escaped.Closed ? 1 : 0)} guards={escaped.Staff.Guards.Members} gotaway={escaped.KidsGotAway}";
+		if ( topic.GotAwayWithAGuard != null && _park?.Invoke() is { } guarded )
+			shut = $" closed={(guarded.Closed ? 1 : 0)} guards={guarded.Staff.Guards.Members} gotaway={guarded.KidsGotAway}";
 		if ( (topic.MostRidesBuilt != null || topic.EveryRideBuilt) && _park?.Invoke() is { } unresearched )
 			shut = $" closed={(unresearched.Closed ? 1 : 0)} researchers={unresearched.Researchers} unfinished={unresearched.RideProjectsUnfinished} kinds={unresearched.RideKindsStanding}/{unresearched.RideKindsOnOffer}";
 		if ( topic.SlowResearch != null && _park?.Invoke() is { } lab )
