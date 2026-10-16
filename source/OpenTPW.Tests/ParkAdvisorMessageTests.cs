@@ -10,7 +10,7 @@ namespace OpenTPW.Tests;
 [TestClass]
 public class ParkAdvisorMessageTests
 {
-	private static SettingsFile Settings( int open = 26, int close = 26, int threshold = 25, int worn = 100, int mechanic = 110 )
+	private static SettingsFile Settings( int open = 26, int close = 26, int threshold = 25, int worn = 100, int mechanic = 110, int idealCells = 400 )
 		=> new( new MemoryStream( Encoding.ASCII.GetBytes( $"GeneralAdvisor.MinScoreForConsideration {threshold}\n"
 			+ $"MessageGroups[0].MinTimeSameMessage 120\nMessageGroups[0].SayOnlyOnce 0\n"
 			+ $"ParkNowOpen.Score {open}\nParkNowClosed.Score {close}\nRidesBreakdownImminent.Score {worn}\n"
@@ -23,6 +23,7 @@ public class ParkAdvisorMessageTests
 			+ "RidesClosed.AtLeastThisManyRides 3\nRidesClosed.MoreThanThisPercentClosed 50\nRidesClosed.Score 80\nQueueUnconnected.Score 87\n"
 			+ "StaffHireMechanics1.ScorePerWornRide 5\nStaffHireMechanics1.PoorerStateThan 25\nStaffHireMechanics2.ScorePerBrokenRide 10\n"
 			+ "StaffHireMechanics3.IdealNumberOfRidesPerMechanic 4\nStaffHireMechanics3.ScorePerExtraRide 10\nWaitingTimes.DaysForStaff 30\n"
+			+ $"StaffHireHandymen3.IdealDevelopedCellsPerHandyman {idealCells}\nStaffHireHandymen3.ScorePerExtra10Cells 2\nStaffHireHandymen3.MinCellsForConsideration 300\n"
 			+ "RidesPoorSelection.PoorerThan 30\nRidesPoorSelection.MoreRidesThan 3\nRidesPoorSelection.Score 30\nWaitingTimes.DaysForObjects 30\n"
 			+ "ShopsPoorSelection.PoorerThan 25\nShopsPoorSelection.MoreShopsThan 2\nShopsPoorSelection.Score 50\n"
 			+ "ShopsBuildShops.Score 50\nShopsBuildShops.AdditionalPerDay 2\n"
@@ -153,7 +154,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 40, written.Count );
+		Assert.AreEqual( 41, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -950,7 +951,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 124, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 123, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -1432,6 +1433,97 @@ public class ParkAdvisorMessageTests
 		facts = facts with { DaysSinceStaffHired = 0 };
 		Round( 2372 + 480 );
 		Assert.AreEqual( ("no-score", 4), (messages.PollAnswer( 7 ), said.Count) );
+	}
+
+	/// <summary>
+	/// Row 10, message 0xa, is polled and scored by the park (0x0059cc20): nought in a shut park, nought with no
+	/// handyman, nought with fewer developed cells than StaffHireHandymen3.MinCellsForConsideration, and then
+	/// StaffHireHandymen3.ScorePerExtra10Cells for EVERY developed cell over IdealDevelopedCellsPerHandyman a handyman,
+	/// not for every ten. Three lines in turn, in the handymen's cap, and tag 12, whose bar carries the hire button of
+	/// type 13, the cleaners' tab.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the door not asked or asked the other way; no handyman scored, or the mechanics asked for them;
+	/// the least cells not asked, asked with a strict test, or another key's; the cells over divided by ten, or each
+	/// handyman's share another key's or not multiplied; nought over scored, or under scored below nought; the score another key's; the row not
+	/// polled; the lines, the response, the sample, the prop or the group another's; tag 12's row another's; the poll
+	/// line naming another row's facts.
+	/// </remarks>
+	[TestMethod]
+	public void AParkTooBigForItsHandymenIsPolledByItsDevelopedCells()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 10 };
+		var messages = new ParkAdvisorMessages( Settings(), cursor: cursor );
+		var handyman = new ParkAdvisorMessages.KindTraining( Members: 1, Budget: 0, Grades: 2 );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 3, Sideshows: 1, WaitingToOpen: 0, Mechanics: 3, DaysSinceStaffHired: 40,
+			Staff: new( default, handyman with { Members = 3 }, default, default, default ), DevelopedCells: 415 );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		void Round( int at )
+		{
+			cursor.Row = 10;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 5000; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+		}
+
+		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireMoreHandymen );
+		Assert.AreEqual( (0xa, "StaffHireHandymen3.ScorePerExtra10Cells", "StaffHireHandymen3", 29, 29, 3, 1, 0, true, 12, ParkAdvisorMessages.HandymanCap, -1),
+			(topic.Id, topic.ScoreKey, topic.CellsAHandyman, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.CellsAHandyman != null ) );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 10 ) );
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 929 ), "before any sweep has handed the park in" );
+		foreach ( var response in new[] { 29, 30, 31 } )
+			Assert.AreEqual( (ParkAdvisorMessages.HandymanCap, 0), ParkAdvisorMessages.PropsOf( response ) );
+		var row = ParkTags.Rows.Single( one => one.Id == 12 );
+		Assert.AreEqual( (ParkTags.NoTag, 2, 16, 0xd, 0, 30000, 0), (row.Key, row.Picture, row.String, row.Button1, row.Button2, row.Life, row.Kind) );
+
+		// No handyman, however big the park and however many mechanics: nought.
+		Round( 929 );
+		Assert.AreEqual( (0, "no-score", 11, 0), (messages.ScoreOf( topic, 929 ), messages.PollAnswer( 10 ), cursor.Row, said.Count) );
+		Assert.AreEqual( " closed=0 handymen=0 cells=415", messages.PollFacts( topic ), "the poll line names what the score read" );
+
+		// One: the key for each cell over his 400, every cell, not every ten.
+		facts = facts with { Staff = facts.Staff with { Handymen = handyman } };
+		Assert.AreEqual( 30, messages.ScoreOf( topic, 930 ), "fifteen cells over, twice each" );
+		facts = facts with { DevelopedCells = 412 };
+		Round( 930 );
+		Assert.AreEqual( (24, "under-threshold", 0), (messages.ScoreOf( topic, 930 ), messages.PollAnswer( 10 ), said.Count), "24 is not above 25" );
+		facts = facts with { DevelopedCells = 400 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 930 ), "a handyman's 400 exactly" );
+		facts = facts with { DevelopedCells = 350 };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 930 ), "fewer than a handyman keeps is nought, not a score below it" );
+		facts = facts with { DevelopedCells = 1213, Staff = facts.Staff with { Handymen = handyman with { Members = 3 } } };
+		Assert.AreEqual( 26, messages.ScoreOf( topic, 930 ), "thirteen over three handymen's 1200" );
+		facts = facts with { DevelopedCells = 299, Staff = facts.Staff with { Handymen = handyman with { Members = 0 } } };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 930 ) );
+
+		// Under the least cells: nought, though a handyman of 100 keeps fewer; at the least it is asked.
+		var small = new ParkAdvisorMessages( Settings( idealCells: 100 ), cursor: new ParkAdvisorMessages.PollCursor { Row = 200 } );
+		var smallFacts = facts with { Staff = facts.Staff with { Handymen = handyman }, DevelopedCells = 299 };
+		small.Tick( 1, 250L, ( _, _ ) => 0, ( _, _ ) => { }, () => smallFacts );
+		Assert.AreEqual( 0, small.ScoreOf( topic, 1 ), "299 is under 300" );
+		smallFacts = smallFacts with { DevelopedCells = 300 };
+		Assert.AreEqual( 400, small.ScoreOf( topic, 1 ), "300 is not under 300: 200 over a handyman's 100" );
+
+		// A shut park: nought.
+		facts = facts with { DevelopedCells = 415, Staff = facts.Staff with { Handymen = handyman }, Closed = true };
+		Assert.AreEqual( 0, messages.ScoreOf( topic, 931 ), "shut" );
+		Assert.AreEqual( " closed=1 handymen=1 cells=415", messages.PollFacts( topic ) );
+		facts = facts with { Closed = false };
+		Round( 932 );
+		CollectionAssert.AreEqual( new[] { (932, 29, 29) }, said );
+		CollectionAssert.AreEqual( new[] { (12, 0) }, groups );
+		StringAssert.Contains( messages.Census(), "message=10/score=30/line=0/lastTick=932/said=1/slaps=0" );
+
+		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the next line is said.
+		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		Round( 932 + 479 );
+		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 10 ), said.Count) );
+		Round( 932 + 480 );
+		Round( 932 + 960 );
+		Round( 932 + 1440 );
+		CollectionAssert.AreEqual( new[] { (932, 29, 29), (1412, 30, 30), (1892, 31, 31), (2372, 29, 29) }, said, "three lines in turn, then the first again" );
+		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
 	}
 
 	/// <summary>
@@ -3535,7 +3627,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 31, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 32, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>

@@ -1945,6 +1945,94 @@ for thirty days, the test's last step), a hire made in the original by hand, a p
 Simulation: the mode is not asked by row 7's score. This game said the line of `days29` two ticks before the
 original (1094, 1096): the wait after row 259's line, not measured further. Not heard in either game.
 
+## A park too big for its handymen (message `0xa`, Q411)
+
+**Row 10, message `0xa`, `StaffHireHandymen3`:** polled, category 0, either game mode, one copy, first response 29,
+three lines in turn. Responses 29 to 31 are **samples 29 to 31**, the random gesture chain, model slot 0, prop 7 (the
+handymen's cap), group 12. From the shipped park's cursor its turns are three after row 7's: ticks 777, 932 and every
+155 on. The transcripts (`global-speech-transcripts.tsv`): "your janitors are working hard but there aren't enough for
+a park this size have you considered hiring more", "you could use more janitors and a park this big...", "you don't
+have enough janitors to handle the park the size and things are getting a little out of control...".
+
+**Its score, `0x0059cc20`** (loose code, read as disassembly; `ECX` the balance object, kept in `EDI`):
+
+1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
+2. The handymen, `FUN_004c9960( 5 )` on the park analyser (`FUN_00519510`): none, nought.
+3. The developed cells, `FUN_004c81b0( 0 )` on the analyser, under `[EDI + 0xec]`,
+   `StaffHireHandymen3.MinCellsForConsideration`, **300** (a signed `JGE` passes 300): nought.
+4. The cells less the handymen times `[EDI + 0xe4]`, `IdealDevelopedCellsPerHandyman`, **400**: nought unless that is
+   above nought, and then it times `[EDI + 0xe8]`, `ScorePerExtra10Cells`, **2** (`0x0059ccab`). **Nothing divides by
+   ten**, whatever the key's name: every cell over counts 2.
+
+`MinScoreForConsideration` is 25, so **thirteen cells over what the handymen keep are enough and twelve are not**: with
+one handyman 413 developed cells. The minimum asks nothing a handyman's 400 does not already ask, at the shipped values.
+
+**The developed cells, `FUN_004c81b0( age )`**, walk the analyser's 1,024 region records (`+0x20` to `+0x1efa4`, `0x7c`
+bytes each, the loop from the last down) and add `FUN_004c8c40( age )` of each. The constructor `FUN_004c58c0` sets a
+region four cells square (`+0xc`), 32 by 32 of them (`+0x10`, `+0x14`) over a map of 128 (`+0x18`, `+0x1c`), and
+`FUN_004c7a90` gives region k the cells (k % 32 x 4, k / 32 x 4), four by four (`+0x0` to `+0xc`): **the regions tile
+the whole map, inside the park and out**. `FUN_004c8c40` counts the cells of its rectangle (`[0x008023a0] + (y x 128 +
+x) x 0x44`) for which any of `FUN_00536310` (`mType` 1, path), `FUN_00536320` (3 or 9), `FUN_00536340` (9),
+`FUN_00536350` (10), `FUN_005d60c0` (answers nought whatever the cell) or `FUN_00536380` (4, a footprint) answers:
+**a cell of type 1, 3, 4, 9 or 10**. It keeps the count at `+0x68`, with a stamp of `mGameTick` at `+0x64` and a
+set byte at `+0x6c` (`FUN_0041a960`), and answers the kept count while the quarter ticks since the stamp
+(`FUN_0041a990`) are no more than `age`; row 10 asks with nought, so only the same quarter tick reuses one. The shipped
+park has **126**: 78 of path, 4 of queue, 35 of footprint, 8 of type 9, one of type 10 (`q411/cells.py`).
+
+**Its tag** is row 12 of the tag table: key 383, picture 2, string 16, the bar's first button of type 13 (the hire
+screen on its cleaners' tab, "Worn rides and no mechanic"), no second, thirty seconds. String 16 reads "Your park is
+filthy because you don't have enough cleaners. You should hire some more."
+
+### OpenTPW (`ParkAdvisorMessages.HireMoreHandymen`, a topic's `CellsAHandyman`; `ParkFacts.DevelopedCells`; `ParkState.DevelopedCells`, `IsDeveloped`; tag row 12)
+
+A topic scored from the same `ParkFacts`, which now carry the developed cells: `ParkState.DevelopedCells` walks the
+whole map's records and counts the five types, afresh at each ask where the original may reuse a count within the
+same quarter tick. The handymen are the kind's members rows 28 to 32 already read (`KindTraining`, `FUN_004c9960`).
+The poll line ends ` closed=N handymen=N cells=N`. `ParkTags.Rows` lists row 12.
+
+**The scenes** (`q411/mkscene.py`): the stock park paused on tick 765 and the first N cells of the 17 x 17 block of
+bare grass at (60,15) laid as path with the console's `path`, saved: `big.TPWS` 289 cells, 415 developed with its one
+handyman; `under.TPWS` 286, 412 (`parkfile.py -d`).
+
+**Predicted first** (`q411/PREDICTION.txt`), both games on files neither had been given. One miss, mine: I carried
+Q333's help row of the type-14 button (526) to the type-13 one, which reads 525; predicted again and held.
+
+**This game** (`q411/confirm.py fix|under|control`; `run-fix2` the final run, on the desktop): *`big`*: `poll message=10
+row=10 days=33 score=30 threshold=25 tick=777 result=post closed=0 handymen=1 cells=415`, queued, and `attempt=1
+message=10 subject=0 score=30 threshold=25 response=29 sample=29 line=0 tick=777`; `saying sp_029.mp2 ... wearing=7,0`,
+him up in the handymen's cap (`1-line.png`), `tags` reading `tag=12/picture=2/subject=0` on the mast at
+`94,901,144,984`. The tag clicked: `message bar: tag 12 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453 ...
+first=mb_buy/help=525 second=hidden erase=mb_erase` and string 16 (`2-bar.png`). The button clicked: `button type 13
+opens the hire screen on tab 0 and takes tag 12 off`, `windows` reading `ParkHireScreen tab 0`, the frame "Hire
+Cleaners" (`3-screen.png`). *`under`* (`run-under1`): `score=24 ... tick=777 result=under-threshold ... cells=412`, no
+attempt, no tag by tick 812. **Main's build** on `big` (`run-control1`): no line of message 10, no attempt, no tag by
+tick 811.
+
+**The original** (`q411/orig/run.sh <file>`, `advisor.py ... 0x7,0xa,0x71,0x103,0xbd,0x11c poll` beside `tags.py`,
+`bar.py` and `screens.py`; a fresh program each). *`big`* (runs a and a2): message `0xa`'s record went from (0, -1, 0,
+0) to **(777, 0, 1, 0) on tick 777**, one tag at (84, 909, 154, 974) on the mast at (94, 901, 144, 984), its text string
+16 of `Language/american`, "Your park is filthy because you don't have enough janitors. You should hire some more."
+(this game reads `English`, whose string 16 says "cleaners"); him up in the handymen's cap with the tag on the aerial
+(`orig/a2-g4.png`). The tag clicked: the bar's data thing 0, buttons 13 and 0, item 0 and the text. The button clicked:
+`screens.py` went to `left 2,3,10 ... hire 0x46b89c0 hiretab 0` on tick 899, the frame "Hire Janitors" with the first
+tab lit (`orig/a-button.png`). *`under`* (run b): no change of message `0xa`'s record, the slots or the tags in 200
+seconds after the load, the park run to 27 February 2000 (about tick 1313, past row 10's turns 777, 932, 1087 and
+1242), no tag (`orig/b-end.png`). `q411/side-by-side.png` sets this game's line beside the original's.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 10 | polled; nought shut, with no handyman, under 300 cells; then 2 for every developed cell over 400 a handyman | the same |
+| 415 cells, one handyman | said on tick 777, line 0, in the handymen's cap | the same |
+| 412 cells | not said | the same (`under-threshold`, 24) |
+| The developed cells | the whole map's cells of type 1, 3, 4, 9 and 10, a region's count reused within its quarter tick | the same, counted afresh |
+| The tag and the bar | row 12, part 2, string 16; button 13 builds the hire screen on its cleaners' tab, tag off | the same |
+
+**Not built or not seen.** In no game run: lines 2 and 3 (samples 30 and 31; the test holds the turn), the line said
+again past its 120 quarter-ticks, two handymen or more (the test holds three), a handyman hired after the line, the
+minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
+handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
+game. The other staff rows, 8, 9 and 11 to 17, are not built (Q412).
+
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 
 **The analyser's `+0x21c30` is the calendar as the newest object was made**, standing still or not. It is the

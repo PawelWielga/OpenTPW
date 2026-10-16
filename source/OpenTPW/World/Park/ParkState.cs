@@ -1169,6 +1169,37 @@ public sealed class ParkState
 		=> unchecked((int)((ParkWorld.StaffState.FileTimeOf( CalendarNow ) - LastObjectBuilt) / TimeSpan.TicksPerDay));
 
 	/// <summary>
+	/// The map's developed cells - <c>FUN_004c81b0</c>: the analyser's 1,024 regions of four cells square, which tile the
+	/// whole map (<c>FUN_004c7a90</c>), each counting its cells whose <c>mType</c> is path, queue, a footprint or a ride's
+	/// two ends (<c>FUN_004c8c40</c>), inside the park or out. <c>docs/exe/advisor-park.md</c>, "A park too big for its
+	/// handymen".
+	/// </summary>
+	/// <remarks>
+	/// Each region keeps its count and gives it again to a caller asking within as many quarter ticks as it names
+	/// (<c>FUN_0041a990</c>); row 10's score names nought, so only the same quarter tick reuses one. This counts afresh
+	/// every time (a deviation of the same quarter tick at most).
+	/// </remarks>
+	public int DevelopedCells()
+	{
+		var cells = 0;
+
+		for ( var y = 0; y < ParkWorld.MapSize; ++y )
+		{
+			for ( var x = 0; x < ParkWorld.MapSize; ++x )
+			{
+				if ( IsDeveloped( Record( x, y ).Type ) )
+					++cells;
+			}
+		}
+
+		return cells;
+	}
+
+	/// <summary>The <c>mType</c>s a developed cell has (<c>FUN_00536310</c>, <c>FUN_00536320</c>, <c>FUN_00536340</c>, <c>FUN_00536350</c>, <c>FUN_00536380</c>).</summary>
+	public static bool IsDeveloped( int type )
+		=> type is CellEdge.Path or ParkRideChoice.QueueCellType or CellEdge.Footprint or CellEdge.RideEnd or CellEdge.RideFarEnd;
+
+	/// <summary>
 	/// How many whole days old a thing is on the park's calendar - <c>FUN_004dd670</c>: <c>( now − built ) /
 	/// 864,000,000,000</c>, a signed 64-bit divide whose low 32 bits are the answer. A stamp in the future is
 	/// negative, and less than a day ahead is nought. The ride score compares it unsigned; the object window

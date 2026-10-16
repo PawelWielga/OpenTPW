@@ -45,9 +45,15 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q411. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q412. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q411 (`advisor-park.md`, "A park too big for its handymen"): row 10 is built. The other staff rows, 8, 9 and 11
+  to 17, are not; row 13's keys name developed cells for the guards (`StaffHireGuards3`), the nearest. In no game run:
+  lines 2 and 3 (the test holds them), two handymen or more, a handyman hired after the line, the minimum of 300
+  (it asks nothing a handyman's 400 does not, at the shipped values: tested only), a region's kept count reused in
+  the same quarter tick (counted afresh here, said at `ParkState.DevelopedCells`), Full Simulation (not asked: the row
+  is either mode's), the other three themes. Not heard in either game.
   From Q410 (`hud.md`, "The research opener and its two boxes"): the boxes are built; the research screen (six effort
   sliders, `FUN_004a96b0`) is counted and waits on the lab (Q245). In no game run: the bar's type `0x13` (its rows
   score only in Full Simulation; the test holds it), a carried hire that is a researcher, the other three themes.
@@ -403,8 +409,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   advisor and costume, which are not built either). Response 18's gesture row, 21, is counted, not played. In no game run:
   lines 2 and 3, the line said again past its cooldown, a mechanic kept or hired after the line, a broken
   sideshow beside the rides (the tests hold each), Full Simulation. Not heard in either game.
-  From Q331 (`advisor-park.md`, "Worn rides and no mechanic"): the ten other staff rows, 8 to 17, are not built
-  (tags 10 to 19, each with a hire button). In no game run: lines 2 and 3, the line said again past its cooldown, a broken ride counted, a
+  From Q331 (`advisor-park.md`, "Worn rides and no mechanic"): the other staff rows, 8, 9 and 11 to 17, are not built
+  (tags 10, 11 and 13 to 19, each with a hire button; row 10 is built, Q411). In no game run: lines 2 and 3, the line said again past its cooldown, a broken ride counted, a
   ride worn under 25 by running, button types `0xd` and `0xf` to `0x11`, the button with the hire screen open
   (the tests hold each), a mechanic hired after the line, Full Simulation. Not heard in either game.
   From Q330 (`hud.md`, "The six round buttons"): what serves Restart Park's request (`FUN_005508b0( 1 )`) is

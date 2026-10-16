@@ -46,6 +46,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireMechanicsBroken = 6;
 	/// <summary>Message 7, polled: the line about more rides than the mechanics can keep (0x0059cac0).</summary>
 	internal const int HireMoreMechanics = 7;
+	/// <summary>Message 0xa, polled: the line about a park too big for its handymen, scored by its developed cells over those they keep (0x0059cc20).</summary>
+	internal const int HireMoreHandymen = 0xa;
 	/// <summary>Message 0x1c, polled: the line about mechanics nobody has trained, scored where the park has one, their training budget is nought and their grades are low (0x0059d620).</summary>
 	internal const int TrainMechanics = 0x1c;
 	/// <summary>Message 0x1d, polled: the same of the handymen (0x0059d680).</summary>
@@ -188,6 +190,9 @@ internal sealed class ParkAdvisorMessages
 	/// grade for every member; nought otherwise.
 	/// <paramref name="SecondGestureRowLine"/> is a second line whose response names a row of the gesture table,
 	/// -1 for none.
+	/// <paramref name="CellsAHandyman"/> makes the score row 10's (0x0059cc20), and names its section: in an open park
+	/// with a handyman and at least the section's MinCellsForConsideration developed cells, the key's value for each
+	/// developed cell over the section's IdealDevelopedCellsPerHandyman for every handyman; nought otherwise.
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -199,7 +204,8 @@ internal sealed class ParkAdvisorMessages
 		string? PoorSelection = null, Shut PoorOf = Shut.Rides, string? PerDayWithNoShop = null, string? ShopsPerRide = null,
 		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null, string? PerDayWithNoFeature = null,
 		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false,
-		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1 );
+		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1,
+		string? CellsAHandyman = null );
 
 	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
@@ -254,7 +260,8 @@ internal sealed class ParkAdvisorMessages
 	/// the same asked for kind 2) and how much of the lab's work that kind is getting (FUN_00503980 asked for
 	/// kind 2: <see cref="ParkResearch.Rate"/>), with the two numbers the rate sets against each other, the
 	/// staff's researchers' ability added up (FUN_004c9e60) and the most a park's could be (FUN_004c9ed0); and
-	/// what rows 28 to 32's read: each kind of staff's <see cref="KindTraining"/>.
+	/// what rows 28 to 32's read: each kind of staff's <see cref="KindTraining"/>; and what row 10's reads besides: the
+	/// developed cells (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -265,7 +272,7 @@ internal sealed class ParkAdvisorMessages
 		int Features = 0, int FeatureKindsOnOffer = 0, int FeatureKindsStanding = 0,
 		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
 		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
-		StaffTraining Staff = default )
+		StaffTraining Staff = default, int DevelopedCells = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -390,6 +397,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireMechanics, "StaffHireMechanics1.ScorePerWornRide", 14, 13, Lines: 3, Prop: HardHat, Group: 7, Polled: true, PerWornRideWithNoMechanic: true ),
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
+		new( HireMoreHandymen, "StaffHireHandymen3.ScorePerExtra10Cells", 29, 29, Lines: 3, Prop: HandymanCap, Group: 12, Polled: true, CellsAHandyman: "StaffHireHandymen3" ),
 
 		// Rows 28 to 32, one a kind of staff in the table's own order. The entertainers' three responses name the
 		// theme's own advisor model and its costume (docs/exe/advisor-park.md, "Staff nobody has trained").
@@ -646,6 +654,8 @@ internal sealed class ParkAdvisorMessages
 	/// (0x0059ca80) is its key's value for each ride broken down in a park with no mechanic, and nought in a
 	/// park with one; row 7's (0x0059cac0) is nought until DaysForStaff days after the newest member of staff
 	/// was made, and then its key's value for each ride over those its mechanics keep, where there is one;
+	/// row 10's (0x0059cc20) is nought in a shut park, with no handyman and with fewer developed cells than its
+	/// section's MinCellsForConsideration, and then its key's value for each developed cell over those its handymen keep;
 	/// row 60's (0x0059d990) is nought where no kind of ride is on offer, until DaysForObjects days after the
 	/// newest object was made, and with fewer rides than its section's MoreRidesThan, and then its key's value
 	/// where the kinds standing are under its section's PoorerThan per cent, in whole numbers, of those on offer;
@@ -771,6 +781,15 @@ internal sealed class ParkAdvisorMessages
 			return over > 0 ? over * Value( topic.ScoreKey ) : 0;
 		}
 
+		if ( topic.CellsAHandyman is { } swept )
+		{
+			// The key names extra ten cells; the original's score multiplies it by every cell over, with no division (0x0059ccab).
+			if ( _park?.Invoke() is not { Closed: false } big || big.Staff.Handymen.Members < 1 ) return 0;
+			if ( big.DevelopedCells < Value( $"{swept}.MinCellsForConsideration" ) ) return 0;
+			var over = big.DevelopedCells - big.Staff.Handymen.Members * Value( $"{swept}.IdealDevelopedCellsPerHandyman" );
+			return over > 0 ? over * Value( topic.ScoreKey ) : 0;
+		}
+
 		if ( topic.PoorSelection is { } selection )
 		{
 			if ( _park?.Invoke() is not { } offered ) return 0;
@@ -863,6 +882,7 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.PerWornRideWithNoMechanic && _park?.Invoke() is { } wear ) shut = $" worn={wear.RidesWorn} mechanics={wear.Mechanics}";
 		if ( topic.PerBrokenRideWithNoMechanic && _park?.Invoke() is { } breaks ) shut = $" broken={breaks.RidesBroken} mechanics={breaks.Mechanics}";
 		if ( topic.RidesAMechanic != null && _park?.Invoke() is { } staffed ) shut = $" rides={staffed.Rides} mechanics={staffed.Mechanics} sincehire={staffed.DaysSinceStaffHired}";
+		if ( topic.CellsAHandyman != null && _park?.Invoke() is { } big ) shut = $" closed={(big.Closed ? 1 : 0)} handymen={big.Staff.Handymen.Members} cells={big.DevelopedCells}";
 		if ( topic.PoorSelection != null && _park?.Invoke() is { } offered )
 		{
 			var kinds = offered.Kinds( topic.PoorOf );

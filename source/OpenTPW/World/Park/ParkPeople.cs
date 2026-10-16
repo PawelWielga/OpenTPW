@@ -2721,8 +2721,8 @@ public sealed partial class ParkPeople : Entity
 	/// thing's +0xc, <see cref="ParkState.Balance"/>); and the guests inside the park (FUN_004c9130,
 	/// <see cref="GateGuestCensus"/>) with those of them whose toilet need is over the advisor's level
 	/// (0x004c9290); and the researchers (FUN_004c9960 asked for type 8) and the lab's projects of a feature's
-	/// kind that are not done (0x004ca690, <see cref="ParkResearch.Unfinished"/>). With no catalogue no kind is
-	/// counted.
+	/// kind that are not done (0x004ca690, <see cref="ParkResearch.Unfinished"/>); and the map's developed cells
+	/// (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>). With no catalogue no kind is counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2810,7 +2810,8 @@ public sealed partial class ParkPeople : Entity
 			_staff.Count( member => member.Model == ResearcherModel ), _research?.Unfinished( ItemDescriptionFile.Feature ) ?? 0,
 			_research?.Unfinished( ItemDescriptionFile.SideShow ) ?? 0,
 			_research?.Rate( ItemDescriptionFile.SideShow, ability, MostResearchAbility ) ?? 0, ability, MostResearchAbility,
-			new ParkAdvisorMessages.StaffTraining( TrainingOf( 0 ), TrainingOf( 1 ), TrainingOf( 2 ), TrainingOf( 3 ), TrainingOf( 4 ) ) );
+			new ParkAdvisorMessages.StaffTraining( TrainingOf( 0 ), TrainingOf( 1 ), TrainingOf( 2 ), TrainingOf( 3 ), TrainingOf( 4 ) ),
+			State.DevelopedCells() );
 	}
 
 	/// <summary>

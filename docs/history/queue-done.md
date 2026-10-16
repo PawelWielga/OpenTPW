@@ -7112,6 +7112,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the same; B then R the buy screen closed; a fresh Full Simulation park the `0x1d3` box, and `1x RESEARCH_SCREEN`
   with a scientist. The original showed the same box by R, the button and over the buy screen. 17 bugs put back,
   all caught. Q239 is the same work, ticked with it.
+- [x] **Q411. The advisor's row 10, a park too big for its handymen.** `0x0059cc20`: nought in a shut park, with no
+  handyman (`FUN_004c9960( 5 )`) and under `MinCellsForConsideration` developed cells, then `ScorePerExtra10Cells` for
+  every cell over 400 a handyman, no division by ten; the developed cells (`FUN_004c81b0`) are the whole map's cells of
+  `mType` 1, 3, 4, 9 or 10, 126 in the shipped park; responses 29 to 31 in the handymen's cap, tag 12 with the hire
+  button of type 13 (`advisor-park.md`, "A park too big for its handymen"). Confirmed: 289 cells of path laid, 415
+  developed with one handyman, `score=30 ... tick=777 result=post`, said in the cap, tag 12, the bar's button
+  opening "Hire Cleaners"; 412 cells scored 24 and were silent; main's build silent. The original given both files
+  did the same. 34 bugs put back.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
