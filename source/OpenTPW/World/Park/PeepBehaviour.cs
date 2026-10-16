@@ -588,14 +588,19 @@ public sealed class PeepBehaviour
 				break;
 
 			// Walking to the stop to go home - case 0x14 of FUN_005019f0. Arrived, they face the way the vehicle
-			// that is current asks (0x7ff for a larger one, FUN_0051aad0, else 0x400) and stand at the stop. Stuck,
-			// the original logs "Got stuck walking around outside" to its bare RET and does nothing else.
+			// that is current asks (0x7ff for a larger one, FUN_0051aad0, else 0x400) and stand at the stop; entering
+			// it, a guest who paid at the gate (mPaidAdmission, +0x204) hands the park analyser their stay
+			// (FUN_00501db0's state 0x15, 0x00502333). Stuck, the original logs "Got stuck walking around outside" to
+			// its bare RET and does nothing else.
 			case PeepState.WalkingOutside:
 				switch ( Walked( peep, walk, playing ) )
 				{
 					case WalkVerdict.Arrived:
 						walk.Heading = LargerVehicleCurrent() ? LargerVehicleHeading : ArrivalHeading;
 						peep.SetState( PeepState.AtTheBusStop, tick, _random );
+
+						if ( peep.PaidAdmission )
+							State.AddLeaverStay( peep.StayAt( State.GameTick ) );
 
 						break;
 

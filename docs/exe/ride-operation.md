@@ -2308,7 +2308,7 @@ its reader `FUN_00402d70`; the same ranges refer to the world pointer `[0x008023
 | `0x004ff428` | the same | the chooser asked when mGameTick > `+0x1fc` + 30 | `Decide` |
 | `0x005002fe` | `FUN_004ffff0`, the queue turn | the mood gap, mGameTick − `+0x208` > 30, and the window on `+0x1fc` | `QueueTurn` |
 | `0x004fcba9`, `0x004fd760` | `FUN_004fcb10`, `FUN_004fd570`, the choosers | an equal score wins on an odd mGameTick | `ParkRideChooser`; the console's `why` asks on the same clock |
-| `0x004fd95b` | `FUN_004fd950` | the stay, `(mGameTick − +0x1d4) >> 2` (the leaver's sample `0x00502345`, the visitor's window) | counted (`LEAVER_STAY_SAMPLE`) |
+| `0x004fd95b` | `FUN_004fd950` | the stay, `(mGameTick − +0x1d4) >> 2` (the leaver's sample `0x00502345`, the visitor's window) | built (`Peep.StayAt`, `ParkState.AddLeaverStay`, Q393) |
 
 SetState stamps in cases 8 and `0xb` only; its case `0x15` reads the stay. `+0x1fc` is also written nought by the
 arrival's refusal (`PeepBehaviour.JoinTheQueue`), which is no clock read.
@@ -3855,8 +3855,9 @@ Five constructors join set `0xc`: model 9's (`0x00508a08`), the tag system's, th
    sets it as a guest pays (`FUN_004ff9d0`, `0x004ffaee`), so only a guest who paid hands in a stay. The history
    ring's readers are the park status screen's graph (`FUN_004a4b90`, `FUN_004a51d0`, the draw at `0x004a47bf`, and
    `FUN_004a5e10` from the date's change, `0x004f8435`), which is not built (`docs/PLAYER-GAPS.md`); that the series
-   is the one the screen calls the average time in the park is not read from a label. OpenTPW counts the write for a
-   guest whose `Peep.PaidAdmission` is set, `LEAVER_STAY_SAMPLE`, and keeps no such ring (Q238).
+   is the one the screen calls the average time in the park is not read from a label. OpenTPW keeps both rings
+   (Q393; `hud.md`, "The leavers' stays"): `PeepBehaviour` hands a paying guest's stay to `ParkState.AddLeaverStay` as
+   it puts them at the stop.
 4. **Thing 8**, the bank, runs its month turn (`FUN_004d02d0` → `FUN_004d0370`, `0x004d035f`).
 5. **Each member of staff** pays a month's wage (`FUN_00504c70`, `0x00504cb9`).
 

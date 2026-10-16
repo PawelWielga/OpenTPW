@@ -741,6 +741,8 @@ public sealed class ParkState
 		MonthVisitors = park.Save?.MonthVisitors?.Copy() ?? new();
 		MonthRides = park.Save?.MonthRides?.Copy() ?? new();
 		MonthHappiness = park.Save?.MonthHappiness?.Copy() ?? new();
+		MonthMeanStay = park.Save?.MonthMeanStay?.Copy() ?? new();
+		LeaverStays = park.Save?.LeaverStays?.Copy() ?? new( ParkMonthRing.Stays );
 		MonthArrivals = park.Save?.MonthArrivals?.Copy() ?? new();
 		LifetimeVisitors = park.Save?.LifetimeVisitors ?? 0;
 		MostPaidForTicket = park.Save?.MostPaidForTicket ?? 0;
@@ -957,6 +959,40 @@ public sealed class ParkState
 	public ParkMonthRing MonthHappiness { get; private set; } = new();
 
 	/// <summary>
+	/// The park analyser's 15th ring (<c>+0x21160</c>): the mean of <see cref="LeaverStays"/>' newest fifty at each close, in
+	/// whole days (<c>FUN_004cef30</c>, <see cref="ParkMonthRing.MeanOfNewest"/>), pushed by <see cref="TurnTheMonth"/>
+	/// after the park value; nothing adds to its month so far.
+	/// </summary>
+	public ParkMonthRing MonthMeanStay { get; private set; } = new();
+
+	/// <summary>
+	/// The park analyser's ring of the last fifty stays (<c>+0x21600</c>): <see cref="AddLeaverStay"/> pushes a paying
+	/// guest's whole days in the park as they reach the stop to go home.
+	/// </summary>
+	public ParkMonthRing LeaverStays { get; private set; } = new( ParkMonthRing.Stays );
+
+	/// <summary>
+	/// A paying guest at the stop to go home hands the analyser their stay (<c>FUN_004c7600</c>, from <c>0x00502333</c>):
+	/// <paramref name="stay"/> (<c>FUN_004fd950</c>, <see cref="Peep.StayAt"/>) in <see cref="StayDays"/> into the next slot.
+	/// </summary>
+	public void AddLeaverStay( uint stay )
+	{
+		var days = StayDays( stay );
+
+		LeaverStays.Push( days );
+		Log.Info( $"Park: a leaver's stay, {stay} fours of sweeps, {days} days into slot {LeaverStays.Current}, the newest {ParkMonthRing.Stays}'s mean {LeaverStays.MeanOfNewest( ParkMonthRing.Stays )}" );
+	}
+
+	/// <summary>
+	/// A stay's whole park days as <c>FUN_004c7600</c> takes them: the stay shifted back left by two (<c>SHL</c> at
+	/// <c>0x0050234a</c>, so in sweeps, a multiple of four), <c>FUN_004f8730</c>'s park time in 100 ns units (times the rate,
+	/// over four, times 10,000,000 in 64 bits, which wraps) and <c>__alldiv</c> by 864,000,000,000, signed, its low half.
+	/// </summary>
+	public static int StayDays( uint stay )
+		=> unchecked( (int)((long)((ulong)(stay << 2) * (uint)GameCalendar.Rate / GameCalendar.AdvancesPerSecond * 10_000_000UL)
+			/ 864_000_000_000L) );
+
+	/// <summary>
 	/// The park analyser's month of guests the arrival vehicles have dropped off (<c>+0x20cc0</c>) and its closed months,
 	/// as <see cref="MonthCosts"/>; <see cref="AddArrival"/> adds to it, and <see cref="TurnTheMonth"/> closes it after
 	/// the sideshow takings.
@@ -1019,10 +1055,10 @@ public sealed class ParkState
 	/// <summary>The analyser's month of what the sideshows have charged (<c>+0x20380</c>), as <see cref="MonthCosts"/>; <see cref="AddSideshowTakings"/> adds to it.</summary>
 	public ParkMonthRing MonthSideshowTakings { get; private set; } = new();
 
-	/// <summary>The analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its arrivals and its guests' happiness as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
+	/// <summary>The analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its arrivals, its guests' happiness, its mean stay and its leavers' stays as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
 	public ParkWorld.MonthRingSet MonthRings
 		=> new( MonthBalance, MonthParkValue, MonthCosts, MonthStaffCosts, MonthTraining, MonthCashIn, MonthGateTakings, MonthShopTakings, MonthSideshowTakings,
-			MonthGuestsInside, MonthVisitors, MonthRides, MonthArrivals, MonthHappiness );
+			MonthGuestsInside, MonthVisitors, MonthRides, MonthArrivals, MonthHappiness, MonthMeanStay, LeaverStays );
 
 	/// <summary>
 	/// A wage or a severance paid: onto the analyser's month of staff costs, after the withdrawal and whether or not it
@@ -1368,8 +1404,8 @@ public sealed class ParkState
 	/// (<c>docs/exe/ride-operation.md</c>, "The month's change"). The analyser's close (<c>FUN_004c7720</c>) samples the
 	/// bank's <see cref="Balance"/> into its first ring, then closes its seven money rings, all costs, staff costs,
 	/// training, cash in, gate, shop and sideshow takings, in that order, and the month's arrivals, then samples <paramref name="guestsInside"/>,
-	/// <see cref="LifetimeVisitors"/>, the <see cref="RidesStanding"/>, <paramref name="guestsHappiness"/> and the <see cref="ParkValue"/> of
-	/// <paramref name="catalogue"/>'s items, and its other rings and samples are counted (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
+	/// <see cref="LifetimeVisitors"/>, the <see cref="RidesStanding"/>, <paramref name="guestsHappiness"/>, the <see cref="ParkValue"/> of
+	/// <paramref name="catalogue"/>'s items and the mean of the <see cref="LeaverStays"/>, and its other rings and samples are counted (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
 	/// instalment withdrawn, its months repaid counted, <see cref="ProfitThisYear"/> given the principal's share back
 	/// by the original's unsigned division, and the loan closed at its period; then, with the balance and
 	/// <see cref="LastBalance"/> both below nought, the whole thirty-day months since <see cref="TurnEnteredRed"/> -
@@ -1396,8 +1432,9 @@ public sealed class ParkState
 		MonthRides.Push( RidesStanding( catalogue ) );
 		MonthHappiness.Push( guestsHappiness );
 		MonthParkValue.Push( ParkValue.Of( this, catalogue ) );
+		MonthMeanStay.Push( LeaverStays.MeanOfNewest( ParkMonthRing.Stays ) );
 		Log.Info( $"Park: analyser month closed, balance {MonthBalance.Newest}, park value {MonthParkValue.Newest}, guests inside {MonthGuestsInside.Newest}, "
-			+ $"visitors {MonthVisitors.Newest}, rides {MonthRides.Newest}, happiness {MonthHappiness.NewestSingle}, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
+			+ $"visitors {MonthVisitors.Newest}, rides {MonthRides.Newest}, happiness {MonthHappiness.NewestSingle}, mean stay {MonthMeanStay.Newest}, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
 			+ $"training {MonthTraining.Newest}, cash in {MonthCashIn.Newest}, gate {MonthGateTakings.Newest}, "
 			+ $"shops {MonthShopTakings.Newest}, sideshows {MonthSideshowTakings.Newest}, arrivals {MonthArrivals.Newest}" );
 		Unimplemented.Report( "ANALYSER_MONTH_CLOSE" );

@@ -7073,6 +7073,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `q392/run-fix2` (the final build, the stock park): the close on 1470 `guests inside 16, happiness 45.4375`, written
   [0.0, 45.4375] on slot 1; main's build wrote [0.0] a slot behind. The original read both, its own close pushing 44.875
   (16 inside) and, on main's file, that file's guests' mean 46.542. 19 bugs put back, all caught after a test change.
+- [x] **Q393. The analyser's leavers' stays, kept in their ring and their mean in the 15th.** The ring of the last fifty
+  stays (`+0x21600`, record `+72022`): a paying guest at the stop hands in their whole park days (`FUN_004c7600`, from
+  `0x00502333`); the close pushes the truncated mean of the newest fifty into the 15th ring (`+0x21160`,
+  `FUN_004cef30`). Kept, read and written (`hud.md`, "The leavers' stays"). Confirmed: four leavers of 21, 33, 33 and
+  34 days, the close on tick 1470 `mean stay 30`, written [0, 30] with the four stays; main's build left [0] a slot
+  behind. The original read both and its own close pushed 30; given main's file, 0. 26 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

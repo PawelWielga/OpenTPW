@@ -2140,6 +2140,8 @@ public sealed partial class ParkWorld : IParkInitialState
 				MonthRides = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthRidesRing ), ParkMonthRing.Size ) );
 				MonthArrivals = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthArrivalsRing ), ParkMonthRing.Size ) );
 				MonthHappiness = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthHappinessRing ), ParkMonthRing.Size ) );
+				MonthMeanStay = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthMeanStayRing ), ParkMonthRing.Size ) );
+				LeaverStays = ParkMonthRing.Read( _data.AsSpan( start + AnalyserLeaverStaysAt, ParkMonthRing.SizeOf( ParkMonthRing.Stays ) ), ParkMonthRing.Stays );
 				LifetimeVisitors = ReadInt32At( start + AnalyserLifetimeVisitorsAt );
 				MostPaidForTicket = ReadInt32At( start + AnalyserMostPaidForTicketAt );
 			}
@@ -2787,6 +2789,18 @@ public sealed partial class ParkWorld : IParkInitialState
 	public ParkMonthRing? MonthHappiness { get; private set; }
 
 	/// <summary>
+	/// The park analyser's 15th ring (<c>+0x21160</c>): the mean of <see cref="LeaverStays"/>' newest fifty at each close,
+	/// in whole days. Null as <see cref="MonthCosts"/>.
+	/// </summary>
+	public ParkMonthRing? MonthMeanStay { get; private set; }
+
+	/// <summary>
+	/// The park analyser's ring of the last <see cref="ParkMonthRing.Stays"/> stays (<c>+0x21600</c>): each paying guest's
+	/// whole days in the park as they stand at the stop to go home (<c>FUN_004c7600</c>). Null as <see cref="MonthCosts"/>.
+	/// </summary>
+	public ParkMonthRing? LeaverStays { get; private set; }
+
+	/// <summary>
 	/// The park analyser's <c>mLifetimeVisitors</c> (<c>+0x21c08</c>): one for every admission fee taken
 	/// (<c>FUN_004c7520</c>). Null where the file holds no analyser.
 	/// </summary>
@@ -2826,27 +2840,32 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// <summary>
 	/// The rings' places among those sixteen: <c>+0x1f100</c>, <c>+0x1f350</c>, <c>+0x1f5a0</c>, <c>+0x1f7f0</c>, <c>+0x1fa40</c>,
 	/// <c>+0x1fc90</c>, <c>+0x1fee0</c>, <c>+0x20130</c>, <c>+0x20380</c>, the guests inside' <c>+0x205d0</c>, the lifetime
-	/// visitors' <c>+0x20820</c>, the rides' <c>+0x20a70</c>, the arrivals' <c>+0x20cc0</c> and the happiness' <c>+0x20f10</c>.
+	/// visitors' <c>+0x20820</c>, the rides' <c>+0x20a70</c>, the arrivals' <c>+0x20cc0</c>, the happiness' <c>+0x20f10</c> and
+	/// the mean stay's <c>+0x21160</c>.
 	/// </summary>
 	private const int MonthBalanceRing = 0, MonthParkValueRing = 1, MonthCostsRing = 2, MonthStaffCostsRing = 3, MonthTrainingRing = 4, MonthCashInRing = 5,
 		MonthGateTakingsRing = 6, MonthShopTakingsRing = 7, MonthSideshowTakingsRing = 8, MonthGuestsInsideRing = 9, MonthVisitorsRing = 10, MonthRidesRing = 11,
-		MonthArrivalsRing = 12, MonthHappinessRing = 13;
+		MonthArrivalsRing = 12, MonthHappinessRing = 13, MonthMeanStayRing = 14;
 
 	private static int AnalyserMonthRingAt( int ring ) => AnalyserIntRingsAt + ring * ParkMonthRing.Size;
 
+	/// <summary>Where the ring of leavers' stays (<c>+0x21600</c>) starts in the analyser's record: straight after the sixteen.</summary>
+	private const int AnalyserLeaverStaysAt = AnalyserIntRingsAt + 16 * ParkMonthRing.Size;
+
 	/// <summary>
 	/// The park analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its
-	/// arrivals and its guests' happiness, in ring order: the bank's balance, the park value, all costs, staff costs,
-	/// training, cash in, gate takings, shop takings, sideshow takings and, the 10th to 14th, the guests inside, the lifetime
-	/// visitors, the rides, the arrivals and the happiness (floats). Its month's close (<c>FUN_004c7720</c>) takes the
-	/// arrivals, those three, the happiness and then the park value after the sideshow takings.
+	/// arrivals, its guests' happiness and its mean stay, in ring order: the bank's balance, the park value, all costs, staff
+	/// costs, training, cash in, gate takings, shop takings, sideshow takings and, the 10th to 15th, the guests inside, the
+	/// lifetime visitors, the rides, the arrivals, the happiness (floats) and the mean stay; then the ring of the leavers'
+	/// stays the mean is taken of. Its month's close (<c>FUN_004c7720</c>) takes the arrivals, those three, the happiness,
+	/// the park value and then the mean stay after the sideshow takings.
 	/// </summary>
 	public readonly record struct MonthRingSet( ParkMonthRing Balance, ParkMonthRing ParkValue, ParkMonthRing Costs, ParkMonthRing StaffCosts, ParkMonthRing Training,
 		ParkMonthRing CashIn, ParkMonthRing GateTakings, ParkMonthRing ShopTakings, ParkMonthRing SideshowTakings, ParkMonthRing GuestsInside,
-		ParkMonthRing Visitors, ParkMonthRing Rides, ParkMonthRing Arrivals, ParkMonthRing Happiness );
+		ParkMonthRing Visitors, ParkMonthRing Rides, ParkMonthRing Arrivals, ParkMonthRing Happiness, ParkMonthRing MeanStay, ParkMonthRing LeaverStays );
 
 	/// <summary>
-	/// Writes the analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its arrivals and its guests' happiness over the file's in <paramref name="body"/>, a copy of this park's own.
+	/// Writes the analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its arrivals, its guests' happiness, its mean stay and its leavers' stays over the file's in <paramref name="body"/>, a copy of this park's own.
 	/// A park with no analyser is left alone.
 	/// </summary>
 	public void PutMonthRings( byte[] body, MonthRingSet rings )
@@ -2872,6 +2891,8 @@ public sealed partial class ParkWorld : IParkInitialState
 		Put( rings.Rides, MonthRidesRing );
 		Put( rings.Arrivals, MonthArrivalsRing );
 		Put( rings.Happiness, MonthHappinessRing );
+		Put( rings.MeanStay, MonthMeanStayRing );
+		rings.LeaverStays.Write( body.AsSpan( AnalyserAt + AnalyserLeaverStaysAt, ParkMonthRing.SizeOf( ParkMonthRing.Stays ) ) );
 	}
 
 	/// <summary>

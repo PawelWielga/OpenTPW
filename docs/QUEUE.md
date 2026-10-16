@@ -44,12 +44,19 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q393. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q394. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q393 (`hud.md`, "The leavers' stays"): the stays and the 15th ring are kept. Nothing here reads them: the park
+  status screen (`PARK_STATUS_SCREEN`), which graphs the 15th, is not built. The 16th (`FUN_004cceb0`) is still the
+  file's bytes (`ANALYSER_MONTH_CLOSE`), and so are the misbehaving kids' two counts the same close zeroes (`+0x21bfc`,
+  `+0x21c00`, `FUN_004c74f0` from `FUN_004d6790`). A stay is handed where `PeepBehaviour` puts a guest walking outside
+  at the stop, the one way in here; the original hands it on any entry to state `0x15`. In no game run: a guest who
+  never paid at the stop (tested only), a stay ring gone round fifty, a stay of a guest stamped after the clock
+  (negative, tested only), Full Simulation (not asked: the rings are either mode's), the other three themes.
   From Q392 (`hud.md`, "The guests' happiness at a close"): the 14th ring is kept. Nothing here reads it: the park
-  status screen (`PARK_STATUS_SCREEN`), which graphs it, is not built. The 15th (a mean of `FUN_004cef30`) and the 16th
-  (`FUN_004cceb0`) are still the file's bytes (`ANALYSER_MONTH_CLOSE`). In no game run: a close with the park shut
+  status screen (`PARK_STATUS_SCREEN`), which graphs it, is not built. The 15th is kept (Q393); the 16th
+  (`FUN_004cceb0`) is still the file's bytes (`ANALYSER_MONTH_CLOSE`). In no game run: a close with the park shut
   (tested only), a guest's happiness below nought or past 255 (tested only), a ring gone round 144 months, Full
   Simulation (not asked: the ring is either mode's), the other three themes.
   From Q391 (`hud.md`, "The arrivals"): the 13th ring is kept. Nothing here reads it: the park status screen

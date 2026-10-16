@@ -773,9 +773,8 @@ public sealed class Peep
 	/// guest alone. Case <c>0xe</c>'s roll is
 	/// <c>PeepBehaviour.RollForTheVisit</c>'s, made straight after this; boarding's putting a balloon away is here,
 	/// and leaving's building it again is <see cref="ParkRideOperation.Dismiss"/>'s, which knows the thing left. The
-	/// rest - firing the events a ride raises, a paying guest's stay handed to the park analyser at the bus stop -
-	/// reaches into a ride, the event ring or the analyser, and is
-	/// not built.
+	/// rest reaches into a ride, the event ring or the analyser: a paying guest's stay handed to the park analyser at the bus
+	/// stop is <see cref="PeepBehaviour"/>'s, where it puts them there; firing the events a ride raises is not built.
 	/// </para>
 	/// </summary>
 	public void SetState( PeepState next, int tick, Random random )
@@ -834,16 +833,6 @@ public sealed class Peep
 
 			case PeepState.HeadingForExit:
 				MajorDest = 0;
-				break;
-
-			// Standing at the stop to go home, a guest who paid at the gate (mPaidAdmission, +0x204) hands the park
-			// analyser how long they stayed: mGameTick less their arrival, in fours of sweeps, into its ring of the
-			// last fifty stays (FUN_004c7600, from 0x00502333), which the month's close averages for the park
-			// status screen's graph. Neither is built: counted.
-			case PeepState.AtTheBusStop:
-				if ( PaidAdmission )
-					Unimplemented.Report( "LEAVER_STAY_SAMPLE" );
-
 				break;
 		}
 	}

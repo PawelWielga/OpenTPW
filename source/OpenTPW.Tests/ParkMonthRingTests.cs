@@ -123,7 +123,7 @@ public class ParkMonthRingTests
 			copies[i].Add( i );
 
 		var body = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
-			MonthRings: new( copies[0], copies[1], copies[2], copies[3], copies[4], copies[5], copies[6], copies[7], copies[8], shipped.MonthGuestsInside!.Copy(), shipped.MonthVisitors!.Copy(), shipped.MonthRides!.Copy(), shipped.MonthArrivals!.Copy(), shipped.MonthHappiness!.Copy() ) ) );
+			MonthRings: new( copies[0], copies[1], copies[2], copies[3], copies[4], copies[5], copies[6], copies[7], copies[8], shipped.MonthGuestsInside!.Copy(), shipped.MonthVisitors!.Copy(), shipped.MonthRides!.Copy(), shipped.MonthArrivals!.Copy(), shipped.MonthHappiness!.Copy(), shipped.MonthMeanStay!.Copy(), shipped.LeaverStays!.Copy() ) ) );
 		var written = Rings( new ParkWorld( body ) );
 
 		Assert.AreEqual( (1, 4242, 0), (written[0].Current, written[0].Newest, written[0].Total), "the balance pushed, its month so far untouched" );
@@ -167,7 +167,7 @@ public class ParkMonthRingTests
 		var same = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
 			MonthRings: new( shipped.MonthBalance!, shipped.MonthParkValue!, shipped.MonthCosts!, shipped.MonthStaffCosts!, shipped.MonthTraining!,
 				shipped.MonthCashIn!, shipped.MonthGateTakings!, shipped.MonthShopTakings!, shipped.MonthSideshowTakings!, shipped.MonthGuestsInside!, ring,
-				shipped.MonthRides!, shipped.MonthArrivals!, shipped.MonthHappiness! ), Visitors: (99, 31) ) );
+				shipped.MonthRides!, shipped.MonthArrivals!, shipped.MonthHappiness!, shipped.MonthMeanStay!, shipped.LeaverStays! ), Visitors: (99, 31) ) );
 		var written = new ParkWorld( same );
 
 		Assert.AreEqual( (99, 31), (written.LifetimeVisitors, written.MostPaidForTicket) );

@@ -1633,8 +1633,8 @@ total `+0x1f100` is never written and reads 0 in every file), and after the seve
 order (read 2026-10-15, Q389, `0x004c788c`..`0x004c7a7a`; not ring order): the month total `+0x20cc0` closed as a money
 ring is (`+0x20cc0`, added by `FUN_004cf3e0`; below, "The arrivals"), `FUN_004c7fa0` (`+0x205d0`; it and the 12th below, "The guests inside and the rides at a close"), the lifetime visitors `+0x21c08`
 (`+0x20820`, below, "The lifetime visitors"), `FUN_004c8070` (`+0x20a70`), `FUN_004c7bb0`'s float (`+0x20f10`; below, "The guests' happiness at a close"),
-`FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value", below), a mean of `FUN_004cef30` (`+0x21160`) and
-`FUN_004cceb0` (`+0x213b0`); the others not read further.
+`FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value", below), a mean of `FUN_004cef30` (`+0x21160`; below,
+"The leavers' stays") and `FUN_004cceb0` (`+0x213b0`); the last not read further.
 
 **The finances screen graphs eight of them** (`FUN_0049a2e0`, its range `DAT_007ca2ec` 12, 36 or 144 months; the rings
 picked by the bits of `DAT_00751fa0`, 1 at the start: 1 the balance, 2 `+0x1f350`, 4 cash in, 8 gate takings, `0x10`
@@ -1665,8 +1665,8 @@ file's at a load, `ParkMonthRing.Push( ParkValue.Of( ... ) )` after the seven mo
 `ParkMonthRing.Push( LifetimeVisitors )` after the money rings and before the park value, written as the 11th (below,
 "The lifetime visitors"). **And the guests inside' and the rides' rings** (Q390): `MonthGuestsInside` and `MonthRides`,
 written as the 10th and 12th (below, "The guests inside and the rides at a close"). **And the arrivals'** (Q391):
-`MonthArrivals`, written as the 13th (below, "The arrivals"). The analyser's other three int rings are not kept
-(`ANALYSER_MONTH_CLOSE`), and a written file keeps the file's bytes for them.
+`MonthArrivals`, written as the 13th (below, "The arrivals"). **And the 14th and 15th** (Q392, Q393; below). The 16th
+is not kept (`ANALYSER_MONTH_CLOSE`), and a written file keeps the file's bytes for it.
 
 #### The park value
 
@@ -1837,6 +1837,46 @@ the park status screen is not built (`PARK_STATUS_SCREEN`). **Confirmed** (`q392
 The original given this game's file read [0.0, 45.438] and its own close at once pushed 44.875 with 16 inside (718
 over 16); given main's file, its close pushed 46.542, the mean of that file's 24 guests to the last place
 (`q392/orig/a-load.log`, `b-load.log`, `side-by-side.png`).
+
+#### The leavers' stays
+
+Read 2026-10-15 (Q393). **The 15th int ring (`+0x21160`, its slot `+0x213a4`, count `+0x213a8`, wrapped `+0x213ac`,
+months `+0x21164`) is the mean stay of the last fifty guests to go home, in whole park days.** A ring of the same shape
+fifty long (`+0x21600`: `mTemp` `+0x21600`, never written, entries `+0x21604`, slot `+0x216cc`, count `+0x216d0` 50 from
+the constructor, wrapped `+0x216d4`; serialised by `FUN_004ce2d0`, the int rings' `FUN_004cdf00` at another length)
+holds the stays: a guest entering state `0x15`, at the stop to go home, whose `mPaidAdmission` (`+0x204`) is set hands
+the analyser their stay (`FUN_00501db0`, `0x00502333`): `FUN_004fd950` (the ticks since `mArrivalDate`, unsigned,
+shifted right by two) shifted back left by two (`SHL` at `0x0050234a`, a 32-bit register), and `FUN_004c7600` turns
+that into park time with `FUN_004f8730` on the park calendar (times its rate `+0x1c`, over four, times 10,000,000 in 64
+bits, which wraps) and `__alldiv`s it by 864,000,000,000, signed: whole days, the low half pushed into the next slot.
+Nothing else writes it (the image's every operand `+0x21600` to `+0x216d4`: the constructor's, the serialiser's, the
+load factory's empty and the close's read). **The month's close**, after the park value (`0x004c79d7`..`0x004c7a40`):
+`FUN_004cef30` on the stays with fifty (`PUSH 0x32`) takes the newest min(50, filled) (filled the count once wrapped,
+else slot + 1), newest first, sums them into a double and answers how many it took (`RET 8`, `EAX`); with any, the
+close divides (`FDIVR`) and `__ftol`s (toward nought), else nought, and pushes that into the 15th. The stays are left as
+they are. The same stretch zeroes `+0x21bfc` and `+0x21c00`, two of the misbehaving kids' counts (`FUN_004c74f0`, from
+`FUN_004d6790`; a challenge's test `FUN_005a04f0` reads them through `FUN_004c94a0`), not read further. **Readers**: the
+park status screen's graph (above, "The guests inside and the rides at a close"); that its series is the one lettered
+"Average time in park" is not read from a label.
+
+**Measured** (`q393/sweep.py`, `law.py`): the shipped `Easymode.TPWI` holds the stays empty (slot -1 of 50) and the 15th
+one month closed on 0. Over all 596 park files on hand the stays' count is 50 and their `mTemp` 0, the 15th's month so far
+0, on the cash-in ring's slot in 576. In all 34 files whose stays hold any and have not wrapped, every closed month of
+the 15th is the truncated mean of the stays' oldest k for some k, the leavers before that close; the 553 with none read
+0. The 9 wrapped (one Full Simulation jungle park's copies) cannot be checked, the window having moved. Stays seen run
+from 18 to 587 days.
+
+**OpenTPW** (Q393). `ParkMonthRing` takes a length (`Stays`, 50); `ParkState.LeaverStays` and `MonthMeanStay`, the file's
+at a load and empty in a park made with no file; `PeepBehaviour`, where a guest walking outside reaches the stop, hands
+a paying guest's `Peep.StayAt` to `ParkState.AddLeaverStay` (`StayDays`) after the state is set, where the original's
+setter does it; `TurnTheMonth` pushes `MeanOfNewest( 50 )` after the park value; the writer writes both
+(`PutMonthRings`); `money` prints them. Nothing here reads them: the park status screen is not built
+(`PARK_STATUS_SCREEN`). **Confirmed** (`q393/`): in the stock park four guests reached the stop before the close, 125,
+193, 194 and 199 fours of sweeps, logged 21, 33, 33 and 34 days; the close on tick 1470 named `mean stay 30` (121 over
+4), and the file held the 15th [0, 30] on the money rings' slot and the stays [21, 33, 33, 34]; main's build left [0] a
+slot behind and no stays. The original given this game's file read both and its own close at once pushed 30, then its
+next leaver handed in 35 days; given main's file, its close pushed 0 (`q393/orig/a-load.log`, `b-load.log`,
+`side-by-side.png`).
 
 #### The first row is picked as a list fills
 

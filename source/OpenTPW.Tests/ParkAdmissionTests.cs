@@ -341,7 +341,7 @@ public class ParkAdmissionTests
 
 		// The park is open but the gate's script never reports itself open, which is the second half of
 		// the pair FUN_004ff7f0 asks about.
-		var (_, guests) = Run( world, admission, () => 0, turns: 600 );
+		var (behaviour, guests) = Run( world, admission, () => 0, turns: 600 );
 
 		// The crossing is not the end of it: from there they walk to one of the four cells by the first bus stop
 		// and stand to go home (docs/exe/ride-operation.md, "Q128").
@@ -360,6 +360,32 @@ public class ParkAdmissionTests
 				$"guest {id} should have REACHED the stop's cells rather than merely been aimed at them - "
 				+ $"they are standing at {guests[id].Navigator.Position.Cell}" );
 		}
+
+		// Having paid at the booth before the wait, each hands the park analyser their stay at the stop (FUN_00501db0,
+		// 0x00502333).
+		Assert.AreEqual( guests.Values.Count( peep => peep.State == PeepState.AtTheBusStop && peep.PaidAdmission ) - 1,
+			behaviour.State.LeaverStays.Current, "a stay for each paying guest at the stop" );
+		Assert.IsTrue( behaviour.State.LeaverStays.Current >= AtTheBooths.Length - 1 );
+	}
+
+	/// <summary>
+	/// <b>A guest who never paid at the gate hands the park analyser no stay at the stop</b> (<c>mPaidAdmission</c>,
+	/// <c>+0x204</c>, tested at <c>0x00502333</c>): the booths' five, their flag cleared (every guest in the shipped file
+	/// has it set), turn a fee of 500 down, walk home and stand at the stop with no stay handed in.
+	/// </summary>
+	[TestMethod]
+	public void AGuestWhoNeverPaidHandsNoStayAtTheStop()
+	{
+		var world = Park();
+		var admission = new ParkAdmission( new ParkBalance( "jungle", easyMode: true ), 500 );
+
+		var (behaviour, guests) = Run( world, admission, () => ParkRides.GateIsOpen, turns: 600,
+			prepare: made => { foreach ( var id in AtTheBooths ) made[id].PaidAdmission = false; } );
+
+		var unpaidAtTheStop = AtTheBooths.Count( id => guests[id].State == PeepState.AtTheBusStop && !guests[id].PaidAdmission );
+		Assert.IsTrue( unpaidAtTheStop > 0, string.Join( " ", AtTheBooths.Select( id => $"{id}:{guests[id].State}:{guests[id].PaidAdmission}" ) ) );
+		Assert.AreEqual( guests.Values.Count( peep => peep.State == PeepState.AtTheBusStop && peep.PaidAdmission ) - 1,
+			behaviour.State.LeaverStays.Current, $"none for the {unpaidAtTheStop} who never paid" );
 	}
 
 	/// <summary>The five guests the save leaves standing at the ticket booths.</summary>
@@ -487,7 +513,8 @@ public class ParkAdmissionTests
 	/// asked before the walk, which is the original's order.
 	/// </summary>
 	private static (PeepBehaviour Behaviour, System.Collections.Generic.Dictionary<int, Peep> Guests) Run(
-		ParkWorld world, ParkAdmission admission, Func<int> gateStatus, int turns )
+		ParkWorld world, ParkAdmission admission, Func<int> gateStatus, int turns,
+		Action<System.Collections.Generic.Dictionary<int, Peep>>? prepare = null )
 	{
 		var behaviour = new PeepBehaviour( world, new Random( 1234 ), admission, gateStatus );
 		var blocked = CellEdge.For( world, ParkPeople.WalkingMode ).Blocked;
@@ -495,6 +522,7 @@ public class ParkAdmissionTests
 		var guests = ParkPeople.PeepsIn( world ).ToDictionary( peep => peep.ThingId );
 		var walks = guests.Values.ToDictionary( peep => peep.ThingId,
 			peep => new PeepWalk( peep.Navigator, blocked ) );
+		prepare?.Invoke( guests );
 
 		for ( var tick = 1; tick <= turns; ++tick )
 		{

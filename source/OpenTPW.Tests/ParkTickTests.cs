@@ -953,8 +953,7 @@ public class ParkTickTests
 			guest.PaidAdmission = true;
 			guest.SetState( PeepState.PickingACellOutside, people.State.GameTick, new Random( 1 ) );
 
-			static int StaysCounted() => Unimplemented.Summary.FirstOrDefault( gap => gap.What == "LEAVER_STAY_SAMPLE" ).Times;
-			var staysBefore = StaysCounted();
+			var staysBefore = people.State.LeaverStays.Current;
 
 			foreach ( var status in new[] { 1, 2, 3 } )
 			{
@@ -985,7 +984,9 @@ public class ParkTickTests
 				Sweep( people );
 
 			Assert.AreEqual( PeepState.AtTheBusStop, guest.State, "they reach the stop" );
-			Assert.IsTrue( StaysCounted() > staysBefore, "and the stay they would hand the park analyser there, having paid at the gate, is counted, not built" );
+			Assert.AreEqual( staysBefore + 1, people.State.LeaverStays.Current, "and, having paid at the gate, they hand the park analyser their stay there" );
+			CollectionAssert.Contains( new[] { people.State.GameTick, people.State.GameTick - 1 }.Select( tick => ParkState.StayDays( guest.StayAt( tick ) ) ).ToArray(),
+				people.State.LeaverStays.Newest, "their days in the park as the sweep that put them there counted them" );
 			Assert.IsTrue( cells.Any( cell => Near( cell, guest.Navigator.Position.Cell ) ),
 				$"on one of stop A's four cells, not at {guest.Navigator.Position.Cell}" );
 			Assert.IsTrue( people.LeaverAtTheStop() );
@@ -1028,10 +1029,8 @@ public class ParkTickTests
 			// still stands there.
 			var (cellX, cellY) = guest.Navigator.Position.Cell;
 			var second = people.Admit( cellX, cellY );
-			var staysSoFar = StaysCounted();
 
 			people.Guests[second].SetState( PeepState.AtTheBusStop, people.State.GameTick, new Random( 1 ) );
-			Assert.AreEqual( staysSoFar, StaysCounted(), "one who never paid at the gate hands the analyser no stay" );
 			Assert.AreEqual( second, (int)people.State.CellAt( cellX, cellY ).Occupant, "the newcomer heads the cell" );
 			Assert.AreEqual( second, people.Peeps[0].ThingId, "and the sweep" );
 			people.State.Forget( id );
