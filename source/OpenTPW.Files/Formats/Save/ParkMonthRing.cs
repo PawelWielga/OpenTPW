@@ -6,7 +6,8 @@ namespace OpenTPW;
 /// mini-balance is a MONTHLY ACCOUNT"). In a park file, <see cref="Size"/> bytes: <c>mCurrentEntry</c>,
 /// <c>mNumEntries</c>, <c>mWrappedAround</c> (a byte), <c>mTemp</c> (the running total) and the months
 /// (<c>FUN_004c5d70</c>). The analyser's ring of the last <see cref="Stays"/> leavers' stays is the same shape, shorter
-/// (<c>+0x21600</c>, <c>FUN_004ce2d0</c>).
+/// (<c>+0x21600</c>, <c>FUN_004ce2d0</c>), and so is its ring of the last <see cref="Loads"/> arrival loads (<c>+0x216d8</c>,
+/// <c>FUN_004ce660</c>).
 /// </summary>
 public sealed class ParkMonthRing
 {
@@ -15,6 +16,9 @@ public sealed class ParkMonthRing
 
 	/// <summary>How many stays the ring of leavers' stays keeps: the constructor's <c>mNumEntries</c> at <c>+0x216d0</c>, 50 in every file.</summary>
 	public const int Stays = 50;
+
+	/// <summary>How many loads the ring of arrival loads keeps: the constructor's <c>mNumEntries</c> at <c>+0x216f4</c>, 5 in every file.</summary>
+	public const int Loads = 5;
 
 	/// <summary>A month ring's bytes in a park file.</summary>
 	public const int Size = 4 + 4 + 1 + 4 + Months * 4;

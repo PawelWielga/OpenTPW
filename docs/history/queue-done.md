@@ -7091,6 +7091,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`hud.md`, "The misbehaving kids"); the close is built whole. Confirmed: 5, 2, 9 written in the stock park, `money`
   `5 got away 2 ever 0`, the close on tick 1470 `0 got away 0 ever 0`, written 0, 0, 0, `ANALYSER_MONTH_CLOSE` gone;
   main's build kept 5, 2, 9. The original read 5, 2, 0 and its close on 1471 zeroed the two. 14 bugs put back, all caught.
+- [x] **Q396. The arrival manager's ring of five loads, kept.** `+0x216d8` (record `+72235`): each load's headcount
+  pushed as the load is called (`FUN_004cf3e0`, `0x004cf41f`..`0x004cf451`), read and written whole (`FUN_004ce660`);
+  its one reader, a challenge's test (`FUN_005a0780`), is not built. Kept, pushed by the timer's load and the console's,
+  written (`hud.md`, "The arrivals"). Confirmed: the load on tick 1264 `Park: a load of 13 into the arrival loads' slot 1,
+  2 called`, the files [13, 13]; main's build left [13]. The original read [13, 13] and pushed its own 12, 12, 11 into
+  slots 2 to 4. 14 bugs put back, all caught after a test change.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

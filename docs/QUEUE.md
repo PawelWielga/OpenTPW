@@ -44,9 +44,14 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q396. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q397. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q396 (`hud.md`, "The arrivals"): the arrival manager's ring of five loads is kept. Nothing here reads it: the
+  challenge whose test it is (`FUN_005a0780`, in the table at `0x00772088`; the challenge's `+0x5f4` once exactly one
+  load is called) is not built, nor are the challenges. A load the original calls of nobody (world state 4, the park
+  full) is not called here, so not pushed. In no game run: the ring gone round (tested only), a load called in a
+  file loaded mid-load, Full Simulation (not asked: the arrivals are either mode's), the other three themes.
   From Q395 (`hud.md`, "The misbehaving kids"): the three counts are kept. Nothing counts into them: the guard's chase
   (`FUN_004d6260` to `FUN_004d6790`) waits on the pranks (`DECIDE_PRANK_*`), and its catch's sound `0x89` with it. The
   advisor's row 264 (`LotsOfPranks`, message `0x108`, score `0x005a04f0`: 100 past two this month) reads the month's count
@@ -72,9 +77,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   (tested only), a guest's happiness below nought or past 255 (tested only), a ring gone round 144 months, Full
   Simulation (not asked: the ring is either mode's), the other three themes.
   From Q391 (`hud.md`, "The arrivals"): the 13th ring is kept. Nothing here reads it: the park status screen
-  (`PARK_STATUS_SCREEN`), whose first series it is, is not built. The arrival manager's ring of five loads (`+0x216dc`,
-  each load's size as it is called; a challenge's test `FUN_005a0780` reads its wrapped byte) is not kept, and a written
-  file keeps the file's bytes for it. In no game run: a load dropped across a close, a stop that refuses a guest (this
+  (`PARK_STATUS_SCREEN`), whose first series it is, is not built. The arrival manager's ring of five loads is kept
+  (Q396). In no game run: a load dropped across a close, a stop that refuses a guest (this
   game's own end of a load; nothing added), a ring gone round 144 months, Full Simulation (not asked: the ring is either
   mode's), the other three themes.
   From Q390 (`hud.md`, "The guests inside and the rides at a close"): the 10th and 12th rings are kept. Nothing here

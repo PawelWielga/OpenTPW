@@ -1785,9 +1785,17 @@ and some of the load are still to drop, makes one guest (`FUN_004cf720`, its ans
 still to drop and adds one to the month so far (`0x004cf56d`..`0x004cf592`); nothing else adds to it (the image's every
 operand `+0x20cc0`: the constructor's nought, the serialiser's, the load factory's, the close's and the graph's). The
 month's close pushes the month so far into the ring and zeroes it, first after the seven money rings
-(`0x004c788c`..`0x004c78bb`). The same manager pushes each load's size, as the load is called, into a ring of five
-(`+0x216dc`, slot `+0x216f0`, count `+0x216f4` 5, wrapped `+0x216f8`), whose wrapped byte a challenge's test reads
-(`FUN_005a0780`); not read further. **Readers**: the park status screen's graph plots the 13th as its first series (bit
+(`0x004c788c`..`0x004c78bb`). **The same manager pushes each load's size, as the load is called, into a ring of the
+last five loads** (read 2026-10-16, Q396): the analyser's ring shape, `mTemp` `+0x216d8` (nought, never written but by
+the constructor and the load factory), the five loads `+0x216dc`, slot `+0x216f0` (-1 before the first), count
+`+0x216f4` 5, wrapped `+0x216f8` (`FUN_004c58c0` `0x004c5b20`..`0x004c5b36`; the load factory's `FUN_0051ae90` the same).
+The push (`0x004cf41f`..`0x004cf451`) takes the headcount `FUN_004cf5b0` answered, after the offloading flag is set and
+before any vehicle is asked: the slot one on, round to nought and wrapped past the fifth, then the size into it. The
+constructor fills no load, so a slot no load has reached holds whatever memory held (`0xcdcdcdcd` in the shipped park,
+nought in the original's own fresh parks). The serialiser reads and writes it whole (`FUN_004ce660`, the stays' shape,
+from `0x004c69e8` and `0x004c70de`). Its one reader is `FUN_005a0780`, a challenge's test in the table at `0x00772088`:
+how many loads have been called (five once wrapped, else the slot plus one), and the challenge's `+0x5f4` when that is
+exactly one; the challenges are not built. **Readers**: the park status screen's graph plots the 13th as its first series (bit
 `1` of `DAT_00753c48`; `FUN_004a51d0`, `FUN_004a5e10` and the draw at `0x004a4750` take its month so far's address,
 the ring's head); its labels are not read.
 
@@ -1800,12 +1808,29 @@ whose ring has moved.
 **OpenTPW** (Q391). `ParkState.MonthArrivals`, the file's at a load and empty in a park made with no file;
 `ParkState.AddArrival` adds one where `ParkPeople.StepArrivals` drops a guest (`Admit` made one); `TurnTheMonth` closes it
 after the sideshow takings; the writer writes it (`PutMonthRings`); `money` prints it as month so far / newest / slot.
-Nothing here reads it: the park status screen is not built (`PARK_STATUS_SCREEN`). The ring of five loads is not kept.
+Nothing here reads it: the park status screen is not built (`PARK_STATUS_SCREEN`). The ring of five loads is kept (Q396).
 **Confirmed** (`q391/`): the stock park's one load of the month, 13 arriving on tick 1264 and all off on 1313, read
 `arrivals 13/13 slot 0`, and a file saved then held 13 so far; the close on tick 1470 named `arrivals 13`, and the file
 held [13, 13] on the money rings' slot; main's build left [13] a slot behind. The original given this game's file read
 [13, 13] and its close at once pushed 0; given the mid-month file, 13 so far, pushed whole by its own close on tick 1383
 (`q391/orig/a-load.log`, `b-load.log`, `side-by-side.png`).
+
+**The ring of five loads, measured** (`q396/sweep.py`): in all 608 park files on hand its count is 5 and its `mTemp`
+nought. In 584 of the 599 whose ring has not gone round, the loads called sum exactly to the guests the 13th ring has
+counted dropped (its months and its month so far); the 15 others are this game's own files, written before it kept the
+ring, which held the file's one load while the guests dropped. The nine that have gone round (Alexah's Full Simulation
+jungle park) hold 35, 35, 46, 46, 50, the newest the 13th's month so far of 50. **OpenTPW** (Q396):
+`ParkState.ArrivalLoads`, the file's at a load (its unreached slots as the file holds them) and five noughts in a park
+made with no file; `ParkState.AddArrivalLoad` pushes where `ParkPeople.StepArrivals` calls a load, and the console's
+`load` (`ForceArrival`) pushes the same; the writer writes it (`PutMonthRings`); `money` prints it as slot / wrapped /
+newest. A load the original calls of nobody (world state 4, or the park full) is not called here, so not pushed
+(`ParkPeople.StepArrivals`, its two refusals). Nothing here reads it. **Confirmed** (`q396/`): the stock park read
+`loads 0/0 newest 13`; its load called on tick 1264 logged `Park: a load of 13 into the arrival loads' slot 1, 2 called`
+before any guest dropped, and files saved then and at the load's all-off on 1313 held [13, 13] and the file's
+`0xcdcdcdcd` beyond; main's build left [13] while the guests dropped. The original given the all-off file read [13, 13],
+pushed its own load of 12 into slot 2 on tick 1916 before its first drop, the 13th's month so far rising to 12, and then
+12 and 11 into slots 3 and 4; given the call file, it dropped the load's 13 and called none (`q396/orig/a2-load.log`,
+`b-load.log`).
 
 #### The guests' happiness at a close
 

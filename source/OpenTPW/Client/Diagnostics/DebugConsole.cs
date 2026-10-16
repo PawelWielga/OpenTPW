@@ -2079,6 +2079,7 @@ public static class DebugConsole
 						$"misbehaving kids {purse.MisbehavingKids.Month} got away {purse.MisbehavingKids.GotAwayThisMonth} ever {purse.MisbehavingKids.Ever} " +
 						$"guests inside ring {purse.MonthGuestsInside.Newest} slot {purse.MonthGuestsInside.Current} rides {purse.RidesStanding( Level.Current.Catalogue )} ring {purse.MonthRides.Newest} slot {purse.MonthRides.Current} " +
 						$"arrivals {purse.MonthArrivals.Total}/{purse.MonthArrivals.Newest} slot {purse.MonthArrivals.Current} " +
+						$"loads {purse.ArrivalLoads.Current}/{(purse.ArrivalLoads.Wrapped ? 1 : 0)} newest {purse.ArrivalLoads.Newest} " +
 						$"happiness {purse.MonthHappiness.NewestSingle} slot {purse.MonthHappiness.Current} now {ParkPeople.Current?.GuestsInsideHappiness} " +
 						$"mean stay {purse.MonthMeanStay.Newest} slot {purse.MonthMeanStay.Current} leavers {purse.LeaverStays.Current}/{(purse.LeaverStays.Wrapped ? 1 : 0)} newest {purse.LeaverStays.Newest} now {purse.LeaverStays.MeanOfNewest( ParkMonthRing.Stays )} " +
 						$"park score {purse.MonthParkScore.Newest} slot {purse.MonthParkScore.Current} now {ParkScore.Of( purse, Level.Current.Catalogue, ParkPeople.Current?.GateGuestCensus ?? 0, ParkPeople.Current?.ScoreStaff ?? default )} " +

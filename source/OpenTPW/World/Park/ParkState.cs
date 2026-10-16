@@ -744,6 +744,7 @@ public sealed class ParkState
 		MonthMeanStay = park.Save?.MonthMeanStay?.Copy() ?? new();
 		MonthParkScore = park.Save?.MonthParkScore?.Copy() ?? new();
 		LeaverStays = park.Save?.LeaverStays?.Copy() ?? new( ParkMonthRing.Stays );
+		ArrivalLoads = park.Save?.ArrivalLoads?.Copy() ?? new( ParkMonthRing.Loads );
 		MonthArrivals = park.Save?.MonthArrivals?.Copy() ?? new();
 		LifetimeVisitors = park.Save?.LifetimeVisitors ?? 0;
 		MostPaidForTicket = park.Save?.MostPaidForTicket ?? 0;
@@ -1003,6 +1004,23 @@ public sealed class ParkState
 			/ 864_000_000_000L) );
 
 	/// <summary>
+	/// The arrival manager's ring of the last five loads, on the park analyser (<c>+0x216d8</c>): <see cref="AddArrivalLoad"/>
+	/// pushes each load's size as the load is called. Nothing here reads it: the challenge whose test counts its loads
+	/// (<c>FUN_005a0780</c>) is not built.
+	/// </summary>
+	public ParkMonthRing ArrivalLoads { get; private set; } = new( ParkMonthRing.Loads );
+
+	/// <summary>
+	/// A load called: its <paramref name="size"/> into the next slot of <see cref="ArrivalLoads"/>, after the headcount is
+	/// taken and before any vehicle is asked (<c>FUN_004cf3e0</c>, <c>0x004cf41f</c>..<c>0x004cf451</c>).
+	/// </summary>
+	internal void AddArrivalLoad( int size )
+	{
+		ArrivalLoads.Push( size );
+		Log.Info( $"Park: a load of {size} into the arrival loads' slot {ArrivalLoads.Current}, {(ArrivalLoads.Wrapped ? ParkMonthRing.Loads : ArrivalLoads.Current + 1)} called" );
+	}
+
+	/// <summary>
 	/// The park analyser's month of guests the arrival vehicles have dropped off (<c>+0x20cc0</c>) and its closed months,
 	/// as <see cref="MonthCosts"/>; <see cref="AddArrival"/> adds to it, and <see cref="TurnTheMonth"/> closes it after
 	/// the sideshow takings.
@@ -1073,10 +1091,10 @@ public sealed class ParkState
 	/// <summary>The analyser's month of what the sideshows have charged (<c>+0x20380</c>), as <see cref="MonthCosts"/>; <see cref="AddSideshowTakings"/> adds to it.</summary>
 	public ParkMonthRing MonthSideshowTakings { get; private set; } = new();
 
-	/// <summary>The analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its arrivals, its guests' happiness, its mean stay, its park score and its leavers' stays as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
+	/// <summary>The analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its arrivals, its guests' happiness, its mean stay, its park score, its leavers' stays and its arrival loads as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
 	public ParkWorld.MonthRingSet MonthRings
 		=> new( MonthBalance, MonthParkValue, MonthCosts, MonthStaffCosts, MonthTraining, MonthCashIn, MonthGateTakings, MonthShopTakings, MonthSideshowTakings,
-			MonthGuestsInside, MonthVisitors, MonthRides, MonthArrivals, MonthHappiness, MonthMeanStay, LeaverStays, MonthParkScore );
+			MonthGuestsInside, MonthVisitors, MonthRides, MonthArrivals, MonthHappiness, MonthMeanStay, LeaverStays, MonthParkScore, ArrivalLoads );
 
 	/// <summary>
 	/// A wage or a severance paid: onto the analyser's month of staff costs, after the withdrawal and whether or not it

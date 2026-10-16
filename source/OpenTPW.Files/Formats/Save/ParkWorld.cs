@@ -2143,6 +2143,7 @@ public sealed partial class ParkWorld : IParkInitialState
 				MonthMeanStay = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthMeanStayRing ), ParkMonthRing.Size ) );
 				MonthParkScore = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthParkScoreRing ), ParkMonthRing.Size ) );
 				LeaverStays = ParkMonthRing.Read( _data.AsSpan( start + AnalyserLeaverStaysAt, ParkMonthRing.SizeOf( ParkMonthRing.Stays ) ), ParkMonthRing.Stays );
+				ArrivalLoads = ParkMonthRing.Read( _data.AsSpan( start + AnalyserArrivalLoadsAt, ParkMonthRing.SizeOf( ParkMonthRing.Loads ) ), ParkMonthRing.Loads );
 				LifetimeVisitors = ReadInt32At( start + AnalyserLifetimeVisitorsAt );
 				MostPaidForTicket = ReadInt32At( start + AnalyserMostPaidForTicketAt );
 				MisbehavingKids = new( ReadInt32At( start + AnalyserMisbehavingKidsAt ), ReadInt32At( start + AnalyserMisbehavingKidsAt + 4 ),
@@ -2810,6 +2811,13 @@ public sealed partial class ParkWorld : IParkInitialState
 	public ParkMonthRing? LeaverStays { get; private set; }
 
 	/// <summary>
+	/// The arrival manager's ring of the last <see cref="ParkMonthRing.Loads"/> loads on the park analyser (<c>+0x216d8</c>):
+	/// each load's size as the load is called (<c>FUN_004cf3e0</c>, <c>0x004cf41f</c>..<c>0x004cf451</c>). Its slots no load
+	/// has reached hold what the file holds, <c>0xcdcdcdcd</c> in the shipped park. Null as <see cref="MonthCosts"/>.
+	/// </summary>
+	public ParkMonthRing? ArrivalLoads { get; private set; }
+
+	/// <summary>
 	/// The park analyser's <c>mLifetimeVisitors</c> (<c>+0x21c08</c>): one for every admission fee taken
 	/// (<c>FUN_004c7520</c>). Null where the file holds no analyser.
 	/// </summary>
@@ -2893,20 +2901,23 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// <summary>Where the ring of leavers' stays (<c>+0x21600</c>) starts in the analyser's record: straight after the sixteen.</summary>
 	private const int AnalyserLeaverStaysAt = AnalyserIntRingsAt + 16 * ParkMonthRing.Size;
 
+	/// <summary>Where the ring of arrival loads (<c>+0x216d8</c>) starts in the analyser's record: straight after the stays.</summary>
+	private const int AnalyserArrivalLoadsAt = AnalyserLeaverStaysAt + 4 + 4 + 1 + 4 + ParkMonthRing.Stays * 4;
+
 	/// <summary>
 	/// The park analyser's sixteen int rings in ring order: the bank's balance, the park value, all costs, staff costs,
 	/// training, cash in, gate takings, shop takings, sideshow takings and, the 10th to 16th, the guests inside, the
 	/// lifetime visitors, the rides, the arrivals, the happiness (floats), the mean stay and the park score; then the ring
-	/// of the leavers' stays the mean is taken of. Its month's close (<c>FUN_004c7720</c>) takes the arrivals, those
+	/// of the leavers' stays the mean is taken of, and the ring of the arrival manager's last five loads. Its month's close (<c>FUN_004c7720</c>) takes the arrivals, those
 	/// three, the happiness, the park value, the mean stay and then the park score after the sideshow takings.
 	/// </summary>
 	public readonly record struct MonthRingSet( ParkMonthRing Balance, ParkMonthRing ParkValue, ParkMonthRing Costs, ParkMonthRing StaffCosts, ParkMonthRing Training,
 		ParkMonthRing CashIn, ParkMonthRing GateTakings, ParkMonthRing ShopTakings, ParkMonthRing SideshowTakings, ParkMonthRing GuestsInside,
 		ParkMonthRing Visitors, ParkMonthRing Rides, ParkMonthRing Arrivals, ParkMonthRing Happiness, ParkMonthRing MeanStay, ParkMonthRing LeaverStays,
-		ParkMonthRing ParkScore );
+		ParkMonthRing ParkScore, ParkMonthRing ArrivalLoads );
 
 	/// <summary>
-	/// Writes the analyser's sixteen int rings and its leavers' stays over the file's in <paramref name="body"/>, a copy of this park's own.
+	/// Writes the analyser's sixteen int rings, its leavers' stays and its arrival loads over the file's in <paramref name="body"/>, a copy of this park's own.
 	/// A park with no analyser is left alone.
 	/// </summary>
 	public void PutMonthRings( byte[] body, MonthRingSet rings )
@@ -2935,6 +2946,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		Put( rings.MeanStay, MonthMeanStayRing );
 		Put( rings.ParkScore, MonthParkScoreRing );
 		rings.LeaverStays.Write( body.AsSpan( AnalyserAt + AnalyserLeaverStaysAt, ParkMonthRing.SizeOf( ParkMonthRing.Stays ) ) );
+		rings.ArrivalLoads.Write( body.AsSpan( AnalyserAt + AnalyserArrivalLoadsAt, ParkMonthRing.SizeOf( ParkMonthRing.Loads ) ) );
 	}
 
 	/// <summary>

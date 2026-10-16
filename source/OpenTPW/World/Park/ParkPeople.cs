@@ -1284,7 +1284,8 @@ public sealed partial class ParkPeople : Entity
 	/// <summary>
 	/// Starts a load of <paramref name="people"/> now, whatever the timer says, and answers the vehicle that is
 	/// current, or with none the one that size calls for. Answering the console rather than the park. A current
-	/// vehicle past its unloading is spent before the load drops, and the load is then summoned by its size.
+	/// vehicle past its unloading is spent before the load drops, and the load is then summoned by its size. The load
+	/// goes onto the analyser's ring of loads as one the timer calls does.
 	///
 	/// <para>
 	/// <b>It exists to bring the second and third vehicles in the stock park.</b> The headcount is what
@@ -1297,6 +1298,7 @@ public sealed partial class ParkPeople : Entity
 	{
 		_arrivalsRemaining = Math.Max( 1, people );
 		_offloading = true;
+		State.AddArrivalLoad( _arrivalsRemaining );
 
 		// A vehicle still current brings it, whatever its size, as the original's summons reuses one.
 		var by = _arrivalVehicle != 0 ? _arrivalVehicle : VehicleFor( _arrivalsRemaining );
@@ -1628,6 +1630,7 @@ public sealed partial class ParkPeople : Entity
 
 			_arrivalsRemaining = LoadSize( worth, raining );
 			_offloading = true;
+			State.AddArrivalLoad( _arrivalsRemaining );
 
 			Log.Info( $"People: {_arrivalsRemaining} arriving on mGameTick {tick} (mark {_arrivalMark}), "
 				+ $"the park worth {worth}, {(raining ? "in rain" : "no rain")}" );

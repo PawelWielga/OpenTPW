@@ -131,7 +131,7 @@ public class ParkArrivalsRingTests
 		var same = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
 			MonthRings: new( shipped.MonthBalance!, shipped.MonthParkValue!, shipped.MonthCosts!, shipped.MonthStaffCosts!, shipped.MonthTraining!,
 				shipped.MonthCashIn!, shipped.MonthGateTakings!, shipped.MonthShopTakings!, shipped.MonthSideshowTakings!, shipped.MonthGuestsInside!,
-				shipped.MonthVisitors!, shipped.MonthRides!, arrivals, shipped.MonthHappiness!, shipped.MonthMeanStay!, shipped.LeaverStays!, shipped.MonthParkScore! ) ) );
+				shipped.MonthVisitors!, shipped.MonthRides!, arrivals, shipped.MonthHappiness!, shipped.MonthMeanStay!, shipped.LeaverStays!, shipped.MonthParkScore!, shipped.ArrivalLoads! ) ) );
 		var written = new ParkWorld( same );
 
 		Assert.AreEqual( (1, 41, 7), (written.MonthArrivals!.Current, written.MonthArrivals.Newest, written.MonthArrivals.Total) );

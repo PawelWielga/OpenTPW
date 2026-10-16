@@ -1558,7 +1558,7 @@ being dropped off" and `+0x0c` is how many people are left to drop.
 **The cycle.** While no load is in progress it compares `FUN_0041a990()` against `DAT_00785314`. When
 that passes it asks `FUN_004cf5b0` for a headcount, logs `"Bus about to arrive with %d people"`, sets
 the offloading flag, and pushes the count into a ring buffer on the analyser thing (`+0x216dc`, cursor
-`+0x216f0`, capacity `+0x216f4`, wrapped flag `+0x216f8`). While the vehicle reports state **2** it
+`+0x216f0`, capacity `+0x216f4`, wrapped flag `+0x216f8`; `hud.md`, "The arrivals", and kept here, Q396). While the vehicle reports state **2** it
 logs `"Bus: dropping off kids"` and calls `FUN_004cf720` **once per call**, a thing sweep, decrementing the count
 and bumping a running total at `+0x20cc0`. The first call that finds the count at nought or below resets the timer,
 clears the flag, and sends the vehicle away. The logging call is a bare `RET` (`0x005da3c0`), so none of these lines
