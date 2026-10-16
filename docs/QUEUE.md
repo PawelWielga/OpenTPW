@@ -48,6 +48,15 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q430 (`hud.md`, "The person's windows"): the visitor's window is built, so the nearest piece is the staff
+  member's window (`STAFF_WINDOW`: its verbs and the patrol tool; Q31b lists it among the seven). Counted, not built:
+  the visitor's preview model (`VISITOR_WINDOW_PREVIEW`, `FUN_00486530`, a copy of the guest's sprite turning in the
+  panel), a guest gone while the window is up (`VISITOR_WINDOW_GUEST_GONE`; the original clears nothing, not decoded),
+  the visitors list's own advisor line `0x11e` (`VISITORS_LIST_ADVISOR_LINE`), a guest's world click (the pick finds only
+  a cell's occupant, so no guest: `FUN_004879d0` category 7 to `c`). Open: the original put `0x12e` in no slot on its
+  second to fourth opens (not read why). Not run in the original: a thought shown in the window (ours drew thought 12,
+  "Bored", `q430/run-fix2/8-row.png`). In no game run: a guest leaving while it is up (tested only), Full Simulation
+  (not asked: the window is either mode's), the other three themes. Not heard.
   From Q429 (`hud.md`, "The person's windows"): both windows are decoded, so the nearest piece is building the
   visitor's window (`VISITOR_WINDOW`; from the strip's click, a guest's world click and a visitors row's `0x400`, which
   counts `LIST_ROW_ACTIVATED_UNANSWERED`), then the staff member's (`STAFF_WINDOW`: its verbs and the patrol tool make it

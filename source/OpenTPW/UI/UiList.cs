@@ -717,6 +717,29 @@ internal sealed class UiList : UiControl
 		Refresh();
 	}
 
+	/// <summary>
+	/// The row of <paramref name="id"/> picked and brought into view (<c>FUN_00664d2a</c>, then <c>FUN_00665739</c>): a row
+	/// outside the window becomes its top, held so the window ends at the last row. Nothing for an id with no row.
+	/// </summary>
+	internal void Pick( int id )
+	{
+		var index = _rows.FindIndex( row => row.Id == id );
+
+		if ( index < 0 )
+			return;
+
+		if ( index < _scrollTop || index >= _scrollTop + VisibleRows )
+		{
+			_scrollTop = index;
+
+			if ( _rows.Count < _scrollTop + VisibleRows )
+				_scrollTop = _rows.Count - VisibleRows;
+		}
+
+		Select( index );
+		Refresh();
+	}
+
 	/// <summary>How far down the list the visible window starts: the index of the row in the first slot.</summary>
 	internal int ScrollTop => _scrollTop;
 

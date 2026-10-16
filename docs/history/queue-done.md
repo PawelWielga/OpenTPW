@@ -7276,6 +7276,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   six rows, FIRE, PICK UP and the patrol toggle (map tool `0x36`), the name's edit, lines `0xc0`, `0xd4`, `0xc1`. Proved
   in the original under Proton (`q429/orig/run.sh`, twelve of twelve): "Visitor #13" with "11 days" then "12 days" and
   the bar 0.567 for 56.0, `0x12e` said and cut by OK; "Mike Cooper", "45 days", bars 0.841 and 0.652, `0xd4` said first.
+- [x] **Q430. The visitor's window (a piece of Q420).** Done 2026-10-16: `ParkVisitorWindow` (`hud.md`, "The person's
+  windows"), from the locator strip's click and a visitors row's click; its eight figures refilled every 4 s, the
+  arrows, `b_locate` and Ctrl+V over it (`ParkLocator.OpenOnVisitor`), `b_kids` (`UiList.Pick`), the preview's click,
+  kids' effect `0x81`, advisor line `0x12e`. Both games on the stock park (`q430/PREDICTION.txt`): "Visitor #13" $684
+  "Queueing"/"Lining up for a ride"; the arrows 42, 41, 42, 29 ($684, $510, $684, $570 stamp 648); the list's top row 3
+  and its first row Visitor #4 ($570, stamp 655) (`q430/side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

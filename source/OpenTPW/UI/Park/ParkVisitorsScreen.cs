@@ -82,7 +82,11 @@ internal sealed class ParkVisitorsScreen : UiWindow
 	/// <summary>The rewrite's timer, running from the screen's making.</summary>
 	private readonly UiTimer _refresh = new( RefreshEvery );
 
-	public ParkVisitorsScreen( WindowStack stack ) : base( stack )
+	/// <param name="pick">
+	/// A guest whose row is picked and brought into view as the list fills (<c>FUN_00493530</c>'s argument: the visitor's
+	/// window's <c>b_kids</c>), or nought.
+	/// </param>
+	public ParkVisitorsScreen( WindowStack stack, int pick = 0 ) : base( stack )
 	{
 		// Built onto the park's own layer (0x0049353e) - see UiWindow.ParkScreen.
 		ParkScreen = true;
@@ -120,6 +124,9 @@ internal sealed class ParkVisitorsScreen : UiWindow
 
 			// A right click on the list moves the camera to the selected row's guest and closes the screen (0x004934c5).
 			RowRightClicked = GoTo,
+
+			// A row's 0x400 opens the visitor's window on its guest (0x0049351e), which closes this screen.
+			Activated = guest => ParkVisitorWindow.Open( Stack, guest ),
 
 			// The tree's list record carries flag 0x80 (0x00750716): the row under the moving pointer is picked. The
 			// screen's handler (0x00493230) has no 0x401 arm, so the pick is the highlight alone.
@@ -177,6 +184,15 @@ internal sealed class ParkVisitorsScreen : UiWindow
 
 		_people = ParkPeople.Current;
 		Show();
+
+		// The opener's last act posts the advisor's message 0x11e (FUN_00493530), which is not built.
+		Unimplemented.Report( "VISITORS_LIST_ADVISOR_LINE" );
+
+		if ( pick != 0 )
+		{
+			_list.Pick( pick );
+			Log.Info( $"Visitors list: guest {pick} picked, selected {_list.Selected}, top row {_list.ScrollTop}" );
+		}
 
 		if ( _people != null )
 		{

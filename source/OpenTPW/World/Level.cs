@@ -1626,7 +1626,8 @@ public class Level
 	/// <summary>
 	/// Opens the management window for one thing - the original's <c>FUN_00486920</c>, which switches
 	/// on the thing's kind byte at <c>+2</c> and then, for a placed object, on the item's
-	/// <c>WhichUIType</c>. <b>Nine windows share one base</b>; only the ride's is built.
+	/// <c>WhichUIType</c>. <b>Nine windows share one base</b>; of the placed objects' only the ride's is built (the visitor's is
+	/// <see cref="UI.ParkVisitorWindow"/>, opened from the locator and the visitors list).
 	/// </summary>
 	internal void OpenObjectWindow( int thingId )
 	{

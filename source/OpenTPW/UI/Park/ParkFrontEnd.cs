@@ -324,13 +324,17 @@ internal sealed class ParkFrontEnd : Panel
 				_stack.Open( new ParkMapScreen( _stack ) );
 				break;
 
-			// FUN_004b3f60 with no member's window up, and FUN_004b4280: no person's window is built to open one on.
+			// FUN_004b3f60( 0 ): no member's window is built to open one on.
 			case 13:
 				_gadget.Locator.OpenStaff( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
 				break;
 
+			// FUN_004b3f60 on the guest of a visitor's window up ([0x007cc418]), else FUN_004b4280.
 			case 14:
-				_gadget.Locator.OpenVisitors( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
+				if ( _stack.Windows.OfType<ParkVisitorWindow>().FirstOrDefault() is { } visitor )
+					_gadget.Locator.OpenOnVisitor( visitor.ThingId, _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
+				else
+					_gadget.Locator.OpenVisitors( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
 				break;
 
 			case 15:

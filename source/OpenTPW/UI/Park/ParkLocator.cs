@@ -37,9 +37,9 @@ namespace OpenTPW.UI;
 /// the patrol rectangle's outline (<see cref="PatrolEdgeCells"/>), laid by <see cref="ParkBuildMarkers"/>.
 /// </para>
 /// <para>
-/// <b>Counted, not built:</b> the strip's click, which opens the person's own window (<c>FUN_004b6080</c>, <c>FUN_004b79b0</c>:
-/// <c>STAFF_WINDOW</c>, <c>VISITOR_WINDOW</c>). With no person's window built, the keys always open a locator on nobody:
-/// the original's opens on the person whose window is up.
+/// <b>The strip's click opens the person's own window</b>: a visitor's (<see cref="ParkVisitorWindow"/>), and Ctrl+V with
+/// one up opens the visitors' locator on that guest (<see cref="OpenOnVisitor"/>). <b>Counted, not built:</b> a member's
+/// window (<c>FUN_004b6080</c>, <c>STAFF_WINDOW</c>), so Ctrl+S always opens its locator on nobody.
 /// </para>
 /// </summary>
 internal sealed class ParkLocator
@@ -528,14 +528,55 @@ internal sealed class ParkLocator
 		return new Vector3( x * 10f * (1f / FixedVector.One), y * 10f * (1f / FixedVector.One), 0f );
 	}
 
-	/// <summary>The strip's left click (<c>FUN_004b3c10</c>, <c>0x10006</c>): the person's own window, which is not built.</summary>
+	/// <summary>
+	/// The strip's left click (<c>FUN_004b3c10</c>, <c>0x10006</c>): the person's own window, a visitor's
+	/// (<see cref="OpensVisitorWindow"/>) or a member's, which is not built.
+	/// </summary>
 	private void OpenPersonWindow()
 	{
 		if ( Find() is not var (member, _) )
 			return;
 
-		Unimplemented.Report( member != null ? "STAFF_WINDOW" : "VISITOR_WINDOW" );
-		Log.Info( $"Park locator: the strip clicked for thing {Actor}, whose window is not built" );
+		if ( member != null )
+		{
+			Unimplemented.Report( "STAFF_WINDOW" );
+			Log.Info( $"Park locator: the strip clicked for thing {Actor}, whose window is not built" );
+			return;
+		}
+
+		Log.Info( $"Park locator: the strip clicked for visitor {Actor}" );
+		OpensVisitorWindow?.Invoke( Actor );
+	}
+
+	/// <summary>What opens a visitor's window on a guest (<c>FUN_004b79b0</c>): the gadget's, set as it is built.</summary>
+	internal Action<int>? OpensVisitorWindow { get; set; }
+
+	/// <summary>
+	/// <c>FUN_004b3f60( guest )</c>, Ctrl+V with a visitor's window up and its <c>b_locate</c>: the visitors' locator
+	/// open, its panel on the arm, the visitors' button down and the strip on the guest, followed; the thought shown in
+	/// the strip's corner and the status hidden, the advisor posted message <c>0x11f</c>, and the open park screen closed.
+	/// </summary>
+	internal void OpenOnVisitor( int guest, Action<UiControl> putOnArm, Action closeScreen )
+	{
+		// Set before the arm is asked, as the staff's is (FUN_004b3f60 sets [0x007cc2f0] first).
+		Open = Kind.Visitors;
+		putOnArm( VisitorPanel );
+
+		Actor = guest;
+		Role = VisitorsRole;
+		_visitorButtons.Put( 0x964 );
+
+		Strip.Visible = true;
+		Describe();
+		Following = true;
+
+		_status.Visible = false;
+		_thought.Visible = true;
+
+		Tell( ParkAdvisorMessages.VisitorLocator );
+		closeScreen();
+
+		Log.Info( $"Park locator: visitors open={Open} on thing {Actor}" );
 	}
 
 	/// <summary><see cref="Actor"/> as a member of staff or a guest, or null where the park has nobody of that id.</summary>

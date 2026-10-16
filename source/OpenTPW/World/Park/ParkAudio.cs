@@ -983,6 +983,31 @@ public sealed class ParkAudio : Entity
 	/// <summary>The kids' category effect a guest put off something plays - see <see cref="PutOff"/>.</summary>
 	private const int PutOffEffect = 0x80;
 
+	/// <summary>The kids' effect the visitor's window plays as it is built, <c>0x81</c> (<c>FUN_004b79b0</c>).</summary>
+	internal const int VisitorWindowEffect = 0x81;
+
+	/// <summary>
+	/// The kids' effect <c>0x81</c> as the visitor's window is built: <c>Sound_PlayEffect( 0, [0x00803a24], 0x81, 0, 0, 0 )</c>,
+	/// no handle kept and no level set, so flat, at its variation's own volume (<see cref="OneShotGain"/>) and a pitch drawn
+	/// from it (<see cref="OneShotRate"/>), as the crowd's voice at (0,0,0) is played. What the sample says has not been
+	/// checked by listening.
+	/// </summary>
+	/// <returns>Whether anything started.</returns>
+	internal bool VisitorWindowOpened()
+	{
+		if ( !Audio.Ready || _kids is not { IsValid: true } )
+			return false;
+
+		var voice = _kids.Play( VisitorWindowEffect, bus: AudioBus.Effects, gain: OneShotGain, rate: OneShotRate );
+
+		if ( voice == null )
+			return false;
+
+		Log.Info( $"Park audio: the visitor's window, effect {VisitorWindowEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} pitch {OneShotPitch}" );
+
+		return true;
+	}
+
 	/// <summary>
 	/// The kids' effect <c>0x7e</c>, a yawn, which the original plays at a guest starting spot animation 4 when
 	/// their id's low nibble is nought (<c>FUN_004fc800</c>, <c>0x004fc84e</c>). What the three samples say has

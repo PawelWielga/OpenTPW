@@ -421,6 +421,7 @@ internal sealed class ParkGadget : UiWindow
 		Locator = new ParkLocator( _arm, Root,
 			(PlaceFor( LocatorStaffStream ).Left - LocatorStaffStream.Left, PlaceFor( LocatorVisitorStream ).Left - LocatorVisitorStream.Left),
 			PlaceFor( LocatorStaffStream ).Top - LocatorStaffStream.Top );
+		Locator.OpensVisitorWindow = guest => ParkVisitorWindow.Open( Stack, guest );
 
 		BuildIn();
 

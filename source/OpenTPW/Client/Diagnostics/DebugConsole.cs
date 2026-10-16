@@ -641,6 +641,12 @@ public static class DebugConsole
 				Reply( Level.Current?.Hud?.Children.OfType<UI.ParkFrontEnd>().FirstOrDefault()?.Gadget.Locator.Census() ?? "no gadget" );
 				break;
 
+			case "visitorwindow":
+				// The visitor's window: its guest, title, figures, bar and thought, or that none is up.
+				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows.OfType<UI.ParkVisitorWindow>()
+					.FirstOrDefault()?.Census() ?? "visitor window: none" );
+				break;
+
 			case "greet":
 				// Replays the front-end greeting the way the lobby gives it on arrival with no saved
 				// players, so its timing and ducking can be captured at a moment of the caller's choosing.

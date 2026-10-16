@@ -38,13 +38,17 @@ public static class Localization
 	/// parameter part is replaced by the value handed over for its number, and one handed no value by nothing.
 	/// </summary>
 	public static string Format( int row, params (int Parameter, string Value)[] values )
+		=> Format( UIStrings, row, values );
+
+	/// <summary>A row of any string table with its parameters filled, as <see cref="Format(int, ValueTuple{int, string}[])"/> fills UITEXT's.</summary>
+	public static string Format( StringFile table, int row, params (int Parameter, string Value)[] values )
 	{
-		if ( row < 0 || row >= UIStrings.Parts.Length )
+		if ( row < 0 || row >= table.Parts.Length )
 			return string.Empty;
 
 		var text = new StringBuilder();
 
-		foreach ( var part in UIStrings.Parts[row] )
+		foreach ( var part in table.Parts[row] )
 		{
 			if ( part.Text != null )
 				text.Append( part.Text );

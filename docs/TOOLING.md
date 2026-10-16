@@ -112,6 +112,14 @@ structure, and hand it to `loadfile.sh` through `POLL`.
 
 Each was found by trial in the item named, and cost a run to find.
 
+- **The visitor's window in either game** (Q430, `q430/orig/run.sh`, `q430/confirm.py`): opened from the strip as below;
+  in the original's 1024 x 768 frame its `b_arup` is (816,138), `b_ardown` (810,182), `b_locate` (809,231), `b_kids`
+  (809,284), the preview (294,199), and the visitors list's first visible row (503,171); here the console's
+  `visitorwindow` is its census and `control 3720` (and the rest of the stream's ids) its places. **The run log writes a
+  line's time and "PM" with U+202F, a narrow no-break space**: a pattern on the log's clock needs `\s`, not a space
+  (two of Q430's checks found nothing for it). A guest who has left changes which row of the list is first: read the
+  `Visitors list: sort` line before naming one.
+
 - **A person's window in the original, and the locators in either game** (Q429, `q429/orig/run.sh`, `q429/confirm.py`):
   off-screen after `loadfile.sh load`, Ctrl+V, the visitors' button (359, 641), then the strip (380, 505) of the
   1024 x 768 frame opens the visitor's window; its OK is (816, 378), as the staff member's (Ctrl+S, the mechanics'
