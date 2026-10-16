@@ -2138,6 +2138,7 @@ public sealed partial class ParkWorld : IParkInitialState
 				MonthGuestsInside = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthGuestsInsideRing ), ParkMonthRing.Size ) );
 				MonthVisitors = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthVisitorsRing ), ParkMonthRing.Size ) );
 				MonthRides = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthRidesRing ), ParkMonthRing.Size ) );
+				MonthArrivals = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthArrivalsRing ), ParkMonthRing.Size ) );
 				LifetimeVisitors = ReadInt32At( start + AnalyserLifetimeVisitorsAt );
 				MostPaidForTicket = ReadInt32At( start + AnalyserMostPaidForTicketAt );
 			}
@@ -2773,6 +2774,12 @@ public sealed partial class ParkWorld : IParkInitialState
 	public ParkMonthRing? MonthRides { get; private set; }
 
 	/// <summary>
+	/// The park analyser's 13th int ring (<c>+0x20cc0</c>): the guests the arrival vehicles dropped off, one by one
+	/// (<c>FUN_004cf3e0</c>), its month so far and its closed months. Null as <see cref="MonthCosts"/>.
+	/// </summary>
+	public ParkMonthRing? MonthArrivals { get; private set; }
+
+	/// <summary>
 	/// The park analyser's <c>mLifetimeVisitors</c> (<c>+0x21c08</c>): one for every admission fee taken
 	/// (<c>FUN_004c7520</c>). Null where the file holds no analyser.
 	/// </summary>
@@ -2812,25 +2819,27 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// <summary>
 	/// The rings' places among those sixteen: <c>+0x1f100</c>, <c>+0x1f350</c>, <c>+0x1f5a0</c>, <c>+0x1f7f0</c>, <c>+0x1fa40</c>,
 	/// <c>+0x1fc90</c>, <c>+0x1fee0</c>, <c>+0x20130</c>, <c>+0x20380</c>, the guests inside' <c>+0x205d0</c>, the lifetime
-	/// visitors' <c>+0x20820</c> and the rides' <c>+0x20a70</c>.
+	/// visitors' <c>+0x20820</c>, the rides' <c>+0x20a70</c> and the arrivals' <c>+0x20cc0</c>.
 	/// </summary>
 	private const int MonthBalanceRing = 0, MonthParkValueRing = 1, MonthCostsRing = 2, MonthStaffCostsRing = 3, MonthTrainingRing = 4, MonthCashInRing = 5,
-		MonthGateTakingsRing = 6, MonthShopTakingsRing = 7, MonthSideshowTakingsRing = 8, MonthGuestsInsideRing = 9, MonthVisitorsRing = 10, MonthRidesRing = 11;
+		MonthGateTakingsRing = 6, MonthShopTakingsRing = 7, MonthSideshowTakingsRing = 8, MonthGuestsInsideRing = 9, MonthVisitorsRing = 10, MonthRidesRing = 11,
+		MonthArrivalsRing = 12;
 
 	private static int AnalyserMonthRingAt( int ring ) => AnalyserIntRingsAt + ring * ParkMonthRing.Size;
 
 	/// <summary>
-	/// The park analyser's eight money rings, its park value, its guests inside, its lifetime visitors and its rides, in ring
-	/// order: the bank's balance, the park value, all costs, staff costs, training, cash in, gate takings, shop takings,
-	/// sideshow takings and, the 10th to 12th, the guests inside, the lifetime visitors and the rides. Its month's close
-	/// (<c>FUN_004c7720</c>) takes those three and then the park value after the sideshow takings.
+	/// The park analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides and its
+	/// arrivals, in ring order: the bank's balance, the park value, all costs, staff costs, training, cash in, gate takings,
+	/// shop takings, sideshow takings and, the 10th to 13th, the guests inside, the lifetime visitors, the rides and the
+	/// arrivals. Its month's close (<c>FUN_004c7720</c>) takes the arrivals, those three and then the park value after the
+	/// sideshow takings.
 	/// </summary>
 	public readonly record struct MonthRingSet( ParkMonthRing Balance, ParkMonthRing ParkValue, ParkMonthRing Costs, ParkMonthRing StaffCosts, ParkMonthRing Training,
 		ParkMonthRing CashIn, ParkMonthRing GateTakings, ParkMonthRing ShopTakings, ParkMonthRing SideshowTakings, ParkMonthRing GuestsInside,
-		ParkMonthRing Visitors, ParkMonthRing Rides );
+		ParkMonthRing Visitors, ParkMonthRing Rides, ParkMonthRing Arrivals );
 
 	/// <summary>
-	/// Writes the analyser's eight money rings, its park value, its guests inside, its lifetime visitors and its rides over the file's in <paramref name="body"/>, a copy of this park's own.
+	/// Writes the analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides and its arrivals over the file's in <paramref name="body"/>, a copy of this park's own.
 	/// A park with no analyser is left alone.
 	/// </summary>
 	public void PutMonthRings( byte[] body, MonthRingSet rings )
@@ -2854,6 +2863,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		Put( rings.GuestsInside, MonthGuestsInsideRing );
 		Put( rings.Visitors, MonthVisitorsRing );
 		Put( rings.Rides, MonthRidesRing );
+		Put( rings.Arrivals, MonthArrivalsRing );
 	}
 
 	/// <summary>

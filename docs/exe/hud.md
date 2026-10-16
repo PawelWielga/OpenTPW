@@ -1631,7 +1631,7 @@ count 144. The same close samples the analyser's other nine rings, which no add 
 before any other ring (`FUN_006ad810` on the bank, `FUN_005195d0`'s thing `+0xc`, into `+0x1f100`'s next slot; its own
 total `+0x1f100` is never written and reads 0 in every file), and after the seven money rings the other seven in this
 order (read 2026-10-15, Q389, `0x004c788c`..`0x004c7a7a`; not ring order): the month total `+0x20cc0` closed as a money
-ring is (`+0x20cc0`, added by `FUN_004cf3e0`), `FUN_004c7fa0` (`+0x205d0`; it and the 12th below, "The guests inside and the rides at a close"), the lifetime visitors `+0x21c08`
+ring is (`+0x20cc0`, added by `FUN_004cf3e0`; below, "The arrivals"), `FUN_004c7fa0` (`+0x205d0`; it and the 12th below, "The guests inside and the rides at a close"), the lifetime visitors `+0x21c08`
 (`+0x20820`, below, "The lifetime visitors"), `FUN_004c8070` (`+0x20a70`), `FUN_004c7bb0`'s float (`+0x20f10`),
 `FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value", below), a mean of `FUN_004cef30` (`+0x21160`) and
 `FUN_004cceb0` (`+0x213b0`); the others not read further.
@@ -1664,8 +1664,9 @@ file's at a load, `ParkMonthRing.Push( ParkValue.Of( ... ) )` after the seven mo
 2nd ring (below, "The park value"). **And the lifetime visitors' ring** (Q389): `MonthVisitors`, the file's at a load,
 `ParkMonthRing.Push( LifetimeVisitors )` after the money rings and before the park value, written as the 11th (below,
 "The lifetime visitors"). **And the guests inside' and the rides' rings** (Q390): `MonthGuestsInside` and `MonthRides`,
-written as the 10th and 12th (below, "The guests inside and the rides at a close"). The analyser's other four int rings
-are not kept (`ANALYSER_MONTH_CLOSE`), and a written file keeps the file's bytes for them.
+written as the 10th and 12th (below, "The guests inside and the rides at a close"). **And the arrivals'** (Q391):
+`MonthArrivals`, written as the 13th (below, "The arrivals"). The analyser's other three int rings are not kept
+(`ANALYSER_MONTH_CLOSE`), and a written file keeps the file's bytes for them.
 
 #### The park value
 
@@ -1775,6 +1776,36 @@ closed on tick 1470 with `guests inside 24` (the `guests` census 29 a moment on)
 [1, 2]; main's build left the file's [0] and [1] a slot behind the money rings. The original given this game's file read
 [0, 24] and [1, 2] and its own close at once pushed 24 and 2, its own counts of the same park (`q390/orig/a-load.log`,
 `side-by-side.png`).
+
+#### The arrivals
+
+Read 2026-10-15 (Q391). **The 13th int ring (`+0x20cc0`, its slot `+0x20f04`, months `+0x20cc4`) counts the guests the
+arrival vehicles drop off**: the arrival manager `FUN_004cf3e0` (`park.md`, "Arrivals"), while the vehicle answers 2
+and some of the load are still to drop, makes one guest (`FUN_004cf720`, its answer not looked at), lowers the count
+still to drop and adds one to the month so far (`0x004cf56d`..`0x004cf592`); nothing else adds to it (the image's every
+operand `+0x20cc0`: the constructor's nought, the serialiser's, the load factory's, the close's and the graph's). The
+month's close pushes the month so far into the ring and zeroes it, first after the seven money rings
+(`0x004c788c`..`0x004c78bb`). The same manager pushes each load's size, as the load is called, into a ring of five
+(`+0x216dc`, slot `+0x216f0`, count `+0x216f4` 5, wrapped `+0x216f8`), whose wrapped byte a challenge's test reads
+(`FUN_005a0780`); not read further. **Readers**: the park status screen's graph plots the 13th as its first series (bit
+`1` of `DAT_00753c48`; `FUN_004a51d0`, `FUN_004a5e10` and the draw at `0x004a4750` take its month so far's address,
+the ring's head); its labels are not read.
+
+**Measured** (`q391/sweep.py`, `law.py`): the shipped `Easymode.TPWI` holds one month closed on 13, its thirteen guests,
+and nothing so far. Over all 589 park files on hand the month so far is never below nought, and the ring stands on the
+cash-in ring's slot in 574; the 15 others are this game's own files written past a month before this was kept. The
+header's `mNumberOfVisitorsToDate` is no partner of it: the months and the month so far sum to it in 24 of the 42 files
+whose ring has moved.
+
+**OpenTPW** (Q391). `ParkState.MonthArrivals`, the file's at a load and empty in a park made with no file;
+`ParkState.AddArrival` adds one where `ParkPeople.StepArrivals` drops a guest (`Admit` made one); `TurnTheMonth` closes it
+after the sideshow takings; the writer writes it (`PutMonthRings`); `money` prints it as month so far / newest / slot.
+Nothing here reads it: the park status screen is not built (`PARK_STATUS_SCREEN`). The ring of five loads is not kept.
+**Confirmed** (`q391/`): the stock park's one load of the month, 13 arriving on tick 1264 and all off on 1313, read
+`arrivals 13/13 slot 0`, and a file saved then held 13 so far; the close on tick 1470 named `arrivals 13`, and the file
+held [13, 13] on the money rings' slot; main's build left [13] a slot behind. The original given this game's file read
+[13, 13] and its close at once pushed 0; given the mid-month file, 13 so far, pushed whole by its own close on tick 1383
+(`q391/orig/a-load.log`, `b-load.log`, `side-by-side.png`).
 
 #### The first row is picked as a list fills
 

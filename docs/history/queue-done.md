@@ -7057,6 +7057,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (the census 29 just after), `rides 2`, written [0, 24] and [1, 2]; main's build wrote [0] and [1] a slot behind. The
   original given the file read them and its own close pushed 24 and 2; main's file, a slot behind. 20 bugs put back,
   all caught after a test change (a feature made a Crazy Ape).
+- [x] **Q391. The analyser's arrivals, kept in their ring.** The 13th int ring (`+0x20cc0`): one added for each guest
+  the arrival vehicle drops (`FUN_004cf3e0`, `0x004cf586`), closed after the sideshow takings; `ParkState.MonthArrivals`
+  and `AddArrival`, the file's at a load, written. Shipped [13], nothing so far; in 574 of 589 park files on the money
+  rings' slot, the 15 others this game's own.
+  `q391/run-fix1` (the final build, the stock park): one load of 13 dropped on ticks 1264 to 1313 (`arrivals 13/13`), the
+  close on 1470 `arrivals 13`, written [13, 13] on slot 1; main's build wrote [13] a slot behind. The original read both,
+  and a mid-month file's 13 so far, which its own close pushed whole. 15 bugs put back, all caught after a test change (a
+  stop off the map).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

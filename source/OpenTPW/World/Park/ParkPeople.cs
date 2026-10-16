@@ -1657,7 +1657,10 @@ public sealed partial class ParkPeople : Entity
 			if ( Admit( stopX, stopY ) == 0 )
 				_arrivalsRemaining = 0;
 			else
+			{
 				--_arrivalsRemaining;
+				State.AddArrival();
+			}
 
 			return;
 		}
