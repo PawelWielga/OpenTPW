@@ -27,11 +27,16 @@ namespace OpenTPW.UI;
 /// (<c>FUN_004b4280</c>) and does not.
 /// </para>
 /// <para>
-/// <b>Counted, not built:</b> the advisor's line each posts as it opens, <c>0xc6</c> for the staff and <c>0x11f</c>
-/// for the visitors, and withdraws as it closes (<c>LOCATOR_ADVISOR_LINE</c>); the edges of a fenced member's patrol
-/// area, drawn each frame (<c>LOCATOR_PATROL_EDGES</c>); and the strip's click, which opens the person's own window
-/// (<c>FUN_004b6080</c>, <c>FUN_004b79b0</c>: <c>STAFF_WINDOW</c>, <c>VISITOR_WINDOW</c>). With no person's window built,
-/// the keys always open a locator on nobody: the original's opens on the person whose window is up.
+/// <b>The advisor tells of each as it opens</b>: Ctrl+S posts message <c>0xc6</c> after the arm takes its panel and
+/// Ctrl+V <c>0x11f</c> last (<c>FUN_00486b00</c>), and the arm folding either away withdraws both (<c>FUN_00486b40</c>),
+/// which cuts him off where he is saying one. So Ctrl+S over a locator already out withdraws its line and posts it
+/// again.
+/// </para>
+/// <para>
+/// <b>Counted, not built:</b> the edges of a fenced member's patrol area, drawn each frame (<c>LOCATOR_PATROL_EDGES</c>);
+/// and the strip's click, which opens the person's own window (<c>FUN_004b6080</c>, <c>FUN_004b79b0</c>:
+/// <c>STAFF_WINDOW</c>, <c>VISITOR_WINDOW</c>). With no person's window built, the keys always open a locator on nobody:
+/// the original's opens on the person whose window is up.
 /// </para>
 /// </summary>
 internal sealed class ParkLocator
@@ -77,6 +82,9 @@ internal sealed class ParkLocator
 	/// <summary>The people stepped through: the running park's, or what a test hands it.</summary>
 	internal ParkPeople? People { get => _people ?? ParkPeople.Current; set => _people = value; }
 	private ParkPeople? _people;
+
+	/// <summary>The running park whose advisor hears of the locators: the level's.</summary>
+	private static ParkState? Park => Level.Current?.ParkState;
 
 	/// <param name="arm">The gadget's arm, which carries the two panels.</param>
 	/// <param name="root">The gadget's root, which holds the strip.</param>
@@ -212,7 +220,8 @@ internal sealed class ParkLocator
 
 	/// <summary>
 	/// Ctrl+S with no member's window up, <c>FUN_004b3f60( 0 )</c>: the staff's locator open, its panel on the arm with no
-	/// button down and nobody found, the status shown in the strip's corner, and the open park screen closed.
+	/// button down and nobody found, the status shown in the strip's corner, the advisor posted message <c>0xc6</c>, and
+	/// the open park screen closed.
 	/// </summary>
 	/// <param name="putOnArm">The gadget's arm taking the panel, folding whatever it carries first.</param>
 	/// <param name="closeScreen">The open park screen closed (<c>FUN_00485b40</c>).</param>
@@ -229,7 +238,7 @@ internal sealed class ParkLocator
 		_status.Visible = true;
 		_thought.Visible = false;
 
-		Unimplemented.Report( "LOCATOR_ADVISOR_LINE" );
+		Tell( ParkAdvisorMessages.StaffLocator );
 		closeScreen();
 
 		Log.Info( $"Park locator: staff open={Open}" );
@@ -237,7 +246,8 @@ internal sealed class ParkLocator
 
 	/// <summary>
 	/// Ctrl+V with no visitor's window up, <c>FUN_004b4280</c>: the panel on the arm first, then the visitors' locator
-	/// open on their role with nobody found, the thought shown in the strip's corner, and the open park screen closed.
+	/// open on their role with nobody found, the thought shown in the strip's corner, the open park screen closed, and
+	/// last the advisor posted message <c>0x11f</c>.
 	/// </summary>
 	internal void OpenVisitors( Action<UiControl> putOnArm, Action closeScreen )
 	{
@@ -252,14 +262,14 @@ internal sealed class ParkLocator
 		_thought.Visible = true;
 
 		closeScreen();
-		Unimplemented.Report( "LOCATOR_ADVISOR_LINE" );
+		Tell( ParkAdvisorMessages.VisitorLocator );
 
 		Log.Info( $"Park locator: visitors open={Open}" );
 	}
 
 	/// <summary>
 	/// The arm folding a panel of this locator away (<c>0x1001d8</c>): nobody, the strip hidden, the camera let go, and
-	/// no locator open. The advisor's two lines are withdrawn with it, neither of which is posted here.
+	/// no locator open, and the advisor's two lines withdrawn, the visitors' first.
 	/// </summary>
 	internal void Folded()
 	{
@@ -268,7 +278,21 @@ internal sealed class ParkLocator
 		Open = Kind.None;
 		Following = false;
 
+		if ( Park?.AdvisorMessages is { } lines )
+		{
+			var now = (long)(GameClock.Now * 1000);
+			lines.Withdraw( ParkAdvisorMessages.VisitorLocator, now, () => Advisor.Current?.StopSpeaking() );
+			lines.Withdraw( ParkAdvisorMessages.StaffLocator, now, () => Advisor.Current?.StopSpeaking() );
+		}
+
 		Log.Info( "Park locator: folded" );
+	}
+
+	/// <summary>The advisor posted a locator's message (<c>FUN_00486b00</c>) on the park's tick, where the park has one.</summary>
+	private void Tell( int message )
+	{
+		if ( Park is { AdvisorMessages: { } lines } park )
+			lines.Post( message, park.GameTick );
 	}
 
 	/// <summary>

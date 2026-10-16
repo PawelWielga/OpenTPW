@@ -2184,14 +2184,33 @@ actor=26 following=1 strip=1 name="Mike Cooper" status=0`, the camera on him to 
 open" (`4-closed.png`); Ctrl+V `visitorPanel=1@485,1127`, its button `actor=42 name="Visitor #13" thought=666`
 (`5-visitor.png`); Escape "Escape: the locator folded away", no menu (`6-escape.png`). Side by side with the original's
 (`q420/side-by-side.png`) the panel, the buttons and the strip stand alike. Main's build counted `STAFF_LOCATOR` and
-`VISITOR_LOCATOR` once each and put nothing out. **Counted, not built:** the advisor's two lines
-(`LOCATOR_ADVISOR_LINE`), a fenced member's patrol edges (`LOCATOR_PATROL_EDGES`), the strip's click (`STAFF_WINDOW`,
+`VISITOR_LOCATOR` once each and put nothing out. **Counted, not built:** a fenced member's patrol edges (`LOCATOR_PATROL_EDGES`), the strip's click (`STAFF_WINDOW`,
 `VISITOR_WINDOW`: no person's window is built, so the keys always open on nobody). **Deviations, said at the site:** the
 arm puts the panel out at once, where the original slides (counted `GADGET_ARM_SLIDE` each way); a person gone from the
 park is let go of, where the original keeps the freed thing's address. Not looked into: the bit `0x1000`'s other
 readers. In no game run: a kind with nobody (tested only), a fenced member, a person leaving the park while followed
 (tested only), the strip's hover and click, first person over a follow, Full Simulation (not asked: the locators are
 either mode's), the other three themes.
+
+**The advisor's two lines** (Q425). `FUN_004b3f60` posts its message after `FUN_004a2590` has folded what the arm
+carried and before it closes the park screen: `0x11f` where it was given a visitor (role 6), else `0xc6`.
+`FUN_004b4280` posts `0x11f` last, after the park screen is closed. The fold's `0x1001d8` withdraws `0x11f` and then
+`0xc6` (`FUN_00486b40`), whichever locator it was, and the destroy (`0x14`) withdraws nothing. So Ctrl+S over its own
+locator cuts its line and posts it again. Both rows are posted-only, one line, the Tutorial category, and have no tag
+(group `0x17f`): `0xc6` is response 417, sample 389 ("those buttons on the control panel arm let you locate your
+employees..."), and `0x11f` is response 547, sample 564 ("you can locate visitors by clicking the button on the control
+panel arm..."). The original (`q425/orig/run.sh`, `q325/stock.TPWS`, `advisor.py` on both; five of five predicted,
+`q425/PREDICTION.txt`): after Ctrl+S, `0xc6` took a slot on 863 and was said on 864, its line 0, for 19998 ms. Ctrl+V
+3 s in left `0xc6` at said 0, slaps 1, and `0x11f` was said on 879. Ctrl+V again after the line took no slot (said
+once). Said again on 972, cut to slaps 2 by a second Ctrl+S and said on 986, then cut to slaps 3 by Ctrl+V: the next
+Ctrl+S took no slot. **OpenTPW** (`ParkLocator.OpenStaff`, `OpenVisitors`, `Folded`; `ParkAdvisorMessages.StaffLocator`,
+`VisitorLocator`): on the stock park (`q425/run-fix6`, the final game binary): Ctrl+S `post message=198 ... tick=782
+result=queued`, `attempt=1 message=198 ... response=417 sample=389` (`1-staff-line.png`). Ctrl+V 2 s in gave `withdraw
+message=287 cleared=0 cut=0`, then `withdraw message=198 cleared=0 cut=1 slaps=1`, then `post message=287`, and sample 564
+at once (`2-visitor-line.png`). After the line, Escape and Ctrl+V gave `result=said-once` (`3-said-once.png`). The third
+cut gave `slaps=3`, then `post message=198 ... result=slapped` (`5-slapped.png`). Main's build counted
+`LOCATOR_ADVISOR_LINE` once. Side by side, `q425/side-by-side.png`. Ctrl+S or Ctrl+V with a person's window up is in no
+game run: no person's window is built.
 
 #### How allstaff and allitems keep their rows current
 

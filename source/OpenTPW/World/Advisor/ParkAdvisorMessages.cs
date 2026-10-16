@@ -122,6 +122,10 @@ internal sealed class ParkAdvisorMessages
 	internal const int BuyScreen = 188;
 	/// <summary>Message 0xbd, posted as the hire screen is built (FUN_0049bdd0) and withdrawn as it is destroyed (FUN_0049b650, event 0x14).</summary>
 	internal const int HireScreen = 189;
+	/// <summary>Message 0xc6, posted as the staff's locator opens (FUN_004b3f60) and withdrawn as the arm folds a locator away (FUN_004b3790, 0x1001d8).</summary>
+	internal const int StaffLocator = 198;
+	/// <summary>Message 0x11f, posted as the visitors' locator opens (FUN_004b4280) and withdrawn as the arm folds a locator away (FUN_004b3790, 0x1001d8).</summary>
+	internal const int VisitorLocator = 287;
 	/// <summary>Message 0xb9, polled: the line about the control panel, scored by the park's age in days (0x005a06c0).</summary>
 	internal const int ControlPanel = 185;
 	/// <summary>Message 0x11a, polled: the line about the tips at the bottom of the screen, scored by the park's age in days (0x005a0720).</summary>
@@ -537,6 +541,8 @@ internal sealed class ParkAdvisorMessages
 		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial ),
 		new( BuyScreen, "HelpMessage.Score", 407, 380, Lines: 1, Category: Tutorial ),
 		new( HireScreen, "HelpMessage.Score", 408, 381, Lines: 1, Category: Tutorial ),
+		new( StaffLocator, "HelpMessage.Score", 417, 389, Lines: 1, Category: Tutorial ),
+		new( VisitorLocator, "HelpMessage.Score", 547, 564, Lines: 1, Category: Tutorial ),
 		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" ),
 		new( ExplainTooltips, "TutorialExplainTooltips.Score", 542, 559, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialExplainTooltips" )
 	];

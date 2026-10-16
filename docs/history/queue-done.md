@@ -7223,6 +7223,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   staffPanel=1@484,1127`, the mechanics' button `actor=26 name="Mike Cooper"` with the camera on him, Ctrl+S again
   `open=None`, Ctrl+V's button `name="Visitor #13"`, Escape folding it with no menu; the original's memory and frames
   the same, six of six (`q420/side-by-side.png`). 27 bugs put back, all caught.
+- [x] **Q425. The locators' advisor lines, `0xc6` and `0x11f`.** Done 2026-10-16. A piece of Q420 (its Q424 note).
+  Ctrl+S posts `0xc6` (response 417, sample 389) after the arm folds what it carried, Ctrl+V `0x11f` (response 547,
+  sample 564) last, and the fold withdraws both (`FUN_004b3f60`, `FUN_004b4280`, `FUN_004b3790`'s `0x1001d8`); tutorial
+  rows of one line, no tag (`hud.md`, "The staff and visitor locators"). Confirmed in both games on the stock park: the
+  staff's line said on Ctrl+S (`attempt=1 message=198 ... sample=389`), cut by Ctrl+V (`withdraw message=198 cleared=0
+  cut=1 slaps=1`) and the visitors' said at once (`sample=564`), said once (`result=said-once`), refused after three
+  cuts (`result=slapped`); main's build counted `LOCATOR_ADVISOR_LINE`. The original's records the same, five of five
+  (`q425/side-by-side.png`). 17 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

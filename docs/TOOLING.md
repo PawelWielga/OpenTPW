@@ -630,7 +630,10 @@ GH=766` there, or the pointer is off):
   the role `[0x007cc30c]`, the person `[0x007cc308]` (a thing's address: its type byte `+2`, `+0x190`/`+0x194`, a
   visitor's number `+0x1d8`) and `gui_CameraFlags` `[0x00790ab0]` bit `0x1000`, read with `tpwmem.py read`. In this
   game the console's `locator`, and `control 95f` for a button's place. A camera against a walker's place is read
-  under `pause`: two replies apart, he has walked most of a cell.
+  under `pause`: two replies apart, he has walked most of a cell. **After Ctrl+S over its own locator, Escape opens the game
+  menu** (seen here; the original's `FUN_004816b0` asks only an open locator): fold the panel with Ctrl+V instead. The advisor's
+  lines `0xc6` and `0x11f` are `advisor.py %PID% SECS 0xc6,0x11f` in the original, the log's `message=198` and `287` here
+  (Q425, `q425/confirm.py`, `q425/orig/run.sh`).
 - **The game menu:** Escape with no tool in hand opens it **and pauses the game**; never sleep under it. Load
   (510,50) then the first row (400,123), the newest file; Save (510,140), type the name, Return; Options
   (510,400), the quality track (512,276), OK (898,688).

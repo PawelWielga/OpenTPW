@@ -313,8 +313,8 @@ public class ParkCountedPathsTests
 		WithControl( stack, Key.P );
 
 		Assert.IsTrue( Level.InstantAction, "no player: Instant Action" );
-		Assert.AreEqual( (1, 1, 0, 2, 1),
-			(Times( "PARK_STATUS_SCREEN" ), Times( "FINANCE_SCREEN" ), Times( "LOANS_SCREEN" ), Times( "LOCATOR_ADVISOR_LINE" ), Times( "POSTCARD_SHORTCUT" )) );
+		Assert.AreEqual( (1, 1, 0, 1),
+			(Times( "PARK_STATUS_SCREEN" ), Times( "FINANCE_SCREEN" ), Times( "LOANS_SCREEN" ), Times( "POSTCARD_SHORTCUT" )) );
 		Assert.AreEqual( (3, 7), (UI.ParkCategoryScreens.LeftOn( UI.ParkCategoryScreens.Information ), UI.ParkCategoryScreens.LeftOn( UI.ParkCategoryScreens.Finance )), "loans left nothing" );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "nothing opened" );
 

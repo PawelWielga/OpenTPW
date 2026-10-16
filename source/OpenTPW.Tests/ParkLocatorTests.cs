@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenTPW.UI;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -245,6 +246,84 @@ public class ParkLocatorTests
 
 		Click( 0x964 );
 		Assert.AreEqual( (_people.Peeps[1].ThingId, "New Visitor"), (Locator.Actor, Find( Locator.Strip, 0x147 ).Text) );
+	}
+
+	/// <summary>
+	/// <b>The advisor tells of a locator as it opens and is taken back as the arm folds it</b>: Ctrl+S posts message
+	/// <c>0xc6</c> after the arm takes its panel (<c>FUN_004b3f60</c>), Ctrl+V <c>0x11f</c> last (<c>FUN_004b4280</c>), each
+	/// on the park's tick, and the fold (<c>FUN_004b3790</c>'s <c>0x1001d8</c>) withdraws both, which empties their slots
+	/// and, while he says one, cuts him off on the game's clock. Ctrl+S over its own locator withdraws its line and posts
+	/// it again, so one copy waits. Both are tutorial lines: with the Tutorial option off neither is taken.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> either post missing or the other's id; a post before the arm folds; no withdrawal at the fold,
+	/// or one id alone withdrawn; the wall clock for the game's; tick nought for the park's; either row's response or
+	/// sample, its category not the tutorial's, or two lines; no park.
+	/// </remarks>
+	[TestMethod]
+	public void TheAdvisorTellsOfALocatorAsItOpensAndIsTakenBackAsItFolds()
+	{
+		using var clock = new SimulationClockScope();
+		var tutorial = true;
+		var lines = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ), tutorial: () => tutorial );
+		var park = Level.Current!.ParkState!;
+		park.AdvisorMessages = lines;
+		var said = new List<(int Response, int Sample)>();
+		int Play( int response, int sample ) { said.Add( (response, sample) ); return 9000; }
+
+		for ( var i = 0; i < 40; ++i )
+			park.AdvanceGameTick();
+		var tick = park.GameTick;
+		Assert.AreNotEqual( 0, tick );
+
+		// The wall clock far past any line's end: a cut is judged on the game's clock, which stands at nought.
+		Time.PinWall( 60000 );
+
+		try
+		{
+			// The Tutorial option off: neither line is taken.
+			tutorial = false;
+			CtrlS();
+			CtrlV();
+			StringAssert.Contains( lines.Census(), "pending=0 ", "the Tutorial option off" );
+			Assert.IsTrue( _gadget.FoldLocator() );
+			tutorial = true;
+
+			CtrlS();
+			StringAssert.Contains( lines.Census(), "pending=1 attempts=0 threshold=25 slot=198/subject=0 " );
+			StringAssert.Contains( lines.Census(), "message=185/score=110/", "posted on the park's own tick" );
+
+			CtrlS();
+			StringAssert.Contains( lines.Census(), "pending=1 attempts=0 threshold=25 slot=198/subject=0 ", "withdrawn as the arm folds, then posted again" );
+
+			// The staff's panel folded for the visitors': the staff's line taken back, the visitors' posted.
+			CtrlV();
+			StringAssert.Contains( lines.Census(), "pending=1 attempts=0 threshold=25 slot=287/subject=0 " );
+
+			lines.Tick( park.GameTick, 0, Play );
+			CollectionAssert.AreEqual( new[] { (547, 564) }, said, "response 547, sample 564" );
+			StringAssert.Contains( lines.Census(), $"message=287/score=1000/line=0/lastTick={tick}/said=1/slaps=0" );
+
+			// Folded while he says it: cut off.
+			Assert.IsTrue( _gadget.FoldLocator() );
+			StringAssert.Contains( lines.Census(), $"message=287/score=1000/line=0/lastTick={tick}/said=0/slaps=1", "cut off" );
+
+			CtrlS();
+			lines.Tick( park.GameTick, 0, Play );
+			Assert.AreEqual( (417, 389), said[1], "response 417, sample 389" );
+			Assert.IsTrue( _gadget.FoldLocator() );
+			StringAssert.Contains( lines.Census(), $"message=198/score=1000/line=0/lastTick={tick}/said=0/slaps=1", "cut off" );
+			StringAssert.Contains( lines.Census(), "pending=0 " );
+
+			// One line, so said again it is the same.
+			CtrlS();
+			lines.Tick( park.GameTick, 0, Play );
+			Assert.AreEqual( (417, 389), said[2], "its one line again" );
+		}
+		finally
+		{
+			Time.PinWall( null );
+		}
 	}
 
 	/// <summary>
