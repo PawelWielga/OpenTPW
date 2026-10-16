@@ -50,43 +50,47 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the original under Proton.
   From Q417 (`advisor-park.md`, "Litter and no handyman"): rows 8 and 9 are built. The other staff rows, 15 to 17, are
   not: rows 15 and 16 the kinds of ride on offer and standing with no researcher (`0x004ca450`, `0x004ca7b0`; the
-  nearest), row 17 the months into the game. Nothing here drops or sweeps litter (`DECIDE_LITTER_DROPPED`,
+  nearest), row 17 the months into the game. **Row 98** (message `0x62`, `GeneralLaxSecurity`, score `0x0059e840`:
+  this month's kids who got away, `FUN_004c94a0( 1 )`, over one times 20, the keys by their names; response 258, sample
+  292, the guards' cap, group 100) is as near: the original said it on tick 828 on Q413's `three.TPWS` and
+  `q414/two.TPWS` (nine got away), and here it is counted (the run review, 2026-10-16). Row 22 (`0x0059d3b0`) reads the
+  same got-away count with a guard on the staff (its lines ask for security cameras). Nothing here drops or sweeps litter (`DECIDE_LITTER_DROPPED`,
   `HANDYMAN_LITTER_SEARCH`), so the share is the file's; the original's handyman swept a cell every 15 or 16 ticks. In
   no game run: lines 2 and 3 (the test holds the turn), a share of nought or at the cut-offs themselves (tested only),
   two handymen, a handyman hired after the line, Full Simulation (not asked: the rows are either mode's), the other
   three themes. Not heard in either game.
   From Q416 (`advisor-park.md`, "A busy park with no guard"): row 11 is built, the first row of category 9 (said only
-  once). The other staff rows, 8, 9 and 15 to 17, are not: rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman;
+  once). The other staff rows, 8, 9 and 15 to 17, are not (rows 8 and 9 are built, Q417): rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman;
   the nearest), rows 15 and 16 the kinds of ride on offer and standing with no researcher, row 17 the months into the
   game. In no game run: lines 2 and 3 (said once, they come only after a withdraw cuts the first; the test holds the
   second with the category's key off), a crowd past 100 or under 70 (tested only), a guard hired after the line, the
   said byte through a save and a load, Full Simulation (not asked: the row is either mode's), the other three themes.
   Not heard in either game.
   From Q415 (`advisor-park.md`, "A busy park with no entertainer"): row 14 is built. The other staff rows, 8, 9, 11 and
-  15 to 17, are not; their scores are read there: rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman), row 11 the
+  15 to 17, are not (row 11 is built, Q416; rows 8 and 9, Q417); their scores are read there: rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman), row 11 the
   crowd over 70 with no guard after `DaysForStaff` (the nearest: it asks only what row 14 and row 13 already read),
   rows 15 and 16 the kinds of ride on offer and standing with no researcher, row 17 the months into the game. In no game
   run: lines 2 and 3 (the test holds them), a crowd under 35 (a score below nought, tested only), a crowd past 100 (tested
   only), an entertainer hired after the line, Full Simulation (not asked: the row is either mode's), the other three
   themes. Not heard in either game.
   From Q414 (`advisor-park.md`, "Lots of pranks"): row 264 is built. The other staff rows, 8, 9, 11 and 14 to 17, are
-  not. The original, given a file with no guard (Q413's `three.TPWS`, `q414/two.TPWS`), raised a tag about tick 828,
-  "Some of the visitors are misbehaving and your security hasn't seen it...", another message than `0xc` or `0x108`:
-  not built here and not looked into (its words are a prank with no guard to see it). In no game run: a shut park (the
+  not (rows 8, 9, 11 and 14 are built, Q415 to Q417). The original, given a file with no guard (Q413's `three.TPWS`,
+  `q414/two.TPWS`), said a line and raised its tag on tick 828, "Some of the visitors are misbehaving and your security
+  hasn't seen it...": the polled row 98, raised by the files' nine kids who got away (Q418's note). In no game run: a shut park (the
   test holds it), the line said twice, a kid counted in play, Full Simulation (not asked: the row is either mode's),
   the other three themes. Not heard in either game.
   From Q413 (`advisor-park.md`, "A park with no guard"): row 12 is built. The other staff rows, 8, 9, 11 and 14 to 17,
-  are not; row 264 (`LotsOfPranks`, `0x005a04f0`, more than two kids this month), which the original posted on tick
-  903 in all three of Q413's files, is the nearest (it reads the same count). In no game run: lines 2 and 3 (the test
+  are not (rows 8, 9, 11 and 14 are built, Q415 to Q417); row 264 (`LotsOfPranks`, `0x005a04f0`, more than two kids this month), which the original posted on tick
+  903 in all three of Q413's files, is the nearest (it reads the same count; built, Q414). In no game run: lines 2 and 3 (the test
   holds them; the third's gesture row is counted), a kid counted in play (nothing here counts one: the pranks), two
   guards or more, a guard hired after the line, Full Simulation (not asked: the row is either mode's), the other three
   themes. Not heard in either game.
   From Q412 (`advisor-park.md`, "A park too big for its guards"): row 13 is built. The other staff rows, 8, 9, 11, 12
-  and 14 to 17, are not (row 12 is built, Q413). In no game run: lines 2 and 3 (the test holds them), a guard over his 750 (776 cells; the
+  and 14 to 17, are not (rows 8, 9, 11, 12 and 14 are built, Q413 to Q417). In no game run: lines 2 and 3 (the test holds them), a guard over his 750 (776 cells; the
   test holds it), two guards or more, a guard hired after the line, Full Simulation (not asked: the row is either
   mode's), the other three themes. Not heard in either game.
   From Q411 (`advisor-park.md`, "A park too big for its handymen"): row 10 is built. The other staff rows, 8, 9 and 11
-  to 17, are not; row 13's keys name developed cells for the guards (`StaffHireGuards3`), the nearest (built, Q412). In no game run:
+  to 17, are not (rows 8, 9 and 11 to 14 are built, Q412 to Q417); row 13's keys name developed cells for the guards (`StaffHireGuards3`), the nearest (built, Q412). In no game run:
   lines 2 and 3 (the test holds them), two handymen or more, a handyman hired after the line, the minimum of 300
   (it asks nothing a handyman's 400 does not, at the shipped values: tested only), a region's kept count reused in
   the same quarter tick (counted afresh here, said at `ParkState.DevelopedCells`), Full Simulation (not asked: the row
@@ -105,7 +109,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q395 (`hud.md`, "The misbehaving kids"): the three counts are kept. Nothing counts into them: the guard's chase
   (`FUN_004d6260` to `FUN_004d6790`) waits on the pranks (`DECIDE_PRANK_*`), and its catch's sound `0x89` with it. The
   advisor's row 264 (`LotsOfPranks`, message `0x108`, score `0x005a04f0`: 100 past two this month) reads the month's count
-  and is not built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`). The original's third count after a load is its memory's
+  (built, Q414). The original's third count after a load is its memory's
   (nought, or -999 once); nought here (said at `ParkState`). Why the original's park loaded at tick 755 ran no close in
   120 s (`q395/orig/a3-load.log`: its words stood still past tick 788 with the clock true) is not looked into. In no
   game run: a kid counted, Full Simulation (not asked: the counts are either mode's), the other three themes.
@@ -1638,6 +1642,11 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the tickets counter runs in every mode. Read what this game does first. Confirm: the balance at 500 and 5000 beside
   the original.
 
+- [ ] **Q419. The hire screen's candidate box is empty.** From the run review, 2026-10-16. On the same file the
+  original's hire screen shows the chosen candidate's figure where this game's box is black (`q412/run-fix2/3-screen.png`
+  beside `q412/orig/a-button.png`; the same in `q415`). The candidates' names differ too, which may be the pool's
+  top-up (Q356's note); not looked into. Decode what the original draws there first. Confirm: the box beside the
+  original's on the same file, a screenshot and the census of what is drawn.
 - [ ] **Q404. A park six months in the red ends.** From the fork review 2, 2026-10-16
   (`verify-economy-guests-paths.md` L4, M2). Counted, `BANK_PARK_ENDS_IN_THE_RED`. What the end does is
   `ride-operation.md`, "The end of the park": world state 4, the end screen, `VAR_BREAKSTAT` 1 on every ride guests

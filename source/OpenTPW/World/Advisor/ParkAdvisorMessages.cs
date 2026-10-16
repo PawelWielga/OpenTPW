@@ -12,7 +12,7 @@ namespace OpenTPW;
 /// "A mechanic on his way", "The line of an opened tag message", "The buy screen's own line" and "The hire
 /// screen's own line".
 /// <para>
-/// Thirty messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
+/// These messages are polled, not posted (FUN_0059c680, "The poll, and the control panel's line"): the control
 /// panel's line and the tips', tutorial messages scored by the park's age; the line about a shut park people
 /// wait outside, scored by how many wait ("A shut park people wait outside"); the lines about an open park with
 /// nothing to ride and a park with no ride; five scored by the share of the park's rides, shops, sideshows,
@@ -30,8 +30,9 @@ namespace OpenTPW;
 /// and more to research", "Every sideshow built, and more to research"); and the lines
 /// about too few
 /// shops and too few sideshows for the park's size ("Too few shops for the park's size", "Too few sideshows for
-/// the park's size"); and five about a kind of staff nobody has trained ("Staff nobody has trained"). The
-/// other 124 polled rows are counted, and the other posted messages are unbuilt.
+/// the park's size"); five about a kind of staff nobody has trained ("Staff nobody has trained"); the staff
+/// rows that ask for handymen, guards and entertainers, and the line about pranksters (their sections, Q411 to
+/// Q417). The other polled rows are counted, and the other posted messages are unbuilt.
 /// </para>
 /// </summary>
 internal sealed class ParkAdvisorMessages
@@ -745,6 +746,7 @@ internal sealed class ParkAdvisorMessages
 	/// rows 28 to 32's (0x0059d620 to 0x0059d7a0) are nought with no member of their kind of staff, with a training
 	/// budget for the kind above nought, and unless the kind's grades are under its section's WorseThan per cent
 	/// of the top grade's, in whole numbers, and then its key's value;
+	/// the staff rows' and the pranksters' are their sections', each said on its Topic;
 	/// every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
@@ -876,7 +878,7 @@ internal sealed class ParkAdvisorMessages
 
 		if ( topic.BusyWithNoEntertainer is { } busy )
 		{
-			// FUN_004c9750 answers nought with nobody inside; the crowd is FUN_004c81e0's (the music's), and nothing keeps the score from going below nought.
+			// The share answers nought with nobody inside (FUN_004c9750); the crowd is the music's, and nothing keeps the score from going below nought.
 			if ( _park?.Invoke() is not { Closed: false } busyPark || busyPark.Staff.Entertainers.Members > 0 ) return 0;
 			if ( busyPark.GuestsInside <= 0 || busyPark.GuestsUnhappy * 100 / busyPark.GuestsInside <= UnhappyShare ) return 0;
 			return (ParkAudio.CrowdLevel( busyPark.GuestsInside ) - Value( $"{busy}.AtLeastThisBusy" )) * Value( topic.ScoreKey );

@@ -1977,10 +1977,13 @@ vtable `+8`, "File read failed"), it hands the third to `FUN_004ced70` (`0x004c7
 write failed"), so a load writes the analyser's word over the buffer and the stream moves on four: the lifetime
 visitors that follow read right. The load factory `FUN_005179c0` allocates the analyser (`0x21c50` bytes) without
 zeroing these three, so after a load the third is whatever that memory held: 0 in two loads, -999 in a third. **The one
-reader** is `FUN_004c94a0( got away )` (the second if non-nought, else the first), asked with nought by two advisor
-scores: `0x005a04f0`, the polled row 264's (message `0x108`, its first response 514): `LotsOfPranks.Score` (100) when
-this month's count is over `LotsOfPranks.MorePrankstersThan` (2), else nought; and `0x0059cd30`, row 12's, a park with
-no guard (`advisor-park.md`, "A park with no guard", Q413). Nothing reads the third.
+reader** is `FUN_004c94a0( got away )` (the second if non-nought, else the first), called from five places, all advisor
+scores. With nought (this month's): `0x005a04f0`, the polled row 264's (message `0x108`, its first response 514):
+`LotsOfPranks.Score` (100) when this month's count is over `LotsOfPranks.MorePrankstersThan` (2), else nought; and
+`0x0059cd30`, row 12's, a park with no guard (`advisor-park.md`, "A park with no guard", Q413). With one (this month's
+got away): `0x0059d3dd` in row 22's score `0x0059d3b0` (with a guard on the staff, a key's score past a key's count; its
+lines 64 to 66 ask for security cameras), and `0x0059e853` and `0x0059e871` in row 98's `0x0059e840` (message `0x62`,
+`advisor-park.md`, "Lots of pranks"). Nothing reads the third.
 
 **Measured** (`q395/sweep.py`): of 608 park files on hand, 594 hold nought, nought and nought; nine hold 0, 0, 3 (Alexah's
 Full Simulation jungle park and its copies); one the original wrote holds 1, 1, 1 (`q253/orig/sold-by-the-original.TPWS`,

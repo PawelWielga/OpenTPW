@@ -1170,9 +1170,9 @@ says it**: every poll of row 185, the first on tick 877, scores 110 and is refus
 
 Each sweep's `Tick` polls first, from the cursor's row, which is the program's (`ParkAdvisorMessages.ProgramCursor`,
 handed to every park by `Level`), set from a loaded file's dword (`Park advisor: restored poll cursor row=...`)
-and written to `savepark`'s file. The built polled rows are 185, 282 ("The tips' line", below), 1 ("A shut park people wait outside", below) and 260 to 262 ("Shut shops, sideshows and toilets", below), 2, 62, 259 and 113 (their sections, below); each of the other 145 is counted
-`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`. A topic's score is its function's (`ScoreOf`: the age's bounds for the
-control panel's, the key's value for the rest), asked at the poll, at the post and at the tick's recheck
+and written to `savepark`'s file. The built polled rows are the topics `ParkAdvisorMessages` lists, each with its section below; every other polled
+row is counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`. A topic's score is its function's (`ScoreOf`: the age's bounds
+for the control panel's, each built row's own reading of the facts, its section's), asked at the poll, at the post and at the tick's recheck
 (`FUN_0059b620` calls `FUN_0059c0a0`). The poll logs a line a change of its answer: `Park advisor: poll
 message=185 row=185 days=... score=... tick=... result=...`. **The line a park was entered with is gone:**
 `UI.ParkLines.ExplainGadget` said sample 377 past the messages at every entry and every load, which the original
@@ -1226,7 +1226,7 @@ have come 122 ticks after the save.
 | A file with the record fresh | said on tick 877 | said on tick 877 |
 | The Tutorial option off | not posted; said a round on once it is on | not posted (the turn after was run past the cutoff) |
 | Past day 60 | not said | not said |
-| The other polled rows | scored each round | rows 282, 1, 2, 5, 6, 62, 113 and 259 to 263 built (below); 142 counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
+| The other polled rows | scored each round | the topics `ParkAdvisorMessages` lists built (below); the rest counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` |
 | The line's wait | the response's length and a second | the same; the length differs a run in both, as the gesture chain does |
 
 Not in a game run: a line found by the poll inside another's wait (the test holds it). No case in either game:
@@ -1742,8 +1742,8 @@ game.
 
 **Row 6, message 6, `StaffHireMechanics2`:** polled, category 0, either game mode, one copy, first response 17,
 three lines in turn. Responses 17 to 19 are samples 16 to 18, model slot 0, prop 5 (the hard hat), group 8; the
-first and third are the random gesture chain and the second, response 18, names gesture row 21. It is the row
-after row 5: from the shipped park's cursor its turns are ticks 773, 928, 1083 and every 155 on.
+first and third are the random gesture chain and the second, response 18, names gesture value 21, row 5 (the caller takes `0x10` off). It
+is the row after row 5: from the shipped park's cursor its turns are ticks 773, 928, 1083 and every 155 on.
 
 **Its score, `0x0059ca80`** (loose code, read as disassembly; `ECX` the balance object):
 
@@ -2188,7 +2188,8 @@ the aerial (`1-line.png`). The tag clicked: `message bar: tag 13 subject 0 item 
 `first=mb_buy/help=528 second=hidden erase=mb_erase` and string 17 (`2-bar.png`). The button clicked: `button type 16
 opens the hire screen on tab 3 and takes tag 13 off`, `windows` reading `ParkHireScreen tab 3`, "Hire Guards"
 (`3-screen.png`). **On 1553 the row scored 30 again and the gate refused it**: `... tick=1553 result=said-once ...
-inside=219 crowd=100 sincehire=39`, one attempt in the run, the census `message=11/score=30/line=0/lastTick=1398/said=1
+inside=219 crowd=100 sincehire=39`, one attempt of message 11 in the run (the run's other, `attempt=2 message=189` on 1452, is the hire
+screen's own line), the census `message=11/score=30/line=0/lastTick=1398/said=1
 /slaps=0`. *`under`* (`run-under1`): on 1398 `... score=22 threshold=25 tick=1398 result=under-threshold closed=0
 guards=0 inside=184 crowd=92 sincehire=32` (six walked in), silent to tick 1571. *`guard`* (`run-guard1`): on 1243 `...
 result=no-score closed=0 guards=1 inside=212 crowd=100 sincehire=25`, no later line (the poll writes a changed answer
@@ -2200,8 +2201,9 @@ only), the census `message=11/score=0/line=-1/lastTick=0/said=0/slaps=0`, silent
 load, **message `0xb`'s record from (0, -1, 0, 0) to (1398, 0, 1, 0) on tick 1398**, one tag at (84, 909, 154, 974)
 lettered string 17, him in the guards' cap (`orig/a-told.png`; filmed, `shots/q416a.mkv`). The tag clicked: the bar's
 thing 0, buttons 16 and 0, item 0 and the text. The button clicked: `hiretab 3` on tick 1468, "Hire Guards" with the
-fourth tab lit (`orig/a-button.png`). **The record stood at (1398, 0, 1, 0) to tick 2270**, past five more turns: said
-once. *`under`* (run b): `inside 180 ... crowd 90` on 1398, `0xb`'s record unmoved to tick 1979, no tag of string 17. *`guard`* (run c): `inside 211 ... crowd 100` on 1398, unmoved to 2092, no tag. `q416/side-by-side.png` sets this game's line beside the original's.
+fourth tab lit (`orig/a-button.png`). **The record stood at (1398, 0, 1, 0) to tick 2212**, the last record read (`inside.py` ran to 2270):
+said once, shown by the turns of 1553 and 1708, which came with the crowd at 100 and would have scored 30 (the
+later turns' crowd, 93 down to 69, could not pass 25). *`under`* (run b): `inside 180 ... crowd 90` on 1398, `0xb`'s record unmoved to tick 1979, no tag of string 17. *`guard`* (run c): `inside 211 ... crowd 100` on 1398, unmoved to 2092, no tag. `q416/side-by-side.png` sets this game's line beside the original's.
 
 | | The original | OpenTPW |
 |---|---|---|
@@ -2223,7 +2225,7 @@ top-up, not this row (Q356's note).
 
 **Row 12, message `0xc`, `StaffHireGuards2`:** polled, category 0, either game mode (the row's `+0x0c` is 2), one
 copy, first response 35, three lines in turn. Responses 35 to 37 are **samples 35 to 37**, model slot 0, prop 6 (the
-guards' cap), group 14; the first two take the random gesture chain and the third names gesture row 22 (counted,
+guards' cap), group 14; the first two take the random gesture chain and the third names gesture value 22, row 6 (the caller takes `0x10` off, `0x0059939f`; counted,
 `ADVISOR_RESPONSE_GESTURE_ROW`, as row 6's second line). From the shipped park's cursor its turns are one before row
 13's: ticks 779, 934, 1089 and every 155 on. The transcripts (`global-speech-transcripts.tsv`): "the park doesn't
 have any guards and some of the visitors are getting out of hand, you should hire some soon", "if you don't knock it
@@ -2345,10 +2347,14 @@ off-screen). *`two`* (run a): `0x108`'s record (0, -1, 0, 0) throughout, the pol
 April). *`three`* (run b): **`0x108`'s record from (0, -1, 0, 0) to (903, 0, 1, 0) on tick 903**, the action 12,498 ms (this
 game's 11,498 and the helper's 1,000), no tag made, him in the guards' cap (`orig/b-told.png`). Q413's runs b and c saw the
 same post on 903 for three and for four kids with a guard. `q414/side-by-side.png` sets the two games' lines side by side.
-**Not predicted**: in both runs on a file with no guard the original raised a tag about tick 828, "Some of the visitors are
-misbehaving and your security hasn't seen it. Make sure your guards are patrolling all areas of the park, or build security
-cameras.", gone on 946: another message than `0xc` or `0x108` (its words are a prank with no guard to see it; not built
-here, not looked into).
+**Not predicted**: in both runs on a file with no guard the original said a line and raised its tag on tick 828, "Some of
+the visitors are misbehaving and your security hasn't seen it. Make sure your guards are patrolling all areas of the park,
+or build security cameras.", gone on 946. It is **the polled row 98, message `0x62`**, its score `0x0059e840`: this month's
+kids who got away (`FUN_004c94a0( 1 )`, `+0x21c00`) over a key, times a key (by their names and the line's words
+`GeneralLaxSecurity.MoreThanThisGotAway` 1 and `ScorePerGetAway` 20; which slot is which key is not proven); response
+258, sample 292, the guards' cap, group 100. Both files hold nine got away, `guard.TPWS` none: the got-away count, not the
+missing guard, raised it. Not built here (counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`); it can be, from
+`ParkState.MisbehavingKids.GotAwayThisMonth`.
 
 | | The original | OpenTPW |
 |---|---|---|
@@ -2359,7 +2365,7 @@ here, not looked into).
 
 **Not built or not seen.** In no game run: a shut park (the test holds it scoring), the line said again past its 120
 quarter-ticks (the test holds it), a kid counted in play (nothing here counts one), Full Simulation (not asked: the row is
-either mode's), the other three themes. Not heard in either game. The tag of about tick 828 in the original is not built.
+either mode's), the other three themes. Not heard in either game. Row 98, which the original said on tick 828 on both files with no guard, is not built (counted).
 
 ## A park too big for its guards (message `0xd`, Q412)
 
@@ -2474,9 +2480,8 @@ stand outside the gate on the road (`mType` 30), so it scores nought.
 screen on its entertainers' tab, the third), no second, thirty seconds. String 20 reads "You've no entertainers and the
 park is starting to get busy. Maybe you should hire some?" (`Language/american`'s, its letters shifted, "You have no").
 
-**The other staff rows** (read for the order of the next pieces): rows 8 and 9 are built since ("Litter and no
-handyman", above); row 11 (`StaffHireGuards1`, `0x0059ccb0`, category 9) waits on
-`WaitingTimes.DaysForStaff`, answers nought with a guard and then scores the crowd less 70; rows 15 and 16
+**The other staff rows** (read for the order of the next pieces): rows 8 and 9 ("Litter and no handyman", above) and
+row 11 ("A busy park with no guard", above) are built; rows 15 and 16
 (`StaffHireResearchers1`, `2`) answer nought with a researcher and read the kinds of ride on offer and standing
 (`0x004ca450`, `0x004ca7b0`; string 21 is "You've built most of the available rides..."); row 17 (`StaffHireResearchers3`,
 category 4) reads the months into the game.
