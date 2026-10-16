@@ -886,7 +886,7 @@ public sealed partial class ParkPeople : Entity
 	public static void TurnTheMonth( ParkPeople? people, ParkState? state, ParkItemCatalogue? catalogue )
 	{
 		people?.TrainTheStaff();
-		state?.TurnTheMonth( catalogue, people?.GateGuestCensus ?? 0 );
+		state?.TurnTheMonth( catalogue, people?.GateGuestCensus ?? 0, people?.GuestsInsideHappiness ?? 0f );
 		people?.PayTheWages();
 	}
 
@@ -2651,6 +2651,34 @@ public sealed partial class ParkPeople : Entity
 	}
 
 	internal int GateGuestCensus => _peeps.Count( peep => InsideGateCensus( peep.Navigator ) );
+
+	/// <summary>
+	/// The mean happiness of the guests <see cref="GateGuestCensus"/> counts, <c>FUN_004c7bb0</c>: each one's happiness
+	/// truncated and cut to its low byte, summed as a whole number, over their count; nought with none inside or the park
+	/// shut (<c>FUN_0051a280</c>).
+	/// </summary>
+	internal float GuestsInsideHappiness
+	{
+		get
+		{
+			if ( State.ParkIsClosed )
+				return 0f;
+
+			var sum = 0;
+			var count = 0;
+
+			foreach ( var peep in _peeps )
+			{
+				if ( !InsideGateCensus( peep.Navigator ) )
+					continue;
+
+				sum += (int)peep.Happiness & 0xff;
+				++count;
+			}
+
+			return count > 0 ? (float)((double)sum / count) : 0f;
+		}
+	}
 
 	/// <summary>
 	/// The guests waiting for the park to open, FUN_004c91c0: those in <see cref="PeepState.WaitingForOpening"/>

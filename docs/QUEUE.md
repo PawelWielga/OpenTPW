@@ -44,9 +44,14 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q392. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q393. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q392 (`hud.md`, "The guests' happiness at a close"): the 14th ring is kept. Nothing here reads it: the park
+  status screen (`PARK_STATUS_SCREEN`), which graphs it, is not built. The 15th (a mean of `FUN_004cef30`) and the 16th
+  (`FUN_004cceb0`) are still the file's bytes (`ANALYSER_MONTH_CLOSE`). In no game run: a close with the park shut
+  (tested only), a guest's happiness below nought or past 255 (tested only), a ring gone round 144 months, Full
+  Simulation (not asked: the ring is either mode's), the other three themes.
   From Q391 (`hud.md`, "The arrivals"): the 13th ring is kept. Nothing here reads it: the park status screen
   (`PARK_STATUS_SCREEN`), whose first series it is, is not built. The arrival manager's ring of five loads (`+0x216dc`,
   each load's size as it is called; a challenge's test `FUN_005a0780` reads its wrapped byte) is not kept, and a written
@@ -55,8 +60,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   mode's), the other three themes.
   From Q390 (`hud.md`, "The guests inside and the rides at a close"): the 10th and 12th rings are kept. Nothing here
   reads them: the park status screen (`PARK_STATUS_SCREEN`), which graphs the 10th beside the 13th to 16th, is not
-  built; nothing reads the 12th. The 13th is kept (Q391); the analyser's other three int rings, the
-  14th's float (`FUN_004c7bb0`), the 15th (a mean of `FUN_004cef30`) and the 16th (`FUN_004cceb0`), are still the file's
+  built; nothing reads the 12th. The 13th and the 14th's float are kept (Q391, Q392); the analyser's other two int rings,
+  the 15th (a mean of `FUN_004cef30`) and the 16th (`FUN_004cceb0`), are still the file's
   bytes (`ANALYSER_MONTH_CLOSE`), and so are the two counts' kept answers (`+0x1f0b8` to `+0x1f0cc`). An upgrade placed
   in an Instant Action park is not catalogued here, so not counted as a ride. In no game run: a ride condemned or
   broken at a close (tested only), an upgrade placed, a ring gone round 144 months, Full Simulation (not asked: the

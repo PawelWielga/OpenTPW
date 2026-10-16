@@ -52,6 +52,15 @@ public sealed class ParkMonthRing
 	}
 
 	/// <summary>
+	/// The month's change for the ring of floats, the 14th (<c>+0x20f10</c>): <paramref name="value"/>'s bits into the
+	/// next slot, as <see cref="Push(int)"/> (<c>FSTP</c> at <c>0x004c79a0</c>).
+	/// </summary>
+	public void Push( float value ) => Push( BitConverter.SingleToInt32Bits( value ) );
+
+	/// <summary>The newest month as a float, for the ring of floats: <see cref="Newest"/>'s bits.</summary>
+	public float NewestSingle => BitConverter.Int32BitsToSingle( Newest );
+
+	/// <summary>
 	/// The newest month's total as the hire screen reads it (<c>0x0049c54f</c>): the current slot's; below nought,
 	/// the slot that index plus the ring's length names once the ring has wrapped, and nought before.
 	/// </summary>

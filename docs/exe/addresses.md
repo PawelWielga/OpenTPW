@@ -347,6 +347,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x004b8ee0` | | OpenTPW/UI/FrontEnd/Screens/IslandPanel.cs  |
 | `0x004b9340` | | OpenTPW/UI/FrontEnd/FrontEndLines.cs OpenTPW/UI/FrontEnd/Screens/IslandPanel.cs  |
 | `0x004b9840` | | OpenTPW/UI/FrontEnd/Screens/IslandPanel.cs  |
+| `0x004c79a0` | Analyser's month close `FUN_004c7720`: `FSTP` of `FUN_004c7bb0`'s mean happiness into the 14th ring, its one of floats (`+0x20f14` + slot x 4; `hud.md`, "The guests' happiness at a close") | OpenTPW.Files/Formats/Save/ParkMonthRing.cs  |
 | `0x004cf3f6` | Arrival manager `FUN_004cf3e0`: `FUN_0041a990`'s elapsed count against the period `[0x00785314]`; `JBE` skips the call, so the count must be more than the period | OpenTPW.Tests/ParkPeopleTests.cs OpenTPW/World/Park/ParkPeople.cs  |
 | `0x004cf455` | Arrival manager: re-tests the offloading flag (`+0x10`) after a load is called, so the same call goes on to ask the vehicle | OpenTPW/World/Park/ParkPeople.cs  |
 | `0x004cf489` | Arrival manager FUN_004cf3e0: with a load held and no vehicle answering, the load's vehicle summoned by its size | OpenTPW.Tests/ParkTickTests.cs OpenTPW/World/Park/ParkPeople.cs  |

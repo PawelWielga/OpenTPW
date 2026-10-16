@@ -7065,6 +7065,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   close on 1470 `arrivals 13`, written [13, 13] on slot 1; main's build wrote [13] a slot behind. The original read both,
   and a mid-month file's 13 so far, which its own close pushed whole. 15 bugs put back, all caught after a test change (a
   stop off the map).
+- [x] **Q392. The analyser's guests' happiness, kept in its ring.** The 14th ring (`+0x20f10`), its one of floats: the
+  mean happiness of the guests inside at the close (`FUN_004c7bb0`: each one's `+0x19c` truncated to its low byte, summed
+  whole, over the count; `0.0` with none or the park shut), pushed after the rides; `ParkState.MonthHappiness` and
+  `ParkPeople.GuestsInsideHappiness`, the file's at a load, written. Shipped [0.0]; in 243 of the 270 closed months with
+  guests on hand the mean times the 10th's count is whole (the rest one Full Simulation park's).
+  `q392/run-fix2` (the final build, the stock park): the close on 1470 `guests inside 16, happiness 45.4375`, written
+  [0.0, 45.4375] on slot 1; main's build wrote [0.0] a slot behind. The original read both, its own close pushing 44.875
+  (16 inside) and, on main's file, that file's guests' mean 46.542. 19 bugs put back, all caught after a test change.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -115,7 +115,7 @@ public class ParkMonthCountsTests
 		var same = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
 			MonthRings: new( shipped.MonthBalance!, shipped.MonthParkValue!, shipped.MonthCosts!, shipped.MonthStaffCosts!, shipped.MonthTraining!,
 				shipped.MonthCashIn!, shipped.MonthGateTakings!, shipped.MonthShopTakings!, shipped.MonthSideshowTakings!, inside,
-				shipped.MonthVisitors!, rides, shipped.MonthArrivals! ) ) );
+				shipped.MonthVisitors!, rides, shipped.MonthArrivals!, shipped.MonthHappiness! ) ) );
 		var written = new ParkWorld( same );
 
 		Assert.AreEqual( (1, 1234), (written.MonthGuestsInside!.Current, written.MonthGuestsInside.Newest) );

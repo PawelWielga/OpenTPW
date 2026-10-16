@@ -1632,7 +1632,7 @@ before any other ring (`FUN_006ad810` on the bank, `FUN_005195d0`'s thing `+0xc`
 total `+0x1f100` is never written and reads 0 in every file), and after the seven money rings the other seven in this
 order (read 2026-10-15, Q389, `0x004c788c`..`0x004c7a7a`; not ring order): the month total `+0x20cc0` closed as a money
 ring is (`+0x20cc0`, added by `FUN_004cf3e0`; below, "The arrivals"), `FUN_004c7fa0` (`+0x205d0`; it and the 12th below, "The guests inside and the rides at a close"), the lifetime visitors `+0x21c08`
-(`+0x20820`, below, "The lifetime visitors"), `FUN_004c8070` (`+0x20a70`), `FUN_004c7bb0`'s float (`+0x20f10`),
+(`+0x20820`, below, "The lifetime visitors"), `FUN_004c8070` (`+0x20a70`), `FUN_004c7bb0`'s float (`+0x20f10`; below, "The guests' happiness at a close"),
 `FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value", below), a mean of `FUN_004cef30` (`+0x21160`) and
 `FUN_004cceb0` (`+0x213b0`); the others not read further.
 
@@ -1806,6 +1806,37 @@ Nothing here reads it: the park status screen is not built (`PARK_STATUS_SCREEN`
 held [13, 13] on the money rings' slot; main's build left [13] a slot behind. The original given this game's file read
 [13, 13] and its close at once pushed 0; given the mid-month file, 13 so far, pushed whole by its own close on tick 1383
 (`q391/orig/a-load.log`, `b-load.log`, `side-by-side.png`).
+
+#### The guests' happiness at a close
+
+Read 2026-10-15 (Q392). **The 14th ring (`+0x20f10`, its slot `+0x21154`, count `+0x21158`, wrapped `+0x2115c`, months
+`+0x20f14`) is the analyser's one ring of floats**: the close (`0x004c796d`, after the 12th's push) calls `FUN_004c7bb0`
+(a thiscall with one stack argument it never reads, `RET 4`; it takes the thing manager `[0x0080239c]` for itself) and
+`FSTP`s its answer into the next slot (`0x004c79a0`); nothing writes the month so far, nought in every file.
+`FUN_004c7bb0` answers `0.0` (`[0x0070031c]`) while the park is shut (`FUN_0051a280`, the world's `mParkClosed`
+`+0x1da710`); otherwise it walks the used thing list for things of kind 1 (`+2`, guests) on whose cell `FUN_004fa990`
+passes, the 10th's walk and test (above), and for each one `__ftol`s the happiness float `+0x19c`, keeps its low byte,
+and adds it to a whole-number sum (`FILD`, `FIADD`, `__ftol`, `0x004c7c46`..`0x004c7c67`); the answer is the sum over
+the count (`FIDIV`), `0.0` with none. The 10th's `FUN_004c7fa0` can answer its kept count of the same quarter tick, this
+one walks every time. **Readers**: the park status screen's graph (above); its labels are not read.
+
+**Measured** (`q392/sweep.py`, `law.py`): the shipped `Easymode.TPWI` holds one month closed on `0.0`, nothing so far.
+Over all 593 park files on hand every month is a float from 0 to 255 and the month so far is nought; the ring stands on
+the cash-in ring's slot in 576. Of the 270 closed months with guests inside (the 10th above nought), the mean times the
+10th's count is a whole number in 243; the 27 others are three months of one Full Simulation park in nine copies
+(`1FullSimCheated`, jungle), where the first fits only a count of 52 for the 10th's 49 (the 10th's kept answer, by my
+reading; not looked into). Every closed month with nobody inside reads `0.0`.
+
+**OpenTPW** (Q392). `ParkState.MonthHappiness`, the file's at a load and empty in a park made with no file, its floats
+kept as their bits (`ParkMonthRing.Push( float )`, `NewestSingle`); `ParkPeople.GuestsInsideHappiness` is the mean
+(the guests `GateGuestCensus` counts, nought with the park shut); `TurnTheMonth` pushes it after the rides, before the
+park value; the writer writes it (`PutMonthRings`); `money` prints it as newest, slot and now. Nothing here reads it:
+the park status screen is not built (`PARK_STATUS_SCREEN`). **Confirmed** (`q392/`): the stock park's close on tick
+1470 named `guests inside 16` and `happiness 45.4375` (727 over 16), `money` read the same at slot 1, and the file held
+[0.0, 45.4375] on the money rings' slot, its own sixteen guests' mean the same; main's build left [0.0] a slot behind.
+The original given this game's file read [0.0, 45.438] and its own close at once pushed 44.875 with 16 inside (718
+over 16); given main's file, its close pushed 46.542, the mean of that file's 24 guests to the last place
+(`q392/orig/a-load.log`, `b-load.log`, `side-by-side.png`).
 
 #### The first row is picked as a list fills
 
