@@ -833,6 +833,53 @@ public class ParkClosedRideTests
 	}
 
 	/// <summary>
+	/// What the advisor's row 14 reads of the park (0x0059ce30): the guests inside it under 30 happiness, each one's
+	/// cut to a whole number and to its low byte (<c>FUN_004c9750</c> asked with 30), beside the guests inside.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a guest outside counted; 30 counted; the happiness rounded, not cut; the low byte not taken; another need read for the happiness.</remarks>
+	[TestMethod]
+	public void TheAdvisorsParkFactsCountTheUnhappyGuestsInside()
+	{
+		var park = Open();
+
+		try
+		{
+			(int Inside, int Unhappy) Read() => (park.People.AdvisorFacts().GuestsInside, park.People.AdvisorFacts().GuestsUnhappy);
+			var guests = park.People.Peeps;
+			Assert.AreEqual( 13, guests.Count );
+			var (ox, oy) = (-1, -1);
+			for ( var y = 0; y < ParkWorld.MapSize && ox < 0; ++y )
+				for ( var x = 0; x < ParkWorld.MapSize && ox < 0; ++x )
+					if ( !Peep.CountsOn( park.State.Record( x, y ).Type ) ) (ox, oy) = (x, y);
+
+			foreach ( var guest in guests )
+			{
+				guest.Navigator.Position = FixedVector.AtCell( 60, 60 );
+				guest.Happiness = 30f;
+				guest.Toilet = 0f;
+			}
+
+			Assert.AreEqual( (13, 0), Read(), "30 is not under 30" );
+			guests[0].Happiness = 29.99f;
+			Assert.AreEqual( (13, 1), Read(), "29.99 is cut to 29" );
+			guests[1].Happiness = 285f;
+			guests[2].Happiness = 256f;
+			Assert.AreEqual( (13, 3), Read(), "the low byte: 285 is 29 and 256 nought" );
+			guests[3].Happiness = -1f;
+			Assert.AreEqual( (13, 3), Read(), "-1 is 255" );
+			guests[4].Toilet = 99f;
+			guests[4].Thirst = 0f;
+			Assert.AreEqual( (13, 3), Read(), "the toilet need is not asked" );
+			guests[0].Navigator.Position = FixedVector.AtCell( ox, oy );
+			Assert.AreEqual( (12, 2), Read(), "a guest outside the park is neither" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
 	/// What row 5's score function reads of the stock park (<c>FUN_004c9960</c> asked for type 4,
 	/// <c>FUN_004ca3a0</c> handed <c>StaffHireMechanics1.PoorerStateThan</c>, 25): its one mechanic, none once he is
 	/// fired, and its rides worn: the Belly Bounce once its State of repair's whole number is under 25, or once it

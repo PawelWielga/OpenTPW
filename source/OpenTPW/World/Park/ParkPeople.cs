@@ -2723,7 +2723,8 @@ public sealed partial class ParkPeople : Entity
 	/// (0x004c9290); and the researchers (FUN_004c9960 asked for type 8) and the lab's projects of a feature's
 	/// kind that are not done (0x004ca690, <see cref="ParkResearch.Unfinished"/>); and the map's developed cells
 	/// (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and this month's misbehaving kids (FUN_004c94a0 asked with
-	/// nought, <see cref="ParkState.MisbehavingKids"/>). With no catalogue no kind is counted.
+	/// nought, <see cref="ParkState.MisbehavingKids"/>); and the guests inside under <see cref="ParkAdvisorMessages.UnhappyBelow"/>
+	/// happiness, each one's truncated to its low byte (FUN_004c9750). With no catalogue no kind is counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2741,12 +2742,13 @@ public sealed partial class ParkPeople : Entity
 		// The need is taken as its whole number's low byte, as the original compares it (0x004c9301); with no
 		// advisor there is no level to be over.
 		var toiletNeedOver = State.AdvisorMessages?.ToiletNeedOver ?? 0xff;
-		var (inside, needing) = (0, 0);
+		var (inside, needing, unhappy) = (0, 0, 0);
 		foreach ( var peep in _peeps )
 		{
 			if ( !InsideGateCensus( peep.Navigator ) ) continue;
 			++inside;
 			if ( ((int)peep.Toilet & 0xff) > toiletNeedOver ) ++needing;
+			if ( ((int)peep.Happiness & 0xff) < ParkAdvisorMessages.UnhappyBelow ) ++unhappy;
 		}
 
 		foreach ( var thing in State.ObjectsInChainOrder() )
@@ -2812,7 +2814,7 @@ public sealed partial class ParkPeople : Entity
 			_research?.Unfinished( ItemDescriptionFile.SideShow ) ?? 0,
 			_research?.Rate( ItemDescriptionFile.SideShow, ability, MostResearchAbility ) ?? 0, ability, MostResearchAbility,
 			new ParkAdvisorMessages.StaffTraining( TrainingOf( 0 ), TrainingOf( 1 ), TrainingOf( 2 ), TrainingOf( 3 ), TrainingOf( 4 ) ),
-			State.DevelopedCells(), State.MisbehavingKids.Month );
+			State.DevelopedCells(), State.MisbehavingKids.Month, unhappy );
 	}
 
 	/// <summary>

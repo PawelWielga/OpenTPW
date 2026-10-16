@@ -2032,7 +2032,7 @@ again past its 120 quarter-ticks, two handymen or more (the test holds three), a
 minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
 handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
 game. Rows 12 and 13 are built since ("A park with no guard", "A park too big for its guards", below); the other
-staff rows, 8, 9, 11 and 14 to 17, are not (Q415).
+staff rows, 8, 9, 11 and 15 to 17, are not (Q416; row 14 is built, "A busy park with no entertainer").
 
 ## A park with no guard (message `0xc`, Q413)
 
@@ -2116,7 +2116,7 @@ pranks", below). `q413/side-by-side.png` sets this game's line beside the origin
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 36 and 37, the third's gesture row counted; the test
 holds the turn), a kid counted in play (nothing here counts one), two guards or more, a guard hired after the line,
 Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The other staff
-rows, 8, 9, 11 and 14 to 17, are not built (Q415).
+rows, 8, 9, 11 and 15 to 17, are not built (Q416; row 14 is, below).
 
 ## Lots of pranks (message `0x108`, Q414)
 
@@ -2255,6 +2255,100 @@ guard over his 750 (776 cells; the test holds it), two guards or more, a guard h
 Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The guards' list
 behind the button held one candidate here and three in the original: the pool's top-up, not this row (Q356's note).
 Row 12 is built since ("A park with no guard", below).
+
+## A busy park with no entertainer (message `0xe`, Q415)
+
+**Row 14, message `0xe`, `StaffHireEntertainers1`:** polled, category 0, either game mode (the row's `+0x0c` is 2),
+one copy, first response 41, three lines in turn (selection 2). Responses 41 to 43 are **samples 41 to 43**, the random
+gesture chain, **model slot 1, prop -1**: the theme's own advisor in its costume, as the entertainers' training line
+(row 31) and the features' rows 79 and 81 ("The theme's own advisor and its costume"); group 16. From the shipped
+park's cursor its turns are one after row 13's: ticks 781, 936, 1091 and every 155 on. The transcripts
+(`global-speech-transcripts.tsv`): "all the world's a stage and you don't have any players the park is getting busy so
+maybe you should hire some entertainers", "it's really hopping out there and you're a little short on entertainers
+actually you don't have any entertainers maybe you should hire some", "here's one for you how many entertainers does it
+take to screw in the light bulb ... you don't have any and the park is getting busy have you considered hiring some".
+
+**Its score, `0x0059ce30`** (undefined bytes; read with Ghidra's `PseudoDisassembler`, nothing written to the project;
+`ECX` the balance object, kept in `ESI`):
+
+1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
+2. The entertainers, `FUN_004c9960( 6 )` on the analyser: above nought (`JG`), nought.
+3. **The unhappy guests' share**, `FUN_004c9750( 0x1e )`: the used thing list walked for things of kind 1 (guests) on
+   whose cell `FUN_004fa990` passes, the guests inside as `FUN_004c7fa0` counts them; of those, the ones whose happiness
+   (the float `+0x19c`, `__ftol` and `& 0xff`) is under the argument; the answer is that count times 100 over the guests
+   inside, in whole numbers, nought with none. Not above **30** (`CMP EAX,0x1e`, `JLE`, a literal, no key): nought.
+4. **The crowd**, `FUN_004c81e0` (half the guests inside, from nought to 100; the music's level, `ParkAudio`), less
+   `[ESI + 0x10c]`, `StaffHireEntertainers1.AtLeastThisBusy`, **35**, times `[ESI + 0x110]`, `ScorePerExtraBusyPoint`,
+   **3** (`0x0059ce91`). **Nothing holds it at nought**: a crowd under 35 scores below nought, which the poll does not take.
+
+`MinScoreForConsideration` is 25, so **a crowd of 44, 88 guests inside, is enough and 43 is not**, with more than 30 per
+cent of them under 30 happiness and no entertainer. The shipped park holds one entertainer (thing 27) and its 13 guests
+stand outside the gate on the road (`mType` 30), so it scores nought.
+
+**Its tag** is row 16 of the tag table: key 383, picture 2, string 20, the bar's first button of type 15 (the hire
+screen on its entertainers' tab, the third), no second, thirty seconds. String 20 reads "You've no entertainers and the
+park is starting to get busy. Maybe you should hire some?" (`Language/american`'s, its letters shifted, "You have no").
+
+**The other staff rows** (read for the order of the next pieces, not built): rows 8 and 9 (`StaffHireHandymen1`,
+`2`, `0x0059cb40`, `0x0059cbb0`) answer nought with a handyman and read the litter (`FUN_004ccdf0`): row 8 three a point
+less 3 up to 25 points, row 9 three a point less 26 from 26; row 11 (`StaffHireGuards1`, `0x0059ccb0`, category 9) waits on
+`WaitingTimes.DaysForStaff`, answers nought with a guard and then scores the crowd less 70; rows 15 and 16
+(`StaffHireResearchers1`, `2`) answer nought with a researcher and read the kinds of ride on offer and standing
+(`0x004ca450`, `0x004ca7b0`; string 21 is "You've built most of the available rides..."); row 17 (`StaffHireResearchers3`,
+category 4) reads the months into the game.
+
+### OpenTPW (`ParkAdvisorMessages.HireEntertainers`, a topic's `BusyWithNoEntertainer`; `ParkFacts.GuestsUnhappy`; tag row 16)
+
+A topic scored from the same `ParkFacts`, which now carry the guests inside under 30 happiness (`ParkPeople.AdvisorFacts`,
+each one's happiness cut to its low byte, beside `GuestsInside`, row 82's count). The crowd is `ParkAudio.CrowdLevel`, the
+music's `FUN_004c81e0`. The entertainers are the kind's members rows 28 to 32 already read. The poll line ends ` closed=N
+entertainers=N inside=N unhappy=N crowd=N`. `ParkTags.Rows` lists row 16.
+
+**The scenes** (`lib/stockscene.py`, `q415/mkscene.py`): the stock park paused on tick 765 with its entertainer, thing 27,
+dismissed and 90 guests admitted on (52,26) and (52,34) (93 inside, `parkfile.py -g`), then each happiness written
+(`+422`, 90, or 5 for the first N inside): `busy.TPWS` 40 unhappy; `even.TPWS` 30; `entkept.TPWS` the same scene with the
+entertainer kept, 40. **Five of the stock guests on the road walk through the gate by tick 781 in both games**, so the
+poll counts 98 inside: 40 of them is 40 per cent, a crowd of 49, (49 - 35) x 3 = **42**; 30 of 98 is a whole 30.
+
+**Predicted first** (`q415/PREDICTION.txt`). Missed, mine: round 1 took the file's 93 inside, though I had named the walk
+through the gate (`run-fix1` read 98, score 42); predicted again and held. In the original, the stills came after the line,
+as Q413's did (filmed, below).
+
+**This game** (`q415/confirm.py fix|even|ent|control`, on the desktop; `run-fix2` the final run): *`busy`*: `poll
+message=14 row=14 days=33 score=42 threshold=25 tick=781 result=post closed=0 entertainers=0 inside=98 unhappy=40
+crowd=49`, queued and said on that tick (`attempt=1 message=14 subject=0 score=42 threshold=25 response=41 sample=41
+line=0 tick=781`), `Advisor: sample 41 ... wearing -1,0 on model slot 1`: Lost Kingdom's explorer up, the tag on the
+aerial (`1-line.png`). The tag clicked: `message bar: tag 16 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453`,
+`first=mb_buy/help=527 second=hidden erase=mb_erase` and string 20 (`2-bar.png`). The button clicked: `button type 15
+opens the hire screen on tab 2 and takes tag 16 off`, `windows` reading `ParkHireScreen tab 2`, "Hire Entertainers"
+(`3-screen.png`). *`even`* (`run-even2`): `... score=0 ... result=no-score closed=0 entertainers=0 inside=98 unhappy=30
+crowd=49`, silent to tick 961. *`entkept`* (`run-ent2`): `... result=no-score closed=0 entertainers=1 inside=98
+unhappy=40 crowd=49`, silent to 962. **Main's build** on `busy` (`run-control1`): no line of message 14, no tag, to 962.
+
+**The original** (`q415/orig/run.sh <file>`, `advisor.py ... 0xc,0xd,0xe,0x108 poll` beside `tags.py`, `bar.py`,
+`screens.py` and `inside.py ... 60 30`; a fresh program each, off-screen). It loads this game's made guests and counts
+them as this game does: `inside 93 ... unhappy 40 share 43 crowd 46` on tick 765, and `inside 98 ... unhappy 40 share 40
+crowd 49` from 773, the same five through the gate. *`busy`* (runs a and a2): **message `0xe`'s record from (0, -1, 0, 0)
+to (781, 0, 1, 0) on tick 781**, one tag at (84, 909, 154, 974) lettered string 20 of `Language/american`, "You have no
+entertainers and the park is starting to get busy. Maybe you should hire some?"; filmed with `record.sh`, the explorer
+in the pith helmet up from about 5 s, as the record moved (`orig/a2-told.png`, film 6.50 s). The tag clicked: the bar's
+thing 0, buttons 15 and 0, item 0 and the text (`orig/a-bar.png`). The button clicked: `hire 0x46be7d0 hiretab 2` on
+tick 899, "Hire Entertainers" with the third tab lit (`orig/a-button.png`). *`even`* (run b): 30 of 98 (a whole 30),
+`0xe`'s record unmoved to tick 2283, no tag. *`entkept`* (run c): unmoved to tick 1937, no tag. `q415/side-by-side.png`
+sets this game's line beside the original's.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 14 | polled; nought shut, with an entertainer, or with 30 per cent or fewer of the guests inside under 30; then (half the guests inside, to 100, less 35) x 3 | the same |
+| 98 inside, 40 under 30, no entertainer | said on tick 781, line 0, Lost Kingdom's own advisor | the same (42) |
+| 98 inside, 30 under 30 | not said | the same (`no-score`) |
+| 98 inside, 40 under 30, one entertainer | not said | the same (`no-score`, `entertainers=1`) |
+| The tag and the bar | row 16, part 2, string 20; button 15 builds the hire screen on its entertainers' tab, tag off | the same |
+
+**Not built or not seen.** In no game run: lines 2 and 3 (samples 42 and 43; the test holds the turn), a crowd under 35
+(a score below nought, tested only), a crowd past 100 (tested only), two entertainers or more, an entertainer hired after
+the line, Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The
+other staff rows, 8, 9, 11 and 15 to 17, are not built (Q416).
 
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 

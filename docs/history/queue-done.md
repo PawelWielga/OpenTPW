@@ -7143,6 +7143,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   result=post closed=0 guards=0 kids=3`, said in the cap, no tag; `guard.TPWS` (a guard, 4 kids) said too; `two.TPWS`
   (2 kids) `no-score`; main's build silent. The original: `0x108` (903, 0, 1, 0) on 903 for three kids, unmoved for
   two. 20 bugs put back.
+- [x] **Q415. The advisor's row 14, a busy park with no entertainer.** `0x0059ce30`: nought shut or with an
+  entertainer, nought unless more than 30 per cent of the guests inside are under 30 happiness (`FUN_004c9750( 30 )`),
+  then (the crowd, `FUN_004c81e0`, less `AtLeastThisBusy` 35) x `ScorePerExtraBusyPoint` 3, below nought too. Three
+  lines, responses 41 to 43, in the theme's own costume; tag 16, string 20, the entertainers' hire button
+  (`advisor-park.md`, "A busy park with no entertainer"). Confirmed: `busy.TPWS` (the entertainer dismissed, 40 of 98
+  inside unhappy) `score=42 ... tick=781 result=post closed=0 entertainers=0 inside=98 unhappy=40 crowd=49`, said, tag
+  16, "Hire Entertainers"; 30 of 98, and the entertainer kept, silent; main's build silent. The original, given the
+  files: 98 inside, `0xe` (781, 0, 1, 0) on 781, the explorer up (filmed), tag, bar, `hiretab 2`; the other two silent.
+  33 bugs put back.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
