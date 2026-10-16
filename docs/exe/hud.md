@@ -1983,7 +1983,7 @@ scores. With nought (this month's): `0x005a04f0`, the polled row 264's (message 
 `0x0059cd30`, row 12's, a park with no guard (`advisor-park.md`, "A park with no guard", Q413). With one (this month's
 got away): `0x0059d3dd` in row 22's score `0x0059d3b0` (with a guard on the staff, a key's score past a key's count; its
 lines 64 to 66 ask for security cameras), and `0x0059e853` and `0x0059e871` in row 98's `0x0059e840` (message `0x62`,
-`advisor-park.md`, "Lots of pranks"). Nothing reads the third.
+`advisor-park.md`, "Kids who got away", Q418). Nothing reads the third.
 
 **Measured** (`q395/sweep.py`): of 608 park files on hand, 594 hold nought, nought and nought; nine hold 0, 0, 3 (Alexah's
 Full Simulation jungle park and its copies); one the original wrote holds 1, 1, 1 (`q253/orig/sold-by-the-original.TPWS`,

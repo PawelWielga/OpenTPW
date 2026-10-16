@@ -7171,6 +7171,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   on 776, tag 11; 8 littered (21, under) and the handyman kept silent; main's build silent. The original, given the
   files (its share read from memory, 13, 30, 8, 30): `8` (775, 0, 1, 0) and `9` (776, 0, 1, 0), the cap filmed, the tags,
   bars and `hiretab 0`; the other two unmoved to 1151 and 1143. 41 bugs put back, all caught after one test changed.
+- [x] **Q418. The advisor's row 98, kids who got away.** `0x0059e840`: this month's kids who got away
+  (`FUN_004c94a0( 1 )`, `+0x21c00`) over `GeneralLaxSecurity.MoreThanThisGotAway` 1, times `ScorePerGetAway` 20; neither
+  the door nor the guards asked. Two lines, responses 257 and 258 (samples 291 and 292, the second with a gesture row), in
+  the guards' cap; tag 100, picture 1, string 119, no button (`advisor-park.md`, "Kids who got away"). Confirmed:
+  `q414/two.TPWS` (no guard, nine got away) `poll message=98 row=98 days=35 score=180 threshold=25 tick=828 result=post
+  closed=0 guards=0 gotaway=9`, said (`sample=291`, `wearing=6,0`), tag 100's bar lettered string 119; `guardaway.TPWS`
+  (the guard kept, three) `score=60` on 828, said; one got away `no-score`, silent; main's build silent. The original
+  given the three files: `0x62` (828, 0, 1, 0) on 828 in the first two, its action 14,998 and 14,164 ms (this game's
+  13,998 and 13,165 and the helper's 1,000), the same tag's words; the third unmoved to 16 April. 33 bugs put back, all
+  caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -128,6 +128,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int ToiletsClosed = 262;
 	/// <summary>Message 0x107, polled: the line about shut staff rooms, scored by the share of the staff rooms that are shut (0x005a0490).</summary>
 	internal const int StaffroomClosed = 263;
+	/// <summary>Message 0x62, polled: the line about lax security, scored by this month's kids who got away over a number (0x0059e840).</summary>
+	internal const int LaxSecurity = 98;
 	/// <summary>Message 0x108, polled: the line about pranksters, scored by this month's misbehaving kids over a number (0x005a04f0).</summary>
 	internal const int LotsOfPranks = 264;
 
@@ -232,6 +234,9 @@ internal sealed class ParkAdvisorMessages
 	/// section's AtLeastThisBusy, times the key's value, below nought too; nought otherwise.
 	/// <paramref name="MorePranksters"/> makes the score row 264's (0x005a04f0), and is the key of the count to pass: the
 	/// key's value where this month's misbehaving kids are more than it, shut or open, guarded or not; nought otherwise.
+	/// <paramref name="GotAwayMoreThan"/> makes the score row 98's (0x0059e840), and is the key of the count to pass:
+	/// where this month's kids who got away are more than it, that count times the key's value, shut or open, guarded
+	/// or not; nought otherwise.
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -246,7 +251,7 @@ internal sealed class ParkAdvisorMessages
 		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1,
 		string? CellsAHandyman = null, string? CellsAGuard = null, string? KidsWithNoGuard = null,
 		string? MorePranksters = null, string? BusyWithNoEntertainer = null, string? BusyWithNoGuard = null,
-		string? LitterWithNoHandyman = null, bool Filthy = false );
+		string? LitterWithNoHandyman = null, bool Filthy = false, string? GotAwayMoreThan = null );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -310,7 +315,8 @@ internal sealed class ParkAdvisorMessages
 	/// what rows 28 to 32's read: each kind of staff's <see cref="KindTraining"/>; and what row 10's reads besides: the
 	/// developed cells (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and what row 12's reads besides: this
 	/// month's misbehaving kids (FUN_004c94a0 asked with nought, <see cref="ParkState.MisbehavingKids"/>), which row 264's
-	/// reads alone; and what rows 8 and 9's read besides: the litter share (FUN_004ccdf0, <see cref="ParkState.LitterShare"/>).
+	/// reads alone; and what rows 8 and 9's read besides: the litter share (FUN_004ccdf0, <see cref="ParkState.LitterShare"/>);
+	/// and what row 98's reads alone: this month's misbehaving kids who got away (FUN_004c94a0 asked with one).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -321,7 +327,8 @@ internal sealed class ParkAdvisorMessages
 		int Features = 0, int FeatureKindsOnOffer = 0, int FeatureKindsStanding = 0,
 		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
 		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
-		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0, int GuestsUnhappy = 0, int LitterShare = 0 )
+		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0, int GuestsUnhappy = 0, int LitterShare = 0,
+		int KidsGotAway = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -460,6 +467,10 @@ internal sealed class ParkAdvisorMessages
 		// Row 264's one response is in the guards' cap; its group, 0x17f, has no row in the tag table, so it leaves no tag
 		// (docs/exe/advisor-park.md, "Lots of pranks").
 		new( LotsOfPranks, "LotsOfPranks.Score", 514, 505, Lines: 1, Prop: GuardCap, Polled: true, MorePranksters: "LotsOfPranks.MorePrankstersThan" ),
+
+		// Row 98's two responses are in the guards' cap, the second with a gesture row of its own (docs/exe/advisor-park.md,
+		// "Kids who got away").
+		new( LaxSecurity, "GeneralLaxSecurity.ScorePerGetAway", 257, 291, Lines: 2, GestureRowLine: 1, Prop: GuardCap, Group: 100, Polled: true, GotAwayMoreThan: "GeneralLaxSecurity.MoreThanThisGotAway" ),
 
 		// Rows 28 to 32, one a kind of staff in the table's own order. The entertainers' three responses name the
 		// theme's own advisor model and its costume (docs/exe/advisor-park.md, "Staff nobody has trained").
@@ -876,6 +887,13 @@ internal sealed class ParkAdvisorMessages
 			return pranked.MisbehavingKids > Value( pranksters ) ? Value( topic.ScoreKey ) : 0;
 		}
 
+		if ( topic.GotAwayMoreThan is { } lax )
+		{
+			// Neither a shut park nor a guard is asked (0x0059e840): this month's kids who got away alone (FUN_004c94a0 asked with one, +0x21c00).
+			if ( _park?.Invoke() is not { } escaped ) return 0;
+			return escaped.KidsGotAway > Value( lax ) ? escaped.KidsGotAway * Value( topic.ScoreKey ) : 0;
+		}
+
 		if ( topic.BusyWithNoEntertainer is { } busy )
 		{
 			// The share answers nought with nobody inside (FUN_004c9750); the crowd is the music's, and nothing keeps the score from going below nought.
@@ -999,6 +1017,8 @@ internal sealed class ParkAdvisorMessages
 			shut = $" closed={(open.Closed ? 1 : 0)} guards={open.Staff.Guards.Members} kids={open.MisbehavingKids}";
 		if ( topic.MorePranksters != null && _park?.Invoke() is { } pranked )
 			shut = $" closed={(pranked.Closed ? 1 : 0)} guards={pranked.Staff.Guards.Members} kids={pranked.MisbehavingKids}";
+		if ( topic.GotAwayMoreThan != null && _park?.Invoke() is { } escaped )
+			shut = $" closed={(escaped.Closed ? 1 : 0)} guards={escaped.Staff.Guards.Members} gotaway={escaped.KidsGotAway}";
 		if ( topic.BusyWithNoEntertainer != null && _park?.Invoke() is { } busyPark )
 			shut = $" closed={(busyPark.Closed ? 1 : 0)} entertainers={busyPark.Staff.Entertainers.Members} inside={busyPark.GuestsInside} unhappy={busyPark.GuestsUnhappy} crowd={ParkAudio.CrowdLevel( busyPark.GuestsInside )}";
 		if ( topic.BusyWithNoGuard != null && _park?.Invoke() is { } thronged )

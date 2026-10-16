@@ -2129,7 +2129,7 @@ again past its 120 quarter-ticks, two handymen or more (the test holds three), a
 minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
 handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
 game. Rows 12 and 13 are built since ("A park with no guard", "A park too big for its guards", below); the other
-staff rows, 15 to 17, are not (Q418; rows 8, 9, 11 and 14 are built, "Litter and no handyman", "A busy park with no guard", "A busy park with no entertainer").
+staff rows, 15 to 17, are not (Q420; rows 8, 9, 11 and 14 are built, "Litter and no handyman", "A busy park with no guard", "A busy park with no entertainer").
 
 ## A busy park with no guard (message `0xb`, Q416)
 
@@ -2303,7 +2303,7 @@ pranks", below). `q413/side-by-side.png` sets this game's line beside the origin
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 36 and 37, the third's gesture row counted; the test
 holds the turn), a kid counted in play (nothing here counts one), two guards or more, a guard hired after the line,
 Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The other staff
-rows, 15 to 17, are not built (Q418; rows 8, 9, 11 and 14 are, above and below).
+rows, 15 to 17, are not built (Q420; rows 8, 9, 11 and 14 are, above and below).
 
 ## Lots of pranks (message `0x108`, Q414)
 
@@ -2350,11 +2350,9 @@ same post on 903 for three and for four kids with a guard. `q414/side-by-side.pn
 **Not predicted**: in both runs on a file with no guard the original said a line and raised its tag on tick 828, "Some of
 the visitors are misbehaving and your security hasn't seen it. Make sure your guards are patrolling all areas of the park,
 or build security cameras.", gone on 946. It is **the polled row 98, message `0x62`**, its score `0x0059e840`: this month's
-kids who got away (`FUN_004c94a0( 1 )`, `+0x21c00`) over a key, times a key (by their names and the line's words
-`GeneralLaxSecurity.MoreThanThisGotAway` 1 and `ScorePerGetAway` 20; which slot is which key is not proven); response
-258, sample 292, the guards' cap, group 100. Both files hold nine got away, `guard.TPWS` none: the got-away count, not the
-missing guard, raised it. Not built here (counted, `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`); it can be, from
-`ParkState.MisbehavingKids.GotAwayThisMonth`.
+kids who got away (`FUN_004c94a0( 1 )`, `+0x21c00`) over `GeneralLaxSecurity.MoreThanThisGotAway` 1, times
+`ScorePerGetAway` 20, the guards' cap, group 100. Both files hold nine got away, `guard.TPWS` none: the got-away count, not
+the missing guard, raised it. Built since ("Kids who got away", below).
 
 | | The original | OpenTPW |
 |---|---|---|
@@ -2365,7 +2363,75 @@ missing guard, raised it. Not built here (counted, `PARK_ADVISOR_POLLED_ROW_NOT_
 
 **Not built or not seen.** In no game run: a shut park (the test holds it scoring), the line said again past its 120
 quarter-ticks (the test holds it), a kid counted in play (nothing here counts one), Full Simulation (not asked: the row is
-either mode's), the other three themes. Not heard in either game. Row 98, which the original said on tick 828 on both files with no guard, is not built (counted).
+either mode's), the other three themes. Not heard in either game. Row 98, which the original said on tick 828 on both files with no guard, is built (Q418, below).
+
+## Kids who got away (message `0x62`, Q418)
+
+**Row 98, message `0x62`, `GeneralLaxSecurity`** (the emulated table, `meta_full.json`, at `0x0076f870`): polled,
+category 0, either game mode (`+0x0c` 2), score function `0x0059e840`, one copy, first response 257, **two lines**,
+selection 2. Responses 257 and 258 (`0x0076afd8`, read in the image) are **samples 291 and 292**, model slot 0, prop 6
+(the guards' cap), no second prop, group 100; the first takes the random gesture chain and the second names gesture value
+27, row 11 (counted, `ADVISOR_RESPONSE_GESTURE_ROW`). From the shipped park's cursor its turn is 75 polled rows before
+row 264's: ticks 828, 983 and every 155 on. The transcripts (`global-speech-transcripts.tsv`): "some of the visitors are
+getting a little wild and your security hasn't noticed make sure your guards are patrolling the whole park or build some
+security cameras" (9.5 s), "hey did you see what that guy just did some of the visitors or misbehaving and security
+hasn't noticed..." (13.4 s), as transcribed.
+
+**Its score, `0x0059e840`** (undefined bytes, read by hand from `read_memory`; nothing written to the project; `ECX` the
+balance object, kept in `ESI`): `PUSH 1`, the world (`[0x007cf6ec]`) through `FUN_00519510`, then `FUN_004c94a0` on the
+analyser (`RET 4`: the `1` is its argument), **this month's kids who got away** (`+0x21c00`; `hud.md`, "The misbehaving
+kids"), against `[ESI + 0x314]`, **`MoreThanThisGotAway`, 1**: more (`JLE` past), and the score is the count asked again
+(`0x0059e871`) times `[ESI + 0x318]`, **`ScorePerGetAway`, 20** (`IMUL`); else nought (`0x0059e87f`). **Nothing else is
+asked**: not `mParkClosed`, not the guards, not the caught kids. The two keys are the schema's records at `0x00733328` and
+`0x00733364`, `0x3c` apart and in that order, ahead of the section's own record at `0x007333a0` (so slots `+0x314`,
+`+0x318`), set by `Advisor.sam`'s lines 580 and 581 (its heading at line 273 is a comment). The other order is refuted by
+the original's post on nine got away: nine is not more than 20.
+
+**Its tag** is row 100 of the tag table (`lib/tagtable.py`): key 383 (it takes no tag's place), picture 1, string 119,
+no button on the bar, thirty seconds, kind 0. String 119 reads "Some of the visitors are misbehaving and your security
+hasn't seen it. Make sure your guards are patrolling all areas of the park, or build security cameras."
+(`Language/american`'s is the same, its letters shifted).
+
+### OpenTPW (`ParkAdvisorMessages.LaxSecurity`, a topic's `GotAwayMoreThan`; `ParkFacts.KidsGotAway`; tag row 100)
+
+A topic scored from `ParkFacts.KidsGotAway`, which `ParkPeople.AdvisorFacts` fills from
+`ParkState.MisbehavingKids.GotAwayThisMonth` (the file's at a load since Q395, zeroed at a month's close). The poll line
+ends ` closed=N guards=N gotaway=N`, the facts beside the score though it reads only the count. `ParkTags.Rows` lists row
+100. Nothing here counts a kid who got away (the chase waits on the pranks, `DECIDE_PRANK_*`), so the count comes from the
+file.
+
+**The scenes**: `q414/two.TPWS` (no guard, 2 kids, 9 got away; row 264 silent on it), and `q418/mkkids.py`'s
+`guardaway.TPWS` (the shipped file, its guard kept, 0 kids, 3 got away) and `one.TPWS` (Q413's `noguard.TPWS` with 2, 1, 0).
+
+**Predicted first** (`q418/PREDICTION.txt`), every prediction held.
+
+**This game** (`q418/confirm.py fix|guard|under|control`, on the desktop; `run-fix1` the final run): *`two`*: `money`
+reading `misbehaving kids 2 got away 9 ever 0`, then `poll message=98 row=98 days=35 score=180 threshold=25 tick=828
+result=post closed=0 guards=0 gotaway=9`, said on that tick, the first line of the run (`attempt=1 message=98 subject=0
+score=180 threshold=25 response=257 sample=291 line=0 tick=828 duration=13998`), `saying sp_291.mp2 ... wearing=6,0`, him
+in the guards' cap, tag 100 on the aerial (`1-line.png`). The tag clicked: `message bar: tag 100 subject 0 item 0 bar:
+out=1`, `first=hidden second=hidden erase=mb_erase` and string 119 (`2-bar.png`). Row 264 on 903: `score=0 ...
+result=no-score ... kids=2`. *`guardaway`* (`run-guard1`): `... score=60 ... tick=828 result=post closed=0 guards=1
+gotaway=3`, said on 828 in the cap. *`one`* (`run-under1`): `... score=0 ... result=no-score closed=0 guards=0 gotaway=1`
+and silent to tick 961. **Main's build** on `two` (`run-control1`): no line of message 98 to tick 961.
+
+**The original** (`q418/orig/run.sh <file>`, `advisor.py ... 0x62,0x108 poll` beside `tags.py`; a fresh program each,
+off-screen). *`two`* (run a): **`0x62`'s record from (0, -1, 0, 0) to (828, 0, 1, 0) on tick 828**, the action 14,998 ms
+(this game's 13,998 and the helper's 1,000), one tag lettered string 119 from 828 to 946, him in the guards' cap
+(`orig/a-told.png`), `0x108` unmoved to the end (17 April). *`guardaway`* (run b): the same on 828 with the guard on the
+staff, the action 14,164 ms (this game's 13,165), the same tag. *`one`* (run c): nothing moved from the load to 16 April,
+no tag (`orig/c-end.png`). `q418/side-by-side.png` sets this game's bar beside the original's line.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 98 | polled; where this month's got-away kids are more than 1, that count times 20; neither the door nor the guards asked | the same |
+| No guard, nine got away | said on tick 828, line 0, in the guards' cap; tag 100, string 119 | the same (180) |
+| One guard, three got away | said on 828 | the same (60, `guards=1`) |
+| No guard, one got away | not said | the same (`no-score`) |
+
+**Not built or not seen.** In no game run: the second line (sample 292; its gesture row counted, the test holds the
+turn), a kid getting away in play (nothing here counts one), a shut park (the test holds it scoring), Full Simulation
+(not asked: the row is either mode's), the other three themes. Not heard in either game.
 
 ## A park too big for its guards (message `0xd`, Q412)
 
@@ -2537,7 +2603,7 @@ sets this game's line beside the original's.
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 42 and 43; the test holds the turn), a crowd under 35
 (a score below nought, tested only), a crowd past 100 (tested only), two entertainers or more, an entertainer hired after
 the line, Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The
-other staff rows, 15 to 17, are not built (Q418; rows 8, 9 and 11 are, "Litter and no handyman", "A busy park with no guard").
+other staff rows, 15 to 17, are not built (Q420; rows 8, 9 and 11 are, "Litter and no handyman", "A busy park with no guard").
 
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 

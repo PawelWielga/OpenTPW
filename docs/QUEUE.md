@@ -45,16 +45,19 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q418. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q418 (`advisor-park.md`, "Kids who got away"): row 98 is built. The other staff rows, 15 to 17, are not: rows 15
+  and 16 the kinds of ride on offer and standing with no researcher (`0x004ca450`, `0x004ca7b0`; the nearest), row 17 the
+  months into the game. Row 22 (`0x0059d3b0`) reads the same got-away count with a guard on the staff (its lines ask for
+  security cameras), the nearest of the guards' rows. In no game run: the second line (sample 292; its gesture row is
+  counted, the test holds the turn), a kid getting away in play (nothing here counts one: the pranks), a shut park (the
+  test holds it scoring), Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in
+  either game.
   From Q417 (`advisor-park.md`, "Litter and no handyman"): rows 8 and 9 are built. The other staff rows, 15 to 17, are
   not: rows 15 and 16 the kinds of ride on offer and standing with no researcher (`0x004ca450`, `0x004ca7b0`; the
-  nearest), row 17 the months into the game. **Row 98** (message `0x62`, `GeneralLaxSecurity`, score `0x0059e840`:
-  this month's kids who got away, `FUN_004c94a0( 1 )`, over one times 20, the keys by their names; response 258, sample
-  292, the guards' cap, group 100) is as near: the original said it on tick 828 on Q413's `three.TPWS` and
-  `q414/two.TPWS` (nine got away), and here it is counted (the run review, 2026-10-16). Row 22 (`0x0059d3b0`) reads the
-  same got-away count with a guard on the staff (its lines ask for security cameras). Nothing here drops or sweeps litter (`DECIDE_LITTER_DROPPED`,
+  nearest), row 17 the months into the game. Row 98 is built (Q418). Nothing here drops or sweeps litter (`DECIDE_LITTER_DROPPED`,
   `HANDYMAN_LITTER_SEARCH`), so the share is the file's; the original's handyman swept a cell every 15 or 16 ticks. In
   no game run: lines 2 and 3 (the test holds the turn), a share of nought or at the cut-offs themselves (tested only),
   two handymen, a handyman hired after the line, Full Simulation (not asked: the rows are either mode's), the other
@@ -76,7 +79,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q414 (`advisor-park.md`, "Lots of pranks"): row 264 is built. The other staff rows, 8, 9, 11 and 14 to 17, are
   not (rows 8, 9, 11 and 14 are built, Q415 to Q417). The original, given a file with no guard (Q413's `three.TPWS`,
   `q414/two.TPWS`), said a line and raised its tag on tick 828, "Some of the visitors are misbehaving and your security
-  hasn't seen it...": the polled row 98, raised by the files' nine kids who got away (Q418's note). In no game run: a shut park (the
+  hasn't seen it...": the polled row 98, raised by the files' nine kids who got away (built, Q418). In no game run: a shut park (the
   test holds it), the line said twice, a kid counted in play, Full Simulation (not asked: the row is either mode's),
   the other three themes. Not heard in either game.
   From Q413 (`advisor-park.md`, "A park with no guard"): row 12 is built. The other staff rows, 8, 9, 11 and 14 to 17,
