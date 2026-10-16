@@ -1729,8 +1729,8 @@ too) and held.
 | The hire screen's own line | `0xbd` posted at 1000 as the screen is built, and said | the same (said on tick 961, as row 5's wait ended) |
 | Rows 6 and 7 | scored on their turns (nought here) | each built since, in its own section below |
 
-**Not built or not seen.** The ten other staff rows, 8 to 17 (their scores not read; row 14's
-line is the theme advisor's). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
+**Not built or not seen.** The other staff rows, 8, 9, 11, 12 and 14 to 17 (their scores not read; row 14's
+line is the theme advisor's; rows 10 and 13 are built, below). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
 turn), the line said again past its 120 quarter-ticks, a broken ride counted (the test holds it, and a ride
 breaking with no mechanic posts `0x44` besides), a ride worn under 25 by running, button types `0xd` and `0xf`
 to `0x11` and the button with the hire screen open (the test holds each), a mechanic hired from the screen after
@@ -2031,7 +2031,87 @@ seconds after the load, the park run to 27 February 2000 (about tick 1313, past 
 again past its 120 quarter-ticks, two handymen or more (the test holds three), a handyman hired after the line, the
 minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
 handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
-game. The other staff rows, 8, 9 and 11 to 17, are not built (Q412).
+game. Row 13 is built since ("A park too big for its guards", below); the other staff rows, 8, 9, 11, 12 and 14 to
+17, are not (Q413).
+
+## A park too big for its guards (message `0xd`, Q412)
+
+**Row 13, message `0xd`, `StaffHireGuards3`:** polled, category 0, either game mode (the row's `+0x0c` is 2), one
+copy, first response 38, three lines in turn. Responses 38 to 40 are **samples 38 to 40**, the random gesture chain,
+model slot 0, prop 6 (the guards' cap), group 15. From the shipped park's cursor its turns are three after row 10's:
+ticks 780, 935, 1090, 1245, 1400 and every 155 on.
+
+**Its score, `0x0059cd90`** (undefined bytes until this item disassembled them; `ECX` the balance object, kept in
+`EDI`). Row 10's twin with two changes:
+
+1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
+2. **The days since the newest hire**, `FUN_004c90d0` on the analyser, under `[EDI + 0x630]`,
+   `WaitingTimes.DaysForStaff`, **30** (a signed `JGE`): nought. Row 7 asks the same ("More rides than the mechanics
+   can keep"); row 10 does not.
+3. The developed cells, `FUN_004c81b0( 0 )`, under `[EDI + 0x108]`, `StaffHireGuards3.MinCellsForConsideration`,
+   **500**: nought.
+4. The cells less the guards, `FUN_004c9960( 7 )`, times `[EDI + 0x100]`, `IdealDevelopedCellsPerGuard`, **750**:
+   nought unless that is above nought, and then it times `[EDI + 0x104]`, `ScorePerExtra10Cells`, **1**. No division.
+
+**No guard is no exit**, where row 10 answers nought with no handyman: a park with none scores one for every developed
+cell from the 500th, so the minimum is what holds the line back. With one guard 776 cells are enough and 775 are not
+(`MinScoreForConsideration` 25). The shipped park holds 126 developed cells and one guard, thing 28. Its newest hire is
+the researcher's, tick 648, so its days reach 30 on tick 1340: **the first turn that can score is 1400.**
+
+**Its tag** is row 15 of the tag table: key 383, picture 2, string 19, the bar's first button of type 16 (the hire
+screen on its guards' tab, the fourth), no second, thirty seconds. String 19 reads "You need more guards to deal with
+a park of this size. Have you considered hiring more?" in both language folders.
+
+### OpenTPW (`ParkAdvisorMessages.HireMoreGuards`, a topic's `CellsAGuard`; tag row 15)
+
+A topic scored from the same `ParkFacts` as row 10's, with `DaysSinceStaffHired` (row 7's) before the cells and no
+exit for a park with no guard. The guards are the kind's members rows 28 to 32 already read. The poll line ends
+` closed=N guards=N cells=N sincehire=N`. `ParkTags.Rows` lists row 15.
+
+**The scenes** (`lib/pathscene.py`): the stock park paused on tick 1233, the first N cells of the 19 x 20 block of bare
+grass at (60,15) laid as path, saved. `big.TPWS` 374 cells and the guard dismissed (`fire 28`), 500 developed with no
+guard; `under.TPWS` 373 and the guard dismissed, 499; `guard.TPWS` 374 with the guard kept, 500 (`parkfile.py -d`).
+Both 500-cell files are 100 over the one handyman's 400, so row 10 speaks first in both games, on tick 1242.
+
+**Predicted first** (`q412/PREDICTION.txt`), both games on files neither had been given. Missed, all mine: two cells
+of the first block were a track's ((79,31) and (79,32), `mType` 0, so `parkfile.bare_blocks` passed them); one file
+spoiled by building beside it; the attempt's number (it counts every attempt of the run, and row 10's came first); and
+the controls' line on 1400, which the poll does not write (it writes a row's answer only when the answer changes).
+
+**This game** (`q412/confirm.py fix|under|guard|control`, on the desktop; `run-fix2` the final run): *`big`*: `poll
+message=13 row=13 days=54 score=0 threshold=25 tick=1245 result=no-score closed=0 guards=0 cells=500 sincehire=25`,
+then `poll message=13 row=13 days=60 score=500 threshold=25 tick=1400 result=post closed=0 guards=0 cells=500
+sincehire=32`, queued and said on that tick (`response=38 sample=38 line=0 tick=1400`), him in the guards' cap with
+the tag on the aerial (`1-line.png`). The tag clicked: `message bar: tag 15 subject 0 item 0 bar: out=1
+rect=486,1112,1101,1453`, `first=mb_buy/help=528 second=hidden erase=mb_erase` and string 19 (`2-bar.png`). The
+button clicked: `button type 16 opens the hire screen on tab 3 and takes tag 15 off`, `windows` reading
+`ParkHireScreen tab 3`, the frame "Hire Guards" (`3-screen.png`). *`under`* (`run-under2`) and *`guard`*
+(`run-guard2`): on 1245 `... cells=499 ...` and `... guards=1 cells=500 ...`, no other line of row 13 to tick 1442,
+the census `message=13/score=0/line=-1/lastTick=0/said=0/slaps=0`, no tag 15. **Main's build** on `big`
+(`run-control1`): no line of message 13, no attempt, no tag to tick 1442.
+
+**The original** (`q412/orig/run.sh <file>`, `advisor.py ... 0x7,0xa,0xd,0x11c poll` beside `tags.py`, `bar.py` and
+`screens.py`; a fresh program each, off-screen). *`big`* (run a): message `0xa`'s record (1242, 0, 1, 0) on tick 1242
+and **`0xd`'s from (0, -1, 0, 0) to (1400, 0, 1, 0) on tick 1400**, one tag at (84, 909, 154, 974) lettered string 19,
+him in the guards' cap (`orig/a-told.png`). The tag clicked: the bar's thing 0, buttons 16 and 0, item 0 and the
+text. The button clicked: `hire 0x46bae50 hiretab 3` on tick 1445, "Hire Guards" with the fourth tab lit
+(`orig/a-button.png`). *`under`* (run b) and *`guard`* (run c): `0xd`'s record unmoved, no slot of `0xd`, no tag of
+string 19, to ticks 1864 and 1863, past the turns 1400, 1555 and 1710. `q412/side-by-side.png` sets this game's bar
+beside the original's.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 13 | polled; nought shut, before 30 days since a hire, under 500 cells; then 1 for every developed cell over 750 a guard, none too | the same |
+| 500 cells, no guard | said on tick 1400, line 0, in the guards' cap | the same |
+| 499 cells, no guard | not said | the same (`no-score`) |
+| 500 cells, one guard | not said | the same (`no-score`, `guards=1`) |
+| 1245, 25 days since the hire | not said | the same (`no-score`, `sincehire=25`) |
+| The tag and the bar | row 15, part 2, string 19; button 16 builds the hire screen on its guards' tab, tag off | the same |
+
+**Not built or not seen.** In no game run: lines 2 and 3 (samples 39 and 40; the test holds the turn), a park with a
+guard over his 750 (776 cells; the test holds it), two guards or more, a guard hired after the line, Full
+Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The guards' list
+behind the button held one candidate here and three in the original: the pool's top-up, not this row (Q356's note).
 
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 

@@ -48,6 +48,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireMoreMechanics = 7;
 	/// <summary>Message 0xa, polled: the line about a park too big for its handymen, scored by its developed cells over those they keep (0x0059cc20).</summary>
 	internal const int HireMoreHandymen = 0xa;
+	/// <summary>Message 0xd, polled: the line about a park too big for its guards, scored by its developed cells over those they keep (0x0059cd90).</summary>
+	internal const int HireMoreGuards = 0xd;
 	/// <summary>Message 0x1c, polled: the line about mechanics nobody has trained, scored where the park has one, their training budget is nought and their grades are low (0x0059d620).</summary>
 	internal const int TrainMechanics = 0x1c;
 	/// <summary>Message 0x1d, polled: the same of the handymen (0x0059d680).</summary>
@@ -193,6 +195,10 @@ internal sealed class ParkAdvisorMessages
 	/// <paramref name="CellsAHandyman"/> makes the score row 10's (0x0059cc20), and names its section: in an open park
 	/// with a handyman and at least the section's MinCellsForConsideration developed cells, the key's value for each
 	/// developed cell over the section's IdealDevelopedCellsPerHandyman for every handyman; nought otherwise.
+	/// <paramref name="CellsAGuard"/> makes the score row 13's (0x0059cd90), and names its section: in an open park,
+	/// <see cref="DaysForStaff"/> days after the newest member of staff was made, with at least the section's
+	/// MinCellsForConsideration developed cells, the key's value for each developed cell over the section's
+	/// IdealDevelopedCellsPerGuard for every guard, a park with none too; nought otherwise.
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -205,9 +211,9 @@ internal sealed class ParkAdvisorMessages
 		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null, string? PerDayWithNoFeature = null,
 		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false,
 		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1,
-		string? CellsAHandyman = null );
+		string? CellsAHandyman = null, string? CellsAGuard = null );
 
-	/// <summary>The key of the whole days since the newest hire that row 7's score waits for (the balance object's +0x630).</summary>
+	/// <summary>The key of the whole days since the newest hire that rows 7 and 13's scores wait for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
 
 	/// <summary>The key of the whole days since the newest object was made that rows 60, 71, 73 to 75, 77 to 79 and 81's scores wait for (the balance object's +0x634).</summary>
@@ -368,7 +374,7 @@ internal sealed class ParkAdvisorMessages
 	internal const int ResearchHat = 10;
 	/// <summary>The handymen's cap, costume id 7: the prop of every line about their training.</summary>
 	internal const int HandymanCap = 7;
-	/// <summary>The guards' cap, costume id 6: the prop of every line about their training.</summary>
+	/// <summary>The guards' cap, costume id 6: the prop of every line about their training, and of the park too big for them.</summary>
 	internal const int GuardCap = 6;
 
 	internal static readonly Topic[] DoorTopics =
@@ -398,6 +404,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
 		new( HireMoreHandymen, "StaffHireHandymen3.ScorePerExtra10Cells", 29, 29, Lines: 3, Prop: HandymanCap, Group: 12, Polled: true, CellsAHandyman: "StaffHireHandymen3" ),
+		new( HireMoreGuards, "StaffHireGuards3.ScorePerExtra10Cells", 38, 38, Lines: 3, Prop: GuardCap, Group: 15, Polled: true, CellsAGuard: "StaffHireGuards3" ),
 
 		// Rows 28 to 32, one a kind of staff in the table's own order. The entertainers' three responses name the
 		// theme's own advisor model and its costume (docs/exe/advisor-park.md, "Staff nobody has trained").
@@ -790,6 +797,15 @@ internal sealed class ParkAdvisorMessages
 			return over > 0 ? over * Value( topic.ScoreKey ) : 0;
 		}
 
+		if ( topic.CellsAGuard is { } patrolled )
+		{
+			// Unlike row 10's, no guard at all is not nought: the original asks the days since the newest hire instead (0x0059cdb8).
+			if ( _park?.Invoke() is not { Closed: false } wide || wide.DaysSinceStaffHired < Value( DaysForStaff ) ) return 0;
+			if ( wide.DevelopedCells < Value( $"{patrolled}.MinCellsForConsideration" ) ) return 0;
+			var over = wide.DevelopedCells - wide.Staff.Guards.Members * Value( $"{patrolled}.IdealDevelopedCellsPerGuard" );
+			return over > 0 ? over * Value( topic.ScoreKey ) : 0;
+		}
+
 		if ( topic.PoorSelection is { } selection )
 		{
 			if ( _park?.Invoke() is not { } offered ) return 0;
@@ -883,6 +899,8 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.PerBrokenRideWithNoMechanic && _park?.Invoke() is { } breaks ) shut = $" broken={breaks.RidesBroken} mechanics={breaks.Mechanics}";
 		if ( topic.RidesAMechanic != null && _park?.Invoke() is { } staffed ) shut = $" rides={staffed.Rides} mechanics={staffed.Mechanics} sincehire={staffed.DaysSinceStaffHired}";
 		if ( topic.CellsAHandyman != null && _park?.Invoke() is { } big ) shut = $" closed={(big.Closed ? 1 : 0)} handymen={big.Staff.Handymen.Members} cells={big.DevelopedCells}";
+		if ( topic.CellsAGuard != null && _park?.Invoke() is { } wide )
+			shut = $" closed={(wide.Closed ? 1 : 0)} guards={wide.Staff.Guards.Members} cells={wide.DevelopedCells} sincehire={wide.DaysSinceStaffHired}";
 		if ( topic.PoorSelection != null && _park?.Invoke() is { } offered )
 		{
 			var kinds = offered.Kinds( topic.PoorOf );

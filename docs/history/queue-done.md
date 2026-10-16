@@ -7120,6 +7120,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   developed with one handyman, `score=30 ... tick=777 result=post`, said in the cap, tag 12, the bar's button
   opening "Hire Cleaners"; 412 cells scored 24 and were silent; main's build silent. The original given both files
   did the same. 34 bugs put back.
+- [x] **Q412. The advisor's row 13, a park too big for its guards.** `0x0059cd90`: nought in a shut park, before
+  `WaitingTimes.DaysForStaff` days since the newest hire and under `MinCellsForConsideration` (500) developed cells,
+  then `ScorePerExtra10Cells` (1) for every cell over 750 a guard (`FUN_004c9960( 7 )`), a park with no guard too;
+  responses 38 to 40 in the guards' cap, tag 15 with the hire button of type 16 (`advisor-park.md`, "A park too big
+  for its guards"). Confirmed: 374 cells of path laid and the guard dismissed, 500 developed, `score=0 ...
+  sincehire=25` on 1245 and `score=500 ... tick=1400 result=post` on 1400, said in the cap, tag 15, the bar's button
+  opening "Hire Guards"; 499 cells, and 500 with the guard kept, silent; main's build silent. The original given the
+  three files did the same. 32 bugs put back.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
