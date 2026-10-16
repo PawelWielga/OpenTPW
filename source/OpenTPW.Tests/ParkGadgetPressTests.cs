@@ -553,6 +553,109 @@ public class ParkGadgetPressTests
 	}
 
 	/// <summary>
+	/// <b>The camcorder button tells of its panel and takes it back</b>: down posts message <c>0x131</c> on the park's
+	/// tick after asking the arm for the panel, refused or not (<c>FUN_00498bb0</c>); up withdraws it after the fold
+	/// (<c>FUN_00498bd0</c>), which cuts him off on the game's clock; either of the panel's buttons withdraws it before
+	/// folding the arm (<c>FUN_00498ad0</c>, <c>0x100</c>). A tag taking the arm from the panel leaves it be.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the post missing, or only where the arm took the panel; no withdrawal at the button's up, at
+	/// the camera button or at the postcard button; a withdrawal where a tag takes the arm; the wall clock for the
+	/// game's; tick nought for the park's; the row's response or sample, its category, or two lines.
+	/// </remarks>
+	[TestMethod]
+	public void TheCamcorderButtonTellsOfItsPanelAndTakesItBack()
+	{
+		using var clock = new SimulationClockScope();
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags();
+		var lines = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var park = gadget.Park = new ParkState( null ) { AdvisorMessages = lines };
+		var camcorder = (UI.UiButton)Find( gadget, 0x27 );
+		var said = new System.Collections.Generic.List<(int Response, int Sample)>();
+		int Play( int response, int sample ) { said.Add( (response, sample) ); return 9000; }
+		var orbitLooksAt = ParkOrbitCameraMode.PointOfInterest;
+		var orbitYaw = ParkOrbitCameraMode.Yaw;
+
+		// Past day 10, so the control panel's row scores 110 on the park's tick and nought on tick nought.
+		for ( var i = 0; i < 300; ++i )
+			park.AdvanceGameTick();
+		var tick = park.GameTick;
+
+		// The wall clock far past the line's end: a cut is judged on the game's clock, which stands at nought.
+		Time.PinWall( 60000 );
+
+		try
+		{
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ), "the camcorder button down" );
+			StringAssert.Contains( lines.Census(), "pending=1 attempts=0 threshold=25 slot=305/subject=0 " );
+			StringAssert.Contains( lines.Census(), "message=185/score=110/", "posted on the park's own tick" );
+			lines.Tick( park.GameTick, 0, Play );
+			CollectionAssert.AreEqual( new[] { (565, 583) }, said, "response 565, sample 583" );
+			StringAssert.Contains( lines.Census(), $"message=305/score=1000/line=0/lastTick={tick}/said=1/slaps=0", "said on the park's tick" );
+
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ), "and up while he says it" );
+			Assert.AreEqual( (false, UI.ParkGadget.ArmMove.In), (camcorder.IsDown, gadget.Moving) );
+			StringAssert.Contains( lines.Census(), $"message=305/score=1000/line=0/lastTick={tick}/said=0/slaps=1", "cut off" );
+			Settle( gadget );
+
+			// Down again, out, and a tag takes the arm: the line stays posted, and its next say is the same one line.
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ) );
+			Settle( gadget );
+			Frame( stack, false, new Vector2( 1000, 100 ), 1.0f );
+			tags.Said( 72, 13, 1000 );
+			Frame( stack, false, new Vector2( 1000, 100 ), 1.1f );
+			Time.PinWall( 60000 );
+			Assert.IsTrue( stack.ClickAt( 119, 941 ), "the tag" );
+			Settle( gadget );
+			Assert.AreEqual( (true, true), (gadget.BarOut, camcorder.IsDown) );
+			StringAssert.Contains( lines.Census(), "slot=305/subject=0 ", "a tag taking the arm leaves the camcorder's line be" );
+			lines.Withdraw( ParkAdvisorMessages.TagMessage, 0, () => { } );
+			lines.Tick( park.GameTick, 0, Play );
+			Assert.AreEqual( (565, 583), said[1], "its one line again" );
+
+			// The camcorder button up folds the bar away and withdraws the camcorder's line while he says it.
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ) );
+			Settle( gadget );
+			StringAssert.Contains( lines.Census(), $"message=305/score=1000/line=0/lastTick={tick}/said=0/slaps=2" );
+
+			// The postcard button withdraws it before folding the arm: nothing posted is left.
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ) );
+			Settle( gadget );
+			Assert.IsTrue( stack.ClickAt( 720, 1280 ), "the postcard button, 0x64" );
+			Assert.AreEqual( (false, UI.ParkGadget.ArmMove.In), (camcorder.IsDown, gadget.Moving), "the arm folds and lifts the button" );
+			StringAssert.Contains( lines.Census(), "pending=0 " );
+			Settle( gadget );
+
+			// The camera button the same, and into first person.
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ) );
+			Settle( gadget );
+			StringAssert.Contains( lines.Census(), "pending=1 " );
+			Assert.IsTrue( stack.ClickAt( 560, 1280 ), "the camera button, 0x63" );
+			Assert.AreEqual( (true, false), (ParkCamcorderCameraMode.Active, camcorder.IsDown) );
+			StringAssert.Contains( lines.Census(), "pending=0 " );
+			ParkCamcorderCameraMode.Leave();
+			Settle( gadget );
+
+			// A panel waits for the arm: the camcorder's is refused, and posted all the same.
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ) );
+			gadget.Slide( 70f );
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ) );
+			Assert.IsTrue( gadget.Carry( gadget.Locator.StaffPanel ) );
+			Assert.IsTrue( stack.ClickAt( 261, 1414 ), "down with the staff's panel waiting" );
+			StringAssert.Contains( gadget.BarCensus(), "waiting=95c", "the camcorder's panel refused" );
+			StringAssert.Contains( lines.Census(), "pending=1 attempts=2 threshold=25 slot=305/subject=0 ", "posted all the same" );
+		}
+		finally
+		{
+			Time.PinWall( null );
+			ParkCamcorderCameraMode.Leave();
+			ParkOrbitCameraMode.PointOfInterest = orbitLooksAt;
+			ParkOrbitCameraMode.Yaw = orbitYaw;
+		}
+	}
+
+	/// <summary>
 	/// <b>The bar's ways off the arm</b> (<c>FUN_0048e2f0</c>, <c>FUN_0048dae0</c>): the erase button hides the tag
 	/// on show at once, takes it off half a second on and folds the arm away; the tag's right click the same; the tag
 	/// taken off by a later line; the retract button, which also lifts the camcorder button; and the camcorder

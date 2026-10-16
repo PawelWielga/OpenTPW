@@ -637,6 +637,11 @@ GH=766` there, or the pointer is off):
   (Q425, `q425/confirm.py`, `q425/orig/run.sh`). A fenced member's patrol edges are `squares.py %PID% 4` after the
   kind's button in the original, and here `locator`'s `patrol=` with `strip`'s drawn census, `| patrol N x,y,marker^lift`,
   read under `pause`; the stock mechanic and entertainer are fenced, the researcher not (Q426, `q426/`).
+- **The camcorder button in the original** (Q428, `q428/orig/run.sh`): the button (130,707) and, once its panel is out,
+  the camera button (283,641), of 1024 x 768; its line `0x131` is `advisor.py %PID% SECS 0x131`, here the log's
+  `message=305` (`q428/confirm.py` clicks `control 27`, `64` and `63`). **The original's camera button installs a pick**
+  (a camcorder cursor over the orbit view, a right click cancels it), not first person. **Leave its postcard button
+  out**: it pauses the game and writes a picture.
 - **The game menu:** Escape with no tool in hand opens it **and pauses the game**; never sleep under it. Load
   (510,50) then the first row (400,123), the newest file; Save (510,140), type the name, Return; Options
   (510,400), the quality track (512,276), OK (898,688).

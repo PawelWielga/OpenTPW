@@ -48,9 +48,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q428 (`hud.md`, "The camcorder button's line"): the line is built. The locators' last piece is still the strip's
+  click, the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`: `FUN_004b6080`, `FUN_004b79b0`, not yet decoded; the
+  employee window is Q31's), the nearest. In no game run: a tag taking the arm from the camcorder panel and a panel
+  refused (tested only), the line let end and said once, Full Simulation (not asked: the button is either mode's), the
+  other three themes. Not heard in either game.
   From Q427 (`hud.md`, "The slide, measured"): the arm's slide is built. The locators' last piece is the strip's click,
   the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`), the nearest. Counted, not built: the camcorder button's
-  advisor line `0x131` (`FUN_00498bb0` posts it, `FUN_00498bd0` withdraws it; `CAMCORDER_PANEL_LINE`). In no game run:
+  advisor line `0x131` (`FUN_00498bb0` posts it, `FUN_00498bd0` withdraws it; built, Q428). In no game run:
   a panel refused while another waits (tested only), Full Simulation (not asked: the arm is either mode's), the other
   three themes. Not heard in either game.
   From Q426 (`hud.md`, "The patrol edges"): a fenced member's patrol edges are built. The locators' last pieces are the

@@ -126,6 +126,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int StaffLocator = 198;
 	/// <summary>Message 0x11f, posted as the visitors' locator opens (FUN_004b4280) and withdrawn as the arm folds a locator away (FUN_004b3790, 0x1001d8).</summary>
 	internal const int VisitorLocator = 287;
+	/// <summary>Message 0x131, posted as the camcorder button goes down (FUN_00498bb0) and withdrawn as it comes up (FUN_00498bd0) or a button on its panel is clicked (FUN_00498ad0, 0x100).</summary>
+	internal const int CamcorderPanel = 305;
 	/// <summary>Message 0xb9, polled: the line about the control panel, scored by the park's age in days (0x005a06c0).</summary>
 	internal const int ControlPanel = 185;
 	/// <summary>Message 0x11a, polled: the line about the tips at the bottom of the screen, scored by the park's age in days (0x005a0720).</summary>
@@ -543,6 +545,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireScreen, "HelpMessage.Score", 408, 381, Lines: 1, Category: Tutorial ),
 		new( StaffLocator, "HelpMessage.Score", 417, 389, Lines: 1, Category: Tutorial ),
 		new( VisitorLocator, "HelpMessage.Score", 547, 564, Lines: 1, Category: Tutorial ),
+		new( CamcorderPanel, "HelpMessage.Score", 565, 583, Lines: 1, Category: Tutorial ),
 		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" ),
 		new( ExplainTooltips, "TutorialExplainTooltips.Score", 542, 559, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialExplainTooltips" )
 	];

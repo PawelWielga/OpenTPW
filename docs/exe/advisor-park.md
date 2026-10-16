@@ -335,7 +335,7 @@ awards moved here.
 
 ## Every HUD screen posts a message
 
-The ids seen so far: `0xbc` when buy opens, `0xbd` when hire opens, `0xc6` and `0x11f` in the staff/visitor locator, and `0x131`, which the camcorder/postcard sub-panel **withdraws**. So the advisor comments on the screen you just opened. The locators' two (response 417, sample 389; response 547, sample 564) are posted as each opens and withdrawn as the arm folds either away; built (Q425, `hud.md`, "The staff and visitor locators").
+The ids seen so far: `0xbc` when buy opens, `0xbd` when hire opens, `0xc6` and `0x11f` in the staff/visitor locator, and `0x131`, which the camcorder button posts as it goes down and withdraws as it comes up or a button on its panel is clicked. So the advisor comments on the screen you just opened. The locators' two (response 417, sample 389; response 547, sample 564) are posted as each opens and withdrawn as the arm folds either away; built (Q425, `hud.md`, "The staff and visitor locators"). The camcorder's (response 565, sample 583) is built (Q428, `hud.md`, "The camcorder button's line").
 
 ## Still unknown
 

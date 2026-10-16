@@ -1141,10 +1141,36 @@ handle 331, sound 0x1c a voice`, the handle 413, 577, 741, 987, 1151 after 2, 4,
 until its right edge passed 439; again, `step -82`, 331 and `sound 0xc2 a voice`; the camcorder button 383, 591, 851 and
 its panel at (482,1206); the camcorder button and Ctrl+S three frames on, `arm: In with panel 62, step -10, handle 435`,
 331, then 1001 with the staff panel at (484,1127). Side by side with the original's film (`q427/side-by-side.png`) the
-bar comes out alike. Main's build had the handle at 1151 at the click and counted `GADGET_ARM_SLIDE`. **Counted, not
-built:** the camcorder button's advisor line `0x131` (`FUN_00498bb0` posts it, `FUN_00498bd0` withdraws it;
-`CAMCORDER_PANEL_LINE`). Not heard in either game. In no game run: a panel refused while another waits (tested only),
-Full Simulation (not asked: the arm is either mode's), the other three themes.
+bar comes out alike. Main's build had the handle at 1151 at the click and counted `GADGET_ARM_SLIDE`. The camcorder
+button's advisor line `0x131` is built (Q428, below). Not heard in either game. In no game run: a panel refused while
+another waits (tested only), Full Simulation (not asked: the arm is either mode's), the other three themes.
+
+### The camcorder button's line (Q428)
+
+**The executable.** Three places name message `0x131`, all through `FUN_00486b00` (post) and `FUN_00486b40` (withdraw).
+The camcorder button's down, `FUN_00498bb0` (from `FUN_004a0840`'s case `0x27` with 1): `FUN_004a2590( panel, 0 )`,
+then the post, whether or not the arm took the panel. Its up, `FUN_00498bd0`: `FUN_004a25f0( 0 )`, then the withdraw.
+The panel's own handler, `FUN_00498ad0`, on any `0x100` (99 the camera, `FUN_00481a10`; 100 the postcard,
+`FUN_004a9380`): the button's act, the withdraw, then `FUN_004a25f0( 1 )`, which lifts the camcorder button. Its
+`0x14` withdraws nothing, so a tag taking the arm from the panel leaves the line be. The fourth hit of the bytes
+`PUSH 0x131`, `0x004c0211` in `FUN_004bff70`, is a string id for `FUN_00485b00`, not a message. Row 305 of the metadata
+table (`meta_full.json`): posted only, category 1 (the Tutorial's: said once, gone after three cuts), one line,
+response 565, sample 583 (9.0 s, "the buttons on this panel let you use camcorder mode ... send email postcards"),
+group `0x17f` (no tag).
+
+**The original** (`q428/orig/run.sh`, `q325/stock.TPWS` off-screen, `advisor.py 0x131`; predicted first, five of five):
+the button down put `0x131` in a slot on 872 and said it on 873, line 0, beside the panel (`a-1-line.png`); up 3 s in
+cut it, slaps 1; down said it on 895 and the camera button cut it, slaps 2; said on 941 and cut by the up, slaps 3;
+the fourth down took no slot. The postcard button was left out: it pauses the game and writes a picture.
+
+**OpenTPW** (`ParkAdvisorMessages.CamcorderPanel`; `ParkGadget.ShowArm`, `EnterCamcorder`, `SendPostcard`).
+`q428/confirm.py` on the stock park, real clicks (`run-fix2`, the final build, five of five): `post message=305
+subject=0 score=1000 threshold=25 tick=790 result=queued`, said at once, response 565, sample 583, beside the panel
+(`1-line.png`; side by side with the original's, `q428/side-by-side.png`); the up `withdraw message=305 cleared=0
+cut=1 slaps=1`; the postcard button `... slaps=2` with `POSTCARD_BUTTON` counted; the camera button `... slaps=3`; the
+fourth down `result=slapped`. Main's build counted `CAMCORDER_PANEL_LINE` and posted nothing. In no game run: a tag
+taking the arm from the panel and a panel refused (tested only), the line let end and said once, Full Simulation (not
+asked: the button is either mode's), the other three themes. Not heard in either game.
 
 ### OpenTPW (Q311: `ParkGadget.OpenTag`, `BarButton`, `EraseTag`, `Carry`, `Swell`; `ParkTags.Open`, `Shut`, `OnShow`)
 

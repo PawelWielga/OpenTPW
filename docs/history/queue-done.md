@@ -7263,6 +7263,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   body's. The original's handle was measured 520 out with the camcorder panel, where `ArmTravel` is 645, and
   820 with the message bar, which is built at that. Left: the mesh on a narrowed control, the slide and its
   sounds built, the camcorder panel's travel and place (`original/bar.py` reads all three).
+- [x] **Q428. The camcorder button's advisor line, message `0x131` (a piece of Q420).** Posted on the park's tick as
+  the button goes down, whether or not the arm takes the panel (`FUN_00498bb0`); withdrawn as it comes up
+  (`FUN_00498bd0`) and by either of the panel's buttons before the arm folds (`FUN_00498ad0`); row 305, the Tutorial's,
+  one line, response 565, sample 583, no tag. Proved by `q428/run-fix2` (five of five on the final build): `post
+  message=305 ... result=queued`, sample 583 said beside the panel, cut by the up, the postcard button and the camera
+  button to slaps 3, then `result=slapped`, as the original's 0x131 went in `q428/orig/` (`q428/side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -354,7 +354,7 @@ internal sealed class ParkGadget : UiWindow
 
 		// What the arm carries, out of the camcorder panel's own stream at 0x00751720, which FUN_00498b50
 		// builds and parks hidden until FUN_00498bb0 hands it over. Both its buttons close the arm behind
-		// them: FUN_00498ad0 acts on the click, withdraws the advisor line the panel posted, and then calls
+		// them: FUN_00498ad0 acts on the click, withdraws the advisor's line 0x131, and then calls
 		// FUN_004a25f0(1) - and that argument is what lifts the camcorder button again.
 		var carried = _carried = _arm.Add( new UiControl
 		{
@@ -643,9 +643,9 @@ internal sealed class ParkGadget : UiWindow
 		};
 
 	/// <summary>
-	/// The camcorder button was clicked, and the arm follows it out or in: down asks the arm for the camcorder panel
-	/// (FUN_00498bb0), up folds away whatever it carries (FUN_00498bd0), each with the advisor's message 0x131, which is
-	/// not built (counted, <c>CAMCORDER_PANEL_LINE</c>).
+	/// The camcorder button was clicked, and the arm follows it out or in: down asks the arm for the camcorder panel and
+	/// then posts the advisor's message 0x131, refused or not (FUN_00498bb0); up folds away whatever the arm carries and
+	/// then withdraws it (FUN_00498bd0).
 	///
 	/// <para>
 	/// It reads the button rather than toggling anything: <see cref="WindowStack"/> has already turned a
@@ -656,12 +656,22 @@ internal sealed class ParkGadget : UiWindow
 	private void ShowArm()
 	{
 		if ( _camcorder.IsDown )
+		{
 			Carry( _carried );
-		else
-			Fold( liftsCamcorder: false );
 
-		Unimplemented.Report( "CAMCORDER_PANEL_LINE" );
+			if ( Park is { AdvisorMessages: { } lines } park )
+				lines.Post( ParkAdvisorMessages.CamcorderPanel, park.GameTick );
+		}
+		else
+		{
+			Fold( liftsCamcorder: false );
+			WithdrawCamcorderLine();
+		}
 	}
+
+	/// <summary>The advisor's message 0x131 withdrawn (FUN_00486b40), which cuts him off where he is saying it.</summary>
+	private void WithdrawCamcorderLine()
+		=> Park?.AdvisorMessages?.Withdraw( ParkAdvisorMessages.CamcorderPanel, (long)(GameClock.Now * 1000), () => Advisor.Current?.StopSpeaking() );
 
 	/// <summary>The arm's state, its byte +0x134: at rest, going out (2) or coming in (3).</summary>
 	/// <remarks>
@@ -1162,25 +1172,29 @@ internal sealed class ParkGadget : UiWindow
 	private static string Button( UiButton button ) => button.Visible ? $"{button.Mesh?.Name ?? "none"}/help={button.HelpText}" : "hidden";
 
 	/// <summary>
-	/// b_1person, the panel's id 99: into first person through FUN_00481a10, and the arm closes behind it.
+	/// b_1person, the panel's id 99: into first person through FUN_00481a10, the advisor's message 0x131 withdrawn, and
+	/// the arm closed behind it (FUN_00498ad0).
 	/// The C key reaches the same mode without any of this, which is why
 	/// <see cref="ParkCamcorderCameraMode"/> is still the only record of whether it is running.
 	/// </summary>
 	private void EnterCamcorder()
 	{
 		ParkCamcorderCameraMode.Enter();
+		WithdrawCamcorderLine();
 		CloseArm();
 	}
 
 	/// <summary>
 	/// b_postcard, the panel's id 100: FUN_004a9380, which pauses the game and writes a picture out - the
 	/// game ships Postcard.wad, postcard.jpg and an HTML template for it. Nothing here writes one yet, and
-	/// it is deliberately out of scope, so it is counted, says so and closes the arm as the other one does.
+	/// it is deliberately out of scope, so it is counted, says so, withdraws the advisor's message 0x131 and closes the
+	/// arm as the other one does.
 	/// </summary>
 	private void SendPostcard()
 	{
 		Unimplemented.Report( "POSTCARD_BUTTON" );
 		Log.Info( "Park gadget: Postcard - nothing writes a postcard out yet, so nothing more happens" );
+		WithdrawCamcorderLine();
 		CloseArm();
 	}
 
