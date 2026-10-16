@@ -2162,7 +2162,7 @@ the strip shown if it was not, lettered (`FUN_004b3490`: a member's name `FUN_00
 nothing more; else the strip hidden and the bit cleared. **Each frame** (`0x1e`) with the bit set, `FUN_004b3640` puts the
 camera's look-at where the person is drawn (`FUN_00486860`: `FUN_004f9f00` blends `+0x190`/`+0x194` towards the
 navigator's place at the frame's fraction of the sweep, held to 0..1, truncates, and scales 10/65536; `FUN_0042aab0`
-writes it, a snap) and draws a fenced member's patrol edges (`FUN_00506eb0`, `FUN_00536100( 0x136, ... )`); then
+writes it, a snap) and draws a fenced member's patrol edges ("The patrol edges" below); then
 `FUN_004b3580` sets the corner: a member's status `FUN_00485ec0( FUN_005064f0() )` (groups 0 and 1 picture 0, 2 1, 3 2,
 4 3, picked up 9, no part), a visitor's last thought less one, `0x29a` with none. The camera's mode change clears the bit
 (`0x0042ae52`). The strip's left click opens the person's window (`FUN_004b6080`, `FUN_004b79b0`).
@@ -2184,7 +2184,7 @@ actor=26 following=1 strip=1 name="Mike Cooper" status=0`, the camera on him to 
 open" (`4-closed.png`); Ctrl+V `visitorPanel=1@485,1127`, its button `actor=42 name="Visitor #13" thought=666`
 (`5-visitor.png`); Escape "Escape: the locator folded away", no menu (`6-escape.png`). Side by side with the original's
 (`q420/side-by-side.png`) the panel, the buttons and the strip stand alike. Main's build counted `STAFF_LOCATOR` and
-`VISITOR_LOCATOR` once each and put nothing out. **Counted, not built:** a fenced member's patrol edges (`LOCATOR_PATROL_EDGES`), the strip's click (`STAFF_WINDOW`,
+`VISITOR_LOCATOR` once each and put nothing out. **Counted, not built:** the strip's click (`STAFF_WINDOW`,
 `VISITOR_WINDOW`: no person's window is built, so the keys always open on nobody). **Deviations, said at the site:** the
 arm puts the panel out at once, where the original slides (counted `GADGET_ARM_SLIDE` each way); a person gone from the
 park is let go of, where the original keeps the freed thing's address. Not looked into: the bit `0x1000`'s other
@@ -2211,6 +2211,32 @@ at once (`2-visitor-line.png`). After the line, Escape and Ctrl+V gave `result=s
 cut gave `slaps=3`, then `post message=198 ... result=slapped` (`5-slapped.png`). Main's build counted
 `LOCATOR_ADVISOR_LINE` once. Side by side, `q425/side-by-side.png`. Ctrl+S or Ctrl+V with a person's window up is in no
 game run: no person's window is built.
+
+**The patrol edges** (Q426). `FUN_004b3640`, with the bit set and the person of type 4 to 8, asks `FUN_00506eb0` whether
+the member's patrol area is the whole map (`+0x20a` 1 and `+0x20c` `0x4000`: none drawn); otherwise it reads the two
+cells (`FUN_00506e70`) and walks four lines of `FUN_00536100( 0x136, ... )`: the top row from the left corner's right
+neighbour to the right corner's left (both corners where the area is one cell wide), the right column from the top
+down, the bottom row as the top, and the left column from the bottom up. `FUN_00536100` walks the longer way, a tie
+along Y, holding the other coordinate at the start's, and passes over an off-map cell (`FUN_004d8300`). So a row two
+cells wide has no middle: its line runs from the right corner back to the left, and both corners are laid twice. Op
+`0x136` is `0x100` (lay a square) with mode `0x36`, the patrol tool's own (`FUN_005234d0` draws the tool's rectangle
+with the same four lines and latches its refusal). `FUN_00532fc0`'s `0x100` arm asks `FUN_00535670( 0x36 )`, which
+answers the refusal latch `DAT_00816d50` and nothing else, and reads the placer's failure `DAT_0081b604` before it;
+both are left by a tool's own pass (`FUN_005234d0` clears the latch first), so with the tools put away the square is
+texture 0, blue, lifted over a built cell and walled as any tool's ("Placement feedback"). Every frame, since the marker
+draw empties its list. **The original** (`q426/orig/run.sh`, `q325/stock.TPWS`, `original/squares.py`; four of four
+predicted, `q426/PREDICTION.txt`): the mechanics' button, texture 0, 48 squares on the 48 cells of (39,21)-(56,28),
+none twice, at height 1.50 (no lift), in the order above (`a-1-mechanic.png`); the scientists' (the whole map) none;
+the entertainers' (47,18)-(48,25) 20 squares on 16 cells, (47,18), (47,25), (48,18) and (48,25) twice, in the same
+order; Escape none. **OpenTPW** (`ParkLocator.PatrolEdgeCells`, queued each frame to `ParkBuildMarkers.QueuePatrolEdges`,
+which lays them as the tools' blue squares and keeps none past its frame): on the stock park (`q426/run-fix2`, the final
+game binary), the mechanics' button logged `Park locator: thing 26 patrols (39, 21)-(56, 28), its edges 48 squares a
+frame`, `locator` ended `patrol=48`, and `strip`'s drawn census held `| patrol 48` in that order, each marker 0, lift 0
+(`1-mechanic.png`, beside the original's in `q426/side-by-side.png`); the scientists' `patrol=0`; the entertainers'
+20 on 16 cells, (48,18), (47,18), (48,18) first (`3-entertainer.png`); Escape none. Main's build counted
+`LOCATOR_PATROL_EDGES`. In no game run: a square lifted over a built cell on an edge (none of the stock areas crosses
+one; the lift is the tools', tested), a fence drawn in play (the patrol tool is the staff window's `0x510`, map tool `0x36`, not built: `STAFF_WINDOW`), Full Simulation (not
+asked: the locators are either mode's), the other three themes.
 
 #### How allstaff and allitems keep their rows current
 

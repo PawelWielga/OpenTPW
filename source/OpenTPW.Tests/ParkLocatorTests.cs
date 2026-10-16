@@ -345,6 +345,95 @@ public class ParkLocatorTests
 		Assert.AreEqual( "0 0 1 2 3 9", string.Join( " ", Enumerable.Range( 0, 6 ).Select( ParkLocator.StatusPart ) ) );
 	}
 
+	/// <summary>
+	/// <b>A patrol area's edges are <c>FUN_004b3640</c>'s four lines</b>: the top row less its corners, the right column
+	/// down, the bottom row, the left column up; a row two cells wide runs back from its right corner, so both corners
+	/// are laid twice; a cell off the map is passed over (<c>FUN_00536100</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the rows' corners kept; a narrow row's corners not taken; the left column walked down; the
+	/// line along the shorter way; an off-map cell laid.</remarks>
+	[TestMethod]
+	public void APatrolAreasEdgesAreTheOriginalsFourLines()
+	{
+		// The stock mechanic's (39,21)-(56,28): every outline cell once, 48.
+		var edges = ParkLocator.PatrolEdgeCells( (39, 21), (56, 28) );
+		Assert.AreEqual( 48, edges.Count );
+		Assert.AreEqual( 48, edges.Distinct().Count() );
+		Assert.AreEqual( "(40, 21) (55, 21) (56, 21) (56, 28) (40, 28) (55, 28) (39, 28) (39, 21)",
+			string.Join( " ", new[] { 0, 15, 16, 23, 24, 39, 40, 47 }.Select( i => edges[i] ) ) );
+
+		// The stock entertainer's (47,18)-(48,25): two wide, so the top and bottom rows each lay both corners again.
+		var narrow = ParkLocator.PatrolEdgeCells( (47, 18), (48, 25) );
+		Assert.AreEqual( 20, narrow.Count );
+		Assert.AreEqual( 16, narrow.Distinct().Count() );
+		Assert.AreEqual( "(48, 18) (47, 18) (48, 18)", string.Join( " ", narrow.Take( 3 ) ) );
+
+		// One wide: the rows are the corner alone.
+		Assert.AreEqual( "(5, 5) (5, 5) (5, 6) (5, 7) (5, 7) (5, 7) (5, 6) (5, 5)",
+			string.Join( " ", ParkLocator.PatrolEdgeCells( (5, 5), (5, 7) ) ) );
+
+		Assert.AreEqual( "(127, 0) (127, 1) (126, 1) (126, 0)", string.Join( " ", ParkLocator.PatrolEdgeCells( (126, 0), (128, 1) ) ) );
+	}
+
+	/// <summary>
+	/// <b>The edges are laid each frame for a fenced member followed, and for nobody else</b>: the stock mechanic's 48,
+	/// handed to the marker mesh for its frame alone; the researcher, whose area is the whole map, none; none once the
+	/// follow ends or the arm folds the locator away.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the edges laid for the whole map; left after the frame; never handed to the mesh; kept by
+	/// the mesh past its frame.</remarks>
+	[TestMethod]
+	public void AFencedMembersEdgesAreLaidWhileFollowed()
+	{
+		CtrlS();
+		Click( 0x95f );
+		var mechanic = _people.Staff.First( member => member.ThingId == Locator.Actor );
+		Assert.AreEqual( ((39, 21), (56, 28)), (mechanic.PatrolFrom, mechanic.PatrolTo), "the stock mechanic's fence" );
+
+		_gadget.Update();
+		CollectionAssert.AreEqual( ParkLocator.PatrolEdgeCells( (39, 21), (56, 28) ), Locator.PatrolEdges );
+		StringAssert.EndsWith( Locator.Census(), " patrol=48" );
+
+		Click( 0x960 );
+		Assert.IsTrue( _people.Staff.First( member => member.ThingId == Locator.Actor ).PatrolsWholeMap, "the researcher's is the map" );
+		_gadget.Update();
+		Assert.AreEqual( 0, Locator.PatrolEdges.Count, "the whole map" );
+
+		Click( 0x95f );
+		_gadget.Update();
+		Assert.AreEqual( 48, Locator.PatrolEdges.Count );
+
+		// The camera taken off him (the camcorder's first person) ends the follow, and with it the edges.
+		typeof( ParkLocator ).GetProperty( nameof( ParkLocator.Following ), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic )!.SetValue( Locator, false );
+		_gadget.Update();
+		Assert.AreEqual( 0, Locator.PatrolEdges.Count, "not followed" );
+
+		// Each frame's edges go to the marker mesh, which takes them for its frame and keeps none for the next.
+		var markers = (ParkBuildMarkers)RuntimeHelpers.GetUninitializedObject( typeof( ParkBuildMarkers ) );
+		var current = typeof( ParkBuildMarkers ).GetProperty( nameof( ParkBuildMarkers.Current ) )!;
+		current.SetValue( null, markers );
+
+		try
+		{
+			Click( 0x95f );
+			_gadget.Update();
+			Assert.AreEqual( 48, Locator.PatrolEdges.Count );
+			CollectionAssert.AreEqual( Locator.PatrolEdges, markers.PatrolQueued.ToList(), "queued for the mesh" );
+
+			typeof( ParkBuildMarkers ).GetMethod( "OnUpdate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic )!
+				.Invoke( markers, null );
+			Assert.AreEqual( 0, markers.PatrolQueued.Count, "taken by the frame" );
+		}
+		finally
+		{
+			current.SetValue( null, null );
+		}
+
+		Assert.IsTrue( _gadget.FoldLocator() );
+		_gadget.Update();
+		Assert.AreEqual( 0, Locator.PatrolEdges.Count, "folded away" );
+	}
+
 	private static UiControl Find( UiControl root, int id )
 		=> FindOrNull( root, id ) ?? throw new AssertFailedException( $"no control {id:x}" );
 

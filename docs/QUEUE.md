@@ -48,14 +48,19 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q426 (`hud.md`, "The patrol edges"): a fenced member's patrol edges are built. The locators' last pieces are the
+  strip's click, which opens the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`; the employee window is Q31's, and
+  the patrol tool, `0x510`, map tool `0x36`, is on it), and the arm's slide (`GADGET_ARM_SLIDE`), the nearest. In no
+  game run: a patrol edge over a built cell (no stock area crosses one; the lift is the tools', tested), Full
+  Simulation (not asked: the locators are either mode's), the other three themes.
   From Q425 (`hud.md`, "The staff and visitor locators"): the locators' two advisor lines are built, so the locators'
-  nearest piece is a fenced member's patrol edges (`LOCATOR_PATROL_EDGES`, `FUN_00536100( 0x136 )`). In no game run:
+  nearest piece is a fenced member's patrol edges (built, Q426). In no game run:
   Ctrl+S or Ctrl+V with a person's window up (none is built; `FUN_004b3f60` given a visitor posts `0x11f`), the lines
   through a save and a load (written with every row's record; not run), the Tutorial option off (tested only), Full Simulation (not asked: the
   locators are either mode's), the other three themes. Not heard in either game.
   From Q424 (`hud.md`, "The staff and visitor locators"): the locators are built. Counted, not built: the advisor's
   two lines as they open, `0xc6` (staff) and `0x11f` (visitors) (built, Q425); a fenced member's patrol edges
-  (`LOCATOR_PATROL_EDGES`, `FUN_00536100( 0x136 )`); the strip's click, the person's window (`STAFF_WINDOW`,
+  (built, Q426); the strip's click, the person's window (`STAFF_WINDOW`,
   `VISITOR_WINDOW`), and with it Ctrl+S or Ctrl+V over a person's window opening on that person. The arm puts the panel
   out at once (counted `GADGET_ARM_SLIDE`). In no game run: a kind with nobody, a person leaving while followed (tested
   only), the strip's hover and click, first person over a follow, Full Simulation (not asked: the locators are either

@@ -29,6 +29,11 @@ namespace OpenTPW;
 /// <c>docs/exe/ride-operation.md</c>, "The red square under a stranded person").
 /// </para>
 /// <para>
+/// <b>A fenced member the staff locator follows has the same blue square on every cell of their patrol area's
+/// outline</b>, queued each frame by <see cref="UI.ParkLocator"/> (<c>FUN_004b3640</c>, op <c>0x136</c>) and gone the
+/// frame it is not (<see cref="QueuePatrolEdges"/>).
+/// </para>
+/// <para>
 /// <b>Over a built cell the square lifts by the height of what is built there, rounded up to ten</b>
 /// (<see cref="LiftOver"/>), and that lift is added to the ground's height again as the corner is laid, as
 /// <c>FUN_0053ddd0</c> does.
@@ -79,8 +84,14 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 	private Vertex[] _vertices = [];
 
-	/// <summary>How many of <see cref="_strip"/>, from its start, are the tool's; the rest are under stranded guests.</summary>
+	/// <summary>How many of <see cref="_strip"/>, from its start, are the tool's; then the patrol edges'; the rest are under stranded guests.</summary>
 	private int _toolSquares;
+
+	/// <summary>How many of <see cref="_strip"/>, after the tool's, are a followed member's patrol edges.</summary>
+	private int _patrolSquares;
+
+	/// <summary>The patrol edges queued since the mesh was last laid, which <see cref="OnUpdate"/> takes and empties.</summary>
+	private List<(int X, int Y)> _patrolQueued = [];
 
 	/// <summary>
 	/// Whether red squares are showing, and the frames counted toward the next change - <c>DAT_00763c98</c> and
@@ -171,13 +182,18 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 		var stranded = Stranded();
 
+		// The original's marker draw empties its list every frame, so a patrol edge queued for no frame is gone.
+		var patrol = _patrolQueued;
+		_patrolQueued = [];
+
 		var built = string.Join( ";", strip.Select( square => $"{square.X},{square.Y},{square.Marker}" ) )
+			+ "|" + string.Join( ";", patrol.Select( cell => $"{cell.X},{cell.Y}" ) )
 			+ "|" + string.Join( ";", stranded.Select( cell => $"{cell.X},{cell.Y}" ) );
 
 		if ( built != _built )
 		{
 			_built = built;
-			Build( strip, stranded );
+			Build( strip, patrol, stranded );
 
 			return;
 		}
@@ -186,6 +202,17 @@ public sealed class ParkBuildMarkers : ModelEntity
 		if ( TranslucentModel is { } model && ParkGround.Current?.Heightfield is { } field && Fill( field ) > 0 )
 			model.UpdateVertices( _vertices );
 	}
+
+	/// <summary>
+	/// A followed member's patrol edges for this frame, one blue square a cell, a cell given twice laid twice
+	/// (<see cref="UI.ParkLocator.PatrolEdgeCells"/>). The original's verdict for them (<c>FUN_00535670( 0x36 )</c>) is
+	/// red only where a tool's pass left its refusal latch (<c>DAT_00816d50</c>) or the placer its (<c>DAT_0081b604</c>);
+	/// the locator puts the tools away, and here no tool's verdict outlives its own strip, so they are blue.
+	/// </summary>
+	public void QueuePatrolEdges( List<(int X, int Y)> cells ) => _patrolQueued = cells;
+
+	/// <summary>The patrol edges queued for the next frame's mesh, for a test.</summary>
+	internal IReadOnlyList<(int X, int Y)> PatrolQueued => _patrolQueued;
 
 	/// <summary>The cell of every stranded guest, one a guest, as the per-frame placement queues them.</summary>
 	private static List<(int X, int Y)> Stranded()
@@ -202,28 +229,32 @@ public sealed class ParkBuildMarkers : ModelEntity
 	}
 
 	/// <summary>
-	/// The squares the mesh holds now, the tool's each with its lift after a <c>^</c>, then those under stranded
-	/// guests after a <c>|</c>, and whether red is showing, for the debug console.
+	/// The squares the mesh holds now, the tool's each with its lift after a <c>^</c>, then a followed member's patrol
+	/// edges, each with its lift, after <c>| patrol</c>, then those under stranded guests after a <c>|</c>, and whether
+	/// red is showing, for the debug console.
 	/// </summary>
 	public string Census()
 	{
 		string Line( Square square ) => $"{square.X},{square.Y},{square.Marker}^{square.Over - Lift:0}";
 
 		var tool = _strip.Take( _toolSquares ).Select( Line ).ToArray();
-		var stranded = _strip.Skip( _toolSquares ).Select( square => $"{square.X},{square.Y}" ).ToArray();
+		var patrol = _strip.Skip( _toolSquares ).Take( _patrolSquares ).Select( Line ).ToArray();
+		var stranded = _strip.Skip( _toolSquares + _patrolSquares ).Select( square => $"{square.X},{square.Y}" ).ToArray();
 
 		return (tool.Length == 0 ? "none" : string.Join( ";", tool ))
+			+ (patrol.Length == 0 ? "" : $" | patrol {patrol.Length} {string.Join( ";", patrol )}")
 			+ (stranded.Length == 0 ? "" : $" | stranded {string.Join( ";", stranded )} red {(_redShown ? "on" : "off")}");
 	}
 
-	private void Build( List<ParkPathBuilding.QueueSquare> strip, List<(int X, int Y)> stranded )
+	private void Build( List<ParkPathBuilding.QueueSquare> strip, List<(int X, int Y)> patrol, List<(int X, int Y)> stranded )
 	{
 		TranslucentModel?.Delete();
 		TranslucentModel = null;
 		_strip = [];
 		_toolSquares = 0;
+		_patrolSquares = 0;
 
-		if ( strip.Count + stranded.Count == 0 || ParkGround.Current?.Heightfield is not { } field )
+		if ( strip.Count + patrol.Count + stranded.Count == 0 || ParkGround.Current?.Heightfield is not { } field )
 			return;
 
 		Unimplemented.Report( "MARKER_RIPPLE_SHADING" );
@@ -233,7 +264,10 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 		bool OnTheField( int x, int y ) => x >= 0 && y >= 0 && x < field.CellsX && y < field.CellsY;
 
-		var lifts = strip.Where( square => OnTheField( square.X, square.Y ) )
+		// A patrol edge is the same blue square as a tool's (FUN_00532fc0's 0x100 arm), lifted the same way.
+		var squares = strip.Concat( patrol.Select( cell => new ParkPathBuilding.QueueSquare( cell.X, cell.Y, ParkPathBuilding.MarkerBlue ) ) );
+
+		var lifts = squares.Where( square => OnTheField( square.X, square.Y ) )
 			.Select( square => (Square: square, Lift: ParkState.Current is { } state
 				? LiftOver( state, Level.Current?.Catalogue, field, square.X, square.Y )
 				: 0f) )
@@ -245,7 +279,8 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 		_strip = lifts.Select( square => new Square( square.Square.X, square.Square.Y, square.Square.Marker, Lift + square.Lift ) )
 			.ToList();
-		_toolSquares = _strip.Count;
+		_toolSquares = strip.Count( square => OnTheField( square.X, square.Y ) );
+		_patrolSquares = _strip.Count - _toolSquares;
 
 		_strip.AddRange( stranded.Where( cell => OnTheField( cell.X, cell.Y ) )
 			.Select( cell => new Square( cell.X, cell.Y, ParkPathBuilding.MarkerRed, StrandedLift ) ) );

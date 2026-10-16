@@ -33,8 +33,11 @@ namespace OpenTPW.UI;
 /// again.
 /// </para>
 /// <para>
-/// <b>Counted, not built:</b> the edges of a fenced member's patrol area, drawn each frame (<c>LOCATOR_PATROL_EDGES</c>);
-/// and the strip's click, which opens the person's own window (<c>FUN_004b6080</c>, <c>FUN_004b79b0</c>:
+/// <b>A fenced member's patrol edges are drawn while followed</b>: each frame the build tools' blue square on every cell of
+/// the patrol rectangle's outline (<see cref="PatrolEdgeCells"/>), laid by <see cref="ParkBuildMarkers"/>.
+/// </para>
+/// <para>
+/// <b>Counted, not built:</b> the strip's click, which opens the person's own window (<c>FUN_004b6080</c>, <c>FUN_004b79b0</c>:
 /// <c>STAFF_WINDOW</c>, <c>VISITOR_WINDOW</c>). With no person's window built, the keys always open a locator on nobody:
 /// the original's opens on the person whose window is up.
 /// </para>
@@ -78,6 +81,9 @@ internal sealed class ParkLocator
 
 	/// <summary>Whether the camera follows <see cref="Actor"/> each frame - <c>gui_CameraFlags</c> bit <c>0x1000</c>.</summary>
 	internal bool Following { get; private set; }
+
+	/// <summary>The cells this frame's patrol edges were laid on (<see cref="PatrolEdgeCells"/>), none unless a fenced member is followed.</summary>
+	internal List<(int X, int Y)> PatrolEdges { get; private set; } = [];
 
 	/// <summary>The people stepped through: the running park's, or what a test hands it.</summary>
 	internal ParkPeople? People { get => _people ?? ParkPeople.Current; set => _people = value; }
@@ -390,6 +396,9 @@ internal sealed class ParkLocator
 		ShowCorner( member, guest );
 		Camera( member, guest );
 
+		if ( member is { PatrolsWholeMap: false } )
+			Log.Info( $"Park locator: thing {Actor} patrols {member.PatrolFrom}-{member.PatrolTo}, its edges {PatrolEdgeCells( member.PatrolFrom, member.PatrolTo ).Count} squares a frame" );
+
 		Log.Info( $"Park locator: role {Role} thing {Actor} \"{_name.Text}\" status={(_status.Visible ? _status.Frame : -1)} thought={(_thought.Visible ? _thought.Frame : -1)}"
 			+ $" camera ({ParkOrbitCameraMode.PointOfInterest.X:F2},{ParkOrbitCameraMode.PointOfInterest.Y:F2})" );
 	}
@@ -401,6 +410,8 @@ internal sealed class ParkLocator
 	/// </summary>
 	internal void Update()
 	{
+		PatrolEdges = [];
+
 		if ( Open == Kind.None || Actor == 0 )
 			return;
 
@@ -423,7 +434,10 @@ internal sealed class ParkLocator
 			Camera( member, guest );
 
 			if ( member is { PatrolsWholeMap: false } )
-				Unimplemented.Report( "LOCATOR_PATROL_EDGES" );
+			{
+				PatrolEdges = PatrolEdgeCells( member.PatrolFrom, member.PatrolTo );
+				ParkBuildMarkers.Current?.QueuePatrolEdges( PatrolEdges );
+			}
 		}
 
 		ShowCorner( member, guest );
@@ -439,6 +453,48 @@ internal sealed class ParkLocator
 			_status.Frame = StatusPart( member.StateGroup );
 		else
 			_thought.Frame = guest!.Thoughts.Last is var thought and not 0 ? thought - 1 : NoThought;
+	}
+
+	/// <summary>
+	/// The cells <c>FUN_004b3640</c> lays a square on for a patrol area, in its order: four lines of
+	/// <c>FUN_00536100( 0x136, ... )</c>, the top row less its corners (both corners where the area is one cell wide), the
+	/// right column from the top, the bottom row the same as the top, and the left column from the bottom. A row two cells
+	/// wide has no middle, so its line runs from the right corner back to the left and both corners are laid twice, as the
+	/// original lays them.
+	/// </summary>
+	internal static List<(int X, int Y)> PatrolEdgeCells( (int X, int Y) from, (int X, int Y) to )
+	{
+		var cells = new List<(int X, int Y)>();
+		var (left, right) = from.X != to.X ? (from.X + 1, to.X - 1) : (from.X, to.X);
+
+		cells.AddRange( Line( (left, from.Y), (right, from.Y) ) );
+		cells.AddRange( Line( (to.X, from.Y), (to.X, to.Y) ) );
+		cells.AddRange( Line( (left, to.Y), (right, to.Y) ) );
+		cells.AddRange( Line( (from.X, to.Y), (from.X, from.Y) ) );
+
+		return cells;
+	}
+
+	/// <summary>
+	/// <c>FUN_00536100</c>'s walk: along X where it is the longer way, else along Y (a tie too), the other coordinate held
+	/// at the start's, both ends included; a cell off the map is passed over (<c>FUN_004d8300</c>).
+	/// </summary>
+	private static IEnumerable<(int X, int Y)> Line( (int X, int Y) start, (int X, int Y) end )
+	{
+		var alongX = Math.Abs( end.Y - start.Y ) < Math.Abs( end.X - start.X );
+		var (from, to) = alongX ? (start.X, end.X) : (start.Y, end.Y);
+		var step = from <= to ? 1 : -1;
+
+		for ( var at = from; ; at += step )
+		{
+			var (x, y) = alongX ? (at, start.Y) : (start.X, at);
+
+			if ( x >= 0 && y >= 0 && x < ParkWorld.MapSize && y < ParkWorld.MapSize )
+				yield return (x, y);
+
+			if ( at == to )
+				yield break;
+		}
 	}
 
 	/// <summary>The status picture of a member's state group (<c>FUN_00485ec0</c> on <c>FUN_005064f0</c>): idle and walking 0, working 1, resting 2, striking 3, and 9, no part, picked up.</summary>
@@ -500,7 +556,7 @@ internal sealed class ParkLocator
 			+ $" status={(_status.Visible ? _status.Frame : -1)} thought={(_thought.Visible ? _thought.Frame : -1)}"
 			+ $" staffPanel={(StaffPanel.Visible ? 1 : 0)}@{StaffPanel.Rect.Left},{StaffPanel.Rect.Top} visitorPanel={(VisitorPanel.Visible ? 1 : 0)}@{VisitorPanel.Rect.Left},{VisitorPanel.Rect.Top}"
 			+ $" down={(_staffButtons.Selected >= 0 ? $"{_staffButtons.Selected:x}" : _visitorButtons.Selected >= 0 ? $"{_visitorButtons.Selected:x}" : "none")}"
-			+ $" camera=({ParkOrbitCameraMode.PointOfInterest.X:F2},{ParkOrbitCameraMode.PointOfInterest.Y:F2})";
+			+ $" camera=({ParkOrbitCameraMode.PointOfInterest.X:F2},{ParkOrbitCameraMode.PointOfInterest.Y:F2}) patrol={PatrolEdges.Count}";
 
 	/// <summary>The hover's frame: <c>hilight</c> laid over the name (<c>FUN_00659bc9( "hilight" )</c>), taking no pointer.</summary>
 	private sealed class UiHighlight : UiControl

@@ -7231,6 +7231,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   cut=1 slaps=1`) and the visitors' said at once (`sample=564`), said once (`result=said-once`), refused after three
   cuts (`result=slapped`); main's build counted `LOCATOR_ADVISOR_LINE`. The original's records the same, five of five
   (`q425/side-by-side.png`). 17 bugs put back, all caught.
+- [x] **Q426. A fenced member's patrol edges on the staff locator.** Done 2026-10-16. A piece of Q420 (its Q425 note).
+  While the locator follows a member whose patrol area is not the whole map, each frame lays the build tools' blue
+  square on every cell of the area's outline, in `FUN_004b3640`'s four `FUN_00536100( 0x136 )` lines, a row two wide
+  laying its corners twice (`hud.md`, "The patrol edges"). Confirmed in both games on the stock park: the mechanic's
+  (39,21)-(56,28) `patrol 48` in the original's order, marker 0, lift 0 (`Park locator: thing 26 patrols (39, 21)-(56,
+  28), its edges 48 squares a frame`); the researcher's whole map none; the entertainer's 20 on 16 cells; Escape none;
+  main's build counted `LOCATOR_PATROL_EDGES`. The original's face list the same, four of four
+  (`q426/side-by-side.png`). 12 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
