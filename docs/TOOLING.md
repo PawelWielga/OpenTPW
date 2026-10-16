@@ -188,6 +188,13 @@ whole list):
   the shipped guard dismissed); it cannot score before tick 1400 (30 days since the researcher's hire on 648), and
   both 500-cell files make row 10 speak first, on 1242. **The poll writes a row's line only when its answer
   changes**: a control that stays `no-score` logs its first turn alone; read the `advisor` census for the rest.
+- **A park with no guard and misbehaving kids** (Q413): `pathscene.py <out> <bin> noguard.TPWS 760 0 -- "fire 28"`
+  (N may be nought: the guard alone dismissed, paused on 765), then this month's kids, caught and not, and ever written
+  with `parkfile.thing_set( src, dst, 5, 73468 + 4 * i, '<i', v )` (`q413/mkkids.py`; `parkfile.py -s` prints them).
+  Both games read the month's two at a load; the advisor's row 12 then turns on tick 779, four kids saying it and
+  three not, and the original also posts row 264 on 903 for more than two. **A still taken after `loadfile.sh` comes
+  too late for a line said a few seconds after the load** (the original off-screen): start `record.sh` as the load's
+  log appears and pull the frames.
 - **An object's money and satisfaction days written in a file** (Q368, `q368/mkscene.py`): in an object's record the
   costs ring is at 228, the takings ring at 361 and the satisfaction ring at 901, each the entry, the count, the wrap
   byte and today (13 bytes) then thirty days, so day `k` is `thing_set( src, dst, t, ring + 13 + 4 * k, '<i', v )`;

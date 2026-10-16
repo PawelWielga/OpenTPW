@@ -1729,8 +1729,8 @@ too) and held.
 | The hire screen's own line | `0xbd` posted at 1000 as the screen is built, and said | the same (said on tick 961, as row 5's wait ended) |
 | Rows 6 and 7 | scored on their turns (nought here) | each built since, in its own section below |
 
-**Not built or not seen.** The other staff rows, 8, 9, 11, 12 and 14 to 17 (their scores not read; row 14's
-line is the theme advisor's; rows 10 and 13 are built, below). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
+**Not built or not seen.** The other staff rows, 8, 9, 11 and 14 to 17 (their scores not read; row 14's
+line is the theme advisor's; rows 10, 12 and 13 are built, below). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
 turn), the line said again past its 120 quarter-ticks, a broken ride counted (the test holds it, and a ride
 breaking with no mechanic posts `0x44` besides), a ride worn under 25 by running, button types `0xd` and `0xf`
 to `0x11` and the button with the hire screen open (the test holds each), a mechanic hired from the screen after
@@ -2031,8 +2031,92 @@ seconds after the load, the park run to 27 February 2000 (about tick 1313, past 
 again past its 120 quarter-ticks, two handymen or more (the test holds three), a handyman hired after the line, the
 minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
 handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
-game. Row 13 is built since ("A park too big for its guards", below); the other staff rows, 8, 9, 11, 12 and 14 to
-17, are not (Q413).
+game. Rows 12 and 13 are built since ("A park with no guard", "A park too big for its guards", below); the other
+staff rows, 8, 9, 11 and 14 to 17, are not (Q414).
+
+## A park with no guard (message `0xc`, Q413)
+
+**Row 12, message `0xc`, `StaffHireGuards2`:** polled, category 0, either game mode (the row's `+0x0c` is 2), one
+copy, first response 35, three lines in turn. Responses 35 to 37 are **samples 35 to 37**, model slot 0, prop 6 (the
+guards' cap), group 14; the first two take the random gesture chain and the third names gesture row 22 (counted,
+`ADVISOR_RESPONSE_GESTURE_ROW`, as row 6's second line). From the shipped park's cursor its turns are one before row
+13's: ticks 779, 934, 1089 and every 155 on. The transcripts (`global-speech-transcripts.tsv`): "the park doesn't
+have any guards and some of the visitors are getting out of hand, you should hire some soon", "if you don't knock it
+off right now I'll turn this park around... some of the visitors are misbehaving and you don't have any guards...",
+"stop that right now, you don't have any guards and the visitors are misbehaving...".
+
+**Its score, `0x0059cd30`** (undefined bytes; read here with Ghidra's `PseudoDisassembler`, nothing written to the
+project; `ECX` the balance object, kept in `ESI`):
+
+1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
+2. The guards, `FUN_004c9960( 7 )` on the analyser: above nought (`JLE` past), nought.
+3. **This month's misbehaving kids**, `FUN_004c94a0( 0 )` on the analyser (`+0x21bfc`, caught and not caught alike;
+   `hud.md`, "The misbehaving kids"), times `[ESI + 0xfc]`, `AdditionalPerMisbehavingKid`, **5**, plus `[ESI + 0xf8]`,
+   `StaffHireGuards2.Score`, **10** (`0x0059cd89`).
+
+No days since a hire and no cells are asked. `MinScoreForConsideration` is 25, so **a park with no guard is told only
+with four kids or more this month**: three score 25, which the poll does not take as above it. The analyser's one
+adder of the kids is the guard's own chase (`FUN_004d6790`), so in the original a park with no guard counts none
+either: the count reaches row 12 from a park file, or from a guard dismissed after a chase that month. The close of a
+month zeroes it.
+
+**Its tag** is row 14 of the tag table: key 383, picture 2, string 18, the bar's first button of type 16 (the hire
+screen on its guards' tab), no second, thirty seconds. String 18 reads "The park doesn't have any guards and some of
+the visitors are misbehaving. You should hire some soon!" (`Language/american`'s is the same, its letters shifted).
+
+### OpenTPW (`ParkAdvisorMessages.HireGuards`, a topic's `KidsWithNoGuard`; `ParkFacts.MisbehavingKids`; tag row 14)
+
+A topic scored from the same `ParkFacts`, which now carry this month's kids (`ParkState.MisbehavingKids.Month`, the
+file's at a load since Q395). The guards are the kind's members rows 28 to 32 already read. The poll line ends
+` closed=N guards=N kids=N`. `ParkTags.Rows` lists row 14. Nothing here counts a kid (the chase waits on the pranks,
+`DECIDE_PRANK_*`), so in this game too the count comes from the file.
+
+**The scenes** (`q413/mkkids.py`): `noguard.TPWS`, the stock park paused on tick 765 with its guard dismissed
+(`lib/pathscene.py ... 760 0 -- "fire 28"`), then the kids written with `parkfile.thing_set` (thing 5, `+73468`):
+`four.TPWS` 4, 0, 0; `three.TPWS` 3, 9, 0 (nine got away, which the row does not read); `guard.TPWS` the shipped file
+with its guard and 4, 0, 0.
+
+**Predicted first** (`q413/PREDICTION.txt`), both games on files neither had been given. Missed, both mine and in the
+original's harness: row 264's line (below) predicted said on 903 where my own click had opened the hire screen on
+899, whose line was being said, so it was said on 975 (posted on 903, as predicted; held in runs b and c); and him in
+the cap, which the stills came too late for (filmed in run a2, held).
+
+**This game** (`q413/confirm.py fix|under|guard|control`, on the desktop; `run-fix1` the final run): *`four`*:
+`money` reading `misbehaving kids 4 got away 0 ever 0`, then `poll message=12 row=12 days=33 score=30 threshold=25
+tick=779 result=post closed=0 guards=0 kids=4`, queued and said on that tick (`attempt=1 message=12 subject=0
+score=30 threshold=25 response=35 sample=35 line=0 tick=779`), `saying sp_035.mp2 ... wearing=6,0`, him in the guards'
+cap with the tag on the aerial (`1-line.png`). The tag clicked: `message bar: tag 14 subject 0 item 0 bar: out=1
+rect=486,1112,1101,1453`, `first=mb_buy/help=528 second=hidden erase=mb_erase` and string 18 (`2-bar.png`). The
+button clicked: `button type 16 opens the hire screen on tab 3 and takes tag 14 off`, `windows` reading
+`ParkHireScreen tab 3`, "Hire Guards" (`3-screen.png`). *`three`* (`run-under1`): `... score=25 threshold=25 tick=779
+result=under-threshold closed=0 guards=0 kids=3`, no other line of row 12 to tick 962, the census
+`message=12/score=25/line=-1/lastTick=0/said=0/slaps=0`. *`guard`* (`run-guard1`): `... score=0 ... result=no-score
+closed=0 guards=1 kids=4`, the same silence. **Main's build** on `four` (`run-control1`): no line of message 12 to
+tick 961.
+
+**The original** (`q413/orig/run.sh <file>`, `advisor.py ... 0xa,0xc,0xd,0x108 poll` beside `tags.py`, `bar.py` and
+`screens.py`; a fresh program each, off-screen). *`four`* (runs a and a2): **message `0xc`'s record from (0, -1, 0, 0)
+to (779, 0, 1, 0) on tick 779**, one tag at (84, 909, 154, 974) lettered string 18; filmed with `record.sh`, him in the
+guards' cap from the load on (`orig/a2-told.png`, film 3.00 s). The tag clicked: the bar's thing 0, buttons 16 and 0,
+item 0 and the text. The button clicked: `hire 0x46ba750 hiretab 3` on tick 899, "Hire Guards" with the fourth tab lit
+(`orig/a-button.png`). *`three`* (run b) and *`guard`* (run c): `0xc`'s record unmoved, no tag of string 18, the
+park run to 20 March (`b-end.png`, `c-end.png`). **In all three files the original also posts message `0x108` on tick
+903** (row 264, `LotsOfPranks`, 100 for more than two kids this month; said on 903 in b and c), which this game counts
+(`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`). `q413/side-by-side.png` sets this game's line beside the original's.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 12 | polled; nought shut or with a guard; else 10 and 5 a misbehaving kid this month | the same |
+| No guard, four kids | said on tick 779, line 0, in the guards' cap | the same |
+| No guard, three kids (nine got away) | not said (25) | the same (`under-threshold`) |
+| One guard, four kids | not said | the same (`no-score`, `guards=1`) |
+| The tag and the bar | row 14, part 2, string 18; button 16 builds the hire screen on its guards' tab, tag off | the same |
+| Row 264, more than two kids | posted on 903 | counted, not built |
+
+**Not built or not seen.** In no game run: lines 2 and 3 (samples 36 and 37, the third's gesture row counted; the test
+holds the turn), a kid counted in play (nothing here counts one), two guards or more, a guard hired after the line,
+Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The other staff
+rows, 8, 9, 11 and 14 to 17, are not built (Q414).
 
 ## A park too big for its guards (message `0xd`, Q412)
 
@@ -2112,6 +2196,7 @@ beside the original's.
 guard over his 750 (776 cells; the test holds it), two guards or more, a guard hired after the line, Full
 Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The guards' list
 behind the button held one candidate here and three in the original: the pool's top-up, not this row (Q356's note).
+Row 12 is built since ("A park with no guard", below).
 
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 

@@ -883,10 +883,12 @@ public class ParkBankTests
 
 		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 5, 2, 9 ), world.MisbehavingKids, "the file's" );
 		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 5, 2, 0 ), bank.MisbehavingKids, "the park's" );
+		Assert.AreEqual( 5, people.AdvisorFacts().MisbehavingKids, "row 12 reads this month's, caught or not" );
 
 		TurnTheMonth( bank, people );
 
 		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 0, 0, 0 ), bank.MisbehavingKids );
+		Assert.AreEqual( 0, people.AdvisorFacts().MisbehavingKids );
 		Assert.AreEqual( before, Times( "ANALYSER_MONTH_CLOSE" ), "the close is built whole" );
 	}
 

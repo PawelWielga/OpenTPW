@@ -1977,9 +1977,10 @@ vtable `+8`, "File read failed"), it hands the third to `FUN_004ced70` (`0x004c7
 write failed"), so a load writes the analyser's word over the buffer and the stream moves on four: the lifetime
 visitors that follow read right. The load factory `FUN_005179c0` allocates the analyser (`0x21c50` bytes) without
 zeroing these three, so after a load the third is whatever that memory held: 0 in two loads, -999 in a third. **The one
-reader** is `FUN_004c94a0( got away )` (the second if non-nought, else the first), asked with nought by `0x005a04f0`, the
-score of the advisor's polled row 264 (message `0x108`, its first response 514): `LotsOfPranks.Score` (100) when this
-month's count is over `LotsOfPranks.MorePrankstersThan` (2), else nought. Nothing reads the third.
+reader** is `FUN_004c94a0( got away )` (the second if non-nought, else the first), asked with nought by two advisor
+scores: `0x005a04f0`, the polled row 264's (message `0x108`, its first response 514): `LotsOfPranks.Score` (100) when
+this month's count is over `LotsOfPranks.MorePrankstersThan` (2), else nought; and `0x0059cd30`, row 12's, a park with
+no guard (`advisor-park.md`, "A park with no guard", Q413). Nothing reads the third.
 
 **Measured** (`q395/sweep.py`): of 608 park files on hand, 594 hold nought, nought and nought; nine hold 0, 0, 3 (Alexah's
 Full Simulation jungle park and its copies); one the original wrote holds 1, 1, 1 (`q253/orig/sold-by-the-original.TPWS`,
@@ -1988,8 +1989,8 @@ a chase abandoned that month, counted since its load).
 **OpenTPW** (Q395). `ParkWorld.MisbehavingKids` reads the three (record `+73468`), `PutMisbehavingKids` writes them;
 `ParkState.MisbehavingKids` takes the file's month two at a load and nought for the third, where the original's is its
 load's unzeroed memory (a deviation, said at the site); `TurnTheMonth` zeroes the month's two; `money` and the close's
-line print them. Nothing counts into them: the guard's chase waits on the pranks (`DECIDE_PRANK_*`), and row 264 is not
-built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`). With them the close is built whole (`ANALYSER_MONTH_CLOSE` gone).
+line print them. Nothing counts into them: the guard's chase waits on the pranks (`DECIDE_PRANK_*`). Row 12 reads this
+month's (Q413); row 264 is not built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`). With them the close is built whole (`ANALYSER_MONTH_CLOSE` gone).
 **Confirmed** (`q395/`): the stock park with the three written 5, 2 and 9 (`kids.TPWS`), loaded; `money` read `misbehaving
 kids 5 got away 2 ever 0`; the close on tick 1470 named `misbehaving kids 0 got away 0 ever 0`, the file held 0, 0, 0 and
 `unimplemented` no longer listed the close; main's build kept 5, 2, 9 in the file and listed it. The original given

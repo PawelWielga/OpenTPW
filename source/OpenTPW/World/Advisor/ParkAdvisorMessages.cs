@@ -48,6 +48,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireMoreMechanics = 7;
 	/// <summary>Message 0xa, polled: the line about a park too big for its handymen, scored by its developed cells over those they keep (0x0059cc20).</summary>
 	internal const int HireMoreHandymen = 0xa;
+	/// <summary>Message 0xc, polled: the line about a park with no guard, scored by this month's misbehaving kids (0x0059cd30).</summary>
+	internal const int HireGuards = 0xc;
 	/// <summary>Message 0xd, polled: the line about a park too big for its guards, scored by its developed cells over those they keep (0x0059cd90).</summary>
 	internal const int HireMoreGuards = 0xd;
 	/// <summary>Message 0x1c, polled: the line about mechanics nobody has trained, scored where the park has one, their training budget is nought and their grades are low (0x0059d620).</summary>
@@ -199,6 +201,9 @@ internal sealed class ParkAdvisorMessages
 	/// <see cref="DaysForStaff"/> days after the newest member of staff was made, with at least the section's
 	/// MinCellsForConsideration developed cells, the key's value for each developed cell over the section's
 	/// IdealDevelopedCellsPerGuard for every guard, a park with none too; nought otherwise.
+	/// <paramref name="KidsWithNoGuard"/> makes the score row 12's (0x0059cd30), and names its section: in an open park
+	/// with no guard, the key's value and the section's AdditionalPerMisbehavingKid for each of this month's misbehaving
+	/// kids; nought otherwise.
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -211,7 +216,7 @@ internal sealed class ParkAdvisorMessages
 		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null, string? PerDayWithNoFeature = null,
 		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false,
 		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1,
-		string? CellsAHandyman = null, string? CellsAGuard = null );
+		string? CellsAHandyman = null, string? CellsAGuard = null, string? KidsWithNoGuard = null );
 
 	/// <summary>The key of the whole days since the newest hire that rows 7 and 13's scores wait for (the balance object's +0x630).</summary>
 	internal const string DaysForStaff = "WaitingTimes.DaysForStaff";
@@ -267,7 +272,8 @@ internal sealed class ParkAdvisorMessages
 	/// kind 2: <see cref="ParkResearch.Rate"/>), with the two numbers the rate sets against each other, the
 	/// staff's researchers' ability added up (FUN_004c9e60) and the most a park's could be (FUN_004c9ed0); and
 	/// what rows 28 to 32's read: each kind of staff's <see cref="KindTraining"/>; and what row 10's reads besides: the
-	/// developed cells (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>).
+	/// developed cells (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and what row 12's reads besides: this
+	/// month's misbehaving kids (FUN_004c94a0 asked with nought, <see cref="ParkState.MisbehavingKids"/>).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -278,7 +284,7 @@ internal sealed class ParkAdvisorMessages
 		int Features = 0, int FeatureKindsOnOffer = 0, int FeatureKindsStanding = 0,
 		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
 		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
-		StaffTraining Staff = default, int DevelopedCells = 0 )
+		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -404,6 +410,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
 		new( HireMoreHandymen, "StaffHireHandymen3.ScorePerExtra10Cells", 29, 29, Lines: 3, Prop: HandymanCap, Group: 12, Polled: true, CellsAHandyman: "StaffHireHandymen3" ),
+		new( HireGuards, "StaffHireGuards2.Score", 35, 35, Lines: 3, GestureRowLine: 2, Prop: GuardCap, Group: 14, Polled: true, KidsWithNoGuard: "StaffHireGuards2" ),
 		new( HireMoreGuards, "StaffHireGuards3.ScorePerExtra10Cells", 38, 38, Lines: 3, Prop: GuardCap, Group: 15, Polled: true, CellsAGuard: "StaffHireGuards3" ),
 
 		// Rows 28 to 32, one a kind of staff in the table's own order. The entertainers' three responses name the
@@ -797,6 +804,13 @@ internal sealed class ParkAdvisorMessages
 			return over > 0 ? over * Value( topic.ScoreKey ) : 0;
 		}
 
+		if ( topic.KidsWithNoGuard is { } unguarded )
+		{
+			// The kids are this month's caught and not caught alike (FUN_004c94a0 asked with nought, +0x21bfc).
+			if ( _park?.Invoke() is not { Closed: false } open || open.Staff.Guards.Members > 0 ) return 0;
+			return Value( topic.ScoreKey ) + open.MisbehavingKids * Value( $"{unguarded}.AdditionalPerMisbehavingKid" );
+		}
+
 		if ( topic.CellsAGuard is { } patrolled )
 		{
 			// Unlike row 10's, no guard at all is not nought: the original asks the days since the newest hire instead (0x0059cdb8).
@@ -899,6 +913,8 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.PerBrokenRideWithNoMechanic && _park?.Invoke() is { } breaks ) shut = $" broken={breaks.RidesBroken} mechanics={breaks.Mechanics}";
 		if ( topic.RidesAMechanic != null && _park?.Invoke() is { } staffed ) shut = $" rides={staffed.Rides} mechanics={staffed.Mechanics} sincehire={staffed.DaysSinceStaffHired}";
 		if ( topic.CellsAHandyman != null && _park?.Invoke() is { } big ) shut = $" closed={(big.Closed ? 1 : 0)} handymen={big.Staff.Handymen.Members} cells={big.DevelopedCells}";
+		if ( topic.KidsWithNoGuard != null && _park?.Invoke() is { } open )
+			shut = $" closed={(open.Closed ? 1 : 0)} guards={open.Staff.Guards.Members} kids={open.MisbehavingKids}";
 		if ( topic.CellsAGuard != null && _park?.Invoke() is { } wide )
 			shut = $" closed={(wide.Closed ? 1 : 0)} guards={wide.Staff.Guards.Members} cells={wide.DevelopedCells} sincehire={wide.DaysSinceStaffHired}";
 		if ( topic.PoorSelection != null && _park?.Invoke() is { } offered )

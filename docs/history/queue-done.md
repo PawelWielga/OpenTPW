@@ -7128,6 +7128,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   sincehire=25` on 1245 and `score=500 ... tick=1400 result=post` on 1400, said in the cap, tag 15, the bar's button
   opening "Hire Guards"; 499 cells, and 500 with the guard kept, silent; main's build silent. The original given the
   three files did the same. 32 bugs put back.
+- [x] **Q413. The advisor's row 12, a park with no guard.** `0x0059cd30`: nought in a shut park and with a guard
+  (`FUN_004c9960( 7 )`), else `StaffHireGuards2.Score` (10) and `AdditionalPerMisbehavingKid` (5) for each of this
+  month's misbehaving kids (`FUN_004c94a0( 0 )`, `+0x21bfc`); responses 35 to 37 in the guards' cap, the third naming
+  gesture row 22, tag 14 with the hire button of type 16 (`advisor-park.md`, "A park with no guard"). Confirmed: the
+  stock park with its guard dismissed and four kids written, `score=30 ... tick=779 result=post closed=0 guards=0
+  kids=4`, said in the cap, tag 14, the bar's button opening "Hire Guards"; three kids (25), and four with the guard
+  kept, silent; main's build silent. The original given the three files did the same, and posted row 264 on 903 in
+  all three (counted here). 26 bugs put back.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
