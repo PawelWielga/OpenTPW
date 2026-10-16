@@ -7161,6 +7161,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `result=said-once`; 178 inside (22, under) and the guard kept silent; main's build silent. The original, given the
   files: `0xb` (1398, 0, 1, 0) on 1398, the cap, tag, bar, `hiretab 3`, unmoved to 2270; the other two silent.
   32 bugs put back.
+- [x] **Q417. The advisor's rows 8 and 9, litter and no handyman.** `0x0059cb40`, `0x0059cbb0`: nought shut or with a
+  handyman; the litter share L (`FUN_004ccdf0`, called by these two alone: the littered cells x 100 over the cells of
+  path, queue or type 9 or littered, cut); row 8 nought over `LitterPointCutoffHigh` 25, else 3L - 3; row 9 nought under
+  `LitterPointCutoffLow` 26, else 3L - 26. Three lines each, responses 23 to 25 and 26 to 28, in the handymen's cap; tags
+  10 and 11, strings 14 and 15, the cleaners' hire button (`advisor-park.md`, "Litter and no handyman"). Confirmed:
+  `messy.TPWS` (the handyman dismissed, 12 of 90 walked cells littered) `poll message=8 ... score=36 threshold=25
+  tick=775 result=post closed=0 handymen=0 litter=13`, said, tag 10, "Hire Cleaners"; `filthy.TPWS` (27) row 9 `score=64`
+  on 776, tag 11; 8 littered (21, under) and the handyman kept silent; main's build silent. The original, given the
+  files (its share read from memory, 13, 30, 8, 30): `8` (775, 0, 1, 0) and `9` (776, 0, 1, 0), the cap filmed, the tags,
+  bars and `hiretab 0`; the other two unmoved to 1151 and 1143. 41 bugs put back, all caught after one test changed.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

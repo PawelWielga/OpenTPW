@@ -45,9 +45,16 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q417. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q418. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q417 (`advisor-park.md`, "Litter and no handyman"): rows 8 and 9 are built. The other staff rows, 15 to 17, are
+  not: rows 15 and 16 the kinds of ride on offer and standing with no researcher (`0x004ca450`, `0x004ca7b0`; the
+  nearest), row 17 the months into the game. Nothing here drops or sweeps litter (`DECIDE_LITTER_DROPPED`,
+  `HANDYMAN_LITTER_SEARCH`), so the share is the file's; the original's handyman swept a cell every 15 or 16 ticks. In
+  no game run: lines 2 and 3 (the test holds the turn), a share of nought or at the cut-offs themselves (tested only),
+  two handymen, a handyman hired after the line, Full Simulation (not asked: the rows are either mode's), the other
+  three themes. Not heard in either game.
   From Q416 (`advisor-park.md`, "A busy park with no guard"): row 11 is built, the first row of category 9 (said only
   once). The other staff rows, 8, 9 and 15 to 17, are not: rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman;
   the nearest), rows 15 and 16 the kinds of ride on offer and standing with no researcher, row 17 the months into the

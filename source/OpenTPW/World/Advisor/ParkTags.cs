@@ -38,6 +38,8 @@ internal sealed class ParkTags
 		new( 7, NoTag, 2, 11, 14, 0, 30000, 0 ),
 		new( 8, NoTag, 2, 12, 14, 0, 30000, 0 ),
 		new( 9, NoTag, 2, 13, 14, 0, 30000, 0 ),
+		new( 10, NoTag, 2, 14, 13, 0, 30000, 0 ),
+		new( 11, NoTag, 2, 15, 13, 0, 30000, 0 ),
 		new( 12, NoTag, 2, 16, 13, 0, 30000, 0 ),
 		new( 13, NoTag, 2, 17, 16, 0, 30000, 0 ),
 		new( 14, NoTag, 2, 18, 16, 0, 30000, 0 ),

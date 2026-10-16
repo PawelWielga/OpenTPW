@@ -1729,7 +1729,7 @@ too) and held.
 | The hire screen's own line | `0xbd` posted at 1000 as the screen is built, and said | the same (said on tick 961, as row 5's wait ended) |
 | Rows 6 and 7 | scored on their turns (nought here) | each built since, in its own section below |
 
-**Not built or not seen.** The other staff rows, 8, 9 and 15 to 17 (their scores not read; rows 10 to 14 are built,
+**Not built or not seen.** The other staff rows, 15 to 17 (their scores not read; rows 8 to 14 are built,
 below). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
 turn), the line said again past its 120 quarter-ticks, a broken ride counted (the test holds it, and a ride
 breaking with no mechanic posts `0x44` besides), a ride worn under 25 by running, button types `0xd` and `0xf`
@@ -1945,6 +1945,103 @@ for thirty days, the test's last step), a hire made in the original by hand, a p
 Simulation: the mode is not asked by row 7's score. This game said the line of `days29` two ticks before the
 original (1094, 1096): the wait after row 259's line, not measured further. Not heard in either game.
 
+## Litter and no handyman (messages 8 and 9, Q417)
+
+**Rows 8 and 9, messages 8 and 9, `StaffHireHandymen1` and `2`:** both polled, category 0, either game mode (`+0x0c`
+2), one copy, three lines in turn (selection 2). Row 8's responses are 23 to 25, row 9's 26 to 28, **samples the
+same**, the random gesture chain, model slot 0, **prop 7, the handymen's cap**, groups 10 and 11. From the shipped
+park's cursor their turns are two and one before row 10's: **ticks 775 and 776**, then every 155 on. The transcripts
+(`global-speech-transcripts.tsv`): row 8 "yak i just stepped in something unspeakable the park is getting messy and you
+don't have any janitors maybe you should hire some", "this place is becoming a mess and you don't have any janitors
+have you thought about hiring some", "the park is getting pretty dirty and you don't have anybody to clean it up maybe
+you should hire some janitors"; row 9 "the park is filthy and you don't have any janitors you should hire some", "this
+park is a mess i'm talking dirty ... the park is a mess and you should hire some janitors", "there aren't any janitors
+in this place is a mess you need to hire some".
+
+**Their scores, `0x0059cb40` and `0x0059cbb0`** (undefined bytes; read with Ghidra's `PseudoDisassembler`, nothing
+written to the project; `ECX` the balance object, kept in `ESI`):
+
+1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
+2. The handymen, `FUN_004c9960( 5 )` on the analyser: above nought (`JLE` passes nought), nought.
+3. The litter share, `FUN_004ccdf0` on the analyser (below), L.
+4. **Row 8:** L over `[ESI + 0xd8]`, `StaffHireHandymen1.LitterPointCutoffHigh`, **25** (`JLE` passes 25), nought;
+   otherwise `[ESI + 0xd0]`, `ScorePerLitterPoint`, **3**, times L, less `[ESI + 0xd4]`, `LitterPointCutoffLow`, **3**.
+   **Row 9:** L under `[ESI + 0xe0]`, `StaffHireHandymen2.LitterPointCutoffLow`, **26** (`JGE` passes 26), nought;
+   otherwise `[ESI + 0xdc]`, its `ScorePerLitterPoint`, **3**, times L, less the same 26. Nothing holds row 8's at
+   nought: a share of nought scores -3, which the poll does not take.
+
+`MinScoreForConsideration` is 25, so **row 8 speaks from a share of 10 (27) to 25 (72), and row 9 from 26 (52) on**;
+the two never score together. The keys' names are the file's: row 8's "low" cut-off is taken off, not compared.
+
+**The litter share, `FUN_004ccdf0`**, walks every cell of the map (`[0x0080239c] + 0x2d8 + (y x 128 + x) x 0x44`, x and
+y from 127 down). A cell is **counted** where `FUN_00536310` (`mType` 1, path) or `FUN_00536320` (3 or 9) passes **or**
+its `mLitter` (`+0x2c`) is not nought, and **littered** where `mLitter` is not nought, whatever its kind; the answer is
+littered x 100 over counted (`IDIV`, cut towards nought), nought with none counted. **Only rows 8 and 9 call it** (`0x0059cb84`, `0x0059cbf4`: every `CALL` rel32 of `.text`, scanned on disk). The shipped park counts **90** (78
+of path, 4 of queue, 8 of type 9) and holds no litter. A littered cell carries the sprite handle its drop made
+(`FUN_004d93b0` writes it to `+0x28`; the file's `mLitterScript`); the share does not read it.
+
+**Their tags** are rows 10 and 11 of the tag table: key 383, picture 2, strings **14** and **15**, the bar's first
+button of type 13 (the hire screen on its cleaners' tab), no second, thirty seconds. `English`: "You've no cleaners and
+the park is starting to get untidy. Maybe you should hire some?" and "You've no cleaners and the park is very untidy.
+You should hire some!"; `american` the same with "You have no janitors".
+
+### OpenTPW (`ParkAdvisorMessages.HireHandymen`, `HireHandymenFilthy`, a topic's `LitterWithNoHandyman`, `Filthy`; `ParkState.LitterShare`; `ParkFacts.LitterShare`; tag rows 10 and 11)
+
+`ParkState.LitterShare` is `FUN_004ccdf0` over the running cells' litter (the file's, as nothing here drops or sweeps
+it: the guests' drop and the handyman's litter search, `HANDYMAN_LITTER_SEARCH`, are not built). The handymen are the
+kind's members rows 28 to 32 already read. The poll line ends ` closed=N handymen=N litter=N`. `ParkTags.Rows` lists rows
+10 and 11.
+
+**The scenes** (`q417/mkscenes.sh`, `lib/stockscene.py`, `parkfile.litter_set`): the stock park paused on tick 768
+with its handyman, thing 25, dismissed (769 kept), saved, then litter of kind 1 written on the first N path cells
+(`mLitter`, the sprite handle left nought, so neither game draws it): `messy.TPWS` 12 cells, a share of 13; `filthy.TPWS`
+27, 30; `tidy.TPWS` 8, 8; `swept.TPWS` 27 with the handyman kept (`parkfile.py -L`).
+
+**Predicted first** (`q417/PREDICTION.txt`). Every prediction of either game held. Void, mine: one run of this game
+(the checker took the library's name `score`), one of the original (no process at the poll's start) and one whose
+pollers logged no tick; the original's stills 2 s after the line missed the advisor, and its first clicks came past the
+tag's thirty seconds: filmed and clicked again.
+
+**This game** (`q417/confirm.py fix8|fix9|tidy|swept|control8|control9`, on the desktop): *`messy`* (`run-fix8b`):
+`poll message=8 row=8 days=33 score=36 threshold=25 tick=775 result=post closed=0 handymen=0 litter=13`, said on that
+tick (`attempt=1 message=8 ... response=23 sample=23 line=0 tick=775`), `saying sp_023.mp2 ... wearing=7,0`, the tag on
+the aerial (`1-line.png`); on 776 message 9 `score=0 ... result=no-score ... litter=13`. The tag clicked: `message bar:
+tag 10 ... first=mb_buy/help=525 second=hidden erase=mb_erase` and string 14 (`2-bar.png`). The button: `button type 13
+opens the hire screen on tab 0 and takes tag 10 off`, `ParkHireScreen tab 0`, "Hire Cleaners" (`3-screen.png`).
+*`filthy`* (`run-fix91`): on 775 message 8 `score=0 ... no-score ... litter=30`; on 776 `poll message=9 row=9 days=33
+score=64 threshold=25 tick=776 result=post closed=0 handymen=0 litter=30`, sample 26, tag 11, string 15, the cleaners'
+tab. *`tidy`* (`run-tidy1`): `score=21 ... tick=775 result=under-threshold ... litter=8`, silent to 814. *`swept`*
+(`run-swept1`): both `no-score closed=0 handymen=1 litter=30`. **Main's build** on `messy` and `filthy`: no line of
+messages 8 or 9, no tag, to 814 and 811.
+
+**The original** (`q417/orig/run.sh <file>`, `advisor.py ... 0x8,0x9,0xa poll` beside `tags.py`, `bar.py`,
+`screens.py` and the new `litter.py`, which reads its own share; a fresh program each, off-screen). `litter.py` read
+**walked 90 and the file's share** (13, 30, 8, 30) at each load. *`messy`* (runs a, a2): message 8's record from (0, -1,
+0, 0) to **(775, 0, 1, 0) on tick 775**, 9's unmoved, one tag lettered string 14 ("You have no janitors..."), him in the
+handymen's cap (`orig/a2-film-cap.png`, filmed); the tag clicked, the bar's buttons 13 and 0; the button, `hiretab 0`,
+"Hire Janitors" (`orig/a-button.png`). *`filthy`* (runs b, b2): 9's record to **(776, 0, 1, 0) on 776**, 8's unmoved,
+string 15, the cap (`orig/b-film-cap.png`), buttons 13 and 0, `hiretab 0`. *`tidy`* (run c3) and *`swept`* (run d): both
+records unmoved to ticks 1151 and 1143, no tag. In `swept` **the original's handyman swept the litter**, a cell every 15
+or 16 ticks from 877 (27 cells to 12 by 1143), which this game's does not. `q417/side-by-side.png` sets the two lines
+side by side.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Rows 8 and 9 | polled; nought shut or with a handyman; 3 a point of the litter share less 3 up to 25, and 3 a point less 26 from 26 | the same |
+| The litter share | cells littered over cells path, queue, type 9 or littered, x 100, cut | the same |
+| 13, no handyman | row 8 said on 775, line 0, in the handymen's cap | the same |
+| 30, no handyman | row 9 said on 776; row 8 not | the same |
+| 8, no handyman | neither said | the same (`under-threshold`, 21) |
+| 30, one handyman | neither said; he sweeps the litter | neither said; he does not sweep |
+| The tags and the bar | rows 10 and 11, part 2, strings 14 and 15; button 13 builds the hire screen on its cleaners' tab | the same |
+
+**Not built or not seen.** In no game run: lines 2 and 3 (samples 24, 25, 27 and 28; the test holds the turn), a share
+of nought (-3, tested only), a share over 25 under row 8 or under 26 under row 9 at the cut-offs themselves (tested
+only), litter dropped or swept in play (neither is built here), two handymen or more, a handyman hired after the line,
+Full Simulation (not asked: the rows are either mode's), the other three themes. Not heard in either game. The guests'
+drop (`FUN_004d93b0`) and the handyman's litter search, which move the share in the original, are counted gaps; until
+they are built the share here is the file's.
+
 ## A park too big for its handymen (message `0xa`, Q411)
 
 **Row 10, message `0xa`, `StaffHireHandymen3`:** polled, category 0, either game mode, one copy, first response 29,
@@ -2032,7 +2129,7 @@ again past its 120 quarter-ticks, two handymen or more (the test holds three), a
 minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
 handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
 game. Rows 12 and 13 are built since ("A park with no guard", "A park too big for its guards", below); the other
-staff rows, 8, 9 and 15 to 17, are not (Q417; rows 11 and 14 are built, "A busy park with no guard", "A busy park with no entertainer").
+staff rows, 15 to 17, are not (Q418; rows 8, 9, 11 and 14 are built, "Litter and no handyman", "A busy park with no guard", "A busy park with no entertainer").
 
 ## A busy park with no guard (message `0xb`, Q416)
 
@@ -2204,7 +2301,7 @@ pranks", below). `q413/side-by-side.png` sets this game's line beside the origin
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 36 and 37, the third's gesture row counted; the test
 holds the turn), a kid counted in play (nothing here counts one), two guards or more, a guard hired after the line,
 Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The other staff
-rows, 8, 9 and 15 to 17, are not built (Q417; rows 11 and 14 are, above and below).
+rows, 15 to 17, are not built (Q418; rows 8, 9, 11 and 14 are, above and below).
 
 ## Lots of pranks (message `0x108`, Q414)
 
@@ -2377,9 +2474,8 @@ stand outside the gate on the road (`mType` 30), so it scores nought.
 screen on its entertainers' tab, the third), no second, thirty seconds. String 20 reads "You've no entertainers and the
 park is starting to get busy. Maybe you should hire some?" (`Language/american`'s, its letters shifted, "You have no").
 
-**The other staff rows** (read for the order of the next pieces, not built): rows 8 and 9 (`StaffHireHandymen1`,
-`2`, `0x0059cb40`, `0x0059cbb0`) answer nought with a handyman and read the litter (`FUN_004ccdf0`): row 8 three a point
-less 3 up to 25 points, row 9 three a point less 26 from 26; row 11 (`StaffHireGuards1`, `0x0059ccb0`, category 9) waits on
+**The other staff rows** (read for the order of the next pieces): rows 8 and 9 are built since ("Litter and no
+handyman", above); row 11 (`StaffHireGuards1`, `0x0059ccb0`, category 9) waits on
 `WaitingTimes.DaysForStaff`, answers nought with a guard and then scores the crowd less 70; rows 15 and 16
 (`StaffHireResearchers1`, `2`) answer nought with a researcher and read the kinds of ride on offer and standing
 (`0x004ca450`, `0x004ca7b0`; string 21 is "You've built most of the available rides..."); row 17 (`StaffHireResearchers3`,
@@ -2436,7 +2532,7 @@ sets this game's line beside the original's.
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 42 and 43; the test holds the turn), a crowd under 35
 (a score below nought, tested only), a crowd past 100 (tested only), two entertainers or more, an entertainer hired after
 the line, Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The
-other staff rows, 8, 9 and 15 to 17, are not built (Q417; row 11 is, "A busy park with no guard").
+other staff rows, 15 to 17, are not built (Q418; rows 8, 9 and 11 are, "Litter and no handyman", "A busy park with no guard").
 
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 

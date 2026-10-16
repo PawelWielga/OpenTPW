@@ -46,6 +46,10 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireMechanicsBroken = 6;
 	/// <summary>Message 7, polled: the line about more rides than the mechanics can keep (0x0059cac0).</summary>
 	internal const int HireMoreMechanics = 7;
+	/// <summary>Message 8, polled: the line about a park getting untidy with no handyman, scored by its litter share up to a cut-off (0x0059cb40).</summary>
+	internal const int HireHandymen = 8;
+	/// <summary>Message 9, polled: the line about a filthy park with no handyman, scored by its litter share from a cut-off (0x0059cbb0).</summary>
+	internal const int HireHandymenFilthy = 9;
 	/// <summary>Message 0xa, polled: the line about a park too big for its handymen, scored by its developed cells over those they keep (0x0059cc20).</summary>
 	internal const int HireMoreHandymen = 0xa;
 	/// <summary>Message 0xb, polled: the line about a busy park with no guard, scored by its crowd, said once (0x0059ccb0).</summary>
@@ -203,6 +207,10 @@ internal sealed class ParkAdvisorMessages
 	/// grade for every member; nought otherwise.
 	/// <paramref name="SecondGestureRowLine"/> is a second line whose response names a row of the gesture table,
 	/// -1 for none.
+	/// <paramref name="LitterWithNoHandyman"/> makes the score rows 8 and 9's (0x0059cb40, 0x0059cbb0), and names the
+	/// section: in an open park with no handyman, the key's value for each point of the litter share less the section's
+	/// LitterPointCutoffLow, below nought too; nought where the share is over the section's LitterPointCutoffHigh (row 8),
+	/// or, with <paramref name="Filthy"/>, under its LitterPointCutoffLow (row 9).
 	/// <paramref name="CellsAHandyman"/> makes the score row 10's (0x0059cc20), and names its section: in an open park
 	/// with a handyman and at least the section's MinCellsForConsideration developed cells, the key's value for each
 	/// developed cell over the section's IdealDevelopedCellsPerHandyman for every handyman; nought otherwise.
@@ -236,7 +244,8 @@ internal sealed class ParkAdvisorMessages
 		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false,
 		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1,
 		string? CellsAHandyman = null, string? CellsAGuard = null, string? KidsWithNoGuard = null,
-		string? MorePranksters = null, string? BusyWithNoEntertainer = null, string? BusyWithNoGuard = null );
+		string? MorePranksters = null, string? BusyWithNoEntertainer = null, string? BusyWithNoGuard = null,
+		string? LitterWithNoHandyman = null, bool Filthy = false );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -300,7 +309,7 @@ internal sealed class ParkAdvisorMessages
 	/// what rows 28 to 32's read: each kind of staff's <see cref="KindTraining"/>; and what row 10's reads besides: the
 	/// developed cells (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and what row 12's reads besides: this
 	/// month's misbehaving kids (FUN_004c94a0 asked with nought, <see cref="ParkState.MisbehavingKids"/>), which row 264's
-	/// reads alone.
+	/// reads alone; and what rows 8 and 9's read besides: the litter share (FUN_004ccdf0, <see cref="ParkState.LitterShare"/>).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -311,7 +320,7 @@ internal sealed class ParkAdvisorMessages
 		int Features = 0, int FeatureKindsOnOffer = 0, int FeatureKindsStanding = 0,
 		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
 		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
-		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0, int GuestsUnhappy = 0 )
+		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0, int GuestsUnhappy = 0, int LitterShare = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -436,6 +445,8 @@ internal sealed class ParkAdvisorMessages
 		new( HireMechanics, "StaffHireMechanics1.ScorePerWornRide", 14, 13, Lines: 3, Prop: HardHat, Group: 7, Polled: true, PerWornRideWithNoMechanic: true ),
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
+		new( HireHandymen, "StaffHireHandymen1.ScorePerLitterPoint", 23, 23, Lines: 3, Prop: HandymanCap, Group: 10, Polled: true, LitterWithNoHandyman: "StaffHireHandymen1" ),
+		new( HireHandymenFilthy, "StaffHireHandymen2.ScorePerLitterPoint", 26, 26, Lines: 3, Prop: HandymanCap, Group: 11, Polled: true, LitterWithNoHandyman: "StaffHireHandymen2", Filthy: true ),
 		new( HireMoreHandymen, "StaffHireHandymen3.ScorePerExtra10Cells", 29, 29, Lines: 3, Prop: HandymanCap, Group: 12, Polled: true, CellsAHandyman: "StaffHireHandymen3" ),
 		new( HireGuardsBusy, "StaffHireGuards1.ScorePerExtraBusyPoint", 32, 32, Lines: 3, Prop: GuardCap, Group: 13, Category: SaidOnce, Polled: true, BusyWithNoGuard: "StaffHireGuards1" ),
 		new( HireGuards, "StaffHireGuards2.Score", 35, 35, Lines: 3, GestureRowLine: 2, Prop: GuardCap, Group: 14, Polled: true, KidsWithNoGuard: "StaffHireGuards2" ),
@@ -831,6 +842,15 @@ internal sealed class ParkAdvisorMessages
 			return over > 0 ? over * Value( topic.ScoreKey ) : 0;
 		}
 
+		if ( topic.LitterWithNoHandyman is { } littered )
+		{
+			// Row 8 passes a share of the high cut-off and row 9 one of the low (JLE 0x0059cb93, JGE 0x0059cc03); both take the low off.
+			if ( _park?.Invoke() is not { Closed: false } messy || messy.Staff.Handymen.Members > 0 ) return 0;
+			var low = Value( $"{littered}.LitterPointCutoffLow" );
+			if ( topic.Filthy ? messy.LitterShare < low : messy.LitterShare > Value( $"{littered}.LitterPointCutoffHigh" ) ) return 0;
+			return messy.LitterShare * Value( topic.ScoreKey ) - low;
+		}
+
 		if ( topic.CellsAHandyman is { } swept )
 		{
 			// The key names extra ten cells; the original's score multiplies it by every cell over, with no division (0x0059ccab).
@@ -971,6 +991,7 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.PerWornRideWithNoMechanic && _park?.Invoke() is { } wear ) shut = $" worn={wear.RidesWorn} mechanics={wear.Mechanics}";
 		if ( topic.PerBrokenRideWithNoMechanic && _park?.Invoke() is { } breaks ) shut = $" broken={breaks.RidesBroken} mechanics={breaks.Mechanics}";
 		if ( topic.RidesAMechanic != null && _park?.Invoke() is { } staffed ) shut = $" rides={staffed.Rides} mechanics={staffed.Mechanics} sincehire={staffed.DaysSinceStaffHired}";
+		if ( topic.LitterWithNoHandyman != null && _park?.Invoke() is { } messy ) shut = $" closed={(messy.Closed ? 1 : 0)} handymen={messy.Staff.Handymen.Members} litter={messy.LitterShare}";
 		if ( topic.CellsAHandyman != null && _park?.Invoke() is { } big ) shut = $" closed={(big.Closed ? 1 : 0)} handymen={big.Staff.Handymen.Members} cells={big.DevelopedCells}";
 		if ( topic.KidsWithNoGuard != null && _park?.Invoke() is { } open )
 			shut = $" closed={(open.Closed ? 1 : 0)} guards={open.Staff.Guards.Members} kids={open.MisbehavingKids}";

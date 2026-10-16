@@ -20,8 +20,9 @@ namespace OpenTPW;
 /// built path writes is kept, seeded from the save, even where the original's reader is not built: each object's
 /// takings and costs are read by the park file's writer and the censuses, and the bank's red tick by
 /// <see cref="MonthsInTheRed"/> and the console. A ride's operation reads the per-object
-/// nominee and the gate reads the cells' occupant lists; the cells' litter is read only by
-/// <see cref="LitteredCells"/>, which only tests call, because the handyman's litter search is not built (<see cref="StaffBehaviour"/>).
+/// nominee and the gate reads the cells' occupant lists; the cells' litter is read by the advisor's
+/// <see cref="LitterShare"/> and by <see cref="LitteredCells"/>, which only tests call, and nothing in play drops or sweeps
+/// it, because the guests' drop and the handyman's litter search are not built (<see cref="StaffBehaviour"/>).
 /// </para>
 /// </summary>
 public sealed class ParkState
@@ -1193,6 +1194,35 @@ public sealed class ParkState
 		}
 
 		return cells;
+	}
+
+	/// <summary>
+	/// The share of the map's walked cells that hold litter, in whole per cent - <c>FUN_004ccdf0</c>: every cell of the
+	/// map, counted where its <c>mType</c> is path, queue or a ride's entrance (<c>FUN_00536310</c>, <c>FUN_00536320</c>)
+	/// or its litter is not nought, and littered where its litter is not nought; the littered times 100 over the counted,
+	/// cut towards nought, and nought with none counted. <c>docs/exe/advisor-park.md</c>, "Litter and no handyman".
+	/// </summary>
+	public int LitterShare()
+	{
+		var walked = 0;
+		var littered = 0;
+
+		for ( var y = 0; y < ParkWorld.MapSize; ++y )
+		{
+			for ( var x = 0; x < ParkWorld.MapSize; ++x )
+			{
+				var dropped = CellAt( x, y ).Litter != 0;
+				var type = Record( x, y ).Type;
+
+				if ( dropped || type is CellEdge.Path or ParkRideChoice.QueueCellType or CellEdge.RideEnd )
+					++walked;
+
+				if ( dropped )
+					++littered;
+			}
+		}
+
+		return walked == 0 ? 0 : littered * 100 / walked;
 	}
 
 	/// <summary>The <c>mType</c>s a developed cell has (<c>FUN_00536310</c>, <c>FUN_00536320</c>, <c>FUN_00536340</c>, <c>FUN_00536350</c>, <c>FUN_00536380</c>).</summary>

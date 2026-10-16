@@ -24,6 +24,8 @@ public class ParkAdvisorMessageTests
 			+ "StaffHireMechanics1.ScorePerWornRide 5\nStaffHireMechanics1.PoorerStateThan 25\nStaffHireMechanics2.ScorePerBrokenRide 10\n"
 			+ "StaffHireMechanics3.IdealNumberOfRidesPerMechanic 4\nStaffHireMechanics3.ScorePerExtraRide 10\nWaitingTimes.DaysForStaff 30\n"
 			+ $"StaffHireHandymen3.IdealDevelopedCellsPerHandyman {idealCells}\nStaffHireHandymen3.ScorePerExtra10Cells 2\nStaffHireHandymen3.MinCellsForConsideration 300\n"
+			+ "StaffHireHandymen1.ScorePerLitterPoint 3\nStaffHireHandymen1.LitterPointCutoffLow 3\nStaffHireHandymen1.LitterPointCutoffHigh 25\n"
+			+ "StaffHireHandymen2.ScorePerLitterPoint 3\nStaffHireHandymen2.LitterPointCutoffLow 26\n"
 			+ "StaffHireGuards1.AtLeastThisBusy 70\nStaffHireGuards1.ScorePerExtraBusyPoint 1\n"
 			+ "MessageGroups[9].MinTimeSameMessage 0\nMessageGroups[9].SayOnlyOnce 1\nMessageGroups[9].DiscardAfterSlaps 0\n"
 			+ "StaffHireGuards2.Score 10\nStaffHireGuards2.AdditionalPerMisbehavingKid 5\n"
@@ -160,7 +162,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 46, written.Count );
+		Assert.AreEqual( 48, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -957,7 +959,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 118, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 116, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -1885,6 +1887,113 @@ public class ParkAdvisorMessageTests
 		Round( 2220 );
 		CollectionAssert.AreEqual( new[] { (781, 41, 41), (1260, 42, 42), (1740, 43, 43), (2220, 41, 41) }, said, "three lines in turn, then the first again" );
 		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+	}
+
+	/// <summary>
+	/// Rows 8 and 9, messages 8 and 9, are polled and scored by the park's litter share (0x0059cb40, 0x0059cbb0): nought
+	/// in a shut park and nought with a handyman; then row 8 nought over StaffHireHandymen1.LitterPointCutoffHigh and
+	/// otherwise ScorePerLitterPoint for each point less LitterPointCutoffLow, below nought too, and row 9 nought under
+	/// StaffHireHandymen2.LitterPointCutoffLow and otherwise its ScorePerLitterPoint for each point less that cut-off.
+	/// Three lines each in the handymen's cap, and tags 10 and 11, whose bars carry the hire button of type 13, the
+	/// cleaners' tab.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the door not asked; the handymen not asked, or another kind's asked; a cut-off another key's, or
+	/// either test the wrong way or letting the cut-off itself through; the low not taken off, or row 9's taking off its
+	/// own share; the score another key's or not multiplied; a row not polled; the category another's; the lines, the
+	/// response, the sample, the prop or the group another's; tags 10 and 11's rows another's; the poll line naming
+	/// another row's facts.
+	/// </remarks>
+	[TestMethod]
+	public void LitterWithNoHandymanIsPolledByItsShare()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 8 };
+		var settings = Settings();
+		var messages = new ParkAdvisorMessages( settings, cursor: cursor );
+		var one = new ParkAdvisorMessages.KindTraining( Members: 1, Budget: 0, Grades: 2 );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 3, Sideshows: 1, WaitingToOpen: 0, Mechanics: 5,
+			Staff: new( default, one with { Members = 5 }, one with { Members = 6 }, one with { Members = 7 }, one with { Members = 8 } ),
+			GuestsInside: 200, DevelopedCells: 900, DaysSinceStaffHired: 30, LitterShare: 13 );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		void Round( int at, int row )
+		{
+			cursor.Row = row;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 5000; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+		}
+
+		var untidy = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireHandymen );
+		var filthy = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireHandymenFilthy );
+		Assert.AreEqual( (8, "StaffHireHandymen1.ScorePerLitterPoint", "StaffHireHandymen1", false, 23, 23, 3, 1, 0, true, 10, ParkAdvisorMessages.HandymanCap, -1),
+			(untidy.Id, untidy.ScoreKey, untidy.LitterWithNoHandyman, untidy.Filthy, untidy.FirstResponse, untidy.FirstSample, untidy.Lines, untidy.MaxInstances, untidy.Category, untidy.Polled, untidy.Group, untidy.Prop, untidy.GestureRowLine) );
+		Assert.AreEqual( (9, "StaffHireHandymen2.ScorePerLitterPoint", "StaffHireHandymen2", true, 26, 26, 3, 1, 0, true, 11, ParkAdvisorMessages.HandymanCap, -1),
+			(filthy.Id, filthy.ScoreKey, filthy.LitterWithNoHandyman, filthy.Filthy, filthy.FirstResponse, filthy.FirstSample, filthy.Lines, filthy.MaxInstances, filthy.Category, filthy.Polled, filthy.Group, filthy.Prop, filthy.GestureRowLine) );
+		Assert.AreEqual( 2, ParkAdvisorMessages.ParkTopics.Count( one => one.LitterWithNoHandyman != null ) );
+		Assert.IsFalse( untidy.FullSimulationOnly || filthy.FullSimulationOnly );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 8 ) && ParkAdvisorMessages.IsPolled( 9 ) );
+		Assert.AreEqual( 0, messages.ScoreOf( untidy, 775 ), "before any sweep has handed the park in" );
+		foreach ( var response in new[] { 23, 24, 25, 26, 27, 28 } )
+			Assert.AreEqual( (ParkAdvisorMessages.HandymanCap, 0), ParkAdvisorMessages.PropsOf( response ) );
+		foreach ( var (id, text) in new[] { (10, 14), (11, 15) } )
+		{
+			var row = ParkTags.Rows.Single( one => one.Id == id );
+			Assert.AreEqual( (ParkTags.NoTag, 2, text, 0xd, 0, 30000, 0), (row.Key, row.Picture, row.String, row.Button1, row.Button2, row.Life, row.Kind) );
+			Assert.AreEqual( 0, UI.ParkGadget.HireTabOf( row.Button1 ), "the cleaners' tab" );
+		}
+
+		// A share of 13: row 8 three a point less 3, 36; row 9 under its 26, nought.
+		Round( 775, 8 );
+		Assert.AreEqual( (36, "post", 9, 1), (messages.ScoreOf( untidy, 775 ), messages.PollAnswer( 8 ), cursor.Row, said.Count) );
+		Assert.AreEqual( " closed=0 handymen=0 litter=13", messages.PollFacts( untidy ), "the poll line names what the score read" );
+		StringAssert.Contains( messages.Census(), "message=8/score=36/line=0/lastTick=775/said=1/slaps=0" );
+		Round( 776, 9 );
+		Assert.AreEqual( (0, "no-score", 1), (messages.ScoreOf( filthy, 776 ), messages.PollAnswer( 9 ), said.Count) );
+		Assert.AreEqual( " closed=0 handymen=0 litter=13", messages.PollFacts( filthy ) );
+		CollectionAssert.AreEqual( new[] { (775, 23, 23) }, said );
+		CollectionAssert.AreEqual( new[] { (10, 0) }, groups );
+
+		// Row 8 up to 25 and row 9 from 26: neither cut-off lets the other's through.
+		facts = facts with { LitterShare = 25 };
+		Assert.AreEqual( (72, 0), (messages.ScoreOf( untidy, 777 ), messages.ScoreOf( filthy, 777 )), "25 is row 8's" );
+		facts = facts with { LitterShare = 26 };
+		Assert.AreEqual( (0, 52), (messages.ScoreOf( untidy, 777 ), messages.ScoreOf( filthy, 777 )), "26 is row 9's: three a point less 26" );
+		facts = facts with { LitterShare = 100 };
+		Assert.AreEqual( (0, 274), (messages.ScoreOf( untidy, 777 ), messages.ScoreOf( filthy, 777 )), "a share of all" );
+		facts = facts with { LitterShare = 9 };
+		Assert.AreEqual( 24, messages.ScoreOf( untidy, 777 ), "nine points are under the threshold" );
+		facts = facts with { LitterShare = 0 };
+		Assert.AreEqual( (-3, 0), (messages.ScoreOf( untidy, 777 ), messages.ScoreOf( filthy, 777 )), "no litter is three under nought, and nothing holds it" );
+
+		// The keys.
+		facts = facts with { LitterShare = 13 };
+		Set( settings, "StaffHireHandymen1.LitterPointCutoffLow", 5 );
+		Assert.AreEqual( 34, messages.ScoreOf( untidy, 777 ) );
+		Set( settings, "StaffHireHandymen1.LitterPointCutoffHigh", 12 );
+		Assert.AreEqual( 0, messages.ScoreOf( untidy, 777 ), "over the high cut-off" );
+		Set( settings, "StaffHireHandymen1.LitterPointCutoffHigh", 25 );
+		Set( settings, "StaffHireHandymen1.LitterPointCutoffLow", 3 );
+		Set( settings, "StaffHireHandymen1.ScorePerLitterPoint", 4 );
+		Assert.AreEqual( 49, messages.ScoreOf( untidy, 777 ) );
+		Set( settings, "StaffHireHandymen1.ScorePerLitterPoint", 3 );
+		Set( settings, "StaffHireHandymen2.LitterPointCutoffLow", 13 );
+		Assert.AreEqual( 26, messages.ScoreOf( filthy, 777 ), "13 is row 9's from a low of 13" );
+		Set( settings, "StaffHireHandymen2.ScorePerLitterPoint", 5 );
+		Assert.AreEqual( 52, messages.ScoreOf( filthy, 777 ) );
+		Set( settings, "StaffHireHandymen2.ScorePerLitterPoint", 3 );
+		Set( settings, "StaffHireHandymen2.LitterPointCutoffLow", 26 );
+
+		// With a handyman, or shut: nought.
+		facts = facts with { LitterShare = 30, Staff = facts.Staff with { Handymen = one } };
+		Assert.AreEqual( (0, 0), (messages.ScoreOf( untidy, 777 ), messages.ScoreOf( filthy, 777 )), "one handyman" );
+		Assert.AreEqual( " closed=0 handymen=1 litter=30", messages.PollFacts( filthy ) );
+		facts = facts with { Staff = facts.Staff with { Handymen = default }, Closed = true };
+		Assert.AreEqual( (0, 0), (messages.ScoreOf( untidy, 777 ), messages.ScoreOf( filthy, 777 )), "shut" );
+		facts = facts with { Closed = false };
+		Round( 931, 9 );
+		Assert.AreEqual( (64, "post"), (messages.ScoreOf( filthy, 931 ), messages.PollAnswer( 9 )) );
+		CollectionAssert.AreEqual( new[] { (775, 23, 23), (931, 26, 26) }, said );
+		CollectionAssert.AreEqual( new[] { (10, 0), (11, 0) }, groups );
 	}
 
 	/// <summary>
@@ -4090,7 +4199,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 37, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 39, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>
