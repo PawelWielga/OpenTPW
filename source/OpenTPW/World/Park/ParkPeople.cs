@@ -2721,7 +2721,7 @@ public sealed partial class ParkPeople : Entity
 	/// thing's +0xc, <see cref="ParkState.Balance"/>); and the guests inside the park (FUN_004c9130,
 	/// <see cref="GateGuestCensus"/>) with those of them whose toilet need is over the advisor's level
 	/// (0x004c9290); and the researchers (FUN_004c9960 asked for type 8) and the lab's projects of a feature's
-	/// kind that are not done (0x004ca690, <see cref="ParkResearch.Unfinished"/>); and the map's developed cells
+	/// kind that are not done (0x004ca690, <see cref="ParkResearch.Unfinished"/>), and of a ride's (0x004ca630); and the map's developed cells
 	/// (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and this month's misbehaving kids (FUN_004c94a0 asked with
 	/// nought, <see cref="ParkState.MisbehavingKids"/>); and the guests inside under <see cref="ParkAdvisorMessages.UnhappyBelow"/>
 	/// happiness, each one's truncated to its low byte (FUN_004c9750). With no catalogue no kind is counted.
@@ -2814,7 +2814,8 @@ public sealed partial class ParkPeople : Entity
 			_research?.Unfinished( ItemDescriptionFile.SideShow ) ?? 0,
 			_research?.Rate( ItemDescriptionFile.SideShow, ability, MostResearchAbility ) ?? 0, ability, MostResearchAbility,
 			new ParkAdvisorMessages.StaffTraining( TrainingOf( 0 ), TrainingOf( 1 ), TrainingOf( 2 ), TrainingOf( 3 ), TrainingOf( 4 ) ),
-			State.DevelopedCells(), State.MisbehavingKids.Month, unhappy, State.LitterShare(), State.MisbehavingKids.GotAwayThisMonth );
+			State.DevelopedCells(), State.MisbehavingKids.Month, unhappy, State.LitterShare(), State.MisbehavingKids.GotAwayThisMonth,
+			_research?.Unfinished( ItemDescriptionFile.Ride ) ?? 0 );
 	}
 
 	/// <summary>

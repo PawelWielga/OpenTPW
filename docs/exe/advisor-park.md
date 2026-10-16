@@ -1729,7 +1729,7 @@ too) and held.
 | The hire screen's own line | `0xbd` posted at 1000 as the screen is built, and said | the same (said on tick 961, as row 5's wait ended) |
 | Rows 6 and 7 | scored on their turns (nought here) | each built since, in its own section below |
 
-**Not built or not seen.** The other staff rows, 15 to 17 (their scores not read; rows 8 to 14 are built,
+**Not built or not seen.** The last staff row, 17, is not built (rows 8 to 16 are,
 below). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
 turn), the line said again past its 120 quarter-ticks, a broken ride counted (the test holds it, and a ride
 breaking with no mechanic posts `0x44` besides), a ride worn under 25 by running, button types `0xd` and `0xf`
@@ -2128,8 +2128,8 @@ seconds after the load, the park run to 27 February 2000 (about tick 1313, past 
 again past its 120 quarter-ticks, two handymen or more (the test holds three), a handyman hired after the line, the
 minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
 handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
-game. Rows 12 and 13 are built since ("A park with no guard", "A park too big for its guards", below); the other
-staff rows, 15 to 17, are not (Q420; rows 8, 9, 11 and 14 are built, "Litter and no handyman", "A busy park with no guard", "A busy park with no entertainer").
+game. Rows 12 and 13 are built since ("A park with no guard", "A park too big for its guards", below); the last staff
+row, 17, is not (Q420; rows 8, 9, 11 and 14 to 16 are built, "Litter and no handyman", "A busy park with no guard", "A busy park with no entertainer", "Most or every kind of ride built, and no researcher").
 
 ## A busy park with no guard (message `0xb`, Q416)
 
@@ -2302,8 +2302,8 @@ pranks", below). `q413/side-by-side.png` sets this game's line beside the origin
 
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 36 and 37, the third's gesture row counted; the test
 holds the turn), a kid counted in play (nothing here counts one), two guards or more, a guard hired after the line,
-Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The other staff
-rows, 15 to 17, are not built (Q420; rows 8, 9, 11 and 14 are, above and below).
+Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The last staff
+row, 17, is not built (Q420; rows 8, 9, 11 and 14 to 16 are, above and below).
 
 ## Lots of pranks (message `0x108`, Q414)
 
@@ -2547,10 +2547,8 @@ screen on its entertainers' tab, the third), no second, thirty seconds. String 2
 park is starting to get busy. Maybe you should hire some?" (`Language/american`'s, its letters shifted, "You have no").
 
 **The other staff rows** (read for the order of the next pieces): rows 8 and 9 ("Litter and no handyman", above) and
-row 11 ("A busy park with no guard", above) are built; rows 15 and 16
-(`StaffHireResearchers1`, `2`) answer nought with a researcher and read the kinds of ride on offer and standing
-(`0x004ca450`, `0x004ca7b0`; string 21 is "You've built most of the available rides..."); row 17 (`StaffHireResearchers3`,
-category 4) reads the months into the game.
+row 11 ("A busy park with no guard", above) are built, and rows 15 and 16 ("Most or every kind of ride built, and no
+researcher", below); row 17 (`StaffHireResearchers3`, category 4) reads the months into the game.
 
 ### OpenTPW (`ParkAdvisorMessages.HireEntertainers`, a topic's `BusyWithNoEntertainer`; `ParkFacts.GuestsUnhappy`; tag row 16)
 
@@ -2603,7 +2601,104 @@ sets this game's line beside the original's.
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 42 and 43; the test holds the turn), a crowd under 35
 (a score below nought, tested only), a crowd past 100 (tested only), two entertainers or more, an entertainer hired after
 the line, Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The
-other staff rows, 15 to 17, are not built (Q420; rows 8, 9 and 11 are, "Litter and no handyman", "A busy park with no guard").
+last staff row, 17, is not built (Q420; rows 8, 9, 11, 15 and 16 are, "Litter and no handyman", "A busy park with no guard", "Most or every kind of ride built, and no researcher").
+
+## Most or every kind of ride built, and no researcher (messages `0xf` and `0x10`, Q421)
+
+**Rows 15 and 16, messages `0xf` and `0x10`, `StaffHireResearchers1` and `2`** (the emulated table, `meta_full.json`):
+both polled, category 0, either game mode (`+0x0c` 2), one copy, selection 2; row 15's score function `0x0059cea0`, first
+response 44, **three lines**; row 16's `0x0059cf50`, first response 47, **two lines**. Responses 44 to 48 are **samples 44 to
+48**, the random gesture chain, model slot 0, prop 10 (the research hat: the scientist's white hair), groups 17 (row 15's)
+and 18 (row 16's). From the shipped park's cursor their turns are one and two after row 14's: ticks 782 and 783, then every
+155. The transcripts (`global-speech-transcripts.tsv`): row 15's "you've built most of the available rides and you don't
+have any wonder research new ones maybe you should hire some researchers", "you don't have any researchers and you've
+already built most of the available rides...", "you've already built most of the available rides maybe you should hire
+some researchers to devise new ones"; row 16's "you've already built all of the available rides and you don't have anyone
+to develop new ones you should hire some researchers", "there aren't any more rides available you've built all of them
+already...".
+
+**Their scores** (undefined bytes; read with Ghidra's `PseudoDisassembler` in the private copy, nothing written to the
+project; `ECX` the balance object, kept in `EDI` and `ESI`), each step on the park analyser (`FUN_00519510`):
+
+1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
+2. The researchers, `FUN_004c9960( 8 )`: above nought (`JG`), nought.
+3. **The lab's projects of a ride's kind left undone, `0x004ca630`** (loose code): `FUN_00503b30( 0 )` on the lab
+   (`FUN_00519550( 0 )` on the world; "Every feature built, and more to research", below, reads the same of kind 3). None
+   (`JZ`): nought.
+4. Row 15: the kinds of ride on offer, `0x004ca450( 0 )` ("A poor selection of rides", below); none, nought. The kinds
+   standing, `0x004ca7b0( 0, 0 )`; **as many as on offer, nought** (`JZ` at `0x0059cf1f`). Then standing x 100 over on
+   offer (`IDIV`, whole numbers) against `[EDI + 0x114]`, **`StaffHireResearchers1.Most`, 70**: not more (`JLE`), nought;
+   else the share less 70 times `[EDI + 0x118]`, **`PointsPerExtraPct`, 5**.
+5. Row 16: the kinds standing, then on offer (the other order, `0x0059cfa8`, `0x0059cfc0`); **as many**
+   (`0x0059cfc5`), `[ESI + 0x11c]`, **`StaffHireResearchers2.Score`, 90**; else nought. Nothing more is asked, so none on
+   offer and none standing are as many and score 90 where steps 1 to 3 let by.
+
+`MinScoreForConsideration` is 25, and Instant Action's Lost Kingdom offers four kinds of ride ("Four kinds of ride in an
+Instant Action park", `TOOLING.md`): **row 15 can never be said there with the shipped keys** (three of four is 75, five
+over 70, 25, not over 25; four of four is nought), and row 16 is said with all four built. The shipped park has a
+researcher (thing 30) and eight ride projects undone in its lab, so it is silent on both.
+
+**Their tags** are rows 17 and 18 of the tag table: key 383, picture 2, strings 21 and 22, the bar's first button of type
+17 (the hire screen on its researchers' tab, the fifth), no second, thirty seconds. Strings 21 and 22 read "You've built
+most of the available rides and you don't have anyone to research new ones. Maybe you should hire some scientists?" and
+"You've no scientists and you've built all the available rides. You should hire some!" (`Language/american`'s, its letters
+shifted, "researchers" and "You have no researchers").
+
+### OpenTPW (`ParkAdvisorMessages.HireResearchers`, `HireResearchersAllBuilt`, a topic's `MostRidesBuilt`, `EveryRideBuilt`; `ParkFacts.RideProjectsUnfinished`; tag rows 17 and 18)
+
+Two topics scored from the same `ParkFacts`, which now carry the lab's ride projects not done (`ParkResearch.Unfinished`
+asked for kind nought, the file's projects, as nothing here researches) beside the researchers, the kinds on offer and the
+kinds standing rows 60 and 80 already read. The poll line ends ` closed=N researchers=N unfinished=N kinds=S/O`.
+`ParkTags.Rows` lists rows 17 and 18; the bar's button of type 17 was built for the hire screen (Q331).
+
+**The scenes** (`lib/stockscene.py`, paused on 768): `all4.TPWS`, the stock park with its researcher (thing 30) dismissed
+and the Crazy Ape, the Rocky Racers and the Aztec Mayhem bought beside the Belly Bounce (four kinds of four); `three.TPWS`,
+dismissed, the Crazy Ape and the Rocky Racers (three of four); `kept.TPWS`, the researcher kept, all three bought. Each
+holds the stock lab's eight ride projects undone (`parkfile.py -l`). Row 15 is said only with `Most` changed to 50 in both
+games (three of four, 25 over 50, times 5, **125**: "A balance key changed in both games", `TOOLING.md`).
+
+**Predicted first** (`q421/PREDICTION.txt`). Every prediction of this game held, in one round.
+
+**This game** (`q421/confirm.py fix|three|most|kept|control`, on the desktop; the final build `49ff42fc`): *`all4`*
+(`run-fix1`): `poll message=15 row=15 days=33 score=0 threshold=25 tick=782 result=no-score closed=0 researchers=0
+unfinished=8 kinds=4/4`, then `poll message=16 row=16 days=33 score=90 threshold=25 tick=783 result=post ... kinds=4/4`,
+said on that tick, the first line of the run (`attempt=1 message=16 subject=0 score=90 threshold=25 response=47 sample=47
+line=0 tick=783`), `saying sp_047.mp2 ... wearing=10,0`: him up in the scientist's white hair (`1-line.png`). The tag
+clicked: `message bar: tag 18 subject 0 item 0 bar: out=1`, `first=mb_buy/help=529 second=hidden erase=mb_erase` and string
+22 (`2-bar.png`). The button clicked: `button type 17 opens the hire screen on tab 4 and takes tag 18 off`, `windows`
+reading `ParkHireScreen tab 4`, "Hire Scientists" with the fifth tab lit (`3-screen.png`). *`three`* (`run-three1`): row 15
+`score=25 ... result=under-threshold ... kinds=3/4` on 782, row 16 `no-score` on 783, silent to tick 963. *`three`* with
+`Most` 50 (`run-most1`, a private folder's `Advisor.sam`): row 15 `score=125 ... tick=782 result=post ... kinds=3/4`, said
+(`response=44 sample=44 line=0`, `sp_044.mp2`, `wearing=10,0`), tag 17's bar lettered string 21 with the same button
+(`2-bar.png`). *`kept`* (`run-kept1`): both rows `no-score ... researchers=1 unfinished=8 kinds=4/4`, silent to 961.
+**Main's build** on `all4` (`run-control1`): no line of message 15 or 16 to 963. The bought rides' queues are joined to no
+path, so row 113 is said on tick 841 too (`run-three1`, `run-kept1`; the original's run a, below).
+
+**The original** (`q421/orig/run.sh <file>`, `advisor.py ... 0xf,0x10 poll` beside `tags.py`; a fresh program each,
+off-screen; `SAM=most50` writes the key into the reference install's `Advisor.sam` for the run and puts the shipped file
+back). *`all4`* (run a): **`0x10`'s record from (0, -1, 0, 0) to (783, 0, 1, 0) on tick 783**, one tag lettered string 22
+of `Language/american`, "You have no researchers and you've built all the available rides. You should hire some!", `0xf`
+unmoved; on 841 row 113's tag beside it, and on 1403 `0x10`'s second line, (1403, 1, 1, 0), its first turn past the
+category's 120 quarter-ticks. The stills came after the line; filmed (run a2, `record.sh`), him up in the white hair from
+about 5.6 s with the tag on the aerial (`orig/a2-hair.png`). *`three`* (run b) and *`kept`* (run c): neither record moved
+to tick 1461, no tag of rows 17 or 18 (row 113's alone). *`three`* with `Most` 50 (run m): **`0xf`'s record to (782, 0, 1,
+0) on 782**, the tag lettered string 21, "You've built most of the available rides and you don't have anyone to research
+new ones. Maybe you should hire some researchers?". `q421/side-by-side.png` sets this game's line beside the original's.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Rows 15 and 16 | polled; nought shut, with a researcher, or with no ride project left in the lab; row 15 (standing x 100 / on offer, less 70) x 5 past 70 and short of all; row 16 90 with all standing | the same |
+| No researcher, four kinds of four | row 16 said on 783, line 0, the scientist's hair; tag 18, string 22 | the same (90; row 15 `no-score`) |
+| No researcher, three of four | not said | the same (row 15 25, `under-threshold`) |
+| Three of four, `Most` 50 | row 15 said on 782; tag 17, string 21 | the same (125) |
+| A researcher, four of four | not said | the same (`no-score`, `researchers=1`) |
+| The tag and the bar | rows 17 and 18, part 2; button 17 builds the hire screen on its researchers' tab | the same ("Hire Scientists", the fifth tab) |
+
+**Not built or not seen.** In no game run: row 15 said with the shipped keys (Instant Action's four kinds cannot pass 25;
+seen under the threshold), lines 2 and 3 of row 15 and row 16's second line here (the test holds the turn; the original
+said row 16's second on 1403), none on offer (row 16's 90, tested only), a researcher hired after the line, Full
+Simulation (not asked: the rows are either mode's), the other three themes. Not heard in either game. The last staff row,
+17 (`0x0059cfe0`, category 4), is not built (Q420).
 
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 

@@ -174,7 +174,9 @@ whole list):
   ending; `WAIT60=0 SECS60=0 CLICKS=1` clicks in time, and `GRAB=1` has the frames of him speaking.
 - **Four kinds of ride in an Instant Action park** (Q343): `stockscene.py ... 912 "buy 1101 41 22 0" "buy 1102 70
   40 0" "buy 1104 55 30 0"` (a Crazy Ape, a Rocky Racers and an Aztec Mayhem beside the stock Belly Bounce, each
-  left shut as bought, which both games count as a kind standing). The Instant Action catalogue holds no fifth.
+  left shut as bought, which both games count as a kind standing). The Instant Action catalogue holds no fifth. Made at
+  765 (paused on 768) with `fire 30` first, the stock researcher dismissed, the file keeps the lab's eight ride
+  projects and both games say the advisor's row 16 on tick 783 (Q421, `q421/all4.TPWS`).
 - **A member of staff's grade written in a file, and the second tag's click** (Q350): `parkfile.thing_set( src,
   dst, 30, 398, '<i', grade )` writes the stock researcher's `mCurrentPayGrade`, which the original reads back at
   his `+0x1e4` (`thingwords.py ... 30:0x1e4:I`). **A stock park whose researcher is of grade 0 hears a training

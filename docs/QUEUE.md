@@ -48,8 +48,15 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q421 (`advisor-park.md`, "Most or every kind of ride built, and no researcher"): rows 15 and 16 are built. The
+  last staff row, 17 (`0x0059cfe0`, `StaffHireResearchers3`, category 4, its keys `MonthsIntoGameForConsideration` and
+  `SlowerThan`; not read), is not; row 22 (`0x0059d3b0`) reads the got-away count with a guard on the staff, the nearest of the guards'
+  rows. In no game run: row 15 said with the shipped keys (Instant Action's four kinds cannot pass 25: tested, and seen
+  under the threshold), lines 2 and 3 of row 15 and line 2 of row 16 (the test holds the turn), none on offer (row 16's
+  90, tested only), a researcher hired after the line, Full Simulation (not asked: the rows are either mode's), the
+  other three themes. Not heard in either game.
   From Q418 (`advisor-park.md`, "Kids who got away"): row 98 is built. The other staff rows, 15 to 17, are not: rows 15
-  and 16 the kinds of ride on offer and standing with no researcher (`0x004ca450`, `0x004ca7b0`; the nearest), row 17 the
+  and 16 the kinds of ride on offer and standing with no researcher (`0x004ca450`, `0x004ca7b0`; the nearest; built, Q421), row 17 the
   months into the game. Row 22 (`0x0059d3b0`) reads the same got-away count with a guard on the staff (its lines ask for
   security cameras), the nearest of the guards' rows. In no game run: the second line (sample 292; its gesture row is
   counted, the test holds the turn), a kid getting away in play (nothing here counts one: the pranks), a shut park (the
@@ -57,7 +64,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   either game.
   From Q417 (`advisor-park.md`, "Litter and no handyman"): rows 8 and 9 are built. The other staff rows, 15 to 17, are
   not: rows 15 and 16 the kinds of ride on offer and standing with no researcher (`0x004ca450`, `0x004ca7b0`; the
-  nearest), row 17 the months into the game. Row 98 is built (Q418). Nothing here drops or sweeps litter (`DECIDE_LITTER_DROPPED`,
+  nearest; built, Q421), row 17 the months into the game. Row 98 is built (Q418). Nothing here drops or sweeps litter (`DECIDE_LITTER_DROPPED`,
   `HANDYMAN_LITTER_SEARCH`), so the share is the file's; the original's handyman swept a cell every 15 or 16 ticks. In
   no game run: lines 2 and 3 (the test holds the turn), a share of nought or at the cut-offs themselves (tested only),
   two handymen, a handyman hired after the line, Full Simulation (not asked: the rows are either mode's), the other

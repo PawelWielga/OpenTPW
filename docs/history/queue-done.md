@@ -7181,6 +7181,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   given the three files: `0x62` (828, 0, 1, 0) on 828 in the first two, its action 14,998 and 14,164 ms (this game's
   13,998 and 13,165 and the helper's 1,000), the same tag's words; the third unmoved to 16 April. 33 bugs put back, all
   caught.
+- [x] **Q421. The advisor's rows 15 and 16, rides built and no researcher.** `0x0059cea0` and `0x0059cf50`: nought in a
+  shut park, with a researcher (`FUN_004c9960( 8 )`) or with no ride project left undone in the lab (`0x004ca630`,
+  `FUN_00503b30( 0 )`); then row 15 (`StaffHireResearchers1`) scores the kinds of ride standing over on offer, whole per
+  cent, past `Most` 70, times `PointsPerExtraPct` 5, nought with none on offer or all standing, and row 16
+  (`StaffHireResearchers2`) its `Score` 90 where all stand. Three lines and two in the research hat; tags 17 and 18, strings
+  21 and 22, the researchers' hire button (`advisor-park.md`, "Most or every kind of ride built, and no researcher").
+  Confirmed: `all4.TPWS` (the stock park, its researcher dismissed, four kinds of four) `poll message=16 row=16 days=33
+  score=90 threshold=25 tick=783 result=post closed=0 researchers=0 unfinished=8 kinds=4/4`, said (`sample=47`,
+  `wearing=10,0`), tag 18's bar lettered string 22, its button opening "Hire Scientists"; three of four row 15 `score=25`,
+  under the threshold, and with `Most` 50 `score=125`, said (`sample=44`), tag 17; the researcher kept, both `no-score`;
+  main's build silent. The original given the files: `0x10` (783, 0, 1, 0) on 783, the white hair on film; `0xf` (782, 0,
+  1, 0) on 782 with `Most` 50; the others unmoved to 1461. 38 bugs put back, 37 caught; the one left, more taken as at
+  least, scores nought at the least either way.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
