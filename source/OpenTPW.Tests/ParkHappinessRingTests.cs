@@ -105,7 +105,7 @@ public class ParkHappinessRingTests
 		var same = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
 			MonthRings: new( shipped.MonthBalance!, shipped.MonthParkValue!, shipped.MonthCosts!, shipped.MonthStaffCosts!, shipped.MonthTraining!,
 				shipped.MonthCashIn!, shipped.MonthGateTakings!, shipped.MonthShopTakings!, shipped.MonthSideshowTakings!, shipped.MonthGuestsInside!,
-				shipped.MonthVisitors!, shipped.MonthRides!, shipped.MonthArrivals!, happiness, shipped.MonthMeanStay!, shipped.LeaverStays! ) ) );
+				shipped.MonthVisitors!, shipped.MonthRides!, shipped.MonthArrivals!, happiness, shipped.MonthMeanStay!, shipped.LeaverStays!, shipped.MonthParkScore! ) ) );
 		var written = new ParkWorld( same );
 
 		Assert.AreEqual( (1, 66.75f), (written.MonthHappiness!.Current, written.MonthHappiness.NewestSingle) );

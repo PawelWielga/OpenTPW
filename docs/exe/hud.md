@@ -1634,7 +1634,7 @@ order (read 2026-10-15, Q389, `0x004c788c`..`0x004c7a7a`; not ring order): the m
 ring is (`+0x20cc0`, added by `FUN_004cf3e0`; below, "The arrivals"), `FUN_004c7fa0` (`+0x205d0`; it and the 12th below, "The guests inside and the rides at a close"), the lifetime visitors `+0x21c08`
 (`+0x20820`, below, "The lifetime visitors"), `FUN_004c8070` (`+0x20a70`), `FUN_004c7bb0`'s float (`+0x20f10`; below, "The guests' happiness at a close"),
 `FUN_004c7db0`'s figure (`+0x1f350`; the graph's "Park value", below), a mean of `FUN_004cef30` (`+0x21160`; below,
-"The leavers' stays") and `FUN_004cceb0` (`+0x213b0`); the last not read further.
+"The leavers' stays") and `FUN_004cceb0` (`+0x213b0`; below, "The park score").
 
 **The finances screen graphs eight of them** (`FUN_0049a2e0`, its range `DAT_007ca2ec` 12, 36 or 144 months; the rings
 picked by the bits of `DAT_00751fa0`, 1 at the start: 1 the balance, 2 `+0x1f350`, 4 cash in, 8 gate takings, `0x10`
@@ -1665,8 +1665,8 @@ file's at a load, `ParkMonthRing.Push( ParkValue.Of( ... ) )` after the seven mo
 `ParkMonthRing.Push( LifetimeVisitors )` after the money rings and before the park value, written as the 11th (below,
 "The lifetime visitors"). **And the guests inside' and the rides' rings** (Q390): `MonthGuestsInside` and `MonthRides`,
 written as the 10th and 12th (below, "The guests inside and the rides at a close"). **And the arrivals'** (Q391):
-`MonthArrivals`, written as the 13th (below, "The arrivals"). **And the 14th and 15th** (Q392, Q393; below). The 16th
-is not kept (`ANALYSER_MONTH_CLOSE`), and a written file keeps the file's bytes for it.
+`MonthArrivals`, written as the 13th (below, "The arrivals"). **And the 14th and 15th** (Q392, Q393; below), **and the 16th** (Q394;
+below, "The park score"): all sixteen are kept.
 
 #### The park value
 
@@ -1877,6 +1877,45 @@ setter does it; `TurnTheMonth` pushes `MeanOfNewest( 50 )` after the park value;
 slot behind and no stays. The original given this game's file read both and its own close at once pushed 30, then its
 next leaver handed in 35 days; given main's file, its close pushed 0 (`q393/orig/a-load.log`, `b-load.log`,
 `side-by-side.png`).
+
+#### The park score
+
+Read 2026-10-15 (Q394). **The 16th int ring (`+0x213b0`, its slot `+0x215f4`, count `+0x215f8`, wrapped `+0x215fc`,
+months `+0x213b4`) is a score of the park out of a hundred**, the last thing the close pushes (`0x004c7a49`, a thiscall on
+the analyser, then the ring's step written out to `0x004c7a7a`). `FUN_004cceb0` adds eleven counts, each capped, every
+division whole:
+
+| Count | Asked of | Points | Most |
+|---|---|---|---|
+| the guests inside | kind 1 (`+2`) on a cell `FUN_004fa990` passes, walked twice, 1,000 at most | n x 20 / 1000 | 20 |
+| the rides | `FUN_004ca8e0( 0, 0 )`: type 3, item `+0x4ac` (`Info.WhichUIType`) 0 | n x 3 / 2 | 20 |
+| the shops | `FUN_004ca8e0( 1, 0 )` | n x 2 | 10 |
+| the sideshows | `FUN_004ca8e0( 2, 0 )` | n x 2 | 10 |
+| the features | `FUN_004ca8e0( 3, 0 )` | n | 10 |
+| the rides upgraded | `FUN_004ca8e0( 0, 2 )`: a ride whose `mUpgradeLevel` byte (`+0x50`) is 2 or over; the level is asked of rides alone | n | 10 |
+| the handymen, the mechanics | the thing list walked inline (`FUN_004cd300`, `FUN_00481f80` a staff type), type 5, then 4, `+3` nought | n | 4 each |
+| the entertainers, guards, researchers | `FUN_004c9960( 6 )`, `( 7 )`, `( 8 )`: type byte, `+3` nought | n | 4 each |
+
+The fixed items (`WhichUIType` 4) count for nothing. **Readers**: the park status screen's graph (above, "The guests
+inside and the rides at a close"); which of its labels names it is not read.
+
+**Measured** (`q394/sweep.py`): the shipped `Easymode.TPWI` holds the 16th one month closed on 18: no guest inside, the
+Belly Bounce (1), the Drinks Shop (2), the Jungle Spray (2), eight features (8) and one of each kind of staff (5). Over
+all 598 park files on hand its month so far is 0, on the cash-in ring's slot in 576. In 180 of the 197 untouched files
+(the park value its file's own, Q388) the newest month is the reckoning from the 10th ring's guests and the file's
+things; each of the 17 others differs by the staff hired or gone since its close. Alexah's Full Simulation jungle park
+reads [72, 72, 73, 74], its last month 74 where the file's twelve rides reckon 73: its 12th ring says thirteen stood at
+that close.
+
+**OpenTPW** (Q394). `ParkScore.Of` counts the objects by their item's `UiType` and level and takes the guests inside and
+`ParkPeople.ScoreStaff` (a member in the hand counts; one fired here is gone at once); `ParkState.MonthParkScore`, the
+file's at a load and empty in a park made with no file, is pushed last in `TurnTheMonth`; the writer writes it; `money`
+prints it with the score now. Nothing here reads it: the park status screen is not built (`PARK_STATUS_SCREEN`).
+**Confirmed** (`q394/`): the stock park with the Belly Bounce written to level 2 (`bounce2.TPWS`), loaded; `money` read
+`park score 18 slot 0 now 19`; the close on tick 1470 (22 guests inside) named `park score 19`, and the file held the 16th
+[18, 19] with every ring on slot 1; main's build left [18] a slot behind. The original given this game's file read
+[18, 19] and its own close at once pushed 19; given main's, its close pushed 19 into slot 1 with its 15th on slot 2
+(`q394/orig/c-load.log`, `b-load.log`, `side-by-side.png`).
 
 #### The first row is picked as a list fills
 

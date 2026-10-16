@@ -886,9 +886,16 @@ public sealed partial class ParkPeople : Entity
 	public static void TurnTheMonth( ParkPeople? people, ParkState? state, ParkItemCatalogue? catalogue )
 	{
 		people?.TrainTheStaff();
-		state?.TurnTheMonth( catalogue, people?.GateGuestCensus ?? 0, people?.GuestsInsideHappiness ?? 0f );
+		state?.TurnTheMonth( catalogue, people?.GateGuestCensus ?? 0, people?.GuestsInsideHappiness ?? 0f, people?.ScoreStaff ?? default );
 		people?.PayTheWages();
 	}
+
+	/// <summary>
+	/// The staff the month's <see cref="ParkScore"/> counts: every member on the staff's list by their type, in the hand
+	/// or not (<c>FUN_004c9960</c> asks only that a thing's <c>+3</c> be nought, and a member fired here is gone at once).
+	/// </summary>
+	internal ParkScore.StaffCounts ScoreStaff => new( _staff.Count( member => member.Model == HandymanModel ), _staff.Count( member => member.Model == MechanicModel ),
+		_staff.Count( member => member.Model == EntertainerModel ), _staff.Count( member => member.Model == GuardModel ), _staff.Count( member => member.Model == ResearcherModel ) );
 
 	/// <summary>
 	/// The month's change reaches each member of staff, the last to hear it - message <c>0xc</c>, whose handler
@@ -992,6 +999,8 @@ public sealed partial class ParkPeople : Entity
 
 	/// <summary>A mechanic's thing model - see <see cref="Staff.Model"/>.</summary>
 	private const int MechanicModel = 4;
+	private const int HandymanModel = 5;
+	private const int GuardModel = 7;
 	private const int ResearcherModel = 8;
 
 	/// <summary>Who is being carried, for the debug console.</summary>

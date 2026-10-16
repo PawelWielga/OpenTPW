@@ -742,6 +742,7 @@ public sealed class ParkState
 		MonthRides = park.Save?.MonthRides?.Copy() ?? new();
 		MonthHappiness = park.Save?.MonthHappiness?.Copy() ?? new();
 		MonthMeanStay = park.Save?.MonthMeanStay?.Copy() ?? new();
+		MonthParkScore = park.Save?.MonthParkScore?.Copy() ?? new();
 		LeaverStays = park.Save?.LeaverStays?.Copy() ?? new( ParkMonthRing.Stays );
 		MonthArrivals = park.Save?.MonthArrivals?.Copy() ?? new();
 		LifetimeVisitors = park.Save?.LifetimeVisitors ?? 0;
@@ -966,6 +967,12 @@ public sealed class ParkState
 	public ParkMonthRing MonthMeanStay { get; private set; } = new();
 
 	/// <summary>
+	/// The park analyser's 16th ring (<c>+0x213b0</c>): the <see cref="ParkScore"/> at each close (<c>FUN_004cceb0</c>),
+	/// pushed by <see cref="TurnTheMonth"/> after the mean stay, the last of its rings; nothing adds to its month so far.
+	/// </summary>
+	public ParkMonthRing MonthParkScore { get; private set; } = new();
+
+	/// <summary>
 	/// The park analyser's ring of the last fifty stays (<c>+0x21600</c>): <see cref="AddLeaverStay"/> pushes a paying
 	/// guest's whole days in the park as they reach the stop to go home.
 	/// </summary>
@@ -1055,10 +1062,10 @@ public sealed class ParkState
 	/// <summary>The analyser's month of what the sideshows have charged (<c>+0x20380</c>), as <see cref="MonthCosts"/>; <see cref="AddSideshowTakings"/> adds to it.</summary>
 	public ParkMonthRing MonthSideshowTakings { get; private set; } = new();
 
-	/// <summary>The analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its arrivals, its guests' happiness, its mean stay and its leavers' stays as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
+	/// <summary>The analyser's eight money rings, its park value, its guests inside, its lifetime visitors, its rides, its arrivals, its guests' happiness, its mean stay, its park score and its leavers' stays as the writer takes them (<see cref="ParkWorld.PutMonthRings"/>).</summary>
 	public ParkWorld.MonthRingSet MonthRings
 		=> new( MonthBalance, MonthParkValue, MonthCosts, MonthStaffCosts, MonthTraining, MonthCashIn, MonthGateTakings, MonthShopTakings, MonthSideshowTakings,
-			MonthGuestsInside, MonthVisitors, MonthRides, MonthArrivals, MonthHappiness, MonthMeanStay, LeaverStays );
+			MonthGuestsInside, MonthVisitors, MonthRides, MonthArrivals, MonthHappiness, MonthMeanStay, LeaverStays, MonthParkScore );
 
 	/// <summary>
 	/// A wage or a severance paid: onto the analyser's month of staff costs, after the withdrawal and whether or not it
@@ -1405,7 +1412,7 @@ public sealed class ParkState
 	/// bank's <see cref="Balance"/> into its first ring, then closes its seven money rings, all costs, staff costs,
 	/// training, cash in, gate, shop and sideshow takings, in that order, and the month's arrivals, then samples <paramref name="guestsInside"/>,
 	/// <see cref="LifetimeVisitors"/>, the <see cref="RidesStanding"/>, <paramref name="guestsHappiness"/>, the <see cref="ParkValue"/> of
-	/// <paramref name="catalogue"/>'s items and the mean of the <see cref="LeaverStays"/>, and its other rings and samples are counted (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
+	/// <paramref name="catalogue"/>'s items, the mean of the <see cref="LeaverStays"/> and the <see cref="ParkScore"/>; the two counts of misbehaving kids it zeroes (<c>+0x21bfc</c>, <c>+0x21c00</c>) are not kept, and are counted (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
 	/// instalment withdrawn, its months repaid counted, <see cref="ProfitThisYear"/> given the principal's share back
 	/// by the original's unsigned division, and the loan closed at its period; then, with the balance and
 	/// <see cref="LastBalance"/> both below nought, the whole thirty-day months since <see cref="TurnEnteredRed"/> -
@@ -1416,7 +1423,8 @@ public sealed class ParkState
 	/// already counted them).
 	/// </param>
 	/// <param name="guestsHappiness">The mean happiness of the guests inside, a float (<c>FUN_004c7bb0</c>, <see cref="ParkPeople.GuestsInsideHappiness"/>).</param>
-	public void TurnTheMonth( ParkItemCatalogue? catalogue, int guestsInside = 0, float guestsHappiness = 0f )
+	/// <param name="staff">The staff the <see cref="ParkScore"/> counts (<see cref="ParkPeople.ScoreStaff"/>).</param>
+	public void TurnTheMonth( ParkItemCatalogue? catalogue, int guestsInside = 0, float guestsHappiness = 0f, ParkScore.StaffCounts staff = default )
 	{
 		MonthBalance.Push( Balance );
 		MonthCosts.Close();
@@ -1433,8 +1441,9 @@ public sealed class ParkState
 		MonthHappiness.Push( guestsHappiness );
 		MonthParkValue.Push( ParkValue.Of( this, catalogue ) );
 		MonthMeanStay.Push( LeaverStays.MeanOfNewest( ParkMonthRing.Stays ) );
+		MonthParkScore.Push( ParkScore.Of( this, catalogue, guestsInside, staff ) );
 		Log.Info( $"Park: analyser month closed, balance {MonthBalance.Newest}, park value {MonthParkValue.Newest}, guests inside {MonthGuestsInside.Newest}, "
-			+ $"visitors {MonthVisitors.Newest}, rides {MonthRides.Newest}, happiness {MonthHappiness.NewestSingle}, mean stay {MonthMeanStay.Newest}, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
+			+ $"visitors {MonthVisitors.Newest}, rides {MonthRides.Newest}, happiness {MonthHappiness.NewestSingle}, mean stay {MonthMeanStay.Newest}, park score {MonthParkScore.Newest}, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
 			+ $"training {MonthTraining.Newest}, cash in {MonthCashIn.Newest}, gate {MonthGateTakings.Newest}, "
 			+ $"shops {MonthShopTakings.Newest}, sideshows {MonthSideshowTakings.Newest}, arrivals {MonthArrivals.Newest}" );
 		Unimplemented.Report( "ANALYSER_MONTH_CLOSE" );

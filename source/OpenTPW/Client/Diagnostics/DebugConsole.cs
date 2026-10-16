@@ -2080,6 +2080,7 @@ public static class DebugConsole
 						$"arrivals {purse.MonthArrivals.Total}/{purse.MonthArrivals.Newest} slot {purse.MonthArrivals.Current} " +
 						$"happiness {purse.MonthHappiness.NewestSingle} slot {purse.MonthHappiness.Current} now {ParkPeople.Current?.GuestsInsideHappiness} " +
 						$"mean stay {purse.MonthMeanStay.Newest} slot {purse.MonthMeanStay.Current} leavers {purse.LeaverStays.Current}/{(purse.LeaverStays.Wrapped ? 1 : 0)} newest {purse.LeaverStays.Newest} now {purse.LeaverStays.MeanOfNewest( ParkMonthRing.Stays )} " +
+						$"park score {purse.MonthParkScore.Newest} slot {purse.MonthParkScore.Current} now {ParkScore.Of( purse, Level.Current.Catalogue, ParkPeople.Current?.GateGuestCensus ?? 0, ParkPeople.Current?.ScoreStaff ?? default )} " +
 						$"cashin {purse.MonthCashIn.Total}/{purse.MonthCashIn.Newest} " +
 						$"staff {purse.MonthStaffCosts.Total}/{purse.MonthStaffCosts.Newest} " +
 						$"costs {purse.MonthCosts.Total}/{purse.MonthCosts.Newest} slot {purse.MonthCosts.Current} " +

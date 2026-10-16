@@ -7079,6 +7079,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `FUN_004cef30`). Kept, read and written (`hud.md`, "The leavers' stays"). Confirmed: four leavers of 21, 33, 33 and
   34 days, the close on tick 1470 `mean stay 30`, written [0, 30] with the four stays; main's build left [0] a slot
   behind. The original read both and its own close pushed 30; given main's file, 0. 26 bugs put back, all caught.
+- [x] **Q394. The analyser's park score, kept in its 16th ring.** `FUN_004cceb0`, the close's last push (`+0x213b0`,
+  record `+71433`): eleven capped counts out of 100, the guests inside, the rides, shops, sideshows, features, the rides
+  at upgrade level 2 or over and each kind of staff. Kept, read and written (`hud.md`, "The park score"). Confirmed: the
+  stock park with the Belly Bounce at level 2, `money` `park score 18 slot 0 now 19`, the close on tick 1470 `park score
+  19`, written [18, 19]; main's build left [18] a slot behind. The original read [18, 19] and its own close pushed 19;
+  given main's file, 19 a slot behind its 15th. 25 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
