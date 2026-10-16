@@ -1041,7 +1041,8 @@ state-byte-0 staff stand outside its accepted cell types. The immediate door arm
 
 Both arms then post a type-`0x13` message, 3 on open and 4 on close (`0x0051a031`, `0x0051a1c1`), whether or not
 anything changed; `CAdvisor::ReceiveMessage` (`FUN_0059b060`, `0x0059b1f8`) answers it with its own message `0x80`
-on open and `0x81` on close (`FUN_0059ae20`). The log `"*** You have just %s your park ***"` is a `RET` stub. The
+on open and `0x81` on close (`FUN_0059ae20`). The park analyser stamps `mParkLastOpened` on 3 (`hud.md`, "The analyser's other
+stamps"). The log `"*** You have just %s your park ***"` is a `RET` stub. The
 entry-price screen's `b_door` calls it as `FUN_00519ef0( down != 1, 0 )` (`0x00498d33`), where the fourth handler
 argument is the switch's down byte after the click (`FUN_00668abd`, posted at `0x006691e1`); the screen's builder
 sets the switch down for a closed park (`Button_SetDown`, `0x00498fd9`). **Down is closed.** `FUN_00516700`, the
@@ -2958,7 +2959,8 @@ dword is the one the handyman's litter search tests (`FUN_004c8ed0`, the cell's 
 3 and 4, set the flag and post a strike; 4 stays 4, sets the flag and posts a strike. With no cause the level and
 the flag are zeroed, and a level of exactly 1 posts a calling-off first. Each post is message `0x17` carrying
 (kind, 0 warning / 2 strike / 3 called off) (`FUN_0040f6f0`, `FUN_0040fb10`); 1 is never sent. Its one receiver is
-the advisor (`FUN_00599e70` joins set `0x17`, `0x00599f08`), whose `FUN_0059afc0` turns it into advisor message
+the advisor (`FUN_00599e70` joins set `0x17`, `0x00599f08`; the analyser's handler has a case for a strike and never
+joins: `hud.md`, "The analyser's other stamps"), whose `FUN_0059afc0` turns it into advisor message
 `0x22`, `0x21`, `0x24`, `0x23`, `0x25` for kinds 0 to 4, plus five times the second number. By the transcripts of
 the response groups two on from those ids (`advisor-park.md`: no arithmetic gives a group, so this is by the
 lines alone, all fifteen agreeing with the kind): the warning is "...they say they'll go on strike if things

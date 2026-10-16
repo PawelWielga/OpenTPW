@@ -735,6 +735,7 @@ public sealed class ParkState
 		MechanicCursor = park.Save?.MechanicCursor ?? 0;
 		LastStaffHired = park.Save?.LastStaffHired ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 		LastObjectBuilt = park.Save?.LastObjectBuilt ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
+		ParkLastOpened = park.Save?.ParkLastOpened ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 		MonthBalance = park.Save?.MonthBalance?.Copy() ?? new();
 		MonthParkValue = park.Save?.MonthParkValue?.Copy() ?? new();
 		MonthGuestsInside = park.Save?.MonthGuestsInside?.Copy() ?? new();
@@ -1142,6 +1143,18 @@ public sealed class ParkState
 	}
 
 	/// <summary>
+	/// The park's calendar at the newest request to open the park, a <c>FILETIME</c>: the park analyser's
+	/// <c>mParkLastOpened</c> (<c>+0x21c28</c>), the file's own at a load (<see cref="ParkWorld.ParkLastOpened"/>)
+	/// and the calendar's start in a park made with no file (<c>FUN_004c58c0</c>). Nothing in the original reads it.
+	/// </summary>
+	/// <remarks>
+	/// The analyser's three stamps before it, <c>mLastStrike</c>, <c>mLastPuke</c> and <c>mLastPrank</c>, are not kept:
+	/// the original never moves them from the constructor's (the strike's message <c>0x17</c> goes to the advisor
+	/// alone), so a file's own go out as they came in (<c>docs/exe/hud.md</c>, "The analyser's other stamps").
+	/// </remarks>
+	public long ParkLastOpened { get; private set; }
+
+	/// <summary>
 	/// Whole days since the newest member of staff was made - <c>FUN_004c90d0</c>: now less
 	/// <see cref="LastStaffHired"/> over 864,000,000,000, a signed 64-bit divide whose low 32 bits are the answer.
 	/// </summary>
@@ -1233,6 +1246,13 @@ public sealed class ParkState
 		}
 
 		AdvisorMessages?.PostDoor( closed, GameTick );
+
+		// The open arm's message 0x13 (3) reaches the analyser too, which stamps now (FUN_004c7370, 0x004c7444).
+		if ( !closed )
+		{
+			ParkLastOpened = ParkWorld.StaffState.FileTimeOf( CalendarNow );
+			Log.Info( $"Park: mParkLastOpened stamped {CalendarNow:d/M/yyyy HH:mm:ss} on mGameTick {GameTick}" );
+		}
 	}
 
 	/// <summary>

@@ -7097,6 +7097,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   written (`hud.md`, "The arrivals"). Confirmed: the load on tick 1264 `Park: a load of 13 into the arrival loads' slot 1,
   2 called`, the files [13, 13]; main's build left [13]. The original read [13, 13] and pushed its own 12, 12, 11 into
   slots 2 to 4. 14 bugs put back, all caught after a test change.
+- [x] **Q397. The analyser's `mParkLastOpened`, kept; its three other stamps never move.** `+0x21c28` (record `+73508`):
+  the calendar's now at every request to open the park, open already or not (`FUN_004c7370` on message `0x13`
+  carrying 3, `0x0051a031`). `mLastStrike`'s case is never reached (set `0x17` is the advisor's alone in all 612 files),
+  and puke and prank have none: dead by CODE, the file's (`hud.md`, "The analyser's other stamps"). Confirmed: the
+  door opened on tick 763 `Park: mParkLastOpened stamped 3/2/2000 02:47:30 on mGameTick 763`, the file held it and
+  held it again after a load; main's build left tick 15's. The original read tick 763's and stamped its own open
+  on tick 917 exactly. 13 bugs put back, all caught after a test change.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -575,6 +575,8 @@ public class ParkFileWriterTests
 
 			StringAssert.StartsWith( ParkBuilding.Sell( state, shipped, catalogue, null, rides, 16, people ), "sell: 'Drinks Shop' thing 16 sold" );
 			Unimplemented.Forget();
+			// A request to open the park, the door already open, stamps the analyser's mParkLastOpened.
+			state.SetParkClosed( false );
 
 			Assert.IsNotNull( Level.WritePark( shipped, state, "jungle", "Bought", people, null, rides, catalogue ) );
 
@@ -585,6 +587,7 @@ public class ParkFileWriterTests
 			Assert.IsNull( written.Problem );
 			Assert.AreEqual( ParkWorld.StaffState.FileTimeOf( new DateTime( 2000, 1, 1 ).AddSeconds( 900 * 3750 ) ), written.LastObjectBuilt, "mLastObjectBuilt, stamped as the things were bought on tick 900" );
 			Assert.AreEqual( shipped.LastStaffHired, written.LastStaffHired );
+			Assert.AreEqual( ParkWorld.StaffState.FileTimeOf( new DateTime( 2000, 1, 1 ).AddSeconds( 900 * 3750 ) ), written.ParkLastOpened, "mParkLastOpened, stamped as the park was opened on tick 900" );
 			Assert.AreEqual( (1101, 91, rides.ScriptFor( ape )), (made.CatalogueId, made.MeshInstance, made.RideScript) );
 			Assert.AreEqual( "Crazy", Encoding.Unicode.GetString( [.. Enumerable.Range( 0, 5 ).SelectMany( i => record.AsSpan( 60 + (i * 4), 2 ).ToArray() )] ) );
 			Assert.AreEqual( "Ape", Encoding.Unicode.GetString( [.. Enumerable.Range( 0, 3 ).SelectMany( i => record.AsSpan( 62 + (i * 4), 2 ).ToArray() )] ) );

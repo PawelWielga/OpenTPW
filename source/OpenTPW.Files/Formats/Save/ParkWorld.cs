@@ -2126,6 +2126,7 @@ public sealed partial class ParkWorld : IParkInitialState
 				AnalyserAt = start;
 				LastStaffHired = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastStaffHiredAt, 8 ) );
 				LastObjectBuilt = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastObjectBuiltAt, 8 ) );
+				ParkLastOpened = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserParkLastOpenedAt, 8 ) );
 				MonthBalance = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthBalanceRing ), ParkMonthRing.Size ) );
 				MonthParkValue = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthParkValueRing ), ParkMonthRing.Size ) );
 				MonthCosts = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthCostsRing ), ParkMonthRing.Size ) );
@@ -2975,6 +2976,34 @@ public sealed partial class ParkWorld : IParkInitialState
 
 		System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(
 			body.AsSpan( AnalyserAt + AnalyserLastObjectBuiltAt, 8 ), lastObjectBuilt );
+	}
+
+	/// <summary>
+	/// The park analyser's <c>mParkLastOpened</c>: the park's calendar at the newest request to open the park, a
+	/// <c>FILETIME</c> (message <c>0x13</c> carrying 3, <c>FUN_004c7370</c>), whether the park was shut or not. Null
+	/// where the file holds no analyser (<c>docs/exe/hud.md</c>, "The analyser's other stamps").
+	/// </summary>
+	public long? ParkLastOpened { get; private set; }
+
+	/// <summary>
+	/// Where <c>mParkLastOpened</c> sits in the analyser's record: eight bytes, the fourth of its six stamps, the
+	/// one before <c>mLastObjectBuilt</c> (<c>FUN_004c5d70</c>).
+	/// </summary>
+	private const int AnalyserParkLastOpenedAt = 73508;
+
+	/// <summary>
+	/// Writes the analyser's <c>mParkLastOpened</c> over the file's in <paramref name="body"/>, a copy of this
+	/// park's own. A park with no such thing is left alone.
+	/// </summary>
+	public void PutParkLastOpened( byte[] body, long parkLastOpened )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+
+		if ( AnalyserAt < 0 )
+			return;
+
+		System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(
+			body.AsSpan( AnalyserAt + AnalyserParkLastOpenedAt, 8 ), parkLastOpened );
 	}
 
 	/// <summary>

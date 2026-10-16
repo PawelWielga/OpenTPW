@@ -920,6 +920,68 @@ public class ParkFileWriterBoughtAndSoldTests
 		}
 	}
 
+	/// <summary>
+	/// The park analyser's <c>mParkLastOpened</c> is the calendar at the newest request to open the park: the shipped
+	/// file's is tick 15's; a request to open stamps now, an open park's too, a close leaves it, and the writer puts it at
+	/// 73508 of the analyser's record. The three stamps before it are the calendar's start, the file's, and stay so.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the open not stamping, or only on a change; a close stamping; the stamp not written, not read back, or read or written at another of the analyser's six; a park's own taken from the calendar's start with a file in hand.</remarks>
+	[TestMethod]
+	public void ParkLastOpenedIsTheParksCalendarAtEachRequestToOpen()
+	{
+		var start = new DateTime( 2000, 1, 1 );
+		var file = ParkWorld.StaffState.FileTimeOf( start.AddSeconds( 15 * 3750 ) );
+
+		Assert.AreEqual( file, shipped.ParkLastOpened, "the shipped park's is tick 15's" );
+
+		var state = new ParkState( shipped );
+
+		Assert.AreEqual( file, state.ParkLastOpened, "a load keeps the file's" );
+
+		state.SetGameTick( 916 );
+		state.SetParkClosed( true );
+
+		Assert.AreEqual( file, state.ParkLastOpened, "a close leaves it" );
+
+		state.SetParkClosed( false );
+		var stamp = ParkWorld.StaffState.FileTimeOf( start.AddSeconds( 916 * 3750 ) );
+
+		Assert.AreEqual( stamp, state.ParkLastOpened, "an open stamps the analyser with now" );
+
+		state.SetGameTick( 950 );
+		state.SetParkClosed( false );
+		stamp = ParkWorld.StaffState.FileTimeOf( start.AddSeconds( 950 * 3750 ) );
+
+		Assert.IsFalse( state.ParkIsClosed );
+		Assert.AreEqual( stamp, state.ParkLastOpened, "so does an open of a park already open" );
+
+		var plain = new ParkWorld( ParkFileWriter.Body( shipped, Running( Things() ) ) );
+
+		Assert.AreEqual( file, plain.ParkLastOpened, "the file's where the writer is given none" );
+
+		var body = ParkFileWriter.Body( shipped, Running( Things() ) with { ParkLastOpened = state.ParkLastOpened } );
+		var written = new ParkWorld( body );
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( stamp, written.ParkLastOpened );
+		Assert.AreEqual( stamp, new ParkState( written ).ParkLastOpened );
+		Assert.AreEqual( shipped.LastObjectBuilt, written.LastObjectBuilt, "the stamp after it is the file's" );
+		Assert.AreEqual( stamp, BitConverter.ToInt64( body, written.AnalyserAt + 73508 ), "mParkLastOpened at 73508 of the analyser's record" );
+
+		var theirs = ParkFileWriter.Body( shipped, Running( Things() ) );
+
+		for ( var at = 0; at < 73544; at++ )
+		{
+			if ( at is < 73508 or >= 73516 )
+				Assert.AreEqual( theirs[shipped.AnalyserAt + at], body[written.AnalyserAt + at], $"the analyser's byte {at} is the file's" );
+		}
+
+		var calendarStart = ParkWorld.StaffState.FileTimeOf( start );
+
+		for ( var at = 73484; at < 73508; at += 8 )
+			Assert.AreEqual( calendarStart, BitConverter.ToInt64( body, written.AnalyserAt + at ), $"mLastStrike, mLastPuke and mLastPrank: {at} is the calendar's start" );
+	}
+
 	/// <summary>The two lines of an item's name are the executable's rows of the game's own table.</summary>
 	[TestMethod]
 	public void AnItemsNameIsItsRowsOfTheTable()

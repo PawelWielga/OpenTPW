@@ -1974,6 +1974,39 @@ kids 5 got away 2 ever 0`; the close on tick 1470 named `misbehaving kids 0 got 
 main's file read 5, 2 and 0 (not 9) and its close on tick 1471 zeroed the two on the tick its ring 1 moved; given this
 game's, 0, 0, 0 throughout (`q395/orig/c-load.log`, `d-load.log`, `side-by-side.png`).
 
+#### The analyser's other stamps
+
+Read 2026-10-16 (Q397). **Of the four stamps after `mLifetimeVisitors`, one moves.** Every operand `+0x21c10` to
+`+0x21c2c` in the image: the constructor `FUN_004c58c0` (all four the calendar's now), the load factory `FUN_005179c0`
+(zeroed, then the file's), the serialiser `FUN_004c5d70` (read `FUN_00510240`, write `FUN_004cede0`, eight bytes
+each), and `FUN_004c7370`, the analyser's message handler (the dispatcher `FUN_0050b550`, model 13). Nothing reads
+any of the four. In that handler:
+
+- **Message `0x13` carrying 3 stamps `mParkLastOpened` (`+0x21c28`)** with the calendar's now (`FUN_004f8690` on world
+  `+0x2a0`, `0x004c7444`..`0x004c747b`). The park door `FUN_00519ef0` posts it from its open arm (`0x0051a031`)
+  **whether or not the park was shut**: an open request to an open park jumps straight to the post (`0x00519f7c`).
+  The close arm posts 4 (`0x0051a1c1`), which the handler ignores; the end of the park (second argument non-nought)
+  posts nothing. The analyser joins set `0x13` in its constructor (`FUN_004c7a90`, with `0xc` and `0x11`), and set
+  `0x13` is things 3, 4, 5, 8 and 9 in the shipped park, the advisor first.
+- **Message `0x17` carrying 2 would stamp `mLastStrike` (`+0x21c10`), and never does**: the strike's message
+  (`FUN_00508f70`) goes to set `0x17`, which the advisor joins (`0x00599f08`) and the analyser does not. A load takes
+  the sets from the file (`FUN_0040fd60`), and set `0x17` is the advisor alone in all 612 park files on hand
+  (`q397/sweep.py`, `parkfile.sets`). Dead by CODE in the original.
+- **`mLastPuke` (`+0x21c18`) and `mLastPrank` (`+0x21c20`) have no case**: only the constructor writes them.
+
+**Measured** (`q397/sweep.py`): in all 612 park files the strike, puke and prank stamps are the calendar's start;
+`mParkLastOpened` is later than it in 609 (`Easymode.TPWI`'s is tick 15).
+
+**OpenTPW** (Q397). `ParkWorld.ParkLastOpened` reads it (record `+73508`), `PutParkLastOpened` writes it;
+`ParkState.ParkLastOpened` takes the file's at a load and the calendar's start with no file; `SetParkClosed( false )`
+stamps the calendar's now every time, the park open or not, and logs `Park: mParkLastOpened stamped <date> on mGameTick
+N`. The other three are not kept: the file's go out as they came in, as the original's would.
+**Confirmed** (`q397/`): the stock park paused on tick 763, the door clicked shut (no line) and open: `Park:
+mParkLastOpened stamped 3/2/2000 02:47:30 on mGameTick 763` (`run-fix1/1-opened.png`); the file held tick 763's, the
+three others the calendar's start, and held it again loaded from the list and saved; main's build left tick 15's. The
+original given that file read tick 763's, kept it as its door shut on tick 896, and stamped tick 917's exactly as it
+opened (`q397/orig/a-load.log`, `a-o-3-opened.png`).
+
 #### The first row is picked as a list fills
 
 Read 2026-10-14 (Q356). **The list's own add picks it.** `FUN_0066403b`, once its count reaches 1, calls

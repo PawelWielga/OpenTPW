@@ -45,9 +45,12 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q397. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q410. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q397 (`hud.md`, "The analyser's other stamps"): `mParkLastOpened` is kept and nothing in either game reads it. In
+  no game run: an open from a shortcut key (`InputButton.OpenPark` is not bound), a park made with no file, Full
+  Simulation (not asked: the door is either mode's), the other three themes.
   From Q396 (`hud.md`, "The arrivals"): the arrival manager's ring of five loads is kept. Nothing here reads it: the
   challenge whose test it is (`FUN_005a0780`, in the table at `0x00772088`; the challenge's `+0x5f4` once exactly one
   load is called) is not built, nor are the challenges. A load the original calls of nobody (world state 4, the park
@@ -384,10 +387,10 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   ferry or seaplane made at its first summons moves the stamp since Q341 (its own thing is not made: above,
   and Q26c). In no game run: a move's put-down, a purchase or a sale
   made in the original by hand, a park made with no file, Full Simulation.
-  From Q333 (`advisor-park.md`, "More rides than the mechanics can keep"): the analyser's four other stamps
-  (`mLastStrike`, `mLastPuke`, `mLastPrank`, `mParkLastOpened`), `mLifetimeVisitors` and
-  the three records after them are not kept and go out as the file's (the FileFormats saves page lists them;
-  what reads and writes each is not read: search the image for each one's displacement, as Q334 did). Whether anything but a hire runs the staff constructor (a
+  From Q333 (`advisor-park.md`, "More rides than the mechanics can keep"): the analyser's four other stamps are
+  read (Q397: `mParkLastOpened` kept, the other three never move), `mLifetimeVisitors` and `mMostPaidForTicket` are
+  kept (Q389); `mLargestBusLoad` and `mLongestStay` are not kept and go out as the file's (what reads and writes each
+  is not read: search the image for each one's displacement, as Q334 did). Whether anything but a hire runs the staff constructor (a
   candidate made for the hire screen) is not read. In no game run: lines 2 and 3, the line said again past its
   cooldown, seven rides and one mechanic, a mechanic hired from the screen after the line (the tests hold
   each), a hire made in the original by hand, a park made with no file, Full Simulation. This game said the

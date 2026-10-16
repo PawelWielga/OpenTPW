@@ -49,21 +49,21 @@ Last updated: 2026-10-16. **This header names no branch and no sha, deliberately
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q397** (the writer: what else a made record leaves out; the leavers' draw on the save's seed is its nearest piece (it needs the park's one shared generator, `park.md`), then the research button's screen, the analyser's four other stamps and the staff rows 8 to 17), then Q241j, Q327 (Full Simulation catch-up, at Alexah's word), Q248, Q260 (the park's lens, decode first), Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13: `docs/CLEANUP-PLAN.md`, untracked.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q410** (the writer: what else a made record leaves out; the leavers' draw on the save's seed is its nearest piece (it needs the park's one shared generator, `park.md`), then the research button's screen, the locators and the staff rows 8 to 17), then Q241j, Q327 (Full Simulation catch-up, at Alexah's word), Q248, Q260 (the park's lens, decode first), Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13: `docs/CLEANUP-PLAN.md`, untracked.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q396: seen (`q396/`, `run-fix1` the final game binary `732d3368` with `OpenTPW.Files.dll` `7f3dd186`, `run-control1` main's off-screen): the stock park, `money` "loads 0/0 newest 13"; the load called on tick 1264 logged `Park: a load of 13 into the arrival loads' slot 1, 2 called` and `money` read "loads 1/0 newest 13" (`1-load-called.png`); the files saved at the call and at the all-off on 1313 held [13, 13] and the shipped `0xcdcdcdcd` beyond, the 13 dropped on top of the file's 13 matching the loads' 26; main's build left [13]. The original given the all-off file read [13, 13] and pushed its own 12, 12 and 11 into slots 2 to 4 on ticks 1916, 2532 and 3184, each before its first drop; given the call file it dropped the 13 and called none. Not seen: the ring gone round (tested only), a load of nobody (the original's, not called here), Full Simulation (not asked: either mode's), the other three themes. 14 bugs put back, all caught after a test change.
+- Q397: seen (`q397/`, `run-fix1` the final game binary `f84710f2` with `OpenTPW.Files.dll` `464b1f14`, `run-control1` main's): the stock park paused on tick 763, the entry-price door clicked shut (`gate` closed 1, no stamp) and open: `Park: mParkLastOpened stamped 3/2/2000 02:47:30 on mGameTick 763` (`1-opened.png`); the file held tick 763's, the strike, puke and prank stamps the calendar's start, and held it again loaded from the list and saved; main's build left tick 15's. The original given the file read tick 763's, kept it as its door shut on tick 896 and stamped `filetime(917)` exactly as it opened (`orig/a-load.log`, `a-o-3-opened.png`). Not seen: an open by a shortcut key (not bound), a park made with no file, Full Simulation (not asked: the door is either mode's), the other three themes. 13 bugs put back, all caught after a test change.
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **77** of 106 | 2026-10-10, `case Opcode.` labels vs enum members |
-| Tests | **3169**, 0 fail, 0 skip with the game | 2026-10-16, Q396, alone in a worktree |
-| Tests without the game | **1055** ran, **2114** skipped, of 3169 | 2026-10-16, Q396 |
+| Tests | **3170**, 0 fail, 0 skip with the game | 2026-10-16, Q397, alone in a worktree |
+| Tests without the game | **1055** ran, **2115** skipped, of 3170 | 2026-10-16, Q397 |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

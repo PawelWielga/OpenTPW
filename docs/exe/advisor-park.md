@@ -1932,11 +1932,11 @@ does.
 | The shipped stamp (day 12) | not said | the same (`no-score`) |
 | A file saved after a hire here | reads this game's stamp; not said | the same (`sincehire=0`) |
 | The tag and the bar | row 9, part 2, string 13; button 14 builds the hire screen on its mechanics' tab, tag off | the same |
-| The analyser's other stamps | each written as its event happens | `mLastObjectBuilt` kept and written ("The newest build", below); the other four the file's |
+| The analyser's other stamps | `mParkLastOpened` at each open request; strike, puke and prank never move | `mLastObjectBuilt` kept and written ("The newest build", below), `mParkLastOpened` too (`hud.md`, "The analyser's other stamps"); the other three the file's |
 
-**Not built or not seen.** Four of the analyser's five other stamps (`mLastStrike`, `mLastPuke`, `mLastPrank`,
-`mParkLastOpened`), `mLargestBusLoad` and `mLongestStay` are not kept here and go out as the file's; what reads each
-is not read. `mLifetimeVisitors` and `mMostPaidForTicket` are kept (Q389; `hud.md`, "The lifetime visitors"). `mLastObjectBuilt` is "The newest build", below. Whether a staff candidate the original makes for the hire
+**Not built or not seen.** `mParkLastOpened` is kept (Q397); `mLastStrike`, `mLastPuke` and `mLastPrank` never move
+in the original and go out as the file's (`hud.md`, "The analyser's other stamps"). `mLargestBusLoad` and
+`mLongestStay` are not kept here and go out as the file's; what reads each is not read. `mLifetimeVisitors` and `mMostPaidForTicket` are kept (Q389; `hud.md`, "The lifetime visitors"). `mLastObjectBuilt` is "The newest build", below. Whether a staff candidate the original makes for the hire
 screen's preview, or anything but a hire, runs the staff constructor is not read (the eight files agree with a
 hire alone). In no game run: lines 2 and 3 (samples 21 and 22; the test holds the turn), the line said again past
 its 120 quarter-ticks, a mechanic kept (three rides are under his four: the test holds seven rides and one
