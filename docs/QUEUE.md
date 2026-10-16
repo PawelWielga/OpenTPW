@@ -45,9 +45,16 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q416. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q417. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q416 (`advisor-park.md`, "A busy park with no guard"): row 11 is built, the first row of category 9 (said only
+  once). The other staff rows, 8, 9 and 15 to 17, are not: rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman;
+  the nearest), rows 15 and 16 the kinds of ride on offer and standing with no researcher, row 17 the months into the
+  game. In no game run: lines 2 and 3 (said once, they come only after a withdraw cuts the first; the test holds the
+  second with the category's key off), a crowd past 100 or under 70 (tested only), a guard hired after the line, the
+  said byte through a save and a load, Full Simulation (not asked: the row is either mode's), the other three themes.
+  Not heard in either game.
   From Q415 (`advisor-park.md`, "A busy park with no entertainer"): row 14 is built. The other staff rows, 8, 9, 11 and
   15 to 17, are not; their scores are read there: rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman), row 11 the
   crowd over 70 with no guard after `DaysForStaff` (the nearest: it asks only what row 14 and row 13 already read),

@@ -455,6 +455,11 @@ whole list):
   `"admit 52 34"` x45 (thing 27 is the stock entertainer; each command takes about 2.5 s) pauses on 765 with 93 inside,
   then `parkfile.thing_set( ..., guest, 422, '<f', h )` writes each happiness (`q415/mkscene.py`; `parkfile.py -g` counts
   them). **Five of the stock guests on the road walk in by tick 781**, in both games (the original's `inside.py ... 60 30` reads 98 on 773): count 98 inside there. The original says a line before its stills: film it (`record.sh start` in the `POLL`, `q415/orig/run.sh` with `RECORD=`; Q415).
+- **Two crowds from one run, past a hire's 30 days:** a script on `lib/parkrun.py` (`q416/mkscenes.py`) pauses the stock
+  park on 1233 (it stops on 1236; 12 inside), gives `fire 28` (the guard), admits 168 and calls `save()`, then admits 32
+  more and calls `save()` again: one game, two files, 178 and 210 inside (each `admit` about 2.5 s, so ~9 minutes). The
+  newest hire's 30 days come on 1340, so the advisor's turns on 1243 score nought and 1398's are the test (Q416). **`wait_for`
+  takes plain words, not a pattern**: a regex there waits out its time and the run judges nothing.
 - **An Aztec Mayhem with riders:** `buy 1104 57 23`, then the queue: `tool queue <thing>`, `worldclick 58 22`,
   `worldclick 56 22`, `tool off`. Two riders are carried about 40 s on, up to five before the ride starts.
   `camera 585 245 25 90` looks down into its pit, where the riders' heads are; from further off its walls hide

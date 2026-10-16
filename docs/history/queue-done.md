@@ -7152,6 +7152,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   16, "Hire Entertainers"; 30 of 98, and the entertainer kept, silent; main's build silent. The original, given the
   files: 98 inside, `0xe` (781, 0, 1, 0) on 781, the explorer up (filmed), tag, bar, `hiretab 2`; the other two silent.
   33 bugs put back.
+- [x] **Q416. The advisor's row 11, a busy park with no guard.** `0x0059ccb0`: nought shut, before
+  `DaysForStaff` (30) days since the newest hire, or with a guard; then (the crowd, `FUN_004c81e0`, less
+  `AtLeastThisBusy` 70) x `ScorePerExtraBusyPoint` 1, below nought too. Category 9, said only once. Three lines,
+  responses 32 to 34, in the guards' cap; tag 13, string 17, the guards' hire button (`advisor-park.md`, "A busy park
+  with no guard"). Confirmed: `busy.TPWS` (the guard dismissed, 210 inside) `score=30 threshold=25 tick=1398
+  result=post closed=0 guards=0 inside=212 crowd=100 sincehire=32`, said, tag 13, "Hire Guards"; on 1553
+  `result=said-once`; 178 inside (22, under) and the guard kept silent; main's build silent. The original, given the
+  files: `0xb` (1398, 0, 1, 0) on 1398, the cap, tag, bar, `hiretab 3`, unmoved to 2270; the other two silent.
+  32 bugs put back.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

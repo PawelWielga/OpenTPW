@@ -1729,8 +1729,8 @@ too) and held.
 | The hire screen's own line | `0xbd` posted at 1000 as the screen is built, and said | the same (said on tick 961, as row 5's wait ended) |
 | Rows 6 and 7 | scored on their turns (nought here) | each built since, in its own section below |
 
-**Not built or not seen.** The other staff rows, 8, 9, 11 and 14 to 17 (their scores not read; row 14's
-line is the theme advisor's; rows 10, 12 and 13 are built, below). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
+**Not built or not seen.** The other staff rows, 8, 9 and 15 to 17 (their scores not read; rows 10 to 14 are built,
+below). In no game run: lines 2 and 3 (samples 14 and 15; the test holds the
 turn), the line said again past its 120 quarter-ticks, a broken ride counted (the test holds it, and a ride
 breaking with no mechanic posts `0x44` besides), a ride worn under 25 by running, button types `0xd` and `0xf`
 to `0x11` and the button with the hire screen open (the test holds each), a mechanic hired from the screen after
@@ -2032,7 +2032,95 @@ again past its 120 quarter-ticks, two handymen or more (the test holds three), a
 minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
 handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
 game. Rows 12 and 13 are built since ("A park with no guard", "A park too big for its guards", below); the other
-staff rows, 8, 9, 11 and 15 to 17, are not (Q416; row 14 is built, "A busy park with no entertainer").
+staff rows, 8, 9 and 15 to 17, are not (Q417; rows 11 and 14 are built, "A busy park with no guard", "A busy park with no entertainer").
+
+## A busy park with no guard (message `0xb`, Q416)
+
+**Row 11, message `0xb`, `StaffHireGuards1`:** polled, **category 9**, either game mode (the row's `+0x0c` is 2), one
+copy, first response 32, three lines in turn (selection 2). Category 9 is `MessageGroups[9]`, "Stuff to be said only
+once": `MinTimeSameMessage` 0, **`SayOnlyOnce` 1**, `DiscardAfterSlaps` 0, so once said the accept gate refuses it for
+good (the message's said byte `+0xe8`; a withdraw that cuts him off clears it). Responses 32 to 34 are **samples 32 to
+34**, the random gesture chain, model slot 0, prop 6 (the guards' cap), group 13. From the shipped park's cursor its
+turns are one before row 12's: ticks 778, 933, 1088, 1243, 1398, 1553 and every 155 on. The transcripts
+(`global-speech-transcripts.tsv`): "pardon me excuse me ... it's getting busy you know you don't have any guards do you
+think you should hire some", "sorry i'm late the traffic is murder the parks really getting busy and you don't have any
+guards maybe you should hire some", "the park is getting busy and you don't have any guards maybe you should hire some".
+
+**Its score, `0x0059ccb0`** (undefined bytes; read with Ghidra's `PseudoDisassembler`, nothing written to the project;
+`ECX` the balance object, kept in `ESI`):
+
+1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
+2. **The days since the newest hire**, `FUN_004c90d0` on the analyser, under `[ESI + 0x630]`,
+   `WaitingTimes.DaysForStaff`, **30** (a signed `JGE`): nought. Rows 7 and 13 ask the same.
+3. The guards, `FUN_004c9960( 7 )` on the analyser: above nought (`JLE` past), nought.
+4. **The crowd**, `FUN_004c81e0` (half the guests inside, from nought to 100; the music's level, `ParkAudio`), less
+   `[ESI + 0xf0]`, `StaffHireGuards1.AtLeastThisBusy`, **70**, times `[ESI + 0xf4]`, `ScorePerExtraBusyPoint`, **1**
+   (`0x0059cd1e`). **Nothing holds it at nought**.
+
+`MinScoreForConsideration` is 25, so **a crowd of 96, 192 guests inside, is enough and 95 is not**, with no guard, 30
+days after the newest hire. The most it can score is 30, a crowd of 100. The shipped park holds one guard (thing 28) and
+its 13 guests stand outside the gate, so it scores nought; its newest hire is the researcher's, tick 648, whose 30 days
+come on tick 1340, so **the first turn that can score is 1398**.
+
+**Its tag** is row 13 of the tag table: key 383, picture 2, string 17, the bar's first button of type 16 (the hire
+screen on its guards' tab, the fourth), no second, thirty seconds. String 17 reads "The park is getting busy and you
+don't have any guards. Maybe you should hire some?" in both language folders (`Language/american`'s letters shifted).
+
+### OpenTPW (`ParkAdvisorMessages.HireGuardsBusy`, a topic's `BusyWithNoGuard`, `SaidOnce`; tag row 13)
+
+A topic scored from the same `ParkFacts` as rows 13 and 14: `DaysSinceStaffHired` (rows 7 and 13), the guards (rows 28
+to 32's members) and `GuestsInside` with `ParkAudio.CrowdLevel` (row 14's crowd). Its category is `SaidOnce`, 9, the
+first built row of it; the accept gate's said-once refusal is the tutorial rows' (`Refusal`). The poll line ends
+` closed=N guards=N inside=N crowd=N sincehire=N`. `ParkTags.Rows` lists row 13.
+
+**The scenes** (`q416/mkscenes.py`, `q416/mkguard.sh`, both on `lib/parkrun.py` off-screen): the stock park paused on
+tick 1236, then guests admitted half on (52,26) and half on (52,34) and saved (`parkfile.py -g`): `under.TPWS` the guard
+dismissed (`fire 28`) and 168 admitted, 178 inside, a crowd of 89; `busy.TPWS` 32 more, 210 inside, a crowd of 100;
+`guard.TPWS` the guard kept and 200 admitted, 212 inside. The newest hire's 30 days come on tick 1340, so the turn on
+1243 scores nought in all three and the one on 1398 is the test.
+
+**Predicted first** (`q416/PREDICTION.txt`), both games on files neither had been given. All held. One run of this game
+was void, mine (`run-fix1`: the script waited on a pattern where the harness takes plain words; its log, read, held).
+
+**This game** (`q416/confirm.py fix|under|guard|control`, on the desktop; `run-fix2` the final run): *`busy`*: `poll
+message=11 row=11 days=53 score=0 threshold=25 tick=1243 result=no-score closed=0 guards=0 inside=210 crowd=100
+sincehire=25`, then `poll message=11 row=11 days=60 score=30 threshold=25 tick=1398 result=post closed=0 guards=0
+inside=212 crowd=100 sincehire=32`, queued and said on that tick (`attempt=1 message=11 subject=0 score=30 threshold=25
+response=32 sample=32 line=0 tick=1398`, `saying sp_032.mp2 ... wearing=6,0`), him in the guards' cap with the tag on
+the aerial (`1-line.png`). The tag clicked: `message bar: tag 13 subject 0 item 0 bar: out=1 rect=486,1112,1101,1453`,
+`first=mb_buy/help=528 second=hidden erase=mb_erase` and string 17 (`2-bar.png`). The button clicked: `button type 16
+opens the hire screen on tab 3 and takes tag 13 off`, `windows` reading `ParkHireScreen tab 3`, "Hire Guards"
+(`3-screen.png`). **On 1553 the row scored 30 again and the gate refused it**: `... tick=1553 result=said-once ...
+inside=219 crowd=100 sincehire=39`, one attempt in the run, the census `message=11/score=30/line=0/lastTick=1398/said=1
+/slaps=0`. *`under`* (`run-under1`): on 1398 `... score=22 threshold=25 tick=1398 result=under-threshold closed=0
+guards=0 inside=184 crowd=92 sincehire=32` (six walked in), silent to tick 1571. *`guard`* (`run-guard1`): on 1243 `...
+result=no-score closed=0 guards=1 inside=212 crowd=100 sincehire=25`, no later line (the poll writes a changed answer
+only), the census `message=11/score=0/line=-1/lastTick=0/said=0/slaps=0`, silent to 1573. **Main's build** on `busy`
+(`run-control1`): no line of message 11, no tag 13, to 1573.
+
+**The original** (`q416/orig/run.sh <file>`, `advisor.py ... 0xb,0xc,0xd,0x108 poll` beside `tags.py`, `bar.py`,
+`screens.py` and `inside.py`; a fresh program each, off-screen). *`busy`* (run a): `inside 210 ... crowd 100` after the
+load, **message `0xb`'s record from (0, -1, 0, 0) to (1398, 0, 1, 0) on tick 1398**, one tag at (84, 909, 154, 974)
+lettered string 17, him in the guards' cap (`orig/a-told.png`; filmed, `shots/q416a.mkv`). The tag clicked: the bar's
+thing 0, buttons 16 and 0, item 0 and the text. The button clicked: `hiretab 3` on tick 1468, "Hire Guards" with the
+fourth tab lit (`orig/a-button.png`). **The record stood at (1398, 0, 1, 0) to tick 2270**, past five more turns: said
+once. *`under`* (run b): `inside 180 ... crowd 90` on 1398, `0xb`'s record unmoved to tick 1979, no tag of string 17. *`guard`* (run c): `inside 211 ... crowd 100` on 1398, unmoved to 2092, no tag. `q416/side-by-side.png` sets this game's line beside the original's.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 11 | polled, category 9; nought shut, before 30 days since a hire, with a guard; then the crowd less 70 | the same |
+| 210 inside, no guard | said on tick 1398, line 0, in the guards' cap | the same |
+| The next turns | not said again (said once) | the same (`said-once`) |
+| 178 inside, no guard | not said (a crowd near 90) | the same (`under-threshold`, 22) |
+| 212 inside, one guard | not said | the same (`no-score`, `guards=1`) |
+| The tag and the bar | row 13, part 2, string 17; button 16 builds the hire screen on its guards' tab, tag off | the same |
+
+**Not built or not seen.** In no game run: lines 2 and 3 (samples 33 and 34; said once, the original never reaches
+them but by a withdraw that cuts the first; the test holds the turn with the key off), a crowd past 100 or under 70
+(tested only), a guard hired after the line, the said byte kept in a file and loaded (the save's histories are
+written and read as every row's), Full Simulation (not asked: the row is either mode's), the other three themes. Not
+heard in either game. The guards' list behind the button held one candidate here and four in the original: the pool's
+top-up, not this row (Q356's note).
 
 ## A park with no guard (message `0xc`, Q413)
 
@@ -2116,7 +2204,7 @@ pranks", below). `q413/side-by-side.png` sets this game's line beside the origin
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 36 and 37, the third's gesture row counted; the test
 holds the turn), a kid counted in play (nothing here counts one), two guards or more, a guard hired after the line,
 Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The other staff
-rows, 8, 9, 11 and 15 to 17, are not built (Q416; row 14 is, below).
+rows, 8, 9 and 15 to 17, are not built (Q417; rows 11 and 14 are, above and below).
 
 ## Lots of pranks (message `0x108`, Q414)
 
@@ -2348,7 +2436,7 @@ sets this game's line beside the original's.
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 42 and 43; the test holds the turn), a crowd under 35
 (a score below nought, tested only), a crowd past 100 (tested only), two entertainers or more, an entertainer hired after
 the line, Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The
-other staff rows, 8, 9, 11 and 15 to 17, are not built (Q416).
+other staff rows, 8, 9 and 15 to 17, are not built (Q417; row 11 is, "A busy park with no guard").
 
 ## The newest build (the analyser's `mLastObjectBuilt`, Q334)
 

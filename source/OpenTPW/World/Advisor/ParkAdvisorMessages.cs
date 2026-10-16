@@ -48,6 +48,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int HireMoreMechanics = 7;
 	/// <summary>Message 0xa, polled: the line about a park too big for its handymen, scored by its developed cells over those they keep (0x0059cc20).</summary>
 	internal const int HireMoreHandymen = 0xa;
+	/// <summary>Message 0xb, polled: the line about a busy park with no guard, scored by its crowd, said once (0x0059ccb0).</summary>
+	internal const int HireGuardsBusy = 0xb;
 	/// <summary>Message 0xc, polled: the line about a park with no guard, scored by this month's misbehaving kids (0x0059cd30).</summary>
 	internal const int HireGuards = 0xc;
 	/// <summary>Message 0xd, polled: the line about a park too big for its guards, scored by its developed cells over those they keep (0x0059cd90).</summary>
@@ -127,6 +129,9 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>The tutorial messages' category (a row's +0x08): MessageGroups[1], refused while the Tutorial option is off (FUN_0059c610).</summary>
 	internal const int Tutorial = 1;
 
+	/// <summary>The category of the lines said only once (MessageGroups[9], "Stuff to be said only once"): SayOnlyOnce 1, no wait between two.</summary>
+	internal const int SaidOnce = 9;
+
 	/// <summary>The category of the lines that tell the player to research more: MessageGroups[4], fifteen minutes between two sayings of one.</summary>
 	internal const int ResearchMore = 4;
 
@@ -205,6 +210,10 @@ internal sealed class ParkAdvisorMessages
 	/// <see cref="DaysForStaff"/> days after the newest member of staff was made, with at least the section's
 	/// MinCellsForConsideration developed cells, the key's value for each developed cell over the section's
 	/// IdealDevelopedCellsPerGuard for every guard, a park with none too; nought otherwise.
+	/// <paramref name="BusyWithNoGuard"/> makes the score row 11's (0x0059ccb0), and names its section: in an open park,
+	/// <see cref="DaysForStaff"/> days after the newest member of staff was made, with no guard, the crowd (half the
+	/// guests inside, at most 100) less the section's AtLeastThisBusy, times the key's value, below nought too; nought
+	/// otherwise.
 	/// <paramref name="KidsWithNoGuard"/> makes the score row 12's (0x0059cd30), and names its section: in an open park
 	/// with no guard, the key's value and the section's AdditionalPerMisbehavingKid for each of this month's misbehaving
 	/// kids; nought otherwise.
@@ -227,7 +236,7 @@ internal sealed class ParkAdvisorMessages
 		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false,
 		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1,
 		string? CellsAHandyman = null, string? CellsAGuard = null, string? KidsWithNoGuard = null,
-		string? MorePranksters = null, string? BusyWithNoEntertainer = null );
+		string? MorePranksters = null, string? BusyWithNoEntertainer = null, string? BusyWithNoGuard = null );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -428,6 +437,7 @@ internal sealed class ParkAdvisorMessages
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
 		new( HireMoreHandymen, "StaffHireHandymen3.ScorePerExtra10Cells", 29, 29, Lines: 3, Prop: HandymanCap, Group: 12, Polled: true, CellsAHandyman: "StaffHireHandymen3" ),
+		new( HireGuardsBusy, "StaffHireGuards1.ScorePerExtraBusyPoint", 32, 32, Lines: 3, Prop: GuardCap, Group: 13, Category: SaidOnce, Polled: true, BusyWithNoGuard: "StaffHireGuards1" ),
 		new( HireGuards, "StaffHireGuards2.Score", 35, 35, Lines: 3, GestureRowLine: 2, Prop: GuardCap, Group: 14, Polled: true, KidsWithNoGuard: "StaffHireGuards2" ),
 		new( HireMoreGuards, "StaffHireGuards3.ScorePerExtra10Cells", 38, 38, Lines: 3, Prop: GuardCap, Group: 15, Polled: true, CellsAGuard: "StaffHireGuards3" ),
 
@@ -852,6 +862,14 @@ internal sealed class ParkAdvisorMessages
 			return (ParkAudio.CrowdLevel( busyPark.GuestsInside ) - Value( $"{busy}.AtLeastThisBusy" )) * Value( topic.ScoreKey );
 		}
 
+		if ( topic.BusyWithNoGuard is { } guardless )
+		{
+			// The days since the newest hire come before the guards, as row 13's (0x0059ccdb); nothing keeps the score from going below nought.
+			if ( _park?.Invoke() is not { Closed: false } busyPark || busyPark.DaysSinceStaffHired < Value( DaysForStaff ) ) return 0;
+			if ( busyPark.Staff.Guards.Members > 0 ) return 0;
+			return (ParkAudio.CrowdLevel( busyPark.GuestsInside ) - Value( $"{guardless}.AtLeastThisBusy" )) * Value( topic.ScoreKey );
+		}
+
 		if ( topic.CellsAGuard is { } patrolled )
 		{
 			// Unlike row 10's, no guard at all is not nought: the original asks the days since the newest hire instead (0x0059cdb8).
@@ -960,6 +978,8 @@ internal sealed class ParkAdvisorMessages
 			shut = $" closed={(pranked.Closed ? 1 : 0)} guards={pranked.Staff.Guards.Members} kids={pranked.MisbehavingKids}";
 		if ( topic.BusyWithNoEntertainer != null && _park?.Invoke() is { } busyPark )
 			shut = $" closed={(busyPark.Closed ? 1 : 0)} entertainers={busyPark.Staff.Entertainers.Members} inside={busyPark.GuestsInside} unhappy={busyPark.GuestsUnhappy} crowd={ParkAudio.CrowdLevel( busyPark.GuestsInside )}";
+		if ( topic.BusyWithNoGuard != null && _park?.Invoke() is { } thronged )
+			shut = $" closed={(thronged.Closed ? 1 : 0)} guards={thronged.Staff.Guards.Members} inside={thronged.GuestsInside} crowd={ParkAudio.CrowdLevel( thronged.GuestsInside )} sincehire={thronged.DaysSinceStaffHired}";
 		if ( topic.CellsAGuard != null && _park?.Invoke() is { } wide )
 			shut = $" closed={(wide.Closed ? 1 : 0)} guards={wide.Staff.Guards.Members} cells={wide.DevelopedCells} sincehire={wide.DaysSinceStaffHired}";
 		if ( topic.PoorSelection != null && _park?.Invoke() is { } offered )
