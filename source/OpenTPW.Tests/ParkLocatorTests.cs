@@ -70,9 +70,25 @@ public class ParkLocatorTests
 
 	private ParkLocator Locator => _gadget.Locator;
 
-	private void CtrlS() => Locator.OpenStaff( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
+	private void CtrlS()
+	{
+		Locator.OpenStaff( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
+		ParkGadgetPressTests.Settle( _gadget );
+	}
 
-	private void CtrlV() => Locator.OpenVisitors( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
+	private void CtrlV()
+	{
+		Locator.OpenVisitors( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
+		ParkGadgetPressTests.Settle( _gadget );
+	}
+
+	/// <summary>Escape over an open locator, and the arm's slide in run to its end.</summary>
+	private bool Fold()
+	{
+		var folded = _gadget.FoldLocator();
+		ParkGadgetPressTests.Settle( _gadget );
+		return folded;
+	}
 
 	/// <summary>A button clicked at its middle, where the arm puts it.</summary>
 	private void Click( int id )
@@ -184,10 +200,10 @@ public class ParkLocatorTests
 		Assert.AreEqual( (0, false, false, there), (Locator.Actor, Locator.Strip.Visible, Locator.Following, ParkOrbitCameraMode.PointOfInterest) );
 		Assert.AreEqual( ParkLocator.Kind.Staff, Locator.Open, "and still open" );
 
-		Assert.IsTrue( _gadget.FoldLocator() );
+		Assert.IsTrue( Fold() );
 		Assert.AreEqual( (ParkLocator.Kind.None, 0, false, false), (Locator.Open, Locator.Actor, Locator.Following, Locator.Strip.Visible) );
 		Assert.IsFalse( _gadget.ArmOut );
-		Assert.IsFalse( _gadget.FoldLocator(), "nothing to fold" );
+		Assert.IsFalse( Fold(), "nothing to fold" );
 
 	}
 
@@ -286,7 +302,7 @@ public class ParkLocatorTests
 			CtrlS();
 			CtrlV();
 			StringAssert.Contains( lines.Census(), "pending=0 ", "the Tutorial option off" );
-			Assert.IsTrue( _gadget.FoldLocator() );
+			Assert.IsTrue( Fold() );
 			tutorial = true;
 
 			CtrlS();
@@ -305,13 +321,13 @@ public class ParkLocatorTests
 			StringAssert.Contains( lines.Census(), $"message=287/score=1000/line=0/lastTick={tick}/said=1/slaps=0" );
 
 			// Folded while he says it: cut off.
-			Assert.IsTrue( _gadget.FoldLocator() );
+			Assert.IsTrue( Fold() );
 			StringAssert.Contains( lines.Census(), $"message=287/score=1000/line=0/lastTick={tick}/said=0/slaps=1", "cut off" );
 
 			CtrlS();
 			lines.Tick( park.GameTick, 0, Play );
 			Assert.AreEqual( (417, 389), said[1], "response 417, sample 389" );
-			Assert.IsTrue( _gadget.FoldLocator() );
+			Assert.IsTrue( Fold() );
 			StringAssert.Contains( lines.Census(), $"message=198/score=1000/line=0/lastTick={tick}/said=0/slaps=1", "cut off" );
 			StringAssert.Contains( lines.Census(), "pending=0 " );
 
@@ -429,7 +445,7 @@ public class ParkLocatorTests
 			current.SetValue( null, null );
 		}
 
-		Assert.IsTrue( _gadget.FoldLocator() );
+		Assert.IsTrue( Fold() );
 		_gadget.Update();
 		Assert.AreEqual( 0, Locator.PatrolEdges.Count, "folded away" );
 	}

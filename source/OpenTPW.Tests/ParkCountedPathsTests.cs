@@ -110,12 +110,15 @@ public class ParkCountedPathsTests
 	public void EscapeFoldsAnOpenLocatorFirst()
 	{
 		var stack = APark();
-		var locator = stack.Windows.OfType<UI.ParkGadget>().Single().Locator;
+		var gadget = stack.Windows.OfType<UI.ParkGadget>().Single();
+		var locator = gadget.Locator;
 
 		WithControl( stack, Key.S );
+		ParkGadgetPressTests.Settle( gadget );
 		Assert.AreEqual( (UI.ParkLocator.Kind.Staff, true), (locator.Open, locator.StaffPanel.Visible) );
 
 		Press( stack, Key.Escape );
+		ParkGadgetPressTests.Settle( gadget );
 		Assert.AreEqual( (UI.ParkLocator.Kind.None, false), (locator.Open, locator.StaffPanel.Visible) );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "no menu" );
 

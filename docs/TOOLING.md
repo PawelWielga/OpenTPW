@@ -760,6 +760,13 @@ GH=766` there, or the pointer is off):
   `h - (1536 - y) * h / 1536` down, the tag (56, 441) at 1280 x 720, the bar's buttons (265, 549) and
   (265, 650); `tags` prints the bar's line. **A `reply` waits its whole time before the next command**, so to
   read what a click did at once give the click 0.02 s (`q311/confirm.py`, Q311).
+- **The arm's slide, step by step** (Q427): here, click under `pause` and `step` the frames (16.7 ms each against the
+  arm's 20 ms timer; 2, 4, 7, 10 and 14 frames are 1, 3, 5, 8 and 10 steps, clear of the boundaries), `tags` reading
+  `handle=`, `move=`, `carried=` and `waiting=` after each (`q427/confirm.py`). The console's `control` takes the id in
+  hex (`control 27` is the camcorder button). In the original, `bar.py` polls each step and `record.sh` films it; a
+  second action inside the 0.22 s slide is one `xdotool` call after the click's release (`mouseup 1 sleep 0.03 keydown
+  Control_L keydown s ...`, `q427/orig/run.sh` with `C=1`). Break the ride AFTER `loadfile.sh` comes back, not inside
+  its `POLL`: it came back 85 s into the poll there, past the tag's 30.5 s life.
 - **Its sound is not paced off-screen:** the null device takes the mix as fast as it is made, so a held voice's
   samples follow one another in a third of their clips' length. Read volumes, pitches and variations from its
   mixer, never a pace or a sample's length in time (Q269).

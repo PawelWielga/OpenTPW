@@ -232,9 +232,11 @@ bar read row 476. The arm out was not tried there.
 
 **OpenTPW.** `ParkGadget` builds the body's children in that order under a body that draws by depth
 (`UiControl.DrawsByDepth`, `Depth`), reads both outlines into `UiControl.Outline`, and builds the arm in
-(`PutArm`) and the aerial down. The arm, its end, the mast and the buttons' panel stop the pointer over their
-rectangles (`UiControl.StopsPointer`). Not the original's: the arm does not slide (counted, `GADGET_ARM_SLIDE`; `docs/QUEUE.md` Q230); in, the arm and its end draw
-nothing (how a mesh is drawn on a narrowed control is not traced) and the retract button is hidden. A tag stands
+(`BuildIn`) and the aerial down. The arm, its end, the mast and the buttons' panel stop the pointer over their
+rectangles (`UiControl.StopsPointer`). The arm slides ("The arm's handler", Q427). Not the original's: at rest in, the arm
+and its end draw nothing, where the original draws them fitted to their narrowed rectangles behind the body and the
+handle (the film of Q427 shows the arm's mesh squeezed to its rectangle through a slide), and the retract button is
+hidden while the arm is in or coming in. A tag stands
 on the mast and lifts the top (`ParkGadget.PutTags`), and the top's right click takes every tag off.
 
 ### Op 4 sub-op 4 is a hit-test region, not a motion path
@@ -1076,14 +1078,23 @@ going out, 3 coming in, 4 coming in for a panel waiting.
   the arm's left (`FUN_004a1440`); **the step is a tenth of the panel's width, the body's right edge less the
   arm's left, and a hundred** (`0x004a16d7`, a whole division); the retract button `0x24` is switched on; sound
   `0x1c` is played (`FUN_0051bfc0`); and the panel is sent `0x1001d9`.
-- **`0xb`, in.** With a panel carried: the panel is sent `0x1001d8`, the step is a tenth of the arm's left less
-  the handle's (`[0x007cb2d0]`), the retract button is switched off and sound `0x1c` played; the state is 3, or 4
-  where the message's word is -1.
+- **`0xb`, in.** Nothing with no panel carried. With one: the panel is sent `0x1001d8`, the timer is armed again
+  (`FUN_0065ef90` answers 1 and resets one already running), the step is a tenth of the arm's left less the handle's
+  (`[0x007cb2d0]`), a whole division from wherever the handle stands, so a slide out turns back where it is and an
+  `0xb` while coming in starts the ten steps again; the retract button is switched off and sound `0x1c` played; the
+  state is 3, or 4 where the message's word is -1. **No sender passes -1** (`FUN_004a2590`, `FUN_004a25f0` and the
+  retract button's `0x100` pass nought; nothing else sends the arm `0xb`): state 4 is dead by CODE.
 - **Timer `0x80080`.** While `+0x130` is over nought it goes down one and the arm's right edge moves a step; the
-  arm's resize (message `0x13`) moves the panel as far (`FUN_0065c7fe`) and shows it and its children by their
-  right edges. At nought the timer stops: coming in, the panel is hidden and unlinked, sent `0x1d` with nought,
-  and sound `0xc2` played; going out, the panel is sent `0x1d` with 1. The state is 0, and a panel waiting in
-  word 2 is posted `0xa`.
+  arm's resize (message `0x12`, `0x004a1a0e`) moves the panel as far (`FUN_0065c7fe`) and shows it and each of its
+  children where its right edge is past the arm's parent's, the body's 439 (`FUN_004a1440`, which sets every one,
+  so a part `0x1001d9` hid is shown again: the bar's button of type nought and a decline's erase button, each with
+  no mesh, stand shown and take the pointer once the arm is out). At nought the timer stops: coming in (state 3),
+  **the arm is put back at its rest rectangle**, the one the builder stored with the narrowed arm (`FUN_0065cf17` at
+  `0x004a23ee` writes the control's `+0x14`; `FUN_0065d4cb` reads it at `0x004a18ef`, `FUN_0065cc04` sets it at
+  `0x004a1933`), the panel is hidden and unlinked, sent `0x1d` with nought, and sound `0xc2` played
+  (`FUN_00485aa0`, cat_ui flat); in state 4 the same but the arm's parent is posted `0xb` in place of the `0x1d` and
+  the sound; going out, the panel is sent `0x1d` with 1. The state is 0, and a panel waiting in word 2 is posted
+  `0xa`. The ten steps fire 20 ms apart and an eleventh ends the slide: 0.22 s.
 - **`0x100` from `0x24`,** the retract button: `0xb`, or with the arm already coming in the waiting panel is
   forgotten; then control `0x27`, the camcorder button, is put up.
 
@@ -1110,7 +1121,32 @@ and `mb_erase` clicked: the tag's shown bit read 0 at once, none was held 0.53 s
 button** after it: the handle stopped at 851, 520 out, a tenth of (319 + 108 + 100) ten times, where the
 stream's rectangles and this game's arm have it 645 out.
 
-### OpenTPW (Q311: `ParkGadget.OpenTag`, `BarButton`, `EraseTag`, `PutArm`, `Swell`; `ParkTags.Open`, `Shut`, `OnShow`)
+### The slide, measured (Q427)
+
+**The original** (`q427/orig/run.sh`, Q265's `bounce.TPWS` off-screen, `bar.py` polling, `record.sh` filming; predicted
+first, `q427/PREDICTION.txt`): the camcorder button put the handle from 331 to 851 in steps of 52 in 0.22 s, the arm's
+state 2 while it moved, its panel at (482,1206)-(801,1359), and back by -52 in state 3. The mechanic's tag: 331 to
+1151 by 82 in 0.23 s, the tag on show and the one being put on show both set as it started and the second cleared at
+its end, the bar starting at (-334,1112,281,1453); every one of the bar's six children shown once out, its button of
+type nought too; clicked again, back by -82, the tag on show cleared as it started. The film: the arm's green body
+squeezed to its rectangle through the slide, the retract cross from its first frame, the postcard button shown a frame
+before the camera button. **A turn** (the camcorder button and Ctrl+S within the slide, twice): one step out to 383,
+steps of -5 back to 333, 331 at the end, then out by 67 to 1001 with the staff panel at (484,1127): the rest
+rectangle, not the tenths.
+
+**OpenTPW** (`ParkGadget.Carry`, `Fold`, `Slide`; `ParkTags.PuttingOnShow`, `Shown`, `FullyOut`; the console's `tags`
+reads the arm's move, what it carries and what waits). `q427/confirm.py` on the stock park, paused and stepped 16.7 ms a
+frame (`run-fix4`, the final build, nine of nine): the tag's click `Park gadget: arm: Out with panel 10d2d, step 82,
+handle 331, sound 0x1c a voice`, the handle 413, 577, 741, 987, 1151 after 2, 4, 7, 10 and 14 frames, the bar hidden
+until its right edge passed 439; again, `step -82`, 331 and `sound 0xc2 a voice`; the camcorder button 383, 591, 851 and
+its panel at (482,1206); the camcorder button and Ctrl+S three frames on, `arm: In with panel 62, step -10, handle 435`,
+331, then 1001 with the staff panel at (484,1127). Side by side with the original's film (`q427/side-by-side.png`) the
+bar comes out alike. Main's build had the handle at 1151 at the click and counted `GADGET_ARM_SLIDE`. **Counted, not
+built:** the camcorder button's advisor line `0x131` (`FUN_00498bb0` posts it, `FUN_00498bd0` withdraws it;
+`CAMCORDER_PANEL_LINE`). Not heard in either game. In no game run: a panel refused while another waits (tested only),
+Full Simulation (not asked: the arm is either mode's), the other three themes.
+
+### OpenTPW (Q311: `ParkGadget.OpenTag`, `BarButton`, `EraseTag`, `Carry`, `Swell`; `ParkTags.Open`, `Shut`, `OnShow`)
 
 `q311/confirm.py`, the stock park's Belly Bounce broken 25 s in and the mechanic's tag clicked three seconds
 after his line, seven predictions of seven twice and the control's one: the log read `Park gadget: message bar:
@@ -1126,10 +1162,10 @@ its tag was gone 33 s after it came.
 
 | | The original | OpenTPW |
 |---|---|---|
-| The arm's way out and in | ten steps 20 ms apart | at once, counted `GADGET_ARM_SLIDE` (Q230); so a tag's right click is never refused as the one being put on show, and a panel takes another's place with no fold between |
-| The arm's travel | a tenth of the panel's width and 208, ten times: 820 with the bar, 520 with the camcorder panel | 820 with the bar; the camcorder panel's is still the stream's 645 (Q230) |
-| The arm's sounds (`0x1c` as it starts, `0xc2` as it is in) | played | not played (Q230) |
-| The panel's children as it comes out | each shown as its right edge passes the body's | all at once |
+| The arm's way out and in | ten steps 20 ms apart | the same on the frame clock (Q427); a tag's right click refused while it is the one being put on show; a panel asked for while the arm moves waits, and a third is refused |
+| The arm's travel | a tenth of the panel's width and 208, ten times: 820 with the bar, 520 with the camcorder panel | the same (Q427) |
+| The arm's sounds (`0x1c` as it starts, `0xc2` as it is in) | played | played, cat_ui at the effects' own volumes (Q427); not heard in either game |
+| The panel's children as it comes out | each shown as its right edge passes the body's | the same (Q427) |
 | The bar's text | the middle panel's, over the right slice | the same lettering; the right slice is put in the tree before the middle one so that it is drawn under it. At 1280 x 720 font 6 is a smaller face than the original's at 1024 x 768, so the line breaks fall later |
 | The two stacked buttons | 21 types | dressed for every type whose mesh is a file of `ui.wad` (not `b_loan` and `b_pkinfo`, nodes of files not looked up); types 3, 9 to `0x11` and `0x18` act (`advisor-park.md`, "A park with no ride in it", "Worn rides and no mechanic"), the rest counted `TAG_BAR_BUTTON` |
 | Advisor message `0x11c` | posted with the bar, withdrawn as it leaves | the same (`advisor-park.md`, "The line of an opened tag message") |
@@ -2186,7 +2222,7 @@ open" (`4-closed.png`); Ctrl+V `visitorPanel=1@485,1127`, its button `actor=42 n
 (`q420/side-by-side.png`) the panel, the buttons and the strip stand alike. Main's build counted `STAFF_LOCATOR` and
 `VISITOR_LOCATOR` once each and put nothing out. **Counted, not built:** the strip's click (`STAFF_WINDOW`,
 `VISITOR_WINDOW`: no person's window is built, so the keys always open on nobody). **Deviations, said at the site:** the
-arm puts the panel out at once, where the original slides (counted `GADGET_ARM_SLIDE` each way); a person gone from the
+arm slides as the original's (Q427); a person gone from the
 park is let go of, where the original keeps the freed thing's address. Not looked into: the bit `0x1000`'s other
 readers. In no game run: a kind with nobody (tested only), a fenced member, a person leaving the park while followed
 (tested only), the strip's hover and click, first person over a follow, Full Simulation (not asked: the locators are

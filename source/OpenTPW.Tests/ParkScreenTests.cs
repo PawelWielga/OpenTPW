@@ -511,15 +511,19 @@ public class ParkScreenTests
 		var gadget = stack.Windows.OfType<UI.ParkGadget>().Single();
 
 		Click( stack, Camcorder );
+		ParkGadgetPressTests.Settle( gadget );
 		Assert.IsTrue( gadget.ArmOut, "the camcorder button puts the arm out" );
 
 		stack.Open( new UI.ParkBuyScreen( stack ) );
 		Pointer( stack, Grass, left: false );
+		ParkGadgetPressTests.Settle( gadget );
 
 		Assert.IsFalse( gadget.ArmOut, "the screen opening folds it" );
 
 		Click( stack, Camcorder );
+		ParkGadgetPressTests.Settle( gadget );
 		Pointer( stack, Grass, left: false );
+		ParkGadgetPressTests.Settle( gadget );
 		Assert.IsTrue( gadget.ArmOut, "and with the screen still up the button puts it out again, and it stays out" );
 	}
 

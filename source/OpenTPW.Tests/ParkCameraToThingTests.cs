@@ -679,6 +679,7 @@ public class ParkCameraToThingTests
 		Frame( false, new Vector2( 1000, 100 ), 1.1f );
 
 		Assert.IsTrue( _stack.ClickAt( 119, 941 ) );
+		ParkGadgetPressTests.Settle( gadget );
 		Assert.IsTrue( gadget.BarOut );
 
 		// The bar's meshes are files of ui.wad: its slices, its erase button and every button the table dresses.

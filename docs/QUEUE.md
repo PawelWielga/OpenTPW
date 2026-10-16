@@ -48,9 +48,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q427 (`hud.md`, "The slide, measured"): the arm's slide is built. The locators' last piece is the strip's click,
+  the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`), the nearest. Counted, not built: the camcorder button's
+  advisor line `0x131` (`FUN_00498bb0` posts it, `FUN_00498bd0` withdraws it; `CAMCORDER_PANEL_LINE`). In no game run:
+  a panel refused while another waits (tested only), Full Simulation (not asked: the arm is either mode's), the other
+  three themes. Not heard in either game.
   From Q426 (`hud.md`, "The patrol edges"): a fenced member's patrol edges are built. The locators' last pieces are the
   strip's click, which opens the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`; the employee window is Q31's, and
-  the patrol tool, `0x510`, map tool `0x36`, is on it), and the arm's slide (`GADGET_ARM_SLIDE`), the nearest. In no
+  the patrol tool, `0x510`, map tool `0x36`, is on it), and the arm's slide (built, Q427), the nearest. In no
   game run: a patrol edge over a built cell (no stock area crosses one; the lift is the tools', tested), Full
   Simulation (not asked: the locators are either mode's), the other three themes.
   From Q425 (`hud.md`, "The staff and visitor locators"): the locators' two advisor lines are built, so the locators'
@@ -62,7 +67,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   two lines as they open, `0xc6` (staff) and `0x11f` (visitors) (built, Q425); a fenced member's patrol edges
   (built, Q426); the strip's click, the person's window (`STAFF_WINDOW`,
   `VISITOR_WINDOW`), and with it Ctrl+S or Ctrl+V over a person's window opening on that person. The arm puts the panel
-  out at once (counted `GADGET_ARM_SLIDE`). In no game run: a kind with nobody, a person leaving while followed (tested
+  out at once (built to slide, Q427). In no game run: a kind with nobody, a person leaving while followed (tested
   only), the strip's hover and click, first person over a follow, Full Simulation (not asked: the locators are either
   mode's), the other three themes.
   From Q423 (`advisor-park.md`, "Kids who got away from a guard"): row 22 is built, so every guards' row is. In no game
@@ -585,7 +590,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   1024 x 768 and breaks its lines later (which face a font slot takes at a window's size is not this item's).
   In no game run: a tag's right click with the bar out, a tag taken off by a later line with the bar out, the
   camcorder button or a park screen with the bar out, two tags, a tag that declines (the tests hold each). The
-  arm's slide, its sounds and the camcorder panel's travel are Q230's.
+  arm's slide, its sounds and the camcorder panel's travel are built (Q427, which was Q230's ask).
   From Q310 (`saves.md`, "OpenTPW's writer, the aerial's tags"): a tag's text is written for kinds 0 and 2
   alone (`TAG_TEXT_KIND`; `FUN_00509e10` has 37), its name the item's `Info.Name`, held on items 1100 and 1140
   (what fills the item record's `+0x410` is not read); what item 2984 is on a guest's tag is not decoded; a
@@ -1264,22 +1269,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   From Q133b: the original's handyman, put down two cells from a dirty toilet, read `0xa` on the tick after the
   put-down and the toilet's stamp was written again a tick later (1389, then 1390: `q133b/orig/a.log`), so the
   second decide runs for him too; from `0xa` the idle between stamps nought, and he does not stand eleven.
-- [ ] **Q230. The gadget's arm jumps out and in, where the original's slides. Decode first.** Found by Q113. The
-  arm's handler `LAB_004a14f0` (installed at `0x004a2387`) is a jump table over messages `0xa` to `0x100` working a
-  state in the control's own `+0x134`; `FUN_004a25f0` reads states 3 and 4 as "still moving", and `FUN_004a2590` is
-  the one way a panel gets onto the arm. Neither how far a step moves nor how long the slide takes is traced. The two
-  ends are known: in, the arm's right edge is 645 left of the stream's (`hud.md`, "The arm and the aerial as built").
-  Here `ParkGadget.PutArm` sets it out or in at once, counted as `GADGET_ARM_SLIDE`; in, the arm and its end draw
-  nothing and the retract button is hidden, where the original narrows the arm and switches the button off. Decode
-  the states, the step and its clock, and how a mesh is drawn on a narrowed control; measure the slide's length in the
-  original's frames; then build it on `Time.Delta` (rule 10). Confirm: frames every 50 ms of the arm going out, beside
-  the original's.
-  From Q311 (`hud.md`, "The arm's handler", read whole there): ten steps on timer `0x80080`, 20 ms apart; the
-  step out is a tenth of the panel's width and 208, in a tenth of the arm's left less the handle's; sound `0x1c`
-  as either starts and `0xc2` as the arm is in; a panel's children are shown as their right edges pass the
-  body's. The original's handle was measured 520 out with the camcorder panel, where `ArmTravel` is 645, and
-  820 with the message bar, which is built at that. Left: the mesh on a narrowed control, the slide and its
-  sounds built, the camcorder panel's travel and place (`original/bar.py` reads all three).
 - [ ] **Q231. Under an open park screen: F1, the wheel and the release. Decode first.** Found by Q115
   (`park-engine.md`, "A park screen is open"). The screens' key handler answers a plain F1 let go by calling
   `FUN_005194d0` on the world and `FUN_0059ab50` on what it answers (`0x00488bfb`), not traced; nothing here reads F1 in

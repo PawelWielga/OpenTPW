@@ -7239,6 +7239,30 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   28), its edges 48 squares a frame`); the researcher's whole map none; the entertainer's 20 on 16 cells; Escape none;
   main's build counted `LOCATOR_PATROL_EDGES`. The original's face list the same, four of four
   (`q426/side-by-side.png`). 12 bugs put back, all caught.
+- [x] **Q427. The gadget's arm slides (a piece of Q420; Q230's ask).** Ten steps 20 ms apart on the frame clock, out with
+  a panel and in, each part shown as its right edge passes the body's, a panel asked for meanwhile waiting and a third
+  refused, a turned slide put back at the arm's rest, sounds `0x1c` and `0xc2`, the camcorder panel 520 out at
+  (482,1206). Proved by `q427/run-fix4` (nine of nine on the final build): the bar's handle 413, 577, 741, 987, 1151
+  after 2, 4, 7, 10, 14 frames, as the original's steps of 82 (`q427/side-by-side.png`); the turn 435, step -10, 331,
+  then 1001, as the original's 383, -5, 333, 331, 1001.
+- [x] **Q230. The gadget's arm jumps out and in, where the original's slides. Decode first.** Built as Q427: the slide, its
+  sounds, the camcorder panel's travel and place; the mesh on a narrowed control is drawn fitted to it (the original's
+  film), and here not at rest in, which shows nothing either way (`hud.md`, "The slide, measured"). Found by Q113. The
+  arm's handler `LAB_004a14f0` (installed at `0x004a2387`) is a jump table over messages `0xa` to `0x100` working a
+  state in the control's own `+0x134`; `FUN_004a25f0` reads states 3 and 4 as "still moving", and `FUN_004a2590` is
+  the one way a panel gets onto the arm. Neither how far a step moves nor how long the slide takes is traced. The two
+  ends are known: in, the arm's right edge is 645 left of the stream's (`hud.md`, "The arm and the aerial as built").
+  Here `ParkGadget.PutArm` sets it out or in at once, counted as `GADGET_ARM_SLIDE`; in, the arm and its end draw
+  nothing and the retract button is hidden, where the original narrows the arm and switches the button off. Decode
+  the states, the step and its clock, and how a mesh is drawn on a narrowed control; measure the slide's length in the
+  original's frames; then build it on `Time.Delta` (rule 10). Confirm: frames every 50 ms of the arm going out, beside
+  the original's.
+  From Q311 (`hud.md`, "The arm's handler", read whole there): ten steps on timer `0x80080`, 20 ms apart; the
+  step out is a tenth of the panel's width and 208, in a tenth of the arm's left less the handle's; sound `0x1c`
+  as either starts and `0xc2` as the arm is in; a panel's children are shown as their right edges pass the
+  body's. The original's handle was measured 520 out with the camcorder panel, where `ArmTravel` is 645, and
+  820 with the message bar, which is built at that. Left: the mesh on a narrowed control, the slide and its
+  sounds built, the camcorder panel's travel and place (`original/bar.py` reads all three).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

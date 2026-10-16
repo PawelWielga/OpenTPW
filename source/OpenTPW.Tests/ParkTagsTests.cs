@@ -188,7 +188,8 @@ public class ParkTagsTests
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the timers left running; the particle's timer left; a declining tag's stopped; the same tag
-	/// opened twice; a tag not standing opened; the tag on show kept after it is taken off; after the bar leaves.
+	/// opened twice; a tag not standing opened; the tag on show kept after it is taken off; after the bar leaves; the tag
+	/// on show at the click, not as the arm starts out; one taken off before the arm starts out put on show.
 	/// </remarks>
 	[TestMethod]
 	public void AnOpenedTagStopsItsTimers()
@@ -202,7 +203,11 @@ public class ParkTagsTests
 		Assert.IsNull( tags.OnShow );
 		var changes = tags.Changes;
 		Assert.IsTrue( tags.Open( opened, 3000 ) );
-		Assert.AreEqual( (opened, false, long.MaxValue, 3000L), (tags.OnShow, opened.TimersRun, opened.HideAt, opened.OpenedAt) );
+		Assert.AreEqual( (null, opened, false, long.MaxValue), (tags.OnShow, tags.PuttingOnShow, opened.TimersRun, opened.HideAt), "being put on show" );
+		tags.Shown( 3000 );
+		Assert.AreEqual( (opened, opened, 3000L), (tags.OnShow, tags.PuttingOnShow, opened.OpenedAt), "on show as the arm starts out" );
+		tags.FullyOut();
+		Assert.IsNull( tags.PuttingOnShow, "and no longer being put on show once out" );
 		Assert.AreEqual( changes + 1, tags.Changes );
 		Assert.IsFalse( tags.Open( opened, 4000 ), "the tag on show is not opened again" );
 		Assert.AreEqual( 3000L, opened.OpenedAt );
@@ -225,13 +230,22 @@ public class ParkTagsTests
 		// Taken off while on show: a mechanic's line takes the about-to-break tag's place.
 		var worn = tags.Said( 68, 14, 600000 )!;
 		Assert.IsTrue( tags.Open( worn, 600100 ) );
+		tags.Shown( 600100 );
 		tags.Said( 72, 14, 600200 );
 		Assert.IsNull( tags.OnShow, "the tag on show taken off leaves none" );
+
+		// Taken off while the arm comes in for the bar: not put on show as it goes out.
+		var early = tags.Said( 68, 15, 700000 )!;
+		Assert.IsTrue( tags.Open( early, 700100 ) );
+		tags.Said( 72, 15, 700200 );
+		tags.Shown( 700300 );
+		Assert.IsNull( tags.OnShow, "a tag taken off before the arm starts out is not put on show" );
 
 		// A tag that declines an offer keeps its timers when opened.
 		var offers = new ParkTags( [new ParkTags.Row( 5, ParkTags.NoTag, 1, 0, 0x1a, 0x1b, 30000, 0 )] );
 		var offer = offers.Said( 5, 0, 1000 )!;
 		Assert.IsTrue( offers.Open( offer, 2000 ) );
+		offers.Shown( 2000 );
 		Assert.AreEqual( (true, 31000L), (offer.TimersRun, offer.HideAt) );
 		offers.Tick( 31000 );
 		Assert.IsTrue( offer.Hidden );

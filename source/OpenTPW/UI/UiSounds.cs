@@ -97,17 +97,20 @@ internal static class UiSounds
 	public static void MenuChoice() => Play( MenuChoiceSound, MenuChoiceVolume );
 
 	/// <summary>A tag was put on the gadget's aerial (FUN_0048eb20), at its variation's own volume as the boot's is.</summary>
-	public static void NewTag() => PlayAtItsOwn( NewTagSound );
+	public static void NewTag() => _ = PlayAtItsOwn( NewTagSound );
 
 	/// <summary>A tag was left clicked (FUN_0048dae0), at its variation's own volume.</summary>
-	public static void TagClick() => PlayAtItsOwn( TagClickSound );
+	public static void TagClick() => _ = PlayAtItsOwn( TagClickSound );
 
-	private static void PlayAtItsOwn( int effect )
+	/// <summary>An effect of the interface's own category played flat, at its variation's own volume (UI_PlaySound, FUN_00485aa0, and FUN_0051bfc0 on cat_ui).</summary>
+	/// True where a voice took it.
+	public static bool Interface( int effect ) => PlayAtItsOwn( effect );
+
+	private static bool PlayAtItsOwn( int effect )
 	{
 		Preload();
 
-		if ( _category != null )
-			_category.Play( effect, BootVolume( _category.VariationsOf( effect ) ), respectDelay: false );
+		return _category != null && _category.Play( effect, BootVolume( _category.VariationsOf( effect ) ), respectDelay: false ) != null;
 	}
 
 	private static void Play( int effect, float volume )

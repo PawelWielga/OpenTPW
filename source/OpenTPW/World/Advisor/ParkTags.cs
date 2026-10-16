@@ -130,8 +130,11 @@ internal sealed class ParkTags
 	internal int Changes { get; private set; }
 	/// <summary>How many tags the list has taken, for the new tag's sound.</summary>
 	internal int Made { get; private set; }
-	/// <summary>The tag whose message the bar shows (DAT_007ca090), or none.</summary>
+	/// <summary>The tag whose message the bar shows (DAT_007ca090), or none: the one put on show as the arm starts out with the bar.</summary>
 	internal Tag? OnShow { get; private set; }
+
+	/// <summary>The tag last left clicked to the bar (DAT_007ca094), until the arm is fully out with it; its right click is refused.</summary>
+	internal Tag? PuttingOnShow { get; private set; }
 
 	/// <summary>
 	/// A line of response group <paramref name="group"/> about <paramref name="subject"/>, a thing of item
@@ -245,9 +248,10 @@ internal sealed class ParkTags
 	}
 
 	/// <summary>
-	/// A tag's message put on the bar (FUN_0048d9c0): its two timers are stopped, unless its second button is
-	/// <see cref="DeclineButton"/>, so it no longer hides at its life's end; it is the tag on show until
-	/// <see cref="Shut"/> or its going. False, and nothing done, for the tag already on show or one not standing.
+	/// A tag's message asked for on the bar (FUN_0048d9c0): its two timers are stopped, unless its second button is
+	/// <see cref="DeclineButton"/>, so it no longer hides at its life's end, and it is the tag being put on show. It
+	/// is on show once the arm starts out with the bar (<see cref="Shown"/>). False, and nothing done, for the tag
+	/// already on show or one not standing.
 	/// </summary>
 	internal bool Open( Tag tag, long now )
 	{
@@ -259,12 +263,27 @@ internal sealed class ParkTags
 			tag.HideAt = long.MaxValue;
 		}
 
-		OnShow = tag;
-		tag.OpenedAt = now;
-		++Changes;
+		PuttingOnShow = tag;
 		Log.Info( $"Park tags: tag {tag.Row.Id} subject {tag.Subject} opened, timers {(tag.TimersRun ? 1 : 0)}" );
 		return true;
 	}
+
+	/// <summary>
+	/// The arm starts out with the bar (the bar's 0x1001d9): the tag being put on show is the one on show, swelling
+	/// from <paramref name="now"/>; one taken off the mast meanwhile leaves none on show.
+	/// </summary>
+	internal void Shown( long now )
+	{
+		OnShow = PuttingOnShow is { } tag && _tags.Contains( tag ) ? tag : null;
+
+		if ( OnShow != null )
+			OnShow.OpenedAt = now;
+
+		++Changes;
+	}
+
+	/// <summary>The arm fully out with the bar (the bar's 0x1d with 1): no tag is being put on show.</summary>
+	internal void FullyOut() => PuttingOnShow = null;
 
 	/// <summary>The bar taken off the arm (the bar's 0x1001d8): no tag is on show.</summary>
 	internal void Shut()
