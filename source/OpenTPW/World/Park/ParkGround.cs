@@ -284,17 +284,10 @@ public sealed class ParkGround : ModelEntity
 				vertices[vertex++] = Corner( field, x + 1, y + 1, CornerUvs[corners[2]], slot );
 				vertices[vertex++] = Corner( field, x, y + 1, CornerUvs[corners[3]], slot );
 
-				// Two triangles over those four corners, always split the same way - which is not
-				// what the original does, and this is where to fix it.
-				//
-				// Which diagonal the original cuts is not located (docs/exe/park-engine.md, "The
-				// diagonal-choice bit has not been located"); the RE pass's 0x0004 is unverified. What is
-				// known is 0x0800, which is never stored: the loader
-				// computes it, building each cell's two triangle normals from its four corner
-				// heights and setting 0x0800 where they diverge by more than about 0.81 degrees,
-				// which is to say "this cell is not flat, so which way it is cut is visible". Doing
-				// the same needs that pass over the heightfield first, so it is left for its own
-				// change rather than smuggled into this one.
+				// Two triangles over those four corners, always split from (x, y) to (x + 1, y + 1) -
+				// which is not what the original does, and this is where to fix it (Q398). The original
+				// cuts each cell on the diagonal its flag 0x0002 names, the other one where the cell
+				// carries 0x0004 instead (docs/exe/park-engine.md, "The triangle diagonal").
 				elements[element++] = (uint)corner;
 				elements[element++] = (uint)(corner + 1);
 				elements[element++] = (uint)(corner + 2);

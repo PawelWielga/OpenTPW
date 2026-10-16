@@ -1918,8 +1918,9 @@ nor `+0x24`; its loader pairs each record with its object by mesh instance and m
 after the room test: the node on the list `DAT_00790fe0` whose `+0x10` is the object's `+0x20` (`FUN_00436860`), which
 is not a pointer but the object's model instance, the handle `FUN_00463060` returns (slot + 1); then on that node
 `+0x140` nought, `+0x3c` bit 0 set and bit 1 clear, and not the one the editor has open (`DAT_00790fec`). No node, or an
-object whose `+0x20` is nought, is refused. `+0x140` counts pairs of the coaster's sections whose boxes intersect
-(`FUN_00439c40` adds, `FUN_0043ad50` takes away). Bit 0 is set only by the editor's finishing action (`FUN_00435570`,
+object whose `+0x20` is nought, is refused. `+0x140` counts the coaster's crossings: `FUN_00439c40` tests a node against those two and more
+along it either way, by boxes and then a prism test (`FUN_0043a2b0`), and a hit adds 1 to each side's count, so a
+section crossing its own coaster adds 2 (`FUN_0043ad50` takes them away). The gate tests only nought. Bit 0 is set only by the editor's finishing action (`FUN_00435570`,
 `0x0043557f`) and by the `SAOC` loader from the saved flags (`0x004380e7`); bit 1, a gap open in the circuit, by the
 editor's gap action (`FUN_00446740`, `0x004468f8`) and the loader (`0x004382b3`), and cleared when a piece bridges it
 (`0x00442cac`). A new node's `+0x3c` holds bit 3 only (`0x004369f8`), so a coaster bought and never finished is refused.
@@ -3910,8 +3911,11 @@ buys one point and loses 10. Only the withdrawal is gated, so with withdrawals o
   `mTurnEnteredRed` (`FUN_004f88b0`: the ticks × the clock's rate / 4, in seconds) is divided into thirty-day months,
   and at 6 or more (4148 sweeps at the shipped rate, about 17 minutes of play) the bank broadcasts message `0x13` with
   2 (`0x004d054c`..`0x004d05b2`). Its own handler then ends the park (`FUN_005168f0`) unless it is ending already, and
-  the advisor raises record `0x6a` (`0x0059aee7`). The end sends nothing further and the walk goes on, so every member
-  of staff is still paid in the ended park. A park that spends past nought and stays there reaches it.
+  the advisor raises record `0x6a` (`0x0059aee7`). The end sets world state 4, opens the end screen (`FUN_00481b50` to
+  `FUN_0048ac40`), clears a render flag (`0x00763f84`), sets `VAR_BREAKSTAT` to 1 on every live ride guests can choose
+  (`FUN_004e0db0`), empties the pending-delete list and closes the gate (`FUN_00519ef0( 0, 1 )`). In state 4 no thing
+  takes a turn (`park-gate.md`), but the clock and the bank go on, so every member of staff is still paid in the
+  ended park. A park that spends past nought and stays there reaches it.
 
 **The wage, `FUN_00504c70`**: `PerTypeStaffConsts[type].PayMultiplier` × `PerGradeStaffConsts[grade].BaseWage`
 (`0x00504ca4`; the type is 0 to 4 for the handyman, mechanic, entertainer, guard and researcher, `FUN_00506490`),

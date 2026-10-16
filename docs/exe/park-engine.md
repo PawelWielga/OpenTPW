@@ -50,20 +50,35 @@ Jungle: **96x85 cells, 97x86 vertices, 8342 heights, 8160 cell records.** Valida
 | Flag bit | What it is | Confidence |
 |---|---|---|
 | `0x0001` | **Hides the cell from the terrain pass.** `FUN_0056f670` skips any cell carrying it (`TEST byte [EAX],0x1` at `0x0056f9ce`). Set in `base.MD2` on exactly the 1,159 jungle-grid cells of mType 2, 30 and 7, and at run time on every cell the tile rule answers (0,8) — footprint, entrance, exit and queue cells (`FUN_0046df50`, `OR 0x101` at `0x0046e012`). The pass rebuilds the ground every frame (called from `FUN_00576a00`), so the bit takes effect at once: written on four grass cells of the running original it opened a black hole two cells square on the next frame (Q360, `textures.md`, "What a floor's clear border shows"). A second, optional pass (`FUN_00570d90`, gated on `DAT_008bcbc8 & 0x10000`, off in the park) has no such test | Confirmed 2026-09-22; in the running original, Q360 |
-| `0x0002` | Preserved by the footprint stamper; meaning not recorded | — |
-| `0x0004` | Preserved by the footprint stamper. The RE pass said it selects the triangle diagonal when `0x0800` is set; neither terrain pass tests it | **Not borne out** - see below |
+| `0x0002` | **The drawn diagonal.** Set: the terrain pass splits the cell from (x,z) to (x+1,z+1); clear: from (x+1,z) to (x,z+1). Preserved by the footprint stamper | Confirmed 2026-10-16 (Ghidra) - see below |
+| `0x0004` | **The height diagonal**, the same split read the other way: clear is (x,z)-(x+1,z+1), set is (x+1,z)-(x,z+1). Every ground cell carries exactly one of `0x0002` and `0x0004`. Preserved by the footprint stamper | Confirmed 2026-10-16 (Ghidra) - see below |
 | `0x0008` / `0x0010` / `0x0020` | Rotation, one field of exactly four states (`flags & 0x38`) | Confirmed |
 | `0x0040` | Mirror, independent of rotation | Confirmed |
 | `0x0080` | Marks a path cell; in a footprint entry it means "this cell of the footprint is used" | Confirmed |
 | `0x0200` | Set by the footprint stamper | Confirmed |
 | `0x0400` | **Darken / shadow bit** — halve this corner's colour | Confirmed at three separate sites |
-| `0x0800` | "This cell is not planar." **Computed at load, never stored on disk** | Confirmed |
+| `0x0800` | "This cell is not planar." **Computed at load, never stored on disk**: `FUN_004504c0` sets it (`0x0045075d`) where the cell's two triangles' normals differ (dot under 0.9999) | Confirmed |
 
-### The diagonal-choice bit has not been located
+### The triangle diagonal
 
-The RE pass reported "`0x0800` set means choose the triangle diagonal from `0x0004`". The `0x0800` half is right about the bit but wrong about where it comes from (it is computed at load — see below), and **the `0x0004` half is not borne out: neither terrain pass (`FUN_0056f670`, `FUN_00570d90`) tests the cell's `0x0004`.**
+A cell's two triangles meet on one diagonal, and the file chooses it per cell: every ground cell (`0x0001` clear)
+carries exactly one of `0x0002` and `0x0004`, in all five heightfields (FileFormats `models.md`, "A cell's
+diagonal"). The drawing and the heights read the two bits and take the same split.
 
-Hunting the terrain renderer `FUN_0056f670` for it found 16 sites pairing `TEST ?H,0x8` with a test of `0x4` in the cell's high byte (`TEST byte ptr [reg+0x1],0x4`, or `TEST AH,0x4` at `0x0056fb0e` and `0x0056fd67`), which looks exactly like the rule. It is not. All 16 sites were traced and every one has the same shape:
+- **Drawing.** The terrain pass `FUN_0056f670` orders each cell's four corners by `0x0002` (`TEST AL,0x2` at
+  `0x0056fac1`, `TEST CL,0x2` at `0x0057033c`) and fans the quad from its first corner (the index writer at
+  `0x00570c19`), so `0x0002` set draws (x,z)-(x+1,z+1) and clear draws (x+1,z)-(x,z+1).
+- **Heights.** `FUN_00452560` (the camera's height) and `FUN_00469a80` (a model draped on the ground) test `0x0004`
+  on every cell (`0x00452719`, `0x0046a34c`): clear splits (x,z)-(x+1,z+1), set (x+1,z)-(x,z+1). The general height
+  under a point, `FUN_004527f0` (six callers), takes the plane through the near corner and its two neighbours unless
+  the cell carries `0x0800`, and only then splits by `0x0004` (`0x004528f8`, `0x00452901`). In Lost Kingdom 589 cells
+  get `0x0800` at load, 158 of them ground cells, 73 of those carrying `0x0004`.
+
+Read 2026-10-16 from a lead in another fork (`meneerkrabs/OpenTPW`), checked in Ghidra and over the five heightfields.
+
+### What the render-state `0x0800` tests are
+
+The terrain renderer `FUN_0056f670` has 16 sites pairing `TEST ?H,0x8` with a test of `0x4` in the cell's high byte (`TEST byte ptr [reg+0x1],0x4`, or `TEST AH,0x4` at `0x0056fb0e` and `0x0056fd67`), which look like a diagonal rule. They are not. All 16 sites were traced and every one has the same shape:
 
     MOV  EDX, dword ptr [0x008bcbc8]   ; the RENDER-STATE global, reloaded right here
     TEST DH, 0x8                       ; so this is render-state 0x0800, never a cell
@@ -76,8 +91,6 @@ Hunting the terrain renderer `FUN_0056f670` for it found 16 sites pairing `TEST 
     AND  EDX, 0x7f7f7f                 ; halve it
 
 So the rule is **"render-state `0x0800` clear AND cell `0x0400` set → halve this corner's colour"**, and the 16 repeats are the four corners unrolled across several vertex-emission paths. The tempting second hypothesis — that `DX` might hold the cell flags, making `TEST DH,0x8` the cell's `0x0800` — is **refuted** by the reload two instructions earlier.
-
-**So the diagonal choice has NOT been located, and the cell's `0x0800` has no consumer found anywhere yet. Do not implement it from the RE pass's report, and do not assume `0x0004` or `0x0400` is it — both have been checked and neither is.** The remaining lead is the triangle emission itself inside `FUN_0056f670` (5793 bytes, heavily unrolled), which would need a full decompile.
 
 | Address | What it is |
 |---|---|
@@ -738,7 +751,7 @@ Action): L opened nothing, and the Money button after F and L opened finances.
 
 **`-1` is a REMEMBERED TAB, not "nothing selected".** `FUN_0049bdd0` rebuilds the screen when `param_1 == -1`, then does `if (param_1 == -1) param_1 = DAT_007ca30c;` and switches five ways on that (cases 0-4) to choose both a title string (`0x8b`-`0x8f`) and a control id (`0x2490`/`0x2493`/`0x2492`/`0x2494`/`0x2491`). So hire has **five tabs** and `-1` means "open on the tab it was left on"; passing a real index when the screen already exists only re-titles and re-selects instead of rebuilding.
 
-**The staff and visitor locators are ONE shared panel**, `FUN_004b3f60`, differing only in which global they test (`0x007cc3c0` vs `0x007cc418`, `0x58` apart — sibling objects). It switches on a type byte at `param_1 + 2` for its title (`0x95e`..`0x964`) and treats `param_1 == 0` as nothing selected. It also builds `DAT_007b05e8` exactly as `FUN_00481a10` does, which corroborates that `DAT_007b05e8` is **not** a camcorder-only global.
+**The staff and visitor locators are ONE shared panel**, `FUN_004b3f60`, differing only in which global they test (`0x007cc3c0` vs `0x007cc418`, `0x58` apart — sibling objects). It switches on the thing's type byte at `param_1 + 2` to pick a role and press that role's radio button, `0x95e`..`0x964` (5 handyman `0x95e`, 4 mechanic `0x95f`, 7 guard `0x962`, 6 entertainer `0x961`, 8 researcher `0x960`, 1 visitor `0x964`; no `0x963`), and treats `param_1 == 0` as nothing selected. The panel's own procedure is `FUN_004b3790` (Q397's locator note). It also builds `DAT_007b05e8` exactly as `FUN_00481a10` does, which corroborates that `DAT_007b05e8` is **not** a camcorder-only global.
 
 **`FUN_004b4280` is `peeploc` with nothing selected**, and the staffloc/peeploc asymmetry is cosmetic. It is a specialised copy of what `FUN_004b3f60(0)` does for the visitor flavour: sets `DAT_007cc30c = 6` and `DAT_007cc2f0 = 2`, hides control `0x148` and shows `0x14a` — the exact inverse of the `DAT_007cc30c == 6` branch inside `FUN_004b3f60` — and ends on `FUN_00486b00(0x11f)`, the same id that branch uses.
 
@@ -3025,7 +3038,7 @@ computes (`models.md`, "Normals").
 
 1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). **Nobody established whether `HeightfieldWidth` counts cells, vertices or cells-minus-one.**
 2. ~~The lighting model.~~ Settled: see "The lighting model" above. `LightNormal` is the direction light travels.
-3. **The diagonal-choice bit** — see the terrain section. The cell's `0x0800` has no consumer found anywhere, and neither terrain pass tests `0x0004`, the RE pass's candidate.
+3. ~~The diagonal-choice bit.~~ Settled: see "The triangle diagonal" above (`0x0002` drawn, `0x0004` heights).
 4. `base.MD2`'s container walking — the heightfield was found by validated signature search, **not** by walking the chunk table.
 5. `base.map`'s per-bit semantics beyond `0x08`.
 6. **The procedural compositor.** Its entry point (Q194): `FUN_004504c0` (from `FUN_00457a90` on a park's load, and

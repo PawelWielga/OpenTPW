@@ -916,8 +916,12 @@ builds. No `TRIGWAITANIM`, trigger or `WAIT4ANIM` decided apart in either phase.
 
 **Corpus:** `ADDOBJ` 644 uses / 164 files, `EVENT` 527/107, `KILLOBJ` 235/122, `FADEOBJ` 113/39, `SETOBJPARAM` 20, **`ADDOBJ_EXT` and `EVENT_EXT` 0 uses**. Node `-1` is the commonest operand in the whole corpus (277 of 644, 341 of 527). Tags run 0-1000 and two tags are killed that no `ADDOBJ` creates. Particle types use ids 1..95; sound types 6..220. **Five shipped requests name an id their category lacks**: jungle
 `Speaker2`, `Speaker3` and `Speaker4` run `ADDOBJ 4 -1 6 1` (jungle's `cat_ambient` holds 177-182 and 190-192), and
-jungle `incagod` (word 332) and hallow `bumper` (word 188) run `EVENT 3 -1 43` (no theme's `cat_rides` has 43). What
-`Sound_PlayEffect`'s category lookup does with a missing id (the manager's vtable `+8`) is not read.
+jungle `incagod` (word 332) and hallow `bumper` (word 188) run `EVENT 3 -1 43` (no theme's own `cat_rides` has 43; the
+global `cat_rides` has 43 and the global `cat_ambient` has 6). **Each is silent, with no fallback**: types 3 and 4 play
+in the level's own pair (`DAT_00803a3c`, `DAT_00803a38`), a category apart from the global pair of the same name; the
+play (`0x006b87d0`) looks the id up in that category's 20-byte records alone (`0x006c5870`), and an absent id, or one
+with no variations, returns the caller's handle, 0 for a script, and tries no other category. The `ADDOBJ`'s 0 then
+frees its record (below).
 
 **`ADDOBJ` hands its record to `FUN_00557970`** (`0x005520d5`), which spawns through `FUN_005573d0`, keeps the
 answer at `+0xc`, looks the node up for `+0x14` (`FUN_0044b220` under `0x100` for types 1 and 2, `0x200` for 3 to

@@ -126,7 +126,7 @@ BGRA palette).
 | `+0x14` | — | A particle's position within its record | Field read in the step routine |
 | `0x0078d90e` | — | The glint gate byte = **Popup Help** (options case `0x1d4c3`, label UIStrings 327) | Options screen wiring |
 | `0x005ed920` | `UIParticles_ButtonGlintStart` | Spawns the button hover glints (effect 35) when that option is on | Disassembly |
-| `0x007858c8` | — | Particle density global. **Only ever read**; the options start on medium (`0x00423690` writes quality 1 at `0x0042369f`), and how PARTICLEDENSITY from that preset's `.sam` reaches this global is not traced | `get_xrefs_to`; `med.sam` has `GameOptions.PARTICLEDENSITY 1000` |
+| `0x007858c8` | — | Particle density global, filled at boot: `FUN_0044de20` (from the window's creation only) picks the quality's detail file (`FUN_0044dc60`: `low.sam`, `med.sam` or `high.sam`) and loads it through the schema at `0x007442fc`, whose PARTICLEDENSITY field lands here. The options start on medium (`0x00423690` writes quality 1 at `0x0042369f`), so 1000; a quality change only flags a restart (`FUN_00423bc0`) | `med.sam` has `GameOptions.PARTICLEDENSITY 1000` (low 500, high 1500) |
 
 **Screen mapping** (from Particles_Render and SpriteBatch_DrawParticles): across
 `((x - 3125) * 16) / 49`, down `(z * 16 - 37500) / 37`, both `/1024` into -1..1; `size >> 6 / 2048`
@@ -158,9 +158,8 @@ linked, end and death spawns, and each window's effects are drawn right after th
 
 ### Decisions taken without proof
 
-Say so if asked: particle density comes from the detail file for the options' graphics quality (`low.sam`,
-`med.sam` or `high.sam`, read as a level loads), and that quality starts at medium, as `GameOptions_Construct`
-(`0x00423690`) sets it. On wide windows, effects pin like a control at their spawn x, spawned-by-effect
+Particle density is no longer one of them: it comes from the detail file for the options' graphics quality, read at
+boot (`0x007858c8` above). Say so if asked: on wide windows, effects pin like a control at their spawn x, spawned-by-effect
 inherit the pin, and glints take the button's anchor. Handles are never 0 (the original's first
 handle can be 0). Keys look near-white because the art is additive gold over a light sky.
 

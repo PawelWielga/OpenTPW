@@ -492,6 +492,13 @@ public sealed class ParkObjects : Entity
 	/// </para>
 	///
 	/// <para>
+	/// <b>Not the original's lettering (Q399).</b> This letters the <c>.sam</c>'s <c>Name</c>; the original
+	/// letters the item's two <c>OBJECT_NAMES</c> rows (FileFormats <c>sgn.md</c>), which in English Lost
+	/// Kingdom differ only for Dino Karts ("DinoKarts", on one line), and scales each character's width by the
+	/// font record's width percent, which <c>SignFile</c> does not read.
+	/// </para>
+	///
+	/// <para>
 	/// Only rides carry one, and of the eleven objects Lost Kingdom is built with the Belly Bounce is the
 	/// only one - but every theme's rides carry them, and the file is always named after the item's own
 	/// folder: seventy-eight of seventy-eight across the four themes.

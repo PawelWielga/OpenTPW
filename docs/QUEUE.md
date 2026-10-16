@@ -35,7 +35,8 @@ artifacts are listed in `docs/history/README.md`. Q208-Q217 come from the 2026-1
 2026-10-03 and 2026-10-04; an id such as `u6-hoardings-1` names a finding in its findings file (`CLAUDE.local.md`
 says where). Q219-Q221 come from the 2026-10-04 effort audit of the commits of 2026-09-29 to 2026-10-01; an id such
 as `r-f1` names a verdict in its results file (`CLAUDE.local.md` says where). Q222 comes from Q107's comparison with
-the original.
+the original. A note marked "fork review 2" comes from the 2026-10-16 review of another fork, every lead checked in
+Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` says where).
 
 ---
 
@@ -189,6 +190,13 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   `VISITOR_LOCATOR`, `POSTCARD_SHORTCUT`). W and D still scroll the orbit camera, the original's camera table binding the
   arrows and the keypad (`ParkOrbitCameraMode.ScrollAxes`; Alexah kept them, 2026-10-14). In no game run: L in Full
   Simulation (counted there), a shortcut under an object window, Ctrl+P in the original.
+  **Note (fork review 2, 2026-10-16, `verify-ui-hud.md` L1):** the locators are decoded whole. The panel's procedure
+  is `FUN_004b3790`: radio buttons `0x95e`..`0x964` pick roles 1 to 6 (handymen, mechanics, guards, entertainers,
+  researchers, visitors); a role walks its staff chain (world `+0x1da73c`..`+0x1da744`, next at `+0x210`) or the
+  visitors newest first, and "next" wraps. The strip (`FUN_004b3490`) letters the staff name or the visitor number
+  (UITEXT `0x1c8`, `0x1c9`) with a state or thought icon; each frame the camera's look-at snaps to the actor
+  (`FUN_00486860`, `FUN_0042aab0`) and a staff member's patrol edges are drawn. Advisor lines `0x11f` and `0xc6` are
+  posted and withdrawn.
   From Q365 (`hud.md`, "How allstaff and allitems keep their rows current"): A row's status is the game's own word (Q379); its skill and happiness are bars (Q369);
   the items columns are Q367's. What the original does to these two lists as a member or an object comes or
   goes with the screen open is not read (allpeeps' `0x1b`/`0x1c`). In no game run: the sideshows' tab rewritten, the
@@ -784,6 +792,10 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   goods from the window's pending sliders (applied on close, on stepping to the next or by apply to all), and a
   toilet's users last month. `UIStrings` 37 to 39 are one row off: UITEXT 37 is "Scrap value", 38 "Local happiness",
   39 "Quality of goods", 40 "Sale price"; nothing uses the three members yet.
+  - **Note (fork review 2, 2026-10-16, `verify-ui-hud.md` L6):** the shop window `FUN_004b01d0` and the sideshow's
+    `FUN_004b16c0` bind their rows: the 30-day takings (`0xc077`, `0xa093`), the satisfaction gauges, the scrap rows
+    and the cell's happiness (`FUN_004cd880( cell, 1 )`). The row labels need the streams `0x00755908` and
+    `0x00755e80` parsed.
 - [ ] **Q244. The happiness gauge draws two copies of its bar.** `docs/PLAYER-GAPS.md` gap 5, found by Alexah playing:
   the bar draws in the wrong place, split down the middle. That page holds a lead read from the code and not
   measured (`UiMeter.OnDraw`'s sampler); measure before touching the meter's arithmetic. The number it shows is
@@ -794,6 +806,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   Instant Action, Lost Kingdom's Easymode; what that does is not decoded. Decode the lab's spending, the automatic
   mode and the completion to `docs/exe/`, then split the build into its sessions. The research screen (six effort
   sliders, `FUN_004aa480`) waits on it; Q239 is its two message boxes.
+  - **Note (fork review 2, 2026-10-16, `verify-economy-guests-paths.md` M1 and L2, `verify-ui-hud.md` L2):**
+    **finishing the last project ends an Instant Action park**: `0x00503d40` plays advisor record `0xa7` and, in game
+    type 2, calls `0x00516b00`, the End feature's only builder; in Full Simulation only once every entry of the set at
+    `0x00f7c58c` is flagged. A completion runs message `0x11`, the lab, message `0x12`, then `0x004aaec0`, whose
+    forward picker `0x005034f0` takes the first eligible project after the current one, else the first before it, else
+    none, screen open or not; a finished project's next level goes on the table's end. The screen (Full Simulation
+    only): fluid `0x004a95b0` and `0x004a9fc0` stepped once a frame message `0x1e`, refresh `0x004a9c70`, setters
+    `0x00503870` and `0x00503900`, the workload knob's limit, a progress fill per panel (`0x004a9bd0`).
 - [ ] **Q141. Golden tickets are never awarded. Decode first, and Alexah's call on when.** Found by Q69. What reaches
   the advisor's glints in the original is a golden-ticket award: only gesture rows 1 and 13 carry the glint flags, and
   only its lines use them (`docs/exe/scenes.md`, "Gesture table"). Those lines play on the park's own advisor, model slot
@@ -811,6 +831,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
     row"); a click on it is refused always and counted, `MYSTERY_RIDE_PURCHASE`. The ticket test and the spending of
     tickets are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`). Lost Kingdom's
     `tourride` (1) and `volcano` (3) carry a ticket cost.
+  - **Note (fork review 2, 2026-10-16):** Lost Kingdom's golden-ticket ride, Jurassic Tours (`tourride`, ticket cost
+    1), runs the TOUR script, which is not built: Q408.
 - [ ] **Q142. The staff pool reads a string table again for every name.** Found by Q70's game run. `ParkStaffPool`
   opens and parses a name table for each candidate it rolls (`RollName`) and STAFF_TYPES for each kind's name
   (`NameOfKind`): 27 of a park load's 28 table reads are six files read over and over, and the staff screen and the
@@ -891,6 +913,11 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   draw takes one (`FUN_00580320`, argument 7, in milliseconds): 500 in the lobby and `LightningTime` in a park, 2000
   in the balance file, which nothing here reads (`weather.md`, "The bolt"). Pass each scene's own. Confirm: `bolt` in
   the lobby and in Lost Kingdom, frames grabbed every 100 ms, the bolt up for 0.5 s and 2 s.
+  - **Note (fork review 2, 2026-10-16, `verify-audio-lips-video.md` lead 3):** the bolt's shape is the PC's own: the
+    constructor (`0x0057d2ab`..`0x0057d2e9`) sets roughness 0.6, a stop test of 6 ± 2, a ribbon half-width of 1.3 /
+    (depth + 1) in screen units and branch odds of 9 in 512; the midpoint step is `0x0057e4b0` (its offset is not
+    perpendicular: it uses |mid|², and its cross term is × 0.0), the branch heading `0x0057e810`, the colour pulse
+    `0x0057ee30`, whose grey can pass 255 and wrap to near black. `Lightning.cs` draws one quad 9 wide.
 - [ ] **Q153. Editing a queue parts from the original's walk twice.** Found by the 2026-09-26 staleness audit.
   `ParkPathBuilding.EditQueue` and `QueueEnds` both cite `FUN_00530120`, and they differ. With no link on the entry
   cell, `EditQueue` steps along the entry cell's raw `Direction` byte, where the original takes the side the thing's
@@ -1130,6 +1157,11 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   Q225. Decode what the bus message's receivers do with it before building. Counted as
   `DECIDE_PRANK_STINK_BOMB`, `DECIDE_PRANK_LITTER` and `DECIDE_PRANK_BALLOON`. Confirm: `need prankery 102` beside a
   guest holding a balloon, the balloon let go; a screenshot.
+  - **Note (fork review 2, 2026-10-16, `verify-economy-guests-paths.md` L3):** the receiver: the guard sent is the
+    idle or walking one (state 0 or 1) nearest the staff HQ's own cell; `0x005099c0` never reads the prankster's cell,
+    and a tie goes to the newest hire. The HQ sits at (0, 0) in Easymode and in all five Full Simulation saves, so it
+    is the guard nearest the map's corner wherever the prank is. Not read: anything else acting on message `0xe`, the
+    escort `0x004d6a50`'s arms.
 - [ ] **Q229. A member of staff put down sets off on the next sweep, where the original's stands eleven. Decode
   first.** Found by Q112's measurement of the original (`ride-operation.md`, "OpenTPW takes the arm"). Its guard, put
   down from the staff window's PICK UP, reads state 7 to 0 on the click, 0 to 1 with a destination a sweep later, 0
@@ -1499,6 +1531,12 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
     unbuilt. Unproven: I did not check whether Easymode.TPWI places one of the three or whether they are only
     buyable. FinishRider's own doc calls it "the seam where a ride simulation will connect" but does not say only
     tests call it. (`OpenTPW/World/Ride/RideState.cs`, line 138, `FinishRider`)
+  - **Note (fork review 2, 2026-10-16, `verify-coasters-run.md` L16):** the filler is the coaster's station step
+    `0x0043b8b0`. The ring COAST 3 drains has three writers: `0x0043b480` unloads a train's riders as it arrives in
+    the station (from the station step, from the state setter `0x00435730` on 4 or 8 to 2, and from `0x0043ba20`),
+    only in state 4 or 8 with mode `0x40` clear; `0x0043b390` moves the admission queue across when the ride closes;
+    `0x0043b130` refills it from a loader. Seating draws the game's own generator at `DAT_007b0958`; a rider the full
+    ring cannot take is taken off the car and queued nowhere. The rest of the coaster's running is Q405.
 
 - [ ] **Q290. The queue's stamp is taken before the queue is measured, where the original measures first.** From
   the week-end audit (stage 8, the older decode read a second time from the listing; verified once, not reproduced
@@ -1506,6 +1544,57 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   comment says so, where the executable measures the queue first and takes the counter after (`ride-operation.md`,
   the row for the queue's remeasure). `OpenTPW/World/Park/ParkState.cs`, line 1688. Confirm: the back cell's stamp
   read in both games after one queue edit.
+
+- [ ] **Q398. Each ground cell is split on its own diagonal.** From the fork review 2, 2026-10-16 (`verify-formats.md`
+  H1, checked again in Ghidra by the main session). `ParkGround` splits every cell from (x, y) to (x + 1, y + 1) and
+  says so at the site; the original draws each cell by its flag `0x2` and takes heights by `0x4`, the same split
+  (`park-engine.md`, "The triangle diagonal"; FileFormats `models.md`, "A cell's diagonal"). In Lost Kingdom 2,708 of
+  the 7,001 ground cells take the other diagonal. Fix the mesh and this game's height under a point (the camera's, a
+  draped model's, and `FUN_004527f0`'s users, which split only the cells the load marks `0x800`). Confirm: a slope
+  cell carrying `0x4` shot beside the original's, the same camera.
+
+- [ ] **Q399. Ride boards lettered as the original letters them.** From the fork review 2, 2026-10-16
+  (`verify-objects-signs-other.md` H1, H3, M1). `ParkObjects.BuildSign` letters the `.sam`'s `Name`, split; the
+  original letters the item's `OBJECT_NAMES` rows (FileFormats `sgn.md`): in English Lost Kingdom only Dino Karts
+  differs, "DinoKarts" on one line. `SignFile.cs` reads neither the width percent (`+0x144`, not 100 on 16 of Lost
+  Kingdom's 17 boards) nor the line's y (`+0x148`); the original fits a line by a binary search on `LOGFONT.lfWidth`
+  (`0x005eab70`). The ink block's four unknown fields are the grow or shrink radius, the blur's sigma, dx and dy (a
+  Gaussian of 3 + trunc( 2.5σ ) taps). Confirm: Dino Karts' board and one other beside the original's.
+
+- [ ] **Q400. Animated textures.** From the fork review 2, 2026-10-16 (`verify-formats.md` H2). 19 texture slots with
+  several frames in 9 jungle wads (the queue fire, the 5x5 rock's waterfall, the monkey's face, `tvsim`, the hyenas,
+  the puzzle, `squark`) and 49 jungle clips with frame tracks; nothing here shows a frame past the first. The layout
+  is FileFormats `models.md` (the frame count at `+0x0A`, "Texture frame tracks"). The engine: sampler `FUN_00470c90`
+  from the clip update `FUN_004721f0` and the channel advance `FUN_004735d0`, when the block's flag `0x2` is set and
+  `[0x007b4980] & 8` clear; loader `FUN_00575c60`, `FUN_00575e10`; the draw reads the frame at `0x0057a47e`,
+  `0x005805ed`, `0x005818c5` and `0x00581e48` while `DAT_008bd550 & 0x40`, which comes from `DAT_00785884`, very
+  likely `GraphicalOptions.ANIMATINGTEXTURES` (inferred from the order in `FUN_0044d8f0`: read it first). Confirm: the
+  queue fire burning beside the original's.
+
+- [ ] **Q401. Self-lit materials.** From the fork review 2, 2026-10-16 (`verify-formats.md` M3). A material whose word
+  `+0xC` carries `0x1` (tested at `0x00580c51`) gives every vertex the colour mask itself, white in play, in place of
+  its lit colour: 929 of 12,960 materials, on signs, water, fire and lava. Nothing here reads it. Confirm: a sign and
+  the waterfall shot beside the original's.
+
+- [ ] **Q402. A refused purchase makes the original's error sound.** From the fork review 2, 2026-10-16
+  (`verify-audio-lips-video.md` lead 5). The original plays `cat_ui` `0x1D` when the buy screen refuses a row
+  (`FUN_004ac270` at `0x004ac7f6`: a mystery row short of tickets, a row dearer than the balance), when a Ctrl+click
+  Clone is dearer than the balance (`FUN_004879d0`, `0x00487b46`), and from `FUN_004af480` (`0x004af5d6`, a control of
+  window stream `0x00755750` not identified). This game refuses a row silently and counts nothing, and Clone has
+  nothing behind it. Confirm: the sound caught by the disk driver on a refused row.
+
+- [ ] **Q403. The balance's colour and the cost in hand.** From the fork review 2, 2026-10-16 (`verify-ui-hud.md` L5).
+  The HUD letters the balance in one of six colours (table `0x00752e30`, index (balance + 999) / 1000 clamped to 0..5:
+  red at nought or below, white over 4000), and control `0x30` shows the cost of the item in hand, only for mode types
+  3, 4 and 8 with `[0x0079c658] & 1` (-9999 hides it, -999 resets it). The keys counter is skipped in Instant Action,
+  the tickets counter runs in every mode. Read what this game does first. Confirm: the balance at 500 and 5000 beside
+  the original.
+
+- [ ] **Q404. A park six months in the red ends.** From the fork review 2, 2026-10-16
+  (`verify-economy-guests-paths.md` L4, M2). Counted, `BANK_PARK_ENDS_IN_THE_RED`. What the end does is
+  `ride-operation.md`, "The end of the park": world state 4, the end screen, `VAR_BREAKSTAT` 1 on every ride guests
+  choose, the pending deletes flushed, the gate closed; the clock and the bank go on. The path tests no game type, so
+  Lost Kingdom's Easymode reaches it. Confirm: a park held in the red to its end, beside the original.
 
 ## B. Docs and comments
 
@@ -1706,6 +1795,13 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   control exists; signs read fixed names (`ParkFixedItems.BuildSign`, `ParkObjects.BuildSign`,
   `LobbyIsland.DisplayNames`). Decode where the original edits the name and what it writes, then build the
   control and make the three sign painters read the save's name.
+  - **Note (fork review 2, 2026-10-16, `verify-objects-signs-other.md` H2):** `0x004990f0` opens the box (two
+    14-character edits, title UITEXT `0xc2`); its OK, `0x004993e0`, sets the gate thing's two lines (`0x004e2950`,
+    `0x004e2a50`, 33 wide characters each), repaints the sign (`0x004682b0`, the hardware path only), writes the
+    player's `gms.dat` theme record (`0x005b0940`, `0x005b0970`: `mSignNameA`, `mSignNameB`, `mNameChanged`), and
+    records the rename as action-recorder entries `0x50` and `0x55` (`0x00403fd0`, replayed by `0x00404f70`), which is
+    how it outlives a save. Lines reading "Kevin the" and "Cosmic Cow" turn the cheats on (`0x004053c0( 1 )`). A ride
+    board takes its name from `OBJECT_NAMES` until a load (Q399).
 - [ ] **Q29. Parity with the original's hardware renderer.** `render-states.md`, "Texture addressing", counts the
   MIN/MAG/MIPFILTER and LOD-bias sites but does not decode their values; no shade-mode row exists; ZFUNC
   is LESSEQUAL there and Less here. The renderer lights per pixel with 16x anisotropic filtering and
@@ -1756,6 +1852,13 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   The class's `0x400` constructor is decoded and the park's music follows it (the 2026-10-06 review's fix 4;
   `audio.md`, "The music's class"): parameter 4 picks the variation and an empty park is not silent. Its other
   constructors are not: `0x006be090` (106 records) and `0x006be680` (2).
+  - **Note (fork review 2, 2026-10-16, `verify-audio-lips-video.md` leads 4 and 1):** the pool is rebuilt every
+    service pass (`0x006b6ba0`): a voice is admitted when not finished, expired, replaced (`0x100`) or waiting
+    (`0x40`), passing the device gate `0x006bc760`, in range or flagged `0x8` (`0x006bca10`), and keyed strictly above
+    the pool's minimum, by insertion sort, the earlier voice keeping a tie. The key's low word is `0xFFFF` less round(
+    0.01 d² ) over x and z (`0x006bb9f0`), left stale past 65535; only pooled voices are ticked. Screams carry
+    priority 2700, the crowd 5300. A script's sound id its category lacks is silent with no fallback (`park.md`):
+    check this game plays nothing for jungle `incagod`'s 43 and `Speaker2`-`4`'s 6.
 - [ ] **Q51. Rest-area occupancy is unbuilt at both ends.** Found by Q36's decode. Arriving to rest
   (`FUN_00505fe0`) adds one to the rest area's script variable 0 (`VAR_STAFFIN` in every staff room) and sends
   message 15 to the resting-staff list (UI control `0x1e7b`); leaving (`FUN_00506d10`, from the normal end of a rest
@@ -1862,12 +1965,20 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   coaster's track; which bought things would meet them was not looked at, but jungle's `coaster1`, `Coaster3`,
   `Tourride` and `wateride` models carry no view node, so their entrances are shut here until this is built). Decode the ride view's camera and what a
   coaster node's `+0x124` holds, to `docs/exe/`; the build is the next session.
+  - **Note (fork review 2, 2026-10-16, `verify-tours-advisor-rse.md` L12, `verify-ui-hud.md` L13):** the ride view's
+    smoothing in `FUN_0042b1c0` weighs the last view by (1000 - dt) × 0.0005, a dt over 200 ms taken as 100 first;
+    leaving puts the camera on the ride's cell's centre, its yaw from `0x00522850 & 0x55` (`0x0042a1d0`). The tour
+    car's view is Q408's.
 
 ## E. Large
 - [ ] **Q31b. The other seven object windows.** After Q31's shop window: the sideshow's, the toilet's and the rest
   of `park-engine.md`'s nine, one window per session. Q31 carries the decoded figures and the `UIStrings` rows.
   From Q251: the staff window's days employed are `FUN_00505b70`, the calendar's now less `mTimeHired` over a
   day, handed to UITEXT `0x1bb` by `FUN_004b58b0` (`saves.md`, "`mTimeHired`"); `Staff.TimeHired` holds it.
+  - **Note (fork review 2, 2026-10-16, `verify-ui-hud.md` L3):** the staff window is decoded whole: handler
+    `FUN_004b5cb0` (fire, with UITEXT `0x18d`'s box when the options ask; pick up; the patrol toggle, tool `0x36`;
+    locate; all staff), arrows walking all staff newest first and wrapping (hidden under two staff), stats refreshed
+    every 4000 ms (`FUN_004b58b0`), advisor lines `0xc0`, `0xc1` and `0xd4` posted and withdrawn.
 - [ ] **Q32. Graphics tiers.** Only `Level.SetupParticles` and `Level.NumKids` read the detail files (`low.sam`,
   `med.sam`, `high.sam`), and only `GameOptions.PARTICLEDENSITY` and `NUMKIDS` (the kid and staff bank caps) from them; nothing reads their `GraphicalOptions.*` keys (texture quality and
   filtering, sky, shadows, fog, mipmaps, view distance). The detail-file loader is `0x00423bc0` (`OptionsScreen`'s
@@ -1914,6 +2025,55 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   not said above: the RSYS module that does not walk closed in the jungle saves, the `ParkGuestSprites`
   duplicate-slot throw (not run again), and the fantasy and hallow saves, which are outside the Lost Kingdom
   scope.
+
+- [ ] **Q405. Coasters run: their trains, motion and station.** From the fork review 2, 2026-10-16
+  (`verify-coasters-run.md` L12-L17, L21). Lost Kingdom's `coaster1`, `Coaster3` and `Minecart`. The train count is
+  clamp( trunc( lap / ( `uiTrainReleaseRate` × 0.001 ) ), 1, `uiMaxTrains` ) (`0x0043ca74`), the trains placed by
+  release time; the motion tick `0x00435a30` runs once a frame after the 31 ms loop (a hop of half a sample, the (T +
+  2O) / 3 collision exchange, f⁴ braking, floors from `fWinchSpeed` and `fMinSpeed`, decay 0.95 below speed 2);
+  `coaster1`'s CrocCar is a bend car (`fBendElevationLow` 0.4, `High` 1.4 on samples flagged 8); the station step is
+  Q289's note; a loaded coaster keeps its saved trains (flag `0x4000`, `0x00437cd5`) and riders (FileFormats
+  `saves.md`, the coasters module; `ParkCoasters` reads only the first header); a car's seats are the capacity split
+  over the centre-type cars. The PC's rating step is `ride-operation.md`'s, not the other fork's, which follows the
+  Mac. Decode to `docs/exe/` first, then split. Confirm: Temple Of Gloom loaded from Alexah's park, its trains running
+  and its riders let off, beside the original.
+
+- [ ] **Q406. Coaster building: the track tool.** From the fork review 2, 2026-10-16 (`verify-coasters-build.md`
+  L1-L11). A piece costs `fCostPerHeight` × H × 0.1 + `fCostPer2DLength` × length × 0.1, plus `fCostPerUnit` only on
+  placing a pylon (`0x00447830`, `0x00435020`; the cursor's preview `0x00435d50`); placing takes trunc( cost ), a
+  height or move release gives back trunc( old ) and takes ceil( new ); finishing, removing and deleting the last move
+  no money, and nothing tests the balance. The edit handlers (height 0.005 a unit, rotate 0.02 within
+  ±`fMaxRotnAngleDeviance`, bank and incline 0.02, loop tilt 0.01 in [0.15, 0.85]), auto-bank ((±π - turn) × v / 4.0
+  over the neighbours' distances; `fAutoBankDivisor` is read by nothing), the sampler (0.05 steps, spacing 3.0) and
+  the closing pair, the end node, the place distance (3 to 8 cells, 3 to 9 for a loop pylon, `0x0042fd90`). The
+  validator `0x00434740` never refuses a click. Open: what hides the loop button on `coaster1`; whether Backspace
+  reaches delete-last `0x00444f30` (`park-engine.md` has Backspace calling `0x0052fe50( 0, 1 )`, its only caller).
+  Decode to `docs/exe/` first, then split.
+
+- [ ] **Q407. Buy Land.** From the fork review 2, 2026-10-16 (`verify-objects-signs-other.md` L1). Counted,
+  `BUY_LAND_TOOL`; Lost Kingdom's Features tab offers it (`hud.md`, item 101), and 13,878 of the 16,384 cells carry
+  the unowned flag `0x40`. The validator `0x00531a50` refuses a span over 2 cells, gate posts, cell types 7 and
+  `0x1e`, a hoarding crossed and a pocket left (a flood fill: grid `0x00532960`, fill `0x005328e0`), and shows the
+  can't-afford pointer `0x14` (`DAT_00816d5c`) unless a layout is replayed; the price is `Costs.MapCell` × the unowned
+  cells inside; the purchase `0x005327e0` places the hoardings and clears the flag inside (`0x005311c0`); the debit is
+  `0x004d01f0`. Confirm: a rectangle bought, beside the original.
+
+- [ ] **Q408. TOUR rides: Jurassic Tours.** From the fork review 2, 2026-10-16 (`verify-tours-advisor-rse.md` L1-L6).
+  `tourride` (Id 1170), Lost Kingdom's golden-ticket ride, Full Simulation only (no `Easy_` `.sam`), runs 19 TOUR
+  instructions, which fall to the counted default here. Decoded: the handlers (table `0x005569d0`; FileFormats
+  `vm/instructions.md`), the flying car's tick `0x0055abf0` (nine states; take-off at 20000 and 14000; a lattice at
+  max( 12000, ground + 5000 ); patrol corners at ±25000; 30000 near stations; bounds from the park, `FUN_0055ab50`), a
+  rider's head ((car `+0xd8` + count) mod car `+0xdc`) + 1, TOUR 9's effects (worn particle 39, broken 40, a repair
+  sound `0xbb` and clip 10), the draw `0x0055ce60`. Waits on Q141.
+
+- [ ] **Q409. Full Simulation's loans and challenges.** From the fork review 2, 2026-10-16
+  (`verify-economy-guests-paths.md` L1, L5). A loan offer passes when its amount is at most the net worth less what
+  the bought loans still owe, signed, kept in the offer and rebuilt on opening and each tab (`0x0049fa00`,
+  `0x004a06b0`, `0x004d06b0`). A won challenge with a follow-up pays no prize, and the follow-up is marked won as it
+  is offered, so one declined or lost never returns; declining a challenge that is not Independent pays half its
+  prize; the pacing reads `DaysAfterCompletedChallenge` and `DaysAfterDeclinedChallenge`; nothing raises the declined
+  count, so `DeclinesToForfeit` is never reached (`0x004d2b60`, `0x004d2fb0`, `0x004d1a00`, `0x004d3140`,
+  `0x004d1ae0`, `0x004d2ec0`). Neither screen is built.
 
 ## F. Then
 
