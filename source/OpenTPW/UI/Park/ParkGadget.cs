@@ -127,6 +127,32 @@ internal sealed class ParkGadget : UiWindow
 	/// </summary>
 	private const int BarTravel = 820;
 
+	/// <summary>The arm's left, top and bottom and the body's right edge, which a carried panel's place and travel are figured from.</summary>
+	private const int ArmLeft = 331;
+	private const int ArmTop = 1069;
+	private const int ArmBottom = 1495;
+	private const int BodyRight = 439;
+
+	/// <summary>
+	/// How far the arm goes out with a panel this wide: ten steps of a tenth of its width, the body's right edge less the
+	/// arm's left, and a hundred, a whole division (<c>0x004a16d7</c>).
+	/// </summary>
+	internal static int TravelFor( int width ) => (width + BodyRight - ArmLeft + 100) / 10 * 10;
+
+	/// <summary>
+	/// Where a carried panel stands with the arm out: its left the arm's left less its own width and fifty, then the
+	/// travel; its middle on the arm's, each half a whole division (<c>0x004a1613</c>).
+	/// </summary>
+	internal static (int Left, int Top) PlaceFor( UiRect panel )
+		=> (ArmLeft - panel.Width - 50 + TravelFor( panel.Width ), ArmTop + (ArmBottom - ArmTop) / 2 - panel.Height / 2);
+
+	/// <summary>The locators' two panels as their stream has them, <c>0x95c</c> and <c>0x963</c>.</summary>
+	private static readonly UiRect LocatorStaffStream = new( 474, 1159, 941, 1470 );
+	private static readonly UiRect LocatorVisitorStream = new( -37, 1159, 429, 1470 );
+
+	/// <summary>The staff and visitor locators, whose panels this arm carries (Ctrl+S and Ctrl+V).</summary>
+	internal ParkLocator Locator { get; }
+
 	/// <summary>How far out the arm's right edge stands now.</summary>
 	private int _armTravel = ArmTravel;
 
@@ -393,6 +419,12 @@ internal sealed class ParkGadget : UiWindow
 		_barFirst = _bar.Add( new UiButton { Id = 0x10d30, Rect = new UiRect( 514, 1121, 617, 1224 ), Clicked = () => BarButton( first: true ), PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
 		_barSecond = _bar.Add( new UiButton { Id = 0x10d2f, Rect = new UiRect( 514, 1229, 617, 1331 ), Clicked = () => BarButton( first: false ), PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
 		_barErase = _bar.Add( new UiButton { Id = 0x10d2e, Rect = new UiRect( 514, 1336, 617, 1439 ), Mesh = UiMesh.Get( BarEraseMesh ), Clicked = EraseTag, PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
+
+		// The staff and visitor locators' two panels, which FUN_004b3cf0 builds hidden and FUN_004b3f60 and FUN_004b4280
+		// hand the arm, each put where the arm's handler puts it out, and their strip above the arm.
+		Locator = new ParkLocator( _arm, Root,
+			(PlaceFor( LocatorStaffStream ).Left - LocatorStaffStream.Left, PlaceFor( LocatorVisitorStream ).Left - LocatorVisitorStream.Left),
+			PlaceFor( LocatorStaffStream ).Top - LocatorStaffStream.Top );
 
 		_onArm = carried;
 		PutArm( null );
@@ -668,9 +700,13 @@ internal sealed class ParkGadget : UiWindow
 		if ( panel == _onArm )
 			return;
 
+		// A locator's panel leaving the arm closes the locator (FUN_004b3790's 0x1001d8).
+		if ( _onArm == Locator.StaffPanel || _onArm == Locator.VisitorPanel )
+			Locator.Folded();
+
 		_onArm = panel;
 
-		var travel = panel == null ? 0 : panel == _bar ? BarTravel : ArmTravel;
+		var travel = panel == null ? 0 : panel == _bar ? BarTravel : panel == Locator.StaffPanel || panel == Locator.VisitorPanel ? TravelFor( panel.Rect.Width ) : ArmTravel;
 		var move = travel - _armTravel;
 
 		_armTravel = travel;
@@ -682,6 +718,33 @@ internal sealed class ParkGadget : UiWindow
 		_retract.Visible = panel != null;
 		_carried.Visible = panel == _carried;
 		_bar.Visible = panel == _bar;
+		Locator.StaffPanel.Visible = panel == Locator.StaffPanel;
+		Locator.VisitorPanel.Visible = panel == Locator.VisitorPanel;
+	}
+
+	/// <summary>
+	/// A locator's panel handed to the arm (<c>FUN_004a2590</c>): the arm folds what it carries, the same panel too, and
+	/// goes out again with this one. Each way is a slide (<see cref="SlideArm"/>), and the camcorder button is left as it is.
+	/// </summary>
+	internal void CarryLocatorPanel( UiControl panel )
+	{
+		if ( _onArm != null )
+			SlideArm( null );
+
+		SlideArm( panel );
+	}
+
+	/// <summary>
+	/// Escape with a locator open (<c>FUN_004816b0</c>, the game table's row 0, <c>0x0040c1a0</c>): the arm folded away,
+	/// the camcorder button left as it is (<c>FUN_004a25f0( 0 )</c>). False, and nothing done, with none open.
+	/// </summary>
+	internal bool FoldLocator()
+	{
+		if ( Locator.Open == ParkLocator.Kind.None )
+			return false;
+
+		CloseArm( liftsCamcorder: false );
+		return true;
 	}
 
 	/// <summary>
@@ -1064,6 +1127,7 @@ internal sealed class ParkGadget : UiWindow
 		_screenSeen = screen;
 
 		PutTags();
+		Locator.Update();
 		ShowDate();
 		ShowEarned();
 		ShowMoney();

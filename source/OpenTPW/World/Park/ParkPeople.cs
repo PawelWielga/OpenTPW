@@ -998,10 +998,10 @@ public sealed partial class ParkPeople : Entity
 	private int _carriedStaff;
 
 	/// <summary>A mechanic's thing model - see <see cref="Staff.Model"/>.</summary>
-	private const int MechanicModel = 4;
-	private const int HandymanModel = 5;
-	private const int GuardModel = 7;
-	private const int ResearcherModel = 8;
+	internal const int MechanicModel = 4;
+	internal const int HandymanModel = 5;
+	internal const int GuardModel = 7;
+	internal const int ResearcherModel = 8;
 
 	/// <summary>Who is being carried, for the debug console.</summary>
 	internal int CarriedStaff => _carriedStaff;

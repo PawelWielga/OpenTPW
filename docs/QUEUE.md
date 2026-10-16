@@ -48,6 +48,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q424 (`hud.md`, "The staff and visitor locators"): the locators are built. Counted, not built: the advisor's
+  two lines as they open, `0xc6` (staff) and `0x11f` (visitors), posted and withdrawn as the buy screen's `0xbc` is
+  (`LOCATOR_ADVISOR_LINE`; the original's advisor came up for `0xc6`), the nearest; a fenced member's patrol edges
+  (`LOCATOR_PATROL_EDGES`, `FUN_00536100( 0x136 )`); the strip's click, the person's window (`STAFF_WINDOW`,
+  `VISITOR_WINDOW`), and with it Ctrl+S or Ctrl+V over a person's window opening on that person. The arm puts the panel
+  out at once (counted `GADGET_ARM_SLIDE`). In no game run: a kind with nobody, a person leaving while followed (tested
+  only), the strip's hover and click, first person over a follow, Full Simulation (not asked: the locators are either
+  mode's), the other three themes.
   From Q423 (`advisor-park.md`, "Kids who got away from a guard"): row 22 is built, so every guards' row is. In no game
   run: lines 2 and 3 (the test holds the turn), a shut park (the test holds it scoring), a kid getting away in play
   (nothing here counts one: the pranks), two guards or more (tested only), Full Simulation (not asked: the row is either
@@ -258,12 +266,12 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   are bars (Q369). In no game
   run: a track ride's row (the fill's `0x2000` walk, `0x00493eb0`), a value past 255, Full Simulation (not asked:
   the screen is either mode's), the other three themes.
-  From Q366 (`hud.md`, "The shortcuts' screen rows"): **the staff and visitor locators** (`FUN_004b3f60`, Ctrl+S and
-  Ctrl+V, a panel at the gadget's foot in the original) and the postcard row are counted, not built (`STAFF_LOCATOR`,
-  `VISITOR_LOCATOR`, `POSTCARD_SHORTCUT`). W and D still scroll the orbit camera, the original's camera table binding the
+  From Q366 (`hud.md`, "The shortcuts' screen rows"): the staff and visitor locators (`FUN_004b3f60`, Ctrl+S and
+  Ctrl+V, a panel at the gadget's foot in the original) are built (Q424); the postcard row is counted
+  (`POSTCARD_SHORTCUT`). W and D still scroll the orbit camera, the original's camera table binding the
   arrows and the keypad (`ParkOrbitCameraMode.ScrollAxes`; Alexah kept them, 2026-10-14). In no game run: L in Full
   Simulation (counted there), a shortcut under an object window, Ctrl+P in the original.
-  **Note (fork review 2, 2026-10-16, `verify-ui-hud.md` L1):** the locators are decoded whole. The panel's procedure
+  **Note (fork review 2, 2026-10-16, `verify-ui-hud.md` L1; built, Q424):** the locators are decoded whole. The panel's procedure
   is `FUN_004b3790`: radio buttons `0x95e`..`0x964` pick roles 1 to 6 (handymen, mechanics, guards, entertainers,
   researchers, visitors); a role walks its staff chain (world `+0x1da73c`..`+0x1da744`, next at `+0x210`) or the
   visitors newest first, and "next" wraps. The strip (`FUN_004b3490`) letters the staff name or the visitor number

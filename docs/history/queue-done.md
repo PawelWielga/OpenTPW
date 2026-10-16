@@ -7214,6 +7214,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   lettered string 28, its button opening the features tab with the Security Camera; four got away `no-score ... gotaway=4`;
   no guard `no-score ... guards=0`; main's build silent. The original: `0x16` (789, 0, 1, 0) on 789, string 28's tag, the
   guards' cap; the other two unmoved to 960. 31 bugs put back, all caught.
+- [x] **Q424. The staff and visitor locators, Ctrl+S and Ctrl+V.** Done 2026-10-16. A piece of Q420 (its Q366 note and
+  the fork review 2's L1). `FUN_004b3cf0`'s two streams (`0x00756950`: the staff's panel `0x95c`, the visitors' `0x963`;
+  `0x00756ad8`: the strip `0x146`) carried by the gadget's arm 670 out; a button takes up its role from the first and
+  steps round, newest first; the strip letters a member's name or "Visitor #N"; the camera snaps to where the person
+  is drawn each frame; the arm's fold closes it, so Ctrl+S over an open locator leaves it closed; Escape folds it
+  first (`hud.md`, "The staff and visitor locators"). Confirmed in both games: the stock park `locator: open=Staff ...
+  staffPanel=1@484,1127`, the mechanics' button `actor=26 name="Mike Cooper"` with the camera on him, Ctrl+S again
+  `open=None`, Ctrl+V's button `name="Visitor #13"`, Escape folding it with no menu; the original's memory and frames
+  the same, six of six (`q420/side-by-side.png`). 27 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

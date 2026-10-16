@@ -2112,12 +2112,86 @@ panel at the gadget's foot. Ctrl+P was not pressed (the postcard writes a pictur
 the game menu, a message box, the options screen, the map or the full-screen view; in first person the postcard's row
 alone. A screen row calls `ParkCategoryScreens.Show`, the opener the category buttons reach, so the category is left on
 it; Space opens the map as its button does; R runs the research opener ("The research opener and its two boxes").
-Park status, finances, the two locators and the postcard are counted (`PARK_STATUS_SCREEN`, `FINANCE_SCREEN`,
-`STAFF_LOCATOR`, `VISITOR_LOCATOR`, `POSTCARD_SHORTCUT`), loans as `LOANS_SCREEN` outside Instant Action and not at all inside it; G with the entry price up
+Park status, finances and the postcard are counted (`PARK_STATUS_SCREEN`, `FINANCE_SCREEN`, `POSTCARD_SHORTCUT`), and
+the two locators open ("The staff and visitor locators", Q424), loans as `LOANS_SCREEN` outside Instant Action and not at all inside it; G with the entry price up
 leaves it as it is. The orbit camera's W and D still scroll it, which the original's does not (its camera table binds the
 arrows and the keypad); A and S scroll it no longer. On the stock park (`q366/run-fix2`, the final game binary): each
 key's `Park keys: shortcut row N, name` line and the screen `windows` named, a frame a screen (`run-fix2/1-items-by-A.png`
 to `9-map.png`); A held a second left the camera's point where it was, W held a second moved it 200 units.
+
+#### The staff and visitor locators
+
+Read 2026-10-16 (Q424; the fork review 2's lead L1, `verify-ui-hud.md`, checked again in the private Ghidra). **Built
+once, carried by the arm.** `FUN_004b3cf0` builds both at the interface's assembly, hidden: the stream `0x00756950`
+holds two panels with the handler `FUN_004b3790`, `0x95c` (474,1159)-(941,1470) for the staff and `0x963`
+(-37,1159)-(429,1470) for the visitors, each a type-8 group `0x95d` framed in `!f_plain` whose buttons (type 2, flags
+`0x11`) are `0x95e` `b_shandy` (help 482), `0x95f` `b_smech` (483), `0x960` `b_sresrhcer` (486, the node `b_sresrcher`),
+`0x961` `b_senter` (484), `0x962` `b_sguard` (485) and `0x964` `b_skids` (489); the group's handler `LAB_004b3b90`
+puts a clicked button down whether the click put it up or down, and posts the panel `0x101` with it and 1. The stream
+`0x00756ad8` is the strip `0x146` (448,964)-(1074,1066), `!frame`, help 552, its handler `FUN_004b3c10`: the name
+`0x147` (font slot 11, white), the status `0x148` (`i_staffstat`), the hover `0x149` (`hilight`, shown on `0x10001`,
+hidden on `0x10002`) and the thought `0x14a` (`thoughts`). The panels go on the arm through `FUN_004a2590`, so each is
+put where the arm's handler puts any panel ("The arm's handler"): its left the arm's left less its width and fifty,
+then ten steps of `(width + 208) / 10`, 67, so 670 out; its middle on the arm's. The staff's stands at (484,1127), the
+visitors' at (485,1127).
+
+**The keys.** Ctrl+S is `FUN_004b3f60( [0x007c2658] )` with a member's window up (`[0x007cc3c0]`), else
+`FUN_004b3f60( 0 )`; Ctrl+V the same with a visitor's (`[0x007cc418]`), else `FUN_004b4280`. `FUN_004b3f60( 0 )` sets
+the locator `[0x007cc2f0]` to 1 FIRST, then hands the arm the staff's panel, then noughts the person `[0x007cc308]`
+and the role `[0x007cc30c]`, lifts every button (`FUN_0066a295( -1 )`), shows the status and hides the thought, posts
+advisor message `0xc6`, closes the open park screen (`FUN_00485b40`) and puts the idle mode over the camcorder's pick
+mode. `FUN_004b4280` hands the arm the visitors' panel FIRST, then sets role 6 and the locator 2, lifts the button,
+noughts the person, hides the status and shows the thought, closes the park screen and posts `0x11f`. Given a person
+(a window up), `FUN_004b3f60` picks the role and button by its type byte (5 handyman 1 `0x95e`, 4 mechanic 2 `0x95f`, 7
+guard 3 `0x962`, 6 entertainer 4 `0x961`, 8 researcher 5 `0x960`, 1 visitor 6 `0x964`) and shows the strip on them.
+
+**The arm folds a locator closed.** The arm takes a panel by folding what it carries, which sends that panel
+`0x1001d8`, and the panel's answer is the locator closed: nobody, the strip hidden, `[0x007cc2f0]` nought,
+`gui_CameraFlags` bit `0x1000` cleared, advisor messages `0x11f` and `0xc6` withdrawn. Because Ctrl+S sets its locator
+before the fold, **Ctrl+S over a locator already out leaves the panel out and closed**: its buttons go down and find
+nobody until Ctrl+S or Ctrl+V again. Ctrl+V sets its own after and is not caught. Escape asks `FUN_004816b0` first
+(the game table's row 0, `0x0040c1a0`): with a locator open it folds the arm (`FUN_004a25f0( 0 )`, the camcorder button
+left as it is) and is spent, so no menu opens.
+
+**A button** (the panel's `0x101`, nothing with no locator open): from role 0 it takes up its role and the role's first
+(`FUN_004b3340`); another role's drops the person and takes its first; the same role's steps to the next, round to
+the first after the last (`FUN_004824d0`: the five staff lists from world `+0x1da73c` to `+0x1da744`, each member's next
+at `+0x210`, newest first; the visitors the used-thing list from its head, newest first, type byte 1). Somebody found:
+the strip shown if it was not, lettered (`FUN_004b3490`: a member's name `FUN_00506860`, a visitor UITEXT 456 "Visitor
+#{P24}" with `+0x1d8`, or 457 "New Visitor" at nought), the camera put on them, bit `0x1000` set. Nobody: from role 0
+nothing more; else the strip hidden and the bit cleared. **Each frame** (`0x1e`) with the bit set, `FUN_004b3640` puts the
+camera's look-at where the person is drawn (`FUN_00486860`: `FUN_004f9f00` blends `+0x190`/`+0x194` towards the
+navigator's place at the frame's fraction of the sweep, held to 0..1, truncates, and scales 10/65536; `FUN_0042aab0`
+writes it, a snap) and draws a fenced member's patrol edges (`FUN_00506eb0`, `FUN_00536100( 0x136, ... )`); then
+`FUN_004b3580` sets the corner: a member's status `FUN_00485ec0( FUN_005064f0() )` (groups 0 and 1 picture 0, 2 1, 3 2,
+4 3, picked up 9, no part), a visitor's last thought less one, `0x29a` with none. The camera's mode change clears the bit
+(`0x0042ae52`). The strip's left click opens the person's window (`FUN_004b6080`, `FUN_004b79b0`).
+
+**The original** (`q420/orig/run.sh`, `q325/stock.TPWS` off-screen; predicted first, six of six, `q420/PREDICTION.txt`):
+Ctrl+S read locator 1, role 0, nobody, bit clear, the panel on the arm (`orig/a-1-ctrl-s.png`); the mechanics' button,
+role 2, a person of type 4, the bit set, the look-at (532.19, 212.05), his `+0x190`/`+0x194` times 10/65536 to the
+hundredth, the strip "Mike Cooper" with his status, him mid-frame (`orig/a-2-mechanic.png`); again the same person;
+Ctrl+S again, the locator 0 with the panel out, the button then nobody; Ctrl+V locator 2, role 6, its button a person of
+type 1 whose `+0x1d8` read 13, "Visitor #13" with no thought (`orig/a-6-visitor.png`); Escape the locator 0, the arm in,
+no menu. The advisor came up as the staff's opened (`0xc6`).
+
+**OpenTPW** (Q424): `ParkLocator`, carried by `ParkGadget`'s arm (`CarryLocatorPanel`, `TravelFor`, `PlaceFor`,
+`FoldLocator`), opened by `ParkFrontEnd`'s rows 13 and 14 and folded by Escape; `Staff.StateGroup`; the console's
+`locator`. On the stock park (`q420/run-fix3`, the final game binary; seven of seven): Ctrl+S `locator: open=Staff
+role=0 actor=0 following=0 strip=0 ... staffPanel=1@484,1127 down=none` (`1-ctrl-s.png`); the mechanics' button `role=2
+actor=26 following=1 strip=1 name="Mike Cooper" status=0`, the camera on him to a fraction of a unit, paused
+(`2-mechanic.png`), and 3 s on; Ctrl+S again `open=None` with the panel out, the button then `actor=0`, "with no locator
+open" (`4-closed.png`); Ctrl+V `visitorPanel=1@485,1127`, its button `actor=42 name="Visitor #13" thought=666`
+(`5-visitor.png`); Escape "Escape: the locator folded away", no menu (`6-escape.png`). Side by side with the original's
+(`q420/side-by-side.png`) the panel, the buttons and the strip stand alike. Main's build counted `STAFF_LOCATOR` and
+`VISITOR_LOCATOR` once each and put nothing out. **Counted, not built:** the advisor's two lines
+(`LOCATOR_ADVISOR_LINE`), a fenced member's patrol edges (`LOCATOR_PATROL_EDGES`), the strip's click (`STAFF_WINDOW`,
+`VISITOR_WINDOW`: no person's window is built, so the keys always open on nobody). **Deviations, said at the site:** the
+arm puts the panel out at once, where the original slides (counted `GADGET_ARM_SLIDE` each way); a person gone from the
+park is let go of, where the original keeps the freed thing's address. Not looked into: the bit `0x1000`'s other
+readers. In no game run: a kind with nobody (tested only), a fenced member, a person leaving the park while followed
+(tested only), the strip's hover and click, first person over a follow, Full Simulation (not asked: the locators are
+either mode's), the other three themes.
 
 #### How allstaff and allitems keep their rows current
 

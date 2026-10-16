@@ -323,10 +323,17 @@ public sealed class Staff
 	/// member's status in the all-staff list: <c>FUN_005064f0</c> on <c>mState</c>, a walk read as Idle when the patrol
 	/// area is the whole map (the row adder <c>0x0049636b</c>; <c>docs/exe/hud.md</c>, "The all-staff status words").
 	/// </summary>
-	public int StatusRow => Activity switch
+	public int StatusRow => StateGroup == 1 && PatrolsWholeMap ? 0 : StateGroup;
+
+	/// <summary>
+	/// <c>FUN_005064f0</c> on <c>mState</c>: 0 idle, 1 walking, 2 a job, 3 resting or going to rest, 4 striking or going to
+	/// strike, 5 picked up. The all-staff list letters its row (<see cref="StatusRow"/>) and the staff locator's strip
+	/// picks its status picture by it (<see cref="UI.ParkLocator.StatusPart"/>).
+	/// </summary>
+	public int StateGroup => Activity switch
 	{
 		StaffActivity.Idle => 0,
-		StaffActivity.Walking => PatrolsWholeMap ? 0 : 1,
+		StaffActivity.Walking => 1,
 		StaffActivity.GoingToRest or StaffActivity.Resting => 3,
 		StaffActivity.GoingOnStrike or StaffActivity.OnStrike => 4,
 		StaffActivity.Held => 5,

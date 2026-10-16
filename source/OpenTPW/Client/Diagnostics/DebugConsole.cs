@@ -636,6 +636,11 @@ public static class DebugConsole
 				Reply( Level.Current?.Hud?.Children.OfType<UI.ParkFrontEnd>().FirstOrDefault()?.Gadget.BarCensus() ?? "no gadget" );
 				break;
 
+			case "locator":
+				// The staff and visitor locators: which is open, whom the camera is on and what the strip shows.
+				Reply( Level.Current?.Hud?.Children.OfType<UI.ParkFrontEnd>().FirstOrDefault()?.Gadget.Locator.Census() ?? "no gadget" );
+				break;
+
 			case "greet":
 				// Replays the front-end greeting the way the lobby gives it on arrival with no saved
 				// players, so its timing and ducking can be captured at a moment of the caller's choosing.

@@ -273,8 +273,8 @@ internal sealed class ParkFrontEnd : Panel
 	/// button reaches, the tab it was left on with it (<c>-1</c>), and every opener notes itself as its category's screen
 	/// (<c>FUN_004a0810</c>), so a row opens what <see cref="ParkCategoryScreens.Show"/> opens and the category button
 	/// opens it next. The map's row is <c>FUN_005f0b40</c>, the map button's. Park status, finances, loans and research
-	/// are not built and are counted where they would open (loans refuse in Instant Action); so are the staff and visitor
-	/// locators (<c>FUN_004b3f60</c>) and the postcard (<c>FUN_004a9380</c>).
+	/// are not built and are counted where they would open (loans refuse in Instant Action); so is the postcard
+	/// (<c>FUN_004a9380</c>). The staff and visitor locators open on the gadget's arm (<see cref="ParkLocator"/>).
 	/// <para>
 	/// The table is heard over the park with nothing in front, and under a park screen, whose handler runs the
 	/// shortcuts' table alone (<c>FUN_00488ba0</c>, <c>0x00488c13</c>): there a row opens its screen in that one's place.
@@ -324,12 +324,13 @@ internal sealed class ParkFrontEnd : Panel
 				_stack.Open( new ParkMapScreen( _stack ) );
 				break;
 
+			// FUN_004b3f60 with no member's window up, and FUN_004b4280: no person's window is built to open one on.
 			case 13:
-				Unimplemented.Report( "STAFF_LOCATOR" );
+				_gadget.Locator.OpenStaff( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
 				break;
 
 			case 14:
-				Unimplemented.Report( "VISITOR_LOCATOR" );
+				_gadget.Locator.OpenVisitors( _gadget.CarryLocatorPanel, () => _stack.CloseParkScreen() );
 				break;
 
 			case 15:
@@ -444,6 +445,13 @@ internal sealed class ParkFrontEnd : Panel
 		// name no modifier, which a row must match exactly (FUN_0040c990).
 		if ( !plain )
 			return;
+
+		// An open locator takes the key first, and folds the arm away (FUN_004816b0, 0x0040c1a0).
+		if ( _gadget?.FoldLocator() == true )
+		{
+			Log.Info( "Escape: the locator folded away" );
+			return;
+		}
 
 		// Escape over anything but the idle mode installs the idle mode and is spent doing it (0x0040c368; see
 		// docs/exe/park-engine.md, "The hand's ways out"): whatever is in the hand is let go of and a build tool put

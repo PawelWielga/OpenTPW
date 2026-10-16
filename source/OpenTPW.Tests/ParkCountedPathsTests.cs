@@ -102,6 +102,28 @@ public class ParkCountedPathsTests
 	}
 
 	/// <summary>
+	/// <b>Ctrl+S puts the staff's locator out and the next Escape folds it away and opens no menu</b>; the Escape after
+	/// opens the menu (<c>FUN_004816b0</c> ahead of the hand and the menu, <c>0x0040c1a0</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> Escape not asking the locator first opens the menu with it out.</remarks>
+	[TestMethod]
+	public void EscapeFoldsAnOpenLocatorFirst()
+	{
+		var stack = APark();
+		var locator = stack.Windows.OfType<UI.ParkGadget>().Single().Locator;
+
+		WithControl( stack, Key.S );
+		Assert.AreEqual( (UI.ParkLocator.Kind.Staff, true), (locator.Open, locator.StaffPanel.Visible) );
+
+		Press( stack, Key.Escape );
+		Assert.AreEqual( (UI.ParkLocator.Kind.None, false), (locator.Open, locator.StaffPanel.Visible) );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "no menu" );
+
+		Press( stack, Key.Escape );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, GameMenu", Names( stack ), "the next opens it" );
+	}
+
+	/// <summary>
 	/// <b>The gadget's postcard button is counted</b> each click, through the click the stack sends a button.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the report taken out of <c>SendPostcard</c> counts nothing.</remarks>
@@ -291,8 +313,8 @@ public class ParkCountedPathsTests
 		WithControl( stack, Key.P );
 
 		Assert.IsTrue( Level.InstantAction, "no player: Instant Action" );
-		Assert.AreEqual( (1, 1, 0, 1, 1, 1),
-			(Times( "PARK_STATUS_SCREEN" ), Times( "FINANCE_SCREEN" ), Times( "LOANS_SCREEN" ), Times( "STAFF_LOCATOR" ), Times( "VISITOR_LOCATOR" ), Times( "POSTCARD_SHORTCUT" )) );
+		Assert.AreEqual( (1, 1, 0, 2, 1),
+			(Times( "PARK_STATUS_SCREEN" ), Times( "FINANCE_SCREEN" ), Times( "LOANS_SCREEN" ), Times( "LOCATOR_ADVISOR_LINE" ), Times( "POSTCARD_SHORTCUT" )) );
 		Assert.AreEqual( (3, 7), (UI.ParkCategoryScreens.LeftOn( UI.ParkCategoryScreens.Information ), UI.ParkCategoryScreens.LeftOn( UI.ParkCategoryScreens.Finance )), "loans left nothing" );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "nothing opened" );
 

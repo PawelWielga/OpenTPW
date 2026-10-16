@@ -624,6 +624,13 @@ GH=766` there, or the pointer is off):
   Ctrl held (`xdotool keydown Control_L` around the key). **L opens nothing in Instant Action**, so an Escape sent after it
   opens the game menu and the next key falls on the menu: close a screen only where one opened. The gadget's
   Information button (173,596) and Money button (107,650) of 1024 x 768 (halve both the stream's x and y).
+- **The locators** (Q424, `q420/orig/run.sh`): Ctrl+S or Ctrl+V as above, then the buttons on the arm at handymen
+  (303,613), mechanics (360,613), guards (416,613), entertainers (332,670), scientists (388,670), visitors (359,641)
+  (the mechanics' and the visitors' clicked, the rest the same layout's); its words are the locator `[0x007cc2f0]`,
+  the role `[0x007cc30c]`, the person `[0x007cc308]` (a thing's address: its type byte `+2`, `+0x190`/`+0x194`, a
+  visitor's number `+0x1d8`) and `gui_CameraFlags` `[0x00790ab0]` bit `0x1000`, read with `tpwmem.py read`. In this
+  game the console's `locator`, and `control 95f` for a button's place. A camera against a walker's place is read
+  under `pause`: two replies apart, he has walked most of a cell.
 - **The game menu:** Escape with no tool in hand opens it **and pauses the game**; never sleep under it. Load
   (510,50) then the first row (400,123), the newest file; Save (510,140), type the name, Return; Options
   (510,400), the quality track (512,276), OK (898,688).
