@@ -7136,6 +7136,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   kids=4`, said in the cap, tag 14, the bar's button opening "Hire Guards"; three kids (25), and four with the guard
   kept, silent; main's build silent. The original given the three files did the same, and posted row 264 on 903 in
   all three (counted here). 26 bugs put back.
+- [x] **Q414. The advisor's row 264, lots of pranks.** `0x005a04f0`: `LotsOfPranks.Score` (100) where this month's
+  misbehaving kids (`FUN_004c94a0( 0 )`) are more than `MorePrankstersThan` (2), else nought; neither the door nor the
+  guards asked. One line, response 514, sample 505, in the guards' cap; its group `0x17f` leaves no tag
+  (`advisor-park.md`, "Lots of pranks"). Confirmed: Q413's `three.TPWS` (no guard, 3 kids) `score=100 ... tick=903
+  result=post closed=0 guards=0 kids=3`, said in the cap, no tag; `guard.TPWS` (a guard, 4 kids) said too; `two.TPWS`
+  (2 kids) `no-score`; main's build silent. The original: `0x108` (903, 0, 1, 0) on 903 for three kids, unmoved for
+  two. 20 bugs put back.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

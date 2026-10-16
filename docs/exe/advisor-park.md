@@ -2032,7 +2032,7 @@ again past its 120 quarter-ticks, two handymen or more (the test holds three), a
 minimum of 300 (it asks nothing a handyman's 400 does not, at the shipped values: the test holds it with 100 a
 handyman), a park made with no file, Full Simulation: the mode is not asked by row 10's score. Not heard in either
 game. Rows 12 and 13 are built since ("A park with no guard", "A park too big for its guards", below); the other
-staff rows, 8, 9, 11 and 14 to 17, are not (Q414).
+staff rows, 8, 9, 11 and 14 to 17, are not (Q415).
 
 ## A park with no guard (message `0xc`, Q413)
 
@@ -2101,8 +2101,8 @@ guards' cap from the load on (`orig/a2-told.png`, film 3.00 s). The tag clicked:
 item 0 and the text. The button clicked: `hire 0x46ba750 hiretab 3` on tick 899, "Hire Guards" with the fourth tab lit
 (`orig/a-button.png`). *`three`* (run b) and *`guard`* (run c): `0xc`'s record unmoved, no tag of string 18, the
 park run to 20 March (`b-end.png`, `c-end.png`). **In all three files the original also posts message `0x108` on tick
-903** (row 264, `LotsOfPranks`, 100 for more than two kids this month; said on 903 in b and c), which this game counts
-(`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`). `q413/side-by-side.png` sets this game's line beside the original's.
+903** (row 264, `LotsOfPranks`, 100 for more than two kids this month; said on 903 in b and c), built since ("Lots of
+pranks", below). `q413/side-by-side.png` sets this game's line beside the original's.
 
 | | The original | OpenTPW |
 |---|---|---|
@@ -2111,12 +2111,70 @@ park run to 20 March (`b-end.png`, `c-end.png`). **In all three files the origin
 | No guard, three kids (nine got away) | not said (25) | the same (`under-threshold`) |
 | One guard, four kids | not said | the same (`no-score`, `guards=1`) |
 | The tag and the bar | row 14, part 2, string 18; button 16 builds the hire screen on its guards' tab, tag off | the same |
-| Row 264, more than two kids | posted on 903 | counted, not built |
+| Row 264, more than two kids | posted on 903 | the same since Q414 ("Lots of pranks") |
 
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 36 and 37, the third's gesture row counted; the test
 holds the turn), a kid counted in play (nothing here counts one), two guards or more, a guard hired after the line,
 Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The other staff
-rows, 8, 9, 11 and 14 to 17, are not built (Q414).
+rows, 8, 9, 11 and 14 to 17, are not built (Q415).
+
+## Lots of pranks (message `0x108`, Q414)
+
+**Row 264, message `0x108`, `LotsOfPranks`** (the emulated table, `meta_full.json`, at `0x00771cc0`): polled, category 0,
+either game mode (`+0x0c` 2), score function `0x005a04f0`, one copy, first response 514, **one line**, selection 2. Response
+514 (the response table's row 512) is **sample 505**, lip 505, the random gesture chain, model slot 0 on the global bank,
+prop 6 (the guards' cap), no second prop, group `0x17f`, which no row of the tag table holds: **the line leaves no tag.**
+From the shipped park's cursor its turn is 124 polled rows after row 12's: ticks 903, 1058, 1213 and every 155 on. The
+transcript (`global-speech-transcripts.tsv`, 8.2 s): "you've got some visitors pulling pranks in your park and frankly
+there a bad influence you should put a stop to it before this kind of behavior spreads" (as transcribed).
+
+**Its score, `0x005a04f0`** (`ECX` the balance object, kept in `ESI`): `FUN_004c94a0( 0 )` on the analyser
+(`FUN_00519510( 0 )` on the world), **this month's misbehaving kids** (`+0x21bfc`, caught and not caught alike; `hud.md`,
+"The misbehaving kids"), against `[ESI + 0x5a8]`, `LotsOfPranks.MorePrankstersThan`, **2**: more (`JLE` past), and the
+score is `[ESI + 0x5ac]`, `LotsOfPranks.Score`, **100**; else nought. **Nothing else is asked**: not `mParkClosed`, not the
+guards, not the days. The two keys are the schema's records at `0x007384f4` and `0x00738530`, in that order (so slots
+`+0x5a8`, `+0x5ac`), set by `Advisor.sam`'s lines 646 and 647 (the section's heading, line 554, is a comment).
+
+### OpenTPW (`ParkAdvisorMessages.LotsOfPranks`, a topic's `MorePranksters`)
+
+A topic scored from `ParkFacts.MisbehavingKids` (Q413's), and nothing else of them. The poll line ends ` closed=N
+guards=N kids=N`, the facts beside the score though it reads only the kids. Its group is the topic's default, `0x17f`, so
+`ParkTags` leaves no tag. Nothing here counts a kid (the chase waits on the pranks, `DECIDE_PRANK_*`), so the count comes
+from the file.
+
+**The scenes**: Q413's `three.TPWS` (no guard, 3 kids, 9 got away) and `guard.TPWS` (the shipped file, its guard kept, 4
+kids), and `q414/two.TPWS` (Q413's `noguard.TPWS` with 2, 9, 0; `q414/mkkids.py`).
+
+**Predicted first** (`q414/PREDICTION.txt`), every prediction held; one thing seen and not predicted (below).
+
+**This game** (`q414/confirm.py fix|guard|under|control`, on the desktop; `run-fix1` the final run): *`three`*: `money`
+reading `misbehaving kids 3 got away 9 ever 0`, then `poll message=264 row=264 days=39 score=100 threshold=25 tick=903
+result=post closed=0 guards=0 kids=3`, said on that tick, the first line of the run (`attempt=1 message=264 subject=0
+score=100 threshold=25 response=514 sample=505 line=0 tick=903 duration=11498`), `saying sp_505.mp2 ... wearing=6,0`, him in
+the guards' cap, no tag before or after (`1-line.png`). *`guard`* (`run-guard1`): `... score=100 ... result=post closed=0
+guards=1 kids=4`, said on 903 in the cap. *`two`* (`run-under1`): `... score=0 ... result=no-score closed=0 guards=0 kids=2`
+and silent to tick 962. **Main's build** on `three` (`run-control1`): no line of message 264 to tick 962.
+
+**The original** (`q414/orig/run.sh <file>`, `advisor.py ... 0xc,0x108 poll` beside `tags.py`; a fresh program each,
+off-screen). *`two`* (run a): `0x108`'s record (0, -1, 0, 0) throughout, the poller silent for its 420 s (`a-end.png`, 16
+April). *`three`* (run b): **`0x108`'s record from (0, -1, 0, 0) to (903, 0, 1, 0) on tick 903**, the action 12,498 ms (this
+game's 11,498 and the helper's 1,000), no tag made, him in the guards' cap (`orig/b-told.png`). Q413's runs b and c saw the
+same post on 903 for three and for four kids with a guard. `q414/side-by-side.png` sets the two games' lines side by side.
+**Not predicted**: in both runs on a file with no guard the original raised a tag about tick 828, "Some of the visitors are
+misbehaving and your security hasn't seen it. Make sure your guards are patrolling all areas of the park, or build security
+cameras.", gone on 946: another message than `0xc` or `0x108` (its words are a prank with no guard to see it; not built
+here, not looked into).
+
+| | The original | OpenTPW |
+|---|---|---|
+| Row 264 | polled; 100 where this month's kids are more than 2, else nought; neither the door nor the guards asked | the same |
+| No guard, three kids (nine got away) | said on tick 903, in the guards' cap, no tag | the same |
+| One guard, four kids | said on 903 (Q413's run c) | the same (`guards=1`) |
+| No guard, two kids (nine got away) | not said | the same (`no-score`) |
+
+**Not built or not seen.** In no game run: a shut park (the test holds it scoring), the line said again past its 120
+quarter-ticks (the test holds it), a kid counted in play (nothing here counts one), Full Simulation (not asked: the row is
+either mode's), the other three themes. Not heard in either game. The tag of about tick 828 in the original is not built.
 
 ## A park too big for its guards (message `0xd`, Q412)
 

@@ -1990,7 +1990,7 @@ a chase abandoned that month, counted since its load).
 `ParkState.MisbehavingKids` takes the file's month two at a load and nought for the third, where the original's is its
 load's unzeroed memory (a deviation, said at the site); `TurnTheMonth` zeroes the month's two; `money` and the close's
 line print them. Nothing counts into them: the guard's chase waits on the pranks (`DECIDE_PRANK_*`). Row 12 reads this
-month's (Q413); row 264 is not built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`). With them the close is built whole (`ANALYSER_MONTH_CLOSE` gone).
+month's (Q413), and row 264 (Q414; `advisor-park.md`, "Lots of pranks"). With them the close is built whole (`ANALYSER_MONTH_CLOSE` gone).
 **Confirmed** (`q395/`): the stock park with the three written 5, 2 and 9 (`kids.TPWS`), loaded; `money` read `misbehaving
 kids 5 got away 2 ever 0`; the close on tick 1470 named `misbehaving kids 0 got away 0 ever 0`, the file held 0, 0, 0 and
 `unimplemented` no longer listed the close; main's build kept 5, 2, 9 in the file and listed it. The original given

@@ -194,7 +194,10 @@ whole list):
   Both games read the month's two at a load; the advisor's row 12 then turns on tick 779, four kids saying it and
   three not, and the original also posts row 264 on 903 for more than two. **A still taken after `loadfile.sh` comes
   too late for a line said a few seconds after the load** (the original off-screen): start `record.sh` as the load's
-  log appears and pull the frames.
+  log appears and pull the frames. Row 264 (Q414) takes the same files, both games saying it on 903 in the guards' cap
+  for three kids and silent for two (`q414/two.TPWS`). **The original's pollers (`advisor.py`, `tags.py`) log a line only
+  on a change**, so a wait on a logged tick past a quiet turn never ends: wait on wall time (about 3.8 ticks a second
+  off-screen, the load's clock starting about 0.7 s into its log) or read the date on the end frame.
 - **An object's money and satisfaction days written in a file** (Q368, `q368/mkscene.py`): in an object's record the
   costs ring is at 228, the takings ring at 361 and the satisfaction ring at 901, each the entry, the count, the wrap
   byte and today (13 bytes) then thirty days, so day `k` is `thing_set( src, dst, t, ring + 13 + 4 * k, '<i', v )`;

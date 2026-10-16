@@ -45,9 +45,15 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q414. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q415. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q414 (`advisor-park.md`, "Lots of pranks"): row 264 is built. The other staff rows, 8, 9, 11 and 14 to 17, are
+  not. The original, given a file with no guard (Q413's `three.TPWS`, `q414/two.TPWS`), raised a tag about tick 828,
+  "Some of the visitors are misbehaving and your security hasn't seen it...", another message than `0xc` or `0x108`:
+  not built here and not looked into (its words are a prank with no guard to see it). In no game run: a shut park (the
+  test holds it), the line said twice, a kid counted in play, Full Simulation (not asked: the row is either mode's),
+  the other three themes. Not heard in either game.
   From Q413 (`advisor-park.md`, "A park with no guard"): row 12 is built. The other staff rows, 8, 9, 11 and 14 to 17,
   are not; row 264 (`LotsOfPranks`, `0x005a04f0`, more than two kids this month), which the original posted on tick
   903 in all three of Q413's files, is the nearest (it reads the same count). In no game run: lines 2 and 3 (the test
