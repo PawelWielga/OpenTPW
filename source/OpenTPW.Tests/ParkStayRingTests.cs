@@ -25,15 +25,17 @@ public class ParkStayRingTests
 	/// <summary>
 	/// <b>A stay is shifted back into sweeps and turned into whole park days</b>, 3,750 seconds a sweep at the shipped rate:
 	/// 11 fours of sweeps are 44 sweeps, 1.9 days, so 1 (47 sweeps would be 2); 12 are 2.08, so 2. A guest stamped after
-	/// the clock (a stay of 2<sup>30</sup> less one) loses the shift's top bits and wraps the 64-bit product to a negative day count.
+	/// the clock (a stay of 2<sup>30</sup> less one) wraps the 64-bit product to a negative day count. The shift is the
+	/// original's <c>SHL</c> in a 32-bit register (<c>0x0050234a</c>): a stay of 2<sup>30</sup> and six loses its top bits to
+	/// 24 sweeps, one day.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the shift left left out; the rate's quarter dropped; a day of another length; the product not wrapped or divided unsigned.</remarks>
+	/// <remarks><b>Mutations:</b> the shift left left out, or taken in 64 bits; the rate's quarter dropped; a day of another length; the product not wrapped or divided unsigned.</remarks>
 	[TestMethod]
 	public void AStayIsWholeParkDays()
 	{
 		Assert.AreEqual( GameCalendar.DefaultRate, GameCalendar.Rate );
-		CollectionAssert.AreEqual( new[] { 0, 0, 1, 2, 4, 5, 3902581, 7805162, -9642654, -5740073 },
-			new uint[] { 0, 5, 11, 12, 24, 29, 0x10000000, 0x20000000, 0x30000000, 0x3fffffff }.Select( ParkState.StayDays ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 0, 0, 1, 2, 4, 5, 3902581, 7805162, -9642654, -5740073, 1 },
+			new uint[] { 0, 5, 11, 12, 24, 29, 0x10000000, 0x20000000, 0x30000000, 0x3fffffff, 0x40000006 }.Select( ParkState.StayDays ).ToArray() );
 	}
 
 	/// <summary>
