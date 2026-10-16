@@ -315,11 +315,9 @@ internal sealed class ParkFrontEnd : Panel
 				ParkCategoryScreens.Show( _stack, ParkCategoryScreens.Finance, row );
 				break;
 
-			// FUN_004aa480, the gadget's Research button's own function: a message box in Instant Action or with no
-			// researcher hired, else the research screen (docs/exe/hud.md, "The nine screens behind Info, Money and
-			// Research"). None of the three is built.
+			// FUN_004aa480, the gadget's Research button's own function.
 			case 11:
-				Unimplemented.Report( "RESEARCH_SHORTCUT" );
+				ParkResearchOpener.Open( _stack );
 				break;
 
 			case 12:

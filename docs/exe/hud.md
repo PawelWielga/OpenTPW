@@ -465,15 +465,37 @@ records, `ParkState` keeps them and the month's change pays the bought ones' ins
 money-in/out split and the graph history) and
 **parkstatus** (Top 3 Thoughts, arrival rate, park rating, multi-year history), each counted when opened
 (`LOANS_SCREEN`, `FINANCE_SCREEN`, `PARK_STATUS_SCREEN`), and **research** (`mResearchDone`,
-`mResearchGroup`, `mFirstResearcher`, and per-group research points), whose gadget button only logs, and counts
-each click as `RESEARCH_BUTTON`: neither the screen nor its two message boxes is built. The key reaches the same
-function: the shortcuts' row 11 is `R` (`0x52`) with no modifier, handler `0x0040c5b0` (`MOV ECX, 0x007b51f0; CALL
-0x004817e0`, a `JMP` to `FUN_004aa480`), counted as `RESEARCH_SHORTCUT` where that table is run: over the park and
-under a park screen, not under the game menu, a message box, the options, the map, the full-screen view or first
-person.
+`mResearchGroup`, `mFirstResearcher`, and per-group research points), whose screen is not built. The key reaches the
+same function: the shortcuts' row 11 is `R` (`0x52`) with no modifier, handler `0x0040c5b0` (`MOV ECX, 0x007b51f0; CALL
+0x004817e0`, a `JMP` to `FUN_004aa480`), heard where that table is run: over the park and under a park screen, not
+under the game menu, a message box, the options, the map, the full-screen view or first person.
 
-So the three buttons are not one job: **Info has 3 of 4 built, Money 2 of 4, and Research is
-none.**
+So the three buttons are not one job: **Info has 3 of 4 built, Money 2 of 4, and Research its two boxes and not its
+screen.**
+
+### The research opener and its two boxes (Q410)
+
+`FUN_004aa480`, decompiled 2026-10-16, is what the gadget's Research button (`0x2b`), R and the message bar's button of
+type `0x13` all run. In order: nothing with the game menu up (`FUN_0048c8d0`) or the screen open (`DAT_007cc1d8`); the
+park screen that is open closed (`FUN_00485b40`); the mode object made once (`FUN_00550ca0`, behind `DAT_00fb34be` bit
+1); then, when the game type `DAT_00fb3b7c` is 2 (Instant Action), `MessageBox_Open( &text, 2, 0, 0, 0, 0, 0, 0 )` with
+UITEXT `0x1d4`, "Research is automatic in Instant Action mode.", white (`ff ff ff`) in font 4, and return; when
+`mFirstResearcher` (`+0x1da742`) is nought, the same box with UITEXT `0x1d3`, "You need to hire some scientists before
+you can carry out any research!"; else the screen's tree (`0x00754490`, `FUN_004a96b0`), its sounds `0x9a` and `0x9b`,
+the effort gauge and the six sliders. `MessageBox_Open`'s second argument is the bottom place's button (`0x9873c8`; 1
+`b_okay`, 2 `b_exit`, 0 hidden) and its third that button's act, and the same pairs follow for `0x9873c9` and
+`0x9873ca`: here the cross alone, with no act, which the box's handler `FUN_0047eed0` answers by closing the box. The box
+pauses the park (`g_ParkRunning`) and holds the key tables off (`FUN_00486b70`) until it closes.
+
+**Built** (`ParkResearchOpener`, `MessageBox` with no tick): both boxes, at all three callers; the bar's type `0x13`
+answers 2, the tag taken off. The screen is counted, `RESEARCH_SCREEN`. In the running game (`q410/run-fix2`): R over the
+stock park logged `Park: research opener: Instant Action, so the box of UITEXT 0x1d4`, the box up with its cross alone
+(`1-r.png`) and the park's clock at tick 769 for 3 s under it; the gadget's button the same; B then R closed the buy
+screen and opened the box. A fresh Full Simulation park (`run-fs1`) gave the `0x1d3` box, and with a scientist hired
+`RESEARCH_SCREEN` counted and no box. The original given the same park (`q410/orig/a-sheet.png`) showed the same box by
+R, by the button and over the buy screen, its cross at (714, 326) of 1024 x 768, the bottom place.
+In no game run: the bar's type `0x13` (its rows 76 and 80 score only in Full Simulation; the test holds it), a carried
+hire that is a researcher, the other three themes.
 
 ### The Staff Training Budgets screen (Q352)
 
@@ -2085,9 +2107,9 @@ panel at the gadget's foot. Ctrl+P was not pressed (the postcard writes a pictur
 `ShortcutKey` runs rows 1 to 15 where the original's table is heard: over the park, and under a park screen; not under
 the game menu, a message box, the options screen, the map or the full-screen view; in first person the postcard's row
 alone. A screen row calls `ParkCategoryScreens.Show`, the opener the category buttons reach, so the category is left on
-it; Space opens the map as its button does. Park status, finances, research, the two locators and the postcard are
-counted (`PARK_STATUS_SCREEN`, `FINANCE_SCREEN`, `RESEARCH_SHORTCUT`, `STAFF_LOCATOR`, `VISITOR_LOCATOR`,
-`POSTCARD_SHORTCUT`), loans as `LOANS_SCREEN` outside Instant Action and not at all inside it; G with the entry price up
+it; Space opens the map as its button does; R runs the research opener ("The research opener and its two boxes").
+Park status, finances, the two locators and the postcard are counted (`PARK_STATUS_SCREEN`, `FINANCE_SCREEN`,
+`STAFF_LOCATOR`, `VISITOR_LOCATOR`, `POSTCARD_SHORTCUT`), loans as `LOANS_SCREEN` outside Instant Action and not at all inside it; G with the entry price up
 leaves it as it is. The orbit camera's W and D still scroll it, which the original's does not (its camera table binds the
 arrows and the keypad); A and S scroll it no longer. On the stock park (`q366/run-fix2`, the final game binary): each
 key's `Park keys: shortcut row N, name` line and the screen `windows` named, a frame a screen (`run-fix2/1-items-by-A.png`

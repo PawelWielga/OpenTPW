@@ -505,7 +505,7 @@ public class ParkGadgetPressTests
 		Assert.AreEqual( (false, false, false, null), (gadget.BarOut, gadget.ArmOut, camcorder.IsDown, tags.OnShow), "which lifts the camcorder button too" );
 		Assert.AreEqual( 1, tags.Standing.Count, "and leaves the tag" );
 
-		// A tag whose buttons are not built: an offer of research, and to decline.
+		// An offer of research, and to decline, which is not built.
 		var buttons = Times( "TAG_BAR_BUTTON" );
 		var offer = tags.Said( 5, 0, 7000 )!;
 		Frame( stack, false, new Vector2( 1000, 100 ), 7.1f );
@@ -514,9 +514,8 @@ public class ParkGadgetPressTests
 		Assert.AreEqual( (true, 0x213, true, -1, false),
 			(Find( gadget, 0x10d30 ).Visible, Find( gadget, 0x10d30 ).HelpText, Find( gadget, 0x10d2f ).Visible, Find( gadget, 0x10d2f ).HelpText, Find( gadget, 0x10d2e ).Visible),
 			"mb_resrch, mb_decline, and no erase button beside a decline" );
-		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
 		Assert.IsTrue( stack.ClickAt( 565, 1280 ) );
-		Assert.AreEqual( (buttons + 2, true), (Times( "TAG_BAR_BUTTON" ), gadget.BarOut), "each counted, and the bar left out" );
+		Assert.AreEqual( (buttons + 1, true), (Times( "TAG_BAR_BUTTON" ), gadget.BarOut), "the decline counted, and the bar left out" );
 		Assert.AreNotEqual( 0x10d2e, Under( gadget, 565, 1387 ), "the hidden erase button takes no pointer" );
 
 		// mb_locate of the other type, which goes by the item (FUN_004868d0, not read): counted, and the camera left.
@@ -526,7 +525,16 @@ public class ParkGadgetPressTests
 		Assert.IsTrue( stack.ClickAt( 119, 791 ), "the third tag up" );
 		Assert.AreEqual( (byItem, 515), (tags.OnShow, Find( gadget, 0x10d30 ).HelpText) );
 		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
-		Assert.AreEqual( (buttons + 3, looked), (Times( "TAG_BAR_BUTTON" ), ParkOrbitCameraMode.PointOfInterest) );
+		Assert.AreEqual( (buttons + 2, looked), (Times( "TAG_BAR_BUTTON" ), ParkOrbitCameraMode.PointOfInterest) );
+
+		// mb_resrch runs the research opener, which in Instant Action is its box, and answers 2: the tag off, the arm in.
+		Assert.IsTrue( Level.InstantAction, "no player: Instant Action" );
+		Assert.IsTrue( stack.ClickAt( 119, 866 ), "the offer again" );
+		Assert.AreEqual( offer, tags.OnShow );
+		Assert.IsTrue( stack.ClickAt( 565, 1172 ) );
+		Assert.AreEqual( (buttons + 2, true, false, null), (Times( "TAG_BAR_BUTTON" ), offer.Hidden, gadget.ArmOut, tags.OnShow),
+			"nothing counted, the tag hidden at once, the arm in" );
+		Assert.AreEqual( ParkResearchOpenerTests.InstantActionText, ParkResearchOpenerTests.TextOf( (UI.MessageBox)stack.Windows[^1] ) );
 	}
 
 	/// <summary>

@@ -45,9 +45,12 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q410. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q411. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q410 (`hud.md`, "The research opener and its two boxes"): the boxes are built; the research screen (six effort
+  sliders, `FUN_004a96b0`) is counted and waits on the lab (Q245). In no game run: the bar's type `0x13` (its rows
+  score only in Full Simulation; the test holds it), a carried hire that is a researcher, the other three themes.
   From Q397 (`hud.md`, "The analyser's other stamps"): `mParkLastOpened` is kept and nothing in either game reads it. In
   no game run: an open from a shortcut key (`InputButton.OpenPark` is not bound), a park made with no file, Full
   Simulation (not asked: the door is either mode's), the other three themes.
@@ -259,9 +262,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   are (the advisor's light, below). In no game run: lines 2 and 3 of any row, a line again past its 120
   quarter-ticks, two members of a kind, a park made with no file, Full Simulation (not asked: the rows are
   either game's and read neither). Not heard in either game.
-  From Q350 (`advisor-park.md`, "Every sideshow built, and more to research"): **the bar's research button
-  does nothing** (type `0x13`, `FUN_004aa480`: the research screen, and in Instant Action a box reading
-  "Research is automatic in Instant Action mode."; counted, `TAG_BAR_BUTTON`). The training lines are
+  From Q350 (`advisor-park.md`, "Every sideshow built, and more to research"): the bar's research button (type
+  `0x13`, `FUN_004aa480`) runs the opener, its boxes built (Q410). The training lines are
   built (Q351), so row 76's line now waits for the researchers' here as there: not run again. A kind's current project and highest group, `mMostExpensiveProject` and
   `mLabActive` are not made; the lab's own turn (`FUN_00503430`: 0.9 points every 20 ticks to a sideshow from
   ability 6) is not read. In no game run: line 2, the line again past its 900 quarter-ticks, the row in the
@@ -1726,14 +1728,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   island panel. The gate half landed with Q41: the flight plays M1 as the homing ends and M2 on a cancel
   (`docs/exe/lobby.md`, "Escape cancels the fly-in"), so do not re-pace it. Confirm: screenshot burst from the
   click to the loading screen.
-
-- [ ] **Q239. Research's two message boxes.** From Q139. The gadget's Research button and R both reach
-  `FUN_004aa480`, which with the game menu down closes the open park screen (`FUN_00485b40`) and opens a message box:
-  UITEXT `0x1d4`, "Research is automatic in Instant Action mode.", when the game type is 2 (Lost Kingdom's Easymode),
-  else UITEXT `0x1d3` when `mFirstResearcher` is nought (`hud.md`, "The nine screens behind Info, Money and
-  Research"). The message box is built; both sites only count (`RESEARCH_BUTTON`, `RESEARCH_SHORTCUT`). Build the two
-  boxes at both; the research screen behind them stays counted (blocked: `docs/PLAYER-GAPS.md`). Confirm: R and the
-  button in Lost Kingdom, the box photographed beside the original's.
 
 - [ ] **Q295. An object window's preview starts from the angle the last one left.** From Q291. The first angle is
   `fmod( [0x007afd50], 6.2831855 )` (`0x00468e2f`; `park-engine.md`, the object window's preview): the record is

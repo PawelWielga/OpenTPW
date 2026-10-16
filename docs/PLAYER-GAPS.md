@@ -20,8 +20,9 @@ however large it looks — that trap has been hit twice.
 (`FUN_004a0840`'s case `0x2b` goes straight to `FUN_004aa480`, as the map does) and its screen is six
 effort sliders over research groups, or a message box in Instant Action or with no researcher hired. This game has no
 research and no groups; Lost Kingdom's one researcher (thing 30) walks and researches as the original's does (Q134),
-the points for the lab counted and spent by nothing. It only logs, and
-counts each click as `RESEARCH_BUTTON`. **Do not open it as a task until a research system exists** (the system is `docs/QUEUE.md` Q245).
+the points for the lab counted and spent by nothing. Its two message boxes are built (Q410): in Lost Kingdom's
+Instant Action the button and R open "Research is automatic in Instant Action mode.", as the original's; the screen
+behind them is counted, `RESEARCH_SCREEN`. **Do not open the screen as a task until a research system exists** (the system is `docs/QUEUE.md` Q245).
 
 **Park status (screen 3) is deferred by Alexah, 2026-09-21** — *"I'm okay delaying work on the Info
 screen. It's not important at the moment."* The Information category is therefore seeded to screen **4**
@@ -79,8 +80,8 @@ laid and verified; and Info and Money now open real screens - **all four of thei
 drew in a running park and were photographed**. Research is not a category at all (`FUN_004a0840`'s
 case `0x2b` goes straight to `FUN_004aa480`, as the map does), and its one screen is six effort
 sliders over research groups: this game has **no research and no groups**, so there is nothing to put behind the
-button. It only logs, and counts each click as `RESEARCH_BUTTON`; R, the shortcut to the same function, is counted as
-`RESEARCH_SHORTCUT`.
+button. The button and R, the shortcut to the same function, open its two message boxes (Q410); the screen is
+counted, `RESEARCH_SCREEN`.
 
 - [x] **Buy** opens `ParkBuyScreen` (stream `0x00754cf8`), which cross-links to `ParkHireScreen`
       (stream `0x00751fa8`). Both are built on the original's control **type 7**, a scrolling
@@ -129,7 +130,7 @@ button. It only logs, and counts each click as `RESEARCH_BUTTON`; R, the shortcu
       is the guest's `mNumRides` (Q177b); shops, sideshows and visitors' Time In Park stay blank and counted
       rather than carrying a plausible wrong quantity. **UITEXT row 117 is literally `"?"`** - the original ships that visitor
       column unnamed too.
-- [ ] **RESEARCH** - logs and counts (`RESEARCH_BUTTON`), and blocked on a system that does not exist rather than on effort. See
+- [ ] **RESEARCH** - its two boxes are built (Q410); its screen is counted (`RESEARCH_SCREEN`), and blocked on a system that does not exist rather than on effort. See
       the note at the head of this item.
 - [x] **PATHS - DONE 2026-09-21, and verified in the running game.** `path 10 10` lays one for
       **20** (`Costs.PathCell`, measured from `Standard.sam` and confirmed through the game's own
@@ -187,8 +188,8 @@ button. It only logs, and counts each click as `RESEARCH_BUTTON`; R, the shortcu
 ### The original section, for the part still open
 
 - [x] **Was seen:** Info, Money and Research do nothing. **Five of the six now open something**, as of
-      2026-09-21 — Buy, Camcorder, Map, Info and Money. Only Research is left.
-- **Lives:** `ParkGadget.cs` — `b_resrch` logs each click and counts it as `RESEARCH_BUTTON`. `b_info` and `b_money` go through
+      2026-09-21 — Buy, Camcorder, Map, Info and Money; Research's boxes since Q410, its screen counted.
+- **Lives:** `ParkGadget.cs` — `b_resrch` runs `ParkResearchOpener`, whose screen is counted as `RESEARCH_SCREEN`. `b_info` and `b_money` go through
   `ParkCategoryScreens.Open`, which is the original's own remembered-tab picker.
 - **The real dispatch is decoded** in `docs/exe/hud.md`: `FUN_004a0940( n )` opens *the screen that
   category was last left on*, from three globals seeded 1 / 3 / 10. **The HUD is six category pickers,

@@ -7104,6 +7104,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   door opened on tick 763 `Park: mParkLastOpened stamped 3/2/2000 02:47:30 on mGameTick 763`, the file held it and
   held it again after a load; main's build left tick 15's. The original read tick 763's and stamped its own open
   on tick 917 exactly. 13 bugs put back, all caught after a test change.
+- [x] **Q410. The research opener's two boxes, at the gadget's button, R and the bar.** `FUN_004aa480`: the open park
+  screen closed first, then in Instant Action UITEXT `0x1d4` and with no researcher UITEXT `0x1d3`, each the plain box
+  with its cross alone (`MessageBox_Open( text, 2, 0, ... )`); the screen counted, `RESEARCH_SCREEN` (`hud.md`, "The
+  research opener and its two boxes"). The bar's type `0x13` answers 2. Confirmed: R over the stock park
+  `Park: research opener: Instant Action, so the box of UITEXT 0x1d4`, the clock at 769 for 3 s under it; the button
+  the same; B then R the buy screen closed; a fresh Full Simulation park the `0x1d3` box, and `1x RESEARCH_SCREEN`
+  with a scientist. The original showed the same box by R, the button and over the buy screen. 17 bugs put back,
+  all caught. Q239 is the same work, ticked with it.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
@@ -7184,6 +7192,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Q38. Confirm: one known effect drawn in the park, screenshot.
   Done by Q258 and Q261 (2026-10-10), ticked 2026-10-11 on Alexah's word after the week-end audit's reading:
   `WorldParticles` draws a park's particles, confirmed in the running game by those items.
+- [x] **Q239. Research's two message boxes.** Done as Q410's piece, the same opener, in the same commit. From Q139. The gadget's Research button and R both reach
+  `FUN_004aa480`, which with the game menu down closes the open park screen (`FUN_00485b40`) and opens a message box:
+  UITEXT `0x1d4`, "Research is automatic in Instant Action mode.", when the game type is 2 (Lost Kingdom's Easymode),
+  else UITEXT `0x1d3` when `mFirstResearcher` is nought (`hud.md`, "The nine screens behind Info, Money and
+  Research"). The message box is built; both sites only count (`RESEARCH_BUTTON`, `RESEARCH_SHORTCUT`). Build the two
+  boxes at both; the research screen behind them stays counted (blocked: `docs/PLAYER-GAPS.md`). Confirm: R and the
+  button in Lost Kingdom, the box photographed beside the original's.
 
 ## D. Alexah's list: decode first, then build (two sessions each)
 

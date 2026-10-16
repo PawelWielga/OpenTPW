@@ -11,7 +11,9 @@ namespace OpenTPW.UI;
 /// </para>
 /// <para>
 /// Quit Game (0x004a61d0) puts the cross in the bottom place, the tick above it, and leaves the top
-/// one empty, with "QUIT GAME / Are you sure you want to quit the game ?" (UITEXT 9).
+/// one empty, with "QUIT GAME / Are you sure you want to quit the game ?" (UITEXT 9). The research opener
+/// (FUN_004aa480) puts the cross in the bottom place with nothing to do and leaves the other two empty: a box
+/// that tells and asks nothing, made here with no tick.
 /// </para>
 /// <para>
 /// It takes no keys. Its callback (0x0047eed0) answers its buttons and its own closing and nothing
@@ -26,9 +28,10 @@ internal sealed class MessageBox : UiWindow
 {
 	private const int MessageFont = 4;
 
-	private readonly Action _onTick;
+	private readonly Action? _onTick;
 
-	public MessageBox( WindowStack stack, string text, Action onTick ) : base( stack )
+	/// <param name="onTick">What the tick does; with none the box has no tick, only its cross.</param>
+	public MessageBox( WindowStack stack, string text, Action? onTick ) : base( stack )
 	{
 		_onTick = onTick;
 		Modal = true;
@@ -61,6 +64,9 @@ internal sealed class MessageBox : UiWindow
 			Clicked = () => Stack.Close( this )
 		} );
 
+		if ( onTick == null )
+			return;
+
 		box.Add( new UiButton
 		{
 			Id = 0x9873c9,
@@ -73,6 +79,6 @@ internal sealed class MessageBox : UiWindow
 	private void Tick()
 	{
 		Stack.Close( this );
-		_onTick();
+		_onTick?.Invoke();
 	}
 }

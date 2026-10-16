@@ -3298,10 +3298,11 @@ run, and the lab's `+0x1430` 14.
 | No researcher | not said | the same (`researchers=0`) |
 | Who says it | the lobby's fly in the research hat | the same |
 | The tag and the bar | row 78, part 2, string 80; the research button and the bomb | the same |
-| The research button | the research screen's opener: in Instant Action a box of one line, and the tag off | counted, nothing opens, the tag stays |
+| The research button | the research screen's opener: in Instant Action a box of one line, and the tag off | the same, built since (Q410; `hud.md`, "The research opener and its two boxes"); in no game run here |
 | A fresh Full Simulation park | not run | said on tick 46 with one scientist, silent with two whose abilities make 8 of 60 |
 
-**Not built or not seen.** The research button's act and its Instant Action box (`FUN_004aa480`, not read);
+**Not built or not seen.** The research screen behind the button (`FUN_004aa480`'s last arm; its two boxes are built,
+Q410);
 the training line of a park whose researchers are poorly graded, which the original said in every run with
 the grade-0 researcher (built, Q351: "Staff nobody has trained"). In
 no game run: line 2 (sample 216; the test holds the turn), the line again past its 900 quarter-ticks, the row in

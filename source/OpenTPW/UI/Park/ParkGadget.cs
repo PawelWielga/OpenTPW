@@ -24,11 +24,10 @@ namespace OpenTPW.UI;
 /// </para>
 /// <para>
 /// <b>What is here and what is not.</b> The gadget draws, the date is live and the buttons light and
-/// click. <b>Five of the six open something</b>: buy and hire, the map, the camcorder arm, the
-/// Information category's staff/items/visitors lists, and the Money category's entry price. <b>Only
-/// Research does nothing</b> - it is not a category, and neither its six effort sliders nor its two
-/// message boxes are built - so it says so in the log and counts
-/// each click as <c>RESEARCH_BUTTON</c>. <b>The gauge is live.</b> There is a happiness on every guest, and
+/// click. <b>Each of the six opens something</b>: buy and hire, the map, the camcorder arm, the
+/// Information category's staff/items/visitors lists, the Money category's entry price, and Research, which is
+/// not a category: its opener's two message boxes are built and its six effort sliders are not
+/// (<see cref="ParkResearchOpener"/>). <b>The gauge is live.</b> There is a happiness on every guest, and
 /// FUN_004c7bb0 is what the original does with them - average them, and read nought while the park is
 /// shut, which is what still leaves it resting at its lowest part in a park nobody has entered.
 /// </para>
@@ -469,22 +468,15 @@ internal sealed class ParkGadget : UiWindow
 			Clicked = () => ParkCategoryScreens.Open( Stack, ParkCategoryScreens.Finance )
 		} );
 
-		// THE LAST ONE STILL DOES NOTHING, and it is not a category: FUN_004a0840's case 0x2b goes straight to
-		// FUN_004aa480 rather than through the remembered-tab picker, exactly as the map does. That opens a message
-		// box in Instant Action or with no researcher hired, and otherwise six effort sliders over research groups
-		// (docs/exe/hud.md, "The nine screens behind Info, Money and Research"). None of the three is built, and
-		// research itself waits on a research system this game lacks (docs/PLAYER-GAPS.md). Counted each click.
+		// Not a category: FUN_004a0840's case 0x2b goes straight to FUN_004aa480 rather than through the
+		// remembered-tab picker, exactly as the map does.
 		buttons.Add( new UiButton
 		{
 			Id = 0x2b,
 			Rect = new UiRect( 274, 1254, 392, 1372 ),
 			HelpText = 472,
 			Mesh = UiMesh.Get( "b_resrch" ),
-			Clicked = () =>
-			{
-				Unimplemented.Report( "RESEARCH_BUTTON" );
-				Log.Info( "Park gadget: Research - neither its screen nor its message boxes are built, so nothing more happens" );
-			}
+			Clicked = () => ParkResearchOpener.Open( Stack )
 		} );
 
 		// The aerial, the stream's second root: the mast 0x2d (94,918)-(144,984) with the red top 0x2e
@@ -719,6 +711,8 @@ internal sealed class ParkGadget : UiWindow
 	private const int EntryPrice = 0x18;
 	/// <summary>The bar's button that opens the Staff Training Budgets screen, b_staffcost (FUN_0048e0f0 to FUN_004b2750).</summary>
 	private const int StaffCosts = 0x15;
+	/// <summary>The bar's button that runs the research opener, mb_resrch (FUN_0048e0f0 to FUN_004aa480).</summary>
+	private const int Research = 0x13;
 	/// <summary>The bar's buttons that open the buy screen, mb_buy: types 9 to 0xc, a tab each from the first (FUN_0048e0f0).</summary>
 	private const int BuyFirstTab = 9;
 	private const int BuyLastTab = 0xc;
@@ -819,7 +813,8 @@ internal sealed class ParkGadget : UiWindow
 	/// <c>TAG_BAR_BUY_ITEM_ROW</c>. Types 0xd to 0x11 open the hire screen on the tab the type less 0xd names
 	/// (FUN_0049bdd0, which destroys the park screen that is open first, the hire screen too, so the screen is
 	/// always built), and answer 2. Type 0x15 opens the Staff Training Budgets screen (FUN_004b2750, nothing where
-	/// it is open already) and answers 2. Every other type opens a screen or answers an offer, none of it built: counted,
+	/// it is open already) and answers 2. Type 0x13 runs the research opener (<see cref="ParkResearchOpener"/>) and answers 2.
+	/// Every other type opens a screen or answers an offer, none of it built: counted,
 	/// <c>TAG_BAR_BUTTON</c>, and nothing more.
 	/// </summary>
 	private void BarButton( bool first )
@@ -862,6 +857,14 @@ internal sealed class ParkGadget : UiWindow
 				Stack.Open( new ParkBuyScreen( Stack, type - BuyFirstTab ) );
 			if ( tag.Item != 0 )
 				Unimplemented.Report( "TAG_BAR_BUY_ITEM_ROW" );
+			EraseTag();
+			return;
+		}
+
+		if ( type == Research )
+		{
+			Log.Info( $"Park gadget: message bar: button type {type} runs the research opener and takes tag {tag.Row.Id} off" );
+			ParkResearchOpener.Open( Stack );
 			EraseTag();
 			return;
 		}

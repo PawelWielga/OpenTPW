@@ -10,9 +10,9 @@ namespace OpenTPW.Tests;
 
 /// <summary>
 /// The park's reached paths that are counted and do nothing more: the game menu's Save Game and Publish
-/// Park, the gadget's postcard button, and R, the shortcuts table's research row (<c>0x0040c5b0</c>, into
-/// <c>FUN_004aa480</c>). Each is counted where the player reaches it and only there; and the shortcuts table's other
-/// rows, which open their screens or are counted. See <c>ParkFrontEnd.NotYet</c>, <c>ParkFrontEnd.ShortcutKey</c> and
+/// Park and the gadget's postcard button, each counted where the player reaches it and only there; R, the shortcuts
+/// table's research row (<c>0x0040c5b0</c>, into <c>FUN_004aa480</c>), heard in the same places; and the shortcuts
+/// table's other rows, which open their screens or are counted. See <c>ParkFrontEnd.NotYet</c>, <c>ParkFrontEnd.ShortcutKey</c> and
 /// <c>ParkGadget.SendPostcard</c>.
 ///
 /// <para>
@@ -120,44 +120,47 @@ public class ParkCountedPathsTests
 	}
 
 	/// <summary>
-	/// <b>R is counted on its release, with no modifier held, over the park</b>: held it is nothing, with Shift or
-	/// Ctrl it is nothing (a row's modifiers are matched exactly, <c>FUN_0040c990</c>), and another key is nothing.
+	/// <b>R runs the research opener on its release, with no modifier held, over the park</b>, which in Instant Action
+	/// is its box: held it is nothing, with Shift or Ctrl it is nothing (a row's modifiers are matched exactly,
+	/// <c>FUN_0040c990</c>), and another key is nothing.
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> read on the press counts while held; the modifier test dropped counts Shift+R; any key
-	/// counted counts T.
+	/// <b>Mutations:</b> read on the press opens while held; the modifier test dropped opens on Shift+R; any key
+	/// opening opens on T.
 	/// </remarks>
 	[TestMethod]
-	public void RLetGoOverTheParkIsCountedAsResearch()
+	public void RLetGoOverTheParkRunsTheResearchOpener()
 	{
 		var stack = APark();
 
 		Frame( stack, Down( Key.R ) );
 		Frame( stack );
-		Assert.AreEqual( 0, Times( "RESEARCH_SHORTCUT" ), "held: nothing" );
+		Assert.IsFalse( Asked( stack ), "held: nothing" );
 
 		Frame( stack, Up( Key.R ) );
-		Assert.AreEqual( 1, Times( "RESEARCH_SHORTCUT" ), "let go: counted" );
+		Assert.IsTrue( Asked( stack ), "let go: the box" );
 
 		foreach ( var modifier in new[] { Key.ShiftLeft, Key.ControlLeft } )
 		{
 			Frame( stack, Down( modifier ), Down( Key.R ) );
 			Frame( stack, Up( Key.R ) );
 			Frame( stack, Up( modifier ) );
+			Assert.IsFalse( Asked( stack ), modifier.ToString() );
 		}
 
 		Press( stack, Key.T );
-		Assert.AreEqual( 1, Times( "RESEARCH_SHORTCUT" ), "Shift+R, Ctrl+R and T: nothing" );
+		Assert.IsFalse( Asked( stack ), "T" );
+		Assert.AreEqual( 0, Times( "RESEARCH_SCREEN" ) );
 	}
 
 	/// <summary>
 	/// <b>R is heard where the shortcuts' table is run and nowhere else</b>: under a park screen (its handler runs
-	/// that table alone, <c>0x00488c13</c>), not under the game menu or another modal window, not under the
-	/// full-screen view, and not in first person.
+	/// that table alone, <c>0x00488c13</c>), which the opener closes first, not under the game menu or another modal
+	/// window, not under the full-screen view, and not in first person.
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> each gate taken out of <c>ShortcutKey</c>, or the full-screen view's branch reading R, counts
-	/// on its line; a park screen refused leaves the first at nought.
+	/// <b>Mutations:</b> each gate taken out of <c>ShortcutKey</c>, or the full-screen view's branch reading R, opens on
+	/// its line; a park screen refused leaves the first shut.
 	/// </remarks>
 	[TestMethod]
 	public void RIsHeardOnlyWhereTheShortcutsTableIsRun()
@@ -167,34 +170,45 @@ public class ParkCountedPathsTests
 
 		stack.Open( screen );
 		Press( stack, Key.R );
-		Assert.AreEqual( 1, Times( "RESEARCH_SHORTCUT" ), "under a park screen: counted" );
-		stack.Close( screen );
+		Assert.IsFalse( stack.Windows.Contains( screen ), "under a park screen: heard, and the screen closed" );
+		Assert.IsTrue( Asked( stack ), "under a park screen: the box" );
 
 		var box = new AWindow( stack, modal: true, parkScreen: false );
 
 		stack.Open( box );
 		Press( stack, Key.R );
-		Assert.AreEqual( 1, Times( "RESEARCH_SHORTCUT" ), "under a modal window: the window's" );
+		Assert.AreSame( box, stack.Windows[^1], "under a modal window: the window's" );
 		stack.Close( box );
 
 		OpenMenu( stack );
 		Press( stack, Key.R );
-		Assert.AreEqual( 1, Times( "RESEARCH_SHORTCUT" ), "under the game menu: the menu's" );
+		Assert.IsFalse( Asked( stack ), "under the game menu: the menu's" );
 		Press( stack, Key.Escape );
 
 		Press( stack, Key.F3 );
 		Assert.IsTrue( stack.Covered );
 		Press( stack, Key.R );
-		Assert.AreEqual( 1, Times( "RESEARCH_SHORTCUT" ), "under the full-screen view: not heard" );
+		Assert.IsFalse( Asked( stack ), "under the full-screen view: not heard" );
 		Press( stack, Key.F3 );
 
 		InFirstPerson( true );
 		Press( stack, Key.R );
-		Assert.AreEqual( 1, Times( "RESEARCH_SHORTCUT" ), "in first person: the viewfinder's layer, which has no such row" );
+		Assert.IsFalse( Asked( stack ), "in first person: the viewfinder's layer, which has no such row" );
 		InFirstPerson( false );
 
 		Press( stack, Key.R );
-		Assert.AreEqual( 2, Times( "RESEARCH_SHORTCUT" ), "and over the park again: counted" );
+		Assert.IsTrue( Asked( stack ), "and over the park again: the box" );
+	}
+
+	/// <summary>Whether the research opener's box is in front; if it is, it is closed.</summary>
+	private static bool Asked( UI.WindowStack stack )
+	{
+		if ( stack.Windows.Count == 0 || stack.Windows[^1] is not UI.MessageBox box )
+			return false;
+
+		Assert.AreEqual( ParkResearchOpenerTests.InstantActionText, ParkResearchOpenerTests.TextOf( box ) );
+		stack.Close( box );
+		return true;
 	}
 
 	/// <summary>

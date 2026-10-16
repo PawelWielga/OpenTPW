@@ -108,6 +108,11 @@ structure, and hand it to `loadfile.sh` through `POLL`.
 
 Each was found by trial in the item named, and cost a run to find.
 
+- **A message box in either game, and its cross** (Q410, `q410/confirm.py`, `q410/orig/run.sh`): here the console's
+  `windows` ends "MessageBox" while one is up (the reply begins `[dbg] windows:`), and `control 9873c8` finds its
+  bottom place to click; R and the gadget's Research button (`control 2b`) open one in an Instant Action park. In the
+  original, off-screen after `loadfile.sh load`: R (`xdotool keydown r`/`keyup`), the Research button at (166, 656) and
+  the box's cross at (714, 326) of the 1024 x 768 frame close it again; B opens the buy screen for a park screen to close.
 - **The hire screen's account in both games, and a month turned** (Q385): this game's `money` prints the analyser's
   money months (`month balance N slot S cashin T/N staff T/N costs T/N slot S ...`, the month so far over the newest
   closed; the balance ring has no month so far, Q387); the log's
