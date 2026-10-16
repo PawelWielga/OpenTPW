@@ -747,6 +747,9 @@ public sealed class ParkState
 		MonthArrivals = park.Save?.MonthArrivals?.Copy() ?? new();
 		LifetimeVisitors = park.Save?.LifetimeVisitors ?? 0;
 		MostPaidForTicket = park.Save?.MostPaidForTicket ?? 0;
+		// The original's load reads the month's two and never the third (its read path calls the writer at 0x004c719a),
+		// leaving it as its load factory's unzeroed memory had it (FUN_005179c0); nought here, the constructor's.
+		MisbehavingKids = park.Save?.MisbehavingKids is { } kids ? kids with { Ever = 0 } : default;
 		MonthCosts = park.Save?.MonthCosts?.Copy() ?? new();
 		MonthStaffCosts = park.Save?.MonthStaffCosts?.Copy() ?? new();
 		MonthCashIn = park.Save?.MonthCashIn?.Copy() ?? new();
@@ -1037,6 +1040,14 @@ public sealed class ParkState
 	/// taken, as <see cref="LifetimeVisitors"/> is kept.
 	/// </summary>
 	public int MostPaidForTicket { get; private set; }
+
+	/// <summary>
+	/// The park analyser's three counts of misbehaving kids (<c>+0x21bfc</c> to <c>+0x21c04</c>): the month's two the
+	/// file's at a load and the third nought, and all three nought in a park made with no file (<c>FUN_004c58c0</c>);
+	/// <see cref="TurnTheMonth"/> zeroes the month's two. What
+	/// counts into them, a guard's chase ending (<c>FUN_004c74f0</c>), waits on the pranks (<c>DECIDE_PRANK_*</c>).
+	/// </summary>
+	public ParkWorld.MisbehavingKidCounts MisbehavingKids { get; private set; }
 
 	/// <summary>
 	/// The park analyser's month of every withdrawal (<c>+0x1f5a0</c>) and its closed months, the file's at a load and
@@ -1412,7 +1423,7 @@ public sealed class ParkState
 	/// bank's <see cref="Balance"/> into its first ring, then closes its seven money rings, all costs, staff costs,
 	/// training, cash in, gate, shop and sideshow takings, in that order, and the month's arrivals, then samples <paramref name="guestsInside"/>,
 	/// <see cref="LifetimeVisitors"/>, the <see cref="RidesStanding"/>, <paramref name="guestsHappiness"/>, the <see cref="ParkValue"/> of
-	/// <paramref name="catalogue"/>'s items, the mean of the <see cref="LeaverStays"/> and the <see cref="ParkScore"/>; the two counts of misbehaving kids it zeroes (<c>+0x21bfc</c>, <c>+0x21c00</c>) are not kept, and are counted (<c>ANALYSER_MONTH_CLOSE</c>). The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
+	/// <paramref name="catalogue"/>'s items, zeroes the month's two <see cref="MisbehavingKids"/> counts, then samples the mean of the <see cref="LeaverStays"/> and the <see cref="ParkScore"/>. The bank's turn, <c>FUN_004d0370</c>: <see cref="BatchBalance"/> deposited and zeroed; each bought loan's
 	/// instalment withdrawn, its months repaid counted, <see cref="ProfitThisYear"/> given the principal's share back
 	/// by the original's unsigned division, and the loan closed at its period; then, with the balance and
 	/// <see cref="LastBalance"/> both below nought, the whole thirty-day months since <see cref="TurnEnteredRed"/> -
@@ -1440,13 +1451,14 @@ public sealed class ParkState
 		MonthRides.Push( RidesStanding( catalogue ) );
 		MonthHappiness.Push( guestsHappiness );
 		MonthParkValue.Push( ParkValue.Of( this, catalogue ) );
+		MisbehavingKids = MisbehavingKids with { Month = 0, GotAwayThisMonth = 0 };
 		MonthMeanStay.Push( LeaverStays.MeanOfNewest( ParkMonthRing.Stays ) );
 		MonthParkScore.Push( ParkScore.Of( this, catalogue, guestsInside, staff ) );
 		Log.Info( $"Park: analyser month closed, balance {MonthBalance.Newest}, park value {MonthParkValue.Newest}, guests inside {MonthGuestsInside.Newest}, "
 			+ $"visitors {MonthVisitors.Newest}, rides {MonthRides.Newest}, happiness {MonthHappiness.NewestSingle}, mean stay {MonthMeanStay.Newest}, park score {MonthParkScore.Newest}, costs {MonthCosts.Newest}, staff costs {MonthStaffCosts.Newest}, "
 			+ $"training {MonthTraining.Newest}, cash in {MonthCashIn.Newest}, gate {MonthGateTakings.Newest}, "
-			+ $"shops {MonthShopTakings.Newest}, sideshows {MonthSideshowTakings.Newest}, arrivals {MonthArrivals.Newest}" );
-		Unimplemented.Report( "ANALYSER_MONTH_CLOSE" );
+			+ $"shops {MonthShopTakings.Newest}, sideshows {MonthSideshowTakings.Newest}, arrivals {MonthArrivals.Newest}, "
+			+ $"misbehaving kids {MisbehavingKids.Month} got away {MisbehavingKids.GotAwayThisMonth} ever {MisbehavingKids.Ever}" );
 
 		var batch = BatchBalance;
 		BatchBalance = 0;

@@ -1854,8 +1854,7 @@ load factory's empty and the close's read). **The month's close**, after the par
 `FUN_004cef30` on the stays with fifty (`PUSH 0x32`) takes the newest min(50, filled) (filled the count once wrapped,
 else slot + 1), newest first, sums them into a double and answers how many it took (`RET 8`, `EAX`); with any, the
 close divides (`FDIVR`) and `__ftol`s (toward nought), else nought, and pushes that into the 15th. The stays are left as
-they are. The same stretch zeroes `+0x21bfc` and `+0x21c00`, two of the misbehaving kids' counts (`FUN_004c74f0`, from
-`FUN_004d6790`; a challenge's test `FUN_005a04f0` reads them through `FUN_004c94a0`), not read further. **Readers**: the
+they are. The same stretch zeroes `+0x21bfc` and `+0x21c00`, this month's misbehaving kids (below, "The misbehaving kids"). **Readers**: the
 park status screen's graph (above, "The guests inside and the rides at a close"); that its series is the one lettered
 "Average time in park" is not read from a label.
 
@@ -1916,6 +1915,39 @@ prints it with the score now. Nothing here reads it: the park status screen is n
 [18, 19] with every ring on slot 1; main's build left [18] a slot behind. The original given this game's file read
 [18, 19] and its own close at once pushed 19; given main's, its close pushed 19 into slot 1 with its 15th on slot 2
 (`q394/orig/c-load.log`, `b-load.log`, `side-by-side.png`).
+
+#### The misbehaving kids
+
+Read 2026-10-16 (Q395). **Three counts sit before `mLifetimeVisitors`**: `mMisbehavingKids` (`+0x21bfc`) and
+`mMisbehavingKidsThatGotAwayWithIt` (`+0x21c00`), this month's, and `mMisbehavingKidsEver` (`+0x21c04`). Their one adder
+is `FUN_004c74f0( caught )`: the first and the third one more, the second one more where `caught` is nought. Its one
+caller is the guard's chase, `FUN_004d6790`: the catch ("Guard: Caught a kid", `0x004d691b`) hands 2, every other end
+("Guard: abandoned chase", `0x004d6a1f`) hands nought. Nothing else writes them (the image's every operand `+0x21bfc` to
+`+0x21c04`): the constructor `FUN_004c58c0` zeroes all three, the close zeroes the month's two (`0x004c79eb`,
+`0x004c79f1`, `EBP` nought, after the park value and before the stays' mean), and the serialiser `FUN_004c5d70`.
+**The serialiser's read never reads the third**: where it reads the first two with `FUN_004fae10` (the stream's read,
+vtable `+8`, "File read failed"), it hands the third to `FUN_004ced70` (`0x004c719a`), the write (vtable `+0xc`, "File
+write failed"), so a load writes the analyser's word over the buffer and the stream moves on four: the lifetime
+visitors that follow read right. The load factory `FUN_005179c0` allocates the analyser (`0x21c50` bytes) without
+zeroing these three, so after a load the third is whatever that memory held: 0 in two loads, -999 in a third. **The one
+reader** is `FUN_004c94a0( got away )` (the second if non-nought, else the first), asked with nought by `0x005a04f0`, the
+score of the advisor's polled row 264 (message `0x108`, its first response 514): `LotsOfPranks.Score` (100) when this
+month's count is over `LotsOfPranks.MorePrankstersThan` (2), else nought. Nothing reads the third.
+
+**Measured** (`q395/sweep.py`): of 608 park files on hand, 594 hold nought, nought and nought; nine hold 0, 0, 3 (Alexah's
+Full Simulation jungle park and its copies); one the original wrote holds 1, 1, 1 (`q253/orig/sold-by-the-original.TPWS`,
+a chase abandoned that month, counted since its load).
+
+**OpenTPW** (Q395). `ParkWorld.MisbehavingKids` reads the three (record `+73468`), `PutMisbehavingKids` writes them;
+`ParkState.MisbehavingKids` takes the file's month two at a load and nought for the third, where the original's is its
+load's unzeroed memory (a deviation, said at the site); `TurnTheMonth` zeroes the month's two; `money` and the close's
+line print them. Nothing counts into them: the guard's chase waits on the pranks (`DECIDE_PRANK_*`), and row 264 is not
+built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`). With them the close is built whole (`ANALYSER_MONTH_CLOSE` gone).
+**Confirmed** (`q395/`): the stock park with the three written 5, 2 and 9 (`kids.TPWS`), loaded; `money` read `misbehaving
+kids 5 got away 2 ever 0`; the close on tick 1470 named `misbehaving kids 0 got away 0 ever 0`, the file held 0, 0, 0 and
+`unimplemented` no longer listed the close; main's build kept 5, 2, 9 in the file and listed it. The original given
+main's file read 5, 2 and 0 (not 9) and its close on tick 1471 zeroed the two on the tick its ring 1 moved; given this
+game's, 0, 0, 0 throughout (`q395/orig/c-load.log`, `d-load.log`, `side-by-side.png`).
 
 #### The first row is picked as a list fills
 

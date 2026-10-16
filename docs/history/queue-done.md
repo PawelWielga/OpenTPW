@@ -7085,6 +7085,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   stock park with the Belly Bounce at level 2, `money` `park score 18 slot 0 now 19`, the close on tick 1470 `park score
   19`, written [18, 19]; main's build left [18] a slot behind. The original read [18, 19] and its own close pushed 19;
   given main's file, 19 a slot behind its 15th. 25 bugs put back, all caught.
+- [x] **Q395. The analyser's misbehaving kids' counts, kept.** `+0x21bfc`, `+0x21c00`, `+0x21c04` (record `+73468`):
+  the guard's chase's tallies (`FUN_004c74f0`), the month's two zeroed by the close (`0x004c79eb`); the original's load
+  never reads the third (`0x004c719a` calls the writer), so it is nought at a load here. Read, zeroed and written
+  (`hud.md`, "The misbehaving kids"); the close is built whole. Confirmed: 5, 2, 9 written in the stock park, `money`
+  `5 got away 2 ever 0`, the close on tick 1470 `0 got away 0 ever 0`, written 0, 0, 0, `ANALYSER_MONTH_CLOSE` gone;
+  main's build kept 5, 2, 9. The original read 5, 2, 0 and its close on 1471 zeroed the two. 14 bugs put back, all caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -2145,6 +2145,8 @@ public sealed partial class ParkWorld : IParkInitialState
 				LeaverStays = ParkMonthRing.Read( _data.AsSpan( start + AnalyserLeaverStaysAt, ParkMonthRing.SizeOf( ParkMonthRing.Stays ) ), ParkMonthRing.Stays );
 				LifetimeVisitors = ReadInt32At( start + AnalyserLifetimeVisitorsAt );
 				MostPaidForTicket = ReadInt32At( start + AnalyserMostPaidForTicketAt );
+				MisbehavingKids = new( ReadInt32At( start + AnalyserMisbehavingKidsAt ), ReadInt32At( start + AnalyserMisbehavingKidsAt + 4 ),
+					ReadInt32At( start + AnalyserMisbehavingKidsAt + 8 ) );
 			}
 
 			_things.Add( new( id, model ) );
@@ -2818,6 +2820,38 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// compare (<c>FUN_004c7520</c>). Null where the file holds no analyser.
 	/// </summary>
 	public int? MostPaidForTicket { get; private set; }
+
+	/// <summary>
+	/// The park analyser's three counts of misbehaving kids: <c>mMisbehavingKids</c> (<c>+0x21bfc</c>) and
+	/// <c>mMisbehavingKidsThatGotAwayWithIt</c> (<c>+0x21c00</c>), this month's, and <c>mMisbehavingKidsEver</c>
+	/// (<c>+0x21c04</c>). A guard's chase ending counts one into the first and the third, and into the second where the kid
+	/// got away (<c>FUN_004c74f0</c>, from <c>FUN_004d6790</c>); the month's close zeroes the first two. The original
+	/// writes the third and never reads it back (<c>0x004c719a</c>).
+	/// </summary>
+	public readonly record struct MisbehavingKidCounts( int Month, int GotAwayThisMonth, int Ever );
+
+	/// <summary>The park analyser's <see cref="MisbehavingKidCounts"/>. Null where the file holds no analyser.</summary>
+	public MisbehavingKidCounts? MisbehavingKids { get; private set; }
+
+	/// <summary>Where the three <see cref="MisbehavingKidCounts"/> sit in the analyser's record, one after another (<c>FUN_004c5d70</c>).</summary>
+	private const int AnalyserMisbehavingKidsAt = 73468;
+
+	/// <summary>
+	/// Writes the analyser's <see cref="MisbehavingKidCounts"/> over the file's in <paramref name="body"/>, a copy of this
+	/// park's own. A park with no analyser is left alone.
+	/// </summary>
+	public void PutMisbehavingKids( byte[] body, MisbehavingKidCounts kids )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+
+		if ( AnalyserAt < 0 )
+			return;
+
+		var at = body.AsSpan( AnalyserAt + AnalyserMisbehavingKidsAt, 12 );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at, kids.Month );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[4..], kids.GotAwayThisMonth );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[8..], kids.Ever );
+	}
 
 	/// <summary>Where <c>mLifetimeVisitors</c> and <c>mMostPaidForTicket</c> sit in the analyser's record (<c>FUN_004c5d70</c>).</summary>
 	private const int AnalyserLifetimeVisitorsAt = 73480, AnalyserMostPaidForTicketAt = 73532;

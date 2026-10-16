@@ -2076,6 +2076,7 @@ public static class DebugConsole
 						$"month balance {purse.MonthBalance.Newest} slot {purse.MonthBalance.Current} " +
 						$"park value {ParkValue.Of( purse, Level.Current.Catalogue )} ring {purse.MonthParkValue.Newest} slot {purse.MonthParkValue.Current} " +
 						$"lifetime visitors {purse.LifetimeVisitors} ring {purse.MonthVisitors.Newest} slot {purse.MonthVisitors.Current} most paid {purse.MostPaidForTicket} " +
+						$"misbehaving kids {purse.MisbehavingKids.Month} got away {purse.MisbehavingKids.GotAwayThisMonth} ever {purse.MisbehavingKids.Ever} " +
 						$"guests inside ring {purse.MonthGuestsInside.Newest} slot {purse.MonthGuestsInside.Current} rides {purse.RidesStanding( Level.Current.Catalogue )} ring {purse.MonthRides.Newest} slot {purse.MonthRides.Current} " +
 						$"arrivals {purse.MonthArrivals.Total}/{purse.MonthArrivals.Newest} slot {purse.MonthArrivals.Current} " +
 						$"happiness {purse.MonthHappiness.NewestSingle} slot {purse.MonthHappiness.Current} now {ParkPeople.Current?.GuestsInsideHappiness} " +

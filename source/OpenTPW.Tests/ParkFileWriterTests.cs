@@ -426,6 +426,28 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
+	/// The level hands the writer the analyser's three counts of misbehaving kids as the running park holds them: a
+	/// park read from a body holding 5, 2 and 9 holds 5, 2 and nought (the third is never read), written over the shipped
+	/// file's nought, nought and nought.
+	/// </summary>
+	[TestMethod]
+	public void TheLevelWritesTheMisbehavingKids()
+	{
+		SetCurrentPlayer( new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
+
+		var body = new SaveReader( new MemoryStream( raw ) ).ReadFile();
+		shipped.PutMisbehavingKids( body, new( 5, 2, 9 ) );
+		var state = new ParkState( new ParkWorld( body ) );
+
+		Level.WritePark( shipped, state, "jungle", "Kids" );
+
+		var written = Read( File.ReadAllBytes( Path.Combine( Jungle, "Kids.TPWS" ) ) );
+
+		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 0, 0, 0 ), shipped.MisbehavingKids );
+		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 5, 2, 0 ), written.MisbehavingKids );
+	}
+
+	/// <summary>
 	/// The level hands the writer the park's things: with its scripts bound and two seconds gone, the file's clock
 	/// has moved on by them and the Belly Bounce's queue head is the park's; without them the file's go out, and with
 	/// a file whose clock will not read they go out counted.

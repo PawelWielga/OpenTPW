@@ -184,4 +184,30 @@ public class ParkMonthRingTests
 		Assert.AreEqual( 31, System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( same.AsSpan( record + 73532 ) ) );
 		Assert.AreEqual( 4321, System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian( same.AsSpan( eleventh + 13 + 4 ) ), "the count at the 11th ring's slot 1" );
 	}
+
+	/// <summary>
+	/// <b>The analyser's three counts of misbehaving kids</b>: thing 5's record at 73,468, 73,472 and 73,476, nought in
+	/// the shipped park. Written back as 5, 2 and 9, each reads back as written, at its own place and nowhere else.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a count read or written a dword out, or as another; the writer not handed them.</remarks>
+	[TestMethod]
+	public void TheShippedParksMisbehavingKidsReadAndWriteBack()
+	{
+		var shipped = Shipped();
+
+		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 0, 0, 0 ), shipped.MisbehavingKids );
+
+		var same = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value,
+			MisbehavingKids: new( 5, 2, 9 ) ) );
+
+		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 5, 2, 9 ), new ParkWorld( same ).MisbehavingKids );
+
+		var original = ParkFileWriter.Body( shipped, new ParkFileWriter.Running( shipped.GameTick, false, 13, 0, shipped.Camera.Saved!.Value ) );
+		var differ = Enumerable.Range( 0, same.Length ).Where( at => same[at] != original[at] ).ToArray();
+		var record = shipped.AnalyserAt;
+
+		Assert.IsTrue( differ.Length == 3 && differ.All( at => at >= record + 73468 && at < record + 73480 ), "the three dwords alone" );
+		Assert.AreEqual( (5, 2, 9), (BitConverter.ToInt32( same, record + 73468 ), BitConverter.ToInt32( same, record + 73472 ),
+			BitConverter.ToInt32( same, record + 73476 )) );
+	}
 }

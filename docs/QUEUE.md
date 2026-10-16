@@ -44,19 +44,25 @@ the original.
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 
-- [ ] **Q395. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
+- [ ] **Q396. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q395 (`hud.md`, "The misbehaving kids"): the three counts are kept. Nothing counts into them: the guard's chase
+  (`FUN_004d6260` to `FUN_004d6790`) waits on the pranks (`DECIDE_PRANK_*`), and its catch's sound `0x89` with it. The
+  advisor's row 264 (`LotsOfPranks`, message `0x108`, score `0x005a04f0`: 100 past two this month) reads the month's count
+  and is not built (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`). The original's third count after a load is its memory's
+  (nought, or -999 once); nought here (said at `ParkState`). Why the original's park loaded at tick 755 ran no close in
+  120 s (`q395/orig/a3-load.log`: its words stood still past tick 788 with the clock true) is not looked into. In no
+  game run: a kid counted, Full Simulation (not asked: the counts are either mode's), the other three themes.
   From Q394 (`hud.md`, "The park score"): the 16th ring is kept, so all sixteen are. Nothing here reads it: the park
   status screen (`PARK_STATUS_SCREEN`), which graphs it, is not built. The misbehaving kids' two counts the close zeroes
-  (`+0x21bfc`, `+0x21c00`) are still the file's bytes (`ANALYSER_MONTH_CLOSE`). In no game run: a park past 50 guests
+  are kept (Q395). In no game run: a park past 50 guests
   inside or past fourteen rides (the caps, tested only), a sideshow, shop or feature bought or sold before a close, a
   member hired or fired before a close (tested only), Full Simulation (not asked: the ring is either mode's), the
   other three themes.
   From Q393 (`hud.md`, "The leavers' stays"): the stays and the 15th ring are kept. Nothing here reads them: the park
-  status screen (`PARK_STATUS_SCREEN`), which graphs the 15th, is not built. The 16th is kept (Q394); the misbehaving
-  kids' two counts the same close zeroes (`+0x21bfc`, `+0x21c00`, `FUN_004c74f0` from `FUN_004d6790`) are still the
-  file's bytes (`ANALYSER_MONTH_CLOSE`). A stay is handed where `PeepBehaviour` puts a guest walking outside
+  status screen (`PARK_STATUS_SCREEN`), which graphs the 15th, is not built. The 16th is kept (Q394), and the misbehaving
+  kids' two counts the same close zeroes are kept (Q395). A stay is handed where `PeepBehaviour` puts a guest walking outside
   at the stop, the one way in here; the original hands it on any entry to state `0x15`. In no game run: a guest who
   never paid at the stop (tested only), a stay ring gone round fifty, a stay of a guest stamped after the clock
   (negative, tested only), Full Simulation (not asked: the rings are either mode's), the other three themes.

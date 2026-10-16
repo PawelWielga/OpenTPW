@@ -859,6 +859,37 @@ public class ParkBankTests
 		Assert.AreEqual( (6, before + 1), (bank.MonthsInTheRed(), Times( "BANK_PARK_ENDS_IN_THE_RED" )) );
 	}
 
+	/// <summary>
+	/// <b>The month's close zeroes this month's two counts of misbehaving kids</b> (<c>0x004c79eb</c>, <c>0x004c79f1</c>):
+	/// a copy of the shipped park given 5, 2 and 9 at the analyser's record loads 5, 2 and nought, the original's load
+	/// never reading the third (<c>0x004c719a</c>), and closes on nought, counting no gap. A park made with no file starts
+	/// at nought (<c>FUN_004c58c0</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the file's counts not read, or the third read; the close zeroing neither or one; the gap counted again.</remarks>
+	[TestMethod]
+	public void TheMonthsCloseZeroesThisMonthsMisbehavingKids()
+	{
+		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 0, 0, 0 ), Bank().MisbehavingKids, "no file" );
+
+		var payload = Payload();
+		var at = new ParkWorld( payload ).AnalyserAt + 73468;
+		Put( payload, at, 5 );
+		Put( payload, at + 4, 2 );
+		Put( payload, at + 8, 9 );
+		var world = new ParkWorld( payload );
+		var bank = new ParkState( world );
+		var people = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), null, bank );
+		var before = Times( "ANALYSER_MONTH_CLOSE" );
+
+		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 5, 2, 9 ), world.MisbehavingKids, "the file's" );
+		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 5, 2, 0 ), bank.MisbehavingKids, "the park's" );
+
+		TurnTheMonth( bank, people );
+
+		Assert.AreEqual( new ParkWorld.MisbehavingKidCounts( 0, 0, 0 ), bank.MisbehavingKids );
+		Assert.AreEqual( before, Times( "ANALYSER_MONTH_CLOSE" ), "the close is built whole" );
+	}
+
 	private (ParkState Bank, ParkPeople People) Month()
 	{
 		var world = Park();

@@ -68,7 +68,8 @@ public static class ParkFileWriter
 	/// file's where it is null. <see cref="MonthRings"/> is the analyser's eight money rings, its park value and its
 	/// lifetime visitors (<see cref="ParkWorld.PutMonthRings"/>); the file's where it is null. <see cref="Visitors"/> is
 	/// the analyser's lifetime visitors and dearest ticket (<see cref="ParkWorld.PutLifetimeVisitors"/>); the file's
-	/// where it is null.
+	/// where it is null. <see cref="MisbehavingKids"/> is the analyser's three counts of misbehaving kids
+	/// (<see cref="ParkWorld.PutMisbehavingKids"/>); the file's where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -81,7 +82,8 @@ public static class ParkFileWriter
 		Func<uint, ParkWorld.AdvisorAction>? AdvisorAction = null,
 		int? AdvisorPollCursor = null, long? LastStaffHired = null, long? LastObjectBuilt = null,
 		(IReadOnlyList<int> Budgets, bool HaveEverTrained)? Training = null,
-		ParkWorld.MonthRingSet? MonthRings = null, (int Lifetime, int MostPaidForTicket)? Visitors = null );
+		ParkWorld.MonthRingSet? MonthRings = null, (int Lifetime, int MostPaidForTicket)? Visitors = null,
+		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -253,6 +255,9 @@ public static class ParkFileWriter
 
 		if ( running.Visitors is { } visitors )
 			loaded.PutLifetimeVisitors( body, visitors.Lifetime, visitors.MostPaidForTicket );
+
+		if ( running.MisbehavingKids is { } kids )
+			loaded.PutMisbehavingKids( body, kids );
 
 		if ( running.Training is { } training )
 			loaded.PutTrainingBudgets( body, training.Budgets, training.HaveEverTrained );
