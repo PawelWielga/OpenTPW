@@ -7332,6 +7332,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (51,27)): each quick click put the tool away (mode 0, the anchor gone), wrote nothing (the area 1 and 16384), cut `0xc1`
   and left the idle pointer with the bar "Left-click to build path" and no menu (`q438/orig/run.sh`, `q438/run1`,
   `q438/side-by-side.png`, `q438/PREDICTION.txt`). Test `EscapeOrAQuickRightClickWithThePatrolToolArmedPutsItAwayAndWritesNothing`.
+- [x] **Q439. The patrol tool's refused click's sound `0xaf` (a piece of Q420).** Done 2026-10-17: built
+  (`UiSounds.Refused`, effect 175 `blnl_error1` at its own 35, flat), silent where the press went to an open park screen
+  (`DAT_008186d8`, `0x00524a77`). Ours, the final build (`q439/run6`): the click on (45,15)-(53,15) logged `... - sound 0xaf,
+  a voice` and the mix matched `blnl_error1` once at 0.999, gain 0.1755 (0.35 x 0.5 x 1); none at the anchor. The
+  original (`q439/orig`, round 1j): refused the same way, its sound 0.318 under the music, the capture's best (not
+  shown). Test `ARefusedPatrolClickIsHeardUnlessItsPressWentToAParkScreen` (`q439/PREDICTION.txt`, `side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

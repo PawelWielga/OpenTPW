@@ -48,9 +48,16 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q439 (`hud.md`, "The patrol switch and the patrol tool"): the refused click's sound is built for the patrol
+  tool, so the nearest piece is the same call at the other three refusals it serves, one helper away
+  (`UiSounds.Refused`; `0x00524aa7` is ahead of the commit's mode switch): a placement on a red cell
+  (`PLACEMENT_REFUSED_SOUND_0xAF`), the path tool (`PATH_TOOL_REFUSED_SOUND_0xAF`, two sites) and the queue tool
+  (`QUEUE_TOOL_REFUSED_SOUND_0xAF`); then the leavers' draw on the save's seed (`park.md`). Not shown in the original:
+  its sound under the music (0.318; run it with the Music switch off). In no game run: a refused click beside an open
+  park screen (tested only), Full Simulation (not asked: the tool is either mode's), the other three themes.
   From Q438 (`hud.md`, "The patrol switch and the patrol tool"): a quick right click with the tool armed is the
   original's, so the nearest piece is the patrol tool's refused click's sound `0xaf` (counted,
-  `PATROL_TOOL_REFUSED_SOUND_0xAF`; heard by the game's own mix), then the leavers' draw on the save's seed
+  `PATROL_TOOL_REFUSED_SOUND_0xAF`; heard by the game's own mix; built, Q439), then the leavers' draw on the save's seed
   (`park.md`; it needs the park's one shared generator). In no game run: a right drag or a held right press with the
   tool armed (the original hands the camera the press late; what its orbit camera does with bit 4 of `DAT_00790aac`,
   held, is not decoded, and ours reads no right button), the click with RMB cancel off, Full Simulation (not asked: the
@@ -80,7 +87,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   member fenced where one path cell lies stands idle on it with thought `0x16` seconds after reaching it here (the patrol
   roll finds only his own cell); watch the original's past nineteen seconds before changing `StaffBehaviour`. Seen: at
   the two runs' cameras our lifted squares look far higher above the ground than the original's, at the same lift
-  numbers; compare at one camera (compared, Q435: the same at one camera). Counted, not built: the refused click's sound `0xaf` (`PATROL_TOOL_REFUSED_SOUND_0xAF`).
+  numbers; compare at one camera (compared, Q435: the same at one camera). Counted, not built: the refused click's sound `0xaf` (`PATROL_TOOL_REFUSED_SOUND_0xAF`; built, Q439).
   In no game run: `0xc1` cut by the click here (the line ended first; the original's was cut; tested), Escape (run, Q437) or a
   right click with the tool armed (run, Q438), Full Simulation (not asked: the window is either mode's), the other three themes.
   Not heard.

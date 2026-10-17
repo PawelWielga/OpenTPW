@@ -14,7 +14,7 @@ namespace OpenTPW;
 ///
 /// <para>
 /// <b>A click</b> (<c>FUN_00524960</c>'s <c>0x36</c> arm, on the release): a red outline puts the tool away with sound
-/// <c>0xaf</c> and leaves the area as it was; the first click anchors; the second writes the rectangle's two corners to
+/// <c>0xaf</c> (<see cref="UI.UiSounds.Refused"/>) and leaves the area as it was; the first click anchors; the second writes the rectangle's two corners to
 /// the member (<c>FUN_00506e50</c>: the least corner's cell id to <c>+0x20a</c>, the greatest's to <c>+0x20c</c>) and puts
 /// the tool away. Neither click plays a sound.
 /// </para>
@@ -74,7 +74,12 @@ public static class ParkPatrolTool
 	}
 
 	/// <summary>One click of the tool, at the cell under the pointer.</summary>
-	public static string Run( int clickX, int clickY )
+	/// <param name="pressReachedTheTool">
+	/// Whether the press went to the park rather than to an open park screen. The refusal's sound is gated on the flag the
+	/// mode's button-down slot sets (<c>DAT_008186d8</c>, read at <c>0x00524a77</c>), and a press beside an open screen
+	/// never calls that slot, so the click is refused there in silence.
+	/// </param>
+	public static string Run( int clickX, int clickY, bool pressReachedTheTool = true )
 	{
 		if ( Level.Current?.Park is not { } park )
 			return "patrol: a park has to be loaded";
@@ -93,9 +98,10 @@ public static class ParkPatrolTool
 
 		if ( Refuses( park, from, to ) )
 		{
-			Unimplemented.Report( "PATROL_TOOL_REFUSED_SOUND_0xAF" );
+			var sound = !pressReachedTheTool ? "no sound, the press went to a park screen"
+				: UI.UiSounds.Refused() ? "sound 0xaf, a voice" : "sound 0xaf, no voice";
 
-			return $"patrol: {from}-{to} takes in no cell of the park, so no area is written and the patrol tool is put away";
+			return $"patrol: {from}-{to} takes in no cell of the park, so no area is written and the patrol tool is put away - {sound}";
 		}
 
 		if ( ParkPeople.Current?.Staff.FirstOrDefault( staff => staff.ThingId == member ) is not { } fenced )

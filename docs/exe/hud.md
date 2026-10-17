@@ -2488,7 +2488,11 @@ answers track type `0x19`** (its own track record, `FUN_004d0af0`, or its parent
 (`0x005356df`), so the outline is all blue or all red, and the anchored one-cell rectangle on land outside the park
 is red already. The cursor (`FUN_0052f950`) has no case for `0x36`: only cursor 8, `c_noplace`, where a square was
 red (`DAT_00816d48`). **The click** (`FUN_00524960`, on the release; the press `FUN_00524790` does nothing for it):
-refused (`DAT_00816d48`), sound `0xaf` and the tool put away, nothing written; unanchored, the anchor set and the kept
+refused (`DAT_00816d48`), sound `0xaf` and the tool put away, nothing written (the sound is the commit's own, ahead of its
+mode switch, so every carry-shell mode's but `0x38`: `FUN_0051bfc0( 0, cat_ui, 0xaf, x, 0, y )` at `0x00524aa7`, where
+no layout replay runs, `[0x00785a2c]` nought, and the press reached the mode's down slot, `DAT_008186d8`, which
+`FUN_00524790` sets on every press: a press beside an open park screen never calls it; effect 175 is one variation at
+volume 35 of `blnl_error1`, `sfUiHD.sdt` entry 0, and every `cat_ui` effect is flagged `0x200`, so it sounds flat); unanchored, the anchor set and the kept
 member read again (`thunk_FUN_0048c920` into `DAT_008186b0`); anchored, where a member is kept, `FUN_00506e50` writes
 the least corner's cell id to `+0x20a` and the greatest's to `+0x20c`, then the anchor is cleared and the tool put
 away (`FUN_0052f200( 0, 0 )`). Neither click plays a sound.
@@ -2507,7 +2511,8 @@ texture 1, and the no-entry pointer (`orig/b-4-outline.png`); the click put the 
 member as its `Serves`, and `ParkPatrolTool` (its `Strip`, `Refuses` and `Run`) lays the preview through
 `ParkPathBuilding.Strip` and takes the world click; `Staff.SetPatrolArea` and `ClearPatrolArea` write the two corners.
 `ParkBuildMode.Arm` withdraws `0xc1` on a change of mode, the only one of the setter's ten posted here; the cursor is the
-plain pointer, `NoGo` while the outline is red. Counted: the refused click's sound (`PATROL_TOOL_REFUSED_SOUND_0xAF`).
+plain pointer, `NoGo` while the outline is red. The refused click plays `0xaf` (`UiSounds.Refused`, Q439) unless a park
+screen is open, where the press went to the screen.
 Its run (`q433/confirm.py`, run4, the final build; real clicks, each cell found by moving the pointer and reading `strip`'s drawn census, now `lib/cellprobe.py`): the same switch
 words, the same 8 squares in the same order for (51,27) and (54,26), row 26 lifted 20 on (51,26) and (52,26) and 10 on
 (53,26) as the original's (tops 21.5, 21.5 and 11.5 over 1.5), the plain pointer, "patrols (51, 26)-(54, 27), cells 3380 to 3511", the window again "Patrolling"; on the band
@@ -2539,6 +2544,15 @@ build tool is put away`, mode 0 not anchored, Mike's area the whole map, `strip`
 A member fenced where one path cell lies stays on it, rolling it again and standing
 eleven sweeps with thought `0x16` on one roll in about 55, in both games (Q434; `ride-operation.md`, "A member fenced
 where one path cell lies").
+**The refused click's sound** (Q439; `q439/confirm.py`, `run6`, the final build; the game's own mix to a file, `bus music
+0`): on the stock park, (45,15) anchored with nothing heard (`blnl_error1` matched at 0.000), the click on (53,15) logged
+`... is put away - sound 0xaf, a voice` and the mix matched `blnl_error1` once, at 0.999 and a gain of 0.1755: its 0.35
+times the master's 0.5 times the effects group's 1, the advisor quiet (`duck=1.00`); the red outline and the no-entry
+pointer before it, neither after (`q439/side-by-side.png`). In the original (`q439/orig/run.sh`, round 1j, its music on)
+(48,16) anchored with `DAT_00816d48` already 1, the outline red to (50,16), and the click put the tool away (mode 0, the
+anchor -1, Mike's area 1 and 16384); `blnl_error1` matched its own mix at 0.318 there, the best of the capture's 111
+windows (the next 0.281), so the sound is suggested and not shown: the music masks a short clip, and the run with it
+switched off was not made.
 
 #### How allstaff and allitems keep their rows current
 

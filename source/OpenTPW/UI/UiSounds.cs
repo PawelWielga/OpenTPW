@@ -46,6 +46,7 @@ internal static class UiSounds
 	private const int BootSound = 210;
 	private const int NewTagSound = 0x1e;
 	private const int TagClickSound = 0xc0;
+	private const int RefusedSound = 0xaf;
 
 	private const float ButtonClickVolume = 0.385f;
 	private const float ToggleClickVolume = 0.245f;
@@ -102,12 +103,23 @@ internal static class UiSounds
 	/// <summary>A tag was left clicked (FUN_0048dae0), at its variation's own volume.</summary>
 	public static void TagClick() => _ = PlayAtItsOwn( TagClickSound );
 
+	/// <summary>
+	/// A build tool's click refused (<c>0x00524aa7</c>: effect <c>0xaf</c>, <c>blnl_error1</c>, at its variation's own
+	/// volume of 35). The original passes the cell's place, but every effect of this category is flagged <c>0x200</c>, so
+	/// it sounds flat. True where a voice took it.
+	/// </summary>
+	public static bool Refused() => PlayAtItsOwn( RefusedSound );
+
 	/// <summary>An effect of the interface's own category played flat, at its variation's own volume (UI_PlaySound, FUN_00485aa0, and FUN_0051bfc0 on cat_ui).</summary>
 	/// True where a voice took it.
 	public static bool Interface( int effect ) => PlayAtItsOwn( effect );
 
+	/// <summary>The last effect played at its variation's own volume, asked for whether or not a voice took it; null for none.</summary>
+	internal static int? LastAsked { get; set; }
+
 	private static bool PlayAtItsOwn( int effect )
 	{
+		LastAsked = effect;
 		Preload();
 
 		return _category != null && _category.Play( effect, BootVolume( _category.VariationsOf( effect ) ), respectDelay: false ) != null;

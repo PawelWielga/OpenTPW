@@ -543,7 +543,9 @@ public class ParkStaffWindowTests
 		Assert.IsTrue( member.PatrolsWholeMap, "the first click writes nothing" );
 		Assert.AreEqual( ParkBuildMode.Patrol, ParkBuildMode.Current );
 
+		UiSounds.LastAsked = null;
 		StringAssert.Contains( Level.Current!.ClickWorldAt( 39, 21, 0 ), "patrols (39, 21)-(56, 28)" );
+		Assert.IsNull( UiSounds.LastAsked, "neither click of a written area plays a sound" );
 		Assert.AreEqual( (1 + 39 + 21 * 128, 1 + 56 + 28 * 128), (member.PatrolBottomLeft, member.PatrolTopRight) );
 		Assert.AreEqual( (ParkBuildMode.None, false), (ParkBuildMode.Current, ParkBuildMode.Anchored) );
 		StringAssert.Contains( lines.Census(), "message=193/score=1000/line=0/" );
@@ -552,6 +554,42 @@ public class ParkStaffWindowTests
 		ParkStaffWindow.Open( _stack, member.ThingId );
 		Assert.IsTrue( ((UiButton)Find( Window!.Root, 0x510 )).IsDown );
 		Assert.AreEqual( 0, Times( "STAFF_WINDOW_PATROL" ) );
+	}
+
+	/// <summary>
+	/// <b>A refused click plays sound <c>0xaf</c> only where its press reached the park</b> (<c>0x00524a77</c>: the flag the
+	/// mode's button-down slot sets; a press beside an open park screen never calls that slot). The stock park's band
+	/// (45,15)-(53,15) lies wholly outside it; the anchoring click plays nothing.
+	/// </summary>
+	[TestMethod]
+	public void ARefusedPatrolClickIsHeardUnlessItsPressWentToAParkScreen()
+	{
+		var member = Mechanic;
+		var area = (member.PatrolBottomLeft, member.PatrolTopRight);
+		_stack.Update();
+		Assert.IsFalse( WindowStack.ParkScreenOpen, "no park screen yet" );
+
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
+		UiSounds.LastAsked = null;
+		StringAssert.Contains( Level.Current!.ClickWorldAt( 45, 15, 0 ), "anchored at (45,15)" );
+		Assert.IsNull( UiSounds.LastAsked, "the anchor plays nothing" );
+		StringAssert.EndsWith( Level.Current!.ClickWorldAt( 53, 15, 0 ), "put away - sound 0xaf, no voice" );
+		Assert.AreEqual( 0xaf, UiSounds.LastAsked );
+
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		_stack.Update();
+		Assert.IsTrue( WindowStack.ParkScreenOpen, "the staff window is a park screen" );
+
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
+		UiSounds.LastAsked = null;
+		StringAssert.Contains( Level.Current!.ClickWorldAt( 45, 15, 0 ), "anchored at (45,15)" );
+		StringAssert.EndsWith( Level.Current!.ClickWorldAt( 53, 15, 0 ), "put away - no sound, the press went to a park screen" );
+		Assert.IsNull( UiSounds.LastAsked );
+		Assert.AreEqual( area, (member.PatrolBottomLeft, member.PatrolTopRight), "refused all the same, nothing written" );
+
+		_stack.Close( Window! );
+		_stack.Update();
+		Assert.IsFalse( WindowStack.ParkScreenOpen );
 	}
 
 	/// <summary>
@@ -614,7 +652,19 @@ public class ParkStaffWindowTests
 		Assert.IsTrue( red.All( square => square.Marker == ParkPathBuilding.MarkerRed ) );
 
 		StringAssert.Contains( ParkPatrolTool.Run( 2, 2 ), "takes in no cell of the park" );
-		Assert.AreEqual( (ParkBuildMode.None, true, 1), (ParkBuildMode.Current, member.PatrolsWholeMap, Times( "PATROL_TOOL_REFUSED_SOUND_0xAF" )) );
+		Assert.AreEqual( (ParkBuildMode.None, true), (ParkBuildMode.Current, member.PatrolsWholeMap) );
+
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
+		ParkBuildMode.AnchorAt( 3, 3 );
+		UiSounds.LastAsked = null;
+		StringAssert.EndsWith( ParkPatrolTool.Run( 2, 2 ), "- sound 0xaf, no voice", "the refusal's sound, asked for (no mixer here)" );
+		Assert.AreEqual( 0xaf, UiSounds.LastAsked );
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
+		ParkBuildMode.AnchorAt( 3, 3 );
+		UiSounds.LastAsked = null;
+		StringAssert.EndsWith( ParkPatrolTool.Run( 2, 2, pressReachedTheTool: false ), "- no sound, the press went to a park screen" );
+		Assert.IsNull( UiSounds.LastAsked );
+		Assert.AreEqual( (ParkBuildMode.None, true), (ParkBuildMode.Current, member.PatrolsWholeMap), "refused in silence all the same" );
 
 		state.SetRecord( 2, 3, state.Record( 2, 3 ) with { TrackParentId = 0 } );
 		Assert.IsFalse( ParkPatrolTool.Refuses( park, (2, 2), (3, 3) ), "one cell of the park is enough" );

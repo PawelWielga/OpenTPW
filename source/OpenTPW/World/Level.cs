@@ -1620,7 +1620,7 @@ public class Level
 			return ParkPathBuilding.RunPath( cellX, cellY );
 
 		if ( ParkBuildMode.Current == ParkBuildMode.Patrol )
-			return ParkPatrolTool.Run( cellX, cellY );
+			return ParkPatrolTool.Run( cellX, cellY, !UI.WindowStack.ParkScreenOpen );
 
 		if ( ParkBuildMode.Anchored )
 			return ParkPathBuilding.RunQueue( cellX, cellY );
