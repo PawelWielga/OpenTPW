@@ -7314,6 +7314,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `q435/PREDICTION.txt`). The lift is the original's; Q433's "far higher" was its two cameras and the lens. Nothing
   drawn changed: the square's record height and the camera's eye are now functions with tests on the original's
   numbers. The walls under a lifted top are the difference left (Q420).
+- [x] **Q436. The walls under a lifted square (a piece of Q420).** Done 2026-10-17: `FUN_00532fc0`'s `0x100` arm read
+  for its other faces, and the walls built (`ParkBuildMarkers.WallsAt`, `WallCorners`): after a lifted square, for its
+  north, east, south and west neighbour in turn, a wall ten high on the shared edge for every ten the neighbour stands
+  under it, red under red and otherwise blue. On Mike Cooper's patrol outline over the stock park both games laid the
+  same nine walls, face for face, in the same order (`q436/orig/a-5-squares.txt`, the `strip` census), drawn under the
+  tops where the original's are (`q436/side-by-side.png`, `q436/PREDICTION.txt`). `MARKER_LIFT_SIDE_FACES` is gone.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

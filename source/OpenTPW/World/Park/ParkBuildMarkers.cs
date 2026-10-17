@@ -18,9 +18,9 @@ namespace OpenTPW;
 /// <c>sin( phase + x + z )</c> from a 4,096-entry table (<c>FUN_004708d0</c>), the phase gaining 0.1 a
 /// frame while the game is not paused (<c>docs/exe/park-engine.md</c>, "Placement feedback").
 /// <para>
-/// Three things are counted rather than guessed: the brightening and dimming that goes with the wave (the
-/// same sine scales the vertex's up vector, which this shader normalises away), the turning of <c>m_link</c> and
-/// <c>m_end</c> to face the camera, and the walls a lifted square drops to a lower neighbour.
+/// Two things are counted rather than guessed: the brightening and dimming that goes with the wave (the
+/// same sine scales the vertex's up vector, which this shader normalises away), and the turning of <c>m_link</c> and
+/// <c>m_end</c> to face the camera.
 /// </para>
 /// <para>
 /// <b>Every red square blinks, seven frames on and two off, all together</b> (<see cref="AdvanceBlink"/>), and
@@ -36,7 +36,8 @@ namespace OpenTPW;
 /// <para>
 /// <b>Over a built cell the square lifts by the height of what is built there, rounded up to ten</b>
 /// (<see cref="LiftOver"/>), and that lift is added to the ground's height again as the corner is laid, as
-/// <c>FUN_0053ddd0</c> does.
+/// <c>FUN_0053ddd0</c> does. <b>A lifted square is walled down to each lower neighbour</b> (<see cref="Walls"/>): on
+/// the edge they share, one wall ten high for every ten between the neighbour's lift and its own, the lowest first.
 /// </para>
 /// </para>
 /// </summary>
@@ -81,6 +82,33 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 	/// <summary>The squares the mesh holds now, and its vertices, so the wave can move them every frame.</summary>
 	private List<Square> _strip = [];
+
+	/// <summary>
+	/// One wall under a lifted square: the square's cell, the edge it stands on (<see cref="FaceNorth"/> and the
+	/// rest), its marker, and how far over the ground its foot is. It rises <see cref="WallHeight"/> from there.
+	/// </summary>
+	internal readonly record struct Wall( int X, int Y, int Face, int Marker, float Over );
+
+	/// <summary>The walls the mesh holds now, in the order the original queues them: by square, then N, E, S, W, lowest first.</summary>
+	private List<Wall> _walls = [];
+
+	/// <summary>
+	/// The face byte of a record (<c>FUN_0053df30</c>'s switch): 0 the flat square, and a wall on the edge toward each
+	/// neighbour, named by that neighbour's direction bit - north the cell's least-y edge, toward y − 1.
+	/// </summary>
+	public const int FaceNorth = 0x01;
+
+	/// <inheritdoc cref="FaceNorth"/>
+	public const int FaceEast = 0x04;
+
+	/// <inheritdoc cref="FaceNorth"/>
+	public const int FaceSouth = 0x10;
+
+	/// <inheritdoc cref="FaceNorth"/>
+	public const int FaceWest = 0x40;
+
+	/// <summary>How tall a wall is - the <c>-10.0</c> at <c>0x00700e1c</c> its top corners are raised by (<c>FUN_0053df30</c>).</summary>
+	public const float WallHeight = 10f;
 
 	private Vertex[] _vertices = [];
 
@@ -230,8 +258,9 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 	/// <summary>
 	/// The squares the mesh holds now, the tool's each with its lift after a <c>^</c>, then a followed member's patrol
-	/// edges, each with its lift, after <c>| patrol</c>, then those under stranded guests after a <c>|</c>, and whether
-	/// red is showing, for the debug console.
+	/// edges, each with its lift, after <c>| patrol</c>, then the walls under both, each with its face byte, its marker
+	/// and the lift its foot stands at, after <c>| walls</c>, then those under stranded guests after a <c>|</c>, and
+	/// whether red is showing, for the debug console.
 	/// </summary>
 	public string Census()
 	{
@@ -239,12 +268,59 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 		var tool = _strip.Take( _toolSquares ).Select( Line ).ToArray();
 		var patrol = _strip.Skip( _toolSquares ).Take( _patrolSquares ).Select( Line ).ToArray();
+		var walls = _walls.Select( wall => $"{wall.X},{wall.Y},{wall.Face},{wall.Marker}^{wall.Over - Lift:0}" ).ToArray();
 		var stranded = _strip.Skip( _toolSquares + _patrolSquares ).Select( square => $"{square.X},{square.Y}" ).ToArray();
 
 		return (tool.Length == 0 ? "none" : string.Join( ";", tool ))
 			+ (patrol.Length == 0 ? "" : $" | patrol {patrol.Length} {string.Join( ";", patrol )}")
+			+ (walls.Length == 0 ? "" : $" | walls {walls.Length} {string.Join( ";", walls )}")
 			+ (stranded.Length == 0 ? "" : $" | stranded {string.Join( ";", stranded )} red {(_redShown ? "on" : "off")}");
 	}
+
+	/// <summary>
+	/// The walls under a square lifted by <paramref name="lift"/>, given each neighbour's lift (null off the map), as
+	/// <c>FUN_00532fc0</c>'s <c>0x100</c> arm queues them after the square: for each neighbour in turn, north
+	/// (<c>DAT_007cdba0</c>), east, south and west, while the neighbour's lift stands under the square's, a wall with its
+	/// foot at the neighbour's lift, then ten higher, until it reaches the square's (<c>0x00533ad0</c>..<c>0x00533b22</c>).
+	/// A neighbour as high or higher gets none; both lifts are whole tens, so the last wall's top is the square's edge.
+	/// </summary>
+	internal static List<(int Face, float Foot)> Walls( float lift, float? north, float? east, float? south, float? west )
+	{
+		var walls = new List<(int Face, float Foot)>();
+
+		foreach ( var (face, neighbour) in new[] { (FaceNorth, north), (FaceEast, east), (FaceSouth, south), (FaceWest, west) } )
+		{
+			if ( neighbour is not { } below )
+				continue;
+
+			for ( var foot = (int)below; foot < (int)lift; foot += (int)WallHeight )
+				walls.Add( (face, foot) );
+		}
+
+		return walls;
+	}
+
+	/// <summary>
+	/// The walls under the square on (<paramref name="x"/>, <paramref name="y"/>) wearing <paramref name="marker"/>, lifted
+	/// by <paramref name="lift"/>, its neighbours' lifts asked of <paramref name="liftAt"/> (null off the map): north at
+	/// y − 1 (<c>DAT_007cdba0</c>, (0, −1)), east at x + 1 (<c>DAT_007cdbc8</c>), south at y + 1 (<c>DAT_007cdba8</c>),
+	/// west at x − 1 (<c>DAT_007cdbd0</c>). Each record sits 1.5 over its foot, as a square's over its lift. A square on
+	/// the ground has none.
+	/// </summary>
+	internal static List<Wall> WallsAt( int x, int y, float lift, int marker, Func<int, int, float?> liftAt ) => lift > 0f
+		? Walls( lift, liftAt( x, y - 1 ), liftAt( x + 1, y ), liftAt( x, y + 1 ), liftAt( x - 1, y ) )
+			.Select( wall => new Wall( x, y, wall.Face, WallMarker( marker ), RecordHeight( wall.Foot ) ) )
+			.ToList()
+		: [];
+
+	/// <summary>
+	/// The marker a wall wears under a square wearing <paramref name="marker"/>: red under red, and blue under every
+	/// other the tools draw, <c>m_link</c> and <c>m_end</c> too (<c>FUN_00532fc0</c>: texture 1 in the refused arm,
+	/// and in the other 2 under orange and otherwise 0, <c>0x00533214</c>; no tool here draws orange).
+	/// </summary>
+	internal static int WallMarker( int marker ) => marker == ParkPathBuilding.MarkerRed
+		? ParkPathBuilding.MarkerRed
+		: ParkPathBuilding.MarkerBlue;
 
 	private void Build( List<ParkPathBuilding.QueueSquare> strip, List<(int X, int Y)> patrol, List<(int X, int Y)> stranded )
 	{
@@ -267,30 +343,39 @@ public sealed class ParkBuildMarkers : ModelEntity
 		// A patrol edge is the same blue square as a tool's (FUN_00532fc0's 0x100 arm), lifted the same way.
 		var squares = strip.Concat( patrol.Select( cell => new ParkPathBuilding.QueueSquare( cell.X, cell.Y, ParkPathBuilding.MarkerBlue ) ) );
 
-		var lifts = squares.Where( square => OnTheField( square.X, square.Y ) )
-			.Select( square => (Square: square, Lift: ParkState.Current is { } state
-				? LiftOver( state, Level.Current?.Catalogue, field, square.X, square.Y )
-				: 0f) )
-			.ToList();
+		float LiftAt( int x, int y ) => ParkState.Current is { } state
+			? LiftOver( state, Level.Current?.Catalogue, field, x, y )
+			: 0f;
 
-		// The original also walls a lifted square down to a lower neighbour (FUN_0053df30's other faces).
-		if ( lifts.Any( square => square.Lift > 0f ) )
-			Unimplemented.Report( "MARKER_LIFT_SIDE_FACES" );
+		float? NeighbourLift( int x, int y ) => OnTheField( x, y ) ? LiftAt( x, y ) : null;
+
+		var lifts = squares.Where( square => OnTheField( square.X, square.Y ) )
+			.Select( square => (Square: square, Lift: LiftAt( square.X, square.Y )) )
+			.ToList();
 
 		_strip = lifts.Select( square => new Square( square.Square.X, square.Square.Y, square.Square.Marker, RecordHeight( square.Lift ) ) )
 			.ToList();
 		_toolSquares = strip.Count( square => OnTheField( square.X, square.Y ) );
 		_patrolSquares = _strip.Count - _toolSquares;
 
+		_walls = lifts.SelectMany( square => WallsAt( square.Square.X, square.Square.Y, square.Lift, square.Square.Marker, NeighbourLift ) )
+			.ToList();
+
+		// Each wall under a square not refused also zeroes the path and queue tools' refusal latch (DAT_00816d50 and
+		// d58, 0x005333bd), which their verdict for the next cell reads; here each strip's latch is its own pass's.
+		if ( ParkBuildMode.Current is ParkBuildMode.Path or ParkBuildMode.Queue
+			&& _walls.Any( wall => wall.Marker != ParkPathBuilding.MarkerRed ) )
+			Unimplemented.Report( "MARKER_WALL_CLEARS_REFUSAL_LATCH" );
+
 		_strip.AddRange( stranded.Where( cell => OnTheField( cell.X, cell.Y ) )
 			.Select( cell => new Square( cell.X, cell.Y, ParkPathBuilding.MarkerRed, StrandedLift ) ) );
 
-		_vertices = new Vertex[_strip.Count * 4];
+		_vertices = new Vertex[(_strip.Count + _walls.Count) * 4];
 
 		if ( Fill( field ) == 0 )
 			return;
 
-		var elements = new uint[_strip.Count * 6];
+		var elements = new uint[(_strip.Count + _walls.Count) * 6];
 		var element = 0;
 
 		for ( var corner = 0u; corner < _vertices.Length; corner += 4 )
@@ -311,7 +396,7 @@ public sealed class ParkBuildMarkers : ModelEntity
 		TranslucentModel.EnableFrequentUpdates( _vertices );
 	}
 
-	/// <summary>Lays the four corners of every square at the wave's current height; answers how many were laid.</summary>
+	/// <summary>Lays the four corners of every square and wall at the wave's current height; answers how many were laid.</summary>
 	private int Fill( HeightfieldFile field )
 	{
 		var vertex = 0;
@@ -329,8 +414,53 @@ public sealed class ParkBuildMarkers : ModelEntity
 			_vertices[vertex++] = Corner( field, x, gone ? y : y + 1, new Vector2( 0f, 1f ), slot, over );
 		}
 
+		foreach ( var wall in _walls )
+		{
+			var slot = Math.Max( 0, Array.IndexOf( Drawn, wall.Marker ) );
+			var gone = wall.Marker == ParkPathBuilding.MarkerRed && !_redShown;
+
+			foreach ( var (x, y, over, uv) in WallCorners( wall, gone ) )
+				_vertices[vertex++] = Corner( field, x, y, uv, slot, over );
+		}
+
 		return vertex;
 	}
+
+	/// <summary>
+	/// A wall's four corners: the foot along its edge at the record's height, then the top a wall higher, u along the
+	/// edge and v up it (<c>FUN_0053df30</c>'s UV pairs 0 to 3). The wave and the ground under each corner are added as
+	/// any square's, alike at foot and top, so the wall stays a wall high. A wall that is <paramref name="gone"/> (red,
+	/// blinked off) is laid with no area: all four on its first corner.
+	/// </summary>
+	internal static (int X, int Y, float Over, Vector2 Uv)[] WallCorners( Wall wall, bool gone )
+	{
+		var ((fromX, fromY), (toX, toY)) = Edge( wall.X, wall.Y, wall.Face );
+
+		if ( gone )
+			return [.. Enumerable.Repeat( (fromX, fromY, wall.Over, Vector2.Zero), 4 )];
+
+		return
+		[
+			(fromX, fromY, wall.Over, new Vector2( 0f, 0f )),
+			(toX, toY, wall.Over, new Vector2( 1f, 0f )),
+			(toX, toY, wall.Over + WallHeight, new Vector2( 1f, 1f )),
+			(fromX, fromY, wall.Over + WallHeight, new Vector2( 0f, 1f ))
+		];
+	}
+
+	/// <summary>
+	/// The two ground corners of the edge a wall stands on, in the order <c>FUN_0053df30</c> lays its foot: north from
+	/// (x, y) to (x + 1, y), east from (x + 1, y) to (x + 1, y + 1), south from (x + 1, y + 1) to (x, y + 1), west from
+	/// (x, y + 1) to (x, y).
+	/// </summary>
+	internal static ((int X, int Y) From, (int X, int Y) To) Edge( int x, int y, int face ) => face switch
+	{
+		FaceNorth => ((x, y), (x + 1, y)),
+		FaceEast => ((x + 1, y), (x + 1, y + 1)),
+		FaceSouth => ((x + 1, y + 1), (x, y + 1)),
+		FaceWest => ((x, y + 1), (x, y)),
+		_ => throw new ArgumentOutOfRangeException( nameof( face ), face, "not a wall's face" )
+	};
 
 	private Vertex Corner( HeightfieldFile field, int x, int y, Vector2 uv, int slot, float over )
 	{

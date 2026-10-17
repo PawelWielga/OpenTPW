@@ -1734,6 +1734,27 @@ positions at `+0x64`):
   (76,40) stand at 5.0), and OpenTPW builds none of them.
 - A lifted square also gets walls down to a lower neighbour, records at 11.5 and 1.5 on the same cell.
 
+**The walls** (decoded and measured 2026-10-17, Q436). After the flat square (face 0), the `0x100` arm asks the four
+neighbours through `FUN_004d99c0`/`FUN_004d96f0` in the order north `DAT_007cdba0` (0,−1), east `DAT_007cdbc8` (+1,0),
+south `DAT_007cdba8` (0,+1), west `DAT_007cdbd0` (−1,0); off the map there is none. A neighbour's lift is found by the
+same rule as the square's. While it is under the square's (`0x00533ad0`..`0x00533b22`, both truncated), a record goes
+down at the neighbour's lift + 1.5 with face byte (`+0x0c`) **1, 4, `0x10` or `0x40`**, the neighbour's direction bit,
+then ten higher, until the square's lift is reached: so a neighbour as high or higher gets none, and from 20 to the
+ground two records, 1.5 and 11.5. `FUN_0053df30` lays such a face as a quad on that edge of the cell (north the least-z
+edge, east x + 10, south z + 10, west the least x), its foot at the record's height and its top **10 higher** (`- −10.0`,
+`0x00700e1c`), u along the edge from the corner it lays first (north (x, z), east (x+10, z), south (x+10, z+10), west
+(x, z+10)) and v up it; `FUN_0053ddd0` adds the ground and the wave alike to foot and top. A wall's texture is 1 under a
+red square (so it blinks with it), 2 under orange, and otherwise 0, blue, under `m_link` and `m_end` too
+(`0x00533214`); its orientation byte (`+0x10`) is 0 where the square's is 1; its `+0x98` is `mode != 4`, so in mode 4
+the walls glide with the carried thing's squares. Each wall laid under a square not refused **also zeroes the refusal
+latches** `DAT_00816d58` and `DAT_00816d50` (`0x005333bd`), which a path or queue strip's verdict for its next cell reads.
+Measured in the original (`q436/orig/a-5-squares.txt`, the stock park, Mike Cooper's patrol outline (51,26)-(54,27)): (52,26)
+21.5 then faces 4 at 11.5 and `0x10` at 1.5 and 11.5; (53,26) 11.5 then 4 and `0x10` at 1.5; (51,26) 21.5 then `0x10`
+and `0x40` each at 1.5 and 11.5; orientation 1 on the eight squares and 0 on the nine walls. **OpenTPW**
+(`ParkBuildMarkers.WallsAt`, `WallCorners`) lays the same nine in the same order (the `strip` census's `| walls`), drawn
+under the tops as the original's (`q436/side-by-side.png`). Counted: the latch zeroed under a path or queue strip
+(`MARKER_WALL_CLEARS_REFUSAL_LATCH`; each strip's latch here is its own pass's).
+
 The double count on raised ground was not caught on one cell. The original's strip ends at the raised out-of-park
 cells before it draws a square there. **Red blinks**: `FUN_0053c8d0` drops texture 1 while `DAT_00763c98` is nought, which
 toggles on a counter of rendered, unpaused frames: seven on, two off (`ride-operation.md`, "The red square under a

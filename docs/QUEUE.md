@@ -48,10 +48,15 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q436 (`park-engine.md`, "Placement feedback", "The walls"): a lifted square's walls are the original's, so the
+  nearest piece is Escape with the patrol tool armed (the original's puts it away unwritten, Q435; not run here).
+  Counted, not built: the latches a wall zeroes under a path or queue strip (`MARKER_WALL_CLEARS_REFUSAL_LATCH`). In no
+  game run: a red wall and its blink, the walls under the locator's patrol edges, a rotation other than nought, Full
+  Simulation (not asked: the outline is either mode's), the other three themes.
   From Q435 (`hud.md`, "The patrol switch and the patrol tool"): at one camera the lifted squares stand where the
   original's do, so the nearest piece is the walls a lifted square drops to a lower neighbour (`MARKER_LIFT_SIDE_FACES`,
   `FUN_0053df30`'s other faces; the original's records at 11.5 and 1.5 under a 21.5 top, `park-engine.md`, "Placement
-  feedback"), drawn there and not here. In no game run: Escape with the tool armed here (the original's puts it away
+  feedback"), drawn there and not here (built, Q436). In no game run: Escape with the tool armed here (the original's puts it away
   unwritten), a rotation other than nought at one camera, Full Simulation (not asked: the outline is either mode's),
   the other three themes.
   From Q434 (`ride-operation.md`, "A member fenced where one path cell lies"): the fenced member's walk on one path cell

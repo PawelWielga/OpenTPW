@@ -2518,8 +2518,9 @@ closed, read by `original/camera.py` (point (484.442, 259.319), zoom 110, rotati
 (Q260); our frame's middle 480 x 360 scaled by 768/360 lays our lifted tops of (51,26) and (52,26), y 284 to 314 here,
 on the original's (`q435/side-by-side.png`), and the cells the original's camera put at two pixels were the cells under
 the same pixels here at the first probe. Q433's "far higher" was its two cameras (ours zoom 60, pitch 45; the
-original's 110, 58.3) and the lens. The one difference left in the outline is the walls a lifted square drops to a
-lower neighbour, drawn there and counted here (`MARKER_LIFT_SIDE_FACES`; `park-engine.md`, "Placement feedback").
+original's 110, 58.3) and the lens. The walls a lifted square drops to a lower neighbour are drawn in both (Q436;
+`park-engine.md`, "Placement feedback", "The walls"): the same nine records, face for face, under the outline's tops of
+(51,26) to (53,26) (`q436/side-by-side.png`).
 Escape with the tool armed and anchored, in the original, puts it away and writes nothing (mode 0, the anchor -1, the
 area 1 and 16384; `q435/orig/a-run.log`); not run here. A member fenced where one path cell lies stays on it, rolling it again and standing
 eleven sweeps with thought `0x16` on one roll in about 55, in both games (Q434; `ride-operation.md`, "A member fenced

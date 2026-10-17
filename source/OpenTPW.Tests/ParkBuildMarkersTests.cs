@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace OpenTPW.Tests;
@@ -32,5 +33,86 @@ public class ParkBuildMarkersTests
 		Assert.AreEqual( 1.5f, ParkBuildMarkers.RecordHeight( 0f ), 1e-5f, "bare ground" );
 		Assert.AreEqual( 11.5f, ParkBuildMarkers.RecordHeight( 10f ), 1e-5f, "a lift of ten" );
 		Assert.AreEqual( 21.5f, ParkBuildMarkers.RecordHeight( 20f ), 1e-5f, "over the Belly Bounce" );
+	}
+
+	/// <summary>
+	/// A lifted square's walls, as the original queued them on the stock park (<c>q435/orig/b-5-squares.txt</c>): (52,26),
+	/// lifted 20 beside (51,26) at 20, (53,26) at 10 and (52,27) on the ground, with (52,25) as high, laid its square at
+	/// 21.5 and then records at 11.5, 1.5 and 11.5 - one wall toward the east and two toward the south, lowest first.
+	/// </summary>
+	[TestMethod]
+	public void ALiftedSquareIsWalledDownToEachLowerNeighbourTenAtATime()
+	{
+		var lifts = new System.Collections.Generic.Dictionary<(int, int), float>
+		{
+			[(52, 25)] = 20f, [(53, 26)] = 10f, [(52, 27)] = 0f, [(51, 26)] = 20f
+		};
+
+		var walls = ParkBuildMarkers.WallsAt( 52, 26, 20f, ParkPathBuilding.MarkerBlue, ( x, y ) => lifts[(x, y)] );
+
+		CollectionAssert.AreEqual(
+			new[] { ParkBuildMarkers.FaceEast, ParkBuildMarkers.FaceSouth, ParkBuildMarkers.FaceSouth },
+			walls.Select( wall => wall.Face ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 11.5f, 1.5f, 11.5f }, walls.Select( wall => wall.Over ).ToArray(),
+			"the original's records after the square's 21.5" );
+		Assert.IsTrue( walls.All( wall => (wall.X, wall.Y, wall.Marker) == (52, 26, ParkPathBuilding.MarkerBlue) ), "the square's own cell, blue" );
+		Assert.IsTrue( ParkBuildMarkers.WallsAt( 52, 26, 20f, ParkPathBuilding.MarkerRed, ( x, y ) => lifts[(x, y)] )
+			.All( wall => wall.Marker == ParkPathBuilding.MarkerRed ), "red under a red square" );
+		Assert.IsTrue( ParkBuildMarkers.WallsAt( 52, 26, 20f, ParkPathBuilding.MarkerLink, ( x, y ) => lifts[(x, y)] )
+			.All( wall => wall.Marker == ParkPathBuilding.MarkerBlue ), "blue under m_link" );
+	}
+
+	/// <summary>The four neighbours are asked north, east, south, west, and a missing or higher one gets no wall.</summary>
+	[TestMethod]
+	public void TheWallsGoNorthEastSouthWestAndNoneOffTheMapOrUpward()
+	{
+		var lifts = new System.Collections.Generic.Dictionary<(int, int), float?>
+		{
+			[(5, 4)] = 0f, [(6, 5)] = 0f, [(5, 6)] = 0f, [(4, 5)] = 0f
+		};
+
+		CollectionAssert.AreEqual(
+			new[] { ParkBuildMarkers.FaceNorth, ParkBuildMarkers.FaceEast, ParkBuildMarkers.FaceSouth, ParkBuildMarkers.FaceWest },
+			ParkBuildMarkers.WallsAt( 5, 5, 10f, 0, ( x, y ) => lifts[(x, y)] ).Select( wall => wall.Face ).ToArray() );
+
+		Assert.AreEqual( 0, ParkBuildMarkers.Walls( 20f, null, 20f, 30f, null ).Count, "off the map, as high, higher" );
+		Assert.AreEqual( 0, ParkBuildMarkers.WallsAt( 5, 5, 0f, 0, ( _, _ ) => -10f ).Count, "a square on the ground has none" );
+		Assert.AreEqual( 2, ParkBuildMarkers.Walls( 20f, 0f, null, null, null ).Count, "ten at a time, not one" );
+	}
+
+	/// <summary>Each wall stands on its own edge of the cell, from the corner the original lays its foot first.</summary>
+	[TestMethod]
+	public void EachWallStandsOnTheEdgeTowardItsNeighbour()
+	{
+		Assert.AreEqual( ((5, 5), (6, 5)), ParkBuildMarkers.Edge( 5, 5, ParkBuildMarkers.FaceNorth ) );
+		Assert.AreEqual( ((6, 5), (6, 6)), ParkBuildMarkers.Edge( 5, 5, ParkBuildMarkers.FaceEast ) );
+		Assert.AreEqual( ((6, 6), (5, 6)), ParkBuildMarkers.Edge( 5, 5, ParkBuildMarkers.FaceSouth ) );
+		Assert.AreEqual( ((5, 6), (5, 5)), ParkBuildMarkers.Edge( 5, 5, ParkBuildMarkers.FaceWest ) );
+		Assert.AreEqual( 10f, ParkBuildMarkers.WallHeight, "the -10.0 at 0x00700e1c" );
+	}
+
+	/// <summary>A wall's foot lies along its edge at the record's height and its top one wall higher; blinked off, it has no area.</summary>
+	[TestMethod]
+	public void AWallRisesTenFromItsRecordAlongItsEdge()
+	{
+		var corners = ParkBuildMarkers.WallCorners( new ParkBuildMarkers.Wall( 5, 5, ParkBuildMarkers.FaceEast, 0, 11.5f ), false );
+
+		CollectionAssert.AreEqual( new[] { (6, 5, 11.5f), (6, 6, 11.5f), (6, 6, 21.5f), (6, 5, 21.5f) },
+			corners.Select( corner => (corner.X, corner.Y, corner.Over) ).ToArray() );
+		CollectionAssert.AreEqual( new[] { (0f, 0f), (1f, 0f), (1f, 1f), (0f, 1f) },
+			corners.Select( corner => (corner.Uv.X, corner.Uv.Y) ).ToArray(), "u along the edge, v up it" );
+
+		var gone = ParkBuildMarkers.WallCorners( new ParkBuildMarkers.Wall( 5, 5, ParkBuildMarkers.FaceEast, 1, 11.5f ), true );
+		Assert.IsTrue( gone.All( corner => (corner.X, corner.Y, corner.Over) == (6, 5, 11.5f) ), "all on its first corner" );
+	}
+
+	/// <summary>A wall is red under a red square and blue under every other the tools draw.</summary>
+	[TestMethod]
+	public void AWallIsRedUnderRedAndBlueOtherwise()
+	{
+		Assert.AreEqual( ParkPathBuilding.MarkerRed, ParkBuildMarkers.WallMarker( ParkPathBuilding.MarkerRed ) );
+		Assert.AreEqual( ParkPathBuilding.MarkerBlue, ParkBuildMarkers.WallMarker( ParkPathBuilding.MarkerBlue ) );
+		Assert.AreEqual( ParkPathBuilding.MarkerBlue, ParkBuildMarkers.WallMarker( ParkPathBuilding.MarkerLink ) );
+		Assert.AreEqual( ParkPathBuilding.MarkerBlue, ParkBuildMarkers.WallMarker( ParkPathBuilding.MarkerEnd ) );
 	}
 }
