@@ -279,7 +279,8 @@ public static class ParkPathBuilding
 	/// (<c>DAT_00816d48</c>, <c>0x00524a63</c>..<c>0x00524acd</c>).
 	/// </para>
 	/// </remarks>
-	public static string RunQueue( int clickX, int clickY )
+	/// <param name="pressReachedTheTool">Whether the press went to the park rather than to an open park screen (<see cref="ParkBuildMode.RefusedSound"/>).</param>
+	public static string RunQueue( int clickX, int clickY, bool pressReachedTheTool = true )
 	{
 		if ( Level.Current is not { } level || level.ParkState is not { } state || level.Park is not { } park )
 			return "queue: a park has to be loaded";
@@ -305,9 +306,8 @@ public static class ParkPathBuilding
 		if ( strip.FirstOrDefault( square => square.Marker == MarkerRed ) is { Why: { } why } refused )
 		{
 			ParkBuildMode.Disarm();
-			Unimplemented.Report( "QUEUE_TOOL_REFUSED_SOUND_0xAF" );
 
-			return $"queue: nothing laid - ({refused.X},{refused.Y}) {why}, so the queue tool is put away";
+			return $"queue: nothing laid - ({refused.X},{refused.Y}) {why}, so the queue tool is put away - {ParkBuildMode.RefusedSound( pressReachedTheTool )}";
 		}
 
 		var (acrossBy, downBy) = (Math.Sign( toX - fromX ), Math.Sign( toY - fromY ));
@@ -682,7 +682,8 @@ public static class ParkPathBuilding
 	/// a path or a queue, or when the click was on the anchor. Otherwise the anchor moves to the run's end,
 	/// so an L is laid a click at a time. The run's end is pushed for Backspace to undo.
 	/// </remarks>
-	public static string RunPath( int clickX, int clickY )
+	/// <param name="pressReachedTheTool">Whether the press went to the park rather than to an open park screen (<see cref="ParkBuildMode.RefusedSound"/>).</param>
+	public static string RunPath( int clickX, int clickY, bool pressReachedTheTool = true )
 	{
 		if ( Level.Current is not { } level || level.ParkState is not { } state || level.Park is not { } park )
 			return "path: a park has to be loaded";
@@ -693,17 +694,15 @@ public static class ParkPathBuilding
 		if ( strip.Count == 0 )
 		{
 			ParkBuildMode.Disarm();
-			Unimplemented.Report( "PATH_TOOL_REFUSED_SOUND_0xAF" );
 
-			return $"path: ({clickX},{clickY}) is off the map, so the path tool is put away";
+			return $"path: ({clickX},{clickY}) is off the map, so the path tool is put away - {ParkBuildMode.RefusedSound( pressReachedTheTool )}";
 		}
 
 		if ( strip.FindIndex( square => square.Marker == MarkerRed ) is var red and >= 0 )
 		{
 			ParkBuildMode.Disarm();
-			Unimplemented.Report( "PATH_TOOL_REFUSED_SOUND_0xAF" );
 
-			return $"path: nothing laid - ({strip[red].X},{strip[red].Y}) {strip[red].Why}, so the path tool is put away";
+			return $"path: nothing laid - ({strip[red].X},{strip[red].Y}) {strip[red].Why}, so the path tool is put away - {ParkBuildMode.RefusedSound( pressReachedTheTool )}";
 		}
 
 		Unimplemented.Report( "PATH_TOOL_CLICK_SOUND_0x65" );

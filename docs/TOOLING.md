@@ -76,6 +76,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/cellfind.py PID X,Y [PX,PY]` | The original's side of `lib/cellprobe.py`: the pixel over a map cell, found by moving the real pointer and reading the build preview's cell (`[0x008186b8]`, `[0x008186b4]`), Newton steps from `camera.py --aim`'s pixel (Q439). The preview reads (0, 0) under a park screen: `PICK=1` reads the picker's cell `[0x007b05cc]` instead, which a member's window leaves live. Its probes stay inside 0.95 of the way to each edge, past which the pointer pans the camera. With the camera still and no panel or object mesh under the pixel, `camera.py --aim`'s pixel was the cell on the first probe, six of six at rotations 0, 90 and 180 (Q440) |
 | `original/setcam.py PID X,Z ZOOM ROT [off\|on]`, `setcam.py PID off\|on` | The original's park camera WRITTEN: the point (world units), the zoom and the rotation in degrees, both rotation words and the scroll terms as the game's own snap writes them, so the next frame is drawn there; `off` stops the follow first, `on` starts it on the locator's person. Reads back the point and the eye against the formula; exit 2 where the point did not stay (a follow or a pan moved it) (Q440) |
 | `original/outside.py PID [X,Y] [N]` | The original's map cells outside the park (`mFlags`, the word at `+0xe` of each 0x44-byte cell, bit `0x40`) nearest a cell or the camera's point, as runs along a row: where a refused rectangle of the patrol tool lies (Q439) |
+| `original/capmatch.py CAPTURE SDT ENTRY FROM TO ...`, `... --scan FROM [SECS]` | One sample of a bank measured in the original's own mix (an `ORIG_ASOUND` file capture, its byte marks taken with `stat -c %s` either side of what is measured): each window's score, gain and rms; `--scan` scores every 2 s window to the end, so a click's window can be shown the capture's only match (Q442) |
 | `original/particledump.py PID EFFECT [raw]` | The original's memory: EVERY particle of each live emitter of an effect (its place less the emitter's, velocity, size, frame, colour) and the spread of each, where `spritepass.py` prints an emitter's first six. OpenTPW's side is the console's `particles <slot>`; `q261/cloud.py <run.out>` prints the same spread from a run's output |
 | `lib/spritesheet.py <bank.ESP> <out.png> <set>...` | A sprite bank's picture sets with their alpha, each frame over black and over white, and each frame's alpha spread and mean colour: what a particle's picture is before any blend. `wadcat --dump SPR_PA.ESP` and `--dump SPR_PA.TPC` on `esprites.wad` write the two files it reads |
 | `original/voices.py PID [SECS]` | The original's memory: every live sound voice by the service's own list (its effect and flags word, the voice's flags, place, range and rectangle, how far it is from the listener), with the listener first; a block a change. Says which placed sounds are in range and sounding. A `POLL` for `loadfile.sh` |
@@ -201,7 +202,12 @@ Each was found by trial in the item named, and cost a run to find.
   cells at the camera's own point (`q438/orig/run.sh`, `AIMREL=1`). **A refused click in the original** (Q439,
   `q439/orig/run.sh` with `AIMB=1`): `camto.py %PID% 48,18`, then `outside.py` for the nearest band of outside cells and
   `cellfind.py` for each corner straight before its click; fixed cells or a grid read earlier miss, as the camera trails
-  Mike. Its sound under the music scored 0.32 only: switch the music off first (`q439/PREDICTION.txt`).
+  Mike. Its sound under the music scored 0.32 only: switch the music off first (`q439/PREDICTION.txt`). With it off
+  (Q442, `q442/orig/run.sh`): `setcam.py PID 435,165 110 0 off` draws (43,16)'s middle at the frame's middle (512,384),
+  and a press there with the hand empty arms the path tool red (mode 1, `d48` 1, read with the button held); its
+  release refuses, and `original/capmatch.py` found `blnl_error1` at 0.558 there, the capture's only window over 0.3.
+  With nothing armed after the menu the preview's cell reads (0, 0) and `PICK=1`'s picker stands still, so
+  `cellfind.py` finds nothing there: aim with the camera instead.
 
 - **The staff window's FIRE and PICK UP in either game** (Q432, `q432/orig/run.sh`, `q432/confirm.py`): on the
   original's 1024 x 768 frame `b_fire` is (228,385) and `b_pick` (308,385); FIRE's box puts its tick at (710,282) and
@@ -787,10 +793,12 @@ GH=766` there, or the pointer is off):
   thing bought goes on the front. Read an order from the file's `mNext` links, never from the ids (Q257z).
 - **Instant Action offers only researched items:** patch a copy with `research.py`, never the reference
   `easymode.TPWI` (Q257n).
-- **Its music off:** the game menu's Options (510,400), the Music switch (445,533), OK (898,688), Escape; the
-  same clicks put it back, and `save/Config.tcf` then holds the same bytes. A park's mix still reads 0.04 rms
-  with it off and every placed voice silenced, so one placed sound's loudness is not read from the mix: neither
-  a match of its sample (0.04) nor its loop's length in the autocovariance found a waterfall 21 units off (Q263).
+- **Its music off:** Escape for the game menu, its Options (510,365 at the install's 800 x 600), the Music switch
+  (445,533), OK (898,688), which goes straight back to the park (an Escape after it opens the menu again, and
+  (445,533) on the menu is Exit To Lobby, which writes an autosave: Q442); the same clicks put it back, and
+  `save/Config.tcf` then holds the same bytes. A park's mix still reads 0.04 rms with it off and every placed voice
+  silenced, so one placed sound's loudness is not read from the mix: neither a match of its sample (0.04) nor its
+  loop's length in the autocovariance found a waterfall 21 units off (Q263).
 - **How loud its mixer plays a voice** is read, not captured: `mixer.py PID` after a load prints each channel's
   distance and gain (Q263's camera files `q263/files/aim-*.TPWS` step the listener away from the waterfall). A
   channel marked `dirty` has not been worked out since it last moved: read the ones that are not (Q264).

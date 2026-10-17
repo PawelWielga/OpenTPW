@@ -99,6 +99,18 @@ public static class ParkBuildMode
 	/// <summary>Puts the mode away entirely - the original's <c>FUN_0052f200( 0, 0 )</c>.</summary>
 	public static void Disarm() => Arm( None );
 
+	/// <summary>
+	/// The commit's refused click: sound <c>0xaf</c> (<see cref="UI.UiSounds.Refused"/>), played once where the preview
+	/// flagged a red square, ahead of the commit's mode switch (<c>0x00524a63</c>..<c>0x00524aae</c>), so a placement,
+	/// the path tool, the queue tool and the patrol tool share it. It is gated on the flag the mode's button-down slot
+	/// sets (<c>DAT_008186d8</c>, read at <c>0x00524a77</c>); a press beside an open park screen never calls that slot,
+	/// so the click is refused there in silence.
+	/// </summary>
+	/// <returns>What the click's answer says of the sound.</returns>
+	public static string RefusedSound( bool pressReachedTheTool )
+		=> !pressReachedTheTool ? "no sound, the press went to a park screen"
+			: UI.UiSounds.Refused() ? "sound 0xaf, a voice" : "sound 0xaf, no voice";
+
 	/// <summary>Remembers where a run starts.</summary>
 	public static void AnchorAt( int x, int y ) => Anchor = (x, y);
 

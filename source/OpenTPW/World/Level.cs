@@ -1551,7 +1551,7 @@ public class Level
 		// 3, 5 and 6. Nothing is charged until it actually goes up, which is why cancelling needs no
 		// refund; see ParkBuilding.Carrying.
 		if ( ParkBuilding.Carrying != 0 )
-			return $"world click: {ParkBuilding.PlaceCarried( cellX, cellY )}";
+			return $"world click: {ParkBuilding.PlaceCarried( cellX, cellY, pressReachedTheTool: !UI.WindowStack.ParkScreenOpen )}";
 
 		if ( ParkStaffPool.Carrying != 0 )
 			return $"world click: {ParkStaffPool.PlaceCarried( cellX, cellY )}";
@@ -1586,7 +1586,7 @@ public class Level
 		{
 			ParkBuildMode.Arm( ParkBuildMode.Path );
 
-			return $"world click: {ParkPathBuilding.RunPath( cellX, cellY )}";
+			return $"world click: {ParkPathBuilding.RunPath( cellX, cellY, !UI.WindowStack.ParkScreenOpen )}";
 		}
 
 		// A member's click opens their window (FUN_004879d0, category 8 to FUN_004b6080).
@@ -1617,13 +1617,13 @@ public class Level
 	private static string RunBuildMode( int cellX, int cellY )
 	{
 		if ( ParkBuildMode.Current == ParkBuildMode.Path )
-			return ParkPathBuilding.RunPath( cellX, cellY );
+			return ParkPathBuilding.RunPath( cellX, cellY, !UI.WindowStack.ParkScreenOpen );
 
 		if ( ParkBuildMode.Current == ParkBuildMode.Patrol )
 			return ParkPatrolTool.Run( cellX, cellY, !UI.WindowStack.ParkScreenOpen );
 
 		if ( ParkBuildMode.Anchored )
-			return ParkPathBuilding.RunQueue( cellX, cellY );
+			return ParkPathBuilding.RunQueue( cellX, cellY, !UI.WindowStack.ParkScreenOpen );
 
 		ParkBuildMode.AnchorAt( cellX, cellY );
 

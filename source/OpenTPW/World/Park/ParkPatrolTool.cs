@@ -75,9 +75,7 @@ public static class ParkPatrolTool
 
 	/// <summary>One click of the tool, at the cell under the pointer.</summary>
 	/// <param name="pressReachedTheTool">
-	/// Whether the press went to the park rather than to an open park screen. The refusal's sound is gated on the flag the
-	/// mode's button-down slot sets (<c>DAT_008186d8</c>, read at <c>0x00524a77</c>), and a press beside an open screen
-	/// never calls that slot, so the click is refused there in silence.
+	/// Whether the press went to the park rather than to an open park screen (<see cref="ParkBuildMode.RefusedSound"/>).
 	/// </param>
 	public static string Run( int clickX, int clickY, bool pressReachedTheTool = true )
 	{
@@ -98,8 +96,7 @@ public static class ParkPatrolTool
 
 		if ( Refuses( park, from, to ) )
 		{
-			var sound = !pressReachedTheTool ? "no sound, the press went to a park screen"
-				: UI.UiSounds.Refused() ? "sound 0xaf, a voice" : "sound 0xaf, no voice";
+			var sound = ParkBuildMode.RefusedSound( pressReachedTheTool );
 
 			return $"patrol: {from}-{to} takes in no cell of the park, so no area is written and the patrol tool is put away - {sound}";
 		}

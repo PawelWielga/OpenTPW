@@ -593,6 +593,70 @@ public class ParkStaffWindowTests
 	}
 
 	/// <summary>
+	/// <b>A placement's and the path and queue tools' refused clicks play the same sound <c>0xaf</c>, only where the press
+	/// reached the park</b>: the commit plays it once ahead of its mode switch (<c>0x00524aae</c>), so every tool shares it.
+	/// A click on (43,16), outside the park, arms the path tool and refuses at once; a click on the Belly Bounce's queue
+	/// hands back the queue tool anchored on (49,22), and a click on (52,18) runs it to (49,18), over a type 7 cell; the Belly Bounce in the hand
+	/// will not go down on (43,16) either, and stays in the hand.
+	/// </summary>
+	[TestMethod]
+	public void RefusedBuildClicksAreHeardUnlessThePressWentToAParkScreen()
+	{
+		var mechanic = Mechanic.ThingId;
+		var objects = new ParkObjects( "jungle", null, null );
+
+		try
+		{
+			foreach ( var screen in new[] { false, true } )
+			{
+				if ( screen )
+					ParkStaffWindow.Open( _stack, mechanic );
+
+				_stack.Update();
+				Assert.AreEqual( screen, WindowStack.ParkScreenOpen );
+				var sound = screen ? "no sound, the press went to a park screen" : "sound 0xaf, no voice";
+
+				UiSounds.LastAsked = null;
+				Assert.AreEqual( $"world click: path: nothing laid - (43,16) is outside the park, so the path tool is put away - {sound}",
+					Level.Current!.ClickWorldAt( 43, 16, 0 ) );
+				Assert.AreEqual( screen ? null : 0xaf, UiSounds.LastAsked, "the path tool" );
+				Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current );
+
+				StringAssert.Contains( Level.Current!.ClickWorldAt( 51, 22, 0 ), "from (49,22)" );
+				UiSounds.LastAsked = null;
+				Assert.AreEqual( $"world click: queue: nothing laid - (49,18) is type 7, which queue may not be laid over, so the queue tool is put away - {sound}",
+					Level.Current!.ClickWorldAt( 52, 18, 0 ) );
+				Assert.AreEqual( screen ? null : 0xaf, UiSounds.LastAsked, "the queue tool" );
+				Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current );
+
+				StringAssert.StartsWith( ParkBuilding.Carry( 1100 ), "carry: holding" );
+				UiSounds.LastAsked = null;
+				var put = Level.Current!.ClickWorldAt( 43, 16, 0 );
+				StringAssert.StartsWith( put, "world click: buy: 'Belly Bounce' will not fit at (43,16) - " );
+				StringAssert.EndsWith( put, $" - {sound}" );
+				Assert.AreEqual( (screen ? null : 0xaf, 1100), (UiSounds.LastAsked, ParkBuilding.Carrying), "a placement, still in the hand" );
+				ParkHand.LetGo();
+			}
+		}
+		finally
+		{
+			ParkHand.LetGo();
+			objects.Delete();
+			Entity.ApplyDeletions();
+		}
+
+		_stack.Close( Window! );
+		_stack.Update();
+		UiSounds.LastAsked = null;
+		StringAssert.Contains( Level.Current!.ClickWorldAt( 10, 10, 0 ), "(10,10)" );
+		Assert.AreEqual( (ParkBuildMode.Path, true), (ParkBuildMode.Current, ParkBuildMode.Anchored), "a click on the park's bare ground anchors" );
+		Assert.IsNull( UiSounds.LastAsked, "and is not refused" );
+
+		Assert.AreEqual( 0, Times( "PATH_TOOL_REFUSED_SOUND_0xAF" ) + Times( "QUEUE_TOOL_REFUSED_SOUND_0xAF" )
+			+ Times( "PLACEMENT_REFUSED_SOUND_0xAF" ), "no longer counted" );
+	}
+
+	/// <summary>
 	/// <b>The patrol switch let up gives the member the whole map</b> (<c>FUN_004b5b50( 0 )</c>, <c>FUN_00506e90</c>: cells 1
 	/// to <c>0x4000</c>); the window stays and no tool is armed.
 	/// </summary>

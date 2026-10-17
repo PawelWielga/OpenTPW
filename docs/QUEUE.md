@@ -50,6 +50,11 @@ Q441, Q260's build, follows Q440 (its tool sets the original's camera for the co
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q442 (`hud.md`, "The patrol switch and the patrol tool"): the refused click's sound is built at every build
+  tool, so the nearest piece is the leavers' draw on the save's seed (`park.md`; it needs the park's one shared
+  generator). In no game run: a move's put-down refused (`ParkBuilding.Move`; tested only), a refusal for money, the
+  original's placement and queue refusals (its path refusal heard; the one call is read in the listing), Full
+  Simulation (not asked: the tools are either mode's), the other three themes.
   From Q439 (`hud.md`, "The patrol switch and the patrol tool"): the refused click's sound is built for the patrol
   tool, so the nearest piece is the same call at the other three refusals it serves, one helper away
   (`UiSounds.Refused`; `0x00524aa7` is ahead of the commit's mode switch): a placement on a red cell

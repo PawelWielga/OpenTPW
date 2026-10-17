@@ -7383,6 +7383,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`lib/cellprobe.py`, `original_view`, `q435/confirm.py`'s 360/768). Confirm: our frame at the original's camera
   numbers laid on the original's whole, not its middle half (`q260/confirm.py` gives the cells and the camera), the
   camcorder beside the original's first person, and the lobby at the number chosen.
+- [x] **Q442. The refused click's sound `0xaf` at a placement, the path tool and the queue tool (a piece of Q420).**
+  Done 2026-10-17: one call ahead of the commit's mode switch (`0x00524a63`..`0x00524aae`) serves every tool, so
+  `ParkBuildMode.RefusedSound` is that call for all four, silent where the press went to an open park screen. Ours, the
+  final build (`q442/run3`, 5 of 5): the path tool armed and refused on (43,16), the queue tool run red from (50,22) and
+  the Belly Bounce refused on (43,16) each logged `- sound 0xaf, a voice` and matched `blnl_error1` once at 1.000, gain
+  0.1750; beside the hire screen `- no sound, the press went to a park screen`, 0.017. The original, its music off
+  (`q442/orig`, round 1f): the press on (43,16) armed the path tool red, the release refused it, `blnl_error1` 0.558, the
+  capture's only match. Test `RefusedBuildClicksAreHeardUnlessThePressWentToAParkScreen`, mutations 12 of 12
+  (`q442/PREDICTION.txt`, `side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

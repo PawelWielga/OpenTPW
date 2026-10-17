@@ -71,8 +71,8 @@ public class ParkMoveTests
 	/// <summary>
 	/// <b>A cell that refuses leaves the thing in the hand</b>, sold where it stood, as a click on a red cell
 	/// does in the original: the move tool stays installed and the next click tries again. The Staff Room's
-	/// anchor is built on, so the Belly Bounce cannot go there. <b>Picking up puts away whatever tool was
-	/// armed</b>, as installing the move tool does.
+	/// anchor is built on, so the Belly Bounce cannot go there, and the click plays sound <c>0xaf</c>. <b>Picking up
+	/// puts away whatever tool was armed</b>, as installing the move tool does.
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> selling and then buying at the cell, rather than selling and taking the item into the
@@ -93,11 +93,14 @@ public class ParkMoveTests
 
 		var before = state.Balance;
 		ParkBuildMode.Arm( ParkBuildMode.Path );
+		UI.UiSounds.LastAsked = null;
 
 		var reply = ParkBuilding.Move( state, world, catalogue, null, rides, BellyBounceThing, 58, 16 );
 
 		Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, "picking up put the path tool away" );
 		StringAssert.Contains( reply, "will not fit at (58,16)" );
+		StringAssert.EndsWith( reply, "- sound 0xaf, no voice", "the refused put-down's sound (0x00524aae), asked for (no mixer here)" );
+		Assert.AreEqual( 0xaf, UI.UiSounds.LastAsked );
 		Assert.AreEqual( bounce.CatalogueId, ParkBuilding.Carrying, $"the Belly Bounce is still in the hand: {reply}" );
 		Assert.IsFalse( state.TryObject( BellyBounceThing, out _ ), "it was sold where it stood" );
 		Assert.AreEqual( 0, rides.ScriptFor( BellyBounceThing ), "and its script went with it" );

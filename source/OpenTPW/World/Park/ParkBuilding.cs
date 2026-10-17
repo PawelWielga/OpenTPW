@@ -1279,14 +1279,15 @@ public static class ParkBuilding
 	/// <see cref="Level"/>'s, read from the armed mode each frame; the message's words are not decoded.
 	/// </para>
 	/// </remarks>
-	public static string PlaceCarried( int cellX, int cellY, int? angle = null )
+	/// <param name="pressReachedTheTool">Whether the press went to the park rather than to an open park screen (<see cref="ParkBuildMode.RefusedSound"/>).</param>
+	public static string PlaceCarried( int cellX, int cellY, int? angle = null, bool pressReachedTheTool = true )
 	{
 		if ( Level.Current is not { } level || level.ParkState is not { } state
 			|| level.Catalogue is not { } catalogue || ParkObjects.Current is not { } objects
 			|| level.Park is not { } park )
 			return "put: a park has to be loaded";
 
-		return PlaceCarried( state, park, catalogue, objects, ParkRides.Current, cellX, cellY, angle );
+		return PlaceCarried( state, park, catalogue, objects, ParkRides.Current, cellX, cellY, angle, pressReachedTheTool );
 	}
 
 	/// <summary>
@@ -1294,17 +1295,16 @@ public static class ParkBuilding
 	/// <paramref name="angle"/> the thing faces the way the hand holds it.
 	/// </summary>
 	private static string PlaceCarried( ParkState state, IParkInitialState park, ParkItemCatalogue catalogue,
-		ParkObjects? objects, ParkRides? rides, int cellX, int cellY, int? angle )
+		ParkObjects? objects, ParkRides? rides, int cellX, int cellY, int? angle, bool pressReachedTheTool = true )
 	{
 		if ( Carrying == 0 )
 			return "put: the hand is empty - `carry <item>` first, or click a row on the buy screen";
 
 		var built = Build( state, park, catalogue, objects, rides, Carrying, cellX, cellY, angle ?? CarryingAngle );
 
-		// A click on a red cell plays sound 0xaf (0x00524aae) and leaves the hand as it is, so the next click
-		// tries again.
+		// A click on a red cell plays sound 0xaf and leaves the hand as it is, so the next click tries again.
 		if ( built.Refused )
-			Unimplemented.Report( "PLACEMENT_REFUSED_SOUND_0xAF" );
+			return $"{built.Answer} - {ParkBuildMode.RefusedSound( pressReachedTheTool )}";
 
 		if ( built.ThingId == 0 )
 			return built.Answer;

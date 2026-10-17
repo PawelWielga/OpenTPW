@@ -2513,7 +2513,8 @@ member as its `Serves`, and `ParkPatrolTool` (its `Strip`, `Refuses` and `Run`) 
 `ParkPathBuilding.Strip` and takes the world click; `Staff.SetPatrolArea` and `ClearPatrolArea` write the two corners.
 `ParkBuildMode.Arm` withdraws `0xc1` on a change of mode, the only one of the setter's ten posted here; the cursor is the
 plain pointer, `NoGo` while the outline is red. The refused click plays `0xaf` (`UiSounds.Refused`, Q439) unless a park
-screen is open, where the press went to the screen.
+screen is open, where the press went to the screen; `ParkBuildMode.RefusedSound` is that one call, which a refused
+placement, path run and queue run make too (Q442).
 Its run (`q433/confirm.py`, run4, the final build; real clicks, each cell found by moving the pointer and reading `strip`'s drawn census, now `lib/cellprobe.py`): the same switch
 words, the same 8 squares in the same order for (51,27) and (54,26), row 26 lifted 20 on (51,26) and (52,26) and 10 on
 (53,26) as the original's (tops 21.5, 21.5 and 11.5 over 1.5), the plain pointer, "patrols (51, 26)-(54, 27), cells 3380 to 3511", the window again "Patrolling"; on the band
@@ -2554,6 +2555,16 @@ pointer before it, neither after (`q439/side-by-side.png`). In the original (`q4
 anchor -1, Mike's area 1 and 16384); `blnl_error1` matched its own mix at 0.318 there, the best of the capture's 111
 windows (the next 0.281), so the sound is suggested and not shown: the music masks a short clip, and the run with it
 switched off was not made.
+**At the other refusals** (Q442; `q442/confirm.py`, `run3`, the final build, the same mix): with the hand empty a click on
+(43,16), outside the park, armed the path tool and logged `path: nothing laid - (43,16) is outside the park, so the path
+tool is put away - sound 0xaf, a voice`; the queue tool handed back on the Belly Bounce's queue and run to (55,22), red
+from (50,22), `queue: nothing laid - (50,22) is the middle of this ride's queue ... - sound 0xaf, a voice`; the Belly
+Bounce in the hand on (43,16), refused and still held, `... - sound 0xaf, a voice`: each matched `blnl_error1` once at
+1.000 and a gain of 0.1750. The same placement beside the hire screen logged `- no sound, the press went to a park
+screen`, and the mix held none (0.017). **In the original, its Music switch off** (`q442/orig/run.sh`, round 1f): the
+press on (43,16) with the hand empty installed the path tool red (mode 1, `DAT_00816d48` 1, the preview's cell (43,16));
+the release put it away, and `blnl_error1` matched its mix at 0.558 there, against 0.077 in the quiet seconds before and
+0.278 at best anywhere else in the capture: shown (`q442/side-by-side.png`).
 
 #### How allstaff and allitems keep their rows current
 
