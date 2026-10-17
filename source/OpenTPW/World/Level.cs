@@ -1431,12 +1431,14 @@ public class Level
 				PersonPointer = true;
 				WorldHelpValues = [(2, member.Name)];
 
-				// As the row is posted the original sets the member idle wherever PICK UP would take them (FUN_00505f50:
-				// FUN_00505bd0, then SetState( 0 )). Counted: on the cell's pick a member the camera follows is dropped
-				// and taken again at each cell, and each take would stop them again (park-engine.md, "What the hover
-				// says over a person").
+				// As the row is posted the member is set idle wherever PICK UP would take them (FUN_00505f50: FUN_00505bd0,
+				// then SetState( 0 )): taken by their picture, a member the camera follows stays taken and is set once.
 				if ( _rowPerson != thingUnderCursor && UI.ParkStaffWindow.CanBePickedUp( member, ParkState ) )
-					Unimplemented.Report( "STAFF_HOVER_SET_STATE" );
+				{
+					var was = member.Activity;
+					member.SetActivity( StaffActivity.Idle, ParkState!.GameTick );
+					Log.Info( $"Park: hover set thing {thingUnderCursor} idle from {was} on mGameTick {ParkState.GameTick}" );
+				}
 
 				return Posted( 555, thingUnderCursor );
 

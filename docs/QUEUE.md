@@ -51,20 +51,21 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
 
-- [ ] **Q468. The original's sprite pick, then the hover's set.** From Q451 (`park-engine.md`, "The thing under a
-  sprite" and "The hover runs only on the park's view"): our pick takes a person by the cell's list, so a member the
-  staff locator's camera follows is dropped and taken again at each cell under a resting pointer, where the original's
-  `FUN_00532bd0` takes the thing whose script is the sprite's latched under the pointer (`DAT_008bd4fc`, the draw's
-  squared-distance test at `0x0058931a`, its distance not decoded) on the hovered cell and its eight neighbours. Decode
-  the latch's test, build the pick for people, then build the hover's set (`STAFF_HOVER_SET_STATE`: `SetActivity( Idle )`
-  where `ParkStaffWindow.CanBePickedUp` passes, as `q451/confirm1.py` ran it). Confirm: Mike Cooper followed by the
-  locator with the pointer resting, set idle once and walking again at the stamp + 11, as `q451/orig/a-load.log`.
 - [ ] **Q469. The hover's other empty rows only after a category.** From Q467: with a tool's mode installed
   (`0x00486fd9` to `0x00486fe4`) and on a cell of no category (`FUN_00486d90`'s switch default, `0x004877a3`) the original
   posts the empty row only if the last category was not nought, so a row standing at category 0 (the guests' row, Q467;
   a locator's) stays; ours always empties it (`Level.WorldHelpRow`, `!HoverTaken` and `!ArmsThePathTool`). Decide which
   of our cells fall to the default (not `FUN_00536390`'s ground, not types 1, 3, 4, 9, 10 or `0x15`) first. Confirm in
   both games: the Q467 standing row, then Shift let go over such a cell.
+- [ ] **Q470. Our people may be drawn larger than the original's.** From Q468 (`park-engine.md`, "The thing under a
+  sprite"): the original adds a picture's span (height / 128 x 20, and across x 0.75) to its place AFTER the draw matrix,
+  whose w is sin 45 of the depth, so on the screen a picture is span / w of the -1 to 1 box; ours draws it in the world
+  through the 53.13 degree lens (`ParkGuestSprites.WriteQuad`), span x 2 / depth down and x 1.5 / depth across. By that
+  arithmetic ours stand sqrt 2 the original's size: Mike's 54 px picture at zoom 110 is 42 px of 768 there and 59 here.
+  Not measured in frames. Measure first: his drawn height in both games at one camera (`lib/bothcam.py`, `circle 26`,
+  `original/spritepick.py PID where 26`), then decide. Also not measured: whether any sprite but a person's body carries
+  the pickable flag `0x200` in the original (a rider's head on a ride, a balloon, a thought bubble); ours latches bodies
+  only.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

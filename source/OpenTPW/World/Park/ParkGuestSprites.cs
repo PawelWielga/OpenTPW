@@ -615,8 +615,16 @@ public sealed class ParkGuestSprites : ModelEntity
 		return set.First + frame + (set.FramesPerDirection * direction);
 	}
 
+	/// <summary>Every person's picture the last frame drew, for the pointer's pick (<see cref="SpritePick"/>): their
+	/// bodies, as the original's people's sprites carry the pickable flag <c>0x200</c>.</summary>
+	internal IReadOnlyList<SpritePick.Drawn> Drawn => _drawn;
+
+	private readonly List<SpritePick.Drawn> _drawn = [];
+
 	protected override void OnRenderTranslucent()
 	{
+		_drawn.Clear();
+
 		if ( TranslucentModel == null || _atlas == null )
 			return;
 
@@ -696,6 +704,7 @@ public sealed class ParkGuestSprites : ModelEntity
 			var centre = Centre( Seated( people, person.ThingId ), x, y, ground, sprite.Height );
 
 			WriteQuad( used++, centre, picture, mirrored, sprite.Alpha );
+			_drawn.Add( new SpritePick.Drawn( person.ThingId, centre, picture.Width, picture.Height, picture.OriginX, picture.OriginY, mirrored ) );
 
 			if ( DebugFacing && _plain is { } plain )
 				WriteGroundDash( used++, centre, angle, kind, plain );

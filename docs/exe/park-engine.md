@@ -1380,13 +1380,39 @@ Written as a **16-bit** store. A point off the map is held to an edge cell first
 the world hit point. The hovered *thing* is latched separately into the mouse-manager object at
 `0x007b05a8`, and a click **snapshots** it (`FUN_0048c960`) rather than re-reading it live.
 
-**The thing under a sprite** (Q194): `FUN_00532bd0` stores the pointer at `0x008bd4f0`/`0x008bd4f4` as x / 1024 − 1 and
-y / 767.5 − 1. When the sprite draw has latched a sprite under it (`DAT_008bd4fc`: cleared at each pass by
-`FUN_0058a770`, set at `0x0058931a` by `FUN_005890e0`'s squared-distance test), it takes that sprite's script
-(`FUN_00475ef0`) and walks the hovered cell, then its eight neighbours (pairs at `0x0081ed40`, filled by the initializer
-`0x00532b30`), returning the first thing of kind 1, 4, 5, 6, 7, 8 or `0x12` on the cell's thing list whose `+0x0c`
-script is the sprite's. Its one caller, `FUN_00540b30` (from `FUN_00475430`), stores the answer at `0x00877350` and hands
-the previous one to `FUN_00423b50` on `0x007b05a8`.
+**The thing under a sprite** (Q194, Q468): `FUN_00532bd0` stores the pointer at `0x008bd4f0`/`0x008bd4f4` as x / 1024 − 1
+and y / 767.5 − 1 of its 2048 x 1536 position (`[0x00faa540]`, `[0x00faa544]`), the screen as −1 to 1, down positive.
+When the sprite draw has latched a sprite under it (`DAT_008bd4fc`: cleared at each pass by `FUN_0058a770`, set at
+`0x0058931a`), it takes that sprite's script (`FUN_00475ef0`: the script whose `+0xd0` is the sprite) and walks the hovered
+cell, then its eight neighbours (pairs at `0x0081ed40`, filled by the initializer `0x00532b30`: (0,0), then (−1,−1),
+(0,−1), (1,−1), (−1,0), (1,0), (−1,1), (0,1), (1,1)), returning the first thing of kind 1, 4, 5, 6, 7, 8 or `0x12` on the
+cell's thing list whose `+0x0c` script is the sprite's; nought otherwise, and off the map. Its one caller, `FUN_00540b30`
+(from `FUN_00475430`), stores the answer at `0x00877350` and hands the previous one to `FUN_00423b50` on `0x007b05a8`.
+
+**The latch** (`FUN_005890e0`, `0x00589259` to `0x0058931a`, from `FUN_00589b50`'s draw of each sprite of the list
+`[0x008c47a0]`, count `+0x2404`). A sprite is tested when its flags `+0x10` carry `0x200` and `[0x008bcbc8]` carries
+`0x1000000`. Its place `+0x0` is (x, y, z, w), the draw matrix `[0x0087b088]` times its world place `+0x14`; its frame
+`+0x28` gives the width `+0xc`, height `+0xe`, the reference `+0x10`/`+0x12` (128) and the origin `+0x14`/`+0x16`
+(signed, negative). With s = `+0x2c` × 20 (`0x0070200c`) and G = `0x008bcbcc` (the screen's height over its width, 0.75):
+L = origin x / 128 × s × G and R = (width + origin x) / 128 × s × G, both negated when flag `0x10` reflects it; the
+height's span is height / 128 × s. The pointer must lie strictly inside the circle
+
+    (px − (x + L) / w)² + (py − y / w)² < 0.0002 × (span across² + span down²)          (0x0070203c)
+
+about the picture's left edge (its right, reflected) at its origin's height, the radius not divided by w: the same
+size on the screen at every zoom. Of two, the one with the smaller w wins (`0x0058930b`: latched only when its w is
+below the latched sprite's `+0xc`). w is the eye's depth times sin 45, the projection's `m23` for the 90 degrees the
+park hands `FUN_00578be0` ("The lens"). Measured in the original (`q468/orig/`, `original/spritepick.py`, `PREDICTION.txt`):
+the latch the decode predicts from every flagged sprite equalled the game's on 164 of 185 polls, the rest a frame
+apart; every sprite latched was a person's (kinds 1, 4 to 8), flags `0x10001200` or, reflected, `0x10001210`; G read
+0.75 and `[0x008bcbc8]` `0x1444100`; Mike Cooper's w read 77.78 at zoom 110 and his place equalled the matrix times
+his world place to the last digit; his r² read 0.014 to 0.019 (pictures 35 to 41 by 50 to 54), guests' 0.006 to 0.009;
+across and down the latch went where the decode's d² passed r². With the locator's camera following him and the
+pointer resting, the pick named him while his cell went (51,21) to (56,21). Not measured: whether any sprite but a
+person's body carries `0x200` (a rider's head on a ride, a balloon, a thought bubble). Here `SpritePick` latches over
+the people's bodies as the last frame drew them (`ParkGuestSprites.Drawn`) and `ParkPicking` takes a person only so;
+the cell's list answers only for what is not a person (`ThingOn( people: false )`), and a console click on a cell
+still takes the list's head. The console's `circle [thing]` prints each drawn person's circle in window pixels.
 
 **The type-3 handlers do NOT test the cell for zero** before unpacking it; the out-of-range value is
 caught downstream by the bounds test inside the callees instead.
@@ -3514,10 +3540,13 @@ him, and walked again at 913 (grade 3: IdleDuration 10, + 1). The locator's came
 category 9 throughout, and he was not set again. Over the gadget's buttons the pointer was the arrow, with the button's
 own row. Here `WindowStack.PointerOnTheView` (no control under the pointer, no modal window, no cover) gates
 `WorldHelpRow`, the entry runs it with the thing forgotten, and `Level.IdleCursor` is the arrow off the view. **The set
-itself is counted, not built** (`STAFF_HOVER_SET_STATE`, only where the original would set): our pick takes a person by
-the cell's list, so a member the locator's camera follows is dropped and taken again at each cell under the resting
-pointer. Built on that pick, run1 set Mike idle eleven times in 9 s, so he stopped at every cell; run3 counted 23 takes in
-6 s. It waits on the original's sprite pick (`FUN_00532bd0`, "The thing under a sprite"; Q468).
+itself is built on the sprite pick** (Q468; "The thing under a sprite"): `Level.WorldHelpRow` sets the member idle as it
+posts their row wherever `ParkStaffWindow.CanBePickedUp` passes. Measured in both (`q468/`, `PREDICTION.txt`): the
+original set Mike idle on the take at 907 and he walked again by 924, the pointer resting with category 9 and no second
+set; ours set him at 810 and logged "Staff: 26 leaves idle for Walking on mGameTick 821, idle since 810", one set while
+the follow carried him over eight cells. In both a member beside him who became the nearer under the pointer was taken
+and set in turn, each change a new take. The gate is hit-tested where the hover asks
+(`WindowStack.PointerOnTheView`), so the frame the pointer reaches a control takes nothing behind it.
 
 **Who a cell's list names as people walk** (Q446). Every person is relinked into the cell they stand on whenever it
 changes: the walk tick `FUN_004fa2a0` calls `FUN_0050b6a0` at `0x004fa2fc` (the placement `FUN_004fa930` at

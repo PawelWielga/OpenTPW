@@ -370,7 +370,11 @@ public sealed class StaffBehaviour
 				if ( (uint)tick <= (uint)(staff.TimeStartedIdling + IdleDurationAt( staff.PayGrade )) )
 					break;
 
+				var since = staff.TimeStartedIdling;
 				Decide( staff, walk, tick );
+
+				if ( staff.Activity != StaffActivity.Idle )
+					Log.Info( $"Staff: {staff.ThingId} leaves idle for {staff.Activity} on mGameTick {tick}, idle since {since}" );
 
 				break;
 

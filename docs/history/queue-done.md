@@ -7474,6 +7474,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   empties it (`Level.WorldHelpRow`, `case PersonPick.Nothing`). Our hover keeps no category for the ground's arms but
   path and ground: decide what the last category was there first. Confirm in both games: Shift over a guest, then off
   them onto bare ground and off again.
+- [x] **Q468. The original's sprite pick, then the hover's set.** Done 2026-10-17: the latch decoded (`FUN_005890e0`,
+  `park-engine.md`, "The thing under a sprite": a circle about the picture's left edge at its origin, r² 0.0002 of the
+  span's, not divided by w, the nearer winning; w is sin 45 of the depth) and measured in the original
+  (`original/spritepick.py`: the decode's latch the game's on 164 of 185 polls, the rest a frame apart); built as
+  `SpritePick` over the people's drawn bodies, `ParkPicking` asking the cell only for what is not a person, and the
+  hover's idle set on it. The original (`q468/orig/` round c): Mike set on the take at 907, walking again by 924, no
+  second set while the pointer rested. Ours `q468/run5` 6 of 6: set at 810, leaving idle at 821 = 810 + 11, one set over
+  eight cells, the circle's edge in four directions (`side-by-side.png`). The coordinator's Q451 finding built with it:
+  the view's gate hit-tested where the hover asks, a test through `Level`'s own entry. Mutations 21 of 22 fail a test;
+  the drawn list's (no device in the suite) fails the game run. Was: From Q451 (`park-engine.md`, "The thing under a
+  sprite" and "The hover runs only on the park's view"): our pick takes a person by the cell's list, so a member the
+  staff locator's camera follows is dropped and taken again at each cell under a resting pointer, where the original's
+  `FUN_00532bd0` takes the thing whose script is the sprite's latched under the pointer (`DAT_008bd4fc`, the draw's
+  squared-distance test at `0x0058931a`, its distance not decoded) on the hovered cell and its eight neighbours. Decode
+  the latch's test, build the pick for people, then build the hover's set (`STAFF_HOVER_SET_STATE`: `SetActivity( Idle )`
+  where `ParkStaffWindow.CanBePickedUp` passes, as `q451/confirm1.py` ran it). Confirm: Mike Cooper followed by the
+  locator with the pointer resting, set idle once and walking again at the stamp + 11, as `q451/orig/a-load.log`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

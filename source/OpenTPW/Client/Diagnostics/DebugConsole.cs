@@ -1270,6 +1270,32 @@ public static class DebugConsole
 			// ground, and the only way to see whether the ray lands where the cursor is drawn - which
 			// a screenshot alone cannot settle, because a cell is ten units across and a pitched
 			// camera makes "further away" and "higher up the frame" look the same.
+			// A person's pick circle as the last frame drew them (SpritePick.Circle): its middle and radius in window
+			// pixels, so a harness can aim at it and at its edge. With no thing, every person drawn.
+			case "circle":
+				{
+					var who = parts.Length > 1 ? (int)Argument( 1 ) : 0;
+					var listed = 0;
+
+					foreach ( var picture in ParkGuestSprites.Current?.Drawn ?? [] )
+					{
+						if ( (who != 0 && picture.Thing != who)
+							|| SpritePick.Circle( picture, Camera.ViewMatrix * Camera.ProjMatrix, Screen.Height / MathF.Max( Screen.Width, 1f ) ) is not { } circle )
+							continue;
+
+						++listed;
+						Reply( $"circle: thing {picture.Thing} middle ({(circle.X + 1f) * Screen.Width / 2f:F0},{(circle.Y + 1f) * Screen.Height / 2f:F0}) " +
+							$"radius {MathF.Sqrt( circle.Reach ) * Screen.Width / 2f:F1} x {MathF.Sqrt( circle.Reach ) * Screen.Height / 2f:F1} r2 {circle.Reach:F4} " +
+							$"depth {circle.Depth:F2} size {picture.Width}x{picture.Height} origin {picture.OriginX},{picture.OriginY} mirrored {picture.Mirrored} " +
+							$"of {Screen.Width:F0}x{Screen.Height:F0}" );
+					}
+
+					if ( listed == 0 )
+						Reply( who != 0 ? $"circle: thing {who} not drawn" : "circle: nobody drawn" );
+
+					break;
+				}
+
 			case "pick":
 				if ( Level.Current?.Kind != Level.Scene.Park )
 				{

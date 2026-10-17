@@ -45,12 +45,15 @@ public static class ParkPicking
 	public static Vector3 WorldPoint { get; private set; }
 
 	/// <summary>
-	/// The thing standing on the cell under the pointer, or nought (<see cref="ThingOn"/>). <b>A declared deviation for
-	/// people:</b> the original takes a person by the sprite drawn under the pointer, matched on the hovered cell and its
-	/// eight neighbours (<c>FUN_00532bd0</c>), and an object by the cell; this asks the cell's list for both, its head
-	/// first, so of two guests on one cell the one who came last answers.
+	/// The person whose picture is under the pointer, taken as the original takes them (<see cref="SpritePick"/>:
+	/// latched by the draw, then found on the hovered cell or a neighbour, <c>FUN_00532bd0</c>); failing one, the thing
+	/// on the hovered cell that is not a person (<see cref="ThingOn"/>), or nought.
 	/// </summary>
 	public static int ThingUnderCursor { get; private set; }
+
+	/// <summary>The person whose picture the last frame's draw latched for the pointer, taken or not, for the debug
+	/// console.</summary>
+	public static int Latched { get; private set; }
 
 	/// <summary>The cell under the pointer as a pair, or false when the pointer is off the map.</summary>
 	public static bool TryCell( out int cellX, out int cellY )
@@ -102,13 +105,14 @@ public static class ParkPicking
 		Cell = answer.Cell;
 		WorldPoint = answer.World;
 		ThingUnderCursor = answer.Thing;
+		Latched = answer.Latched;
 	}
 
 	/// <summary>A cell the debug console's <c>hover</c> holds the pointer over, or null to follow the mouse.</summary>
 	public static (int X, int Y)? Pinned { get; set; }
 
 	/// <summary>What the ray through one point of the window meets.</summary>
-	private readonly record struct Answer( int Cell, Vector3 World, int Thing );
+	private readonly record struct Answer( int Cell, Vector3 World, int Thing, int Latched );
 
 	/// <summary>
 	/// The whole of the picking arithmetic, given a position on the window. <see cref="Update"/> hands
@@ -135,12 +139,27 @@ public static class ParkPicking
 		if ( !ParkState.OnMap( cellX, cellY ) )
 			return default;
 
-		var thing = Level.Current?.ParkState is { } state
-			? ThingOn( state, cellX, cellY )
-			: 0;
+		var latched = LatchedAt( screen );
+		var thing = 0;
 
-		return new Answer( (cellY * ParkWorld.MapSize) + cellX + 1, hit, thing );
+		if ( Level.Current?.ParkState is { } state )
+		{
+			thing = SpritePick.Taken( state, latched, cellX, cellY );
+
+			if ( thing == 0 )
+				thing = ThingOn( state, cellX, cellY, people: false );
+		}
+
+		return new Answer( (cellY * ParkWorld.MapSize) + cellX + 1, hit, thing, latched );
 	}
+
+	/// <summary>The person whose picture the last frame's draw latches for a point of the window (<see cref="SpritePick.Latch"/>),
+	/// against the camera that frame was drawn with.</summary>
+	private static int LatchedAt( Vector2 screen )
+		=> ParkGuestSprites.Current is { } sprites
+			? SpritePick.Latch( sprites.Drawn, SpritePick.Box( screen, Screen.Width, Screen.Height ),
+				Camera.ViewMatrix * Camera.ProjMatrix, Screen.Height / MathF.Max( Screen.Width, 1f ) )
+			: 0;
 
 	/// <summary>
 	/// What a click on one cell resolves to: whoever is standing on it, or - failing that - the object
@@ -170,12 +189,17 @@ public static class ParkPicking
 	/// ray would need a camera, a heightfield and a loaded park, and would pass just as well with the
 	/// owner lookup put back.
 	/// </remarks>
-	internal static int ThingOn( ParkState state, int cellX, int cellY )
+	/// <param name="people">Whether a person on the cell's list answers. The pointer takes people by their pictures
+	/// (<see cref="SpritePick"/>) and asks the cell for the rest; a console click on a cell takes whoever heads it.</param>
+	internal static int ThingOn( ParkState state, int cellX, int cellY, bool people = true )
 	{
-		var standing = state.CellAt( cellX, cellY ).Occupant;
+		var crowd = ParkPeople.Current;
 
-		if ( standing != 0 )
-			return standing;
+		for ( int standing = state.CellAt( cellX, cellY ).Occupant; standing != 0; standing = state.NextOnCell( standing ) )
+		{
+			if ( people || crowd == null || !(crowd.Guests.ContainsKey( standing ) || crowd.IsStaff( standing )) )
+				return standing;
+		}
 
 		var parent = state.Record( cellX, cellY ).ParentId;
 
@@ -354,7 +378,7 @@ public static class ParkPicking
 	{
 		var mouse = Input.Mouse.Position;
 
-		return Describe( new Answer( Cell, WorldPoint, ThingUnderCursor ),
+		return Describe( new Answer( Cell, WorldPoint, ThingUnderCursor, Latched ),
 			$"mouse ({mouse.X:F0},{mouse.Y:F0})" );
 	}
 
@@ -371,6 +395,6 @@ public static class ParkPicking
 
 		return $"pick: cell ({cellX},{cellY}) packed {answer.Cell} " +
 			$"world ({answer.World.X:F1},{answer.World.Y:F1},{answer.World.Z:F1}) " +
-			$"standing {occupant} - {asked} {size}";
+			$"standing {occupant} latched {answer.Latched} - {asked} {size}";
 	}
 }
