@@ -69,6 +69,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/money.py PID SECS THING...` | The original's memory: each object's all-items columns, its customers last thirty days, last month's profit, total profit, satisfaction and bar, worked out from its takings, costs, customers and satisfaction rings and its two totals as the original's getters do, a line a change with `mGameTick`. A `POLL` for `loadfile.sh` (Q368) |
 | `original/thingwords.py PID SECS THING:OFFSET[:FMT[:NAME]] ...` | The original's memory: any words of any things, a line a change with `mGameTick`. Use it for a field or two before writing a poller: the mechanics' search cursor is `2:0xc`, a mechanic's state, job and count `26:0x19c:I`, `26:0x218`, `26:0x214:I`. A `POLL` for `loadfile.sh` |
 | `original/spritepass.py PID`, `particleheights.py PID SECS EFFECT [STEP]`, `particleoverlay.py PID OUT.png [EFFECT]` | The original's world particles: the sprite pass's matrix (`[0x0087b088]`) with every emitter's draw words and its particles projected to pixels; how high and wide an effect's particles go over a time; and a frame grabbed with each particle's sprite marked on it, which proves a projection rule against the picture |
+| `original/camera.py PID [X,Y;...]`, `--aim X,Y` | The original's park camera now: the point, zoom and rotation, the camera's matrix (its last row the eye) and the draw matrix, and named cells' corners at 1.5 and 21.5 put through it to pixels of the 1024 x 768 frame; `--aim` prints the pixel of a cell's middle, so a run's clicks follow whatever camera it has (Q435) |
 | `original/particledump.py PID EFFECT [raw]` | The original's memory: EVERY particle of each live emitter of an effect (its place less the emitter's, velocity, size, frame, colour) and the spread of each, where `spritepass.py` prints an emitter's first six. OpenTPW's side is the console's `particles <slot>`; `q261/cloud.py <run.out>` prints the same spread from a run's output |
 | `lib/spritesheet.py <bank.ESP> <out.png> <set>...` | A sprite bank's picture sets with their alpha, each frame over black and over white, and each frame's alpha spread and mean colour: what a particle's picture is before any blend. `wadcat --dump SPR_PA.ESP` and `--dump SPR_PA.TPC` on `esprites.wad` write the two files it reads |
 | `original/voices.py PID [SECS]` | The original's memory: every live sound voice by the service's own list (its effect and flags word, the voice's flags, place, range and rectangle, how far it is from the listener), with the listener first; a block a change. Says which placed sounds are in range and sounding. A `POLL` for `loadfile.sh` |
@@ -841,6 +842,13 @@ GH=766` there, or the pointer is off):
   seconds from the load is in its memory and not in its picture: poll it, do not film it (Q257w).
 - **Its camera stands further back than OpenTPW's for the same numbers.** A file saved under
   `parkrun.original_view( x, y )` shows the point mid-frame there; measured at zoom 110 and yaw 180 alone (Q257r).
+- **Both games at one camera** (Q435): read the original's point, zoom and rotation with `original/camera.py` and give
+  them here as `camera X Z ZOOM DEGREES` (its third coordinate is this game's second). At rotation 0 and zoom 110 the eye
+  is the same in both, and the pictures differ by the lens alone: a pixel of this game's 1280 x 720 window is
+  (640, 360) + (the original's - (512, 384)) x 360 / 768, so this game's middle 480 x 360 scaled to 1024 x 768 lays on
+  the original's frame. `camera.py
+  --aim` gives the original's click on a cell; the same formula gives this game's start for `lib/cellprobe.py`
+  (`q435/orig/run.sh`, `q435/confirm.py`). The camera goes to a member as their window opens, so aim in the run itself.
 - **`tpwmem.py read` and `watch` take every address as hex**, with or without `0x`: a decimal one is silently
   another address, so work a sum out first.
 - **A ferry or seaplane made, and a file that holds it:** load `q340/late30.TPWS` (a leaver at the stop, no

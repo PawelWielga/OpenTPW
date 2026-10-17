@@ -71,15 +71,15 @@ public sealed class ParkOrbitCameraMode : CameraMode
 	/// Pitch for the current zoom: 45 degrees pulled in, 65 pushed out, straight line between, then
 	/// clamped. Zoom and pitch are one control in the original and they stay one control here.
 	/// </summary>
-	public static float Pitch
-	{
-		get
-		{
-			var t = ((Zoom - MinZoom) / (MaxZoom - MinZoom)).Clamp( 0f, 1f );
-			var degrees = PitchAtMinZoom + ((PitchAtMaxZoom - PitchAtMinZoom) * t);
+	public static float Pitch => PitchAt( Zoom );
 
-			return degrees.Clamp( 0f, MaxPitch );
-		}
+	/// <summary>The pitch <see cref="Pitch"/> gives at a zoom, in degrees.</summary>
+	internal static float PitchAt( float zoom )
+	{
+		var t = ((zoom - MinZoom) / (MaxZoom - MinZoom)).Clamp( 0f, 1f );
+		var degrees = PitchAtMinZoom + ((PitchAtMaxZoom - PitchAtMinZoom) * t);
+
+		return degrees.Clamp( 0f, MaxPitch );
 	}
 
 	/// <summary>
@@ -250,24 +250,32 @@ public sealed class ParkOrbitCameraMode : CameraMode
 	/// </remarks>
 	private void Place( float ground )
 	{
-		// Where the eye goes. The original builds it as the point of interest plus
-		// rotateY( yaw, (0, sin(pitch) * zoom, -cos(pitch) * zoom) ) - a height and a horizontal
-		// distance, swung about the vertical. That is written in the original's axes, where Y is up;
-		// this engine has Z up, so the height goes into Z and the swing happens about Z instead.
-		var pitch = Pitch.DegreesToRadians();
-
-		var horizontal = MathF.Cos( pitch ) * Zoom;
-		var height = (MathF.Sin( pitch ) * Zoom) + ground;
-
-		Position = PointOfInterest + new Vector3(
-			horizontal * MathF.Sin( Yaw ),
-			-horizontal * MathF.Cos( Yaw ),
-			height );
+		Position = EyeAt( PointOfInterest, Yaw, Zoom, ground );
 
 		// Only Forward is taken from this - see Rotation.LookAt, whose roll is arbitrary, and the note
 		// on it in AudioListener. Camera builds its view from Forward and a fixed world up, so that is
 		// all this has to be right about.
 		Rotation = Rotation.LookAt( PointOfInterest - Position );
+	}
+
+	/// <summary>
+	/// Where the eye stands for a point of interest, a spin, a zoom and the eased ground under the point. The original
+	/// builds it as the point plus <c>rotateY( yaw, (0, sin(pitch) * zoom, -cos(pitch) * zoom) )</c>, a height and a
+	/// horizontal distance swung about the vertical, in its own axes, where Y is up; this engine has Z up, so the height
+	/// goes into Z and the swing happens about Z instead. Read in the running original at rotation nought
+	/// (<c>docs/exe/park-engine.md</c>, "The park camera").
+	/// </summary>
+	internal static Vector3 EyeAt( Vector3 pointOfInterest, float yaw, float zoom, float ground )
+	{
+		var pitch = PitchAt( zoom ).DegreesToRadians();
+
+		var horizontal = MathF.Cos( pitch ) * zoom;
+		var height = (MathF.Sin( pitch ) * zoom) + ground;
+
+		return pointOfInterest + new Vector3(
+			horizontal * MathF.Sin( yaw ),
+			-horizontal * MathF.Cos( yaw ),
+			height );
 	}
 
 	/// <summary>

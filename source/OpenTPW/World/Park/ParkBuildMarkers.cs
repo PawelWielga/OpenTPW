@@ -277,7 +277,7 @@ public sealed class ParkBuildMarkers : ModelEntity
 		if ( lifts.Any( square => square.Lift > 0f ) )
 			Unimplemented.Report( "MARKER_LIFT_SIDE_FACES" );
 
-		_strip = lifts.Select( square => new Square( square.Square.X, square.Square.Y, square.Square.Marker, Lift + square.Lift ) )
+		_strip = lifts.Select( square => new Square( square.Square.X, square.Square.Y, square.Square.Marker, RecordHeight( square.Lift ) ) )
 			.ToList();
 		_toolSquares = strip.Count( square => OnTheField( square.X, square.Y ) );
 		_patrolSquares = _strip.Count - _toolSquares;
@@ -371,6 +371,13 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 	/// <summary>The original's <c>(t + 9) / 10 * 10.0</c>, integer division towards nought.</summary>
 	internal static float CeilingTen( int truncated ) => (truncated + 9) / 10 * 10f;
+
+	/// <summary>
+	/// The height a square's record carries over a cell lifted by <paramref name="lift"/>: <c>1.5</c> over it, as the
+	/// original's records read (21.5 over the Belly Bounce, 11.5 and 1.5 beside it; <c>docs/exe/park-engine.md</c>,
+	/// "Placement feedback").
+	/// </summary>
+	internal static float RecordHeight( float lift ) => Lift + lift;
 
 	/// <summary>
 	/// How far the wave lifts a corner - <c>sin( phase + x + z )</c> in the original's own axes, its

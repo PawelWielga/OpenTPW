@@ -2512,8 +2512,16 @@ Its run (`q433/confirm.py`, run4, the final build; real clicks, each cell found 
 words, the same 8 squares in the same order for (51,27) and (54,26), row 26 lifted 20 on (51,26) and (52,26) and 10 on
 (53,26) as the original's (tops 21.5, 21.5 and 11.5 over 1.5), the plain pointer, "patrols (51, 26)-(54, 27), cells 3380 to 3511", the window again "Patrolling"; on the band
 (45,15) four red squares on the anchored cell (each line lays it), 16 red at (53,15), `NoGo`, nothing written
-(`q433/side-by-side.png`). Seen, not this item's: at the two runs' cameras our lifted squares look far higher
-above the ground than the original's (not compared at one camera). A member fenced where one path cell lies stays on it, rolling it again and standing
+(`q433/side-by-side.png`). **At one camera** (Q435) the lift is the original's: its camera after Mike's window
+closed, read by `original/camera.py` (point (484.442, 259.319), zoom 110, rotation 0), given here as `camera 484.442
+259.319 110 0`, puts the eye at the same (484.44, 93.62, 201.57) in both games, so the frames differ by the lens alone
+(Q260); our frame's middle 480 x 360 scaled by 768/360 lays our lifted tops of (51,26) and (52,26), y 284 to 314 here,
+on the original's (`q435/side-by-side.png`), and the cells the original's camera put at two pixels were the cells under
+the same pixels here at the first probe. Q433's "far higher" was its two cameras (ours zoom 60, pitch 45; the
+original's 110, 58.3) and the lens. The one difference left in the outline is the walls a lifted square drops to a
+lower neighbour, drawn there and counted here (`MARKER_LIFT_SIDE_FACES`; `park-engine.md`, "Placement feedback").
+Escape with the tool armed and anchored, in the original, puts it away and writes nothing (mode 0, the anchor -1, the
+area 1 and 16384; `q435/orig/a-run.log`); not run here. A member fenced where one path cell lies stays on it, rolling it again and standing
 eleven sweeps with thought `0x16` on one roll in about 55, in both games (Q434; `ride-operation.md`, "A member fenced
 where one path cell lies").
 

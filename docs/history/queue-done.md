@@ -7307,6 +7307,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   stands him eleven ticks (`ride-operation.md`, "A member fenced where one path cell lies"). The original: 628 plan
   stamps in 718 ticks, nine stands of 11; ours: 633 rolls in 775 ticks, thirteen of 11 (`q434/PREDICTION.txt`). Nothing in
   `StaffBehaviour` changed; the roll's log line carries the tick, and a test holds the case.
+- [x] **Q435. The patrol tool's lifted squares at one camera (a piece of Q420).** Done 2026-10-17: the original's camera
+  read after Mike Cooper's window closed (point (484.442, 259.319), zoom 110, rotation 0; `original/camera.py`) and
+  given to OpenTPW by `camera`: the same eye in both, the lens alone apart (53.13 degrees there, 90 here), and our
+  frame's middle scaled by 768/360 lays our lifted tops of (51,26) and (52,26) on the original's (`q435/side-by-side.png`,
+  `q435/PREDICTION.txt`). The lift is the original's; Q433's "far higher" was its two cameras and the lens. Nothing
+  drawn changed: the square's record height and the camera's eye are now functions with tests on the original's
+  numbers. The walls under a lifted top are the difference left (Q420).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

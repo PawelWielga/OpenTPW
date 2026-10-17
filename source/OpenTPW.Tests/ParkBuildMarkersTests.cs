@@ -21,4 +21,16 @@ public class ParkBuildMarkersTests
 			"the two ground axes count alike, so the crests run corner to corner" );
 		Assert.AreEqual( System.MathF.Sin( 30f ), ParkBuildMarkers.Wave( 0f, 10f, 20f ), 1e-5f, "in world units, not cells" );
 	}
+
+	/// <summary>
+	/// A square's record sits 1.5 over its lift: the original's records read 21.5 over the Belly Bounce's lift of 20,
+	/// 11.5 over a lift of 10 and 1.5 on bare ground (<c>docs/exe/park-engine.md</c>, "Placement feedback"; Q433, Q435).
+	/// </summary>
+	[TestMethod]
+	public void ASquaresRecordSitsOneAndAHalfOverItsLift()
+	{
+		Assert.AreEqual( 1.5f, ParkBuildMarkers.RecordHeight( 0f ), 1e-5f, "bare ground" );
+		Assert.AreEqual( 11.5f, ParkBuildMarkers.RecordHeight( 10f ), 1e-5f, "a lift of ten" );
+		Assert.AreEqual( 21.5f, ParkBuildMarkers.RecordHeight( 20f ), 1e-5f, "over the Belly Bounce" );
+	}
 }

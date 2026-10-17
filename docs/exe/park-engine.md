@@ -321,6 +321,14 @@ Separate from the lobby island camera. Save module `"SAD_CAMERA"`, chunk magic `
     eye Y additionally raised by the one-pole-smoothed (alpha 0.5) terrain height under the POI
     projection near 0.1, far 1000.0, FOV 90
 
+**Measured** (Q435, `original/camera.py`, twice): at point (484.442, 0, 259.319), zoom 110, rotation 0 the camera's
+matrix `0x0087aff0` holds the eye in its last row, (484.44, 93.62, 201.57), the formula's exactly, and its forward
+(0, -0.851, 0.525) runs through the point, so the point is the frame's middle. The draw matrix `[0x0087b088]` there
+gives x/w = 1.5 tan and y/w = 2 tan of the angle off the eye's axis: 768 pixels a unit of tangent down a 768-high frame,
+53.13 degrees top to bottom (`park.md`, the `0x0087b0d0` scale). OpenTPW at the same numbers has the same eye and a
+90 degree lens: its 1280 x 720 frame's middle 480 x 360, scaled by 768/360, lays on the original's (`q435/side-by-side.png`).
+Rotation 0 only; the rotation's sign is not tested.
+
 The camera persists a *saved* POI and *saved* Y rotation as well as the *required* ones — the shape of a camera that leaves its position and is put back (camcorder mode does exactly that).
 
 Terrain-following is real, and the sampler is `FUN_00452560( x, z, 1 )`. With `gui_CameraFlags & 0x16` clear (`0x0042c6c4`) the update `FUN_0042b1c0` calls it on the look-at point (`0x007908f0`, `0x007908f8`) at `0x0042c817`, adds the last answer (`0x00790ae4`), halves the sum (0.5 at `0x006fddfc`), stores it back and adds it to the eye's height (`0x00790aa4`). `FUN_00452560` interpolates the landscape's corner heights (`+0x28` of `[0x007a0854] + 0x6c`) and answers nought off the map; it is not `FUN_004527f0`, which no camera function calls.

@@ -48,16 +48,22 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q435 (`hud.md`, "The patrol switch and the patrol tool"): at one camera the lifted squares stand where the
+  original's do, so the nearest piece is the walls a lifted square drops to a lower neighbour (`MARKER_LIFT_SIDE_FACES`,
+  `FUN_0053df30`'s other faces; the original's records at 11.5 and 1.5 under a 21.5 top, `park-engine.md`, "Placement
+  feedback"), drawn there and not here. In no game run: Escape with the tool armed here (the original's puts it away
+  unwritten), a rotation other than nought at one camera, Full Simulation (not asked: the outline is either mode's),
+  the other three themes.
   From Q434 (`ride-operation.md`, "A member fenced where one path cell lies"): the fenced member's walk on one path cell
   is the original's, so the nearest piece is the patrol tool's lifted squares at one camera in both games (ours looked
-  far higher at Q433's two cameras; Q260, the lens, may be the cause). In no game run: two misses in a row in the
+  far higher at Q433's two cameras; Q260, the lens, may be the cause; compared, Q435: the original's). In no game run: two misses in a row in the
   original (its 200 s had none; ours had one, deciding the next sweep as `0x00505542` says), another kind of member or
   grade, Full Simulation (not asked: the walk is either mode's), the other three themes.
   From Q433 (`hud.md`, "The patrol switch and the patrol tool"): the patrol switch and its tool are built. Nearest: a
   member fenced where one path cell lies stands idle on it with thought `0x16` seconds after reaching it here (the patrol
   roll finds only his own cell); watch the original's past nineteen seconds before changing `StaffBehaviour`. Seen: at
   the two runs' cameras our lifted squares look far higher above the ground than the original's, at the same lift
-  numbers; compare at one camera. Counted, not built: the refused click's sound `0xaf` (`PATROL_TOOL_REFUSED_SOUND_0xAF`).
+  numbers; compare at one camera (compared, Q435: the same at one camera). Counted, not built: the refused click's sound `0xaf` (`PATROL_TOOL_REFUSED_SOUND_0xAF`).
   In no game run: `0xc1` cut by the click here (the line ended first; the original's was cut; tested), Escape or a
   right click with the tool armed, Full Simulation (not asked: the window is either mode's), the other three themes.
   Not heard.
@@ -905,6 +911,9 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   frustum. Find which the picture is (a known point's pixel in both games at one camera), whether the lobby and
   the camcorder are the same, and what `TOOLING.md`'s "its camera stands further back" then is. Confirm: the
   decode written down; the build is the next session.
+  From Q435 (`park-engine.md`, "The park camera", its "Measured"): at rotation 0 and zoom 110 the original's eye is the
+  formula's and the same as ours, its picture 53.13 degrees, and our frame's middle scaled by 768/360 lays on it
+  (`q435/side-by-side.png`); the lobby, the camcorder, another rotation and the "further back" of `TOOLING.md` are open.
 - [ ] **Q149. The calendar keeps its own game tick, from nought, and makes up the advances the original loses.** Found
   by the 2026-09-26 staleness audit. The original's calendar counter is `mGameTick` (`+0x1da70c`, `weather.md`, "The
   calendar"), which a loaded save sets to its own (755 in `Easymode.TPWI`, as `GameCalendar.Rebase` says);
