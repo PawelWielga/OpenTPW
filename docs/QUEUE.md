@@ -44,7 +44,28 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
+At Alexah's word (2026-10-17), Q260 and Q440 (the cameras) come first: testing against the original waits on them.
 
+- [ ] **Q260. The park's lens: 90 degrees or 53.** Decode first. From Q258 (`park.md`, "A park's particles,
+  started and drawn"): the matrix the original draws by, read in its memory, is a 90 degree projection times a
+  scale of 1.5 across and 2 down (`0x0087b0d0`, `FUN_005781d0`), and a point through it lands in the frame with
+  the screen as -1 to 1: 53.13 degrees top to bottom. `ParkOrbitCameraMode` asks for 90, from the culling
+  frustum. Find which the picture is (a known point's pixel in both games at one camera), whether the lobby and
+  the camcorder are the same, and what the old "further back" and "closer" readings were (`TOOLING.md`,
+  "Cameras in both games"). Confirm: the decode written down; the build is the next session.
+  From Q435 (`park-engine.md`, "The park camera", its "Measured"): at rotation 0 and zoom 110 the original's eye is the
+  formula's and the same as ours, its picture 53.13 degrees, and our frame's middle scaled by 768/360 lays on it
+  (`q435/side-by-side.png`); the lobby, the camcorder and another rotation are open.
+- [ ] **Q440. Both games at one frame: a tool that sets the original's camera, and its follow decoded.** Filed at
+  Alexah's word (2026-10-17), with Q260 moved first: the run of Q433 to Q439 lost many rounds to aiming clicks in the
+  original while its camera trailed a staff member (`TOOLING.md`, "Cameras in both games", "The follow" and "Aiming a
+  click"). Build `original/setcam.py PID X,Z ZOOM ROT`: write the point (`0x007908f0`), zoom (`0x007909ec`) and
+  rotation (`0x00790a38` and its copy `0x007909e0`), and read back with `camera.py` that the matrices follow on the next
+  frame. Decode what starts and ends the follow (`gui_CameraFlags` `[0x00790ab0]` bit `0x1000`) and whether clearing the
+  bit stops it, then give the tool a switch for it. Add to `lib/` the matching step for this game (the console's `camera`)
+  so one call puts both games on the same numbers. Confirm: both games' frames at three cameras (rotations 0, 90, 180)
+  side by side, a cell's pixel predicted by `camera.py --aim` and found there by `cellfind.py`, and a click on a named
+  cell landing on it in the original with a member's window open. Rows in `TOOLING.md`.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
@@ -928,16 +949,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest
   file; the quicksave and quickload keys (`<theme>.TPWS`); `restart.INTS` written when the folder has none, and
   read by Restart Park. After Q241j. Confirm: a park left and entered again at the tick it was left on.
-- [ ] **Q260. The park's lens: 90 degrees or 53.** Decode first. From Q258 (`park.md`, "A park's particles,
-  started and drawn"): the matrix the original draws by, read in its memory, is a 90 degree projection times a
-  scale of 1.5 across and 2 down (`0x0087b0d0`, `FUN_005781d0`), and a point through it lands in the frame with
-  the screen as -1 to 1: 53.13 degrees top to bottom. `ParkOrbitCameraMode` asks for 90, from the culling
-  frustum. Find which the picture is (a known point's pixel in both games at one camera), whether the lobby and
-  the camcorder are the same, and what `TOOLING.md`'s "its camera stands further back" then is. Confirm: the
-  decode written down; the build is the next session.
-  From Q435 (`park-engine.md`, "The park camera", its "Measured"): at rotation 0 and zoom 110 the original's eye is the
-  formula's and the same as ours, its picture 53.13 degrees, and our frame's middle scaled by 768/360 lays on it
-  (`q435/side-by-side.png`); the lobby, the camcorder, another rotation and the "further back" of `TOOLING.md` are open.
 - [ ] **Q149. The calendar keeps its own game tick, from nought, and makes up the advances the original loses.** Found
   by the 2026-09-26 staleness audit. The original's calendar counter is `mGameTick` (`+0x1da70c`, `weather.md`, "The
   calendar"), which a loaded save sets to its own (755 in `Easymode.TPWI`, as `GameCalendar.Rebase` says);

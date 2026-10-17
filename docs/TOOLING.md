@@ -114,6 +114,56 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 `q257x/orig/smoke.py` for a car's smoke handle, its emitter and its node's place, `q257t/orig/chan.py` for a car's model's channel stamps, `q253/orig/look.py`; a model's heads are `original/heads.py`, above): each reads its own structures. Start from the newest that reads the same
 structure, and hand it to `loadfile.sh` through `POLL`.
 
+## Cameras in both games
+
+Read this before aiming a click or comparing two pictures. Each fact names the item that found it.
+
+| To do this | Use |
+|---|---|
+| Set this game's park view | console `camera X Y ZOOM YAW` |
+| Read the original's view | `original/camera.py PID` (`--aim X,Y` gives a cell's pixel) |
+| Pan the original to a cell | `original/camto.py PID X,Y` (pointer on the screen edge) |
+| Click a named cell in the original | `original/cellfind.py PID X,Y`, straight before the click |
+| Click a named cell here | `lib/cellprobe.py` `find( (x, y), start )` |
+| Find cells outside the park in the original | `original/outside.py PID` |
+
+**This game** (`ParkOrbitCameraMode`):
+- `camera x y zoom yaw` takes world units, a cell times ten, and the yaw in degrees; its reply is the state (`poi=... yaw= zoom= pitch= ground=`). Q257n
+- Both games at one camera: copy the original's point, zoom and rotation from `camera.py` as `camera X Z ZOOM DEGREES` (the original's third coordinate is this game's second). Q435
+- The eye is lifted by the ground's height under the point, so over high ground it is further than `zoom` from it. Read `placed`'s listener, do not work it out. Q264
+- The camera aims at the ground: it cannot close in on water 30 units up. Q257s
+- `freeze` stops only the lobby's orbit. `pause` stops the clock, and nothing eased on `Time.Delta` moves under it: `step` before a grab (`VERIFYING.md` rule 91). `camera` then `step 2` moves every walker two ticks, so take a census last. Q257r
+- `cellprobe.py` needs the camera set first (`camera X Y 60 0`): at zoom 25 a 50 to 90 px step stays inside one cell and the slope is nought. Anchor nothing before both corners are found. Q433
+
+**The original** (1024 x 768 off-screen frame at its origin):
+- `camera.py` reads the point `0x007908f0` (x, ground, z; a cell is 10), zoom `0x007909ec`, rotation `0x00790a38` and its copy `0x007909e0`, the camera matrix `0x0087aff0` (its last row the eye) and the draw matrix `[0x0087b088]`. Q435
+- Its eye is the formula's: point + rotated (0, sin p x zoom, -cos p x zoom), pitch from the zoom (`park-engine.md`, "The park camera"). Rotation 0 only is tested. Q435
+- Its arrow keys turn the view and do not pan. The pointer resting on a screen edge pans, about 8 cells a second: `camto.py` learns the sense and rate, then rests the pointer in the middle. Q433, Q439
+- No tool here writes the camera words yet (Q440 asks for one). Pan by the edges. `groundcell.py` writes the ground, not the camera.
+- A file entered by `screenpark.sh` is framed on the camera's own point; the Load Park list's view is 65 units on. `parkrun.original_view( x, y )` allows for the list. Q359
+- For the first seconds after a load the camera is not on the saved view: poll a short-lived thing, do not film it. Q257w
+- A camera file's listener is not where the camera was aimed: read `voices.py`'s first line. Q263
+
+**The follow**:
+- The original starts it when a member's window is opened from the locator's strip, or opened again, and on `b_locate` and Ctrl+S or Ctrl+V (`gui_CameraFlags` `[0x00790ab0]` bit `0x1000`). The point then trails the member as he walks; the arrow keys and edge pans do nothing against it (`camto.py` held Up eight times, the point stayed on Mike). Q435, Q438, Q439
+- It ends when the window closes (the camera stays where it was) or at PICK UP (a frame of the member's spot before the pickup is not the view after it; shoot the carry and the drop). Q432, Q435
+- This game: `ParkLocator.Press` sets `Following`; each frame `Camera` puts the point on the member's blended place. A change to the camcorder's first person, a person gone, or a step that finds nobody clears it. A staff window's preview click does `GoToThing` once. Whether opening a window from the world click follows here is not checked.
+- A walker's place against the camera is read under `pause`: two replies apart he has walked most of a cell. Q424
+
+**The lens** (Q260, open):
+- The original's draw matrix is a 90 degree projection times 1.5 across and 2 down: 53.13 degrees top to bottom. This game asks for 90. At rotation 0 and zoom 110 the eye is the same and the frames differ by the lens alone. Q435
+- This game's 1280 x 720 pixel is (640, 360) + (the original's - (512, 384)) x 360 / 768: our middle 480 x 360 scaled to 1024 x 768 lays on the original's frame (`q435/side-by-side.png`, `q436/frames.py`). Q435
+- A change drawn at one camera is shown by the box difference against an earlier run's frame at the same numbers. Q436
+- Open: the lobby, the camcorder, other rotations. The original was once read as standing "further back" (Q257r) and once "closer" (Q357) for the same numbers; Q435 found the same eye, so both were the lens and the framing. Inferred.
+
+**Aiming a click** (every one of these cost a void):
+- Read the camera in the same run as the click, straight before it. A fixed pixel or cell from an earlier run named other cells (Q435 O1, Q438 O3).
+- Aim relative to the camera's own point, not to fixed cells (`q438/orig/run.sh` `AIMREL=1`); better, take any cell of the right kind found live (`outside.py`, `cellfind.py`) and never hard-code Q433's (51,27), (54,26), (45,15).
+- A cell off the frame stops the run unclicked. Q439 stopped at 877,38 and at 2003,686.
+- A frame and its camera read seconds apart are not the same view while a follow runs. Q438
+- Open the member's window where he stands near the target, or zoom the original out (not tried). Q439
+- Stop the original on any exit of the run script, or the next run loads into it. Q439
+
 ## Recipes
 
 Each was found by trial in the item named, and cost a run to find.
@@ -203,10 +253,10 @@ Each was found by trial in the item named, and cost a run to find.
 
 - **A sign's board beside the original's** (Q357): Lost Kingdom's park gate, from inside the park. This game:
   `camera 480 140 80 180` and `step 2` under `pause`, saved; the original given that file through
-  `original/screenpark.sh` frames the same board nearer (its camera stands closer for the same numbers).
+  `original/screenpark.sh` frames the same board nearer (the lens: "Cameras in both games").
   `q357/measure.py <frame> orig|ours` reads two lettering-free patches of its face and the slab's top. The lobby's
   boards are no use: in the original's orbit the player buttons cover them, and this game's `island N` frames
-  them small and mid-flight. In the original the pointer on a screen edge scrolls the camera.
+  them small and mid-flight.
 
 **In OpenTPW, through the console** (`OPENTPW_DEBUG_CONSOLE=1`; the `case` labels in `DebugConsole.cs` are the
 whole list):
@@ -218,7 +268,6 @@ whole list):
   a free slot digit, holding a Full Simulation player's `gms.dat` and empty theme folders; two clicks on its row
   of the player list (660, 158 for the second row) go straight into Lost Kingdom, which it makes fresh and
   writes as `jungle/restart.INTS` within the minute. Remove the folder afterwards (`original/freshfs.sh`).
-- **`camera x y zoom yaw` takes world units**, a cell times ten (Q257n).
 - **Is a float product rounded before its compare** (Q343): break on the `FCOMPP` with `BRK_PRINT` (`brk.sh`'s
   row) as the `POLL` of a `loadfile.sh` load: `fctrl` 0x27f is 53-bit precision, so `FILD`, `FMUL float ptr` is a
   double of the float key (five times the float nearest 0.2 is more than one). The same hit gives the row's turn
@@ -851,18 +900,7 @@ GH=766` there, or the pointer is off):
   predict a count, never a maximum (Q258: a bubble's height read 31 in ten seconds and 42 in forty).
 - **For the first seconds after a load its camera is not on the saved view**, so a thing that lasts under five
   seconds from the load is in its memory and not in its picture: poll it, do not film it (Q257w).
-- **Its camera stands further back than OpenTPW's for the same numbers.** A file saved under
-  `parkrun.original_view( x, y )` shows the point mid-frame there; measured at zoom 110 and yaw 180 alone (Q257r).
-- **Both games at one camera** (Q435): read the original's point, zoom and rotation with `original/camera.py` and give
-  them here as `camera X Z ZOOM DEGREES` (its third coordinate is this game's second). At rotation 0 and zoom 110 the eye
-  is the same in both, and the pictures differ by the lens alone: a pixel of this game's 1280 x 720 window is
-  (640, 360) + (the original's - (512, 384)) x 360 / 768, so this game's middle 480 x 360 scaled to 1024 x 768 lays on
-  the original's frame. `camera.py
-  --aim` gives the original's click on a cell; the same formula gives this game's start for `lib/cellprobe.py`
-  (`q435/orig/run.sh`, `q435/confirm.py`). The camera goes to a member as their window opens, so aim in the run itself.
-  A change drawn at that camera is shown by the box difference against an earlier run's frame at the same numbers, and
-  side by side with the original's frame scaled as above (`q436/frames.py`); the original's records do not depend on
-  its camera, so a run whose camera went elsewhere still gives them (Q436).
+- **Both games at one camera, aiming, the follow and the lens:** "Cameras in both games", above (Q435, Q436).
 - **`tpwmem.py read` and `watch` take every address as hex**, with or without `0x`: a decimal one is silently
   another address, so work a sum out first.
 - **A ferry or seaplane made, and a file that holds it:** load `q340/late30.TPWS` (a leaver at the stop, no
