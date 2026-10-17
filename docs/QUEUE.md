@@ -50,23 +50,28 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
-Q479 is first at Alexah's word (2026-10-17). The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
+Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q479. Why our picture looks washed out against the original's. Decode first.** Asked by Alexah (2026-10-17),
-  from `q472/side-by-side.png`: at one camera every colour of ours is paler and bluer than the original's - the grass
-  (the original's dark and mottled with brown dirt patches, ours an even bright green), the sea, the brick walk. Means:
-  `q472/orig/a-A2.png` about (39, 68, 19), `q472/run2/G8.png` about (71, 92, 89), HUD in both. The lead, read from our
-  code and not yet measured: `content/shaders/test.shader` (the ground, paths, hoardings, every model) and
-  `water.shader` mix every pixel toward `Level.FogColour` (jungle's `ThemeEngine.FogColour`, pale blue (72, 216, 248))
-  by `exp( distance x 0.01 ) x Level.FogDensity` (0.025), a formula and density nobody decoded; a rough sum puts about
-  0.3 of fog in our grass at that camera, which fits its blue of 89 against 19. The original sets `FOGENABLE`
-  (`render-states.md`, `FUN_00567620`) with a mode, start, end or density not read. Find what makes the difference,
-  measured, not guessed: the original's fog state (mode, start, end, density, colour) read live (`tpwmem.py`) and in
-  the listing; then, with our fog off, what is left: the light (`park-engine.md`, "The lighting model"), each cell's
-  ground texture (`original/groundcell.py`), any second layer or detail texture (the dirt patches), filtering, and
-  the frame's gamma. Measure first: one frame pair at one camera (`lib/bothcam.py`), a grass, sea and brick patch's
-  mean in each, and the same with our fog off. The session is the decode and the measurement; the build is a new item.
+- [ ] **Q481. No fog in the park's own view.** From Q479 (`park-engine.md`, "The park view's colours"): the original's
+  terrain and objects take fog only under render-word `0x2000`, on while `gui_CameraFlags & 0x16` (a ride's view, first
+  person), so its overhead park view has none; ours mixes every pixel of `test.shader` and `water.shader` toward
+  `Level.FogColour` by `exp( d x 0.01 ) x 0.025` (Q479 measured +3 +6 +17 on the grass, +8 +17 +20 on the sea). Take it
+  out of the park view and say at the site where the original's fog lives (linear, `FIRSTPERSONVIEWDISTANCE`'s start and
+  end, the theme's colour) for the views that have it. With it: the frame past the ground's edge is cleared to the fog
+  colour only under render-word `0x4002000` and to black otherwise (read, not measured: `FUN_00573740`); measure the
+  original's before changing ours'. Confirm in both games at Q479's cameras (`q479/orig/run.sh`): A and B's boxes.
+- [ ] **Q482. Land outside the park is drawn at half light.** From Q479: `FUN_00450d10` sets a ground cell's `0x400`
+  where the map cell's `mFlags` has `0x40` and not `0x80`, and the terrain pass halves that cell's corner light while
+  `GraphicalOptions.LIGHTING` is on; ours draws it at full (`ParkGround`). Build it from the park's cells, again after
+  Buy Land (`FUN_005327e0` calls it), and say what `0x80` is or count it at the site. Confirm in both games at camera A
+  (`q479/orig/rund.sh`): the grass box about (70, 133, 36) halved to about (33, 66, 17) with the compositor's patches,
+  or (13, 73, 13) without them; a bought cell's light doubling.
+- [ ] **Q483. The ground's dirt patches: the procedural compositor. Decode first.** From Q479: inside a box round the
+  view (`FUN_0056f380`, the terrain object's words `0x8d` to `0x90`) the original draws each cell with a tile
+  composited from `base.lnd` (`park-engine.md`, "The blocking unknowns", 6; `FUN_0055f780` blends up to thirteen
+  textures), not the cell's texture; ours draws the cell's texture alone. Decode what fills a tile and the box, measured
+  against `[0x008bd550]` bit 4 held clear and set (`q479/orig/runc.sh`), before any build.
 - [ ] **Q472b. Build the picker's heightfield and its last cell.** From Q472 (`park-engine.md`, "The picker never hands
   the mode a cell off the map"). `ParkPicking.Resolve` meets the ground only over the heightfield (`HeightAtWorld` holds
   the edge height past it, so ours answers (98,40) past the last column and (40,85) past the last row, map type 7, and

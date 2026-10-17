@@ -56,7 +56,7 @@ Jungle: **96x85 cells, 97x86 vertices, 8342 heights, 8160 cell records.** Valida
 | `0x0040` | Mirror, independent of rotation | Confirmed |
 | `0x0080` | Marks a path cell; in a footprint entry it means "this cell of the footprint is used" | Confirmed |
 | `0x0200` | Set by the footprint stamper | Confirmed |
-| `0x0400` | **Darken / shadow bit** — halve this corner's colour | Confirmed at three separate sites |
+| `0x0400` | **Land outside the park, drawn at half light**: the terrain pass halves the corner's colour. `FUN_00450d10` sets it where the map cell's `mFlags` has `0x40` and not `0x80` ("The park view's colours") | Confirmed at three separate sites; measured (Q479) |
 | `0x0800` | "This cell is not planar." **Computed at load, never stored on disk**: `FUN_004504c0` sets it (`0x0045075d`) where the cell's two triangles' normals differ (dot under 0.9999) | Confirmed |
 
 ### The triangle diagonal
@@ -3211,6 +3211,51 @@ drawn some other way, which only frames of the original a few game days apart wo
 lighting. Not checked: whether the original's mesh normals at `+0x64` are the same smoothed normals OpenTPW
 computes (`models.md`, "Normals").
 
+## The park view's colours: no fog, land outside the park at half light, the compositor's tiles
+
+Decoded and measured for Q479 (`q479/PREDICTION.txt`, `q479/orig/`, the stock park at medium detail): one camera's
+grass reads (32.8, 65.9, 16.5) in the original and (33.2, 145.1, 45.5) in OpenTPW. Three things make the
+difference, each held on and off in the running original (`original/memhold.py`, `groundcell.py`).
+
+**The park's own view has no fog.** The fog is linear, by a vertex's depth: none at or before a start, the fog colour
+alone at or past an end, `f = (d - start) / (end - start)` between. The start and end live at `0x008bd490` and
+`0x008bd494` (`1 / (end - start)` at `0x008bd498`, written by `FUN_00583280`), and the colour at `0x008bd47c`
+(the theme's `FogColour`, "The lighting model"). `FUN_0044d8f0` sets the start and end from
+`GraphicalOptions.FIRSTPERSONVIEWDISTANCE` (`0x007858b4`; the detail file, `low`/`med`/`high.sam`): 0 gives 50 to 60,
+1 gives 100 to 110, 2 gives 135 to 150 and 3 gives 230 to 250, with `0x008bd4c0` 200, 325, 450 or 700 beside
+them; the startup default is 100 to 130 (`0x00582de5`), the lobby's own 50 to 300 (`FUN_005d8b50`). Each frame
+`FUN_00576a00` hands the three to the device's fog setter (vtable `0x00701330` slot 6, `FUN_00567ad0`), which sets
+the colour and, where the card passes the table-fog probe `FUN_005673d0`, linear table fog. Where it fails
+(render-word bits `0x4000` or `0x8000`) the game fogs each vertex itself as a batch is flushed (`FUN_00565590`,
+`FUN_00565ee0`): under `0x4000` `FUN_005747d0` scales the vertex colour by `1 - f` and puts the fog colour times `f`
+in the specular, with `SPECULARENABLE` on and `FOGENABLE` off for the batch; under `0x8000` `FUN_00574960` writes
+`f` into the specular's alpha. **The terrain pass asks for any of it only under render-word bit `0x2000`**
+(`FUN_0056f670` calls `FUN_00565ee0` behind it), and the only writer of that bit is `Game_StateMachine`'s
+`XOR 0x2080` (`0x0054fae2`) as `gui_CameraFlags & 0x16` (a ride's view, first person) comes on and goes off. Live
+under Proton at medium the word reads `0x01444100`: `0x4000` set, `0x2000` clear, start 100, end 110. Held at
+10000/20000, and at -2/-1 (every vertex past the end), the park view's frames did not change by one level in any
+box of ground, path or object; only the animated sea moved. Read and not measured: the frame is cleared to the fog
+colour only under render-word `0x4002000` (`FUN_00573740`, `FUN_00573cc0`), and to black otherwise.
+
+**Land outside the park is drawn at half light.** `FUN_00450d10` (on a park's load from `FUN_005323f0`, and from
+Buy Land's `FUN_005327e0`) sets the ground cell's `0x0400` where the map cell's `mFlags` has `0x40` (land outside
+the park, "Building and deleting paths and queues") and not `0x80`, and clears it everywhere else; the terrain pass
+halves such a cell's corner light while render-word `0x0800` is clear ("What the render-state `0x0800` tests are";
+`GraphicalOptions.LIGHTING` 0 sets it, `FUN_0044d8f0`). Live, 4,922 of the 7,980 heightfield cells carry it: the
+border and every row from 42 on. Cleared over one camera's cells, its grass went from (32.8, 65.9, 16.5) to
+(69.6, 133.4, 35.6), where OpenTPW's reads (29.9, 139.2, 28.6) with its fog off.
+
+**The brown patches are the procedural compositor's.** `FUN_0056f380` gives every visible cell inside the box at the
+terrain object's words `0x8d` to `0x90` a composited tile when `[0x008bd550]` bit 4 is set (the compositor ready,
+"The blocking unknowns", 6), and the cell's own texture otherwise. Live it reads `0x146`. Held clear, the patches
+went and the plain cell textures showed, the same small flecks in the same places as OpenTPW's at
+(13.3, 72.7, 12.9), the half light still on.
+
+With the three set aside, a brick walk and a road agree within 8 a channel ((116, 54, 53) against (112, 61, 61);
+(49, 49, 52) against (51, 50, 59)), so neither the light on lit faces nor the frame's gamma is the gap. OpenTPW's
+sea, fog off, is (1.0, 53.7, 55.9) against the original's (1.4, 55.0, 69.4): the blue's 13 is not looked into, nor is
+texture filtering.
+
 ---
 
 ## The blocking unknowns, worst first
@@ -3225,7 +3270,8 @@ computes (`models.md`, "Normals").
    refused) calls `FUN_0056e550` on `DAT_00879d60`. That needs `DAT_008bd524 == 1` (not identified), logs "Attempting to
    initialize procedural textures", and through `FUN_005723f0` allocates the tile buffers (`FUN_0055f720`,
    `DAT_008798c8`) and reads the file (`FUN_00560ff0`, which refuses it unless byte 0 is 3), then sets
-   `DAT_008bd550 |= 4`. What sets `0x2000` from `PROCEDURALTEXTURING` (0, 2, 2 in `low`, `med`, `high.sam`) is not traced.
+   `DAT_008bd550 |= 4`. `FUN_0044d8f0` sets that gate from `GraphicalOptions.PROCEDURALTEXTURING` (`0x0078587c`; 0, 2, 2 in `low`, `med`,
+   `high.sam`): nought clears `DAT_007a1a8c`'s `0x6000`, 1 to 3 set it with `DAT_0079d86c` `|= 4`, `2` or `1`.
    - `FUN_0055f780`, a 6,256-byte MMX thiscall, composites one tile (callers `FUN_00572440`, and `FUN_00572630` from
      `FUN_0057ace0`): unless all four corner samples' channel 0 are `0xff` it fills the tile grey (`0x7f7f7f00`);
      otherwise it upsamples channels 1-3 with `FUN_0055e780` into `DAT_008798a8`, `DAT_008798b8`, `DAT_00879398` and

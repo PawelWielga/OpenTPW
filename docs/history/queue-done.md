@@ -7572,6 +7572,29 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `FUN_00457c30`). In the original: (95,40) read (94,40), (40,84) read (40,83), and past column 95, past row 84 and over
   the sea past row 0 the cell and the hit point stood, the row with them; ours 7 of 7 at the same views as the control
   (`q472/`); Q469's (45,0) was not seen again. `park-engine.md`, "The picker never hands the mode a cell off the map".
+- [x] **Q479. Why our picture looks washed out against the original's. Decode first.** Asked by Alexah (2026-10-17),
+  from `q472/side-by-side.png`: at one camera every colour of ours is paler and bluer than the original's - the grass
+  (the original's dark and mottled with brown dirt patches, ours an even bright green), the sea, the brick walk. Means:
+  `q472/orig/a-A2.png` about (39, 68, 19), `q472/run2/G8.png` about (71, 92, 89), HUD in both. The lead, read from our
+  code and not yet measured: `content/shaders/test.shader` (the ground, paths, hoardings, every model) and
+  `water.shader` mix every pixel toward `Level.FogColour` (jungle's `ThemeEngine.FogColour`, pale blue (72, 216, 248))
+  by `exp( distance x 0.01 ) x Level.FogDensity` (0.025), a formula and density nobody decoded; a rough sum puts about
+  0.3 of fog in our grass at that camera, which fits its blue of 89 against 19. The original sets `FOGENABLE`
+  (`render-states.md`, `FUN_00567620`) with a mode, start, end or density not read. Find what makes the difference,
+  measured, not guessed: the original's fog state (mode, start, end, density, colour) read live (`tpwmem.py`) and in
+  the listing; then, with our fog off, what is left: the light (`park-engine.md`, "The lighting model"), each cell's
+  ground texture (`original/groundcell.py`), any second layer or detail texture (the dirt patches), filtering, and
+  the frame's gamma. Measure first: one frame pair at one camera (`lib/bothcam.py`), a grass, sea and brick patch's
+  mean in each, and the same with our fog off. The session is the decode and the measurement; the build is a new item.
+  Done 2026-10-17, the decode and the measurement only (the builds are Q481 to Q483): three things, each held on and off
+  in the running original (`park-engine.md`, "The park view's colours"). The original's park view has no fog (start and
+  end held past everything, then before everything: 0.0 change in every ground, path and object box; the terrain asks
+  for fog only under render-word `0x2000`, which a ride's or first person's view toggles), where ours adds +3 +6 +17 to
+  the grass and +8 +17 +20 to the sea. Land outside the park is drawn at half light (cell `0x400`, `FUN_00450d10`):
+  cleared, the original's grass went (32.8, 65.9, 16.5) -> (69.6, 133.4, 35.6) against ours' (29.9, 139.2, 28.6) fog
+  off. The brown patches are the procedural compositor's tiles (`[0x008bd550]` bit 4 held clear: the patches went, ours'
+  flecks showed). Brick and road agree within 8 a channel. `q479/PREDICTION.txt`: 13 predictions, 8 held, 5 missed and
+  recorded; frames `q479/orig/b-*`, `c-*`, `d-*`, `q479/ours-fog/`, `q479/ours-nofog/`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

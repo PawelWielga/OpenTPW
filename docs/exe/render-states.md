@@ -39,7 +39,7 @@ which code reads them is not traced (Q194, from the bytes). DirectDraw's two cal
 | `0x8000` | `ZENABLE = NOT this bit` | `FUN_00567620` |
 | `0x1000` / `0x2000` | Not render states: together the `0x3000` "exempt from sorting" mask | `FUN_00565590` tests the mask |
 | `0x80000` | `SPECULARENABLE` | `FUN_00567620` |
-| `0x100000` | `FOGENABLE` | `FUN_00567620` |
+| `0x100000` | `FOGENABLE` | `FUN_00567620`. Cleared on a batch the game fogs itself; the park's own view asks for no fog at all (`park-engine.md`, "The park view's colours") |
 | `0x800000` | Overrides the per-batch depth key with 0 | `FUN_00565590` |
 
 ## States set once for the whole run
