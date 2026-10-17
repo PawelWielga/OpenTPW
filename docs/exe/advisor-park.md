@@ -1,6 +1,6 @@
 # Park advisor (original executable)
 
-The park advisor is a THING like the weather, ticking on the same beat. It hears in two ways: the park **posts a message** to it, and **each tick it polls one row** of the metadata table below, calling that row's score function (`FUN_0059a550` calls `FUN_0059c680( 1 )` on the static at `0x00fb3540`, built by `FUN_0059bea0`, whose `+0x20` is `MinScoreForConsideration` (`DAT_00fb3560`); it steps its cursor at `+0` over the 351 rows to the next whose `+0x00` is nought, 156 of them, calls that row's score function and keeps a score above nought that the accept gate `FUN_0059abc0` would take; the tick raises it when `FUN_0059bf20` answers above `MinScoreForConsideration`, 25). Either way the message is accepted or rejected by a gate, and an accepted message occupies one of **eight priority slots**. Each tick the advisor considers the highest-scoring slot, speaking only if its score passes the threshold (Q90 below), then picks a line within that response and plays a sample. Two separate tables sit behind this — a static response table at `0x00768fb8` that maps a response id to a sample, lip file and gesture, and a runtime-filled metadata table at `0x0076e300` that holds the per-message score function, category and line count. The scores' coefficients live in `data/Advisor/Advisor.sam`, whose schema is compiled into the executable as 60-byte descriptors. This page is about the park advisor's message and scoring system; the on-screen advisor model and his interruption are in `ui.md`.
+The park advisor is a THING like the weather, ticking on the same beat. It hears in two ways: the park **posts a message** to it, and **each tick it polls one row** of the metadata table below, calling that row's score function (`FUN_0059a550` calls `FUN_0059c680( 1 )` on the static at `0x00fb3540`, built by `FUN_0059bea0`, whose `+0x20` is `MinScoreForConsideration` (`DAT_00fb3560`); it steps its cursor at `+0` over the 351 rows to the next whose `+0x00` is nought, 155 of them (row 0's is 1 in the image, `0x0076e300`), calls that row's score function and keeps a score above nought that the accept gate `FUN_0059abc0` would take; the tick raises it when `FUN_0059bf20` answers above `MinScoreForConsideration`, 25). Either way the message is accepted or rejected by a gate, and an accepted message occupies one of **eight priority slots**. Each tick the advisor considers the highest-scoring slot, speaking only if its score passes the threshold (Q90 below), then picks a line within that response and plays a sample. Two separate tables sit behind this — a static response table at `0x00768fb8` that maps a response id to a sample, lip file and gesture, and a runtime-filled metadata table at `0x0076e300` that holds the per-message score function, category and line count. The scores' coefficients live in `data/Advisor/Advisor.sam`, whose schema is compiled into the executable as 60-byte descriptors. This page is about the park advisor's message and scoring system; the on-screen advisor model and his interruption are in `ui.md`.
 
 ## The thing
 
@@ -17,7 +17,7 @@ The park advisor is a THING like the weather, ticking on the same beat. It hears
 | `FUN_0059c500` | — | Routes some responses to a separate sticky slot at `+0x16d0` | |
 | `FUN_005194d0` | — | Fetches the advisor THING; indexes a THING table at `DAT_007cfb90`, stride 5 dwords | Asserts "Thing has been allocated in Thing..."; the decompiler hides the call because the result is passed in ECX by `__fastcall` |
 
-Concrete message-to-response pairs seen in the dispatch: message `8` → response `0x102`; message `0x0e` sub 0/1/2 → `0x7d`/`0x7e`/`0x7f`; message `0x11` (research) categories 0-4 → `0x5d`, `0x5f`, `0x60`, `0x61`, `0x5e`.
+Concrete message ids seen in the dispatch (the values are **advisor message ids**, the metadata rows' ids, stored at the record's `+0xc`; they are not response ids): message `8` → advisor message `0x102`, row 258 `RideCondemned` (responses 498-500); message `0x0e` sub 0/1/2 → advisor messages `0x7d`/`0x7e`/`0x7f`, rows 125-127 (responses 302, 304, 306; `0x0059b393`, `0x0059b315`, `0x0059b297`); message `0x11` (research) categories 0-4 → advisor messages `0x5d`, `0x5f`, `0x60`, `0x61`, `0x5e`, rows 93-97 (`Research*Researched`). Fork watch 2026-10-16, `verify-advisor.md`, "Our committed docs found wrong" 3.
 
 ## Q90 — park opening and closing (decode only, 2026-10-03)
 
@@ -222,11 +222,11 @@ The disassembly computes `advisor + id*0x10 + 0xe0` outright (`LEA EAX,[EDI + 0x
 
 ### Response metadata at `0x0076e300` — filled before `WinMain`
 
-Stride `0x38`, validated by `row+0x04 == id`, with a linear-scan fallback bounded at `0x772fcc` (351 rows). Ids `0x15f` and `0x160` are excluded outright. **The table reads as zeros in the image; its filler is straight-line code at `0x005a0a50`** (`MOV` and `XOR` between four `PUSH`es and `POP`s, ending in the `RET` at `0x005a86fb`; in no Ghidra function), a C++ static initializer the C runtime runs before `WinMain` through the thunk `0x005a0a40` listed at `.data` `0x0072bda8` (Q177's analyser decode; the complete emulated table is `~/.cache/tpw-harnesses/q177/skeptic-analyser/meta_full.json`, made by `emu2.py` there). Row 91, for one: polled, id `0x5b`, category 0, mode 2, score function `0x0059e730`, one instance, first response 244, two lines, selection mode 2.
+Stride `0x38`, validated by `row+0x04 == id`, with a linear-scan fallback bounded at `0x772fcc` (351 rows). Ids `0x15f` and `0x160` are excluded outright. **The table reads as zeros in the image, except row 0: `+0x00` = 1 and `+0x0c` = 2 at `0x0076e300` and `0x0076e30c`, which the filler never writes (fork watch 2026-10-16, `verify-advisor.md` lead A). Its filler is straight-line code at `0x005a0a50`** (`MOV` and `XOR` between four `PUSH`es and `POP`s, ending in the `RET` at `0x005a86fb`; in no Ghidra function), a C++ static initializer the C runtime runs before `WinMain` through the thunk `0x005a0a40` listed at `.data` `0x0072bda8` (Q177's analyser decode; the complete emulated table is `~/.cache/tpw-harnesses/q177/skeptic-analyser/meta_full.json`, made by `emu2.py` there). Row 91, for one: polled, id `0x5b`, category 0, mode 2, score function `0x0059e730`, one instance, first response 244, two lines, selection mode 2.
 
 | Address / offset | Original name | What it is | Evidence |
 |---|---|---|---|
-| `0x0076e300` | — | Metadata table, stride `0x38`, filled by the static initializer at `0x005a0a50` | Zeros in the image |
+| `0x0076e300` | — | Metadata table, stride `0x38`, filled by the static initializer at `0x005a0a50` | Zeros in the image but row 0's `+0x00` = 1 and `+0x0c` = 2 |
 | `+0x00` | — | Nought: the row is polled, one of 155, a turn every 155 ticks; otherwise posted only | `FUN_0059c680` |
 | `0x772fcc` | — | Upper bound of the linear-scan fallback (351 rows) | |
 | `+0x04` | — | Id (used to validate a row) | |
@@ -2685,7 +2685,7 @@ project; `ECX` the balance object, kept in `EDI` and `ESI`), each step on the pa
 1. `FUN_0051a280` on the world, `mParkClosed`: a shut park, nought.
 2. The researchers, `FUN_004c9960( 8 )`: above nought (`JG`), nought.
 3. **The lab's projects of a ride's kind left undone, `0x004ca630`** (loose code): `FUN_00503b30( 0 )` on the lab
-   (`FUN_00519550( 0 )` on the world; "Every feature built, and more to research", below, reads the same of kind 3). None
+   (`FUN_00519550` on the world, the lab its `+0x1da722` names; "Every feature built, and more to research", below, reads the same of kind 3). None
    (`JZ`): nought.
 4. Row 15: the kinds of ride on offer, `0x004ca450( 0 )` ("A poor selection of rides", below); none, nought. The kinds
    standing, `0x004ca7b0( 0, 0 )`; **as many as on offer, nought** (`JZ` at `0x0059cf1f`). Then standing x 100 over on
@@ -2744,7 +2744,7 @@ unmoved; on 841 row 113's tag beside it, and on 1403 `0x10`'s second line, (1403
 category's 120 quarter-ticks. The stills came after the line; filmed (run a2, `record.sh`), him up in the white hair from
 about 5.6 s with the tag on the aerial (`orig/a2-hair.png`). *`three`* (run b) and *`kept`* (run c): neither record moved
 to tick 1461, no tag of rows 17 or 18 (row 113's alone). *`three`* with `Most` 50 (run m): **`0xf`'s record to (782, 0, 1,
-0) on 782**, the tag lettered string 21, "You've built most of the available rides and you don't have anyone to research
+0) on 782** and its second line, (1402, 1, 1, 0), on 1402, the tag lettered string 21, "You've built most of the available rides and you don't have anyone to research
 new ones. Maybe you should hire some researchers?". `q421/side-by-side.png` sets this game's line beside the original's.
 
 | | The original | OpenTPW |
@@ -2758,7 +2758,7 @@ new ones. Maybe you should hire some researchers?". `q421/side-by-side.png` sets
 
 **Not built or not seen.** In no game run: row 15 said with the shipped keys (Instant Action's four kinds cannot pass 25;
 seen under the threshold), lines 2 and 3 of row 15 and row 16's second line here (the test holds the turn; the original
-said row 16's second on 1403), none on offer (row 16's 90, tested only), a researcher hired after the line, Full
+said row 16's second on 1403 and, with `Most` 50, row 15's on 1402), none on offer (row 16's 90, tested only), a researcher hired after the line, Full
 Simulation (not asked: the rows are either mode's), the other three themes. Not heard in either game. The last staff row,
 17 (`0x0059cfe0`, category 4), is built (Q422, below).
 
@@ -2781,11 +2781,11 @@ hiring more researchers", "your research is way behind schedule you could speed 
    `ResearchAbility`, "Every sideshow built, and more to research", below), kept in `EDI`: nought (`JZ`), nought.
 3. **The months into the game**: `FUN_004f8800` on the park calendar (world `+0x2a0`), the calendar's now less its start,
    which is `mGameTick` times `mFunnySecsPerRealSec` over four, in whole seconds, whatever date the park began on; then
-   over `0x17920F8648000` (`0x0067c320`, a signed 64-bit divide), **thirty days**. Under `[ESI + 0x120]`,
+   over `0x1792F8648000` (`0x0067c320`, a signed 64-bit divide), **thirty days**. Under `[ESI + 0x120]`,
    **`MonthsIntoGameForConsideration`, 15** (a signed `JL`): nought. At Lost Kingdom's 3,750 calendar seconds a tick a
    month is 691.2 ticks: **the first ends between ticks 691 and 692, and fifteen are tick 10,368**.
 4. The researchers, `FUN_004c9960( 8 )`: none, nought.
-5. **The staff pool's researchers to hire, `FUN_00508380( 4 )`** (loose code; `ECX` the world, whose first member is the
+5. **The staff pool's researchers to hire, `FUN_004c9e40( 4 )`** (`0x0059d078`, which hands `FUN_00508380` the world `[0x0080239c]`; `ECX` there, the analyser, it ignores; the world's first member is the
    pool: 32 records of `0x14` bytes, each `+0` the kind and `+0xa` `mValid`; the FileFormats saves page, "The staff pool"):
    the slots in use of kind 4. None, nought. A candidate in the player's hand (`mOnPointer`) still counts.
 6. **The researchers' ability added up, `FUN_004c9e60`**, times 100, over the most (an unsigned `DIV`): not under
@@ -2810,7 +2810,7 @@ researchers=N candidates=C ability=A/M`. `ParkTags.Rows` lists row 19.
 **The scenes**: `stock.TPWS` (`lib/stockscene.py`, the stock park paused on 771, nothing done) and `nohire.TPWS`, the same
 with the pool's three researchers' `mValid` cleared (`parkfile.pool_set`). **The line is said in both games only with
 `MonthsIntoGameForConsideration` set to 1** ("A balance key changed in both games", `TOOLING.md`): the park's clock would
-have to stand past tick 10,368, past every candidate's time in the pool (about 600 ticks).
+have to stand past tick 10,368: the run's length, since the pool tops up (the original's run d, below, gained a researcher on 1083).
 
 **Predicted first** (`q422/PREDICTION.txt`). Every prediction held, in one round, in both games.
 
@@ -2846,7 +2846,8 @@ end frame's 23 June 2000, about tick 4,000. `q422/side-by-side.png` sets this ga
 | No researcher to hire, the key 1 | not said | the same (`candidates=0`) |
 | The tag and the bar | row 19, part 2; button 17 builds the hire screen on its researchers' tab | the same ("Hire Scientists", the fifth tab) |
 
-**Not built or not seen.** In no game run: the line with the shipped key (fifteen months: tested only), research at 14
+**Not built or not seen.** In no game run: the line with the shipped key (fifteen months: tested only), `nohire` past the
+pool's top-up (the original said the line on 1094; this game's run ended on 963, so its pool's refill is not shown), research at 14
 per cent or more (tested only), a most of nought (tested only), lines 2 and 3 (the test holds the turn), a researcher hired
 after the line, Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game.
 
@@ -2920,7 +2921,7 @@ over the file's value**: every load left the file's standing.
 | A load | the file's | the same |
 | A file saved here after a purchase, and after its sale | reads this game's stamp | written at 73,516 |
 | A vehicle made at its first summons | stamps it, and its slot holds the new thing | the same (Q342): an object on cell (0,0), written with its slot |
-| Which vehicle a leaver's summons draws | `% 3` of the save's seed: the third in every load of one file | this game's own generator: any of the three, the bus stamping nothing |
+| Which vehicle a leaver's summons draws | `% 3` of the save's seed: the third in every load of one file | one step of the save's seed, which nothing else here draws (Q443): from the stock seed the bus first, every run, stamping nothing |
 | The nine rows that read it | scored | rows 60, 71, 73 and 74 built ("A poor selection of rides", "A poor selection of shops", "A park with rides and no shop", "Too few shops for the park's size"); the other five not built, not read |
 
 **Not built or not seen.** Five of the nine rows (row 74 is "Too few shops for the park's size"; rows 60, 71 and 73 are "A poor selection of rides", "A poor
@@ -2965,8 +2966,8 @@ file names no thing for the seaplane this game summoned.
 
 **Not the same in the two games.** The draw: the original's is `% 3` of the save's seed and moved the
 stamp on tick 1094 in every load of `late30`, the third vehicle's slot where the slots were read; this game's
-generator is its own, and drew the seaplane twice, the ferry and the bus in four runs, each on tick 1093, a tick before the original's. A bus drawn
-makes nothing, so one run in three still says a thirty-day row early. The second vehicle is made here when the
+generator was its own then (Q341's four runs drew the seaplane twice, the ferry and the bus, each on tick 1093, a tick before the original's); since Q443 it is one step of the save's seed, and a file with the stock seed draws the bus first in every run. A bus drawn
+makes nothing, so the thirty-day rows come early in every run. The second vehicle is made here when the
 draw or a load's size next names it, in the original on tick 1419 to 1434. The vehicle's thing is made and
 written since Q342. **Not run:** a load of sixty-one's own summons in the running game (the test holds it), the
 second vehicle's stamp in the running game, a park made with no file, Full Simulation.
@@ -4863,3 +4864,35 @@ five hire buttons (types `0xd` to `0x11`; built since, "Worn rides and no mechan
 (a rebuild, reached by a bar button alone), a park left with the screen open, Full Simulation (the row's mode
 word is row 188's, either mode). The American strings name the first tab "Hire Janitors", the English "Hire
 Cleaners": the reference install reads the American. Not heard in either game.
+
+## Rows settled from the bytes by the fork watch (2026-10-16)
+
+Read from the listing of `testme.exe` (`verify-advisor.md`, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-16/`); no
+game run. Row numbers are metadata rows; the rows' keys are in the Advisor.sam sections the schema walk names.
+
+| Row | Callback | What it scores | State here |
+|---|---|---|---|
+| 3 `VisitorsThirsty` (message 3) | `0x0059c9d0` | the count of park guests whose thirst float `+0x1a4`, cut by `__ftol` to its low byte, is above `VisitorsThirsty.ThirstierThan` (`+0xb0`), times `.ScorePerThirstyPerson` (`+0xac`); the count is `0x004c93f0`, ECX ignored | unbuilt |
+| 4 `VisitorsHungry` (message 4) | `0x0059ca00` | the same with hunger `+0x1a8` (`0x004c9340`), `HungrierThan` `+0xb8`, `ScorePerHungryPerson` `+0xb4` | unbuilt |
+| 85 `FeaturesNotEnoughToilets` | `0x0059e420` | **always nought**: it runs the average toilet queue (`0x004cca40`) and discards it (`FSTP ST0`; `XOR EAX,EAX; RET` at `0x0059e444`), reading neither `.AverageQueueLongerThan` nor `.Score`. Its lines (responses 233-234) are never said by the original | polled, counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; a faithful nought leaves the census |
+| 125-127 prank advice | `0x0059f360`, `0x0059f370`, `0x0059f380` | the keys `PrankSbomb.Score`, `PrankLitter.Score`, `PrankBalloon.Score` (`+0x3d4`, `+0x3d8`, `+0x3dc`), 35 each in the shipped file (above the 25 cut) | unbuilt |
+| 167 (message `0xa7`) | `0x0059f9a0` | the constant 10000; posted at `0x00503f8d` when the last research project is finished (`0x00503d40`; Q245's note) | unbuilt |
+| 168 (message `0xa8`) | `0x0059f9b0` | the constant 9999; nothing found posts it | unbuilt |
+
+- Rows 3 and 4 ask for no door (`0x0051a280` is not called, unlike rows 82, 85 and 86), no guests-inside division and no age: the
+  same shape as row 82's toilet count `0x004c9290`, which `ParkPeople.AdvisorFacts` already builds. With the shipped 99 and 1, if a need
+  tops out at 100 (the original's clamp was not re-read), only a guest whose need truncates to 100 counts, and the score must pass 25, so 26 or more such guests. Selection mode 2, category 0, max 1;
+  row 3 responses 8-10, row 4 responses 11-13.
+- Rows 125-127: the post (`0x004ff2c7` to `0x004ff307`) sends the guest's id twice and `id % 3` (`DIV 3` at `0x004ff2f8`) in the
+  record's `+0xc`, vtable `0x007007a8`. The receiver `ReceiveMessage` `0x0059b060` arm for message type `0xe` (`0x0059b221`) builds a record
+  with the guest's id (message `+8`) and the guest's packed cell (`byte[+7] << 7 + byte[+5] + 1`, `0x0059b25c` to `0x0059b26e`) and
+  switches on `+0xc`: 0 posts advisor message `0x7d`, 1 `0x7e`, 2 `0x7f`; anything else posts nothing. The prank done is
+  chosen by `mPrankeryIndex` = 100 + id % 3 (`guest-arrivals.md`), so for a guest the constructor made the advice names the
+  prank done; they could part only for a loaded guest whose `+0x1c0` disagrees with its id % 3 (not read).
+- Row 291 (`HelpMessage`, message `0x123`, getter `0x0059e8c0`) names response 551, the only id from 540 to 612 that no
+  row holds: `Advisor_SayResponse` finds nothing, returns 0 and plays nothing. Nothing was found that posts message `0x123`.
+- Row 86 (`0x0059e450`) asks for no handyman first (`FUN_004c9960( 5 )` above nought gives nought), then bounds the filth
+  by `FeaturesDirtyToilets3.FilthierThan` (`+0x2e0`) as well as `DirtyToilets1`'s: a fact for whoever builds rows 86 to 89.
+- Fifteen callbacks' keys, taken from the schema walk, were each checked against their disassembly and first response's transcript and
+  agree (rows 15, 16, 17, 86, 92, 100, 107, 114, 140, 141, 169, 172, 238, 258, 323); a key is the first `MOV` load of the function,
+  not always the first load.

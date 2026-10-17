@@ -5,7 +5,7 @@ namespace OpenTPW.Tests;
 
 /// <summary>
 /// The person under the pointer's say over a click on the park, before the ground's categories (<c>FUN_00486d90</c>,
-/// <c>0x00486fd0</c> to <c>0x0048722b</c>; <c>docs/exe/park-engine.md</c>, "Type 1, the idle mode, does nothing at all").
+/// <c>0x00486fd0</c> to <c>0x0048722b</c>; <c>docs/exe/park-engine.md</c>, "The person under the pointer decides first").
 /// </summary>
 [TestClass]
 public class ParkPersonPickTests

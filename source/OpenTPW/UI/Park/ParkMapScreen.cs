@@ -33,8 +33,9 @@ namespace OpenTPW.UI;
 /// </para>
 /// <para>
 /// <b>No terrain colours are painted over the picture.</b> The colours the original gives its land
-/// codes are filled in at run time and are not known, and the shipped picture already shows the park's
-/// terrain.
+/// codes are immediates in its initialiser at <c>0x005f0700</c> (<c>docs/exe/hud.md</c>, "The map's
+/// colours"; which record colours which code is not traced), not carried over, and the shipped picture
+/// already shows the park's terrain.
 /// </para>
 /// <para>
 /// <b>Engine and content.</b> The window, the controls and the help bar are engine. Which controls the

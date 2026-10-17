@@ -14,7 +14,7 @@ Tick an item here in the same commit that lands it, and move its detail to the p
 Scope is **Lost Kingdom only**. Anything that changes nothing in `data/levels/jungle` is not on this list,
 however large it looks — that trap has been hit twice.
 
-## Deferred in item 2: research, park status and patrol areas
+## Deferred in item 2: research and park status
 
 **ONLY RESEARCH REMAINS, AND IT IS BLOCKED BY ABSENCE, NOT BY EFFORT.** It is not a category
 (`FUN_004a0840`'s case `0x2b` goes straight to `FUN_004aa480`, as the map does) and its screen is six

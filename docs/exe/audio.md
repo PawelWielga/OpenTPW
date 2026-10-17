@@ -22,7 +22,7 @@ The delay-load IAT *can* be found, but not by searching for a string or a VA: th
 | `00711980` | — | The only place the wrapper's address appears: slot `+0x60` of the QMixer wrapper vtable at `0x00711920` (see below), so the caller is virtual-dispatched | Address search |
 | `007655d8` | — | Ride-script keyword table; holds `SETREVERB` alongside `SPARK`, `SCREAMLEVEL`, `SETLIGHT`, `WALKON` | Read from the exe |
 
-`SndReverb.map` is 820 bytes with first dword `2000`. **Record shape NOT decoded** — 48 and 68 both divide the remainder, 52 is wrong.
+`SndReverb.map` is 820 bytes and decoded to its last byte: the loader `0x006c5d20` reads a dword that must be 2000, a slot count (32), then per slot one byte (0 empty, the slot's first word set to -1) and, when it is non-zero, 13 dwords (52 bytes) into a `count x 0x34` array at `+0x68`; 8 + 32 + 15 x 52 = 820, slots 0 to 14 present. The layout is FileFormats' "Reverb presets (SndReverb.map)" page; what the 13 values are is not decoded (fork watch 2026-10-16, `verify-audio-fx.md` L7).
 
 ## The single entry point
 
@@ -909,7 +909,7 @@ OpenTPW does not clamp a voice: `AudioClip` keeps NLayer's floats, up to 1.40, a
 ## Unknowns
 
 - **`FUN_0051c700` is NOT the distance-mapping feed.** It is the sound-detail ladder that interpolates the three `RadiusInfo[n].MINRADIUS` values (100.0 / 0.5 / 0 at SWITCH 25 / 50 / 75) from `data\sound.sam` and posts them to `0x006b5890` → `FUN_006b99c0` → `FUN_006b8180`, which latches `{on/off, radius}` and walks the voice array setting a per-voice LEVEL. That level comes from `FUN_006c4c80`, a **segment-versus-circle occlusion test that uses only the X and Z components** and ignores height entirely — so the pause's Y-lift cannot touch it either way. It never reaches `SetDistanceMapping`.
-- `SndReverb.map`'s record shape is **not decoded**.
+- `SndReverb.map`'s slots and 52-byte records are decoded (see the page's first lines); what the 13 values of a record mean, and how a slot is applied to a voice, is **not decoded**.
 - **What `QMixer.dll` does with the distance mapping is read**: "The mixer's distance law". Its three numbers and their writer are in "A voice's range, and the rectangle it follows the listener in": 2.0, the voice's range and 0.8, from `FUN_006bc410`, through the one call site `0x006c581b` in `FUN_006c5690` (`if ( params->flags_at_0x14 & 0x200 ) vtbl[0x60]( out, channel, params + 0x38 )`).
 - **`params+0x14` is a request mask, not a flag pair.** `FUN_006c5690` tests at least nine bits of it, each gating one setter: `0x1` the position path (`FUN_006b7fa0`), `0x2` volume, `0x20` frequency, `0x40`, `0x100` source cone, `0x200` distance mapping, `0x400`, `0x20000`, `0x80000`.
 - **A pause silences every voice with a range**: lifted 10,000 units, the listener is past any range, and the mixer plays nothing of a channel past its max ("The mixer's distance law"; a paused park's channel read a distance of 10,000.32 and a gain of nought). OpenTPW holds placed voices to silence, in `Audio.HoldPlaced`. A voice with no range, flag `0x8`, is not shown to be silenced.

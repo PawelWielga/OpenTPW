@@ -75,7 +75,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/camto.py PID X,Y [TOL]` | The original's park camera panned to a cell by resting the pointer on the 1024 x 768 frame's edges (its arrow keys turn the view), each edge's sense and rate learnt as it goes; with Mike's window opened before, the camera stayed where it was put for the 20 s measured (Q439) |
 | `original/cellfind.py PID X,Y [PX,PY]` | The original's side of `lib/cellprobe.py`: the pixel over a map cell, found by moving the real pointer and reading the build preview's cell (`[0x008186b8]`, `[0x008186b4]`), Newton steps from `camera.py --aim`'s pixel (Q439). The preview reads (0, 0) under a park screen: `PICK=1` reads the picker's cell `[0x007b05cc]` instead, which a member's window leaves live. Its probes stay inside 0.95 of the way to each edge, past which the pointer pans the camera. With the camera still and no panel or object mesh under the pixel, `camera.py --aim`'s pixel was the cell on the first probe, six of six at rotations 0, 90 and 180 (Q440) |
 | `original/cellhead.py PID [THING ...] [@X,Y ...]` | The original's cell lists, read once: the cell a thing is linked into (its bytes `+5`, `+7`) with its address (what `[0x007cc308]` and `[0x007b05ac]` hold), and a cell's chain head first (the cell's `+0x24`, then each thing's `mMapChild` `+0xa`), with `mGameTick`. Here the console's `cell X Y` (`occupant`) and `staff` (`cell`) (Q446) |
-| `original/setcam.py PID X,Z ZOOM ROT [off\|on]`, `setcam.py PID off\|on` | The original's park camera WRITTEN: the point (world units), the zoom and the rotation in degrees, both rotation words and the scroll terms as the game's own snap writes them, so the next frame is drawn there; `off` stops the follow first, `on` starts it on the locator's person. Reads back the point and the eye against the formula; exit 2 where the point did not stay (a follow or a pan moved it) (Q440) |
+| `original/setcam.py PID X,Z ZOOM ROT [off\|on]`, `setcam.py PID off\|on` | The original's park camera WRITTEN: the point (world units), the zoom and the rotation in degrees, the rotation asked for (`0x00790a38`) and, setcam's own choice, the drawn one (`0x007909e0`; the game's snap writes only the first), and the scroll terms as the snap writes them, so the next frame is drawn there; `off` stops the follow first, `on` starts it on the locator's person. Reads back the point and the eye against the formula; exit 2 where the point did not stay (a follow or a pan moved it) (Q440) |
 | `original/outside.py PID [X,Y] [N]` | The original's map cells outside the park (`mFlags`, the word at `+0xe` of each 0x44-byte cell, bit `0x40`) nearest a cell or the camera's point, as runs along a row: where a refused rectangle of the patrol tool lies (Q439) |
 | `original/capmatch.py CAPTURE SDT ENTRY FROM TO ...`, `... --scan FROM [SECS]` | One sample of a bank measured in the original's own mix (an `ORIG_ASOUND` file capture, its byte marks taken with `stat -c %s` either side of what is measured): each window's score, gain and rms; `--scan` scores every 2 s window to the end, so a click's window can be shown the capture's only match (Q442) |
 | `original/particledump.py PID EFFECT [raw]` | The original's memory: EVERY particle of each live emitter of an effect (its place less the emitter's, velocity, size, frame, colour) and the spread of each, where `spritepass.py` prints an emitter's first six. OpenTPW's side is the console's `particles <slot>`; `q261/cloud.py <run.out>` prints the same spread from a run's output |
@@ -112,6 +112,8 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/timens.py SECONDS CMD...` | A command run in a time namespace where the computer has been up SECONDS: the original's park clock without a restart (warning 1, below). **It fails outside the VS Code sandbox** (`PermissionError` on `/proc/self/setgroups`, tried 2026-10-10), so a session started from a plain terminal cannot use it as it is |
 | `original/kwinwl-start.sh` | A private display on `:78` drawn by the graphics card (`kwin_wayland --virtual` with Xwayland) for the original, where Xvfb draws by software. `:78` is `parkrun.py`'s too. **Not run since it was written**: try it before leaning on it |
 | `q119/lib.py` | What `parkrun.py` is built on: the launch, the console pipe, XTEST clicks and keys, the frame grab. Use it through `parkrun.py` |
+| `fork-review-2/forkwatch.py [--from SHA] [--keep]` | The daily fork watch's first step (read-only): fetches the meneerkrabs fork's clone (`~/.cache/tpw-fork-krabs/repo`), takes the PC addresses in the lines added since the last look, maps each to its function by `funcs-all.tsv` (every function's ranges, dumped from Ghidra 2026-10-16), drops the functions our tree and the FileFormats clone cite now and those an earlier look handed on, and writes `watch-<sha>.json`; `--keep` records the new tip in `watch-state.json` once the leads go to a sweep |
+| `fork-review-2/mkwatchev.py <watch-SHA.json> <dir>` | The watch's evidence builder: splits the leads into areas (advisor, ui-hud, audio-fx, world, other) by the fork file citing each most, and writes `<dir>/claims-<area>-N.txt` (the fork's citing lines, +-2, read from the watched tip, for the sweeps) and `<dir>/code-<area>-N.txt` (our Ghidra decompile of each function, for the verifiers) from `<dir>/decomp.json`, which a Ghidra dump script (`watch/2026-10-16/dump.py`, a model for the next) writes |
 | `gen_addresses.py` | Regenerating `docs/exe/addresses.md` |
 | `wadcat`, `strdump`, `nodenames/` | A wad's entries, a string table's lines, a UI wad's node names (`CLAUDE.local.md`). `strdump` prints every part of a row, a parameter as `{Pn}` (since Q372: a row that starts with one, as UITEXT 441 "{P11} hours", read blank before); name the table under the data folder, `Language/English/UITEXT.str` |
 
@@ -145,18 +147,18 @@ Read this before aiming a click or comparing two pictures. Each fact names the i
 - `cellprobe.py` needs the camera set first (`camera X Y 60 0`): at zoom 25 a 50 to 90 px step stays inside one cell and the slope is nought. Anchor nothing before both corners are found. Q433
 
 **The original** (1024 x 768 off-screen frame at its origin):
-- `camera.py` reads the point `0x007908f0` (x, ground, z; a cell is 10), zoom `0x007909ec`, rotation `0x00790a38` and its copy `0x007909e0`, the camera matrix `0x0087aff0` (its last row the eye) and the draw matrix `[0x0087b088]`. Q435
+- `camera.py` reads the point `0x007908f0` (x, ground, z; a cell is 10), zoom `0x007909ec`, rotation `0x00790a38` and the drawn rotation `0x007909e0` (eased after it), the camera matrix `0x0087aff0` (its last row the eye) and the draw matrix `[0x0087b088]`. Q435
 - Its eye is the formula's: point + (-h sin r, sin p x zoom, -h cos r), pitch from the zoom (`park-engine.md`, "The park camera"), measured at rotations 0, 90 and 180. Q435, Q440
-- Its arrow keys turn the view and do not pan. The pointer past 0.95 of the way to a screen edge pans, about 8 cells a second, and stops a follow: `camto.py` learns the sense and rate, then rests the pointer in the middle. A pointer left there by a script keeps panning (Q440's first round lost two rotations to it). Q433, Q439, Q440
+- Its arrow keys turn the view and do not pan. The pointer past 0.95 of the way to a screen edge pans (only with `[0x0078d910]` clear, an Options toggle), about 8 cells a second, and stops a follow: `camto.py` learns the sense and rate, then rests the pointer in the middle. A pointer left there by a script keeps panning (Q440's first round lost two rotations to it). Q433, Q439, Q440
 - `setcam.py` writes the camera words (with `off`, or a follow puts the point back the next frame) and reads the eye back: 0.000 units off the formula at every rotation tried. Q440
 - A file entered by `screenpark.sh` is framed on the camera's own point; the Load Park list's view is 65 units on. `parkrun.original_view( x, y )` allows for the list. Q359
 - For the first seconds after a load the camera is not on the saved view: poll a short-lived thing, do not film it. Q257w
 - A camera file's listener is not where the camera was aimed: read `voices.py`'s first line. Q263
 
 **The follow**:
-- It is `gui_CameraFlags` `[0x00790ab0]` bit `0x1000` (`park-engine.md`, "The follow"). The original starts it when the locator's button finds somebody, on Ctrl+S or Ctrl+V, and on a window's binoculars, which put the window away; the point then trails the member as he walks, the arrow keys only turning the view. Q435, Q440
+- It is `gui_CameraFlags` `[0x00790ab0]` bit `0x1000` (`park-engine.md`, "The follow"). The original starts it when the locator's button finds somebody, on Ctrl+S or Ctrl+V with a person's window up (with nobody it opens a locator and leaves the bit clear), and on a window's binoculars, which put the window away; the point then trails the member as he walks, the arrow keys only turning the view. Q435, Q440
 - A person's window, from the strip or the world, folds the locator and stops it: with a window open the camera stands still (Mike walked 12 units in 2 s, the point did not move). Q440
-- It ends on any pan (the keypad, the pointer past 0.95 of the way to an edge: a second at the right edge left the point 83 units from Mike), the locator's fold, a mode change, and PICK UP (a frame of the member's spot before the pickup is not the view after it; shoot the carry and the drop). `setcam.py PID off` ends it from outside, `on` starts it again. Q432, Q435, Q440
+- It ends on any pan (the keypad, the pointer past 0.95 of the way to an edge: a second at the right edge left the point 83 units from Mike), the locator's fold, a mode change, and a person's window opening (the strip's click folds the locator, so the camera stands still while the window is up; a frame from before that click is not the view at a PICK UP). `setcam.py PID off` ends it from outside, `on` starts it again. Q432, Q435, Q440
 - This game: `ParkLocator.Press` sets `Following`; each frame `Camera` puts the point on the member's blended place. A change to the camcorder's first person, a person gone, or a step that finds nobody clears it. A staff window's preview click does `GoToThing` once. Whether opening a window from the world click follows here is not checked.
 - A walker's place against the camera is read under `pause`: two replies apart he has walked most of a cell. Q424
 
@@ -164,7 +166,8 @@ Read this before aiming a click or comparing two pictures. Each fact names the i
 - Every view hands the projection an angle (the park 90, the lobby `ISLANDFOV`), and the draw matrix's fixed screen scale makes the picture `2 atan( tan(a/2) / 2 )` high: the park 53.13 x 67.38, the camcorder the same, the lobby at 100 61.58 x 76.93 (`park-engine.md`, "The lens"). `original/lens.py PID [SECS]` reads it live; this game logs it once a mode (`Camera: ParkOrbitCameraMode lens 53.13 high at 4:3, ...`). Q260, Q441
 - This game draws the same lens (Q441): its 1280 x 720 pixel is (640, 360) + (the original's - (512, 384)) x 720 / 768 at the same camera, six named cells on the first probe at three rotations (`q441/confirm.py`), and its middle 960 x 720 scaled to 1024 x 768 lays on the original's whole frame (`q441/sidebyside.py`, `q441/side-by-side.png`). The scripts of Q260 to Q440 (`q260/confirm.py`, `q435/confirm.py`, `q436/frames.py`, `q440/confirm.py`) were written for the old 90 degree lens and use x 360 / 768 and the middle 480 x 360: change both before running one again. Q260, Q435, Q441
 - A change drawn at one camera is shown by the box difference against an earlier run's frame at the same numbers. Q436
-- The original was once read as standing "further back" (Q264, Q302) and once "closer" (Q357) at the same numbers: the eye is the same (Q435) and the picture shows the middle half each way, so everything stands twice as large in it. Q260
+- The original's records do not depend on its camera, so a run whose camera went elsewhere still gives them. Q436
+- The original was once read as standing "further back" (Q257r, repeated by Q264) and once "closer" (Q357) at the same numbers. "Further back" was the Load Park list's view, 65 units on (Q359); "closer" was the lens: the eye is the same (Q435) and the picture showed the middle half each way against OpenTPW's old 90 degree lens, so everything stood twice as large in it (until Q441). Q260
 - `camera.py --aim`'s pixel was cellfind.py's first probe at both of Q260's cells, with the camera still: the cells out at Q439 came from something other than the lens. Q260
 
 **Aiming a click** (every one of these cost a void):
@@ -179,6 +182,22 @@ Read this before aiming a click or comparing two pictures. Each fact names the i
 
 Each was found by trial in the item named, and cost a run to find.
 
+- **The daily fork watch** (2026-10-16, `fork-review-2/watch/2026-10-16/`): what the meneerkrabs fork newly reads from
+  the PC executable since the last look, handed to Alexah as a report. (1) `forkwatch.py` writes `watch-<sha>.json`.
+  It re-fetches and records whatever the fork's tip is when `--keep` runs, so run it with `--keep` in this same run
+  (the json is then the record handed on and nothing between two looks is skipped), or write the json's `to` sha into
+  `watch-state.json` by hand. (2) Make `funcs.json` by hand, a list of the leads' `func` keys (no script writes it;
+  `watch/2026-10-16/dump.py` reads it), run a dump script like that one through the private Ghidra
+  (`ghidra-private/gd`, never the `ghidra` MCP server while a session holds it) to write `decomp.json`, then
+  `mkwatchev.py watch-<sha>.json <dir>`. (3) One sweep agent per area (`tpw-sweep`, Sonnet) reads
+  `claims-<area>-N.txt` and writes `sweep-<area>.md` from a `BRIEF.md` (who we are, the fork, its Mac and Theme Park
+  Inc traps: copy the last day's). (4) One `tpw-verify` agent per area settles every high and medium lead and every
+  conflict from `objdump` of `testme.exe` and at most fifteen private `gd` calls, reading our facts from committed
+  `main` by `git grep` (`VERIFY.md` is its brief), and writes `verify-<area>.md`; only CONFIRMED, or the confirmed
+  part of PARTLY, is used. (5) Write `REPORT.md` (leads that held and what they serve, our doc lines found wrong) and
+  report to Alexah. (6) **File only on Alexah's word** (hers, 2026-10-16, in the coordinator session: "file and fix"):
+  notes under the items the leads serve, new items after the queue's last, our wrong doc lines fixed, each citing
+  "fork watch <date>" and the verify file's lead id. Never a sweep-only claim.
 - **A member's walk watched in the original, and a patrol area set without the tool** (Q434, `q434/orig/run-b.sh`):
   the person's own `+0x8`/`+0xc` are not its place. The navigator is at `+0xd4`, so `thingwords.py ... 26:0xdc:I:px
   26:0xe0:I:py` (16.16: the cell is the value `>> 16`), `26:0x18:H 26:0x1a:H` the destination (cell x 256 + 128 at a
@@ -202,12 +221,11 @@ Each was found by trial in the item named, and cost a run to find.
   held=0.06)`. Opening Mike's window again snaps the original's camera to wherever he has walked, so aim that phase's
   cells at the camera's own point (`q438/orig/run.sh`, `AIMREL=1`). **A refused click in the original** (Q439,
   `q439/orig/run.sh` with `AIMB=1`): `camto.py %PID% 48,18`, then `outside.py` for the nearest band of outside cells and
-  `cellfind.py` for each corner straight before its click; fixed cells or a grid read earlier miss, as the camera trails
-  Mike. Its sound under the music scored 0.32 only: switch the music off first (`q439/PREDICTION.txt`). With it off
+  `cellfind.py` for each corner, read straight before its click. Its sound under the music scored 0.32 only: switch the music off first (`q439/PREDICTION.txt`). With it off
   (Q442, `q442/orig/run.sh`): `setcam.py PID 435,165 110 0 off` draws (43,16)'s middle at the frame's middle (512,384),
   and a press there with the hand empty arms the path tool red (mode 1, `d48` 1, read with the button held); its
   release refuses, and `original/capmatch.py` found `blnl_error1` at 0.558 there, the capture's only window over 0.3.
-  With nothing armed after the menu the preview's cell reads (0, 0) and `PICK=1`'s picker stands still, so
+  With nothing armed after the menu the preview's cell reads (0, 0), so
   `cellfind.py` finds nothing there: aim with the camera instead.
 
 - **The staff window's FIRE and PICK UP in either game** (Q432, `q432/orig/run.sh`, `q432/confirm.py`): on the
@@ -215,8 +233,9 @@ Each was found by trial in the item named, and cost a run to find.
   its cross at (714,326); here they are `control 50c`, `50e`, `9873c9` and `9873c8`. Fire the stock park's one mechanic
   last: with him gone the mechanics' button opens a locator with nobody, and the strip opens no window. The gadget's
   money readout moves with income every second, so a cost is read by `original/bank.py` either side of the click, and
-  here by `money`'s `staff` total. PICK UP lets the camera go as the window closes: a frame of the member's spot
-  before the pickup is not the view after it; shoot the carry and the drop instead, which share a camera.
+  here by `money`'s `staff` total. The strip's click folds the locator and ends the follow, so the camera stays put while
+  the member walks on with the window up: a frame from before the strip's click is not the view at the pickup. Shoot
+  the window, the carry and the drop, which share a camera.
 
 - **The staff member's window in either game** (Q431, `q431/orig/run.sh`, `q431/confirm.py`): Ctrl+S, the mechanics'
   button (360,613), then the strip (380,505) of the original's 1024 x 768 frame opens it on Mike Cooper; its `b_ardown`
@@ -275,7 +294,7 @@ Each was found by trial in the item named, and cost a run to find.
 
 - **A sign's board beside the original's** (Q357): Lost Kingdom's park gate, from inside the park. This game:
   `camera 480 140 80 180` and `step 2` under `pause`, saved; the original given that file through
-  `original/screenpark.sh` frames the same board nearer (the lens: "Cameras in both games").
+  `original/screenpark.sh` frames the board alike since Q441 (one lens: "Cameras in both games"); any difference left is the script's own framing (`screenpark.sh` frames the camera's own point, Q359). Re-check `q357/measure.py`'s patches, which were placed for the two scales, before reusing it.
   `q357/measure.py <frame> orig|ours` reads two lettering-free patches of its face and the slab's top. The lobby's
   boards are no use: in the original's orbit the player buttons cover them, and this game's `island N` frames
   them small and mid-flight.
@@ -938,8 +957,7 @@ GH=766` there, or the pointer is off):
 - **`tpwmem.py read` and `watch` take every address as hex**, with or without `0x`: a decimal one is silently
   another address, so work a sum out first.
 - **A ferry or seaplane made, and a file that holds it:** load `q340/late30.TPWS` (a leaver at the stop, no
-  vehicle current): the leavers' summons comes on tick 1093 and draws the ferry, the seaplane or the bus, the
-  bus one run in three, which makes nothing: run again. Save while the vehicle is current (before tick 1200);
+  vehicle current): the leavers' summons comes on tick 1093 and, since Q443, draws from the file's seed 0x3f416bba: the bus first in every run, which makes nothing (the seaplane is the next summons, 0x3e8846bc -> 0x975cef2b); for the ferry, write a seed whose first draw `% 3` is 2 into a copy. Save while the vehicle is current (before tick 1200);
   `parkfile.py -v <file>` prints the three slots, the object list, cell (0,0)'s chain and each vehicle's record,
   and the original's own to set beside it are in `q257x/orig/fixed-by-the-original.TPWS`. In the original,
   `worldwords.py` on the four vehicle words and `object.py %PID% SECS <thing> 0 1` (the vehicle script's
@@ -989,7 +1007,7 @@ GH=766` there, or the pointer is off):
   `0x2` uses whose reference the header moves (Q359).
 - **Lost Kingdom's river in both games** (Q358): `camera 480 465 110 180` (`parkrun.py`'s `original_view( 480, 400 )`),
   `step 2`, then `save()`; `original/screenpark.sh` on that file. The original's saved view stands nearer than this
-  game's and frames the long reach (78 water pixels across at x 300 of its 1024 x 768 frame, this game's 36 at x 530),
+  game's and frames the long reach (78 water pixels across at x 300 of its 1024 x 768 frame, this game's 36 at x 530; measured before Q441's lens, so re-measure before relying on the pixel counts),
   not the left bend. Measure a bank by `lib/seam.py` (this game's window x 430..630, y 230..330; the original's
   x 100..450, y 200..420), never by a fixed darkness level: the original's terrain is lit darker and its rocks'
   outlines touch the water. Every saved file of the same scene differs in bytes (the park runs before the pause).

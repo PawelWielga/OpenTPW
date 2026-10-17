@@ -319,7 +319,7 @@ The struct has a shipped name: `FUN_00464580` is a debug dumper that prints ever
 
 `FUN_004735d0` advances one channel, called once per channel from `FUN_00473c70` (stride 0x38, correct), called by two routes. **A model on screen** is advanced and posed from its scene-node callback `0x00463030` (installed by `FUN_00463060` at `0x004638bd`) which calls `FUN_0044e380( model, 1 )` and then marks it `+4 |= 0x200000` (`0x0046304d`); **every other model** is advanced, not posed, by the per-frame model sweep `FUN_0044e410( 3 )` with `( 0, 8 )` (a model whose header `+0x30` carries `0x4` still has its node-lookup records' matrices composed by `FUN_0044ab30`, `0x00473e01`..`0x00473e1b`: 25 shipped models, all coaster parts; `ride-operation.md`, "How long a leg lasts, and where its ends are"), which skips and clears that mark (`0x0044e4a4`, `0x0044e4e0`) — the routine `0x0054e2b0` that the park's load hangs on the scene (`0x0054ecbc`) and the scene draw at `0x0054fb6c` runs through `FUN_00576a00` — **after the 31 ms catch-up loop's back edge at `0x0054f8da`**. The park's `FUN_0044e410( 2 )` at `0x0054fa96` advances only the model at `DAT_00790988`. It takes **no time argument**: it reads `DAT_007b496c` (or `DAT_007b4974` when channel flag `0x40` is set), a snapshot written once per frame by `FUN_00473440` at `0x0054f475` from the clock object at `0x785970`.
 
-**Animation advances once per frame off one snapshot while scripts tick at 31 ms** — several sim ticks in one frame still produce exactly one advance. Confirmed by call graph: `FUN_004735d0` has **exactly one** caller, `FUN_00473c70` at `0x00473d2e`, and **not one** of that function's ten call sites is the script system `FUN_005516b0` or is called directly inside the 31 ms loop; the park's are `FUN_0044e410(2)`, `FUN_00429df0(0)` and `FUN_00429df0(1)` after the loop's back edge (`0x0054fa96`..`0x0054faae`, past `0x0054f8da`), and `FUN_0044e410(3)` and `FUN_0044e380` (`0x0044e3cc`, from the scene-node callback) inside the scene draw, so both routes advance once a frame, after its ticks. Of the rest, `FUN_0044e510` advances the terrain's base model (`DAT_0079fcb4`, which `FUN_004504c0` fills by the name `Base` from the level's `Terrain` `base.md2`; called at `0x0054e322` by the park's scene routine `0x0054e2b0` after its sweep, so inside the scene draw too, and at `0x0054e72a` in the state machine's case `0x0054e6c7` after that case's own `FUN_0044e410(3)`), and five advance a coaster's car models (`FUN_00430590` twice, `FUN_00430ed0`, `FUN_00432df0` twice); those the loop can reach, when a loaded save's layout is replayed (`FUN_00516380` at `0x0051669f`, down to `0x004311f0`) and when a model is built with flag `0x200` (`0x00463860`, through `FUN_004368f0`, `FUN_00436ac0`, `FUN_00434060` and `FUN_00433bd0` to `FUN_00432df0`). None is a placed thing's own model.
+**Animation advances once per frame off one snapshot while scripts tick at 31 ms** — several sim ticks in one frame still produce exactly one advance. Confirmed by call graph: `FUN_004735d0` has **exactly one** caller, `FUN_00473c70` at `0x00473d2e`, and **not one** of that function's ten call sites is the script system `FUN_005516b0` or is called directly inside the 31 ms loop; the park's are `FUN_0044e410(2)`, `FUN_00429df0(0)` and `FUN_00429df0(1)` after the loop's back edge (`0x0054fa96`..`0x0054faae`, past `0x0054f8da`), and `FUN_0044e410(3)` and `FUN_0044e380` (`0x0044e3cc`, from the scene-node callback) inside the scene draw, so both routes advance once a frame, after its ticks. Of the rest, `FUN_0044e510` advances the terrain's base model (`DAT_0079fcb4`, which `FUN_004504c0` fills by the name `Base` from the level's `Terrain` `base.md2`; called at `0x0054e322` by the park's scene routine `0x0054e2b0` after its sweep, so inside the scene draw too, and at `0x0054e72a` in the state machine's case `0x0054e6c7` after that case's own `FUN_0044e410(3)`), and five advance a coaster track's pylon models (`FUN_00430590` twice, `FUN_00430ed0`, `FUN_00432df0` twice; `FUN_00430ed0` is the track knot pass, `0x7a4610[node+0x70]` at `0x004311f0`: fork watch 2026-10-16, `verify-world.md` L2; the other four were not re-read); those the loop can reach, when a loaded save's layout is replayed (`FUN_00516380` at `0x0051669f`, down to `0x004311f0`) and when a model is built with flag `0x200` (`0x00463860`, through `FUN_004368f0`, `FUN_00436ac0`, `FUN_00434060` and `FUN_00433bd0` to `FUN_00432df0`). None is a placed thing's own model.
 
 **Two candidates were checked and cleared, and either would have inverted this:** `FUN_00473440` runs once per frame *above* the loop, so it looks like the sweep, but only computes the frame delta into `DAT_007b497c`; and `FUN_00475360` does run inside the loop every 2nd tick, but is a periodic-task scheduler (`+0x7c` due time, `+0x80` interval) that calls none of this.
 
@@ -887,7 +887,10 @@ builds. No `TRIGWAITANIM`, trigger or `WAIT4ANIM` decided apart in either phase.
 
     ADDOBJ(8)       00551f5f  malloc 0x1c, link at frame +0xb0, DAT_008791b4++, 4 operands,
                               then FUN_00557970(frame, record, op3, 1000, op4)
-    ADDOBJ_EXT(9)   005520e8  the same, 5 operands - op4 is a LIFETIME where ADDOBJ hardcodes 1000
+    ADDOBJ_EXT(9)   005520e8  the same, 5 operands - ADDOBJ hardcodes 1000 where this passes op4; only a
+                              particle reads it: unless it is 1000 it is stored (low word) at the emitter's
+                              +0x9e via 0x51ffd0 (sound types ignore it; what +0x9e is, is not traced - it
+                              is not the life, +0x1c: fork watch 2026-10-16, verify-audio-fx.md C2)
     KILLOBJ(10)     005522c5  walk +0xb0; every record whose +0x18 == operand is stopped and freed
     FADEOBJ(11)     005523d0  the same walk; differs ONLY for a sound
     EVENT(13)       00552615  3 operands -> FUN_005573d0(frame, op1, op2, op3, 1000); handle DISCARDED
@@ -944,8 +947,11 @@ One operand, shipped **70x value 1 and 70x value 0**. It does **not** block — 
                                  model at +0xc8, Particles_Spawn, stores the handle at +0xcc.
     then value!=0 (0x5562cd)     UNGATED: thingTable[+0xc8] -> FUN_00556a80 -> Sound_PlayEffect
                                  twice, sample ids 0x6f (111) and 0xd3 (211).
-    then value==0 (0x55635f)     needs +0x8c > 5, reads VARIABLE 5, then UNGATED as above ->
-                                 FUN_00551320, which picks a sample from 0x4b..0x5a by variable 5.
+    then value==0 (0x55635f)     needs +0x8c > 5 (the script declares at least six variables), reads
+                                 VARIABLE 5 (VAR_ONRIDE), then UNGATED as above -> FUN_00551320, the
+                                 SINGLESCREAM picker called with (VAR_ONRIDE, 1, 1): step (1+1)/50 = 0, so
+                                 75, 79, 83 or 87 (0x4b, 0x4f, 0x53, 0x57) by the number aboard, silent with
+                                 none (fork watch 2026-10-16, verify-audio-fx.md A1).
 
 **`+0xcc` is the repair particle's handle** — a frame field, one slot, and `FUN_00558500` clears it on death. The killer is `FUN_00556a80`: it does `*(*(*(arg + 8) + 4) + 0x78)` with **no guard**, and its argument is `thingTable[frame+0xc8]` at `0x7a4610` — a table filled at runtime, indexed by the script's model handle with no guard. The sound side is safe (`FUN_0051bfc0` is `Sound_PlayEffect`, guarded on `DAT_00802bc8`/`DAT_00802bd4`), but that does not rescue it.
 
@@ -2198,7 +2204,7 @@ gull (matched from 3 s in it scores 1.00), and my script used a name of the libr
 listener and to see a voice's first variation drawn.
 
 **Not held against the original:** the same camera numbers in both games, not run (its eye at the same numbers is
-ours, Q435, and only its picture is narrower, Q260, so the listener can be compared there); what was held is the law,
+ours, Q435, and since Q441 its picture is the same, Q260, Q441, so the listener can be compared there for a file entered without the Load Park list's 65 units, Q359); what was held is the law,
 in its own mixer's memory. Not measured: the river in the mix (its gain was 0.0159 where it was
 looked for); a pan against the original's.
 

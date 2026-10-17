@@ -691,6 +691,8 @@ public sealed partial class ParkWorld
 			// Whoever has come onto the cell heads it, the newest first; whoever the file had there and is there
 			// still follows in the file's order; then the objects made there, the newest first, and the file's
 			// things that are no person: a vehicle made on the corner cell stands before the vehicles the file has there.
+			// Rebuilt by id and the file's order, not the running list the original saves: a file chain [A, B] whose B
+			// walked off and back runs [B, A] here too and is written [A, B] (docs/exe/saves.md, "The chains"; Q420).
 			var here = peopleOn.GetValueOrDefault( cell ) ?? [];
 			var before = stood.GetValueOrDefault( cell ) ?? [];
 			var chain = here.Where( id => !before.Contains( id ) ).ToList();

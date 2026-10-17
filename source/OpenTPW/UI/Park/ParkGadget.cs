@@ -134,8 +134,8 @@ internal sealed class ParkGadget : UiWindow
 
 	/// <summary>
 	/// The depth of a panel the arm carries: the arm's 0xa links it under the arm, which gives it the arm's depth and two
-	/// (FUN_0065f447), then sets it three less (0x004a15bf to 0x004a15cd, FUN_0065f16b), so its parts at 5 and theirs at 7
-	/// pass behind the body (8), the retract button (7) and the handle (9) as it slides.
+	/// (FUN_0065f447), then sets it three less (0x004a15bf to 0x004a15cd, FUN_0065f16b), so its parts at 5 pass behind the
+	/// body (8), the retract button (7) and the handle (9) as it slides, and theirs at 7 tie the retract button.
 	/// </summary>
 	internal const int CarriedDepth = ArmDepth + 2 - 3;
 
@@ -350,8 +350,8 @@ internal sealed class ParkGadget : UiWindow
 		// Coming in the original switches this button off, calling the control's vtable+0x14 with 0 exactly
 		// as it does for the readouts that are shown but never clicked, and it stays drawn through the slide
 		// until the handle stands over it; here it is switched off through the slide and hidden at rest in
-		// (see BuildIn), and switched off it still stops the pointer, doing nothing, where the original's
-		// hit test passes over it. The red cross it shows is not the disabled part of b_retract: b_retract.md2's six
+		// (see BuildIn), and switched off it still stops the pointer, doing nothing but its glint and help
+		// row 481 (Q66), where the original's hit test passes over it. The red cross it shows is not the disabled part of b_retract: b_retract.md2's six
 		// nodes are b_retract, disable, hilite, hidown, helddown and down - UiButton's own order - so part
 		// 0 is the NORMAL look, and a button that closes something simply looks like a cross.
 		_retract = _arm.Add( new UiButton
@@ -775,7 +775,9 @@ internal sealed class ParkGadget : UiWindow
 	/// arm at the arm's left less its own width and fifty, its middle on the arm's, every part of it hidden that does
 	/// not reach past the arm's left, which is all of it; the step is a tenth of the panel's width, the body's right
 	/// edge less the arm's left, and a hundred; the retract button is on, sound 0x1c plays and the panel is told it
-	/// starts out (0x1001d9).
+	/// starts out (0x1001d9). Not the original's in one way: the original links the panel at its linked depth (the arm's plus two,
+	/// FUN_0065f447) less three, one under the arm's (0x004a15bf..0x004a15cd), and each child two deeper, behind the body and the retract cross; here the panel takes
+	/// its parent's depth plus two, so the panel and its children draw in front of both (docs/exe/hud.md, Q445).
 	/// </summary>
 	private void SlideOut( UiControl panel )
 	{

@@ -89,7 +89,6 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0042c460` | The sweep: the whole step, with either axis put back if its cell changed | OpenTPW.Tests/ParkCamcorderWalkTests.cs OpenTPW/World/Park/ParkCamcorderCameraMode.cs  |
 | `0x0042c587` | The camcorder sweep, after every pass: FUN_0042a340 at the pass's cell; a ride found runs Ride it! from first person and ends the sweep | OpenTPW.Tests/ParkCamcorderWalkTests.cs OpenTPW/World/Park/ParkCamcorderCameraMode.cs  |
 | `0x0042d130` | | OpenTPW/World/Park/ParkOrbitCameraMode.cs  |
-| `0x004311f0` | FUN_00430ed0, a coaster car's update: FUN_00473c70 advances the car's model; a layout replayed inside the 31 ms loop reaches it | OpenTPW/VM/RideScript.cs  |
 | `0x004380e7` | SAOC loader: node +0x3c bit 0, the circuit closed, from the saved header's flag bit 0 | OpenTPW.Files/Formats/Save/ParkCoasters.cs OpenTPW/World/Park/ParkRideChoice.cs  |
 | `0x004382b3` | SAOC loader: node +0x3c bit 1, a gap open, from the saved header's flag bit 1 | OpenTPW.Files/Formats/Save/ParkCoasters.cs  |
 | `0x0043837d` | SAOC loader: node +0x140, the clash count, restored from header +0x1c last | OpenTPW.Files/Formats/Save/ParkCoasters.cs OpenTPW/World/Park/ParkRideChoice.cs  |
@@ -833,7 +832,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00527fb4` | The demolisher's gate: the object's cached queue length `+0x40` above nought | OpenTPW.Tests/ParkPathBuildingTests.cs OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00527fe8` | The drain's debit scaled by the per-age percentage, `FUN_004e2290` | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00528007` | Demolisher FUN_00527ee0: the queue drain's debit, the bank's withdrawal FUN_004d01f0 | OpenTPW/World/Park/ParkPathBuilding.cs  |
-| `0x00528179` | FUN_00527ee0: the track arm's withdrawal; any track type but nought, karts' and water's withdraws nought | OpenTPW.Tests/ParkBankTests.cs OpenTPW/World/Park/ParkBuilding.cs  |
+| `0x00528179` | FUN_00527ee0: the track arm's withdrawal; `WhichTrackType` 0 skips it, karts' (1) and water's (2) withdraw 2 x the cell cost x the scrap % / 100 (signed), after their tiles are cleared and refunded, any other type withdraws nought (`FUN_0053b280`: cost x % / 100 a tile, unsigned; fork watch 2026-10-16, `verify-world.md` C3) | OpenTPW.Tests/ParkBankTests.cs OpenTPW/World/Park/ParkBuilding.cs  |
 | `0x0052818d` | The demolisher puts back the tool it was called under, `FUN_0052f200( prevTool, 0 )`; tool 0 installs the idle mode | OpenTPW.Tests/ParkHandTests.cs OpenTPW/World/Park/ParkBuilding.cs  |
 | `0x0052842b` | The demolisher's second footprint pass: `FUN_005367a0( 0, 0 )` on every cell of the shape but its `.` ones | OpenTPW/World/Park/ParkBuilding.cs  |
 | `0x00528584` | Demolisher FUN_00527ee0: FUN_00545610 frees the object's track ride entry, before the object goes | OpenTPW/World/Park/ParkBuilding.cs OpenTPW/World/Park/ParkTrackRideTable.cs  |
@@ -1269,7 +1268,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x006fe7d4` | Float 2/3: the share of the panel's width for half the footprint's diagonal (FUN_004689f0) | OpenTPW/UI/Park/ParkObjectPreview.cs  |
 | `0x006fe7e4` | Float -pi/4: the preview's tip, the sine's index (FUN_00468e50) | OpenTPW/UI/Park/ParkObjectPreview.cs  |
 | `0x006fe7e8` | Float pi/4: the preview's tip, the cosine's index (FUN_00468e50) | OpenTPW/UI/Park/ParkObjectPreview.cs  |
-| `0x006fe804` | Float -0.0004: taken off the preview's angle each millisecond (FUN_00468e50) | OpenTPW/UI/Park/ParkObjectPreview.cs  |
+| `0x006fe804` | Float -0.0004: subtracted from the preview's angle each millisecond (`FSUBR` at `0x00469090`), so the angle grows 0.0004 a millisecond (FUN_00468e50; fork watch 2026-10-16, `verify-ui-hud.md` C1) | OpenTPW/UI/Park/ParkObjectPreview.cs  |
 | `0x006febe4` | | OpenTPW.Files/Formats/Model/AnimationFile.cs  |
 | `0x006febec` | | OpenTPW.Files/Formats/Model/AnimationFile.cs  |
 | `0x006fec00` | The constant 0.01 in the lobby path sampler's `percent * 0.01 * segments` | OpenTPW/World/Lobby/LobbyModel.cs  |

@@ -184,9 +184,9 @@ public sealed class ParkOrbitCameraMode : CameraMode
 			return;
 		}
 
-		// Spin and zoom. These reuse bindings that already exist rather than inventing new ones: what
-		// the original binds is not traced yet, so the controls are provisional and the geometry below
-		// is the part that matches it.
+		// Spin and zoom. These reuse bindings that already exist rather than inventing new ones: the
+		// original's camera table is decoded (docs/exe/park-engine.md, "The turn") but its rates and keys are not built
+		// (Q23, Q27), so the controls are provisional and the geometry below is the part that matches it.
 		//
 		// Not while one of the park's screens is open: opening one switches the camera's table off and clears its
 		// rows' latches (FUN_00485b70, 0x00485ccd), and the screen's handler runs the shortcuts' table alone, so no
@@ -214,6 +214,8 @@ public sealed class ParkOrbitCameraMode : CameraMode
 
 		if ( keys && (forward != 0f || right != 0f) )
 		{
+			// Not the original's: a scroll here does not end a locator's follow, where any pan in the original does
+			// (0x0042ba37, 0x0042ba92; Q23), so the follow puts the point back each frame.
 			var scroll = ScrollSpeed * Time.Delta;
 
 			// The same basis the eye is placed from, and the same one ParkCamcorderCameraMode walks

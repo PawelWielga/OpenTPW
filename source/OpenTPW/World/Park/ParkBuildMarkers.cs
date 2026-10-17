@@ -235,7 +235,8 @@ public sealed class ParkBuildMarkers : ModelEntity
 	/// A followed member's patrol edges for this frame, one blue square a cell, a cell given twice laid twice
 	/// (<see cref="UI.ParkLocator.PatrolEdgeCells"/>). The original's verdict for them (<c>FUN_00535670( 0x36 )</c>) is
 	/// red only where a tool's pass left its refusal latch (<c>DAT_00816d50</c>) or the placer its (<c>DAT_0081b604</c>);
-	/// the locator puts the tools away, and here no tool's verdict outlives its own strip, so they are blue.
+	/// here no tool's verdict outlives its own strip, so they are always blue (a deviation, not run with a refused tool
+	/// beforehand; docs/exe/hud.md, "The patrol edges").
 	/// </summary>
 	public void QueuePatrolEdges( List<(int X, int Y)> cells ) => _patrolQueued = cells;
 
@@ -281,7 +282,7 @@ public sealed class ParkBuildMarkers : ModelEntity
 	/// The walls under a square lifted by <paramref name="lift"/>, given each neighbour's lift (null off the map), as
 	/// <c>FUN_00532fc0</c>'s <c>0x100</c> arm queues them after the square: for each neighbour in turn, north
 	/// (<c>DAT_007cdba0</c>), east, south and west, while the neighbour's lift stands under the square's, a wall with its
-	/// foot at the neighbour's lift, then ten higher, until it reaches the square's (<c>0x00533ad0</c>..<c>0x00533b22</c>).
+	/// foot at the neighbour's lift, then ten higher, until it reaches the square's (the arm for a square not refused, north's loop <c>0x0053337a</c>..<c>0x005333dc</c>; the refused arm's is <c>0x00533ad0</c>..<c>0x00533b22</c>).
 	/// A neighbour as high or higher gets none; both lifts are whole tens, so the last wall's top is the square's edge.
 	/// </summary>
 	internal static List<(int Face, float Foot)> Walls( float lift, float? north, float? east, float? south, float? west )
@@ -316,7 +317,7 @@ public sealed class ParkBuildMarkers : ModelEntity
 	/// <summary>
 	/// The marker a wall wears under a square wearing <paramref name="marker"/>: red under red, and blue under every
 	/// other the tools draw, <c>m_link</c> and <c>m_end</c> too (<c>FUN_00532fc0</c>: texture 1 in the refused arm,
-	/// and in the other 2 under orange and otherwise 0, <c>0x00533214</c>; no tool here draws orange).
+	/// <c>0x00533b07</c>, and in the other 2 under orange and otherwise 0, <c>0x00533214</c>; no tool here draws orange).
 	/// </summary>
 	internal static int WallMarker( int marker ) => marker == ParkPathBuilding.MarkerRed
 		? ParkPathBuilding.MarkerRed

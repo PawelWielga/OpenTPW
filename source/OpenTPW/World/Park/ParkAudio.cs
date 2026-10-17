@@ -990,7 +990,10 @@ public sealed class ParkAudio : Entity
 	/// The kids' effect <c>0x81</c> as the visitor's window is built: <c>Sound_PlayEffect( 0, [0x00803a24], 0x81, 0, 0, 0 )</c>,
 	/// no handle kept and no level set, so flat, at its variation's own volume (<see cref="OneShotGain"/>) and a pitch drawn
 	/// from it (<see cref="OneShotRate"/>), as the crowd's voice at (0,0,0) is played. What the sample says has not been
-	/// checked by listening.
+	/// checked by listening. Not the original's in one way: the original plays it on every build and throttles nothing,
+	/// while this call keeps <see cref="SoundCategory"/>'s per-effect throttle (this project's reading of a priority
+	/// field, Q43), so a window opened again within the clip's length plus the effect's RepeatDelay is silent;
+	/// <c>PutOff</c> and the yawn pass <c>respectDelay: false</c> for that reason.
 	/// </summary>
 	/// <returns>Whether anything started.</returns>
 	internal bool VisitorWindowOpened()

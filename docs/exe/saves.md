@@ -764,7 +764,7 @@ Measured: the shipped park's four first members read 1.1.2000 15:37:30, tick 15 
 researcher 29.1.2000 03:00:00, tick 648; all 53 of the played jungle park's and all 12 of the fantasy park's are a
 whole number of ticks, no two alike, the newest thing the latest (`q251/look.py`). OpenTPW stamps a hire with
 `ParkState.CalendarNow` as `ParkPeople` makes the member, reads the file's (`ParkWorld.StaffState.TimeHired`) and
-writes both back; the console's `staff` prints it. Nothing here shows the days employed: the staff window is unbuilt.
+writes both back; the console's `staff` prints it. `ParkStaffWindow` letters the days employed (`FUN_00505b70`).
 
 ### A sprite's `+0xbc`
 
@@ -819,7 +819,9 @@ follow the list. It runs after the scripts, the track rides and the models are s
   walking hire Patrolling and its patrol roll fails: `q380/orig/acontrol`).
 - **The chains.** A person is written on the cell their `mX` and `mY` name. Whoever has come onto a cell heads
   its chain, the newest first; whoever the file had there and is there still follows in the file's order; then
-  the file's things that are no person. `mWho` is written for each cell whose head changes.
+  the file's things that are no person. `mWho` is written for each cell whose head changes. This is rebuilt from ids and the
+  file's order, not the running list the original writes: since Q446 a member relinks as they walk, so a file chain
+  [A, B] whose B walks off and back runs [B, A] and is written [A, B] (the run review, 2026-10-17; Q420).
 - **The staff lists** are written from the list's order, as the files' run.
 - **The sprite table.** A kept person keeps their slot; a made one takes the lowest empty, and the table grows
   by fifty when it is full; a gone one's is emptied. A made record is the constructor's (`FUN_004758f0`): its

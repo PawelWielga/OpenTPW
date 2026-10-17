@@ -545,7 +545,7 @@ public class ParkStaffWindowTests
 
 		UiSounds.LastAsked = null;
 		StringAssert.Contains( Level.Current!.ClickWorldAt( 39, 21, 0 ), "patrols (39, 21)-(56, 28)" );
-		Assert.IsNull( UiSounds.LastAsked, "neither click of a written area plays a sound" );
+		Assert.IsNull( UiSounds.LastAsked, "the click that writes the area plays no sound" );
 		Assert.AreEqual( (1 + 39 + 21 * 128, 1 + 56 + 28 * 128), (member.PatrolBottomLeft, member.PatrolTopRight) );
 		Assert.AreEqual( (ParkBuildMode.None, false), (ParkBuildMode.Current, ParkBuildMode.Anchored) );
 		StringAssert.Contains( lines.Census(), "message=193/score=1000/line=0/" );
@@ -743,8 +743,8 @@ public class ParkStaffWindowTests
 
 	/// <summary>
 	/// <b>Escape, or a quick right click with RMB cancel on, puts the patrol tool away and writes nothing</b>, anchored or
-	/// not: the game table's row 0 (<c>0x0040c368</c>) and the right button's armed release (<c>0x0048842b</c>) each install
-	/// the idle mode over any other, so the anchor goes, the member keeps the area the switch left, <c>0xc1</c> is withdrawn
+	/// not: the game table's row 0 (<c>0x0040c368</c>; over any mode but 0 and 1, where the menu opens) and the right button's armed
+	/// release (<c>0x0048842b</c>; over any) each install the idle mode, so the anchor goes, the member keeps the area the switch left, <c>0xc1</c> is withdrawn
 	/// and no menu opens. The original's, both ways: mode 0, the anchor -1, the area 1 and 16384 (<c>docs/exe/hud.md</c>,
 	/// "The patrol switch and the patrol tool").
 	/// </summary>

@@ -1451,8 +1451,7 @@ public sealed partial class ParkPeople : Entity
 
 	/// <summary>
 	/// Whether an entertainer stands on the nine cells around (x, y), for a deciding guest's watching arm. The
-	/// original walks those cells' thing lists; staff here are not entered in the cells they cross, so this asks
-	/// each one's walk where they are.
+	/// original walks those cells' thing lists; this asks each member's walk where they are.
 	/// </summary>
 	private bool EntertainerBeside( int x, int y )
 	{

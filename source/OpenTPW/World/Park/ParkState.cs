@@ -901,7 +901,8 @@ public sealed class ParkState
 	/// The park's one generator, the original's <c>mRandomSeed</c> (<c>world + 0x1da708</c>): seeded from the save and
 	/// written back to it, stepped by <see cref="Draw"/> (<c>docs/exe/park.md</c>, "Arrivals: who comes, on what"). <b>Only the
 	/// leavers' summons draws it here</b>; every other system keeps its own state and says so at its site, and the
-	/// reseeds with a guest's id that the original makes on it (an arrival, a balloon, a costume's return) are made on
+	/// eight reseeds with a guest's id that the original makes on it (an arrival, a balloon, a costume's return among them:
+	/// eight callers of <c>FUN_00516370</c>) are made on
 	/// those sites' own states, so this one's sequence is the original's only where nothing else drew between.
 	/// </summary>
 	public uint RandomSeed { get; private set; }

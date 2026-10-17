@@ -2,7 +2,7 @@ namespace OpenTPW.UI;
 
 /// <summary>
 /// The staff member's window: one member's name, days employed, wage, skill, happiness, energy and status, with arrows
-/// to the next and the previous member - the first of the nine object windows (<c>docs/exe/hud.md</c>, "The person's
+/// to the next and the previous member - one of the nine object windows (<c>docs/exe/hud.md</c>, "The person's
 /// windows").
 ///
 /// <para>

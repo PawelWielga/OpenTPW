@@ -36,7 +36,10 @@ artifacts are listed in `docs/history/README.md`. Q208-Q217 come from the 2026-1
 says where). Q219-Q221 come from the 2026-10-04 effort audit of the commits of 2026-09-29 to 2026-10-01; an id such
 as `r-f1` names a verdict in its results file (`CLAUDE.local.md` says where). Q222 comes from Q107's comparison with
 the original. A note marked "fork review 2" comes from the 2026-10-16 review of another fork, every lead checked in
-Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` says where).
+Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` says where). A note marked "fork watch"
+comes from the daily look at the same fork's new commits (the first, 2026-10-16:
+`~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-16/`, `verify-<area>.md`; `docs/TOOLING.md`, "Recipes", the daily
+fork watch).
 
 ---
 
@@ -53,9 +56,35 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   `FUN_005363xx` tests) and what state 0 does to a walking member first; confirm in both games what a member under the
   pointer does. In no game run: Full Simulation (not asked: the hover is either mode's), the other three themes.
 
+  From the run review (2026-10-17): our hover runs while the pointer is over a control, so a member behind the gadget
+  gets the pick hand and is counted; the original runs it (`0x00488582`) only while `[0x007c24fc]` is set (messages
+  `0x10001`, `0x10002`, `0x15`, likely the park view's pointer enter and leave; not proven). Built as is, the state
+  change would reset a member behind the gadget: gate it first. Also where the guests decide and nobody is taken, the
+  original empties the row only if the last category was not nought (`0x004870f3` to `0x004870ff`); ours always does.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From the run review (2026-10-17): `ParkAdvisorMessages.MonthsSinceTheFirstSweep` (Q422) copies
+  `ParkStrikes.MonthsSinceTheFirstSweep`, the same formula over `FUN_004f8800` and `0x1792F8648000`: call the one and drop
+  the copy. The locator's patrol edges (Q426) are always blue here, where the original lays them red after a tool's last
+  pass left its refusal latched (`DAT_00816d50`, `DAT_0081b604`); said at `ParkBuildMarkers.QueuePatrolEdges`, not run (a
+  refused path click, then Ctrl+S and the mechanics' button, read with `squares.py`). A quick right click (Q438): `Level`
+  also tests the 200 ms on the release frame, where the original tests it only on message `0x1e` (`0x0048821f`), which
+  differs only if no `0x1e` arrives between; and the original's no-entry pointer showed over a blue outline
+  (`q438/orig/b-7-outline.png`, the latch `[0x00816d48]` 1 at the anchor and 0 after) where `Level.PatrolCursor` shows
+  `c_noplace` only while red: look when the patrol pointer is next touched. World clicks with a locator or person window
+  open (Q424, Q431, Q432): Q444.
+  From the fork watch (2026-10-16, `verify-advisor.md`; `advisor-park.md`, "Rows settled from the bytes"): three
+  polled rows (3, 4 and 85) are settled from the bytes and ready to build, none yet named by an item, and row 86 has
+  one fact. Rows 3 and 4 (`VisitorsThirsty`, `VisitorsHungry`, `0x0059c9d0`, `0x0059ca00`) score the count of park
+  guests whose thirst (`+0x1a4`) or hunger (`+0x1a8`), cut to a low byte, is above the key, times the key
+  (`0x004c93f0`, `0x004c9340`; the shape of row 82's toilet count, which `ParkPeople.AdvisorFacts` builds); shipped 99
+  and 1, so, if a need tops out at 100 (the original's clamp is not re-read), 26 guests at 100 are needed. Row 85
+  (`FeaturesNotEnoughToilets`, `0x0059e420`) is always nought, so it builds as a faithful nought and leaves the
+  `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` census; its lines are never said by the original. The one fact for row 86: it
+  bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no handyman. Row 291's response 551
+  does not exist (a raised row 291 would be silent; nothing found posts it). Rows 125 to 127 are Q228's, rows 167 and
+  168 Q245's. Not run.
   From Q443 (`park.md`, "Arrivals: who comes, on what, and how often"): the leavers' draw is on the save's seed, which
   is written back, so the nearest piece is the staff strike's five records and `mForceStrike` (`ParkWorld.StaffHqState`;
   a strike changes them, Q138b, and the writer leaves them the file's, `saves.md`, the staff HQ), then the economy
@@ -82,8 +111,8 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   held, is not decoded, and ours reads no right button), the click with RMB cancel off, Full Simulation (not asked: the
   tool is either mode's), the other three themes. Not heard.
   From Q437 (`hud.md`, "The patrol switch and the patrol tool"): Escape with the tool armed is the original's, so the
-  nearest piece is a quick right click with the tool armed (RMB cancel on; `park-engine.md`, "The hand's ways out"), run
-  in neither game (run in both, Q438). In no game run: Escape with a modifier held while the tool is armed (the shortcuts' row names none),
+  nearest piece is a quick right click with the tool armed (RMB cancel on; `park-engine.md`, "The hand's ways out"), since run
+  in both games (Q438). In no game run: Escape with a modifier held while the tool is armed (the shortcuts' row names none),
   Escape unanchored in the original, Full Simulation (not asked: the tool is either mode's), the other three themes. Not
   heard.
   From Q436 (`park-engine.md`, "Placement feedback", "The walls"): a lifted square's walls are the original's, so the
@@ -94,8 +123,7 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   From Q435 (`hud.md`, "The patrol switch and the patrol tool"): at one camera the lifted squares stand where the
   original's do, so the nearest piece is the walls a lifted square drops to a lower neighbour (`MARKER_LIFT_SIDE_FACES`,
   `FUN_0053df30`'s other faces; the original's records at 11.5 and 1.5 under a 21.5 top, `park-engine.md`, "Placement
-  feedback"), drawn there and not here (built, Q436). In no game run: Escape with the tool armed here (the original's puts it away
-  unwritten; run, Q437), a rotation other than nought at one camera, Full Simulation (not asked: the outline is either mode's),
+  feedback"), drawn there and not here (built, Q436). In no game run: a rotation other than nought at one camera, Full Simulation (not asked: the outline is either mode's),
   the other three themes.
   From Q434 (`ride-operation.md`, "A member fenced where one path cell lies"): the fenced member's walk on one path cell
   is the original's, so the nearest piece is the patrol tool's lifted squares at one camera in both games (ours looked
@@ -107,8 +135,7 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   roll finds only his own cell); watch the original's past nineteen seconds before changing `StaffBehaviour`. Seen: at
   the two runs' cameras our lifted squares look far higher above the ground than the original's, at the same lift
   numbers; compare at one camera (compared, Q435: the same at one camera). Counted, not built: the refused click's sound `0xaf` (`PATROL_TOOL_REFUSED_SOUND_0xAF`; built, Q439).
-  In no game run: `0xc1` cut by the click here (the line ended first; the original's was cut; tested), Escape (run, Q437) or a
-  right click with the tool armed (run, Q438), Full Simulation (not asked: the window is either mode's), the other three themes.
+  In no game run: `0xc1` cut by the click here (the line ended first; the original's was cut; tested), Full Simulation (not asked: the window is either mode's), the other three themes.
   Not heard.
   From Q432 (`hud.md`, "The person's windows"): FIRE and PICK UP are built, so the staff window's nearest piece is the
   patrol switch (`STAFF_WINDOW_PATROL`: `FUN_004b5b50`, map tool `0x36` and advisor line `0xc1`, or the area cleared,
@@ -125,58 +152,58 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   the all-staff list's advisor line `0x11d` (`STAFF_LIST_ADVISOR_LINE`), the staff room's list's row (`0x004b5267`; no
   staff room window). Not shown: the patrol switch's second help row, 87. Settled: Q430's "`0x12e` in no slot on the
   second to fourth opens" is the accept gate (Tutorial lines said once, and refused after three cuts). In no game run:
-  a member's world click (tested only through `ParkStaffWindow.Open`; the pick may not find a walking member), PICK UP
+  a member's world click (tested only through `ParkStaffWindow.Open`; since Q446 it finds a member where they stand), PICK UP
   unlit (tested only), Full Simulation (not asked: the window is either mode's), the other three themes. Not heard.
+  (These leftovers belong to Q31b, filed there 2026-10-17.)
   From Q430 (`hud.md`, "The person's windows"): the visitor's window is built, so the nearest piece is the staff
   member's window (built, Q431; its verbs and the patrol tool are not; Q31b lists it among the seven). Counted, not built:
   the visitor's preview model (`VISITOR_WINDOW_PREVIEW`, `FUN_00486530`, a copy of the guest's sprite turning in the
   panel), a guest gone while the window is up (`VISITOR_WINDOW_GUEST_GONE`; the original clears nothing, not decoded),
-  the visitors list's own advisor line `0x11e` (`VISITORS_LIST_ADVISOR_LINE`), a guest's world click (the pick finds only
-  a cell's occupant, so no guest: `FUN_004879d0` category 7 to `c`). Open: the original put `0x12e` in no slot on its
-  second to fourth opens (not read why). Not run in the original: a thought shown in the window (ours drew thought 12,
+  the visitors list's own advisor line `0x11e` (`VISITORS_LIST_ADVISOR_LINE`). Not built, not counted: a guest's world click
+  (the pick finds only a cell's occupant, so no guest: `FUN_004879d0` category 7 to `c`; Q444). The original put `0x12e` in no
+  slot on its second to fourth opens, and so did this game, by said-once (the accept gate, Q431's note above); the
+  original's own cause is not read. (These leftovers belong to Q31b, filed there 2026-10-17.) Not run in the original: a thought shown in the window (ours drew thought 12,
   "Bored", `q430/run-fix2/8-row.png`). In no game run: a guest leaving while it is up (tested only), Full Simulation
   (not asked: the window is either mode's), the other three themes. Not heard.
   From Q429 (`hud.md`, "The person's windows"): both windows are decoded, so the nearest piece is building the
   visitor's window (`VISITOR_WINDOW`; from the strip's click, a guest's world click and a visitors row's `0x400`, which
   counts `LIST_ROW_ACTIVATED_UNANSWERED`), then the staff member's (`STAFF_WINDOW`: its verbs and the patrol tool make it
-  the larger; Q31b lists it among the seven). Not run in the original: a thought shown, either window's verbs, arrows
+  the larger; Q31b lists it among the seven; both built, Q430 and Q431). Not run in the original: a thought shown, either window's verbs, arrows
   or name edit, either opened from the world or a list, Full Simulation (not asked: the windows are either mode's), the
   other three themes. Not heard.
   From Q428 (`hud.md`, "The camcorder button's line"): the line is built. The locators' last piece is still the strip's
-  click, the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`: `FUN_004b6080`, `FUN_004b79b0`, not yet decoded; the
-  employee window is Q31's), the nearest. In no game run: a tag taking the arm from the camcorder panel and a panel
+  click, the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`: `FUN_004b6080`, `FUN_004b79b0`, decoded in Q429 and built in
+  Q430 and Q431; the staff and visitor windows are Q31b's), the nearest. In no game run: a tag taking the arm from the camcorder panel and a panel
   refused (tested only), the line let end and said once, Full Simulation (not asked: the button is either mode's), the
   other three themes. Not heard in either game.
   From Q427 (`hud.md`, "The slide, measured"): the arm's slide is built. The locators' last piece is the strip's click,
-  the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`), the nearest. Counted, not built: the camcorder button's
-  advisor line `0x131` (`FUN_00498bb0` posts it, `FUN_00498bd0` withdraws it; built, Q428). In no game run:
+  the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`), the nearest. The camcorder button's
+  advisor line `0x131` (`FUN_00498bb0` posts it, `FUN_00498bd0` withdraws it) is built (Q428). In no game run:
   a panel refused while another waits (tested only), Full Simulation (not asked: the arm is either mode's), the other
   three themes. Not heard in either game.
   From Q426 (`hud.md`, "The patrol edges"): a fenced member's patrol edges are built. The locators' last pieces are the
-  strip's click, which opens the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`; the employee window is Q31's, and
+  strip's click, which opens the person's window (`STAFF_WINDOW`, `VISITOR_WINDOW`; the staff and visitor windows are Q31b's, and
   the patrol tool, `0x510`, map tool `0x36`, is on it), and the arm's slide (built, Q427), the nearest. In no
   game run: a patrol edge over a built cell (no stock area crosses one; the lift is the tools', tested), Full
   Simulation (not asked: the locators are either mode's), the other three themes.
   From Q425 (`hud.md`, "The staff and visitor locators"): the locators' two advisor lines are built, so the locators'
   nearest piece is a fenced member's patrol edges (built, Q426). In no game run:
-  Ctrl+S or Ctrl+V with a person's window up (none is built; `FUN_004b3f60` given a visitor posts `0x11f`), the lines
+  Ctrl+V over the visitor's window (run, Q430) and Ctrl+S over a member's (built, Q431; in no game run; `FUN_004b3f60` given a visitor posts `0x11f`), the lines
   through a save and a load (written with every row's record; not run), the Tutorial option off (tested only), Full Simulation (not asked: the
   locators are either mode's), the other three themes. Not heard in either game.
-  From Q424 (`hud.md`, "The staff and visitor locators"): the locators are built. Counted, not built: the advisor's
-  two lines as they open, `0xc6` (staff) and `0x11f` (visitors) (built, Q425); a fenced member's patrol edges
-  (built, Q426); the strip's click, the person's window (`STAFF_WINDOW`,
-  `VISITOR_WINDOW`), and with it Ctrl+S or Ctrl+V over a person's window opening on that person. The arm puts the panel
+  From Q424 (`hud.md`, "The staff and visitor locators"): the locators are built. Since built: a fenced member's patrol edges
+  (Q426); the strip's click and the person's windows, with Ctrl+S and Ctrl+V over them (Q430, Q431). The arm puts the panel
   out at once (built to slide, Q427). In no game run: a kind with nobody, a person leaving while followed (tested
   only), the strip's hover and click, first person over a follow, Full Simulation (not asked: the locators are either
   mode's), the other three themes.
-  From Q423 (`advisor-park.md`, "Kids who got away from a guard"): row 22 is built, so every guards' row is. In no game
+  From Q423 (`advisor-park.md`, "Kids who got away from a guard"): row 22 is built, so every guards' row Instant Action polls is; row 23 (`0x0059d400`, `StaffSetGuardArea`, Full Simulation's alone) is not (the Q348 list), and rows 24 and 25 score the stub `0x005d60c0`. In no game
   run: lines 2 and 3 (the test holds the turn), a shut park (the test holds it scoring), a kid getting away in play
   (nothing here counts one: the pranks), two guards or more (tested only), Full Simulation (not asked: the row is either
   mode's), the other three themes. Not heard in either game.
   From Q422 (`advisor-park.md`, "Research too slow, and researchers to hire"): row 17 is built, so every staff row, 5 to
   17, is. Row 22 (`0x0059d3b0`) reads the got-away count with a guard on the staff, the nearest of the guards' rows (built, Q423). In no
-  game run: the line with the shipped fifteen months (the clock would pass every candidate's time in the pool; tested
-  only), research at 14 per cent or more, a most of nought (tested only), lines 2 and 3 (the test holds the turn), a
+  game run: the line with the shipped fifteen months (the run's length: the clock would have to stand past tick 10,368; tested
+  only), no hire past the pool's top-up (the original said it on 1094; not run here), research at 14 per cent or more, a most of nought (tested only), lines 2 and 3 (the test holds the turn), a
   researcher hired after the line, Full Simulation (not asked: the row is either mode's), the other three themes. Not
   heard in either game.
   From Q421 (`advisor-park.md`, "Most or every kind of ride built, and no researcher"): rows 15 and 16 are built. The
@@ -201,37 +228,37 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   two handymen, a handyman hired after the line, Full Simulation (not asked: the rows are either mode's), the other
   three themes. Not heard in either game.
   From Q416 (`advisor-park.md`, "A busy park with no guard"): row 11 is built, the first row of category 9 (said only
-  once). The other staff rows, 8, 9 and 15 to 17, are not (rows 8 and 9 are built, Q417): rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman;
-  the nearest), rows 15 and 16 the kinds of ride on offer and standing with no researcher, row 17 the months into the
+  once). The other staff rows, 8, 9 and 15 to 17, are not (rows 8 and 9 are built, Q417; rows 15 and 16, Q421): rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman;
+  the nearest), rows 15 and 16 the kinds of ride on offer and standing with no researcher (built, Q421), row 17 the months into the
   game (built, Q422). In no game run: lines 2 and 3 (said once, they come only after a withdraw cuts the first; the test holds the
   second with the category's key off), a crowd past 100 or under 70 (tested only), a guard hired after the line, the
   said byte through a save and a load, Full Simulation (not asked: the row is either mode's), the other three themes.
   Not heard in either game.
   From Q415 (`advisor-park.md`, "A busy park with no entertainer"): row 14 is built. The other staff rows, 8, 9, 11 and
-  15 to 17, are not (row 11 is built, Q416; rows 8 and 9, Q417); their scores are read there: rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman), row 11 the
+  15 to 17, are not (row 11 is built, Q416; rows 8 and 9, Q417; rows 15 and 16, Q421); their scores are read there: rows 8 and 9 the litter (`FUN_004ccdf0`, with no handyman), row 11 the
   crowd over 70 with no guard after `DaysForStaff` (the nearest: it asks only what row 14 and row 13 already read),
-  rows 15 and 16 the kinds of ride on offer and standing with no researcher, row 17 the months into the game (built, Q422). In no game
+  rows 15 and 16 the kinds of ride on offer and standing with no researcher (built, Q421), row 17 the months into the game (built, Q422). In no game
   run: lines 2 and 3 (the test holds them), a crowd under 35 (a score below nought, tested only), a crowd past 100 (tested
   only), an entertainer hired after the line, Full Simulation (not asked: the row is either mode's), the other three
   themes. Not heard in either game.
   From Q414 (`advisor-park.md`, "Lots of pranks"): row 264 is built. The other staff rows, 8, 9, 11 and 14 to 17, are
-  not (rows 8, 9, 11 and 14 are built, Q415 to Q417). The original, given a file with no guard (Q413's `three.TPWS`,
+  not (rows 8, 9, 11 and 14 to 16 are built, Q415 to Q421). The original, given a file with no guard (Q413's `three.TPWS`,
   `q414/two.TPWS`), said a line and raised its tag on tick 828, "Some of the visitors are misbehaving and your security
   hasn't seen it...": the polled row 98, raised by the files' nine kids who got away (built, Q418). In no game run: a shut park (the
   test holds it), the line said twice, a kid counted in play, Full Simulation (not asked: the row is either mode's),
   the other three themes. Not heard in either game.
   From Q413 (`advisor-park.md`, "A park with no guard"): row 12 is built. The other staff rows, 8, 9, 11 and 14 to 17,
-  are not (rows 8, 9, 11 and 14 are built, Q415 to Q417); row 264 (`LotsOfPranks`, `0x005a04f0`, more than two kids this month), which the original posted on tick
+  are not (rows 8, 9, 11 and 14 to 16 are built, Q415 to Q421); row 264 (`LotsOfPranks`, `0x005a04f0`, more than two kids this month), which the original posted on tick
   903 in all three of Q413's files, is the nearest (it reads the same count; built, Q414). In no game run: lines 2 and 3 (the test
   holds them; the third's gesture row is counted), a kid counted in play (nothing here counts one: the pranks), two
   guards or more, a guard hired after the line, Full Simulation (not asked: the row is either mode's), the other three
   themes. Not heard in either game.
   From Q412 (`advisor-park.md`, "A park too big for its guards"): row 13 is built. The other staff rows, 8, 9, 11, 12
-  and 14 to 17, are not (rows 8, 9, 11, 12 and 14 are built, Q413 to Q417). In no game run: lines 2 and 3 (the test holds them), a guard over his 750 (776 cells; the
+  and 14 to 17, are not (rows 8, 9, 11, 12 and 14 to 16 are built, Q413 to Q421). In no game run: lines 2 and 3 (the test holds them), a guard over his 750 (776 cells; the
   test holds it), two guards or more, a guard hired after the line, Full Simulation (not asked: the row is either
   mode's), the other three themes. Not heard in either game.
   From Q411 (`advisor-park.md`, "A park too big for its handymen"): row 10 is built. The other staff rows, 8, 9 and 11
-  to 17, are not (rows 8, 9 and 11 to 14 are built, Q412 to Q417); row 13's keys name developed cells for the guards (`StaffHireGuards3`), the nearest (built, Q412). In no game run:
+  to 17, are not (rows 8, 9 and 11 to 16 are built, Q412 to Q421); row 13's keys name developed cells for the guards (`StaffHireGuards3`), the nearest (built, Q412). In no game run:
   lines 2 and 3 (the test holds them), two handymen or more, a handyman hired after the line, the minimum of 300
   (it asks nothing a handyman's 400 does not, at the shipped values: tested only), a region's kept count reused in
   the same quarter tick (counted afresh here, said at `ParkState.DevelopedCells`), Full Simulation (not asked: the row
@@ -380,7 +407,7 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   run: a track ride's row (the fill's `0x2000` walk, `0x00493eb0`), a value past 255, Full Simulation (not asked:
   the screen is either mode's), the other three themes.
   From Q366 (`hud.md`, "The shortcuts' screen rows"): the staff and visitor locators (`FUN_004b3f60`, Ctrl+S and
-  Ctrl+V, a panel at the gadget's foot in the original) are built (Q424); the postcard row is counted
+  Ctrl+V, a panel on the gadget's arm in the original) are built (Q424); the postcard row is counted
   (`POSTCARD_SHORTCUT`). W and D still scroll the orbit camera, the original's camera table binding the
   arrows and the keypad (`ParkOrbitCameraMode.ScrollAxes`; Alexah kept them, 2026-10-14). In no game run: L in Full
   Simulation (counted there), a shortcut under an object window, Ctrl+P in the original.
@@ -923,6 +950,9 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   (`SCENE_HEIGHT_OWN_MESH`: the mesh at the instance's `+0x2c`, whose setter is not read). Not read: a track
   piece's cell (`FUN_0053bf30`), header flag `0x80`'s setter, and a loaded car's own `+0xa0` as the height a
   corner off its ride keeps. A boat's rocking from its corners is still `BUMPER_CAR_ROCK`.
+  From the run review (2026-10-17): the writer rebuilds each cell's chain by id and the file's order, not the running
+  list the original writes (`ParkWorld.People.cs`, `saves.md`, "The chains"): since Q446 a file chain [A, B] whose B
+  walks off and back runs [B, A] and is written [A, B]. Write the running order.
 - [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The economy thing's loans and rings,
   the staff HQ's strikes, the calendar's and the weather's fields; then `ParkSaveScreen.Save` writes
   (`SAVE_GAME_WRITER` gone), an overwrite replaces the file, and the Load Park list shows it. Confirm: a park
@@ -972,7 +1002,7 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
 - [ ] **Q31. The shop's object window.** `Level.OpenObjectWindow` opens only a ride's (`UiType 0`). Shops,
   sideshows and the rest stop at `SHOP_WINDOW`, `SIDESHOW_WINDOW` and `FEATURE_WINDOW`; a staff member's click
   opens their window (Q431); a clicked visitor reaches nothing counted. `park-engine.md`, "The
-  per-object management screen is nine screens", lists the nine. This item is the shop's; the other seven are Q31b.
+  per-object management screen is nine screens", lists the nine. This item is the shop's; the other seven are Q31b (the visitor's and the staff member's are built, Q430, Q431: five are left).
   From Q177: the shop, sideshow and toilet windows' figures are decoded (`ride-operation.md`, "The settle-up's
   bookkeeping"): customer satisfaction, profit last month, customers as "C of M", winners last month, the cost of
   goods from the window's pending sliders (applied on close, on stepping to the next or by apply to all), and a
@@ -982,6 +1012,11 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
     `FUN_004b16c0` bind their rows: the 30-day takings (`0xc077`, `0xa093`), the satisfaction gauges, the scrap rows
     and the cell's happiness (`FUN_004cd880( cell, 1 )`). The row labels need the streams `0x00755908` and
     `0x00755e80` parsed.
+  - **Note (fork watch 2026-10-16, `verify-ui-hud.md` H1):** the shop window's load, apply, ranges and buttons are
+    decoded (`hud.md`, "The shop, sideshow and ride windows"): the setters `0x004e21e0`, `0x004e2190` (the slider x
+    50) and `0x004e2770`, applied on close, on a step or by apply to all (`0xc081`), which reaches every object of the
+    **same item**, not every shop; the sliders' ranges (quality 0 to 2, amount 0 to 100, price 0 to 500); Up and Down
+    step the window.
 - [ ] **Q244. The happiness gauge draws two copies of its bar.** `docs/PLAYER-GAPS.md` gap 5, found by Alexah playing:
   the bar draws in the wrong place, split down the middle. That page holds a lead read from the code and not
   measured (`UiMeter.OnDraw`'s sampler); measure before touching the meter's arithmetic. The number it shows is
@@ -1000,6 +1035,11 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
     none, screen open or not; a finished project's next level goes on the table's end. The screen (Full Simulation
     only): fluid `0x004a95b0` and `0x004a9fc0` stepped once a frame message `0x1e`, refresh `0x004a9c70`, setters
     `0x00503870` and `0x00503900`, the workload knob's limit, a progress fill per panel (`0x004a9bd0`).
+  - **Note (fork watch 2026-10-16, `verify-advisor.md`, rows 167 and 168):** finishing the last research project
+    (`0x00503d40`) plays advisor record `0xa7`, row 167, `0x0059f9a0` (`MOV EAX,0x2710`, score 10000), posted at
+    `0x00503f8d`, responses 380-381 ("you've discovered all of the items in the game"). Row 168 (message `0xa8`,
+    `0x0059f9b0`, score 9999, responses 382-384, "a special surprise animation") has no poster found; the six `PUSH
+    0xa8` in `.text` are not it. Both unbuilt (`advisor-park.md`, "Rows settled from the bytes").
 - [ ] **Q141. Golden tickets are never awarded. Decode first, and Alexah's call on when.** Found by Q69. What reaches
   the advisor's glints in the original is a golden-ticket award: only gesture rows 1 and 13 carry the glint flags, and
   only its lines use them (`docs/exe/scenes.md`, "Gesture table"). Those lines play on the park's own advisor, model slot
@@ -1019,6 +1059,11 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
     `tourride` (1) and `volcano` (3) carry a ticket cost.
   - **Note (fork review 2, 2026-10-16):** Lost Kingdom's golden-ticket ride, Jurassic Tours (`tourride`, ticket cost
     1), runs the TOUR script, which is not built: Q408.
+  - **Note (fork watch 2026-10-16, `verify-audio-fx.md` A5):** gesture rows 12 and 13 (values 28 and 29; table
+    `0x0076dc18`, stride `0x50`) alone carry the `0x400000` cue that `0x00598bf0` turns into the key timer, so a
+    golden-ticket line (row 13) plays goldkey `0xc6`, particle 87 and `0x004b9340` at its due time (`0x00599991` to
+    `0x005999d1`). `FrontEnd.KeyHandedOver` is row 12's build; row 13's has no site. Whether `0x004b9340` does
+    anything in a park is not proven.
 - [ ] **Q142. The staff pool reads a string table again for every name.** Found by Q70's game run. `ParkStaffPool`
   opens and parses a name table for each candidate it rolls (`RollName`) and STAFF_TYPES for each kind's name
   (`NameOfKind`): 27 of a park load's 28 table reads are six files read over and over, and the staff screen and the
@@ -1217,6 +1262,28 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   objects; the prankery id's `& 0xffff`; the cash's `Math.Max( 0, ... )`; `Players.Load`'s read-only stand-in. And
   `ArchiveDamageTests.EveryInstalledWadEntryStillDecodes` prints its hash and count without asserting either. Write
   each test, put its bug back, see it fail (`CLAUDE.md` rule 6). No game run.
+  From the run review (2026-10-17): three more callers whose tests stop at the helper. `ParkBuildMarkers` hands
+  `RecordHeight( square.Lift )` to the strip's `Over`; put back `square.Lift` and every test passes, and the game's `strip`
+  census prints `Over - Lift`: assert a built strip's `Over` for a lifted cell (21.5), or print `Over` (Q435).
+  `ParkBuildMarkers.Fill` needs no GPU and runs before `Build`'s first GPU call, so Q436's mutation m12 (the vertex count)
+  is not "game-only": move the count into a testable `VertexCount( squares, walls )`. `CameraLensTests.
+  TheLobbyDrawsItsFilesAngle` asserts 100, which `LobbyCameraMode.ReadSettings( TextReader )` also falls back to, so a wrong
+  path or an unread stream passes: open `lobby/lobby.txt` through `FileSystem`, assert it is found, parse that stream (Q441).
+  `ParkStaffCellListTests` (Q446) demands a relink from a member in the Held state, where the original relinks only in
+  its walk tick and a placement: drive a one-cell walk in Walking instead, so a relink inside `Walked` passes.
+  `Level.cs`'s hand-over of the gadget's locator to the level (Q444) is reached by no test (`ParkLocatorTests` sets
+  `level.Locator` by hand); build the test level through `ParkFrontEnd`, or add its deletion to Q444's mutations as
+  caught by the game alone. `ParkStaffWindowTests`' refused-sound test (Q442) reaches the path and queue refusals beside a
+  park screen by clicks the game refuses (`Level.WorldClick` returns on `KeptFromThePark`), so `RunPath( cellX, cellY, true )`
+  at the `RunBuildMode` call survives: arm the tool before the window opens (`ParkBuildMode.Arm( ParkBuildMode.Path )`; the
+  queue by `ParkPathBuilding.EditQueue( 13 )`), then click, reword the summary to "armed", and put that bug back.
+  `Level.cs` hands `state.RandomSeed` to `ParkFileWriter.Running` with no test on the wiring (Q443; `q443/mutations.py` declares
+  `LV` and uses it for no mutant): take the argument out and the suite passes; assert the written header's seed.
+  The person windows (Q430 to Q432): Ctrl+V over the visitor's window (`ParkFrontEnd`'s case 14 branch; drive the action,
+  assert the locator is on the guest and the window closed, put the branch back out); `Level.ClickWorldAt` with a staff
+  thing (deleting its branch survives every test); `ParkStaffWindow.Open` with the window already up (it stays on its
+  member and posts `0xc0` again); and PICK UP's "not drawn", shown by the census predicate alone (the draw loop's
+  `InTheHand` skip in `ParkGuestSprites` survives; show his cell on screen).
 - [ ] **Q212. The ride window's other statuses. Decode first.** Found by the 2026-10-04 review (`u7-ride-door-6`,
   `-7`, `-9`, `-10`). `FUN_00485f60` answers `0xb`..`0x14` (80/100/255) for a ride with a mechanic called (`+0x64`),
   2 (UITEXT 366) for state 1 with nobody assigned and `0x15` (UITEXT 385, "REPAIRS IN PROGRESS") with one, 24 for an
@@ -1348,6 +1415,12 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
     and a tie goes to the newest hire. The HQ sits at (0, 0) in Easymode and in all five Full Simulation saves, so it
     is the guard nearest the map's corner wherever the prank is. Not read: anything else acting on message `0xe`, the
     escort `0x004d6a50`'s arms.
+  - **Note (fork watch 2026-10-16, `verify-advisor.md` lead B):** the advisor's half of the bus message is decoded
+    (`advisor-park.md`, "Rows settled from the bytes"): `ReceiveMessage` arm `0x0059b221` takes the guest's id and
+    packed cell and switches on the message's `+0xc` (the guest's id % 3): 0 posts advisor message `0x7d`, 1 `0x7e`, 2
+    `0x7f` (rows 125-127, getters `0x0059f360`, `0x0059f370`, `0x0059f380`, keys `PrankSbomb`, `PrankLitter` and
+    `PrankBalloon` `.Score`, 35 each, above the 25 cut). The prank done is `mPrankeryIndex` 100 + id % 3, so the
+    advice names the prank done for a guest the constructor made.
 - [ ] **Q229. A member of staff put down sets off on the next sweep, where the original's stands eleven. Decode
   first.** Found by Q112's measurement of the original (`ride-operation.md`, "OpenTPW takes the arm"). Its guard, put
   down from the staff window's PICK UP, reads state 7 to 0 on the click, 0 to 1 with a destination a sweep later, 0
@@ -1707,6 +1780,11 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
     only in state 4 or 8 with mode `0x40` clear; `0x0043b390` moves the admission queue across when the ride closes;
     `0x0043b130` refills it from a loader. Seating draws the game's own generator at `DAT_007b0958`; a rider the full
     ring cannot take is taken off the car and queued nowhere. The rest of the coaster's running is Q405.
+  - **Note (fork watch 2026-10-16, `verify-world.md` L14):** the separation pass is `0x005102f0`, called directly
+    (`0x0050e166`) with radius 2 x `[thing+4]` and callback `0x0050dfc0`: a window of +-ceil( radius / `0x10000` )
+    cells (3 x 3 only for a radius of one cell or less), rows then columns, one thing list per cell (`cell+0x2b8`,
+    next `+10`) in its own order; kinds 1, 4, 5, 6, 7, 8 and `0x12`; itself excluded; distance non-zero and strictly
+    inside the radius; it stops after the **fifth** neighbour. Whether guests reach it is not read.
 
 - [ ] **Q290. The queue's stamp is taken before the queue is measured, where the original measures first.** From
   the week-end audit (stage 8, the older decode read a second time from the listing; verified once, not reproduced
@@ -1752,6 +1830,12 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   Clone is dearer than the balance (`FUN_004879d0`, `0x00487b46`), and from `FUN_004af480` (`0x004af5d6`, a control of
   window stream `0x00755750` not identified). This game refuses a row silently and counts nothing, and Clone has
   nothing behind it. Confirm: the sound caught by the disk driver on a refused row.
+  - **Note (fork watch 2026-10-16, `verify-audio-fx.md` A3):** the list rows' click sound is built (`UiSounds`,
+    `WindowStack`'s hook `0x00485780`): the control's message `0x100` handler (`0x004857b8`) plays `Select3` (189,
+    `0xbd`) when style bit `0x10` of `[this+0x48]` is set (`0x004857cb`), else `0x1f`. Open: which park list rows the
+    original's factories make with style `0x10` (sites `0x00493986`, `0x004939b0`, `0x00494628`, `0x0049463d`,
+    `0x00496cea`, `0x00496cff`, `0x004b4c70`, `0x006604a1`, `0x0066051a`) and whether ours set `Toggles` for the same
+    rows; which of them receive `0x100` is not read.
 
 - [ ] **Q403. The balance's colour and the cost in hand.** From the fork review 2, 2026-10-16 (`verify-ui-hud.md` L5).
   The HUD letters the balance in one of six colours (table `0x00752e30`, index (balance + 999) / 1000 clamped to 0..5:
@@ -1765,6 +1849,10 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   beside `q412/orig/a-button.png`; the same in `q415`). The candidates' names differ too, which may be the pool's
   top-up (Q356's note); not looked into. Decode what the original draws there first. Confirm: the box beside the
   original's on the same file, a screenshot and the census of what is drawn.
+  - **Note (fork watch 2026-10-16, `verify-audio-fx.md` O4):** the figure is made at `0x0049bb4a` to `0x0049bb64`:
+    `0x00475a10( 0x0074f758, slot )` with the slot by role from `0x0049bb10` (5, 6, 4, 7, 8), the handle kept at
+    `[0x007ca310]`, then `0x004755d0( handle, 8, 8.0f )`. The facing and frames 0 to 7 are inside the sprite script
+    `0x0074f758`: not read.
 - [ ] **Q404. A park six months in the red ends.** From the fork review 2, 2026-10-16
   (`verify-economy-guests-paths.md` L4, M2). Counted, `BANK_PARK_ENDS_IN_THE_RED`. What the end does is
   `ride-operation.md`, "The end of the park": world state 4, the end screen, `VAR_BREAKSTAT` 1 on every ride guests
@@ -1928,9 +2016,14 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   modules", Camera), so a park saved here at an eighth turn opens a quarter away there. Seen beside the original
   at the same zoom and point (`q241f/sheet-ours-beside-original.png`): OpenTPW's view takes in far more ground.
   From Q440 (`park-engine.md`, "The turn"): held, the Left arrow and keypad 9 raise the rotation 0.002 a millisecond
-  and the Right arrow and keypad 7 lower it, and the drawn rotation eases after it by min(dt, 140) / 140 a frame; the
+  and the Right arrow and keypad 7 lower it, and the drawn rotation eases after it by min(dt, 140) / 140 a frame (min(dt, 200) / 200 with the 90 degree option
+  `[0x0078d912]` set: this item's own option); the
   direction is already the original's (this game's yaw is its rotation negated, and the Left arrow,
   RotateLeft, lowers the yaw). The step and the easing are what differ.
+  From the run review (2026-10-17, Q440): W and D scroll the orbit camera (`ParkOrbitCameraMode.cs`) without ending a
+  locator's follow, where any pan in the original does (`0x0042ba37`, `0x0042ba92`; `ParkLocator.Following` is cleared only
+  at its own fold, a mode change, a person gone and a step that finds nobody), so scrolling with the locator following
+  does nothing here: the follow puts the point back each frame. Counted nowhere; clear it where a pan is built.
 - [ ] **Q24. Nothing highlights a thing under the mouse.** The idle pointer already follows the hover category over
   ground and path (`Level.IdleOverPath`). Picking is decoded (`park-engine.md`, "Picking is a real ray cast, not a
   grid lookup"): the hit point comes from a ray against the terrain and then object meshes, and the hovered THING is
@@ -1962,6 +2055,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
 - [ ] **Q27. Pushing the mouse at the screen edge does not scroll.** The "push scroll" option exists and
   is read by nothing. `ParkOrbitCameraMode.Update` scrolls from keys only. Decode the camera
   binding table at `0x00748158` (`park-engine.md`, "The park camera"), then build.
+  From Q440 (`park-engine.md`, "The follow"): the original pans at the edge only with `[0x0078d910]` clear, an Options
+  toggle (written at `0x004a3882`, control `0x1d4c9`); the update zeroes the pointer's terms when it is set. Which of the
+  Options screen's rows it is, and whether it is the "push scroll" row, is not read.
 - [ ] **Q28. Renaming parks and rides.** The save carries a name per park (`saves.md`, the `gms.dat` theme record's park name). No rename
   control exists; signs read fixed names (`ParkFixedItems.BuildSign`, `ParkObjects.BuildSign`,
   `LobbyIsland.DisplayNames`). Decode where the original edits the name and what it writes, then build the
@@ -1993,6 +2089,11 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   footprint) and the demolish sound (`DEMOLISH_SOUND`, `0x96`-`0x99` by size). Not yet counted: the
   build side - `Info.CreateParticleEffect` and the `+0xd4` sound zone the script loader makes when an
   item has one (`park.md`, "What selling a thing does to its script"). The world pass to draw them in is `WorldParticles`.
+  - **Note (fork watch 2026-10-16, `verify-audio-fx.md` A6):** particle caller ids read in the listing: `0x004d95bf`
+    50, `0x00544dd8` 2, `0x005480fc` 96, `0x0055dba3` 39, `0x0055dc22` and `0x0055dca1` 40, `0x005999ad` 87,
+    `0x0048de1a` 91; also `0x00546ac7` and `0x0054aed5` (15), `0x00549d04`, `0x0054ad24`, `0x00557334`, `0x00557f0e`
+    (19), `0x004b8f6e` to `0x004b961c` (97, 98), `0x00548481`, `0x00548a4b` (1), `0x005488d4` (10). Which fire for a
+    Lost Kingdom build or sale is not read.
 - [ ] **Q40. The place-staff mode's cell rule and its carry preview.** Found by Q6's decode (`park-engine.md`,
   "Putting a candidate down: the type-5 mode"), so this is a build. The original takes a worker only on a
   cell of `mType` 0, 1, 3 or 9, not flagged `0x40`, whose track record after the 12/17 parent redirect is
@@ -2030,6 +2131,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     0.01 d² ) over x and z (`0x006bb9f0`), left stale past 65535; only pooled voices are ticked. Screams carry
     priority 2700, the crowd 5300. A script's sound id its category lacks is silent with no fallback (`park.md`):
     check this game plays nothing for jungle `incagod`'s 43 and `Speaker2`-`4`'s 6.
+  From the run review (2026-10-17, Q430): `ParkAudio.VisitorWindowOpened` (kids effect `0x81`, played on every build of the
+  visitor's window in the original) keeps this throttle, now said at the site: a window opened again within the clip's
+  length plus RepeatDelay is silent here. Pass `respectDelay: false` there, as `PutOff` and the yawn do, if the throttle
+  stays when this item is done.
 - [ ] **Q51. Rest-area occupancy is unbuilt at both ends.** Found by Q36's decode. Arriving to rest
   (`FUN_00505fe0`) adds one to the rest area's script variable 0 (`VAR_STAFFIN` in every staff room) and sends
   message 15 to the resting-staff list (UI control `0x1e7b`); leaving (`FUN_00506d10`, from the normal end of a rest
@@ -2119,6 +2224,13 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   two first. All four reach `FUN_004a9380`: sound `0x95`, the game paused, the interface hidden, a screen chosen by
   `DAT_007cc150 = 3`, and a picture written out with `Postcard.wad`, `postcard.jpg` and an HTML template
   (`park-engine.md`). Decode the screen and what is written, to `docs/exe/`; the build is the next session.
+  - **Note (fork watch 2026-10-16, `verify-ui-hud.md` M2 and M5):** the address check, inside the send handler
+    (`0x004a7f36` to `0x004a7fa2`): the recipients are split on `;`, `,`, space and newline; each needs an `@` not at
+    its start and a `.` after it more than one character on; any failure opens the box UITEXT `0xd6`, otherwise
+    `0x004a8600` sends (online: skipped). The photo is 640 x 240 (`0x005d485f`), drawn into (`0x142`, `0x5e`, `0x27c`,
+    `0xd7`). The alert queue `0x0047f620` (a deque, popped one at a time when no box is up) is fed only by the
+    postcard and the online screens (33 call sites of `0x0047f410`): in an offline Lost Kingdom game only the postcard
+    posts to it. Not by goals or challenges.
 - [ ] **Q242. Go Online and Publish Park. Alexah's call.** From Q139. Both are counted (`GO_ONLINE`,
   `PUBLISH_PARK`) and close the menu; the original starts connecting (`0x005b5cc0`) to servers that are gone. Ask
   Alexah: leave them counted, say so in the game's own style (rule 11), or something else. Then build the answer.
@@ -2150,6 +2262,23 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     `FUN_004b5cb0` (fire, with UITEXT `0x18d`'s box when the options ask; pick up; the patrol toggle, tool `0x36`;
     locate; all staff), arrows walking all staff newest first and wrapping (hidden under two staff), stats refreshed
     every 4000 ms (`FUN_004b58b0`), advisor lines `0xc0`, `0xc1` and `0xd4` posted and withdrawn.
+  From the run review (2026-10-17): both person windows are built (Q430, Q431), so five of the seven are left, and their
+  leftovers belong here; Q420's notes from Q430 and Q431 list them: the visitor's preview (`VISITOR_WINDOW_PREVIEW`) and a
+  guest gone (`VISITOR_WINDOW_GUEST_GONE`), the lists' lines `0x11e` and `0x11d`, the staff member's name edit, preview and
+  member gone (`STAFF_WINDOW_NAME_EDIT`, `STAFF_WINDOW_PREVIEW`, `STAFF_WINDOW_MEMBER_GONE`), the staff room's row
+  (`0x004b5267`) and the patrol switch's second help row (87). New: the base handler `FUN_0048d200` turns the cursor Up and
+  Down keys (`0x2600`, `0x2800`) into `b_arup` and `b_ardown` (`hud.md`, "The person's windows"); decode the focus to see
+  whether a key reaches the window, then build it or count it (`Unimplemented.Report( "OBJECT_WINDOW_CURSOR_KEYS" )`).
+  Duplicates: `ParkLocator.OpenOnMember` copies `OpenOnVisitor`, where the original's is one function, `FUN_004b3f60`,
+  branching on the type byte (`0x004b3f84`, table `0x004b4258`): make one `OpenOn( thing )`; and
+  `ParkStaffWindow.DaysEmployed` is a third copy of the `( FileTimeOf( now ) - stamp ) / TicksPerDay` divide beside
+  `ParkState.DaysSinceStaffHired` and `DaysSinceObjectBuilt`: one `DaysSince( stamp, now )`. Their tests that miss their
+  bug are in Q211's run-review note.
+  - **Note (fork watch 2026-10-16, `verify-ui-hud.md` H1):** the sideshow's and the ride's windows are decoded too
+    (`hud.md`, "The shop, sideshow and ride windows"). Sideshow: price always, then chance of winning (`+0x190`, 0 to
+    100) and prize (`+0x188`, 0 to 10000) only when `NonWinnableSideshow` (`+0x10c`) is 0, which no shipped `.sam`
+    sets (that branch is dead by content); apply to all is `0xa0a9` with mask `0x100`, the same-item rule. Ride: the
+    speed, duration and capacity controls and the apply `0x004af440`.
 - [ ] **Q32. Graphics tiers.** Only `Level.SetupParticles` and `Level.NumKids` read the detail files (`low.sam`,
   `med.sam`, `high.sam`), and only `GameOptions.PARTICLEDENSITY` and `NUMKIDS` (the kid and staff bank caps) from them; nothing reads their `GraphicalOptions.*` keys (texture quality and
   filtering, sky, shadows, fog, mipmaps, view distance). The detail-file loader is `0x00423bc0` (`OptionsScreen`'s
@@ -2208,6 +2337,16 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   over the centre-type cars. The PC's rating step is `ride-operation.md`'s, not the other fork's, which follows the
   Mac. Decode to `docs/exe/` first, then split. Confirm: Temple Of Gloom loaded from Alexah's park, its trains running
   and its riders let off, beside the original.
+  - **Note (fork watch 2026-10-16, `verify-world.md` L2 and L3, `verify-audio-fx.md` O1):** `0x00430ed0` is the
+    **track knot pass**, not a car update (`addresses.md` said car). Per track node (list `[0x00790fe4]+0x18`, next
+    `+0x64`) it works the tangent's yaw and pitch into `+0xd4` and `+0xe0`, poses the node's pylon model
+    (`0x00430ca0`), advances its model (`0x00473c70( 0x7a4610[node+0x70], 1, 0 )`, `0x004311f0`) and, for each knot
+    record (`node+0x90`, stride `0x58`), takes the posed tag's position and writes the node's roll at `+0xe4`; the
+    second rail is the knot plus (0, 1, 0) (non-loop), plus 2.0 x the tag's row (a modelled loop, node flag `0x40`),
+    `0x004321c0` last. The sampler `0x00440c10` turns (second rail point less the first) by -yaw and -pitch through
+    the sine table `0x007b0968` and takes atan2( -x, y ); `0x00440ad0` walks the knots. The bend `0x00438800` runs
+    from `0x0043d730` only for a car type whose flag bit 0 is set (`coaster1`'s `bBendCar 1`), its dot clamped to [0,
+    1] before the acos. Not read: the bend's tables, `0x00432df0`, `0x00435570`, the per-pylon tag counts.
 
 - [ ] **Q406. Coaster building: the track tool.** From the fork review 2, 2026-10-16 (`verify-coasters-build.md`
   L1-L11). A piece costs `fCostPerHeight` × H × 0.1 + `fCostPer2DLength` × length × 0.1, plus `fCostPerUnit` only on
@@ -2220,6 +2359,14 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   validator `0x00434740` never refuses a click. Open: what hides the loop button on `coaster1`; whether Backspace
   reaches delete-last `0x00444f30` (`park-engine.md` has Backspace calling `0x0052fe50( 0, 1 )`, its only caller).
   Decode to `docs/exe/` first, then split.
+  - **Note (fork watch 2026-10-16, `verify-world.md` L1 and L9, `verify-audio-fx.md` O1):** the loop button's open
+    question is answered: control `0x20` is enabled only when the mask's bit 2 holds and the thing's upgrade level
+    (`+0x50`, `mUpgradeLevel`) is at least 1 (`0x004980c9`, refresh `0x0049880f`), so a fresh coaster has it off until
+    its first upgrade (`coaster1` has `Upgrades[0..2]`); at level 1 or more the icon is `cb_loop`, or `cb_trough` when
+    mask bit `0x200` (definition flag `0x100`) is set. `0x004df8f0` raises the level (`0x004df962`) only when thing
+    `+0x19c` is 2: not decoded. The loop pair: `0x0079c664` = 2 at `0x00442cf4` (button) and `0x00444677` (key),
+    zeroed at `0x004446dd`; `0x006fdeec` = 90000.0 compared at `0x00435e2a`. The closing click `0x00442880` is not
+    read. The knot pass is Q405's note.
 
 - [ ] **Q407. Buy Land.** From the fork review 2, 2026-10-16 (`verify-objects-signs-other.md` L1). Counted,
   `BUY_LAND_TOOL`; Lost Kingdom's Features tab offers it (`hud.md`, item 101), and 13,878 of the 16,384 cells carry
@@ -2245,6 +2392,55 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   prize; the pacing reads `DaysAfterCompletedChallenge` and `DaysAfterDeclinedChallenge`; nothing raises the declined
   count, so `DeclinesToForfeit` is never reached (`0x004d2b60`, `0x004d2fb0`, `0x004d1a00`, `0x004d3140`,
   `0x004d1ae0`, `0x004d2ec0`). Neither screen is built.
+  - **Note (fork watch 2026-10-16, `verify-world.md` L13, `verify-ui-hud.md` M1):** a shop's sale feeds the challenges
+    by its `ShopType` 1 to 6 (`0x004e18e4`: types 5, ingredient, 8, ingredient, 7, 6) and `SpecialIngredient` 1 to 4
+    (`0x004e18fc`: types 2, 1, 3, 4), posted by `0x004d27a0`; `0x004ca160` is the mean over toilets of 100 less a
+    float's low byte, only for `0x004d2860`. The loans window: row pitch `(h x 0x600) / [0x00faa5c0] + 6` from a font
+    of 7; summary labels UITEXT `0x165`, `0x168`, `0x167`, `0x169`; take `0x0049f460` and repay `0x0049f4a0` refill
+    only the list `0x0012c4bd`; the tab is remembered for the session (`[0x007cb260]`, control `0x0012c4bf` or
+    `0x0012c4c0`).
+
+- [ ] **Q448. Ride script: REPAIREFFECT and BUMP 17.** From the fork watch, 2026-10-16 (`verify-audio-fx.md` A1 and
+  C1, `verify-world.md` L6). Both are counted by the dispatch's per-instruction report (`RideScript.cs`: "REPAIREFFECT
+  at N", "Wateride: BUMP at N"; `BUMP_17_TRACK_PIECES` is the bumper rides' alone, and the water ride has no bumper
+  record, `RideScript.cs:2337-2345`), both reached by Lost Kingdom's own rides. **REPAIREFFECT** (table entry 93,
+  `0x005562a6`; FileFormats `vm/instructions.md`): the particle on for a non-zero value and off for nought
+  (`0x00556de0`); **show** also plays global rides 111 and 211 at the model; **hide** plays the SINGLESCREAM picker
+  `0x00551320` with (`VAR_ONRIDE`, 1, 1), so only column 0 (75, 79, 83, 87 by the number aboard, silent with none),
+  and only when the script declares more than five variables. Our `park.md` has the polarity right; the other fork,
+  which follows the Mac, has it backwards. Jungle Bouncy runs `REPAIREFFECT 1` and later `0`. **BUMP 17**
+  (`0x005549ed`): the operand against `[script+0xe6]`; equal does nothing, otherwise it is stored and the circuit
+  walks `0x0052a490` and `0x0052a700` run with f = 1 for an operand of 0 and 0 for any other; reset to -1 at load
+  (`0x00559f29`); track edits run the same walks. Jungle's `Wateride.RSE` issues it four times (0, 1, 1, 0). Confirm:
+  Bouncy's repair limb and the Wateride, beside the original. Decode `0x0052a490` and `0x0052a700` to `docs/exe/`
+  first if they are not there. Building BUMP 17 for the Wateride also needs the water ride's track record, which the
+  code does not have (the Q257r paragraph under Q420).
+
+- [ ] **Q449. Building over scenery, and tearing down a water track.** From the fork watch, 2026-10-16
+  (`verify-world.md` C2 and C3). (1) The placement check (`0x00535d66` to `0x00535d73`) passes a new thing over
+  another's cells only when its `Info.OverwritePriority` is **strictly greater** than the owner's (`0x00818c10`,
+  `0x00818c14`). Every category file declares 5; of the item files, features alone set it, 45 at 1 and 48 at 0
+  (FileFormats `sam.md`, which lists Lost Kingdom's); the path and queue tools write 2 and 3 (`0x00527200`,
+  `0x00527218`). Our code reads the key nowhere (`ItemDescriptionFile.cs` lists it as unread;
+  `RideInfo.OverwritePriority` is unused): decide what a click on scenery with a ride or shop selected does here, then
+  count it. (2) The demolisher's track arm (`0x0052801d`), for `WhichTrackType` 1 (karts) and 2 (the water ride):
+  withdraws 2 x the cell cost x the scrap % / 100, signed, at `0x00528179`, after the per-tile refund of `0x0053b280`
+  (cost x % / 100 unsigned; none for cell type `0x19`, a replayed layout or a station tile). `SALE_TRACK_TEARDOWN`
+  (`ParkBuilding.cs`) counts it. Lost Kingdom's Wateride (`WhichTrackType` 2) and its go-karts (1) both reach this
+  arm; its coasters (3) withdraw nought. Confirm: a Wateride sold with its track, and the go-karts, the bank beside
+  the original's.
+
+- [ ] **Q450. Park screens: the buy window's gauges, the map's colours, the hover latch.** From the fork watch,
+  2026-10-16 (`verify-ui-hud.md` M3, M4, C3). (1) The buy screen's stats panel is unbuilt (`ParkBuyScreen.cs`); its
+  gauges are in `hud.md`, "The shop, sideshow and ride windows" (`0x004abb00`: excitement, text from
+  `Upgrades[0].RedLineCapacity`, a gauge from `Upgrades[0].WearRate`; label text not read). (2) The map overlay is
+  unbuilt (`ParkMapScreen.cs`); its colours are immediates in `0x005f0700` (`hud.md`, "The map's colours"); the
+  channel order is inferred, and which record colours which code is not traced. (3) The frame routine brackets the
+  draws with `0x0046c100` (on `0x007b05a8`, at `0x0054e310`) and `0x0046c110` (at `0x0054e34f`), which sets `+4`
+  (`0x007b05ac`) to the latched thing when its kind byte `+2` is 1, 4, 5, 6, 7, 8 or `0x12`, sets `+8` to the first
+  thing on the picked cell (`+0x24`, `0x007b05cc`, by `0x00527e80`) and, when nothing was latched, copies `+8` into
+  `+0`; `0x0048c960` snapshots `+0` and `+4`. Ours has the `+0` latch only; compare Q444 before building. Confirm each
+  beside the original.
 
 ## F. Then
 

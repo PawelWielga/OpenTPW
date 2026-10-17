@@ -337,7 +337,7 @@ into the running original at point (495, 285), zoom 110 (`original/setcam.py`), 
 `EyeAt` swings the other way (point + h sin yaw), so **the original's rotation is OpenTPW's yaw negated**; at
 `camera 495 285 110 -R` the same named cells stand at the same pixels of the two pictures through the lens law at all
 three (`q440/side-by-side.png`). The rotation asked for is `0x00790a38`; the one drawn, `0x007909e0`, eases towards
-it by min(dt, 140) / 140 a frame and snaps within 0.0005; both are kept in 0..2 pi. The Left arrow (camera table
+it by min(dt, 140) / 140 a frame, or min(dt, 200) / 200 with `[0x0078d912]` set (`0x0042b76d`..`0x0042b7d7`, `0x0042bb41`..`0x0042bb93`; constants 200 and 0.005 at `0x006fdd9c`, `0x006fddcc` against 140 and 1/140 at `0x006fddd0`, `0x006fddd4`), and snaps within 0.0005; both are kept in 0..2 pi. The Left arrow (camera table
 action 6) and keypad 9 raise the rotation (`[0x00790aac]` bit 8, `0x0042b355`), 0.002 a millisecond held, or a
 quarter turn a press with `[0x0078d912]` set; the Right arrow and keypad 7 lower it. The three scroll terms
 `0x00790a88`..`0x00790a90` carry a pan's momentum; the game's own snap (`FUN_0042aab0`) noughts them.
@@ -356,9 +356,9 @@ then lasts a frame; cleared, the camera stands where the follow left it.
   person's window up and from the windows' binoculars (the staff window's `FUN_004b5cb0` case `0x521`, the visitor
   window's `FUN_004b7720` case `0x3737`); and `FUN_004b3790` (`0x004b3b4b`), the locator's button finding somebody.
 - **Cleared** by the locator folded (`0x004b3806`) or finding nobody (`0x004b3b16`); by the camera's mode change
-  (`FUN_0042ab20`, `0x0042ae4c`); by the reset (`[0x00790aac]` bit `0x100`); and by **any pan of the orbit camera**
+  (`FUN_0042ab20`, `0x0042ae4c`; its `and dl, 0x41` and the store, `0x0042ab6d`..`0x0042ab72`, are inside it); by the camera's reset at a park's load (`FUN_0042a990`, `0x0042a9be`, flags nought, called from `0x00457aac`); by the reset key (`[0x00790aac]` bit `0x100`); and by **any pan of the orbit camera**
   (`0x0042ba37`, `0x0042ba92`): the keypad's 8, 2, 4 and 6 (camera table actions `0xd` to `0x10`), the right button's
-  drag with `[0x0078d910]` set, or the pointer past 0.95 of the way to an edge while the game is the active
+  drag with `[0x0078d910]` set (its clear at `0x0042b961`), or, with `[0x0078d910]` clear (the update zeroes the pointer's terms when it is set, `0x0042b948`..`0x0042b993`; an Options toggle, written at `0x004a3882`, control `0x1d4c9`), the pointer past 0.95 of the way to an edge while the game is the active
   application (`[0x007a1a14]` bit 8, from `WM_ACTIVATEAPP`) with `gui_CameraFlags` bit `0x100` clear (set by the
   camera's messages `0x10002` and `0x22`, cleared by `0x10001`, the pointer's move). Measured: the pointer resting on the frame's right edge for a second cleared
   the bit and left the point 83 units from the member it had followed.
@@ -381,8 +381,9 @@ screen scale in after the projection, and that scale narrows every view by the s
 | `FUN_00578be0` | The projection builder (`ECX` = `0x0087b110`; near, far, angle): `m00 = m11 = cos(a/2)`, `m23 = sin(a/2)`, `m22 = sin(a/2) / (1 - near/far)`; it keeps the three in `DAT_0087b1dc`, `0x00768acc`, `DAT_0087af58`. Its `DAT_008bcbc8 & 0x200` branch is orthographic; the flags word is `0x00410100`, so **the park is perspective** |
 | `FUN_005781d0` | Render start (`FUN_00572780`): the screen scale `0x0087b0d0` = diag( `2 x DAT_008bcbcc`, `-2` (`0xc0000000` at `0x0087b0e4`), 1, 1 ); nothing writes it after |
 | `FUN_005783b0` | The draw matrix `[0x0087b088]` (`0x0087b158`) = the camera's matrix `0x0087aff0` inverted, times the projection, times the scale. The one path for every view |
-| `FUN_00578ca0` | Calls the builder again with the kept angle and a new far: `FUN_0056ea90` gives 460 or `[0x008bd4c0]`, the fog's distance |
-| `FUN_0056bb00`, `FUN_0056b790` | The culling frustum: corner rays `(+/-tan(a/2) / DAT_008bcbcc, +/-tan(a/2), 1)`, the projection's own 90 degrees without the scale, a volume wider than the picture (harmless: it culls less) |
+| `FUN_00578ca0` | Calls the builder again with the kept angle and a new far. Three call sites: `0x0056bd3e` in `FUN_0056bb00`, and `0x0056eac0` and `0x0056ed79` in `FUN_0056ea90`, which hands it 1000.0, then the depth the cell scan found (`[esi+0x1c]`, 100.0 at `0x0056ead3`, raised as cells are scanned). 460 / `[0x008bd4c0]` is only the scan's range around the eye, never the far; the far measured (126, 128, 112) is neither |
+| `FUN_0056b790` | The picture's frustum, made straight after the builder at `0x0042aa5f`, `0x0054e884` and `0x005d8cda`: it multiplies `tan(a/2)` by 0.5 (`0x0070149c`), so its corner rays are `(+/-0.5 tan(a/2) / DAT_008bcbcc, +/-0.5 tan(a/2), 1)`, (+/-0.667, +/-0.5, 1) at 90, the 53.13 x 67.38 picture itself; it writes `[0x00879d54]` |
+| `FUN_0056bb00` | The per-frame frustum (from `0x00576add` when `[0x008bd508] & 0x100` is clear, `0x00576aba`), unscaled: corner rays `(+/-tan(a/2) / DAT_008bcbcc, +/-tan(a/2), 1)`, the projection's own 90 degrees, a volume wider than the picture (harmless: it culls less) |
 | `FUN_0045bf90` | Screen to world: its corner ray is built from fixed numbers (`0x0074c9b8` pi/2 x `0x0074d13c` 0.885 x 0.5 = a 39.8 degree diagonal, split by `atan( 0.75 )`, `_DAT_006fe640`): half-tangents **0.667 across, 0.500 down**, the park's picture |
 | `DAT_008bcbcc` | 0.75 in the running original at 800 x 600 and 1024 x 768 (written through the render struct `0x008bcbc8`; every mode of `FUN_00449ec0` is 4:3 bar 1280 x 1024) |
 
@@ -394,7 +395,8 @@ picture whose half-tangent is `tan(a/2) / 2` top to bottom and `tan(a/2) / 1.5` 
 |---|---|---|
 | The park camera's reset `FUN_0042a990` (pi/2 x 180/pi, `0x0042aa2f`) | 90 | **53.13 x 67.38** |
 | `Window_Create` `0x0044e277`, `Game_StateMachine` `0x0054e874` (`0x42b40000`) | 90 | 53.13 x 67.38 |
-| The lobby's render camera `0x00f83778` (vtable `0x00702a90`, slot 2 `0x005d8cb0`), its `+4` | 115 at `FUN_005d8b50`, then `ISLANDFOV` | 100: **61.58 x 76.93** (`lobby.md`, "The lens") |
+| The lobby's render camera (the global `[0x00f83778]` points at it; vtable `0x00702a90`, slot 2 `0x005d8cb0`), its `+4` | 115 at `FUN_005d8b50`, then `ISLANDFOV` | 100: **61.58 x 76.93** (`lobby.md`, "The lens") |
+| `Lobby_Start` `0x005dcfe0`, the same `+4` (60.0, `0x42700000`, at `0x005dd034`) | 60 | by the law 32.2 top to bottom; not measured |
 
 Nothing in a park calls the builder after the reset but `FUN_00578ca0`, so the camcorder's first person draws with
 the orbit camera's lens. **Measured** (Q260, `original/lens.py`): the lobby's angle 100.000 (its camera's `+4` the
@@ -402,14 +404,14 @@ same), `m00` 0.64279, `m23` 0.76604, scale 1.5 and -2, aspect 0.75, so 61.58 x 7
 `m23` = 0.70711, the same scale, 53.13 x 67.38; the camcorder's pick and its first person the same 90 (the far 126,
 128 and 112 as the fog moved). Two cells named at one camera (point (494.975, 192.002), zoom 110, rotation 0) stood at
 702,254 and 281,489 of the original's 1024 x 768 frame and at (729, 299) and (532, 409) of OpenTPW's 1280 x 720, which
-is (640, 360) + (the original's - (512, 384)) x 360 / 768 to the pixel: OpenTPW's picture was 90 degrees then, twice the
-original's tangent (`q260/side-by-side.png`, `q260/overlay.png`). Rotation 0 only; other rotations are Q440's.
+is (640, 360) + (the original's - (512, 384)) x 360 / 768, each on its named cell at the law's pixel (a cell is about 25 px here; the same-lens pixel lies 90 px or more away): OpenTPW's picture was 90 degrees then, twice the
+original's tangent (`q260/side-by-side.png`, `q260/overlay.png`). Rotations 0, 90 and 180 (Q440, `q440/side-by-side.png`).
 
 **Why it was read as 90 before.** The builder alone writes `m00 == m11` with no aspect term, and the culling frustum
 is the 90 degree one, so "the culler must frame what is drawn" made 90 the vertical angle. The screen scale breaks
-that: the culler frames more than is drawn. And the two readings of the original's camera as "further back" (Q264, Q302)
-and "closer" (Q357) at the same numbers were the lens alone: the eye is the same (Q435), and the original's frame
-shows the middle half, each way, of what a 90 degree lens shows, so everything stands twice as large in it.
+that: the culler frames more than is drawn. Of the two readings of the original's camera at the same numbers, "further back"
+(Q257r, repeated by Q264) was the Load Park list's view, 65 units on (Q359), and "closer" (Q357) was the lens: the eye is the
+same (Q435), and the original's frame showed the middle half, each way, of what OpenTPW's old 90 degree lens showed, so everything stood twice as large in it (until Q441).
 
 **OpenTPW draws the same lens** (Q441). `Camera.DrawnAngle( a )` is the law, and a camera mode's `FieldOfView` is the
 picture's vertical angle at 4:3: both park camera modes take `DrawnAngle( 90 )`, 53.13 (`ParkOrbitCameraMode.Lens`), and
@@ -451,7 +453,7 @@ The two 800x600 ones are at exactly the 4:3 the game was designed at, which is w
 
 The reason is structural: separating a vertical 90 from a horizontal one means locating vanishing points one to seven thousand pixels *outside* an 800x600 frame, from edges whose directions differ by one or two degrees, in JPEG. The tooling (`lines.py` detector — proven good, 0.87 deg mean miss against truth; `fit.py`, `group.py`, `joint.py`, `truth.py`, `view.py`, and `capture_control.py` for the control frame) lived in that session's scratchpad and is gone; rebuild it from this description if the question is reopened.
 
-**The qualitative signal is withdrawn.** "The original shows no sky and OpenTPW does" is explained by **content, not lens**: the original parks are full of rides, shops and trees that stop the eye at the horizon, and OpenTPW's park, when this was measured (2026-09-13), was bare ground plus `base.MD2` scenery. It is not evidence about the FOV.
+**The qualitative signal is withdrawn.** "The original shows no sky and OpenTPW does" is explained by **content and lens** (Q260: OpenTPW's old 90 degree picture reached the horizon at pitch 45, the original's top edge never does, "The ORBIT camera never shows the sky" below): the original parks are full of rides, shops and trees that stop the eye at the horizon, and OpenTPW's park, when this was measured (2026-09-13), was bare ground plus `base.MD2` scenery. It was no measure of the angle: content and lens were mixed in it.
 
 Two cautions from how this went. An earlier check listed the two reference folder *names* and concluded from them that there were no park shots; that was luck rather than judgement — **open the files**. And a control with a known answer is what caught all four failures above — **build the control first**.
 
@@ -1595,8 +1597,9 @@ facing off the map makes it return null (`0x00529744`..`0x00529757` for the entr
 (`FUN_00532fc0( 0x204, 3, … )`), whose verdict passes only bare ground or a path without NOMODIFY — so
 another queue, another thing's placer cell, water or rock all refuse. Every other end — a queued exit,
 or the entrance of a thing with no queue — is tested as op 1 (`0x201`), which accepts a NOMODIFY path and
-refuses another thing's cells, red unless that thing's `+0x54` (`Info.OverwritePriority`, 5 on every
-shipped category) is below the placed item's.
+refuses another thing's cells, red unless that thing's `+0x54` (`Info.OverwritePriority`) is below the placed item's (strictly: `0x00535d66` to
+`0x00535d73`). The category files all declare 5; an item's own `.sam` overrides it only for features, 45 of the
+shipped item files setting 1 and 48 setting 0 (FileFormats `sam.md`; fork watch 2026-10-16, `verify-world.md` C2).
 
 **A thing without one** gets a single path cell in front of its entrance (`0x005298d5`..`0x005299aa`),
 the same path stamp, and then relinks the paths round it; its entrance keeps `H` as its direction, where
@@ -1810,7 +1813,7 @@ positions at `+0x64`):
 **The walls** (decoded and measured 2026-10-17, Q436). After the flat square (face 0), the `0x100` arm asks the four
 neighbours through `FUN_004d99c0`/`FUN_004d96f0` in the order north `DAT_007cdba0` (0,−1), east `DAT_007cdbc8` (+1,0),
 south `DAT_007cdba8` (0,+1), west `DAT_007cdbd0` (−1,0); off the map there is none. A neighbour's lift is found by the
-same rule as the square's. While it is under the square's (`0x00533ad0`..`0x00533b22`, both truncated), a record goes
+same rule as the square's. While it is under the square's (north's loop in the arm for a square not refused, `0x0053337a`..`0x005333dc`, and in the refused arm `0x00533ad0`..`0x00533b22`; both truncated), a record goes
 down at the neighbour's lift + 1.5 with face byte (`+0x0c`) **1, 4, `0x10` or `0x40`**, the neighbour's direction bit,
 then ten higher, until the square's lift is reached: so a neighbour as high or higher gets none, and from 20 to the
 ground two records, 1.5 and 11.5. `FUN_0053df30` lays such a face as a quad on that edge of the cell (north the least-z
@@ -1818,7 +1821,7 @@ edge, east x + 10, south z + 10, west the least x), its foot at the record's hei
 `0x00700e1c`), u along the edge from the corner it lays first (north (x, z), east (x+10, z), south (x+10, z+10), west
 (x, z+10)) and v up it; `FUN_0053ddd0` adds the ground and the wave alike to foot and top. A wall's texture is 1 under a
 red square (so it blinks with it), 2 under orange, and otherwise 0, blue, under `m_link` and `m_end` too
-(`0x00533214`); its orientation byte (`+0x10`) is 0 where the square's is 1; its `+0x98` is `mode != 4`, so in mode 4
+(`0x00533b07` pushes the 1 in the refused arm; `0x00533214` holds only the orange-or-0 of the others); its orientation byte (`+0x10`) is 0 where the square's is 1; its `+0x98` is `mode != 4`, so in mode 4
 the walls glide with the carried thing's squares. Each wall laid under a square not refused **also zeroes the refusal
 latches** `DAT_00816d58` and `DAT_00816d50` (`0x005333bd`), which a path or queue strip's verdict for its next cell reads.
 Measured in the original (`q436/orig/a-5-squares.txt`, the stock park, Mike Cooper's patrol outline (51,26)-(54,27)): (52,26)
@@ -2859,8 +2862,8 @@ with `hx`, `hz`, `share`, `reach` the record's `+0x5c`, `+0x60`, `+0x64`, `+0x6c
 multiplied by 0.75 (the screen's 3:4; `0x006fe800`, its three rotation rows) and its z column by 0.1 (`0x006fe7fc`, all
 four rows). So the model turns about
 the middle of its footprint for a box whose low corner is its origin, and that middle stands on the panel's middle
-line, under its middle by 0.35 of `share * reach`. The angle then takes `-0.0004` a millisecond off itself
-(`0x006fe804`): **0.4 of a radian a second**, on the clock `FUN_004031e0` reads.
+line, under its middle by 0.35 of `share * reach`. The angle then grows by 0.0004 a millisecond: the constant
+(`0x006fe804`) is -0.0004 and the routine subtracts it from the angle (`FSUBR` at `0x00469090`): **0.4 of a radian a second**, on the clock `FUN_004031e0` reads.
 
 **Measured in the original** (2026-10-05, the record read from memory with each window open): the Belly Bounce's
 window `+0x4c`.. -0.66015625, 0.25, 0.404296875, 0.5390625 (the panel (348,162)..(762,576)) and `+0x5c`.. 0.1510225,
@@ -3468,14 +3471,14 @@ Lost Kingdom arm nothing. A guest on the cell does not stop it.
 Ctrl `0xc`, Alt `0x30`; the locator `[0x007cc2f0]` by `FUN_004b4480` at `0x00486dd6`; the person is the sprite pick's
 `[0x007b05ac]`, "The thing under a sprite" above). With the visitors' locator open (2) and no modifier, or Shift alone
 and no locator, a guest (kind byte 1) is category 7, the visitor's window (`FUN_004b79b0`), and anything else is
-category 0, a member of staff too (`0x00486fd0`). Otherwise a member (kinds 5, 4, 6, 7, 8) is category 8 to 12, their
+category 0, a member of staff too (`0x00487009` to `0x0048702d`; `0x00486fd0` is the test that the mode is type 0 or 1). Otherwise a member (kinds 5, 4, 6, 7, 8) is category 8 to 12, their
 window (`FUN_004b6080`); then with either locator open every later category is skipped (`0x0048721c` to
 `0x004878d3`), so a click on ground, path or an object does nothing (category 0 falls out of `FUN_004879d0`'s switch
 answering 1). Measured in the original (`q444/orig/`, `PREDICTION.txt`): the staff locator open, two points off any
 person read category 0 and their clicks left the mode and the screens as they were; Mike under the pointer read 9 and
 the click opened his window and folded the arm; the visitors' locator open, the guest at the middle read 7 and the
 click opened the visitor's window; the visitors' locator and Shift together, the locator's own guest read 0; with no
-locator Shift alone read 0 on path and 7 on a guest, whose click opened their window.
+locator Shift alone read 0 on bare ground and 7 on a guest, whose click opened their window.
 
 **What the hover says over a person** (Q447; `FUN_00486d90`). A row is posted (`FUN_004924b0`) only when the category or
 the thing `[0x007c24f8]` changes. A guest taken (category 7) posts UIHELPTEXT 553 "Visitor #{P3} : Left-click to view
@@ -3483,8 +3486,10 @@ this person's details", P3 the guest's number `+0x1d8` (a `VARM` value of type 3
 a member (8 to 12) posts 555 "{P2} : Left-click to view this staff member's details", P2 the name at `+0x1a0`
 (`FUN_00506860`, type 2), and calls `FUN_00505f50`, which sets the member's state to nought (CStaff's `SetState`,
 `FUN_005054d0( 0 )`) unless it is 4, 5, 7, `0xd` or `0x12` and only where `FUN_004fa990` answers (not decoded;
-counted, `STAFF_HOVER_SET_STATE`). Either puts up pointer 2, which `FUN_00489720` registers as `c_pick.ani`. Where the
-guests decide and nobody is taken the empty row `0x0078a374` is posted and pointer 0 put up; with a locator open
+counted, `STAFF_HOVER_SET_STATE`; the hover itself runs (`0x00488582`) only while `[0x007c24fc]` is set, Q451). Either puts up pointer 2, which `FUN_00489720` registers as `c_pick.ani`. Where the
+guests decide and nobody is taken the empty row `0x0078a374` is posted, only if the last hover category was not
+nought (`0x004870f3` to `0x004870ff`; otherwise nothing is posted and the old row stays; ours always empties it, Q451),
+and pointer 0 put up; with a locator open
 otherwise and nobody taken, the jump from `0x0048721c` to `0x004878d3` posts nothing and puts up pointer 0, so the row
 last posted stands. Measured in the original: the staff locator open, Mike Cooper under the pointer read category 9
 with his row and the hand, and off him category 0 with the row still at the foot and the arrow (`q444/orig/a-4-member-hover.png`,

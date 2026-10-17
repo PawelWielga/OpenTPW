@@ -22,7 +22,7 @@ internal readonly record struct ParkPreviewFit( float Scale, float HalfX, float 
 	/// <summary>The share of the panel's width half the footprint's diagonal may fill (<c>0x006fe7d4</c>).</summary>
 	public const float WidthShare = 2f / 3f;
 
-	/// <summary>How fast the model turns, in radians a millisecond (<c>0x006fe804</c>, taken off the angle).</summary>
+	/// <summary>How fast the model turns, in radians a millisecond (<c>0x006fe804</c>, the constant -0.0004 subtracted from the angle, so the angle grows).</summary>
 	public const float RadiansPerMillisecond = 0.0004f;
 
 	/// <summary>The sine and cosine of the 45 degrees the model is tipped towards the viewer (<c>0x006fe7e4</c>, <c>0x006fe7e8</c>).</summary>

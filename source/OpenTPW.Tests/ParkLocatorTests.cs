@@ -519,7 +519,7 @@ public class ParkLocatorTests
 
 	/// <summary>
 	/// <b>With the visitors' locator open and no modifier a guest clicked opens their window and nothing else does</b>
-	/// (<c>0x00486fd0</c>, category 7 to <c>FUN_004b79b0</c>), not even a member; with Control held the member's window
+	/// (<c>0x00487009</c> to <c>0x0048702d</c>, category 7 to <c>FUN_004b79b0</c>), not even a member; with Control held the member's window
 	/// opens again and the ground still does nothing.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the guest's window not opened; a member's opened with no modifier; Control taken as none.</remarks>
@@ -548,7 +548,7 @@ public class ParkLocatorTests
 	}
 
 	/// <summary>
-	/// <b>Shift alone with no locator open is the guest pick</b> (<c>0x00486fd0</c>): a guest's window, and nothing for the
+	/// <b>Shift alone with no locator open is the guest pick</b> (<c>0x00487009</c> to <c>0x0048702d</c>): a guest's window, and nothing for the
 	/// ground, the ride or a member; let go, the ground arms the path tool.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> Shift not asked; Shift with a locator taken as the pick; the member's window under Shift.</remarks>

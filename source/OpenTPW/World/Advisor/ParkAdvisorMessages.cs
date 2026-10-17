@@ -763,7 +763,7 @@ internal sealed class ParkAdvisorMessages
 		=> (int)((long)(uint)tick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond / 86400);
 
 	/// <summary>
-	/// Whole months of thirty days since mGameTick nought: FUN_004f8800 over 0x17920F8648000 (0x0059d041), as
+	/// Whole months of thirty days since mGameTick nought: FUN_004f8800 over 0x1792F8648000 (0x0059d041), as
 	/// <see cref="DaysSinceTheFirstSweep"/> counts days.
 	/// </summary>
 	internal static int MonthsSinceTheFirstSweep( int tick )

@@ -1660,7 +1660,7 @@ took the same road.
 **OpenTPW** (Q128b): `PeepBehaviour`'s cases for `PickingACellOutside`, `WalkingOutside` and `AtTheBusStop` are the
 three turns above, on `StopCells`; `ParkPeople.MayCrossTheRoad` is `FUN_0051a760`, `LeaverAtTheStop` is
 `FUN_0051a9d0`, and `StepVehicle` is the manager's tail with both arms; `Summon( 0 )` draws one of the three vehicles
-(`VehicleAtRandom`, on the arrivals' generator, the original's on the save's seed). A guest who goes comes off their cell
+(`VehicleAtRandom`, on the park's generator, `ParkState.RandomSeed`, the save's seed, as the original's: Q443). A guest who goes comes off their cell
 inside their own turn, as the original's delete does it (`FUN_0050b780` to the unlink `FUN_004d9280`), so the one
 behind is the head later in the same sweep; they are put in `Leaving` and taken out of the park's lists as the sweep's
 turns end. Measured in Lost Kingdom, the park shut with the entry-price screen's door:
@@ -2513,16 +2513,16 @@ booth or entrance A or B in states `0x10`, `0x12` and `0x13`. `mTimeHired` is mG
   it); every Lost Kingdom member carries an area.
 - **A member fenced where one path cell lies stays on it, rolling it again** (Q434). Standing on that cell, the linked
   walk strikes out every slot (all lie outside the area or off the path), so each decide is the patrol roll, which finds
-  his own cell: `FUN_004fa530` writes its centre to `+0x18`/`+0x1a` and `FUN_0050f8e0` plans from the navigator's place
-  (`+0xd4`, so `+0xdc`/`+0xe0` in 16.16) to it, refusing only on `FUN_00511420`'s `0x70000000`, and stamps `+0x11c`
+  his own cell: `FUN_004fa530` writes its centre to `+0x18`/`+0x1a` and `FUN_0050f8e0` (reached through `FUN_00510100`) plans from the navigator's place
+  (`+0xd4`, so `+0xdc`/`+0xe0` in 16.16) to it, refusing only on `FUN_00511420`'s `0x70000000` (and `mStrandedTime`, never set for staff), and stamps `+0x11c`
   (the navigator's `+0x48`). Nothing refuses a target in the member's own cell, so he walks the few units there and
   decides again. One roll in about 55 misses thirty tries (7/8 each with one path cell in eight): thought `0x16` and a
   stand, stamped from the walk (`+0x200` only where `+0x19c` was 1, `0x00505526`), so IdleDuration + 1 sweeps, eleven at
   grade 3; a miss from that stand is stamped nought (`0x00505542`) and decides on the next sweep. Measured in the original
   (`q434/orig/run-b.sh`, the stock park, Mike Cooper's words `+0x20a`/`+0x20c` written 3380/3511, (51,26)-(54,27), the
   tool's whole effect, `FUN_00506e50`): on (52,27) from 12 s to the end of 200 s, every destination the cell's centre
-  (`0x3480`, `0x1b80`), 628 plan stamps in 718 ticks, nine stands of exactly 11 ticks, each with `0x16`, state 1 in 630
-  polls of 639. OpenTPW does the same (`q434/confirm.py` run2): 633 rolls in 775 ticks, all to (52,27), thirteen stands of 11.
+  (`0x3480`, `0x1b80`), 628 plan stamps in 718 ticks, eight stands of exactly 11 ticks and a ninth cut off by the end of the watch, each with `0x16`, state 1 in 630
+  of the 639 lines (the watcher prints a word only when it changes: the nine stands are nine of those lines, and the eight measured are 88 of the 718 ticks). OpenTPW does the same (`q434/confirm.py` run2): 633 rolls in 775 ticks, all to (52,27), thirteen stands of 11.
 - **The strike** is decoded whole under "The strike", below: the month's look, its gate, the 24 months, the levels and
   states 4 and 5.
 
@@ -3677,8 +3677,10 @@ Opus skeptic; reports in `~/.cache/tpw-harnesses/q177c/map/`):
 - **Every caller of the bank.** The withdrawal has 15 callers: the purchase (the object constructor, `0x004db4f6`),
   a path cell and a queue cell (`0x00534879`, `0x005348ad`), the sale's queue drain and its track (`0x00528007`, `0x00528179`: the
   demolisher's switch on `WhichTrackType` inside its queue arm, `0x0052801d`, where karts and the water ride clear
-  their cells and pay for them and any other non-zero type withdraws nought), an upgrade on completion (`0x004dfa96`), the monthly wage on message `0xc`
-  (`0x00504cb9`), a dismissal (`0x00505944`), staff training (`0x00505a45`), the cost of goods (`0x004e1952`), Buy Land
+  their cells and pay for them and any other non-zero type withdraws nought; the karts' (type 1) and the water ride's
+  (type 2) withdrawal at `0x00528179` is 2 x the cell cost x the scrap % / 100, signed, after the per-tile refunds of
+  `FUN_0053b280`; fork watch 2026-10-16, `verify-world.md` C3), an upgrade on completion (`0x004dfa96`), the monthly wage
+  on message `0xc` (`0x00504cb9`), a dismissal (`0x00505944`), staff training (`0x00505a45`), the cost of goods (`0x004e1952`), Buy Land
   (`0x00525d6d`), a track cell (`0x005391de`) and the coaster editor (`0x004352ac`, `0x00441c99`, `0x00445c95`). The
   deposit has 11: the charge (`0x004e16c6`), every object's destructor (`0x004dd19f`, the sale's refund), a cleared
   queue cell forced and unforced (`0x00536aa8`, `0x00536b5b`), a cleared track cell (`0x0053b622`), a challenge's prize

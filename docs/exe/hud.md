@@ -237,7 +237,7 @@ rectangles (`UiControl.StopsPointer`). The arm slides ("The arm's handler", Q427
 and its end draw nothing, where the original draws them fitted to their narrowed rectangles behind the body and the
 handle (the film of Q427 shows the arm's mesh squeezed to its rectangle through a slide), and the retract button is
 hidden at rest in; through the slide in it is drawn switched off, as the original's, but stops the pointer, doing
-nothing, where the original's hit test passes over it. A carried panel is at depth 3, its parts at 5 and theirs at 7
+nothing (and starts its glint and help row 481 for the 0.22 s, Q66), where the original's hit test passes over it. A carried panel is at depth 3, its parts at 5 and theirs at 7
 (Q445, "The arm's handler"): behind the body, and its parts behind the retract button. A tag stands
 on the mast and lifts the top (`ParkGadget.PutTags`), and the top's right click takes every tag off.
 
@@ -1158,37 +1158,10 @@ reads `depth=` and `behind body N retract N of N` for the carried panel's shown 
 `depth=3`, `retract=on`; behind body and retract 1 of 1, 2 of 2 and 6 of 6 at handles 577, 741 and 987; clicked again
 `retract=off` through the slide and `hidden` at 331; the camcorder panel at 591 `1 retract 1 of 1`; the staff panel
 out `behind body 6 retract 1 of 6`, its five buttons tied with the retract button at 7. Beside the original's film
-(`q445/side-by-side.png`): the bar's text cut at the body's right edge and the cross over the bar (its f073 to f075),
+(`q445/side-by-side.png`; the slide in: `q445/run1/3-in-1.png` beside `handoff/review2/q427/rev-orig-bar-in-f187-196.png`): the bar's text cut at the body's right edge and the cross over the bar (its f073 to f075),
 the postcard button half behind the body (its f323), the cross drawn through the slide in (its f188 to f193). Main's
 build drew the bar over the body and hid the cross at the click. In no game run: the original's locator panel
 mid-slide, so the order at a tie of depth; Full Simulation (not asked: the arm is either mode's); the other three themes.
-
-### The camcorder button's line (Q428)
-
-**The executable.** Three places name message `0x131`, all through `FUN_00486b00` (post) and `FUN_00486b40` (withdraw).
-The camcorder button's down, `FUN_00498bb0` (from `FUN_004a0840`'s case `0x27` with 1): `FUN_004a2590( panel, 0 )`,
-then the post, whether or not the arm took the panel. Its up, `FUN_00498bd0`: `FUN_004a25f0( 0 )`, then the withdraw.
-The panel's own handler, `FUN_00498ad0`, on any `0x100` (99 the camera, `FUN_00481a10`; 100 the postcard,
-`FUN_004a9380`): the button's act, the withdraw, then `FUN_004a25f0( 1 )`, which lifts the camcorder button. Its
-`0x14` withdraws nothing, so a tag taking the arm from the panel leaves the line be. The fourth hit of the bytes
-`PUSH 0x131`, `0x004c0211` in `FUN_004bff70`, is a string id for `FUN_00485b00`, not a message. Row 305 of the metadata
-table (`meta_full.json`): posted only, category 1 (the Tutorial's: said once, gone after three cuts), one line,
-response 565, sample 583 (9.0 s, "the buttons on this panel let you use camcorder mode ... send email postcards"),
-group `0x17f` (no tag).
-
-**The original** (`q428/orig/run.sh`, `q325/stock.TPWS` off-screen, `advisor.py 0x131`; predicted first, five of five):
-the button down put `0x131` in a slot on 872 and said it on 873, line 0, beside the panel (`a-1-line.png`); up 3 s in
-cut it, slaps 1; down said it on 895 and the camera button cut it, slaps 2; said on 941 and cut by the up, slaps 3;
-the fourth down took no slot. The postcard button was left out: it pauses the game and writes a picture.
-
-**OpenTPW** (`ParkAdvisorMessages.CamcorderPanel`; `ParkGadget.ShowArm`, `EnterCamcorder`, `SendPostcard`).
-`q428/confirm.py` on the stock park, real clicks (`run-fix2`, the final build, five of five): `post message=305
-subject=0 score=1000 threshold=25 tick=790 result=queued`, said at once, response 565, sample 583, beside the panel
-(`1-line.png`; side by side with the original's, `q428/side-by-side.png`); the up `withdraw message=305 cleared=0
-cut=1 slaps=1`; the postcard button `... slaps=2` with `POSTCARD_BUTTON` counted; the camera button `... slaps=3`; the
-fourth down `result=slapped`. Main's build counted `CAMCORDER_PANEL_LINE` and posted nothing. In no game run: a tag
-taking the arm from the panel and a panel refused (tested only), the line let end and said once, Full Simulation (not
-asked: the button is either mode's), the other three themes. Not heard in either game.
 
 ### OpenTPW (Q311: `ParkGadget.OpenTag`, `BarButton`, `EraseTag`, `Carry`, `Swell`; `ParkTags.Open`, `Shut`, `OnShow`)
 
@@ -1218,6 +1191,33 @@ its tag was gone 33 s after it came.
 | The tag on show | swells by the stream, a step every 100 ms on the frame's clock | the same steps on real milliseconds, so a round is 0.7 s where the original's frames make it 0.9 |
 | The buttons' depths | one more at every showing | not kept |
 | A tag opened, in a park file | written with its whole life, and a load starts its timers again | the same (`ParkTags.Restore`) |
+
+### The camcorder button's line (Q428)
+
+**The executable.** Three places name message `0x131`, all through `FUN_00486b00` (post) and `FUN_00486b40` (withdraw).
+The camcorder button's down, `FUN_00498bb0` (from `FUN_004a0840`'s case `0x27` with 1): `FUN_004a2590( panel, 0 )`,
+then the post, whether or not the arm took the panel. Its up, `FUN_00498bd0`: `FUN_004a25f0( 0 )`, then the withdraw.
+The panel's own handler, `FUN_00498ad0`, on any `0x100` (99 the camera, `FUN_00481a10`; 100 the postcard,
+`FUN_004a9380`): the button's act, the withdraw, then `FUN_004a25f0( 1 )`, which lifts the camcorder button. Its
+`0x14` withdraws nothing, so a tag taking the arm from the panel leaves the line be. The fourth hit of the bytes
+`PUSH 0x131`, `0x004c0211` in `FUN_004bff70`, is a string id for `FUN_00485b00`, not a message. Row 305 of the metadata
+table (`meta_full.json`): posted only, category 1 (the Tutorial's: said once, gone after three cuts), one line,
+response 565, sample 583 (9.0 s, "the buttons on this panel let you use camcorder mode ... send email postcards"),
+group `0x17f` (no tag).
+
+**The original** (`q428/orig/run.sh`, `q325/stock.TPWS` off-screen, `advisor.py 0x131`; predicted first, five of five):
+the button down put `0x131` in a slot on 872 and said it on 873, line 0, beside the panel (`a-1-line.png`); up 3 s in
+cut it, slaps 1; down said it on 895 and the camera button cut it, slaps 2; said on 941 and cut by the up, slaps 3;
+the fourth down took no slot. The postcard button was left out: it pauses the game and writes a picture.
+
+**OpenTPW** (`ParkAdvisorMessages.CamcorderPanel`; `ParkGadget.ShowArm`, `EnterCamcorder`, `SendPostcard`).
+`q428/confirm.py` on the stock park, real clicks (`run-fix2`, the final build, five of five): `post message=305
+subject=0 score=1000 threshold=25 tick=790 result=queued`, said at once, response 565, sample 583, beside the panel
+(`1-line.png`; side by side with the original's, `q428/side-by-side.png`); the up `withdraw message=305 cleared=0
+cut=1 slaps=1`; the postcard button `... slaps=2` with `POSTCARD_BUTTON` counted; the camera button `... slaps=3`; the
+fourth down `result=slapped`. Main's build counted `CAMCORDER_PANEL_LINE` and posted nothing. In no game run: a tag
+taking the arm from the panel and a panel refused (tested only), the line let end and said once, Full Simulation (not
+asked: the button is either mode's), the other three themes. Not heard in either game.
 
 ## The help rows, from the game's own UIHELPTEXT.str
 
@@ -1274,10 +1274,23 @@ space).
 
 `FUN_005f09a0` is **not** a sprite selector — it is a **three-stop colour ramp**: clamp a value to 0-100,
 blend stop1->stop2 below 50 and stop2->stop3 above, patch R/G/B into the descriptor and force alpha 0xff.
-The stops are `DAT_00f86bd8`, `DAT_00f86bfc`, `DAT_00f86c20` (runtime-filled — beyond `.data`'s raw bytes,
-so a static read gives zeros). The value is a **per-thing metric** fetched differently per radio setting
+The stops are `DAT_00f86bd8`, `DAT_00f86bfc`, `DAT_00f86c20` (beyond `.data`'s raw bytes, so a static read gives zeros;
+they are filled by the initialiser `0x005f0700`, below). The value is a **per-thing metric** fetched differently per radio setting
 (`FUN_004e0860`, `FUN_004e1e30`). The first is built (`ParkRideScore.ExcitementOf`); the second's days are kept
 (`ParkObjectRings.Satisfaction`) and its average is not; the thing layers are unbuilt. The base image plus the cell codes 9-12 (below) is the honest first cut.
+
+### The map's colours are immediates in `0x005f0700`
+
+(Fork watch 2026-10-16, `verify-ui-hud.md` M4; read from the listing, not run.) `0x005f0700` is an initialiser of 36-byte
+records (stride `0x24`) from `0x00f869e0`, reached from the data word at `0x0072df04`: eight written byte by byte, then
+fifteen through `0x005f0970( this, a, b, c, d )`, which stores the bytes `[c, b, a, d]`, so memory is B, G, R, A for arguments
+R, G, B, A. The object ramp `0x005f2380` takes `0x00f86bd8`, `0x00f86bfc`, `0x00f86c20` = (248, 0, 0), (248, 200, 0),
+(48, 252, 0): red, orange, green, which reads as R, G, B. Read that way the eight byte-by-byte records are black, white,
+black, green (0, 255, 0), cyan (0, 255, 255), orange (254, 78, 0), yellow (252, 255, 3) and brown (110, 66, 11). The fifteen
+`0x005f0970` records from `0x00f86b00` (R, G, B, A): (31, 166, 31), (37, 198, 37), (0, 23, 0), (0, 23, 0, 128),
+(25, 25, 150, 200), (25, 25, 250, 200), the ramp's three, then (32, 168, 248), (248, 132, 0), (248, 252, 0), (0, 0, 0),
+(255, 0, 0), (200, 250, 200). The channel order is inferred, not proven: a photograph of the original's map would settle it.
+Which record colours which land code, thing kind or layer is not traced.
 
 ### Controls
 
@@ -2075,7 +2088,7 @@ a chase abandoned that month, counted since its load).
 `ParkState.MisbehavingKids` takes the file's month two at a load and nought for the third, where the original's is its
 load's unzeroed memory (a deviation, said at the site); `TurnTheMonth` zeroes the month's two; `money` and the close's
 line print them. Nothing counts into them: the guard's chase waits on the pranks (`DECIDE_PRANK_*`). Row 12 reads this
-month's (Q413), and row 264 (Q414; `advisor-park.md`, "Lots of pranks"). With them the close is built whole (`ANALYSER_MONTH_CLOSE` gone).
+month's (Q413), row 264 too (Q414; `advisor-park.md`, "Lots of pranks"), and row 98 this month's got away (Q418; `advisor-park.md`, "Kids who got away"), and row 22 the same with a guard on the staff (Q423; `advisor-park.md`, "Kids who got away from a guard"). With them the close is built whole (`ANALYSER_MONTH_CLOSE` gone).
 **Confirmed** (`q395/`): the stock park with the three written 5, 2 and 9 (`kids.TPWS`), loaded; `money` read `misbehaving
 kids 5 got away 2 ever 0`; the close on tick 1470 named `misbehaving kids 0 got away 0 ever 0`, the file held 0, 0, 0 and
 `unimplemented` no longer listed the close; main's build kept 5, 2, 9 in the file and listed it. The original given
@@ -2187,7 +2200,7 @@ management gadget"). Measured in the original under Proton (`q366/orig/a`..`c`, 
 frame a key: A all items, and the Information button after it all items again; S, B, H, V, T and G all staff, buy, hire,
 all visitors, Staff Training Budgets and the entry price, each in the last one's place; Space the map, and A over the map
 nothing; I park status, F finances; L nothing, and the Money button after F and L finances; Ctrl+S and Ctrl+V a locator
-panel at the gadget's foot. Ctrl+P was not pressed (the postcard writes a picture out).
+panel on the gadget's arm. Ctrl+P was not pressed (the postcard writes a picture out).
 
 **OpenTPW** (Q366): `ParkFrontEnd.ShortcutRow` is the table, a key let go matched on its key and its modifiers alike, and
 `ShortcutKey` runs rows 1 to 15 where the original's table is heard: over the park, and under a park screen; not under
@@ -2292,8 +2305,7 @@ result=queued`, `attempt=1 message=198 ... response=417 sample=389` (`1-staff-li
 message=287 cleared=0 cut=0`, then `withdraw message=198 cleared=0 cut=1 slaps=1`, then `post message=287`, and sample 564
 at once (`2-visitor-line.png`). After the line, Escape and Ctrl+V gave `result=said-once` (`3-said-once.png`). The third
 cut gave `slaps=3`, then `post message=198 ... result=slapped` (`5-slapped.png`). Main's build counted
-`LOCATOR_ADVISOR_LINE` once. Side by side, `q425/side-by-side.png`. Ctrl+S or Ctrl+V with a person's window up is in no
-game run: no person's window is built.
+`LOCATOR_ADVISOR_LINE` once. Side by side, `q425/side-by-side.png`. Ctrl+V over the visitor's window ran in both games (Q430); Ctrl+S over a staff member's is in no game run.
 
 **The patrol edges** (Q426). `FUN_004b3640`, with the bit set and the person of type 4 to 8, asks `FUN_00506eb0` whether
 the member's patrol area is the whole map (`+0x20a` 1 and `+0x20c` `0x4000`: none drawn); otherwise it reads the two
@@ -2305,7 +2317,7 @@ cells wide has no middle: its line runs from the right corner back to the left, 
 `0x136` is `0x100` (lay a square) with mode `0x36`, the patrol tool's own (`FUN_005234d0` draws the tool's rectangle
 with the same four lines and latches its refusal). `FUN_00532fc0`'s `0x100` arm asks `FUN_00535670( 0x36 )`, which
 answers the refusal latch `DAT_00816d50` and nothing else, and reads the placer's failure `DAT_0081b604` before it;
-both are left by a tool's own pass (`FUN_005234d0` clears the latch first), so with the tools put away the square is
+both are left by a tool's own pass (`FUN_005234d0` clears the latch first), so after a park load, or a pass that accepted, the square is
 texture 0, blue, lifted over a built cell and walled as any tool's ("Placement feedback"). Every frame, since the marker
 draw empties its list. **The original** (`q426/orig/run.sh`, `q325/stock.TPWS`, `original/squares.py`; four of four
 predicted, `q426/PREDICTION.txt`): the mechanics' button, texture 0, 48 squares on the 48 cells of (39,21)-(56,28),
@@ -2317,7 +2329,7 @@ game binary), the mechanics' button logged `Park locator: thing 26 patrols (39, 
 frame`, `locator` ended `patrol=48`, and `strip`'s drawn census held `| patrol 48` in that order, each marker 0, lift 0
 (`1-mechanic.png`, beside the original's in `q426/side-by-side.png`); the scientists' `patrol=0`; the entertainers'
 20 on 16 cells, (48,18), (47,18), (48,18) first (`3-entertainer.png`); Escape none. Main's build counted
-`LOCATOR_PATROL_EDGES`. In no game run: a square lifted over a built cell on an edge (none of the stock areas crosses
+`LOCATOR_PATROL_EDGES`. In no game run: edges laid red where a tool's last pass left a refusal latched (here they are always blue: a deviation; it needs a refused path click, then Ctrl+S and the mechanics' button, read with `squares.py`), a square lifted over a built cell on an edge (none of the stock areas crosses
 one; the lift is the tools', tested), a fence drawn in play (the patrol tool, built: "The patrol switch and the patrol tool" below), Full Simulation (not
 asked: the locators are either mode's), the other three themes.
 
@@ -2332,7 +2344,7 @@ object dispatcher `FUN_00486920`, and a row's `0x400` in the visitors list (`0x0
 (`0x00496088`) and the staff room's (`0x004b5267`). The windows are statics: the visitor's at `0x007cc408` (its tree
 `[0x007cc418]`, which Ctrl+V tests), vtable `0x006fff40`; the staff member's at `0x007cc3b0` (tree `[0x007cc3c0]`), vtable
 `0x006ffe50`. The person is `[0x007c2658]`, set by `FUN_0048ca00`, which also counts the things of the window's class
-(visitor 1, staff `0x40`).
+(`FUN_00481bc0`; the visitor's static holds class -2, which `0x0048ca00`'s table at `0x0048caac` maps to mask `0x40`, the type-1 things, `0x00481e0b`; the staff member's holds -1, mask 1, the types 4 to 8, `FUN_00481f80`).
 
 **The visitor's** (`FUN_004b79b0`; stream `0x007575e0`, handler `FUN_004b7720`). The builder posts advisor message
 `0x12e` and plays `cat_kids` effect `0x81`; the destroy (`0x14`) withdraws `0x12e`. The stream (`lib/uistream.py`;
@@ -2358,10 +2370,10 @@ stay** (`FUN_004fd950` shifted left by two before `FUN_004f8730`, as the list's 
 `+0x220` of `KIDSTATES.str` (`[0x0078baa0]`, table `0x3ec`, `mUIKidStates`), row 16 "Using: {P0}" with the name of the
 thing whose id is `+0x1dc` (`FUN_004e2780`). The thought is part `+0x30` less one, or 999 at nought (none shown), and row
 `+0x30` of `THOUGHTS.str` (`[0x0078ba9c]`). The title is set at the show (vtable `+4`, `0x004b7660`) and again by the
-refresh while the window's kept number `this[9]` is nought, so a new visitor's title turns to their number once given.
+refresh while the window's kept number `this[9]` is nought, so a new visitor's title turns to their number once given. The visitor's open (vtable `+0`, `0x004b75a0`) calls `FUN_0048ca00` and sets the thought panel `0x3734` up (font 6, its colours, shown) but never hides the arrows: `b_arup` and `b_ardown` stay up whatever the count, where the staff member's open hides them below two staff.
 The preview (vtable `+0x18`, `0x004b6b90`) is `FUN_00486530`: a copy of the person's model (`FUN_00475cf0` on `+0xc`) set
-in the panel's rect, a fourth word 12.0 kept at the copy's `+0xa4` (not followed), copied from the live model again
-on every `0x1e` (`FUN_00486610`). Its click goes to the person and closes the window (the base's `0x0048d1a0`).
+in the panel's rect, a fourth word 12.0 kept at the copy's `+0xa4` (which `FUN_00486530` also uses to place the copy: the word times -0.25, `0x006ff160`, truncated and subtracted from the vertical term at `0x0048659e`..`0x004865ad`, so a quarter of it, 3 for the visitor's 12.0 and 2 for the staff's 8.0, is added before the 1/768 scale; the store is `0x00475d6a`), copied from the live model again
+on every `0x1e` (`FUN_00486610`). Its click goes to the person and closes the window (the base's `0x0048d1a0`). The base's handler `FUN_0048d200`, which ends every object window's handler, also turns the key-down message `0x1000a` into arrow moves: cursor Up (`0x2600`) calls `FUN_0048cbe0`, `b_arup`'s, and cursor Down (`0x2800`) `FUN_0048caf0`, `b_ardown`'s (`0x0048d220`..`0x0048d243`). Whether a key reaches the window depends on the focus, which is not read; this game has no key branch in either person window and counts none (Q31b).
 
 **The staff member's** (`FUN_004b6080`; stream `0x00756f48`, handler `FUN_004b5cb0`). The builder posts `0xc0` and
 gives the preview `FUN_004b5c80` (the camera to the member, the window kept); the destroy withdraws `0xc0` and `0xd4`.
@@ -2374,7 +2386,7 @@ gives the preview `FUN_004b5c80` (the camera to the member, the window kept); th
 | `0x512` | (665,280)-(1538,623) | the stats: six rows, labels at x 688, figures at x 1193 |
 | `0x50c`, `0x50e`, `0x510` | (380,694), (539,694), (1401,694) | `b_fire` (89), `b_pick` (88), `b_route` (86, a toggle, flags `0x11`, second help 87) |
 | `0x50d`, `0x50f` | (1591,234), (1580,322) | `b_arup` (92), `b_ardown` (91) |
-| `0x521`, `0x50b` | (1568,411), (1568,518) | `b_locate` (93), `b_allstaff` (94: the all-staff list on the member's kind, `FUN_00496620( FUN_00506490() )`) |
+| `0x521`, `0x50b` | (1568,411), (1568,518) | `b_locate` (93), `b_allstaff` (94: the all-staff list on the member's kind, `FUN_00496620( FUN_00506490(), member )`) |
 | `-1` | (1591,714) | `b_okay` |
 
 The labels (vtable `+0xc`, `FUN_004b53c0`): UITEXT 64 Employed for, 65 Monthly wage, 67 Skill, 69 Happiness, 68 Energy,
@@ -2425,7 +2437,7 @@ empty, else `"%s %s"` (`0x0075c0c0`). Nothing clears `[0x007c2658]` as a guest g
 `b_locate` and Ctrl+V over the window: the window gone, `[0x007cc2f0]` 2 on the guest, role 6, `0x11f` posted; `b_kids`:
 the list up with #12 (row 11 of 13) brought in as row 3's top, #4 (`a-7-kids.png`; the lit row the pointer's, flag
 `0x80`), `0x11e` posted; its first row's click: the window on #4 ($570, stamp 655), the list gone; the preview's click:
-the window gone. `0x12e` was posted and said once (916/917); the later three opens put none in a slot (not read why).
+the window gone. `0x12e` was posted and said once (916/917); the later three opens put none in a slot, and neither did this game's, by said-once (`q430/run-fix2/run.log`, `result=said-once`, the accept gate); the original's own cause is not read.
 
 **OpenTPW** (Q430): `ParkVisitorWindow`, opened by the strip's click on a visitor and a visitors row's `0x400`; Ctrl+V
 with it up and its `b_locate` are `ParkLocator.OpenOnVisitor`; `b_kids` is `UiList.Pick`. Counted: the preview's model
@@ -2490,9 +2502,9 @@ costs 538 to 699 in the same 1.2 s, exactly 161 (his wage, 7 x 23), his `+3` 1; 
 **OpenTPW** (Q432): FIRE opens `MessageBox` on UITEXT 397 where `GameOptions.Confirmations` is on, its tick
 `ParkPeople.Fire` on the member kept; PICK UP is `ParkPeople.PickUp`; each closes the window. `ParkPeople.Fire` puts a
 carried worker back first. A member in the hand is not drawn in the park (`ParkGuestSprites.InTheHand`; the `guests`
-census says "IN THE HAND, not drawn"). Counted: the puff (`STAFF_DISMISSAL_PARTICLE`) and the figure at the pointer
+census says "IN THE HAND, not drawn"; that the draw loop skips him is shown by the census predicate only, not on screen). Counted: the puff (`STAFF_DISMISSAL_PARTICLE`) and the figure at the pointer
 (`STAFF_PICKED_UP_PREVIEW`), so our pointer stays the plain arrow while a worker is carried. Its run (`q432/confirm.py`)
-took 161 off the bank and put 161 on the staff costs across the tick, the same box (`q432/side-by-side-box.png`).
+logged one month's wage of 161 paid and put 161 on the staff costs across the tick (the balance moved -86, with income between the reads), the same box (`q432/side-by-side-box.png`).
 
 **The patrol switch and the patrol tool, read** (Q433). The switch `0x510` calls `FUN_004b5b50` with its new state. Up
 (0): `FUN_00506e90` on the member, the whole map (`+0x20a` 1, `+0x20c` `0x4000`), and the window stays. Down (1): the
@@ -2508,9 +2520,9 @@ answers track type `0x19`** (its own track record, `FUN_004d0af0`, or its parent
 `FUN_0053ad90`), so a single cell of the park lets it through. The verdict `FUN_00535670( 0x36 )` is the latch alone
 (`0x005356df`), so the outline is all blue or all red, and the anchored one-cell rectangle on land outside the park
 is red already. The cursor (`FUN_0052f950`) has no case for `0x36`: only cursor 8, `c_noplace`, where a square was
-red (`DAT_00816d48`). **The click** (`FUN_00524960`, on the release; the press `FUN_00524790` does nothing for it):
+red (`DAT_00816d48`). **The click** (`FUN_00524960`, on the release; the press `FUN_00524790` only sets `DAT_008186d8`, which the refusal's sound reads):
 refused (`DAT_00816d48`), sound `0xaf` and the tool put away, nothing written (the sound is the commit's own, ahead of its
-mode switch, so every carry-shell mode's but `0x38`: `FUN_0051bfc0( 0, cat_ui, 0xaf, x, 0, y )` at `0x00524aa7`, where
+mode switch, so every carry-shell mode's but `0x38`: `FUN_0051bfc0( 0, cat_ui, 0xaf, x * 10, 0, y * 10 )` at `0x00524aa7`, where
 no layout replay runs, `[0x00785a2c]` nought, and the press reached the mode's down slot, `DAT_008186d8`, which
 `FUN_00524790` sets on every press: a press beside an open park screen never calls it; effect 175 is one variation at
 volume 35 of `blnl_error1`, `sfUiHD.sdt` entry 0, and every `cat_ui` effect is flagged `0x200`, so it sounds flat); unanchored, the anchor set and the kept
@@ -2541,8 +2553,8 @@ words, the same 8 squares in the same order for (51,27) and (54,26), row 26 lift
 (45,15) four red squares on the anchored cell (each line lays it), 16 red at (53,15), `NoGo`, nothing written
 (`q433/side-by-side.png`). **At one camera** (Q435) the lift is the original's: its camera after Mike's window
 closed, read by `original/camera.py` (point (484.442, 259.319), zoom 110, rotation 0), given here as `camera 484.442
-259.319 110 0`, puts the eye at the same (484.44, 93.62, 201.57) in both games, so the frames differ by the lens alone
-(Q260); our frame's middle 480 x 360 (under the 90 degree lens then; the whole frame since Q441) scaled by 768/360 lays our lifted tops of (51,26) and (52,26), y 284 to 314 here,
+259.319 110 0`, puts the eye at the same (484.44, 93.62, 201.57) in both games, so the frames differed by the lens alone
+(Q260; one lens since Q441); our frame's middle 480 x 360 scaled by 768/360 (the 90 degree lens of then; since Q441 the middle 960 x 720 by 768/720) lays our lifted tops of (51,26) and (52,26), y 284 to 314 here,
 on the original's (`q435/side-by-side.png`), and the cells the original's camera put at two pixels were the cells under
 the same pixels here at the first probe. Q433's "far higher" was its two cameras (ours zoom 60, pitch 45; the
 original's 110, 58.3) and the lens. The walls a lifted square drops to a lower neighbour are drawn in both (Q436;
@@ -3174,3 +3186,41 @@ with tickets is not built, counted `MYSTERY_RIDE_PURCHASE`.
 `FUN_004aaf70` appends them as synthetic rows **-1** and **-2** on tab 3 rather than finding them in the
 walk. The Buy Land price is `Costs.MapCell`; the executable ships no default for it and the four
 sibling cell prices, so they are all zero in the image and filled from the balance file.
+
+## The shop, sideshow and ride windows: load, apply, ranges and the buy screen's gauges (fork watch 2026-10-16)
+
+Read from the listing (`verify-ui-hud.md` H1 and M3); no game run. The three windows are objects with vtables ride `0x006ffbe8`,
+shop `0x006ffc68`, sideshow `0x006ffce8`: slot `+4` load (ride `0x004ae940` over `0x004af030`, shop `0x004b0950`, sideshow
+`0x004b1ee0`), `+0x14` refresh (shop `0x004b01d0`, sideshow `0x004b16c0`), `+0x3c` apply (ride `0x004af440`, shop `0x004b0aa0`,
+sideshow `0x004b20b0`). Window objects are globals: shop `0x007cc258`, sideshow `0x007cc298` (pending values at `+0x24`, `+0x28`,
+`+0x2c`), ride `0x007cc218` (`+0x2c`, `+0x30`, `+0x34`). The selected object is `[0x007c2658]`.
+
+- **Base proc `0x0048d200`**: message `0x14` (close) calls the apply slot only when an object is selected; key down `0x2600` and
+  `0x2800` (the cursor Up and Down) call `0x0048cbe0` and `0x0048caf0`, which apply first, then step by the class mask and, on a
+  different object, load it.
+- **Shop** apply: `+0x28` to `0x004e21e0` (the amount of special ingredient, `+0x198`); the byte `+0x24` x 50 to `0x004e2190` (quality,
+  `& 0xff` into `+0x18c`); `+0x2c` to `0x004e2770` (price, `+0x194`). Load: `0xc082` the door; `0xc06b` <- byte `+0x18c` / 50;
+  `0xc086` <- byte `+0x198`, shown with label `0xc084` only when `0x004e2200` names an ingredient (item `+0x158` 1 to 4 picks string 0 to 3
+  of the table `[0x0078ba8c]`); `0xc085` <- `+0x194`. Ranges: `0xc06b` 0 to 2, `0xc086` 0 to 100, `0xc085` 0 to 500, step 1; previous and
+  next `0xc069`, `0xc06a` hidden under two shops. Buttons: `0xc068` delete, `0xc080` move, `0xc081` apply to all, `0xc082` door.
+- **Sideshow** apply: the price (`+0x2c` to `0x004e2770`) always; then only when the item's `+0x10c` is 0, the byte `+0x24` to
+  `0x004e21c0` (chance of winning, `& 0xff` into `+0x190`) and `+0x28` to `0x004e1a20` (cost of goods, the prize, `+0x188`).
+  `+0x10c` is `UsageInfo.NonWinnableSideshow`; no shipped `.sam` sets it (56 loose files and all 312 wads), so the hidden branch (controls
+  `0xa090`, `0xa08e`, `0xa0a6`, `0xa0a7` hidden, label UITEXT `0x34`) is dead by content: every sideshow window shows the chance
+  slider, the prize box and UITEXT `0x33`. Load `0x004b1ee0`: `0xa08a` the door, `0xa08e` <- `+0x190`, `0xa08f` <- `+0x194`
+  (price), `0xa090` <- `+0x188` (prize). Ranges: `0xa08e` 0 to 100, `0xa090` 0 to 10000, `0xa08f` 0 to 500; `0xa08c`, `0xa08d`
+  hidden under two. Buttons: `0xa08b` delete, `0xa0a8` move, `0xa0a9` apply to all, `0xa08a` door.
+- **Apply to all**: shop `0xc081` (`0x004b0dba`, `0x00481bc0( 0x200, 0x004b0ae0 )`), sideshow `0xa0a9` (`0x004b23b3`, **mask `0x100`**,
+  `0x004b20f0`); the mask runs `0x00482040` over every thing of kind 3 whose item's `AddOn.UpgradesId` (`+0x284`) is 0 and whose
+  `Info.WhichUIType` (`+0x4ac`) is 1 (shop) or 2 (sideshow); the callback acts only when the thing's item id (`+0xe`) equals the
+  selected object's, so it reaches every object of **the same item**, not every shop.
+- **Ride** load `0x004af030`: the speed control `0x3e30` ranges over the item's `+0x134` to `+0x138` (value thing `+0x58`); the gauge
+  `0x3e2e` is `Upgrades[level].RedLineSpeed` (`+0x1ac` + `0x40` x the thing's byte `+0x50`) << 10 / (max - min); the duration
+  `0x3e2f` shows only when item `+0x70` is non-zero (range `+0x12c` to `+0x130`, value byte `+0x5c`); the capacity `0x3e2d` (and
+  panel `0x3e31`) is hidden when `+0x124` equals `+0x128`. Apply: `+0x2c` to `0x004dd6e0`, byte `+0x30` to `0x004dd7f0`, byte `+0x34`
+  to `0x004dd720` only when item `+0x70` is set.
+- **The buy screen's stats** `0x004abb00` (not a Ghidra function): the item by `0x00412e90( 0x007890a0, id )`. On tab `[0x007cc1fc]` 0, gauge `0x1ee`
+  <- item `+0x13c` x 1024 / 100 (`UsageInfo.ExcitementLevel`), text `0x1f2` <- `+0x19c` (`Upgrades[0].RedLineCapacity`, `%d`), gauge
+  `0x1ef` <- `+0x1b0` x 1024 / 100 (`Upgrades[0].WearRate`); tab 2 only gauge `0x1ee`; other tabs none; text `0x1f5` <- `0x004ca8c0`'s
+  count, or UITEXT `0x88` when 0. Which tab value is rides is inferred. The hire gauge `0x2482` is the candidate's byte `+8` x 1024 / 5
+  (`0x0049b8c3` to `0x0049b8f8`).

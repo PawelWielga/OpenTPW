@@ -2,7 +2,7 @@ namespace OpenTPW.UI;
 
 /// <summary>
 /// The visitor's window: one guest's figures, their status and their last thought, with arrows to the next and the
-/// previous guest - the second of the nine object windows (<c>docs/exe/hud.md</c>, "The person's windows").
+/// previous guest - one of the nine object windows (<c>docs/exe/hud.md</c>, "The person's windows").
 ///
 /// <para>
 /// <b>Where the layout comes from.</b> <c>FUN_004b79b0</c> builds it on the shared base <c>FUN_0048cea0</c> from the

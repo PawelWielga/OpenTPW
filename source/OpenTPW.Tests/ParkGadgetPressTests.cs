@@ -278,7 +278,7 @@ public class ParkGadgetPressTests
 	/// <summary>
 	/// <b>Every panel the arm carries is drawn behind the body and the retract button</b>: the arm's 0xa sets the panel
 	/// three under the depth its link gave it (0x004a15bf to 0x004a15cd), the arm's 4 and two less three, so 3, its
-	/// parts 5 and theirs 7, all before the retract button's 7 and the body's 8 - the camcorder panel, the message bar
+	/// parts 5 before the retract button's 7 and the body's 8, and theirs 7, tied with the retract button - the camcorder panel, the message bar
 	/// and both locators' panels, each shown whole as it stands half way out. A locator's buttons, under a group, stand
 	/// at 7 with the retract button.
 	/// </summary>

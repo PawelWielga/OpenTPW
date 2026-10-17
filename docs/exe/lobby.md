@@ -324,9 +324,9 @@ The box is the lobby's own geometry: the four islands stand at 400 and 600 in X 
 
 ### The lens
 
-The lobby's render camera is a second object, `0x00f83778` (`FrontEnd_Init` builds it, `FUN_005d8b00`, vtable
-`0x00702a90`). Its `FUN_005d8b50` sets its angle `+4` to 115, and `IslandLobby_Start` copies `ISLANDFOV` over it
-(`0x005e13fb`); its slot 2, `0x005d8cb0`, hands that angle to the projection builder each pass. The draw matrix's
+The lobby's render camera is a second object, held by the global `[0x00f83778]` (`FrontEnd_Init` builds it, `FUN_005d8b00`, vtable
+`0x00702a90`). Its `FUN_005d8b50` sets its angle `+4` to 115, `IslandLobby_Start` copies `ISLANDFOV` over it
+(`0x005e13fb`), and `Lobby_Start` (`0x005dcfe0`) writes 60.0 to it at `0x005dd034` (by the same law 32.2 degrees top to bottom; not measured); its slot 2, `0x005d8cb0`, hands that angle to the projection builder each pass. The draw matrix's
 screen scale (`park-engine.md`, "The lens: 90 handed to the projection, 53.13 drawn") then makes the picture
 `2 atan( tan(a/2) / 2 )` top to bottom: `ISLANDFOV(100)` draws **61.58 degrees top to bottom and 76.93 across**.
 Measured (Q260, `original/lens.py`, the player list over the lobby): angle 100.000, the camera's `+4` 100.000,

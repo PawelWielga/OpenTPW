@@ -1340,7 +1340,8 @@ public class Level
 	/// pick shows UIHELPTEXT 553 "Visitor #{P3} : Left-click to view this person's details", their number <c>+0x1d8</c>,
 	/// or 554 "New Visitor" at nought; a member 555 "{P2} : Left-click to view this staff member's details", their name
 	/// (<c>FUN_00506860</c>); either puts up pointer 2, <c>c_pick</c> (<c>FUN_004a2aa0( 2 )</c>). Where the guests decide
-	/// and nobody is taken the row is emptied; with a locator open and nobody taken nothing is posted, so the row last
+	/// and nobody is taken the row is emptied, where the original empties it only if the last hover category was not
+	/// nought (<c>0x004870f3</c> to <c>0x004870ff</c>) and otherwise leaves the old row up: not built; with a locator open and nobody taken nothing is posted, so the row last
 	/// posted stands (<c>0x0048721c</c> to <c>0x004878d3</c>). Otherwise UIHELPTEXT 441 "Left-click to build path" over
 	/// bare ground and 442 "Left-click to extend this path" over path, where the click would arm the path tool
 	/// (<see cref="ArmsThePathTool"/>). Nothing is found in the original to show 443, "BACKSPACE to undo", so nothing
@@ -1465,7 +1466,7 @@ public class Level
 	/// <summary>
 	/// The first of <c>FUN_00486d90</c>'s tests, which decide before the ground's: with the visitors' locator open and no
 	/// modifier held, or Shift alone and no locator, a guest under the pointer is category 7 and anything else is
-	/// nothing (<c>0x00486fd0</c>); otherwise a member of staff is their kind's category, and with either locator open
+	/// nothing (<c>0x00487009</c> to <c>0x0048702d</c>); otherwise a member of staff is their kind's category, and with either locator open
 	/// whatever else is under the pointer is nothing (<c>0x0048721c</c>), so a click there arms no tool and opens no window.
 	/// </summary>
 	/// <param name="locator">Which locator is open, <c>[0x007cc2f0]</c>.</param>

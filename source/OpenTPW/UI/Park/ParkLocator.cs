@@ -79,7 +79,8 @@ internal sealed class ParkLocator
 	/// <summary>The thing the camera is on, <c>[0x007cc308]</c>, or nought.</summary>
 	internal int Actor { get; private set; }
 
-	/// <summary>Whether the camera follows <see cref="Actor"/> each frame - <c>gui_CameraFlags</c> bit <c>0x1000</c>.</summary>
+	/// <summary>Whether the camera follows <see cref="Actor"/> each frame - <c>gui_CameraFlags</c> bit <c>0x1000</c>.
+	/// Not ended by the orbit camera's scroll, where any pan in the original ends the follow (<c>0x0042ba37</c>, <c>0x0042ba92</c>; Q23).</summary>
 	internal bool Following { get; private set; }
 
 	/// <summary>The cells this frame's patrol edges were laid on (<see cref="PatrolEdgeCells"/>), none unless a fenced member is followed.</summary>
@@ -98,7 +99,7 @@ internal sealed class ParkLocator
 	/// <param name="down">How far down, the same for both: their middles on the arm's.</param>
 	internal ParkLocator( UiControl arm, UiControl root, (int Staff, int Visitors) across, int down )
 	{
-		// Each panel at the arm's carried depth, its buttons two under the group's, at 7 with the retract button: which of
+		// Each panel at the arm's carried depth, its buttons two above the group's 5, at 7 with the retract button: which of
 		// the two the original draws first at one depth is not decoded, and here the retract button, linked first, is.
 		StaffPanel = arm.Add( new UiControl { Id = 0x95c, Rect = new UiRect( 474, 1159, 941, 1470 ), Depth = ParkGadget.CarriedDepth, PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
 		_staffButtons = StaffPanel.Add( new UiRadioGroup

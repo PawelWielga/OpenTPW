@@ -1291,7 +1291,7 @@ public static class ParkBuilding
 	}
 
 	/// <summary>
-	/// The whole of <see cref="PlaceCarried(int, int, int?)"/> once the park is in hand. With no
+	/// The whole of <see cref="PlaceCarried(int, int, int?, bool)"/> once the park is in hand. With no
 	/// <paramref name="angle"/> the thing faces the way the hand holds it.
 	/// </summary>
 	private static string PlaceCarried( ParkState state, IParkInitialState park, ParkItemCatalogue catalogue,
