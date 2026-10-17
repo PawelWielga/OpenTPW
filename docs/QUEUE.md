@@ -59,11 +59,24 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it
   Buy Land (`FUN_005327e0` calls it), and say what `0x80` is or count it at the site. Confirm in both games at camera A
   (`q479/orig/rund.sh`): the grass box about (70, 133, 36) halved to about (33, 66, 17) with the compositor's patches,
   or (13, 73, 13) without them; a bought cell's light doubling.
+  The first review of Q479 (`handoff/review3/q479/FINDINGS.md`, finding 3; not second-checked) adds a third caller of
+  `FUN_00450d10`, the saved park's post-load rebuild `FUN_00415140` (`0x0041517f`), the path the stock file takes, and
+  a clamp of each cell to the map limits (`0x00450d4d` to `0x00450d64`); check both.
 - [ ] **Q483. The ground's dirt patches: the procedural compositor. Decode first.** From Q479: inside a box round the
   view (`FUN_0056f380`, the terrain object's words `0x8d` to `0x90`) the original draws each cell with a tile
   composited from `base.lnd` (`park-engine.md`, "The blocking unknowns", 6; `FUN_0055f780` blends up to thirteen
   textures), not the cell's texture; ours draws the cell's texture alone. Decode what fills a tile and the box, measured
   against `[0x008bd550]` bit 4 held clear and set (`q479/orig/runc.sh`), before any build.
+- [ ] **Q486. The park's sea: its texture, its motion and its colour. Decode first.** Asked by Alexah (2026-10-17),
+  from `q472/side-by-side.png`: the original's sea is an animated, perhaps procedural, texture - Alexah's lead: the
+  same wave motion as the path tool's see-through preview - where ours (`content/shaders/water.shader`, `World/Terrain/
+  Water.cs`) samples one texture with a sine wobble and a scroll of our own (`waveScale`, `waveFrequency`,
+  `offsetSpeed`: no decode behind any of them). Its colour differs too, measured by Q479 with both games' fog off: ours
+  (1.0, 53.7, 55.9) against the original's (1.4, 55.0, 69.4), teal against blue (`q479/ours-nofog/B-1.png`,
+  `q479/orig/b-B-fog1.png`; `park-engine.md`, "The park view's colours"). Find what the original draws there: the
+  sea's model and texture (`dk_water3`, `textures.md`), how it moves (a texture animation, a procedural texture, a UV
+  scroll, or vertex motion), whether the path preview shares it, and its light. Measure first: a short film of the same
+  patch in both games at one camera (`original/record.sh`, `lib/bothcam.py`). The build is a new item.
 - [ ] **Q472b. Build the picker's heightfield and its last cell.** From Q472 (`park-engine.md`, "The picker never hands
   the mode a cell off the map"). `ParkPicking.Resolve` meets the ground only over the heightfield (`HeightAtWorld` holds
   the edge height past it, so ours answers (98,40) past the last column and (40,85) past the last row, map type 7, and
