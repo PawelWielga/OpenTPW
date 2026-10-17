@@ -51,12 +51,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
 
-- [ ] **Q467. The guests' empty row only after a category.** From the run review (2026-10-17), split from Q451: where
-  the guests decide (the visitors' locator, or Shift alone) and nobody is taken, the original posts the empty row only
-  if the last hover category was not nought (`0x004870f3` to `0x004870ff`), otherwise the old row stays; ours always
-  empties it (`Level.WorldHelpRow`, `case PersonPick.Nothing`). Our hover keeps no category for the ground's arms but
-  path and ground: decide what the last category was there first. Confirm in both games: Shift over a guest, then off
-  them onto bare ground and off again.
 - [ ] **Q468. The original's sprite pick, then the hover's set.** From Q451 (`park-engine.md`, "The thing under a
   sprite" and "The hover runs only on the park's view"): our pick takes a person by the cell's list, so a member the
   staff locator's camera follows is dropped and taken again at each cell under a resting pointer, where the original's
@@ -65,6 +59,12 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
   the latch's test, build the pick for people, then build the hover's set (`STAFF_HOVER_SET_STATE`: `SetActivity( Idle )`
   where `ParkStaffWindow.CanBePickedUp` passes, as `q451/confirm1.py` ran it). Confirm: Mike Cooper followed by the
   locator with the pointer resting, set idle once and walking again at the stamp + 11, as `q451/orig/a-load.log`.
+- [ ] **Q469. The hover's other empty rows only after a category.** From Q467: with a tool's mode installed
+  (`0x00486fd9` to `0x00486fe4`) and on a cell of no category (`FUN_00486d90`'s switch default, `0x004877a3`) the original
+  posts the empty row only if the last category was not nought, so a row standing at category 0 (the guests' row, Q467;
+  a locator's) stays; ours always empties it (`Level.WorldHelpRow`, `!HoverTaken` and `!ArmsThePathTool`). Decide which
+  of our cells fall to the default (not `FUN_00536390`'s ground, not types 1, 3, 4, 9, 10 or `0x15`) first. Confirm in
+  both games: the Q467 standing row, then Shift let go over such a cell.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

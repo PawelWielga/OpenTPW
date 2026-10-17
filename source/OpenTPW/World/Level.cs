@@ -1355,12 +1355,18 @@ public class Level
 	private int _postedRow = -1;
 
 	/// <summary>
+	/// Whether the last hover's category <c>[0x007c24f4]</c> was nought: each hover zeroes it and its arm sets its own
+	/// (<c>0x00486de5</c>), and where the guests decide and nobody is taken the empty row is posted only after a category.
+	/// </summary>
+	private bool _categoryNought = true;
+
+	/// <summary>
 	/// The help row for a cell under the pointer, idle, and the person's pointer (<c>FUN_00486d90</c>). A guest it would
 	/// pick shows UIHELPTEXT 553 "Visitor #{P3} : Left-click to view this person's details", their number <c>+0x1d8</c>,
 	/// or 554 "New Visitor" at nought; a member 555 "{P2} : Left-click to view this staff member's details", their name
 	/// (<c>FUN_00506860</c>); either puts up pointer 2, <c>c_pick</c> (<c>FUN_004a2aa0( 2 )</c>). Where the guests decide
-	/// and nobody is taken the row is emptied, where the original empties it only if the last hover category was not
-	/// nought (<c>0x004870f3</c> to <c>0x004870ff</c>) and otherwise leaves the old row up: not built; with a locator open and nobody taken nothing is posted, so the row last
+	/// and nobody is taken the row is emptied only if the last hover's category was not nought, and otherwise the old row
+	/// stands (<c>0x004870f3</c> to <c>0x004870ff</c>); with a locator open and nobody taken nothing is posted, so the row last
 	/// posted stands (<c>0x0048721c</c> to <c>0x004878d3</c>). Otherwise UIHELPTEXT 441 "Left-click to build path" over
 	/// bare ground and 442 "Left-click to extend this path" over path, where the click would arm the path tool
 	/// (<see cref="ArmsThePathTool"/>). Nothing is found in the original to show 443, "BACKSPACE to undo", so nothing
@@ -1385,6 +1391,7 @@ public class Level
 			_rowPerson = 0;
 			var row = WorldHelpRow( x, y, thingUnderCursor, onTheView );
 			_rowPerson = 0;
+			_categoryNought = true;
 
 			return row;
 		}
@@ -1396,7 +1403,16 @@ public class Level
 		// Not taken, the row is none, and a locator opened afterwards keeps none. The original runs no hover then and posts
 		// nothing (0x00488569), so its row is whatever was posted last: not measured.
 		if ( !HoverTaken || Park is not { } park || ParkPeople.Current is not { } people )
+		{
+			// With a tool's mode installed the category is nought (0x00486fd0); under a park screen no hover runs.
+			if ( !UI.WindowStack.ParkScreenOpen )
+				_categoryNought = true;
+
 			return Posted( -1, 0 );
+		}
+
+		var lastNought = _categoryNought;
+		_categoryNought = false;
 
 		switch ( PersonUnder( thingUnderCursor ) )
 		{
@@ -1425,15 +1441,20 @@ public class Level
 				return Posted( 555, thingUnderCursor );
 
 			// Off a person the category falls to nought, so the same person's row is posted again when the pointer returns.
-			case PersonPick.Nothing when !GuestsDecide( LocatorOpen, Input.Held ):
+			// Where the guests decide, the empty row is posted only after a category (0x004870f3).
+			case PersonPick.Nothing when !GuestsDecide( LocatorOpen, Input.Held ) || lastNought:
+				_categoryNought = true;
 				WorldHelpValues = standingValues;
 				_rowPerson = 0;
 				return _postedRow;
 
 			case PersonPick.Nothing:
+				_categoryNought = true;
 				return Posted( -1, 0 );
 		}
 
+		// The ground's other arms have categories of their own (an object 4, a queue 3) or nought (0x004877a3), and their
+		// rows are not built: the row here is emptied either way, so the category taken makes no difference.
 		if ( !ArmsThePathTool( x, y, thingUnderCursor ) )
 			return Posted( -1, 0 );
 

@@ -3490,14 +3490,18 @@ CStaff's `SetState`, `FUN_005054d0( 0 )`; a guard's `0x12` test after it can nev
 comes onto is set idle: from a walk the stamp `+0x200` is the clock and the wait is the grade's, from anything else
 nought (`ride-operation.md`, "The idle wait, and the stamp it counts from"). Either puts up pointer 2, which `FUN_00489720` registers as `c_pick.ani`. Where the
 guests decide and nobody is taken the empty row `0x0078a374` is posted, only if the last hover category was not
-nought (`0x004870f3` to `0x004870ff`; otherwise nothing is posted and the old row stays; ours always empties it, Q467),
-and pointer 0 put up; with a locator open
+nought (`0x004870f3` to `0x004870ff`; otherwise nothing is posted and the old row stays; each hover keeps the old
+category and zeroes `[0x007c24f4]` at `0x00486de5`, and its arm sets its own), and pointer 0 put up; the tool's mode arm
+(`0x00486fd9`) and the switch's default (`0x004877a3`) post it on the same test, where ours always empties it (Q469); with a locator open
 otherwise and nobody taken, the jump from `0x0048721c` to `0x004878d3` posts nothing and puts up pointer 0, so the row
 last posted stands. Measured in the original: the staff locator open, Mike Cooper under the pointer read category 9
 with his row and the hand, and off him category 0 with the row still at the foot and the arrow (`q444/orig/a-4-member-hover.png`,
 `a-2-P1.png`); the visitors' locator open, a guest whose `+0x1d8` read 9 showed "Visitor #9 : ..." and the hand, and
 bare ground category 0 no row and the arrow (`q447/orig/`). Here `Level.WorldHelpRow` answers the row, its values and
-`PersonPointer`, and keeps the row last answered where the original posts nothing.
+`PersonPointer`, and keeps the row last answered where the original posts nothing. Measured in both (Q467,
+`q467/`, `PREDICTION.txt`): the visitors' locator opened with Ctrl held read category 0 with "Left-click to build path"
+standing, and Ctrl let go it stood on at category 0; off the followed guest (category 7, "Visitor #13") the bar was
+emptied.
 
 **The hover runs only on the park's view** (Q451). `Park_MouseMessageProc` runs `FUN_00486d90` on its timer
 (`0x00488582`) only while `[0x007c24fc]` is set. Message `0x10001`, the pointer coming onto the layer from a control,

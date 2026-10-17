@@ -7462,6 +7462,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   unless it is 4, 5, 7, `0xd` or `0x12`, where `FUN_004fa990` answers; ours only counts it. Decode `FUN_004fa990` and
   what state 0 does to a walking member first; confirm in both games what a member under the pointer does. From the
   run review: gate it first (`0x00488582`, `[0x007c24fc]`).
+- [x] **Q467. The guests' empty row only after a category.** Done 2026-10-17: built in `Level.WorldHelpRow`
+  (`_categoryNought`: each hover zeroes the category and its arm sets its own, `0x00486de5`; nought after the view's entry
+  and a tool's mode); the ground's other arms empty the row either way here. The original (`q467/orig/`, round 2): bare
+  ground category 2 and "Left-click to build path"; Ctrl held through V, category 0 and the row standing; Ctrl let go,
+  still 0 and the row still standing; the followed guest 7 and "Visitor #13"; off them 0 and the bar empty. Ours
+  `q467/run1` 5 of 5, the same rows (`side-by-side.png`); mutations 6 of 7, the seventh equivalent. The same rule at the
+  armed-mode and default ground arms is Q469. Was: From the run review (2026-10-17), split from Q451: where
+  the guests decide (the visitors' locator, or Shift alone) and nobody is taken, the original posts the empty row only
+  if the last hover category was not nought (`0x004870f3` to `0x004870ff`), otherwise the old row stays; ours always
+  empties it (`Level.WorldHelpRow`, `case PersonPick.Nothing`). Our hover keeps no category for the ground's arms but
+  path and ground: decide what the last category was there first. Confirm in both games: Shift over a guest, then off
+  them onto bare ground and off again.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

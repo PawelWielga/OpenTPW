@@ -637,6 +637,47 @@ public class ParkLocatorTests
 	}
 
 	/// <summary>
+	/// <b>Where the guests decide and nobody is taken, the empty row is posted only after a category</b>
+	/// (<c>0x004870f3</c>): Shift over bare ground empties the ground's row; with the visitors' locator open, Ctrl held
+	/// takes the category to nought with the ground's row standing, and let go the row still stands; off a guest it is
+	/// emptied; and a guest's row posted as the pointer comes onto the view stands off them, the category nought after
+	/// the entry.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> always emptied; never emptied; the last category not kept; Ctrl's hover not nought; the
+	/// entry not nought.</remarks>
+	[TestMethod]
+	public void TheGuestsEmptyRowIsPostedOnlyAfterACategory()
+	{
+		_stack.Update();
+		var guest = AGuest();
+		var level = Level.Current!;
+		int Row( int thing, bool onTheView = true ) => level.WorldHelpRow( 43, 16, thing, onTheView );
+		void Hold( params Key[] keys ) => Input.Keyboard = new Input.KeyboardInfo( keys.ToList() );
+
+		Assert.AreEqual( (441, 441), (Row( 0 ), Row( 0 )), "onto the view, then the ground's category" );
+		Hold( Key.ShiftLeft );
+		Assert.AreEqual( (-1, -1), (Row( 0 ), Row( 0 )), "Shift alone: emptied after the ground's category" );
+
+		Hold();
+		Assert.AreEqual( 441, Row( 0 ) );
+		CtrlV();
+		Hold( Key.ControlLeft );
+		Assert.AreEqual( 441, Row( 0 ), "Ctrl held: the locator's, nought, the row standing" );
+		Hold();
+		Assert.AreEqual( (441, 441), (Row( 0 ), Row( 0 )), "let go: nought before, so the row stands" );
+
+		var numbered = _people.Guests[guest].VisitorNumber;
+		_people.Guests[guest].VisitorNumber = 13;
+		Assert.AreEqual( 553, Row( guest ) );
+		Assert.AreEqual( (-1, -1), (Row( 0 ), Row( 0 )), "off the guest: emptied after their category" );
+
+		Row( guest, onTheView: false );
+		Assert.AreEqual( 553, Row( guest ), "onto the view, onto the guest" );
+		Assert.AreEqual( 553, Row( 0 ), "off them at once: the category nought after the entry" );
+		_people.Guests[guest].VisitorNumber = numbered;
+	}
+
+	/// <summary>
 	/// <b>The hover counts the member's idle as it posts their row, wherever PICK UP would take them</b>
 	/// (<c>FUN_00505f50</c> asks <c>FUN_00505bd0</c>, then <c>SetState( 0 )</c>): once as the pointer comes onto them and
 	/// not again while it stays, never for a member on strike, and the member left as they were. Off the park's view

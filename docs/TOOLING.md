@@ -266,7 +266,9 @@ Each was found by trial in the item named, and cost a run to find.
   person at the middle of the picture, so the pointer there is on them (here 0.5, 0.5 of the window, `pick` answering
   "standing thing N"; in the original (512, 384), scanned outward until the hover's category `[0x007c24f4]` reads 7 for
   a guest or 8 to 12 for a member, the thing `[0x007b05ac]`). Here `pointer` replies the cursor, the help row and its
-  text filled; pause first so the person stays on the cell the pick asks.
+  text filled; pause first so the person stays on the cell the pick asks. **The original's row is the foot bar** (288 to 736 across, 722 to 758 down of
+  1024 x 768; crop it from the frame), and a modifier is held through its hover with `xdotool keydown Control_L` and
+  `keyup` seconds apart, here with `key_down`/`key_up` (Q467, `q467/orig/run.sh`, `q467/confirm.py`).
 
 - **A message box in either game, and its cross** (Q410, `q410/confirm.py`, `q410/orig/run.sh`): here the console's
   `windows` ends "MessageBox" while one is up (the reply begins `[dbg] windows:`), and `control 9873c8` finds its
