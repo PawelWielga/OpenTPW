@@ -236,7 +236,9 @@ bar read row 476. The arm out was not tried there.
 rectangles (`UiControl.StopsPointer`). The arm slides ("The arm's handler", Q427). Not the original's: at rest in, the arm
 and its end draw nothing, where the original draws them fitted to their narrowed rectangles behind the body and the
 handle (the film of Q427 shows the arm's mesh squeezed to its rectangle through a slide), and the retract button is
-hidden while the arm is in or coming in. A tag stands
+hidden at rest in; through the slide in it is drawn switched off, as the original's, but stops the pointer, doing
+nothing, where the original's hit test passes over it. A carried panel is at depth 3, its parts at 5 and theirs at 7
+(Q445, "The arm's handler"): behind the body, and its parts behind the retract button. A tag stands
 on the mast and lifts the top (`ParkGadget.PutTags`), and the top's right click takes every tag off.
 
 ### Op 4 sub-op 4 is a hit-test region, not a motion path
@@ -1073,7 +1075,9 @@ going out, 3 coming in, 4 coming in for a panel waiting.
 
 - **`0xa`, out with a panel.** In any state but 0 the panel is kept in the arm's data word 2 and nothing more is
   done. At rest: timer `0x80080` is armed at 20 ms and the arm's `+0x130` set to ten; the panel is linked under
-  the arm (`FUN_0065f447`) three depths under its own; its rectangle is put at the arm's left less its own width
+  the arm (`FUN_0065f447`, which gives it the arm's depth and two) and set three under that (`0x004a15bf` to
+  `0x004a15cd`, `FUN_0065f16b`): the arm's 4 makes it 3, its parts 5 and theirs 7: the parts behind the retract button
+  (7), and all of it behind the body (8) and the handle (9), so a part sliding out is cut off at the body's right edge; its rectangle is put at the arm's left less its own width
   and fifty, its middle on the arm's (`0x004a1613`), and each of its children is shown once its right edge is past
   the arm's left (`FUN_004a1440`); **the step is a tenth of the panel's width, the body's right edge less the
   arm's left, and a hundred** (`0x004a16d7`, a whole division); the retract button `0x24` is switched on; sound
@@ -1141,9 +1145,23 @@ handle 331, sound 0x1c a voice`, the handle 413, 577, 741, 987, 1151 after 2, 4,
 until its right edge passed 439; again, `step -82`, 331 and `sound 0xc2 a voice`; the camcorder button 383, 591, 851 and
 its panel at (482,1206); the camcorder button and Ctrl+S three frames on, `arm: In with panel 62, step -10, handle 435`,
 331, then 1001 with the staff panel at (484,1127). Side by side with the original's film (`q427/side-by-side.png`) the
-bar comes out alike. Main's build had the handle at 1151 at the click and counted `GADGET_ARM_SLIDE`. The camcorder
+bar came out at the same steps but drawn over the body and the retract cross, where the original's passes behind both;
+built (Q445, below). Main's build had the handle at 1151 at the click and counted `GADGET_ARM_SLIDE`. The camcorder
 button's advisor line `0x131` is built (Q428, below). Not heard in either game. In no game run: a panel refused while
 another waits (tested only), Full Simulation (not asked: the arm is either mode's), the other three themes.
+
+### The carried panel's depth (Q445)
+
+**OpenTPW** (`ParkGadget.CarriedDepth`, on the camcorder panel, the bar and both locators' panels; the console's `tags`
+reads `depth=` and `behind body N retract N of N` for the carried panel's shown parts, and `retract=on|off|hidden`).
+`q445/confirm.py` on the stock park, paused and stepped (`run1`, the final build, five of five): the bar's click
+`depth=3`, `retract=on`; behind body and retract 1 of 1, 2 of 2 and 6 of 6 at handles 577, 741 and 987; clicked again
+`retract=off` through the slide and `hidden` at 331; the camcorder panel at 591 `1 retract 1 of 1`; the staff panel
+out `behind body 6 retract 1 of 6`, its five buttons tied with the retract button at 7. Beside the original's film
+(`q445/side-by-side.png`): the bar's text cut at the body's right edge and the cross over the bar (its f073 to f075),
+the postcard button half behind the body (its f323), the cross drawn through the slide in (its f188 to f193). Main's
+build drew the bar over the body and hid the cross at the click. In no game run: the original's locator panel
+mid-slide, so the order at a tie of depth; Full Simulation (not asked: the arm is either mode's); the other three themes.
 
 ### The camcorder button's line (Q428)
 
@@ -1192,6 +1210,8 @@ its tag was gone 33 s after it came.
 | The arm's travel | a tenth of the panel's width and 208, ten times: 820 with the bar, 520 with the camcorder panel | the same (Q427) |
 | The arm's sounds (`0x1c` as it starts, `0xc2` as it is in) | played | played, cat_ui at the effects' own volumes (Q427); not heard in either game |
 | The panel's children as it comes out | each shown as its right edge passes the body's | the same (Q427) |
+| A carried panel's depth | 3, its parts 5 and theirs 7: behind the body and the retract button | the same (Q445); a locator's buttons, at 7 under their group, are drawn after the retract button, the order at one depth not decoded |
+| The retract button through the slide in | switched off and drawn | the same, but it stops the pointer (Q445) |
 | The bar's text | the middle panel's, over the right slice | the same lettering; the right slice is put in the tree before the middle one so that it is drawn under it. At 1280 x 720 font 6 is a smaller face than the original's at 1024 x 768, so the line breaks fall later |
 | The two stacked buttons | 21 types | dressed for every type whose mesh is a file of `ui.wad` (not `b_loan` and `b_pkinfo`, nodes of files not looked up); types 3, 9 to `0x11` and `0x18` act (`advisor-park.md`, "A park with no ride in it", "Worn rides and no mechanic"), the rest counted `TAG_BAR_BUTTON` |
 | Advisor message `0x11c` | posted with the bar, withdrawn as it leaves | the same (`advisor-park.md`, "The line of an opened tag message") |

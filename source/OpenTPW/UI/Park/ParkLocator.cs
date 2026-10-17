@@ -98,7 +98,9 @@ internal sealed class ParkLocator
 	/// <param name="down">How far down, the same for both: their middles on the arm's.</param>
 	internal ParkLocator( UiControl arm, UiControl root, (int Staff, int Visitors) across, int down )
 	{
-		StaffPanel = arm.Add( new UiControl { Id = 0x95c, Rect = new UiRect( 474, 1159, 941, 1470 ), PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
+		// Each panel at the arm's carried depth, its buttons two under the group's, at 7 with the retract button: which of
+		// the two the original draws first at one depth is not decoded, and here the retract button, linked first, is.
+		StaffPanel = arm.Add( new UiControl { Id = 0x95c, Rect = new UiRect( 474, 1159, 941, 1470 ), Depth = ParkGadget.CarriedDepth, PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
 		_staffButtons = StaffPanel.Add( new UiRadioGroup
 		{
 			Id = 0x95d,
@@ -115,7 +117,7 @@ internal sealed class ParkLocator
 		Button( _staffButtons, 0x961, new UiRect( 602, 1320, 705, 1422 ), 484, "b_senter" );
 		Button( _staffButtons, 0x962, new UiRect( 771, 1207, 873, 1310 ), 485, "b_sguard" );
 
-		VisitorPanel = arm.Add( new UiControl { Id = 0x963, Rect = new UiRect( -37, 1159, 429, 1470 ), PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
+		VisitorPanel = arm.Add( new UiControl { Id = 0x963, Rect = new UiRect( -37, 1159, 429, 1470 ), Depth = ParkGadget.CarriedDepth, PinAcross = Anchor.Left, PinDown = VerticalAnchor.Bottom } );
 		_visitorButtons = VisitorPanel.Add( new UiRadioGroup
 		{
 			Id = 0x95d,

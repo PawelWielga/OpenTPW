@@ -47,13 +47,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 Q444 and Q445 come first: defects a player meets, found by the review of the run of 2026-10-16/17 (its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`).
 
-- [ ] **Q445. The gadget's sliding panels drawn behind its body, as the original's.** From the run review (q427). The
-  arm's message `0xa` sets a panel's depth to its linked depth less three (`0x004a15bf` to `0x004a15cd`, `FUN_0065f16b`):
-  the panel at 3, its children at 5, under the body (8) and the retract button (7), so a sliding bar's text is cut off
-  where it passes behind the body. Ours gives the panels the default depth 6 (`ParkGadget._bar`, `_carried`,
-  `ParkLocator`), so their text runs over the body and the retract cross. Also: the original keeps the retract cross drawn
-  through the whole slide in (its film, frames 188-193); ours hides it at the click. `hud.md` calls the bar's slide
-  "alike": correct it. Confirm: the bar and the camcorder panel sliding out and in, frame beside the original's film.
 - [ ] **Q446. A member of staff entered in the cells they walk, so a world click finds them where they stand.** Q444's
   piece (2). Staff are entered in a cell's list only when hired or put down (`ParkPeople.Hire`, `DropStaff`), never as
   they walk, so a click on (47,25) of the stock park opens Mike Cooper's window after he has walked off, and Q444's run

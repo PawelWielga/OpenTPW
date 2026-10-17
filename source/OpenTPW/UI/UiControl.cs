@@ -122,7 +122,7 @@ internal class UiControl
 	/// </summary>
 	public bool DrawsByDepth { get; init; }
 
-	private int DrawDepth => Depth ?? (Parent is { } parent ? parent.DrawDepth + 2 : 0);
+	internal int DrawDepth => Depth ?? (Parent is { } parent ? parent.DrawDepth + 2 : 0);
 
 	internal bool Hovered { get; set; }
 

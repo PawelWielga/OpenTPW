@@ -129,6 +129,16 @@ internal sealed class ParkGadget : UiWindow
 	private const int ArmBottom = 1495;
 	private const int BodyRight = 439;
 
+	/// <summary>The arm's depth, behind the body's 8, and its end's.</summary>
+	private const int ArmDepth = 4;
+
+	/// <summary>
+	/// The depth of a panel the arm carries: the arm's 0xa links it under the arm, which gives it the arm's depth and two
+	/// (FUN_0065f447), then sets it three less (0x004a15bf to 0x004a15cd, FUN_0065f16b), so its parts at 5 and theirs at 7
+	/// pass behind the body (8), the retract button (7) and the handle (9) as it slides.
+	/// </summary>
+	internal const int CarriedDepth = ArmDepth + 2 - 3;
+
 	/// <summary>
 	/// How far the arm goes out with a panel this wide: ten steps of a tenth of its width, the body's right edge less the
 	/// arm's left, and a hundred, a whole division (<c>0x004a16d7</c>).
@@ -293,7 +303,7 @@ internal sealed class ParkGadget : UiWindow
 			Id = 0x21,
 			Rect = new UiRect( 331, 1069, 1006, 1495 ),
 			Mesh = _armMesh = UiMesh.Get( "panel" ),
-			Depth = 4,
+			Depth = ArmDepth,
 			StopsPointer = true,
 
 			// It reaches out past the body, so UiControl.Add will not let it follow the body's corner and
@@ -316,7 +326,7 @@ internal sealed class ParkGadget : UiWindow
 			Id = 0x22,
 			Rect = new UiRect( 1006, 1069, 1071, 1382 ),
 			Mesh = _armEndMesh = UiMesh.Get( "panelend" ),
-			Depth = 4,
+			Depth = ArmDepth,
 			StopsPointer = true,
 			PinAcross = Anchor.Left,
 			PinDown = VerticalAnchor.Bottom
@@ -337,9 +347,11 @@ internal sealed class ParkGadget : UiWindow
 		// "Left-click to close this arm" - UIHELPTEXT row 481. It goes away with the arm, because it is
 		// inside it, which is also how it comes to follow the arm's corner without being told to.
 		//
-		// With the arm in the original switches this button off, calling the control's vtable+0x14 with 0
-		// exactly as it does for the readouts that are shown but never clicked, and a control switched off
-		// takes no pointer; here it is hidden while the arm is in or coming in (see BuildIn). The red cross it shows is not the disabled part of b_retract: b_retract.md2's six
+		// Coming in the original switches this button off, calling the control's vtable+0x14 with 0 exactly
+		// as it does for the readouts that are shown but never clicked, and it stays drawn through the slide
+		// until the handle stands over it; here it is switched off through the slide and hidden at rest in
+		// (see BuildIn), and switched off it still stops the pointer, doing nothing, where the original's
+		// hit test passes over it. The red cross it shows is not the disabled part of b_retract: b_retract.md2's six
 		// nodes are b_retract, disable, hilite, hidown, helddown and down - UiButton's own order - so part
 		// 0 is the NORMAL look, and a button that closes something simply looks like a cross.
 		_retract = _arm.Add( new UiButton
@@ -359,7 +371,8 @@ internal sealed class ParkGadget : UiWindow
 		var carried = _carried = _arm.Add( new UiControl
 		{
 			Id = 0x62,
-			Rect = new UiRect( 466, 1316, 785, 1469 )
+			Rect = new UiRect( 466, 1316, 785, 1469 ),
+			Depth = CarriedDepth
 		} );
 
 		carried.Add( new UiButton
@@ -388,6 +401,7 @@ internal sealed class ParkGadget : UiWindow
 		{
 			Id = 0x10d2d,
 			Rect = new UiRect( 486, 1112, 1101, 1453 ),
+			Depth = CarriedDepth,
 			PinAcross = Anchor.Left,
 			PinDown = VerticalAnchor.Bottom
 		} );
@@ -781,6 +795,7 @@ internal sealed class ParkGadget : UiWindow
 		_arm.Mesh = _armMesh;
 		_armEnd.Mesh = _armEndMesh;
 		_retract.Visible = true;
+		_retract.Enabled = true;
 
 		StartsOut( panel );
 	}
@@ -788,7 +803,7 @@ internal sealed class ParkGadget : UiWindow
 	/// <summary>
 	/// The arm's 0xb, in (0x004a1793): nothing with no panel carried; else the panel is told it starts in (0x1001d8),
 	/// the step is a tenth of the arm's left less the handle's, from wherever the arm stands, so a slide out turns
-	/// back where it is; the retract button is off and sound 0x1c plays.
+	/// back where it is; the retract button is switched off, still drawn, and sound 0x1c plays.
 	/// </summary>
 	private void SlideIn()
 	{
@@ -799,7 +814,7 @@ internal sealed class ParkGadget : UiWindow
 
 		_step = -_armTravel / SlideSteps;
 		Start( ArmMove.In );
-		_retract.Visible = false;
+		_retract.Enabled = false;
 	}
 
 	private void Start( ArmMove move )
@@ -869,6 +884,7 @@ internal sealed class ParkGadget : UiWindow
 			_onArm = null;
 			_arm.Mesh = null;
 			_armEnd.Mesh = null;
+			_retract.Visible = false;
 
 			if ( panel != null )
 				panel.Visible = false;
@@ -943,8 +959,8 @@ internal sealed class ParkGadget : UiWindow
 	/// <b>Not the original's in two ways.</b> At rest in, the arm and its end draw nothing here, where the original draws
 	/// them fitted to their narrowed rectangles, as it draws the arm through a slide; every point of both rectangles is
 	/// inside the body's outline or the handle's, so nothing of them shows either way. And the retract button is hidden
-	/// while the arm is in or coming in, where the original switches it off and keeps it behind the handle
-	/// (docs/exe/hud.md, "The arm's handler").
+	/// at rest in, where the original keeps it drawn, switched off, behind the handle (docs/exe/hud.md, "The arm's
+	/// handler").
 	/// </remarks>
 	private void BuildIn()
 	{
@@ -1168,8 +1184,20 @@ internal sealed class ParkGadget : UiWindow
 
 	/// <summary>The bar, its text and buttons, the arm's handle, its move and what it carries, for the debug console's <c>tags</c>.</summary>
 	internal string BarCensus() => $"bar: out={(BarOut ? 1 : 0)} rect={Edges( _bar.Rect )} arm={Edges( _arm.Rect )} handle={Edges( _armEnd.Children[0].Rect )}"
-		+ $" move={Moving} carried={(_onArm is { } carried ? $"{carried.Id:x}@{Edges( carried.Rect )}/shown={(carried.Visible ? 1 : 0)}" : "none")} waiting={_waiting?.Id.ToString( "x" ) ?? "none"}"
+		+ $" move={Moving} carried={(_onArm is { } carried ? $"{carried.Id:x}@{Edges( carried.Rect )}/shown={(carried.Visible ? 1 : 0)}/depth={carried.DrawDepth}/{Behind( carried )}" : "none")} waiting={_waiting?.Id.ToString( "x" ) ?? "none"}"
+		+ $" retract={(!_retract.Visible ? "hidden" : _retract.Enabled ? "on" : "off")}"
 		+ $" first={Button( _barFirst )} second={Button( _barSecond )} erase={Button( _barErase )} camcorder={(_camcorder.IsDown ? 1 : 0)} text=\"{(BarOut ? _barText.Text : null)}\"";
+
+	/// <summary>How many of a carried panel's shown parts are drawn before the body, and how many before the retract button, of how many.</summary>
+	private string Behind( UiControl panel )
+	{
+		var order = _arm.Parent!.DrawOrder();
+		var parts = order.Where( control => control != panel && IsIn( control, panel ) ).ToList();
+		return $"behind body {parts.Count( part => order.IndexOf( part ) < order.IndexOf( _arm.Parent ) )}"
+			+ $" retract {parts.Count( part => order.IndexOf( part ) < order.IndexOf( _retract ) )} of {parts.Count}";
+
+		static bool IsIn( UiControl control, UiControl panel ) => control.Parent is { } parent && (parent == panel || IsIn( parent, panel ));
+	}
 
 	private static string Button( UiButton button ) => button.Visible ? $"{button.Mesh?.Name ?? "none"}/help={button.HelpText}" : "hidden";
 

@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace OpenTPW.Tests;
@@ -125,14 +126,17 @@ public class ParkGadgetPressTests
 
 		Assert.IsTrue( stack.ClickAt( 389, 1426 ), "the retract button, 0x24" );
 
-		Assert.AreEqual( (true, UI.ParkGadget.ArmMove.In, false), (gadget.ArmOut, gadget.Moving, Find( gadget, 0x24 ).Visible), "coming in, the retract button off" );
+		var retract = (UI.UiButton)Find( gadget, 0x24 );
+		Assert.AreEqual( (true, UI.ParkGadget.ArmMove.In, true, false), (gadget.ArmOut, gadget.Moving, retract.Visible, retract.Enabled), "coming in, the retract button switched off and drawn" );
 		gadget.Slide( 100f );
 		Assert.AreEqual( (591, 222), (Find( gadget, 0x23 ).Rect.Left, panel.Rect.Left), "five steps of -52" );
+		Assert.IsTrue( retract.Visible, "still drawn half way in" );
 		gadget.Slide( 100f );
 		Assert.AreEqual( (331, true), (Find( gadget, 0x23 ).Rect.Left, gadget.ArmOut), "in, and the panel still on it" );
 		gadget.Slide( 20f );
 
 		Assert.AreEqual( (false, false, UI.ParkGadget.ArmMove.Rest), (gadget.ArmOut, panel.Visible, gadget.Moving) );
+		Assert.IsFalse( retract.Visible, "hidden at rest in" );
 		Assert.AreEqual( 0x23, Under( gadget, 460, 1310 ), "and the handle is back" );
 		Assert.IsNull( Under( gadget, 850, 1150 ) );
 	}
@@ -267,8 +271,51 @@ public class ParkGadgetPressTests
 		Settle( gadget );
 
 		CollectionAssert.AreEqual(
-			new[] { 0x21, 0x22, 0x62, 0x24, 0x1d, 0x63, 0x64, 0x23, 0x1e, 0x20, 0x25, 0x1f, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b },
-			Find( gadget, 0x1d ).DrawOrder().Select( control => control.Id ).ToArray(), "the arm out" );
+			new[] { 0x62, 0x21, 0x22, 0x63, 0x64, 0x24, 0x1d, 0x23, 0x1e, 0x20, 0x25, 0x1f, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b },
+			Find( gadget, 0x1d ).DrawOrder().Select( control => control.Id ).ToArray(), "the arm out, its panel at 3 and the buttons at 5" );
+	}
+
+	/// <summary>
+	/// <b>Every panel the arm carries is drawn behind the body and the retract button</b>: the arm's 0xa sets the panel
+	/// three under the depth its link gave it (0x004a15bf to 0x004a15cd), the arm's 4 and two less three, so 3, its
+	/// parts 5 and theirs 7, all before the retract button's 7 and the body's 8 - the camcorder panel, the message bar
+	/// and both locators' panels, each shown whole as it stands half way out. A locator's buttons, under a group, stand
+	/// at 7 with the retract button.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> any one panel left at its parent's depth and two; the carried depth the arm's less three, not
+	/// its link's.
+	/// </remarks>
+	[TestMethod]
+	public void EveryCarriedPanelIsDrawnBehindTheBody()
+	{
+		foreach ( var id in new[] { 0x62, 0x10d2d, 0x95c, 0x963 } )
+		{
+			var (_, gadget) = AGadget();
+			var panel = Find( gadget, id );
+			Show( panel );
+			Find( gadget, 0x24 ).Visible = true;
+
+			var order = Find( gadget, 0x1d ).DrawOrder().Select( control => control.Id ).ToList();
+			var parts = Everything( panel ).Select( control => control.Id ).ToList();
+
+			Assert.AreEqual( 0, order.IndexOf( id ), $"0x{id:x} at 3, before the arm at 4" );
+			Assert.IsTrue( order.IndexOf( 0x21 ) < order.IndexOf( parts[1] ), $"0x{id:x}'s parts at 5, over the arm" );
+			Assert.IsTrue( panel.Children.All( part => order.IndexOf( part.Id ) < order.IndexOf( 0x24 ) ), $"0x{id:x}'s parts behind the retract button" );
+			Assert.IsTrue( parts.All( part => order.IndexOf( part ) < order.IndexOf( 0x1d ) ), $"0x{id:x} wholly behind the body" );
+			Assert.IsTrue( order.IndexOf( 0x24 ) < order.IndexOf( 0x1d ), "the retract button behind the body" );
+		}
+
+		static void Show( UI.UiControl control )
+		{
+			control.Visible = true;
+
+			foreach ( var child in control.Children )
+				Show( child );
+		}
+
+		static IEnumerable<UI.UiControl> Everything( UI.UiControl control )
+			=> control.Children.SelectMany( Everything ).Prepend( control );
 	}
 
 	/// <summary>

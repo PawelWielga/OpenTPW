@@ -906,7 +906,9 @@ GH=766` there, or the pointer is off):
   read what a click did at once give the click 0.02 s (`q311/confirm.py`, Q311).
 - **The arm's slide, step by step** (Q427): here, click under `pause` and `step` the frames (16.7 ms each against the
   arm's 20 ms timer; 2, 4, 7, 10 and 14 frames are 1, 3, 5, 8 and 10 steps, clear of the boundaries), `tags` reading
-  `handle=`, `move=`, `carried=` and `waiting=` after each (`q427/confirm.py`). The console's `control` takes the id in
+  `handle=`, `move=`, `carried=` and `waiting=` after each (`q427/confirm.py`); `carried=` ends `/depth=N/behind body
+  N retract N of N` (how many of the panel's shown parts draw before the body and before the cross) and `retract=` reads
+  `on`, `off` or `hidden` (Q445, `q445/confirm.py`). The console's `control` takes the id in
   hex (`control 27` is the camcorder button). In the original, `bar.py` polls each step and `record.sh` films it; a
   second action inside the 0.22 s slide is one `xdotool` call after the click's release (`mouseup 1 sleep 0.03 keydown
   Control_L keydown s ...`, `q427/orig/run.sh` with `C=1`). Break the ride AFTER `loadfile.sh` comes back, not inside

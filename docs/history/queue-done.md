@@ -7418,6 +7418,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   original's pick for staff first). Confirm: both games, a locator open, a click on bare ground and on a path arming
   nothing; a guest clicked with the visitors' locator open; a click where a member stood after he walked off opening
   nothing; tests for each.
+- [x] **Q445. The gadget's sliding panels drawn behind its body, as the original's.** Done 2026-10-17: every carried
+  panel at depth 3 (`ParkGadget.CarriedDepth`), the cross drawn switched off through the slide in; `q445/run1` 5 of 5,
+  `tags` `behind body 6 retract 6 of 6` at 987, frames beside the original's film (`q445/side-by-side.png`); mutations
+  10 of 10. Left: a locator's buttons tie the cross at 7 (the original's order at one depth not decoded). From the run review (q427). The
+  arm's message `0xa` sets a panel's depth to its linked depth less three (`0x004a15bf` to `0x004a15cd`, `FUN_0065f16b`):
+  the panel at 3, its children at 5, under the body (8) and the retract button (7), so a sliding bar's text is cut off
+  where it passes behind the body. Ours gives the panels the default depth 6 (`ParkGadget._bar`, `_carried`,
+  `ParkLocator`), so their text runs over the body and the retract cross. Also: the original keeps the retract cross drawn
+  through the whole slide in (its film, frames 188-193); ours hides it at the click. `hud.md` calls the bar's slide
+  "alike": correct it. Confirm: the bar and the camcorder panel sliding out and in, frame beside the original's film.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
