@@ -50,9 +50,23 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
-The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
+Q479 is first at Alexah's word (2026-10-17). The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
+- [ ] **Q479. Why our picture looks washed out against the original's. Decode first.** Asked by Alexah (2026-10-17),
+  from `q472/side-by-side.png`: at one camera every colour of ours is paler and bluer than the original's - the grass
+  (the original's dark and mottled with brown dirt patches, ours an even bright green), the sea, the brick walk. Means:
+  `q472/orig/a-A2.png` about (39, 68, 19), `q472/run2/G8.png` about (71, 92, 89), HUD in both. The lead, read from our
+  code and not yet measured: `content/shaders/test.shader` (the ground, paths, hoardings, every model) and
+  `water.shader` mix every pixel toward `Level.FogColour` (jungle's `ThemeEngine.FogColour`, pale blue (72, 216, 248))
+  by `exp( distance x 0.01 ) x Level.FogDensity` (0.025), a formula and density nobody decoded; a rough sum puts about
+  0.3 of fog in our grass at that camera, which fits its blue of 89 against 19. The original sets `FOGENABLE`
+  (`render-states.md`, `FUN_00567620`) with a mode, start, end or density not read. Find what makes the difference,
+  measured, not guessed: the original's fog state (mode, start, end, density, colour) read live (`tpwmem.py`) and in
+  the listing; then, with our fog off, what is left: the light (`park-engine.md`, "The lighting model"), each cell's
+  ground texture (`original/groundcell.py`), any second layer or detail texture (the dirt patches), filtering, and
+  the frame's gamma. Measure first: one frame pair at one camera (`lib/bothcam.py`), a grass, sea and brick patch's
+  mean in each, and the same with our fog off. The session is the decode and the measurement; the build is a new item.
 - [ ] **Q472b. Build the picker's heightfield and its last cell.** From Q472 (`park-engine.md`, "The picker never hands
   the mode a cell off the map"). `ParkPicking.Resolve` meets the ground only over the heightfield (`HeightAtWorld` holds
   the edge height past it, so ours answers (98,40) past the last column and (40,85) past the last row, map type 7, and
@@ -101,6 +115,15 @@ The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its f
   (`0x1be`, 446, `0x004874ab`) and `HOVER_TYPE_15_ROW` (`0x1c0`, 448, `0x00487742`). Decode each arm's tests first (the
   object's VARM value and the rows its kinds take, `0x00487665` to `0x00487728`), then build the queue's and the
   object's, which every Lost Kingdom park reaches. Confirm in both games: the pointer over a ride, a shop and a queue.
+- [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
+  listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
+  the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for
+  each sprite with flags `0x200` and `0x10000000`. It uses the `alphkid` texture `0x00550950` loads into the sprite
+  list's `+0x2400` when `[0x008bcbc8]` has `0x40000`, and the sprite's own picture when neither `0x20000` nor `0x40000`
+  is set; the detail files' SPRITESHADOW (0, 1, 2 in low, med, high) is inferred to set those bits (`0x0044da97`, key
+  order only), and the reference run read `0x1444100` (alphkid on). Ours draws none (`ride-operation.md`, "no shadow";
+  Q32 lists shadows among the keys nothing reads). Decode the pass's placement and colour first, then build it at the
+  reference's setting. Confirm by a frame pair in both games at one camera (`lib/bothcam.py`).
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
