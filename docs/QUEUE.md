@@ -47,16 +47,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 At Alexah's word (2026-10-17), Q260 and Q440 (the cameras) come first: testing against the original waits on them.
 Q441, Q260's build, follows Q440 (its tool sets the original's camera for the comparison).
 
-- [ ] **Q441. Build the lens: the park's 53.13 and the lobby's `ISLANDFOV` through the same law.** From Q260
-  (`park-engine.md`, "The lens: 90 handed to the projection, 53.13 drawn"). `ParkOrbitCameraMode` and
-  `ParkCamcorderCameraMode` ask for 90 where the original draws `2 atan( 1/2 )` = 53.13 degrees top to bottom at 4:3
-  (67.38 across); `LobbyCameraMode` asks for a fixed 60 that Alexah chose by eye (2026-09) between two readings of
-  `ISLANDFOV`, where the file's 100 through the law draws 61.58. Ask Alexah before changing the lobby's 60: it was
-  their call, and the law's number is now known. Check what follows a narrower picture: our picking (the pointer's cell),
-  the culler, the HUD's world markers, the camera's limits and everything a confirm script aims through
-  (`lib/cellprobe.py`, `original_view`, `q435/confirm.py`'s 360/768). Confirm: our frame at the original's camera
-  numbers laid on the original's whole, not its middle half (`q260/confirm.py` gives the cells and the camera), the
-  camcorder beside the original's first person, and the lobby at the number chosen.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

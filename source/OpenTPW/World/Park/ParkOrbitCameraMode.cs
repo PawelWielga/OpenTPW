@@ -1,4 +1,4 @@
-using NeoVeldrid;
+﻿using NeoVeldrid;
 using System.Numerics;
 
 namespace OpenTPW;
@@ -140,30 +140,27 @@ public sealed class ParkOrbitCameraMode : CameraMode
 	/// <summary>How fast the point of interest scrolls, in world units a second. Provisional - see Update.</summary>
 	private const float ScrollSpeed = 200f;
 
+	/// <summary>
+	/// The angle the original's park camera hands its projection: pi/2 at its reset (<c>FUN_0042a990</c>,
+	/// <c>0x0042aa2f</c>), near 0.1, far 1000.
+	/// </summary>
+	internal const float HandedAngle = 90f;
+
+	/// <summary>
+	/// The picture the park draws, 53.13 degrees top to bottom at 4:3 and 67.38 across: the handed 90
+	/// through the original's screen scale (<see cref="Camera.DrawnAngle"/>). The camcorder's first person
+	/// draws with the same lens.
+	/// </summary>
+	/// <remarks>
+	/// The far plane stays Camera's own 10000 rather than the original's 1000. Nothing here depends on it -
+	/// it costs only depth precision - so it is left alone rather than reaching into shared code to suit one
+	/// camera.
+	/// </remarks>
+	public static float Lens => Camera.DrawnAngle( HandedAngle );
+
 	public ParkOrbitCameraMode()
 	{
-		// The original's park projection is 90, near 0.1, far 1000, and the 90 is a VERTICAL angle.
-		//
-		// Both halves of that are read out of the exe. FUN_00578be0 builds the matrix
-		// from a half-angle - _DAT_007018b8 is pi/180 and _DAT_007018c0 is 0.5 - and writes
-		// m[0] == m[5] with no aspect term, which on its own leaves the convention open. What closes
-		// it is the CULLING frustum, which has to frame the same volume the matrix draws or geometry
-		// would pop at the edge of the screen: FUN_0056bb00 builds its four corner rays as
-		// (+/-fVar1/DAT_008bcbcc, +/-fVar1, 1). With the 4:3 that every shipped mode except 1280x1024
-		// uses, that is (+/-1.333, +/-1.0, 1) - a vertical half-angle of 45 and a horizontal one of
-		// 53.13. So vertical 90, horizontal 106.26, which is exactly what CameraMode's angle already
-		// means. DAT_008bcbcc is written at runtime through a struct pointer and reads 0.75 in the
-		// running original at 1024 x 768; the picking code carries the same figure as a literal
-		// double and takes atan(0.75) to build the same frustum (FUN_0045bf90).
-		//
-		// The reference screenshots cannot check this - see docs/exe/park-engine.md, "Do not try to
-		// measure the FOV from the reference screenshots". Any difference in how much sky the two show
-		// is content, not lens: the original's parks are full of rides and trees that stop the eye.
-		//
-		// The far plane stays Camera's own 10000 rather than the original's 1000. Nothing here depends
-		// on it - it costs only depth precision - so it is left alone rather than reaching into shared
-		// code to suit one camera.
-		FieldOfView = 90f;
+		FieldOfView = Lens;
 
 		// Already over the point of interest before anything reads the camera - see Place. The ground
 		// is PEEKED rather than sampled, for the reason ParkCamcorderCameraMode.PeekGround gives: the

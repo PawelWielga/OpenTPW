@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -88,7 +88,7 @@ public class LobbyCountedGapsTests
 	private static int Times( string what ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == what ).Times;
 
 	/// <summary>An isle made without its constructor, whose model has no clips to play.</summary>
-	private static LobbyIsland AnIsle()
+	internal static LobbyIsland AnIsle()
 	{
 		var model = (LobbyModel)RuntimeHelpers.GetUninitializedObject( typeof( LobbyModel ) );
 		SetField( model, "<Animators>k__BackingField", Array.Empty<MeshAnimator>() );
@@ -99,10 +99,10 @@ public class LobbyCountedGapsTests
 		return isle;
 	}
 
-	private static void SetCurrentPlayer( Player? player )
+	internal static void SetCurrentPlayer( Player? player )
 		=> typeof( Players ).GetProperty( nameof( Players.Current ) )!.SetValue( Players.Roster, player );
 
-	private static void SetField( object target, string field, object? value )
+	internal static void SetField( object target, string field, object? value )
 	{
 		for ( var type = target.GetType(); type != null; type = type.BaseType )
 		{

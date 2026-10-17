@@ -325,8 +325,9 @@ Separate from the lobby island camera. Save module `"SAD_CAMERA"`, chunk magic `
 matrix `0x0087aff0` holds the eye in its last row, (484.44, 93.62, 201.57), the formula's exactly, and its forward
 (0, -0.851, 0.525) runs through the point, so the point is the frame's middle. The draw matrix `[0x0087b088]` there
 gives x/w = 1.5 tan and y/w = 2 tan of the angle off the eye's axis: 768 pixels a unit of tangent down a 768-high frame,
-53.13 degrees top to bottom (`park.md`, the `0x0087b0d0` scale). OpenTPW at the same numbers has the same eye and a
-90 degree lens: its 1280 x 720 frame's middle 480 x 360, scaled by 768/360, lays on the original's (`q435/side-by-side.png`).
+53.13 degrees top to bottom (`park.md`, the `0x0087b0d0` scale). OpenTPW at the same numbers has the same eye and,
+since Q441, the same lens: its 1280 x 720 frame's middle 960 x 720, scaled by 768/720, lays on the original's whole
+frame (`q441/side-by-side.png`).
 
 **The turn** (Q440, decoded and measured). The update builds the eye's offset as (0, sin p x zoom, -cos p x zoom)
 (`0x00790aa0` nought, `0x00790aa4`, `0x00790aa8`) and turns it by the drawn rotation `0x007909e0`: x' = x cos r + z sin r,
@@ -401,7 +402,7 @@ same), `m00` 0.64279, `m23` 0.76604, scale 1.5 and -2, aspect 0.75, so 61.58 x 7
 `m23` = 0.70711, the same scale, 53.13 x 67.38; the camcorder's pick and its first person the same 90 (the far 126,
 128 and 112 as the fog moved). Two cells named at one camera (point (494.975, 192.002), zoom 110, rotation 0) stood at
 702,254 and 281,489 of the original's 1024 x 768 frame and at (729, 299) and (532, 409) of OpenTPW's 1280 x 720, which
-is (640, 360) + (the original's - (512, 384)) x 360 / 768 to the pixel: OpenTPW's picture is 90 degrees, twice the
+is (640, 360) + (the original's - (512, 384)) x 360 / 768 to the pixel: OpenTPW's picture was 90 degrees then, twice the
 original's tangent (`q260/side-by-side.png`, `q260/overlay.png`). Rotation 0 only; other rotations are Q440's.
 
 **Why it was read as 90 before.** The builder alone writes `m00 == m11` with no aspect term, and the culling frustum
@@ -410,8 +411,16 @@ that: the culler frames more than is drawn. And the two readings of the original
 and "closer" (Q357) at the same numbers were the lens alone: the eye is the same (Q435), and the original's frame
 shows the middle half, each way, of what a 90 degree lens shows, so everything stands twice as large in it.
 
-OpenTPW's `Camera` takes a camera mode's `FieldOfView` as its vertical angle at 4:3, and both park camera modes ask
-for 90; the original's picture is a vertical 53.13 at 4:3 (Q441 builds it).
+**OpenTPW draws the same lens** (Q441). `Camera.DrawnAngle( a )` is the law, and a camera mode's `FieldOfView` is the
+picture's vertical angle at 4:3: both park camera modes take `DrawnAngle( 90 )`, 53.13 (`ParkOrbitCameraMode.Lens`), and
+the lobby `DrawnAngle( ISLANDFOV )`. At 4:3 the projection is the original's draw matrix, x/w 1.5 and y/w 2 a unit of
+tangent, and the pointer's ray reaches 0.667 across and 0.5 down a unit ahead, `FUN_0045bf90`'s figures; a wider window
+keeps the height and sees further to the sides. The log says each mode's lens once (`Camera: ParkOrbitCameraMode lens
+53.13 high at 4:3, across 0.6667 there and 0.8889 at 1280 x 720`). Measured (Q441, at point (495, 285), zoom 110,
+rotations 0, 90 and 180): the original's cells at 512,588 and 677,588 stood under 640,551 and 795,551 of the 1280 x 720
+window, (640, 360) + (the original's - (512, 384)) x 720 / 768, on the first probe; the camcorder at the original's
+first-person eye (495.55, 5, 284.35) draws its gate at the same size and place (`q441/camcorder.png`). The culler and
+the far plane are not the original's: OpenTPW culls nothing on the processor and its far plane is 10000.
 
 ### Also mapped on the way
 

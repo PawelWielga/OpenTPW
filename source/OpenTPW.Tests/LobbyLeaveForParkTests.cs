@@ -236,7 +236,7 @@ public class LobbyLeaveForParkTests
 
 		var asked = 0;
 		var askedAgain = 0;
-		var settings = new LobbyCameraMode.CameraSettings( SpinRadius: 70f, VerticalOffset: 20f );
+		var settings = new LobbyCameraMode.CameraSettings( SpinRadius: 70f, VerticalOffset: 20f, IslandFov: 100f );
 
 		LobbyCameraMode.LeaveForPark( () => ++asked );
 

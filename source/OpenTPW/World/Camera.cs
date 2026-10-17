@@ -31,6 +31,57 @@ public static class Camera
 
 	private static CameraMode CameraMode = new();
 
+	/// <summary>
+	/// The vertical picture at 4:3 that a view handed <paramref name="handedDegrees"/> draws in the
+	/// original: <c>2 atan( tan(a/2) / 2 )</c>. Its draw matrix multiplies the screen scale
+	/// <c>0x0087b0d0</c>, diag( 1.5, -2 ) at 4:3, in after the projection (<c>FUN_005783b0</c>), so every
+	/// view shows half the tangent it asked for (<c>docs/exe/park-engine.md</c>, "The lens"): the park's
+	/// 90 draws 53.13, the lobby's ISLANDFOV 100 draws 61.58.
+	/// </summary>
+	public static float DrawnAngle( float handedDegrees )
+		=> (2f * MathF.Atan( MathF.Tan( handedDegrees.DegreesToRadians() * 0.5f ) / ScreenScale )).RadiansToDegrees();
+
+	/// <summary>The screen scale's vertical term, the -2 at <c>0x0087b0e4</c> (its sign is the screen's flip).</summary>
+	private const float ScreenScale = 2f;
+
+	/// <summary>The camera mode, lens and window shape last logged, so the log says each once.</summary>
+	private static (Type? Mode, float Angle, float Aspect) _logged;
+
+	/// <summary>
+	/// The projection for a picture <paramref name="verticalDegrees"/> high at 4:3 on a window of
+	/// <paramref name="aspect"/>, and how far it reaches sideways one unit ahead, there and at 4:3.
+	/// </summary>
+	internal static (Matrix4x4 Projection, float Across, float ReferenceAcross) Lens( float verticalDegrees, float aspect )
+	{
+		// Its own floor under the aspect, so a window with no area at all - one that has just been
+		// minimised - cannot put a NaN through the projection and out into everything drawn with it.
+		aspect = MathF.Max( aspect, 0.01f );
+
+		// The angle a camera mode asks for is its vertical angle at 4:3, the shape it was set at.
+		//
+		// A window wider than that keeps it and sees further out to the sides, which is what a fixed
+		// vertical angle has always done here and is what a wider screen should buy. A window
+		// narrower than 4:3 would, by the same rule, see less across than the original ever showed -
+		// at 3:4 not much over half of it - and the lobby's islands would be cropped off the sides of
+		// a tall window. So below 4:3 it is the horizontal angle that is held at its 4:3 value and
+		// the vertical one that opens up instead. Either way everything the original framed at 4:3 is
+		// still on the screen, and at 4:3 itself the two rules meet and nothing changes.
+		var vertical = verticalDegrees.DegreesToRadians();
+		var reference = MathF.Tan( vertical * 0.5f ) * ReferenceAspect;
+
+		if ( aspect < ReferenceAspect )
+			vertical = 2f * MathF.Atan( MathF.Tan( vertical * 0.5f ) * ReferenceAspect / aspect );
+
+		var projection = Matrix4x4.CreatePerspectiveFieldOfView(
+			vertical,
+			aspect,
+			0.1f,
+			10000.0f
+		);
+
+		return (projection, MathF.Tan( vertical * 0.5f ) * aspect, reference);
+	}
+
 	private static void CalcViewProjMatrix()
 	{
 		if ( CameraMode == null )
@@ -46,33 +97,17 @@ public static class Camera
 			up.GetSystemVector3()
 		);
 
-		// Its own floor under the aspect, so a window with no area at all - one that has just been
-		// minimised - cannot put a NaN through the projection and out into everything drawn with it.
-		var aspect = MathF.Max( Screen.Aspect, 0.01f );
+		var lens = Lens( CameraMode.FieldOfView, Screen.Aspect );
 
-		// The angle a camera mode asks for is its vertical angle at 4:3, the shape it was set at.
-		//
-		// A window wider than that keeps it and sees further out to the sides, which is what a fixed
-		// vertical angle has always done here and is what a wider screen should buy. A window
-		// narrower than 4:3 would, by the same rule, see less across than the original ever showed -
-		// at 3:4 not much over half of it - and the lobby's islands would be cropped off the sides of
-		// a tall window. So below 4:3 it is the horizontal angle that is held at its 4:3 value and
-		// the vertical one that opens up instead. Either way everything the original framed at 4:3 is
-		// still on the screen, and at 4:3 itself the two rules meet and nothing changes.
-		var vertical = CameraMode.FieldOfView.DegreesToRadians();
-		ReferenceHorizontalTangent = MathF.Tan( vertical * 0.5f ) * ReferenceAspect;
+		ProjMatrix = lens.Projection;
+		HorizontalTangent = lens.Across;
+		ReferenceHorizontalTangent = lens.ReferenceAcross;
 
-		if ( aspect < ReferenceAspect )
-			vertical = 2f * MathF.Atan( MathF.Tan( vertical * 0.5f ) * ReferenceAspect / aspect );
-
-		HorizontalTangent = MathF.Tan( vertical * 0.5f ) * aspect;
-
-		ProjMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
-			vertical,
-			aspect,
-			0.1f,
-			10000.0f
-		);
+		if ( _logged != (CameraMode.GetType(), CameraMode.FieldOfView, Screen.Aspect) )
+		{
+			_logged = (CameraMode.GetType(), CameraMode.FieldOfView, Screen.Aspect);
+			Log.Trace( $"Camera: {CameraMode.GetType().Name} lens {CameraMode.FieldOfView:F2} high at 4:3, across {lens.ReferenceAcross:F4} there and {lens.Across:F4} at {Screen.Width} x {Screen.Height}" );
+		}
 	}
 
 	public static void SetCameraMode<T>() where T : CameraMode

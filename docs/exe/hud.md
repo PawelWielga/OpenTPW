@@ -2521,7 +2521,7 @@ words, the same 8 squares in the same order for (51,27) and (54,26), row 26 lift
 (`q433/side-by-side.png`). **At one camera** (Q435) the lift is the original's: its camera after Mike's window
 closed, read by `original/camera.py` (point (484.442, 259.319), zoom 110, rotation 0), given here as `camera 484.442
 259.319 110 0`, puts the eye at the same (484.44, 93.62, 201.57) in both games, so the frames differ by the lens alone
-(Q260); our frame's middle 480 x 360 scaled by 768/360 lays our lifted tops of (51,26) and (52,26), y 284 to 314 here,
+(Q260); our frame's middle 480 x 360 (under the 90 degree lens then; the whole frame since Q441) scaled by 768/360 lays our lifted tops of (51,26) and (52,26), y 284 to 314 here,
 on the original's (`q435/side-by-side.png`), and the cells the original's camera put at two pixels were the cells under
 the same pixels here at the first probe. Q433's "far higher" was its two cameras (ours zoom 60, pitch 45; the
 original's 110, 58.3) and the lens. The walls a lifted square drops to a lower neighbour are drawn in both (Q436;

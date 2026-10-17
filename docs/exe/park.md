@@ -1916,7 +1916,7 @@ both on it); the rule is the listing's.
 
 **What follows for the lens:** a product of `1.5 x` and `2 x` over a 90 degree projection draws a picture 53.13
 degrees top to bottom, not 90, and it is every view's (`park-engine.md`, "The lens: 90 handed to the projection, 53.13
-drawn"; Q260). OpenTPW's park camera asks for 90 (Q441 builds it); the sprites here are built at their size in the
+drawn"; Q260). OpenTPW's park camera draws the same 53.13 (Q441); the sprites here are built at their size in the
 park, so they are right under either lens.
 
 **Who starts one.** `FUN_005573d0` (`ADDOBJ`'s and `EVENT`'s worker) cases 1 and 2 call `Particles_Spawn` and

@@ -330,9 +330,9 @@ The lobby's render camera is a second object, `0x00f83778` (`FrontEnd_Init` buil
 screen scale (`park-engine.md`, "The lens: 90 handed to the projection, 53.13 drawn") then makes the picture
 `2 atan( tan(a/2) / 2 )` top to bottom: `ISLANDFOV(100)` draws **61.58 degrees top to bottom and 76.93 across**.
 Measured (Q260, `original/lens.py`, the player list over the lobby): angle 100.000, the camera's `+4` 100.000,
-`m00` 0.64279, scale 1.5 and -2. **OpenTPW** asks for a fixed 60 (`LobbyCameraMode.FieldOfViewDegrees`, chosen by eye
-between the file read as horizontal and as vertical, before the scale was known); the file's number through the
-law is Q441's.
+`m00` 0.64279, scale 1.5 and -2. **OpenTPW** reads `ISLANDFOV` from `lobby.txt` and draws it through the same law
+(`LobbyCameraMode.LensOf`, `Camera.DrawnAngle`): 61.58 for the shipped 100, flying and orbiting alike (Q441; its fixed
+60, chosen by eye before the scale was known, gave way to the law's number at Alexah's word, 2026-10-17).
 
 ### Attract: fly the box, aim at the nearest island
 

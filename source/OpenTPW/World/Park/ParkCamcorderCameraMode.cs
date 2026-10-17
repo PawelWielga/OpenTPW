@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace OpenTPW;
 
@@ -260,8 +260,8 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 
 	public ParkCamcorderCameraMode()
 	{
-		// The same lens the orbit camera uses - see its constructor for why 90 is a vertical angle.
-		FieldOfView = 90f;
+		// The orbit camera's lens: nothing in a park hands the projection another angle.
+		FieldOfView = ParkOrbitCameraMode.Lens;
 
 		// Already standing where Enter put the viewer, before anything reads the camera - see Place.
 		// The ground is PEEKED rather than sampled: GroundUnderStand spends its one un-eased sample on

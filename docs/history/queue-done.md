@@ -7364,6 +7364,25 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   so one call puts both games on the same numbers. Confirm: both games' frames at three cameras (rotations 0, 90, 180)
   side by side, a cell's pixel predicted by `camera.py --aim` and found there by `cellfind.py`, and a click on a named
   cell landing on it in the original with a member's window open. Rows in `TOOLING.md`.
+- [x] **Q441. Build the lens: the park's 53.13 and the lobby's `ISLANDFOV` through the same law.** Done
+  2026-10-17 (`park-engine.md`, "The lens"; `lobby.md`, "The lens"): `Camera.DrawnAngle( a )` = `2 atan( tan(a/2) / 2 )`;
+  both park cameras draw `DrawnAngle( 90 )`, 53.13, and the lobby `lobby.txt`'s `ISLANDFOV` through it, 61.58 for the
+  shipped 100 (Alexah chose the law's number over the old 60, 2026-10-17, relayed by the run's coordinator). At 4:3 the
+  projection is the original's draw matrix (x/w 1.5, y/w 2) and the pointer's ray its picking's 0.667 and 0.5; picking
+  follows by `Camera.HorizontalTangent`, and nothing else projects on the processor. At (495, 285), zoom 110, rotations
+  0, 90 and 180 the original's 512,588 and 677,588 cells stood under 640,551 and 795,551 of our 1280 x 720 window on the
+  first probe, six of six, and our middle 960 x 720 lays on its whole frame; the camcorder at its first-person eye draws
+  the gate at the same size and place (`q441/side-by-side.png`, `q441/camcorder.png`, `q441/PREDICTION.txt`, 11 of 11 on
+  the final DLL; mutations 11 of 11). From Q260
+  (`park-engine.md`, "The lens: 90 handed to the projection, 53.13 drawn"). `ParkOrbitCameraMode` and
+  `ParkCamcorderCameraMode` ask for 90 where the original draws `2 atan( 1/2 )` = 53.13 degrees top to bottom at 4:3
+  (67.38 across); `LobbyCameraMode` asks for a fixed 60 that Alexah chose by eye (2026-09) between two readings of
+  `ISLANDFOV`, where the file's 100 through the law draws 61.58. Ask Alexah before changing the lobby's 60: it was
+  their call, and the law's number is now known. Check what follows a narrower picture: our picking (the pointer's cell),
+  the culler, the HUD's world markers, the camera's limits and everything a confirm script aims through
+  (`lib/cellprobe.py`, `original_view`, `q435/confirm.py`'s 360/768). Confirm: our frame at the original's camera
+  numbers laid on the original's whole, not its middle half (`q260/confirm.py` gives the cells and the camera), the
+  camcorder beside the original's first person, and the lobby at the number chosen.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

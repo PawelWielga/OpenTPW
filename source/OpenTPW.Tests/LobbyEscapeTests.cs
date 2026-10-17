@@ -319,7 +319,7 @@ public class LobbyEscapeTests
 	private static void Step( int frames )
 	{
 		for ( var i = 0; i < frames; ++i )
-			LobbyCameraMode.StepLeaving( new LobbyCameraMode.CameraSettings( 70f, 20f ) );
+			LobbyCameraMode.StepLeaving( new LobbyCameraMode.CameraSettings( 70f, 20f, 100f ) );
 	}
 
 	private static void PlayGate( LobbyGate gate, int frames )

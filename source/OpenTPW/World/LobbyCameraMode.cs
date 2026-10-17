@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace OpenTPW;
 
@@ -146,27 +146,12 @@ public class LobbyCameraMode : CameraMode
 	private const float DirectionRate = 1f;
 
 	/// <summary>
-	/// How wide a view the lobby is framed at, as the vertical angle at 4:3 that <see cref="Camera"/>
-	/// takes. <b>A deliberate deviation from the file, not a derivation of it - do not "correct" this
-	/// by reading ISLANDFOV.</b>
-	///
-	/// What the file asks for is now known. The original has two lobbies: Lobby_Start, the globe one
-	/// that loads data\lobby\globe, writes the camera's field itself - MOV dword ptr [EAX + 0x4],
-	/// 0x42700000, which is 60.0f, at 0x005dd034 - while IslandLobby_Start, the one that calls
-	/// IslandPanel_Create and parses each park's script, copies the file's value instead: FLD [ECX+4] /
-	/// FSTP [EAX+4] at 0x005e13fb, ECX being the lobby.txt settings block and +4 where FUN_005e2cc0 put
-	/// ISLANDFOV. The unit is the projection's - FUN_00578be0 works out <c>half = fov * (pi/180) * 0.5</c>
-	/// and fills cos(half) into m00 and m11 - so ISLANDFOV(100) is a full hundred-degree field, and
-	/// taken as the horizontal angle it comes to 83.58 vertical at 4:3.
-	///
-	/// So this camera, which is the island lobby, would take 83.58 from the file. Alexah looked at both
-	/// and chose 60, the globe lobby's number.
-	/// The wider view is faithful to the file; the narrower one frames the island better, and that is the
-	/// call being made. Measurement cannot break the tie: projecting the island mesh against the two
-	/// reference screenshots excludes the vertical reading outright, but brackets the horizontal angle
-	/// only at roughly 80 to 95 degrees and cannot separate 100 from the high eighties.
+	/// The picture the lobby draws: lobby.txt's ISLANDFOV, which the island lobby copies into its render
+	/// camera (<c>0x005e13fb</c>) and hands the projection, through the original's screen scale
+	/// (<see cref="Camera.DrawnAngle"/>). The shipped 100 draws 61.58 degrees top to bottom at 4:3
+	/// (<c>docs/exe/lobby.md</c>, "The lens").
 	/// </summary>
-	private const float FieldOfViewDegrees = 60f;
+	internal static float LensOf( CameraSettings settings ) => Camera.DrawnAngle( settings.IslandFov );
 
 	/// <summary>
 	/// Static so it survives <see cref="Camera.SetCameraMode{T}"/> creating a fresh instance.
@@ -252,7 +237,7 @@ public class LobbyCameraMode : CameraMode
 	/// camera and then pulling in from one radius to the other; this orbits the islands where
 	/// they stand instead, so nothing reads them yet.
 	/// </summary>
-	internal readonly record struct CameraSettings( float SpinRadius, float VerticalOffset );
+	internal readonly record struct CameraSettings( float SpinRadius, float VerticalOffset, float IslandFov );
 
 	public override void Update()
 	{
@@ -290,7 +275,7 @@ public class LobbyCameraMode : CameraMode
 		{
 			Attract( islands );
 
-			FieldOfView = FieldOfViewDegrees;
+			FieldOfView = LensOf( settings );
 			return;
 		}
 
@@ -329,7 +314,7 @@ public class LobbyCameraMode : CameraMode
 		Position = _position;
 		Rotation = Rotation.LookAt( _lookAt - _position );
 
-		FieldOfView = FieldOfViewDegrees;
+		FieldOfView = LensOf( settings );
 	}
 
 	/// <summary>Which part of the leaving sequence is running - see <see cref="LeaveForPark"/>.</summary>
@@ -879,30 +864,45 @@ public class LobbyCameraMode : CameraMode
 		if ( _settings is { } cached )
 			return cached;
 
+		_settings = ReadSettings();
+		Log.Info( $"Lobby camera: ISLANDFOV {_settings.Value.IslandFov:F2} handed, {LensOf( _settings.Value ):F2} drawn high at 4:3" );
+
+		return _settings.Value;
+	}
+
+	/// <summary>Reads lobby.txt's camera settings - see <see cref="CameraSettings"/>.</summary>
+	internal static CameraSettings ReadSettings()
+	{
+		using var stream = FileSystem.OpenRead( "lobby/lobby.txt" );
+
+		if ( stream == null )
+			return ReadSettings( TextReader.Null );
+
+		using var reader = new StreamReader( stream );
+		return ReadSettings( reader );
+	}
+
+	/// <summary>The camera settings in a lobby.txt's lines.</summary>
+	internal static CameraSettings ReadSettings( TextReader reader )
+	{
 		// The same values the file ships with, so a missing script changes nothing.
 		var spinRadius = 70f;
 		var verticalOffset = 20f;
+		var islandFov = 100f;
 
-		using ( var stream = FileSystem.OpenRead( "lobby/lobby.txt" ) )
+		while ( reader.ReadLine() is { } line )
 		{
-			if ( stream != null )
-			{
-				using var reader = new StreamReader( stream );
+			var trimmed = line.TrimStart();
 
-				while ( reader.ReadLine() is { } line )
-				{
-					var trimmed = line.TrimStart();
-
-					if ( LobbyScript.TryReadSetting( trimmed, "SPINRADIUS", out var value ) )
-						spinRadius = value;
-					else if ( LobbyScript.TryReadSetting( trimmed, "VERTICALOFFSET", out value ) )
-						verticalOffset = value;
-				}
-			}
+			if ( LobbyScript.TryReadSetting( trimmed, "SPINRADIUS", out var value ) )
+				spinRadius = value;
+			else if ( LobbyScript.TryReadSetting( trimmed, "VERTICALOFFSET", out value ) )
+				verticalOffset = value;
+			else if ( LobbyScript.TryReadSetting( trimmed, "ISLANDFOV", out value ) )
+				islandFov = value;
 		}
 
-		_settings = new CameraSettings( spinRadius, verticalOffset );
-		return _settings.Value;
+		return new CameraSettings( spinRadius, verticalOffset, islandFov );
 	}
 
 }
