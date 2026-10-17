@@ -641,6 +641,12 @@ public static class DebugConsole
 				Reply( Level.Current?.Hud?.Children.OfType<UI.ParkFrontEnd>().FirstOrDefault()?.Gadget.Locator.Census() ?? "no gadget" );
 				break;
 
+			case "staffwindow":
+				// The staff member's window: its member, title, figures, bars, status and buttons, or that none is up.
+				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows.OfType<UI.ParkStaffWindow>()
+					.FirstOrDefault()?.Census() ?? "staff window: none" );
+				break;
+
 			case "visitorwindow":
 				// The visitor's window: its guest, title, figures, bar and thought, or that none is up.
 				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows.OfType<UI.ParkVisitorWindow>()

@@ -126,6 +126,10 @@ internal sealed class ParkAdvisorMessages
 	internal const int StaffLocator = 198;
 	/// <summary>Message 0x11f, posted as the visitors' locator opens (FUN_004b4280) and withdrawn as the arm folds a locator away (FUN_004b3790, 0x1001d8).</summary>
 	internal const int VisitorLocator = 287;
+	/// <summary>Message 0xc0, posted as the staff member's window is built (FUN_004b6080) and withdrawn as it is destroyed (FUN_004b5cb0, event 0x14).</summary>
+	internal const int StaffWindow = 192;
+	/// <summary>Message 0xd4, posted as the staff member's window shows a member with a patrol area (FUN_004b5ab0) and withdrawn as it is destroyed.</summary>
+	internal const int StaffWindowPatrol = 212;
 	/// <summary>Message 0x12e, posted as the visitor's window is built (FUN_004b79b0) and withdrawn as it is destroyed (FUN_004b7720, event 0x14).</summary>
 	internal const int VisitorWindow = 302;
 	/// <summary>Message 0x131, posted as the camcorder button goes down (FUN_00498bb0) and withdrawn as it comes up (FUN_00498bd0) or a button on its panel is clicked (FUN_00498ad0, 0x100).</summary>
@@ -547,6 +551,8 @@ internal sealed class ParkAdvisorMessages
 		new( HireScreen, "HelpMessage.Score", 408, 381, Lines: 1, Category: Tutorial ),
 		new( StaffLocator, "HelpMessage.Score", 417, 389, Lines: 1, Category: Tutorial ),
 		new( VisitorLocator, "HelpMessage.Score", 547, 564, Lines: 1, Category: Tutorial ),
+		new( StaffWindow, "HelpMessage.Score", 411, 384, Lines: 1, Category: Tutorial ),
+		new( StaffWindowPatrol, "HelpMessage.Score", 431, 457, Lines: 1, Category: Tutorial ),
 		new( VisitorWindow, "HelpMessage.Score", 562, 580, Lines: 1, Category: Tutorial ),
 		new( CamcorderPanel, "HelpMessage.Score", 565, 583, Lines: 1, Category: Tutorial ),
 		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" ),

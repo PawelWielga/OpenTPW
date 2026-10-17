@@ -7282,6 +7282,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   kids' effect `0x81`, advisor line `0x12e`. Both games on the stock park (`q430/PREDICTION.txt`): "Visitor #13" $684
   "Queueing"/"Lining up for a ride"; the arrows 42, 41, 42, 29 ($684, $510, $684, $570 stamp 648); the list's top row 3
   and its first row Visitor #4 ($570, stamp 655) (`q430/side-by-side.png`).
+- [x] **Q431. The staff member's window (a piece of Q420).** Done 2026-10-17: `ParkStaffWindow` (`hud.md`, "The
+  person's windows"), from the locator strip's click, a member's world click and an all-staff row; its six rows
+  refilled every 4 s, the arrows on the staff, `b_locate` and Ctrl+S over it (`ParkLocator.OpenOnMember`),
+  `b_allstaff` (the list on the kind, the row picked), the preview's click, advisor lines `0xc0` and `0xd4`; the verbs
+  and the name's edit counted. Both games on the stock park (`q431/PREDICTION.txt`): "Mike Cooper", "$ 161",
+  "Patrolling"; the arrows 26, 25, 26, 27; Ctrl+S and `b_locate` on the entertainer, role 4; the list on his tab
+  (`q431/side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

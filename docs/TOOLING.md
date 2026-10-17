@@ -112,6 +112,15 @@ structure, and hand it to `loadfile.sh` through `POLL`.
 
 Each was found by trial in the item named, and cost a run to find.
 
+- **The staff member's window in either game** (Q431, `q431/orig/run.sh`, `q431/confirm.py`): Ctrl+S, the mechanics'
+  button (360,613), then the strip (380,505) of the original's 1024 x 768 frame opens it on Mike Cooper; its `b_ardown`
+  is (810,182), `b_arup` (816,138), `b_locate` (809,231), `b_allstaff` (809,284), the preview (259,206), OK (816,378),
+  and the all-staff list's first row (500,222). Here the console's `staffwindow` is its census and `control 50f` (the
+  stream's ids) its places; OK's id is -1, which `control` does not parse (and the gadget holds -1s too), so click it by the root `50a`. **An advisor
+  line's fate depends on how long a window stays up**: a Tutorial line said to its end is refused for ever after
+  (`SayOnlyOnce`), one cut three times too (`DiscardAfterSlaps`); hold a window longer than the original's run did and
+  the later posts differ (Q431's round 2): `confirm.py`'s `WAIT=0` keeps the original's pace.
+
 - **The visitor's window in either game** (Q430, `q430/orig/run.sh`, `q430/confirm.py`): opened from the strip as below;
   in the original's 1024 x 768 frame its `b_arup` is (816,138), `b_ardown` (810,182), `b_locate` (809,231), `b_kids`
   (809,284), the preview (294,199), and the visitors list's first visible row (503,171); here the console's

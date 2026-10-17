@@ -98,8 +98,16 @@ internal sealed class ParkStaffScreen : UiWindow
 	/// </summary>
 	private static int _sort = 1;
 
-	public ParkStaffScreen( WindowStack stack ) : base( stack )
+	/// <param name="kind">
+	/// The kind to open on (<c>FUN_00496620</c>'s first argument: a staff member's window's <c>b_allstaff</c>), or -1 for the
+	/// one it was last left on.
+	/// </param>
+	/// <param name="pick">A member whose row is picked and brought into view as the list fills (its second), or nought.</param>
+	public ParkStaffScreen( WindowStack stack, int kind = -1, int pick = 0 ) : base( stack )
 	{
+		if ( kind != -1 )
+			_lastKind = kind;
+
 		// Built onto the park's own layer (0x00496643) - see UiWindow.ParkScreen.
 		ParkScreen = true;
 
@@ -137,6 +145,9 @@ internal sealed class ParkStaffScreen : UiWindow
 			// A right click on the list moves the camera to the selected row's member of staff and closes the screen
 			// (0x0049602f).
 			RowRightClicked = GoTo,
+
+			// A row's 0x400 opens the member's window (0x00496088, FUN_004b6080).
+			Activated = member => ParkStaffWindow.Open( Stack, member ),
 
 			// The screen's handler keeps the list's 0x406 (0x00495fe0).
 			SortChanged = word => _sort = word,
@@ -236,6 +247,15 @@ internal sealed class ParkStaffScreen : UiWindow
 
 		_list.Build();
 		Show( _lastKind );
+
+		// The opener's last act posts the advisor's message 0x11d (FUN_00496620), which is not built.
+		Unimplemented.Report( "STAFF_LIST_ADVISOR_LINE" );
+
+		if ( pick != 0 )
+		{
+			_list.Pick( pick );
+			Log.Info( $"Staff list: member {pick} picked, selected {_list.Selected}, top row {_list.ScrollTop}" );
+		}
 
 		// Every member of staff's meter is set once, as the screen opens (FUN_00496620, FUN_004c7cc0): no tab or
 		// timer moves it. A mean over nobody reads nought, as the gadget's gauge does for a park with no guests.

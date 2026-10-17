@@ -103,7 +103,7 @@ public class ParkVisitorWindowTests
 	/// <summary>
 	/// <b>The strip's click opens the window on its guest</b> (<c>FUN_004b3c10</c>): a park screen, so the arm folds the
 	/// locator closed; titled "Visitor #" and the number, its eight labels UITEXT 70, 71, 72, 75, 73, 74, 76 and 77; the
-	/// preview counted. A member's strip still counts <c>STAFF_WINDOW</c> and opens nothing.
+	/// preview counted. A member's strip opens the staff member's window instead.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the strip's opener gone; a label's row swapped; the title's parameter or rows; the preview not counted.</remarks>
 	[TestMethod]
@@ -130,7 +130,7 @@ public class ParkVisitorWindowTests
 		ParkGadgetPressTests.Settle( _gadget );
 		Click( _gadget.Root, 0x95e );
 		Click( _gadget.Root, 0x146 );
-		Assert.AreEqual( (1, (ParkVisitorWindow?)null), (Times( "STAFF_WINDOW" ), Window) );
+		Assert.AreEqual( (0, (ParkVisitorWindow?)null, 1), (Times( "STAFF_WINDOW" ), Window, _stack.Windows.OfType<ParkStaffWindow>().Count()) );
 	}
 
 	/// <summary>

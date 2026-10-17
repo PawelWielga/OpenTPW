@@ -2246,8 +2246,8 @@ actor=26 following=1 strip=1 name="Mike Cooper" status=0`, the camera on him to 
 open" (`4-closed.png`); Ctrl+V `visitorPanel=1@485,1127`, its button `actor=42 name="Visitor #13" thought=666`
 (`5-visitor.png`); Escape "Escape: the locator folded away", no menu (`6-escape.png`). Side by side with the original's
 (`q420/side-by-side.png`) the panel, the buttons and the strip stand alike. Main's build counted `STAFF_LOCATOR` and
-`VISITOR_LOCATOR` once each and put nothing out. **Counted, not built:** the strip's click on a member (`STAFF_WINDOW`:
-no member's window is built, so Ctrl+S always opens on nobody); a visitor's opens their window (Q430, "The person's windows"). **Deviations, said at the site:** the
+`VISITOR_LOCATOR` once each and put nothing out. The strip's click opens the person's window, a visitor's (Q430)
+or a member's (Q431), and Ctrl+S or Ctrl+V with one up opens on that person ("The person's windows"). **Deviations, said at the site:** the
 arm slides as the original's (Q427); a person gone from the
 park is let go of, where the original keeps the freed thing's address. Not looked into: the bit `0x1000`'s other
 readers. In no game run: a kind with nobody (tested only), a fenced member, a person leaving the park while followed
@@ -2297,10 +2297,10 @@ frame`, `locator` ended `patrol=48`, and `strip`'s drawn census held `| patrol 4
 (`1-mechanic.png`, beside the original's in `q426/side-by-side.png`); the scientists' `patrol=0`; the entertainers'
 20 on 16 cells, (48,18), (47,18), (48,18) first (`3-entertainer.png`); Escape none. Main's build counted
 `LOCATOR_PATROL_EDGES`. In no game run: a square lifted over a built cell on an edge (none of the stock areas crosses
-one; the lift is the tools', tested), a fence drawn in play (the patrol tool is the staff window's `0x510`, map tool `0x36`, not built: `STAFF_WINDOW`), Full Simulation (not
+one; the lift is the tools', tested), a fence drawn in play (the patrol tool is the staff window's `0x510`, map tool `0x36`, not built: `STAFF_WINDOW_PATROL`), Full Simulation (not
 asked: the locators are either mode's), the other three themes.
 
-#### The person's windows: the visitor's and the staff member's (Q429, Q430)
+#### The person's windows: the visitor's and the staff member's (Q429, Q430, Q431)
 
 Read 2026-10-16 (Q429, decode only; nothing is built). Two of the object windows' nine (`park-engine.md`, "The
 per-object management screen is nine screens"), both on the shared base `FUN_0048cea0( stream, handler, preview,
@@ -2409,9 +2409,43 @@ the window gone. `0x12e` was posted and said once (916/917); the later three ope
 **OpenTPW** (Q430): `ParkVisitorWindow`, opened by the strip's click on a visitor and a visitors row's `0x400`; Ctrl+V
 with it up and its `b_locate` are `ParkLocator.OpenOnVisitor`; `b_kids` is `UiList.Pick`. Counted: the preview's model
 (`VISITOR_WINDOW_PREVIEW`), a guest gone while it is up (`VISITOR_WINDOW_GUEST_GONE`, the window closed), the list's
-`0x11e` (`VISITORS_LIST_ADVISOR_LINE`). A member's window is still `STAFF_WINDOW`, a member's world click too; a
-guest's world click reaches nothing (the pick finds only a cell's occupant). Its run (`q430/confirm.py`, round 2) walked
+`0x11e` (`VISITORS_LIST_ADVISOR_LINE`). A guest's world click reaches nothing (the pick finds only a cell's
+occupant). Its run (`q430/confirm.py`, round 2) walked
 the same guests as the original's: 42, 41, 42, 29, the list's top row 3 and its first row Visitor #4 ($570).
+
+**Read for the staff member's build** (Q431). The stats' rows, label then figure (`FUN_004b53c0`, the refresh
+`FUN_004b58b0`): `0x51a` 64 then `0x51b` the days; `0x51d` 65 then `0x51e` a money cell; `0x519` 67 then bar `0x514`
+(`ridestatbar.wct`); `0x518` 69 then bar `0x513` (`happygrad.wct`); `0x51c` 68 then bar `0x515` (`ridestatbar.wct`);
+`0x516` 66 then the picture `0x51f` (1130,553), type 6 in `i_staffstat`, part `FUN_00485ec0( FUN_005064f0 )` (0 and 1
+to 0, 2 to 1, 3 to 2, 4 to 3, else 9) and the word `0x517` (1193,553). The labels at x 688 to 1085, the figures at 1193
+to 1520, each bar inset 10 (`FUN_00485e30`). `FUN_00505b70` is `FUN_004c90d0`'s divide on `+0x1f0`: whole days of the
+park's calendar. **The arrows** walk mask 1 (`FUN_0048ca00`'s class -1): `FUN_00482da0`'s case 1 takes the
+used-thing list's previous link from the member, or from the list's tail, and keeps the first whose kind byte is 4 to
+8 (`FUN_00481f80`); `FUN_004824d0` the other way. The open counts the staff the same way. **PICK UP** is enabled by
+`FUN_00505bd0`: never in states 4, 5, 7, `0xd` or `0x12`, else where the cell the member stands in (bytes `+5`, `+7`)
+has `mType` 0, 1, 3, 9 or 10 (`FUN_004fa990`). **`b_allstaff`** is `FUN_00496620( kind, member )`, two arguments: the
+list on that kind with the member's row picked and brought into view (`FUN_00664d2a`, `FUN_00665739`), as the
+visitor's `b_kids`; a kind of -1 is the one last shown. That opener's last act posts advisor message `0x11d`
+(`0x00496b9e`). The preview's handler (`FUN_004b5c80`) takes only `0x10006`: `FUN_0048ce80`, the camera to the
+member, and the window stays. `FUN_004b3f60( member )` sets the locator 1 first, then the arm, then the role and
+button by the type byte, shows the status, hides the thought and posts `0xc6`.
+
+**The original** (`q431/orig/run.sh`, the stock park; `q431/PREDICTION.txt` round 1): the window on Mike Cooper, "39
+days" on 2.10.2000, "$ 161", "Patrolling", both arrows, PICK UP lit (`a-1-window.png`); `b_ardown` the handyman (25),
+`b_arup` back, again the entertainer (27); `b_locate` and Ctrl+S over the window: the window gone, `[0x007cc2f0]` 1,
+role 4 on him; `b_allstaff`: the entertainers' tab, "Pierre Hintze" lit (`a-7-allstaff.png`), `0x11d` posted; its
+row: the window on him; the preview: the window kept. **The advisor's gate decides what is said, not the window**:
+`0xd4` went in once (916), was said to its end and was refused at every later show (the Tutorial group's
+`SayOnlyOnce` 1); `0xc0` was said on 972, 1033 and 1080, each cut by the close, and refused at the fourth build
+(`DiscardAfterSlaps` 3).
+
+**OpenTPW** (Q431): `ParkStaffWindow`, opened by the strip's click on a member, a member's world click and an
+all-staff row's `0x400`; Ctrl+S with it up and its `b_locate` are `ParkLocator.OpenOnMember`; `b_allstaff` opens
+`ParkStaffScreen` on the kind with the row picked. Counted: the preview's model (`STAFF_WINDOW_PREVIEW`), FIRE
+(`STAFF_WINDOW_FIRE`), PICK UP (`STAFF_WINDOW_PICK_UP`), the patrol switch (`STAFF_WINDOW_PATROL`, put back as the
+area has it), the name's edit (`STAFF_WINDOW_NAME_EDIT`), a member gone while it is up (`STAFF_WINDOW_MEMBER_GONE`,
+the window closed), the all-staff list's `0x11d` (`STAFF_LIST_ADVISOR_LINE`). The switch's second help row, 87, is
+not shown. Its run (`q431/confirm.py`, run1) walked 26, 25, 26, 27 as the original's, "47 days" on tick 1109.
 
 #### How allstaff and allitems keep their rows current
 

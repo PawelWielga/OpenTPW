@@ -1579,8 +1579,13 @@ public class Level
 			return $"world click: {ParkPathBuilding.RunPath( cellX, cellY )}";
 		}
 
-		if ( thingUnderCursor != 0 && ParkPeople.Current?.IsStaff( thingUnderCursor ) == true )
-			Unimplemented.Report( "STAFF_WINDOW" );
+		// A member's click opens their window (FUN_004879d0, category 8 to FUN_004b6080).
+		if ( thingUnderCursor != 0 && ParkPeople.Current?.IsStaff( thingUnderCursor ) == true && _windows is { } stack )
+		{
+			UI.ParkStaffWindow.Open( stack, thingUnderCursor );
+
+			return $"world click: opened the staff window for thing {thingUnderCursor}";
+		}
 
 		if ( thingUnderCursor != 0 )
 		{
@@ -1627,7 +1632,8 @@ public class Level
 	/// Opens the management window for one thing - the original's <c>FUN_00486920</c>, which switches
 	/// on the thing's kind byte at <c>+2</c> and then, for a placed object, on the item's
 	/// <c>WhichUIType</c>. <b>Nine windows share one base</b>; of the placed objects' only the ride's is built (the visitor's is
-	/// <see cref="UI.ParkVisitorWindow"/>, opened from the locator and the visitors list).
+	/// <see cref="UI.ParkVisitorWindow"/>, opened from the locator and the visitors list, and the staff member's
+	/// <see cref="UI.ParkStaffWindow"/>).
 	/// </summary>
 	internal void OpenObjectWindow( int thingId )
 	{

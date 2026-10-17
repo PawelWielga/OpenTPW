@@ -37,9 +37,9 @@ namespace OpenTPW.UI;
 /// the patrol rectangle's outline (<see cref="PatrolEdgeCells"/>), laid by <see cref="ParkBuildMarkers"/>.
 /// </para>
 /// <para>
-/// <b>The strip's click opens the person's own window</b>: a visitor's (<see cref="ParkVisitorWindow"/>), and Ctrl+V with
-/// one up opens the visitors' locator on that guest (<see cref="OpenOnVisitor"/>). <b>Counted, not built:</b> a member's
-/// window (<c>FUN_004b6080</c>, <c>STAFF_WINDOW</c>), so Ctrl+S always opens its locator on nobody.
+/// <b>The strip's click opens the person's own window</b>: a visitor's (<see cref="ParkVisitorWindow"/>) or a member's
+/// (<see cref="ParkStaffWindow"/>), and Ctrl+V or Ctrl+S with one up opens its locator on that person
+/// (<see cref="OpenOnVisitor"/>, <see cref="OpenOnMember"/>).
 /// </para>
 /// </summary>
 internal sealed class ParkLocator
@@ -530,7 +530,7 @@ internal sealed class ParkLocator
 
 	/// <summary>
 	/// The strip's left click (<c>FUN_004b3c10</c>, <c>0x10006</c>): the person's own window, a visitor's
-	/// (<see cref="OpensVisitorWindow"/>) or a member's, which is not built.
+	/// (<see cref="OpensVisitorWindow"/>) or a member's (<see cref="OpensStaffWindow"/>).
 	/// </summary>
 	private void OpenPersonWindow()
 	{
@@ -539,8 +539,8 @@ internal sealed class ParkLocator
 
 		if ( member != null )
 		{
-			Unimplemented.Report( "STAFF_WINDOW" );
-			Log.Info( $"Park locator: the strip clicked for thing {Actor}, whose window is not built" );
+			Log.Info( $"Park locator: the strip clicked for member {Actor}" );
+			OpensStaffWindow?.Invoke( Actor );
 			return;
 		}
 
@@ -550,6 +550,50 @@ internal sealed class ParkLocator
 
 	/// <summary>What opens a visitor's window on a guest (<c>FUN_004b79b0</c>): the gadget's, set as it is built.</summary>
 	internal Action<int>? OpensVisitorWindow { get; set; }
+
+	/// <summary>What opens a staff member's window on a member (<c>FUN_004b6080</c>): the gadget's, set as it is built.</summary>
+	internal Action<int>? OpensStaffWindow { get; set; }
+
+	/// <summary>
+	/// <c>FUN_004b3f60( member )</c>, Ctrl+S with a staff member's window up and its <c>b_locate</c>: the staff's locator
+	/// open, set before its panel goes on the arm, the member's kind's button down and the strip on them, followed; the
+	/// status shown in the strip's corner and the thought hidden, the advisor posted message <c>0xc6</c>, and the open park
+	/// screen closed.
+	/// </summary>
+	internal void OpenOnMember( Staff member, Action<UiControl> putOnArm, Action closeScreen )
+	{
+		Open = Kind.Staff;
+		putOnArm( StaffPanel );
+
+		var button = ButtonOf( member.Model );
+
+		Actor = member.ThingId;
+		Role = RoleOf( button );
+		_staffButtons.Put( button );
+
+		Strip.Visible = true;
+		Describe();
+		Following = true;
+
+		_status.Visible = true;
+		_thought.Visible = false;
+
+		Tell( ParkAdvisorMessages.StaffLocator );
+		closeScreen();
+
+		Log.Info( $"Park locator: staff open={Open} on thing {Actor}, role {Role}" );
+	}
+
+	/// <summary>The button <c>FUN_004b3f60</c> puts down for a member's thing model: 5 handyman <c>0x95e</c>, 4 mechanic <c>0x95f</c>, 7 guard <c>0x962</c>, 6 entertainer <c>0x961</c>, 8 researcher <c>0x960</c>.</summary>
+	internal static int ButtonOf( int model ) => model switch
+	{
+		ParkPeople.HandymanModel => 0x95e,
+		ParkPeople.MechanicModel => 0x95f,
+		ParkPeople.GuardModel => 0x962,
+		ParkPeople.EntertainerModel => 0x961,
+		ParkPeople.ResearcherModel => 0x960,
+		_ => -1
+	};
 
 	/// <summary>
 	/// <c>FUN_004b3f60( guest )</c>, Ctrl+V with a visitor's window up and its <c>b_locate</c>: the visitors' locator

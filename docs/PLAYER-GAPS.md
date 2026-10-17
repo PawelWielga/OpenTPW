@@ -90,8 +90,8 @@ counted, `RESEARCH_SCREEN`.
 - [x] **Clicking a placed ride opens its management window** - `ParkObjectWindow`, stream
       `0x00755150`. **There are nine such windows**, dispatched by `FUN_00486920` on the thing's kind
       byte and the item's `WhichUIType`; the others stop at four counted names (`SHOP_WINDOW`, `SIDESHOW_WINDOW`,
-      `FEATURE_WINDOW` for toilets, staff rooms, misc items and upgrades alike, and `STAFF_WINDOW`), and a visitor's
-      reaches nothing counted. Close, delete, move and
+      `FEATURE_WINDOW` for toilets, staff rooms, misc items and upgrades alike); the staff member's is built (Q431)
+      and so is the visitor's (Q430), which a visitor's world click does not reach. Close, delete, move and
       the two cycle arrows work.
 - [x] **The rides panel - 2026-09-21; two rows still counted.** All three sliders take their
       range from the item and their value from the ride, and **save**: capacity 5 of 1..10 clicked to

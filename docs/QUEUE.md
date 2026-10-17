@@ -48,8 +48,19 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q431 (`hud.md`, "The person's windows"): the staff member's window is built, so the nearest piece is its verbs:
+  FIRE (`STAFF_WINDOW_FIRE`: `FUN_00505790`, behind a box on UITEXT `0x18d` where the option `[0x0078d90f]` is set;
+  `ParkPeople.Fire` exists), PICK UP (`STAFF_WINDOW_PICK_UP`: `FUN_0048c950` then `FUN_00505c50`; `ParkPeople.PickUp`
+  exists), the patrol switch (`STAFF_WINDOW_PATROL`: `FUN_004b5b50`, map tool `0x36` and advisor line `0xc1`, or the
+  area cleared, `FUN_00506e90`). Counted, not built: the name's edit (`STAFF_WINDOW_NAME_EDIT`, `FUN_0048d290`), the
+  preview's model (`STAFF_WINDOW_PREVIEW`), a member gone while it is up (`STAFF_WINDOW_MEMBER_GONE`, not decoded),
+  the all-staff list's advisor line `0x11d` (`STAFF_LIST_ADVISOR_LINE`), the staff room's list's row (`0x004b5267`; no
+  staff room window). Not shown: the patrol switch's second help row, 87. Settled: Q430's "`0x12e` in no slot on the
+  second to fourth opens" is the accept gate (Tutorial lines said once, and refused after three cuts). In no game run:
+  a member's world click (tested only through `ParkStaffWindow.Open`; the pick may not find a walking member), PICK UP
+  unlit (tested only), Full Simulation (not asked: the window is either mode's), the other three themes. Not heard.
   From Q430 (`hud.md`, "The person's windows"): the visitor's window is built, so the nearest piece is the staff
-  member's window (`STAFF_WINDOW`: its verbs and the patrol tool; Q31b lists it among the seven). Counted, not built:
+  member's window (built, Q431; its verbs and the patrol tool are not; Q31b lists it among the seven). Counted, not built:
   the visitor's preview model (`VISITOR_WINDOW_PREVIEW`, `FUN_00486530`, a copy of the guest's sprite turning in the
   panel), a guest gone while the window is up (`VISITOR_WINDOW_GUEST_GONE`; the original clears nothing, not decoded),
   the visitors list's own advisor line `0x11e` (`VISITORS_LIST_ADVISOR_LINE`), a guest's world click (the pick finds only
@@ -898,8 +909,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   tick and the day's, month's and year's work with it; the original drops all of them with the sweep
   (`FUN_004d7b20`, `FUN_00512880`). `LongestCatchUp`'s remark says so and calls it a deviation.
 - [ ] **Q31. The shop's object window.** `Level.OpenObjectWindow` opens only a ride's (`UiType 0`). Shops,
-  sideshows and the rest stop at `SHOP_WINDOW`, `SIDESHOW_WINDOW` and `FEATURE_WINDOW`, and a staff member at
-  `STAFF_WINDOW` (`Level.ClickWorldAt`); a clicked visitor reaches nothing counted. `park-engine.md`, "The
+  sideshows and the rest stop at `SHOP_WINDOW`, `SIDESHOW_WINDOW` and `FEATURE_WINDOW`; a staff member's click
+  opens their window (Q431); a clicked visitor reaches nothing counted. `park-engine.md`, "The
   per-object management screen is nine screens", lists the nine. This item is the shop's; the other seven are Q31b.
   From Q177: the shop, sideshow and toilet windows' figures are decoded (`ride-operation.md`, "The settle-up's
   bookkeeping"): customer satisfaction, profit last month, customers as "C of M", winners last month, the cost of
