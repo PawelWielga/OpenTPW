@@ -243,6 +243,12 @@ Each was found by trial in the item named, and cost a run to find.
   An advisor message's row in `q177/skeptic-analyser/meta_full.json` is at `0x76e300 + id x 56` (the response at
   `+0x24`), then `lib/responses.py <response>` for its sample.
 
+- **The pointer on a person in either game** (Q447, `q447/confirm.py`, `q447/orig/run.sh`): a locator's follow keeps its
+  person at the middle of the picture, so the pointer there is on them (here 0.5, 0.5 of the window, `pick` answering
+  "standing thing N"; in the original (512, 384), scanned outward until the hover's category `[0x007c24f4]` reads 7 for
+  a guest or 8 to 12 for a member, the thing `[0x007b05ac]`). Here `pointer` replies the cursor, the help row and its
+  text filled; pause first so the person stays on the cell the pick asks.
+
 - **A message box in either game, and its cross** (Q410, `q410/confirm.py`, `q410/orig/run.sh`): here the console's
   `windows` ends "MessageBox" while one is up (the reply begins `[dbg] windows:`), and `control 9873c8` finds its
   bottom place to click; R and the gadget's Research button (`control 2b`) open one in an Instant Action park. In the

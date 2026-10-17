@@ -39,15 +39,17 @@ internal sealed class HelpBar
 	/// <summary>Whether it is switched on - the original's Popup Help option, which the button glints also wait on.</summary>
 	public bool Enabled => GameOptions.Current.PopupHelp;
 
-	/// <summary>Shows row <paramref name="helpText"/>, or nothing for -1.</summary>
-	public void Update( int helpText )
+	/// <summary>Shows row <paramref name="helpText"/>, or nothing for -1, its parameters filled with <paramref name="values"/>.</summary>
+	public void Update( int helpText, params (int Parameter, string Value)[] values )
 	{
 		// On the press. The original toggles it on the release, through the system table its window procedure matches
 		// on every key (0x0040c5d0; docs/QUEUE.md Q65).
 		if ( Input.Pressed( InputButton.ToggleHelpBar ) )
 			GameOptions.Current.PopupHelp = !GameOptions.Current.PopupHelp;
 
-		var text = Enabled && helpText >= 0 ? Localization.Help( helpText ) : "";
+		var text = !Enabled || helpText < 0 ? ""
+			: values.Length > 0 ? Localization.FormatHelp( helpText, values )
+			: Localization.Help( helpText );
 		_bar.Visible = text.Length > 0;
 
 		if ( !_bar.Visible )
@@ -59,6 +61,9 @@ internal sealed class HelpBar
 		var height = (lineHeight * 0xc00 / UiFonts.SetScreenHeight) + 10;
 		_bar.Rect = new UiRect( Left, Bottom - height, Right, Bottom );
 	}
+
+	/// <summary>What the strip says now, or nothing while it is hidden.</summary>
+	public string Text => _bar.Visible ? _bar.Text ?? "" : "";
 
 	public void Draw() => _bar.Draw();
 

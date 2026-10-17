@@ -47,10 +47,11 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 Q444 and Q445 come first: defects a player meets, found by the review of the run of 2026-10-16/17 (its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`).
 
-- [ ] **Q447. A person's hover rows and pointer.** From Q444. The hover over a guest it would pick shows UIHELPTEXT 0x229
-  (with their number, `+0x1d8`) or 0x22a, over a member 0x22b with `FUN_00506860`'s string, and puts up pointer 2
-  (`FUN_004a2aa0( 2 )`; `FUN_00486d90`); ours shows neither, counted `PERSON_HOVER_HELP`. Q444's original frames show a
-  member's row standing at the foot of the screen with the staff locator open (`q444/orig/a-2-P1.png`): read why first.
+- [ ] **Q451. The state a member is set to by the hover.** From Q447 (`park-engine.md`, "What the hover says over a person"): the hover over a
+  member calls `FUN_00505f50`, which sets their state to nought (`FUN_005054d0( 0 )`) unless it is 4, 5, 7, `0xd` or
+  `0x12`, where `FUN_004fa990` answers; ours only counts it (`STAFF_HOVER_SET_STATE`). Decode `FUN_004fa990` (five
+  `FUN_005363xx` tests) and what state 0 does to a walking member first; confirm in both games what a member under the
+  pointer does. In no game run: Full Simulation (not asked: the hover is either mode's), the other three themes.
 
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in

@@ -22,6 +22,9 @@ public static class Localization
 	/// </summary>
 	public static string Help( int id ) => id >= 0 && id < HelpTexts.Entries.Length ? HelpTexts[id] : string.Empty;
 
+	/// <summary>A row of UIHELPTEXT.str with its parameters filled, as <see cref="Format(int, ValueTuple{int, string}[])"/> fills UITEXT's.</summary>
+	public static string FormatHelp( int row, params (int Parameter, string Value)[] values ) => Format( HelpTexts, row, values );
+
 	/// <summary>
 	/// A row of UITEXT.str by number, for the rows <see cref="UIStrings"/> does not name.
 	/// </summary>

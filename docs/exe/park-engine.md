@@ -3477,6 +3477,21 @@ the click opened his window and folded the arm; the visitors' locator open, the 
 click opened the visitor's window; the visitors' locator and Shift together, the locator's own guest read 0; with no
 locator Shift alone read 0 on path and 7 on a guest, whose click opened their window.
 
+**What the hover says over a person** (Q447; `FUN_00486d90`). A row is posted (`FUN_004924b0`) only when the category or
+the thing `[0x007c24f8]` changes. A guest taken (category 7) posts UIHELPTEXT 553 "Visitor #{P3} : Left-click to view
+this person's details", P3 the guest's number `+0x1d8` (a `VARM` value of type 3), or 554 "New Visitor : ..." at nought;
+a member (8 to 12) posts 555 "{P2} : Left-click to view this staff member's details", P2 the name at `+0x1a0`
+(`FUN_00506860`, type 2), and calls `FUN_00505f50`, which sets the member's state to nought (CStaff's `SetState`,
+`FUN_005054d0( 0 )`) unless it is 4, 5, 7, `0xd` or `0x12` and only where `FUN_004fa990` answers (not decoded;
+counted, `STAFF_HOVER_SET_STATE`). Either puts up pointer 2, which `FUN_00489720` registers as `c_pick.ani`. Where the
+guests decide and nobody is taken the empty row `0x0078a374` is posted and pointer 0 put up; with a locator open
+otherwise and nobody taken, the jump from `0x0048721c` to `0x004878d3` posts nothing and puts up pointer 0, so the row
+last posted stands. Measured in the original: the staff locator open, Mike Cooper under the pointer read category 9
+with his row and the hand, and off him category 0 with the row still at the foot and the arrow (`q444/orig/a-4-member-hover.png`,
+`a-2-P1.png`); the visitors' locator open, a guest whose `+0x1d8` read 9 showed "Visitor #9 : ..." and the hand, and
+bare ground category 0 no row and the arrow (`q447/orig/`). Here `Level.WorldHelpRow` answers the row, its values and
+`PersonPointer`, and keeps the row last answered where the original posts nothing.
+
 **Who a cell's list names as people walk** (Q446). Every person is relinked into the cell they stand on whenever it
 changes: the walk tick `FUN_004fa2a0` calls `FUN_0050b6a0` at `0x004fa2fc` (the placement `FUN_004fa930` at
 `0x004fa976`), which compares the thing's cell bytes `+5` and `+7` with the new position's and only then unlinks

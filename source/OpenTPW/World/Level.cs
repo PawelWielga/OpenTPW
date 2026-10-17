@@ -1170,6 +1170,7 @@ public class Level
 
 		// The help row the world shows for the cell under the pointer - see WorldHelpRow.
 		UI.WindowStack.WorldHelpText = Kind == Scene.Park ? WorldHelpRow() : -1;
+		UI.WindowStack.WorldHelpValues = Kind == Scene.Park ? WorldHelpValues : [];
 
 		// The HUD is not an entity - see RootPanel - so it is driven from here, after the world.
 		Hud.Update();
@@ -1214,7 +1215,8 @@ public class Level
 			ParkBuildMode.Queue => QueueCursor(),
 			ParkBuildMode.Path => PathCursor(),
 			ParkBuildMode.Patrol => ParkPicking.TryCell( out var x, out var y ) ? PatrolCursor( x, y ) : Input.CursorTypes.Normal,
-			_ => IdleOverPath() ? Input.CursorTypes.Path : Input.CursorTypes.Normal
+			_ => HoverTaken && PersonPointer ? Input.CursorTypes.Pick
+				: IdleOverPath() ? Input.CursorTypes.Path : Input.CursorTypes.Normal
 		};
 
 		if ( cursor.CursorType != wanted )
@@ -1317,27 +1319,97 @@ public class Level
 		=> ParkBuildMode.Current == ParkBuildMode.None && ParkHand.Empty && !UI.WindowStack.ParkScreenOpen;
 
 	private int WorldHelpRow()
-		=> ParkPicking.TryCell( out var x, out var y ) ? WorldHelpRow( x, y, ParkPicking.ThingUnderCursor ) : -1;
+		=> ParkPicking.TryCell( out var x, out var y )
+			? WorldHelpRow( x, y, ParkPicking.ThingUnderCursor )
+			: WorldHelpRow( -1, -1, ParkPicking.ThingUnderCursor );
+
+	/// <summary>The values of <see cref="UI.WindowStack.WorldHelpText"/>'s parameters, as the last hover filled them.</summary>
+	internal (int Parameter, string Value)[] WorldHelpValues { get; private set; } = [];
+
+	/// <summary>Whether the last hover put up the pick pointer, <c>c_pick</c>, over a person it would take.</summary>
+	internal bool PersonPointer { get; private set; }
+
+	/// <summary>The person whose row the hover posted last, so their row and its log line are posted once.</summary>
+	private int _rowPerson;
+
+	/// <summary>The row the hover posted last, which stands while a locator is open and nobody is taken.</summary>
+	private int _postedRow = -1;
 
 	/// <summary>
-	/// The help row for a cell under the pointer, idle: UIHELPTEXT 441 "Left-click to build path" over
+	/// The help row for a cell under the pointer, idle, and the person's pointer (<c>FUN_00486d90</c>). A guest it would
+	/// pick shows UIHELPTEXT 553 "Visitor #{P3} : Left-click to view this person's details", their number <c>+0x1d8</c>,
+	/// or 554 "New Visitor" at nought; a member 555 "{P2} : Left-click to view this staff member's details", their name
+	/// (<c>FUN_00506860</c>); either puts up pointer 2, <c>c_pick</c> (<c>FUN_004a2aa0( 2 )</c>). Where the guests decide
+	/// and nobody is taken the row is emptied; with a locator open and nobody taken nothing is posted, so the row last
+	/// posted stands (<c>0x0048721c</c> to <c>0x004878d3</c>). Otherwise UIHELPTEXT 441 "Left-click to build path" over
 	/// bare ground and 442 "Left-click to extend this path" over path, where the click would arm the path tool
 	/// (<see cref="ArmsThePathTool"/>). Nothing is found in the original to show 443, "BACKSPACE to undo", so nothing
 	/// here does.
 	/// </summary>
 	internal int WorldHelpRow( int x, int y, int thingUnderCursor )
 	{
-		if ( !HoverTaken || Park is not { } park )
-			return -1;
+		var standingValues = WorldHelpValues;
+		WorldHelpValues = [];
+		PersonPointer = false;
 
-		// A person's own rows, 0x229 and 0x22a for a guest and 0x22b for a member, and the pointer they put up, are not built.
-		if ( PersonUnder( thingUnderCursor ) is PersonPick.Guest or PersonPick.Member )
-			Unimplemented.Report( "PERSON_HOVER_HELP" );
+		// Not taken, the row is none, and a locator opened afterwards keeps none. The original runs no hover then and posts
+		// nothing (0x00488569), so its row is whatever was posted last: not measured.
+		if ( !HoverTaken || Park is not { } park || ParkPeople.Current is not { } people )
+			return Posted( -1, 0 );
+
+		switch ( PersonUnder( thingUnderCursor ) )
+		{
+			case PersonPick.Guest:
+				var guest = people.Guests[thingUnderCursor];
+				PersonPointer = true;
+
+				if ( guest.VisitorNumber == 0 )
+					return Posted( 554, thingUnderCursor );
+
+				WorldHelpValues = [(3, $"{guest.VisitorNumber}")];
+				return Posted( 553, thingUnderCursor );
+
+			case PersonPick.Member:
+				var member = people.Staff.First( staff => staff.ThingId == thingUnderCursor );
+				PersonPointer = true;
+				WorldHelpValues = [(2, member.Name)];
+
+				// The hover also sets the member's state to nought in most states (FUN_00505f50, CStaff's SetState).
+				if ( _rowPerson != thingUnderCursor )
+					Unimplemented.Report( "STAFF_HOVER_SET_STATE" );
+
+				return Posted( 555, thingUnderCursor );
+
+			// Off a person the category falls to nought, so the same person's row is posted again when the pointer returns.
+			case PersonPick.Nothing when !GuestsDecide( LocatorOpen, Input.Held ):
+				WorldHelpValues = standingValues;
+				_rowPerson = 0;
+				return _postedRow;
+
+			case PersonPick.Nothing:
+				return Posted( -1, 0 );
+		}
 
 		if ( !ArmsThePathTool( x, y, thingUnderCursor ) )
-			return -1;
+			return Posted( -1, 0 );
 
-		return ParkState.CellFor( park, x, y ).Type == CellEdge.Path ? 442 : 441;
+		return Posted( ParkState.CellFor( park, x, y ).Type == CellEdge.Path ? 442 : 441, 0 );
+	}
+
+	/// <summary>The row the hover posts, logged as it changes to or from a person's.</summary>
+	private int Posted( int row, int person )
+	{
+		if ( person != _rowPerson || (person != 0 && row != _postedRow) )
+		{
+			if ( person != 0 )
+				Log.Info( $"Park: hover row {row} \"{Localization.FormatHelp( row, WorldHelpValues )}\" for thing {person}, pointer c_pick" );
+			else if ( _rowPerson != 0 )
+				Log.Info( $"Park: hover row {row} after thing {_rowPerson}" );
+
+			_rowPerson = person;
+		}
+
+		return _postedRow = row;
 	}
 
 	/// <summary>
@@ -1402,8 +1474,7 @@ public class Level
 	/// <param name="member">Whether a member of staff is.</param>
 	internal static PersonPick PickPerson( UI.ParkLocator.Kind locator, Input.Modifiers held, bool guest, bool member )
 	{
-		if ( (locator == UI.ParkLocator.Kind.Visitors && held == Input.Modifiers.None)
-			|| (held == Input.Modifiers.Shift && locator == UI.ParkLocator.Kind.None) )
+		if ( GuestsDecide( locator, held ) )
 			return guest ? PersonPick.Guest : PersonPick.Nothing;
 
 		if ( member )
@@ -1411,6 +1482,11 @@ public class Level
 
 		return locator == UI.ParkLocator.Kind.None ? PersonPick.Further : PersonPick.Nothing;
 	}
+
+	/// <summary>Whether the guests decide alone: the visitors' locator open and no modifier, or Shift alone and no locator.</summary>
+	private static bool GuestsDecide( UI.ParkLocator.Kind locator, Input.Modifiers held )
+		=> (locator == UI.ParkLocator.Kind.Visitors && held == Input.Modifiers.None)
+			|| (held == Input.Modifiers.Shift && locator == UI.ParkLocator.Kind.None);
 
 	/// <summary><see cref="PickPerson"/> for this thing under the pointer, the locator open now and the keys held now.</summary>
 	private static PersonPick PersonUnder( int thingUnderCursor )

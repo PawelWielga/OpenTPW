@@ -1551,7 +1551,7 @@ public static class DebugConsole
 
 				if ( Level.Current is { Kind: Level.Scene.Park } pointed )
 				{
-					Reply( $"pointer: cursor {pointed.ParkCursor}, help row {UI.WindowStack.WorldHelpText}, at "
+					Reply( $"pointer: cursor {pointed.ParkCursor}, help row {UI.WindowStack.WorldHelpText} \"{Localization.FormatHelp( UI.WindowStack.WorldHelpText, UI.WindowStack.WorldHelpValues )}\", at "
 						+ $"({Input.Mouse.Position.X:F0},{Input.Mouse.Position.Y:F0}) over "
 						+ (pointerStack?.Hovered is { } under ? $"control 0x{under.Id:x}" : "no control")
 						+ $"; a right press here is {(Level.RightPressTaken( pointerStack is { Covered: true } || pointerStack?.TakesRightPress( Input.Mouse.Position.X, Input.Mouse.Position.Y ) == true ) ? "the interface's" : "the park's")}" );

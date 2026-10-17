@@ -572,33 +572,70 @@ public class ParkLocatorTests
 	}
 
 	/// <summary>
-	/// <b>The hover shows the path's row only where the click would arm the path tool</b>: 441 over bare ground and 442 over
-	/// path with no locator open, nothing with the staff's open; a member under the pointer, and a guest with the visitors'
-	/// open, show nothing and count their own rows' gap.
+	/// <b>The hover shows the path's row where the click would arm the path tool, and a person's where it would take
+	/// them</b>: 441 over bare ground and 442 over path with no locator open; a member 555 with their name and a guest 553
+	/// with their number (554 at nought), each with the pick pointer; with the staff's locator open and nobody taken the
+	/// row last posted stands, and where the guests decide and nobody is taken the row is emptied (<c>FUN_00486d90</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the hover not asking the person; the person's gap not counted.</remarks>
+	/// <remarks><b>Mutations:</b> the rows swapped, the values dropped, the row not kept under a locator, the row kept where
+	/// the guests decide, the pointer not put up, the member's state change counted every frame.</remarks>
 	[TestMethod]
-	public void TheHoverShowsThePathsRowOnlyWhereTheClickWouldArmIt()
+	public void TheHoverShowsThePathsRowOrThePersonsWhereTheClickWouldTakeThem()
 	{
 		_stack.Update();
 		var (pathX, pathY) = APathCell();
 		var guest = AGuest();
-		var member = _people.Staff[0].ThingId;
-		int Row( int x, int y, int thing ) => Level.Current!.WorldHelpRow( x, y, thing );
-		int Counted() => Unimplemented.Summary.FirstOrDefault( gap => gap.What == "PERSON_HOVER_HELP" ).Times;
+		var number = 13;
+		var member = _people.Staff[0];
+		var level = Level.Current!;
+		int Row( int x, int y, int thing ) => level.WorldHelpRow( x, y, thing );
+		int Counted() => Unimplemented.Summary.FirstOrDefault( gap => gap.What == "STAFF_HOVER_SET_STATE" ).Times;
+		var counted = Counted();
 
 		Assert.AreEqual( (441, 442, 441), (Row( 43, 16, 0 ), Row( pathX, pathY, 0 ), Row( 43, 16, guest )) );
-		Assert.AreEqual( 0, Counted() );
+		Assert.IsFalse( level.PersonPointer );
+
+		Assert.AreEqual( 555, Row( 43, 16, member.ThingId ), "a member with no locator open" );
+		Assert.AreEqual( $"{member.Name} : Left-click to view this staff member's details",
+			Localization.FormatHelp( 555, level.WorldHelpValues ) );
+		Assert.IsTrue( level.PersonPointer );
+		Assert.AreEqual( 441, Row( 43, 16, 0 ) );
 
 		CtrlS();
-		Assert.AreEqual( (-1, -1, -1), (Row( 43, 16, 0 ), Row( pathX, pathY, 0 ), Row( 43, 16, guest )) );
-		Assert.AreEqual( 0, Counted(), "a guest with the staff's locator is nobody's" );
-		Assert.AreEqual( -1, Row( 43, 16, member ) );
-		Assert.AreEqual( 1, Counted() );
+		Assert.AreEqual( (441, 441), (Row( pathX, pathY, 0 ), Row( 43, 16, guest )), "the ground's row stands under the locator" );
+		Assert.IsFalse( level.PersonPointer );
+		Assert.AreEqual( 555, Row( 43, 16, member.ThingId ) );
+		Assert.AreEqual( 555, Row( 43, 16, member.ThingId ) );
+		Assert.AreEqual( counted + 2, Counted(), "once as the pointer comes onto the member, each time" );
+		Assert.AreEqual( (555, 555), (Row( 43, 16, 0 ), Row( 43, 16, guest )), "the member's row stands" );
+		Assert.AreEqual( member.Name, level.WorldHelpValues.Single().Value );
+		Assert.IsFalse( level.PersonPointer );
 
 		Fold();
 		CtrlV();
-		Assert.AreEqual( (-1, -1), (Row( 43, 16, guest ), Row( 43, 16, member )) );
-		Assert.AreEqual( 2, Counted(), "the guest's, not the member's" );
+		var numbered = _people.Guests[guest].VisitorNumber;
+		_people.Guests[guest].VisitorNumber = 0;
+		Assert.AreEqual( 554, Row( 43, 16, guest ), "New Visitor at nought" );
+		Assert.AreEqual( 0, level.WorldHelpValues.Length );
+		_people.Guests[guest].VisitorNumber = number;
+		Assert.AreEqual( 553, Row( 43, 16, guest ) );
+		Assert.AreEqual( $"Visitor #{number} : Left-click to view this person's details", Localization.FormatHelp( 553, level.WorldHelpValues ) );
+		Assert.IsTrue( level.PersonPointer );
+
+		// The help bar fills the row's parameters with the hover's values.
+		var popupHelp = GameOptions.Current.PopupHelp;
+		GameOptions.Current.PopupHelp = true;
+		UI.WindowStack.WorldHelpText = 553;
+		UI.WindowStack.WorldHelpValues = level.WorldHelpValues;
+		Input.Mouse = new();
+		_stack.Update();
+		Assert.AreEqual( $"Visitor #{number} : Left-click to view this person's details", _stack.HelpBarText );
+		GameOptions.Current.PopupHelp = popupHelp;
+		_people.Guests[guest].VisitorNumber = numbered;
+		UI.WindowStack.WorldHelpText = -1;
+		UI.WindowStack.WorldHelpValues = [];
+		Assert.AreEqual( (-1, -1), (Row( 43, 16, member.ThingId ), Row( 43, 16, 0 )), "the guests decide: the row is emptied" );
+		Assert.IsFalse( level.PersonPointer );
+		Assert.AreEqual( 0, level.WorldHelpValues.Length );
 	}
 }

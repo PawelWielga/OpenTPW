@@ -138,6 +138,12 @@ internal sealed class WindowStack : Panel
 	/// </summary>
 	internal static int WorldHelpText { get; set; } = -1;
 
+	/// <summary>The values of <see cref="WorldHelpText"/>'s parameters: a person's number or name.</summary>
+	internal static (int Parameter, string Value)[] WorldHelpValues { get; set; } = [];
+
+	/// <summary>What the help bar says after the last update.</summary>
+	internal string HelpBarText => _helpBar.Text;
+
 	public WindowStack()
 	{
 		UiFonts.Preload();
@@ -427,7 +433,10 @@ internal sealed class WindowStack : Panel
 
 		// The world's row only where a click would reach the world: over no control, and no modal up. Under the cover the
 		// bar is not drawn, and its own key is still heard: the window procedure matches the system table on every key.
-		_helpBar.Update( _hovered?.HelpText ?? (ModalUp ? -1 : WorldHelpText) );
+		if ( _hovered != null || ModalUp )
+			_helpBar.Update( _hovered?.HelpText ?? -1 );
+		else
+			_helpBar.Update( WorldHelpText, WorldHelpValues );
 	}
 
 	protected override void OnRender()

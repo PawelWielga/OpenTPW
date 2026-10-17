@@ -7441,6 +7441,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`FUN_004d9280`, `FUN_004d91f0`) when its cell changes; guests here already do it (`PeepBehaviour`'s `StandOn`). Do the
   same for staff and read what else reads a cell's list (`LeaverAtTheStop`, the writer's links). Confirm: both games,
   a click where a member stood after he walked off opening nothing, and on him where he stands opening his window.
+- [x] **Q447. A person's hover rows and pointer.** Done
+  2026-10-17: `Level.WorldHelpRow` posts 553/554 over a guest it would take and 555 with the name over a member, the
+  help bar fills their values and the pointer is `c_pick`; with a locator open and nobody taken the row last posted
+  stands, which is why `a-2-P1.png` shows it (the jump past every post, `0x0048721c` to `0x004878d3`); `q447/run2` 6 of
+  6 ("Mike Cooper : ..." and the hand, the row standing off him with the arrow, "Visitor #13 : ..." and the hand, no row
+  off the guest); the original "Visitor #9 : ..." with the hand and no row off them (`q447/side-by-side.png`); mutations
+  12 of 12. The member's state set to nought by the hover is counted, Q451. Was: From Q444. The hover over a guest it would pick shows UIHELPTEXT 0x229
+  (with their number, `+0x1d8`) or 0x22a, over a member 0x22b with `FUN_00506860`'s string, and puts up pointer 2
+  (`FUN_004a2aa0( 2 )`; `FUN_00486d90`); ours shows neither, counted `PERSON_HOVER_HELP`. Q444's original frames show a
+  member's row standing at the foot of the screen with the staff locator open (`q444/orig/a-2-P1.png`): read why first.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
