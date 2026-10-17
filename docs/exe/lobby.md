@@ -322,6 +322,18 @@ Built by `FUN_005dfcd0`, vtable `0x00702cb0`. Its `[2]` is a 0x10-byte island li
 The box is the lobby's own geometry: the four islands stand at 400 and 600 in X and Z, centred on
 (500, 500), and the camera wanders a 400×400 box around them between heights 50 and 100.
 
+### The lens
+
+The lobby's render camera is a second object, `0x00f83778` (`FrontEnd_Init` builds it, `FUN_005d8b00`, vtable
+`0x00702a90`). Its `FUN_005d8b50` sets its angle `+4` to 115, and `IslandLobby_Start` copies `ISLANDFOV` over it
+(`0x005e13fb`); its slot 2, `0x005d8cb0`, hands that angle to the projection builder each pass. The draw matrix's
+screen scale (`park-engine.md`, "The lens: 90 handed to the projection, 53.13 drawn") then makes the picture
+`2 atan( tan(a/2) / 2 )` top to bottom: `ISLANDFOV(100)` draws **61.58 degrees top to bottom and 76.93 across**.
+Measured (Q260, `original/lens.py`, the player list over the lobby): angle 100.000, the camera's `+4` 100.000,
+`m00` 0.64279, scale 1.5 and -2. **OpenTPW** asks for a fixed 60 (`LobbyCameraMode.FieldOfViewDegrees`, chosen by eye
+between the file read as horizontal and as vertical, before the scale was known); the file's number through the
+law is Q441's.
+
 ### Attract: fly the box, aim at the nearest island
 
 Per frame, with the lobby's delta (`0.01 × ms`, ten units a second — see `LobbyScript.TicksPerSecond`):

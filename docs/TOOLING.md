@@ -70,6 +70,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/thingwords.py PID SECS THING:OFFSET[:FMT[:NAME]] ...` | The original's memory: any words of any things, a line a change with `mGameTick`. Use it for a field or two before writing a poller: the mechanics' search cursor is `2:0xc`, a mechanic's state, job and count `26:0x19c:I`, `26:0x218`, `26:0x214:I`. A `POLL` for `loadfile.sh` |
 | `original/spritepass.py PID`, `particleheights.py PID SECS EFFECT [STEP]`, `particleoverlay.py PID OUT.png [EFFECT]` | The original's world particles: the sprite pass's matrix (`[0x0087b088]`) with every emitter's draw words and its particles projected to pixels; how high and wide an effect's particles go over a time; and a frame grabbed with each particle's sprite marked on it, which proves a projection rule against the picture |
 | `original/camera.py PID [X,Y;...]`, `--aim X,Y` | The original's park camera now: the point, zoom and rotation, the camera's matrix (its last row the eye) and the draw matrix, and named cells' corners at 1.5 and 21.5 put through it to pixels of the 1024 x 768 frame; `--aim` prints the pixel of a cell's middle, so a run's clicks follow whatever camera it has (Q435) |
+| `original/lens.py PID [SECS]` | The original's lens now: the angle handed to the projection builder, its near and far, the projection, the screen scale, the lobby render camera's own angle and `gui_CameraFlags`, then the picture's angles top to bottom and across; with SECS a line a change (Q260) |
 | `original/camto.py PID X,Y [TOL]` | The original's park camera panned to a cell by resting the pointer on the 1024 x 768 frame's edges (its arrow keys turn the view), each edge's sense and rate learnt as it goes; with Mike's window opened before, the camera stayed where it was put for the 20 s measured (Q439) |
 | `original/cellfind.py PID X,Y [PX,PY]` | The original's side of `lib/cellprobe.py`: the pixel over a map cell, found by moving the real pointer and reading the build preview's cell (`[0x008186b8]`, `[0x008186b4]`), Newton steps from `camera.py --aim`'s pixel, which was cells out (why is not looked into); a tool with a preview must be armed (Q439) |
 | `original/outside.py PID [X,Y] [N]` | The original's map cells outside the park (`mFlags`, the word at `+0xe` of each 0x44-byte cell, bit `0x40`) nearest a cell or the camera's point, as runs along a row: where a refused rectangle of the patrol tool lies (Q439) |
@@ -122,6 +123,7 @@ Read this before aiming a click or comparing two pictures. Each fact names the i
 |---|---|
 | Set this game's park view | console `camera X Y ZOOM YAW` |
 | Read the original's view | `original/camera.py PID` (`--aim X,Y` gives a cell's pixel) |
+| Read the original's lens | `original/lens.py PID` |
 | Pan the original to a cell | `original/camto.py PID X,Y` (pointer on the screen edge) |
 | Click a named cell in the original | `original/cellfind.py PID X,Y`, straight before the click |
 | Click a named cell here | `lib/cellprobe.py` `find( (x, y), start )` |
@@ -150,11 +152,12 @@ Read this before aiming a click or comparing two pictures. Each fact names the i
 - This game: `ParkLocator.Press` sets `Following`; each frame `Camera` puts the point on the member's blended place. A change to the camcorder's first person, a person gone, or a step that finds nobody clears it. A staff window's preview click does `GoToThing` once. Whether opening a window from the world click follows here is not checked.
 - A walker's place against the camera is read under `pause`: two replies apart he has walked most of a cell. Q424
 
-**The lens** (Q260, open):
-- The original's draw matrix is a 90 degree projection times 1.5 across and 2 down: 53.13 degrees top to bottom. This game asks for 90. At rotation 0 and zoom 110 the eye is the same and the frames differ by the lens alone. Q435
-- This game's 1280 x 720 pixel is (640, 360) + (the original's - (512, 384)) x 360 / 768: our middle 480 x 360 scaled to 1024 x 768 lays on the original's frame (`q435/side-by-side.png`, `q436/frames.py`). Q435
+**The lens** (Q260):
+- Every view hands the projection an angle (the park 90, the lobby `ISLANDFOV`), and the draw matrix's fixed screen scale makes the picture `2 atan( tan(a/2) / 2 )` high: the park 53.13 x 67.38, the camcorder the same, the lobby at 100 61.58 x 76.93 (`park-engine.md`, "The lens"). `original/lens.py PID [SECS]` reads it live. Q260
+- This game's 1280 x 720 pixel is (640, 360) + (the original's - (512, 384)) x 360 / 768 at the same camera, to the pixel at two named cells (`q260/confirm.py`); our middle 480 x 360 scaled to 1024 x 768 lays on the original's frame (`q260/overlay.png`, `q435/side-by-side.png`, `q436/frames.py`). Q435, Q260
 - A change drawn at one camera is shown by the box difference against an earlier run's frame at the same numbers. Q436
-- Open: the lobby, the camcorder, other rotations. The original was once read as standing "further back" (Q257r) and once "closer" (Q357) for the same numbers; Q435 found the same eye, so both were the lens and the framing. Inferred.
+- The original was once read as standing "further back" (Q264, Q302) and once "closer" (Q357) at the same numbers: the eye is the same (Q435) and the picture shows the middle half each way, so everything stands twice as large in it. Q260
+- `camera.py --aim`'s pixel was cellfind.py's first probe at both of Q260's cells, with the camera still: the cells out at Q439 came from something other than the lens. Q260
 
 **Aiming a click** (every one of these cost a void):
 - Read the camera in the same run as the click, straight before it. A fixed pixel or cell from an earlier run named other cells (Q435 O1, Q438 O3).

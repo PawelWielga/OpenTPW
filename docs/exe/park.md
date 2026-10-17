@@ -1914,10 +1914,10 @@ drawn a third wider on the screen than it is authored, as the lobby's are. **Not
 width. The frame at 1024 x 768 shows a bubble's ring too faintly to tell 13 px from 10 (`orig/overlay.py` marks
 both on it); the rule is the listing's.
 
-**What follows for the lens, and is NOT acted on here:** a product of `1.5 x` and `2 x` over a 90 degree
-projection draws a vertical half-angle of `atan( 1 / 2 )`, 53.13 degrees top to bottom, not 90. OpenTPW's park
-camera asks for 90 (`ParkOrbitCameraMode`, from the culling frustum `FUN_0056bb00`). Filed as Q260, decode first;
-the sprites here are built at their size in the park, so they are right under either lens.
+**What follows for the lens:** a product of `1.5 x` and `2 x` over a 90 degree projection draws a picture 53.13
+degrees top to bottom, not 90, and it is every view's (`park-engine.md`, "The lens: 90 handed to the projection, 53.13
+drawn"; Q260). OpenTPW's park camera asks for 90 (Q441 builds it); the sprites here are built at their size in the
+park, so they are right under either lens.
 
 **Who starts one.** `FUN_005573d0` (`ADDOBJ`'s and `EVENT`'s worker) cases 1 and 2 call `Particles_Spawn` and
 `Particles_SpawnFull` with the node's place times 1024 (`saves.md`, "OpenTPW's writer, an emitter started" and
@@ -2189,9 +2189,9 @@ gull (matched from 3 s in it scores 1.00), and my script used a name of the libr
 (`q302/mutations.py`), 31 fail a test; three survived the first tests, which were then made to move the
 listener and to see a voice's first variation drawn.
 
-**Not held against the original:** the same camera numbers in both games. The original's camera stands
-further back for the same numbers (Q260), so its listener is elsewhere and its gain with it; what was held is
-the law, in its own mixer's memory. Not measured: the river in the mix (its gain was 0.0159 where it was
+**Not held against the original:** the same camera numbers in both games, not run (its eye at the same numbers is
+ours, Q435, and only its picture is narrower, Q260, so the listener can be compared there); what was held is the law,
+in its own mixer's memory. Not measured: the river in the mix (its gain was 0.0159 where it was
 looked for); a pan against the original's.
 
 ## The save's world block: map cells

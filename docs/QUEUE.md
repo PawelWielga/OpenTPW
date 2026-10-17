@@ -45,17 +45,8 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 At Alexah's word (2026-10-17), Q260 and Q440 (the cameras) come first: testing against the original waits on them.
+Q441, Q260's build, follows Q440 (its tool sets the original's camera for the comparison).
 
-- [ ] **Q260. The park's lens: 90 degrees or 53.** Decode first. From Q258 (`park.md`, "A park's particles,
-  started and drawn"): the matrix the original draws by, read in its memory, is a 90 degree projection times a
-  scale of 1.5 across and 2 down (`0x0087b0d0`, `FUN_005781d0`), and a point through it lands in the frame with
-  the screen as -1 to 1: 53.13 degrees top to bottom. `ParkOrbitCameraMode` asks for 90, from the culling
-  frustum. Find which the picture is (a known point's pixel in both games at one camera), whether the lobby and
-  the camcorder are the same, and what the old "further back" and "closer" readings were (`TOOLING.md`,
-  "Cameras in both games"). Confirm: the decode written down; the build is the next session.
-  From Q435 (`park-engine.md`, "The park camera", its "Measured"): at rotation 0 and zoom 110 the original's eye is the
-  formula's and the same as ours, its picture 53.13 degrees, and our frame's middle scaled by 768/360 lays on it
-  (`q435/side-by-side.png`); the lobby, the camcorder and another rotation are open.
 - [ ] **Q440. Both games at one frame: a tool that sets the original's camera, and its follow decoded.** Filed at
   Alexah's word (2026-10-17), with Q260 moved first: the run of Q433 to Q439 lost many rounds to aiming clicks in the
   original while its camera trailed a staff member (`TOOLING.md`, "Cameras in both games", "The follow" and "Aiming a
@@ -66,6 +57,16 @@ At Alexah's word (2026-10-17), Q260 and Q440 (the cameras) come first: testing a
   so one call puts both games on the same numbers. Confirm: both games' frames at three cameras (rotations 0, 90, 180)
   side by side, a cell's pixel predicted by `camera.py --aim` and found there by `cellfind.py`, and a click on a named
   cell landing on it in the original with a member's window open. Rows in `TOOLING.md`.
+- [ ] **Q441. Build the lens: the park's 53.13 and the lobby's `ISLANDFOV` through the same law.** From Q260
+  (`park-engine.md`, "The lens: 90 handed to the projection, 53.13 drawn"). `ParkOrbitCameraMode` and
+  `ParkCamcorderCameraMode` ask for 90 where the original draws `2 atan( 1/2 )` = 53.13 degrees top to bottom at 4:3
+  (67.38 across); `LobbyCameraMode` asks for a fixed 60 that Alexah chose by eye (2026-09) between two readings of
+  `ISLANDFOV`, where the file's 100 through the law draws 61.58. Ask Alexah before changing the lobby's 60: it was
+  their call, and the law's number is now known. Check what follows a narrower picture: our picking (the pointer's cell),
+  the culler, the HUD's world markers, the camera's limits and everything a confirm script aims through
+  (`lib/cellprobe.py`, `original_view`, `q435/confirm.py`'s 360/768). Confirm: our frame at the original's camera
+  numbers laid on the original's whole, not its middle half (`q260/confirm.py` gives the cells and the camera), the
+  camcorder beside the original's first person, and the lobby at the number chosen.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

@@ -319,7 +319,7 @@ Separate from the lobby island camera. Save module `"SAD_CAMERA"`, chunk magic `
     pitch = lerp(45deg, 65deg, (zoom - 70) / 60), clamped [0, 84.2673deg]
     eye = POI + rotateY( yaw, (0, sin(pitch)*zoom, -cos(pitch)*zoom) )
     eye Y additionally raised by the one-pole-smoothed (alpha 0.5) terrain height under the POI
-    projection near 0.1, far 1000.0, FOV 90
+    projection near 0.1, far 1000.0, angle 90: a 53.13 degree picture top to bottom ("The lens" below)
 
 **Measured** (Q435, `original/camera.py`, twice): at point (484.442, 0, 259.319), zoom 110, rotation 0 the camera's
 matrix `0x0087aff0` holds the eye in its last row, (484.44, 93.62, 201.57), the formula's exactly, and its forward
@@ -333,22 +333,48 @@ The camera persists a *saved* POI and *saved* Y rotation as well as the *require
 
 Terrain-following is real, and the sampler is `FUN_00452560( x, z, 1 )`. With `gui_CameraFlags & 0x16` clear (`0x0042c6c4`) the update `FUN_0042b1c0` calls it on the look-at point (`0x007908f0`, `0x007908f8`) at `0x0042c817`, adds the last answer (`0x00790ae4`), halves the sum (0.5 at `0x006fddfc`), stores it back and adds it to the eye's height (`0x00790aa4`). `FUN_00452560` interpolates the landscape's corner heights (`+0x28` of `[0x007a0854] + 0x6c`) and answers nought off the map; it is not `FUN_004527f0`, which no camera function calls.
 
-### The 90 is VERTICAL
+### The lens: 90 handed to the projection, 53.13 drawn
 
-`FUN_00578be0` does write `m[0] == m[5]` with no aspect term, and on its own that leaves the convention open. **The culling frustum closes it**, because it must frame the same volume the matrix draws or geometry would pop at the screen edge.
+The angle every view hands the projection builder is not the picture's angle. The draw matrix multiplies a fixed
+screen scale in after the projection, and that scale narrows every view by the same law.
 
 | Address | What it is |
 |---|---|
-| `FUN_00578be0` | The projection-matrix builder: `m[0] == m[5]`, no aspect term. Its `DAT_008bcbc8 & 0x200` branch swaps `m[11] = sin(h)` for `m[15] = 1.0`, i.e. orthographic; the default flags word is `0x00410100`, so that bit is clear and **the park is perspective** |
-| `FUN_0056bb00` | Builds four corner rays `(+/-fVar1/DAT_008bcbcc, +/-fVar1, 1)` |
-| `FUN_0056b790` | Twin of the above |
-| `_DAT_007018b8` | pi/180 |
-| `_DAT_007018c0` | The double 0.5 |
-| `_DAT_0074c9b8` × `_DAT_006fdd80` | `(pi/2) * (180/pi)` = **90 exactly**, computed, not a literal |
+| `FUN_00578be0` | The projection builder (`ECX` = `0x0087b110`; near, far, angle): `m00 = m11 = cos(a/2)`, `m23 = sin(a/2)`, `m22 = sin(a/2) / (1 - near/far)`; it keeps the three in `DAT_0087b1dc`, `0x00768acc`, `DAT_0087af58`. Its `DAT_008bcbc8 & 0x200` branch is orthographic; the flags word is `0x00410100`, so **the park is perspective** |
+| `FUN_005781d0` | Render start (`FUN_00572780`): the screen scale `0x0087b0d0` = diag( `2 x DAT_008bcbcc`, `-2` (`0xc0000000` at `0x0087b0e4`), 1, 1 ); nothing writes it after |
+| `FUN_005783b0` | The draw matrix `[0x0087b088]` (`0x0087b158`) = the camera's matrix `0x0087aff0` inverted, times the projection, times the scale. The one path for every view |
+| `FUN_00578ca0` | Calls the builder again with the kept angle and a new far: `FUN_0056ea90` gives 460 or `[0x008bd4c0]`, the fog's distance |
+| `FUN_0056bb00`, `FUN_0056b790` | The culling frustum: corner rays `(+/-tan(a/2) / DAT_008bcbcc, +/-tan(a/2), 1)`, the projection's own 90 degrees without the scale, a volume wider than the picture (harmless: it culls less) |
+| `FUN_0045bf90` | Screen to world: its corner ray is built from fixed numbers (`0x0074c9b8` pi/2 x `0x0074d13c` 0.885 x 0.5 = a 39.8 degree diagonal, split by `atan( 0.75 )`, `_DAT_006fe640`): half-tangents **0.667 across, 0.500 down**, the park's picture |
+| `DAT_008bcbcc` | 0.75 in the running original at 800 x 600 and 1024 x 768 (written through the render struct `0x008bcbc8`; every mode of `FUN_00449ec0` is 4:3 bar 1280 x 1024) |
 
-With 4:3 the rays are `(+/-1.333, +/-1.0, 1)`: **vertical half-angle 45, horizontal 53.13 → vfov 90, hfov 106.26.** OpenTPW's `Camera` takes a camera mode's `FieldOfView` as its vertical angle at 4:3, and both park camera modes ask for 90.
+A point's `x / w` and `y / w` through the draw matrix are the screen as -1 to 1. So a view handed angle `a` draws a
+picture whose half-tangent is `tan(a/2) / 2` top to bottom and `tan(a/2) / 1.5` side to side, a plain 4:3 lens of
+`2 atan( tan(a/2) / 2 )` vertically. The builder's callers:
 
-**The aspect term:** `DAT_008bcbcc` is written at runtime through a struct pointer (the only static write, at `0x00582da8`, is the defaults initialiser zeroing `[base+4]` of the render struct at `0x008bcbc8`); it reads 0.75 in the running original at 1024 x 768 (`park.md`, the `2 x DAT_008bcbcc` scale at `0x0087b0d0`). Corroboration: the picking code `FUN_0045bf90` carries 0.75 as a literal **double** at `_DAT_006fe640` and takes `atan(0.75)` to build the same frustum; and `FUN_00449ec0`'s mode table is 160x120 / 320x240 / 400x300 / 512x384 / 640x480 / 800x600 / 1024x768 / 1280x1024 / 1600x1200 / 2048x1536 — **every mode 4:3 except 1280x1024**, which is what `Camera.ReferenceAspect` already says.
+| Caller | Angle | Picture, top to bottom x side to side |
+|---|---|---|
+| The park camera's reset `FUN_0042a990` (pi/2 x 180/pi, `0x0042aa2f`) | 90 | **53.13 x 67.38** |
+| `Window_Create` `0x0044e277`, `Game_StateMachine` `0x0054e874` (`0x42b40000`) | 90 | 53.13 x 67.38 |
+| The lobby's render camera `0x00f83778` (vtable `0x00702a90`, slot 2 `0x005d8cb0`), its `+4` | 115 at `FUN_005d8b50`, then `ISLANDFOV` | 100: **61.58 x 76.93** (`lobby.md`, "The lens") |
+
+Nothing in a park calls the builder after the reset but `FUN_00578ca0`, so the camcorder's first person draws with
+the orbit camera's lens. **Measured** (Q260, `original/lens.py`): the lobby's angle 100.000 (its camera's `+4` the
+same), `m00` 0.64279, `m23` 0.76604, scale 1.5 and -2, aspect 0.75, so 61.58 x 76.93; the park's 90.000, `m00` =
+`m23` = 0.70711, the same scale, 53.13 x 67.38; the camcorder's pick and its first person the same 90 (the far 126,
+128 and 112 as the fog moved). Two cells named at one camera (point (494.975, 192.002), zoom 110, rotation 0) stood at
+702,254 and 281,489 of the original's 1024 x 768 frame and at (729, 299) and (532, 409) of OpenTPW's 1280 x 720, which
+is (640, 360) + (the original's - (512, 384)) x 360 / 768 to the pixel: OpenTPW's picture is 90 degrees, twice the
+original's tangent (`q260/side-by-side.png`, `q260/overlay.png`). Rotation 0 only; other rotations are Q440's.
+
+**Why it was read as 90 before.** The builder alone writes `m00 == m11` with no aspect term, and the culling frustum
+is the 90 degree one, so "the culler must frame what is drawn" made 90 the vertical angle. The screen scale breaks
+that: the culler frames more than is drawn. And the two readings of the original's camera as "further back" (Q264, Q302)
+and "closer" (Q357) at the same numbers were the lens alone: the eye is the same (Q435), and the original's frame
+shows the middle half, each way, of what a 90 degree lens shows, so everything stands twice as large in it.
+
+OpenTPW's `Camera` takes a camera mode's `FieldOfView` as its vertical angle at 4:3, and both park camera modes ask
+for 90; the original's picture is a vertical 53.13 at 4:3 (Q441 builds it).
 
 ### Also mapped on the way
 
@@ -425,7 +451,7 @@ Every theme ships `sky/` with those three files and an `ssky/` low-detail set be
 
 **A park's sky colour comes from its own art, not from a key.** `SKYCOLOUR(r,g,b)` is parsed only by the lobby's island-script reader `FUN_005e3210` — which also handles `LIGHTNING(n)` and `RAINY(n)`, storing them into the weather object at `+0x64`/`+0x68`/`+0x6c` as `value << 16`, `+0x5c` and `+0x60`. **No theme balance file carries a sky colour key at all** (checked in all four). The colour is `sky_rgb.tga`.
 
-**The ORBIT camera never shows the sky.** Its pitch is 45-65 degrees against a vertical FOV of 90, so the top of the frame sits at elevation `45 - pitch` — 0 at best, never above the horizon. All three reference screenshots agree: ground to every edge. **Camcorder mode does show it**; from the ground the sky fills the upper half of the frame. The argument above is about the orbit camera, and for that it holds exactly.
+**The ORBIT camera never shows the sky.** Its pitch is 45-65 degrees against a picture 53.13 degrees high ("The lens"), so the top of the frame sits at elevation `26.57 - pitch`, always below the horizon. All three reference screenshots agree: ground to every edge. **Camcorder mode does show it**; from the ground the sky fills the upper half of the frame. The argument above is about the orbit camera, and for that it holds exactly.
 
 What OpenTPW's orbit camera shows past the ground's edge is the **fog-cleared background**, measured at exactly jungle's `ThemeEngine.FogColour` **4774136** (`0x48D8F8`) with **one unique colour and zero standard deviation** across the strip. Not sky.
 

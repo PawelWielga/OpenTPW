@@ -7338,6 +7338,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   a voice` and the mix matched `blnl_error1` once at 0.999, gain 0.1755 (0.35 x 0.5 x 1); none at the anchor. The
   original (`q439/orig`, round 1j): refused the same way, its sound 0.318 under the music, the capture's best (not
   shown). Test `ARefusedPatrolClickIsHeardUnlessItsPressWentToAParkScreen` (`q439/PREDICTION.txt`, `side-by-side.png`).
+- [x] **Q260. The park's lens: 90 degrees or 53.** Done 2026-10-17, decode only (`park-engine.md`, "The lens: 90
+  handed to the projection, 53.13 drawn"; `lobby.md`, "The lens"): every view hands `FUN_00578be0` an angle and the
+  draw matrix multiplies in a fixed screen scale (1.5 across, 2 down, `FUN_005781d0`), so the picture is
+  `2 atan( tan(a/2) / 2 )` high. The original's memory (`original/lens.py`, `q260/orig`): the park 90.000, 53.13 x 67.38;
+  the camcorder's first person the same; the lobby `ISLANDFOV` 100.000, 61.58 x 76.93. Cells (52,21) and (46,17) at one
+  camera: 702,254 and 281,489 in the original, (729, 299) and (532, 409) here, the 53.13 law to the pixel
+  (`q260/overlay.png`, `q260/PREDICTION.txt`). The old "further back" and "closer" were the lens. Built in Q441.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
