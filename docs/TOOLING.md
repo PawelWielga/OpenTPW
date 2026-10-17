@@ -181,6 +181,8 @@ Read this before aiming a click or comparing two pictures. Each fact names the i
 - A cell off the frame stops the run unclicked. Q439 stopped at 877,38 and at 2003,686.
 - A frame and its camera read seconds apart are not the same view while a follow runs. Q438
 - Stop the original on any exit of the run script, or the next run loads into it. Q439
+- The original's picker reads straight off the pointer: `camera.py --aim`'s pixel, one `xdotool mousemove` on `:77`, and 1.5 s later the cell `[0x007b05cc]` and its hit point `[0x007a1c70]` (three floats, x ground z), which stand unchanged where the ray meets nothing (`q472/orig/run.sh`). Q472
+- The pixel map to this game holds only where both points stand on the same ground: at (400,780) this game's camera stood on ground 7.0 and the original's point slid to (400, 781.6) after `setcam.py`, and the mapped pixel fell two rows short. There, find this game's pixel by `pick X Y` down a column (`q472/confirm.py`, G6b). Q472
 
 ## Recipes
 

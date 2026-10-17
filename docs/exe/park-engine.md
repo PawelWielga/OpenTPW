@@ -987,7 +987,7 @@ extent is `[[0x007a0854] + 0x6c]`, the heightfield block of `Terrain\base.md2`: 
 
 **One branch is decoded but not built here: walking onto a ride's entrance rides it.** Every pass of the sweep, the
 whole-step one included, ends at `0x0042c545`: the cell of where the pass left the viewer, `(int)(x * 0.1)` and
-`(int)(y * 0.1)` clamped to the map (`FUN_0042cd40`), is handed to `FUN_0042a340` (`0x0042c587`). That answers only for
+`(int)(y * 0.1)` held to 0..94 and 0..83 (`FUN_0042cd40`, `MapInfo`'s limits `[0x007a0314]` and `[0x007a0374]`), is handed to `FUN_0042a340` (`0x0042c587`). That answers only for
 an **entrance**, a cell of type 9 (`FUN_00536340`, `[cell+8] == 9`): it reads the cell's `mParentID` (`+0x10`), walks
 the thing chain of that owner's cell (`+0x24`, the next at the thing's `+0xa`), and returns the first catalogue object
 (kind byte `+2` is 3) whose item's `+0x118` is nought. `+0x118` is **`UsageInfo.CannotRide`**, row 11 of the descriptor
@@ -1386,7 +1386,7 @@ id in `FUN_0045d560`:
 
     DAT_007b05cc = y * 0x80 + 1 + x        -- identical to this project's y*128 + x + 1
 
-Written as a **16-bit** store. A point off the map is held to an edge cell first; 0 is stored only where the clamps fail ("The picker never hands the mode a cell off the map"). The "y" is really the **Z** component of
+Written as a **16-bit** store. The cell is held to columns 0 to 94 and rows 0 to 83 (`MapInfo`'s 95 and 84), and a ray that meets nothing leaves the last cell standing ("The picker never hands the mode a cell off the map"). The "y" is really the **Z** component of
 the world hit point. The hovered *thing* is latched separately into the mouse-manager object at
 `0x007b05a8`, and a click **snapshots** it (`FUN_0048c960`) rather than re-reading it live.
 
@@ -2437,11 +2437,26 @@ be reopened while carrying (see Open), the old one returning first, after which 
 `0x00507fcd`); and leaving the park (see "Leaving a park with something in the hand"). A
 held or dragged right press, or any right press with the option off, leaves the candidate in the hand.
 
-**The picker never hands the mode a cell off the map.** `FUN_0045d560` clamps the pick to an edge cell,
-and a ray that hits nothing leaves the last hovered cell standing, so any nonzero id it writes is a map
-cell (both seen in Q469: the sea past row 0 read (45,0) at one view, and at another the last cell stood). It writes 0 only if a runtime limit (`DAT_007a0314`, `DAT_007a0374`) is 0 or less, or a grid
-dimension and its limit are both above 128; those limits are filled at run time and were not read, so
-"never 0" is likely, not proven. The click does not test for 0.
+**The picker never hands the mode a cell off the map** (Q472; measured in the original, `q472/PREDICTION.txt`). Each
+frame, unless `gui_CameraFlags` `[0x00790ab0] & 0x16` (a first-person view), `0x0054e2b0` calls `FUN_0045bf90( &P, 60.0,
+0x007a1c90, 0 )` and then `FUN_0045d560( &P )`, P the point at `0x007a1c70`. `FUN_0045bf90` writes P only when its ray
+meets the terrain or an object (`DAT_007a1cd4`); meeting neither, **P keeps the last hit and the same cell is written
+again**. The terrain test walks only the heightfield `[[0x007a0854] + 0x6c]`: origin `+0x8`/`+0xc` (0, 0), spacing
+`+0x10`/`+0x14` (10, 10), `+0x18` by `+0x1c` cells (**96 by 85**), so nothing past x 960 or z 850, and nothing at z
+below 0, is ground to it. The object march (`FUN_0045cdc0`, steps of 10 along the ray while it is above the terrain's
+hit, or above 0 with none) asks the things of the cell under each step, that cell held to 0 to `[0x007a0314] - 1` and 0
+to `[0x007a0374] - 1`. `FUN_0045d560` then takes x = (int)((P.x - `+0x8`) / `+0x10`) and y = (int)((P.z - `+0xc`) /
+`+0x14`), truncated, holds each to 0 and to the heightfield's cells less one, then to `[0x007a0314] - 1` and
+`[0x007a0374] - 1`, and writes `y * 0x80 + 1 + x`; 0 only where `FUN_004d8300` refuses (outside 0 to 127), which these
+holds never reach. **The two limits are `Standard.sam`'s `MapInfo.HeightfieldWidth` and `HeightfieldHeight`**, 95 and 84 in
+every park: `FUN_00457c30` copies them from `FUN_00519430` and `FUN_00519440` (`[0x0078558c]`, `[0x00785590]`, the
+balance block's fields in the order of the names at `0x0074253c`: XStart, YStart, Width, Height; the starts, 0 and 0,
+go to `[0x007a01bc]` and `[0x007a029c]`). **So the picker answers columns 0 to 94 and rows 0 to 83 only**: the
+terrain met in column 95 or row 84 is held to 94 or 83. Read in the original at the stock park
+(`q472/orig/a-run.out`): the heightfield 96 x 85 at (0, 0) by 10, the limits 95 and 84; the pointer on (95,40) read
+(94,40) with P.x 958.2, on (40,84) read (40,83) with P.z 847.4; past column 95 (the boundary fence and the field
+beyond), past row 84, and over the sea past row 0, P and the cell stood unchanged, the object word 0, and the hover's
+row stood with them (`a-A4.png`). The click does not test for 0.
 
 **Open.** What advisor message `0x135` says (it resolves through a table filled at runtime); what puts
 the cursor back after a drop or a cancel; whether the staff constructors' later calls make a sound;
@@ -3200,7 +3215,7 @@ computes (`models.md`, "Normals").
 
 ## The blocking unknowns, worst first
 
-1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). **Nobody established whether `HeightfieldWidth` counts cells, vertices or cells-minus-one.**
+1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). Settled for the picker (Q472): the terrain is tested over the heightfield's 96x85 cells and the cell is held below `HeightfieldWidth` and `HeightfieldHeight`, 0..94 and 0..83 ("The picker never hands the mode a cell off the map"). The camera sweep's `FUN_0042cd40` holds to the same; what else reads them (`FUN_0055abf0` and the rest of `[0x007a0314]`'s twenty readers) is not read.
 2. ~~The lighting model.~~ Settled: see "The lighting model" above. `LightNormal` is the direction light travels.
 3. ~~The diagonal-choice bit.~~ Settled: see "The triangle diagonal" above (`0x0002` drawn, `0x0004` heights).
 4. `base.MD2`'s container walking — the heightfield was found by validated signature search, **not** by walking the chunk table.
@@ -3575,9 +3590,10 @@ the track's (`0x004873d5` to `0x00487441`: two of those ways return with no post
 (6), and every other the default `0x004877a3`, which posts the empty row only after a category and puts up pointer 0: in
 Lost Kingdom map types 7 (9,077 cells, among them the land past the entrance's fence and the gate's two outer cells,
 which the gate's test takes first), 2 (240) and 30 (66, the approach, the ticket booths among them, taken first too). Built in `Level.GroundArmAt` and `Level.WorldHelpRow`. **The picker meets no cell only
-before its first pick** ("The picker never hands the mode a cell off the map" above): over the sea the original kept the
-last cell (2092) when the camera moved off the map, so its row stood, and at another view it answered the edge cell
-(45,0); ours answers no cell there, posts nothing and counts `PICK_EDGE_CELL` (Q472). Measured in both (`q469/`,
+before its first pick** ("The picker never hands the mode a cell off the map" above): over the sea, and past the
+heightfield's last column and row, the original keeps the last cell, so its row stands; ours answers no cell over the
+sea, posts nothing and counts `PICK_EDGE_CELL`, and past the heightfield answers a cell of map type 7 and empties the row
+(Q472b). Measured in both (`q469/`,
 `PREDICTION.txt`, `side-by-side.png`): from (43,16) "Left-click to build path" onto the hoarding (42,16) category 0 and the
 row standing, on to (44,16), map type 7, still standing; from (43,16) straight onto (44,16) the bar emptied, and onto the
 hoarding still empty; the camera then moved to the sea, the row stood.

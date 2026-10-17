@@ -7558,6 +7558,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   test ahead of `Level.ArmsThePathTool`, and count the ground's unbuilt rows where ours posts -1 (`0x226` the object's
   name `0x004876d1`, `0x1bc` a queue `0x00487621`, `0x1be` a track `0x004874ab`, `0x1c0` type `0x15` `0x00487742`).
   Confirm in both games: hover and click (47,17), then a booth.
+- [x] **Q472. The picker's edge cell and its last cell.** From Q469 (`park-engine.md`, "The picker never hands the mode
+  a cell off the map", "The arms that post nothing"): the original's `FUN_0045d560` holds a point off the map to an edge
+  cell, and where the ray meets nothing the last cell stands, both seen over the sea (q469/orig: (45,0) at one view, the
+  last cell 2092 at another); ours answers no cell (`ParkPicking.Resolve`), so the hover posts nothing there, counted
+  `PICK_EDGE_CELL`, and every verb that asks the cell (a tool's square, a click) does nothing where the original's acts on
+  an edge cell. Decode first where the ray's hit leaves the terrain (`FUN_0045bf90`) and which edge cell a point takes.
+  Confirm in both games: the pointer over the sea past row 0 and past a ground edge (Lost Kingdom's 141), the cell read
+  and the row.
+  Done 2026-10-17, the decode only (the build is Q472b): the original writes the hit point only when its ray meets the
+  heightfield (96 x 85 cells, 0 to 960 by 0 to 850) or an object, so past the heightfield and over the sea the last cell
+  stands; the cell is held to 0..94 and 0..83 by `Standard.sam`'s `MapInfo.HeightfieldWidth` and `Height` (95, 84;
+  `FUN_00457c30`). In the original: (95,40) read (94,40), (40,84) read (40,83), and past column 95, past row 84 and over
+  the sea past row 0 the cell and the hit point stood, the row with them; ours 7 of 7 at the same views as the control
+  (`q472/`); Q469's (45,0) was not seen again. `park-engine.md`, "The picker never hands the mode a cell off the map".
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
