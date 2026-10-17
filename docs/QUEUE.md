@@ -82,6 +82,8 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it
   pointer is not over the map") go with it. The object march (`FUN_0045cdc0`: a model met before the terrain gives its
   hit point) is not built and not counted: count it at the site. Confirm in both games at `q472/orig/run.sh`'s three
   views: the cell, the help row and a frame at each step.
+  The object march's test is the gate's arch face, where the original answers the gate cells (`q471/orig/x-scan.log`, y
+  320 to 380) and ours the approach behind it (`q471/run1-nopixel.out`; the review of Q471, `handoff/review3/VERIFY-7.md`).
 - [ ] **Q473. The help bar is one posted row.** From Q469: the original's bar holds whatever `FUN_004924b0` last posted,
   the hover's, a control's and a park screen's (the buy screen's `FUN_004abc80`, its rows `0x94`, `0x96` to `0x98`, `0x21a`,
   `0x21b`) alike, and the camcorder's own (`0x243`, `0x244`, `0x004bd920` to `0x004bd9d4`, mode 9, which ours does not
@@ -129,6 +131,12 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it
   order only), and the reference run read `0x1444100` (alphkid on). Ours draws none (`ride-operation.md`, "no shadow";
   Q32 lists shadows among the keys nothing reads). Decode the pass's placement and colour first, then build it at the
   reference's setting. Confirm by a frame pair in both games at one camera (`lib/bothcam.py`).
+- [ ] **Q484. The help bar wraps a long row inside its strip.** From the review of Q471 (`handoff/review3/VERIFY-7.md`,
+  finding 3; seen in frames): `UI/HelpBar.cs` never sets `TextWraps`, so a long row (459 "Park gates - ...", 460 "Ticket
+  booth - ...") runs past both ends of the dark `f_helpbg` strip (`q471/run2/2-gate.png`: text at x 388 to 893 over a
+  strip at about 430 to 850), where the original sets it on two lines inside its bar (`q471/orig/b-2-gate.png`). Decode
+  the bar's lettering first (its width, line height and where it breaks), then build it. Confirm by a frame pair over
+  the gate in both games.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
