@@ -185,7 +185,10 @@ public partial class Renderer
 	{
 		// Cleared to the sky rather than to black. The sky is geometry, and the lobby's is four
 		// layers of cloud on an open dome - about a fifth of it is gaps, with nothing behind them
-		// but whatever the frame started as. Black there reads as holes punched in the sky.
+		// but whatever the frame started as. Black there reads as holes punched in the sky. The original
+		// clears a park's frame to its fog colour only under either bit of render-word 0x4002000 and to
+		// black otherwise (FUN_00573740, 0x005737b6; read, not measured): its park camera never looks far
+		// enough up to show the clear (docs/exe/park-engine.md, "The park view's colours").
 		var sky = Level.FogColour;
 		DrawScene( "Main Render", OnRender, new RgbaFloat( sky.X, sky.Y, sky.Z, 1f ) );
 

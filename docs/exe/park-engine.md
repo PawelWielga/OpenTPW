@@ -3229,13 +3229,25 @@ the colour and, where the card passes the table-fog probe `FUN_005673d0`, linear
 (render-word bits `0x4000` or `0x8000`) the game fogs each vertex itself as a batch is flushed (`FUN_00565590`,
 `FUN_00565ee0`): under `0x4000` `FUN_005747d0` scales the vertex colour by `1 - f` and puts the fog colour times `f`
 in the specular, with `SPECULARENABLE` on and `FOGENABLE` off for the batch; under `0x8000` `FUN_00574960` writes
-`f` into the specular's alpha. **The terrain pass asks for any of it only under render-word bit `0x2000`**
-(`FUN_0056f670` calls `FUN_00565ee0` behind it), and the only writer of that bit is `Game_StateMachine`'s
-`XOR 0x2080` (`0x0054fae2`) as `gui_CameraFlags & 0x16` (a ride's view, first person) comes on and goes off. Live
+`(1 - f) x 255` into the specular's alpha. **The terrain pass asks for any of it only under render-word bit `0x2000`**
+(`FUN_0056f670` calls `FUN_00565ee0` behind it). In a park `Game_StateMachine`'s `XOR 0x2080` (`0x0054fae2`) turns
+it on and off as `gui_CameraFlags & 0x16` (a ride's view, first person) comes on and goes off; the lobby sets it in
+`FUN_005d9680` (`OR AH,0x20`) for its own fog; `FUN_005d9690`, `0x005d8bf9`, `0x00576eff` and the FOG option's
+`AND AH,0x9f` in `FUN_0044d8f0` (`0x0044db16`, with `0x4000`) clear it. Of the word's 50 writes those two are the
+ones read setting it by a constant; the rest were not each followed. Live
 under Proton at medium the word reads `0x01444100`: `0x4000` set, `0x2000` clear, start 100, end 110. Held at
 10000/20000, and at -2/-1 (every vertex past the end), the park view's frames did not change by one level in any
 box of ground, path or object; only the animated sea moved. Read and not measured: the frame is cleared to the fog
-colour only under render-word `0x4002000` (`FUN_00573740`, `FUN_00573cc0`), and to black otherwise.
+colour only under either bit of render-word `0x4002000` (`FUN_00573740`, `FUN_00573cc0`; `AND EDI,0x4002000` at
+`0x005737b6`), and to black otherwise. Neither is seen in the park's view: at the farthest zoom, 130, in four
+rotations the camera still looks down on ground and sea, no run of near-black longer than 9 pixels in the frame's top
+strip (Q481, `q481/orig/a-C-*.png`).
+
+**OpenTPW draws the park's view with no fog** (Q481): `Level.FogDensityFor` is nought in a park, so `test.shader`'s
+and `water.shader`'s mix adds nothing, and the lobby keeps its own haze. At Q479's cameras every box reads as Q479's
+copy with both shaders' fog set to nought (A's grass (29.9, 139.2, 28.6), B's sea (1.0, 53.7, 55.9)), where main's
+read (33.2, 145.1, 45.5) and (8.6, 70.9, 76.2) (`q481/side-by-side.png`). First person, fogged in the original, is
+drawn without it and counted, `FIRST_PERSON_FOG` (Q485); the frame is still cleared to the fog colour.
 
 **Land outside the park is drawn at half light.** `FUN_00450d10` (on a park's load from `FUN_005323f0`, and from
 Buy Land's `FUN_005327e0`) sets the ground cell's `0x0400` where the map cell's `mFlags` has `0x40` (land outside

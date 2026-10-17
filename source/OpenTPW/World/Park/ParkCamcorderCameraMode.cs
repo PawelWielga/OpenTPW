@@ -199,6 +199,10 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 
 		Camera.SetCameraMode<ParkCamcorderCameraMode>();
 		ParkGuestSprites.Current?.UseFirstPersonPictures( true );
+
+		// The original fogs first person, linearly by depth, where the park's own view has none; this view is
+		// drawn without it (Level.FogDensityFor).
+		Unimplemented.Report( "FIRST_PERSON_FOG" );
 	}
 
 	/// <summary>

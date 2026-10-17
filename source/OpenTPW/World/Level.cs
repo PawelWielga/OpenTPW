@@ -27,10 +27,26 @@ public class Level
 	/// <summary>
 	/// How thick the haze is - the multiplier on the shaders' <c>exp( depth * 0.01 )</c>, so it is
 	/// what the fade is at zero distance and it reaches full strength around three hundred and
-	/// seventy units out. Clear up close and a wall at the horizon, which is the shape this has
-	/// always had.
+	/// seventy units out. The scene's own - see <see cref="FogDensityFor"/>.
 	/// </summary>
-	public static float FogDensity { get; set; } = 0.025f;
+	public static float FogDensity => FogDensityFor( Current?.Kind );
+
+	/// <summary>The lobby's haze: clear up close and a wall at the horizon.</summary>
+	internal const float LobbyFogDensity = 0.025f;
+
+	/// <summary>
+	/// The haze a scene is drawn with: none in a park, the lobby's anywhere else.
+	///
+	/// <para>
+	/// The original draws a park's own view with no fog: the terrain and the objects ask for it only under
+	/// render-word <c>0x2000</c> (FUN_0056f670 calls FUN_00565ee0 behind it), which <c>Game_StateMachine</c> turns on
+	/// while <c>gui_CameraFlags &amp; 0x16</c> is (first person, a ride's view; <c>0x0054fae2</c>). That fog is linear by
+	/// depth, from <c>GraphicalOptions.FIRSTPERSONVIEWDISTANCE</c>'s start to its end (100 to 110 at medium,
+	/// FUN_0044d8f0), in the theme's <c>FogColour</c> (docs/exe/park-engine.md, "The park view's colours"). It is not
+	/// built: first person is drawn without it and counted, <c>FIRST_PERSON_FOG</c>.
+	/// </para>
+	/// </summary>
+	internal static float FogDensityFor( Scene? kind ) => kind == Scene.Park ? 0f : LobbyFogDensity;
 
 	public SettingsFile Global { get; private init; }
 
@@ -231,7 +247,8 @@ public class Level
 		Log.Info( $"{ThemeName}: balance stack came to {Balance.Count} keys" );
 		load.Mark( "balance" );
 
-		// What distance fades to. The lobby's Sky rewrites this every frame from its own horizon,
+		// The theme's fog colour. A park's own view fades nothing to it (FogDensityFor), but the frame is
+		// cleared to it and the sky hazes into it. The lobby's Sky rewrites this every frame from its own horizon,
 		// because that horizon moves with whichever park the camera is on; a park's sky is untinted and
 		// deliberately leaves this alone, so setting it once here holds. Jungle and fantasy are a pale
 		// blue within a few points of the lobby's own constant, hallow is nearly black and space is

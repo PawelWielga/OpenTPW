@@ -53,14 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q481. No fog in the park's own view.** From Q479 (`park-engine.md`, "The park view's colours"): the original's
-  terrain and objects take fog only under render-word `0x2000`, on while `gui_CameraFlags & 0x16` (a ride's view, first
-  person), so its overhead park view has none; ours mixes every pixel of `test.shader` and `water.shader` toward
-  `Level.FogColour` by `exp( d x 0.01 ) x 0.025` (Q479 measured +3 +6 +17 on the grass, +8 +17 +20 on the sea). Take it
-  out of the park view and say at the site where the original's fog lives (linear, `FIRSTPERSONVIEWDISTANCE`'s start and
-  end, the theme's colour) for the views that have it. With it: the frame past the ground's edge is cleared to the fog
-  colour only under render-word `0x4002000` and to black otherwise (read, not measured: `FUN_00573740`); measure the
-  original's before changing ours'. Confirm in both games at Q479's cameras (`q479/orig/run.sh`): A and B's boxes.
 - [ ] **Q482. Land outside the park is drawn at half light.** From Q479: `FUN_00450d10` sets a ground cell's `0x400`
   where the map cell's `mFlags` has `0x40` and not `0x80`, and the terrain pass halves that cell's corner light while
   `GraphicalOptions.LIGHTING` is on; ours draws it at full (`ParkGround`). Build it from the park's cells, again after
@@ -137,6 +129,13 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it
   strip at about 430 to 850), where the original sets it on two lines inside its bar (`q471/orig/b-2-gate.png`). Decode
   the bar's lettering first (its width, line height and where it breaks), then build it. Confirm by a frame pair over
   the gate in both games.
+- [ ] **Q485. First person's fog.** From Q481 (`park-engine.md`, "The park view's colours"): the original fogs first
+  person and a ride's view (render-word `0x2000`, `Game_StateMachine`'s `XOR 0x2080` at `0x0054fae2`), linearly by depth
+  from `GraphicalOptions.FIRSTPERSONVIEWDISTANCE`'s start to its end (100 to 110 at medium, `FUN_0044d8f0`) in the
+  theme's `FogColour`, which under Proton is the game's own vertex fog (`0x4000`: `FUN_005747d0`, the colour times
+  `1 - f` and the fog colour times `f` in the specular); ours draws first person with none, counted `FIRST_PERSON_FOG`
+  (`ParkCamcorderCameraMode.Enter`). Measure the original's first person first (the frame at `f` 0, between and 1,
+  and whether Proton adds the specular), then build it. Confirm by a frame pair in both games at one stand.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

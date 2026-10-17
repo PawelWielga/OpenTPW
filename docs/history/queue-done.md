@@ -7595,6 +7595,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   off. The brown patches are the procedural compositor's tiles (`[0x008bd550]` bit 4 held clear: the patches went, ours'
   flecks showed). Brick and road agree within 8 a channel. `q479/PREDICTION.txt`: 13 predictions, 8 held, 5 missed and
   recorded; frames `q479/orig/b-*`, `c-*`, `d-*`, `q479/ours-fog/`, `q479/ours-nofog/`.
+- [x] **Q481. No fog in the park's own view.** From Q479 (`park-engine.md`, "The park view's colours"): the original's
+  terrain and objects take fog only under render-word `0x2000`, on while `gui_CameraFlags & 0x16` (a ride's view, first
+  person), so its overhead park view has none; ours mixes every pixel of `test.shader` and `water.shader` toward
+  `Level.FogColour` by `exp( d x 0.01 ) x 0.025` (Q479 measured +3 +6 +17 on the grass, +8 +17 +20 on the sea). Take it
+  out of the park view and say at the site where the original's fog lives (linear, `FIRSTPERSONVIEWDISTANCE`'s start and
+  end, the theme's colour) for the views that have it. With it: the frame past the ground's edge is cleared to the fog
+  colour only under render-word `0x4002000` and to black otherwise (read, not measured: `FUN_00573740`); measure the
+  original's before changing ours'. Confirm in both games at Q479's cameras (`q479/orig/run.sh`): A and B's boxes.
+  **Done 2026-10-17:** `Level.FogDensityFor` is nought in a park; at A and B every box is Q479's fog-off copy's to
+  0.0 (A's grass (29.9, 139.2, 28.6), B's sea (1.0, 53.7, 55.9)), main's (33.2, 145.1, 45.5) and (8.6, 70.9, 76.2);
+  the original's unchanged by its fog held (`q481/side-by-side.png`, `PREDICTION.txt`). The original clears to the fog
+  colour under either bit of `0x4002000` (`0x005737b6`), and the clear is seen nowhere in its park view (zoom 130, four
+  rotations), so ours is left. First person, fogged in the original, is counted `FIRST_PERSON_FOG`: Q485.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -1054,9 +1054,9 @@ GH=766` there, or the pointer is off):
   inside the frame (880,560 on `:77`), never past 0.95 of it, or the camera pans between shots. The fog:
   `memhold.py %PID% 5 0x008bd490:f=10000 0x008bd494:f=20000` (the park view takes none, so nothing changes). The
   compositor's tiles: `memhold.py %PID% 6 0x008bd550=<the word less 4>`. Land outside the park at full light:
-  `HF=engine groundcell.py %PID% 6 X0,Y0:X1,Y1=-0x400` (not restored: stop the original after). This game's fog off:
-  a copy of the bin folder with `fogFactor = 0.0;` in its `content/shaders/test.shader` and `water.shader` (the
-  shaders are compiled as it starts), `~/.cache/dn-tmp/q479/nofog`.
+  `HF=engine groundcell.py %PID% 6 X0,Y0:X1,Y1=-0x400` (not restored: stop the original after). This game's park
+  draws no fog since Q481; the lobby's is taken off in a copy of the bin folder with `fogFactor = 0.0;` in its
+  `content/shaders/test.shader` and `water.shader` (the shaders are compiled as it starts), `~/.cache/dn-tmp/q479/nofog`.
 
 ## The original under Proton
 
