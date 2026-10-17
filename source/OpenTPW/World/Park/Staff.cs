@@ -156,10 +156,16 @@ public sealed class Staff
 	/// The corners of the rectangle this member of staff keeps to, as <b>packed cell ids</b> -
 	/// <c>y * 128 + 1 + x</c>. Both nought means no area at all.
 	/// </summary>
-	public int PatrolBottomLeft { get; }
+	public int PatrolBottomLeft { get; private set; }
 
 	/// <inheritdoc cref="PatrolBottomLeft"/>
-	public int PatrolTopRight { get; }
+	public int PatrolTopRight { get; private set; }
+
+	/// <summary>The patrol tool's write, <c>FUN_00506e50</c>: the two corners' cell ids, the least first.</summary>
+	public void SetPatrolArea( int bottomLeft, int topRight ) => (PatrolBottomLeft, PatrolTopRight) = (bottomLeft, topRight);
+
+	/// <summary>The patrol switch let up, <c>FUN_00506e90</c>: the whole map, cells 1 to <c>0x4000</c>.</summary>
+	public void ClearPatrolArea() => SetPatrolArea( WholeMapBottomLeft, WholeMapTopRight );
 
 	/// <summary>Where they are and where they are going - the same navigator every person carries.</summary>
 	public PeepNavigator Navigator { get; }

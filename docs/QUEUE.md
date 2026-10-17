@@ -48,6 +48,14 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q433 (`hud.md`, "The patrol switch and the patrol tool"): the patrol switch and its tool are built. Nearest: a
+  member fenced where one path cell lies stands idle on it with thought `0x16` seconds after reaching it here (the patrol
+  roll finds only his own cell); watch the original's past nineteen seconds before changing `StaffBehaviour`. Seen: at
+  the two runs' cameras our lifted squares look far higher above the ground than the original's, at the same lift
+  numbers; compare at one camera. Counted, not built: the refused click's sound `0xaf` (`PATROL_TOOL_REFUSED_SOUND_0xAF`).
+  In no game run: `0xc1` cut by the click here (the line ended first; the original's was cut; tested), Escape or a
+  right click with the tool armed, Full Simulation (not asked: the window is either mode's), the other three themes.
+  Not heard.
   From Q432 (`hud.md`, "The person's windows"): FIRE and PICK UP are built, so the staff window's nearest piece is the
   patrol switch (`STAFF_WINDOW_PATROL`: `FUN_004b5b50`, map tool `0x36` and advisor line `0xc1`, or the area cleared,
   `FUN_00506e90`). Counted, not built: the puff of particle `0x13` at a dismissal (`STAFF_DISMISSAL_PARTICLE`,

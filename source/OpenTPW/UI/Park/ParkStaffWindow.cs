@@ -30,10 +30,14 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
+/// <b>The patrol switch</b> (<c>0x510</c>, <c>FUN_004b5b50</c>) hands over the patrol tool as it goes down and gives the
+/// member the whole map as it comes up (<see cref="Patrol"/>).
+/// </para>
+///
+/// <para>
 /// <b>Counted, not built:</b> the preview's copy of the member's model (<c>FUN_00486530</c>, <c>STAFF_WINDOW_PREVIEW</c>;
-/// the panel stands empty and its click still goes to the member), the patrol area's toggle (<c>FUN_004b5b50</c>,
-/// <c>STAFF_WINDOW_PATROL</c>), and the name's edit (<c>FUN_0048d290</c>, <c>STAFF_WINDOW_NAME_EDIT</c>). The toggle's
-/// second help row, 87 while it is down, is not shown: a button here has one.
+/// the panel stands empty and its click still goes to the member), and the name's edit (<c>FUN_0048d290</c>,
+/// <c>STAFF_WINDOW_NAME_EDIT</c>). The switch's second help row, 87 while it is down, is not shown: a button here has one.
 /// </para>
 /// </summary>
 internal sealed class ParkStaffWindow : UiWindow
@@ -457,13 +461,32 @@ internal sealed class ParkStaffWindow : UiWindow
 		Log.Info( $"Staff window: {name} for thing {ThingId} is not built" );
 	}
 
-	/// <summary>The patrol area's switch (<c>FUN_004b5b50</c>): counted, and put back as the member's area has it.</summary>
+	/// <summary>
+	/// The patrol area's switch (<c>FUN_004b5b50</c>). Let up, the member's area is the whole map again
+	/// (<see cref="Staff.ClearPatrolArea"/>) and the window stays. Put down, the member is kept for the patrol tool
+	/// (<see cref="ParkPatrolTool"/>, mode <c>0x36</c>), the tool is put in the hand, the window closes and the advisor's
+	/// message <c>0xc1</c> is posted, in that order.
+	/// </summary>
 	private void Patrol()
 	{
-		Verb( "STAFF_WINDOW_PATROL" );
+		if ( Member is not { } member )
+			return;
 
-		if ( Member is { } member )
-			_patrol.IsDown = !member.PatrolsWholeMap;
+		if ( !_patrol.IsDown )
+		{
+			member.ClearPatrolArea();
+			Log.Info( $"Staff window: patrol switch up on thing {ThingId}, its area the whole map" );
+
+			return;
+		}
+
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, ThingId );
+		Stack.Close( this );
+
+		if ( Level.Current?.ParkState is { AdvisorMessages: { } lines } park )
+			lines.Post( ParkAdvisorMessages.PatrolTool, park.GameTick );
+
+		Log.Info( $"Staff window: patrol switch down on thing {ThingId}, the patrol tool in the hand" );
 	}
 
 	/// <summary>

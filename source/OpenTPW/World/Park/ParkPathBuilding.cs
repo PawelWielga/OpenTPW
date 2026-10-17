@@ -501,11 +501,12 @@ public static class ParkPathBuilding
 	/// </summary>
 	public const int OutsideThePark = 0x40;
 
-	/// <summary>The squares the armed tool shows for the pointer's cell - the path tool's or the queue tool's.</summary>
+	/// <summary>The squares the armed tool shows for the pointer's cell - the path tool's, the queue tool's or the patrol tool's.</summary>
 	public static List<QueueSquare> Strip( int toX, int toY ) => ParkBuildMode.Current switch
 	{
 		ParkBuildMode.Path => PathStrip( toX, toY ),
 		ParkBuildMode.Queue => QueueStrip( toX, toY ),
+		ParkBuildMode.Patrol => ParkPatrolTool.Strip( toX, toY ),
 		_ => []
 	};
 
@@ -646,7 +647,7 @@ public static class ParkPathBuilding
 	/// The track record a cell answers by: its own (<c>FUN_004d0af0</c>), or for a track cell of type 12
 	/// or 17, its parent's - a redirect each caller makes inline after that fetch (<c>0x00535811</c>).
 	/// </summary>
-	private static ParkWorld.MapCell TrackRecord( IParkInitialState park, ParkWorld.MapCell cell )
+	internal static ParkWorld.MapCell TrackRecord( IParkInitialState park, ParkWorld.MapCell cell )
 	{
 		if ( !CellEdge.TrackDefersToParent( cell.TrackType ) || cell.TrackParentId == 0 )
 			return cell;

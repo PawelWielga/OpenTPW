@@ -74,6 +74,7 @@ public class ParkStaffWindowTests
 		Input.Mouse = new();
 		ParkOrbitCameraMode.PointOfInterest = _looksAt;
 		GameOptions.Current.Confirmations = _confirmations;
+		ParkBuildMode.Forget();
 		Unimplemented.Forget();
 	}
 
@@ -339,11 +340,10 @@ public class ParkStaffWindowTests
 	}
 
 	/// <summary>
-	/// <b>The verbs and the name's edit are counted</b>, the window staying up and the patrol switch put back as the
-	/// member's area has it; <b>PICK UP is disabled</b> going on strike, on strike, carried and repairing, and off a cell of
+	/// <b>The name's edit is counted</b>, the window staying up; <b>PICK UP is disabled</b> going on strike, on strike, carried and repairing, and off a cell of
 	/// type 0, 1, 3, 9 or 10 (<c>FUN_00505bd0</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> a verb not counted; the switch left as clicked; a state or a cell type missing from the test.</remarks>
+	/// <remarks><b>Mutations:</b> the edit not counted; a state or a cell type missing from the test.</remarks>
 	[TestMethod]
 	public void TheVerbsLeftAreCountedAndPickUpIsEnabledByStateAndCell()
 	{
@@ -353,12 +353,10 @@ public class ParkStaffWindowTests
 		ParkStaffWindow.Open( _stack, member.ThingId );
 		var window = Window!;
 
-		foreach ( var id in new[] { 0x510, 0x520 } )
-			Click( window.Root, id );
+		Click( window.Root, 0x520 );
 
-		Assert.AreEqual( (1, 1), (Times( "STAFF_WINDOW_PATROL" ), Times( "STAFF_WINDOW_NAME_EDIT" )) );
+		Assert.AreEqual( 1, Times( "STAFF_WINDOW_NAME_EDIT" ) );
 		Assert.AreSame( window, Window );
-		Assert.IsFalse( ((UiButton)Find( window.Root, 0x510 )).IsDown, "the switch put back up" );
 
 		var state = Level.Current!.ParkState!;
 		var (x, y) = member.Navigator.Position.Cell;
@@ -505,13 +503,130 @@ public class ParkStaffWindowTests
 		Assert.AreEqual( ((ParkStaffWindow?)null, 1), (Window, Times( "STAFF_WINDOW_MEMBER_GONE" )) );
 	}
 
+	/// <summary>
+	/// <b>The patrol switch put down hands over the patrol tool</b> (<c>FUN_004b5b50( 1 )</c>): mode <c>0x36</c> for the
+	/// member, the window closed, the advisor's <c>0xc1</c> posted (response 412, sample 385); <b>two clicks fence them</b>,
+	/// the least corner's cell id first whichever corner is clicked first (<c>FUN_00506e50</c>), and the tool is put away,
+	/// which withdraws <c>0xc1</c> (<c>FUN_0052f200</c>). The window shown again has the switch down.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no tool or another member; the window left up; <c>0xc1</c> not posted or not withdrawn; the
+	/// corners swapped or not ordered; the tool left armed; the first click writing an area.</remarks>
+	[TestMethod]
+	public void ThePatrolSwitchDownHandsOverTheToolAndTwoClicksFenceTheMember()
+	{
+		using var clock = new SimulationClockScope();
+		var lines = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ), tutorial: () => true );
+		var park = Level.Current!.ParkState!;
+		park.AdvisorMessages = lines;
+		var said = new List<(int Response, int Sample)>();
+		int Play( int response, int sample ) { said.Add( (response, sample) ); return 9000; }
+
+		var member = Mechanic;
+		Fence( member, Staff.WholeMapBottomLeft, Staff.WholeMapTopRight );
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		Click( Window!.Root, 0x510 );
+
+		Assert.IsNull( Window, "the window closed" );
+		Assert.AreEqual( (ParkBuildMode.Patrol, member.ThingId, false), (ParkBuildMode.Current, ParkBuildMode.Serves, ParkBuildMode.Anchored) );
+		StringAssert.Contains( lines.Census(), "slot=193/subject=0 " );
+		Assert.IsFalse( lines.Census().Contains( "slot=192/" ), "0xc0 taken back by the close" );
+		lines.Tick( park.GameTick, 0, Play );
+		CollectionAssert.AreEqual( new[] { (412, 385) }, said );
+
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
+		StringAssert.Matches( lines.Census(), new System.Text.RegularExpressions.Regex( @"message=193/\S*/said=1/slaps=0" ), "the same mode again withdraws nothing" );
+
+		StringAssert.Contains( Level.Current!.ClickWorldAt( 56, 28, 0 ), "anchored at (56,28)" );
+		Assert.IsTrue( member.PatrolsWholeMap, "the first click writes nothing" );
+		Assert.AreEqual( ParkBuildMode.Patrol, ParkBuildMode.Current );
+
+		StringAssert.Contains( Level.Current!.ClickWorldAt( 39, 21, 0 ), "patrols (39, 21)-(56, 28)" );
+		Assert.AreEqual( (1 + 39 + 21 * 128, 1 + 56 + 28 * 128), (member.PatrolBottomLeft, member.PatrolTopRight) );
+		Assert.AreEqual( (ParkBuildMode.None, false), (ParkBuildMode.Current, ParkBuildMode.Anchored) );
+		StringAssert.Contains( lines.Census(), "message=193/score=1000/line=0/" );
+		StringAssert.Contains( lines.Census(), "/said=0/slaps=1", "cut off as the tool is put away" );
+
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		Assert.IsTrue( ((UiButton)Find( Window!.Root, 0x510 )).IsDown );
+		Assert.AreEqual( 0, Times( "STAFF_WINDOW_PATROL" ) );
+	}
+
+	/// <summary>
+	/// <b>The patrol switch let up gives the member the whole map</b> (<c>FUN_004b5b50( 0 )</c>, <c>FUN_00506e90</c>: cells 1
+	/// to <c>0x4000</c>); the window stays and no tool is armed.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the area left; another pair of cells; the window closed; the tool armed.</remarks>
+	[TestMethod]
+	public void ThePatrolSwitchUpGivesTheWholeMap()
+	{
+		var member = Mechanic;
+		Fence( member, 1 + 39 + 21 * 128, 1 + 56 + 28 * 128 );
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		var window = Window!;
+		Click( window.Root, 0x510 );
+
+		Assert.AreEqual( (1, 0x4000), (member.PatrolBottomLeft, member.PatrolTopRight) );
+		Assert.AreSame( window, Window );
+		Assert.IsFalse( ((UiButton)Find( window.Root, 0x510 )).IsDown );
+		Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current );
+	}
+
+	/// <summary>
+	/// <b>The tool's outline</b> (<c>FUN_005234d0</c>, mode <c>0x36</c>): one blue square unanchored, then the rectangle's
+	/// edges in the patrol edges' order, <b>all red where no cell of it is in the park</b> (<c>FUN_00532a50</c>: outside the
+	/// park, or track type <c>0x19</c>, its own or its parent's), and then the click puts the tool away writing nothing, the
+	/// sound counted.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the outside flag or the track type not read; the parent not followed; one good cell not
+	/// enough; the unanchored square red; the refused click writing an area or leaving the tool armed.</remarks>
+	[TestMethod]
+	public void TheOutlineIsRedWhereNoCellIsInThePark()
+	{
+		var member = Mechanic;
+		var state = Level.Current!.ParkState!;
+		var park = Level.Current!.Park!;
+		Fence( member, Staff.WholeMapBottomLeft, Staff.WholeMapTopRight );
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
+
+		var one = ParkPatrolTool.Strip( 2, 2 );
+		Assert.AreEqual( (1, 2, 2, ParkPathBuilding.MarkerBlue), (one.Count, one[0].X, one[0].Y, one[0].Marker) );
+
+		var cells = new[] { (2, 2), (3, 2), (2, 3), (3, 3) };
+		var parent = state.Record( 5, 5 ) with { Flags = 0, TrackType = 0x19 };
+		state.SetRecord( 5, 5, parent );
+
+		foreach ( var (x, y) in cells )
+			state.SetRecord( x, y, state.Record( x, y ) with { Flags = (ushort)ParkPathBuilding.OutsideThePark, TrackType = 0 } );
+
+		state.SetRecord( 3, 3, state.Record( 3, 3 ) with { Flags = 0, TrackType = 0x19 } );
+		state.SetRecord( 2, 3, state.Record( 2, 3 ) with { Flags = 0, TrackType = 12, TrackParentId = (ushort)MapStep.CellId( 5, 5 ) } );
+		Assert.IsTrue( ParkPatrolTool.Refuses( park, (2, 2), (3, 3) ) );
+
+		ParkBuildMode.AnchorAt( 3, 3 );
+		CollectionAssert.AreEqual( Enumerable.Repeat( (3, 3, ParkPathBuilding.MarkerRed), 4 ).ToList(),
+			ParkPathBuilding.Strip( 3, 3 ).Select( square => (square.X, square.Y, square.Marker) ).ToList(), "the anchored cell, a line each" );
+		Assert.AreEqual( Input.CursorTypes.NoGo, Level.PatrolCursor( 2, 2 ), "the refusal's pointer" );
+		var red = ParkPathBuilding.Strip( 2, 2 );
+		CollectionAssert.AreEqual( ParkLocator.PatrolEdgeCells( (2, 2), (3, 3) ), red.Select( square => (square.X, square.Y) ).ToList() );
+		Assert.IsTrue( red.All( square => square.Marker == ParkPathBuilding.MarkerRed ) );
+
+		StringAssert.Contains( ParkPatrolTool.Run( 2, 2 ), "takes in no cell of the park" );
+		Assert.AreEqual( (ParkBuildMode.None, true, 1), (ParkBuildMode.Current, member.PatrolsWholeMap, Times( "PATROL_TOOL_REFUSED_SOUND_0xAF" )) );
+
+		state.SetRecord( 2, 3, state.Record( 2, 3 ) with { TrackParentId = 0 } );
+		Assert.IsFalse( ParkPatrolTool.Refuses( park, (2, 2), (3, 3) ), "one cell of the park is enough" );
+
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
+		ParkBuildMode.AnchorAt( 3, 3 );
+		Assert.IsTrue( ParkPatrolTool.Strip( 2, 2 ).All( square => square.Marker == ParkPathBuilding.MarkerBlue ) );
+		Assert.AreEqual( Input.CursorTypes.Normal, Level.PatrolCursor( 2, 2 ), "no cursor of its own" );
+		ParkPatrolTool.Run( 2, 2 );
+		Assert.AreEqual( (MapStep.CellId( 2, 2 ), MapStep.CellId( 3, 3 )), (member.PatrolBottomLeft, member.PatrolTopRight) );
+	}
+
 	private static int Bar( ParkStaffWindow window, int id ) => ((ParkObjectWindow.UiStatBar)Find( window.Root, id )).Units;
 
-	private static void Fence( Staff member, int bottomLeft, int topRight )
-	{
-		typeof( Staff ).GetField( $"<{nameof( Staff.PatrolBottomLeft )}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( member, bottomLeft );
-		typeof( Staff ).GetField( $"<{nameof( Staff.PatrolTopRight )}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( member, topRight );
-	}
+	private static void Fence( Staff member, int bottomLeft, int topRight ) => member.SetPatrolArea( bottomLeft, topRight );
 
 	private static UiControl Find( UiControl root, int id )
 		=> FindOrNull( root, id ) ?? throw new AssertFailedException( $"no control {id:x}" );

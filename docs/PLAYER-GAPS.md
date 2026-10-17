@@ -28,7 +28,8 @@ behind them is counted, `RESEARCH_SCREEN`. **Do not open the screen as a task un
 screen. It's not important at the moment."* The Information category is therefore seeded to screen **4**
 where the original seeds **3**, a declared deviation that reverts the day park status is built.
 
-**Setting a patrol area was explicitly deferred by Alexah** and is not built; staff keep to the areas the save gives them.
+**Setting a patrol area, deferred by Alexah "for now" on 2026-09-21, is built** (Q433): the staff member's window's
+patrol switch hands over the patrol tool, and two clicks on the map fence the member (`docs/exe/hud.md`).
 
 ## How the vehicles move
 

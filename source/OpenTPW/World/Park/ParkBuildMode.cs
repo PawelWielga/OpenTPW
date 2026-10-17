@@ -8,9 +8,9 @@ namespace OpenTPW;
 /// <para>
 /// <b>It is a MODE, not a tool, and the binary names it so itself:</b> the two functions that write
 /// it record the replay actions <c>ACTION_SET_MODE</c> and <c>ACTION_SET_MODE_NR</c>. There are
-/// exactly three writers in the whole image, so the list of what writes the mode is closed - and of its values only two
-/// matter here, <b>1 for path and 3 for queue</b>, fixed by the cursor table that registers
-/// <c>c_path.ani</c> and <c>c_queue.ani</c> against them.
+/// exactly three writers in the whole image, so the list of what writes the mode is closed - and of its values three
+/// are built here, <b>1 for path and 3 for queue</b>, fixed by the cursor table that registers
+/// <c>c_path.ani</c> and <c>c_queue.ani</c> against them, and <b><c>0x36</c> for the patrol tool</b>.
 /// </para>
 ///
 /// <para>
@@ -32,10 +32,13 @@ public static class ParkBuildMode
 	/// <summary>Laying queue, the original's mode 3 (cursor <c>c_queue.ani</c>).</summary>
 	public const int Queue = ParkRideChoice.QueueCellType;
 
+	/// <summary>Fencing a member of staff into a patrol area, the original's mode <c>0x36</c> (<see cref="ParkPatrolTool"/>).</summary>
+	public const int Patrol = 0x36;
+
 	/// <summary>Which mode is armed, or <see cref="None"/>.</summary>
 	public static int Current { get; private set; }
 
-	/// <summary>The object a queue being laid is for, or nought. A path needs none.</summary>
+	/// <summary>The object a queue being laid is for, or the member a patrol area is for, or nought. A path needs none.</summary>
 	public static int Serves { get; private set; }
 
 	/// <summary>Where this run was anchored, or <b>(-1,-1)</b> for a run that has not started.</summary>
@@ -56,6 +59,11 @@ public static class ParkBuildMode
 	/// </summary>
 	public static string Arm( int mode, int serves = 0 )
 	{
+		// A change of mode withdraws ten advisor messages (FUN_0052f200, 0x0052f245..0x0052f326); of them only the
+		// patrol tool's 0xc1 is posted here, so it is the one withdrawn, which cuts the advisor off where he says it.
+		if ( mode != Current && Level.Current?.ParkState?.AdvisorMessages is { } lines )
+			lines.Withdraw( ParkAdvisorMessages.PatrolTool, (long)(GameClock.Now * 1000), () => Advisor.Current?.StopSpeaking() );
+
 		Current = mode;
 		Serves = serves;
 		Anchor = (-1, -1);
@@ -63,6 +71,7 @@ public static class ParkBuildMode
 		return mode switch
 		{
 			Path => "tool: laying path - click once to anchor, again to lay the run",
+			Patrol => $"tool: fencing thing {serves} - click one corner of the patrol area, then the other",
 			Queue => serves == 0
 				? "tool: a queue has to say which thing it serves - `tool queue <thingId>`"
 				: $"tool: laying queue for thing {serves} - click once to anchor, again to lay the run",

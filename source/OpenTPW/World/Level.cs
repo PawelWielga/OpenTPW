@@ -1209,6 +1209,7 @@ public class Level
 		{
 			ParkBuildMode.Queue => QueueCursor(),
 			ParkBuildMode.Path => PathCursor(),
+			ParkBuildMode.Patrol => ParkPicking.TryCell( out var x, out var y ) ? PatrolCursor( x, y ) : Input.CursorTypes.Normal,
 			_ => IdleOverPath() ? Input.CursorTypes.Path : Input.CursorTypes.Normal
 		};
 
@@ -1261,6 +1262,15 @@ public class Level
 
 		return $"world click: right click - {letGo}";
 	}
+
+	/// <summary>
+	/// The patrol tool sets no cursor of its own (<c>FUN_0052f950</c> has no case for mode <c>0x36</c>), only
+	/// <c>c_noplace</c> while its outline is red (cursor 8, the refusal <c>DAT_00816d48</c>); otherwise the ordinary pointer.
+	/// </summary>
+	internal static Input.CursorTypes PatrolCursor( int x, int y )
+		=> ParkPatrolTool.Strip( x, y ).Any( square => square.Marker == ParkPathBuilding.MarkerRed )
+			? Input.CursorTypes.NoGo
+			: Input.CursorTypes.Normal;
 
 	/// <summary>
 	/// The path tool's cursor follows its preview as the queue tool's does (<c>FUN_0052f950</c>):
@@ -1608,6 +1618,9 @@ public class Level
 	{
 		if ( ParkBuildMode.Current == ParkBuildMode.Path )
 			return ParkPathBuilding.RunPath( cellX, cellY );
+
+		if ( ParkBuildMode.Current == ParkBuildMode.Patrol )
+			return ParkPatrolTool.Run( cellX, cellY );
 
 		if ( ParkBuildMode.Anchored )
 			return ParkPathBuilding.RunQueue( cellX, cellY );

@@ -2297,7 +2297,7 @@ frame`, `locator` ended `patrol=48`, and `strip`'s drawn census held `| patrol 4
 (`1-mechanic.png`, beside the original's in `q426/side-by-side.png`); the scientists' `patrol=0`; the entertainers'
 20 on 16 cells, (48,18), (47,18), (48,18) first (`3-entertainer.png`); Escape none. Main's build counted
 `LOCATOR_PATROL_EDGES`. In no game run: a square lifted over a built cell on an edge (none of the stock areas crosses
-one; the lift is the tools', tested), a fence drawn in play (the patrol tool is the staff window's `0x510`, map tool `0x36`, not built: `STAFF_WINDOW_PATROL`), Full Simulation (not
+one; the lift is the tools', tested), a fence drawn in play (the patrol tool, built: "The patrol switch and the patrol tool" below), Full Simulation (not
 asked: the locators are either mode's), the other three themes.
 
 #### The person's windows: the visitor's and the staff member's (Q429, Q430, Q431)
@@ -2441,8 +2441,7 @@ row: the window on him; the preview: the window kept. **The advisor's gate decid
 
 **OpenTPW** (Q431): `ParkStaffWindow`, opened by the strip's click on a member, a member's world click and an
 all-staff row's `0x400`; Ctrl+S with it up and its `b_locate` are `ParkLocator.OpenOnMember`; `b_allstaff` opens
-`ParkStaffScreen` on the kind with the row picked. Counted: the preview's model (`STAFF_WINDOW_PREVIEW`), the patrol
-switch (`STAFF_WINDOW_PATROL`, put back as the area has it), the name's edit (`STAFF_WINDOW_NAME_EDIT`), a member gone
+`ParkStaffScreen` on the kind with the row picked. Counted: the preview's model (`STAFF_WINDOW_PREVIEW`), the name's edit (`STAFF_WINDOW_NAME_EDIT`), a member gone
 while it is up (`STAFF_WINDOW_MEMBER_GONE`, the window closed), the all-staff list's `0x11d` (`STAFF_LIST_ADVISOR_LINE`).
 The switch's second help row, 87, is not shown. Its run (`q431/confirm.py`, run1) walked 26, 25, 26, 27 as the
 original's, "47 days" on tick 1109.
@@ -2473,6 +2472,50 @@ carried worker back first. A member in the hand is not drawn in the park (`ParkG
 census says "IN THE HAND, not drawn"). Counted: the puff (`STAFF_DISMISSAL_PARTICLE`) and the figure at the pointer
 (`STAFF_PICKED_UP_PREVIEW`), so our pointer stays the plain arrow while a worker is carried. Its run (`q432/confirm.py`)
 took 161 off the bank and put 161 on the staff costs across the tick, the same box (`q432/side-by-side-box.png`).
+
+**The patrol switch and the patrol tool, read** (Q433). The switch `0x510` calls `FUN_004b5b50` with its new state. Up
+(0): `FUN_00506e90` on the member, the whole map (`+0x20a` 1, `+0x20c` `0x4000`), and the window stays. Down (1): the
+member kept (`FUN_0048c950( [0x007c2658] )`, into `[0x007c2650]`), the build-tool shell `FUN_0046c580( 0x36 )` installed
+(its install `FUN_0046d5a0` runs the setter `FUN_0052f200( 0x36, 1 )`), the window closed (vtable `+0x2c`), then advisor
+message `0xc1` posted. **The setter withdraws ten messages on any change of mode** (`0x0052f245`..`0x0052f326`):
+`0xb8`, `0xcb`, `0xd6`, `0xcd`, `0xc9`, `0xce`, `0xc1`, `0x159`, `0x15a` and `0x151`, so `0xc1` is cut as the tool is put
+away, however it is. **The preview** (`FUN_005234d0`'s `0x36` arm) sets the run's price to -9999 (`FUN_0052fb90`), then
+unanchored lays one square under the pointer and anchored the rectangle from the anchor to the pointer, its least and
+greatest corners, in the four lines of "The patrol edges" above, after setting the refusal latch `DAT_00816d50` by
+`FUN_00532a50`: **refused where every cell of the rectangle on the map is outside the park** (`mFlags & 0x40`) **or
+answers track type `0x19`** (its own track record, `FUN_004d0af0`, or its parent's for types 12 and 17,
+`FUN_0053ad90`), so a single cell of the park lets it through. The verdict `FUN_00535670( 0x36 )` is the latch alone
+(`0x005356df`), so the outline is all blue or all red, and the anchored one-cell rectangle on land outside the park
+is red already. The cursor (`FUN_0052f950`) has no case for `0x36`: only cursor 8, `c_noplace`, where a square was
+red (`DAT_00816d48`). **The click** (`FUN_00524960`, on the release; the press `FUN_00524790` does nothing for it):
+refused (`DAT_00816d48`), sound `0xaf` and the tool put away, nothing written; unanchored, the anchor set and the kept
+member read again (`thunk_FUN_0048c920` into `DAT_008186b0`); anchored, where a member is kept, `FUN_00506e50` writes
+the least corner's cell id to `+0x20a` and the greatest's to `+0x20c`, then the anchor is cleared and the tool put
+away (`FUN_0052f200( 0, 0 )`). Neither click plays a sound.
+
+**The original** (`q433/orig/run.sh` and `run2.sh`, the stock park; `q433/PREDICTION.txt` rounds 1 and 2): Mike Cooper's
+switch drawn down (footprints crossed in red) on (39,21)-(56,28), 2728 and 3641; up: 1 and 16384, the window up, the
+footprints alone and "Idle" at the next refresh (`orig/a-2-switch-up.png`); down: the window gone, `[0x007c2650]` him,
+mode `0x36`, `0xc1` posted and said, `0xd4` cut by the close, one blue square at (51,27) and the plain arrow; a click
+there anchored (51,27); the pointer at (54,26): 8 cells in texture 0, (52,26), (53,26), (54,26), (54,27), (52,27),
+(53,27), (51,27), (51,26), row 26 lifted over the built cells (`orig/a-5-outline.png`); the click: 3380 and 3511,
+(51,26)-(54,27), mode 0, the anchor -1, `0xc1` cut (slaps 1); the window again down and "Patrolling". On the band
+outside the park, (45,15) anchored with the latch already 1 and (53,15) gave 16 squares on 9 cells, every one
+texture 1, and the no-entry pointer (`orig/b-4-outline.png`); the click put the tool away and wrote nothing.
+
+**OpenTPW** (Q433): the switch is `ParkStaffWindow.Patrol`; the tool is build mode `0x36`, `ParkBuildMode.Patrol` with the
+member as its `Serves`, and `ParkPatrolTool` (its `Strip`, `Refuses` and `Run`) lays the preview through
+`ParkPathBuilding.Strip` and takes the world click; `Staff.SetPatrolArea` and `ClearPatrolArea` write the two corners.
+`ParkBuildMode.Arm` withdraws `0xc1` on a change of mode, the only one of the setter's ten posted here; the cursor is the
+plain pointer, `NoGo` while the outline is red. Counted: the refused click's sound (`PATROL_TOOL_REFUSED_SOUND_0xAF`).
+Its run (`q433/confirm.py`, run4, the final build; real clicks, each cell found by moving the pointer and reading `strip`'s drawn census, now `lib/cellprobe.py`): the same switch
+words, the same 8 squares in the same order for (51,27) and (54,26), row 26 lifted 20 on (51,26) and (52,26) and 10 on
+(53,26) as the original's (tops 21.5, 21.5 and 11.5 over 1.5), the plain pointer, "patrols (51, 26)-(54, 27), cells 3380 to 3511", the window again "Patrolling"; on the band
+(45,15) four red squares on the anchored cell (each line lays it), 16 red at (53,15), `NoGo`, nothing written
+(`q433/side-by-side.png`). Seen, not this item's: at the two runs' cameras our lifted squares look far higher
+above the ground than the original's (not compared at one camera), and a member fenced where one path cell lies stands idle on it with thought `0x16` within seconds of
+reaching it (the patrol roll finds only his own cell); the original's was still walking nineteen seconds after its
+fence and was not watched longer.
 
 #### How allstaff and allitems keep their rows current
 

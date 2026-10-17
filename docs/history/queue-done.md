@@ -7295,6 +7295,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   and the figure at the pointer counted (`hud.md`, "The person's windows"). Both games on the stock park
   (`q432/PREDICTION.txt`): Mike Cooper carried and put down; the same box; the tick took exactly 161, the staff costs
   538 to 699 (`q432/side-by-side-box.png`).
+- [x] **Q433. The staff window's patrol switch and the patrol tool (a piece of Q420).** Done 2026-10-17: the switch up
+  gives the member the whole map, down hands over build mode `0x36` (`ParkPatrolTool`) with the advisor's `0xc1`; the
+  tool's outline is the patrol edges' squares, red where no cell is in the park (`FUN_00532a50`); the second click writes
+  the least and greatest corners; a change of tool withdraws `0xc1` (`hud.md`, "The patrol switch and the patrol tool").
+  Both games on the stock park (`q433/PREDICTION.txt`): the same 8 squares for (51,27) and (54,26), 3380 and 3511; the
+  band outside the park refused with 16 red squares (`q433/side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
