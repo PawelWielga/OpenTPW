@@ -2441,11 +2441,38 @@ row: the window on him; the preview: the window kept. **The advisor's gate decid
 
 **OpenTPW** (Q431): `ParkStaffWindow`, opened by the strip's click on a member, a member's world click and an
 all-staff row's `0x400`; Ctrl+S with it up and its `b_locate` are `ParkLocator.OpenOnMember`; `b_allstaff` opens
-`ParkStaffScreen` on the kind with the row picked. Counted: the preview's model (`STAFF_WINDOW_PREVIEW`), FIRE
-(`STAFF_WINDOW_FIRE`), PICK UP (`STAFF_WINDOW_PICK_UP`), the patrol switch (`STAFF_WINDOW_PATROL`, put back as the
-area has it), the name's edit (`STAFF_WINDOW_NAME_EDIT`), a member gone while it is up (`STAFF_WINDOW_MEMBER_GONE`,
-the window closed), the all-staff list's `0x11d` (`STAFF_LIST_ADVISOR_LINE`). The switch's second help row, 87, is
-not shown. Its run (`q431/confirm.py`, run1) walked 26, 25, 26, 27 as the original's, "47 days" on tick 1109.
+`ParkStaffScreen` on the kind with the row picked. Counted: the preview's model (`STAFF_WINDOW_PREVIEW`), the patrol
+switch (`STAFF_WINDOW_PATROL`, put back as the area has it), the name's edit (`STAFF_WINDOW_NAME_EDIT`), a member gone
+while it is up (`STAFF_WINDOW_MEMBER_GONE`, the window closed), the all-staff list's `0x11d` (`STAFF_LIST_ADVISOR_LINE`).
+The switch's second help row, 87, is not shown. Its run (`q431/confirm.py`, run1) walked 26, 25, 26, 27 as the
+original's, "47 days" on tick 1109.
+
+**FIRE and PICK UP, read for the build** (Q432; `FUN_004b5cb0`'s `0x50c` and `0x50e`, read as disassembly). FIRE, with
+the Confirmations option `[0x0078d90f]` set, opens `MessageBox_Open( &text, 2, 0, 1, FUN_004b6070, 0, 0, 0 )`: UITEXT
+`0x18d` (397, "DISMISS EMPLOYEE" and "Are you sure you want to dismiss this employee ?") white in font 4, the cross in
+the bottom place with no act and the tick in the middle place with `FUN_004b6070`. The text record's fourth word is
+the member as the box opened (`[0x007c2658]` at `0x004b5e96`); the box's handler calls an act with its kept word 3
+(`FUN_0047eed0`), which `FUN_004b6070` hands in ECX to the dismissal `FUN_00505790`. With the option
+off, `FUN_00505790` at once. Either way the window's vtable `+0x2c` closes it next (`0x004b5ecc`), behind the box. The
+dismissal first installs the idle mode where the current one is type 6 (`0x00505830`: a carried worker is put back,
+"The worker (type 6)" in `park-engine.md`), takes one month's wage by kind and grade from the bank and adds it to the
+analyser's staff costs (`+0x1f7f0`), puts particle `0x13` at the member (`FUN_004fa470`: the model's place plus the
+map's offset, the ground's height there), and deletes the thing (`FUN_0050b780`). PICK UP keeps the member
+(`FUN_0048c950`, `[0x007c2650]`), picks them up (`FUN_00505c50`, ECX the member) and closes the window.
+
+**The original** (`q432/orig/run.sh`, the stock park; `q432/PREDICTION.txt` rounds 1 and 1b): the option read 1. PICK UP
+on Mike Cooper: the window gone, `+0x19c` 7, the hand's word (`mStaffHQ`'s `+0x60`) 26, `[0x007c2650]` his address, a
+new mode object, and a figure of him hanging at the pointer (`orig/a-2-pickup.png`); a click in the middle of the view
+put him down at (47,24), state 1 (the mechanic's search), the hand's word 0, the bank unmoved. FIRE: the window gone and
+the box up (`orig/b-5-fire-box.png`); the cross kept him; FIRE again and the tick: the bank 88122 to 87961 and the staff
+costs 538 to 699 in the same 1.2 s, exactly 161 (his wage, 7 x 23), his `+3` 1; the mechanics' locator then named nobody.
+
+**OpenTPW** (Q432): FIRE opens `MessageBox` on UITEXT 397 where `GameOptions.Confirmations` is on, its tick
+`ParkPeople.Fire` on the member kept; PICK UP is `ParkPeople.PickUp`; each closes the window. `ParkPeople.Fire` puts a
+carried worker back first. A member in the hand is not drawn in the park (`ParkGuestSprites.InTheHand`; the `guests`
+census says "IN THE HAND, not drawn"). Counted: the puff (`STAFF_DISMISSAL_PARTICLE`) and the figure at the pointer
+(`STAFF_PICKED_UP_PREVIEW`), so our pointer stays the plain arrow while a worker is carried. Its run (`q432/confirm.py`)
+took 161 off the bank and put 161 on the staff costs across the tick, the same box (`q432/side-by-side-box.png`).
 
 #### How allstaff and allitems keep their rows current
 

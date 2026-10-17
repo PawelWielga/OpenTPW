@@ -640,6 +640,9 @@ public sealed class ParkGuestSprites : ModelEntity
 
 		foreach ( var (person, sprite) in _people )
 		{
+			if ( InTheHand( people, person.ThingId ) )
+				continue;
+
 			var (kind, bank) = LookOf( people, person, sprite );
 
 			// A rider in a bumper boat is drawn as their head on its seat, and no more.
@@ -1321,9 +1324,13 @@ public sealed class ParkGuestSprites : ModelEntity
 				$"drawn ({x:0.000},{y:0.000}) alpha {alpha:0.00}" +
 				$"{(seated is { } on ? $" SEATED z {on.Z:0.0}" : "")}{(head is { } h ? $" HEAD only frame {h.Frame}" : "")} " +
 				$"saved ({sprite.X:0.0},{sprite.Y:0.0}) " +
-				$"cellsize {cellX:0.##}x{cellY:0.##} walk {(walk == null ? "none" : "found")}";
+				$"cellsize {cellX:0.##}x{cellY:0.##} walk {(walk == null ? "none" : "found")}" +
+				$"{(InTheHand( people, person.ThingId ) ? " IN THE HAND, not drawn" : "")}";
 		}
 	}
+
+	/// <summary>A member in the hand is not drawn in the park: the pickup frees their sprite (<c>FUN_00505c50</c>).</summary>
+	internal static bool InTheHand( ParkPeople? people, int thingId ) => people is { CarriedStaff: not 0 } && people.CarriedStaff == thingId;
 
 	/// <summary>
 	/// Every balloon, held and bursting, one line each, where it was last placed: the ground under it plus its

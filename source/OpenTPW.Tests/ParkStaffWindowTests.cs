@@ -25,6 +25,7 @@ public class ParkStaffWindowTests
 	private ParkPeople _people = null!;
 	private WindowStack _stack = null!;
 	private ParkGadget _gadget = null!;
+	private bool _confirmations;
 
 	[TestInitialize]
 	public void LoadThePark()
@@ -33,6 +34,7 @@ public class ParkStaffWindowTests
 		_screen = Screen.Size;
 		_now = Time.Now;
 		_looksAt = ParkOrbitCameraMode.PointOfInterest;
+		_confirmations = GameOptions.Current.Confirmations;
 
 		Screen.Size = new Point2( 2048, 1536 );
 		Log ??= new();
@@ -71,6 +73,7 @@ public class ParkStaffWindowTests
 		Time.PinWall( null );
 		Input.Mouse = new();
 		ParkOrbitCameraMode.PointOfInterest = _looksAt;
+		GameOptions.Current.Confirmations = _confirmations;
 		Unimplemented.Forget();
 	}
 
@@ -342,7 +345,7 @@ public class ParkStaffWindowTests
 	/// </summary>
 	/// <remarks><b>Mutations:</b> a verb not counted; the switch left as clicked; a state or a cell type missing from the test.</remarks>
 	[TestMethod]
-	public void TheVerbsAreCountedAndPickUpIsEnabledByStateAndCell()
+	public void TheVerbsLeftAreCountedAndPickUpIsEnabledByStateAndCell()
 	{
 		var member = Mechanic;
 		Fence( member, Staff.WholeMapBottomLeft, Staff.WholeMapTopRight );
@@ -350,15 +353,10 @@ public class ParkStaffWindowTests
 		ParkStaffWindow.Open( _stack, member.ThingId );
 		var window = Window!;
 
-		foreach ( var id in new[] { 0x50c, 0x50e, 0x510, 0x520 } )
-		{
-			if ( Find( window.Root, id ) is UiButton { Enabled: false } button )
-				button.Enabled = true;
-
+		foreach ( var id in new[] { 0x510, 0x520 } )
 			Click( window.Root, id );
-		}
 
-		Assert.AreEqual( (1, 1, 1, 1), (Times( "STAFF_WINDOW_FIRE" ), Times( "STAFF_WINDOW_PICK_UP" ), Times( "STAFF_WINDOW_PATROL" ), Times( "STAFF_WINDOW_NAME_EDIT" )) );
+		Assert.AreEqual( (1, 1), (Times( "STAFF_WINDOW_PATROL" ), Times( "STAFF_WINDOW_NAME_EDIT" )) );
 		Assert.AreSame( window, Window );
 		Assert.IsFalse( ((UiButton)Find( window.Root, 0x510 )).IsDown, "the switch put back up" );
 
@@ -384,6 +382,95 @@ public class ParkStaffWindowTests
 		member.SetActivity( StaffActivity.OnStrike, 0 );
 		window.Update();
 		Assert.IsFalse( ((UiButton)Find( window.Root, 0x50e )).Enabled, "every frame" );
+	}
+
+	/// <summary>
+	/// <b>FIRE asks first where the Confirmations option is on</b> (<c>0x50c</c>, <c>[0x0078d90f]</c>): the box on UITEXT 397
+	/// over the window closed at once; its cross keeps the member; its tick (<c>FUN_004b6070</c>) dismisses them, one
+	/// month's wage taken and put on the month's staff costs, the puff counted. The original's run took 161 each way.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no box; the box's text; the window left up; the cross dismissing; the tick dismissing nobody;
+	/// the wage not taken; the puff not counted.</remarks>
+	[TestMethod]
+	public void FireAsksFirstWhereConfirmationsAreOn()
+	{
+		GameOptions.Current.Confirmations = true;
+		var member = Mechanic;
+		var state = Level.Current!.ParkState!;
+		var (bank, costs) = (state.Balance, state.MonthStaffCosts.Total);
+
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		Click( Window!.Root, 0x50c );
+
+		var box = _stack.Windows.OfType<MessageBox>().Single();
+		Assert.IsNull( Window, "the window closed behind the box" );
+		Assert.AreEqual( Localization.Get( UIStrings.DismissEmployee ), Find( box.Root, 0x9873c7 ).Text );
+		Assert.IsTrue( _people.IsStaff( member.ThingId ), "asked, not yet dismissed" );
+
+		Click( box.Root, 0x9873c8 );
+		Assert.AreEqual( (0, true, bank), (_stack.Windows.OfType<MessageBox>().Count(), _people.IsStaff( member.ThingId ), state.Balance), "the cross keeps them" );
+
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		Click( Window!.Root, 0x50c );
+		Click( _stack.Windows.OfType<MessageBox>().Single().Root, 0x9873c9 );
+
+		Assert.IsFalse( _people.IsStaff( member.ThingId ), "the tick dismisses them" );
+		Assert.AreEqual( (bank - 161, costs + 161), (state.Balance, state.MonthStaffCosts.Total), "one month's wage, 7 x 23" );
+		Assert.AreEqual( (1, 0), (Times( "STAFF_DISMISSAL_PARTICLE" ), Times( "STAFF_WINDOW_FIRE" )) );
+	}
+
+	/// <summary><b>With the Confirmations option off FIRE dismisses at once</b>, and the window closes; no box.</summary>
+	/// <remarks><b>Mutations:</b> the option not read; the window left up.</remarks>
+	[TestMethod]
+	public void FireDismissesAtOnceWhereConfirmationsAreOff()
+	{
+		GameOptions.Current.Confirmations = false;
+		var member = Mechanic;
+
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		Click( Window!.Root, 0x50c );
+
+		Assert.AreEqual( (false, 0), (_people.IsStaff( member.ThingId ), _stack.Windows.OfType<MessageBox>().Count()) );
+		Assert.IsNull( Window );
+	}
+
+	/// <summary>
+	/// <b>PICK UP puts the member in the hand and closes the window</b> (<c>0x50e</c>, <c>FUN_00505c50</c>): state 7, the
+	/// hand naming them, the sprite under the pointer counted, and the member no longer drawn in the park.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> nobody picked up; the window left up; the preview not counted; the carried member drawn.</remarks>
+	[TestMethod]
+	public void PickUpPutsTheMemberInTheHand()
+	{
+		var member = Mechanic;
+		member.SetActivity( StaffActivity.Idle, 0 );
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		Assert.IsFalse( ParkGuestSprites.InTheHand( _people, member.ThingId ), "the control: drawn before" );
+
+		Click( Window!.Root, 0x50e );
+
+		Assert.IsNull( Window, "closed" );
+		Assert.AreEqual( (member.ThingId, StaffActivity.Held, 1), (_people.CarriedStaff, member.Activity, Times( "STAFF_PICKED_UP_PREVIEW" )) );
+		Assert.IsTrue( ParkGuestSprites.InTheHand( _people, member.ThingId ), "not drawn in the park" );
+		Assert.IsFalse( ParkGuestSprites.InTheHand( _people, _people.Staff.First( other => other != member ).ThingId ), "another member is" );
+	}
+
+	/// <summary>
+	/// <b>A dismissal puts a carried worker back down first</b> (<c>FUN_00505790</c> installs the idle mode over type 6,
+	/// <c>0x00505830</c>), where they stand.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the carried worker left in the hand.</remarks>
+	[TestMethod]
+	public void FireWithAWorkerInTheHandPutsThemBackFirst()
+	{
+		GameOptions.Current.Confirmations = false;
+		var carried = _people.Staff.First( member => member.Model == ParkPeople.HandymanModel );
+		Assert.IsTrue( _people.PickUp( carried.ThingId ) );
+
+		ParkStaffWindow.Open( _stack, Mechanic.ThingId );
+		Click( Window!.Root, 0x50c );
+
+		Assert.AreEqual( (0, StaffActivity.Idle), (_people.CarriedStaff, carried.Activity) );
 	}
 
 	/// <summary>

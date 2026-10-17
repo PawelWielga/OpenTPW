@@ -2389,6 +2389,10 @@ slots are `RET 8`.
 
 The thing at world `+0x1da718` is `mStaffHQ`, thing 1 (`FUN_00519450`; `ride-operation.md`, "The strike"), whose
 `+0x60` the save names `mStaffMemberPickedUp`.
+**Measured** (Q432, `q432/orig/run.sh`, the staff window's PICK UP on the stock park's mechanic): `+0x60` read
+`0x0073001a` while he was carried and `0x00730000` once he was put down, so the worker is its low word; his `+0x19c` 7,
+then 1 after the drop. The dismissal (`FUN_00505790`) installs the idle mode first where the current mode is type 6
+(`0x00505830`), so a carried worker is put back before anyone is fired.
 
 **Open.** Whether anything moves a carried worker (a carried
 mechanic or handyman whose ride or toilet is deleted leaves state 7 by message 10 and can then walk; whether

@@ -48,6 +48,12 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q432 (`hud.md`, "The person's windows"): FIRE and PICK UP are built, so the staff window's nearest piece is the
+  patrol switch (`STAFF_WINDOW_PATROL`: `FUN_004b5b50`, map tool `0x36` and advisor line `0xc1`, or the area cleared,
+  `FUN_00506e90`). Counted, not built: the puff of particle `0x13` at a dismissal (`STAFF_DISMISSAL_PARTICLE`,
+  `FUN_004fa470`) and the figure of a carried worker at the pointer (`STAFF_PICKED_UP_PREVIEW`, the type-6 mode's
+  sprite). In no game run: FIRE with the Confirmations option off and a dismissal with another worker carried (tested
+  only), a drop refused, Full Simulation (not asked: the window is either mode's), the other three themes. Not heard.
   From Q431 (`hud.md`, "The person's windows"): the staff member's window is built, so the nearest piece is its verbs:
   FIRE (`STAFF_WINDOW_FIRE`: `FUN_00505790`, behind a box on UITEXT `0x18d` where the option `[0x0078d90f]` is set;
   `ParkPeople.Fire` exists), PICK UP (`STAFF_WINDOW_PICK_UP`: `FUN_0048c950` then `FUN_00505c50`; `ParkPeople.PickUp`

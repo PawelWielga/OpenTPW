@@ -81,6 +81,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/waiting.py PID SECS` | The original's memory: the park analyser's count of guests waiting for a shut park to open (its `+0x1f0d4`, written each time the advisor's row 1 is scored past its two early ends, -999 before), beside the same count taken live (things of type 1 in state 3 on the two ticket booths' cells, by id), `mParkClosed` and every guest's state, a line a change with the wall clock and `mGameTick`. A `POLL` for `loadfile.sh` |
 | `original/tags.py PID SECS` | The original's memory: the tags on the gadget's aerial (how many are held, each one's control rectangle on the 2048 x 1536 layout and its text, the mast's rectangle, the tag on the bar), a line a change with the wall clock and `mGameTick`. Says when a line leaves a tag, where it stands and when it goes. A `POLL` for `loadfile.sh` |
 | `original/staffpool.py PID SECS` | The original's memory: the staff pool, each slot in use as slot:kind/name row/grade (`[0x007cf83c]`, 32 records of 0x14 bytes), beside the hire screen's tab and whether it is up, a block a change with `mGameTick`. The hire list fills in slot order, so the first of a kind is the first handed over; it shows each timeout and top-up. Resolve a name row with `strdump`. A `POLL` for `loadfile.sh` (Q356) |
+| `original/bank.py PID` | The original's money, read once: the bank balance, the analyser's staff costs this month, the hand's worker (its low word), the current mode, the staff window's kept member and `mGameTick`, one line. Read it either side of a click to measure what the click cost (Q432: a dismissal's wage, 161) |
 | `original/screens.py PID SECS` | The original's memory: what the gadget's three category buttons are left on (`[0x007cb28c]`, `[0x007cb2a0]`, `[0x007cb290]`) and which park screen is up (the open screen `[0x007c24c8]`, the buy screen `[0x007cc1f8]`, the hire screen `[0x007ca308]`, each pointer printed, so a screen destroyed and built again shows) and the hire screen's tab (`[0x007ca30c]`, `hiretab`, 0 the cleaners' to 4 the scientists'), a line a change with the wall clock and `mGameTick`. Says what a click opened without a frame. A `POLL` for `loadfile.sh` |
 | `original/bar.py PID SECS` | The original's memory: the message bar (its rectangle, shown bit, parent, its data's thing, button types, item and text, each child's rectangle), the tag on show and the one being put on show, the gadget's body with its children two deep, the arm's handle, and each tag's rectangle, shown bit, timer byte and whether a stream plays on it, the changed parts a change with the wall clock and `mGameTick`. Says what a click on a tag, on the bar or on the camcorder button does to the arm, step by step. A `POLL` for `loadfile.sh` |
 | `original/breakq.py PID SECS THING [all]` | The original's memory, **written**: breaks a ride (`VAR_BREAKSTAT`) each time it is open with a queue that has stood four seconds, so every break puts a queue out, a line a break. With `all` it first writes nought over the mask byte at `0x0050133f`, so every guest dismissed from a queue plays kids `0x80`, not one in eight. Stop the original afterwards |
@@ -111,6 +112,14 @@ structure, and hand it to `loadfile.sh` through `POLL`.
 ## Recipes
 
 Each was found by trial in the item named, and cost a run to find.
+
+- **The staff window's FIRE and PICK UP in either game** (Q432, `q432/orig/run.sh`, `q432/confirm.py`): on the
+  original's 1024 x 768 frame `b_fire` is (228,385) and `b_pick` (308,385); FIRE's box puts its tick at (710,282) and
+  its cross at (714,326); here they are `control 50c`, `50e`, `9873c9` and `9873c8`. Fire the stock park's one mechanic
+  last: with him gone the mechanics' button opens a locator with nobody, and the strip opens no window. The gadget's
+  money readout moves with income every second, so a cost is read by `original/bank.py` either side of the click, and
+  here by `money`'s `staff` total. PICK UP lets the camera go as the window closes: a frame of the member's spot
+  before the pickup is not the view after it; shoot the carry and the drop instead, which share a camera.
 
 - **The staff member's window in either game** (Q431, `q431/orig/run.sh`, `q431/confirm.py`): Ctrl+S, the mechanics'
   button (360,613), then the strip (380,505) of the original's 1024 x 768 frame opens it on Mike Cooper; its `b_ardown`

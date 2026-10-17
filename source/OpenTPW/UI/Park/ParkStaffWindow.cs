@@ -24,12 +24,16 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
+/// <b>FIRE and PICK UP</b> (<c>FUN_004b5cb0</c>'s <c>0x50c</c> and <c>0x50e</c>) each close the window as they act. FIRE
+/// dismisses the member (<see cref="ParkPeople.Fire"/>), behind a box on UITEXT 397 where the Confirmations option is on;
+/// PICK UP puts them in the hand (<see cref="ParkPeople.PickUp"/>).
+/// </para>
+///
+/// <para>
 /// <b>Counted, not built:</b> the preview's copy of the member's model (<c>FUN_00486530</c>, <c>STAFF_WINDOW_PREVIEW</c>;
-/// the panel stands empty and its click still goes to the member), the three verbs FIRE (<c>FUN_00505790</c>,
-/// <c>STAFF_WINDOW_FIRE</c>), PICK UP (<c>FUN_00505c50</c>, <c>STAFF_WINDOW_PICK_UP</c>) and the patrol area's toggle
-/// (<c>FUN_004b5b50</c>, <c>STAFF_WINDOW_PATROL</c>), and the name's edit (<c>FUN_0048d290</c>,
-/// <c>STAFF_WINDOW_NAME_EDIT</c>). The toggle's second help row, 87 while it is down, is not shown: a button here has
-/// one.
+/// the panel stands empty and its click still goes to the member), the patrol area's toggle (<c>FUN_004b5b50</c>,
+/// <c>STAFF_WINDOW_PATROL</c>), and the name's edit (<c>FUN_0048d290</c>, <c>STAFF_WINDOW_NAME_EDIT</c>). The toggle's
+/// second help row, 87 while it is down, is not shown: a button here has one.
 /// </para>
 /// </summary>
 internal sealed class ParkStaffWindow : UiWindow
@@ -105,7 +109,7 @@ internal sealed class ParkStaffWindow : UiWindow
 			Rect = new UiRect( 380, 694, 534, 847 ),
 			HelpText = 89,
 			Mesh = UiMesh.Get( "b_fire" ),
-			Clicked = () => Verb( "STAFF_WINDOW_FIRE" )
+			Clicked = Fire
 		} );
 
 		// b_arup is FUN_0048cbe0 and b_ardown FUN_0048caf0, on the staff's mask 1 (Cycle).
@@ -133,7 +137,7 @@ internal sealed class ParkStaffWindow : UiWindow
 			Rect = new UiRect( 539, 694, 692, 847 ),
 			HelpText = 88,
 			Mesh = UiMesh.Get( "b_pick" ),
-			Clicked = () => Verb( "STAFF_WINDOW_PICK_UP" )
+			Clicked = PickUp
 		} );
 
 		_down = Root.Add( new UiButton
@@ -409,6 +413,41 @@ internal sealed class ParkStaffWindow : UiWindow
 			return;
 
 		Stack.Open( new ParkStaffScreen( Stack, ParkStaffPool.KindFor( member.Model ), member.ThingId ) );
+	}
+
+	/// <summary>
+	/// FIRE (<c>0x50c</c>): where the Confirmations option is on (<c>[0x0078d90f]</c>) a box on UITEXT 397 whose tick
+	/// (<c>FUN_004b6070</c>) dismisses the member shown as it opened and whose cross does nothing; where it is off the
+	/// dismissal at once (<c>FUN_00505790</c>). The window closes either way, behind the box.
+	/// </summary>
+	private void Fire()
+	{
+		var member = ThingId;
+
+		if ( GameOptions.Current.Confirmations )
+			Stack.Open( new MessageBox( Stack, Localization.Get( UIStrings.DismissEmployee ), () => Dismiss( member ) ) );
+		else
+			Dismiss( member );
+
+		Log.Info( $"Staff window: FIRE on thing {member}, {(GameOptions.Current.Confirmations ? "the box of UITEXT 397 asks first" : "dismissed at once")}" );
+
+		Stack.Close( this );
+	}
+
+	private static void Dismiss( int thingId )
+	{
+		if ( People?.Fire( thingId ) != true )
+			Log.Info( $"Staff window: thing {thingId} is not on the staff, so nobody is dismissed" );
+	}
+
+	/// <summary>PICK UP (<c>0x50e</c>): the member kept (<c>FUN_0048c950</c>), put in the hand (<c>FUN_00505c50</c>), the window closed.</summary>
+	private void PickUp()
+	{
+		var picked = People?.PickUp( ThingId ) == true;
+
+		Log.Info( $"Staff window: PICK UP on thing {ThingId}, {(picked ? "in the hand" : "not on the staff")}" );
+
+		Stack.Close( this );
 	}
 
 	/// <summary>A verb not built: counted, and the switch put back as it stood.</summary>

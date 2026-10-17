@@ -927,6 +927,11 @@ public sealed partial class ParkPeople : Entity
 	/// out</b> - <c>FUN_00505790</c> charges, spawns a particle and calls the thing's delete, with no
 	/// state change and no walk to the gate. The severance is exactly one wage, by the same expression
 	/// the monthly charge uses, and goes onto the analyser's month of staff costs as a wage does.
+	/// <para>
+	/// It first installs the idle mode where a worker is carried, which puts them back down
+	/// (<c>0x00505830</c>; <see cref="PutBack"/>). The puff of particle <c>0x13</c> at the member
+	/// (<c>FUN_004fa470</c>) is counted, not built.
+	/// </para>
 	/// </remarks>
 	internal bool Fire( int thingId )
 	{
@@ -934,6 +939,9 @@ public sealed partial class ParkPeople : Entity
 
 		if ( at < 0 )
 			return false;
+
+		if ( _carriedStaff != 0 )
+			Log.Info( $"Hand: {PutBack()}" );
 
 		var member = _staff[at];
 		var kind = ParkStaffPool.KindFor( member.Model );
@@ -958,6 +966,8 @@ public sealed partial class ParkPeople : Entity
 
 		_behaviour.State.Spend( severance );
 		_behaviour.State.AddStaffCost( severance );
+
+		Unimplemented.Report( "STAFF_DISMISSAL_PARTICLE" );
 
 		Log.Info( $"People: dismissed thing {thingId}, a grade {member.PayGrade} " +
 			$"{ParkStaffPool.NameOfKind( kind ).ToLowerInvariant()} - one month's wage of {severance} paid, " +
@@ -1030,6 +1040,10 @@ public sealed partial class ParkPeople : Entity
 
 		member.SetActivity( StaffActivity.Held, State.GameTick );
 		_carriedStaff = thingId;
+
+		// The type-6 mode keeps the member's sprite bank and costume and hangs them under the pointer (vtable
+		// 0x006fea70); here a carried member is only taken out of the drawing (ParkGuestSprites).
+		Unimplemented.Report( "STAFF_PICKED_UP_PREVIEW" );
 
 		Log.Info( $"People: picked up thing {thingId}" );
 

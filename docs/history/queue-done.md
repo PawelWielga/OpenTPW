@@ -7289,6 +7289,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   and the name's edit counted. Both games on the stock park (`q431/PREDICTION.txt`): "Mike Cooper", "$ 161",
   "Patrolling"; the arrows 26, 25, 26, 27; Ctrl+S and `b_locate` on the entertainer, role 4; the list on his tab
   (`q431/side-by-side.png`).
+- [x] **Q432. The staff window's FIRE and PICK UP (a piece of Q420).** Done 2026-10-17: FIRE asks on UITEXT 397
+  where the Confirmations option is on (its tick `ParkPeople.Fire` on the member kept), PICK UP is `ParkPeople.PickUp`,
+  each closing the window; a dismissal puts a carried worker back first; a member in the hand is not drawn; the puff
+  and the figure at the pointer counted (`hud.md`, "The person's windows"). Both games on the stock park
+  (`q432/PREDICTION.txt`): Mike Cooper carried and put down; the same box; the tick took exactly 161, the staff costs
+  538 to 699 (`q432/side-by-side-box.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
