@@ -7491,6 +7491,28 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the latch's test, build the pick for people, then build the hover's set (`STAFF_HOVER_SET_STATE`: `SetActivity( Idle )`
   where `ParkStaffWindow.CanBePickedUp` passes, as `q451/confirm1.py` ran it). Confirm: Mike Cooper followed by the
   locator with the pointer resting, set idle once and walking again at the stamp + 11, as `q451/orig/a-load.log`.
+- [x] **Q469. The hover's other empty rows only after a category.** Done 2026-10-17: built in `Level.GroundArmAt` and
+  `Level.WorldHelpRow` (`Silent`): a tool armed or a hand full (`0x00486fd9`; the build shell is type 3, `0x006b71c0`) and
+  the switch's default (`0x004877a3`; Lost Kingdom's map types 7, 2 and 30) empty the row only after a category; no cell,
+  a hoarding and an object's cell with no object post nothing (`park-engine.md`, "The arms that post nothing"); no cell
+  counted `PICK_EDGE_CELL` (Q472); the comment at `0x00488569` limited to a park screen. Both games (`q469/`, 8 of 8 each,
+  `side-by-side.png`): (43,16) "Left-click to build path", onto the hoarding (42,16) and on to (44,16), map type 7, the
+  row stood; straight from (43,16) onto (44,16) emptied, then the hoarding still empty; the camera moved to the sea, the row
+  stood. Mutations 14 of 14. Not on screen: the tool's arm (no player route here reaches a tool armed at category 0 with
+  a row standing but through a control's row, which ours keeps apart: Q473), the object's cell with no object (none in
+  the stock park). Was: From Q467: with a tool's mode installed
+  (`0x00486fd9` to `0x00486fe4`) and on a cell of no category (`FUN_00486d90`'s switch default, `0x004877a3`) the original
+  posts the empty row only if the last category was not nought, so a row standing at category 0 (the guests' row, Q467;
+  a locator's) stays; ours always empties it (`Level.WorldHelpRow`, `!HoverTaken` and `!ArmsThePathTool`). Decide which
+  of our cells fall to the default (not `FUN_00536390`'s ground, not types 1, 3, 4, 9, 10 or `0x15`) first. The review
+  of Q467 (`handoff/review3/VERIFY-2.md`) adds the arms that post nothing whatever the last category: `0x00487240` (no
+  cell), `0x00487667` and `0x0048768d` (an object cell with no thing, or a failed thing test), `0x004873bd` (a type-12
+  track cell under a `0x19` parent: the 429 hoarding cells, the most reachable), and two that return with no post and no
+  pointer call, `0x004873f8` -> `0x00487990` and `0x0048743f` -> `0x00487441`; with the coaster builder's modes,
+  `0x00486e1a`, `0x00486e28` and `0x00486e31` -> `0x004878e4`. Ours posts -1 at each. Those arms leave `_categoryNought`
+  true (ours sets it false before every ground arm). The comment at the not-taken case ("The original runs no hover
+  then", `0x00488569`) holds only under a park screen: correct it. Confirm in both games: the Q467 standing row, then
+  Shift let go over such a cell, then the pointer moved from bare ground onto a hoarding.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

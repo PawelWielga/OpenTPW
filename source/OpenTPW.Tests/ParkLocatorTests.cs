@@ -678,6 +678,66 @@ public class ParkLocatorTests
 	}
 
 	/// <summary>
+	/// <b>The hover's arms that post nothing leave the row standing, and the switch's default empties it only after a
+	/// category</b> (<c>FUN_00486d90</c>): from bare ground onto a hoarding 441 stands (<c>0x004873bd</c>), and on from
+	/// there onto a cell of map type 7 beside the gate and one of type 2, the default (<c>0x004877a3</c>), it still
+	/// stands; from bare ground straight onto either it is emptied; off the map it stands (<c>0x00487240</c>), counted; an object's
+	/// cell whose parent holds no object stands (<c>0x00487667</c>), and one whose parent holds one empties it; a type-12
+	/// track cell under another parent is counted. With a tool armed the empty row is posted only after a category
+	/// (<c>0x00486fd9</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the hoarding not silent; the default always emptied; the default never emptied; no cell
+	/// not silent; the edge cell's count dropped; the object's cell silent with its object; not silent without; the tool's arm always emptied; never
+	/// emptied; the category not nought after the tool's arm; the track's count dropped.</remarks>
+	[TestMethod]
+	public void TheHoversSilentArmsLeaveTheRowStanding()
+	{
+		_stack.Update();
+		var level = Level.Current!;
+		var state = level.ParkState!;
+		int Row( (int X, int Y) cell ) => level.WorldHelpRow( cell.X, cell.Y, 0 );
+		var (ground, hoarding, outside) = ((43, 16), (42, 16), (44, 16));
+		var two = Enumerable.Range( 0, 128 * 128 ).Select( i => (X: i % 128, Y: i / 128) ).First( c => state.Record( c.X, c.Y ).Type == 2 );
+		var footprint = Enumerable.Range( 0, 128 * 128 ).Select( i => (X: i % 128, Y: i / 128) )
+			.First( c => state.Record( c.X, c.Y ).Type == CellEdge.Footprint && ParkItemHeights.Owner( state, c.X, c.Y ) != null );
+		Assert.AreEqual( (0, 12, 7), (state.Record( 42, 16 ).Type, state.Record( 42, 16 ).TrackType, state.Record( 44, 16 ).Type) );
+
+		Assert.AreEqual( (441, 441), (Row( ground ), Row( ground )), "onto the view, then the ground's category" );
+		Assert.AreEqual( 441, Row( hoarding ), "onto a hoarding: nothing posted" );
+		Assert.AreEqual( (441, 441), (Row( outside ), Row( two )), "on to the default from nought: the row stands" );
+		Assert.AreEqual( 441, Row( ground ) );
+		Assert.AreEqual( (-1, -1), (Row( outside ), Row( hoarding )), "straight onto the default: emptied after the ground's" );
+		Row( ground );
+		Assert.AreEqual( -1, Row( two ), "map type 2 the same" );
+		Row( ground );
+		Assert.AreEqual( (441, 441), (Row( (-1, -1) ), Row( outside )), "off the map nothing posted, and nought after it" );
+		Assert.IsTrue( Unimplemented.Summary.Any( gap => gap.What == "PICK_EDGE_CELL" ), "the original's picker holds an edge cell" );
+
+		Row( ground );
+		Assert.AreEqual( (-1, -1), (Row( footprint ), Row( outside )), "an object's cell: its category, its row not built" );
+		var orphan = (X: 60, Y: 30);
+		var was = state.Record( orphan.X, orphan.Y );
+		Assert.AreEqual( 441, Row( ground ) );
+		state.SetRecord( orphan.X, orphan.Y, was with { Type = CellEdge.Footprint, ParentId = (ushort)((orphan.Y * 128) + orphan.X + 1) } );
+		Assert.AreEqual( 441, Row( orphan ), "an object's cell whose parent holds no object: nothing posted" );
+		state.SetRecord( orphan.X, orphan.Y, was with { TrackType = 12, TrackParentId = (ushort)((orphan.Y * 128) + orphan.X + 2) } );
+		Row( orphan );
+		Assert.IsTrue( Unimplemented.Summary.Any( gap => gap.What == "HOVER_TRACK_CELL_CATEGORY" ), "a type-12 cell under another parent" );
+		state.SetRecord( orphan.X, orphan.Y, was );
+
+		Row( ground );
+		Row( hoarding );
+		ParkBuildMode.Arm( ParkBuildMode.Path );
+		Assert.AreEqual( (441, 441), (Row( ground ), Row( ground )), "a tool armed after nought: the row stands" );
+		ParkBuildMode.Disarm();
+		Assert.AreEqual( 441, Row( ground ) );
+		ParkBuildMode.Arm( ParkBuildMode.Path );
+		Assert.AreEqual( (-1, -1), (Row( ground ), Row( hoarding )), "after the ground's category: emptied, then nought" );
+		ParkBuildMode.Disarm();
+		Assert.AreEqual( (441, 441), (Row( ground ), Row( hoarding )) );
+	}
+
+	/// <summary>
 	/// <b>The pointer asks the cell only for what is not a person</b> (<see cref="ParkPicking.ThingOn"/> with
 	/// <c>people: false</c>): people are taken by their pictures (<see cref="SpritePick"/>). A guest heading a cell's list
 	/// is passed over for what stands behind them, a member too, and a console click on the cell still takes the head.

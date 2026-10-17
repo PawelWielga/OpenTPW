@@ -84,7 +84,7 @@ internal static class ParkItemHeights
 	/// The placed thing a cell belongs to: the one anchored there, else the one its <c>mParentID</c> names -
 	/// the original's cell object (<c>FUN_0053bf30</c>), then its thing (<c>FUN_00527e80</c>).
 	/// </summary>
-	private static ParkWorld.CatalogueObject? Owner( ParkState state, int x, int y )
+	internal static ParkWorld.CatalogueObject? Owner( ParkState state, int x, int y )
 	{
 		var parent = state.Record( x, y ).ParentId;
 		var (ownerX, ownerY) = parent != 0 ? MapStep.CellAt( parent ) : (x, y);

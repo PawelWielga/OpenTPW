@@ -51,19 +51,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
 
-- [ ] **Q469. The hover's other empty rows only after a category.** From Q467: with a tool's mode installed
-  (`0x00486fd9` to `0x00486fe4`) and on a cell of no category (`FUN_00486d90`'s switch default, `0x004877a3`) the original
-  posts the empty row only if the last category was not nought, so a row standing at category 0 (the guests' row, Q467;
-  a locator's) stays; ours always empties it (`Level.WorldHelpRow`, `!HoverTaken` and `!ArmsThePathTool`). Decide which
-  of our cells fall to the default (not `FUN_00536390`'s ground, not types 1, 3, 4, 9, 10 or `0x15`) first. The review
-  of Q467 (`handoff/review3/VERIFY-2.md`) adds the arms that post nothing whatever the last category: `0x00487240` (no
-  cell), `0x00487667` and `0x0048768d` (an object cell with no thing, or a failed thing test), `0x004873bd` (a type-12
-  track cell under a `0x19` parent: the 429 hoarding cells, the most reachable), and two that return with no post and no
-  pointer call, `0x004873f8` -> `0x00487990` and `0x0048743f` -> `0x00487441`; with the coaster builder's modes,
-  `0x00486e1a`, `0x00486e28` and `0x00486e31` -> `0x004878e4`. Ours posts -1 at each. Those arms leave `_categoryNought`
-  true (ours sets it false before every ground arm). The comment at the not-taken case ("The original runs no hover
-  then", `0x00488569`) holds only under a park screen: correct it. Confirm in both games: the Q467 standing row, then
-  Shift let go over such a cell, then the pointer moved from bare ground onto a hoarding.
 - [ ] **Q470. Our people may be drawn larger than the original's.** From Q468 (`park-engine.md`, "The thing under a
   sprite"): the original adds a picture's span (height / 128 x 20, and across x 0.75) to its place AFTER the draw matrix,
   whose w is sin 45 of the depth, so on the screen a picture is span / w of the -1 to 1 box; ours draws it in the world
@@ -82,6 +69,22 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
   test ahead of `Level.ArmsThePathTool`, and count the ground's unbuilt rows where ours posts -1 (`0x226` the object's
   name `0x004876d1`, `0x1bc` a queue `0x00487621`, `0x1be` a track `0x004874ab`, `0x1c0` type `0x15` `0x00487742`).
   Confirm in both games: hover and click (47,17), then a booth.
+- [ ] **Q472. The picker's edge cell and its last cell.** From Q469 (`park-engine.md`, "The picker never hands the mode
+  a cell off the map", "The arms that post nothing"): the original's `FUN_0045d560` holds a point off the map to an edge
+  cell, and where the ray meets nothing the last cell stands, both seen over the sea (q469/orig: (45,0) at one view, the
+  last cell 2092 at another); ours answers no cell (`ParkPicking.Resolve`), so the hover posts nothing there, counted
+  `PICK_EDGE_CELL`, and every verb that asks the cell (a tool's square, a click) does nothing where the original's acts on
+  an edge cell. Decode first where the ray's hit leaves the terrain (`FUN_0045bf90`) and which edge cell a point takes.
+  Confirm in both games: the pointer over the sea past row 0 and past a ground edge (Lost Kingdom's 141), the cell read
+  and the row.
+- [ ] **Q473. The help bar is one posted row.** From Q469: the original's bar holds whatever `FUN_004924b0` last posted,
+  the hover's, a control's and a park screen's (the buy screen's `FUN_004abc80`, its rows `0x94`, `0x96` to `0x98`, `0x21a`,
+  `0x21b`) alike, and the camcorder's own (`0x243`, `0x244`, `0x004bd920` to `0x004bd9d4`, mode 9, which ours does not
+  post); ours chooses each frame between the control under the pointer and the world's row (`WindowStack.Update`), so a
+  control's row never stands over the park, and under a park screen the world's row is -1 (`Level.WorldHelpRow`, not
+  measured). Decide what the bar holds after each first (a tool armed from a control and the pointer back over a
+  hoarding is the case Q469 left: the original keeps the control's row). Confirm in both games: the gadget's Buy button
+  hovered, then the pointer onto a hoarding; the camcorder's rows.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
@@ -1333,7 +1336,8 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
   The catalogue's emitters are registered and the per-item slot table (item `+0x4dc`, `0x0041455a`) is thrown away.
   `FreshParkBoundary.Apply` throws where the original stops at its 64th entry (`0x00532517`), and a test pins the
   throw. Confirm: several entertainers hired in a fresh park, more than one costume on screen; the boundary beside
-  the original's fresh park.
+  the original's fresh park. The stock park's boundary is not drawn either (Q469: the wall right of the gate in
+  `q469/orig/a-4-cam180.png`, open grass in `q469/run1/2-hoarding.png`).
 - [ ] **Q215. The park advisor's tick: three paths neither built nor counted, and the original never watched.** Found
   by the 2026-10-04 review (`u5-advisor-door-2`, `-3`, `-9`). `FUN_0059a550` polls a metadata row each tick
   (`FUN_0059c680( 1 )`); `FUN_0059b620` posts a message after `Advisor_SayResponse` (`FUN_0040f740`, `FUN_0040fb10`,

@@ -2411,7 +2411,7 @@ held or dragged right press, or any right press with the option off, leaves the 
 
 **The picker never hands the mode a cell off the map.** `FUN_0045d560` clamps the pick to an edge cell,
 and a ray that hits nothing leaves the last hovered cell standing, so any nonzero id it writes is a map
-cell. It writes 0 only if a runtime limit (`DAT_007a0314`, `DAT_007a0374`) is 0 or less, or a grid
+cell (both seen in Q469: the sea past row 0 read (45,0) at one view, and at another the last cell stood). It writes 0 only if a runtime limit (`DAT_007a0314`, `DAT_007a0374`) is 0 or less, or a grid
 dimension and its limit are both above 128; those limits are filled at run time and were not read, so
 "never 0" is likely, not proven. The click does not test for 0.
 
@@ -3518,7 +3518,7 @@ nought (`ride-operation.md`, "The idle wait, and the stamp it counts from"). Eit
 guests decide and nobody is taken the empty row `0x0078a374` is posted, only if the last hover category was not
 nought (`0x004870f3` to `0x004870ff`; otherwise nothing is posted and the old row stays; each hover keeps the old
 category and zeroes `[0x007c24f4]` at `0x00486de5`, and its arm sets its own), and pointer 0 put up; the tool's mode arm
-(`0x00486fd9`) and the switch's default (`0x004877a3`) post it on the same test, where ours always empties it (Q469); with a locator open
+(`0x00486fd9`) and the switch's default (`0x004877a3`) post it on the same test ("The arms that post nothing" below); with a locator open
 otherwise and nobody taken, the jump from `0x0048721c` to `0x004878d3` posts nothing and puts up pointer 0, so the row
 last posted stands. Measured in the original: the staff locator open, Mike Cooper under the pointer read category 9
 with his row and the hand, and off him category 0 with the row still at the foot and the arrow (`q444/orig/a-4-member-hover.png`,
@@ -3528,6 +3528,31 @@ bare ground category 0 no row and the arrow (`q447/orig/`). Here `Level.WorldHel
 `q467/`, `PREDICTION.txt`): the visitors' locator opened with Ctrl held read category 0 with "Left-click to build path"
 standing, and Ctrl let go it stood on at category 0; off the followed guest (category 7, "Visitor #13") the bar was
 emptied.
+
+**The arms that post nothing** (Q469; the listing `objdump` of `0x00486d90` to `0x004879d0`). Every mode type but 0 and
+1 reaches `0x00486fd9`, save 8 (the coaster builder) and type 3 with the build mode `0x15` or `0x16`, which go to
+`0x004878e4`, and 9 (the camcorder), which posts its own rows `0x244` and `0x243`: so the build shell `FUN_0046c580` (vtable `0x006fe9e0`, whose `+0x24`
+`0x006b71c0` answers 3, so the path tool and every build tool too), a candidate (5) and a worker (6). There the thing
+`[0x007c24f8]` is forgotten, no pointer is put up, and the empty row is posted only if the last category was not nought.
+Where no person is taken: no cell (`[0x007b05cc]` nought, `0x00487240`), a type-12 track cell under a type-`0x19` parent
+(the hoardings, `0x004873bd`: 429 cells in Lost Kingdom, 426 of them on map type 0), and a cell of map type 4, 9 or 10
+with no object (`0x00487667`; the object is `FUN_00527e80`'s, the parent cell's) post nothing and put up pointer 0, the
+category nought. An object whose item's `AddOn.UpgradesId` (`+0x284`, `FUN_004e2710`) is not nought posts nothing too
+unless its `AddOn.UpgradeType` (`+0x288`) is 2 (`0x0048768d`): Lost Kingdom's three add-ons (1500 to 1502) are all type
+1, track-ride add-ons, which nothing here builds. Types 11 and 16, and 12 under any other parent, ask the cell's thing and
+the track's (`0x004873d5` to `0x00487441`: two of those ways return with no post and no pointer); none is in Lost Kingdom
+(its track types are 7, 12 and 25), and ours counts them (`HOVER_TRACK_CELL_CATEGORY`). Then the map type's switch (table
+`0x004879b0`): 0 bare ground (`FUN_00536390`, category 2), 1 path (1), 3 a queue (3), 4, 9 and 10 an object (4), `0x15`
+(6), and every other the default `0x004877a3`, which posts the empty row only after a category and puts up pointer 0: in
+Lost Kingdom map types 7 (9,077 cells, among them those beside the gate and the land past the entrance's fence), 2
+(240) and 30 (66, the approach; the ticket booths
+among them come first, Q471). Built in `Level.GroundArmAt` and `Level.WorldHelpRow`. **The picker meets no cell only
+before its first pick** ("The picker never hands the mode a cell off the map" above): over the sea the original kept the
+last cell (2092) when the camera moved off the map, so its row stood, and at another view it answered the edge cell
+(45,0); ours answers no cell there, posts nothing and counts `PICK_EDGE_CELL` (Q472). Measured in both (`q469/`,
+`PREDICTION.txt`, `side-by-side.png`): from (43,16) "Left-click to build path" onto the hoarding (42,16) category 0 and the
+row standing, on to (44,16), map type 7, still standing; from (43,16) straight onto (44,16) the bar emptied, and onto the
+hoarding still empty; the camera then moved to the sea, the row stood.
 
 **The hover runs only on the park's view** (Q451). `Park_MouseMessageProc` runs `FUN_00486d90` on its timer
 (`0x00488582`) only while `[0x007c24fc]` is set. Message `0x10001`, the pointer coming onto the layer from a control,
