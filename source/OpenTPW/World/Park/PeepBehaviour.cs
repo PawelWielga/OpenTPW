@@ -834,10 +834,11 @@ public sealed class PeepBehaviour
 		// things themselves - and maintains it when a thing moves cell (FUN_0050b6a0), is created
 		// (FUN_0050afe0) or destroyed. ParkState.StandOn answers the first two together.
 		//
-		// <b>This is called every turn, unconditionally, and that matters:</b> a guest the shipped park
-		// leaves STANDING STILL is entered into their cell's list on their first turn, where a from/to move
-		// guarded by "did the cell change" would never enter them and the gate could not see them.
-		// StandOn decides for itself that the cell is unchanged, exactly as FUN_0050b6a0 does.
+		// <b>This is called every turn, unconditionally, and that matters:</b> a guest standing still whom no
+		// list holds yet (a park with no file behind it; the file's people are on their lists from the load)
+		// is entered on their first turn, where a from/to move guarded by "did the cell change" would never
+		// enter them and the gate could not see them. StandOn decides for itself that the cell is unchanged,
+		// exactly as FUN_0050b6a0 does.
 		//
 		// <b>It lives here rather than in ParkPeople on purpose.</b> Putting it in the driver would leave
 		// it unreachable from every test that calls Step directly. Every caller goes through Step, so

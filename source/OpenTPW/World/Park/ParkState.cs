@@ -721,6 +721,9 @@ public sealed class ParkState
 			};
 		}
 
+		if ( park.Save is { } save )
+			SeedCellLists( save );
+
 		// Everything the file placed, copied so that what is built and sold afterwards moves here rather
 		// than in ParkWorld, which describes a file.
 		_objects.AddRange( park.Objects );
@@ -1700,9 +1703,37 @@ public sealed class ParkState
 	// What is standing on each cell - a list per cell, headed by RuntimeCell.Occupant and linked
 	// through the THINGS, exactly as the queues above are. The original keeps the links on the thing
 	// itself (+8 previous, +10 next); they are kept here for the same reason mQNext/mQPrev are, so that
-	// the whole structure lives in one place and is seeded once.
+	// the whole structure lives in one place and is seeded once, from the file (SeedCellLists).
 	private readonly Dictionary<int, int> _onCellNext = [];
 	private readonly Dictionary<int, int> _onCellPrev = [];
+
+	/// <summary>
+	/// Every cell's list as the file chains it (<c>mWho</c>, then each thing's <c>mMapChild</c>; <see cref="ParkWorld.ChainAt"/>),
+	/// each thing on it recorded as standing there - the original's loader takes the chains whole and enters nobody of
+	/// its own accord. A person the save has heading a cell is then already on it, so their first turn's
+	/// <see cref="StandOn"/> changes nothing, and walking off leaves whoever stood behind them the head.
+	/// </summary>
+	private void SeedCellLists( ParkWorld save )
+	{
+		for ( var cell = 0; cell < _cells.Length; ++cell )
+		{
+			if ( _cells[cell].Occupant == 0 )
+				continue;
+
+			var chain = save.ChainAt( cell % ParkWorld.MapSize, cell / ParkWorld.MapSize );
+
+			for ( var i = 0; i < chain.Count; ++i )
+			{
+				if ( i > 0 )
+					_onCellPrev[chain[i]] = chain[i - 1];
+
+				if ( i + 1 < chain.Count )
+					_onCellNext[chain[i]] = chain[i + 1];
+
+				_cellOf[chain[i]] = cell;
+			}
+		}
+	}
 
 	/// <summary>
 	/// Puts a thing on a cell, at the head of whatever is already there - the original's
@@ -1796,8 +1827,8 @@ public sealed class ParkState
 	/// <para>
 	/// <b>It also covers a thing being placed for the first time, which a from/to move cannot.</b> The
 	/// original links a thing into its cell when it is CREATED (<c>FUN_0050afe0</c>) as well as when it
-	/// moves, and asking "where are you now" answers both cases with one call: a guest the save leaves
-	/// standing still is entered into their cell's list on their first turn.
+	/// moves, and asking "where are you now" answers both cases with one call. A person the file holds is
+	/// already on their cell's list (<see cref="SeedCellLists"/>), so their first call changes nothing.
 	/// </para>
 	/// </summary>
 	public void StandOn( int thingId, int x, int y )

@@ -3477,6 +3477,20 @@ the click opened his window and folded the arm; the visitors' locator open, the 
 click opened the visitor's window; the visitors' locator and Shift together, the locator's own guest read 0; with no
 locator Shift alone read 0 on path and 7 on a guest, whose click opened their window.
 
+**Who a cell's list names as people walk** (Q446). Every person is relinked into the cell they stand on whenever it
+changes: the walk tick `FUN_004fa2a0` calls `FUN_0050b6a0` at `0x004fa2fc` (the placement `FUN_004fa930` at
+`0x004fa976`), which compares the thing's cell bytes `+5` and `+7` with the new position's and only then unlinks
+(`FUN_004d9280`) and relinks at the head (`FUN_004d91f0`). It serves staff as it serves guests; the pick-up
+`FUN_00505c50` unlinks nobody, so a carried member stays on the list of the cell they were taken from. The load keeps
+every cell's chain as the file has it (FileFormats `saves.md`, "Thing records"), so a person who heads a cell in the
+file and walks off leaves whoever the file chained behind them its head. Measured in the original (`q446/orig/`,
+`original/cellhead.py`): the stock park's guard 28, saved alone on (39,28), paced between (39,25) and (39,28) and the
+cell's chain read `[28]` while he stood on it and `[]` each time he was off it; with the guards' locator open the
+pointer over the empty cell read category 0 and its click opened nothing, and on him category 11 and his window. Here
+`ParkState` seeds the lists from the file's chains and `StaffBehaviour.Step` ends with the relink, as
+`PeepBehaviour.Step` does for a guest; the click still takes the head of the cell's list where the original takes the
+sprite drawn under the pointer (`ParkPicking.ThingOn`).
+
 **The preview** (`FUN_005234d0` → `FUN_00536100(0x101, …)`, every UI tick): unanchored, one square
 under the pointer, which is both the first and the last cell; anchored, the line from the anchor to the
 pointer snapped to the longer axis (a tie runs along X). Off-map cells get no square. The per-cell

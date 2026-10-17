@@ -47,15 +47,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 Q444 and Q445 come first: defects a player meets, found by the review of the run of 2026-10-16/17 (its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`).
 
-- [ ] **Q446. A member of staff entered in the cells they walk, so a world click finds them where they stand.** Q444's
-  piece (2). Staff are entered in a cell's list only when hired or put down (`ParkPeople.Hire`, `DropStaff`), never as
-  they walk, so a click on (47,25) of the stock park opens Mike Cooper's window after he has walked off, and Q444's run
-  opened member 28's from (39,28), his cell in the save (`q444/PREDICTION.txt`, ours round 2). The original relinks
-  every person as they cross a cell: its walk tick `FUN_004fa2a0` (called from the staff's own states, `FUN_004d7580`,
-  `FUN_004d6790`, `FUN_004da490`, `FUN_004da740`) moves them by `FUN_0050b6a0`, which unlinks and relinks the thing
-  (`FUN_004d9280`, `FUN_004d91f0`) when its cell changes; guests here already do it (`PeepBehaviour`'s `StandOn`). Do the
-  same for staff and read what else reads a cell's list (`LeaverAtTheStop`, the writer's links). Confirm: both games,
-  a click where a member stood after he walked off opening nothing, and on him where he stands opening his window.
 - [ ] **Q447. A person's hover rows and pointer.** From Q444. The hover over a guest it would pick shows UIHELPTEXT 0x229
   (with their number, `+0x1d8`) or 0x22a, over a member 0x22b with `FUN_00506860`'s string, and puts up pointer 2
   (`FUN_004a2aa0( 2 )`; `FUN_00486d90`); ours shows neither, counted `PERSON_HOVER_HELP`. Q444's original frames show a

@@ -569,8 +569,9 @@ public class PeepBehaviourTests
 	/// question is "am I the first thing standing here?".
 	/// </para>
 	/// <para>
-	/// The negative arm turns on the list being LIFO: thing 99 arrives after our guest, so 99 heads the
+	/// The negative arm turns on the list being LIFO: thing 999 arrives after our guest, so 999 heads the
 	/// cell and our guest - who is standing still, and therefore is not relinked - stays behind them.
+	/// The ids are none of the file's: its own things are on their cells' lists from the load.
 	/// </para>
 	/// </summary>
 	[TestMethod]
@@ -586,20 +587,20 @@ public class PeepBehaviourTests
 		var blocked = CellEdge.For( world, ParkPeople.WalkingMode ).Blocked;
 
 		// Somebody else is standing here already, and arrives after our guest, so heads the list.
-		var second = PaidGuest( 7 );
+		var second = PaidGuest( 907 );
 		var behind = new PeepWalk( second.Navigator, blocked );
 		var (cellX, cellY) = behind.Position.Cell;
 
 		waiting.StandOn( second.ThingId, cellX, cellY );
-		waiting.StandOn( 99, cellX, cellY );
+		waiting.StandOn( 999, cellX, cellY );
 
 		behaviour.Step( second, behind, playing: null, tick: 1 );
 
 		Assert.AreEqual( PeepState.WaitingForOpening, second.State,
-			"the cell names thing 99, so this guest waits their turn rather than pushing in" );
+			"the cell names thing 999, so this guest waits their turn rather than pushing in" );
 
 		// And a guest the cell does name goes through.
-		var first = PaidGuest( 8 );
+		var first = PaidGuest( 908 );
 		var walk = new PeepWalk( first.Navigator, blocked );
 		var (x, y) = walk.Position.Cell;
 

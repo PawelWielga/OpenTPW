@@ -747,8 +747,7 @@ public sealed partial class ParkPeople : Entity
 
 		ParkGuestSprites.Current?.Add( person, picture with { Slot = slot, X = cellX, Y = cellY } );
 
-		// A member of staff enters a cell's occupancy list only here and in DropStaff: PeepBehaviour's
-		// StandOn is for guests, and nothing re-stands a member of staff as they walk.
+		// Made on this cell, they head its list (FUN_0050afe0); StaffBehaviour.Step relinks them as they walk.
 		_behaviour.State.StandOn( thingId, cellX, cellY );
 
 		// Every kind's constructor ends in its decide, where they were put.

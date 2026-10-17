@@ -40,7 +40,6 @@ public sealed partial class ParkWorld
 	/// The things on a cell, as the file chains them: the cell's <c>mWho</c>, then each thing's <c>mMapChild</c>
 	/// (<c>FUN_0050b090</c>). Empty off the map, on a cell with nobody, or where the list was not read.
 	/// </summary>
-	/// Dead by CODE: only ParkFileWriterPeopleTests and ParkFileWriterBoughtAndSoldTests call it.
 	public IReadOnlyList<int> ChainAt( int x, int y )
 	{
 		var chain = new List<int>();

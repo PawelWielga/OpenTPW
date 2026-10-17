@@ -7428,6 +7428,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `ParkLocator`), so their text runs over the body and the retract cross. Also: the original keeps the retract cross drawn
   through the whole slide in (its film, frames 188-193); ours hides it at the click. `hud.md` calls the bar's slide
   "alike": correct it. Confirm: the bar and the camcorder panel sliding out and in, frame beside the original's film.
+- [x] **Q446. A member of staff entered in the cells they walk, so a world click finds them where they stand.** Done
+  2026-10-17: `StaffBehaviour.Step` ends with the relink and `ParkState` seeds every cell's list from the file's chains (a
+  saved head re-entering its own cell linked itself behind itself, so it stayed head); `q446/run1` 5 of 5, (39,28)
+  occupant 0 once the guard walked off and its click `nothing to do`, his window on his new cell; the original's chain
+  `[]`/`[28]` as he paced, category 0 then 11 (`q446/side-by-side.png`); mutations 7 of 7. Q444's
+  piece (2). Staff are entered in a cell's list only when hired or put down (`ParkPeople.Hire`, `DropStaff`), never as
+  they walk, so a click on (47,25) of the stock park opens Mike Cooper's window after he has walked off, and Q444's run
+  opened member 28's from (39,28), his cell in the save (`q444/PREDICTION.txt`, ours round 2). The original relinks
+  every person as they cross a cell: its walk tick `FUN_004fa2a0` (called from the staff's own states, `FUN_004d7580`,
+  `FUN_004d6790`, `FUN_004da490`, `FUN_004da740`) moves them by `FUN_0050b6a0`, which unlinks and relinks the thing
+  (`FUN_004d9280`, `FUN_004d91f0`) when its cell changes; guests here already do it (`PeepBehaviour`'s `StandOn`). Do the
+  same for staff and read what else reads a cell's list (`LeaverAtTheStop`, the writer's links). Confirm: both games,
+  a click where a member stood after he walked off opening nothing, and on him where he stands opening his window.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

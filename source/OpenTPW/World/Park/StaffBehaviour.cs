@@ -581,6 +581,14 @@ public sealed class StaffBehaviour
 			default:
 				break;
 		}
+
+		// The walk relinks them into the cell they stand on whenever it changes (FUN_004fa2a0 calling FUN_0050b6a0 at
+		// 0x004fa2fc), as a guest's does, so the cell a member has walked off no longer names them and a click there
+		// finds whoever is left. A carried member is moved by nothing and stays in the list of the cell they were
+		// picked up from: the pick-up (FUN_00505c50) unlinks nobody.
+		var (standingX, standingY) = walk.Position.Cell;
+
+		_state?.StandOn( staff.ThingId, standingX, standingY );
 	}
 
 	/// <summary>
