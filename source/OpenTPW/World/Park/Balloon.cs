@@ -9,8 +9,8 @@ namespace OpenTPW;
 /// <b>Its colour is the guest's id and nothing else.</b> The original reseeds the park's one generator with the id and
 /// then draws twice, the bank and the set, both when a shop gives it and when leaving a thing builds it again, so the
 /// same guest gets the same colour from every shop and back after every ride.
-/// OpenTPW keeps no shared generator (<see cref="ParkGenerator"/>), so the reseed's other effect - every later draw
-/// in the park following from that id - is not reproduced.
+/// The reseed is made on a state of its own here, not on the park's generator (<see cref="ParkState.RandomSeed"/>), so
+/// its other effect - every later draw in the park following from that id - is not reproduced.
 /// </para>
 /// </summary>
 public sealed class Balloon

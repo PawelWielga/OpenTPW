@@ -1624,7 +1624,15 @@ seaplane and the ferry** and **0 means choose at random**. The random arm is an 
 `x = x * 0x19660d + 0x3c6ef35f`, rotated right thirteen, made positive, `% 3` — run over
 **`mRandomSeed`** (`+0x1da708`), the save's own seed. The spent load (`0x004cf5a5`, through the call at `0x004cf4b1`) and the tail pass 0 (`0x004cf4f2`, `0x004cf50c`,
 `0x004cf526`, `0x004cf54a`), but a current vehicle is reused whatever the argument, so the random arm is reached only
-from the tail's call when no vehicle is current (`0x004cf526`).
+from the tail's call when no vehicle is current (`0x004cf526`). The draw is `FUN_00516330`'s inlined, the state written
+back, and `% 3` unsigned: nought the bus, one the seaplane, two the ferry (`0x0051a34b`..`0x0051a37f`, an unsigned `DIV`).
+
+**OpenTPW** (Q443): the park's generator is `ParkState.RandomSeed`, seeded from the file's `mRandomSeed` and written
+back to it by the save; `ParkPeople.Summon` draws it for the random arm and nothing else draws it, as every other system
+here keeps a generator of its own (`ParkGenerator` says so, each site where it departs). From the stock Lost Kingdom's
+`0x3f416bba` the first four draws pick the bus, the seaplane, the bus and the bus. The original's state at the same summons
+is not ours: its needs turns, its scripts' `RAND`s and the other systems draw it between, and each arrival reseeds it with
+the guest's id.
 
 The save agrees from the other side: its header fields are named `mArrivalVehicle_Size1`, `_Size2`,
 `_Size3` and `mCurrentArrivalVehicle` (`FUN_00516c80`), and `FUN_0051a2f0` caches the three at

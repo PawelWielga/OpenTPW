@@ -632,7 +632,7 @@ public sealed partial class ParkPeople : Entity
 
 		// The guard chooses anew (FUN_004d5de0); the other four constructors are handed the candidate's costume
 		// byte as it is (FUN_0046c8e0, 0x0046c9b9 and its kin) and make the sprite on it.
-		// As with arrivals, the native shared generator is not yet reproduced.
+		// As with arrivals, the draw is the arrivals' generator's, not the park's (ParkState.RandomSeed).
 		var bank = kind == 7 && banks.CountOf( kind ) > 0
 			? (random.Next() >> 2) % banks.CountOf( kind ) : candidate.Costume & 0xff;
 
@@ -1776,12 +1776,14 @@ public sealed partial class ParkPeople : Entity
 	{
 		if ( _arrivalVehicle == 0 )
 		{
-			// Size nought is one of the three at random, the leavers' summons (FUN_0051a2f0). The original draws on the
-			// save's own seed; this project keeps no shared generator, so the arrivals' is drawn.
-			_arrivalVehicle = size != 0 ? size : VehicleAtRandom( _arrivalRandom );
+			// Size nought is one of the three at random, the leavers' summons: one draw of the park's generator, the
+			// save's own seed (FUN_0051a2f0).
+			var seed = State.RandomSeed;
+
+			_arrivalVehicle = size != 0 ? size : VehicleAtRandom( State.Draw() );
 
 			Log.Info( $"People: the {ParkFixedItems.VehicleName( _arrivalVehicle )} summoned on mGameTick {State.GameTick}"
-				+ (size == 0 ? ", at random" : "") );
+				+ (size == 0 ? $", at random: mRandomSeed 0x{seed:x8} to 0x{State.RandomSeed:x8}" : "") );
 
 			if ( _vehicleThings[_arrivalVehicle - 1] == 0 )
 				_vehicleThings[_arrivalVehicle - 1] = MakeVehicle( _arrivalVehicle );
@@ -1869,8 +1871,11 @@ public sealed partial class ParkPeople : Entity
 			Summon( 0 );
 	}
 
-	/// <summary>One of the three vehicles, each as likely - the summons for size nought (<c>% 3</c>, in <c>FUN_0051a2f0</c>).</summary>
-	internal static int VehicleAtRandom( Random random ) => ((int)((uint)random.Next() % 3)) + 1;
+	/// <summary>
+	/// The vehicle a draw of the park's generator picks - the summons for size nought: <c>% 3</c>, unsigned, nought the
+	/// bus, one the seaplane, two the ferry (<c>FUN_0051a2f0</c>).
+	/// </summary>
+	internal static int VehicleAtRandom( uint draw ) => (int)(draw % 3) + 1;
 
 	/// <summary>Whether a vehicle other than the small crowd's is current - <c>FUN_0051aad0</c>.</summary>
 	internal bool LargerVehicleIsCurrent => _arrivalVehicle is 2 or 3;
@@ -2373,8 +2378,8 @@ public sealed partial class ParkPeople : Entity
 	/// <summary>
 	/// The needs turn's thought (<c>0x00501913</c>..<c>0x0050192d</c>): one draw of the park's generator, and one
 	/// time in ten the thought the needs pick (<see cref="Thoughts.PickFromNeeds"/>), set with no sound argument.
-	/// The draw comes from the arrivals' generator here: this project keeps no shared one
-	/// (<see cref="ParkGenerator"/>).
+	/// The draw comes from the arrivals' generator here, not the park's (<see cref="ParkState.RandomSeed"/>, which only
+	/// the leavers' summons draws).
 	/// </summary>
 	private void ThinkOfNeeds( Peep peep )
 	{

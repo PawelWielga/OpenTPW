@@ -677,7 +677,8 @@ public class Level
 			} : null,
 			state.AdvisorMessages?.PollRow, state.LastStaffHired, state.LastObjectBuilt,
 			people != null ? (people.TrainingBudgets.ToArray(), people.HaveEverTrained) : null,
-			state.MonthRings, (state.LifetimeVisitors, state.MostPaidForTicket), state.MisbehavingKids, state.ParkLastOpened );
+			state.MonthRings, (state.LifetimeVisitors, state.MostPaidForTicket), state.MisbehavingKids, state.ParkLastOpened,
+			state.RandomSeed );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;
@@ -712,7 +713,7 @@ public class Level
 			Log.Info( $"Save: aerial tag {tag.Id} written: thing {tag.Thing} item {tag.Item} life {tag.Life} picture {tag.Picture} "
 				+ $"buttons {tag.Button1},{tag.Button2} \"{tag.Text}\"" );
 
-		Log.Info( $"Save: wrote {path}, {file.Length} bytes: mGameTick {running.GameTick}, " +
+		Log.Info( $"Save: wrote {path}, {file.Length} bytes: mRandomSeed 0x{running.RandomSeed:x8}, mGameTick {running.GameTick}, " +
 			$"{(running.ParkClosed ? "closed" : "open")}, {running.VisitorsToDate} visitors to date, balance {running.Balance}, " +
 			$"camera {ParkOrbitCameraMode.State()}, {cells.Count} cells of ground" );
 

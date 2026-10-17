@@ -20,7 +20,8 @@ public class ParkFileWriterTests
 	private const int Preamble = 0x60D;
 
 	private static readonly ParkFileWriter.Running Played = new( GameTick: 1234, ParkClosed: true, VisitorsToDate: 77,
-		Balance: 54321, Camera: new ParkCameraModule.View( Zoom: 95f, YRotation: 1.5f, PointX: 300f, PointZ: 250f ) );
+		Balance: 54321, Camera: new ParkCameraModule.View( Zoom: 95f, YRotation: 1.5f, PointX: 300f, PointZ: 250f ),
+		RandomSeed: 0x9e3779b9u );
 
 	private byte[] raw = null!;
 	private ParkWorld shipped = null!;
@@ -285,7 +286,7 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
-	/// Every module is carried: the body differs from the file's only inside the eight fields written, and not at
+	/// Every module is carried: the body differs from the file's only inside the nine fields written, and not at
 	/// all when the running park's numbers are the file's own. The shipped file is not written to.
 	/// </summary>
 	[TestMethod]
@@ -303,9 +304,10 @@ public class ParkFileWriterTests
 		var camera = Find( before, "EMAK" ) - 40;
 		var economy = Enumerable.Range( 0, before.Length - 4 ).Single( at => BitConverter.ToInt32( before, at ) == 87987 );
 
-		// mGameTick, mParkClosed, mNumberOfVisitorsToDate; mBalance; the zoom and rotation, the point's x, its z.
+		// mGameTick, mParkClosed, mNumberOfVisitorsToDate, mRandomSeed; mBalance; the zoom and rotation, the point's x, its z.
 		(int At, int Size)[] written =
-			[(header + 14, 4), (header + 22, 4), (header + 26, 4), (economy, 4), (camera, 8), (camera + 12, 4), (camera + 20, 4)];
+			[(header + 14, 4), (header + 22, 4), (header + 26, 4), (header + 34, 4), (economy, 4), (camera, 8), (camera + 12, 4),
+				(camera + 20, 4)];
 
 		var changed = Enumerable.Range( 0, body.Length ).Where( at => body[at] != before[at] ).ToArray();
 		var outside = changed.Where( at => !written.Any( field => at >= field.At && at < field.At + field.Size ) ).ToArray();
@@ -315,6 +317,24 @@ public class ParkFileWriterTests
 		foreach ( var field in written )
 			Assert.IsTrue( changed.Any( at => at >= field.At && at < field.At + field.Size ), $"nothing changed in the field at 0x{field.At:x}" );
 
+	}
+
+	/// <summary>
+	/// <b>The park's generator is written as <c>mRandomSeed</c></b>, the header's dword after <c>mTrafficLights</c>
+	/// (<c>world + 0x1da708</c>), and read back as the seed; with none given the file's stands.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the seed not written; written at <c>mGameTick</c>'s place; written with none given.</remarks>
+	[TestMethod]
+	public void TheParksGeneratorIsWrittenAsTheSeed()
+	{
+		var written = Read( ParkFileWriter.Write( shipped, Played ) );
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( unchecked((int)0x9e3779b9u), written.RandomSeed );
+		Assert.AreEqual( 1234, written.GameTick, "beside the clock, not over it" );
+		Assert.AreNotEqual( shipped.RandomSeed, written.RandomSeed );
+		Assert.AreEqual( shipped.RandomSeed, Read( ParkFileWriter.Write( shipped, Played with { RandomSeed = null } ) ).RandomSeed,
+			"none given: the file's" );
 	}
 
 	/// <summary><see cref="ParkWorld"/> is the file: writing a park from it leaves the body it holds as it was read.</summary>

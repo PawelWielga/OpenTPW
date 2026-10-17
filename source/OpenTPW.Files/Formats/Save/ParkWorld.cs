@@ -1595,6 +1595,9 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// <summary>How far into the World header a field sits: the sizes of the fields before it.</summary>
 	private static int HeaderFieldAt( int field ) => HeaderFieldSizes.Take( field ).Sum();
 
+	/// <summary>Where <c>mRandomSeed</c> sits past <see cref="HeaderAt"/>.</summary>
+	internal static int RandomSeedAt => HeaderFieldAt( RandomSeedField );
+
 	/// <summary>Where <c>mGameTick</c> sits past <see cref="HeaderAt"/>.</summary>
 	internal static int GameTickAt => HeaderFieldAt( GameTickField );
 

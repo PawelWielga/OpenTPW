@@ -81,8 +81,9 @@ public sealed record ParkSpriteBanks( int KidBanks, int CostumeBanks, int Balloo
 
 	/// <summary>
 	/// The child a guest arrives as, and goes back to out of a costume (<c>0x004fb18d</c>): the park's generator reseeded
-	/// with the guest's id word, one draw, <c>(r &gt;&gt; 2) %</c> the kid banks, unsigned. OpenTPW keeps no shared
-	/// generator (<see cref="ParkGenerator"/>), so the reseed's hold on every later draw in the park is not reproduced.
+	/// with the guest's id word, one draw, <c>(r &gt;&gt; 2) %</c> the kid banks, unsigned. The reseed is made
+	/// on a state of its own here, not on the park's generator (<see cref="ParkState.RandomSeed"/>), so its hold on every
+	/// later draw in the park is not reproduced.
 	/// </summary>
 	public int ChildOf( int thingId )
 	{

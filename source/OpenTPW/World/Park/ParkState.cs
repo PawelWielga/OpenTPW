@@ -685,6 +685,7 @@ public sealed class ParkState
 		VisitorsToDate = park?.NumberOfVisitorsToDate ?? 0;
 		ParkIsClosed = park is not null && park.ParkClosed != 0;
 		GameTick = park?.GameTick ?? 0;
+		RandomSeed = unchecked((uint)(park?.RandomSeed ?? 0));
 
 		_cells = new RuntimeCell[ParkWorld.MapSize * ParkWorld.MapSize];
 
@@ -892,6 +893,26 @@ public sealed class ParkState
 	/// (<c>docs/exe/park.md</c>, "Arrivals"). <see cref="AdvanceGameTick"/> moves it.
 	/// </summary>
 	public int GameTick { get; private set; }
+
+	/// <summary>
+	/// The park's one generator, the original's <c>mRandomSeed</c> (<c>world + 0x1da708</c>): seeded from the save and
+	/// written back to it, stepped by <see cref="Draw"/> (<c>docs/exe/park.md</c>, "Arrivals: who comes, on what"). <b>Only the
+	/// leavers' summons draws it here</b>; every other system keeps its own state and says so at its site, and the
+	/// reseeds with a guest's id that the original makes on it (an arrival, a balloon, a costume's return) are made on
+	/// those sites' own states, so this one's sequence is the original's only where nothing else drew between.
+	/// </summary>
+	public uint RandomSeed { get; private set; }
+
+	/// <summary>One draw of the park's generator - <c>FUN_00516330</c> on <see cref="RandomSeed"/>.</summary>
+	internal uint Draw()
+	{
+		var state = RandomSeed;
+		var drawn = ParkGenerator.Draw( ref state );
+
+		RandomSeed = state;
+
+		return drawn;
+	}
 
 	/// <summary>
 	/// A thing sweep begins: the clock goes one up before anything in the sweep runs, as <c>FUN_00516380</c> does at

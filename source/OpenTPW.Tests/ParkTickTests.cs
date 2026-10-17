@@ -1252,9 +1252,12 @@ public class ParkTickTests
 			// bus's load, every time.
 			for ( var round = 0; round < 8; ++round )
 			{
+				var seedBefore = state.RandomSeed;
+
 				people.HoldTheLoad( 2 );
 				Plays( 6 );
 				Sweep( people );
+				Assert.AreEqual( seedBefore, state.RandomSeed, $"round {round}: a summons by size draws nothing" );
 				Assert.AreEqual( 0, script["VAR_STATUS"], $"round {round}: the spent vehicle's status is written nought" );
 				Assert.AreNotEqual( ParkPeople.NoVehicle, people.VehicleStatus(), "one is current again" );
 				Assert.IsFalse( people.LargerVehicleIsCurrent, "and it is the bus, the vehicle for a load of two" );
@@ -1275,10 +1278,16 @@ public class ParkTickTests
 			{
 				var (before, slots, head) = (Stamp(), people.VehicleThings.ToArray(), state.ObjectsInChainOrder().First().ThingId);
 
+				// The pick is one draw of the park's generator, the save's seed (FUN_0051a2f0).
+				var seed = state.RandomSeed;
+				var picked = ParkPeople.VehicleAtRandom( ParkGenerator.Draw( ref seed ) );
+
 				people.HoldTheLoad( 0 );
 				Plays( 6 );
 				Sweep( people );
 				Assert.AreNotEqual( ParkPeople.NoVehicle, people.VehicleStatus(), "a vehicle is summoned for the leaver" );
+				Assert.AreEqual( (picked, seed), (people.CurrentVehicle, state.RandomSeed),
+					$"round {round}: the vehicle the park's generator draws, in one step" );
 				drawn.Add( people.LargerVehicleIsCurrent );
 
 				if ( people.CurrentVehicle == 2 && seaplaneMade++ == 0 )
@@ -1330,17 +1339,42 @@ public class ParkTickTests
 	}
 
 	/// <summary>
-	/// <b>The summons for a leaver draws one of the three vehicles, each as likely</b> (<c>% 3</c>, in <c>FUN_0051a2f0</c>).
+	/// <b>The summons for a leaver draws one of the three vehicles, each as likely</b>: the draw <c>% 3</c>, unsigned,
+	/// nought the bus, one the seaplane, two the ferry (<c>FUN_0051a2f0</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> always the bus; a fourth vehicle; nought.</remarks>
+	/// <remarks><b>Mutations:</b> always the bus; a fourth vehicle; nought; the remainder signed; the order turned.</remarks>
 	[TestMethod]
 	public void TheSummonsAtRandomDrawsEachOfTheThreeVehicles()
 	{
-		var random = new Random( 7 );
-		var drawn = Enumerable.Range( 0, 600 ).Select( _ => ParkPeople.VehicleAtRandom( random ) ).ToArray();
+		CollectionAssert.AreEqual( new[] { 1, 2, 3, 1, 1, 3 },
+			new uint[] { 0, 1, 2, 3, uint.MaxValue, 0x80000000u }.Select( ParkPeople.VehicleAtRandom ).ToArray() );
+
+		var state = 7u;
+		var drawn = Enumerable.Range( 0, 600 ).Select( _ => ParkPeople.VehicleAtRandom( ParkGenerator.Draw( ref state ) ) ).ToArray();
 
 		CollectionAssert.AreEquivalent( new[] { 1, 2, 3 }, drawn.Distinct().ToArray() );
 		Assert.IsTrue( drawn.GroupBy( vehicle => vehicle ).All( group => group.Count() is > 150 and < 250 ), "each about a third" );
+	}
+
+	/// <summary>
+	/// <b>The park's generator is the save's seed</b>, <c>mRandomSeed</c>, and one draw is one step of
+	/// <c>FUN_00516330</c> on it.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the seed not read; the step not kept; the draw not the step's.</remarks>
+	[TestMethod]
+	public void TheParksGeneratorIsTheSavesSeed()
+	{
+		var world = World();
+		var state = new ParkState( world );
+		var expected = unchecked((uint)world.RandomSeed);
+
+		Assert.AreEqual( expected, state.RandomSeed );
+
+		for ( var draw = 0; draw < 3; ++draw )
+		{
+			Assert.AreEqual( ParkGenerator.Draw( ref expected ), state.Draw(), $"draw {draw}" );
+			Assert.AreEqual( expected, state.RandomSeed, $"the state after draw {draw}" );
+		}
 	}
 
 	/// <summary>

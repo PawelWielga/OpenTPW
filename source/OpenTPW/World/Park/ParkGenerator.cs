@@ -6,8 +6,9 @@ namespace OpenTPW;
 ///
 /// <para>
 /// <b>The original keeps one, in the world (<c>[world+0x1da708]</c>), and every system draws it</b>; a balloon,
-/// a costume's return and a guest's arrival each reseed it with a guest's id first. OpenTPW keeps a state per
-/// user instead, so each caller holds its own and says at its site where that departs.
+/// a costume's return and a guest's arrival each reseed it with a guest's id first. Here the park's one is
+/// <see cref="ParkState.RandomSeed"/>, which the leavers' summons alone draws; every other caller holds a state of
+/// its own and says at its site where that departs.
 /// </para>
 /// </summary>
 public static class ParkGenerator

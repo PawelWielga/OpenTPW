@@ -3408,8 +3408,8 @@ Alexah's two played Lost Kingdom saves, written by the original, which hold 29 a
 
 **OpenTPW builds it** (`Balloon`, `ParkRideOperation.GiveABalloon` and `Dismiss`, `Peep.SetState` and `Peep.Tick`,
 `ParkPeople`, `ParkGuestSprites.DrawBalloons`), counting the event (`SETTLE_UP_BALLOON_EVENT`); the thought picker's draw is
-`ParkPeople.ThinkOfNeeds` ("Q110b"). Its departures: no shared generator, so the reseed's effect on the park's later draws
-is not reproduced (`ParkGenerator`); the bob's phase counts placements on the frame clock at 30 a second rather than
+`ParkPeople.ThinkOfNeeds` ("Q110b"). Its departures: the reseed is made on a state of its own, not the park's generator, so its effect on
+the park's later draws is not reproduced (`ParkGenerator`); the bob's phase counts placements on the frame clock at 30 a second rather than
 per rendered frame; the two other callers of the placement are not reproduced; whether the per-frame placement runs
 while a park's menu has paused the clock is not traced; a saved balloon's first turn is one interval after the load,
 as a person's is. A balloon saved while it bursts, which no guest names any more, goes on bursting after the load on its

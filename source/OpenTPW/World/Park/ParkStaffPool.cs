@@ -372,7 +372,8 @@ public sealed class ParkStaffPool
 	/// by those weights and a candidate of it is made. Then the minimums are made up (<see cref="MakeUpTheMinimums"/>).
 	/// </summary>
 	/// <remarks>
-	/// The original draws on the world's generator; this project keeps no shared one, so the pool's own is drawn. A
+	/// The original draws on the world's generator; the pool's own is drawn here, not the park's
+	/// (<see cref="ParkState.RandomSeed"/>, which only the leavers' summons draws). A
 	/// kind with more candidates than its <c>Max</c> wants a negative number, there as here. A kind is full only once
 	/// a member of it has been met in the park (<c>FUN_00508000</c> raises the flag as it counts one), so a limit of
 	/// nought with nobody employed is not full.

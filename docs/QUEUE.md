@@ -50,6 +50,12 @@ Q441, Q260's build, follows Q440 (its tool sets the original's camera for the co
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q443 (`park.md`, "Arrivals: who comes, on what, and how often"): the leavers' draw is on the save's seed, which
+  is written back, so the nearest piece is the staff strike's five records and `mForceStrike` (`ParkWorld.StaffHqState`;
+  a strike changes them, Q138b, and the writer leaves them the file's, `saves.md`, the staff HQ), then the economy
+  thing's rings and the loans. In no game run: the original's own vehicle at the same summons (its generator is drawn
+  by every system and reseeded at each arrival, ours by the leavers alone: moving those onto `ParkState.RandomSeed` is
+  not filed as a piece of this item), Full Simulation (not asked: the summons is either mode's), the other three themes.
   From Q442 (`hud.md`, "The patrol switch and the patrol tool"): the refused click's sound is built at every build
   tool, so the nearest piece is the leavers' draw on the save's seed (`park.md`; it needs the park's one shared
   generator). In no game run: a move's put-down refused (`ParkBuilding.Move`; tested only), a refusal for money, the

@@ -7392,6 +7392,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`q442/orig`, round 1f): the press on (43,16) armed the path tool red, the release refused it, `blnl_error1` 0.558, the
   capture's only match. Test `RefusedBuildClicksAreHeardUnlessThePressWentToAParkScreen`, mutations 12 of 12
   (`q442/PREDICTION.txt`, `side-by-side.png`).
+- [x] **Q443. The leavers' draw on the save's seed (a piece of Q420).**
+  Done 2026-10-17: the park's generator is `ParkState.RandomSeed`, seeded from `mRandomSeed`, stepped by the summons at
+  random (`FUN_0051a2f0`, `0x0051a34b`..`0x0051a37f`: `% 3` unsigned, nought the bus) and written back by the save. The
+  final build (`q443/run2`, 4 of 4): from the stock `0x3f416bba` the bus (`0x3e8846bc`, `1-bus-6.png`), the seaplane
+  (`0x975cef2b`), the save writing `mRandomSeed 0x975cef2b` and the file holding it, and loaded back the bus again
+  (`0xd4727529`, `4-loaded-bus-6.png`); the original's first read after loading the file was `0x975cef2b`
+  (`q443/orig/a-load.log`). Tests `TheParksGeneratorIsTheSavesSeed`, `TheParksGeneratorIsWrittenAsTheSeed`, the summons'
+  rounds checked step by step; mutations 13 of 13 (`q443/PREDICTION.txt`, `mut.out`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

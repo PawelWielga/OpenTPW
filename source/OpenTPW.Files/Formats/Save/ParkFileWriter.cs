@@ -71,7 +71,7 @@ public static class ParkFileWriter
 	/// where it is null. <see cref="MisbehavingKids"/> is the analyser's three counts of misbehaving kids
 	/// (<see cref="ParkWorld.PutMisbehavingKids"/>); the file's where it is null. <see cref="ParkLastOpened"/> is the
 	/// analyser's stamp of the newest request to open the park (<see cref="ParkWorld.PutParkLastOpened"/>); the file's
-	/// where it is null.
+	/// where it is null. <see cref="RandomSeed"/> is the park's generator, <c>mRandomSeed</c>; the file's where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -85,7 +85,7 @@ public static class ParkFileWriter
 		int? AdvisorPollCursor = null, long? LastStaffHired = null, long? LastObjectBuilt = null,
 		(IReadOnlyList<int> Budgets, bool HaveEverTrained)? Training = null,
 		ParkWorld.MonthRingSet? MonthRings = null, (int Lifetime, int MostPaidForTicket)? Visitors = null,
-		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null, long? ParkLastOpened = null );
+		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null, long? ParkLastOpened = null, uint? RandomSeed = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -226,6 +226,9 @@ public static class ParkFileWriter
 			throw new InvalidOperationException( "the park file it was loaded from holds no economy thing" );
 
 		var body = (byte[])loaded.Body.Clone();
+
+		if ( running.RandomSeed is { } seed )
+			PutInt32( body, loaded.HeaderAt + ParkWorld.RandomSeedAt, unchecked((int)seed) );
 
 		PutInt32( body, loaded.HeaderAt + ParkWorld.GameTickAt, running.GameTick );
 		PutInt32( body, loaded.HeaderAt + ParkWorld.ParkClosedAt, running.ParkClosed ? 1 : 0 );

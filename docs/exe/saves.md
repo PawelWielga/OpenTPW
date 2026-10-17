@@ -648,7 +648,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 
 | Part | Play here changes | A writer here |
 |---|---|---|
-| The header | `mGameTick`, `mParkClosed`, `mNumberOfVisitorsToDate`; the five staff heads and `mFirstObject` as things are made and gone; the arrival vehicles' handles | patched. `mRandomSeed` is carried: the generators here are not the original's |
+| The header | `mGameTick`, `mParkClosed`, `mNumberOfVisitorsToDate`; the five staff heads and `mFirstObject` as things are made and gone; the arrival vehicles' handles | patched. `mRandomSeed` is the park's generator as it stands (`ParkState.RandomSeed`), which only the leavers' summons draws here: every other system keeps a generator of its own (Q443) |
 | The object controls | an item's standing count and first-build stamp (nothing here researches an item: its researched flags are the file's) | patched |
 | The staff pool | every candidate, the top-up's counts and mark | written slot for slot from `ParkStaffPool`; an empty slot keeps its bytes and loses `mValid` |
 | The clock and arrival fields | the date, the arrival timer | patched: the timer's mark, count and flag are written; the clock's fields are still the file's (Q241j) |
