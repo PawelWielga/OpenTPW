@@ -44,8 +44,29 @@ Ghidra; `verify-<area>.md` and a lead id name its evidence (`CLAUDE.local.md` sa
 
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
-At Alexah's word (2026-10-17), Q260 and Q440 (the cameras) come first: testing against the original waits on them.
-Q441, Q260's build, follows Q440 (its tool sets the original's camera for the comparison).
+Q444 and Q445 come first: defects a player meets, found by the review of the run of 2026-10-16/17 (its findings are
+`~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`).
+
+- [ ] **Q444. World clicks with a locator or a person's window open, as the original's.** From the run review (q424, q431,
+  q432). (1) With a locator open, the original's hover categoriser `FUN_00486d90` reads it (`0x00486dd6`, `[0x007cc2f0]`)
+  and skips the ground, path and object categories (`0x0048721c` to `0x004878d3`: category 0, the click does nothing);
+  staff under the pointer keep their window, and with the visitors' locator open a guest under the pointer opens the
+  visitor's window without Shift (`0x00487009` to `0x0048702d`, category 7, `FUN_004b79b0`). Ours arms the path tool
+  (`Level.ArmsThePathTool`, used by the hover and `ClickWorldAt`) and opens object windows, uncounted: Q432's run logged
+  "world click: path: anchored at (49,23)" with the staff locator open where the original laid nothing and its strip
+  took the click (`q432/orig/b-run.out`). (2) A member's world click opens the window on the cell's occupant
+  (`ParkPicking.ThingOn`), but staff are entered in a cell only when hired or put down, never as they walk: the stock
+  park's (47,25) still names Mike Cooper after he walks off. Open only on a member standing on the clicked cell (read the
+  original's pick for staff first). Confirm: both games, a locator open, a click on bare ground and on a path arming
+  nothing; a guest clicked with the visitors' locator open; a click where a member stood after he walked off opening
+  nothing; tests for each.
+- [ ] **Q445. The gadget's sliding panels drawn behind its body, as the original's.** From the run review (q427). The
+  arm's message `0xa` sets a panel's depth to its linked depth less three (`0x004a15bf` to `0x004a15cd`, `FUN_0065f16b`):
+  the panel at 3, its children at 5, under the body (8) and the retract button (7), so a sliding bar's text is cut off
+  where it passes behind the body. Ours gives the panels the default depth 6 (`ParkGadget._bar`, `_carried`,
+  `ParkLocator`), so their text runs over the body and the retract cross. Also: the original keeps the retract cross drawn
+  through the whole slide in (its film, frames 188-193); ours hides it at the click. `hud.md` calls the bar's slide
+  "alike": correct it. Confirm: the bar and the camcorder panel sliding out and in, frame beside the original's film.
 
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
