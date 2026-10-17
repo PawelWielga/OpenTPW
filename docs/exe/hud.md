@@ -2527,7 +2527,16 @@ area 1 and 16384; `q435/orig/a-run.log`), the outline and the advisor gone from 
 **Here the same** (Q437; `ParkFrontEnd.MenuKey` to `ParkHand.LetGo`): unanchored and anchored on (51,27), each Escape
 logged `withdraw message=193 cleared=0 cut=1` then `Escape: the build tool is put away`, mode 0 not anchored, Mike's area
 still the whole map, (0, 0)-(127, 127), no square or wall drawn and no menu; the next Escape opened the game menu (`q437/run2`,
-`q437/side-by-side.png`). A member fenced where one path cell lies stays on it, rolling it again and standing
+`q437/side-by-side.png`). **A quick right click with the tool armed** (RMB cancel on, `[0x0078d911]` 1) does the same in
+both games (Q438): the armed release installs the idle mode with no type test (`0x0048842b`; `park-engine.md`, "The hand's
+ways out"). The original's (`q438/orig/run.sh`, the right button held 0.08 s): unanchored and anchored on (54,17), mode
+0x36 to 0, the anchor -1, Mike's area 1 and 16384, `0xc1` cut (slaps 1, then 2), no marker square left and no menu; the
+camera unmoved across the click; the pointer the idle one over the ground, with the help bar "Left-click to build path"
+(`orig/a-4-rclick.png`, `orig/b-8-rclick.png`). Ours (`Level.RightButton` to `Level.QuickRightClick` to `ParkHand.LetGo`;
+`q438/run1`), unanchored and anchored on (51,27): `withdraw message=193 cleared=0 cut=1` then `world click: right click - the
+build tool is put away`, mode 0 not anchored, Mike's area the whole map, `strip` none, the camera unmoved, `pointer`
+"cursor Path, help row 441", no menu; a second quick click, over the idle mode, logs nothing (`q438/side-by-side.png`).
+A member fenced where one path cell lies stays on it, rolling it again and standing
 eleven sweeps with thought `0x16` on one roll in about 55, in both games (Q434; `ride-operation.md`, "A member fenced
 where one path cell lies").
 

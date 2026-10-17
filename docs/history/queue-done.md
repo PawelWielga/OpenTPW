@@ -7327,6 +7327,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   run found `strip`'s census listing the last outline's walls after the squares went (nothing drawn): fixed in
   `ParkBuildMarkers.Build`. Tests `EscapeWithThePatrolToolArmedPutsItAwayAndWritesNothing`,
   `NothingToDrawLeavesNoWallsInTheCensus`.
+- [x] **Q438. A quick right click with the patrol tool armed (a piece of Q420).** Done 2026-10-17: the same in both
+  games, nothing built. RMB cancel on, Mike Cooper's tool unanchored and then anchored (the original on (54,17), ours on
+  (51,27)): each quick click put the tool away (mode 0, the anchor gone), wrote nothing (the area 1 and 16384), cut `0xc1`
+  and left the idle pointer with the bar "Left-click to build path" and no menu (`q438/orig/run.sh`, `q438/run1`,
+  `q438/side-by-side.png`, `q438/PREDICTION.txt`). Test `EscapeOrAQuickRightClickWithThePatrolToolArmedPutsItAwayAndWritesNothing`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

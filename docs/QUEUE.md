@@ -48,9 +48,16 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q438 (`hud.md`, "The patrol switch and the patrol tool"): a quick right click with the tool armed is the
+  original's, so the nearest piece is the patrol tool's refused click's sound `0xaf` (counted,
+  `PATROL_TOOL_REFUSED_SOUND_0xAF`; heard by the game's own mix), then the leavers' draw on the save's seed
+  (`park.md`; it needs the park's one shared generator). In no game run: a right drag or a held right press with the
+  tool armed (the original hands the camera the press late; what its orbit camera does with bit 4 of `DAT_00790aac`,
+  held, is not decoded, and ours reads no right button), the click with RMB cancel off, Full Simulation (not asked: the
+  tool is either mode's), the other three themes. Not heard.
   From Q437 (`hud.md`, "The patrol switch and the patrol tool"): Escape with the tool armed is the original's, so the
   nearest piece is a quick right click with the tool armed (RMB cancel on; `park-engine.md`, "The hand's ways out"), run
-  in neither game. In no game run: Escape with a modifier held while the tool is armed (the shortcuts' row names none),
+  in neither game (run in both, Q438). In no game run: Escape with a modifier held while the tool is armed (the shortcuts' row names none),
   Escape unanchored in the original, Full Simulation (not asked: the tool is either mode's), the other three themes. Not
   heard.
   From Q436 (`park-engine.md`, "Placement feedback", "The walls"): a lifted square's walls are the original's, so the
@@ -75,7 +82,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   the two runs' cameras our lifted squares look far higher above the ground than the original's, at the same lift
   numbers; compare at one camera (compared, Q435: the same at one camera). Counted, not built: the refused click's sound `0xaf` (`PATROL_TOOL_REFUSED_SOUND_0xAF`).
   In no game run: `0xc1` cut by the click here (the line ended first; the original's was cut; tested), Escape (run, Q437) or a
-  right click with the tool armed, Full Simulation (not asked: the window is either mode's), the other three themes.
+  right click with the tool armed (run, Q438), Full Simulation (not asked: the window is either mode's), the other three themes.
   Not heard.
   From Q432 (`hud.md`, "The person's windows"): FIRE and PICK UP are built, so the staff window's nearest piece is the
   patrol switch (`STAFF_WINDOW_PATROL`: `FUN_004b5b50`, map tool `0x36` and advisor line `0xc1`, or the area cleared,

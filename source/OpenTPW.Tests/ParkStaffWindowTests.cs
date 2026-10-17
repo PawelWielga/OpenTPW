@@ -26,6 +26,7 @@ public class ParkStaffWindowTests
 	private WindowStack _stack = null!;
 	private ParkGadget _gadget = null!;
 	private bool _confirmations;
+	private bool _rmbCancel;
 
 	[TestInitialize]
 	public void LoadThePark()
@@ -35,6 +36,7 @@ public class ParkStaffWindowTests
 		_now = Time.Now;
 		_looksAt = ParkOrbitCameraMode.PointOfInterest;
 		_confirmations = GameOptions.Current.Confirmations;
+		_rmbCancel = GameOptions.Current.RmbCancel;
 
 		Screen.Size = new Point2( 2048, 1536 );
 		Log ??= new();
@@ -74,6 +76,7 @@ public class ParkStaffWindowTests
 		Input.Mouse = new();
 		ParkOrbitCameraMode.PointOfInterest = _looksAt;
 		GameOptions.Current.Confirmations = _confirmations;
+		GameOptions.Current.RmbCancel = _rmbCancel;
 		ParkBuildMode.Forget();
 		Unimplemented.Forget();
 	}
@@ -625,39 +628,55 @@ public class ParkStaffWindowTests
 	}
 
 	/// <summary>
-	/// <b>Escape with the patrol tool armed puts it away and writes nothing</b>, anchored or not: the game table's row 0
-	/// installs the idle mode over any other (<c>0x0040c368</c>), so the anchor goes, the member keeps the area the switch
-	/// left, <c>0xc1</c> is withdrawn and no menu opens. The original's, anchored: mode 0, the anchor -1, the area 1 and
-	/// 16384 (<c>docs/exe/hud.md</c>, "The patrol switch and the patrol tool").
+	/// <b>Escape, or a quick right click with RMB cancel on, puts the patrol tool away and writes nothing</b>, anchored or
+	/// not: the game table's row 0 (<c>0x0040c368</c>) and the right button's armed release (<c>0x0048842b</c>) each install
+	/// the idle mode over any other, so the anchor goes, the member keeps the area the switch left, <c>0xc1</c> is withdrawn
+	/// and no menu opens. The original's, both ways: mode 0, the anchor -1, the area 1 and 16384 (<c>docs/exe/hud.md</c>,
+	/// "The patrol switch and the patrol tool").
 	/// </summary>
-	/// <remarks><b>Mutations:</b> Escape leaving the tool armed or opening the menu; the anchor kept; an area written;
+	/// <remarks><b>Mutations:</b> a way out leaving the tool armed or opening the menu; the anchor kept; an area written;
 	/// <c>0xc1</c> not withdrawn.</remarks>
 	[TestMethod]
-	public void EscapeWithThePatrolToolArmedPutsItAwayAndWritesNothing()
+	public void EscapeOrAQuickRightClickWithThePatrolToolArmedPutsItAwayAndWritesNothing()
 	{
 		using var clock = new SimulationClockScope();
 		var lines = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ), tutorial: () => true );
 		Level.Current!.ParkState!.AdvisorMessages = lines;
+		GameOptions.Current.RmbCancel = true;
 		var member = Mechanic;
 
-		foreach ( var anchored in new[] { false, true } )
+		foreach ( var (way, anchored) in new[] { ("Escape", false), ("Escape", true), ("a quick right click", false), ("a quick right click", true) } )
 		{
 			Fence( member, Staff.WholeMapBottomLeft, Staff.WholeMapTopRight );
 			ParkStaffWindow.Open( _stack, member.ThingId );
 			Click( Window!.Root, 0x510 );
-			Assert.AreEqual( ParkBuildMode.Patrol, ParkBuildMode.Current, $"armed, anchored {anchored}" );
-			StringAssert.Contains( lines.Census(), "slot=193/", $"0xc1 posted, anchored {anchored}" );
+			Assert.AreEqual( ParkBuildMode.Patrol, ParkBuildMode.Current, $"armed, {way}, anchored {anchored}" );
+			StringAssert.Contains( lines.Census(), "slot=193/", $"0xc1 posted, {way}, anchored {anchored}" );
 
 			if ( anchored )
 				StringAssert.Contains( Level.Current!.ClickWorldAt( 51, 27, 0 ), "anchored at (51,27)" );
 
-			Escape();
+			if ( way == "Escape" )
+				Escape();
+			else
+				Assert.AreEqual( "world click: right click - the build tool is put away", QuickRightClick(), $"anchored {anchored}" );
 
-			Assert.AreEqual( (ParkBuildMode.None, false), (ParkBuildMode.Current, ParkBuildMode.Anchored), $"put away, anchored {anchored}" );
-			Assert.AreEqual( (1, 0x4000), (member.PatrolBottomLeft, member.PatrolTopRight), $"nothing written, anchored {anchored}" );
-			Assert.IsFalse( lines.Census().Contains( "slot=193/" ), $"0xc1 withdrawn, anchored {anchored}" );
-			Assert.IsFalse( _stack.Windows.OfType<GameMenu>().Any(), $"no menu, anchored {anchored}" );
+			Assert.AreEqual( (ParkBuildMode.None, false), (ParkBuildMode.Current, ParkBuildMode.Anchored), $"put away, {way}, anchored {anchored}" );
+			Assert.AreEqual( (1, 0x4000), (member.PatrolBottomLeft, member.PatrolTopRight), $"nothing written, {way}, anchored {anchored}" );
+			Assert.IsFalse( lines.Census().Contains( "slot=193/" ), $"0xc1 withdrawn, {way}, anchored {anchored}" );
+			Assert.IsFalse( _stack.Windows.OfType<GameMenu>().Any(), $"no menu, {way}, anchored {anchored}" );
 		}
+	}
+
+	/// <summary>A press and a release of the right button 50 ms apart at one point on the park: a quick click.</summary>
+	private static string? QuickRightClick()
+	{
+		var at = new Vector2( 1024, 600 );
+		Time.PinWall( 50000 );
+		Level.Current!.RightButton( true, at );
+		Time.PinWall( 50050 );
+
+		return Level.Current!.RightButton( false, at );
 	}
 
 	/// <summary>Escape let go with no modifier, through the park front end's own handler on this stack and gadget.</summary>

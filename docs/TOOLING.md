@@ -133,7 +133,10 @@ Each was found by trial in the item named, and cost a run to find.
   measured here, read in the original's code. A run that waits longer than a line (0xc1, 18 s) before the click that
   puts the tool away shows no cut. **Here `0xc1` leaves its slot a tick after it is posted**, as the advisor starts
   saying it: read `advisor`'s `message=193/.../said=1`, not `slot=193/` (Q437's first miss); a way out's cut is the
-  log's `withdraw message=193 ... cut=1` just before its own line (`q437/confirm.py`).
+  log's `withdraw message=193 ... cut=1` just before its own line (`q437/confirm.py`). **A quick right click** (Q438): in
+  the original `xdotool mousedown 3`, 0.08 s, `mouseup 3` on `:77` (under the 200 ms limit); here `button(3, ...,
+  held=0.06)`. Opening Mike's window again snaps the original's camera to wherever he has walked, so aim that phase's
+  cells at the camera's own point (`q438/orig/run.sh`, `AIMREL=1`).
 
 - **The staff window's FIRE and PICK UP in either game** (Q432, `q432/orig/run.sh`, `q432/confirm.py`): on the
   original's 1024 x 768 frame `b_fire` is (228,385) and `b_pick` (308,385); FIRE's box puts its tick at (710,282) and
