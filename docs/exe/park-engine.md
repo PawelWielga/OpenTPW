@@ -3517,7 +3517,8 @@ constructs `FUN_0046c580(1)`, whose `OnInstall` `FUN_0046d5a0` calls `FUN_0052f2
 anchor, cursor 3), and the release applies at the same cell, which anchors. **One click arms and
 anchors.** Idle, the pointer already wears `c_path` over those cells, with UIHELPTEXT 441 "Left-click to
 build path" over ground and 442 "Left-click to extend this path" over path. What comes before the
-categories: the person under the pointer and the locators (below), the gate and ticket booth, and track cells — type `0xb` and `0x10` have categories of their own, and a type
+categories: the person under the pointer and the locators (below), the gate and ticket booths ("The gate and the ticket
+booths" below), and track cells — type `0xb` and `0x10` have categories of their own, and a type
 `0xc` cell whose parent is `0x19` has none at all (`0x004873b3`..`0x004873c5`), so the 429 such cells in
 Lost Kingdom arm nothing. A guest on the cell does not stop it.
 
@@ -3552,7 +3553,7 @@ last posted stands. Measured in the original: the staff locator open, Mike Coope
 with his row and the hand, and off him category 0 with the row still at the foot and the arrow (`q444/orig/a-4-member-hover.png`,
 `a-2-P1.png`); the visitors' locator open, a guest whose `+0x1d8` read 9 showed "Visitor #9 : ..." and the hand, and
 bare ground category 0 no row and the arrow (`q447/orig/`). Here `Level.WorldHelpRow` answers the row, its values and
-`PersonPointer`, and keeps the row last answered where the original posts nothing. Measured in both (Q467,
+`PickPointer`, and keeps the row last answered where the original posts nothing. Measured in both (Q467,
 `q467/`, `PREDICTION.txt`): the visitors' locator opened with Ctrl held read category 0 with "Left-click to build path"
 standing, and Ctrl let go it stood on at category 0; off the followed guest (category 7, "Visitor #13") the bar was
 emptied.
@@ -3572,15 +3573,35 @@ the track's (`0x004873d5` to `0x00487441`: two of those ways return with no post
 (its track types are 7, 12 and 25), and ours counts them (`HOVER_TRACK_CELL_CATEGORY`). Then the map type's switch (table
 `0x004879b0`): 0 bare ground (`FUN_00536390`, category 2), 1 path (1), 3 a queue (3), 4, 9 and 10 an object (4), `0x15`
 (6), and every other the default `0x004877a3`, which posts the empty row only after a category and puts up pointer 0: in
-Lost Kingdom map types 7 (9,077 cells, among them those beside the gate and the land past the entrance's fence), 2
-(240) and 30 (66, the approach; the ticket booths
-among them come first, Q471). Built in `Level.GroundArmAt` and `Level.WorldHelpRow`. **The picker meets no cell only
+Lost Kingdom map types 7 (9,077 cells, among them the land past the entrance's fence and the gate's two outer cells,
+which the gate's test takes first), 2 (240) and 30 (66, the approach, the ticket booths among them, taken first too). Built in `Level.GroundArmAt` and `Level.WorldHelpRow`. **The picker meets no cell only
 before its first pick** ("The picker never hands the mode a cell off the map" above): over the sea the original kept the
 last cell (2092) when the camera moved off the map, so its row stood, and at another view it answered the edge cell
 (45,0); ours answers no cell there, posts nothing and counts `PICK_EDGE_CELL` (Q472). Measured in both (`q469/`,
 `PREDICTION.txt`, `side-by-side.png`): from (43,16) "Left-click to build path" onto the hoarding (42,16) category 0 and the
 row standing, on to (44,16), map type 7, still standing; from (43,16) straight onto (44,16) the bar emptied, and onto the
 hoarding still empty; the camera then moved to the sea, the row stood.
+
+**The gate and the ticket booths** (Q471; `FUN_00486d90` `0x004872a4` to `0x0048730d`). After the test for no cell and
+before the cell's own categories, the hover compares the cell id `[0x007b05cc]` with the entrances' (`FUN_004d8690( 0 )`
+and `( 1 )`, `EntranceA` and `B`), with A's less one and B's plus one (the cells either side on their row, `0x004872be`
+to `0x004872f0`), and then with the booths' (`FUN_004d8610( 0 )` and `( 1 )`, `TicketBoothA` and `B`). The gate is
+category 14 (`0x00487868`): UIHELPTEXT 459 (`0x1cb`, `0x00487885`) "Park gates - left-click to open/close the park or
+change the ticket price (G)"; a booth category 13 (`0x004877d3`): 460 (`0x1cc`, `0x004877f0`) "Ticket booth - ...", the
+same words. Each posts its row only when the last category was another, forgets the thing and puts up pointer 2,
+`c_pick`. The click's switch (table `0x00488168`) sends 13 and 14 to `0x00487c93`, `FUN_00498d80`, the entry price's
+builder, as G does: it notes itself as category 3's screen 10 (`FUN_004a0810( 3, 10 )`) and posts the advisor's `0x12f`
+(`FUN_00486b00`). In Lost Kingdom the gate is (46,17) to (49,17), the middle two path (map type 1) and the outer two
+type 7, and the booths (47,13) and (48,13), type 30. The original's picker answers row 17 over the gate model's face:
+at camera (475,155) 110 180 the arch's pixels from y 320 to 540 read gate cells, bar one row at y 480 that read row 16
+(`q471/orig/x-scan.log`).
+Measured in both (`q471/`, `PREDICTION.txt`): the booth category 13 and its row with the hand, the four gate cells 14 and
+the gate's row with the hand, (45,17) and (50,17) category 0 and the bar emptied; the click on (47,17) and on (47,13)
+each opened the entry price screen (`[0x007ca210]` set), where main's build posted 442 and armed the path tool
+(`q471/control1`). Built in `Level.GateArmAt`, `Level.WorldHelpRow` and `Level.ClickWorldAt`. The rows over a queue
+(`0x1bc`, 444), an object (`0x226`, 550, with its name), a track (`0x1be`, 446) and type `0x15` (`0x1c0`, 448) are not
+built: ours posts the empty row there and counts `HOVER_QUEUE_ROW`, `HOVER_OBJECT_ROW`, `HOVER_TRACK_CELL_CATEGORY` and
+`HOVER_TYPE_15_ROW`.
 
 **The hover runs only on the park's view** (Q451). `Park_MouseMessageProc` runs `FUN_00486d90` on its timer
 (`0x00488582`) only while `[0x007c24fc]` is set. Message `0x10001`, the pointer coming onto the layer from a control,

@@ -1224,12 +1224,12 @@ public class Level
 
 	/// <summary>
 	/// The pointer with nothing armed: off the park's view the control's own, the arrow over the gadget's buttons; on it
-	/// the pick hand over a person the hover would take, <c>c_path</c> where a click would arm the path tool, and the
+	/// the pick hand over a person the hover would take, the gate or a ticket booth, <c>c_path</c> where a click would arm the path tool, and the
 	/// arrow otherwise.
 	/// </summary>
 	internal Input.CursorTypes IdleCursor()
 		=> !_onTheView ? Input.CursorTypes.Normal
-			: HoverTaken && PersonPointer ? Input.CursorTypes.Pick
+			: HoverTaken && PickPointer ? Input.CursorTypes.Pick
 			: IdleOverPath() ? Input.CursorTypes.Path : Input.CursorTypes.Normal;
 
 	/// <summary>
@@ -1345,8 +1345,8 @@ public class Level
 	/// <summary>The values of <see cref="UI.WindowStack.WorldHelpText"/>'s parameters, as the last hover filled them.</summary>
 	internal (int Parameter, string Value)[] WorldHelpValues { get; private set; } = [];
 
-	/// <summary>Whether the last hover put up the pick pointer, <c>c_pick</c>, over a person it would take.</summary>
-	internal bool PersonPointer { get; private set; }
+	/// <summary>Whether the last hover put up the pick pointer, <c>c_pick</c>: over a person it would take, the gate or a ticket booth.</summary>
+	internal bool PickPointer { get; private set; }
 
 	/// <summary>The person whose row the hover posted last, so their row and its log line are posted once.</summary>
 	private int _rowPerson;
@@ -1369,7 +1369,9 @@ public class Level
 	/// stands (<c>0x004870f3</c> to <c>0x004870ff</c>); with a locator open and nobody taken nothing is posted, so the row last
 	/// posted stands (<c>0x0048721c</c> to <c>0x004878d3</c>). Otherwise UIHELPTEXT 441 "Left-click to build path" over
 	/// bare ground and 442 "Left-click to extend this path" over path, where the click would arm the path tool
-	/// (<see cref="ArmsThePathTool"/>); the ground's other arms post nothing, or the empty row only after a category
+	/// (<see cref="ArmsThePathTool"/>); 459 "Park gates - left-click to open/close the park or change the ticket price (G)"
+	/// over the gate and 460, its "Ticket booth" twin, over a booth, with the pick hand (<see cref="GateArmAt"/>); the
+	/// ground's other arms post nothing, or the empty row only after a category
 	/// (<see cref="GroundArmAt"/>), and so does a tool armed or a hand full (<c>0x00486fd9</c>). Nothing is found in the
 	/// original to show 443, "BACKSPACE to undo", so nothing here does. The hover runs only while the pointer is on the
 	/// park's view (<c>0x00488575</c>).
@@ -1400,7 +1402,7 @@ public class Level
 
 		var standingValues = WorldHelpValues;
 		WorldHelpValues = [];
-		PersonPointer = false;
+		PickPointer = false;
 
 		// Under a park screen the original runs no hover and posts nothing (0x00488569), so its row is whatever was posted
 		// last, the screen's own rows among them: not measured. Here the row is none.
@@ -1420,7 +1422,7 @@ public class Level
 		{
 			case PersonPick.Guest:
 				var guest = people.Guests[person];
-				PersonPointer = true;
+				PickPointer = true;
 
 				if ( guest.VisitorNumber == 0 )
 					return Posted( 554, person );
@@ -1430,7 +1432,7 @@ public class Level
 
 			case PersonPick.Member:
 				var member = people.Staff.First( staff => staff.ThingId == person );
-				PersonPointer = true;
+				PickPointer = true;
 				WorldHelpValues = [(2, member.Name)];
 
 				// As the row is posted the member is set idle wherever PICK UP would take them (FUN_00505f50: FUN_00505bd0,
@@ -1459,13 +1461,22 @@ public class Level
 			case GroundArm.Path:
 				return Posted( 442, 0 );
 
+			// The gate's category 14 and a ticket booth's 13 put up the pick hand, pointer 2 (0x00487868, 0x004877d3).
+			case GroundArm.Gate:
+				PickPointer = true;
+				return Posted( 459, 0 );
+
+			case GroundArm.Booth:
+				PickPointer = true;
+				return Posted( 460, 0 );
+
 			case GroundArm.Silent:
 				return Silent( standingValues, lastNought, emptyAfterACategory: false );
 
 			case GroundArm.NoCategory:
 				return Silent( standingValues, lastNought, emptyAfterACategory: true );
 
-			// A queue's category 3, an object's 4, type 0x15's 6, a track ride's 5: their rows are not built (Q471).
+			// A queue's category 3, an object's 4, type 0x15's 6, a track ride's 5: their rows are not built, and counted.
 			case GroundArm.UnbuiltRow:
 			default:
 				return Posted( -1, 0 );
@@ -1529,6 +1540,12 @@ public class Level
 		/// <summary>No category, and the empty row posted only if the last category was not nought.</summary>
 		NoCategory,
 
+		/// <summary>Category 14, the park gate: UIHELPTEXT 459, and a click opens the entry price.</summary>
+		Gate,
+
+		/// <summary>Category 13, a ticket booth: UIHELPTEXT 460, and a click opens the entry price.</summary>
+		Booth,
+
 		/// <summary>A category whose row is not built: a queue, an object, type <c>0x15</c>, a track ride.</summary>
 		UnbuiltRow
 	}
@@ -1540,7 +1557,8 @@ public class Level
 	/// (<c>0x004873bd</c>), nor an object's cell with no object (<c>0x00487667</c>). Then the map type: 0 is bare ground,
 	/// 1 path, 3 a queue, 4, 9 and 10 an object's, <c>0x15</c> its own, and every other the switch's default
 	/// (<c>0x004877a3</c>), which empties the row only after a category: in Lost Kingdom map types 7, 2 and 30 (the
-	/// approach). The gate and the ticket booths come before all of it in the original (Q471).
+	/// approach). Before the cell's own categories, after the test for no cell, come the gate and the ticket booths
+	/// (<see cref="GateArmAt"/>).
 	/// </summary>
 	internal GroundArm GroundArmAt( int x, int y )
 	{
@@ -1554,6 +1572,9 @@ public class Level
 			Unimplemented.Report( "PICK_EDGE_CELL" );
 			return GroundArm.Silent;
 		}
+
+		if ( GateArmAt( x, y ) is { } gate )
+			return gate;
 
 		var cell = ParkState.CellFor( park, x, y );
 
@@ -1576,15 +1597,51 @@ public class Level
 		{
 			CellEdge.Nothing => GroundArm.Ground,
 			CellEdge.Path => GroundArm.Path,
-			3 or 0x15 => GroundArm.UnbuiltRow,
 
-			// The object is the parent cell's (FUN_00527e80). An add-on's test after it (0x0048768d) is not run: every add-on
-			// Lost Kingdom ships is a track ride's, which nothing here builds.
+			// A queue's row UIHELPTEXT 0x1bc (0x00487621) and type 0x15's 0x1c0 (0x00487742).
+			3 => UnbuiltRow( "HOVER_QUEUE_ROW" ),
+			0x15 => UnbuiltRow( "HOVER_TYPE_15_ROW" ),
+
+			// The object is the parent cell's (FUN_00527e80); its row is 0x226 with the object's name (0x004876d1). An
+			// add-on's test after it (0x0048768d) is not run: every add-on Lost Kingdom ships is a track ride's, which nothing
+			// here builds.
 			CellEdge.Footprint or CellEdge.RideEnd or CellEdge.RideFarEnd
-				=> ParkItemHeights.Owner( state, x, y ) is null ? GroundArm.Silent : GroundArm.UnbuiltRow,
+				=> ParkItemHeights.Owner( state, x, y ) is null ? GroundArm.Silent : UnbuiltRow( "HOVER_OBJECT_ROW" ),
 
 			_ => GroundArm.NoCategory
 		};
+	}
+
+	private static GroundArm UnbuiltRow( string name )
+	{
+		Unimplemented.Report( name );
+		return GroundArm.UnbuiltRow;
+	}
+
+	/// <summary>The theme's gate cells and ticket booths, read once per balance - see <see cref="GateArmAt"/>.</summary>
+	private (ParkBalance Balance, (int X, int Y)[] Gate, (int X, int Y)[] Booths)? _gateCells;
+
+	/// <summary>
+	/// Whether a cell is the park gate's or a ticket booth's (<c>FUN_00486d90</c>, <c>0x004872a4</c> to <c>0x0048730d</c>):
+	/// the gate is <c>EntranceA</c>, <c>EntranceB</c> and the cells either side of them on their row (<c>FUN_004d8690</c>'s
+	/// cell id less one and its other's plus one), category 14; then the booths <c>TicketBoothA</c> and <c>B</c>
+	/// (<c>FUN_004d8610</c>), category 13. Lost Kingdom's gate is (46,17) to (49,17), its booths (47,13) and (48,13).
+	/// </summary>
+	private GroundArm? GateArmAt( int x, int y )
+	{
+		if ( Balance is not { } balance )
+			return null;
+
+		if ( _gateCells is not { } cells || cells.Balance != balance )
+		{
+			var (a, b) = (ParkAdmission.Cell( balance, "EntranceA" ), ParkAdmission.Cell( balance, "EntranceB" ));
+			_gateCells = cells = (balance, [a, b, (a.X - 1, a.Y), (b.X + 1, b.Y)],
+				[ParkAdmission.Cell( balance, "TicketBoothA" ), ParkAdmission.Cell( balance, "TicketBoothB" )]);
+		}
+
+		return cells.Gate.Contains( (x, y) ) ? GroundArm.Gate
+			: cells.Booths.Contains( (x, y) ) ? GroundArm.Booth
+			: null;
 	}
 
 	/// <summary>What the person under the pointer makes of a click - see <see cref="PickPerson"/>.</summary>
@@ -1874,6 +1931,15 @@ public class Level
 
 			case PersonPick.Nothing:
 				return $"world click: nothing to do at ({cellX},{cellY}), the person under the pointer decides it ({LocatorOpen} locator open)";
+		}
+
+		// THE GATE AND THE TICKET BOOTHS OPEN THE ENTRY PRICE, their categories 14 and 13 (FUN_00498d80, 0x00487c93), as G does.
+		if ( GroundArmAt( cellX, cellY ) is (GroundArm.Gate or GroundArm.Booth) and var gate )
+		{
+			if ( _windows is { } priceStack )
+				UI.ParkCategoryScreens.Show( priceStack, UI.ParkCategoryScreens.Finance, 10 );
+
+			return $"world click: the {(gate == GroundArm.Gate ? "gate" : "ticket booth")} at ({cellX},{cellY}) opens the entry price";
 		}
 
 		// CLICKING A QUEUE CELL HANDS BACK THE QUEUE TOOL for the thing that queue serves, anchored on the

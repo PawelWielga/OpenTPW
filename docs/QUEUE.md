@@ -53,15 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q471. The park gate's row and click, and the ground's other rows counted.** From the review of Q467
-  (`handoff/review3/VERIFY-2.md`, finding 1; read from code and data, not watched): Lost Kingdom's gate path cells
-  (47,17) and (48,17) are mType 1 with track type 0, so ours posts 442 there and a click arms the path tool, where the
-  original takes category 14 (entrances A-1 to B+1, `FUN_004d8690` at `0x004872a4` to `0x004872f7`), posts UIHELPTEXT
-  `0x1cb` (`0x00487885`) and its click opens the entry price screen (`0x00487c93` -> `FUN_00498d80`); the ticket booths
-  (47,13) and (48,13) take category 13 and `0x1cc` (`0x004872fd`, `0x00487308`, `0x004877f0`). Build the gate and booth
-  test ahead of `Level.ArmsThePathTool`, and count the ground's unbuilt rows where ours posts -1 (`0x226` the object's
-  name `0x004876d1`, `0x1bc` a queue `0x00487621`, `0x1be` a track `0x004874ab`, `0x1c0` type `0x15` `0x00487742`).
-  Confirm in both games: hover and click (47,17), then a booth.
 - [ ] **Q472. The picker's edge cell and its last cell.** From Q469 (`park-engine.md`, "The picker never hands the mode
   a cell off the map", "The arms that post nothing"): the original's `FUN_0045d560` holds a point off the map to an edge
   cell, and where the ray meets nothing the last cell stands, both seen over the sea (q469/orig: (45,0) at one view, the
@@ -101,6 +92,13 @@ The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its f
   under him. Decode first: how the original's sprite pass meets the depth buffer (its z test and write for the sprite
   list in `FUN_00589b50`, and whether the blueprint mesh is drawn before or after it), then build it and photograph
   Mike on a path under the mechanics' locator in both games.
+- [ ] **Q478. The hover's rows over a queue, an object, a track and type `0x15`.** From Q471 (`park-engine.md`, "The gate
+  and the ticket booths"): over those cells ours posts the empty row, counted `HOVER_QUEUE_ROW` (UIHELPTEXT `0x1bc`, 444
+  "Left-click to edit this queue", `0x00487621`), `HOVER_OBJECT_ROW` (`0x226`, 550 "{P2}: Left-click to view/edit this
+  item's details. Hold CTRL and click to buy another", the object's name, `0x004876d1`), `HOVER_TRACK_CELL_CATEGORY`
+  (`0x1be`, 446, `0x004874ab`) and `HOVER_TYPE_15_ROW` (`0x1c0`, 448, `0x00487742`). Decode each arm's tests first (the
+  object's VARM value and the rows its kinds take, `0x00487665` to `0x00487728`), then build the queue's and the
+  object's, which every Lost Kingdom park reaches. Confirm in both games: the pointer over a ride, a shop and a queue.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

@@ -1038,6 +1038,14 @@ GH=766` there, or the pointer is off):
   not nought walks, meets the dead end and takes the patrol roll (`q380/confirm.py`). From that cell no try routes: the
   log says `Staff N: thought 0x16` and the frame shows the "?" over him on the queue's fence.
 
+- **The park gate and the ticket booths in both games** (Q471): camera (475,155) 110 180 (`lib/bothcam.py`) shows both.
+  The original's 1024 x 768 pixels: booth (47,13) (520,280), gate (47,17) (500,520), its sides (46,17) (580,500) and
+  (49,17) (320,540), past them (45,17) (680,520) and (50,17) (300,520); this game's 1280 x 720 at the mapped pixels
+  (648,262), (629,488), (704,469), (460,506), (798,488), (441,488), each checked by `pick X Y` first. The original's
+  picker answers row 17 over the arch's face, where this game's picks the ground behind it, so take a gate cell's pixel
+  at the arch's foot (`q471/confirm.py`'s `find()`; `q471/orig/run.sh` reads the category, the cell and `[0x007ca210]`,
+  the entry price screen).
+
 ## The original under Proton
 
 The original game (`testme.exe`, the 2.0 build Ghidra holds) runs on this machine through GE-Proton, as a

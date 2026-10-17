@@ -105,7 +105,8 @@ public sealed class ParkAdmission
 		CrossingBusStopSideB = (Cell( balance, "CrossingBSSideB" ).X, CrossingBusStopSideA.Y);
 	}
 
-	private static (int X, int Y) Cell( ParkBalance balance, string name )
+	/// <summary>A fixed item's cell, <c>FixedItemInfo.{name}PosX</c> and <c>PosY</c>, or (-1, -1) where the key is absent.</summary>
+	internal static (int X, int Y) Cell( ParkBalance balance, string name )
 		=> (balance.Int( $"FixedItemInfo.{name}PosX", -1 ), balance.Int( $"FixedItemInfo.{name}PosY", -1 ));
 
 	private readonly Func<int> _fee;

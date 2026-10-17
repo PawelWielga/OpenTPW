@@ -7546,6 +7546,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   decode's 349.3 and 389.4), ours on main 46 px over his origin's row of 720 against the original's 32.5; with the span
   drawn over `Camera.ClipPerWorld` (1.414) one 26 x 51 picture went 45 to 32 up and 17 to 12 left (`q470/`). Only people
   set `0x200` (three censuses; the head's, balloons' and bubbles' programs leave local 16 without it). Filed Q477.
+- [x] **Q471. The park gate's row and click, and the ground's other rows counted.** Done 2026-10-17: the gate's four
+  cells post 459 and the booths 460 with the pick hand, and a click on either opens the entry price, 9 of 9 in ours
+  (`q471/run2`) and 8 of 8 in the original (`q471/orig/b-run.out`), main's build 442 and the path tool (`control1`);
+  `HOVER_QUEUE_ROW`, `HOVER_OBJECT_ROW` and `HOVER_TYPE_15_ROW` counted (Q478); 12 of 12 bugs put back fail. From the review of Q467
+  (`handoff/review3/VERIFY-2.md`, finding 1; read from code and data, not watched): Lost Kingdom's gate path cells
+  (47,17) and (48,17) are mType 1 with track type 0, so ours posts 442 there and a click arms the path tool, where the
+  original takes category 14 (entrances A-1 to B+1, `FUN_004d8690` at `0x004872a4` to `0x004872f7`), posts UIHELPTEXT
+  `0x1cb` (`0x00487885`) and its click opens the entry price screen (`0x00487c93` -> `FUN_00498d80`); the ticket booths
+  (47,13) and (48,13) take category 13 and `0x1cc` (`0x004872fd`, `0x00487308`, `0x004877f0`). Build the gate and booth
+  test ahead of `Level.ArmsThePathTool`, and count the ground's unbuilt rows where ours posts -1 (`0x226` the object's
+  name `0x004876d1`, `0x1bc` a queue `0x00487621`, `0x1be` a track `0x004874ab`, `0x1c0` type `0x15` `0x00487742`).
+  Confirm in both games: hover and click (47,17), then a booth.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

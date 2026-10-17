@@ -51,7 +51,9 @@ public class ParkLocatorTests
 		typeof( Level ).GetProperty( nameof( Level.Catalogue ) )!.SetValue( level, catalogue );
 		Level.Current = level;
 
-		_people = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), null, state, catalogue );
+		var balance = new ParkBalance( "jungle", easyMode: true );
+		typeof( Level ).GetProperty( nameof( Level.Balance ) )!.SetValue( level, balance );
+		_people = new ParkPeople( world, balance, null, state, catalogue );
 		_stack = new WindowStack();
 		_gadget = new ParkGadget( _stack );
 		_stack.Open( _gadget );
@@ -666,22 +668,22 @@ public class ParkLocatorTests
 		int Row( int x, int y, int thing ) => level.WorldHelpRow( x, y, thing );
 
 		Assert.AreEqual( (441, 442, 441), (Row( 43, 16, 0 ), Row( pathX, pathY, 0 ), Row( 43, 16, guest )) );
-		Assert.IsFalse( level.PersonPointer );
+		Assert.IsFalse( level.PickPointer );
 
 		Assert.AreEqual( 555, Row( 43, 16, member.ThingId ), "a member with no locator open" );
 		Assert.AreEqual( $"{member.Name} : Left-click to view this staff member's details",
 			Localization.FormatHelp( 555, level.WorldHelpValues ) );
-		Assert.IsTrue( level.PersonPointer );
+		Assert.IsTrue( level.PickPointer );
 		Assert.AreEqual( 441, Row( 43, 16, 0 ) );
 
 		CtrlS();
 		Assert.AreEqual( (441, 441), (Row( pathX, pathY, 0 ), Row( 43, 16, guest )), "the ground's row stands under the locator" );
-		Assert.IsFalse( level.PersonPointer );
+		Assert.IsFalse( level.PickPointer );
 		Assert.AreEqual( 555, Row( 43, 16, member.ThingId ) );
 		Assert.AreEqual( 555, Row( 43, 16, member.ThingId ) );
 		Assert.AreEqual( (555, 555), (Row( 43, 16, 0 ), Row( 43, 16, guest )), "the member's row stands" );
 		Assert.AreEqual( member.Name, level.WorldHelpValues.Single().Value );
-		Assert.IsFalse( level.PersonPointer );
+		Assert.IsFalse( level.PickPointer );
 
 		Fold();
 		CtrlV();
@@ -692,7 +694,7 @@ public class ParkLocatorTests
 		_people.Guests[guest].VisitorNumber = number;
 		Assert.AreEqual( 553, Row( 43, 16, guest ) );
 		Assert.AreEqual( $"Visitor #{number} : Left-click to view this person's details", Localization.FormatHelp( 553, level.WorldHelpValues ) );
-		Assert.IsTrue( level.PersonPointer );
+		Assert.IsTrue( level.PickPointer );
 
 		// The help bar fills the row's parameters with the hover's values.
 		var popupHelp = GameOptions.Current.PopupHelp;
@@ -707,7 +709,7 @@ public class ParkLocatorTests
 		UI.WindowStack.WorldHelpText = -1;
 		UI.WindowStack.WorldHelpValues = [];
 		Assert.AreEqual( (-1, -1), (Row( 43, 16, member.ThingId ), Row( 43, 16, 0 )), "the guests decide: the row is emptied" );
-		Assert.IsFalse( level.PersonPointer );
+		Assert.IsFalse( level.PickPointer );
 		Assert.AreEqual( 0, level.WorldHelpValues.Length );
 	}
 
@@ -810,6 +812,58 @@ public class ParkLocatorTests
 		Assert.AreEqual( (-1, -1), (Row( ground ), Row( hoarding )), "after the ground's category: emptied, then nought" );
 		ParkBuildMode.Disarm();
 		Assert.AreEqual( (441, 441), (Row( ground ), Row( hoarding )) );
+	}
+
+	/// <summary>
+	/// <b>The park gate and the ticket booths come before the cell's own categories</b> (<c>FUN_00486d90</c>,
+	/// <c>0x004872a4</c> to <c>0x0048730d</c>): over the gate, (46,17) to (49,17), the hover posts 459 with the pick hand,
+	/// over a booth 460, though the gate's middle cells are path and its sides map type 7; a click on either opens the entry
+	/// price (<c>FUN_00498d80</c>) and arms no tool. Past the gate's sides the cells are the ground's again. A queue's, an
+	/// object's and type <c>0x15</c>'s rows are counted.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the gate's side cells dropped; a cell further out taken; the booths' row the gate's; the
+	/// gate test after the cell's own; no pick hand; the click arms the path tool; each count dropped.</remarks>
+	[TestMethod]
+	public void TheGateAndTheBoothsPostTheirRowsAndOpenTheEntryPrice()
+	{
+		_stack.Update();
+		var level = Level.Current!;
+		var state = level.ParkState!;
+		int Row( int x, int y ) => level.WorldHelpRow( x, y, 0 );
+		Assert.AreEqual( (1, 1, 7, 7), (state.Record( 47, 17 ).Type, state.Record( 48, 17 ).Type, state.Record( 46, 17 ).Type, state.Record( 49, 17 ).Type) );
+
+		Row( 43, 16 );
+		Assert.AreEqual( (459, 459, 459, 459), (Row( 46, 17 ), Row( 47, 17 ), Row( 48, 17 ), Row( 49, 17 )), "the gate's four cells" );
+		Assert.IsTrue( level.PickPointer, "the pick hand over the gate" );
+		Assert.AreEqual( (460, 460), (Row( 47, 13 ), Row( 48, 13 )), "the booths" );
+		Assert.IsTrue( level.PickPointer, "the pick hand over a booth" );
+		Assert.AreEqual( -1, Row( 45, 17 ), "past the gate's side, map type 7: emptied after the booth's category" );
+		Row( 47, 17 );
+		Assert.AreEqual( -1, Row( 50, 17 ), "past the other side" );
+		Assert.IsFalse( level.PickPointer );
+
+		ParkCategoryScreens.Remember( ParkCategoryScreens.Finance, 9 );
+		StringAssert.Contains( level.ClickWorldAt( 47, 17, 0 ), "the gate at (47,17) opens the entry price" );
+		Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, "no path tool" );
+		Assert.AreEqual( 1, _stack.Windows.Count( window => window is ParkEntryPriceScreen ), "the entry price opened" );
+		StringAssert.Contains( level.ClickWorldAt( 48, 13, 0 ), "the ticket booth at (48,13) opens the entry price" );
+		Assert.AreEqual( 1, _stack.Windows.Count( window => window is ParkEntryPriceScreen ), "not a second" );
+		Assert.AreEqual( 10, ParkCategoryScreens.LeftOn( ParkCategoryScreens.Finance ), "noted as the finance category's screen" );
+
+		var cell = (X: 60, Y: 30);
+		var was = state.Record( cell.X, cell.Y );
+		var footprint = Enumerable.Range( 0, 128 * 128 ).Select( i => (X: i % 128, Y: i / 128) )
+			.First( c => state.Record( c.X, c.Y ).Type == CellEdge.Footprint && ParkItemHeights.Owner( state, c.X, c.Y ) != null );
+		Unimplemented.Forget();
+		Row( footprint.X, footprint.Y );
+		Assert.AreEqual( "HOVER_OBJECT_ROW", string.Join( ",", Unimplemented.Summary.Select( gap => gap.What ) ) );
+		state.SetRecord( cell.X, cell.Y, was with { Type = 3 } );
+		Row( cell.X, cell.Y );
+		state.SetRecord( cell.X, cell.Y, was with { Type = 0x15 } );
+		Row( cell.X, cell.Y );
+		state.SetRecord( cell.X, cell.Y, was );
+		CollectionAssert.AreEquivalent( new[] { "HOVER_OBJECT_ROW", "HOVER_QUEUE_ROW", "HOVER_TYPE_15_ROW" },
+			Unimplemented.Summary.Select( gap => gap.What ).ToArray() );
 	}
 
 	/// <summary>
