@@ -53,15 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q470. Our people may be drawn larger than the original's.** From Q468 (`park-engine.md`, "The thing under a
-  sprite"): the original adds a picture's span (height / 128 x 20, and across x 0.75) to its place AFTER the draw matrix,
-  whose w is sin 45 of the depth, so on the screen a picture is span / w of the -1 to 1 box; ours draws it in the world
-  through the 53.13 degree lens (`ParkGuestSprites.WriteQuad`), span x 2 / depth down and x 1.5 / depth across. By that
-  arithmetic ours stand sqrt 2 the original's size: Mike's 54 px picture at zoom 110 is 42 px of 768 there and 59 here.
-  Not measured in frames. Measure first: his drawn height in both games at one camera (`lib/bothcam.py`, `circle 26`,
-  `original/spritepick.py PID where 26`), then decide. Also not measured: whether any sprite but a person's body carries
-  the pickable flag `0x200` in the original (a rider's head on a ride, a balloon, a thought bubble); ours latches bodies
-  only.
 - [ ] **Q471. The park gate's row and click, and the ground's other rows counted.** From the review of Q467
   (`handoff/review3/VERIFY-2.md`, finding 1; read from code and data, not watched): Lost Kingdom's gate path cells
   (47,17) and (48,17) are mType 1 with track type 0, so ours posts 442 there and a click arms the path tool, where the
@@ -102,6 +93,14 @@ The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its f
   that is not lost. Take the park's press from the frame's events (`LeftWentDown`, which `WindowStack` already reads
   for the view), check the interface's own press (`mouseDown && !_mouseWasDown`) the same way, and confirm with a
   60 ms press in that park, before and after.
+- [ ] **Q477. What hides a person below their feet.** From Q470 (`q470/PREDICTION.txt`, rounds 1 and 1b;
+  `side-by-side.png`): our quad is square on to the eye at its place's depth, as the original's corners keep the place's
+  z and w (`FUN_005890e0`), yet ours loses every row below the origin to the ground nearer the eye (Mike's feet end on
+  the origin's row; the original's go 5 px under it, to 389), and under the staff locator a patrol outline's blue squares
+  (`ParkBuildMarkers`, 1.5 over the ground) hide him up to 12 px over it, where the original's frame shows no square
+  under him. Decode first: how the original's sprite pass meets the depth buffer (its z test and write for the sprite
+  list in `FUN_00589b50`, and whether the blueprint mesh is drawn before or after it), then build it and photograph
+  Mike on a path under the mechanics' locator in both games.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

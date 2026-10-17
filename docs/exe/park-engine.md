@@ -1424,6 +1424,24 @@ the people's bodies as the last frame drew them (`ParkGuestSprites.Drawn`) and `
 the cell's list answers only for the object, kept apart from the person (`ThingOn( people: false )`; "The person and
 the object are two values" above), and a console `worldclick` on a cell takes the list's head as the person where it is one. The console's `circle [thing]` prints each drawn person's circle in window pixels.
 
+**The size a sprite is drawn** (Q470). The same routine lays the quad: each corner is the place (x, y, z, w) with the span
+added to x and y, z and w untouched (`param_2[0]`, `[4]`, `[8]`, `[0xc]` across, `[1]`, `[5]`, `[9]`, `[0xd]` down, the
+`0x80000` branch on z instead), so the span is in clip space and is divided by w with the place. The projection
+`FUN_00578be0` puts cos of half the handed angle on x and y (`m00`, `m11`) and its sine into w (`m23`), the screen scale
+then 1.5 on x and 2 on y; so a span s is s / (2 cos 45) = s / 1.414 of the world square on to the eye, at every depth, and
+a picture H px high stands H x 20 / 128 / w x 384 = H x 60 / w px of the 1024 x 768 frame (W x 60 / w across, the 0.75
+and the 1.5 cancelling). The flag `0x200` is the sprite program's local 16 (`FUN_00542010` copies `+0xc4` into the draw
+record's flags): a person's program sets `0x1200`; the rider's head's (`0x0074f558`) sets `0x3000080`; the balloons'
+(`0x0074f480`, `0x0074f4c0`) and the thought scripts (from `0x0074f190`) write no local 16, so none of those is pickable.
+**Measured** (`q470/`, `PREDICTION.txt`): under the mechanics' locator at zoom 110 (w 77.782) the original drew Mike
+Cooper's 41 x 52 picture, origin 21, 45, from row 350 to 389 (the decode's 349.3 and 389.4), and three censuses of the
+sprite list held 0x200 on every sprite and every one a person's. OpenTPW (`ParkGuestSprites.Extent`,
+`Camera.ClipPerWorld`) draws the span over 1.414 in the world; before Q470 it drew the span itself, the same picture 46 px
+over his origin's row of 720 where the original's 34.7 of 768 is 32.5; after it, the same 26 x 51 picture on both builds
+went 45 to 32 up, 17 to 12 left and 8 to 5 right of his place. Not the same: below the origin, ours is hidden by the ground
+nearer the eye than the place, and by a patrol outline's squares under the staff locator, where the original draws
+the picture to its last row (Mike's feet 5 px under the origin) (Q477).
+
 **The type-3 handlers do NOT test the cell for zero** before unpacking it; the out-of-range value is
 caught downstream by the bounds test inside the callees instead.
 

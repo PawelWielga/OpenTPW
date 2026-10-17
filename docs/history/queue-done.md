@@ -7534,6 +7534,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `DebugConsole.cs` and `ParkPicking.cs` comments), and tests that reach `ParkPicking.Resolve` (dropping `Taken`,
   losing `people: false`, a wrong G all pass today). Confirm: a click on a Lost Kingdom ride with a guest walking past
   opens its window, in both games.
+- [x] **Q470. Our people may be drawn larger than the original's.** From Q468 (`park-engine.md`, "The thing under a
+  sprite"): the original adds a picture's span (height / 128 x 20, and across x 0.75) to its place AFTER the draw matrix,
+  whose w is sin 45 of the depth, so on the screen a picture is span / w of the -1 to 1 box; ours draws it in the world
+  through the 53.13 degree lens (`ParkGuestSprites.WriteQuad`), span x 2 / depth down and x 1.5 / depth across. By that
+  arithmetic ours stand sqrt 2 the original's size: Mike's 54 px picture at zoom 110 is 42 px of 768 there and 59 here.
+  Not measured in frames. Measure first: his drawn height in both games at one camera (`lib/bothcam.py`, `circle 26`,
+  `original/spritepick.py PID where 26`), then decide. Also not measured: whether any sprite but a person's body carries
+  the pickable flag `0x200` in the original (a rider's head on a ride, a balloon, a thought bubble); ours latches bodies
+  only. **Done:** measured, they were 1.41 times: the original drew Mike's 41 x 52 picture from row 350 to 389 of 768 (the
+  decode's 349.3 and 389.4), ours on main 46 px over his origin's row of 720 against the original's 32.5; with the span
+  drawn over `Camera.ClipPerWorld` (1.414) one 26 x 51 picture went 45 to 32 up and 17 to 12 left (`q470/`). Only people
+  set `0x200` (three censuses; the head's, balloons' and bubbles' programs leave local 16 without it). Filed Q477.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

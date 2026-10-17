@@ -38,31 +38,32 @@ namespace OpenTPW;
 public sealed class ParkGuestSprites : ModelEntity
 {
 	/// <summary>
-	/// Every picture stores 128 in the two fields the engine divides its size by, so a picture's world
-	/// size is its pixels over 128, times the span below.
+	/// Every picture stores 128 in the two fields the engine divides its size by, so a picture's size is its
+	/// pixels over 128, times the span below.
 	///
 	/// <para>
 	/// <b>The span is measured rather than chosen.</b> The draw path <c>FUN_00589410</c> scales a picture
 	/// by its instance's own scale times <c>0x0070200c</c>, which holds <b>20.0</b> and sits in read-only
 	/// <c>.rdata</c>. Every other term on the vertical chain is one: the factor at <c>0x00768ab4</c> is
 	/// 1.0 and has no writer anywhere in the image, the call site <c>FUN_00589990</c> passes 1.0f for both
-	/// of its multipliers, and all eighteen of the shipped park's sprites carry scale 1.0/1.0. A picture's
-	/// height in the world is therefore its pixels times twenty over a hundred and twenty-eight, exactly.
+	/// of its multipliers, and all eighteen of the shipped park's sprites carry scale 1.0/1.0.
 	/// </para>
 	/// <para>
-	/// <b>The one term that is not one belongs to the viewport, and is deliberately not applied here.</b>
-	/// The horizontal chain also multiplies by <c>0x008bcbcc</c>, which reads zero in the static image
-	/// because it is written at device setup. It is the aspect ratio: <c>FUN_0056b790</c> builds the
-	/// frustum corners at unit depth as <c>y = 0.5 * tan(fov/2)</c> and <c>x = y / 0x008bcbcc</c>, and
-	/// since <c>x = y * aspect</c> for any camera, that factor is height over width. Two other users
-	/// agree - one scales only the horizontal of a screen-space quad by it, the other applies it only to a
-	/// default horizontal size. Our projection matrix already carries the aspect, so applying it a second
-	/// time here would squash every person in the park by it.
+	/// <b>The span is the original's clip space, not its world.</b> <c>FUN_005890e0</c> adds it to the corners
+	/// after the draw matrix and before the divide by w, so it is drawn the span over
+	/// <see cref="Camera.ClipPerWorld"/> in the world, square on to the eye: twenty over the root of two a
+	/// reference (<c>docs/exe/park-engine.md</c>, "The thing under a sprite"). The across there is also
+	/// multiplied by <c>0x008bcbcc</c>, the screen's height over its width; ClipPerWorld takes it with the
+	/// screen scale's 1.5, and our projection carries the aspect itself.
 	/// </para>
 	/// </summary>
 	private const float PictureReference = 128f;
 
-	private const float WorldPerReference = 20f;
+	/// <summary>The span, <c>0x0070200c</c>, in the original's clip space.</summary>
+	private const float SpanPerReference = 20f;
+
+	/// <summary>The span drawn in the world, square on to the eye of the park's lens.</summary>
+	internal static readonly float WorldPerReference = SpanPerReference / Camera.ClipPerWorld( ParkOrbitCameraMode.HandedAngle );
 
 	/// <summary>How many ways round the compass a heading is folded into before a set is asked for.</summary>
 	private const int Compass = 8;
@@ -1119,6 +1120,16 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// more down their picture, which is to say on their feet.
 	/// </para>
 	/// </summary>
+	/// <summary>
+	/// How far a picture reaches in the world from the point it is drawn at, square on to the eye: left of it, right of
+	/// it, above it and below it, its origin on the point.
+	/// </summary>
+	internal static (float Left, float Right, float Above, float Below) Extent( int width, int height, int originX, int originY, float instanceScale = 1f )
+	{
+		var scale = instanceScale * WorldPerReference / PictureReference;
+		return (originX * scale, (width - originX) * scale, originY * scale, (height - originY) * scale);
+	}
+
 	private void WriteQuad( int index, Vector3 centre, Region picture, bool mirrored, int alpha, float instanceScale = 1f )
 	{
 		if ( index < 0 || index * 4 >= _vertices.Length )
@@ -1140,12 +1151,12 @@ public sealed class ParkGuestSprites : ModelEntity
 		// Square to both the view and that across, which is the camera's own up with no roll in it.
 		var upward = across.Cross( forward ).Normal;
 
-		var scale = instanceScale * WorldPerReference / PictureReference;
+		var (leftward, rightward, above, below) = Extent( picture.Width, picture.Height, picture.OriginX, picture.OriginY, instanceScale );
 
-		var left = across * (-picture.OriginX * scale);
-		var right = across * ((picture.Width - picture.OriginX) * scale);
-		var top = upward * (picture.OriginY * scale);
-		var bottom = upward * (-(picture.Height - picture.OriginY) * scale);
+		var left = across * -leftward;
+		var right = across * rightward;
+		var top = upward * above;
+		var bottom = upward * -below;
 
 		// White at the sprite's own alpha: the shader multiplies the picture by this, so anything else
 		// would tint the art.
