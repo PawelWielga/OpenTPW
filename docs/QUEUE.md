@@ -47,16 +47,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 At Alexah's word (2026-10-17), Q260 and Q440 (the cameras) come first: testing against the original waits on them.
 Q441, Q260's build, follows Q440 (its tool sets the original's camera for the comparison).
 
-- [ ] **Q440. Both games at one frame: a tool that sets the original's camera, and its follow decoded.** Filed at
-  Alexah's word (2026-10-17), with Q260 moved first: the run of Q433 to Q439 lost many rounds to aiming clicks in the
-  original while its camera trailed a staff member (`TOOLING.md`, "Cameras in both games", "The follow" and "Aiming a
-  click"). Build `original/setcam.py PID X,Z ZOOM ROT`: write the point (`0x007908f0`), zoom (`0x007909ec`) and
-  rotation (`0x00790a38` and its copy `0x007909e0`), and read back with `camera.py` that the matrices follow on the next
-  frame. Decode what starts and ends the follow (`gui_CameraFlags` `[0x00790ab0]` bit `0x1000`) and whether clearing the
-  bit stops it, then give the tool a switch for it. Add to `lib/` the matching step for this game (the console's `camera`)
-  so one call puts both games on the same numbers. Confirm: both games' frames at three cameras (rotations 0, 90, 180)
-  side by side, a cell's pixel predicted by `camera.py --aim` and found there by `cellfind.py`, and a click on a named
-  cell landing on it in the original with a member's window open. Rows in `TOOLING.md`.
 - [ ] **Q441. Build the lens: the park's 53.13 and the lobby's `ISLANDFOV` through the same law.** From Q260
   (`park-engine.md`, "The lens: 90 handed to the projection, 53.13 drawn"). `ParkOrbitCameraMode` and
   `ParkCamcorderCameraMode` ask for 90 where the original draws `2 atan( 1/2 )` = 53.13 degrees top to bottom at 4:3
@@ -1930,6 +1920,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   (`0x0042b489`, `0x0042b4a4`) and its loader rounds a saved rotation to a quarter (`saves.md`, "Loading the
   modules", Camera), so a park saved here at an eighth turn opens a quarter away there. Seen beside the original
   at the same zoom and point (`q241f/sheet-ours-beside-original.png`): OpenTPW's view takes in far more ground.
+  From Q440 (`park-engine.md`, "The turn"): held, the Left arrow and keypad 9 raise the rotation 0.002 a millisecond
+  and the Right arrow and keypad 7 lower it, and the drawn rotation eases after it by min(dt, 140) / 140 a frame; the
+  direction is already the original's (this game's yaw is its rotation negated, and the Left arrow,
+  RotateLeft, lowers the yaw). The step and the easing are what differ.
 - [ ] **Q24. Nothing highlights a thing under the mouse.** The idle pointer already follows the hover category over
   ground and path (`Level.IdleOverPath`). Picking is decoded (`park-engine.md`, "Picking is a real ray cast, not a
   grid lookup"): the hit point comes from a ray against the terrain and then object meshes, and the hovered THING is

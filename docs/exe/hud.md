@@ -2227,7 +2227,8 @@ navigator's place at the frame's fraction of the sweep, held to 0..1, truncates,
 writes it, a snap) and draws a fenced member's patrol edges ("The patrol edges" below); then
 `FUN_004b3580` sets the corner: a member's status `FUN_00485ec0( FUN_005064f0() )` (groups 0 and 1 picture 0, 2 1, 3 2,
 4 3, picked up 9, no part), a visitor's last thought less one, `0x29a` with none. The camera's mode change clears the bit
-(`0x0042ae52`). The strip's left click opens the person's window (`FUN_004b6080`, `FUN_004b79b0`).
+(`0x0042ae52`), and so does any pan of the camera; opening a park screen folds the arm, so a person's window
+and the follow never run together (`park-engine.md`, "The follow"). The strip's left click opens the person's window (`FUN_004b6080`, `FUN_004b79b0`).
 
 **The original** (`q420/orig/run.sh`, `q325/stock.TPWS` off-screen; predicted first, six of six, `q420/PREDICTION.txt`):
 Ctrl+S read locator 1, role 0, nobody, bit clear, the panel on the arm (`orig/a-1-ctrl-s.png`); the mechanics' button,

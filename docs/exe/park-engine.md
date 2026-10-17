@@ -327,11 +327,48 @@ matrix `0x0087aff0` holds the eye in its last row, (484.44, 93.62, 201.57), the 
 gives x/w = 1.5 tan and y/w = 2 tan of the angle off the eye's axis: 768 pixels a unit of tangent down a 768-high frame,
 53.13 degrees top to bottom (`park.md`, the `0x0087b0d0` scale). OpenTPW at the same numbers has the same eye and a
 90 degree lens: its 1280 x 720 frame's middle 480 x 360, scaled by 768/360, lays on the original's (`q435/side-by-side.png`).
-Rotation 0 only; the rotation's sign is not tested.
+
+**The turn** (Q440, decoded and measured). The update builds the eye's offset as (0, sin p x zoom, -cos p x zoom)
+(`0x00790aa0` nought, `0x00790aa4`, `0x00790aa8`) and turns it by the drawn rotation `0x007909e0`: x' = x cos r + z sin r,
+z' = z cos r - x sin r. So **eye = point + (-h sin r, sin p x zoom + ground, -h cos r)**, h = cos p x zoom. Written
+into the running original at point (495, 285), zoom 110 (`original/setcam.py`), the camera's matrix read back the eye at
+(495, 227.253), (437.253, 285) and (495, 342.747) at rotations 0, 90 and 180, the formula's to three places. OpenTPW's
+`EyeAt` swings the other way (point + h sin yaw), so **the original's rotation is OpenTPW's yaw negated**; at
+`camera 495 285 110 -R` the same named cells stand at the same pixels of the two pictures through the lens law at all
+three (`q440/side-by-side.png`). The rotation asked for is `0x00790a38`; the one drawn, `0x007909e0`, eases towards
+it by min(dt, 140) / 140 a frame and snaps within 0.0005; both are kept in 0..2 pi. The Left arrow (camera table
+action 6) and keypad 9 raise the rotation (`[0x00790aac]` bit 8, `0x0042b355`), 0.002 a millisecond held, or a
+quarter turn a press with `[0x0078d912]` set; the Right arrow and keypad 7 lower it. The three scroll terms
+`0x00790a88`..`0x00790a90` carry a pan's momentum; the game's own snap (`FUN_0042aab0`) noughts them.
 
 The camera persists a *saved* POI and *saved* Y rotation as well as the *required* ones — the shape of a camera that leaves its position and is put back (camcorder mode does exactly that).
 
 Terrain-following is real, and the sampler is `FUN_00452560( x, z, 1 )`. With `gui_CameraFlags & 0x16` clear (`0x0042c6c4`) the update `FUN_0042b1c0` calls it on the look-at point (`0x007908f0`, `0x007908f8`) at `0x0042c817`, adds the last answer (`0x00790ae4`), halves the sum (0.5 at `0x006fddfc`), stores it back and adds it to the eye's height (`0x00790aa4`). `FUN_00452560` interpolates the landscape's corner heights (`+0x28` of `[0x007a0854] + 0x6c`) and answers nought off the map; it is not `FUN_004527f0`, which no camera function calls.
+
+### The follow
+
+`gui_CameraFlags` bit `0x1000` is the whole of it (Q440): set, the locator's frame handler `FUN_004b3640` puts the point on
+the locator's person `[0x007cc308]` every frame through `FUN_0042aab0` (`hud.md`, "The staff and visitor locators"), so a point written
+then lasts a frame; cleared, the camera stands where the follow left it.
+
+- **Set** at two sites: `FUN_004b3f60` (`0x004b4078`), a person handed to the locator, from Ctrl+S or Ctrl+V with a
+  person's window up and from the windows' binoculars (the staff window's `FUN_004b5cb0` case `0x521`, the visitor
+  window's `FUN_004b7720` case `0x3737`); and `FUN_004b3790` (`0x004b3b4b`), the locator's button finding somebody.
+- **Cleared** by the locator folded (`0x004b3806`) or finding nobody (`0x004b3b16`); by the camera's mode change
+  (`FUN_0042ab20`, `0x0042ae4c`); by the reset (`[0x00790aac]` bit `0x100`); and by **any pan of the orbit camera**
+  (`0x0042ba37`, `0x0042ba92`): the keypad's 8, 2, 4 and 6 (camera table actions `0xd` to `0x10`), the right button's
+  drag with `[0x0078d910]` set, or the pointer past 0.95 of the way to an edge while the game is the active
+  application (`[0x007a1a14]` bit 8, from `WM_ACTIVATEAPP`) with `gui_CameraFlags` bit `0x100` clear (set by the
+  camera's messages `0x10002` and `0x22`, cleared by `0x10001`, the pointer's move). Measured: the pointer resting on the frame's right edge for a second cleared
+  the bit and left the point 83 units from the member it had followed.
+- **A person's window and the follow never run together.** Opening any park screen (`FUN_0048cea0` ->
+  `FUN_00485b70`) folds the gadget's arm (`FUN_004a25f0( 1 )`), which closes the locator and clears the bit; and
+  `FUN_004b3f60` ends by closing the open park screen (`FUN_00485b40`), so the binoculars put the window away. Measured:
+  Mike Cooper's window opened from the strip left the bit clear and the point still while he walked; his binoculars
+  closed the window and the point stood within 1.6 units of him from then on.
+- **Written from outside**, clearing the bit stops the follow and setting it starts it again on the locator's person:
+  `setcam.py PID off` left the point where it was for 5 s while the member walked 34 units; `on` put it back within
+  1.8 units at the next read. With no person on the locator the bit does nothing.
 
 ### The lens: 90 handed to the projection, 53.13 drawn
 

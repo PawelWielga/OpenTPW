@@ -262,8 +262,9 @@ public sealed class ParkOrbitCameraMode : CameraMode
 	/// Where the eye stands for a point of interest, a spin, a zoom and the eased ground under the point. The original
 	/// builds it as the point plus <c>rotateY( yaw, (0, sin(pitch) * zoom, -cos(pitch) * zoom) )</c>, a height and a
 	/// horizontal distance swung about the vertical, in its own axes, where Y is up; this engine has Z up, so the height
-	/// goes into Z and the swing happens about Z instead. Read in the running original at rotation nought
-	/// (<c>docs/exe/park-engine.md</c>, "The park camera").
+	/// goes into Z and the swing happens about Z instead. The original's swing puts the eye at the point less
+	/// <c>h sin r</c> across, this one at the point plus <c>h sin yaw</c>, so its rotation is this yaw negated: read in the
+	/// running original at rotations 0, 90 and 180 (<c>docs/exe/park-engine.md</c>, "The park camera").
 	/// </summary>
 	internal static Vector3 EyeAt( Vector3 pointOfInterest, float yaw, float zoom, float ground )
 	{

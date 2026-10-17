@@ -7345,6 +7345,25 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the camcorder's first person the same; the lobby `ISLANDFOV` 100.000, 61.58 x 76.93. Cells (52,21) and (46,17) at one
   camera: 702,254 and 281,489 in the original, (729, 299) and (532, 409) here, the 53.13 law to the pixel
   (`q260/overlay.png`, `q260/PREDICTION.txt`). The old "further back" and "closer" were the lens. Built in Q441.
+- [x] **Q440. Both games at one frame: a tool that sets the original's camera, and its follow decoded.** Done
+  2026-10-17 (`park-engine.md`, "The park camera", "The turn" and "The follow"; `TOOLING.md`, "Cameras in both games"):
+  `original/setcam.py` writes the point, zoom and both rotation words and reads the eye back, 0.000 units off the
+  formula at 0, 90 and 180; the original's rotation is this game's yaw negated, which `lib/bothcam.py` does and
+  `ParkOrbitCameraEyeTests` now pins. The follow is bit `0x1000` alone: set by the locator's button, Ctrl+S or Ctrl+V and
+  the binoculars, cleared by the fold (any park screen opening folds the arm, so a person's window never follows), a
+  mode change and any pan; `setcam.py off`/`on` stopped and restarted it. At (495, 285), zoom 110: `camera.py --aim`
+  to the pixel and the picker on the named cell first time, six of six, with Mike's window open, and a click there read
+  4018 = (49,31); here `cellprobe.py` found the same cells at the lens law's pixel within half a pixel, six of six
+  (`q440/side-by-side.png`, `q440/PREDICTION.txt`). Filed at
+  Alexah's word (2026-10-17), with Q260 moved first: the run of Q433 to Q439 lost many rounds to aiming clicks in the
+  original while its camera trailed a staff member (`TOOLING.md`, "Cameras in both games", "The follow" and "Aiming a
+  click"). Build `original/setcam.py PID X,Z ZOOM ROT`: write the point (`0x007908f0`), zoom (`0x007909ec`) and
+  rotation (`0x00790a38` and its copy `0x007909e0`), and read back with `camera.py` that the matrices follow on the next
+  frame. Decode what starts and ends the follow (`gui_CameraFlags` `[0x00790ab0]` bit `0x1000`) and whether clearing the
+  bit stops it, then give the tool a switch for it. Add to `lib/` the matching step for this game (the console's `camera`)
+  so one call puts both games on the same numbers. Confirm: both games' frames at three cameras (rotations 0, 90, 180)
+  side by side, a cell's pixel predicted by `camera.py --aim` and found there by `cellfind.py`, and a click on a named
+  cell landing on it in the original with a member's window open. Rows in `TOOLING.md`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

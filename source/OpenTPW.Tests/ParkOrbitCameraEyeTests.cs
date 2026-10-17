@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Numerics;
 
 namespace OpenTPW.Tests;
@@ -32,6 +33,24 @@ public class ParkOrbitCameraEyeTests
 		Assert.AreEqual( 484.442f, eye.X, 0.01f, "straight behind the point" );
 		Assert.AreEqual( 201.572f, eye.Y, 0.01f, "57.75 back from it, on the near side" );
 		Assert.AreEqual( 93.623f, eye.Z, 0.01f, "93.62 up" );
+	}
+
+	/// <summary>
+	/// The original turned to 90 and 180 at point (495, 285), zoom 110, stood its eye at (437.253, 93.623, 285.000) and
+	/// (495.000, 93.623, 342.747): on the point less (h sin r, h cos r). This yaw swings the other way, so the same eye is
+	/// the rotation negated (Q440, <c>lib/bothcam.py</c>).
+	/// </summary>
+	[TestMethod]
+	public void TheOriginalsRotationIsThisYawNegated()
+	{
+		var point = new Vector3( 495f, 285f, 0f );
+		var ninety = ParkOrbitCameraMode.EyeAt( point, -MathF.PI / 2f, 110f, 0f );
+		var half = ParkOrbitCameraMode.EyeAt( point, -MathF.PI, 110f, 0f );
+
+		Assert.AreEqual( 437.253f, ninety.X, 0.01f, "at 90, 57.75 less in x than the point" );
+		Assert.AreEqual( 285f, ninety.Y, 0.01f, "at 90, level with it" );
+		Assert.AreEqual( 495f, half.X, 0.01f, "at 180, level with it" );
+		Assert.AreEqual( 342.747f, half.Y, 0.01f, "at 180, 57.75 beyond it" );
 	}
 
 	/// <summary>The eased ground under the point raises the eye by as much (the original's <c>0x00790aa4</c>).</summary>
