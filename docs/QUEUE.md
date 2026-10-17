@@ -50,7 +50,21 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
+The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
+`~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
+- [ ] **Q474. A click on a ride takes the cell's object, not a passing guest.** From the review of Q468
+  (`handoff/review3/VERIFY-3.md`, finding 1; read from code, not watched): since Q468 `ParkPicking.Resolve` keeps only
+  the latched person when `SpritePick.Taken` finds one on the hovered cell or a neighbour, so a plain click (no locator,
+  no Shift) on a ride cell beside a path with a guest's picture under the pointer reaches `OpenObjectWindow( guest )`,
+  stops at `ParkState.TryObject` and opens nothing (the log still says "opened"). The original keeps the person
+  (`0x007b05ac`) and the cell (`0x007b05cc`) apart; a guest with no locator falls to `0x00487231`, which takes the
+  category from the cell (`FUN_00527e80` at `0x0048734c`). Keep the two values apart and give the object arm
+  `ThingOn( people: false )`; check seated riders on a ride's body too. With it, from the same review: the click's text
+  that still says it takes the head of the cell's list (`park-engine.md`, "the click still takes the head";
+  `DebugConsole.cs` and `ParkPicking.cs` comments), and tests that reach `ParkPicking.Resolve` (dropping `Taken`,
+  losing `people: false`, a wrong G all pass today). Confirm: a click on a Lost Kingdom ride with a guest walking past
+  opens its window, in both games.
 - [ ] **Q470. Our people may be drawn larger than the original's.** From Q468 (`park-engine.md`, "The thing under a
   sprite"): the original adds a picture's span (height / 128 x 20, and across x 0.75) to its place AFTER the draw matrix,
   whose w is sin 45 of the depth, so on the screen a picture is span / w of the -1 to 1 box; ours draws it in the world
@@ -85,6 +99,14 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
   measured). Decide what the bar holds after each first (a tool armed from a control and the pointer back over a
   hoarding is the case Q469 left: the original keeps the control's row). Confirm in both games: the gadget's Buy button
   hovered, then the pointer onto a hoarding; the camcorder's rows.
+- [ ] **Q475. A reflected person turns about their feet.** From the review of Q468 (`handoff/review3/VERIFY-3.md`,
+  finding 2; read from code, not seen): the original reflects a picture by negating L and R about its origin
+  (`0x005891f1` to `0x00589212`, corners at `0x0058922d` to `0x00589256`, u left alone; the flag 2 at `0x00589f68` is a
+  winding flag), where ours swaps u about the quad's middle (`ParkGuestSprites.cs`, the mirrored quad), so a person
+  hops sideways by W - 2 x OriginX picture pixels each time they turn between a direct and a reflected facing (5 px for
+  thing 28), and the latch circle and bubble sit off the reflected body. Confirm by a frame pair in both games of one
+  person turning. With it: the latch circle is round in the -1 to 1 box, so at 16:9 it reaches 1.27 times across
+  against the original's 4:3 (`SpritePick.cs`): say it at the site, and run the pick at 4:3 once.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
