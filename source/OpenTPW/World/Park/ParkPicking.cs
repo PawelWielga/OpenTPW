@@ -46,10 +46,17 @@ public static class ParkPicking
 
 	/// <summary>
 	/// The person whose picture is under the pointer, taken as the original takes them (<see cref="SpritePick"/>:
-	/// latched by the draw, then found on the hovered cell or a neighbour, <c>FUN_00532bd0</c>); failing one, the thing
-	/// on the hovered cell that is not a person (<see cref="ThingOn"/>), or nought.
+	/// latched by the draw, then found on the hovered cell or a neighbour, <c>FUN_00532bd0</c>, <c>[0x007b05ac]</c>), or
+	/// nought.
 	/// </summary>
-	public static int ThingUnderCursor { get; private set; }
+	public static int PersonUnderCursor { get; private set; }
+
+	/// <summary>
+	/// The thing on the hovered cell that is not a person (<see cref="ThingOn"/>), or nought: the original's object arm
+	/// asks the cell <c>[0x007b05cc]</c> (<c>FUN_00527e80</c>, <c>0x0048734c</c>) whoever the person is, so a guest
+	/// under the pointer does not hide the ride their feet are beside.
+	/// </summary>
+	public static int ObjectUnderCursor { get; private set; }
 
 	/// <summary>The person whose picture the last frame's draw latched for the pointer, taken or not, for the debug
 	/// console.</summary>
@@ -104,7 +111,8 @@ public static class ParkPicking
 
 		Cell = answer.Cell;
 		WorldPoint = answer.World;
-		ThingUnderCursor = answer.Thing;
+		PersonUnderCursor = answer.Person;
+		ObjectUnderCursor = answer.Object;
 		Latched = answer.Latched;
 	}
 
@@ -112,7 +120,7 @@ public static class ParkPicking
 	public static (int X, int Y)? Pinned { get; set; }
 
 	/// <summary>What the ray through one point of the window meets.</summary>
-	private readonly record struct Answer( int Cell, Vector3 World, int Thing, int Latched );
+	private readonly record struct Answer( int Cell, Vector3 World, int Person, int Object, int Latched );
 
 	/// <summary>
 	/// The whole of the picking arithmetic, given a position on the window. <see cref="Update"/> hands
@@ -139,31 +147,35 @@ public static class ParkPicking
 		if ( !ParkState.OnMap( cellX, cellY ) )
 			return default;
 
-		var latched = LatchedAt( screen );
-		var thing = 0;
-
-		if ( Level.Current?.ParkState is { } state )
-		{
-			thing = SpritePick.Taken( state, latched, cellX, cellY );
-
-			if ( thing == 0 )
-				thing = ThingOn( state, cellX, cellY, people: false );
-		}
-
-		return new Answer( (cellY * ParkWorld.MapSize) + cellX + 1, hit, thing, latched );
-	}
-
-	/// <summary>The person whose picture the last frame's draw latches for a point of the window (<see cref="SpritePick.Latch"/>),
-	/// against the camera that frame was drawn with.</summary>
-	private static int LatchedAt( Vector2 screen )
-		=> ParkGuestSprites.Current is { } sprites
-			? SpritePick.Latch( sprites.Drawn, SpritePick.Box( screen, Screen.Width, Screen.Height ),
-				Camera.ViewMatrix * Camera.ProjMatrix, Screen.Height / MathF.Max( Screen.Width, 1f ) )
+		var latched = ParkGuestSprites.Current is { } sprites
+			? LatchFor( sprites.Drawn, screen, Screen.Width, Screen.Height, Camera.ViewMatrix * Camera.ProjMatrix )
 			: 0;
 
+		var (person, placed) = Level.Current?.ParkState is { } state ? Take( state, latched, cellX, cellY ) : (0, 0);
+
+		return new Answer( (cellY * ParkWorld.MapSize) + cellX + 1, hit, person, placed, latched );
+	}
+
 	/// <summary>
-	/// What a click on one cell resolves to: whoever is standing on it, or - failing that - the object
-	/// that owns it.
+	/// The person whose picture a frame's draw latches for a point of a window <paramref name="width"/> by
+	/// <paramref name="height"/> (<see cref="SpritePick.Latch"/>), against the camera that frame was drawn with: the point
+	/// in the -1 to 1 box, and the across at the height over the width (<c>0x008bcbcc</c>).
+	/// </summary>
+	internal static int LatchFor( IEnumerable<SpritePick.Drawn> drawn, Vector2 screen, float width, float height,
+		System.Numerics.Matrix4x4 viewProjection )
+		=> SpritePick.Latch( drawn, SpritePick.Box( screen, width, height ), viewProjection, height / MathF.Max( width, 1f ) );
+
+	/// <summary>
+	/// What the pointer takes on a cell, as two values the way the original keeps them: the latched person if they
+	/// stand on it or a neighbour (<see cref="SpritePick.Taken"/>, <c>[0x007b05ac]</c>), and the cell's thing that is not a
+	/// person (<see cref="ThingOn"/>, the object arm's <c>FUN_00527e80</c> on <c>[0x007b05cc]</c>).
+	/// </summary>
+	internal static (int Person, int Object) Take( ParkState state, int latched, int cellX, int cellY )
+		=> (SpritePick.Taken( state, latched, cellX, cellY ), ThingOn( state, cellX, cellY, people: false ));
+
+	/// <summary>
+	/// What one cell holds: whoever heads its list, or - failing that - the object that owns it; with
+	/// <c>people</c> false, the first on its list that is not a person, or the owner.
 	/// </summary>
 	/// <remarks>
 	/// <b>A placed thing is on ONE cell's occupancy list, and it is not usually the one you click.</b>
@@ -174,9 +186,9 @@ public static class ParkPicking
 	/// 3884</c>. So a click that asked occupancy alone answered on <b>1 of 12</b> cells of a ride and
 	/// nothing anywhere else on it.
 	/// <para>
-	/// <b>Occupancy is asked FIRST and that order matters</b>: a guest standing on a ride's footprint is
-	/// the head of that cell's list, and clicking them should reach them rather than the ride under
-	/// their feet. The owner is the fallback, not the answer.
+	/// <b>Occupancy is asked FIRST</b>: a thing on the cell's own list comes before the owner, which is the
+	/// fallback. With <c>people</c> true a guest heading a ride's anchor cell answers there instead of the ride;
+	/// the console's <c>worldclick</c> asks it so, and takes the answer as the person only where it is one.
 	/// </para>
 	/// <para>
 	/// The lookup is <see cref="ParkPathBuilding"/>'s own, which a queue cell already uses to name the
@@ -190,7 +202,8 @@ public static class ParkPicking
 	/// owner lookup put back.
 	/// </remarks>
 	/// <param name="people">Whether a person on the cell's list answers. The pointer takes people by their pictures
-	/// (<see cref="SpritePick"/>) and asks the cell for the rest; a console click on a cell takes whoever heads it.</param>
+	/// (<see cref="SpritePick"/>) and asks the cell for the rest (<see cref="Take"/>); a console click on a cell takes
+	/// whoever heads it.</param>
 	internal static int ThingOn( ParkState state, int cellX, int cellY, bool people = true )
 	{
 		var crowd = ParkPeople.Current;
@@ -261,9 +274,13 @@ public static class ParkPicking
 		return true;
 	}
 
-	/// <summary>The thing standing under an arbitrary point of the window, or nought.</summary>
-	public static int ThingAt( float screenX, float screenY )
-		=> Resolve( new Vector2( screenX, screenY ) ).Thing;
+	/// <summary>The person and the cell's object under an arbitrary point of the window, each nought for none.</summary>
+	public static (int Person, int Object) ThingsAt( float screenX, float screenY )
+	{
+		var answer = Resolve( new Vector2( screenX, screenY ) );
+
+		return (answer.Person, answer.Object);
+	}
 
 	/// <summary>
 	/// The direction the pointer points, in world space.
@@ -378,7 +395,7 @@ public static class ParkPicking
 	{
 		var mouse = Input.Mouse.Position;
 
-		return Describe( new Answer( Cell, WorldPoint, ThingUnderCursor, Latched ),
+		return Describe( new Answer( Cell, WorldPoint, PersonUnderCursor, ObjectUnderCursor, Latched ),
 			$"mouse ({mouse.X:F0},{mouse.Y:F0})" );
 	}
 
@@ -391,10 +408,11 @@ public static class ParkPicking
 
 		var cellX = (answer.Cell - 1) % ParkWorld.MapSize;
 		var cellY = (answer.Cell - 1) / ParkWorld.MapSize;
-		var occupant = answer.Thing != 0 ? $"thing {answer.Thing}" : "nothing";
+		var occupant = answer.Person != 0 ? $"thing {answer.Person}" : "nothing";
+		var placed = answer.Object != 0 ? $"thing {answer.Object}" : "nothing";
 
 		return $"pick: cell ({cellX},{cellY}) packed {answer.Cell} " +
 			$"world ({answer.World.X:F1},{answer.World.Y:F1},{answer.World.Z:F1}) " +
-			$"standing {occupant} latched {answer.Latched} - {asked} {size}";
+			$"standing {occupant} object {placed} latched {answer.Latched} - {asked} {size}";
 	}
 }

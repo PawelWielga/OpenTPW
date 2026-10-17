@@ -7513,6 +7513,27 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   true (ours sets it false before every ground arm). The comment at the not-taken case ("The original runs no hover
   then", `0x00488569`) holds only under a park screen: correct it. Confirm in both games: the Q467 standing row, then
   Shift let go over such a cell, then the pointer moved from bare ground onto a hoarding.
+- [x] **Q474. A click on a ride takes the cell's object, not a passing guest.** Done 2026-10-17: `ParkPicking` keeps
+  the person taken by their picture and the cell's object apart (`PersonUnderCursor`, `ObjectUnderCursor`; `Take`,
+  `LatchFor`), as the original's `[0x007c2650]` and `[0x007c2654]` (`FUN_004879d0`; `park-engine.md`, "The person and
+  the object are two values"); `Level.ClickWorldAt` takes each window from its own; the console's `click`, `worldclick`
+  and `pick` follow. Both games (`q474/`, `side-by-side.png`): ours (run3, 4 of 4) guest 94 entering the Dino Karts under
+  the pointer, `pick` "standing thing 94 object thing 289", the click "opened the window for thing 289" and its window
+  up; main's binary at the same point "opened the window for thing 94" and nothing (control1); the original's stock
+  park, guest 51 on the Belly Bounce's cell, category 4, its click kept object 13 and opened its window. Mutations 8 of
+  9 fail a test, the ninth equivalent. Seated riders: the object is the cell's whoever is latched, so they cannot hide
+  the ride either (not seen separately). Filed Q476 (a quick press lost in a slow frame). Was: From the review of Q468
+  (`handoff/review3/VERIFY-3.md`, finding 1; read from code, not watched): since Q468 `ParkPicking.Resolve` keeps only
+  the latched person when `SpritePick.Taken` finds one on the hovered cell or a neighbour, so a plain click (no locator,
+  no Shift) on a ride cell beside a path with a guest's picture under the pointer reaches `OpenObjectWindow( guest )`,
+  stops at `ParkState.TryObject` and opens nothing (the log still says "opened"). The original keeps the person
+  (`0x007b05ac`) and the cell (`0x007b05cc`) apart; a guest with no locator falls to `0x00487231`, which takes the
+  category from the cell (`FUN_00527e80` at `0x0048734c`). Keep the two values apart and give the object arm
+  `ThingOn( people: false )`; check seated riders on a ride's body too. With it, from the same review: the click's text
+  that still says it takes the head of the cell's list (`park-engine.md`, "the click still takes the head";
+  `DebugConsole.cs` and `ParkPicking.cs` comments), and tests that reach `ParkPicking.Resolve` (dropping `Taken`,
+  losing `people: false`, a wrong G all pass today). Confirm: a click on a Lost Kingdom ride with a guest walking past
+  opens its window, in both games.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

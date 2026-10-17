@@ -124,6 +124,25 @@ public class SpritePickTests
 		Assert.AreEqual( 0, SpritePick.Taken( state, 26, 127, 127 ), "at the map's edge, nobody near" );
 	}
 
+	/// <summary>
+	/// <b>The pointer's latch puts the window's pixel in the box and takes the across at the window's height over its
+	/// width</b> (<see cref="ParkPicking.LatchFor"/>, <c>0x008bcbcc</c>). At 1280 x 720 that is 0.5625: the circle's middle
+	/// moves to 0.3264 and its radius to 0.1497, so 0.146 left of the middle is inside and 0.153 is not, where at 0.75, at
+	/// 1 or at the width over the height both would be inside.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the across at 0.75, at 1 or at the width over the height; the box's width and height
+	/// swapped.</remarks>
+	[TestMethod]
+	public void ThePointersLatchTakesTheAcrossAtTheWindowsHeightOverItsWidth()
+	{
+		static int At( float x, float y ) => ParkPicking.LatchFor( [Mike()], new OpenTPW.Vector2( (x + 1f) * 640f, (y + 1f) * 360f ),
+			1280f, 720f, Plain );
+
+		Assert.AreEqual( 26, At( 0.3264f - 0.146f, 0.611f ) );
+		Assert.AreEqual( 0, At( 0.3264f - 0.153f, 0.611f ), "past the radius at 0.5625" );
+		Assert.AreEqual( 26, At( 0.3264f + 0.146f, 0.611f ) );
+	}
+
 	/// <summary>The window's pixel in the -1 to 1 box, down positive.</summary>
 	[TestMethod]
 	public void APixelIsPutInTheBoxDownPositive()

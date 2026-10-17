@@ -53,18 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q474. A click on a ride takes the cell's object, not a passing guest.** From the review of Q468
-  (`handoff/review3/VERIFY-3.md`, finding 1; read from code, not watched): since Q468 `ParkPicking.Resolve` keeps only
-  the latched person when `SpritePick.Taken` finds one on the hovered cell or a neighbour, so a plain click (no locator,
-  no Shift) on a ride cell beside a path with a guest's picture under the pointer reaches `OpenObjectWindow( guest )`,
-  stops at `ParkState.TryObject` and opens nothing (the log still says "opened"). The original keeps the person
-  (`0x007b05ac`) and the cell (`0x007b05cc`) apart; a guest with no locator falls to `0x00487231`, which takes the
-  category from the cell (`FUN_00527e80` at `0x0048734c`). Keep the two values apart and give the object arm
-  `ThingOn( people: false )`; check seated riders on a ride's body too. With it, from the same review: the click's text
-  that still says it takes the head of the cell's list (`park-engine.md`, "the click still takes the head";
-  `DebugConsole.cs` and `ParkPicking.cs` comments), and tests that reach `ParkPicking.Resolve` (dropping `Taken`,
-  losing `people: false`, a wrong G all pass today). Confirm: a click on a Lost Kingdom ride with a guest walking past
-  opens its window, in both games.
 - [ ] **Q470. Our people may be drawn larger than the original's.** From Q468 (`park-engine.md`, "The thing under a
   sprite"): the original adds a picture's span (height / 128 x 20, and across x 0.75) to its place AFTER the draw matrix,
   whose w is sin 45 of the depth, so on the screen a picture is span / w of the -1 to 1 box; ours draws it in the world
@@ -107,6 +95,13 @@ The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its f
   thing 28), and the latch circle and bubble sit off the reflected body. Confirm by a frame pair in both games of one
   person turning. With it: the latch circle is round in the -1 to 1 box, so at 16:9 it reaches 1.27 times across
   against the original's 4:3 (`SpritePick.cs`): say it at the site, and run the pick at 4:3 once.
+- [ ] **Q476. A press let go inside one frame never reaches the park.** From Q474 (`q474/PREDICTION.txt`, run1 and run2):
+  `Level.WorldClick` acts on `Input.Mouse.Left` going from up to down between two frames (`Input.cs`, `IsMouseDown`), so a
+  press and release inside one frame is lost; XTEST's 0.06 s click was lost twice in Alexah's Full Simulation park,
+  whose frames reach 97 ms (p99, `stats`), and landed held 0.3 s. The original acts on `WM_LBUTTONDOWN`, a message
+  that is not lost. Take the park's press from the frame's events (`LeftWentDown`, which `WindowStack` already reads
+  for the view), check the interface's own press (`mouseDown && !_mouseWasDown`) the same way, and confirm with a
+  60 ms press in that park, before and after.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
@@ -2147,7 +2142,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
 - [ ] **Q24. Nothing highlights a thing under the mouse.** The idle pointer already follows the hover category over
   ground and path (`Level.IdleOverPath`). Picking is decoded (`park-engine.md`, "Picking is a real ray cast, not a
   grid lookup"): the hit point comes from a ray against the terrain and then object meshes, and the hovered THING is
-  taken from the cell, not by hitting its model (`ParkPicking.ThingUnderCursor`). Decode what the hover updater
+  taken from the cell, not by hitting its model (`ParkPicking.ObjectUnderCursor`; a person by their picture, `PersonUnderCursor`). Decode what the hover updater
   `FUN_00486d90` highlights when the hovered thing is an object or a person, then build it.
 - [ ] **Q25. The camcorder button should give a crosshair and place the camera where you click.**
   `ParkGadget.EnterCamcorder` enters the mode at once. The original installs a mouse-interaction mode

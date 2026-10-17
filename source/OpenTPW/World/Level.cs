@@ -1321,7 +1321,7 @@ public class Level
 	/// (<c>FUN_004a2aa0( 0 )</c>, <c>0x00485cc8</c>).
 	/// </summary>
 	private bool IdleOverPath()
-		=> HoverTaken && ParkPicking.TryCell( out var x, out var y ) && ArmsThePathTool( x, y, ParkPicking.ThingUnderCursor );
+		=> HoverTaken && ParkPicking.TryCell( out var x, out var y ) && ArmsThePathTool( x, y, ParkPicking.PersonUnderCursor );
 
 	/// <summary>Whether the hover is taken at all: nothing armed, an empty hand and no park screen open.</summary>
 	private static bool HoverTaken
@@ -1332,8 +1332,8 @@ public class Level
 		var onTheView = _windows?.PointerOnTheView ?? true;
 
 		return ParkPicking.TryCell( out var x, out var y )
-			? WorldHelpRow( x, y, ParkPicking.ThingUnderCursor, onTheView )
-			: WorldHelpRow( -1, -1, ParkPicking.ThingUnderCursor, onTheView );
+			? WorldHelpRow( x, y, ParkPicking.PersonUnderCursor, onTheView )
+			: WorldHelpRow( -1, -1, ParkPicking.PersonUnderCursor, onTheView );
 	}
 
 	/// <summary>
@@ -1376,7 +1376,7 @@ public class Level
 	/// </summary>
 	/// <param name="onTheView">Whether the pointer is on the park's own view rather than a control
 	/// (<see cref="UI.WindowStack.PointerOnTheView"/>).</param>
-	internal int WorldHelpRow( int x, int y, int thingUnderCursor, bool onTheView = true )
+	internal int WorldHelpRow( int x, int y, int person, bool onTheView = true )
 	{
 		// Off the view the park runs no hover (0x00488575): nothing is posted, so the row and the pointer stand.
 		if ( !onTheView )
@@ -1391,7 +1391,7 @@ public class Level
 		{
 			_onTheView = true;
 			_rowPerson = 0;
-			var row = WorldHelpRow( x, y, thingUnderCursor, onTheView );
+			var row = WorldHelpRow( x, y, person, onTheView );
 			_rowPerson = 0;
 			_categoryNought = true;
 
@@ -1416,33 +1416,33 @@ public class Level
 
 		_categoryNought = false;
 
-		switch ( PersonUnder( thingUnderCursor ) )
+		switch ( PersonUnder( person ) )
 		{
 			case PersonPick.Guest:
-				var guest = people.Guests[thingUnderCursor];
+				var guest = people.Guests[person];
 				PersonPointer = true;
 
 				if ( guest.VisitorNumber == 0 )
-					return Posted( 554, thingUnderCursor );
+					return Posted( 554, person );
 
 				WorldHelpValues = [(3, $"{guest.VisitorNumber}")];
-				return Posted( 553, thingUnderCursor );
+				return Posted( 553, person );
 
 			case PersonPick.Member:
-				var member = people.Staff.First( staff => staff.ThingId == thingUnderCursor );
+				var member = people.Staff.First( staff => staff.ThingId == person );
 				PersonPointer = true;
 				WorldHelpValues = [(2, member.Name)];
 
 				// As the row is posted the member is set idle wherever PICK UP would take them (FUN_00505f50: FUN_00505bd0,
 				// then SetState( 0 )): taken by their picture, a member the camera follows stays taken and is set once.
-				if ( _rowPerson != thingUnderCursor && UI.ParkStaffWindow.CanBePickedUp( member, ParkState ) )
+				if ( _rowPerson != person && UI.ParkStaffWindow.CanBePickedUp( member, ParkState ) )
 				{
 					var was = member.Activity;
 					member.SetActivity( StaffActivity.Idle, ParkState!.GameTick );
-					Log.Info( $"Park: hover set thing {thingUnderCursor} idle from {was} on mGameTick {ParkState.GameTick}" );
+					Log.Info( $"Park: hover set thing {person} idle from {was} on mGameTick {ParkState.GameTick}" );
 				}
 
-				return Posted( 555, thingUnderCursor );
+				return Posted( 555, person );
 
 			// Off a person the category falls to nought, so the same person's row is posted again when the pointer returns.
 			// Where the guests decide, the empty row is posted only after a category (0x004870f3); with a locator open
@@ -1511,8 +1511,8 @@ public class Level
 	/// click to the ground (<see cref="PickPerson"/>): no locator open, no Shift alone, no member of staff. A guest on the
 	/// cell, or the ride a path serves, does not stop it.
 	/// </summary>
-	private bool ArmsThePathTool( int x, int y, int thingUnderCursor )
-		=> GroundArmAt( x, y ) is GroundArm.Ground or GroundArm.Path && PersonUnder( thingUnderCursor ) == PersonPick.Further;
+	private bool ArmsThePathTool( int x, int y, int person )
+		=> GroundArmAt( x, y ) is GroundArm.Ground or GroundArm.Path && PersonUnder( person ) == PersonPick.Further;
 
 	/// <summary>Which arm of the hover a cell falls to where no person is taken - see <see cref="GroundArmAt"/>.</summary>
 	internal enum GroundArm
@@ -1630,13 +1630,13 @@ public class Level
 			|| (held == Input.Modifiers.Shift && locator == UI.ParkLocator.Kind.None);
 
 	/// <summary><see cref="PickPerson"/> for this thing under the pointer, the locator open now and the keys held now.</summary>
-	private static PersonPick PersonUnder( int thingUnderCursor )
+	private static PersonPick PersonUnder( int person )
 	{
 		var people = ParkPeople.Current;
 
 		return PickPerson( LocatorOpen, Input.Held,
-			guest: thingUnderCursor != 0 && people?.Guests.ContainsKey( thingUnderCursor ) == true,
-			member: thingUnderCursor != 0 && people?.IsStaff( thingUnderCursor ) == true );
+			guest: person != 0 && people?.Guests.ContainsKey( person ) == true,
+			member: person != 0 && people?.IsStaff( person ) == true );
 	}
 
 	/// <summary>Which locator the park's gadget has open, or none.</summary>
@@ -1742,7 +1742,7 @@ public class Level
 			return;
 
 		if ( ParkPicking.TryCell( out var cellX, out var cellY ) )
-			Log.Info( ClickWorldAt( cellX, cellY, ParkPicking.ThingUnderCursor ) );
+			Log.Info( ClickWorldAt( cellX, cellY, ParkPicking.PersonUnderCursor, ParkPicking.ObjectUnderCursor ) );
 	}
 
 	/// <summary>
@@ -1826,7 +1826,11 @@ public class Level
 	/// console cannot press the mouse button, so without this the whole placing-by-pointing path would be
 	/// unreachable from it, which is the same reason <c>ParkPicking.PickAt</c> takes coordinates.
 	/// </remarks>
-	internal string ClickWorldAt( int cellX, int cellY, int thingUnderCursor )
+	/// <param name="person">The person under the pointer (<see cref="ParkPicking.PersonUnderCursor"/>), or nought.</param>
+	/// <param name="placed">The cell's thing that is not a person (<see cref="ParkPicking.ObjectUnderCursor"/>), or nought:
+	/// the original's click takes a person's window from <c>[0x007c2650]</c> and an object's from <c>[0x007c2654]</c>, which
+	/// the hover fills from the cell, so a guest passing a ride leaves the ride's window to open (<c>FUN_004879d0</c>).</param>
+	internal string ClickWorldAt( int cellX, int cellY, int person, int placed = 0 )
 	{
 		// ANYTHING IN THE HAND GOES DOWN FIRST, and only an empty hand opens a window. That is the
 		// original's own order: a place mode consumes the click - FUN_004879d0 acts only while the
@@ -1854,19 +1858,19 @@ public class Level
 			return $"world click: {RunBuildMode( cellX, cellY )}";
 
 		// THE PERSON UNDER THE POINTER IS ASKED FIRST, and an open locator or Shift alone keeps the click from everything after.
-		switch ( PersonUnder( thingUnderCursor ) )
+		switch ( PersonUnder( person ) )
 		{
 			case PersonPick.Guest:
 				if ( _windows is { } guestStack )
-					UI.ParkVisitorWindow.Open( guestStack, thingUnderCursor );
+					UI.ParkVisitorWindow.Open( guestStack, person );
 
-				return $"world click: opened the visitor window for thing {thingUnderCursor}";
+				return $"world click: opened the visitor window for thing {person}";
 
 			case PersonPick.Member:
 				if ( _windows is { } memberStack )
-					UI.ParkStaffWindow.Open( memberStack, thingUnderCursor );
+					UI.ParkStaffWindow.Open( memberStack, person );
 
-				return $"world click: opened the staff window for thing {thingUnderCursor}";
+				return $"world click: opened the staff window for thing {person}";
 
 			case PersonPick.Nothing:
 				return $"world click: nothing to do at ({cellX},{cellY}), the person under the pointer decides it ({LocatorOpen} locator open)";
@@ -1884,18 +1888,18 @@ public class Level
 
 		// BARE GROUND OR PATH PICKS UP THE PATH TOOL - there is no button for it - and the same click
 		// anchors it, the original's press installing the tool and its release applying it.
-		if ( ArmsThePathTool( cellX, cellY, thingUnderCursor ) )
+		if ( ArmsThePathTool( cellX, cellY, person ) )
 		{
 			ParkBuildMode.Arm( ParkBuildMode.Path );
 
 			return $"world click: {ParkPathBuilding.RunPath( cellX, cellY, !UI.WindowStack.ParkScreenOpen )}";
 		}
 
-		if ( thingUnderCursor != 0 )
+		if ( placed != 0 )
 		{
-			OpenObjectWindow( thingUnderCursor );
+			OpenObjectWindow( placed );
 
-			return $"world click: opened the window for thing {thingUnderCursor}";
+			return $"world click: opened the window for thing {placed}";
 		}
 
 		return $"world click: nothing to do at ({cellX},{cellY})";

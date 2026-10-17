@@ -1365,6 +1365,16 @@ world an idle-mode-only behaviour. It switches on the hover category `DAT_007c24
     category 7      a guest          -> FUN_004b79b0
     categories 8-c  the five staff   -> FUN_004b6080, the staff detail window
 
+**The person and the object are two values** (Q474). Categories 7 to `0xc` open the person `FUN_0048c920` answers,
+`[0x007c2650]`; category 4 opens the object `FUN_0048c930` answers, `[0x007c2654]` (written by `FUN_0048c940`,
+`FUN_0048c960`, `FUN_0048c980`), once it has asked the cell `[0x007b05cc]` again (`FUN_00527e80`). The hover takes that
+object from the cell (`0x0048734c`), never from the sprite pick's person `[0x007b05ac]`, so a guest under the pointer
+with no locator and no Shift (who falls through to the cell's categories at `0x00487231`) leaves a click on the ride
+beside them to the ride. Measured in the original (`q474/orig/`, `PREDICTION.txt`): the stock park, the pointer at
+(460,280) on the Belly Bounce's cell (52,23) read category 4 with guest 51 (kind 1) taken, and its click kept object 13
+and opened the Belly Bounce's window. Here `ParkPicking` keeps them apart (`PersonUnderCursor`, `ObjectUnderCursor`)
+and `Level.ClickWorldAt` takes the window of each from its own.
+
 **A left click reaches the mode's own handler only when `FUN_004879d0` returned non-zero** - i.e. only
 when the world click did not consume it. A fixed "click then dispatch" sequence is wrong.
 
@@ -1411,8 +1421,8 @@ across and down the latch went where the decode's d² passed r². With the locat
 pointer resting, the pick named him while his cell went (51,21) to (56,21). Not measured: whether any sprite but a
 person's body carries `0x200` (a rider's head on a ride, a balloon, a thought bubble). Here `SpritePick` latches over
 the people's bodies as the last frame drew them (`ParkGuestSprites.Drawn`) and `ParkPicking` takes a person only so;
-the cell's list answers only for what is not a person (`ThingOn( people: false )`), and a console click on a cell
-still takes the list's head. The console's `circle [thing]` prints each drawn person's circle in window pixels.
+the cell's list answers only for the object, kept apart from the person (`ThingOn( people: false )`; "The person and
+the object are two values" above), and a console `worldclick` on a cell takes the list's head as the person where it is one. The console's `circle [thing]` prints each drawn person's circle in window pixels.
 
 **The type-3 handlers do NOT test the cell for zero** before unpacking it; the out-of-range value is
 caught downstream by the bounds test inside the callees instead.
@@ -3584,8 +3594,8 @@ file and walks off leaves whoever the file chained behind them its head. Measure
 cell's chain read `[28]` while he stood on it and `[]` each time he was off it; with the guards' locator open the
 pointer over the empty cell read category 0 and its click opened nothing, and on him category 11 and his window. Here
 `ParkState` seeds the lists from the file's chains and `StaffBehaviour.Step` ends with the relink, as
-`PeepBehaviour.Step` does for a guest; the click still takes the head of the cell's list where the original takes the
-sprite drawn under the pointer (`ParkPicking.ThingOn`).
+`PeepBehaviour.Step` does for a guest; the pointer takes the person by the sprite drawn under it ("The thing under a
+sprite") and the console's `worldclick` the head of the cell's list.
 
 **The preview** (`FUN_005234d0` → `FUN_00536100(0x101, …)`, every UI tick): unanchored, one square
 under the pointer, which is both the first and the last cell; anchored, the line from the anchor to the

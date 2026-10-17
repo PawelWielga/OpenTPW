@@ -1364,8 +1364,8 @@ public static class DebugConsole
 					break;
 				}
 
-				Reply( clickPark.ClickWorldAt( clickX, clickY,
-					ParkPicking.ThingAt( Argument( 1 ), Argument( 2 ) ) ) );
+				var (clickPerson, clickObject) = ParkPicking.ThingsAt( Argument( 1 ), Argument( 2 ) );
+				Reply( clickPark.ClickWorldAt( clickX, clickY, clickPerson, clickObject ) );
 				break;
 
 			// Buying, selling and moving something, driven by hand. A player buys through the buy screen
@@ -1689,13 +1689,13 @@ public static class DebugConsole
 			// reaches the very method a real frame reaches, Level.ClickWorldAt, which its own remarks
 			// say was split out of WorldClick for exactly this purpose.
 			//
-			// THE THING UNDER THE CELL IS RESOLVED THE WAY A FRAME RESOLVES IT - ParkPicking.ThingOn,
-			// exactly as Level.WorldClick reaches it through ParkPicking.ThingUnderCursor. Only the ray
-			// is skipped, because a harness has no cursor to cast from. Reading the cell's own occupant
-			// here instead would make an instrument that cannot see the thing it is pointed at: a placed
-			// thing sits on ONE cell's occupancy list and owns the rest of its footprint through
-			// mParentID, so it would answer on the anchor alone, and a measurement taken through it would
-			// read 1 of 12 cells of a ride whatever the picking code did.
+			// THE CELL'S OBJECT IS RESOLVED THE WAY A FRAME RESOLVES IT - ParkPicking.ThingOn with people
+			// false, as Level.WorldClick reaches it through ParkPicking.ObjectUnderCursor. The person is
+			// the head of the cell's list where that is a person, since a harness has no cursor to latch
+			// a picture with; a frame takes the person by their picture instead (SpritePick). Reading the
+			// cell's own occupant for the object would make an instrument that cannot see the thing it is
+			// pointed at: a placed thing sits on ONE cell's occupancy list and owns the rest of its
+			// footprint through mParentID, so it would answer on the anchor alone, 1 of 12 cells of a ride.
 			case "worldclick":
 				if ( parts.Length < 3 )
 				{
@@ -1713,11 +1713,16 @@ public static class DebugConsole
 				var clickedX = (int)Argument( 1 );
 				var clickedY = (int)Argument( 2 );
 
-				var clickedThing = ParkState.OnMap( clickedX, clickedY )
-					? ParkPicking.ThingOn( clickedState, clickedX, clickedY )
+				var clickedHead = ParkState.OnMap( clickedX, clickedY ) ? clickedState.CellAt( clickedX, clickedY ).Occupant : 0;
+				var clickedPerson = clickedHead != 0 && ParkPeople.Current is { } clickedPeople
+					&& (clickedPeople.Guests.ContainsKey( clickedHead ) || clickedPeople.IsStaff( clickedHead ))
+					? clickedHead
+					: 0;
+				var clickedObject = ParkState.OnMap( clickedX, clickedY )
+					? ParkPicking.ThingOn( clickedState, clickedX, clickedY, people: false )
 					: 0;
 
-				Reply( clickedPark.ClickWorldAt( clickedX, clickedY, clickedThing ) );
+				Reply( clickedPark.ClickWorldAt( clickedX, clickedY, clickedPerson, clickedObject ) );
 				break;
 
 			// Arms a build mode, so that clicking the park lays a RUN rather than one cell. The mouse

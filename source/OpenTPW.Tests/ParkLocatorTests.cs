@@ -482,7 +482,82 @@ public class ParkLocatorTests
 	/// <summary>A guest in the park, admitted on the road's far side where the shipped park has none inside.</summary>
 	private int AGuest() => _people.Guests.Count > 0 ? _people.Guests.Keys.First() : _people.Admit( 55, 30 );
 
-	private static string ClickAt( int x, int y, int thing ) => Level.Current!.ClickWorldAt( x, y, thing );
+	/// <summary>A click on a cell with one thing under the pointer: a person as the person, anything else as the object.</summary>
+	private string ClickAt( int x, int y, int thing )
+		=> _people.Guests.ContainsKey( thing ) || _people.IsStaff( thing )
+			? Level.Current!.ClickWorldAt( x, y, thing, 0 )
+			: Level.Current!.ClickWorldAt( x, y, 0, thing );
+
+	/// <summary>
+	/// <b>A guest under the pointer leaves a click on a ride to the ride</b> (<c>FUN_004879d0</c>: category 4 opens the
+	/// object the hover took from the cell, <c>[0x007c2654]</c>, kept apart from the person, <c>[0x007c2650]</c>). The
+	/// pointer over the Belly Bounce's anchor (51,23), a guest heading its list and latched, takes the guest and the ride
+	/// as two values; nobody latched, the ride alone. With no locator and no modifier the click opens the ride's window;
+	/// with Shift alone the same two open the guest's; the frame's own click opens the ride's; a member under the pointer
+	/// is still their window first.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the latched person dropped; the cell asked with people; the object window given the
+	/// person; the frame's click given the person twice.</remarks>
+	[TestMethod]
+	public void AGuestUnderThePointerLeavesAClickOnARideToTheRide()
+	{
+		var state = Level.Current!.ParkState!;
+		var guest = AGuest();
+		var member = _people.Staff[0].ThingId;
+		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( Level.Current, Level.Scene.Park );
+
+		state.StandOn( guest, 51, 23 );
+		Assert.AreEqual( guest, state.CellAt( 51, 23 ).Occupant, "the guest heads the ride's anchor" );
+
+		var (person, placed) = ParkPicking.Take( state, guest, 51, 23 );
+		Assert.AreEqual( (guest, 13), (person, placed), "the guest latched, and the ride under them" );
+		Assert.AreEqual( (0, 13), ParkPicking.Take( state, 0, 51, 23 ), "nobody latched: the ride alone" );
+
+		StringAssert.Contains( Level.Current.ClickWorldAt( 51, 23, person, placed ), "opened the window for thing 13" );
+		Assert.AreEqual( 13, _stack.Windows.OfType<ParkObjectWindow>().Single().ThingId );
+		Assert.IsFalse( _stack.Windows.OfType<ParkVisitorWindow>().Any() );
+		_stack.Close( _stack.Windows.OfType<ParkObjectWindow>().Single() );
+
+		Input.Keyboard = new Input.KeyboardInfo( new List<Key> { Key.ShiftLeft } );
+		StringAssert.Contains( Level.Current.ClickWorldAt( 51, 23, person, placed ), $"opened the visitor window for thing {guest}" );
+		Input.Keyboard = new();
+		_stack.Close( _stack.Windows.OfType<ParkVisitorWindow>().Single() );
+
+		// The frame's own click hands the two values on as the pointer left them (Level.WorldClick).
+		var cell = typeof( ParkPicking ).GetProperty( nameof( ParkPicking.Cell ) )!;
+		var personUnder = typeof( ParkPicking ).GetProperty( nameof( ParkPicking.PersonUnderCursor ) )!;
+		var objectUnder = typeof( ParkPicking ).GetProperty( nameof( ParkPicking.ObjectUnderCursor ) )!;
+		var worldClick = typeof( Level ).GetMethod( "WorldClick", BindingFlags.Instance | BindingFlags.NonPublic )!;
+
+		try
+		{
+			// What the interface's update leaves for the park's click, which an earlier test's press can leave set.
+			typeof( WindowStack ).GetProperty( nameof( WindowStack.PointerTaken ), BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, false );
+			typeof( WindowStack ).GetProperty( nameof( WindowStack.ParkScreenOpen ), BindingFlags.Static | BindingFlags.NonPublic )!.SetValue( null, false );
+			cell.SetValue( null, MapStep.CellId( 51, 23 ) );
+			personUnder.SetValue( null, person );
+			objectUnder.SetValue( null, placed );
+
+			foreach ( var down in new[] { true, false } )
+			{
+				Input.Mouse = new() { Left = down, Position = new Vector2( 1024, 600 ) };
+				worldClick.Invoke( Level.Current, [] );
+			}
+
+			Assert.AreEqual( 13, _stack.Windows.OfType<ParkObjectWindow>().Single().ThingId, "the frame's click: the ride's window" );
+			_stack.Close( _stack.Windows.OfType<ParkObjectWindow>().Single() );
+		}
+		finally
+		{
+			cell.SetValue( null, 0 );
+			personUnder.SetValue( null, 0 );
+			objectUnder.SetValue( null, 0 );
+			Input.Mouse = new();
+		}
+
+		StringAssert.Contains( Level.Current.ClickWorldAt( 51, 23, member, placed ), $"opened the staff window for thing {member}" );
+		Assert.IsFalse( _stack.Windows.OfType<ParkObjectWindow>().Any() );
+	}
 
 	/// <summary>
 	/// <b>With the staff's locator open a click on the park arms no tool and opens no window</b> (<c>0x0048721c</c>): bare
