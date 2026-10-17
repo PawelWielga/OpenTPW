@@ -1215,13 +1215,22 @@ public class Level
 			ParkBuildMode.Queue => QueueCursor(),
 			ParkBuildMode.Path => PathCursor(),
 			ParkBuildMode.Patrol => ParkPicking.TryCell( out var x, out var y ) ? PatrolCursor( x, y ) : Input.CursorTypes.Normal,
-			_ => HoverTaken && PersonPointer ? Input.CursorTypes.Pick
-				: IdleOverPath() ? Input.CursorTypes.Path : Input.CursorTypes.Normal
+			_ => IdleCursor()
 		};
 
 		if ( cursor.CursorType != wanted )
 			cursor.CursorType = wanted;
 	}
+
+	/// <summary>
+	/// The pointer with nothing armed: off the park's view the control's own, the arrow over the gadget's buttons; on it
+	/// the pick hand over a person the hover would take, <c>c_path</c> where a click would arm the path tool, and the
+	/// arrow otherwise.
+	/// </summary>
+	internal Input.CursorTypes IdleCursor()
+		=> !_onTheView ? Input.CursorTypes.Normal
+			: HoverTaken && PersonPointer ? Input.CursorTypes.Pick
+			: IdleOverPath() ? Input.CursorTypes.Path : Input.CursorTypes.Normal;
 
 	/// <summary>
 	/// The queue tool's cursor follows its preview (<c>FUN_0052f950</c>): <c>c_link</c> when the run
@@ -1319,9 +1328,19 @@ public class Level
 		=> ParkBuildMode.Current == ParkBuildMode.None && ParkHand.Empty && !UI.WindowStack.ParkScreenOpen;
 
 	private int WorldHelpRow()
-		=> ParkPicking.TryCell( out var x, out var y )
-			? WorldHelpRow( x, y, ParkPicking.ThingUnderCursor )
-			: WorldHelpRow( -1, -1, ParkPicking.ThingUnderCursor );
+	{
+		var onTheView = _windows?.PointerOnTheView ?? true;
+
+		return ParkPicking.TryCell( out var x, out var y )
+			? WorldHelpRow( x, y, ParkPicking.ThingUnderCursor, onTheView )
+			: WorldHelpRow( -1, -1, ParkPicking.ThingUnderCursor, onTheView );
+	}
+
+	/// <summary>
+	/// Whether the pointer was on the park's own view at the last hover, <c>[0x007c24fc]</c>: set as it comes onto the
+	/// view from a control (message <c>0x10001</c>) and cleared as it leaves for one (<c>0x10002</c>).
+	/// </summary>
+	private bool _onTheView;
 
 	/// <summary>The values of <see cref="UI.WindowStack.WorldHelpText"/>'s parameters, as the last hover filled them.</summary>
 	internal (int Parameter, string Value)[] WorldHelpValues { get; private set; } = [];
@@ -1345,10 +1364,31 @@ public class Level
 	/// posted stands (<c>0x0048721c</c> to <c>0x004878d3</c>). Otherwise UIHELPTEXT 441 "Left-click to build path" over
 	/// bare ground and 442 "Left-click to extend this path" over path, where the click would arm the path tool
 	/// (<see cref="ArmsThePathTool"/>). Nothing is found in the original to show 443, "BACKSPACE to undo", so nothing
-	/// here does.
+	/// here does. The hover runs only while the pointer is on the park's view (<c>0x00488575</c>).
 	/// </summary>
-	internal int WorldHelpRow( int x, int y, int thingUnderCursor )
+	/// <param name="onTheView">Whether the pointer is on the park's own view rather than a control
+	/// (<see cref="UI.WindowStack.PointerOnTheView"/>).</param>
+	internal int WorldHelpRow( int x, int y, int thingUnderCursor, bool onTheView = true )
 	{
+		// Off the view the park runs no hover (0x00488575): nothing is posted, so the row and the pointer stand.
+		if ( !onTheView )
+		{
+			_onTheView = false;
+			return _postedRow;
+		}
+
+		// Coming onto the view the hover runs at once with the thing forgotten, and the category is nought after it
+		// (0x0048884e to 0x00488870), so the next hover posts the same person's row, and sets them idle, again.
+		if ( !_onTheView )
+		{
+			_onTheView = true;
+			_rowPerson = 0;
+			var row = WorldHelpRow( x, y, thingUnderCursor, onTheView );
+			_rowPerson = 0;
+
+			return row;
+		}
+
 		var standingValues = WorldHelpValues;
 		WorldHelpValues = [];
 		PersonPointer = false;
@@ -1375,8 +1415,11 @@ public class Level
 				PersonPointer = true;
 				WorldHelpValues = [(2, member.Name)];
 
-				// The hover also sets the member's state to nought in most states (FUN_00505f50, CStaff's SetState).
-				if ( _rowPerson != thingUnderCursor )
+				// As the row is posted the original sets the member idle wherever PICK UP would take them (FUN_00505f50:
+				// FUN_00505bd0, then SetState( 0 )). Counted: on the cell's pick a member the camera follows is dropped
+				// and taken again at each cell, and each take would stop them again (park-engine.md, "What the hover
+				// says over a person").
+				if ( _rowPerson != thingUnderCursor && UI.ParkStaffWindow.CanBePickedUp( member, ParkState ) )
 					Unimplemented.Report( "STAFF_HOVER_SET_STATE" );
 
 				return Posted( 555, thingUnderCursor );

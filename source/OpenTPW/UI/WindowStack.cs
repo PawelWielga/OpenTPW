@@ -182,6 +182,14 @@ internal sealed class WindowStack : Panel
 	internal UiControl? Hovered => _hovered;
 
 	/// <summary>
+	/// Whether the pointer was on the scene's own view at the stack's last update: over no control, no modal window up
+	/// and no cover over the stack. The park's view hears the pointer come onto it and leave it for a control
+	/// (<c>0x10001</c>, <c>0x10002</c>); a modal window counts as a control here, as it does for the help bar, which is
+	/// not measured in the original.
+	/// </summary>
+	internal bool PointerOnTheView => !Covered && _hovered == null && !ModalUp;
+
+	/// <summary>
 	/// Whether a full-screen control over the stack's layer has the keys and the pointer, the layer hidden under it, as
 	/// the park's full-screen view makes one (<c>FUN_004a29d0</c>; <c>docs/exe/park-engine.md</c>, "The full-screen
 	/// view: F3"). Nothing of the stack is drawn, the help bar included, and nothing in it is pointed at or pressed: every

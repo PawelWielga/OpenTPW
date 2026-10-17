@@ -578,7 +578,7 @@ public class ParkLocatorTests
 	/// row last posted stands, and where the guests decide and nobody is taken the row is emptied (<c>FUN_00486d90</c>).
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the rows swapped, the values dropped, the row not kept under a locator, the row kept where
-	/// the guests decide, the pointer not put up, the member's state change counted every frame.</remarks>
+	/// the guests decide, the pointer not put up.</remarks>
 	[TestMethod]
 	public void TheHoverShowsThePathsRowOrThePersonsWhereTheClickWouldTakeThem()
 	{
@@ -589,8 +589,6 @@ public class ParkLocatorTests
 		var member = _people.Staff[0];
 		var level = Level.Current!;
 		int Row( int x, int y, int thing ) => level.WorldHelpRow( x, y, thing );
-		int Counted() => Unimplemented.Summary.FirstOrDefault( gap => gap.What == "STAFF_HOVER_SET_STATE" ).Times;
-		var counted = Counted();
 
 		Assert.AreEqual( (441, 442, 441), (Row( 43, 16, 0 ), Row( pathX, pathY, 0 ), Row( 43, 16, guest )) );
 		Assert.IsFalse( level.PersonPointer );
@@ -606,7 +604,6 @@ public class ParkLocatorTests
 		Assert.IsFalse( level.PersonPointer );
 		Assert.AreEqual( 555, Row( 43, 16, member.ThingId ) );
 		Assert.AreEqual( 555, Row( 43, 16, member.ThingId ) );
-		Assert.AreEqual( counted + 2, Counted(), "once as the pointer comes onto the member, each time" );
 		Assert.AreEqual( (555, 555), (Row( 43, 16, 0 ), Row( 43, 16, guest )), "the member's row stands" );
 		Assert.AreEqual( member.Name, level.WorldHelpValues.Single().Value );
 		Assert.IsFalse( level.PersonPointer );
@@ -637,5 +634,68 @@ public class ParkLocatorTests
 		Assert.AreEqual( (-1, -1), (Row( 43, 16, member.ThingId ), Row( 43, 16, 0 )), "the guests decide: the row is emptied" );
 		Assert.IsFalse( level.PersonPointer );
 		Assert.AreEqual( 0, level.WorldHelpValues.Length );
+	}
+
+	/// <summary>
+	/// <b>The hover counts the member's idle as it posts their row, wherever PICK UP would take them</b>
+	/// (<c>FUN_00505f50</c> asks <c>FUN_00505bd0</c>, then <c>SetState( 0 )</c>): once as the pointer comes onto them and
+	/// not again while it stays, never for a member on strike, and the member left as they were. Off the park's view
+	/// (<c>[0x007c24fc]</c>) no hover runs and the row stands; coming back onto it the member is posted twice, the thing
+	/// forgotten before and the category nought after (<c>0x0048884e</c>). Over a control the pointer is the arrow, as
+	/// the original's over the gadget's buttons.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> not counted; counted in any state; counted every frame; counted off the view; the thing
+	/// not forgotten as the pointer comes onto the view; the category not nought after it; the entry never seen; the hand
+	/// off the view; a control under the pointer taken for the view.</remarks>
+	[TestMethod]
+	public void TheHoverCountsTheMembersIdleWherePickUpWouldTakeThem()
+	{
+		_stack.Update();
+		var level = Level.Current!;
+		var state = level.ParkState!;
+		var member = _people.Staff.First( staff => Peep.CountsOn( state.Record( staff.Navigator.Position.Cell.X, staff.Navigator.Position.Cell.Y ).Type ) );
+		int Row( int thing, bool onTheView = true ) => level.WorldHelpRow( 43, 16, thing, onTheView );
+		int Counted() => Unimplemented.Summary.FirstOrDefault( gap => gap.What == "STAFF_HOVER_SET_STATE" ).Times;
+		member.SetActivity( StaffActivity.Walking, state.GameTick );
+
+		Input.Mouse = new() { Position = new Vector2( 200, 1350 ) };
+		_stack.Update();
+		Assert.IsTrue( _stack.Hovered != null && !_stack.PointerOnTheView, "over the gadget" );
+		Input.Mouse = new() { Position = new Vector2( 1800, 200 ) };
+		_stack.Update();
+		Assert.IsTrue( _stack.Hovered == null && _stack.PointerOnTheView, "over the park" );
+		Input.Mouse = new();
+
+		Row( 0 );
+		Row( 0 );
+		Assert.AreEqual( 555, Row( member.ThingId ) );
+		Assert.AreEqual( 1, Counted(), "as the pointer comes onto them" );
+		Assert.AreEqual( StaffActivity.Walking, member.Activity, "and left walking" );
+		Row( member.ThingId );
+		Assert.AreEqual( 1, Counted(), "not again while the pointer stays on them" );
+
+		Row( 0 );
+		member.SetActivity( StaffActivity.OnStrike, state.GameTick );
+		Row( member.ThingId );
+		Assert.AreEqual( 1, Counted(), "on strike, PICK UP would not take them" );
+		member.SetActivity( StaffActivity.Walking, state.GameTick );
+
+		Row( 0 );
+		Assert.AreEqual( 441, Row( member.ThingId, onTheView: false ), "off the view the row last posted stands" );
+		Assert.AreEqual( 1, Counted(), "no hover off the view" );
+		Assert.AreEqual( Input.CursorTypes.Normal, level.IdleCursor(), "the arrow over a control" );
+
+		Row( 0 );
+		Row( member.ThingId );
+		Assert.AreEqual( 2, Counted() );
+		Row( member.ThingId, onTheView: false );
+		Assert.AreEqual( Input.CursorTypes.Normal, level.IdleCursor(), "the arrow over a control, the member's row standing" );
+		Assert.AreEqual( 555, Row( member.ThingId ), "back onto the view, onto the member they last were" );
+		Assert.AreEqual( Input.CursorTypes.Pick, level.IdleCursor() );
+		Assert.AreEqual( 3, Counted(), "the thing forgotten as the pointer comes on" );
+		Row( member.ThingId );
+		Assert.AreEqual( 4, Counted(), "posted again, the category nought after the entry" );
+		Row( member.ThingId );
+		Assert.AreEqual( 4, Counted(), "and then not again" );
 	}
 }

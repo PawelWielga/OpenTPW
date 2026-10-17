@@ -3484,11 +3484,13 @@ locator Shift alone read 0 on bare ground and 7 on a guest, whose click opened t
 the thing `[0x007c24f8]` changes. A guest taken (category 7) posts UIHELPTEXT 553 "Visitor #{P3} : Left-click to view
 this person's details", P3 the guest's number `+0x1d8` (a `VARM` value of type 3), or 554 "New Visitor : ..." at nought;
 a member (8 to 12) posts 555 "{P2} : Left-click to view this staff member's details", P2 the name at `+0x1a0`
-(`FUN_00506860`, type 2), and calls `FUN_00505f50`, which sets the member's state to nought (CStaff's `SetState`,
-`FUN_005054d0( 0 )`) unless it is 4, 5, 7, `0xd` or `0x12` and only where `FUN_004fa990` answers (not decoded;
-counted, `STAFF_HOVER_SET_STATE`; the hover itself runs (`0x00488582`) only while `[0x007c24fc]` is set, Q451). Either puts up pointer 2, which `FUN_00489720` registers as `c_pick.ani`. Where the
+(`FUN_00506860`, type 2), and calls `FUN_00505f50` (`0x0048720d`), which is PICK UP's test `FUN_00505bd0` (the
+state not 4, 5, 7, `0xd` or `0x12`, and `FUN_004fa990` passing the member's cell: type 0, 1, 3, 9 or 10) followed by
+CStaff's `SetState`, `FUN_005054d0( 0 )`; a guard's `0x12` test after it can never be reached. So a member the pointer
+comes onto is set idle: from a walk the stamp `+0x200` is the clock and the wait is the grade's, from anything else
+nought (`ride-operation.md`, "The idle wait, and the stamp it counts from"). Either puts up pointer 2, which `FUN_00489720` registers as `c_pick.ani`. Where the
 guests decide and nobody is taken the empty row `0x0078a374` is posted, only if the last hover category was not
-nought (`0x004870f3` to `0x004870ff`; otherwise nothing is posted and the old row stays; ours always empties it, Q451),
+nought (`0x004870f3` to `0x004870ff`; otherwise nothing is posted and the old row stays; ours always empties it, Q467),
 and pointer 0 put up; with a locator open
 otherwise and nobody taken, the jump from `0x0048721c` to `0x004878d3` posts nothing and puts up pointer 0, so the row
 last posted stands. Measured in the original: the staff locator open, Mike Cooper under the pointer read category 9
@@ -3496,6 +3498,22 @@ with his row and the hand, and off him category 0 with the row still at the foot
 `a-2-P1.png`); the visitors' locator open, a guest whose `+0x1d8` read 9 showed "Visitor #9 : ..." and the hand, and
 bare ground category 0 no row and the arrow (`q447/orig/`). Here `Level.WorldHelpRow` answers the row, its values and
 `PersonPointer`, and keeps the row last answered where the original posts nothing.
+
+**The hover runs only on the park's view** (Q451). `Park_MouseMessageProc` runs `FUN_00486d90` on its timer
+(`0x00488582`) only while `[0x007c24fc]` is set. Message `0x10001`, the pointer coming onto the layer from a control,
+forgets the thing `[0x007c24f8]`, runs the hover once (no park screen open), then sets the flag and the category
+`[0x007c24f4]` to nought (`0x0048884e` to `0x00488870`), so the next hover posts the same row again and, over a member,
+sets them idle again. `0x10002`, the pointer leaving for a control, and `0x15` (its sender not traced) clear the flag.
+Measured in the original (`q451/orig/`, `PREDICTION.txt`): the flag read 1 on the view and 0 over the mechanics' button.
+With the staff locator open, Mike Cooper walking (state 1) went to 0 with stamp 902 on the tick the hover took
+him, and walked again at 913 (grade 3: IdleDuration 10, + 1). The locator's camera kept him under the resting pointer,
+category 9 throughout, and he was not set again. Over the gadget's buttons the pointer was the arrow, with the button's
+own row. Here `WindowStack.PointerOnTheView` (no control under the pointer, no modal window, no cover) gates
+`WorldHelpRow`, the entry runs it with the thing forgotten, and `Level.IdleCursor` is the arrow off the view. **The set
+itself is counted, not built** (`STAFF_HOVER_SET_STATE`, only where the original would set): our pick takes a person by
+the cell's list, so a member the locator's camera follows is dropped and taken again at each cell under the resting
+pointer. Built on that pick, run1 set Mike idle eleven times in 9 s, so he stopped at every cell; run3 counted 23 takes in
+6 s. It waits on the original's sprite pick (`FUN_00532bd0`, "The thing under a sprite"; Q468).
 
 **Who a cell's list names as people walk** (Q446). Every person is relinked into the cell they stand on whenever it
 changes: the walk tick `FUN_004fa2a0` calls `FUN_0050b6a0` at `0x004fa2fc` (the placement `FUN_004fa930` at

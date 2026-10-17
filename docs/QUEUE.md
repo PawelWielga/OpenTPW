@@ -51,17 +51,20 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
 
-- [ ] **Q451. The state a member is set to by the hover.** From Q447 (`park-engine.md`, "What the hover says over a person"): the hover over a
-  member calls `FUN_00505f50`, which sets their state to nought (`FUN_005054d0( 0 )`) unless it is 4, 5, 7, `0xd` or
-  `0x12`, where `FUN_004fa990` answers; ours only counts it (`STAFF_HOVER_SET_STATE`). Decode `FUN_004fa990` (five
-  `FUN_005363xx` tests) and what state 0 does to a walking member first; confirm in both games what a member under the
-  pointer does. In no game run: Full Simulation (not asked: the hover is either mode's), the other three themes.
-
-  From the run review (2026-10-17): our hover runs while the pointer is over a control, so a member behind the gadget
-  gets the pick hand and is counted; the original runs it (`0x00488582`) only while `[0x007c24fc]` is set (messages
-  `0x10001`, `0x10002`, `0x15`, likely the park view's pointer enter and leave; not proven). Built as is, the state
-  change would reset a member behind the gadget: gate it first. Also where the guests decide and nobody is taken, the
-  original empties the row only if the last category was not nought (`0x004870f3` to `0x004870ff`); ours always does.
+- [ ] **Q467. The guests' empty row only after a category.** From the run review (2026-10-17), split from Q451: where
+  the guests decide (the visitors' locator, or Shift alone) and nobody is taken, the original posts the empty row only
+  if the last hover category was not nought (`0x004870f3` to `0x004870ff`), otherwise the old row stays; ours always
+  empties it (`Level.WorldHelpRow`, `case PersonPick.Nothing`). Our hover keeps no category for the ground's arms but
+  path and ground: decide what the last category was there first. Confirm in both games: Shift over a guest, then off
+  them onto bare ground and off again.
+- [ ] **Q468. The original's sprite pick, then the hover's set.** From Q451 (`park-engine.md`, "The thing under a
+  sprite" and "The hover runs only on the park's view"): our pick takes a person by the cell's list, so a member the
+  staff locator's camera follows is dropped and taken again at each cell under a resting pointer, where the original's
+  `FUN_00532bd0` takes the thing whose script is the sprite's latched under the pointer (`DAT_008bd4fc`, the draw's
+  squared-distance test at `0x0058931a`, its distance not decoded) on the hovered cell and its eight neighbours. Decode
+  the latch's test, build the pick for people, then build the hover's set (`STAFF_HOVER_SET_STATE`: `SetActivity( Idle )`
+  where `ParkStaffWindow.CanBePickedUp` passes, as `q451/confirm1.py` ran it). Confirm: Mike Cooper followed by the
+  locator with the pointer resting, set idle once and walking again at the stamp + 11, as `q451/orig/a-load.log`.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

@@ -7451,6 +7451,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (with their number, `+0x1d8`) or 0x22a, over a member 0x22b with `FUN_00506860`'s string, and puts up pointer 2
   (`FUN_004a2aa0( 2 )`; `FUN_00486d90`); ours shows neither, counted `PERSON_HOVER_HELP`. Q444's original frames show a
   member's row standing at the foot of the screen with the staff locator open (`q444/orig/a-2-P1.png`): read why first.
+- [x] **Q451. The state a member is set to by the hover.** Done 2026-10-17: decoded (`park-engine.md`, "What the hover
+  says over a person" and "The hover runs only on the park's view"): `FUN_00505f50` is PICK UP's test `FUN_00505bd0`
+  then `SetState( 0 )`; the hover runs only while `[0x007c24fc]` is set, by `0x10001`/`0x10002`. Built: the gate
+  (`WindowStack.PointerOnTheView`), the entry's second post, the arrow off the view (`Level.IdleCursor`); the set stays
+  counted where the original would set (Q468). The original (`q451/orig/`): Mike set 1 to 0 at 902, walking at 913, once;
+  the flag 1 and 0; the arrow over the buttons. Ours `q451/run3` 4 of 4 (the hand and row 555 on Mike, the count rising
+  only with takes, the arrow over 0x95f, no count there); run1 with the set built stopped him eleven times in 9 s;
+  mutations 10 of 10. Was: From Q447. The hover over a member calls `FUN_00505f50`, which sets their state to nought
+  unless it is 4, 5, 7, `0xd` or `0x12`, where `FUN_004fa990` answers; ours only counts it. Decode `FUN_004fa990` and
+  what state 0 does to a walking member first; confirm in both games what a member under the pointer does. From the
+  run review: gate it first (`0x00488582`, `[0x007c24fc]`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
