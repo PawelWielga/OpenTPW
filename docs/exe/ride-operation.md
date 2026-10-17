@@ -3215,7 +3215,7 @@ does (`0x004e24bc`..`0x004e252a`).
 | Use dirties a toilet | every use | built, `ParkRideOperation.WearByUse`, in the park's own record (`ParkState`) |
 | The queue's dirt gate | reads `+0x44` | built in `PeepBehaviour.QueueTurn` on `ParkState.IsDirty`; with thought `0xe` |
 | The arrival's answer of 100 | `FUN_004fd4e0` | built in `PeepBehaviour.TurnsAwayFrom`; dead by content in Lost Kingdom |
-| `VAR_WORN` to a dirty toilet | every turn | built, `ParkRideOperation.TellTheWorn`, by name; `Toilet.rse` adds its two objects, kept as records and not drawn (Q20b) |
+| `VAR_WORN` to a dirty toilet | every turn | built, `ParkRideOperation.TellTheWorn`, by name; `Toilet.rse` adds its two objects, its flies and stink, drawn (Q258) |
 | Effects 1 and 6 | stamped into the cells | built: the use that dirties swaps 1 for 6 on `ParkState.Effects` (Q257e, "The region effects") |
 | The handyman's search, walk and clean | states `0xa`, `0xb` | built: `StaffBehaviour.FindToilet`, `ArriveAtTheLoo`, `CleanOn`, `ParkRideOperation.Clean` and the open after it; the save's `mToiletToClean`, `mTimeStartedCleaning` and `mTimeMarkedForMaintenance` are read |
 | The aim after the search | left on the last candidate tested | aimed at the winner again; counted where they differ, `HANDYMAN_TOILET_AIM_LEFT_ON_A_LATER_TOILET` |

@@ -115,7 +115,8 @@ No new shipped-file layout was discovered; these are executable mappings of alre
 with a screenshot and message/score/threshold log. To exercise the audible branch, use a clearly labelled,
 private configuration fixture raising only both door scores to **26** before posting, leaving the threshold at 25.
 Read or explicitly reset the two histories before predicting the response/sample sequence: event 10 in
-`FUN_0059ae20` sets every rotation index to −1, so each message then selects line 0, then 1, then 0.
+`FUN_0059ae20` sets every rotation index to −1 and every record's said and slaps to nought, keeping its tick, so each
+message then selects line 0, then 1, then 0. It is sent once, on a player's first park (`0x0054f24e`; Q454).
 A saved history may begin elsewhere; Q90b traces the fresh constructor below. Confirm both the actual door action and
 advisor on screen with its matching log. Cover alternating lines, same-state posting, duplicate suppression,
 the strict 25 boundary, per-message cooldown and queue priority in regression tests; restore the missing
@@ -1249,8 +1250,9 @@ park**, days 21 to 79.
 
 **What the shipped park holds.** `Easymode.TPWI`'s record of `0x11a` is (605, line 0, said 1, slaps 0), and it is
 the message its last action names as playing. From the file's cursor, 277, row 282 is the fifth row scored: tick
-760, then every 155 ticks. So Instant Action's Lost Kingdom never says it either: it scores 100 and is refused as
-said once, and from tick 1845 scores nought.
+760, then every 155 ticks. So Instant Action's Lost Kingdom, loaded by a player who has played a park before, never says it either: it scores
+100 and is refused as said once, and from tick 1845 scores nought. A new player's first park clears the said bytes
+first (event 10, `0x0054f24e`; not built here, Q454), so there it can be said.
 
 ### OpenTPW (`ParkAdvisorMessages.ExplainTooltips`, a second topic with `Polled` and an `AgeSection`)
 
@@ -3745,8 +3747,9 @@ running the stock park (`q343/orig/fpu-load.log`) stopped on ticks 970 and 1125 
 of sideshow**; rounded to a float the product would be one, and not more. Under the shipped ratio the row scores
 at five kinds of ride to each kind of sideshow.
 
-**So in an Instant Action park the row can never score**: its catalogue holds four kinds of ride (items 1100,
-1101, 1102 and 1104), and four times 0.2 is under one. The Full Simulation catalogue holds seventeen, and there
+**An Instant Action park scores the row only once research brings a fifth kind of ride**: its catalogue holds twelve
+kinds, four of them on offer at the start (items 1100, 1101, 1102 and 1104), and the lab's research tick tests no
+game type (`0x00503430`, completion `0x00504630`), so a fifth can come; four times 0.2 is under one. The Full Simulation catalogue holds seventeen, and there
 five kinds of ride beside one kind of sideshow, thirty days after the newest build and with more than 20000 in
 the bank, score 80. The door is not asked.
 
@@ -4112,7 +4115,7 @@ with one test more:
   member's next at `+0x210`), the sum of `ResearcherConstsPerGrade[grade].ResearchAbility` (`0x0078545c + 12 x`
   the member's `+0x1e4`), the points a researcher hands the lab every 20 ticks.
 - `most` is `FUN_004c9ed0`: `StaffPoolInfo.MaxResearchersInPark` (`0x007852f8`) times the top grade's ability
-  (`0x0078548c`, the table's row 4). Nought is not tested: the division would fault.
+  (`0x0078548c`, the table's row 4). Nought is tested first: `test esi,esi` at `0x00503998` returns nought before the division.
 
 So the line is for a lab whose sideshow research is getting **less than one whole unit**. In Instant Action's
 Lost Kingdom (`Easy_Standard.sam`: abilities 6, 9, 12, 16 and 20, six researchers at the most, so 120) the
@@ -4779,8 +4782,8 @@ line"). Not heard in either game.
 **The post.** The hire screen's opener, `FUN_0049bdd0( tab )`, builds the screen where none is open
 (`DAT_007ca308` nought), where the tab asked for is -1 (the one last left on) or where it is the tab shown, and
 its last act on a built screen, at `0x0049c800`, is `FUN_00486b00( 0xbd )`. Where the layout does not load it
-returns before the post. Asked for another tab with the screen open it retitles and refills the list
-(`FUN_0049b5b0`) and posts nothing; the tabs' own clicks are the handler's and never come here. Its eight
+returns before the post. Asked for another tab with the screen open it first destroys the open screen (`FUN_00485b40` at `0x0049bdec`, whose
+event 0x14 clears `DAT_007ca308` at `0x0049b7bd`), so it always builds the screen again and posts 0xbd; the tabs' own clicks are the handler's and never come here. Its eight
 callers are the bar's five button types (`0xd` to `0x11`, a tab each), the gadget's button (`FUN_004a0940`, -1,
 where the category was last left on hire), the buy screen's handler (`0x004ac4b2`, its button to hire) and one
 in no function (`0x00481702`). Every opener begins with `FUN_00485b40`, which destroys the park screen that is

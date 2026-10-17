@@ -602,10 +602,11 @@ Instant Action's), a budget at 10000 in either game (the test holds the end), th
 
 ### The stat bars' skin, `ridestatbar.wct` (Q353)
 
-Every type-9 bar of the park's screens is given the same skin, `FUN_00477ff0( texture )`: 38 of its 46 calls hand it
+Every type-9 bar of the park's screens is given the same skin, `FUN_00477ff0( texture )`: 28 of its 46 calls hand it
 `"ridestatbar.wct"` (`0x00750e00`: the object window's four, the training screen's five, the hire screen's one and
 the others' bars) and 8 `"happygrad.wct"` (`0x007508c0`: the all-staff screen's three, "The all-staff rows", below,
-and one each in `FUN_004939d0`, `FUN_004afc10`, `FUN_004b1040`, `FUN_004b53c0` and `FUN_004b6c20`). It is an
+and one each in `FUN_004939d0`, `FUN_004afc10`, `FUN_004b1040`, `FUN_004b53c0` and `FUN_004b6c20`); the other ten
+hand it `"bluebar.wct"` (five), `"smallguage.wct"` (two), `"hap.wct"`, `"sad_undec.wct"` and `"progress.wct"`. It is an
 object of vtable `0x006feeb8` holding two quads in a 100 by 100 space, four vertices a block of `0x30` bytes (x, y
 and z four apiece, `FUN_00477c00`). The control hands it its value through the skin's `+0xc` with flag 8
 (`FUN_0066d885`, the value held to 0 to `0x400`); there (`0x00478593`) `v = value x 0.0009765625 x 100`, held to
@@ -1790,12 +1791,13 @@ below, "The park score"): all sixteen are kept.
 `FUN_004c7db0` (read 2026-10-15, Q388), a thiscall on the analyser with one argument, a number of quarter ticks. Its
 answer is kept at `+0x1f0ec`, stamped at `+0x1f0e8` with `mGameTick` (`FUN_0041a960`) and flagged at `+0x1f0f0`: with
 the flag set and the argument at or over the quarter ticks since the stamp (`FUN_0041a990`, `(tick >> 2) - (stamp >> 2)`,
-unsigned) the kept answer is given again. Its two callers: the month's close (`0x004c79a7`, argument nought, so a fresh
+unsigned) the kept answer is given again. Its four callers: advisor rows 156 and 157's score callbacks (`0x0059f873`, `0x0059f8e3`, argument `0xa`; each scores
+when `FUN_004c7bb0`'s value is above its row's coefficient), the month's close (`0x004c79a7`, argument nought, so a fresh
 sum unless one was taken in the same quarter tick), which pushes it into the 2nd int ring, `+0x1f350` (its slot
 `+0x1f594`, its months `+0x1f354`), and the loans screen's test of a loan (`FUN_004d06b0`, argument `0x14`), which
 weighs the value (times the float 1.0 at `0x00700370`) less what the bought loans still owe against the loan's record;
 not read further. The analyser's serialiser
-`FUN_004c5d70` writes the three kept fields too. The sum:
+`FUN_004c5d70` writes each kept answer's count and flag, not its stamp (`0x004cd9c0`). The sum:
 
 - **Every cell** of the 128 x 128 runtime array (world `+0x2d8`, `0x44` bytes, id `y*128+x+1`) whose `mFlags & 0x40`
   (outside the park) is clear adds by `mType`: 0 adds 2, 1 (path) 3, 2 adds 1, 3 (queue) 5, 9 adds 6 (both the `3 or 9`
@@ -1830,8 +1832,8 @@ its slot `+0x20a64`, months `+0x20824`; `0x004c7904`..`0x004c792a`): the count a
 `+0x20820` never written. **Its readers**: the park status screen (`FUN_004a52a0`, I) letters it as "Total park
 visitors" (`0x4a68ca`, `FUN_004c94c0`), as it opens and on its one-second timer (`0x004a48b3`), beside "People in park"
 (`FUN_004c9130`); the golden tickets' Local 0 and Local 5 (`FUN_004d4bc0`; Local 5 through `FUN_004c94d0`, the only
-reader of the ring: the count less the month that many back); and a challenge's test at `0x005a0557` (the count
-against `GoldenTicketLocal`'s `Visitors` times a float of its own, `+0x5b8`; not read further). **Nothing reads
+reader of the ring: the count less the month that many back); and advisor rows 170, 314 and 316's scores (`0x0059fa82`, `0x005a0557`, `0x005a05b2`; 314 and 316 score when the
+count is above their product, each with preconditions of its own: `0x0051a280`, `0x004d4ac0`, `0x005af7f0`). **Nothing reads
 `mMostPaidForTicket`**: the image's every operand `+0x21c40` is the constructor's, the serialiser's two and
 `FUN_004c7520`'s.
 
@@ -1858,7 +1860,7 @@ Read 2026-10-15 (Q390). **The month's close samples two counts into the 10th and
 the analyser with one argument, a number of quarter ticks, asked with nought (`PUSH EBP`, `0x004c78b1` and
 `0x004c7929`), so counted afresh unless the same quarter tick counted already; each keeps its answer as the park value
 does (`FUN_004c7fa0`: stamp `+0x1f0b8`, count `+0x1f0bc`, flag `+0x1f0c0`; `FUN_004c8070`: `+0x1f0c4`, `+0x1f0c8`,
-`+0x1f0cc`), and the serialiser writes them.
+`+0x1f0cc`), and the serialiser writes their counts and flags, not their stamps (`0x004cd9c0`).
 
 - **`FUN_004c7fa0`, the guests inside** (`+0x205d0`, its slot `+0x20814`, months `+0x205d4`; `0x004c78c1`..`0x004c78f1`):
   the used thing list (`FUN_00516130`, `FUN_00516160`) walked for things of kind 1 (`+2`, guests) on whose cell
@@ -1910,7 +1912,9 @@ The push (`0x004cf41f`..`0x004cf451`) takes the headcount `FUN_004cf5b0` answere
 before any vehicle is asked: the slot one on, round to nought and wrapped past the fifth, then the size into it. The
 constructor fills no load, so a slot no load has reached holds whatever memory held (`0xcdcdcdcd` in the shipped park,
 nought in the original's own fresh parks). The serialiser reads and writes it whole (`FUN_004ce660`, the stays' shape,
-from `0x004c69e8` and `0x004c70de`). Its one reader is `FUN_005a0780`, a challenge's test in the table at `0x00772088`:
+from `0x004c69e8` and `0x004c70de`). It has three readers: advisor row 124's score (`FUN_0059f220`, at `0x005a368f`: the newest load against the one
+before, only while the park is younger than `[+0x3c8]` 30-day months), row 140's (`FUN_0059f440`, at `0x005a3c50`: the
+newest load), none of them built, and `FUN_005a0780`, a challenge's test in the table at `0x00772088`:
 how many loads have been called (five once wrapped, else the slot plus one), and the challenge's `+0x5f4` when that is
 exactly one; the challenges are not built. **Readers**: the park status screen's graph plots the 13th as its first series (bit
 `1` of `DAT_00753c48`; `FUN_004a51d0`, `FUN_004a5e10` and the draw at `0x004a4750` take its month so far's address,
@@ -2668,8 +2672,10 @@ Spray's days and totals into `q353/grades.TPWS`; `original/money.py` polling): a
 "$ 3766", "-$ 100", "-$ 580", "$ 10" and "$ 10" (a sale each by then, as the poll read), right-aligned, and its
 satisfaction bars measure 0.526, 0.491 and 0.509 of their width (542, 491 and 512 of 1024).
 
-Every bar is `((value & 0xff) << 10) / 100` of 1024, a float truncated first (`__ftol`), so a value past 255 shows its
-low byte. Measured in the original on `q353/grades.TPWS` (`q367/orig/a-*.png`, `object.py` on thing 13): the Belly
+The excitement, repair and life bars are `((value & 0xff) << 10) / 100` of 1024 (the excitement an int, the others a
+float truncated first, `__ftol`), so a value past 255 shows its low byte. **The satisfaction bar is not masked**
+(`0x00494031`, `0x00494199`, `0x00495888`, `0x00495959`: `FUN_004e1e30`, then the shift, no `and 0xff`); the bar's
+setter `FUN_0066d885` holds it to 0..0x400, so below nought it is empty and from 100 up full (ours masks it, Q457). Measured in the original on `q353/grades.TPWS` (`q367/orig/a-*.png`, `object.py` on thing 13): the Belly
 Bounce's row "5" with bars of 0.403, 0.925 and 0.993 of their width, its repair 92.32 and life 99.85 at the frame
 (942 and 1013 of 1024); the sideshows' excitement bars 0.308 (Jungle Spray, 30) and 0.28 (Strength Bird, 27).
 
@@ -2925,7 +2931,8 @@ its column): the number centred (its middle 0.495 of the column), the cash to th
 the left (its start 0.032), as `( 2, 1 )` reads right on the park status screen above.
 
 **The thought** (read 2026-10-15, Q373). The factory `FUN_004938c0` makes the row's fifth cell a **type 6** control
-(`FUN_0065dd7b( 6, 1, 4, ... )` at `0x0049399b`: `FUN_0066d9e0`, vtable `0x00705c58`), where the others are type 1. Its
+(`FUN_0065dd7b( 6, 1, 4, ... )` at `0x0049399b`: `FUN_0066d9e0`, vtable `0x00705c58`), where the happiness cell is type 9 (`FUN_0065dd7b( 9, 0x11, 5 )` at `0x004939b0`) and the number cell is the row
+control itself (`FUN_0065bcad` at `0x00493932`). Its
 value setter (vtable `+0x1c`, `0x0066da4d`) keeps the value at `+0x13c`, hands it to the text and the skin as the **state
 word** (flag 1, data `+4`), then calls the base's (`0x00661525`, flag `0x80` alone, which a mesh skin passes over). The
 styler's `FUN_00659bc9( "ti_hungry" )` clones a template from the list `[0x00faa610]`: `FUN_00489060` files every

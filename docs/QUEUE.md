@@ -47,8 +47,9 @@ fork watch).
 
 **Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
-Q444 and Q445 come first: defects a player meets, found by the review of the run of 2026-10-16/17 (its findings are
-`~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`).
+The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its findings are
+`~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
+(`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
 
 - [ ] **Q451. The state a member is set to by the hover.** From Q447 (`park-engine.md`, "What the hover says over a person"): the hover over a
   member calls `FUN_00505f50`, which sets their state to nought (`FUN_005054d0( 0 )`) unless it is 4, 5, 7, `0xd` or
@@ -469,7 +470,7 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   The skill bars wear `ridestatbar.wct` (Q353). The screen's lettering is smaller than the original's at this window size (not looked into). The
   finances and loans screens its buttons go to are not built. What reads `mHaveEverTrained` was not looked for.
   No file of the original's own with a budget was made (its memory was read). **This game's month does not
-  turn on the file's calendar** (Q241j: 715 ticks after a load, where the original's turned on 1383). In no
+  turn on the file's calendar** (Q149: 715 ticks after a load, where the original's turned on 1383). In no
   game run: Full Simulation (the loans button enabled there), a budget at 10000, the three other themes.
   From Q351 (`advisor-park.md`, "Staff nobody has trained"): the bar's staff-costs button is built (Q352).
   The gesture rows of responses 82, 84 and 90 are counted
@@ -999,6 +1000,10 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   `GameCalendar` (which carries its advances over) runs five ahead of `ParkState.CalendarNow`, and the weather's
   tick and the day's, month's and year's work with it; the original drops all of them with the sweep
   (`FUN_004d7b20`, `FUN_00512880`). `LongestCatchUp`'s remark says so and calls it a deviation.
+  From the week-end audit, 2026-10-17 (`VERIFY-RT.md`): every load starts the calendar again at 1/1/2000
+  (`Level.cs`, `GameCalendar.Rebase()`), where the original's clock block keeps the date (`0x004f7f5f`..`0x004f81ed`).
+  A game run saved on day 7 and read day 0 after the load. So a player who saves and loads more often than once a
+  month never reaches a month's change: no wages, no month's accounts, no year's turn.
 - [ ] **Q31. The shop's object window.** `Level.OpenObjectWindow` opens only a ride's (`UiType 0`). Shops,
   sideshows and the rest stop at `SHOP_WINDOW`, `SIDESHOW_WINDOW` and `FEATURE_WINDOW`; a staff member's click
   opens their window (Q431); a clicked visitor reaches nothing counted. `park-engine.md`, "The
@@ -1354,7 +1359,8 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
 - [ ] **Q221. Eight leftovers from the effort audit, each dead by content today.** Found by the 2026-10-04 effort
   audit, each read in the listing. (1) `ParkScriptStates` reads the tick and next handle with `header > dword * 4`; it
   should be `>= (dword + 1) * 4`. (2) `ParkBuyScreen.Listed` applies two of the original's four filters: add the
-  upgrade (`+0x284`) and model-failed (`+0x508`) tests or count them (`FUN_004aaf70`). (3) `ParkAudio.ScreamEffectFor`
+  upgrade (`+0x284`) and model-failed (`+0x508`) tests or count them (`FUN_004aaf70`); the upgrade test is reached
+  since Q349 (Alexah's Full Simulation saves), so it is Q452. (3) `ParkAudio.ScreamEffectFor`
   silences a negative band; `FUN_00551130` plays `0x48` for one. (4) `RideScript.NextRandom` answers 0 for every
   bound + 1 at or below nought; only -1 divides by nought (`0x00553994`). (5) `ParkItemHeights.Over` floors the
   cell's middle where `0x00452bb0` truncates corner offsets: measure it on raised ground. (6) The original rolls a
@@ -1859,6 +1865,58 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   choose, the pending deletes flushed, the gate closed; the clock and the bank go on. The path tests no game type, so
   Lost Kingdom's Easymode reaches it. Confirm: a park held in the red to its end, beside the original.
 
+- [ ] **Q452. Buy Rides lists a researched ride upgrade.** From the week-end audit, 2026-10-17 (`LEDGER.md` D1,
+  `VERIFY-13a.md` Q349 1; `CLAUDE.local.md` says where). `ParkBuyScreen.Listed` lacks the original's `+0x284` skip
+  (`0x004aaffc`), so a Full Simulation park with 1500 or 1501 researched lists Dino Karts Jump (750) and Dino Karts
+  Tunnel (900), and a row puts one in the hand. Seen in the game on a copy of Alexah's Full Simulation autosave
+  (`gp-fs.out`). It is Q221 (2), no longer dead by content since Q349. Confirm: the list without them, beside the original.
+- [ ] **Q453. A park file's advisor poll cursor out of range stalls the game.** From the week-end audit (D2,
+  `VERIFY-2a.md` Q316 1). `RestoreCursor` refuses only a negative cursor; at `0x7FFFFFFF` the first poll's `row + 1`
+  overflows and walks 2^31 rows, about 87 s. The original sets any cursor of 351 or more to nought first (`0x0059c6a8`).
+  Put the wrap back before the loop (the line removed as mutant r09) with an `int.MaxValue` test.
+- [ ] **Q454. A new Instant Action player's first park clears the advisor's records.** From the week-end audit (D3,
+  `VERIFY-1b.md` Q313 1). Event 10 (`RESET_FOR_EASY_MODE`, sent `0x0054f24e`, handled `0x0059af63`) sets every record's
+  line to -1 and its said and slaps to nought, keeping the tick, on the player's first park only (the gms.dat byte
+  read `0x005b0597`, written `0x005b0109`). Ours keeps Easymode.TPWI's said bytes, so 0xb9 and 0x11a are never said.
+  `PlayerFile.FirstParkToCome` is never cleared here. Confirm: a new player's first park in both games, tick 877.
+- [ ] **Q455. A click on the tab already down lifts it.** From the week-end audit (D4, `VERIFY-15a.md` Q364 1).
+  `WindowStack` flips the radio button up and `Put` returns before setting it down; the original's group with style
+  0x10 sets it down again (`0x0066a455`..`0x0066a468`; frames `q364/orig/b-*.png`). `ParkLocator` already works round
+  it. Read each screen group's style first.
+- [ ] **Q456. The entry price screen's Loans button in Instant Action.** From the week-end audit (D5, `VERIFY-16a.md`
+  Q366 1). The original disables it in game type 2 (`0x00499008`..`0x00499030`), as staff costs' (`ParkStaffCostsScreen.cs`
+  does it); ours takes the click, closes the screen and opens nothing.
+- [ ] **Q457. The satisfaction bar is masked to a byte.** From the week-end audit (D6, `VERIFY-16a.md` Q367/Q368).
+  `ParkItemsScreen` runs satisfaction through `Bar()`'s `& 0xff`; the original does not (`0x00494031`, `0x00494199`,
+  `0x00495888`, `0x00495959`) and the setter clamps 0..0x400 (`0x0066d885`). A test with -1 and 256.
+- [ ] **Q458. The staff screen's meters average as the original's.** From the week-end audit (D7, `VERIFY-16b.md`
+  Q369 1). The original averages each member's `ftol(h) & 0xff`: the kind's meter an integer mean then
+  `(m << 10) / 100` (`0x004c9cc0`), the all-staff meter a float mean times 1024 times 0.01f (`0x004c7cc0`, `0x00496a7b`),
+  in double (`advisor-park.md`, the FPU's precision). Ours scales the raw mean: 896 against 892 on `q369/skill.TPWS`.
+- [ ] **Q459. The happiness gauge keeps the mean's fraction.** From the week-end audit (D8, `VERIFY-4b.md` Q392 2).
+  `FUN_004c7bb0` ends `fidiv` (`0x004c7c96`); the gauge is trunc(mean x 10.24) of 1024 (`0x004a1d3f`..`0x004a1d5a`). Ours
+  is a whole mean of 100, and `TheMeanIsWholeAndRoundsTowardsNought` pins it. `GuestsInsideHappiness` is the exact routine.
+- [ ] **Q460. Zlib textures round the chroma terms twice.** From the week-end audit (D9, `VERIFY-13b.md` Q355 1). The
+  original stores the Cb and Cr terms as float32 at 1.5 x 2^23 (`0x00594f5e`, `0x00594f87`), integers before Y is added;
+  `Held` rounds once: 933 of 986 files differ by 1. Green's rounding (the FPU mode) needs a breakpoint at `0x00594f72`.
+- [ ] **Q461. The tag bar's meshless buttons are disabled in the original.** From the week-end audit (D10,
+  `TIEBREAK-Q311.md`). A type-0 tag's second button and a decline's erase button are shown and disabled (vtable +0x14
+  with 0 at `0x0048e991`, `0x0048e43c`); the hit test skips a disabled control (`0x0065db3b`). Q427 made them take the
+  pointer (`ParkGadget.cs`, `hud.md`, two tests). Needs Q66 (`HitTest` reads no `Enabled`) first, or the difference said.
+- [ ] **Q462. The advisor's turn comes before the sweep's tail.** From the week-end audit (D11, `VERIFY-8b.md` Q318 1).
+  The original walks every thing (his turn inside the walk), then `0x004d7b20` (`0x00516695`): arrivals, staff pool,
+  calendar. Ours runs the arrivals and the pool before his `Tick`, so row 0x11 can be said a poll round early or late.
+- [ ] **Q463. A tag's first show: half a second, and particle 0x5a.** From the week-end audit (D12, `VERIFY-7b.md`
+  Q309 1). The mast posts message 6 (show) 500 ms after a tag is put on (`0x004a1286`); its first show starts effect
+  0x5a (`0x0048dfa6`, not while paused). Ours shows it at once and counts nothing (rule 4): count it first.
+- [ ] **Q464. A written corner cell's made vehicles run newest first.** From the week-end audit (D13, `VERIFY-2b.md`
+  Q342 1). With ferry and seaplane both made, `ParkWorld.People.cs` writes cell (0,0)'s chain oldest first; the
+  original's file (`q257x/orig/fixed-by-the-original.TPWS`) and our running list run newest first. No effect on reading
+  back was found.
+- [ ] **Q465. A purchase's advisor post is not counted.** From the week-end audit (`VERIFY-10a.md` Q328 3). Every
+  purchase reaches the original's 0xc9 or 0xce post (`0x004ac67e`..`0x004ac7d9`); ours neither builds nor counts it
+  (`ParkBuyScreen.Chose`). The line is filed under Q420; add the `Unimplemented.Report` (rule 4).
+
 ## B. Docs and comments
 
 - [ ] **Q14. Comment sweep of the cleanup commits.** Replace history-voice comments with what the code does now,
@@ -1941,6 +1999,15 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   original). `park.md`: "`WALKGET` returns only a rider `WALKOFF` let off (`FUN_00557110`)" (`FUN_00557110`
   answers a slot in state 4 and `WALKOFF` writes 3: trace the walk update's writes at `0x00557e6c` and
   `0x00558018`). Confirm: each settled from the listing, the page saying what it shows. No game run.
+
+- [ ] **Q466. The texture-alpha pages and two FileFormats pages, read again whole.** From the week-end audit,
+  2026-10-17 (`VERIFY-14a.md`, `VERIFY-14b.md`, `VERIFY-15a.md`; `CLAUDE.local.md` says where). Q357 to Q362 rewrote the
+  alpha rule in turn and left `textures.md` (:19-20, :34-38, :51-58, :86-97, :123-124, :234), `lobby.md` (:215-239) and
+  `render-states.md` (:79, :161, :166) contradicting the code and each other: nothing keys black in the interface; the
+  loader's `0x800` makes floors opaque; the skirt pass clears the current group's material when the edge byte is nought;
+  mode 1 reverses each texel's bytes (`0x005ecf5e`). FileFormats `formats/sgn.md:228-230` keeps the old multiplier's alpha
+  figures and `formats/models.md:747` calls bit 0x02 the only one established (rule 14). Rewrite each from the tip's
+  code and the listing; no behaviour change.
 
 ## C. Alexah's list: cause known, one session each
 
