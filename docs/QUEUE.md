@@ -624,7 +624,9 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
   ride worn under 25 by running, button types `0xd` and `0xf` to `0x11`, the button with the hire screen open
   (the tests hold each), a mechanic hired after the line, Full Simulation. Not heard in either game.
   From Q330 (`hud.md`, "The six round buttons"): what serves Restart Park's request (`FUN_005508b0( 1 )`) is
-  not read; it keeps the category in both games, measured. In no game run: Full Simulation, the Information
+  read by the fork watch of 2026-10-17 (`verify-save.md` L2): it only stores its argument in `DAT_00879088`; `0x0048b5b0`
+  (menu command 3) and `0x0048b620` (command 0x17, the end-of-park menu's Restart Park) pass 1; the world runs state 10,
+  0xd, 0xe, the reload, 10, and `0x0055037b` clears the word; it never passes state 9. Restart Park keeps the category in both games, measured. In no game run: Full Simulation, the Information
   and Finance categories (their seed and their openers' notes are read, not put to the original; Information
   is seeded 4 here, the declared deviation), a key that opens a screen. Exit To Lobby in the original writes
   `autosave.TPWS`; this game writes none.
@@ -978,6 +980,11 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest
   file; the quicksave and quickload keys (`<theme>.TPWS`); `restart.INTS` written when the folder has none, and
   read by Restart Park. After Q241j. Confirm: a park left and entered again at the tick it was left on.
+  - **Note (fork watch 2026-10-17, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-17/verify-save.md` L5):** the analyser record's undecoded part (FileFormats `saves.md`, its
+    first 62,598 bytes) is mostly 1,024 records of 61 bytes, four ints then nine caches, each a count and an
+    `mWorkedOut` byte, measured at the record's +36 to +62,500 in two files; no cache stamp is saved (`0x004cd9c0`).
+    The sound block after the 84 bytes is three dwords and a length L, ending at +12+L in 487 of 487 park files
+    (`0x0051c547`, L3); what the three words are is not read. Both go to FileFormats `saves.md` (rule 14).
 - [ ] **Q149. The calendar keeps its own game tick, from nought, and makes up the advances the original loses.** Found
   by the 2026-09-26 staleness audit. The original's calendar counter is `mGameTick` (`+0x1da70c`, `weather.md`, "The
   calendar"), which a loaded save sets to its own (755 in `Easymode.TPWI`, as `GameCalendar.Rebase` says);
@@ -2415,6 +2422,13 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     from `0x0043d730` only for a car type whose flag bit 0 is set (`coaster1`'s `bBendCar 1`), its dot clamped to [0,
     1] before the acos. Not read: the bend's tables, `0x00432df0`, `0x00435570`, the per-pylon tag counts.
 
+  - **Note (fork watch 2026-10-17, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-17/verify-save.md` L1):** the coasters module holds each track piece as one 0x22-byte
+    record: flags, the mesh instance (to node `+0x70` through `0x00463ab0`), cell x and y (u16), an ordinal (u8), five
+    unaligned floats and a link count (u8). The floats go into the node through `0x00444150` (loft, `+0xe8`),
+    `0x004441d0` (yaw, `+0xe0`) and `0x00444270` (bank and incline, `+0xd8`/`+0xdc`, or a loop's rotation, `+0xf8`).
+    Measured on Temple Of Gloom in Alexah's jungle saves: the pieces end at the module's +1,344, leaving the 506 bytes
+    for trains, cars and riders. No loop piece or link in the corpus: those branches are read from code only. The field
+    table belongs in FileFormats `saves.md`, "The coasters module".
 - [ ] **Q406. Coaster building: the track tool.** From the fork review 2, 2026-10-16 (`verify-coasters-build.md`
   L1-L11). A piece costs `fCostPerHeight` × H × 0.1 + `fCostPer2DLength` × length × 0.1, plus `fCostPerUnit` only on
   placing a pylon (`0x00447830`, `0x00435020`; the cursor's preview `0x00435d50`); placing takes trunc( cost ), a
