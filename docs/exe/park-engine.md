@@ -1358,6 +1358,7 @@ which calls the hover updater `FUN_00486d90` and then the world click `FUN_00487
 **`FUN_004879d0` acts only when the current mode's type is 0 or 1**, which is what makes clicking the
 world an idle-mode-only behaviour. It switches on the hover category `DAT_007c24f4`:
 
+    category 0      nothing          -> answers 1, the click taken
     category 4      a placed object  -> FUN_00486920, the per-object window dispatcher
     category 7      a guest          -> FUN_004b79b0
     categories 8-c  the five staff   -> FUN_004b6080, the staff detail window
@@ -3459,10 +3460,22 @@ constructs `FUN_0046c580(1)`, whose `OnInstall` `FUN_0046d5a0` calls `FUN_0052f2
 anchor, cursor 3), and the release applies at the same cell, which anchors. **One click arms and
 anchors.** Idle, the pointer already wears `c_path` over those cells, with UIHELPTEXT 441 "Left-click to
 build path" over ground and 442 "Left-click to extend this path" over path. What comes before the
-categories: staff under the pointer (their window), an active locator, **Shift** (the guest pick), the
-gate and ticket booth, and track cells — type `0xb` and `0x10` have categories of their own, and a type
+categories: the person under the pointer and the locators (below), the gate and ticket booth, and track cells — type `0xb` and `0x10` have categories of their own, and a type
 `0xc` cell whose parent is `0x19` has none at all (`0x004873b3`..`0x004873c5`), so the 429 such cells in
 Lost Kingdom arm nothing. A guest on the cell does not stop it.
+
+**The person under the pointer decides first** (Q444; `FUN_00486d90`, the modifiers by `GetAsyncKeyState`: Shift 3,
+Ctrl `0xc`, Alt `0x30`; the locator `[0x007cc2f0]` by `FUN_004b4480` at `0x00486dd6`; the person is the sprite pick's
+`[0x007b05ac]`, "The thing under a sprite" above). With the visitors' locator open (2) and no modifier, or Shift alone
+and no locator, a guest (kind byte 1) is category 7, the visitor's window (`FUN_004b79b0`), and anything else is
+category 0, a member of staff too (`0x00486fd0`). Otherwise a member (kinds 5, 4, 6, 7, 8) is category 8 to 12, their
+window (`FUN_004b6080`); then with either locator open every later category is skipped (`0x0048721c` to
+`0x004878d3`), so a click on ground, path or an object does nothing (category 0 falls out of `FUN_004879d0`'s switch
+answering 1). Measured in the original (`q444/orig/`, `PREDICTION.txt`): the staff locator open, two points off any
+person read category 0 and their clicks left the mode and the screens as they were; Mike under the pointer read 9 and
+the click opened his window and folded the arm; the visitors' locator open, the guest at the middle read 7 and the
+click opened the visitor's window; the visitors' locator and Shift together, the locator's own guest read 0; with no
+locator Shift alone read 0 on path and 7 on a guest, whose click opened their window.
 
 **The preview** (`FUN_005234d0` → `FUN_00536100(0x101, …)`, every UI tick): unanchored, one square
 under the pointer, which is both the first and the last cell; anchored, the line from the anchor to the

@@ -766,6 +766,14 @@ GH=766` there, or the pointer is off):
   (Q425, `q425/confirm.py`, `q425/orig/run.sh`). A fenced member's patrol edges are `squares.py %PID% 4` after the
   kind's button in the original, and here `locator`'s `patrol=` with `strip`'s drawn census, `| patrol N x,y,marker^lift`,
   read under `pause`; the stock mechanic and entertainer are fenced, the researcher not (Q426, `q426/`).
+- **What a world click is, in either game** (Q444, `q444/orig/run.sh`, `q444/confirm.py`): the original's hover category is
+  `[0x007c24f4]` (`park-engine.md`'s table: 0 nothing, 1 path, 2 ground, 7 a guest, 8 to 12 a member) and the person under
+  the pointer `[0x007b05ac]`, read with `tpwmem.py read` after a `gmove.py` glide; with a locator's follow on, the person
+  is near (512,384) of 1024 x 768. **Click at once on the point that reads the category wanted**: a few seconds of reads
+  and a frame between let a walker go (round a). Here `pick` names the cell and its list's head (`standing thing N`),
+  `cell X Y` its `occupant`, `tool` the mode as a number (`mode 0,` none, `mode 1,` the path tool); for a guest or a
+  member to stay put, `pause` once the arm has stopped (its slide is eased on `Time.Delta`), click, `resume`. A window's
+  OK on a 16:9 window is the 2048 x 1536 rect scaled by the height and moved in by the side bars.
 - **The camcorder button in the original** (Q428, `q428/orig/run.sh`): the button (130,707) and, once its panel is out,
   the camera button (283,641), of 1024 x 768; its line `0x131` is `advisor.py %PID% SECS 0x131`, here the log's
   `message=305` (`q428/confirm.py` clicks `control 27`, `64` and `63`). **The original's camera button installs a pick**

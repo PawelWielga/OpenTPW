@@ -7400,6 +7400,24 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`0xd4727529`, `4-loaded-bus-6.png`); the original's first read after loading the file was `0x975cef2b`
   (`q443/orig/a-load.log`). Tests `TheParksGeneratorIsTheSavesSeed`, `TheParksGeneratorIsWrittenAsTheSeed`, the summons'
   rounds checked step by step; mutations 13 of 13 (`q443/PREDICTION.txt`, `mut.out`).
+- [x] **Q444. World clicks with a locator open, as the original's: piece (1).** From the run review (q424, q431,
+  q432). **Done (2026-10-17):** `Level.PickPerson` asks the person under the pointer before the ground, the original's
+  first tests (`park-engine.md`, "The person under the pointer decides first"): with a locator open a click arms no tool
+  and opens no object's window, and the hover shows no path row; a member keeps their window; with the visitors' locator
+  and no modifier, or Shift alone and no locator, a guest's window and nothing else. Confirmed in both games
+  (`q444/PREDICTION.txt`, ours 8 of 8 on the final binary, `q444/side-by-side.png`); `mutate.py` 16 of 16. A person's own
+  hover rows are counted (`PERSON_HOVER_HELP`, Q447). I split the item: piece (2) is Q446. (1) With a locator open, the original's hover categoriser `FUN_00486d90` reads it (`0x00486dd6`, `[0x007cc2f0]`)
+  and skips the ground, path and object categories (`0x0048721c` to `0x004878d3`: category 0, the click does nothing);
+  staff under the pointer keep their window, and with the visitors' locator open a guest under the pointer opens the
+  visitor's window without Shift (`0x00487009` to `0x0048702d`, category 7, `FUN_004b79b0`). Ours arms the path tool
+  (`Level.ArmsThePathTool`, used by the hover and `ClickWorldAt`) and opens object windows, uncounted: Q432's run logged
+  "world click: path: anchored at (49,23)" with the staff locator open where the original laid nothing and its strip
+  took the click (`q432/orig/b-run.out`). (2) A member's world click opens the window on the cell's occupant
+  (`ParkPicking.ThingOn`), but staff are entered in a cell only when hired or put down, never as they walk: the stock
+  park's (47,25) still names Mike Cooper after he walks off. Open only on a member standing on the clicked cell (read the
+  original's pick for staff first). Confirm: both games, a locator open, a click on bare ground and on a path arming
+  nothing; a guest clicked with the visitors' locator open; a click where a member stood after he walked off opening
+  nothing; tests for each.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

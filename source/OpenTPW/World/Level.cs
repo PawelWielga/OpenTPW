@@ -60,6 +60,9 @@ public class Level
 	/// <summary>Everything this theme sells, for as long as the park is up - see <see cref="ParkBuilding"/>.</summary>
 	public ParkItemCatalogue? Catalogue { get; private set; }
 
+	/// <summary>The park gadget's staff and visitor locators, which a click on the park asks (<see cref="PickPerson"/>).</summary>
+	internal UI.ParkLocator? Locator { get; set; }
+
 	/// <summary>Which of those items the park has researched, the save's word first - see <see cref="ParkResearch"/>.</summary>
 	public ParkResearch? Research { get; private set; }
 
@@ -1027,7 +1030,7 @@ public class Level
 
 		// What Escape does here, and what the menu's choices do, which is this scene's to say. After the
 		// stack, as the lobby's front end is, so it hears about a frame once the stack has dealt it out.
-		Hud.AddChild( new ParkFrontEnd( windows, ThemeName ) );
+		Locator = Hud.AddChild( new ParkFrontEnd( windows, ThemeName ) ).Gadget.Locator;
 
 		// The same on-screen effects the lobby has, and for a reason rather than for symmetry: a park
 		// makes button glints. SetupParticles runs for parks as well as for the lobby, the windows here
@@ -1307,17 +1310,31 @@ public class Level
 	/// (<c>FUN_004a2aa0( 0 )</c>, <c>0x00485cc8</c>).
 	/// </summary>
 	private bool IdleOverPath()
-		=> ParkBuildMode.Current == ParkBuildMode.None && ParkHand.Empty && !UI.WindowStack.ParkScreenOpen
-			&& ParkPicking.TryCell( out var x, out var y ) && ArmsThePathTool( x, y, ParkPicking.ThingUnderCursor );
+		=> HoverTaken && ParkPicking.TryCell( out var x, out var y ) && ArmsThePathTool( x, y, ParkPicking.ThingUnderCursor );
+
+	/// <summary>Whether the hover is taken at all: nothing armed, an empty hand and no park screen open.</summary>
+	private static bool HoverTaken
+		=> ParkBuildMode.Current == ParkBuildMode.None && ParkHand.Empty && !UI.WindowStack.ParkScreenOpen;
+
+	private int WorldHelpRow()
+		=> ParkPicking.TryCell( out var x, out var y ) ? WorldHelpRow( x, y, ParkPicking.ThingUnderCursor ) : -1;
 
 	/// <summary>
-	/// The help row for the cell under the pointer, idle: UIHELPTEXT 441 "Left-click to build path" over
-	/// bare ground and 442 "Left-click to extend this path" over path. Nothing is found in the original to
-	/// show 443, "BACKSPACE to undo", so nothing here does.
+	/// The help row for a cell under the pointer, idle: UIHELPTEXT 441 "Left-click to build path" over
+	/// bare ground and 442 "Left-click to extend this path" over path, where the click would arm the path tool
+	/// (<see cref="ArmsThePathTool"/>). Nothing is found in the original to show 443, "BACKSPACE to undo", so nothing
+	/// here does.
 	/// </summary>
-	private int WorldHelpRow()
+	internal int WorldHelpRow( int x, int y, int thingUnderCursor )
 	{
-		if ( !IdleOverPath() || Park is not { } park || !ParkPicking.TryCell( out var x, out var y ) )
+		if ( !HoverTaken || Park is not { } park )
+			return -1;
+
+		// A person's own rows, 0x229 and 0x22a for a guest and 0x22b for a member, and the pointer they put up, are not built.
+		if ( PersonUnder( thingUnderCursor ) is PersonPick.Guest or PersonPick.Member )
+			Unimplemented.Report( "PERSON_HOVER_HELP" );
+
+		if ( !ArmsThePathTool( x, y, thingUnderCursor ) )
 			return -1;
 
 		return ParkState.CellFor( park, x, y ).Type == CellEdge.Path ? 442 : 441;
@@ -1325,8 +1342,8 @@ public class Level
 
 	/// <summary>
 	/// Whether a click on this cell, idle and empty-handed, picks up the path tool: bare ground or path
-	/// (<c>FUN_00486d90</c>'s categories 2 and 1), with no Shift held - Shift is the guest pick - and no
-	/// member of staff under the pointer, whose window comes first. A guest on the cell, or the ride a
+	/// (<c>FUN_00486d90</c>'s categories 2 and 1), where the person under the pointer leaves the click to the ground
+	/// (<see cref="PickPerson"/>): no locator open, no Shift alone, no member of staff. A guest on the cell, or the ride a
 	/// path serves, does not stop it. Track cells of type 11 and 16 have a category of their own, and a
 	/// type-12 track cell whose parent is type 25 has none at all (<c>0x004873b3</c>).
 	/// </summary>
@@ -1354,11 +1371,59 @@ public class Level
 				return false;
 		}
 
-		if ( Input.ShiftHeld )
-			return false;
-
-		return thingUnderCursor == 0 || ParkPeople.Current?.IsStaff( thingUnderCursor ) != true;
+		return PersonUnder( thingUnderCursor ) == PersonPick.Further;
 	}
+
+	/// <summary>What the person under the pointer makes of a click - see <see cref="PickPerson"/>.</summary>
+	internal enum PersonPick
+	{
+		/// <summary>Nobody's: the ground's own categories decide.</summary>
+		Further,
+
+		/// <summary>Category 0: the click does nothing.</summary>
+		Nothing,
+
+		/// <summary>Category 7: the visitor's window, <c>FUN_004b79b0</c>.</summary>
+		Guest,
+
+		/// <summary>Categories 8 to 12: the staff member's window, <c>FUN_004b6080</c>.</summary>
+		Member
+	}
+
+	/// <summary>
+	/// The first of <c>FUN_00486d90</c>'s tests, which decide before the ground's: with the visitors' locator open and no
+	/// modifier held, or Shift alone and no locator, a guest under the pointer is category 7 and anything else is
+	/// nothing (<c>0x00486fd0</c>); otherwise a member of staff is their kind's category, and with either locator open
+	/// whatever else is under the pointer is nothing (<c>0x0048721c</c>), so a click there arms no tool and opens no window.
+	/// </summary>
+	/// <param name="locator">Which locator is open, <c>[0x007cc2f0]</c>.</param>
+	/// <param name="held">The modifiers held, as <c>GetAsyncKeyState</c> reads Shift, Control and Alt.</param>
+	/// <param name="guest">Whether a guest is under the pointer.</param>
+	/// <param name="member">Whether a member of staff is.</param>
+	internal static PersonPick PickPerson( UI.ParkLocator.Kind locator, Input.Modifiers held, bool guest, bool member )
+	{
+		if ( (locator == UI.ParkLocator.Kind.Visitors && held == Input.Modifiers.None)
+			|| (held == Input.Modifiers.Shift && locator == UI.ParkLocator.Kind.None) )
+			return guest ? PersonPick.Guest : PersonPick.Nothing;
+
+		if ( member )
+			return PersonPick.Member;
+
+		return locator == UI.ParkLocator.Kind.None ? PersonPick.Further : PersonPick.Nothing;
+	}
+
+	/// <summary><see cref="PickPerson"/> for this thing under the pointer, the locator open now and the keys held now.</summary>
+	private static PersonPick PersonUnder( int thingUnderCursor )
+	{
+		var people = ParkPeople.Current;
+
+		return PickPerson( LocatorOpen, Input.Held,
+			guest: thingUnderCursor != 0 && people?.Guests.ContainsKey( thingUnderCursor ) == true,
+			member: thingUnderCursor != 0 && people?.IsStaff( thingUnderCursor ) == true );
+	}
+
+	/// <summary>Which locator the park's gadget has open, or none.</summary>
+	private static UI.ParkLocator.Kind LocatorOpen => Current?.Locator?.Open ?? UI.ParkLocator.Kind.None;
 
 	/// <summary>
 	/// The build keys, on release as the original's game table fires them: Backspace and Delete. Not
@@ -1571,6 +1636,25 @@ public class Level
 		if ( ParkBuildMode.Current != ParkBuildMode.None )
 			return $"world click: {RunBuildMode( cellX, cellY )}";
 
+		// THE PERSON UNDER THE POINTER IS ASKED FIRST, and an open locator or Shift alone keeps the click from everything after.
+		switch ( PersonUnder( thingUnderCursor ) )
+		{
+			case PersonPick.Guest:
+				if ( _windows is { } guestStack )
+					UI.ParkVisitorWindow.Open( guestStack, thingUnderCursor );
+
+				return $"world click: opened the visitor window for thing {thingUnderCursor}";
+
+			case PersonPick.Member:
+				if ( _windows is { } memberStack )
+					UI.ParkStaffWindow.Open( memberStack, thingUnderCursor );
+
+				return $"world click: opened the staff window for thing {thingUnderCursor}";
+
+			case PersonPick.Nothing:
+				return $"world click: nothing to do at ({cellX},{cellY}), the person under the pointer decides it ({LocatorOpen} locator open)";
+		}
+
 		// CLICKING A QUEUE CELL HANDS BACK THE QUEUE TOOL for the thing that queue serves, anchored on the
 		// queue's far end - the original's mode 0x14, "edit this ride's queue". It has to be tested BEFORE
 		// the thing under the cursor, because a queue cell names its ride through the owner a queue
@@ -1588,14 +1672,6 @@ public class Level
 			ParkBuildMode.Arm( ParkBuildMode.Path );
 
 			return $"world click: {ParkPathBuilding.RunPath( cellX, cellY, !UI.WindowStack.ParkScreenOpen )}";
-		}
-
-		// A member's click opens their window (FUN_004879d0, category 8 to FUN_004b6080).
-		if ( thingUnderCursor != 0 && ParkPeople.Current?.IsStaff( thingUnderCursor ) == true && _windows is { } stack )
-		{
-			UI.ParkStaffWindow.Open( stack, thingUnderCursor );
-
-			return $"world click: opened the staff window for thing {thingUnderCursor}";
 		}
 
 		if ( thingUnderCursor != 0 )

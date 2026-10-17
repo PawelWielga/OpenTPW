@@ -45,8 +45,10 @@ public static class ParkPicking
 	public static Vector3 WorldPoint { get; private set; }
 
 	/// <summary>
-	/// The thing standing on the cell under the pointer, or nought - the original latches the same
-	/// answer by asking the cell rather than by hit-testing the thing's own model.
+	/// The thing standing on the cell under the pointer, or nought (<see cref="ThingOn"/>). <b>A declared deviation for
+	/// people:</b> the original takes a person by the sprite drawn under the pointer, matched on the hovered cell and its
+	/// eight neighbours (<c>FUN_00532bd0</c>), and an object by the cell; this asks the cell's list for both, its head
+	/// first, so of two guests on one cell the one who came last answers.
 	/// </summary>
 	public static int ThingUnderCursor { get; private set; }
 

@@ -1,9 +1,11 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NeoVeldrid;
 using OpenTPW.UI;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace OpenTPW.Tests;
@@ -36,6 +38,7 @@ public class ParkLocatorTests
 		Log ??= new();
 		FileSystem = GameData.Required();
 		Input.Mouse = new();
+		Unimplemented.Forget();
 
 		using var stream = new MemoryStream( FileSystem.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
 		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
@@ -52,6 +55,8 @@ public class ParkLocatorTests
 		_stack = new WindowStack();
 		_gadget = new ParkGadget( _stack );
 		_stack.Open( _gadget );
+		level.Locator = _gadget.Locator;
+		typeof( Level ).GetField( "_windows", BindingFlags.NonPublic | BindingFlags.Instance )!.SetValue( level, _stack );
 
 		ParkOrbitCameraMode.PointOfInterest = new Vector3( 300f, 300f, 0f );
 	}
@@ -65,7 +70,10 @@ public class ParkLocatorTests
 		Screen.Size = _screen;
 		Time.Now = _now;
 		Input.Mouse = new();
+		Input.Keyboard = new();
 		ParkOrbitCameraMode.PointOfInterest = _looksAt;
+		ParkBuildMode.Forget();
+		Unimplemented.Forget();
 	}
 
 	private ParkLocator Locator => _gadget.Locator;
@@ -455,4 +463,142 @@ public class ParkLocatorTests
 
 	private static UiControl? FindOrNull( UiControl root, int id )
 		=> root.Id == id ? root : root.Children.Select( child => FindOrNull( child, id ) ).FirstOrDefault( found => found != null );
+
+	/// <summary>The first cell of path in the shipped park, row by row.</summary>
+	private static (int X, int Y) APathCell()
+	{
+		for ( var y = 0; y < ParkWorld.MapSize; y++ )
+		{
+			for ( var x = 0; x < ParkWorld.MapSize; x++ )
+			{
+				if ( ParkState.CellFor( Level.Current!.Park!, x, y ).Type == CellEdge.Path )
+					return (x, y);
+			}
+		}
+
+		throw new AssertFailedException( "the shipped park has path" );
+	}
+
+	/// <summary>A guest in the park, admitted on the road's far side where the shipped park has none inside.</summary>
+	private int AGuest() => _people.Guests.Count > 0 ? _people.Guests.Keys.First() : _people.Admit( 55, 30 );
+
+	private static string ClickAt( int x, int y, int thing ) => Level.Current!.ClickWorldAt( x, y, thing );
+
+	/// <summary>
+	/// <b>With the staff's locator open a click on the park arms no tool and opens no window</b> (<c>0x0048721c</c>): bare
+	/// ground (43,16), path (49,23), the Belly Bounce's anchor (51,23) and a guest all do nothing; a member under the pointer
+	/// still has their window. With it folded away the same ground arms the path tool, which (43,16), outside the park, refuses at once.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the locator not asked; the visitors' alone stopping the ground; the member's window refused.</remarks>
+	[TestMethod]
+	public void WithTheStaffLocatorOpenAClickOnTheParkDoesNothingButAMembersWindow()
+	{
+		var (pathX, pathY) = APathCell();
+		var guest = AGuest();
+
+		CtrlS();
+		Assert.AreEqual( ParkLocator.Kind.Staff, Locator.Open );
+
+		foreach ( var (x, y, thing) in new[] { (43, 16, 0), (pathX, pathY, 0), (51, 23, 13), (49, 23, guest) } )
+		{
+			StringAssert.Contains( ClickAt( x, y, thing ), "nothing to do", $"({x},{y}) thing {thing}" );
+			Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, $"({x},{y}) armed nothing" );
+		}
+
+		Assert.IsFalse( _stack.Windows.Any( window => window is ParkObjectWindow or ParkVisitorWindow ) );
+
+		var member = _people.Staff[0];
+		StringAssert.Contains( ClickAt( 49, 23, member.ThingId ), $"opened the staff window for thing {member.ThingId}" );
+		Assert.IsTrue( _stack.Windows.OfType<ParkStaffWindow>().Any() );
+
+		_stack.Close( _stack.Windows.OfType<ParkStaffWindow>().Single() );
+		Fold();
+		Assert.AreEqual( ParkLocator.Kind.None, Locator.Open );
+		StringAssert.StartsWith( ClickAt( 43, 16, 0 ), "world click: path", "with no locator the ground arms the path tool" );
+	}
+
+	/// <summary>
+	/// <b>With the visitors' locator open and no modifier a guest clicked opens their window and nothing else does</b>
+	/// (<c>0x00486fd0</c>, category 7 to <c>FUN_004b79b0</c>), not even a member; with Control held the member's window
+	/// opens again and the ground still does nothing.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the guest's window not opened; a member's opened with no modifier; Control taken as none.</remarks>
+	[TestMethod]
+	public void WithTheVisitorsLocatorOpenAGuestClickedOpensTheirWindowAndAMemberNothing()
+	{
+		var guest = AGuest();
+		var member = _people.Staff[0];
+
+		CtrlV();
+		Assert.AreEqual( ParkLocator.Kind.Visitors, Locator.Open );
+
+		StringAssert.Contains( ClickAt( 49, 23, member.ThingId ), "nothing to do" );
+		StringAssert.Contains( ClickAt( 43, 16, 0 ), "nothing to do" );
+		Assert.IsFalse( _stack.Windows.Any( window => window is ParkStaffWindow or ParkVisitorWindow ) );
+
+		StringAssert.Contains( ClickAt( 49, 23, guest ), $"opened the visitor window for thing {guest}" );
+		Assert.AreEqual( guest, _stack.Windows.OfType<ParkVisitorWindow>().Single().ThingId );
+		_stack.Close( _stack.Windows.OfType<ParkVisitorWindow>().Single() );
+
+		CtrlV();
+		Input.Keyboard = new Input.KeyboardInfo( new List<Key> { Key.ControlLeft } );
+		StringAssert.Contains( ClickAt( 43, 16, 0 ), "nothing to do" );
+		Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current );
+		StringAssert.Contains( ClickAt( 49, 23, member.ThingId ), "opened the staff window" );
+	}
+
+	/// <summary>
+	/// <b>Shift alone with no locator open is the guest pick</b> (<c>0x00486fd0</c>): a guest's window, and nothing for the
+	/// ground, the ride or a member; let go, the ground arms the path tool.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> Shift not asked; Shift with a locator taken as the pick; the member's window under Shift.</remarks>
+	[TestMethod]
+	public void ShiftAloneWithNoLocatorPicksAGuestAndNothingElse()
+	{
+		var guest = AGuest();
+		var member = _people.Staff[0];
+
+		Input.Keyboard = new Input.KeyboardInfo( new List<Key> { Key.ShiftLeft } );
+
+		foreach ( var (x, y, thing) in new[] { (43, 16, 0), (51, 23, 13), (49, 23, member.ThingId) } )
+			StringAssert.Contains( ClickAt( x, y, thing ), "nothing to do", $"({x},{y}) thing {thing}" );
+
+		Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current );
+		StringAssert.Contains( ClickAt( 49, 23, guest ), $"opened the visitor window for thing {guest}" );
+
+		Input.Keyboard = new();
+		_stack.Close( _stack.Windows.OfType<ParkVisitorWindow>().Single() );
+		StringAssert.StartsWith( ClickAt( 43, 16, 0 ), "world click: path" );
+	}
+
+	/// <summary>
+	/// <b>The hover shows the path's row only where the click would arm the path tool</b>: 441 over bare ground and 442 over
+	/// path with no locator open, nothing with the staff's open; a member under the pointer, and a guest with the visitors'
+	/// open, show nothing and count their own rows' gap.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the hover not asking the person; the person's gap not counted.</remarks>
+	[TestMethod]
+	public void TheHoverShowsThePathsRowOnlyWhereTheClickWouldArmIt()
+	{
+		_stack.Update();
+		var (pathX, pathY) = APathCell();
+		var guest = AGuest();
+		var member = _people.Staff[0].ThingId;
+		int Row( int x, int y, int thing ) => Level.Current!.WorldHelpRow( x, y, thing );
+		int Counted() => Unimplemented.Summary.FirstOrDefault( gap => gap.What == "PERSON_HOVER_HELP" ).Times;
+
+		Assert.AreEqual( (441, 442, 441), (Row( 43, 16, 0 ), Row( pathX, pathY, 0 ), Row( 43, 16, guest )) );
+		Assert.AreEqual( 0, Counted() );
+
+		CtrlS();
+		Assert.AreEqual( (-1, -1, -1), (Row( 43, 16, 0 ), Row( pathX, pathY, 0 ), Row( 43, 16, guest )) );
+		Assert.AreEqual( 0, Counted(), "a guest with the staff's locator is nobody's" );
+		Assert.AreEqual( -1, Row( 43, 16, member ) );
+		Assert.AreEqual( 1, Counted() );
+
+		Fold();
+		CtrlV();
+		Assert.AreEqual( (-1, -1), (Row( 43, 16, guest ), Row( 43, 16, member )) );
+		Assert.AreEqual( 2, Counted(), "the guest's, not the member's" );
+	}
 }

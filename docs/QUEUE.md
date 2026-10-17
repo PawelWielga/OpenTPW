@@ -47,19 +47,6 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 Q444 and Q445 come first: defects a player meets, found by the review of the run of 2026-10-16/17 (its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`).
 
-- [ ] **Q444. World clicks with a locator or a person's window open, as the original's.** From the run review (q424, q431,
-  q432). (1) With a locator open, the original's hover categoriser `FUN_00486d90` reads it (`0x00486dd6`, `[0x007cc2f0]`)
-  and skips the ground, path and object categories (`0x0048721c` to `0x004878d3`: category 0, the click does nothing);
-  staff under the pointer keep their window, and with the visitors' locator open a guest under the pointer opens the
-  visitor's window without Shift (`0x00487009` to `0x0048702d`, category 7, `FUN_004b79b0`). Ours arms the path tool
-  (`Level.ArmsThePathTool`, used by the hover and `ClickWorldAt`) and opens object windows, uncounted: Q432's run logged
-  "world click: path: anchored at (49,23)" with the staff locator open where the original laid nothing and its strip
-  took the click (`q432/orig/b-run.out`). (2) A member's world click opens the window on the cell's occupant
-  (`ParkPicking.ThingOn`), but staff are entered in a cell only when hired or put down, never as they walk: the stock
-  park's (47,25) still names Mike Cooper after he walks off. Open only on a member standing on the clicked cell (read the
-  original's pick for staff first). Confirm: both games, a locator open, a click on bare ground and on a path arming
-  nothing; a guest clicked with the visitors' locator open; a click where a member stood after he walked off opening
-  nothing; tests for each.
 - [ ] **Q445. The gadget's sliding panels drawn behind its body, as the original's.** From the run review (q427). The
   arm's message `0xa` sets a panel's depth to its linked depth less three (`0x004a15bf` to `0x004a15cd`, `FUN_0065f16b`):
   the panel at 3, its children at 5, under the body (8) and the retract button (7), so a sliding bar's text is cut off
@@ -67,6 +54,19 @@ Q444 and Q445 come first: defects a player meets, found by the review of the run
   `ParkLocator`), so their text runs over the body and the retract cross. Also: the original keeps the retract cross drawn
   through the whole slide in (its film, frames 188-193); ours hides it at the click. `hud.md` calls the bar's slide
   "alike": correct it. Confirm: the bar and the camcorder panel sliding out and in, frame beside the original's film.
+- [ ] **Q446. A member of staff entered in the cells they walk, so a world click finds them where they stand.** Q444's
+  piece (2). Staff are entered in a cell's list only when hired or put down (`ParkPeople.Hire`, `DropStaff`), never as
+  they walk, so a click on (47,25) of the stock park opens Mike Cooper's window after he has walked off, and Q444's run
+  opened member 28's from (39,28), his cell in the save (`q444/PREDICTION.txt`, ours round 2). The original relinks
+  every person as they cross a cell: its walk tick `FUN_004fa2a0` (called from the staff's own states, `FUN_004d7580`,
+  `FUN_004d6790`, `FUN_004da490`, `FUN_004da740`) moves them by `FUN_0050b6a0`, which unlinks and relinks the thing
+  (`FUN_004d9280`, `FUN_004d91f0`) when its cell changes; guests here already do it (`PeepBehaviour`'s `StandOn`). Do the
+  same for staff and read what else reads a cell's list (`LeaverAtTheStop`, the writer's links). Confirm: both games,
+  a click where a member stood after he walked off opening nothing, and on him where he stands opening his window.
+- [ ] **Q447. A person's hover rows and pointer.** From Q444. The hover over a guest it would pick shows UIHELPTEXT 0x229
+  (with their number, `+0x1d8`) or 0x22a, over a member 0x22b with `FUN_00506860`'s string, and puts up pointer 2
+  (`FUN_004a2aa0( 2 )`; `FUN_00486d90`); ours shows neither, counted `PERSON_HOVER_HELP`. Q444's original frames show a
+  member's row standing at the foot of the screen with the staff locator open (`q444/orig/a-2-P1.png`): read why first.
 
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
