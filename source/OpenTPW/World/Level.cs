@@ -327,7 +327,10 @@ public class Level
 		if ( Research is { } researched )
 			Log.Info( researched.Summary );
 
-		_ = new ParkGround( ThemeName, park );
+		var lighting = Lighting();
+		if ( !lighting )
+			Unimplemented.Report( "LIGHTING_OFF" );
+		_ = new ParkGround( ThemeName, park, Balance, lighting );
 		load.Mark( "ground" );
 
 		_ = new ParkPaths( ThemeName, park );
@@ -1131,6 +1134,27 @@ public class Level
 		}
 
 		return 2;
+	}
+
+	/// <summary>
+	/// The detail file's <c>GraphicalOptions.LIGHTING</c>: 1 in med.sam and high.sam, 0 in low.sam, where the original sets
+	/// render-state <c>0x0800</c> (<c>FUN_0044d8f0</c>) and draws no land at half light. What else it turns off is not
+	/// decoded, and ours lights the park the same either way (<c>LIGHTING_OFF</c>). A file that will not read gives
+	/// medium's 1.
+	/// </summary>
+	private static bool Lighting()
+	{
+		try
+		{
+			if ( int.TryParse( new SettingsFile( $"/{DetailFile}" )["GraphicalOptions.LIGHTING"], out var value ) )
+				return value != 0;
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"Ground: {DetailFile} would not load, so the park is lit as at medium - {e.Message}" );
+		}
+
+		return true;
 	}
 
 	public void Update()

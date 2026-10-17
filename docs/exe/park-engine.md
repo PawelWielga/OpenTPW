@@ -3249,13 +3249,28 @@ copy with both shaders' fog set to nought (A's grass (29.9, 139.2, 28.6), B's se
 read (33.2, 145.1, 45.5) and (8.6, 70.9, 76.2) (`q481/side-by-side.png`). First person, fogged in the original, is
 drawn without it and counted, `FIRST_PERSON_FOG` (Q485); the frame is still cleared to the fog colour.
 
-**Land outside the park is drawn at half light.** `FUN_00450d10` (on a park's load from `FUN_005323f0`, and from
-Buy Land's `FUN_005327e0`) sets the ground cell's `0x0400` where the map cell's `mFlags` has `0x40` (land outside
-the park, "Building and deleting paths and queues") and not `0x80`, and clears it everywhere else; the terrain pass
-halves such a cell's corner light while render-word `0x0800` is clear ("What the render-state `0x0800` tests are";
-`GraphicalOptions.LIGHTING` 0 sets it, `FUN_0044d8f0`). Live, 4,922 of the 7,980 heightfield cells carry it: the
-border and every row from 42 on. Cleared over one camera's cells, its grass went from (32.8, 65.9, 16.5) to
-(69.6, 133.4, 35.6), where OpenTPW's reads (29.9, 139.2, 28.6) with its fog off.
+**Land outside the park is drawn at half light.** `FUN_00450d10` runs on a fresh park's load (`FUN_005323f0`,
+`0x00532629`), on a saved park's (`FUN_00415140`, `0x0041517f`) and after Buy Land (`FUN_005327e0`, `0x005328c3`). It
+walks the heightfield's cells, 96 by 85 (the terrain's `+0x18` and `+0x1c`), asks each one's map cell held to 0 to
+`[0x007a0314] - 1` and 0 to `[0x007a0374] - 1` (`MapInfo`'s 95 and 84, `0x00450d3d` to `0x00450d64`), and sets the
+ground cell's `0x0400` where that cell's `mFlags` has `0x40` (land outside the park, "Building and deleting paths and
+queues") and not `0x80`, clearing it everywhere else; after the walk it calls `FUN_0046f150`, `FUN_00450b30` (the
+terrain's `+0x78`) and `FUN_005836b0` on `0x008bd508`, not read. **`mFlags` `0x80` is the cell's attribute `0x10`**,
+which `FUN_00536490` carries over as the map loads (`0x0053656d`): in Lost Kingdom the 552 cells of the approach before
+the gates, rows 0 to 16 of columns 28 to 67, every one also `0x40`, and every one hidden ground (`0x0001`) in the
+running original, so the exception draws no pixel of the stock park. The terrain pass halves a `0x0400` cell's corner
+light while render-word `0x0800` is clear ("What the render-state `0x0800` tests are"; `GraphicalOptions.LIGHTING` 0
+sets it, `FUN_0044d8f0`). Live, 5,102 of the 8,160 heightfield cells carry it, the border and every row from 42 on,
+4,922 of them inside 0..94 x 0..83 and all 180 of the last column and row (Q482, `q482/orig/a-read-*.txt`); the rule
+over the stock file gives every one of the 7,980 cells Q479 read. Cleared over one camera's cells, its grass went from
+(32.8, 65.9, 16.5) to (69.6, 133.4, 35.6), where OpenTPW's reads (29.9, 139.2, 28.6) with its fog off.
+
+**OpenTPW draws it** (Q482): `ParkGround.LandOutsideThePark` makes the mask as the park loads and keeps it through
+every rebuild, and `test.shader` floor-halves the corner's byte light under the vertex flag `ParkGround.HalfLight`. At
+camera A the grass went from (29.9, 139.2, 28.6) to (14.9, 69.3, 14.2), 0.498 of it, where the original's reads
+(32.8, 65.9, 16.5) with its compositor's patches; camera B's approach did not move. Under `low.sam`'s `LIGHTING` 0
+nothing is halved, and the rest of what that option turns off is counted, `LIGHTING_OFF` (Q487). Buy Land is unbuilt
+(Q407); its purchase must make the mask again.
 
 **The brown patches are the procedural compositor's.** `FUN_0056f380` gives every visible cell inside the box at the
 terrain object's words `0x8d` to `0x90` a composited tile when `[0x008bd550]` bit 4 is set (the compositor ready,
@@ -3779,8 +3794,8 @@ force (`0x00536825`). Nothing is refunded. So Backspace takes up exactly what a 
 Lost Kingdom has 14 non-zero path cells, all corners and junctions — eleven at 1, (47,21), (48,21) and
 (48,28) at 2 — and the queue node (52,22) at 1.
 
-**`mFlags & 0x40` marks land outside the park** — the meaning is inferred from a census, the writer is
-not found beyond its clearer: `FUN_005311c0` tests it (`FUN_00535db0( 0x40 )`) and clears it (`FUN_0053a530( 0x40 )`, first at `0x00531327`), and Buy Land's apply arm reaches that (tool `0x39` tested at `0x00525c4e`, `FUN_005327e0` at `0x00525d52`, the call at `0x005328b4`), as does the terrain initializer `FUN_005323f0` (`0x00532557`). 13,878 of Lost Kingdom's 16,384 cells carry it, all
+**`mFlags & 0x40` marks land outside the park** — the meaning is inferred from a census. `FUN_00536490` sets it as
+the map loads on every cell but the first paths (`0x00536553`, `0x005365b5`), and `FUN_005311c0` tests it (`FUN_00535db0( 0x40 )`) and clears it (`FUN_0053a530( 0x40 )`, first at `0x00531327`), and Buy Land's apply arm reaches that (tool `0x39` tested at `0x00525c4e`, `FUN_005327e0` at `0x00525d52`, the call at `0x005328b4`), as does the terrain initializer `FUN_005323f0` (`0x00532557`). 13,878 of Lost Kingdom's 16,384 cells carry it, all
 of mType 7, 0, 2 or 30; every path, queue, footprint and entrance is among the 2,506 without it. **Every track record's `mNeighbours` is 0**, so the corner
 test never fires on the shipped park.
 

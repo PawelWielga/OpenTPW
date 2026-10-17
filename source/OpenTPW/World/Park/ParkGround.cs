@@ -45,15 +45,38 @@ public sealed class ParkGround : ModelEntity
 	/// <summary>The park this was built from, so that it can be built again when a cell changes.</summary>
 	private IParkInitialState? _world;
 
+	/// <summary>
+	/// <c>MapInfo.HeightfieldWidth</c> and <c>HeightfieldHeight</c> (95 and 84 in every theme), the limits
+	/// <see cref="LandOutsideThePark"/> holds a ground cell's map cell below.
+	/// </summary>
+	private readonly int _mapWidth;
+
+	private readonly int _mapHeight;
+
+	/// <summary><c>GraphicalOptions.LIGHTING</c> from the detail file: the half light is drawn only while it is on.</summary>
+	private readonly bool _lighting;
+
+	/// <summary>
+	/// The ground cells drawn at half light, by <c>y * CellsX + x</c>: the ground cell flag <c>0x0400</c>. Made
+	/// once, as the park loads, and kept through every <see cref="Rebuild"/>, as the original sets the flag only
+	/// on a load and after Buy Land (unbuilt, <c>BUY_LAND_TOOL</c>; built, its apply makes this again).
+	/// </summary>
+	private bool[]? _halfLight;
+
 	/// <param name="world">
 	/// The park's own save, or null where the theme ships none. It is asked one question only: which
 	/// cells something else draws - a path, a queue or a built thing's floor - so that those are left to
 	/// their owners instead of being drawn as grass underneath them.
 	/// </param>
-	public ParkGround( string themeName, IParkInitialState? world )
+	/// <param name="balance">The theme's balance, asked for <c>MapInfo</c>'s limits; the field's own less one without it.</param>
+	/// <param name="lighting"><c>GraphicalOptions.LIGHTING</c>: off, no cell is drawn at half light.</param>
+	public ParkGround( string themeName, IParkInitialState? world, ParkBalance? balance = null, bool lighting = true )
 	{
 		_themeName = themeName;
 		_world = world;
+		_lighting = lighting;
+		_mapWidth = balance?.Int( "MapInfo.HeightfieldWidth" ) ?? 0;
+		_mapHeight = balance?.Int( "MapInfo.HeightfieldHeight" ) ?? 0;
 		Name = $"{themeName} ground";
 
 		Build( world );
@@ -174,6 +197,18 @@ public sealed class ParkGround : ModelEntity
 
 		var field = Heightfield;
 
+		if ( _halfLight == null && world != null && _lighting )
+		{
+			var width = _mapWidth > 0 ? _mapWidth : field.CellsX - 1;
+			var height = _mapHeight > 0 ? _mapHeight : field.CellsY - 1;
+
+			_halfLight = LandOutsideThePark( field.CellsX, field.CellsY, width, height,
+				( x, y ) => ParkState.CellFor( world, x, y ).Flags );
+
+			Log.Info( $"{_themeName}: {_halfLight.Count( half => half )} of the {field.CellsX}x{field.CellsY} ground cells " +
+				$"are land outside the park, drawn at half light (map cells held below {width}x{height})" );
+		}
+
 		Log.Info( $"{_themeName}: landscape {field.CellsX}x{field.CellsY} cells at " +
 			$"{field.CellSizeX}x{field.CellSizeY} units, {field.VertexCount} heights, block at 0x{field.BlockOffset:x}" );
 
@@ -237,6 +272,7 @@ public sealed class ParkGround : ModelEntity
 		// Which corner's texture coordinate each corner of the quad takes, rewritten per cell by
 		// PermuteCorners. Held out here and reused rather than allocated eight thousand times.
 		var corners = new int[4];
+		var halfLit = 0;
 
 		for ( var y = 0; y < field.CellsY; ++y )
 		{
@@ -278,11 +314,15 @@ public sealed class ParkGround : ModelEntity
 				PermuteCorners( (ushort)field.Cells[(y * field.CellsX) + x], corners );
 
 				var corner = vertex;
+				var flags = _halfLight?[(y * field.CellsX) + x] == true ? HalfLight : 0u;
 
-				vertices[vertex++] = Corner( field, x, y, CornerUvs[corners[0]], slot );
-				vertices[vertex++] = Corner( field, x + 1, y, CornerUvs[corners[1]], slot );
-				vertices[vertex++] = Corner( field, x + 1, y + 1, CornerUvs[corners[2]], slot );
-				vertices[vertex++] = Corner( field, x, y + 1, CornerUvs[corners[3]], slot );
+				if ( flags != 0 )
+					++halfLit;
+
+				vertices[vertex++] = Corner( field, x, y, CornerUvs[corners[0]], slot, flags );
+				vertices[vertex++] = Corner( field, x + 1, y, CornerUvs[corners[1]], slot, flags );
+				vertices[vertex++] = Corner( field, x + 1, y + 1, CornerUvs[corners[2]], slot, flags );
+				vertices[vertex++] = Corner( field, x, y + 1, CornerUvs[corners[3]], slot, flags );
 
 				// Two triangles over those four corners, always split from (x, y) to (x + 1, y + 1) -
 				// which is not what the original does, and this is where to fix it (Q398). The original
@@ -309,8 +349,45 @@ public sealed class ParkGround : ModelEntity
 		// degenerate triangles that the card would probably discard, which is not a reason to send them.
 		Model = new Model( vertices[..vertex], elements[..element], material );
 
-		Log.Info( $"{_themeName}: ground {element / 6} cells drawn, " +
+		Log.Info( $"{_themeName}: ground {element / 6} cells drawn, {halfLit} of them at half light, " +
 			$"{field.CellCount - (element / 6)} left to the scenery, to the paths and to what is built on them" );
+	}
+
+	/// <summary>
+	/// The vertex flag <c>content/shaders/test.shader</c> halves a park-lit corner's colour under (its
+	/// <c>FLAG_HALF_LIGHT</c>). Not from any file, so it sits in the high bits beside the shader's other flags of ours.
+	/// </summary>
+	public const uint HalfLight = 0x40000;
+
+	/// <summary>
+	/// The map cell flag that keeps land outside the park at full light: <c>base.map</c>'s attribute <c>0x10</c>,
+	/// which <c>FUN_00536490</c> carries into <c>mFlags</c> as the map loads (<c>0x0053656d</c>). In Lost Kingdom it is the 552 cells of
+	/// the approach before the gate, rows 0 to 16, every one of them outside the park too.
+	/// </summary>
+	public const ushort KeptLit = 0x80;
+
+	/// <summary>
+	/// Which ground cells are drawn at half light: <c>FUN_00450d10</c>, run as a park loads (<c>FUN_005323f0</c>,
+	/// <c>FUN_00415140</c>) and after Buy Land (<c>FUN_005327e0</c>). Each of the field's cells asks its map cell, held
+	/// to 0 to <paramref name="mapWidth"/> - 1 and 0 to <paramref name="mapHeight"/> - 1 (<c>0x00450d3d</c> to
+	/// <c>0x00450d64</c>), so the field's last column and row ask the map's last; the cell is half lit where that one's
+	/// <c>mFlags</c> carries <see cref="ParkPathBuilding.OutsideThePark"/> and not <see cref="KeptLit"/>
+	/// (docs/exe/park-engine.md, "The park view's colours").
+	/// </summary>
+	internal static bool[] LandOutsideThePark( int cellsX, int cellsY, int mapWidth, int mapHeight, Func<int, int, ushort> mapFlags )
+	{
+		var half = new bool[cellsX * cellsY];
+
+		for ( var y = 0; y < cellsY; ++y )
+		{
+			for ( var x = 0; x < cellsX; ++x )
+			{
+				var flags = mapFlags( Math.Clamp( x, 0, mapWidth - 1 ), Math.Clamp( y, 0, mapHeight - 1 ) );
+				half[(y * cellsX) + x] = (flags & ParkPathBuilding.OutsideThePark) != 0 && (flags & KeptLit) == 0;
+			}
+		}
+
+		return half;
 	}
 
 	/// <summary>
@@ -318,14 +395,14 @@ public sealed class ParkGround : ModelEntity
 	/// Z up where the original has Y up - the same swap <see cref="LobbyModel"/> makes when it reads a
 	/// model, which is what puts the ground under the scenery rather than beside it.
 	/// </summary>
-	private static Vertex Corner( HeightfieldFile field, int x, int y, Vector2 uv, int slot )
+	private static Vertex Corner( HeightfieldFile field, int x, int y, Vector2 uv, int slot, uint flags )
 		=> new()
 		{
 			Position = new Vector3( x * field.CellSizeX, y * field.CellSizeY, field.HeightAt( x, y ) ),
 			Normal = NormalAt( field, x, y ),
 			TexCoords = uv,
 			TexIndex = slot,
-			MatFlags = 0
+			MatFlags = flags
 		};
 
 	/// <summary>

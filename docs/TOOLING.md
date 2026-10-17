@@ -403,6 +403,10 @@ whole list):
   the screen writes every budget back, so it sets `mHaveEverTrained` by itself**: read the flag before it. A
   tag's count taken from the log before the load's click is stale (`run.sh`'s `held`): click a tag only after a
   fresh `tags.py` line. This game's month turns about 715 ticks after a load, not on the file's calendar (Q149).
+- **This game at another graphics quality** (Q482): `gamefolder.make( dest, {} )`, then write the quality into the
+  folder's own `save/Config.tcf`, the dword at byte 12 (0 low, 1 medium, 2 high; `ConfigFile.Record`'s order after the
+  version: card rendering, resolution, quality), and hand the folder to `parkrun.py` as `GAME_FOLDER`. The level reads
+  `low.sam`, `med.sam` or `high.sam` by it as the park loads (`q482/ours.py`, `GAME_FOLDER=... run2-low`).
 - **A balance key changed in both games** (Q338): this game from a private folder (`lib/gamefolder.py`, then
   `GAME_FOLDER` before `parkrun.py`; an off-screen run wants a folder of its own beside the desktop's). The
   original reads `~/Games/TPW-original/Data/Advisor/Advisor.sam` as it starts: stop it, check the file's sum is

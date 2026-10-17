@@ -37,6 +37,9 @@ vertex {
     layout(location = 6) out flat uint outMatFlags;
     layout(location = 7) out vec3 vParkLight;
 
+    // Set by ParkGround on the corners of a ground cell outside the park (ParkGround.HalfLight).
+    const uint FLAG_HALF_LIGHT = 0x40000;
+
     void main() {
         vs_out.vTexCoords = texCoords;
         vs_out.vTexCoords.y = 1.0 - vs_out.vTexCoords.y;
@@ -74,6 +77,12 @@ vertex {
             float facing = -dot(d, vec3(normal.x, normal.z, normal.y));
             vec3 lit = g_oUbo.g_vAmbientColour + (g_oUbo.g_vLightColor * max(facing, 0.0));
             vParkLight = round(clamp(lit, 0.0, 1.0) * 255.0) / 255.0;
+
+            // Land outside the park (ParkGround.HalfLight): the terrain pass halves the corner's byte colour,
+            // SHR 1 and AND 0x7f7f7f, while GraphicalOptions.LIGHTING is on (FUN_0056f670; docs/exe/park-engine.md,
+            // "What the render-state 0x0800 tests are").
+            if ((matFlags & FLAG_HALF_LIGHT) != 0)
+                vParkLight = floor(round(vParkLight * 255.0) / 2.0) / 255.0;
         }
     }
 }

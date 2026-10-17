@@ -496,8 +496,9 @@ public static class ParkPathBuilding
 	/// <summary>
 	/// The cell flag that marks land outside the park - carried by 13,878 of Lost Kingdom's 16,384 cells,
 	/// all of them water, rock or unbuilt ground, and by none of the 126 that hold a path, a queue or a
-	/// thing. Every tool's preview answers red on it first. What sets it is not traced; Buy Land is the
-	/// likely clearer.
+	/// thing. Every tool's preview answers red on it first. <c>FUN_00536490</c> sets it as the map loads on every cell
+	/// but the first paths (<c>0x00536553</c>, <c>0x005365b5</c>), <c>FUN_005311c0</c> clears it inside the park, and
+	/// Buy Land reaches that. <see cref="ParkGround"/> draws it at half light.
 	/// </summary>
 	public const int OutsideThePark = 0x40;
 

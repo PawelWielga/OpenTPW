@@ -7608,6 +7608,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the original's unchanged by its fog held (`q481/side-by-side.png`, `PREDICTION.txt`). The original clears to the fog
   colour under either bit of `0x4002000` (`0x005737b6`), and the clear is seen nowhere in its park view (zoom 130, four
   rotations), so ours is left. First person, fogged in the original, is counted `FIRST_PERSON_FOG`: Q485.
+- [x] **Q482. Land outside the park is drawn at half light.** From Q479: `FUN_00450d10` sets a ground cell's `0x400`
+  where the map cell's `mFlags` has `0x40` and not `0x80`, and the terrain pass halves that cell's corner light while
+  `GraphicalOptions.LIGHTING` is on; ours draws it at full (`ParkGround`). Build it from the park's cells, again after
+  Buy Land (`FUN_005327e0` calls it), and say what `0x80` is or count it at the site. Confirm in both games at camera A
+  (`q479/orig/rund.sh`): the grass box about (70, 133, 36) halved to about (33, 66, 17) with the compositor's patches,
+  or (13, 73, 13) without them; a bought cell's light doubling.
+  The first review of Q479 (`handoff/review3/q479/FINDINGS.md`, finding 3; not second-checked) adds a third caller of
+  `FUN_00450d10`, the saved park's post-load rebuild `FUN_00415140` (`0x0041517f`), the path the stock file takes, and
+  a clamp of each cell to the map limits (`0x00450d4d` to `0x00450d64`); check both.
+  **Done (2026-10-17):** `ParkGround.LandOutsideThePark` (the 96 x 85 cells, each map cell held below 95 x 84, `0x40`
+  and not `0x80`) made at load and kept through rebuilds, `test.shader`'s floor-halved byte light under
+  `ParkGround.HalfLight`; `0x80` is base.map's attribute `0x10` (`FUN_00536490`, `0x0053656d`), the approach before the
+  gates, none of it drawn ground in the stock park. The log's 5,102 marked, 4,513 drawn half lit; A's grass
+  (29.9, 139.2, 28.6) to (14.9, 69.3, 14.2), the original's (32.8, 65.9, 16.5); the original live, 180 of 180 at the
+  last column and row; low quality halves nothing, `LIGHTING_OFF` (Q487). Both other callers are loads, so ours' one
+  load covers them; Buy Land's re-marking waits for Q407 (`q482/PREDICTION.txt`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

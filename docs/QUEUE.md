@@ -53,15 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q482. Land outside the park is drawn at half light.** From Q479: `FUN_00450d10` sets a ground cell's `0x400`
-  where the map cell's `mFlags` has `0x40` and not `0x80`, and the terrain pass halves that cell's corner light while
-  `GraphicalOptions.LIGHTING` is on; ours draws it at full (`ParkGround`). Build it from the park's cells, again after
-  Buy Land (`FUN_005327e0` calls it), and say what `0x80` is or count it at the site. Confirm in both games at camera A
-  (`q479/orig/rund.sh`): the grass box about (70, 133, 36) halved to about (33, 66, 17) with the compositor's patches,
-  or (13, 73, 13) without them; a bought cell's light doubling.
-  The first review of Q479 (`handoff/review3/q479/FINDINGS.md`, finding 3; not second-checked) adds a third caller of
-  `FUN_00450d10`, the saved park's post-load rebuild `FUN_00415140` (`0x0041517f`), the path the stock file takes, and
-  a clamp of each cell to the map limits (`0x00450d4d` to `0x00450d64`); check both.
 - [ ] **Q483. The ground's dirt patches: the procedural compositor. Decode first.** From Q479: inside a box round the
   view (`FUN_0056f380`, the terrain object's words `0x8d` to `0x90`) the original draws each cell with a tile
   composited from `base.lnd` (`park-engine.md`, "The blocking unknowns", 6; `FUN_0055f780` blends up to thirteen
@@ -127,6 +118,12 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it
   (`0x1be`, 446, `0x004874ab`) and `HOVER_TYPE_15_ROW` (`0x1c0`, 448, `0x00487742`). Decode each arm's tests first (the
   object's VARM value and the rows its kinds take, `0x00487665` to `0x00487728`), then build the queue's and the
   object's, which every Lost Kingdom park reaches. Confirm in both games: the pointer over a ride, a shop and a queue.
+- [ ] **Q487. What low quality's `GraphicalOptions.LIGHTING` 0 turns off. Decode first.** From Q482: `low.sam` sets it 0,
+  `med.sam` and `high.sam` 1, and `FUN_0044d8f0` then sets render-word `0x0800`, under which the terrain pass draws no
+  land at half light (`park-engine.md`, "What the render-state `0x0800` tests are"); what else reads `0x0800` (the
+  vertex light `FUN_005741b0`, the models' pass) is not read. Ours draws no half light there and lights the park as at
+  medium, counted `LIGHTING_OFF` at the park's load (`Level.Lighting`). Decode the bit's other readers, then measure
+  the original at low quality (`Resolution.sam` aside, its Options screen) at Q479's camera A before any build.
 - [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
   listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
   the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for
@@ -2543,7 +2540,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   `0x1e`, a hoarding crossed and a pocket left (a flood fill: grid `0x00532960`, fill `0x005328e0`), and shows the
   can't-afford pointer `0x14` (`DAT_00816d5c`) unless a layout is replayed; the price is `Costs.MapCell` × the unowned
   cells inside; the purchase `0x005327e0` places the hoardings and clears the flag inside (`0x005311c0`); the debit is
-  `0x004d01f0`. Confirm: a rectangle bought, beside the original.
+  `0x004d01f0`. Confirm: a rectangle bought, beside the original. The purchase also re-marks the ground's half light
+  (`FUN_00450d10` at `0x005328c3`; Q482): make `ParkGround`'s mask again, and confirm a bought cell's light doubling.
 
 - [ ] **Q408. TOUR rides: Jurassic Tours.** From the fork review 2, 2026-10-16 (`verify-tours-advisor-rse.md` L1-L6).
   `tourride` (Id 1170), Lost Kingdom's golden-ticket ride, Full Simulation only (no `Easy_` `.sam`), runs 19 TOUR
