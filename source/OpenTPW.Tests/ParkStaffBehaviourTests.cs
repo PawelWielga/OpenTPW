@@ -853,6 +853,92 @@ public class ParkStaffBehaviourTests
 		Assert.AreEqual( 0, member.Thoughts.Last, "a roll that finds a cell thinks nothing" );
 	}
 
+	/// <summary>
+	/// A member fenced where one path cell lies, and standing on it: the stock park's mechanic in (51,26)-(54,27),
+	/// whose one path cell is (52,27). The linked walk has no slot inside the area, so every decide is the patrol roll
+	/// (<c>FUN_00506f30</c>), which finds his own cell and walks him to its centre. Thirty misses think <c>0x16</c> and
+	/// stand him, stamped from the walk, for IdleDuration + 1 sweeps (eleven at grade 3, as both games measured:
+	/// <c>docs/exe/ride-operation.md</c>, "A member fenced where one path cell lies"); a stand from that idle is stamped
+	/// nought (<c>0x00505542</c>), so he decides on the very next sweep.
+	/// </summary>
+	[TestMethod]
+	public void AMemberFencedWhereOnePathCellLiesRollsHisOwnCellAndStandsElevenSweepsOnThirtyMisses()
+	{
+		var world = Park();
+		var state = new ParkState( world );
+
+		for ( var x = 51; x <= 54; ++x )
+		{
+			for ( var y = 26; y <= 27; ++y )
+			{
+				Assert.AreEqual( (x, y) == (52, 27), state.Record( x, y ).Type == CellEdge.Path,
+					$"({x},{y}): the stock park's one path cell in the area is (52,27)" );
+			}
+		}
+
+		var member = ParkPeople.StaffIn( world ).Single( staff => staff.ThingId == Mechanic );
+		member.SetPatrolArea( MapStep.CellId( 51, 26 ), MapStep.CellId( 54, 27 ) );
+		member.Happiness = 50f;
+		member.Tiredness = 80f;
+		member.Navigator.Position = new FixedVector( PeepNavigator.WaypointCentre( 52 ), PeepNavigator.WaypointCentre( 27 ) );
+		member.Navigator.Target = member.Navigator.Position;
+		member.SetActivity( StaffActivity.Idle, tick: 1 );
+
+		var walk = new PeepWalk( member.Navigator, new CellEdge( state.Record, ParkPeople.WalkingMode ).Blocked );
+		var draws = new SetDraw();
+		var behaviour = new StaffBehaviour( Balance(), draws, state );
+		var idle = behaviour.IdleDurationAt( member.PayGrade );
+
+		Assert.AreEqual( 3, member.PayGrade );
+		Assert.AreEqual( 10, idle, "grade 3's IdleDuration, so the eleven sweeps measured" );
+
+		// A draw of 1 tries 51 + 1 % 4 = 52 and 26 + 1 % 2 = 27, the path cell; 0 tries (51,26), grass.
+		draws.Value = 1;
+		behaviour.Step( member, walk, playing: null, tick: 1001 );
+		Assert.AreEqual( StaffActivity.Walking, member.Activity, "the roll found his own cell" );
+		Assert.AreEqual( new FixedVector( PeepNavigator.WaypointCentre( 52 ), PeepNavigator.WaypointCentre( 27 ) ),
+			member.Navigator.Target, "aimed at his own cell's centre" );
+
+		draws.Value = 0;
+		var stood = 0;
+
+		for ( var tick = 1002; tick < 1010 && member.Activity != StaffActivity.Idle; ++tick )
+		{
+			behaviour.Step( member, walk, playing: null, tick );
+			stood = tick;
+		}
+
+		Assert.AreEqual( StaffActivity.Idle, member.Activity, "thirty misses stand him" );
+		Assert.AreEqual( 0x16, member.Thoughts.Last, "and think 0x16 (0x0050701f)" );
+		Assert.AreEqual( stood, member.TimeStartedIdling, "stamped, as he stood from a walk" );
+		Assert.AreEqual( (52, 27), member.Navigator.Position.Cell, "still on his one cell" );
+
+		draws.Value = 1;
+
+		for ( var tick = stood + 1; tick <= stood + idle; ++tick )
+		{
+			behaviour.Step( member, walk, playing: null, tick );
+			Assert.AreEqual( StaffActivity.Idle, member.Activity, $"tick {tick}: inside IdleDuration + 1 sweeps" );
+		}
+
+		draws.Value = 0;
+		behaviour.Step( member, walk, playing: null, stood + idle + 1 );
+		Assert.AreEqual( StaffActivity.Idle, member.Activity, "the eleventh sweep decides, and misses again" );
+		Assert.AreEqual( 0, member.TimeStartedIdling, "a stand from an idle is stamped nought (0x00505542)" );
+
+		draws.Value = 1;
+		behaviour.Step( member, walk, playing: null, stood + idle + 2 );
+		Assert.AreEqual( StaffActivity.Walking, member.Activity, "so he decides again on the very next sweep" );
+	}
+
+	/// <summary>Answers whatever <see cref="Value"/> is set to.</summary>
+	private sealed class SetDraw : Random
+	{
+		public int Value { get; set; }
+
+		public override int Next() => Value;
+	}
+
 	[DataTestMethod]
 	[DataRow( 3, 0x04, false )]
 	[DataRow( 3, 0x40, true )]

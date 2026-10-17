@@ -2513,9 +2513,9 @@ words, the same 8 squares in the same order for (51,27) and (54,26), row 26 lift
 (53,26) as the original's (tops 21.5, 21.5 and 11.5 over 1.5), the plain pointer, "patrols (51, 26)-(54, 27), cells 3380 to 3511", the window again "Patrolling"; on the band
 (45,15) four red squares on the anchored cell (each line lays it), 16 red at (53,15), `NoGo`, nothing written
 (`q433/side-by-side.png`). Seen, not this item's: at the two runs' cameras our lifted squares look far higher
-above the ground than the original's (not compared at one camera), and a member fenced where one path cell lies stands idle on it with thought `0x16` within seconds of
-reaching it (the patrol roll finds only his own cell); the original's was still walking nineteen seconds after its
-fence and was not watched longer.
+above the ground than the original's (not compared at one camera). A member fenced where one path cell lies stays on it, rolling it again and standing
+eleven sweeps with thought `0x16` on one roll in about 55, in both games (Q434; `ride-operation.md`, "A member fenced
+where one path cell lies").
 
 #### How allstaff and allitems keep their rows current
 

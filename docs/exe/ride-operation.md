@@ -2511,6 +2511,18 @@ booth or entrance A or B in states `0x10`, `0x12` and `0x13`. `mTimeHired` is mG
 - **The patrol roll `FUN_00506f30`** takes a cell only when it is on the map and path, `mType` 1 (`FUN_00536310`),
   before it routes. A member of staff whose corners are both 0 is outside every cell (`FUN_00506ed0` has no case for
   it); every Lost Kingdom member carries an area.
+- **A member fenced where one path cell lies stays on it, rolling it again** (Q434). Standing on that cell, the linked
+  walk strikes out every slot (all lie outside the area or off the path), so each decide is the patrol roll, which finds
+  his own cell: `FUN_004fa530` writes its centre to `+0x18`/`+0x1a` and `FUN_0050f8e0` plans from the navigator's place
+  (`+0xd4`, so `+0xdc`/`+0xe0` in 16.16) to it, refusing only on `FUN_00511420`'s `0x70000000`, and stamps `+0x11c`
+  (the navigator's `+0x48`). Nothing refuses a target in the member's own cell, so he walks the few units there and
+  decides again. One roll in about 55 misses thirty tries (7/8 each with one path cell in eight): thought `0x16` and a
+  stand, stamped from the walk (`+0x200` only where `+0x19c` was 1, `0x00505526`), so IdleDuration + 1 sweeps, eleven at
+  grade 3; a miss from that stand is stamped nought (`0x00505542`) and decides on the next sweep. Measured in the original
+  (`q434/orig/run-b.sh`, the stock park, Mike Cooper's words `+0x20a`/`+0x20c` written 3380/3511, (51,26)-(54,27), the
+  tool's whole effect, `FUN_00506e50`): on (52,27) from 12 s to the end of 200 s, every destination the cell's centre
+  (`0x3480`, `0x1b80`), 628 plan stamps in 718 ticks, nine stands of exactly 11 ticks, each with `0x16`, state 1 in 630
+  polls of 639. OpenTPW does the same (`q434/confirm.py` run2): 633 rolls in 775 ticks, all to (52,27), thirteen stands of 11.
 - **The strike** is decoded whole under "The strike", below: the month's look, its gate, the 24 months, the levels and
   states 4 and 5.
 
@@ -2828,7 +2840,7 @@ with the look, and the handyman's `+0x21a` is not written), and the researcher's
 
 In OpenTPW: `StaffBehaviour.TiredOrCarryingOn` (`FUN_00506a40` past the strike), `TooTiredToWork`, `Rest`'s decide,
 `Hired`, a hire patrolling the whole map (Q380), so a linked walk's dead end takes the patrol roll for them, which logs
-`Staff: N patrol roll to (x,y) on try T` or thinks `0x16`; `Staff.Pace` on `Peep.Ease`, the park's sweep calling it
+`Staff: N patrol roll to (x,y) on try T, mGameTick K` or thinks `0x16`; `Staff.Pace` on `Peep.Ease`, the park's sweep calling it
 before the stamp; the shared setter's hurry. The
 `staff` census prints `base`, `purpose`, `adjustor`, `pace`, `speed` and `restExact`, and the console's `staffrest
 <thing> <0-100>` sets a member's rest.

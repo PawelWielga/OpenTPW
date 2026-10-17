@@ -48,6 +48,11 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q434 (`ride-operation.md`, "A member fenced where one path cell lies"): the fenced member's walk on one path cell
+  is the original's, so the nearest piece is the patrol tool's lifted squares at one camera in both games (ours looked
+  far higher at Q433's two cameras; Q260, the lens, may be the cause). In no game run: two misses in a row in the
+  original (its 200 s had none; ours had one, deciding the next sweep as `0x00505542` says), another kind of member or
+  grade, Full Simulation (not asked: the walk is either mode's), the other three themes.
   From Q433 (`hud.md`, "The patrol switch and the patrol tool"): the patrol switch and its tool are built. Nearest: a
   member fenced where one path cell lies stands idle on it with thought `0x16` seconds after reaching it here (the patrol
   roll finds only his own cell); watch the original's past nineteen seconds before changing `StaffBehaviour`. Seen: at

@@ -7301,6 +7301,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the least and greatest corners; a change of tool withdraws `0xc1` (`hud.md`, "The patrol switch and the patrol tool").
   Both games on the stock park (`q433/PREDICTION.txt`): the same 8 squares for (51,27) and (54,26), 3380 and 3511; the
   band outside the park refused with 16 red squares (`q433/side-by-side.png`).
+- [x] **Q434. A member fenced where one path cell lies (a piece of Q420).** Done 2026-10-17: watched in both games for
+  200 s on the stock park, Mike Cooper fenced to (51,26)-(54,27), whose one path cell is (52,27): he stays on it, the
+  patrol roll aims him at its centre about once a tick, and one roll in about 55 misses thirty tries, thinks `0x16` and
+  stands him eleven ticks (`ride-operation.md`, "A member fenced where one path cell lies"). The original: 628 plan
+  stamps in 718 ticks, nine stands of 11; ours: 633 rolls in 775 ticks, thirteen of 11 (`q434/PREDICTION.txt`). Nothing in
+  `StaffBehaviour` changed; the roll's log line carries the tick, and a test holds the case.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

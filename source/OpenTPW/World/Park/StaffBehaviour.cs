@@ -1598,7 +1598,7 @@ public sealed class StaffBehaviour
 
 			if ( walk.PlanRoute( WanderBlocked ) )
 			{
-				Log.Info( $"Staff: {staff.ThingId} patrol roll to ({x},{y}) on try {attempt + 1}" );
+				Log.Info( $"Staff: {staff.ThingId} patrol roll to ({x},{y}) on try {attempt + 1}, mGameTick {_state?.GameTick ?? 0}" );
 
 				return true;
 			}

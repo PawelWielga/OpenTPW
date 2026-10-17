@@ -114,6 +114,13 @@ structure, and hand it to `loadfile.sh` through `POLL`.
 
 Each was found by trial in the item named, and cost a run to find.
 
+- **A member's walk watched in the original, and a patrol area set without the tool** (Q434, `q434/orig/run-b.sh`):
+  the person's own `+0x8`/`+0xc` are not its place. The navigator is at `+0xd4`, so `thingwords.py ... 26:0xdc:I:px
+  26:0xe0:I:py` (16.16: the cell is the value `>> 16`), `26:0x18:H 26:0x1a:H` the destination (cell x 256 + 128 at a
+  cell's centre), `26:0x11c:I` the stamp of the last route planned (it moves on every successful roll), `26:0x30:I` the
+  thought and `26:0x19c:I` the state. The patrol tool's click writes `+0x20a`/`+0x20c` and nothing else
+  (`FUN_00506e50`), so `thingpoke.py %PID% 0.5 4 26:0x20a:H=3380 26:0x20c:H=3511` (kind 4) fences a member exactly,
+  where Q433's clicks P1/P2 land on other cells as the camera follows Mike between runs.
 - **The patrol tool in either game** (Q433, `q433/orig/run.sh` and `run2.sh`, `q433/confirm.py`): on the original's
   1024 x 768 frame the staff window's patrol switch is (739,385); with the tool armed `[0x008186b8]`, `[0x008186b4]` is
   the preview's cell, so moving the pointer over a grid and reading them maps the view (`run2.sh`). The original's
