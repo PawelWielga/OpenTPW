@@ -55,8 +55,15 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
   (`0x00486fd9` to `0x00486fe4`) and on a cell of no category (`FUN_00486d90`'s switch default, `0x004877a3`) the original
   posts the empty row only if the last category was not nought, so a row standing at category 0 (the guests' row, Q467;
   a locator's) stays; ours always empties it (`Level.WorldHelpRow`, `!HoverTaken` and `!ArmsThePathTool`). Decide which
-  of our cells fall to the default (not `FUN_00536390`'s ground, not types 1, 3, 4, 9, 10 or `0x15`) first. Confirm in
-  both games: the Q467 standing row, then Shift let go over such a cell.
+  of our cells fall to the default (not `FUN_00536390`'s ground, not types 1, 3, 4, 9, 10 or `0x15`) first. The review
+  of Q467 (`handoff/review3/VERIFY-2.md`) adds the arms that post nothing whatever the last category: `0x00487240` (no
+  cell), `0x00487667` and `0x0048768d` (an object cell with no thing, or a failed thing test), `0x004873bd` (a type-12
+  track cell under a `0x19` parent: the 429 hoarding cells, the most reachable), and two that return with no post and no
+  pointer call, `0x004873f8` -> `0x00487990` and `0x0048743f` -> `0x00487441`; with the coaster builder's modes,
+  `0x00486e1a`, `0x00486e28` and `0x00486e31` -> `0x004878e4`. Ours posts -1 at each. Those arms leave `_categoryNought`
+  true (ours sets it false before every ground arm). The comment at the not-taken case ("The original runs no hover
+  then", `0x00488569`) holds only under a park screen: correct it. Confirm in both games: the Q467 standing row, then
+  Shift let go over such a cell, then the pointer moved from bare ground onto a hoarding.
 - [ ] **Q470. Our people may be drawn larger than the original's.** From Q468 (`park-engine.md`, "The thing under a
   sprite"): the original adds a picture's span (height / 128 x 20, and across x 0.75) to its place AFTER the draw matrix,
   whose w is sin 45 of the depth, so on the screen a picture is span / w of the -1 to 1 box; ours draws it in the world
@@ -66,6 +73,15 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
   `original/spritepick.py PID where 26`), then decide. Also not measured: whether any sprite but a person's body carries
   the pickable flag `0x200` in the original (a rider's head on a ride, a balloon, a thought bubble); ours latches bodies
   only.
+- [ ] **Q471. The park gate's row and click, and the ground's other rows counted.** From the review of Q467
+  (`handoff/review3/VERIFY-2.md`, finding 1; read from code and data, not watched): Lost Kingdom's gate path cells
+  (47,17) and (48,17) are mType 1 with track type 0, so ours posts 442 there and a click arms the path tool, where the
+  original takes category 14 (entrances A-1 to B+1, `FUN_004d8690` at `0x004872a4` to `0x004872f7`), posts UIHELPTEXT
+  `0x1cb` (`0x00487885`) and its click opens the entry price screen (`0x00487c93` -> `FUN_00498d80`); the ticket booths
+  (47,13) and (48,13) take category 13 and `0x1cc` (`0x004872fd`, `0x00487308`, `0x004877f0`). Build the gate and booth
+  test ahead of `Level.ArmsThePathTool`, and count the ground's unbuilt rows where ours posts -1 (`0x226` the object's
+  name `0x004876d1`, `0x1bc` a queue `0x00487621`, `0x1be` a track `0x004874ab`, `0x1c0` type `0x15` `0x00487742`).
+  Confirm in both games: hover and click (47,17), then a booth.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
