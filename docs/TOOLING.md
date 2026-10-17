@@ -131,7 +131,9 @@ Each was found by trial in the item named, and cost a run to find.
   Here `camera X Y 60 0` (10 units a cell) and `lib/cellprobe.py` find the cells; the console's `strip` is the outline
   and `pointer` its cursor. **An anchored one-cell rectangle is four squares** on that cell (each line lays it):
   measured here, read in the original's code. A run that waits longer than a line (0xc1, 18 s) before the click that
-  puts the tool away shows no cut.
+  puts the tool away shows no cut. **Here `0xc1` leaves its slot a tick after it is posted**, as the advisor starts
+  saying it: read `advisor`'s `message=193/.../said=1`, not `slot=193/` (Q437's first miss); a way out's cut is the
+  log's `withdraw message=193 ... cut=1` just before its own line (`q437/confirm.py`).
 
 - **The staff window's FIRE and PICK UP in either game** (Q432, `q432/orig/run.sh`, `q432/confirm.py`): on the
   original's 1024 x 768 frame `b_fire` is (228,385) and `b_pick` (308,385); FIRE's box puts its tick at (710,282) and

@@ -48,8 +48,13 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
+  From Q437 (`hud.md`, "The patrol switch and the patrol tool"): Escape with the tool armed is the original's, so the
+  nearest piece is a quick right click with the tool armed (RMB cancel on; `park-engine.md`, "The hand's ways out"), run
+  in neither game. In no game run: Escape with a modifier held while the tool is armed (the shortcuts' row names none),
+  Escape unanchored in the original, Full Simulation (not asked: the tool is either mode's), the other three themes. Not
+  heard.
   From Q436 (`park-engine.md`, "Placement feedback", "The walls"): a lifted square's walls are the original's, so the
-  nearest piece is Escape with the patrol tool armed (the original's puts it away unwritten, Q435; not run here).
+  nearest piece is Escape with the patrol tool armed (the original's puts it away unwritten, Q435; run here, Q437).
   Counted, not built: the latches a wall zeroes under a path or queue strip (`MARKER_WALL_CLEARS_REFUSAL_LATCH`). In no
   game run: a red wall and its blink, the walls under the locator's patrol edges, a rotation other than nought, Full
   Simulation (not asked: the outline is either mode's), the other three themes.
@@ -57,7 +62,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   original's do, so the nearest piece is the walls a lifted square drops to a lower neighbour (`MARKER_LIFT_SIDE_FACES`,
   `FUN_0053df30`'s other faces; the original's records at 11.5 and 1.5 under a 21.5 top, `park-engine.md`, "Placement
   feedback"), drawn there and not here (built, Q436). In no game run: Escape with the tool armed here (the original's puts it away
-  unwritten), a rotation other than nought at one camera, Full Simulation (not asked: the outline is either mode's),
+  unwritten; run, Q437), a rotation other than nought at one camera, Full Simulation (not asked: the outline is either mode's),
   the other three themes.
   From Q434 (`ride-operation.md`, "A member fenced where one path cell lies"): the fenced member's walk on one path cell
   is the original's, so the nearest piece is the patrol tool's lifted squares at one camera in both games (ours looked
@@ -69,7 +74,7 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
   roll finds only his own cell); watch the original's past nineteen seconds before changing `StaffBehaviour`. Seen: at
   the two runs' cameras our lifted squares look far higher above the ground than the original's, at the same lift
   numbers; compare at one camera (compared, Q435: the same at one camera). Counted, not built: the refused click's sound `0xaf` (`PATROL_TOOL_REFUSED_SOUND_0xAF`).
-  In no game run: `0xc1` cut by the click here (the line ended first; the original's was cut; tested), Escape or a
+  In no game run: `0xc1` cut by the click here (the line ended first; the original's was cut; tested), Escape (run, Q437) or a
   right click with the tool armed, Full Simulation (not asked: the window is either mode's), the other three themes.
   Not heard.
   From Q432 (`hud.md`, "The person's windows"): FIRE and PICK UP are built, so the staff window's nearest piece is the

@@ -7320,6 +7320,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   under it, red under red and otherwise blue. On Mike Cooper's patrol outline over the stock park both games laid the
   same nine walls, face for face, in the same order (`q436/orig/a-5-squares.txt`, the `strip` census), drawn under the
   tops where the original's are (`q436/side-by-side.png`, `q436/PREDICTION.txt`). `MARKER_LIFT_SIDE_FACES` is gone.
+- [x] **Q437. Escape with the patrol tool armed (a piece of Q420).** Done 2026-10-17: run here as the original's was at
+  Q435. On the stock park, Mike Cooper's patrol tool unanchored and then anchored on (51,27): each Escape cut `0xc1`
+  (`withdraw message=193 cleared=0 cut=1`), put the tool away (mode 0, not anchored) and wrote nothing (Mike still the
+  whole map), and opened no menu; the next opened it (`q437/run2`, `q437/side-by-side.png`, `q437/PREDICTION.txt`). The
+  run found `strip`'s census listing the last outline's walls after the squares went (nothing drawn): fixed in
+  `ParkBuildMarkers.Build`. Tests `EscapeWithThePatrolToolArmedPutsItAwayAndWritesNothing`,
+  `NothingToDrawLeavesNoWallsInTheCensus`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -2522,7 +2522,12 @@ original's 110, 58.3) and the lens. The walls a lifted square drops to a lower n
 `park-engine.md`, "Placement feedback", "The walls"): the same nine records, face for face, under the outline's tops of
 (51,26) to (53,26) (`q436/side-by-side.png`).
 Escape with the tool armed and anchored, in the original, puts it away and writes nothing (mode 0, the anchor -1, the
-area 1 and 16384; `q435/orig/a-run.log`); not run here. A member fenced where one path cell lies stays on it, rolling it again and standing
+area 1 and 16384; `q435/orig/a-run.log`), the outline and the advisor gone from the next frame and no menu up
+(`q435/orig/a-6-escaped.png`): the game table's row 0 installs the idle mode (`0x0040c368`), whose setter cuts `0xc1`.
+**Here the same** (Q437; `ParkFrontEnd.MenuKey` to `ParkHand.LetGo`): unanchored and anchored on (51,27), each Escape
+logged `withdraw message=193 cleared=0 cut=1` then `Escape: the build tool is put away`, mode 0 not anchored, Mike's area
+still the whole map, (0, 0)-(127, 127), no square or wall drawn and no menu; the next Escape opened the game menu (`q437/run2`,
+`q437/side-by-side.png`). A member fenced where one path cell lies stays on it, rolling it again and standing
 eleven sweeps with thought `0x16` on one roll in about 55, in both games (Q434; `ride-operation.md`, "A member fenced
 where one path cell lies").
 

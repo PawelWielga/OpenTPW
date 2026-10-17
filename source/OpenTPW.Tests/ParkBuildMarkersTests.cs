@@ -115,4 +115,27 @@ public class ParkBuildMarkersTests
 		Assert.AreEqual( ParkPathBuilding.MarkerBlue, ParkBuildMarkers.WallMarker( ParkPathBuilding.MarkerLink ) );
 		Assert.AreEqual( ParkPathBuilding.MarkerBlue, ParkBuildMarkers.WallMarker( ParkPathBuilding.MarkerEnd ) );
 	}
+
+	/// <summary>
+	/// <b>Nothing left to draw leaves no walls behind</b>: when the tool is put away the mesh goes, and the census that
+	/// `strip` reads says "none" with no walls after it, as the original's list is emptied every frame.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the walls not cleared with the squares keep the last outline's walls in the census.</remarks>
+	[TestMethod]
+	public void NothingToDrawLeavesNoWallsInTheCensus()
+	{
+		var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+		var markers = (ParkBuildMarkers)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject( typeof( ParkBuildMarkers ) );
+		var lifts = new System.Collections.Generic.Dictionary<(int, int), float> { [(52, 25)] = 20f, [(53, 26)] = 10f, [(52, 27)] = 0f, [(51, 26)] = 20f };
+		var strip = typeof( ParkBuildMarkers ).GetField( "_strip", flags )!;
+		strip.SetValue( markers, System.Activator.CreateInstance( strip.FieldType ) );
+		typeof( ParkBuildMarkers ).GetField( "_walls", flags )!
+			.SetValue( markers, ParkBuildMarkers.WallsAt( 52, 26, 20f, ParkPathBuilding.MarkerBlue, ( x, y ) => lifts[(x, y)] ) );
+		StringAssert.Contains( markers.Census(), "| walls 3 " );
+
+		typeof( ParkBuildMarkers ).GetMethod( "Build", flags )!.Invoke( markers,
+			[new System.Collections.Generic.List<ParkPathBuilding.QueueSquare>(), new System.Collections.Generic.List<(int X, int Y)>(), new System.Collections.Generic.List<(int X, int Y)>()] );
+
+		Assert.AreEqual( "none", markers.Census() );
+	}
 }

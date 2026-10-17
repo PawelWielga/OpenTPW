@@ -327,6 +327,7 @@ public sealed class ParkBuildMarkers : ModelEntity
 		TranslucentModel?.Delete();
 		TranslucentModel = null;
 		_strip = [];
+		_walls = [];
 		_toolSquares = 0;
 		_patrolSquares = 0;
 
