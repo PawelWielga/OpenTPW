@@ -62,6 +62,8 @@ filed the items that cite it.
   `gby_sur`'s red 7.4 to 9.8, so predict what is left. Q460's rounding sits under the nibbles.
   **Alexah (2026-10-18): both.** Cut to the original's four bits a channel by default, as the shipped game draws it,
   banding and all; an option keeps eight (a nice fix, said at the site and in the option's own text).
+  The eight-bit option is the original's own `GraphicalOptions.TEXTURE32 1` (format 3, 8-8-8-8; `textures.md`), which no
+  shipped detail file sets: the review of Q492 (`handoff/review4/VERIFY-1.md`, q492 5).
 - [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
   listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
   the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for
