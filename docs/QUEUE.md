@@ -1149,12 +1149,6 @@ filed the items that cite it.
   spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
   Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
   spent one on `tourride`.
-- [ ] **Q142. The staff pool reads a string table again for every name.** Found by Q70's game run. `ParkStaffPool`
-  opens and parses a name table for each candidate it rolls (`RollName`) and STAFF_TYPES for each kind's name
-  (`NameOfKind`): 27 of a park load's 28 table reads are six files read over and over, and the staff screen and the
-  `candidates` census read STAFF_TYPES once a row. Read each once, as `Localization` does. Confirm: `park jungle` logs
-  seven `String table:` lines (THEMENAMES too), two of them `35 strings in 904 bytes` (ENTERTAINER_NAMES and GUARD_NAMES alike), and the
-  `candidates` census and the hire screen show the same names as before.
 - [ ] **Q143. `BFSTReader` takes a string's length from one byte, and four shipped strings are longer.** Found by
   Q70's review. A record is `01`, a length of at least two bytes, little-endian, in a three-byte field, then the
   characters (FileFormats `strings.md`);

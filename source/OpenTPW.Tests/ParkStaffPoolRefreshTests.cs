@@ -489,4 +489,51 @@ public class ParkStaffPoolRefreshTests
 			Screen.Size = screenBefore;
 		}
 	}
+
+	/// <summary>
+	/// <b>The pool's six string tables are each read once in a run, not once a name</b> (Q142): three pools rolled from
+	/// three seeds, their censuses and every kind's word, singular and plural, parse at most the five name tables and
+	/// <c>STAFF_TYPES.str</c>, whatever an earlier test read. The words are still the table's: Cleaner and Cleaners at
+	/// rows 0 and 1, Scientist and Scientists at 8 and 9.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> either table made again on every call (<c>NameAt</c>'s, <c>NameOfKind</c>'s) parses one a name.</remarks>
+	[TestMethod]
+	public void ThePoolsStringTablesAreReadOnceNotOnceAName()
+	{
+		var balance = new ParkBalance( "jungle", easyMode: true );
+		var reads = 0;
+		var names = 0;
+		var words = new List<string>();
+		Logger.LogDelegate count = ( severity, text ) =>
+		{
+			if ( text.StartsWith( "String table:" ) )
+				++reads;
+		};
+
+		Logger.OnLog += count;
+
+		try
+		{
+			foreach ( var seed in new[] { 1, 2, 3 } )
+			{
+				var pool = new ParkStaffPool( balance, seed, gameTick: 0 );
+
+				names += pool.Candidates.Count;
+				_ = pool.Census().ToArray();
+			}
+
+			for ( var kind = 0; kind < ParkStaffPool.Kinds; ++kind )
+				words.Add( $"{ParkStaffPool.NameOfKind( kind )}/{ParkStaffPool.NameOfKind( kind, plural: true )}" );
+		}
+		finally
+		{
+			Logger.OnLog -= count;
+		}
+
+		Assert.IsTrue( names > 30, $"{names} names drawn, enough that a read a name could not hide under six" );
+		Assert.IsTrue( reads <= 6, $"{reads} tables parsed for {names} names" );
+		CollectionAssert.AreEqual(
+			new[] { "Cleaner/Cleaners", "Mechanic/Mechanics", "Entertainer/Entertainers", "Guard/Guards", "Scientist/Scientists" },
+			words );
+	}
 }

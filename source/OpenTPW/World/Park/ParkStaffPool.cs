@@ -228,6 +228,12 @@ public sealed class ParkStaffPool
 	private static readonly string[] NameTables =
 		["HANDYMAN_NAMES", "MECHANIC_NAMES", "ENTERTAINER_NAMES", "GUARD_NAMES", "RESEARCHER_NAMES"];
 
+	/// <summary>Each kind's name table, read the first time a name of that kind is drawn and kept, as <see cref="Localization"/> keeps its own.</summary>
+	private static readonly StringFile?[] _nameTables = new StringFile?[Kinds];
+
+	/// <summary><c>STAFF_TYPES.str</c>, read the first time a kind is named and kept.</summary>
+	private static StringFile? _kindNames;
+
 	/// <summary>
 	/// The balance file's own plural for each kind, the same word in each per-kind <c>StaffPoolInfo</c> key read
 	/// here and neither the kind's name nor the singular of <see cref="TrainingNames"/>: <c>BeginningNumberOfHandymen</c>,
@@ -293,10 +299,10 @@ public sealed class ParkStaffPool
 	{
 		try
 		{
-			var types = new StringFile( "Language/English/STAFF_TYPES.str" );
+			_kindNames ??= new StringFile( "Language/English/STAFF_TYPES.str" );
 			var row = (kind * 2) + (plural ? 1 : 0);
 
-			return types[row] ?? $"kind {kind}";
+			return _kindNames[row] ?? $"kind {kind}";
 		}
 		catch ( Exception )
 		{
@@ -661,9 +667,9 @@ public sealed class ParkStaffPool
 	{
 		try
 		{
-			var names = new StringFile( $"Language/English/{NameTables[kind]}.str" );
+			_nameTables[kind] ??= new StringFile( $"Language/English/{NameTables[kind]}.str" );
 
-			return names[row] ?? $"{NameOfKind( kind )} {_nextId}";
+			return _nameTables[kind]![row] ?? $"{NameOfKind( kind )} {_nextId}";
 		}
 		catch ( Exception )
 		{
