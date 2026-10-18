@@ -3286,8 +3286,69 @@ went and the plain cell textures showed, the same small flecks in the same place
 
 With the three set aside, a brick walk and a road agree within 8 a channel ((116, 54, 53) against (112, 61, 61);
 (49, 49, 52) against (51, 50, 59)), so neither the light on lit faces nor the frame's gamma is the gap. OpenTPW's
-sea, fog off, is (1.0, 53.7, 55.9) against the original's (1.4, 55.0, 69.4): the blue's 13 is not looked into, nor is
-texture filtering.
+sea, fog off, is (1.0, 53.7, 55.9) against the original's (1.4, 55.0, 69.4): the blue is the original's moving quilt
+over the lake, which OpenTPW does not draw ("The park's sea", below); texture filtering is not looked into.
+
+---
+
+## The park's sea: a still lake, and a moving quilt over its harbour
+
+Decoded and measured for Q486 (`q486/PREDICTION.txt`, `q486/orig/a-*`, `q486/ours1/`, `q486/side-by-side.png`).
+
+**Two layers.** `base.MD2`'s mesh 191, `Line01` (113 vertices; x -252 to 1209, y -11 to -10, z -621 to 30), is the
+lake at large: `jri_lak2` under word `0x31`, wrapped, and moved by nothing; `basem.MD2`'s eleven UV tracks move the
+river's `surface*`, `Object12` and `falls02` alone. Over the harbour by the gates the engine lays a sea of its own,
+`WaterMesh`, the second of the three dynamic-faces meshes `FUN_0053bfe0` makes ("Placement feedback", above): `0x86`
+faces, mesh id 1. No data file describes it but its corner and its three textures.
+
+**The quilt.** Every park frame, in every view (`FUN_0053c3f0`, called at `0x0054e2fc`), `FUN_0053d380( 16, 19, 20.0,
+phase )` fills a grid of 16 columns by 19 rows, 20 units apart: the point at x = 20c, z = 20r stands at height
+1.7 cos s (`0x00700e04`), with the normal (sin s, 1, sin s) normalised, where
+**s = (2π/3)(x cos 10° - z sin 10°) - 0.5 × phase** (`0x00700dd4` × `0x00700e00`; ten times `0x00700dd0`; `0x00700de4`).
+Every sine is `FUN_004708d0`'s 4,096-entry table, a cosine read as the sine of the angle less -π/2 (`0x00700df0`).
+`FUN_0053cab0` then lays a quad on each cell of two blocks at the corner `0x00870ec8`/`cc`/`d0`: columns 0 to 9 by
+rows 0 to 10, and columns 10 to 13 by rows 0 to 5, 110 + 24 = 134 faces, the mesh's whole room. A quad shows its
+texture once (UV (0,0), (1,0), (0,1), (1,1)). Its texture is one of 110 words at `0x00871d18`, the second block
+taking the first 24 again, each drawn once as the module starts (`FUN_0053bfe0`: `rand() % 3 + 15`, so `gby_sur1`,
+`gby_sur2` or `gby_sur3` of the table at `0x00763b38`). `FUN_0053c9c0` puts each face in the face list the build
+squares share (`0x00820b00`), `FUN_0053d9e0` hands mesh 1's faces to `WaterMesh`, and `FUN_0053ddd0` writes their
+corners with the face's normals (its `param_7` nought: no ground height and no square's wave). The mesh's material
+word is 3 (`FUN_0053d790`, `param_1[9]`): `0x2`, see-through, and no `0x10` or `0x20`, so clamped.
+
+**Its corner is `WaterStartPos`.** `FUN_004080e0` copies the theme file's `WaterStartPos` (the balance object's
+`0x00785718`) to `0x00870ec8`: (380, -5, -180) in all four parks. The quilt covers x 380 to 580 by z -180 to 40, and
+x 580 to 660 by z -180 to -60, at y -5 give or take 1.7, six units over `Line01`.
+
+**How it moves.** The phase `0x00871f60` gains 0.4 a rendered frame unless the clock is paused (`FUN_0053c3f0`
+subtracts `0x00700de8`'s -0.4 times the clock's rate, `FUN_00403390`, the double at `0x00785970` + `0x20`, which
+`FUN_004032b0` makes 1.0), so s falls 0.2 a frame: one wave every 2π / 0.2 = 31.4 rendered frames, counted in frames
+as the squares' wave is. Sampled every 20 units, the wave of 3 units aliases: neighbouring points stand at unrelated
+phases, so the quilt heaves quad by quad rather than in a swell. The textures do not move; the corners and their
+light do.
+
+**Its light**, read and not measured apart from the heave: the normals go to the model lighter ("The lighting
+model"), so with the sun travelling (0.4, -0.8, 0.4) a corner takes the ambient (0.333, 0.333, 0.408) plus the sun
+times (0.816 - 0.816 sin s) / √(1 + 2 sin² s): nought at sin s = 1, 0.943 at -1. Each corner brightens and darkens
+once a wave.
+
+**The path tool's see-through preview shares the machinery, not the wave**: the same module, face list, sine table
+and pause gate move the build squares (`FUN_0053ddd0`'s wave branch, sin(phase + x + z) on the squares' phase
+`0x00874fc0`, 0.1 a frame), and a square's normal (0, (sin + 1) / 2, 0) dims it in time. The sea's formula is its
+own, at four times the rate.
+
+**Measured** (the stock park, `q325/stock.TPWS`; camera B, (450,30) 110 180; the original off-screen at 30 frames a
+second): corner and `WaterStartPos` both (380, -5, -180); the 110 words 38, 44 and 28 times 15, 16 and 17; the two
+phases gained 36.000 and 9.000 in 3.00 s, 4.0000 to 1, 30.00 frames a second. The sea box (350,150)-(500,300) changed
+by 6.07 (mean absolute, `patchmean.py`'s `mad`) in 0.5 s and by 0.00 with the phase held, the brick and road beside
+it 0.00, and a film's box repeated every 31.39 film frames (1.046 s). With the corner's y held at -50, under
+`Line01`, the box read (0.0, 50.4, 54.0) and was still, the teal of `jri_lak2` (texture mean (1.1, 53.9, 56.1)) at
+about 0.935 of it, why not whole not looked into; with the quilt it read (2.7, 60.0, 75.7). The blue is the quilt's:
+the three `gby_sur` average about (14, 80, 112) at alpha 67 to 207 (`q486/textures.png`).
+
+**OpenTPW draws `Line01` alone** (`ParkTerrain`; `Water` and `water.shader` are the lobby's sea, and the park makes
+neither): at the same camera its box read (1.0, 53.5, 55.8) and no pixel changed in six seconds (Q486, `ours1`). The
+quilt is Q490. The gates' flags, the third mesh (`FlagsMesh`: `FUN_0053d570` and the `FUN_0053cda0` loop over
+`0x00763cf8`, words 18 and 19, `gte_lgo1`), wave in the original's frame and are not drawn here: Q491, decode first.
 
 ---
 

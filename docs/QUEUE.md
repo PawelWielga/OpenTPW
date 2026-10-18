@@ -53,16 +53,20 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q486. The park's sea: its texture, its motion and its colour. Decode first.** Asked by Alexah (2026-10-17),
-  from `q472/side-by-side.png`: the original's sea is an animated, perhaps procedural, texture - Alexah's lead: the
-  same wave motion as the path tool's see-through preview - where ours (`content/shaders/water.shader`, `World/Terrain/
-  Water.cs`) samples one texture with a sine wobble and a scroll of our own (`waveScale`, `waveFrequency`,
-  `offsetSpeed`: no decode behind any of them). Its colour differs too, measured by Q479 with both games' fog off: ours
-  (1.0, 53.7, 55.9) against the original's (1.4, 55.0, 69.4), teal against blue (`q479/ours-nofog/B-1.png`,
-  `q479/orig/b-B-fog1.png`; `park-engine.md`, "The park view's colours"). Find what the original draws there: the
-  sea's model and texture (`dk_water3`, `textures.md`), how it moves (a texture animation, a procedural texture, a UV
-  scroll, or vertex motion), whether the path preview shares it, and its light. Measure first: a short film of the same
-  patch in both games at one camera (`original/record.sh`, `lib/bothcam.py`). The build is a new item.
+- [ ] **Q490. Build the park's sea quilt.** From Q486 (`park-engine.md`, "The park's sea"): the `WaterMesh` over the
+  harbour, 134 see-through quads of `gby_sur1..3` (`data/generic/dynamic/textures`, or `stexture` where `FUN_0054dcc0`
+  answers so) at `WaterStartPos` read from the balance (never a constant), each quad's texture drawn once, the 16 x 19 grid's heights
+  and normals made each frame from the decoded s, lit through the park's lighter, and the phase on `Time.Delta` at 30
+  frames a second (0.4 a frame; say the deviation at the site, as `ParkBuildMarkers` does) and held while the park is
+  paused. Confirm at camera B against `q486/orig`: the box's colour toward (2.7, 60.0, 75.7), a period near 1.05 s, the
+  brick and road unchanged. `Line01` alone read 0.935 of `jri_lak2` in the original against ours' 1.0; measure it with
+  the quilt sunk (`q486/orig/run.sh`'s hold) before calling the colour done.
+- [ ] **Q491. The gates' flags: the third dynamic mesh. Decode first.** From Q486: `FlagsMesh` (`FUN_0053bfe0`,
+  `0x180` faces, mesh id 3) waves eight flags of `gte_lgo1` (words 18 and 19, alternating) on the poles by the gates:
+  `FUN_0053d570( 7, 5, 1.8, phase )` with its phase at `0x00871ed0`, then the `FUN_0053cda0` loop over eight fixed
+  points at `0x00763cf4` (x 411.25, 451.25, 511.25 and 551.25, y 22, z 38.75 and 50.75), each turned by the float at
+  `+0x5c` of the thing `FUN_00519590` answers, times π/180 (not named). OpenTPW stands the poles bare
+  (`q486/side-by-side.png`). Decode the flag's grid, its wave and the turning thing, then build.
 - [ ] **Q472b. Build the picker's heightfield and its last cell.** From Q472 (`park-engine.md`, "The picker never hands
   the mode a cell off the map"). `ParkPicking.Resolve` meets the ground only over the heightfield (`HeightAtWorld` holds
   the edge height past it, so ours answers (98,40) past the last column and (40,85) past the last row, map type 7, and

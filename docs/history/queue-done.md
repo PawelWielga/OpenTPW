@@ -7650,6 +7650,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the emulator's; 136 caught from the original equal it too; camera P: path cells 0.675 against the original's frame,
   main 0.565 (`q489/`, run2, orig/a, orig/b); 23 of 23 bugs put back fail a test. The `0x13` decode's off-by-one is
   noted under Q460.
+- [x] **Q486. The park's sea: its texture, its motion and its colour. Decode first.** Asked by Alexah (2026-10-17),
+  from `q472/side-by-side.png`: the original's sea is an animated, perhaps procedural, texture - Alexah's lead: the
+  same wave motion as the path tool's see-through preview - where ours (`content/shaders/water.shader`, `World/Terrain/
+  Water.cs`) samples one texture with a sine wobble and a scroll of our own (`waveScale`, `waveFrequency`,
+  `offsetSpeed`: no decode behind any of them). Its colour differs too, measured by Q479 with both games' fog off: ours
+  (1.0, 53.7, 55.9) against the original's (1.4, 55.0, 69.4), teal against blue (`q479/ours-nofog/B-1.png`,
+  `q479/orig/b-B-fog1.png`; `park-engine.md`, "The park view's colours"). Find what the original draws there: the
+  sea's model and texture (`dk_water3`, `textures.md`), how it moves (a texture animation, a procedural texture, a UV
+  scroll, or vertex motion), whether the path preview shares it, and its light. Measure first: a short film of the same
+  patch in both games at one camera (`original/record.sh`, `lib/bothcam.py`). The build is a new item.
+  **Done (2026-10-17, decode only):** `park-engine.md`, "The park's sea"; FileFormats `sam.md` (`WaterStartPos`) and
+  `models.md` (`5a2936a`). The sea is two layers: `base.MD2`'s `Line01` (`jri_lak2`, no UV track, still), which is all OpenTPW draws (its box
+  (1.0, 53.5, 55.8), no pixel changed in 6 s; `Water.cs` is the lobby's), and over the harbour the engine's own
+  `WaterMesh`: 134 quads 20 units square from `WaterStartPos` (380, -5, -180), each a random `gby_sur1..3` drawn once,
+  see-through, whose corners heave 1.7 cos s with s = (2π/3)(x cos 10° - z sin 10°) - 0.5 phase and are lit by their
+  normals, the phase 0.4 a rendered frame. Measured live: the corner, the words (38/44/28), the phases 4.0000 to 1 at
+  30.00 fps, the box moving 6.07 in 0.5 s and 0.00 held, a period of 31.39 frames against 31.4, and with the quilt sunk
+  the box teal and still, OpenTPW's picture (`q486/side-by-side.png`). Not a texture animation: Alexah's lead holds in
+  kind, a vertex wave in the build squares' module, with its own formula. Filed Q490 (the build) and Q491 (the gates'
+  flags, the third mesh). `lib/patchmean.py` gained `mad`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
