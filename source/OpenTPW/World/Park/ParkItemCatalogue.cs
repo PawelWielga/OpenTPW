@@ -137,7 +137,11 @@ public sealed class ParkItemCatalogue
 
 		// The row of ITEMTYPES.str that names its kind - ItemDescriptionFile.RideTypeStringIndex. The buy screen's help
 		// row names an item by it.
-		int RideTypeStringIndex = 0 )
+		int RideTypeStringIndex = 0,
+
+		// The ride an add-on fits and its kind - ItemDescriptionFile.AddOnUpgradesId and AddOnUpgradeType. The hover's
+		// object row reads them (Level.GroundArmAt).
+		int AddOnUpgradesId = 0, int AddOnUpgradeType = 0 )
 	{
 		/// <summary>A tier's <c>CostOfUpgrade</c>: tier nought's is <see cref="BuildPrice"/>, nought past the third.</summary>
 		public int UpgradeCostAt( int tier ) => tier switch { 0 => BuildPrice, 1 => UpgradeCost1, 2 => UpgradeCost2, _ => 0 };
@@ -378,7 +382,8 @@ public sealed class ParkItemCatalogue
 					UpgradeResearchCost1: description.UpgradeResearchCostAt( 1 ),
 					UpgradeResearchCost2: description.UpgradeResearchCostAt( 2 ),
 					UpgradeCost1: description.UpgradeCostAt( 1 ), UpgradeCost2: description.UpgradeCostAt( 2 ),
-					RideTypeStringIndex: description.RideTypeStringIndex );
+					RideTypeStringIndex: description.RideTypeStringIndex,
+					AddOnUpgradesId: description.AddOnUpgradesId, AddOnUpgradeType: description.AddOnUpgradeType );
 
 			return true;
 		}

@@ -802,7 +802,7 @@ public class ParkLocatorTests
 		Assert.AreEqual( (441, 441), (Row( (-1, -1) ), Row( outside )), "no cell, before the first meeting: nothing posted, and nought after it" );
 
 		Row( ground );
-		Assert.AreEqual( (-1, -1), (Row( footprint ), Row( outside )), "an object's cell: its category, its row not built" );
+		Assert.AreEqual( (550, -1), (Row( footprint ), Row( outside )), "an object's cell: its category and row, then emptied" );
 		var orphan = (X: 60, Y: 30);
 		var was = state.Record( orphan.X, orphan.Y );
 		Assert.AreEqual( 441, Row( ground ) );
@@ -829,8 +829,8 @@ public class ParkLocatorTests
 	/// <b>The park gate and the ticket booths come before the cell's own categories</b> (<c>FUN_00486d90</c>,
 	/// <c>0x004872a4</c> to <c>0x0048730d</c>): over the gate, (46,17) to (49,17), the hover posts 459 with the pick hand,
 	/// over a booth 460, though the gate's middle cells are path and its sides map type 7; a click on either opens the entry
-	/// price (<c>FUN_00498d80</c>) and arms no tool. Past the gate's sides the cells are the ground's again. A queue's, an
-	/// object's and type <c>0x15</c>'s rows are counted.
+	/// price (<c>FUN_00498d80</c>) and arms no tool. Past the gate's sides the cells are the ground's again. Type
+	/// <c>0x15</c>'s row is counted.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the gate's side cells dropped; a cell further out taken; the booths' row the gate's; the
 	/// gate test after the cell's own; no pick hand; the click arms the path tool; each count dropped.</remarks>
@@ -863,24 +863,21 @@ public class ParkLocatorTests
 
 		var cell = (X: 60, Y: 30);
 		var was = state.Record( cell.X, cell.Y );
-		var footprint = Enumerable.Range( 0, 128 * 128 ).Select( i => (X: i % 128, Y: i / 128) )
-			.First( c => state.Record( c.X, c.Y ).Type == CellEdge.Footprint && ParkItemHeights.Owner( state, c.X, c.Y ) != null );
 		Unimplemented.Forget();
-		Row( footprint.X, footprint.Y );
-		Assert.AreEqual( "HOVER_OBJECT_ROW", string.Join( ",", Unimplemented.Summary.Select( gap => gap.What ) ) );
+		Row( 55, 15 );
 		state.SetRecord( cell.X, cell.Y, was with { Type = 3 } );
 		Row( cell.X, cell.Y );
 		state.SetRecord( cell.X, cell.Y, was with { Type = 0x15 } );
 		Row( cell.X, cell.Y );
 		state.SetRecord( cell.X, cell.Y, was );
-		CollectionAssert.AreEquivalent( new[] { "HOVER_OBJECT_ROW", "HOVER_QUEUE_ROW", "HOVER_TYPE_15_ROW" },
-			Unimplemented.Summary.Select( gap => gap.What ).ToArray() );
+		Assert.AreEqual( "HOVER_TYPE_15_ROW", string.Join( ",", Unimplemented.Summary.Select( gap => gap.What ) ),
+			"an object's and a queue's rows are built; type 0x15's is counted" );
 	}
 
 	/// <summary>
 	/// <b>Only the hover counts a row it has not built</b>: the click asks the same arm of the ground (to see whether the
-	/// path tool is armed) and posts no row, so a click on an object's cell adds nothing to <c>HOVER_OBJECT_ROW</c>, which
-	/// the hover counts once for each of its frames.
+	/// path tool is armed) and posts no row, so a click on a type-<c>0x15</c> cell adds nothing to <c>HOVER_TYPE_15_ROW</c>,
+	/// which the hover counts once for each of its frames.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the count put back in the ground's arm, so a click counts too.</remarks>
 	[TestMethod]
@@ -889,9 +886,9 @@ public class ParkLocatorTests
 		_stack.Update();
 		var level = Level.Current!;
 		var state = level.ParkState!;
-		var footprint = Enumerable.Range( 0, 128 * 128 ).Select( i => (X: i % 128, Y: i / 128) )
-			.First( c => state.Record( c.X, c.Y ).Type == CellEdge.Footprint && ParkItemHeights.Owner( state, c.X, c.Y ) != null );
-		int Counted() => Unimplemented.Summary.Where( gap => gap.What == "HOVER_OBJECT_ROW" ).Sum( gap => gap.Times );
+		var footprint = (X: 60, Y: 30);
+		state.SetRecord( footprint.X, footprint.Y, state.Record( footprint.X, footprint.Y ) with { Type = 0x15 } );
+		int Counted() => Unimplemented.Summary.Where( gap => gap.What == "HOVER_TYPE_15_ROW" ).Sum( gap => gap.Times );
 
 		level.WorldHelpRow( footprint.X, footprint.Y, 0 );
 		Unimplemented.Forget();
@@ -1298,5 +1295,91 @@ public class ParkLocatorTests
 		{
 			(Camera.ViewMatrix, Camera.ProjMatrix, Screen.Size) = (viewMatrix, projMatrix, size);
 		}
+	}
+
+	/// <summary>
+	/// <b>A queue's row and an object's</b> (<c>FUN_00486d90</c>, <c>0x00487603</c> and <c>0x00487665</c> to
+	/// <c>0x00487718</c>). Over a queue, category 3: UIHELPTEXT 444 "Left-click to edit this queue", posted on a change of
+	/// category, and the pointer <c>c_queue</c>. Over an object, category 4: 550 with the object's name as <c>FUN_004e2780</c>
+	/// joins it and the pick hand, posted only for an object other than the thing the hover holds, whatever the category,
+	/// so the same object after a hoarding or an object-less cell, which keep the thing, posts nothing, and after the
+	/// ground, which forgets it, posts again. An add-on that is a track ride's (<c>AddOn.UpgradeType</c> 1) posts nothing and
+	/// keeps the old row; one that is another ride's (2) posts its row. Shift alone with nobody taken empties the row and
+	/// keeps the thing, so the same object after it leaves the bar empty; coming back onto the view forgets it.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the queue's pointer the pick hand; type <c>0x15</c> given the queue's category; the object's row posted on a change of category; the
+	/// thing kept by the ground; the thing forgotten by a hoarding or under Shift; the thing kept on coming back onto the
+	/// view; the name dropped; the add-on test dropped; the add-on's type test dropped.</remarks>
+	[TestMethod]
+	public void AQueueAndAnObjectPostTheirRows()
+	{
+		_stack.Update();
+		var level = Level.Current!;
+		var state = level.ParkState!;
+		(int Row, bool Posted, string Text) Hover( int x, int y )
+		{
+			var row = level.WorldHelpRow( x, y, 0 );
+			return (row, level.HoverPosted, row < 0 ? "" : Localization.FormatHelp( row, level.WorldHelpValues ));
+		}
+
+		(int Row, bool Posted) Head( int x, int y )
+		{
+			var (row, posted, _) = Hover( x, y );
+			return (row, posted);
+		}
+
+		var queue = (X: 60, Y: 30);
+		var ride = (X: 62, Y: 30);
+		var addOn = (X: 64, Y: 30);
+		var hoarding = (X: 42, Y: 16);
+		var orphan = (X: 66, Y: 30);
+		state.SetRecord( queue.X, queue.Y, state.Record( queue.X, queue.Y ) with { Type = 3 } );
+		state.SetRecord( ride.X, ride.Y, state.Record( ride.X, ride.Y ) with { Type = CellEdge.Footprint, ParentId = 0 } );
+		state.AddObject( new ParkWorld.CatalogueObject( state.NextThingId(), 1100, ride.X << 8, ride.Y << 8, 0 ) );
+		state.SetRecord( addOn.X, addOn.Y, state.Record( addOn.X, addOn.Y ) with { Type = CellEdge.Footprint, ParentId = 0 } );
+		state.AddObject( new ParkWorld.CatalogueObject( state.NextThingId(), 1500, addOn.X << 8, addOn.Y << 8, 0 ) );
+		state.SetRecord( orphan.X, orphan.Y, state.Record( orphan.X, orphan.Y ) with { Type = CellEdge.Footprint, ParentId = 0 } );
+
+		Hover( 43, 16 );
+		Assert.AreEqual( (444, true, "Left-click to edit this queue"), Hover( queue.X, queue.Y ) );
+		Assert.AreEqual( Input.CursorTypes.Queue, level.HoverPointer, "c_queue over a queue" );
+		Assert.AreEqual( Input.CursorTypes.Queue, level.IdleCursor() );
+		Assert.IsFalse( Hover( queue.X, queue.Y ).Posted, "the same category: not posted again" );
+		var pylon = (X: 68, Y: 30);
+		state.SetRecord( pylon.X, pylon.Y, state.Record( pylon.X, pylon.Y ) with { Type = 0x15 } );
+		Assert.AreEqual( (-1, true), Head( pylon.X, pylon.Y ), "type 0x15 after the queue: its own category 6, the row emptied" );
+		Assert.AreEqual( (444, true), Head( queue.X, queue.Y ) );
+
+		var toilet = "Small Toilet: Left-click to view/edit this item's details. Hold CTRL and click to buy another";
+		Assert.AreEqual( (550, true, toilet), Hover( 55, 15 ) );
+		Assert.IsTrue( level.PickPointer, "the pick hand over an object" );
+		Assert.AreEqual( Input.CursorTypes.Pick, level.IdleCursor() );
+		Assert.IsFalse( Hover( 55, 15 ).Posted, "the same object" );
+		Assert.AreEqual( (550, true), Head( ride.X, ride.Y ), "another object, the same category: posted" );
+		StringAssert.StartsWith( Hover( 55, 15 ).Text, "Small Toilet:" );
+
+		Assert.AreEqual( (550, false), Head( hoarding.X, hoarding.Y ), "a hoarding posts nothing and keeps the thing" );
+		Assert.AreEqual( (550, false), Head( 55, 15 ), "so the same object posts nothing" );
+		Assert.AreEqual( (550, false), Head( orphan.X, orphan.Y ), "an object's cell with no object the same" );
+		Assert.AreEqual( (550, false, toilet), Hover( 55, 15 ) );
+		Assert.AreEqual( (550, false), Head( addOn.X, addOn.Y ), "a track ride's add-on: nothing posted" );
+		Assert.AreEqual( (550, false), Head( 55, 15 ), "and the thing kept" );
+		Hover( hoarding.X, hoarding.Y );
+		Assert.AreEqual( (441, true), Head( 43, 16 ), "the ground forgets the thing" );
+		Assert.AreEqual( (550, true, toilet), Hover( 55, 15 ) );
+		Input.Keyboard = new Input.KeyboardInfo( [Key.ShiftLeft] );
+		Assert.AreEqual( (-1, true), Head( 55, 15 ), "Shift alone, nobody taken: emptied after the object's category" );
+		Input.Keyboard = new();
+		Assert.AreEqual( (-1, false), Head( 55, 15 ), "and the thing kept (0x004870f3): the same object posts nothing" );
+		level.WorldHelpRow( 55, 15, 0, onTheView: false );
+		Assert.AreEqual( (550, true, toilet), Hover( 55, 15 ), "back on the view the thing is forgotten: posted again" );
+
+		var space = new ParkItemCatalogue( "space", FileSystem );
+		Assert.IsTrue( space.TryGet( 3502, out var zob ) );
+		Assert.IsTrue( level.Catalogue!.TryGet( 1500, out var lavaJump ) );
+		Assert.AreEqual( (3109, 2, 1150, 1), (zob.AddOnUpgradesId, zob.AddOnUpgradeType, lavaJump.AddOnUpgradesId, lavaJump.AddOnUpgradeType) );
+		typeof( Level ).GetProperty( nameof( Level.Catalogue ) )!.SetValue( level, space );
+		state.AddObject( new ParkWorld.CatalogueObject( state.NextThingId(), 3502, orphan.X << 8, orphan.Y << 8, 0 ) );
+		Assert.AreEqual( (550, true), Head( orphan.X, orphan.Y ), "another ride's add-on, UpgradeType 2: its row" );
 	}
 }

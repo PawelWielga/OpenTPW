@@ -53,13 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q478. The hover's rows over a queue, an object, a track and type `0x15`.** From Q471 (`park-engine.md`, "The gate
-  and the ticket booths"): over those cells ours posts the empty row, counted `HOVER_QUEUE_ROW` (UIHELPTEXT `0x1bc`, 444
-  "Left-click to edit this queue", `0x00487621`), `HOVER_OBJECT_ROW` (`0x226`, 550 "{P2}: Left-click to view/edit this
-  item's details. Hold CTRL and click to buy another", the object's name, `0x004876d1`), `HOVER_TRACK_CELL_CATEGORY`
-  (`0x1be`, 446, `0x004874ab`) and `HOVER_TYPE_15_ROW` (`0x1c0`, 448, `0x00487742`). Decode each arm's tests first (the
-  object's VARM value and the rows its kinds take, `0x00487665` to `0x00487728`), then build the queue's and the
-  object's, which every Lost Kingdom park reaches. Confirm in both games: the pointer over a ride, a shop and a queue.
 - [ ] **Q494. The picker's object march.** From Q472b (`park-engine.md`, "The picker never hands the mode a cell off
   the map"): after the terrain, `FUN_0045bf90` marches the ray in steps of 10 (`FUN_0045cdc0`) and asks the things of the
   cell under each step, held to `MapInfo`'s limits; a model met before the ground gives the hit point, and so the cell.
@@ -100,6 +93,8 @@ filed the items that cite it.
   From Q495: a two-line row (538, 539, the buy screen's land rows) stands over the top of our one-line strip, where
   the original's strip holds both lines (`q495/side-by-side.png`, rows 3 and 4); `FUN_004924b0` sets a label flag by
   whether the text holds a line break (`FUN_0065c428( 1, ... )`).
+  From Q478: the object row 550 ("Belly Bounce: Left-click to view/edit this item's details. Hold CTRL and click to buy
+  another") is set on two lines in the original (`q478/orig/b-3-ride.png`) and runs past ours on one (`q478/run4/3-ride.png`).
 - [ ] **Q485. First person's fog.** From Q481 (`park-engine.md`, "The park view's colours"): the original fogs first
   person and a ride's view (render-word `0x2000`, `Game_StateMachine`'s `XOR 0x2080` at `0x0054fae2`), linearly by depth
   from `GraphicalOptions.FIRSTPERSONVIEWDISTANCE`'s start to its end (100 to 110 at medium, `FUN_0044d8f0`) in the
@@ -2140,9 +2135,18 @@ filed the items that cite it.
   builder's object (the ride the buy row was chosen on); a click on the add-on opens that ride's window when the word is
   non-zero (`docs/exe/park-engine.md`, "The add-on's snap, its open ends and the window a click opens"). Its open ends light
   the dummy nodes by a bit accumulator that is never cleared after the start. Read what this game does first (`HOVER_*` and
-  the add-on hover counters). Reached through Q512's add-on rows, so after it. Confirm in Full Simulation: an add-on dragged
+  the add-on hover counters; since Q478 a placed add-on of type 1 posts no hover row and keeps the thing, `Level.GroundArmAt`). Reached through Q512's add-on rows, so after it. Confirm in Full Simulation: an add-on dragged
   over a track piece at each flow, its snapped cell and angle, and a click on the placed add-on opening the ride's window,
   beside the original; a screenshot of each.
+- [ ] **Q514. The hover's rows over a track and type `0x15`.** From Q478 (`park-engine.md`, "The rows over a queue and
+  an object", "The arms that post nothing"): ours posts the empty row and counts `HOVER_TRACK_CELL_CATEGORY` (track types
+  11 and 16, and 12 under a parent not 25) and `HOVER_TYPE_15_ROW` (map type `0x15`). Type `0x15` is read: category 6,
+  UIHELPTEXT 448 (`0x1c0`, "Left-click to edit this track") posted on a change of category, the thing forgotten,
+  `FUN_00469180`, pointer 11 `c_pylon` (`0x00487728` to `0x004877a2`). The track's arm (`0x004873d5` to `0x004874fe`) is
+  category 5 and 446 (`0x1be`) with pointer 6 or 10 by the track record's `+0x2c`, after tests of the cell's thing and
+  the track's (`FUN_00536380`, `FUN_00536350`, `FUN_00536340`, the add-on test) not read. The stock park reaches neither
+  (map types 0, 1, 2, 3, 4, 7, 9, 10, 30 and track types 7, 12, 25, `parkfile.show_map` on `q325/stock.TPWS`); that a
+  built track ride is what makes them is inferred from the rows' words and `c_pylon`: build after the track rides. Confirm in both games over a built coaster's track and its pylons.
 
 ## B. Docs and comments
 
@@ -2336,7 +2340,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   taken from the cell, not by hitting its model (`ParkPicking.ObjectUnderCursor`; a person by their picture, `PersonUnderCursor`). Decode what the hover updater
   `FUN_00486d90` highlights when the hovered thing is an object or a person, then build it. Include the park gate: its
   arm calls `FUN_00469180` (`0x004878ce`, the highlight swap on `[0x007afda0]`), which the ticket booth's arm does not
-  (`park-engine.md`, "The gate and the ticket booths"); the hover calls it at six places.
+  (`park-engine.md`, "The gate and the ticket booths"); the hover calls it at six places. Seen in the original (Q478):
+  the pointer on the Belly Bounce brightens its model (the frame's box (180,220) to (300,350) reads red 160 and 173 in
+  `q478/orig/b-3-ride.png` and `b-4-ride-again.png`, 138 and 141 in `b-2-queue.png` and `b-5-shop.png`), the object
+  arm's call at `0x00487712`.
 - [ ] **Q25. The camcorder button should give a crosshair and place the camera where you click.**
   `ParkGadget.EnterCamcorder` enters the mode at once. The original installs a mouse-interaction mode
   (`FUN_00481a10`, `park-engine.md`, "Camcorder mode — the first-person view"). Its click handler was decoded by Q48

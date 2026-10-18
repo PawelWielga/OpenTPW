@@ -7898,6 +7898,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     `(((100 - c) / 3 + c) << 10) / most` on child `0xd2d12`, the knob `(workload - 70) x limit / 30`, the drag's inverse
     `30 x value / limit + 70`. The five (224, 86, 86, 255) text colours are all in `FUN_004aa480`, this screen; which
     labels they colour is not assigned, nor is the ball's travel.
+- [x] **Q478. The hover's rows over a queue, an object, a track and type `0x15`.** Done 2026-10-18: decoded all four
+  arms (`park-engine.md`, "The rows over a queue and an object") and built the queue's and the object's: 444 with
+  `c_queue` on a change of category, 550 with the object's name and the hand only for an object other than the thing the
+  hover holds, an add-on of type 1 posting nothing. Ours held O1 to O8 (`q478/run1` to `run4`, `run4` on the final build;
+  main's build the empty bar and the arrow, `control1`); the original held R2 and R4 (round b: the same cells,
+  categories 3, 4, 4 and rows, `q478/orig/b-*`, `side-by-side.png`) and missed R1 and R3, recorded (its rows are
+  `american`'s, the queue's "line"; its zoom clamps at 130); 18 of 18 bugs put back fail. The track's
+  and type `0x15`'s rows are Q514. From Q471 (`park-engine.md`, "The gate
+  and the ticket booths"): over those cells ours posts the empty row, counted `HOVER_QUEUE_ROW` (UIHELPTEXT `0x1bc`, 444
+  "Left-click to edit this queue", `0x00487621`), `HOVER_OBJECT_ROW` (`0x226`, 550 "{P2}: Left-click to view/edit this
+  item's details. Hold CTRL and click to buy another", the object's name, `0x004876d1`), `HOVER_TRACK_CELL_CATEGORY`
+  (`0x1be`, 446, `0x004874ab`) and `HOVER_TYPE_15_ROW` (`0x1c0`, 448, `0x00487742`). Decode each arm's tests first (the
+  object's VARM value and the rows its kinds take, `0x00487665` to `0x00487728`), then build the queue's and the
+  object's, which every Lost Kingdom park reaches. Confirm in both games: the pointer over a ride, a shop and a queue.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

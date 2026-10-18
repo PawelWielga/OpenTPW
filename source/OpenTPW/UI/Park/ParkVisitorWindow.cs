@@ -369,7 +369,11 @@ internal sealed class ParkVisitorWindow : UiWindow
 
 	private static StringFile? _objectNames;
 
-	private static string NameOfThing( int thingId )
+	/// <summary>
+	/// A placed thing's name (<c>FUN_004e2780</c>): its item's two lines joined (<see cref="JoinName"/>), the catalogue's
+	/// name where the table has no row for it, and nothing for a thing not placed.
+	/// </summary>
+	internal static string NameOfThing( int thingId )
 	{
 		if ( Level.Current is not { ParkState: { } state, Catalogue: { } catalogue }
 			|| !state.TryObject( thingId, out var placed ) )

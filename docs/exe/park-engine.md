@@ -4194,10 +4194,39 @@ at camera (475,155) 110 180 the arch's pixels from y 320 to 540 read gate cells,
 Measured in both (`q471/`, `PREDICTION.txt`): the booth category 13 and its row with the hand, the four gate cells 14 and
 the gate's row with the hand, (45,17) and (50,17) category 0 and the bar emptied; the click on (47,17) and on (47,13)
 each opened the entry price screen (`[0x007ca210]` set), where main's build posted 442 and armed the path tool
-(`q471/control1`). Built in `Level.GateArmAt`, `Level.WorldHelpRow` and `Level.ClickWorldAt`. The rows over a queue
-(`0x1bc`, 444), an object (`0x226`, 550, with its name), a track (`0x1be`, 446) and type `0x15` (`0x1c0`, 448) are not
-built: ours posts the empty row there and counts `HOVER_QUEUE_ROW`, `HOVER_OBJECT_ROW`, `HOVER_TRACK_CELL_CATEGORY` and
-`HOVER_TYPE_15_ROW`, from the hover alone: the click's and the pointer's tool tests ask the same arm and do not count.
+(`q471/control1`). Built in `Level.GateArmAt`, `Level.WorldHelpRow` and `Level.ClickWorldAt`. The rows over a track
+(`0x1be`, 446) and type `0x15` (`0x1c0`, 448) are not built: ours posts the empty row there and counts
+`HOVER_TRACK_CELL_CATEGORY` and `HOVER_TYPE_15_ROW`, from the hover alone: the click's and the pointer's tool tests ask
+the same arm and do not count. The queue's and an object's are built (below).
+
+**The rows over a queue and an object** (Q478; `FUN_00486d90` `0x00487603` to `0x004877a2`). Every row of these arms
+is looked up in `[0x0078ba98]`'s table (`FUN_006ace60`) and, with the table's `[0x0078ba80]` set, decoded into
+`0x7ba058` by `FUN_006adc80`, the `.str` reader's own character decode (its bytes through the table's lookup), not a
+change of words. A **queue** (map type 3) is category 3: UIHELPTEXT 444 (`0x1bc`) is posted only when the last category
+was not 3, the thing `[0x007c24f8]` is forgotten (`0x004877b9`) and pointer 4 put up, `c_queue` (`FUN_00489720`
+registers it). An **object** (map types 4, 9 and 10; the thing `FUN_00527e80` answers for the parent cell, `0x0048734c`)
+is first asked whether it is an add-on: its item's `AddOn.UpgradesId` (`+0x284`, `FUN_004e2710`) not nought and its
+`AddOn.UpgradeType` (`+0x288`, `FUN_004dd4e0`'s item) not 2 jumps to `0x004878d3`, nothing posted and the thing kept.
+Of the shipped add-ons, the eleven `upgrades/*.wad` items, all are type 1 (a track ride's) but space's `zob2` (3502,
+type 2, on 3109): Lost Kingdom's 1500 and 1501 fit 1150, 1502 fits 1160. Otherwise it is category 4, and the row is
+posted only when the object is not the thing the hover holds (`0x0048769d`), **whatever the category**: the thing is set
+to it, `FUN_004e2780` writes the object's name (its two lines joined, `hud.md`, "The status's row 16") and UIHELPTEXT
+550 (`0x226`) is formatted with it as a `VARM` value of type 2, `{P2}` (`FUN_006acd60`, `0x004876fd`), and posted; either
+way `FUN_00469180` runs (the model highlight, Q24) and pointer 2, `c_pick`, is put up. So the thing decides: the arms that
+leave it (no cell, a hoarding, an object's cell with no object, an add-on, all through `0x004878d3`; nobody taken where
+the guests decide, `0x004870f3`, which empties the row after a category) let the same object post nothing after them,
+and every arm that forgets it (the ground `0x0048757d`, path, queue and the default `0x004877b9`, type `0x15`
+`0x00487783`, a track `0x004874f4`, the gate and the booths, a tool armed `0x00486ff7`) or takes a person (`0x00487216`) lets it post again.
+Type `0x15` is category 6: 448, posted on a change of category, the thing forgotten, `FUN_00469180`, pointer 11
+(`c_pylon`). Built in `Level.GroundArmAt`, `Level.WorldHelpRow` (`ObjectPosted`, `_objectTaken`), `Level.IdleCursor`
+(`HoverPointer`) and `ItemDescriptionFile.AddOnUpgradesId`/`AddOnUpgradeType`. Measured in both (`q478/`,
+`PREDICTION.txt`, `side-by-side.png`, ours `run4`), the stock park at camera (480,265) 130 180: over the queue (50,22) category 3,
+thing 0, "Left-click to edit this line" and `c_queue` (the reference install reads `Language/american`, whose 444 says
+line; ours reads `English`'s "queue"); over the Belly Bounce (52,24) category 4 and "Belly Bounce: Left-click to
+view/edit this item's details. Hold CTRL and click to buy another" with the hand, its model lit; over the Drinks Shop
+(43,31) category 4, another thing, its row with the hand. Ours posted 444 with `c_queue` and 550 with each name and
+the hand, the ride again posting nothing; main's build (`q478/control1`) the empty bar and the arrow. The original
+sets the long row on two lines (Q484).
 
 **The hover runs only on the park's view** (Q451). `Park_MouseMessageProc` runs `FUN_00486d90` on its timer
 (`0x00488582`) only while `[0x007c24fc]` is set. Message `0x10001`, the pointer coming onto the layer from a control,

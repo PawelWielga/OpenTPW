@@ -204,6 +204,18 @@ public sealed partial class ItemDescriptionFile
 	public int BumperType => _bumperType ?? _category?.BumperType ?? 0;
 
 	/// <summary>
+	/// The ride an add-on fits - <c>AddOn.UpgradesId</c>, descriptor <c>+0x284</c> (<c>FUN_004e2710</c>): nought on everything
+	/// but the eleven add-ons, the jungle's 1500 and 1501 on 1150 and 1502 on 1160.
+	/// </summary>
+	public int AddOnUpgradesId => _addOnUpgradesId ?? _category?.AddOnUpgradesId ?? 0;
+
+	/// <summary>
+	/// What kind of add-on this is - <c>AddOn.UpgradeType</c>, descriptor <c>+0x288</c>: 1 a track ride's, 2 another ride's,
+	/// space's <c>zob2</c> (3502) alone. The hover posts an add-on's row only at 2 (<c>0x0048768d</c>).
+	/// </summary>
+	public int AddOnUpgradeType => _addOnUpgradeType ?? _category?.AddOnUpgradeType ?? 0;
+
+	/// <summary>
 	/// What the placer adds to the anchor cell, before its own fixed offset, to find a bumper ride's arena centre -
 	/// <c>Bumper.NorthXAdjust</c> to <c>Bumper.WestYAdjust</c>, descriptor <c>+0xa4</c>..<c>+0xc0</c>, read by
 	/// <c>FUN_00529e10</c> for the turn 0, 90, 180 or 270 (<c>docs/exe/park.md</c>, "Where a bumper ride's cars float").
@@ -625,6 +637,8 @@ public sealed partial class ItemDescriptionFile
 	private int? _goldenTicketCost;
 	private int? _rideTypeStringIndex;
 	private int? _bumperType;
+	private int? _addOnUpgradesId;
+	private int? _addOnUpgradeType;
 	private readonly int?[] _bumperAdjust = new int?[8];
 	private readonly List<string?> _supplementalMeshes = [];
 	private int? _attractionValue;
@@ -953,6 +967,14 @@ public sealed partial class ItemDescriptionFile
 
 				case "Bumper.BumperType":
 					_bumperType = Number( line );
+					break;
+
+				case "AddOn.UpgradesId":
+					_addOnUpgradesId = Number( line );
+					break;
+
+				case "AddOn.UpgradeType":
+					_addOnUpgradeType = Number( line );
 					break;
 
 				case "Bumper.NorthXAdjust": _bumperAdjust[0] = Number( line ); break;
