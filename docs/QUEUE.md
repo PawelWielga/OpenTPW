@@ -1117,7 +1117,7 @@ filed the items that cite it.
   does each opening take the work load from 85 down one (`hud.md` predicts 84, then 83)? Not read: the pump's frame
   count in `res_fluid`, how the gauge and dial draw, the sounds' parameters.
 - [ ] **Q706. Golden tickets awarded in Full Simulation (the checks and the award).** From Q141 (`ride-operation.md`,
-  "Golden tickets"; `saves.md`, "Keys and tickets"). Alexah's call on when. On the sweep that makes `mGameTick` a
+  "Golden tickets"; `saves.md`, "Keys and tickets"). **Alexah (2026-10-18): after Q327**, the Full Simulation catch-up, is done. On the sweep that makes `mGameTick` a
   multiple of 100, in Full Simulation alone: the six Local tests (each skipped when the park holds it), the four
   Global (Global 3's cells as `hud.md`'s predicates; Global 1's excitement and Global 2's section list as decoded
   there), the secret; each award into `PlayerFile` as `FUN_005af810`/`FUN_005af940`/`FUN_005afb00` return 1 to 4 (the
