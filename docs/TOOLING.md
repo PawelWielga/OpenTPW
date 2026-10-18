@@ -304,6 +304,9 @@ Each was found by trial in the item named, and cost a run to find.
   bottom place to click; R and the gadget's Research button (`control 2b`) open one in an Instant Action park. In the
   original, off-screen after `loadfile.sh load`: R (`xdotool keydown r`/`keyup`), the Research button at (166, 656) and
   the box's cross at (714, 326) of the 1024 x 768 frame close it again; B opens the buy screen for a park screen to close.
+  Every box logs its words as it opens, `Message box: <text>` with each line break as ` / ` and `, with a tick` when it
+  has one (Q143). In the lobby, `control 7a16` is slot 1's delete button: its click opens the delete box, and its cross
+  closes it deleting nothing (`q143/confirm.py`).
 - **The hire screen's account in both games, and a month turned** (Q385): this game's `money` prints the analyser's
   money months (`month balance N slot S cashin T/N staff T/N costs T/N slot S ...`, the month so far over the newest
   closed; the balance ring has no month so far, Q387); the log's

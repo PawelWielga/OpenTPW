@@ -35,6 +35,7 @@ internal sealed class MessageBox : UiWindow
 	{
 		_onTick = onTick;
 		Modal = true;
+		Log.Info( $"Message box: {text.ReplaceLineEndings( " / " )}{(onTick == null ? "" : ", with a tick")}" );
 		Pauses = true;
 
 		Root = Backdrop();

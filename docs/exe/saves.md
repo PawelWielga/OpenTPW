@@ -64,9 +64,13 @@ falls back to defaults (mode 0); a partial read keeps whatever was read. It crea
 of every park save, before the park file is opened ("Load Game and Save Game" below).
 
 **Delete (`b_dellog`)** shows message box text UITEXT 399, then recursively deletes the player directory. The slot is
-emptied and nothing else is written. Row 399 is not empty: it is a parameter string, parameter 4 then
-"Are you sure you want to / delete this player ?", in both language folders; a reader that takes a string's first
-text part alone reads it as empty, which is what OpenTPW's does (`QUEUE.md` Q143).
+emptied and nothing else is written. Row 399 is a parameter string, parameter 4 then
+"Are you sure you want to / delete this player ?", in both language folders. The click (`0x004a6031`) takes the slot's
+record (`FUN_005c7d00`, 24 bytes a slot) and hands its `+8`, the name the slot shows (`FrontEnd_FillPlayerSlots` sets
+the slot's text to it), as parameter 4 in a string variable (vtable `0x006ff174`, whose writer `0x006add70` appends the
+whole string) to the formatter `FUN_006acd60` on `[0x0078ba94]`, then opens the box with the tick `0x004a61b0`
+(`0x0047f020`). So the box reads the name, a blank line and the question. **OpenTPW**: `FrontEnd.DeleteQuestion`
+(Q143).
 
 ## `gms.dat` — the player profile
 

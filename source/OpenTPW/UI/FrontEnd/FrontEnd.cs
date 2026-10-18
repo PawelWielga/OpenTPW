@@ -120,22 +120,18 @@ internal sealed class FrontEnd : Panel
 	/// the tick.
 	///
 	/// <para>
-	/// The original asks with UITEXT 399, handed the player's name: a parameter string, its parameter and then
-	/// "Are you sure you want to / delete this player ?" (docs/exe/saves.md, "Delete"). <c>Localization.Get</c>
-	/// gives a string's first text part alone, which is empty for this row, so here the
-	/// box asks in a line of OpenTPW's own, worded as the game words its other deletions (UITEXT 393 to 397),
-	/// unless the text has a line 399 of its own.
+	/// It asks with UITEXT 399, the player's name and then "Are you sure you want to / delete this player ?" - see
+	/// <see cref="DeleteQuestion"/>.
 	/// </para>
 	/// </summary>
 	internal void AskToDeletePlayer( int slot )
-	{
-		var text = Localization.Get( UIStrings.ConfirmDeletePlayer );
+		=> _stack.Open( new MessageBox( _stack, DeleteQuestion( Players.Roster[slot]?.Name ?? "" ), () => DeletePlayer( slot ) ) );
 
-		if ( string.IsNullOrWhiteSpace( text ) )
-			text = $"DELETE PLAYER\n\nAre you sure you want to delete {Players.Roster[slot]?.Name} ?\n\n(All of their saved games WILL be lost)";
-
-		_stack.Open( new MessageBox( _stack, text, () => DeletePlayer( slot ) ) );
-	}
+	/// <summary>
+	/// The delete box's words: UITEXT 399 with its parameter 4 the player's name, the text the slot shows, which the
+	/// original hands over from the slot's record <c>+8</c> as a string variable (0x004a6056, docs/exe/saves.md, "Delete").
+	/// </summary>
+	internal static string DeleteQuestion( string name ) => Localization.Format( (int)UIStrings.ConfirmDeletePlayer, (4, name) );
 
 	/// <summary>The delete box's tick (0x004a61b0): the player goes, folder and all, and the slots are filled again (0x004a62b0).</summary>
 	private void DeletePlayer( int slot )

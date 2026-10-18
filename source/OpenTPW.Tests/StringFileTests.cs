@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace OpenTPW.Tests;
@@ -24,7 +25,7 @@ public class StringFileTests
 	public void AStringTableIsParsedOnce()
 	{
 		var table = Table( 2 );
-		var (file, lines) = Parses( $"String table: 2 strings in {table.Length} bytes", () => new StringFile( new MemoryStream( table ) ) );
+		var (file, lines) = Parses( $"String table: 2 strings in {table.Length} bytes, the longest 0 characters", () => new StringFile( new MemoryStream( table ) ) );
 
 		Assert.AreEqual( 2, file.Entries.Length );
 		Assert.AreEqual( "", file[1] );
@@ -32,20 +33,110 @@ public class StringFileTests
 	}
 
 	/// <summary>
-	/// <b>The interface's own table, parsed once.</b> <c>UITEXT.str</c> holds 474 strings in 17,076 bytes, and row
-	/// 200 (<see cref="UIStrings.ParkName"/>) is "Park name".
+	/// <b>The interface's own table, parsed once.</b> <c>UITEXT.str</c> holds 474 strings in 17,076 bytes, the longest
+	/// row 417's 615 characters, and row 200 (<see cref="UIStrings.ParkName"/>) is "Park name".
 	/// </summary>
 	[TestMethod]
 	public void TheInterfacesTextIsParsedOnce()
 	{
 		FileSystem = GameData.Required();
 
-		var (file, lines) = Parses( "String table: 474 strings in 17076 bytes",
+		var (file, lines) = Parses( "String table: 474 strings in 17076 bytes, the longest 615 characters",
 			() => new StringFile( "Language/English/UITEXT.str" ) );
 
 		Assert.AreEqual( 474, file.Entries.Length );
 		Assert.AreEqual( "Park name", file[(int)UIStrings.ParkName] );
 		Assert.AreEqual( 1, lines, "one parse for one StringFile" );
+	}
+
+	/// <summary>
+	/// <b>A string over 255 characters is read whole.</b> A string's length is three bytes (FileFormats
+	/// <c>strings.md</c>), and four shipped strings need more than the first, all in <c>UITEXT.str</c>: row 400
+	/// (<see cref="UIStrings.Change"/>), 262 characters in English and 256 in american, and row 417
+	/// (<see cref="UIStrings.SoftwareCopyright"/>), 615 and 614. The words are checked in English alone: the reader
+	/// decodes every table through the English character table, which the american one is not (docs/QUEUE.md Q710).
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the length taken from its first byte alone reads row 400 as "CHANGE" and as empty, and row
+	/// 417 cut to 103 and 102 characters. No shipped string reaches 65,536 characters, so the third byte is
+	/// <see cref="AStringsLengthTakesAllThreeBytes"/>'s.
+	/// </remarks>
+	[TestMethod]
+	[DataRow( "English", 262, 615 )]
+	[DataRow( "american", 256, 614 )]
+	public void AStringOver255CharactersIsReadWhole( string language, int change, int copyright )
+	{
+		FileSystem = GameData.Required();
+
+		var file = new StringFile( $"Language/{language}/UITEXT.str" );
+
+		Assert.AreEqual( change, file[(int)UIStrings.Change].Length );
+		Assert.AreEqual( copyright, file[(int)UIStrings.SoftwareCopyright].Length );
+
+		if ( language != "English" )
+			return;
+
+		Assert.IsTrue( file[(int)UIStrings.Change].StartsWith( "CHANGE SCREEN RESOLUTION\n\n" ) );
+		Assert.IsTrue( file[(int)UIStrings.Change].EndsWith( " your original setting will be restored." ) );
+		Assert.IsTrue( file[(int)UIStrings.SoftwareCopyright].StartsWith( "Software © 1999 Bullfrog Productions Ltd." ) );
+		Assert.IsTrue( file[(int)UIStrings.SoftwareCopyright].EndsWith( "gistered trademarks of QSound Labs, Inc." ) );
+	}
+
+	/// <summary>
+	/// <b>A string's length takes all three bytes.</b> A made-up table of one string 65,537 characters long, its
+	/// length <c>01 00 01</c>, and a second of one character: a length of one byte or two reads the first as one
+	/// character.
+	/// </summary>
+	[TestMethod]
+	public void AStringsLengthTakesAllThreeBytes()
+	{
+		FileSystem = GameData.Required();
+
+		const int length = 0x10001;
+		var padded = (length + 3) & ~3;
+
+		using var bytes = new MemoryStream();
+		using var writer = new BinaryWriter( bytes );
+
+		writer.Write( Encoding.ASCII.GetBytes( "BFST" ) );
+		writer.Write( 0 );
+		writer.Write( 2 );
+		writer.Write( 8 );
+		writer.Write( 8 + 4 + padded + 4 );
+		writer.Write( 0x01 | (length << 8) );
+		writer.Write( Enumerable.Repeat( (byte)2, length ).Concat( new byte[padded - length + 4] ).ToArray() );
+		writer.Write( 0x01 | (1 << 8) );
+		writer.Write( new byte[] { 3, 0, 0, 0, 0, 0, 0, 0 } );
+
+		var file = new StringFile( new MemoryStream( bytes.ToArray() ) );
+
+		Assert.AreEqual( length, file[0].Length );
+		Assert.AreEqual( 1, file[1].Length );
+	}
+
+	/// <summary>
+	/// <b>Every row of every shipped table reads as its first text part.</b> The 4,730 rows of the 42 <c>.str</c>
+	/// files, read by <see cref="StringFile.Entries"/>, each equal the text of the first of their
+	/// <see cref="StringFile.Parts"/>, which takes a part's whole three-byte value.
+	/// </summary>
+	[TestMethod]
+	public void EveryShippedStringIsItsFirstTextPart()
+	{
+		FileSystem = GameData.Required();
+
+		var files = Directory.GetFiles( Path.Combine( GameDir.Data, "Language" ), "*.str", SearchOption.AllDirectories );
+		var rows = 0;
+
+		foreach ( var path in files )
+		{
+			var file = new StringFile( Path.GetRelativePath( GameDir.Data, path ) );
+
+			for ( var row = 0; row < file.Entries.Length; ++row, ++rows )
+				Assert.AreEqual( file.Parts[row].FirstOrDefault().Text ?? "", file[row], $"{path} row {row}" );
+		}
+
+		Assert.AreEqual( 42, files.Length );
+		Assert.AreEqual( 4730, rows );
 	}
 
 	/// <summary>Makes a file with <paramref name="read"/> and counts the log lines that say exactly <paramref name="line"/>.</summary>

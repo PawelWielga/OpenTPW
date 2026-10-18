@@ -46,21 +46,7 @@ internal sealed class BFSTReader : BaseFormat
 	{
 		memoryStream.Seek( 0, SeekOrigin.Begin );
 
-		/*	
-		Header
-			4 bytes: Magic number - "BFST"
-			4 bytes: A number from 1000 to 1020, one per table (FileFormats strings.md)
-			4 bytes: String count
-			
-		#For each string
-			4 bytes - String offset (from the end of the string count)
-			
-		#For each string (at offset)
-			1 byte - Part type, 0x01 (text) at the start of every shipped string
-			3 bytes - String length
-			n bytes - Each character, specified with an offset in a BFMU file.
-			0-3 bytes - Zero padding to a multiple of four, then a zero word that ends the string unless more parts follow
-		*/
+		// The layout, the header and each record, is FileFormats strings.md.
 
 		var magicNumber = memoryStream.ReadString( 4 );
 
@@ -77,6 +63,7 @@ internal sealed class BFSTReader : BaseFormat
 		//Save Pos and create
 		var initialMemPos = memoryStream.Position;
 		List<string> outputList = new List<string>();
+		var longest = 0;
 
 		for ( int i = 0; i < stringCount; i++ )
 		{
@@ -97,12 +84,9 @@ internal sealed class BFSTReader : BaseFormat
 				throw new Exception( $"String Offset not working - offset set to {unknownOne} @ Pos:{memoryStream.Position}" );
 			}
 
-			// String Length
-			var stringLength = memoryStream.ReadByte();
-
-			// The length's other two bytes, which this does not read - docs/QUEUE.md Q143
-			_ = memoryStream.ReadByte();
-			_ = memoryStream.ReadByte();
+			// The length, the part's three bytes above its type, little-endian: four shipped strings are over 255
+			var stringLength = memoryStream.ReadByte() | (memoryStream.ReadByte() << 8) | (memoryStream.ReadByte() << 16);
+			longest = Math.Max( longest, stringLength );
 
 			StringBuilder str = new StringBuilder();
 			// Characters
@@ -120,7 +104,7 @@ internal sealed class BFSTReader : BaseFormat
 
 		}
 
-		Log?.Info( $"String table: {outputList.Count} strings in {buffer.Length} bytes" );
+		Log?.Info( $"String table: {outputList.Count} strings in {buffer.Length} bytes, the longest {longest} characters" );
 
 		return outputList.ToArray();
 	}

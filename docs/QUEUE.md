@@ -1142,24 +1142,11 @@ filed the items that cite it.
   spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
   Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
   spent one on `tourride`.
-- [ ] **Q143. `BFSTReader` takes a string's length from one byte, and four shipped strings are longer.** Found by
-  Q70's review. A record is `01`, a length of at least two bytes, little-endian, in a three-byte field, then the
-  characters (FileFormats `strings.md`);
-  `ReadFile` reads the length's first byte and skips the other two. Of the 4,730 records in the 42 shipped files, four
-  are over 255, all in UITEXT.str: row 400 (`UIStrings.Change`, 262 characters in English, which reads "CHANGE"; 256 in
-  american, which reads empty) and row 417 (`SoftwareCopyright`, 615 and 614, cut to 103 and 102). Nothing reads either
-  row yet, so no screen shows the cut. Read all three bytes; the reader's copy of the layout, which says "3 bytes" and
-  "Unknown", becomes a pointer to `strings.md`. A test on rows 400 and 417.
-  From Q241: the reader also takes a string's first text part alone, so each of the 474 parameter strings is cut
-  at its first parameter (FileFormats `strings.md`, "The note on parts"). UITEXT 399, the delete-player question,
-  reads empty that way, and `FrontEnd.AskToDeletePlayer` fills it with words of its own in the belief that the
-  original ships it blank; it is parameter 4, then "Are you sure you want to / delete this player ?". UITEXT 205
-  (the overwrite question) and 448 (a save's date) are two more. Read every part, give `Localization` a way to be
-  handed the parameters, and let the delete box say the original's words. `q241/strraw.py` prints a row's parts.
-  From Q241c: every part is read now (`BFSTReader.ReadParts`, `StringFile.Parts`, with the three-byte length) and
-  `Localization.Format( row, (parameter, value)... )` fills them; `ReadFile` and `Localization.Get` still give the
-  first part by the one-byte length, and only the Load Park screen's date (448) and the Save Park screen's overwrite
-  question (205) use the parts.
+- [ ] **Q710. `BFSTReader` decodes every table through the English character table.** Found by Q143. Each language
+  folder has its own `MBToUni.dat`, and the american one lacks `’`, so every character after it is one index lower
+  (FileFormats `strings.md`); `BFSTReader.LookupTable` opens `Language/English/MBToUni.dat` whatever the table, so an
+  american table reads shifted. Dead by CONTENT: `Localization` and every other reader take English tables alone.
+  Take the table's own folder's file when a second language is read. A test: american `THEMENAMES.str` row 0.
 - [ ] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
   what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
   turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a

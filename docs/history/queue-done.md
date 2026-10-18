@@ -7953,6 +7953,27 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   first (which things, which of their meshes or boxes), then build it. The test is the gate's arch face, where the
   original answers the gate cells (`q471/orig/x-scan.log`, y 320 to 380) and ours the approach behind it
   (`q471/run1-nopixel.out`; the review of Q471, `handoff/review3/VERIFY-7.md`). Confirm in both games at that view.
+- [x] **Q143. `BFSTReader` takes a string's length from one byte, and four shipped strings are longer.** Found by
+  Q70's review. A record is `01`, a length of at least two bytes, little-endian, in a three-byte field, then the
+  characters (FileFormats `strings.md`);
+  `ReadFile` reads the length's first byte and skips the other two. Of the 4,730 records in the 42 shipped files, four
+  are over 255, all in UITEXT.str: row 400 (`UIStrings.Change`, 262 characters in English, which reads "CHANGE"; 256 in
+  american, which reads empty) and row 417 (`SoftwareCopyright`, 615 and 614, cut to 103 and 102). Nothing reads either
+  row yet, so no screen shows the cut. Read all three bytes; the reader's copy of the layout, which says "3 bytes" and
+  "Unknown", becomes a pointer to `strings.md`. A test on rows 400 and 417.
+  From Q241: the reader also takes a string's first text part alone, so each of the 474 parameter strings is cut
+  at its first parameter (FileFormats `strings.md`, "The note on parts"). UITEXT 399, the delete-player question,
+  reads empty that way, and `FrontEnd.AskToDeletePlayer` fills it with words of its own in the belief that the
+  original ships it blank; it is parameter 4, then "Are you sure you want to / delete this player ?". UITEXT 205
+  (the overwrite question) and 448 (a save's date) are two more. Read every part, give `Localization` a way to be
+  handed the parameters, and let the delete box say the original's words. `q241/strraw.py` prints a row's parts.
+  From Q241c: every part is read now (`BFSTReader.ReadParts`, `StringFile.Parts`, with the three-byte length) and
+  `Localization.Format( row, (parameter, value)... )` fills them; `ReadFile` and `Localization.Get` still give the
+  first part by the one-byte length, and only the Load Park screen's date (448) and the Save Park screen's overwrite
+  question (205) use the parts.
+  Done 2026-10-18, `alexah/805-string-length-three-bytes`: `ReadFile` takes all three bytes (UITEXT's longest row
+  reads 615 characters), and the delete box asks with row 399, the player's name as parameter 4
+  (`FrontEnd.DeleteQuestion`; `exe/saves.md`, "Delete"). Leftover: Q710.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

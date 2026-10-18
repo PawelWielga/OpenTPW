@@ -55,15 +55,15 @@ Last updated: 2026-10-18. **This header names no branch and no sha, deliberately
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q494 (the picker's object march): the gate's arch answering its cells was confirmed in both games at one camera (`q494/run4` on the final build, `orig/a-scan.log`, `orig/b-*`, control on main); over the Belly Bounce at Q478's view 14 of 18 cells matched and 9 of 18 met the ride, the others its floor tying with the ground at height 0 (Q515; the original's rays give 18 of 18 cells); not run in either game: a shop's or a ride's tall side where the ground behind it is another cell, an animated model mid-pose (the gate's doors stood shut in the original and open in ours; the gateway is walked first and answered every point), the boundary's hoarding (not drawn, counted) and a coaster's track pieces (not built). Our camera at the original's numbers casts about 0.3 units off its ray at the gate, so a pixel on the arch's silhouette or a cell edge can answer the cell beside the original's (round 3: 81 of 87).
+- Q143 (2026-10-18, lane B, off-screen on lavapipe, so its log and census are the evidence and its pictures (`q143/run1/box.png`, `closed.png`) are white): the lobby logged `String table: 474 strings in 17076 bytes, the longest 615 characters` (UITEXT read whole, row 417), where the old one-byte reading's control said the longest 186; slot 1's delete button logged `Message box: ref /  / Are you sure you want to / delete this player ?, with a tick` (row 399 with the name), where the control said OpenTPW's own words; `windows` listed the box and, after its cross, did not, and the player stayed. Rows 400 and 417 still reach no screen, so the long strings are shown only by the log and the tests. Not compared with the original on screen (lane B has no original); the box's words are the decode's (`exe/saves.md`, "Delete").
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **77** of 106 | 2026-10-10, `case Opcode.` labels vs enum members |
-| Tests | **3396**, 0 fail, 0 skip with the game | 2026-10-18, Q494, alone in a worktree |
-| Tests without the game | **1150** ran, **2246** skipped, of 3396 | 2026-10-18, Q494, alone in a worktree |
+| Tests | **3394**, 0 fail, 0 skip with the game | 2026-10-18, Q143, alone in a worktree |
+| Tests without the game | **1144** ran, **2250** skipped, of 3394 | 2026-10-18, Q143, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 
