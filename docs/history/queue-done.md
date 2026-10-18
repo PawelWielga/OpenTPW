@@ -7920,6 +7920,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   sideshows 481, miscellaneous 829, upgrades 829 of 1024); the label UITEXT 446 with the estimated price; the pump's
   four states and its speed `(rate + 20) x 0x10000 / 100` stepped once a UI pass; back's pick (`0x005036a0`); the
   handler's sliders and sounds; the advisor's line, message 200, sample 391. The build is Q705.
+- [x] **Q141. Golden tickets, decoded (Full Simulation only).** Found by Q69; the decode only, lane B, in the private
+  Ghidra copy, nothing built. `ride-operation.md`, "Golden tickets": tested every 100 sweeps in game type 0 alone;
+  Local 3 is everything researched and one of every item standing; Local 5's span is the months into the game; Global 0
+  is the highest track point of any coaster (`+0x110`, `FUN_0043c450`); the secret is every counted cell watched (the
+  effect record's security word; Lost Kingdom counts 7,001 cells); the first ticket's two lines (`0x137`, `0x13b`); the
+  four hint rows and the profit hint and ten ticket rows no code posts; the ticket lines' gesture rows. `scenes.md`:
+  a gesture row that does not open on clip 14 has no lead-in, and one whose clips are not loaded falls to the random
+  chain. Checked against Alexah's original-written profile and jungle file (`q141/PREDICTION.txt`, eight of eight):
+  Locals 0 to 2 and the coaster record at 106 won, the other three failing on the file's own measures. The build is
+  Q706 to Q708, Alexah's call on when.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

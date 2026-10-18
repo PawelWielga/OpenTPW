@@ -126,7 +126,17 @@ Each clip word is a clip number and flag bits. **Rows 1 and 13 are the only ones
 to two of 44, and `0x200000`, which no row uses, empties it. Effects 44 and 49 are the golden ticket's glints (`ParLib`).
 Every response using rows 1 and 13 is a golden-ticket line on model slot 1, the park's own advisor; clips 16 to 20 ship
 only in a level's `advisor.wad`, so the lobby's advisor, slot 0, never plays them. OpenTPW awards no golden ticket, so
-nothing reaches the glints (`lobby.md`, "World sprites").
+nothing reaches the glints (`lobby.md`, "World sprites"; `ride-operation.md`, "Golden tickets", Q707).
+
+**A row and the voice's start** (`FUN_00598bf0( row, length )`, from `Advisor_SayResponse` at `0x005993a4` with the
+gesture less 16 and the sample's length plus 500 ms): it copies the row's clip words to `0x00f79718` and sums their
+lengths from the model's table `0x00f796c4`, a cue word (`0x400000`) setting the cue timer `0x00f79778` instead. **When
+the row's first clip, its flag bits `0x7f0000` masked off, is not 14, it zeroes `0x00f79694`**, the time
+`Advisor_SayResponse` set for the voice after the lead-in (`0x0059922a`; 800 ms, `ui.md`): the voice it has just started
+(`0x00599339`) is then left playing (`0x00599409`..`0x0059944c`) rather than stopped (`Sound_Stop`) and started again by
+`Advisor_Update` when the lead-in ends, so
+**a row that does not open on clip 14 has no lead-in**. Rows 1 and 13 open on clip 17. When the row's clips sum to
+nought on the speaking model (none loaded), the random chain (`FUN_00598b20`) is built in their place.
 
 ## Leaving the lobby (state 3), in order
 

@@ -359,7 +359,7 @@ filed the items that cite it.
   broken at a close (tested only), an upgrade placed, a ring gone round 144 months, Full Simulation (not asked: the
   rings are either mode's), the other three themes.
   From Q389 (`hud.md`, "The lifetime visitors"): the count, the dearest and the 11th ring are kept. Nothing here reads
-  them: the park status screen (`PARK_STATUS_SCREEN`, which letters the count) and the golden tickets (Q141) are not
+  them: the park status screen (`PARK_STATUS_SCREEN`, which letters the count) and the golden tickets (Q706) are not
   built; the gate fee's challenge message is counted (`GATE_FEE_CHALLENGE_POST`). The analyser's other six int rings
   are still the file's bytes (`ANALYSER_MONTH_CLOSE`); the 10th (`FUN_004c7fa0`) and the 12th (`FUN_004c8070`) stand
   beside it in the close. In no game run: a fee of nought, a fee lowered below the dearest, a ring gone round 144
@@ -1116,30 +1116,39 @@ filed the items that cite it.
   lane A checks it in the original (`tpwmem.py`, the lab's `+0x1460`): with one researcher whose summed ability is 3,
   does each opening take the work load from 85 down one (`hud.md` predicts 84, then 83)? Not read: the pump's frame
   count in `res_fluid`, how the gauge and dial draw, the sounds' parameters.
-- [ ] **Q141. Golden tickets are never awarded. Decode first, and Alexah's call on when.** Found by Q69. What reaches
-  the advisor's glints in the original is a golden-ticket award: only gesture rows 1 and 13 carry the glint flags, and
-  only its lines use them (`docs/exe/scenes.md`, "Gesture table"). Those lines play on the park's own advisor, model slot
-  1 from the level's `advisor.wad` with clips 16 to 20, which OpenTPW does not load. The sweep also read that a row whose
-  first clip is not 14 skips the lead-in (`FUN_00598bf0`, not checked). No site reaches any of it, so nothing is counted.
-  - **Note (fork review, 2026-09-30):** the automatic awards run only in game type 0 (`FUN_004d4a00`'s gate covers all eleven
-    tickets), so in Lost Kingdom's Easymode, type 2 (Q178's note), the original never awards a ticket by play; this
-    waits for a Full Simulation park (Q197). The cheat table can still award one in any type (rows
-    `0x0040c6c0`..`0x0040c7e0` call `0x005af810`/`0x005af940`), behind the cheats byte the `CHTS` module loads, which
-    Easymode ships set. The checker's decode is Q194's. Review items economy-8, gap3-8.
-  - **From Q177c:** the buy list and its click read the same list of ticket-bought items as the purchase: a row whose
-    item has a `GoldenTicketCost` not yet bought with tickets is named "??? Mystery Ride! ???" with its negated ticket
-    cost for a price (`0x004ab02e`), and a click on it is refused when the player holds too few tickets
-    (`FUN_004d4b90`, `0x004ac5a9`). The row is built, from the player's `RideIds` (`docs/exe/hud.md`, "The mystery
-    row"); a click on it is refused always and counted, `MYSTERY_RIDE_PURCHASE`. The ticket test and the spending of
-    tickets are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`). Lost Kingdom's
-    `tourride` (1) and `volcano` (3) carry a ticket cost.
-  - **Note (fork review 2, 2026-10-16):** Lost Kingdom's golden-ticket ride, Jurassic Tours (`tourride`, ticket cost
-    1), runs the TOUR script, which is not built: Q408.
+- [ ] **Q706. Golden tickets awarded in Full Simulation (the checks and the award).** From Q141 (`ride-operation.md`,
+  "Golden tickets"; `saves.md`, "Keys and tickets"). Alexah's call on when. On the sweep that makes `mGameTick` a
+  multiple of 100, in Full Simulation alone: the six Local tests (each skipped when the park holds it), the four
+  Global (Global 3's cells as `hud.md`'s predicates; Global 1's excitement and Global 2's section list as decoded
+  there), the secret; each award into `PlayerFile` as `FUN_005af810`/`FUN_005af940`/`FUN_005afb00` return 1 to 4 (the
+  record moved between parks, never raised), written at the next `gms.dat` write; the island panel's keys follow.
+  Count what is not built: the posts (`GOLDEN_TICKET_MESSAGE`, until Q707) and the cheat rows. Confirm in Alexah's
+  Full Simulation jungle (a copy of the player and the file): a test that passes is awarded on the next 100th tick
+  (log and `gms.dat` read back), and the stored three plus the record award nothing (the original's own profile).
+  Measures not yet held here (the coaster's highest point, the cell security words) are a piece each.
+- [ ] **Q707. The advisor's golden-ticket lines.** After Q706. The thirteen posts (`0xd7`-`0xd9`, `0xdc`-`0xde`,
+  `0xe1`-`0xe3`, `0xea`-`0xed`; score 99000, posted on the message bus) and the first ticket's `0x137` and `0x13b`,
+  on model slot 1, the park's own advisor, from the level's `advisor.wad` (clips 16 to 20, which OpenTPW does not
+  load); lines of result 1 on gesture row 1, results 2 and 3 on row 13, with the glints (`scenes.md`, "Gesture table",
+  effects 44 and 49) and no lead-in (`scenes.md`, "A row and the voice's start"); `ADVISOR_RESPONSE_GESTURE_ROW` is
+  the counter there now.
   - **Note (fork watch 2026-10-16, `verify-audio-fx.md` A5):** gesture rows 12 and 13 (values 28 and 29; table
     `0x0076dc18`, stride `0x50`) alone carry the `0x400000` cue that `0x00598bf0` turns into the key timer, so a
     golden-ticket line (row 13) plays goldkey `0xc6`, particle 87 and `0x004b9340` at its due time (`0x00599991` to
     `0x005999d1`). `FrontEnd.KeyHandedOver` is row 12's build; row 13's has no site. Whether `0x004b9340` does
     anything in a park is not proven.
+- [ ] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
+  tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
+  one load). `0x13e` and the rows no code posts stay unsaid, as the original's.
+- [ ] **Q709. Spending golden tickets: the mystery ride's purchase.** From Q177c, carried from Q141 when it was ticked.
+  The buy list and its click read the same list of ticket-bought items as the purchase: a row whose item has a
+  `GoldenTicketCost` not yet bought with tickets is named "??? Mystery Ride! ???" with its negated ticket cost for a
+  price (`0x004ab02e`), and a click on it is refused when the player holds too few tickets (`FUN_004d4b90`,
+  `0x004ac5a9`). The row is built, from the player's `RideIds` (`docs/exe/hud.md`, "The mystery row"); a click on it
+  is refused always and counted, `MYSTERY_RIDE_PURCHASE`. The ticket test and the spending of tickets (`gms.dat`'s
+  spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
+  Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
+  spent one on `tourride`.
 - [ ] **Q142. The staff pool reads a string table again for every name.** Found by Q70's game run. `ParkStaffPool`
   opens and parses a name table for each candidate it rolls (`RollName`) and STAFF_TYPES for each kind's name
   (`NameOfKind`): 27 of a park load's 28 table reads are six files read over and over, and the staff screen and the
@@ -2753,7 +2762,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   `vm/instructions.md`), the flying car's tick `0x0055abf0` (nine states; take-off at 20000 and 14000; a lattice at
   max( 12000, ground + 5000 ); patrol corners at ±25000; 30000 near stations; bounds from the park, `FUN_0055ab50`), a
   rider's head ((car `+0xd8` + count) mod car `+0xdc`) + 1, TOUR 9's effects (worn particle 39, broken 40, a repair
-  sound `0xbb` and clip 10), the draw `0x0055ce60`. Waits on Q141.
+  sound `0xbb` and clip 10), the draw `0x0055ce60`. Waits on Q706 and Q709.
 
 - [ ] **Q409. Full Simulation's loans and challenges.** From the fork review 2, 2026-10-16
   (`verify-economy-guests-paths.md` L1, L5). A loan offer passes when its amount is at most the net worth less what

@@ -2156,7 +2156,7 @@ in 4, no admission since in 13), never above `mMostPaidForTicket`.
 in a park made with no file; `Take`, the gate fee, raises them as `FUN_004c7520` does; `TurnTheMonth` pushes the count
 into `MonthVisitors`; the writer writes all three (`ParkWorld.PutLifetimeVisitors`, `PutMonthRings`); `money` prints
 them. The challenge message is counted (`GATE_FEE_CHALLENGE_POST`). Nothing here reads them: the park status screen is
-not built (`PARK_STATUS_SCREEN`), nor the golden tickets (Q141). **Confirmed** (`q389/`): the stock park with its fee
+not built (`PARK_STATUS_SCREEN`), nor the golden tickets (Q706). **Confirmed** (`q389/`): the stock park with its fee
 written to 26 took 18 fees before its close on tick 1474 (`Park: lifetime visitors 9` .. `26, most paid for a ticket
 26`), closed `visitors 26` with the gate's 668 = 200 + 26 x 18, and wrote 26, 26 and the ring [0, 26]; main's build
 wrote the file's 8, 25 and [0]. The original given this game's file read 26, 26, [0, 26], closed 26 into its third slot

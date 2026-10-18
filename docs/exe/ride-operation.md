@@ -3761,7 +3761,7 @@ in double ("What a thing is worth to a guest", "Where OpenTPW differs", the FPU'
 (Q386; `hud.md`, "The mini-balance is a MONTHLY ACCOUNT"), and the gate fee's lifetime visitors and dearest ticket
 (Q389; `hud.md`, "The lifetime visitors"). Counted, not built: the gate fee's challenge post (`GATE_FEE_CHALLENGE_POST`), the booking's (`COST_OF_GOODS_CHALLENGE_POST`), the purchase's golden-ticket arm (`PURCHASE_GOLDEN_TICKET_ARM`, on
 every such purchase, as the purchase does not ask the player's `RideIds`) and a kart or water ride's track at a sale
-(`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row is built (`hud.md`, "The mystery row"); a click on it is refused whatever tickets the player holds and counted, `MYSTERY_RIDE_PURCHASE`, as its ticket test is not built (Q141).
+(`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row is built (`hud.md`, "The mystery row"); a click on it is refused whatever tickets the player holds and counted, `MYSTERY_RIDE_PURCHASE`, as its ticket test is not built (Q709).
 
 **Who reads what the booking moves**:
 
@@ -3836,10 +3836,13 @@ x87 control word (`0x0059e96a` `FSTP DWORD`).
 ### Golden tickets
 
 Re-read for Q194 from the fork review (`economy-8`, `economy-9`; `wf_cba77d07-b66`, a read-only Opus verifier in
-Ghidra and over every shipped `.sam`). **None of it is built in OpenTPW**: Q141 is the item.
+Ghidra and over every shipped `.sam`), and decoded whole for Q141. **None of it is built in OpenTPW**: the checks and
+awards are Q706, the advisor's ticket lines Q707, the hints Q708.
 
 **The tick.** `FUN_004d4a00`, from `FUN_004d7b20` (`0x004d7b60`) on a thing sweep (`0x00516695`) whose world counter
-`+0x1da70c` is a multiple of 100 (`DIV`, `0x004d7b54`; not every sweep), does nothing unless
+`+0x1da70c`, `mGameTick`, is a multiple of 100 (`DIV`, `0x004d7b54`; the sweep raises it first, `0x00516398`, and calls
+`FUN_004d7b20` last). A sweep is every 8th 31 ms tick (`boot.md`, "Tick rates"), so the tickets are tested once every 100
+sweeps, about 24.8 seconds, on ticks 100, 200 and so on. It does nothing unless
 the game type `DAT_00fb3b7c` is 0 (`0x004d4a31`..`0x004d4a40`), so play awards no ticket in Instant Action or online
 (`saves.md`, "Keys and tickets"). It runs the six Local tickets (`FUN_004d4bc0`), the four Global (`FUN_004d4e50`), then
 the Secret. Each ticket is tested and awarded alone, never "all met", and **every threshold compare is a signed strict `>`**
@@ -3852,14 +3855,14 @@ global"): `GoldenTicketLocal`'s seven keys at `0x00785790`..`0x007857a8`, `Golde
 | Local 0 | the analyser's cumulative visitors (`FUN_004c94c0`, `+0x21c08`) | `Visitors` `0x00785790` |
 | Local 1 | people in the park (`FUN_004c9130`) | `PeopleInPark` `0x00785794` |
 | Local 2 | the average happiness (`FUN_004c7bb0`: each counted peep's `+0x19c` truncated to a byte, summed, over the count; 0.0 when nobody is counted or the park is shut) `>` `Happiness`, **and** people in the park `>` `AtLeastThisManyHappyPeople` | `0x00785798`, `0x0078579c` |
-| Local 3 | `FUN_004ca6b0()` is true; no `.sam` key. Partly decoded: false when `FUN_00503b30(5)` counts anything on the thing at world `+0x1da722`; otherwise true only if every item of a list (`FUN_00412e60`/`FUN_00412e70`) has `WhichUIType` (`+0x4ac`) 4, or a `CControlManager` record with `+0x18` non-zero (how many stand in the park), or a `GoldenTicketCost` (`+0xc4`). "One of every item built" is a reading, not a decode | none |
+| Local 3 | `FUN_004ca6b0()`; no `.sam` key. **Everything researched, and one of every item standing**: false while the lab (the thing world `+0x1da722` names, `FUN_00519550`) has a project of any kind left undone (`FUN_00503b30( 5 )`: `mResearchDone` under `mCost`; `advisor-park.md`, "Every feature built, and more to research"); then true only if every item of the catalogue `0x007890a0` (`FUN_00412e60`/`FUN_00412e70`) is not shown in the UI (`WhichUIType`, `+0x4ac`, 4), or has at least one standing (its control record's `+0x18`, `FUN_004d3d80`), or costs a golden ticket (`+0xc4`) | none |
 | Local 4 | the bank's `mProfitThisYear` (`+0x124`, below) | `ProfitYear` `0x007857a0` |
-| Local 5 | `FUN_004c94d0(RecentVisitorMonths)` (cumulative visitors less the monthly ring's entry that many months back: ring `+0x20824`, index `+0x20a64`, size `+0x20a68`, wrapped `+0x20a6c`; 0 when it does not reach back) `>` `RecentVisitors`, **and** a span from `FUN_004f8800` in 30-day months (`/ 0x1792f8648000`) `>` `RecentVisitorMonths` | `0x007857a4`, `0x007857a8` |
-| Global 0 | `FUN_004cc920(&id, 0)`: the truncated maximum of `FUN_0043e0e0`'s float over kind-3 objects passing `FUN_004e2b50`; logged "coaster height" (the measure is not decoded) | `CoasterHeight` `0x007857ac` |
+| Local 5 | `FUN_004c94d0(RecentVisitorMonths)` (cumulative visitors less the monthly ring's entry that many months back: ring `+0x20824`, index `+0x20a64`, size `+0x20a68`, wrapped `+0x20a6c`; 0 when it does not reach back) `>` `RecentVisitors`, **and** the months into the game `>` `RecentVisitorMonths`: `FUN_004f8800` on the park calendar (world `+0x2a0`, `0x004d4de6`), its now less its start, over thirty days (`/ 0x1792f8648000`), as `advisor-park.md`'s "The months into the game" | `0x007857a4`, `0x007857a8` |
+| Global 0 | `FUN_004cc920(&id, 0)`: **the highest track point of any coaster**, truncated: over the things of model 3 whose item's track type (`+0x9c`, `FUN_004e2b50`) is 3, the float `FUN_0043e0e0` reads at `+0x110` of the coaster's record on the list `DAT_00790fe0` (`FUN_00436860`, keyed by the thing's `+0x20`). The track's analysis `FUN_0043c450` takes the largest height (the point's `+0x40`, its world y, so the ground under the track counts) over the track's points and stores it there through `FUN_0043df90` (`0x0043e093`), with the top speed at `+0x114`. `FUN_004cc810` is the same walk over `+0x108` | `CoasterHeight` `0x007857ac` |
 | Global 1 | `FUN_004cc3b0`: the highest excitement (`FUN_004e0860`) over rides of `WhichTrackType` 1, car track | `GokartExcitement` `0x007857b0` |
 | Global 2 | `FUN_004cc6f0(&id, 2)`: the longest `FUN_00545310` section list over rides of `WhichTrackType` 2, water | `WaterLength` `0x007857b4` |
 | Global 3 | `FUN_004cd7f0`: the cells of kind 9, 10, 4 or `0x15`, or whose record is track type 11, 13, 16, 18 or 25 (`hud.md`'s cell predicates) | `MinCellsCovered` `0x007857bc` |
-| Secret | progress `+0x26` clear and `FUN_004cd720() == 100` exactly: the whole percentage of the cells not of kind 2, 7 or `0x1e` whose 10-byte record (`FUN_004d8410`, the world's `+0x2d8 + 0x1b1104`) has a word at `+6` above 0 (what `+6` holds is not decoded) | none |
+| Secret | progress `+0x26` clear and `FUN_004cd720() == 100` exactly: the whole percentage of the cells not of kind 2, 7 or `0x1e` whose 10-byte effect record (`FUN_004d8410`, the world's `+0x2d8 + 0x1b1104`) has its **security** word (`+6`, "The region effects", above) above 0: **the whole park watched**, every cell inside a guard's effect 3 (radius 3) or a security object's effect 4 (radius 5). Cells of any other type count, bare land (type 0) included; Lost Kingdom counts 7,001 of the 16,384 (240 of type 2, 9,077 of 7 and 66 of 30 left out) | none |
 
 `MinCellsOwned` (`0x007857b8`) has no reader: no dword of the executable holds the address. The Local tickets first skip
 one the park holds (`FUN_005af7f0(i)`); the Globals have no such test, because the award itself decides
@@ -3870,8 +3873,52 @@ Secret is ever awarded (`FUN_005afb00`'s one caller, `0x004d4a84`), so nothing f
 from its checker, take the ticket index and the award's result, log "Won a ... golden ticket", and post one advisor
 message through `FUN_0059b590`: results 1, 2, 3 (ticket; ticket and key; ticket, key and park) post `0xd7`-`0xd9`
 (Local), `0xdc`-`0xde` (Global) and `0xe1`-`0xe3` (Secret); a Global result 4, the record moved here, posts `0xea`-`0xed`
-by index (coaster height, go-kart excitement, water length, big park). Their lines are `advisor-park.md`'s, "The message-to-sample rule". The
-cheat rows award Local and Global tickets in any game type (Q141's note).
+by index (coaster height, go-kart excitement, water length, big park). Their lines are `advisor-park.md`'s, "The message-to-sample rule". Each post is
+`FUN_0059b590( message, thing 0, ticket index, -1, 0, -1 )` sent on the message bus `DAT_00788d3c` (`MsgBus_Send`), not
+handed to the advisor thing as the door's posts are (`FUN_005194d0`; which listener takes it was not traced); every
+row is game type 0's alone (`+0x0c` 0), posted only, its score `GeneralWonGoldenTicket.Score` (`0x0059e890`), 99000.
+**Then the first ticket's two lines**: each poster ends in `FUN_004d5b30`, which, when the player's tickets of every
+kind (`FUN_005af530`, `saves.md`, "Keys and tickets") are exactly one, posts `0x137` (response 571, sample 589,
+`WonFirstGoldenTicket.Score` 1000: "...you've won your first golden ticket... for every three golden tickets you win you
+also get a golden key...") and `0x13b` (response 575, sample 598, `GoldTicketCluesForRemainder.Score` 999: "...get lots of
+people in the park all at once, or make them really happy... a fantastic ride... a lot of money..."). The award changes
+the player's progress object in memory only: nothing here writes `gms.dat`, which takes the tickets at its next write
+(`saves.md`, "Save / deselect", and the start of every park save). The cheat rows (`0x0040c6c0`..`0x0040c7e0`, rows of
+`PUSH i; CALL 0x00409410; MOV ECX,EAX; CALL 0x005af810`) award Local and Global tickets in any game type and post nothing.
+
+**The advisor's ticket lines.** Lines of result 1 use gesture 17, the gesture table's row 1; results 2 and 3, gesture 29,
+row 13 (`scenes.md`, "Gesture table": the glints, clips 16 to 20 of the level's `advisor.wad`); the "moved" and
+first-ticket lines the random chain. All are on model slot 1, the park's own advisor.
+
+**The hints** (polled rows, game type 0 alone; `Advisor.sam` scores): `0x13a` (sample 597, "you're really close to winning
+a golden ticket...") scores `GoldTicketNearToFirstOne.Score` 150 while the player holds no ticket, the secret ones not
+counted (`FUN_004d4ac0`, `FUN_005af4a0`) and the cumulative visitors pass `Visitors` × 0.65; `0x13c` (sample 599) 100 when they
+pass `Visitors` × 0.9 and Local 0 is not held; `0x13d` (sample 600) 100 when the average happiness passes `Happiness` ×
+0.85, people in the park pass `AtLeastThisManyHappyPeople` and Local 2 is not held; `0x119` (sample 558, "do you know
+about theme park golden tickets...") `GoldTicketExplanation.Score` 200 while the arrival loads ring (`+0x216d8`, `hud.md`,
+"The arrivals") holds exactly one load. Each product is cut to an int (`__ftol`, `0x0067a830`) and every compare is strict.
+`0x13e` (sample 601, the profit hint, `0x005a0670`: profit past `ProfitYear` × 0.9, Local 4 not held) is a posted-only
+row, and no `PUSH 0x13e` posts it: the original never says it.
+
+**Rows no code posts.** Of the ticket rows `0xd7` to `0xed` the posters push only the thirteen above (and `0x137`, `0x13b`).
+`0xda`, `0xdb`, `0xdf`, `0xe0`, `0xe4` and `0xe5` repeat the result-3 rows' lines; `0xe6` to `0xe9` (`AwardGiven.Score`,
+responses 470 to 473, samples 528 to 531: "your park won an award for the height of the roller coaster", the water ride,
+the go-kart track, the park's size) are the record given rather than moved. Every `PUSH` of those ids in the executable
+(27 byte hits with `0x13e`'s) goes to a string row (`FUN_00485b00`), a log, a control or a rectangle, none to
+`FUN_0059b590`: the original never says them.
+
+**Checked against the original's own profile** (Q141, `q141/PREDICTION.txt`): Alexah's Full Simulation `gms.dat`, which
+the original wrote, holds jungle tickets Local 0, 1 and 2 and the player-wide record 0, held by jungle at 106 (over
+`CoasterHeight` 105), with one ticket spent on Jurassic Tours (1170). The jungle park file's own measures fail the other
+three as decoded: the lab has projects undone (Local 3), the bank's profit this year is -33,596 against 15,000 (Local 4),
+and the visitors of the last six months are 759 less the ring's 500, 259 against 350 (Local 5); its secret measure is 17
+per cent (the stock `Easymode.TPWI`, 3). OpenTPW loads the same measures (`money`: lifetime visitors 759, profit -33596)
+and over ticks 19007 to 19147 awards nothing, as the original would not either: the three Locals are held and the record
+is this park's (`FUN_005af940` returns 0).
+
+**What reaches it in Lost Kingdom.** Instant Action (`Easymode.TPWI`, game type 2) never: play awards nothing, every
+ticket row and hint is game type 0's, and only the cheats award. A Full Simulation jungle reaches all of it: a gap
+(`CLAUDE.md` rule 3), Q706 to Q708. OpenTPW counts nothing there yet.
 
 ### Challenges
 

@@ -263,6 +263,7 @@ global gap between lines.** `MessageGroups` is set for groups 0-5 and 9 only; 6-
 The golden-ticket keys are score coefficients, not lines: `GoldTicketNearToFirstOne`, `NearToXPeeps`,
 `NearToXHappiness` and `NearToXProfit` (multipliers 0.65, 0.9, 0.85, 0.9) with `GeneralWonGoldenTicket`,
 `GoldTicketExplanation`, `WonFirstGoldenTicket` and `GoldTicketCluesForRemainder`; no other shipped `.sam` has them.
+Which rows read them, and when the original says them, is `ride-operation.md`, "Golden tickets" (Q141).
 
 ### The schema is compiled into the exe
 
@@ -1161,7 +1162,8 @@ of the 53 calls of the withdrawal (`FUN_00486b40`, `FUN_0059aa70`) pushes a cons
 `Advisor.sam`. A tick is 3,750 funny seconds, a day 23.04 ticks: **the line is owed from tick 254 to tick 1382 of
 a park**, and is said on the first of those ticks the cursor stands on row 185. Row 282's (`0x005a0720`, message
 `0x11a`) is the same function on `TutorialExplainTooltips` (20, 80, 100), built in "The tips' line", below, and
-row 281's (`0x005a0780`) is `GoldTicketExplanation.Score` on a count of one, not built.
+row 281's (`0x005a0780`, message `0x119`) is `GoldTicketExplanation.Score` while the arrival loads ring holds one load
+(`ride-operation.md`, "Golden tickets"), not built (Q708).
 
 **What the shipped park holds.** `Easymode.TPWI`'s record of `0xb9` is (257, line 0, said 1, slaps 0): its makers'
 park said the line on its eleventh day, and the file begins on tick 755. So **Instant Action's Lost Kingdom never
