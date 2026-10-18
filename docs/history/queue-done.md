@@ -7974,6 +7974,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Done 2026-10-18, `alexah/805-string-length-three-bytes`: `ReadFile` takes all three bytes (UITEXT's longest row
   reads 615 characters), and the delete box asks with row 399, the player's name as parameter 4
   (`FrontEnd.DeleteQuestion`; `exe/saves.md`, "Delete"). Leftover: Q710.
+- [x] **Q487. What low quality's `GraphicalOptions.LIGHTING` 0 turns off, decoded.** From Q482; the decode only, nothing
+  built. `park-engine.md`, "What `GraphicalOptions.LIGHTING` 0 turns off": render-word `0x0800` gives every vertex of
+  the ground and of every model the channel mask (fullbright: `FUN_00574530`, `FUN_00574660`), skips the models' light
+  setup (`FUN_0057aa10`) and the half light; `0x1000` is read once, inside the `0x0800`-clear branch, so it changes
+  nothing; the detail file is applied once a start (`Window_Create`), so the Options screen's quality takes effect at the
+  next start. Measured in the original set to Low on its Options screen and restarted (`q487/PREDICTION.txt`: P1 to P3, P6 and
+  P8 to P10 held, P7 held but for a box a passing bus filled, re-run as P9, P4 and P5 missed by their bounds): the word
+  `0x01025900`; camera A's grass (23.4, 141.7, 21.5), and (10.6, 70.5, 9.6) with the two bits held clear; at camera B
+  the gate's banners white at low and grey lit (`q487/side-by-side.png`). The build is Q516.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

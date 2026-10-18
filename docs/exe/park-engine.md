@@ -3481,7 +3481,8 @@ caller of the light constructor `FUN_00457e70`).
 (from `FUN_0056ef10`, from the terrain renderer `FUN_0056f670`); both do the same thing: each channel × 255.0
 (`0x007016e4`), rounded, clamped to 0..255, alpha 0xFF, ANDed with the channel mask at `[0x0087a248]+0x2c`
 (`AND EAX,[ECX+0x2c]` at `0x0057463f`). The mask is 0xFFFFFFFF in play; the frame renderer `FUN_00576ec0` narrows it
-for two passes gated on render-state `0x8`. With render-state `0x800` the colour is the mask itself, fullbright.
+for two passes gated on render-state `0x8`. With render-state `0x800` the colour is the mask itself, fullbright
+(low quality's `LIGHTING` 0: "What `GraphicalOptions.LIGHTING` 0 turns off").
 The model lighter reads its normals from the mesh at `+0x64`, stride 12.
 
 **The terrain's normals are not unit length.** `FUN_0056ef10` builds one per vertex,
@@ -3568,7 +3569,7 @@ over the stock file gives every one of the 7,980 cells Q479 read. Cleared over o
 every rebuild, and `test.shader` floor-halves the corner's byte light under the vertex flag `ParkGround.HalfLight`. At
 camera A the grass went from (29.9, 139.2, 28.6) to (14.9, 69.3, 14.2), 0.498 of it, where the original's reads
 (32.8, 65.9, 16.5) with its compositor's patches; camera B's approach did not move. Under `low.sam`'s `LIGHTING` 0
-nothing is halved, and the rest of what that option turns off (`0x1000` too) is counted, `LIGHTING_OFF` (Q487). Buy Land is unbuilt
+nothing is halved, and the rest of what that option turns off (below) is counted, `LIGHTING_OFF` (Q516). Buy Land is unbuilt
 (Q407); its purchase must make the mask again. Not run in Full Simulation: a fresh park's cells take their `mFlags` from
 `FreshPark` (`0x40` unless a path, `0x80` from attribute `0x10`), which by code follows `FUN_00536490`, so the mask is
 expected to match, and no fresh park was photographed.
@@ -3583,6 +3584,34 @@ With the three set aside, a brick walk and a road agree within 8 a channel ((116
 (49, 49, 52) against (51, 50, 59)), so neither the light on lit faces nor the frame's gamma is the gap. OpenTPW's
 sea, fog off, is (1.0, 53.7, 55.9) against the original's (1.4, 55.0, 69.4): the blue is the original's moving quilt
 over the lake, which OpenTPW lays since Q490 ("The park's sea", below); texture filtering is not looked into.
+
+### What `GraphicalOptions.LIGHTING` 0 turns off
+
+**The light itself** (Q487). `DetailFile_Apply` (`0x0044d8f0`) sets render-word `0x1800` for 0 (`or ah,0x18` at `0x0044dc36`), clears it
+for 1 (`and ah,0xe7` at `0x0044dc49`) and leaves it for any other value. It runs only from `FUN_0044dc60`, which only
+`Window_Create` calls (`0x0044e1cc`), once a start: the Options screen's OK writes the quality to `Config.tcf` and the
+next start applies it. Every reference to `0x008bcbc8` was walked (188); these are all the readers of the two bits:
+
+| Bit | Reader | What it does there |
+|---|---|---|
+| `0x0800` | the terrain pass `FUN_0056f670`, 16 sites | No corner at half light ("What the render-state `0x0800` tests are") |
+| `0x0800` | the vertex colour, `Light_GroundVertexColours` (`0x00574530`) and `Light_ModelVertexColours` (`0x00574660`) | Every vertex takes the channel mask `[[0x0087a248]+0x2c]` (`0xFFFFFFFF` in play) instead of the lighter `FUN_005741b0`'s sum: each face fullbright, its texture's own colour, the sun and the ambient unread ("The lighting model") |
+| `0x0800` | the models' light setup `Light_ModelSetup` (`0x0057aa10`) | Skipped whole: the chain's reset `FUN_00576230`, the model's own lights `FUN_005744d0`, the point light `FUN_00574110` (under `0x0400`), the sun turned into the model's space `FUN_005743a0` |
+| `0x0800` | `FUN_0057a750` (`0x0057a822`) | Copied as `0x10000000` into a draw record, only where the renderer `[0x008bd524]` is 4 (live 1) |
+| `0x1000` | `Light_ModelSetup`, once, inside the `0x0800`-clear branch | Clear, `FUN_005744d0` chains the model's own lights onto `[0x00879dec]`. Its one writer moves it with `0x0800`, so it changes nothing under any value of the key |
+
+`FUN_00570d90` sets `0x0800` for its own layer's draw (off in the park, `textures.md`); nothing else tests either bit.
+
+**Measured in the original** (`q487/PREDICTION.txt`, `q487/orig/`: the stock park, the Options screen's quality track
+to Low, a restart). The word read `0x01025900` at low against `0x01444100` at medium: `0x1800` set, `0x400000` clear
+(`SKYDETAIL` 0), `0x20000` set and `0x40000` clear (`SPRITESHADOW` 0); `[0x008bd550]` `0x102` (no compositor, no
+`0x40`), `[0x007a1a8c]` without `0x6000` (`PROCEDURALTEXTURING` 0). At camera A the grass read (23.4, 141.7, 21.5) and
+showed no brown patches, where medium's reads (32.8, 65.9, 16.5); byte 1 held at low with `0x18` cleared, (10.6,
+70.5, 9.6), 0.497 of it in green. On level ground, then, all LIGHTING 0 changes is the half light, because a level
+face saturates when lit ("What it looks like", above). At camera B the gate's banners and the wall's turned face,
+grey when lit, are white at low (the banners' box luminance 90.0 to 129.7, the wall's +20.7; the brick and the road
+0.0). OpenTPW at low draws (29.9, 139.2, 28.6) at A, with no half light, but lights every face by the sun and the
+ambient, so its banners stay shaded (`q487/side-by-side.png`, `banners-crop.png`; `LIGHTING_OFF`, Q516).
 
 ---
 

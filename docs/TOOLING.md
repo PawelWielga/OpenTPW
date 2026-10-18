@@ -880,7 +880,13 @@ GH=766` there, or the pointer is off):
   cursor and the row.
 - **The game menu:** Escape with no tool in hand opens it **and pauses the game**; never sleep under it. Load
   (510,50) then the first row (400,123), the newest file; Save (510,140), type the name, Return; Options
-  (510,400), the quality track (512,276), OK (898,688).
+  (510,365 at the install's 800 x 600), the quality track (512,276), OK (898,688).
+- **Its graphics quality** (Q487): the Options screen as above; one click on the track left of its knob, at (512,276),
+  took it from Medium to "Graphics quality: Low" (the knob did not move, the words did), and its minus at (491,276) did
+  nothing. OK writes the dword at byte 12 of `save/Config.tcf`; the detail file is applied only as the game starts
+  (`Window_Create`), so stop the original (`loadfile.sh stop`) and load again before measuring. Copy `Config.tcf` first
+  and put it back, with its time (`touch -d`), after; a second `loadfile.sh load` writes its own "before" sum with the
+  new quality in it, so compare `save/` with a sum taken before the first (`q487/orig/lib.sh`, `a-options-low2.png`).
 - **Buying:** Buy (117,588), a ride's row such as (560,305), the features tab (843,123). A blue footprint is a
   legal place and a red one is not. After the placing click the queue tool is in the hand: a click on the path
   joins the queue and puts the tool away, and a later click on the queue's cell picks it up again (Q257o).

@@ -53,12 +53,15 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q487. What low quality's `GraphicalOptions.LIGHTING` 0 turns off. Decode first.** From Q482: `low.sam` sets it 0,
-  `med.sam` and `high.sam` 1, and `FUN_0044d8f0` then sets render-word `0x1800` (both `0x0800` and `0x1000`, `or ah,0x18` at `0x0044dc36`); under `0x0800` the terrain pass draws no
-  land at half light (`park-engine.md`, "What the render-state `0x0800` tests are"); what else reads `0x0800`, and what reads `0x1000` at all (the
-  vertex light `FUN_005741b0`, the models' pass), is not read. Ours draws no half light there and lights the park as at
-  medium, counted `LIGHTING_OFF` at the park's load (`Level.Lighting`). Decode both bits' other readers, then measure
-  the original at low quality (`Resolution.sam` aside, its Options screen) at Q479's camera A before any build.
+- [ ] **Q516. Low quality draws every face at full light.** From Q487 (`park-engine.md`, "What
+  `GraphicalOptions.LIGHTING` 0 turns off"; `q487/PREDICTION.txt`): under `low.sam`'s `LIGHTING` 0 the original gives
+  every vertex of the ground and of every model the channel mask, white in play, in place of the sun and ambient sum
+  (`FUN_00574530`, `FUN_00574660`), so each face shows its texture's own colour. Ours draws no half light there but
+  still lights by the sun and the ambient (`test.shader`, `ParkLight`), counted `LIGHTING_OFF` (`Level.Lighting`, whose
+  comment still says the rest is not decoded). Build it where the vertex light is made, one switch from
+  `Level.Lighting`. Confirm at Q479's camera B in both games at low (ours by `q482/lowq`'s quality 0; the original by
+  its Options screen, `docs/TOOLING.md`, "Recipes"): the gate's banners, grey when lit, white
+  (`q487/orig/d-B-low.png`, `q487/banners-crop.png`), and camera A's grass unchanged at (29.9, 139.2, 28.6).
 - [ ] **Q700. Ours cuts every texture to four bits a channel, as the original's A4R4G4B4.** From Q492 (`textures.md`,
   "The texture cache's surface format"): the shipped presets run format 2, and the original stores each channel as
   `v >> 4` (`TexFormat_BuildChannelTables`, `0x005839f0`), alpha too; ours makes every texture `R8_G8_B8_A8_UNorm`
@@ -74,7 +77,8 @@ filed the items that cite it.
   each sprite with flags `0x200` and `0x10000000`. It uses the `alphkid` texture `0x00550950` loads into the sprite
   list's `+0x2400` when `[0x008bcbc8]` has `0x40000`, and the sprite's own picture when neither `0x20000` nor `0x40000`
   is set; the detail files' SPRITESHADOW (0, 1, 2 in low, med, high) is inferred to set those bits (`0x0044da97`, key
-  order only), and the reference run read `0x1444100` (alphkid on). Ours draws none (`ride-operation.md`, "no shadow";
+  order only), and the reference run read `0x1444100` (alphkid on). Measured by Q487: at low the word read
+  `0x01025900`, `0x20000` set and `0x40000` clear, so SPRITESHADOW 0 sets `0x20000` as the key order said. Ours draws none (`ride-operation.md`, "no shadow";
   Q32 lists shadows among the keys nothing reads). Decode the pass's placement and colour first, then build it at the
   reference's setting. Confirm by a frame pair in both games at one camera (`lib/bothcam.py`).
 - [ ] **Q484. The help bar wraps a long row inside its strip.** From the review of Q471 (`handoff/review3/VERIFY-7.md`,
