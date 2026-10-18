@@ -7685,6 +7685,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   seaplane, the same held phases: half a wave apart mad 9.58 (the original's 8.89), a whole one 0.00 in both; over a
   wave (6.1, 58.4, 72.0) against (1.7, 54.5, 68.8), the rest most likely the original's 16-bit surfaces (Q492); sunk, `Line01`
   alone (1.0, 53.5, 55.7) against (0.0, 50.2, 53.8). Low quality takes `stexture`. 12 tests; 17 of 17 bugs put back fail.
+- [x] **Q491. The gates' flags: the third dynamic mesh. Decode first.** From Q486: `FlagsMesh` (`FUN_0053bfe0`,
+  `0x180` faces, mesh id 3) waves eight flags of `gte_lgo1` (words 18 and 19, alternating) on the poles by the gates:
+  `FUN_0053d570( 7, 5, 1.8, phase )` with its phase at `0x00871ed0`, then the `FUN_0053cda0` loop over eight fixed
+  points at `0x00763cf4` (x 411.25, 451.25, 511.25 and 551.25, y 22, z 38.75 and 50.75), each turned by the float at
+  `+0x5c` of the thing `FUN_00519590` answers, times π/180 (not named). OpenTPW stands the poles bare
+  (`q486/side-by-side.png`). Decode the flag's grid, its wave and the turning thing, then build.
+  **Done (2026-10-18, decode only):** `park-engine.md`, "The gates' flags"; FileFormats `sam.md` (`b09e5f7`: `gte_lgo1` is one
+  file in both folders). `FUN_0053d570` lays a 7 x 5 grid 1.8 apart, y = 0.6 t cos(πD/2) − 1.8r − 0.02x², z = 0.3 t
+  cos(2πD/3), D = √(x² + (1.8r + 9)²) − 0.6 phase, t = min(x/5.4, 1); `FUN_0053cda0` moves it 0.5 off each pole, turns it
+  by the weather's `mWindDir` (the thing at park `+0x1da724`, `+0x5c`) and lays two faces a cell; word 18's flags wear
+  the SimThemePark half, 19's Bullfrog. The phase is zeroed and stepped with the sea's. Measured in the original: 384
+  faces fit the model to 3.0e-5 (UVs 4.8e-8, normals 1.9e-7) at the live wind 139° and held at 0° and 90°, and at the
+  phase held at 5, 15 and 25; the phases equal in 298 reads of 298; phase 5 and 25 the same frame, 15 not (7.4).
+  `PREDICTION.txt`: 13 predictions, 11 held and 2 missed and recorded (a box taking the moving sea; a read landing a
+  frame after the held phase), each re-run; the model's bugs put back, 7 of 7 killed. Filed Q493 (the build). Added
+  `original/dynfaces.py`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

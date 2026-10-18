@@ -3372,9 +3372,62 @@ parked seaplane, the original's (100,150)-(250,300)): at phase 1 and 1 + 2π, he
 68.8) in that box. Ours stands higher, most likely by the 16-bit surfaces above (ours draws 8 bits a channel everywhere: Q492),
 and by `Line01`, ours (1.0, 53.5, 55.7) with the quilt sunk against (0.0, 50.2, 53.8). The phase gained 11.5 a second
 by wall clock, held still under the park's menu. The debug console's `sea` prints the corner, phase, folder and words;
-`sea phase P` and `sea y H` move them. The gates' flags, the third mesh (`FlagsMesh`: `FUN_0053d570` and the
-`FUN_0053cda0` loop over the points at `0x00763cf4`, words 18 and 19, `gte_lgo1`), wave in the original's frame and are
-not drawn here: Q491, decode first.
+`sea phase P` and `sea y H` move them. The gates' flags, the third mesh, are the next section.
+
+## The gates' flags: eight flags of one grid, turned by the wind
+
+Decoded and measured for Q491 (`q491/PREDICTION.txt`, `q491/orig/`, `q491/side-by-side.png`).
+
+**Where.** `FlagsMesh`, the third dynamic-faces mesh (`FUN_0053bfe0`: `0x180` faces, mesh id 3, the same twenty
+textures). Every park frame, after the sea, `FUN_0053c3f0` calls `FUN_0053d570( 7, 5, 1.8, phase )` and then
+`FUN_0053cda0` once for each of eight points at `0x00763cf4`, 16 bytes a point (x, y, z and a word `-1` nothing reads):
+x 411.25, 451.25, 511.25 and 551.25, each at z 38.75 and at z 50.75, y 22. They are fixed in the executable, whatever
+the park; nothing writes them. The grid goes into the sea's arrays (corners `0x00874180`, normals `0x00870ed8`, point
+[c][r] at c × `0xe4` + r × `0xc`), after the sea's faces have been laid from them.
+
+**The grid.** Point [c][r], c 0 to 6 and r 0 to 4, stands at x = 1.8c, with P the phase:
+D = √(x² + (1.8r + 9)²) − 0.6P (`0x00700e08`), the distance from a point 9 above the flag's top at the pole, and
+t = min( x / 5.4, 1 ), 5.4 being (7 − 4) × 1.8;
+**y = 0.6 t cos(πD/2) − 1.8r − 0.02x²** (`0x00700e10` 0.3 doubled, `0x00700e0c` 0.25 of 2π, `0x00700e18`) and
+**z = 0.3 t cos(2πD/3)** (`0x00700dd4` × `0x00700e00`); the normal is (t sin(2πD/3), t sin(2πD/3), 1) normalised, the
+same value stored to its x and its y (`0x0053d6f6`). Every sine and cosine is `FUN_004708d0`'s 4,096-entry table, as the
+sea's. So the flag runs 10.8 from the pole and 7.2 down, still at the pole (t = 0) and waving whole past 5.4 from it,
+drooping 0.02x², 2.33 at its free edge.
+
+**The faces.** `FUN_0053cda0( x, y, z, 0.5, 6, 4, word, mWindDir × π/180 )` lays each of the grid's 6 × 4 cells as two
+faces, front then back. The front's corners are [c+1][r], [c][r], [c+1][r+1], [c][r+1] with their normals negated; the
+back's are [c][r], [c+1][r], [c][r+1], [c+1][r+1] with the normals as they are. Each corner is moved 0.5 along x, off the
+pole, turned about y by the angle a (x' = x cos a − z sin a, z' = x sin a + z cos a, the table's sine and cosine), then
+moved to the point. U runs c/6, nought at the pole and 1 at the free edge; v starts at 1.0 for word 18 and 0.55 for word
+19 (`0x00700dfc`) and falls 0.55/4 a row. `FUN_0053c9c0` puts each face in the shared face list with `+0x94` nought, so
+`FUN_0053d9e0` hands mesh 3's faces to `FUN_0053e530`, triangles (2, 1, 0) and (1, 2, 3) as the sea's. The words
+alternate from 18 at the first point: the flags at z 38.75 take word 18, those at z 50.75 word 19. 8 × 24 × 2 = 384 faces,
+the mesh's whole room.
+
+**The angle is the wind.** `FUN_00519590`, on the park at `[0x007cf83c]`, answers the thing whose id the park keeps at
+`+0x1da724`, `mWeather` (`weather.md`); its `+0x5c` is `mWindDir`, degrees, which `FUN_00512f00` moves by
+`(rand % 90) − 45` at each change of weather. Every flag takes the same angle: at 0 they stream to +x, at 90 to +z.
+
+**The texture.** Words 18 and 19 are both `gte_lgo1` (the table at `0x00763b38`, its word 3 as the sea's: clamped; header
+byte 1 nought and every texel's alpha 255 as decoded, so opaque): 128 × 128, the SimThemePark logo in its upper half as this game's `TextureFile` decodes it and
+Bullfrog Productions' in its lower, the same file in `Textures` and `STexture`. Word 18's flags wear the SimThemePark half
+(v 1.0 to 0.45), word 19's the Bullfrog half (v 0.55 to 0), so v 1 is the decoded picture's top row. Both sides are
+drawn; from behind a logo reads mirrored.
+
+**How it moves.** The phase `0x00871ed0` is zeroed with the sea's by `FUN_0053bfe0` and stepped beside it, 0.4 a rendered
+frame unless the clock is paused, so the two are equal at every read. D falls 0.24 a frame, so the ripples run out from
+the pole's top: the z ripple repeats every 3 of D (12.5 frames), the y wave every 4 (16.7 frames), the whole every 12 of D,
+20 of phase, 50 frames. The light comes from the normals through the model lighter, as the sea's (read, not measured).
+
+**Measured** (the stock park, `q325/stock.TPWS`, off-screen at 30 frames a second, camera B; `original/dynfaces.py`
+against `q491/flagmodel.py`, the model above): the two phases 431.996 to 467.995 in 3.01 s, equal in 298 reads of 298;
+384 faces of mesh 3 at list indices 134 to 517, after the sea's 134, words 192 × 18 and 192 × 19 in the predicted order;
+at the live wind (139°), held at 0° and at 90°, and with the phase held at 5, 15 and 25, every corner within 3.0e-5 of the
+model, every UV within 4.8e-8, every normal within 1.9e-7. Phase 5 and 25 lay the same faces and the same frame (mean
+absolute difference 0.00); 5 and 15 the same x and z and y up to 1.1995 apart, the frame 7.4 apart over the nearer flags.
+`a-w0.png` and `a-w90.png` show every flag turned a quarter turn between the two winds.
+
+**OpenTPW stands the poles bare** (`q491/ours2/B.png`): Q493 builds the flags.
 
 ---
 

@@ -53,12 +53,14 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q491. The gates' flags: the third dynamic mesh. Decode first.** From Q486: `FlagsMesh` (`FUN_0053bfe0`,
-  `0x180` faces, mesh id 3) waves eight flags of `gte_lgo1` (words 18 and 19, alternating) on the poles by the gates:
-  `FUN_0053d570( 7, 5, 1.8, phase )` with its phase at `0x00871ed0`, then the `FUN_0053cda0` loop over eight fixed
-  points at `0x00763cf4` (x 411.25, 451.25, 511.25 and 551.25, y 22, z 38.75 and 50.75), each turned by the float at
-  `+0x5c` of the thing `FUN_00519590` answers, times π/180 (not named). OpenTPW stands the poles bare
-  (`q486/side-by-side.png`). Decode the flag's grid, its wave and the turning thing, then build.
+- [ ] **Q493. Build the gates' flags.** From Q491 (`park-engine.md`, "The gates' flags"): eight flags of `gte_lgo1` at
+  the points of `0x00763cf4`, one 7 x 5 grid at 1.8 waved by the phase (the sea's, 0.4 a frame; `ParkSea.Phase` holds it
+  at 30 a second on `Time.Delta`), the corners and normals by the formulas there, 0.5 off the pole and turned by
+  `ParkWeather.WindDirection`, two faces a cell, the words alternating 18, 19 (v from 1.0 or 0.55, 0.55/4 a row), lit
+  by the park's lighter, clamped, opaque, from `stexture` at `TEXTUREQUALITY` 0 or 1. In this engine's axes the
+  original's y and z swap. Confirm against `q491/flagmodel.py` (the model the original's 384 faces fit to 3e-5) and the
+  original's frames at camera B with the wind held (`thingpoke.py PID S 15 7:0x5c:f=W`, `q491/orig/run-b.sh`). The
+  other three themes' flags (the same eight points, fixed in the executable) are not looked at.
 - [ ] **Q472b. Build the picker's heightfield and its last cell.** From Q472 (`park-engine.md`, "The picker never hands
   the mode a cell off the map"). `ParkPicking.Resolve` meets the ground only over the heightfield (`HeightAtWorld` holds
   the edge height past it, so ours answers (98,40) past the last column and (40,85) past the last row, map type 7, and
