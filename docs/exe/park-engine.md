@@ -3525,8 +3525,9 @@ it 0.00, and a film's box repeated every 31.39 film frames (1.046 s). With the c
 0.935 of it and blue 0.963, red nought. With the quilt the box moves over a wave: a-B-1's (2.7, 60.0, 75.7) is a
 peak, and over one period of the film (frames 30 to 210) it averages (2.2, 55.3, 69.8), frames from (1.5, 50.3, 63.4)
 to (2.9, 60.2, 75.8). The blue is the quilt's: the three `gby_sur` average about (14, 80, 112) at alpha 67 to 207
-(`q486/textures.png`). The red near nought is most likely the 16-bit surface, inferred and not decoded (Q492): if the
-original holds each channel's top four bits, as it does the path tiles' (A4R4G4B4, below), the textures' red keeps none.
+(`q486/textures.png`). The original's textures are A4R4G4B4, each channel cut to its top four bits (`textures.md`, "The
+texture cache's surface format", Q492): that leaves the `gby_sur` a mean red of 7.4 to 9.8, not nought, so the cut
+alone does not account for the red near nought; the device's widening of a nibble and the 16-bit display are not read.
 
 **OpenTPW lays the quilt over `Line01`** (`ParkSea`, Q490; `ParkTerrain` draws the lake, and `Water` and
 `water.shader` are the lobby's sea): the corner from the balance's `WaterStartPos`, the 110 words drawn as the park
@@ -3537,7 +3538,7 @@ the site), and holds while the park is paused. Measured at camera B (`q490/run2`
 parked seaplane, the original's (100,150)-(250,300)): at phase 1 and 1 + 2π, held, ours (7.0, 63.2, 77.8) and
 (5.4, 55.0, 67.7) against the original's (2.4, 59.8, 75.3) and (1.3, 51.6, 65.0); half a wave apart mad 9.58 against
 8.89, a whole wave 0.00 in both; over a wave (2π of s in eight steps) (6.1, 58.4, 72.0) against the film's (1.7, 54.5,
-68.8) in that box. Ours stands higher, most likely by the 16-bit surfaces above (ours draws 8 bits a channel everywhere: Q492),
+68.8) in that box. Ours stands higher, in part by the 16-bit surfaces above (ours draws 8 bits a channel everywhere: Q700),
 and by `Line01`, ours (1.0, 53.5, 55.7) with the quilt sunk against (0.0, 50.2, 53.8). The phase gained 11.5 a second
 by wall clock, held still under the park's menu. The debug console's `sea` prints the corner, phase, folder and words;
 `sea phase P` and `sea y H` move them. The gates' flags, the third mesh, are the next section.

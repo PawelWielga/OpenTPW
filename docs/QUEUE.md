@@ -73,19 +73,15 @@ filed the items that cite it.
   vertex light `FUN_005741b0`, the models' pass), is not read. Ours draws no half light there and lights the park as at
   medium, counted `LIGHTING_OFF` at the park's load (`Level.Lighting`). Decode both bits' other readers, then measure
   the original at low quality (`Resolution.sam` aside, its Options screen) at Q479's camera A before any build.
-- [ ] **Q492. The original's textures are 16-bit surfaces at medium. Decode first.** From Q490: the original's sea and
-  lake keep red near nought where ours reads 4 to 7 (`q490/PREDICTION.txt`), as `gby_sur`'s red (about 14) keeps
-  nothing of its top four bits; the path tiles are A4R4G4B4 (Q489, `park-engine.md`), and `med.sam` sets
-  `GraphicalOptions.TEXTURE32` 0. Decode which surface format the loader picks for each texture (alpha graded, cut,
-  none) and under `TEXTURE32`, then decide with Alexah whether ours draws the same four or five bits a channel.
-  - **Note (fork watch 2026-10-18, `verify-other-b.md` L1, `verify-ui-hud.md` U1):** the decode is now largely done
-    (`textures.md`, "The texture cache's surface format"). `TEXTURE32` sets bit `0x400000` of the flag word
-    (`boot.md`); the window setup turns it into the format index `2 + TEXTURE32` (`0x0044e1f4`), which `FUN_0058da40`
-    stores in `[0x008bd554]` (3 when the renderer mode is 4), indexing the table at `0x007015f8` (5-6-5, 1-5-5-5,
-    4-4-4-4, 8-8-8-8). `low`, `med` and `high.sam` all hold `TEXTURE32 0` (and `RENDER32 0`, which picks a 16-bit
-    display by bit `0x200000`, a separate setting), so the shipped game runs format 2, A4R4G4B4: four bits a channel.
-    What is left: `FUN_0058b220`, which fills the format records from the device (what record 2 holds), and the
-    per-texture pick (alpha graded, cut or none), then measuring ours against the original's four bits.
+- [ ] **Q700. Ours cuts every texture to four bits a channel, as the original's A4R4G4B4.** From Q492 (`textures.md`,
+  "The texture cache's surface format"): the shipped presets run format 2, and the original stores each channel as
+  `v >> 4` (`TexFormat_BuildChannelTables`, `0x005839f0`), alpha too; ours makes every texture `R8_G8_B8_A8_UNorm`
+  (`Texture.CreateTexture`) and keeps eight, only `ProceduralGround` cutting (Q489). Build the cut where a texture is
+  made (one site), read how the device widens a nibble first if it can be read, and measure the sea at Q490's camera B
+  against `q490/run2` (ours (6.1, 58.4, 72.0) over a wave, the original's film (1.7, 54.5, 68.8)); the cut alone leaves
+  `gby_sur`'s red 7.4 to 9.8, so predict what is left. Q460's rounding sits under the nibbles.
+  **Needs Alexah (2026-10-18):** cut every texture to the original's four bits a channel (a picture as the shipped game
+  draws it, with its banding), or keep ours at eight and say the deviation at the site?
 - [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
   listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
   the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for

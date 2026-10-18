@@ -193,9 +193,11 @@ original draws it (`hud.md`, "The stat bars' skin").
 `[0x008bd554]` is the texture cache's surface format **index**, not the display mode. The window setup (`0x0044e1f4`,
 `and ecx,0x400000; or ecx,0x800000; shr ecx,0x16`) makes it `2 + TEXTURE32`, where `TEXTURE32` is
 `GraphicalOptions.TEXTURE32` (bit `0x400000` of the flag word, `boot.md`), and passes it as argument 4 of `0x0044df20`.
-That reaches the engine init `0x00572780` (`0x00572966`), `FUN_0058cff0` (the "tcache ok" step) and `FUN_0058da40`, the
+That reaches the engine init `0x00572780` (`0x00572966`), `FUN_0058cff0` (the "tcache ok" step) and `TexCache_Init` (`0x0058da40`), the
 texture cache's init, which logs "Texture Cache Initialization" and "Surfaceformat chosen %d", stores the index
-(`0x0058db5c`; forced 3 at `0x0058daca` when the renderer mode `[0x008bd524]` is 4) and calls `FUN_0058b220( .., fmt )`.
+(`0x0058db5c`; forced 3 at `0x0058daca` when the renderer mode `[0x008bd524]` is 4) and calls
+`TexCache_CreateStagingPool` (`0x0058b220`, below). `FUN_0058db90` (from `FUN_005774c0`) stores a new index and remakes
+the pool and the slots; what calls it with which index is not read.
 The table at `0x007015f8` holds four shorts a format, alpha, red, green, blue bits:
 
 | Index | Format |
@@ -211,8 +213,47 @@ The bytes a texel are `2, 2, 2, 4` at `0x007014c8` and again at `0x00701fe0`. `0
 (Q492; the path tiles, `park-engine.md`, "A path laid over"). The display depth is separate: 16 or 32 by `RENDER32`
 (`boot.md`, `0x0044e20b`), and the shipped presets hold `RENDER32 0` too.
 
-Not read: what record 2 holds and how `FUN_0058b220` fills the table from the device, and the per-texture pick
-(alpha graded, cut or none) that Q492 asks for.
+**A record is the device's own pixel format** (Q492). The Direct3D init `FUN_00573080` asks the device for its texture
+formats (`IDirect3DDevice3::EnumTextureFormats`, vtable `+0x20`, callback `0x00573060`). `TexFormat_EnumCallback`
+(`0x00572f70`) counts the set bits of each offered format's alpha, red, green and blue masks (`Bits_Count`, `0x005911d0`)
+and copies its 32-byte `DDPIXELFORMAT` into the record whose four counts the table above holds, logging "Surfaceformat
+%d found, argb %d %d %d %d". A record left with `dwSize` nought is a format the device lacks: `TexFormat_GetRecord`
+(`0x00573820`) refuses it (error `0xb0754003`), and with record 2 empty the init releases what it made and fails
+(`0x005733fe`; "No suitable alpha surfaces" is logged only under the flag word's `0x2000000`). So the 4-4-4-4 format is
+required, whatever its masks' order on the device.
+
+**One table a format turns 8 bits into the surface's.** `TexFormat_BuildChannelTables` (`0x005839f0`), from the engine
+init (`0x005727b0`, after the device's formats are taken at `0x0044df6b`), fills for each record whose `dwSize` is 32 a
+table at `0x008bd5d8 + 0x1000 n`: for each value `v` from 0 to 255 four dwords, alpha, red, green, blue, each
+`(v >> (8 - bits)) << shift`, `bits` that mask's count and `shift` its lowest set bit (`Bits_LowestSet`, `0x005911f0`).
+**A channel is cut to its top bits, never rounded**: at format 2 a channel keeps `v >> 4`, so 0 to 15 store nought and
+240 to 255 store 15. (Format 3's table is the static constructor's, `0x00583900`: `v << 24`, `<< 16`, `<< 8`, `v`.) Every
+writer of a texel goes through it:
+
+- The zlib codec `FUN_00593ab0`, the LZSS one `FUN_00595920` and `FUN_00597100` (not identified) use the 512-word
+  tables `Codec_BuildChannelTables` (`0x005916c0`) copies from it, alpha `0x00cef228`, blue `0x00cef628`, green
+  `0x00cefe28`, red `0x00cf0228`, indexed by the channel's rounded value plus 128 (held to 0..255 first). A texel is the
+  OR of one word a channel; with an alpha chunk the alpha's word (`0x005954c8`), without one the format's whole alpha
+  mask, the record's `+0x1c` (`0x0059568c`, `0x00596e31`, `0x00598332`).
+- `FUN_00575160`, the other formats' converter (from `FUN_00574bd0`), the same: a 4-byte source's alpha through the
+  alpha column, a 3-byte source's the alpha of 255 (`+0xff0`); its texel stride is `[0x007016f8 + 4 n]`, 2 at format 2.
+- `SpritePack_Load` at format 2 (`0x00587f0e`) turns its 256-colour palette into 16-bit entries through the table.
+
+**No texture picks its own format.** The texture cache makes every slot through the device's factory (`[0x008bd52c]`
+`+0x10`, then its slot 0 with the size, the index `[0x008bd554]` and the mip count: `TexCache_CreateSlots`,
+`0x0058d1d0`), and `TexCache_CreateStagingPool` its staging surfaces, two a size from `[0x007022e8]` 256 down by halves,
+system-memory textures (`DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY`, `0x1800`) through `TexCache_CreateStagingPair`
+(`0x0058b0b0`), in the same one format. A texture's alpha class (opaque, cut out, graded: "The loader" above,
+`render-states.md`) chooses its render state, not its surface: in the shipped game all three are A4R4G4B4, a cut-out or
+graded texture keeping its alpha's top four bits and an opaque one 15.
+
+The sea's three `gby_sur` (`q492/census-gby_sur.txt`, decoded by this game's reader, as `wctorig.py` does not read
+LZSS) average red 13.5 to 15.2 with 60 to 63% of texels under 16; the cut leaves 7.4 to 9.8 (a nibble taken back as
+`n x 17`). How the device widens a nibble when it samples, and what the 16-bit display (`RENDER32` 0) keeps after it,
+are not read. Not read either: `FUN_0057b6e0`'s format-2 branch (`0x0057b716`).
+
+**OpenTPW** makes every texture `R8_G8_B8_A8_UNorm` (`Texture.CreateTexture`) and keeps all eight bits; only
+`ProceduralGround`'s sheet is cut to the top four (Q489). Whether ours cuts every texture the same is Q700.
 
 ## The zlib codec, `FUN_00593ab0`
 

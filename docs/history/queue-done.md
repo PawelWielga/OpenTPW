@@ -7854,6 +7854,25 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   written, not drawn first. Final binary: Mike's own pixels to his picture's last row open and folded (`q500/run5`),
   first person 12 of 12 unpulled, two people behind the gate hidden (`run6`); original pull 110.000 to 106.185
   (`q500/orig`); 14 of 14 bugs put back fail a test.
+- [x] **Q492. The original's textures are 16-bit surfaces at medium. Decode first.** From Q490: the original's sea and
+  lake keep red near nought where ours reads 4 to 7 (`q490/PREDICTION.txt`), as `gby_sur`'s red (about 14) keeps
+  nothing of its top four bits; the path tiles are A4R4G4B4 (Q489, `park-engine.md`), and `med.sam` sets
+  `GraphicalOptions.TEXTURE32` 0. Decode which surface format the loader picks for each texture (alpha graded, cut,
+  none) and under `TEXTURE32`, then decide with Alexah whether ours draws the same four or five bits a channel.
+  - **Note (fork watch 2026-10-18, `verify-other-b.md` L1, `verify-ui-hud.md` U1):** the decode is now largely done
+    (`textures.md`, "The texture cache's surface format"). `TEXTURE32` sets bit `0x400000` of the flag word
+    (`boot.md`); the window setup turns it into the format index `2 + TEXTURE32` (`0x0044e1f4`), which `FUN_0058da40`
+    stores in `[0x008bd554]` (3 when the renderer mode is 4), indexing the table at `0x007015f8` (5-6-5, 1-5-5-5,
+    4-4-4-4, 8-8-8-8). `low`, `med` and `high.sam` all hold `TEXTURE32 0` (and `RENDER32 0`, which picks a 16-bit
+    display by bit `0x200000`, a separate setting), so the shipped game runs format 2, A4R4G4B4: four bits a channel.
+    What is left: `FUN_0058b220`, which fills the format records from the device (what record 2 holds), and the
+    per-texture pick (alpha graded, cut or none), then measuring ours against the original's four bits.
+  - **Done 2026-10-18, `alexah/800-texture-surface-decode`, the decode only** (`textures.md`, "The texture cache's
+    surface format"): a record is the device's own `DDPIXELFORMAT`, taken by `TexFormat_EnumCallback` (`0x00572f70`;
+    `FUN_0058b220` makes the staging pool instead), format 2 is required, and every texel of every texture goes
+    through one table a format that cuts each channel to its top bits (`0x005839f0`, `v >> 4` at format 2); no texture
+    picks its own format, its alpha class choosing only the render state. `gby_sur1`'s red 13.5 is 7.4 after the cut,
+    63.2% of its texels under 16 (`q492/census-gby_sur.txt`). The build and the decision are Q700.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
