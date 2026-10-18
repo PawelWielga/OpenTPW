@@ -349,6 +349,10 @@ public class Level
 		_ = ParkSea.For( Balance, TextureQuality() );
 		load.Mark( "sea" );
 
+		// The gates' flags, which wave at the sea's phase.
+		_ = ParkFlags.For( TextureQuality() );
+		load.Mark( "flags" );
+
 		// The objects before the fixed items, which is the one ordering here that matters: the gate and the
 		// traffic lights are swept out of the very registry the placed things are swept from, so it has to
 		// exist before they can put themselves into it.
@@ -416,7 +420,7 @@ public class Level
 
 		// After the audio, because a park opens with its weather already rolled and that first roll
 		// may want to start the rain straight away.
-		_ = new ParkWeather();
+		_ = new ParkWeather( park?.Save?.WindDirection );
 		load.Mark( "weather" );
 
 		// The advisor last, as in the lobby: he rides on top of the rest and ducks everything above him

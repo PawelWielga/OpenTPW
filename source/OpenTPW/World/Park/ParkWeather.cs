@@ -135,7 +135,11 @@ public sealed class ParkWeather : Entity
 	/// <summary>The park is 128 cells square at ten units a cell - see <c>ParkGround</c>.</summary>
 	private static float MapExtent => OpenTPW.ParkWorld.MapSize * 10f;
 
-	public ParkWeather()
+	/// <param name="savedWindDirection">
+	/// The park file's <c>mWindDir</c>, or null for a fresh park: the original's constructor rolls and moves the wind,
+	/// then a load reads the saved one over it (<c>FUN_00512010</c>), so a loaded park's flags stand as they were saved.
+	/// </param>
+	public ParkWeather( float? savedWindDirection = null )
 	{
 		Current = this;
 
@@ -174,6 +178,8 @@ public sealed class ParkWeather : Entity
 		// The original rolls a quality in the constructor and applies it at once (0x00511fc4), so a
 		// park opens with weather already decided rather than with a day of nothing.
 		Apply( Roll() );
+
+		WindDirection = StartingWind( WindDirection, savedWindDirection );
 
 		// The target, not Drops: the ramp has not run yet, so Drops is still nought here and reporting
 		// it would say "dry" however hard it is about to rain.
@@ -403,7 +409,28 @@ public sealed class ParkWeather : Entity
 		// Wind comes straight off the quality too: the worse it is, the harder it blows, and the
 		// direction wanders by up to forty-five degrees a change.
 		WindForce = Math.Clamp( (100 - Quality) * 0.01f, 0f, 1f );
-		WindDirection = (WindDirection + _rng.Next( 90 ) - 45 + 360f) % 360f;
+		WindDirection = Turned( WindDirection, _rng.Next( 90 ) - 45, _heldWind );
+	}
+
+	/// <summary>The wind a park opens with: the file's <c>mWindDir</c> over the constructor's roll, where there is a file.</summary>
+	internal static float StartingWind( float rolled, float? saved ) => saved ?? rolled;
+
+	/// <summary>The wind after a change of weather: turned by <paramref name="turn"/> degrees and wrapped to [0, 360), unless held.</summary>
+	internal static float Turned( float wind, int turn, float? held ) => held ?? (wind + turn + 360f) % 360f;
+
+	private float? _heldWind;
+
+	/// <summary>
+	/// Holds the wind at <paramref name="degrees"/>, or lets it go again with null, for DebugConsole's <c>flags wind</c>:
+	/// the original's frames of the gates' flags were taken with its <c>mWindDir</c> held (Q491), and a change of
+	/// weather would otherwise turn ours away from them.
+	/// </summary>
+	internal void DebugWind( float? degrees )
+	{
+		_heldWind = degrees;
+
+		if ( degrees is { } held )
+			WindDirection = held;
 	}
 
 	/// <summary>

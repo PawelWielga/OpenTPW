@@ -38,6 +38,13 @@ Read from the named save stream in `FUN_00512010`: the original announces every 
 | `+0x60` | `mWindForce` | `(100 - q) * 0.01`, clamped `[0,1]` | Named save stream |
 | `+0x64` | `mOverridden` | Saved and loaded, **never read by anything traced**. Whether it is the original's forced-weather latch is **not established** | Named save stream |
 
+**A load reads the 99 bytes in this order** (`FUN_00512010`, its save twin beside it), so a field's place in the record
+is the sum of the sizes before it (FileFormats `saves.md`, "The weather"): `mWindDir` is at the record's +90 of 99. All six
+park files hold it whole, 24 to 350, and the original's live wind on the stock park was its file's 139
+(Q491). **OpenTPW reads `mWindDir` alone** (`ParkWorld.WindDirection`, Q493): `ParkWeather` rolls and moves the wind as
+the constructor does, then takes the file's over it, as the load does; the gates' flags turn by it. The quality, the
+schedule and the rest stay fresh, and the writer writes the file's record back as it was (Q241j).
+
 ### Quality is the only input
 
 `FUN_00512f00` is the only converter from quality to weather:

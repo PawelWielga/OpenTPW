@@ -3427,7 +3427,17 @@ model, every UV within 4.8e-8, every normal within 1.9e-7. Phase 5 and 25 lay th
 absolute difference 0.00); 5 and 15 the same x and z and y up to 1.1995 apart, the frame 7.4 apart over the nearer flags.
 `a-w0.png` and `a-w90.png` show every flag turned a quarter turn between the two winds.
 
-**OpenTPW stands the poles bare** (`q491/ours2/B.png`): Q493 builds the flags.
+**OpenTPW lays the flags** (`ParkFlags`, Q493): the grid, the eight points, the faces front then back, the UVs and the
+turn as above, in this engine's axes the original's y and z swapped, the triangles the sea's, `gte_lgo1` opaque and
+clamped from `stexture` at `TEXTUREQUALITY` 0 or 1, lit by the park's lighter. **The faces are culled**, as the original's
+two faces a cell say its are: from camera B (on the flags' +z side, the sun travelling +z) both games show the side whose
+normal faces away from the sun, ambient alone, the flags' boxes ours (84.5, 65.0, 73.5) and (106.1, 93.7, 101.0) against the
+original's (86.0, 63.9, 72.2) and (109.5, 95.5, 101.9) at the wind held at 0 and both phases at 5 (`q493/side-by-side.png`).
+The phase is `ParkSea.Phase`, as the original's two are equal at every read; the angle is `ParkWeather.WindDirection`,
+which a loaded park takes from the file's `mWindDir` (139 in the stock park; `weather.md`). Phase 5 against 25 moved the
+boxes 0.00, 5 against 15 7.36 and 8.14 (the original's 7.44 and 6.98). Ours is sharper than the original's frame, whose logo
+reads blurred (not looked into). The debug console's `flags` prints the count, phase, wind and folder; `flags wind W`
+holds the wind, `flags wind free` lets it go.
 
 ---
 

@@ -7701,6 +7701,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `PREDICTION.txt`: 13 predictions, 11 held and 2 missed and recorded (a box taking the moving sea; a read landing a
   frame after the held phase), each re-run; the model's bugs put back, 7 of 7 killed. Filed Q493 (the build). Added
   `original/dynfaces.py`.
+- [x] **Q493. Build the gates' flags.** From Q491 (`park-engine.md`, "The gates' flags"): eight flags of `gte_lgo1` at
+  the points of `0x00763cf4`, one 7 x 5 grid at 1.8 waved by the phase (the sea's, 0.4 a frame; `ParkSea.Phase` holds it
+  at 30 a second on `Time.Delta`), the corners and normals by the formulas there, 0.5 off the pole and turned by
+  `ParkWeather.WindDirection`, two faces a cell, the words alternating 18, 19 (v from 1.0 or 0.55, 0.55/4 a row), lit
+  by the park's lighter, clamped, opaque, from `stexture` at `TEXTUREQUALITY` 0 or 1. In this engine's axes the
+  original's y and z swap. Confirm against `q491/flagmodel.py` (the model the original's 384 faces fit to 3e-5) and the
+  original's frames at camera B with the wind held (`thingpoke.py PID S 15 7:0x5c:f=W`, `q491/orig/run-b.sh`). The
+  other three themes' flags (the same eight points, fixed in the executable) are not looked at.
+  **Done (2026-10-18):** `ParkFlags` (Level after the sea), the grid, faces, UVs and turn of `park-engine.md`, culled as
+  the original's two faces a cell; the angle `ParkWeather.WindDirection`, which a loaded park now takes from the file's
+  `mWindDir` (the weather's record +90 of 99, `ParkWorld.WindDirection`; FileFormats `saves.md`, "The weather", `bfe2085`);
+  console `flags`, `flags wind W|free`. Confirmed at camera B on the final binary (`q493/run3`, 7 of 7; `run4-low`, 2 of
+  2): entry wind 139, the flags' phase the sea's, the boxes (84.5, 65.0, 73.5) and (106.1, 93.7, 101.0) against the
+  original's (86.0, 63.9, 72.2) and (109.5, 95.5, 101.9) at wind 0 and phase 5, phase 5 against 25 0.00 and against 15
+  7.36 / 8.14 (the original's 7.44 / 6.98), wind 90 as `a-w90.png` (`q493/side-by-side.png`). `PREDICTION.txt`: 10
+  predictions, all held. 24 bugs put back, 24 killed. Tests 3347/0 with the game, 1129 ran / 2218 skipped without.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

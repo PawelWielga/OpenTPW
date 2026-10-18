@@ -2112,6 +2112,8 @@ public sealed partial class ParkWorld : IParkInitialState
 				StaffHq = ReadStaffHq( start );
 				StaffHqAt = start;
 			}
+			else if ( model == WeatherModel )
+				WindDirection = ReadSingleAt( start + WeatherWindDirectionAt );   // mWindDir
 			else if ( model == MechanicHqModel )
 			{
 				MechanicHqAt = start;
@@ -2673,6 +2675,19 @@ public sealed partial class ParkWorld : IParkInitialState
 
 	/// <summary>Where the mechanics' HQ's record lies in the body, or -1 with none.</summary>
 	public int MechanicHqAt { get; private set; } = -1;
+
+	/// <summary>
+	/// The weather thing's <c>mWindDir</c>, degrees in [0, 360) - model 15, thing 7 in every park file, which the
+	/// header's <c>mWeather</c> names (<c>FUN_00512010</c> reads it; FileFormats <c>saves.md</c>, "The weather"). Null
+	/// where the file holds no such thing.
+	/// </summary>
+	public float? WindDirection { get; private set; }
+
+	/// <summary>The model number of the weather thing - see <see cref="WindDirection"/>.</summary>
+	private const int WeatherModel = 15;
+
+	/// <summary>Where <c>mWindDir</c> sits in the weather's 99-byte record, before <c>mWindForce</c> and <c>mOverridden</c>.</summary>
+	private const int WeatherWindDirectionAt = 90;
 
 	/// <summary>The model number of the mechanics' HQ - see <see cref="MechanicCursor"/>.</summary>
 	private const int MechanicHqModel = 10;

@@ -53,14 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q493. Build the gates' flags.** From Q491 (`park-engine.md`, "The gates' flags"): eight flags of `gte_lgo1` at
-  the points of `0x00763cf4`, one 7 x 5 grid at 1.8 waved by the phase (the sea's, 0.4 a frame; `ParkSea.Phase` holds it
-  at 30 a second on `Time.Delta`), the corners and normals by the formulas there, 0.5 off the pole and turned by
-  `ParkWeather.WindDirection`, two faces a cell, the words alternating 18, 19 (v from 1.0 or 0.55, 0.55/4 a row), lit
-  by the park's lighter, clamped, opaque, from `stexture` at `TEXTUREQUALITY` 0 or 1. In this engine's axes the
-  original's y and z swap. Confirm against `q491/flagmodel.py` (the model the original's 384 faces fit to 3e-5) and the
-  original's frames at camera B with the wind held (`thingpoke.py PID S 15 7:0x5c:f=W`, `q491/orig/run-b.sh`). The
-  other three themes' flags (the same eight points, fixed in the executable) are not looked at.
 - [ ] **Q472b. Build the picker's heightfield and its last cell.** From Q472 (`park-engine.md`, "The picker never hands
   the mode a cell off the map"). `ParkPicking.Resolve` meets the ground only over the heightfield (`HeightAtWorld` holds
   the edge height past it, so ours answers (98,40) past the last column and (40,85) past the last row, map type 7, and
@@ -1046,6 +1038,8 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
   From Q241f: `Level.WritePark` is the call to make. Of the economy thing only `mBalance` is written, so a loaded
   park reads the first file's profit under the new balance (`money`: profit -12013 beside 88112). The original puts
   the pointer back to its default mode before it writes (`FUN_00516c80`, step 1); `WritePark` does not.
+  From Q493: of the weather thing only `mWindDir` is read at a load (`ParkWorld.WindDirection`), and the writer writes
+  the file's record back as it was, so a park saved after a change of weather holds the wind it was loaded with.
   From Q241h: a member of staff in the hand is written idle where they were picked up, and stays in the
   running park's hand; the default mode's install is what puts them down in the original.
 - [ ] **Q327. Full Simulation catch-up: the built advisor lines in a Full Simulation park.** Filed at Alexah's

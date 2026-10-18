@@ -421,7 +421,9 @@ whole list):
   it back, so a `dynfaces.py` dump is laid at P + 0.4 now and then (`q491/orig/b-p15.0.json`): take five reads 0.1 s
   apart and keep one the model fits at P (`q491/orig/run-c.sh`). The flags' geometry repeats every 20 of phase; P and
   P + 10 differ in y alone. At camera B the nearer flags' boxes (395,435,500,485) and (750,435,870,490) are clear of the
-  sea.
+  sea; this game's are (530,408,629,455) and (863,408,976,459). This game (Q493): `pause`, `sea phase P` (the flags wave
+  at the sea's phase, so it moves both), `flags wind W` holds the wind (`flags wind free` lets it go), `flags` prints
+  the count, phase, wind and folder (`q493/ours.py`).
 - **This game at another graphics quality** (Q482): `gamefolder.make( dest, {} )`, then write the quality into the
   folder's own `save/Config.tcf`, the dword at byte 12 (0 low, 1 medium, 2 high; `ConfigFile.Record`'s order after the
   version: card rendering, resolution, quality), and hand the folder to `parkrun.py` as `GAME_FOLDER`. The level reads

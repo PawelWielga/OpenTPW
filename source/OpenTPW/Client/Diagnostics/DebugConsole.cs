@@ -1806,6 +1806,22 @@ public static class DebugConsole
 				Reply( $"sea: corner {sea.CornerText} phase {sea.Phase:0.000} from {sea.Folder} words {sea.Census()}" );
 				break;
 
+			// The gates' flags: how many, their phase (the sea's) and wind, and the folder; `flags wind <degrees>` holds the
+			// weather's wind there, as the original's frames were taken with its mWindDir held, and `flags wind free` lets it go.
+			case "flags":
+				if ( ParkFlags.Current is not { } flags )
+				{
+					Reply( "flags: none - a park has to be loaded" );
+					break;
+				}
+
+				if ( parts.Length >= 3 && parts[1] == "wind" )
+					ParkWeather.Current?.DebugWind( parts[2] == "free" ? null : Argument( 2 ) );
+
+				Reply( $"flags: {ParkFlags.Poles.Length} of {ParkFlags.FacesPerFlag} faces, phase {flags.Phase:0.000} "
+					+ $"wind {ParkWeather.Current?.WindDirection.ToString( "0.###" ) ?? "none"} from {flags.Folder}" );
+				break;
+
 			// WHY a guest is not going anywhere, which `peeps` cannot answer. MajorDest is written only after a route
 			// succeeds, so a guest whose best cannot be reached looks identical to one who chose nothing. This asks
 			// the chooser alone, no route; each route a real choice asked is in the log ("the chooser routes to").
