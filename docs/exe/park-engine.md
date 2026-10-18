@@ -3357,11 +3357,28 @@ set of textures for N (64, 32, 16 are sets 0, 1, 2), r = 84 - y (the map's rows 
 In the jungle file C is brown earth (T0, T1 average (150, 91, 35) and (168, 112, 51)), and B and A are two grasses
 laid over it where u2 and u3 lift their masks: the brown patches of Q479's frames are where neither covers the earth.
 
-**A path laid over.** Where the cell's word has `0x0080` (a path cell) the record carries the cell's own texture, and
-the last pass lays it over the tile by its alpha, `tile + (path - tile) x alpha >> 8` a byte, its rows and columns
-turned by the word's mirror `0x40` and rotation `0x08`/`0x10`/`0x20` (the eight start and step cases at the pass's
-head); a 16-bit texture is read as 4:4:4:4. Read, not run under unicorn and not caught live (none of the 60 had one). A
-grey tile returns before that pass (`0x0055f841` to `0x0055f874`), so nothing is laid over a refused cell.
+**A path laid over** (Q489; run under unicorn with the record, `lib/lndtile.py`, and 136 path tiles caught from the
+running original with their records and texels, `original/tilecap.sh`, all equal: `q489/orig/a-pathcmp.txt`).
+`FUN_0056f090` hands each visible cell a record of five dwords (`piVar2[-1]` to `[3]`): the cell's texture where its word
+has `0x0080`, else nought; that texture's width and height (`+0x10`, `+0x12` of the surface); the bytes a texel of the
+display mode, `[0x007014c8 + 4 x [0x008bd554]]` (2 in modes 0 to 2, 4 in mode 3; 2 live); and the word.
+`FUN_00572440` swaps the texture for its locked bits (`FUN_00590da0`). With a texture, `FUN_0055f780`'s last pass
+(`0x00560926` on) writes each pixel of the tile, in order, as `t + ((p - t) x a >> 8)` a channel: t the scratch's
+pixel the word's turn picks, p and a the texel at row `k x (h / N)` and column `j x (w / N)` of the texture, read
+unturned. The eight cases at the pass's head, by `0x40` then the first of `0x08`, `0x10`, `0x20` set, read the
+scratch as it is, turned (`0x08`, `0x10`, `0x20`) or reflected (`0x40` with each), `q489/turns.py`. At 2 bytes a texel
+the texel is A4R4G4B4, each nibble as a byte's top four bits, so a path covers at most 240 of 256 (`0xf0`); at 4 it is
+A8R8G8B8. A grey tile returns before the pass (`0x0055f841` to `0x0055f874`).
+
+What is laid. A path tile written on a cell (`FUN_00450470` to `FUN_0046df50`, set 1) puts the theme `.tct`'s PathTex
+entry in the cell's texture index (61 + the tile in the jungle, 63 to 81 live) and writes its word `& 0xff87 & 0xfffe |
+0x0180`, then `0x20` for 90, `0x10` for 180, `0x08` for 270 (the angle compared with `0x5a`, `0xb4`, `0x10e`), so a path
+cell is never mirrored; all 78 of the stock park's read so live (`q489/orig/a-words.txt`). The texture is the full
+`pathtex` file, 128 x 128 (not `spathtex`'s 32), and its locked surface holds the file's rows bottom up against
+OpenTPW's `TextureFile` (the surface's row 0 is its last). Each nibble is that decode's byte `>> 4` on 97.3% of the
+caught nibbles; every other one is one higher, and only where OpenTPW's byte ends in `0xf`: the original's own type
+`0x13` decode stands one above OpenTPW's on about half of those bytes (Q460). The terrain pass then draws the tile by
+the cell's word, as every tile ("Which cell is handed on"), and `FUN_0046ded0(1)` leaves a `0x0080` cell's turn.
 
 **Elsewhere.** `FUN_0057ace0`, reached from the model maker `FUN_00463060`, composites through `FUN_00572630` one
 uncached tile for each cell of a rectangle whose word has `0x0080` and `0x0200` (a footprint's used cell): a lead for

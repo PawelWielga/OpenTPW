@@ -11,6 +11,12 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
+/// <b>Where the ground composites its tiles, the ground draws the path</b>, laid over the cell's tile
+/// (<see cref="ParkGround.LaysPath"/>), and this draws only the path cells outside the box or at a detail without
+/// the compositor.
+/// </para>
+///
+/// <para>
 /// <b>This draws instead of the ground, never on top of it.</b> A path cell is ordinary drawn ground in
 /// <c>base.MD2</c> - measured: all 82
 /// of Lost Kingdom's path and queue cells carry a real ground texture index and none is the
@@ -138,6 +144,7 @@ public sealed class ParkPaths : ModelEntity
 		// Which tiles this park actually uses, in ascending order, each becoming one slot of the material.
 		var indices = new List<int>();
 		var cells = new List<(int X, int Y, ParkWorld.MapCell Cell)>();
+		var laidOver = 0;
 
 		for ( var y = 0; y < field.CellsY; ++y )
 		{
@@ -151,8 +158,15 @@ public sealed class ParkPaths : ModelEntity
 				// that did not read the overlay too would leave a hole exactly where the walkway belongs.
 				var cell = ParkState.CellFor( world, x, y );
 
+				// Where the ground composites its tiles, the path is laid over the cell's tile (ParkGround.LaysPath).
 				if ( !IsPath( cell ) )
 					continue;
+
+				if ( ParkGround.Current?.LaysPath( x, y ) == true )
+				{
+					++laidOver;
+					continue;
+				}
 
 				cells.Add( (x, y, cell) );
 
@@ -163,22 +177,23 @@ public sealed class ParkPaths : ModelEntity
 
 		if ( cells.Count == 0 )
 		{
-			Log.Info( $"{_themeName}: the saved park has no paths in it" );
+			Log.Info( laidOver > 0
+				? $"{_themeName}: every one of the {laidOver} path cells is laid over the ground's tiles, so none is drawn here"
+				: $"{_themeName}: the saved park has no paths in it" );
 			return;
 		}
 
 		indices.Sort();
 
 		var textures = new Texture[Material.TextureSlots];
-		var directory = $"levels/{_themeName.ToLowerInvariant()}/terrain/pathtex";
-		var table = ReadTable();
+		var table = ReadTable( _themeName );
 
 		if ( indices.Count > textures.Length )
 			Log.Warning( $"{_themeName}: the paths use {indices.Count} tiles where a material holds {textures.Length}" );
 
 		for ( var slot = 0; slot < textures.Length; ++slot )
 			textures[slot] = slot < indices.Count
-				? Resolve( table, indices[slot], directory )
+				? Resolve( table, indices[slot] )
 				: Texture.Missing;
 
 		Log.Info( $"{_themeName}: path tiles - " + string.Join( ", ",
@@ -221,7 +236,7 @@ public sealed class ParkPaths : ModelEntity
 		Model = new Model( vertices[..vertex], elements[..element], material );
 		Drawn = element / 6;
 
-		Log.Info( $"{_themeName}: {Drawn} path cells drawn from {indices.Count} tiles" );
+		Log.Info( $"{_themeName}: {Drawn} path cells drawn from {indices.Count} tiles, {laidOver} laid over the ground's tiles" );
 	}
 
 	/// <summary>
@@ -229,9 +244,9 @@ public sealed class ParkPaths : ModelEntity
 	/// the not-found texture and the paths are still laid in the right places, which is far more useful
 	/// than no paths at all.
 	/// </summary>
-	private TextureTableFile? ReadTable()
+	internal static TextureTableFile? ReadTable( string themeName )
 	{
-		var theme = _themeName.ToLowerInvariant();
+		var theme = themeName.ToLowerInvariant();
 		var path = $"levels/{theme}/terrain/{theme}.tct";
 
 		try
@@ -241,7 +256,7 @@ public sealed class ParkPaths : ModelEntity
 		}
 		catch ( Exception e )
 		{
-			Log.Warning( $"{_themeName}: {path} would not read, so no path tile can be named - {e.Message}" );
+			Log.Warning( $"{themeName}: {path} would not read, so no path tile can be named - {e.Message}" );
 			return null;
 		}
 	}
@@ -250,23 +265,33 @@ public sealed class ParkPaths : ModelEntity
 		=> table?.NameFor( PathSection, index ) ?? string.Empty;
 
 	/// <summary>
-	/// The texture a tile index draws with. The table names them <c>.tga</c> and the files beside it are
-	/// the same stem as <c>.wct</c>, which is the one translation this needs - the same swap the ground
-	/// makes for its own names.
+	/// The file a tile index draws with, or null where the table names none. The table names them <c>.tga</c> and the
+	/// files beside it are the same stem as <c>.wct</c>, which is the one translation this needs - the same swap the
+	/// ground makes for its own names.
 	/// </summary>
-	private Texture Resolve( TextureTableFile? table, int index, string directory )
+	internal static string? TileFile( string themeName, TextureTableFile? table, int index )
 	{
 		var name = TileName( table, index );
 
 		if ( string.IsNullOrEmpty( name ) )
-			return Texture.Missing;
+			return null;
 
 		var dot = name.LastIndexOf( '.' );
 		var stem = dot > 0 ? name[..dot] : name;
+		return $"levels/{themeName.ToLowerInvariant()}/terrain/pathtex/{stem}.wct";
+	}
+
+	/// <summary>The texture a tile index draws with (<see cref="TileFile"/>).</summary>
+	private Texture Resolve( TextureTableFile? table, int index )
+	{
+		var name = TileName( table, index );
+
+		if ( TileFile( _themeName, table, index ) is not { } file )
+			return Texture.Missing;
 
 		try
 		{
-			return new Texture( $"{directory}/{stem}.wct", TextureFlags.Repeat );
+			return new Texture( file, TextureFlags.Repeat );
 		}
 		catch ( Exception e )
 		{

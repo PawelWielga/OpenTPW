@@ -53,14 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q489. The procedural ground's path laid over.** From Q488 (`park-engine.md`, "The procedural ground", "A path
-  laid over"). `FUN_0055f780`'s last pass lays a path cell's own texture over its tile by its alpha, turned by the
-  word's mirror and rotation (its eight start and step cases), a 16-bit texture read as 4:4:4:4; a grey tile returns
-  before it. All 78 of the stock park's path cells are composited, and `ParkPaths` draws the path alone where the
-  original draws the path over the ground (`PROCEDURAL_PATH_OVERLAY`, 78 a build). First run the pass under unicorn
-  (`lib/lndtile.py` with the record's texture) and catch tiles with paths in the running original (`tilecap.sh`), then
-  build it, and make a cell's tile again when a build marks it `0x0100` (`FUN_0046df50` sets `0x0101`). Confirm at a
-  camera over the shipped paths in both games (`lib/cellmatch.py`).
 - [ ] **Q486. The park's sea: its texture, its motion and its colour. Decode first.** Asked by Alexah (2026-10-17),
   from `q472/side-by-side.png`: the original's sea is an animated, perhaps procedural, texture - Alexah's lead: the
   same wave motion as the path tool's see-through preview - where ours (`content/shaders/water.shader`, `World/Terrain/
@@ -1994,6 +1986,9 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
 - [ ] **Q460. Zlib textures round the chroma terms twice.** From the week-end audit (D9, `VERIFY-13b.md` Q355 1). The
   original stores the Cb and Cr terms as float32 at 1.5 x 2^23 (`0x00594f5e`, `0x00594f87`), integers before Y is added;
   `Held` rounds once: 933 of 986 files differ by 1. Green's rounding (the FPU mode) needs a breakpoint at `0x00594f72`.
+  Q489 saw it through type `0x13` too: the running original's 16-bit surfaces of eleven jungle `pathtex` files hold
+  each channel's top four bits, and where OpenTPW's byte ends in `0xf` about half (19,265 of 35,399) are one higher
+  (`q489/PREDICTION.txt` a3, `conv3.py`); hold those files' nibbles to the original's once fixed.
 - [ ] **Q461. The tag bar's meshless buttons are disabled in the original.** From the week-end audit (D10,
   `TIEBREAK-Q311.md`). A type-0 tag's second button and a decline's erase button are shown and disabled (vtable +0x14
   with 0 at `0x0048e991`, `0x0048e43c`); the hit test skips a disabled control (`0x0065db3b`). Q427 made them take the

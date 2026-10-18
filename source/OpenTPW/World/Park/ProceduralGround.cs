@@ -63,17 +63,59 @@ public sealed class ProceduralGround
 	private static int Lerp( int q, int p, int w ) => (q + (((p - q) * w) >> 8)) & 0xff;
 
 	/// <summary>
+	/// A path cell's own texture as the original's compositor reads it from the texture's locked surface: its rows
+	/// bottom up against the file's, and each channel cut to its top four bits, A4R4G4B4 (the 16-bit mode the original
+	/// runs in, where <c>[0x007014c8 + 4 x [0x008bd554]]</c> is 2; in its 32-bit mode it would read 8:8:8:8).
+	/// </summary>
+	public sealed class PathTexture
+	{
+		public int Width { get; }
+
+		public int Height { get; }
+
+		/// <summary>Red, green, blue and alpha a texel, each <c>byte &amp; 0xf0</c>, the surface's row 0 first.</summary>
+		internal byte[] Texels { get; }
+
+		private PathTexture( int width, int height, byte[] texels )
+		{
+			Width = width;
+			Height = height;
+			Texels = texels;
+		}
+
+		/// <param name="rgba">The file's texels as <see cref="TextureFile"/> decodes them, its row 0 first.</param>
+		public static PathTexture FromRgba( byte[] rgba, int width, int height )
+		{
+			var texels = new byte[width * height * 4];
+
+			for ( var row = 0; row < height; ++row )
+				for ( var i = 0; i < width * 4; ++i )
+					texels[(row * width * 4) + i] = (byte)(rgba[((height - 1 - row) * width * 4) + i] & 0xf0);
+
+			return new PathTexture( width, height, texels );
+		}
+	}
+
+	/// <summary>
+	/// What <c>FUN_0056f090</c> hands the tile maker for a path cell (word <c>0x0080</c>): the cell's own texture, and the
+	/// word whose mirror and turn the last pass reads.
+	/// </summary>
+	public readonly record struct Overlay( PathTexture Texture, ushort Word );
+
+	/// <summary>
 	/// The tile of box-relative cell (<paramref name="x"/>, <paramref name="y"/>): <see cref="TileSize"/> squared
 	/// pixels of red, green and blue, row 0 first, as <c>FUN_00572440</c> leaves it in the surface. Row k lies
-	/// toward the cell's y + 1 edge as k grows, and column j toward x + 1.
+	/// toward the cell's y + 1 edge as k grows, and column j toward x + 1. With an <paramref name="overlay"/> the
+	/// cell's path is laid over it by the function's last pass (<see cref="LayOver"/>).
 	/// </summary>
-	public byte[] Tile( int x, int y )
+	public byte[] Tile( int x, int y, Overlay? overlay = null )
 	{
 		var n = TileSize;
 		var tile = new byte[n * n * 3];
 		var r = Rows - y - 1;
 
 		// The map is read flat, as the original reads it, so the box's last column (95) takes the next row's first.
+		// A grey tile returns before the path is laid over (0x0055f874).
 		if ( (Sample( (4 * r) + 1, (4 * x) + 1, 0 ) & Sample( (4 * r) + 1, (4 * x) + 2, 0 )
 			& Sample( (4 * r) + 2, (4 * x) + 1, 0 ) & Sample( (4 * r) + 2, (4 * x) + 2, 0 )) != 0xff )
 		{
@@ -133,7 +175,71 @@ public sealed class ProceduralGround
 			}
 		}
 
+		return overlay is { } path ? LayOver( tile, path ) : tile;
+	}
+
+	/// <summary>
+	/// <c>FUN_0055f780</c>'s last pass (<c>0x00560926</c> on): each pixel of the tile, in order, is the scratch's pixel
+	/// the word's turn picks (<see cref="Turn"/>) with the path's texel at row <c>k x (h / N)</c> and column
+	/// <c>j x (w / N)</c> laid over by its alpha, <c>t + ((p - t) x a &gt;&gt; 8)</c> a channel. The alpha is four
+	/// bits, so the path covers at most 240 of 256.
+	/// </summary>
+	private byte[] LayOver( byte[] scratch, Overlay overlay )
+	{
+		var n = TileSize;
+		var texture = overlay.Texture;
+		var across = texture.Width / n;
+		var down = texture.Height / n;
+		var (start, pixelStep, rowStep) = Turn( overlay.Word, n );
+		var tile = new byte[n * n * 3];
+
+		for ( var k = 0; k < n; ++k )
+		{
+			for ( var j = 0; j < n; ++j )
+			{
+				var from = (start + (k * rowStep) + (j * pixelStep)) * 3;
+				var texel = ((k * down * texture.Width) + (j * across)) * 4;
+				var alpha = texture.Texels[texel + 3];
+
+				for ( var c = 0; c < 3; ++c )
+					tile[(((k * n) + j) * 3) + c] = (byte)Lerp( scratch[from + c], texture.Texels[texel + c], alpha );
+			}
+		}
+
 		return tile;
+	}
+
+	/// <summary>
+	/// Where the last pass starts reading the scratch, and its step along a row and down one, in pixels: by the word's
+	/// mirror <c>0x40</c>, then the first of <c>0x08</c>, <c>0x10</c>, <c>0x20</c> set (the eight cases at the pass's head):
+	/// the scratch as it is, turned three ways, and the four reflections. The path is read unturned.
+	/// </summary>
+	internal static (int Start, int PixelStep, int RowStep) Turn( ushort word, int n )
+	{
+		if ( (word & 0x40) == 0 )
+		{
+			if ( (word & 0x08) != 0 )
+				return ((n * n) - n, -n, 1);
+
+			if ( (word & 0x10) != 0 )
+				return ((n * n) - 1, -1, -n);
+
+			if ( (word & 0x20) != 0 )
+				return (n - 1, n, -1);
+
+			return (0, 1, n);
+		}
+
+		if ( (word & 0x08) != 0 )
+			return ((n * n) - n, 1, -n);
+
+		if ( (word & 0x10) != 0 )
+			return ((n * n) - 1, -n, -1);
+
+		if ( (word & 0x20) != 0 )
+			return (n - 1, -1, n);
+
+		return (0, n, 1);
 	}
 
 	/// <summary>2 where a span's sixteen are all 255, 0 where all nought, 1 where mixed.</summary>

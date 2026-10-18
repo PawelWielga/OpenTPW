@@ -10,7 +10,8 @@ namespace OpenTPW;
 /// them: <c>jgr_bas1..6</c> for the jungle and fantasy, <c>hrk_bas1..6</c> for hallow,
 /// <c>sfl_bas1..6</c> for space. Index 0 is the exception and is not a ground texture at all - it
 /// covers the cells the river and the park's fixed approach run over, which the scenery draws. The
-/// player's own paths are <b>not</b> among them and are drawn by <see cref="ParkPaths"/>.
+/// player's own paths are <b>not</b> among them: inside the procedural ground's box each is laid over its cell's tile
+/// here, as the original's compositor lays it, and elsewhere <see cref="ParkPaths"/> draws it.
 /// </para>
 ///
 /// <para>
@@ -72,6 +73,14 @@ public sealed class ParkGround : ModelEntity
 	private readonly ParkBalance? _balance;
 
 	private readonly int _tileSize;
+
+	/// <summary>The theme's texture table, read once, for the path tiles laid over the ground's tiles.</summary>
+	private TextureTableFile? _pathTable;
+
+	private bool _pathTableRead;
+
+	/// <summary>Each path tile's texture as the compositor reads it, by tile index, null where it would not read.</summary>
+	private readonly Dictionary<int, ProceduralGround.PathTexture?> _pathTextures = new();
 
 	/// <param name="world">
 	/// The park's own save, or null where the theme ships none. It is asked one question only: which
@@ -169,8 +178,8 @@ public sealed class ParkGround : ModelEntity
 	/// <b>The player's own paths are NOT among these.</b>
 	/// Measured against the save: all 82 of Lost Kingdom's path and queue cells carry a real ground
 	/// index - mostly 27, <c>jgr_bas1</c> - and not one is 0, while every one of the 66 cells the save
-	/// marks as the fixed approach is 0. So a built path is ordinary drawn ground here, and the cells it
-	/// covers are left out separately, by asking the save rather than the model - see
+	/// marks as the fixed approach is 0. So a built path is ordinary drawn ground here, and which surface
+	/// draws its cell is decided by asking the save rather than the model - see <see cref="LaysPath"/> and
 	/// <see cref="ParkPaths"/>.
 	/// </para>
 	/// </summary>
@@ -218,9 +227,21 @@ public sealed class ParkGround : ModelEntity
 
 		var field = Heightfield;
 
-		// Made once: without a path laid over it (PROCEDURAL_PATH_OVERLAY) a tile is the file's alone and never changes.
+		// Made once, then laid again where the path over a tile has changed since (FUN_0056f090 under 0x0100).
 		if ( _tileSize > 0 && _tiles == null )
-			_tiles = GroundTiles.Make( _themeName, _balance, field, _tileSize );
+		{
+			_tiles = GroundTiles.Make( _themeName, _balance, field, _tileSize, ( x, y ) => PathOver( world, x, y ) );
+		}
+		else if ( _tiles != null )
+		{
+			var laid = _tiles.Remake( ( x, y ) => PathOver( world, x, y ), out var replaced );
+
+			// The old model and its material went first (Rebuild), so nothing draws with the old texture now.
+			replaced?.Delete();
+
+			if ( laid > 0 )
+				Log.Info( $"{_themeName}: {laid} ground tiles laid again, their path changed" );
+		}
 
 		if ( _halfLight == null && world != null && _lighting )
 		{
@@ -331,22 +352,17 @@ public sealed class ParkGround : ModelEntity
 					// disagree about who owns a cell.
 					var cell = ParkState.CellFor( world, x, y );
 
-					if ( ParkPaths.IsPath( cell ) || ParkQueues.IsQueue( cell ) || ParkObjects.CoversGround( cell ) )
-					{
-						// The original lays a path cell's own texture over its tile by its alpha, the tile's last pass
-						// (docs/exe/park-engine.md, "The procedural ground"); ParkPaths draws the path alone.
-						if ( _tiles?.Covers( x, y ) == true && ParkPaths.IsPath( cell ) )
-							Unimplemented.Report( "PROCEDURAL_PATH_OVERLAY" );
-
+					// Inside the box the path is laid over the cell's tile, which is drawn here; outside it ParkPaths
+					// draws the path alone, as the terrain pass draws the cell's own texture there.
+					if ( (ParkPaths.IsPath( cell ) && !LaysPath( x, y )) || ParkQueues.IsQueue( cell ) || ParkObjects.CoversGround( cell ) )
 						continue;
-					}
 				}
 
 				var slot = Math.Clamp( indices.IndexOf( texture ), 0, textures.Length - 1 );
 
 				// Which way round this cell's art goes - the low half of the same word the texture
-				// index came from. A composited tile is turned the same way (0x0056fa0b).
-				var uvs = CellUvs( DrawnWord( (ushort)field.Cells[(y * field.CellsX) + x], _tileSize > 0 ) );
+				// index came from, as a path writes it on a path cell. A composited tile is turned the same way (0x0056fa0b).
+				var uvs = CellUvs( DrawnWord( WordOf( world, field, x, y ), _tileSize > 0 ) );
 
 				// Inside the box the cell draws its composited tile in place of its own texture (FUN_0056f380).
 				var tile = _tiles?.Covers( x, y ) == true;
@@ -395,6 +411,75 @@ public sealed class ParkGround : ModelEntity
 
 		Log.Info( $"{_themeName}: ground {element / 6} cells drawn, {tiled} of them with a composited tile, {halfLit} at half light, " +
 			$"{field.CellCount - (element / 6)} left to the scenery, to the paths and to what is built on them" );
+	}
+
+	/// <summary>Whether a path on cell (x, y) is laid over the cell's composited tile, which the ground then draws.</summary>
+	public bool LaysPath( int x, int y ) => _tiles?.Covers( x, y ) == true;
+
+	/// <summary>A cell's word as the running park holds it: the file's, or on a path cell what the path wrote (<see cref="PathWord"/>).</summary>
+	private static ushort WordOf( IParkInitialState? world, HeightfieldFile field, int x, int y )
+	{
+		var word = (ushort)field.Cells[(y * field.CellsX) + x];
+
+		if ( world == null )
+			return word;
+
+		var cell = ParkState.CellFor( world, x, y );
+		return ParkPaths.IsPath( cell ) ? PathWord( word, cell.TileAngle ) : word;
+	}
+
+	/// <summary>
+	/// The word <c>FUN_0046df50</c> writes on a cell a path tile is laid on: its mirror, turn and <c>0x0001</c> cleared,
+	/// <c>0x0180</c> set (a path cell, its tile stale), then the angle's turn, 90 <c>0x20</c>, 180 <c>0x10</c>, 270
+	/// <c>0x08</c>, as the running original holds all 78 of the stock park's.
+	/// </summary>
+	internal static ushort PathWord( ushort word, int angle )
+		=> (ushort)((word & 0xff86) | 0x0180 | angle switch { 90 => 0x20, 180 => 0x10, 270 => 0x08, _ => 0 });
+
+	/// <summary>The path laid over cell (x, y)'s tile: its tile's texture and the word, or null where it is no path cell.</summary>
+	private ProceduralGround.Overlay? PathOver( IParkInitialState? world, int x, int y )
+	{
+		if ( world == null )
+			return null;
+
+		var cell = ParkState.CellFor( world, x, y );
+
+		if ( !ParkPaths.IsPath( cell ) || PathTexture( cell.TileIndex ) is not { } texture )
+			return null;
+
+		return new ProceduralGround.Overlay( texture, WordOf( world, Heightfield, x, y ) );
+	}
+
+	/// <summary>A path tile's texture as the compositor reads it, read once.</summary>
+	private ProceduralGround.PathTexture? PathTexture( int index )
+	{
+		if ( _pathTextures.TryGetValue( index, out var known ) )
+			return known;
+
+		if ( !_pathTableRead )
+		{
+			_pathTable = ParkPaths.ReadTable( _themeName );
+			_pathTableRead = true;
+		}
+
+		ProceduralGround.PathTexture? texture = null;
+
+		if ( ParkPaths.TileFile( _themeName, _pathTable, index ) is { } file )
+		{
+			try
+			{
+				using var stream = FileSystem.OpenRead( file );
+				var data = new TextureFile( stream ).Data;
+				texture = ProceduralGround.PathTexture.FromRgba( data.Data, data.Width, data.Height );
+			}
+			catch ( Exception e )
+			{
+				Log.Warning( $"{_themeName}: path tile {index} would not read, so nothing is laid over its tiles - {e.Message}" );
+			}
+		}
+
+		_pathTextures[index] = texture;
+		return texture;
 	}
 
 	/// <summary>

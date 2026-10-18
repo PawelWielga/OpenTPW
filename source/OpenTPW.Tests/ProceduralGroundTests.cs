@@ -184,7 +184,7 @@ public class ProceduralGroundTests
 	public void TheTilesAreLaidBottomUp()
 	{
 		var ground = Ground( "jungle" );
-		var pixels = GroundTiles.Lay( ground, 4, 5, out _ );
+		var pixels = GroundTiles.Lay( ground, 4, 5, new ProceduralGround.Overlay?[20], out _ );
 		var tile = ground.Tile( 2, 3 );
 
 		foreach ( var (k, row) in new[] { (0, 31), (15, 16) } )
@@ -196,5 +196,155 @@ public class ProceduralGroundTests
 				CollectionAssert.AreEqual( tile[from..(from + 3)], pixels[at..(at + 3)], $"row {k}, column {j}" );
 			}
 		}
+	}
+
+	/// <summary>A jungle path tile's texture as the compositor reads it, through the repo's own decode.</summary>
+	private static ProceduralGround.PathTexture PathTexture( string name )
+	{
+		using var stream = GameData.Required().OpenRead( $"levels/jungle/terrain/pathtex/{name}.wct" );
+		var data = new TextureFile( stream ).Data;
+		return ProceduralGround.PathTexture.FromRgba( data.Data, data.Width, data.Height );
+	}
+
+	/// <summary>
+	/// Every one of the shipped park's 78 path cells, its own tile (by the <c>.tct</c>'s PathTex) laid over its ground
+	/// by the word the path writes, against the original's function given the same texels (<c>oracle.py</c>: the
+	/// surface's A4R4G4B4, measured in the running original). Without the path the same 78 hash
+	/// <c>1724f766...</c>.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the alpha taken as eight bits, the texture read top down or at every texel rather than
+	/// every w / N, the path turned where the ground should be, or the angle's turn bits swapped, each changes the
+	/// hash.</remarks>
+	[TestMethod]
+	public void EveryPathTileOfTheShippedParkIsTheOriginals()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+
+		var world = new ParkWorld( new SaveReader( new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) ) ).ReadFile() );
+		using var md2 = data.OpenRead( "levels/jungle/terrain/base.MD2" );
+		var field = new HeightfieldFile( md2 );
+		var table = ParkPaths.ReadTable( "jungle" );
+		var ground = Ground( "jungle" );
+		using var all = new MemoryStream();
+		var paths = 0;
+
+		for ( var y = 0; y < 85; ++y )
+		{
+			for ( var x = 0; x < 96; ++x )
+			{
+				var cell = world.CellAt( x, y );
+
+				if ( !ParkPaths.IsPath( cell ) )
+					continue;
+
+				var file = ParkPaths.TileFile( "jungle", table, cell.TileIndex )!;
+				using var stream = data.OpenRead( file );
+				var texels = new TextureFile( stream ).Data;
+				var texture = ProceduralGround.PathTexture.FromRgba( texels.Data, texels.Width, texels.Height );
+				var word = ParkGround.PathWord( (ushort)field.Cells[(y * field.CellsX) + x], cell.TileAngle );
+
+				all.Write( ground.Tile( x, y, new ProceduralGround.Overlay( texture, word ) ) );
+				++paths;
+			}
+		}
+
+		Assert.AreEqual( 78, paths );
+		Assert.AreEqual( "d231594b1b4fd9cd97f7cfb90e92e6ab66c6f09f5a53e29e64adccce9bb4774e", Hash( all.ToArray() ) );
+	}
+
+	/// <summary>
+	/// Each of the eight cases at the last pass's head on one cell and one tile (jungle's (10, 10), whose ground tells
+	/// every turn and reflection apart, under <c>jpa_tju1</c>): the scratch read as it is, turned three ways, and
+	/// reflected four, the path unturned; with two turn bits the first of <c>0x08</c>, <c>0x10</c>, <c>0x20</c> wins.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> any case's start or either step changed fails its row; the turn bits read as one field
+	/// fails 0x98, 0xb0 or 0xf0.</remarks>
+	[TestMethod]
+	[DataRow( (ushort)0x80, "5c47848e3dd92809d4703b2c01f42e9d167ffe0a65ee251c1a55c8d55de93c8a" )]
+	[DataRow( (ushort)0x88, "e5bde34f54b4492745faaff320cfb3823790c53f79551777a280c403fe83db99" )]
+	[DataRow( (ushort)0x90, "0e6a2ec806c356fa20ddf028b0ad3549fb3d8b5038ffc93acfba48c7994d8b90" )]
+	[DataRow( (ushort)0xa0, "ee10b0f0ac30e2f4449b65930a8fd1397e9b1e7de2e88f96a1d5514451bb6d27" )]
+	[DataRow( (ushort)0xc0, "ef2076036f17678daa64e8978f9f66e030b610148dcd6c4e3ccb7b5d39fa24a5" )]
+	[DataRow( (ushort)0xc8, "0b1b3cdb70b63c63dde52dc5db57ba58a568bc5be360f082fa97d4027e0dad92" )]
+	[DataRow( (ushort)0xd0, "43b6de9ee68e78c411b80cf779c275bb81c42636b9889bd4777e7de35daa5dcd" )]
+	[DataRow( (ushort)0xe0, "5523bab82ead0fafd650c43ab47f46d29b6a277c641d4cd94128c2c5ba5d1329" )]
+	[DataRow( (ushort)0x98, "e5bde34f54b4492745faaff320cfb3823790c53f79551777a280c403fe83db99" )]
+	[DataRow( (ushort)0xb0, "0e6a2ec806c356fa20ddf028b0ad3549fb3d8b5038ffc93acfba48c7994d8b90" )]
+	[DataRow( (ushort)0xf0, "43b6de9ee68e78c411b80cf779c275bb81c42636b9889bd4777e7de35daa5dcd" )]
+	public void EachTurnOfTheLastPassIsTheOriginals( ushort word, string expected )
+		=> Assert.AreEqual( expected, Hash( Ground( "jungle" ).Tile( 10, 10, new ProceduralGround.Overlay( PathTexture( "jpa_tju1" ), word ) ) ) );
+
+	/// <summary>A grey tile returns before the last pass: (28, 0) with a path over it is still all grey.</summary>
+	[TestMethod]
+	public void NoPathIsLaidOverAGreyTile()
+		=> Assert.IsTrue( Ground( "jungle" ).Tile( 28, 0, new ProceduralGround.Overlay( PathTexture( "jpa_tju1" ), 0x80 ) )
+			.All( b => b == ProceduralGround.Grey ) );
+
+	/// <summary>
+	/// The word <c>FUN_0046df50</c> writes for a path tile: the diagonal kept, <c>0x0001</c>, the mirror and the turn
+	/// cleared, <c>0x0180</c> set, then 90 <c>0x20</c>, 180 <c>0x10</c>, 270 <c>0x08</c> - the running original's 78 path
+	/// cells read <c>0x82</c>, <c>0xa2</c>, <c>0x92</c> and <c>0x8a</c> once the compositor has cleared <c>0x0100</c>.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> 90 and 270 swapped fails the second and fourth; the mirror kept gives 0x1c2 for 0x42;
+	/// 0x0001 kept gives 0x193 for 0x7b.</remarks>
+	[TestMethod]
+	public void APathWritesItsWordAsTheOriginal()
+	{
+		Assert.AreEqual( (ushort)0x182, ParkGround.PathWord( 0x0002, 0 ) );
+		Assert.AreEqual( (ushort)0x1a2, ParkGround.PathWord( 0x0042, 90 ) );
+		Assert.AreEqual( (ushort)0x192, ParkGround.PathWord( 0x007b, 180 ) );
+		Assert.AreEqual( (ushort)0x18c, ParkGround.PathWord( 0x0004, 270 ) );
+		Assert.AreEqual( (ushort)0x582, ParkGround.PathWord( 0x0402, 45 ) );
+	}
+
+	/// <summary>
+	/// The texels as the original's surface holds them: the file's last row first, each channel's top four bits.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the rows kept top down puts 0x10 first; rounding to the nearest nibble gives 0xb0 for
+	/// 0xaf.</remarks>
+	[TestMethod]
+	public void APathTextureIsCutToFourBitsAndReadBottomUp()
+	{
+		var texture = ProceduralGround.PathTexture.FromRgba( [0x10, 0x20, 0x30, 0x40, 0xaf, 0x0f, 0xff, 0x88], 1, 2 );
+
+		CollectionAssert.AreEqual( new byte[] { 0xa0, 0x00, 0xf0, 0x80, 0x10, 0x20, 0x30, 0x40 }, texture.Texels );
+	}
+
+	/// <summary>
+	/// A tile is laid again only where its path laid over changes: in a box of 4 x 5 jungle tiles, a path put on (2, 3)
+	/// lays one tile, which is then the tile with the path; the same path again lays none; taken off, one, and the
+	/// pixels are the first lay's again.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the new overlay not kept lays one again on the second call; every tile laid again
+	/// gives 20; the tile made without its overlay leaves the pixels unchanged after the first.</remarks>
+	[TestMethod]
+	public void ATileIsLaidAgainOnlyWhereItsPathChanges()
+	{
+		var ground = Ground( "jungle" );
+		var overlays = new ProceduralGround.Overlay?[20];
+		var pixels = GroundTiles.Lay( ground, 4, 5, overlays, out _ );
+		var first = pixels.ToArray();
+		var path = new ProceduralGround.Overlay( PathTexture( "jpa_tju1" ), 0x88 );
+		Func<int, int, ProceduralGround.Overlay?> on = ( x, y ) => (x, y) == (2, 3) ? path : null;
+
+		Assert.AreEqual( 1, GroundTiles.Relay( ground, pixels, overlays, 4, 5, on ) );
+		var tile = ground.Tile( 2, 3, path );
+		CollectionAssert.AreNotEqual( ground.Tile( 2, 3 ), tile );
+
+		// Tile (2, 3)'s row k stands on the texture's row 80 - 1 - (48 + k), from column 32 (TheTilesAreLaidBottomUp).
+		for ( var k = 0; k < 16; ++k )
+		{
+			for ( var j = 0; j < 16; ++j )
+			{
+				var at = ((((31 - k) * 64) + 32 + j) * 4);
+				var from = ((k * 16) + j) * 3;
+				CollectionAssert.AreEqual( tile[from..(from + 3)], pixels[at..(at + 3)], $"row {k}, column {j}" );
+			}
+		}
+
+		Assert.AreEqual( 0, GroundTiles.Relay( ground, pixels, overlays, 4, 5, on ) );
+		Assert.AreEqual( 1, GroundTiles.Relay( ground, pixels, overlays, 4, 5, ( _, _ ) => null ) );
+		CollectionAssert.AreEqual( first, pixels );
 	}
 }

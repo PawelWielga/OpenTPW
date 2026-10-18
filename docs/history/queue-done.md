@@ -7643,6 +7643,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the tile on every ground cell at medium and high, unturned (`FUN_0046ded0(1)`), the ring as the original's. Camera A:
   each cell shows its own tile on 115 of 122 (the original 84), grass (37.0,66.2,21.3) against (32.8,65.9,16.5), brown
   17.5% against 17.0% (`q488/`, run4, orig/a); 24 of 24 bugs put back fail a test.
+- [x] **Q489. The procedural ground's path laid over.** Built: `ProceduralGround.LayOver` and `Turn` (`FUN_0055f780`'s
+  last pass, its eight cases), `PathTexture` (the 16-bit surface's A4R4G4B4, rows bottom up, measured live),
+  `ParkGround.PathWord` (`FUN_0046df50`) and `PathOver`, `GroundTiles.Remake`/`Relay` (a tile laid again where its path
+  changes, as under `0x0100`); `ParkPaths` draws only the path cells outside the box. All 78 shipped path tiles equal
+  the emulator's; 136 caught from the original equal it too; camera P: path cells 0.675 against the original's frame,
+  main 0.565 (`q489/`, run2, orig/a, orig/b); 23 of 23 bugs put back fail a test. The `0x13` decode's off-by-one is
+  noted under Q460.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
