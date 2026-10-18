@@ -56,6 +56,11 @@ internal class UiControl
 	/// <summary>Whether text too wide for its rectangle carries on onto further lines.</summary>
 	public bool TextWraps { get; init; }
 
+	/// <summary>The lines its text was last drawn in, and the width they were wrapped at in the font's pixels (0 for none).</summary>
+	internal IReadOnlyList<string> TextLines => _text.Lines;
+
+	internal int TextWrapWidth => _text.WrapWidth;
+
 	/// <summary>Stretched over the whole window instead of keeping the virtual screen's shape - the dimmer behind a dialog.</summary>
 	public bool FillsWindow { get; init; }
 

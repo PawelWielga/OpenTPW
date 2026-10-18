@@ -1655,6 +1655,21 @@ public static class DebugConsole
 						: pointerStack?.ModalUp == true ? "no control, and a modal window takes the press" : "the view") );
 				break;
 
+			// The help bar as it was last drawn: its text's lines, the width they were wrapped at in the font's pixels and
+			// where the block stands on the strip.
+			case "helpbar":
+				var barStack = Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault();
+
+				if ( barStack is not { } stack || stack.HelpBarText.Length == 0 )
+				{
+					Reply( "helpbar: hidden" );
+					break;
+				}
+
+				Reply( $"helpbar: wrap {stack.HelpBar.WrapWidth}, down {stack.HelpBar.Down}, lines {stack.HelpBar.Lines.Count}: "
+					+ string.Join( " | ", stack.HelpBar.Lines.Select( line => $"\"{line}\"" ) ) );
+				break;
+
 			// Backspace, as the key reaches it - the same body. It acts on the pointer's cell, so pair it
 			// with `hover` for the idle delete.
 			case "backspace":

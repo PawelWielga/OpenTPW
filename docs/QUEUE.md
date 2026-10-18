@@ -53,17 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q484. The help bar wraps a long row inside its strip.** From the review of Q471 (`handoff/review3/VERIFY-7.md`,
-  finding 3; seen in frames): `UI/HelpBar.cs` never sets `TextWraps`, so a long row (459 "Park gates - ...", 460 "Ticket
-  booth - ...") runs past both ends of the dark `f_helpbg` strip (`q471/run2/2-gate.png`: text at x 388 to 893 over a
-  strip at about 430 to 850), where the original sets it on two lines inside its bar (`q471/orig/b-2-gate.png`). Decode
-  the bar's lettering first (its width, line height and where it breaks), then build it. Confirm by a frame pair over
-  the gate in both games.
-  From Q495: a two-line row (538, 539, the buy screen's land rows) stands over the top of our one-line strip, where
-  the original's strip holds both lines (`q495/side-by-side.png`, rows 3 and 4); `FUN_004924b0` sets a label flag by
-  whether the text holds a line break (`FUN_0065c428( 1, ... )`).
-  From Q478: the object row 550 ("Belly Bounce: Left-click to view/edit this item's details. Hold CTRL and click to buy
-  another") is set on two lines in the original (`q478/orig/b-3-ride.png`) and runs past ours on one (`q478/run4/3-ride.png`).
 - [ ] **Q485. First person's fog.** From Q481 (`park-engine.md`, "The park view's colours"): the original fogs first
   person and a ride's view (render-word `0x2000`, `Game_StateMachine`'s `XOR 0x2080` at `0x0054fae2`), linearly by depth
   from `GraphicalOptions.FIRSTPERSONVIEWDISTANCE`'s start to its end (100 to 110 at medium, `FUN_0044d8f0`) in the

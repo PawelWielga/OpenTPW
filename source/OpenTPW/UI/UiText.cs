@@ -26,6 +26,7 @@ internal sealed class UiText
 	private int _width;
 	private int _height;
 	private Layout _built;
+	private List<string> _lines = [];
 
 	private readonly record struct Layout( string Text, int Font, int Set, UiColour Colour, bool Shadow, int WrapWidth, TextAlign Across );
 
@@ -60,6 +61,11 @@ internal sealed class UiText
 			Graphics.Quad( new Rectangle( MathF.Round( x ), MathF.Round( Screen.Height - y - height ), width, height ), Material.UI );
 	}
 
+	/// <summary>The lines the text was last laid out in, and the width in the font's pixels they were wrapped at (0 for none).</summary>
+	public IReadOnlyList<string> Lines => _lines;
+
+	public int WrapWidth => _built.WrapWidth;
+
 	/// <summary>Releases the texture. Drawing again lays the text out afresh.</summary>
 	public void Delete()
 	{
@@ -78,7 +84,7 @@ internal sealed class UiText
 	{
 		_built = layout;
 
-		var lines = Lines( font, layout.Text, layout.WrapWidth );
+		var lines = _lines = Wrap( font, layout.Text, layout.WrapWidth );
 		var margin = layout.Shadow ? ShadowOffset : 0;
 
 		var textWidth = Math.Max( 1, lines.Max( line => font.Measure( line ) ) );
@@ -115,41 +121,68 @@ internal sealed class UiText
 		_height = height;
 	}
 
-	/// <summary>The text's lines: split where it says, and where a line is wider than <paramref name="wrapWidth"/> if that is not 0.</summary>
-	private static List<string> Lines( BitmapFont font, string text, int wrapWidth )
+	/// <summary>
+	/// The text's lines: split where it says, and where a line is wider than <paramref name="wrapWidth"/> if that is not 0.
+	/// The break is the renderer's word-wrapper's (0x006aec80): the pen's advances are added a character at a time, and
+	/// the character that takes the sum past the width ends the line before the last space or tab at or after the line's
+	/// second character, or before itself where there is none, a lone character keeping its line. Spaces and tabs before
+	/// the break are left off the line and those after it off the next.
+	/// </summary>
+	internal static List<string> Wrap( BitmapFont font, string text, int wrapWidth )
 	{
 		var lines = new List<string>();
 
 		foreach ( var paragraph in text.Replace( "\r\n", "\n" ).Split( '\n' ) )
 		{
-			if ( wrapWidth <= 0 || font.Measure( paragraph ) <= wrapWidth )
+			if ( wrapWidth <= 0 )
 			{
 				lines.Add( paragraph );
 				continue;
 			}
 
-			var line = "";
+			var start = 0;
+			var sum = 0;
 
-			foreach ( var word in paragraph.Split( ' ' ) )
+			for ( int i = 0; i < paragraph.Length; ++i )
 			{
-				var longer = line.Length == 0 ? word : $"{line} {word}";
+				var advance = font.Measure( paragraph.AsSpan( i, 1 ) );
 
-				if ( line.Length > 0 && font.Measure( longer ) > wrapWidth )
+				// A line's first character stays on it however wide: the original gives it a line of its own, and the next
+				// character, overflowing at once, then cuts before itself.
+				if ( sum + advance <= wrapWidth || i == start )
 				{
-					lines.Add( line );
-					line = word;
+					sum += advance;
+					continue;
 				}
-				else
-				{
-					line = longer;
-				}
+
+				var at = i;
+
+				while ( at != start && !IsSpace( paragraph[at] ) )
+					--at;
+
+				var end = at == start ? i : at;
+				var next = end;
+
+				while ( at != start && end - 1 != start && IsSpace( paragraph[end - 1] ) )
+					--end;
+
+				while ( next < paragraph.Length && IsSpace( paragraph[next] ) )
+					++next;
+
+				lines.Add( paragraph[start..end] );
+				start = next;
+				sum = 0;
+				i = next - 1;
 			}
 
-			lines.Add( line );
+			if ( start < paragraph.Length || paragraph.Length == 0 )
+				lines.Add( paragraph[start..] );
 		}
 
 		return lines;
 	}
+
+	private static bool IsSpace( char character ) => character is ' ' or '\t';
 }
 
 internal enum TextAlign

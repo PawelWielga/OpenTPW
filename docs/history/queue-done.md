@@ -8040,6 +8040,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   far end 1.5 and 1.3 px from the original's on the nearest pose; 18 of 18 mutations killed (`q480/PREDICTION.txt`:
   R1, R2b's red and green, O1 to O6, B1 held; R2, R2b's blue, R2c, O4's far end missed, recorded;
   `q480/side-by-side.png`). Leftovers: Q520, Q521.
+- [x] **Q484. The help bar wraps a long row inside its strip.** Done 2026-10-18: the label's wrap (`0x0065c4b9`, skin `+0xda`) and the renderer's word-wrapper (`0x006aec80`) decoded (`hud.md`, "The help bar's lettering"), built in `HelpBar` and `UiText.Wrap`; 459 and 550 break as the original's at 800 x 600, 538 at the strip's top (`q484/side-by-side.png`, `q484/run2` 4 of 4, the console's `helpbar`); 7 tests, mutations 8 of 8. From the review of Q471 (`handoff/review3/VERIFY-7.md`,
+  finding 3; seen in frames): `UI/HelpBar.cs` never sets `TextWraps`, so a long row (459 "Park gates - ...", 460 "Ticket
+  booth - ...") runs past both ends of the dark `f_helpbg` strip (`q471/run2/2-gate.png`: text at x 388 to 893 over a
+  strip at about 430 to 850), where the original sets it on two lines inside its bar (`q471/orig/b-2-gate.png`). Decode
+  the bar's lettering first (its width, line height and where it breaks), then build it. Confirm by a frame pair over
+  the gate in both games.
+  From Q495: a two-line row (538, 539, the buy screen's land rows) stands over the top of our one-line strip, where
+  the original's strip holds both lines (`q495/side-by-side.png`, rows 3 and 4); `FUN_004924b0` sets a label flag by
+  whether the text holds a line break (`FUN_0065c428( 1, ... )`).
+  From Q478: the object row 550 ("Belly Bounce: Left-click to view/edit this item's details. Hold CTRL and click to buy
+  another") is set on two lines in the original (`q478/orig/b-3-ride.png`) and runs past ours on one (`q478/run4/3-ride.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

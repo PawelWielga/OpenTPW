@@ -151,6 +151,9 @@ internal sealed class WindowStack : Panel
 	/// <summary>What the help bar says after the last update.</summary>
 	internal string HelpBarText => _helpBar.Text;
 
+	/// <summary>The help bar itself, for the console's look at how it last set its text.</summary>
+	internal HelpBar HelpBar => _helpBar;
+
 	/// <summary>
 	/// What the pointer was over at the last update, for the bar: a control, <see cref="Background"/> (a modal window, a
 	/// park screen's body or the cover), a window's <see cref="Layer"/>, or null for the scene's own view.

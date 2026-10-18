@@ -1403,6 +1403,51 @@ release is not decoded. Measured here
 (`q473/run1`, 10 of 10, and main's build `q473/ctl1`, which kept 441 over the hoarding and emptied the bar under the
 open screen).
 
+### The help bar's lettering (Q484)
+
+`HelpBar_Build` (`0x00492180`) builds the bar's label
+(`FUN_0065dd7b( 1, 1, 0xfff355e4, 0x23e, 0x5f0 - h, 0x5c2, 0x5f0 )`: x 574 to 1474, its bottom at 1520, `h` the help font's line height times `0xc00` over the screen height, plus 10, so
+two lines and ten units) with a `LabelSkin`, then `UI_SetTextAlign( 1, 1 )` (`0x0065c428`) and `UI_SetTextWrap( 1, 1 )`
+(`0x0065c4b9`), font slot 7, colour 255, 255, 255, 255 and the mesh `f_helpbg`. `UI_SetTextWrap` posts `0x3000` with its
+two bytes at the message's `+6` and `+7`; the skin's `FUN_0048fc40` stores them at `+0xda` (`0x1000`) and `+0xdb`
+(`0x2000`). `LabelSkin_Draw` (`0x0048f862`) reads `+0xda`: nought, and the box it hands the renderer is `0x4000` pixels
+wide (centred on the label for the centre code), so nothing wraps; one, and the box is the label's own width `+0x3c` in
+the screen's pixels, less the left inset `+0xde` (nought here; the constructor writes it). `LabelSkin_Construct` writes
+`+0xda` nought, so a label wraps only where its builder says: 26 calls of `UI_SetTextWrap` in 19 functions do (the message
+box's `MessageBox_Open` and `NewPlayerDialog_Open` among them; which of them pass 1 is not read). So **the bar wraps at
+its own width**.
+
+Both posters set the down byte by the text: `HelpBar_PostText( text )` (`0x004924b0`) and `HelpBar_PostControlRow`
+(`0x00492070`, the control's row) call `WideStrChr( text, 10 )` (`0x0067c2f0`), and `UI_SetTextAlign( 1, found == 0 )`:
+**a text with a line break of its own stands at the top** ( 1, 0 ), any other in the middle ( 1, 1 ), centred across
+either way. The block's height is the line count times the line height ("How a list's cells are aligned", below), so a
+wrapped two-line row in the middle sits about five units under the strip's top, and a row with a break at the top of it.
+
+**Where a line breaks** is the renderer's word-wrapper `TextLayout_WrapParagraph` (`0x006aec80`), over the glyph records
+`TextLayout_LayGlyphs` (`0x006ae930`) lays out (16 bytes each: flags `+4`, the pen's advance `+8`).
+`TextLayout_CharFlags` (`0x006aeab0`) gives the flags by the character: space and tab `0x12` (`0x10` a place to break
+before, `2` blank), line feed `4`, carriage return `0xc`, anything else 1. `TextLayout_PlaceBlock` (`0x006aeb10`) ends a
+paragraph after each glyph flagged 4 (with the next too where it is flagged 4 and 8) and wraps each one:
+
+1. The advances are added from the line's start, the flag-4 glyphs counting nothing. The glyph that takes the sum past
+   the box width `+0xa8` (greater than it, not equal) ends the line.
+2. If it is the line's first glyph, the line is that glyph alone. Otherwise the wrapper steps back from it, to the
+   line's second glyph at the furthest, for one flagged `0x10`: found, the line ends before it and the blank glyphs just
+   before it are left off the line, though never its first (`0x006aecff`); none, the line ends before the overflowing
+   glyph, cutting the word.
+3. The next line starts at the break and skips blank glyphs (`0x006aed1a`); the line is added at `0x006aed2d`.
+
+Each line is added by `FUN_006add90`, which keeps the widest in `+0x80`. Measured in the original at 800 x 600
+(`q484/orig/`, `PREDICTION.txt`; the stock park off-screen): over the gate 459 on two lines, broken before "ticket"
+(`a-1-gate.png`); over the Belly Bounce 550 broken before "CTRL" (`a-3-ride.png`); over the path one line in the middle
+(`a-2-path.png`); the land rows' own two lines stand at the strip's top (`q495/orig/a-O10-buyland.png`).
+
+**OpenTPW** (`HelpBar`: `TextWraps`, `TextDown` by a line feed; `UiText.Wrap`, the one wrapper every wrapping control
+uses): the same breaks, at the strip's width in the font's pixels (`(int)` of the drawn width over the font scale, 351
+at the 1280 x 720 window's set; the original's `+0x3c` is not read for its rounding). The console's `helpbar` prints the
+lines as last drawn. Measured (`q484/run2`, 4 of 4; `side-by-side.png`): 459 and 550 broken as the original's, every
+letter inside the strip, 538 at its top; main's build (`q484/ctl1`) set both long rows on one line past both ends.
+
 ### The buy screen's help rows (Q495)
 
 The buy screen's handler `FUN_004ac270` ends its frame message `0x1e` (`0x004ac465`) with `FUN_004abc80( &[0x007cc1e8] )`
@@ -1455,8 +1500,8 @@ is not looked into.
 **OpenTPW** (`ParkBuyScreen.HelpPost`, asked by `WindowStack` after the control under the pointer has posted, the
 `UiWindow.HelpPost` hook): the same states and rows, the kind by `ParkBuyScreen.TypeNameOf`, the price the item file's
 as the list's (the record's `+0x04` agrees in all 50 shipped records), the tickets `Players.TicketsUnspent`. Its list
-picks no first row as it fills (Q232), so nothing is posted before the pointer has selected a row. A two-line row
-stands over the top of our one-line strip, where the original's strip holds both lines (Q484). Measured
+picks no first row as it fills (Q232), so nothing is posted before the pointer has selected a row. A row's own
+two lines stand at the top of the strip, as the original's (Q484, above). Measured
 (`q495/run1`, 15 of 15, `side-by-side.png`): every row's words as the original's frames.
 
 ### The online visit's help rows (Q496)

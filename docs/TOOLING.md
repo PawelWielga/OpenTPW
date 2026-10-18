@@ -1169,6 +1169,12 @@ GH=766` there, or the pointer is off):
   `0x20000` (`memhold.py`, under the held clock), which also empties the light list `[0x008c1818]`; ours with
   `shadows 0`. Then `lib/shadowdiff.py` on the pair, `--near` on the person's place. The original's frame is 16-bit: a
   dark channel's ratio there is pulled down by the level kept (blue at 4 to 7 of 31 read 0.543), so judge on red and green.
+- **The help bar's lettering in both games** (Q484, `q484/confirm.py`, `q484/orig/run.sh`): ours prints the lines as
+  last drawn with the console's `helpbar` ("wrap 351, down Centre, lines 2: ..."; the wrap width is in the font's
+  pixels); the original's lines are read off its frames only, at its standing 800 x 600 (font set 2, the set ours draws
+  at 1280 x 720, so the breaks compare). Over the gate (475,155) 110 180 and the Belly Bounce (480,265) 150 180 both
+  rows wrap; a land row on the buy screen holds a break of its own. Measure the white ink inside the strip's band, and
+  keep the gadget out of the band (its white triangle sits at x ~420 on our frame).
 
 ## The original under Proton
 

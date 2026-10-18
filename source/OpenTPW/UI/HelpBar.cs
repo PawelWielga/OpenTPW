@@ -8,8 +8,10 @@ namespace OpenTPW.UI;
 /// 0x00492180 builds it: from x 574 to 1474 on the virtual screen with its bottom at 1520, and as
 /// tall as twice the help font's line at the game's resolution plus ten, worked out as
 /// <c>height * 0xc00 / screen height + 10</c>. It wears f_helpbg.md2, a single quad of translucent
-/// black, with the text centred on it in white in font 7. Each control carries the row of
-/// UIHELPTEXT.str it shows in its layout data (op 0x11), and a control with none shows nothing.
+/// black, with the text centred on it in white in font 7, wrapped at the strip's width and standing in the
+/// middle, or at the top where the text holds a line break of its own (docs/exe/hud.md, "The help bar's
+/// lettering"). Each control carries the row of UIHELPTEXT.str it shows in its layout data (op 0x11), and a
+/// control with none shows nothing.
 /// </para>
 /// <para>
 /// It shows only while the options screen's Popup help is on (<see cref="GameOptions.PopupHelp"/>).
@@ -33,6 +35,7 @@ internal sealed class HelpBar
 		Rect = new UiRect( Left, Bottom - 40, Right, Bottom ),
 		Mesh = UiMesh.Get( "f_helpbg" ),
 		Font = HelpFont,
+		TextWraps = true,
 		Visible = false
 	};
 
@@ -56,6 +59,7 @@ internal sealed class HelpBar
 			return;
 
 		_bar.Text = text;
+		_bar.TextDown = text.Contains( '\n' ) ? TextAlign.Start : TextAlign.Centre;
 
 		var lineHeight = UiFonts.Get( HelpFont )?.LineHeight ?? 13;
 		var height = (lineHeight * 0xc00 / UiFonts.SetScreenHeight) + 10;
@@ -64,6 +68,13 @@ internal sealed class HelpBar
 
 	/// <summary>What the strip says now, or nothing while it is hidden.</summary>
 	public string Text => _bar.Visible ? _bar.Text ?? "" : "";
+
+	/// <summary>The lines the strip last set its text in, the width they were wrapped at in the font's pixels, and where they stand.</summary>
+	public IReadOnlyList<string> Lines => _bar.TextLines;
+
+	public int WrapWidth => _bar.TextWrapWidth;
+
+	public TextAlign Down => _bar.TextDown;
 
 	public void Draw() => _bar.Draw();
 

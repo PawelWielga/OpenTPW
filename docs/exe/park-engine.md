@@ -4351,8 +4351,8 @@ thing 0, "Left-click to edit this line" and `c_queue` (the reference install rea
 line; ours reads `English`'s "queue"); over the Belly Bounce (52,24) category 4 and "Belly Bounce: Left-click to
 view/edit this item's details. Hold CTRL and click to buy another" with the hand, its model lit; over the Drinks Shop
 (43,31) category 4, another thing, its row with the hand. Ours posted 444 with `c_queue` and 550 with each name and
-the hand, the ride again posting nothing; main's build (`q478/control1`) the empty bar and the arrow. The original
-sets the long row on two lines (Q484).
+the hand, the ride again posting nothing; main's build (`q478/control1`) the empty bar and the arrow. Both set the long row
+on two lines, broken before "CTRL" (Q484; `hud.md`, "The help bar's lettering").
 
 **The hover runs only on the park's view** (Q451). `Park_MouseMessageProc` runs `FUN_00486d90` on its timer
 (`0x00488582`) only while `[0x007c24fc]` is set. Message `0x10001`, the pointer coming onto the layer from a control,
