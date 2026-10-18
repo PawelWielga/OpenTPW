@@ -787,7 +787,8 @@ hands a right press or release (`param_3 != 0`) to the base proc on itself (`0x0
 goes nowhere. So in 2048x1536 units a right click leaves anywhere on `0 <= x < 2047, 0 <= y < 1535` but
 `1916 <= x < 2018, 1404 <= y < 1506`. With RMB cancel off, nowhere. Nothing passes a message to a parent: the queue
 pump hands each entry to its own control's `+0x114` (`0x00669a84`, `FUN_0065f697`). The management screens are built
-onto layer 0, which first person hides, and the help bar is disabled, so nothing else is under the pointer.
+onto layer 0, which first person hides, and the help bar has no control (below, "The help bar in first person"), so
+nothing else is under the pointer.
 
 **What else a right press does in first person.** `FUN_00488a00` hands every message, before the base proc, to
 `FUN_0042a760`, which sets `DAT_00790aac |= 4` on a right press and clears it on the release (`0x0042a8bd`,
@@ -1378,10 +1379,57 @@ orbit, in the camcorder's pick (mode vtable `0x6fead0`) and in first person (rou
 while the park's view stayed `0x4641ab0`, and 669,758 reads over a sweep of the pointer in first person found the state
 nought throughout. The game type read 2, Instant Action: `loadfile.sh` loads the file into the reference install's
 running game. **In the pick and in
-first person the bar is hidden** (shown 0, `b-A5-first-person-after.png`). Here the online visit is not built (Go
+first person the bar is hidden** (shown 0, `b-A5-first-person-after.png`); in the pick only until a ride has been under
+the pointer (below, "The help bar in first person"). Here the online visit is not built (Go
 Online is counted, Q242), so there is nothing of this to build in a Lost Kingdom park. Ours runs the park's hover in
 first person, its rows and the pick hand under the viewfinder (`q496/run2`, row 459 over the gate's stone,
-`side-by-side.png`): Q497.
+`side-by-side.png`): decoded below (Q497), built by Q498.
+
+### The help bar in first person (Q497)
+
+**The way in.** The pick's click reaches `FUN_0042ab20`, whose entry to first person calls `FUN_00481470( 1 )`, and
+`FUN_00481470( x )` calls `FUN_004a2ac0( x == 0 )`: message 6 hides layer 0 (the park's view `[0x007cb2ac]`, the gadget
+on it) and shows layer 1 (`[0x007cb2b0]`, `FUN_00488a00`, cursor `0x15`, `c_crosshair.ani`). The way out,
+`FUN_0042ab20( 0x40 )`, calls `FUN_00481470( 0 )`, the reverse. `UI_SetVisible` then hit-tests the pointer where it
+rests (`FUN_006589f9`): a new control under it is sent `0x10001` and the old one `0x10002`, both queued for the next pump
+(`FUN_00658ccc` -> `FUN_006697e3`). A control hidden is also handed at once to the sink's `+0x34` (`FUN_0066a148`), which
+noughts the sink's control if it was that one and hides the label. So, on the way in:
+
+1. The bar is hidden the moment the view is, and the sink holds no control.
+2. Until the queued `0x10002` reaches the view, its timer can run one more hover, and a row that hover posts stands
+   until the pump (measured once: the path's row for 0.3 ms of reads, round b).
+3. The view's `0x10002` clears `[0x007c24fc]`, so no hover runs in first person and the category stands where the
+   last left it. Layer 1's `0x10001` makes it the sink's control and posts its row, which is none, so the bar stays
+   hidden (the sink stays switched on, `+4` 1) and the cursor is layer 1's `0x15`.
+
+**The way out.** Escape, C, the eject button and a right click with RMB cancel set layer 1's cursor to 1 (`c_busy.ani`)
+and leave (above, "Four ways out of camcorder mode"). Layer 1 is dropped from the sink at once; on the next pump the
+view's `0x10001` puts up its own cursor (the one the last hover put up), and `Park_MouseMessageProc` runs the hover,
+then sets the flag and the category nought (`park-engine.md`, "The hover runs only on the park's view"), and the
+library posts the view's own row, -1, which hides whatever that hover posted. The next timer hover posts its arm's row,
+a change from nought. Its cell is the one the picker last held, the pick's click's, until the picker reads the pointer's
+own place, 367 ms after the swap in both rounds (why it waits is not read); then that place's row.
+
+**The pick posts rows of its own** (mode type 9, `0x00486e37` to `0x00486fcf`). It sets no category and puts up no
+pointer (the mode wears `0x13`, `c_cam.ani`). No cell: nothing. A cell whose thing (`FUN_00527e80`) is of type 3, no
+add-on (`FUN_004e2710`'s word nought) and with `+0x4ac` nought: UIHELPTEXT `0x244` (580, "{P2}: Left-click to ride",
+`{P2}` its name, `FUN_004e2780`) on a change of thing. Any other cell: `0x243` (579, "Left-click to use camcorder mode
+here") when the last thing was set or the last category was not nought, and the thing forgotten. Coming onto the view
+in the pick, the `0x10001`'s hover posts 579 (the category was the orbit's) and the view's row hides it, so over ground
+the bar stays hidden until a ride has been under the pointer.
+
+**Measured in the original** (`q497/orig/`, `PREDICTION.txt`; Q265's `bounce.TPWS` off-screen, `helpbar.py`'s `fp`
+fields; R the Belly Bounce, P path, G ground). In orbit at G: the view pointed, the flag 1, cursor 3, 441. The pick at
+G: the bar hidden, cursor `0x13`; onto R "Belly Bounce: Left-click to ride" with the thing set; back to G "Left-click to
+use camcorder mode here", the category 0 throughout. The click at P: flags `0x202`, layer 1 pointed and the sink's
+control, the flag 0, the bar hidden, cursor `0x15`, and 338,155 reads over a sweep changed none of them. Escape (round
+a) and C (round b) at G: cursor 1, the swap 29 ms after the key, the view pointed, the flag 1 and cursor 3 a frame
+later, the bar shown with the click's cell's row 10 ms after the swap, and G's "Left-click to build path" 400 ms after
+the key (`a-bars.png`).
+
+**OpenTPW** has no pick (Q25) and runs the park's hover under the viewfinder: in first person `pointer` read the pick
+hand and row 459 shown, and after C the hover's row at once (`q497/ctl1`, main's binary, 3 of 3; `side-by-side.png`,
+the original's crosshair and no bar beside ours' hand and the gate's row). The build is Q498.
 
 ## The park map — `FUN_005f0b40`, stream `0x00774da0`
 

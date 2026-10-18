@@ -7772,6 +7772,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`q496/run2`, 3 of 3) but runs the park's hover in first person: Q497. Was: From Q495, split off Q495: the
   camcorder's mode posts by its state `[0x007cc8e4]` (`0x004bd919`): 0 the empty row, 1 `0x191`, 2 `0x244` with a
   thing's name (`FUN_00486280`), 3 `0x243`. Decode first what calls it and what moves `[0x007cc8e4]`, then build it.
+- [x] **Q497. No help bar and no park hover in first person.** Decoded (no build): entering first person hides layer 0
+  (`FUN_00481470( 1 )` -> `FUN_004a2ac0( 0 )`); `UI_SetVisible` drops the view from the help sink at once
+  (`FUN_0066a148`: the bar hidden) and queues its `0x10002` (the hover's flag cleared) and layer 1's `0x10001` (no row,
+  cursor `0x15`); leaving swaps back, and the view's `0x10001` and the next timer hover post the row, first for the
+  click's cell, then for the pointer's place 367 ms on. The pick (mode 9) posts 580 over a ride and 579 after it
+  (`hud.md`, "The help bar in first person"). Measured in the original (`q497/orig/` rounds a and b, `helpbar.py`'s new
+  `fp` fields; 9 predictions, 2 missed and explained) and ours' control on main's binary (`q497/ctl1`, 3 of 3,
+  `side-by-side.png`). Built by Q498. Was: From Q496 (`hud.md`, "The online visit's
+  help rows"; `q496/side-by-side.png`): in the original's first person the help bar is hidden (`helpbar.py` shown 0)
+  and the cursor is the viewfinder's crosshair (`0x15`, layer 1, `FUN_00488a00`); ours runs the park's hover under the
+  viewfinder, its rows (459 over the gate's stone, 441, 442) and the pick hand (`q496/run2`). The camcorder's pick
+  (mode 9) hides the bar too, with the category nought (`q496/orig/a-A3-pick.png`); ours has no pick (Q25). Decode
+  what hides the bar on the way in and what brings the hover's row back on the way out, then build it on
+  `WindowStack.WorldHelpPost` and the camcorder's cursor. Confirm in both games: `helpbar.py`'s shown flag and
+  `pointer`'s row and cursor in first person, and after leaving it.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

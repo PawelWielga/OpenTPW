@@ -3908,7 +3908,7 @@ emptied.
 
 **The arms that post nothing** (Q469; the listing `objdump` of `0x00486d90` to `0x004879d0`). Every mode type but 0 and
 1 reaches `0x00486fd9`, save 8 (the coaster builder) and type 3 with the build mode `0x15` or `0x16`, which go to
-`0x004878e4`, and 9 (the camcorder), which posts its own rows `0x244` and `0x243`: so the build shell `FUN_0046c580` (vtable `0x006fe9e0`, whose `+0x24`
+`0x004878e4`, and 9 (the camcorder's pick), which posts its own rows `0x244` and `0x243` (`hud.md`, "The help bar in first person"): so the build shell `FUN_0046c580` (vtable `0x006fe9e0`, whose `+0x24`
 `0x006b71c0` answers 3, so the path tool and every build tool too), a candidate (5) and a worker (6). There the thing
 `[0x007c24f8]` is forgotten, no pointer is put up, and the empty row is posted only if the last category was not nought.
 Where no person is taken: no cell (`[0x007b05cc]` nought, `0x00487240`), a type-12 track cell under a type-`0x19` parent
