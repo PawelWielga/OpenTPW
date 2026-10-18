@@ -80,8 +80,8 @@ filed the items that cite it.
   made (one site), read how the device widens a nibble first if it can be read, and measure the sea at Q490's camera B
   against `q490/run2` (ours (6.1, 58.4, 72.0) over a wave, the original's film (1.7, 54.5, 68.8)); the cut alone leaves
   `gby_sur`'s red 7.4 to 9.8, so predict what is left. Q460's rounding sits under the nibbles.
-  **Needs Alexah (2026-10-18):** cut every texture to the original's four bits a channel (a picture as the shipped game
-  draws it, with its banding), or keep ours at eight and say the deviation at the site?
+  **Alexah (2026-10-18): both.** Cut to the original's four bits a channel by default, as the shipped game draws it,
+  banding and all; an option keeps eight (a nice fix, said at the site and in the option's own text).
 - [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
   listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
   the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for
