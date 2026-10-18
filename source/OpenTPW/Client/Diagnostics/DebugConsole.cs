@@ -1327,6 +1327,19 @@ public static class DebugConsole
 					: ParkPicking.State() );
 				break;
 
+			// The picker handed a ray rather than a window point: from an eye through a point, both in world units, so
+			// the original's eye and its pick point P (its x, height, z as our x, z, y) can be fed straight in.
+			case "pickray":
+				if ( Level.Current?.Kind != Level.Scene.Park || parts.Length < 7 )
+				{
+					Reply( "pickray: pickray <eye x> <eye y> <eye z> <through x> <through y> <through z>, in a park" );
+					break;
+				}
+
+				Reply( ParkPicking.PickRay( new Vector3( Argument( 1 ), Argument( 2 ), Argument( 3 ) ),
+					new Vector3( Argument( 4 ), Argument( 5 ), Argument( 6 ) ) ) );
+				break;
+
 			// A click at a point of the window, and it takes coordinates for exactly the reason `pick`
 			// does: a warp of the pointer reaches X and never reaches SDL, so a harness cannot select
 			// a row by warping the cursor onto it. Only SDL is skipped - the hit test, the row

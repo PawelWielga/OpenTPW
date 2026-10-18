@@ -30,8 +30,13 @@ namespace OpenTPW;
 /// past them nothing is met; the hit is held to the heightfield's last cell and then below <c>MapInfo</c>'s
 /// <c>HeightfieldWidth</c> and <c>HeightfieldHeight</c> (columns 0 to 94, rows 0 to 83); and a ray that meets nothing
 /// leaves the last cell and point standing (<c>FUN_0045bf90</c> writes its point only on a hit, <c>FUN_0045d560</c>
-/// packs it every frame). The object march after the terrain (<c>FUN_0045cdc0</c>: a model met before the ground
-/// gives its hit point) is not built: counted as <c>PICK_OBJECT_MARCH</c>.
+/// packs it every frame).
+/// </para>
+///
+/// <para>
+/// <b>A model nearer the eye than the ground gives the point</b> (<see cref="ParkPickMarch"/>): after the terrain the
+/// ray is marched a cell at a time and each cell's placed thing has its triangles tested, so the pointer on the park
+/// gate's arch answers the gate's cells, not the ground behind it.
 /// </para>
 ///
 /// <para>
@@ -134,6 +139,10 @@ public static class ParkPicking
 		if ( Pinned is { } pinned )
 			answer = answer with { Cell = MapStep.CellId( pinned.X, pinned.Y ) };
 
+		if ( answer.Marched != Marched )
+			Log.Info( answer.Marched != 0 ? $"pick: the march meets thing {answer.Marched}, cell {answer.Cell}" : "pick: the march meets nothing" );
+
+		Marched = answer.Marched;
 		Cell = answer.Cell;
 		WorldPoint = answer.World;
 		PersonUnderCursor = answer.Person;
@@ -144,6 +153,9 @@ public static class ParkPicking
 	/// <summary>A cell the debug console's <c>hover</c> holds the pointer over, or null to follow the mouse.</summary>
 	public static (int X, int Y)? Pinned { get; set; }
 
+	/// <summary>The thing whose model the pointer's object march met (<c>[0x007afda0]</c>'s model, <c>FUN_00469340</c>), or nought.</summary>
+	public static int Marched { get; private set; }
+
 	/// <summary>Whether the pointer's last ray met the ground: false where its cell is the one left standing.</summary>
 	public static bool PointerMet { get; private set; } = true;
 
@@ -153,12 +165,13 @@ public static class ParkPicking
 		Pinned = null;
 		Cell = 0;
 		WorldPoint = default;
-		PersonUnderCursor = ObjectUnderCursor = Latched = 0;
+		PersonUnderCursor = ObjectUnderCursor = Latched = Marched = 0;
 		PointerMet = true;
 	}
 
 	/// <summary>What the ray through one point of the window meets: <c>Met</c> false where the cell is the one left standing.</summary>
-	internal readonly record struct Answer( int Cell, Vector3 World, int Person, int Object, int Latched, bool Met = true );
+	internal readonly record struct Answer( int Cell, Vector3 World, int Person, int Object, int Latched, bool Met = true,
+		int Marched = 0 );
 
 	/// <summary>
 	/// The whole of the picking arithmetic, given a position on the window. <see cref="Update"/> hands
@@ -167,7 +180,7 @@ public static class ParkPicking
 	/// </summary>
 	private static Answer Resolve( Vector2 screen )
 	{
-		if ( ParkGround.Current is not { Heightfield: { } field } ground )
+		if ( ParkGround.Current is not { Heightfield: not null } )
 			return default;
 
 		// Zero until the camera has run once - see Camera.CalcViewProjMatrix. A ray built from it on
@@ -175,17 +188,108 @@ public static class ParkPicking
 		if ( Camera.HorizontalTangent <= 0f )
 			return default;
 
-		var direction = RayThrough( screen );
+		return Cast( screen, Camera.Position, RayThrough( screen ) );
+	}
 
-		// FUN_0045cdc0 marches the ray again against the models of the cells under it; a model met first gives the point.
-		Unimplemented.Report( "PICK_OBJECT_MARCH" );
+	/// <summary>What a ray from <paramref name="from"/> meets, the ground and then the object march, for <see cref="Resolve"/>
+	/// and the console's <see cref="PickRay"/>; <paramref name="screen"/> is the window point a person's picture is latched by.</summary>
+	private static Answer Cast( Vector2 screen, Vector3 from, Vector3 direction )
+	{
+		if ( ParkGround.Current is not { Heightfield: { } field } ground )
+			return default;
 
-		var (cell, met, hit) = Meet( field, Camera.Position, direction, ground.MapInfoWidth, ground.MapInfoHeight );
+		var state = Level.Current?.ParkState;
+
+		var (cell, met, hit) = Meet( field, from, direction, ground.MapInfoWidth, ground.MapInfoHeight );
+
+		var marched = 0;
+
+		if ( state != null && March( from, direction, met ? hit : null, ground.MapInfoWidth, ground.MapInfoHeight,
+			( x, y ) => CandidateOn( state, Level.Current?.Catalogue, ParkObjects.Current, field, x, y ) ) is { } thing )
+		{
+			(marched, hit, met) = (thing.Thing, thing.Point, true);
+			var (x, y) = CellOf( field, hit, ground.MapInfoWidth, ground.MapInfoHeight );
+			cell = MapStep.CellId( x, y );
+		}
 
 		if ( cell <= 0 )
 			return default;
 
-		return Assemble( cell, met, hit, screen, ParkGuestSprites.Current?.Drawn, Level.Current?.ParkState );
+		return Assemble( cell, met, hit, screen, ParkGuestSprites.Current?.Drawn, state ) with { Marched = marched };
+	}
+
+	/// <summary>
+	/// The thing the object march met and where, where it is nearer <paramref name="from"/> than <paramref name="ground"/>
+	/// (the ground's point wins a tie) or the ray met no ground: <c>0x0045ccf7</c>..<c>0x0045cd35</c>. The march asks
+	/// <paramref name="thingOn"/> each cell held to <paramref name="mapWidth"/> by <paramref name="mapHeight"/>.
+	/// </summary>
+	internal static (int Thing, Vector3 Point)? March( Vector3 from, Vector3 direction, Vector3? ground, int mapWidth,
+		int mapHeight, Func<int, int, ParkPickMarch.Candidate?> thingOn )
+	{
+		var start = from.GetSystemVector3();
+
+		if ( ParkPickMarch.March( start, direction.GetSystemVector3(), ground?.GetSystemVector3(),
+			( x, y ) => ParkPickMarch.Hold( x, y, mapWidth, mapHeight ) is var (heldX, heldY) ? thingOn( heldX, heldY ) : null )
+			is not { } met )
+			return null;
+
+		if ( ground is { } g && System.Numerics.Vector3.Distance( met.Point, start ) >= System.Numerics.Vector3.Distance( g.GetSystemVector3(), start ) )
+			return null;
+
+		return (met.Thing, (Vector3)met.Point);
+	}
+
+	/// <summary>
+	/// What the object march asks of a cell (<c>FUN_00452ae0</c> handed its thing back): the thing the cell answers
+	/// (<see cref="ParkItemHeights.ThingAnswering"/>), its <c>.hmp</c> height there over its model's root, the floor of
+	/// its <c>.hmp</c>'s box as the file has it (the model's <c>+0x84</c>, which the loader copies from it), and its model
+	/// as drawn. A cell of the second layer's things (track kinds 11, 12, 16, 17 and 25, the boundary's hoarding among
+	/// them: <c>FUN_0053bf30</c>) is asked first in the original; this park builds none of them, so it is counted and
+	/// answers nothing.
+	/// </summary>
+	private static ParkPickMarch.Candidate? CandidateOn( ParkState state, ParkItemCatalogue? catalogue, ParkObjects? objects,
+		HeightfieldFile field, int x, int y )
+	{
+		if ( state.Record( x, y ).TrackType is 11 or 12 or 16 or 17 or 25 )
+		{
+			Unimplemented.Report( "PICK_OBJECT_MARCH_TRACK_THING" );
+			return null;
+		}
+
+		var gate = ParkFixedItems.Current?.ThingFor( "gates" ) ?? 0;
+		var (entranceA, entranceB) = Level.Current?.Balance is { } balance
+			? (ParkAdmission.Cell( balance, "EntranceA" ), ParkAdmission.Cell( balance, "EntranceB" ))
+			: ((-9, -9), (-9, -9));
+
+		var thing = ParkItemHeights.ThingAnswering( state, entranceA, entranceB, gate, x, y );
+		var placed = state.Objects.FirstOrDefault( o => o.ThingId == thing );
+
+		if ( thing == 0 || placed.ThingId != thing || objects?.ModelFor( thing ) is not { } model || catalogue == null
+			|| !catalogue.TryGet( placed.CatalogueId, out var item ) || ParkItemHeights.For( item ) is not { } file )
+			return null;
+
+		var root = RootOf( model );
+
+		if ( ParkItemHeights.AboveBase( file, root, placed.Angle, field, x, y ) is not { } above )
+			return null;
+
+		return new ParkPickMarch.Candidate( thing, above + root.Z, file.BoxMin.Y,
+			( from, direction ) => ParkPickMarch.MeetModel( model, from, direction ) );
+	}
+
+	/// <summary>
+	/// Where a standing model's root node is in the world (the original's root matrix, <c>+0x40</c> to <c>+0x48</c>):
+	/// its place in the file, turned and moved as the model was stood. A placed thing's root is its file's origin, so
+	/// this is where it was stood; the gate's carries the gate's place in the park.
+	/// </summary>
+	private static System.Numerics.Vector3 RootOf( LobbyModel model )
+	{
+		var file = model.Source;
+		var root = file.Nodes.FindIndex( node => node.ParentIndex < 0 );
+		var at = root >= 0 ? file.Nodes[root].WorldTransform.Translation : default;
+
+		return System.Numerics.Vector3.Transform( new System.Numerics.Vector3( at.X, at.Z, at.Y ), model.PlacedRotation )
+			+ model.PlacedOrigin.GetSystemVector3();
 	}
 
 	/// <summary>
@@ -363,6 +467,14 @@ public static class ParkPicking
 	}
 
 	/// <summary>
+	/// What a ray from <paramref name="from"/> through <paramref name="toward"/> meets, without disturbing what the pointer
+	/// is over: an instrument for handing this picker the original's own ray (its eye and its point P), so that what the
+	/// two games' models and march make of one ray is compared apart from their two cameras.
+	/// </summary>
+	public static string PickRay( Vector3 from, Vector3 toward )
+		=> Describe( Cast( new Vector2( -1f, -1f ), from, (toward - from).Normal ), $"ray from ({from.X:F1},{from.Y:F1},{from.Z:F1})" );
+
+	/// <summary>
 	/// The cell under an arbitrary point of the window, without disturbing what the pointer is over.
 	/// False only before the ray has first met the ground: where it meets nothing, the pointer's last cell stands.
 	/// </summary>
@@ -527,7 +639,7 @@ public static class ParkPicking
 	{
 		var mouse = Input.Mouse.Position;
 
-		return Describe( new Answer( Cell, WorldPoint, PersonUnderCursor, ObjectUnderCursor, Latched, PointerMet ),
+		return Describe( new Answer( Cell, WorldPoint, PersonUnderCursor, ObjectUnderCursor, Latched, PointerMet, Marched ),
 			$"mouse ({mouse.X:F0},{mouse.Y:F0})" );
 	}
 
@@ -545,7 +657,8 @@ public static class ParkPicking
 
 		return $"pick: cell ({cellX},{cellY}) packed {answer.Cell} " +
 			$"world ({answer.World.X:F1},{answer.World.Y:F1},{answer.World.Z:F1}) " +
-			$"standing {occupant} object {placed} latched {answer.Latched}{(answer.Met ? "" : " (nothing met: the last cell stands)")} - " +
+			$"standing {occupant} object {placed} latched {answer.Latched}{(answer.Met ? "" : " (nothing met: the last cell stands)")}" +
+			$"{(answer.Marched != 0 ? $" marched thing {answer.Marched}" : "")} - " +
 			$"{asked} {size}";
 	}
 }

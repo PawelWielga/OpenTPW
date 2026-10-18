@@ -7936,6 +7936,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `candidates` census read STAFF_TYPES once a row. Read each once, as `Localization` does. Confirm: `park jungle` logs
   seven `String table:` lines (THEMENAMES too), two of them `35 strings in 904 bytes` (ENTERTAINER_NAMES and GUARD_NAMES alike), and the
   `candidates` census and the hire screen show the same names as before.
+- [x] **Q494. The picker's object march.** Done 2026-10-18: decoded (`park-engine.md`, "The picker's object march")
+  and built: the ray is marched a cell at a time, the cell's thing found as `FUN_00527e80` finds it (the entrance's row
+  answers the gate), tried where the ray's height reaches its `.hmp` and box, its model's faces walked in the original's
+  order on each triangle's own plane (the running game rewrites the faces' normals; the file's give 45 of 87). Handed
+  the original's own rays, ours meets 87 of its 87 gate points within 0.2 (`q494/ray2.out`); at the same camera the arch
+  answers the gate's cells (81 of 87; three silhouette pixels and three on a cell edge lie the cameras' 0.3 units
+  apart), its row 459, the hand and a click opening the entry price, as the original's (`q494/run4`, `orig/b-*`; main's
+  build the ground behind, `control1`); over the Belly Bounce at Q478's view 14 of 18 cells (the cameras again; the
+  original's rays give 18 of 18) and 9 of 18 met the ride, the rest its floor's tie with the ground (Q515). R1 and R7
+  missed, recorded; 17 of 17 bugs put back fail. The boundary's hoarding is counted (`PICK_OBJECT_MARCH_TRACK_THING`,
+  a note under Q214). From Q472b (`park-engine.md`, "The picker never hands the mode a cell off
+  the map"): after the terrain, `FUN_0045bf90` marches the ray in steps of 10 (`FUN_0045cdc0`) and asks the things of the
+  cell under each step, held to `MapInfo`'s limits; a model met before the ground gives the hit point, and so the cell.
+  Ours meets the ground alone, counted `PICK_OBJECT_MARCH` in `ParkPicking.Resolve`. Decode the march's model test
+  first (which things, which of their meshes or boxes), then build it. The test is the gate's arch face, where the
+  original answers the gate cells (`q471/orig/x-scan.log`, y 320 to 380) and ours the approach behind it
+  (`q471/run1-nopixel.out`; the review of Q471, `handoff/review3/VERIFY-7.md`). Confirm in both games at that view.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

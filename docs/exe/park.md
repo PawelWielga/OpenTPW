@@ -390,7 +390,7 @@ The proof is the construction clip, which by definition ends on the built object
 
 `FUN_00471860` applies an animation's visibility channel: it walks the entries **from the end**, takes the first whose absolute value is at or before the current frame, and sets 0x10 when that entry is `< 1` (**so a 0 entry hides**) or clears it otherwise. If no entry qualifies **the flag is left alone**, not defaulted to visible.
 
-At draw time (`FUN_0045d090` and three others) the node walk tests `0x10` **after** computing the node's matrix and then carries on into the children, so **a hidden node does not hide its children** — bit `0x20` is what prunes a subtree. `0x80000000` protects a node from animation visibility altogether.
+In the node walks (the picker's `PickMarch_MeetModel`, `FUN_0045d090`, and three others) the walk tests `0x10` **after** computing the node's matrix and then carries on into the children, so **a hidden node does not hide its children** — bit `0x20` is what prunes a subtree. `0x80000000` protects a node from animation visibility altogether.
 
 ### The per-clip hide list
 

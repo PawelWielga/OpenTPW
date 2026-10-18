@@ -53,13 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q494. The picker's object march.** From Q472b (`park-engine.md`, "The picker never hands the mode a cell off
-  the map"): after the terrain, `FUN_0045bf90` marches the ray in steps of 10 (`FUN_0045cdc0`) and asks the things of the
-  cell under each step, held to `MapInfo`'s limits; a model met before the ground gives the hit point, and so the cell.
-  Ours meets the ground alone, counted `PICK_OBJECT_MARCH` in `ParkPicking.Resolve`. Decode the march's model test
-  first (which things, which of their meshes or boxes), then build it. The test is the gate's arch face, where the
-  original answers the gate cells (`q471/orig/x-scan.log`, y 320 to 380) and ours the approach behind it
-  (`q471/run1-nopixel.out`; the review of Q471, `handoff/review3/VERIFY-7.md`). Confirm in both games at that view.
 - [ ] **Q487. What low quality's `GraphicalOptions.LIGHTING` 0 turns off. Decode first.** From Q482: `low.sam` sets it 0,
   `med.sam` and `high.sam` 1, and `FUN_0044d8f0` then sets render-word `0x1800` (both `0x0800` and `0x1000`, `or ah,0x18` at `0x0044dc36`); under `0x0800` the terrain pass draws no
   land at half light (`park-engine.md`, "What the render-state `0x0800` tests are"); what else reads `0x0800`, and what reads `0x1000` at all (the
@@ -1387,6 +1380,10 @@ filed the items that cite it.
   throw. Confirm: several entertainers hired in a fresh park, more than one costume on screen; the boundary beside
   the original's fresh park. The stock park's boundary is not drawn either (Q469: the wall right of the gate in
   `q469/orig/a-4-cam180.png`, open grass in `q469/run1/2-hoarding.png`).
+  From Q494: the picker's object march meets the boundary's hoarding in the original (ho_fos1.MD2, its track kind 25
+  anchors (43,17) and (51,17), at 7 pixels right of the gate in `q494/orig/a-scan.log`); ours counts
+  `PICK_OBJECT_MARCH_TRACK_THING` on every cell of kind 11, 12, 16, 17 or 25 and answers the ground there. Once the
+  hoarding is drawn, `ParkPicking.CandidateOn` asks its model first (`FUN_0053bf30`'s `+4`).
 - [ ] **Q215. The park advisor's tick: three paths neither built nor counted, and the original never watched.** Found
   by the 2026-10-04 review (`u5-advisor-door-2`, `-3`, `-9`). `FUN_0059a550` polls a metadata row each tick
   (`FUN_0059c680( 1 )`); `FUN_0059b620` posts a message after `Advisor_SayResponse` (`FUN_0040f740`, `FUN_0040fb10`,
@@ -2352,7 +2349,18 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   (`park-engine.md`, "The gate and the ticket booths"); the hover calls it at six places. Seen in the original (Q478):
   the pointer on the Belly Bounce brightens its model (the frame's box (180,220) to (300,350) reads red 160 and 173 in
   `q478/orig/b-3-ride.png` and `b-4-ride-again.png`, 138 and 141 in `b-2-queue.png` and `b-5-shop.png`), the object
-  arm's call at `0x00487712`.
+  arm's call at `0x00487712`. From Q494: `[0x007afda0]` is the model the picker's object march met (`FUN_00469340`), which
+  ours keeps as `ParkPicking.Marched` (the thing).
+- [ ] **Q515. The object march's tie with the ground: a model's floor lying on it.** From Q494 (`q494/PREDICTION.txt`,
+  R7; `park-engine.md`, "The picker's object march"): at (480,265) 130 180 the original's march met the Belly Bounce at
+  all 16 pixels over it, 14 of them on its floor (`jb_floor`, local height 0) at height 0, where ours, handed the
+  original's own rays (`q494/ray3`), answers the ground at 7: the floor and the ground meet the ray at one point and ours
+  keeps the ground on a tie (`ParkPicking.March`, `>=`). The original keeps the model's point only where it is strictly
+  nearer (`0x0045cd04`..`0x0045cd35`), comparing the ground's distance rounded to a float with the model's at the FPU's
+  width; its root stood at 1.256e-07 (the record's root `+0x44`, read live; the ground 0.0 there), and ours stands the
+  thing at the ground's height (`ParkObjects.OriginFor`). Read where the original's root height comes from (the save's
+  fixed-point position, or the stand), then build it. The cell is the same either way: only the thing met changes,
+  which is Q24's highlight. Confirm in both games by `hoverscan.py ... pick` and `pickray` at that view.
 - [ ] **Q25. The camcorder button should give a crosshair and place the camera where you click.**
   `ParkGadget.EnterCamcorder` enters the mode at once. The original installs a mouse-interaction mode
   (`FUN_00481a10`, `park-engine.md`, "Camcorder mode — the first-person view"). Its click handler was decoded by Q48

@@ -61,23 +61,64 @@ internal static class ParkItemHeights
 	/// ground at the cell's corner (<c>FUN_004527f0</c>).
 	/// </summary>
 	public static float Over( ParkState state, ParkItemCatalogue? catalogue, HeightfieldFile field, int x, int y )
+		=> Built( state, catalogue, field, x, y )?.Top ?? field.HeightAt( x, y );
+
+	/// <summary>
+	/// <c>FUN_00452ae0</c> where a placed thing with a <c>.hmp</c> owns the cell: the thing, its file, the height its
+	/// base stands at, and how high it stands over the cell; null where none does, which is where the original answers
+	/// nought to a caller handed its thing back (the picker's object march, <c>FUN_0045cdc0</c>) and the ground to one
+	/// that is not.
+	/// </summary>
+	internal static (ParkWorld.CatalogueObject Placed, ItemHeightMapFile File, float Base, float Top)? Built( ParkState state,
+		ParkItemCatalogue? catalogue, HeightfieldFile field, int x, int y )
 	{
-		if ( Owner( state, x, y ) is { } placed && catalogue != null && catalogue.TryGet( placed.CatalogueId, out var item )
-			&& For( item ) is { } file )
-		{
-			// The cell's middle carried back into the item's own unturned space, the original's
-			// 0x00452bb0..0x00452c1d, which does the same with the cell's corner for each quarter turn.
-			// The thing's base is the ground under its anchor, where OriginFor stands it.
-			var origin = ParkObjects.OriginFor( placed.CellX, placed.CellY, placed.Angle ).GetSystemVector3() with { Z = 0f };
-			var middle = new System.Numerics.Vector3( (x + 0.5f) * field.CellSizeX, (y + 0.5f) * field.CellSizeY, 0f );
-			var local = System.Numerics.Vector3.Transform( middle - origin,
-				System.Numerics.Quaternion.Inverse( ParkObjects.Turn( placed.Angle ) ) );
+		if ( Owner( state, x, y ) is not { } placed || catalogue == null || !catalogue.TryGet( placed.CatalogueId, out var item )
+			|| For( item ) is not { } file )
+			return null;
 
-			if ( file.HeightOver( (int)MathF.Floor( local.X / field.CellSizeX ), (int)MathF.Floor( local.Y / field.CellSizeY ) ) is { } above )
-				return above + field.HeightAt( placed.CellX, placed.CellY );
-		}
+		// The thing's base is the ground under its anchor, where OriginFor stands it.
+		var origin = ParkObjects.OriginFor( placed.CellX, placed.CellY, placed.Angle ).GetSystemVector3();
 
-		return field.HeightAt( x, y );
+		if ( AboveBase( file, origin, placed.Angle, field, x, y ) is not { } above )
+			return null;
+
+		var under = field.HeightAt( placed.CellX, placed.CellY );
+
+		return (placed, file, under, above + under);
+	}
+
+	/// <summary>
+	/// How high a <c>.hmp</c> says its thing stands over a cell, above the thing's base: the cell's middle carried back
+	/// into the item's own unturned space from <paramref name="origin"/> (its root's place) by its quarter turn
+	/// <paramref name="angle"/>, the original's <c>0x00452bb0</c>..<c>0x00452c1d</c>, which does the same with the cell's
+	/// corner for each quarter turn. Null outside the file's cells.
+	/// </summary>
+	internal static float? AboveBase( ItemHeightMapFile file, System.Numerics.Vector3 origin, int angle, HeightfieldFile field,
+		int x, int y )
+	{
+		var middle = new System.Numerics.Vector3( (x + 0.5f) * field.CellSizeX, (y + 0.5f) * field.CellSizeY, 0f );
+		var local = System.Numerics.Vector3.Transform( middle - (origin with { Z = 0f }),
+			System.Numerics.Quaternion.Inverse( ParkObjects.Turn( angle ) ) );
+
+		return file.HeightOver( (int)MathF.Floor( local.X / field.CellSizeX ), (int)MathF.Floor( local.Y / field.CellSizeY ) );
+	}
+
+	/// <summary>
+	/// The thing a cell answers to <c>FUN_00452ae0</c> where its track layer holds no piece (<c>FUN_00527e80</c>,
+	/// <c>docs/exe/park.md</c>, "The scene's height under a point"): a cell on the entrance's row, from one before
+	/// <paramref name="entranceA"/> to one past <paramref name="entranceB"/>, answers the gate, <paramref name="gate"/>,
+	/// whatever it holds; a cell of type 4, 9 or 10 its parent cell's object (<see cref="Owner"/>); any other nothing.
+	/// </summary>
+	internal static int ThingAnswering( ParkState state, (int X, int Y) entranceA, (int X, int Y) entranceB, int gate,
+		int x, int y )
+	{
+		if ( y == entranceA.Y && x >= entranceA.X - 1 && x <= entranceB.X + 1 )
+			return gate;
+
+		return state.Record( x, y ).Type is CellEdge.Footprint or CellEdge.RideEnd or CellEdge.RideFarEnd
+			&& Owner( state, x, y ) is { } placed
+			? placed.ThingId
+			: 0;
 	}
 
 	/// <summary>

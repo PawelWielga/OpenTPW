@@ -2656,11 +2656,63 @@ meets nothing the last cell and point stand. **Deviation:** the original's word 
 a later park opens on the last park's P. Ours is nought before the first meeting and again after `ParkPicking.Forget` (a park's
 end), which shows for a frame or two over (0,0), the sea, with no peeps and no row. (A write through a computed pointer is not
 ruled out by the search.) The ground met is the march over `HeightAtWorld`, not the
-original's two triangles a cell (the class's declared deviation). The object march is not built (Q494): counted as
-`PICK_OBJECT_MARCH`. Measured at the three views above (`q472b/`, `PREDICTION.txt`, `side-by-side.png`): (95,40) answers
+original's two triangles a cell (the class's declared deviation). The object march is built (Q494, below). Measured at the three views above (`q472b/`, `PREDICTION.txt`, `side-by-side.png`): (95,40) answers
 (94,40) with x 956.1; past the last column (94,40) and the point stand and "Left-click to build path" stands over the
 fence; (40,84)'s pixel answers (40,83) and no pixel of its column a row above 83; past the last row (40,83) stands; over
 the sea (45,2) stands; the original read the same cells at the same views (round b).
+
+**The picker's object march** (Q494; read in Ghidra, measured in the original, `q494/PREDICTION.txt`). After its
+terrain test `FUN_0045bf90` marches the same ray against the models of the cells under it, from the eye (`0x00790aa0`)
+in steps of 10 along whichever of the ray's ground axes is longer (x, or z where `|x| <= |z|`), the other axis and the
+height following in proportion (`0x0045c99a`..`0x0045c9e0`). It goes on while the ray stands at or above the terrain's
+point plus one step's fall, or at or above nought where the terrain met nothing (`0x0045c9f0`..`0x0045ca17`); nothing
+else ends it. Each step asks `PickMarch_AskCell` (`FUN_0045cdc0`) about the cell `(int)(x * 0.1)`, `(int)(z * 0.1)`; then, where the other
+axis crossed a cell edge during the step and the new x and z are not below nought, it asks the cell at the crossing,
+taken 1.01 of the way (`0x006fe668`). The first thing met ends the march.
+
+`FUN_0045cdc0` holds the cell to 0 and to `MapInfo`'s width and height less one and asks `FUN_00452ae0( x, z, &thing )`
+("Placement feedback"; `park.md`, "The scene's height under a point"): a track piece's model (`FUN_0053bf30`), else
+`FUN_00527e80`, where every cell of the entrance's row from one before `EntranceA` to one past `EntranceB` answers the
+gate whatever it holds, and a cell of type 4, 9 or 10 its parent's object. A thing whose model record has no `.hmp`
+(`+0xcc`) is not tried; one that has answers its `.hmp` height over the cell plus its root's height. A record flagged
+`0x80000` (set by the coaster builder `FUN_00434060` on a track piece's records; none of the stock park's 163 records
+carries it) is tried as its piece's list (`[[record + 0xd4] + 0x100]`, `FUN_00447790`, `FUN_004477d0`), last first, each
+with its own height. The thing is tried when the ray's height across the cell, from where it enters to where it leaves
+along the stepped axis (`modf` of a tenth, or `1 - fmod( v, 10 ) / 10` for a falling coordinate), reaches down to that
+height and up to the model's box minimum height (header `+0x84`, which `FUN_00451640` copies from the `.hmp`'s box:
+gates.hmp's -0.004). A model flagged `0x40000` and `0x20000` (`+0x30`) is first brought up to its pose (`FUN_00473c30`).
+
+The model test, `PickMarch_MeetModel` (`FUN_0045d090`) `( root node, identity )`, walks the node tree from the header's root (`+0x78`): each node's
+matrix composed onto its parent's (`FUN_004702d0`); a node flagged `0x10` or `0x8210` offers no faces, otherwise its
+vertices are carried into the world (`FUN_00466c80`) and its faces tried by material in the material table's order
+(each material's `+4` its first face, `+6` its count); then its children (`+0xc`, then each `+8`) unless it is flagged
+`0x20`. A face is tried by the LINE through the eye, not the ray: the plane through its first corner with its normal
+from the table at mesh `+0x64` (turned, normalised), the point inside where the three angles it makes with the corners
+sum to 6.2821855 (`0x006fe678`) or more. The first face inside gives the point (`0x007a1cc8`, kept at `0x007a1cb8`), so
+the answer is the first face in that order, not the nearest. **The faces' normals in the running game are the
+triangles' own**: in gates.MD2's gateway the table holds 596 entries, 400 equal to the file's and the 196 the faces
+name rewritten parallel to their triangles, 196 of 196 (`q494/orig/a-gatenormals.txt`); what rewrites them is not read.
+
+The record met goes to `[0x007a1cd4]` and to `[0x007afda0]` (`FUN_00469340`, the highlight's model, Q24), and the
+coaster builder reads it (`FUN_00443340`). The model's point is P where it is strictly nearer the eye than the
+terrain's, or the terrain met nothing (`0x0045ccf7`..`0x0045cd35`); else the terrain's point is.
+
+Measured in the original at the stock park, camera (475,155) 110 180 (`q494/orig/a-scan.log`, `hoverscan.py` `pick`):
+of 210 pixels over and around the gate, 87 met the gate's record (gates.MD2) and answered cells (46..50,17), (49,18)
+and (46,18), P on the arch's faces at z 170.2 to 183.1 and heights 1.9 to 44.0, not always the face nearest the eye; 7
+met the boundary's hoarding (ho_fos1.MD2, its track kind 25 anchors at (43,17) and (51,17), `a-tracklayer.txt`); the
+gate's live vertices and gateway matrix are the file's, its doors stood turned to identity. The walk replayed on
+gates.MD2 with the original's own rays (`walk.py`) gives 87 of its 87 points with each triangle's own plane and 45 with
+the file's normals. At (480,265) 130 180 (`c-scan.log`) the march met the Belly Bounce (bouncy.MD2) at 16 points, most
+on its base at height 0, and the Jungle Spray at 2.
+
+**OpenTPW** (Q494, `ParkPickMarch`, `ParkPicking.March` and `CandidateOn`, `ParkItemHeights.ThingAnswering`): the march,
+the cell's thing, the `.hmp` height about the model's root, the box floor, the walk and the nearer-than-the-ground rule
+as above, the plane each triangle's own. Deviations: the `.hmp`'s cell is found from the cell's middle (the original
+carries the corner by quarter turns: the same cell); the march stops after 400 steps; a cell of the second layer's things
+(track kinds 11, 12, 16, 17, 25: the boundary's hoarding) is counted `PICK_OBJECT_MARCH_TRACK_THING` and answers
+nothing, as none is built (Q214), and so the flagged records of a coaster's pieces are not reached. Handed the
+original's rays by the console's `pickray` (`q494/ray2.out`), ours meets 87 of its 87 gate points within 0.2.
 
 **Open.** What advisor message `0x135` says (it resolves through a table filled at runtime); what puts
 the cursor back after a drop or a cancel; whether the staff constructors' later calls make a sound;
