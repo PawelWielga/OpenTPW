@@ -692,6 +692,8 @@ public class ParkLocatorTests
 		Assert.AreEqual( 554, Row( 43, 16, guest ), "New Visitor at nought" );
 		Assert.AreEqual( 0, level.WorldHelpValues.Length );
 		_people.Guests[guest].VisitorNumber = number;
+		Assert.AreEqual( 554, Row( 43, 16, guest ), "the same person and category: nothing posted again" );
+		Row( 43, 16, 0 );
 		Assert.AreEqual( 553, Row( 43, 16, guest ) );
 		Assert.AreEqual( $"Visitor #{number} : Left-click to view this person's details", Localization.FormatHelp( 553, level.WorldHelpValues ) );
 		Assert.IsTrue( level.PickPointer );
@@ -699,15 +701,17 @@ public class ParkLocatorTests
 		// The help bar fills the row's parameters with the hover's values.
 		var popupHelp = GameOptions.Current.PopupHelp;
 		GameOptions.Current.PopupHelp = true;
-		UI.WindowStack.WorldHelpText = 553;
-		UI.WindowStack.WorldHelpValues = level.WorldHelpValues;
+		UI.WindowStack.WorldHelpPost = (553, level.WorldHelpValues);
 		Input.Mouse = new();
 		_stack.Update();
 		Assert.AreEqual( $"Visitor #{number} : Left-click to view this person's details", _stack.HelpBarText );
 		GameOptions.Current.PopupHelp = popupHelp;
 		_people.Guests[guest].VisitorNumber = numbered;
-		UI.WindowStack.WorldHelpText = -1;
-		UI.WindowStack.WorldHelpValues = [];
+		_stack.Update();
+		Assert.AreEqual( $"Visitor #{number} : Left-click to view this person's details", _stack.HelpBarText, "a posted row stands until another posts" );
+		UI.WindowStack.WorldHelpPost = (-1, []);
+		_stack.Update();
+		Assert.AreEqual( "", _stack.HelpBarText );
 		Assert.AreEqual( (-1, -1), (Row( 43, 16, member.ThingId ), Row( 43, 16, 0 )), "the guests decide: the row is emptied" );
 		Assert.IsFalse( level.PickPointer );
 		Assert.AreEqual( 0, level.WorldHelpValues.Length );
@@ -717,11 +721,12 @@ public class ParkLocatorTests
 	/// <b>Where the guests decide and nobody is taken, the empty row is posted only after a category</b>
 	/// (<c>0x004870f3</c>): Shift over bare ground empties the ground's row; with the visitors' locator open, Ctrl held
 	/// takes the category to nought with the ground's row standing, and let go the row still stands; off a guest it is
-	/// emptied; and a guest's row posted as the pointer comes onto the view stands off them, the category nought after
-	/// the entry.
+	/// emptied; and coming back onto the view from a control the first hovers are at the last place on the view
+	/// (<c>q473/orig</c>, round c), so a guest left there posts their row, and a guest come onto from where nobody was
+	/// waits a hover.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> always emptied; never emptied; the last category not kept; Ctrl's hover not nought; the
-	/// entry not nought.</remarks>
+	/// entry not nought; the return at the pointer's own place.</remarks>
 	[TestMethod]
 	public void TheGuestsEmptyRowIsPostedOnlyAfterACategory()
 	{
@@ -748,9 +753,13 @@ public class ParkLocatorTests
 		Assert.AreEqual( 553, Row( guest ) );
 		Assert.AreEqual( (-1, -1), (Row( 0 ), Row( 0 )), "off the guest: emptied after their category" );
 
+		Row( guest );
 		Row( guest, onTheView: false );
-		Assert.AreEqual( 553, Row( guest ), "onto the view, onto the guest" );
-		Assert.AreEqual( 553, Row( 0 ), "off them at once: the category nought after the entry" );
+		Assert.AreEqual( 553, Row( 0 ), "back onto the view: the hovers at the last place, the guest" );
+		Assert.AreEqual( -1, Row( 0 ), "then the pointer's own place: emptied after the guest's category" );
+		Row( 0, onTheView: false );
+		Assert.AreEqual( -1, Row( guest ), "back onto a guest from where nobody was: the last place's, nothing, the bar left empty" );
+		Assert.AreEqual( 553, Row( guest ), "then the guest's own" );
 		_people.Guests[guest].VisitorNumber = numbered;
 	}
 
@@ -913,11 +922,103 @@ public class ParkLocatorTests
 	}
 
 	/// <summary>
+	/// <b>The help bar holds one row, whoever posted it last</b> (<c>docs/exe/hud.md</c>, "The help bar holds one posted
+	/// row"; <c>q473/orig</c>): the gadget's Buy button posts its own row and leaving it empties the bar; back on the view
+	/// the hovers are at the last place first, so with the ground left last its row comes back over a hoarding (round a,
+	/// O3) and with the hoarding left last the bar stays empty (round b, B4). Under a park screen the hover posts nothing:
+	/// the ground's row stands beside the screen (O7), its body empties the bar, and coming off the body the category is
+	/// nought, so after it closes the ground posts again.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a control's leave posts nothing; the world's row taken over a control; the return at
+	/// the pointer's own place; the last place never kept; the category not nought between the return's hovers; the
+	/// screen's body not emptied; the body taken for the view; the hover posting under a park screen; the hover posting
+	/// every frame; a row changed under the pointer not posted.</remarks>
+	[TestMethod]
+	public void TheHelpBarHoldsOneRowWhoeverPostedIt()
+	{
+		_stack.Update();
+		var level = Level.Current!;
+		var popupHelp = GameOptions.Current.PopupHelp;
+		GameOptions.Current.PopupHelp = true;
+		var (ground, hoarding) = ((43, 16), (42, 16));
+		var (park, body) = (new Vector2( 1800, 200 ), new Vector2( 1000, 700 ));
+		var build = Localization.Help( 441 );
+		const string buyRow = "Left-click to buy and build attractions or to hire staff";
+
+		// The gadget's Buy button, found by its row.
+		var gadget = Enumerable.Range( 0, 64 * 48 ).Select( i => new Vector2( i % 64 * 32 + 16, i / 64 * 32 + 16 ) ).First( point =>
+		{
+			Input.Mouse = new() { Position = point };
+			_stack.Update();
+			return _stack.Hovered is { } control && Localization.Help( control.HelpText ) == buyRow;
+		} );
+
+		// One frame as Level.Update runs it: the hover at the cell, then the interface.
+		string Frame( (int X, int Y) cell, Vector2 at )
+		{
+			Input.Mouse = new() { Position = at };
+			var row = level.WorldHelpRow( cell.X, cell.Y, 0, _stack.PointerOnTheView );
+			UI.WindowStack.WorldHelpPost = level.HoverPosted ? (row, level.WorldHelpValues) : null;
+			_stack.Update();
+			return _stack.HelpBarText;
+		}
+
+		try
+		{
+			Assert.AreEqual( build, Frame( ground, park ) );
+			var buy = Frame( ground, gadget );
+			Assert.IsNotNull( _stack.Hovered );
+			Assert.AreEqual( buyRow, buy, "the Buy button's own row (O2)" );
+			var buyButton = _stack.Hovered!;
+			buyButton.HelpText = 470;
+			Assert.AreEqual( Localization.Help( 470 ), Frame( ground, gadget ), "ours: a row changed under the pointer is posted" );
+			buyButton.HelpText = 469;
+			Assert.AreEqual( buy, Frame( ground, gadget ) );
+			Assert.AreEqual( build, Frame( hoarding, park ), "back onto a hoarding, the ground left last: its row again (O3)" );
+			Assert.AreEqual( build, Frame( hoarding, park ), "and it stands" );
+			Assert.AreEqual( buy, Frame( hoarding, gadget ) );
+			Assert.AreEqual( "", Frame( hoarding, park ), "back onto the hoarding, the hoarding left last: the bar left empty (B4)" );
+			Assert.AreEqual( (-1, ""), (_stack.HelpRow, Frame( hoarding, park )) );
+			Assert.AreEqual( -1, level.WorldHelpRow( hoarding.Item1, hoarding.Item2, 0 ), "the hover's own row is the emptied bar's" );
+			Assert.AreEqual( build, Frame( ground, park ), "the ground's category: posted" );
+
+			Input.Mouse = new() { Position = gadget };
+			level.WorldHelpRow( ground.Item1, ground.Item2, 0, _stack.PointerOnTheView );
+			UI.WindowStack.WorldHelpPost = (442, []);
+			_stack.Update();
+			Assert.AreEqual( buy, _stack.HelpBarText, "a row the view posts is not taken over a control" );
+			Assert.AreEqual( build, Frame( ground, park ) );
+
+			var screen = new ParkEntryPriceScreen( _stack );
+			_stack.Open( screen );
+			Assert.AreEqual( build, Frame( ground, park ) );
+			Assert.AreEqual( build, Frame( hoarding, park ), "a park screen open beside the pointer: no hover, the row stands (O7)" );
+			Assert.IsTrue( _stack.Hovered == null && _stack.OnParkScreen( body.X, body.Y ), "the screen's body" );
+			Assert.AreEqual( "", Frame( ground, body ), "onto the screen's body: emptied" );
+			Assert.AreEqual( "", Frame( ground, park ), "back beside it: no hover under a park screen" );
+			_stack.Close( screen );
+			Frame( ground, park );
+			Assert.AreEqual( build, Frame( ground, park ), "closed: the category nought since the pointer came off the body, so posted" );
+
+			_stack.Open( screen = new ParkEntryPriceScreen( _stack ) );
+			Assert.AreEqual( build, Frame( ground, park ) );
+			_stack.Close( screen );
+			Assert.AreEqual( build, Frame( ground, park ), "the pointer kept beside the screen: the row stood throughout" );
+
+		}
+		finally
+		{
+			GameOptions.Current.PopupHelp = popupHelp;
+			Input.Mouse = new();
+		}
+	}
+
+	/// <summary>
 	/// <b>The hover sets the member idle as it posts their row, wherever PICK UP would take them</b>
 	/// (<c>FUN_00505f50</c> asks <c>FUN_00505bd0</c>, then <c>SetState( 0 )</c>): once as the pointer comes onto them and
 	/// not again while it stays, from a walk with the clock as the stamp, never a member on strike. Off the park's view
-	/// (<c>[0x007c24fc]</c>) no hover runs and the row stands; coming back onto it the member is posted twice, the thing
-	/// forgotten before and the category nought after (<c>0x0048884e</c>). Over a control the pointer is the arrow, as
+	/// (<c>[0x007c24fc]</c>) no hover runs and the row stands; coming back onto it the member is posted twice at the last
+	/// place, the thing forgotten before and the category nought after (<c>0x0048884e</c>), the second set from idle. Over a control the pointer is the arrow, as
 	/// the original's over the gadget's buttons.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> not set; set in any state; set every frame; set off the view; the stamp nought from a
@@ -978,11 +1079,11 @@ public class ParkLocatorTests
 		Assert.AreEqual( Input.CursorTypes.Normal, level.IdleCursor(), "the arrow over a control, the member's row standing" );
 		Assert.AreEqual( 555, Row( member.ThingId ), "back onto the view, onto the member they last were" );
 		Assert.AreEqual( Input.CursorTypes.Pick, level.IdleCursor() );
-		Assert.IsTrue( Set(), "the thing forgotten as the pointer comes on" );
-		Row( member.ThingId );
-		Assert.IsTrue( Set(), "posted again, the category nought after the entry" );
+		Assert.AreEqual( (StaffActivity.Idle, 0), (member.Activity, member.TimeStartedIdling),
+			"set as the thing is forgotten, and again from idle as the category is nought: the stamp nought" );
+		Assert.IsTrue( Set() );
 		Row( member.ThingId );
 		Assert.IsFalse( Set(), "and then not again" );
-		Assert.AreEqual( 4, sets );
+		Assert.AreEqual( 3, sets );
 	}
 }

@@ -133,16 +133,35 @@ internal sealed class WindowStack : Panel
 	internal static bool RightPointerTaken { get; private set; }
 
 	/// <summary>
-	/// The help row for what the pointer is over in the world, shown when it is over no control - or -1.
-	/// The scene sets it each frame before the stack updates; only the park has one.
+	/// The row the scene's own view posted this frame (<c>FUN_004924b0</c>), with its parameters' values, or null where it
+	/// posted nothing. The scene sets it each frame before the stack updates; only the park's hover posts. Taken only
+	/// while the pointer is on the view, after the row a control left behind, and cleared as it is taken.
 	/// </summary>
-	internal static int WorldHelpText { get; set; } = -1;
+	internal static (int Row, (int Parameter, string Value)[] Values)? WorldHelpPost { get; set; }
 
-	/// <summary>The values of <see cref="WorldHelpText"/>'s parameters: a person's number or name.</summary>
-	internal static (int Parameter, string Value)[] WorldHelpValues { get; set; } = [];
+	/// <summary>
+	/// The help bar's one row, as last posted (<see cref="PostHelp"/>), or -1 for the empty bar: whatever posted last
+	/// stands, a control's or the park's alike.
+	/// </summary>
+	internal int HelpRow { get; private set; } = -1;
+
+	/// <summary>The values of <see cref="HelpRow"/>'s parameters: a person's number or name.</summary>
+	internal (int Parameter, string Value)[] HelpValues { get; private set; } = [];
 
 	/// <summary>What the help bar says after the last update.</summary>
 	internal string HelpBarText => _helpBar.Text;
+
+	/// <summary>
+	/// What the pointer was over at the last update, for the bar: a control, <see cref="Background"/> (a modal window, a
+	/// park screen's body or the cover), or null for the scene's own view.
+	/// </summary>
+	private object? _pointed;
+
+	/// <summary>The row <see cref="_pointed"/> posted, so a control's row changed under the pointer is posted too.</summary>
+	private int _pointedRow = -1;
+
+	/// <summary>Whatever is under the pointer that is neither a control nor the view: its row is none.</summary>
+	private static readonly object Background = new();
 
 	public WindowStack()
 	{
@@ -182,14 +201,15 @@ internal sealed class WindowStack : Panel
 	internal UiControl? Hovered => _hovered;
 
 	/// <summary>
-	/// Whether the pointer is on the scene's own view now: over no control, no modal window up and no cover over the
-	/// stack. Hit-tested where it is asked, not taken from the stack's last update, which the park's hover runs before:
-	/// the frame the pointer reaches a control takes nothing behind it. The park's view hears the pointer come onto it
-	/// and leave it for a control (<c>0x10001</c>, <c>0x10002</c>); a modal window counts as a control here, as it does
-	/// for the help bar, which is not measured in the original.
+	/// Whether the pointer is on the scene's own view now: over no control and no park screen's body, no modal window up
+	/// and no cover over the stack. Hit-tested where it is asked, not taken from the stack's last update, which the park's
+	/// hover runs before: the frame the pointer reaches a control takes nothing behind it. The park's view hears the
+	/// pointer come onto it and leave it for a control (<c>0x10001</c>, <c>0x10002</c>), a park screen's body among them;
+	/// a modal window counts as a control here, as it does for the help bar, which is not measured in the original.
 	/// </summary>
 	internal bool PointerOnTheView
-		=> !Covered && !ModalUp && HitTest( Input.Mouse.Position.X, Input.Mouse.Position.Y ) == null;
+		=> !Covered && !ModalUp && HitTest( Input.Mouse.Position.X, Input.Mouse.Position.Y ) == null
+			&& !OnParkScreen( Input.Mouse.Position.X, Input.Mouse.Position.Y );
 
 	/// <summary>
 	/// Whether a full-screen control over the stack's layer has the keys and the pointer, the layer hidden under it, as
@@ -332,6 +352,8 @@ internal sealed class WindowStack : Panel
 		_rightWasDown = false;
 		Covered = false;
 		ParkScreenOpen = false;
+		_pointed = null;
+		PostHelp( -1, [] );
 		_helpBar.ReleaseText();
 		Input.TextCaptured = false;
 	}
@@ -441,12 +463,34 @@ internal sealed class WindowStack : Panel
 
 		Keyboard();
 
-		// The world's row only where a click would reach the world: over no control, and no modal up. Under the cover the
-		// bar is not drawn, and its own key is still heard: the window procedure matches the system table on every key.
-		if ( _hovered != null || ModalUp )
-			_helpBar.Update( _hovered?.HelpText ?? -1 );
-		else
-			_helpBar.Update( WorldHelpText, WorldHelpValues );
+		// The bar holds one row, the last posted (docs/exe/hud.md, "The help bar holds one posted row"). The pointer coming
+		// onto a control posts its row and leaving it empties the bar (0x10001 and 0x10002 to FUN_0065f6d1, the help sink's
+		// +0x24 and +0x28); the view's own row comes after that, so a row the park posted stands until something else
+		// posts. Under the cover the bar is not drawn, and its own key is still heard: the window procedure matches the
+		// system table on every key.
+		var pointed = hit ?? (Covered || ModalUp || OnParkScreen( mouse.X, mouse.Y ) ? Background : null);
+
+		// Ours: a control's row changed under a pointer at rest is posted at once; whether the original posts it again is
+		// not decoded.
+		if ( pointed != _pointed || (hit != null && hit.HelpText != _pointedRow) )
+		{
+			_pointed = pointed;
+			_pointedRow = hit?.HelpText ?? -1;
+			PostHelp( _pointedRow, [] );
+		}
+
+		if ( pointed == null && WorldHelpPost is { } post )
+			PostHelp( post.Row, post.Values );
+
+		WorldHelpPost = null;
+		_helpBar.Update( HelpRow, HelpValues );
+	}
+
+	/// <summary>Posts row <paramref name="row"/> to the help bar, or empties it with -1 (<c>FUN_004924b0</c>).</summary>
+	private void PostHelp( int row, (int Parameter, string Value)[] values )
+	{
+		HelpRow = row;
+		HelpValues = row < 0 ? [] : values;
 	}
 
 	protected override void OnRender()

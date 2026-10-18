@@ -1258,9 +1258,8 @@ public class Level
 		if ( Kind == Scene.Park )
 			ParkPicking.Update();
 
-		// The help row the world shows for the cell under the pointer - see WorldHelpRow.
-		UI.WindowStack.WorldHelpText = Kind == Scene.Park ? WorldHelpRow() : -1;
-		UI.WindowStack.WorldHelpValues = Kind == Scene.Park ? WorldHelpValues : [];
+		// The help row the hover posts for the cell under the pointer, if it posts one - see WorldHelpRow.
+		UI.WindowStack.WorldHelpPost = Kind == Scene.Park && WorldHelpRow() is var row && HoverPosted ? (row, WorldHelpValues) : null;
 
 		// The HUD is not an entity - see RootPanel - so it is driven from here, after the world.
 		Hud.Update();
@@ -1432,8 +1431,14 @@ public class Level
 	/// </summary>
 	private bool _onTheView;
 
-	/// <summary>The values of <see cref="UI.WindowStack.WorldHelpText"/>'s parameters, as the last hover filled them.</summary>
+	/// <summary>The values of <see cref="WorldHelpRow(int, int, int, bool)"/>'s row's parameters, as the last hover filled them.</summary>
 	internal (int Parameter, string Value)[] WorldHelpValues { get; private set; } = [];
+
+	/// <summary>Whether the last hover posted its row to the help bar (<c>FUN_004924b0</c>), rather than leaving it.</summary>
+	internal bool HoverPosted { get; private set; }
+
+	/// <summary>The cell and the person the last hover on the view was asked about, which the hover after a return reads.</summary>
+	private (int X, int Y, int Person)? _lastHover;
 
 	/// <summary>Whether the last hover put up the pick pointer, <c>c_pick</c>: over a person it would take, the gate or a ticket booth.</summary>
 	internal bool PickPointer { get; private set; }
@@ -1441,14 +1446,19 @@ public class Level
 	/// <summary>The person whose row the hover posted last, so their row and its log line are posted once.</summary>
 	private int _rowPerson;
 
-	/// <summary>The row the hover posted last, which stands while a locator is open and nobody is taken.</summary>
+	/// <summary>
+	/// The row the hover posted last, which stands while a locator is open and nobody is taken; -1 after the pointer has
+	/// been on a control, whose leaving empties the bar.
+	/// </summary>
 	private int _postedRow = -1;
 
 	/// <summary>
-	/// Whether the last hover's category <c>[0x007c24f4]</c> was nought: each hover zeroes it and its arm sets its own
-	/// (<c>0x00486de5</c>), and where the guests decide and nobody is taken the empty row is posted only after a category.
+	/// The last hover's category <c>[0x007c24f4]</c>: each hover zeroes it and its arm sets its own (<c>0x00486de5</c>). A
+	/// row is posted only when the category or the person changes, and where the guests decide and nobody is taken the
+	/// empty row is posted only after a category. A queue, an object, type <c>0x15</c> and a track share one here
+	/// (<see cref="GroundArm.UnbuiltRow"/>).
 	/// </summary>
-	private bool _categoryNought = true;
+	private int _category;
 
 	/// <summary>
 	/// The help row for a cell under the pointer, idle, and the person's pointer (<c>FUN_00486d90</c>). A guest it would
@@ -1470,6 +1480,8 @@ public class Level
 	/// (<see cref="UI.WindowStack.PointerOnTheView"/>).</param>
 	internal int WorldHelpRow( int x, int y, int person, bool onTheView = true )
 	{
+		HoverPosted = false;
+
 		// Off the view the park runs no hover (0x00488575): nothing is posted, so the row and the pointer stand.
 		if ( !onTheView )
 		{
@@ -1477,36 +1489,49 @@ public class Level
 			return _postedRow;
 		}
 
-		// Coming onto the view the hover runs at once with the thing forgotten, and the category is nought after it
-		// (0x0048884e to 0x00488870), so the next hover posts the same person's row, and sets them idle, again.
+		// Coming onto the view from a control, whose leaving emptied the bar, the hover runs with the thing forgotten and
+		// the category is nought after it (0x0048884e to 0x00488870); the timer's hover after that reads the cell picked
+		// before the pointer moved. So both run at the last place on the view, the second posting its row if its arm posts
+		// one, a member's again, and the next hover is at the pointer's own place (docs/exe/park-engine.md, "The hover
+		// after a return to the view").
 		if ( !_onTheView )
 		{
 			_onTheView = true;
 			_rowPerson = 0;
-			var row = WorldHelpRow( x, y, person, onTheView );
+			_postedRow = -1;
+			WorldHelpValues = [];
+
+			var (lastX, lastY, lastPerson) = _lastHover ?? (x, y, person);
+			WorldHelpRow( lastX, lastY, lastPerson, onTheView );
+			var posted = HoverPosted;
+
 			_rowPerson = 0;
-			_categoryNought = true;
+			_category = 0;
+			var row = WorldHelpRow( lastX, lastY, lastPerson, onTheView );
+			HoverPosted |= posted;
 
 			return row;
 		}
+
+		_lastHover = (x, y, person);
 
 		var standingValues = WorldHelpValues;
 		WorldHelpValues = [];
 		PickPointer = false;
 
-		// Under a park screen the original runs no hover and posts nothing (0x00488569), so its row is whatever was posted
-		// last, the screen's own rows among them: not measured. Here the row is none.
+		// Under a park screen the original runs no hover and posts nothing (0x00488569), so the row last posted stands.
 		if ( UI.WindowStack.ParkScreenOpen || Park is not { } park || ParkPeople.Current is not { } people )
-			return Posted( -1, 0 );
+		{
+			WorldHelpValues = standingValues;
+			return _postedRow;
+		}
 
 		// With a tool armed or a hand full the hover runs, forgets the thing and leaves the category nought, and posts the
 		// empty row only if the last category was not nought (0x00486fd9): otherwise the old row stands.
-		var lastNought = _categoryNought;
+		var last = _category;
 
 		if ( !HoverTaken )
-			return Silent( standingValues, lastNought, emptyAfterACategory: true );
-
-		_categoryNought = false;
+			return Silent( standingValues, last, emptyAfterACategory: true );
 
 		switch ( PersonUnder( person ) )
 		{
@@ -1515,10 +1540,10 @@ public class Level
 				PickPointer = true;
 
 				if ( guest.VisitorNumber == 0 )
-					return Posted( 554, person );
+					return Posted( 554, person, 7, last );
 
 				WorldHelpValues = [(3, $"{guest.VisitorNumber}")];
-				return Posted( 553, person );
+				return Posted( 553, person, 7, last );
 
 			case PersonPick.Member:
 				var member = people.Staff.First( staff => staff.ThingId == person );
@@ -1534,42 +1559,42 @@ public class Level
 					Log.Info( $"Park: hover set thing {person} idle from {was} on mGameTick {ParkState.GameTick}" );
 				}
 
-				return Posted( 555, person );
+				return Posted( 555, person, 9, last );
 
 			// Off a person the category falls to nought, so the same person's row is posted again when the pointer returns.
 			// Where the guests decide, the empty row is posted only after a category (0x004870f3); with a locator open
 			// otherwise, never (0x0048721c).
 			case PersonPick.Nothing:
-				return Silent( standingValues, lastNought, emptyAfterACategory: GuestsDecide( LocatorOpen, Input.Held ) );
+				return Silent( standingValues, last, emptyAfterACategory: GuestsDecide( LocatorOpen, Input.Held ) );
 		}
 
 		switch ( GroundArmAt( x, y ) )
 		{
 			case GroundArm.Ground:
-				return Posted( 441, 0 );
+				return Posted( 441, 0, 2, last );
 
 			case GroundArm.Path:
-				return Posted( 442, 0 );
+				return Posted( 442, 0, 1, last );
 
 			// The gate's category 14 and a ticket booth's 13 put up the pick hand, pointer 2 (0x00487868, 0x004877d3).
 			case GroundArm.Gate:
 				PickPointer = true;
-				return Posted( 459, 0 );
+				return Posted( 459, 0, 14, last );
 
 			case GroundArm.Booth:
 				PickPointer = true;
-				return Posted( 460, 0 );
+				return Posted( 460, 0, 13, last );
 
 			case GroundArm.Silent:
-				return Silent( standingValues, lastNought, emptyAfterACategory: false );
+				return Silent( standingValues, last, emptyAfterACategory: false );
 
 			case GroundArm.NoCategory:
-				return Silent( standingValues, lastNought, emptyAfterACategory: true );
+				return Silent( standingValues, last, emptyAfterACategory: true );
 
 			// A queue's category 3, an object's 4, type 0x15's 6, a track ride's 5: their rows are not built, and counted.
 			case GroundArm.UnbuiltRow:
 			default:
-				return Posted( -1, 0 );
+				return Posted( -1, 0, 3, last );
 		}
 	}
 
@@ -1578,21 +1603,31 @@ public class Level
 	/// posted only if the last category was not nought, and otherwise nothing is posted, so the old row and its values
 	/// stand and the thing is forgotten.
 	/// </summary>
-	private int Silent( (int Parameter, string Value)[] standingValues, bool lastNought, bool emptyAfterACategory )
+	private int Silent( (int Parameter, string Value)[] standingValues, int last, bool emptyAfterACategory )
 	{
-		_categoryNought = true;
+		_category = 0;
 
-		if ( emptyAfterACategory && !lastNought )
-			return Posted( -1, 0 );
+		if ( emptyAfterACategory && last != 0 )
+			return Posted( -1, 0, 0, last );
 
 		WorldHelpValues = standingValues;
 		_rowPerson = 0;
 		return _postedRow;
 	}
 
-	/// <summary>The row the hover posts, logged as it changes to or from a person's.</summary>
-	private int Posted( int row, int person )
+	/// <summary>
+	/// The row of an arm with category <paramref name="category"/>, posted only when the category differs from the last
+	/// hover's, <paramref name="last"/>, or the person from the last taken (<c>FUN_00486d90</c>, the ground's arm at
+	/// <c>0x00487522</c>), and logged as it changes to or from a person's. Otherwise nothing is posted and the row last
+	/// posted stands, even where a control has emptied the bar since.
+	/// </summary>
+	private int Posted( int row, int person, int category, int last )
 	{
+		_category = category;
+
+		if ( category == last && person == _rowPerson )
+			return _postedRow;
+
 		if ( person != _rowPerson || (person != 0 && row != _postedRow) )
 		{
 			if ( person != 0 )
@@ -1603,6 +1638,7 @@ public class Level
 			_rowPerson = person;
 		}
 
+		HoverPosted = true;
 		return _postedRow = row;
 	}
 

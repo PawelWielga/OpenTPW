@@ -1254,6 +1254,33 @@ string decoded. A `StringFile( Stream )` constructor does **not** avoid it, beca
 Assign `FileSystem = new BaseFileSystem( <data dir> )` before constructing anything. Otherwise the first read
 throws, and with stderr filtered that looks like "the rows are empty".
 
+### The help bar holds one posted row (Q473)
+
+The bar is the UI library's help sink `[0x007ca0c0]` (vtable `0x006ff598`, built by `FUN_00492470`, which registers it
+at `0x0077c48c` through `FUN_006595b3`), its label `[0x007ca0d8]` (shown by bit 0 of `+0x48`), its switches `+4` (set and
+cleared by `FUN_004922e0` and `FUN_00492300`) and `+0xc` (built), its control `+0x14`. Whatever posts last stands; there is no second row underneath:
+
+| Poster | What it does to the label |
+|---|---|
+| A control's `0x10001`, the pointer coming on (`FUN_0065f6d1` `0x0065fa15`: sink `+0x24`, `FUN_00492160`) | its row, asked by message `0xc` (`+0x90`, `FUN_0065bc70`; -1 is the empty string), through `FUN_00492070`; an empty row hides it |
+| A control's `0x10002`, the pointer leaving (`0x0065fa2b`: sink `+0x28`, `FUN_0066a0bb`) | hidden (`FUN_00492130`) |
+| `FUN_004924b0( text )`: the park's hover, the buy screen's `FUN_004abc80`, the camcorder's mode (`0x004bd920` to `0x004bd9d4`) | the text, or hidden when it is empty |
+
+The park's view is a control too (`[0x007cb2ac]`, `FUN_00489f50`; its row -1). On its `0x10001` `Park_MouseMessageProc`
+runs the hover once, sets the category nought (`0x0048884e` to `0x00488870`), and passes the message to the library
+(`0x004889b6`). What the pointer coming back from a control finds is in `park-engine.md`, "The hover after a return to
+the view". Measured in the original (`q473/orig/`, `PREDICTION.txt`; the stock park, 1024 x 768, the Buy button at
+(113, 590)): over ground "Left-click to build path"; on Buy its own row 469, the sink's `+6` 1 and its control the
+button's; from Buy onto a hoarding with the ground left last, 441 again; with the hoarding left last, the label hidden
+(shown 0) and still hidden 1.5 s on. With the pointer on ground below the entry-price screen, G opened it and the row
+stood, and stood after Escape. Not built here: the buy screen's and the camcorder's posts (Q495). Here
+`WindowStack.HelpRow` is the one row: a change of what is under the pointer (`WindowStack._pointed`: a control, a modal
+window's, a park screen's body or the cover, or the view) posts the control's row or -1, then the view's own post
+(`WindowStack.WorldHelpPost`, the park's `Level.HoverPosted`) is taken while the pointer is on the view. Ours posts a
+control's row again when it changes under a resting pointer; whether the original does is not decoded. Measured here
+(`q473/run1`, 10 of 10, and main's build `q473/ctl1`, which kept 441 over the hoarding and emptied the bar under the
+open screen).
+
 ## The park map — `FUN_005f0b40`, stream `0x00774da0`
 
 **It loads the shipped image *and* renders live over it** — both, not one or the other.

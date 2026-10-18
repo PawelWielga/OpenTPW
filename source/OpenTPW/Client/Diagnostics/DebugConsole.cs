@@ -1570,14 +1570,14 @@ public static class DebugConsole
 				break;
 
 			// Where the pointer is and the control under it, so a real press can be predicted before it is made. In a park,
-			// also the cursor, the help row the world gives it, and whose a right press there would be: the interface's, or
+			// also the cursor, the help bar's posted row and what it shows, and whose a right press there would be: the interface's, or
 			// the park's, which arms the quick click.
 			case "pointer":
 				var pointerStack = Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault();
 
 				if ( Level.Current is { Kind: Level.Scene.Park } pointed )
 				{
-					Reply( $"pointer: cursor {pointed.ParkCursor}, help row {UI.WindowStack.WorldHelpText} \"{Localization.FormatHelp( UI.WindowStack.WorldHelpText, UI.WindowStack.WorldHelpValues )}\", at "
+					Reply( $"pointer: cursor {pointed.ParkCursor}, help row {pointerStack?.HelpRow ?? -1} \"{pointerStack?.HelpBarText}\", at "
 						+ $"({Input.Mouse.Position.X:F0},{Input.Mouse.Position.Y:F0}) over "
 						+ (pointerStack?.Hovered is { } under ? $"control 0x{under.Id:x}" : "no control")
 						+ $"; a right press here is {(Level.RightPressTaken( pointerStack is { Covered: true } || pointerStack?.TakesRightPress( Input.Mouse.Position.X, Input.Mouse.Position.Y ) == true ) ? "the interface's" : "the park's")}" );

@@ -7738,6 +7738,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   stands; the original the same at the same views (`q472b/orig/b-run.out`, `side-by-side.png`). `PREDICTION.txt`: 13
   predictions, 10 held at last, 3 missed in run1 on the console's note (the picker held). Mutations 13 of 14 caught; the
   one left, `MapInfo`'s limits handed from the live ground, only a game run reaches (H3).
+- [x] **Q473. The help bar is one posted row.** Done 2026-10-18: built in `WindowStack` (`HelpRow`, `PostHelp`,
+  `WorldHelpPost`: a control's row as the pointer comes on, emptied as it leaves, the view's post after it) and
+  `Level.WorldHelpRow` (`HoverPosted`: posted only on a change of category or person; the return's two hovers at the
+  last place on the view, `_lastHover`; nothing under a park screen); a park screen's body is off the view. The original
+  (`q473/orig/`, rounds a to c, `poll.py`): Buy's row; from Buy onto a hoarding 441 when the ground was left last, the
+  bar empty when the hoarding was (O3 missed, explained by round c: the return's hover sees the old cell); under the price
+  screen the row stood. Ours 10 of 10 (`q473/run1`), main's build kept 441 and emptied the bar under the screen
+  (`q473/ctl1`). Mutations 13 of 14 caught (m11 equivalent). The buy screen's and the camcorder's posts are Q495. Was: From Q469: the original's bar holds whatever `FUN_004924b0` last posted,
+  the hover's, a control's and a park screen's (the buy screen's `FUN_004abc80`, its rows `0x94`, `0x96` to `0x98`, `0x21a`,
+  `0x21b`) alike, and the camcorder's own (`0x243`, `0x244`, `0x004bd920` to `0x004bd9d4`, mode 9, which ours does not
+  post); ours chooses each frame between the control under the pointer and the world's row (`WindowStack.Update`), so a
+  control's row never stands over the park, and under a park screen the world's row is -1 (`Level.WorldHelpRow`, not
+  measured). Decide what the bar holds after each first (a tool armed from a control and the pointer back over a
+  hoarding is the case Q469 left: the original keeps the control's row). Confirm in both games: the gadget's Buy button
+  hovered, then the pointer onto a hoarding; the camcorder's rows.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

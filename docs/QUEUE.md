@@ -53,14 +53,15 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q473. The help bar is one posted row.** From Q469: the original's bar holds whatever `FUN_004924b0` last posted,
-  the hover's, a control's and a park screen's (the buy screen's `FUN_004abc80`, its rows `0x94`, `0x96` to `0x98`, `0x21a`,
-  `0x21b`) alike, and the camcorder's own (`0x243`, `0x244`, `0x004bd920` to `0x004bd9d4`, mode 9, which ours does not
-  post); ours chooses each frame between the control under the pointer and the world's row (`WindowStack.Update`), so a
-  control's row never stands over the park, and under a park screen the world's row is -1 (`Level.WorldHelpRow`, not
-  measured). Decide what the bar holds after each first (a tool armed from a control and the pointer back over a
-  hoarding is the case Q469 left: the original keeps the control's row). Confirm in both games: the gadget's Buy button
-  hovered, then the pointer onto a hoarding; the camcorder's rows.
+- [ ] **Q495. The buy screen's and the camcorder's help rows.** From Q473 (`hud.md`, "The help bar holds one posted row"):
+  two posters reach the bar through `FUN_004924b0` besides the controls and the hover, and neither is built. The buy
+  screen's `FUN_004abc80` (called from `FUN_004ac270`, `0x004ac478`) posts, for the item under the pointer (its id, or -1
+  and -2), one of UIHELPTEXT `0x97`, `0x98`, `0x96` with the item's name, `0x94`, `0x21a` and `0x21b`, on a change of item
+  or state (`[0x007cc1e0]`, `[0x0075513c]`). The camcorder's mode posts by its state `[0x007cc8e4]` (`0x004bd919`): 0 the
+  empty row, 1 `0x191`, 2 `0x244` with a thing's name (`FUN_00486280`), 3 `0x243`. Decode first what calls each and what
+  moves `[0x007cc8e4]` (`0x004bd754` to `0x004bda08`, `FUN_004bf460`), then build both on `WindowStack.HelpRow`, counted
+  where reached until then. Confirm in both games: the buy screen's rows over an affordable item, a dear one and one not
+  researched; the camcorder's rows.
 - [ ] **Q475. A reflected person turns about their feet.** From the review of Q468 (`handoff/review3/VERIFY-3.md`,
   finding 2; read from code, not seen): the original reflects a picture by negating L and R about its origin
   (`0x005891f1` to `0x00589212`, corners at `0x0058922d` to `0x00589256`, u left alone; the flag 2 at `0x00589f68` is a

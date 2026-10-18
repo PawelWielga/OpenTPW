@@ -3901,7 +3901,7 @@ last posted stands. Measured in the original: the staff locator open, Mike Coope
 with his row and the hand, and off him category 0 with the row still at the foot and the arrow (`q444/orig/a-4-member-hover.png`,
 `a-2-P1.png`); the visitors' locator open, a guest whose `+0x1d8` read 9 showed "Visitor #9 : ..." and the hand, and
 bare ground category 0 no row and the arrow (`q447/orig/`). Here `Level.WorldHelpRow` answers the row, its values and
-`PickPointer`, and keeps the row last answered where the original posts nothing. Measured in both (Q467,
+`PickPointer`, and posts it (`Level.HoverPosted`) only where the original posts, on a change of category or person. Measured in both (Q467,
 `q467/`, `PREDICTION.txt`): the visitors' locator opened with Ctrl held read category 0 with "Left-click to build path"
 standing, and Ctrl let go it stood on at category 0; off the followed guest (category 7, "Visitor #13") the bar was
 emptied.
@@ -3960,8 +3960,8 @@ Measured in the original (`q451/orig/`, `PREDICTION.txt`): the flag read 1 on th
 With the staff locator open, Mike Cooper walking (state 1) went to 0 with stamp 902 on the tick the hover took
 him, and walked again at 913 (grade 3: IdleDuration 10, + 1). The locator's camera kept him under the resting pointer,
 category 9 throughout, and he was not set again. Over the gadget's buttons the pointer was the arrow, with the button's
-own row. Here `WindowStack.PointerOnTheView` (no control under the pointer, no modal window, no cover) gates
-`WorldHelpRow`, the entry runs it with the thing forgotten, and `Level.IdleCursor` is the arrow off the view. **The set
+own row. Here `WindowStack.PointerOnTheView` (no control or park screen's body under the pointer, no modal window, no
+cover) gates `WorldHelpRow`, the return runs it as below, and `Level.IdleCursor` is the arrow off the view. **The set
 itself is built on the sprite pick** (Q468; "The thing under a sprite"): `Level.WorldHelpRow` sets the member idle as it
 posts their row wherever `ParkStaffWindow.CanBePickedUp` passes. Measured in both (`q468/`, `PREDICTION.txt`): the
 original set Mike idle on the take at 907 and he walked again by 924, the pointer resting with category 9 and no second
@@ -3969,6 +3969,22 @@ set; ours set him at 810 and logged "Staff: 26 leaves idle for Walking on mGameT
 the follow carried him over eight cells. In both a member beside him who became the nearer under the pointer was taken
 and set in turn, each change a new take. The gate is hit-tested where the hover asks
 (`WindowStack.PointerOnTheView`), so the frame the pointer reaches a control takes nothing behind it.
+
+**The hover after a return to the view** (Q473; the bar itself is `hud.md`, "The help bar holds one posted row"). The
+control left behind empties the bar (its `0x10002`), and the timer's hover after the layer's `0x10001` reads the cell
+picked before the pointer moved, so the hovers of the return are at the last place on the view: the `0x10001` hover with
+the old category and the thing forgotten, then, the category nought, one that posts that place's row if its arm posts
+one; the next hover is at the pointer's own place. Why the pick lags is not read from code (the timer's pick
+`FUN_0046c2a0` at `0x00488557` reads the library's pointer `[0x00faa540]`, `[0x00faa544]`, before the hover at
+`0x00488582`). Measured in the original (`q473/orig/`, `PREDICTION.txt`, a single jump from the Buy button onto the
+hoarding (42,16); `poll.py`, about 280,000 reads in 2.5 s): with the ground (43,16) left last, the leave hid the label at
+556.7 ms, the layer's entry came at 584.9 ms, the category went 2, 0, then 2 with the cell still 2092 and the label shown
+with 441, the cell became 2091 at 585.6 ms and the category 0 at 589.6 ms, 441 standing; with the hoarding left last
+the category stayed 0 and the label hidden. A park screen's body is a control too: coming off it the category is
+nought, so the hover posts again once the screen is shut. Here `Level.WorldHelpRow` keeps the last place on the view
+(`_lastHover`) and runs both hovers there on the return, the second set idle of a member from idle, so with the stamp
+nought; every arm posts only on a change of category or person (`Level.Posted`), and under a park screen nothing is
+posted, so the row stands beside an open screen.
 
 **Who a cell's list names as people walk** (Q446). Every person is relinked into the cell they stand on whenever it
 changes: the walk tick `FUN_004fa2a0` calls `FUN_0050b6a0` at `0x004fa2fc` (the placement `FUN_004fa930` at
