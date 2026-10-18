@@ -7912,6 +7912,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`0x1be`, 446, `0x004874ab`) and `HOVER_TYPE_15_ROW` (`0x1c0`, 448, `0x00487742`). Decode each arm's tests first (the
   object's VARM value and the rows its kinds take, `0x00487665` to `0x00487728`), then build the queue's and the
   object's, which every Lost Kingdom park reaches. Confirm in both games: the pointer over a ride, a shop and a queue.
+- [x] **Q704. The research screen's panels, decoded (Full Simulation only).** From Q245 and Q410; the decode only,
+  lane B, in the private Ghidra copy, nothing built. `hud.md`, "The research screen's panels": the stream's five
+  panels by kind (rides, upgrades, shops, sideshows, miscellaneous) with their sliders, arrows, bar and pump; the bar
+  is the points left as a per cent of the DEAREST project's cost (`0x00503ac0`), which the original's own bytes answer
+  under unicorn nine of nine (`q704/fill.out`) and on Alexah's fresh Full Simulation jungle (rides 552, shops 675,
+  sideshows 481, miscellaneous 829, upgrades 829 of 1024); the label UITEXT 446 with the estimated price; the pump's
+  four states and its speed `(rate + 20) x 0x10000 / 100` stepped once a UI pass; back's pick (`0x005036a0`); the
+  handler's sliders and sounds; the advisor's line, message 200, sample 391. The build is Q705.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

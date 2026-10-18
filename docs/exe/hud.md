@@ -511,8 +511,101 @@ of `ResearchAbility` over the researchers, `0x0078545c + 12 x grade`) and `most`
 division is by 30 through the magic `0x88888889`). The limit is kept at `[0x007cc1c0]`. The inverse, for a drag
 (`0x004a99ea`-`0x004a9a17`), clamps the slider's value to the limit and writes `workload = 30 x value / limit + 70` through
 `FUN_00503900`. So the workload runs 70 to 100 along the slider's travel up to the limit. Five calls to the text-colour
-setter `0x0065c5d5` in `FUN_004aa480` pass (224, 86, 86, 255): all five of the literal calls of that colour in the 134 the scan found; which of its labels they colour is not assigned, nor is the ball's travel (`0x0066b088`, `0x0066b771`,
-`0x0066bb9b`).
+setter `0x0065c5d5` in `FUN_004aa480` pass (224, 86, 86, 255): all five of the literal calls of that colour in the 134 the scan found; they colour the five panels' project labels (below). The ball's travel (`0x0066b088`, `0x0066b771`,
+`0x0066bb9b`) is not read.
+
+### The research screen's panels (Q704)
+
+Read in the private Ghidra copy (lane B, 2026-10-18): the opener `ResearchScreen_Open` (`0x004aa480`), the handler
+`ResearchScreen_OnMessage` (`0x004a96b0`), the five panels' procs and the lab's getters below; the stream `0x00754490`
+walked (`lib/uistream.py`, `q704/stream.txt`), its sixteen meshes resolved (`meshhash.py`) and its help rows read
+(`UIHELPTEXT.str` 238, 244 to 260). Nothing built and neither game run: the screen opens only in Full Simulation.
+The advisor's own line for it (below) describes the same screen.
+
+**The stream.** Rects on the 2048 x 1536 layout. The frame `0xd2cff` (186, 30)-(2018, 1032) is `w_res` (the node
+`research_wind`); the title `0xd2d00` (866, 67)-(1338, 146) takes UITEXT 184, "Research Lab" (message `0x15`). Five
+panels, one a kind, each (785, y)-(1830, y + 150), a `res_panel` (node `research`) skinned `res_pipe` (node `pipe`):
+
+| Panel | y | Kind | Its slider | Slider help | Icon `0xd2d02` | Arrows' help | Proc |
+|---|---|---|---|---|---|---|---|
+| `0xd2d01` | 158 | 0 rides | `0xd2d0e` | 244 | `h_ride` | 249, 250 | `0x004aa0c0` |
+| `0xd2d07` | 318 | 4 upgrades | `0xd2d0f` | 245 | `h_upg` (node `h_upgrade`) | 251, 252 | `0x004aa300` |
+| `0xd2d08` | 479 | 1 shops | `0xd2d0d` | 246 | `h_shop` | 253, 254 | `0x004aa360` |
+| `0xd2d09` | 640 | 2 sideshows | `0xd2d0c` | 247 | `h_show` | 255, 256 | `0x004aa3c0` |
+| `0xd2d0a` | 801 | 3 miscellaneous | `0xd2d0b` | 248 | `h_feature` | 257, 258 | `0x004aa420` |
+
+Inside each panel: the icon `0xd2d02` (type 6, x 816-919), the arrows `0xd2d03` `b_sleft` (x 924-1007) and `0xd2d04`
+`b_sright` (x 1012-1096), the bar `0xd2d05` (type 9, x 1132-1497, help 259, "Name of item being researched / The coloured
+bar indicates time remaining until complete") and the pump `0xd2d06` (type 6, `res_fluid`, node `fluid`, x 1555-1712,
+help 260, "Research pump - its speed indicates how fast the research is progressing"). The five effort sliders sit
+left of their panels at x 472-769 (type 3, flags `0x61`, a `b_scroller` ball on a `res_slider` track, node
+`effortslidea`), range 0 to 100, each set at the opening to its kind's effort (`Lab_KindEffort`, `0x00503850`). The
+workload slider `0xd2d10` (234, 148)-(464, 968) (flags `0x51`, `res_mainslider`, node `effort`, help 238, "Scientists'
+work rate") holds the dial `0xd2d11` (`res_faces`, node `cameo`) and the gauge `0xd2d12` (type 9, `effortguage.wct`);
+its arithmetic is the section above. The close button (1889, 844)-(1972, 927) is `b_okay` (id -1, help 1).
+
+**The bar.** `ResearchScreen_SetFill( kind )` (`0x004a9bd0`) sets the panel's `0xd2d05` to `(100 - left) x 1024 / 100`
+of 1024, as the skill bar's, where `left` is `Lab_PercentLeftOfDearest( kind )` (`0x00503ac0`): the points left in the
+kind's current project **as a per cent of the dearest project's cost** (`mMostExpensiveProject`, `+0x1464`),
+`(mCost - mResearchDone) x 100 / dearest mCost` in the FPU, cut to a whole number by `__ftol`; nought with no current
+project, a cost of 0.1 or less (`[0x007007e8]`), or a dearest cost of 1.0 or less (`[0x007007f0]`). So the bar fills
+as the project goes, a cheap project starts nearly full, and a kind with nothing left reads full. The original's own
+bytes answer so under unicorn (`q704/fill.py`, `lib/exeleaf.py`): 300 of a dearest 1000 with nothing done is 30 left,
+716 filled; 333 is 33; the dearest itself one point in is 99, 10 filled. On Alexah's fresh Full Simulation jungle
+(`restart.INTS`, dearest project 3 at 1300; `q704/fslab.out`) the bars open at rides (Dino Karts) 552, shops (1212) 675,
+sideshows (1304) 481, miscellaneous (Stone Head) 829 and upgrades (1100's tier 1) 829. The bars are set at the
+opening, on each tick of the screen's timer (message `0x10`; it arms `0x80080` at 1000 ms on `0x15`, as the buy screen
+does), after a workload drag, after an arrow and when a kind finishes (`Research_OnKindFinished`).
+
+**The bar's text.** `ResearchScreen_SetProjectText( kind )` (`0x004aa120`) letters the bar's label with UITEXT 446,
+"{P14}" over "Estimated price : $ {P13}": P14 the current project's item's name, P13 `Lab_KindEstimatedPrice( kind )`
+(`0x00503a20`), for kinds 0 to 3 the item's control record's `+4` (`Upgrades[0].CostOfUpgrade`, copied at the record's
+making, `FUN_004d3e00`) and for kind 4 `Upgrades[level].CostOfUpgrade` of the item upgraded (`+0x1b8 + 0x40 x level`).
+With no current project the label is UITEXT 185, "All Items Researched", and that kind's pump is refreshed. Each label
+is a `LabelSkin` aligned (1, 1) by `0x0065c428` (with `0x0065c4b9( 1, 1 )`), in font slot 6 (`FUN_00485a70`), coloured
+(224, 86, 86, 255).
+
+**The pump.** Each panel keeps four slots: 0 the position (16.16), 1 a clock stamp (`FUN_0065968e`) written and never
+read, 2 the speed, 3 the state. The opening sets slot 0 to `0x30`, state 0 and the pump's frame `0x30`.
+`ResearchPump_SetRate( panel, rate )` (`0x004a95b0`): a rate of nought turns a running pump (state 1 or 3) to state 2
+at frame `0x20`; any other rate starts a stopped or stopping one (0 or 2) in state 3 at frame `0x30`, and sets the speed
+to `(rate + 20) x 0x10000 / 100` (a rate of nought leaves the speed as it was). `ResearchPump_Tick` (`0x004a9fc0`, which
+each panel's proc runs) acts on message `0x1e`, which `UI_TickTree` sends every control of the tree once a UI pass
+(`FUN_0048a580`, run from six places in `Game_StateMachine`), so no clock paces it: state 1 runs frames `0x00` to `0x1f`
+and starts again; state 3 runs `0x30` to `0x3f`, then state 1 from 0; state 2 runs `0x20` to `0x2f`, then stops in state 0
+at `0x30`. Each pass adds twice the speed, so a pump moves `2 x (rate + 20) / 100` frames a pass. The rate is
+`Lab_KindRate( kind )` (`0x00503980`; `advisor-park.md`, "The rate") where the kind has a current project
+(`Lab_KindCurrentItem`, `0x005039f0`), and nought where not. `ResearchScreen_RefreshPumps( kind or -1 )` (`0x004a9c70`)
+hands the pumps their rates, then sets the parameter `0x12` of the loop sound `0x9a` to the mean of the five rates. It
+runs at the opening, after an effort or workload drag (not while the opening seeds the sliders, `[0x007cc1bc]`), and
+for a kind left with no project.
+
+**The arrows.** A panel's proc on `0x100` (a click): `0xd2d03` runs `Lab_PickPreviousProject( kind )` (`0x005036a0`), the
+other `Lab_PickNextProject`, then the text and the bar. Back takes the nearest open project of the kind at or under its
+highest group before the current one, else the last such after it, else keeps the current, which is set to -1 only if
+it is done; for kind 4 the same test of the upgraded item as forward's (`park-engine.md`, "The next project").
+
+**The sliders.** Message `0x800` from a slider: the five efforts go to `Lab_SetEffort( kind, value )`, the value
+unchanged; the workload slider's value is held to the limit and `Lab_SetWorkLoad( 30 x value / limit + 70 )`, then all
+five bars are set, the dial `0xd2d11` to frame `2 x (30 x value / limit) / 7` (0 to 8), and the parameters `0xc` and `0xd`
+of both loop sounds (`0x9a`, `0x9b`) to `value x 100 / 1024`. A press on an effort slider (`0x801`) starts sound `0x9c`
+with its parameters `0xb` and `0xa` the value, a drag updates them, the release (`0x802`) fades it. The limit and the knob
+are set again on `0x1e` when the researchers' summed ability changes. **Read, not measured:** a slider's value setter
+(vtable `+0x1c`, `Slider_SetValue` `0x0066b508`, then `Slider_SetPosition`) sends `0x800` to its parent whenever the
+value changes, and the opening sets the knob after the limit, so the opening runs `Lab_SetWorkLoad` on the knob's round
+trip, `30 x ((w - 70) x limit / 30) / limit + 70` in whole numbers, which is `w - 1` where it does not divide back. With
+Full Simulation's `most` of 60, of the summed abilities 2 to 12 those of 3, 6, 9 and 12 do so at 85, and each opening would take the work load
+down one (85, 84, 83...; `q704/knob-roundtrip.txt`). The efforts' seeding writes each effort back unchanged.
+
+**Opening and closing.** The opening loops sounds `0x9a` and `0x9b` and ends with `FUN_00486b00( 200 )`, the
+advisor's line for the screen (row 200, posted-only, response 419, sample 391: "this is where you discover new stuff to
+build, dragging the horizontal sliders sets how much research gets done in each field, you know, like rides or shops,
+and those pumps on the right show how fast the work is going; if you want to change which item is being researched,
+click the left and right arrow buttons; drag the vertical slider on the left to determine how hard your researchers
+work", `global-speech-transcripts.tsv`). Message 5 and the close button close it; `0x14` (destroyed) stops the three
+sounds and withdraws message 200. The knob's own proc (`ResearchScreen_KnobProc`, `0x004a9f90`) clears `[0x007cc1dc]`
+when it goes. Not read: the pump's frame count in `res_fluid`, how the gauge and the dial draw, what the sounds'
+parameters do.
 
 ### The Staff Training Budgets screen (Q352)
 

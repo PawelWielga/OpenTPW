@@ -1346,7 +1346,7 @@ each besides the set-up and the load, `Lab_SetEffort` (`0x00503870`) and `Lab_Se
 called only by the research screen, `FUN_004a96b0`, which Instant Action never opens (`hud.md`, "The research
 opener and its two boxes"). So an Instant Action park researches by its file's efforts and work load for ever,
 only while it has a researcher; the screen's arrows are the only other writers of a kind's current project
-(`Lab_PickNextProject` forward, `FUN_005036a0` back). `mLabActive` is set again when a researcher is made
+(`Lab_PickNextProject` forward, `Lab_PickPreviousProject` `0x005036a0` back; `hud.md`, "The research screen's panels"). `mLabActive` is set again when a researcher is made
 (`0x00502600`) or removed (`0x00502920`), from the word at world `+0x1da742` (`FUN_005041f0`); a change posts
 message `0x13` with 5 or 6, whose handler `FUN_00481af0` returns in type 2.
 

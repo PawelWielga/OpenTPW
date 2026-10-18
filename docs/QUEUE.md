@@ -312,7 +312,7 @@ filed the items that cite it.
   the same quarter tick (counted afresh here, said at `ParkState.DevelopedCells`), Full Simulation (not asked: the row
   is either mode's), the other three themes. Not heard in either game.
   From Q410 (`hud.md`, "The research opener and its two boxes"): the boxes are built; the research screen (six effort
-  sliders, `FUN_004a96b0`) is counted and waits on the lab (Q701; the screen is Q704). In no game run: the bar's type `0x13` (its rows
+  sliders, `FUN_004a96b0`) is counted and waits on the lab (Q701; the screen is Q705). In no game run: the bar's type `0x13` (its rows
   score only in Full Simulation; the test holds it), a carried hire that is a researcher, the other three themes.
   From Q397 (`hud.md`, "The analyser's other stamps"): `mParkLastOpened` is kept and nothing in either game reads it. In
   no game run: an open from a shortcut key (`InputButton.OpenPark` is not bound), a park made with no file, Full
@@ -1104,12 +1104,18 @@ filed the items that cite it.
   (`FUN_00516b00`); in Full Simulation only once every park record is marked. Row 168 (`0xa8`) has no poster found.
   `lib/labsim.py` puts Easymode's last project, Super Toilet, on the 1177th hand-out, tick 24280, with one researcher;
   a run can hire more or start from a file with less left. Decode what the End feature does first if no item has.
-- [ ] **Q704. The research screen (Full Simulation only).** From Q245 and Q410: the six effort sliders
-  (`FUN_004a96b0`/`FUN_004aa480`, `RESEARCH_SCREEN` counted), the only writers of the efforts and work load
-  (`Lab_SetEffort` `0x00503870`, `Lab_SetWorkLoad` `0x00503900`) and the arrows' project pick (`Lab_PickNextProject`
-  forward, `FUN_005036a0` back); the workload slider is decoded (`hud.md`, "The research screen's workload slider and
-  its red text"), the panels' fluid and fill are the fork review's leads (`0x004a95b0`, `0x004a9fc0`, `0x004a9bd0`,
-  `0x00503ac0`). Instant Action never opens it. Decode the panels first.
+- [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
+  "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
+  stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge
+  (`Lab_SetWorkLoad`), the arrows (`Lab_PickNextProject`, `Lab_PickPreviousProject`), each bar's fill and red label
+  (UITEXT 446, or 185 with nothing left), the pumps (speed per UI pass, so on `Time.Delta` at the original's rate: say
+  the deviation at the site), the 1000 ms timer, sounds `0x9a` to `0x9c`, advisor message 200 posted and withdrawn.
+  After Q701 (the lab spends): without it the bars and pumps never move. Confirm in a Full Simulation jungle from
+  Alexah's `restart.INTS` with a researcher hired: the five bars at 552, 675, 481, 829 and 829 of 1024 (log and
+  census) and the screen photographed beside the original's (lane A). Before copying the opening's knob round trip,
+  lane A checks it in the original (`tpwmem.py`, the lab's `+0x1460`): with one researcher whose summed ability is 3,
+  does each opening take the work load from 85 down one (`hud.md` predicts 84, then 83)? Not read: the pump's frame
+  count in `res_fluid`, how the gauge and dial draw, the sounds' parameters.
 - [ ] **Q141. Golden tickets are never awarded. Decode first, and Alexah's call on when.** Found by Q69. What reaches
   the advisor's glints in the original is a golden-ticket award: only gesture rows 1 and 13 carry the glint flags, and
   only its lines use them (`docs/exe/scenes.md`, "Gesture table"). Those lines play on the park's own advisor, model slot
