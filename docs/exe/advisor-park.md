@@ -4879,7 +4879,7 @@ game run. Row numbers are metadata rows; the rows' keys are in the Advisor.sam s
 | 4 `VisitorsHungry` (message 4) | `0x0059ca00` | the same with hunger `+0x1a8` (`0x004c9340`), `HungrierThan` `+0xb8`, `ScorePerHungryPerson` `+0xb4` | unbuilt |
 | 85 `FeaturesNotEnoughToilets` | `0x0059e420` | **always nought**: it runs the average toilet queue (`0x004cca40`) and discards it (`FSTP ST0`; `XOR EAX,EAX; RET` at `0x0059e444`), reading neither `.AverageQueueLongerThan` nor `.Score`. Its lines (responses 233-234) are never said by the original | polled, counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; a faithful nought leaves the census |
 | 125-127 prank advice | `0x0059f360`, `0x0059f370`, `0x0059f380` | the keys `PrankSbomb.Score`, `PrankLitter.Score`, `PrankBalloon.Score` (`+0x3d4`, `+0x3d8`, `+0x3dc`), 35 each in the shipped file (above the 25 cut) | unbuilt |
-| 167 (message `0xa7`) | `0x0059f9a0` | the constant 10000; posted at `0x00503f8d` when the last research project is finished (`0x00503d40`; Q245's note) | unbuilt |
+| 167 (message `0xa7`) | `0x0059f9a0` | the constant 10000; posted when the last research project is finished, at `0x00503ee9` in Instant Action and at `0x00503f8d` in Full Simulation once every park of the player's is all researched (`park-engine.md`, "The lab at work") | unbuilt |
 | 168 (message `0xa8`) | `0x0059f9b0` | the constant 9999; nothing found posts it | unbuilt |
 
 - Rows 3 and 4 ask for no door (`0x0051a280` is not called, unlike rows 82, 85 and 86), no guests-inside division and no age: the

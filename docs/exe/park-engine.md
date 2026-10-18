@@ -1227,10 +1227,9 @@ project of twenty bytes:
 `FUN_00503330`, a kind at a time: `effort` is `ResearchCategories[kind].Effort` (`0x00785568`) capped at 100,
 `output` is `effort * 100 / the efforts' sum * mWorkLoad / 100` in whole numbers, the current project the first
 of the kind not done whose group is at or under the kind's highest, and `FUN_00503b80` raises the highest group
-while the share done of the projects at or under it is at least the dword at `0x00785540 + 4 * group`
-(`ResearchTech[group].PercentageForThisTech` by its place before the efforts; the key is not walked from the
-schema). The lab also listens for event `0x11` (`FUN_00503d40`): a project finished asks `FUN_00504580`
-for the item's next upgrade.
+while the share done of the projects at or under it is at least the dword at `0x00785540 + 4 * group`, which
+is `ResearchTech[group + 1].PercentageForThisTech` ("The lab at work", below). The lab also listens for event
+`0x11` (`FUN_00503d40`): a project finished asks `FUN_00504580` for the item's next upgrade.
 
 **The catalogue's order** is the item folders `rides`, `features`, `upgrades`, `shops`, `sideshow`, and each
 folder's items by their names in capitals (`SUPBOG` before `S_PLANT`): the order of the control records and
@@ -1286,6 +1285,82 @@ row 80's line in its own fresh park is not seen there; no file of this game's wa
 fresh park is not saved, `SAVE_PARK_WITH_NO_FILE`). The other three themes' fresh labs are measured in the
 original's two other files and not made here in any run. An upgrade item is catalogued and nothing builds one.
 Not heard in either game.
+
+### The lab at work: the spending, a project finished, the end of research
+
+Q245, read in the private Ghidra copy (lane B, 2026-10-18); nothing built, neither game run. The lab is the
+thing above. In memory a project is 20 bytes from `+0xc` (`+0` the item's word, `+4` `mCat` a dword, `+8` the
+group's byte, `+9` the upgrade level's, `+0xc` `mCost`, `+0x10` `mResearchDone`, both floats) and a kind 16 bytes
+from `+0x140c` (`+0` effort, `+4` output, `+8` current project, `+0xc` highest group, a byte); `mNumProjects`
+`+0x145c`, `mWorkLoad` `+0x1460`, the dearest `+0x1464`, `mLabActive` `+0x1468`. The kinds are 0 rides, 1 shops,
+2 sideshows, 3 features, 4 upgrades.
+
+**Only a researcher spends.** `Lab_SpendPoints` (`0x00503430`) has one caller, the researcher's pre-step
+(`0x005029d1`; `ride-operation.md`, "The research, in both games"), with the grade's `ResearchAbility`. It adds
+the efforts of the kinds whose current project is set and not done (`0x00503450`..`0x00503466`); with none, it
+spends nothing. Then, kind 0 to 4, each kind with an effort and a current project gets effort / that sum ×
+`mWorkLoad` × ability × 0.01 (`[0x007007e4]`), worked in the FPU and stored as a float (`0x005034d0`), and
+`LabProject_AddPoints` (`0x00504630`) adds it to that project. The sum is taken once, so a kind that finishes
+mid-share does not change the others' shares that turn.
+
+**A project finished** (`0x0050466f`: the points at or over the cost; points past the cost are kept in the
+project and carried nowhere): the item's control record (`FUN_004d3d10`) is marked researched (`+0x10`,
+`0x005046a1`) and its tier set to the project's level (`+0x14`, `0x005046c0`), and message `0x11` (vtable
+`0x006fd800`, the item at `+8`, `mCat` at `+0xc`) is sent at once to its four listeners (`MsgBus_Send`,
+`0x0040fb10`, through `Thing_DispatchMessage` `0x0050b550` by the listener's kind byte):
+
+| Listener | On message `0x11` |
+|---|---|
+| the lab (kind `0xe`, `Lab_OnMessage` `0x00503d40`) | `LabProject_MakeNextUpgrade` (`0x00504580`) writes the item's next tier with a research cost at the table's end and counts it in `mNumProjects` (`0x00503da2`); `Lab_RaiseHighestGroup` (`0x00503b80`) for kind `mCat`; then message `0x12` with `mCat`; then the end test (below) |
+| the advisor (kind `0xb`, `Advisor_OnMessage` `0x0059b060`) | by `mCat`: 0 → message `0x5d`, 1 → `0x5f`, 2 → `0x60`, 3 → `0x61`, 4 → `0x5e`: rows 93 to 97, `Research*Researched`, scores 150, 130, 130, 110 and 90 in `Advisor.sam`; any other kind logs "unknown research category" |
+| the park analyser (kind `0xd`, made by `FUN_004c58c0`, subscribed in `FUN_004c7a90`; handler `FUN_004c7370`) | the item into its tab's ring of the recently researched, the tab the item's `Info.WhichUIType` (`hud.md`, the row state 2) |
+| the challenge manager (kind `0x13`, `ChallengeManager_OnMessage` `0x004d2860`) | for `mCat` 0 only, challenge type `0x10` with 1 (`FUN_004d27a0`) |
+
+**The group.** `Lab_RaiseHighestGroup( kind )` takes the kind's projects at or under its highest group and their
+share done in whole per cent; while that is at least the dword at `0x00785540 + 4 × highest` (`0x00503c19`) and
+the highest is under 7, the highest goes up one. That table is `ResearchTech[highest + 1]`: q198's schema walk
+(`q198/decode/scratch/balschema.txt`) puts `ResearchTech[0]` at `0x0078553c`, slot 317, and both park files bear
+it out: each kind's highest group is 1 in Alexah's fresh `restart.INTS` and in `Easymode.TPWI`, where reading
+`ResearchTech[1]`, 0, would have raised it at once. So with `Standard.sam`'s 0, 0, 80, 85, 85 a kind's group 1
+opens group 2 at 80% done, group 2 opens 3 at 85% and 3 opens 4 at 85%; `ResearchTech[5..]` are set by no file
+and were not read. A raise with any of the kind's projects not done posts advisor
+message `0x85` + kind for kinds 0 to 3, rows 133 to 136 `NewResearchGroup*`, score 40; kind 4 posts nothing.
+
+**The next project.** Message `0x12` reaches kind `0x11`'s handler (`FUN_0050ca50`), whose case `0x12` runs
+`Research_OnKindFinished` (`0x004aaec0`, through `0x00481520`), screen open or not: unless the kind's current
+project is set and open (`Lab_KindHasOpenProject`, `0x00504040`), `Lab_PickNextProject` (`0x005034f0`) takes the first project of the
+kind, open and at or under its highest group, after the current one; else the first such before it; else none,
+the current set to -1. For kind 4 a project is eligible only while the item it upgrades (`AddOn.UpgradesId`,
+`+0x284`, or the item itself) is researched and, where that item has a `UsageInfo.GoldenTicketCost`, unlocked
+(`FUN_004d4b70`). With the screen open (`[0x007cc1d8]`) the panel is refreshed (`0x004aa120`, `0x004a9bd0`).
+
+**The end of research** (`0x00503e15`..`0x00503fb7`): when every project in the table is done, the player's
+progress (`[0x00f7c58c]`, made if absent) marks this park all researched (`PlayerProgress_MarkParkAllResearched`,
+`0x005b0ca0`: byte `+0xb9` of its current park's record). In game type 2, Instant Action, the lab then raises
+advisor message `0xa7` (row 167, `0x00503ee9`) and the world builds the "End" feature (`FUN_00516b00`); in type 0,
+Full Simulation, the same only when every park record of the player's is so marked
+(`PlayerProgress_AllParksAllResearched`, `0x005b0c40`, `0x00503f8d`); in type 1 nothing more.
+
+**The automatic mode is the screen refused, nothing more.** The efforts and the work load have one writer
+each besides the set-up and the load, `Lab_SetEffort` (`0x00503870`) and `Lab_SetWorkLoad` (`0x00503900`), both
+called only by the research screen, `FUN_004a96b0`, which Instant Action never opens (`hud.md`, "The research
+opener and its two boxes"). So an Instant Action park researches by its file's efforts and work load for ever,
+only while it has a researcher; the screen's arrows are the only other writers of a kind's current project
+(`Lab_PickNextProject` forward, `FUN_005036a0` back). `mLabActive` is set again when a researcher is made
+(`0x00502600`) or removed (`0x00502920`), from the word at world `+0x1da742` (`FUN_005041f0`); a change posts
+message `0x13` with 5 or 6, whose handler `FUN_00481af0` returns in type 2.
+
+**In Lost Kingdom's Easymode** (`q245/easymode-lab.txt`, `parkfile.py -l`): efforts 100, 15, 30, 25 and 0, work
+load 85, and the one researcher, grade 2, has Easy ability 12, so a hand-out gives 6, 0.9, 1.8, 1.5 and nothing:
+the file's points, 30, 4.5, 9 and 7.5, are five hand-outs each. Every one of its eight ride projects has
+`Upgrades[1..2].CostOfResearch` 0 in its `Easy_` layer, so a finished ride appends no upgrade: tiers 1 and 2 are
+marked researched at once, and the end is reachable. **What the decode gives the build to meet** (`lib/labsim.py`,
+these rules in float32 over the file, every hand-out taken, the first on tick 760 as Q134 counted them):
+Dino Karts (1150) researched on the 95th hand-out, tick 2640, with the rides' group raised to 2; Stone Head
+(1414) on the 162nd, tick 3980; Laughing Hyenas (1304) on the 384th, tick 8420; Fries (1212) on the 496th, tick 10660,
+its float sum landing on 450 to a rounding; the last of the 24, Super Toilet (1419), on the 1177th, tick 24280, about twelve
+minutes in, and with it row 167 and the End. `labsim.py` takes `ResearchTech[5..]` as nought, which moves only
+when rows 133 to 136 are posted: no Easymode project is above group 4. Not run in either game.
 
 ### Entering and leaving first person: a click on the ground
 

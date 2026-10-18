@@ -2789,7 +2789,7 @@ animation not queued again. So a spell is WorkDuration + 1 sweeps in state `0xf`
 4 for 4 and 5, 5 for 7, 2 for 6 and everything above) and on any class but 3, 4 and 5, on every sweep where
 mGameTick % 20 is nought (`0x00502984`), hands `ResearcherConstsPerGrade[grade].ResearchAbility` (`0x0078545c`,
 stride 12) to the lab: `FUN_00519550` for the lab, then `FUN_00503430( ability )`, which shares the points among
-the five categories being researched by each one's effort and calls `FUN_00504630` for each with effort / the efforts' sum × the lab's `+0x1460` × ability × 0.01 (`[0x007007e4]`, `0x005034a6`..`0x005034ca`). `Standard.sam` gives
+the kinds with an open project by each one's effort and calls `FUN_00504630` for each with effort / those efforts' sum × the lab's `mWorkLoad` (`+0x1460`) × ability × 0.01 (`[0x007007e4]`, `0x005034a6`..`0x005034ca`; the spending and what a finished project does are `park-engine.md`, "The lab at work"). `Standard.sam` gives
 2, 3, 4, 5, 6 and jungle's `Easy_Standard.sam` 6, 9, 12, 16, 20, which the original's memory held in the park.
 
 **The original under Proton**, stock Lost Kingdom left alone, researcher 30 (grade 2) read once a sweep from 755 to

@@ -7873,6 +7873,31 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     through one table a format that cuts each channel to its top bits (`0x005839f0`, `v >> 4` at format 2); no texture
     picks its own format, its alpha class choosing only the render state. `gby_sur1`'s red 13.5 is 7.4 after the cut,
     63.2% of its texels under 16 (`q492/census-gby_sur.txt`). The build and the decision are Q700.
+- [x] **Q245. The research lab. Decode first.** Done 2026-10-18 (lane B, the decode only): `park-engine.md`, "The lab
+  at work"; the build is Q701 to Q704. Nothing spends the researcher's points (`RESEARCH_POINTS_TO_THE_LAB`,
+  Q134, which read no further than `FUN_00503430`'s share-out) and nothing completes an item (`FUN_00504630`, which
+  sets the researched flag and the tier; `ParkResearch` says so). UITEXT `0x1d4` says research is automatic in
+  Instant Action, Lost Kingdom's Easymode; what that does is not decoded. Decode the lab's spending, the automatic
+  mode and the completion to `docs/exe/`, then split the build into its sessions. The research screen (six effort
+  sliders, `FUN_004aa480`) waits on it; Q239 is its two message boxes.
+  - **Note (fork review 2, 2026-10-16, `verify-economy-guests-paths.md` M1 and L2, `verify-ui-hud.md` L2):**
+    **finishing the last project ends an Instant Action park**: `0x00503d40` plays advisor record `0xa7` and, in game
+    type 2, calls `0x00516b00`, the End feature's only builder; in Full Simulation only once every entry of the set at
+    `0x00f7c58c` is flagged. A completion runs message `0x11`, the lab, message `0x12`, then `0x004aaec0`, whose
+    forward picker `0x005034f0` takes the first eligible project after the current one, else the first before it, else
+    none, screen open or not; a finished project's next level goes on the table's end. The screen (Full Simulation
+    only): fluid `0x004a95b0` and `0x004a9fc0` stepped once a frame message `0x1e`, refresh `0x004a9c70`, setters
+    `0x00503870` and `0x00503900`, the workload knob's limit, a progress fill per panel (`0x004a9bd0`).
+  - **Note (fork watch 2026-10-16, `verify-advisor.md`, rows 167 and 168):** finishing the last research project
+    (`0x00503d40`) plays advisor record `0xa7`, row 167, `0x0059f9a0` (`MOV EAX,0x2710`, score 10000), posted at
+    `0x00503f8d`, responses 380-381 ("you've discovered all of the items in the game"). Row 168 (message `0xa8`,
+    `0x0059f9b0`, score 9999, responses 382-384, "a special surprise animation") has no poster found; the six `PUSH
+    0xa8` in `.text` are not it. Both unbuilt (`advisor-park.md`, "Rows settled from the bytes").
+  - **Note (fork watch 2026-10-18, `verify-ui-hud.md` U5 and U2):** the screen's workload slider is decoded
+    (`hud.md`, "The research screen's workload slider and its red text"): the limit
+    `(((100 - c) / 3 + c) << 10) / most` on child `0xd2d12`, the knob `(workload - 70) x limit / 30`, the drag's inverse
+    `30 x value / limit + 70`. The five (224, 86, 86, 255) text colours are all in `FUN_004aa480`, this screen; which
+    labels they colour is not assigned, nor is the ball's travel.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

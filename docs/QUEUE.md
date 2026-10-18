@@ -137,7 +137,7 @@ filed the items that cite it.
   `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` census; its lines are never said by the original. The one fact for row 86: it
   bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no handyman. Row 291's response 551
   does not exist (a raised row 291 would be silent; nothing found posts it). Rows 125 to 127 are Q228's, rows 167 and
-  168 Q245's. Not run.
+  168 Q703's. Not run.
   From Q443 (`park.md`, "Arrivals: who comes, on what, and how often"): the leavers' draw is on the save's seed, which
   is written back, so the nearest piece is the staff strike's five records and `mForceStrike` (`ParkWorld.StaffHqState`;
   a strike changes them, Q138b, and the writer leaves them the file's, `saves.md`, the staff HQ), then the economy
@@ -317,7 +317,7 @@ filed the items that cite it.
   the same quarter tick (counted afresh here, said at `ParkState.DevelopedCells`), Full Simulation (not asked: the row
   is either mode's), the other three themes. Not heard in either game.
   From Q410 (`hud.md`, "The research opener and its two boxes"): the boxes are built; the research screen (six effort
-  sliders, `FUN_004a96b0`) is counted and waits on the lab (Q245). In no game run: the bar's type `0x13` (its rows
+  sliders, `FUN_004a96b0`) is counted and waits on the lab (Q701; the screen is Q704). In no game run: the bar's type `0x13` (its rows
   score only in Full Simulation; the test holds it), a carried hire that is a researcher, the other three themes.
   From Q397 (`hud.md`, "The analyser's other stamps"): `mParkLastOpened` is kept and nothing in either game reads it. In
   no game run: an open from a shortcut key (`InputButton.OpenPark` is not bound), a park made with no file, Full
@@ -1087,30 +1087,34 @@ filed the items that cite it.
   the bar draws in the wrong place, split down the middle. That page holds a lead read from the code and not
   measured (`UiMeter.OnDraw`'s sampler); measure before touching the meter's arithmetic. The number it shows is
   not the fault, and which guests it counts is Q148's. Confirm: the gauge photographed beside the original's.
-- [ ] **Q245. The research lab. Decode first.** Nothing spends the researcher's points (`RESEARCH_POINTS_TO_THE_LAB`,
-  Q134, which read no further than `FUN_00503430`'s share-out) and nothing completes an item (`FUN_00504630`, which
-  sets the researched flag and the tier; `ParkResearch` says so). UITEXT `0x1d4` says research is automatic in
-  Instant Action, Lost Kingdom's Easymode; what that does is not decoded. Decode the lab's spending, the automatic
-  mode and the completion to `docs/exe/`, then split the build into its sessions. The research screen (six effort
-  sliders, `FUN_004aa480`) waits on it; Q239 is its two message boxes.
-  - **Note (fork review 2, 2026-10-16, `verify-economy-guests-paths.md` M1 and L2, `verify-ui-hud.md` L2):**
-    **finishing the last project ends an Instant Action park**: `0x00503d40` plays advisor record `0xa7` and, in game
-    type 2, calls `0x00516b00`, the End feature's only builder; in Full Simulation only once every entry of the set at
-    `0x00f7c58c` is flagged. A completion runs message `0x11`, the lab, message `0x12`, then `0x004aaec0`, whose
-    forward picker `0x005034f0` takes the first eligible project after the current one, else the first before it, else
-    none, screen open or not; a finished project's next level goes on the table's end. The screen (Full Simulation
-    only): fluid `0x004a95b0` and `0x004a9fc0` stepped once a frame message `0x1e`, refresh `0x004a9c70`, setters
-    `0x00503870` and `0x00503900`, the workload knob's limit, a progress fill per panel (`0x004a9bd0`).
-  - **Note (fork watch 2026-10-16, `verify-advisor.md`, rows 167 and 168):** finishing the last research project
-    (`0x00503d40`) plays advisor record `0xa7`, row 167, `0x0059f9a0` (`MOV EAX,0x2710`, score 10000), posted at
-    `0x00503f8d`, responses 380-381 ("you've discovered all of the items in the game"). Row 168 (message `0xa8`,
-    `0x0059f9b0`, score 9999, responses 382-384, "a special surprise animation") has no poster found; the six `PUSH
-    0xa8` in `.text` are not it. Both unbuilt (`advisor-park.md`, "Rows settled from the bytes").
-  - **Note (fork watch 2026-10-18, `verify-ui-hud.md` U5 and U2):** the screen's workload slider is decoded
-    (`hud.md`, "The research screen's workload slider and its red text"): the limit
-    `(((100 - c) / 3 + c) << 10) / most` on child `0xd2d12`, the knob `(workload - 70) x limit / 30`, the drag's inverse
-    `30 x value / limit + 70`. The five (224, 86, 86, 255) text colours are all in `FUN_004aa480`, this screen; which
-    labels they colour is not assigned, nor is the ball's travel.
+- [ ] **Q701. The lab spends a researcher's points and finishes a project.** From Q245 (`park-engine.md`, "The lab
+  at work"). Replace the count `RESEARCH_POINTS_TO_THE_LAB` (`StaffBehaviour.Research`) with `Lab_SpendPoints`'s
+  share-out (the kinds with an open project, effort / their sum × `mWorkLoad` × ability × 0.01, a float), the finish
+  (the control record's researched flag and tier, `ParkResearch.IsResearched` and the buy list following), the next
+  upgrade appended (`LabProject_MakeNextUpgrade`), the group raise against `ResearchTech[highest + 1]` and the next
+  project's pick. `ParkWorld` reads each kind's current project and highest group and the lab's `mWorkLoad`
+  (FileFormats `saves.md` has their bytes). Messages to the advisor, the analyser and the end are Q702 and Q703:
+  count them where they would go. Confirm in stock Easymode with its one researcher, predicted from `lib/labsim.py`:
+  Dino Karts researched on the 95th hand-out, tick 2640 (log and census), then bought from the buy list
+  (photograph); Stone Head on the 162nd. A test with values a wrong share or a wrong group index gets wrong.
+- [ ] **Q702. A finished project tells the advisor and the buy list.** From Q245, after Q701. Message `0x11` to the
+  advisor: rows 93 to 97 (`Research*Researched`, by `mCat`, scores 150, 130, 130, 110, 90) and, on a group raised
+  with work left, rows 133 to 136 (`NewResearchGroup*`, score 40); to the park analyser: the tab's ring of the
+  recently researched, the buy list's row state 2 (`ParkBuyScreen` holds it at 0 today; `hud.md`). The challenge
+  manager's type `0x10` (a ride researched) stays counted until challenges are built. Confirm: Dino Karts' line
+  heard and its row sorted as recently researched, beside the original's at the same tick if lane A can run it.
+- [ ] **Q703. The end of research.** From Q245, after Q701. When every project in the table is done the player's
+  progress marks the park all researched (`+0xb9` of its park record, `0x005b0ca0`; whether `gms.dat` keeps it is
+  not read), then in Instant Action advisor row 167 (`0xa7`, score 10000, responses 380-381) and the End feature
+  (`FUN_00516b00`); in Full Simulation only once every park record is marked. Row 168 (`0xa8`) has no poster found.
+  `lib/labsim.py` puts Easymode's last project, Super Toilet, on the 1177th hand-out, tick 24280, with one researcher;
+  a run can hire more or start from a file with less left. Decode what the End feature does first if no item has.
+- [ ] **Q704. The research screen (Full Simulation only).** From Q245 and Q410: the six effort sliders
+  (`FUN_004a96b0`/`FUN_004aa480`, `RESEARCH_SCREEN` counted), the only writers of the efforts and work load
+  (`Lab_SetEffort` `0x00503870`, `Lab_SetWorkLoad` `0x00503900`) and the arrows' project pick (`Lab_PickNextProject`
+  forward, `FUN_005036a0` back); the workload slider is decoded (`hud.md`, "The research screen's workload slider and
+  its red text"), the panels' fluid and fill are the fork review's leads (`0x004a95b0`, `0x004a9fc0`, `0x004a9bd0`,
+  `0x00503ac0`). Instant Action never opens it. Decode the panels first.
 - [ ] **Q141. Golden tickets are never awarded. Decode first, and Alexah's call on when.** Found by Q69. What reaches
   the advisor's glints in the original is a golden-ticket award: only gesture rows 1 and 13 carry the glint flags, and
   only its lines use them (`docs/exe/scenes.md`, "Gesture table"). Those lines play on the park's own advisor, model slot
