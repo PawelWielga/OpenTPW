@@ -96,6 +96,9 @@ public sealed class BFMUReader : BaseFormat
 	/// <summary>The table, decoded once: it never changes, and a string asks for it once per character.</summary>
 	private List<char>? _characters;
 
+	/// <summary>The number of characters in the table.</summary>
+	public int Count => (_characters ??= CharacterArray()).Count;
+
 	public char GetCharacter( int character )
 	{
 		_characters ??= CharacterArray();

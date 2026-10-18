@@ -2165,7 +2165,7 @@ come on tick 1340, so **the first turn that can score is 1398**.
 
 **Its tag** is row 13 of the tag table: key 383, picture 2, string 17, the bar's first button of type 16 (the hire
 screen on its guards' tab, the fourth), no second, thirty seconds. String 17 reads "The park is getting busy and you
-don't have any guards. Maybe you should hire some?" in both language folders (`Language/american`'s letters shifted).
+don't have any guards. Maybe you should hire some?" in both language folders.
 
 ### OpenTPW (`ParkAdvisorMessages.HireGuardsBusy`, a topic's `BusyWithNoGuard`, `SaidOnce`; tag row 13)
 
@@ -2253,7 +2253,7 @@ month zeroes it.
 
 **Its tag** is row 14 of the tag table: key 383, picture 2, string 18, the bar's first button of type 16 (the hire
 screen on its guards' tab), no second, thirty seconds. String 18 reads "The park doesn't have any guards and some of
-the visitors are misbehaving. You should hire some soon!" (`Language/american`'s is the same, its letters shifted).
+the visitors are misbehaving. You should hire some soon!" (`Language/american`'s is the same).
 
 ### OpenTPW (`ParkAdvisorMessages.HireGuards`, a topic's `KidsWithNoGuard`; `ParkFacts.MisbehavingKids`; tag row 14)
 
@@ -2394,7 +2394,7 @@ the original's post on nine got away: nine is not more than 20.
 **Its tag** is row 100 of the tag table (`lib/tagtable.py`): key 383 (it takes no tag's place), picture 1, string 119,
 no button on the bar, thirty seconds, kind 0. String 119 reads "Some of the visitors are misbehaving and your security
 hasn't seen it. Make sure your guards are patrolling all areas of the park, or build security cameras."
-(`Language/american`'s is the same, its letters shifted).
+(`Language/american`'s is the same).
 
 ### OpenTPW (`ParkAdvisorMessages.LaxSecurity`, a topic's `GotAwayMoreThan`; `ParkFacts.KidsGotAway`; tag row 100)
 
@@ -2610,7 +2610,7 @@ stand outside the gate on the road (`mType` 30), so it scores nought.
 
 **Its tag** is row 16 of the tag table: key 383, picture 2, string 20, the bar's first button of type 15 (the hire
 screen on its entertainers' tab, the third), no second, thirty seconds. String 20 reads "You've no entertainers and the
-park is starting to get busy. Maybe you should hire some?" (`Language/american`'s, its letters shifted, "You have no").
+park is starting to get busy. Maybe you should hire some?" (`Language/american`'s, "You have no").
 
 **The other staff rows** (read for the order of the next pieces): rows 8 and 9 ("Litter and no handyman", above) and
 row 11 ("A busy park with no guard", above) are built, and rows 15 and 16 ("Most or every kind of ride built, and no
@@ -2802,7 +2802,7 @@ unsaid. Nothing about the research itself is asked: neither the lab's projects n
 
 **Its tag** is row 19 of the tag table: key 383, picture 2, string 23, the bar's first button of type 17 (the hire screen
 on its researchers' tab, the fifth), no second, thirty seconds. String 23 reads "Your research is taking a long time. You
-might speed things up by hiring more scientists." (`Language/american`'s, its letters shifted, "researchers").
+might speed things up by hiring more scientists." (`Language/american`'s, "researchers").
 
 ### OpenTPW (`ParkAdvisorMessages.HireMoreResearchers`, a topic's `SlowResearch`, `MonthsSinceTheFirstSweep`; `ParkFacts.ResearcherCandidates`; tag row 19)
 

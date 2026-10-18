@@ -1366,9 +1366,9 @@ Op 0x11's value is a row of **`Language/English/UIHELPTEXT.str`**, read through 
 `b_buy` vs `UIStrings.ParkClosed = 469`" is **not** a contradiction: the two
 tables simply share index space.
 
-**Reading a `.str` outside the game needs the file system mounted FIRST.** `BFSTReader`'s lookup table is a
-static `Lazy<BFMUReader>` over `Language/English/MBToUni.dat`, opened through `FileSystem.OpenRead` on the first
-string decoded. A `StringFile( Stream )` constructor does **not** avoid it, because it decodes as it constructs.
+**Reading a `.str` outside the game needs the file system mounted FIRST.** `BFSTReader` opens the character table
+of the table's own folder (`Language/<folder>/MBToUni.dat`, English for a `StringFile( Stream )`), kept once per
+folder and opened through `FileSystem.OpenRead` on the first character decoded. A `StringFile( Stream )` constructor does **not** avoid it, because it decodes as it constructs.
 Assign `FileSystem = new BaseFileSystem( <data dir> )` before constructing anything. Otherwise the first read
 throws, and with stderr filtered that looks like "the rows are empty".
 

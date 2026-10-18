@@ -760,15 +760,15 @@ The four park display names **are** in the shipped data, measured with OpenTPW's
 `LobbyIsland.DisplayNames` still holds the four displayed names by hand. `ParkFixedItems.ParkDisplayName` already
 reads them from `THEMENAMES.str` for the gate's sign; the lobby's table should read them the same way.
 
-**`BFSTReader` can only decode English.** Its lookup table is a **static** field initialised to
-`Language/English/MBToUni.dat` — fixed for the life of the process and hardcoded to English.
-Decoding the other shipped language through it shifts every letter by one:
+**`BFSTReader` decodes each folder's tables through that folder's own character table** (Q710). Read through the
+English table, the american tables shift every letter past `’` by one:
 
     american/THEMENAMES.str -> "Mptu Ljohepn"  "Ibmmpxffo Xpsme"  "Xpoefs Mboe"  "Tqbdf [pof"
 
-Two languages ship (English, american), **21 `.str` files each**. The localisation path also
-hardcodes `Language/English/UITEXT.str` and `UIHELPTEXT.str`. Making the lookup table per-language
-and non-static is the other half of the fix.
+`StringFile( path )` takes `MBToUni.dat` from the path's folder, each kept from its first character decoded, so the
+american `THEMENAMES.str` reads the four theme names; a `StringFile( Stream )` has no folder and takes English. The
+console's `strings <table> <row>...` reads any row so. Two languages ship (English, american), **21 `.str` files
+each**, and the game reads English alone: `Localization` and every other reader name `Language/English`.
 
 **How to redo the measurement:** the local `strdump` harness does it (`CLAUDE.local.md`; it mounts the file system
 first, and `dotnet run` rebuilds it against the current tree). By hand: make a throwaway console project referencing `OpenTPW.Files.dll` and
@@ -777,6 +777,6 @@ folder, then set the one static the readers need before touching them —
 `OpenTPW.Common.GlobalNamespace.FileSystem = new BaseFileSystem( "<install>/data" )` (with no `Log` set they log
 nothing) — and construct
 `new StringFile( "Language/English/THEMENAMES.str" )`, reading `.Entries`. **The file system must be
-mounted first even if `StringFile` is handed a raw `Stream`**, because the reader opens its lookup table
-(a static `Lazy<BFMUReader>`) through the global file system on the first string it decodes. Without it that first
+mounted first even if `StringFile` is handed a raw `Stream`**, because the reader opens its character table
+(kept once per folder) through the global file system on the first character it decodes. Without it that first
 decode throws, which looks like "the file is unreadable".

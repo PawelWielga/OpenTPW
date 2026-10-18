@@ -7983,6 +7983,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   P8 to P10 held, P7 held but for a box a passing bus filled, re-run as P9, P4 and P5 missed by their bounds): the word
   `0x01025900`; camera A's grass (23.4, 141.7, 21.5), and (10.6, 70.5, 9.6) with the two bits held clear; at camera B
   the gate's banners white at low and grey lit (`q487/side-by-side.png`). The build is Q516.
+- [x] **Q710. `BFSTReader` decodes every table through the English character table.** Found by Q143. Each language
+  folder has its own `MBToUni.dat`, and the american one lacks `’`, so every character after it is one index lower
+  (FileFormats `strings.md`); `BFSTReader.LookupTable` opens `Language/English/MBToUni.dat` whatever the table, so an
+  american table reads shifted. Dead by CONTENT: `Localization` and every other reader take English tables alone.
+  Take the table's own folder's file when a second language is read. A test: american `THEMENAMES.str` row 0.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

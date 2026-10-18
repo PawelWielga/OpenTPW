@@ -55,15 +55,15 @@ Last updated: 2026-10-18. **This header names no branch and no sha, deliberately
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q487 (what low quality's `LIGHTING` 0 turns off; decoded, nothing built): the original at low (its Options screen and a restart) read at Q479's cameras A and B only, in one park (the stock Lost Kingdom file), with the two bits held clear in the running word for LIGHTING's own share; not looked at: a ride's or a shop's model at low (only the gate's banners and the wall show the fullbright at B), the sky, sprites, particles and first person at low, Full Simulation (the word is set by the detail file alone, at start, so no difference is expected), and the renderer-4 arm of `FUN_0057a750` (live renderer 1). Ours at low was photographed on main's code (`q487/ours-low`), the build being Q516.
+- Q710 (2026-10-18, lane B, off-screen on lavapipe, so its log and console replies are the evidence and its pictures (`q710/run2/lobby.png`, `strings.png`, `jungle.png`) are white): the boot logged `Character table: Language/English/MBToUni.dat, 249 characters` alone; the console's `strings Language/american/THEMENAMES.str 0 1 2 3` answered "Lost Kingdom", "Halloween World", "Wonder Land", "Space Zone" and the log then held `Character table: Language/american/MBToUni.dat, 248 characters` once, where a copy with every table through the English one answered "Mptu Ljohepn" and the rest shifted (`q710/control`); american UIHELPTEXT 444 answered "Left-click to edit this line", the English "Left-click to edit this queue"; a jungle load opened no third table. The game shows English alone, so no screen changes.
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **77** of 106 | 2026-10-10, `case Opcode.` labels vs enum members |
-| Tests | **3397**, 0 fail, 0 skip with the game | 2026-10-18, Q487, alone in a worktree |
-| Tests without the game | **1150** ran, **2247** skipped, of 3397 | 2026-10-18, Q487, alone in a worktree |
+| Tests | **3404**, 0 fail, 0 skip with the game | 2026-10-18, Q710, alone in a worktree |
+| Tests without the game | **1150** ran, **2254** skipped, of 3404 | 2026-10-18, Q710, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

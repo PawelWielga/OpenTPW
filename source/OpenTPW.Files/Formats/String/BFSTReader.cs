@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Concurrent;
+using System.Text;
 
 namespace OpenTPW;
 
@@ -7,20 +8,53 @@ internal sealed class BFSTReader : BaseFormat
 	private ExpandedMemoryStream memoryStream;
 	public byte[] buffer;
 
-	/// <summary>
-	/// The multibyte-to-Unicode table, opened on first use rather than when the type loads. A static
-	/// initialiser that reads through the global file system fails the whole type if nothing has
-	/// mounted one yet, from wherever the first .str happens to be read.
-	/// </summary>
-	private static readonly Lazy<BFMUReader> LookupTable = new( () => new BFMUReader( "Language/English/MBToUni.dat" ) );
+	/// <summary>The character table a <see cref="StringFile"/> read from a stream is decoded through, its folder unknown.</summary>
+	public const string EnglishCharacterTable = "Language/English/MBToUni.dat";
 
+	/// <summary>
+	/// Each folder's multibyte-to-Unicode table, opened on its first use rather than when the type loads: a static
+	/// initialiser that reads through the global file system fails the whole type if nothing has mounted one yet.
+	/// The two shipped tables differ (the american one has no ’), so each is kept apart (FileFormats strings.md).
+	/// </summary>
+	private static readonly ConcurrentDictionary<string, Lazy<BFMUReader>> CharacterTables = new();
+
+	private readonly string _characterTable;
+	private BFMUReader? _lookupTable;
+
+	/// <summary>This table's character table, opened on the first character decoded: an empty string needs none.</summary>
+	private BFMUReader LookupTable => _lookupTable ??= OpenCharacterTable( _characterTable );
+
+	/// <summary>The character table beside a <c>.str</c> file: the one in its own language folder.</summary>
+	public static string CharacterTableFor( string path )
+	{
+		var folder = Path.GetDirectoryName( path.Replace( '\\', '/' ) )?.Replace( '\\', '/' );
+		return string.IsNullOrEmpty( folder ) ? "MBToUni.dat" : $"{folder}/MBToUni.dat";
+	}
+
+	private static BFMUReader OpenCharacterTable( string path )
+	{
+		return CharacterTables.GetOrAdd( path, key => new Lazy<BFMUReader>( () =>
+		{
+			var table = new BFMUReader( key );
+			Log?.Info( $"Character table: {key}, {table.Count} characters" );
+			return table;
+		} ) ).Value;
+	}
+
+	/// <summary>
+	/// Reads a <c>.str</c> file, decoded through the character table in its own folder. Dead by CODE: nothing calls it,
+	/// <see cref="StringFile"/> reads through the stream constructor.
+	/// </summary>
 	public BFSTReader( string path )
 	{
+		_characterTable = CharacterTableFor( path );
 		ReadFromFile( path );
 	}
 
-	public BFSTReader( Stream stream )
+	/// <summary>Reads a table from a stream, decoded through <paramref name="characterTable"/>.</summary>
+	public BFSTReader( Stream stream, string characterTable )
 	{
+		_characterTable = characterTable;
 		ReadFromStream( stream );
 	}
 	public void Dispose()
@@ -93,7 +127,7 @@ internal sealed class BFSTReader : BaseFormat
 			for ( int j = 0; j < stringLength; j++ )
 			{
 				var mtuPos = memoryStream.ReadByte();
-				var readCharacter = LookupTable.Value.GetCharacter( mtuPos );
+				var readCharacter = LookupTable.GetCharacter( mtuPos );
 				str.Append( readCharacter );
 			}
 
@@ -137,7 +171,7 @@ internal sealed class BFSTReader : BaseFormat
 					var text = new StringBuilder( value );
 
 					for ( var index = 0; index < value; ++index )
-						text.Append( LookupTable.Value.GetCharacter( buffer[at + index] ) );
+						text.Append( LookupTable.GetCharacter( buffer[at + index] ) );
 
 					parts.Add( new StringPart( text.ToString(), 0 ) );
 					at += (value + 3) & ~3;

@@ -2286,6 +2286,34 @@ public static class DebugConsole
 
 				break;
 
+			// `strings <table> <row>...`: a string table's rows as the game reads them, through the table's own folder's
+			// character table, so a language folder the game does not show can still be read in it.
+			case "strings":
+				if ( parts.Length < 3 )
+				{
+					Reply( "strings: give a table under data and at least one row, as `strings Language/american/THEMENAMES.str 0`" );
+					break;
+				}
+
+				try
+				{
+					var table = new StringFile( parts[1] );
+
+					foreach ( var row in parts.Skip( 2 ) )
+					{
+						if ( int.TryParse( row, out var index ) && index >= 0 && index < table.Entries.Length )
+							Reply( $"strings: {parts[1]} row {index} of {table.Entries.Length}: \"{table[index]}\"" );
+						else
+							Reply( $"strings: {parts[1]} has no row '{row}' (rows 0 to {table.Entries.Length - 1})" );
+					}
+				}
+				catch ( Exception e )
+				{
+					Reply( $"strings: {parts[1]} could not be read: {e.Message}" );
+				}
+
+				break;
+
 			case "quit":
 				Reply( "quitting" );
 				Environment.Exit( 0 );

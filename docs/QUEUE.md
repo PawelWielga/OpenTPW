@@ -1146,11 +1146,6 @@ filed the items that cite it.
   spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
   Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
   spent one on `tourride`.
-- [ ] **Q710. `BFSTReader` decodes every table through the English character table.** Found by Q143. Each language
-  folder has its own `MBToUni.dat`, and the american one lacks `’`, so every character after it is one index lower
-  (FileFormats `strings.md`); `BFSTReader.LookupTable` opens `Language/English/MBToUni.dat` whatever the table, so an
-  american table reads shifted. Dead by CONTENT: `Localization` and every other reader take English tables alone.
-  Take the table's own folder's file when a second language is read. A test: american `THEMENAMES.str` row 0.
 - [ ] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
   what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
   turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a

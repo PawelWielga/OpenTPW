@@ -10,8 +10,12 @@ public sealed class StringFile : BaseFormat
 	/// </summary>
 	public StringPart[][] Parts { get; private set; } = [];
 
+	/// <summary>The character table the strings are decoded through: the file's own folder's, English for a stream.</summary>
+	private readonly string _characterTable = BFSTReader.EnglishCharacterTable;
+
 	public StringFile( string path )
 	{
+		_characterTable = BFSTReader.CharacterTableFor( path );
 		ReadFromFile( path );
 	}
 
@@ -24,7 +28,7 @@ public sealed class StringFile : BaseFormat
 
 	protected override void ReadFromStream( Stream stream )
 	{
-		var reader = new BFSTReader( stream );
+		var reader = new BFSTReader( stream, _characterTable );
 		Entries = reader.ReadFile();
 		Parts = reader.ReadParts();
 	}

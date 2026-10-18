@@ -19,7 +19,8 @@ public class StringFileTests
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> <c>ReadFile()</c> called again at the end of the reader's <c>ReadFromStream</c> logs two
-	/// lines; the log line taken out logs none.
+	/// lines; the log line taken out logs none; the character table opened before the first character fails it in a
+	/// run without the game, which has no file system to open it through.
 	/// </remarks>
 	[TestMethod]
 	public void AStringTableIsParsedOnce()
@@ -53,8 +54,8 @@ public class StringFileTests
 	/// <b>A string over 255 characters is read whole.</b> A string's length is three bytes (FileFormats
 	/// <c>strings.md</c>), and four shipped strings need more than the first, all in <c>UITEXT.str</c>: row 400
 	/// (<see cref="UIStrings.Change"/>), 262 characters in English and 256 in american, and row 417
-	/// (<see cref="UIStrings.SoftwareCopyright"/>), 615 and 614. The words are checked in English alone: the reader
-	/// decodes every table through the English character table, which the american one is not (docs/QUEUE.md Q710).
+	/// (<see cref="UIStrings.SoftwareCopyright"/>), 615 and 614, each starting with the same words in both, apart from
+	/// the american "(c)" for the English "©".
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the length taken from its first byte alone reads row 400 as "CHANGE" and as empty, and row
@@ -62,9 +63,9 @@ public class StringFileTests
 	/// <see cref="AStringsLengthTakesAllThreeBytes"/>'s.
 	/// </remarks>
 	[TestMethod]
-	[DataRow( "English", 262, 615 )]
-	[DataRow( "american", 256, 614 )]
-	public void AStringOver255CharactersIsReadWhole( string language, int change, int copyright )
+	[DataRow( "English", 262, 615, "©" )]
+	[DataRow( "american", 256, 614, "(c)" )]
+	public void AStringOver255CharactersIsReadWhole( string language, int change, int copyright, string sign )
 	{
 		FileSystem = GameData.Required();
 
@@ -73,13 +74,53 @@ public class StringFileTests
 		Assert.AreEqual( change, file[(int)UIStrings.Change].Length );
 		Assert.AreEqual( copyright, file[(int)UIStrings.SoftwareCopyright].Length );
 
+		Assert.IsTrue( file[(int)UIStrings.Change].StartsWith( "CHANGE SCREEN RESOLUTION\n\n" ) );
+		Assert.IsTrue( file[(int)UIStrings.SoftwareCopyright].StartsWith( $"Software {sign} 1999 Bullfrog Productions Ltd." ) );
+
 		if ( language != "English" )
 			return;
 
-		Assert.IsTrue( file[(int)UIStrings.Change].StartsWith( "CHANGE SCREEN RESOLUTION\n\n" ) );
 		Assert.IsTrue( file[(int)UIStrings.Change].EndsWith( " your original setting will be restored." ) );
-		Assert.IsTrue( file[(int)UIStrings.SoftwareCopyright].StartsWith( "Software © 1999 Bullfrog Productions Ltd." ) );
 		Assert.IsTrue( file[(int)UIStrings.SoftwareCopyright].EndsWith( "gistered trademarks of QSound Labs, Inc." ) );
+	}
+
+	/// <summary>
+	/// <b>Each language folder's tables are decoded through that folder's own character table.</b> The american
+	/// <c>MBToUni.dat</c> has no ’, so its indices past it are one lower than the English ones (FileFormats
+	/// <c>strings.md</c>): through the English table the american <c>THEMENAMES.str</c> reads "Mptu Ljohepn". Through
+	/// its own it reads the four theme names, named with either separator, and the English table, read after it, still
+	/// reads its own. Row 444 of the american <c>UIHELPTEXT.str</c> is the queue's help row the original showed,
+	/// "Left-click to edit this line", where the English one says "queue".
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> every table through the English character table reads "Mptu Ljohepn"; one table kept for every
+	/// folder, the first opened, reads one of the two folders shifted; a backslash left as it is finds no table.
+	/// </remarks>
+	[TestMethod]
+	public void EachFolderIsDecodedThroughItsOwnCharacterTable()
+	{
+		FileSystem = GameData.Required();
+
+		CollectionAssert.AreEqual( new[] { "Lost Kingdom", "Halloween World", "Wonder Land", "Space Zone" },
+			new StringFile( "Language/american/THEMENAMES.str" ).Entries );
+		Assert.AreEqual( "Lost Kingdom", new StringFile( "Language/English/THEMENAMES.str" )[0] );
+		Assert.AreEqual( "Lost Kingdom", new StringFile( "Language\\american\\THEMENAMES.str" )[0], "a path the file system takes with backslashes" );
+		Assert.AreEqual( "Left-click to edit this line", new StringFile( "Language/american/UIHELPTEXT.str" )[444] );
+		Assert.AreEqual( "Left-click to edit this queue", new StringFile( "Language/English/UIHELPTEXT.str" )[444] );
+	}
+
+	/// <summary>
+	/// <b>A table read from a stream has no folder, and is decoded through the English character table.</b> The
+	/// american <c>THEMENAMES.str</c>'s bytes handed over as a stream read "Mptu Ljohepn".
+	/// </summary>
+	[TestMethod]
+	public void AStreamIsDecodedThroughTheEnglishCharacterTable()
+	{
+		FileSystem = GameData.Required();
+
+		var bytes = File.ReadAllBytes( Path.Combine( GameDir.Data, "Language", "american", "THEMENAMES.str" ) );
+
+		Assert.AreEqual( "Mptu Ljohepn", new StringFile( new MemoryStream( bytes ) )[0] );
 	}
 
 	/// <summary>
