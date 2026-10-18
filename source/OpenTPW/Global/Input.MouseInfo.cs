@@ -17,6 +17,13 @@ public static partial class Input
 		/// </summary>
 		public bool LeftWentDown;
 
+		/// <summary>
+		/// How many presses of the left button the window system sent this frame. <see cref="Left"/> is only where the
+		/// button stands as the frame ends, so a press let go inside one frame shows here and in
+		/// <see cref="LeftWentDown"/> alone.
+		/// </summary>
+		public int LeftPresses;
+
 		/// <summary>Whether the right button went down this frame, as <see cref="LeftWentDown"/> is for the left.</summary>
 		public bool RightWentDown;
 

@@ -542,7 +542,7 @@ public class ParkLocatorTests
 
 			foreach ( var down in new[] { true, false } )
 			{
-				Input.Mouse = new() { Left = down, Position = new Vector2( 1024, 600 ) };
+				Input.Mouse = new() { Left = down, LeftWentDown = down, Position = new Vector2( 1024, 600 ) };
 				worldClick.Invoke( Level.Current, [] );
 			}
 

@@ -427,25 +427,28 @@ internal sealed class WindowStack : Panel
 				(Input.Mouse.Left && _leftPress.On == hit) || (Input.Mouse.Right && _rightPress.On == hit) );
 		}
 
-		var mouseDown = Input.Mouse.Left;
-
-		if ( mouseDown && !_mouseWasDown )
+		// The left button's steps this frame, in order, so a press let go inside one frame is still a press and a
+		// release, as the original's WM_LBUTTONDOWN and WM_LBUTTONUP are two messages - see LeftSteps.
+		foreach ( var mouseDown in LeftSteps( _mouseWasDown, Input.Mouse ) )
 		{
-			PointerTaken = Covered || hit != null || ModalUp || OnParkScreen( mouse.X, mouse.Y );
+			if ( mouseDown && !_mouseWasDown )
+			{
+				PointerTaken = Covered || hit != null || ModalUp || OnParkScreen( mouse.X, mouse.Y );
 
-			Press( hit, mouse.X, mouse.Y );
+				Press( hit, mouse.X, mouse.Y );
 
-			if ( !PointerTaken && Input.Mouse.LeftWentDown )
-				ViewPressed?.Invoke();
+				if ( !PointerTaken && Input.Mouse.LeftWentDown )
+					ViewPressed?.Invoke();
+			}
+			else if ( mouseDown && _pressed != null )
+				_pressed.PointerDragged( mouse.X, mouse.Y );
+			else if ( !mouseDown && _mouseWasDown )
+				Release( hit );
+
+			LeftClick( mouseDown, hit, mouse / VirtualScreen.Scale );
+
+			_mouseWasDown = mouseDown;
 		}
-		else if ( mouseDown && _pressed != null )
-			_pressed.PointerDragged( mouse.X, mouse.Y );
-		else if ( !mouseDown && _mouseWasDown )
-			Release( hit );
-
-		LeftClick( mouseDown, hit, mouse / VirtualScreen.Scale );
-
-		_mouseWasDown = mouseDown;
 
 		var rightDown = Input.Mouse.Right;
 
@@ -755,6 +758,30 @@ internal sealed class WindowStack : Panel
 		}
 
 		return null;
+	}
+
+	/// <summary>
+	/// Where the left button stood after each of this frame's presses and releases, given where it stood as the last
+	/// frame ended: the button as it ends the frame when it was not pressed, and otherwise a release before each press
+	/// made while it was down, the press, and the release that let it go inside the frame. The original is sent each as
+	/// its own message (<c>WM_LBUTTONDOWN</c> posts <c>0x10005</c>; <c>docs/exe/lobby.md</c>), so none is lost.
+	/// </summary>
+	internal static IEnumerable<bool> LeftSteps( bool wasDown, Input.MouseInfo mouse )
+	{
+		var presses = Math.Max( mouse.LeftPresses, mouse.LeftWentDown ? 1 : 0 );
+		var down = wasDown;
+
+		for ( int i = 0; i < presses; ++i )
+		{
+			if ( down )
+				yield return false;
+
+			yield return true;
+			down = true;
+		}
+
+		if ( presses == 0 || down != mouse.Left )
+			yield return mouse.Left;
 	}
 
 	private void Press( UiControl? hit, float x, float y )

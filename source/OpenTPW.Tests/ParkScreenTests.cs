@@ -884,7 +884,7 @@ public class ParkScreenTests
 	/// <summary>One frame with the pointer at a point of the screen and the left button down or up.</summary>
 	private static void Pointer( UI.WindowStack stack, Vector2 at, bool left )
 	{
-		Input.UpdateFrom( new Snapshot( [], at, left ) );
+		Input.UpdateFrom( new Snapshot( [], at, left, pressed: left && !Input.Mouse.Left ) );
 		stack.Update();
 	}
 
@@ -939,11 +939,14 @@ public class ParkScreenTests
 		}
 	}
 
-	/// <summary>SDL's events for one frame: the keys, where the pointer is and whether the left button is down.</summary>
-	private sealed class Snapshot( KeyEvent[] keys, Vector2 at, bool left = false ) : InputSnapshot
+	/// <summary>
+	/// SDL's events for one frame: the keys, where the pointer is, whether the left button is down, and whether its press
+	/// was sent this frame.
+	/// </summary>
+	private sealed class Snapshot( KeyEvent[] keys, Vector2 at, bool left = false, bool pressed = false ) : InputSnapshot
 	{
 		public IReadOnlyList<KeyEvent> KeyEvents => keys;
-		public IReadOnlyList<MouseEvent> MouseEvents => [];
+		public IReadOnlyList<MouseEvent> MouseEvents => pressed ? [new MouseEvent( MouseButton.Left, true )] : [];
 		public IReadOnlyList<char> KeyCharPresses => [];
 		public System.Numerics.Vector2 MousePosition => new( at.X, at.Y );
 		public float WheelDelta => 0f;

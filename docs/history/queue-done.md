@@ -7813,6 +7813,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   thing 28), and the latch circle and bubble sit off the reflected body. Confirm by a frame pair in both games of one
   person turning. With it: the latch circle is round in the -1 to 1 box, so at 16:9 it reaches 1.27 times across
   against the original's 4:3 (`SpritePick.cs`): say it at the site, and run the pick at 4:3 once.
+- [x] **Q476. A press let go inside one frame never reaches the park.** From Q474 (`q474/PREDICTION.txt`, run1 and run2):
+  `Level.WorldClick` acts on `Input.Mouse.Left` going from up to down between two frames (`Input.cs`, `IsMouseDown`), so a
+  press and release inside one frame is lost; XTEST's 0.06 s click was lost twice in Alexah's Full Simulation park,
+  whose frames reach 97 ms (p99, `stats`), and landed held 0.3 s. The original acts on `WM_LBUTTONDOWN`, a message
+  that is not lost. Take the park's press from the frame's events (`LeftWentDown`, which `WindowStack` already reads
+  for the view), check the interface's own press (`mouseDown && !_mouseWasDown`) the same way, and confirm with a
+  60 ms press in that park, before and after.
+  **Done (2026-10-18):** `Input.MouseInfo.LeftPresses`, `WindowStack.LeftSteps` (a press and a release for each press
+  let go inside a frame), `Level.WorldClick` on `LeftWentDown`, a frame's second press counted at the park
+  (`PARK_PRESSES_IN_ONE_FRAME`). In Alexah's Full Simulation park (frames 66 ms): ground 20/20 at 0 s and 20/20 at 60 ms,
+  the buy button 10/10 at 0 s; main's binary 0/20, 1/20, 0/10; the original 5/5 (`q476/`, `side-by-side.png`).
+  Mutations 8/8 (one equivalent). The right button is Q499.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

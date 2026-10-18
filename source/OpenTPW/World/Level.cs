@@ -1276,7 +1276,6 @@ public class Level
 		}
 	}
 
-	private bool _worldMouseWasDown;
 	private bool _worldRightWasDown;
 
 	/// <summary>The park's own pointer, so an armed tool can show its cursor.</summary>
@@ -1911,12 +1910,15 @@ public class Level
 	/// <c>FUN_004879d0</c> reads the hover category and sends category 4, a placed object, to
 	/// <c>FUN_00486920</c>.
 	/// </summary>
+	/// <remarks>
+	/// The press is one the window system sent this frame (<see cref="Input.MouseInfo.LeftWentDown"/>), so one let go
+	/// inside the frame still lands, as the original's <c>WM_LBUTTONDOWN</c> does, and a button already held when the
+	/// park began is none. A frame's second press is counted, not acted on (<c>PARK_PRESSES_IN_ONE_FRAME</c>): the
+	/// first may open a window that the second would land on, and the interface has dealt out the frame's presses by now.
+	/// </remarks>
 	private void WorldClick()
 	{
-		var down = Input.Mouse.Left;
-		var pressed = down && !_worldMouseWasDown;
-
-		_worldMouseWasDown = down;
+		var pressed = Input.Mouse.LeftWentDown;
 
 		ParkCamcorderCameraMode.ReadRightButton();
 
@@ -1928,6 +1930,9 @@ public class Level
 
 		if ( !pressed || LeftPressTaken( UI.WindowStack.PointerTaken ) || KeptFromThePark( UI.WindowStack.ParkScreenOpen ) )
 			return;
+
+		if ( Input.Mouse.LeftPresses > 1 )
+			Unimplemented.Report( "PARK_PRESSES_IN_ONE_FRAME" );
 
 		if ( ParkPicking.TryCell( out var cellX, out var cellY ) )
 			Log.Info( ClickWorldAt( cellX, cellY, ParkPicking.PersonUnderCursor, ParkPicking.ObjectUnderCursor ) );

@@ -893,6 +893,16 @@ the DirectInput cursor library is on (`FUN_0047e7d0` sets `DAT_007b4b88`, `0x004
 callback `0x00486c70` posts the presses and releases in the same units. Its own double click bit (`0x0063446a`) never
 reaches the UI, and `FUN_00658ab4`, which would post `0x10007` to the hover, has no caller (dead by CODE).
 
+**A press let go at once is still a press and a release** (Q476). Measured in the original (`q476/orig/run.sh`, round
+a): five presses on the gadget's buy button, each sent back to back with its release (one `xdotool mousedown 1 mouseup
+1`, nothing between), each opened the buy screen, a new screen read 0.06 to 0.09 s on (`screens.py`'s poll).
+How the cursor library's callback gets them (buffered or not) is not read; the measurement is what the build follows.
+OpenTPW: `Input.MouseInfo.LeftPresses` and `LeftWentDown` come from the frame's events, not the button's state as the
+frame ends; `WindowStack.LeftSteps` gives the stack a press and a release for each press let go inside a frame (and a
+release before a press made while it was down), and `Level.WorldClick` acts on `LeftWentDown`. A frame's second press
+reaches the interface and is counted at the park (`PARK_PRESSES_IN_ONE_FRAME`). The right button is still read from
+its state (Q499).
+
 ### Who acts on the click, and who on the release
 
 Decoded for `docs/QUEUE.md` Q123b, first-hand, and run in the original.

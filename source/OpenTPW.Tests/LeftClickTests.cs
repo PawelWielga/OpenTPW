@@ -541,6 +541,36 @@ public class LeftClickTests
 		Assert.AreEqual( 1, rights, "the window closed under the right press: no click" );
 	}
 
+	/// <summary>
+	/// <b>A press let go inside one frame is still a click</b>, a button's and a control's, and a double click whose two
+	/// presses fall in one frame is still a click and a double click's second, as the original is sent each message.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the press read from the button's state as the frame ends gives no click; one step a frame gives
+	/// no second.
+	/// </remarks>
+	[TestMethod]
+	public void APressLetGoInsideOneFrameIsStillAClick()
+	{
+		Inside( OnTheButton, 1000, presses: 1 );
+		Assert.AreEqual( 1, _window.ButtonClicks, "the button" );
+
+		Inside( OnThePanel, 3000, presses: 1 );
+		Assert.AreEqual( 1, _window.PanelClicks, "the panel" );
+
+		Inside( OnThePanel, 6000, presses: 2 );
+		Assert.AreEqual( 2, _window.PanelClicks, "the double click's first is a click" );
+		Assert.AreEqual( 1, _window.Panel.Seconds, "and its second is told" );
+	}
+
+	/// <summary>One frame whose presses were all let go inside it: the button up as it ends, and the presses sent.</summary>
+	private void Inside( Vector2 at, long now, int presses )
+	{
+		Time.PinWall( now );
+		Input.Mouse = new() { LeftWentDown = true, LeftPresses = presses, Position = at };
+		_stack.Update();
+	}
+
 	/// <summary>The middle of one of the list's rows, in window pixels: rows are 44 tall from (600,100).</summary>
 	private static Vector2 Row( int slot ) => new( 700, 100 + (slot * 44) + 22 );
 

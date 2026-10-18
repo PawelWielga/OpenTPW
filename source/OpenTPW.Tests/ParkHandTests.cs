@@ -464,7 +464,7 @@ public class ParkHandTests
 
 				foreach ( var down in new[] { true, false } )
 				{
-					Input.Mouse = new() { Left = down, Position = new Vector2( 1024, 600 ) };
+					Input.Mouse = new() { Left = down, LeftWentDown = down, Position = new Vector2( 1024, 600 ) };
 					worldClick.Invoke( level, [] );
 				}
 
@@ -473,6 +473,66 @@ public class ParkHandTests
 				else
 					Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, $"and in the orbit view the same press picks up the path tool" );
 			}
+		}
+		finally
+		{
+			Level.Current = levelBefore;
+			current.SetValue( null, stateBefore );
+			cell.SetValue( null, cellBefore );
+		}
+	}
+
+	/// <summary>
+	/// <b>A press the window system sent reaches the park though it was let go inside the frame</b>, as the original's
+	/// WM_LBUTTONDOWN does: the frame ends with the button up and the press on a path picks up the path tool. A button
+	/// held when the park began, sent no press, picks up nothing; a frame's second press is counted.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the press read from the button's state as the frame ends arms nothing on the quick press and
+	/// arms the tool on the held button; the second press not counted.
+	/// </remarks>
+	[TestMethod]
+	public void APressLetGoInsideOneFrameReachesThePark()
+	{
+		using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		var current = typeof( ParkState ).GetProperty( nameof( ParkState.Current ) )!;
+		var cell = typeof( ParkPicking ).GetProperty( nameof( ParkPicking.Cell ) )!;
+		var (levelBefore, stateBefore, cellBefore) = (Level.Current, ParkState.Current, ParkPicking.Cell);
+		var worldClick = typeof( Level ).GetMethod( "WorldClick", BindingFlags.Instance | BindingFlags.NonPublic )!;
+
+		try
+		{
+			var level = ALevel();
+			var state = new ParkState( world );
+
+			typeof( Level ).GetProperty( nameof( Level.Park ) )!.SetValue( level, world );
+			typeof( Level ).GetProperty( nameof( Level.ParkState ) )!.SetValue( level, state );
+			current.SetValue( null, state );
+			Level.Current = level;
+			InFirstPerson( false );
+
+			var (x, y) = Enumerable.Range( 0, ParkWorld.MapSize * ParkWorld.MapSize )
+				.Select( i => (X: i % ParkWorld.MapSize, Y: i / ParkWorld.MapSize) )
+				.First( c => ParkState.CellFor( world, c.X, c.Y ) is { Type: CellEdge.Path, TrackType: 0 } );
+
+			cell.SetValue( null, y * ParkWorld.MapSize + x + 1 );
+
+			Input.Mouse = new() { Left = true, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, "a button already held is no press" );
+
+			Input.Mouse = new() { Left = false, LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, $"the press let go inside the frame, on the path at ({x},{y})" );
+
+			ParkBuildMode.Disarm();
+			var counted = Unimplemented.Summary.FirstOrDefault( g => g.What == "PARK_PRESSES_IN_ONE_FRAME" ).Times;
+
+			Input.Mouse = new() { Left = false, LeftWentDown = true, LeftPresses = 2, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, "two presses: the first acts" );
+			Assert.AreEqual( counted + 1, Unimplemented.Summary.FirstOrDefault( g => g.What == "PARK_PRESSES_IN_ONE_FRAME" ).Times, "and the second is counted" );
 		}
 		finally
 		{

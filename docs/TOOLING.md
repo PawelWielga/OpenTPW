@@ -843,8 +843,8 @@ GH=766` there, or the pointer is off):
   and a frame between let a walker go (round a). Here `pick` names the cell, the person taken by their picture
   (`standing thing N`) and the cell's object apart (`object thing M`; Q474), `cell X Y` its `occupant` and `parent` (a
   queue cell's parent is its ride too: test the type), `tool` the mode as a number (`mode 0,` none, `mode 1,` the path
-  tool); in a crowded park hold the press 0.3 s (`button(1, what, held=0.3)`), since a 0.06 s press inside one slow frame
-  is lost (Q476); for a guest or a member to stay put, `pause` once the arm has stopped (its slide is eased on `Time.Delta`), click, `resume`. A window's
+  tool); a press of any length lands, one let go inside a slow frame too (Q476; `button(1, what, held=0)` is a press let
+  go at once, the original's `xdotool mousedown 1 mouseup 1`); for a guest or a member to stay put, `pause` once the arm has stopped (its slide is eased on `Time.Delta`), click, `resume`. A window's
   OK on a 16:9 window is the 2048 x 1536 rect scaled by the height and moved in by the side bars. **Where a member stood** (Q446, `q446/confirm.py`, `q446/orig/run.sh`): the stock park's guard 28 is alone on (39,28) in the file and walks off it within a minute in both games (the original's paces to (39,25) and back); the guards' button opens his locator, and the original's pixel over a cell with a locator up is `PICK=1 cellfind.py` (its build preview reads (0, 0) then); wait with `cellhead.py` until he is near the cell and off it, or the pixel can land at the frame's edge under the HUD.
 - **The camcorder button in the original** (Q428, `q428/orig/run.sh`): the button (130,707) and, once its panel is out,
   the camera button (283,641), of 1024 x 768; its line `0x131` is `advisor.py %PID% SECS 0x131`, here the log's

@@ -53,13 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q476. A press let go inside one frame never reaches the park.** From Q474 (`q474/PREDICTION.txt`, run1 and run2):
-  `Level.WorldClick` acts on `Input.Mouse.Left` going from up to down between two frames (`Input.cs`, `IsMouseDown`), so a
-  press and release inside one frame is lost; XTEST's 0.06 s click was lost twice in Alexah's Full Simulation park,
-  whose frames reach 97 ms (p99, `stats`), and landed held 0.3 s. The original acts on `WM_LBUTTONDOWN`, a message
-  that is not lost. Take the park's press from the frame's events (`LeftWentDown`, which `WindowStack` already reads
-  for the view), check the interface's own press (`mouseDown && !_mouseWasDown`) the same way, and confirm with a
-  60 ms press in that park, before and after.
 - [ ] **Q477. What hides a person below their feet.** From Q470 (`q470/PREDICTION.txt`, rounds 1 and 1b;
   `side-by-side.png`): our quad is square on to the eye at its place's depth, as the original's corners keep the place's
   z and w (`FUN_005890e0`), yet ours loses every row below the origin to the ground nearer the eye (Mike's feet end on
@@ -118,6 +111,13 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
   `1 - f` and the fog colour times `f` in the specular); ours draws first person with none, counted `FIRST_PERSON_FOG`
   (`ParkCamcorderCameraMode.Enter`). Measure the original's first person first (the frame at `f` 0, between and 1,
   and whether Proton adds the specular), then build it. Confirm by a frame pair in both games at one stand.
+- [ ] **Q499. A right press let go inside one frame is lost.** From Q476 (`hud.md`, "A click and a double click"): the
+  left button's steps now come from the frame's events (`WindowStack.LeftSteps`), but the right is still read from its
+  state as the frame ends: `WindowStack`'s right press and `RightClick` (`rightDown && !_rightWasDown`) and the park's
+  quick right click (`Level.RightButton`, RMB cancel) never see a right press and release inside one frame, though
+  `Input.MouseInfo.RightWentDown` has it. Give the right the left's steps (a `RightPresses` count), and confirm with a
+  back-to-back right press (`button(3, what, held=0)`) in Alexah's Full Simulation park, hand full and RMB cancel on,
+  and on the first-person view, before and after; the original's own with `xdotool mousedown 3 mouseup 3`.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
