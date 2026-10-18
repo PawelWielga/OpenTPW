@@ -1787,6 +1787,25 @@ public static class DebugConsole
 					.Select( square => $"({square.X},{square.Y}):{square.Marker}" + (square.Why is { } why ? $"[{why}]" : "") ) ) );
 				break;
 
+			// The harbour's moving sea: its corner, phase, folder and texture words; `sea y <h>` moves its corner's
+			// height, as the original's was held under Line01 to read the lake alone, and `sea phase <p>` puts its wave
+			// anywhere, which a paused park then holds.
+			case "sea":
+				if ( ParkSea.Current is not { } sea )
+				{
+					Reply( "sea: none - a park has to be loaded" );
+					break;
+				}
+
+				if ( parts.Length >= 3 && parts[1] == "y" )
+					sea.SetHeight( Argument( 2 ) );
+
+				if ( parts.Length >= 3 && parts[1] == "phase" )
+					sea.SetPhase( Argument( 2 ) );
+
+				Reply( $"sea: corner {sea.CornerText} phase {sea.Phase:0.000} from {sea.Folder} words {sea.Census()}" );
+				break;
+
 			// WHY a guest is not going anywhere, which `peeps` cannot answer. MajorDest is written only after a route
 			// succeeds, so a guest whose best cannot be reached looks identical to one who chose nothing. This asks
 			// the chooser alone, no route; each route a real choice asked is in the log ("the chooser routes to").

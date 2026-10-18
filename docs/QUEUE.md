@@ -53,14 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q490. Build the park's sea quilt.** From Q486 (`park-engine.md`, "The park's sea"): the `WaterMesh` over the
-  harbour, 134 see-through quads of `gby_sur1..3` (`data/generic/dynamic/textures`, or `stexture` where `FUN_0054dcc0`
-  answers so) at `WaterStartPos` read from the balance (never a constant), each quad's texture drawn once, the 16 x 19 grid's heights
-  and normals made each frame from the decoded s, lit through the park's lighter, and the phase on `Time.Delta` at 30
-  frames a second (0.4 a frame; say the deviation at the site, as `ParkBuildMarkers` does) and held while the park is
-  paused. Confirm at camera B against `q486/orig`: the box's colour toward (2.7, 60.0, 75.7), a period near 1.05 s, the
-  brick and road unchanged. `Line01` alone read 0.935 of `jri_lak2` in the original against ours' 1.0; measure it with
-  the quilt sunk (`q486/orig/run.sh`'s hold) before calling the colour done.
 - [ ] **Q491. The gates' flags: the third dynamic mesh. Decode first.** From Q486: `FlagsMesh` (`FUN_0053bfe0`,
   `0x180` faces, mesh id 3) waves eight flags of `gte_lgo1` (words 18 and 19, alternating) on the poles by the gates:
   `FUN_0053d570( 7, 5, 1.8, phase )` with its phase at `0x00871ed0`, then the `FUN_0053cda0` loop over eight fixed
@@ -123,6 +115,11 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
   vertex light `FUN_005741b0`, the models' pass) is not read. Ours draws no half light there and lights the park as at
   medium, counted `LIGHTING_OFF` at the park's load (`Level.Lighting`). Decode the bit's other readers, then measure
   the original at low quality (`Resolution.sam` aside, its Options screen) at Q479's camera A before any build.
+- [ ] **Q492. The original's textures are 16-bit surfaces at medium. Decode first.** From Q490: the original's sea and
+  lake keep red near nought where ours reads 4 to 7 (`q490/PREDICTION.txt`), as `gby_sur`'s red (about 14) keeps
+  nothing of its top four bits; the path tiles are A4R4G4B4 (Q489, `park-engine.md`), and `med.sam` sets
+  `GraphicalOptions.TEXTURE32` 0. Decode which surface format the loader picks for each texture (alpha graded, cut,
+  none) and under `TEXTURE32`, then decide with Alexah whether ours draws the same four or five bits a channel.
 - [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
   listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
   the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for

@@ -30,6 +30,7 @@ namespace OpenTPW;
 /// <b>Animated by a bare companion.</b> Only the jungle ships one - <c>basem.MD2</c>, which reports
 /// <c>IsAnimation</c> and carries eleven UV tracks - and <see cref="LobbyModel.LoadAnimations"/> takes a
 /// bare <c>m</c> clip where no <c>M1</c>, <c>M2</c>... run exists, so those tracks scroll on the park's clock.
+/// Nothing moves the lake, <c>Line01</c>: the moving water over the harbour is <see cref="ParkSea"/>'s.
 /// </para>
 /// </summary>
 public sealed class ParkTerrain : Entity

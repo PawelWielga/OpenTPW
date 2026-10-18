@@ -407,6 +407,13 @@ whole list):
   the screen writes every budget back, so it sets `mHaveEverTrained` by itself**: read the flag before it. A
   tag's count taken from the log before the load's click is stale (`run.sh`'s `held`): click a tag only after a
   fresh `tags.py` line. This game's month turns about 715 ticks after a load, not on the file's calendar (Q149).
+- **The harbour's sea at one phase in both games** (Q490): this game `pause`, then `sea phase P` (the console's `sea`
+  prints the corner, phase, folder and words; `sea y H` sinks it to read `Line01` alone); the original
+  `memhold.py %PID% 4 0x00871f60:f=P`, a frame grabbed 2 s in (`q490/orig/run.sh`). The same P draws the same wave in
+  both (the words differ, being random); P and P + 4π are one wave apart (mad 0.00 in both), P + 2π half. At camera B
+  measure beside the seaplane, which parks over the first sea box in ours: the original's (100,150)-(250,300), ours
+  (254,141)-(394,281). Two frames meant half a wave apart are grabbed by wall clock, 0.52 s grab to grab: `shot()`'s
+  settles put them about a whole wave apart.
 - **This game at another graphics quality** (Q482): `gamefolder.make( dest, {} )`, then write the quality into the
   folder's own `save/Config.tcf`, the dword at byte 12 (0 low, 1 medium, 2 high; `ConfigFile.Record`'s order after the
   version: card rendering, resolution, quality), and hand the folder to `parkrun.py` as `GAME_FOLDER`. The level reads

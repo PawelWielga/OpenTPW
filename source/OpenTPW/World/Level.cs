@@ -345,6 +345,10 @@ public class Level
 		_ = new ParkTerrain( ThemeName );
 		load.Mark( "terrain" );
 
+		// The moving sea over the harbour, laid over the terrain's still lake.
+		_ = ParkSea.For( Balance, TextureQuality() );
+		load.Mark( "sea" );
+
 		// The objects before the fixed items, which is the one ordering here that matters: the gate and the
 		// traffic lights are swept out of the very registry the placed things are swept from, so it has to
 		// exist before they can put themselves into it.
@@ -1155,6 +1159,25 @@ public class Level
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	/// The detail file's <c>GraphicalOptions.TEXTUREQUALITY</c>: 1 in low.sam, 2 in med.sam, 3 in high.sam. A file that will not read
+	/// gives medium's 2.
+	/// </summary>
+	private static int TextureQuality()
+	{
+		try
+		{
+			if ( int.TryParse( new SettingsFile( $"/{DetailFile}" )["GraphicalOptions.TEXTUREQUALITY"], out var value ) )
+				return value;
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"Sea: {DetailFile} would not load, so its textures are medium's - {e.Message}" );
+		}
+
+		return 2;
 	}
 
 	/// <summary>

@@ -30,7 +30,7 @@ How the original game boots: `WinMain` takes a single-instance lock, builds the 
 
 ## Boot init — `Boot_Init` 0x0054dcf0 (once)
 
-1. **Textures:** 0x004688b0 picks the texture folders by a detail setting (`DAT_00785874`): `stexture`/`ssharete` or `textures`/`sharetex`.
+1. **Textures:** 0x004688b0 picks the texture folders by a detail setting (`DAT_00785874`): `stexture`/`ssharete` or `textures`/`sharetex`. `Boot_Init` (`0x0054dd02`) passes it 1, the small copies, where the detail file's `GraphicalOptions.TEXTUREQUALITY` (`DAT_00785874`) is 0 or 1, or, with a `dialog.tcf` loaded (`DAT_0078d968`), where its flag word has `0x800`; `FUN_0054dcc0` asks the same for the dynamic meshes (`park-engine.md`, "The park's sea"). Read live at medium: 2.
 2. **Checks and options:**
    - 0x005d55a0 checks an "Authorization Stamp" and logs the result.
    - 0x0040f000 parses the command line's options (the words `GetCommandLineA`'s string was split into by 0x00405630): `version quickload nodebug noload SAVEDEBUG flmouse bwcursor`. If it fails, the game aborts.
@@ -260,7 +260,7 @@ Evidence is a Ghidra trace of `/testme.exe` throughout; the column names what in
 | 0x00550ca0 | | The mode object's constructor, run once per caller's static guard (26 guard bytes across its 85 call sites): derives the type from the flag word (`0x2000000` gives 2, `0x1000000` gives 1, otherwise 0) and writes the type and its bit back. Its "Invalid GameType in SetGameType" assert has a constant true condition, so never fires. | Decompile |
 | 0x00550d80 | SetGameType | The only setter taking a type: stores it and sets its one flag bit, asserting `< 3`. Five callers: Select (`0x005c85ae`), 0 or 2 by `gms.dat +0x24`; `Game_StateMachine`, which tests the same byte and pushes 0 (`0x005501b4`) or `EBP`, not resolved (`0x00550179`); `0x004c0876` and `0x005e273e` with 1. | Decompile, call sites |
 | 0x004688b0 | | Picks texture folders by the detail setting: `stexture`/`ssharete` or `textures`/`sharetex`. | Folder-name strings |
-| `DAT_00785874` | | The texture detail setting read by 0x004688b0. | Read site |
+| `DAT_00785874` | | `GraphicalOptions.TEXTUREQUALITY`, the texture detail setting `Boot_Init` and `FUN_0054dcc0` test for 0 or 1. | Read site; 2 live at medium (Q490) |
 | 0x005d55a0 | | Checks the "Authorization Stamp" and logs the result. | String |
 | 0x0040f000 | | Parses the command line's options (`GetCommandLineA`'s string, split by 0x00405630): `version quickload nodebug noload SAVEDEBUG flmouse bwcursor`. Failure aborts the game. | Option strings |
 | 0x0040cb80 | | Reads settings sections `system camera cheat coaster shortcuts`. | Section strings |

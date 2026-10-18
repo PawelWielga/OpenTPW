@@ -7670,6 +7670,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the box teal and still, OpenTPW's picture (`q486/side-by-side.png`). Not a texture animation: Alexah's lead holds in
   kind, a vertex wave in the build squares' module, with its own formula. Filed Q490 (the build) and Q491 (the gates'
   flags, the third mesh). `lib/patchmean.py` gained `mad`.
+- [x] **Q490. Build the park's sea quilt.** From Q486 (`park-engine.md`, "The park's sea"): the `WaterMesh` over the
+  harbour, 134 see-through quads of `gby_sur1..3` (`data/generic/dynamic/textures`, or `stexture` where `FUN_0054dcc0`
+  answers so) at `WaterStartPos` read from the balance (never a constant), each quad's texture drawn once, the 16 x 19 grid's heights
+  and normals made each frame from the decoded s, lit through the park's lighter, and the phase on `Time.Delta` at 30
+  frames a second (0.4 a frame; say the deviation at the site, as `ParkBuildMarkers` does) and held while the park is
+  paused. Confirm at camera B against `q486/orig`: the box's colour toward (2.7, 60.0, 75.7), a period near 1.05 s, the
+  brick and road unchanged. `Line01` alone read 0.935 of `jri_lak2` in the original against ours' 1.0; measure it with
+  the quilt sunk (`q486/orig/run.sh`'s hold) before calling the colour done.
+  Done 2026-10-18, `alexah/589-park-sea-quilt`: `ParkSea` (`Level` lays it after the terrain; the console's `sea`). The
+  review of Q486 (`handoff/review3/q486/FINDINGS.md`) was right on its points: the target is a wave's mean, not a-B-1
+  (the film's (2.2, 55.3, 69.8)), the see-through is the textures' graded alpha, and the sea's faces take
+  `FUN_0053e530`, whose triangles fold the quad the other way from the squares'. At camera B in a box beside the parked
+  seaplane, the same held phases: half a wave apart mad 9.58 (the original's 8.89), a whole one 0.00 in both; over a
+  wave (6.1, 58.4, 72.0) against (1.7, 54.5, 68.8), the rest most likely the original's 16-bit surfaces (Q492); sunk, `Line01`
+  alone (1.0, 53.5, 55.7) against (0.0, 50.2, 53.8). Low quality takes `stexture`. 12 tests; 17 of 17 bugs put back fail.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
