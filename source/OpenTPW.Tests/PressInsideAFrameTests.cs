@@ -7,7 +7,7 @@ namespace OpenTPW.Tests;
 
 /// <summary>
 /// A press let go inside one frame: the window system sends its press and its release, and the button stands up as
-/// the frame ends. The original is sent each as a message (WM_LBUTTONDOWN posts <c>0x10005</c>), so none is lost.
+/// the frame ends. The original is sent each as a message (the cursor library's callback <c>0x00486c70</c> posts <c>0x10005</c>), so none is lost.
 /// </summary>
 [TestClass]
 public class PressInsideAFrameTests

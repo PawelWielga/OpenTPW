@@ -787,8 +787,9 @@ hands a right press or release (`param_3 != 0`) to the base proc on itself (`0x0
 goes nowhere. So in 2048x1536 units a right click leaves anywhere on `0 <= x < 2047, 0 <= y < 1535` but
 `1916 <= x < 2018, 1404 <= y < 1506`. With RMB cancel off, nowhere. Nothing passes a message to a parent: the queue
 pump hands each entry to its own control's `+0x114` (`0x00669a84`, `FUN_0065f697`). The management screens are built
-onto layer 0, which first person hides, and the help bar has no control (below, "The help bar in first person"), so
-nothing else is under the pointer.
+onto layer 0, which first person hides, and the help bar's label is built disabled (`0x004922a6`..`0x004922aa`, `+0x14` with 0; flag `0x2`, so the hit test skips it) and is
+hidden in first person (below, "The help bar in first person"), so nothing else is under the pointer. The sink's own control
+there is layer 1.
 
 **What else a right press does in first person.** `FUN_00488a00` hands every message, before the base proc, to
 `FUN_0042a760`, which sets `DAT_00790aac |= 4` on a right press and clears it on the release (`0x0042a8bd`,
@@ -1288,7 +1289,11 @@ stood, and stood after Escape. Here
 `WindowStack.HelpRow` is the one row: a change of what is under the pointer (`WindowStack._pointed`: a control, a modal
 window's, a park screen's body or the cover, or the view) posts the control's row or -1, then the view's own post
 (`WindowStack.WorldHelpPost`, the park's `Level.HoverPosted`) is taken while the pointer is on the view. Ours posts a
-control's row again when it changes under a resting pointer; whether the original does is not decoded. Measured here
+control's row again when it changes under a resting pointer. The original posts the hovered control's row again when a
+button whose flags (`FUN_0065d57c`) hold `0x10` is let go: the button class's proc, message `0x10004` (jump table
+`0x0066938c`, case `0x006690d6`), calls the sink's `+0x1c` at `0x00669172`, which is `0x00492320` and re-runs
+`FUN_00492070` for the sink's control (`+0x14`) while `+4` is set. Whether it posts again at a change made without a
+release is not decoded. Measured here
 (`q473/run1`, 10 of 10, and main's build `q473/ctl1`, which kept 441 over the hoarding and emptied the bar under the
 open screen).
 
@@ -1356,7 +1361,8 @@ is 1 and `FUN_004813e0` (the park's interface, `FUN_00489f50`) otherwise; `FUN_0
 `FUN_004bf460`, which loads stream `0x00758ae8` into `[0x007cc8bc]` and builds the full-screen control `[0x007cc8c0]`
 (`FUN_0065dd7b( 1, 0, 0xfff04d2a, 0, 0, 0x7ff, 0x5ff )`), both with the handler `0x004bd4a0`, in no function. Those two
 words and the state `[0x007cc8e4]` are written only there and in the handler (the two noughted on their `0x14`). That interface has no park view (`[0x007cb2ac]` stays
-nought, so `FUN_004814a0` sets its cursors instead); `FUN_004bd090`, `FUN_004bd260`, `FUN_004bcf50` and `FUN_004bce80`
+nought, so `FUN_004814a0` sets its cursors instead); `FUN_004bd090`, `FUN_004bd260`, `FUN_004bcf50`, `FUN_004bce80`, `FUN_004bcef0` (called at `0x004a7e51`; it picks the layer by
+`[0x007cc698]`, `0x004bcf18`/`0x004bcf32`, then noughts that word) and the handler `0x004bd4a0` itself (`0x004bde21`..`0x004bde44`, by `[0x007cc8b4]`)
 set property 6 of the two layers (`FUN_00658d9f`), and the frame below runs on the one `FUN_0065d57c` finds shown.
 
 On a frame (`0x1e`) of whichever layer is shown, the handler works out a state (`0x004bd74f` to `0x004bd902`):
@@ -1413,17 +1419,22 @@ noughts the sink's control if it was that one and hides the label. So, on the wa
 
 **The way out.** Escape, C, the eject button and a right click with RMB cancel set layer 1's cursor to 1 (`c_busy.ani`)
 and leave (above, "Four ways out of camcorder mode"). Layer 1 is dropped from the sink at once; on the next pump the
-view's `0x10001` puts up its own cursor (the one the last hover put up), and `Park_MouseMessageProc` runs the hover,
-then sets the flag and the category nought (`park-engine.md`, "The hover runs only on the park's view"), and the
-library posts the view's own row, -1, which hides whatever that hover posted. The next timer hover posts its arm's row,
+view's `0x10001` (`Park_MouseMessageProc`, `0x0048884e`) runs first: it noughts the thing, runs the hover (when the hover's
+guard word `[0x007c24c8]` is nought; the hover puts up its own pointer), sets the flag to 1 and the category nought (`park-engine.md`,
+"The hover runs only on the park's view"). Then the base proc (`0x004889b6`) applies the view's cursor, the one this hover
+put up, and the library posts the view's own row, -1, which hides whatever that hover posted. The next timer hover posts its arm's row,
 a change from nought. Its cell is the one the picker last held, the pick's click's, until the picker reads the pointer's
 own place, 367 ms after the swap in both rounds (why it waits is not read); then that place's row.
 
 **The pick posts rows of its own** (mode type 9, `0x00486e37` to `0x00486fcf`). It sets no category and puts up no
-pointer (the mode wears `0x13`, `c_cam.ani`). No cell: nothing. A cell whose thing (`FUN_00527e80`) is of type 3, no
-add-on (`FUN_004e2710`'s word nought) and with `+0x4ac` nought: UIHELPTEXT `0x244` (580, "{P2}: Left-click to ride",
-`{P2}` its name, `FUN_004e2780`) on a change of thing. Any other cell: `0x243` (579, "Left-click to use camcorder mode
-here") when the last thing was set or the last category was not nought, and the thing forgotten. Coming onto the view
+pointer (the mode wears `0x13`, `c_cam.ani`). No cell: nothing. A cell with **no thing**
+(`0x00486e79`): UIHELPTEXT `0x243` (579, "Left-click to use camcorder mode here") when the last thing was set or the last
+category was not nought, and the thing forgotten. A cell whose thing (`FUN_00527e80`) is of type 3, no add-on
+(`FUN_004e2710`'s word nought) and whose item record (`FUN_004dd4e0`; its `+0x4ac` is the item's `Info.WhichUIType`, not the
+thing's) has `+0x4ac` nought, a ride: UIHELPTEXT `0x244` (580, "{P2}: Left-click to ride", `{P2}` its name, `FUN_004e2780`)
+when the thing changed **or** the last category was not nought (the hover noughts `[0x007c24f4]` at `0x00486de5`, and the
+category saved at entry is compared, `0x00486eea`..`0x00486efe`). **Any other thing** (another type, an add-on, a shop,
+sideshow or feature): nothing is posted and the thing is kept (`0x00487990`, a bare epilogue). Coming onto the view
 in the pick, the `0x10001`'s hover posts 579 (the category was the orbit's) and the view's row hides it, so over ground
 the bar stays hidden until a ride has been under the pointer.
 

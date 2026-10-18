@@ -42,7 +42,8 @@ internal sealed class WorldParticles : Entity
 	/// <summary>A half width of one in the sprite pass, in park units: 1 / (1.5 cos 45).</summary>
 	internal const float UnitsAcross = 1f / (1.5f * 0.70710677f);
 
-	/// <summary>A half height of one in the sprite pass, in park units: 1 / (2 cos 45).</summary>
+	/// <summary>A half height of one in the sprite pass, in park units: 1 / (2 cos 45), the span law of
+	/// <see cref="Camera.ClipPerWorld"/> (<c>docs/exe/park-engine.md</c>, "The size a sprite is drawn").</summary>
 	internal const float UnitsDown = 1f / (2f * 0.70710677f);
 
 	/// <summary>The width over the height of an effect with no picture (<c>DAT_008bcbcc</c>).</summary>

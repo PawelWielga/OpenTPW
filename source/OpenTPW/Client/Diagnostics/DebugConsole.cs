@@ -1691,7 +1691,8 @@ public static class DebugConsole
 				if ( drawnState is not null )
 					overlay = drawnState.ChangedCells;
 
-				Reply( $"drawn: paths {ParkPaths.Current?.Drawn.ToString() ?? "<no ParkPaths>"} cells, " +
+				Reply( $"drawn: paths {ParkPaths.Current?.Drawn.ToString() ?? "<no ParkPaths>"} cells (laid over the ground's tiles " +
+					$"{ParkPaths.Current?.LaidOver.ToString() ?? "?"}), " +
 					$"queues {ParkQueues.Current?.Placed.ToString() ?? "<no ParkQueues>"} pieces, " +
 					$"ground {(ParkGround.Current is null ? "<none>" : "built")} | " +
 					$"overlay {overlay} changed cells, balance {drawnState?.Balance.ToString() ?? "?"} | " +

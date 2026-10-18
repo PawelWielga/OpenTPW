@@ -89,9 +89,10 @@ public sealed class ParkGround : ModelEntity
 	private readonly Dictionary<int, ProceduralGround.PathTexture?> _pathTextures = new();
 
 	/// <param name="world">
-	/// The park's own save, or null where the theme ships none. It is asked one question only: which
-	/// cells something else draws - a path, a queue or a built thing's floor - so that those are left to
-	/// their owners instead of being drawn as grass underneath them.
+	/// The park's own save, or null where the theme ships none. It is asked which cells something else draws - a
+	/// path, a queue or a built thing's floor - so that those are left to their owners instead of being drawn as grass
+	/// underneath them, and, on a path cell the compositor's tiles cover, which tile and which turn the path lays over
+	/// the ground's own (<see cref="LaysPath"/>).
 	/// </param>
 	/// <param name="balance">The theme's balance, asked for <c>MapInfo</c>'s limits; the field's own less one without it.</param>
 	/// <param name="lighting"><c>GraphicalOptions.LIGHTING</c>: off, no cell is drawn at half light.</param>
@@ -254,8 +255,8 @@ public sealed class ParkGround : ModelEntity
 			var width = _mapWidth > 0 ? _mapWidth : field.CellsX - 1;
 			var height = _mapHeight > 0 ? _mapHeight : field.CellsY - 1;
 
-			_halfLight = LandOutsideThePark( field.CellsX, field.CellsY, width, height,
-				( x, y ) => ParkState.CellFor( world, x, y ).Flags );
+			_halfLight = HalfLitCells( _lighting, field.CellsX, field.CellsY, width, height,
+				( x, y ) => ParkState.CellFor( world, x, y ).Flags )!;
 
 			Log.Info( $"{_themeName}: {_halfLight.Count( half => half )} of the {field.CellsX}x{field.CellsY} ground cells " +
 				$"are land outside the park, drawn at half light (map cells held below {width}x{height})" );
@@ -341,10 +342,11 @@ public sealed class ParkGround : ModelEntity
 					continue;
 
 				// A cell something else draws is not this surface's to draw. Three kinds of cell are
-				// somebody else's: the ones the player laid a path on, which ParkPaths draws; the ones
-				// something is built on, where the item's own model carries a floor plate as wide as its
-				// footprint; and the ones a queue runs over, where each piece of queue brings its own
-				// base. See ParkObjects.CoversGround and ParkQueues.IsQueue.
+				// somebody else's: the ones the player laid a path on, which ParkPaths draws except where
+				// the compositor's tiles cover them (LaysPath: there this draws the cell, the path laid over
+				// its tile); the ones something is built on, where the item's own model carries a floor plate
+				// as wide as its footprint; and the ones a queue runs over, where each piece of queue brings
+				// its own base. See ParkObjects.CoversGround and ParkQueues.IsQueue.
 				//
 				// All three are ordinary ground cells in the model rather than index 0, so without this
 				// two surfaces are built over each other at identical heights and fight for the same
@@ -360,7 +362,7 @@ public sealed class ParkGround : ModelEntity
 
 					// Inside the box the path is laid over the cell's tile, which is drawn here; outside it ParkPaths
 					// draws the path alone, as the terrain pass draws the cell's own texture there.
-					if ( (ParkPaths.IsPath( cell ) && !LaysPath( x, y )) || ParkQueues.IsQueue( cell ) || ParkObjects.CoversGround( cell ) )
+					if ( LeavesToOthers( cell, LaysPath( x, y ) ) )
 						continue;
 				}
 
@@ -368,7 +370,7 @@ public sealed class ParkGround : ModelEntity
 
 				// Which way round this cell's art goes - the low half of the same word the texture
 				// index came from, as a path writes it on a path cell. A composited tile is turned the same way (0x0056fa0b).
-				var uvs = CellUvs( DrawnWord( WordOf( world, field, x, y ), _tileSize > 0 ) );
+				var uvs = CellUvs( DrawnWordAt( world, field, x, y, _tileSize > 0 ) );
 
 				// Inside the box the cell draws its composited tile in place of its own texture (FUN_0056f380).
 				var tile = _tiles?.Covers( x, y ) == true;
@@ -380,7 +382,7 @@ public sealed class ParkGround : ModelEntity
 				}
 
 				var corner = vertex;
-				var flags = _halfLight?[(y * field.CellsX) + x] == true ? HalfLight : 0u;
+				var flags = CornerFlags( _halfLight, (y * field.CellsX) + x );
 
 				if ( flags != 0 )
 					++halfLit;
@@ -419,11 +421,36 @@ public sealed class ParkGround : ModelEntity
 			$"{field.CellCount - (element / 6)} left to the scenery, to the paths and to what is built on them" );
 	}
 
-	/// <summary>Whether a path on cell (x, y) is laid over the cell's composited tile, which the ground then draws.</summary>
-	public bool LaysPath( int x, int y ) => _tiles?.Covers( x, y ) == true;
+	/// <summary>
+	/// Whether a path on cell (x, y) is laid over the cell's composited tile, which the ground then draws: the cell is in
+	/// the compositor's box and its path tile's texture reads. Where that texture will not read, <see cref="ParkPaths"/>
+	/// draws the cell with the not-found texture, as it does outside the box.
+	/// </summary>
+	public bool LaysPath( int x, int y )
+	{
+		if ( _tiles?.Covers( x, y ) != true )
+			return false;
+
+		if ( _world == null )
+			return true;
+
+		var cell = ParkState.CellFor( _world, x, y );
+		return !ParkPaths.IsPath( cell ) || PathTexture( cell.TileIndex ) != null;
+	}
+
+	/// <summary>
+	/// Whether this surface leaves a cell to another: a path cell the compositor's tiles do not carry
+	/// (<see cref="ParkPaths.DrawsPathCell"/> draws it), a queue's or a built thing's.
+	/// </summary>
+	internal static bool LeavesToOthers( ParkWorld.MapCell cell, bool laysPath )
+		=> ParkPaths.DrawsPathCell( cell, laysPath ) || ParkQueues.IsQueue( cell ) || ParkObjects.CoversGround( cell );
+
+	/// <summary>The word cell (x, y) is drawn with: the running park's (<see cref="WordOf"/>) as <see cref="DrawnWord"/> turns it.</summary>
+	internal static ushort DrawnWordAt( IParkInitialState? world, HeightfieldFile field, int x, int y, bool compositor )
+		=> DrawnWord( WordOf( world, field, x, y ), compositor );
 
 	/// <summary>A cell's word as the running park holds it: the file's, or on a path cell what the path wrote (<see cref="PathWord"/>).</summary>
-	private static ushort WordOf( IParkInitialState? world, HeightfieldFile field, int x, int y )
+	internal static ushort WordOf( IParkInitialState? world, HeightfieldFile field, int x, int y )
 	{
 		var word = (ushort)field.Cells[(y * field.CellsX) + x];
 
@@ -524,6 +551,16 @@ public sealed class ParkGround : ModelEntity
 
 		return half;
 	}
+
+	/// <summary>
+	/// The cells drawn at half light, or null where <c>GraphicalOptions.LIGHTING</c> is off and none is
+	/// (<see cref="LandOutsideThePark"/> otherwise).
+	/// </summary>
+	internal static bool[]? HalfLitCells( bool lighting, int cellsX, int cellsY, int mapWidth, int mapHeight, Func<int, int, ushort> mapFlags )
+		=> lighting ? LandOutsideThePark( cellsX, cellsY, mapWidth, mapHeight, mapFlags ) : null;
+
+	/// <summary>The vertex flags a ground cell's four corners carry: <see cref="HalfLight"/> where the cell is half lit.</summary>
+	internal static uint CornerFlags( bool[]? halfLight, int cell ) => halfLight?[cell] == true ? HalfLight : 0u;
 
 	/// <summary>
 	/// One corner of one cell. The grid lies flat in X and Y with height in Z, because this engine has

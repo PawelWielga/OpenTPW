@@ -128,9 +128,10 @@ source flags, runtime texture flags and decoded alpha pixels in both engines at 
 
 ## What actually disables depth writes
 
-For a world sprite, its flag `0x4000`: `SpriteList_Draw` (`FUN_0058a770`) ORs `0x800` into its word, and a particle's
-record carries it, a person's does not (`park.md`, "A park's particles, started and drawn"; `park-engine.md`, "What hides
-a person below their feet"). For a mesh, bit `0x2` of a **mesh record's first dword**, not the material word of the same value. Conflating the
+For a world sprite, its flag `0x80000`: `Sprite_BuildQuad` (`FUN_00589b50`) ORs `0x800` into the quad's word
+(`0x00589e85`); `SpriteList_Draw` (`FUN_0058a770`) ORs one for `0x4000` too, but only into the key it groups by. For a
+particle, its record's `0x4000`: `SpriteBatch_DrawParticles` ORs it (`0x0057c7fd`; `park.md`, "A park's particles, started
+and drawn"). A person's flags carry neither (`park-engine.md`, "What hides a person below their feet"). For a mesh, bit `0x2` of a **mesh record's first dword**, not the material word of the same value. Conflating the
 two sends you the wrong way, exactly like `Node.Flags` versus `Node.IdFlags`. `ModelFile.cs` skips
 that dword as "initial mesh data".
 

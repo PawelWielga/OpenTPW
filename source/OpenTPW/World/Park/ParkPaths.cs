@@ -49,6 +49,9 @@ public sealed class ParkPaths : ModelEntity
 	/// <summary>How many cells were drawn as path - for the log, and for anything wanting to check.</summary>
 	public int Drawn { get; private set; }
 
+	/// <summary>How many path cells the ground drew instead, laid over its composited tiles (<see cref="ParkGround.LaysPath"/>).</summary>
+	public int LaidOver { get; private set; }
+
 	private readonly string _themeName;
 
 	/// <summary>The park this was built from, so that it can be built again when a cell changes.</summary>
@@ -71,9 +74,10 @@ public sealed class ParkPaths : ModelEntity
 	/// <para>
 	/// <b>The same shape as <see cref="ParkGround.Rebuild"/>, deliberately.</b> The paths are one model
 	/// of every path cell in the park, so there is no per-cell edit to make, and the two surfaces have
-	/// to be rebuilt together or they disagree about which cell belongs to whom: the ground stops
-	/// drawing grass on a cell the moment the overlay calls it a path, so a path that did not rebuild
-	/// alongside it would leave <b>a hole</b> rather than a walkway.
+	/// to be rebuilt together or they disagree about which cell belongs to whom: outside the compositor's box the
+	/// ground stops drawing grass on a cell the moment the overlay calls it a path, so a path that did not rebuild
+	/// alongside it would leave <b>a hole</b> rather than a walkway; inside it the ground lays the path over the
+	/// cell's tile (<see cref="ParkGround.LaysPath"/>), and a ground that did not rebuild leaves the old tile.
 	/// </para>
 	/// <para>
 	/// <b>The old model is let go of first</b>, for the reason the ground gives: a
@@ -121,6 +125,12 @@ public sealed class ParkPaths : ModelEntity
 	/// </summary>
 	public static bool IsPath( ParkWorld.MapCell cell ) => cell.TileSet == PathTileSet;
 
+	/// <summary>
+	/// Whether this draws a cell: a path cell the ground's composited tiles do not carry (<paramref name="laysPath"/>,
+	/// <see cref="ParkGround.LaysPath"/>). The ground leaves exactly these cells to it (<see cref="ParkGround.LeavesToOthers"/>).
+	/// </summary>
+	public static bool DrawsPathCell( ParkWorld.MapCell cell, bool laysPath ) => IsPath( cell ) && !laysPath;
+
 	private void Build( IParkInitialState? world )
 	{
 		// Without a save there are no paths - which is the ordinary case for three of the four themes,
@@ -154,15 +164,18 @@ public sealed class ParkPaths : ModelEntity
 				// park loaded has to be drawn as one, and ParkWorld cannot record that. It falls through
 				// to the save for every cell nobody has changed, which is all of them until somebody
 				// builds something. This is the same seam ParkGround reads, and the two have to agree:
-				// the ground stops drawing grass the moment the overlay calls a cell a path, so a path
-				// that did not read the overlay too would leave a hole exactly where the walkway belongs.
+				// outside the compositor's box the ground stops drawing grass the moment the overlay calls a
+				// cell a path, so a path that did not read the overlay too would leave a hole exactly where
+				// the walkway belongs.
 				var cell = ParkState.CellFor( world, x, y );
 
 				// Where the ground composites its tiles, the path is laid over the cell's tile (ParkGround.LaysPath).
 				if ( !IsPath( cell ) )
 					continue;
 
-				if ( ParkGround.Current?.LaysPath( x, y ) == true )
+				var laysPath = ParkGround.Current?.LaysPath( x, y ) == true;
+
+				if ( !DrawsPathCell( cell, laysPath ) )
 				{
 					++laidOver;
 					continue;
@@ -174,6 +187,8 @@ public sealed class ParkPaths : ModelEntity
 					indices.Add( cell.TileIndex );
 			}
 		}
+
+		LaidOver = laidOver;
 
 		if ( cells.Count == 0 )
 		{
@@ -242,7 +257,7 @@ public sealed class ParkPaths : ModelEntity
 	/// <summary>
 	/// The theme's texture table, or null where it will not read - in which case every tile falls back to
 	/// the not-found texture and the paths are still laid in the right places, which is far more useful
-	/// than no paths at all.
+	/// than no paths at all (inside the compositor's box too: <see cref="ParkGround.LaysPath"/> is false where a tile's texture will not read).
 	/// </summary>
 	internal static TextureTableFile? ReadTable( string themeName )
 	{

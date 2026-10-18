@@ -484,12 +484,13 @@ public class ParkHandTests
 
 	/// <summary>
 	/// <b>A press the window system sent reaches the park though it was let go inside the frame</b>, as the original's
-	/// WM_LBUTTONDOWN does: the frame ends with the button up and the press on a path picks up the path tool. A button
-	/// held when the park began, sent no press, picks up nothing; a frame's second press is counted.
+	/// press from its cursor library's callback (<c>0x00486c70</c>) does: the frame ends with the button up and the press
+	/// on a path picks up the path tool. A button held when the park began, sent no press, picks up nothing; a frame's
+	/// second press is counted and not acted on.
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the press read from the button's state as the frame ends arms nothing on the quick press and
-	/// arms the tool on the held button; the second press not counted.
+	/// arms the tool on the held button; the second press not counted; the second press acted on (a second click on the anchor counts, and puts the tool away).
 	/// </remarks>
 	[TestMethod]
 	public void APressLetGoInsideOneFrameReachesThePark()
@@ -533,6 +534,7 @@ public class ParkHandTests
 			worldClick.Invoke( level, [] );
 			Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, "two presses: the first acts" );
 			Assert.AreEqual( counted + 1, Unimplemented.Summary.FirstOrDefault( g => g.What == "PARK_PRESSES_IN_ONE_FRAME" ).Times, "and the second is counted" );
+			Assert.AreEqual( (true, 0), (ParkBuildMode.Anchored, ParkBuildMode.Clicks), "and not acted on: the armed path was anchored by the first press and handed no second click" );
 		}
 		finally
 		{

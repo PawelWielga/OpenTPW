@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace OpenTPW.Tests;
@@ -96,9 +100,85 @@ public class ParkGuestSpriteDepthTests
 	}
 
 	/// <summary>
+	/// <b>The frame the people are drawn in ends furthest first</b>, through the code that writes it: three people stood
+	/// 5, 50 and 20 along the camera's line of sight from a camera that is not at the origin, each with the facing dash
+	/// the debug console can switch on, are written six quads whose keys are those depths twice, and the frame hands the
+	/// upload the quads 50, 50, 20, 20, 5, 5.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the key of a picture (<c>WriteQuad</c>) or of a dash (<c>WriteGroundDash</c>) negated, taken from
+	/// the point itself rather than from the camera, or the frame ending in <c>Fold</c> and not <c>Finish</c> all leave the
+	/// depths out of order or different from the stood-at ones.
+	/// </remarks>
+	[TestMethod]
+	public void AFrameOfPeopleIsWrittenKeyedByDepthAndEndsFurthestFirst()
+	{
+		var data = GameData.Required();
+		var bankFile = ParkGuestSprites.BanksIn( data, ParkGuestSprites.FolderFor( 0, "jungle" )!, 0 )[0];
+		var bank = new SpriteBankFile( new MemoryStream( data.ReadAllBytes( bankFile ) ) );
+		var pictures = Enumerable.Repeat( new ParkGuestSprites.Region( 0.25f, 0.1f, 0.5f, 0.3f, 38, 50, 22, 42 ), 1024 ).ToArray();
+
+		var all = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+		var cameraField = typeof( Camera ).GetField( "CameraMode", all )!;
+		var cameraBefore = cameraField.GetValue( null );
+		var statics = new[] { typeof( ParkPeople ), typeof( ParkBumperBoats ), typeof( ParkGround ), typeof( ParkObjects ) }
+			.Select( type => type.GetProperty( "Current", all )! ).ToArray();
+		var staticsBefore = statics.Select( property => property.GetValue( null ) ).ToArray();
+		var dashBefore = ParkGuestSprites.DebugFacing;
+
+		try
+		{
+			foreach ( var property in statics )
+				property.SetValue( null, null );
+
+			Camera.SetCameraMode<CameraMode>();
+			var mode = (CameraMode)cameraField.GetValue( null )!;
+			mode.Position = new OpenTPW.Vector3( 100f, -40f, 7f );
+
+			var forward = Camera.Rotation.Forward;
+			Assert.IsTrue( Math.Abs( OpenTPW.Vector3.Dot( mode.Position, forward ) ) > 1f, "the control: the camera is not at the origin's depth" );
+
+			var pool = new ParkGuestSprites( "jungle", null );
+			pool.Resize( 6 );
+
+			var loaded = typeof( ParkGuestSprites ).GetNestedType( "Loaded", all )!;
+			((IDictionary)typeof( ParkGuestSprites ).GetField( "_banks", all )!.GetValue( pool )!)[(0, 0)] = Activator.CreateInstance( loaded, bank, pictures );
+			typeof( ParkGuestSprites ).GetField( "_plain", all )!.SetValue( pool, pictures[0] );
+
+			var people = (List<(ParkWorld.Person Person, ParkWorld.Sprite Sprite)>)typeof( ParkGuestSprites ).GetField( "_people", all )!.GetValue( pool )!;
+
+			foreach ( var (thing, depth) in new[] { (1, 5f), (2, 50f), (3, 20f) } )
+			{
+				var at = mode.Position + (forward * depth);
+				people.Add( (new ParkWorld.Person( thing, 0, 0, 0, thing, 0, default!, null ),
+					new ParkWorld.Sprite( thing, 0, 0, 0, at.X, at.Z, at.Y, 0, 0, 255, 0, 0, 0 )) );
+			}
+
+			ParkGuestSprites.DebugFacing = true;
+
+			var (used, reach) = pool.WriteTheFrame();
+			var (_, depths) = pool.Written;
+
+			Assert.AreEqual( (6, 6), (used, reach), "a picture and a dash each" );
+			CollectionAssert.AreEqual( new[] { 50f, 50f, 20f, 20f, 5f, 5f }, depths.Select( d => MathF.Round( d, 2 ) ).ToArray(),
+				"each keyed by its depth from the camera along its line of sight, furthest first" );
+		}
+		finally
+		{
+			ParkGuestSprites.DebugFacing = dashBefore;
+			cameraField.SetValue( null, cameraBefore );
+
+			for ( var i = 0; i < statics.Length; ++i )
+				statics[i].SetValue( null, staticsBefore[i] );
+		}
+	}
+
+	/// <summary>
 	/// <b>The people write depth through the original's alpha test</b>: their pipeline leaves depth writing on, and
 	/// their shader drops a fragment under 16 of 255 (ALPHAFUNC GREATEREQUAL, ALPHAREF 16; <c>render-states.md</c>), not
-	/// only a clear one as the particles' shader does.
+	/// only a clear one as the particles' shader does. <b>This checks the constants</b> <see cref="ParkGuestSprites.PeopleMaterial"/>
+	/// and <see cref="ParkGuestSprites.PeopleShader"/> and the shader's text, not the material <c>Build</c> makes from them
+	/// (that needs a device); that <c>Build</c> uses them rests on the game run.
 	/// </summary>
 	[TestMethod]
 	public void ThePeopleWriteDepthThroughTheAlphaTest()

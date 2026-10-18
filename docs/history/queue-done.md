@@ -7545,7 +7545,8 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   only. **Done:** measured, they were 1.41 times: the original drew Mike's 41 x 52 picture from row 350 to 389 of 768 (the
   decode's 349.3 and 389.4), ours on main 46 px over his origin's row of 720 against the original's 32.5; with the span
   drawn over `Camera.ClipPerWorld` (1.414) one 26 x 51 picture went 45 to 32 up and 17 to 12 left (`q470/`). Only people
-  set `0x200` (three censuses; the head's, balloons' and bubbles' programs leave local 16 without it). Filed Q477.
+  set `0x200` by the sprite programs (read statically: the head's, balloons' and bubbles' programs leave local 16
+  without it); the three censuses held people's sprites alone. Filed Q477.
 - [x] **Q471. The park gate's row and click, and the ground's other rows counted.** Done 2026-10-17: the gate's four
   cells post 459 and the booths 460 with the pick hand, and a click on either opens the entry price, 9 of 9 in ours
   (`q471/run2`) and 8 of 8 in the original (`q471/orig/b-run.out`), main's build 442 and the path tool (`control1`);

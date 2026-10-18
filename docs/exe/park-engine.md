@@ -1373,8 +1373,11 @@ world an idle-mode-only behaviour. It switches on the hover category `DAT_007c24
 
 **The person and the object are two values** (Q474). Categories 7 to `0xc` open the person `FUN_0048c920` answers,
 `[0x007c2650]`; category 4 opens the object `FUN_0048c930` answers, `[0x007c2654]` (written by `FUN_0048c940`,
-`FUN_0048c960`, `FUN_0048c980`), once it has asked the cell `[0x007b05cc]` again (`FUN_00527e80`). The hover takes that
-object from the cell (`0x0048734c`), never from the sprite pick's person `[0x007b05ac]`, so a guest under the pointer
+`FUN_0048c960`, `FUN_0048c980`), once it has asked the cell `[0x007b05cc]` again (`FUN_00527e80`). The frame's picker
+`FUN_0046c110` (`0x0054e34f`) stores the first thing on the picked cell at `[0x007b05b0]` (`0x0046c16e`, `0x0046c1b2`)
+whoever the person is, and the click's `FUN_0048c960` (`0x00487a5d`) snapshots it into `[0x007c2654]`; the hover reaches
+`[0x007c2654]` by none of its writers and asks the cell only for its own category (`0x0048734c`). So the object is the
+cell's, never the sprite pick's person `[0x007b05ac]`, and a guest under the pointer
 with no locator and no Shift (who falls through to the cell's categories at `0x00487231`) leaves a click on the ride
 beside them to the ride. Measured in the original (`q474/orig/`, `PREDICTION.txt`): the stock park, the pointer at
 (460,280) on the Belly Bounce's cell (52,23) read category 4 with guest 51 (kind 1) taken, and its click kept object 13
@@ -1398,14 +1401,14 @@ the world hit point. The hovered *thing* is latched separately into the mouse-ma
 
 **The thing under a sprite** (Q194, Q468): `FUN_00532bd0` stores the pointer at `0x008bd4f0`/`0x008bd4f4` as x / 1024 − 1
 and y / 767.5 − 1 of its 2048 x 1536 position (`[0x00faa540]`, `[0x00faa544]`), the screen as −1 to 1, down positive.
-When the sprite draw has latched a sprite under it (`DAT_008bd4fc`: cleared at each pass by `FUN_0058a770`, set at
+When the sprite draw has latched a sprite under it (`DAT_008bd4fc`: cleared at each pass by `SpriteList_Draw`, set at
 `0x0058931a`), it takes that sprite's script (`FUN_00475ef0`: the script whose `+0xd0` is the sprite) and walks the hovered
 cell, then its eight neighbours (pairs at `0x0081ed40`, filled by the initializer `0x00532b30`: (0,0), then (−1,−1),
 (0,−1), (1,−1), (−1,0), (1,0), (−1,1), (0,1), (1,1)), returning the first thing of kind 1, 4, 5, 6, 7, 8 or `0x12` on the
 cell's thing list whose `+0x0c` script is the sprite's; nought otherwise, and off the map. Its one caller, `FUN_00540b30`
 (from `FUN_00475430`), stores the answer at `0x00877350` and hands the previous one to `FUN_00423b50` on `0x007b05a8`.
 
-**The latch** (`FUN_005890e0`, `0x00589259` to `0x0058931a`, from `FUN_00589b50`'s draw of each sprite of the list
+**The latch** (`FUN_005890e0`, `0x00589259` to `0x0058931a`, from `Sprite_BuildQuad`'s draw of each sprite of the list
 `[0x008c47a0]`, count `+0x2404`). A sprite is tested when its flags `+0x10` carry `0x200` and `[0x008bcbc8]` carries
 `0x1000000`. Its place `+0x0` is (x, y, z, w), the draw matrix `[0x0087b088]` times its world place `+0x14`; its frame
 `+0x28` gives the width `+0xc`, height `+0xe`, the reference `+0x10`/`+0x12` (128) and the origin `+0x14`/`+0x16`
@@ -1441,10 +1444,18 @@ record's flags): a person's program sets `0x1200`; the rider's head's (`0x0074f5
 (`0x0074f480`, `0x0074f4c0`) and the thought scripts (from `0x0074f190`) write no local 16, so none of those is pickable.
 **Measured** (`q470/`, `PREDICTION.txt`): under the mechanics' locator at zoom 110 (w 77.782) the original drew Mike
 Cooper's 41 x 52 picture, origin 21, 45, from row 350 to 389 (the decode's 349.3 and 389.4), and three censuses of the
-sprite list held 0x200 on every sprite and every one a person's. OpenTPW (`ParkGuestSprites.Extent`,
+sprite list held people's sprites alone (18, 17 and 17 of them, each with `0x200`): no head, balloon or thought bubble was
+in any, so those three rest on the static reading of their programs, not on a count. OpenTPW (`ParkGuestSprites.Extent`,
 `Camera.ClipPerWorld`) draws the span over 1.414 in the world; before Q470 it drew the span itself, the same picture 46 px
 over his origin's row of 720 where the original's 34.7 of 768 is 32.5; after it, the same 26 x 51 picture on both builds
-went 45 to 32 up, 17 to 12 left and 8 to 5 right of his place. Below the origin both draw the picture
+went 45 to 32 up, 17 to 12 left and 8 to 5 right of his place. **Not shown** on the fixed build: a rider's head, a balloon
+or a thought bubble; all four kinds go through the one `ParkGuestSprites.Corners` and `Extent` (the head with
+`HeadScale`), so the change reaches them, but only a person's body was photographed. **The across, below 4:3.** The span
+across is multiplied by G (`0x008bcbcc`, height over width) in the original, which runs only at 4:3, where G is 0.75 and
+cancels the screen scale's 1.5; our projection carries the window's aspect itself, so the draw needs no G. The pick passes
+the window's height over its width as G (`ParkPicking.LatchFor`): the same at 4:3 and wider, but below 4:3
+`Camera.Lens` holds the horizontal angle, the drawn edge stays where 4:3 puts it and the circle's middle lies G / 0.75
+times as far out (1.33 at a square window), its radius growing the same. A deviation of ours, not corrected. Below the origin both draw the picture
 to its last row (Mike's feet 5 px under the origin), each tested nearer the eye: "What hides a person below their feet",
 below (Q477, Q500).
 
@@ -1459,24 +1470,35 @@ the decode's 503.5 and 527.4, where a reflection about the picture's middle puts
 (`ParkGuestSprites.Across`, `Corners`) draws the same; before Q475 it kept the sides and swapped u, so a person hopped
 sideways by W − 2 × origin x picture pixels at each turn between a direct and a reflected facing.
 
-**What hides a person below their feet** (Q477, decoded). `SpriteList_Draw` (`FUN_0058a770`) builds each world
-sprite's state word from its picture's texture (`Texture_BlendStateWord`) and ORs `0x800`, no depth write, only for the
-sprite's flag `0x4000` (also `0x200000`, `0x20000` and `0x8000000` for its `0x200000`, `0x20000` and `0x10000`); it
-groups the list by texture and word, each group furthest first by `+8`, and hands each sprite through `FUN_00589fd0` to
-`Sprite_BuildQuad` (`FUN_00589b50`) and `SpriteBatch_AddQuad` (`0x00565f90`). A person's flags carry no `0x4000`, so a
-person is depth tested (`LESSEQUAL`, `render-states.md`) and **written**. People's pictures are graded (texture flags
+**What hides a person below their feet** (Q477, decoded). The word a world sprite is drawn with is
+`Sprite_BuildQuad`'s (`FUN_00589b50`): it takes the picture's texture word (`Texture_BlendStateWord`, `0x00589b91`, into
+the quad's `+0xc`) and ORs `0x800`, no depth write, only in its arm for the sprite's flag `0x80000` (`0x00589dd4`,
+`or ah,8` at `0x00589e85`). `SpriteList_Draw` (`FUN_0058a770`) works out a word of its own (the texture's, `0x800` for the
+sprite's `0x4000`, and `0x200000`, `0x20000` and `0x8000000` for its `0x200000`, `0x20000` and `0x10000`;
+`or bh,8` at `0x0058a8c4`) but only as the key it groups the list by (`0x0058a910`, `0x0058a935`, `0x0058a9cb`): texture
+and word, each group furthest first by `+8`. The draw loop (`0x0058aa13` to `0x0058aa4d`) hands each sprite alone to
+`FUN_00589fd0`, which builds the quad on the stack through `Sprite_BuildQuad` and adds it with `0x00566220` (the batch
+at `[0x00879ab0]`, which ORs `0x100000` under render bit `0x2000`). A particle's `0x4000` is its own:
+`SpriteBatch_DrawParticles` ORs `0x800` for it (`0x0057c7f4`, `0x0057c7fd`) into the quad it builds and adds with
+`0x00565f90`. Under render bit `0x80` (`0x0058a785`; `Game_StateMachine`'s
+`xor edx,0x2080`, `0x0054fae2`, sets it with `0x2000` in a ride's view and in first person) the list is not grouped: it is
+walked from its end, each sprite through `FUN_00589f90` (`FUN_00589770` after it unless the render word has `0x20000`) and
+`0x00565f90`. Whether the batch's own sorts (`render-states.md`, "Three back-to-front sorts") still order the quads there
+is unread, so that `FurthestFirst` also sorts in first person is not shown to differ. A person's flags (`0x10001210`) carry
+no `0x80000`, so a person is depth tested (`LESSEQUAL`, `render-states.md`) and **written**. People's pictures are graded (texture flags
 `0x51201252`, word `0x556`: alpha test at 16, blended), so their batches are sorted and drawn after every opaque and
 cut-out one, among the graded ones furthest first (`render-states.md`, "Three back-to-front sorts"). The ground's word
 is `0x1256` (`0x101256` fogged; `FUN_0056f670`, `0x0056f753`): drawn first, tested and written. The patrol and build
 squares (`BlueprintMesh`, a model of the model lists) are graded too (`blue`, flags `0x510712e2`).
 
 **The pull.** After `FUN_005890e0` lays the quad, `Sprite_BuildQuad` moves every corner's clip z to `z − 0.2 / (z + 1)`
-(`0x00589f17` to `0x00589f5a`: `[0x00702044]` 0.2, `[0x00702038]` −1.0) when the sprite's flags carry `0x200` (a
-person's, "The size a sprite is drawn") and the render word `[0x008bcbc8]` lacks `0x2000` (it does in the park's view,
+(`0x00589f17` to `0x00589f59`: `[0x00702044]` 0.2, `[0x00702038]` −1.0) when the sprite's flags carry `0x200` (a
+person's, "The size a sprite is drawn"), neither `0x40000` nor `0x80000` (their arms, `0x00589ce4` and `0x00589dd4`, end at
+`0x00589f5c`, past the pull), and the render word `[0x008bcbc8]` lacks `0x2000` (it does in the park's view,
 `0x1444100`; the views that set it are the ride and first-person ones, "The park view's colours"). With the projection's
 z = Q (e − near) and w = sin 45 × e, near 0.1 (`0x0042aa4e`), that is `1/e' = 1/e + 0.2 sin 45 / (Q near w (z + 1))`,
 about `1/e + 3.95 / e²`: at the locator's zoom 110 the person is tested as if 3.81 units nearer the eye (e 110.000 to
-106.186). The draw matrix's z row is built with a far near 1000 (Mike's z 77.719 at w 77.782 gives Q 0.70718), not the
+106.185). The draw matrix's z row is built with a far near 1000 (Mike's z 77.719 at w 77.782 gives Q 0.70718), not the
 126 to 127 then in `[0x00768acc]`. `ClipToScreen_Fpu` (`0x00579690`, the x87 one of the transform's CPU variants, case 0)
 writes the buffer's z as z/w × `[0x008bcc2c]` + `[0x008bcc30]` (4.33 and −3.33 read live), or `[0x008bcc34]` z +
 `[0x008bcc38]` for a z under `[0x008bcc28]` (compared as integers; 0.311 read live), the "ui, linear, log" ranges
@@ -1484,7 +1506,7 @@ writes the buffer's z as z/w × `[0x008bcc2c]` + `[0x008bcc30]` (4.33 and −3.3
 step about 0.43 units at depth 110.
 
 **Measured in the original** (`q477/`, `PREDICTION.txt`; the stock park, Mike under the mechanics' follow at zoom 110,
-the clock held by its pause word `[0x007859a0]` so each trio of frames is one pose; `original/spritepick.py PID where 26
+the clock held by its paused flag `[0x007859a0]` (`0x00785970` + 0x30; not a real pause: `FUN_004030d0` reads the capture of the last real pause, `FUN_00403030`, while it is held, and `FUN_00403050` is not run, so the held span falls due at once when it is put back) so each trio of frames is one pose; `original/spritepick.py PID where 26
 depth` reads the word, the pull and the buffer's numbers). As it runs, his shoes reach row 389 of the 1024 x 768 frame,
 5 px under his origin's row, over the squares' blue wash. With 0.2 held at 0 (`memhold.py`) the squares wash over his
 whole body below his hair (rows 358 to 389) and his shoes still reach 389: the ground 0 to 0.48 units nearer there lies
@@ -2516,8 +2538,13 @@ row stood with them (`a-A4.png`). The click does not test for 0.
 
 **OpenTPW** (Q472b, `ParkPicking.MeetGround`, `CellOf`, `Meet`): the ray meets the ground only over the heightfield's
 cells, the cell is truncated and held to the heightfield's last and then below `MapInfo`'s two limits, and where the ray
-meets nothing the last cell and point stand (nought only before the first meeting, and again after a park ends: what the
-original's P holds before its first hit is not measured). The ground met is the march over `HeightAtWorld`, not the
+meets nothing the last cell and point stand. **Deviation:** the original's word is never nought. P (`0x007a1c70`) lies in
+`.data`'s zero tail (raw data ends at `0x00784e00`), so it starts at (0,0,0); `[0x007b05cc]` is written only by `FUN_0045d560`
+(`0x0045d5f7`, and `0x0045d601` on `FUN_004d8300`'s refusal, never reached) and by the start-up initializer `FUN_0046c0b0`
+(`0x0046c0b0`, with 1); nothing resets either at a park's end. So it reads cell (0,0) before the first hit of a session and
+a later park opens on the last park's P. Ours is nought before the first meeting and again after `ParkPicking.Forget` (a park's
+end), which shows for a frame or two over (0,0), the sea, with no peeps and no row. (A write through a computed pointer is not
+ruled out by the search.) The ground met is the march over `HeightAtWorld`, not the
 original's two triangles a cell (the class's declared deviation). The object march is not built (Q494): counted as
 `PICK_OBJECT_MARCH`. Measured at the three views above (`q472b/`, `PREDICTION.txt`, `side-by-side.png`): (95,40) answers
 (94,40) with x 956.1; past the last column (94,40) and the point stand and "Left-click to build path" stands over the
@@ -3289,7 +3316,7 @@ alone at or past an end, `f = (d - start) / (end - start)` between. The start an
 (the theme's `FogColour`, "The lighting model"). `FUN_0044d8f0` sets the start and end from
 `GraphicalOptions.FIRSTPERSONVIEWDISTANCE` (`0x007858b4`; the detail file, `low`/`med`/`high.sam`): 0 gives 50 to 60,
 1 gives 100 to 110, 2 gives 135 to 150 and 3 gives 230 to 250, with `0x008bd4c0` 200, 325, 450 or 700 beside
-them; the startup default is 100 to 130 (`0x00582de5`), the lobby's own 50 to 300 (`FUN_005d8b50`). Each frame
+them; the startup default is 100 to 130 (`0x00582de5`), the lobby's own 50 to 300 (`FUN_005d8b50`, `0x005d8bfc` to `0x005d8c10`), and 50 to 250 in the three lobby states that call `FUN_005d9680` (`0x005e1407`, `0x005e1980`, `0x005e24a2`), each followed by `FUN_005d96a0( 0xff44ddff, 50.0, 250.0 )`. Each frame
 `FUN_00576a00` hands the three to the device's fog setter (vtable `0x00701330` slot 6, `FUN_00567ad0`), which sets
 the colour and, where the card passes the table-fog probe `FUN_005673d0`, linear table fog. Where it fails
 (render-word bits `0x4000` or `0x8000`) the game fogs each vertex itself as a batch is flushed (`FUN_00565590`,
@@ -3310,7 +3337,7 @@ rotations the camera still looks down on ground and sea, no run of near-black lo
 strip (Q481, `q481/orig/a-C-*.png`).
 
 **OpenTPW draws the park's view with no fog** (Q481): `Level.FogDensityFor` is nought in a park, so `test.shader`'s
-and `water.shader`'s mix adds nothing, and the lobby keeps its own haze. At Q479's cameras every box reads as Q479's
+and `water.shader`'s mix adds nothing, and the lobby keeps its own haze (not the original's: its lobby fogs linearly, 50 to 250, where ours is `exp`; the lobby was not photographed after this change). At Q479's cameras every box reads as Q479's
 copy with both shaders' fog set to nought (A's grass (29.9, 139.2, 28.6), B's sea (1.0, 53.7, 55.9)), where main's
 read (33.2, 145.1, 45.5) and (8.6, 70.9, 76.2) (`q481/side-by-side.png`). First person, fogged in the original, is
 drawn without it and counted, `FIRST_PERSON_FOG` (Q485); the frame is still cleared to the fog colour.
@@ -3326,7 +3353,8 @@ which `FUN_00536490` carries over as the map loads (`0x0053656d`): in Lost Kingd
 the gates, rows 0 to 16 of columns 28 to 67, every one also `0x40`, and every one hidden ground (`0x0001`) in the
 running original, so the exception draws no pixel of the stock park. The terrain pass halves a `0x0400` cell's corner
 light while render-word `0x0800` is clear ("What the render-state `0x0800` tests are"; `GraphicalOptions.LIGHTING` 0
-sets it, `FUN_0044d8f0`). Live, 5,102 of the 8,160 heightfield cells carry it, the border and every row from 42 on,
+sets it and `0x1000` beside it, `or ah,0x18` at `0x0044dc36`; 1 clears both, `and ah,0xe7` at `0x0044dc49`; `FUN_0044d8f0`). Live, 5,102 of the 8,160 heightfield cells carry it, every row from 40 on and the last column
+and row whole,
 4,922 of them inside 0..94 x 0..83 and all 180 of the last column and row (Q482, `q482/orig/a-read-*.txt`); the rule
 over the stock file gives every one of the 7,980 cells Q479 read. Cleared over one camera's cells, its grass went from
 (32.8, 65.9, 16.5) to (69.6, 133.4, 35.6), where OpenTPW's reads (29.9, 139.2, 28.6) with its fog off.
@@ -3335,8 +3363,10 @@ over the stock file gives every one of the 7,980 cells Q479 read. Cleared over o
 every rebuild, and `test.shader` floor-halves the corner's byte light under the vertex flag `ParkGround.HalfLight`. At
 camera A the grass went from (29.9, 139.2, 28.6) to (14.9, 69.3, 14.2), 0.498 of it, where the original's reads
 (32.8, 65.9, 16.5) with its compositor's patches; camera B's approach did not move. Under `low.sam`'s `LIGHTING` 0
-nothing is halved, and the rest of what that option turns off is counted, `LIGHTING_OFF` (Q487). Buy Land is unbuilt
-(Q407); its purchase must make the mask again.
+nothing is halved, and the rest of what that option turns off (`0x1000` too) is counted, `LIGHTING_OFF` (Q487). Buy Land is unbuilt
+(Q407); its purchase must make the mask again. Not run in Full Simulation: a fresh park's cells take their `mFlags` from
+`FreshPark` (`0x40` unless a path, `0x80` from attribute `0x10`), which by code follows `FUN_00536490`, so the mask is
+expected to match, and no fresh park was photographed.
 
 **The brown patches are the procedural compositor's.** `FUN_0056f380` gives every visible cell inside the box at the
 terrain object's words `0x8d` to `0x90` a composited tile when `[0x008bd550]` bit 4 is set (the compositor ready,
@@ -3394,7 +3424,7 @@ x 580 to 660 by z -180 to -60, at y -5 give or take 1.7, six units over `Line01`
 subtracts `0x00700de8`'s -0.4 times the clock's rate, `FUN_00403390`, the double at `0x00785970` + `0x20`, which
 `FUN_004032b0` makes 1.0), so s falls 0.2 a frame: one wave every 2π / 0.2 = 31.4 rendered frames, counted in frames
 as the squares' wave is. Sampled every 20 units, the wave of 3 units aliases into a regular one: s steps 3.55 rad (or
--2.73) a column and 0.99 rad a row, the same everywhere, so the pattern seen is a wave about 6.3 rows long running
+-2.73) a column and 1.00 rad a row (20 × 2π/3 × 0.174, the table's sine, less 2π), the same everywhere, so the pattern seen is a wave about 6.3 rows long running
 along z, not the swell of 3 units. The textures do not move; the corners and their light do.
 
 **Its light**, read and not measured apart from the heave: the normals go to the model lighter ("The lighting
@@ -3440,7 +3470,8 @@ Decoded and measured for Q491 (`q491/PREDICTION.txt`, `q491/orig/`, `q491/side-b
 
 **Where.** `FlagsMesh`, the third dynamic-faces mesh (`FUN_0053bfe0`: `0x180` faces, mesh id 3, the same twenty
 textures). Every park frame, after the sea, `FUN_0053c3f0` calls `FUN_0053d570( 7, 5, 1.8, phase )` and then
-`FUN_0053cda0` once for each of eight points at `0x00763cf4`, 16 bytes a point (x, y, z and a word `-1` nothing reads):
+`FUN_0053cda0` once for each of eight points at `0x00763cf4`, 16 bytes a point (x, y, z and a fourth dword nothing reads: `-1` on the first seven, and on the eighth the first four
+bytes of the string `gte_lgo1.tga` at `0x00763d70`, which follows the table):
 x 411.25, 451.25, 511.25 and 551.25, each at z 38.75 and at z 50.75, y 22. They are fixed in the executable, whatever
 the park; nothing writes them. The grid goes into the sea's arrays (corners `0x00874180`, normals `0x00870ed8`, point
 [c][r] at c × `0xe4` + r × `0xc`), after the sea's faces have been laid from them.
@@ -3527,9 +3558,9 @@ tile and composites the cell into it, and a hit composites again only when the c
 none (`GraphicalOptions.PROCEDURALTEXTURING` 1, 2, 3 set 4, 2, 1; 0 turns the compositor off), and `FUN_00572110` cuts
 the ask to 16 when `[0x008bd520]` < 48 MB or the texture memory `[0x008c1624]` < bytes-a-pixel x 3 MB, and 64 to 32 under
 64 MB or 5 MB. **`[0x008bd520]` is `GlobalMemoryStatus`'s `dwTotalPhys`** (`0x0058357b`) and the test is signed
-(`JL`, `0x0057215f`): read live over 4 GB it is -1, and between 2 and 4 GB Windows reports 2 GB to a program not
-large-address aware (as `testme.exe` is not), `0x80000000`, negative too, so the original makes **16-pixel tiles
-whatever the detail asks** (measured only over 4 GB). Read live at medium: `[0x0079d86c]` `0x82`, `[0x008bd520]` `0xffffffff`, tile size 16, 2,000 tiles.
+(`JL`, `0x0057215f`): read live over 4 GB (under Proton) it is -1, so the original makes **16-pixel tiles whatever the detail asks**
+there. Between 2 and 4 GB is not measured: `testme.exe` is not large-address aware, and if Windows reports
+`0x7fffffff` for it the test is not taken and the texture-memory test decides, so medium could ask 32. Read live at medium: `[0x0079d86c]` `0x82`, `[0x008bd520]` `0xffffffff`, tile size 16, 2,000 tiles.
 
 **What fills a tile** (`FUN_0055f780`, thiscall on the lnd object; dest, x, y, record). With N the tile size, the
 set of textures for N (64, 32, 16 are sets 0, 1, 2), r = 84 - y (the map's rows run the other way) and
@@ -3546,8 +3577,8 @@ set of textures for N (64, 32, 16 are sets 0, 1, 2), r = 84 - y (the map's rows 
    23): u1, u2, u3.
 3. **Every texture** (Tk is the lnd object's slot k: the file stores the thirteen in the slot order 0, 1, 3, 4, 8, 9,
    2, 5, 10, 6, 7, 11, 12, `FUN_0055f470`; slots 0, 1, 3, 4, 8, 9 are colour, four bytes a texel, the rest one) is
-   read at a window of N x N starting at column `(N x x) mod (w - N)` and row `(N x r) mod (h - N)`, so the file's
-   odd widths (212, 222, 242, 282, 292) make the pattern repeat slowly.
+   read at a window of N x N starting at column `(N x x) mod (w - N)` and row `(N x r) mod (h - N)`, so the 64-pixel set's
+   widths (192, 212, 222, 242, 282; the live game's 16-pixel set is narrower) make the pattern repeat slowly.
 4. **Three layers**, each two colour textures mixed by a ramp of one grey texture times u1:
    A = lerp( T9, T8, R4[ T10 x u1 >> 8 ] ), B = lerp( T4, T3, R2[ T5 x u1 >> 8 ] ), C = lerp( T1, T0, R1[ T2 x u1 >> 8 ] ).
    Rk is the ramp of the file's k-th pair of header bytes (centre c, width w: 0 below c - (w+1)/2, 255 above c +
@@ -3564,7 +3595,7 @@ set of textures for N (64, 32, 16 are sets 0, 1, 2), r = 84 - y (the map's rows 
    (X8R8G8B8 in memory is B, G, R, X), or converts it where the surface is 16-bit (`[0x00701548 + 4 x [0x008bd554]]`
    2; live it is 2, `0x0057257a`).
 
-In the jungle file C is brown earth (T0, T1 average (150, 91, 35) and (168, 112, 51)), and B and A are two grasses
+In the jungle file C is brown earth (T0, T1 average, in the 16-pixel set the live game draws, (150, 91, 35) and (168, 112, 51); the 64-pixel set's are (147, 88, 32) and (164, 108, 48)), and B and A are two grasses
 laid over it where u2 and u3 lift their masks: the brown patches of Q479's frames are where neither covers the earth.
 
 **A path laid over** (Q489; run under unicorn with the record, `lib/lndtile.py`, and 136 path tiles caught from the
@@ -3600,14 +3631,14 @@ holds a `base.lnd`, so the bit is not set there.
 the box's last column 95 is composited too: its fifth sample column is the next sample row's first (the map is read as
 one run; `ProceduralGroundTests` holds (95, 40) to the emulator). The terrain pass lays the tile as it lays a cell's own
 texture ("The UV rule", above): texel centre to texel centre, row 0 at the cell's y edge and column 0 at its x edge, and
-with the compositor on unturned. Measured in both games at camera A (`lib/cellmatch.py`): the original's frame shows
+with the compositor on unturned, but for a path cell (`0x80`), which keeps its word's turn (`0x0046defd`, `test cl,0x81`; "What is laid", above). Measured in both games at camera A (`lib/cellmatch.py`): the original's frame shows
 the cell's own tile on 84 of 122 cells, OpenTPW's on 115.
 
 ---
 
 ## The blocking unknowns, worst first
 
-1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). Settled for the picker (Q472): the terrain is tested over the heightfield's 96x85 cells and the cell is held below `HeightfieldWidth` and `HeightfieldHeight`, 0..94 and 0..83 ("The picker never hands the mode a cell off the map"). The camera sweep's `FUN_0042cd40` holds to the same; what else reads them (`FUN_0055abf0` and the rest of `[0x007a0314]`'s twenty readers) is not read.
+1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). Settled for the picker (Q472): the terrain is tested over the heightfield's 96x85 cells and the cell is held below `HeightfieldWidth` and `HeightfieldHeight`, 0..94 and 0..83 ("The picker never hands the mode a cell off the map"). The camera sweep's `FUN_0042cd40` holds to the same; what else reads them is not read: of the 22 read instructions of `[0x007a0314]` in 17 functions, Q472 read three functions (`FUN_0042cd40`, `FUN_0045cdc0`, `FUN_0045d560`) and Q479 a fourth (`FUN_00450d10`, its clamp at `0x00450d4d`), which leaves 18 sites in 13 functions (`FUN_0055abf0`, with four, among them).
 2. ~~The lighting model.~~ Settled: see "The lighting model" above. `LightNormal` is the direction light travels.
 3. ~~The diagonal-choice bit.~~ Settled: see "The triangle diagonal" above (`0x0002` drawn, `0x0004` heights).
 4. `base.MD2`'s container walking — the heightfield was found by validated signature search, **not** by walking the chunk table.
@@ -3939,7 +3970,7 @@ this person's details", P3 the guest's number `+0x1d8` (a `VARM` value of type 3
 a member (8 to 12) posts 555 "{P2} : Left-click to view this staff member's details", P2 the name at `+0x1a0`
 (`FUN_00506860`, type 2), and calls `FUN_00505f50` (`0x0048720d`), which is PICK UP's test `FUN_00505bd0` (the
 state not 4, 5, 7, `0xd` or `0x12`, and `FUN_004fa990` passing the member's cell: type 0, 1, 3, 9 or 10) followed by
-CStaff's `SetState`, `FUN_005054d0( 0 )`; a guard's `0x12` test after it can never be reached. So a member the pointer
+CStaff's `SetState`, `FUN_005054d0( 0 )`; a guard's `0x12` test after it is reached and can never pass. So a member the pointer
 comes onto is set idle: from a walk the stamp `+0x200` is the clock and the wait is the grade's, from anything else
 nought (`ride-operation.md`, "The idle wait, and the stamp it counts from"). Either puts up pointer 2, which `FUN_00489720` registers as `c_pick.ani`. Where the
 guests decide and nobody is taken the empty row `0x0078a374` is posted, only if the last hover category was not
@@ -3968,8 +3999,9 @@ category nought. An object whose item's `AddOn.UpgradesId` (`+0x284`, `FUN_004e2
 unless its `AddOn.UpgradeType` (`+0x288`) is 2 (`0x0048768d`): Lost Kingdom's three add-ons (1500 to 1502) are all type
 1, track-ride add-ons, which nothing here builds. Types 11 and 16, and 12 under any other parent, ask the cell's thing and
 the track's (`0x004873d5` to `0x00487441`: two of those ways return with no post and no pointer); none is in Lost Kingdom
-(its track types are 7, 12 and 25), and ours counts them (`HOVER_TRACK_CELL_CATEGORY`). Then the map type's switch (table
-`0x004879b0`): 0 bare ground (`FUN_00536390`, category 2), 1 path (1), 3 a queue (3), 4, 9 and 10 an object (4), `0x15`
+(its track types are 7, 12 and 25), and ours counts them (`HOVER_TRACK_CELL_CATEGORY`). Bare ground (`FUN_00536390`,
+`0x0048750d`, category 2) is tested before the switch, which it skips (`0x0048758d`); then the map type's switch (table
+`0x004879b0`): 1 path (1), 3 a queue (3), 4, 9 and 10 an object (4), `0x15`
 (6), and every other the default `0x004877a3`, which posts the empty row only after a category and puts up pointer 0: in
 Lost Kingdom map types 7 (9,077 cells, among them the land past the entrance's fence and the gate's two outer cells,
 which the gate's test takes first), 2 (240) and 30 (66, the approach, the ticket booths among them, taken first too). Built in `Level.GroundArmAt` and `Level.WorldHelpRow`. **The picker meets no cell only
@@ -3978,7 +4010,10 @@ heightfield's last column and row, the original keeps the last cell, so its row 
 `ParkPicking`). Measured in both (`q469/`,
 `PREDICTION.txt`, `side-by-side.png`): from (43,16) "Left-click to build path" onto the hoarding (42,16) category 0 and the
 row standing, on to (44,16), map type 7, still standing; from (43,16) straight onto (44,16) the bar emptied, and onto the
-hoarding still empty; the camera then moved to the sea, the row stood.
+hoarding still empty; the camera then moved to the sea, the row stood. Not run in either game: the Q467 standing row (or
+Shift let go) carried onto a default cell or a hoarding, which only a locator folded with the pointer already there reaches
+(an open locator takes `0x0048702d`, never the ground's arms); the rule is the one round b's hoarding at nought then
+type 7 measured, and ours has it from tests alone.
 
 **The gate and the ticket booths** (Q471; `FUN_00486d90` `0x004872a4` to `0x0048730d`). After the test for no cell and
 before the cell's own categories, the hover compares the cell id `[0x007b05cc]` with the entrances' (`FUN_004d8690( 0 )`
@@ -3987,7 +4022,13 @@ to `0x004872f0`), and then with the booths' (`FUN_004d8610( 0 )` and `( 1 )`, `T
 category 14 (`0x00487868`): UIHELPTEXT 459 (`0x1cb`, `0x00487885`) "Park gates - left-click to open/close the park or
 change the ticket price (G)"; a booth category 13 (`0x004877d3`): 460 (`0x1cc`, `0x004877f0`) "Ticket booth - ...", the
 same words. Each posts its row only when the last category was another, forgets the thing and puts up pointer 2,
-`c_pick`. The click's switch (table `0x00488168`) sends 13 and 14 to `0x00487c93`, `FUN_00498d80`, the entry price's
+`c_pick`; the gate's arm also calls `FUN_00469180` (`0x004878ce`), the booth's does not. `FUN_00469180` is a model
+highlight swap: it puts back the material of the model held in `[0x007a1ce0]` (clearing `0x20000` on its `+4`), then, if
+`[0x007afda0]` (set by `0x00469340`) holds a model with no `0x20000` and `[0x007afda4]` is nought, tints each of its
+meshes (`0x1000000`, a colour block, `0x20000`, `0x400000`) and stores it in `[0x007a1ce0]`. The hover calls it at six
+places in all (`0x00486f6b`, `0x004874fe`, `0x00487712`, `0x0048778d`, `0x004878ce`, `0x0048798b`). Which model
+`[0x007afda0]` holds over the gate is not read, so whether the gate's model lights up is not known; nothing here
+highlights (Q24). The click's switch (table `0x00488168`) sends 13 and 14 to `0x00487c93`, `FUN_00498d80`, the entry price's
 builder, as G does: it notes itself as category 3's screen 10 (`FUN_004a0810( 3, 10 )`) and posts the advisor's `0x12f`
 (`FUN_00486b00`). In Lost Kingdom the gate is (46,17) to (49,17), the middle two path (map type 1) and the outer two
 type 7, and the booths (47,13) and (48,13), type 30. The original's picker answers row 17 over the gate model's face:
@@ -3999,7 +4040,7 @@ each opened the entry price screen (`[0x007ca210]` set), where main's build post
 (`q471/control1`). Built in `Level.GateArmAt`, `Level.WorldHelpRow` and `Level.ClickWorldAt`. The rows over a queue
 (`0x1bc`, 444), an object (`0x226`, 550, with its name), a track (`0x1be`, 446) and type `0x15` (`0x1c0`, 448) are not
 built: ours posts the empty row there and counts `HOVER_QUEUE_ROW`, `HOVER_OBJECT_ROW`, `HOVER_TRACK_CELL_CATEGORY` and
-`HOVER_TYPE_15_ROW`.
+`HOVER_TYPE_15_ROW`, from the hover alone: the click's and the pointer's tool tests ask the same arm and do not count.
 
 **The hover runs only on the park's view** (Q451). `Park_MouseMessageProc` runs `FUN_00486d90` on its timer
 (`0x00488582`) only while `[0x007c24fc]` is set. Message `0x10001`, the pointer coming onto the layer from a control,

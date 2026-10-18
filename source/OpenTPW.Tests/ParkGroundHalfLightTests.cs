@@ -70,4 +70,39 @@ public class ParkGroundHalfLightTests
 		Assert.IsFalse( half[(5 * 96) + 40], "(40, 5) is the approach, kept lit" );
 		Assert.IsFalse( half[(20 * 96) + 40], "(40, 20) is inside the park" );
 	}
+
+	/// <summary>
+	/// Where <c>GraphicalOptions.LIGHTING</c> is off no cell is half lit, and where it is on a half-lit cell's corners
+	/// carry <see cref="ParkGround.HalfLight"/> and no other cell's does.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the lighting test dropped fails the null; <c>CornerFlags</c> returning the flag for
+	/// every cell, or never, fails the pair of cells.</remarks>
+	[TestMethod]
+	public void OnlyAHalfLitCellsCornersCarryTheFlagAndOnlyWhileLightingIsOn()
+	{
+		ushort[] row = [0x40, 0x00];
+
+		Assert.IsNull( ParkGround.HalfLitCells( false, 2, 1, 2, 1, ( x, y ) => row[x] ) );
+
+		var half = ParkGround.HalfLitCells( true, 2, 1, 2, 1, ( x, y ) => row[x] );
+
+		Assert.AreEqual( ParkGround.HalfLight, ParkGround.CornerFlags( half, 0 ) );
+		Assert.AreEqual( 0u, ParkGround.CornerFlags( half, 1 ) );
+		Assert.AreEqual( 0u, ParkGround.CornerFlags( null, 0 ) );
+	}
+
+	/// <summary>
+	/// The model shader halves a park-lit corner's byte colour under the flag <see cref="ParkGround"/> sets, and
+	/// under no other: its constant is the code's, and the halving is behind the flag and behind the park light.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the shader's constant changed, or the halving moved out of the flag's test, fails.</remarks>
+	[TestMethod]
+	public void TheModelShaderHalvesUnderTheFlagTheGroundSets()
+	{
+		var text = File.ReadAllText( Path.Combine( System.AppContext.BaseDirectory, "content", "shaders", "test.shader" ) );
+
+		StringAssert.Contains( text, $"const uint FLAG_HALF_LIGHT = 0x{ParkGround.HalfLight:x};" );
+		StringAssert.Contains( text,
+			"if ((matFlags & FLAG_HALF_LIGHT) != 0)\n                vParkLight = floor(round(vParkLight * 255.0) / 2.0) / 255.0;" );
+	}
 }

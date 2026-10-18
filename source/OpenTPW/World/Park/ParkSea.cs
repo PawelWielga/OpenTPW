@@ -76,7 +76,13 @@ public sealed class ParkSea : ModelEntity
 	/// <summary>The corner as the log and the console print it, "(380, -180, -5)".</summary>
 	public string CornerText => FormattableString.Invariant( $"({Corner.X:0.##}, {Corner.Y:0.##}, {Corner.Z:0.##})" );
 
-	/// <summary>The phase, <c>DAT_00871f60</c>. It grows without bound, as the original's.</summary>
+	/// <summary>
+	/// The phase, <c>DAT_00871f60</c>. It grows without bound, as the original's, a float32 too. <b>Limit:</b> ours gains
+	/// 12 a second whatever the frame rate, so at a high refresh rate the step rounds against the float's spacing after
+	/// hours and the sea slows (at 144 Hz, from about 1.5 h; stopped at about 48 h), where the original's 0.4 a frame
+	/// holds to about 12 h and stops at about 194 h. No one wrap fixes it: the sea repeats every 4π of phase but
+	/// <see cref="ParkFlags"/>, which takes this phase, repeats every 20, and the two have no common period.
+	/// </summary>
 	public float Phase { get; private set; }
 
 	/// <summary>Each quad's texture, 0 to 2 for <c>gby_sur1</c> to <c>gby_sur3</c>, as drawn at load.</summary>
@@ -88,23 +94,17 @@ public sealed class ParkSea : ModelEntity
 	private readonly int[] _words;
 	private readonly Vertex[] _vertices;
 
+	/// <summary>The four corners of every quad as last laid, in <see cref="Quads"/>' order. Read by the tests.</summary>
+	internal IReadOnlyList<Vertex> Vertices => _vertices;
+
 	public ParkSea( Vector3 waterStartPos, bool smallTextures, Random random )
+		: this( CornerOf( waterStartPos ), smallTextures ? "stexture" : "textures", DrawWords( random ) )
 	{
-		Name = "park sea";
-
-		Corner = CornerOf( waterStartPos );
-		Folder = smallTextures ? "stexture" : "textures";
-		_words = DrawWords( random );
-
 		var textures = new Texture[Material.TextureSlots];
 		for ( var slot = 0; slot < textures.Length; ++slot )
 			textures[slot] = slot < TextureNames.Length ? Load( $"generic/dynamic/{Folder}/{TextureNames[slot]}.wct" ) : Texture.Missing;
 
-		var quads = Quads().ToArray();
-		_vertices = new Vertex[quads.Length * 4];
-		Fill();
-
-		var elements = Elements( quads.Length );
+		var elements = Elements( _vertices.Length / 4 );
 
 		var material = new Material<ObjectUniformBuffer>( "content/shaders/test.shader", MaterialFlags.DisableCulling );
 		material.Set( "Color", textures );
@@ -112,8 +112,20 @@ public sealed class ParkSea : ModelEntity
 		TranslucentModel = new Model( _vertices, elements, material );
 		TranslucentModel.EnableFrequentUpdates( _vertices );
 
-		Log.Info( $"Sea: {quads.Length} quads at {CornerText} from {Folder}, words {Census()}" );
+		Log.Info( $"Sea: {_vertices.Length / 4} quads at {CornerText} from {Folder}, words {Census()}" );
 		Current = this;
+	}
+
+	/// <summary>The sea's data without its model, which needs the renderer: what the constructor above lays first, and what the tests lay.</summary>
+	internal ParkSea( Vector3 corner, string folder, int[] words )
+	{
+		Name = "park sea";
+
+		Corner = corner;
+		Folder = folder;
+		_words = words;
+		_vertices = new Vertex[Quads().Count() * 4];
+		Fill();
 	}
 
 	/// <summary>

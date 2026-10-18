@@ -46,11 +46,9 @@ public static class Camera
 
 	/// <summary>
 	/// How many units of the original's clip space a unit square on to the eye is, at any depth, in a view handed
-	/// <paramref name="handedDegrees"/>: its projection puts <c>cos( a/2 )</c> on x and y and <c>sin( a/2 )</c> into w
-	/// (<c>FUN_00578be0</c>), and the screen scale's 2 multiplies y after it (1.5 on x, against the 0.75 of the screen's
-	/// height over its width that an across is given). A size the original adds after its draw matrix, a sprite's span
-	/// (<c>FUN_005890e0</c>), is drawn the size of that span over this in the world: 1.41 for the park's 90
-	/// (<c>docs/exe/park-engine.md</c>, "The thing under a sprite").
+	/// <paramref name="handedDegrees"/>: <c>2 cos( a/2 )</c>, 1.41 for the park's 90. A size the original adds after its
+	/// draw matrix, a sprite's span, is drawn that span over this in the world (<c>docs/exe/park-engine.md</c>, "The
+	/// size a sprite is drawn", where the law is written).
 	/// </summary>
 	public static float ClipPerWorld( float handedDegrees )
 		=> ScreenScale * MathF.Cos( handedDegrees.DegreesToRadians() * 0.5f );

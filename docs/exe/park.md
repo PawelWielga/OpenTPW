@@ -55,7 +55,7 @@ Confirmed from `WadArchive.cs` and verified by hand against the header: 4 magic 
 
 Attribute values seen: 0 (empty), 1, 3, 8 (park entrance), 17 (0x11, the bus/road approach, 490 cells), 128, 144 (0x90, road/bus/crossing, 48 cells), 148 (0x94, ticket booth, 14 cells). They look like a bitfield. **Values 17, 144, 148 and 8 occupy byte-identical positions in all four parks** — the fixed infrastructure every park inherits. The rest differ per park: the 0/1/3 cells, jungle's four 128s (x 51..54, y 57) and one cell of 16 in fantasy (27,17).
 
-The attribute map's non-zero region is exactly x 0..95, y 0..84 — reproducing `Standard.sam`'s 95x84 from a different file entirely. Value 17 (the bus road) occupies x 28..67, y 0..16; value 3 occupies x 29..57, y 39..64.
+The attribute map's non-zero region is exactly x 0..95, y 0..84: the heightfield's 96x85 cells (`base.md2`'s), not `Standard.sam`'s `MapInfo` 95 and 84, which are the limits the picker holds a cell below (0..94, 0..83; `park-engine.md`, "The picker never hands the mode a cell off the map"). Value 17 (the bus road) occupies x 28..67, y 0..16; value 3 occupies x 29..57, y 39..64.
 
 **`base.map` carries NO player-laid paths — do not look for them there.** Jungle's `base.map` has just **66** cells with 0x80 set — the bus road (144), the two crossings and the ticket booths (148), plus four bare 128s — and **every one of the eleven object cells reads attribute 0 with no 0x80 neighbour**. The attribute map describes the fixed approach every park inherits, not what a player built.
 
@@ -110,7 +110,7 @@ are weights), then three sets of thirteen textures, for 64-, 32- and 16-pixel ti
     Seasons[0..3], Weather.*, WeatherEffects.* (rain/lightning thresholds, thunder distance)
     GoldenTicketLocal.*, ChallengesInThisLevel[0..7], LoanInfo[]
 
-**95x84 playable heightfield inside a 128x128 map mesh** is the reading that makes the sizes agree. `Easy_Standard.sam` has **no** `MapInfo` — it is an override layer over `Standard.sam`, not a replacement. `global.sam` is the small file the **lobby** reads before a theme loads (ticket rules, `ParkName.GateObjectId 1601`).
+**`MapInfo` 95 and 84 are the limits the picker holds a cell below** (0..94 and 0..83; `park-engine.md`, "The picker never hands the mode a cell off the map"), inside the **96x85 heightfield** of `base.md2`, which sits inside a 128x128 map. `Easy_Standard.sam` has **no** `MapInfo` — it is an override layer over `Standard.sam`, not a replacement. `global.sam` is the small file the **lobby** reads before a theme loads (ticket rules, `ParkName.GateObjectId 1601`).
 
 **The base `data/levels/Standard.sam` is the simulation's balance file**, 588 lines against jungle's 144, and it is the layer the theme file overlays. Its groups: `PeepInfo` (**33 keys**), `PeepTypes[0..7]` (8 rows of `PreferredExcitement` / `StartingCash` / `BoredomThreshold`), `StaffPoolInfo`, `Arrival`, `AllStaffConstants`, `PerGradeStaffConsts[0..4]`, `PerTypeStaffConsts[0..4]`, the four `*ConstsPerGrade`, `BankAccountInfo`, `LoanInfo[0..7]`, `Research`/`ResearchTech`/`ResearchCategories`, `Costs`, `Challenges`, `GoldenTicketGlobal`, plus the `MapInfo`/`FixedItemInfo`/`ThemeEngine`/`Seasons`/`Weather` groups a theme overrides.
 
@@ -118,7 +118,7 @@ are weights), then three sets of thirteen textures, for 64-, 32- and 16-pixel ti
 
 ### The parks really are re-skins
 
-All four `Standard.sam` files declare **identical** `MapInfo` (heightfield 95x84 at 0,0; FixedItemOrigin 48,17), identical `LightNormal` (0.4, -0.8, 0.4), identical `WaterStartPos` (380, -5, -180), identical `AmbientLightLevel` and `DirectionalLightLevel`. **Only `ThemeEngine.FogColour` differs.** One park engine serves all four — build it once, properly.
+All four `Standard.sam` files declare **identical** `MapInfo` (`HeightfieldWidth` 95 and `HeightfieldHeight` 84, the picker's limits, at 0,0; FixedItemOrigin 48,17), identical `LightNormal` (0.4, -0.8, 0.4), identical `WaterStartPos` (380, -5, -180), identical `AmbientLightLevel` and `DirectionalLightLevel`. **Only `ThemeEngine.FogColour` differs.** One park engine serves all four — build it once, properly.
 
 ### The ThemeEngine colours are 0xAARRGGBB
 
@@ -206,7 +206,7 @@ Magic and version are uniform across the whole shipped corpus, **checked not sam
 
 **Evidence.** `ticket_booths` is the only mesh whose grid coordinate comes straight from `Standard.sam` (`TicketBoothA/B PosX 47/48, PosY 13`) rather than from a guess: predicted (480.0, 135.0), actual (480.0, 135.0), **error 0.0 on both axes**. The other named meshes carry guessed grid coordinates, and their residuals are structured rather than random — both bus shelters sit exactly one cell before their stop in Z and are inset symmetrically in X — which is a mesh-centre offset, not a broken transform. **Treat the cell size as proven and per-item offsets as unknown.**
 
-Playable 95x84 -> world 0..950 x 0..840. Map 128x128 -> 0..1280. `base.MD2` spans -555..1511 x -621..1445, so the park sits inside a much larger scenic island.
+The heightfield's 96x85 cells -> world 0..960 x 0..850 (`MapInfo` 95 and 84 are the picker's limits, not its size). Map 128x128 -> 0..1280. `base.MD2` spans -555..1511 x -621..1445, so the park sits inside a much larger scenic island.
 
 **Two indexing conventions, opposite to each other, both proven:**
 

@@ -51,8 +51,10 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 	/// <summary>
 	/// The marker table at <c>0x00763b38</c>, in its own order: an index there is the texture a square
-	/// wears. Loaded from <c>data/generic/dynamic/textures</c>, the folder <c>FUN_0053d790</c> searches
-	/// first.
+	/// wears. Loaded from <c>data/generic/dynamic/textures</c> at every texture quality. <b>Deviation:</b> the
+	/// original takes <c>STexture</c> (<c>0x00763ee4</c>) where <c>FUN_0054dcc0</c> answers 1, texture quality 0 or 1
+	/// (<c>FUN_0053d790</c>, <c>0x0053d7b4</c>), as <see cref="ParkSea"/> and <see cref="ParkFlags"/> do; blue and red
+	/// differ between the two folders. Not built: a change to what is drawn is confirmed in the running game.
 	/// </summary>
 	private static readonly string[] MarkerNames =
 	[

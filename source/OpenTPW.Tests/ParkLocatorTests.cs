@@ -693,6 +693,7 @@ public class ParkLocatorTests
 		Assert.AreEqual( 0, level.WorldHelpValues.Length );
 		_people.Guests[guest].VisitorNumber = number;
 		Assert.AreEqual( 554, Row( 43, 16, guest ), "the same person and category: nothing posted again" );
+		Assert.IsNull( level.HoverPost( 554 ), "and the frame hands the bar nothing" );
 		Row( 43, 16, 0 );
 		Assert.AreEqual( 553, Row( 43, 16, guest ) );
 		Assert.AreEqual( $"Visitor #{number} : Left-click to view this person's details", Localization.FormatHelp( 553, level.WorldHelpValues ) );
@@ -701,7 +702,9 @@ public class ParkLocatorTests
 		// The help bar fills the row's parameters with the hover's values.
 		var popupHelp = GameOptions.Current.PopupHelp;
 		GameOptions.Current.PopupHelp = true;
-		UI.WindowStack.WorldHelpPost = (553, level.WorldHelpValues);
+		UI.WindowStack.WorldHelpPost = level.HoverPost( 553 );
+		Assert.AreEqual( 553, UI.WindowStack.WorldHelpPost!.Value.Row );
+		Assert.AreEqual( number.ToString(), UI.WindowStack.WorldHelpPost!.Value.Values.Single().Value, "with the person's number" );
 		Input.Mouse = new();
 		_stack.Update();
 		Assert.AreEqual( $"Visitor #{number} : Left-click to view this person's details", _stack.HelpBarText );
@@ -875,6 +878,99 @@ public class ParkLocatorTests
 	}
 
 	/// <summary>
+	/// <b>Only the hover counts a row it has not built</b>: the click asks the same arm of the ground (to see whether the
+	/// path tool is armed) and posts no row, so a click on an object's cell adds nothing to <c>HOVER_OBJECT_ROW</c>, which
+	/// the hover counts once for each of its frames.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the count put back in the ground's arm, so a click counts too.</remarks>
+	[TestMethod]
+	public void OnlyTheHoverCountsARowItHasNotBuilt()
+	{
+		_stack.Update();
+		var level = Level.Current!;
+		var state = level.ParkState!;
+		var footprint = Enumerable.Range( 0, 128 * 128 ).Select( i => (X: i % 128, Y: i / 128) )
+			.First( c => state.Record( c.X, c.Y ).Type == CellEdge.Footprint && ParkItemHeights.Owner( state, c.X, c.Y ) != null );
+		int Counted() => Unimplemented.Summary.Where( gap => gap.What == "HOVER_OBJECT_ROW" ).Sum( gap => gap.Times );
+
+		level.WorldHelpRow( footprint.X, footprint.Y, 0 );
+		Unimplemented.Forget();
+		level.WorldHelpRow( footprint.X, footprint.Y, 0 );
+		level.WorldHelpRow( footprint.X, footprint.Y, 0 );
+		Assert.AreEqual( 2, Counted(), "the hover, twice" );
+
+		level.GroundArmAt( footprint.X, footprint.Y );
+		level.ClickWorldAt( footprint.X, footprint.Y, 0 );
+		Assert.AreEqual( 2, Counted(), "the ground's arm and a click add none" );
+	}
+
+	/// <summary>
+	/// <b>A person on the gate comes before the gate</b> (<c>FUN_00486d90</c>: the person's tests at <c>0x00487009</c> and
+	/// <c>0x0048721c</c> decide before <c>0x00487231</c>, and the click reads the hover's category): a member of staff
+	/// on (47,17) shows their row and opens their window, not the gate's row and the entry price; with Shift alone a guest
+	/// there is the visitor, and with the staff's locator open and nobody taken the click does nothing and the hover posts
+	/// no gate row.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the gate's test moved above the person's, in the hover and in the click.</remarks>
+	[TestMethod]
+	public void APersonOnTheGateIsTakenBeforeTheGate()
+	{
+		_stack.Update();
+		var level = Level.Current!;
+		var member = _people.Staff[0];
+		var guest = AGuest();
+		int Row( int thing ) => level.WorldHelpRow( 47, 17, thing );
+
+		Row( 0 );
+		Assert.AreEqual( 459, Row( guest ), "a guest with no locator and no Shift is the ground's: the gate" );
+		Assert.AreEqual( 555, Row( member.ThingId ), "a member, before the gate" );
+		StringAssert.Contains( ClickAt( 47, 17, member.ThingId ), $"opened the staff window for thing {member.ThingId}" );
+		Assert.AreEqual( 0, _stack.Windows.Count( window => window is ParkEntryPriceScreen ), "not the entry price" );
+		_stack.Close( _stack.Windows.OfType<ParkStaffWindow>().Single() );
+		_stack.Update();
+
+		_people.Guests[guest].VisitorNumber = 13;
+		Input.Keyboard = new Input.KeyboardInfo( [Key.ShiftLeft] );
+		Assert.AreEqual( 553, Row( guest ), "Shift alone: the guest decides" );
+		StringAssert.Contains( ClickAt( 47, 17, guest ), $"opened the visitor window for thing {guest}" );
+		Assert.AreEqual( 0, _stack.Windows.Count( window => window is ParkEntryPriceScreen ) );
+		_stack.Close( _stack.Windows.OfType<ParkVisitorWindow>().Single() );
+		Input.Keyboard = new();
+
+		CtrlS();
+		Row( 0 );
+		Assert.AreNotEqual( 459, Row( 0 ), "the staff's locator open and nobody taken: no gate row" );
+		StringAssert.Contains( ClickAt( 47, 17, 0 ), "nothing to do" );
+		Assert.AreEqual( 0, _stack.Windows.Count( window => window is ParkEntryPriceScreen ) );
+	}
+
+	/// <summary>
+	/// <b>Under a park screen the hover runs none</b> (<c>0x00488569</c>): the row last posted stands and the category
+	/// is kept, so after the screen closes the default arm empties the row, as bare ground's category 2 calls for. Were the
+	/// hover run as a hand full or a tool armed, the screen would take the category to nought and the row would stand
+	/// after it.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the park screen dropped from the not-taken test of <c>WorldHelpRow</c>.</remarks>
+	[TestMethod]
+	public void UnderAParkScreenTheRowStandsAndTheCategoryIsKept()
+	{
+		_stack.Update();
+		var level = Level.Current!;
+		int Row( int x, int y ) => level.WorldHelpRow( x, y, 0 );
+
+		Assert.AreEqual( 441, Row( 43, 16 ), "bare ground, category 2" );
+		ParkStaffWindow.Open( _stack, _people.Staff[0].ThingId );
+		_stack.Update();
+		Assert.IsTrue( WindowStack.ParkScreenOpen, "the staff window is a park screen" );
+		Assert.AreEqual( (441, 441), (Row( 43, 16 ), Row( 44, 16 )), "the screen open: the row stands, even on the default arm" );
+
+		_stack.Close( _stack.Windows.OfType<ParkStaffWindow>().Single() );
+		_stack.Update();
+		Assert.IsFalse( WindowStack.ParkScreenOpen );
+		Assert.AreEqual( -1, Row( 44, 16 ), "closed: the category before the screen still decides, so the default empties the row" );
+	}
+
+	/// <summary>
 	/// <b>The pointer asks the cell only for what is not a person</b> (<see cref="ParkPicking.ThingOn"/> with
 	/// <c>people: false</c>): people are taken by their pictures (<see cref="SpritePick"/>). A guest heading a cell's list
 	/// is passed over for what stands behind them, a member too, and a console click on the cell still takes the head.
@@ -958,7 +1054,7 @@ public class ParkLocatorTests
 		{
 			Input.Mouse = new() { Position = at };
 			var row = level.WorldHelpRow( cell.X, cell.Y, 0, _stack.PointerOnTheView );
-			UI.WindowStack.WorldHelpPost = level.HoverPosted ? (row, level.WorldHelpValues) : null;
+			UI.WindowStack.WorldHelpPost = level.HoverPost( row );
 			_stack.Update();
 			return _stack.HelpBarText;
 		}
@@ -1039,7 +1135,7 @@ public class ParkLocatorTests
 		{
 			Input.Mouse = new() { Position = at };
 			var row = level.WorldHelpRow( cell.X, cell.Y, 0, _stack.PointerOnTheView );
-			UI.WindowStack.WorldHelpPost = level.HoverPosted ? (row, level.WorldHelpValues) : null;
+			UI.WindowStack.WorldHelpPost = level.HoverPost( row );
 			_stack.Update();
 			return _stack.HelpBarText;
 		}
@@ -1152,5 +1248,55 @@ public class ParkLocatorTests
 		Row( member.ThingId );
 		Assert.IsFalse( Set(), "and then not again" );
 		Assert.AreEqual( 3, sets );
+	}
+
+	/// <summary>
+	/// <b>The picker puts the window's own width and height to the latch, hands on the person and the object each as its
+	/// own, and keeps the last point where the ray met nothing</b> (<see cref="ParkPicking.Assemble"/>, which
+	/// <c>Resolve</c> calls). At 1280 x 720 a guest's picture is latched with the pointer on its circle's middle (0.3264,
+	/// 0.611); a ride stands behind the guest on the cell and is the object.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the window's width and height swapped; the person and the object swapped; the point
+	/// taken from the ray where it met nothing.</remarks>
+	[TestMethod]
+	public void ThePickerPutsTheWindowAndThePersonAndTheObjectToTheirPlaces()
+	{
+		var state = Level.Current!.ParkState!;
+		var guest = AGuest();
+		var (x, y) = (Enumerable.Range( 30, 60 ).First( column => state.CellAt( column, 60 ).Occupant == 0 ), 60);
+		var ride = state.Objects.First().ThingId;
+		state.StandOn( ride, x, y );
+		state.StandOn( guest, x, y );
+
+		var (viewMatrix, projMatrix, size) = (Camera.ViewMatrix, Camera.ProjMatrix, Screen.Size);
+
+		try
+		{
+			Screen.Size = new Point2( 1280, 720 );
+			Camera.ViewMatrix = System.Numerics.Matrix4x4.Identity;
+			Camera.ProjMatrix = new System.Numerics.Matrix4x4( 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 );
+
+			var depth = 65.45f / System.MathF.Sin( System.MathF.PI / 4f );
+			var originX = 0.3264f + (21f * 20f / 128f * 0.5625f / (depth * System.MathF.Sin( System.MathF.PI / 4f )));
+			var drawn = new SpritePick.Drawn( guest, new Vector3( originX * depth, -0.611f * depth, depth ), 56, 60, 21, 41, false );
+			var pointer = new Vector2( (0.3264f + 1f) * 640f, (0.611f + 1f) * 360f );
+			var hit = new Vector3( 12f, 34f, 5f );
+
+			var answer = ParkPicking.Assemble( MapStep.CellId( x, y ), true, hit, pointer, [drawn], state );
+			Assert.AreEqual( (guest, ride, guest), (answer.Person, answer.Object, answer.Latched) );
+			Assert.AreEqual( hit, answer.World );
+			Assert.IsTrue( answer.Met );
+
+			answer = ParkPicking.Assemble( MapStep.CellId( x, y ), false, hit, pointer, [drawn], state );
+			Assert.AreNotEqual( hit, answer.World, "the ray met nothing: the last point stands" );
+			Assert.IsFalse( answer.Met );
+
+			answer = ParkPicking.Assemble( MapStep.CellId( x, y ), true, hit, new Vector2( 0, 0 ), [drawn], state );
+			Assert.AreEqual( (0, ride, 0), (answer.Person, answer.Object, answer.Latched), "no picture under the pointer: the ride alone" );
+		}
+		finally
+		{
+			(Camera.ViewMatrix, Camera.ProjMatrix, Screen.Size) = (viewMatrix, projMatrix, size);
+		}
 	}
 }

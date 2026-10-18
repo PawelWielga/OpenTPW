@@ -214,9 +214,9 @@ public class ParkTerrainTests
 	}
 
 	/// <summary>
-	/// The playable region Standard.sam declares is the region the attribute map actually fills. The
-	/// map is 128 square and the park is 95x84 of it, so everything beyond that should be empty - which
-	/// is the check that the two files agree about where the park is.
+	/// The attribute map is marked only inside the heightfield. MapInfo's 95 and 84 are the limits the picker
+	/// holds a cell below, so the last cell is 95 across and 84 down (<c>docs/exe/park.md</c>): the
+	/// heightfield is 96x85 cells of the 128-square map, and everything beyond it should be empty.
 	/// </summary>
 	[TestMethod]
 	public void NothingIsMarkedOutsideTheDeclaredHeightfield()
@@ -227,8 +227,8 @@ public class ParkTerrainTests
 		var width = Cell( balance, "MapInfo.HeightfieldWidth" );
 		var height = Cell( balance, "MapInfo.HeightfieldHeight" );
 
-		Assert.AreEqual( 95, width, "declared heightfield width" );
-		Assert.AreEqual( 84, height, "declared heightfield height" );
+		Assert.AreEqual( 95, width, "MapInfo.HeightfieldWidth, the last column" );
+		Assert.AreEqual( 84, height, "MapInfo.HeightfieldHeight, the last row" );
 
 		var outside = 0;
 
@@ -238,7 +238,7 @@ public class ParkTerrainTests
 					outside++;
 
 		Assert.AreEqual( 0, outside,
-			$"{outside} marked cells sit outside the {width}x{height} the park declares" );
+			$"{outside} marked cells sit past column {width} or row {height}, the heightfield's last" );
 	}
 
 	private static int Cell( SettingsFile balance, string key )

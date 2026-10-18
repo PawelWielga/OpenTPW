@@ -385,10 +385,13 @@ internal sealed class WindowStack : Panel
 
 		ParkScreenOpen = ParkScreenUp;
 
-		// Ours: the hover is hit-tested every frame, and a press goes to it, so a press always reaches what the
-		// pointer is over. The original works its hover out only on a move and when its interface changes
-		// (FUN_006589f9), so a press made after a window opens, before the pointer moves, can go to the old
-		// hover (docs/exe/lobby.md, "The lobby's keys act on the release", Unsettled). Kept as a fix (docs/DECISIONS.md).
+		// Ours: the hover is hit-tested once a frame, and a press made after the last frame goes to it. The original works
+		// its hover out only on a move and when its interface changes (FUN_006589f9), so a press made after a window
+		// opens, before the pointer moves, can go to the old hover (docs/exe/lobby.md, "The lobby's keys act on the
+		// release", Unsettled). Kept as a fix (docs/DECISIONS.md).
+		// Every step of one frame's presses (LeftSteps) goes to this one hit; only PointerTaken's modal and park-screen tests
+		// are read live. Whether the original sends a frame's second press to the control the first one's click left is not
+		// decided (its press poster, FUN_00658af1, takes the hover current at posting).
 		var mouse = Input.Mouse.Position;
 		var hit = Covered ? null : HitTest( mouse.X, mouse.Y );
 
@@ -428,7 +431,7 @@ internal sealed class WindowStack : Panel
 		}
 
 		// The left button's steps this frame, in order, so a press let go inside one frame is still a press and a
-		// release, as the original's WM_LBUTTONDOWN and WM_LBUTTONUP are two messages - see LeftSteps.
+		// release, as the original's cursor library posts a press and a release as two messages (0x00486c70) - see LeftSteps.
 		foreach ( var mouseDown in LeftSteps( _mouseWasDown, Input.Mouse ) )
 		{
 			if ( mouseDown && !_mouseWasDown )
@@ -488,8 +491,9 @@ internal sealed class WindowStack : Panel
 		// A layer laid over the view is the control there, whose row is none (docs/exe/hud.md, "The help bar in first person").
 		var pointed = hit ?? (Covered || ModalUp || OnParkScreen( mouse.X, mouse.Y ) ? Background : Layer);
 
-		// Ours: a control's row changed under a pointer at rest is posted at once; whether the original posts it again is
-		// not decoded.
+		// Ours: a control's row changed under a pointer at rest is posted at once. The original posts the hovered control's
+		// row again when a button with flag 0x10 is let go (0x10004: 0x00669172 calls the sink's +0x1c, 0x00492320); whether
+		// it posts at any other change is not decoded (docs/exe/hud.md, "The help bar holds one posted row").
 		if ( pointed != _pointed || (hit != null && hit.HelpText != _pointedRow) )
 		{
 			_pointed = pointed;
@@ -764,7 +768,7 @@ internal sealed class WindowStack : Panel
 	/// Where the left button stood after each of this frame's presses and releases, given where it stood as the last
 	/// frame ended: the button as it ends the frame when it was not pressed, and otherwise a release before each press
 	/// made while it was down, the press, and the release that let it go inside the frame. The original is sent each as
-	/// its own message (<c>WM_LBUTTONDOWN</c> posts <c>0x10005</c>; <c>docs/exe/lobby.md</c>), so none is lost.
+	/// its own message (the cursor library's callback <c>0x00486c70</c> posts the press, <c>0x10005</c>, through <c>FUN_00658af1</c>; <c>docs/exe/hud.md</c>), so none is lost.
 	/// </summary>
 	internal static IEnumerable<bool> LeftSteps( bool wasDown, Input.MouseInfo mouse )
 	{

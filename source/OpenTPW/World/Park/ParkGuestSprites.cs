@@ -49,12 +49,9 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// of its multipliers, and all eighteen of the shipped park's sprites carry scale 1.0/1.0.
 	/// </para>
 	/// <para>
-	/// <b>The span is the original's clip space, not its world.</b> <c>FUN_005890e0</c> adds it to the corners
-	/// after the draw matrix and before the divide by w, so it is drawn the span over
-	/// <see cref="Camera.ClipPerWorld"/> in the world, square on to the eye: twenty over the root of two a
-	/// reference (<c>docs/exe/park-engine.md</c>, "The thing under a sprite"). The across there is also
-	/// multiplied by <c>0x008bcbcc</c>, the screen's height over its width; ClipPerWorld takes it with the
-	/// screen scale's 1.5, and our projection carries the aspect itself.
+	/// <b>The span is the original's clip space, not its world.</b> It is drawn the span over
+	/// <see cref="Camera.ClipPerWorld"/> in the world (<c>docs/exe/park-engine.md</c>, "The size a sprite is drawn",
+	/// where the law is written once).
 	/// </para>
 	/// </summary>
 	private const float PictureReference = 128f;
@@ -494,12 +491,12 @@ public sealed class ParkGuestSprites : ModelEntity
 			indices[at + 5] = (i * 4) + 3;
 		}
 
-		// Depth tested AND written, as the original's people are: their sprites carry no 0x4000, so FUN_0058a770 ORs
-		// no 0x800 into the word their graded pictures give (0x556: alpha test at 16, blended; docs/exe/park-engine.md,
-		// "What hides a person below their feet"). people.shader drops what the test drops, and the quads go to the
-		// buffer furthest first (FurthestFirst), so a nearer person's picture never cuts a hole in one behind. The
-		// heads, bubbles and balloons drawn here share the word: their programs set no 0x4000 either, and their
-		// pictures' texture flags are not read. Two-sided because a quad turned to face the camera can end up wound
+		// Depth tested AND written, as the original's people are: their sprites carry no 0x80000, so Sprite_BuildQuad ORs
+		// no 0x800 (0x00589e85) into the word their graded pictures give (0x556: alpha test at 16, blended;
+		// docs/exe/park-engine.md, "What hides a person below their feet"). people.shader drops what the test drops, and
+		// the quads go to the buffer furthest first (FurthestFirst), so a nearer person's picture never cuts a hole in one
+		// behind. The heads, bubbles and balloons drawn here share the word: their sprite flags are not read for 0x80000
+		// either, nor their pictures' texture flags. Two-sided because a quad turned to face the camera can end up wound
 		// either way.
 		var material = new Material( PeopleShader, PeopleMaterial );
 
@@ -665,6 +662,35 @@ public sealed class ParkGuestSprites : ModelEntity
 		if ( TranslucentModel == null || _atlas == null )
 			return;
 
+		var (used, reach) = WriteTheFrame();
+
+		if ( reach == 0 )
+			return;
+
+		TranslucentModel.UpdateVertices( _vertices, reach * 4 );
+
+		if ( used == 0 || DebugHidden )
+			return;
+
+		// World space already, so the model matrix is identity - the quads were turned to face the
+		// camera as they were written.
+		TranslucentModel.Material.Set( "g_oUbo", new ObjectUniformBuffer
+		{
+			g_mModel = Matrix4x4.Identity,
+			g_mView = Camera.ViewMatrix,
+			g_mProj = Camera.ProjMatrix
+		} );
+
+		TranslucentModel.Draw();
+	}
+
+	/// <summary>
+	/// Writes every quad of the frame and puts them in the order they go to the buffer (<see cref="Finish"/>): how many
+	/// were written and how many the upload has to reach. Split from the draw because it needs no device, so a test can
+	/// run the frame as <see cref="OnRenderTranslucent"/> does.
+	/// </summary>
+	internal (int Used, int Reach) WriteTheFrame()
+	{
 		var field = ParkGround.Current?.Heightfield;
 		var used = 0;
 
@@ -751,26 +777,7 @@ public sealed class ParkGuestSprites : ModelEntity
 
 		used = DrawBalloons( people, field, cellX, cellY, alpha, used );
 
-		var reach = Finish( used );
-
-		if ( reach == 0 )
-			return;
-
-		TranslucentModel.UpdateVertices( _vertices, reach * 4 );
-
-		if ( used == 0 || DebugHidden )
-			return;
-
-		// World space already, so the model matrix is identity - the quads were turned to face the
-		// camera as they were written.
-		TranslucentModel.Material.Set( "g_oUbo", new ObjectUniformBuffer
-		{
-			g_mModel = Matrix4x4.Identity,
-			g_mView = Camera.ViewMatrix,
-			g_mProj = Camera.ProjMatrix
-		} );
-
-		TranslucentModel.Draw();
+		return (used, Finish( used ));
 	}
 
 	/// <summary>
@@ -1132,31 +1139,6 @@ public sealed class ParkGuestSprites : ModelEntity
 			: (playing.Set, playing.Frame, playing.BankOffset);
 
 	/// <summary>
-	/// One sprite's quad, stood upright at <paramref name="centre"/> and turned to face the camera.
-	///
-	/// <para>
-	/// <b>Square-on to the camera, not merely upright.</b> A quad spanned by world up and a horizontal
-	/// across - which is how rain is built - faces the camera only in plan: tilt the camera down and it
-	/// foreshortens, until a guest is squashed to a fraction of their height and the sprite shows its
-	/// edge. A park camera looks down between 45 and 65 degrees, so that costs between a third and more
-	/// than half of every person's height. The original keeps its people turned to face the camera, so
-	/// the basis has to lean with the camera's pitch rather than stand in world up.
-	/// </para>
-	/// <para>
-	/// The basis comes from the view direction and world up rather than from <c>Rotation.Right</c> and
-	/// <c>Rotation.Up</c>, because <see cref="Rotation.LookAt"/> leaves roll arbitrary and those two
-	/// carry it - the same trap <see cref="AudioListener"/> and <see cref="Audio"/> both record against
-	/// their own use of it. <c>Forward</c> is the one of the three that can be trusted, and a roll-free
-	/// basis follows from it and world up.
-	/// </para>
-	/// <para>
-	/// The picture's own origin decides where the quad sits about that point: it is stored negated in
-	/// the file and read back positive, measured from the picture's top left, so the sprite reaches
-	/// <c>origin</c> above the point and the rest of its height below. Every person's origin sits 85% or
-	/// more down their picture, which is to say on their feet.
-	/// </para>
-	/// </summary>
-	/// <summary>
 	/// How far a picture reaches in the world from the point it is drawn at, square on to the eye: left of it, right of
 	/// it, above it and below it, its origin on the point.
 	/// </summary>
@@ -1211,9 +1193,9 @@ public sealed class ParkGuestSprites : ModelEntity
 
 	/// <summary>
 	/// The eye depth the original tests a person's corner at when it is drawn at <paramref name="depth"/>:
-	/// <c>Sprite_BuildQuad</c> (<c>FUN_00589b50</c>, <c>0x00589f17</c> to <c>0x00589f5a</c>) moves each corner's clip z to
+	/// <c>Sprite_BuildQuad</c> (<c>FUN_00589b50</c>, <c>0x00589f17</c> to <c>0x00589f59</c>) moves each corner's clip z to
 	/// <c>z - 0.2 / (z + 1)</c>, which with the draw matrix above is <c>e / (1 + 0.2 / (Q near (z + 1)))</c>: 110 is tested at
-	/// 106.19, 3.81 nearer (docs/exe/park-engine.md, "What hides a person below their feet").
+	/// 106.185, 3.81 nearer (docs/exe/park-engine.md, "What hides a person below their feet").
 	/// </summary>
 	internal static float PulledDepth( float depth )
 	{
@@ -1246,7 +1228,8 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// Puts the first <paramref name="used"/> quads in the order the original draws its people's batch: furthest from
 	/// the eye first (<c>SpriteList_Draw</c>, <c>FUN_0058a770</c>, each group by its <c>+8</c>), by the depth of the point each is
 	/// drawn at. Their pictures write depth, so a nearer one drawn first would hide the edge of one behind it that
-	/// its own clear fringe should have let through.
+	/// its own clear fringe should have let through. Every quad is keyed by its unpulled depth; whether the original's order
+	/// agrees for a pulled body against an unpulled head, bubble or balloon is not settled.
 	/// </summary>
 	private void FurthestFirst( int used ) => FurthestFirst( _vertices, _depths, used );
 
@@ -1279,6 +1262,28 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// A picture's four corners square on to an eye looking along <paramref name="forward"/>, its origin on
 	/// <paramref name="centre"/>: top left, top right, bottom right, bottom left, each with the picture's u and v there.
 	/// False, writing nothing, looking straight down.
+	///
+	/// <para>
+	/// <b>Square-on to the camera, not merely upright.</b> A quad spanned by world up and a horizontal
+	/// across - which is how rain is built - faces the camera only in plan: tilt the camera down and it
+	/// foreshortens, until a guest is squashed to a fraction of their height and the sprite shows its
+	/// edge. A park camera looks down between 45 and 65 degrees, so that costs between a third and more
+	/// than half of every person's height. The original keeps its people turned to face the camera, so
+	/// the basis has to lean with the camera's pitch rather than stand in world up.
+	/// </para>
+	/// <para>
+	/// The basis comes from the view direction and world up rather than from <c>Rotation.Right</c> and
+	/// <c>Rotation.Up</c>, because <see cref="Rotation.LookAt"/> leaves roll arbitrary and those two
+	/// carry it - the same trap <see cref="AudioListener"/> and <see cref="Audio"/> both record against
+	/// their own use of it. <c>Forward</c> is the one of the three that can be trusted, and a roll-free
+	/// basis follows from it and world up.
+	/// </para>
+	/// <para>
+	/// The picture's own origin decides where the quad sits about that point: it is stored negated in
+	/// the file and read back positive, measured from the picture's top left, so the sprite reaches
+	/// <c>origin</c> above the point and the rest of its height below. Every person's origin sits 85% or
+	/// more down their picture, which is to say on their feet.
+	/// </para>
 	/// </summary>
 	internal static bool Corners( Span<Vertex> corners, Vector3 forward, Vector3 centre, Region picture, bool mirrored, int alpha, float instanceScale = 1f )
 	{

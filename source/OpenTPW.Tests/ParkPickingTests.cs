@@ -78,6 +78,11 @@ public class ParkPickingTests
 		Assert.AreEqual( 847.36f, hit.Y, 0.5f, "met in row 84" );
 		Assert.IsFalse( ParkPicking.MeetGround( field, north, Toward( north, OnTheGround( field, 404.11f, 875f ) ), out _ ), "past row 84" );
 
+		// Just past the edge, inside the extra cell that the vertex count (97 x 86) would add to the cell count (96 x 85):
+		// the slab ends at x 960 and y 850, not 970 and 860.
+		Assert.IsFalse( ParkPicking.MeetGround( field, east, Toward( east, OnTheGround( field, 965f, 405.89f ) ), out _ ), "between 960 and 970" );
+		Assert.IsFalse( ParkPicking.MeetGround( field, north, Toward( north, OnTheGround( field, 404.11f, 855f ) ), out _ ), "between 850 and 860" );
+
 		var sea = new Vector3( 455f, 30f, 90f );
 		Assert.IsTrue( ParkPicking.MeetGround( field, sea, Toward( sea, OnTheGround( field, 455f, 25f ) ), out _ ), "row 2" );
 		Assert.IsFalse( ParkPicking.MeetGround( field, sea, Toward( sea, OnTheGround( field, 455f, -35f ) ), out _ ), "the sea past row 0" );

@@ -8,7 +8,8 @@ namespace OpenTPW;
 /// one.</b> <see cref="ParkGround"/> draws every cell nothing else owns and asks
 /// <see cref="ParkPaths.IsPath"/>, <see cref="ParkQueues.IsQueue"/> and
 /// <see cref="ParkObjects.CoversGround"/> which ones to leave alone. Rebuild the ground on its own and
-/// it stops drawing grass on a cell the moment the overlay calls it a path - while the paths, built
+/// it stops drawing grass on a cell the moment the overlay calls it a path outside the compositor's box
+/// (<see cref="ParkGround.LaysPath"/>; inside it the ground lays the path itself) - while the paths, built
 /// once at load, still draw nothing there. <b>The result is a hole in the park exactly where the new
 /// walkway belongs.</b>
 /// </para>

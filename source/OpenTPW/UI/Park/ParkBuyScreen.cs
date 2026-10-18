@@ -327,6 +327,10 @@ internal sealed class ParkBuyScreen : UiWindow
 
 		_list.Clear();
 
+		// The help bar's item goes with the rows: the original's fill picks the new first row (0x004aca3e), which this
+		// list does not (LIST_FIRST_ROW_SELECTED), so the new tab has no item until the pointer selects one.
+		_helpItem = 0;
+
 		// Each row goes in by the list's sort. A deviation: they are handed over in name order, where the original
 		// walks its catalogue (FUN_00412e60), which shows only among rows equal on the sorted column.
 		// A deviation: the price is the item file's, where the original shows its control record's +0x04 (0x004ab086),
@@ -566,7 +570,7 @@ internal sealed class ParkBuyScreen : UiWindow
 	/// <remarks>
 	/// The original's list picks its first row as it fills, so there the bar speaks of that row as soon as the pointer
 	/// comes onto the rows; this list picks none (<c>LIST_FIRST_ROW_SELECTED</c>, counted as it fills), so nothing is
-	/// posted before the pointer has selected a row.
+	/// posted before the pointer has selected a row, on opening and after each tab change.
 	/// </remarks>
 	protected internal override (int Row, (int Parameter, string Value)[] Values)? HelpPost()
 	{

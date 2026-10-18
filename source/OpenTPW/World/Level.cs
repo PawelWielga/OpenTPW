@@ -31,7 +31,18 @@ public class Level
 	/// </summary>
 	public static float FogDensity => FogDensityFor( Current?.Kind );
 
-	/// <summary>The lobby's haze: clear up close and a wall at the horizon.</summary>
+	/// <summary>
+	/// The lobby's haze: clear up close and a wall at the horizon.
+	///
+	/// <para>
+	/// Not the original's. Its lobby fogs linearly, none before depth 50 and the fog colour alone at 250 (the three
+	/// lobby states that call <c>FUN_005d9680</c> then <c>FUN_005d96a0</c>, <c>0x005e1407</c>, <c>0x005e1980</c>,
+	/// <c>0x005e24a2</c>; the lobby's own initialisation sets 50 to 300 with the fog off, <c>0x005d8bef</c>;
+	/// docs/exe/park-engine.md, "The park view's colours"), where the shaders' <c>exp</c> here has no start and no end.
+	/// It is the value the global fog had before parks stopped using it, and the lobby with it has not been
+	/// photographed against the original's.
+	/// </para>
+	/// </summary>
 	internal const float LobbyFogDensity = 0.025f;
 
 	/// <summary>
@@ -1146,7 +1157,7 @@ public class Level
 
 	/// <summary>
 	/// The detail file's <c>GraphicalOptions.LIGHTING</c>: 1 in med.sam and high.sam, 0 in low.sam, where the original sets
-	/// render-state <c>0x0800</c> (<c>FUN_0044d8f0</c>) and draws no land at half light. What else it turns off is not
+	/// render-state <c>0x1800</c> (<c>FUN_0044d8f0</c>, both bits), of which <c>0x0800</c> keeps land from half light. What else it turns off is not
 	/// decoded, and ours lights the park the same either way (<c>LIGHTING_OFF</c>). A file that will not read gives
 	/// medium's 1.
 	/// </summary>
@@ -1169,7 +1180,7 @@ public class Level
 	/// The detail file's <c>GraphicalOptions.TEXTUREQUALITY</c>: 1 in low.sam, 2 in med.sam, 3 in high.sam. A file that will not read
 	/// gives medium's 2.
 	/// </summary>
-	private static int TextureQuality()
+	internal static int TextureQuality()
 	{
 		try
 		{
@@ -1188,7 +1199,7 @@ public class Level
 	/// The procedural ground's tile size: 0 where the detail file's <c>GraphicalOptions.PROCEDURALTEXTURING</c> is 0
 	/// (low.sam), and 16 for any other. The original asks 16, 32 or 64 for 1, 2 or 3 (<c>FUN_00457a90</c>), but
 	/// <c>FUN_00572110</c> cuts the ask to 16 where the physical memory, a signed test of <c>dwTotalPhys</c>, is under
-	/// 48 MB, which on any computer with 2 GB or more it reads as negative (docs/exe/park-engine.md, "The procedural
+	/// 48 MB, which over 4 GB it reads as negative (measured under Proton; between 2 and 4 GB it is not measured, docs/exe/park-engine.md, "The procedural
 	/// ground"). A file that will not read gives medium's 16.
 	/// </summary>
 	private static int ProceduralTileSize()
@@ -1255,11 +1266,18 @@ public class Level
 
 		// What the pointer is over, before the interface deals out this frame's clicks - so a click
 		// and the cell it landed on are the same frame's answer. Only a park has ground to point at.
+		// A gap: the original skips the picker in first person ([0x790ab0] & 0x16, 0x0054e2c0), so its cell stands where
+		// it was and the crowd voice counts round it; ours keeps following the pointer (docs/QUEUE.md Q505).
 		if ( Kind == Scene.Park )
+		{
+			if ( ParkCamcorderCameraMode.Active )
+				Unimplemented.Report( "PICK_IN_FIRST_PERSON" );
+
 			ParkPicking.Update();
+		}
 
 		// The help row the hover posts for the cell under the pointer, if it posts one - see WorldHelpRow.
-		UI.WindowStack.WorldHelpPost = Kind == Scene.Park && WorldHelpRow() is var row && HoverPosted ? (row, WorldHelpValues) : null;
+		UI.WindowStack.WorldHelpPost = Kind == Scene.Park ? HoverPost( WorldHelpRow() ) : null;
 
 		// The HUD is not an entity - see RootPanel - so it is driven from here, after the world.
 		Hud.Update();
@@ -1446,6 +1464,13 @@ public class Level
 	/// <summary>Whether the last hover posted its row to the help bar (<c>FUN_004924b0</c>), rather than leaving it.</summary>
 	internal bool HoverPosted { get; private set; }
 
+	/// <summary>
+	/// What the frame hands the help bar for the hover's <paramref name="row"/>: the row with its values where the hover
+	/// posted, nothing where it left the bar alone. <see cref="Update"/> and the tests both take it from here.
+	/// </summary>
+	internal (int Row, (int Parameter, string Value)[] Values)? HoverPost( int row )
+		=> HoverPosted ? (row, WorldHelpValues) : null;
+
 	/// <summary>The cell and the person the last hover on the view was asked about, which the hover after a return reads.</summary>
 	private (int X, int Y, int Person)? _lastHover;
 
@@ -1577,7 +1602,8 @@ public class Level
 				return Silent( standingValues, last, emptyAfterACategory: GuestsDecide( LocatorOpen, Input.Held ) );
 		}
 
-		switch ( GroundArmAt( x, y ) )
+		// Only the hover counts a row it has not built; the click and the pointer ask the same arm without counting.
+		switch ( GroundArmAt( x, y, out var unbuilt ) )
 		{
 			case GroundArm.Ground:
 				return Posted( 441, 0, 2, last );
@@ -1603,6 +1629,9 @@ public class Level
 			// A queue's category 3, an object's 4, type 0x15's 6, a track ride's 5: their rows are not built, and counted.
 			case GroundArm.UnbuiltRow:
 			default:
+				if ( unbuilt is not null )
+					Unimplemented.Report( unbuilt );
+
 				return Posted( -1, 0, 3, last );
 		}
 	}
@@ -1610,7 +1639,8 @@ public class Level
 	/// <summary>
 	/// An arm of the hover that leaves the category nought: where <paramref name="emptyAfterACategory"/> the empty row is
 	/// posted only if the last category was not nought, and otherwise nothing is posted, so the old row and its values
-	/// stand and the thing is forgotten.
+	/// stand. The thing is forgotten on every such arm here; the original forgets it only at some (<c>0x00487441</c>,
+	/// <c>0x00486ff7</c>, <c>0x004877b9</c>), but each leaves the category nought, so the next person is posted anew either way.
 	/// </summary>
 	private int Silent( (int Parameter, string Value)[] standingValues, int last, bool emptyAfterACategory )
 	{
@@ -1696,7 +1726,16 @@ public class Level
 	/// (<see cref="GateArmAt"/>).
 	/// </summary>
 	internal GroundArm GroundArmAt( int x, int y )
+		=> GroundArmAt( x, y, out _ );
+
+	/// <summary>
+	/// <see cref="GroundArmAt(int, int)"/>, and for <see cref="GroundArm.UnbuiltRow"/> the name of the gap the hover counts
+	/// (<paramref name="unbuilt"/>): the click and the pointer's tool test ask the arm too, and must not count a row they do not post.
+	/// </summary>
+	private GroundArm GroundArmAt( int x, int y, out string? unbuilt )
 	{
+		unbuilt = null;
+
 		if ( Park is not { } park || ParkState is not { } state )
 			return GroundArm.Silent;
 
@@ -1719,33 +1758,32 @@ public class Level
 		// Types 11 and 16, and 12 under any other parent, ask the cell's thing and the track's (0x004873d5).
 		if ( cell.TrackType is 11 or 12 or 16 )
 		{
-			Unimplemented.Report( "HOVER_TRACK_CELL_CATEGORY" );
+			unbuilt = "HOVER_TRACK_CELL_CATEGORY";
 			return GroundArm.UnbuiltRow;
 		}
 
-		return cell.Type switch
+		var arm = cell.Type switch
 		{
 			CellEdge.Nothing => GroundArm.Ground,
 			CellEdge.Path => GroundArm.Path,
 
 			// A queue's row UIHELPTEXT 0x1bc (0x00487621) and type 0x15's 0x1c0 (0x00487742).
-			3 => UnbuiltRow( "HOVER_QUEUE_ROW" ),
-			0x15 => UnbuiltRow( "HOVER_TYPE_15_ROW" ),
+			3 => GroundArm.UnbuiltRow,
+			0x15 => GroundArm.UnbuiltRow,
 
 			// The object is the parent cell's (FUN_00527e80); its row is 0x226 with the object's name (0x004876d1). An
 			// add-on's test after it (0x0048768d) is not run: every add-on Lost Kingdom ships is a track ride's, which nothing
 			// here builds.
 			CellEdge.Footprint or CellEdge.RideEnd or CellEdge.RideFarEnd
-				=> ParkItemHeights.Owner( state, x, y ) is null ? GroundArm.Silent : UnbuiltRow( "HOVER_OBJECT_ROW" ),
+				=> ParkItemHeights.Owner( state, x, y ) is null ? GroundArm.Silent : GroundArm.UnbuiltRow,
 
 			_ => GroundArm.NoCategory
 		};
-	}
 
-	private static GroundArm UnbuiltRow( string name )
-	{
-		Unimplemented.Report( name );
-		return GroundArm.UnbuiltRow;
+		if ( arm == GroundArm.UnbuiltRow )
+			unbuilt = cell.Type switch { 3 => "HOVER_QUEUE_ROW", 0x15 => "HOVER_TYPE_15_ROW", _ => "HOVER_OBJECT_ROW" };
+
+		return arm;
 	}
 
 	/// <summary>The theme's gate cells and ticket booths, read once per balance - see <see cref="GateArmAt"/>.</summary>
@@ -1912,7 +1950,7 @@ public class Level
 	/// </summary>
 	/// <remarks>
 	/// The press is one the window system sent this frame (<see cref="Input.MouseInfo.LeftWentDown"/>), so one let go
-	/// inside the frame still lands, as the original's <c>WM_LBUTTONDOWN</c> does, and a button already held when the
+	/// inside the frame still lands, as the original's press from the cursor library's callback (<c>0x00486c70</c>) does, and a button already held when the
 	/// park began is none. A frame's second press is counted, not acted on (<c>PARK_PRESSES_IN_ONE_FRAME</c>): the
 	/// first may open a window that the second would land on, and the interface has dealt out the frame's presses by now.
 	/// </remarks>
@@ -2022,7 +2060,7 @@ public class Level
 	/// <param name="person">The person under the pointer (<see cref="ParkPicking.PersonUnderCursor"/>), or nought.</param>
 	/// <param name="placed">The cell's thing that is not a person (<see cref="ParkPicking.ObjectUnderCursor"/>), or nought:
 	/// the original's click takes a person's window from <c>[0x007c2650]</c> and an object's from <c>[0x007c2654]</c>, which
-	/// the hover fills from the cell, so a guest passing a ride leaves the ride's window to open (<c>FUN_004879d0</c>).</param>
+	/// the frame's picker fills from the cell (<c>FUN_0046c110</c>) and the click snapshots, so a guest passing a ride leaves the ride's window to open (<c>FUN_004879d0</c>).</param>
 	internal string ClickWorldAt( int cellX, int cellY, int person, int placed = 0 )
 	{
 		// ANYTHING IN THE HAND GOES DOWN FIRST, and only an empty hand opens a window. That is the

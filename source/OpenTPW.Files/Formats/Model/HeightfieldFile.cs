@@ -10,9 +10,10 @@ namespace OpenTPW;
 ///
 /// <para>
 /// <b>base.lnd is not this.</b> It is the obvious candidate by name, it is the biggest thing in
-/// terrain.wad, and it is the wrong file: it holds procedural texture source data and the original
-/// only reads it when a render flag is set, logging "Procedural textures not allowed" when it is not.
-/// A park loads and draws perfectly without it.
+/// terrain.wad, and it is the wrong file: it holds the procedural ground's texture source data, which the
+/// original reads unless a render bit forbids it (it logs "Procedural textures not allowed" only when a debug bit is
+/// also set). The ground at medium and high is composited from it (<c>ProceduralGround</c>); a park without it draws
+/// every cell's own texture.
 /// </para>
 ///
 /// <para>

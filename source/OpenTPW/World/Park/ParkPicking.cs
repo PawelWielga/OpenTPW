@@ -46,8 +46,11 @@ public static class ParkPicking
 {
 	/// <summary>
 	/// The cell under the pointer, packed as <c>y * 128 + x + 1</c>: where the ray meets nothing, the last cell it met.
-	/// <b>Nought only before the first meeting</b> - the original's own sentinel, and the reason the packing is one-based
-	/// rather than plain. What the original's point holds before its first hit is not measured.
+	/// <b>Nought before the first meeting, and again after <see cref="Forget"/></b> - a deviation: the original's word is
+	/// never nought. It starts at 1 (cell (0,0), <c>FUN_0046c0b0</c> at start-up) and its point P (<c>0x007a1c70</c>)
+	/// starts at (0,0,0) and is carried from one park to the next, so it is never emptied (<c>docs/exe/park-engine.md</c>,
+	/// "The picker never hands the mode a cell off the map"). The difference is a frame or two before the first meeting
+	/// over the sea at (0,0), where there are no peeps and no row.
 	/// </summary>
 	public static int Cell { get; private set; }
 
@@ -62,8 +65,9 @@ public static class ParkPicking
 	public static int PersonUnderCursor { get; private set; }
 
 	/// <summary>
-	/// The thing on the hovered cell that is not a person (<see cref="ThingOn"/>), or nought: the original's object arm
-	/// asks the cell <c>[0x007b05cc]</c> (<c>FUN_00527e80</c>, <c>0x0048734c</c>) whoever the person is, so a guest
+	/// The thing on the hovered cell that is not a person (<see cref="ThingOn"/>), or nought: the original's object
+	/// is the first thing on the cell <c>[0x007b05cc]</c> (<c>FUN_00527e80</c>), which <c>FUN_0046c110</c> stores at
+	/// <c>[0x007b05b0]</c> each frame and the click snapshots (<c>docs/exe/park-engine.md</c>), whoever the person is, so a guest
 	/// under the pointer does not hide the ride their feet are beside.
 	/// </summary>
 	public static int ObjectUnderCursor { get; private set; }
@@ -154,7 +158,7 @@ public static class ParkPicking
 	}
 
 	/// <summary>What the ray through one point of the window meets: <c>Met</c> false where the cell is the one left standing.</summary>
-	private readonly record struct Answer( int Cell, Vector3 World, int Person, int Object, int Latched, bool Met = true );
+	internal readonly record struct Answer( int Cell, Vector3 World, int Person, int Object, int Latched, bool Met = true );
 
 	/// <summary>
 	/// The whole of the picking arithmetic, given a position on the window. <see cref="Update"/> hands
@@ -181,13 +185,26 @@ public static class ParkPicking
 		if ( cell <= 0 )
 			return default;
 
+		return Assemble( cell, met, hit, screen, ParkGuestSprites.Current?.Drawn, Level.Current?.ParkState );
+	}
+
+	/// <summary>
+	/// What the pointer is over once the ray has handed on a cell: the picture the window's pixel latches
+	/// (<see cref="LatchFor"/>, against the window's width and height and the camera's matrices), the person and the
+	/// object taken on that cell (<see cref="Take"/>), and the point, the ray's own where it met the ground and the
+	/// one standing where it did not. Apart from <see cref="Resolve"/> so that its wiring can be tested without a camera
+	/// and a heightfield.
+	/// </summary>
+	internal static Answer Assemble( int cell, bool met, Vector3 hit, Vector2 screen, IEnumerable<SpritePick.Drawn>? drawn,
+		ParkState? state )
+	{
 		var (cellX, cellY) = MapStep.CellAt( cell );
 
-		var latched = ParkGuestSprites.Current is { } sprites
-			? LatchFor( sprites.Drawn, screen, Screen.Width, Screen.Height, Camera.ViewMatrix * Camera.ProjMatrix )
+		var latched = drawn is not null
+			? LatchFor( drawn, screen, Screen.Width, Screen.Height, Camera.ViewMatrix * Camera.ProjMatrix )
 			: 0;
 
-		var (person, placed) = Level.Current?.ParkState is { } state ? Take( state, latched, cellX, cellY ) : (0, 0);
+		var (person, placed) = state is not null ? Take( state, latched, cellX, cellY ) : (0, 0);
 
 		return new Answer( cell, met ? hit : WorldPoint, person, placed, latched, met );
 	}
@@ -242,6 +259,14 @@ public static class ParkPicking
 	/// The person whose picture a frame's draw latches for a point of a window <paramref name="width"/> by
 	/// <paramref name="height"/> (<see cref="SpritePick.Latch"/>), against the camera that frame was drawn with: the point
 	/// in the -1 to 1 box, and the across at the height over the width (<c>0x008bcbcc</c>).
+	///
+	/// <para>
+	/// <b>That is right at 4:3 and wider, and not below it.</b> <see cref="Camera.Lens"/> holds the horizontal angle of
+	/// a window narrower than 4:3, so the picture's drawn left edge stays at 0.75 of the span while this height over
+	/// width grows past 0.75: the circle's middle then lies height / width / 0.75 times as far from the origin as
+	/// the drawn edge does (1.33 at a square window), and its radius grows the same. The original runs only at 4:3, so the deviation is
+	/// ours alone; not corrected (<c>docs/exe/park-engine.md</c>, "The size a sprite is drawn").
+	/// </para>
 	/// </summary>
 	internal static int LatchFor( IEnumerable<SpritePick.Drawn> drawn, Vector2 screen, float width, float height,
 		System.Numerics.Matrix4x4 viewProjection )
@@ -250,7 +275,7 @@ public static class ParkPicking
 	/// <summary>
 	/// What the pointer takes on a cell, as two values the way the original keeps them: the latched person if they
 	/// stand on it or a neighbour (<see cref="SpritePick.Taken"/>, <c>[0x007b05ac]</c>), and the cell's thing that is not a
-	/// person (<see cref="ThingOn"/>, the object arm's <c>FUN_00527e80</c> on <c>[0x007b05cc]</c>).
+	/// person (<see cref="ThingOn"/>, <c>FUN_00527e80</c> on <c>[0x007b05cc]</c>).
 	/// </summary>
 	internal static (int Person, int Object) Take( ParkState state, int latched, int cellX, int cellY )
 		=> (SpritePick.Taken( state, latched, cellX, cellY ), ThingOn( state, cellX, cellY, people: false ));
@@ -269,8 +294,12 @@ public static class ParkPicking
 	/// nothing anywhere else on it.
 	/// <para>
 	/// <b>Occupancy is asked FIRST</b>: a thing on the cell's own list comes before the owner, which is the
-	/// fallback. With <c>people</c> true a guest heading a ride's anchor cell answers there instead of the ride;
-	/// the console's <c>worldclick</c> asks it so, and takes the answer as the person only where it is one.
+	/// fallback. With <c>people</c> true a guest heading a ride's anchor cell answers there instead of the ride.
+	/// </para>
+	/// <para>
+	/// <b>Dead by CODE:</b> the <c>people: true</c> arm is called by tests alone. The pointer asks with <c>people: false</c>
+	/// (<see cref="Take"/>), and the console's <c>worldclick</c> reads the cell's head itself and asks this with
+	/// <c>people: false</c> for the rest.
 	/// </para>
 	/// <para>
 	/// The lookup is <see cref="ParkPathBuilding"/>'s own, which a queue cell already uses to name the
@@ -284,8 +313,8 @@ public static class ParkPicking
 	/// owner lookup put back.
 	/// </remarks>
 	/// <param name="people">Whether a person on the cell's list answers. The pointer takes people by their pictures
-	/// (<see cref="SpritePick"/>) and asks the cell for the rest (<see cref="Take"/>); a console click on a cell takes
-	/// whoever heads it.</param>
+	/// (<see cref="SpritePick"/>) and asks the cell for the rest (<see cref="Take"/>); true takes whoever heads the cell,
+	/// which nothing outside the tests does.</param>
 	internal static int ThingOn( ParkState state, int cellX, int cellY, bool people = true )
 	{
 		var crowd = ParkPeople.Current;

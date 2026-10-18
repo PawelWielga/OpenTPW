@@ -30,8 +30,8 @@ public static class SpritePick
 	/// its size and origin in pixels, and whether it is drawn reflected.</summary>
 	internal readonly record struct Drawn( int Thing, Vector3 Origin, int Width, int Height, int OriginX, int OriginY, bool Mirrored );
 
-	/// <summary>A picture's pixels to the original's span: <c>+0x2c</c> 1.0 times 20 (<c>0x0070200c</c>) over the 128 of
-	/// the picture's reference (<c>FUN_005890e0</c>).</summary>
+	/// <summary>A picture's pixels to the original's span, in its clip space (<c>docs/exe/park-engine.md</c>, "The size a
+	/// sprite is drawn"; the draw's world size is <see cref="ParkGuestSprites"/>'s).</summary>
 	private const float Span = 20f / 128f;
 
 	/// <summary>The radius squared over the span squared, <c>0x0070203c</c>.</summary>

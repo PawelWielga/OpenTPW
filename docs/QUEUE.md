@@ -50,8 +50,8 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
-Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
-`~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
+The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
+filed the items that cite it.
 
 - [ ] **Q478. The hover's rows over a queue, an object, a track and type `0x15`.** From Q471 (`park-engine.md`, "The gate
   and the ticket booths"): over those cells ours posts the empty row, counted `HOVER_QUEUE_ROW` (UIHELPTEXT `0x1bc`, 444
@@ -68,10 +68,10 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
   original answers the gate cells (`q471/orig/x-scan.log`, y 320 to 380) and ours the approach behind it
   (`q471/run1-nopixel.out`; the review of Q471, `handoff/review3/VERIFY-7.md`). Confirm in both games at that view.
 - [ ] **Q487. What low quality's `GraphicalOptions.LIGHTING` 0 turns off. Decode first.** From Q482: `low.sam` sets it 0,
-  `med.sam` and `high.sam` 1, and `FUN_0044d8f0` then sets render-word `0x0800`, under which the terrain pass draws no
-  land at half light (`park-engine.md`, "What the render-state `0x0800` tests are"); what else reads `0x0800` (the
-  vertex light `FUN_005741b0`, the models' pass) is not read. Ours draws no half light there and lights the park as at
-  medium, counted `LIGHTING_OFF` at the park's load (`Level.Lighting`). Decode the bit's other readers, then measure
+  `med.sam` and `high.sam` 1, and `FUN_0044d8f0` then sets render-word `0x1800` (both `0x0800` and `0x1000`, `or ah,0x18` at `0x0044dc36`); under `0x0800` the terrain pass draws no
+  land at half light (`park-engine.md`, "What the render-state `0x0800` tests are"); what else reads `0x0800`, and what reads `0x1000` at all (the
+  vertex light `FUN_005741b0`, the models' pass), is not read. Ours draws no half light there and lights the park as at
+  medium, counted `LIGHTING_OFF` at the park's load (`Level.Lighting`). Decode both bits' other readers, then measure
   the original at low quality (`Resolution.sam` aside, its Options screen) at Q479's camera A before any build.
 - [ ] **Q492. The original's textures are 16-bit surfaces at medium. Decode first.** From Q490: the original's sea and
   lake keep red near nought where ours reads 4 to 7 (`q490/PREDICTION.txt`), as `gby_sur`'s red (about 14) keeps
@@ -1981,6 +1981,70 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
 - [ ] **Q465. A purchase's advisor post is not counted.** From the week-end audit (`VERIFY-10a.md` Q328 3). Every
   purchase reaches the original's 0xc9 or 0xce post (`0x004ac67e`..`0x004ac7d9`); ours neither builds nor counts it
   (`ParkBuyScreen.Chose`). The line is filed under Q420; add the `Unimplemented.Report` (rule 4).
+- [ ] **Q501. A rider's head, a balloon and a thought bubble are drawn the original's size: shown.** From the review of Q470
+  (`handoff/review3/VERIFY-6.md`, finding 4): Q470 drew every sprite through `Extent` (the span over
+  `Camera.ClipPerWorld`), and the head (`HeadScale` 0.685), the balloon and the thought bubble go through the same
+  `ParkGuestSprites.Corners`, but only a person's body was photographed on the fixed build, and no census of the
+  original's sprite list held a head, balloon or bubble (they hold people alone; whether any of those carries `0x200` rests
+  on the programs' static reading). Confirm in both games at one camera: a rider's head on a ride, a balloon and a thought
+  bubble, their rows and columns against the decode (`original/spritepick.py` census with one of each on the list).
+- [ ] **Q502. The lobby's fog is linear, 50 to 250, in the original; ours is `exp`. Decode first, then build.** From the review of Q481
+  (VERIFY-9 Q481 1): the three lobby states that call `FUN_005d9680` (`OR AH,0x20` on render-word `0x008bcbc8`, at
+  `0x005e1407`, `0x005e1980`, `0x005e24a2`) then `FUN_005d96a0( 0xff44ddff, 50.0, 250.0 )`, which writes `0x008bd47c`,
+  `0x008bd490`, `0x008bd494`; the lobby's own initialisation (`0x005d8bef` to `0x005d8c10`) sets 50 to 300 with the bit
+  clear. Ours is `Level.LobbyFogDensity` 0.025 through the shaders' `exp( depth * 0.01 )`, which has no start or end
+  (`test.shader`, `water.shader`), and the lobby has not been photographed against the original's since parks stopped using
+  the global fog. Decode which lobby states fog and which do not, photograph the lobby in both games at the same
+  camera, then give the lobby the original's linear start and end (the park's `FIRST_PERSON_FOG` item builds the same
+  linear fog; share its shader path).
+- [ ] **Q503. The build markers load from `textures` at every texture quality.** The original's `FUN_0053d790` calls
+  `FUN_0054dcc0` (0x0053d7b4) and takes `STexture` (`0x00763ee4`) for the three dynamic meshes where it answers 1
+  (texture quality 0 or 1), as `ParkSea` and `ParkFlags` already do through `ParkSea.SmallTextures`. `ParkBuildMarkers.Load`
+  always reads `generic/dynamic/textures/{name}.wct`; `blue.wct` (493 against 211 bytes) and `red.wct` (340 against 122)
+  differ between the folders, `m_link` and `m_end` do not. Pass the quality in, load `stexture` at 0 and 1, and confirm
+  it in the running game at low detail (a screenshot of a build square, before and after). Said at the site in
+  `ParkBuildMarkers.MarkerNames`.
+- [ ] **Q504. The sea's and the flags' phase is a float that grows without bound, and no one wrap keeps both seamless.**
+  `ParkSea.Phase` gains 12 a second off `Time.Delta`; at a high refresh rate the step (12 x Delta) is rounded against the
+  float's ulp after hours (numpy float32 at 144 Hz: rate x1.031 from 1.5 h, x0.9375 from 3 h, x1.125 from 6 h, x0.75
+  from 12 h, x1.5 from 24 h, stopped at about 48 h). The original's is a float32 too (`DAT_00871f60`, `DAT_00871ed0`)
+  but steps 0.4 a frame at 30 fps, so it is within 1.6% only to 12.1 h (phase 2^19) and stops at 2^23 (about 194 h).
+  The sea's wave is periodic in the phase every 4 pi (s = ... - 0.5 phase; the table index moves by 4,096) but the flags'
+  `Grid` is periodic every 20 (D = ... - 0.6 phase; the joint period of 3 and 4 in D is 12), and `ParkFlags` takes the
+  sea's phase, so wrapping the shared phase at either breaks the other at the wrap. Fix: keep two phases (the sea's
+  wrapped at 4 pi, the flags' at 20, both stepped alike from the same `Advance`), say it as a deviation at the site,
+  and test that a phase either side of each wrap gives the same wave. Said at `ParkSea.Phase`.
+- [ ] **Q505. The picker stands still in first person.** From the review of Q472b (`handoff/review3/VERIFY-13.md`, q472b 1): the original skips the picker and the packer while
+  `[0x790ab0] & 0x16` is set (`0x0054e2c0` `test al,0x16`, then `jne`; first person is `0x202`), so its cell stays where it
+  was. Ours runs `ParkPicking.Update` every park frame, counted `PICK_IN_FIRST_PERSON` in `Level.Update`, so the crowd
+  voice (`ParkAudio.cs`, the original's `0x0054f875`) counts guests round a cell that follows the pointer. Decode which
+  modes set `0x4` and `0x10`, then hold the picker under all three bits. Confirm in both games: the crowd voice's count
+  in first person against the cell before it.
+- [ ] **Q506. A frame's second press: acted on at the park, or not (`PARK_PRESSES_IN_ONE_FRAME`).** From the review of Q476
+  (`handoff/review3/VERIFY-14.md`, finding 2): `Level.WorldClick` counts a frame's second left press and does not act on
+  it (`Unimplemented.Report( "PARK_PRESSES_IN_ONE_FRAME" )`), because the first may open a window the second would land on
+  and the interface has dealt the frame's presses out by then. Two presses inside one 31 ms frame is rare with a mouse. Decode
+  what the original does with two presses delivered between two park ticks (the cursor callback `0x00486c70` posts each
+  through `FUN_00658af1`; where the park's mouse proc `FUN_004879d0` runs against the drain), build it or record that one is
+  enough, and drop the counter or say why it stays.
+- [ ] **Q507. Does the original send a frame's second press to the control the first press's click left?** From the review of
+  Q476 (VERIFY-14, finding 4; UNSETTLED). `WindowStack.Update` hit-tests the hover once and gives every step of
+  `LeftSteps` (press, release, click) to that one control, so a second press in the same frame reaches the control the first
+  press clicked even if that click closed or replaced it. The original's press poster `FUN_00658af1` addresses the hover current at
+  posting (`0x00658b1a mov eax,[0x00faa5e0]`, then `0x00658ccc`), so if the cursor callback posts the second press before the
+  drain handles the first click, the original's second press also goes to the old control. Settle by how `0x00486c70`'s events
+  are delivered against the message drain (Ghidra), or by a two-press-in-one-frame run in the original on a button that closes
+  its own window; then keep the comment at `WindowStack.Update` ("whether the original sends a frame's second press ... is not
+  decided") or replace it with the answer.
+- [ ] **Q508. A pulled body against an unpulled sprite's order (heads, bubbles, balloons).** From the review of Q500
+  (VERIFY-14, finding 3; UNSETTLED, narrowed). The premise now holds: each group's flush (`0x0058aa3b call 0x5658c0`, ecx
+  `[0x00879ab0]`, the batch object `0x00566220` adds to) reaches `FUN_00565590` (`0x00565917`), so sprite batches go through the
+  per-triangle sort, which keys on the screen z the pull wrote. Still unread: the mask `[esi+0xc]` tested at `0x0056570b` (the
+  doc's `0x3000`) and `[0x008bd524]` in play, and whether bodies share a group (texture) with heads, bubbles and balloons;
+  across groups the batch key (mean z) also sees the pulled z. Settle by a live read of those two words in the original, or a
+  photograph of a balloon's fringe against a body in both games; then say whether `FurthestFirst`, which orders every quad
+  here by its unpulled depth, matches the original's order for a pulled body against an unpulled sprite, and whether the
+  first-person view (render bit `0x80`, ungrouped; `docs/exe/park-engine.md`, "What hides a person below their feet") sorts at all.
 
 ## B. Docs and comments
 
@@ -2048,7 +2112,8 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
   `FUN_004d0810`, which are undefined bytes in the Ghidra project, so nobody has read them there: disassemble at
   each, read what it does, and correct the rows. And nineteen functions the docs call `FUN_` have a name in the
   project (the harness folder's `audit-2026-10-10/findings/s1-ghidra-named.tsv`): write the names in the docs.
-  Nothing in Ghidra is named or made a function without Alexah's word. No game run.
+  Name them and make them functions in Ghidra as the reading finds them (Alexah, 2026-10-18); a name there agrees
+  with its `docs/exe/` row. No game run.
 
 - [ ] **Q294. The FileFormats pages changed since 2026-09-26, against the game's files.** Left by the week-end
   audit's stage 8. 1,557 layout statements on 22 pages, `saves.md` and `models.md` most of them, packed into 56
@@ -2160,7 +2225,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   ground and path (`Level.IdleOverPath`). Picking is decoded (`park-engine.md`, "Picking is a real ray cast, not a
   grid lookup"): the hit point comes from a ray against the terrain and then object meshes, and the hovered THING is
   taken from the cell, not by hitting its model (`ParkPicking.ObjectUnderCursor`; a person by their picture, `PersonUnderCursor`). Decode what the hover updater
-  `FUN_00486d90` highlights when the hovered thing is an object or a person, then build it.
+  `FUN_00486d90` highlights when the hovered thing is an object or a person, then build it. Include the park gate: its
+  arm calls `FUN_00469180` (`0x004878ce`, the highlight swap on `[0x007afda0]`), which the ticket booth's arm does not
+  (`park-engine.md`, "The gate and the ticket booths"); the hover calls it at six places.
 - [ ] **Q25. The camcorder button should give a crosshair and place the camera where you click.**
   `ParkGadget.EnterCamcorder` enters the mode at once. The original installs a mouse-interaction mode
   (`FUN_00481a10`, `park-engine.md`, "Camcorder mode — the first-person view"). Its click handler was decoded by Q48
@@ -2175,8 +2242,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   From Q496 and Q497 (`q496/orig/`, `q497/orig/`, `helpbar.py`): the pick wears `0x13`, `c_cam.ani`, and posts rows of
   its own, 580 "{P2}: Left-click to ride" over a ride and 579 "Left-click to use camcorder mode here" after it, and
   none over ground before (`hud.md`, "The help bar in first person"); build them with the pick. Its
-  click on a hoarding (617, 378) and on the land below the gate was refused with the no-entry cursor, where one on
-  the path inside the gate (290, 395) stood the viewer there.
+  click on a hoarding (617, 378), and one at (700, 450) or (617, 500), left the pick up (the no-entry cursor, seen
+  at (617, 500)); one at (512, 420) or (450, 450) dropped it back to the orbit's mode `0x6fea10` with no first person;
+  one on the path inside the gate (290, 395) stood the viewer there.
 - [ ] **Q26c. Ferry, seaplane and bus are always there.** `ParkFixedItems.Items` stands all three
   permanently, and `VehicleFor` gives a load under 36 the bus, so only the bus is called in the stock park (its
   loads are 13 and fewer since Q26b; three new rides make 30).
@@ -2418,9 +2486,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     100) and prize (`+0x188`, 0 to 10000) only when `NonWinnableSideshow` (`+0x10c`) is 0, which no shipped `.sam`
     sets (that branch is dead by content); apply to all is `0xa0a9` with mask `0x100`, the same-item rule. Ride: the
     speed, duration and capacity controls and the apply `0x004af440`.
-- [ ] **Q32. Graphics tiers.** Only `Level.SetupParticles` and `Level.NumKids` read the detail files (`low.sam`,
-  `med.sam`, `high.sam`), and only `GameOptions.PARTICLEDENSITY` and `NUMKIDS` (the kid and staff bank caps) from them; nothing reads their `GraphicalOptions.*` keys (texture quality and
-  filtering, sky, shadows, fog, mipmaps, view distance). The detail-file loader is `0x00423bc0` (`OptionsScreen`'s
+- [ ] **Q32. Graphics tiers.** `Level` reads the detail files (`low.sam`, `med.sam`, `high.sam`) for `GameOptions.PARTICLEDENSITY`
+  and `NUMKIDS` (the kid and staff bank caps) and for three `GraphicalOptions.*` keys: `LIGHTING` (a counted no-op),
+  `TEXTUREQUALITY` (the sea's and the flags' folder) and `PROCEDURALTEXTURING` (the ground's tile size). Nothing reads
+  the rest (texture filtering, sky, shadows, fog, mipmaps, view distance); `SKYQUALITY` and `FIRSTPERSONVIEWDISTANCE` are named only in comments. The detail-file loader is `0x00423bc0` (`OptionsScreen`'s
   restart note). Decode what it does with each key - the lobby plan's item 11 names three: the `stexture` set,
   `SKYQUALITY` and the particle low-detail byte - then build low / medium / high.
 - [ ] **Q33. UI scale.** The UI has one fixed virtual size (`VirtualScreen`, 2048 by 1536). Add Auto / small / medium
@@ -2586,7 +2655,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   draws with `0x0046c100` (on `0x007b05a8`, at `0x0054e310`) and `0x0046c110` (at `0x0054e34f`), which sets `+4`
   (`0x007b05ac`) to the latched thing when its kind byte `+2` is 1, 4, 5, 6, 7, 8 or `0x12`, sets `+8` to the first
   thing on the picked cell (`+0x24`, `0x007b05cc`, by `0x00527e80`) and, when nothing was latched, copies `+8` into
-  `+0`; `0x0048c960` snapshots `+0` and `+4`. Ours has the `+0` latch only; compare Q444 before building. Confirm each
+  `+0`; `0x0048c960` snapshots `+0`, `+4` and `+8` (into `0x007c264c`, `0x007c2650`, `0x007c2654`). `ParkPicking` keeps all
+  three apart: the raw latch (`Latched`, no copy of `+8` into it when nothing was latched), `PersonUnderCursor` (`+4`)
+  and `ObjectUnderCursor` (`+8`; Q474); compare Q444 before building. Confirm each
   beside the original.
 
 ## F. Then

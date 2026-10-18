@@ -48,7 +48,7 @@ public class ParkGuestSpriteSizeTests
 	/// texture, so Mike's reflected 38 x 50, origin 22 across (<c>q470/orig/b-run.out</c>, flags <c>0x10</c>), shows his
 	/// picture's left edge on the right, at 528.97 where his circle's middle read 529, and its right edge on the left, at
 	/// 499.66; his origin's column stands on the origin's pixel, 512, both ways round. Reflected about the quad's middle
-	/// it would stand at 516.63, the edges at 524.34 and 495.03.
+	/// it would stand at 507.37, the edges at 524.34 and 495.03.
 	/// </summary>
 	[TestMethod]
 	public void AReflectedPersonTurnsAboutTheirFeet()
@@ -86,10 +86,67 @@ public class ParkGuestSpriteSizeTests
 		Assert.AreEqual( 100f + (22f * pixel), corners[1].Position.X, 1e-4f, "the top right, 22 right" );
 		Assert.AreEqual( (0.5f, 0.25f), (corners[0].TexCoords.X, corners[1].TexCoords.X), "the picture reflected" );
 		Assert.AreEqual( (corners[0].Position.X, corners[1].Position.X), (corners[3].Position.X, corners[2].Position.X) );
+		Assert.AreEqual( (0.5f, 0.25f), (corners[3].TexCoords.X, corners[2].TexCoords.X), "the bottom edge reflected the same way" );
+		Assert.AreEqual( (0.1f, 0.1f, 0.3f, 0.3f), (corners[0].TexCoords.Y, corners[1].TexCoords.Y, corners[2].TexCoords.Y, corners[3].TexCoords.Y), "rows are not reflected" );
 
 		var origin = 0.25f + (0.25f * 22f / 38f);
 		var along = (origin - corners[0].TexCoords.X) / (corners[1].TexCoords.X - corners[0].TexCoords.X);
 		Assert.AreEqual( 100f, corners[0].Position.X + ((corners[1].Position.X - corners[0].Position.X) * along), 1e-3f, "the origin's column on the point" );
+
+		var direct = new Vertex[4];
+		Assert.IsTrue( ParkGuestSprites.Corners( direct, new OpenTPW.Vector3( 0f, 1f, 0f ), centre, picture, mirrored: false, 255 ) );
+		Assert.AreEqual( 100f - (22f * pixel), direct[0].Position.X, 1e-4f, "unreflected, the top left is 22 picture pixels left" );
+		Assert.AreEqual( 100f + (16f * pixel), direct[1].Position.X, 1e-4f, "and the top right 16 right" );
+		Assert.AreEqual( (0.25f, 0.5f, 0.5f, 0.25f), (direct[0].TexCoords.X, direct[1].TexCoords.X, direct[2].TexCoords.X, direct[3].TexCoords.X), "the picture as drawn" );
+		Assert.AreEqual( (direct[0].Position.X, direct[1].Position.X), (direct[3].Position.X, direct[2].Position.X) );
+	}
+
+	/// <summary>
+	/// <b>The quad written for a picture is the size Extent gives, square on to the eye</b>: <c>ParkGuestSprites.WriteQuad</c>
+	/// hands its corners to <c>Corners</c> with the picture, the reflection and the instance scale, and nothing else. Mike's
+	/// 41 x 52, origin 21, 45, seen from 50 degrees down: his top 45 picture pixels above the point and his feet 7 below,
+	/// each pixel 20 / 128 over 1.4142 of the world, along the camera's own up (0, sin 50, cos 50), and all four corners
+	/// at the one depth along the view. A rider's head (scale 0.685) is that much of it. A quad that took its own scale
+	/// (20 / 128 itself, or the world up) or dropped the instance scale fails.
+	/// </summary>
+	[TestMethod]
+	public void TheQuadWrittenIsTheExtentSquareToTheEye()
+	{
+		var pitch = 50f * MathF.PI / 180f;
+		var forward = new OpenTPW.Vector3( 0f, MathF.Cos( pitch ), -MathF.Sin( pitch ) );
+		var upward = new OpenTPW.Vector3( 0f, MathF.Sin( pitch ), MathF.Cos( pitch ) );
+		var centre = new OpenTPW.Vector3( 3f, 4f, 5f );
+		var picture = new ParkGuestSprites.Region( 0.1f, 0.2f, 0.3f, 0.4f, 41, 52, 21, 45 );
+		var corners = new Vertex[4];
+		var pixel = 20f / 128f / 1.41421356f;
+
+		Assert.IsTrue( ParkGuestSprites.Corners( corners, forward, centre, picture, mirrored: false, 255 ) );
+		AssertCorners( corners, centre, upward, forward, pixel, left: 21, right: 20, above: 45, below: 7 );
+
+		Assert.IsTrue( ParkGuestSprites.Corners( corners, forward, centre, picture, mirrored: false, 255, ParkGuestSprites.HeadScale ) );
+		AssertCorners( corners, centre, upward, forward, pixel * ParkGuestSprites.HeadScale, left: 21, right: 20, above: 45, below: 7 );
+	}
+
+	private static void AssertCorners( Vertex[] corners, OpenTPW.Vector3 centre, OpenTPW.Vector3 upward, OpenTPW.Vector3 forward,
+		float pixel, float left, float right, float above, float below )
+	{
+		var across = new OpenTPW.Vector3( 1f, 0f, 0f );
+		var expected = new[]
+		{
+			centre - (across * left * pixel) + (upward * above * pixel),
+			centre + (across * right * pixel) + (upward * above * pixel),
+			centre + (across * right * pixel) - (upward * below * pixel),
+			centre - (across * left * pixel) - (upward * below * pixel),
+		};
+
+		for ( var i = 0; i < 4; ++i )
+		{
+			Assert.AreEqual( expected[i].X, corners[i].Position.X, 1e-4f, $"corner {i} across" );
+			Assert.AreEqual( expected[i].Y, corners[i].Position.Y, 1e-4f, $"corner {i} depth" );
+			Assert.AreEqual( expected[i].Z, corners[i].Position.Z, 1e-4f, $"corner {i} up" );
+		}
+
+		Assert.AreEqual( (corners[0].Position - corners[3].Position).Dot( forward ), 0f, 1e-4f, "square on to the eye" );
 	}
 
 	/// <summary>A rider's head keeps its 0.685 of that (<c>0x0074ced0</c>): a 30-px head 30 x 0.685 x 60 / w = 15.85 px high.</summary>

@@ -7,7 +7,7 @@ namespace OpenTPW.Tests;
 
 /// <summary>
 /// The buy screen's help rows (<c>docs/exe/hud.md</c>, "The buy screen's help rows"): <c>FUN_004abc80</c> posts the row of
-/// the item the list last selected while the pointer is on the list's rectangle, and only on a change of the item or of
+/// the item the list last selected while the pointer is on the list's row area, and only on a change of the item or of
 /// its state. The rows and the order of what is posted are the original's, measured in it (<c>q495/orig/</c>).
 /// </summary>
 [TestClass]
@@ -148,6 +148,63 @@ public class ParkBuyHelpTests
 		Assert.AreEqual( 0x96, screen.HelpPost( true, 499, null, 0 )?.Row, "back on them: spoken of again" );
 		screen.RowSelected( 1101 );
 		Assert.AreEqual( 0x96, screen.HelpPost( true, 499, null, 0 )?.Row, "another item in the same state" );
+	}
+
+	/// <summary>
+	/// A tab change takes the item with the old tab's rows: back on the new tab's row area, on a slot no row fills, the bar
+	/// is not told of the old tab's row (the review of Q495: the Pirate Ship was posted over the sideshows).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the item kept across <c>Show</c>.</remarks>
+	[TestMethod]
+	public void ATabChangeForgetsTheOldTabsItem()
+	{
+		var (_, screen, _) = ParkFootprintPictureTests.BuyScreen();
+		screen.RowSelected( 1101 );
+
+		Assert.AreEqual( 0x96, screen.HelpPost( true, 1500, null, 0 )?.Row, "the Pirate Ship, dear" );
+
+		screen.PickTab( 2 );
+
+		Assert.IsNull( screen.HelpPost( false, 1500, null, 0 ), "the tab is off the rows" );
+		Assert.IsNull( screen.HelpPost( true, 1500, null, 0 ), "back on the sideshows' rows with none selected" );
+		Assert.AreEqual( "help item 0 posted 1101 state -1", screen.HelpCensus() );
+	}
+
+	/// <summary>
+	/// A golden-ticket ride's two rows: the one it is bought by when the tickets reach its cost (<c>0x97</c>), the one it is
+	/// refused by below it (<c>0x98</c>), whatever the bank holds; and a ride the player has unlocked is posted as any other.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the two mystery rows swapped; the mystery priced by the bank.</remarks>
+	[TestMethod]
+	public void AMysteryRidePostsItsTwoRowsByTheTickets()
+	{
+		var (catalogue, screen, _) = ParkFootprintPictureTests.BuyScreen();
+		var mystery = catalogue.All.First( item => item.GoldenTicketCost > 1 );
+		var cost = mystery.GoldenTicketCost;
+
+		screen.RowSelected( mystery.Id );
+
+		Assert.AreEqual( 0x97, screen.HelpPost( true, 0, null, cost )?.Row, "the tickets reach the cost" );
+		Assert.AreEqual( 0x98, screen.HelpPost( true, 1_000_000, null, cost - 1 )?.Row, "one ticket short, a full bank" );
+
+		ushort[] unlocked = [(ushort)mystery.Id];
+		var row = screen.HelpPost( true, mystery.BuildPrice, unlocked, 0 );
+
+		Assert.AreEqual( 0x94, row?.Row, "unlocked: priced by the bank" );
+	}
+
+	/// <summary>
+	/// The tickets a ride can still be bought with are those earned less those spent (<c>0x005af5d0</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the spent not taken off; the spent added.</remarks>
+	[TestMethod]
+	public void TheTicketsUnspentAreTheEarnedLessTheSpent()
+	{
+		var file = new PlayerFile { RecordTickets = [1, 1, 1, 1], BonusTickets = [1, 0], TicketsSpent = 2 };
+		var player = new Player( 0, "Test", file );
+
+		Assert.AreEqual( 5, player.Tickets );
+		Assert.AreEqual( 3, player.TicketsUnspent );
 	}
 
 	/// <summary>
