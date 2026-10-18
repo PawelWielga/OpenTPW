@@ -23,6 +23,7 @@ vertex {
         vec3 g_vAmbientColour;
         float g_flParkLight;
         vec3 g_vLightTravels;
+        float g_flFullLight;
     } g_oUbo;
 
     layout(location = 0) out VS_OUT {
@@ -73,6 +74,16 @@ vertex {
         vParkLight = vec3(0.0);
         if (g_oUbo.g_flParkLight > 0.5)
         {
+            // Low quality's GraphicalOptions.LIGHTING 0 (render-state 0x0800): every vertex takes the channel mask,
+            // white, in place of the sum, so each face shows its texture's own colour and no half light
+            // (Light_ModelVertexColours 0x00574660, Light_GroundVertexColours 0x00574530; docs/exe/park-engine.md,
+            // "What GraphicalOptions.LIGHTING 0 turns off").
+            if (g_oUbo.g_flFullLight > 0.5)
+            {
+                vParkLight = vec3(1.0);
+                return;
+            }
+
             vec3 d = normalize(inverse(mat3(g_oUbo.g_mModel)) * g_oUbo.g_vLightTravels);
             float facing = -dot(d, vec3(normal.x, normal.z, normal.y));
             vec3 lit = g_oUbo.g_vAmbientColour + (g_oUbo.g_vLightColor * max(facing, 0.0));
@@ -120,6 +131,7 @@ fragment {
         vec3 g_vAmbientColour;
         float g_flParkLight;
         vec3 g_vLightTravels;
+        float g_flFullLight;
     } g_oUbo;
 
     // Material.TextureSlots: 31 is the most materials any shipped mesh names (Q203).

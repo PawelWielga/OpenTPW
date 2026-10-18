@@ -39,6 +39,7 @@ public class ShaderTests
 		Assert.AreEqual( 272, At( nameof( ObjectUniformBuffer.g_vAmbientColour ) ) );
 		Assert.AreEqual( 284, At( nameof( ObjectUniformBuffer.g_flParkLight ) ) );
 		Assert.AreEqual( 288, At( nameof( ObjectUniformBuffer.g_vLightTravels ) ) );
+		Assert.AreEqual( 300, At( nameof( ObjectUniformBuffer.g_flFullLight ) ) );
 		Assert.AreEqual( 304, System.Runtime.InteropServices.Marshal.SizeOf<ObjectUniformBuffer>() );
 	}
 

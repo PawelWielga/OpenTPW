@@ -53,15 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q516. Low quality draws every face at full light.** From Q487 (`park-engine.md`, "What
-  `GraphicalOptions.LIGHTING` 0 turns off"; `q487/PREDICTION.txt`): under `low.sam`'s `LIGHTING` 0 the original gives
-  every vertex of the ground and of every model the channel mask, white in play, in place of the sun and ambient sum
-  (`FUN_00574530`, `FUN_00574660`), so each face shows its texture's own colour. Ours draws no half light there but
-  still lights by the sun and the ambient (`test.shader`, `ParkLight`), counted `LIGHTING_OFF` (`Level.Lighting`, whose
-  comment still says the rest is not decoded). Build it where the vertex light is made, one switch from
-  `Level.Lighting`. Confirm at Q479's camera B in both games at low (ours by `q482/lowq`'s quality 0; the original by
-  its Options screen, `docs/TOOLING.md`, "Recipes"): the gate's banners, grey when lit, white
-  (`q487/orig/d-B-low.png`, `q487/banners-crop.png`), and camera A's grass unchanged at (29.9, 139.2, 28.6).
 - [ ] **Q700. Ours cuts every texture to four bits a channel, as the original's A4R4G4B4.** From Q492 (`textures.md`,
   "The texture cache's surface format"): the shipped presets run format 2, and the original stores each channel as
   `v >> 4` (`TexFormat_BuildChannelTables`, `0x005839f0`), alpha too; ours makes every texture `R8_G8_B8_A8_UNorm`

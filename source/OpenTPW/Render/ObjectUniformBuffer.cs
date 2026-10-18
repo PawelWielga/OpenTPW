@@ -82,5 +82,10 @@ struct ObjectUniformBuffer
 
 	/// <summary>The direction the park's sun light travels, in world space. Read with <see cref="g_flParkLight"/>.</summary>
 	public Vector3 g_vLightTravels; // 12
-	public float _padding5; // 4
+
+	/// <summary>
+	/// 1 where <see cref="ParkLight.Lit"/> is off, low quality's <c>GraphicalOptions.LIGHTING</c> 0: every vertex of a
+	/// park draw is white, its texture's own colour. Read with <see cref="g_flParkLight"/>.
+	/// </summary>
+	public float g_flFullLight; // 4
 }

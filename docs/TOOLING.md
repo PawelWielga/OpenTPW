@@ -888,6 +888,9 @@ GH=766` there, or the pointer is off):
   (`Window_Create`), so stop the original (`loadfile.sh stop`) and load again before measuring. Copy `Config.tcf` first
   and put it back, with its time (`touch -d`), after; a second `loadfile.sh load` writes its own "before" sum with the
   new quality in it, so compare `save/` with a sum taken before the first (`q487/orig/lib.sh`, `a-options-low2.png`).
+  **Quicker, with no Options screen** (Q516): write the dword at byte 12 of `save/Config.tcf` yourself (`printf
+  '\x00\x00\x00\x00' | dd of=Config.tcf bs=1 seek=12 count=4 conv=notrunc`, after `cp -p` of the file) before
+  `loadfile.sh load` starts the original: the word read `0x1025900`, low's (`q516/orig/`, `q516/PREDICTION.txt` P9).
 - **Buying:** Buy (117,588), a ride's row such as (560,305), the features tab (843,123). A blue footprint is a
   legal place and a red one is not. After the placing click the queue tool is in the hand: a click on the path
   joins the queue and puts the tool away, and a later click on the queue's cell picks it up again (Q257o).

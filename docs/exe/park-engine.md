@@ -3569,7 +3569,7 @@ over the stock file gives every one of the 7,980 cells Q479 read. Cleared over o
 every rebuild, and `test.shader` floor-halves the corner's byte light under the vertex flag `ParkGround.HalfLight`. At
 camera A the grass went from (29.9, 139.2, 28.6) to (14.9, 69.3, 14.2), 0.498 of it, where the original's reads
 (32.8, 65.9, 16.5) with its compositor's patches; camera B's approach did not move. Under `low.sam`'s `LIGHTING` 0
-nothing is halved, and the rest of what that option turns off (below) is counted, `LIGHTING_OFF` (Q516). Buy Land is unbuilt
+nothing is halved, and every corner is white (below, Q516). Buy Land is unbuilt
 (Q407); its purchase must make the mask again. Not run in Full Simulation: a fresh park's cells take their `mFlags` from
 `FreshPark` (`0x40` unless a path, `0x80` from attribute `0x10`), which by code follows `FUN_00536490`, so the mask is
 expected to match, and no fresh park was photographed.
@@ -3610,8 +3610,15 @@ showed no brown patches, where medium's reads (32.8, 65.9, 16.5); byte 1 held at
 70.5, 9.6), 0.497 of it in green. On level ground, then, all LIGHTING 0 changes is the half light, because a level
 face saturates when lit ("What it looks like", above). At camera B the gate's banners and the wall's turned face,
 grey when lit, are white at low (the banners' box luminance 90.0 to 129.7, the wall's +20.7; the brick and the road
-0.0). OpenTPW at low draws (29.9, 139.2, 28.6) at A, with no half light, but lights every face by the sun and the
-ambient, so its banners stay shaded (`q487/side-by-side.png`, `banners-crop.png`; `LIGHTING_OFF`, Q516).
+0.0).
+
+**OpenTPW draws it** (Q516): `Level.Lighting` reads the detail file into `ParkLight.Lit`, which keeps the ground from
+half light and, off, has `test.shader` give every corner of a park draw (the ground, the paths, the sea, every model)
+white in place of the sum. At low, camera B's banner box went from luminance 87.2 to 135.9 on main's build, the
+banners and the fence's cloths white as the original's (shot again at low: 132.3, where lit reads 90.0), the brick
+and the road 0.0, the sea +4.9; camera A's grass
+stayed (29.9, 139.2, 28.6); medium is main's to 0.0 (`q516/PREDICTION.txt`, `q516/side-by-side.png`). Sprites, the
+sky, particles and the weather draw through their own shaders and are not changed by it.
 
 ---
 

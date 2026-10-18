@@ -7988,6 +7988,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (FileFormats `strings.md`); `BFSTReader.LookupTable` opens `Language/English/MBToUni.dat` whatever the table, so an
   american table reads shifted. Dead by CONTENT: `Localization` and every other reader take English tables alone.
   Take the table's own folder's file when a second language is read. A test: american `THEMENAMES.str` row 0.
+- [x] **Q516. Low quality draws every face at full light.** From Q487 (`park-engine.md`, "What
+  `GraphicalOptions.LIGHTING` 0 turns off"; `q487/PREDICTION.txt`): under `low.sam`'s `LIGHTING` 0 the original gives
+  every vertex of the ground and of every model the channel mask, white in play, in place of the sun and ambient sum
+  (`FUN_00574530`, `FUN_00574660`), so each face shows its texture's own colour. Ours draws no half light there but
+  still lights by the sun and the ambient (`test.shader`, `ParkLight`), counted `LIGHTING_OFF` (`Level.Lighting`, whose
+  comment still says the rest is not decoded). Build it where the vertex light is made, one switch from
+  `Level.Lighting`. Confirm at Q479's camera B in both games at low (ours by `q482/lowq`'s quality 0; the original by
+  its Options screen, `docs/TOOLING.md`, "Recipes"): the gate's banners, grey when lit, white
+  (`q487/orig/d-B-low.png`, `q487/banners-crop.png`), and camera A's grass unchanged at (29.9, 139.2, 28.6).
+  **Done (2026-10-18):** `ParkLight.Lit` from `Level.Lighting`, `test.shader` white under `g_flFullLight`;
+  `LIGHTING_OFF` gone. At low, B's banner box 87.2 to 135.9 in luminance (the original, shot again at low, 132.3; lit
+  90.0), the brick and the road 0.0, A's grass (29.9, 139.2, 28.6) exactly; medium main's to 0.0
+  (`q516/PREDICTION.txt`: P1 to P6, P8, P9 held, P7 missed on a stale baseline; `q516/side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

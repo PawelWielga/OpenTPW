@@ -131,6 +131,7 @@ public partial class ModelEntity : Entity
 			g_vAmbientColour = parkLight?.Ambient ?? Vector3.Zero,
 			g_flParkLight = parkLight != null ? 1f : 0f,
 			g_vLightTravels = parkLight?.Travels ?? Vector3.Zero,
+			g_flFullLight = ParkLight.FullLight( parkLight ),
 
 			_padding0 = 0,
 			_padding1 = 0,
