@@ -321,11 +321,39 @@ Separate from the lobby island camera. Save module `"SAD_CAMERA"`, chunk magic `
 | `FUN_0042b1c0` | — | The camera-mode dispatcher, `gui_CameraFlags`' heaviest consumer | Decompiled |
 | `0x00748158` | — | The 25-entry `camera` binding table (unnamed) | `FUN_0040cb80` |
 
-    POI default (475, 0, 175)          zoom 110, clamped [70, 130]
+    POI default (475, 0, 175)          zoom 110, clamped [70, 130] (a hidden bit widens it to [40, 300], below)
     pitch = lerp(45deg, 65deg, (zoom - 70) / 60), clamped [0, 84.2673deg]
     eye = POI + rotateY( yaw, (0, sin(pitch)*zoom, -cos(pitch)*zoom) )
     eye Y additionally raised by the one-pole-smoothed (alpha 0.5) terrain height under the POI
     projection near 0.1, far 1000.0, angle 90: a 53.13 degree picture top to bottom ("The lens" below)
+
+The projection (0.1, 1000.0, 90) is pushed to `0x00578be0` on the camera `0x0087b110` at `0x0054e86a` (fork watch
+2026-10-18, `verify-other-a.md` M3).
+
+**A hidden wide zoom** (fork watch 2026-10-18, `verify-world-a.md` H1). Camera row `0x11` of the `camera` table (row at
+`0x00748298`, stride `0x14`: key `0x20`, modifier `0x3f`, handler `0x0042a520` at `0x007482a4`) flips bit `0x200` of
+`[0x00790aac]` (`0x0042a520`: `test`, then clear or set, returns 1). By the key decode below (`MapVirtualKeyA`, `0x3f` =
+Shift+Ctrl+Alt, fired on release) that is **Shift+Ctrl+Alt+Space**; no code calls the handler and the press has not been
+made in a running original (Q510). The zoom clamp (`0x0042c621`-`0x0042c6a1`) runs only with bit `0x80` set (`test bl,0x80`;
+clear, no clamp at all) and picks its range by bit `0x200` (`test bh,2`, `0x0042c62c`): clear, [70, 130] (`0x006fde08`,
+`0x006fde0c`); set, **[40, 300]** (`0x0074c9d8`, `0x0074c9dc`). The park-load reset `FUN_0042a990` (`0x00457aac`) writes
+`[0x00790aac] = ([0x00790aac] & 0x200) | 0x80` (`0x0042aa64`-`0x0042aa75`), so the clamp is armed at every load and the
+wide bit survives it; every other writer keeps `0x200` (`and al,0x87`, `0x0042a816`, `0x0042b32b`; `and ecx,0xffffff80`,
+`0x0042a827`; `and bh,0xfe`, `0x0042b54a`). In the camera update `0x0042b1c0`-`0x0042c900` bit `0x200` is read only at
+`0x0042c62c`, and the pitch comes from the zoom by the same expression, so it extrapolates past 40 and 300 (the [0, 84.27]
+clamp above was not re-read there).
+
+**A sprite's camera sector reads the asked rotation** (fork watch 2026-10-18, `verify-world-a.md` M1,
+`verify-other-a.md` M1). `FUN_00540ab0` takes the park camera's rotation from `[0x00790a38]`, the **asked** rotation, not
+the drawn one: `fmod( .., 2 pi )` (`_CIfmod`, the double at `0x00700e68`), plus 2 pi if negative (`0x00700e64` = 0,
+`0x00700e70` = -2 pi), into `0x00876b24`. When `[0x00790ab0] & 0x16` (a free-look camera mode) it takes `FUN_0046f1c0(
+[0x00790a98] )` instead: `atan2( m+0x20, m+0x28 )` while `-0.9 <= m+0x24 <= 0.9` (`0x006feb78`, `0x006feb7c`), else
+`atan2( -m+8, m+0 )`. `FUN_00542010` (`0x0054218b`) turns it into the sector `8 - (n & 7)` with
+`n = trunc( (rotation - (-pi/8)) x (1 / 2 pi) x 8 )` (`0x00700e74`, `0x00700e78`, `0x00700e7c`; `__ftol` truncates a value
+that is not negative). The drawn direction is `(sector + heading) & 7`, the heading being `((angle - 0x380) & 0x7ff) >> 8`
+(`0x004fa08a`), and mirrored as `8 - d` past the slot's last direction (byte `+0x223`). **A draw whose flags word has
+`0x40000` gets sector 0 with no camera term** (`0x005421cc`-`0x005421e1`), and one with `0x2000000`, or a direction byte of
+0, gets direction 0 (`0x0054220f`); which things carry `0x40000` is not read.
 
 **Measured** (Q435, `original/camera.py`, twice): at point (484.442, 0, 259.319), zoom 110, rotation 0 the camera's
 matrix `0x0087aff0` holds the eye in its last row, (484.44, 93.62, 201.57), the formula's exactly, and its forward
@@ -571,9 +599,12 @@ FPU's current precision.**
 | `0x005f5f10` | — | Raw clock: `(QPC - start) / divisor + offset` by 64-by-32 `IDIV`; `timeGetTime()` when QPC fails | objdump |
 | `0x00fa71e0` | — | Its object: `+0x0` QPC flag, `+0x4` divisor (10000 for a 10 MHz counter), `+0x8` offset (`timeGetTime` at start-up), `+0x10` start QPC | `/proc/pid/mem` |
 
-**The consequence:** the raw clock is milliseconds since boot, and so is the accumulator. Direct3D without
-`DDSCL_FPUPRESERVE` puts the thread's x87 unit at 24-bit precision (Wine does the same), so the accumulator can only
-hold multiples of 2^(e-23), where 2^e ≤ its value: 64 ms from 6.2 to 12.4 days of uptime. A frame's time much
+**The consequence:** the raw clock is milliseconds since boot, and so is the accumulator. The accumulator is added at 24-bit precision (measured), so it can only
+hold multiples of 2^(e-23), where 2^e ≤ its value: 64 ms from 6.2 to 12.4 days of uptime. Which code leaves 24-bit in
+force there is not settled: a Direct3D without `DDSCL_FPUPRESERVE` was the first guess (Wine does the same), but the
+running original read control word `0x27f`, 53-bit, at a park tick (`advisor-park.md`, "The product is a double of the
+float key"), and the renderer's own switch is `0x00591220` with a failure exit that restores nothing (`0x00577433`;
+"Which rounding is live is not settled" below). Both states occur (fork watch 2026-10-18, `verify-world-a.md` H2). A frame's time much
 shorter than that is rounded away, and a slightly shorter one is rounded up. Measured at 6.5 days of uptime, with the
 tick counter `0x00877d34` against the wall clock: uncapped, about 275 fps, 0 ticks in 30 s (the park froze); at 30 fps,
 44.5-49.6 ticks/s, the clock at 1.38-1.54 times real time; at about 4.5 fps, 32.9 ticks/s (real time). A second
@@ -963,15 +994,20 @@ asked axis may leave its cell.
 | `0x0074c9d0` | **0.001** | The nudge after an open crossing that left the cell unchanged |
 | `_DAT_006fde00` / `_DAT_006fde04` | ∓1e-4 | A step inside this band is zeroed before anything is swept |
 
-**Which rounding is live is not settled.** The CRT starts the FPU at 53-bit precision (`0x006804da`). The frame
+**Which rounding is live is not settled.** The CRT starts the FPU at 53-bit precision (`0x006804da`). In the running
+original a breakpoint at `0x0059e17b` read the control word `0x27f`, 53-bit, on ticks 970 and 1125 (`advisor-park.md`,
+"The product is a double of the float key"), beside the 24-bit clock accumulator below: both states occur (fork watch
+2026-10-18, `verify-world-a.md` H2). The frame
 renderer `FUN_00576ec0` switches to 24-bit at `0x00576fa7` and has three exits. On success it restores the saved word
 (`0x00577310`), or, when the `0x2` bit of `[0x008bd508]` is set (`TEST AL,0x2` at `0x005772f6`), the saved word with the precision bits set,
 64-bit (`0x00577304`, `FUN_00591250` ORs `0x300`); no writer found sets that bit (it starts `0x3000141` at `0x00583555`,
 the other writers OR in other bits or put back saved words), so that arm is probably never taken, though an indirect
 write is not ruled out. Its failure exit (`0x00577433`) restores nothing, so one failed frame leaves 24-bit in force
 for the rest of the run. The thing sweep runs beside the renderer, never inside it, so what it computes sees whatever
-the last exit left (Q173). DirectDraw is set up with `DDSCL_FPUSETUP` (`0x00563914`, `0x00563b92`), whose effect belongs to the
-runtime, not the executable. It matters only at the margin: at 53 bits a positive step landing exactly on a
+the last exit left (Q173). DirectDraw is set up with `DDSCL_FPUSETUP`: `SetCooperativeLevel` (vtable slot `0x50`) is called with `0x851`
+(FULLSCREEN | EXCLUSIVE | ALLOWMODEX | FPUSETUP; `push` at `0x0056390b`, call `0x00563914`) and with `0x808` (NORMAL |
+FPUSETUP; `0x00563b7a`, call `0x00563b92`); neither carries FPUPRESERVE `0x1000`. What that does to the control word
+belongs to the runtime, not the executable (fork watch 2026-10-18, `verify-world-a.md` H2). It matters only at the margin: at 53 bits a positive step landing exactly on a
 boundary, `245 + 5`, has reach 0.99999928 and is asked; at 24 bits its reach is 1.0, it is taken whole, and step 7
 puts it back. The cell in step 1 is the same either way. The walking speed's ease (`FUN_004fa870`, `ride-operation.md`,
 "Where a WALKING peep is drawn") leaves a fingerprint in the saves. In Alexah's two played Lost Kingdom saves no guest
@@ -1887,7 +1923,7 @@ Every one of the 72 items with `Info.HasQueue` has both.
 
 **Rotation is never changed by a user input on any traced path.** It is zeroed when the tool ends
 (`FUN_0052f200( 0, … )`, `0x0052f3b6`), snapped for an add-on hovered over a track type by the tool-4 preview
-(`FUN_0052f1b0` at `0x005237f7`), and set to the thing's own angle when a move picks it up
+(`FUN_0052f1b0` at `0x005237f7`; the rule is "The add-on's snap", below), and set to the thing's own angle when a move picks it up
 (`FUN_0052f1b0( [thing + 0x10], 1 )`, "Moving a thing"). What a successful put-down leaves in it is open ("The
 hand's ways out"; `docs/QUEUE.md` Q58). Whether the original has a manual rotate is an open question.
 
@@ -2643,7 +2679,49 @@ carries something, the item with `FUN_0052f880`. **Neither sets the rotation**: 
 `DAT_0081d7a4` only for verb 0 (`0x0052f3b6`), so a thing bought over a carried move faces the moved thing's way -
 unless it is an add-on hovered over one of the five track types, which the tool-4 preview snaps (`FUN_0052f1b0` at
 `0x005237f7`, inside the preview's add-on branch; the `0x3b` arm has no snap, so nothing turns a carried move).
-What a successful put-down leaves in the rotation is not decoded.
+A put-down that reaches `FUN_005253b8` (by the `je` at `0x00524db1`) resets the rotation **unless exactly Ctrl is held**
+(fork watch 2026-10-18, `verify-ui-hud.md` U6). `FUN_0046b420` reads the modifiers as Shift 3, Ctrl `0xC`, Alt `0x30`. With
+the word `0xC` the function jumps to `0x00525a06` and changes nothing. Otherwise it calls `FUN_0052f580( 0, 0 )` (idle) and
+`FUN_0052f1b0( 0, 0 )`, which saves the old rotation in `0x0081b134` and writes **0 into `0x0081d7a4`** (`0x0052f1d3`-
+`0x0052f1de`); the tail at `0x005259ae` ends with `FUN_0052f1b0( 0, 0 )` again unless Ctrl is held. Not read: which
+placements take the `0x00524db1` branch, and whether the last click of a queue re-arms the tool (the queue tool's commit).
+
+**The add-on's snap, its open ends and the window a click opens** (fork watch 2026-10-18, `verify-world-b.md` L2 and L3,
+`verify-world-a.md` M5; read from `0x005236b0`, `0x0052a023`, `0x00486920` and `0x0052ade3`, no game run). Lost Kingdom's
+add-ons (1500 to 1502) are the items that reach all of it.
+
+- **The snap**, the tool-4 preview `0x005236b0`, runs only when the add-on flag `[0x008187f8]` is non-zero (`0x0052369d`).
+  For each axis, d = the cell less the ride's anchor cell (`[0x007639a4]`, `[0x007639a8]`); a negative odd d is lowered by
+  one, then halved (`sar 1`): the anchor + 2 × floor( d / 2 ), written to `0x008186a4`/`0x008186a8` (`0x005236e3`..`0x0052374d`).
+  The cell's record (`[0x007cf83c] + 40 × (((y × 128 + x + 1) & 0xffff) + 0x6cde)`) is then tested: `FUN_0053ad90` (types
+  `0xc`, `0x11`) redirects to the head `[ + 0x10 ]`, and `FUN_0053ad30` accepts types `0xb`, `0xd`, `0x10`, `0x12` and `0x19`,
+  the five track types above.
+- **The angle** comes from the cell's flow byte (`FUN_00522850` is `mov al, [ecx + 0xd]`): index flow - 1, held to `0x3f`, into the
+  64-byte table `0x00524750` (`[0]` 0, `[3]` 1, `[0xf]` 2, `[0x3f]` 3, every other 4), then the jump table `0x0052473c`: flow 1 gives
+  0, flow 4 gives `0x10e`, flow `0x10` gives `0xb4`, flow `0x40` gives `0x5a`, and index 4 keeps the angle `0x0052f1f0` answers.
+  `FUN_0052f1b0` sets `[0x0081d7a4]`, the old one going to `0x0081b134` (event `0xa` through `0x00403d00` when it changes).
+- **The adjust** (`0x00523804`..`0x005238a5`) takes the item's X/Y adjust of that angle: type `+0xa4`/`+0xa8` (0), `+0xbc`/`+0xc0`
+  (`0x5a`), `+0xb4`/`+0xb8` (`0xb4`), `+0xac`/`+0xb0` (`0x10e`), which are `ItemDescriptionFile`'s North, West, South and East
+  adjusts (`ItemDescriptionFile.cs:958-965`). The ride's angle `[[0x008186ac] + 0x10]` then moves the cell: `0x5a` x - 1, `0xb4`
+  x - 1 and y + 1, `0x10e` y + 1 (`0x005238ab`..`0x005238d7`). The attempt is `FUN_00528a70( x, y, 4, angle )`; a failure sets
+  `[0x0081b604]` to 1.
+- **The placement** (`0x00529ff5`..`0x0052a023`) with `[0x008187f8]` set and the type's `+0x288` not 2 stores the word `+0x30` on
+  the thing: the word at the builder's object `[0x008186ac]` (`0x00527930`, `0x0050b350`), else 0. The builder's object is the
+  ride the add-on's buy row was chosen on (`ride-operation.md`, "The ride window's Buy Upgrades list").
+- **The click** (`0x00486920`): a thing whose byte `+2` is 3 and whose type `+0x4ac` is class 0 (table `0x00486a90`). A type with
+  `+0x288` 2 opens the window of `[0x007cc3e0]` (`0x004b6ae0`). Otherwise a non-zero word `+0x30` (`FUN_004e0df0`) opens that ride's
+  window (`0x004af980` on `0x007cfb90[id]`); a zero word looks at the type's own `+0x284` (`FUN_004e2710`): zero opens the thing's own
+  window, non-zero opens nothing.
+- **The open ends**, `0x0052a970`, per tile at `0x0052ade3`: `FUN_00535db0( 0x10 )` raises the counter `[esp + 0x20]`, and the bit
+  reset at `0x0052ae1e` runs only when the raised counter is 0. Every other write of the counter in the routine is 0
+  (`0x0052a996`, `0x0052abe4`, `0x0052ac3c`, `0x0052ad1e`) and `[esp + 0x2c]` is written only 0 (`0x0052a9ae`) and by the two ORs, so the
+  bits accumulate across runs and are never cleared after the start. Ahead `FUN_0050c3e0( flow, 2 )`, behind
+  `FUN_0050c3e0( FUN_004d8c00( flow ), 2 )`: type `0xb`/`0x10` (`FUN_0053ad70`) with `+4`, or `0xd`/`0x12`, ORs `0x10`
+  (`0x0052af07`) or 1 (`0x0052af4d`). At counter 2 (`0x0052af54`) with the bits at most `0x11`, the byte table `0x0052b38c`
+  (`00 01 04 x 14 02 03`) and the jump table (`0x0052af77`, `0x0052afe8`, `0x0052b002`, `0x0052b0cb`, `0x0052b1a7`) choose the
+  dummy nodes: bits 0 shows both, 1 hides dummy 1 and shows `0x10`, `0x10` shows 1 and hides `0x10`, `0x11` hides both
+  (`FUN_0044b3c0( instance, 1, n )`; show is `and ~0x10`, hide is `or 0x80000010`). Not read: that `0x007639a4` is the ride's
+  cell (the fork's word), what `[esp + 0x50]` holds in the demolisher's add-on arm (`0x00528512`..`0x0052852d`).
 
 **The worker (type 6)**, vtable `0x006fea70`. The mode stores only the worker's sprite bank and costume; the
 worker's id is kept in the world's hand thing (`+0x60`, through `FUN_00509ae0` and `FUN_00509af0`). The pickup
@@ -3593,7 +3671,8 @@ set of textures for N (64, 32, 16 are sets 0, 1, 2), r = 84 - y (the map's rows 
 7. Rows are written into the scratch from its last row up, so the tile's row k comes from texture and weight row N-1-k;
    with no record texture the scratch is the tile. `FUN_00572440` then reverses each pixel's bytes into the surface
    (X8R8G8B8 in memory is B, G, R, X), or converts it where the surface is 16-bit (`[0x00701548 + 4 x [0x008bd554]]`
-   2; live it is 2, `0x0057257a`).
+   2; live it is 2, `0x0057257a`; `[0x008bd554]` is the texture cache's surface format index, `2 + TEXTURE32`,
+   `textures.md`, "The texture cache's surface format").
 
 In the jungle file C is brown earth (T0, T1 average, in the 16-pixel set the live game draws, (150, 91, 35) and (168, 112, 51); the 64-pixel set's are (147, 88, 32) and (164, 108, 48)), and B and A are two grasses
 laid over it where u2 and u3 lift their masks: the brown patches of Q479's frames are where neither covers the earth.
@@ -3602,7 +3681,9 @@ laid over it where u2 and u3 lift their masks: the brown patches of Q479's frame
 running original with their records and texels, `original/tilecap.sh`, all equal: `q489/orig/a-pathcmp.txt`).
 `FUN_0056f090` hands each visible cell a record of five dwords (`piVar2[-1]` to `[3]`): the cell's texture where its word
 has `0x0080`, else nought; that texture's width and height (`+0x10`, `+0x12` of the surface); the bytes a texel of the
-display mode, `[0x007014c8 + 4 x [0x008bd554]]` (2 in modes 0 to 2, 4 in mode 3; 2 live); and the word.
+texture cache's surface format, `[0x007014c8 + 4 x [0x008bd554]]` (2 for the formats 0 to 2, 4 for format 3; 2 live, since
+`[0x008bd554]` is `2 + TEXTURE32` and the shipped files hold `TEXTURE32 0`: `textures.md`, "The texture cache's surface
+format"); and the word.
 `FUN_00572440` swaps the texture for its locked bits (`FUN_00590da0`). With a texture, `FUN_0055f780`'s last pass
 (`0x00560926` on) writes each pixel of the tile, in order, as `t + ((p - t) x a >> 8)` a channel: t the scratch's
 pixel the word's turn picks, p and a the texel at row `k x (h / N)` and column `j x (w / N)` of the texture, read

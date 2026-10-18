@@ -2307,8 +2307,9 @@ public class Level
 
 	/// <summary>
 	/// How long every voice still sounding takes to fade as a level ends. The original's state machine hands its
-	/// stop-all (0x0051bcb0) 90, in the same untraced unit as the 60 that Sound_StopFading is handed when the advisor
-	/// is quietened, which he already takes as milliseconds - so 0.09 seconds. <b>Inferred, not proven.</b>
+	/// stop-all (0x0051bcb0) 90; Sound_StopFading's 60 is a percentage kept per service pass (docs/exe/audio.md, "The
+	/// fade, the SoundInfo settings and the reverb"), and whether the 90 is the same is not traced. A deviation: 0.09
+	/// seconds stands in for it (docs/QUEUE.md Q509).
 	/// </summary>
 	private const float StopAllSeconds = 0.09f;
 

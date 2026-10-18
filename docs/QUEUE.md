@@ -78,6 +78,14 @@ filed the items that cite it.
   nothing of its top four bits; the path tiles are A4R4G4B4 (Q489, `park-engine.md`), and `med.sam` sets
   `GraphicalOptions.TEXTURE32` 0. Decode which surface format the loader picks for each texture (alpha graded, cut,
   none) and under `TEXTURE32`, then decide with Alexah whether ours draws the same four or five bits a channel.
+  - **Note (fork watch 2026-10-18, `verify-other-b.md` L1, `verify-ui-hud.md` U1):** the decode is now largely done
+    (`textures.md`, "The texture cache's surface format"). `TEXTURE32` sets bit `0x400000` of the flag word
+    (`boot.md`); the window setup turns it into the format index `2 + TEXTURE32` (`0x0044e1f4`), which `FUN_0058da40`
+    stores in `[0x008bd554]` (3 when the renderer mode is 4), indexing the table at `0x007015f8` (5-6-5, 1-5-5-5,
+    4-4-4-4, 8-8-8-8). `low`, `med` and `high.sam` all hold `TEXTURE32 0` (and `RENDER32 0`, which picks a 16-bit
+    display by bit `0x200000`, a separate setting), so the shipped game runs format 2, A4R4G4B4: four bits a channel.
+    What is left: `FUN_0058b220`, which fills the format records from the device (what record 2 holds), and the
+    per-texture pick (alpha graded, cut or none), then measuring ours against the original's four bits.
 - [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
   listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
   the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for
@@ -1102,6 +1110,11 @@ filed the items that cite it.
     `0x00503f8d`, responses 380-381 ("you've discovered all of the items in the game"). Row 168 (message `0xa8`,
     `0x0059f9b0`, score 9999, responses 382-384, "a special surprise animation") has no poster found; the six `PUSH
     0xa8` in `.text` are not it. Both unbuilt (`advisor-park.md`, "Rows settled from the bytes").
+  - **Note (fork watch 2026-10-18, `verify-ui-hud.md` U5 and U2):** the screen's workload slider is decoded
+    (`hud.md`, "The research screen's workload slider and its red text"): the limit
+    `(((100 - c) / 3 + c) << 10) / most` on child `0xd2d12`, the knob `(workload - 70) x limit / 30`, the drag's inverse
+    `30 x value / limit + 70`. The five (224, 86, 86, 255) text colours are all in `FUN_004aa480`, this screen; which
+    labels they colour is not assigned, nor is the ball's travel.
 - [ ] **Q141. Golden tickets are never awarded. Decode first, and Alexah's call on when.** Found by Q69. What reaches
   the advisor's glints in the original is a golden-ticket award: only gesture rows 1 and 13 carry the glint flags, and
   only its lines use them (`docs/exe/scenes.md`, "Gesture table"). Those lines play on the park's own advisor, model slot
@@ -1273,6 +1286,11 @@ filed the items that cite it.
   From Q126: `FUN_0055a470` (`0x0054f828`, every eighth step, a dropped sweep's too) finds the ride the camera is
   on (`FUN_0042a4e0`, the list at `[0x008791b0]`) and hands its `+0xd8`, or the default `[0x0078578c]`, to
   `FUN_0051c8d0`, a sound setting not decoded. Nothing here has it, counted or not.
+  - **Note (fork watch 2026-10-18, `verify-other-a.md` H2, `verify-audio-fx.md` F2):** decoded, `audio.md`, "The fade, the SoundInfo
+    settings and the reverb". `FUN_0051c8d0` is the reverb preset holder (`[0x00803ab4]`, posts `0x700b30` only on a
+    change), and `[0x0078578c]` is the level key `Sound.Reverb` (0 in `Standard.sam`, 3 in hallow's, none in jungle's,
+    so Lost Kingdom's is 0). A negative ride `+0xd8` sends nothing. The preset reaches EAX 2.0 hardware only; reverb
+    itself stays cut (`audio.md`).
 - [ ] **Q158. Five park-screen readouts are stand-ins, and nothing counts them.** Found by the 2026-09-26 staleness
   audit (`CLAUDE.md` rule 4). `ParkObjectWindow`'s Age row prints a bare number: its wording, `FUN_006acd60` with
   `0x1b1`, is not decoded. Its scrap row prints the build price, where `FUN_004e2400` scales it by the age bucket's
@@ -1427,6 +1445,13 @@ filed the items that cite it.
   18 may be 19. (8) Two docs lines not yet re-measured: `park.md`'s selector table rows 8 and 9 leave out the
   `0x4000` and type gates of `FUN_00544c80` and `FUN_00544e50`; FileFormats `sound-categories.md` says the masks use
   bits 1, 2 and 4 beside 645 speech variations holding 100.
+  - **Note on (7) (fork watch 2026-10-18, `verify-world-a.md` H2; `park-engine.md`, "Which rounding is live is not
+    settled"):** the cause of the 24-bit reading is not settled, and our own 53-bit reading stands beside it: a breakpoint
+    at `0x0059e17b` in the running original read the control word `0x27f` on ticks 970 and 1125
+    (`advisor-park.md`, "The product is a double of the float key"), while the game-clock accumulator is added at 24 bits
+    (measured). DirectDraw's cooperative level is set with `0x851` (`0x00563914`) and `0x808` (`0x00563b92`), both with
+    FPUSETUP and neither with FPUPRESERVE; the renderer's own 24-bit switch is `0x00591220` (a failed frame leaves it in
+    force, `0x00577433`). Which one a given calculation sees is still to be read, in the original, at that calculation.
 - [ ] **Q222. The original's guests come up empty-handed, and ours do not. Measure first.** Found by Q107's
   comparison with the original (`ride-operation.md`, "Q107"). The same stock Lost Kingdom park left alone for 240 s:
   the original's chooser named nothing 112 times and a thing 72 times (Jungle Spray 27, Drinks Shop 18, Belly Bounce
@@ -1458,10 +1483,19 @@ filed the items that cite it.
   and check `FUN_004fff20` whole; then build both where `DECIDE_LITTER_BIN_ERRAND` and `DECIDE_LITTER_DROPPED` are
   counted. Confirm: a guest at litter 90 beside the bin at (44,29) walks to it, `peeps` showing litter 0; one far
   from it drops, `cell` showing the litter; a screenshot of each.
+  - **Note (fork watch 2026-10-18, `verify-other-b.md` L2):** `FUN_004d93b0` is read whole in `ride-operation.md`, "A cell's
+    litter": it returns at once online and when the cell already holds litter; the kind picks one of eight sprite programs
+    (kinds 1 to 5 their own, 6 and the "Dodgy litter type" log share one, 7 and 8 stamp region effects 2 and 5 first, 8 also
+    particle `0x32`); the cell keeps the sprite (`+0x28`), the kind (`+0x2c`) and nought (`+0x30`); and **it reseeds the park
+    generator with the cell id**, then draws twice for the place in the cell (`10 x cell + 1 + r % 9` on each axis), so a cell's
+    litter always stands in the same spot and every drop resets the shared generator, which the generator mirror must copy.
 - [ ] **Q226. Nobody is sick.** Found by Q111, arm (b). Illness exactly 100 on a third of deciding turns: spot
   animation 7, litter type 7 on the cell, event `0x12`, sound `0xcc`, illness nought, and the turn ends. After Q225,
   which builds a cell's litter. Build it where `DECIDE_VOMIT` is counted. Confirm: `need vomit 100`, a guest sick
   within a few turns, `peeps` showing illness 0; a screenshot.
+  - **Note (fork watch 2026-10-18, `verify-other-b.md` L2):** the sick are litter kind 7: record `0x0074f140`, region effect 2
+    stamped first, then the sprite placed by the cell-id reseed and two draws (`ride-operation.md`, "A cell's litter"). The drop
+    does nothing on a cell that already has litter, so a second sickness there leaves the first.
 - [ ] **Q227. Nobody stops to watch the entertainer.** Found by Q111, arm (e). An entertainer on the nine cells
   around a deciding guest, and the nearest one performing (staff state `0xe`): event `0xe`, the guest turned to face
   them, and the turn ends. The original's stock park did it eight times in 964 sweeps. After Q133d, which builds the
@@ -1904,6 +1938,10 @@ filed the items that cite it.
     original's factories make with style `0x10` (sites `0x00493986`, `0x004939b0`, `0x00494628`, `0x0049463d`,
     `0x00496cea`, `0x00496cff`, `0x004b4c70`, `0x006604a1`, `0x0066051a`) and whether ours set `Toggles` for the same
     rows; which of them receive `0x100` is not read.
+  - **Note (fork watch 2026-10-18, `verify-ui-hud.md` U3, `verify-world-b.md` L1):** the control of stream `0x00755750` is the ride
+    window's **Buy Upgrades list** (`FUN_004ae560`, handler `0x004ae430`, rows from `FUN_004ae140`), and the `0x1D` it plays
+    (`0x00486ae0`) is for an **add-on** row dearer than the balance only: a level row dearer than the balance gives no cue at
+    all (`0x004af4e9`, strictly below). `ride-operation.md`, "The ride window's Buy Upgrades list". Q512 builds the list.
 
 - [ ] **Q403. The balance's colour and the cost in hand.** From the fork review 2, 2026-10-16 (`verify-ui-hud.md` L5).
   The HUD letters the balance in one of six colours (table `0x00752e30`, index (balance + 999) / 1000 clamped to 0..5:
@@ -2045,6 +2083,66 @@ filed the items that cite it.
   photograph of a balloon's fringe against a body in both games; then say whether `FurthestFirst`, which orders every quad
   here by its unpulled depth, matches the original's order for a pulled body against an unpulled sprite, and whether the
   first-person view (render bit `0x80`, ungrouped; `docs/exe/park-engine.md`, "What hides a person below their feet") sorts at all.
+- [ ] **Q509. Sound_StopFading: the original's fade law, and FADEOBJ as a cut at low detail.** From the fork watch,
+  2026-10-18 (`verify-other-a.md` H1, `verify-audio-fx.md` F1; `docs/exe/audio.md`, "The fade, the SoundInfo settings
+  and the reverb"). The original's `Sound_StopFading` (`0x0051c300`) and `FADEOBJ`'s sound arm are a **x0.6 volume step
+  per library service pass** (the 60 is a percentage kept, not milliseconds) while sound detail is above
+  `SoundInfo.FADETOGGLE` (30, `sound.sam`; stock detail is `DEFAULTQUALITY` 50, and 25 at boot on low graphics detail,
+  `0x0054de17`), and a **hard stop** (the same as `KILLOBJ` / `Sound_Stop`) at 30 or below. At 0, or with no channel, the
+  voice is stopped on the next pass. OpenTPW stands a flat 0.06 s ramp in for both, said at the site in
+  `Advisor.QuietenSeconds`, `ParkAudio`'s rain and crowd fades and `ParkCarSounds`. Build: (1) the fade as a geometric
+  decay on the voice's volume per service tick (the service rate is **not measured**: measure it first, the service runs
+  whenever `Sound_ApplyGroupVolumes` posts `0x700b6c`, `audio.md`, "The service", and pick the pass length from that,
+  rather than from a guess), ending in a stop at 0; (2) `FADEOBJ` and `Sound_StopFading` as a cut when sound detail is
+  30 or below, the detail being the options' sound quality slider (`0x00423850`), so the options screen's slider must
+  reach it; (3) the stop-all at a level's end (`0x0051bcb0`, handed 90, `Level.StopAllSeconds`): trace whether the 90 is
+  the same kind of percentage before changing it. Confirm: the advisor quietened (options screen) and the bumper cars'
+  unload with a capture of the mix at detail 50 and at 30, beside the original at the same detail; predict the decay
+  per pass first. Predicted per pass: 100, 60, 36, 22, 13, 8, 5, 3, 2, 1, 0 of the starting volume (before the
+  device's integer rounding, not read).
+- [ ] **Q510. The hidden wide zoom: press it in the original, then build. Confirm first.** From the fork watch
+  (2026-10-18, `verify-world-a.md` H1; `docs/exe/park-engine.md`, "A hidden wide zoom"). Camera row `0x11` (`0x00748298`,
+  key `0x20`, modifier `0x3f`, handler `0x0042a520`) flips bit `0x200` of `[0x00790aac]`; by our key decode that is
+  Shift+Ctrl+Alt+Space, and with the bit set the zoom clamp is [40, 300] (`0x0074c9d8`, `0x0074c9dc`) where it is [70, 130]
+  otherwise. The clamp runs only while bit `0x80` is set; the park-load reset `FUN_0042a990` keeps `0x200` and sets `0x80`
+  (`0x0042aa64`-`0x0042aa75`), so the wide zoom survives a load. The key table is the handler's only reference, and the press has never been
+  made in a running original: this is decode, not observation. Confirm by that press in the original under Proton (read
+  `[0x00790aac]` bit `0x200` with `tpwmem.py`, then zoom out with the mouse wheel or keys and read the zoom at its limit,
+  predicting 300 and 40 first), also after a park load. Then build it: the key, the bit kept across a load, the two ranges.
+  The pitch is computed from the zoom by the same expression and extrapolates past the range; read the camera's pitch clamp
+  ([0, 84.27] in `park-engine.md`) at zoom 300 in the original before building it. Q23 is the camera's other work.
+- [ ] **Q511. A bouncing rider is lifted on a sine.** From the fork watch, 2026-10-18 (`verify-world-b.md` L4). The Belly
+  Bounce's riders are drawn standing on their node here (`ParkGuestSprites.Seated`); the original's positioner
+  `FUN_00557ab0` lifts each on a sine (`0x00557c75`): the phase is `( trunc( elapsed x ( 0.8 + 0.005 x the short +0xc0 ) )
+  mod 1000 ) x 0.003125`, the index `trunc( phase x [0x007b095c] ) & [0x007b0960]` into the table `0x007b0968`, and the height
+  `( ( visitor mod 7 ) + 12.0 ) x sine + the instance word + BOUNCESETBASE's word` (`+0x6e`), or the node's own y when that
+  is larger; the sprite is placed by `FUN_004f9e60` with `elapsed / 500` and template 2 (`docs/exe/ride-operation.md`, "The
+  bounce riders' height"). Counted, `RIDER_BOUNCE`, at the draw. Lost Kingdom's stock park carries the Belly Bounce, so placed
+  content reaches it. Not read: whether a4 is a heading sector, and `[ [+0x1c] + 0x1c ]` (template 3 and `visitor mod 7`).
+  Read those first. Confirm in both games: a rider's height over a few seconds on the same ride, predicted from the formula,
+  beside the original (`record.sh`); a screenshot of each.
+- [ ] **Q512. The ride window's Buy Upgrades list.** From the fork watch, 2026-10-18 (`verify-world-b.md` L1,
+  `verify-ui-hud.md` U3). The ride window's upgrades button (`RIDE_WINDOW_UPGRADES`, counted) opens the original's list
+  (stream `0x00755750`; `FUN_004ae560`, rows `FUN_004ae140`, choice `FUN_004ae430` and `FUN_004af480`): the add-on rows
+  (types whose `+0x284` is the ride's type and whose control has `+0x10`), then one row for the next level, UITEXT 29 with
+  the price `CostOfUpgrade[level+1]`, or UITEXT 30 "cancel" while an upgrade waits (state 2), else UITEXT 26 or 28; nothing in
+  Instant Action (UITEXT 27). A level row is ordered only when its cost is strictly below the balance, with no error cue; an
+  add-on row at most the balance builds a tool-4 carry shell and closes the window, and a dearer one plays `cat_ui` `0x1D`
+  (`docs/exe/ride-operation.md`, "The ride window's Buy Upgrades list"). Full Simulation only: Lost Kingdom's stock park is
+  Instant Action. Neighbours: Q272 (a mechanic and a waiting upgrade), Q452 (Buy Rides lists a researched upgrade), Q402 (the
+  sound). Confirm in Full Simulation: a ride at level 0 and at level 2, the list's rows and prices, an order and its cancel,
+  beside the original; a screenshot of each.
+- [ ] **Q513. The add-on's snap and the window a click on an add-on opens.** From the fork watch, 2026-10-18
+  (`verify-world-b.md` L2 and L3, `verify-world-a.md` M5). Lost Kingdom's add-ons (1500 to 1502, `AddOn.UpgradeType` 1) are
+  the items. Hovered over one of the five track types, the tool-4 preview snaps the add-on to anchor + 2 x floor( d / 2 ) on
+  both axes, turns it by the cell's flow (flow 1 gives 0, 4 `0x10e`, `0x10` `0xb4`, `0x40` `0x5a`), applies the item's
+  North/West/South/East adjust and moves the cell by the ride's own angle; the placement stores the word `+0x30` as the
+  builder's object (the ride the buy row was chosen on); a click on the add-on opens that ride's window when the word is
+  non-zero (`docs/exe/park-engine.md`, "The add-on's snap, its open ends and the window a click opens"). Its open ends light
+  the dummy nodes by a bit accumulator that is never cleared after the start. Read what this game does first (`HOVER_*` and
+  the add-on hover counters). Reached through Q512's add-on rows, so after it. Confirm in Full Simulation: an add-on dragged
+  over a track piece at each flow, its snapped cell and angle, and a click on the placed add-on opening the ride's window,
+  beside the original; a screenshot of each.
 
 ## B. Docs and comments
 
@@ -2114,6 +2212,10 @@ filed the items that cite it.
   project (the harness folder's `audit-2026-10-10/findings/s1-ghidra-named.tsv`): write the names in the docs.
   Name them and make them functions in Ghidra as the reading finds them (Alexah, 2026-10-18); a name there agrees
   with its `docs/exe/` row. No game run.
+  - **Note (fork watch 2026-10-18, `verify-advisor.md` A1):** the three loan helpers were read in the executable's listing, not
+    in Ghidra: `FUN_004d0810` (some offer passes and is untaken), `FUN_004d0970` (a taken offer's remaining owed) and
+    `FUN_004d0a00` (the total owed), and `ride-operation.md`'s rows on them are corrected ("The loan helpers and the money
+    rows"). The Ghidra project was not touched: their functions and names are still to make there.
 
 - [ ] **Q294. The FileFormats pages changed since 2026-09-26, against the game's files.** Left by the week-end
   audit's stage 8. 1,557 layout statements on 22 pages, `saves.md` and `models.md` most of them, packed into 56
@@ -2221,6 +2323,13 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   locator's follow, where any pan in the original does (`0x0042ba37`, `0x0042ba92`; `ParkLocator.Following` is cleared only
   at its own fold, a mode change, a person gone and a step that finds nobody), so scrolling with the locator following
   does nothing here: the follow puts the point back each frame. Counted nowhere; clear it where a pan is built.
+  From the fork watch (2026-10-18, `verify-world-a.md` M1, `verify-other-a.md` M1; `park-engine.md`, "A sprite's camera
+  sector reads the asked rotation"): the original picks a sprite's camera sector from the **asked** rotation
+  `[0x00790a38]`, not the eased one, as `8 - (trunc( (rotation + pi/8) x 8 / 2 pi ) & 7)` (`0x00542010`), and a draw
+  with flag `0x40000` gets sector 0 (`0x005421cc`). `ParkGuestSprites.Facing` reads `Camera.Rotation.Forward` (about
+  line 571); that is the same today because `ParkOrbitCameraMode` snaps and has no ease, and it becomes a difference when
+  this item builds the ease: the sector must then follow the asked rotation. The rounding agrees; the sign against
+  `0x00790a38` is read only from the code and its own note says the screen settles it.
 - [ ] **Q24. Nothing highlights a thing under the mouse.** The idle pointer already follows the hover category over
   ground and path (`Level.IdleOverPath`). Picking is decoded (`park-engine.md`, "Picking is a real ray cast, not a
   grid lookup"): the hit point comes from a ray against the terrain and then object meshes, and the hovered THING is
@@ -2340,6 +2449,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   visitor's window in the original) keeps this throttle, now said at the site: a window opened again within the clip's
   length plus RepeatDelay is silent here. Pass `respectDelay: false` there, as `PutOff` and the yawn do, if the throttle
   stays when this item is done.
+  - **Note (fork watch 2026-10-18, `verify-other-a.md` M3):** the pool's tie keeps the **newer** voice: `0x006b6a80` links a new voice at the
+    list head, so the rebuild (`0x006b6bc0`, strictly greater than the lowest rank) sees the newest first. This corrects
+    "the earlier voice keeping a tie" above (`audio.md`, "The fade, the SoundInfo settings and the reverb").
 - [ ] **Q51. Rest-area occupancy is unbuilt at both ends.** Found by Q36's decode. Arriving to rest
   (`FUN_00505fe0`) adds one to the rest area's script variable 0 (`VAR_STAFFIN` in every staff room) and sends
   message 15 to the resting-staff list (UI control `0x1e7b`); leaving (`FUN_00506d10`, from the normal end of a rest
@@ -2372,6 +2484,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   starts at nought, said at `ParkBuilding.CarryingAngle`. Decode what a successful put-down leaves in it (the light
   setter `FUN_0052f580( 0, 0 )`) before building one rotation. Confirm: move a ride turned 90, buy over it, put the
   purchase down, `objects` showing its angle.
+  - **Note (fork watch 2026-10-18, `verify-ui-hud.md` U6):** a put-down that reaches `0x005253b8` leaves the rotation at
+    0 (`0x0081d7a4`, by `0x0052f1b0( 0, 0 )`) unless exactly Ctrl is held, which keeps it (`park-engine.md`, the paragraph
+    on carrying a purchase). Ours already keeps the item in the hand on exactly Ctrl (`ParkBuilding.cs:1319-1324`). Still
+    unread: which placements take the branch at `0x00524db1`, and the queue tool's commit.
 - [ ] **Q60. A mechanic put down should look for work at once. Decode first.** Found by Q39's decode. The type-6
   put-down (`FUN_00505ea0`) sets every kind idle but the mechanic, whose claims are cleared (`FUN_004dad20`) and whose
   job search runs there and then (`FUN_004da5b0`); here a mechanic goes idle like the rest, counted as
@@ -2502,6 +2618,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   inferred, not proven (`Advisor`'s note), so decode the global's writer first. For the names and the `ISLAND()`
   fields the data equals the constant, so "nothing looks different" is the regression check (`docs/exe/lobby.md`,
   "Park names and the locale tables"). Confirm: a lobby screenshot before and after, identical.
+  - **Note (fork watch 2026-10-18, `verify-other-a.md` lead 3):** `DUCKINGLEVEL` is proven: global `0x00785914`, the table's
+    seventh key (`docs/exe/audio.md`, "The fade, the SoundInfo settings and the reverb"), used as a percentage, the
+    group level times 38 / 100 (`0x0051bdf9`). The "inferred, not proven" above is settled; read it from `sound.sam`.
 - [ ] **Q73. Cache pipelines and assets by key (the rest of the review's Phase D).** One pipeline per material
   (`Material`) where one per (shader, flags, output) would do, and texture and shader caches that scan `Asset.All`
   linearly (`Texture.Cache`, `Shader.Cache`). The shared blank texture landed (`bb897f8`); measure the load before
@@ -2563,6 +2682,24 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     Measured on Temple Of Gloom in Alexah's jungle saves: the pieces end at the module's +1,344, leaving the 506 bytes
     for trains, cars and riders. No loop piece or link in the corpus: those branches are read from code only. The field
     table belongs in FileFormats `saves.md`, "The coasters module".
+  - **Note (fork watch 2026-10-18, `verify-audio-fx.md` F3):** the crash sound. `0x0043cd60` exchanges two bumping trains' speeds and, when
+    the difference passes 1.0 (`[0x006fe020]`), calls `0x00439840`, which **only while `[0x00785a2c]` is nought** plays
+    global rides 12 (`0x0051bfc0( 0, [0x00803a28], 0xc, x, y, z )`, `0x004398cd`) at a place taken from the train's `+0x20`
+    by the ride's sample count (`+0xa8`). Build it with that gate, the one `audio.md`, "What an EventMap's slots feed",
+    names for slot 0.
+  - **Note (fork watch 2026-10-18, `verify-world-b.md` L6 and L7, `verify-world-a.md` M2 and M4):** the rebuild `0x0043eb70` runs
+    **every frame** for every track with flag bit 0 (`0x00435a30`, from `0x00435a95`, list `0x00790fe0`, next `+0x18`; event
+    `0x43` once, flag `0x2000`), so `0x00435a30` is the per-frame rebuild as well as the motion tick; the edited track and an
+    index-picked one run it too (`0x00447d49`, `0x00447d83`). Its order: `0x00430ed0` (knots), `0x00432b50`, `0x00440c10`
+    (sampler), `0x0043c450` (roll), `0x00439920`, `0x00439ab0`, `0x0043eac0`, `0x004402d0`. **The winch mark** (node `+8` bit
+    `0x800`): `0x00432b50` clears it at every rebuild (unless `0x1000`), `0x0043c5f0` sets it when the clamped value equals its
+    limit; not read: that the limit is the floor speed, and "creation parameter 0x20 gives `0x1800`" (no such immediate is
+    or-ed into `+8`). **Chop rounding**: `0x00439ab0` (the crossing pass) sets the x87 to chop (`0x00439ab9`..`0x00439ac8`) and
+    restores it at `0x00439c30`; every conversion in its callees truncates. **The roll per sample** `0x0043c450` (gated by
+    car-type flag 8, run in the rebuild, not per car): the target angle `0x0046f230`, the delta wrapped by (d + 3 pi) mod 2 pi less
+    pi, weight |vector| x car-type `+0x6c` held to 1.0, the roll wrapped and stored at sample `+0x18`, past `[track+0x134]`
+    scaled by 1 - clamp( (i - start) / (`+0xa8` - start), 0, 1 ); the vector is turned by three sample angles. Not read: that
+    `+0x6c` is `ForceMultiplier`.
 - [ ] **Q406. Coaster building: the track tool.** From the fork review 2, 2026-10-16 (`verify-coasters-build.md`
   L1-L11). A piece costs `fCostPerHeight` × H × 0.1 + `fCostPer2DLength` × length × 0.1, plus `fCostPerUnit` only on
   placing a pylon (`0x00447830`, `0x00435020`; the cursor's preview `0x00435d50`); placing takes trunc( cost ), a
@@ -2582,6 +2719,11 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     `+0x19c` is 2: not decoded. The loop pair: `0x0079c664` = 2 at `0x00442cf4` (button) and `0x00444677` (key),
     zeroed at `0x004446dd`; `0x006fdeec` = 90000.0 compared at `0x00435e2a`. The closing click `0x00442880` is not
     read. The knot pass is Q405's note.
+  - **Note (fork watch 2026-10-18, `verify-world-b.md` L5, `verify-world-a.md` M3):** Q406's H is the pylon height
+    `0x004346a0` = ( `[p+0xc0]` - `[p+0xbc]` ) x t + `[p+0xbc]`, t the piece's `+0xe8`. At the cost (`0x00447830`) t is
+    **unclamped**, p is `[[piece+0x100]+0x18]` and the result is x 0.1 (`0x006fe1f0`, `0x004478bf`); the cursor routine
+    `0x00443f40` clamps t to [0, 1] and skips it when the control's flags & `0x4000`, storing the result at `+0x118`. The rebuild
+    every frame, the chop rounding and the per-sample roll are Q405's note.
 
 - [ ] **Q407. Buy Land.** From the fork review 2, 2026-10-16 (`verify-objects-signs-other.md` L1). Counted,
   `BUY_LAND_TOOL`; Lost Kingdom's Features tab offers it (`hud.md`, item 101), and 13,878 of the 16,384 cells carry
@@ -2615,6 +2757,11 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     of 7; summary labels UITEXT `0x165`, `0x168`, `0x167`, `0x169`; take `0x0049f460` and repay `0x0049f4a0` refill
     only the list `0x0012c4bd`; the tab is remembered for the session (`[0x007cb260]`, control `0x0012c4bf` or
     `0x0012c4c0`).
+  - **Note (fork watch 2026-10-18, `verify-advisor.md` A1):** the credit test `0x004d06b0` is read in `ride-operation.md`, "The
+    loan helpers and the money rows": limit = net worth x 1.0 less the total still owed (instalments left x instalment over the
+    taken offers), an offer passing when its amount is at most it, and the pass flag **written into the offer** on every call, so
+    an advisor poll of row 102 rewrites the flags. A loan taken counts as cash in for the advisor's row 107. Rows 100 and 107
+    are polled in Instant Action too (Lost Kingdom reaches them); 101 and 102 are Full Simulation's alone.
 
 - [ ] **Q448. Ride script: REPAIREFFECT and BUMP 17.** From the fork watch, 2026-10-16 (`verify-audio-fx.md` A1 and
   C1, `verify-world.md` L6). Both are counted by the dispatch's per-instruction report (`RideScript.cs`: "REPAIREFFECT
@@ -2631,6 +2778,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   Bouncy's repair limb and the Wateride, beside the original. Decode `0x0052a490` and `0x0052a700` to `docs/exe/`
   first if they are not there. Building BUMP 17 for the Wateride also needs the water ride's track record, which the
   code does not have (the Q257r paragraph under Q420).
+  - **Note (fork watch 2026-10-18, `verify-audio-fx.md` F5):** REPAIREFFECT's two sounds (global rides 111 and 211, `0x0051bfc0` at
+    `0x0055631a` and `0x0055634c`) **drop both returned handles**: nothing stores them, so nothing can stop them with the
+    owner. Do not tie them to the owner. Whether 111 and 211 loop (effect flag `0x8`) was not read; if they do, the
+    original never stops them.
 
 - [ ] **Q449. Building over scenery, and tearing down a water track.** From the fork watch, 2026-10-16
   (`verify-world.md` C2 and C3). (1) The placement check (`0x00535d66` to `0x00535d73`) passes a new thing over

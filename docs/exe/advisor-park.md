@@ -4899,3 +4899,24 @@ game run. Row numbers are metadata rows; the rows' keys are in the Advisor.sam s
 - Fifteen callbacks' keys, taken from the schema walk, were each checked against their disassembly and first response's transcript and
   agree (rows 15, 16, 17, 86, 92, 100, 107, 114, 140, 141, 169, 172, 238, 258, 323); a key is the first `MOV` load of the function,
   not always the first load.
+
+## Rows settled from the bytes by the fork watch (2026-10-18)
+
+Read from the listing of `testme.exe` (`verify-advisor.md`, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-18/`); no game run.
+
+- **Rows 100, 101, 102 and 107** (the money rows, `0x0059e8d0`..`0x0059edb9`) and the loan helpers they ask are in
+  `ride-operation.md`, "The loan helpers and the money rows" (fork watch 2026-10-18, `verify-advisor.md` A1). Row 102 fires at a balance
+  below nought, the `JGE` at `0x0059e9c8` (A7).
+- **Role coverage, `0x004cd340( role )` and `0x004cd500( role, mode )`** (fork watch 2026-10-18, `verify-advisor.md` A2). `0x004cd340`
+  clears byte `+0x3c` of all 128 x 128 cell records (stride `0x44`, world `+0x2d8`), then for every thing whose type byte (`+2`) is in
+  4 to 8 and equals the role and that has a patrol area (`0x00506eb0`: `+0x20a`/`+0x20c` not (1, `0x4000`)) writes 1 to `+0x3c` of
+  every cell of the rectangle `0x00506e70` gives: a flag, not a count. Its one caller is `0x004cd50a`. `0x004cd500` then counts cells
+  by mode (jump table `0x004cd708`; the cell's type is `+8`): mode 0 every cell **not** type 2, 7 or `0x1e`; mode 1 types 1, 3, 9,
+  10, 4, `0x15`, or `0x005363f0`'s test (not read); mode 2 type 9 only; mode 3 types 1, 3, 9 (path, queue or entrance:
+  `ride-operation.md`). The share is covered x 100 / count (`IDIV`), nought with no cells. Callers: `0x0059d218` (role 4, mechanics,
+  mode 2), `0x0059d383` (role 5, handymen, mode 3), `0x0059d5f3` (role 6, entertainers, mode 1); each scores ( 100 - share ) x
+  `[+0x140]` / `[+0x158]` / `[+0x190]` and gives nought when that is below `[+0x13c]` / `[+0x154]` / `[+0x18c]` (the `Advisor.sam`
+  comment on `StaffMechanicCoverage.Score` and its kin); the mechanics' one first needs months at least `[+0x138]`, mechanics
+  (`0x004c9960( 4 )`) at least `[+0x12c]` and `0x004c9b40( 4 )` non-zero. These rows are **Full Simulation's alone** (the mode-0 list
+  above holds 18 to 21 and 23 to 27), so the shipped Lost Kingdom park never reaches them; the guard's coverage callbacks
+  (`0x005d60c0`, registered at `0x005a1238` and `0x005a1257`) were never measured.

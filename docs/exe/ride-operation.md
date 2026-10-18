@@ -1964,7 +1964,7 @@ completion then charges `CostOfUpgrade[l]` and sets the speed to `InitSpeed[l]`,
 the duration to `InitDuration[l]`, held as the constructor holds them (`0x004dfa9b`..`0x004dfbdf`), so an upgraded ride
 starts at both ratios 1. The compiled schema's `Upgrades` has three tiers (`0x0074669c`), so `l` = 3 reads `+0x260` and
 `+0x268`, `SupplementalMeshes[7].FileName` and `Attraction[0].NewBonus`; the upgrade list offers one only below tier 2
-(`0x004ae2d4`) and the completion's "already at level three" check is a bare `RET` (`FUN_005da3c0`), so only a save's
+(`0x004ae2d4`; "The ride window's Buy Upgrades list", below) and the completion's "already at level three" check is a bare `RET` (`FUN_005da3c0`), so only a save's
 byte can hold 3 or more. The upgrade list offers nothing in game type 2 (`0x004ae1a2`, UITEXT 27 "Upgrades are not
 available in Instant Action mode"), and the stock Lost Kingdom park is Instant Action: nothing is upgraded there. Every
 `Rides.sam` gives `InitSpeed` 60, 75 and 90, which no item overrides; `InitDuration` is 3, or the item's own at all
@@ -1981,6 +1981,34 @@ three tiers (the Belly Bounce 30, the Hot Pot 25, Jurassic Tours 40).
 | Alexah's tier-1 Belly Bounce (53) | `E` 40, `l` 1, 75/75, 30/30 | 40; speed 60 gives 32, 59 31, 90 48 | as the original |
 
 The handles shown take slot 0; the low byte is whichever slot is free first.
+
+**The ride window's Buy Upgrades list** (fork watch 2026-10-18, `verify-world-b.md` L1 and `verify-ui-hud.md` U3; read from
+`0x004ae140`..`0x004ae42c`, the `0x400` handler `0x004ae475`..`0x004ae518`, `0x004e03e0`, `0x004dd4e0` and `0x004af480`, no
+game run). The ride window's handler (`0x004af600`) opens the list at `0x004af8ec`: `0x004ae560` builds the window stream
+`0x00755750` (handler `0x004ae430`, title `0x1f4e` on the two-pass text class, UITEXT 31, list `0x1f4d` with a name cell
+and a price cell in font 7) and `0x004ae140` fills it.
+
+- **Game type `[0x00fb3b7c]` 2** (Instant Action): no rows (`0x004ae1aa`). Otherwise every type (`0x00412e60`/`0x00412e70`) with
+  `+0x508` nought and `+0x284` equal to the ride's type, whose control (`0x004d3d10( type id, 0 )` on the world's
+  `+0x1d943c`) has byte `+0x10` set, is a row: name `0x00412fb0`, price the control's `+4`, value the type id (`0x004ae230`).
+  These are the add-ons.
+- `FUN_004e03e0` is `[ride + 0x19c] == 2` (an upgrade ordered and waiting). Then one row, UITEXT 30 (`CancelLevel`) formatted
+  with level + 2, price 0, value -12999 (`0x004ae2bd`), and nothing else. Otherwise, with the level `[ride + 0x50]` below 2 and
+  level + 1 at most the researched level, the control's `+0x14` of `[ride + 0xe]`: a row UITEXT 29 (`UpgradeToLevel`) with
+  level + 2, price `rideType[ +0x1b8 + 0x40 (level + 1) ]` (`CostOfUpgrade`, `rideType` = `0x004dd4e0( ride )`), value
+  -(level + 1) (`0x004ae36f`).
+- With no row at all: UITEXT 27 in game type 2, 28 (`RideFullyUpgraded`) when the level is 2, else 26 (`NoUpgrades`), through
+  `0x00485b00`, split by `0x0067c430` on `0x007558f0`, one row of value -7890 a line (`0x004ae3fa`).
+- **The choice** (`0x004ae430`, message `0x400`; -7890 does nothing): -12999 is `0x004af480( 0, 1 )`, which calls
+  `0x004e0050( 0 )` (cancel). A negative value `v` is `0x004af480( v, 0 )`: `0x004e0050( 1 )` (order the upgrade) only when
+  `CostOfUpgrade[-v]` is **strictly below** the balance (`0x004af4e9`), with no error cue for a dearer one, and the list
+  closes. A positive value (an add-on) takes the price `+4` **at most** the balance: a tool-4 carry shell
+  `0x0046c5a0( 4, type id )`, the ride made the builder's object (`0x005276d0( 1 )`), and the ride window closed
+  (`0x0048cf70`); a dearer one is `0x00486ae0`, `cat_ui` `0x1D` (Q402). The balance is `FUN_006ad810` on `FUN_005195d0`'s thing.
+  Message `0x14` closes the list; `0x100` with -2 closes it.
+
+Lost Kingdom's stock park is Instant Action, so none of this is reached there; it is a Full Simulation window
+(`docs/QUEUE.md` Q512). Our tab is counted (`ParkObjectWindow.cs`, `RIDE_WINDOW_UPGRADES`).
 
 Instant Action catalogues only items with an `Easy_` file (`0x00413ac4`): all four bought cases have one; Chac Atak
 and Gorilla Thrilla do not. The saved rows were measured read-only in Alexah's played jungle saves (`q172save`, and a
@@ -2965,7 +2993,7 @@ reader was found, looking after each `FUN_00519450` call); for kind 0 alone and 
 cells of kind 1, 3 or 9 (`FUN_004c8150`), above 0.2 (`[0x007008dc]`, `0x005093c2`); then, for every kind, more
 than three members whose rest bytes (`(u8)trunc( +0x1fc )`) average under 15 by unsigned division ("striking
 through fatigue"), or more than three whose happiness bytes (`+0x1f8`) do ("through unhappiness"). The cell
-dword is the one the handyman's litter search tests (`FUN_004c8ed0`, the cell's `+0x2c`); what writes it is not read (Q225).
+dword is the one the handyman's litter search tests (`FUN_004c8ed0`, the cell's `+0x2c`); `FUN_004d93b0` writes it ("A cell's litter", below; Q225).
 
 **The levels, `FUN_00508f70`.** With a cause, by the level: 0 becomes 1 and posts a warning; 1, 2 and 3 become 2,
 3 and 4, set the flag and post a strike; 4 stays 4, sets the flag and posts a strike. With no cause the level and
@@ -3131,6 +3159,29 @@ words are the balance file's keys in its own order**: `RegionFX[n].Happiness`, `
 | 5 | 3 | happiness -3, illness 3, hunger -1 | litter of kind 8, which also starts particle effect `0x32` | that litter removed |
 | 6 | 3 | illness 2, hunger -2 | the use that dirties a toilet | the clean; a dirty toilet's sale (`0x004dd222`) |
 | 7 | 6 | happiness 2, attraction 10 | fireworks' constructor (`0x004db48c`) | the thing's turn `FUN_004e0b90` on the sweep its script's variable 0 reads 1, which then writes it 2; its destructor while that variable reads under 2 (`0x004dd217`) |
+
+**A cell's litter, `FUN_004d93b0( cell, kind )`** (fork watch 2026-10-18, `verify-other-b.md` L2; read from the listing, no game
+run). It returns at once in the online visit (game type `[0x00fb3b7c]` 1, `0x004d93ef`) and when the cell already has litter
+(`[cell + 0x2c]` non-zero, `0x004d93fc`). Otherwise `lea eax, [kind - 1]; cmp eax, 7; ja` and the jump table `0x004d95d4` choose the
+sprite program among the eight 0x28-byte records from `0x0074f050`:
+
+| Kind | Record | Besides |
+|---|---|---|
+| 1 to 5 | `0x0074f050`, `0x0074f078`, `0x0074f0a0`, `0x0074f0c8`, `0x0074f0f0` (slots 0 to 4) | |
+| 6 | `0x0074f118` (slot 5) | no log (`0x004d94b9`) |
+| 0 or above 8 | `0x0074f118` | logs "Dodgy litter type" (`0x0075af7c`, `0x004d94aa`) |
+| 7 | `0x0074f140` (slot 6) | `FUN_004d8440( 2, cell )`, region effect 2 |
+| 8 | `0x0074f168` (slot 7) | `FUN_004d8440( 5, cell )`, region effect 5, and `Particles_Spawn( 0x32, x × 1024, 0, y × 1024 )` (`0x00700498` 1024.0), its handle kept at `+0x38` |
+
+Each record is a sprite program, `0x004768b0 n`, `0x004766d0 0x10 0x80000`, `0x00476940 0`, `0x00476020 <self>`: `n` is the **second**
+word and runs 0 to 7 with the slot. The sprite is made by `FUN_00475a10( record, 0xb, 0, 0, 0, 0, 0 )` and kept at `[cell + 0x28]`;
+`+0x2c` becomes the kind and the word `+0x30` nought; "Littering cell %d, %d" is logged (`0x0075af90`).
+
+**The placement reseeds the park's generator with the cell id** (`0x004d94de`..`0x004d94e2`: `FUN_00516370( cell word )` on `[0x0080239c]`,
+which stores `+0x1da708`) and draws twice (`FUN_00516330`): the sprite stands at world (`10 × cellX + 1 + r1 % 9`,
+`10 × cellY + 1 + r2 % 9`), the constants `0x00700490` (-1.0) and `0x00700494` (10.0), through `FUN_00475480( handle, x, 0, y, 0 )`. So
+a cell's litter always stands in the same place, and every drop resets the shared generator, which a mirror of that generator must copy
+(the handyman who finds litter does the same with the litter cell's id, `FUN_004d7100`, `0x004d71ca`, above).
 
 **Measured on every cell of thirteen of the original's park files** (`q257e/fx.py`, the files of `q257e/files13.txt`;
 212,992 cells): the ten bytes are what the file's own things stamp, 0 cells wrong: each object by its `mFlags`, a
@@ -3720,10 +3771,12 @@ every such purchase, as the purchase does not ask the player's `RideIds`) and a 
   the balance, `0x00535914`; `FUN_005346d0`, `0x00534779`; `FUN_00539760`, `0x00539f82`); the analyser's month-end
   balance sample (`FUN_004c7720`, `0x004c7730`, ring `+0x1f104`); Buy Land's pending price (`FUN_00531a50`,
   `0x00532383`) and a track cell's (`FUN_00538fc0`, `0x00539056`); four not yet named (`0x00487b36`, `0x004abd8d`,
-  `0x004af4a5`, `0x00523645`); and eight advisor rows in undisassembled code
+  `0x004af4a5`, `0x00523645`); and eight advisor rows
   (`0x0059defb`..`0x0059eafd`): three compare it with a row's threshold (`+0x274`, `+0x298`, `+0x330`), one compares
-  it less `FUN_004d0a00` with `FUN_004d0970` × `+0x338`, and four fire only below nought (`0x0059e9b0` when
-  `FUN_004d0810` answers non-zero, and the three red-time rows below).
+  it less `FUN_004d0a00` (the total the bought loans still owe) with the least remaining owed of them, `FUN_004d0970`
+  of the loan `0x004d09a0` picks, × `+0x338` (row 101), and four fire only below nought (`0x0059e9b0` when
+  `FUN_004d0810` answers non-zero, and the three red-time rows below). "The loan helpers", below, reads the helpers
+  (fork watch 2026-10-18, `verify-advisor.md` A1).
 - Going red: `FUN_004d0370`, at each month change with the balance and `mLastBalance` both below nought, divides the
   time since `mTurnEnteredRed` by 30 days and at 6 or more broadcasts message `0x13` with 2 (`0x004d054c`,
   `0x004d05b2`), which the bank's handler turns into the end of the park (`FUN_004d02d0`, `FUN_005168f0`) unless the world's state
@@ -3735,7 +3788,7 @@ every such purchase, as the purchase does not ask the player's `RideIds`) and a 
   withdrawal that leaves the balance at nought or more (a shop's cost of goods, a loan's instalment) writes a
   non-negative `mLastBalance`, and the next dip stamps afresh. The advisor counts the same months: rows 103 to 105
   (`0x0059e9f0`, `0x0059ea70`, `0x0059eaf0`) score only while the balance is below nought and `FUN_004d0810` answers
-  nought (it looks over the eight loans; what it asks is not decoded), by `FUN_004d0260`'s time since `mTurnEnteredRed`
+  nought (no offer of the eight both passes the credit test and is untaken; "The loan helpers"), by `FUN_004d0260`'s time since `mTurnEnteredRed`
   over 30 days: under 3 months, 3 or 4, and exactly 5, the month before the end.
 - `mProfitThisYear`: golden ticket Local 4 when it passes the global at `0x007857a0` (`GoldenTicketLocal.ProfitYear` by key order; `FUN_004d4bc0`, `0x004d4d6b`; "Golden tickets", below) and
   advisor row 318 near it, both in game type 0 only. It is zeroed on the year's change (`0x004d034e`), not on entering a
@@ -3752,6 +3805,33 @@ every such purchase, as the purchase does not ask the player's `RideIds`) and a 
   ("Other costs", "Balance": `hud.md`), the staff-costs and loans screens, and the gadget's icon beside the money
   (`FUN_004a0e30`, control `0x31`, frame 1 when last month's cash in was below its total costs; likely the red down arrow beside the
   money in the original's frame, though which picture each frame is was not established).
+
+**The loan helpers and the money rows** (fork watch 2026-10-18, `verify-advisor.md` A1; read from the listing of
+`0x004d0690`..`0x004d0a2c` and `0x0059e8d0`..`0x0059edb9`, no game run). The loans object (`FUN_005195d0`'s) holds eight
+offers of 0x20 bytes from `+0x14`: pass flag, amount (`+0x18`), instalments `n`, instalment, taken, paid.
+
+| Function | What it answers |
+|---|---|
+| `FUN_004d0690` | how many offers are taken (`+0x28` + 32 i non-zero) |
+| `0x004d06b0( out, i )` | owed = the sum over taken offers of (`n` - paid) × instalment; limit = `__ftol`( net worth `FUN_004c7db0( 0x14 )` × 1.0 at `0x00700370` ) - owed; offer `i` passes when its amount is at most the limit (signed). It **writes** the pass flag into the offer (`0x004d0721`, `0x004d073b`), so polling an advisor row changes the offers' flags |
+| `FUN_004d0810` | 1 when some offer passes and is not taken |
+| `FUN_004d0970( i )` | a taken offer's **remaining owed**, (`n` - paid) × instalment (not a monthly repayment); 0 when not taken |
+| `0x004d09a0` | the index of the taken offer with the smallest non-zero remaining owed (the first wins a tie), -1 when none |
+| `FUN_004d0a00` | the total owed over all taken offers |
+
+A loan taken adds its amount to the cash-in ring (`+0x1fc90`, `0x004d07c9`), so the advisor's row 107 counts it as income.
+The rows read keys of `Advisor.sam` by offset (`+0x330` `WealthHigh.MoreMoneyThan` to `+0x35c` `WagesHigh.Score`):
+
+| Row | Callback | Scores (the key at its offset) when |
+|---|---|---|
+| 100 | `0x0059e8d0` | the balance is strictly above `+0x330` and `FUN_004d0690` answers nought: `+0x334` |
+| 101 | `0x0059e910` | surplus = balance - `FUN_004d0a00`, kept as a single; `i` = `0x004d09a0`; none: nought; else `FUN_004d0970( i )` × the float `+0x338` is below the surplus: `+0x33c`. Game type 0 only |
+| 102 | `0x0059e9b0` | the balance is below nought (the `JGE` is `0x0059e9c8`; nought does not fire) and `FUN_004d0810` answers non-zero: `+0x340`. Game type 0 only |
+| 107 | `0x0059eb80` | park time over 30 days (`0x1792F8648000` in 100 ns) is at least 3; the mean of the last `+0x358` months (fewer before the ring fills) of cash in, ring `+0x1fc90`, × the float `+0x354` is below the mean of staff costs, ring `+0x1f7f0`; either mean nought gives nought: `+0x35c` |
+
+Rows 100 and 107 are polled in Instant Action too, so the shipped Lost Kingdom park reaches them; 101 and 102 are Full
+Simulation's alone (`advisor-park.md`, the mode-0 list). Precision: the surplus is rounded to a single whatever the
+x87 control word (`0x0059e96a` `FSTP DWORD`).
 
 ### Golden tickets
 
@@ -4691,6 +4771,24 @@ The record is **16 bytes**: handle `+0`, node `+4` = `*(EBP+0x70) + slotIndex`, 
 - Park objects load at the origin and are afterwards moved, so a node position must have the placed rotation and origin applied; the load origin is not the placed one.
 - `UsageInfo.RideHandlesSprite` is the flag "If the script handles the person sprite".
 - **Measured in the running game**: node 1 (`body`) of thing 13 resolves to **(525.4, 252.6, 10.3)**, against the queue front at (525, 234).
+
+**The bounce riders' height** (fork watch 2026-10-18, `verify-world-b.md` L4; read from `0x00557c03`..`0x00557ce9`, no game run).
+The positioner `FUN_00557ab0` does not stand a rider on the node: `0x00557c75` lifts them on a sine. For a rider's record
+(handle `+0`, start `+0xc`) the elapsed time is `0x00402d70()` less the start.
+
+- The phase is `( trunc( elapsed × ( 0.8 + 0.005 × the short `+0xc0` ) ) mod 1000 ) × 0.003125` (`0x00701008` -0.005, the double
+  `0x00701010` 0.8, `0x00701018` 0.003125). The index is `trunc( phase × [0x007b095c] ) & [0x007b0960]` into the sine table
+  `0x007b0968`.
+- The height is `( ( visitor mod 7 ) + 12.0 ) × sine + [ebp-4] + the short [+0x6e]` (`BOUNCESETBASE`'s word), and the node's own y
+  (`[ebp-0x30]`, `0x00435710`) when that is larger (`0x00557c8a`). `[ebp-4]` is the word `+0x34` of `[ instance + 0x78 ] + 0x10` of the
+  ride's instance `0x007a4610[ [+0xc8] ]` (`0x00557bcf`); the visitor is the record's dword `+0`.
+- The sprite is placed by `FUN_004f9e60( x, height, z, a4, template )`: normally a4 is elapsed / 500 (`0x10624dd3`, `sar 5`) and
+  the template 2; when `[ [esi + 0x1c] + 0x1c ]` is non-zero a4 is `visitor mod 7` and the template 3, at the node's height. a4 goes on
+  to `FUN_00475480`. Not traced: whether a4 is a heading sector (the fork says `& 7`; not in `0x00557cf1`), and what
+  `[ [+0x1c] + 0x1c ]` means.
+
+OpenTPW draws a bounce rider on the node, unlifted (`ParkGuestSprites.Seated`), and counts it (`RIDER_BOUNCE`). The Belly Bounce
+is in the stock Lost Kingdom park, so this is a gap that placed content reaches (`docs/QUEUE.md` Q511).
 
 ## Where a WALKING peep is drawn, and it is INTERPOLATED per frame
 

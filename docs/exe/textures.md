@@ -188,6 +188,32 @@ second multiplier and convert it with 1.772 into blue (`FUN_00593ab0`: plane `0x
 are equal (`q354/sweep.sh`). `ridestatbar.wct` (Y 6, offset 10 = 10, offset 12 = 2) decodes red to green, as the
 original draws it (`hud.md`, "The stat bars' skin").
 
+## The texture cache's surface format (fork watch 2026-10-18, `verify-other-b.md` L1, `verify-ui-hud.md` U1)
+
+`[0x008bd554]` is the texture cache's surface format **index**, not the display mode. The window setup (`0x0044e1f4`,
+`and ecx,0x400000; or ecx,0x800000; shr ecx,0x16`) makes it `2 + TEXTURE32`, where `TEXTURE32` is
+`GraphicalOptions.TEXTURE32` (bit `0x400000` of the flag word, `boot.md`), and passes it as argument 4 of `0x0044df20`.
+That reaches the engine init `0x00572780` (`0x00572966`), `FUN_0058cff0` (the "tcache ok" step) and `FUN_0058da40`, the
+texture cache's init, which logs "Texture Cache Initialization" and "Surfaceformat chosen %d", stores the index
+(`0x0058db5c`; forced 3 at `0x0058daca` when the renderer mode `[0x008bd524]` is 4) and calls `FUN_0058b220( .., fmt )`.
+The table at `0x007015f8` holds four shorts a format, alpha, red, green, blue bits:
+
+| Index | Format |
+|---|---|
+| 0 | R5G6B5 (0, 5, 6, 5) |
+| 1 | A1R5G5B5 (1, 5, 5, 5) |
+| 2 | A4R4G4B4 (4, 4, 4, 4): `TEXTURE32` 0 |
+| 3 | A8R8G8B8 (8, 8, 8, 8): `TEXTURE32` 1 |
+
+The bytes a texel are `2, 2, 2, 4` at `0x007014c8` and again at `0x00701fe0`. `0x004925d0` copies the 32-byte record
+`0x008bd558 + 32 x [0x008bd554]`, the chosen format's own. `data/low.sam`, `med.sam` and `high.sam` all hold
+`GraphicalOptions.TEXTURE32 0` (line 50), so a shipped game runs format 2 and its textures keep four bits a channel
+(Q492; the path tiles, `park-engine.md`, "A path laid over"). The display depth is separate: 16 or 32 by `RENDER32`
+(`boot.md`, `0x0044e20b`), and the shipped presets hold `RENDER32 0` too.
+
+Not read: what record 2 holds and how `FUN_0058b220` fills the table from the device, and the per-texture pick
+(alpha graded, cut or none) that Q492 asks for.
+
 ## The zlib codec, `FUN_00593ab0`
 
 Built (Q355: `TextureFile.DecodeZlibCodec`). The multiplier of each value is the table's; nothing else scales it.

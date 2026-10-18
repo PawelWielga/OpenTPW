@@ -474,6 +474,9 @@ public sealed class RideScript
 	/// the one member of the family that script uses outside the main loop - and a script writing into
 	/// nothing would read as an oversight. Compare <see cref="RideState.SetWorn"/>.
 	/// </para>
+	/// <para>
+	/// The rider's height it feeds is docs/exe/ride-operation.md, "The bounce riders' height"; it is not built here (<c>RIDER_BOUNCE</c>).
+	/// </para>
 	/// </summary>
 	private short _bounceBase;
 

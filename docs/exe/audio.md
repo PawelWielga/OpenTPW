@@ -95,7 +95,7 @@ Nothing on this path writes a volume. A sample's volume comes from its variation
 **A stop takes down one chain.**
 - `Sound_Stop` and `Sound_StopFading` find the voice by its exact handle (`0x006b6830`, generation-checked at `0x006b6876`).
 - A held parent's stop (`0x006bd9b0`) hard-stops each child still in its chain, down to `QSWaveMixStopChannel` (`0x006d24d7`). It deletes the children, clears the chain and flags itself finished (`0x006bcade`).
-- With fading on, StopFading still ends in the same hard stop. The parent has no channel, so its first fade step takes the no-channel exit (`0x006bcc71`), and the next service stops it (`0x006b62fe` → `0x006b6320`).
+- With fading on ("The fade", below), StopFading still ends in the same hard stop. The parent has no channel, so its first fade step takes the no-channel exit (`0x006bcc71`), and the next service stops it (`0x006b62fe` → `0x006b6320`).
 - Nothing on any stop or free path writes an effect record, a category or a manager gate. STOPSCREAM zeroes the script's `+0xd0` itself (`0x00555f0a`).
 
 **Where two callers of one effect do meet: the pool.**
@@ -458,7 +458,7 @@ what sets the car's case to 2 or 4, the gates on the go-kart and water arms of `
   has gone (`FUN_006b6620`), and the answer goes back into `+0x20`, so a voice that has ended empties it and the next
   retarget starts another. No ride state gates the step.
 - **The go's end** (`Bumper_CarTick`'s unloading arm for types -1, -3, -6, -11, -14, `0x0054788e`, by the byte map at
-  `0x00547c30`): after the unload, `Sound_StopFading( +0x20 )` with 60, every unloading tick, **without clearing
+  `0x00547c30`): after the unload, `Sound_StopFading( +0x20 )` (the 60 is a per-pass volume step, "The fade", below), every unloading tick, **without clearing
   `+0x20`**; the handle goes when the voice has. **Taking a car off** (`FUN_0054ae50`, `0x0054b065`) fades it the same
   way. The cars stay when a go ends; only `BUMP 10`, a sale or a capacity cut takes them off.
 - **Measured in the original** (Q202, `q202/voicelog.py`, the reference park patched to research the Hot Pot, bought
@@ -503,7 +503,7 @@ so a pitch `p` plays at 2^((p + 1) / 96) of the sample's rate above nought and 2
 247, at volume 68.
 
 **OpenTPW** builds this for the bumper arm (`ParkBumperCars`, `ParkCarSounds`): the lead's engine looped at 68 / 100,
-moved and pitched each tick, faded with 60 taken as milliseconds; its volume is the channel's own number, 51 of 127
+moved and pitched each tick, stopped with a 0.06 s fade of its own (**a deviation**: the original's `Sound_StopFading` is a x0.6 step per service pass at detail above 30, a cut otherwise, "The fade", below; Q509); its volume is the channel's own number, 51 of 127
 beside the music's 60 ("A channel's volume"). The coasters', tour ride's and go-karts' slots are not
 built.
 
@@ -741,7 +741,7 @@ So the level does two things. As the class's zone parameter (controller slot 0) 
 
 **How loud it is, measured** (Q236b; `q236b/orig/`, `crowdx.py`, `musicx.py`). The scale past the variation's volume was not decoded then (it is now: "A channel's volume", above, which is what is built), so it was taken from the original's mix, written to a file by ALSA's `file` plugin. The crowd's clips are 53 to 724 ms long by the map and cannot be picked out under the music, so the music was switched off in the original's own options for the crowd's windows and measured by itself in another: with the pointer over the Belly Bounce's queue (level 9 in memory) 53 samples of variations 1 and 7 matched at a score of 0.6 or better, a first-variation sample at a least-squares gain of 0.036 to 0.046 of the decoded clip; over empty ground (level 0, no handle) one matched. The music's samples read 0.18 to 0.22 against a mono template, which ffmpeg makes 1.41 times the mean of a stereo sample's two channels (checked in OpenTPW's own mix, where a music sample known to play at 0.165 reads 0.117), so 0.26 to 0.31. By sample, the first variation's medians run from 0.022 to 0.046 with a middle of 0.034, where OpenTPW's are one value: **that spread is not explained** (the original may cut a sample at the map's length, which is 35 ms or so short of the decoded clip, or weigh each sample; not read). So a crowd sample at volume 14 is about 0.12 of a music sample at volume 100 (0.09 to 0.17). The options screen's two default volumes taken as plain factors, 75 for sound effects and 60 for music (`sound.sam`, `DefaultVolume`), would give 0.175, just outside that; the channel's own number, 10 of 127 beside the music's 60, is 0.167, and the mixer reads exactly that, so the capture's middle of 0.12 was low and is not explained. The matched samples carry all six pitches. The file is not paced (it runs about 3.6 times faster than the game), so how closely one sample follows another in the original was not measured.
 
-**OpenTPW** (`ParkAudio.SetCrowdVoice`, `NextCrowdSample`, `ParkPeople.GuestsNear`): on the music's beat the guests on the cells within four of `ParkPicking.Cell` are counted (nought with no cell), held to 100 and made nought in world state 4. Above nought the voice is held: a flat sample of kids 91 from the first variation, then, as each ends, one from the variation the level's zone gives (`ParkScreams.NextVariation`, the music's rule), at the voice's own volume and pitch (`ParkAudio.HeldSample`): the voice's first sample takes them from `ParkAudio.Controlled` (the level, and a drawn pitch), and a later one keeps them, a twin's too. Each beat's set gives the playing sample the level's volume and a pitch drawn again, at once, where its variation names parameter 7, and nothing on a twin. At nought the sample is faded over 0.06 s (`Sound_StopFading`'s 60) and the voice let go; started again it begins from the first variation. A sample's volume plays at the channel's own number (`ParkAudio.ChannelGain`): 14 is 10 of 127 beside the music's 60, 0.0550 beside 0.33. **Said:** the next sample is started on the frame after the last has ended, where the original's service pass starts it (rate not measured); the voice that ended by itself in Q236's log is not modelled, a held voice here never ends; the count reads each guest's linked cell (`ParkState.CellOf`), the original the cells' own lists. Console: `crowd`.
+**OpenTPW** (`ParkAudio.SetCrowdVoice`, `NextCrowdSample`, `ParkPeople.GuestsNear`): on the music's beat the guests on the cells within four of `ParkPicking.Cell` are counted (nought with no cell), held to 100 and made nought in world state 4. Above nought the voice is held: a flat sample of kids 91 from the first variation, then, as each ends, one from the variation the level's zone gives (`ParkScreams.NextVariation`, the music's rule), at the voice's own volume and pitch (`ParkAudio.HeldSample`): the voice's first sample takes them from `ParkAudio.Controlled` (the level, and a drawn pitch), and a later one keeps them, a twin's too. Each beat's set gives the playing sample the level's volume and a pitch drawn again, at once, where its variation names parameter 7, and nothing on a twin. At nought the sample is faded over 0.06 s (**a deviation**: the original's `Sound_StopFading` is a x0.6 step per service pass at detail above 30 and a cut otherwise, "The fade", below; Q509) and the voice let go; started again it begins from the first variation. A sample's volume plays at the channel's own number (`ParkAudio.ChannelGain`): 14 is 10 of 127 beside the music's 60, 0.0550 beside 0.33. **Said:** the next sample is started on the frame after the last has ended, where the original's service pass starts it (rate not measured); the voice that ended by itself in Q236's log is not modelled, a held voice here never ends; the count reads each guest's linked cell (`ParkState.CellOf`), the original the cells' own lists. Console: `crowd`.
 
 ## The staff's voices
 
@@ -906,10 +906,71 @@ together is not in the executable.
 OpenTPW does not clamp a voice: `AudioClip` keeps NLayer's floats, up to 1.40, and only the final mix is clamped
 (`Audio.Mix`), so a clip past full scale played below full volume is louder at its peaks than the original's.
 
+## The fade, the SoundInfo settings and the reverb
+
+(Fork watch 2026-10-18, `verify-other-a.md` H1/H2/M3 and `verify-audio-fx.md` F1/F2, both read from the disassembly of `testme.exe`.)
+
+**`sound.sam`'s `SoundInfo.*` and `DefaultVolume.*` keys are globals.** `0x007858f0` is a settings object (vtable `0x006fd640`, built at `0x00401030`
+from `0x00402ca0`, key table `0x00746a20`, base `this+8` from `0x005b0d60`), filled by `0x00401650` from the file `"sound.sam"` (`0x0045b277`, the
+name set at `0x00458da0`). Each key's global is `0x007858f8 + 4n`, n counting from 1 in the **table's** order (`park-engine.md`, "How a key finds
+its global"), which is not the file's order:
+
+| Global | Key | Shipped | Use read |
+|---|---|---|---|
+| `0x007858fc` | `QSOUND` | 15 | `0x0051b920`: detail above it sends `0x700b54` (also REAR 30 and CROSSOVER 40) |
+| `0x00785900` / `0x00785904` | `REAR` / `CROSSOVER` | 30 / 40 | the same send |
+| `0x00785908` | `EAX` | 10 | detail above it sends `0x700b50`; at or below it the reverb preset is forced to 0 |
+| `0x0078590c` | `GEOMETRY` | 20 | not read here |
+| `0x00785910` | `MPEGRATE` | 35 | above it sends 0, else 1 (`0x700b4c`) |
+| `0x00785914` | `DUCKINGLEVEL` | 38 | **a percentage**: the group level times 38 / 100 (`0x0051bdf9`) |
+| `0x00785918` | `DROPPABLELEVEL` | 20 | above it sends `0x700b44` |
+| `0x0078591c` | `DEFAULTQUALITY` | 50 | the options constructor's sound detail (`0x004236e9`), passed on at `0x00423850` |
+| `0x00785920` | `FADETOGGLE` | 30 | the fade bit, below |
+| `0x00785924` | `SOUNDON` | 1 | |
+| `0x00785928` to `0x00785934` | `DefaultVolume.SFX`, `MUSIC`, `SPEECH`, `MOVIE` | | the options constructor (`0x004236a5`) |
+
+At boot (`0x0054de0a`..`0x0054de22`) the library's detail is `DEFAULTQUALITY`, or half of it (25) when the options' graphics detail (`+8`) is
+nought. So a low-detail start has fading off until the options are applied. Whether a saved `SoundQuality` is applied at boot was not traced.
+
+**The fade.** `FADEOBJ`'s sound arm and `Sound_StopFading` (`0x0051c300`) post `{0x00700bac, handle, 0x3c}` (`0x006b5930` -> `0x006b8930`). `KILLOBJ`
+and `Sound_Stop` (`0x0051c2c0`) post `{0x00700ba8, handle}` to the same library slot `+0x18` (`0x006b89b0`, the hard stop).
+- `0x006b8930` tests the fade bit `0x400` of `[[this+0x24]+0x28]`. Clear: it calls slot `+0x18`, so the fade **is** the plain stop.
+- The bit is written by `0x0051b920( detail )` (`0x0051ba6b`): detail **above** `SoundInfo.FADETOGGLE` (`[0x00785920]`, 30) sends `0x700b48` with 1
+  (`0x006b85a0` ORs the bit, `0x006b85b3`), else 0 (`0x006b85bb`). Clearing it turns every fading voice into a stop (`0x006b6240`).
+  Stock detail is 50, so **fades are on by default and `FADEOBJ` cuts at detail 30 or below**.
+- Set: `0x006b65a0` finds the voice (`0x006b6830`) and calls its slot `+0x30` (`0x006b7130`), which stores the byte 60 at voice `+0x44` and sets `0x400` in `+0x30`.
+- Each service pass (`0x006b62b0`, while the manager byte `+0x50` is set, `0x006b6334`..`0x006b6347`) calls a flagged voice's slot `+0x2c` (`0x006bcb80`). A byte other
+  than 100 becomes a device command (`0x006c50d0`, flag `0x80000`), and the device sets the channel volume to the **current** volume times the byte / 100
+  (`0x006c5709`..`0x006c5737`; current from `0x006bb860`, written back to the channel's `+0x18`).
+- So the 60 is **a x0.6 step per service pass**: a geometric fade of about nine passes from 100 to 0, not milliseconds and not a fixed level. At 0, or
+  with no channel (a held parent, line 98 above), the voice swaps `0x400` for `0x100` (`0x006bcc6e`) and the next service stops it (`0x006b62fe`).
+  How often the service runs is not measured, so the fade has no length in seconds.
+- **OpenTPW's fade is a deviation:** a flat 0.06 s ramp at every detail (`Advisor.QuietenSeconds`, `ParkAudio`'s rain and crowd fades, `ParkCarSounds`). The
+  original's law and the cut at detail 30 or below are Q509. The 90 handed to stop-all (`0x0051bcb0`) when a level ends is probably the same kind of
+  percentage; it was not traced.
+
+**The voice pool's tie.** `0x006b6ba0` clears the 31 slots at the start of each pass; `0x006b6bc0` admits a voice only when its rank (`+0x20`) is strictly greater than the lowest,
+and places it before the first slot of strictly lower rank. `0x006b6a80` links a new voice at the list head (`+0x24`), so the rebuild sees the newest first
+and **a tie keeps the newer voice** (Q43).
+
+**The reverb.** `SETREVERB` (`0x0055649c`) only stores its operand at script `+0xd8`. Every eighth step `0x0055a470` (`0x0042a4e0` gives the ridden
+object) finds the script with `+0xc8` equal to it, `+0x10` nought and `+0xd8` set, in the list `[0x008791b0]`, and hands a level of 0 or more to the preset holder
+`0x0051c8d0` (a negative one sends nothing); with no match it hands `[0x0078578c]`. The holder keeps the preset at `[0x00803ab4]` (-1 at sound init, `0x0051b700`) and
+posts `0x700b30` (`0x006b5c90` -> `0x006ba1b0`) only on a change. `0x006c6000` refuses an index past the count or a record whose word 0 is -1. At detail at or
+below `SoundInfo.EAX` (10), `0x0051b920` resets the holder to 0 (`0x0051b9c7`..`0x0051b9f1`).
+- **`[0x0078578c]` is the level key `Sound.Reverb`**, entry 255 of the `PeepInfo` object `0x00785040`'s table (`0x0073fc70`; `0x005157cb` loads the theme's `Standard.sam` into it).
+  `data/levels/Standard.sam` sets 0 and `hallow/Standard.sam` sets 3; jungle sets none, so Lost Kingdom's reverb off a ride is 0.
+- **A slot goes to the listener, not to a voice, and only through EAX 2.0 hardware.** `0x006c46b0` copies the record's 13 words in the order [3], [4], [11], [5], [6], [7],
+  [8], [9], [10], [0], [1], [2], [12], then flags 9 (0x38 bytes), and sends them through `IKsPropertySet::Set` (vtable `+0x10`) with the GUID at `0x0070aa50`,
+  `{0306A6A8-B224-11D2-99E5-0000E8D8C722}` = `DSPROPSETID_EAX20_ListenerProperties`, property 1. That is the `EAXLISTENERPROPERTIES` layout, so the words are, by index:
+  0 environment, 1 environment size, 2 environment diffusion, 3 room, 4 room HF, 5 decay time, 6 decay HF ratio, 7 reflections, 8 reflections delay, 9 reverb,
+  10 reverb delay, 11 room rolloff factor, 12 air absorption HF. All three audio backends' slot `+0x50` (`0x0061add0`) answers -1, and the image imports no
+  `QSWaveMix` reverb entry, so there is no software reverb. Not checked: which levels shipped scripts pass (the fork lists 0, 1, 3, 8, 9).
+
 ## Unknowns
 
 - **`FUN_0051c700` is NOT the distance-mapping feed.** It is the sound-detail ladder that interpolates the three `RadiusInfo[n].MINRADIUS` values (100.0 / 0.5 / 0 at SWITCH 25 / 50 / 75) from `data\sound.sam` and posts them to `0x006b5890` → `FUN_006b99c0` → `FUN_006b8180`, which latches `{on/off, radius}` and walks the voice array setting a per-voice LEVEL. That level comes from `FUN_006c4c80`, a **segment-versus-circle occlusion test that uses only the X and Z components** and ignores height entirely — so the pause's Y-lift cannot touch it either way. It never reaches `SetDistanceMapping`.
-- `SndReverb.map`'s slots and 52-byte records are decoded (see the page's first lines); what the 13 values of a record mean, and how a slot is applied to a voice, is **not decoded**.
+- `SndReverb.map`'s slots and 52-byte records are decoded (see the page's first lines); what the 13 values of a record mean and how a slot is applied are in "The fade, the SoundInfo settings and the reverb", above (they are EAX 2.0 listener properties, applied to the listener and not to a voice).
 - **What `QMixer.dll` does with the distance mapping is read**: "The mixer's distance law". Its three numbers and their writer are in "A voice's range, and the rectangle it follows the listener in": 2.0, the voice's range and 0.8, from `FUN_006bc410`, through the one call site `0x006c581b` in `FUN_006c5690` (`if ( params->flags_at_0x14 & 0x200 ) vtbl[0x60]( out, channel, params + 0x38 )`).
 - **`params+0x14` is a request mask, not a flag pair.** `FUN_006c5690` tests at least nine bits of it, each gating one setter: `0x1` the position path (`FUN_006b7fa0`), `0x2` volume, `0x20` frequency, `0x40`, `0x100` source cone, `0x200` distance mapping, `0x400`, `0x20000`, `0x80000`.
 - **A pause silences every voice with a range**: lifted 10,000 units, the listener is past any range, and the mixer plays nothing of a channel past its max ("The mixer's distance law"; a paused park's channel read a distance of 10,000.32 and a gain of nought). OpenTPW holds placed voices to silence, in `Audio.HoldPlaced`. A voice with no range, flag `0x8`, is not shown to be silenced.

@@ -98,7 +98,7 @@ The handle is zero through the **800 ms lead-in**, because `Advisor_Update` star
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
 | `0x005996d0` | `Advisor_StopQuietly` | Identical teardown with no cry. Its argument picks the fading stop over the plain one | Ghidra |
-| `0x0051c300` | `Sound_StopFading` | Passes 60 to the sound's vtable `+0x30`. Taken as milliseconds — **unit untraced** | Ghidra |
+| `0x0051c300` | `Sound_StopFading` | Posts the stop to the library, which at sound detail above `SoundInfo.FADETOGGLE` (30) marks the voice fading with 60 (vtable `+0x30`, `0x006b7130`) and each service pass then keeps 60 % of its volume; at 30 or below it is the plain stop. Not milliseconds: `audio.md`, "The fade" (fork watch 2026-10-18, `verify-other-a.md` H1) | Ghidra, disassembly |
 | `0x004a3a30` | `OptionsScreen_Open` | Caller, with argument 1. The Game Options screen quietens him | Ghidra |
 | `0x0055035a` | `Game_StateMachine` | Caller. **Not checked against OpenTPW** | Ghidra |
 | `0x004a9380` | — | Caller (the postcard screen); also plays UI sound `0x95` and calls `ButtonGlintStop`. **Not checked against OpenTPW** | Ghidra |
@@ -201,6 +201,27 @@ The constants in the code are only seeds for a first-ever run. **Do not re-measu
 - After that, ~0.85 ms a frame: ~90 ms over a 6 s load.
 - Vsync stays on during the load: turning it off makes no difference.
 
+## The two-pass text class (`0x00491920` / `0x00491ab0`)
+
+Fork watch 2026-10-18 (`verify-ui-hud.md` C1), read from the listing and seen in the original's frames.
+
+| Address / value | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x00491920` | — | The constructor of a second text-control class. It writes vtable `0x006ff530` (`0x0049199c`). 22 call sites, among them the pause menu's item builder (`0x00485727`), the shared title builder `0x00492f60` (`0x0049309a`), the upgrade list's title (`0x004ae5f2`) and the lobby's park name (`0x004b8e0d`, id `0x1e0ef`, font 0, (252, 232, 7)) | Disassembly |
+| `0x006ff530` slot `+0x24` = `0x00491ab0` | — | Its render slot (`0x006ff554`). The eleven other label vtables from `0x006ff320` hold `0x0048f830` there | Disassembly |
+| `0x00491da1`-`0x00491e1a` | — | **Pass 1**: glyph colour (`0x80`, `0x80`, `0x80`, `0x80`) through `0x006ad6e0`, the rectangle moved to (x - 2, y + 2, x2 - 2, y2 + 2) (`0x00491dcc`-`0x00491dfb`), and the draw `0x006ae0f0` | Disassembly |
+| `0x00491e27`-`0x00491e84` | — | **Pass 2**: colour (`0xff` x 4), the rectangle unshifted, the draw `0x006ae0f0` again | Disassembly |
+| `0x0048f830` | — | The plain label render: one draw, white glyphs (`0x0048fa96`) unless `+0xdd` | Disassembly |
+
+So a menu item, a window title or a park name is a grey copy at half strength two pixels left and two down, then the
+text at full strength; the shadow is the class, not a flag (the 13 writes of `+0xdb` in `0x00480000`-`0x004c0000` have no
+reader). `0x006ae0f0` has four callers: `0x0048fbb0` (the plain label), `0x00491e1a` and `0x00491e84` (this class) and
+`0x00492986`. The pause menu ("Load", cyan) and the lobby park name ("Wonder Land", yellow) both show the darker copy
+in the original's frames. The options screen's labels do not: `0x004a43b0` and `0x004a4490` build the plain class
+(`0x0048f6a0`, `0x004a43f9` and `0x004a44d9`) in (0, 0, 0, 255) and font 6 (`0x007537b4`), and ours matches
+(`OptionsScreen.cs`, font 6, `UiColour.Black`, no shadow). Not read: whether the pass's grey replaces the text's own
+colour or combines with it; `UiText` halves the colour and draws it at half alpha.
+
 ## Escape game menu
 
 | Address / value | Original name | What it is | Evidence |
@@ -268,7 +289,7 @@ Verified with a silent XTEST harness at 1280x720 (the options screen's virtual x
 - the percent-to-loudness curve past the mixer's door — on the game's side it is a straight multiply (a slider's percent times 0.01 is its group's level, `0x006b59d0` and `0x006b5a30`, the float at `0x0070a280`; `audio.md`, "A channel's volume"), which percent / default keeps in proportion; how the mixer applies the number to a sample was not read;
 - anything against the original actually running: no reference screenshots of either screen exist locally;
 - the menu's hover tick rate taken as 30/s;
-- the 60 passed by `Sound_StopFading` taken as milliseconds;
+- the 60 passed by `Sound_StopFading` is a per-pass volume step, not milliseconds (`audio.md`, "The fade"); how often the library's service pass runs is not measured;
 - the `0.09 s` voice fade inferred from the 90 at `0x0051bcb0`;
 - `Game_StateMachine` `0x0055035a` and the postcard caller `0x004a9380` as quiet-stop callers, neither checked against OpenTPW;
 - the original's cue-timer behaviour after a cut (`0x00f79778`);

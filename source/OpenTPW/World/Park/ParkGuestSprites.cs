@@ -764,7 +764,14 @@ public sealed class ParkGuestSprites : ModelEntity
 			// naming a node of the ride's own model, and that node is where they are drawn, height and
 			// all. See Centre for why the choice lives in a function of its own.
 			var ground = field?.HeightAtWorld( x, y ) ?? 0f;
-			var centre = Centre( Seated( people, person.ThingId ), x, y, ground, sprite.Height );
+			var seat = Seated( people, person.ThingId );
+
+			// The original lifts a bouncing rider by a phase-driven sine height (FUN_00557c75; docs/exe/ride-operation.md,
+			// "The bounce riders' height"); here the rider stands on the node, unlifted.
+			if ( seat != null )
+				Unimplemented.Report( "RIDER_BOUNCE" );
+
+			var centre = Centre( seat, x, y, ground, sprite.Height );
 
 			WriteQuad( used++, centre, picture, mirrored, sprite.Alpha, pulled: Pulled );
 			_drawn.Add( new SpritePick.Drawn( person.ThingId, centre, picture.Width, picture.Height, picture.OriginX, picture.OriginY, mirrored ) );

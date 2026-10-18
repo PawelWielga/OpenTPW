@@ -13,6 +13,9 @@ namespace OpenTPW.UI;
 /// The purple skin every big button and dialog title wears (0x00491ab0) draws its text twice: first
 /// in grey at half strength, two pixels to the left and two down, and then at full strength where it
 /// belongs, which gives the lettering its dark edge. The plain label skin (0x0048f830) draws it once.
+/// The original's first pass sets the glyph colour to (0x80, 0x80, 0x80, 0x80); this halves the text's own
+/// colour instead, and whether the original's grey replaces the colour or combines with it is not read.
+/// docs/exe/ui.md, "The two-pass text class".
 /// </para>
 /// </summary>
 internal sealed class UiText

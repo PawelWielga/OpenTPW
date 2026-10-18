@@ -26,6 +26,8 @@ How the original game boots: `WinMain` takes a single-instance lock, builds the 
 |---|---|
 | 0x1 | Fullscreen or windowed. |
 | 0x200 | **Front end.** Set: intro movies, then the lobby. Clear: straight into state 9 (a park), and leaving the park quits. Nothing found clears it. |
+| 0x200000 | **`GraphicalOptions.RENDER32`** (`[0x007858a8]`, the key table at `0x00744300`, index 13). `FUN_0044d8f0` copies it in: 0 clears the bit, 1 sets it, any other value leaves it (`0x0044db41`-`0x0044db65`). The window setup turns it into the display depth it hands `0x0044df20` as argument 1, 32 set and 16 clear (`0x0044e20b`, `and eax,0x200000; neg; sbb; and eax,0x10; add eax,0x10`); that this ends in the display-mode call (`0x00563460`) is not read. `data/low.sam`, `med.sam` and `high.sam` all hold `RENDER32 0`, so the shipped presets run a 16-bit display. Nothing else writes the bit. (fork watch 2026-10-18, `verify-other-b.md` L1, `verify-ui-hud.md` U1) |
+| 0x400000 | **`GraphicalOptions.TEXTURE32`** (`[0x007858ac]`, index 14), set the same way (`0x0044db6a`-`0x0044db88`). The window setup turns it into the texture format index `2 + TEXTURE32` (`0x0044e1f4`, argument 4 of `0x0044df20`), which reaches the texture cache's init and `[0x008bd554]`: `textures.md`, "The texture cache's surface format". The three shipped `.sam` files hold `TEXTURE32 0` (Q492). (fork watch 2026-10-18, `verify-other-b.md` L1, `verify-ui-hud.md` U1) |
 | 0x800000, 0x1000000, 0x2000000 | Game types 0, 1 and 2, set by 0x00550d80, "SetGameType"; the mode object's constructor 0x00550ca0 derives the type from them and rewrites them. Type 1 runs the ONLINE CHAT init. |
 
 ## Boot init — `Boot_Init` 0x0054dcf0 (once)
@@ -53,8 +55,8 @@ one write is 0, in the initializer `FUN_0046c0b0`; a write through a pointer is 
 | State | What happens |
 |---|---|
 | 4 | Goes to 5. |
-| 5 | Once no key is held (ESC, Space, or the **unidentified** check 0x006595a8), `Intro_PlayBullfrogMovie` 0x0054df20 plays `Data\Movies\bf.tgq`. Then 6. |
-| 6 | Waits for the movie to end (0x0051b300 returns nonzero). ESC, Space or 0x006595a8 skips it (0x0051b350 stops it). Then 7. |
+| 5 | Once no key is held (ESC, Space, or a mouse button: 0x006595a8, below), `Intro_PlayBullfrogMovie` 0x0054df20 plays `Data\Movies\bf.tgq`. Then 6. |
+| 6 | Waits for the movie to end (0x0051b300 returns nonzero). ESC, Space or a mouse button (0x006595a8) skips it (0x0051b350 stops it). Then 7. |
 | 7 | Once no key is held, `Intro_PlayParkMovie` 0x0054e070 plays one park movie, chosen by the local day of the month & 7: 0 bub, 1 buc, 2 grav, 3 jug, 4 mir, 5 plan, 6 roc, 7 roll (`Data\Movies\*.tgq`). Then 8. |
 | 8 | Same as 6, then 1. |
 | 1 | **Front end load**, behind the loading screen with the bar. Loads weather and shadow textures (0x00550950: snow, raindrop, lightning, alphkid); the advisor model from `%s\Global\Advisor` (0x00429ba0); particles `Data\Particle\Tp2.plb`; the lobby object (0x005d5770, `DAT_00f82884`); then `FrontEnd_Init` and 0x00540900(0,1). The load is bracketed by 0x006591e3 and 0x00659201. Then `LoadingScreen_End`, `Sound_SetSpeechDuck(0)`, then 2. |
@@ -156,7 +158,7 @@ counted with `InterlockedIncrement`: the player reads and decodes on its own thr
 **Not established.** Which x87 precision the original decodes under. The unicorn runs used `0x027F` (53-bit, the
 Windows default); 64-bit gives the same pixels; 24-bit (Direct3D's default) changes 37.5% of the samples of
 `bf.tgq` frame 120, by up to 46 of 127 (`fpcw.py`). A movie port should not claim bit-exact until the decoding thread's control word is read in the
-original under Proton. Also unread: the colour tables' arithmetic and the skip key `0x006595a8`.
+original under Proton. Also unread: the colour tables' arithmetic.
 
 ## Tick rates
 
@@ -271,7 +273,7 @@ Evidence is a Ghidra trace of `/testme.exe` throughout; the column names what in
 | `DAT_0087906c` | | The current state. | State machine |
 | `DAT_00879068` | | Gate: the state machine runs once this is set, at the end of boot init. | State machine |
 | 0x0054df20 | `Intro_PlayBullfrogMovie` | Plays `Data\Movies\bf.tgq`. | Filename string |
-| 0x006595a8 | | **Unidentified** key/input check, used alongside ESC and Space to skip the movies. | Call sites in states 5–8 |
+| 0x006595a8 | | Returns the mouse-button word at `0x00FAA5BC`: one bit a button, `1 << button`, set by the button-down handler (`0x00658b02`-`0x00658b4e`) and cleared by the button-up (`0x00658b6c`-`0x00658bbe`), zeroed at `0x006585a0` and `0x006593f4`; any button counts. Used alongside ESC and Space to skip the movies. (fork watch 2026-10-18, `verify-other-b.md` L3) | Disassembly; call sites in states 5–8 (`0x0054e450`, `0x0054e4ae`, `0x0054e4ec`, `0x0054e546`) |
 | 0x0051b300 | | Returns nonzero when a movie has ended. | States 6 and 8 |
 | 0x0051b350 | | Stops the playing movie. | Skip path |
 | 0x0054e070 | `Intro_PlayParkMovie` | Plays one park movie chosen by day-of-month & 7. | Filename strings |

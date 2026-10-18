@@ -60,7 +60,7 @@ public sealed class ParkAudio : Entity
 	/// <summary>The parameter the rain's level is set under (<c>FUN_0051e830</c>'s 8); each of 33's four variations names it on its volume.</summary>
 	public const int RainParameter = 8;
 
-	/// <summary>What <c>Sound_StopFading</c> hands the library (<c>0x3c</c>, <c>0x0051c300</c>), taken as milliseconds.</summary>
+	/// <summary>A deviation: <c>Sound_StopFading</c> (<c>0x0051c300</c>) is a x0.6 volume step per service pass above sound detail 30 and a cut below (<c>audio.md</c>, "The fade"; Q509), not a 0.06 s ramp.</summary>
 	private const float RainFadeSeconds = 0.06f;
 
 	/// <summary>
@@ -191,7 +191,7 @@ public sealed class ParkAudio : Entity
 	/// <summary>How many cells each way from the pointer's the crowd is counted over (<c>FUN_004c8d30</c>'s third argument).</summary>
 	public const int CrowdVoiceReach = 4;
 
-	/// <summary>What <c>Sound_StopFading</c> hands the library (<c>0x3c</c>, <c>0x0051c300</c>), taken as milliseconds.</summary>
+	/// <summary>A deviation: <c>Sound_StopFading</c> (<c>0x0051c300</c>) is a x0.6 volume step per service pass above sound detail 30 and a cut below (<c>audio.md</c>, "The fade"; Q509), not a 0.06 s ramp.</summary>
 	private const float CrowdVoiceFadeSeconds = 0.06f;
 
 	/// <summary>

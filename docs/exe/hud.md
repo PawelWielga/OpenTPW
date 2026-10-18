@@ -501,6 +501,19 @@ R, by the button and over the buy screen, its cross at (714, 326) of 1024 x 768,
 In no game run: the bar's type `0x13` (its rows 76 and 80 score only in Full Simulation; the test holds it), a carried
 hire that is a researcher, the other three themes.
 
+### The research screen's workload slider and its red text (Q245)
+
+Fork watch 2026-10-18, `verify-ui-hud.md` U5 and U2, read in `FUN_004aa480`'s listing. With `c` = `FUN_004c9e60` (the sum
+of `ResearchAbility` over the researchers, `0x0078545c + 12 x grade`) and `most` = `FUN_004c9ed0` (`[0x007852f8]` x
+`[0x0078548c]`; `advisor-park.md` has both), the screen sets
+`limit = ((((100 - c) / 3) + c) << 10) / most` (`0x004aacce`-`0x004aacf9`) on the child `0xd2d12`, and the slider
+`0xd2d10`'s knob to `(workload - 70) x limit / 30` (`0x004aad01`-`0x004aad17`; `workload` is the lab's `+0x1460`; the
+division is by 30 through the magic `0x88888889`). The limit is kept at `[0x007cc1c0]`. The inverse, for a drag
+(`0x004a99ea`-`0x004a9a17`), clamps the slider's value to the limit and writes `workload = 30 x value / limit + 70` through
+`FUN_00503900`. So the workload runs 70 to 100 along the slider's travel up to the limit. Five calls to the text-colour
+setter `0x0065c5d5` in `FUN_004aa480` pass (224, 86, 86, 255): all five of the literal calls of that colour in the 134 the scan found; which of its labels they colour is not assigned, nor is the ball's travel (`0x0066b088`, `0x0066b771`,
+`0x0066bb9b`).
+
 ### The Staff Training Budgets screen (Q352)
 
 Screen 9 of the Money category, `staffcosts`. Read 2026-10-13: the builder `FUN_004b2750` (decompiled, its calls
@@ -3078,10 +3091,25 @@ Read 2026-10-15 (Q383). `FUN_0065c428( across, down )` posts `0xc00` to the cont
 with the two bytes at the message's `+4` and `+5`. A label's skin (vtable `0x006ff320`; the label `FUN_0048f6a0`, the
 number painter `FUN_0048fde0` and the money cell `FUN_00490250` alike) takes it in its slot `+0xc`, `FUN_0048fc40`:
 flag `0x400` stores the across byte at `+0xd8`, `0x800` the down byte at `+0xd9`. Each constructor writes 0 and 1 there,
-so **a cell no styler aligns stands at ( 0, 1 ): from the left, in the middle**. `LabelSkin_Draw` (`0x0048f862`) hands
-the across byte to the text renderer as 0 left, 1 centre, 2 right, after `FUN_004925a0` swaps 0 and 2 where the
-language is `0x40d` (Hebrew; English never is), and the down byte as 0 top, 1 middle, 2 bottom (`FUN_006aeb10`: the
-renderer's `+0xa4` and `+0xa0`).
+so **a cell no styler aligns stands at ( 0, 1 ): from the left, in the middle**. `LabelSkin_Draw` (`0x0048f862`) **translates**
+the two bytes into the renderer's own codes, after `FUN_004925a0` swaps 0 and 2 where the language is `0x40d` (Hebrew;
+English never is). The renderer's across code `+0xa4` is 0 left, 1 right, 2 centre (its setter `0x006adf60` accepts 0 to 2),
+so the label's byte 2 (right) becomes 1 (`0x0048f888`) and its byte 1 (centre) becomes 2. The renderer's down code `+0xa0`
+is 2 middle, 5 bottom and anything else top (its setter `0x006adf20` accepts 2, 4 and 5); the label's down bytes 0, 1, 2
+(top, middle, bottom) become 4, 2, 5 (`0x0048fa1c`; fork watch 2026-10-18, `verify-other-a.md` M2 read the mapping,
+`verify-other-b.md` L4 did not).
+
+**The renderer places the block, `FUN_006aeb10`, and each line, `FUN_006ae550`, with truncating integer arithmetic**
+(fork watch 2026-10-18, `verify-other-b.md` L4, `verify-other-a.md` M2). `FUN_006aec80` is the word-wrapper, not a width:
+it breaks at the box width `+0xa8`, adds each line through `0x006add90` and returns the count; a line's width is its
+record's third word. The block's height is the line count times the line height `+0xbc`. Down: code 2 puts the top at
+`(bottom - top - h) / 2 + top` (`cdq; sub; sar`, rounding toward nought, no clamp, so a block taller than the box rises
+above its top), code 5 at `bottom - h`, otherwise `top` (results `+0xb0`, `+0xb8`). Across, with the block width `w`
+(`+0x80`): code 1 puts the left at `right - w`, code 2 at `(right - left - w) / 2 + left` truncated, otherwise `left`
+(results `+0xac`, `+0xb4`). Each line then moves by `right - lineWidth - left` for code 1, and for code 2 by that
+shifted right once, unsigned (`0x006ae550`). `UiText.Align` centres in floats and rounds the drawn position
+(`MathF.Round`), where the original truncates: a one-pixel difference is possible and unmeasured; inside the texture
+its `(int)` cast truncates as the original does.
 
 The stylers, each call on the cell just made (`ESI`, the listing; the decompiler drops it):
 

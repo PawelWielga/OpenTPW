@@ -176,9 +176,10 @@ public sealed class Advisor : Entity
 	private const float CutOffSeconds = 0.01f;
 
 	/// <summary>
-	/// How long his voice takes to fade when he is quietened. Advisor_StopQuietly (0x005996d0) hands
-	/// Sound_StopFading (0x0051c300) 60, which the sound library takes on to a fade (0x006b8930) in a
-	/// unit that was not traced. It is taken as milliseconds.
+	/// How long his voice takes to fade when he is quietened. <b>A deviation:</b> Advisor_StopQuietly (0x005996d0) hands
+	/// Sound_StopFading (0x0051c300), which at sound detail above SoundInfo.FADETOGGLE (30) takes 60 percent off the
+	/// voice's volume on each service pass and otherwise cuts it (docs/exe/audio.md, "The fade"; Q509). This flat
+	/// 0.06 s ramp stands in for both.
 	/// </summary>
 	private const float QuietenSeconds = 0.06f;
 
