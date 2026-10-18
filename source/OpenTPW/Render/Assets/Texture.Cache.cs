@@ -82,10 +82,11 @@ partial class Texture
 
 		// Everything the loading road assigns. Alpha is a property of the file or the pixels these
 		// handles hold, so a shared texture has to answer the same as the one that loaded it - left
-		// out, every one of them read as opaque. The other four are the same argument: the
-		// sampler its flags asked for, the size, and the path it came from.
+		// out, every one of them read as opaque. The other five are the same argument: the
+		// sampler its flags asked for, whether its texels are cut, the size, and the path it came from.
 		Alpha = cached.Alpha;
 		SamplerType = cached.SamplerType;
+		Cut = cached.Cut;
 		Width = cached.Width;
 		Height = cached.Height;
 		Path = cached.Path;

@@ -85,6 +85,13 @@ internal static class Game
 			Log.Warning( $"Cache folder: {cacheFolder} cannot be made ({e.GetType().Name}: {e.Message}); nothing in the game reads it" );
 		}
 
+		// The texture format, read once from the detail file the game starts with, as the original's window setup takes
+		// it (0x0044e1f4).
+		Texture.KeepsEightBits = Level.Texture32( Level.DetailFile );
+		Log.Info( Texture.KeepsEightBits
+			? $"Textures: {Level.DetailFile}'s TEXTURE32 1, so every texture keeps eight bits a channel (A8R8G8B8)"
+			: $"Textures: {Level.DetailFile}'s TEXTURE32 0, so the game's art is cut to four bits a channel (A4R4G4B4)" );
+
 		//
 		// Init renderer
 		//

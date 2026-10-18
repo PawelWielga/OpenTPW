@@ -666,8 +666,8 @@ internal sealed class ParkObjectWindow : UiWindow
 			if ( At <= 0f )
 				return;
 
-			_green ??= new Texture( [0x20, 0xB0, 0x20, 0xFF], 1, 1 );
-			_red ??= new Texture( [0xC0, 0x20, 0x20, 0xFF], 1, 1 );
+			_green ??= new Texture( [0x20, 0xB0, 0x20, 0xFF], 1, 1, TextureFlags.OwnPixels );
+			_red ??= new Texture( [0xC0, 0x20, 0x20, 0xFF], 1, 1, TextureFlags.OwnPixels );
 
 			var box = Pixels;
 			var split = box.Width * Math.Clamp( At, 0f, 1f );

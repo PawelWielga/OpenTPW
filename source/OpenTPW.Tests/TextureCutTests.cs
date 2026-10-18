@@ -1,0 +1,125 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
+using System.Linq;
+
+namespace OpenTPW.Tests;
+
+/// <summary>
+/// The shipped game's textures are A4R4G4B4: every channel cut to its top four bits as it is stored, and the nibble
+/// read back as <c>n / 15</c> (docs/exe/textures.md, "The texture cache's surface format"). <c>TEXTURE32</c> 1 keeps
+/// eight.
+/// </summary>
+[TestClass]
+public class TextureCutTests
+{
+	/// <summary>A channel keeps its top four bits, never rounded, and a nibble is widened to <c>n x 17</c>.</summary>
+	/// <remarks><b>Mutation:</b> rounding in place of the cut, the nibble widened as <c>n &lt;&lt; 4</c>, or the cut
+	/// dropped, fails a pair.</remarks>
+	[TestMethod]
+	public void AChannelKeepsItsTopFourBitsWidenedByRepeatingThem()
+	{
+		var pairs = new (byte In, byte Out)[] { (0, 0), (15, 0), (16, 17), (14, 0), (40, 34), (239, 238), (240, 255), (255, 255) };
+
+		foreach ( var (value, cut) in pairs )
+			Assert.AreEqual( cut, Texture.CutChannel( value ), $"{value}" );
+	}
+
+	/// <summary>
+	/// Every level is cut, each the rounded mean of the eight-bit level above's two by two, down to one texel; an odd
+	/// side's last column is its own.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the levels made from the cut level above, the mean unrounded, the levels stopped short,
+	/// or a level left uncut, fails.</remarks>
+	[TestMethod]
+	public void EveryLevelIsTheMeanOfTheEightBitLevelAboveCut()
+	{
+		// Three by two: a row of 30, 33, 200 over a row of 31, 33, 100, alpha 255; one byte a texel is spelt out below.
+		byte[] Texel( byte v ) => [v, v, v, 255];
+		var data = new[] { 30, 33, 200, 31, 33, 100 }.SelectMany( v => Texel( (byte)v ) ).ToArray();
+
+		var levels = Texture.CutLevels( data, 3, 2 ).ToList();
+
+		Assert.AreEqual( 2, levels.Count, "3 x 2, then 1 x 1" );
+		Assert.AreEqual( (3, 2), (levels[0].Width, levels[0].Height) );
+		CollectionAssert.AreEqual( new byte[] { 17, 34, 204, 17, 34, 102 }, Enumerable.Range( 0, 6 ).Select( i => levels[0].Pixels[i * 4] ).ToArray() );
+		Assert.AreEqual( 255, levels[0].Pixels[3], "alpha 255 stays 255" );
+
+		// (30 + 33 + 31 + 33 + 2) / 4 = 32 of the eight-bit texels -> 34; the cut texels' 17, 34, 17, 34 would give 25 -> 17.
+		Assert.AreEqual( (1, 1), (levels[1].Width, levels[1].Height) );
+		Assert.AreEqual( 34, levels[1].Pixels[0] );
+	}
+
+	/// <summary>The game's art is cut unless <c>TEXTURE32</c> is 1; OpenTPW's own pixels never are.</summary>
+	/// <remarks><b>Mutation:</b> either test in <c>CutsFor</c> dropped or turned round fails.</remarks>
+	[TestMethod]
+	public void TheGamesArtIsCutUnlessItKeepsEightBits()
+	{
+		var was = Texture.KeepsEightBits;
+
+		try
+		{
+			Texture.KeepsEightBits = false;
+			Assert.IsTrue( Texture.CutsFor( TextureFlags.Repeat ) );
+			Assert.IsFalse( Texture.CutsFor( TextureFlags.OwnPixels | TextureFlags.PointFilter ) );
+
+			Texture.KeepsEightBits = true;
+			Assert.IsFalse( Texture.CutsFor( TextureFlags.Repeat ) );
+		}
+		finally
+		{
+			Texture.KeepsEightBits = was;
+		}
+	}
+
+	/// <summary>No shipped detail file sets <c>TEXTURE32</c>; a file saying 1 keeps eight, and 2 does not.</summary>
+	/// <remarks><b>Mutation:</b> the value's test made <c>!= 0</c> keeps eight at 2; turned round, the shipped files keep
+	/// eight; the key ignored, the written 1 is cut.</remarks>
+	[TestMethod]
+	public void OnlyTexture32OneKeepsEightBits()
+	{
+		var folder = Path.Combine( Path.GetTempPath(), $"opentpw-texture32-{System.Guid.NewGuid():N}" );
+		Directory.CreateDirectory( folder );
+
+		try
+		{
+			File.WriteAllText( Path.Combine( folder, "one.sam" ), "GraphicalOptions.TEXTURE32\t\t1\n" );
+			File.WriteAllText( Path.Combine( folder, "two.sam" ), "GraphicalOptions.TEXTURE32\t\t2\n" );
+			FileSystem = new BaseFileSystem( folder );
+			Log = new();
+
+			Assert.IsTrue( Level.Texture32( "one.sam" ) );
+			Assert.IsFalse( Level.Texture32( "two.sam" ) );
+		}
+		finally
+		{
+			Directory.Delete( folder, true );
+		}
+
+		FileSystem = GameData.Required();
+
+		Assert.IsFalse( Level.Texture32( "low.sam" ) );
+		Assert.IsFalse( Level.Texture32( "med.sam" ) );
+		Assert.IsFalse( Level.Texture32( "high.sam" ) );
+	}
+
+	/// <summary>
+	/// The sea's <c>gby_sur1</c> keeps red 7.4 of its 13.5 once cut, 63% of its texels under 16 storing nought
+	/// (<c>q492/census-gby_sur.txt</c>); green 79.6 keeps 76.6.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the nibble widened as <c>n &lt;&lt; 4</c> gives red 7.0 and green 72.1; rounding, about 13.5.</remarks>
+	[TestMethod]
+	public void TheSeasTextureKeepsLittleOfItsRed()
+	{
+		FileSystem = GameData.Required();
+		Log = new();
+
+		var (image, _) = Texture.ReadWct( "generic/dynamic/textures/gby_sur1.wct" );
+		var cut = Texture.CutLevels( image.Data, image.Width, image.Height ).First().Pixels;
+		var texels = cut.Length / 4;
+
+		double Mean( int c ) => Enumerable.Range( 0, texels ).Average( i => cut[(i * 4) + c] );
+
+		Assert.AreEqual( 7.4, Mean( 0 ), 0.05, "red" );
+		Assert.AreEqual( 76.6, Mean( 1 ), 0.05, "green" );
+	}
+}

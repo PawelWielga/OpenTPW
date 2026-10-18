@@ -108,7 +108,7 @@ internal sealed class UiText
 		else
 		{
 			_texture?.Delete();
-			_texture = new Texture( pixels, width, height );
+			_texture = new Texture( pixels, width, height, TextureFlags.OwnPixels );
 		}
 
 		_width = width;

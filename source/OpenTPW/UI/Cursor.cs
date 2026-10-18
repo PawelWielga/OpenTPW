@@ -37,7 +37,7 @@ public class Cursor : Panel, Singleton<Cursor>
 	private void LoadTexture()
 	{
 		var cursorPath = $"/data/ui/cursors/{GetImageName( _cursorType )}.tga";
-		_texture = new Texture( GameDir.GetPath( cursorPath ), TextureFlags.PinkChromaKey );
+		_texture = new Texture( GameDir.GetPath( cursorPath ), TextureFlags.PinkChromaKey | TextureFlags.OwnPixels );
 		_hotspot = HotspotOf( _cursorType );
 	}
 

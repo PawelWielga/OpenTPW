@@ -226,10 +226,10 @@ public partial class Texture : Asset
 		if ( NativeTexture == null || data.Length < Width * Height * 4 )
 			return;
 
-		var ptr = Marshal.AllocHGlobal( data.Length );
-		Marshal.Copy( data, 0, ptr, data.Length );
-		Device.UpdateTexture( NativeTexture, ptr, (uint)data.Length, 0, 0, 0, Width, Height, 1, 0, 0 );
-		Marshal.FreeHGlobal( ptr );
+		if ( Cut )
+			Upload( data );
+		else
+			UpdateLevel( data, Width, Height, 0 );
 	}
 
 	/// <summary>
@@ -355,6 +355,8 @@ public partial class Texture : Asset
 
 		SamplerType = SamplerFor( flags );
 
+		Cut = CutsFor( flags );
+
 		uint mipLevels = (uint)CalculateMipLevels( (int)width, (int)height, 1 );
 
 		var textureDescription = TextureDescription.Texture2D(
@@ -368,24 +370,118 @@ public partial class Texture : Asset
 
 		var texture = Device.ResourceFactory.CreateTexture( textureDescription );
 
-		var textureDataPtr = Marshal.AllocHGlobal( data.Length );
-		Marshal.Copy( data, 0, textureDataPtr, data.Length );
-		Device.UpdateTexture( texture, textureDataPtr, (uint)data.Length, 0, 0, 0, width, height, 1, 0, 0 );
-		Marshal.FreeHGlobal( textureDataPtr );
-
-		var textureView = Device.ResourceFactory.CreateTextureView( texture );
-
 		Path = debugName;
 		NativeTexture = texture;
-		NativeTextureView = textureView;
 		Width = width;
 		Height = height;
+
+		Upload( data );
+
+		NativeTextureView = Device.ResourceFactory.CreateTextureView( texture );
+
+		Register();
+	}
+
+	/// <summary>
+	/// <c>GraphicalOptions.TEXTURE32</c> 1 in the detail file the game starts with: every texture kept at eight bits a
+	/// channel, the original's format 3 (A8R8G8B8). No shipped detail file sets it, so the game's art is cut to four
+	/// (<see cref="CutLevels"/>), as the shipped game draws it, banding and all. Set once at boot (<c>Game</c>), before
+	/// the first texture.
+	/// </summary>
+	public static bool KeepsEightBits { get; set; }
+
+	/// <summary>Whether this texture's texels are cut to four bits a channel - see <see cref="CutLevels"/>.</summary>
+	public bool Cut { get; private set; }
+
+	/// <summary>Whether a texture asked for with <paramref name="flags"/> is cut: unless the game keeps eight bits or the pixels are OpenTPW's own.</summary>
+	internal static bool CutsFor( TextureFlags flags ) => !KeepsEightBits && !flags.HasFlag( TextureFlags.OwnPixels );
+
+	/// <summary>
+	/// Puts <paramref name="data"/> in every level: cut, every level made here (<see cref="CutLevels"/>); kept at eight,
+	/// the first level and the device's mip maps.
+	/// </summary>
+	private void Upload( byte[] data )
+	{
+		if ( Cut )
+		{
+			var level = 0u;
+
+			foreach ( var (pixels, w, h) in CutLevels( data, (int)Width, (int)Height ) )
+				UpdateLevel( pixels, (uint)w, (uint)h, level++ );
+
+			return;
+		}
+
+		UpdateLevel( data, Width, Height, 0 );
 
 		Render.ImmediateSubmit( cmd =>
 		{
 			cmd.GenerateMipmaps( NativeTexture );
 		} );
+	}
 
-		Register();
+	private void UpdateLevel( byte[] pixels, uint width, uint height, uint level )
+	{
+		var ptr = Marshal.AllocHGlobal( pixels.Length );
+		Marshal.Copy( pixels, 0, ptr, pixels.Length );
+		Device.UpdateTexture( NativeTexture, ptr, (uint)pixels.Length, 0, 0, 0, width, height, 1, level, 0 );
+		Marshal.FreeHGlobal( ptr );
+	}
+
+	/// <summary>
+	/// A channel as the shipped game's A4R4G4B4 surface holds it and the device hands it back: cut to its top four bits
+	/// (<c>TexFormat_BuildChannelTables</c> <c>0x005839f0</c>, <c>v &gt;&gt; 4</c>, never rounded), and the nibble read
+	/// as <c>n / 15</c>, the unsigned-normalised rule of Direct3D, OpenGL and Vulkan alike, so <c>n x 17</c> of 255.
+	/// </summary>
+	internal static byte CutChannel( byte value ) => (byte)((value >> 4) * 17);
+
+	/// <summary>
+	/// Every level of a cut texture, the first first, each channel of each through <see cref="CutChannel"/>, alpha too:
+	/// the original stores every level of every texture in the one format (<c>textures.md</c>, "The texture cache's
+	/// surface format"). How it fills a level below the first is not read; here each is the rounded mean of the eight-bit
+	/// level above's two by two (its last row or column alone on an odd side), cut, down to one texel, where the
+	/// original makes four levels (<c>0x0058da96</c>).
+	/// </summary>
+	internal static IEnumerable<(byte[] Pixels, int Width, int Height)> CutLevels( byte[] data, int width, int height )
+	{
+		var levels = (int)Math.Floor( Math.Log2( Math.Max( width, height ) ) ) + 1;
+		var level = data;
+
+		for ( var i = 0; i < levels; ++i )
+		{
+			var cut = new byte[width * height * 4];
+
+			for ( var j = 0; j < cut.Length; ++j )
+				cut[j] = CutChannel( level[j] );
+
+			yield return (cut, width, height);
+
+			if ( i + 1 == levels )
+				break;
+
+			var w = Math.Max( 1, width / 2 );
+			var h = Math.Max( 1, height / 2 );
+			var next = new byte[w * h * 4];
+
+			for ( var y = 0; y < h; ++y )
+				for ( var x = 0; x < w; ++x )
+					for ( var c = 0; c < 4; ++c )
+					{
+						int sum = 0, count = 0;
+
+						for ( var dy = 0; dy < 2 && (2 * y) + dy < height; ++dy )
+							for ( var dx = 0; dx < 2 && (2 * x) + dx < width; ++dx )
+							{
+								sum += level[((((2 * y) + dy) * width) + (2 * x) + dx) * 4 + c];
+								++count;
+							}
+
+						next[((y * w) + x) * 4 + c] = (byte)((sum + (count / 2)) / count);
+					}
+
+			level = next;
+			width = w;
+			height = h;
+		}
 	}
 }

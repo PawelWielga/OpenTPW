@@ -8001,6 +8001,27 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `LIGHTING_OFF` gone. At low, B's banner box 87.2 to 135.9 in luminance (the original, shot again at low, 132.3; lit
   90.0), the brick and the road 0.0, A's grass (29.9, 139.2, 28.6) exactly; medium main's to 0.0
   (`q516/PREDICTION.txt`: P1 to P6, P8, P9 held, P7 missed on a stale baseline; `q516/side-by-side.png`).
+- [x] **Q700. Ours cuts every texture to four bits a channel, as the original's A4R4G4B4.** From Q492 (`textures.md`,
+  "The texture cache's surface format"): the shipped presets run format 2, and the original stores each channel as
+  `v >> 4` (`TexFormat_BuildChannelTables`, `0x005839f0`), alpha too; ours makes every texture `R8_G8_B8_A8_UNorm`
+  (`Texture.CreateTexture`) and keeps eight, only `ProceduralGround` cutting (Q489). Build the cut where a texture is
+  made (one site), read how the device widens a nibble first if it can be read, and measure the sea at Q490's camera B
+  against `q490/run2` (ours (6.1, 58.4, 72.0) over a wave, the original's film (1.7, 54.5, 68.8)); the cut alone leaves
+  `gby_sur`'s red 7.4 to 9.8, so predict what is left. Q460's rounding sits under the nibbles.
+  **Alexah (2026-10-18): both.** Cut to the original's four bits a channel by default, as the shipped game draws it,
+  banding and all; an option keeps eight (a nice fix, said at the site and in the option's own text).
+  The eight-bit option is the original's own `GraphicalOptions.TEXTURE32 1` (format 3, 8-8-8-8; `textures.md`), which no
+  shipped detail file sets: the review of Q492 (`handoff/review4/VERIFY-1.md`, q492 5).
+  Done 2026-10-18, `alexah/610-four-bit-textures`: `Texture.CutChannel` (`v >> 4`, the nibble read as `n / 15`, so
+  `n x 17`, alpha too) on every level of every texture of the game's art, each level below the first the rounded mean of
+  the eight-bit level above, cut; `Level.Texture32` reads the start's detail file once (`Game`), and `TEXTURE32 1` keeps
+  eight with the device's mip maps, as before. `TextureFlags.OwnPixels` keeps eight for OpenTPW's stand-ins and the
+  sky's tint, and for the loading screen, the pointer and the letters, not read (Q517). Read: `MIPMAP` gives four levels
+  a texture (`textures.md`). At camera B, the brick (115.5, 54.0, 53.8) against the original's (116.1, 54.3, 53.4),
+  main's (111.9, 60.8, 60.9); the road (50.7, 49.7, 52.1) against (48.8, 48.8, 52.0), main's (51.3, 49.9, 58.9); the sea's
+  eight held phases (3.1, 55.0, 69.9) against (1.3, 55.1, 69.4), main's (5.9, 57.9, 71.3); at A the grass nearer in red
+  and blue. `TEXTURE32 1` drew main's frames (mad 0.00 to 0.04). 5 tests; 12 of 12 bugs put back fail (`q700/`).
+  Q460's rounding is not touched. Filed Q517 to Q519.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

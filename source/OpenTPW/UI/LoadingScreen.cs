@@ -116,8 +116,8 @@ internal sealed class LoadingScreen : IDisposable
 		// the size the window is when the load starts and kept, as the original chooses its folder
 		// once (LoadingScreen_Begin, 0x00587479); only where it is drawn follows the window.
 		_picture = LoadPicture( _width );
-		_darkRed = new Texture( [0x80, 0x00, 0x00, 0xFF], 1, 1 );
-		_red = new Texture( [0xFF, 0x00, 0x00, 0xFF], 1, 1 );
+		_darkRed = new Texture( [0x80, 0x00, 0x00, 0xFF], 1, 1, TextureFlags.OwnPixels );
+		_red = new Texture( [0xFF, 0x00, 0x00, 0xFF], 1, 1, TextureFlags.OwnPixels );
 
 		Logger.OnLog += OnLog;
 		_current = this;
@@ -200,7 +200,7 @@ internal sealed class LoadingScreen : IDisposable
 		using var stream = FileSystem.OpenRead( chosen );
 		var image = ImageResult.FromStream( stream, ColorComponents.RedGreenBlueAlpha );
 
-		return new Texture( image.Data, image.Width, image.Height );
+		return new Texture( image.Data, image.Width, image.Height, TextureFlags.OwnPixels );
 	}
 
 	private void OnLog( Logger.Level severity, string text )
@@ -268,7 +268,7 @@ internal sealed class LoadingScreen : IDisposable
 
 		_statusPixels = new byte[_statusBox.Width * _statusBox.Height * 4];
 		_status?.Delete();
-		_status = new Texture( _statusPixels, _statusBox.Width, _statusBox.Height, TextureFlags.PointFilter );
+		_status = new Texture( _statusPixels, _statusBox.Width, _statusBox.Height, TextureFlags.PointFilter | TextureFlags.OwnPixels );
 
 		// Whatever was written into the strip that has gone has to be written into the new one.
 		_lineShown = null;

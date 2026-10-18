@@ -228,7 +228,7 @@ public class Sky : Entity
 		_cloudCoverage = cloudAverage.W;
 
 		// No ramp to flood where nothing floods it - see the note on tinted above.
-		_tintRamp = tinted ? new Texture( _tintPixel, 1, 1 ) : null;
+		_tintRamp = tinted ? new Texture( _tintPixel, 1, 1, TextureFlags.OwnPixels ) : null;
 
 		_gradient = GradientRamp( _directory, out _gradientColour );
 		_bandRamp = White();

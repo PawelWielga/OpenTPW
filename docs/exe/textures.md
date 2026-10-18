@@ -247,13 +247,31 @@ system-memory textures (`DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY`, `0x1800`) thro
 `render-states.md`) chooses its render state, not its surface: in the shipped game all three are A4R4G4B4, a cut-out or
 graded texture keeping its alpha's top four bits and an opaque one 15.
 
+**Four levels a texture, every one in the format** (Q700). `TexCache_SetDefaults` (`0x0058d0f0`) starts with no mip
+levels; `TexCache_Init` sets four (`[+0x18e8]`, `0x0058dab0`) and the cache's bit 2 when `[0x008bd550]` has bit 2, which
+`DetailFile_Apply` copies from `GraphicalOptions.MIPMAP` (`[0x007858a4]`, key 12 of the table at `0x00744300`,
+`0x0044db1e`; 1 in all three shipped files). `TexCache_MeasureSpace` (`0x0058d400`) keeps them only where the renderer
+`[0x008bd524]` is 1 (live 1) and the space measured is over 64 of its units, else logs "NOTICE not enough space for
+mipmaps, creating surfaces without" and clears both; `TexCache_CreateAllSlots` (`0x0058d670`) hands the count to every
+slot (`TexCache_CreateSlots`'s last argument, a slot over one level sized four thirds). How a level below the first is
+filled is not read.
+
 The sea's three `gby_sur` (`q492/census-gby_sur.txt`, decoded by this game's reader, as `wctorig.py` does not read
 LZSS) average red 13.5 to 15.2 with 60 to 63% of texels under 16; the cut leaves 7.4 to 9.8 (a nibble taken back as
-`n x 17`). How the device widens a nibble when it samples, and what the 16-bit display (`RENDER32` 0) keeps after it,
-are not read. Not read either: `FUN_0057b6e0`'s format-2 branch (`0x0057b716`).
+`n x 17`). How the device widens a nibble is not read from Proton's code; the unsigned-normalised rule (`n / 15`, so
+`n x 17` of 255) is measured to hold well enough: at camera B the original's sea period reads (1.3, 55.1, 69.4), ours
+cut (3.1, 55.0, 69.9) and uncut (5.9, 57.9, 71.3), and the brick (116.1, 54.3, 53.4) against ours cut (115.5, 54.0, 53.8)
+and uncut (111.9, 60.8, 60.9) (`q700/PREDICTION.txt`, P9-P11). The red left over the sea's is most likely the 16-bit
+display (`RENDER32` 0), whose 5-6-5 OpenTPW does not draw; not read. Not read either: `FUN_0057b6e0`'s format-2
+branch (`0x0057b716`).
 
-**OpenTPW** makes every texture `R8_G8_B8_A8_UNorm` (`Texture.CreateTexture`) and keeps all eight bits; only
-`ProceduralGround`'s sheet is cut to the top four (Q489). Whether ours cuts every texture the same is Q700.
+**OpenTPW** cuts every texture of the game's art the same (Q700, `Texture.CutChannel`, `v >> 4` widened to `n x 17`,
+alpha too), unless the detail file the game starts with says `TEXTURE32 1` (`Texture.KeepsEightBits`, the original's
+format 3). Each level is made on the processor, the rounded mean of the eight-bit level above's two by two, cut, down to
+one texel (the original's four levels and its filler not followed). Kept at eight (`TextureFlags.OwnPixels`): the
+one-colour stand-ins and the sky's tint, which are OpenTPW's own, and the loading screen, the pointer and the letters,
+whose way to the screen in the original is not read (Q517). The procedural ground's sheet goes through the same cut,
+so a path's texels, which its compositor reads from the locked surface as `n << 4` (Q489), reach the screen as `n x 17`.
 
 ## The zlib codec, `FUN_00593ab0`
 

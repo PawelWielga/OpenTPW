@@ -128,7 +128,7 @@ internal sealed class ParkFootprintPicture : UiControl
 			if ( !_textures.TryGetValue( square.Mark, out var texture ) )
 			{
 				var colour = ColourOf( square.Mark );
-				texture = new Texture( [colour.R, colour.G, colour.B, (byte)MathF.Round( Strength * 255f )], 1, 1 );
+				texture = new Texture( [colour.R, colour.G, colour.B, (byte)MathF.Round( Strength * 255f )], 1, 1, TextureFlags.OwnPixels );
 				_textures[square.Mark] = texture;
 			}
 

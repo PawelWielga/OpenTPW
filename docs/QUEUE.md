@@ -53,17 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q700. Ours cuts every texture to four bits a channel, as the original's A4R4G4B4.** From Q492 (`textures.md`,
-  "The texture cache's surface format"): the shipped presets run format 2, and the original stores each channel as
-  `v >> 4` (`TexFormat_BuildChannelTables`, `0x005839f0`), alpha too; ours makes every texture `R8_G8_B8_A8_UNorm`
-  (`Texture.CreateTexture`) and keeps eight, only `ProceduralGround` cutting (Q489). Build the cut where a texture is
-  made (one site), read how the device widens a nibble first if it can be read, and measure the sea at Q490's camera B
-  against `q490/run2` (ours (6.1, 58.4, 72.0) over a wave, the original's film (1.7, 54.5, 68.8)); the cut alone leaves
-  `gby_sur`'s red 7.4 to 9.8, so predict what is left. Q460's rounding sits under the nibbles.
-  **Alexah (2026-10-18): both.** Cut to the original's four bits a channel by default, as the shipped game draws it,
-  banding and all; an option keeps eight (a nice fix, said at the site and in the option's own text).
-  The eight-bit option is the original's own `GraphicalOptions.TEXTURE32 1` (format 3, 8-8-8-8; `textures.md`), which no
-  shipped detail file sets: the review of Q492 (`handoff/review4/VERIFY-1.md`, q492 5).
 - [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
   listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
   the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for
@@ -2132,6 +2121,22 @@ filed the items that cite it.
   the track's (`FUN_00536380`, `FUN_00536350`, `FUN_00536340`, the add-on test) not read. The stock park reaches neither
   (map types 0, 1, 2, 3, 4, 7, 9, 10, 30 and track types 7, 12, 25, `parkfile.show_map` on `q325/stock.TPWS`); that a
   built track ride is what makes them is inferred from the rows' words and `c_pylon`: build after the track rides. Confirm in both games over a built coaster's track and its pylons.
+- [ ] **Q517. Do the loading screen, the pointer and the letters pass the four-bit cut? Decode first.** From Q700
+  (`textures.md`, "The texture cache's surface format"): ours keeps them at eight bits (`TextureFlags.OwnPixels`) because
+  how the original puts them on the screen is not read: the loading screen's picture (`LoadingScreen_Begin`,
+  `0x00587380`), the `.ani` pointer, and the `.bf4` letters. Find whether each is a texture of the cache (cut to
+  A4R4G4B4) or a blit to the display, then cut what the original cuts. Confirm by a frame pair of the help bar's letters
+  and the pointer in both games.
+- [ ] **Q518. The 16-bit display.** From Q700 (`q700/PREDICTION.txt`, P3, P9): with the textures cut, the sea at camera
+  B still reads red 3.1 against the original's 1.3, and the shipped presets hold `RENDER32 0`, a 16-bit display
+  (`boot.md`, `0x0044e20b`), where ours draws eight bits a channel. Decode first what the original's frame keeps at 16
+  bits (5-6-5, and whether the device dithers or cuts), measured on its own frames at its own resolution, then decide
+  with Alexah whether ours draws the same.
+- [ ] **Q519. A texture's mip levels: four, and how the original fills them.** From Q700 (`textures.md`, "Four levels a
+  texture"): the original gives each texture four levels where the cache has room (`TexCache_MeasureSpace`,
+  `0x0058d400`); ours makes every level down to one texel, each the rounded mean of the eight-bit level above, cut, a
+  filter not read. Read the filler (what writes a level below the first: the codecs, or a downsample of the surface),
+  then build it. Confirm by a far camera over the sea and the brick in both games.
 
 ## B. Docs and comments
 

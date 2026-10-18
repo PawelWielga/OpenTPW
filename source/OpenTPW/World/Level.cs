@@ -1128,7 +1128,7 @@ public class Level
 	/// The detail file for the options' graphics quality - low.sam, med.sam or high.sam, going by their names - which
 	/// starts at medium (0x00423690).
 	/// </summary>
-	private static string DetailFile => GameOptions.Current.GraphicsQuality switch
+	internal static string DetailFile => GameOptions.Current.GraphicsQuality switch
 	{
 		0 => "low.sam",
 		2 => "high.sam",
@@ -1152,6 +1152,27 @@ public class Level
 		}
 
 		return 2;
+	}
+
+	/// <summary>
+	/// A detail file's <c>GraphicalOptions.TEXTURE32</c>: 0 in all three shipped, the original's texture format 2,
+	/// A4R4G4B4; 1 is its format 3, A8R8G8B8 (<c>0x0044e1f4</c>, <c>2 + TEXTURE32</c>; <c>textures.md</c>, "The texture
+	/// cache's surface format"). <c>DetailFile_Apply</c> copies only 0 and 1 into the flag word, which starts clear, so
+	/// any other value, or a file that will not read, is 0.
+	/// </summary>
+	internal static bool Texture32( string detailFile )
+	{
+		try
+		{
+			if ( int.TryParse( new SettingsFile( $"/{detailFile}" )["GraphicalOptions.TEXTURE32"], out var value ) )
+				return value == 1;
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"Textures: {detailFile} would not load, so every texture is cut to four bits a channel - {e.Message}" );
+		}
+
+		return false;
 	}
 
 	/// <summary>

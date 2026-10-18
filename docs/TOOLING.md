@@ -435,6 +435,11 @@ whole list):
   measure beside the seaplane, which parks over the first sea box in ours: the original's (100,150)-(250,300), ours
   (254,141)-(394,281). Two frames meant half a wave apart are grabbed by wall clock, 0.52 s grab to grab: `shot()`'s
   settles put them about a whole wave apart.
+  **A sea's colour is the eight phases' mean, P = 1 + k 4π/8, k 0 to 7, in both games** (Q700, `q700/ours.py`,
+  `q700/orig/run.sh`): the words are drawn afresh each run, so one binary's k0 frame differs by mad 1.8 to 4.4 between
+  two runs, while the eight's mean holds to under 1 a channel.
+- **This game with eight-bit textures** (Q700): `gamefolder.py DEST data/med.sam "GraphicalOptions.TEXTURE32<six tabs>0"
+  "...1"`; the run's log then says "med.sam's TEXTURE32 1, so every texture keeps eight bits a channel" (`q700/tex32`).
 - **The gates' flags at one wind and one phase** (Q491): `thingpoke.py %PID% S 15 7:0x5c:f=W` holds the weather's
   `mWindDir` (every flag turns with it; 0 streams them to +x), `memhold.py %PID% S 0x00871ed0:f=P 0x00871f60:f=P` both
   phases. **A read under a held phase can be a frame late**: the frame steps the phase 0.4 before `memhold.py` writes
