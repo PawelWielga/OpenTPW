@@ -15,9 +15,9 @@ namespace OpenTPW;
 ///
 /// <para>
 /// A cell is not simply mapped corner to corner: its flag word says which way round the art goes, and
-/// <see cref="PermuteCorners"/> applies that. The original does it in a handful of lines - it starts
-/// with the four corners in order and shuffles them - so this does too, and the comment there carries
-/// the shuffle exactly as the original writes it.
+/// <see cref="PermuteCorners"/> applies that as the original does, to the cell's own texture and to its composited
+/// tile alike. Inside the procedural ground's box, at a detail that asks for it, every cell draws its tile
+/// (<see cref="ProceduralGround"/>) in place of its own texture.
 /// </para>
 /// </summary>
 public sealed class ParkGround : ModelEntity
@@ -63,6 +63,16 @@ public sealed class ParkGround : ModelEntity
 	/// </summary>
 	private bool[]? _halfLight;
 
+	/// <summary>
+	/// The procedural ground's tiles, every cell of the box in one texture, or null where the detail file turns the
+	/// compositor off or the park has no <c>base.lnd</c>: every cell then draws its own texture.
+	/// </summary>
+	private GroundTiles? _tiles;
+
+	private readonly ParkBalance? _balance;
+
+	private readonly int _tileSize;
+
 	/// <param name="world">
 	/// The park's own save, or null where the theme ships none. It is asked one question only: which
 	/// cells something else draws - a path, a queue or a built thing's floor - so that those are left to
@@ -70,7 +80,12 @@ public sealed class ParkGround : ModelEntity
 	/// </param>
 	/// <param name="balance">The theme's balance, asked for <c>MapInfo</c>'s limits; the field's own less one without it.</param>
 	/// <param name="lighting"><c>GraphicalOptions.LIGHTING</c>: off, no cell is drawn at half light.</param>
-	public ParkGround( string themeName, IParkInitialState? world, ParkBalance? balance = null, bool lighting = true )
+	/// <param name="tileSize">
+	/// The procedural ground's tile size, or 0 where <c>GraphicalOptions.PROCEDURALTEXTURING</c> is 0 and every cell
+	/// draws its own texture.
+	/// </param>
+	public ParkGround( string themeName, IParkInitialState? world, ParkBalance? balance = null, bool lighting = true,
+		int tileSize = 0 )
 	{
 		_themeName = themeName;
 		_world = world;
@@ -78,6 +93,9 @@ public sealed class ParkGround : ModelEntity
 		_mapWidth = balance?.Int( "MapInfo.HeightfieldWidth" ) ?? 0;
 		_mapHeight = balance?.Int( "MapInfo.HeightfieldHeight" ) ?? 0;
 		Name = $"{themeName} ground";
+
+		_balance = balance;
+		_tileSize = tileSize;
 
 		Build( world );
 
@@ -120,6 +138,9 @@ public sealed class ParkGround : ModelEntity
 		// override that does not chain to it keeps both for the life of the process. The ground is a model
 		// and a material a park builds from scratch every time it is loaded.
 		base.OnDelete();
+
+		// The tiles' texture is the ground's own; the material does not let go of its textures.
+		_tiles?.Texture.Delete();
 
 		if ( Current == this )
 			Current = null;
@@ -197,6 +218,10 @@ public sealed class ParkGround : ModelEntity
 
 		var field = Heightfield;
 
+		// Made once: without a path laid over it (PROCEDURAL_PATH_OVERLAY) a tile is the file's alone and never changes.
+		if ( _tileSize > 0 && _tiles == null )
+			_tiles = GroundTiles.Make( _themeName, _balance, field, _tileSize );
+
 		if ( _halfLight == null && world != null && _lighting )
 		{
 			var width = _mapWidth > 0 ? _mapWidth : field.CellsX - 1;
@@ -257,6 +282,11 @@ public sealed class ParkGround : ModelEntity
 				? Resolve( field, indices[slot], directory )
 				: Texture.Missing;
 
+		var tileSlot = Math.Min( indices.Count, textures.Length - 1 );
+
+		if ( _tiles != null )
+			textures[tileSlot] = _tiles.Texture;
+
 		Log.Info( $"{_themeName}: ground textures - " +
 			string.Join( ", ", indices.Select( index => $"{index}:{TextureName( field, index )}" ) ) );
 
@@ -269,10 +299,8 @@ public sealed class ParkGround : ModelEntity
 		var vertex = 0;
 		var element = 0;
 
-		// Which corner's texture coordinate each corner of the quad takes, rewritten per cell by
-		// PermuteCorners. Held out here and reused rather than allocated eight thousand times.
-		var corners = new int[4];
 		var halfLit = 0;
+		var tiled = 0;
 
 		for ( var y = 0; y < field.CellsY; ++y )
 		{
@@ -304,14 +332,30 @@ public sealed class ParkGround : ModelEntity
 					var cell = ParkState.CellFor( world, x, y );
 
 					if ( ParkPaths.IsPath( cell ) || ParkQueues.IsQueue( cell ) || ParkObjects.CoversGround( cell ) )
+					{
+						// The original lays a path cell's own texture over its tile by its alpha, the tile's last pass
+						// (docs/exe/park-engine.md, "The procedural ground"); ParkPaths draws the path alone.
+						if ( _tiles?.Covers( x, y ) == true && ParkPaths.IsPath( cell ) )
+							Unimplemented.Report( "PROCEDURAL_PATH_OVERLAY" );
+
 						continue;
+					}
 				}
 
 				var slot = Math.Clamp( indices.IndexOf( texture ), 0, textures.Length - 1 );
 
 				// Which way round this cell's art goes - the low half of the same word the texture
-				// index came from.
-				PermuteCorners( (ushort)field.Cells[(y * field.CellsX) + x], corners );
+				// index came from. A composited tile is turned the same way (0x0056fa0b).
+				var uvs = CellUvs( DrawnWord( (ushort)field.Cells[(y * field.CellsX) + x], _tileSize > 0 ) );
+
+				// Inside the box the cell draws its composited tile in place of its own texture (FUN_0056f380).
+				var tile = _tiles?.Covers( x, y ) == true;
+
+				if ( tile )
+				{
+					slot = tileSlot;
+					++tiled;
+				}
 
 				var corner = vertex;
 				var flags = _halfLight?[(y * field.CellsX) + x] == true ? HalfLight : 0u;
@@ -319,10 +363,10 @@ public sealed class ParkGround : ModelEntity
 				if ( flags != 0 )
 					++halfLit;
 
-				vertices[vertex++] = Corner( field, x, y, CornerUvs[corners[0]], slot, flags );
-				vertices[vertex++] = Corner( field, x + 1, y, CornerUvs[corners[1]], slot, flags );
-				vertices[vertex++] = Corner( field, x + 1, y + 1, CornerUvs[corners[2]], slot, flags );
-				vertices[vertex++] = Corner( field, x, y + 1, CornerUvs[corners[3]], slot, flags );
+				vertices[vertex++] = Corner( field, x, y, Uv( x, y, uvs[0], tile ), slot, flags );
+				vertices[vertex++] = Corner( field, x + 1, y, Uv( x, y, uvs[1], tile ), slot, flags );
+				vertices[vertex++] = Corner( field, x + 1, y + 1, Uv( x, y, uvs[2], tile ), slot, flags );
+				vertices[vertex++] = Corner( field, x, y + 1, Uv( x, y, uvs[3], tile ), slot, flags );
 
 				// Two triangles over those four corners, always split from (x, y) to (x + 1, y + 1) -
 				// which is not what the original does, and this is where to fix it (Q398). The original
@@ -349,7 +393,7 @@ public sealed class ParkGround : ModelEntity
 		// degenerate triangles that the card would probably discard, which is not a reason to send them.
 		Model = new Model( vertices[..vertex], elements[..element], material );
 
-		Log.Info( $"{_themeName}: ground {element / 6} cells drawn, {halfLit} of them at half light, " +
+		Log.Info( $"{_themeName}: ground {element / 6} cells drawn, {tiled} of them with a composited tile, {halfLit} at half light, " +
 			$"{field.CellCount - (element / 6)} left to the scenery, to the paths and to what is built on them" );
 	}
 
@@ -406,16 +450,22 @@ public sealed class ParkGround : ModelEntity
 		};
 
 	/// <summary>
-	/// The texture coordinate belonging to each corner of a cell, in the order the four corners are
-	/// emitted above: the origin corner, then across, then across and along, then along.
+	/// The texture coordinate of each corner of the original's ring (<c>ESP+0x4c</c> to <c>0x68</c> in <c>FUN_0056f670</c>),
+	/// which runs (x, y), (x, y + 1), (x + 1, y + 1), (x + 1, y): u along x and v along y on a cell nothing turns.
 	/// </summary>
-	private static readonly Vector2[] CornerUvs =
+	private static readonly Vector2[] RingUvs =
 	{
 		new( 0f, 0f ),
-		new( 1f, 0f ),
+		new( 0f, 1f ),
 		new( 1f, 1f ),
-		new( 0f, 1f )
+		new( 1f, 0f )
 	};
+
+	/// <summary>
+	/// A corner's texture coordinate: on the cell's own texture as it is, and on its tile from texel centre to texel
+	/// centre (<see cref="GroundTiles.Uv"/>).
+	/// </summary>
+	private Vector2 Uv( int x, int y, Vector2 uv, bool tile ) => tile ? _tiles!.Uv( x, y, uv ) : uv;
 
 	/// <summary>
 	/// A cell's mirror bit, and its rotation - which is one field of three bits, not three flags.
@@ -427,35 +477,14 @@ public sealed class ParkGround : ModelEntity
 	private const ushort CellRotation = 0x38;
 
 	/// <summary>
-	/// Shuffles <paramref name="corners"/> - which starts as 0,1,2,3 - into the order this cell's art
-	/// is laid in. Six thousand of the jungle's cells are mirrored and a hundred are turned, so a
-	/// ground drawn without this is wrong nearly everywhere, if only subtly.
-	///
-	/// <para>
-	/// This is <c>FUN_0056f4f0</c> written out. The original is handed the same 0,1,2,3 - the call site
-	/// literally writes <c>0x03020100</c> onto the stack immediately before calling it - and moves the
-	/// entries about, so what is being permuted is which corner supplies which texture coordinate
-	/// rather than the coordinates themselves. Two details are easy to get backwards and both are the
-	/// original's own order: <b>the mirror is applied first</b>, and it is a <b>diagonal</b> reflection
-	/// - it exchanges the two off-diagonal corners, not a flip in x or in y.
-	/// </para>
-	///
-	/// <para>
-	/// The three rotation bits are one field (<c>0x38</c>), so they are exclusive and this reads as an
-	/// else-chain even though the original writes three separate ifs. They are one, two and three
-	/// quarter turns, which is the same cycle <c>0 -> 0x08 -> 0x10 -> 0x20 -> 0</c> that the original
-	/// steps through when it rotates a ride's footprint.
-	/// </para>
-	///
-	/// <para>
-	/// <b>The one thing not settled is which corner the original calls 0</b>, and which way its ring
-	/// runs. The permutation itself is exact, but if its ring starts elsewhere or turns the other way,
-	/// a quarter turn here would be three quarters there. It shows up on a hundred of the jungle's
-	/// cells and on none of its mirrors, so the mirror - which is the overwhelming majority of the
-	/// effect - is right either way.
-	/// </para>
+	/// Shuffles <paramref name="corners"/> - which starts as 0,1,2,3 - into the ring corners this cell's art is laid by:
+	/// <c>FUN_0056f4f0</c>, handed <c>0x03020100</c> (<c>0x0056fa0b</c>). Grid corner k of the ring takes the texture
+	/// coordinate of ring corner <c>corners[k]</c> (<see cref="RingUvs"/>), on the cell's own texture and on its tile
+	/// alike. The mirror is applied first and is diagonal (ring corners 1 and 3 change places); then the first of
+	/// <c>0x08</c>, <c>0x10</c>, <c>0x20</c> set turns it a quarter, a half or three quarters
+	/// (docs/exe/park-engine.md, "The procedural ground").
 	/// </summary>
-	private static void PermuteCorners( ushort flags, int[] corners )
+	internal static void PermuteCorners( ushort flags, int[] corners )
 	{
 		corners[0] = 0;
 		corners[1] = 1;
@@ -468,23 +497,28 @@ public sealed class ParkGround : ModelEntity
 		if ( (flags & CellMirror) != 0 )
 			(corners[1], corners[3]) = (corners[3], corners[1]);
 
-		switch ( flags & CellRotation )
-		{
-			case 0x08:
-				(corners[0], corners[1], corners[2], corners[3])
-					= (corners[3], corners[0], corners[1], corners[2]);
-				break;
+		if ( (flags & 0x08) != 0 )
+			(corners[0], corners[1], corners[2], corners[3]) = (corners[3], corners[0], corners[1], corners[2]);
+		else if ( (flags & 0x10) != 0 )
+			(corners[0], corners[1], corners[2], corners[3]) = (corners[2], corners[3], corners[0], corners[1]);
+		else if ( (flags & 0x20) != 0 )
+			(corners[0], corners[1], corners[2], corners[3]) = (corners[1], corners[2], corners[3], corners[0]);
+	}
 
-			case 0x10:
-				(corners[0], corners[2]) = (corners[2], corners[0]);
-				(corners[1], corners[3]) = (corners[3], corners[1]);
-				break;
+	/// <summary>
+	/// A cell's word as the terrain pass reads it: with the compositor on, every cell with neither <c>0x80</c> nor
+	/// <c>0x01</c> loses its mirror and turn (<c>FUN_0046ded0(1)</c>, run by the park's load at <c>0x00450813</c> and by
+	/// <c>FUN_00457a00</c>), so its tile is never turned; with it off the file's word stands.
+	/// </summary>
+	internal static ushort DrawnWord( ushort word, bool compositor )
+		=> compositor && (word & 0x81) == 0 ? (ushort)(word & 0xff87) : word;
 
-			case 0x20:
-				(corners[0], corners[1], corners[2], corners[3])
-					= (corners[1], corners[2], corners[3], corners[0]);
-				break;
-		}
+	/// <summary>The texture coordinates of grid corners (x, y), (x + 1, y), (x + 1, y + 1), (x, y + 1) for a cell's word.</summary>
+	internal static Vector2[] CellUvs( ushort flags )
+	{
+		var corners = new int[4];
+		PermuteCorners( flags, corners );
+		return [RingUvs[corners[0]], RingUvs[corners[3]], RingUvs[corners[2]], RingUvs[corners[1]]];
 	}
 
 	/// <summary>

@@ -53,15 +53,14 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q488. The ground's dirt patches: the procedural ground built.** From Q483 (`park-engine.md`, "The procedural
-  ground"; FileFormats `lnd.md`). First read how the terrain pass maps a composited tile onto its cell (`FUN_0056f670`:
-  the UVs, and whether the cell's rotation and mirror turn it), which Q483 left. Then: `base.lnd` read at the boundary
-  (`OpenTPW.Files`), the tile made as `FUN_0055f780` makes it at 16 pixels (the original's size on any computer with
-  2 GB or more: say at the site if another is chosen), grey where the map's byte 0 refuses, inside the box only; a
-  path cell's own texture laid over by its alpha with its rotation and mirror (`lndtile.py` does not run that pass yet:
-  extend it, and catch tiles with paths in view with `tilecap.sh`); made again after a build marks the cell `0x0100`.
-  Tests take their values from `lib/lndtile.py` (bit-exact, all three spans' classes and the frozen u1); confirm at
-  Q479's camera A in both games (the patches, `patchmean.py`) and tile for tile against `tilecap.sh`'s catch.
+- [ ] **Q489. The procedural ground's path laid over.** From Q488 (`park-engine.md`, "The procedural ground", "A path
+  laid over"). `FUN_0055f780`'s last pass lays a path cell's own texture over its tile by its alpha, turned by the
+  word's mirror and rotation (its eight start and step cases), a 16-bit texture read as 4:4:4:4; a grey tile returns
+  before it. All 78 of the stock park's path cells are composited, and `ParkPaths` draws the path alone where the
+  original draws the path over the ground (`PROCEDURAL_PATH_OVERLAY`, 78 a build). First run the pass under unicorn
+  (`lib/lndtile.py` with the record's texture) and catch tiles with paths in the running original (`tilecap.sh`), then
+  build it, and make a cell's tile again when a build marks it `0x0100` (`FUN_0046df50` sets `0x0101`). Confirm at a
+  camera over the shipped paths in both games (`lib/cellmatch.py`).
 - [ ] **Q486. The park's sea: its texture, its motion and its colour. Decode first.** Asked by Alexah (2026-10-17),
   from `q472/side-by-side.png`: the original's sea is an animated, perhaps procedural, texture - Alexah's lead: the
   same wave motion as the path tool's see-through preview - where ours (`content/shaders/water.shader`, `World/Terrain/

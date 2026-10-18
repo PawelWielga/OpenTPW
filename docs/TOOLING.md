@@ -53,6 +53,8 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `lib/diffpic.py <a.png> <b.png> <out.png> [x0 y0 x1 y1]` | Two frames side by side and a third, the second dimmed with every pixel differing by more than 40 a channel in red: where a change lies and its shape, and the count (Q359) |
 | `lib/patchmean.py IMG NAME=X0,Y0,X1,Y1 ... [--vs IMG2]` | Named pixel boxes' mean colour, spread and brightness in a frame of either game, and with `--vs` the same boxes in a second frame and the difference; `mean( img, box )` importable. A colour compared across the two games or two runs at one camera (Q479) |
 | `lib/lndtile.py <base.lnd> <N> <x> <y> [out.png]`, `... sheet X0 Y0 X1 Y1 out.png` | The original's procedural ground tile made by its OWN code, `FUN_0055f780` run under unicorn on the file (`Tiler( path, N ).tile( x, y )`, `.rgb()`): the bit-exact oracle for a port (Q483; `park-engine.md`, "The procedural ground"). The path laid over is not run. Needs `~/.cache/tpw-emu312/bin/python` |
+| `lib/lndsheet.py <base.lnd> <N> <out.rgb>` | Every procedural ground tile of a park (cells 0..95 x 0..84) by `lndtile.py`, in one file, and its SHA-256: what OpenTPW's `ProceduralGroundTests` hold `ProceduralGround` to (Q488). Read back `numpy.fromfile( f, uint8 ).reshape( 85, 96, N, N, 3 )[y, x]`. Needs `~/.cache/tpw-emu312/bin/python` |
+| `lib/cellmatch.py AIM SHEET X0,X1,Y0,Y1 FRAME...` | Which procedural ground tile each game draws on a cell: a homography from the original's `camera.py --aim` pixels of named cells (`q488/orig/run.sh` writes them) cuts each cell out of a frame of either game at one camera (this game's mapped as `bothcam.py` says) and matches it against `lndsheet.py`'s tile of the cell and its eight neighbours. The original at Q479's camera A: its own tile on 84 of 122 cells (Q488) |
 | `lib/barshare.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar measured in a frame of either game, by its layout rectangle: the share of its middle row in colour, the share grey, the colour's mean r - g, the last coloured pixel, the grey's mean, and the pixel an eighth of the way. **A black cell counts as grey** (spread under 12): judge "nothing drawn" by the grey's mean, under 5 there and 49 to 58 on a drawn track (Q367). **It reads a
 `happygrad.wct` bar about 0.02 short** (its greyish-teal texels spread 30 or less): use `barsplit.py` for that one (Q369) |
 | `lib/barsplit.py <png> <x0> <y0> <x1> <y1> ...` | A type-9 bar's fill by where its grey track starts (the first pixel of the middle row, from the left, with a spread of 12 or less and a mean of 40 to 75), as a share of the width: right for any ramp, `happygrad.wct`'s too, and blind to a highlighted row's band past the bar's end (Q369). **A lettered number's anti-aliased edge passes its track test**: where a cell may hold text, not a bar, judge "no bar" by `listcells.colour` (Q371) |
@@ -1063,6 +1065,16 @@ GH=766` there, or the pointer is off):
   `HF=engine groundcell.py %PID% 6 X0,Y0:X1,Y1=-0x400` (not restored: stop the original after). This game's park
   draws no fog since Q481; the lobby's is taken off in a copy of the bin folder with `fogFactor = 0.0;` in its
   `content/shaders/test.shader` and `water.shader` (the shaders are compiled as it starts), `~/.cache/dn-tmp/q479/nofog`.
+
+- **Where a ground pattern stands in both games** (Q488): the fence along camera A's top cannot tell a camera a cell off
+  from none (its posts stand about one a cell; `q488/fenceshift.py` 0.82 at no shift, 0.78 at one post). Ask each game
+  which cell stands under the same pixels instead: the original's `camera.py PID --aim X,Y` for a dozen cells straight
+  after `setcam.py` (`q488/orig/run.sh`), then this game's `pick X Y` at the mapped pixels (`q488/ours.py` with
+  `PICKS='X,Y;...'`): both named the same five cells. `lib/cellmatch.py` then says which tile is drawn there.
+- **A texture of ours made from bytes for `test.shader`** (Q488): the shader turns every v over (`1.0 - y`), so a
+  texture laid top down is drawn mirrored about its middle row; lay its rows bottom up (`GroundTiles.Lay`).
+- **`wadcat --cat` is for text**: a binary entry comes out with its bytes turned to `?`. Take a binary with `--dump`
+  (`wadcat --dump base.MD2 terrain.wad` writes it to the working folder; `q488/wordcmp.py` reads its cell words).
 
 ## The original under Proton
 

@@ -7637,6 +7637,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   from the running original; held clear, bit 4 takes the patches away (`q483/orig/a-sheet.png`). On a computer with
   2 GB or more the original makes 16-pixel tiles whatever the detail asks (a signed test of `dwTotalPhys`). Filed Q488
   (the build). New tools: `lib/lndtile.py`, `original/tilecap.sh`, `lndcmp.py`, `compstate.py`.
+- [x] **Q488. The ground's dirt patches: the procedural ground built.** Split: the path laid over is Q489. Built:
+  `ProceduralGroundFile` (`base.lnd`), `ProceduralGround` (`FUN_0055f780`, every tile of all four parks equal to the
+  emulator's by hash), `GroundTiles` (the box, one texture laid bottom up, texel centre to centre) and in `ParkGround`
+  the tile on every ground cell at medium and high, unturned (`FUN_0046ded0(1)`), the ring as the original's. Camera A:
+  each cell shows its own tile on 115 of 122 (the original 84), grass (37.0,66.2,21.3) against (32.8,65.9,16.5), brown
+  17.5% against 17.0% (`q488/`, run4, orig/a); 24 of 24 bugs put back fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -161,11 +161,15 @@ Byte `+1` of the 4-byte record is the HIGH byte of the flags u16, so `|= 8` ther
 
     if ((flags & 0x78) == 0) nothing happens at all
     if (flags & 0x40)  swap p[1] and p[3]        <- MIRROR, and it is applied FIRST
-    if (flags & 0x08)  p = [p3, p0, p1, p2]      <- one quarter turn
-    if (flags & 0x10)  swap p0/p2 and p1/p3      <- two
-    if (flags & 0x20)  p = [p1, p2, p3, p0]      <- three
+    if (flags & 0x08)  p = [p3, p0, p1, p2]      <- one quarter turn, and return
+    else if (flags & 0x10)  swap p0/p2 and p1/p3 <- two, and return
+    else if (flags & 0x20)  p = [p1, p2, p3, p0] <- three
 
-Mirror is a **diagonal reflection** (it exchanges the two off-diagonal corners), not a flip in x or y, and it happens **before** the rotation. The rotation bits are one/two/three quarter turns of the corner list, which agrees exactly with the `0 -> 0x08 -> 0x10 -> 0x20 -> 0` cycle the footprint stamper `FUN_00463060` uses. The three bits are mutually exclusive (they are a field, `flags & 0x38`), so the tests read as if/else even though they are written as three ifs. Mirror is set on 84% of jungle's cells, so **none of this is skippable**.
+Mirror is a **diagonal reflection** (it exchanges the two off-diagonal corners), not a flip in x or y, and it happens **before** the rotation. The rotation bits are one/two/three quarter turns of the corner list, which agrees exactly with the `0 -> 0x08 -> 0x10 -> 0x20 -> 0` cycle the footprint stamper `FUN_00463060` uses; each returns, so where two are set the first of `0x08`, `0x10`, `0x20` wins.
+
+**The ring** (Q488, `FUN_0056f670`): the array is `0x03020100` (`0x0056fa0b`), permuted for **every** drawn cell before its texture record is looked up, so a composited tile is turned exactly as a cell's own texture. Grid point (x, y) always takes corner byte 0, (x, y + 1) byte 1, (x + 1, y + 1) byte 2 and (x + 1, y) byte 3, whichever diagonal the cell is cut on (only the vertex order changes); byte k names the UV pair k of the table at `ESP+0x4c`: (0, 0), (0, 1), (1, 1), (1, 0). A UV is then `U x record+0x20 + record+0x28`, `V x record+0x24 + record+0x2c`, which `FUN_00590350` sets to place the texture in its page from the first texel's centre to the last's (offset `(pos + 0.5) / page`, scale `(size - 1) / page`; the 0.5 is `[0x008c1628]`, written at `0x00583968`).
+
+**With the compositor on, no ground cell is turned.** `FUN_0046ded0(1)` takes `0x78` off the word of every cell with neither `0x80` nor `0x01` (`& 0xff87`); the park's load runs it once `base.lnd` is read with `[0x007a1a8c]` `0x4000` set (`0x00450813`), and so does `FUN_00457a00`, which turns the compositor on. `FUN_00457a40` turns it off and `FUN_0046ded0(0)` puts the file's bits `0x08` to `0x80` back from the pristine copy `[0x0079fc54]+0x2c`. Live at medium (Q479's dump of 7,980 cells) 11 cells carry the mirror where base.MD2 marks 6,886 of 8,160: the mirror stands only at low detail, where the cells draw their own textures.
 
 ### How a cell's textureIndex becomes an actual texture
 
@@ -3313,15 +3317,18 @@ tile and composites the cell into it, and a hit composites again only when the c
 none (`GraphicalOptions.PROCEDURALTEXTURING` 1, 2, 3 set 4, 2, 1; 0 turns the compositor off), and `FUN_00572110` cuts
 the ask to 16 when `[0x008bd520]` < 48 MB or the texture memory `[0x008c1624]` < bytes-a-pixel x 3 MB, and 64 to 32 under
 64 MB or 5 MB. **`[0x008bd520]` is `GlobalMemoryStatus`'s `dwTotalPhys`** (`0x0058357b`) and the test is signed
-(`JL`, `0x0057215f`): on a computer with 2 GB or more it is negative, so the original makes **16-pixel tiles whatever
-the detail asks**. Read live at medium: `[0x0079d86c]` `0x82`, `[0x008bd520]` `0xffffffff`, tile size 16, 2,000 tiles.
+(`JL`, `0x0057215f`): read live over 4 GB it is -1, and between 2 and 4 GB Windows reports 2 GB to a program not
+large-address aware (as `testme.exe` is not), `0x80000000`, negative too, so the original makes **16-pixel tiles
+whatever the detail asks** (measured only over 4 GB). Read live at medium: `[0x0079d86c]` `0x82`, `[0x008bd520]` `0xffffffff`, tile size 16, 2,000 tiles.
 
 **What fills a tile** (`FUN_0055f780`, thiscall on the lnd object; dest, x, y, record). With N the tile size, the
 set of textures for N (64, 32, 16 are sets 0, 1, 2), r = 84 - y (the map's rows run the other way) and
 `lerp( q, p, w ) = q + ((p - q) x w >> 8)` on each of a texel's bytes 1 to 3 (red, green, blue; the shift arithmetic):
 
 1. **The gate.** Unless byte 0 of the map's four samples at rows 4r+1, 4r+2 and columns 4x+1, 4x+2 are all 255, the tile
-   is grey, `0x7f7f7f00`. In the stock jungle file 1,153 of the 8,075 cells are grey: the approach and the shipped paths.
+   is grey, `0x7f7f7f00`. In the stock jungle file 1,153 of the 96 x 85 cells are grey, all with word `0x0001` (the
+   scenery draws them): 240 river cells (mType 2), 847 of mType 7 and 66 of the approach (30). All 78 path cells are
+   composited (Q488, `greycells.py`).
 2. **Three weights.** Each of the map's bytes 1, 2 and 3 over the cell's 5 x 5 samples (rows 4r..4r+4, columns
    4x..4x+4) is upsampled to N x N (`FUN_0055e780`: each of the 4 x 4 squares bilinear in 16.16 fixed point, the value
    starting at `a << 16` and stepping by `(c - a) << s` a row and `dx` along it, `dx` starting at `(b - a) << s` and
@@ -3353,13 +3360,21 @@ laid over it where u2 and u3 lift their masks: the brown patches of Q479's frame
 **A path laid over.** Where the cell's word has `0x0080` (a path cell) the record carries the cell's own texture, and
 the last pass lays it over the tile by its alpha, `tile + (path - tile) x alpha >> 8` a byte, its rows and columns
 turned by the word's mirror `0x40` and rotation `0x08`/`0x10`/`0x20` (the eight start and step cases at the pass's
-head); a 16-bit texture is read as 4:4:4:4. Read, not run under unicorn and not caught live (none of the 60 had one).
+head); a 16-bit texture is read as 4:4:4:4. Read, not run under unicorn and not caught live (none of the 60 had one). A
+grey tile returns before that pass (`0x0055f841` to `0x0055f874`), so nothing is laid over a refused cell.
 
 **Elsewhere.** `FUN_0057ace0`, reached from the model maker `FUN_00463060`, composites through `FUN_00572630` one
 uncached tile for each cell of a rectangle whose word has `0x0080` and `0x0200` (a footprint's used cell): a lead for
 the procedural base (`textures.md`), not followed. The lobby calls the same load (`FUN_005d84a0`) but no lobby wad
-holds a `base.lnd`, so the bit is not set there. **How the terrain pass maps a tile onto its cell** (its UVs, and the
-cell's rotation and mirror) is not read.
+holds a `base.lnd`, so the bit is not set there.
+
+**Which cell is handed on, and how its tile is laid** (Q488). `FUN_0056f090` keys each visible box cell
+`(row - [+0x238]) x 0x100 + col - [+0x234]` and `FUN_00572440` hands `FUN_0055f780` x = the low byte, y = the rest, so
+the box's last column 95 is composited too: its fifth sample column is the next sample row's first (the map is read as
+one run; `ProceduralGroundTests` holds (95, 40) to the emulator). The terrain pass lays the tile as it lays a cell's own
+texture ("The UV rule", above): texel centre to texel centre, row 0 at the cell's y edge and column 0 at its x edge, and
+with the compositor on unturned. Measured in both games at camera A (`lib/cellmatch.py`): the original's frame shows
+the cell's own tile on 84 of 122 cells, OpenTPW's on 115.
 
 ---
 
@@ -3375,7 +3390,7 @@ cell's rotation and mirror) is not read.
    calls `FUN_0056dfe0`, which (unless `[0x008bd550]` has `0x10000000`) calls `FUN_0056e550` on `DAT_00879d60`. That
    needs `DAT_008bd524 == 1` (live 1, not identified), makes the cache (`FUN_00572110`), sizes the scratch
    (`FUN_0055f720`, `DAT_008798c8`) and reads the file (`FUN_00560ff0`, refused unless byte 0 is 3), then sets
-   `[0x008bd550] |= 4`. How the terrain pass maps a tile onto its cell is not read.
+   `[0x008bd550] |= 4`. How the terrain pass lays a tile: "The procedural ground", Q488.
 7. ~~The park camera's terrain-following sampler.~~ Settled: `FUN_00452560`, called at `0x0042c817`; see "The park camera" above.
 
 ---

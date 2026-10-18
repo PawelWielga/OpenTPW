@@ -330,7 +330,7 @@ public class Level
 		var lighting = Lighting();
 		if ( !lighting )
 			Unimplemented.Report( "LIGHTING_OFF" );
-		_ = new ParkGround( ThemeName, park, Balance, lighting );
+		_ = new ParkGround( ThemeName, park, Balance, lighting, ProceduralTileSize() );
 		load.Mark( "ground" );
 
 		_ = new ParkPaths( ThemeName, park );
@@ -1155,6 +1155,28 @@ public class Level
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	/// The procedural ground's tile size: 0 where the detail file's <c>GraphicalOptions.PROCEDURALTEXTURING</c> is 0
+	/// (low.sam), and 16 for any other. The original asks 16, 32 or 64 for 1, 2 or 3 (<c>FUN_00457a90</c>), but
+	/// <c>FUN_00572110</c> cuts the ask to 16 where the physical memory, a signed test of <c>dwTotalPhys</c>, is under
+	/// 48 MB, which on any computer with 2 GB or more it reads as negative (docs/exe/park-engine.md, "The procedural
+	/// ground"). A file that will not read gives medium's 16.
+	/// </summary>
+	private static int ProceduralTileSize()
+	{
+		try
+		{
+			if ( int.TryParse( new SettingsFile( $"/{DetailFile}" )["GraphicalOptions.PROCEDURALTEXTURING"], out var value ) )
+				return value == 0 ? 0 : 16;
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"Ground: {DetailFile} would not load, so the ground is composited as at medium - {e.Message}" );
+		}
+
+		return 16;
 	}
 
 	public void Update()
