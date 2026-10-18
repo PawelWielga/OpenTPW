@@ -7763,6 +7763,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `side-by-side.png`); mutations 15 of 16, the survivor equivalent (`q495/mut.log`). In no game run: a mystery ride's
   rows (no Lost Kingdom item is one in Instant Action; tested only), Full Simulation (not asked: the screen is either
   mode's), the other three themes.
+- [x] **Q496. The camcorder's help rows.** Decoded (no build): the poster at `0x004bd919` is the **online visit's**,
+  not the camcorder's. `FUN_004bf460` (the tree `[0x007cc8bc]`, the control `[0x007cc8c0]`, handler `0x004bd4a0`) is
+  called only by `FUN_0048a410`, which the park load runs only for game type 1; the state is 0 off the layers, 2/4 a
+  ride under the pointer (580), 1 a walk (401), 3 the pick (579) (`hud.md`, "The online visit's help rows"). Measured
+  in the original (`q496/orig/`, rounds a and b): the tree, the control and the state nought in orbit, in the pick and
+  in first person, 669,758 reads; the bar hidden in the pick and in first person. Ours posts none of the three rows
+  (`q496/run2`, 3 of 3) but runs the park's hover in first person: Q497. Was: From Q495, split off Q495: the
+  camcorder's mode posts by its state `[0x007cc8e4]` (`0x004bd919`): 0 the empty row, 1 `0x191`, 2 `0x244` with a
+  thing's name (`FUN_00486280`), 3 `0x243`. Decode first what calls it and what moves `[0x007cc8e4]`, then build it.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

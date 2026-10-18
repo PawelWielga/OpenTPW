@@ -53,11 +53,14 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q496. The camcorder's help rows.** From Q495, split off Q495: the camcorder's mode posts by its state
-  `[0x007cc8e4]` (`0x004bd919`): 0 the empty row, 1 `0x191`, 2 `0x244` with a thing's name (`FUN_00486280`), 3
-  `0x243`. Decode first what calls it and what moves `[0x007cc8e4]` (`0x004bd754` to `0x004bda08`, `FUN_004bf460`;
-  the code is in no function), then build it on `UiWindow.HelpPost` or `WindowStack.WorldHelpPost`, counted where
-  reached until then. Confirm in both games: the camcorder's rows (`original/helpbar.py` reads the bar).
+- [ ] **Q497. No help bar and no park hover in first person. Decode first.** From Q496 (`hud.md`, "The online visit's
+  help rows"; `q496/side-by-side.png`): in the original's first person the help bar is hidden (`helpbar.py` shown 0)
+  and the cursor is the viewfinder's crosshair (`0x15`, layer 1, `FUN_00488a00`); ours runs the park's hover under the
+  viewfinder, its rows (459 over the gate's stone, 441, 442) and the pick hand (`q496/run2`). The camcorder's pick
+  (mode 9) hides the bar too, with the category nought (`q496/orig/a-A3-pick.png`); ours has no pick (Q25). Decode
+  what hides the bar on the way in and what brings the hover's row back on the way out, then build it on
+  `WindowStack.WorldHelpPost` and the camcorder's cursor. Confirm in both games: `helpbar.py`'s shown flag and
+  `pointer`'s row and cursor in first person, and after leaving it.
 - [ ] **Q475. A reflected person turns about their feet.** From the review of Q468 (`handoff/review3/VERIFY-3.md`,
   finding 2; read from code, not seen): the original reflects a picture by negating L and R about its origin
   (`0x005891f1` to `0x00589212`, corners at `0x0058922d` to `0x00589256`, u left alone; the flag 2 at `0x00589f68` is a
@@ -2193,6 +2196,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   (`hud.md`, "Four ways out of camcorder mode"): decode it with this, then set the speed. The original's walk keys
   are the zoom's, Up and Down (bits `0x20` and `0x40` of the button word, measured); here W and S walk and the arrows
   do not.
+  From Q496 (`q496/orig/`, `helpbar.py`): in the pick the original's bar is hidden and the hover's category nought, and
+  its click on a hoarding (617, 378) and on the land below the gate was refused with the no-entry cursor, where one on
+  the path inside the gate (290, 395) stood the viewer there.
 - [ ] **Q26c. Ferry, seaplane and bus are always there.** `ParkFixedItems.Items` stands all three
   permanently, and `VehicleFor` gives a load under 36 the bus, so only the bus is called in the stock park (its
   loads are 13 and fewer since Q26b; three new rides make 30).
@@ -2387,6 +2393,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
 - [ ] **Q242. Go Online and Publish Park. Alexah's call.** From Q139. Both are counted (`GO_ONLINE`,
   `PUBLISH_PARK`) and close the menu; the original starts connecting (`0x005b5cc0`) to servers that are gone. Ask
   Alexah: leave them counted, say so in the game's own style (rule 11), or something else. Then build the answer.
+  From Q496: the online visit's own interface (`FUN_0048a410`, stream `0x00758ae8`) and its help rows are decoded
+  (`hud.md`, "The online visit's help rows"); they come with whatever Go Online becomes.
 - [ ] **Q243. Every counted name against this queue.** Asked by Alexah, 2026-10-08: a thing "counted, not built"
   must have an item here, or it may never be come back to. List every `Unimplemented.Report` name in the source by
   script, find each in this file, and file an item (or add the name to the item it belongs to) for each one that has

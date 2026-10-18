@@ -1264,7 +1264,7 @@ cleared by `FUN_004922e0` and `FUN_00492300`) and `+0xc` (built), its control `+
 |---|---|
 | A control's `0x10001`, the pointer coming on (`FUN_0065f6d1` `0x0065fa15`: sink `+0x24`, `FUN_00492160`) | its row, asked by message `0xc` (`+0x90`, `FUN_0065bc70`; -1 is the empty string), through `FUN_00492070`; an empty row hides it |
 | A control's `0x10002`, the pointer leaving (`0x0065fa2b`: sink `+0x28`, `FUN_0066a0bb`) | hidden (`FUN_00492130`) |
-| `FUN_004924b0( text )`: the park's hover, the buy screen's `FUN_004abc80` (below, "The buy screen's help rows"), the camcorder's mode (`0x004bd920` to `0x004bd9d4`) | the text, or hidden when it is empty |
+| `FUN_004924b0( text )`: the park's hover, the buy screen's `FUN_004abc80` (below, "The buy screen's help rows"), the online visit's poster (`0x004bd920` to `0x004bd9d4`, below, "The online visit's help rows") | the text, or hidden when it is empty |
 
 The park's view is a control too (`[0x007cb2ac]`, `FUN_00489f50`; its row -1). On its `0x10001` `Park_MouseMessageProc`
 runs the hover once, sets the category nought (`0x0048884e` to `0x00488870`), and passes the message to the library
@@ -1273,7 +1273,7 @@ the view". Measured in the original (`q473/orig/`, `PREDICTION.txt`; the stock p
 (113, 590)): over ground "Left-click to build path"; on Buy its own row 469, the sink's `+6` 1 and its control the
 button's; from Buy onto a hoarding with the ground left last, 441 again; with the hoarding left last, the label hidden
 (shown 0) and still hidden 1.5 s on. With the pointer on ground below the entry-price screen, G opened it and the row
-stood, and stood after Escape. Not built here: the camcorder's posts (Q496). Here
+stood, and stood after Escape. Here
 `WindowStack.HelpRow` is the one row: a change of what is under the pointer (`WindowStack._pointed`: a control, a modal
 window's, a park screen's body or the cover, or the view) posts the control's row or -1, then the view's own post
 (`WindowStack.WorldHelpPost`, the park's `Level.HoverPosted`) is taken while the pointer is on the view. Ours posts a
@@ -1336,6 +1336,52 @@ as the list's (the record's `+0x04` agrees in all 50 shipped records), the ticke
 picks no first row as it fills (Q232), so nothing is posted before the pointer has selected a row. A two-line row
 stands over the top of our one-line strip, where the original's strip holds both lines (Q484). Measured
 (`q495/run1`, 15 of 15, `side-by-side.png`): every row's words as the original's frames.
+
+### The online visit's help rows (Q496)
+
+The poster at `0x004bd919` is not the camcorder's: it belongs to the **online visit**, game type 1, and no offline park
+builds it. `Game_StateMachine`'s park load calls `FUN_0048a410` (through `0x00481420`, `0x0054ed1e`) when `[0x00fb3b7c]`
+is 1 and `FUN_004813e0` (the park's interface, `FUN_00489f50`) otherwise; `FUN_0048a410` is the only caller of
+`FUN_004bf460`, which loads stream `0x00758ae8` into `[0x007cc8bc]` and builds the full-screen control `[0x007cc8c0]`
+(`FUN_0065dd7b( 1, 0, 0xfff04d2a, 0, 0, 0x7ff, 0x5ff )`), both with the handler `0x004bd4a0`, in no function. Those two
+words and the state `[0x007cc8e4]` are written only there and in the handler (the two noughted on their `0x14`). That interface has no park view (`[0x007cb2ac]` stays
+nought, so `FUN_004814a0` sets its cursors instead); `FUN_004bd090`, `FUN_004bd260`, `FUN_004bcf50` and `FUN_004bce80`
+set property 6 of the two layers (`FUN_00658d9f`), and the frame below runs on the one `FUN_0065d57c` finds shown.
+
+On a frame (`0x1e`) of whichever layer is shown, the handler works out a state (`0x004bd74f` to `0x004bd902`):
+
+1. Nought unless the pointer is on one of the layers: `0x10001` sets `[0x007cc8dc]` (the tree) or `[0x007cc8e0]` (the
+   control) and noughts the state, so the next frame posts again, and `0x10002` clears the flag (`0x004bda03`,
+   `0x004bda40`).
+2. 2, a ride the visitor can take, when the cell under the pointer `[0x007b05cc]` holds a thing (`FUN_00527e80`) of type
+   3 whose `FUN_004e2710` word is nought and whose `FUN_004dd4e0` record has `+0x4ac` nought, or 3 with bit `0x10` of
+   the thing's `+0x32`; the thing is kept in `[0x007cc8e8]`.
+3. With the current mode's type 9 (the camcorder's pick), 3, or 4 where step 2 found a ride; otherwise 1 where it found
+   none.
+
+A change of state posts (`FUN_004924b0`, the text `FUN_006acd60` lays from table `[0x0078ba98]`, `UIHELPTEXT.str`) and
+sets the layer's cursor (`FUN_0065f11d`):
+
+| State | Row | Text | Cursor |
+|---|---|---|---|
+| 0 | none | the bar hidden | 0 |
+| 1 | `0x191` (401) | "Left-click to walk to this point / Double-click to jump to this point" | 0 |
+| 2, 4 | `0x244` (580) | "{P2}: Left-click to ride", `{P2}` the thing's name (`FUN_00486280`) | `0x13` |
+| 3 | `0x243` (579) | "Left-click to use camcorder mode here" | `0x13` |
+
+A left press (`0x10005`, button 0) with the state 2 and a mode other than 9 rides the thing (`FUN_004e15b0( 0 )`,
+`0x004bdb34`).
+
+**Measured in the original** (`q496/orig/`, `PREDICTION.txt`; the stock park off-screen, `helpbar.py`'s `cam` fields): in
+orbit, in the camcorder's pick (mode vtable `0x6fead0`) and in first person (round b, the pick's click on the path at
+(290, 395), `gui_CameraFlags` `0x202`, mode `0x6fea10`) the tree, the control, the state and the thing read nought
+while the park's view stayed `0x4641ab0`, and 669,758 reads over a sweep of the pointer in first person found the state
+nought throughout. The game type read 2, Instant Action: `loadfile.sh` loads the file into the reference install's
+running game. **In the pick and in
+first person the bar is hidden** (shown 0, `b-A5-first-person-after.png`). Here the online visit is not built (Go
+Online is counted, Q242), so there is nothing of this to build in a Lost Kingdom park. Ours runs the park's hover in
+first person, its rows and the pick hand under the viewfinder (`q496/run2`, row 459 over the gate's stone,
+`side-by-side.png`): Q497.
 
 ## The park map — `FUN_005f0b40`, stream `0x00774da0`
 
