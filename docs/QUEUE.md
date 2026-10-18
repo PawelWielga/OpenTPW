@@ -53,14 +53,14 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q477. What hides a person below their feet.** From Q470 (`q470/PREDICTION.txt`, rounds 1 and 1b;
-  `side-by-side.png`): our quad is square on to the eye at its place's depth, as the original's corners keep the place's
-  z and w (`FUN_005890e0`), yet ours loses every row below the origin to the ground nearer the eye (Mike's feet end on
-  the origin's row; the original's go 5 px under it, to 389), and under the staff locator a patrol outline's blue squares
-  (`ParkBuildMarkers`, 1.5 over the ground) hide him up to 12 px over it, where the original's frame shows no square
-  under him. Decode first: how the original's sprite pass meets the depth buffer (its z test and write for the sprite
-  list in `FUN_00589b50`, and whether the blueprint mesh is drawn before or after it), then build it and photograph
-  Mike on a path under the mechanics' locator in both games.
+- [ ] **Q500. A person's depth pull.** From Q477 (`park-engine.md`, "What hides a person below their feet"; `q477/`):
+  build the original's pull on the people's quads (`ParkGuestSprites`): each corner's depth as the original's clip z
+  less 0.2 / (z + 1), z = Q (e - 0.1), w = sin 45 e, Q from the draw matrix (a far near 1000), so 1/e' = 1/e + 3.95 / e^2
+  near enough, 3.81 units at zoom 110; not in a ride's view or first person (render word `0x2000`). The original also
+  writes the people's depth (alpha test at 16) where ours does not, so a square drawn after them in ours would still wash
+  over them: write it, or draw the squares first, and say which at the site. Confirm in both games: Mike on a path under
+  the mechanics' locator (`q477/ctl.py`, `q477/orig/run.sh`), his shoes 5 px under his origin's row and no blue over
+  him; a person behind a hill crest still hidden.
 - [ ] **Q478. The hover's rows over a queue, an object, a track and type `0x15`.** From Q471 (`park-engine.md`, "The gate
   and the ticket booths"): over those cells ours posts the empty row, counted `HOVER_QUEUE_ROW` (UIHELPTEXT `0x1bc`, 444
   "Left-click to edit this queue", `0x00487621`), `HOVER_OBJECT_ROW` (`0x226`, 550 "{P2}: Left-click to view/edit this

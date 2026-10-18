@@ -49,6 +49,7 @@ which code reads them is not traced (Q194, from the bytes). DirectDraw's two cal
 | `0x0056695c` | `CULLMODE = 1 = D3DCULL_NONE` | **Set once at startup and never rewritten anywhere in the program.** Nothing in the game is one-sided; foliage is authored expecting it. Render a park's foliage or fences with backface culling on and they come out half-missing. | All 88 `call [reg+0x58]` sites scanned; no other site writes CULLMODE |
 | `0x005669b7` | `ALPHAFUNC = 7 = D3DCMP_GREATEREQUAL` | Alpha test comparison, never changed | Disassembly |
 | `0x00573614` | `ZFUNC = 4 = D3DCMP_LESSEQUAL` | Depth comparison, never changed. OpenTPW uses `Less` — **a difference, not yet shown to matter.** | Disassembly |
+| `0x00573660` | — | The `EnumZBufferFormats` callback (`FUN_00573080`, `0x005731b3`): keeps the format offered and stops at the first of 16 bits, so the z-buffer is 16-bit wherever the card offers one. At a park's depth 110 a step is about 0.43 units (`park-engine.md`, "What hides a person below their feet") | Disassembly |
 | `DAT_007012d8` | ALPHAREF pair table | `{0x1000, 0xf000, 0x10, 0xf0}` | Data at that address |
 | `FUN_00567270` | — | Probes the card and selects index 2 of that table, so the two references in use are **16 and 240 of 255** | Disassembly |
 
@@ -127,7 +128,9 @@ source flags, runtime texture flags and decoded alpha pixels in both engines at 
 
 ## What actually disables depth writes
 
-Bit `0x2` of a **mesh record's first dword**, not the material word of the same value. Conflating the
+For a world sprite, its flag `0x4000`: `SpriteList_Draw` (`FUN_0058a770`) ORs `0x800` into its word, and a particle's
+record carries it, a person's does not (`park.md`, "A park's particles, started and drawn"; `park-engine.md`, "What hides
+a person below their feet"). For a mesh, bit `0x2` of a **mesh record's first dword**, not the material word of the same value. Conflating the
 two sends you the wrong way, exactly like `Node.Flags` versus `Node.IdFlags`. `ModelFile.cs` skips
 that dword as "initial mesh data".
 
@@ -139,7 +142,7 @@ that dword as "initial mesh data".
 Swept across 839 static models / 4924 mesh records: only four distinct flag words exist —
 `0x1` (x4585), `0x401` (x331), `0x2` (x5), `0x81` (x3). Bit `0x2` is set on exactly five records, every
 one of them a mesh named `heightfield` in a `base.md2`: the four park terrains and the lobby. Every one of those five
-records is empty (no vertices, no faces), so nothing that reaches the screen has depth writes off: `ParkTerrain` passes
+records is empty (no vertices, no faces), so no mesh that reaches the screen has depth writes off (a world particle does): `ParkTerrain` passes
 the park `base.md2` through `LobbyModel`, and the ground itself is drawn by `ParkGround` from the file's heightfield block.
 
 **Trap when sweeping `.md2`:** an animation file has `meshPtr` (`+0x70`) `== 0` and must be skipped, or

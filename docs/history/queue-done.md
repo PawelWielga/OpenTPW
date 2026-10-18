@@ -7825,6 +7825,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`PARK_PRESSES_IN_ONE_FRAME`). In Alexah's Full Simulation park (frames 66 ms): ground 20/20 at 0 s and 20/20 at 60 ms,
   the buy button 10/10 at 0 s; main's binary 0/20, 1/20, 0/10; the original 5/5 (`q476/`, `side-by-side.png`).
   Mutations 8/8 (one equivalent). The right button is Q499.
+- [x] **Q477. What hides a person below their feet.** Decoded (no build): a person's sprite is depth tested and written
+  (`SpriteList_Draw` ORs no-write `0x800` only for flag `0x4000`, which particles carry), graded (`0x556`), drawn after the
+  ground (`0x1256`); `Sprite_BuildQuad` pulls each corner's clip z to `z - 0.2 / (z + 1)` for flag `0x200` outside the
+  ride and first-person views, about 3.8 units nearer the eye at zoom 110; the z-buffer is 16-bit (`0x00573660`)
+  (`park-engine.md`, "What hides a person below their feet"). Measured in the original (`q477/orig/` rounds a and b,
+  the clock held paused, `memhold.py` on the 0.2): held at 0 the patrol squares wash over Mike below his hair while his
+  shoes still reach row 389; held at -0.05 the ground hides him from row 373 (372.7 predicted), at -0.2 wholly. Ours'
+  control on main's binary (`q477/run1-main`): feet end on the origin's row, the squares hide up to 18 px over it.
+  13 predictions, 5 missed in whole or part and explained. Built by Q500. Was: From Q470 (`q470/PREDICTION.txt`, rounds 1 and 1b;
+  `side-by-side.png`): our quad is square on to the eye at its place's depth, as the original's corners keep the place's
+  z and w (`FUN_005890e0`), yet ours loses every row below the origin to the ground nearer the eye (Mike's feet end on
+  the origin's row; the original's go 5 px under it, to 389), and under the staff locator a patrol outline's blue squares
+  (`ParkBuildMarkers`, 1.5 over the ground) hide him up to 12 px over it, where the original's frame shows no square
+  under him. Decode first: how the original's sprite pass meets the depth buffer (its z test and write for the sprite
+  list in `FUN_00589b50`, and whether the blueprint mesh is drawn before or after it), then build it and photograph
+  Mike on a path under the mechanics' locator in both games.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

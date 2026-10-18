@@ -1917,7 +1917,7 @@ effect in the world, and how a world particle becomes a sprite.
 | `0x0087b0d0` | | A scale: `2 x DAT_008bcbcc` across, `-2` down (`FUN_005781d0`: `0x0087b0e4 = 0xc0000000`). Read live: 1.5, -2, 1, 1 | Decompiled; memory |
 | `DAT_008bcbcc` | | 0.75 in the running original at 1024 x 768: the screen's height over its width | Memory |
 | sprite record `+8` | | A picture's width over its height: 1.0 for set 8's 61 x 61, 1.0357 for its 58 x 56 (`Sprites_LookUp`'s 24-byte records) | Memory |
-| state bit `0x800` | | Set for every record carrying `0x4000`, so every world sprite: no depth write (`render-states.md`). Draw flags `0x4` give the word `0x200522`, with `0x2000` plus `0x30` (source alpha, one) | Decompiled |
+| state bit `0x800` | | Set for every record carrying `0x4000`, so every world particle: no depth write (`render-states.md`). A person's sprite carries no `0x4000` and writes depth (`park-engine.md`, "What hides a person below their feet"). Draw flags `0x4` give the word `0x200522`, with `0x2000` plus `0x30` (source alpha, one) | Decompiled |
 
 **The matrices, read in the running original** (`orig/look.py`, the park camera on a bought Drinks Shop): the
 projection is `diag( 0.70711, 0.70711, . )` with the fourth taken as 0.70711 of the depth, a 90 degree lens

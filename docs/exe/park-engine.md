@@ -1446,7 +1446,7 @@ sprite list held 0x200 on every sprite and every one a person's. OpenTPW (`ParkG
 over his origin's row of 720 where the original's 34.7 of 768 is 32.5; after it, the same 26 x 51 picture on both builds
 went 45 to 32 up, 17 to 12 left and 8 to 5 right of his place. Not the same: below the origin, ours is hidden by the ground
 nearer the eye than the place, and by a patrol outline's squares under the staff locator, where the original draws
-the picture to its last row (Mike's feet 5 px under the origin) (Q477).
+the picture to its last row (Mike's feet 5 px under the origin): "What hides a person below their feet", below (Q477).
 
 **A reflected picture turns about its origin** (Q475). The quad's left corners (vertices 0 and 3) are x + L and its right
 (1 and 2) x + R (`0x0058922d` to `0x00589256`), L and R the signed sides above; flag `0x10` negates both
@@ -1458,6 +1458,40 @@ stopped for each frame: reflected, his 31 x 52 picture (origin 20) drew from 505
 the decode's 503.5 and 527.4, where a reflection about the picture's middle puts it at 496.6 to 520.5. OpenTPW
 (`ParkGuestSprites.Across`, `Corners`) draws the same; before Q475 it kept the sides and swapped u, so a person hopped
 sideways by W − 2 × origin x picture pixels at each turn between a direct and a reflected facing.
+
+**What hides a person below their feet** (Q477, decoded). `SpriteList_Draw` (`FUN_0058a770`) builds each world
+sprite's state word from its picture's texture (`Texture_BlendStateWord`) and ORs `0x800`, no depth write, only for the
+sprite's flag `0x4000` (also `0x200000`, `0x20000` and `0x8000000` for its `0x200000`, `0x20000` and `0x10000`); it
+groups the list by texture and word, each group furthest first by `+8`, and hands each sprite through `FUN_00589fd0` to
+`Sprite_BuildQuad` (`FUN_00589b50`) and `SpriteBatch_AddQuad` (`0x00565f90`). A person's flags carry no `0x4000`, so a
+person is depth tested (`LESSEQUAL`, `render-states.md`) and **written**. People's pictures are graded (texture flags
+`0x51201252`, word `0x556`: alpha test at 16, blended), so their batches are sorted and drawn after every opaque and
+cut-out one, among the graded ones furthest first (`render-states.md`, "Three back-to-front sorts"). The ground's word
+is `0x1256` (`0x101256` fogged; `FUN_0056f670`, `0x0056f753`): drawn first, tested and written. The patrol and build
+squares (`BlueprintMesh`, a model of the model lists) are graded too (`blue`, flags `0x510712e2`).
+
+**The pull.** After `FUN_005890e0` lays the quad, `Sprite_BuildQuad` moves every corner's clip z to `z − 0.2 / (z + 1)`
+(`0x00589f17` to `0x00589f5a`: `[0x00702044]` 0.2, `[0x00702038]` −1.0) when the sprite's flags carry `0x200` (a
+person's, "The size a sprite is drawn") and the render word `[0x008bcbc8]` lacks `0x2000` (it does in the park's view,
+`0x1444100`; the views that set it are the ride and first-person ones, "The park view's colours"). With the projection's
+z = Q (e − near) and w = sin 45 × e, near 0.1 (`0x0042aa4e`), that is `1/e' = 1/e + 0.2 sin 45 / (Q near w (z + 1))`,
+about `1/e + 3.95 / e²`: at the locator's zoom 110 the person is tested as if 3.81 units nearer the eye (e 110.000 to
+106.186). The draw matrix's z row is built with a far near 1000 (Mike's z 77.719 at w 77.782 gives Q 0.70718), not the
+126 to 127 then in `[0x00768acc]`. `ClipToScreen_Fpu` (`0x00579690`, the x87 one of the transform's CPU variants, case 0)
+writes the buffer's z as z/w × `[0x008bcc2c]` + `[0x008bcc30]` (4.33 and −3.33 read live), or `[0x008bcc34]` z +
+`[0x008bcc38]` for a z under `[0x008bcc28]` (compared as integers; 0.311 read live), the "ui, linear, log" ranges
+`FUN_005833c0` logs; the z-buffer is the first 16-bit format `EnumZBufferFormats` offers (the callback `0x00573660`), a
+step about 0.43 units at depth 110.
+
+**Measured in the original** (`q477/`, `PREDICTION.txt`; the stock park, Mike under the mechanics' follow at zoom 110,
+the clock held by its pause word `[0x007859a0]` so each trio of frames is one pose; `original/spritepick.py PID where 26
+depth` reads the word, the pull and the buffer's numbers). As it runs, his shoes reach row 389 of the 1024 x 768 frame,
+5 px under his origin's row, over the squares' blue wash. With 0.2 held at 0 (`memhold.py`) the squares wash over his
+whole body below his hair (rows 358 to 389) and his shoes still reach 389: the ground 0 to 0.48 units nearer there lies
+within about a step of the 16-bit buffer. Held at −0.05 (1.0 units away) the ground hides him from row 373 down
+(predicted 372.7), at −0.02 from about 383, at −0.2 wholly. OpenTPW (`ParkGuestSprites`) draws people blended, depth
+tested and not written, with no pull, so the ground nearer the eye hides every row under the origin and the squares hide
+him up to 18 px over it (`q477/run1-main`); the build is Q500.
 
 **The type-3 handlers do NOT test the cell for zero** before unpacking it; the out-of-range value is
 caught downstream by the bounds test inside the callees instead.
