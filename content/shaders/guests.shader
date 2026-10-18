@@ -1,9 +1,9 @@
 vertex {
   //
-  // World sprites: the park's guests and staff, and in time its litter, balloons and thought
-  // bubbles. Camera-facing quads built in world space - so, unlike the interface's particles,
-  // these are behind the hills they stand behind - each carrying its own patch of one atlas and
-  // its own colour.
+  // World sprites that write no depth: the park's particles. Camera-facing quads built in world
+  // space - so, unlike the interface's particles, these are behind the hills they stand behind -
+  // each carrying its own patch of one atlas and its own colour. The park's people are
+  // people.shader, which writes depth.
   //
   // There is no colour in the vertex format, so the colour rides in the material flags word as
   // 0xAARRGGBB, the same arrangement content/shaders/particles.shader uses and for the same
@@ -60,10 +60,9 @@ fragment {
   {
       fragColor = texture( sampler2D( Color, s_Color ), vs_out.vTexCoords ) * vs_out.vColour;
 
-      // A sprite's pictures sit on a palette whose index 0 is fully clear, and the pool packs them
-      // into one atlas with clear pixels between. These quads do not write depth, so a fully clear
-      // fragment blended over the scene would still cost a blend and, where two guests overlap,
-      // show as a faint square. Dropping it is both cheaper and what the picture means.
+      // A particle's pictures are packed into one atlas with clear pixels between. These quads do
+      // not write depth, so a fully clear fragment blended over the scene would still cost a blend
+      // and, where two particles overlap, show as a faint square. Dropping it is both cheaper and what the picture means.
       if ( fragColor.a < 0.004 )
           discard;
   }

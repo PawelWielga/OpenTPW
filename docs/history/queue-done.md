@@ -7841,6 +7841,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   under him. Decode first: how the original's sprite pass meets the depth buffer (its z test and write for the sprite
   list in `FUN_00589b50`, and whether the blueprint mesh is drawn before or after it), then build it and photograph
   Mike on a path under the mechanics' locator in both games.
+- [x] **Q500. A person's depth pull.** From Q477 (`park-engine.md`, "What hides a person below their feet"; `q477/`):
+  build the original's pull on the people's quads (`ParkGuestSprites`): each corner's depth as the original's clip z
+  less 0.2 / (z + 1), z = Q (e - 0.1), w = sin 45 e, Q from the draw matrix (a far near 1000), so 1/e' = 1/e + 3.95 / e^2
+  near enough, 3.81 units at zoom 110; not in a ride's view or first person (render word `0x2000`). The original also
+  writes the people's depth (alpha test at 16) where ours does not, so a square drawn after them in ours would still wash
+  over them: write it, or draw the squares first, and say which at the site. Confirm in both games: Mike on a path under
+  the mechanics' locator (`q477/ctl.py`, `q477/orig/run.sh`), his shoes 5 px under his origin's row and no blue over
+  him; a person behind a hill crest still hidden. **Done (2026-10-18):** `ParkGuestSprites.Pull`/`PulledDepth` (110 to 106.19, none in
+  first person), the people's quads write depth through `people.shader`'s alpha test at 16, furthest first (`Finish`);
+  written, not drawn first. Final binary: Mike's own pixels to his picture's last row open and folded (`q500/run5`),
+  first person 12 of 12 unpulled, two people behind the gate hidden (`run6`); original pull 110.000 to 106.185
+  (`q500/orig`); 14 of 14 bugs put back fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -1300,7 +1300,8 @@ public static class DebugConsole
 							$"origin pixel ({(place.X / place.W + 1f) * Screen.Width / 2f:F1},{(1f - place.Y / place.W) * Screen.Height / 2f:F1}) " +
 							$"radius {MathF.Sqrt( circle.Reach ) * Screen.Width / 2f:F1} x {MathF.Sqrt( circle.Reach ) * Screen.Height / 2f:F1} r2 {circle.Reach:F4} " +
 							$"depth {circle.Depth:F2} size {picture.Width}x{picture.Height} origin {picture.OriginX},{picture.OriginY} mirrored {picture.Mirrored} " +
-							$"of {Screen.Width:F0}x{Screen.Height:F0}" );
+							$"of {Screen.Width:F0}x{Screen.Height:F0} " +
+							$"tested {(ParkGuestSprites.Current?.Pulled == true ? ParkGuestSprites.PulledDepth( circle.Depth ) : circle.Depth):F2}" );
 					}
 
 					if ( listed == 0 )

@@ -1444,9 +1444,9 @@ Cooper's 41 x 52 picture, origin 21, 45, from row 350 to 389 (the decode's 349.3
 sprite list held 0x200 on every sprite and every one a person's. OpenTPW (`ParkGuestSprites.Extent`,
 `Camera.ClipPerWorld`) draws the span over 1.414 in the world; before Q470 it drew the span itself, the same picture 46 px
 over his origin's row of 720 where the original's 34.7 of 768 is 32.5; after it, the same 26 x 51 picture on both builds
-went 45 to 32 up, 17 to 12 left and 8 to 5 right of his place. Not the same: below the origin, ours is hidden by the ground
-nearer the eye than the place, and by a patrol outline's squares under the staff locator, where the original draws
-the picture to its last row (Mike's feet 5 px under the origin): "What hides a person below their feet", below (Q477).
+went 45 to 32 up, 17 to 12 left and 8 to 5 right of his place. Below the origin both draw the picture
+to its last row (Mike's feet 5 px under the origin), each tested nearer the eye: "What hides a person below their feet",
+below (Q477, Q500).
 
 **A reflected picture turns about its origin** (Q475). The quad's left corners (vertices 0 and 3) are x + L and its right
 (1 and 2) x + R (`0x0058922d` to `0x00589256`), L and R the signed sides above; flag `0x10` negates both
@@ -1489,9 +1489,14 @@ depth` reads the word, the pull and the buffer's numbers). As it runs, his shoes
 5 px under his origin's row, over the squares' blue wash. With 0.2 held at 0 (`memhold.py`) the squares wash over his
 whole body below his hair (rows 358 to 389) and his shoes still reach 389: the ground 0 to 0.48 units nearer there lies
 within about a step of the 16-bit buffer. Held at −0.05 (1.0 units away) the ground hides him from row 373 down
-(predicted 372.7), at −0.02 from about 383, at −0.2 wholly. OpenTPW (`ParkGuestSprites`) draws people blended, depth
-tested and not written, with no pull, so the ground nearer the eye hides every row under the origin and the squares hide
-him up to 18 px over it (`q477/run1-main`); the build is Q500.
+(predicted 372.7), at −0.02 from about 383, at −0.2 wholly. OpenTPW (`ParkGuestSprites.Pull`, `PulledDepth`) moves each
+corner of a person's body along its line from the eye to the depth the pull gives (110 to 106.185; none in first person,
+the one `0x2000` view built), and the people's quads write depth through the alpha test at 16 (`people.shader`), handed
+over furthest first (`FurthestFirst`); the heads, bubbles and balloons drawn with them write depth too, their texture
+words not read. **Measured** (`q500/`, `PREDICTION.txt`): Mike's own pixels reach his picture's bottom, up to 8 px under
+his origin's row of 720, with the locator open and folded, where before they stopped at the origin and the squares hid
+him up to 18 px over it (`q477/run1-main`); with the pull taken out and depth still written they stop at the origin, the
+squares now kept off him above it; people behind the park gate stay hidden by its stone.
 
 **The type-3 handlers do NOT test the cell for zero** before unpacking it; the out-of-range value is
 caught downstream by the bounds test inside the callees instead.

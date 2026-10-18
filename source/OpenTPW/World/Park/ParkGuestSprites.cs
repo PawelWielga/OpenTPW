@@ -125,6 +125,12 @@ public sealed class ParkGuestSprites : ModelEntity
 	private Texture? _atlas;
 	private Region? _plain;
 	private Vertex[] _vertices = [];
+
+	/// <summary>Each quad's depth from the eye at the point it is drawn at, the key <see cref="FurthestFirst(int)"/> sorts by.</summary>
+	private float[] _depths = [];
+
+	/// <summary>The quads' corners and depths as written, for a test of the frame's end (<see cref="Finish"/>).</summary>
+	internal (Vertex[] Vertices, float[] Depths) Written => (_vertices, _depths);
 	private int _uploaded;
 
 	/// <summary>
@@ -488,12 +494,14 @@ public sealed class ParkGuestSprites : ModelEntity
 			indices[at + 5] = (i * 4) + 3;
 		}
 
-		// Depth-tested so a guest behind a hill is behind it, but not depth-writing: these are blended
-		// and drawn in whatever order the table happens to be in, so letting them occlude one another
-		// would show as sprite-shaped holes where two overlap. Two-sided because a quad turned to face
-		// the camera can end up wound either way.
-		var material = new Material( "content/shaders/guests.shader",
-			MaterialFlags.DisableDepthWrite | MaterialFlags.DisableCulling );
+		// Depth tested AND written, as the original's people are: their sprites carry no 0x4000, so FUN_0058a770 ORs
+		// no 0x800 into the word their graded pictures give (0x556: alpha test at 16, blended; docs/exe/park-engine.md,
+		// "What hides a person below their feet"). people.shader drops what the test drops, and the quads go to the
+		// buffer furthest first (FurthestFirst), so a nearer person's picture never cuts a hole in one behind. The
+		// heads, bubbles and balloons drawn here share the word: their programs set no 0x4000 either, and their
+		// pictures' texture flags are not read. Two-sided because a quad turned to face the camera can end up wound
+		// either way.
+		var material = new Material( PeopleShader, PeopleMaterial );
 
 		material.Set( "Color", _atlas! );
 
@@ -503,6 +511,12 @@ public sealed class ParkGuestSprites : ModelEntity
 		TranslucentModel.EnableFrequentUpdates( _vertices );
 	}
 
+	/// <summary>The people's shader, whose alpha test is the original's (<c>content/shaders/people.shader</c>).</summary>
+	internal const string PeopleShader = "content/shaders/people.shader";
+
+	/// <summary>The people's pipeline: depth tested and written, both faces drawn (<see cref="Build"/>).</summary>
+	internal const MaterialFlags PeopleMaterial = MaterialFlags.DisableCulling;
+
 	/// <summary>
 	/// A fresh vertex array of that many quads, every one a point, and no quad counted as uploaded: the model
 	/// <see cref="Build"/> makes over it starts from the array, so there is nothing of the last frame to fold, and
@@ -511,7 +525,19 @@ public sealed class ParkGuestSprites : ModelEntity
 	internal void Resize( int quads )
 	{
 		_vertices = new Vertex[quads * 4];
+		_depths = new float[quads];
 		_uploaded = 0;
+	}
+
+	/// <summary>
+	/// The frame's quads made ready for the upload: the <paramref name="used"/> written put furthest first
+	/// (<see cref="FurthestFirst(int)"/>), then the last frame's leftovers folded (<see cref="Fold"/>), whose answer
+	/// this is.
+	/// </summary>
+	internal int Finish( int used )
+	{
+		FurthestFirst( used );
+		return Fold( used );
 	}
 
 	/// <summary>
@@ -628,9 +654,13 @@ public sealed class ParkGuestSprites : ModelEntity
 
 	private readonly List<SpritePick.Drawn> _drawn = [];
 
+	/// <summary>Whether the last frame pulled the people's bodies toward the eye (<see cref="Pull"/>): not in first person.</summary>
+	internal bool Pulled { get; private set; }
+
 	protected override void OnRenderTranslucent()
 	{
 		_drawn.Clear();
+		Pulled = !ParkCamcorderCameraMode.Active;
 
 		if ( TranslucentModel == null || _atlas == null )
 			return;
@@ -710,7 +740,7 @@ public sealed class ParkGuestSprites : ModelEntity
 			var ground = field?.HeightAtWorld( x, y ) ?? 0f;
 			var centre = Centre( Seated( people, person.ThingId ), x, y, ground, sprite.Height );
 
-			WriteQuad( used++, centre, picture, mirrored, sprite.Alpha );
+			WriteQuad( used++, centre, picture, mirrored, sprite.Alpha, pulled: Pulled );
 			_drawn.Add( new SpritePick.Drawn( person.ThingId, centre, picture.Width, picture.Height, picture.OriginX, picture.OriginY, mirrored ) );
 
 			if ( DebugFacing && _plain is { } plain )
@@ -721,7 +751,7 @@ public sealed class ParkGuestSprites : ModelEntity
 
 		used = DrawBalloons( people, field, cellX, cellY, alpha, used );
 
-		var reach = Fold( used );
+		var reach = Finish( used );
 
 		if ( reach == 0 )
 			return;
@@ -1148,13 +1178,101 @@ public sealed class ParkGuestSprites : ModelEntity
 		return mirrored ? (-rightward, width, leftward, 0) : (-leftward, 0, rightward, width);
 	}
 
-	private void WriteQuad( int index, Vector3 centre, Region picture, bool mirrored, int alpha, float instanceScale = 1f )
+	/// <summary>
+	/// Writes a picture's quad at <paramref name="index"/>, its origin on <paramref name="centre"/>; a person's body is
+	/// <paramref name="pulled"/> toward the eye (<see cref="Pull"/>).
+	/// </summary>
+	private void WriteQuad( int index, Vector3 centre, Region picture, bool mirrored, int alpha, float instanceScale = 1f, bool pulled = false )
 	{
 		if ( index < 0 || index * 4 >= _vertices.Length )
 			return;
 
-		if ( !Corners( _vertices.AsSpan( index * 4, 4 ), Camera.Rotation.Forward, centre, picture, mirrored, alpha, instanceScale ) )
+		var forward = Camera.Rotation.Forward;
+		var corners = _vertices.AsSpan( index * 4, 4 );
+		_depths[index] = (centre - Camera.Position).Dot( forward );
+
+		if ( !Corners( corners, forward, centre, picture, mirrored, alpha, instanceScale ) )
+		{
 			Collapse( index );
+			return;
+		}
+
+		if ( pulled )
+			Pull( corners, Camera.Position, forward );
+	}
+
+	/// <summary>
+	/// The original's draw matrix: <c>z = Q (e - near)</c>, <c>w = sin 45 e</c>, near 0.1 (<c>0x0042aa4e</c>) and Q built with a
+	/// far of 1000, for an eye depth e (<c>FUN_00578be0</c>).
+	/// </summary>
+	private const float PullNear = 0.1f;
+
+	private static readonly float PullQ = MathF.Sin( MathF.PI / 4f ) / (1f - (PullNear / 1000f));
+
+	/// <summary>
+	/// The eye depth the original tests a person's corner at when it is drawn at <paramref name="depth"/>:
+	/// <c>Sprite_BuildQuad</c> (<c>FUN_00589b50</c>, <c>0x00589f17</c> to <c>0x00589f5a</c>) moves each corner's clip z to
+	/// <c>z - 0.2 / (z + 1)</c>, which with the draw matrix above is <c>e / (1 + 0.2 / (Q near (z + 1)))</c>: 110 is tested at
+	/// 106.19, 3.81 nearer (docs/exe/park-engine.md, "What hides a person below their feet").
+	/// </summary>
+	internal static float PulledDepth( float depth )
+	{
+		var z = PullQ * (depth - PullNear);
+		return depth / (1f + (0.2f / (PullQ * PullNear * (z + 1f))));
+	}
+
+	/// <summary>
+	/// Moves each corner along its own line from the eye to <see cref="PulledDepth"/>, so the picture lands on the same
+	/// pixels and is tested that much nearer: what lies under a person's origin and just in front of it, the ground
+	/// and a tool's squares, no longer hides their feet. The original pulls only a sprite whose flags carry
+	/// <c>0x200</c>, a person's body, and not under the render word's <c>0x2000</c>, set by the ride and first-person
+	/// views; first person is the one of those built here, so the caller asks for no pull there.
+	/// </summary>
+	internal static void Pull( Span<Vertex> corners, Vector3 eye, Vector3 forward )
+	{
+		for ( var i = 0; i < corners.Length; ++i )
+		{
+			var seen = corners[i].Position - eye;
+			var depth = seen.Dot( forward );
+
+			if ( depth <= PullNear )
+				continue;
+
+			corners[i] = corners[i] with { Position = eye + (seen * (PulledDepth( depth ) / depth)) };
+		}
+	}
+
+	/// <summary>
+	/// Puts the first <paramref name="used"/> quads in the order the original draws its people's batch: furthest from
+	/// the eye first (<c>SpriteList_Draw</c>, <c>FUN_0058a770</c>, each group by its <c>+8</c>), by the depth of the point each is
+	/// drawn at. Their pictures write depth, so a nearer one drawn first would hide the edge of one behind it that
+	/// its own clear fringe should have let through.
+	/// </summary>
+	private void FurthestFirst( int used ) => FurthestFirst( _vertices, _depths, used );
+
+	/// <inheritdoc cref="FurthestFirst(int)"/>
+	internal static void FurthestFirst( Vertex[] vertices, float[] depths, int used )
+	{
+		used = Math.Min( used, Math.Min( vertices.Length / 4, depths.Length ) );
+
+		if ( used < 2 )
+			return;
+
+		var order = new int[used];
+
+		for ( var i = 0; i < used; ++i )
+			order[i] = i;
+
+		var keys = depths.AsSpan( 0, used ).ToArray();
+		Array.Sort( order, ( a, b ) => keys[b].CompareTo( keys[a] ) );
+
+		var quads = vertices.AsSpan( 0, used * 4 ).ToArray();
+
+		for ( var i = 0; i < used; ++i )
+		{
+			quads.AsSpan( order[i] * 4, 4 ).CopyTo( vertices.AsSpan( i * 4, 4 ) );
+			depths[i] = keys[order[i]];
+		}
 	}
 
 	/// <summary>
@@ -1242,6 +1360,7 @@ public sealed class ParkGuestSprites : ModelEntity
 		var w = (plain.Top + plain.Bottom) * 0.5f;
 
 		var v = index * 4;
+		_depths[index] = (feet - Camera.Position).Dot( Camera.Rotation.Forward );
 
 		Corner( v, start - side );
 		Corner( v + 1, start + side );
