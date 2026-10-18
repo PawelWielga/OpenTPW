@@ -50,14 +50,18 @@ park, the calendar, the shop's window, the gauge, the research lab), then the re
 The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
 (`~/.cache/tpw-harnesses/audit-2026-10-17/`, `LEDGER.md`; `CLAUDE.local.md` says where).
-Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
+Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q483. The ground's dirt patches: the procedural compositor. Decode first.** From Q479: inside a box round the
-  view (`FUN_0056f380`, the terrain object's words `0x8d` to `0x90`) the original draws each cell with a tile
-  composited from `base.lnd` (`park-engine.md`, "The blocking unknowns", 6; `FUN_0055f780` blends up to thirteen
-  textures), not the cell's texture; ours draws the cell's texture alone. Decode what fills a tile and the box, measured
-  against `[0x008bd550]` bit 4 held clear and set (`q479/orig/runc.sh`), before any build.
+- [ ] **Q488. The ground's dirt patches: the procedural ground built.** From Q483 (`park-engine.md`, "The procedural
+  ground"; FileFormats `lnd.md`). First read how the terrain pass maps a composited tile onto its cell (`FUN_0056f670`:
+  the UVs, and whether the cell's rotation and mirror turn it), which Q483 left. Then: `base.lnd` read at the boundary
+  (`OpenTPW.Files`), the tile made as `FUN_0055f780` makes it at 16 pixels (the original's size on any computer with
+  2 GB or more: say at the site if another is chosen), grey where the map's byte 0 refuses, inside the box only; a
+  path cell's own texture laid over by its alpha with its rotation and mirror (`lndtile.py` does not run that pass yet:
+  extend it, and catch tiles with paths in view with `tilecap.sh`); made again after a build marks the cell `0x0100`.
+  Tests take their values from `lib/lndtile.py` (bit-exact, all three spans' classes and the frozen u1); confirm at
+  Q479's camera A in both games (the patches, `patchmean.py`) and tile for tile against `tilecap.sh`'s catch.
 - [ ] **Q486. The park's sea: its texture, its motion and its colour. Decode first.** Asked by Alexah (2026-10-17),
   from `q472/side-by-side.png`: the original's sea is an animated, perhaps procedural, texture - Alexah's lead: the
   same wave motion as the path tool's see-through preview - where ours (`content/shaders/water.shader`, `World/Terrain/

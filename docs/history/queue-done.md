@@ -7624,6 +7624,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (29.9, 139.2, 28.6) to (14.9, 69.3, 14.2), the original's (32.8, 65.9, 16.5); the original live, 180 of 180 at the
   last column and row; low quality halves nothing, `LIGHTING_OFF` (Q487). Both other callers are loads, so ours' one
   load covers them; Buy Land's re-marking waits for Q407 (`q482/PREDICTION.txt`).
+- [x] **Q483. The ground's dirt patches: the procedural compositor. Decode first.** From Q479: inside a box round the
+  view (`FUN_0056f380`, the terrain object's words `0x8d` to `0x90`) the original draws each cell with a tile
+  composited from `base.lnd` (`park-engine.md`, "The blocking unknowns", 6; `FUN_0055f780` blends up to thirteen
+  textures), not the cell's texture; ours draws the cell's texture alone. Decode what fills a tile and the box, measured
+  against `[0x008bd550]` bit 4 held clear and set (`q479/orig/runc.sh`), before any build.
+  **Done (2026-10-17, decode only):** `park-engine.md`, "The procedural ground"; FileFormats `lnd.md` (new). The box is
+  the whole heightfield, 0..95 x 0..84 (MapInfo plus `ProceduralTexturingX/YOffset`, -1 held to 0), not a box round the
+  view; a tile is three layers of two textures each, laid by two masks from the map's bytes, with two quirks of the
+  original's (a mixed span's frozen u1, a whole span's layer taken unmixed). A model of the reading equals the
+  original's function under unicorn on 12 x 8,075 tiles (four parks, three sizes), and that equals all 60 tiles caught
+  from the running original; held clear, bit 4 takes the patches away (`q483/orig/a-sheet.png`). On a computer with
+  2 GB or more the original makes 16-pixel tiles whatever the detail asks (a signed test of `dwTotalPhys`). Filed Q488
+  (the build). New tools: `lib/lndtile.py`, `original/tilecap.sh`, `lndcmp.py`, `compstate.py`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

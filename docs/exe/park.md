@@ -87,7 +87,12 @@ Mesh names are the park itself: `road_center`, `road_lhs`, `road_rhs`, `arrival_
 
 ## `.LND` — procedural-texture source, not the landscape
 
-Header: byte 0 = 3, a version the engine checks (`FUN_00560ff0` refuses any other; `park-engine.md`, "The blocking unknowns", 6), 10 bytes of per-park values, then uint32 384, uint32 344, uint32 4 at offsets 11/15/19 — **the same 384/344/4 in all four parks** — then 4-byte quads. There is a section of 384 x 344 x 4 bytes = 528,384 somewhere in the middle, and ~1.8 MB beyond it. Sizes are park-specific (jungle 2,417,116; fantasy 2,196,802; hallow 2,447,361; space 2,241,690). The heights are not here: they are a block inside `base.MD2`, read by `HeightfieldFile` — see `park-engine.md`, "The heightfield lives inside base.MD2". The engine loads `base.lnd` only when `DAT_007a1a8c & 0x2000` is set (`park-engine.md`, "base.lnd is not the heightfield").
+Its bytes are FileFormats `lnd.md` (Q483): a version byte 3 (`FUN_00560ff0` refuses any other), five ramp pairs, a
+map of 384 x 344 samples of four bytes (four samples a cell; byte 0 says where the ground is composited, bytes 1 to 3
+are weights), then three sets of thirteen textures, for 64-, 32- and 16-pixel tiles. Sizes are park-specific (jungle
+2,417,116; fantasy 2,196,802; hallow 2,447,361; space 2,241,690). The heights are not here: they are a block inside
+`base.MD2`, read by `HeightfieldFile` — see `park-engine.md`, "The heightfield lives inside base.MD2". The engine loads
+`base.lnd` only when `DAT_007a1a8c & 0x2000` is set; what it makes of it is `park-engine.md`, "The procedural ground".
 
 ## `Standard.sam` — the park's specification, and the simulation's balance file
 

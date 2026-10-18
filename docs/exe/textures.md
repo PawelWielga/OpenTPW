@@ -99,7 +99,9 @@ materials, their texture's flags or the footprint cells' texture words (a read w
 `mGameTick` and the Belly Bounce's body texture, both read at once); `m_grass1`'s cached texture has no surface
 (`+0x0c` -1, `+0x18` nought). Holding the textures' `0x300` additive, the footprint cells' texture words or the
 floor's `0x800` cleared changed nothing on screen (`orig/belly-4.png`, `h-3.png`, `k-2.png`): the floor's draw state
-is made at the load, and **which routine draws a procedural base each frame is not read**. The texture cache
+is made at the load, and **which routine draws a procedural base each frame is not read**. A lead (Q483): the model
+maker `FUN_00463060` calls `FUN_0057ace0`, which composites a ground tile (`park-engine.md`, "The procedural ground")
+for each cell of a rectangle whose word has `0x0080` and `0x0200`; not followed. The texture cache
 (`[0x0087a268]`, 4,096 entries of {folder, name, texture, refs}, the count at `+0x10000`) holds `m_grass1` once,
 `data\levels\jungle\sharetex\m_grass1.TGA`, flags `0x11070281` (graded, version 2, `0x40000` from the loader's `0x20`,
 `0x30000` from materials' `0x10`/`0x20`).

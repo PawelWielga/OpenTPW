@@ -10,9 +10,10 @@ What `testme.exe` says about park loading, terrain, the camera, the clock, the s
 
 | Address / offset | Original name | What it is | Evidence |
 |---|---|---|---|
-| `DAT_007a1a8c & 0x2000` | — | Gate on loading `base.lnd` at all (`FUN_004504c0`, `0x004507a7`); with the flag off the call is skipped and nothing is logged. `"Procedural textures not allowed"` is `FUN_0056dfe0`'s, when `DAT_008bd550 & 0x10000000` is set, and logged only under the debug bit `DAT_008bd508 & 0x2000000` ("The blocking unknowns", 6) | Ghidra, Q194 |
+| `DAT_007a1a8c & 0x2000` | — | Gate on loading `base.lnd` at all (`FUN_004504c0`, `0x004507a7`); with the flag off the call is skipped and nothing is logged. `"Procedural textures not allowed"` is `FUN_0056dfe0`'s, when `DAT_008bd550 & 0x10000000` is set, and logged only under the debug bit `DAT_008bd508 & 0x2000000` ("The procedural ground") | Ghidra, Q194 |
 
-**Skip it entirely for a first renderer.** Rendering its second section looks like stacked texture tiles rather than a park, which is the symptom of treating it as terrain.
+It is the source of the ground's composited tiles: what the game makes of it is "The procedural ground", its bytes
+FileFormats `lnd.md`.
 
 ---
 
@@ -55,6 +56,7 @@ Jungle: **96x85 cells, 97x86 vertices, 8342 heights, 8160 cell records.** Valida
 | `0x0008` / `0x0010` / `0x0020` | Rotation, one field of exactly four states (`flags & 0x38`) | Confirmed |
 | `0x0040` | Mirror, independent of rotation | Confirmed |
 | `0x0080` | Marks a path cell; in a footprint entry it means "this cell of the footprint is used" | Confirmed |
+| `0x0100` | **The composited tile is stale**: on the cell's next view `FUN_0056f090` composites it again even from the cache, and clears the bit ("The procedural ground"). Set with `0x0001` by `FUN_0046df50`; every cell caught on its first composite carried it (Q483) | Ghidra; live, Q483 |
 | `0x0200` | Set by the footprint stamper | Confirmed |
 | `0x0400` | **Land outside the park, drawn at half light**: the terrain pass halves the corner's colour. `FUN_00450d10` sets it where the map cell's `mFlags` has `0x40` and not `0x80` ("The park view's colours") | Confirmed at three separate sites; measured (Q479) |
 | `0x0800` | "This cell is not planar." **Computed at load, never stored on disk**: `FUN_004504c0` sets it (`0x0045075d`) where the cell's two triangles' normals differ (dot under 0.9999) | Confirmed |
@@ -3274,7 +3276,7 @@ nothing is halved, and the rest of what that option turns off is counted, `LIGHT
 
 **The brown patches are the procedural compositor's.** `FUN_0056f380` gives every visible cell inside the box at the
 terrain object's words `0x8d` to `0x90` a composited tile when `[0x008bd550]` bit 4 is set (the compositor ready,
-"The blocking unknowns", 6), and the cell's own texture otherwise. Live it reads `0x146`. Held clear, the patches
+"The procedural ground", below), and the cell's own texture otherwise. Live it reads `0x146`. Held clear, the patches
 went and the plain cell textures showed, the same small flecks in the same places as OpenTPW's at
 (13.3, 72.7, 12.9), the half light still on.
 
@@ -3285,6 +3287,82 @@ texture filtering.
 
 ---
 
+## The procedural ground
+
+Decoded for Q483 and run three ways: read in Ghidra, `FUN_0055f780` run unchanged under unicorn on the game's own file
+(`lib/lndtile.py`), and the tiles the running original makes caught as it makes them (`original/tilecap.sh`,
+`lndcmp.py`). A Python model written from the reading (`q483/model.py`) equals the emulator byte for byte on every
+cell 0..94 x 0..84 of all four parks at all three tile sizes (12 x 8,075 tiles), and the emulator equals the 60 tiles
+the original made in the stock park (`q483/orig/a-cmp.txt`, `a-sheet.png`). The file's bytes are FileFormats `lnd.md`.
+
+**Where.** `FUN_00457c30` sets the box once a park loads (`FUN_0056df70`, `0x00457cf5`) on the terrain object
+`[0x00879d60]`: `+0x234` x0 and `+0x238` y0 are `MapInfo.XStart` and `YStart` (`[0x00785584]`, `[0x00785588]`), `+0x23c`
+x1 = x0 + `HeightfieldWidth` + `ThemeEngine.ProceduralTexturingXOffset` and `+0x240` y1 = y0 + `HeightfieldHeight` +
+`ProceduralTexturingYOffset`, each offset held to nought when below 1 (`FUN_004080e0`); every park ships -1, so the box
+is 0..95 x 0..84 inclusive, the whole heightfield (read live: 0, 0, 95, 84). Inside it, while `[0x008bd550]` bit 4 is
+set, `FUN_0056f090` gives every visible ground cell (`0x0001` clear) a composited tile; outside it, or with the bit
+clear, the cell draws its own texture. The cells' coordinates handed on are box-relative.
+
+**The cache.** `+0x230` is a cache of `[0x008c162c]` tiles (`GraphicalOptions.PROCEDURALTEXTURECACHE` 0, 1, 2 give
+1,500, 2,000, 2,500, `FUN_0044d8f0`) in a ring kept in last-used order, found through a 128 x 128 table of slots by
+cell (`FUN_00572440`). Up to 2,500 visible cells a frame (`0x9c4`) are looked up; a miss takes the least recently used
+tile and composites the cell into it, and a hit composites again only when the cell's word has `0x0100`, which
+`FUN_0056f090` clears (`AND 0xfeff`). Every cell caught on its first composite carried it (word `0x104`).
+
+**The tile size.** `FUN_00457a90` asks 16 when `[0x0079d86c]` has 4, 32 when it has 2, 64 when 1 and 32 with
+none (`GraphicalOptions.PROCEDURALTEXTURING` 1, 2, 3 set 4, 2, 1; 0 turns the compositor off), and `FUN_00572110` cuts
+the ask to 16 when `[0x008bd520]` < 48 MB or the texture memory `[0x008c1624]` < bytes-a-pixel x 3 MB, and 64 to 32 under
+64 MB or 5 MB. **`[0x008bd520]` is `GlobalMemoryStatus`'s `dwTotalPhys`** (`0x0058357b`) and the test is signed
+(`JL`, `0x0057215f`): on a computer with 2 GB or more it is negative, so the original makes **16-pixel tiles whatever
+the detail asks**. Read live at medium: `[0x0079d86c]` `0x82`, `[0x008bd520]` `0xffffffff`, tile size 16, 2,000 tiles.
+
+**What fills a tile** (`FUN_0055f780`, thiscall on the lnd object; dest, x, y, record). With N the tile size, the
+set of textures for N (64, 32, 16 are sets 0, 1, 2), r = 84 - y (the map's rows run the other way) and
+`lerp( q, p, w ) = q + ((p - q) x w >> 8)` on each of a texel's bytes 1 to 3 (red, green, blue; the shift arithmetic):
+
+1. **The gate.** Unless byte 0 of the map's four samples at rows 4r+1, 4r+2 and columns 4x+1, 4x+2 are all 255, the tile
+   is grey, `0x7f7f7f00`. In the stock jungle file 1,153 of the 8,075 cells are grey: the approach and the shipped paths.
+2. **Three weights.** Each of the map's bytes 1, 2 and 3 over the cell's 5 x 5 samples (rows 4r..4r+4, columns
+   4x..4x+4) is upsampled to N x N (`FUN_0055e780`: each of the 4 x 4 squares bilinear in 16.16 fixed point, the value
+   starting at `a << 16` and stepping by `(c - a) << s` a row and `dx` along it, `dx` starting at `(b - a) << s` and
+   growing by `(((d - c) << s) - ((b - a) << s)) >> log2(N / 4)` a row, s = 16 - log2(N / 4); the byte is bits 16 to
+   23): u1, u2, u3.
+3. **Every texture** (Tk is the lnd object's slot k: the file stores the thirteen in the slot order 0, 1, 3, 4, 8, 9,
+   2, 5, 10, 6, 7, 11, 12, `FUN_0055f470`; slots 0, 1, 3, 4, 8, 9 are colour, four bytes a texel, the rest one) is
+   read at a window of N x N starting at column `(N x x) mod (w - N)` and row `(N x r) mod (h - N)`, so the file's
+   odd widths (212, 222, 242, 282, 292) make the pattern repeat slowly.
+4. **Three layers**, each two colour textures mixed by a ramp of one grey texture times u1:
+   A = lerp( T9, T8, R4[ T10 x u1 >> 8 ] ), B = lerp( T4, T3, R2[ T5 x u1 >> 8 ] ), C = lerp( T1, T0, R1[ T2 x u1 >> 8 ] ).
+   Rk is the ramp of the file's k-th pair of header bytes (centre c, width w: 0 below c - (w+1)/2, 255 above c +
+   (w+1)/2, `(i x 255 - lo x 255) / (w + 1)` between; `FUN_0055e710`, at `0x008795a8`, `0x008796a8`, `0x008793a8`,
+   `0x008797a8`, `0x008794a8` for pairs 1 to 5).
+5. **Two masks**: mA = max( R5[ T12 x u3 >> 8 ], R5[ T11 x u3 >> 8 ] ), mB = max( R3[ T6 x u2 >> 8 ], R3[ T7 x u2 >> 8 ] ).
+6. **The mix**, for each span of 16 pixels of a row by the class of its masks (all 255, all 0, mixed): mA all 255 gives
+   A; mA all 0 gives B where mB is all 255, C where it is all 0, else lerp( C, B, mB ) (`FUN_0055ee10`); mA mixed gives
+   lerp( B, A, mA ) or lerp( C, A, mA ) where mB is all 255 or all 0, else **lerp( lerp( C, B, mB ), A, mA ) with every
+   pixel of the span taking the span's first u1** (`FUN_0055eaa0` never steps that pointer, `[ESP+0x78]`). A span of
+   one class takes the layer whole, never lerp( x, y, 255 ), which is one short. The MMX paths and the byte paths agree.
+7. Rows are written into the scratch from its last row up, so the tile's row k comes from texture and weight row N-1-k;
+   with no record texture the scratch is the tile. `FUN_00572440` then reverses each pixel's bytes into the surface
+   (X8R8G8B8 in memory is B, G, R, X), or converts it where the surface is 16-bit (`[0x00701548 + 4 x [0x008bd554]]`
+   2; live it is 2, `0x0057257a`).
+
+In the jungle file C is brown earth (T0, T1 average (150, 91, 35) and (168, 112, 51)), and B and A are two grasses
+laid over it where u2 and u3 lift their masks: the brown patches of Q479's frames are where neither covers the earth.
+
+**A path laid over.** Where the cell's word has `0x0080` (a path cell) the record carries the cell's own texture, and
+the last pass lays it over the tile by its alpha, `tile + (path - tile) x alpha >> 8` a byte, its rows and columns
+turned by the word's mirror `0x40` and rotation `0x08`/`0x10`/`0x20` (the eight start and step cases at the pass's
+head); a 16-bit texture is read as 4:4:4:4. Read, not run under unicorn and not caught live (none of the 60 had one).
+
+**Elsewhere.** `FUN_0057ace0`, reached from the model maker `FUN_00463060`, composites through `FUN_00572630` one
+uncached tile for each cell of a rectangle whose word has `0x0080` and `0x0200` (a footprint's used cell): a lead for
+the procedural base (`textures.md`), not followed. The lobby calls the same load (`FUN_005d84a0`) but no lobby wad
+holds a `base.lnd`, so the bit is not set there. **How the terrain pass maps a tile onto its cell** (its UVs, and the
+cell's rotation and mirror) is not read.
+
+---
+
 ## The blocking unknowns, worst first
 
 1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). Settled for the picker (Q472): the terrain is tested over the heightfield's 96x85 cells and the cell is held below `HeightfieldWidth` and `HeightfieldHeight`, 0..94 and 0..83 ("The picker never hands the mode a cell off the map"). The camera sweep's `FUN_0042cd40` holds to the same; what else reads them (`FUN_0055abf0` and the rest of `[0x007a0314]`'s twenty readers) is not read.
@@ -3292,22 +3370,12 @@ texture filtering.
 3. ~~The diagonal-choice bit.~~ Settled: see "The triangle diagonal" above (`0x0002` drawn, `0x0004` heights).
 4. `base.MD2`'s container walking — the heightfield was found by validated signature search, **not** by walking the chunk table.
 5. `base.map`'s per-bit semantics beyond `0x08`.
-6. **The procedural compositor.** Its entry point (Q194): `FUN_004504c0` (from `FUN_00457a90` on a park's load, and
-   from the lobby's `FUN_005d84a0`) passes the gate above, builds `%sbase.lnd` and calls `FUN_0056dfe0`, which (unless
-   refused) calls `FUN_0056e550` on `DAT_00879d60`. That needs `DAT_008bd524 == 1` (not identified), logs "Attempting to
-   initialize procedural textures", and through `FUN_005723f0` allocates the tile buffers (`FUN_0055f720`,
-   `DAT_008798c8`) and reads the file (`FUN_00560ff0`, which refuses it unless byte 0 is 3), then sets
-   `DAT_008bd550 |= 4`. `FUN_0044d8f0` sets that gate from `GraphicalOptions.PROCEDURALTEXTURING` (`0x0078587c`; 0, 2, 2 in `low`, `med`,
-   `high.sam`): nought clears `DAT_007a1a8c`'s `0x6000`, 1 to 3 set it with `DAT_0079d86c` `|= 4`, `2` or `1`.
-   - `FUN_0055f780`, a 6,256-byte MMX thiscall, composites one tile (callers `FUN_00572440`, and `FUN_00572630` from
-     `FUN_0057ace0`): unless all four corner samples' channel 0 are `0xff` it fills the tile grey (`0x7f7f7f00`);
-     otherwise it upsamples channels 1-3 with `FUN_0055e780` into `DAT_008798a8`, `DAT_008798b8`, `DAT_00879398` and
-     blends up to thirteen source textures with modulo wrap. Only its first ~180 of 2,681 decompiled lines are read.
-   - `FUN_0055e780` is a bilinear **up**sample: one byte channel's 5 × 5 samples to an N × N tile, N = 4 × (w >> 2).
-   - `FUN_0056e7e0` is the separate visible-cell pass: a quadtree over map cells that projects each rectangle's height
-     box, culls it, and splits it, `FUN_0056e780` keeping each of 128 rows' x span. `FUN_00576a00` calls both
-     branches: `FUN_0056ea90` for the spans, `FUN_00576910` → `FUN_0056f090` → `FUN_00572440` → `FUN_0055f780` for
-     the tiles. No sprite passes through any of them.
+6. ~~The procedural compositor.~~ Settled: see "The procedural ground" above. Its entry is `FUN_004504c0` (from
+   `FUN_00457a90` on a park's load, and from the lobby's `FUN_005d84a0`): past the gate above it builds `%sbase.lnd` and
+   calls `FUN_0056dfe0`, which (unless `[0x008bd550]` has `0x10000000`) calls `FUN_0056e550` on `DAT_00879d60`. That
+   needs `DAT_008bd524 == 1` (live 1, not identified), makes the cache (`FUN_00572110`), sizes the scratch
+   (`FUN_0055f720`, `DAT_008798c8`) and reads the file (`FUN_00560ff0`, refused unless byte 0 is 3), then sets
+   `[0x008bd550] |= 4`. How the terrain pass maps a tile onto its cell is not read.
 7. ~~The park camera's terrain-following sampler.~~ Settled: `FUN_00452560`, called at `0x0042c817`; see "The park camera" above.
 
 ---
