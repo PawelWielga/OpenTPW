@@ -854,8 +854,11 @@ GH=766` there, or the pointer is off):
   `helpbar.py`'s `flags` reads `0x202`. A click on the hoarding (617, 378) or the land below the gate is refused (the
   no-entry cursor) and leaves the pick up; C puts the pick back. **The pick over a ride** (Q497, `q497/orig/run.sh`):
   Q265's `bounce.TPWS` (`q265/run-fix1/`) in its saved view, no `setcam.py`: the Belly Bounce at (600, 470), path at
-  (300, 300) (the pick's click there enters first person), ground at (400, 440); `SCAN=1 run.sh` reads the hover's
-  category over a grid in orbit to find such points in another file.
+  (300, 300) (the pick's click there enters first person), ground at (400, 440), though in Q498's round c that point
+  read the Belly Bounce (cat 4) in orbit: read A1 before trusting it; `SCAN=1 run.sh` reads the hover's
+  category over a grid in orbit to find such points in another file. **Ours into first person** (`q498/confirm.py`):
+  `control 27` then `63` enter it at once (no pick, Q25); the eject button is `control 89db53`; `pointer` reads the
+  cursor and the row.
 - **The game menu:** Escape with no tool in hand opens it **and pauses the game**; never sleep under it. Load
   (510,50) then the first row (400,123), the newest file; Save (510,140), type the name, Return; Options
   (510,400), the quality track (512,276), OK (898,688).

@@ -71,6 +71,14 @@ internal sealed class ParkViewfinder : UiWindow
 	protected internal override void Update() => Hidden = !ParkCamcorderCameraMode.Active;
 
 	/// <summary>
+	/// First person's own layer, laid over the hidden park view while the mode runs (<c>FUN_00481470</c> ->
+	/// <c>FUN_004a2ac0</c>): no help row, cursor <c>0x15</c>, <c>c_crosshair.ani</c> (<c>docs/exe/hud.md</c>, "The help
+	/// bar in first person"). Asked of the mode, so the frame first person starts in already has it.
+	/// </summary>
+	protected internal override Input.CursorTypes? LayerCursor
+		=> ParkCamcorderCameraMode.Active ? Input.CursorTypes.Crosshair : null;
+
+	/// <summary>
 	/// What answers a right click whose press lands on the view, as the stack asks at the press
 	/// (<see cref="WindowStack.ViewRightClick"/>): in first person the view is this window's own full-screen
 	/// layer, under the frame, which takes no pointer, and beside the eject button, which drops a right

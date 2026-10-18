@@ -153,7 +153,7 @@ internal sealed class WindowStack : Panel
 
 	/// <summary>
 	/// What the pointer was over at the last update, for the bar: a control, <see cref="Background"/> (a modal window, a
-	/// park screen's body or the cover), or null for the scene's own view.
+	/// park screen's body or the cover), a window's <see cref="Layer"/>, or null for the scene's own view.
 	/// </summary>
 	private object? _pointed;
 
@@ -208,8 +208,22 @@ internal sealed class WindowStack : Panel
 	/// a modal window counts as a control here, as it does for the help bar, which is not measured in the original.
 	/// </summary>
 	internal bool PointerOnTheView
-		=> !Covered && !ModalUp && HitTest( Input.Mouse.Position.X, Input.Mouse.Position.Y ) == null
+		=> !Covered && !ModalUp && Layer == null && HitTest( Input.Mouse.Position.X, Input.Mouse.Position.Y ) == null
 			&& !OnParkScreen( Input.Mouse.Position.X, Input.Mouse.Position.Y );
+
+	/// <summary>
+	/// The window whose full-screen layer lies over the scene's view (<see cref="UiWindow.LayerCursor"/>), or null: first
+	/// person's. The view under it is never pointed at.
+	/// </summary>
+	private UiWindow? Layer => _windows.LastOrDefault( window => window.LayerCursor != null );
+
+	/// <summary>
+	/// The cursor of the layer under the pointer, or null where the pointer is on no layer: on a control, a modal, a park
+	/// screen, under the cover or on the view itself.
+	/// </summary>
+	internal Input.CursorTypes? LayerCursor
+		=> Covered || ModalUp || HitTest( Input.Mouse.Position.X, Input.Mouse.Position.Y ) != null
+			|| OnParkScreen( Input.Mouse.Position.X, Input.Mouse.Position.Y ) ? null : Layer?.LayerCursor;
 
 	/// <summary>
 	/// Whether a full-screen control over the stack's layer has the keys and the pointer, the layer hidden under it, as
@@ -468,7 +482,8 @@ internal sealed class WindowStack : Panel
 		// +0x24 and +0x28); the view's own row comes after that, so a row the park posted stands until something else
 		// posts. Under the cover the bar is not drawn, and its own key is still heard: the window procedure matches the
 		// system table on every key.
-		var pointed = hit ?? (Covered || ModalUp || OnParkScreen( mouse.X, mouse.Y ) ? Background : null);
+		// A layer laid over the view is the control there, whose row is none (docs/exe/hud.md, "The help bar in first person").
+		var pointed = hit ?? (Covered || ModalUp || OnParkScreen( mouse.X, mouse.Y ) ? Background : Layer);
 
 		// Ours: a control's row changed under a pointer at rest is posted at once; whether the original posts it again is
 		// not decoded.

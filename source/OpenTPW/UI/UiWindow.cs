@@ -107,6 +107,13 @@ internal abstract class UiWindow
 	/// </summary>
 	protected internal virtual (int Row, (int Parameter, string Value)[] Values)? HelpPost() => null;
 
+	/// <summary>
+	/// The cursor of a full-screen layer this window lays over the scene's own view, or null where it lays none. While it
+	/// is laid the layer is the control under the pointer wherever none of the window's controls is: its help row is
+	/// none, it wears this cursor, and the view under it is not pointed at. Asked live, as the window's own state is.
+	/// </summary>
+	protected internal virtual Input.CursorTypes? LayerCursor => null;
+
 	/// <summary>Enter was pressed with this in front.</summary>
 	protected internal virtual void Accept() { }
 

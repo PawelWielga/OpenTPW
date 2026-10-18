@@ -1381,9 +1381,8 @@ nought throughout. The game type read 2, Instant Action: `loadfile.sh` loads the
 running game. **In the pick and in
 first person the bar is hidden** (shown 0, `b-A5-first-person-after.png`); in the pick only until a ride has been under
 the pointer (below, "The help bar in first person"). Here the online visit is not built (Go
-Online is counted, Q242), so there is nothing of this to build in a Lost Kingdom park. Ours runs the park's hover in
-first person, its rows and the pick hand under the viewfinder (`q496/run2`, row 459 over the gate's stone,
-`side-by-side.png`): decoded below (Q497), built by Q498.
+Online is counted, Q242), so there is nothing of this to build in a Lost Kingdom park. In first person ours, as the
+original, runs no park hover, the bar empty and the crosshair up (below, "The help bar in first person", Q498).
 
 ### The help bar in first person (Q497)
 
@@ -1427,9 +1426,15 @@ a) and C (round b) at G: cursor 1, the swap 29 ms after the key, the view pointe
 later, the bar shown with the click's cell's row 10 ms after the swap, and G's "Left-click to build path" 400 ms after
 the key (`a-bars.png`).
 
-**OpenTPW** has no pick (Q25) and runs the park's hover under the viewfinder: in first person `pointer` read the pick
-hand and row 459 shown, and after C the hover's row at once (`q497/ctl1`, main's binary, 3 of 3; `side-by-side.png`,
-the original's crosshair and no bar beside ours' hand and the gate's row). The build is Q498.
+**OpenTPW** has no pick (Q25). First person lays the viewfinder's layer over the view (`UiWindow.LayerCursor`, the
+viewfinder's while the mode runs; `WindowStack` takes it for the control under the pointer wherever the eject button is
+not): its row is none, so the bar empties and no hover runs, and the pointer is `c_crosshair` (`Level.WantedCursor`).
+The eject button posts its own 468 and wears the arrow. Out by C or Escape the view comes back as from a control, so the
+hover runs at the last place on the view and posts its row (Q473). Measured (`q498/`, `PREDICTION.txt`): ours 7 of 7 on
+the final binary, the crosshair and `help row -1 ""` throughout first person, 468 over the eject button, the gate's 459
+after C and after Escape; the original's round c the same layer, the bar hidden and `0x15` throughout
+(`side-by-side.png`). Not built: the original's layer wears `c_busy` from the key to the swap (29 ms), and the hover a
+timer can still run before the queued `0x10002` (under a frame); ours swaps in the frame of the key.
 
 ## The park map — `FUN_005f0b40`, stream `0x00774da0`
 

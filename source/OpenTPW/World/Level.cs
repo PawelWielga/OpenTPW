@@ -1299,17 +1299,27 @@ public class Level
 		// (FUN_0052f950 with the hover category, cursor 3). Under the full-screen view the park's mouse proc hears
 		// nothing and the pointer is the plain arrow, as the original's frame shows it over grass; with a tool armed
 		// there it is not measured.
-		var wanted = FullScreenView ? Input.CursorTypes.Normal : ParkBuildMode.Current switch
-		{
-			ParkBuildMode.Queue => QueueCursor(),
-			ParkBuildMode.Path => PathCursor(),
-			ParkBuildMode.Patrol => ParkPicking.TryCell( out var x, out var y ) ? PatrolCursor( x, y ) : Input.CursorTypes.Normal,
-			_ => IdleCursor()
-		};
+		var wanted = WantedCursor();
 
 		if ( cursor.CursorType != wanted )
 			cursor.CursorType = wanted;
 	}
+
+	/// <summary>
+	/// The cursor the park's pointer wears this frame: a layer's own over the hidden view, first person's crosshair
+	/// (<see cref="UI.WindowStack.LayerCursor"/>), and the view's otherwise. Leaving first person by a key, the original's
+	/// layer wears <c>c_busy.ani</c> until the swap 29 ms on (<c>docs/exe/hud.md</c>, "The help bar in first person");
+	/// ours swaps in the same frame, so it is never seen.
+	/// </summary>
+	internal Input.CursorTypes WantedCursor()
+		=> _windows?.LayerCursor is { } layer ? layer
+			: FullScreenView ? Input.CursorTypes.Normal : ParkBuildMode.Current switch
+			{
+				ParkBuildMode.Queue => QueueCursor(),
+				ParkBuildMode.Path => PathCursor(),
+				ParkBuildMode.Patrol => ParkPicking.TryCell( out var x, out var y ) ? PatrolCursor( x, y ) : Input.CursorTypes.Normal,
+				_ => IdleCursor()
+			};
 
 	/// <summary>
 	/// The pointer with nothing armed: off the park's view the control's own, the arrow over the gadget's buttons; on it

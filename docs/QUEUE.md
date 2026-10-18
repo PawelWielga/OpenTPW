@@ -53,13 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q498. No help bar and no park hover in first person.** From Q497 (`hud.md`, "The help bar in first person";
-  `q497/side-by-side.png`): the original hides the park's view in first person, so no hover runs, the bar is hidden
-  (first person's layer has no row) and the cursor is that layer's `0x15`, `c_crosshair.ani`; on the way out the view
-  comes back under the pointer as from a control, and the next hover posts its row. Ours runs the hover under the
-  viewfinder (`q497/ctl1`: the pick hand and row 459). Build it on `WindowStack` (first person's layer as the control
-  under the pointer, its row -1), `Level.WorldHelpRow` and the camcorder's cursor. Confirm in both games with
-  `helpbar.py`'s `fp` fields and `pointer`: in first person, and after Escape and C.
 - [ ] **Q475. A reflected person turns about their feet.** From the review of Q468 (`handoff/review3/VERIFY-3.md`,
   finding 2; read from code, not seen): the original reflects a picture by negating L and R about its origin
   (`0x005891f1` to `0x00589212`, corners at `0x0058922d` to `0x00589256`, u left alone; the flag 2 at `0x00589f68` is a

@@ -7787,6 +7787,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   what hides the bar on the way in and what brings the hover's row back on the way out, then build it on
   `WindowStack.WorldHelpPost` and the camcorder's cursor. Confirm in both games: `helpbar.py`'s shown flag and
   `pointer`'s row and cursor in first person, and after leaving it.
+- [x] **Q498. No help bar and no park hover in first person.** Built: the viewfinder lays first person's layer over the
+  view (`UiWindow.LayerCursor`, `WindowStack.Layer`/`LayerCursor`, `Level.WantedCursor`): row none, no hover, the
+  crosshair; the eject button its own 468 and the arrow; out by C or Escape the hover's row as from a control (`hud.md`,
+  "The help bar in first person"). Ours `q498/run1` 7 of 7 on the final binary (`help row -1 ""`, Crosshair; 459
+  after C and Escape), the original's round c (`q498/orig/`: layer1, shown 0, `0x15`; C3 missed in its row, G on the
+  Belly Bounce), `side-by-side.png`; mutations 7 of 7. Was: From Q497 (`hud.md`, "The help bar in first person";
+  `q497/side-by-side.png`): the original hides the park's view in first person, so no hover runs, the bar is hidden
+  (first person's layer has no row) and the cursor is that layer's `0x15`, `c_crosshair.ani`; on the way out the view
+  comes back under the pointer as from a control, and the next hover posts its row. Ours runs the hover under the
+  viewfinder (`q497/ctl1`: the pick hand and row 459). Build it on `WindowStack` (first person's layer as the control
+  under the pointer, its row -1), `Level.WorldHelpRow` and the camcorder's cursor. Confirm in both games with
+  `helpbar.py`'s `fp` fields and `pointer`: in first person, and after Escape and C.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -1014,6 +1014,73 @@ public class ParkLocatorTests
 	}
 
 	/// <summary>
+	/// <b>First person lays its own layer over the park's view</b> (<c>FUN_00481470</c> -> <c>FUN_004a2ac0</c>; <c>docs/exe/hud.md</c>,
+	/// "The help bar in first person"): the layer is the control under the pointer wherever the eject button is not, its
+	/// row none, so the bar empties and no hover runs over the gate or the ground under it, and the pointer is its
+	/// crosshair, <c>0x15</c>. The eject button posts its own row and wears the arrow. Out of it the view comes back under
+	/// the pointer as from a control: the hover runs at the last place on the view, the click's cell, and posts its row.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no layer (the hover runs under the viewfinder); the layer's row taken for the view's; the
+	/// layer's cursor not worn; the layer worn over the eject button; the layer asked only of a shown window; the last
+	/// place moved under the layer.</remarks>
+	[TestMethod]
+	public void FirstPersonLaysItsLayerOverTheView()
+	{
+		var level = Level.Current!;
+		var popupHelp = GameOptions.Current.PopupHelp;
+		GameOptions.Current.PopupHelp = true;
+		var (ground, hoarding, gate) = ((43, 16), (42, 16), (47, 17));
+		var (park, eject) = (new Vector2( 1800, 200 ), new Vector2( 1960, 1450 ));
+		var build = Localization.Help( 441 );
+		var viewfinder = new ParkViewfinder( _stack );
+		_stack.Open( viewfinder );
+
+		string Frame( (int X, int Y) cell, Vector2 at )
+		{
+			Input.Mouse = new() { Position = at };
+			var row = level.WorldHelpRow( cell.X, cell.Y, 0, _stack.PointerOnTheView );
+			UI.WindowStack.WorldHelpPost = level.HoverPosted ? (row, level.WorldHelpValues) : null;
+			_stack.Update();
+			return _stack.HelpBarText;
+		}
+
+		void InFirstPerson( bool active )
+			=> typeof( ParkCamcorderCameraMode ).GetProperty( nameof( ParkCamcorderCameraMode.Active ) )!.SetValue( null, active );
+
+		try
+		{
+			Assert.AreEqual( build, Frame( ground, park ) );
+			Assert.AreNotEqual( Input.CursorTypes.Crosshair, level.WantedCursor(), "in orbit: the view's own pointer" );
+
+			InFirstPerson( true );
+			Assert.IsFalse( _stack.PointerOnTheView, "the layer, from the frame the mode starts" );
+			Assert.AreEqual( Input.CursorTypes.Crosshair, level.WantedCursor(), "the layer's 0x15" );
+			var bar = Frame( ground, park );
+			Assert.AreEqual( (-1, ""), (_stack.HelpRow, bar), "onto the layer: the bar emptied" );
+			Assert.AreEqual( "", Frame( gate, park ), "no hover over the gate under it" );
+			Assert.AreEqual( "", Frame( ground, park ), "nor over the ground" );
+			Assert.AreEqual( Input.CursorTypes.Crosshair, level.WantedCursor() );
+
+			Assert.AreEqual( Localization.Help( 468 ), Frame( gate, eject ), "the eject button's own row" );
+			Assert.AreEqual( Input.CursorTypes.Normal, level.WantedCursor(), "and the arrow over it" );
+			Assert.AreEqual( "", Frame( gate, park ), "back onto the layer: emptied" );
+
+			InFirstPerson( false );
+			Assert.AreEqual( build, Frame( hoarding, park ), "out: the hover at the last place on the view, the ground's row" );
+			Assert.IsTrue( _stack.PointerOnTheView );
+			Assert.AreNotEqual( Input.CursorTypes.Crosshair, level.WantedCursor() );
+			Assert.AreEqual( Localization.Help( 459 ), Frame( gate, eject ), "the eject button gone with the mode: the view's hover over the gate" );
+		}
+		finally
+		{
+			InFirstPerson( false );
+			_stack.Close( viewfinder );
+			GameOptions.Current.PopupHelp = popupHelp;
+			Input.Mouse = new();
+		}
+	}
+
+	/// <summary>
 	/// <b>The hover sets the member idle as it posts their row, wherever PICK UP would take them</b>
 	/// (<c>FUN_00505f50</c> asks <c>FUN_00505bd0</c>, then <c>SetState( 0 )</c>): once as the pointer comes onto them and
 	/// not again while it stays, from a walk with the clock as the stamp, never a member on strike. Off the park's view
