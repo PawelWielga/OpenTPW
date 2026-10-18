@@ -1360,7 +1360,7 @@ public static class DebugConsole
 
 				if ( !ParkPicking.TryCellAt( Argument( 1 ), Argument( 2 ), out var clickX, out var clickY ) )
 				{
-					Reply( "click: that point is not over the map" );
+					Reply( "click: no cell yet: the ray has never met the ground" );
 					break;
 				}
 

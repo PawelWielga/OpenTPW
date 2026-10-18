@@ -2464,6 +2464,16 @@ terrain met in column 95 or row 84 is held to 94 or 83. Read in the original at 
 beyond), past row 84, and over the sea past row 0, P and the cell stood unchanged, the object word 0, and the hover's
 row stood with them (`a-A4.png`). The click does not test for 0.
 
+**OpenTPW** (Q472b, `ParkPicking.MeetGround`, `CellOf`, `Meet`): the ray meets the ground only over the heightfield's
+cells, the cell is truncated and held to the heightfield's last and then below `MapInfo`'s two limits, and where the ray
+meets nothing the last cell and point stand (nought only before the first meeting, and again after a park ends: what the
+original's P holds before its first hit is not measured). The ground met is the march over `HeightAtWorld`, not the
+original's two triangles a cell (the class's declared deviation). The object march is not built (Q494): counted as
+`PICK_OBJECT_MARCH`. Measured at the three views above (`q472b/`, `PREDICTION.txt`, `side-by-side.png`): (95,40) answers
+(94,40) with x 956.1; past the last column (94,40) and the point stand and "Left-click to build path" stands over the
+fence; (40,84)'s pixel answers (40,83) and no pixel of its column a row above 83; past the last row (40,83) stands; over
+the sea (45,2) stands; the original read the same cells at the same views (round b).
+
 **Open.** What advisor message `0x135` says (it resolves through a table filled at runtime); what puts
 the cursor back after a drop or a cancel; whether the staff constructors' later calls make a sound;
 whether a single click on a hire row picks, since a double click always does; whether the hire screen
@@ -3914,9 +3924,8 @@ the track's (`0x004873d5` to `0x00487441`: two of those ways return with no post
 Lost Kingdom map types 7 (9,077 cells, among them the land past the entrance's fence and the gate's two outer cells,
 which the gate's test takes first), 2 (240) and 30 (66, the approach, the ticket booths among them, taken first too). Built in `Level.GroundArmAt` and `Level.WorldHelpRow`. **The picker meets no cell only
 before its first pick** ("The picker never hands the mode a cell off the map" above): over the sea, and past the
-heightfield's last column and row, the original keeps the last cell, so its row stands; ours answers no cell over the
-sea, posts nothing and counts `PICK_EDGE_CELL`, and past the heightfield answers a cell of map type 7 and empties the row
-(Q472b). Measured in both (`q469/`,
+heightfield's last column and row, the original keeps the last cell, so its row stands, and so does ours (Q472b,
+`ParkPicking`). Measured in both (`q469/`,
 `PREDICTION.txt`, `side-by-side.png`): from (43,16) "Left-click to build path" onto the hoarding (42,16) category 0 and the
 row standing, on to (44,16), map type 7, still standing; from (43,16) straight onto (44,16) the bar emptied, and onto the
 hoarding still empty; the camera then moved to the sea, the row stood.

@@ -25,6 +25,16 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
+/// <b>The ground is only the heightfield, and the cell never leaves the map</b> (<c>docs/exe/park-engine.md</c>, "The
+/// picker never hands the mode a cell off the map"). The terrain test walks the heightfield's own cells (96 x 85), so
+/// past them nothing is met; the hit is held to the heightfield's last cell and then below <c>MapInfo</c>'s
+/// <c>HeightfieldWidth</c> and <c>HeightfieldHeight</c> (columns 0 to 94, rows 0 to 83); and a ray that meets nothing
+/// leaves the last cell and point standing (<c>FUN_0045bf90</c> writes its point only on a hit, <c>FUN_0045d560</c>
+/// packs it every frame). The object march after the terrain (<c>FUN_0045cdc0</c>: a model met before the ground
+/// gives its hit point) is not built: counted as <c>PICK_OBJECT_MARCH</c>.
+/// </para>
+///
+/// <para>
 /// <b>The camera's own roll may NOT be used to build the ray.</b> <see cref="Camera.Rotation"/> comes
 /// from <c>Rotation.LookAt</c>, whose roll is arbitrary (<c>AudioListener.Facing</c> says why) - only its forward
 /// vector means anything. The view matrix is built by <c>CreateLookTo</c> against the world's up, so
@@ -35,13 +45,13 @@ namespace OpenTPW;
 public static class ParkPicking
 {
 	/// <summary>
-	/// The cell under the pointer, packed as <c>y * 128 + x + 1</c>, or <b>nought when the pointer is
-	/// not over the map at all</b> - the original's own sentinel, and the reason the packing is
-	/// one-based rather than plain.
+	/// The cell under the pointer, packed as <c>y * 128 + x + 1</c>: where the ray meets nothing, the last cell it met.
+	/// <b>Nought only before the first meeting</b> - the original's own sentinel, and the reason the packing is one-based
+	/// rather than plain. What the original's point holds before its first hit is not measured.
 	/// </summary>
 	public static int Cell { get; private set; }
 
-	/// <summary>Where the ray actually met the ground, for anything that wants more than a cell.</summary>
+	/// <summary>Where the ray last met the ground, for anything that wants more than a cell.</summary>
 	public static Vector3 WorldPoint { get; private set; }
 
 	/// <summary>
@@ -62,7 +72,7 @@ public static class ParkPicking
 	/// console.</summary>
 	public static int Latched { get; private set; }
 
-	/// <summary>The cell under the pointer as a pair, or false when the pointer is off the map.</summary>
+	/// <summary>The cell under the pointer as a pair, or false before the ray has first met the ground.</summary>
 	public static bool TryCell( out int cellX, out int cellY )
 	{
 		if ( Cell <= 0 )
@@ -103,6 +113,17 @@ public static class ParkPicking
 	{
 		var answer = Resolve( Input.Mouse.Position );
 
+		if ( answer.Cell > 0 )
+		{
+			if ( answer.Met != PointerMet )
+			{
+				Log.Info( answer.Met ? $"pick: the ray meets the ground again, cell {answer.Cell}"
+					: $"pick: the ray meets nothing, cell {answer.Cell} stands" );
+			}
+
+			PointerMet = answer.Met;
+		}
+
 		// A cell pinned from the debug console stands in for the pointer's, for the reason `worldclick`
 		// exists: the console cannot move the pointer, so without it nothing that
 		// follows the pointer - the queue tool's squares and cursor - could be driven or photographed.
@@ -119,16 +140,30 @@ public static class ParkPicking
 	/// <summary>A cell the debug console's <c>hover</c> holds the pointer over, or null to follow the mouse.</summary>
 	public static (int X, int Y)? Pinned { get; set; }
 
-	/// <summary>What the ray through one point of the window meets.</summary>
-	private readonly record struct Answer( int Cell, Vector3 World, int Person, int Object, int Latched );
+	/// <summary>Whether the pointer's last ray met the ground: false where its cell is the one left standing.</summary>
+	public static bool PointerMet { get; private set; } = true;
+
+	/// <summary>Lets go of the last cell and the console's pin, as a park ends, so the next park's picker starts with none.</summary>
+	public static void Forget()
+	{
+		Pinned = null;
+		Cell = 0;
+		WorldPoint = default;
+		PersonUnderCursor = ObjectUnderCursor = Latched = 0;
+		PointerMet = true;
+	}
+
+	/// <summary>What the ray through one point of the window meets: <c>Met</c> false where the cell is the one left standing.</summary>
+	private readonly record struct Answer( int Cell, Vector3 World, int Person, int Object, int Latched, bool Met = true );
 
 	/// <summary>
 	/// The whole of the picking arithmetic, given a position on the window. <see cref="Update"/> hands
-	/// it the pointer; <see cref="PickAt"/> hands it whatever it is asked to.
+	/// it the pointer; <see cref="PickAt"/> hands it whatever it is asked to. Where the ray meets nothing, the
+	/// pointer's last cell and point stand, so a console question about a point answers what the pointer would there.
 	/// </summary>
 	private static Answer Resolve( Vector2 screen )
 	{
-		if ( ParkGround.Current?.Heightfield is not { } field )
+		if ( ParkGround.Current is not { Heightfield: { } field } ground )
 			return default;
 
 		// Zero until the camera has run once - see Camera.CalcViewProjMatrix. A ray built from it on
@@ -138,14 +173,15 @@ public static class ParkPicking
 
 		var direction = RayThrough( screen );
 
-		if ( !MarchToGround( field, Camera.Position, direction, out var hit ) )
+		// FUN_0045cdc0 marches the ray again against the models of the cells under it; a model met first gives the point.
+		Unimplemented.Report( "PICK_OBJECT_MARCH" );
+
+		var (cell, met, hit) = Meet( field, Camera.Position, direction, ground.MapInfoWidth, ground.MapInfoHeight );
+
+		if ( cell <= 0 )
 			return default;
 
-		var cellX = (int)MathF.Floor( hit.X / field.CellSizeX );
-		var cellY = (int)MathF.Floor( hit.Y / field.CellSizeY );
-
-		if ( !ParkState.OnMap( cellX, cellY ) )
-			return default;
+		var (cellX, cellY) = MapStep.CellAt( cell );
 
 		var latched = ParkGuestSprites.Current is { } sprites
 			? LatchFor( sprites.Drawn, screen, Screen.Width, Screen.Height, Camera.ViewMatrix * Camera.ProjMatrix )
@@ -153,7 +189,53 @@ public static class ParkPicking
 
 		var (person, placed) = Level.Current?.ParkState is { } state ? Take( state, latched, cellX, cellY ) : (0, 0);
 
-		return new Answer( (cellY * ParkWorld.MapSize) + cellX + 1, hit, person, placed, latched );
+		return new Answer( cell, met ? hit : WorldPoint, person, placed, latched, met );
+	}
+
+	/// <summary>
+	/// What a ray from <paramref name="from"/> hands on: the packed cell (<see cref="Answered"/>, the pointer's own
+	/// <see cref="Cell"/> standing where it meets nothing), whether it met the ground, and where.
+	/// </summary>
+	internal static (int Cell, bool Met, Vector3 Hit) Meet( HeightfieldFile field, Vector3 from, Vector3 direction,
+		int mapWidth, int mapHeight )
+	{
+		var met = MeetGround( field, from, direction, out var hit );
+
+		return (Answered( field, met ? hit : null, Cell, mapWidth, mapHeight ), met, hit);
+	}
+
+	/// <summary>
+	/// The packed cell the picker hands on: the cell of a ground <paramref name="hit"/> (<see cref="CellOf"/>), or, where
+	/// the ray met nothing, the <paramref name="standing"/> one, as <c>FUN_0045d560</c> packs the point
+	/// <c>FUN_0045bf90</c> left unwritten.
+	/// </summary>
+	internal static int Answered( HeightfieldFile field, Vector3? hit, int standing, int mapWidth, int mapHeight )
+	{
+		if ( hit is not { } at )
+			return standing;
+
+		var (x, y) = CellOf( field, at, mapWidth, mapHeight );
+
+		return MapStep.CellId( x, y );
+	}
+
+	/// <summary>
+	/// The cell a ground hit falls in, as <c>FUN_0045d560</c> packs it: across and down the heightfield from its origin,
+	/// truncated, held to 0 and to the heightfield's last cell, then below <paramref name="mapWidth"/> and
+	/// <paramref name="mapHeight"/> (<c>MapInfo</c>'s, <c>[0x007a0314]</c> and <c>[0x007a0374]</c>; nought holds nothing).
+	/// </summary>
+	internal static (int X, int Y) CellOf( HeightfieldFile field, Vector3 hit, int mapWidth, int mapHeight )
+	{
+		var x = Math.Clamp( (int)((hit.X - field.OriginX) / field.CellSizeX), 0, field.CellsX - 1 );
+		var y = Math.Clamp( (int)((hit.Y - field.OriginY) / field.CellSizeY), 0, field.CellsY - 1 );
+
+		if ( mapWidth > 0 )
+			x = Math.Clamp( x, 0, mapWidth - 1 );
+
+		if ( mapHeight > 0 )
+			y = Math.Clamp( y, 0, mapHeight - 1 );
+
+		return (x, y);
 	}
 
 	/// <summary>
@@ -253,7 +335,7 @@ public static class ParkPicking
 
 	/// <summary>
 	/// The cell under an arbitrary point of the window, without disturbing what the pointer is over.
-	/// False where that point is not over the map at all.
+	/// False only before the ray has first met the ground: where it meets nothing, the pointer's last cell stands.
 	/// </summary>
 	/// <remarks>
 	/// The same justification <see cref="PickAt"/> carries, one step further on: the console cannot press
@@ -320,11 +402,11 @@ public static class ParkPicking
 			(a.X * b.Y) - (a.Y * b.X) );
 
 	/// <summary>
-	/// Walks the ray forward until it passes below the ground, then halves the crossing to find where.
-	/// Answers false where the ray never meets the land - pointing at the sky, or off the side of the
-	/// map.
+	/// Walks the ray forward across the heightfield until it passes below the ground, then halves the crossing to find
+	/// where. Answers false where the ray never meets the land inside the heightfield - pointing at the sky, past its last
+	/// column or row, or over the sea before its first: the original's terrain test walks only the heightfield's cells.
 	/// </summary>
-	private static bool MarchToGround( HeightfieldFile field, Vector3 from, Vector3 direction, out Vector3 hit )
+	internal static bool MeetGround( HeightfieldFile field, Vector3 from, Vector3 direction, out Vector3 hit )
 	{
 		hit = default;
 
@@ -333,11 +415,19 @@ public static class ParkPicking
 		if ( step <= 0f )
 			return false;
 
-		var previous = from;
+		var (enter, leave) = (0f, Reach);
+
+		if ( !Slab( from.X, direction.X, field.OriginX, field.OriginX + (field.CellsX * field.CellSizeX), ref enter, ref leave )
+			|| !Slab( from.Y, direction.Y, field.OriginY, field.OriginY + (field.CellsY * field.CellSizeY), ref enter, ref leave ) )
+			return false;
+
+		var previous = from + (direction * enter);
 		var wasAbove = previous.Z >= Ground( field, previous );
 
-		for ( var travelled = step; travelled <= Reach; travelled += step )
+		for ( var travelled = enter; travelled < leave; )
 		{
+			travelled = MathF.Min( travelled + step, leave );
+
 			var at = from + (direction * travelled);
 			var above = at.Z >= Ground( field, at );
 
@@ -356,12 +446,25 @@ public static class ParkPicking
 		return false;
 	}
 
-	/// <summary>The land under a world position, holding the edge height outside the map.</summary>
-	/// <remarks>
-	/// Holding rather than falling away matters: a ray aimed past the edge of the park would otherwise
-	/// dive through a wall of nothing and report a hit in mid-air. <see cref="ParkState.OnMap"/> is what
-	/// actually rejects those, after the crossing is found.
-	/// </remarks>
+	/// <summary>Narrows the ray's stretch <paramref name="enter"/> to <paramref name="leave"/> to where one coordinate lies
+	/// between <paramref name="low"/> and <paramref name="high"/>; false where none of it does.</summary>
+	private static bool Slab( float from, float along, float low, float high, ref float enter, ref float leave )
+	{
+		if ( MathF.Abs( along ) < 1e-6f )
+			return from >= low && from <= high;
+
+		var (near, far) = ((low - from) / along, (high - from) / along);
+
+		if ( near > far )
+			(near, far) = (far, near);
+
+		enter = MathF.Max( enter, near );
+		leave = MathF.Min( leave, far );
+
+		return enter <= leave;
+	}
+
+	/// <summary>The land under a world position inside the heightfield, which is all <see cref="MeetGround"/> asks.</summary>
 	private static float Ground( HeightfieldFile field, Vector3 at )
 		=> field.HeightAtWorld( at.X, at.Y );
 
@@ -395,7 +498,7 @@ public static class ParkPicking
 	{
 		var mouse = Input.Mouse.Position;
 
-		return Describe( new Answer( Cell, WorldPoint, PersonUnderCursor, ObjectUnderCursor, Latched ),
+		return Describe( new Answer( Cell, WorldPoint, PersonUnderCursor, ObjectUnderCursor, Latched, PointerMet ),
 			$"mouse ({mouse.X:F0},{mouse.Y:F0})" );
 	}
 
@@ -404,7 +507,7 @@ public static class ParkPicking
 		var size = $"of {Screen.Width:F0}x{Screen.Height:F0}";
 
 		if ( answer.Cell <= 0 )
-			return $"pick: not over the map - {asked} {size}";
+			return $"pick: no cell yet - {asked} {size}";
 
 		var cellX = (answer.Cell - 1) % ParkWorld.MapSize;
 		var cellY = (answer.Cell - 1) / ParkWorld.MapSize;
@@ -413,6 +516,7 @@ public static class ParkPicking
 
 		return $"pick: cell ({cellX},{cellY}) packed {answer.Cell} " +
 			$"world ({answer.World.X:F1},{answer.World.Y:F1},{answer.World.Z:F1}) " +
-			$"standing {occupant} object {placed} latched {answer.Latched} - {asked} {size}";
+			$"standing {occupant} object {placed} latched {answer.Latched}{(answer.Met ? "" : " (nothing met: the last cell stands)")} - " +
+			$"{asked} {size}";
 	}
 }

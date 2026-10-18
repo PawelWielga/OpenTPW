@@ -7717,6 +7717,27 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   original's (86.0, 63.9, 72.2) and (109.5, 95.5, 101.9) at wind 0 and phase 5, phase 5 against 25 0.00 and against 15
   7.36 / 8.14 (the original's 7.44 / 6.98), wind 90 as `a-w90.png` (`q493/side-by-side.png`). `PREDICTION.txt`: 10
   predictions, all held. 24 bugs put back, 24 killed. Tests 3347/0 with the game, 1129 ran / 2218 skipped without.
+- [x] **Q472b. Build the picker's heightfield and its last cell.** From Q472 (`park-engine.md`, "The picker never hands
+  the mode a cell off the map"). `ParkPicking.Resolve` meets the ground only over the heightfield (`HeightAtWorld` holds
+  the edge height past it, so ours answers (98,40) past the last column and (40,85) past the last row, map type 7, and
+  the bar empties where the original's row stands, `q472/side-by-side.png`), keeps the last cell and point where the ray
+  meets nothing (ours answers no cell over the sea, counted `PICK_EDGE_CELL`, and every verb that asks the cell does
+  nothing there), and holds the cell below `MapInfo.HeightfieldWidth` and `Height` (ours answers (95,40) and (40,84),
+  where the original's (94,40) and (40,83)). The comments at `Level.GroundArmAt` and `ParkPicking.Cell` ("nought when the
+  pointer is not over the map") go with it. The object march (`FUN_0045cdc0`: a model met before the terrain gives its
+  hit point) is not built and not counted: count it at the site. Confirm in both games at `q472/orig/run.sh`'s three
+  views: the cell, the help row and a frame at each step.
+  The object march's test is the gate's arch face, where the original answers the gate cells (`q471/orig/x-scan.log`, y
+  320 to 380) and ours the approach behind it (`q471/run1-nopixel.out`; the review of Q471, `handoff/review3/VERIFY-7.md`).
+  **Done (2026-10-18):** `ParkPicking.MeetGround` (the march clipped to the heightfield's 96 x 85), `CellOf` (truncated,
+  held to its last cell, then below `ParkGround.MapInfoWidth` and `Height`), `Meet` and `Answered` (the pointer's last
+  cell and point stand where nothing is met), `Forget` at a park's end; `PICK_EDGE_CELL` is gone, `PICK_OBJECT_MARCH`
+  counts the march (Q494); `pick` notes "(nothing met: the last cell stands)" and the log each change. Confirmed on the
+  final binary (`q472b/run2`, 10 of 10): (95,40) answers (94,40), past it (94,40) stands with "Left-click to build
+  path", (40,84)'s pixel answers (40,83) and none of its column a row above, past it (40,83) stands, over the sea (45,2)
+  stands; the original the same at the same views (`q472b/orig/b-run.out`, `side-by-side.png`). `PREDICTION.txt`: 13
+  predictions, 10 held at last, 3 missed in run1 on the console's note (the picker held). Mutations 13 of 14 caught; the
+  one left, `MapInfo`'s limits handed from the live ground, only a game run reaches (H3).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -787,8 +787,7 @@ public class ParkLocatorTests
 		Row( ground );
 		Assert.AreEqual( -1, Row( two ), "map type 2 the same" );
 		Row( ground );
-		Assert.AreEqual( (441, 441), (Row( (-1, -1) ), Row( outside )), "off the map nothing posted, and nought after it" );
-		Assert.IsTrue( Unimplemented.Summary.Any( gap => gap.What == "PICK_EDGE_CELL" ), "the original's picker holds an edge cell" );
+		Assert.AreEqual( (441, 441), (Row( (-1, -1) ), Row( outside )), "no cell, before the first meeting: nothing posted, and nought after it" );
 
 		Row( ground );
 		Assert.AreEqual( (-1, -1), (Row( footprint ), Row( outside )), "an object's cell: its category, its row not built" );

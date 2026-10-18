@@ -1642,8 +1642,8 @@ public class Level
 
 	/// <summary>
 	/// Which arm of the hover's ground a cell falls to (<c>FUN_00486d90</c> from <c>0x00487231</c>). No cell under the
-	/// pointer posts nothing (<c>0x00487240</c>; ours meets it where the original's picker would hold an edge cell, counted
-	/// as <c>PICK_EDGE_CELL</c>), and neither does a hoarding, a type-12 track cell whose parent is type 25
+	/// pointer posts nothing (<c>0x00487240</c>; the picker answers none only before its first meeting with the ground,
+	/// <see cref="ParkPicking.Cell"/>), and neither does a hoarding, a type-12 track cell whose parent is type 25
 	/// (<c>0x004873bd</c>), nor an object's cell with no object (<c>0x00487667</c>). Then the map type: 0 is bare ground,
 	/// 1 path, 3 a queue, 4, 9 and 10 an object's, <c>0x15</c> its own, and every other the switch's default
 	/// (<c>0x004877a3</c>), which empties the row only after a category: in Lost Kingdom map types 7, 2 and 30 (the
@@ -1655,13 +1655,8 @@ public class Level
 		if ( Park is not { } park || ParkState is not { } state )
 			return GroundArm.Silent;
 
-		// The original's picker holds a point off the map to an edge cell and keeps the last cell where the ray meets
-		// nothing (FUN_0045d560), so its hover meets no cell only before the first pick; ours answers none for both.
 		if ( !ParkState.OnMap( x, y ) )
-		{
-			Unimplemented.Report( "PICK_EDGE_CELL" );
 			return GroundArm.Silent;
-		}
 
 		if ( GateArmAt( x, y ) is { } gate )
 			return gate;
@@ -2292,7 +2287,7 @@ public class Level
 		// something says otherwise - and a park entered after one left mid-run would otherwise open with
 		// a path tool armed and an anchor pointing at a cell in a different park.
 		ParkBuildMode.Forget();
-		ParkPicking.Pinned = null;
+		ParkPicking.Forget();
 
 		// And whatever is in the hand, which would otherwise go down at the next park's first click. The
 		// original's park end takes its interaction mode down while the park still stands - the save it makes on

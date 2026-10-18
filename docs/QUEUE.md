@@ -53,18 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q472b. Build the picker's heightfield and its last cell.** From Q472 (`park-engine.md`, "The picker never hands
-  the mode a cell off the map"). `ParkPicking.Resolve` meets the ground only over the heightfield (`HeightAtWorld` holds
-  the edge height past it, so ours answers (98,40) past the last column and (40,85) past the last row, map type 7, and
-  the bar empties where the original's row stands, `q472/side-by-side.png`), keeps the last cell and point where the ray
-  meets nothing (ours answers no cell over the sea, counted `PICK_EDGE_CELL`, and every verb that asks the cell does
-  nothing there), and holds the cell below `MapInfo.HeightfieldWidth` and `Height` (ours answers (95,40) and (40,84),
-  where the original's (94,40) and (40,83)). The comments at `Level.GroundArmAt` and `ParkPicking.Cell` ("nought when the
-  pointer is not over the map") go with it. The object march (`FUN_0045cdc0`: a model met before the terrain gives its
-  hit point) is not built and not counted: count it at the site. Confirm in both games at `q472/orig/run.sh`'s three
-  views: the cell, the help row and a frame at each step.
-  The object march's test is the gate's arch face, where the original answers the gate cells (`q471/orig/x-scan.log`, y
-  320 to 380) and ours the approach behind it (`q471/run1-nopixel.out`; the review of Q471, `handoff/review3/VERIFY-7.md`).
 - [ ] **Q473. The help bar is one posted row.** From Q469: the original's bar holds whatever `FUN_004924b0` last posted,
   the hover's, a control's and a park screen's (the buy screen's `FUN_004abc80`, its rows `0x94`, `0x96` to `0x98`, `0x21a`,
   `0x21b`) alike, and the camcorder's own (`0x243`, `0x244`, `0x004bd920` to `0x004bd9d4`, mode 9, which ours does not
@@ -103,6 +91,13 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
   (`0x1be`, 446, `0x004874ab`) and `HOVER_TYPE_15_ROW` (`0x1c0`, 448, `0x00487742`). Decode each arm's tests first (the
   object's VARM value and the rows its kinds take, `0x00487665` to `0x00487728`), then build the queue's and the
   object's, which every Lost Kingdom park reaches. Confirm in both games: the pointer over a ride, a shop and a queue.
+- [ ] **Q494. The picker's object march.** From Q472b (`park-engine.md`, "The picker never hands the mode a cell off
+  the map"): after the terrain, `FUN_0045bf90` marches the ray in steps of 10 (`FUN_0045cdc0`) and asks the things of the
+  cell under each step, held to `MapInfo`'s limits; a model met before the ground gives the hit point, and so the cell.
+  Ours meets the ground alone, counted `PICK_OBJECT_MARCH` in `ParkPicking.Resolve`. Decode the march's model test
+  first (which things, which of their meshes or boxes), then build it. The test is the gate's arch face, where the
+  original answers the gate cells (`q471/orig/x-scan.log`, y 320 to 380) and ours the approach behind it
+  (`q471/run1-nopixel.out`; the review of Q471, `handoff/review3/VERIFY-7.md`). Confirm in both games at that view.
 - [ ] **Q487. What low quality's `GraphicalOptions.LIGHTING` 0 turns off. Decode first.** From Q482: `low.sam` sets it 0,
   `med.sam` and `high.sam` 1, and `FUN_0044d8f0` then sets render-word `0x0800`, under which the terrain pass draws no
   land at half light (`park-engine.md`, "What the render-state `0x0800` tests are"); what else reads `0x0800` (the

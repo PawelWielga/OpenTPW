@@ -54,6 +54,12 @@ public sealed class ParkGround : ModelEntity
 
 	private readonly int _mapHeight;
 
+	/// <summary><c>MapInfo.HeightfieldWidth</c>, or nought without the balance: <see cref="ParkPicking"/> holds its column below it.</summary>
+	public int MapInfoWidth => _mapWidth;
+
+	/// <summary><c>MapInfo.HeightfieldHeight</c>, or nought without the balance: <see cref="ParkPicking"/> holds its row below it.</summary>
+	public int MapInfoHeight => _mapHeight;
+
 	/// <summary><c>GraphicalOptions.LIGHTING</c> from the detail file: the half light is drawn only while it is on.</summary>
 	private readonly bool _lighting;
 
