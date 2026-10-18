@@ -479,6 +479,13 @@ internal sealed class WindowStack : Panel
 			PostHelp( _pointedRow, [] );
 		}
 
+		// A screen's own post, from its frame message: the buy screen's row for the item under the pointer.
+		foreach ( var window in _windows.ToArray() )
+		{
+			if ( window.HelpPost() is { } posted )
+				PostHelp( posted.Row, posted.Values );
+		}
+
 		if ( pointed == null && WorldHelpPost is { } post )
 			PostHelp( post.Row, post.Values );
 

@@ -7753,6 +7753,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   measured). Decide what the bar holds after each first (a tool armed from a control and the pointer back over a
   hoarding is the case Q469 left: the original keeps the control's row). Confirm in both games: the gadget's Buy button
   hovered, then the pointer onto a hoarding; the camcorder's rows.
+- [x] **Q495. The buy screen's help rows.** From Q473 (`hud.md`, "The help bar holds one posted row"); split by the
+  session: the camcorder's rows are Q496. Built: `FUN_004abc80` from the frame message, the item the list last
+  selected (`[0x007cc1e8]`), posted on a change of the item or its state while the pointer is on the list's row area
+  (the region, measured: not the tabs or headings), 148/150 with the item's kind (`Info.RideTypeStringIndex` of
+  `ITEMTYPES.str`, not its name, run in with no space), 151/152 for a mystery ride by the tickets left, 538/539 for the
+  land rows, posted once each (`hud.md`, "The buy screen's help rows"; FileFormats `sam.md`). Confirmed: the original's
+  rounds a and b (`q495/orig/`, 15 predictions, 5 missed and explained), ours 15 of 15 (`q495/run1`,
+  `side-by-side.png`); mutations 15 of 16, the survivor equivalent (`q495/mut.log`). In no game run: a mystery ride's
+  rows (no Lost Kingdom item is one in Instant Action; tested only), Full Simulation (not asked: the screen is either
+  mode's), the other three themes.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

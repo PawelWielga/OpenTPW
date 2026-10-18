@@ -485,6 +485,9 @@ internal sealed class ParkBuyScreen : UiWindow
 	/// </remarks>
 	internal void RowSelected( int rowId )
 	{
+		// The help bar's item, whether or not the row waits anew (0x004aca3e).
+		_helpItem = rowId;
+
 		if ( rowId == _pending )
 			return;
 
@@ -510,6 +513,145 @@ internal sealed class ParkBuyScreen : UiWindow
 	internal string PreviewCensus()
 		=> $"row {Previewed} shown, {(_pending != 0 ? $"row {_pending} waiting {Time.WallMilliseconds - _pendingSince} ms" : "none waiting")}, "
 			+ $"list selection {_list.Selected}: {_footprint.Census()}";
+
+	/// <summary>
+	/// The item the help bar speaks of: the row the list last selected, by id, nought before any - the original's
+	/// <c>[0x007cc1e8]</c>, which the opener noughts (<c>0x004acd7f</c>) and the <c>0x401</c> arm sets.
+	/// </summary>
+	private int _helpItem;
+
+	/// <summary>The item the bar last spoke of, nought before any - <c>[0x007cc1e0]</c>, noughted by the opener.</summary>
+	private int _helpPosted;
+
+	/// <summary>
+	/// The state the bar last spoke of, or <see cref="HelpOffList"/> - <c>[0x0075513c]</c>, a global that starts at -1 and
+	/// that no opener resets.
+	/// </summary>
+	private static int _helpState = HelpOffList;
+
+	/// <summary>The pointer is off the list's row area: nothing is posted, and the next item on it is.</summary>
+	internal const int HelpOffList = -1;
+
+	/// <summary>A mystery ride the player's golden tickets buy: UIHELPTEXT <c>0x97</c>, "Left-click to buy this item".</summary>
+	internal const int HelpMysteryBought = 0;
+
+	/// <summary>A mystery ride they do not: <c>0x98</c>, "You don't have enough golden tickets to buy this item!".</summary>
+	internal const int HelpMysteryShort = 1;
+
+	/// <summary>An item dearer than the bank: <c>0x96</c>, its kind's name and "You can't afford to buy this item!".</summary>
+	internal const int HelpDear = 2;
+
+	/// <summary>An item the bank buys: <c>0x94</c>, its kind's name and "Left-click to buy".</summary>
+	internal const int HelpToBuy = 3;
+
+	/// <summary>A land row: <c>0x21a</c> for Buy Land, <c>0x21b</c> for Clear Land.</summary>
+	internal const int HelpLand = 4;
+
+	/// <summary>
+	/// The state an item's row is spoken of in (<c>FUN_004abc80</c>, <c>0x004abd6e</c> to <c>0x004abdf2</c>): a mystery
+	/// ride by the tickets the player has left (<c>FUN_004d4b90</c>: the cost at most what <c>FUN_005af5d0</c> counts),
+	/// any other item by its price against the bank, a price equal to the bank buying it.
+	/// </summary>
+	/// <remarks>A deviation, the list's own: the price is the item file's, where the original reads its control record's <c>+0x04</c>.</remarks>
+	internal static int HelpStateOf( ParkItemCatalogue.Item item, long balance, IReadOnlyCollection<ushort>? unlocked, int tickets )
+		=> IsMystery( item, unlocked )
+			? item.GoldenTicketCost <= tickets ? HelpMysteryBought : HelpMysteryShort
+			: item.BuildPrice <= balance ? HelpToBuy : HelpDear;
+
+	/// <summary>
+	/// The frame message's last arm (<c>0x004ac465</c>): with an item selected, <c>FUN_004abc80</c> posts its row while the
+	/// pointer is on the list's region (<c>0x1f8</c>'s <c>+0x2c</c>, <c>FUN_00659e83</c>), which is its row area: the
+	/// original's state went to -1 over its tabs and headings and over the strips beside the rows (<c>q495/orig/</c>).
+	/// </summary>
+	/// <remarks>
+	/// The original's list picks its first row as it fills, so there the bar speaks of that row as soon as the pointer
+	/// comes onto the rows; this list picks none (<c>LIST_FIRST_ROW_SELECTED</c>, counted as it fills), so nothing is
+	/// posted before the pointer has selected a row.
+	/// </remarks>
+	protected internal override (int Row, (int Parameter, string Value)[] Values)? HelpPost()
+	{
+		if ( _helpItem == 0 )
+			return null;
+
+		var mouse = Input.Mouse.Position;
+
+		var rows = VirtualScreen.ToPixels( _list.RowArea, _list.Anchor, _list.VerticalAnchor );
+
+		return HelpPost( rows.Contains( mouse.X, mouse.Y ), Level.Current?.ParkState?.Balance ?? 0,
+			Players.Roster.Current?.File.RideIds, Players.Roster.Current?.TicketsUnspent ?? 0 );
+	}
+
+	/// <summary>
+	/// <c>FUN_004abc80</c>: posted only on a change of the item or of its state, so a row stands under whatever posts after
+	/// it until one of the two moves. Off the list nothing is posted and the state is forgotten, so the item is spoken of
+	/// again as the pointer comes back; a land row is posted once for as long as it is the item, wherever the pointer goes.
+	/// </summary>
+	internal (int Row, (int Parameter, string Value)[] Values)? HelpPost( bool onList, long balance, IReadOnlyCollection<ushort>? unlocked,
+		int tickets )
+	{
+		if ( !onList )
+		{
+			_helpState = HelpOffList;
+			return null;
+		}
+
+		if ( _helpItem < 0 )
+		{
+			if ( _helpPosted == _helpItem )
+				return null;
+
+			_helpState = HelpLand;
+			_helpPosted = _helpItem;
+
+			Log.Info( $"Buy screen: help for land row {_helpItem}, state {HelpLand}" );
+
+			return (_helpItem == BuyLandRow ? 0x21a : 0x21b, []);
+		}
+
+		if ( Level.Current?.Catalogue is not { } catalogue || !catalogue.TryGet( _helpItem, out var item ) )
+			return null;
+
+		var state = HelpStateOf( item, balance, unlocked, tickets );
+
+		if ( state == _helpState && _helpPosted == _helpItem )
+			return null;
+
+		_helpPosted = _helpItem;
+		_helpState = state;
+
+		Log.Info( $"Buy screen: help for {item.Id} {item.Name}, state {state}" );
+
+		return state switch
+		{
+			HelpMysteryBought => (0x97, []),
+			HelpMysteryShort => (0x98, []),
+			HelpDear => (0x96, [(0, TypeNameOf( item ))]),
+			_ => (0x94, [(0, TypeNameOf( item ))])
+		};
+	}
+
+	/// <summary>The kinds' names, the table the boot loads as <c>mObjectTypeNames</c> (table <c>0x3f9</c>, <c>[0x0078bad0]</c>).</summary>
+	internal const string TypeTable = "Language/English/ITEMTYPES.str";
+
+	private static StringFile? _typeNames;
+
+	/// <summary>
+	/// What the help row names an item by (<c>0x004abe7f</c>): row <see cref="ParkItemCatalogue.Item.RideTypeStringIndex"/>
+	/// of <c>ITEMTYPES.str</c>, the kind and not the item's own name, so the Belly Bounce is "Bouncy Castle" and a shop,
+	/// whose row is nought, is nothing. The row's text follows it with no space ("Bouncy CastleLeft-click to buy"), as the
+	/// original's does.
+	/// </summary>
+	internal static string TypeNameOf( ParkItemCatalogue.Item item )
+	{
+		_typeNames ??= new StringFile( TypeTable );
+
+		var row = item.RideTypeStringIndex;
+
+		return row >= 0 && row < _typeNames.Entries.Length ? _typeNames[row] : string.Empty;
+	}
+
+	/// <summary>What the help bar's poster holds, for the console.</summary>
+	internal string HelpCensus() => $"help item {_helpItem} posted {_helpPosted} state {_helpState}";
 
 	protected internal override void Update()
 	{

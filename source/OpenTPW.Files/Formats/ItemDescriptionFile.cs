@@ -190,6 +190,13 @@ public sealed partial class ItemDescriptionFile
 	public int GoldenTicketCost => _goldenTicketCost ?? _category?.GoldenTicketCost ?? 0;
 
 	/// <summary>
+	/// The row of <c>ITEMTYPES.str</c> that names the kind of thing this is - <c>Info.RideTypeStringIndex</c>, descriptor
+	/// <c>+0x90</c>: Belly Bounce 7, "Bouncy Castle". Rides and sideshows set it; no shop, feature or category file
+	/// does, and they read nought, a row that is empty.
+	/// </summary>
+	public int RideTypeStringIndex => _rideTypeStringIndex ?? _category?.RideTypeStringIndex ?? 0;
+
+	/// <summary>
 	/// Which kind of bumper vehicle the ride makes - <c>Bumper.BumperType</c>, descriptor <c>+0xa0</c>. Non-zero gives
 	/// the placed thing a track handle (<c>FUN_00529e10</c>, <c>0x00529e4d</c>): the Hot Pot -1, Dino Karts -4 and
 	/// Splish Splash -5 in the jungle.
@@ -616,6 +623,7 @@ public sealed partial class ItemDescriptionFile
 	private int? _doHeadProcessing;
 	private int? _excitementLevel;
 	private int? _goldenTicketCost;
+	private int? _rideTypeStringIndex;
 	private int? _bumperType;
 	private readonly int?[] _bumperAdjust = new int?[8];
 	private readonly List<string?> _supplementalMeshes = [];
@@ -973,6 +981,10 @@ public sealed partial class ItemDescriptionFile
 
 				case "UsageInfo.GoldenTicketCost":
 					_goldenTicketCost = Number( line );
+					break;
+
+				case "Info.RideTypeStringIndex":
+					_rideTypeStringIndex = Number( line );
 					break;
 
 				case "UsageInfo.NumSimultAnims":

@@ -100,6 +100,13 @@ internal abstract class UiWindow
 	/// <summary>Called every frame the window is open.</summary>
 	protected internal virtual void Update() { }
 
+	/// <summary>
+	/// The help bar's row this window posts this frame (<c>FUN_004924b0</c> from its frame message), with its parameters'
+	/// values, or null where it posts nothing. Asked each frame after the row the control under the pointer posted, so a
+	/// row posted here stands over it until something else posts.
+	/// </summary>
+	protected internal virtual (int Row, (int Parameter, string Value)[] Values)? HelpPost() => null;
+
 	/// <summary>Enter was pressed with this in front.</summary>
 	protected internal virtual void Accept() { }
 

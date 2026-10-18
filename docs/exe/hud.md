@@ -1264,7 +1264,7 @@ cleared by `FUN_004922e0` and `FUN_00492300`) and `+0xc` (built), its control `+
 |---|---|
 | A control's `0x10001`, the pointer coming on (`FUN_0065f6d1` `0x0065fa15`: sink `+0x24`, `FUN_00492160`) | its row, asked by message `0xc` (`+0x90`, `FUN_0065bc70`; -1 is the empty string), through `FUN_00492070`; an empty row hides it |
 | A control's `0x10002`, the pointer leaving (`0x0065fa2b`: sink `+0x28`, `FUN_0066a0bb`) | hidden (`FUN_00492130`) |
-| `FUN_004924b0( text )`: the park's hover, the buy screen's `FUN_004abc80`, the camcorder's mode (`0x004bd920` to `0x004bd9d4`) | the text, or hidden when it is empty |
+| `FUN_004924b0( text )`: the park's hover, the buy screen's `FUN_004abc80` (below, "The buy screen's help rows"), the camcorder's mode (`0x004bd920` to `0x004bd9d4`) | the text, or hidden when it is empty |
 
 The park's view is a control too (`[0x007cb2ac]`, `FUN_00489f50`; its row -1). On its `0x10001` `Park_MouseMessageProc`
 runs the hover once, sets the category nought (`0x0048884e` to `0x00488870`), and passes the message to the library
@@ -1273,13 +1273,69 @@ the view". Measured in the original (`q473/orig/`, `PREDICTION.txt`; the stock p
 (113, 590)): over ground "Left-click to build path"; on Buy its own row 469, the sink's `+6` 1 and its control the
 button's; from Buy onto a hoarding with the ground left last, 441 again; with the hoarding left last, the label hidden
 (shown 0) and still hidden 1.5 s on. With the pointer on ground below the entry-price screen, G opened it and the row
-stood, and stood after Escape. Not built here: the buy screen's and the camcorder's posts (Q495). Here
+stood, and stood after Escape. Not built here: the camcorder's posts (Q496). Here
 `WindowStack.HelpRow` is the one row: a change of what is under the pointer (`WindowStack._pointed`: a control, a modal
 window's, a park screen's body or the cover, or the view) posts the control's row or -1, then the view's own post
 (`WindowStack.WorldHelpPost`, the park's `Level.HoverPosted`) is taken while the pointer is on the view. Ours posts a
 control's row again when it changes under a resting pointer; whether the original does is not decoded. Measured here
 (`q473/run1`, 10 of 10, and main's build `q473/ctl1`, which kept 441 over the hoarding and emptied the bar under the
 open screen).
+
+### The buy screen's help rows (Q495)
+
+The buy screen's handler `FUN_004ac270` ends its frame message `0x1e` (`0x004ac465`) with `FUN_004abc80( &[0x007cc1e8] )`
+whenever that word is not nought. `[0x007cc1e8]` is the item the list last selected: the `0x401` arm writes the row's id
+there whatever else it does (`0x004aca3e`, after the footprint's wait; an index of -1 writes nothing), so the fill's
+pick of the first row sets it too ("The first row is picked as a list fills"), and the opener noughts it with
+`[0x007cc1e0]`, `[0x007cc1e4]` and `[0x007cc1f0]` before it builds the screen (`0x004acd72` to `0x004acd86`; an opener
+that finds the screen up skips that). `FUN_004abc80`:
+
+1. Copies the list's region (`0x1f8`'s `+0x2c`, `FUN_0065d4f6`) and tests the pointer `[0x00faa540]`, `[0x00faa544]`
+   against it (`FUN_00659e83`: left and top in, right and bottom out). Off it, `[0x0075513c] = -1` and nothing is posted.
+   The region is the **row area**, op `0xa`'s (1037,427)-(1727,871), not the list's whole rectangle: measured in the
+   original (`q495/orig/`, round b), the state went to -1 at each of four points just off the row area and to the item's
+   at four just on it, and to -1 over the tabs and the headings (round a), which stand inside the list's rectangle.
+2. A land row (-1, -2): if `[0x007cc1e0]` already holds it, nothing (whatever the state); else state 4, the word
+   set, and UIHELPTEXT `0x21a` (538, "Left-click to buy land / The cost shown is per tile of land") or `0x21b` (539,
+   "Left-click to clear land / There is no cost for this"). So a land row is posted once for as long as it is the item.
+3. An item: the state is, for a ride whose `UsageInfo.GoldenTicketCost` (`+0xc4`) is above nought and that the player
+   has not unlocked (`FUN_004d4b70`: the mystery row's test), 0 where the cost is at most the tickets the player has left
+   (`FUN_004d4b90`, `FUN_005af5d0`: the tickets earned, `0x005af530`'s count, less `+0x1c`, those spent) and 1 otherwise;
+   for any other item 3 where the control record's price `+0x04` is at most the bank (`FUN_005195d0`'s thing `+0xc`,
+   the balance the screen's corner letters) and 2 otherwise. The same item in the same state posts nothing; else the
+   two words are set and the row posted:
+
+| State | Row | Text |
+|---|---|---|
+| 0 | `0x97` (151) | "Left-click to buy this item" |
+| 1 | `0x98` (152) | "You don't have enough golden tickets to buy this item!" |
+| 2 | `0x96` (150) | "{P0}You can't afford to buy this item!" |
+| 3 | `0x94` (148) | "{P0}Left-click to buy" |
+
+**`{P0}` is the item's kind, not its name** (`0x004abe7f`): row `item+0x90` of the table `[0x0078bad0]`, which the boot
+loads as `mObjectTypeNames` (table `0x3f9`, `FUN_00419710` at `0x00419db1`), `Language/English/ITEMTYPES.str`, 26
+rows, row 0 empty. `item+0x90` is `Info.RideTypeStringIndex` (FileFormats, the item description files): the Belly
+Bounce 7, "Bouncy Castle", the Crazy Ape 8, "Pirate Ship", the Jungle Spray 19, "Shooting Gallery"; no shop or feature
+sets it, so theirs is row 0 and the bar reads "Left-click to buy" alone. The kind runs into the text with no space. All
+measured in the original's frames (`q495/orig/a-bars.png`, `b-bars.png`): "Bouncy CastleLeft-click to buy", "Pirate
+ShipYou can't afford to buy this item!", "Shooting GalleryYou can't afford to buy this item!", "Left-click to buy".
+Row `0x95` (149, "{P0}Left-click to buy / This item was recently researched!") is not posted here.
+
+Because a post is made only on a change and the bar holds the last one, what stands depends on the way the pointer
+came. Measured in the original (round a, the stock park with the bank written to 1500, `q495/cash1500.TPWS`): over
+the Name heading after the screen opened, the heading's own row (off the region; the first row, Aztec Mayhem, was
+already the item); onto Belly Bounce's row 148, Crazy Ape's 150; a tab's own row over the tab, and the row again on the
+way back; off the list nothing, and the row again on the way back; Buy Land's 538, then off the list and back onto
+it the bar **empty** and the state -1; Clear Land's 539. After a click on the features tab the bar was hidden, the item
+the fill's first row (Buy Land) and the pointer still on the tab; why the tab's own row was not shown after its click
+is not looked into.
+
+**OpenTPW** (`ParkBuyScreen.HelpPost`, asked by `WindowStack` after the control under the pointer has posted, the
+`UiWindow.HelpPost` hook): the same states and rows, the kind by `ParkBuyScreen.TypeNameOf`, the price the item file's
+as the list's (the record's `+0x04` agrees in all 50 shipped records), the tickets `Players.TicketsUnspent`. Its list
+picks no first row as it fills (Q232), so nothing is posted before the pointer has selected a row. A two-line row
+stands over the top of our one-line strip, where the original's strip holds both lines (Q484). Measured
+(`q495/run1`, 15 of 15, `side-by-side.png`): every row's words as the original's frames.
 
 ## The park map — `FUN_005f0b40`, stream `0x00774da0`
 

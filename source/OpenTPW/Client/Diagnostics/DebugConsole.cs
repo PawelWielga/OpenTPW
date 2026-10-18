@@ -2037,11 +2037,11 @@ public static class DebugConsole
 				break;
 
 			// What the buy screen's panel shows: the row shown and the row waiting, and the footprint picture's cells
-			// and its block on the window.
+			// and its block on the window; and its help bar poster's item, the item it last posted and that one's state.
 			case "footprint":
 				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows
 					.OfType<UI.ParkBuyScreen>().FirstOrDefault() is { } buying
-						? $"footprint: {buying.PreviewCensus()}"
+						? $"footprint: {buying.PreviewCensus()}; {buying.HelpCensus()}"
 						: "footprint: the buy screen is not open" );
 				break;
 

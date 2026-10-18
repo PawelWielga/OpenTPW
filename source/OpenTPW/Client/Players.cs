@@ -176,6 +176,9 @@ internal sealed class Player( int slot, string name, PlayerFile file )
 	/// </summary>
 	public int Tickets => File.CountTickets( SaveFolder.IsTheme );
 
+	/// <summary>Golden tickets earned and not yet spent on a ride (0x005af5d0): <see cref="Tickets"/> less those spent.</summary>
+	public int TicketsUnspent => Tickets - File.TicketsSpent;
+
 	/// <summary>Gives a key outright and writes the player out straight away, as the original does (0x005afc30, 0x005c8a10).</summary>
 	public void AddKey()
 	{

@@ -249,7 +249,7 @@ public class ParkFootprintPictureTests
 	}
 
 	/// <summary>Lost Kingdom's catalogue and research around the buy screen, as the game has them.</summary>
-	private static (ParkItemCatalogue Catalogue, ParkBuyScreen Screen, WindowStack Stack) BuyScreen()
+	internal static (ParkItemCatalogue Catalogue, ParkBuyScreen Screen, WindowStack Stack) BuyScreen()
 	{
 		Screen.Size = new Point2( 2048, 1536 );
 		FileSystem = GameData.Required();

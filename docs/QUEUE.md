@@ -53,15 +53,11 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q495. The buy screen's and the camcorder's help rows.** From Q473 (`hud.md`, "The help bar holds one posted row"):
-  two posters reach the bar through `FUN_004924b0` besides the controls and the hover, and neither is built. The buy
-  screen's `FUN_004abc80` (called from `FUN_004ac270`, `0x004ac478`) posts, for the item under the pointer (its id, or -1
-  and -2), one of UIHELPTEXT `0x97`, `0x98`, `0x96` with the item's name, `0x94`, `0x21a` and `0x21b`, on a change of item
-  or state (`[0x007cc1e0]`, `[0x0075513c]`). The camcorder's mode posts by its state `[0x007cc8e4]` (`0x004bd919`): 0 the
-  empty row, 1 `0x191`, 2 `0x244` with a thing's name (`FUN_00486280`), 3 `0x243`. Decode first what calls each and what
-  moves `[0x007cc8e4]` (`0x004bd754` to `0x004bda08`, `FUN_004bf460`), then build both on `WindowStack.HelpRow`, counted
-  where reached until then. Confirm in both games: the buy screen's rows over an affordable item, a dear one and one not
-  researched; the camcorder's rows.
+- [ ] **Q496. The camcorder's help rows.** From Q495, split off Q495: the camcorder's mode posts by its state
+  `[0x007cc8e4]` (`0x004bd919`): 0 the empty row, 1 `0x191`, 2 `0x244` with a thing's name (`FUN_00486280`), 3
+  `0x243`. Decode first what calls it and what moves `[0x007cc8e4]` (`0x004bd754` to `0x004bda08`, `FUN_004bf460`;
+  the code is in no function), then build it on `UiWindow.HelpPost` or `WindowStack.WorldHelpPost`, counted where
+  reached until then. Confirm in both games: the camcorder's rows (`original/helpbar.py` reads the bar).
 - [ ] **Q475. A reflected person turns about their feet.** From the review of Q468 (`handoff/review3/VERIFY-3.md`,
   finding 2; read from code, not seen): the original reflects a picture by negating L and R about its origin
   (`0x005891f1` to `0x00589212`, corners at `0x0058922d` to `0x00589256`, u left alone; the flag 2 at `0x00589f68` is a
@@ -125,6 +121,9 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
   strip at about 430 to 850), where the original sets it on two lines inside its bar (`q471/orig/b-2-gate.png`). Decode
   the bar's lettering first (its width, line height and where it breaks), then build it. Confirm by a frame pair over
   the gate in both games.
+  From Q495: a two-line row (538, 539, the buy screen's land rows) stands over the top of our one-line strip, where
+  the original's strip holds both lines (`q495/side-by-side.png`, rows 3 and 4); `FUN_004924b0` sets a label flag by
+  whether the text holds a line break (`FUN_0065c428( 1, ... )`).
 - [ ] **Q485. First person's fog.** From Q481 (`park-engine.md`, "The park view's colours"): the original fogs first
   person and a ride's view (render-word `0x2000`, `Game_StateMachine`'s `XOR 0x2080` at `0x0054fae2`), linearly by depth
   from `GraphicalOptions.FIRSTPERSONVIEWDISTANCE`'s start to its end (100 to 110 at medium, `FUN_0044d8f0`) in the
@@ -1543,6 +1542,10 @@ Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's
   the hire list carries the flag too and does not set it, and the three list screens' trees carry it (`0x291`). With
   no first row selected, the buy screen's panel stays empty until the pointer has been over a row, where the
   original's shows the top row half a second after the list fills.
+  From Q495 (`hud.md`, "The buy screen's help rows"): the fill's pick is also the buy screen's help item, so in the
+  original the first row's help row is posted as soon as the pointer comes onto the row area; ours posts nothing before
+  a row is selected. After a tab's click the original's bar was hidden with the pointer on the tab (`q495/orig/`,
+  O9), where ours keeps the tab's row: look at it with the pick.
   From Q356 (`hud.md`, "The first row is picked as a list fills"): the pick is built for the hire list
   (`UiList.PicksFirstRow`, its `0x401` posted and taken by the screen's `Update`); a list sets it once its screen's
   handler of `0x401` is read. `gmove.py` glides diagonally and the pointer over a list picks: check the pointer's
