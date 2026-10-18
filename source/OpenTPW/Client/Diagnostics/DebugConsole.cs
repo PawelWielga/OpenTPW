@@ -1190,6 +1190,45 @@ public static class DebugConsole
 				Reply( $"sprites {(ParkGuestSprites.DebugHidden ? "hidden" : "drawn")}" );
 				break;
 
+			// The people's shadows: `shadows` the census (the tier, the light, the colour, how many the last frame drew),
+			// `shadows 0`/`shadows 1` leaves them undrawn or draws them, `shadows THING` that person's four corners in the
+			// world and the window (0 and 1 the far end).
+			case "shadows":
+				{
+					var sprites = ParkGuestSprites.Current;
+					var thing = parts.Length > 1 ? (int)Argument( 1 ) : -1;
+
+					if ( thing is 0 or 1 && parts.Length > 1 )
+						ParkGuestSprites.DebugShadowsHidden = thing == 0;
+
+					var travels = Level.Current?.ParkLight?.Travels;
+					var darkness = travels is { } t ? ParkPersonShadows.Darkness( t ) : null;
+
+					Reply( $"shadows: tier {ParkPersonShadows.Tier( Level.DetailFile )} ({Level.DetailFile} SPRITESHADOW) "
+						+ $"{(ParkGuestSprites.DebugShadowsHidden ? "hidden" : "drawn")} {sprites?.ShadowsDrawn.Count ?? 0} "
+						+ $"light {travels?.ToString() ?? "none"} darkness {darkness?.ToString() ?? "none"} "
+						+ $"colour 0x{(darkness is { } d ? ParkPersonShadows.Colour( d ) : 0u):x8} "
+						+ $"lift {(ParkCamcorderCameraMode.Active ? ParkPersonShadows.FirstPersonLift : ParkPersonShadows.Lift)}" );
+
+					foreach ( var (who, corners) in sprites?.ShadowsDrawn ?? [] )
+					{
+						if ( who != thing )
+							continue;
+
+						var said = $"shadow: thing {who}";
+
+						foreach ( var corner in corners )
+						{
+							var seen = System.Numerics.Vector4.Transform( new System.Numerics.Vector4( corner.X, corner.Y, corner.Z, 1f ), Camera.ViewMatrix * Camera.ProjMatrix );
+							said += $" ({corner.X:F2},{corner.Y:F2},{corner.Z:F2})=px({(seen.X / seen.W + 1f) * Screen.Width / 2f:F1},{(1f - seen.Y / seen.W) * Screen.Height / 2f:F1})";
+						}
+
+						Reply( said );
+					}
+
+					break;
+				}
+
 			// Where the park camera is, in world units and in grid cells - the two coordinate systems
 			// a park is described in, and the pair most worth seeing side by side while placing things.
 			case "camera":

@@ -189,6 +189,25 @@ public sealed class HeightfieldFile
 			: ((alongY - near) * v) + ((1f - u) * near) + (alongX * u);
 	}
 
+	/// <summary>
+	/// The plane through a cell's near corner and that corner's two neighbours, over every cell, split or not: what the
+	/// original stands a person's shadow on (<c>SpriteShadow_BuildQuad</c>, <c>0x00589631</c> to <c>0x0058970b</c>). The cell is
+	/// found by truncation and its far corners are clamped to the grid; off the map the near corner is clamped too, where
+	/// the original reads past the heights (a deviation only there).
+	/// </summary>
+	public float CornerPlaneAt( float worldX, float worldY )
+	{
+		var gridX = worldX / CellSizeX;
+		var gridY = worldY / CellSizeY;
+
+		var x = (int)gridX;
+		var y = (int)gridY;
+
+		var near = HeightAt( x, y );
+
+		return near + ((HeightAt( x + 1, y ) - near) * (gridX - x)) + ((HeightAt( x, y + 1 ) - near) * (gridY - y));
+	}
+
 	/// <summary>The flag word of a cell - the low half of its record.</summary>
 	public ushort FlagsAt( int x, int y ) => (ushort)(Cells[(y * CellsX) + x] & 0xFFFF);
 

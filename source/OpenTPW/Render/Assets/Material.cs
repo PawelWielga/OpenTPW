@@ -24,7 +24,13 @@ public enum MaterialFlags
 	/// Draws both faces, as the original draws every face it has - a blade of grass is one quad seen
 	/// from either side, and the sky is geometry the camera sits inside, with no outward side to cull.
 	/// </summary>
-	DisableCulling = 8
+	DisableCulling = 8,
+
+	/// <summary>
+	/// Multiplies what is already there by the colour drawn and leaves its alpha: the original's state word with
+	/// SRCBLEND ZERO and DESTBLEND SRCCOLOR (low byte <c>0x13</c>), a person's shadow (<see cref="ParkPersonShadows"/>).
+	/// </summary>
+	Multiply = 16
 }
 
 public partial class Material : Asset
@@ -450,7 +456,11 @@ public partial class Material : Asset
 		//
 		var pipelineDescription = new GraphicsPipelineDescription()
 		{
-			BlendState = flags.HasFlag( MaterialFlags.Additive )
+			BlendState = flags.HasFlag( MaterialFlags.Multiply )
+				? new BlendStateDescription( RgbaFloat.Black, new BlendAttachmentDescription( true,
+					BlendFactor.Zero, BlendFactor.SourceColor, BlendFunction.Add,
+					BlendFactor.Zero, BlendFactor.One, BlendFunction.Add ) )
+				: flags.HasFlag( MaterialFlags.Additive )
 				? BlendStateDescription.SingleAdditiveBlend
 				: BlendStateDescription.SingleAlphaBlend,
 

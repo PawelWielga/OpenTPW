@@ -8022,6 +8022,24 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   eight held phases (3.1, 55.0, 69.9) against (1.3, 55.1, 69.4), main's (5.9, 57.9, 71.3); at A the grass nearer in red
   and blue. `TEXTURE32 1` drew main's frames (mad 0.00 to 0.04). 5 tests; 12 of 12 bugs put back fail (`q700/`).
   Q460's rounding is not touched. Filed Q517 to Q519.
+- [x] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
+  listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
+  the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for
+  each sprite with flags `0x200` and `0x10000000`. It uses the `alphkid` texture `0x00550950` loads into the sprite
+  list's `+0x2400` when `[0x008bcbc8]` has `0x40000`, and the sprite's own picture when neither `0x20000` nor `0x40000`
+  is set; the detail files' SPRITESHADOW (0, 1, 2 in low, med, high) is inferred to set those bits (`0x0044da97`, key
+  order only), and the reference run read `0x1444100` (alphkid on). Measured by Q487: at low the word read
+  `0x01025900`, `0x20000` set and `0x40000` clear, so SPRITESHADOW 0 sets `0x20000` as the key order said. Ours draws none (`ride-operation.md`, "no shadow";
+  Q32 lists shadows among the keys nothing reads). Decode the pass's placement and colour first, then build it at the
+  reference's setting. Confirm by a frame pair in both games at one camera (`lib/bothcam.py`).
+  **Done (2026-10-18):** decoded (`park-engine.md`, "A person's shadow": `ShadowLights_Add`, `SpriteShadow_Draw`,
+  `SpriteShadow_BuildQuad`) and built at medium: `ParkPersonShadows`, `ParkGuestSprites.WriteShadow`,
+  `HeightfieldFile.CornerPlaneAt`, `MaterialFlags.Multiply`, console `shadows`. The running original held one light,
+  darkness `0x67000000`, across (0.408, 0, -0.408), m10 = m12 = 0.5; ours says darkness 103, colour `0xff989898`, 18
+  drawn, and darkens 0.595 of every channel against the original's 0.591 and 0.602 (red, green) on bare ground; Mike's
+  far end 1.5 and 1.3 px from the original's on the nearest pose; 18 of 18 mutations killed (`q480/PREDICTION.txt`:
+  R1, R2b's red and green, O1 to O6, B1 held; R2, R2b's blue, R2c, O4's far end missed, recorded;
+  `q480/side-by-side.png`). Leftovers: Q520, Q521.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

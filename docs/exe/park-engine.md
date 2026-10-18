@@ -1631,6 +1631,42 @@ his origin's row of 720, with the locator open and folded, where before they sto
 him up to 18 px over it (`q477/run1-main`); with the pull taken out and depth still written they stop at the origin, the
 squares now kept off him above it; people behind the park gate stay hidden by its stone.
 
+**A person's shadow** (Q480, decoded and measured). Each frame the ground's draw `FUN_00576a00` empties a list of up to
+four shadow lights at `0x008c1658` (`ShadowLights_Clear`, `0x00584b10`; `ShadowLights_Init`, `0x00584a70`, makes it at start) and, unless the render word
+`[0x008bcbc8]` holds `0x20000`, hands `ShadowLights_Add` (`0x00584be0`) the direction of each light its list gives (`0x00576d1c` to
+`0x00576d60`; a park has one, the sun). `ShadowLights_Add` normalises it (L) and, only where L·(0, 1, 0) × -127
+(`0x00768ab0`, `0x00701ecc`) is over nought, keeps light i: the across `(Lz, 0, -Lx)` (up × L, unnormalised) at `+0x140 +
+12i`, L at `+0x170 + 12i`, the darkness `trunc(-127 Ly) << 24` at `+0x1b0 + 4i`, an angle at `+0x1a0 + 4i` (for the model
+shadows, not read here), and the matrix at `+0x40 (i + 1)`: the identity with row 1 `(-Lx/Ly, 0, -Lz/Ly, 0)`, which lays a
+point's height flat along the light. The count is `+0x1c0`, the walk's cursor `+0x1c4` (`ShadowLights_First`, `ShadowLights_Next`, `0x00584e30`, `0x00584e50`).
+After the people's pass `SpriteList_Draw` (`0x0058aa4f`) returns under `0x20000`; under `0x40000` it calls `SpriteShadow_Draw` (`0x00589990`)
+for every sprite of its depth buckets (the ones being drawn) with the silhouette `[list + 0x2400]` (`alphkid`, loaded by
+`0x00550950`), and with neither, with nought (the sprite's own picture); then it flushes the batch.
+`SpriteShadow_Draw` takes only a sprite whose flags hold `0x200` and `0x10000000` (a person's body); per light,
+`SpriteShadow_BuildQuad` (`0x00589410`) builds the quad in the world: across, the picture's columns `+0x14` to `+0x14 + width` over its `+0x10`
+(128) times the instance scale × 20 (`0x0070200c`) × `DAT_008bcbcc` (0.75), along the across from the sprite's place
+`+0x14`/`+0x1c`, both sides negated for a reflected sprite (`+0x10 & 0x10`); up, its rows the same way (no 0.75),
+shifted so the foot is nought; the four corners put through the light's matrix (the height laid along the light), and each
+then set on the land: the plane through its heightfield cell's near corner and that corner's two neighbours (the cell by
+truncation, the far corners clamped; not the triangle split `FUN_004527f0` uses), plus 0.6 (`0x008bd4ec`, 0.25 under
+render word `0x2000` or renderer 4, `0x00576a72`), the sprite's own height ignored; then through the draw matrix
+`[0x0087b088]`. Corners 0 and 1 carry the texture's top row and are the far end. Under `0x40000` the colour is
+`0xff000000 | ~(darkness × 0x010101)` and the state word's low byte `0x13` (SRCBLEND ZERO, DESTBLEND SRCCOLOR: the
+ground multiplied by the colour times the texel), with the picture's alpha test (16) kept, `0x800` set (no depth write)
+and `0x200` cleared; without it the colour is the darkness word itself and the picture's own blend. **Measured**
+(`q480/`, `PREDICTION.txt`; the stock park at medium, `[0x008bcbc8]` `0x1444100`): count 1, darkness `0x67000000`, L
+(0.40825, -0.81650, 0.40825), across (0.40825, 0, -0.40825), m10 and m12 0.5, m11 0; with `0x20000` held the count
+read 0 and every shadow went. On bare ground a guest's shadow left 0.591 and 0.602 of the red and green
+(152/255 = 0.596; the frame is 16-bit, its blue there 4 to 7 of 31 levels, 0.543); Mike's, inside the mechanics' patrol
+squares, shows through them (they are drawn over it), 0.556, 0.716, 0.835. Mike's shadow reaches 27 px up and 29 right of
+his place (1024 x 768, zoom 110; 26 and 29 reflected): a thin streak up and to the right, the way the sun travels.
+OpenTPW: `ParkPersonShadows` (the geometry, tier, darkness and colour), `ParkGuestSprites.WriteShadow` (one a body
+drawn, after the people), `HeightfieldFile.CornerPlaneAt`, `MaterialFlags.Multiply`; the own picture of tiers 2 and 3
+is counted, `SPRITE_SHADOW_OWN_PICTURE` (Q521). Measured (`run2`): 0.595 of every channel, his far end 24.5 up and 27.7 right
+(scaled to 768) on a reflected pose, 26.7 and 25.6 on the original's unreflected one (`run1`). **Not the same**: a tool's squares are drawn before the people here and write depth 1.5 over the land, so a
+shadow under them is hidden (Q520); and every body drawn casts one, where the original's buckets may leave out a person
+off the frame whose shadow would show (the buckets' cull is not read).
+
 **The type-3 handlers do NOT test the cell for zero** before unpacking it; the out-of-range value is
 caught downstream by the bounds test inside the callees instead.
 

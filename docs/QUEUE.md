@@ -53,16 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q480. A person's shadow.** From the review of Q470 (`handoff/review3/VERIFY-6.md`, finding 6; read from the
-  listing and seen in `q470/orig/a-2-mike-3.png`, `a-2-mike-5.png`): the original draws a dark see-through shadow on
-  the ground beside every guest and member of staff, a pass after the sprites (`0x0058aa4f`) calling `FUN_00589990` for
-  each sprite with flags `0x200` and `0x10000000`. It uses the `alphkid` texture `0x00550950` loads into the sprite
-  list's `+0x2400` when `[0x008bcbc8]` has `0x40000`, and the sprite's own picture when neither `0x20000` nor `0x40000`
-  is set; the detail files' SPRITESHADOW (0, 1, 2 in low, med, high) is inferred to set those bits (`0x0044da97`, key
-  order only), and the reference run read `0x1444100` (alphkid on). Measured by Q487: at low the word read
-  `0x01025900`, `0x20000` set and `0x40000` clear, so SPRITESHADOW 0 sets `0x20000` as the key order said. Ours draws none (`ride-operation.md`, "no shadow";
-  Q32 lists shadows among the keys nothing reads). Decode the pass's placement and colour first, then build it at the
-  reference's setting. Confirm by a frame pair in both games at one camera (`lib/bothcam.py`).
 - [ ] **Q484. The help bar wraps a long row inside its strip.** From the review of Q471 (`handoff/review3/VERIFY-7.md`,
   finding 3; seen in frames): `UI/HelpBar.cs` never sets `TextWraps`, so a long row (459 "Park gates - ...", 460 "Ticket
   booth - ...") runs past both ends of the dark `f_helpbg` strip (`q471/run2/2-gate.png`: text at x 388 to 893 over a
@@ -2137,6 +2127,18 @@ filed the items that cite it.
   `0x0058d400`); ours makes every level down to one texel, each the rounded mean of the eight-bit level above, cut, a
   filter not read. Read the filler (what writes a level below the first: the codecs, or a downsample of the surface),
   then build it. Confirm by a far camera over the sea and the brick in both games.
+- [ ] **Q520. A person's shadow under a tool's squares.** From Q480 (`park-engine.md`, "A person's shadow"): the
+  original's patrol squares (and any tool's) are drawn over the people's shadows, which show through them
+  (`q480/orig/a-2-on.png`: Mike's shadow on the squares darkens 0.556, 0.716, 0.835); ours draws `ParkBuildMarkers`
+  before the people, writing depth 1.5 over the land, so a shadow 0.6 over it is hidden (`q480/run2/4-on.png`: 0 pixels
+  changed with `shadows 0`). Decode where the original draws its marker squares against the sprite list's two passes
+  (and whether they write depth over the people's feet, Q477), then order ours to match. Confirm by the locator open on
+  Mike in both games, a frame pair with shadows on and off (`lib/shadowdiff.py`).
+- [ ] **Q521. A person's shadow at high detail: their own picture.** From Q480: `SPRITESHADOW` 2 and 3 (`high.sam` sets
+  2) have `SpriteShadow_Draw` use the person's own picture with the darkness word `0x67000000` as its colour and the
+  picture's own blend (no multiply), counted here `SPRITE_SHADOW_OWN_PICTURE` and drawing none. Build it (a second
+  shadow mesh on the people's atlas, alpha-blended, no depth write). Confirm at high quality in both games (the
+  original by its Options screen) by a frame pair at one camera.
 
 ## B. Docs and comments
 
@@ -2612,8 +2614,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     speed, duration and capacity controls and the apply `0x004af440`.
 - [ ] **Q32. Graphics tiers.** `Level` reads the detail files (`low.sam`, `med.sam`, `high.sam`) for `GameOptions.PARTICLEDENSITY`
   and `NUMKIDS` (the kid and staff bank caps) and for three `GraphicalOptions.*` keys: `LIGHTING` (a counted no-op),
-  `TEXTUREQUALITY` (the sea's and the flags' folder) and `PROCEDURALTEXTURING` (the ground's tile size). Nothing reads
-  the rest (texture filtering, sky, shadows, fog, mipmaps, view distance); `SKYQUALITY` and `FIRSTPERSONVIEWDISTANCE` are named only in comments. The detail-file loader is `0x00423bc0` (`OptionsScreen`'s
+  `TEXTUREQUALITY` (the sea's and the flags' folder) and `PROCEDURALTEXTURING` (the ground's tile size). `SPRITESHADOW` is read too (Q480: medium's silhouette built, the own
+  picture counted). Nothing reads the rest (texture filtering, sky, the sky's and models' shadows, fog, mipmaps, view distance); `SKYQUALITY` and `FIRSTPERSONVIEWDISTANCE` are named only in comments. The detail-file loader is `0x00423bc0` (`OptionsScreen`'s
   restart note). Decode what it does with each key - the lobby plan's item 11 names three: the `stexture` set,
   `SKYQUALITY` and the particle low-detail byte - then build low / medium / high.
 - [ ] **Q33. UI scale.** The UI has one fixed virtual size (`VirtualScreen`, 2048 by 1536). Add Auto / small / medium

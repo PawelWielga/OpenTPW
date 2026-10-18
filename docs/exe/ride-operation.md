@@ -2761,7 +2761,7 @@ name.
 
 **Beside the original** (`q133d/sheet-beside-original.png`, its `sheet-performing.png` above OpenTPW's four frames):
 the same green dinosaur turning through set 4's poses where it stands. OpenTPW's is cut along its lower edge by the
-ground at that camera, as every sprite's is in the build before too, and has no shadow.
+ground at that camera, as every sprite's is in the build before too. (A body has cast a shadow since Q480: `park-engine.md`, "A person's shadow".)
 
 ### The research, in both games
 
@@ -3521,7 +3521,7 @@ x (`0x006fe2c4`) and turned `c` × −45° about y (`0x006fe2bc`), keeping the f
 nought; rows 0 and 6 keep column 0, and the frame is `c + 8r` (`0x0044b9f5`). It then sets two more locals (`0x0044ba04`..`0x0044ba2f`; `FUN_004755d0` writes local *n* at
 `+0x84 + 4n`): local 9, `+0xa8`, the roll from `FUN_0046f200` times 1/2π (`0x006fe2cc`), so in turns, which OpenTPW
 does not draw (`RIDER_HEAD_ROLL`); and **local 8, `+0xa4`, the sprite's scale, 0.685** (the float at `0x0074ced0`),
-which the picker copies to the draw record's `+0x2c` (`0x005422b2`) and `FUN_00589410` multiplies by the 20.0 span. A
+which the picker copies to the draw record's `+0x2c` (`0x005422b2`) and `SpriteShadow_BuildQuad` multiplies by the 20.0 span. A
 head is drawn at 0.685 of a body's size; its pictures (22-40 pixels, all 128/128 like every pack) are as tall as a
 whole kid's. OpenTPW: `ParkGuestSprites.HeadScale` (Q179d's follow-up, Alexah 2026-09-30). The `b_car`'s `Head1` is turned half
 round and tilted about 5° from the boat, so a face points away from the boat's fan. OpenTPW: `ParkBumperBoats.HeadFrame`. The `0x4000` custom-detail path is not reached: OpenTPW has only the three detail files. The

@@ -54,6 +54,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `lib/seam.py <frame.png> x0 x1 y0 y1` | A dark seam between water and its near bank, column by column in a window: the share of seam columns, the median ratio of the darkest pixel below the water to the water's and the bank's, and the longest run of neighbouring seam columns. Compares frames of two games lit differently, where a fixed level does not (Q358) |
 | `lib/screendiff.py <a.png> <b.png> [x0 y0 x1 y1]` | Pixels differing by more than 40 between two frames inside a box, and where: a screen that should not change, checked against the control's frame (Q358) |
 | `lib/diffpic.py <a.png> <b.png> <out.png> [x0 y0 x1 y1]` | Two frames side by side and a third, the second dimmed with every pixel differing by more than 40 a channel in red: where a change lies and its shape, and the count (Q359) |
+| `lib/shadowdiff.py ON.png OFF.png CX CY [HALF] [--scale S] [--near X,Y] [--out crop.png]` | A person's shadow from a frame pair of either game, shadows drawn and not, all else equal: the pixels darker by more than 6, with `--near` only the connected group nearest a point (one person's), their box from a point (the person's place pixel; `--scale 1.0667` puts ours on the original's 768), the median per-channel ratio on/off (the darkening, 0.596 at medium in both) and an 8x crop. Ours: `shadows 0` / `shadows 1` under `pause`; the original: `memhold.py PID 4 0x008bcbc8:I=<word with 0x20000>` under the held clock (Q480, `q480/orig/run.sh`) |
 | `lib/patchmean.py IMG NAME=X0,Y0,X1,Y1 ... [--vs IMG2]` | Named pixel boxes' mean colour, spread and brightness in a frame of either game, and with `--vs` the same boxes in a second frame, the difference and `mad`, the per-pixel mean absolute difference (how much moved where the means agree, Q486); `mean( img, box )` and `mad( img, img2, box )` importable. A colour compared across the two games or two runs at one camera (Q479) |
 | `lib/lndtile.py <base.lnd> <N> <x> <y> [out.png]`, `... sheet X0 Y0 X1 Y1 out.png` | The original's procedural ground tile made by its OWN code, `FUN_0055f780` run under unicorn on the file (`Tiler( path, N ).tile( x, y )`, `.rgb()`): the bit-exact oracle for a port (Q483; `park-engine.md`, "The procedural ground"). `tile( x, y, rec )` with rec = (texels, w, h, depth, word) runs the path laid over too, the texels as the original's surface holds them (Q489). Needs `~/.cache/tpw-emu312/bin/python` |
 | `lib/exeleaf.py` (import: `Exe()`, `alloc`, `write`, `read`, `call( fn, *args, ecx= )`, `reads`, `signed`) | Any leaf routine of `testme.exe` run unchanged under unicorn on memory the caller lays out: the image mapped at its base, a stack, a heap, a `HLT` sentinel, FPCW `0x027F`; `call` answers EAX, `reads` lists the globals a call touched. The oracle for a port's arithmetic (Q704's `q704/fill.py` runs `Lab_PercentLeftOfDearest` on a made-up lab and on a park's, `fslab.py`). `lndtile.py` keeps its own copy of the set-up. Needs `~/.cache/tpw-emu312/bin/python` |
@@ -1160,6 +1161,14 @@ GH=766` there, or the pointer is off):
   wave's phase (the quilt stops; it still creeps 0.4 a frame between writes, under one level); `0x00870ecc:f=-50` sinks
   the quilt under the lake, leaving `Line01` alone, OpenTPW's picture. The period of a moving patch: film it
   (`record.sh`), then the box's autocorrelation over the frames, not an FFT of a few seconds, whose bins are too coarse.
+
+- **A person's shadow in both games, measured** (Q480, `q480/orig/run.sh`, `q480/confirm.py`): Mike under the mechanics'
+  locator at zoom 110. **Fold the locator (Escape) before reading a shadow's colour**: in the original its patrol squares
+  are drawn over the shadow and change what it does to the ground (0.556, 0.716, 0.835 there against 0.6 on bare
+  ground); here they write depth over it and hide it. The original's shadows alone go with the render word held with
+  `0x20000` (`memhold.py`, under the held clock), which also empties the light list `[0x008c1818]`; ours with
+  `shadows 0`. Then `lib/shadowdiff.py` on the pair, `--near` on the person's place. The original's frame is 16-bit: a
+  dark channel's ratio there is pulled down by the level kept (blue at 4 to 7 of 31 read 0.543), so judge on red and green.
 
 ## The original under Proton
 

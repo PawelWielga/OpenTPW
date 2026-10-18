@@ -42,10 +42,10 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// pixels over 128, times the span below.
 	///
 	/// <para>
-	/// <b>The span is measured rather than chosen.</b> The draw path <c>FUN_00589410</c> scales a picture
+	/// <b>The span is measured rather than chosen.</b> The draw path <c>SpriteShadow_BuildQuad</c> scales a picture
 	/// by its instance's own scale times <c>0x0070200c</c>, which holds <b>20.0</b> and sits in read-only
 	/// <c>.rdata</c>. Every other term on the vertical chain is one: the factor at <c>0x00768ab4</c> is
-	/// 1.0 and has no writer anywhere in the image, the call site <c>FUN_00589990</c> passes 1.0f for both
+	/// 1.0 and has no writer anywhere in the image, the call site <c>SpriteShadow_Draw</c> passes 1.0f for both
 	/// of its multipliers, and all eighteen of the shipped park's sprites carry scale 1.0/1.0.
 	/// </para>
 	/// <para>
@@ -129,6 +129,27 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// <summary>The quads' corners and depths as written, for a test of the frame's end (<see cref="Finish"/>).</summary>
 	internal (Vertex[] Vertices, float[] Depths) Written => (_vertices, _depths);
 	private int _uploaded;
+
+	/// <summary>The detail file's <c>SPRITESHADOW</c>, read as the park loads (<see cref="ParkPersonShadows.Tier"/>).</summary>
+	private readonly int _shadowTier = 1;
+
+	/// <summary>One shadow quad a person, rewritten each frame and drawn after the people (<see cref="ParkPersonShadows"/>).</summary>
+	private Vertex[] _shadowVertices = [];
+
+	/// <summary>The frame's shadows as <see cref="WriteTheFrame"/> left them, for a test.</summary>
+	internal Vertex[] ShadowsWritten => _shadowVertices;
+
+	private int _shadowsUploaded;
+	private Model? _shadowModel;
+	private Texture? _silhouette;
+
+	/// <summary>Each shadow the last frame drew: whose, and its four corners in the world, for the console's <c>shadows</c>.</summary>
+	internal IReadOnlyList<(int Thing, Vector3[] Corners)> ShadowsDrawn => _shadowsDrawn;
+
+	private readonly List<(int Thing, Vector3[] Corners)> _shadowsDrawn = [];
+
+	/// <summary>Whether the people's shadows are left undrawn, for the debug console's <c>shadows 0</c>.</summary>
+	internal static bool DebugShadowsHidden { get; set; }
 
 	/// <summary>
 	/// The balloons' shared bob: its phase and the placements counted toward its next step - the globals
@@ -270,6 +291,13 @@ public sealed class ParkGuestSprites : ModelEntity
 			return;
 
 		_people.AddRange( Taken( park ) );
+		_shadowTier = ParkPersonShadows.Tier( OpenTPW.Level.DetailFile );
+		Log.Info( _shadowTier switch
+		{
+			0 => $"Shadows: {OpenTPW.Level.DetailFile}'s SPRITESHADOW 0, so nobody casts a shadow",
+			1 => $"Shadows: {OpenTPW.Level.DetailFile}'s SPRITESHADOW 1, so every person casts the {ParkPersonShadows.Silhouette} silhouette",
+			_ => $"Shadows: {OpenTPW.Level.DetailFile}'s SPRITESHADOW {_shadowTier}, the person's own picture, not built: none drawn"
+		} );
 
 		Current = this;
 		_themeName = themeName;
@@ -506,6 +534,43 @@ public sealed class ParkGuestSprites : ModelEntity
 		TranslucentModel?.Delete();
 		TranslucentModel = new Model( _vertices, indices, material );
 		TranslucentModel.EnableFrequentUpdates( _vertices );
+
+		BuildShadows();
+	}
+
+	/// <summary>
+	/// The shadows' mesh, a quad a person, at medium's tier only: the silhouette multiplied onto what lies under it,
+	/// tested against depth and writing none, both faces drawn (<see cref="ParkPersonShadows"/>). The shader is the
+	/// people's: the picture times the vertex colour, dropped under alpha 16, as the original's word <c>0x...13</c>
+	/// keeps the silhouette's alpha test.
+	/// <para>
+	/// <b>A deviation: under a tool's squares the shadow is hidden.</b> <see cref="ParkBuildMarkers"/> draws before the
+	/// people and writes depth 1.5 over the land, so a shadow 0.6 over it fails the test there, where the original's shows
+	/// through its squares (Q520).
+	/// </para>
+	/// </summary>
+	private void BuildShadows()
+	{
+		_shadowModel?.Delete();
+		_shadowModel = null;
+
+		if ( _shadowTier != 1 || _people.Count == 0 )
+			return;
+
+		var indices = new uint[_people.Count * 6];
+
+		for ( uint i = 0; i < _people.Count; ++i )
+		{
+			var at = i * 6;
+			(indices[at], indices[at + 1], indices[at + 2]) = (i * 4, (i * 4) + 1, (i * 4) + 2);
+			(indices[at + 3], indices[at + 4], indices[at + 5]) = (i * 4, (i * 4) + 2, (i * 4) + 3);
+		}
+
+		var material = new Material( PeopleShader, PeopleMaterial | MaterialFlags.DisableDepthWrite | MaterialFlags.Multiply );
+		material.Set( "Color", _silhouette ??= new Texture( ParkPersonShadows.Silhouette ) );
+
+		_shadowModel = new Model( _shadowVertices, indices, material );
+		_shadowModel.EnableFrequentUpdates( _shadowVertices );
 	}
 
 	/// <summary>The people's shader, whose alpha test is the original's (<c>content/shaders/people.shader</c>).</summary>
@@ -524,6 +589,8 @@ public sealed class ParkGuestSprites : ModelEntity
 		_vertices = new Vertex[quads * 4];
 		_depths = new float[quads];
 		_uploaded = 0;
+		_shadowVertices = new Vertex[_people.Count * 4];
+		_shadowsUploaded = 0;
 	}
 
 	/// <summary>
@@ -651,6 +718,9 @@ public sealed class ParkGuestSprites : ModelEntity
 
 	private readonly List<SpritePick.Drawn> _drawn = [];
 
+	/// <summary>The light a frame's shadows are cast by where the sprites stand in no level: a test's.</summary>
+	internal Vector3? ShadowLight { get; set; }
+
 	/// <summary>Whether the last frame pulled the people's bodies toward the eye (<see cref="Pull"/>): not in first person.</summary>
 	internal bool Pulled { get; private set; }
 
@@ -663,25 +733,86 @@ public sealed class ParkGuestSprites : ModelEntity
 			return;
 
 		var (used, reach) = WriteTheFrame();
-
-		if ( reach == 0 )
-			return;
-
-		TranslucentModel.UpdateVertices( _vertices, reach * 4 );
-
-		if ( used == 0 || DebugHidden )
-			return;
+		var (shadows, shadowReach) = FoldShadows( _shadowsDrawn.Count );
 
 		// World space already, so the model matrix is identity - the quads were turned to face the
 		// camera as they were written.
-		TranslucentModel.Material.Set( "g_oUbo", new ObjectUniformBuffer
+		var buffer = new ObjectUniformBuffer
 		{
 			g_mModel = Matrix4x4.Identity,
 			g_mView = Camera.ViewMatrix,
 			g_mProj = Camera.ProjMatrix
-		} );
+		};
 
-		TranslucentModel.Draw();
+		if ( reach > 0 )
+		{
+			TranslucentModel.UpdateVertices( _vertices, reach * 4 );
+
+			if ( used > 0 && !DebugHidden )
+			{
+				TranslucentModel.Material.Set( "g_oUbo", buffer );
+				TranslucentModel.Draw();
+			}
+		}
+
+		// The shadows after the people, as the original's second pass follows its first: a body's picture has written
+		// its depth, so the part of its shadow behind it stays hidden.
+		if ( _shadowModel != null && shadowReach > 0 )
+		{
+			_shadowModel.UpdateVertices( _shadowVertices, shadowReach * 4 );
+
+			if ( shadows > 0 && !DebugShadowsHidden )
+			{
+				_shadowModel.Material.Set( "g_oUbo", buffer );
+				_shadowModel.Draw();
+			}
+		}
+	}
+
+	/// <summary>
+	/// Folds to nothing every shadow the last frame wrote and this one did not; answers this frame's count and how many
+	/// the upload has to reach (<see cref="Fold"/>'s rule).
+	/// </summary>
+	private (int Used, int Reach) FoldShadows( int used )
+	{
+		used = Math.Min( used, _shadowVertices.Length / 4 );
+
+		for ( var i = used; i < _shadowsUploaded; ++i )
+			_shadowVertices.AsSpan( i * 4, 4 ).Clear();
+
+		var reach = Math.Max( used, _shadowsUploaded );
+		_shadowsUploaded = used;
+
+		return (used, reach);
+	}
+
+	/// <summary>
+	/// A body's shadow written at the frame's next free shadow, the picture's foot on <paramref name="centre"/>'s place
+	/// (<see cref="ParkPersonShadows.Corners"/>): at medium's tier, with a park light travelling downwards and room
+	/// left. The own picture of tiers 2 and 3 is counted and draws none.
+	/// </summary>
+	private void WriteShadow( int thingId, Vector3 centre, Region picture, bool mirrored, Vector3? travels, HeightfieldFile? field )
+	{
+		if ( _shadowTier >= 2 )
+		{
+			Unimplemented.Report( "SPRITE_SHADOW_OWN_PICTURE" );
+			return;
+		}
+
+		var index = _shadowsDrawn.Count;
+
+		if ( _shadowTier != 1 || travels is not { } light || ParkPersonShadows.Darkness( light ) is not { } darkness
+			|| (index * 4) + 3 >= _shadowVertices.Length )
+			return;
+
+		var corners = _shadowVertices.AsSpan( index * 4, 4 );
+		var lift = ParkCamcorderCameraMode.Active ? ParkPersonShadows.FirstPersonLift : ParkPersonShadows.Lift;
+
+		if ( !ParkPersonShadows.Corners( corners, new Vector2( centre.X, centre.Y ), picture.Width, picture.Height, picture.OriginX,
+			mirrored, light, ( x, y ) => field?.CornerPlaneAt( x, y ) ?? 0f, lift, ParkPersonShadows.Colour( darkness ) ) )
+			return;
+
+		_shadowsDrawn.Add( (thingId, [corners[0].Position, corners[1].Position, corners[2].Position, corners[3].Position]) );
 	}
 
 	/// <summary>
@@ -693,6 +824,9 @@ public sealed class ParkGuestSprites : ModelEntity
 	{
 		var field = ParkGround.Current?.Heightfield;
 		var used = 0;
+
+		_shadowsDrawn.Clear();
+		var travels = Level?.ParkLight?.Travels ?? ShadowLight;
 
 		// The simulation, if this park is running one. Asked once a frame rather than once a person.
 		var people = ParkPeople.Current;
@@ -775,6 +909,7 @@ public sealed class ParkGuestSprites : ModelEntity
 
 			WriteQuad( used++, centre, picture, mirrored, sprite.Alpha, pulled: Pulled );
 			_drawn.Add( new SpritePick.Drawn( person.ThingId, centre, picture.Width, picture.Height, picture.OriginX, picture.OriginY, mirrored ) );
+			WriteShadow( person.ThingId, centre, picture, mirrored, travels, field );
 
 			if ( DebugFacing && _plain is { } plain )
 				WriteGroundDash( used++, centre, angle, kind, plain );
@@ -829,7 +964,7 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// <summary>
 	/// A rider's head is drawn at 0.685 of a body's size: <c>FUN_0044b510</c> writes the float at <c>0x0074ced0</c> into
 	/// the head sprite's local 8 every frame (<c>0x0044ba1f</c>), its scale <c>+0xa4</c>, which the picker hands the draw
-	/// as the record's <c>+0x2c</c> (<c>0x005422b2</c>) and <c>FUN_00589410</c> multiplies by the span.
+	/// as the record's <c>+0x2c</c> (<c>0x005422b2</c>) and <c>SpriteShadow_BuildQuad</c> multiplies by the span.
 	/// </summary>
 	internal const float HeadScale = 0.685f;
 
@@ -1448,6 +1583,10 @@ public sealed class ParkGuestSprites : ModelEntity
 
 		_atlas?.Delete();
 		_atlas = null;
+
+		// The silhouette came by its path, so the texture cache may be holding it for another: only the model goes.
+		_shadowModel?.Delete();
+		_shadowModel = null;
 	}
 
 	/// <summary>
