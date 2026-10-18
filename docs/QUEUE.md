@@ -53,14 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 Q479 is first at Alexah's word (2026-10-17); its builds, Q481 to Q483 and Q483's build Q488, follow it. The review of the run of 2026-10-17/18 put Q474 first, a click Q468 broke (its findings are
 `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`).
 
-- [ ] **Q475. A reflected person turns about their feet.** From the review of Q468 (`handoff/review3/VERIFY-3.md`,
-  finding 2; read from code, not seen): the original reflects a picture by negating L and R about its origin
-  (`0x005891f1` to `0x00589212`, corners at `0x0058922d` to `0x00589256`, u left alone; the flag 2 at `0x00589f68` is a
-  winding flag), where ours swaps u about the quad's middle (`ParkGuestSprites.cs`, the mirrored quad), so a person
-  hops sideways by W - 2 x OriginX picture pixels each time they turn between a direct and a reflected facing (5 px for
-  thing 28), and the latch circle and bubble sit off the reflected body. Confirm by a frame pair in both games of one
-  person turning. With it: the latch circle is round in the -1 to 1 box, so at 16:9 it reaches 1.27 times across
-  against the original's 4:3 (`SpritePick.cs`): say it at the site, and run the pick at 4:3 once.
 - [ ] **Q476. A press let go inside one frame never reaches the park.** From Q474 (`q474/PREDICTION.txt`, run1 and run2):
   `Level.WorldClick` acts on `Input.Mouse.Left` going from up to down between two frames (`Input.cs`, `IsMouseDown`), so a
   press and release inside one frame is lost; XTEST's 0.06 s click was lost twice in Alexah's Full Simulation park,

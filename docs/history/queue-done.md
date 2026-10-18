@@ -7799,6 +7799,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   viewfinder (`q497/ctl1`: the pick hand and row 459). Build it on `WindowStack` (first person's layer as the control
   under the pointer, its row -1), `Level.WorldHelpRow` and the camcorder's cursor. Confirm in both games with
   `helpbar.py`'s `fp` fields and `pointer`: in first person, and after Escape and C.
+- [x] **Q475. A reflected person turns about their feet.** Built: reflected, the quad's sides are negated about the
+  picture's origin and the texture kept (`ParkGuestSprites.Across`, `Corners`; `park-engine.md`, "A reflected picture turns
+  about its origin"), and the latch's 16:9 reach is said at its site (`SpritePick.Latch`). Ours `q475/run4` on the final
+  binary (his pixels' sides, by a frame with and one without the people, `sprites 0`, within 1 px of the origin rule) and
+  `run5-43` at 1024 x 768 (the circle's r2 and middle the original's: 0.0162 and 529 for the reflected 38 x 50); the
+  control `run2-ctl` 7 px left; the original's round c (`q475/orig/`, frames under SIGSTOP: 505 to 527 against 503.5 and
+  527.4), `side-by-side.png`; mutations 8 of 8. Was: From the review of Q468 (`handoff/review3/VERIFY-3.md`,
+  finding 2; read from code, not seen): the original reflects a picture by negating L and R about its origin
+  (`0x005891f1` to `0x00589212`, corners at `0x0058922d` to `0x00589256`, u left alone; the flag 2 at `0x00589f68` is a
+  winding flag), where ours swaps u about the quad's middle (`ParkGuestSprites.cs`, the mirrored quad), so a person
+  hops sideways by W - 2 x OriginX picture pixels each time they turn between a direct and a reflected facing (5 px for
+  thing 28), and the latch circle and bubble sit off the reflected body. Confirm by a frame pair in both games of one
+  person turning. With it: the latch circle is round in the -1 to 1 box, so at 16:9 it reaches 1.27 times across
+  against the original's 4:3 (`SpritePick.cs`): say it at the site, and run the pick at 4:3 once.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

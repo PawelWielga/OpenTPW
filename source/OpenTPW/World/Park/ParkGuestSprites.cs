@@ -84,7 +84,7 @@ public sealed class ParkGuestSprites : ModelEntity
 	}
 
 	/// <summary>Where a picture sits in the atlas, and the size and origin it was authored with.</summary>
-	private readonly record struct Region(
+	internal readonly record struct Region(
 		float Left, float Top, float Right, float Bottom, int Width, int Height, int OriginX, int OriginY );
 
 	private sealed record Loaded( SpriteBankFile Bank, Region[] Pictures );
@@ -154,6 +154,12 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// </para>
 	/// </summary>
 	internal static bool DebugFacing { get; set; }
+
+	/// <summary>
+	/// For the debug console only: everything here written and recorded for the pick as usual, and nothing drawn, so
+	/// a paused frame taken with and without it is the people's own pixels.
+	/// </summary>
+	internal static bool DebugHidden { get; set; }
 
 	/// <summary>
 	/// Enough colours to tell the <b>nine</b> kinds of people apart at a glance - see <see cref="DebugFacing"/>.
@@ -722,7 +728,7 @@ public sealed class ParkGuestSprites : ModelEntity
 
 		TranslucentModel.UpdateVertices( _vertices, reach * 4 );
 
-		if ( used == 0 )
+		if ( used == 0 || DebugHidden )
 			return;
 
 		// World space already, so the model matrix is identity - the quads were turned to face the
@@ -1130,31 +1136,51 @@ public sealed class ParkGuestSprites : ModelEntity
 		return (originX * scale, (width - originX) * scale, originY * scale, (height - originY) * scale);
 	}
 
+	/// <summary>
+	/// The two sides of a picture's quad across the eye, from the point it is drawn at, and the column of the picture
+	/// each side shows (nought its left edge, the width its right). Reflected, the original negates both sides about the
+	/// origin and leaves the texture as it is (<c>FUN_005890e0</c>, <c>0x005891e5</c> to <c>0x00589256</c>), so column c
+	/// is drawn at the origin plus <c>originX - c</c>: the picture turns about the person's feet.
+	/// </summary>
+	internal static (float Left, int LeftColumn, float Right, int RightColumn) Across( int width, int height, int originX, int originY, bool mirrored, float instanceScale = 1f )
+	{
+		var (leftward, rightward, _, _) = Extent( width, height, originX, originY, instanceScale );
+		return mirrored ? (-rightward, width, leftward, 0) : (-leftward, 0, rightward, width);
+	}
+
 	private void WriteQuad( int index, Vector3 centre, Region picture, bool mirrored, int alpha, float instanceScale = 1f )
 	{
 		if ( index < 0 || index * 4 >= _vertices.Length )
 			return;
 
-		var forward = Camera.Rotation.Forward;
+		if ( !Corners( _vertices.AsSpan( index * 4, 4 ), Camera.Rotation.Forward, centre, picture, mirrored, alpha, instanceScale ) )
+			Collapse( index );
+	}
+
+	/// <summary>
+	/// A picture's four corners square on to an eye looking along <paramref name="forward"/>, its origin on
+	/// <paramref name="centre"/>: top left, top right, bottom right, bottom left, each with the picture's u and v there.
+	/// False, writing nothing, looking straight down.
+	/// </summary>
+	internal static bool Corners( Span<Vertex> corners, Vector3 forward, Vector3 centre, Region picture, bool mirrored, int alpha, float instanceScale = 1f )
+	{
 		var across = forward.Cross( Vector3.Up );
 
 		// Looking straight down there is no horizontal left to hang the sprite on, and every quad
 		// would be edge-on anyway.
 		if ( across.LengthSquared < 0.000001f )
-		{
-			Collapse( index );
-			return;
-		}
+			return false;
 
 		across = across.Normal;
 
 		// Square to both the view and that across, which is the camera's own up with no roll in it.
 		var upward = across.Cross( forward ).Normal;
 
-		var (leftward, rightward, above, below) = Extent( picture.Width, picture.Height, picture.OriginX, picture.OriginY, instanceScale );
+		var (_, _, above, below) = Extent( picture.Width, picture.Height, picture.OriginX, picture.OriginY, instanceScale );
+		var (leftAt, leftColumn, rightAt, _) = Across( picture.Width, picture.Height, picture.OriginX, picture.OriginY, mirrored, instanceScale );
 
-		var left = across * -leftward;
-		var right = across * rightward;
+		var left = across * leftAt;
+		var right = across * rightAt;
 		var top = upward * above;
 		var bottom = upward * -below;
 
@@ -1162,18 +1188,15 @@ public sealed class ParkGuestSprites : ModelEntity
 		// would tint the art.
 		var colour = ((uint)Math.Clamp( alpha, 0, 255 ) << 24) | 0x00ffffffu;
 
-		var u0 = mirrored ? picture.Right : picture.Left;
-		var u1 = mirrored ? picture.Left : picture.Right;
+		var u0 = leftColumn == 0 ? picture.Left : picture.Right;
+		var u1 = leftColumn == 0 ? picture.Right : picture.Left;
 
-		var v = index * 4;
+		corners[0] = new Vertex( centre + left + top, new Vector2( u0, picture.Top ) ) { MatFlags = colour };
+		corners[1] = new Vertex( centre + right + top, new Vector2( u1, picture.Top ) ) { MatFlags = colour };
+		corners[2] = new Vertex( centre + right + bottom, new Vector2( u1, picture.Bottom ) ) { MatFlags = colour };
+		corners[3] = new Vertex( centre + left + bottom, new Vector2( u0, picture.Bottom ) ) { MatFlags = colour };
 
-		Corner( v, centre + left + top, u0, picture.Top );
-		Corner( v + 1, centre + right + top, u1, picture.Top );
-		Corner( v + 2, centre + right + bottom, u1, picture.Bottom );
-		Corner( v + 3, centre + left + bottom, u0, picture.Bottom );
-
-		void Corner( int vertex, Vector3 position, float u, float w )
-			=> _vertices[vertex] = new Vertex( position, new Vector2( u, w ) ) { MatFlags = colour };
+		return true;
 	}
 
 	/// <summary>

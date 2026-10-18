@@ -1448,6 +1448,17 @@ went 45 to 32 up, 17 to 12 left and 8 to 5 right of his place. Not the same: bel
 nearer the eye than the place, and by a patrol outline's squares under the staff locator, where the original draws
 the picture to its last row (Mike's feet 5 px under the origin) (Q477).
 
+**A reflected picture turns about its origin** (Q475). The quad's left corners (vertices 0 and 3) are x + L and its right
+(1 and 2) x + R (`0x0058922d` to `0x00589256`), L and R the signed sides above; flag `0x10` negates both
+(`0x005891e5` to `0x00589212`) and nothing in the routine writes a u, so the picture's left column is drawn on the right
+at x − L: column c at the origin plus (origin x − c), the origin's column on the person's place both ways round. The
+EBX the routine returns (1 for `0x10`, toggled by `0x60` and `0x80000`) only makes the caller OR the primitive's winding
+flag 2 (`0x00589f15`). **Measured** (`q475/`, `PREDICTION.txt`), Mike under the mechanics' follow with the game process
+stopped for each frame: reflected, his 31 x 52 picture (origin 20) drew from 505 to 527 of the 1024 x 768 frame against
+the decode's 503.5 and 527.4, where a reflection about the picture's middle puts it at 496.6 to 520.5. OpenTPW
+(`ParkGuestSprites.Across`, `Corners`) draws the same; before Q475 it kept the sides and swapped u, so a person hopped
+sideways by W − 2 × origin x picture pixels at each turn between a direct and a reflected facing.
+
 **The type-3 handlers do NOT test the cell for zero** before unpacking it; the out-of-range value is
 caught downstream by the bounds test inside the callees instead.
 

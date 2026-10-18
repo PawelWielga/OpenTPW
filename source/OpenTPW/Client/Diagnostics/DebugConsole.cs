@@ -1180,6 +1180,16 @@ public static class DebugConsole
 				Reply( $"facing {(ParkGuestSprites.DebugFacing ? "on" : "off")}" );
 				break;
 
+			// The people's pictures, their balloons and bubbles drawn or not (ParkGuestSprites.DebugHidden), the pick's
+			// record kept either way: a paused frame with and one without is the people's own pixels. Toggles, or 0/1.
+			case "sprites":
+				ParkGuestSprites.DebugHidden = parts.Length > 1
+					? Argument( 1 ) == 0f
+					: !ParkGuestSprites.DebugHidden;
+
+				Reply( $"sprites {(ParkGuestSprites.DebugHidden ? "hidden" : "drawn")}" );
+				break;
+
 			// Where the park camera is, in world units and in grid cells - the two coordinate systems
 			// a park is described in, and the pair most worth seeing side by side while placing things.
 			case "camera":
@@ -1271,7 +1281,8 @@ public static class DebugConsole
 			// a screenshot alone cannot settle, because a cell is ten units across and a pitched
 			// camera makes "further away" and "higher up the frame" look the same.
 			// A person's pick circle as the last frame drew them (SpritePick.Circle): its middle and radius in window
-			// pixels, so a harness can aim at it and at its edge. With no thing, every person drawn.
+			// pixels, so a harness can aim at it and at its edge, and the pixel their origin is drawn at. With no thing,
+			// every person drawn.
 			case "circle":
 				{
 					var who = parts.Length > 1 ? (int)Argument( 1 ) : 0;
@@ -1284,7 +1295,9 @@ public static class DebugConsole
 							continue;
 
 						++listed;
+						var place = System.Numerics.Vector4.Transform( new System.Numerics.Vector4( picture.Origin.X, picture.Origin.Y, picture.Origin.Z, 1f ), Camera.ViewMatrix * Camera.ProjMatrix );
 						Reply( $"circle: thing {picture.Thing} middle ({(circle.X + 1f) * Screen.Width / 2f:F0},{(circle.Y + 1f) * Screen.Height / 2f:F0}) " +
+							$"origin pixel ({(place.X / place.W + 1f) * Screen.Width / 2f:F1},{(1f - place.Y / place.W) * Screen.Height / 2f:F1}) " +
 							$"radius {MathF.Sqrt( circle.Reach ) * Screen.Width / 2f:F1} x {MathF.Sqrt( circle.Reach ) * Screen.Height / 2f:F1} r2 {circle.Reach:F4} " +
 							$"depth {circle.Depth:F2} size {picture.Width}x{picture.Height} origin {picture.OriginX},{picture.OriginY} mirrored {picture.Mirrored} " +
 							$"of {Screen.Width:F0}x{Screen.Height:F0}" );

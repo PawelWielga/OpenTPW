@@ -64,6 +64,9 @@ public static class SpritePick
 			if ( Circle( picture, viewProjection, heightOverWidth ) is not { } circle )
 				continue;
 
+			// Round in the -1 to 1 box, as the original's, which is its circle at 4:3. A window wider than the original's
+			// 4:3 stretches the box across, so at 16:9 the circle reaches 1.27 times the original's across and 0.95 down
+			// at the same height (a picture 34 x 47): a deviation, kept, since the original never draws wider than 4:3.
 			var distance = ((pointer.X - circle.X) * (pointer.X - circle.X)) + ((pointer.Y - circle.Y) * (pointer.Y - circle.Y));
 
 			if ( distance < circle.Reach && circle.Depth < nearest )
