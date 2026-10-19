@@ -8120,6 +8120,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the console's `strikes` read `months 1` on 792 and `months 2` on 1422 (`q531/run-month2l1`, `1-end.png`); 5 of 5
   predictions held; mutations 5/5 against the advisor's tests alone. Nothing the player sees changed, so the original
   was not re-run: Q422 compared the same numbers with it.
+- [x] **Q532. The patrol edges are red after a refused tool's pass.** Q420's piece. The tool's pass leaves the refusal
+  latch `DAT_00816d50` as its verdicts set it and putting the tool away keeps it (`FUN_005234d0` clears it at
+  `0x005234f2`; `FUN_0052f200( 0 )` does not), so a followed member's patrol edges, whose verdict is that latch alone
+  (`0x005356df`), are red until a tool's next pass (`hud.md`, "The patrol edges"). Done 2026-10-19: in the original
+  (`q532/orig/run.sh`) a refused click outside the park left `d50` 0 and the mechanic's 48 squares texture 0, one on
+  the Belly Bounce's (51,24) left `d50` 1 and the 48 texture 1, and the path tool armed again and put away by Escape
+  left 0 and texture 0; the same clicks here (`q532/run5`) gave `latch` 0, 1, 0 and the 48 markers 0, 1, 0
+  (`side-by-side.png`); 3 of 3 predictions held in the original and 5 of 5 here, after one miss recorded; mutations 14/14.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

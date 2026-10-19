@@ -255,7 +255,12 @@ Each was found by trial in the item named, and cost a run to find.
   and a press there with the hand empty arms the path tool red (mode 1, `d48` 1, read with the button held); its
   release refuses, and `original/capmatch.py` found `blnl_error1` at 0.558 there, the capture's only window over 0.3.
   With nothing armed after the menu the preview's cell reads (0, 0), so
-  `cellfind.py` finds nothing there: aim with the camera instead.
+  `cellfind.py` finds nothing there: aim with the camera instead. **The refusal latch a tool leaves** (Q532,
+  `q532/orig/run.sh`, `q532/confirm.py`): in the original, `setcam.py` to (49,24), click (the path tool armed and
+  anchored), `setcam.py` to (51,24), click (refused on the Belly Bounce), then Ctrl+S and the mechanics' button, read
+  `[0x00816d50]` and `squares.py`; here `cellprobe.py`'s `find` arms `tool path`, and each probe's pass moves the latch,
+  so probe a cell outside the park last (`tool` then reads `latch 0`), and find each cell at the camera it is clicked
+  at: (51,24) and (49,24) at `camera 495 230 90 0`, (43,16) at `camera 475 190 90 0`, not the other way.
 
 - **The staff window's FIRE and PICK UP in either game** (Q432, `q432/orig/run.sh`, `q432/confirm.py`): on the
   original's 1024 x 768 frame `b_fire` is (228,385) and `b_pick` (308,385); FIRE's box puts its tick at (710,282) and

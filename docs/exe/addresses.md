@@ -811,6 +811,8 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00521e60` | | OpenTPW.Files/Formats/Particle/ParticleLibraryFile.cs OpenTPW/World/Particles/ParticleSystem.cs  |
 | `0x00522360` | | OpenTPW.Files/Formats/Particle/ParticleLibraryFile.cs OpenTPW/World/Particles/ParticleSystem.cs  |
 | `0x005224f0` | | OpenTPW/World/Particles/ParticleSystem.cs  |
+| `0x005234f2` | Tool pass `FUN_005234d0`: clears the refusal latch `DAT_00816d50` at its start (with `d48`, `d58`), which its verdicts then set | OpenTPW/World/Park/ParkBuildMarkers.cs OpenTPW/World/Park/ParkBuildMode.cs  |
+| `0x00523dd3` | Tool pass, the patrol arm: the rectangle's test `FUN_00532a50` into the refusal latch `DAT_00816d50` | OpenTPW/World/Park/ParkPatrolTool.cs OpenTPW.Tests/ParkStaffWindowTests.cs  |
 | `0x00524a63` | Build commit: a red preview (`DAT_00816d48`) lays nothing, sound `0xaf` | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00524a77` | Carry shell's button-up FUN_00524960: its one read of the down slot's flag DAT_008186d8, gating a sound | OpenTPW/World/Level.cs  |
 | `0x00524aae` | Place commit: a click on a red cell plays sound `0xaf` and leaves the hand as it is | OpenTPW/World/Park/ParkBuilding.cs  |
@@ -871,6 +873,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x005303f1` | `FUN_00530120`: an entry cell with no link pushes the cell its angle names | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00530487` | `FUN_00530120`'s angle arm ends; the final push follows | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x005330ca` | | OpenTPW/World/Park/ParkBuildMarkers.cs  |
+| `0x0053319a` | Marker draw `FUN_00532fc0`, op `0x100`: the placer's failure `DAT_0081b604` makes the square red before the verdict is asked | OpenTPW/World/Park/ParkBuildMarkers.cs  |
 | `0x0053473c` | Stamp: queue over path force-clears the path, `FUN_005367a0(0,0)` | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x0053475d` | Stamp: end of the force-clear | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x005347af` | | OpenTPW/World/Park/ParkState.cs  |
@@ -881,8 +884,10 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0053525a` | Queue arm: first of the four entrance-bond probes | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00535323` | Queue arm: last entrance-bond probe | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00535597` | Queue arm: end | OpenTPW/World/Park/ParkPathBuilding.cs  |
+| `0x005356df` | Verdict `FUN_00535670`: mode `0x36` (the patrol tool, the patrol edges) answers the refusal latch `DAT_00816d50` alone | OpenTPW/World/Park/ParkBuildMarkers.cs  |
 | `0x005357c7` | Verdict `FUN_00535670`: the `0x40` outside-the-park test, first for every tool | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00535811` | Verdict `FUN_00535670`: the parent redirect for track types 12 and 17, made inline after `FUN_004d0af0` fetches the cell's own track record | OpenTPW/World/Park/ParkPathBuilding.cs  |
+| `0x00535885` | Verdict `FUN_00535670`: `DAT_00816d58` copied into `DAT_00816d50`, after the outside-the-park test | OpenTPW/World/Park/ParkPathBuilding.cs OpenTPW.Tests/ParkPathToolTests.cs  |
 | `0x005358e9` | Queue verdict: the cash total skips queue over path | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x005358f1` | Queue verdict: end of that guard | OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00535d63` | Verdict: end of the path arm | OpenTPW/World/Park/ParkPathBuilding.cs  |

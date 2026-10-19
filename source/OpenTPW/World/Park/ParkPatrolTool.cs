@@ -22,8 +22,16 @@ namespace OpenTPW;
 public static class ParkPatrolTool
 {
 	/// <summary>The squares the tool shows for the pointer's cell.</summary>
-	public static List<ParkPathBuilding.QueueSquare> Strip( int toX, int toY )
+	public static List<ParkPathBuilding.QueueSquare> Strip( int toX, int toY ) => Strip( toX, toY, out _ );
+
+	/// <summary>
+	/// The squares the tool shows for the pointer's cell, and whether its pass leaves the refusal latch
+	/// <c>DAT_00816d50</c> set: the rectangle's test sets it (<c>0x00523dd3</c>), and unanchored nothing does.
+	/// </summary>
+	public static List<ParkPathBuilding.QueueSquare> Strip( int toX, int toY, out bool latched )
 	{
+		latched = false;
+
 		if ( !ParkState.OnMap( toX, toY ) )
 			return [];
 
@@ -32,6 +40,7 @@ public static class ParkPatrolTool
 
 		var (from, to) = Corners( ParkBuildMode.Anchor, (toX, toY) );
 		var refused = Level.Current?.Park is { } park && Refuses( park, from, to );
+		latched = refused;
 		var marker = refused ? ParkPathBuilding.MarkerRed : ParkPathBuilding.MarkerBlue;
 		var why = refused ? "takes in no cell of the park" : null;
 

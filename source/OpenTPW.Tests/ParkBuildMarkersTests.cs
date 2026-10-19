@@ -134,9 +134,104 @@ public class ParkBuildMarkersTests
 		StringAssert.Contains( markers.Census(), "| walls 3 " );
 
 		typeof( ParkBuildMarkers ).GetMethod( "Build", flags )!.Invoke( markers,
-			[new System.Collections.Generic.List<ParkPathBuilding.QueueSquare>(), new System.Collections.Generic.List<(int X, int Y)>(), new System.Collections.Generic.List<(int X, int Y)>()] );
+			[new System.Collections.Generic.List<ParkPathBuilding.QueueSquare>(), new System.Collections.Generic.List<ParkPathBuilding.QueueSquare>(), new System.Collections.Generic.List<(int X, int Y)>()] );
 
 		Assert.AreEqual( "none", markers.Census() );
+	}
+
+	/// <summary>
+	/// <b>A followed member's patrol edges are all red under the refusal latch and all blue without it</b>, each cell
+	/// as given, a cell given twice laid twice: the original's verdict for them is <c>DAT_00816d50</c> alone
+	/// (<c>0x005356df</c>). In the original (<c>q532/orig/a-run.out</c>) the mechanic's 48 were texture 1 after a
+	/// refused path click on the Belly Bounce and texture 0 after one outside the park.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the latch not read (always blue, as before), or read the wrong way round.</remarks>
+	[TestMethod]
+	public void ThePatrolEdgesAreRedOnlyUnderTheRefusalLatch()
+	{
+		var cells = new System.Collections.Generic.List<(int X, int Y)> { (48, 18), (47, 18), (48, 18) };
+
+		var red = ParkBuildMarkers.PatrolSquares( cells, latched: true );
+		var blue = ParkBuildMarkers.PatrolSquares( cells, latched: false );
+
+		CollectionAssert.AreEqual( new[] { (48, 18, 1), (47, 18, 1), (48, 18, 1) }, red.Select( square => (square.X, square.Y, square.Marker) ).ToArray() );
+		CollectionAssert.AreEqual( new[] { (48, 18, 0), (47, 18, 0), (48, 18, 0) }, blue.Select( square => (square.X, square.Y, square.Marker) ).ToArray() );
+	}
+
+	/// <summary>
+	/// <b>The frame lays the queued edges by the latch</b>: with it set the mesh is laid from red squares, and the
+	/// latch changing with the same cells lays it again.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the frame laying the edges without the latch; the mesh not laid again when only it changes.</remarks>
+	[TestMethod]
+	public void TheFrameLaysTheQueuedEdgesByTheLatch()
+	{
+		var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+		var markers = (ParkBuildMarkers)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject( typeof( ParkBuildMarkers ) );
+		var update = typeof( ParkBuildMarkers ).GetMethod( "OnUpdate", flags )!;
+		var built = typeof( ParkBuildMarkers ).GetField( "_built", flags )!;
+
+		try
+		{
+			ParkBuildMode.Forget();
+			ParkBuildMode.RefusalLatched = true;
+			markers.QueuePatrolEdges( [(48, 18), (47, 18)] );
+			update.Invoke( markers, null );
+			StringAssert.Contains( (string)built.GetValue( markers )!, "|48,18,1;47,18,1|" );
+
+			ParkBuildMode.RefusalLatched = false;
+			markers.QueuePatrolEdges( [(48, 18), (47, 18)] );
+			update.Invoke( markers, null );
+			StringAssert.Contains( (string)built.GetValue( markers )!, "|48,18,0;47,18,0|" );
+		}
+		finally
+		{
+			ParkBuildMode.Forget();
+		}
+	}
+
+	/// <summary>
+	/// <b>A frame's pass sets the latch only while a tool is armed</b>: a refused pass sets it, an accepted one clears it,
+	/// and with nothing armed it stands (<c>q532/orig/a-run.out</c>: <c>d50</c> 1 after the refused path click, still 1
+	/// with the locator out, 0 after the path tool was armed again and put away).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the latch taken from a frame with no tool armed; kept over an armed tool's pass.</remarks>
+	[TestMethod]
+	public void OnlyAnArmedToolsPassMovesTheLatch()
+	{
+		Assert.IsTrue( ParkBuildMarkers.LatchAfterFrame( false, ParkBuildMode.Path, true, true ), "a refused pass" );
+		Assert.IsFalse( ParkBuildMarkers.LatchAfterFrame( true, ParkBuildMode.Path, true, false ), "an accepted pass" );
+		Assert.IsTrue( ParkBuildMarkers.LatchAfterFrame( true, ParkBuildMode.None, true, false ), "nothing armed: it stands" );
+		Assert.IsFalse( ParkBuildMarkers.LatchAfterFrame( false, ParkBuildMode.None, true, true ) );
+	}
+
+	/// <summary>
+	/// <b>Putting a tool away leaves the refusal latch as its last pass left it</b>: the setter clears only the placer's
+	/// <c>DAT_0081b604</c> (<c>FUN_0052f200( 0 )</c>), and arming another tool runs no pass until a frame does. Leaving the
+	/// park forgets it, as a park's start clears it (<c>FUN_0052f050</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the latch cleared by <c>Disarm</c> or <c>Arm</c>; not cleared by <c>Forget</c>.</remarks>
+	[TestMethod]
+	public void PuttingAToolAwayLeavesTheRefusalLatch()
+	{
+		try
+		{
+			ParkBuildMode.Arm( ParkBuildMode.Path );
+			ParkBuildMode.RefusalLatched = true;
+
+			ParkBuildMode.Disarm();
+			Assert.IsTrue( ParkBuildMode.RefusalLatched, "put away" );
+
+			ParkBuildMode.Arm( ParkBuildMode.Patrol, 26 );
+			Assert.IsTrue( ParkBuildMode.RefusalLatched, "another tool armed, no pass yet" );
+
+			ParkBuildMode.Forget();
+			Assert.IsFalse( ParkBuildMode.RefusalLatched, "the park left" );
+		}
+		finally
+		{
+			ParkBuildMode.Forget();
+		}
 	}
 
 	/// <summary>The ripple shading is counted as a gap only where the light is on: low quality's full light leaves no colour for it to change.</summary>

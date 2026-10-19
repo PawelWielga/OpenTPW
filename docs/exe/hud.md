@@ -2756,10 +2756,23 @@ along Y, holding the other coordinate at the start's, and passes over an off-map
 cells wide has no middle: its line runs from the right corner back to the left, and both corners are laid twice. Op
 `0x136` is `0x100` (lay a square) with mode `0x36`, the patrol tool's own (`FUN_005234d0` draws the tool's rectangle
 with the same four lines and latches its refusal). `FUN_00532fc0`'s `0x100` arm asks `FUN_00535670( 0x36 )`, which
-answers the refusal latch `DAT_00816d50` and nothing else, and reads the placer's failure `DAT_0081b604` before it;
-both are left by a tool's own pass (`FUN_005234d0` clears the latch first), so after a park load, or a pass that accepted, the square is
+answers the refusal latch `DAT_00816d50` and nothing else (`0x005356df`), and reads the placer's failure `DAT_0081b604`
+before it (`0x0053319a`); both are left by a tool's own pass, so after a park load, or a pass that accepted, the square is
 texture 0, blue, lifted over a built cell and walled as any tool's ("Placement feedback"). Every frame, since the marker
-draw empties its list. **The original** (`q426/orig/run.sh`, `q325/stock.TPWS`, `original/squares.py`; four of four
+draw empties its list. **The latch outlives the tool**
+(read 2026-10-19, Q532): the pass `FUN_005234d0` clears `d48`, `d50` and `d58` at its start (`0x005234ec`..`0x005234f8`)
+and its verdicts set them; the setter `FUN_0052f200( 0 )` clears only `DAT_0081b604` (`0x0052f38d`); the click
+`FUN_00524960` and the press `FUN_00524790` clear `d50` only under the replay (`[0x00785a2c]`); a park's start clears all
+(`FUN_0052f050`). So a tool put away, by its refused click, Escape or a commit, leaves its last pass's `d50`, and the edges
+are red until a tool's next pass. The path verdict (mode 1) sets `d50` itself on a thing's cell (types 4, 9, 10, unless a
+lower overwrite priority lets it bulldoze), track type `0x19`, a run dearer than the balance and a queue that is not a loose
+end; it sets only `DAT_00816d58` on a type `0x15` cell or a track corner (`0x00535b9f`, `0x00535d57`), which the NEXT
+square's verdict copies into `d50` (`0x00535885`) after its outside-the-park test, which answers first; land outside the
+park (flag `0x40`) sets neither. The patrol tool's anchored pass sets it by the rectangle's test (`0x00523dd3`). The queue
+arm (mode 3) sets `d50` on a thing's cell, track `0x19`, the money, the middle of its own queue and another ride's, and
+`d58` on a path laid into (`m_link`, which also sets `DAT_00816d60`), a NOMODIFY path, type `0x15` and a track corner. Named in Ghidra: `BuildTool_PreviewPass` (`FUN_005234d0`), `BuildTool_CellVerdict` (`FUN_00535670`),
+`BuildTool_SetMode` (`FUN_0052f200`), `g_BuildRefusalLatch` (`d50`), `g_BuildRefusalPending` (`d58`), `g_PlacerFailed`
+(`DAT_0081b604`). **The original** (`q426/orig/run.sh`, `q325/stock.TPWS`, `original/squares.py`; four of four
 predicted, `q426/PREDICTION.txt`): the mechanics' button, texture 0, 48 squares on the 48 cells of (39,21)-(56,28),
 none twice, at height 1.50 (no lift), in the order above (`a-1-mechanic.png`); the scientists' (the whole map) none;
 the entertainers' (47,18)-(48,25) 20 squares on 16 cells, (47,18), (47,25), (48,18) and (48,25) twice, in the same
@@ -2769,7 +2782,18 @@ game binary), the mechanics' button logged `Park locator: thing 26 patrols (39, 
 frame`, `locator` ended `patrol=48`, and `strip`'s drawn census held `| patrol 48` in that order, each marker 0, lift 0
 (`1-mechanic.png`, beside the original's in `q426/side-by-side.png`); the scientists' `patrol=0`; the entertainers'
 20 on 16 cells, (48,18), (47,18), (48,18) first (`3-entertainer.png`); Escape none. Main's build counted
-`LOCATOR_PATROL_EDGES`. In no game run: edges laid red where a tool's last pass left a refusal latched (here they are always blue: a deviation; it needs a refused path click, then Ctrl+S and the mechanics' button, read with `squares.py`), a square lifted over a built cell on an edge (none of the stock areas crosses
+`LOCATOR_PATROL_EDGES`. **Red after a refused pass** (Q532): in the original (`q532/orig/run.sh`, the stock park, three of
+three predicted, `q532/PREDICTION.txt`) (43,16), outside the park, clicked with the hand empty refused the path tool with
+`d50` 0, and the mechanics' button laid "texture 0: 48 squares on 48 cells"; (49,24) anchored and the click on (51,24),
+the Belly Bounce's cell, refused with `d50` 1 (`d48` 1 too while the red edges were drawn), and the 48 were texture 1
+(`a-2-edges.png`); (49,24) anchored again and Escape left `d50` 0 and the 48 texture 0. **OpenTPW**
+(`ParkBuildMode.RefusalLatched`, set by each frame's pass in `ParkBuildMarkers.LatchAfterFrame`; the path verdict's two
+latches, `ParkPathBuilding.Latches`; the edges by `ParkBuildMarkers.PatrolSquares`): the same clicks on the final build
+(`q532/run5`) gave the same three, `tool`'s `latch` 0, 1, 0 and `strip`'s `| patrol 48` markers all 0, all 1, all 0
+(`q532/side-by-side.png`). The queue tool's pass leaves the latch clear here, its arm's latches not told apart by this
+verdict (`QUEUE_PASS_REFUSAL_LATCH`), and a carried item draws no preview, so leaves the latch as it was
+(`CARRY_PREVIEW_MARKERS`). In no game run: a refused queue or patrol click before the edges, a track's refusal (no shipped
+track reaches the path tool here; tested), a square lifted over a built cell on an edge (none of the stock areas crosses
 one; the lift is the tools', tested), a fence drawn in play (the patrol tool, built: "The patrol switch and the patrol tool" below), Full Simulation (not
 asked: the locators are either mode's), the other three themes.
 

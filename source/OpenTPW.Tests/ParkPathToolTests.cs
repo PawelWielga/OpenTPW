@@ -165,6 +165,50 @@ public class ParkPathToolTests
 	}
 
 	/// <summary>
+	/// <b>The refusal latch a pass leaves</b> (<c>DAT_00816d50</c>, which a followed member's patrol edges read): set by a
+	/// thing's cell, not by land outside the park; a type <c>0x15</c> cell sets only <c>DAT_00816d58</c>, which the next
+	/// square's verdict copies into it (<c>0x00535885</c>), so last in the run it leaves the latch clear, and before a
+	/// square outside the park too, whose test answers first. In the original (<c>q532/orig/a-run.out</c>) the run from
+	/// (49,24) onto the Belly Bounce's (51,24) left <c>d50</c> 1 and (43,16) outside the park left it 0.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> any red square latching; the type 0x15 cell latching at once; the copy made before the
+	/// outside-the-park test.</remarks>
+	[TestMethod]
+	public void APathPassLeavesTheRefusalLatchOnlyWhereItsVerdictsSetIt()
+	{
+		var park = World();
+		var state = new ParkState( park );
+		ParkBuildMode.Arm( ParkBuildMode.Path );
+
+		bool Latched( int toX )
+		{
+			ParkPathBuilding.PathStrip( state, park, toX, 10, Price, out var latched );
+			return latched;
+		}
+
+		ParkBuildMode.AnchorAt( 10, 10 );
+		Assert.IsFalse( Latched( 13 ), "bare ground" );
+
+		state.SetRecord( 11, 10, ParkState.CellFor( park, 11, 10 ) with { Flags = ParkPathBuilding.OutsideThePark } );
+		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):0 (13,10):0", Describe( ParkPathBuilding.PathStrip( state, park, 13, 10, Price ) ) );
+		Assert.IsFalse( Latched( 13 ), "red outside the park, but not latched" );
+
+		state.SetRecord( 11, 10, ParkState.CellFor( park, 11, 10 ) with { Type = CellEdge.Footprint, Flags = 0 } );
+		Assert.IsTrue( Latched( 11 ), "a thing's cell, last" );
+		Assert.IsTrue( Latched( 13 ), "a thing's cell, then bare ground" );
+
+		state.SetRecord( 11, 10, ParkState.CellFor( park, 11, 10 ) with { Type = 0, Flags = 0 } );
+		state.SetRecord( 12, 10, ParkState.CellFor( park, 12, 10 ) with { Type = 0x15 } );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1", Describe( ParkPathBuilding.PathStrip( state, park, 12, 10, Price ) ) );
+		Assert.IsFalse( Latched( 12 ), "a type 0x15 cell last: only d58" );
+		Assert.IsTrue( Latched( 13 ), "the next square's verdict copies it" );
+
+		state.SetRecord( 13, 10, ParkState.CellFor( park, 13, 10 ) with { Flags = ParkPathBuilding.OutsideThePark } );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1", Describe( ParkPathBuilding.PathStrip( state, park, 13, 10, Price ) ) );
+		Assert.IsFalse( Latched( 13 ), "outside the park answers before the copy" );
+	}
+
+	/// <summary>
 	/// <b>A path as the last square is <c>m_end</c> before the track-corner test is asked</b>; in the
 	/// middle of a run the same cell is refused by it.
 	/// </summary>

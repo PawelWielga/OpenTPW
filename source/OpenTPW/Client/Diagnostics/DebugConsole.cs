@@ -1844,6 +1844,7 @@ public static class DebugConsole
 							? $", anchored at ({ParkBuildMode.Anchor.X},{ParkBuildMode.Anchor.Y})"
 							: ", not anchored") +
 						$", {ParkBuildMode.Pending.Count} pending, {ParkBuildMode.Clicks} clicks" +
+						$", latch {(ParkBuildMode.RefusalLatched ? 1 : 0)}" +
 						" - `tool path`, `tool queue <thingId>`, `tool off`" );
 					break;
 				}

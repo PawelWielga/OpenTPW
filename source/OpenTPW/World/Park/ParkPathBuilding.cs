@@ -105,8 +105,8 @@ public static class ParkPathBuilding
 
 		var price = CellCost( level );
 		var owed = 0;
-		var latched = false;
-		var (marker, why, _) = PathVerdict( state, park, cellX, cellY, true, price, ref owed, ref latched );
+		var latches = new Latches();
+		var (marker, why, _) = PathVerdict( state, park, cellX, cellY, true, price, ref owed, ref latches );
 
 		if ( marker == MarkerRed )
 			return $"path: nothing laid - ({cellX},{cellY}) {why}";
@@ -503,13 +503,42 @@ public static class ParkPathBuilding
 	public const int OutsideThePark = 0x40;
 
 	/// <summary>The squares the armed tool shows for the pointer's cell - the path tool's, the queue tool's or the patrol tool's.</summary>
-	public static List<QueueSquare> Strip( int toX, int toY ) => ParkBuildMode.Current switch
+	public static List<QueueSquare> Strip( int toX, int toY ) => Strip( toX, toY, out _ );
+
+	/// <summary>
+	/// The armed tool's squares for the pointer's cell, and the refusal latch its pass leaves
+	/// (<see cref="ParkBuildMode.RefusalLatched"/>): the path verdict's own, the patrol rectangle's test. The queue arm's
+	/// latches are not decoded, so its pass leaves the latch clear, as each pass starts it.
+	/// </summary>
+	public static List<QueueSquare> Strip( int toX, int toY, out bool latched )
 	{
-		ParkBuildMode.Path => PathStrip( toX, toY ),
-		ParkBuildMode.Queue => QueueStrip( toX, toY ),
-		ParkBuildMode.Patrol => ParkPatrolTool.Strip( toX, toY ),
-		_ => []
-	};
+		latched = false;
+
+		switch ( ParkBuildMode.Current )
+		{
+			case ParkBuildMode.Path:
+				if ( Level.Current is not { } level || level.ParkState is not { } state || level.Park is not { } park )
+					return [];
+
+				return PathStrip( state, park, toX, toY, CellCost( level ), out latched );
+
+			case ParkBuildMode.Queue:
+				var queue = QueueStrip( toX, toY );
+
+				// The queue arm sets DAT_00816d50 on some refusals and DAT_00816d58 on others (FUN_00535670, mode 3), which
+				// this verdict does not tell apart: docs/exe/hud.md, "The patrol edges".
+				if ( queue.Any( square => square.Marker == MarkerRed ) )
+					Unimplemented.Report( "QUEUE_PASS_REFUSAL_LATCH" );
+
+				return queue;
+
+			case ParkBuildMode.Patrol:
+				return ParkPatrolTool.Strip( toX, toY, out latched );
+
+			default:
+				return [];
+		}
+	}
 
 	/// <summary>
 	/// The squares the path tool shows - the original's hover pass in mode 1, <c>FUN_00536100( 0x101, … )</c>
@@ -533,6 +562,11 @@ public static class ParkPathBuilding
 	}
 
 	internal static List<QueueSquare> PathStrip( ParkState state, IParkInitialState park, int toX, int toY, int price )
+		=> PathStrip( state, park, toX, toY, price, out _ );
+
+	/// <inheritdoc cref="PathStrip(int, int)"/>
+	/// <param name="latched">Whether the pass leaves <c>DAT_00816d50</c> set (<see cref="ParkBuildMode.RefusalLatched"/>).</param>
+	internal static List<QueueSquare> PathStrip( ParkState state, IParkInitialState park, int toX, int toY, int price, out bool latched )
 	{
 		var strip = new List<QueueSquare>();
 		var (fromX, fromY) = ParkBuildMode.Anchored ? ParkBuildMode.Anchor : (toX, toY);
@@ -541,7 +575,7 @@ public static class ParkPathBuilding
 		var steps = Math.Max( Math.Abs( endX - fromX ), Math.Abs( endY - fromY ) );
 		var (acrossBy, downBy) = (Math.Sign( endX - fromX ), Math.Sign( endY - fromY ));
 		var owed = 0;
-		var latched = false;
+		var latches = new Latches();
 
 		for ( var step = 0; step <= steps; ++step )
 		{
@@ -550,24 +584,38 @@ public static class ParkPathBuilding
 			if ( !ParkState.OnMap( x, y ) )
 				continue;
 
-			var (marker, why, broke) = PathVerdict( state, park, x, y, step == steps, price, ref owed, ref latched );
+			var (marker, why, broke) = PathVerdict( state, park, x, y, step == steps, price, ref owed, ref latches );
 
 			strip.Add( new( x, y, marker, why, broke ) );
 		}
 
+		latched = latches.Refused;
+
 		return strip;
+	}
+
+	/// <summary>
+	/// The path verdict's two refusal latches: <c>DAT_00816d50</c> (<see cref="Refused"/>), which reddens every later
+	/// square and outlives the pass (<see cref="ParkBuildMode.RefusalLatched"/>), and <c>DAT_00816d58</c>
+	/// (<see cref="Pending"/>), which a type <c>0x15</c> cell or a track corner sets and the next square's verdict copies
+	/// into the first, unless that square is outside the park (<c>0x005357c7</c> answers before <c>0x00535885</c>).
+	/// </summary>
+	private struct Latches
+	{
+		public bool Refused;
+		public bool Pending;
 	}
 
 	/// <summary>
 	/// One square of the path tool's preview - <c>FUN_00535670</c>'s op-1 arm, in its own order
 	/// (<c>0x005357c7</c>..<c>0x00535d63</c>). NOMODIFY is never read for a path.
 	/// </summary>
-	/// <param name="latched">
-	/// The original's <c>d50</c>/<c>d58</c>: once one square refuses in a way that latches, every square
+	/// <param name="latches">
+	/// The original's <c>d50</c> and <c>d58</c>: once one square refuses in a way that latches, every square
 	/// after it is red. Outside-the-park land and an unknown cell type refuse without latching.
 	/// </param>
 	private static (int Marker, string? Why, bool Unaffordable) PathVerdict( ParkState state, IParkInitialState park,
-		int x, int y, bool last, int price, ref int owed, ref bool latched )
+		int x, int y, bool last, int price, ref int owed, ref Latches latches )
 	{
 		var cell = ParkState.CellFor( park, x, y );
 
@@ -579,19 +627,23 @@ public static class ParkPathBuilding
 		if ( cell.Type is CellEdge.Footprint or CellEdge.RideEnd or CellEdge.RideFarEnd )
 		{
 			Unimplemented.Report( "PATH_RUN_OVER_A_LOW_PRIORITY_THING" );
-			latched = true;
+			latches.Refused = true;
 
 			return (MarkerRed, "has something built on it", false);
 		}
 
-		if ( latched )
+		// A track's refusal waits in d58 for the next square's verdict, which copies it here (0x00535885).
+		if ( latches.Pending )
+			latches.Refused = true;
+
+		if ( latches.Refused )
 			return (MarkerRed, "comes after a refused square", false);
 
 		var track = TrackRecord( park, cell );
 
 		if ( track.TrackType == 0x19 )
 		{
-			latched = true;
+			latches.Refused = true;
 
 			return (MarkerRed, "is part of a track", false);
 		}
@@ -602,7 +654,7 @@ public static class ParkPathBuilding
 
 		if ( state.Balance < owed )
 		{
-			latched = true;
+			latches.Refused = true;
 
 			return (MarkerRed, $"would bring the run to {owed} against a balance of {state.Balance}", true);
 		}
@@ -612,14 +664,14 @@ public static class ParkPathBuilding
 
 		if ( cell.Type == 0x15 )
 		{
-			latched = true;
+			latches.Pending = true;
 
 			return (MarkerRed, "is part of a track", false);
 		}
 
 		if ( TrackCornerOrJunction( track ) )
 		{
-			latched = true;
+			latches.Pending = true;
 
 			return (MarkerRed, "is a track corner or junction", false);
 		}
@@ -636,7 +688,7 @@ public static class ParkPathBuilding
 				&& ParkState.CellFor( park, x + only.AcrossBy, y + only.DownBy ).Type == ParkRideChoice.QueueCellType )
 				return (MarkerLink, null, false);
 
-			latched = true;
+			latches.Refused = true;
 
 			return (MarkerRed, "is a queue that is not a loose end", false);
 		}

@@ -1245,7 +1245,8 @@ public static class ParkBuilding
 
 		// While carrying, the original draws the footprint in coloured squares every tick - m_front along
 		// its front row, m_enter on the cell before the entrance, m_exit before the exit - out of the same
-		// marker vocabulary the queue tool uses. Only the path and queue tools' strips are built.
+		// marker vocabulary the queue tool uses. Only the path and queue tools' strips are built, so a carried item's pass
+		// neither clears nor sets the refusal latch a followed member's patrol edges read (DAT_00816d50, ParkBuildMode.RefusalLatched).
 		Unimplemented.Report( "CARRY_PREVIEW_MARKERS" );
 	}
 

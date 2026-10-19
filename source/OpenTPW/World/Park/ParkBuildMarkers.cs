@@ -29,9 +29,10 @@ namespace OpenTPW;
 /// <c>docs/exe/ride-operation.md</c>, "The red square under a stranded person").
 /// </para>
 /// <para>
-/// <b>A fenced member the staff locator follows has the same blue square on every cell of their patrol area's
-/// outline</b>, queued each frame by <see cref="UI.ParkLocator"/> (<c>FUN_004b3640</c>, op <c>0x136</c>) and gone the
-/// frame it is not (<see cref="QueuePatrolEdges"/>).
+/// <b>A fenced member the staff locator follows has the same square on every cell of their patrol area's
+/// outline</b>, blue, or red after a refused tool's pass (<see cref="PatrolSquares"/>), queued each frame by
+/// <see cref="UI.ParkLocator"/> (<c>FUN_004b3640</c>, op <c>0x136</c>) and gone the frame it is not
+/// (<see cref="QueuePatrolEdges"/>).
 /// </para>
 /// <para>
 /// <b>Over a built cell the square lifts by the height of what is built there, rounded up to ten</b>
@@ -213,18 +214,20 @@ public sealed class ParkBuildMarkers : ModelEntity
 			(_redShown, _blinkFrames) = AdvanceBlink( _redShown, _blinkFrames, BlinkFramesPerSecond * Time.Delta );
 		}
 
-		var strip = ParkPicking.TryCell( out var x, out var y )
-			? ParkPathBuilding.Strip( x, y )
-			: [];
+		var picked = ParkPicking.TryCell( out var x, out var y );
+		var latched = false;
+		var strip = picked ? ParkPathBuilding.Strip( x, y, out latched ) : [];
+
+		ParkBuildMode.RefusalLatched = LatchAfterFrame( ParkBuildMode.RefusalLatched, ParkBuildMode.Current, picked, latched );
 
 		var stranded = Stranded();
 
 		// The original's marker draw empties its list every frame, so a patrol edge queued for no frame is gone.
-		var patrol = _patrolQueued;
+		var patrol = PatrolSquares( _patrolQueued, ParkBuildMode.RefusalLatched );
 		_patrolQueued = [];
 
 		var built = string.Join( ";", strip.Select( square => $"{square.X},{square.Y},{square.Marker}" ) )
-			+ "|" + string.Join( ";", patrol.Select( cell => $"{cell.X},{cell.Y}" ) )
+			+ "|" + string.Join( ";", patrol.Select( square => $"{square.X},{square.Y},{square.Marker}" ) )
 			+ "|" + string.Join( ";", stranded.Select( cell => $"{cell.X},{cell.Y}" ) );
 
 		if ( built != _built )
@@ -241,13 +244,29 @@ public sealed class ParkBuildMarkers : ModelEntity
 	}
 
 	/// <summary>
-	/// A followed member's patrol edges for this frame, one blue square a cell, a cell given twice laid twice
-	/// (<see cref="UI.ParkLocator.PatrolEdgeCells"/>). The original's verdict for them (<c>FUN_00535670( 0x36 )</c>) is
-	/// red only where a tool's pass left its refusal latch (<c>DAT_00816d50</c>) or the placer its (<c>DAT_0081b604</c>);
-	/// here no tool's verdict outlives its own strip, so they are always blue (a deviation, not run with a refused tool
-	/// beforehand; docs/exe/hud.md, "The patrol edges").
+	/// A followed member's patrol edges for this frame, one square a cell, a cell given twice laid twice
+	/// (<see cref="UI.ParkLocator.PatrolEdgeCells"/>), all red or all blue by the refusal latch
+	/// (<see cref="PatrolSquares"/>).
 	/// </summary>
 	public void QueuePatrolEdges( List<(int X, int Y)> cells ) => _patrolQueued = cells;
+
+	/// <summary>
+	/// The refusal latch after a frame: an armed tool's pass over the park leaves it as its verdicts set it
+	/// (<c>FUN_005234d0</c>, cleared at <c>0x005234f2</c> and set by them); with no tool armed none runs and it stands.
+	/// </summary>
+	internal static bool LatchAfterFrame( bool latch, int mode, bool picked, bool passLatched )
+		=> picked && mode != ParkBuildMode.None ? passLatched : latch;
+
+	/// <summary>
+	/// The patrol edges' squares: the original's verdict for them (<c>FUN_00535670( 0x36 )</c>, <c>0x005356df</c>) is the
+	/// refusal latch <c>DAT_00816d50</c> alone, so they are red after a tool's last pass refused in a way that latches
+	/// (<see cref="ParkBuildMode.RefusalLatched"/>) and blue otherwise. The square's own arm reads the placer's failure
+	/// <c>DAT_0081b604</c> first (<c>0x0053319a</c>), which putting a tool away clears; no placement here draws a preview
+	/// (<c>CARRY_PREVIEW_MARKERS</c>). docs/exe/hud.md, "The patrol edges".
+	/// </summary>
+	internal static List<ParkPathBuilding.QueueSquare> PatrolSquares( IEnumerable<(int X, int Y)> cells, bool latched )
+		=> cells.Select( cell => new ParkPathBuilding.QueueSquare( cell.X, cell.Y,
+			latched ? ParkPathBuilding.MarkerRed : ParkPathBuilding.MarkerBlue ) ).ToList();
 
 	/// <summary>The patrol edges queued for the next frame's mesh, for a test.</summary>
 	internal IReadOnlyList<(int X, int Y)> PatrolQueued => _patrolQueued;
@@ -332,7 +351,7 @@ public sealed class ParkBuildMarkers : ModelEntity
 		? ParkPathBuilding.MarkerRed
 		: ParkPathBuilding.MarkerBlue;
 
-	private void Build( List<ParkPathBuilding.QueueSquare> strip, List<(int X, int Y)> patrol, List<(int X, int Y)> stranded )
+	private void Build( List<ParkPathBuilding.QueueSquare> strip, List<ParkPathBuilding.QueueSquare> patrol, List<(int X, int Y)> stranded )
 	{
 		TranslucentModel?.Delete();
 		TranslucentModel = null;
@@ -352,8 +371,8 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 		bool OnTheField( int x, int y ) => x >= 0 && y >= 0 && x < field.CellsX && y < field.CellsY;
 
-		// A patrol edge is the same blue square as a tool's (FUN_00532fc0's 0x100 arm), lifted the same way.
-		var squares = strip.Concat( patrol.Select( cell => new ParkPathBuilding.QueueSquare( cell.X, cell.Y, ParkPathBuilding.MarkerBlue ) ) );
+		// A patrol edge is the same square as a tool's (FUN_00532fc0's 0x100 arm), lifted and walled the same way.
+		var squares = strip.Concat( patrol );
 
 		float LiftAt( int x, int y ) => ParkState.Current is { } state
 			? LiftOver( state, Level.Current?.Catalogue, field, x, y )

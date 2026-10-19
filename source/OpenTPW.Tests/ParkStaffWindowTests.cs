@@ -693,8 +693,9 @@ public class ParkStaffWindowTests
 		Fence( member, Staff.WholeMapBottomLeft, Staff.WholeMapTopRight );
 		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
 
-		var one = ParkPatrolTool.Strip( 2, 2 );
+		var one = ParkPatrolTool.Strip( 2, 2, out var unanchored );
 		Assert.AreEqual( (1, 2, 2, ParkPathBuilding.MarkerBlue), (one.Count, one[0].X, one[0].Y, one[0].Marker) );
+		Assert.IsFalse( unanchored, "unanchored, its pass sets no latch" );
 
 		var cells = new[] { (2, 2), (3, 2), (2, 3), (3, 3) };
 		var parent = state.Record( 5, 5 ) with { Flags = 0, TrackType = 0x19 };
@@ -711,9 +712,10 @@ public class ParkStaffWindowTests
 		CollectionAssert.AreEqual( Enumerable.Repeat( (3, 3, ParkPathBuilding.MarkerRed), 4 ).ToList(),
 			ParkPathBuilding.Strip( 3, 3 ).Select( square => (square.X, square.Y, square.Marker) ).ToList(), "the anchored cell, a line each" );
 		Assert.AreEqual( Input.CursorTypes.NoGo, Level.PatrolCursor( 2, 2 ), "the refusal's pointer" );
-		var red = ParkPathBuilding.Strip( 2, 2 );
+		var red = ParkPathBuilding.Strip( 2, 2, out var latched );
 		CollectionAssert.AreEqual( ParkLocator.PatrolEdgeCells( (2, 2), (3, 3) ), red.Select( square => (square.X, square.Y) ).ToList() );
 		Assert.IsTrue( red.All( square => square.Marker == ParkPathBuilding.MarkerRed ) );
+		Assert.IsTrue( latched, "the rectangle's test sets the latch its pass leaves (0x00523dd3)" );
 
 		StringAssert.Contains( ParkPatrolTool.Run( 2, 2 ), "takes in no cell of the park" );
 		Assert.AreEqual( (ParkBuildMode.None, true), (ParkBuildMode.Current, member.PatrolsWholeMap) );
@@ -735,7 +737,8 @@ public class ParkStaffWindowTests
 
 		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
 		ParkBuildMode.AnchorAt( 3, 3 );
-		Assert.IsTrue( ParkPatrolTool.Strip( 2, 2 ).All( square => square.Marker == ParkPathBuilding.MarkerBlue ) );
+		Assert.IsTrue( ParkPatrolTool.Strip( 2, 2, out var accepted ).All( square => square.Marker == ParkPathBuilding.MarkerBlue ) );
+		Assert.IsFalse( accepted, "an accepted pass leaves the latch clear" );
 		Assert.AreEqual( Input.CursorTypes.Normal, Level.PatrolCursor( 2, 2 ), "no cursor of its own" );
 		ParkPatrolTool.Run( 2, 2 );
 		Assert.AreEqual( (MapStep.CellId( 2, 2 ), MapStep.CellId( 3, 3 )), (member.PatrolBottomLeft, member.PatrolTopRight) );

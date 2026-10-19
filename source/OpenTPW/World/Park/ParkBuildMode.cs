@@ -48,6 +48,15 @@ public static class ParkBuildMode
 	public static bool Anchored => Anchor.X >= 0;
 
 	/// <summary>
+	/// The refusal latch as the last tool's pass left it - the original's <c>DAT_00816d50</c>. Each pass clears it first
+	/// (<c>FUN_005234d0</c>, <c>0x005234f2</c>) and its verdicts set it; putting the tool away leaves it
+	/// (<c>FUN_0052f200( 0 )</c> clears only the placer's <c>DAT_0081b604</c>), so a followed member's patrol edges are
+	/// red after a refused click until a tool's next pass (<see cref="ParkBuildMarkers.QueuePatrolEdges"/>; a park's
+	/// start clears it, <c>FUN_0052f050</c>). docs/exe/hud.md, "The patrol edges".
+	/// </summary>
+	public static bool RefusalLatched { get; set; }
+
+	/// <summary>
 	/// Arms a mode, and <b>clears the anchor</b>.
 	///
 	/// <para>
@@ -184,6 +193,7 @@ public static class ParkBuildMode
 		Serves = 0;
 		Anchor = (-1, -1);
 		Clicks = 0;
+		RefusalLatched = false;
 		_pending.Clear();
 	}
 }
