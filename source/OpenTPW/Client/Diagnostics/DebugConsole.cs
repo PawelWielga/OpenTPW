@@ -1229,6 +1229,30 @@ public static class DebugConsole
 					break;
 				}
 
+			// First person's fog: the band, whether it reaches this frame's draws, the colour and what the shaders get.
+			// `fog S E` holds another band, in the original's clip z as memhold.py holds [0x008bd490]/[0x008bd494] there;
+			// `fog file` puts the detail file's back.
+			case "fog":
+				{
+					if ( Level.Current is not { Kind: Level.Scene.Park } fogged )
+					{
+						Reply( "fog: only in a park" );
+						break;
+					}
+
+					if ( parts.Length > 2 )
+						fogged.FirstPersonFog = new FirstPersonFog( Argument( 1 ), Argument( 2 ) );
+					else if ( parts.Length > 1 && parts[1] == "file" )
+						fogged.FirstPersonFog = FirstPersonFog.Read( Level.DetailFile );
+
+					var colour = Level.FogColour;
+					var uniform = Level.LinearFog;
+					Reply( $"fog: first person {(ParkCamcorderCameraMode.Active ? "on" : "off")}, band {fogged.FirstPersonFog?.ToString() ?? "none"} "
+						+ $"({Level.DetailFile} FIRSTPERSONVIEWDISTANCE), colour ({colour.X * 255f:0},{colour.Y * 255f:0},{colour.Z * 255f:0}), "
+						+ $"shaders ({uniform.X:0.0},{uniform.Y:0.0},{uniform.Z:0})" );
+					break;
+				}
+
 			// Where the park camera is, in world units and in grid cells - the two coordinate systems
 			// a park is described in, and the pair most worth seeing side by side while placing things.
 			case "camera":

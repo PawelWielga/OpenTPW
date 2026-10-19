@@ -51,13 +51,32 @@ public class Level
 	/// <para>
 	/// The original draws a park's own view with no fog: the terrain and the objects ask for it only under
 	/// render-word <c>0x2000</c> (FUN_0056f670 calls FUN_00565ee0 behind it), which <c>Game_StateMachine</c> turns on
-	/// while <c>gui_CameraFlags &amp; 0x16</c> is (first person, a ride's view; <c>0x0054fae2</c>). That fog is linear by
-	/// depth, from <c>GraphicalOptions.FIRSTPERSONVIEWDISTANCE</c>'s start to its end (100 to 110 at medium,
-	/// FUN_0044d8f0), in the theme's <c>FogColour</c> (docs/exe/park-engine.md, "The park view's colours"). It is not
-	/// built: first person is drawn without it and counted, <c>FIRST_PERSON_FOG</c>.
+	/// while <c>gui_CameraFlags &amp; 0x16</c> is (first person, a ride's view; <c>0x0054fae2</c>). That fog is
+	/// <see cref="LinearFog"/>, not this.
 	/// </para>
 	/// </summary>
 	internal static float FogDensityFor( Scene? kind ) => kind == Scene.Park ? 0f : LobbyFogDensity;
+
+	/// <summary>
+	/// The park's first-person fog band, read from the detail file as the park loads (the original reads it once a
+	/// start, <c>DetailFile_Apply</c>), or null outside a park. The console's <c>fog</c> holds another band.
+	/// </summary>
+	public FirstPersonFog? FirstPersonFog { get; set; }
+
+	/// <summary>
+	/// The shaders' <c>g_vLinearFog</c> for this frame's world draws: first person's fog in a park while first person is
+	/// up, nought otherwise (<see cref="LinearFogFor"/>).
+	/// </summary>
+	internal static System.Numerics.Vector4 LinearFog =>
+		LinearFogFor( Current?.Kind, ParkCamcorderCameraMode.Active, Current?.FirstPersonFog );
+
+	/// <summary>
+	/// First person's fog where it reaches: in a park, in first person (the original's render-word <c>0x2000</c>, set
+	/// with <c>0x80</c> by <c>Game_StateMachine</c>'s <c>XOR 0x2080</c> at <c>0x0054fae2</c> while
+	/// <c>gui_CameraFlags &amp; 0x16</c> is; the ride's view, the other view it sets it for, is not built).
+	/// </summary>
+	internal static System.Numerics.Vector4 LinearFogFor( Scene? kind, bool firstPerson, FirstPersonFog? fog ) =>
+		kind == Scene.Park && firstPerson && fog != null ? fog.Uniform : default;
 
 	public SettingsFile Global { get; private init; }
 
@@ -258,8 +277,8 @@ public class Level
 		Log.Info( $"{ThemeName}: balance stack came to {Balance.Count} keys" );
 		load.Mark( "balance" );
 
-		// The theme's fog colour. A park's own view fades nothing to it (FogDensityFor), but the frame is
-		// cleared to it and the sky hazes into it. The lobby's Sky rewrites this every frame from its own horizon,
+		// The theme's fog colour. A park's own view fades nothing to it (FogDensityFor) and first person fades to it
+		// (LinearFog); the frame is cleared to it and the sky hazes into it. The lobby's Sky rewrites this every frame from its own horizon,
 		// because that horizon moves with whichever park the camera is on; a park's sky is untinted and
 		// deliberately leaves this alone, so setting it once here holds. Jungle and fantasy are a pale
 		// blue within a few points of the lobby's own constant, hallow is nearly black and space is
@@ -279,6 +298,9 @@ public class Level
 		Log.Info( ParkLight.Lit
 			? $"{ThemeName}: lit per vertex by ambient {ParkLight.Ambient} and a sun travelling {travels}"
 			: $"{ThemeName}: {DetailFile}'s LIGHTING 0, so every vertex takes the full colour, no sun, no ambient, no half light" );
+
+		FirstPersonFog = FirstPersonFog.Read( DetailFile );
+		Log.Info( $"{ThemeName}: {DetailFile}'s FIRSTPERSONVIEWDISTANCE fogs first person from {FirstPersonFog} in {FogColour}" );
 
 		SunLight = new Sun()
 		{

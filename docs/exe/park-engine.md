@@ -3562,7 +3562,7 @@ them; the startup default is 100 to 130 (`0x00582de5`), the lobby's own 50 to 30
 `FUN_00576a00` hands the three to the device's fog setter (vtable `0x00701330` slot 6, `FUN_00567ad0`), which sets
 the colour and, where the card passes the table-fog probe `FUN_005673d0`, linear table fog. Where it fails
 (render-word bits `0x4000` or `0x8000`) the game fogs each vertex itself as a batch is flushed (`FUN_00565590`,
-`FUN_00565ee0`): under `0x4000` `FUN_005747d0` scales the vertex colour by `1 - f` and puts the fog colour times `f`
+`FUN_00565ee0`): under `0x4000` `Fog_VertexSpecular` (`0x005747d0`) scales the vertex colour by `1 - f` and puts the fog colour times `f`
 in the specular, with `SPECULARENABLE` on and `FOGENABLE` off for the batch; under `0x8000` `FUN_00574960` writes
 `(1 - f) x 255` into the specular's alpha. **The terrain pass asks for any of it only under render-word bit `0x2000`**
 (`FUN_0056f670` calls `FUN_00565ee0` behind it). In a park `Game_StateMachine`'s `XOR 0x2080` (`0x0054fae2`) turns
@@ -3570,7 +3570,8 @@ it on and off as `gui_CameraFlags & 0x16` (a ride's view, first person) comes on
 `FUN_005d9680` (`OR AH,0x20`) for its own fog; `FUN_005d9690`, `0x005d8bf9`, `0x00576eff` and the FOG option's
 `AND AH,0x9f` in `FUN_0044d8f0` (`0x0044db16`, with `0x4000`) clear it. Of the word's 50 writes those two are the
 ones read setting it by a constant; the rest were not each followed. Live
-under Proton at medium the word reads `0x01444100`: `0x4000` set, `0x2000` clear, start 100, end 110. Held at
+under Proton at medium the word reads `0x01444100`: `0x4000` set, `0x2000` clear, start 100, end 110 (in first person
+`0x01446180`, `0x2080` on, Q485). Held at
 10000/20000, and at -2/-1 (every vertex past the end), the park view's frames did not change by one level in any
 box of ground, path or object; only the animated sea moved. Read and not measured: the frame is cleared to the fog
 colour only under either bit of render-word `0x4002000` (`FUN_00573740`, `FUN_00573cc0`; `AND EDI,0x4002000` at
@@ -3582,7 +3583,47 @@ strip (Q481, `q481/orig/a-C-*.png`).
 and `water.shader`'s mix adds nothing, and the lobby keeps its own haze (not the original's: its lobby fogs linearly, 50 to 250, where ours is `exp`; the lobby was not photographed after this change). At Q479's cameras every box reads as Q479's
 copy with both shaders' fog set to nought (A's grass (29.9, 139.2, 28.6), B's sea (1.0, 53.7, 55.9)), where main's
 read (33.2, 145.1, 45.5) and (8.6, 70.9, 76.2) (`q481/side-by-side.png`). First person, fogged in the original, is
-drawn without it and counted, `FIRST_PERSON_FOG` (Q485); the frame is still cleared to the fog colour.
+fogged as the original's (Q485, below); the frame is still cleared to the fog colour.
+
+### First person's fog
+
+Decoded and measured for Q485 (`q485/PREDICTION.txt`, `q485/orig/`, `q485/run5/`, `q485/side-by-side.png`): the stock
+park, the original's eye at (481.9, 5, 166.3) looking (0.279, 0, -0.960), the clock held, the start and end held by
+`memhold.py`.
+
+**The depth is the clip z, not the buffer's z.** `Fog_VertexSpecular` compares the float at a batch vertex's `+8`; measured, the
+fog sees it before `ClipToScreen_Fpu` turns `+8` into the 16-bit buffer's z (the order itself was not traced), so it is
+still the draw matrix's z row, which in first person reads 1.0001 × its w row less 0.0707: **d = 0.70718 (e − 0.1)**, e the eye depth along the view (the
+projection's sin 45 × 1000 / 999.9, near 0.1; "The pull"). Held at 20 to 40 and at 40 to 80, the fraction read along
+the ground straight ahead follows (d − start) / (end − start) of that d (`q485/orig/b-fogfit.txt`: eye depth 40 under
+20 to 40 reads 0.40, the formula 0.41; measured in e it would be whole); in the eye depth itself, medium's 100 to 110 is
+141.5 to 155.6. Where the band is narrower than a ground cell the frame departs from the per-point formula (eye depth
+50 at the third line: formula 0.76, read 0.66), as a value worked out at each vertex and blended across the triangle
+does. Its edge across the flat path is level: d is planar, not a distance.
+
+**The colour is the specular's.** At -2 to -1 every fogged pixel reads (74, 219, 255): the theme's `FogColour`
+`0x48d8f8` through the 16-bit frame (5, 6 and 5 bits: 72, 216, 248 shown as 74, 219, 255). Proton honours the specular.
+
+**What is fogged.** Everything the batches carry under `0x2000`: the ground (`FUN_0056f670` through `FUN_00565ee0`), the
+models (the booth, the trees, the topiary, the lamps fade at 20 to 40), the sea (`Line01`'s lake behind the fence reads
+the fog colour at the stock band and (10, 58, 61) with it held off), the people and particles (`SpriteBatch_AddQuad`,
+`0x00566123`..`0x00566145`; its callers include `SpriteBatch_DrawParticles` and the people's `FUN_00589f90`), and the
+people's shadows (`SpriteShadow_Draw` through `FUN_00566220`, `0x005663fb`..`0x0056641a` and `0x005665f7`..`0x0056661b`;
+code read: no person stood near enough in the original's frames to show one). The sky is not: its ramp is the same
+at every band. The viewfinder's quads are fogged too (they fade at -2 to -1 and at 0 to 0.3, not at 20 to 40), so at
+every shipped band (the nearest starts at 50) they never are. Whether the weather's drops go through the fogged batch
+is not read.
+
+**OpenTPW draws it** (Q485): `FirstPersonFog` reads the band as the park loads, `Level.LinearFog` hands it to the world's
+draws while first person is up (the ride's view, the other view `0x2000` is set for, is not built), and `test.shader`,
+`people.shader` and `guests.shader` work f out at each vertex from the eye depth and mix the theme's `FogColour` in by it.
+The sky's shader takes none. Ours draws 32 bits, so the fog colour reads (72, 216, 248) where the original's frame shows
+(74, 219, 255). The viewfinder is interface here and takes none (at no shipped band does that show). Weather drops are
+drawn unfogged and counted, `FIRST_PERSON_FOG_WEATHER`. Along three lines clear of people, held at 20 to 40 and 40 to 80,
+ours reads within 0.03 of the original's at every depth, its departures from the formula included
+(`q485/run5/linefit.txt`); at the stock band the pixels the fog changes are the far hills and the far path and fence in
+both (4,062 here, 3,593 there). A shadow under the fog is the fog colour times the shadow's own fogged colour, (20, 183,
+241) when whole.
 
 **Land outside the park is drawn at half light.** `FUN_00450d10` runs on a fresh park's load (`FUN_005323f0`,
 `0x00532629`), on a saved park's (`FUN_00415140`, `0x0041517f`) and after Buy Land (`FUN_005327e0`, `0x005328c3`). It

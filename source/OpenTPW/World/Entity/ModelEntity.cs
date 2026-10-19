@@ -61,8 +61,7 @@ public partial class ModelEntity : Entity
 		if ( Model == null || Opacity <= 0f || DrawnByOwner )
 			return;
 
-		Draw( Model, Camera.ViewMatrix, Camera.ProjMatrix, Level.SunLight?.Position ?? Vector3.Zero,
-			Level.SunLight?.Color ?? Vector3.One, Level.FogDensity, worldNormals: true, parkLight: Level.ParkLight );
+		Draw( Model, SceneUniforms() );
 	}
 
 	protected override void OnRenderTranslucent()
@@ -70,9 +69,16 @@ public partial class ModelEntity : Entity
 		if ( TranslucentModel == null || Opacity <= 0f || DrawnByOwner )
 			return;
 
-		Draw( TranslucentModel, Camera.ViewMatrix, Camera.ProjMatrix, Level.SunLight?.Position ?? Vector3.Zero,
-			Level.SunLight?.Color ?? Vector3.One, Level.FogDensity, worldNormals: true, parkLight: Level.ParkLight );
+		Draw( TranslucentModel, SceneUniforms() );
 	}
+
+	/// <summary>
+	/// What a draw of this model in the world hands its shader: the scene's camera, sun, haze, park light and first
+	/// person's fog (<see cref="Level.LinearFog"/>).
+	/// </summary>
+	internal ObjectUniformBuffer SceneUniforms() => Uniforms( Camera.ViewMatrix, Camera.ProjMatrix,
+		Level.SunLight?.Position ?? Vector3.Zero, Level.SunLight?.Color ?? Vector3.One, Level.FogDensity, worldNormals: true,
+		parkLight: Level.ParkLight, linearFog: Level.LinearFog );
 
 	/// <summary>
 	/// Draws one half of this model - its solid half, or with <paramref name="translucent"/> its
@@ -103,14 +109,20 @@ public partial class ModelEntity : Entity
 			return;
 
 		if ( (translucent ? TranslucentModel : Model) is { } half )
-			Draw( half, view, projection, lightPosition, lightColor, 0f, ambient, worldNormals, transform );
+			Draw( half, Uniforms( view, projection, lightPosition, lightColor, 0f, ambient, worldNormals, transform ) );
 	}
 
-	private void Draw( Model model, System.Numerics.Matrix4x4 view, System.Numerics.Matrix4x4 projection,
-		Vector3 lightPosition, Vector3 lightColor, float fogDensity, float ambient = 0f, bool worldNormals = false,
-		System.Numerics.Matrix4x4? transform = null, ParkLight? parkLight = null )
+	private static void Draw( Model model, ObjectUniformBuffer uniformBuffer )
 	{
-		var uniformBuffer = new ObjectUniformBuffer
+		model.Material.Set( "g_oUbo", uniformBuffer );
+		model.Draw();
+	}
+
+	private ObjectUniformBuffer Uniforms( System.Numerics.Matrix4x4 view, System.Numerics.Matrix4x4 projection,
+		Vector3 lightPosition, Vector3 lightColor, float fogDensity, float ambient = 0f, bool worldNormals = false,
+		System.Numerics.Matrix4x4? transform = null, ParkLight? parkLight = null, System.Numerics.Vector4 linearFog = default )
+	{
+		return new ObjectUniformBuffer
 		{
 			// Where the caller says, or where this entity stands. See DrawOverlay's transform.
 			g_mModel = transform ?? ModelMatrix,
@@ -132,12 +144,10 @@ public partial class ModelEntity : Entity
 			g_flParkLight = parkLight != null ? 1f : 0f,
 			g_vLightTravels = parkLight?.Travels ?? Vector3.Zero,
 			g_flFullLight = ParkLight.FullLight( parkLight ),
+			g_vLinearFog = linearFog,
 
 			_padding0 = 0,
 			_padding1 = 0,
 		};
-
-		model.Material.Set( "g_oUbo", uniformBuffer );
-		model.Draw();
 	}
 }

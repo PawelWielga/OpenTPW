@@ -1,12 +1,12 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace OpenTPW.Tests;
 
 /// <summary>
 /// A park's own view is drawn with no fog, as the original's: its terrain and objects are fogged only in first person
-/// and a ride's view (docs/exe/park-engine.md, "The park view's colours"). The lobby keeps its haze.
+/// and a ride's view (docs/exe/park-engine.md, "The park view's colours"; first person's is FirstPersonFogTests). The
+/// lobby keeps its haze.
 /// </summary>
 [TestClass]
 public class ParkViewFogTests
@@ -55,25 +55,10 @@ public class ParkViewFogTests
 		Assert.AreEqual( 0.025f, Level.FogDensity );
 	}
 
-	/// <summary>First person is fogged in the original and not here, so going into it is counted.</summary>
-	/// <remarks><b>Mutation:</b> the report taken out of <see cref="ParkCamcorderCameraMode.Enter"/> fails here.</remarks>
-	[TestMethod]
-	public void GoingIntoFirstPersonCountsItsFog()
-	{
-		Level.Current = Scene( Level.Scene.Park );
-		var before = Times( "FIRST_PERSON_FOG" );
-
-		ParkCamcorderCameraMode.Enter();
-
-		Assert.AreEqual( before + 1, Times( "FIRST_PERSON_FOG" ) );
-	}
-
 	private static Level Scene( Level.Scene kind )
 	{
 		var level = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
 		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( level, kind );
 		return level;
 	}
-
-	private static int Times( string what ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == what ).Times;
 }

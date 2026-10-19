@@ -186,6 +186,11 @@ public abstract class WeatherSprites : ModelEntity
 
 		// Vertices are built in world space, so the model transform is identity rather than
 		// this entity's - it has no position of its own to speak of.
+		// First person fogs the park's world (Level.LinearFog); whether the original's drops go through its fogged sprite
+		// batch is not read, so drops drawn there are counted and drawn unfogged.
+		if ( _uploaded > 0 && Level.LinearFog.Z > 0.5f )
+			Unimplemented.Report( "FIRST_PERSON_FOG_WEATHER" );
+
 		Model.Material.Set( "g_oUbo", new ObjectUniformBuffer
 		{
 			g_mModel = Matrix4x4.Identity,

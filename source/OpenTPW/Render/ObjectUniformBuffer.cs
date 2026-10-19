@@ -88,4 +88,10 @@ struct ObjectUniformBuffer
 	/// park draw is white, its texture's own colour. Read with <see cref="g_flParkLight"/>.
 	/// </summary>
 	public float g_flFullLight; // 4
+
+	/// <summary>
+	/// First person's fog (<see cref="FirstPersonFog.Uniform"/>): its start and end in eye depth and 1 to switch it on.
+	/// Nought everywhere else, where no draw is fogged by it.
+	/// </summary>
+	public Vector4 g_vLinearFog; // 16
 }

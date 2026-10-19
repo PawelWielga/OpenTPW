@@ -188,6 +188,7 @@ Read this before aiming a click or comparing two pictures. Each fact names the i
 - Every view hands the projection an angle (the park 90, the lobby `ISLANDFOV`), and the draw matrix's fixed screen scale makes the picture `2 atan( tan(a/2) / 2 )` high: the park 53.13 x 67.38, the camcorder the same, the lobby at 100 61.58 x 76.93 (`park-engine.md`, "The lens"). `original/lens.py PID [SECS]` reads it live; this game logs it once a mode (`Camera: ParkOrbitCameraMode lens 53.13 high at 4:3, ...`). Q260, Q441
 - This game draws the same lens (Q441): its 1280 x 720 pixel is (640, 360) + (the original's - (512, 384)) x 720 / 768 at the same camera, six named cells on the first probe at three rotations (`q441/confirm.py`), and its middle 960 x 720 scaled to 1024 x 768 lays on the original's whole frame (`q441/sidebyside.py`, `q441/side-by-side.png`). The scripts of Q260 to Q440 (`q260/confirm.py`, `q435/confirm.py`, `q436/frames.py`, `q440/confirm.py`) were written for the old 90 degree lens and use x 360 / 768 and the middle 480 x 360: change both before running one again. Q260, Q435, Q441
 - A change drawn at one camera is shown by the box difference against an earlier run's frame at the same numbers. Q436
+- One first-person stand in both games (Q485): the original's way in (Q496's, below) stands its eye at (481.897, 5, 166.285) looking (0.2788, 0, -0.9604), and `camera.py PID` there prints the first-person draw matrix and eye (`q485/orig/b-camera.txt`); here `pause`, the pointer at the window's middle (Steer turns the view off it), then `camcorder 481.897 166.285 -2.85905` (the yaw is the original's rotation negated, as `bothcam`'s). A ground point put through that draw matrix lands on ours by the same 720 / 768 map: `q485/linefit.py`. Q485
 - The original's records do not depend on its camera, so a run whose camera went elsewhere still gives them. Q436
 - The original was once read as standing "further back" (Q257r, repeated by Q264) and once "closer" (Q357) at the same numbers. "Further back" was the Load Park list's view, 65 units on (Q359); "closer" was the lens: the eye is the same (Q435) and the picture showed the middle half each way against OpenTPW's old 90 degree lens, so everything stood twice as large in it (until Q441). Q260
 - `camera.py --aim`'s pixel was cellfind.py's first probe at both of Q260's cells, with the camera still: the cells out at Q439 came from something other than the lens. Q260
@@ -1134,6 +1135,13 @@ GH=766` there, or the pointer is off):
   `HF=engine groundcell.py %PID% 6 X0,Y0:X1,Y1=-0x400` (not restored: stop the original after). This game's park
   draws no fog since Q481; the lobby's is taken off in a copy of the bin folder with `fogFactor = 0.0;` in its
   `content/shaders/test.shader` and `water.shader` (the shaders are compiled as it starts), `~/.cache/dn-tmp/q479/nofog`.
+
+- **First person's fog held, in both games** (Q485, `q485/orig/run-b.sh`, `q485/confirm.py`): in the original, first person
+  at the stand above and the clock held, `memhold.py %PID% 6 0x008bd490:f=S 0x008bd494:f=E` (the band in clip z, about
+  0.707 of the eye depth); here `fog S E`, and `fog file` puts the detail file's band back (`fog` alone is the census).
+  Take the ground's frames with `sprites 0` and `shadows 0`, or a guest stands on the sampled line (Q485's R3, twice);
+  `q485/linefit.py RUN K...` then reads the fraction along ground lines in both games beside the formula. -2/-1 turns
+  every fogged pixel the fog colour, the one test of what a band reaches.
 
 - **Where a ground pattern stands in both games** (Q488): the fence along camera A's top cannot tell a camera a cell off
   from none (its posts stand about one a cell; `q488/fenceshift.py` 0.82 at no shift, 0.78 at one post). Ask each game

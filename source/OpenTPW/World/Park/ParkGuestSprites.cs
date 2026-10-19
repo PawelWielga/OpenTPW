@@ -73,12 +73,30 @@ public sealed class ParkGuestSprites : ModelEntity
 	private const int Padding = 4;
 
 	[StructLayout( LayoutKind.Sequential )]
-	private struct ObjectUniformBuffer
+	internal struct ObjectUniformBuffer
 	{
 		public Matrix4x4 g_mModel;
 		public Matrix4x4 g_mView;
 		public Matrix4x4 g_mProj;
+
+		/// <summary>The theme's fog colour, and first person's band (<see cref="Level.LinearFog"/>).</summary>
+		public System.Numerics.Vector4 g_vFogColour;
+		public System.Numerics.Vector4 g_vLinearFog;
 	}
+
+	/// <summary>
+	/// What the people's and the shadows' draws hand people.shader. World space already, so the model matrix is identity -
+	/// the quads were turned to face the camera as they were written. Both are fogged in first person, as the original's
+	/// sprite batch fogs them (SpriteBatch_AddQuad, SpriteShadow_Draw's FUN_00566220, under render-word 0x2000).
+	/// </summary>
+	internal static ObjectUniformBuffer DrawUniforms() => new()
+	{
+		g_mModel = Matrix4x4.Identity,
+		g_mView = Camera.ViewMatrix,
+		g_mProj = Camera.ProjMatrix,
+		g_vFogColour = new( Level.FogColour.X, Level.FogColour.Y, Level.FogColour.Z, 0f ),
+		g_vLinearFog = Level.LinearFog
+	};
 
 	/// <summary>Where a picture sits in the atlas, and the size and origin it was authored with.</summary>
 	internal readonly record struct Region(
@@ -735,14 +753,7 @@ public sealed class ParkGuestSprites : ModelEntity
 		var (used, reach) = WriteTheFrame();
 		var (shadows, shadowReach) = FoldShadows( _shadowsDrawn.Count );
 
-		// World space already, so the model matrix is identity - the quads were turned to face the
-		// camera as they were written.
-		var buffer = new ObjectUniformBuffer
-		{
-			g_mModel = Matrix4x4.Identity,
-			g_mView = Camera.ViewMatrix,
-			g_mProj = Camera.ProjMatrix
-		};
+		var buffer = DrawUniforms();
 
 		if ( reach > 0 )
 		{

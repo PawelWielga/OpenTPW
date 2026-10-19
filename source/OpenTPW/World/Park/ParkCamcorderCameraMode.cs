@@ -200,9 +200,9 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 		Camera.SetCameraMode<ParkCamcorderCameraMode>();
 		ParkGuestSprites.Current?.UseFirstPersonPictures( true );
 
-		// The original fogs first person, linearly by depth, where the park's own view has none; this view is
-		// drawn without it (Level.FogDensityFor).
-		Unimplemented.Report( "FIRST_PERSON_FOG" );
+		// The park's world is fogged while this view is up, as the original's under render-word 0x2000 (Level.LinearFog).
+		if ( Level.Current?.FirstPersonFog is { } fog )
+			Log.Info( $"First person: fogged from {fog}" );
 	}
 
 	/// <summary>

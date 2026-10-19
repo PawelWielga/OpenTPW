@@ -20,12 +20,16 @@ vertex {
       mat4 g_mModel;
       mat4 g_mView;
       mat4 g_mProj;
+      vec4 g_vFogColour;
+      vec4 g_vLinearFog;
   } g_oUbo;
 
   layout( location = 0 ) out struct VS_OUT {
       vec2 vTexCoords;
       vec4 vColour;
   } vs_out;
+
+  layout( location = 2 ) out float vFog;
 
   void main() {
       vs_out.vTexCoords = texCoords;
@@ -35,7 +39,14 @@ vertex {
           float( matFlags & 0xFFu ),
           float( ( matFlags >> 24 ) & 0xFFu ) ) / 255.0;
 
-      gl_Position = g_oUbo.g_mProj * g_oUbo.g_mView * g_oUbo.g_mModel * vec4( position, 1.0 );
+      vec4 view = g_oUbo.g_mView * g_oUbo.g_mModel * vec4( position, 1.0 );
+      gl_Position = g_oUbo.g_mProj * view;
+
+      // First person's fog, worked out at each corner as the original's sprite batch does under render-word 0x2000
+      // (SpriteBatch_AddQuad, Fog_VertexSpecular): see test.shader. Nought off it.
+      vFog = 0.0;
+      if ( g_oUbo.g_vLinearFog.z > 0.5 )
+          vFog = clamp( ( -view.z - g_oUbo.g_vLinearFog.x ) / ( g_oUbo.g_vLinearFog.y - g_oUbo.g_vLinearFog.x ), 0.0, 1.0 );
   }
 }
 
@@ -45,12 +56,16 @@ fragment {
       vec4 vColour;
   } vs_out;
 
+  layout( location = 2 ) in float vFog;
+
   layout( location = 0 ) out vec4 fragColor;
 
   layout( set = 0, binding = 0 ) uniform ObjectUniformBuffer {
       mat4 g_mModel;
       mat4 g_mView;
       mat4 g_mProj;
+      vec4 g_vFogColour;
+      vec4 g_vLinearFog;
   } g_oUbo;
 
   layout( set = 1, binding = 0 ) uniform texture2D Color;
@@ -65,5 +80,8 @@ fragment {
       // and, where two particles overlap, show as a faint square. Dropping it is both cheaper and what the picture means.
       if ( fragColor.a < 0.004 )
           discard;
+
+      // First person's fog: the colour towards the theme's fog colour, the alpha the picture's.
+      fragColor.rgb = mix( fragColor.rgb, g_oUbo.g_vFogColour.rgb, vFog );
   }
 }

@@ -24,6 +24,7 @@ vertex {
         float g_flParkLight;
         vec3 g_vLightTravels;
         float g_flFullLight;
+        vec4 g_vLinearFog;
     } g_oUbo;
 
     layout(location = 0) out VS_OUT {
@@ -37,6 +38,7 @@ vertex {
     layout(location = 5) out flat int outTexIndex;
     layout(location = 6) out flat uint outMatFlags;
     layout(location = 7) out vec3 vParkLight;
+    layout(location = 8) out float vFog;
 
     // Set by ParkGround on the corners of a ground cell outside the park (ParkGround.HalfLight).
     const uint FLAG_HALF_LIGHT = 0x40000;
@@ -64,6 +66,13 @@ vertex {
 
         outTexIndex = texIndex;
         outMatFlags = matFlags;
+
+        // First person's fog (FirstPersonFog, Level.LinearFog): linear in the eye depth from the band's start to its
+        // end, worked out here at the vertex and blended across the triangle, as the original's Fog_VertexSpecular writes it
+        // into each vertex's colours (docs/exe/park-engine.md, "First person's fog"). Nought off it.
+        vFog = 0.0;
+        if (g_oUbo.g_vLinearFog.z > 0.5)
+            vFog = clamp((-vs_out.vViewPosition.z - g_oUbo.g_vLinearFog.x) / (g_oUbo.g_vLinearFog.y - g_oUbo.g_vLinearFog.x), 0.0, 1.0);
 
         // A park is lit per vertex, as the original lights it (FUN_005741b0, docs/exe/park-engine.md,
         // "The lighting model"): the ambient colour plus the sun's colour times -(d.n) where that is not
@@ -110,6 +119,7 @@ fragment {
     layout(location = 5) in flat int texIndex;
     layout(location = 6) in flat uint outMatFlags;
     layout(location = 7) in vec3 vParkLight;
+    layout(location = 8) in float vFog;
 
     layout(location = 0) out vec4 fragColor;
 
@@ -132,6 +142,7 @@ fragment {
         float g_flParkLight;
         vec3 g_vLightTravels;
         float g_flFullLight;
+        vec4 g_vLinearFog;
     } g_oUbo;
 
     // Material.TextureSlots: 31 is the most materials any shipped mesh names (Q203).
@@ -284,5 +295,9 @@ fragment {
 
         // Mix with fog
         fragColor.xyz = mix(fragColor.xyz, g_oUbo.g_vFogColour, fogFactor);
+
+        // First person's: the colour times 1 - f and the fog colour times f added, the original's diffuse and
+        // specular; the alpha is the texture's still.
+        fragColor.xyz = mix(fragColor.xyz, g_oUbo.g_vFogColour, vFog);
     }
 }

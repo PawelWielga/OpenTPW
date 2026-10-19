@@ -174,12 +174,30 @@ internal sealed class WorldParticles : Entity
 	}
 
 	[System.Runtime.InteropServices.StructLayout( System.Runtime.InteropServices.LayoutKind.Sequential )]
-	private struct ObjectUniformBuffer
+	internal struct ObjectUniformBuffer
 	{
 		public Matrix4x4 g_mModel;
 		public Matrix4x4 g_mView;
 		public Matrix4x4 g_mProj;
+
+		/// <summary>The theme's fog colour, and first person's band (<see cref="Level.LinearFog"/>).</summary>
+		public System.Numerics.Vector4 g_vFogColour;
+		public System.Numerics.Vector4 g_vLinearFog;
 	}
+
+	/// <summary>
+	/// What every pool's draw hands guests.shader: identity, as the quads are built in the world, and first person's fog,
+	/// as the original's particles are fogged through its sprite batch (SpriteBatch_DrawParticles, SpriteBatch_AddQuad
+	/// under render-word 0x2000).
+	/// </summary>
+	internal static ObjectUniformBuffer DrawUniforms() => new()
+	{
+		g_mModel = Matrix4x4.Identity,
+		g_mView = Camera.ViewMatrix,
+		g_mProj = Camera.ProjMatrix,
+		g_vFogColour = new( Level.FogColour.X, Level.FogColour.Y, Level.FogColour.Z, 0f ),
+		g_vLinearFog = Level.LinearFog
+	};
 
 	/// <summary>
 	/// A pool of quads for one blend, built in the world every frame and drawn in one go. Quads not wanted this
@@ -268,12 +286,7 @@ internal sealed class WorldParticles : Entity
 			if ( _used == 0 )
 				return;
 
-			_model.Material.Set( "g_oUbo", new ObjectUniformBuffer
-			{
-				g_mModel = Matrix4x4.Identity,
-				g_mView = Camera.ViewMatrix,
-				g_mProj = Camera.ProjMatrix
-			} );
+			_model.Material.Set( "g_oUbo", DrawUniforms() );
 
 			_model.Draw();
 		}

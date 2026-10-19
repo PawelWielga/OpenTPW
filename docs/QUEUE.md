@@ -53,13 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q485. First person's fog.** From Q481 (`park-engine.md`, "The park view's colours"): the original fogs first
-  person and a ride's view (render-word `0x2000`, `Game_StateMachine`'s `XOR 0x2080` at `0x0054fae2`), linearly by depth
-  from `GraphicalOptions.FIRSTPERSONVIEWDISTANCE`'s start to its end (100 to 110 at medium, `FUN_0044d8f0`) in the
-  theme's `FogColour`, which under Proton is the game's own vertex fog (`0x4000`: `FUN_005747d0`, the colour times
-  `1 - f` and the fog colour times `f` in the specular); ours draws first person with none, counted `FIRST_PERSON_FOG`
-  (`ParkCamcorderCameraMode.Enter`). Measure the original's first person first (the frame at `f` 0, between and 1,
-  and whether Proton adds the specular), then build it. Confirm by a frame pair in both games at one stand.
 - [ ] **Q499. A right press let go inside one frame is lost.** From Q476 (`hud.md`, "A click and a double click"): the
   left button's steps now come from the frame's events (`WindowStack.LeftSteps`), but the right is still read from its
   state as the frame ends: `WindowStack`'s right press and `RightClick` (`rightDown && !_rightWasDown`) and the park's
@@ -1981,8 +1974,8 @@ filed the items that cite it.
   clear. Ours is `Level.LobbyFogDensity` 0.025 through the shaders' `exp( depth * 0.01 )`, which has no start or end
   (`test.shader`, `water.shader`), and the lobby has not been photographed against the original's since parks stopped using
   the global fog. Decode which lobby states fog and which do not, photograph the lobby in both games at the same
-  camera, then give the lobby the original's linear start and end (the park's `FIRST_PERSON_FOG` item builds the same
-  linear fog; share its shader path).
+  camera, then give the lobby the original's linear start and end (first person's fog, Q485, is the same linear fog,
+  `FirstPersonFog` and the shaders' `g_vLinearFog`, worked out per vertex in the original's clip z: share that path).
 - [ ] **Q503. The build markers load from `textures` at every texture quality.** The original's `FUN_0053d790` calls
   `FUN_0054dcc0` (0x0053d7b4) and takes `STexture` (`0x00763ee4`) for the three dynamic meshes where it answers 1
   (texture quality 0 or 1), as `ParkSea` and `ParkFlags` already do through `ParkSea.SmallTextures`. `ParkBuildMarkers.Load`
@@ -2128,6 +2121,12 @@ filed the items that cite it.
   picture's own blend (no multiply), counted here `SPRITE_SHADOW_OWN_PICTURE` and drawing none. Build it (a second
   shadow mesh on the people's atlas, alpha-blended, no depth write). Confirm at high quality in both games (the
   original by its Options screen) by a frame pair at one camera.
+- [ ] **Q522. The weather's drops in first person's fog.** From Q485 (`park-engine.md`, "First person's fog"): first person
+  fogs every batch under render-word `0x2000`, but whether the rain's and snow's drops go through that batch (the callers
+  of `SpriteBatch_AddQuad` include `FUN_0057be90`, `FUN_0057ed50`, `FUN_005860d0`, `FUN_00577ae0` and `FUN_0058a010`, none
+  read) is not decoded; ours draws them unfogged and counts `FIRST_PERSON_FOG_WEATHER` (`WeatherSprites.OnRender`).
+  Decode the weather's draw, then fog `weather.shader` the same way or take the count out. Confirm by rain in first
+  person in both games with the band held at 20 to 40 (`memhold.py` there, the console's `fog 20 40` here).
 
 ## B. Docs and comments
 

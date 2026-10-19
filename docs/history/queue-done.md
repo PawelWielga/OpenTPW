@@ -8051,6 +8051,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   whether the text holds a line break (`FUN_0065c428( 1, ... )`).
   From Q478: the object row 550 ("Belly Bounce: Left-click to view/edit this item's details. Hold CTRL and click to buy
   another") is set on two lines in the original (`q478/orig/b-3-ride.png`) and runs past ours on one (`q478/run4/3-ride.png`).
+- [x] **Q485. First person's fog.** From Q481 (`park-engine.md`, "The park view's colours"): the original fogs first
+  person and a ride's view (render-word `0x2000`, `Game_StateMachine`'s `XOR 0x2080` at `0x0054fae2`), linearly by depth
+  from `GraphicalOptions.FIRSTPERSONVIEWDISTANCE`'s start to its end (100 to 110 at medium, `FUN_0044d8f0`) in the
+  theme's `FogColour`, which under Proton is the game's own vertex fog (`0x4000`: `FUN_005747d0`, the colour times
+  `1 - f` and the fog colour times `f` in the specular); ours draws first person with none, counted `FIRST_PERSON_FOG`
+  (`ParkCamcorderCameraMode.Enter`). Measure the original's first person first (the frame at `f` 0, between and 1,
+  and whether Proton adds the specular), then build it. Confirm by a frame pair in both games at one stand.
+  Done 2026-10-18 (`q485/`, `park-engine.md`, "First person's fog"): the fog's depth is the clip z, 0.70718 (e - 0.1), not
+  the buffer's z (held at 20 to 40, eye depth 40 reads 0.40 in the original, the formula 0.41); built per vertex in
+  `test.shader`, `people.shader`, `guests.shader` from `FirstPersonFog` (`Level.LinearFog`), the sky unfogged. Ours within
+  0.03 of the original's along three ground lines at every depth of both holds (`q485/run5/linefit.txt`,
+  `q485/side-by-side.png`); console `fog`. Weather drops counted, Q522.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
