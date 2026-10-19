@@ -531,7 +531,7 @@ public static class DebugConsole
 				break;
 
 			// Writes the running park into the player's folder under the name given, spaces and all, as far as the
-			// writer is built (Level.WritePark). The park menu's Save Game does not reach it yet.
+			// writer is built (Level.WritePark), as the park menu's Save Game does.
 			case "savepark":
 				var saveName = line.Trim()[parts[0].Length..].Trim();
 

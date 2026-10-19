@@ -53,18 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The managers are written (the staff HQ's
-  strikes, Q523, the economy thing's fields and loans, Q524, the calendar's month and day, Q526, and the weather
-  thing, Q528); what is left is that `ParkSaveScreen.Save` writes
-  (`SAVE_GAME_WRITER` gone), an overwrite replaces the file, and the Load Park list shows it. Confirm: a park
-  played, saved from the menu under a typed name, loaded by OpenTPW and by the original under Proton; the tick,
-  the cash and the guest count predicted; a screenshot of each.
-  From Q241f: `Level.WritePark` is the call to make. The original puts
-  the pointer back to its default mode before it writes (`FUN_00516c80`, step 1); `WritePark` does not.
-  From Q493: of the weather thing only `mWindDir` is read at a load (`ParkWorld.WindDirection`; the rest is Q529). The
-  writer writes the running weather since Q528.
-  From Q241h: a member of staff in the hand is written idle where they were picked up, and stays in the
-  running park's hand; the default mode's install is what puts them down in the original.
 - [ ] **Q327. Full Simulation catch-up: the built advisor lines in a Full Simulation park.** Filed at Alexah's
   word, 2026-10-12, and placed here by it: after Q241j, whose economy fields a Full Simulation file needs. One
   session. A Full Simulation park made with no file, saved, and run through each built polled row's scene in
@@ -79,6 +67,8 @@ filed the items that cite it.
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest
   file; the quicksave and quickload keys (`<theme>.TPWS`); `restart.INTS` written when the folder has none, and
   read by Restart Park. After Q241j. Confirm: a park left and entered again at the tick it was left on.
+  From Q241j: `Level.WritePark` writes `gms.dat` first and installs the idle mode for every caller, so each of these
+  is a call of it.
   - **Note (fork watch 2026-10-17, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-17/verify-save.md` L5):** the analyser record's undecoded part (FileFormats `saves.md`, its
     first 62,598 bytes) is mostly 1,024 records of 61 bytes, four ints then nine caches, each a count and an
     `mWorkedOut` byte, measured at the record's +36 to +62,500 in two files; no cache stamp is saved (`0x004cd9c0`).
@@ -774,12 +764,8 @@ filed the items that cite it.
     back (`saves.md`, "Loading the modules", Camera), so until Q247 builds it the load should call
     `Unimplemented.Report` under a name of its own, shown by the `unimplemented` census after a Load Park.
     (`OpenTPW/World/Level.cs`, line 282; commit `2bdbd7fd`)
-  - `Level.WritePark` writes a park file without writing `gms.dat` first and without putting the pointer back to
-    its default mode, and counts neither: its summary names both as deviations and the body calls no
-    `Unimplemented.Report` for them. The original does both on every save (`saves.md`, "The save", step 1,
-    for `gms.dat`, and `FUN_00516c80` step 1 through `FUN_0046c350` for the pointer), so each should be
-    counted where the file is written until Q248 and Q241j build them, shown by `savepark` followed by
-    `unimplemented`. (`OpenTPW/World/Level.cs`, line 505; commit `2bdbd7fd`)
+  - Built by Q241j: `Level.WritePark` writes `gms.dat` first and installs the idle mode before the park, as the
+    original's save does on every call; nothing of this bullet is left.
   - `Peep.Tick` leaves the cell's region-effects term out of every needs turn and counts nothing, though the park
     has kept the cells since Q257e (`ParkState.Effects`). The original adds the cell's happiness, illness and
     hunger words there (`FUN_00501650` through the getter `FUN_004d8410`), so until it is built the turn should
@@ -2072,7 +2058,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
 ## F. Then
 
 Back to `docs/PLAYER-GAPS.md`: gap 4 (advisor in a park); gap 5 (happiness gauge) is Q244 and gap 7 (saving a
-park) is Q241j, both in section A. Also litter and the day ending, whose deferral reasons expired
+fresh park) is Q249, both in section A. Also litter and the day ending, whose deferral reasons expired
 (`docs/REVIEW-2026-09-21.md` section 6).
 
 ## G. The lobby plan's open items

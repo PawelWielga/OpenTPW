@@ -214,9 +214,9 @@ drag".
 
 The park menu's rows 1 and 2 (`FUN_0048b6a0`, `scenes.md`). Decoded in Ghidra and run in the original under Proton
 on 2026-10-08 (Q241, Q241d); what was only read is listed at the end. OpenTPW builds the Load Park screen and the
-Save Park screen ("OpenTPW's Load Park" and "OpenTPW's Save Park", below); the save itself is counted
-(`SAVE_GAME_WRITER`), what it must write is "What a park file must hold to be written", and the first stage of the
-writer, reached from the console alone, is "OpenTPW's writer, the first stage".
+Save Park screen ("OpenTPW's Load Park" and "OpenTPW's Save Park", below), whose OK writes the running park (Q241j);
+what it must write is "What a park file must hold to be written", and the writer's stages are the "OpenTPW's writer,
+..." sections.
 
 ### The two rows
 
@@ -413,9 +413,24 @@ through `Localization.Format( 205, (2, name) )` in a `MessageBox` when the name 
 close. Opening the question takes the focus from the box and nothing gives it back but a click on the box, as
 measured below.
 
-**The save is not built.** Where `FUN_0049e9b0` calls `FUN_005ac610`, `ParkSaveScreen.Save` counts
-`SAVE_GAME_WRITER`, logs the name and closes the screen; nothing is written ("What a park file must hold to be
-written", below; Q241f on).
+**The save** is `Level.WritePark( name )`, where `FUN_0049e9b0` calls `FUN_005ac610`, then the screen closes
+whatever it answered. It does the original's steps in order: the player's `gms.dat` (`Player.Save`, step 1 of "The
+save"), the idle mode installed over the hand (`ParkHand.LetGo`, the world writer's `0x00516d13`), then
+`<name>.TPWS` in the player's folder for the theme, written over a file of that name in any case
+(`SaveFolder.WritePark`), as the original under Wine wrote over `New Save.TPWS`. The menu's Escape has already let go
+of the hand on the way to the screen ("The hand's ways out", `park-engine.md`), so the idle mode changes something
+only for the console's `savepark`, which is the same call.
+
+**Measured (Q241j).** In OpenTPW (final build, `q241j/run2`, seven predictions of seven; run 1's two misses were the
+`windows` and `guests` censuses read wrongly): the stock park run 20 s and paused at `mGameTick` 843, balance 88112,
+13 guests; Escape, Save, "Typed Save" typed over "New Save", Enter logged `Save Park: 'Typed Save' is written to
+users/1ref/jungle/Typed Save.TPWS, and the screen closes`, nothing counted; the file held 843, 88112 and 13 guest
+things, and `gms.dat` was rewritten 0.11 s before it with its bytes unchanged. The Load row's list read
+`'Typed Save' 19.10.2026 13:15` and its click started the clock at 843 with 88112 and 13 guests. Run on to 885 and
+saved again by the row's click and Enter, the question "Typed Save exists / Overwrite ?" and its tick: one file,
+885, loaded back at 885. The original under Proton loaded that file from its Load Park list: the tick fell from 1327
+to 885, the bank read 88112 and the guests 13, all inside, and its gadget showed $88112 (`q241j/orig/b-load.log`,
+`b-2-loaded.png`; `q241j/side-by-side.png`).
 
 **Measured (Q241d).** In the original, the reference player's folder holding one save, "New Save", the box read
 from its buffer `0x007ca720` (`q241d/orig`, nine predictions of nine):
@@ -500,9 +515,9 @@ frames), `confirm.py`, `mutate.py` and the sheet of OpenTPW's screen beside the 
 
 ## What a park file must hold to be written
 
-Decoded and measured on 2026-10-08 (Q241e). `ParkSaveScreen.Save` still counts `SAVE_GAME_WRITER`; the writer's
-stages that are built are the "OpenTPW's writer, ..." sections below, and `Level.WritePark`, reached from the
-console's `savepark` alone, is their one caller until Q241j. The objects' decode is "The objects, their scripts
+Decoded and measured on 2026-10-08 (Q241e). The writer's stages that are built are the "OpenTPW's writer, ..."
+sections below, and `Level.WritePark` is their one caller, reached from the park menu's Save Game and the console's
+`savepark` (Q241j). The objects' decode is "The objects, their scripts
 and their models". The bytes are the FileFormats
 `saves.md`'s; this section is what the original does with them and what a writer here has to get right.
 
@@ -694,12 +709,12 @@ over the copy, never the one held.
   and models as they run the fourth's ("OpenTPW's writer, the objects"); a thing bought and a thing sold the
   fifth's; a queue cell's model the sixth's; the arrival vehicle, a balloon let go and a thought read back
   the seventh's; a vehicle made at its summons its own section's; a model record's two tables, a rider's head and a made object's flags and corner their own
-  sections' below; the rest is Q257e and Q241j.
+  sections' below; the rest is Q257e.
 - **Where.** `Level.WritePark( name )` writes `<player's folder>/<theme>/<name>.TPWS`, replacing a file of that
-  name in another case. The console's `savepark <name>` is its one caller; the Save Park screen's OK stays counted
-  until Q241j. **Deviations:** the player's `gms.dat` is not written first (Q248) and the pointer is not put back
-  to its default mode; a park made fresh, with no file behind it, is counted (`SAVE_PARK_WITH_NO_FILE`, Q249) and
-  not written; with nobody playing, which only the console's `park` reaches, nothing is written.
+  name in another case, the player's `gms.dat` first and the idle mode installed before it, as the original's. The
+  Save Park screen's OK and the console's `savepark <name>` are its callers (Q241j). **Deviations:** a park made
+  fresh, with no file behind it, is counted (`SAVE_PARK_WITH_NO_FILE`, Q249) and not written; with nobody playing,
+  which only the console's `park` reaches, nothing is written.
 - **The load does not read the camera module**: a park loaded here opens on the default view (Q247).
 
 **Measured (Q241f, `q241f/`).** Lost Kingdom entered by a player holding `easymode.TPWI` alone (755, 87987, no
@@ -856,8 +871,8 @@ follow the list. It runs after the scripts, the track rides and the models are s
 - **Deviations, each counted.** A handle to a thing the file does not hold, which
   is a thing bought here and left out (`SAVE_PARK_OBJECT_BOUGHT`) or one sold and taken out, is written as nought, and a guest bound for it or on it decides where they stand
   (`SAVE_PARK_HANDLE_TO_AN_UNWRITTEN_THING`, and `SAVE_PARK_GUEST_ON_A_THING` for one on it). A member
-  of staff in the hand is written idle where they were picked up, as the original puts the hand's thing down
-  first.
+  of staff in the hand is put down on their cell before anything is written, as the original's idle mode puts the
+  hand's thing down (`Level.WritePark`, Q241j), and written there.
 - **The staff pool and the arrival block were not written at this stage**, so a load was followed by a load of
   arrivals: both games called one of thirteen within 30 s of loading a file written at tick 1334, where the
   park written was about 580 ticks from its next. They are written now (below).
@@ -3234,7 +3249,7 @@ from `+22` (level, flag, stamp; FileFormats `saves.md`, "The staff HQ"), are wri
 (`ParkWorld.PutStrikes`, handed `ParkStrikes.ForceWord` and `Records` by `ParkFileWriter.Running.Strikes`). In
 memory they are thing 1's `+0x64` and `+0x24` on (`ride-operation.md`, "The strike"). A saved force word other than
 1 is written back as it was; the console's `forcestrike 1` writes 1. `mStaffMemberPickedUp`, the two bytes at
-`+20` between them, is the file's (a worker in the hand is written where they were picked up: Q241j's note). The
+`+20` between them, is the file's; a worker in the hand is put down before anything is written (`ParkHand.LetGo`, Q241j). The
 save logs `Save: strikes written: force F recs [...]`.
 
 **Both games** (`q523/`: `confirm.py`, `PREDICTION.txt`, `run1`, `run2-one`, `run3`, `control1`, `orig/`). The stock park

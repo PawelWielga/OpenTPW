@@ -9100,6 +9100,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (55,24); ours the same prices and cursors; main's build `c_noplace` throughout.
 - [x] **Q539. The refusal latch's other writers.** Q420's leftovers, split: the wall's clear was Q540, the red
   square's second charge Q542; the carried item's passes are Q536, which holds their decode.
+- [x] **Q241j. The writer: the managers, then Save Game saves.** From Q241e; the managers were Q523, Q524, Q526 and
+  Q528. `ParkSaveScreen.Save` calls `Level.WritePark( name )` (`SAVE_GAME_WRITER` gone), which writes the player's
+  `gms.dat` first, installs the idle mode over the hand (`0x00516d13`; a worker held is put down) and then the park,
+  over a file of that name in any case. Tests `OkOverANewNameWritesTheParkAndCloses` and four more in
+  `ParkSaveScreenTests`, mutations 6 of 7 (one equivalent, `q241j/mutate.out`). Measured (`q241j/run2`, 7 of 7):
+  the stock park at `mGameTick` 843, 88112, 13 guests, saved from the menu as "Typed Save", listed `'Typed Save'
+  19.10.2026 13:15` and loaded back at 843, 88112, 13; saved over at 885 through the question and loaded at 885. The
+  original under Proton loaded that file at 885 with 88112 and 13 guests (`q241j/orig/b-load.log`,
+  `q241j/side-by-side.png`). A park made fresh is still not written: Q249.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

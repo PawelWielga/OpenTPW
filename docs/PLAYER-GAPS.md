@@ -1,7 +1,7 @@
 # What a player notices
 
 What a player notices, **ordered by when a player meets it**, not by size or by how interesting it is to build.
-**This is not the work queue: `docs/QUEUE.md` is**. Its section F returns to gap 4; gap 5 is its Q244 and gap 7 its Q241j, both in its section A.
+**This is not the work queue: `docs/QUEUE.md` is**. Its section F returns to gap 4; gap 5 is its Q244 and gap 7 its Q249 (a fresh park saved), in its section A.
 Drawn up 2026-09-20 from `docs/STATUS.md`, the 42-thing Lost Kingdom census
 (`docs/history/current-task-archive.md`, grep `THE PARK IS FULLY DECODED`) and the live plan.
 
@@ -347,15 +347,16 @@ from the crossing. So the arrival path they would take is the one the shipped sa
 
 ## 7. A park cannot be saved
 
-- [ ] **Seen:** Save writes nothing and Publish does nothing, which a player meets at the moment they try to
-  stop. Load opens the Load Park screen and loads the row clicked (Q241c); Save opens the Save Park screen, and
-  its OK closes it with nothing written (Q241d). The park writer is built, `Level.WritePark`, and only the console's `savepark` reaches it; the screen's call is Q241j.
-- **Lives:** `ParkSaveScreen.Save`, counted as `SAVE_GAME_WRITER`, and `ParkFrontEnd`'s game menu, where
-  Publish Park calls `NotYet(...)`, counted as `PUBLISH_PARK`.
+- [ ] **Seen:** Publish does nothing, and a park made fresh (a Full Simulation park entered with no file) cannot be
+  saved, which a player meets at the moment they try to stop. Load opens the Load Park screen and loads the row
+  clicked (Q241c); Save opens the Save Park screen and its OK writes the running park under the typed name (Q241d,
+  Q241j), which OpenTPW and the original both load back.
+- **Lives:** `Level.WritePark`, which counts a park with no file as `SAVE_PARK_WITH_NO_FILE` (Q249), and
+  `ParkFrontEnd`'s game menu, where Publish Park calls `NotYet(...)`, counted as `PUBLISH_PARK`.
 - **Decoded (Q241):** the two screens, the folder's list, the load in place and the writer's container are in
-  `docs/exe/saves.md`, "Load Game and Save Game"; Q241b to Q241i are built, and `QUEUE.md` holds Q241j (Save Game saves), Q248 and Q249.
+  `docs/exe/saves.md`, "Load Game and Save Game"; Q241b to Q241j are built, and `QUEUE.md` holds Q248 and Q249.
 - **Nine park files agree with the traced preamble** (`docs/exe/saves.md`, "Preamble"): the shipped `Easymode.TPWI` and the eight of
-  Alexah's Full Simulation play. The original under Proton has loaded the files the console's `savepark` wrote.
+  Alexah's Full Simulation play. The original under Proton has loaded the files the console's `savepark` and the menu's Save Game wrote.
 - **Full Simulation now starts fresh** (Q197): twelve things, closed, fee 20 and the regular balance/loans;
   Instant Action keeps `Easymode.TPWI`. Where the player's folder holds a park file for the theme, entering loads the newest instead (Q241b).
   The initialization and its reference comparison are in `exe/park-engine.md`, "A fresh Full Simulation world".

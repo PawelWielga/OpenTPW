@@ -6,13 +6,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace OpenTPW.Tests;
 
 /// <summary>
-/// The Save Park screen up to the writer (<c>docs/exe/saves.md</c>, "One screen, two uses", "What the handlers
-/// answer" and "OpenTPW's Save Park"): the menu row that opens it, the name box, a row's click, OK, Enter and
-/// Escape, the overwrite question, and the count that stands for the save. Over a disposable save folder.
+/// The Save Park screen (<c>docs/exe/saves.md</c>, "One screen, two uses", "What the handlers answer" and "OpenTPW's
+/// Save Park"): the menu row that opens it, the name box, a row's click, OK, Enter and Escape, the overwrite question,
+/// and the save it makes of the running park. Over a disposable save folder.
 /// </summary>
 [TestClass]
 public class ParkSaveScreenTests
@@ -198,22 +199,24 @@ public class ParkSaveScreenTests
 	}
 
 	/// <summary>
-	/// <b>OK over a name the folder does not hold counts the save and closes the screen</b>, and writes nothing.
-	/// A name that differs from a save's only in its case or by a space at its end is such a name, and so is an
-	/// empty one.
+	/// <b>OK over a name the folder does not hold writes the running park under it at once and closes the
+	/// screen</b>, the player's gms.dat with it. A name that differs from a save's only by a space at its end is such
+	/// a name, and so is an empty one, written as <c>.TPWS</c>; one that differs only in its case is asked nothing
+	/// and written over the save of that name, as the original under Wine wrote over <c>New Save.TPWS</c>.
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> the report taken out counts nothing; the screen left open; a compare that ignores case asks,
-	/// and so does a name trimmed; an empty name refused stays open.
+	/// <b>Mutations:</b> the save not made writes nothing; the screen left open; a compare that ignores case asks,
+	/// and so does a name trimmed; an empty name refused stays open; the player not saved leaves no gms.dat.
 	/// </remarks>
 	[TestMethod]
-	[DataRow( "zz" )]
-	[DataRow( "new save" )]
-	[DataRow( "New Save " )]
-	[DataRow( "" )]
-	public void OkOverANewNameCountsTheWriterAndCloses( string name )
+	[DataRow( "zz", "New Save.TPWS, zz.TPWS" )]
+	[DataRow( "new save", "New Save.TPWS" )]
+	[DataRow( "New Save ", "New Save .TPWS, New Save.TPWS" )]
+	[DataRow( "", ".TPWS, New Save.TPWS" )]
+	public void OkOverANewNameWritesTheParkAndCloses( string name, string files )
 	{
 		Put( "New Save.TPWS", DateTime.Now );
+		RunningPark( 4321 );
 
 		var stack = APark();
 		var screen = OpenSavePark( stack );
@@ -225,49 +228,56 @@ public class ParkSaveScreenTests
 		Click( screen, Ok );
 
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "the screen closes, with no question" );
-		Assert.AreEqual( "1x SAVE_GAME_WRITER", Counted() );
+		Assert.AreEqual( "", Counted() );
 		Assert.IsFalse( stack.AnyPausing );
-		Assert.AreEqual( "New Save.TPWS", string.Join( ", ", Directory.GetFiles( Jungle ).Select( Path.GetFileName ) ), "nothing is written" );
+		Assert.AreEqual( files, Parks(), "the park is written under the name" );
+		Assert.AreEqual( 4321, TickIn( Directory.GetFiles( Jungle ).Single( file => string.Equals( Path.GetFileName( file ), name + ".TPWS", StringComparison.OrdinalIgnoreCase ) ) ), "and is the running park" );
+		Assert.IsTrue( File.Exists( Path.Combine( Jungle, "..", "gms.dat" ) ), "the player is written with it" );
 	}
 
 	/// <summary><b>Enter in the box is the OK button and Escape the cancel button; the cross closes too.</b></summary>
 	/// <remarks>
-	/// <b>Mutations:</b> Enter not answered leaves the screen; Escape saving counts one; the cross saving counts one.
+	/// <b>Mutations:</b> Enter not answered leaves the screen; Escape saving writes one; the cross saving writes one.
 	/// </remarks>
 	[TestMethod]
 	public void EnterIsOkAndEscapeIsCancel()
 	{
+		RunningPark( 900 );
+
 		var stack = APark();
 
 		OpenSavePark( stack );
 		Press( stack, Key.Escape );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "Escape closes" );
-		Assert.AreEqual( "", Counted(), "and saves nothing" );
+		Assert.AreEqual( "", Parks(), "and saves nothing" );
 		Frame( stack );
 		Assert.IsFalse( Input.TextCaptured, "the keys are the park's again" );
 
 		Click( OpenSavePark( stack ), Cross );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "the cross closes" );
-		Assert.AreEqual( "", Counted() );
+		Assert.AreEqual( "", Parks() );
 
 		OpenSavePark( stack );
 		Type( stack, "mine" );
 		Press( stack, Key.Enter );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "Enter closes" );
-		Assert.AreEqual( "1x SAVE_GAME_WRITER", Counted(), "and is the save" );
+		Assert.AreEqual( "mine.TPWS", Parks(), "and is the save" );
 	}
 
 	/// <summary>
 	/// <b>OK over a name the folder holds asks UITEXT 205 first</b>, the name its parameter; the question's tick is
-	/// the save and closes both, and its cross leaves the screen open with nothing counted.
+	/// the save, written over the file, and closes both, and its cross leaves the screen open and the file as it was.
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> the question skipped counts at once; the name left out reads " exists"; the tick not saving;
-	/// the cross saving; the folder as it stood at the opening kept asks nothing of a file written since.
+	/// <b>Mutations:</b> the question skipped writes at once; the name left out reads " exists"; the tick not saving
+	/// leaves the old file; the cross saving; the folder as it stood at the opening kept asks nothing of a file written
+	/// since.
 	/// </remarks>
 	[TestMethod]
 	public void ANameInTheFolderIsAskedAboutFirst()
 	{
+		RunningPark( 1234 );
+
 		var stack = APark();
 		var screen = OpenSavePark( stack );
 
@@ -276,7 +286,7 @@ public class ParkSaveScreenTests
 
 		Press( stack, Key.Enter );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkSaveScreen, MessageBox", Names( stack ) );
-		Assert.AreEqual( "", Counted(), "nothing is saved yet" );
+		Assert.AreEqual( 4, new FileInfo( OldSave ).Length, "nothing is saved yet" );
 
 		var question = stack.Windows.OfType<UI.MessageBox>().Single();
 
@@ -284,12 +294,13 @@ public class ParkSaveScreenTests
 
 		Click( question, QuestionCross );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkSaveScreen", Names( stack ), "the cross leaves the screen" );
-		Assert.AreEqual( "", Counted() );
+		Assert.AreEqual( 4, new FileInfo( OldSave ).Length, "and the file" );
 
 		Click( screen, Ok );
 		Click( stack.Windows.OfType<UI.MessageBox>().Single(), QuestionTick );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "the tick closes both" );
-		Assert.AreEqual( "1x SAVE_GAME_WRITER", Counted() );
+		Assert.AreEqual( "New Save.TPWS", Parks() );
+		Assert.AreEqual( 1234, TickIn( OldSave ), "the running park is written over the old save" );
 	}
 
 	/// <summary>
@@ -304,6 +315,7 @@ public class ParkSaveScreenTests
 	public void TheBoxLosesTheKeysToTheQuestionUntilItIsClicked()
 	{
 		Put( "New Save.TPWS", DateTime.Now );
+		RunningPark( 900 );
 
 		var stack = APark();
 		var screen = OpenSavePark( stack );
@@ -327,15 +339,19 @@ public class ParkSaveScreenTests
 
 		Press( stack, Key.Enter );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ) );
-		Assert.AreEqual( "1x SAVE_GAME_WRITER", Counted() );
+		Assert.AreEqual( "New Save.TPWS, New Savey.TPWS", Parks() );
 	}
 
-	/// <summary><b>With nobody playing the list is empty and OK still counts the save.</b></summary>
+	/// <summary>
+	/// <b>With nobody playing the list is empty, and OK writes nothing, there being no folder, and closes.</b> With no
+	/// park running it writes nothing either.
+	/// </summary>
 	[TestMethod]
 	public void WithNobodyPlayingTheListIsEmpty()
 	{
 		Put( "a.TPWS", DateTime.Now );
 		SetCurrentPlayer( null );
+		RunningPark( 900 );
 
 		var stack = APark();
 		var screen = OpenSavePark( stack );
@@ -343,7 +359,64 @@ public class ParkSaveScreenTests
 		Assert.AreEqual( 0, ListOf( screen ).Rows.Count );
 
 		Click( screen, Ok );
-		Assert.AreEqual( "1x SAVE_GAME_WRITER", Counted() );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ) );
+		Assert.AreEqual( "a.TPWS", Parks() );
+
+		SetCurrentPlayer( new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
+		Level.Current = null!;
+		Click( OpenSavePark( stack ), Ok );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ) );
+		Assert.AreEqual( "a.TPWS", Parks(), "no park, no save" );
+	}
+
+	/// <summary>
+	/// <b>The save installs the idle mode before it writes</b> (<c>0x00516d13</c>): a build tool armed is put away.
+	/// The menu's Escape has already done it on the way to the screen, so this is the console's <c>savepark</c>.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the hand not let go leaves the path tool armed.</remarks>
+	[TestMethod]
+	public void TheSaveLetsGoOfTheHand()
+	{
+		RunningPark( 900 );
+		ParkBuildMode.Arm( ParkBuildMode.Path );
+
+		Assert.IsNotNull( Level.Current.WritePark( "held" ) );
+		Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current );
+		Assert.AreEqual( 900, TickIn( Path.Combine( Jungle, "held.TPWS" ) ) );
+	}
+
+	/// <summary>
+	/// The shipped park running in a level of its own at a tick of its own, which is not the file's 755, so a save
+	/// that wrote the file as loaded is told from one that wrote the running park.
+	/// </summary>
+	private void RunningPark( int tick )
+	{
+		using var stream = new MemoryStream( FileSystem.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var reader = new SaveReader( stream );
+		var world = new ParkWorld( reader.ReadFile(), reader.Preamble );
+		var state = new ParkState( world );
+		var level = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
+
+		state.SetGameTick( tick );
+		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( level, Level.Scene.Park );
+		typeof( Level ).GetProperty( nameof( Level.ThemeName ) )!.SetValue( level, "jungle" );
+		typeof( Level ).GetProperty( nameof( Level.Park ) )!.SetValue( level, world );
+		typeof( Level ).GetProperty( nameof( Level.ParkState ) )!.SetValue( level, state );
+		Level.Current = level;
+	}
+
+	/// <summary>The park files in the player's jungle folder, by name.</summary>
+	private string Parks() => string.Join( ", ", Directory.GetFiles( Jungle, "*.TPWS" ).Select( Path.GetFileName ).Order( StringComparer.Ordinal ) );
+
+	private string OldSave => Path.Combine( Jungle, "New Save.TPWS" );
+
+	/// <summary>The <c>mGameTick</c> a park file holds.</summary>
+	private static int TickIn( string path )
+	{
+		using var stream = new MemoryStream( File.ReadAllBytes( path ) );
+		var reader = new SaveReader( stream );
+
+		return new ParkWorld( reader.ReadFile(), reader.Preamble ).GameTick;
 	}
 
 	/// <summary>What has been counted, less the list's own count of a first row it does not select.</summary>

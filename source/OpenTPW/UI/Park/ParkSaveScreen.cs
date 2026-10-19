@@ -24,8 +24,8 @@ namespace OpenTPW.UI;
 /// handed the name; any other is saved at once, an empty one too. The name is not trimmed.
 /// </para>
 /// <para>
-/// <b>The save is not built.</b> <c>FUN_0049e9b0</c> writes the player and then the park
-/// (<c>FUN_005ac610</c>) and closes the screen; here it is counted, <c>SAVE_GAME_WRITER</c>, and the screen closes.
+/// <b>The save</b> is <c>FUN_0049e9b0</c>'s: the player and then the park written under the box's name
+/// (<c>FUN_005ac610</c>, <see cref="Level.WritePark(string)"/>), and the screen closes whatever it answered.
 /// </para>
 /// </summary>
 internal sealed class ParkSaveScreen : ParkFileScreen
@@ -122,14 +122,18 @@ internal sealed class ParkSaveScreen : ParkFileScreen
 	}
 
 	/// <summary>
-	/// <c>FUN_0049e9b0</c>: the save under the box's name, then the screen closes whatever the save answered. The
-	/// save itself, the player's <c>gms.dat</c> and then <c>&lt;name&gt;.TPWS</c> in the player's folder for the
-	/// theme, is counted and writes nothing.
+	/// <c>FUN_0049e9b0</c>: the save under the box's name, the player's <c>gms.dat</c> and then
+	/// <c>&lt;name&gt;.TPWS</c> in the player's folder for the theme, written over a file of that name; then the
+	/// screen closes whatever the save answered.
 	/// </summary>
 	private void Save()
 	{
-		Unimplemented.Report( "SAVE_GAME_WRITER" );
-		Log.Info( $"Save Park: '{_name.Value}' is not written - nothing writes a park back yet - and the screen closes" );
+		var name = _name.Value;
+		var written = Level.Current?.WritePark( name );
+
+		Log.Info( written != null
+			? $"Save Park: '{name}' is written to {written}, and the screen closes"
+			: $"Save Park: '{name}' is not written - the log says why - and the screen closes" );
 
 		Stack.Close( this );
 	}

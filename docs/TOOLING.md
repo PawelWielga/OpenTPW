@@ -78,6 +78,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/scriptvar.py PID THING [INDEX [VALUE]]` | A ride script's variables in the running original, by thing: read, or **written** (the one tool that writes its memory). It is how a ride is broken on demand |
 | `original/object.py PID SECS THING [VAR ...]` | The original's memory: one object's `mState`, `mCanLoad`, the guest being loaded, the queue's head, the member assigned, the State of repair and the remaining life, and those variables of its script, a line a change with `mGameTick`. A `POLL` for `loadfile.sh` |
 | `original/money.py PID SECS THING...` | The original's memory: each object's all-items columns, its customers last thirty days, last month's profit, total profit, satisfaction and bar, worked out from its takings, costs, customers and satisfaction rings and its two totals as the original's getters do, a line a change with `mGameTick`. A `POLL` for `loadfile.sh` (Q368) |
+| `original/tick.py PID SECS` | The original's memory: `mGameTick` every 50 ms, a line a change, a fall marked `FALL`: the moment a Load Park click's file is read in, and the tick it starts at. Run it beside a reader that prints only on its own changes (`POLL="python3 -u tick.py %PID% 25 & python3 -u inside.py %PID% 25; wait"`, Q241j). A `POLL` for `loadfile.sh` |
 | `original/thingwords.py PID SECS THING:OFFSET[:FMT[:NAME]] ...` | The original's memory: any words of any things, a line a change with `mGameTick`. Use it for a field or two before writing a poller: the mechanics' search cursor is `2:0xc`, a mechanic's state, job and count `26:0x19c:I`, `26:0x218`, `26:0x214:I`. A `POLL` for `loadfile.sh` |
 | `original/spritepass.py PID`, `particleheights.py PID SECS EFFECT [STEP]`, `particleoverlay.py PID OUT.png [EFFECT]` | The original's world particles: the sprite pass's matrix (`[0x0087b088]`) with every emitter's draw words and its particles projected to pixels; how high and wide an effect's particles go over a time; and a frame grabbed with each particle's sprite marked on it, which proves a projection rule against the picture |
 | `original/camera.py PID [X,Y;...]`, `--aim X,Y` | The original's park camera now: the point, zoom and rotation, the camera's matrix (its last row the eye) and the draw matrix, and named cells' corners at 1.5 and 21.5 put through it to pixels of the 1024 x 768 frame; `--aim` prints the pixel of a cell's middle, so a run's clicks follow whatever camera it has (Q435) |
@@ -1219,6 +1220,13 @@ GH=766` there, or the pointer is off):
   `HF=engine groundcell.py %PID% 0.3 X0,Y0:X1,Y1=+0x100` (`READ=X0,Y0:X1,Y1` with 0.1 s prints the words first); every
   cell of the box is composited again on the next frame, each path cell with its record. A texture the original holds
   in a 16-bit surface is `TextureFile`'s rows bottom up, each channel's top four bits (`q489/layout.py`, `conv3.py`).
+- **Save Game from OpenTPW's own menu, by real keys** (Q241j, `q241j/confirm.py`): after `parkrun.py`, `key("Escape")` opens
+  the menu (a held tool takes a first Escape), `place("2")` is its Save row; the box opens on "New Save" selected, so
+  the name typed replaces it, one `key()` a character, a capital with `mods=("Shift_L",)`, a space as `"space"`;
+  `key("Return")` is OK. A row of the list, at the row height its `Save Park: N saved parks ..., rows of R units` line
+  gives, puts its name in the box; Enter then opens the question, whose tick is control `9873c9`. The save logs
+  `Save Park: '<name>' is written to <path>`; the `windows` census then reads `ParkGadget, ParkViewfinder` (the HUD's
+  own), never "none". The `guests` census lists every person: its `model 1` lines are the guests.
 - **`wadcat --cat` is for text**: a binary entry comes out with its bytes turned to `?`. Take a binary with `--dump`
   (`wadcat --dump base.MD2 terrain.wad` writes it to the working folder; `q488/wordcmp.py` reads its cell words).
 - **A pick compared with the original's own ray** (Q494, `q494/ray.py`): the two cameras at one view (`lib/bothcam.py`)

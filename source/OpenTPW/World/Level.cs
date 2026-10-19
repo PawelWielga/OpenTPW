@@ -565,18 +565,29 @@ public class Level
 	/// tiled again goes out with its model made, or let go.
 	/// </para>
 	/// <para>
-	/// <b>Deviations.</b> The original writes the player's <c>gms.dat</c> first and puts the pointer back to its
-	/// default mode; neither is done here. A park made fresh, with no file behind it, is counted and not written.
-	/// With nobody playing there is no folder, and nothing is written; the original has a player on every entry.
+	/// <b>In the original's order</b>: the player's <c>gms.dat</c> first (<c>FUN_005c8a10</c>, the save's step 1),
+	/// then the idle mode installed over the hand (<see cref="ParkHand.LetGo"/>; the world writer does it before it
+	/// writes anything, <c>0x00516d13</c>), so a worker held is put down and written where they stand, then the park.
+	/// </para>
+	/// <para>
+	/// <b>Deviations.</b> A park made fresh, with no file behind it, is counted and not written. With nobody playing
+	/// there is no folder, and nothing is written; the original has a player on every entry.
 	/// </para>
 	/// </summary>
 	internal string? WritePark( string name )
 	{
-		if ( Kind == Scene.Park && ParkState is { } state )
-			return WritePark( Park, state, ThemeName, name, ParkPeople.Current, ParkStaffPool.Current, ParkRides.Current, Catalogue );
+		if ( Kind != Scene.Park || ParkState is not { } state )
+		{
+			Log.Warning( $"Save: '{name}' is not written - no park is running" );
+			return null;
+		}
 
-		Log.Warning( $"Save: '{name}' is not written - no park is running" );
-		return null;
+		Players.Roster.Current?.Save();
+
+		if ( ParkHand.LetGo() is { } letGo )
+			Log.Info( $"Save: the idle mode is installed before the park is written: {letGo}" );
+
+		return WritePark( Park, state, ThemeName, name, ParkPeople.Current, ParkStaffPool.Current, ParkRides.Current, Catalogue );
 	}
 
 	/// <summary><see cref="WritePark(string)"/> for a park's own parts, the camera's being the orbit camera's.</summary>
