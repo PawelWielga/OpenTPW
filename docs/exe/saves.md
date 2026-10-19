@@ -659,7 +659,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | The cells | a path or queue laid or cleared, land, a footprint, the chain of who stands where | patched cell by cell, each record where it lies (every cell has its map and track parts); `mWho` with the things it names; the effects part written again from the running grid, last of all ("OpenTPW's writer, the region effects") |
 | A guest, a member of staff | everything they do | carried records patched from `ParkPeople`; one made here written whole; one gone left out |
 | A catalogue object | its door, price, counts, rings, queue, script handle | carried records patched; one bought here written whole; one sold left out |
-| The economy thing, the staff HQ | the balance, the loans, the rings; the strikes, the training budgets | the balance is written, and the staff HQ's five budgets and `mHaveEverTrained` ("OpenTPW's writer, the training budgets") and its `mForceStrike` and five strike records ("OpenTPW's writer, the strike records"); the loans, the rings and `mStaffMemberPickedUp` are the file's |
+| The economy thing, the staff HQ | the fee, the balance, the profit, the red stamp, the loans; the strikes, the training budgets | the economy thing's seven fields and eight loans are written ("OpenTPW's writer, the economy thing"), and the staff HQ's five budgets and `mHaveEverTrained` ("OpenTPW's writer, the training budgets") and its `mForceStrike` and five strike records ("OpenTPW's writer, the strike records"); `mStaffMemberPickedUp` is the file's |
 | The analyser, the research lab, the weather, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar and weather run here | carried, but for the mechanics' HQ's `mNextObject` (model 10, `PutMechanicCursor`) and the analyser's `mLastStaffHired` (model 13, `PutLastStaffHired`: the calendar as the newest member of staff was made, which the advisor's row 7 counts its thirty days from; `advisor-park.md`, "More rides than the mechanics can keep"; the original read this game's stamp from a file saved after a hire here, Q333) and its `mLastObjectBuilt` (`PutLastObjectBuilt`: the calendar as the newest object was made, a sale leaving it; `advisor-park.md`, "The newest build"; the original read this game's from files saved after a purchase and after its sale, Q334) and its `mParkLastOpened` (`PutParkLastOpened`: the calendar at the newest request to open the park; `hud.md`, "The analyser's other stamps"; the original read this game's, Q397); the analyser's three other stamps, which the original never moves, and its counts, and what the weather and the calendar run here, are not written |
 
 **What is not settled, and belongs to the build that meets it.** A record made here has bytes no reader here
@@ -3251,6 +3251,34 @@ original's own file** saved there from its menu (`orig/Q523ORIG-by-the-original.
 
 Not run: a calling-off saved and loaded (a level of 1 with no cause), a file whose force word is not 0 or 1, a park
 made with no file, Full Simulation (not asked: the strike is either mode's).
+
+### OpenTPW's writer, the economy thing
+
+Q524. The economy thing (model 16, thing 8, 300 bytes; FileFormats `saves.md`, "The economy thing") is written whole
+from the running park: `mAdmissionFee`, `mBalance`, `mBatchBalance`, `mWithdrawalsEnabled`, `mLastBalance`,
+`mTurnEnteredRed` and `mProfitThisYear` from `+16`, and the eight loans of eight dwords from `+44`
+(`ParkWorld.PutEconomy`, handed `ParkState.Economy` by `ParkFileWriter.Running.Economy`). In memory they are the
+bank's `+0x118`, `+0xc`, `+0x10`, `+0x114`, `+0x11c`, `+0x120`, `+0x124` and `+0x14` on (`ride-operation.md`, "The cost
+of goods and the park's money"). Here the entry-price screen moves the fee, a withdrawal the last balance and the red
+stamp, every take, deposit and withdrawal and the year's change the profit, and the month's change a bought loan's
+months repaid (and closes it at its period); a loan is bought nowhere here (no loans screen). The save logs
+`Save: economy written: fee F balance B ... loans [slot: repaid/period of instalment]`; the console's `loans` prints the
+same and every slot.
+
+**Both games** (`q524/`: `confirm.py`, `PREDICTION.txt`, `run1`, `run2`, `control1`, `orig/`). `loan4.TPWS` is the stock
+park with the balance 100 and loan 4 (18000 over 24 at 750) bought, five repaid (`parkfile.economy_set`). Loaded here,
+the fee raised to 28 by three clicks on the entry-price screen's plus, the clock written 17556 and stepped over the
+month: the loan's 750 and five wages took the balance to -1188 on 17557, `mTurnEnteredRed` 17557, and the year's change
+zeroed the profit; saved, the file read fee 28 balance -1188 batch 0 withdrawals 1 last -1188 red 17557 profit 0 and loan
+4 repaid 6, and loaded back the same, the screen at 28 (`run2/3-reloaded-fee.png`). Main's build wrote the balance alone:
+fee 25, last 87787, red 0, profit -12013, repaid 5 (`control1`). **The original** given the file read all of it at the
+load (`orig/a-load.log`) and charged 28 a guest from the next tick; its screen showed "$ 28" (`orig/a-fee.png`). Unlike
+Q523's file, its first tick was no month's change: its calendar stood at 2 September 2002. **Its own file** saved from its
+menu (`orig/Q524ORIG-by-the-original.TPWS`) holds fee 28, balance -796, last -1188, red 17557, profit 392 and loan 4
+bought 1, repaid 6: the layout and the kind of values this game writes.
+
+Not run: a loan bought or paid off (no loans screen here, Q456), withdrawals off, a batch not nought, a park made with no
+file, Full Simulation (not asked: the bank is either mode's).
 
 ## What OpenTPW builds
 

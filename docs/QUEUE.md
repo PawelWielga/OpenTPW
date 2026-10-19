@@ -77,14 +77,20 @@ filed the items that cite it.
   bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no handyman. Row 291's response 551
   does not exist (a raised row 291 would be silent; nothing found posts it). Rows 125 to 127 are Q228's, rows 167 and
   168 Q703's. Not run.
+  From Q524 (`saves.md`, "OpenTPW's writer, the economy thing"): the economy thing's seven fields and eight loans are
+  written (it has no rings: the money rings are the analyser's, written since Q385 to Q389), so the nearest piece is
+  the calendar's fields (Q241j's too): the original runs a month's change on its first tick in some files this game
+  writes (Q523's) and not in others (Q524's, its calendar two days into a month), which those fields decide. In no game
+  run: a loan bought or paid off here (no loans screen, Q456), withdrawals off, a batch not nought, Full Simulation
+  (not asked: the bank is either mode's), the other three themes.
   From Q523 (`saves.md`, "OpenTPW's writer, the strike records"): the strike records and the force are written, so the
-  nearest piece is the economy thing's loans and rings (Q241j's too). The original ends a strike one look early in a
-  file this game wrote, its first tick after the load being a month's change (Q149). In no game run: a calling-off
+  nearest piece is the economy thing's loans and rings (Q241j's too; written, Q524). The original ends a strike one
+  look early in Q523's file, its first tick after the load being a month's change there (Q149; not in Q524's). In no game run: a calling-off
   saved, a force word not 0 or 1, Full Simulation (not asked: the strike is either mode's), the other three themes.
   From Q443 (`park.md`, "Arrivals: who comes, on what, and how often"): the leavers' draw is on the save's seed, which
   is written back, so the nearest piece is the staff strike's five records and `mForceStrike` (`ParkWorld.StaffHqState`;
   a strike changes them, Q138b; written, Q523), then the economy
-  thing's rings and the loans. In no game run: the original's own vehicle at the same summons (its generator is drawn
+  thing's rings and the loans (written, Q524). In no game run: the original's own vehicle at the same summons (its generator is drawn
   by every system and reseeded at each arrival, ours by the leavers alone: moving those onto `ParkState.RandomSeed` is
   not filed as a piece of this item), Full Simulation (not asked: the summons is either mode's), the other three themes.
   From Q442 (`hud.md`, "The patrol switch and the patrol tool"): the refused click's sound is built at every build
@@ -951,13 +957,12 @@ filed the items that cite it.
   From the run review (2026-10-17): the writer rebuilds each cell's chain by id and the file's order, not the running
   list the original writes (`ParkWorld.People.cs`, `saves.md`, "The chains"): since Q446 a file chain [A, B] whose B
   walks off and back runs [B, A] and is written [A, B]. Write the running order.
-- [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The economy thing's loans and rings,
-  the calendar's and the weather's fields (the staff HQ's strikes are written, Q523); then `ParkSaveScreen.Save` writes
+- [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The calendar's and the weather's
+  fields (the staff HQ's strikes are written, Q523, and the economy thing's fields and loans, Q524); then `ParkSaveScreen.Save` writes
   (`SAVE_GAME_WRITER` gone), an overwrite replaces the file, and the Load Park list shows it. Confirm: a park
   played, saved from the menu under a typed name, loaded by OpenTPW and by the original under Proton; the tick,
   the cash and the guest count predicted; a screenshot of each.
-  From Q241f: `Level.WritePark` is the call to make. Of the economy thing only `mBalance` is written, so a loaded
-  park reads the first file's profit under the new balance (`money`: profit -12013 beside 88112). The original puts
+  From Q241f: `Level.WritePark` is the call to make. The original puts
   the pointer back to its default mode before it writes (`FUN_00516c80`, step 1); `WritePark` does not.
   From Q493: of the weather thing only `mWindDir` is read at a load (`ParkWorld.WindDirection`), and the writer writes
   the file's record back as it was, so a park saved after a change of weather holds the wind it was loaded with.
@@ -2124,6 +2129,12 @@ filed the items that cite it.
   read) is not decoded; ours draws them unfogged and counts `FIRST_PERSON_FOG_WEATHER` (`WeatherSprites.OnRender`).
   Decode the weather's draw, then fog `weather.shader` the same way or take the count out. Confirm by rain in first
   person in both games with the band held at 20 to 40 (`memhold.py` there, the console's `fog 20 40` here).
+- [ ] **Q525. The money's lettering: the entry fee's "$ " and a cash below nought.** From Q524 (`q524/side-by-side.png`):
+  the original's entry-price spinner letters the fee "$ 28" where ours letters "28" (`ParkEntryPriceScreen.Show`), and
+  its park cash at the top left letters a balance under nought "-$ 796" in red where ours letters "$ -1188" in the
+  usual colours (`orig/a-fee.png` beside `run2/3-reloaded-fee.png`). Seen, not decoded: read the spinner's text
+  (`hud.md` names the money skin `FUN_00490250`, "$ 75" and "-$ 11750" on the training screen) and the cash display's
+  draw, then letter both as the original does. Confirm by the two frames at one fee and one balance under nought.
 
 ## B. Docs and comments
 

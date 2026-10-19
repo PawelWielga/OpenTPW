@@ -2256,6 +2256,23 @@ public static class DebugConsole
 					: "budgets: a park has to be loaded" );
 				break;
 
+			// The bank's seven fields and every loan slot, as the writer writes them (ParkState.Economy).
+			case "loans":
+				if ( Level.Current?.ParkState is not { } bank )
+				{
+					Reply( "loans: a park has to be loaded" );
+					break;
+				}
+
+				Reply( $"loans: {bank.DescribeEconomy()}" );
+
+				foreach ( var (loan, slot) in bank.Loans.Select( ( loan, slot ) => (loan, slot) ) )
+					Reply( $"  loan {slot} available {loan.Available} amount {loan.AmountAvailable} apr {loan.AprPercent} "
+						+ $"months {loan.RepaymentMonths} monthly {loan.MonthlyRepayment} bought {loan.Bought} "
+						+ $"repaid {loan.MonthsRepaid} lender {loan.LenderNameIndex}" );
+
+				break;
+
 			case "money":
 				Reply( Level.Current?.ParkState is { } purse
 					? $"money balance {purse.Balance} takings {purse.Takings} " +

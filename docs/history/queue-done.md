@@ -8082,6 +8082,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   five struck (`q523/run1`); main's build wrote (0, 0, 715) x5 (`control1`); the original read the file's records and
   carried a level-1 dispute to (2, 1, 16838) on its first tick (`orig/b-load.log`); its own file saved mid-strike holds
   1 and (3, 1, 17557) x5 in the same layout (`orig/Q523ORIG-by-the-original.TPWS`).
+- [x] **Q524. The writer: the economy thing's fields and loans.** Q420's piece. The fee, the balance, the batch, the
+  withdrawals switch, the last balance, the red stamp, the year's profit and the eight loans are written from the
+  running park (`ParkWorld.PutEconomy`; `saves.md`, "OpenTPW's writer, the economy thing"). Done 2026-10-19: a file
+  with loan 4 bought, the fee moved to 28 and a month run, saved holding fee 28 balance -1188 last -1188 red 17557
+  and loan 4 repaid 6, loaded back the same with the screen at 28 (`q524/run2`); main's build kept fee 25, last 87787,
+  red 0 and repaid 5 (`control1`); the original read all of it and charged 28 a guest, its screen "$ 28", and its own
+  file holds the same layout (`orig/a-load.log`, `orig/Q524ORIG-by-the-original.TPWS`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

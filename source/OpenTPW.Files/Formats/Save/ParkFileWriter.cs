@@ -73,6 +73,9 @@ public static class ParkFileWriter
 	/// (<see cref="ParkWorld.PutMisbehavingKids"/>); the file's where it is null. <see cref="ParkLastOpened"/> is the
 	/// analyser's stamp of the newest request to open the park (<see cref="ParkWorld.PutParkLastOpened"/>); the file's
 	/// where it is null. <see cref="RandomSeed"/> is the park's generator, <c>mRandomSeed</c>; the file's where it is null.
+	/// <see cref="Economy"/> is the economy thing's seven fields and eight loans (<see cref="ParkWorld.PutEconomy"/>),
+	/// written after <see cref="Balance"/>, so its own balance is the one the file holds; where it is null only
+	/// <see cref="Balance"/> is written and the rest are the file's.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -87,7 +90,8 @@ public static class ParkFileWriter
 		(IReadOnlyList<int> Budgets, bool HaveEverTrained)? Training = null,
 		ParkWorld.MonthRingSet? MonthRings = null, (int Lifetime, int MostPaidForTicket)? Visitors = null,
 		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null, long? ParkLastOpened = null, uint? RandomSeed = null,
-		(int ForceStrike, IReadOnlyList<ParkWorld.StrikeRecord> Records)? Strikes = null );
+		(int ForceStrike, IReadOnlyList<ParkWorld.StrikeRecord> Records)? Strikes = null,
+		ParkWorld.EconomyState? Economy = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -236,6 +240,9 @@ public static class ParkFileWriter
 		PutInt32( body, loaded.HeaderAt + ParkWorld.ParkClosedAt, running.ParkClosed ? 1 : 0 );
 		PutInt32( body, loaded.HeaderAt + ParkWorld.NumberOfVisitorsToDateAt, running.VisitorsToDate );
 		PutInt32( body, loaded.EconomyAt + ParkWorld.BalanceAt, running.Balance );
+
+		if ( running.Economy is { } economy )
+			loaded.PutEconomy( body, economy );
 
 		loaded.Camera.Put( body, running.Camera );
 

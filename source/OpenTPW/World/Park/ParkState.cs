@@ -1529,6 +1529,18 @@ public sealed class ParkState
 
 	private readonly ParkWorld.LoanState[] _loans = new ParkWorld.LoanState[ParkWorld.EconomyState.LoanSlots];
 
+	/// <summary>The bank's seven fields and eight loans as they stand, the economy thing the writer writes.</summary>
+	public ParkWorld.EconomyState Economy => new( AdmissionFee, Balance, BatchBalance, WithdrawalsEnabled, LastBalance,
+		TurnEnteredRed, ProfitThisYear, _loans.ToArray() );
+
+	/// <summary>The bank's fields and its bought loans, for the save's log and the console's <c>loans</c>.</summary>
+	public string DescribeEconomy()
+		=> $"fee {AdmissionFee} balance {Balance} batch {BatchBalance} withdrawals {WithdrawalsEnabled} last {LastBalance} "
+			+ $"red {TurnEnteredRed} profit {ProfitThisYear} loans ["
+			+ string.Join( ", ", _loans.Select( ( loan, i ) => (loan, i) ).Where( x => x.loan.Bought != 0 )
+				.Select( x => $"{x.i}: {x.loan.MonthsRepaid}/{x.loan.RepaymentMonths} of {x.loan.MonthlyRepayment}" ) )
+			+ "]";
+
 	/// <summary>Puts a loan in a slot - a test's, as no loans screen is built and no park file buys one.</summary>
 	internal void SetLoan( int slot, ParkWorld.LoanState loan ) => _loans[slot] = loan;
 

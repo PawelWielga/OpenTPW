@@ -1533,4 +1533,115 @@ public class ParkFileWriterTests
 			Entity.ApplyDeletions();
 		}
 	}
+
+	/// <summary>
+	/// <b>A written park holds the economy thing's seven fields and its eight loans</b>, each from its own place
+	/// (FileFormats <c>saves.md</c>, "The economy thing"), and every byte the writer changes for them lies inside the
+	/// record's 284 bytes past its map base. Handed none, the writer writes the balance alone and leaves the rest the
+	/// file's: the shipped fee of 25 and profit of -12013.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the fee written in the balance's place; the last balance and the red stamp swapped; the profit
+	/// not written; the loans a slot out of place; the last loan slot not written; bought and repaid swapped; the
+	/// writer never calling it.
+	/// </remarks>
+	[TestMethod]
+	public void AWrittenParkHoldsTheBanksSevenFieldsAndEightLoans()
+	{
+		var loans = Enumerable.Range( 0, ParkWorld.EconomyState.LoanSlots )
+			.Select( i => new ParkWorld.LoanState( 100 * i + 1, 100 * i + 2, 100 * i + 3, 100 * i + 4, 100 * i + 5,
+				100 * i + 6, 100 * i + 7, 100 * i + 8 ) ).ToArray();
+		var economy = new ParkWorld.EconomyState( AdmissionFee: 31, Balance: -2677, BatchBalance: 77, WithdrawalsEnabled: 0,
+			LastBalance: -555, TurnEnteredRed: 16900, ProfitThisYear: 4321, Loans: loans );
+
+		var alone = ParkFileWriter.Body( shipped, Played );
+		var body = ParkFileWriter.Body( shipped, Played with { Economy = economy } );
+		var written = new ParkWorld( body ).Economy!.Value;
+
+		Assert.AreEqual( (31, -2677, 77, 0, -555, 16900, 4321),
+			(written.AdmissionFee, written.Balance, written.BatchBalance, written.WithdrawalsEnabled, written.LastBalance,
+				written.TurnEnteredRed, written.ProfitThisYear) );
+		CollectionAssert.AreEqual( loans, written.Loans.ToArray() );
+
+		var changed = Enumerable.Range( 0, body.Length ).Where( i => body[i] != alone[i] ).ToArray();
+
+		Assert.IsTrue( changed.Length > 0 );
+		Assert.IsTrue( changed[^1] - changed[0] < 284, $"changed bytes {changed[0]}..{changed[^1]}" );
+
+		var left = new ParkWorld( alone ).Economy!.Value;
+
+		Assert.AreEqual( (25, 54321, -12013, 87787), (left.AdmissionFee, left.Balance, left.ProfitThisYear, left.LastBalance) );
+		CollectionAssert.AreEqual( shipped.Economy!.Value.Loans.ToArray(), left.Loans.ToArray() );
+	}
+
+	/// <summary>
+	/// <b>The running bank hands the writer every field it loaded</b>, each in its own place: a park read from a file
+	/// whose seven fields and eight loans all differ gives them back unchanged.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> <see cref="ParkState.Economy"/>'s last balance the balance, its withdrawals always on, its
+	/// batch nought, its loans not the running ones.</remarks>
+	[TestMethod]
+	public void TheRunningBankHandsBackEveryFieldItLoaded()
+	{
+		var loans = Enumerable.Range( 0, ParkWorld.EconomyState.LoanSlots )
+			.Select( i => new ParkWorld.LoanState( 100 * i + 1, 100 * i + 2, 100 * i + 3, 100 * i + 4, 100 * i + 5,
+				100 * i + 6, 100 * i + 7, 100 * i + 8 ) ).ToArray();
+		var economy = new ParkWorld.EconomyState( AdmissionFee: 31, Balance: -2677, BatchBalance: 77, WithdrawalsEnabled: 0,
+			LastBalance: -555, TurnEnteredRed: 16900, ProfitThisYear: 4321, Loans: loans );
+		var fixture = Inflate( raw );
+		shipped.PutEconomy( fixture, economy );
+
+		var running = new ParkState( new ParkWorld( fixture ) ).Economy;
+
+		Assert.AreEqual( economy with { Loans = [] }, running with { Loans = [] } );
+		CollectionAssert.AreEqual( loans, running.Loans.ToArray() );
+		Assert.AreEqual( "fee 31 balance -2677 batch 77 withdrawals 0 last -555 red 16900 profit 4321 loans [0: 7/4 of 5, "
+			+ "1: 107/104 of 105, 2: 207/204 of 205, 3: 307/304 of 305, 4: 407/404 of 405, 5: 507/504 of 505, 6: 607/604 of 605, "
+			+ "7: 707/704 of 705]", new ParkState( new ParkWorld( fixture ) ).DescribeEconomy() );
+	}
+
+	/// <summary>
+	/// <b>The level writes the bank as it runs</b>: a fee moved on the entry-price screen, and a month's change that
+	/// pays a bought loan's instalment (loan 4, 750 a month over 24) into the red, are in the file it writes, and a
+	/// park loaded from it runs on from them.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> <c>Level.WritePark</c> handing the writer no economy; a loan's months repaid not counted;
+	/// the getter's last balance the balance.</remarks>
+	[TestMethod]
+	public void TheLevelWritesTheBanksFeeAndARepaidLoan()
+	{
+		SetCurrentPlayer( new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
+
+		var loans = shipped.Economy!.Value.Loans.ToArray();
+		loans[4] = loans[4] with { Bought = 1, MonthsRepaid = 5 };
+		var fixture = Inflate( raw );
+		shipped.PutEconomy( fixture, shipped.Economy!.Value with { Balance = 100, Loans = loans } );
+
+		using var stream = new MemoryStream( raw );
+		var reader = new SaveReader( stream );
+		reader.ReadFile();
+		var world = new ParkWorld( fixture, reader.Preamble );
+		var state = new ParkState( world );
+		state.SetGameTick( 16840 );
+		state.SetAdmissionFee( 28 );
+		state.TurnTheMonth( null );
+
+		Assert.AreEqual( (-650, -650, 16840), (state.Balance, state.LastBalance, state.TurnEnteredRed) );
+
+		// A deposit moves the balance and the profit and leaves the last balance where the withdrawal put it.
+		state.Deposit( 40 );
+
+		Level.WritePark( world, state, "jungle", "Loan Park" );
+
+		var written = Read( File.ReadAllBytes( Path.Combine( Jungle, "Loan Park.TPWS" ) ) ).Economy!.Value;
+
+		// The instalment is withdrawn from the year's profit and its principal's share, the whole 750, given back.
+		Assert.AreEqual( (28, -610, -650, 16840, -12013 + 40),
+			(written.AdmissionFee, written.Balance, written.LastBalance, written.TurnEnteredRed, written.ProfitThisYear) );
+		Assert.AreEqual( (1, 6, 750), (written.Loans[4].Bought, written.Loans[4].MonthsRepaid, written.Loans[4].MonthlyRepayment) );
+
+		var reloaded = new ParkState( Read( File.ReadAllBytes( Path.Combine( Jungle, "Loan Park.TPWS" ) ) ) );
+
+		Assert.AreEqual( state.DescribeEconomy(), reloaded.DescribeEconomy() );
+	}
 }

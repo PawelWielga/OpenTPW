@@ -3309,6 +3309,44 @@ public sealed partial class ParkWorld : IParkInitialState
 	}
 
 	/// <summary>
+	/// Writes the economy thing's seven fields and its eight loans over the file's in <paramref name="body"/>, a copy
+	/// of this park's own, in the order <see cref="ReadEconomy"/> reads them (FileFormats <c>saves.md</c>, "The economy
+	/// thing"). A loan slot past <paramref name="economy"/>'s list is left the file's.
+	/// </summary>
+	public void PutEconomy( byte[] body, EconomyState economy )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+		ArgumentNullException.ThrowIfNull( economy.Loans );
+
+		if ( EconomyAt < 0 )
+			throw new InvalidOperationException( "the park file it was loaded from holds no economy thing" );
+
+		var at = body.AsSpan( EconomyAt + EconomyFieldsAt, 28 );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at, economy.AdmissionFee );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[4..], economy.Balance );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[8..], economy.BatchBalance );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[12..], economy.WithdrawalsEnabled );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[16..], economy.LastBalance );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[20..], economy.TurnEnteredRed );
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[24..], economy.ProfitThisYear );
+
+		for ( var i = 0; i < EconomyState.LoanSlots && i < economy.Loans.Count; ++i )
+		{
+			var loan = economy.Loans[i];
+			var fields = body.AsSpan( EconomyAt + LoansAt + (i * LoanStride), LoanStride );
+
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( fields, loan.Available );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( fields[4..], loan.AmountAvailable );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( fields[8..], loan.AprPercent );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( fields[12..], loan.RepaymentMonths );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( fields[16..], loan.MonthlyRepayment );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( fields[20..], loan.Bought );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( fields[24..], loan.MonthsRepaid );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( fields[28..], loan.LenderNameIndex );
+		}
+	}
+
+	/// <summary>
 	/// The model number of the park's economy - the manager read for the park's prices, because
 	/// <see cref="BankAccount"/> names it and nothing else in the save says what a park charges.
 	/// </summary>
