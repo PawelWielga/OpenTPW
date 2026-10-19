@@ -457,15 +457,51 @@ the box was clicked, then "Old Parky"; Enter closed the screen with `1x SAVE_GAM
 unchanged; OK over "New Save" and the question's tick closed both, `2x`. The unchanged build's Save row opened
 nothing and counted `SAVE_GAME` (`q241d/control`).
 
-### The other callers, not this item's
+### The other callers
 
 | Site | What |
 |---|---|
 | `FUN_0040bf90`, `FUN_0040c040` (reached through a table, no direct caller) | Quicksave and quickload: the name is the theme's (`FUN_005c5520`), so `<theme>.TPWS` |
-| `0x0054ff10` in `Game_StateMachine`; `0x00424bd7` | `FUN_005ac610( L"autosave" )` |
+| `0x0054ff10` in `Game_StateMachine`; `0x00424bd7` in `GameOptions_RestartBox_Tick` | `FUN_005ac610( L"autosave" )`: "Leaving a park: the autosave", below |
 | `0x00550c23`; `0x0055036c` | `restart.INTS` written when the folder has none; read by Restart Park |
 | `0x00407eae` in `FUN_00407e00` | a `.TPWS` loaded by name as the world is made |
 | `FUN_005accf0`, `0x0054f12b` | entering a park: the newest `*.TPW*` in the folder ("Entering a park", below) |
+
+### Leaving a park: the autosave
+
+**State 0xb writes the park as `autosave.TPWS` before it takes it down** (`0x0054fef5`..`0x0054ff10`): the name is a
+string object at `0x00877c60`, made from `L"autosave"` (`0x00747a58`) by a static constructor (`0x0054ca60`), handed
+to `FUN_005ac610` on the save manager `0x00f7b560`, so it is "The save" above whole: `gms.dat` first, then the file
+in the player's theme folder, written over the last one. It is skipped only when the game mode `[0x00fb3b7c]` is 1,
+online (`0x0054fefd`, `EBX` 1 since `0x0054e3d6`), so a Full Simulation and an Instant Action park are both written.
+State 0xb is reached by the leave reasons 2 and 3 (`DAT_00879088`; `boot.md`, the state table): the park menu's
+Exit To Lobby and Quit Game; and `Game_Shutdown` (`0x005503f0`) runs it whenever a park is up, so the window closed
+from a park writes it too. Restart Park (reason 1, states 0xd and 0xe) and a load from the list do not pass it.
+
+The second site is the options screen's RESTART GAME box (UITEXT 403, `GameOptions_Accept`): its tick,
+`GameOptions_RestartBox_Tick` (`0x00424bb0`, handed to the box at `0x004238a8`), writes leave reason 2 and, when no
+lobby object stands (`[0x00f82884]` nought, so in a park), the autosave at once (`0x00424bd7`), sets `[0x00786b80]`
+and calls `FUN_004a4580`; in the lobby it sets the lobby object's `+0x14` to 3 instead. OpenTPW's options screen
+applies its display and resolution without that box (`ui.md`, `GameOptions_Accept`), so nothing reaches it here.
+
+Entering the theme again then finds the autosave as the newest `*.TPW*` ("Entering a park", below), so a park left
+is entered at the tick it was left on.
+
+**OpenTPW** (`Level.WriteParkOnLeaving`): `Game` calls it before the scene goes on the lobby's reload (Exit To Lobby,
+and the console's `lobby` and `reload`) and after the frame loop ends (Quit Game, the window's close), and it calls
+`Level.WritePark( "autosave" )` when the scene is a park. The console's `quit` ends the process at once and writes
+nothing. Load Park's row and Restart Park, which end the scene here where the original loads in place, write
+nothing, as the original's. A park made fresh is counted and not written (`SAVE_PARK_WITH_NO_FILE`, Q249), as every
+save of one is.
+
+**Measured (Q544).** In the original under Proton, the stock park loaded from the list and held by the menu at
+`mGameTick` 986: Exit To Lobby wrote `autosave.TPWS` holding 986, 27 ms after `gms.dat` (whose bytes were the same),
+and the park entered again from the lobby read 0 in the new world and then 986, never the list's file's 755
+(`q544/orig/b-load.log`, `b-entered.png`). In OpenTPW, the same park paused at 823 with 88112 and 13 guests: Exit
+To Lobby logged `Leaving the park: autosave is written to users/1ref/jungle/autosave.TPWS`, the file held the
+three, `park jungle` read it and started at 823; run on to 845, Quit Game's tick wrote 845 as the game closed
+(`q544/run1`, four predictions of four). Main's binary wrote nothing and came back at 755 (`q544/control`). The
+window's own close, a Full Simulation park and the options screen's box were not run.
 
 ### Entering a park
 

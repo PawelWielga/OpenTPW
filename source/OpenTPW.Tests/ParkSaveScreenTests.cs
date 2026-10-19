@@ -386,6 +386,35 @@ public class ParkSaveScreenTests
 	}
 
 	/// <summary>
+	/// <b>Leaving a park writes it as <c>autosave.TPWS</c></b> (state 0xb, <c>0x0054ff10</c>), at the tick it was left
+	/// on, beside the menu's saves, and entering the theme again finds it as the newest park file. Leaving the lobby
+	/// writes nothing.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> another name; the running park's tick not written (the file's 755); the guard on the scene
+	/// turned round writes nothing from a park.
+	/// </remarks>
+	[TestMethod]
+	public void LeavingAParkWritesTheAutosaveThatEnteringFindsNewest()
+	{
+		Put( "easymode.TPWI", new DateTime( 2026, 10, 1, 14, 18, 0, DateTimeKind.Local ) );
+		Put( "New Save.TPWS", new DateTime( 2026, 10, 8, 12, 28, 0, DateTimeKind.Local ) );
+
+		var lobby = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
+		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( lobby, Level.Scene.Lobby );
+		Assert.IsNull( lobby.WriteParkOnLeaving() );
+		Assert.AreEqual( "New Save.TPWS", Parks() );
+
+		RunningPark( 1234 );
+
+		Assert.AreEqual( "users/1Test/jungle/autosave.TPWS", Level.Current.WriteParkOnLeaving() );
+		Assert.AreEqual( "New Save.TPWS, autosave.TPWS", Parks() );
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "autosave.TPWS" ) ) );
+		Assert.AreEqual( "autosave.TPWS", Path.GetFileName( SaveFolder.NewestPark( 0, "Test", "jungle" ) ) );
+		Assert.AreEqual( "", Counted() );
+	}
+
+	/// <summary>
 	/// The shipped park running in a level of its own at a tick of its own, which is not the file's 755, so a save
 	/// that wrote the file as loaded is told from one that wrote the running park.
 	/// </summary>

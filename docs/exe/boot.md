@@ -66,7 +66,7 @@ one write is 0, in the initializer `FUN_0046c0b0`; a write through a pointer is 
 | 0xf | 0x00550b30 when not online, then 10. |
 | 10 | **In-park loop.** Fixed 31 ms ticks with at most 2000 ms of catch-up; see [Tick rates](#tick-rates) for what runs at which frequency. Ticks run only while the app is active or windowed. Also each pass: listener, `Advisor_Update`, render, present, `Scr%05ld.tga` screenshots and the "E W R P S" timings line. `DAT_00879088` == 1 goes to 0xd; 2 or 3 goes to 0xb. |
 | 0xd | Goes to 0xe, which calls `Advisor_StopQuietly(1)` (0x005996d0) to stop the advisor and 0x005ac5f0, then goes back to 10. |
-| 0xb | **Leave the park:** teardown. Then 0xc (quit) if `DAT_00879088` == 3 or there is no front end; otherwise 9 if another park is pending (+0x3f0), else 1, back to the lobby. |
+| 0xb | **Leave the park:** the park written as `autosave.TPWS` unless online (`0x0054ff10`; `saves.md`, "Leaving a park: the autosave"), then teardown. Then 0xc (quit) if `DAT_00879088` == 3 or there is no front end; otherwise 9 if another park is pending (+0x3f0), else 1, back to the lobby. |
 | 0xc | Final teardown of the players and online objects; sets the quit bit. |
 
 **A fresh Full Simulation park (Q197).** State 9 constructs a world even when the player has no save:

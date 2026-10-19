@@ -126,6 +126,10 @@ internal static class Game
 		Render.PostUpdate += ReloadLobbyIfAsked;
 		Render.Run();
 
+		// The game closed with a park up leaves the park first, as Game_Shutdown runs state 0xb (0x005503f0), so
+		// Quit Game and the window's own close both write the autosave before the player is saved.
+		Level.Current.WriteParkOnLeaving();
+
 		// Whoever is still playing is saved as the game closes, however it was closed (WinMain_Main, 0x0045acfc).
 		Players.Roster.SaveAndDeselect();
 
@@ -200,6 +204,8 @@ internal static class Game
 
 		_lobbyReloadAsked = false;
 
+		// State 0xb writes the autosave before it takes a park down; Restart Park and Load Park pass it by.
+		Level.Current.WriteParkOnLeaving();
 		Level.Current.Unload();
 		LoadLobby( openAudio: false );
 	}

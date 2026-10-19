@@ -690,10 +690,12 @@ whole list):
   (`q329/confirm.py a|b|off|saved`, `q329/orig/run.sh <file> a|b|c`; Q329).
 - **Restart Park and Exit To Lobby by real clicks, in both games:** in the original Escape, then the menu's
   Restart Park row at `gmove.py 510 228` and the question's tick at `708 283` (25 s to the restarted park), or
-  Exit To Lobby at `510 573` (no question; 30 s to the lobby, then `660 58` clicked twice enters the park as
-  `loadfile.sh` does). **Exit To Lobby writes `autosave.TPWS` into the reference player's jungle folder and
+  Exit To Lobby at `510 522` at the install's 800 x 600 (`510 573` there is Quit Game, whose question comes up;
+  Q544), no question; 30 s to the lobby, then `660 58` clicked twice enters the park as `loadfile.sh` does.
+  **Exit To Lobby writes `autosave.TPWS` into the reference player's jungle folder and
   rewrites `gms.dat` with the same bytes**: `loadfile.sh stop` then says the sum changed; take the autosave out
   (it is the newest file there, so the next start would enter the park on it) and the sum is the one before.
+  `q544/orig/run.sh <tag>` does the whole round with `tick.py` and takes the autosave out (Q544).
   In OpenTPW `menu`, a click on `control 3`'s middle, then on `control 9873c9`'s, the question's tick (Return
   through XTEST does not answer it); `lobby` and `park jungle` are the console's way out and in
   (`q330/confirm.py fix|restart`, `q330/orig/run.sh <file> r|l`; Q330).

@@ -9120,6 +9120,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   made fresh, both games said row 80 on 3615 (score 60, the spiky hair, tag 82) and row 62 on 3912 (457, line 2);
   opened in the file, both said row 2 on 3567 (99, the ticket cap, tag 4; `q327/side-L.png`, `side-O.png`). No code
   changed; a test pins the fresh park's schedule (seven bugs put back, seven caught). Tests 3486.
+- [x] **Q544. `autosave.TPWS` on leaving a park.** Q248's first piece (`saves.md`, "Leaving a park: the autosave").
+  State 0xb writes the park as `autosave` unless online (`0x0054ff10`), from Exit To Lobby, Quit Game and the
+  window's close; `Level.WriteParkOnLeaving`, called by `Game` before the lobby's reload and after the frame loop.
+  Confirmed: the stock park left by Exit To Lobby and entered again at the tick it was left on, in both games
+  (`q544/`), and Quit Game's file at its own tick; the control on main wrote nothing and re-entered at 755.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

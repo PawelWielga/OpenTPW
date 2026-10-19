@@ -590,6 +590,27 @@ public class Level
 		return WritePark( Park, state, ThemeName, name, ParkPeople.Current, ParkStaffPool.Current, ParkRides.Current, Catalogue );
 	}
 
+	/// <summary>The name the park is written under as it is left (<c>0x00747a58</c>).</summary>
+	internal const string AutosaveName = "autosave";
+
+	/// <summary>
+	/// Writes the running park as <c>autosave.TPWS</c> when the scene is a park, as the original's state 0xb does
+	/// before it takes the park down (<c>0x0054ff10</c>; <c>docs/exe/saves.md</c>, "Leaving a park: the autosave"): the park
+	/// menu's Exit To Lobby and Quit Game, and the game closed with a park up. Entering the theme again finds it
+	/// as the newest park file (<see cref="SaveFolder.NewestPark"/>). The original skips it only online, which is
+	/// not built. Answers where it was written, or null.
+	/// </summary>
+	internal string? WriteParkOnLeaving()
+	{
+		if ( Kind != Scene.Park )
+			return null;
+
+		var written = WritePark( AutosaveName );
+		Log.Info( $"Leaving the park: {AutosaveName} {(written is null ? "is not written" : $"is written to {written}")}" );
+
+		return written;
+	}
+
 	/// <summary><see cref="WritePark(string)"/> for a park's own parts, the camera's being the orbit camera's.</summary>
 	internal static string? WritePark( IParkInitialState? park, ParkState state, string theme, string name,
 		ParkPeople? people = null, ParkStaffPool? pool = null, ParkRides? rides = null, ParkItemCatalogue? catalogue = null )

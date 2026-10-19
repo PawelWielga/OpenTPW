@@ -350,11 +350,12 @@ from the crossing. So the arrival path they would take is the one the shipped sa
 - [ ] **Seen:** Publish does nothing, and a park made fresh (a Full Simulation park entered with no file) cannot be
   saved, which a player meets at the moment they try to stop. Load opens the Load Park screen and loads the row
   clicked (Q241c); Save opens the Save Park screen and its OK writes the running park under the typed name (Q241d,
-  Q241j), which OpenTPW and the original both load back.
+  Q241j), which OpenTPW and the original both load back. Leaving a park writes it as `autosave.TPWS`, which the next
+  entry finds, as the original's (Q544).
 - **Lives:** `Level.WritePark`, which counts a park with no file as `SAVE_PARK_WITH_NO_FILE` (Q249), and
   `ParkFrontEnd`'s game menu, where Publish Park calls `NotYet(...)`, counted as `PUBLISH_PARK`.
 - **Decoded (Q241):** the two screens, the folder's list, the load in place and the writer's container are in
-  `docs/exe/saves.md`, "Load Game and Save Game"; Q241b to Q241j are built, and `QUEUE.md` holds Q248 and Q249.
+  `docs/exe/saves.md`, "Load Game and Save Game"; Q241b to Q241j and Q544 are built, and `QUEUE.md` holds Q248 and Q249.
 - **Nine park files agree with the traced preamble** (`docs/exe/saves.md`, "Preamble"): the shipped `Easymode.TPWI` and the eight of
   Alexah's Full Simulation play. The original under Proton has loaded the files the console's `savepark` and the menu's Save Game wrote.
 - **Full Simulation now starts fresh** (Q197): twelve things, closed, fee 20 and the regular balance/loans;

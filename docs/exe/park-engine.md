@@ -3183,8 +3183,9 @@ traced.
 
 **OpenTPW** (`Level.ForgetPark`, part of `Level.Unload`): `ParkBuildMode.Forget` puts the build tool away, then
 `ParkHand.LetGo` lets go of the hand - the item and the candidate through their `Drop`, a worker through
-`ParkPeople.PutBack` - logged as `Leaving the park:`. Nothing is saved, and Restart Park reloads through the same `Unload`, so the hand leaves empty
-either way. It is `ParkHand.LetGo`, so a picked-up worker is put back down in their cell as well. The rest keeps the
+`ParkPeople.PutBack` - logged as `Leaving the park:`. Exit To Lobby has already written the park as `autosave.TPWS` by then (`Level.WriteParkOnLeaving`,
+which lets go of the hand itself; `saves.md`, "Leaving a park: the autosave"), and Restart Park reloads through the
+same `Unload` with nothing written, so the hand leaves empty either way. It is `ParkHand.LetGo`, so a picked-up worker is put back down in their cell as well. The rest keeps the
 original's order: every entity is deleted, `ParkRides` letting go of `ParkRides.Current` as it goes, and last of
 all `Level.ForgetRunningPark` lets go of `ParkState.Current` and `ParkStaffPool.Current`. The console's `parks`
 reads a left park and its pool `collected` in the lobby (Q44).

@@ -253,7 +253,7 @@ The click's level was measured by disk capture rather than read from the `.sdt`.
 | `0x0078d8d8` | GameOptions object | The live options object | Ghidra |
 | `0x00423690` | `GameOptions_Construct` | Where the defaults come from | Ghidra |
 | `0x00423740` | `GameOptions_CheckChanges` | Compares each option with its value when the screen opened: a new graphics quality reloads the detail file, and other changes raise a restart level at `+0x94` | Decompile |
-| `0x004237f0` | `GameOptions_Accept` | The tick: calls `CheckChanges` (`0x00423814`), reads `+0x94`, and shows RESTART GAME (UITEXT 403, pushed at `0x0042387d`) instead of closing when a restart is due. OpenTPW's `OptionsScreen` skips that check; its display and resolution take effect on the tick, with no restart | Disassembly |
+| `0x004237f0` | `GameOptions_Accept` | The tick: calls `CheckChanges` (`0x00423814`), reads `+0x94`, and shows RESTART GAME (UITEXT 403, pushed at `0x0042387d`) instead of closing when a restart is due. The box's tick (`GameOptions_RestartBox_Tick` `0x00424bb0`) leaves a park through the autosave (`saves.md`, "Leaving a park: the autosave"). OpenTPW's `OptionsScreen` skips that check; its display and resolution take effect on the tick, with no restart | Disassembly |
 | — | `Sound_ApplyGroupVolumes` | Speech volume 0 disables the duck — **proven** here | Ghidra |
 | `0x1d4c8` | — | The rendering row's control | Layout stream |
 | `0x1d4d2` | — | That row's `b_on2` arrow | Layout stream |
