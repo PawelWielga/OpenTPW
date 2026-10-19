@@ -2146,13 +2146,22 @@ edge, east x + 10, south z + 10, west the least x), its foot at the record's hei
 red square (so it blinks with it), 2 under orange, and otherwise 0, blue, under `m_link` and `m_end` too
 (`0x00533b07` pushes the 1 in the refused arm; `0x00533214` holds only the orange-or-0 of the others); its orientation byte (`+0x10`) is 0 where the square's is 1; its `+0x98` is `mode != 4`, so in mode 4
 the walls glide with the carried thing's squares. Each wall laid under a square not refused **also zeroes the refusal
-latches** `DAT_00816d58` and `DAT_00816d50` (`0x005333bd`), which a path or queue strip's verdict for its next cell reads.
+latches** `DAT_00816d58` and `DAT_00816d50` (`0x005333bd`, `0x0053357a`, `0x00533737`, `0x005338fc`, one site a direction;
+the refused arm's walls zero neither). **That changes nothing a path or queue reader sees** (read 2026-10-19, Q540): every
+answer of the mode-1 and mode-3 verdict that is not red leaves both at nought, but the queue's join (`m_link`, the strip's
+last square, `d58` and `DAT_00816d60` set, `0x00535c78`), on a path cell, which only a track thing's height lifts; the
+click's walks (ops `0x81`..`0x87`, `0x15`, `0x32`) never reach the verdict, which only ops with `0x100` or `0x200` call,
+and the other reader of `d58`, `FUN_00539760`, runs under the track modes alone (`0x0e`, `0x13`, `0x14`, `0x16`, `0x1a`).
+So the one wall that zeroes a set latch is a patrol edge the locator draws after a join's pass, over a lifted cell;
+the next pass clears `d58` first.
 Measured in the original (`q436/orig/a-5-squares.txt`, the stock park, Mike Cooper's patrol outline (51,26)-(54,27)): (52,26)
 21.5 then faces 4 at 11.5 and `0x10` at 1.5 and 11.5; (53,26) 11.5 then 4 and `0x10` at 1.5; (51,26) 21.5 then `0x10`
 and `0x40` each at 1.5 and 11.5; orientation 1 on the eight squares and 0 on the nine walls. **OpenTPW**
 (`ParkBuildMarkers.WallsAt`, `WallCorners`) lays the same nine in the same order (the `strip` census's `| walls`), drawn
-under the tops as the original's (`q436/side-by-side.png`). Counted: the latch zeroed under a path or queue strip
-(`MARKER_WALL_CLEARS_REFUSAL_LATCH`; each strip's latch here is its own pass's).
+under the tops as the original's (`q436/side-by-side.png`). OpenTPW zeroes no latch under a wall: its `d58` lives inside a
+pass (`ParkPathBuilding.Latches`), and no square its path or queue verdicts leave unrefused is lifted, on any of the stock
+park's cells (`ParkPathToolTests.NoUnrefusedPathOrQueueSquareIsLifted`). Measured in both games: `hud.md`, "The patrol
+edges", "Under a wall" (Q540).
 
 The double count on raised ground was not caught on one cell. The original's strip ends at the raised out-of-park
 cells before it draws a square there. **Red blinks**: `FUN_0053c8d0` drops texture 1 while `DAT_00763c98` is nought, which

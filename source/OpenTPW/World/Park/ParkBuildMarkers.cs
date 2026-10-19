@@ -392,11 +392,10 @@ public sealed class ParkBuildMarkers : ModelEntity
 		_walls = lifts.SelectMany( square => WallsAt( square.Square.X, square.Square.Y, square.Lift, square.Square.Marker, NeighbourLift ) )
 			.ToList();
 
-		// Each wall under a square not refused also zeroes the path and queue tools' refusal latch (DAT_00816d50 and
-		// d58, 0x005333bd), which their verdict for the next cell reads; here each strip's latch is its own pass's.
-		if ( ParkBuildMode.Current is ParkBuildMode.Path or ParkBuildMode.Queue
-			&& _walls.Any( wall => wall.Marker != ParkPathBuilding.MarkerRed ) )
-			Unimplemented.Report( "MARKER_WALL_CLEARS_REFUSAL_LATCH" );
+		// Each wall under a square not refused also zeroes the refusal latches DAT_00816d50 and d58 (0x005333bd). That
+		// changes nothing the path and queue tools read, so it is not done: such a square leaves both at nought already,
+		// but for the queue's join, the strip's last square, whose path cell is never lifted, and the d58 a join leaves
+		// is read next by a pass, which clears it first. docs/exe/park-engine.md, "The walls".
 
 		_strip.AddRange( stranded.Where( cell => OnTheField( cell.X, cell.Y ) )
 			.Select( cell => new Square( cell.X, cell.Y, ParkPathBuilding.MarkerRed, StrandedLift ) ) );

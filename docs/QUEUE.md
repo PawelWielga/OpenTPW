@@ -53,12 +53,12 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q539. The refusal latch's other writers.** Q420's leftovers (`hud.md`, "The patrol edges"), each counted:
-  the latches a lifted square's wall zeroes under a path or queue strip (`MARKER_WALL_CLEARS_REFUSAL_LATCH`), a carried
-  item's passes, which set `d50` and `d5c` while its price is above the balance and on an entrance or exit facing off
-  the map (`CARRY_PREVIEW_MARKERS`), and a red square's second verdict charging the cell again (`park-engine.md`, "The
-  path tool"; `ParkPathBuilding.JudgedAgain` reproduces only its copy of `d58`), which can turn the cursor to `c_cash`.
-  The press-to-release hover passes are Q535. Confirm: each beside the original's `[0x00816d50]` and its edges.
+- [ ] **Q539. The refusal latch's other writers.** Q420's leftovers (`hud.md`, "The patrol edges"), each counted: a
+  carried item's passes, which set `d50` and `d5c` while its price is above the balance and on an entrance or exit
+  facing off the map (`CARRY_PREVIEW_MARKERS`), and a red square's second verdict charging the cell again
+  (`park-engine.md`, "The path tool"; `ParkPathBuilding.JudgedAgain` reproduces only its copy of `d58`), which can turn
+  the cursor to `c_cash`. The wall's clear was Q540. The press-to-release hover passes are Q535. Confirm: each beside the
+  original's `[0x00816d50]` and its edges.
 - [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The managers are written (the staff HQ's
   strikes, Q523, the economy thing's fields and loans, Q524, the calendar's month and day, Q526, and the weather
   thing, Q528); what is left is that `ParkSaveScreen.Save` writes
@@ -1371,6 +1371,11 @@ filed the items that cite it.
   back on a park cell, and read the cursor; predict `c_noplace`. Also read the pointer over the gadget's camera
   control with the tool armed (`FUN_004981d0` writes the same control's cursor). Write the result into
   `docs/exe/hud.md`, "The patrol pointer", and drop the "not watched" sentence there and at `Arm`.
+- [ ] **Q541. The build tools' run price, decode first.** Seen in Q540's runs, read nowhere: with the queue tool
+  anchored on the stock park the original shows a yellow "$ 375" under the balance (`q540/orig/a-16-join28-edges.png`,
+  `b-1-before-click.png`), the run's price, gone after the click; ours shows none (`q540/run2/3-join-edges.png`). Read
+  who draws it, for which modes, and what `FUN_0052fb90`'s -9999 (the patrol tool's) does to it.
+
 ## B. Docs and comments
 
 - [ ] **Q14. Comment sweep of the cleanup commits.** Replace history-voice comments with what the code does now,

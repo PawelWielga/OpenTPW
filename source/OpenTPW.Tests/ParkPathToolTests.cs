@@ -485,6 +485,77 @@ public class ParkPathToolTests
 		Assert.AreEqual( 0, ParkState.CellFor( park, 10, 10 ).Flags );
 	}
 
+	/// <summary>
+	/// <b>No square the path or queue tool leaves unrefused is lifted</b>, on any of the shipped park's 16,384 cells,
+	/// first or last, so none is walled, and the latches a wall zeroes (<c>0x005333bd</c>) are never zeroed under a
+	/// strip here. Lifted cells are met: the Belly Bounce's, the fountain's, and type 7 land on raised ground, all red.
+	/// </summary>
+	[TestMethod]
+	public void NoUnrefusedPathOrQueueSquareIsLifted()
+	{
+		FileSystem = data;
+		var park = World();
+		var state = new ParkState( park );
+		var catalogue = new ParkItemCatalogue( "jungle", data, instantAction: true );
+
+		HeightfieldFile field;
+
+		using ( var terrain = data.OpenRead( "levels/jungle/terrain/base.MD2" ) )
+			field = new HeightfieldFile( terrain );
+
+		var serves = ParkPathBuilding.OwnerOf( state, ParkState.CellFor( park, 50, 22 ) );
+		var (unrefused, liftedRed) = (0, 0);
+
+		void Judge( IEnumerable<ParkPathBuilding.QueueSquare> strip )
+		{
+			foreach ( var square in strip )
+			{
+				var lift = ParkBuildMarkers.LiftOver( state, catalogue, field, square.X, square.Y );
+
+				if ( square.Marker == ParkPathBuilding.MarkerRed )
+				{
+					liftedRed += lift > 0 ? 1 : 0;
+					continue;
+				}
+
+				++unrefused;
+				Assert.AreEqual( 0f, lift, $"({square.X},{square.Y}) marker {square.Marker}" );
+			}
+		}
+
+		for ( var y = 0; y < 128; ++y )
+		{
+			for ( var x = 0; x < 128; ++x )
+			{
+				ParkBuildMode.Arm( ParkBuildMode.Path );
+				Judge( ParkPathBuilding.PathStrip( state, park, x, y, Price ) );
+
+				if ( x == 127 )
+					continue;
+
+				ParkBuildMode.AnchorAt( x, y );
+				Judge( ParkPathBuilding.PathStrip( state, park, x + 1, y, Price ).Take( 1 ) );
+
+				ParkBuildMode.ArmAt( ParkBuildMode.Queue, serves, x, y );
+				Judge( ParkPathBuilding.QueueStrip( state, park, x, y, Price, out _ ) );
+				Judge( ParkPathBuilding.QueueStrip( state, park, x + 1, y, Price, out _ ).Take( 1 ) );
+			}
+		}
+
+		Assert.AreEqual( 8590, unrefused, "measured" );
+		Assert.AreEqual( 1496, liftedRed, "measured" );
+
+		// A path on the hill at (76,64), 37 high, is still unlifted: the path tool's m_end and the queue's join there.
+		state.SetRecord( 75, 64, ParkState.CellFor( park, 75, 64 ) with { Type = 0, Flags = 0 } );
+		state.SetRecord( 76, 64, ParkState.CellFor( park, 76, 64 ) with { Type = CellEdge.Path, Flags = 0 } );
+		ParkBuildMode.Arm( ParkBuildMode.Path );
+		Judge( ParkPathBuilding.PathStrip( state, park, 76, 64, Price ) );
+		ParkBuildMode.ArmAt( ParkBuildMode.Queue, serves, 75, 64 );
+		Judge( ParkPathBuilding.QueueStrip( state, park, 76, 64, Price, out _ ) );
+
+		Assert.AreEqual( 8590 + 3, unrefused, "an m_end, then bare ground and the join" );
+	}
+
 	private static string Describe( IEnumerable<ParkPathBuilding.QueueSquare> strip )
 		=> string.Join( " ", strip.Select( square => $"({square.X},{square.Y}):{square.Marker}" ) );
 }

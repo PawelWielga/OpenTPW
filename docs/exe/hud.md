@@ -2810,7 +2810,18 @@ the strips `49,22,0;50,22,1` latch 1 (`1b-hover.png`), Escape latch 1 and `| pat
 `q538/side-by-side.png`), `49,22,0;48,22,8` latch 0 and markers 0, and `(49,18)`, `(49,17)` red with latch 0. The second
 verdict, console-driven (no player route on the stock park, so in no run of the original): the queue tool anchored on
 the NOMODIFY avenue cell (48,17) with the pointer held on (48,16), flags `0x04c0`, drew `(48,17):1[is marked NOMODIFY]
-(48,16):1[is outside the park]`, latch 1, and the edges red after Escape (`5b-hover.png`, `5-edges.png`). Two clears are built from the listing alone (in no game run, 2026-10-19 review):
+(48,16):1[is outside the park]`, latch 1, and the edges red after Escape (`5b-hover.png`, `5-edges.png`).
+**Under a wall** (Q540): the edges are drawn after the tool's pass, so where one crosses a lifted cell its walls zero the latches the pass left (`park-engine.md`, "The walls"),
+and only a queue's join leaves one set then. In the original (`q540/orig/`, `q325/stock.TPWS`, `q540/PREDICTION.txt`
+round 1): Mike Cooper's fence drawn with the patrol tool, (52,26)-(54,27), and the locator following him laid 11 records,
+6 squares and 5 walls under (52,26) and (53,26), texture 0; the Belly Bounce's queue edited and the pointer on the join
+(49,28), `d60` 1 and `d58` 0 with the edges drawn (`a-16-join28-edges.png`), 1 with the follow off (`setcam.py off`, no
+edges, `a-17`), 0 again on; the click there laid the same five cells for $375 either way (`a-19-*`, `b-1-*`), so nothing
+reads that `d58`. **OpenTPW** keeps no `d58` past a pass, so it zeroes nothing: the same clicks on the final build
+(`q540/run2`) gave "thing 26 patrols (52, 26)-(54, 27), its edges 6 squares a frame", with the queue tool still armed
+`49,22..49,27` marker 0 and `49,28` marker 8, `| patrol 6` and `| walls 5` all 0, latch 0 (`3-join-edges.png`, beside the
+original's in `q540/side-by-side.png`), and the click "queue: laid 5 from (49,22) and joined the path at (49,28)", five
+withdrawals of 75; main's build counted `MARKER_WALL_CLEARS_REFUSAL_LATCH` 3 times there. Two clears are built from the listing alone (in no game run, 2026-10-19 review):
 `ParkBuildMode.Arm` of a tool and taking an item into the hand (`ParkBuilding.Hold`, which the move tool also reaches)
 clear the latch. Not built: between the press and the release the original runs mode-1 hover passes over the clicked
 cell, so an empty-hand click on one unaffordable cell leaves `d50` 1 (the money arm, `0x00535931`) where ours leaves it 0;
@@ -2818,8 +2829,7 @@ and mode 4's passes (`0x005235bb`..) set `d50` and `d5c` each tick while the ite
 (`0x00523658`; the golden-ticket cost `+0xc4` unpaid sets neither, `0x005235e6`..`0x0052360b`) and the placer sets it on an
 entrance or exit facing off the map (`0x005295e8`, `0x00529730`), where ours leaves a carried item's latch clear
 (`CARRY_PREVIEW_MARKERS`). In no game run: a refused queue or patrol click before the edges (a queue pass then Escape was, Q538), a track's refusal (no shipped
-track reaches the path tool here; tested), a square lifted over a built cell on an edge (none of the stock areas crosses
-one; the lift is the tools', tested), a fence drawn in play (the patrol tool, built: "The patrol switch and the patrol tool" below), Full Simulation (not
+track reaches the path tool here; tested), Full Simulation (not
 asked: the locators are either mode's), the other three themes.
 
 #### The person's windows: the visitor's and the staff member's (Q429, Q430, Q431)

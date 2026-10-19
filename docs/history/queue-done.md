@@ -9085,6 +9085,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   From the run review (2026-10-17): the writer rebuilds each cell's chain by id and the file's order, not the running
   list the original writes (`ParkWorld.People.cs`, `saves.md`, "The chains"): since Q446 a file chain [A, B] whose B
   walks off and back runs [B, A] and is written [A, B]. Write the running order.
+- [x] **Q540. The latches a lifted square's wall zeroes under a path or queue strip** (Q539's first piece). Read: the
+  four sites (`0x005333bd`..) change nothing a path or queue reader sees; only a queue join's `d58`, under the locator's
+  edges, which nothing reads. `MARKER_WALL_CLEARS_REFUSAL_LATCH` taken out, no square left unrefused is lifted on any
+  cell (`NoUnrefusedPathOrQueueSquareIsLifted`, mutations 6 of 6). Measured in both games (`q540/side-by-side.png`): the
+  original's `d58` 0 with the edges, 1 without, the same $375 queue either way; ours latch 0, `| walls 5` all 0.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
