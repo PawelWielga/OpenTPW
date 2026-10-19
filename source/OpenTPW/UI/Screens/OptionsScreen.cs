@@ -449,8 +449,7 @@ internal sealed class OptionsScreen : UiWindow
 	/// <summary>
 	/// The display row. Its words are OpenTPW's own: the original's UITEXT has nothing for windowed or
 	/// full screen, because it chose between its two ways as it started and never showed the choice
-	/// (see <see cref="Display"/>), so these are written in the style of the lines around them - the
-	/// same way the delete box's missing question is.
+	/// (see <see cref="Display"/>), so these are written in the style of the lines around them.
 	/// </summary>
 	private void ShowDisplay()
 	{

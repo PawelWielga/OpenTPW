@@ -458,6 +458,7 @@ internal sealed class WindowStack : Panel
 
 		// The right button's steps the same way (RightSteps): the cursor library posts its press and release as two
 		// messages too (0x00486c70, button 1).
+		// Ours: the left's steps are dealt before the right's; the original's one queue keeps their order (0x00486c70).
 		foreach ( var rightDown in RightSteps( _rightWasDown, Input.Mouse ) )
 		{
 			if ( rightDown && !_rightWasDown )

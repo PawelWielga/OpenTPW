@@ -786,7 +786,8 @@ English table, the american tables shift every letter past `’` by one:
 `StringFile( path )` takes `MBToUni.dat` from the path's folder, each kept from its first character decoded, so the
 american `THEMENAMES.str` reads the four theme names; a `StringFile( Stream )` has no folder and takes English. The
 console's `strings <table> <row>...` reads any row so. Two languages ship (English, american), **21 `.str` files
-each**, and the game reads English alone: `Localization` and every other reader name `Language/English`.
+each**; OpenTPW reads English alone (`Localization` and every other reader name `Language/English`), where the
+reference install of the original reads `Language/american` (`saves.md`, "Load Game and Save Game").
 
 **How to redo the measurement:** the local `strdump` harness does it (`CLAUDE.local.md`; it mounts the file system
 first, and `dotnet run` rebuilds it against the current tree). By hand: make a throwaway console project referencing `OpenTPW.Files.dll` and

@@ -311,6 +311,27 @@ public class ProceduralGroundTests
 		CollectionAssert.AreEqual( new byte[] { 0xa0, 0x00, 0xf0, 0x80, 0x10, 0x20, 0x30, 0x40 }, texture.Texels );
 	}
 
+	/// <summary><c>TEXTURE32</c> 1 keeps the texels whole (the original's 8:8:8:8 read), rows still bottom up.</summary>
+	/// <remarks><b>Mutation:</b> the mask taken whatever the mode gives 0xa0 first.</remarks>
+	[TestMethod]
+	public void APathTextureIsKeptWholeUnderTexture32()
+	{
+		var was = Texture.KeepsEightBits;
+
+		try
+		{
+			Texture.KeepsEightBits = true;
+
+			var texture = ProceduralGround.PathTexture.FromRgba( [0x10, 0x20, 0x30, 0x40, 0xaf, 0x0f, 0xff, 0x88], 1, 2 );
+
+			CollectionAssert.AreEqual( new byte[] { 0xaf, 0x0f, 0xff, 0x88, 0x10, 0x20, 0x30, 0x40 }, texture.Texels );
+		}
+		finally
+		{
+			Texture.KeepsEightBits = was;
+		}
+	}
+
 	/// <summary>
 	/// A tile is laid again only where its path laid over changes: in a box of 4 x 5 jungle tiles, a path put on (2, 3)
 	/// lays one tile, which is then the tile with the path; the same path again lays none; taken off, one, and the

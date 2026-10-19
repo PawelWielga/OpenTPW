@@ -6,8 +6,8 @@ namespace OpenTPW;
 /// the detail file's <c>GraphicalOptions.FIRSTPERSONVIEWDISTANCE</c> (<c>DetailFile_Apply</c> <c>0x0044d8f0</c>). The
 /// depth it is measured in is the original's clip z, the float at a batch vertex's <c>+8</c> that
 /// <c>Fog_VertexSpecular</c> compares, which is <see cref="ClipScale"/> × (eye depth − <see cref="ClipNear"/>); the shaders
-/// take the band in eye depth. Everything in the park's world is fogged but the sky (docs/exe/park-engine.md, "First
-/// person's fog").
+/// take the band in eye depth. Everything in the park's world is fogged but the sky, and the viewfinder's interface, which the original fogs
+/// but no shipped band shows (<see cref="OpenTPW.UI.ParkViewfinder"/>; docs/exe/park-engine.md, "First person's fog").
 /// </summary>
 /// <param name="Start">Where the fog begins, in the original's clip z.</param>
 /// <param name="End">Where it is whole, in the original's clip z.</param>

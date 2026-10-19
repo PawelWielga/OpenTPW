@@ -25,8 +25,8 @@ namespace OpenTPW.UI;
 /// </summary>
 internal sealed class HelpBar
 {
-	private const int Left = 574;
-	private const int Right = 1474;
+	internal const int Left = 574;
+	internal const int Right = 1474;
 	private const int Bottom = 1520;
 	private const int HelpFont = 7;
 

@@ -87,7 +87,8 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// <summary>
 	/// What the people's and the shadows' draws hand people.shader. World space already, so the model matrix is identity -
 	/// the quads were turned to face the camera as they were written. Both are fogged in first person, as the original's
-	/// sprite batch fogs them (SpriteBatch_AddQuad, SpriteShadow_Draw's FUN_00566220, under render-word 0x2000).
+	/// sprite batch fogs them (SpriteBatch_AddQuad, and FUN_00589770's shadow through FUN_00565f90, under render-word
+	/// 0x2000; docs/exe/park-engine.md, "First person's fog"). The orbit view's silhouette shadow is unfogged there.
 	/// </summary>
 	internal static ObjectUniformBuffer DrawUniforms() => new()
 	{
@@ -314,7 +315,7 @@ public sealed class ParkGuestSprites : ModelEntity
 		{
 			0 => $"Shadows: {OpenTPW.Level.DetailFile}'s SPRITESHADOW 0, so nobody casts a shadow",
 			1 => $"Shadows: {OpenTPW.Level.DetailFile}'s SPRITESHADOW 1, so every person casts the {ParkPersonShadows.Silhouette} silhouette",
-			_ => $"Shadows: {OpenTPW.Level.DetailFile}'s SPRITESHADOW {_shadowTier}, the person's own picture, not built: none drawn"
+			_ => $"Shadows: {OpenTPW.Level.DetailFile}'s SPRITESHADOW {_shadowTier}, the person's own picture: drawn in first person, not built elsewhere (none drawn)"
 		} );
 
 		Current = this;
@@ -557,10 +558,16 @@ public sealed class ParkGuestSprites : ModelEntity
 	}
 
 	/// <summary>
-	/// The shadows' mesh, a quad a person, at medium's tier only: the silhouette multiplied onto what lies under it,
-	/// tested against depth and writing none, both faces drawn (<see cref="ParkPersonShadows"/>). The shader is the
+	/// The shadows' mesh, a quad a person: in the orbit view at medium's tier the silhouette multiplied onto what lies
+	/// under it, tested against depth and writing none, both faces drawn (<see cref="ParkPersonShadows"/>); in first person
+	/// at any tier but 0 the atlas (the bodies' own pictures) alpha-blended, again writing no depth. The shader is the
 	/// people's: the picture times the vertex colour, dropped under alpha 16, as the original's word <c>0x...13</c>
-	/// keeps the silhouette's alpha test.
+	/// keeps the silhouette's alpha test, and fogged by <c>vFog</c> in first person, as <c>FUN_00589770</c>'s is.
+	/// <para>
+	/// <b>A deviation in order:</b> the shadows are all drawn after all the bodies. The original's first-person walk adds
+	/// each shadow straight after its own body (<c>0x0058a7f1</c>, <c>0x0058a800</c>), which under an alpha blend differs
+	/// only where a shadow overlaps another person's graded edge; the walk's batch sort is unread (park-engine.md).
+	/// </para>
 	/// <para>
 	/// <b>A deviation: under a tool's squares the shadow is hidden.</b> <see cref="ParkBuildMarkers"/> draws before the
 	/// people and writes depth 1.5 over the land, so a shadow 0.6 over it fails the test there, where the original's shows
@@ -572,7 +579,9 @@ public sealed class ParkGuestSprites : ModelEntity
 		_shadowModel?.Delete();
 		_shadowModel = null;
 
-		if ( _shadowTier != 1 || _people.Count == 0 )
+		var kind = ParkPersonShadows.KindFor( _shadowTier, FirstPerson );
+
+		if ( kind is not (ParkPersonShadows.Kind.Silhouette or ParkPersonShadows.Kind.FirstPersonOwnPicture) || _people.Count == 0 )
 			return;
 
 		var indices = new uint[_people.Count * 6];
@@ -584,8 +593,9 @@ public sealed class ParkGuestSprites : ModelEntity
 			(indices[at + 3], indices[at + 4], indices[at + 5]) = (i * 4, (i * 4) + 2, (i * 4) + 3);
 		}
 
-		var material = new Material( PeopleShader, PeopleMaterial | MaterialFlags.DisableDepthWrite | MaterialFlags.Multiply );
-		material.Set( "Color", _silhouette ??= new Texture( ParkPersonShadows.Silhouette ) );
+		var firstPerson = kind == ParkPersonShadows.Kind.FirstPersonOwnPicture;
+		var material = new Material( PeopleShader, ShadowMaterialFor( kind ) );
+		material.Set( "Color", firstPerson ? _atlas! : _silhouette ??= new Texture( ParkPersonShadows.Silhouette ) );
 
 		_shadowModel = new Model( _shadowVertices, indices, material );
 		_shadowModel.EnableFrequentUpdates( _shadowVertices );
@@ -596,6 +606,16 @@ public sealed class ParkGuestSprites : ModelEntity
 
 	/// <summary>The people's pipeline: depth tested and written, both faces drawn (<see cref="Build"/>).</summary>
 	internal const MaterialFlags PeopleMaterial = MaterialFlags.DisableCulling;
+
+	/// <summary>The silhouette shadow's: the people's with no depth written (word <c>0x...13</c> | <c>0x800</c>, <c>0x00589a51</c>) and the multiply blend.</summary>
+	internal const MaterialFlags SilhouetteShadowMaterial = PeopleMaterial | MaterialFlags.DisableDepthWrite | MaterialFlags.Multiply;
+
+	/// <summary>The pipeline a <paramref name="kind"/> of shadow is drawn with.</summary>
+	internal static MaterialFlags ShadowMaterialFor( ParkPersonShadows.Kind kind )
+		=> kind == ParkPersonShadows.Kind.FirstPersonOwnPicture ? OwnPictureShadowMaterial : SilhouetteShadowMaterial;
+
+	/// <summary>First person's own-picture shadow: the people's alpha blend with no depth written (word <c>0x556</c> | <c>0x800</c>, <c>0x00589845</c>), no multiply.</summary>
+	internal const MaterialFlags OwnPictureShadowMaterial = PeopleMaterial | MaterialFlags.DisableDepthWrite;
 
 	/// <summary>
 	/// A fresh vertex array of that many quads, every one a point, and no quad counted as uploaded: the model
@@ -766,8 +786,9 @@ public sealed class ParkGuestSprites : ModelEntity
 			}
 		}
 
-		// The shadows after the people, as the original's second pass follows its first: a body's picture has written
-		// its depth, so the part of its shadow behind it stays hidden.
+		// The shadows after the people, as the orbit view's second pass follows its first: a body's picture has written
+		// its depth, so the part of its shadow behind it stays hidden. First person's original adds each shadow straight
+		// after its own body (BuildShadows says what differs).
 		if ( _shadowModel != null && shadowReach > 0 )
 		{
 			_shadowModel.UpdateVertices( _shadowVertices, shadowReach * 4 );
@@ -799,12 +820,15 @@ public sealed class ParkGuestSprites : ModelEntity
 
 	/// <summary>
 	/// A body's shadow written at the frame's next free shadow, the picture's foot on <paramref name="centre"/>'s place
-	/// (<see cref="ParkPersonShadows.Corners"/>): at medium's tier, with a park light travelling downwards and room
-	/// left. The own picture of tiers 2 and 3 is counted and draws none.
+	/// (<see cref="ParkPersonShadows.Corners"/>), with a park light travelling downwards and room left: the silhouette at
+	/// medium's tier in the orbit view, or in first person the body's own atlas picture in black at the darkness alpha
+	/// (<see cref="ParkPersonShadows.Kind"/>). The orbit view's own picture of tier 2 and 3 is counted and draws none.
 	/// </summary>
 	private void WriteShadow( int thingId, Vector3 centre, Region picture, bool mirrored, Vector3? travels, HeightfieldFile? field )
 	{
-		if ( _shadowTier >= 2 )
+		var kind = ParkPersonShadows.KindFor( _shadowTier, FirstPerson );
+
+		if ( kind == ParkPersonShadows.Kind.OwnPictureNotBuilt )
 		{
 			Unimplemented.Report( "SPRITE_SHADOW_OWN_PICTURE" );
 			return;
@@ -812,15 +836,18 @@ public sealed class ParkGuestSprites : ModelEntity
 
 		var index = _shadowsDrawn.Count;
 
-		if ( _shadowTier != 1 || travels is not { } light || ParkPersonShadows.Darkness( light ) is not { } darkness
+		if ( kind == ParkPersonShadows.Kind.None || travels is not { } light || ParkPersonShadows.Darkness( light ) is not { } darkness
 			|| (index * 4) + 3 >= _shadowVertices.Length )
 			return;
 
+		var firstPerson = kind == ParkPersonShadows.Kind.FirstPersonOwnPicture;
 		var corners = _shadowVertices.AsSpan( index * 4, 4 );
-		var lift = ParkCamcorderCameraMode.Active ? ParkPersonShadows.FirstPersonLift : ParkPersonShadows.Lift;
+		var lift = firstPerson ? ParkPersonShadows.FirstPersonLift : ParkPersonShadows.Lift;
+		var colour = firstPerson ? ParkPersonShadows.OwnPictureColour( darkness ) : ParkPersonShadows.Colour( darkness );
+		(float, float, float, float)? uv = firstPerson ? (picture.Left, picture.Top, picture.Right, picture.Bottom) : null;
 
 		if ( !ParkPersonShadows.Corners( corners, new Vector2( centre.X, centre.Y ), picture.Width, picture.Height, picture.OriginX,
-			mirrored, light, ( x, y ) => field?.CornerPlaneAt( x, y ) ?? 0f, lift, ParkPersonShadows.Colour( darkness ) ) )
+			mirrored, light, ( x, y ) => field?.CornerPlaneAt( x, y ) ?? 0f, lift, colour, uv ) )
 			return;
 
 		_shadowsDrawn.Add( (thingId, [corners[0].Position, corners[1].Position, corners[2].Position, corners[3].Position]) );

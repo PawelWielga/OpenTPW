@@ -137,8 +137,8 @@ public static class GameCalendar
 	/// Here it counts from nought whatever the save holds.
 	/// </summary>
 	/// <param name="rate">
-	/// Funny seconds per real second, for when a park's saved clock block is read. Nothing reads it
-	/// yet, so every caller passes the default.
+	/// Funny seconds per real second: the park's own is in <see cref="ParkWorld.Calendar"/>, which no
+	/// caller passes yet, so every caller passes the default.
 	/// </param>
 	public static void Rebase( int rate = DefaultRate )
 	{

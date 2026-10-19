@@ -196,8 +196,9 @@ original draws it (`hud.md`, "The stat bars' skin").
 That reaches the engine init `0x00572780` (`0x00572966`), `FUN_0058cff0` (the "tcache ok" step) and `TexCache_Init` (`0x0058da40`), the
 texture cache's init, which logs "Texture Cache Initialization" and "Surfaceformat chosen %d", stores the index
 (`0x0058db5c`; forced 3 at `0x0058daca` when the renderer mode `[0x008bd524]` is 4) and calls
-`TexCache_CreateStagingPool` (`0x0058b220`, below). `FUN_0058db90` (from `FUN_005774c0`) stores a new index and remakes
-the pool and the slots; what calls it with which index is not read.
+`TexCache_CreateStagingPool` (`0x0058b220`, below). `FUN_0058db90`'s one caller (`0x00577520`, in `FUN_005774c0`) passes -1: the index
+stays, the cache is freed if `0x20000000` is set, and only the slots are remade (`FUN_0058d670`); the staging pool is not
+remade on that path (with another index it would be, and only in renderer mode 1).
 The table at `0x007015f8` holds four shorts a format, alpha, red, green, blue bits:
 
 | Index | Format |
@@ -217,18 +218,20 @@ The bytes a texel are `2, 2, 2, 4` at `0x007014c8` and again at `0x00701fe0`. `0
 formats (`IDirect3DDevice3::EnumTextureFormats`, vtable `+0x20`, callback `0x00573060`). `TexFormat_EnumCallback`
 (`0x00572f70`) counts the set bits of each offered format's alpha, red, green and blue masks (`Bits_Count`, `0x005911d0`)
 and copies its 32-byte `DDPIXELFORMAT` into the record whose four counts the table above holds, logging "Surfaceformat
-%d found, argb %d %d %d %d". A record left with `dwSize` nought is a format the device lacks: `TexFormat_GetRecord`
+%d found (argb) %d%d%d%d" (`0x007688c4`) under the flag word's `0x1000000`. A record left with `dwSize` nought is a format the device lacks: `TexFormat_GetRecord`
 (`0x00573820`) refuses it (error `0xb0754003`), and with record 2 empty the init releases what it made and fails
 (`0x005733fe`; "No suitable alpha surfaces" is logged only under the flag word's `0x2000000`). So the 4-4-4-4 format is
-required, whatever its masks' order on the device.
+required; the loaders follow its masks' order on the device, the sign board assumes A-R-G-B.
 
 **One table a format turns 8 bits into the surface's.** `TexFormat_BuildChannelTables` (`0x005839f0`), from the engine
 init (`0x005727b0`, after the device's formats are taken at `0x0044df6b`), fills for each record whose `dwSize` is 32 a
 table at `0x008bd5d8 + 0x1000 n`: for each value `v` from 0 to 255 four dwords, alpha, red, green, blue, each
 `(v >> (8 - bits)) << shift`, `bits` that mask's count and `shift` its lowest set bit (`Bits_LowestSet`, `0x005911f0`).
 **A channel is cut to its top bits, never rounded**: at format 2 a channel keeps `v >> 4`, so 0 to 15 store nought and
-240 to 255 store 15. (Format 3's table is the static constructor's, `0x00583900`: `v << 24`, `<< 16`, `<< 8`, `v`.) Every
-writer of a texel goes through it:
+240 to 255 store 15. (Format 3's table starts as the static constructor's, `0x00583900`: `v << 24`, `<< 16`, `<< 8`, `v`; it is
+rebuilt from the device's masks when the device offers 8-8-8-8, and stands when it does not, or in renderer mode 4,
+where `0x005839a0` fills record 3 by hand after the tables are built, `0x005727c3`.) The texture loaders' writers go
+through it:
 
 - The zlib codec `FUN_00593ab0`, the LZSS one `FUN_00595920` and `FUN_00597100` (not identified) use the 512-word
   tables `Codec_BuildChannelTables` (`0x005916c0`) copies from it, alpha `0x00cef228`, blue `0x00cef628`, green
@@ -238,6 +241,10 @@ writer of a texel goes through it:
 - `FUN_00575160`, the other formats' converter (from `FUN_00574bd0`), the same: a 4-byte source's alpha through the
   alpha column, a 3-byte source's the alpha of 255 (`+0xff0`); its texel stride is `[0x007016f8 + 4 n]`, 2 at format 2.
 - `SpritePack_Load` at format 2 (`0x00587f0e`) turns its 256-colour palette into 16-bit entries through the table.
+
+The sign board's mode 2 (`FUN_005ecb40`, `0x005ed011`) packs its own nibbles, `(b0 & 0xf0) << 8 | (b1 & 0xf0) << 4 |
+(b2 & 0xf0) | b3 >> 4`: also a cut, but in a fixed A4R4G4B4 order whatever record 2's masks; the terrain's last pass
+blends in place on the locked surface (`park-engine.md`, "The procedural ground").
 
 **No texture picks its own format.** The texture cache makes every slot through the device's factory (`[0x008bd52c]`
 `+0x10`, then its slot 0 with the size, the index `[0x008bd554]` and the mip count: `TexCache_CreateSlots`,
@@ -252,7 +259,7 @@ levels; `TexCache_Init` sets four (`[+0x18e8]`, `0x0058dab0`) and the cache's bi
 `DetailFile_Apply` copies from `GraphicalOptions.MIPMAP` (`[0x007858a4]`, key 12 of the table at `0x00744300`,
 `0x0044db1e`; 1 in all three shipped files). `TexCache_MeasureSpace` (`0x0058d400`) keeps them only where the renderer
 `[0x008bd524]` is 1 (live 1) and the space measured is over 64 of its units, else logs "NOTICE not enough space for
-mipmaps, creating surfaces without" and clears both; `TexCache_CreateAllSlots` (`0x0058d670`) hands the count to every
+mipmaps, creating surfaces without" (when bit 2 was set and the flag word `[0x008bd508]` holds `0x1000000`, `0x0058d5be`..`0x0058d5cc`) and clears both (`0x0058d5ed`..`0x0058d603`, unconditional); `TexCache_CreateAllSlots` (`0x0058d670`) hands the count to every
 slot (`TexCache_CreateSlots`'s last argument, a slot over one level sized four thirds). How a level below the first is
 filled is not read.
 
@@ -269,9 +276,23 @@ branch (`0x0057b716`).
 alpha too), unless the detail file the game starts with says `TEXTURE32 1` (`Texture.KeepsEightBits`, the original's
 format 3). Each level is made on the processor, the rounded mean of the eight-bit level above's two by two, cut, down to
 one texel (the original's four levels and its filler not followed). Kept at eight (`TextureFlags.OwnPixels`): the
-one-colour stand-ins and the sky's tint, which are OpenTPW's own, and the loading screen, the pointer and the letters,
-whose way to the screen in the original is not read (Q517). The procedural ground's sheet goes through the same cut,
-so a path's texels, which its compositor reads from the locked surface as `n << 4` (Q489), reach the screen as `n x 17`.
+loading bar's reds, the object window's green and red lines and the sky's tint, which are OpenTPW's own, and the loading
+screen, the pointer and the letters, whose way to the screen in the original is not read (Q517). The footprint picture's
+three colours are the original's (`FUN_004ab1b0`, park-engine.md) and are cut with the rest: measured (8,89,140),
+(0,117,25), (115,53,0) over black on a 16-bit frame fit the cut alone (the blue's red 0x1e is 8, the green's red 0x0f 0,
+the brown's blue 0x0f 0), not the eight-bit colour. The procedural ground's sheet goes through the same cut, so a path's
+texels, which its compositor reads from the locked surface as `n << 4` (Q489), reach the screen as `n x 17`; under
+`TEXTURE32` 1 the sheet is not cut and a path stays `n << 4`.
+
+**The sky's colour ramp is the exception to `n x 17`** (Q700). `sky_rgb.tga` is loaded as the other art is, A4R4G4B4, and
+the ramp is read back from that surface at format 2 (`0x00585d67`..`0x00585da2`) as each colour channel `n << 4 | 8`
+and alpha 255; at format 3 the texel is copied (`0x00585dc5`). OpenTPW writes `(v & 0xf0) | 8` and 255
+(`Sky.WidenRamp`) unless `TEXTURE32` 1.
+
+**What the cut costs** (Q700). The park loads about 0.76 s slower than with eight bits kept (totals 3.4 s against 4.2 s over
+four runs: guest sprites 273 -> 729 ms, ground 560 -> 691, objects 717 -> 785, fixed items 172 -> 206; `q700/*/run.log`);
+the guest atlas is also packed and cut again on every switch into and out of first person (about 0.45 s by the load
+figure, not measured).
 
 ## The zlib codec, `FUN_00593ab0`
 

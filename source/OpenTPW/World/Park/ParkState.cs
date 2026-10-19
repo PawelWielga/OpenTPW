@@ -937,7 +937,8 @@ public sealed class ParkState
 	/// </summary>
 	/// <remarks>
 	/// The start and the rate are <see cref="GameCalendar.Epoch"/> and <see cref="GameCalendar.Rate"/>, the clock
-	/// constructor's own: the save's clock block is not read, and Lost Kingdom's holds the same two (the rate
+	/// constructor's own: the save's clock block is read (<see cref="ParkWorld.Calendar"/>) but its start and rate are not
+	/// used, and Lost Kingdom's holds the same two (the rate
 	/// <c>docs/exe/weather.md</c>, the start <c>docs/exe/ride-operation.md</c>, "What it gives the three rides"). This
 	/// is not <see cref="GameCalendar.Now"/>, which counts from nought (Q149).
 	/// </remarks>

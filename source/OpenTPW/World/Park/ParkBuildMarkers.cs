@@ -71,6 +71,13 @@ public sealed class ParkBuildMarkers : ModelEntity
 	/// <summary>The shader's own see-through bit - see <c>test.shader</c>'s <c>FLAG_TRANSLUCENT</c>.</summary>
 	private const uint Translucent = 2;
 
+	/// <summary>
+	/// Whether the squares' ripple shading (the sine scaling each corner's up vector, <c>0x00700e28</c>) is a gap in this
+	/// light: the original's lighter runs only behind render-word <c>0x0800</c> (<c>0x0057453a</c>, <c>0x00574689</c>), so
+	/// low quality's <c>LIGHTING</c> 0 gives every corner the mask and the scale changes no colour there (Q516).
+	/// </summary>
+	internal static bool RipplesShade( ParkLight? light ) => light is not { Lit: false };
+
 	private readonly Texture[] _textures = new Texture[Material.TextureSlots];
 
 	/// <summary>The strip last built, so the mesh is laid again only when it changes.</summary>
@@ -337,7 +344,8 @@ public sealed class ParkBuildMarkers : ModelEntity
 		if ( strip.Count + patrol.Count + stranded.Count == 0 || ParkGround.Current?.Heightfield is not { } field )
 			return;
 
-		Unimplemented.Report( "MARKER_RIPPLE_SHADING" );
+		if ( RipplesShade( Level.Current?.ParkLight ) )
+			Unimplemented.Report( "MARKER_RIPPLE_SHADING" );
 
 		if ( strip.Any( square => square.Marker is ParkPathBuilding.MarkerLink or ParkPathBuilding.MarkerEnd ) )
 			Unimplemented.Report( "MARKER_ICON_TURNS_WITH_CAMERA" );

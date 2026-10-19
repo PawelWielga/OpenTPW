@@ -77,9 +77,9 @@ filed the items that cite it.
   From Q528 (`saves.md`, "OpenTPW's writer, the weather thing"): the weather thing is written from the running park, so
   the original loading a file this game writes runs on with its weather (it rained, and delivered this game's
   forecast on its own clock); a load here still reads only the wind (Q529). The managers' fields Q241j names are all
-  written now; the rest of this item is the pieces above (the advisor's rows, built since, Q530; the patrol edges, the
-  quick right click).
-  In no game run: snow (only hallow snows), a forced quality held against a delivery (`mOverridden` is never set),
+  written now; the rest of this item is the pieces above (the advisor's rows, built since, Q530; the
+  `MonthsSinceTheFirstSweep` copy; the patrol edges; the quick right click).
+  In no game run: snow (only hallow snows), a forced quality held against a delivery (nothing found sets `mOverridden` but a load),
   Full Simulation (not asked: the weather is either mode's), the other three themes.
   From Q526 (`saves.md`, "OpenTPW's writer, the calendar's fields"): the park clock's month and day are written as the
   date of the tick, so the original runs no month's change on its first tick after loading a file this game writes
@@ -88,19 +88,21 @@ filed the items that cite it.
   shipped), Full Simulation (not asked: the calendar is either mode's), the other three themes.
   From Q524 (`saves.md`, "OpenTPW's writer, the economy thing"): the economy thing's seven fields and eight loans are
   written (it has no rings: the money rings are the analyser's, written since Q385 to Q389), so the nearest piece is
-  the calendar's fields (Q241j's too; written, Q526): the original runs a month's change on its first tick in some files this game
-  writes (Q523's) and not in others (Q524's, its calendar two days into a month), which those fields decide. In no game
+  the calendar's fields (Q241j's too; written, Q526): the original ran a month's change on its first tick in files this game wrote
+  before Q526 whenever the load's month differed from the file's stock `mMonthAtLastUpdate` (Q523's, loaded in
+  January) and not otherwise (Q524's, loaded on 1 February 2002), which those fields decide; written since Q526, it
+  runs none. In no game
   run: a loan bought or paid off here (no loans screen, Q456), withdrawals off, a batch not nought, Full Simulation
   (not asked: the bank is either mode's), the other three themes.
   From Q523 (`saves.md`, "OpenTPW's writer, the strike records"): the strike records and the force are written, so the
-  nearest piece is the economy thing's loans and rings (Q241j's too; written, Q524). The original ends a strike one
-  look early in Q523's file, its first tick after the load being a month's change there (Q149; not in Q524's; a file
+  nearest piece is the economy thing's loans (Q241j's too; written, Q524). The original ends a strike one
+  look early in Q523's file, its first tick after the load being a month's change there (the file's `mMonthAtLastUpdate` is the stock's February, which a January load differs from: the clock fields, Q241j; the calendar, Q149; not in Q524's, loaded in February; a file
   written since Q526 holds its tick's month and day, and none runs). In no game run: a calling-off
   saved, a force word not 0 or 1, Full Simulation (not asked: the strike is either mode's), the other three themes.
   From Q443 (`park.md`, "Arrivals: who comes, on what, and how often"): the leavers' draw is on the save's seed, which
   is written back, so the nearest piece is the staff strike's five records and `mForceStrike` (`ParkWorld.StaffHqState`;
   a strike changes them, Q138b; written, Q523), then the economy
-  thing's rings and the loans (written, Q524). In no game run: the original's own vehicle at the same summons (its generator is drawn
+  thing's loans (written, Q524). In no game run: the original's own vehicle at the same summons (its generator is drawn
   by every system and reseeded at each arrival, ours by the leavers alone: moving those onto `ParkState.RandomSeed` is
   not filed as a piece of this item), Full Simulation (not asked: the summons is either mode's), the other three themes.
   From Q442 (`hud.md`, "The patrol switch and the patrol tool"): the refused click's sound is built at every build
@@ -347,8 +349,9 @@ filed the items that cite it.
   balance, `+0x1f350`, the lifetime visitors and more; Q386 named each; Q387, Q388 and Q389 keep three, and the
   lifetime visitors and dearest ticket) are not kept, and a written file keeps the file's bytes for them
   (`ANALYSER_MONTH_CLOSE`). A park made with no file starts the rings empty and is not written
-  (`SAVE_PARK_WITH_NO_FILE`). The original closes a month on the first tick after loading a file this game saved past
-  its own first month (this game's calendar, Q149). In no game run: a loan taken or paid (no screen), a month with
+  (`SAVE_PARK_WITH_NO_FILE`). A file written since Q526 holds its tick's month and day, so the original
+  runs no month's change on its first tick after the load (`saves.md`, "OpenTPW's writer, the calendar's fields"); before
+  it, files kept the stock's `mMonthAtLastUpdate` (Q241j; this game's calendar, Q149). In no game run: a loan taken or paid (no screen), a month with
   withdrawals off, a ring gone round 144 months, Full Simulation (not asked: the account is either mode's), the other
   three themes.
   From Q384 (`hud.md`, "How a list's cells are aligned"): the hire and buy lists' alignments are compared cell by cell.
@@ -394,7 +397,7 @@ filed the items that cite it.
   either mode's), the other three themes.
   From Q372 (`hud.md`, "The visitors rows", "The time in park"): the time in park is built. Its rate is
   `GameCalendar.Rate`, the clock constructor's, where the original's is the park calendar's own `+0x1c` (the save's
-  clock block is not read: Q149). The original's larger lettering clips a nine-digit count at both ends of its cell,
+  clock block is read, `ParkWorld.Calendar`, and its rate not used: Q149). The original's larger lettering clips a nine-digit count at both ends of its cell,
   where this game's fits. In no game run: an arrival's row with the screen open (its stay nought in either game), Full
   Simulation (not asked: the screen is either mode's), the other three themes.
   From Q371 (`hud.md`, "The visitors rows: a number, a money cell, a bar"): the visitors' number, cash and happiness are
@@ -1059,7 +1062,7 @@ filed the items that cite it.
   project's pick. `ParkWorld` reads each kind's current project and highest group and the lab's `mWorkLoad`
   (FileFormats `saves.md` has their bytes). Messages to the advisor, the analyser and the end are Q702 and Q703:
   count them where they would go. Confirm in stock Easymode with its one researcher, predicted from `lib/labsim.py`:
-  Dino Karts researched on the 95th hand-out, tick 2640 (log and census), then bought from the buy list
+  Dino Karts researched on the 95th hand-out (tick 2640 if he never rests; later by his first break, near tick 2230) (log and census), then bought from the buy list
   (photograph); Stone Head on the 162nd. A test with values a wrong share or a wrong group index gets wrong.
 - [ ] **Q702. A finished project tells the advisor and the buy list.** From Q245, after Q701. Message `0x11` to the
   advisor: rows 93 to 97 (`Research*Researched`, by `mCat`, scores 150, 130, 130, 110, 90) and, on a group raised
@@ -1071,7 +1074,7 @@ filed the items that cite it.
   progress marks the park all researched (`+0xb9` of its park record, `0x005b0ca0`; whether `gms.dat` keeps it is
   not read), then in Instant Action advisor row 167 (`0xa7`, score 10000, responses 380-381) and the End feature
   (`FUN_00516b00`); in Full Simulation only once every park record is marked. Row 168 (`0xa8`) has no poster found.
-  `lib/labsim.py` puts Easymode's last project, Super Toilet, on the 1177th hand-out, tick 24280, with one researcher;
+  `lib/labsim.py` puts Easymode's last project, Super Toilet, on the 1177th hand-out (tick 24280 without rests), with one researcher;
   a run can hire more or start from a file with less left. Decode what the End feature does first if no item has.
   The End feature's handler is read (fork watch 2026-10-19, verify-world.md L2; `park-engine.md`, "The End feature's
   handler `0x0048a970`"): Escape at any time, or a right click after 2000 ms with RMB cancel on, deletes the feature,
@@ -1081,11 +1084,12 @@ filed the items that cite it.
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge
   (`Lab_SetWorkLoad`), the arrows (`Lab_PickNextProject`, `Lab_PickPreviousProject`), each bar's fill and red label
-  (UITEXT 446, or 185 with nothing left), the pumps (speed per UI pass, so on `Time.Delta` at the original's rate: say
-  the deviation at the site), the 1000 ms timer, sounds `0x9a` to `0x9c`, advisor message 200 posted and withdrawn.
+  (UITEXT 446, or 185 with nothing left), the pumps (speed per UI pass; lane A measures the original's passes a second first, a pump's frames a second
+  under `play.sh`'s 30 fps cap or `0x1e` posts a second, then on `Time.Delta` at that rate: say the deviation at the site), the 1000 ms timer, sounds `0x9a` to `0x9c`, advisor message 200 posted and withdrawn.
   After Q701 (the lab spends): without it the bars and pumps never move. Confirm in a Full Simulation jungle from
-  Alexah's `restart.INTS` with a researcher hired: the five bars at 552, 675, 481, 829 and 829 of 1024 (log and
-  census) and the screen photographed beside the original's (lane A). Before copying the opening's knob round trip,
+  Alexah's `restart.INTS` with a researcher hired: the five bars at 552, 675, 481, 829 and 829 of 1024 on an opening before the researcher's first hand-out (the clock
+  paused at the hire), else as `lib/labsim.py`'s done at the opening's tick predicts (log and
+  census) and the screen photographed beside the original's (lane A). Before copying the knob round trip (the opening, and a researcher hired, trained or lost with the screen open),
   lane A checks it in the original (`tpwmem.py`, the lab's `+0x1460`): with one researcher whose summed ability is 3,
   does each opening take the work load from 85 down one (`hud.md` predicts 84, then 83)? Not read: the pump's frame
   count in `res_fluid`, how the gauge and dial draw, the sounds' parameters.
@@ -1100,7 +1104,7 @@ filed the items that cite it.
   (log and `gms.dat` read back), and the stored three plus the record award nothing (the original's own profile).
   Measures not yet held here (the coaster's highest point, the cell security words) are a piece each.
 - [ ] **Q707. The advisor's golden-ticket lines.** After Q706. The thirteen posts (`0xd7`-`0xd9`, `0xdc`-`0xde`,
-  `0xe1`-`0xe3`, `0xea`-`0xed`; score 99000, posted on the message bus) and the first ticket's `0x137` and `0x13b`,
+  `0xe1`-`0xe3`, `0xea`-`0xed`, the ticket index as the line; score 99000, the moved rows 500, posted on the message bus) and the first ticket's `0x137` and `0x13b`,
   on model slot 1, the park's own advisor, from the level's `advisor.wad` (clips 16 to 20, which OpenTPW does not
   load); lines of result 1 on gesture row 1, results 2 and 3 on row 13, with the glints (`scenes.md`, "Gesture table",
   effects 44 and 49) and no lead-in (`scenes.md`, "A row and the voice's start"); `ADVISOR_RESPONSE_GESTURE_ROW` is
@@ -1270,8 +1274,7 @@ filed the items that cite it.
   percentage, `SCRAP_VALUE_DEPRECIATION`, counted only when something is sold. `ParkEntryPriceScreen`'s heading
   `0x4f3af` is empty, and its remark says "left empty and counted"; the original titles it with the name of the thing
   at world `+0x1da732`, `mParkGates` (`ParkWorld`), and its help row 191 reads "Park name - left-click to edit", so
-  the title is the park's name and its edit is Q28's. `ParkGadget.ShowDate` prints the machine's short date in place
-  of a format not read back. `ParkBuyScreen`'s description panel `0x1ea` draws its frame and the footprint picture, and neither the item's turning model nor its name row `0x1ec`. Count each
+  the title is the park's name and its edit is Q28's. `ParkGadget.ShowDate` prints the machine's short date (Q527). `ParkBuyScreen`'s description panel `0x1ea` draws its frame and the footprint picture, and neither the item's turning model nor its name row `0x1ec`. Count each
   where it is drawn. Confirm: `unimplemented` after opening a ride's window, the entry-price screen and the buy
   screen.
   From Q238: the buy list's prices are bare numbers where the original letters "$ 2500" (UITEXT `0x1c1`,
@@ -2152,8 +2155,11 @@ filed the items that cite it.
   11 and 16, and 12 under a parent not 25) and `HOVER_TYPE_15_ROW` (map type `0x15`). Type `0x15` is read: category 6,
   UIHELPTEXT 448 (`0x1c0`, "Left-click to edit this track") posted on a change of category, the thing forgotten,
   `FUN_00469180`, pointer 11 `c_pylon` (`0x00487728` to `0x004877a2`). The track's arm (`0x004873d5` to `0x004874fe`) is
-  category 5 and 446 (`0x1be`) with pointer 6 or 10 by the track record's `+0x2c`, after tests of the cell's thing and
-  the track's (`FUN_00536380`, `FUN_00536350`, `FUN_00536340`, the add-on test) not read. The stock park reaches neither
+  category 5 and 446 (`0x1be`) with pointer 6 or 10 by `+0x2c` of the thing `FUN_004d99e0` answers for the track
+  record's `+0x10` cell (none: the thing forgotten, nothing posted, `0x00487441`). On a cell of map type 4, 9 or 10
+  (`FUN_00536380`, `FUN_00536350`, `FUN_00536340`) the arm returns with nothing when the cell has no thing
+  (`0x004873f8`) and goes on to the map-type switch when its thing is no add-on (`0x0048740e`), so such a cell takes the
+  object's 550, where ours counts the track first. The stock park reaches neither
   (map types 0, 1, 2, 3, 4, 7, 9, 10, 30 and track types 7, 12, 25, `parkfile.show_map` on `q325/stock.TPWS`); that a
   built track ride is what makes them is inferred from the rows' words and `c_pylon`: build after the track rides. Confirm in both games over a built coaster's track and its pylons.
 - [ ] **Q517. Do the loading screen, the pointer and the letters pass the four-bit cut? Decode first.** From Q700
@@ -2179,11 +2185,13 @@ filed the items that cite it.
   changed with `shadows 0`). Decode where the original draws its marker squares against the sprite list's two passes
   (and whether they write depth over the people's feet, Q477), then order ours to match. Confirm by the locator open on
   Mike in both games, a frame pair with shadows on and off (`lib/shadowdiff.py`).
-- [ ] **Q521. A person's shadow at high detail: their own picture.** From Q480: `SPRITESHADOW` 2 and 3 (`high.sam` sets
-  2) have `SpriteShadow_Draw` use the person's own picture with the darkness word `0x67000000` as its colour and the
-  picture's own blend (no multiply), counted here `SPRITE_SHADOW_OWN_PICTURE` and drawing none. Build it (a second
-  shadow mesh on the people's atlas, alpha-blended, no depth write). Confirm at high quality in both games (the
-  original by its Options screen) by a frame pair at one camera.
+- [ ] **Q521. A person's shadow at high detail in the orbit view: their own picture, unfogged.** From Q480, narrowed by
+  the run 4 review (first person's own-picture shadow, `FUN_00589770`, is built: `ParkPersonShadows.KindFor`). `SPRITESHADOW`
+  2 and 3 (`high.sam` sets 2) have `SpriteShadow_Draw`'s non-`0x40000` arm (added with `0x566220`, unfogged) use the
+  person's own picture with the darkness word `0x67000000` as its colour and the picture's own blend (no multiply),
+  counted here `SPRITE_SHADOW_OWN_PICTURE` (`ParkGuestSprites.WriteShadow`) and drawing none. Build it on first person's:
+  add the unfogged orbit kind to `KindFor` and reuse `OwnPictureShadowMaterial`. Confirm at high quality in both games
+  (the original by its Options screen) by a frame pair at one camera.
 - [ ] **Q522. The weather's drops in first person's fog.** From Q485 (`park-engine.md`, "First person's fog"): first person
   fogs every batch under render-word `0x2000`, but whether the rain's and snow's drops go through that batch (the callers
   of `SpriteBatch_AddQuad` include `FUN_0057be90`, `FUN_0057ed50`, `FUN_005860d0`, `FUN_00577ae0` and `FUN_0058a010`, none
@@ -2200,8 +2208,10 @@ filed the items that cite it.
   (`q526/side-by-side.png`): on 10 January 2002 the original's gadget reads "1.10.2002" (`orig/a-2-loaded-gadget.png`,
   the poll's day word 10 at that moment), where ours letters .NET's short date, "1/6/2002" on 6 January
   (`ParkGadget.ShowDate`, `ToShortDateString`, so it follows the computer's culture). Seen, not decoded: no
-  "%d.%d.%d" format is among the executable's strings, so find what letters the gadget's date (a Windows date format
-  under Proton's locale, or the UI text table) before choosing ours. Confirm by both gadgets on one date.
+  "%d.%d.%d" format is among the executable's strings, the first candidate is UITEXT 448, `{17}.{16}.{18}` in the american
+  tables (`saves.md`, the Load Park rows): check the gadget's date draw for `0x1c0`. Ours draws `GameCalendar.Now`,
+  which counts from nought after a load (Q149), so the two gadgets agree only after a console `clock`. Confirm by both
+  gadgets on one date.
 - [ ] **Q529. A loaded park's weather runs on from the file's.** From Q528 (`saves.md`, "OpenTPW's writer, the weather
   thing"): the original's load reads all of the weather thing over its constructor's (`Weather_Serialise`,
   `0x00512010`) and runs on from it, the rain, the storm, a pending forecast and its due time; ours reads only
@@ -2210,7 +2220,9 @@ filed the items that cite it.
   3 days, the forecast's `mTime`; the first tick past each) rather than day edges of `GameCalendar` (Q149), so a
   forecast read from a file falls due on the original's tick. Look first at what the load leaves undrawn: the original
   sets the particles only on a step of the ramp, so a file whose drops stand at their target rains nowhere until the
-  next change (filmed, `q528/orig/e-rain-film.png`), and its voice's handle is the saving process's. Confirm: q528's `run3/q528-fix2.TPWS`
+  next change (filmed, `q528/orig/e-rain-film.png`), and its voice's handle is the saving process's. The constructor does not apply its roll
+  (`docs/exe/weather.md`, `FUN_00511f70`), so a park with no file holds the roll unapplied until its first forecast
+  arrives. Confirm: q528's `run3/q528-fix2.TPWS`
   loaded here and in the original, the quality, the drops and the forecast's delivery tick (17097) predicted, a frame
   of each.
 - [ ] **Q712. The television static on entering or leaving first person.** From the fork watch of 2026-10-19
@@ -2225,6 +2237,26 @@ filed the items that cite it.
   the static photographed in the original under Proton on entering first person, then ours beside it; predict the 300 ms
   from the frame count.
 
+- [ ] **Q716. First person's own-picture shadow beside the original's.** From the run 4 review (Q480 1, Q485 1 and 2),
+  built and confirmed here against main (`fix-run4/PREDICTION.txt` S1-S5: no streak at -2/-1, 0.592 of the ground under
+  the picture's core, a figure where main drew a bar) but not beside the original: its first-person frames (`q485/orig`)
+  have nobody near the camera. Put the original in first person with people within the band (`gmove.py`, `memhold.py`
+  at the stock band and at -2/-1) and ours at the same stand; predict the shape (the person's own `.FPC` picture laid
+  along the sun) and 0x67/255 darkening on opaque texels. Measure the order too: ours draws every shadow after every
+  body, the original's 0x80 walk adds each straight after its own body (said at `BuildShadows`).
+- [ ] **Q717. The cost of cutting every texture to four bits.** From the run 4 review (Q700 4): a park loads 0.76 s
+  slower with the cut, and each switch into and out of first person packs the guest atlas again (about 0.45 s by the
+  load figure, not measured). Measure a camcorder switch with and without the cut (`TEXTURE32 1` in a private game
+  folder); if it is felt, make `CutLevels` cheaper (a 256-entry table, one row loop a level). Said at
+  `Texture.LevelsFor` and in `docs/exe/textures.md`, "What the cut costs".
+- [ ] **Q718. A first-person right click let go inside one frame reaches the park after first person is left.** From the
+  run 4 review (Q499 2, latent). `Hud.Update` (`Level.cs`) runs the window stack before `WorldClick`: the stack's release
+  step calls `ViewRightClick` (`ParkViewfinder.RightClickAnswer`), which leaves first person, and `WorldClick`'s press
+  step then reads `RightPressTaken( false )`, arms, and its release runs `QuickRightClick`. The original posts the park
+  the press first, in first person, and takes none of it. Harmless today (entering first person lets go of the hand and
+  `LetGo` answers null); it bites if anything the quick click does is ever not a no-op in first person. Fix: record at
+  the stack's press step whether `ViewRightClick` answered, in a static of its own, and read that in `RightPressTaken`.
+  Said at the site (`Level.WorldClick`, "Latent").
 ## B. Docs and comments
 
 - [ ] **Q14. Comment sweep of the cleanup commits.** Replace history-voice comments with what the code does now,
@@ -2420,18 +2452,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   (`park-engine.md`, "The gate and the ticket booths"); the hover calls it at six places. Seen in the original (Q478):
   the pointer on the Belly Bounce brightens its model (the frame's box (180,220) to (300,350) reads red 160 and 173 in
   `q478/orig/b-3-ride.png` and `b-4-ride-again.png`, 138 and 141 in `b-2-queue.png` and `b-5-shop.png`), the object
-  arm's call at `0x00487712`. From Q494: `[0x007afda0]` is the model the picker's object march met (`FUN_00469340`), which
-  ours keeps as `ParkPicking.Marched` (the thing).
-- [ ] **Q515. The object march's tie with the ground: a model's floor lying on it.** From Q494 (`q494/PREDICTION.txt`,
-  R7; `park-engine.md`, "The picker's object march"): at (480,265) 130 180 the original's march met the Belly Bounce at
-  all 16 pixels over it, 14 of them on its floor (`jb_floor`, local height 0) at height 0, where ours, handed the
-  original's own rays (`q494/ray3`), answers the ground at 7: the floor and the ground meet the ray at one point and ours
-  keeps the ground on a tie (`ParkPicking.March`, `>=`). The original keeps the model's point only where it is strictly
-  nearer (`0x0045cd04`..`0x0045cd35`), comparing the ground's distance rounded to a float with the model's at the FPU's
-  width; its root stood at 1.256e-07 (the record's root `+0x44`, read live; the ground 0.0 there), and ours stands the
-  thing at the ground's height (`ParkObjects.OriginFor`). Read where the original's root height comes from (the save's
-  fixed-point position, or the stand), then build it. The cell is the same either way: only the thing met changes,
-  which is Q24's highlight. Confirm in both games by `hoverscan.py ... pick` and `pickray` at that view.
+  arm's calls at `0x00487712` (a new object) and `0x004878ce` (the same one). From Q494: `[0x007afda0]` is the model the picker's object march met (`FUN_00469340`), which
+  ours keeps as `ParkPicking.Marched` (the thing), whether or not its point beat the ground's.
 - [ ] **Q25. The camcorder button should give a crosshair and place the camera where you click.**
   `ParkGadget.EnterCamcorder` enters the mode at once. The original installs a mouse-interaction mode
   (`FUN_00481a10`, `park-engine.md`, "Camcorder mode — the first-person view"). Its click handler was decoded by Q48

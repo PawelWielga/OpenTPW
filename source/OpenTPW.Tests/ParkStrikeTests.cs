@@ -750,16 +750,23 @@ public class ParkStrikeTests
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the force not written, or written as 1; a record a kind out of place; the level and the
-	/// flag swapped; the stamp not written; the picked-up word or a budget written over; the writer handed nothing
+	/// flag swapped; the stamp not written; the picked-up word zeroed or a budget written over; the force written as eight bytes; the console's line showing a set word as 1; the writer handed nothing
 	/// still writing.
 	/// </remarks>
 	[TestMethod]
 	public void AWrittenParkHoldsTheForceAndTheFiveStrikeRecords()
 	{
-		var world = Park();
-		var at = world.StaffHqAt;
+		// The file's word at +20 is made nonzero, so a writer that zeroes it, or writes the force as an eight-byte
+		// word over it, is told from one that keeps it.
+		using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var payload = new SaveReader( stream ).ReadFile();
+		var at = new ParkWorld( payload ).StaffHqAt;
 
 		Assert.IsTrue( at > 0 );
+
+		BitConverter.GetBytes( (short)0x001a ).CopyTo( payload, at + 20 );
+
+		var world = new ParkWorld( payload );
 
 		ParkWorld.StrikeRecord[] records = [new( 1, 0, 16837 ), new( 2, 1, 16843 ), new( 3, 0, 17557 ), new( 4, 1, 18202 ), new( 0, 1, 19607 )];
 		var running = new ParkFileWriter.Running( world.GameTick, false, 13, 0, world.Camera.Saved!.Value,
@@ -770,7 +777,7 @@ public class ParkStrikeTests
 		Assert.AreEqual( 7, BitConverter.ToInt32( body, at + 16 ), "mForceStrike" );
 		CollectionAssert.AreEqual( records.SelectMany( record => new[] { record.Level, record.OnStrike, record.Stamp } ).ToArray(),
 			Enumerable.Range( 0, 15 ).Select( i => BitConverter.ToInt32( body, at + 22 + (4 * i) ) ).ToArray(), "mStrikeLevel[0..4]" );
-		Assert.AreEqual( 0, BitConverter.ToInt16( body, at + 20 ), "mStaffMemberPickedUp, the file's" );
+		Assert.AreEqual( 0x001a, BitConverter.ToInt16( body, at + 20 ), "mStaffMemberPickedUp, the file's" );
 		CollectionAssert.AreEqual( new[] { 25, 150, 75, 10000, 50 },
 			Enumerable.Range( 0, 5 ).Select( i => BitConverter.ToInt32( body, at + 82 + (4 * i) ) ).ToArray(), "the budgets" );
 
@@ -779,6 +786,7 @@ public class ParkStrikeTests
 
 		Assert.IsNull( written.Problem );
 		Assert.AreEqual( 7, carried.ForceWord );
+		StringAssert.StartsWith( carried.Describe(), "force 7 ", "the console's line shows the word, not 0 or 1" );
 		Assert.AreEqual( "1,0,16837 2,1,16843 3,0,17557 4,1,18202 0,1,19607", Records( carried ) );
 		CollectionAssert.AreEqual( records, carried.Records.ToArray() );
 

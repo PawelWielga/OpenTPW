@@ -3242,8 +3242,9 @@ with `forcestrike 1` and the clock written 16,836: saved on 16843, the file's th
 `+20` and (2, 1, 16843) five times; loaded back here, `strikes` read the same and all five staff set off for the
 picket within 25 sweeps and stood on row 9 (`run1/2-picket.png`; the final build's `run3`, within 48). Main's build wrote the stock file's (0, 0, 715)
 and no force, and nobody struck. **The original** given the file read force 1 and (2, 1, 16843) at the load, then
-ran a month's look on the first tick (16844) and ended the strike, the level kept 2: it closes a month on the first
-tick after loading a file this game saved past its first month, the clock block being the file's ("Inside `WRLD`",
+ran a month's look on the first tick (16844) and ended the strike, the level kept 2: it closed a month on the first
+tick after the load, the file's `mMonthAtLastUpdate` being then the stock's February and the load in January (written
+from the tick since Q526: "OpenTPW's writer, the calendar's fields"; the clock block being the file's, "Inside `WRLD`",
 the clock; Q149). Given the file saved on 16837 with (1, 0, 16837), that first-tick look raised every kind to (2, 1,
 16838) and all five set off within two seconds; its 1 January 2002 look on 16843 ended it. Run on, its look on
 17557 struck again, (3, 1, 17557), from the force alone, all five on row 9 (`orig/c-picket-before-save.png`). **The
@@ -3269,12 +3270,17 @@ same and every slot.
 **Both games** (`q524/`: `confirm.py`, `PREDICTION.txt`, `run1`, `run2`, `control1`, `orig/`). `loan4.TPWS` is the stock
 park with the balance 100 and loan 4 (18000 over 24 at 750) bought, five repaid (`parkfile.economy_set`). Loaded here,
 the fee raised to 28 by three clicks on the entry-price screen's plus, the clock written 17556 and stepped over the
-month: the loan's 750 and five wages took the balance to -1188 on 17557, `mTurnEnteredRed` 17557, and the year's change
-zeroed the profit; saved, the file read fee 28 balance -1188 batch 0 withdrawals 1 last -1188 red 17557 profit 0 and loan
+month: the loan's 750 and five wages took the balance to -1188 on 17557, `mTurnEnteredRed` 17557, and a year's change
+zeroed the profit. The console's `clock` raises it: `GameCalendar.SetCounter` leaves the year edge at the load's 2000
+(Q149). The original, loading into its running 2002 park, had none on 17557 (from a fresh entry its first sweep would
+have zeroed it on 16844 instead, `weather.md`); saved, the file read fee 28 balance -1188 batch 0 withdrawals 1 last -1188 red 17557 profit 0 and loan
 4 repaid 6, and loaded back the same, the screen at 28 (`run2/3-reloaded-fee.png`). Main's build wrote the balance alone:
 fee 25, last 87787, red 0, profit -12013, repaid 5 (`control1`). **The original** given the file read all of it at the
 load (`orig/a-load.log`) and charged 28 a guest from the next tick; its screen showed "$ 28" (`orig/a-fee.png`). Unlike
-Q523's file, its first tick was no month's change: its calendar stood at 2 September 2002. **Its own file** saved from its
+Q523's file, its first tick was no month's change. Both files kept the stock clock block, whose
+`mMonthAtLastUpdate` is 1, February, counted from nought (`0x004f830b`). Q523's loads on 16843, 1 January 2002, and
+differs, so it sends `0xc` (`0x004f83b9`). This one loads on 17557, 1 February 2002, and does not. The gadget's
+"2.9.2002" in `orig/a-fee.png` is month first: 9 February, about 180 ticks on. **Its own file** saved from its
 menu (`orig/Q524ORIG-by-the-original.TPWS`) holds fee 28, balance -796, last -1188, red 17557, profit 392 and loan 4
 bought 1, repaid 6: the layout and the kind of values this game writes.
 
@@ -3293,10 +3299,11 @@ them (`Calendar_Serialise` reads all five and writes them back as they lie); the
 The save logs `Save: calendar written: month M day D, the date of tick T, YYYY-MM-DD`. A load here reads the block
 (`ParkWorld.Calendar`) and runs nothing on it: this game's month edges are its own calendar's, from nought (Q149).
 
-**Measured across the files** (`q526/clocksweep.py`, the 741 park files on this machine): of the 48 the original saved
-(its save folder, Alexah's Full Simulation saves, the items' `orig/` folders), 41 hold the date of their own tick; four
-`restart.INTS` at tick 0 hold month 0 day -1, the constructor's (`Calendar_Construct`, `0x004f7e80`); the other three are
-files this game wrote, kept there to be loaded. 556 of the other 693 miss, each a file this game wrote before this piece,
+**Measured across the files** (`q526/clocksweep.py`, the 741 park files on this machine): of the 48 park files in the original's
+folders (its save folder, Alexah's Full Simulation saves, the items' `orig/` folders), 41 hold the date of their own tick
+(22 the shipped pair at 755, ten of them byte copies of the disc's `Easymode.TPWI` and ten of one `restart.INTS`, and 19
+at other ticks); the four `restart.INTS` written at tick 0 hold month 0 day -1, the constructor's (`Calendar_Construct`,
+`0x004f7e80`); the other three are files this game wrote, kept there to be loaded. 556 of the other 693 miss, each a file this game wrote before this piece,
 the loaded file's pair carried under a later tick. The start (2000-01-01) and the rate (15000) are the same in all 741.
 
 **Why it matters.** Written stale, the pair made the original run a month's change on its first tick after loading a
@@ -3339,19 +3346,22 @@ from the running park (`ParkWorld.PutWeather`, handed `ParkWeather.Written` by `
 | `mOverridden` | the file's | written by the constructor alone (`Weather_Construct`, `0x00511f70`: nought); read by message 1 |
 
 **Deviations, said at `ParkWorld.PutWeather` and `ParkWeather.Written`.** The original writes its live voice's handle,
-which names nothing in the process that loads the file and, being not nought, keeps that one's rain voice from ever
-starting; this game writes nought (in all 48 files the original saved on this machine it is nought: none was raining).
+which names nothing in the process that loads the file and, being not nought, keeps that one's rain voice from starting
+until the drops next end or it snows (modes 1 and 2 stop the handle, whatever it names, and set it to nought); this game writes nought (in all 48 park files in the original's folders it is nought: none was raining).
 This park's schedule counts day edges of its own calendar (Q149), not the original's instants, so its forecast is made
 and delivered on a whole day where the original's is made on the first tick past an instant; the stamps written are
 the park calendar's on the tick it happened here, so the original loading the file runs its own schedule from them.
 A load here still reads only `mWindDir` (Q493): the quality, the forecast and the storm are rolled fresh (Q529).
 
-**Measured across the files** (`q528/wsweep.py`, the 741 park files on this machine; `parkfile.weather`, `-W`): in all
-48 the original saved, `mLastChanged` is a whole tick of its clock at or before the file's tick; the forecast is made
+**Measured across the files** (`q528/wsweep.py`, the 741 park files on this machine; `parkfile.weather`, `-W`): in the 48
+park files in the original's folders (three of them files this game wrote, kept there to be loaded; ten byte copies of
+the disc's park), `mLastChanged` is a whole tick of its clock at or before the file's tick in 43, and in the other 5
+it is nought, the constructor's: four saved at tick 0, and a Halloween World autosave on tick 4 whose first forecast
+(made on tick 1) had not yet arrived; the forecast is made
 on the first tick past `mLastChanged` + 69.12 ticks (909 to 979, 1724 to 1794, 2050 to 2120) and its `mTime` is
 `mLastForecasted` + 92.16 ticks, four days, in 44 (the other four, `restart.INTS` and the like at tick 0, hold noughts);
-`mThunderCountdown` + the tick is nought in 40, the count run down from nought since tick 0, and the tick of a load
-or of a later bolt in the rest; the location is the debug fill in 38, (x, 300, z) in the 3 where a bolt armed the thunder, and bytes nothing wrote in
+`mThunderCountdown` + the tick is nought in 40, the count run down from nought since tick 0; in five of the original's own it is the tick of a load or
+a later bolt, and in the three of this game's it is the stock -755 carried; the location is the debug fill in 38, (x, 300, z) in the 3 where a bolt armed the thunder, and bytes nothing wrote in
 the other 7 (noughts, or a heap's leftovers);
 `mOverridden` is nought in all 48.
 

@@ -59,7 +59,10 @@ public sealed class ParkStrikes
 	/// <summary><c>mForceStrike</c> as the save holds it, for the writer.</summary>
 	public int ForceWord => _force;
 
-	/// <summary>The five records as the save holds them, {level, flag, stamp} a kind, for the writer.</summary>
+	/// <summary>
+	/// The five records as the save holds them, {level, flag, stamp} a kind, for the writer. A flag is kept as 0 or 1,
+	/// the only values the game writes (<c>0x005090b2</c>, <c>0x005099a7</c>); the original copies the block raw.
+	/// </summary>
 	public IReadOnlyList<ParkWorld.StrikeRecord> Records
 		=> [.. Enumerable.Range( 0, Kinds )
 			.Select( kind => new ParkWorld.StrikeRecord( _level[kind], _onStrike[kind] ? 1 : 0, _stamp[kind] ) )];
@@ -241,7 +244,7 @@ public sealed class ParkStrikes
 
 	/// <summary>The force and the five records, {level, flag, stamp} a kind, for the console's <c>strikes</c>.</summary>
 	public string Describe()
-		=> $"force {(Force ? 1 : 0)} recs ["
+		=> $"force {_force} recs ["
 			+ string.Join( ", ", Enumerable.Range( 0, Kinds )
 				.Select( kind => $"({_level[kind]}, {(_onStrike[kind] ? 1 : 0)}, {_stamp[kind]})" ) )
 			+ "]";

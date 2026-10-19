@@ -2394,7 +2394,7 @@ the original's post on nine got away: nine is not more than 20.
 **Its tag** is row 100 of the tag table (`lib/tagtable.py`): key 383 (it takes no tag's place), picture 1, string 119,
 no button on the bar, thirty seconds, kind 0. String 119 reads "Some of the visitors are misbehaving and your security
 hasn't seen it. Make sure your guards are patrolling all areas of the park, or build security cameras."
-(`Language/american`'s is the same).
+(`Language/american`'s is the same but for its straight apostrophe).
 
 ### OpenTPW (`ParkAdvisorMessages.LaxSecurity`, a topic's `GotAwayMoreThan`; `ParkFacts.KidsGotAway`; tag row 100)
 
@@ -2707,8 +2707,8 @@ researcher (thing 30) and eight ride projects undone in its lab, so it is silent
 **Their tags** are rows 17 and 18 of the tag table: key 383, picture 2, strings 21 and 22, the bar's first button of type
 17 (the hire screen on its researchers' tab, the fifth), no second, thirty seconds. Strings 21 and 22 read "You've built
 most of the available rides and you don't have anyone to research new ones. Maybe you should hire some scientists?" and
-"You've no scientists and you've built all the available rides. You should hire some!" (`Language/american`'s, its letters
-shifted, "researchers" and "You have no researchers").
+"You've no scientists and you've built all the available rides. You should hire some!" (`Language/american`'s, "researchers"
+and "You have no researchers").
 
 ### OpenTPW (`ParkAdvisorMessages.HireResearchers`, `HireResearchersAllBuilt`, a topic's `MostRidesBuilt`, `EveryRideBuilt`; `ParkFacts.RideProjectsUnfinished`; tag rows 17 and 18)
 
@@ -4479,8 +4479,9 @@ bathrooms for a park this size...") are never said.
 **Their tags** are rows 5 and 6 of the tag table: key 383, picture 2, strings 9 and 10, the bar's first button of type
 10 (the buy screen, row 73's), no second, thirty seconds. English's string 9 reads "Lots of your visitors are thirsty.
 Maybe you should build some more drinks shops?" (`Language/american`'s "drink shops"), string 10 "People are getting
-hungry and there aren't enough food shops. Do you think you should build some more?". Row 85's group, 87, is not listed:
-nothing says it.
+hungry and there aren't enough food shops. Do you think you should build some more?". Row 85's group, 87, has its row in the tag
+table too (`0x0075f788`): key 84, picture 2, string 88, the bar's first button of type 12, no second, thirty seconds.
+No line leaves that tag, because row 85 is never said, so `ParkTags.Rows` does not hold it.
 
 ### OpenTPW (`ParkAdvisorMessages.VisitorsThirsty`, `VisitorsHungry`, `NotEnoughToilets`; a topic's `PerThirstyGuest`, `PerHungryGuest`, `AlwaysNought`, `SecondProp`; `ParkFacts.GuestsThirsty`, `GuestsHungry`; tag rows 5 and 6)
 

@@ -294,7 +294,7 @@ public class Level
 		var lightNormal = Balance.Vector( "LightNormal", new Vector3( 0.4f, -0.8f, 0.4f ) );
 		var travels = new Vector3( lightNormal.X, lightNormal.Z, lightNormal.Y ).Normal;
 
-		ParkLight = new ParkLight( Balance.Colour( "ThemeEngine.AmbientLightLevel", new Vector3( 0.333f ) ), travels, Lighting( DetailFile ) );
+		ParkLight = ParkLightFor( Balance.Colour( "ThemeEngine.AmbientLightLevel", new Vector3( 0.333f ) ), travels, DetailFile );
 		Log.Info( ParkLight.Lit
 			? $"{ThemeName}: lit per vertex by ambient {ParkLight.Ambient} and a sun travelling {travels}"
 			: $"{ThemeName}: {DetailFile}'s LIGHTING 0, so every vertex takes the full colour, no sun, no ambient, no half light" );
@@ -1209,6 +1209,9 @@ public class Level
 		return false;
 	}
 
+	/// <summary>The park's light: the theme's ambient and the sun's direction, lit unless <paramref name="detailFile"/> says <c>LIGHTING</c> 0.</summary>
+	internal static ParkLight ParkLightFor( Vector3 ambient, Vector3 travels, string detailFile ) => new( ambient, travels, Lighting( detailFile ) );
+
 	/// <summary>
 	/// A detail file's <c>GraphicalOptions.LIGHTING</c>: 1 in med.sam and high.sam, 0 in low.sam, where the original sets
 	/// render-state <c>0x1800</c> (<c>DetailFile_Apply</c> <c>0x0044d8f0</c>), whose <c>0x0800</c> keeps land from half
@@ -1541,7 +1544,8 @@ public class Level
 	/// The object the hover's object arm took last, the thing <c>[0x007c24f8]</c> as that arm compares it (<c>0x0048769d</c>):
 	/// its row is posted only for an object other than this one, whatever the category. Every arm that forgets the thing
 	/// or takes a person forgets it; those that post nothing and leave the thing (no cell, a hoarding, an object's cell
-	/// with no object, an add-on, <c>0x004878d3</c>) and nobody taken where the guests decide (<c>0x004870f3</c>) keep it.
+	/// with no object, an add-on, <c>0x004878d3</c>), nobody taken where the guests decide (<c>0x004870f3</c>) and a locator open
+	/// with nobody taken (<c>0x0048721c</c>) keep it.
 	/// </summary>
 	private int _objectTaken;
 
@@ -2098,6 +2102,11 @@ public class Level
 
 		// Each step the right button took this frame, so a quick click let go inside one frame is still a press and a
 		// release, as the original's park is posted both (0x00486c70).
+		//
+		// Latent: the stack runs before this (Hud.Update). A first-person right click let go inside one frame is answered by
+		// the stack's release, which leaves first person, so its press step is read here with first person already left and
+		// arms, and its release runs the quick right click; the original's park is posted the press first, in first person,
+		// and takes none of it. Harmless while entering first person lets go of the hand and LetGo answers null.
 		var putAway = false;
 
 		foreach ( var rightDown in UI.WindowStack.RightSteps( _worldRightWasDown, Input.Mouse ) )
@@ -2109,6 +2118,8 @@ public class Level
 			}
 		}
 
+		// Ours: the original's one queue keeps the two buttons' order (0x00486c70); here a frame whose quick right click
+		// put something away hands the park none of its left presses (docs/exe/hud.md, "A click and a double click").
 		if ( putAway )
 			return;
 

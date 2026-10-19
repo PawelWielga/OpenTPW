@@ -1673,7 +1673,8 @@ public class ParkFileWriterTests
 
 	/// <summary>
 	/// <b>The running park's month and day are the date of its tick</b>, as the original's calendar stores them every
-	/// sweep: tick 16970 is 6 January 2002, month nought; 17556 the last of January and 17557 the first of February.
+	/// sweep: tick 16970 is 6 January 2002, month nought; 17556 the last of January and 17557 the first of February;
+	/// 16842 the last of 2001 (month 11) and 16843 the first of 2002.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the month one-based; the day taken from the calendar that counts from nought.</remarks>
 	[TestMethod]
@@ -1691,6 +1692,12 @@ public class ParkFileWriterTests
 
 		state.SetGameTick( 17557 );
 		Assert.AreEqual( (1, 1), state.CalendarAtLastUpdate );
+
+		state.SetGameTick( 16842 );
+		Assert.AreEqual( (11, 31), state.CalendarAtLastUpdate );
+
+		state.SetGameTick( 16843 );
+		Assert.AreEqual( (0, 1), state.CalendarAtLastUpdate );
 	}
 
 	/// <summary>
@@ -1824,6 +1831,65 @@ public class ParkFileWriterTests
 		finally
 		{
 			weather.Delete();
+		}
+	}
+
+	/// <summary>
+	/// <b>A forecast made is written valid, with its own stamp, due time and quality</b>: the park calendar three days
+	/// past the last change (the shipped 7 days between changes less 4 of warning) makes one, which the save carries as
+	/// pending, stamped with the tick's calendar and falling due four days on. <b>The thunder sounds at the top of the
+	/// bolt that armed it</b>, not the latest bolt's.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the forecast not recorded for the save; its valid flag fixed false; the thunder taken
+	/// at the latest bolt.</remarks>
+	[TestMethod]
+	public void AForecastMadeIsWrittenValidAndTheThunderSoundsWhereItWasArmed()
+	{
+		var file = shipped.WeatherRecord!.Value;
+		var state = new ParkState( shipped );
+		state.SetGameTick( 16970 );
+		Time.Paused = false;
+		Time.StepFrames = 0;
+		GameClock.Rebase();
+		GameCalendar.Rebase();
+		Time.Update( 0f );
+		GameClock.Update( false, GameClock.ParkCatchUp );
+		GameCalendar.Update();
+		var weather = new ParkWeather( 139f, drawn: false );
+
+		try
+		{
+			weather.DebugQuality( 50 );
+
+			// Frames at sixty a second until the third day has turned (70 advances, about a thousand frames).
+			for ( var frame = 0; frame < 5000 && GameCalendar.Days < 3; ++frame )
+			{
+				Time.Update( 1f / 60f );
+				GameClock.Update( false, GameClock.ParkCatchUp );
+				GameCalendar.Update();
+				weather.Update();
+			}
+
+			var written = weather.Written( file );
+
+			Assert.IsTrue( weather.Forecast >= 0, "a forecast is made three days on" );
+			Assert.IsTrue( written.ForecastValid );
+			Assert.AreEqual( CalendarOn( 16970 ), written.LastForecasted );
+			Assert.AreEqual( ParkWeather.ForecastDue( written.LastForecasted, 4 ), written.ForecastTime );
+			Assert.AreEqual( weather.Forecast, written.ForecastQuality );
+
+			weather.DebugQuality( 10 );
+			weather.DebugStrike( new Vector3( 100f, 200f, 0f ) );
+			var armedAt = weather.LastStrike;
+			weather.DebugStrike( new Vector3( 900f, 900f, 0f ) );
+
+			Assert.AreNotEqual( armedAt, weather.LastStrike );
+			Assert.AreEqual( armedAt, weather.ThunderPlace );
+		}
+		finally
+		{
+			weather.Delete();
+			GameCalendar.Rebase();
 		}
 	}
 

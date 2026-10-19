@@ -36,7 +36,7 @@ internal sealed class UiText
 			return;
 
 		var scale = UiFonts.Scale;
-		var layout = new Layout( text, font, UiFonts.SetIndex, colour, shadow, wrap ? (int)(area.Width / scale) : 0, across );
+		var layout = new Layout( text, font, UiFonts.SetIndex, colour, shadow, wrap ? WrapWidthOf( area.Width ) : 0, across );
 
 		if ( _texture == null || layout != _built )
 			Build( bitmap, layout );
@@ -60,6 +60,13 @@ internal sealed class UiText
 		using ( _ = new Graphics.Scope( Screen.Size ) )
 			Graphics.Quad( new Rectangle( MathF.Round( x ), MathF.Round( Screen.Height - y - height ), width, height ), Material.UI );
 	}
+
+	/// <summary>
+	/// The width a wrapping control's text breaks at, in the font's pixels: the control's drawn width over the font's scale,
+	/// cut toward nought as the original cuts it ((x1 - x0) x the screen width / 2048, <c>0x0048f47b</c>; docs/exe/hud.md,
+	/// "The help bar's lettering").
+	/// </summary>
+	internal static int WrapWidthOf( float areaWidth ) => (int)(areaWidth / UiFonts.Scale);
 
 	/// <summary>The lines the text was last laid out in, and the width in the font's pixels they were wrapped at (0 for none).</summary>
 	public IReadOnlyList<string> Lines => _lines;
@@ -127,6 +134,15 @@ internal sealed class UiText
 	/// the character that takes the sum past the width ends the line before the last space or tab at or after the line's
 	/// second character, or before itself where there is none, a lone character keeping its line. Spaces and tabs before
 	/// the break are left off the line and those after it off the next.
+	///
+	/// <para>
+	/// <b>Where it differs from the original</b>, none of it reached by shipped text (dead by CONTENT: no row of either
+	/// language folder ends in a line feed or holds a carriage return). The original lays each paragraph with its line
+	/// feed (0x006aeb4b): blanks cut at a break that land before a line feed add one more, empty line (0x006aed53), a line
+	/// feed that ends the text lays no further paragraph and an empty text lays no line (0x006aeb81, 0x006aeb32), a
+	/// carriage return is a break of its own, so CR LF is two. Here the line feeds are split off first, a trailing empty
+	/// paragraph and an empty text each lay one line, a lone carriage return is a character and CR LF is one break.
+	/// </para>
 	/// </summary>
 	internal static List<string> Wrap( BitmapFont font, string text, int wrapWidth )
 	{

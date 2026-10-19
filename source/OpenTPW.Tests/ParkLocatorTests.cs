@@ -771,7 +771,7 @@ public class ParkLocatorTests
 	/// category</b> (<c>FUN_00486d90</c>): from bare ground onto a hoarding 441 stands (<c>0x004873bd</c>), and on from
 	/// there onto a cell of map type 7 beside the gate and one of type 2, the default (<c>0x004877a3</c>), it still
 	/// stands; from bare ground straight onto either it is emptied; off the map it stands (<c>0x00487240</c>), counted; an object's
-	/// cell whose parent holds no object stands (<c>0x00487667</c>), and one whose parent holds one empties it; a type-12
+	/// cell whose parent holds no object stands (<c>0x00487667</c>), and one whose parent holds one posts its row, 550; a type-12
 	/// track cell under another parent is counted. With a tool armed the empty row is posted only after a category
 	/// (<c>0x00486fd9</c>).
 	/// </summary>
@@ -1308,7 +1308,7 @@ public class ParkLocatorTests
 	/// keeps the thing, so the same object after it leaves the bar empty; coming back onto the view forgets it.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the queue's pointer the pick hand; type <c>0x15</c> given the queue's category; the object's row posted on a change of category; the
-	/// thing kept by the ground; the thing forgotten by a hoarding or under Shift; the thing kept on coming back onto the
+	/// thing kept by the ground, the default arm, the queue, the gate, a member or a guest; the thing forgotten by a hoarding or under Shift; the thing kept on coming back onto the
 	/// view; the name dropped; the add-on test dropped; the add-on's type test dropped.</remarks>
 	[TestMethod]
 	public void AQueueAndAnObjectPostTheirRows()
@@ -1322,10 +1322,10 @@ public class ParkLocatorTests
 			return (row, level.HoverPosted, row < 0 ? "" : Localization.FormatHelp( row, level.WorldHelpValues ));
 		}
 
-		(int Row, bool Posted) Head( int x, int y )
+		(int Row, bool Posted) Head( int x, int y, int person = 0 )
 		{
-			var (row, posted, _) = Hover( x, y );
-			return (row, posted);
+			var row = level.WorldHelpRow( x, y, person );
+			return (row, level.HoverPosted);
 		}
 
 		var queue = (X: 60, Y: 30);
@@ -1357,6 +1357,21 @@ public class ParkLocatorTests
 		Assert.IsFalse( Hover( 55, 15 ).Posted, "the same object" );
 		Assert.AreEqual( (550, true), Head( ride.X, ride.Y ), "another object, the same category: posted" );
 		StringAssert.StartsWith( Hover( 55, 15 ).Text, "Small Toilet:" );
+
+		// Every arm that forgets the thing posts the object again on the way back (0x004877b9, 0x00487783, 0x004878c8 and
+		// the person arms 0x00487216, 0x004870dd), not only the ground's.
+		Assert.AreEqual( (-1, true), Head( 44, 16 ), "a cell of map type 7: no category, the row emptied" );
+		Assert.AreEqual( (550, true), Head( 55, 15 ), "forgotten by the default arm: posted again" );
+		Assert.AreEqual( (444, true), Head( queue.X, queue.Y ) );
+		Assert.AreEqual( (550, true), Head( 55, 15 ), "forgotten by the queue" );
+		Assert.AreEqual( (459, true), Head( 47, 17 ) );
+		Assert.AreEqual( (550, true), Head( 55, 15 ), "forgotten by the gate" );
+		Assert.AreEqual( (555, true), Head( 43, 16, _people.Staff[0].ThingId ), "a member taken" );
+		Assert.AreEqual( (550, true), Head( 55, 15 ), "forgotten by the member" );
+		CtrlV();
+		Assert.IsTrue( Head( 43, 16, AGuest() ).Row is 553 or 554, "a guest taken, the visitors' locator open" );
+		Assert.IsTrue( Fold() );
+		Assert.AreEqual( (550, true), Head( 55, 15 ), "forgotten by the guest" );
 
 		Assert.AreEqual( (550, false), Head( hoarding.X, hoarding.Y ), "a hoarding posts nothing and keeps the thing" );
 		Assert.AreEqual( (550, false), Head( 55, 15 ), "so the same object posts nothing" );

@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenTPW.UI;
+using System.Linq;
 using System.Reflection;
 
 namespace OpenTPW.Tests;
@@ -13,7 +14,7 @@ namespace OpenTPW.Tests;
 [TestClass]
 public class HelpBarWrapTests
 {
-	/// <summary>The strip's width at 800 x 600, in the font's pixels: 900 of the virtual screen's 2048 across.</summary>
+	/// <summary>The strip's width at 800 x 600, in the font's pixels: 900 of the virtual screen's 2048 across. The live width is tested apart.</summary>
 	private const int StripWidth = 900 * 800 / 2048;
 
 	private bool _popupHelp;
@@ -93,6 +94,51 @@ public class HelpBarWrapTests
 
 		CollectionAssert.AreEqual( new[] { "WW", "WW", "W" }, UiText.Wrap( font, "WWWWW", font.Measure( "WW" ) + 1 ) );
 		CollectionAssert.AreEqual( new[] { "W", "W" }, UiText.Wrap( font, "WW", 1 ) );
+	}
+
+	/// <summary>
+	/// <b>The strip's width is the drawn width over the font's scale, cut toward nought</b>, at each of the four sets'
+	/// screens (512 x 384 to 1024 x 768, where the scale is 1) and on two windows drawn larger than their set (1280 x 720, 1920 x 1080): the width <c>UiText.Draw</c> hands the wrapper, not a constant of the test's own.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the width rounded to nearest gives 352 at the third set; the scale left out
+	/// gives 421 at 1280 x 720.
+	/// </remarks>
+	[TestMethod]
+	public void TheStripsWidthIsTheDrawnWidthOverTheScaleCutTowardNought()
+	{
+		var screen = Screen.Size;
+
+		try
+		{
+			foreach ( var (width, height, expected) in new[] { (512, 384, 225), (640, 480, 281), (800, 600, 351), (1024, 768, 450), (1280, 720, 351), (1920, 1080, 450) } )
+			{
+				Screen.Size = new Point2( width, height );
+
+				var strip = VirtualScreen.ToPixels( new UiRect( HelpBar.Left, 0, HelpBar.Right, 1 ), Anchor.Centre, VerticalAnchor.Middle );
+
+				Assert.AreEqual( expected, UiText.WrapWidthOf( strip.Width ), $"{width} x {height}" );
+			}
+		}
+		finally
+		{
+			Screen.Size = screen;
+		}
+	}
+
+	/// <summary>
+	/// A line that starts with blanks and overflows keeps its first blank: the trimming of the blanks before a break stops at
+	/// the line's second character (0x006aecfb), where trimming them all would leave an empty line.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the trim without its <c>end - 1 != start</c> stop gives an empty first line.</remarks>
+	[TestMethod]
+	public void ALineThatStartsWithBlanksKeepsItsFirstOne()
+	{
+		var font = Font();
+		var lines = UiText.Wrap( font, "   WWWWWW", font.Measure( "   WW" ) );
+
+		Assert.AreEqual( " ", lines[0] );
+		Assert.AreEqual( "WWWWWW", string.Concat( lines.Skip( 1 ) ), "the rest is cut where it overflows" );
 	}
 
 	/// <summary>A row with a break of its own stands at the top of the strip, any other in the middle; both wrap.</summary>

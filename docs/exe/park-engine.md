@@ -1316,7 +1316,9 @@ spends nothing. Then, kind 0 to 4, each kind with an effort and a current projec
 `LabProject_AddPoints` (`0x00504630`) adds it to that project. The sum is taken once, so a kind that finishes
 mid-share does not change the others' shares that turn.
 
-**A project finished** (`0x0050466f`: the points at or over the cost; points past the cost are kept in the
+**A project finished** (`0x0050466f`: the points at or over the cost, compared before the store (`fcom`
+`0x0050466f`, then `fstp` `0x00504672`), so above 24-bit precision a sum that rounds up onto the cost is kept at the
+cost and never finishes; the precision the sweep runs at is not read; points past the cost are kept in the
 project and carried nowhere): the item's control record (`FUN_004d3d10`) is marked researched (`+0x10`,
 `0x005046a1`) and its tier set to the project's level (`+0x14`, `0x005046c0`), and message `0x11` (vtable
 `0x006fd800`, the item at `+8`, `mCat` at `+0xc`) is sent at once to its four listeners (`MsgBus_Send`,
@@ -1361,14 +1363,17 @@ opener and its two boxes"). So an Instant Action park researches by its file's e
 only while it has a researcher; the screen's arrows are the only other writers of a kind's current project
 (`Lab_PickNextProject` forward, `Lab_PickPreviousProject` `0x005036a0` back; `hud.md`, "The research screen's panels"). `mLabActive` is set again when a researcher is made
 (`0x00502600`) or removed (`0x00502920`), from the word at world `+0x1da742` (`FUN_005041f0`); a change posts
-message `0x13` with 5 or 6, whose handler `FUN_00481af0` returns in type 2.
+message `0x13` with 5 or 6, whose handler `FUN_00481af0` does nothing in this build (its one call is the empty logger `0x005da3c0`).
 
 **In Lost Kingdom's Easymode** (`q245/easymode-lab.txt`, `parkfile.py -l`): efforts 100, 15, 30, 25 and 0, work
 load 85, and the one researcher, grade 2, has Easy ability 12, so a hand-out gives 6, 0.9, 1.8, 1.5 and nothing:
 the file's points, 30, 4.5, 9 and 7.5, are five hand-outs each. Every one of its eight ride projects has
 `Upgrades[1..2].CostOfResearch` 0 in its `Easy_` layer, so a finished ride appends no upgrade: tiers 1 and 2 are
 marked researched at once, and the end is reachable. **What the decode gives the build to meet** (`lib/labsim.py`,
-these rules in float32 over the file, every hand-out taken, the first on tick 760 as Q134 counted them):
+these rules in float32 over the file, every hand-out taken (the stock researcher is not: his rest, 93 on tick 755 and
+0.06 a sweep down in `q134/orig/a.log`, reaches `RestLevel` near tick 2230, when he walks to the Staff Room and rests,
+handing nothing out in states 2 and 3; so each tick below is a floor and the hand-out count is the prediction), the
+first on tick 760 as Q134 counted them):
 Dino Karts (1150) researched on the 95th hand-out, tick 2640, with the rides' group raised to 2; Stone Head
 (1414) on the 162nd, tick 3980; Laughing Hyenas (1304) on the 384th, tick 8420; Fries (1212) on the 496th, tick 10660,
 its float sum landing on 450 to a rounding; the last of the 24, Super Toilet (1419), on the 1177th, tick 24280, about twelve
@@ -1652,7 +1657,8 @@ four shadow lights at `0x008c1658` (`ShadowLights_Clear`, `0x00584b10`; `ShadowL
 12i`, L at `+0x170 + 12i`, the darkness `trunc(-127 Ly) << 24` at `+0x1b0 + 4i`, an angle at `+0x1a0 + 4i` (for the model
 shadows, not read here), and the matrix at `+0x40 (i + 1)`: the identity with row 1 `(-Lx/Ly, 0, -Lz/Ly, 0)`, which lays a
 point's height flat along the light. The count is `+0x1c0`, the walk's cursor `+0x1c4` (`ShadowLights_First`, `ShadowLights_Next`, `0x00584e30`, `0x00584e50`).
-After the people's pass `SpriteList_Draw` (`0x0058aa4f`) returns under `0x20000`; under `0x40000` it calls `SpriteShadow_Draw` (`0x00589990`)
+Under render bit `0x80` (first person and a ride's view) there is no second pass: after each body `SpriteList_Draw`
+calls `FUN_00589770` (`0x0058a800`; below, "First person's shadow"). In the grouped pass, after the people's pass `SpriteList_Draw` (`0x0058aa4f`) returns under `0x20000`; under `0x40000` it calls `SpriteShadow_Draw` (`0x00589990`)
 for every sprite of its depth buckets (the ones being drawn) with the silhouette `[list + 0x2400]` (`alphkid`, loaded by
 `0x00550950`), and with neither, with nought (the sprite's own picture); then it flushes the batch.
 `SpriteShadow_Draw` takes only a sprite whose flags hold `0x200` and `0x10000000` (a person's body); per light,
@@ -1662,7 +1668,8 @@ for every sprite of its depth buckets (the ones being drawn) with the silhouette
 shifted so the foot is nought; the four corners put through the light's matrix (the height laid along the light), and each
 then set on the land: the plane through its heightfield cell's near corner and that corner's two neighbours (the cell by
 truncation, the far corners clamped; not the triangle split `FUN_004527f0` uses), plus 0.6 (`0x008bd4ec`, 0.25 under
-render word `0x2000` or renderer 4, `0x00576a72`), the sprite's own height ignored; then through the draw matrix
+render word `0x2000` or renderer 4, `0x00576a72`), the sprite's own height ignored (true only without the sprite flag `0x800`: see
+the unreached branches below); then through the draw matrix
 `[0x0087b088]`. Corners 0 and 1 carry the texture's top row and are the far end. Under `0x40000` the colour is
 `0xff000000 | ~(darkness × 0x010101)` and the state word's low byte `0x13` (SRCBLEND ZERO, DESTBLEND SRCCOLOR: the
 ground multiplied by the colour times the texel), with the picture's alpha test (16) kept, `0x800` set (no depth write)
@@ -1673,9 +1680,32 @@ read 0 and every shadow went. On bare ground a guest's shadow left 0.591 and 0.6
 (152/255 = 0.596; the frame is 16-bit, its blue there 4 to 7 of 31 levels, 0.543); Mike's, inside the mechanics' patrol
 squares, shows through them (they are drawn over it), 0.556, 0.716, 0.835. Mike's shadow reaches 27 px up and 29 right of
 his place (1024 x 768, zoom 110; 26 and 29 reflected): a thin streak up and to the right, the way the sun travels.
-OpenTPW: `ParkPersonShadows` (the geometry, tier, darkness and colour), `ParkGuestSprites.WriteShadow` (one a body
-drawn, after the people), `HeightfieldFile.CornerPlaneAt`, `MaterialFlags.Multiply`; the own picture of tiers 2 and 3
-is counted, `SPRITE_SHADOW_OWN_PICTURE` (Q521). Measured (`run2`): 0.595 of every channel, his far end 24.5 up and 27.7 right
+**Branches no body reaches** (the flags measured on bodies were `0x10001200` and `0x10001210`): `BuildQuad` negates the heights
+under sprite flag `0x20` (`0x00589558`); turns the quad by `-[sprite+0x30]` through `0x00591430` under `0x80`
+(`0x005895d7`); under `0x800` adds `[sprite+0x20]` to the lift in place of 0.0 (`0x00702034`, `0x00589613`); and the ground's
+draw skips both `ShadowLights_Clear` and the Add when the view's flags lack `0x800` (`0x00576d01`) and adds only lights whose
+type slot answers 1 (`0x00576d36`).
+
+**First person's shadow** (Q480 and Q485, second reader): under render bit `0x80`, `SpriteList_Draw` (`0x0058a785`, the
+render word measured in first person is `0x01446180`: `0x80` set, `0x20000` clear) walks the list from its end and calls
+`FUN_00589770` (`0x0058a800`) straight after each sprite's `FUN_00589f90`. It takes a body only (`0x200`, `0x10000000`:
+`0x0058977c`, `0x00589785`), never reads `0x40000` and has no silhouette: the picture is the sprite's own
+`[[sprite+0x28]]` (`0x00589790`, `0x005897b4`), the one `Sprite_BuildQuad` draws for the body. The word is that picture's
+own (`0x00590c40`) with `0x800` (`0x00589845`, no depth write) and `0x200` cleared (`0x0058993c`); the people's `0x556` is
+SRCALPHA / INVSRCALPHA, so it is an alpha blend and no `0x13` multiply. The colour is `BuildQuad`'s return, the light's darkness
+word (`0x00589750`; `trunc(-127 Ly) << 24`, `0x00584d97`), black at that alpha, `0x67000000` under the jungle sun. It is added
+with `0x00565f90` (`0x0058994e`), which under `0x2000|0x4000` calls `Fog_VertexSpecular` (`0x005747d0`, `0x00566123` to
+`0x00566145`), so the vertex is black × (1 - f) with the fog colour as its specular × f: the result is dst × (1 - a) + fog × f × a
+with a = darkness/255 × the texel's alpha, and **over ground fogged whole the shadow is the fog colour: it vanishes**. At tier 0
+(`0x20000`) the walk draws the sprite alone. The grouped pass's `SpriteShadow_Draw` non-`0x40000` arm is the same own-picture
+draw (texture `[[sprite+0x28]]` at `0x005899c1`, colour the darkness word at `0x00589aec`) added with `0x00566220`, unfogged;
+only that arm is high detail's in the orbit view (Q521). Nothing yet measured it with a person in the band (code read).
+OpenTPW: `ParkPersonShadows` (the geometry, tier, darkness, colour and `KindFor`), `ParkGuestSprites.WriteShadow` (one a body
+drawn), `HeightfieldFile.CornerPlaneAt`, `MaterialFlags.Multiply` for the silhouette; in first person (`ParkGuestSprites.FirstPerson`)
+the shadow is the body's atlas picture in `OwnPictureColour`, alpha-blended, no depth write, through `people.shader`'s fog, at any
+tier but 0; the own picture of tiers 2 and 3 in the orbit view is counted, `SPRITE_SHADOW_OWN_PICTURE` (Q521). **Not the same**
+in first person: all the shadows are drawn after all the bodies, where the original's walk adds each after its own body (differs
+only where a shadow overlaps another person's graded edge; the walk's batch sort is unread). Measured (`run2`): 0.595 of every channel, his far end 24.5 up and 27.7 right
 (scaled to 768) on a reflected pose, 26.7 and 25.6 on the original's unreflected one (`run1`). **Not the same**: a tool's squares are drawn before the people here and write depth 1.5 over the land, so a
 shadow under them is hidden (Q520); and every body drawn casts one, where the original's buckets may leave out a person
 off the frame whose shadow would show (the buckets' cull is not read).
@@ -2077,7 +2107,8 @@ world coordinates. `FUN_0053ddd0` reads it from a 4,096-entry table `FUN_004708d
 is one world unit, a tenth of a cell. The phase `DAT_00874fc0` gains 0.1 each rendered frame unless the
 clock is paused (`FUN_0053c3f0`, `0x0053c755`..`0x0053c773`, gated on `FUN_004030c0`, IsPaused). The same
 sine scales the corner's up vector by `(sin + 1) / 2` (`0x00700e28` is −1.0, `0x00700de4` 0.5), so the
-squares also brighten and dim as they wave. Alexah, who played the original: *"they were translucent.
+squares also brighten and dim as they wave (at medium and high: low's `LIGHTING` 0 gives every corner the mask, so the
+scale changes no colour there, Q516). Alexah, who played the original: *"they were translucent.
 They waved like a flag/water."*
 
 **Over a built cell the square is lifted** (`FUN_00532fc0`, `0x005330ca` and its siblings). The record's height is
@@ -2739,8 +2770,10 @@ vertices are carried into the world (`FUN_00466c80`) and its faces tried by mate
 from the table at mesh `+0x64` (turned, normalised), the point inside where the three angles it makes with the corners
 sum to 6.2821855 (`0x006fe678`) or more. The first face inside gives the point (`0x007a1cc8`, kept at `0x007a1cb8`), so
 the answer is the first face in that order, not the nearest. **The faces' normals in the running game are the
-triangles' own**: in gates.MD2's gateway the table holds 596 entries, 400 equal to the file's and the 196 the faces
-name rewritten parallel to their triangles, 196 of 196 (`q494/orig/a-gatenormals.txt`); what rewrites them is not read.
+triangles' own**: in gates.MD2's gateway the 196 entries the faces name all lie parallel to their triangles in the
+running game, 37 of them already so in the file (`q494/orig/a-gatenormals.txt`); the table's other entries were not
+compared, and what rewrites the 159 is not read. File side: 26 of the 196 lie more than 8 degrees off in the file
+(FileFormats `models.md`, "Normals"; `q494/fixB-normals-sweep.py`).
 
 The record met goes to `[0x007a1cd4]` and to `[0x007afda0]` (`FUN_00469340`, the highlight's model, Q24), and the
 coaster builder reads it (`FUN_00443340`). The model's point is P where it is strictly nearer the eye than the
@@ -2756,12 +2789,16 @@ the file's normals. At (480,265) 130 180 (`c-scan.log`) the march met the Belly 
 on its base at height 0, and the Jungle Spray at 2.
 
 **OpenTPW** (Q494, `ParkPickMarch`, `ParkPicking.March` and `CandidateOn`, `ParkItemHeights.ThingAnswering`): the march,
-the cell's thing, the `.hmp` height about the model's root, the box floor, the walk and the nearer-than-the-ground rule
-as above, the plane each triangle's own. Deviations: the `.hmp`'s cell is found from the cell's middle (the original
+the cell's thing, the `.hmp` height about the model's root, the box floor, the walk and the thing met kept as
+`ParkPicking.Marched` whether or not its point wins, as `[0x007a1cd4]` keeps it, and its point taken only where strictly
+nearer than the ground's, the plane each triangle's own. Deviations: the `.hmp`'s cell is found from the cell's middle (the original
 carries the corner by quarter turns: the same cell); the march stops after 400 steps; a cell of the second layer's things
 (track kinds 11, 12, 16, 17, 25: the boundary's hoarding) is counted `PICK_OBJECT_MARCH_TRACK_THING` and answers
-nothing, as none is built (Q214), and so the flagged records of a coaster's pieces are not reached. Handed the
-original's rays by the console's `pickray` (`q494/ray2.out`), ours meets 87 of its 87 gate points within 0.2.
+nothing, as none is built (Q214); `FUN_0053bf30` answers a track-layer object of any kind (`+4`, or the `+0x10` parent's
+for kinds 12 and 17; `0x00452b08` uses any non-zero answer) and ours gates on those five kinds alone, so another kind
+holding an object is not tested, and so the flagged records of a coaster's pieces are not reached. Handed the
+original's rays by the console's `pickray` (`q494/ray2.out`), ours meets 87 of its 87 gate points within 0.2 (on the item's build and again on the
+run 4 review's fix build, `fix-run4/r2.out`, where the march keeps the thing met).
 
 **Open.** What advisor message `0x135` says (it resolves through a table filled at runtime); what puts
 the cursor back after a drop or a cancel; whether the staff constructors' later calls make a sound;
@@ -3621,8 +3658,9 @@ does. Its edge across the flat path is level: d is planar, not a distance.
 models (the booth, the trees, the topiary, the lamps fade at 20 to 40), the sea (`Line01`'s lake behind the fence reads
 the fog colour at the stock band and (10, 58, 61) with it held off), the people and particles (`SpriteBatch_AddQuad`,
 `0x00566123`..`0x00566145`; its callers include `SpriteBatch_DrawParticles` and the people's `FUN_00589f90`), and the
-people's shadows (`SpriteShadow_Draw` through `FUN_00566220`, `0x005663fb`..`0x0056641a` and `0x005665f7`..`0x0056661b`;
-code read: no person stood near enough in the original's frames to show one). The sky is not: its ramp is the same
+people's shadows (`FUN_00589770` at `0x0058a800` under render bit `0x80`, through `FUN_00565f90`: the person's own picture,
+alpha-blended, black at the darkness alpha, "A person's shadow"; code read: no person stood near enough in the original's frames to
+show one. The orbit view's `SpriteShadow_Draw` goes through `FUN_00566220` and is unfogged there). The sky is not: its ramp is the same
 at every band. The viewfinder's quads are fogged too (they fade at -2 to -1 and at 0 to 0.3, not at 20 to 40), so at
 every shipped band (the nearest starts at 50) they never are. Whether the weather's drops go through the fogged batch
 is not read.
@@ -3635,8 +3673,9 @@ The sky's shader takes none. Ours draws 32 bits, so the fog colour reads (72, 21
 drawn unfogged and counted, `FIRST_PERSON_FOG_WEATHER`. Along three lines clear of people, held at 20 to 40 and 40 to 80,
 ours reads within 0.03 of the original's at every depth, its departures from the formula included
 (`q485/run5/linefit.txt`); at the stock band the pixels the fog changes are the far hills and the far path and fence in
-both (4,062 here, 3,593 there). A shadow under the fog is the fog colour times the shadow's own fogged colour, (20, 183,
-241) when whole.
+both (4,062 here, 3,593 there). A shadow is built as the original's `FUN_00589770` draws it (`people.shader` is unchanged): black at the darkness alpha, the
+body's own picture, fogged, so over ground fogged whole it is the fog colour and the shadow vanishes (predicted; not yet
+measured with a person in the band).
 
 **Entering or leaving first person shows 300 ms of television static** (Q712; fork watch 2026-10-19, verify-advisor-ui.md L4).
 `Game_StateMachine` (`0x0054fabb`..`0x0054fb63`): on either edge of `([0x00790ab0] & 0x16) != 0` against the latch byte
@@ -3689,8 +3728,8 @@ over the lake, which OpenTPW lays since Q490 ("The park's sea", below); texture 
 ### What `GraphicalOptions.LIGHTING` 0 turns off
 
 **The light itself** (Q487). `DetailFile_Apply` (`0x0044d8f0`) sets render-word `0x1800` for 0 (`or ah,0x18` at `0x0044dc36`), clears it
-for 1 (`and ah,0xe7` at `0x0044dc49`) and leaves it for any other value. It runs only from `FUN_0044dc60`, which only
-`Window_Create` calls (`0x0044e1cc`), once a start: the Options screen's OK writes the quality to `Config.tcf` and the
+for 1 (`and ah,0xe7` at `0x0044dc49`) and leaves it for any other value. It runs only from `FUN_0044dc60`, which `Window_Create` calls once a start, directly (`0x0044e1cc`) or through
+`FUN_0044de20` (`0x0044e1e6`, `0x0044de8b`): the Options screen's OK writes the quality to `Config.tcf` and the
 next start applies it. Every reference to `0x008bcbc8` was walked (188); these are all the readers of the two bits:
 
 | Bit | Reader | What it does there |
@@ -3701,7 +3740,9 @@ next start applies it. Every reference to `0x008bcbc8` was walked (188); these a
 | `0x0800` | `FUN_0057a750` (`0x0057a822`) | Copied as `0x10000000` into a draw record, only where the renderer `[0x008bd524]` is 4 (live 1) |
 | `0x1000` | `Light_ModelSetup`, once, inside the `0x0800`-clear branch | Clear, `FUN_005744d0` chains the model's own lights onto `[0x00879dec]`. Its one writer moves it with `0x0800`, so it changes nothing under any value of the key |
 
-`FUN_00570d90` sets `0x0800` for its own layer's draw (off in the park, `textures.md`); nothing else tests either bit.
+`FUN_00576ec0` also sets `0x0800` (with `0x20000`) for each frame when the renderer `[0x008bd524]` is 4 (`or eax,0x20800` at
+`0x00576f02`, the word restored at the frame's end; live 1), the renderer-4 arm beside `FUN_0057a750`'s; `FUN_00570d90`'s
+`or ah,0x8` (`0x00570e94`) is on a texture-format word, not this one; nothing else sets `0x0800` or tests either bit.
 
 **Measured in the original** (`q487/PREDICTION.txt`, `q487/orig/`: the stock park, the Options screen's quality track
 to Low, a restart). The word read `0x01025900` at low against `0x01444100` at medium: `0x1800` set, `0x400000` clear
@@ -4330,7 +4371,7 @@ last posted stands. Measured in the original: the staff locator open, Mike Coope
 with his row and the hand, and off him category 0 with the row still at the foot and the arrow (`q444/orig/a-4-member-hover.png`,
 `a-2-P1.png`); the visitors' locator open, a guest whose `+0x1d8` read 9 showed "Visitor #9 : ..." and the hand, and
 bare ground category 0 no row and the arrow (`q447/orig/`). Here `Level.WorldHelpRow` answers the row, its values and
-`PickPointer`, and posts it (`Level.HoverPosted`) only where the original posts, on a change of category or person. Measured in both (Q467,
+`HoverPointer`, and posts it (`Level.HoverPosted`) only where the original posts, on a change of category or person. Measured in both (Q467,
 `q467/`, `PREDICTION.txt`): the visitors' locator opened with Ctrl held read category 0 with "Left-click to build path"
 standing, and Ctrl let go it stood on at category 0; off the followed guest (category 7, "Visitor #13") the bar was
 emptied.
@@ -4405,18 +4446,18 @@ to it, `FUN_004e2780` writes the object's name (its two lines joined, `hud.md`, 
 550 (`0x226`) is formatted with it as a `VARM` value of type 2, `{P2}` (`FUN_006acd60`, `0x004876fd`), and posted; either
 way `FUN_00469180` runs (the model highlight, Q24) and pointer 2, `c_pick`, is put up. So the thing decides: the arms that
 leave it (no cell, a hoarding, an object's cell with no object, an add-on, all through `0x004878d3`; nobody taken where
-the guests decide, `0x004870f3`, which empties the row after a category) let the same object post nothing after them,
+the guests decide, `0x004870f3`, which empties the row after a category; a locator open with nobody taken, `0x0048721c`) let the same object post nothing after them,
 and every arm that forgets it (the ground `0x0048757d`, path, queue and the default `0x004877b9`, type `0x15`
-`0x00487783`, a track `0x004874f4`, the gate and the booths, a tool armed `0x00486ff7`) or takes a person (`0x00487216`) lets it post again.
+`0x00487783`, a track `0x004874f4` (its exit `0x004873f8` keeps it, and `0x0048740e` goes on to the switch), the gate and the booths, a tool armed `0x00486ff7`) or takes a person (`0x00487216`) lets it post again.
 Type `0x15` is category 6: 448, posted on a change of category, the thing forgotten, `FUN_00469180`, pointer 11
 (`c_pylon`). Built in `Level.GroundArmAt`, `Level.WorldHelpRow` (`ObjectPosted`, `_objectTaken`), `Level.IdleCursor`
 (`HoverPointer`) and `ItemDescriptionFile.AddOnUpgradesId`/`AddOnUpgradeType`. Measured in both (`q478/`,
-`PREDICTION.txt`, `side-by-side.png`, ours `run4`), the stock park at camera (480,265) 130 180: over the queue (50,22) category 3,
+`PREDICTION.txt`, `side-by-side.png`, ours `run4`), the stock park at camera (480,265) 130 180 (the original's categories and things were read live and not stored: `q478/PREDICTION.txt` R4 records the read, `q478/orig/` the frames): over the queue (50,22) category 3,
 thing 0, "Left-click to edit this line" and `c_queue` (the reference install reads `Language/american`, whose 444 says
 line; ours reads `English`'s "queue"); over the Belly Bounce (52,24) category 4 and "Belly Bounce: Left-click to
 view/edit this item's details. Hold CTRL and click to buy another" with the hand, its model lit; over the Drinks Shop
 (43,31) category 4, another thing, its row with the hand. Ours posted 444 with `c_queue` and 550 with each name and
-the hand, the ride again posting nothing; main's build (`q478/control1`) the empty bar and the arrow. Both set the long row
+the hand, the ride again posting nothing; main's build (`q478/control1`, at zoom 150, the same cells) the empty bar and the arrow. Both set the long row
 on two lines, broken before "CTRL" (Q484; `hud.md`, "The help bar's lettering").
 
 **The hover runs only on the park's view** (Q451). `Park_MouseMessageProc` runs `FUN_00486d90` on its timer

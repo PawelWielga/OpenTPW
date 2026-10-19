@@ -577,9 +577,61 @@ public class ParkHandTests
 	/// left press alone would pick up the path tool again. Which of the two came first is not kept between the buttons,
 	/// so the frame is the put-away's.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the put-away frame going on to its left press; only the last step's answer counted.</remarks>
+	/// <remarks><b>Mutations:</b> the put-away frame going on to its left press.</remarks>
 	[TestMethod]
 	public void AFrameWhoseRightClickPutTheToolAwayTakesNoLeftPress()
+	{
+		OnAPath( ( worldClick, level, x, y ) =>
+		{
+			Time.PinWall( 200_000 );
+			Input.Mouse = new() { LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, $"a left press on the path at ({x},{y}) picks up the path tool" );
+
+			Time.PinWall( 201_000 );
+			Input.Mouse = new() { RightWentDown = true, RightPresses = 1, LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, "the right click put it away, and the frame's left press picked nothing up" );
+		} );
+	}
+
+	/// <summary>
+	/// <b>A put-away anywhere among a frame's right steps counts</b>, not only the last step's: a frame that begins with the
+	/// right button held, lets it go (the quick click, 50 ms after its press) and presses it again, ends on a press step that
+	/// answers nothing, and still hands the park none of its left presses.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> <c>putAway = RightButton( ... ) is { }</c> on every step, so that the last step's answer is the
+	/// one counted, picks the path tool up again from the frame's left press. (A frame that begins with the button up
+	/// puts away on its last step, so the first test cannot tell.)
+	/// </remarks>
+	[TestMethod]
+	public void APutAwayBeforeTheFramesLastRightStepStillTakesNoLeftPress()
+	{
+		OnAPath( ( worldClick, level, x, y ) =>
+		{
+			Time.PinWall( 200_000 );
+			Input.Mouse = new() { LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, $"a left press on the path at ({x},{y}) picks up the path tool" );
+
+			Time.PinWall( 201_000 );
+			Input.Mouse = new() { Right = true, RightWentDown = true, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, "a right press alone puts nothing away" );
+
+			Time.PinWall( 201_050 );
+			Input.Mouse = new() { Right = true, RightPresses = 1, LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, "the release put it away, and the frame's left press picked nothing up" );
+		} );
+	}
+
+	/// <summary>
+	/// Runs <paramref name="frames"/> in a park whose picked cell is a path, out of first person, with the right button
+	/// cancelling: the level's <c>WorldClick</c>, the level, and the cell's x and y. Everything it changes is put back.
+	/// </summary>
+	private void OnAPath( Action<MethodInfo, Level, int, int> frames )
 	{
 		using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
 		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
@@ -606,15 +658,7 @@ public class ParkHandTests
 
 			cell.SetValue( null, y * ParkWorld.MapSize + x + 1 );
 
-			Time.PinWall( 200_000 );
-			Input.Mouse = new() { LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
-			worldClick.Invoke( level, [] );
-			Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, $"a left press on the path at ({x},{y}) picks up the path tool" );
-
-			Time.PinWall( 201_000 );
-			Input.Mouse = new() { RightWentDown = true, RightPresses = 1, LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
-			worldClick.Invoke( level, [] );
-			Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, "the right click put it away, and the frame's left press picked nothing up" );
+			frames( worldClick, level, x, y );
 		}
 		finally
 		{
@@ -996,10 +1040,6 @@ public class ParkHandTests
 	/// <summary>A level made without its constructor - the right button needs nothing a scene builds.</summary>
 	private static Level ALevel() => (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
 
-	/// <summary>
-	/// A quick right click at a point as frames make one: the stack's update, then the level's own reading of the park's
-	/// buttons, for the press and again 50 ms on for the release.
-	/// </summary>
 	/// <summary>A right press and its release inside one frame, the button up as it ends, then the stack's and the level's update.</summary>
 	private static void QuickRightClickInsideOneFrame( UI.WindowStack stack, Level level, Vector2 at, float now )
 	{
@@ -1009,6 +1049,10 @@ public class ParkHandTests
 		typeof( Level ).GetMethod( "WorldClick", BindingFlags.Instance | BindingFlags.NonPublic )!.Invoke( level, [] );
 	}
 
+	/// <summary>
+	/// A quick right click at a point as frames make one: the stack's update, then the level's own reading of the park's
+	/// buttons, for the press and again 50 ms on for the release.
+	/// </summary>
 	private static void QuickRightClickAFrame( UI.WindowStack stack, Level level, Vector2 at, float now )
 	{
 		var worldClick = typeof( Level ).GetMethod( "WorldClick", BindingFlags.Instance | BindingFlags.NonPublic )!;

@@ -55,4 +55,39 @@ public class ParkFullLightTests
 		Assert.IsTrue( at < text.IndexOf( "vec3 lit = g_oUbo.g_vAmbientColour" ), "ahead of the sum" );
 		Assert.AreEqual( 2, text.Split( "float g_flFullLight;" ).Length - 1, "both stages' blocks carry it" );
 	}
+
+	/// <summary>The park's light is lit by the detail file the park runs on: low.sam's LIGHTING 0 reaches <c>ParkLight.Lit</c>.</summary>
+	/// <remarks><b>Mutation:</b> <c>Lighting( detailFile )</c> in <c>ParkLightFor</c> replaced by <c>true</c> fails.</remarks>
+	[TestMethod]
+	public void TheParkLightIsLitByTheDetailFileItRunsOn()
+	{
+		FileSystem = GameData.Required();
+		Log = new();
+
+		var ambient = new Vector3( 0.333f, 0.333f, 0.408f );
+		var travels = new Vector3( 0.4f, 0.4f, -0.8f );
+
+		Assert.IsFalse( Level.ParkLightFor( ambient, travels, "low.sam" ).Lit );
+		Assert.IsTrue( Level.ParkLightFor( ambient, travels, "med.sam" ).Lit );
+		Assert.AreEqual( ambient, Level.ParkLightFor( ambient, travels, "high.sam" ).Ambient );
+	}
+
+	/// <summary>The uniforms a draw hands the shader carry the park's light: the full light only from an unlit park, none outside a park.</summary>
+	/// <remarks><b>Mutation:</b> <c>g_flFullLight</c> not written, or written from the wrong light, or <c>g_flParkLight</c> left
+	/// at nought, fails.</remarks>
+	[TestMethod]
+	public void TheUniformsCarryTheParkLightAndItsFullLight()
+	{
+		var ambient = new Vector3( 0.333f, 0.333f, 0.408f );
+		var travels = new Vector3( 0.4f, 0.4f, -0.8f );
+
+		var lit = ModelEntity.WithParkLight( default, new ParkLight( ambient, travels ) );
+		Assert.AreEqual( (1f, 0f, ambient, travels), (lit.g_flParkLight, lit.g_flFullLight, lit.g_vAmbientColour, lit.g_vLightTravels) );
+
+		var low = ModelEntity.WithParkLight( default, new ParkLight( ambient, travels, Lit: false ) );
+		Assert.AreEqual( (1f, 1f), (low.g_flParkLight, low.g_flFullLight) );
+
+		var none = ModelEntity.WithParkLight( default, null );
+		Assert.AreEqual( (0f, 0f, Vector3.Zero), (none.g_flParkLight, none.g_flFullLight, none.g_vAmbientColour) );
+	}
 }

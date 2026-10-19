@@ -65,9 +65,9 @@ internal static class ParkItemHeights
 
 	/// <summary>
 	/// <c>FUN_00452ae0</c> where a placed thing with a <c>.hmp</c> owns the cell: the thing, its file, the height its
-	/// base stands at, and how high it stands over the cell; null where none does, which is where the original answers
-	/// nought to a caller handed its thing back (the picker's object march, <c>FUN_0045cdc0</c>) and the ground to one
-	/// that is not.
+	/// base stands at, and how high it stands over the cell; null where none does (where <c>FUN_00452ae0</c> answers
+	/// nought to the original's object march, which ours asks through <c>ParkPicking.CandidateOn</c>, and the ground to a
+	/// caller that is not handed its thing back). Only <see cref="Over"/> calls it, and reads <c>Top</c> alone.
 	/// </summary>
 	internal static (ParkWorld.CatalogueObject Placed, ItemHeightMapFile File, float Base, float Top)? Built( ParkState state,
 		ParkItemCatalogue? catalogue, HeightfieldFile field, int x, int y )

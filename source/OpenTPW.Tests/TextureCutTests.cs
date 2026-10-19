@@ -71,7 +71,7 @@ public class TextureCutTests
 		}
 	}
 
-	/// <summary>No shipped detail file sets <c>TEXTURE32</c>; a file saying 1 keeps eight, and 2 does not.</summary>
+	/// <summary>No shipped detail file sets <c>TEXTURE32</c> to 1; a file saying 1 keeps eight, and 2 does not.</summary>
 	/// <remarks><b>Mutation:</b> the value's test made <c>!= 0</c> keeps eight at 2; turned round, the shipped files keep
 	/// eight; the key ignored, the written 1 is cut.</remarks>
 	[TestMethod]
@@ -121,5 +121,48 @@ public class TextureCutTests
 
 		Assert.AreEqual( 7.4, Mean( 0 ), 0.05, "red" );
 		Assert.AreEqual( 76.6, Mean( 1 ), 0.05, "green" );
+	}
+
+	/// <summary>
+	/// The choice <c>Upload</c> makes from the flags a texture was asked for: levels made here for the game's art, none
+	/// (the device makes them) for OpenTPW's own pixels or under <c>TEXTURE32</c> 1.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> <c>LevelsFor</c> reading <c>CutsFor</c> turned round, or ignoring the flags, fails;
+	/// <c>Upload</c> and <c>Cut</c> take the same choice from <c>Requested</c>, so a flag dropped at a call site is the
+	/// game-only half (<c>ParkFootprintPicture.SquareFlags</c> has its own test).</remarks>
+	[TestMethod]
+	public void UploadCutsFromTheFlagsItWasAskedFor()
+	{
+		byte[] data = [200, 100, 50, 255];
+		var was = Texture.KeepsEightBits;
+
+		try
+		{
+			Texture.KeepsEightBits = false;
+			Assert.AreEqual( 1, Texture.LevelsFor( data, 1, 1, TextureFlags.None )!.Count() );
+			Assert.AreEqual( 204, Texture.LevelsFor( data, 1, 1, TextureFlags.Repeat )!.First().Pixels[0], "200 cut" );
+			Assert.IsNull( Texture.LevelsFor( data, 1, 1, TextureFlags.OwnPixels ) );
+
+			Texture.KeepsEightBits = true;
+			Assert.IsNull( Texture.LevelsFor( data, 1, 1, TextureFlags.None ) );
+		}
+		finally
+		{
+			Texture.KeepsEightBits = was;
+		}
+	}
+
+	/// <summary>
+	/// The sky's colour ramp is read back from the 16-bit surface as <c>n &lt;&lt; 4 | 8</c> a colour channel and alpha 255
+	/// (<c>0x00585d82</c>..<c>0x00585da2</c>), not as the art's <c>n x 17</c>.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the widening as <c>n x 17</c> (255 for 255, 17 for 16), the 8 dropped, or the alpha
+	/// widened as a colour (248), fails.</remarks>
+	[TestMethod]
+	public void TheSkysRampIsWidenedAsANibbleThenAnEight()
+	{
+		byte[] ramp = [0, 15, 16, 255, 240, 130, 8, 77];
+
+		CollectionAssert.AreEqual( new byte[] { 8, 8, 24, 255, 248, 136, 8, 255 }, Sky.WidenRamp( ramp ) );
 	}
 }

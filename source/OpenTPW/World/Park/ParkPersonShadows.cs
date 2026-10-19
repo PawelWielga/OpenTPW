@@ -8,7 +8,11 @@ namespace OpenTPW;
 /// <para>
 /// <b>Which picture.</b> The detail file's <c>GraphicalOptions.SPRITESHADOW</c> picks it: 0 draws none, 1 (medium) the
 /// shipped <c>generic/shadow/alphkid</c> silhouette over every person, 2 and 3 the person's own picture
-/// (<c>0x0044da97</c>). The own picture is not built: it is counted, <c>SPRITE_SHADOW_OWN_PICTURE</c>, and draws none.
+/// (<c>0x0044da97</c>). Outside first person the own picture is not built: it is counted,
+/// <c>SPRITE_SHADOW_OWN_PICTURE</c>, and draws none. <b>In first person</b> (render bit <c>0x80</c>) the original does not
+/// use the silhouette at all: <c>SpriteList_Draw</c> calls <c>FUN_00589770</c> (<c>0x0058a800</c>) after each body at any tier
+/// but 0, which draws the body's own picture, alpha-blended, black at the darkness alpha
+/// (<see cref="OwnPictureColour"/>), fogged through <c>0x00565f90</c>; <see cref="KindFor"/> picks it.
 /// </para>
 /// <para>
 /// <b>How dark.</b> The original keeps one shadow a light for up to four lights travelling downwards
@@ -67,18 +71,54 @@ internal static class ParkPersonShadows
 	/// <summary>The shadow's colour, 0xAARRGGBB: opaque, each channel 255 less the darkness (<c>0x00589ab5</c> to <c>0x00589acf</c>).</summary>
 	internal static uint Colour( int darkness ) => 0xffffffffu - ((uint)darkness * 0x010101u);
 
+	/// <summary>The darkness word the original's own-picture shadow is added with, 0xAARRGGBB: black, alpha the darkness (<c>0x00589750</c> reads it from <c>0x008c1808</c>, <c>ShadowLights_Add</c> writes <c>trunc(-127 Ly) &lt;&lt; 24</c> at <c>0x00584d97</c>), 0x67000000 under the jungle sun.</summary>
+	internal static uint OwnPictureColour( int darkness ) => (uint)darkness << 24;
+
+	/// <summary>What a person's shadow is drawn as.</summary>
+	internal enum Kind
+	{
+		/// <summary>No shadow: tier 0 (<c>0x20000</c>), or a tier no file holds.</summary>
+		None,
+
+		/// <summary>Medium's silhouette multiplied onto the ground (<c>SpriteShadow_Draw</c> under <c>0x40000</c>).</summary>
+		Silhouette,
+
+		/// <summary>First person's: the body's own picture, alpha-blended in black at the darkness alpha (<c>FUN_00589770</c>).</summary>
+		FirstPersonOwnPicture,
+
+		/// <summary>The own picture of the orbit view at high, not built: counted, <c>SPRITE_SHADOW_OWN_PICTURE</c> (Q521).</summary>
+		OwnPictureNotBuilt
+	}
+
 	/// <summary>
-	/// A person's shadow's four corners, each with the silhouette's u and v there: the picture's width across the
-	/// light at the person's <paramref name="place"/> (reflected, both sides negated about it), its height stood up from
-	/// there and laid flat along <paramref name="travels"/>, each corner then set <paramref name="lift"/> above
-	/// <paramref name="ground"/>'s plane there. Corners 0 and 1 are the picture's top, at the far end; 2 and 3 its foot.
-	/// False, writing nothing, for a light that does not travel downwards.
+	/// The shadow a <paramref name="tier"/> casts in the view. Tier 0 sets <c>0x20000</c>, which ends <c>SpriteList_Draw</c>
+	/// before any shadow in either view (<c>0x0058a7a1</c>); in first person (<c>0x80</c>) every other tier takes
+	/// <c>FUN_00589770</c> (<c>0x0058a800</c>), which never reads <c>0x40000</c>; elsewhere 1 is the silhouette and 2 and 3 the
+	/// own picture (<c>0x0044da97</c>). A tier under 0 would leave the render word as it was, which no file does: none.
+	/// </summary>
+	internal static Kind KindFor( int tier, bool firstPerson )
+		=> tier <= 0 ? Kind.None
+		: firstPerson ? Kind.FirstPersonOwnPicture
+		: tier == 1 ? Kind.Silhouette
+		: Kind.OwnPictureNotBuilt;
+
+	/// <summary>
+	/// A person's shadow's four corners: the picture's width across the light at the person's <paramref name="place"/>
+	/// (reflected, both sides negated about it), its height stood up from there and laid flat along
+	/// <paramref name="travels"/>, each corner then set <paramref name="lift"/> above <paramref name="ground"/>'s plane
+	/// there. Corners 0 and 1 are the picture's top, at the far end; 2 and 3 its foot. Each carries the texture's u and v
+	/// there: <paramref name="uv"/>'s Left, Top for corner 0, Right, Top for 1, Right, Bottom for 2 and Left, Bottom for 3,
+	/// never flipped by the reflection (as <c>SpriteShadow_BuildQuad</c> does not), or the whole texture when null, as the
+	/// silhouette is. False, writing nothing, for a light that does not travel downwards.
 	/// </summary>
 	internal static bool Corners( Span<Vertex> corners, Vector2 place, int width, int height, int originX, bool mirrored,
-		Vector3 travels, Func<float, float, float> ground, float lift, uint colour )
+		Vector3 travels, Func<float, float, float> ground, float lift, uint colour,
+		(float Left, float Top, float Right, float Bottom)? uv = null )
 	{
 		if ( Darkness( travels ) is null )
 			return false;
+
+		var (u0, v0, u1, v1) = uv ?? (0f, 0f, 1f, 1f);
 
 		// The across (Lz, 0, -Lx) of the original's Y-up axes (0x00584d0f to 0x00584d45), unnormalised: shorter as the sun
 		// stands higher.
@@ -93,10 +133,10 @@ internal static class ParkPersonShadows
 		var tall = height * Span;
 		var laid = new Vector2( travels.X, travels.Y ) * (-tall / travels.Z);
 
-		corners[0] = Corner( place + (across * left) + laid, new Vector2( 0f, 0f ) );
-		corners[1] = Corner( place + (across * right) + laid, new Vector2( 1f, 0f ) );
-		corners[2] = Corner( place + (across * right), new Vector2( 1f, 1f ) );
-		corners[3] = Corner( place + (across * left), new Vector2( 0f, 1f ) );
+		corners[0] = Corner( place + (across * left) + laid, new Vector2( u0, v0 ) );
+		corners[1] = Corner( place + (across * right) + laid, new Vector2( u1, v0 ) );
+		corners[2] = Corner( place + (across * right), new Vector2( u1, v1 ) );
+		corners[3] = Corner( place + (across * left), new Vector2( u0, v1 ) );
 
 		return true;
 

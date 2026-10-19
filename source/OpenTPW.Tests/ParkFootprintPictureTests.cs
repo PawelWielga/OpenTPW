@@ -492,4 +492,31 @@ public class ParkFootprintPictureTests
 		Assert.AreSame( screen.Footprint, panel.Children.Single( control => control.Id == 0x1eb ) );
 		Assert.AreEqual( new UiRect( 440, 407, 594, 561 ), screen.Footprint.Rect );
 	}
+
+	/// <summary>
+	/// The squares are cut to four bits like the rest of the game's art: the blue over black comes to (9, 91, 136), the
+	/// original's 16-bit frame's (8, 89, 140) to within its own rounding, where eight bits kept give (16, 91, 136).
+	/// </summary>
+	/// <remarks><b>Mutation:</b> <c>SquareFlags</c> made <c>OwnPixels</c> (the cut dropped from the texture) fails.</remarks>
+	[TestMethod]
+	public void TheSquaresAreCutToFourBitsALikeTheRestOfTheArt()
+	{
+		var was = Texture.KeepsEightBits;
+
+		try
+		{
+			Texture.KeepsEightBits = false;
+			Assert.IsTrue( Texture.CutsFor( ParkFootprintPicture.SquareFlags ) );
+		}
+		finally
+		{
+			Texture.KeepsEightBits = was;
+		}
+
+		var blue = ParkFootprintPicture.ColourOf( Mark.Body );
+		var strength = (byte)System.MathF.Round( ParkFootprintPicture.Strength * 255f );
+		int OverBlack( byte channel ) => (int)System.MathF.Round( Texture.CutChannel( channel ) * Texture.CutChannel( strength ) / 255f );
+
+		Assert.AreEqual( (9, 91, 136), (OverBlack( blue.R ), OverBlack( blue.G ), OverBlack( blue.B )) );
+	}
 }

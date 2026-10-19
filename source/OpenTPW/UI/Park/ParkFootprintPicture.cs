@@ -96,6 +96,12 @@ internal sealed class ParkFootprintPicture : UiControl
 		return squares;
 	}
 
+	/// <summary>
+	/// A square's one-texel texture is cut to four bits a channel with the rest of the game's art: its colours are the
+	/// original's fill (<c>FUN_004ab1b0</c>), which a 16-bit frame draws cut (docs/exe/textures.md, "OpenTPW cuts").
+	/// </summary>
+	internal const TextureFlags SquareFlags = TextureFlags.None;
+
 	/// <summary>The colour of a mark: blue <c>1e aa ff</c>, green <c>0f dc 32</c> the entrance, brown <c>dc 64 0f</c> the exit.</summary>
 	internal static UiColour ColourOf( Mark mark ) => mark switch
 	{
@@ -128,7 +134,7 @@ internal sealed class ParkFootprintPicture : UiControl
 			if ( !_textures.TryGetValue( square.Mark, out var texture ) )
 			{
 				var colour = ColourOf( square.Mark );
-				texture = new Texture( [colour.R, colour.G, colour.B, (byte)MathF.Round( Strength * 255f )], 1, 1, TextureFlags.OwnPixels );
+				texture = new Texture( [colour.R, colour.G, colour.B, (byte)MathF.Round( Strength * 255f )], 1, 1, SquareFlags );
 				_textures[square.Mark] = texture;
 			}
 

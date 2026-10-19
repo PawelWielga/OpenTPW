@@ -102,10 +102,6 @@ public class ParkLoadScreenTests
 
 		foreach ( var folder in new[] { "Language/English", "Language/american" } )
 		{
-			// Each folder's strings go through that folder's own character table, and the reader has the English one.
-			if ( folder != "Language/English" )
-				continue;
-
 			foreach ( var path in FileSystem.GetFiles( folder ).Where( file => file.EndsWith( ".str", StringComparison.OrdinalIgnoreCase ) ) )
 			{
 				var file = new StringFile( path );
@@ -126,7 +122,7 @@ public class ParkLoadScreenTests
 			}
 		}
 
-		Assert.AreEqual( 2365, strings, "the 21 English tables' strings" );
+		Assert.AreEqual( 4730, strings, "the 42 tables' strings" );
 		Assert.IsTrue( parameters > 0 );
 		Console.WriteLine( $"{strings} strings, {parameters} parameter parts" );
 	}

@@ -153,7 +153,7 @@ public static class ParkPicking
 	/// <summary>A cell the debug console's <c>hover</c> holds the pointer over, or null to follow the mouse.</summary>
 	public static (int X, int Y)? Pinned { get; set; }
 
-	/// <summary>The thing whose model the pointer's object march met (<c>[0x007afda0]</c>'s model, <c>FUN_00469340</c>), or nought.</summary>
+	/// <summary>The thing whose model the pointer's object march met, whether or not its point beat the ground's (<c>[0x007a1cd4]</c>, and <c>[0x007afda0]</c> through <c>FUN_00469340</c>), or nought.</summary>
 	public static int Marched { get; private set; }
 
 	/// <summary>Whether the pointer's last ray met the ground: false where its cell is the one left standing.</summary>
@@ -207,9 +207,14 @@ public static class ParkPicking
 		if ( state != null && March( from, direction, met ? hit : null, ground.MapInfoWidth, ground.MapInfoHeight,
 			( x, y ) => CandidateOn( state, Level.Current?.Catalogue, ParkObjects.Current, field, x, y ) ) is { } thing )
 		{
-			(marched, hit, met) = (thing.Thing, thing.Point, true);
-			var (x, y) = CellOf( field, hit, ground.MapInfoWidth, ground.MapInfoHeight );
-			cell = MapStep.CellId( x, y );
+			marched = thing.Thing;
+
+			if ( thing.Nearer )
+			{
+				(hit, met) = (thing.Point, true);
+				var (x, y) = CellOf( field, hit, ground.MapInfoWidth, ground.MapInfoHeight );
+				cell = MapStep.CellId( x, y );
+			}
 		}
 
 		if ( cell <= 0 )
@@ -219,11 +224,13 @@ public static class ParkPicking
 	}
 
 	/// <summary>
-	/// The thing the object march met and where, where it is nearer <paramref name="from"/> than <paramref name="ground"/>
-	/// (the ground's point wins a tie) or the ray met no ground: <c>0x0045ccf7</c>..<c>0x0045cd35</c>. The march asks
-	/// <paramref name="thingOn"/> each cell held to <paramref name="mapWidth"/> by <paramref name="mapHeight"/>.
+	/// The thing the object march met and where, and whether that point is nearer <paramref name="from"/> than
+	/// <paramref name="ground"/> (or the ray met no ground). The thing is kept either way, as the original stores it before
+	/// its nearer test (<c>0x0045cccf</c>, <c>[0x007a1cd4]</c>; <c>FUN_00469340</c>, <c>[0x007afda0]</c>); its point replaces
+	/// the ground's only where strictly nearer, the ground's winning a tie (<c>0x0045ccf7</c>..<c>0x0045cd35</c>). The march
+	/// asks <paramref name="thingOn"/> each cell held to <paramref name="mapWidth"/> by <paramref name="mapHeight"/>.
 	/// </summary>
-	internal static (int Thing, Vector3 Point)? March( Vector3 from, Vector3 direction, Vector3? ground, int mapWidth,
+	internal static (int Thing, Vector3 Point, bool Nearer)? March( Vector3 from, Vector3 direction, Vector3? ground, int mapWidth,
 		int mapHeight, Func<int, int, ParkPickMarch.Candidate?> thingOn )
 	{
 		var start = from.GetSystemVector3();
@@ -233,19 +240,20 @@ public static class ParkPicking
 			is not { } met )
 			return null;
 
-		if ( ground is { } g && System.Numerics.Vector3.Distance( met.Point, start ) >= System.Numerics.Vector3.Distance( g.GetSystemVector3(), start ) )
-			return null;
+		var nearer = ground is not { } g
+			|| System.Numerics.Vector3.Distance( met.Point, start ) < System.Numerics.Vector3.Distance( g.GetSystemVector3(), start );
 
-		return (met.Thing, (Vector3)met.Point);
+		return (met.Thing, (Vector3)met.Point, nearer);
 	}
 
 	/// <summary>
 	/// What the object march asks of a cell (<c>FUN_00452ae0</c> handed its thing back): the thing the cell answers
 	/// (<see cref="ParkItemHeights.ThingAnswering"/>), its <c>.hmp</c> height there over its model's root, the floor of
 	/// its <c>.hmp</c>'s box as the file has it (the model's <c>+0x84</c>, which the loader copies from it), and its model
-	/// as drawn. A cell of the second layer's things (track kinds 11, 12, 16, 17 and 25, the boundary's hoarding among
-	/// them: <c>FUN_0053bf30</c>) is asked first in the original; this park builds none of them, so it is counted and
-	/// answers nothing.
+	/// as drawn. <c>FUN_0053bf30</c> answers a cell's track-layer object, of any kind (<c>+4</c>, or for kinds 12 and 17 the
+	/// <c>+0x10</c> parent's), before <c>FUN_00527e80</c>. This park builds none, so a cell whose track kind is one of the
+	/// five the lift test names (11, 12, 16, 17 and 25, the boundary's hoarding among them) is counted and answers nothing;
+	/// another kind holding an object is not tested (a deviation, Q214).
 	/// </summary>
 	private static ParkPickMarch.Candidate? CandidateOn( ParkState state, ParkItemCatalogue? catalogue, ParkObjects? objects,
 		HeightfieldFile field, int x, int y )

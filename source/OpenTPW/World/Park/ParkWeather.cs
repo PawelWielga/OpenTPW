@@ -199,8 +199,9 @@ public sealed class ParkWeather : Entity
 		_thunderRandomiser = Int( balance, "WeatherEffects.ThunderRandomiser", 2 );
 		_maxRaindrops = Int( balance, "WeatherEffects.MaxRaindrops", 600 );
 
-		// The original rolls a quality in the constructor and applies it at once (0x00511fc4), so a
-		// park opens with weather already decided rather than with a day of nothing.
+		// The original's constructor rolls a quality and stores it unapplied (0x00511fc4), its stamps nought and
+		// its wind 90 at 0.5, and a load reads the file over it. This applies the roll at once, a deviation
+		// until Q529 starts the weather from the file.
 		Apply( Roll() );
 
 		WindDirection = StartingWind( WindDirection, savedWindDirection );
@@ -603,6 +604,9 @@ public sealed class ParkWeather : Entity
 		DebugStrikes++;
 	}
 
+	/// <summary>Where the thunder sounds: the top of the bolt that armed it, else the latest bolt's.</summary>
+	internal Vector3 ThunderPlace => _thunderAt ?? LastStrike;
+
 	/// <summary>
 	/// Sounds the thunder for a bolt that flashed a while ago - at the top of the bolt that armed it, because the
 	/// original plays it as a placed sound rather than a flat one. The count falls every weather tick, armed or not, as
@@ -616,7 +620,7 @@ public sealed class ParkWeather : Entity
 		if ( _thunderCountdown != 0 )
 			return;
 
-		ParkAudio.Current?.Thunder( _thunderAt ?? LastStrike );
+		ParkAudio.Current?.Thunder( ThunderPlace );
 	}
 
 	/// <summary>

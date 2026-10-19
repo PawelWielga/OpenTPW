@@ -65,7 +65,8 @@ public sealed class ProceduralGround
 	/// <summary>
 	/// A path cell's own texture as the original's compositor reads it from the texture's locked surface: its rows
 	/// bottom up against the file's, and each channel cut to its top four bits, A4R4G4B4 (the 16-bit mode the original
-	/// runs in, where <c>[0x007014c8 + 4 x [0x008bd554]]</c> is 2; in its 32-bit mode it would read 8:8:8:8).
+	/// runs in, where <c>[0x007014c8 + 4 x [0x008bd554]]</c> is 2; in its 32-bit mode it would read 8:8:8:8, which
+	/// <see cref="Texture.KeepsEightBits"/> (<c>TEXTURE32</c> 1) keeps here).
 	/// </summary>
 	public sealed class PathTexture
 	{
@@ -73,7 +74,7 @@ public sealed class ProceduralGround
 
 		public int Height { get; }
 
-		/// <summary>Red, green, blue and alpha a texel, each <c>byte &amp; 0xf0</c>, the surface's row 0 first.</summary>
+		/// <summary>Red, green, blue and alpha a texel, each <c>byte &amp; 0xf0</c> (whole under <c>TEXTURE32</c> 1), the surface's row 0 first.</summary>
 		internal byte[] Texels { get; }
 
 		private PathTexture( int width, int height, byte[] texels )
@@ -87,10 +88,11 @@ public sealed class ProceduralGround
 		public static PathTexture FromRgba( byte[] rgba, int width, int height )
 		{
 			var texels = new byte[width * height * 4];
+			var mask = Texture.KeepsEightBits ? 0xff : 0xf0;
 
 			for ( var row = 0; row < height; ++row )
 				for ( var i = 0; i < width * 4; ++i )
-					texels[(row * width * 4) + i] = (byte)(rgba[((height - 1 - row) * width * 4) + i] & 0xf0);
+					texels[(row * width * 4) + i] = (byte)(rgba[((height - 1 - row) * width * 4) + i] & mask);
 
 			return new PathTexture( width, height, texels );
 		}

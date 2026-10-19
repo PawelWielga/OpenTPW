@@ -356,7 +356,9 @@ public class Sky : Entity
 
 	/// <summary>
 	/// The cloud layers' colour ramp: sky_rgb.tga reduced to 16x16 by sampling the middle of each
-	/// cell, which is how FUN_00585ce0 builds the original's table.
+	/// cell, which is how FUN_00585ce0 builds the original's table. Unless the game keeps eight bits
+	/// (<see cref="Texture.KeepsEightBits"/>) each channel is widened as the original does (<see cref="WidenRamp"/>), and
+	/// the texture is kept as it is (<see cref="TextureFlags.OwnPixels"/>), not cut again.
 	/// </summary>
 	private static Texture GradientRamp( string directory, out Vector3 average )
 	{
@@ -389,10 +391,28 @@ public class Sky : Entity
 			}
 		}
 
+		if ( !Texture.KeepsEightBits )
+			ramp = WidenRamp( ramp );
+
 		var mean = Average( ramp );
 		average = new Vector3( mean.X, mean.Y, mean.Z );
 
-		return new Texture( ramp, GridSize, GridSize );
+		return new Texture( ramp, GridSize, GridSize, TextureFlags.OwnPixels );
+	}
+
+	/// <summary>
+	/// The ramp as the original's 16-bit table reads back (<c>0x00585d82</c>..<c>0x00585da2</c>, <c>sky_rgb.tga</c>
+	/// loaded as A4R4G4B4): each colour channel's top four bits <c>n</c> widened to <c>n &lt;&lt; 4 | 8</c>, not to
+	/// <c>n x 17</c> as the game's art is, and alpha 255. docs/exe/textures.md, "The texture cache's surface format".
+	/// </summary>
+	internal static byte[] WidenRamp( byte[] rgba )
+	{
+		var widened = new byte[rgba.Length];
+
+		for ( int i = 0; i < rgba.Length; ++i )
+			widened[i] = (i & 3) == 3 ? (byte)255 : (byte)((rgba[i] & 0xf0) | 8);
+
+		return widened;
 	}
 
 	/// <summary>The mean of every pixel, 0-1 per channel, alpha in W.</summary>

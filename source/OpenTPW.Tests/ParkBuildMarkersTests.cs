@@ -138,4 +138,17 @@ public class ParkBuildMarkersTests
 
 		Assert.AreEqual( "none", markers.Census() );
 	}
+
+	/// <summary>The ripple shading is counted as a gap only where the light is on: low quality's full light leaves no colour for it to change.</summary>
+	/// <remarks><b>Mutation:</b> the test turned round, or dropped, fails.</remarks>
+	[TestMethod]
+	public void TheRippleShadingIsAGapOnlyUnderALitPark()
+	{
+		var ambient = new Vector3( 0.333f );
+		var travels = new Vector3( 0.4f, 0.4f, -0.8f );
+
+		Assert.IsTrue( ParkBuildMarkers.RipplesShade( null ), "the lobby has no park light" );
+		Assert.IsTrue( ParkBuildMarkers.RipplesShade( new ParkLight( ambient, travels ) ) );
+		Assert.IsFalse( ParkBuildMarkers.RipplesShade( new ParkLight( ambient, travels, Lit: false ) ) );
+	}
 }

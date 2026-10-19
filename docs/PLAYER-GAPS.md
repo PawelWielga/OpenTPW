@@ -22,7 +22,7 @@ effort sliders over research groups, or a message box in Instant Action or with 
 research and no groups; Lost Kingdom's one researcher (thing 30) walks and researches as the original's does (Q134),
 the points for the lab counted and spent by nothing. Its two message boxes are built (Q410): in Lost Kingdom's
 Instant Action the button and R open "Research is automatic in Instant Action mode.", as the original's; the screen
-behind them is counted, `RESEARCH_SCREEN`. **Do not open the screen as a task until a research system exists** (the system is `docs/QUEUE.md` Q245).
+behind them is counted, `RESEARCH_SCREEN`. **Do not open the screen as a task until a research system exists** (the system is `docs/QUEUE.md` Q701 to Q703, decoded in `park-engine.md`, "The lab at work"; the screen is Q705, Full Simulation only).
 
 **Park status (screen 3) is deferred by Alexah, 2026-09-21** — *"I'm okay delaying work on the Info
 screen. It's not important at the moment."* The Information category is therefore seeded to screen **4**

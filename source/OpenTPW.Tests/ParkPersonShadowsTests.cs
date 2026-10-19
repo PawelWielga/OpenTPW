@@ -152,10 +152,91 @@ public class ParkPersonShadowsTests
 	[TestMethod]
 	public void EveryBodyDrawnCastsOne()
 	{
+		var picture = new ParkGuestSprites.Region( 0.25f, 0.1f, 0.5f, 0.3f, 38, 50, 22, 42 );
+
+		WithThreeBodies( 1, false, picture, pool =>
+		{
+			Assert.AreEqual( 3, pool.ShadowsDrawn.Count, "one a body" );
+
+			foreach ( var drawn in pool.Drawn )
+			{
+				var index = pool.ShadowsDrawn.ToList().FindIndex( shadow => shadow.Thing == drawn.Thing );
+				Assert.IsTrue( index >= 0, $"thing {drawn.Thing} casts one" );
+
+				var want = new Vertex[4];
+				ParkPersonShadows.Corners( want, new Vector2( drawn.Origin.X, drawn.Origin.Y ), drawn.Width, drawn.Height, drawn.OriginX,
+					drawn.Mirrored, Sun, ( _, _ ) => 0f, ParkPersonShadows.Lift, 0xff989898u );
+
+				for ( var i = 0; i < 4; ++i )
+				{
+					var got = pool.ShadowsWritten[(index * 4) + i];
+					Assert.AreEqual( want[i].Position.X, got.Position.X, 0.0001f, $"thing {drawn.Thing} corner {i} x" );
+					Assert.AreEqual( want[i].Position.Y, got.Position.Y, 0.0001f, $"thing {drawn.Thing} corner {i} y" );
+					Assert.AreEqual( 0.6f, got.Position.Z, 0.0001f, $"thing {drawn.Thing} corner {i} over no ground" );
+					Assert.AreEqual( 0xff989898u, got.MatFlags );
+					Assert.AreEqual( want[i].TexCoords, got.TexCoords, $"thing {drawn.Thing} corner {i} the whole silhouette" );
+				}
+			}
+		} );
+	}
+
+	/// <summary>
+	/// <b>First person casts the body's own picture</b> (<c>FUN_00589770</c>, <c>0x0058a800</c>), through the code that writes
+	/// the frame: at tier 1 and tier 2 alike, each corner carries the atlas region's own uv (never the silhouette's 0 to 1), the
+	/// colour is black at the darkness alpha, 0x67000000, and the lift is 0.25 (<c>0x2000</c>). At tier 0 none is cast; at tier 2
+	/// in the orbit view none is built.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the silhouette's uv or its 0xff989898 colour kept in first person, the orbit view's 0.6 lift,
+	/// the tier-2 case left to the orbit view's count, tier 0 let through, or the choice keyed on tier 1 alone, each fails.</remarks>
+	[TestMethod]
+	public void FirstPersonCastsTheBodysOwnPicture()
+	{
+		var picture = new ParkGuestSprites.Region( 0.25f, 0.1f, 0.5f, 0.3f, 38, 50, 22, 42 );
+
+		foreach ( var tier in new[] { 1, 2 } )
+		{
+			WithThreeBodies( tier, true, picture, pool =>
+			{
+				Assert.AreEqual( 3, pool.ShadowsDrawn.Count, $"tier {tier}: one a body in first person" );
+
+				foreach ( var drawn in pool.Drawn )
+				{
+					var index = pool.ShadowsDrawn.ToList().FindIndex( shadow => shadow.Thing == drawn.Thing );
+					Assert.IsTrue( index >= 0, $"thing {drawn.Thing} casts one" );
+
+					var want = new Vertex[4];
+					ParkPersonShadows.Corners( want, new Vector2( drawn.Origin.X, drawn.Origin.Y ), drawn.Width, drawn.Height, drawn.OriginX,
+						drawn.Mirrored, Sun, ( _, _ ) => 0f, ParkPersonShadows.FirstPersonLift, 0x67000000u, (0.25f, 0.1f, 0.5f, 0.3f) );
+
+					var uv = new[] { (0.25f, 0.1f), (0.5f, 0.1f), (0.5f, 0.3f), (0.25f, 0.3f) };
+
+					for ( var i = 0; i < 4; ++i )
+					{
+						var got = pool.ShadowsWritten[(index * 4) + i];
+						Assert.AreEqual( want[i].Position.X, got.Position.X, 0.0001f, $"tier {tier} thing {drawn.Thing} corner {i} x" );
+						Assert.AreEqual( want[i].Position.Y, got.Position.Y, 0.0001f, $"tier {tier} thing {drawn.Thing} corner {i} y" );
+						Assert.AreEqual( 0.25f, got.Position.Z, 0.0001f, $"tier {tier} thing {drawn.Thing} corner {i} lifted 0.25" );
+						Assert.AreEqual( 0x67000000u, got.MatFlags, $"tier {tier} corner {i} black at the darkness alpha" );
+						Assert.AreEqual( uv[i], (got.TexCoords.X, got.TexCoords.Y), $"tier {tier} corner {i} the picture's own uv" );
+					}
+				}
+			} );
+		}
+
+		WithThreeBodies( 0, true, picture, pool => Assert.AreEqual( 0, pool.ShadowsDrawn.Count, "tier 0 casts none in first person" ) );
+		WithThreeBodies( 2, false, picture, pool => Assert.AreEqual( 0, pool.ShadowsDrawn.Count, "tier 2 in the orbit view is not built" ) );
+	}
+
+	/// <summary>
+	/// Three people stood about a camera, the jungle sun given, the frame written at the shadow <paramref name="tier"/> in the
+	/// orbit view or first person (<see cref="ParkGuestSprites.FirstPerson"/>), every picture the given <paramref name="picture"/>;
+	/// <paramref name="check"/> sees the pool.
+	/// </summary>
+	private static void WithThreeBodies( int tier, bool firstPerson, ParkGuestSprites.Region picture, Action<ParkGuestSprites> check )
+	{
 		var data = GameData.Required();
 		var bankFile = ParkGuestSprites.BanksIn( data, ParkGuestSprites.FolderFor( 0, "jungle" )!, 0 )[0];
 		var bank = new SpriteBankFile( new MemoryStream( data.ReadAllBytes( bankFile ) ) );
-		var picture = new ParkGuestSprites.Region( 0.25f, 0.1f, 0.5f, 0.3f, 38, 50, 22, 42 );
 		var pictures = Enumerable.Repeat( picture, 1024 ).ToArray();
 
 		var all = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
@@ -175,6 +256,8 @@ public class ParkPersonShadowsTests
 			mode.Position = new Vector3( 100f, -40f, 7f );
 
 			var pool = new ParkGuestSprites( "jungle", null ) { ShadowLight = Sun };
+			typeof( ParkGuestSprites ).GetField( "_shadowTier", all )!.SetValue( pool, tier );
+			typeof( ParkGuestSprites ).GetProperty( "FirstPerson", all )!.SetValue( pool, firstPerson );
 			var loaded = typeof( ParkGuestSprites ).GetNestedType( "Loaded", all )!;
 			((IDictionary)typeof( ParkGuestSprites ).GetField( "_banks", all )!.GetValue( pool )!)[(0, 0)] = Activator.CreateInstance( loaded, bank, pictures );
 
@@ -190,26 +273,7 @@ public class ParkPersonShadowsTests
 			pool.Resize( 12 );
 			pool.WriteTheFrame();
 
-			Assert.AreEqual( 3, pool.ShadowsDrawn.Count, "one a body" );
-
-			foreach ( var drawn in pool.Drawn )
-			{
-				var index = pool.ShadowsDrawn.ToList().FindIndex( shadow => shadow.Thing == drawn.Thing );
-				Assert.IsTrue( index >= 0, $"thing {drawn.Thing} casts one" );
-
-				var want = new Vertex[4];
-				ParkPersonShadows.Corners( want, new Vector2( drawn.Origin.X, drawn.Origin.Y ), drawn.Width, drawn.Height, drawn.OriginX,
-					drawn.Mirrored, Sun, ( _, _ ) => 0f, ParkPersonShadows.Lift, 0xff989898u );
-
-				for ( var i = 0; i < 4; ++i )
-				{
-					var got = pool.ShadowsWritten[(index * 4) + i];
-					Assert.AreEqual( want[i].Position.X, got.Position.X, 0.0001f, $"thing {drawn.Thing} corner {i} x" );
-					Assert.AreEqual( want[i].Position.Y, got.Position.Y, 0.0001f, $"thing {drawn.Thing} corner {i} y" );
-					Assert.AreEqual( 0.6f, got.Position.Z, 0.0001f, $"thing {drawn.Thing} corner {i} over no ground" );
-					Assert.AreEqual( 0xff989898u, got.MatFlags );
-				}
-			}
+			check( pool );
 		}
 		finally
 		{
@@ -230,5 +294,83 @@ public class ParkPersonShadowsTests
 	{
 		Assert.AreNotEqual( MaterialFlags.Additive, MaterialFlags.Multiply );
 		Assert.AreEqual( MaterialFlags.None, MaterialFlags.Multiply & (MaterialFlags.Additive | MaterialFlags.DisableDepth | MaterialFlags.DisableCulling) );
+	}
+
+	/// <summary>
+	/// <b>The shadow pipelines' flags</b>: the silhouette's is the people's, no depth written, multiplied; first person's own
+	/// picture is the people's with no depth written and the default alpha blend, no multiply (<c>0x556</c> | <c>0x800</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the multiply or the depth-write drop taken out of the silhouette's, the multiply put on first
+	/// person's, or its depth write left on, each fails.</remarks>
+	[TestMethod]
+	public void EachShadowPipelineHasItsFlags()
+	{
+		Assert.AreEqual( MaterialFlags.DisableCulling | MaterialFlags.DisableDepthWrite | MaterialFlags.Multiply, ParkGuestSprites.SilhouetteShadowMaterial );
+		Assert.AreEqual( MaterialFlags.DisableCulling | MaterialFlags.DisableDepthWrite, ParkGuestSprites.OwnPictureShadowMaterial );
+		Assert.AreEqual( MaterialFlags.None, ParkGuestSprites.OwnPictureShadowMaterial & MaterialFlags.Multiply );
+		Assert.AreEqual( ParkGuestSprites.SilhouetteShadowMaterial, ParkGuestSprites.ShadowMaterialFor( ParkPersonShadows.Kind.Silhouette ) );
+		Assert.AreEqual( ParkGuestSprites.OwnPictureShadowMaterial, ParkGuestSprites.ShadowMaterialFor( ParkPersonShadows.Kind.FirstPersonOwnPicture ) );
+	}
+
+	/// <summary>
+	/// <b>First person's colour is black at the darkness alpha</b>: the light's darkness word, <c>trunc(-127 Ly) &lt;&lt; 24</c>,
+	/// 0x67000000 under the jungle sun (<c>0x00589750</c>, <c>0x00584d97</c>), not the silhouette's grey.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the shift 16 or 0, the grey colour, or the darkness taken from 255, each fails.</remarks>
+	[TestMethod]
+	public void FirstPersonsColourIsBlackAtTheDarknessAlpha()
+	{
+		Assert.AreEqual( 0x67000000u, ParkPersonShadows.OwnPictureColour( 103 ) );
+		Assert.AreEqual( 0x7f000000u, ParkPersonShadows.OwnPictureColour( 127 ) );
+		Assert.AreEqual( 0u, ParkPersonShadows.OwnPictureColour( 0 ) );
+		Assert.AreEqual( 103, (int)(ParkPersonShadows.OwnPictureColour( ParkPersonShadows.Darkness( Sun )!.Value ) >> 24) );
+	}
+
+	/// <summary>
+	/// <b>A picture's own uv rides the corners, unflipped by a reflection</b> (<c>SpriteShadow_BuildQuad</c> negates the sides
+	/// under flag <c>0x10</c> and leaves the picture's columns alone): corner 0 takes (Left, Top), 1 (Right, Top), 2
+	/// (Right, Bottom), 3 (Left, Bottom), reflected or not.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the whole-texture uv used, the Left and Right swapped when reflected, or the rows swapped,
+	/// each fails.</remarks>
+	[TestMethod]
+	public void ARegionsUvRidesTheCornersUnflipped()
+	{
+		foreach ( var mirrored in new[] { false, true } )
+		{
+			var corners = new Vertex[4];
+
+			Assert.IsTrue( ParkPersonShadows.Corners( corners, new Vector2( 100f, 200f ), 41, 52, 21, mirrored, Sun, ( _, _ ) => 0f,
+				ParkPersonShadows.FirstPersonLift, 0x67000000u, (0.25f, 0.1f, 0.5f, 0.3f) ) );
+
+			var want = new[] { (0.25f, 0.1f), (0.5f, 0.1f), (0.5f, 0.3f), (0.25f, 0.3f) };
+
+			for ( var i = 0; i < 4; ++i )
+			{
+				Assert.AreEqual( want[i], (corners[i].TexCoords.X, corners[i].TexCoords.Y), $"mirrored {mirrored} corner {i}" );
+				Assert.AreEqual( 0x67000000u, corners[i].MatFlags );
+				Assert.AreEqual( 0.25f, corners[i].Position.Z, 0.0001f );
+			}
+		}
+	}
+
+	/// <summary>
+	/// <b>Which shadow each tier casts in each view</b>: tier 0 none in either (<c>0x20000</c>); first person (<c>0x80</c>) the
+	/// body's own picture at every other tier, as <c>FUN_00589770</c> never reads <c>0x40000</c>; the orbit view's silhouette at
+	/// 1 and its unbuilt own picture at 2 and 3.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> first person keyed on tier 1, tier 0 let through in first person, or the orbit view's tier 2
+	/// given the silhouette, each fails.</remarks>
+	[TestMethod]
+	public void EachTierCastsItsKindInEachView()
+	{
+		Assert.AreEqual( ParkPersonShadows.Kind.None, ParkPersonShadows.KindFor( 0, false ) );
+		Assert.AreEqual( ParkPersonShadows.Kind.None, ParkPersonShadows.KindFor( 0, true ) );
+		Assert.AreEqual( ParkPersonShadows.Kind.Silhouette, ParkPersonShadows.KindFor( 1, false ) );
+		Assert.AreEqual( ParkPersonShadows.Kind.FirstPersonOwnPicture, ParkPersonShadows.KindFor( 1, true ) );
+		Assert.AreEqual( ParkPersonShadows.Kind.OwnPictureNotBuilt, ParkPersonShadows.KindFor( 2, false ) );
+		Assert.AreEqual( ParkPersonShadows.Kind.OwnPictureNotBuilt, ParkPersonShadows.KindFor( 3, false ) );
+		Assert.AreEqual( ParkPersonShadows.Kind.FirstPersonOwnPicture, ParkPersonShadows.KindFor( 2, true ) );
+		Assert.AreEqual( ParkPersonShadows.Kind.FirstPersonOwnPicture, ParkPersonShadows.KindFor( 3, true ) );
 	}
 }

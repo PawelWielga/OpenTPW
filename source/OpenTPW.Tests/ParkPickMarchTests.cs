@@ -10,7 +10,8 @@ namespace OpenTPW.Tests;
 /// The picker's object march (<see cref="ParkPickMarch"/>; <c>docs/exe/park-engine.md</c>, "The picker's object march").
 /// The gate's figures are the original's own, read at the stock park with the camera at (475,155) 110 180
 /// (<c>q494/orig/a-scan.log</c>): its eye at (475, 93.623, 212.747) and the point P its march wrote for each pixel, here
-/// as our x, y, z (its x, z, height).
+/// as our x, y, z (its x, z, height). The candidate a cell offers (the <c>.hmp</c> about the model's root, the box's
+/// <c>BoxMin.Y</c>, the zero-opacity hide) is covered by the game run alone (<c>q494/</c>), not by a test here.
 /// </summary>
 [TestClass]
 public class ParkPickMarchTests
@@ -43,8 +44,7 @@ public class ParkPickMarchTests
 	/// first); (469.9, 175.7, 44.0) only on each triangle's own plane (the file's face normals meet (469.7, 174.0, 41.8));
 	/// (492.4, 170.5, 30.4) on neither.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the file's face normals for the plane; the faces in the file's order; the angle sum's
-	/// threshold at 2π less a tenth; the children before the node's own faces.</remarks>
+	/// <remarks><b>Mutations:</b> the faces in the file's order; the node's own faces dropped.</remarks>
 	[TestMethod]
 	public void TheOriginalsOwnRaysMeetTheGateWhereItsMarchMet()
 	{
@@ -64,6 +64,7 @@ public class ParkPickMarchTests
 	/// A triangle is met by the ray's LINE: a point inside it behind the eye counts, as <c>FUN_0045d090</c> never asks
 	/// which side of the eye it is on; a point outside it does not.
 	/// </summary>
+	/// <remarks><b>Mutations:</b> the angle sum's threshold at 2π less a tenth.</remarks>
 	[TestMethod]
 	public void ATriangleIsMetByTheLineInsideIt()
 	{
@@ -146,11 +147,14 @@ public class ParkPickMarchTests
 	}
 
 	/// <summary>
-	/// <b>A thing met answers only where it is nearer the eye than the ground's point</b> (<c>0x0045ccf7</c>): the
-	/// ground wins a tie, and with no ground the thing answers.
+	/// <b>The thing met is kept whichever point wins, and gives the point only where it is strictly nearer the eye than
+	/// the ground's</b> (<c>0x0045cccf</c> stores the record before the nearer test, <c>0x0045ccf7</c>): the ground wins a
+	/// tie, and with no ground the thing's point answers.
 	/// </summary>
+	/// <remarks><b>Mutations:</b> the thing dropped where the ground wins; the tie to the thing (<c>&lt;</c> to
+	/// <c>&lt;=</c>); the ground ignored.</remarks>
 	[TestMethod]
-	public void AThingNearerThanTheGroundAnswers()
+	public void TheThingMetIsKeptAndGivesThePointOnlyWhenNearer()
 	{
 		var from = new Vector3( 5, 5, 50 );
 		var direction = new Vector3( 0, 1, -0.5f ).Normal;
@@ -158,10 +162,16 @@ public class ParkPickMarchTests
 			? new ParkPickMarch.Candidate( 9, 100f, -1f, ( _, _ ) => new SVector3( 5, 25, 40 ) )
 			: null;
 
-		Assert.AreEqual( 9, ParkPicking.March( from, direction, null, 95, 84, Meets )?.Thing );
-		Assert.AreEqual( 9, ParkPicking.March( from, direction, new Vector3( 5, 26, 39.5f ), 95, 84, Meets )?.Thing );
-		Assert.IsNull( ParkPicking.March( from, direction, new Vector3( 5, 25, 40 ), 95, 84, Meets ), "a tie" );
-		Assert.IsNull( ParkPicking.March( from, direction, new Vector3( 5, 24, 41 ), 95, 84, Meets ) );
+		Assert.AreEqual( (9, true), Pick( ParkPicking.March( from, direction, null, 95, 84, Meets ) ) );
+		Assert.AreEqual( (9, true), Pick( ParkPicking.March( from, direction, new Vector3( 5, 26, 39.5f ), 95, 84, Meets ) ) );
+		Assert.AreEqual( (9, false), Pick( ParkPicking.March( from, direction, new Vector3( 5, 25, 40 ), 95, 84, Meets ) ), "a tie: the ground's point, the thing kept" );
+		Assert.AreEqual( (9, false), Pick( ParkPicking.March( from, direction, new Vector3( 5, 24, 41 ), 95, 84, Meets ) ), "the ground nearer" );
+	}
+
+	private static (int Thing, bool Nearer) Pick( (int Thing, Vector3 Point, bool Nearer)? met )
+	{
+		Assert.IsNotNull( met );
+		return (met.Value.Thing, met.Value.Nearer);
 	}
 
 	/// <summary>

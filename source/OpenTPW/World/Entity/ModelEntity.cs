@@ -122,7 +122,7 @@ public partial class ModelEntity : Entity
 		Vector3 lightPosition, Vector3 lightColor, float fogDensity, float ambient = 0f, bool worldNormals = false,
 		System.Numerics.Matrix4x4? transform = null, ParkLight? parkLight = null, System.Numerics.Vector4 linearFog = default )
 	{
-		return new ObjectUniformBuffer
+		return WithParkLight( new ObjectUniformBuffer
 		{
 			// Where the caller says, or where this entity stands. See DrawOverlay's transform.
 			g_mModel = transform ?? ModelMatrix,
@@ -138,16 +138,24 @@ public partial class ModelEntity : Entity
 			g_flAmbient = ambient,
 			g_flWorldNormals = worldNormals ? 1f : 0f,
 
-			// A park lights the scene per vertex as the original does; the lobby, and anything drawn
-			// on the screen through DrawOverlay, keep the shader's own lighting.
-			g_vAmbientColour = parkLight?.Ambient ?? Vector3.Zero,
-			g_flParkLight = parkLight != null ? 1f : 0f,
-			g_vLightTravels = parkLight?.Travels ?? Vector3.Zero,
-			g_flFullLight = ParkLight.FullLight( parkLight ),
 			g_vLinearFog = linearFog,
 
 			_padding0 = 0,
 			_padding1 = 0,
-		};
+		}, parkLight );
+	}
+
+	/// <summary>
+	/// <paramref name="uniforms"/> with the park's light written in: a park lights the scene per vertex as the original
+	/// does, and at low quality draws every vertex white (<see cref="ParkLight.FullLight"/>); the lobby, and anything
+	/// drawn on the screen through <see cref="DrawOverlay"/>, pass no light and keep the shader's own lighting.
+	/// </summary>
+	internal static ObjectUniformBuffer WithParkLight( ObjectUniformBuffer uniforms, ParkLight? parkLight )
+	{
+		uniforms.g_vAmbientColour = parkLight?.Ambient ?? Vector3.Zero;
+		uniforms.g_flParkLight = parkLight != null ? 1f : 0f;
+		uniforms.g_vLightTravels = parkLight?.Travels ?? Vector3.Zero;
+		uniforms.g_flFullLight = ParkLight.FullLight( parkLight );
+		return uniforms;
 	}
 }

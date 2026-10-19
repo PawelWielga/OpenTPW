@@ -226,6 +226,8 @@ public partial class Texture : Asset
 		if ( NativeTexture == null || data.Length < Width * Height * 4 )
 			return;
 
+		// Cut only for a texture that does not hold OwnPixels; the three callers (LoadingScreen, UiText, Sky) all do, so
+		// no caller reaches the cut branch today (dead by CODE).
 		if ( Cut )
 			Upload( data );
 		else
@@ -355,8 +357,6 @@ public partial class Texture : Asset
 
 		SamplerType = SamplerFor( flags );
 
-		Cut = CutsFor( flags );
-
 		uint mipLevels = (uint)CalculateMipLevels( (int)width, (int)height, 1 );
 
 		var textureDescription = TextureDescription.Texture2D(
@@ -384,29 +384,43 @@ public partial class Texture : Asset
 
 	/// <summary>
 	/// <c>GraphicalOptions.TEXTURE32</c> 1 in the detail file the game starts with: every texture kept at eight bits a
-	/// channel, the original's format 3 (A8R8G8B8). No shipped detail file sets it, so the game's art is cut to four
+	/// channel, the original's format 3 (A8R8G8B8). No shipped detail file sets it to 1 (all three hold 0), so the game's art is cut to four
 	/// (<see cref="CutLevels"/>), as the shipped game draws it, banding and all. Set once at boot (<c>Game</c>), before
 	/// the first texture.
 	/// </summary>
 	public static bool KeepsEightBits { get; set; }
 
 	/// <summary>Whether this texture's texels are cut to four bits a channel - see <see cref="CutLevels"/>.</summary>
-	public bool Cut { get; private set; }
+	public bool Cut => CutsFor( Requested );
 
 	/// <summary>Whether a texture asked for with <paramref name="flags"/> is cut: unless the game keeps eight bits or the pixels are OpenTPW's own.</summary>
 	internal static bool CutsFor( TextureFlags flags ) => !KeepsEightBits && !flags.HasFlag( TextureFlags.OwnPixels );
 
 	/// <summary>
-	/// Puts <paramref name="data"/> in every level: cut, every level made here (<see cref="CutLevels"/>); kept at eight,
+	/// The levels of a texture asked for with <paramref name="flags"/>: every one made here (<see cref="CutLevels"/>) where
+	/// the texture is cut (<see cref="CutsFor"/>), null where it is kept at eight bits and the device makes the mip maps.
+	/// </summary>
+	/// <remarks>
+	/// Cutting costs time. The park loads about 0.76 s slower with every texture cut than with <c>TEXTURE32</c> 1 (the
+	/// totals over four runs, <c>q700/*/run.log</c>: 3.4 s against 4.2 s), the guest sprites 273 -> 729 ms, the ground
+	/// 560 -> 691, the objects 717 -> 785, the fixed items 172 -> 206; the guest atlas is packed again, cut again, on
+	/// every switch into and out of first person (<c>ParkGuestSprites.UseFirstPersonPictures</c>), about 0.45 s by the
+	/// load figure, not measured.
+	/// </remarks>
+	internal static IEnumerable<(byte[] Pixels, int Width, int Height)>? LevelsFor( byte[] data, int width, int height, TextureFlags flags )
+		=> CutsFor( flags ) ? CutLevels( data, width, height ) : null;
+
+	/// <summary>
+	/// Puts <paramref name="data"/> in every level: cut, every level made here (<see cref="LevelsFor"/>); kept at eight,
 	/// the first level and the device's mip maps.
 	/// </summary>
 	private void Upload( byte[] data )
 	{
-		if ( Cut )
+		if ( LevelsFor( data, (int)Width, (int)Height, Requested ) is { } levels )
 		{
 			var level = 0u;
 
-			foreach ( var (pixels, w, h) in CutLevels( data, (int)Width, (int)Height ) )
+			foreach ( var (pixels, w, h) in levels )
 				UpdateLevel( pixels, (uint)w, (uint)h, level++ );
 
 			return;

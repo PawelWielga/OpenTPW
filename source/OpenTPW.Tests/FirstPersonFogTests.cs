@@ -175,5 +175,22 @@ public class FirstPersonFogTests
 			new System.Text.RegularExpressions.Regex( "g_vLinearFog" ) );
 	}
 
+	/// <summary>
+	/// <b>The fog is worked out per vertex from the planar eye depth</b> (<see cref="FirstPersonFog.At"/> is this formula's
+	/// twin, tested alone): <c>clamp( ( -view.z - start ) / ( end - start ), 0, 1 )</c> in each of the three world shaders.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the sign dropped (<c>view.z</c>, never fogs), the radial <c>length( view.xyz )</c>, or the
+	/// denominator <c>g_vLinearFog.y</c> alone, each fails here.</remarks>
+	[TestMethod]
+	public void EveryWorldShaderFogsByPlanarEyeDepth()
+	{
+		var line = new System.Text.RegularExpressions.Regex(
+			@"vFog\s*=\s*clamp\(\s*\(\s*-\s*(view|vs_out\.vViewPosition)\.z\s*-\s*g_oUbo\.g_vLinearFog\.x\s*\)\s*/\s*"
+			+ @"\(\s*g_oUbo\.g_vLinearFog\.y\s*-\s*g_oUbo\.g_vLinearFog\.x\s*\)\s*,\s*0\.0\s*,\s*1\.0\s*\)\s*;" );
+
+		foreach ( var name in new[] { "test", "people", "guests" } )
+			StringAssert.Matches( File.ReadAllText( Path.Combine( ContentRoot(), "shaders", $"{name}.shader" ) ), line, name );
+	}
+
 	private static string ContentRoot() => Path.Combine( AppContext.BaseDirectory, "content" );
 }

@@ -538,7 +538,7 @@ The advisor's own line for it (below) describes the same screen.
 
 **The stream.** Rects on the 2048 x 1536 layout. The frame `0xd2cff` (186, 30)-(2018, 1032) is `w_res` (the node
 `research_wind`); the title `0xd2d00` (866, 67)-(1338, 146) takes UITEXT 184, "Research Lab" (message `0x15`). Five
-panels, one a kind, each (785, y)-(1830, y + 150), a `res_panel` (node `research`) skinned `res_pipe` (node `pipe`):
+panels, one a kind, each (785, y)-(1830, y + 150 or 151, the stream's own), a `res_panel` (node `research`) skinned `res_pipe` (node `pipe`):
 
 | Panel | y | Kind | Its slider | Slider help | Icon `0xd2d02` | Arrows' help | Proc |
 |---|---|---|---|---|---|---|---|
@@ -606,8 +606,8 @@ of both loop sounds (`0x9a`, `0x9b`) to `value x 100 / 1024`. A press on an effo
 with its parameters `0xb` and `0xa` the value, a drag updates them, the release (`0x802`) fades it. The limit and the knob
 are set again on `0x1e` when the researchers' summed ability changes. **Read, not measured:** a slider's value setter
 (vtable `+0x1c`, `Slider_SetValue` `0x0066b508`, then `Slider_SetPosition`) sends `0x800` to its parent whenever the
-value changes, and the opening sets the knob after the limit, so the opening runs `Lab_SetWorkLoad` on the knob's round
-trip, `30 x ((w - 70) x limit / 30) / limit + 70` in whole numbers, which is `w - 1` where it does not divide back. With
+value changes, and the opening sets the knob after the limit, so the opening, and each `0x1e` that finds the summed ability changed, runs
+`Lab_SetWorkLoad` on the knob's round trip, `30 x ((w - 70) x limit / 30) / limit + 70` in whole numbers, which is `w - 1` where it does not divide back. With
 Full Simulation's `most` of 60, of the summed abilities 2 to 12 those of 3, 6, 9 and 12 do so at 85, and each opening would take the work load
 down one (85, 84, 83...; `q704/knob-roundtrip.txt`). The efforts' seeding writes each effort back unchanged.
 
@@ -1473,7 +1473,7 @@ open screen).
 two lines and ten units) with a `LabelSkin`, then `UI_SetTextAlign( 1, 1 )` (`0x0065c428`) and `UI_SetTextWrap( 1, 1 )`
 (`0x0065c4b9`), font slot 7, colour 255, 255, 255, 255 and the mesh `f_helpbg`. `UI_SetTextWrap` posts `0x3000` with its
 two bytes at the message's `+6` and `+7`; the skin's `FUN_0048fc40` stores them at `+0xda` (`0x1000`) and `+0xdb`
-(`0x2000`). `LabelSkin_Draw` (`0x0048f862`) reads `+0xda`: nought, and the box it hands the renderer is `0x4000` pixels
+(`0x2000`). `LabelSkin_Draw` (`0x0048f830`) reads `+0xda`: nought, and the box it hands the renderer is `0x4000` pixels
 wide (centred on the label for the centre code), so nothing wraps; one, and the box is the label's own width `+0x3c` in
 the screen's pixels, less the left inset `+0xde` (nought here; the constructor writes it). `LabelSkin_Construct` writes
 `+0xda` nought, so a label wraps only where its builder says: 26 calls of `UI_SetTextWrap` in 19 functions do (the message
@@ -1507,7 +1507,7 @@ Each line is added by `FUN_006add90`, which keeps the widest in `+0x80`. Measure
 
 **OpenTPW** (`HelpBar`: `TextWraps`, `TextDown` by a line feed; `UiText.Wrap`, the one wrapper every wrapping control
 uses): the same breaks, at the strip's width in the font's pixels (`(int)` of the drawn width over the font scale, 351
-at the 1280 x 720 window's set; the original's `+0x3c` is not read for its rounding). The console's `helpbar` prints the
+at the 1280 x 720 window's set; the original's `+0x3c` is (x1 - x0) x the screen width / 2048, cut toward nought (`0x0048f47b`): 351 here too). The console's `helpbar` prints the
 lines as last drawn. Measured (`q484/run2`, 4 of 4; `side-by-side.png`): 459 and 550 broken as the original's, every
 letter inside the strip, 538 at its top; main's build (`q484/ctl1`) set both long rows on one line past both ends.
 
@@ -3311,7 +3311,7 @@ Read 2026-10-15 (Q383). `FUN_0065c428( across, down )` posts `0xc00` to the cont
 with the two bytes at the message's `+4` and `+5`. A label's skin (vtable `0x006ff320`; the label `FUN_0048f6a0`, the
 number painter `FUN_0048fde0` and the money cell `FUN_00490250` alike) takes it in its slot `+0xc`, `FUN_0048fc40`:
 flag `0x400` stores the across byte at `+0xd8`, `0x800` the down byte at `+0xd9`. Each constructor writes 0 and 1 there,
-so **a cell no styler aligns stands at ( 0, 1 ): from the left, in the middle**. `LabelSkin_Draw` (`0x0048f862`) **translates**
+so **a cell no styler aligns stands at ( 0, 1 ): from the left, in the middle**. `LabelSkin_Draw` (`0x0048f830`) **translates**
 the two bytes into the renderer's own codes, after `FUN_004925a0` swaps 0 and 2 where the language is `0x40d` (Hebrew;
 English never is). The renderer's across code `+0xa4` is 0 left, 1 right, 2 centre (its setter `0x006adf60` accepts 0 to 2),
 so the label's byte 2 (right) becomes 1 (`0x0048f888`) and its byte 1 (centre) becomes 2. The renderer's down code `+0xa0`

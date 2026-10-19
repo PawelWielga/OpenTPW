@@ -23,9 +23,10 @@ public enum TextureFlags
 	Repeat = 8,
 
 	/// <summary>
-	/// Kept at eight bits a channel where the game's art is cut to four (<see cref="Texture.Cut"/>): the one-colour
-	/// stand-ins and the sky's tint, which are OpenTPW's own, and the loading screen, the pointer and the letters
-	/// <see cref="UiText"/> sets, whose way to the screen in the original (its texture cache or a blit) is not read.
+	/// Kept at eight bits a channel where the game's art is cut to four (<see cref="Texture.Cut"/>): the loading bar's
+	/// reds, the object window's green and red lines and the sky's tint, which are OpenTPW's own, and the loading screen,
+	/// the pointer and the letters <see cref="UiText"/> sets, whose way to the screen in the original (its texture cache
+	/// or a blit) is not read. The footprint picture's colours are the original's and are cut.
 	/// </summary>
 	OwnPixels = 16
 }

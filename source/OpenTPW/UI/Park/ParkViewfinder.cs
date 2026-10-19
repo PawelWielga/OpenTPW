@@ -30,6 +30,11 @@ namespace OpenTPW.UI;
 /// only wanted to click was the mode fighting you.
 /// </para>
 /// <para>
+/// <b>A deviation: it is never fogged.</b> The original's viewfinder quads go through the fogged sprite batch and fade at
+/// bands under about 20 (they fade at -2 to -1 and at 0 to 0.3); ours is interface and takes no fog, which no shipped band
+/// shows (the nearest starts at 50; <see cref="FirstPersonFog"/>, docs/exe/park-engine.md, "First person's fog").
+/// </para>
+/// <para>
 /// <b>Engine and content.</b> The window, the frame and the pointer are engine. Which controls first
 /// person has, where they sit and what the button does is this file.
 /// </para>

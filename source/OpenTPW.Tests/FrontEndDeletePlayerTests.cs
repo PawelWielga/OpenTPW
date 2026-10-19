@@ -1,4 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace OpenTPW.Tests;
 
@@ -24,4 +28,47 @@ public class FrontEndDeletePlayerTests
 
 		Assert.AreEqual( "MARGOT\n\nAre you sure you want to\ndelete this player ?", UI.FrontEnd.DeleteQuestion( "MARGOT" ) );
 	}
+
+	/// <summary>
+	/// <b>The box is handed the name of the slot whose delete button was pressed</b>, not the folder's, an empty name or
+	/// another slot's: the real <c>AskToDeletePlayer</c> over a roster with two named slots, and the text of the box it opens.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> <c>""</c> in place of the slot's name leaves the first line empty; <c>Roster[0]</c> in place of
+	/// <c>Roster[slot]</c> names the other player.
+	/// </remarks>
+	[TestMethod]
+	public void TheDeleteBoxIsHandedTheSlotsName()
+	{
+		FileSystem = GameData.Required();
+		Log ??= new();
+
+		var slots = (Player?[])typeof( Players ).GetField( "_slots", BindingFlags.Instance | BindingFlags.NonPublic )!.GetValue( Players.Roster )!;
+		var before = slots.ToArray();
+
+		try
+		{
+			slots[0] = new Player( 0, "ALICE", new PlayerFile() );
+			slots[2] = new Player( 2, "MARGOT", new PlayerFile() );
+
+			var stack = (UI.WindowStack)RuntimeHelpers.GetUninitializedObject( typeof( UI.WindowStack ) );
+			typeof( UI.WindowStack ).GetField( "_windows", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( stack, new List<UI.UiWindow>() );
+
+			var frontEnd = (UI.FrontEnd)RuntimeHelpers.GetUninitializedObject( typeof( UI.FrontEnd ) );
+			typeof( UI.FrontEnd ).GetField( "_stack", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( frontEnd, stack );
+
+			frontEnd.AskToDeletePlayer( 2 );
+
+			var box = stack.Windows.OfType<UI.MessageBox>().Single();
+			Assert.AreEqual( UI.FrontEnd.DeleteQuestion( "MARGOT" ), TextOf( box.Root! ) );
+		}
+		finally
+		{
+			for ( var i = 0; i < slots.Length; i++ )
+				slots[i] = before[i];
+		}
+	}
+
+	private static string? TextOf( UI.UiControl control )
+		=> control.Text ?? control.Children.Select( TextOf ).FirstOrDefault( text => text != null );
 }
