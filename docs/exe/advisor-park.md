@@ -345,7 +345,7 @@ The ids seen so far: `0xbc` when buy opens, `0xbd` when hire opens, `0xc6` and `
 |---|---|
 | The loader that fills `0x0076e300` | **Found** and emulated: the static initializer at `0x005a0a50` (above); the 40 screen-posted ids are posted-only rows of one line each |
 | The u16 at message `+0x00` | Unknown — it is written by `FUN_0059c0a0` but is not the gating id |
-| `Welcome` (section 2) | Row 0 of the metadata table is posted only in the running game (the emulated table has it polled), its score function (`0x0059c8c0`, `MOV EAX,[ECX + 0xa0]`) is `Welcome.Score`, and the shipped park's file holds message 0 as said on tick 1; its poster is not read. Its line looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
+| `Welcome` (section 2) | Row 0 of the metadata table is posted only in the running game (the emulated table has it polled), its score function (`0x0059c8c0`, `MOV EAX,[ECX + 0xa0]`) is `Welcome.Score`, and the shipped park's file holds message 0 as said on tick 1; its poster is not read A park made with no file in the original holds it in a slot at 100,000 on tick 0 and says it on tick 1 for 31.3 s ("A fresh Full Simulation park", Q327; Q543). Its line looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
 | Responses 399-402 | All carry sample 1, an `OpenPark` line — the same stub shape |
 
 ## Q90b — the posted door path (2026-10-03)
@@ -1382,8 +1382,8 @@ line of message 1, no attempt, no tag at tick 941.
 | The count's place | left in the analyser's `+0x1f0d4` | not kept |
 
 **Not built or not seen.** Rows 259 and 263. Lines 3 and 4 (samples 2 and 3) were in no game run, nor the
-refusal inside 480 ticks, a second load of guests (whether a bus comes to a shut park was in no run),
-a park opened while he says it (whether anything withdraws message 1 was not looked for), a tag 3 taking the place of a tag 4, or Full Simulation's empty park. The entry-price screen's own
+refusal inside 480 ticks, a second load of guests (a bus does come to a shut park: Q327's fresh park, tick 604 in both games),
+a park opened while he says it (whether anything withdraws message 1 was not looked for), or a tag 3 taking the place of a tag 4. The entry-price screen's own
 line, `0x12f`, is not posted here (`hud.md`). Not heard in either game.
 
 ## Shut shops, sideshows and toilets (messages `0x104` to `0x106`, Q320)
@@ -1542,7 +1542,7 @@ Bounce left standing** (`run-ride`, off-screen): tick 769's poll line alone, no 
 
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 5 and 6; the test holds the turn), the
 line said again past its 120 quarter-ticks, a tag 4 taking a tag 3's place or the other way, the park shut while he
-speaks (whether anything withdraws message 2 was not looked for), Full Simulation's empty park opened, a ride or a
+speaks (whether anything withdraws message 2 was not looked for), a ride or a
 sideshow sold by the player's own window. The original was not given a file with one of the two left standing. Not
 heard in either game.
 
@@ -1636,8 +1636,7 @@ message 62, no attempt, no tag by tick 1000, the count one more.
 
 **Not built or not seen.** The row of a tag's item selected on the buy screen
 (`TAG_BAR_BUY_ITEM_ROW`). In no game run: lines 2 and 3 (samples 180 and 181; the test holds the turn), the line
-said again past its 120 quarter-ticks, a shut park with no ride, a park under its 26th day (the test holds 25 and
-28), Full Simulation's empty park, button types `0xa` to `0xc` and the button with the buy screen open (the test
+said again past its 120 quarter-ticks, button types `0xa` to `0xc` and the button with the buy screen open (the test
 holds `0xb` and the open screen), a ride bought after the line. Not heard in either game.
 
 ## Worn rides and no mechanic (message 5, Q331)
@@ -4071,8 +4070,9 @@ fresh through tick 1144.
 | The tag and the bar | row 82, part 2, string 84; no button but the bomb | the same |
 | The lab's projects | the file's, and worked on from the load, 1.5 points every 20 ticks on project 8 | the file's, read and never changed |
 
-**Not built or not seen.** A Full Simulation park, the row's only game, was run in this game alone and since
-(Q349, above); in no game run: the line again past its
+**Not built or not seen.** A Full Simulation park, the row's only game, is run in both games since (Q327, "A fresh
+Full Simulation park", below: the original's own fresh park said it on tick 2755, and its file said it on 3615 in
+both); in no game run: the line again past its
 900 quarter-ticks (the test holds it), a kind standing that is not on offer, a project finished by the
 original's own research and what that does to the kinds on offer, the other three themes' labs. Of the lab's
 record this game reads the projects alone: the five kinds' effort, output, current project and highest group,
@@ -4584,7 +4584,7 @@ that tick, "Somewhere in your park, a line is not connected to a path." (the mas
 
 **Not built or not seen.** In no game run: lines 2 and 3 (samples 485 and 486; the test holds the
 turn), the line said again past its 120 quarter-ticks (the test holds it), a ride shut from its own window, a
-share of exactly half, four rides or more, Full Simulation's rates. Not heard in either game.
+share of exactly half, four rides or more. Not heard in either game.
 
 ## A queue not joined to a path (message `0x71`, Q324)
 
@@ -4679,7 +4679,7 @@ in 75 s.
 then held back. What reads the balance object's `+4`. In no game run: line 2 (sample 313; the test holds the
 turn), the line said again past its 120 quarter-ticks (the test holds it), a queue cut off from an open ride
 (`ride-operation.md`: the ride stays open), two rides unjoined, the tag's button clicked in the original, the
-line posted while he speaks (255 copies), Full Simulation. Not heard in either game.
+line posted while he speaks (255 copies). Not heard in either game.
 
 ## A shut staff room (message `0x107`, Q325)
 
@@ -4760,8 +4760,44 @@ from tick 898, it held.
 The response's lip file 0 is not read: the sample's own number is looked for here and none is found. What a shut
 staff room does to a tired member of staff was not looked for in either game (here `GoAndRest` does not ask
 `CanLoad`). In no game run: a share between nought and the whole (the test holds the bound), the line said again
-past its 120 quarter-ticks (the test holds it; the original stayed silent on tick 1057), a staff room bought,
-Full Simulation. The original's sound was not recorded or measured; neither game was heard by ear.
+past its 120 quarter-ticks (the test holds it; the original stayed silent on tick 1057). A staff room bought into
+Q327's Full Simulation park scored nought in both. The original's sound was not recorded or measured; neither game was heard by ear.
+
+## A fresh Full Simulation park (Q327)
+
+**No listed row's score asks the game type.** Every reference to `0x00fb3b7c` was set against the score functions of
+rows 1, 2, 62, 80, 113, 185, 259 to 263 and 282 and every function each calls, three calls deep: none reads it (row
+185's `0x005a06c0` is undefined in Ghidra, and byte for byte row 282's but its call displacements and its three
+offsets). The game type enters at the poll alone, by a row's `+0x0c` (row 80's nought, "The poll", above). What a
+Full Simulation park changes is what the scores read: a park made with no file is shut, holds nothing but its
+gates and lights, and starts its clock and the poll's cursor at nought; its catalogue is the regular one.
+
+**Its own lines, in both games** (`q327/confirm.py`, `orig/freshfs.sh make` with `advisor.py` from the click; a
+fresh program, nothing done). Each row's turn is its place among the 155 polled rows from tick 1:
+
+| Row | Turns | Answer | OpenTPW | The original |
+|---|---|---|---|---|
+| 185 | 110, 265 | 0 on day 4, 110 on day 11 | said on 265 | said on 265 |
+| 282 | 148 to 458, 613 | 0 to day 19, 100 on day 26 | said on 613 | posted on 613, said on 775 |
+| 62 | 502, 657 | 13 (day 21, under 25), 34 (day 28) | posted on 657, said on 664 | posted on 657, said on 861 |
+| 1, 2 | every 155 from 1, 2 | 0: shut, nothing to ride | never said | never said |
+| 80, 113, 259 to 263 | | 0: no researcher, no queue, nothing to be shut | never said | never said |
+
+The order is the same, and the scores in the original's slots are this game's poll lines. **Two lines this game
+does not build come first there.** Message 0 (row 0, `Welcome`; response 1, sample 1, slot 1) is in a slot at
+100,000 on tick 0 and said on tick 1, for 31.3 s, in every fresh park the original made (two of two); its poster is
+not read (Q543). Message `0x119` (row 281, `GoldTicketExplanation`, Q708) is said on 612, its turn after the first
+bus's load (604 in both games), for 25 s, so row 282's line waits to 775 and row 62's to 861. A line's length in
+sweeps is not compared: the original's sweep ran about 6.5 a second here and this game's 4.8.
+
+**Row 80 in the original's own fresh park.** Its buy screen's misc tab bought one of each of the eight features on
+offer and its hire screen one researcher: `0x50` was said on tick 2755 in the spiky hair (`orig/b/r-01.png`).
+Saved from its menu on tick 3513 (cursor 160) and loaded by a Full Simulation player in both games, with `0x50`'s
+record made fresh (`parkfile.advisor_forget`), row 80 was said on 3615 in both, score 60, line 0, and row 62 again
+on 3912, score 457, line 2, refused on 3602 and 3757 by the same-message wait (`side-L.png`). The same file with
+`mParkClosed` written nought (the fresh park opened with nothing to ride) had row 2 said on 3567 in both, score 99,
+in the green ticket cap with tag 4 (`side-O.png`). The original said row 107's `0x6b` there on 3633 (score 90)
+and one line no named message accounts for on 3825; neither is built here.
 
 ## The buy screen's own line (message `0xbc`, Q328)
 

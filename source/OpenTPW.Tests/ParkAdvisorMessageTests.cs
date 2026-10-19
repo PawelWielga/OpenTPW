@@ -4809,4 +4809,39 @@ public class ParkAdvisorMessageTests
 			fresh.Tick( tick, tick * 250L, ( response, _ ) => { heard.Add( (tick, response) ); return 2000; } );
 		CollectionAssert.AreEqual( new[] { (265, 404), (613, 542) }, heard );
 	}
+
+	/// <summary>
+	/// A fresh Full Simulation park: shut, nothing standing but its gates and lights, the cursor at nought and the
+	/// clock from nought. Of the polled rows built, the ones its age owes speak and nothing else does: row 185 on
+	/// 265, row 282 on 613, and row 62, under the threshold on 502 (13), posted on 657 (34) and said when 282's line
+	/// and the second after it end. The door keeps row 2 at nought; the empty park keeps rows 1, 259 to 263, 113 and 80 there.
+	/// The lengths are the original's lines (19,165, 12,498 and 9,998 ms), a sweep 250 ms.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the fresh park open; a ride counted; row 62's days counted from a later tick, or its
+	/// per-day key the score's; row 282's section the control panel's; no second after a line; a line that holds
+	/// nothing.
+	/// </remarks>
+	[TestMethod]
+	public void AFreshFullSimulationParkSaysOnlyTheLinesItsAgeOwes()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 0 };
+		var messages = new ParkAdvisorMessages( Settings(), tutorial: () => true, cursor: cursor, instantAction: () => false );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: true, Rides: 0, Sideshows: 0, WaitingToOpen: 0 );
+		var lengths = new Dictionary<int, int> { [404] = 19165, [542] = 12498, [182] = 9998 };
+		var heard = new List<(int Tick, int Response)>();
+		var answers = new Dictionary<(int Row, int Tick), string?>();
+		for ( var tick = 1; tick <= 700; ++tick )
+		{
+			messages.Tick( tick, tick * 250L, ( response, _ ) => { heard.Add( (tick, response) ); return lengths[response]; }, park: () => facts );
+			foreach ( var row in new[] { 1, 2, 62, 80, 113, 185, 259, 260, 261, 262, 263, 282 } )
+				answers[(row, tick)] = messages.PollAnswer( row );
+		}
+
+		CollectionAssert.AreEqual( new[] { (265, 404), (613, 542), (667, 182) }, heard );
+		Assert.AreEqual( ("under-threshold", "post"), (answers[(62, 502)], answers[(62, 657)]) );
+		Assert.AreEqual( ("no-score", "no-score"), (answers[(1, 622)], answers[(2, 622)]), "shut, and nothing to ride" );
+		foreach ( var row in new[] { 80, 113, 259, 260, 261, 262, 263 } )
+			Assert.AreEqual( "no-score", answers[(row, 700)], $"row {row}" );
+	}
 }

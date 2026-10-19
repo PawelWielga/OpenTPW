@@ -53,16 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q327. Full Simulation catch-up: the built advisor lines in a Full Simulation park.** Filed at Alexah's
-  word, 2026-10-12, and placed here by it: after Q241j, whose economy fields a Full Simulation file needs. One
-  session. A Full Simulation park made with no file, saved, and run through each built polled row's scene in
-  both games (rows 1, 2, 62, 113, 185, 259 to 263, 282, and row 80, which is Full Simulation's alone and needs
-  the fresh park's lab filled first, Q349: `advisor-park.md` has each scene and its turn; the
-  cursor is the program's, not a file's, so predict each turn from it). Say first, from each score function,
-  whether the mode is asked; run those where it could matter (the regular catalogue, the empty park's age and
-  rates), and say in one line why for the rest. Confirm: each line's `poll` and `attempt` lines with a
-  screenshot, and the original's record on the same file. It answers the "Full Simulation" left in Q331's notes
-  From Q319 to From Q325; take each out of those notes as it is run.
 - [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). `gms.dat`
   written before every park file; `autosave.TPWS` on leaving a park, which entering then finds as the newest
   file; the quicksave and quickload keys (`<theme>.TPWS`); `restart.INTS` written when the folder has none, and
@@ -190,6 +180,8 @@ filed the items that cite it.
 - [ ] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
   tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
   one load). `0x13e` and the rows no code posts stay unsaid, as the original's.
+  From Q327: a fresh Full Simulation park in the original says `0x119` on tick 612, the turn after the first bus's
+  load (604 here too), for 25 s, and row 282's line waits behind it (`advisor-park.md`, "A fresh Full Simulation park").
 - [ ] **Q709. Spending golden tickets: the mystery ride's purchase.** From Q177c, carried from Q141 when it was ticked.
   The buy list and its click read the same list of ticket-bought items as the purchase: a row whose item has a
   `GoldenTicketCost` not yet bought with tickets is named "??? Mystery Ride! ???" with its negated ticket cost for a
@@ -1361,6 +1353,13 @@ filed the items that cite it.
   zero it, `FUN_004a0db0`'s message `0x1e` does (`0x004a0dee`), calling `FUN_004a0ab0` first on every second one. A red
   square's second verdict adds to it (`park-engine.md`, "The path tool"), so the label may show more than the run's
   price: read it beside `strip`'s `run price`.
+- [ ] **Q543. The welcome a park made with no file says on tick 1, decode first.** From Q327 (`advisor-park.md`, "A
+  fresh Full Simulation park", and "Still unknown", `Welcome`). In both of the original's fresh Full Simulation parks
+  message 0 (row 0, posted only; response 1, sample 1, slot 1, `Welcome.Score` by `0x0059c8c0`) stood in a slot at
+  100,000 on tick 0 and was said on tick 1 for 31.3 s (`q327/orig/a/fresh.log`; record (1, 0, 1, 0)); this game posts
+  nothing there. Find the poster (a post of message 0 at the world's setup, or the park's first tick), whether an
+  Instant Action park made with no file and a loaded park post it too, and what sample 1's 31 s is. Then build it.
+  Confirm: a fresh park's first seconds in both games, the record and a frame.
 
 ## B. Docs and comments
 
@@ -1992,6 +1991,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     taken offers), an offer passing when its amount is at most it, and the pass flag **written into the offer** on every call, so
     an advisor poll of row 102 rewrites the flags. A loan taken counts as cash in for the advisor's row 107. Rows 100 and 107
     are polled in Instant Action too (Lost Kingdom reaches them); 101 and 102 are Full Simulation's alone.
+  From Q327: the original said row 107's `0x6b` (score 90) on tick 3633 of `q327/FSOPEN.TPWS` and `FSFRESH80.TPWS`,
+  its fresh Full Simulation park saved on 3513 (no loan, $48,180, $1,400 spent); this game counts the row
+  (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`).
 
 - [ ] **Q448. Ride script: REPAIREFFECT and BUMP 17.** From the fork watch, 2026-10-16 (`verify-audio-fx.md` A1 and
   C1, `verify-world.md` L6). Both are counted by the dispatch's per-instruction report (`RideScript.cs`: "REPAIREFFECT

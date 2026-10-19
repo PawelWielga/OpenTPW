@@ -8775,28 +8775,27 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   From Q325 (`advisor-park.md`, "A shut staff room"): a staff room's own window is not built (the original's,
   `FUN_004b4fc0`, has no door); response 513's lip file 0 is not read. Thirteen other responses name
   `z_error.mp2` (0, 429, 517 to 519, 550, 572, 573, 588 to 591, 599): their rows are not read. In no game run:
-  a share between nought and the whole, the line again past its cooldown (the test holds each), a staff room
-  bought, Full Simulation. The original's sound was not measured; neither game was heard by ear.
+  a share between nought and the whole, the line again past its cooldown (the test holds each). A staff room bought
+  in a Full Simulation park scored nought in both games (Q327). The original's sound was not measured; neither game was heard by ear.
   From Q324 (`advisor-park.md`, "A queue not joined to a path"): **the object the line passes over is not the
   original's**: here the thing the queue tool is armed for, there the builder's object `DAT_008186ac`, set from
   the interface's selected thing too (`FUN_005276d0`, nineteen callers not read) and perhaps kept after the
   tool is put away; buy a ride with the mouse in the original, put the tool away and watch the word and row
   113. What reads the balance object's `+4` is not found. In no game run: line 2, the line said again past its
   cooldown (the test holds each), a queue cut off from an open ride, two rides unjoined, the tag's button
-  clicked in the original, the line posted while he speaks, Full Simulation. Not heard in either game.
+  clicked in the original, the line posted while he speaks. Not heard in either game.
   From Q323 (`advisor-park.md`, "An open park's shut rides"): in no game run: row 259's second and third lines, the line said again past its cooldown (the test holds
-  each), a ride shut from its own window, a share of exactly half, four rides or more, Full Simulation's
-  rates. Not heard in either game.
+  each), a ride shut from its own window, a share of exactly half, four rides or more. Not heard in either game.
   From Q322 (`advisor-park.md`, "A park with no ride in it"): the row of a tag's item is not selected on the buy screen
   (`TAG_BAR_BUY_ITEM_ROW`, counted; no listed tag names an item); what writes an item's control record's
   standing count (`+0x18`) is not read. In no game run: lines 2 and 3, the line said again past its cooldown,
-  a shut park with no ride, a park under its 26th day, Full Simulation's empty park, button types `0xa` to
+  button types `0xa` to
   `0xc`, the button with the buy screen open (the tests hold each), a ride bought after the line. Not heard in
   either game.
   From Q321 (`advisor-park.md`, "An open park with nothing to ride"): in no game run: row 2's second and
   third lines, the line said again past its cooldown, a tag 4 and a tag 3 taking each other's place, the park
-  shut while he speaks (whether anything withdraws message 2 was not looked for), Full Simulation's empty park
-  opened, a sale through the player's own window. Not heard in either game.
+  shut while he speaks (whether anything withdraws message 2 was not looked for), a sale through the player's own
+  window. Not heard in either game.
   From Q320 (`advisor-park.md`, "Shut shops, sideshows and toilets"): The toilets' count's place in the analyser (`+0x1f0e0`) is
   not kept. In no game run: a shop, sideshow or toilet shut by itself in an open park (no window shuts a shop
   or a toilet), a share between nought and the whole, each row's second and third lines, a row said again past
@@ -8805,13 +8804,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   From Q319 (`advisor-park.md`, "A shut park people wait outside"): The count's place in the analyser (`+0x1f0d4`) is not
   kept. The entry-price screen's own line (`0x12f`) is not posted. In no game run: lines 3 and 4, the refusal
   inside 480 ticks, a bus at a shut park, the park opened while he speaks (whether anything withdraws message 1
-  was not looked for), a tag 3 taking a tag 4's place, Full Simulation's empty park. Not heard in either game.
+  was not looked for), a tag 3 taking a tag 4's place. Not heard in either game.
   From Q318 (`advisor-park.md`, "The advisor's turn in the sweep"): in no game run: a ride's own post said on
   its tick (the wear's `0x42`, the break's `0x44` and `0x45`; a test holds the wear's), a post from the staff
   pool's or the arrivals' turn (none is built). Whether `0x45`'s 31 sweeps after the line before it (the
   original's 43) moved was not measured again. Not heard in either game.
   From Q317 (`advisor-park.md`, "The tips' line"): in no run of the original: the Tutorial switch off at row
-  282's turn, a park past day 79, a park made with no file. This game's wait was 11,665 ms in each run and the
+  282's turn, a park past day 79. This game's wait was 11,665 ms in each run and the
   original's 11,665 and 12,498: what the second second is was not read. The line's end was not seen. Not heard
   in either game.
   From Q316 (`advisor-park.md`, "The poll, and the control panel's line"): 146 of the 155 polled rows are not
@@ -9109,6 +9108,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   19.10.2026 13:15` and loaded back at 843, 88112, 13; saved over at 885 through the question and loaded at 885. The
   original under Proton loaded that file at 885 with 88112 and 13 guests (`q241j/orig/b-load.log`,
   `q241j/side-by-side.png`). A park made fresh is still not written: Q249.
+- [x] **Q327. Full Simulation catch-up: the built advisor lines in a Full Simulation park.** Done 2026-10-19
+  (`advisor-park.md`, "A fresh Full Simulation park"). No listed row's score reads the game type (`0x00fb3b7c`, three
+  calls deep in Ghidra); it enters at the poll alone, by row 80's `+0x0c`. A fresh Full Simulation park, made by each
+  game in a fresh program with nothing done: row 185 said on 265 in both, row 282 posted on 613 and row 62 on 657
+  (scores 100 and 34, 13 on 502) in both; this game said them on 613 and 664 (`poll message=62 row=62 days=28 score=34
+  threshold=25 tick=657 result=post`, `q327/run2/1-line-62.png`, the hard hat and tag 64), the original on 775 and
+  861, after two lines this game does not build: the welcome, message 0, on tick 1 (Q543), and row 281's `0x119` on
+  612 (Q708). Rows 1, 2, 80, 113 and 259 to 263 never scored. **The original's own fresh park**, with the eight
+  features and a researcher bought through its screens, said row 80 on 2755; saved from its menu on 3513 with `0x50`
+  made fresh, both games said row 80 on 3615 (score 60, the spiky hair, tag 82) and row 62 on 3912 (457, line 2);
+  opened in the file, both said row 2 on 3567 (99, the ticket cap, tag 4; `q327/side-L.png`, `side-O.png`). No code
+  changed; a test pins the fresh park's schedule (seven bugs put back, seven caught). Tests 3486.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
