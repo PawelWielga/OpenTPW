@@ -231,6 +231,15 @@ Each was found by trial in the item named, and cost a run to find.
   thought and `26:0x19c:I` the state. The patrol tool's click writes `+0x20a`/`+0x20c` and nothing else
   (`FUN_00506e50`), so `thingpoke.py %PID% 0.5 4 26:0x20a:H=3380 26:0x20c:H=3511` (kind 4) fences a member exactly,
   where Q433's clicks P1/P2 land on other cells as the camera follows Mike between runs.
+- **A build tool's money refusal in both games** (Q542, `q542/orig/run2.sh`, `q542/confirm.py`): a park with a low
+  balance is `parkfile.economy_set( stock, dst, dict( balance = 50 ) )`, but in the original the gate's takings lift it
+  by about 125 before the first read after `loadfile.sh`, so hold it: the bank is the thing at world `+0x1da726` (8,
+  kind 16), `thingpoke.py %PID% 120 16 8:0xc:i=50`, and `bank.py` reads it. The tools' cursor is the short at
+  `[0x007cb2d8]` (8 `c_noplace`, 20 `c_cash`), `d5c` the money flag, `[0x0081af4c]` the run's total, read with
+  `tpwmem.py watch 0x0081af4c:i 3` (it reads 0 between resets, so take the greatest). Here `load()` pauses, so the
+  file's balance stands; `strip X Y` prints `run price N` and marks a square refused for money `$`, and `pointer` the
+  cursor. **Our Load Park list is in name order** (`SaveFolder.SavedParks`): with two files copied in, row 1 is the first
+  by name, not the newest, so take the first out before loading the second.
 - **The patrol tool in either game** (Q433, `q433/orig/run.sh` and `run2.sh`, `q433/confirm.py`): on the original's
   1024 x 768 frame the staff window's patrol switch is (739,385); with the tool armed `[0x008186b8]`, `[0x008186b4]` is
   the preview's cell, so moving the pointer over a grid and reading them maps the view (`run2.sh`). The original's

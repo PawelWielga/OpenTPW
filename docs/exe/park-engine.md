@@ -4549,7 +4549,7 @@ verdict `FUN_00535670(1,0)`, in its own order (`0x005357c7`..`0x00535d63`):
 | 2 | mType 4, 9 or 10 | red and latch, unless the item's `+0x54` is below 2 (rides and shops are 5) |
 | 3 | an earlier latch | red |
 | 4 | track type `0x19`, after the parent redirect for 12 and 17 (made inline after `FUN_004d0af0`, which fetches the cell's own record) | red, latch |
-| 5 | cost: mType 0 or 3 adds `Costs.PathCell` to the run; cash below the total | red, latch, `c_cash` |
+| 5 | cost: mType 0 or 3 adds `Costs.PathCell` to the run; cash below the total, asked only when the total is not nought (`0x0053590a`) | red, latch, `c_cash` |
 | 6 | mType 1 as the last cell | `m_end` (11) |
 | 7 | mType `0x15` | red, `DAT_00816d58`, which the square's second verdict copies into the latch |
 | 8 | track corner (`FUN_0053ae00`: two cardinal links at right angles) or junction (`FUN_0053ae90`: three or more) | red, `d58`, copied as row 7's |
@@ -4559,12 +4559,22 @@ verdict `FUN_00535670(1,0)`, in its own order (`0x005357c7`..`0x00535d63`):
 
 NOMODIFY is never read for a path. The cursor (`FUN_0052f950`) is `c_link` if any square was `m_link`,
 else `c_end` if any was `m_end`, else `c_path`; a red square overrides with `c_noplace`, a cash refusal
-with `c_cash`. Two details are not reproduced: for the one preview after the pointer leaves an anchor it
-was resting on, the anchor still shows `m_end` (`DAT_00818688`), and a red square adds to the run's total
-a second time. **Every red square is judged twice**: the square's arm of `FUN_00532fc0` calls the verdict again with
-its third argument 1 (`0x00533927`) and throws the answer away. That call passes the latch test, so it charges the cell
-again (which can only change the cursor), and it copies `d58` into the latch (`0x00535885`) on the same square: a
-`d58` refusal latches at once, the last square included (built, Q538: `ParkPathBuilding.JudgedAgain`).
+with `c_cash`. One detail is not reproduced: for the one preview after the pointer leaves an anchor it
+was resting on, the anchor still shows `m_end` (`DAT_00818688`). **Every red square is judged twice**: the square's arm of `FUN_00532fc0` calls the verdict again with
+its third argument 1 (`0x00533927`), throws the answer away and sets `DAT_00816d48` (`FUN_00527940( 1 )`, `0x00533933`). That call
+copies `d58` into the latch (`0x00535885`) on the same square: a `d58` refusal latches at once, the last square
+included (built, Q538). It skips only the earlier latch's return (`0x00535898`): land outside the park still answers
+first, a thing's cell latches (`0x00535d95`), track `0x19` latches, and past them the cell is charged again into the
+run's total `DAT_0081af4c` (`FUN_0052fba0`, `0x005358f4`: the mode's price, `FUN_0052fb20` for the path tool and
+`FUN_0052fb40` for the queue tool, on a cell `FUN_00535600` lets the mode build on that is not already its type, a path
+under the queue tool excepted) and the money is asked again (`0x005358fc`..`0x0053593f`: the total not nought and above
+the balance sets `d50`, `d48` and `DAT_00816d5c`). So a red square after a latch is paid for by its second verdict alone,
+a red square the first call charged (a corner on bare ground, a cash refusal) is paid for twice, and once the total
+passes the balance the cursor is `c_cash` (`FUN_0052f950` asks `d5c` last), where the squares' own verdicts would leave
+`c_noplace`. The pass does not reset the total for these two tools: `FUN_004a0db0`, a control's message handler,
+sets it to nought on its message `0x1e` (`0x004a0dee`) and on every second one first calls `FUN_004a0ab0`; how often
+that comes against the pass, and what is drawn of the total, is Q541's. Built (Q542): `ParkPathBuilding.JudgedAgain`, the run's total each square's `Owed`, the console's `strip X Y`
+printing it as `run price` and a `$` on a square refused for money.
 
 **A click** (`0x005271b7`..`0x00527655`, on release at the preview's target): any red square lays
 nothing, plays `0xaf` and puts the tool away — the arming click included, so a click outside the park's

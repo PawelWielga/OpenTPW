@@ -208,13 +208,13 @@ public class ParkPathToolTests
 
 	/// <summary>
 	/// <b>The queue tool's pass leaves the latch as its verdict sets it</b> (<c>FUN_00535670</c>'s mode-3 arm): a thing's
-	/// cell, a track, the money, the middle of its own queue and another ride's set <c>d50</c>; a NOMODIFY path, a type
-	/// <c>0x15</c> cell and a track corner set <c>d58</c>, which the red square's second verdict copies; land outside the
-	/// park, a NOMODIFY thing and the join set neither, so the squares after them take their own verdicts. A NOMODIFY
-	/// thing latches nothing, and NOMODIFY bare ground is blue.
+	/// cell, NOMODIFY or not, a track, the money, the middle of its own queue and another ride's set <c>d50</c>; a NOMODIFY
+	/// path, a type <c>0x15</c> cell and a track corner set <c>d58</c>, which the red square's second verdict copies; land
+	/// outside the park and the join set neither, so the squares after them take their own verdicts. NOMODIFY bare ground
+	/// is blue.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> any red square latching; the second verdict's copy dropped; the join latching; the
-	/// middle of the queue not latching; NOMODIFY read on bare ground; the NOMODIFY thing latching.</remarks>
+	/// middle of the queue not latching; NOMODIFY read on bare ground; the NOMODIFY thing not latching.</remarks>
 	[TestMethod]
 	public void AQueuePassLeavesTheRefusalLatchOnlyWhereItsVerdictsSetIt()
 	{
@@ -242,8 +242,8 @@ public class ParkPathToolTests
 		Assert.IsFalse( latched, "outside the park latches nothing" );
 
 		Set( 11, original[11] with { Type = CellEdge.Footprint, Flags = ParkPathBuilding.NoModify } );
-		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):0 (13,10):0", Strip( 13, out latched ), "a NOMODIFY thing" );
-		Assert.IsFalse( latched, "a NOMODIFY thing answers first and latches nothing" );
+		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):1 (13,10):1", Strip( 13, out latched ), "a NOMODIFY thing" );
+		Assert.IsTrue( latched, "a NOMODIFY thing latches as any thing does in mode 3" );
 
 		Set( 11, original[11] with { Type = CellEdge.Footprint, Flags = 0 } );
 		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):1 (13,10):1", Strip( 13, out latched ), "a thing" );
@@ -318,6 +318,86 @@ public class ParkPathToolTests
 		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):11", Describe( ParkPathBuilding.PathStrip( state, park, 12, 10, Price ) ) );
 		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1",
 			Describe( ParkPathBuilding.PathStrip( state, park, 13, 10, Price ) ) );
+	}
+
+	/// <summary>
+	/// <b>A red square's second verdict charges it again</b> (<c>0x005358f4</c>) and asks the money once more: a square
+	/// after a latch is paid for by it alone, one the first call charged (a corner on bare ground) twice, and a run that
+	/// passes the balance is refused for money (<c>DAT_00816d5c</c>, <c>c_cash</c>) where the squares alone would only be
+	/// red. Land outside the park and a thing's cell are not charged, the queue tool pays for bare ground alone, and the
+	/// money is not asked with nothing owed.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the second charge dropped; a thing's cell charged; land outside the park charged; the
+	/// path tool's rule in the queue tool; the money asked with nothing owed; the second test's refusal not reported.</remarks>
+	[TestMethod]
+	public void ARedSquaresSecondVerdictChargesItAgain()
+	{
+		var park = World();
+		var state = new ParkState( park );
+		var original = Enumerable.Range( 10, 5 ).ToDictionary( x => x, x => ParkState.CellFor( park, x, 10 ) );
+
+		void Set( int x, ParkWorld.MapCell cell ) => state.SetRecord( x, 10, cell );
+
+		void Reset()
+		{
+			foreach ( var (x, cell) in original )
+				Set( x, cell );
+		}
+
+		void HoldTheBalanceAt( int balance ) => state.Spend( state.Balance - balance );
+
+		string Strip( List<ParkPathBuilding.QueueSquare> strip )
+			=> string.Join( " ", strip.Select( square => $"({square.X},{square.Y}):{square.Marker}{(square.Unaffordable ? "$" : "")}" ) )
+				+ $" owes {strip[^1].Owed}";
+
+		string PathTo( int toX ) => Strip( ParkPathBuilding.PathStrip( state, park, toX, 10, Price ) );
+
+		ParkBuildMode.Arm( ParkBuildMode.Path );
+		ParkBuildMode.AnchorAt( 10, 10 );
+
+		// Bare, bare, a thing, bare, bare: the thing's cell is never paid for, and the squares after it only by their
+		// second verdicts.
+		Set( 12, original[12] with { Type = CellEdge.Footprint } );
+		HoldTheBalanceAt( 50 );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 owes 40", PathTo( 12 ), "the thing's cell is not charged" );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1$ owes 60", PathTo( 13 ), "60 against 50: c_cash" );
+
+		HoldTheBalanceAt( 70 );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1 owes 60", PathTo( 13 ), "60 against 70: c_noplace" );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1 (14,10):1$ owes 80", PathTo( 14 ), "each charged once" );
+
+		// A corner on bare ground: charged by its first verdict and again by its second.
+		Reset();
+		Set( 11, original[11] with { TrackNeighbours = 0x05 } );
+		HoldTheBalanceAt( 50 );
+		Assert.AreEqual( "(10,10):0 (11,10):1$ owes 60", PathTo( 11 ), "40 by the first verdicts, 60 by the second" );
+
+		// Land outside the park answers before the charge in the second verdict too.
+		Reset();
+		Set( 11, original[11] with { Flags = ParkPathBuilding.OutsideThePark } );
+		HoldTheBalanceAt( 30 );
+		Assert.AreEqual( "(10,10):0 (11,10):1 owes 20", PathTo( 11 ), "outside the park: not charged" );
+
+		// Nothing owed, the balance below nought: a red path after a latch is not refused for money.
+		Reset();
+		ParkBuildMode.AnchorAt( 11, 10 );
+		Set( 11, original[11] with { Type = CellEdge.Footprint } );
+		Set( 12, original[12] with { Type = CellEdge.Path } );
+		HoldTheBalanceAt( -100 );
+		Assert.AreEqual( "(11,10):1 (12,10):1 owes 0", PathTo( 12 ), "the money is not asked with nothing owed" );
+
+		// The queue tool pays for bare ground alone: another ride's queue end latches unpaid, the bare ground after it
+		// is paid for by its second verdict.
+		Reset();
+		ParkBuildMode.Forget();
+		ParkBuildMode.ArmAt( ParkBuildMode.Queue, state.Objects[0].ThingId, 10, 10 );
+		Set( 11, original[11] with { Type = ParkRideChoice.QueueCellType, Neighbours = 0x01 } );
+		HoldTheBalanceAt( 30 );
+		var queue = ParkPathBuilding.QueueStrip( state, park, 11, 10, Price, out _ );
+		Assert.AreEqual( "(10,10):0 (11,10):1 owes 20", Strip( queue ), "a queue is not charged in mode 3" );
+		queue = ParkPathBuilding.QueueStrip( state, park, 12, 10, Price, out var latched );
+		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):1$ owes 40", Strip( queue ), "40 against 30" );
+		Assert.IsTrue( latched );
 	}
 
 	/// <summary>A track corner is two cardinal links at right angles, a junction three or more.</summary>

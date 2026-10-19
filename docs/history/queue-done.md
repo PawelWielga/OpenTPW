@@ -9090,6 +9090,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   edges, which nothing reads. `MARKER_WALL_CLEARS_REFUSAL_LATCH` taken out, no square left unrefused is lifted on any
   cell (`NoUnrefusedPathOrQueueSquareIsLifted`, mutations 6 of 6). Measured in both games (`q540/side-by-side.png`): the
   original's `d58` 0 with the edges, 1 without, the same $375 queue either way; ours latch 0, `| walls 5` all 0.
+- [x] **Q542. A red square's second verdict charges it again** (Q539's second piece). Read: the second call
+  (`0x00533927`) skips only the latch's return (`0x00535898`), so past land outside the park, a thing and track `0x19`
+  it adds the cell's price to the run total `DAT_0081af4c` (`0x005358f4`) and asks the money again, setting `d5c`
+  (`c_cash`). Built in `ParkPathBuilding.JudgedAgain` for both tools; `QueueSquare.Owed`; `strip X Y` prints `run
+  price` and a `$`. Tests `ARedSquaresSecondVerdictChargesItAgain`, mutations 8 of 10 (2 equivalent, `q542/mutate.out`).
+  Measured in both games, the path tool anchored on (49,24) across the Belly Bounce (`q542/side-by-side.png`): the
+  original's total 40, 60, 80 on (53..55,24), the bank held at 50 `c_noplace` then `c_cash` from (54,24), at 70 from
+  (55,24); ours the same prices and cursors; main's build `c_noplace` throughout.
+- [x] **Q539. The refusal latch's other writers.** Q420's leftovers, split: the wall's clear was Q540, the red
+  square's second charge Q542; the carried item's passes are Q536, which holds their decode.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

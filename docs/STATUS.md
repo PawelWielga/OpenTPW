@@ -49,21 +49,21 @@ Last updated: 2026-10-19. **This header names no branch and no sha, deliberately
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q701** (the lab spends a researcher's points and finishes a project); then **Q539** (the refusal latch's last two writers, a carried item's passes and a red square's second charge; the wall's clear was Q540, which changes nothing a reader sees), then Q241j, Q327 (Full Simulation catch-up, at Alexah's word), Q248, Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q701** (the lab spends a researcher's points and finishes a project); then **Q241j** (Q539 is done: the wall's clear was Q540, the red square's second charge Q542, and the carried item's passes are Q536), then Q327 (Full Simulation catch-up, at Alexah's word), Q248, Q149 and Q31: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4, 5, 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q540 (the latches a wall zeroes under a path or queue strip, Q539's first piece; read, no behaviour changed): the original (`q540/orig/`, the stock park, Mike Cooper's fence (52,26)-(54,27) committed, the locator following him, the queue tool armed from (50,22), the pointer on the join (49,28)): `d58` 0 with the edges' 5 walls drawn (`a-16-join28-edges.png`), 1 with the follow off (`a-17`), the same queue for $375 either way (`a-19-*`, `b-1-*`). Ours on the final build (`q540/run2`, real clicks): "thing 26 patrols (52, 26)-(54, 27), its edges 6 squares a frame", the strip `49,22..27` 0 and `49,28` 8, `| patrol 6`, `| walls 5`, all 0, latch 0, `MARKER_WALL_CLEARS_REFUSAL_LATCH` not counted (`3-join-edges.png`; `q540/side-by-side.png`); main's build counted it 3 times there (`run-main`). Not seen: a join on a lifted path cell (only a track thing lifts one, `MARKER_LIFT_OVER_TRACK_THING`), the click's unanchored verdicts, which do read `d58` (`0x0052727b`; not reached with an anchor), the fence anchored at (51,27) (it fell on (52,26)), Full Simulation (not asked: the tools are either mode's), the other three themes. Not heard (silent runs).
+- Q542 (a red square's second verdict charges it again, Q539's second piece): the original (`q542/orig/run2.out`, `q542/bal50.TPWS`, the bank held by `thingpoke.py`; the path tool armed on (49,24) by a click, the pointer across the Belly Bounce): bank 50, the run total 40 on (53,24) with cursor 8 (`c_noplace`), 60 on (54,24) and 80 on (55,24) with `d5c` 1 and cursor 20 (`c_cash`); bank 70, `c_noplace` on (54,24), `c_cash` on (55,24) (`orig/orig-crops.png`). Ours on the final build (`q542/run2`, real clicks): `strip` `(54,24):1$ | run price 60`, `pointer` `cursor Cash` at 50, `NoGo` at 70 until (55,24), 80 (`q542/side-by-side.png`); main's build `NoGo` throughout (`run-main`). Not seen: a corner on bare ground charged twice and the queue tool's charge (no stock cell; tested), the label the original draws of the total (Q541), the total accumulating if the pass runs twice before its reset (`FUN_004a0db0`, not watched), Full Simulation (not asked: the tools are either mode's), the other three themes. Not heard (silent runs).
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **77** of 106 | 2026-10-10, `case Opcode.` labels vs enum members |
-| Tests | **3483**, 0 fail, 0 skip with the game | 2026-10-19, Q540, alone in a worktree |
-| Tests without the game | **1185** ran, **2298** skipped, of 3483 | 2026-10-19, Q540, alone in a worktree |
+| Tests | **3484**, 0 fail, 0 skip with the game | 2026-10-19, Q542, alone in a worktree |
+| Tests without the game | **1185** ran, **2299** skipped, of 3484 | 2026-10-19, Q542, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

@@ -2772,14 +2772,19 @@ end; it sets only `DAT_00816d58` on a type `0x15` cell or a track corner (`0x005
 square is judged a second time (`0x00533927`, the verdict's third argument 1), whose copy of `d58` into `d50`
 (`0x00535885`) latches it on the same square (Q538); land outside the park (flag `0x40`) sets neither, and answers before
 the copy. The patrol tool's anchored pass sets it by the rectangle's test (`0x00523dd3`). The queue
-arm (mode 3; Q538, read 2026-10-19), in its order: a NOMODIFY thing's cell red with no latch (`0x0053569e`), land outside
-the park red with no latch, a thing's cell `d50` (`0x00535d95`), the copy of `d58`, an earlier latch red, track `0x19`
-`d50` (`0x005358c0`), the money `d50` (only bare ground charged, `0x00535931`), its own queue's middle and another ride's
-queue `d50` (`0x00535aae`, `0x00535acc`), type `0x15` `d58` (`0x00535ba4`), a track corner `d58` (`0x00535d57`), bare
+arm (mode 3; Q538, read 2026-10-19), in its order: land outside the park red with no latch, a thing's cell `d50`
+(`0x00535d95`), NOMODIFY or not (the verdict's early NOMODIFY answer, `0x005356aa`..`0x005356c5`, is for modes 4, 9
+and 10), the copy of `d58`, an earlier latch red, track `0x19` `d50` (`0x005358c0`), the money `d50` (only bare ground
+charged, `0x00535931`; tested only once something is owed, `0x0053590a`, so in a park in the red the anchor and the
+join still pass), its own queue's middle and another ride's queue `d50` (`0x00535aae`, `0x00535acc`), type `0x15` `d58` (`0x00535ba4`), a track corner `d58` (`0x00535d57`), bare
 ground blue (NOMODIFY unread), the last cell a path `m_link` with `d58` and `DAT_00816d60` (`0x00535c78`), a path in the
 run blue or, NOMODIFY, `d58` (`0x00535c8a`), any other type red with no latch. So a queue pass leaves `d50` after any
-refusal but land outside the park, a NOMODIFY thing and a type it may not be laid over (the stock park's type 7 land,
-flags 0), and leaves `d58` alone only after the join. Named in Ghidra: `BuildTool_PreviewPass` (`FUN_005234d0`), `BuildTool_CellVerdict` (`FUN_00535670`),
+refusal but land outside the park and a type it may not be laid over (the stock park's type 7 land,
+flags 0), and leaves `d58` alone only after the join. The second verdict of a red square, in either mode, skips only
+the earlier latch's return (`0x00535898`), so past land outside the park, a thing's cell and track `0x19` it charges the
+cell again into the run's total `DAT_0081af4c` (`0x005358f4`) and tests the money once more: a red square after a latch
+is paid for there, one the first call charged is paid for twice, and a run that comes to more than the balance sets `d5c`
+(`0x0053593f`) and so `c_cash` where the squares alone would show `c_noplace` (Q542; `park-engine.md`, "The path tool"). Named in Ghidra: `BuildTool_PreviewPass` (`FUN_005234d0`), `BuildTool_CellVerdict` (`FUN_00535670`),
 `BuildTool_SetMode` (`FUN_0052f200`), `g_BuildRefusalLatch` (`d50`), `g_BuildRefusalPending` (`d58`), `g_PlacerFailed`
 (`DAT_0081b604`). **The original** (`q426/orig/run.sh`, `q325/stock.TPWS`, `original/squares.py`; four of four
 predicted, `q426/PREDICTION.txt`): the mechanics' button, texture 0, 48 squares on the 48 cells of (39,21)-(56,28),

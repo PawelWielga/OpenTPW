@@ -53,12 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q539. The refusal latch's other writers.** Q420's leftovers (`hud.md`, "The patrol edges"), each counted: a
-  carried item's passes, which set `d50` and `d5c` while its price is above the balance and on an entrance or exit
-  facing off the map (`CARRY_PREVIEW_MARKERS`), and a red square's second verdict charging the cell again
-  (`park-engine.md`, "The path tool"; `ParkPathBuilding.JudgedAgain` reproduces only its copy of `d58`), which can turn
-  the cursor to `c_cash`. The wall's clear was Q540. The press-to-release hover passes are Q535. Confirm: each beside the
-  original's `[0x00816d50]` and its edges.
 - [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The managers are written (the staff HQ's
   strikes, Q523, the economy thing's fields and loans, Q524, the calendar's month and day, Q526, and the weather
   thing, Q528); what is left is that `ParkSaveScreen.Save` writes
@@ -1362,6 +1356,8 @@ filed the items that cite it.
   entrance or exit facing off the map (trigger not re-derived). Build both in `ParkBuildMarkers.OnUpdate` while
   `ParkBuilding.Carrying != 0`; the player reaches it by a move with the price above the balance, which `Carry`
   refuses but `Move` does not. `Hold` clears the latch for now; said at the site (`ParkBuilding.Hold`).
+  From Q539 (its last piece; counted as `CARRY_PREVIEW_MARKERS`): confirm beside the original's `[0x00816d50]` and the
+  locator's edges; the bank can be held low in the original with `thingpoke.py` (`TOOLING.md`, "Recipes", Q542).
 - [ ] **Q537. The patrol pointer after a re-arm, watched in the original.** From the run 5 review (Q534 1). Re-arming
   the patrol tool over itself keeps `c_noplace` here (`ParkBuildMode.Arm`), by the decode (`FUN_004b5b50` ->
   `FUN_0046c350` -> `FUN_0046d5a0`; the setter `FUN_0052f200` sets a cursor for modes 3 and 1 only); not watched in
@@ -1375,6 +1371,10 @@ filed the items that cite it.
   anchored on the stock park the original shows a yellow "$ 375" under the balance (`q540/orig/a-16-join28-edges.png`,
   `b-1-before-click.png`), the run's price, gone after the click; ours shows none (`q540/run2/3-join-edges.png`). Read
   who draws it, for which modes, and what `FUN_0052fb90`'s -9999 (the patrol tool's) does to it.
+  From Q542: the total is `DAT_0081af4c` (`FUN_0052fba0` adds, `FUN_0052fbc0` reads); the path and queue passes never
+  zero it, `FUN_004a0db0`'s message `0x1e` does (`0x004a0dee`), calling `FUN_004a0ab0` first on every second one. A red
+  square's second verdict adds to it (`park-engine.md`, "The path tool"), so the label may show more than the run's
+  price: read it beside `strip`'s `run price`.
 
 ## B. Docs and comments
 
