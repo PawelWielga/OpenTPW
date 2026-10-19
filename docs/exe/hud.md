@@ -1007,8 +1007,20 @@ How the cursor library's callback gets them (buffered or not) is not read; the m
 OpenTPW: `Input.MouseInfo.LeftPresses` and `LeftWentDown` come from the frame's events, not the button's state as the
 frame ends; `WindowStack.LeftSteps` gives the stack a press and a release for each press let go inside a frame (and a
 release before a press made while it was down), and `Level.WorldClick` acts on `LeftWentDown`. A frame's second press
-reaches the interface and is counted at the park (`PARK_PRESSES_IN_ONE_FRAME`). The right button is still read from
-its state (Q499).
+reaches the interface and is counted at the park (`PARK_PRESSES_IN_ONE_FRAME`).
+
+**The right button's are posted the same way** (Q499). The callback (`CursorLib_ButtonCallback`, `0x00486c70`, made a
+function and named this session) takes one event a call: `0xf0` the left, `0xf1` the right, `0xf2` the middle, with
+down or up. Each button keeps a latch (`0x007c24dc`, `0x007c24e0`, `0x007c24e4`): a down with the latch clear sets it and
+posts the press (`UI_PostButtonPress`, `0x00658af1`, the button as its first argument, 1 the right), an up with it set
+clears it and posts the release (`UI_PostButtonRelease`, `0x00658b5b`); a repeat of either is dropped. The point is
+scaled to the interface's 2048 x 1536 by the screen's size (`0x00faa5c4`, `0x00faa5c0`). Measured in the original
+(`q499/orig/run.sh`, round a, the stock park, RMB cancel `0x0078d911` = 1): one back-to-back right press (`xdotool
+mousedown 3 mouseup 3`) left first person three times of three (`helpbar.py` flags `0x202` to `0x0`) and put the armed
+patrol tool away (mode `0x0081ae2c` 54 to 0). OpenTPW: `Input.MouseInfo.RightPresses`, and `WindowStack.RightSteps`
+gives the stack's right press and click, and `Level.WorldClick`'s quick right click, each step as `LeftSteps` does the
+left's. A frame whose quick right click put the hand away hands the park none of that frame's left presses (ours:
+which came first is not kept between the two buttons).
 
 ### Who acts on the click, and who on the release
 

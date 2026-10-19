@@ -116,6 +116,25 @@ public class ParkFirstPersonRightClickTests
 		Assert.IsTrue( ParkCamcorderCameraMode.Active, "one on the eject button does not" );
 	}
 
+	/// <summary>
+	/// <b>A right click let go inside one frame still leaves</b>: the window system sent its press and its release, and the
+	/// button stands up as the frame ends. The original is posted both as messages (<c>0x00486c70</c>, button 1), so its
+	/// click is made; one on the eject button still does not leave.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the stack's right button read from its end state alone.</remarks>
+	[TestMethod]
+	public void AClickLetGoInsideOneFrameLeaves()
+	{
+		var stack = APark();
+
+		InFirstPerson( true );
+		InsideOneFrame( stack, Eject, 10f );
+		Assert.IsTrue( ParkCamcorderCameraMode.Active, "not from the eject button" );
+
+		InsideOneFrame( stack, View, 11f );
+		Assert.IsFalse( ParkCamcorderCameraMode.Active, "a press and its release in one frame on the view leaves" );
+	}
+
 	/// <summary><b>With RMB cancel off no right click leaves</b>: the layer's handler reads the switch first (<c>0x00488aa8</c>).</summary>
 	/// <remarks><b>Mutations:</b> the switch not read.</remarks>
 	[TestMethod]
@@ -414,6 +433,14 @@ public class ParkFirstPersonRightClickTests
 	{
 		Time.PinWall( (long)System.MathF.Round( now * 1000f ) );
 		Input.Mouse = new() { Right = right, RightWentDown = right && !Input.Mouse.Right, Position = at };
+		stack.Update();
+	}
+
+	/// <summary>A right press and its release inside one frame, at one point: the button up as the frame ends.</summary>
+	private static void InsideOneFrame( UI.WindowStack stack, Vector2 at, float now )
+	{
+		Time.PinWall( (long)System.MathF.Round( now * 1000f ) );
+		Input.Mouse = new() { RightWentDown = true, RightPresses = 1, Position = at };
 		stack.Update();
 	}
 

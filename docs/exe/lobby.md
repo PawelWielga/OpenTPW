@@ -609,7 +609,7 @@ active child's `+0x14`, and the island camera's `0x005e2310` takes three keys. E
 | the new player dialog | its name box (`0x004a6f8e`), which edits on the press and takes Enter (the main one) and Escape on the release (`0x00667fee`), sending `0x802` or `0x804` to the dialog synchronously | the tick's whole close runs inside that one key-up's delivery, so its release never reaches the root |
 
 **A left press on the lobby's view enters the park, on the press.** WM_LBUTTONDOWN posts `0x10005`, with the button (0
-left, 1 right, 2 middle) as its first argument, to the control the pointer is over (`FUN_00658af1`, the hover
+left, 1 right, 2 middle) as its first argument, to the control the pointer is over (`UI_PostButtonPress`, `0x00658af1`, the hover
 `[0x00faa5e0]`). There is no hit test at the press: the hover is worked out on a move, and by `FUN_006589f9`, which
 hit-tests at the last pointer position unless a control holds the capture `[0x00faa5e8]`. Its ten callers are a control
 built visible (`0x0065bff4`), destroyed (`0x0065c267`), shown or hidden (`UI_SetVisible`, `0x0065da61`), linked

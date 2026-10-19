@@ -53,13 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q499. A right press let go inside one frame is lost.** From Q476 (`hud.md`, "A click and a double click"): the
-  left button's steps now come from the frame's events (`WindowStack.LeftSteps`), but the right is still read from its
-  state as the frame ends: `WindowStack`'s right press and `RightClick` (`rightDown && !_rightWasDown`) and the park's
-  quick right click (`Level.RightButton`, RMB cancel) never see a right press and release inside one frame, though
-  `Input.MouseInfo.RightWentDown` has it. Give the right the left's steps (a `RightPresses` count), and confirm with a
-  back-to-back right press (`button(3, what, held=0)`) in Alexah's Full Simulation park, hand full and RMB cancel on,
-  and on the first-person view, before and after; the original's own with `xdotool mousedown 3 mouseup 3`.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.

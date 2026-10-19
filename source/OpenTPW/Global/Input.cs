@@ -322,6 +322,7 @@ public static partial class Input
 			LeftWentDown = inputSnapshot.MouseEvents.Any( e => e.MouseButton == MouseButton.Left && e.Down ),
 			LeftPresses = inputSnapshot.MouseEvents.Count( e => e.MouseButton == MouseButton.Left && e.Down ),
 			RightWentDown = inputSnapshot.MouseEvents.Any( e => e.MouseButton == MouseButton.Right && e.Down ),
+			RightPresses = inputSnapshot.MouseEvents.Count( e => e.MouseButton == MouseButton.Right && e.Down ),
 			Wheel = inputSnapshot.WheelDelta
 		};
 

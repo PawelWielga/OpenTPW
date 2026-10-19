@@ -2792,7 +2792,7 @@ which closes the coaster bar if it is up (`0x0048842b`..`0x0048843c`). Every mod
 
 **Whose a right press is** (decoded for `docs/QUEUE.md` Q56: three decoders, each put to a refuter; static only).
 The window procedure posts a right press as it does a left one (`0x0046b6a5`, button 1) to the control under the
-pointer (`FUN_00658af1`), with no hit test at the press, and the release to that same control wherever the pointer
+pointer (`UI_PostButtonPress`, `0x00658af1`), with no hit test at the press, and the release to that same control wherever the pointer
 has gone (`0x00658b88`). Nothing passes a press to a parent: the base proc's `0x10005` case (`0x0065f820`) posts the
 press on (`0x11005`, `0x10007`) only to itself, its one other message the focus change's `0x1b` to the old focus. `Park_MouseMessageProc` is installed on the park's layer 0 alone (`DAT_007cb2ac`, built at `0x0048a0bc`),
 so **a right press arms the click only when it lands on that layer**, and nothing on its way to the arm reads a

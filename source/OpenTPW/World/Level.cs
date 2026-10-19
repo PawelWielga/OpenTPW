@@ -2084,11 +2084,21 @@ public class Level
 
 		ParkCamcorderCameraMode.ReadRightButton();
 
-		if ( RightButton( Input.Mouse.Right, Input.Mouse.Position / UI.VirtualScreen.Scale, RightPressTaken( UI.WindowStack.RightPointerTaken ) ) is { } putAway )
+		// Each step the right button took this frame, so a quick click let go inside one frame is still a press and a
+		// release, as the original's park is posted both (0x00486c70).
+		var putAway = false;
+
+		foreach ( var rightDown in UI.WindowStack.RightSteps( _worldRightWasDown, Input.Mouse ) )
 		{
-			Log.Info( putAway );
-			return;
+			if ( RightButton( rightDown, Input.Mouse.Position / UI.VirtualScreen.Scale, RightPressTaken( UI.WindowStack.RightPointerTaken ) ) is { } letGo )
+			{
+				Log.Info( letGo );
+				putAway = true;
+			}
 		}
+
+		if ( putAway )
+			return;
 
 		if ( !pressed || LeftPressTaken( UI.WindowStack.PointerTaken ) || KeptFromThePark( UI.WindowStack.ParkScreenOpen ) )
 			return;

@@ -198,6 +198,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00485cf3` | FUN_00485b70, a park screen opening: the gadget's arm folded, FUN_004a25f0( 1 ) | OpenTPW/UI/Park/ParkGadget.cs  |
 | `0x00485d20` | | OpenTPW/UI/Screens/OptionsScreen.cs  |
 | `0x00486bce` | | OpenTPW/Global/GameClock.cs  |
+| `0x00486c70` | `CursorLib_ButtonCallback`: posts each button's press and release as its own message (hud.md, "A click and a double click") | OpenTPW/Global/Input.MouseInfo.cs OpenTPW/UI/WindowStack.cs OpenTPW/World/Level.cs OpenTPW.Tests/ParkFirstPersonRightClickTests.cs OpenTPW.Tests/ParkHandTests.cs OpenTPW.Tests/PressInsideAFrameTests.cs  |
 | `0x004873b3` | Hover category: a type-12 track cell under a type-25 parent gets no category | OpenTPW/World/Level.cs  |
 | `0x00488234` | Park_MouseMessageProc, the tick 0x1e with a quick click armed: FUN_0065968e, the real-time clock, less the press's stamp | OpenTPW.Tests/ParkHandTests.cs  |
 | `0x0048823f` | Park_MouseMessageProc: more than 200 ms (0xc8) since the right press disarms the quick click | OpenTPW/World/Level.cs  |
@@ -1187,7 +1188,8 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x005f5fa0` | The sound clock: wall-time milliseconds | OpenTPW/World/Park/ParkAudio.cs  |
 | `0x005f8ae0` | | OpenTPW/Client/GameDir.cs  |
 | `0x006584df` | | OpenTPW/UI/WindowStack.cs  |
-| `0x00658b5b` | UI: posts a release (0x10004) to the control that took the press | OpenTPW.Tests/ParkFirstPersonRightButtonWalkTests.cs OpenTPW.Tests/ParkFirstPersonRightClickTests.cs  |
+| `0x00658af1` | `UI_PostButtonPress`: posts a press (0x10005) to the control under the pointer | OpenTPW/UI/WindowStack.cs  |
+| `0x00658b5b` | `UI_PostButtonRelease`: posts a release (0x10004) to the control that took the press | OpenTPW.Tests/ParkFirstPersonRightButtonWalkTests.cs OpenTPW.Tests/ParkFirstPersonRightClickTests.cs  |
 | `0x00658f97` | | OpenTPW/UI/Screens/GameMenu.cs  |
 | `0x00659a58` | | OpenTPW/UI/UiMesh.cs  |
 | `0x0065d3a3` | | OpenTPW/UI/UiControl.cs  |

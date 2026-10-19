@@ -8063,6 +8063,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `test.shader`, `people.shader`, `guests.shader` from `FirstPersonFog` (`Level.LinearFog`), the sky unfogged. Ours within
   0.03 of the original's along three ground lines at every depth of both holds (`q485/run5/linefit.txt`,
   `q485/side-by-side.png`); console `fog`. Weather drops counted, Q522.
+- [x] **Q499. A right press let go inside one frame is lost.** From Q476 (`hud.md`, "A click and a double click"): the
+  left button's steps now come from the frame's events (`WindowStack.LeftSteps`), but the right is still read from its
+  state as the frame ends: `WindowStack`'s right press and `RightClick` (`rightDown && !_rightWasDown`) and the park's
+  quick right click (`Level.RightButton`, RMB cancel) never see a right press and release inside one frame, though
+  `Input.MouseInfo.RightWentDown` has it. Give the right the left's steps (a `RightPresses` count), and confirm with a
+  back-to-back right press (`button(3, what, held=0)`) in Alexah's Full Simulation park, hand full and RMB cancel on,
+  and on the first-person view, before and after; the original's own with `xdotool mousedown 3 mouseup 3`.
+  **Done (2026-10-18):** `Input.MouseInfo.RightPresses`, `WindowStack.RightSteps` (one `Steps` with the left's), the
+  stack's right press and click and `Level.WorldClick`'s quick right click run on each step; the original's callback
+  posts the right's press and release as messages (`CursorLib_ButtonCallback`, `0x00486c70`; `hud.md`). In the Full
+  Simulation park (frames 67 ms): hand put away 10/10 at 0 s and 10/10 at 60 ms, first person left 5/5; main's binary
+  0/10, 0/10, 0/5; the original 3/3 out of first person and its patrol tool put away (`q499/`, `side-by-side.png`).
+  Mutations 10/10.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

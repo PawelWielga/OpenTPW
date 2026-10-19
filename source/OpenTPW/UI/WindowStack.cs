@@ -394,7 +394,7 @@ internal sealed class WindowStack : Panel
 		// release", Unsettled). Kept as a fix (docs/DECISIONS.md).
 		// Every step of one frame's presses (LeftSteps) goes to this one hit; only PointerTaken's modal and park-screen tests
 		// are read live. Whether the original sends a frame's second press to the control the first one's click left is not
-		// decided (its press poster, FUN_00658af1, takes the hover current at posting).
+		// decided (its press poster, UI_PostButtonPress 0x00658af1, takes the hover current at posting).
 		var mouse = Input.Mouse.Position;
 		var hit = Covered ? null : HitTest( mouse.X, mouse.Y );
 
@@ -456,17 +456,20 @@ internal sealed class WindowStack : Panel
 			_mouseWasDown = mouseDown;
 		}
 
-		var rightDown = Input.Mouse.Right;
-
-		if ( rightDown && !_rightWasDown )
+		// The right button's steps the same way (RightSteps): the cursor library posts its press and release as two
+		// messages too (0x00486c70, button 1).
+		foreach ( var rightDown in RightSteps( _rightWasDown, Input.Mouse ) )
 		{
-			RightPointerTaken = Covered || TakesRightPress( mouse.X, mouse.Y );
-			hit?.RightPressed?.Invoke();
+			if ( rightDown && !_rightWasDown )
+			{
+				RightPointerTaken = Covered || TakesRightPress( mouse.X, mouse.Y );
+				hit?.RightPressed?.Invoke();
+			}
+
+			RightClick( rightDown, hit, mouse / VirtualScreen.Scale );
+
+			_rightWasDown = rightDown;
 		}
-
-		RightClick( rightDown, hit, mouse / VirtualScreen.Scale );
-
-		_rightWasDown = rightDown;
 
 		// The wheel goes to the slider under the pointer, or the slider whose thumb it is.
 		if ( Input.Mouse.Wheel != 0f && (_hovered as UiSlider ?? (_hovered as UiSliderThumb)?.Slider) is { } slider )
@@ -771,11 +774,20 @@ internal sealed class WindowStack : Panel
 	/// Where the left button stood after each of this frame's presses and releases, given where it stood as the last
 	/// frame ended: the button as it ends the frame when it was not pressed, and otherwise a release before each press
 	/// made while it was down, the press, and the release that let it go inside the frame. The original is sent each as
-	/// its own message (the cursor library's callback <c>0x00486c70</c> posts the press, <c>0x10005</c>, through <c>FUN_00658af1</c>; <c>docs/exe/hud.md</c>), so none is lost.
+	/// its own message (the cursor library's callback <c>0x00486c70</c> posts the press, <c>0x10005</c>, through <c>UI_PostButtonPress</c>, <c>0x00658af1</c>; <c>docs/exe/hud.md</c>), so none is lost.
 	/// </summary>
 	internal static IEnumerable<bool> LeftSteps( bool wasDown, Input.MouseInfo mouse )
+		=> Steps( wasDown, mouse.Left, Math.Max( mouse.LeftPresses, mouse.LeftWentDown ? 1 : 0 ) );
+
+	/// <summary>
+	/// Where the right button stood after each of this frame's presses and releases, as <see cref="LeftSteps"/> is for
+	/// the left. The original's cursor library posts the right button's too, as button 1 (<c>0x00486c70</c>).
+	/// </summary>
+	internal static IEnumerable<bool> RightSteps( bool wasDown, Input.MouseInfo mouse )
+		=> Steps( wasDown, mouse.Right, Math.Max( mouse.RightPresses, mouse.RightWentDown ? 1 : 0 ) );
+
+	private static IEnumerable<bool> Steps( bool wasDown, bool endsDown, int presses )
 	{
-		var presses = Math.Max( mouse.LeftPresses, mouse.LeftWentDown ? 1 : 0 );
 		var down = wasDown;
 
 		for ( int i = 0; i < presses; ++i )
@@ -787,8 +799,8 @@ internal sealed class WindowStack : Panel
 			down = true;
 		}
 
-		if ( presses == 0 || down != mouse.Left )
-			yield return mouse.Left;
+		if ( presses == 0 || down != endsDown )
+			yield return endsDown;
 	}
 
 	private void Press( UiControl? hit, float x, float y )

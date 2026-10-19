@@ -404,6 +404,33 @@ public class ParkHandTests
 	}
 
 	/// <summary>
+	/// <b>A quick right click let go inside one frame lets go too</b>: the stack and the level's frame are each given its
+	/// press and its release (<see cref="UI.WindowStack.RightSteps"/>), as the original's park is posted both
+	/// (<c>0x00486c70</c>). Over the gadget's gauge the same click is still the interface's, so the press inside the
+	/// frame is still judged as one.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the level's frame reading the button's end state alone keeps the hand full on the park; the
+	/// stack's right steps not recording whose the press is empties it over the gauge.
+	/// </remarks>
+	[TestMethod]
+	public void AQuickRightClickInsideOneFrameLetsGo()
+	{
+		var (_, item) = MoveTheBellyBounceIntoTheHand();
+		var level = ALevel();
+		var stack = new UI.WindowStack();
+
+		stack.Open( new UI.ParkGadget( stack ) );
+		GameOptions.Current.RmbCancel = true;
+
+		QuickRightClickInsideOneFrame( stack, level, new Vector2( 115, 1200 ), 110f );
+		Assert.AreEqual( item, ParkBuilding.Carrying, "inside one frame over the gauge leaves the hand full" );
+
+		QuickRightClickInsideOneFrame( stack, level, new Vector2( 1024, 600 ), 120f );
+		Assert.AreEqual( 0, ParkBuilding.Carrying, "inside one frame on the park lets go" );
+	}
+
+	/// <summary>
 	/// <b>In first person no right press is the park's</b>: entering it hides the park's own layer and shows the
 	/// viewfinder's over it (<c>0x004a2ac0</c>), whose handler never arms the quick click.
 	/// </summary>
@@ -538,6 +565,60 @@ public class ParkHandTests
 		}
 		finally
 		{
+			Level.Current = levelBefore;
+			current.SetValue( null, stateBefore );
+			cell.SetValue( null, cellBefore );
+		}
+	}
+
+	/// <summary>
+	/// <b>A frame whose quick right click put the tool away hands the park none of its left presses</b>: the path tool
+	/// armed, a right click and a left press on a path, each let go inside the one frame, leave no tool, where the
+	/// left press alone would pick up the path tool again. Which of the two came first is not kept between the buttons,
+	/// so the frame is the put-away's.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the put-away frame going on to its left press; only the last step's answer counted.</remarks>
+	[TestMethod]
+	public void AFrameWhoseRightClickPutTheToolAwayTakesNoLeftPress()
+	{
+		using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		var current = typeof( ParkState ).GetProperty( nameof( ParkState.Current ) )!;
+		var cell = typeof( ParkPicking ).GetProperty( nameof( ParkPicking.Cell ) )!;
+		var (levelBefore, stateBefore, cellBefore) = (Level.Current, ParkState.Current, ParkPicking.Cell);
+		var worldClick = typeof( Level ).GetMethod( "WorldClick", BindingFlags.Instance | BindingFlags.NonPublic )!;
+
+		try
+		{
+			var level = ALevel();
+			var state = new ParkState( world );
+
+			typeof( Level ).GetProperty( nameof( Level.Park ) )!.SetValue( level, world );
+			typeof( Level ).GetProperty( nameof( Level.ParkState ) )!.SetValue( level, state );
+			current.SetValue( null, state );
+			Level.Current = level;
+			InFirstPerson( false );
+			GameOptions.Current.RmbCancel = true;
+
+			var (x, y) = Enumerable.Range( 0, ParkWorld.MapSize * ParkWorld.MapSize )
+				.Select( i => (X: i % ParkWorld.MapSize, Y: i / ParkWorld.MapSize) )
+				.First( c => ParkState.CellFor( world, c.X, c.Y ) is { Type: CellEdge.Path, TrackType: 0 } );
+
+			cell.SetValue( null, y * ParkWorld.MapSize + x + 1 );
+
+			Time.PinWall( 200_000 );
+			Input.Mouse = new() { LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.Path, ParkBuildMode.Current, $"a left press on the path at ({x},{y}) picks up the path tool" );
+
+			Time.PinWall( 201_000 );
+			Input.Mouse = new() { RightWentDown = true, RightPresses = 1, LeftWentDown = true, LeftPresses = 1, Position = new Vector2( 1024, 600 ) };
+			worldClick.Invoke( level, [] );
+			Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, "the right click put it away, and the frame's left press picked nothing up" );
+		}
+		finally
+		{
+			ParkBuildMode.Disarm();
 			Level.Current = levelBefore;
 			current.SetValue( null, stateBefore );
 			cell.SetValue( null, cellBefore );
@@ -919,6 +1000,15 @@ public class ParkHandTests
 	/// A quick right click at a point as frames make one: the stack's update, then the level's own reading of the park's
 	/// buttons, for the press and again 50 ms on for the release.
 	/// </summary>
+	/// <summary>A right press and its release inside one frame, the button up as it ends, then the stack's and the level's update.</summary>
+	private static void QuickRightClickInsideOneFrame( UI.WindowStack stack, Level level, Vector2 at, float now )
+	{
+		Time.PinWall( (long)System.MathF.Round( now * 1000f ) );
+		Input.Mouse = new() { RightWentDown = true, RightPresses = 1, Position = at };
+		stack.Update();
+		typeof( Level ).GetMethod( "WorldClick", BindingFlags.Instance | BindingFlags.NonPublic )!.Invoke( level, [] );
+	}
+
 	private static void QuickRightClickAFrame( UI.WindowStack stack, Level level, Vector2 at, float now )
 	{
 		var worldClick = typeof( Level ).GetMethod( "WorldClick", BindingFlags.Instance | BindingFlags.NonPublic )!;

@@ -243,7 +243,10 @@ Each was found by trial in the item named, and cost a run to find.
   saying it: read `advisor`'s `message=193/.../said=1`, not `slot=193/` (Q437's first miss); a way out's cut is the
   log's `withdraw message=193 ... cut=1` just before its own line (`q437/confirm.py`). **A quick right click** (Q438): in
   the original `xdotool mousedown 3`, 0.08 s, `mouseup 3` on `:77` (under the 200 ms limit); here `button(3, ...,
-  held=0.06)`. Opening Mike's window again snaps the original's camera to wherever he has walked, so aim that phase's
+  held=0.06)`. A right press of any length lands, one let go inside a slow frame too (Q499; `button(3, what, held=0)` is
+  the original's one call `xdotool mousedown 3 mouseup 3`); with the hand full by `carry 1100` and `rmbcancel on`, a
+  put-away is the log's `world click: right click - drop:` and `hand` reading `item 0` (`q499/confirm.py`, which also
+  leaves first person by it; the original's `q499/orig/run.sh` reads first person by `helpbar.py`'s flags). Opening Mike's window again snaps the original's camera to wherever he has walked, so aim that phase's
   cells at the camera's own point (`q438/orig/run.sh`, `AIMREL=1`). **A refused click in the original** (Q439,
   `q439/orig/run.sh` with `AIMB=1`): `camto.py %PID% 48,18`, then `outside.py` for the nearest band of outside cells and
   `cellfind.py` for each corner, read straight before its click. Its sound under the music scored 0.32 only: switch the music off first (`q439/PREDICTION.txt`). With it off

@@ -27,6 +27,13 @@ public static partial class Input
 		/// <summary>Whether the right button went down this frame, as <see cref="LeftWentDown"/> is for the left.</summary>
 		public bool RightWentDown;
 
+		/// <summary>
+		/// How many presses of the right button the window system sent this frame, as <see cref="LeftPresses"/> is for
+		/// the left: the original's cursor library posts the right button's press and release as messages too
+		/// (<c>0x00486c70</c>, button 1).
+		/// </summary>
+		public int RightPresses;
+
 		public float Wheel;
 
 		public override string ToString()
