@@ -8137,6 +8137,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   meanwhile, 5 of 5 `armed=1 held=652..654 ms` and put away (`2-full.png`, `2-after.png`); held 0.4 s, 3 of 3 `armed=0`,
   kept. The original (`q533/orig/run.sh`, the patrol tool, the process stopped 0.605 s): 3 of 5 put away, 2 kept, held 0.4 s
   2 of 2 kept (`side-by-side.png`); run1's miss recorded (`PREDICTION.txt`); mutations 6/6.
+- [x] **Q534. The patrol pointer stays refused over a blue outline.** Q420's piece (the run review of 2026-10-17). The
+  original's cursor pass `FUN_0052f950` has no case for mode `0x36` and sets cursor 8 only on a frame whose pass left
+  `DAT_00816d48`; nothing resets it while the tool is armed (`hud.md`, "The patrol pointer"). Done 2026-10-19:
+  `ParkPatrolTool.PointerRefused`, set by `Level.PatrolCursor`, cleared by `ParkBuildMode.Arm`. Ours on the final build
+  (`q534/run4`, the stock park): armed `cursor Normal`; (43,16) anchored, `NoGo`, red; the pointer on (43,21), 14 squares
+  blue, `latch 0`, `NoGo`, 1.5 s on too (`3-outline.png`); Escape `cursor Path`. The original (`q438/orig/b-run.log`,
+  `b-7-outline.png`): `d48` 1 at the anchor, 0 after, the no-entry pointer over the blue outline (`q534/side-by-side.png`);
+  five of five predicted, runs 1 to 3 aborted by the harness and recorded (`PREDICTION.txt`); mutations 4/4.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

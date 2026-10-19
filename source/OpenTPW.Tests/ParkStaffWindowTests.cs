@@ -735,6 +735,16 @@ public class ParkStaffWindowTests
 		state.SetRecord( 2, 3, state.Record( 2, 3 ) with { TrackParentId = 0 } );
 		Assert.IsFalse( ParkPatrolTool.Refuses( park, (2, 2), (3, 3) ), "one cell of the park is enough" );
 
+		// The anchor's own cell refused, then a rectangle taking in a park cell: blue, and the pointer stays c_noplace
+		// (FUN_0052f950 sets cursor 8 on d48 and nothing else in mode 0x36), until the tool is armed again.
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
+		ParkBuildMode.AnchorAt( 3, 3 );
+		Assert.AreEqual( Input.CursorTypes.Normal, Level.PatrolCursor(), "armed: the ordinary pointer" );
+		Assert.AreEqual( Input.CursorTypes.NoGo, Level.PatrolCursor( 3, 3 ), "the anchor's cell alone is refused" );
+		Assert.IsTrue( ParkPatrolTool.Strip( 2, 2 ).All( square => square.Marker == ParkPathBuilding.MarkerBlue ) );
+		Assert.AreEqual( Input.CursorTypes.NoGo, Level.PatrolCursor( 2, 2 ), "a blue outline keeps the refusal's pointer" );
+		Assert.AreEqual( Input.CursorTypes.NoGo, Level.PatrolCursor(), "off the cells too" );
+
 		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
 		ParkBuildMode.AnchorAt( 3, 3 );
 		Assert.IsTrue( ParkPatrolTool.Strip( 2, 2, out var accepted ).All( square => square.Marker == ParkPathBuilding.MarkerBlue ) );

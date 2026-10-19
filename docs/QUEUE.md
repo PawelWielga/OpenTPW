@@ -57,12 +57,16 @@ filed the items that cite it.
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
   From the run review (2026-10-17): the original's no-entry pointer showed over a blue outline
-  (`q438/orig/b-7-outline.png`, the latch `[0x00816d48]` 1 at the anchor and 0 after) where `Level.PatrolCursor` shows
-  `c_noplace` only while red: look when the patrol pointer is next touched. World clicks with a locator or person window
-  open (Q424, Q431, Q432): Q444.
+  (`q438/orig/b-7-outline.png`, the latch `[0x00816d48]` 1 at the anchor and 0 after): built, Q534. World clicks with a
+  locator or person window open (Q424, Q431, Q432): Q444.
+  From Q534 (`hud.md`, "The patrol pointer"): the patrol tool's `c_noplace` stays from its first refused frame until the
+  tool is put away or armed again, in both games; the rest of this item is the queue tool's pass
+  (`QUEUE_PASS_REFUSAL_LATCH`, below). In no game run: the original on the same cells today (its `q438` run of the same
+  scene is the comparison), the pointer over the gadget with the tool armed, Full Simulation (not asked: the tool is
+  either mode's), the other three themes.
   From Q533 (`park-engine.md`, "The hand's ways out", "Where each test sits"): a quick right click's release reads the
   flag alone and the 200 ms is the frame's tick, after the frame's buttons, in both games; the rest of this item is the
-  queue tool's pass (`QUEUE_PASS_REFUSAL_LATCH`, below) and the patrol pointer over a blue outline, above. A stop before our frame's tick
+  queue tool's pass (`QUEUE_PASS_REFUSAL_LATCH`, below) and the patrol pointer over a blue outline (since, Q534), above. A stop before our frame's tick
   disarms it as the original's rounds 1 and 4 did (`q533/run1`, 5 of 5 `armed=0`). In no game run: a move then a return inside one frame (the original sees each move, ours the frame's last point),
   Full Simulation (not asked: the button is either mode's), the other three themes.
   From Q532 (`hud.md`, "The patrol edges"): the patrol edges are red after a tool's last pass left the refusal latch

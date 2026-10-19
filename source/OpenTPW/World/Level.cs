@@ -1393,7 +1393,7 @@ public class Level
 			{
 				ParkBuildMode.Queue => QueueCursor(),
 				ParkBuildMode.Path => PathCursor(),
-				ParkBuildMode.Patrol => ParkPicking.TryCell( out var x, out var y ) ? PatrolCursor( x, y ) : Input.CursorTypes.Normal,
+				ParkBuildMode.Patrol => ParkPicking.TryCell( out var x, out var y ) ? PatrolCursor( x, y ) : PatrolCursor(),
 				_ => IdleCursor()
 			};
 
@@ -1455,12 +1455,20 @@ public class Level
 
 	/// <summary>
 	/// The patrol tool sets no cursor of its own (<c>FUN_0052f950</c> has no case for mode <c>0x36</c>), only
-	/// <c>c_noplace</c> while its outline is red (cursor 8, the refusal <c>DAT_00816d48</c>); otherwise the ordinary pointer.
+	/// <c>c_noplace</c> on a frame its outline is red (cursor 8, the refusal <c>DAT_00816d48</c>), which then stays until
+	/// the tool is armed again or put away (<see cref="ParkPatrolTool.PointerRefused"/>); before that the ordinary pointer.
 	/// </summary>
 	internal static Input.CursorTypes PatrolCursor( int x, int y )
-		=> ParkPatrolTool.Strip( x, y ).Any( square => square.Marker == ParkPathBuilding.MarkerRed )
-			? Input.CursorTypes.NoGo
-			: Input.CursorTypes.Normal;
+	{
+		if ( ParkPatrolTool.Strip( x, y ).Any( square => square.Marker == ParkPathBuilding.MarkerRed ) )
+			ParkPatrolTool.PointerRefused = true;
+
+		return PatrolCursor();
+	}
+
+	/// <summary>The patrol tool's pointer off the map's cells: whatever its last refusal left.</summary>
+	internal static Input.CursorTypes PatrolCursor()
+		=> ParkPatrolTool.PointerRefused ? Input.CursorTypes.NoGo : Input.CursorTypes.Normal;
 
 	/// <summary>
 	/// The path tool's cursor follows its preview as the queue tool's does (<c>FUN_0052f950</c>):

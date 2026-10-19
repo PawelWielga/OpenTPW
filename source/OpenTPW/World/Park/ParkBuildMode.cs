@@ -76,6 +76,7 @@ public static class ParkBuildMode
 		Current = mode;
 		Serves = serves;
 		Anchor = (-1, -1);
+		ParkPatrolTool.PointerRefused = false;
 
 		return mode switch
 		{
@@ -194,6 +195,7 @@ public static class ParkBuildMode
 		Anchor = (-1, -1);
 		Clicks = 0;
 		RefusalLatched = false;
+		ParkPatrolTool.PointerRefused = false;
 		_pending.Clear();
 	}
 }

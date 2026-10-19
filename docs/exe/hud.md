@@ -2983,8 +2983,16 @@ greatest corners, in the four lines of "The patrol edges" above, after setting t
 answers track type `0x19`** (its own track record, `FUN_004d0af0`, or its parent's for types 12 and 17,
 `FUN_0053ad90`), so a single cell of the park lets it through. The verdict `FUN_00535670( 0x36 )` is the latch alone
 (`0x005356df`), so the outline is all blue or all red, and the anchored one-cell rectangle on land outside the park
-is red already. The cursor (`FUN_0052f950`) has no case for `0x36`: only cursor 8, `c_noplace`, where a square was
-red (`DAT_00816d48`). **The click** (`FUN_00524960`, on the release; the press `FUN_00524790` only sets `DAT_008186d8`, which the refusal's sound reads):
+is red already. **The patrol pointer** (read 2026-10-19, Q534): the cursor (`FUN_0052f950`) has no case for `0x36`; it
+sets cursor 8, `c_noplace`, on a frame whose pass left `DAT_00816d48` (`FUN_00527950` answers it), and nothing else sets
+a cursor while the tool is armed (`BuildTool_SetMode` sets none for `0x36`; `FUN_004a2aa0` only stores what it is
+handed), so once refused the pointer stays `c_noplace` over a blue outline until the tool is put away or armed again.
+The original (`q438/orig/b-run.log`, `b-7-outline.png`): (54,17) anchored with `d48` 1, the pointer on (57,16), `d48`
+0, the outline texture 0 and the no-entry pointer over it. **OpenTPW** (`ParkPatrolTool.PointerRefused`, set by
+`Level.PatrolCursor`, cleared by `ParkBuildMode.Arm`): the final build (`q534/run4`, the stock park, five of five
+predicted, `q534/PREDICTION.txt`) armed showed `pointer: cursor Normal`; (43,16), outside the park, anchored, `NoGo`
+and the square red; the pointer on (43,21), the 14 squares blue, `latch 0` and still `NoGo`, 1.5 s on too
+(`3-outline.png`, beside the original's in `q534/side-by-side.png`); Escape, `cursor Path`. **The click** (`FUN_00524960`, on the release; the press `FUN_00524790` only sets `DAT_008186d8`, which the refusal's sound reads):
 refused (`DAT_00816d48`), sound `0xaf` and the tool put away, nothing written (the sound is the commit's own, ahead of its
 mode switch, so every carry-shell mode's but `0x38`: `FUN_0051bfc0( 0, cat_ui, 0xaf, x * 10, 0, y * 10 )` at `0x00524aa7`, where
 no layout replay runs, `[0x00785a2c]` nought, and the press reached the mode's down slot, `DAT_008186d8`, which

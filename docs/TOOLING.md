@@ -238,7 +238,9 @@ Each was found by trial in the item named, and cost a run to find.
   and Down drew it back; neither panned**: the pointer resting on a screen edge pans, about 8 cells a second;
   `KEYS="Left:5" EDGE="1022 300 1.2;512 766 1.0"` brought the band outside the park (x 42..53, y 14..16) into view.
   Here `camera X Y 60 0` (10 units a cell) and `lib/cellprobe.py` find the cells; the console's `strip` is the outline
-  and `pointer` its cursor. **An anchored one-cell rectangle is four squares** on that cell (each line lays it):
+  and `pointer` its cursor. **Set `camera` after the switch is down**: the strip's locator follows Mike, so a camera set
+  before Ctrl+S is lost; at `camera 475 190 90 0` cellprobe finds (43,16), outside the park, and (43,21), whose rectangle
+  from (43,16) is blue, so one anchor shows a red pass then a blue outline (Q534, `q534/confirm.py`). **An anchored one-cell rectangle is four squares** on that cell (each line lays it):
   measured here, read in the original's code. A run that waits longer than a line (0xc1, 18 s) before the click that
   puts the tool away shows no cut. **Here `0xc1` leaves its slot a tick after it is posted**, as the advisor starts
   saying it: read `advisor`'s `message=193/.../said=1`, not `slot=193/` (Q437's first miss); a way out's cut is the
