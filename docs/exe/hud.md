@@ -2768,11 +2768,18 @@ arming any tool, the path and patrol tools, the move tool and a carried item (mo
 (`FUN_0052f050`). So a tool put away, by its refused click, Escape or a commit, leaves its last pass's `d50`, and the edges
 are red until the next tool is installed or passes. The path verdict (mode 1) sets `d50` itself on a thing's cell (types 4, 9, 10, unless a
 lower overwrite priority lets it bulldoze), track type `0x19`, a run dearer than the balance and a queue that is not a loose
-end; it sets only `DAT_00816d58` on a type `0x15` cell or a track corner (`0x00535b9f`, `0x00535d57`), which the NEXT
-square's verdict copies into `d50` (`0x00535885`) after its outside-the-park test, which answers first; land outside the
-park (flag `0x40`) sets neither. The patrol tool's anchored pass sets it by the rectangle's test (`0x00523dd3`). The queue
-arm (mode 3) sets `d50` on a thing's cell, track `0x19`, the money, the middle of its own queue and another ride's, and
-`d58` on a path laid into (`m_link`, which also sets `DAT_00816d60`), a NOMODIFY path, type `0x15` and a track corner. Named in Ghidra: `BuildTool_PreviewPass` (`FUN_005234d0`), `BuildTool_CellVerdict` (`FUN_00535670`),
+end; it sets only `DAT_00816d58` on a type `0x15` cell or a track corner (`0x00535b9f`, `0x00535d57`), and every red
+square is judged a second time (`0x00533927`, the verdict's third argument 1), whose copy of `d58` into `d50`
+(`0x00535885`) latches it on the same square (Q538); land outside the park (flag `0x40`) sets neither, and answers before
+the copy. The patrol tool's anchored pass sets it by the rectangle's test (`0x00523dd3`). The queue
+arm (mode 3; Q538, read 2026-10-19), in its order: a NOMODIFY thing's cell red with no latch (`0x0053569e`), land outside
+the park red with no latch, a thing's cell `d50` (`0x00535d95`), the copy of `d58`, an earlier latch red, track `0x19`
+`d50` (`0x005358c0`), the money `d50` (only bare ground charged, `0x00535931`), its own queue's middle and another ride's
+queue `d50` (`0x00535aae`, `0x00535acc`), type `0x15` `d58` (`0x00535ba4`), a track corner `d58` (`0x00535d57`), bare
+ground blue (NOMODIFY unread), the last cell a path `m_link` with `d58` and `DAT_00816d60` (`0x00535c78`), a path in the
+run blue or, NOMODIFY, `d58` (`0x00535c8a`), any other type red with no latch. So a queue pass leaves `d50` after any
+refusal but land outside the park, a NOMODIFY thing and a type it may not be laid over (the stock park's type 7 land,
+flags 0), and leaves `d58` alone only after the join. Named in Ghidra: `BuildTool_PreviewPass` (`FUN_005234d0`), `BuildTool_CellVerdict` (`FUN_00535670`),
 `BuildTool_SetMode` (`FUN_0052f200`), `g_BuildRefusalLatch` (`d50`), `g_BuildRefusalPending` (`d58`), `g_PlacerFailed`
 (`DAT_0081b604`). **The original** (`q426/orig/run.sh`, `q325/stock.TPWS`, `original/squares.py`; four of four
 predicted, `q426/PREDICTION.txt`): the mechanics' button, texture 0, 48 squares on the 48 cells of (39,21)-(56,28),
@@ -2793,15 +2800,24 @@ the Belly Bounce's cell, refused with `d50` 1 (`d48` 1 too while the red edges w
 latches, `ParkPathBuilding.Latches`; the edges by `ParkBuildMarkers.PatrolSquares`): the same clicks on the final build
 (`q532/run5`) gave the same three, `tool`'s `latch` 0, 1, 0 and `strip`'s `| patrol 48` markers all 0, all 1, all 0
 (`q532/side-by-side.png` holds the first two states; the third, Escape and blue, is `q532/run5/3-edges.png` and
-`q532/orig/a-3-edges.png`). The queue tool's pass leaves the latch clear here, its arm's latches not told apart by this
-verdict (`QUEUE_PASS_REFUSAL_LATCH`). Two clears are built from the listing alone (in no game run, 2026-10-19 review):
+`q532/orig/a-3-edges.png`). **After a queue tool's pass** (Q538): in the original (`q538/orig/run.sh`, `q325/stock.TPWS`,
+three of three predicted, `q538/PREDICTION.txt`) a click on the Belly Bounce's queue cell (50,22) edits the queue, mode
+3 anchored on (49,22); the pointer on (50,22), the queue's middle, `d50` 1 (`a-1-hover.png`), Escape kept it and the 48
+edges were texture 1; on (48,22), the join, `d50` 0 with `d58` 1 and `d60` 1, the edges texture 0; on (49,17), across
+type 7 land, `d50` 0. **OpenTPW** (`ParkPathBuilding.QueueStrip` and its `Verdict`, the second verdict
+`ParkPathBuilding.JudgedAgain`): the same clicks on the final build (`q538/run4`) gave `tool` mode 3 anchored at (49,22),
+the strips `49,22,0;50,22,1` latch 1 (`1b-hover.png`), Escape latch 1 and `| patrol 48` markers all 1 (`1-edges.png`;
+`q538/side-by-side.png`), `49,22,0;48,22,8` latch 0 and markers 0, and `(49,18)`, `(49,17)` red with latch 0. The second
+verdict, console-driven (no player route on the stock park, so in no run of the original): the queue tool anchored on
+the NOMODIFY avenue cell (48,17) with the pointer held on (48,16), flags `0x04c0`, drew `(48,17):1[is marked NOMODIFY]
+(48,16):1[is outside the park]`, latch 1, and the edges red after Escape (`5b-hover.png`, `5-edges.png`). Two clears are built from the listing alone (in no game run, 2026-10-19 review):
 `ParkBuildMode.Arm` of a tool and taking an item into the hand (`ParkBuilding.Hold`, which the move tool also reaches)
 clear the latch. Not built: between the press and the release the original runs mode-1 hover passes over the clicked
 cell, so an empty-hand click on one unaffordable cell leaves `d50` 1 (the money arm, `0x00535931`) where ours leaves it 0;
 and mode 4's passes (`0x005235bb`..) set `d50` and `d5c` each tick while the item's price is above the bank's balance
 (`0x00523658`; the golden-ticket cost `+0xc4` unpaid sets neither, `0x005235e6`..`0x0052360b`) and the placer sets it on an
 entrance or exit facing off the map (`0x005295e8`, `0x00529730`), where ours leaves a carried item's latch clear
-(`CARRY_PREVIEW_MARKERS`). In no game run: a refused queue or patrol click before the edges, a track's refusal (no shipped
+(`CARRY_PREVIEW_MARKERS`). In no game run: a refused queue or patrol click before the edges (a queue pass then Escape was, Q538), a track's refusal (no shipped
 track reaches the path tool here; tested), a square lifted over a built cell on an edge (none of the stock areas crosses
 one; the lift is the tools', tested), a fence drawn in play (the patrol tool, built: "The patrol switch and the patrol tool" below), Full Simulation (not
 asked: the locators are either mode's), the other three themes.

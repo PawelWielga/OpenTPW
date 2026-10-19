@@ -384,113 +384,179 @@ public static class ParkPathBuilding
 	/// not armed and anchored.
 	/// </summary>
 	/// <remarks>
-	/// <b>After the first red square every later square is red</b>, as the original latches it.
+	/// <b>After a square that latches every later square is red</b> (<see cref="Latches"/>); land outside the park, a
+	/// NOMODIFY thing and a cell type the queue may not be laid over refuse without latching, so the squares after them
+	/// take their own verdicts.
 	/// </remarks>
-	public static List<QueueSquare> QueueStrip( int toX, int toY )
+	public static List<QueueSquare> QueueStrip( int toX, int toY ) => QueueStrip( toX, toY, out _ );
+
+	/// <inheritdoc cref="QueueStrip(int, int)"/>
+	/// <param name="latched">Whether the pass leaves <c>DAT_00816d50</c> set (<see cref="ParkBuildMode.RefusalLatched"/>).</param>
+	public static List<QueueSquare> QueueStrip( int toX, int toY, out bool latched )
 	{
-		var strip = new List<QueueSquare>();
+		latched = false;
 
 		if ( ParkBuildMode.Current != ParkBuildMode.Queue || !ParkBuildMode.Anchored
 			|| Level.Current is not { } level || level.ParkState is not { } state || level.Park is not { } park )
-			return strip;
+			return [];
 
+		return QueueStrip( state, park, toX, toY, QueueCost( level ), out latched );
+	}
+
+	/// <inheritdoc cref="QueueStrip(int, int, out bool)"/>
+	internal static List<QueueSquare> QueueStrip( ParkState state, IParkInitialState park, int toX, int toY, int price, out bool latched )
+	{
+		var strip = new List<QueueSquare>();
 		var serves = ParkBuildMode.Serves;
 		var (fromX, fromY) = ParkBuildMode.Anchor;
 		var (endX, endY) = ParkBuildMode.SnapToAxis( toX, toY );
 
 		var steps = Math.Max( Math.Abs( endX - fromX ), Math.Abs( endY - fromY ) );
 		var (acrossBy, downBy) = (Math.Sign( endX - fromX ), Math.Sign( endY - fromY ));
-		var price = QueueCost( level );
 		var owed = 0;
-		string? refused = null;
+		var latches = new Latches();
 
 		for ( var step = 0; step <= steps; ++step )
 		{
 			var (x, y) = (fromX + (acrossBy * step), fromY + (downBy * step));
-
-			if ( refused != null )
-			{
-				strip.Add( new( x, y, MarkerRed, refused ) );
-				continue;
-			}
-
-			var (marker, why) = Verdict( state, park, x, y, serves, step == steps, price, ref owed );
+			var (marker, why) = Verdict( state, park, x, y, serves, step == steps, price, ref owed, ref latches );
 
 			if ( marker == MarkerRed )
-				refused = why;
+				JudgedAgain( ref latches );
 
 			strip.Add( new( x, y, marker, why, Unaffordable: marker == MarkerRed && owed > state.Balance ) );
 		}
+
+		latched = latches.Refused;
 
 		return strip;
 	}
 
 	/// <summary>
-	/// One square of the queue tool's preview - the queue arm of <c>FUN_00535670</c>, as far as it is
-	/// decoded. It answers only blue, red, <c>m_link</c> and <c>m_end</c>.
+	/// One square of the queue tool's preview - <c>FUN_00535670</c>'s mode-3 arm, in its own order, answering blue,
+	/// red, <c>m_link</c> or <c>m_end</c>. docs/exe/hud.md, "The patrol edges", lists what sets each latch.
 	/// </summary>
 	private static (int Marker, string? Why) Verdict( ParkState state, IParkInitialState park, int x, int y, int serves,
-		bool last, int price, ref int owed )
+		bool last, int price, ref int owed, ref Latches latches )
 	{
 		if ( !ParkState.OnMap( x, y ) )
 			return (MarkerRed, "is off the map");
 
 		var cell = ParkState.CellFor( park, x, y );
+		var thing = cell.Type is CellEdge.Footprint or CellEdge.RideEnd or CellEdge.RideFarEnd;
 
-		// The verdict's first test for every tool (0x005357c7): land outside the park.
+		// A NOMODIFY thing's cell answers before anything else, latching nothing (0x0053569e).
+		if ( thing && (cell.Flags & NoModify) != 0 )
+			return (MarkerRed, "has something built on it");
+
 		if ( (cell.Flags & OutsideThePark) != 0 )
 			return (MarkerRed, "is outside the park");
 
-		// Any path may end a run, NOMODIFY or not: that is the join, and the path stays a path.
-		if ( last && cell.Type == PathType )
-			return (MarkerLink, null);
+		// A thing's own cells are red unless its item's overwrite priority is below the queue tool's 3,
+		// in which case the original bulldozes it (op 0x87 into FUN_00527ee0). Every jungle ride's is 5;
+		// nothing here demolishes, so it is red either way.
+		if ( thing )
+		{
+			Unimplemented.Report( "QUEUE_RUN_OVER_A_LOW_PRIORITY_THING" );
+			latches.Refused = true;
+
+			return (MarkerRed, "has something built on it");
+		}
+
+		if ( latches.Pending )
+			latches.Refused = true;
+
+		if ( latches.Refused )
+			return (MarkerRed, "comes after a refused square");
+
+		var track = TrackRecord( park, cell );
+
+		if ( track.TrackType == 0x19 )
+		{
+			latches.Refused = true;
+
+			return (MarkerRed, "is part of a track");
+		}
+
+		// Only bare ground is paid for in the preview (FUN_00535600's mode 3): a path is left out, though
+		// laying queue over it is charged like any other cell.
+		if ( cell.Type == NothingType )
+			owed += price;
+
+		if ( state.Balance < owed )
+		{
+			latches.Refused = true;
+
+			return (MarkerRed, $"would bring the run to {owed} against a balance of {state.Balance}");
+		}
 
 		// This ride's own queue: a cell NOT joined exactly two ways - its end, or its node - may close a
 		// run or be carried through; one joined exactly two ways is the middle of the file and may not
 		// (FUN_00522790's count against 2, as the original tests it).
 		if ( cell.Type == ParkRideChoice.QueueCellType )
 		{
-			if ( OwnerOf( state, cell ) != serves )
-				return (MarkerRed, "is another ride's queue");
+			var why = System.Numerics.BitOperations.PopCount( cell.Neighbours ) == 2 ? "is the middle of this ride's queue"
+				: OwnerOf( state, cell ) != serves ? "is another ride's queue"
+				: null;
 
-			var twoLinked = System.Numerics.BitOperations.PopCount( cell.Neighbours ) == 2;
+			if ( why == null )
+				return last ? (MarkerEnd, null) : (MarkerBlue, null);
 
-			if ( last )
-				return twoLinked ? (MarkerRed, "is the middle of this ride's queue") : (MarkerEnd, null);
+			latches.Refused = true;
 
-			return twoLinked ? (MarkerRed, "is the middle of this ride's queue") : (MarkerBlue, null);
+			return (MarkerRed, why);
 		}
 
-		// A thing's own cells are red unless its item's overwrite priority is below the queue tool's 3,
-		// in which case the original bulldozes it (op 0x87 into FUN_00527ee0). Every jungle ride's is 5;
-		// nothing here demolishes, so it is red either way.
-		if ( cell.Type is CellEdge.Footprint or CellEdge.RideEnd or CellEdge.RideFarEnd )
+		if ( cell.Type == 0x15 )
 		{
-			Unimplemented.Report( "QUEUE_RUN_OVER_A_LOW_PRIORITY_THING" );
+			latches.Pending = true;
 
-			return (MarkerRed, "has something built on it");
+			return (MarkerRed, "is part of a track");
 		}
 
-		if ( !MayBecome( cell.Type, ParkRideChoice.QueueCellType, lastOfRun: false ) )
-			return (MarkerRed, $"is type {cell.Type}, which queue may not be laid over");
+		if ( TrackCornerOrJunction( track ) )
+		{
+			latches.Pending = true;
 
-		if ( (cell.Flags & NoModify) != 0 )
+			return (MarkerRed, "is a track corner or junction");
+		}
+
+		if ( cell.Type == NothingType )
+			return (MarkerBlue, null);
+
+		if ( cell.Type == PathType )
+		{
+			// Any path may end a run, NOMODIFY or not: that is the join, and the path stays a path. The join
+			// sets d58 too (0x00535c78), which the pass then leaves behind.
+			if ( last )
+			{
+				latches.Pending = true;
+
+				return (MarkerLink, null);
+			}
+
+			if ( (cell.Flags & NoModify) == 0 )
+				return (MarkerBlue, null);
+
+			latches.Pending = true;
+
 			return (MarkerRed, "is marked NOMODIFY");
+		}
 
-		// The original also refuses bare ground and path where two corner tests fire (FUN_0053ae00 and
-		// FUN_0053ae90, which the path tool's TrackCornerOrJunction reproduces); what the queue arm asks
-		// them of is not decoded, and this arm does not ask them.
-		Unimplemented.Report( "QUEUE_VERDICT_CORNER_RULE" );
+		return (MarkerRed, $"is type {cell.Type}, which queue may not be laid over");
+	}
 
-		// The preview's cash test leaves a path out of the total (0x005358e9..0x005358f1), though
-		// laying queue over it is charged like any other cell.
-		if ( cell.Type != PathType )
-			owed += price;
-
-		if ( state.Balance < owed )
-			return (MarkerRed, $"would bring the run to {owed} against a balance of {state.Balance}");
-
-		return (MarkerBlue, null);
+	/// <summary>
+	/// The original judges a red square a second time, with the verdict's third argument 1 and its answer thrown away
+	/// (<c>0x00533927</c>). That call copies <c>DAT_00816d58</c> into <c>DAT_00816d50</c> (<c>0x00535885</c>), so a
+	/// square that refuses by <c>d58</c> latches at once; only a join, which is not red, leaves <c>d58</c> alone at
+	/// the pass's end. Its other effect, each cell's price charged again, can only change the cursor and is not
+	/// reproduced.
+	/// </summary>
+	private static void JudgedAgain( ref Latches latches )
+	{
+		if ( latches.Pending )
+			latches.Refused = true;
 	}
 
 	/// <summary>
@@ -507,8 +573,7 @@ public static class ParkPathBuilding
 
 	/// <summary>
 	/// The armed tool's squares for the pointer's cell, and the refusal latch its pass leaves
-	/// (<see cref="ParkBuildMode.RefusalLatched"/>): the path verdict's own, the patrol rectangle's test. The queue arm's
-	/// latches are not decoded, so its pass leaves the latch clear, as each pass starts it.
+	/// (<see cref="ParkBuildMode.RefusalLatched"/>): the path and queue verdicts' own, the patrol rectangle's test.
 	/// </summary>
 	public static List<QueueSquare> Strip( int toX, int toY, out bool latched )
 	{
@@ -523,14 +588,7 @@ public static class ParkPathBuilding
 				return PathStrip( state, park, toX, toY, CellCost( level ), out latched );
 
 			case ParkBuildMode.Queue:
-				var queue = QueueStrip( toX, toY );
-
-				// The queue arm sets DAT_00816d50 on some refusals and DAT_00816d58 on others (FUN_00535670, mode 3), which
-				// this verdict does not tell apart: docs/exe/hud.md, "The patrol edges".
-				if ( queue.Any( square => square.Marker == MarkerRed ) )
-					Unimplemented.Report( "QUEUE_PASS_REFUSAL_LATCH" );
-
-				return queue;
+				return QueueStrip( toX, toY, out latched );
 
 			case ParkBuildMode.Patrol:
 				return ParkPatrolTool.Strip( toX, toY, out latched );
@@ -550,7 +608,7 @@ public static class ParkPathBuilding
 	/// <b>Two things the original does are not reproduced</b>: for the one preview after the pointer leaves
 	/// an anchor it was resting on, the anchor still shows <c>m_end</c> (<c>DAT_00818688</c>) - here the
 	/// end square is only ever the last - and after a red square it adds each cell's price to the run a
-	/// second time, through a verdict call whose answer it throws away, which can only change the cursor.
+	/// second time, through the verdict call <see cref="JudgedAgain"/> stands for, which can only change the cursor.
 	/// </remarks>
 	public static List<QueueSquare> PathStrip( int toX, int toY )
 	{
@@ -586,6 +644,9 @@ public static class ParkPathBuilding
 
 			var (marker, why, broke) = PathVerdict( state, park, x, y, step == steps, price, ref owed, ref latches );
 
+			if ( marker == MarkerRed )
+				JudgedAgain( ref latches );
+
 			strip.Add( new( x, y, marker, why, broke ) );
 		}
 
@@ -595,10 +656,11 @@ public static class ParkPathBuilding
 	}
 
 	/// <summary>
-	/// The path verdict's two refusal latches: <c>DAT_00816d50</c> (<see cref="Refused"/>), which reddens every later
+	/// The path and queue verdicts' two refusal latches: <c>DAT_00816d50</c> (<see cref="Refused"/>), which reddens every later
 	/// square and outlives the pass (<see cref="ParkBuildMode.RefusalLatched"/>), and <c>DAT_00816d58</c>
-	/// (<see cref="Pending"/>), which a type <c>0x15</c> cell or a track corner sets and the next square's verdict copies
-	/// into the first, unless that square is outside the park (<c>0x005357c7</c> answers before <c>0x00535885</c>).
+	/// (<see cref="Pending"/>), which a type <c>0x15</c> cell, a track corner, a NOMODIFY path and the queue's join set,
+	/// and a verdict copies into the first (<c>0x00535885</c>): the red square's own second one (<see cref="JudgedAgain"/>),
+	/// so <c>d58</c> outlives a square only after a join, which ends the run.
 	/// </summary>
 	private struct Latches
 	{
@@ -632,7 +694,7 @@ public static class ParkPathBuilding
 			return (MarkerRed, "has something built on it", false);
 		}
 
-		// A track's refusal waits in d58 for the next square's verdict, which copies it here (0x00535885).
+		// d58 is copied here (0x00535885); a red square's own second verdict has already done it (JudgedAgain).
 		if ( latches.Pending )
 			latches.Refused = true;
 

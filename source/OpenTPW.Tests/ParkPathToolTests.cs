@@ -166,13 +166,12 @@ public class ParkPathToolTests
 
 	/// <summary>
 	/// <b>The refusal latch a pass leaves</b> (<c>DAT_00816d50</c>, which a followed member's patrol edges read): set by a
-	/// thing's cell, not by land outside the park; a type <c>0x15</c> cell sets only <c>DAT_00816d58</c>, which the next
-	/// square's verdict copies into it (<c>0x00535885</c>), so last in the run it leaves the latch clear, and before a
-	/// square outside the park too, whose test answers first. In the original (<c>q532/orig/a-run.out</c>) the run from
-	/// (49,24) onto the Belly Bounce's (51,24) left <c>d50</c> 1 and (43,16) outside the park left it 0.
+	/// thing's cell, not by land outside the park; a type <c>0x15</c> cell sets <c>DAT_00816d58</c>, which the red square's
+	/// own second verdict (<c>0x00533927</c>) copies into it (<c>0x00535885</c>), so it latches last in the run too, and
+	/// before a square outside the park. In the original (<c>q532/orig/a-run.out</c>) the run from (49,24) onto the Belly
+	/// Bounce's (51,24) left <c>d50</c> 1 and (43,16) outside the park left it 0.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> any red square latching; the type 0x15 cell latching at once; the copy made before the
-	/// outside-the-park test.</remarks>
+	/// <remarks><b>Mutations:</b> any red square latching; the second verdict's copy dropped.</remarks>
 	[TestMethod]
 	public void APathPassLeavesTheRefusalLatchOnlyWhereItsVerdictsSetIt()
 	{
@@ -200,12 +199,105 @@ public class ParkPathToolTests
 		state.SetRecord( 11, 10, ParkState.CellFor( park, 11, 10 ) with { Type = 0, Flags = 0 } );
 		state.SetRecord( 12, 10, ParkState.CellFor( park, 12, 10 ) with { Type = 0x15 } );
 		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1", Describe( ParkPathBuilding.PathStrip( state, park, 12, 10, Price ) ) );
-		Assert.IsFalse( Latched( 12 ), "a type 0x15 cell last: only d58" );
-		Assert.IsTrue( Latched( 13 ), "the next square's verdict copies it" );
+		Assert.IsTrue( Latched( 12 ), "a type 0x15 cell last: its own second verdict copies d58" );
 
 		state.SetRecord( 13, 10, ParkState.CellFor( park, 13, 10 ) with { Flags = ParkPathBuilding.OutsideThePark } );
 		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1", Describe( ParkPathBuilding.PathStrip( state, park, 13, 10, Price ) ) );
-		Assert.IsFalse( Latched( 13 ), "outside the park answers before the copy" );
+		Assert.IsTrue( Latched( 13 ), "copied at (12,10), before the square outside the park" );
+	}
+
+	/// <summary>
+	/// <b>The queue tool's pass leaves the latch as its verdict sets it</b> (<c>FUN_00535670</c>'s mode-3 arm): a thing's
+	/// cell, a track, the money, the middle of its own queue and another ride's set <c>d50</c>; a NOMODIFY path, a type
+	/// <c>0x15</c> cell and a track corner set <c>d58</c>, which the red square's second verdict copies; land outside the
+	/// park, a NOMODIFY thing and the join set neither, so the squares after them take their own verdicts. A NOMODIFY
+	/// thing latches nothing, and NOMODIFY bare ground is blue.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> any red square latching; the second verdict's copy dropped; the join latching; the
+	/// middle of the queue not latching; NOMODIFY read on bare ground; the NOMODIFY thing latching.</remarks>
+	[TestMethod]
+	public void AQueuePassLeavesTheRefusalLatchOnlyWhereItsVerdictsSetIt()
+	{
+		var park = World();
+		var state = new ParkState( park );
+		var original = Enumerable.Range( 10, 4 ).ToDictionary( x => x, x => ParkState.CellFor( park, x, 10 ) );
+		ParkBuildMode.ArmAt( ParkBuildMode.Queue, 999, 10, 10 );
+
+		string Strip( int toX, out bool latched )
+			=> Describe( ParkPathBuilding.QueueStrip( state, park, toX, 10, Price, out latched ) );
+
+		void Set( int x, ParkWorld.MapCell cell ) => state.SetRecord( x, 10, cell );
+
+		void Reset()
+		{
+			foreach ( var (x, cell) in original )
+				Set( x, cell );
+		}
+
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):0 (13,10):0", Strip( 13, out var latched ), "bare ground" );
+		Assert.IsFalse( latched );
+
+		Set( 11, original[11] with { Flags = ParkPathBuilding.OutsideThePark } );
+		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):0 (13,10):0", Strip( 13, out latched ), "outside: the next squares their own" );
+		Assert.IsFalse( latched, "outside the park latches nothing" );
+
+		Set( 11, original[11] with { Type = CellEdge.Footprint, Flags = ParkPathBuilding.NoModify } );
+		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):0 (13,10):0", Strip( 13, out latched ), "a NOMODIFY thing" );
+		Assert.IsFalse( latched, "a NOMODIFY thing answers first and latches nothing" );
+
+		Set( 11, original[11] with { Type = CellEdge.Footprint, Flags = 0 } );
+		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):1 (13,10):1", Strip( 13, out latched ), "a thing" );
+		Assert.IsTrue( latched, "a thing's cell" );
+
+		Set( 11, original[11] with { Type = 0, Flags = ParkPathBuilding.NoModify } );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):0", Strip( 12, out latched ), "NOMODIFY bare ground is blue" );
+		Assert.IsFalse( latched );
+
+		Set( 11, original[11] with { Type = CellEdge.Path, Flags = ParkPathBuilding.NoModify } );
+		Assert.AreEqual( "(10,10):0 (11,10):8", Strip( 11, out latched ), "the join, NOMODIFY or not" );
+		Assert.IsFalse( latched, "the join sets only d58" );
+		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):1", Strip( 12, out latched ), "a NOMODIFY path in the run" );
+		Assert.IsTrue( latched, "d58, copied" );
+
+		Set( 12, original[12] with { Flags = ParkPathBuilding.OutsideThePark } );
+		Assert.AreEqual( "(10,10):0 (11,10):1 (12,10):1", Strip( 12, out latched ) );
+		Assert.IsTrue( latched, "copied by (11,10)'s own second verdict, before the square outside the park" );
+
+		Reset();
+		Set( 12, original[12] with { Type = 0x15 } );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1", Strip( 12, out latched ) );
+		Assert.IsTrue( latched, "a type 0x15 cell last" );
+
+		Reset();
+		Set( 12, original[12] with { Type = CellEdge.Path, TrackNeighbours = 0x05 } );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1", Strip( 13, out latched ), "a track corner" );
+		Assert.IsTrue( latched );
+
+		Reset();
+		Set( 12, original[12] with { TrackType = 0x19 } );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1", Strip( 13, out latched ), "a track" );
+		Assert.IsTrue( latched );
+
+		Reset();
+		Set( 12, original[12] with { Type = ParkRideChoice.QueueCellType, Neighbours = 0x11 } );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1", Strip( 13, out latched ) );
+		Assert.IsTrue( latched, "the middle of a queue" );
+
+		Set( 12, original[12] with { Type = ParkRideChoice.QueueCellType, Neighbours = 0x01 } );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1", Strip( 12, out latched ) );
+		Assert.IsTrue( latched, "another ride's queue end" );
+
+		Reset();
+		var ride = state.Objects[0];
+		ParkBuildMode.ArmAt( ParkBuildMode.Queue, ride.ThingId, 10, 10 );
+		Set( 12, original[12] with { Type = ParkRideChoice.QueueCellType, Neighbours = 0x01, ParentId = (ushort)((ride.CellY * 128) + ride.CellX + 1) } );
+		state.Spend( state.Balance - (2 * Price) );
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):11", Strip( 12, out latched ), "its own queue's end is not paid for" );
+		Assert.IsFalse( latched );
+
+		Reset();
+		Assert.AreEqual( "(10,10):0 (11,10):0 (12,10):1 (13,10):1", Strip( 13, out latched ), "the third cell unpaid for" );
+		Assert.IsTrue( latched, "the money" );
 	}
 
 	/// <summary>

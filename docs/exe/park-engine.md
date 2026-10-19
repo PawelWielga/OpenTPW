@@ -2167,8 +2167,11 @@ see-through, by Alexah's own memory of the original; the blend state itself was 
 which answers only **0 blue, 1 red, 8 `m_link`** (the last cell is a path — cursor `c_link`) or
 **11 `m_end`** (the last cell is this ride's own queue end — cursor `c_end`). A foreign queue cell is
 red; a ride, entrance or exit cell is blue only when its item's `+0x54` is below 3, and every jungle
-ride's is 5; after a refusal every later cell is red, and any red switches the cursor to
-`c_noplace.cur` (`FUN_0052f950`). **The anchor is always the first square**, so the cell before a new
+ride's is 5; after a refusal that latches every later cell is red (which ones latch: `hud.md`, "The patrol
+edges"; land outside the park and a type the queue may not be laid over do not), and any red switches the cursor to
+`c_noplace.cur` (`FUN_0052f950`). Only bare ground is charged (`FUN_00535600`'s mode 3 with a path left out by its
+caller), and the track-corner test is the path tool's, asked at the same site (`0x00535bd9`, `0x00535be8`) of bare
+ground and a path that is not the run's last. **The anchor is always the first square**, so the cell before a new
 ride's entrance is marked the moment it is placed.
 
 **While a thing is carried** (mode 4) the placer runs twice a tick, a test pass that turns everything red
@@ -4539,8 +4542,8 @@ verdict `FUN_00535670(1,0)`, in its own order (`0x005357c7`..`0x00535d63`):
 | 4 | track type `0x19`, after the parent redirect for 12 and 17 (made inline after `FUN_004d0af0`, which fetches the cell's own record) | red, latch |
 | 5 | cost: mType 0 or 3 adds `Costs.PathCell` to the run; cash below the total | red, latch, `c_cash` |
 | 6 | mType 1 as the last cell | `m_end` (11) |
-| 7 | mType `0x15` | red, latch |
-| 8 | track corner (`FUN_0053ae00`: two cardinal links at right angles) or junction (`FUN_0053ae90`: three or more) | red, latch |
+| 7 | mType `0x15` | red, `DAT_00816d58`, which the square's second verdict copies into the latch |
+| 8 | track corner (`FUN_0053ae00`: two cardinal links at right angles) or junction (`FUN_0053ae90`: three or more) | red, `d58`, copied as row 7's |
 | 9 | mType 1 or 0 | blue |
 | 10 | mType 3 with exactly one of its eight bits set, toward another queue cell | `m_link` (8); any other queue cell red and latch — **the owner is never asked** |
 | 11 | any other mType | red, **no latch** |
@@ -4548,8 +4551,11 @@ verdict `FUN_00535670(1,0)`, in its own order (`0x005357c7`..`0x00535d63`):
 NOMODIFY is never read for a path. The cursor (`FUN_0052f950`) is `c_link` if any square was `m_link`,
 else `c_end` if any was `m_end`, else `c_path`; a red square overrides with `c_noplace`, a cash refusal
 with `c_cash`. Two details are not reproduced: for the one preview after the pointer leaves an anchor it
-was resting on, the anchor still shows `m_end` (`DAT_00818688`), and a red strip adds to the run's total
-a second time through a verdict call whose answer is thrown away.
+was resting on, the anchor still shows `m_end` (`DAT_00818688`), and a red square adds to the run's total
+a second time. **Every red square is judged twice**: the square's arm of `FUN_00532fc0` calls the verdict again with
+its third argument 1 (`0x00533927`) and throws the answer away. That call passes the latch test, so it charges the cell
+again (which can only change the cursor), and it copies `d58` into the latch (`0x00535885`) on the same square: a
+`d58` refusal latches at once, the last square included (built, Q538: `ParkPathBuilding.JudgedAgain`).
 
 **A click** (`0x005271b7`..`0x00527655`, on release at the preview's target): any red square lays
 nothing, plays `0xaf` and puts the tool away — the arming click included, so a click outside the park's
