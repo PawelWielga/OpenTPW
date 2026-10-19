@@ -8095,6 +8095,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   park on 16972 saved month 0 day 6, the date of its tick (`q526/run3`; main's build wrote the stock 1 and 2,
   `control1`); the original given that file ran no month's change until 17557, 1 February, and given main's ran one
   on its first tick, loan 4 repaid there (`orig/a-load.log`, `orig/b-load.log`); its own file holds its tick's date.
+- [x] **Q528. The writer: the weather thing's fields.** Q420's piece. The weather thing is written from the running
+  park (`ParkWorld.PutWeather`, `ParkWeather.Written`; `saves.md`, "OpenTPW's writer, the weather thing"): the quality,
+  the change's and the forecast's stamps on the park calendar, the forecast, the drops, the lightning, the thunder's
+  count (now falling every weather tick, as the original's) and the top of the bolt that armed it, the wind;
+  `mRainSoundHandle` nought, `mPType` and `mOverridden` the file's. Done 2026-10-19: loan4 with quality 10 forced on
+  16970 saved quality 10, drops 100/450, thunder 5 at its bolt (`q528/run3`; main's build wrote the fixture's record,
+  `control1`); stepped on, a forecast made here on 17004 saved valid 1; the original given the first rained, ran the
+  drops to 440 and made its own forecast on 17040, and given the second delivered this game's 83 on 17097
+  (`orig/a-load.log`, `orig/c-load.log`, `side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

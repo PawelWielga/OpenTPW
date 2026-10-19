@@ -370,7 +370,8 @@ public static class DebugConsole
 				Reply( ParkWeather.Current == null
 					? "weather none - not in a park"
 					: $"weather quality={ParkWeather.Current.Quality} drops={ParkWeather.Current.Drops} "
-						+ $"storm={ParkWeather.Current.Lightning} rain: {ParkAudio.Current?.RainCensus() ?? "no park audio"}" );
+						+ $"storm={ParkWeather.Current.Lightning} rain: {ParkAudio.Current?.RainCensus() ?? "no park audio"}; "
+						+ $"as saved: {ParkWeather.Describe( ParkWeather.Current.Written( ParkState.Current?.Park?.Save?.WeatherRecord ) )}" );
 				break;
 
 			// Waiting for one is up to forty seconds of real time, which is no way to check a bolt.
@@ -2505,9 +2506,9 @@ public static class DebugConsole
 			+ $"quality={ParkWeather.Current?.Quality} drops={ParkWeather.Current?.Drops} "
 			+ $"storm={ParkWeather.Current?.Lightning} snow={ParkWeather.Current?.Snowing} "
 			+ $"strikes={ParkWeather.Current?.DebugStrikes} forecast={ParkWeather.Current?.Forecast} "
-			+ $"flash={ParkWeather.Current?.DebugBolt.Flash:F3} "
-			+ $"boltOpacity={ParkWeather.Current?.DebugBolt.DebugOpacity:F3} "
-			+ $"boltDist={ParkWeather.Current?.DebugBolt.DebugAxisDistance:F0} "
+			+ $"flash={ParkWeather.Current?.DebugBolt?.Flash:F3} "
+			+ $"boltOpacity={ParkWeather.Current?.DebugBolt?.DebugOpacity:F3} "
+			+ $"boltDist={ParkWeather.Current?.DebugBolt?.DebugAxisDistance:F0} "
 			// Compact, because Vector3's own formatting carries spaces and a harness splitting the
 			// reply on whitespace gets a single bracket.
 			+ $"cam={Camera.Position.X:F0},{Camera.Position.Y:F0},{Camera.Position.Z:F0} "

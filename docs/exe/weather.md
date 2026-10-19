@@ -7,19 +7,19 @@ Weather in the original is not a subsystem: it is a **thing of model 15** in the
 | Address / offset | Original name | What it is | Evidence |
 |---|---|---|---|
 | `FUN_0050b360` | — | Thing-update dispatcher; switches on the thing's type byte at `+2`. Case `0x0f` calls `FUN_00512880`. | Decompile of the switch |
-| `FUN_00512880` | — | The weather thing's update: schedules the next change, rolls the new quality, publishes the forecast | Case `0x0f` target |
-| `FUN_00511f70` | — | Weather constructor, **104 bytes (0x68)**; writes the type byte via `FUN_0050afe0(this,1,0xf)` | Decompile |
+| `FUN_00512880` | — | `Weather_Update` in Ghidra: the weather thing's update: schedules the next change, rolls the new quality, publishes the forecast, delivers it when due, ramps the drops, the bolts and the thunder | Case `0x0f` target |
+| `FUN_00511f70` | — | `Weather_Construct` in Ghidra: the weather constructor, **104 bytes (0x68)**; writes the type byte via `FUN_0050afe0(this,1,0xf)`; the stamps and the forecast nought, the quality rolled, `mOverridden` nought, the wind 90 at 0.5 | Decompile |
 | `FUN_0050afe0` | — | Thing type-byte writer | Call in the constructor |
 | `0x00518db4` | — | Loader jump table; entry `0x0e` dispatches model 15 to `0x00518b62` | Table read |
 | `0x00518b62` | — | Model 15 load entry | Jump-table entry `0x0e` |
 | `FUN_0050b550` | — | Thing broadcast-message dispatcher; case `0x0f` → `FUN_005127a0` | Decompile |
-| `FUN_005127a0` | — | Weather message handler: message 1 = "apply now" → `FUN_00512f00`; message 2 = "forecast in N days" → fills `+0x20..+0x2c` | Decompile |
+| `FUN_005127a0` | — | `Weather_OnMessage` in Ghidra: message 1 = "apply now" → `FUN_00512f00`, **refused while `mOverridden` is set** (`0x0051285f`); message 2 = "forecast in N days" → `+0x20` now + N days, `+0x28` the quality, `+0x2c` 1, and `mLastForecasted` now | Decompile |
 
 `ParkWorld`'s header field **`mWeather` is that thing's HANDLE**, sitting among `mMechanicHQ` / `mResearchLab` / `mStaffHQ`, all manager handles — it is **not** a quality value. The saved record is **99 bytes** = 4 (id) + 4 (model 15) + 91 body, matching the "thing id 7, model 15, 99 bytes" record in jungle's save.
 
 ### Field map
 
-Read from the named save stream in `FUN_00512010`: the original announces every field name to a logging call the release build compiles away — the same trick that recovered the `ParkWorld` header.
+Read from the named save stream in `FUN_00512010` (`Weather_Serialise` in Ghidra, one function both ways): the original announces every field name to a logging call the release build compiles away — the same trick that recovered the `ParkWorld` header.
 
 | Offset | Original name | What it is | Evidence |
 |---|---|---|---|
@@ -30,20 +30,21 @@ Read from the named save stream in `FUN_00512010`: the original announces every 
 | `+0x38` | `mLightning` | Flag, set when quality is in the lightning band | Named save stream |
 | `+0x3c` | `mLightningCountdown` | — | Named save stream |
 | `+0x40` | `mLightningNumThisPeriod` | — | Named save stream |
-| `+0x44` | `mThunderCountdown` | Weather ticks left before the thunder sample plays | Named save stream |
-| `+0x48` | `mLastLightningLocation` | vec3; the **top** of the last bolt, y = 300 | Named save stream |
+| `+0x44` | `mThunderCountdown` | Weather ticks left before the thunder sample plays; falls by one every weather tick, armed or not (`0x00512bd4`), so it stands below nought between storms | Named save stream; the stock park's -755 on its tick 755 |
+| `+0x48` | `mLastLightningLocation` | vec3; the **top** of the bolt that armed the thunder (set only while the count is below one), y = 300; where the thunder sounds | Named save stream |
 | `+0x54` | `mRainSoundHandle` | Per-thing rain voice; string at `0x007622e4`; serialized at `0x00512387` and `0x005126de` | Named save stream, string table |
 | `+0x58` | `mPType` | Saved and loaded, **never read** — **purpose unknown** | Named save stream |
 | `+0x5c` | `mWindDir` | Degrees, wrapped `[0,360)` | Named save stream |
 | `+0x60` | `mWindForce` | `(100 - q) * 0.01`, clamped `[0,1]` | Named save stream |
-| `+0x64` | `mOverridden` | Saved and loaded, **never read by anything traced**. Whether it is the original's forced-weather latch is **not established** | Named save stream |
+| `+0x64` | `mOverridden` | Set, it refuses every delivered forecast (message 1, `0x0051285f`). Written only by the constructor (nought) and the load among the weather's own code; nothing found sets it | Named save stream; a scan of `0x00511f00`..`0x00513600` |
 
 **A load reads the 99 bytes in this order** (`FUN_00512010`, its save twin beside it), so a field's place in the record
 is the sum of the sizes before it (FileFormats `saves.md`, "The weather"): `mWindDir` is at the record's +90 of 99. All six
 park files hold it whole, 24 to 350, and the original's live wind on the stock park was its file's 139
 (Q491). **OpenTPW reads `mWindDir` alone** (`ParkWorld.WindDirection`, Q493): `ParkWeather` rolls and moves the wind as
 the constructor does, then takes the file's over it, as the load does; the gates' flags turn by it. The quality, the
-schedule and the rest stay fresh, and the writer writes the file's record back as it was (Q241j).
+schedule and the rest stay fresh (Q529). The writer writes the running weather (Q528; `saves.md`, "OpenTPW's writer,
+the weather thing").
 
 ### Quality is the only input
 
@@ -65,7 +66,7 @@ fall speed = 0.8 for snow, 2.5 for rain (FUN_0057dc40)
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
-| `FUN_00512f00` | — | Quality → particle mode, wind, sound; the sole converter | Decompile |
+| `FUN_00512f00` | — | `Weather_ApplyQuality` in Ghidra: quality → particle mode, wind, sound; the sole converter; stamps `mLastChanged` with now (`FUN_004f8690`, `Calendar_Now` in Ghidra) | Decompile |
 | `FUN_00516330` | — | Coin flip; decides the winner when a quality qualifies as both snow and rain | Call in `FUN_00512f00` |
 | `FUN_0057d920` | — | Wind setter `(angleDegrees, force)`; stored normalised with **y fixed at -1 before normalisation** | Decompile |
 | `FUN_0057dc40` | — | Fall-speed setter (velocity in units/sec) | Decompile |
@@ -165,7 +166,7 @@ Descriptors carry no target address; the binder `FUN_00401030` computes them pos
 
 ### The forecast is real
 
-`FUN_00512880` schedules the next change at `mLastChanged + (DaysBetweenChanges - DaysOfWarning)` = 3 days, rolls the new quality with `FUN_00512e10`, and publishes it as a forecast; the thing applies it **`DaysOfWarning` (4) days later**, so the full cycle is 7 days. **Whether the warning is ever player-visible** (an advisor line, a forecast panel) is **not established**.
+`FUN_00512880` schedules the next change at `mLastChanged + (DaysBetweenChanges - DaysOfWarning)` = 3 days (the first tick past that instant: 69.12 ticks, so 909 to 979 in the original's own files; `saves.md`, "OpenTPW's writer, the weather thing"), rolls the new quality with `FUN_00512e10`, and publishes it as a forecast; the thing applies it **`DaysOfWarning` (4) days later**, so the full cycle is 7 days. **Whether the warning is ever player-visible** (an advisor line, a forecast panel) is **not established**.
 
 ## Weather is per-theme
 
@@ -249,7 +250,7 @@ Two independent methods agree exactly, and a third confirms it live: the runtime
 | `FUN_0051e830` | — | The **rain level**, exact analogue of the music level; drives the global rain voice from `+0x34` | Decompile |
 | `FUN_0051e790` | — | The music level | Decompile |
 | `FUN_0051bc40` | — | `(handle, selector, level)`; both level setters go through it | Decompile |
-| `FUN_005131f0` | — | `(this, mode)`: **0** = start rain (particle mode 1 + effect `0x21` into thing `+0x54`), **1** = start snow (mode 2, fade the rain loop), **2** = stop everything | Decompile |
+| `FUN_005131f0` | — | `Weather_RainVoice` in Ghidra. `(this, mode)`: **0** = start rain (particle mode 1 + effect `0x21` into thing `+0x54`), **1** = start snow (mode 2, fade the rain loop), **2** = stop everything | Decompile |
 | `DAT_00803aac` | — | The **global** rain voice handle started by `FUN_0051e830` | Decompile |
 | `0x006b7150` | — | Makes a voice's controller record, every key and value nought: a voice nobody sets plays at its variation's low | Decompile |
 | `0x00512ac5` | — | The level a ramp step hands the bed: `drops x 100 / MaxRaindrops` | Decompile |
@@ -352,7 +353,7 @@ Then: the gate is 0 all through the lobby anyway, and `Game_Pause` refuses regar
 ## Open questions
 
 - `mPType` (`+0x58`): saved, loaded, never read. **Purpose unknown.**
-- `mOverridden` (`+0x64`): saved, loaded, never read by anything traced. Whether it is the original's forced-weather latch is **not established**.
+- `mOverridden` (`+0x64`): refuses a delivered forecast when set, but nothing found sets it but a load. Whether a cheat or a script once did is **not established**.
 - Whether the forecast warning is ever player-visible is **not established**.
 - What a level set on the bed's stale handle answers after a stop (`FUN_006b5b80`), and so whether the next shower's first step starts a voice, is not read.
 - `FUN_00512c50`'s third argument is pushed and never read.

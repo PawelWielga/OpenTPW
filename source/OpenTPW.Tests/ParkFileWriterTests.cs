@@ -1717,4 +1717,172 @@ public class ParkFileWriterTests
 		Assert.AreEqual( (0, 6, 16970), (written.MonthAtLastUpdate, written.DayAtLastUpdate,
 			Read( File.ReadAllBytes( Path.Combine( Jungle, "Calendar Park.TPWS" ) ) ).GameTick) );
 	}
+
+	/// <summary>The park calendar on a tick as a <c>FILETIME</c>: 2000-01-01 plus the tick's 3,750 seconds at the shipped rate.</summary>
+	private static long CalendarOn( int tick ) => (12591158400L + (tick * 3750L)) * 10_000_000L;
+
+	/// <summary>
+	/// <b>The shipped park's weather thing reads as the original wrote it</b> (FileFormats <c>saves.md</c>, "The weather"):
+	/// quality 78 applied on tick 746, the forecast made on 653 and due four days later, the thunder count -755 on
+	/// tick 755, no bolt ever put down, the wind 139 at 0.22. And it is written back whole: every field the running park
+	/// changes, in its place, the voice's handle nought, the location left where none is given, <c>mPType</c> and
+	/// <c>mOverridden</c> the file's.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the drops' two places swapped, reader and writer alike; the location written where none is
+	/// given; the handle left; the writer never calling it.</remarks>
+	[TestMethod]
+	public void AWrittenParkHoldsTheWeathersFields()
+	{
+		var file = shipped.WeatherRecord!.Value;
+
+		Assert.AreEqual( new ParkWorld.WeatherState( 78, CalendarOn( 746 ), CalendarOn( 653 ),
+			CalendarOn( 653 ) + (4 * TimeSpan.TicksPerDay), 78, false, 0, 0, false, 0, 0, -755, null, 139f, file.WindForce ), file );
+		Assert.AreEqual( 0.22f, file.WindForce, 1e-6f );
+
+		var stormy = new ParkWorld.WeatherState( 12, CalendarOn( 17000 ), CalendarOn( 17010 ), CalendarOn( 17102 ), 55, true,
+			340, 450, true, 123, 3, -40, new System.Numerics.Vector3( 93.25f, 300f, 705.5f ), 163.5f, 0.88f );
+		var alone = ParkFileWriter.Body( shipped, Played );
+		var body = ParkFileWriter.Body( shipped, Played with { Weather = stormy } );
+
+		Assert.AreEqual( stormy, new ParkWorld( body ).WeatherRecord );
+
+		// Where FileFormats saves.md puts them, so a field read and written at another's place is caught too.
+		Assert.AreEqual( (12, 340, 450, -40, 163.5f), (BitConverter.ToInt32( body, shipped.WeatherAt + 16 ),
+			BitConverter.ToInt32( body, shipped.WeatherAt + 49 ), BitConverter.ToInt32( body, shipped.WeatherAt + 53 ),
+			BitConverter.ToInt32( body, shipped.WeatherAt + 66 ), BitConverter.ToSingle( body, shipped.WeatherAt + 90 )) );
+		Assert.AreEqual( 300f, BitConverter.ToSingle( body, shipped.WeatherAt + 74 ) );
+
+		var changed = Enumerable.Range( 0, body.Length ).Where( i => body[i] != alone[i] ).ToArray();
+		var at = shipped.WeatherAt;
+
+		Assert.IsTrue( changed.Length > 0 );
+		Assert.IsTrue( changed[0] >= at + 16 && changed[^1] < at + 98, $"changed bytes {changed[0]}..{changed[^1]}, the weather at {at}" );
+		Assert.IsFalse( changed.Any( i => i >= at + 86 && i < at + 90 ), "mPType is the file's" );
+
+		var dry = stormy with { LastLightningLocation = null };
+		var heard = (byte[])alone.Clone();
+		heard[at + 82] = 7;
+		shipped.PutWeather( heard, dry );
+
+		Assert.AreEqual( dry, new ParkWorld( heard ).WeatherRecord, "no location given leaves the file's fill" );
+		Assert.AreEqual( 0, BitConverter.ToInt32( heard, at + 82 ), "the voice's handle is written nought" );
+	}
+
+	/// <summary>
+	/// <b>A forecast falls due four whole days of the park calendar after it is made</b>, as the original's message 2
+	/// stamps it: the shipped park's own forecast, made on tick 653, is due on 745.16.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the warning counted in hours.</remarks>
+	[TestMethod]
+	public void AForecastFallsDueItsDaysOfWarningLater()
+	{
+		var file = shipped.WeatherRecord!.Value;
+
+		Assert.AreEqual( file.ForecastTime, ParkWeather.ForecastDue( file.LastForecasted, 4 ) );
+	}
+
+	/// <summary>
+	/// <b>The running weather is written as it stands</b>: a quality of 10 applied on tick 16970 is stamped with that
+	/// tick's calendar, asks for 450 drops and arms the lightning; with no forecast made the file's last forecast is kept
+	/// and none is pending; with no bolt the file's location is kept. A bolt aimed at (100, 200) arms the thunder (10 or
+	/// 11 weather ticks off) and is written at its top in the original's axes, y up, 300; a second bolt while the thunder
+	/// is armed leaves it there.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the stamp from the calendar that counts from nought; the location not turned into the
+	/// original's axes; the location taken at every bolt; a forecast shown pending with none made.</remarks>
+	[TestMethod]
+	public void TheRunningWeatherIsWrittenAsItStands()
+	{
+		var file = shipped.WeatherRecord!.Value;
+		var state = new ParkState( shipped );
+		state.SetGameTick( 16970 );
+		var weather = new ParkWeather( 139f, drawn: false );
+
+		try
+		{
+			weather.DebugWind( 139f );
+			weather.DebugQuality( 10 );
+
+			var written = weather.Written( file );
+
+			Assert.AreEqual( new ParkWorld.WeatherState( 10, CalendarOn( 16970 ), file.LastForecasted, file.ForecastTime,
+				file.ForecastQuality, false, 0, 450, true, 0, 0, 0, null, 139f, written.WindForce ), written );
+			Assert.AreEqual( 0.9f, written.WindForce, 1e-6f );
+
+			weather.DebugStrike( new Vector3( 100f, 200f, 0f ) );
+			var struck = weather.Written( file );
+
+			Assert.IsTrue( struck.ThunderCountdown is 10 or 11, $"thunder {struck.ThunderCountdown}" );
+			Assert.AreEqual( 300f, struck.LastLightningLocation!.Value.Y );
+			Assert.AreEqual( 100f, struck.LastLightningLocation.Value.X, 50f );
+			Assert.AreEqual( 200f, struck.LastLightningLocation.Value.Z, 50f );
+
+			weather.DebugStrike( new Vector3( 900f, 900f, 0f ) );
+
+			Assert.AreEqual( struck.LastLightningLocation, weather.Written( file ).LastLightningLocation );
+		}
+		finally
+		{
+			weather.Delete();
+		}
+	}
+
+	/// <summary>
+	/// <b>The thunder's count falls every weather tick, armed or not</b>, as the original's does: a dry park five weather
+	/// ticks in holds -5, the stock park's -755 on its tick 755 the same rule from nought.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the count held at nought between storms.</remarks>
+	[TestMethod]
+	public void TheThundersCountFallsEveryWeatherTick()
+	{
+		_ = new ParkState( shipped );
+		var weather = new ParkWeather( 139f, drawn: false );
+
+		try
+		{
+			weather.DebugQuality( 78 );
+			GameCalendar.SetCounter( 5 );
+			weather.Update();
+
+			Assert.AreEqual( -5, weather.Written( null ).ThunderCountdown );
+		}
+		finally
+		{
+			weather.Delete();
+			GameCalendar.Rebase();
+		}
+	}
+
+	/// <summary>
+	/// <b>The level writes the weather as it stands</b>: a park whose weather was set to 10 on tick 16970 is written with
+	/// that quality, that stamp and its 450 drops asked for, where the file it was loaded from held the shipped 78.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> <c>Level.WritePark</c> handing the writer no weather.</remarks>
+	[TestMethod]
+	public void TheLevelWritesTheWeather()
+	{
+		SetCurrentPlayer( new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
+
+		using var stream = new MemoryStream( raw );
+		var reader = new SaveReader( stream );
+		reader.ReadFile();
+		var world = new ParkWorld( Inflate( raw ), reader.Preamble );
+		var state = new ParkState( world );
+		state.SetGameTick( 16970 );
+		var weather = new ParkWeather( 139f, drawn: false );
+
+		try
+		{
+			weather.DebugQuality( 10 );
+			Level.WritePark( world, state, "jungle", "Weather Park" );
+		}
+		finally
+		{
+			weather.Delete();
+		}
+
+		var written = Read( File.ReadAllBytes( Path.Combine( Jungle, "Weather Park.TPWS" ) ) ).WeatherRecord!.Value;
+
+		Assert.AreEqual( (10, CalendarOn( 16970 ), 450), (written.Quality, written.LastChanged, written.TargetDrops) );
+	}
 }

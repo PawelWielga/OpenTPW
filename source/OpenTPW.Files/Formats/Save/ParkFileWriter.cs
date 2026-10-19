@@ -77,6 +77,7 @@ public static class ParkFileWriter
 	/// written after <see cref="Balance"/>, so its own balance is the one the file holds; where it is null only
 	/// <see cref="Balance"/> is written and the rest are the file's. <see cref="Calendar"/> is the park clock's
 	/// <c>mMonthAtLastUpdate</c> (nought-based) and <c>mDayAtLastUpdate</c> (<see cref="ParkWorld.PutCalendar"/>);
+	/// the file's where it is null. <see cref="Weather"/> is the weather thing's fields (<see cref="ParkWorld.PutWeather"/>);
 	/// the file's where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
@@ -93,7 +94,8 @@ public static class ParkFileWriter
 		ParkWorld.MonthRingSet? MonthRings = null, (int Lifetime, int MostPaidForTicket)? Visitors = null,
 		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null, long? ParkLastOpened = null, uint? RandomSeed = null,
 		(int ForceStrike, IReadOnlyList<ParkWorld.StrikeRecord> Records)? Strikes = null,
-		ParkWorld.EconomyState? Economy = null, (int Month, int Day)? Calendar = null );
+		ParkWorld.EconomyState? Economy = null, (int Month, int Day)? Calendar = null,
+		ParkWorld.WeatherState? Weather = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -256,6 +258,9 @@ public static class ParkFileWriter
 
 		if ( running.Calendar is { } calendar )
 			loaded.PutCalendar( body, calendar.Month, calendar.Day );
+
+		if ( running.Weather is { } weather )
+			loaded.PutWeather( body, weather );
 
 		if ( running.Arrival is { } arrival )
 			loaded.PutArrival( body, arrival.TimeSig, arrival.PeopleOnBus, arrival.Offloading, arrival.CurrentVehicle, arrival.Vehicles );

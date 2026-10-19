@@ -563,7 +563,7 @@ FileFormats page takes from the readers holds for the writer.
 | 10 | `FUN_004da960` | the map base (`FUN_0050b090`) and `mNextObject` |
 | 11 | `FUN_00599f60` | thing 3 |
 | 12, 17 | `FUN_00509bc0` | the map base alone |
-| 13, 14, 15, 16, 19 | `FUN_004c5d70`, `FUN_00502dc0`, `FUN_00512010`, `FUN_004cf920`, `FUN_004d2320` | the analyser, the research lab, the weather, the economy thing, the challenge manager |
+| 13, 14, 15, 16, 19 | `FUN_004c5d70`, `FUN_00502dc0`, `Weather_Serialise` (`0x00512010`), `FUN_004cf920`, `FUN_004d2320` | the analyser, the research lab, the weather, the economy thing, the challenge manager |
 | 18 | none | refused: "Should not be able to save online persons" |
 
 **The reader makes every thing again.** For each record it allocates the model's object, runs its constructor and
@@ -660,7 +660,8 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | A guest, a member of staff | everything they do | carried records patched from `ParkPeople`; one made here written whole; one gone left out |
 | A catalogue object | its door, price, counts, rings, queue, script handle | carried records patched; one bought here written whole; one sold left out |
 | The economy thing, the staff HQ | the fee, the balance, the profit, the red stamp, the loans; the strikes, the training budgets | the economy thing's seven fields and eight loans are written ("OpenTPW's writer, the economy thing"), and the staff HQ's five budgets and `mHaveEverTrained` ("OpenTPW's writer, the training budgets") and its `mForceStrike` and five strike records ("OpenTPW's writer, the strike records"); `mStaffMemberPickedUp` is the file's |
-| The analyser, the research lab, the weather, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar and weather run here | carried, but for the mechanics' HQ's `mNextObject` (model 10, `PutMechanicCursor`) and the analyser's `mLastStaffHired` (model 13, `PutLastStaffHired`: the calendar as the newest member of staff was made, which the advisor's row 7 counts its thirty days from; `advisor-park.md`, "More rides than the mechanics can keep"; the original read this game's stamp from a file saved after a hire here, Q333) and its `mLastObjectBuilt` (`PutLastObjectBuilt`: the calendar as the newest object was made, a sale leaving it; `advisor-park.md`, "The newest build"; the original read this game's from files saved after a purchase and after its sale, Q334) and its `mParkLastOpened` (`PutParkLastOpened`: the calendar at the newest request to open the park; `hud.md`, "The analyser's other stamps"; the original read this game's, Q397); the analyser's three other stamps, which the original never moves, and its counts, and what the weather and the calendar run here, are not written |
+| The weather | its quality, the rain, the lightning and thunder, the forecast, the wind | written from the running park ("OpenTPW's writer, the weather thing"); `mPType` and `mOverridden` the file's, `mRainSoundHandle` nought |
+| The analyser, the research lab, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar runs here | carried, but for the mechanics' HQ's `mNextObject` (model 10, `PutMechanicCursor`) and the analyser's `mLastStaffHired` (model 13, `PutLastStaffHired`: the calendar as the newest member of staff was made, which the advisor's row 7 counts its thirty days from; `advisor-park.md`, "More rides than the mechanics can keep"; the original read this game's stamp from a file saved after a hire here, Q333) and its `mLastObjectBuilt` (`PutLastObjectBuilt`: the calendar as the newest object was made, a sale leaving it; `advisor-park.md`, "The newest build"; the original read this game's from files saved after a purchase and after its sale, Q334) and its `mParkLastOpened` (`PutParkLastOpened`: the calendar at the newest request to open the park; `hud.md`, "The analyser's other stamps"; the original read this game's, Q397); the analyser's three other stamps, which the original never moves, and its counts, and what the calendar runs here, are not written |
 
 **What is not settled, and belongs to the build that meets it.** A record made here has bytes no reader here
 names: whether nought is safe in each is to be measured by loading a made guest and a bought ride in the
@@ -3315,6 +3316,68 @@ holds month 2 day 7, that tick's date.
 Not run: a park made with no file (its clock would be the constructor's, `SAVE_PARK_WITH_NO_FILE`), a rate other than
 15000 (none shipped), Full Simulation (not asked: the calendar is either mode's), the other three themes. The original's
 year message on a load past 2000 is its own, not this piece's: it comes to its own files too (`weather.md`).
+
+### OpenTPW's writer, the weather thing
+
+Q528. The weather thing (model 15, the header's `mWeather`, thing 7; FileFormats `saves.md`, "The weather") is written
+from the running park (`ParkWorld.PutWeather`, handed `ParkWeather.Written` by `Level.WritePark`), in the order
+`Weather_Serialise` (`0x00512010`, one function both ways) reads and writes it:
+
+| Field | Written from | What the original does with it (`weather.md`) |
+|---|---|---|
+| `mQuality` | the running quality | applied by `Weather_ApplyQuality` (`0x00512f00`), which stamps `mLastChanged` with now (`Calendar_Now`, `0x004f8690`: `mFunnyTimeStart` + `mGameTick` x rate / 4 whole seconds) |
+| `mLastChanged` | the park calendar (`ParkState.CalendarNow`) as the quality was last applied | `Weather_Update` (`0x00512880`) posts message 2 (a forecast `DaysOfWarning` days off) on the first tick past `mLastChanged` + (`DaysBetweenChanges` - `DaysOfWarning`) days (`0x00512995`) while no forecast is pending |
+| `mLastForecasted`, the forecast's `mTime`, `mQuality` | as the forecast was made, four days on, the quality rolled; the file's until this park makes one | message 2 (`Weather_OnMessage`, `0x005127a0`) stamps both; they stay after the delivery |
+| the forecast's `mValid` | a forecast pending here | on the first tick past `mTime` the update posts message 1 with the forecast's quality and clears it; message 1 applies it **unless `mOverridden` is set** (`0x0051285f`) |
+| `mCurrentDrops`, `mTargetDrops` | the ramp and its target | the ramp walks the current toward the target by `SpeedOfChange` a tick |
+| `mLightning`, `mLightningCountdown`, `mLightningNumThisPeriod` | the same | the bolts |
+| `mThunderCountdown` | the count, which falls by one every weather tick, armed or not (`0x00512bd4`), as here | the thunder sounds as it reaches nought, at `mLastLightningLocation` (`0x00512bdd`); between storms it stands below nought (the stock park's -755 on its tick 755) |
+| `mLastLightningLocation` | the top of the bolt that armed the thunder, in the original's axes (x, 300, z); the file's twelve bytes where no bolt here armed it | set only as a bolt arms the thunder (count below one) |
+| `mRainSoundHandle` | nought | the thing's own rain voice: `Weather_RainVoice` (`0x005131f0`) starts one only over a nought handle and stops and noughts it on snow or when the drops end |
+| `mPType` | the file's | read by nothing |
+| `mWindDir`, `mWindForce` | the running wind | the wind |
+| `mOverridden` | the file's | written by the constructor alone (`Weather_Construct`, `0x00511f70`: nought); read by message 1 |
+
+**Deviations, said at `ParkWorld.PutWeather` and `ParkWeather.Written`.** The original writes its live voice's handle,
+which names nothing in the process that loads the file and, being not nought, keeps that one's rain voice from ever
+starting; this game writes nought (in all 48 files the original saved on this machine it is nought: none was raining).
+This park's schedule counts day edges of its own calendar (Q149), not the original's instants, so its forecast is made
+and delivered on a whole day where the original's is made on the first tick past an instant; the stamps written are
+the park calendar's on the tick it happened here, so the original loading the file runs its own schedule from them.
+A load here still reads only `mWindDir` (Q493): the quality, the forecast and the storm are rolled fresh (Q529).
+
+**Measured across the files** (`q528/wsweep.py`, the 741 park files on this machine; `parkfile.weather`, `-W`): in all
+48 the original saved, `mLastChanged` is a whole tick of its clock at or before the file's tick; the forecast is made
+on the first tick past `mLastChanged` + 69.12 ticks (909 to 979, 1724 to 1794, 2050 to 2120) and its `mTime` is
+`mLastForecasted` + 92.16 ticks, four days, in 44 (the other four, `restart.INTS` and the like at tick 0, hold noughts);
+`mThunderCountdown` + the tick is nought in 40, the count run down from nought since tick 0, and the tick of a load
+or of a later bolt in the rest; the location is the debug fill in 38, (x, 300, z) in the 3 where a bolt armed the thunder, and bytes nothing wrote in
+the other 7 (noughts, or a heap's leftovers);
+`mOverridden` is nought in all 48.
+
+**Both games** (`q528/`: `confirm.py`, `PREDICTION.txt`, `run3`, `control1`, `orig/`). `q524/loan4.TPWS` loaded here,
+the clock written 16970, `weather 10`, `bolt 300 300` and five weather ticks: the census and the save's line read
+`quality 10 changed 2002-01-06 13:05:00`, the file's forecast kept with `valid 0`, `drops 100/450 lightning 1`, two
+bolts, `thunder 5 at (275.4, 300.0, 269.2)`, wind 142, force 0.90, and the file the same (`run3/1-weather.png`).
+Stepped on, the park made its own forecast on 17004 (made 2002-01-08 00:30:00, due 2002-01-12 00:30:00, 83) and the
+second file holds it, valid 1 (`run3/3-forecast.png`, rain falling). Main's build wrote the fixture's record to the
+byte (`control1`). **The original** given the first file read quality 10, drops 100, target 450 and thunder 5, counted
+the thunder to nought on 16980 and on below, ramped the drops to 440, rained (`orig/a-rain-crop.png`), made its own
+forecast on 17040 (16970 + 69.12) and delivered it on 17133; given main's it made one on its first tick, 16976, and
+delivered it on 17069, dry throughout; given the second it delivered this game's forecast, 83, on 17097 (the first
+tick past 17096.16), the rain ending on 17118, and its next forecast came on 17167. Its own file saved after it
+(`orig/Q528ORIG-by-the-original.TPWS`) has the layout this game writes.
+
+**A file loaded with its drops at their target draws no rain.** `Weather_Update` hands the particles their count
+(`FUN_0057d910`) only on a step of the ramp, and 440 against a target of 450 is within `SpeedOfChange`, so the original
+given the second file drew none until its delivery on 17097 started the drops down: filmed (`orig/e-rain-film.png`, from
+`orig/q528e.mkv`), no rain about 17093, streaks about 17101 and 17109, none past 17118. Its own files are the same: a
+park saved in steady rain and loaded is dry until the weather next changes. This game draws its rain from the drops
+it holds (Q529 reads them).
+
+Not run: snow (only hallow snows), a quality forced here held against a delivery (the console's `weather` drops the
+pending forecast; `mOverridden` is not set by anything), Full Simulation (not asked: the weather is either mode's), the
+other three themes.
 
 ## What OpenTPW builds
 

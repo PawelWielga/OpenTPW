@@ -77,10 +77,16 @@ filed the items that cite it.
   bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no handyman. Row 291's response 551
   does not exist (a raised row 291 would be silent; nothing found posts it). Rows 125 to 127 are Q228's, rows 167 and
   168 Q703's. Not run.
+  From Q528 (`saves.md`, "OpenTPW's writer, the weather thing"): the weather thing is written from the running park, so
+  the original loading a file this game writes runs on with its weather (it rained, and delivered this game's
+  forecast on its own clock); a load here still reads only the wind (Q529). The managers' fields Q241j names are all
+  written now; the rest of this item is the pieces above (the advisor's rows, the patrol edges, the quick right click).
+  In no game run: snow (only hallow snows), a forced quality held against a delivery (`mOverridden` is never set),
+  Full Simulation (not asked: the weather is either mode's), the other three themes.
   From Q526 (`saves.md`, "OpenTPW's writer, the calendar's fields"): the park clock's month and day are written as the
   date of the tick, so the original runs no month's change on its first tick after loading a file this game writes
-  (it did in Q523's file); the nearest piece is the weather thing's fields (Q241j's too; only `mWindDir` is read at a
-  load, Q493). In no game run: a park made with no file (`SAVE_PARK_WITH_NO_FILE`), a rate other than 15000 (none
+  (it did in Q523's file); the nearest piece is the weather thing's fields (Q241j's too; written, Q528; only `mWindDir`
+  is read at a load, Q493, Q529). In no game run: a park made with no file (`SAVE_PARK_WITH_NO_FILE`), a rate other than 15000 (none
   shipped), Full Simulation (not asked: the calendar is either mode's), the other three themes.
   From Q524 (`saves.md`, "OpenTPW's writer, the economy thing"): the economy thing's seven fields and eight loans are
   written (it has no rings: the money rings are the analyser's, written since Q385 to Q389), so the nearest piece is
@@ -963,15 +969,16 @@ filed the items that cite it.
   From the run review (2026-10-17): the writer rebuilds each cell's chain by id and the file's order, not the running
   list the original writes (`ParkWorld.People.cs`, `saves.md`, "The chains"): since Q446 a file chain [A, B] whose B
   walks off and back runs [B, A] and is written [A, B]. Write the running order.
-- [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The weather's fields (the staff HQ's
-  strikes are written, Q523, the economy thing's fields and loans, Q524, and the calendar's month and day, Q526); then `ParkSaveScreen.Save` writes
+- [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The managers are written (the staff HQ's
+  strikes, Q523, the economy thing's fields and loans, Q524, the calendar's month and day, Q526, and the weather
+  thing, Q528); what is left is that `ParkSaveScreen.Save` writes
   (`SAVE_GAME_WRITER` gone), an overwrite replaces the file, and the Load Park list shows it. Confirm: a park
   played, saved from the menu under a typed name, loaded by OpenTPW and by the original under Proton; the tick,
   the cash and the guest count predicted; a screenshot of each.
   From Q241f: `Level.WritePark` is the call to make. The original puts
   the pointer back to its default mode before it writes (`FUN_00516c80`, step 1); `WritePark` does not.
-  From Q493: of the weather thing only `mWindDir` is read at a load (`ParkWorld.WindDirection`), and the writer writes
-  the file's record back as it was, so a park saved after a change of weather holds the wind it was loaded with.
+  From Q493: of the weather thing only `mWindDir` is read at a load (`ParkWorld.WindDirection`; the rest is Q529). The
+  writer writes the running weather since Q528.
   From Q241h: a member of staff in the hand is written idle where they were picked up, and stays in the
   running park's hand; the default mode's install is what puts them down in the original.
 - [ ] **Q327. Full Simulation catch-up: the built advisor lines in a Full Simulation park.** Filed at Alexah's
@@ -2147,6 +2154,17 @@ filed the items that cite it.
   (`ParkGadget.ShowDate`, `ToShortDateString`, so it follows the computer's culture). Seen, not decoded: no
   "%d.%d.%d" format is among the executable's strings, so find what letters the gadget's date (a Windows date format
   under Proton's locale, or the UI text table) before choosing ours. Confirm by both gadgets on one date.
+- [ ] **Q529. A loaded park's weather runs on from the file's.** From Q528 (`saves.md`, "OpenTPW's writer, the weather
+  thing"): the original's load reads all of the weather thing over its constructor's (`Weather_Serialise`,
+  `0x00512010`) and runs on from it, the rain, the storm, a pending forecast and its due time; ours reads only
+  `mWindDir` (`ParkWorld.WindDirection`) and rolls the rest fresh, though `ParkWorld.WeatherRecord` reads it all. Start
+  `ParkWeather` from the record, and schedule as the original does, on the park calendar's instants (`mLastChanged` +
+  3 days, the forecast's `mTime`; the first tick past each) rather than day edges of `GameCalendar` (Q149), so a
+  forecast read from a file falls due on the original's tick. Look first at what the load leaves undrawn: the original
+  sets the particles only on a step of the ramp, so a file whose drops stand at their target rains nowhere until the
+  next change (filmed, `q528/orig/e-rain-film.png`), and its voice's handle is the saving process's. Confirm: q528's `run3/q528-fix2.TPWS`
+  loaded here and in the original, the quality, the drops and the forecast's delivery tick (17097) predicted, a frame
+  of each.
 
 ## B. Docs and comments
 

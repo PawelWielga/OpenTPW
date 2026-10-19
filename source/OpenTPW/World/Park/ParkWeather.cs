@@ -105,6 +105,17 @@ public sealed class ParkWeather : Entity
 	private int _forecastDueDay = -1;
 	private int _counterSeen;
 
+	// What the thing's saved record holds (FUN_00512010): the park calendar, a FILETIME, as the quality was last
+	// applied (FUN_00512f00 stamps mLastChanged) and as the last forecast was made, with its due time and quality
+	// (message 2, FUN_005127a0); the forecast's stay after it is delivered, as the original's do, and are null until
+	// this park makes one.
+	private long _lastChanged;
+	private (long Made, long Due, int Quality)? _lastForecast;
+
+	// mLastLightningLocation: the top of the bolt that armed the thunder, which is where the thunder sounds. Null
+	// until a bolt arms it.
+	private Vector3? _thunderAt;
+
 	private readonly Random _rng = new();
 
 	/// <summary>
@@ -119,9 +130,9 @@ public sealed class ParkWeather : Entity
 	/// whatever proves wrong becomes a constructor parameter then.
 	/// </para>
 	/// </summary>
-	private readonly Rain _rain = new();
+	private readonly Rain? _rain;
 
-	private readonly Lightning _lightning = new();
+	private readonly Lightning? _lightning;
 
 	/// <summary>
 	/// How far a bolt may come down from the park's edge, and how far its top leans - straight out of
@@ -139,9 +150,22 @@ public sealed class ParkWeather : Entity
 	/// The park file's <c>mWindDir</c>, or null for a fresh park: the original's constructor rolls and moves the wind,
 	/// then a load reads the saved one over it (<c>FUN_00512010</c>), so a loaded park's flags stand as they were saved.
 	/// </param>
-	public ParkWeather( float? savedWindDirection = null )
+	public ParkWeather( float? savedWindDirection = null ) : this( savedWindDirection, drawn: true )
+	{
+	}
+
+	/// <param name="savedWindDirection">As the public constructor's.</param>
+	/// <param name="drawn">Whether it makes the rain and the bolt that draw it; a weather that draws nothing needs no device.</param>
+	/// Dead by CODE with <paramref name="drawn"/> false: only ParkFileWriterTests passes it.
+	internal ParkWeather( float? savedWindDirection, bool drawn )
 	{
 		Current = this;
+
+		if ( drawn )
+		{
+			_rain = new();
+			_lightning = new();
+		}
 
 		var balance = Level.Current?.Balance;
 
@@ -197,9 +221,8 @@ public sealed class ParkWeather : Entity
 	/// giving a forced quality a full <c>DaysBetweenChanges</c> to be observed in.
 	/// </para>
 	/// <para>
-	/// The original has a field this may well be for - <c>mOverridden</c> at +0x64, saved and loaded but
-	/// never read by anything traced - but <b>what it does is not established</b>, so this is a debug
-	/// convenience rather than a claim about it.
+	/// The original's <c>mOverridden</c> (+0x64) refuses a delivered forecast while set (<c>0x0051285f</c>), but nothing
+	/// found sets it, so this is a debug convenience rather than that latch: it does not set the field a save writes.
 	/// </para>
 	/// </summary>
 	internal void DebugQuality( int quality )
@@ -242,7 +265,7 @@ public sealed class ParkWeather : Entity
 	/// is uploaded, so a non-zero one puts the fault downstream of the wiring.
 	/// </para>
 	/// </summary>
-	internal Lightning DebugBolt => _lightning;
+	internal Lightning? DebugBolt => _lightning;
 
 	private static readonly int[] DefaultAverage = [75, 80, 90, 50];
 	private static readonly int[] DefaultTolerance = [25, 20, 10, 15];
@@ -328,7 +351,23 @@ public sealed class ParkWeather : Entity
 
 		Forecast = Roll();
 		_forecastDueDay = GameCalendar.Days + _daysOfWarning;
+
+		var made = CalendarStamp();
+		_lastForecast = (made, ForecastDue( made, _daysOfWarning ), Forecast);
 	}
+
+	/// <summary>
+	/// When a forecast made on <paramref name="made"/> falls due: <paramref name="daysOfWarning"/> whole days of the park
+	/// calendar later, the forecast's <c>mTime</c> (message 2, <c>FUN_005127a0</c>).
+	/// </summary>
+	internal static long ForecastDue( long made, int daysOfWarning ) => made + (daysOfWarning * TimeSpan.TicksPerDay);
+
+	/// <summary>
+	/// Now on the park's own calendar as a <c>FILETIME</c> (<see cref="ParkState.CalendarNow"/>, <c>FUN_004f8690</c>),
+	/// the stamp the original's weather takes; the calendar's start where there is no park.
+	/// </summary>
+	private static long CalendarStamp()
+		=> ParkWorld.StaffState.FileTimeOf( ParkState.Current?.CalendarNow ?? GameCalendar.Epoch );
 
 	/// <summary>
 	/// A quality for the season, from FUN_00512e10: usually the season's average give or take its
@@ -367,6 +406,7 @@ public sealed class ParkWeather : Entity
 	private void Apply( int quality )
 	{
 		Quality = Math.Clamp( quality, 1, 100 );
+		_lastChanged = CalendarStamp();
 
 		var snowing = Quality >= _snowLow && Quality <= _snowHigh;
 		var raining = Quality >= _rainLow && Quality <= _rainHigh;
@@ -475,7 +515,9 @@ public sealed class ParkWeather : Entity
 			_drops = 0;
 			Drops = 0;
 
-			_rain.Level = 0f;
+			if ( _rain != null )
+				_rain.Level = 0f;
+
 			ParkAudio.Current?.StopRain();
 			return;
 		}
@@ -489,7 +531,8 @@ public sealed class ParkWeather : Entity
 		// count is the renderer's own business and is NOT the same number - it draws Level of its own
 		// pool, which is the lobby's nine hundred. Matching the two exactly is a thing to do once
 		// there is a reason to believe the park's pool size, rather than now.
-		_rain.Level = _drops / (float)_maxRaindrops;
+		if ( _rain != null )
+			_rain.Level = _drops / (float)_maxRaindrops;
 
 		ParkAudio.Current?.SetRainLevel( RainLevel( _drops, _maxRaindrops ) );
 	}
@@ -544,33 +587,71 @@ public sealed class ParkWeather : Entity
 		LastStrikeGround = new Vector3( groundX, groundY, 0f );
 		LastStrike = new Vector3( groundX + Lean(), groundY + Lean(), BoltHeight );
 
-		_lightning.Strike( LastStrikeGround, LastStrike );
+		_lightning?.Strike( LastStrikeGround, LastStrike );
 
 		// Thunder follows the flash, and closes in as the storm builds: the delay is the distance less
 		// however many bolts this period has already thrown, so the first is about ten weather ticks
 		// behind its thunder and later ones follow almost at once.
 		if ( _thunderCountdown < 1 )
+		{
 			_thunderCountdown = _rng.Next( Math.Max( _thunderRandomiser, 1 ) )
 				+ Math.Max( _thunderDistance - _strikesThisPeriod, 0 );
+			_thunderAt = LastStrike;
+		}
 
 		_strikesThisPeriod++;
 		DebugStrikes++;
 	}
 
 	/// <summary>
-	/// Sounds the thunder for a bolt that flashed a while ago - at the bolt's own top, because the
-	/// original plays it as a placed sound rather than a flat one.
+	/// Sounds the thunder for a bolt that flashed a while ago - at the top of the bolt that armed it, because the
+	/// original plays it as a placed sound rather than a flat one. The count falls every weather tick, armed or not, as
+	/// the original's does (<c>0x00512bd4</c>), so it stands below nought between storms and only an armed count meets
+	/// nought.
 	/// </summary>
 	private void Thunder()
 	{
-		if ( _thunderCountdown < 1 )
-			return;
-
-		_thunderCountdown--;
+		_thunderCountdown = unchecked(_thunderCountdown - 1);
 
 		if ( _thunderCountdown != 0 )
 			return;
 
-		ParkAudio.Current?.Thunder( LastStrike );
+		ParkAudio.Current?.Thunder( _thunderAt ?? LastStrike );
 	}
+
+	/// <summary>
+	/// The weather thing's fields as a save writes them (<see cref="ParkWorld.PutWeather"/>; <c>docs/exe/saves.md</c>,
+	/// "OpenTPW's writer, the weather thing"). Where this park has made no forecast, the last forecast's stamp, due time
+	/// and quality are <paramref name="file"/>'s, as the original's load leaves them; its <c>mValid</c> is this park's,
+	/// whose forecast from the file is not read. The location is in the original's axes, y up.
+	/// <para>
+	/// <b>A deviation:</b> this park's schedule counts day edges of <see cref="GameCalendar"/> (Q149), so its forecast is
+	/// made and falls due on a whole day where the original's is made on the first tick past an instant
+	/// (<c>0x00512995</c>); the stamps are the park calendar's on the tick it happened here, so the original loading the
+	/// file runs its own schedule from them.
+	/// </para>
+	/// </summary>
+	public ParkWorld.WeatherState Written( ParkWorld.WeatherState? file )
+	{
+		var forecast = _lastForecast
+			?? (file is { } saved ? (saved.LastForecasted, saved.ForecastTime, saved.ForecastQuality) : (0L, 0L, 0));
+
+		return new ParkWorld.WeatherState( Quality, _lastChanged, forecast.Made, forecast.Due, forecast.Quality,
+			ForecastValid: Forecast >= 0, _drops, _targetDrops, Lightning, _lightningCountdown, _strikesThisPeriod,
+			_thunderCountdown,
+			_thunderAt is { } top ? new System.Numerics.Vector3( top.X, top.Z, top.Y ) : file?.LastLightningLocation,
+			WindDirection, WindForce );
+	}
+
+	/// <summary>The fields <see cref="Written"/> gives, one line, for the save's log and the console's <c>weather</c>.</summary>
+	internal static string Describe( ParkWorld.WeatherState weather )
+		=> $"quality {weather.Quality} changed {Stamp( weather.LastChanged )} forecast {weather.ForecastQuality} made "
+			+ $"{Stamp( weather.LastForecasted )} due {Stamp( weather.ForecastTime )} valid {(weather.ForecastValid ? 1 : 0)}, "
+			+ $"drops {weather.CurrentDrops}/{weather.TargetDrops} lightning {(weather.Lightning ? 1 : 0)} countdown "
+			+ $"{weather.LightningCountdown} bolts {weather.LightningNumThisPeriod} thunder {weather.ThunderCountdown} at "
+			+ $"{(weather.LastLightningLocation is { } at ? $"({at.X:F1}, {at.Y:F1}, {at.Z:F1})" : "none")}, "
+			+ $"wind {weather.WindDir:F2} force {weather.WindForce:F2}";
+
+	private static string Stamp( long fileTime )
+		=> fileTime > 0 ? DateTime.FromFileTimeUtc( fileTime ).ToString( "yyyy-MM-dd HH:mm:ss" ) : fileTime.ToString();
 }

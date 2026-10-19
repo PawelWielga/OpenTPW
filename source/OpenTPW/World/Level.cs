@@ -743,7 +743,7 @@ public class Level
 			state.MonthRings, (state.LifetimeVisitors, state.MostPaidForTicket), state.MisbehavingKids, state.ParkLastOpened,
 			state.RandomSeed,
 			people != null ? (people.Strikes.ForceWord, people.Strikes.Records) : null,
-			state.Economy, state.CalendarAtLastUpdate );
+			state.Economy, state.CalendarAtLastUpdate, ParkWeather.Current?.Written( loaded.WeatherRecord ) );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;
@@ -768,6 +768,9 @@ public class Level
 		Log.Info( $"Save: economy written: {state.DescribeEconomy()}" );
 		Log.Info( $"Save: calendar written: month {running.Calendar!.Value.Month} day {running.Calendar.Value.Day}, "
 			+ $"the date of tick {state.GameTick}, {state.CalendarNow:yyyy-MM-dd}" );
+
+		if ( running.Weather is { } weather )
+			Log.Info( $"Save: weather written: {ParkWeather.Describe( weather )}" );
 
 		foreach ( var (message, history) in running.AdvisorHistories ?? new Dictionary<int, ParkWorld.AdvisorHistory>() )
 		{

@@ -2135,7 +2135,11 @@ public sealed partial class ParkWorld : IParkInitialState
 				StaffHqAt = start;
 			}
 			else if ( model == WeatherModel )
+			{
 				WindDirection = ReadSingleAt( start + WeatherWindDirectionAt );   // mWindDir
+				WeatherRecord = ReadWeather( start );
+				WeatherAt = start;
+			}
 			else if ( model == MechanicHqModel )
 			{
 				MechanicHqAt = start;
