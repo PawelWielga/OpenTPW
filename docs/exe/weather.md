@@ -83,7 +83,7 @@ FUN_00516380 is called every 8th 31 ms tick = 248 ms = ~4/s, hence the /4
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
-| `FUN_004f8260` | — | The day, month and year advance: sends `0xb`, `0xc` and `0xd` on their compares, then stores the new `mMonthAtLastUpdate`, `mDayAtLastUpdate` and year (`0x004f8541`..`0x004f8552`). The constructor, the park-entry seed `FUN_004f85a0` (month and year from tick 0) and the load write them too (`ride-operation.md`, "The month's change") | Decompile |
+| `FUN_004f8260` | — | `Calendar_Update` in Ghidra: the day, month and year advance on the calendar at world `+0x2a0`: sends `0xb`, `0xc` and `0xd` on their compares (the day of the month against `+0x14`, the month nought-based against `+0x10`, the whole year against `+0x18`), then stores all three (`0x004f8541`..`0x004f8552`), every sweep, so between sweeps they are the date of `mGameTick`. Called from the sweep's tail `World_SweepTail` (`FUN_004d7b20`, `0x004d7b3b`), which `FUN_00516380` calls (`0x00516695`) after counting the tick on (`0x00516398`). The constructor, the park-entry seed `FUN_004f85a0` (month and year from tick 0) and the load write them too (`ride-operation.md`, "The month's change") | Decompile |
 | `FUN_004f8770` | — | Counter → funny seconds | Decompile |
 | `0x0080239c` | — | Base of the tick counter (`+ 0x1da70c`) | Decompile |
 | `FUN_00516380` | — | Increments the counter; one call per eight ticks | Call site below |
@@ -91,8 +91,8 @@ FUN_00516380 is called every 8th 31 ms tick = 248 ms = ~4/s, hence the /4
 | `0x0054f7bb` | — | The gated `CALL FUN_00516380` | Disassembly |
 | `0x00877d34` | — | The 31 ms tick counter itself | Gate above |
 | `0x004f7ea9` | — | `MOV [ESI+0x1c],0x3a98` — `mFunnySecsPerRealSec` defaults to **15000** | Disassembly of `FUN_004f7e80` |
-| `FUN_004f7e80` | — | Game-clock constructor | Decompile |
-| `FUN_004f7f30` | — | Clock save block: `+0x00 mFunnyTimeStart`, `+0x08 mSessionStart`, `+0x10 mMonthAtLastUpdate`, `+0x14 mDayAtLastUpdate`, `+0x1c mFunnySecsPerRealSec`. **`+0x18` (year) is not saved**, so after entering a park and loading it the year is the entry's seed, 2000, and a park saved in another year gets `0xd` on its first sweep (a quickload into the running park keeps the running year) | Named save stream |
+| `FUN_004f7e80` | — | `Calendar_Construct` in Ghidra: the game-clock constructor; month `+0x10` 0, day `+0x14` -1 (`0xffffffff`), year `+0x18` 0, so a park file written before its first sweep (every `restart.INTS`, tick 0) holds month 0 day -1 | Decompile; four `restart.INTS` files (Q526) |
+| `FUN_004f7f30` | — | `Calendar_Serialise` in Ghidra: the clock save block, the five fields read or written as they lie in memory: `+0x00 mFunnyTimeStart`, `+0x08 mSessionStart`, `+0x10 mMonthAtLastUpdate`, `+0x14 mDayAtLastUpdate`, `+0x1c mFunnySecsPerRealSec`. **`+0x18` (year) is not saved**, so after entering a park and loading it the year is the entry's seed, 2000, and a park saved in another year gets `0xd` on its first sweep (a quickload into the running park keeps the running year) | Named save stream |
 | `0x007ced58` | — | Published calendar: `+58` second, `+5c` minute, `+60` hour, `+64` day, `+68` month (0-based), `+6c` year-1900, `+70` day-of-week — written every world tick | Decompile |
 | `0x0054f680` | — | `CMP EAX,0x3` — **at most 3 world-clock advances per rendered frame**, so a stuttering machine loses time and never gains it | Disassembly |
 | `0x785970` | — | The millisecond clock, used by the VM's `SETTIMER`/`GETTIMER`/`GETTIME` — a different clock from this one | Decompile |

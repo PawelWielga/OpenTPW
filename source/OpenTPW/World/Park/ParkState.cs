@@ -946,6 +946,15 @@ public sealed class ParkState
 			* TimeSpan.TicksPerSecond );
 
 	/// <summary>
+	/// The park clock's <c>mMonthAtLastUpdate</c>, nought-based, and <c>mDayAtLastUpdate</c> as the original's hold them
+	/// now: <c>Calendar_Update</c> (<c>0x004f8260</c>) stores the date of <c>mGameTick</c> at the end of every sweep, the
+	/// same sweep that counts it on (<c>World_SweepTail</c>, <c>0x004d7b20</c>), so between sweeps they are
+	/// <see cref="CalendarNow"/>'s month and day. A save writes them (<c>docs/exe/saves.md</c>, "OpenTPW's writer, the
+	/// calendar's fields"). Not <see cref="GameCalendar.Now"/>'s, which counts from nought (Q149).
+	/// </summary>
+	public (int Month, int Day) CalendarAtLastUpdate => (CalendarNow.Month - 1, CalendarNow.Day);
+
+	/// <summary>
 	/// The park's calendar as the newest member of staff was made, a <c>FILETIME</c>: the park analyser's
 	/// <c>mLastStaffHired</c> (<c>+0x21c38</c>), the file's own at a load (<see cref="ParkWorld.LastStaffHired"/>)
 	/// and the calendar's start in a park made with no file, whose analyser is made on tick nought

@@ -1266,6 +1266,12 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// </summary>
 	private const int ArrivalBlockSize = 18;
 
+	/// <summary>
+	/// The park clock's 28 bytes before the arrival block, which <c>Calendar_Serialise</c> (<c>0x004f7f30</c>) reads
+	/// and writes field by field and <see cref="Calendar"/> holds.
+	/// </summary>
+	private const int CalendarBlockSize = 28;
+
 	/// <summary>The map between the tables and the thing list - a 128x128 grid, whatever the park's own size is.</summary>
 	private const int MapCellCount = MapSize * MapSize;
 
@@ -1682,11 +1688,12 @@ public sealed partial class ParkWorld : IParkInitialState
 		ReadHeader();
 
 		// The fixed tables. The object controls and the staff pool are read; of the arrival and clock fields after
-		// them, the pool's mark and the last 18 bytes, the arrival timer.
+		// them, the pool's mark, the park clock and the last 18 bytes, the arrival timer.
 		ReadObjectControls();
 		Skip( 2 );                                  // mPreviousSearchKey
 		ReadStaffPool();
-		Skip( ArrivalTailSize - PoolCountsSize - 4 - ArrivalBlockSize );
+		Skip( ArrivalTailSize - PoolCountsSize - 4 - CalendarBlockSize - ArrivalBlockSize );   // mOpeningStaffPoolGenerated
+		ReadCalendar();
 		ReadArrivalBlock();
 
 		ReadMap();
@@ -1919,6 +1926,21 @@ public sealed partial class ParkWorld : IParkInitialState
 		StaffPoolPeopleInCat = counts;
 		StaffPoolStopProducing = stops;
 		StaffPoolTimeSig = ReadInt32();
+	}
+
+	private void ReadCalendar()
+	{
+		CalendarAt = _at;
+
+		var start = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( _at, 8 ) );
+		var session = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( _at + 8, 8 ) );
+		_at += 16;
+
+		var month = ReadInt32();
+		var day = ReadInt32();
+		var rate = ReadInt32();
+
+		Calendar = new CalendarBlock( start, session, month, day, rate );
 	}
 
 	private void ReadArrivalBlock()

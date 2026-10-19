@@ -1644,4 +1644,77 @@ public class ParkFileWriterTests
 
 		Assert.AreEqual( state.DescribeEconomy(), reloaded.DescribeEconomy() );
 	}
+	/// <summary>
+	/// <b>A written park holds the park clock's month and day</b> (FileFormats <c>saves.md</c>, "The arrival and clock
+	/// fields"), and those eight bytes are all the writer changes for them: the clock's start, session and rate stay the
+	/// file's. Handed none, the writer leaves the shipped park's month 1 and day 2, the date of its tick 755.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the month and the day swapped; the month written one-based; the writer never calling it;
+	/// the reader a field out of place.</remarks>
+	[TestMethod]
+	public void AWrittenParkHoldsTheCalendarsMonthAndDay()
+	{
+		Assert.AreEqual( new ParkWorld.CalendarBlock( 125911584000000000, shipped.Calendar!.SessionStart, 1, 2, 15000 ),
+			shipped.Calendar );
+
+		var alone = ParkFileWriter.Body( shipped, Played );
+		var body = ParkFileWriter.Body( shipped, Played with { Calendar = (0, 6) } );
+		var written = new ParkWorld( body ).Calendar!;
+
+		Assert.AreEqual( shipped.Calendar with { MonthAtLastUpdate = 0, DayAtLastUpdate = 6 }, written );
+
+		var changed = Enumerable.Range( 0, body.Length ).Where( i => body[i] != alone[i] ).ToArray();
+
+		Assert.IsTrue( changed.Length > 0 );
+		Assert.IsTrue( changed[0] >= shipped.CalendarAt + 0x10 && changed[^1] < shipped.CalendarAt + 0x18,
+			$"changed bytes {changed[0]}..{changed[^1]}, the clock at {shipped.CalendarAt}" );
+		Assert.AreEqual( (1, 2), (new ParkWorld( alone ).Calendar!.MonthAtLastUpdate, new ParkWorld( alone ).Calendar!.DayAtLastUpdate) );
+	}
+
+	/// <summary>
+	/// <b>The running park's month and day are the date of its tick</b>, as the original's calendar stores them every
+	/// sweep: tick 16970 is 6 January 2002, month nought; 17556 the last of January and 17557 the first of February.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the month one-based; the day taken from the calendar that counts from nought.</remarks>
+	[TestMethod]
+	public void TheRunningParksMonthAndDayAreTheDateOfItsTick()
+	{
+		var state = new ParkState( shipped );
+
+		Assert.AreEqual( (1, 2), state.CalendarAtLastUpdate );
+
+		state.SetGameTick( 16970 );
+		Assert.AreEqual( (0, 6), state.CalendarAtLastUpdate );
+
+		state.SetGameTick( 17556 );
+		Assert.AreEqual( (0, 31), state.CalendarAtLastUpdate );
+
+		state.SetGameTick( 17557 );
+		Assert.AreEqual( (1, 1), state.CalendarAtLastUpdate );
+	}
+
+	/// <summary>
+	/// <b>The level writes the calendar as it stands</b>: a park on tick 16970 is written with month nought and day 6,
+	/// where the file it was loaded from held the shipped 1 and 2.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> <c>Level.WritePark</c> handing the writer no calendar.</remarks>
+	[TestMethod]
+	public void TheLevelWritesTheCalendarsMonthAndDay()
+	{
+		SetCurrentPlayer( new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
+
+		using var stream = new MemoryStream( raw );
+		var reader = new SaveReader( stream );
+		reader.ReadFile();
+		var world = new ParkWorld( Inflate( raw ), reader.Preamble );
+		var state = new ParkState( world );
+		state.SetGameTick( 16970 );
+
+		Level.WritePark( world, state, "jungle", "Calendar Park" );
+
+		var written = Read( File.ReadAllBytes( Path.Combine( Jungle, "Calendar Park.TPWS" ) ) ).Calendar!;
+
+		Assert.AreEqual( (0, 6, 16970), (written.MonthAtLastUpdate, written.DayAtLastUpdate,
+			Read( File.ReadAllBytes( Path.Combine( Jungle, "Calendar Park.TPWS" ) ) ).GameTick) );
+	}
 }

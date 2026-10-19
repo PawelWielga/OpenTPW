@@ -77,15 +77,21 @@ filed the items that cite it.
   bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no handyman. Row 291's response 551
   does not exist (a raised row 291 would be silent; nothing found posts it). Rows 125 to 127 are Q228's, rows 167 and
   168 Q703's. Not run.
+  From Q526 (`saves.md`, "OpenTPW's writer, the calendar's fields"): the park clock's month and day are written as the
+  date of the tick, so the original runs no month's change on its first tick after loading a file this game writes
+  (it did in Q523's file); the nearest piece is the weather thing's fields (Q241j's too; only `mWindDir` is read at a
+  load, Q493). In no game run: a park made with no file (`SAVE_PARK_WITH_NO_FILE`), a rate other than 15000 (none
+  shipped), Full Simulation (not asked: the calendar is either mode's), the other three themes.
   From Q524 (`saves.md`, "OpenTPW's writer, the economy thing"): the economy thing's seven fields and eight loans are
   written (it has no rings: the money rings are the analyser's, written since Q385 to Q389), so the nearest piece is
-  the calendar's fields (Q241j's too): the original runs a month's change on its first tick in some files this game
+  the calendar's fields (Q241j's too; written, Q526): the original runs a month's change on its first tick in some files this game
   writes (Q523's) and not in others (Q524's, its calendar two days into a month), which those fields decide. In no game
   run: a loan bought or paid off here (no loans screen, Q456), withdrawals off, a batch not nought, Full Simulation
   (not asked: the bank is either mode's), the other three themes.
   From Q523 (`saves.md`, "OpenTPW's writer, the strike records"): the strike records and the force are written, so the
   nearest piece is the economy thing's loans and rings (Q241j's too; written, Q524). The original ends a strike one
-  look early in Q523's file, its first tick after the load being a month's change there (Q149; not in Q524's). In no game run: a calling-off
+  look early in Q523's file, its first tick after the load being a month's change there (Q149; not in Q524's; a file
+  written since Q526 holds its tick's month and day, and none runs). In no game run: a calling-off
   saved, a force word not 0 or 1, Full Simulation (not asked: the strike is either mode's), the other three themes.
   From Q443 (`park.md`, "Arrivals: who comes, on what, and how often"): the leavers' draw is on the save's seed, which
   is written back, so the nearest piece is the staff strike's five records and `mForceStrike` (`ParkWorld.StaffHqState`;
@@ -957,8 +963,8 @@ filed the items that cite it.
   From the run review (2026-10-17): the writer rebuilds each cell's chain by id and the file's order, not the running
   list the original writes (`ParkWorld.People.cs`, `saves.md`, "The chains"): since Q446 a file chain [A, B] whose B
   walks off and back runs [B, A] and is written [A, B]. Write the running order.
-- [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The calendar's and the weather's
-  fields (the staff HQ's strikes are written, Q523, and the economy thing's fields and loans, Q524); then `ParkSaveScreen.Save` writes
+- [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The weather's fields (the staff HQ's
+  strikes are written, Q523, the economy thing's fields and loans, Q524, and the calendar's month and day, Q526); then `ParkSaveScreen.Save` writes
   (`SAVE_GAME_WRITER` gone), an overwrite replaces the file, and the Load Park list shows it. Confirm: a park
   played, saved from the menu under a typed name, loaded by OpenTPW and by the original under Proton; the tick,
   the cash and the guest count predicted; a screenshot of each.
@@ -2135,6 +2141,12 @@ filed the items that cite it.
   usual colours (`orig/a-fee.png` beside `run2/3-reloaded-fee.png`). Seen, not decoded: read the spinner's text
   (`hud.md` names the money skin `FUN_00490250`, "$ 75" and "-$ 11750" on the training screen) and the cash display's
   draw, then letter both as the original does. Confirm by the two frames at one fee and one balance under nought.
+- [ ] **Q527. The gadget's date: the original letters it month.day.year with full stops.** From Q526
+  (`q526/side-by-side.png`): on 10 January 2002 the original's gadget reads "1.10.2002" (`orig/a-2-loaded-gadget.png`,
+  the poll's day word 10 at that moment), where ours letters .NET's short date, "1/6/2002" on 6 January
+  (`ParkGadget.ShowDate`, `ToShortDateString`, so it follows the computer's culture). Seen, not decoded: no
+  "%d.%d.%d" format is among the executable's strings, so find what letters the gadget's date (a Windows date format
+  under Proton's locale, or the UI text table) before choosing ours. Confirm by both gadgets on one date.
 
 ## B. Docs and comments
 

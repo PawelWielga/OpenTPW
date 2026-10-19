@@ -15,6 +15,36 @@ public sealed partial class ParkWorld
 	/// <summary>Where the arrival block's first field, <c>mArrivalRate</c>, sits in the body; -1 where the walk never reached it.</summary>
 	public int ArrivalAt { get; private set; } = -1;
 
+	/// <summary>Where the park clock's first field, <c>mFunnyTimeStart</c>, sits in the body; -1 where the walk never reached it.</summary>
+	public int CalendarAt { get; private set; } = -1;
+
+	/// <summary>
+	/// The park clock as it was saved: <c>Calendar_Serialise</c>'s five fields, in its order (FileFormats <c>saves.md</c>,
+	/// "The arrival and clock fields"). <c>mMonthAtLastUpdate</c> is nought-based and <c>mDayAtLastUpdate</c> the day of
+	/// the month, the date <c>Calendar_Update</c> (<c>0x004f8260</c>) last compared, which it does every sweep; the
+	/// year it compares is not saved (<c>docs/exe/weather.md</c>, "The calendar").
+	/// </summary>
+	public sealed record CalendarBlock( long FunnyTimeStart, long SessionStart, int MonthAtLastUpdate,
+		int DayAtLastUpdate, int FunnySecsPerRealSec );
+
+	/// <summary>The park clock this park was saved with; null where the walk never reached it.</summary>
+	public CalendarBlock? Calendar { get; private set; }
+
+	/// <summary>
+	/// Writes the park clock's <c>mMonthAtLastUpdate</c> (nought-based) and <c>mDayAtLastUpdate</c> over the file's in
+	/// <paramref name="body"/>, a copy of <see cref="Body"/>. <c>mFunnyTimeStart</c>, <c>mSessionStart</c> and
+	/// <c>mFunnySecsPerRealSec</c> are left as the file's, as the original's own load-then-save leaves them.
+	/// </summary>
+	/// <exception cref="InvalidOperationException">The walk never reached the block.</exception>
+	internal void PutCalendar( byte[] body, int month, int day )
+	{
+		if ( CalendarAt < 0 )
+			throw new InvalidOperationException( "the park file it was loaded from was not read as far as its park clock" );
+
+		PutInt32( body, CalendarAt + 0x10, month );
+		PutInt32( body, CalendarAt + 0x14, day );
+	}
+
 	/// <summary>
 	/// <c>mPeopleInCat</c>: how many of each kind the park employed as the pool last counted them, by kind
 	/// (<c>FUN_00508000</c>, which the top-up calls).

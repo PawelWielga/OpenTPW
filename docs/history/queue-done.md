@@ -8089,6 +8089,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   and loan 4 repaid 6, loaded back the same with the screen at 28 (`q524/run2`); main's build kept fee 25, last 87787,
   red 0 and repaid 5 (`control1`); the original read all of it and charged 28 a guest, its screen "$ 28", and its own
   file holds the same layout (`orig/a-load.log`, `orig/Q524ORIG-by-the-original.TPWS`).
+- [x] **Q526. The writer: the park clock's month and day.** Q420's piece. `mMonthAtLastUpdate` (nought-based) and
+  `mDayAtLastUpdate` are written as the date of the running park's `mGameTick` (`ParkWorld.PutCalendar`; `saves.md`,
+  "OpenTPW's writer, the calendar's fields"); the start, session and rate stay the file's. Done 2026-10-19: the stock
+  park on 16972 saved month 0 day 6, the date of its tick (`q526/run3`; main's build wrote the stock 1 and 2,
+  `control1`); the original given that file ran no month's change until 17557, 1 February, and given main's ran one
+  on its first tick, loan 4 repaid there (`orig/a-load.log`, `orig/b-load.log`); its own file holds its tick's date.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

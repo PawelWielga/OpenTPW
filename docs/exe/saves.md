@@ -655,7 +655,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | The header | `mGameTick`, `mParkClosed`, `mNumberOfVisitorsToDate`; the five staff heads and `mFirstObject` as things are made and gone; the arrival vehicles' handles | patched. `mRandomSeed` is the park's generator as it stands (`ParkState.RandomSeed`), which only the leavers' summons draws here: every other system keeps a generator of its own (Q443) |
 | The object controls | an item's standing count and first-build stamp (nothing here researches an item: its researched flags are the file's) | patched |
 | The staff pool | every candidate, the top-up's counts and mark | written slot for slot from `ParkStaffPool`; an empty slot keeps its bytes and loses `mValid` |
-| The clock and arrival fields | the date, the arrival timer | patched: the timer's mark, count and flag are written; the clock's fields are still the file's (Q241j) |
+| The clock and arrival fields | the date, the arrival timer | patched: the timer's mark, count and flag are written, and the clock's `mMonthAtLastUpdate` and `mDayAtLastUpdate` ("OpenTPW's writer, the calendar's fields"); its start, session and rate are the file's |
 | The cells | a path or queue laid or cleared, land, a footprint, the chain of who stands where | patched cell by cell, each record where it lies (every cell has its map and track parts); `mWho` with the things it names; the effects part written again from the running grid, last of all ("OpenTPW's writer, the region effects") |
 | A guest, a member of staff | everything they do | carried records patched from `ParkPeople`; one made here written whole; one gone left out |
 | A catalogue object | its door, price, counts, rings, queue, script handle | carried records patched; one bought here written whole; one sold left out |
@@ -3279,6 +3279,42 @@ bought 1, repaid 6: the layout and the kind of values this game writes.
 
 Not run: a loan bought or paid off (no loans screen here, Q456), withdrawals off, a batch not nought, a park made with no
 file, Full Simulation (not asked: the bank is either mode's).
+
+### OpenTPW's writer, the calendar's fields
+
+Q526. The park clock's `mMonthAtLastUpdate`, nought-based, and `mDayAtLastUpdate`, the dwords at the clock's `+0x10` and
+`+0x14` (the 28 bytes before the arrival block; FileFormats `saves.md`, "The arrival and clock fields"), are written as
+the date of the running park's `mGameTick` (`ParkWorld.PutCalendar`, handed `ParkState.CalendarAtLastUpdate` by
+`ParkFileWriter.Running.Calendar`). That is what the original's hold at any save: `Calendar_Update` (`0x004f8260`,
+`weather.md`, "The calendar") stores the date it compared on every sweep, the sweep that counts the tick on, so between
+sweeps they are the tick's date. The start, the session and the rate are the file's, as the original's own load leaves
+them (`Calendar_Serialise` reads all five and writes them back as they lie); the year at `+0x18` is not in the file.
+The save logs `Save: calendar written: month M day D, the date of tick T, YYYY-MM-DD`. A load here reads the block
+(`ParkWorld.Calendar`) and runs nothing on it: this game's month edges are its own calendar's, from nought (Q149).
+
+**Measured across the files** (`q526/clocksweep.py`, the 741 park files on this machine): of the 48 the original saved
+(its save folder, Alexah's Full Simulation saves, the items' `orig/` folders), 41 hold the date of their own tick; four
+`restart.INTS` at tick 0 hold month 0 day -1, the constructor's (`Calendar_Construct`, `0x004f7e80`); the other three are
+files this game wrote, kept there to be loaded. 556 of the other 693 miss, each a file this game wrote before this piece,
+the loaded file's pair carried under a later tick. The start (2000-01-01) and the rate (15000) are the same in all 741.
+
+**Why it matters.** Written stale, the pair made the original run a month's change on its first tick after loading a
+file of this game's whenever the file's tick lay in another month than the loaded file's (Q523's strike ended one look
+early); written from the tick, the first tick finds the same day and month and nothing changes.
+
+**Both games** (`q526/`: `confirm.py`, `PREDICTION.txt`, `run3`, `control1`, `orig/`). `q524/loan4.TPWS` (main's
+writer's stock park on 16843 with loan 4 bought, 5 of 24 repaid; its clock still the stock month 1 day 2) loaded here,
+the clock written 16972 (6 January 2002, the gadget "1/6/2002", `run3/1-date-gadget.png`) and saved: the log read
+`month 0 day 6, the date of tick 16972, 2002-01-06` and the file the same, the start, session and rate the fixture's.
+Main's build wrote month 1 day 2 (`control1`). **The original** given this game's file read month 0 day 6 at the load
+and ran no month's change until 17557, 1 February, where loan 4 went to 6 repaid on that tick (`orig/a-load.log`); given
+main's it read month 1 day 2 and on its first tick, 16973, set month 0 day 6, took loan 4 to 6 repaid and the balance
+from 150 to -1138 (`orig/b-load.log`). **Its own file** saved from its menu on 18352 (`orig/Q526ORIG-by-the-original.TPWS`)
+holds month 2 day 7, that tick's date.
+
+Not run: a park made with no file (its clock would be the constructor's, `SAVE_PARK_WITH_NO_FILE`), a rate other than
+15000 (none shipped), Full Simulation (not asked: the calendar is either mode's), the other three themes. The original's
+year message on a load past 2000 is its own, not this piece's: it comes to its own files too (`weather.md`).
 
 ## What OpenTPW builds
 
