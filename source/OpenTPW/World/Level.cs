@@ -741,7 +741,8 @@ public class Level
 			state.AdvisorMessages?.PollRow, state.LastStaffHired, state.LastObjectBuilt,
 			people != null ? (people.TrainingBudgets.ToArray(), people.HaveEverTrained) : null,
 			state.MonthRings, (state.LifetimeVisitors, state.MostPaidForTicket), state.MisbehavingKids, state.ParkLastOpened,
-			state.RandomSeed );
+			state.RandomSeed,
+			people != null ? (people.Strikes.ForceWord, people.Strikes.Records) : null );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;
@@ -759,6 +760,9 @@ public class Level
 
 		if ( SaveFolder.WritePark( player.Slot, player.Name, theme, name, file ) is not { } path )
 			return null;
+
+		if ( people != null )
+			Log.Info( $"Save: strikes written: {people.Strikes.Describe()}" );
 
 		foreach ( var (message, history) in running.AdvisorHistories ?? new Dictionary<int, ParkWorld.AdvisorHistory>() )
 		{

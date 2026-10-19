@@ -741,4 +741,83 @@ public class ParkStrikeTests
 
 		CollectionAssert.AreEqual( budgets, people.TrainingBudgets, "mBudget[0..4], a kind each" );
 	}
+
+	/// <summary>
+	/// <b>A written park holds the force and the five strike records</b>: <c>mForceStrike</c>'s dword at 16 of the
+	/// staff HQ's record and three dwords a kind from 22, <c>mStaffMemberPickedUp</c> between them and the budgets
+	/// after them the file's (FileFormats <c>saves.md</c>, "The staff HQ"). The park that loads the file carries the
+	/// dispute on; handed none, the writer leaves the file's.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the force not written, or written as 1; a record a kind out of place; the level and the
+	/// flag swapped; the stamp not written; the picked-up word or a budget written over; the writer handed nothing
+	/// still writing.
+	/// </remarks>
+	[TestMethod]
+	public void AWrittenParkHoldsTheForceAndTheFiveStrikeRecords()
+	{
+		var world = Park();
+		var at = world.StaffHqAt;
+
+		Assert.IsTrue( at > 0 );
+
+		ParkWorld.StrikeRecord[] records = [new( 1, 0, 16837 ), new( 2, 1, 16843 ), new( 3, 0, 17557 ), new( 4, 1, 18202 ), new( 0, 1, 19607 )];
+		var running = new ParkFileWriter.Running( world.GameTick, false, 13, 0, world.Camera.Saved!.Value,
+			Training: ([25, 150, 75, 10000, 50], true), Strikes: (7, records) );
+
+		var body = ParkFileWriter.Body( world, running );
+
+		Assert.AreEqual( 7, BitConverter.ToInt32( body, at + 16 ), "mForceStrike" );
+		CollectionAssert.AreEqual( records.SelectMany( record => new[] { record.Level, record.OnStrike, record.Stamp } ).ToArray(),
+			Enumerable.Range( 0, 15 ).Select( i => BitConverter.ToInt32( body, at + 22 + (4 * i) ) ).ToArray(), "mStrikeLevel[0..4]" );
+		Assert.AreEqual( 0, BitConverter.ToInt16( body, at + 20 ), "mStaffMemberPickedUp, the file's" );
+		CollectionAssert.AreEqual( new[] { 25, 150, 75, 10000, 50 },
+			Enumerable.Range( 0, 5 ).Select( i => BitConverter.ToInt32( body, at + 82 + (4 * i) ) ).ToArray(), "the budgets" );
+
+		var written = new ParkWorld( body );
+		var carried = new ParkStrikes( written.StaffHq );
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( 7, carried.ForceWord );
+		Assert.AreEqual( "1,0,16837 2,1,16843 3,0,17557 4,1,18202 0,1,19607", Records( carried ) );
+		CollectionAssert.AreEqual( records, carried.Records.ToArray() );
+
+		// Handed nothing, the writer leaves the file's: the shipped noughts and 715s, and no force.
+		var left = new ParkWorld( ParkFileWriter.Body( world, running with { Strikes = null } ) ).StaffHq!.Value;
+
+		Assert.AreEqual( 0, left.ForceStrike );
+		Assert.AreEqual( "0,0,715 0,0,715 0,0,715 0,0,715 0,0,715", Records( new ParkStrikes( left ) ) );
+	}
+
+	/// <summary>
+	/// The records the writer is handed are the look's: a forced month on the shipped five staff stamps all five
+	/// and starts each dispute, and the force the console sets is written 1, a saved word kept as it was, and
+	/// cleared nought.
+	/// </summary>
+	[TestMethod]
+	public void TheWrittenRecordsAreTheLooksAndTheForceItsWord()
+	{
+		var world = Park();
+		var strikes = new ParkStrikes( world.StaffHq ) { Force = true };
+
+		Assert.AreEqual( 1, strikes.ForceWord );
+
+		strikes.Look( 16837, false, 8, OneOfEach( world ) );
+
+		CollectionAssert.AreEqual( Enumerable.Repeat( new ParkWorld.StrikeRecord( 1, 0, 16837 ), 5 ).ToArray(),
+			strikes.Records.ToArray() );
+
+		strikes.Look( 16843, false, 8, OneOfEach( world ) );
+
+		CollectionAssert.AreEqual( Enumerable.Repeat( new ParkWorld.StrikeRecord( 2, 1, 16843 ), 5 ).ToArray(),
+			strikes.Records.ToArray() );
+
+		var saved = new ParkStrikes( world.StaffHq!.Value with { ForceStrike = 7 } ) { Force = true };
+
+		Assert.AreEqual( 7, saved.ForceWord, "a set word kept" );
+
+		saved.Force = false;
+
+		Assert.AreEqual( 0, saved.ForceWord );
+	}
 }

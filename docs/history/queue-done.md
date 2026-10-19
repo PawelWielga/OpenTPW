@@ -8076,6 +8076,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Simulation park (frames 67 ms): hand put away 10/10 at 0 s and 10/10 at 60 ms, first person left 5/5; main's binary
   0/10, 0/10, 0/5; the original 3/3 out of first person and its patrol tool put away (`q499/`, `side-by-side.png`).
   Mutations 10/10.
+- [x] **Q523. The writer: the staff HQ's strike records and `mForceStrike`.** Q420's piece. The force and the five
+  records (level, flag, stamp) are written from the running park (`ParkWorld.PutStrikes`; `saves.md`, "OpenTPW's
+  writer, the strike records"). Done 2026-10-19: saved on 16843, thing 1 read 1 and (2, 1, 16843) x5, loaded back the
+  five struck (`q523/run1`); main's build wrote (0, 0, 715) x5 (`control1`); the original read the file's records and
+  carried a level-1 dispute to (2, 1, 16838) on its first tick (`orig/b-load.log`); its own file saved mid-strike holds
+  1 and (3, 1, 17557) x5 in the same layout (`orig/Q523ORIG-by-the-original.TPWS`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

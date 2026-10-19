@@ -3283,6 +3283,32 @@ public sealed partial class ParkWorld : IParkInitialState
 	}
 
 	/// <summary>
+	/// Writes the staff HQ's <c>mForceStrike</c> and its five <c>mStrikeLevel</c> over the file's in
+	/// <paramref name="body"/>, a copy of this park's own. <c>mStaffMemberPickedUp</c>, between them, is left the
+	/// file's. A park with no such thing is left alone.
+	/// </summary>
+	public void PutStrikes( byte[] body, int forceStrike, IReadOnlyList<StrikeRecord> records )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+		ArgumentNullException.ThrowIfNull( records );
+
+		if ( StaffHqAt < 0 )
+			return;
+
+		System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(
+			body.AsSpan( StaffHqAt + StaffHqForceStrikeAt, 4 ), forceStrike );
+
+		for ( var i = 0; i < StaffHqState.Kinds && i < records.Count; ++i )
+		{
+			var at = body.AsSpan( StaffHqAt + StaffHqStrikesAt + (12 * i), 12 );
+
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at, records[i].Level );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[4..], records[i].OnStrike );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[8..], records[i].Stamp );
+		}
+	}
+
+	/// <summary>
 	/// The model number of the park's economy - the manager read for the park's prices, because
 	/// <see cref="BankAccount"/> names it and nothing else in the save says what a park charges.
 	/// </summary>

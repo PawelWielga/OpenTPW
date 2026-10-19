@@ -44,11 +44,25 @@ public sealed class ParkStrikes
 	private readonly bool[] _onStrike = new bool[Kinds];
 	private readonly int[] _stamp = new int[Kinds];
 
+	private int _force;
+
 	/// <summary>
 	/// <c>mForceStrike</c>: set, the month's look skips its gate and every kind has a cause. Only a save sets it
-	/// in the original; here the console's <c>forcestrike</c> does too.
+	/// in the original; here the console's <c>forcestrike</c> does too, to 1, and a set word keeps its value.
 	/// </summary>
-	public bool Force { get; set; }
+	public bool Force
+	{
+		get => _force != 0;
+		set => _force = value ? (_force != 0 ? _force : 1) : 0;
+	}
+
+	/// <summary><c>mForceStrike</c> as the save holds it, for the writer.</summary>
+	public int ForceWord => _force;
+
+	/// <summary>The five records as the save holds them, {level, flag, stamp} a kind, for the writer.</summary>
+	public IReadOnlyList<ParkWorld.StrikeRecord> Records
+		=> [.. Enumerable.Range( 0, Kinds )
+			.Select( kind => new ParkWorld.StrikeRecord( _level[kind], _onStrike[kind] ? 1 : 0, _stamp[kind] ) )];
 
 	/// <param name="hq">The save's staff HQ, or null for a record of noughts, as the constructor leaves it (<c>FUN_005089c0</c>).</param>
 	public ParkStrikes( ParkWorld.StaffHqState? hq = null )
@@ -56,7 +70,7 @@ public sealed class ParkStrikes
 		if ( hq is not { } saved )
 			return;
 
-		Force = saved.ForceStrike != 0;
+		_force = saved.ForceStrike;
 
 		for ( var kind = 0; kind < Kinds && kind < (saved.Strikes?.Count ?? 0); ++kind )
 		{

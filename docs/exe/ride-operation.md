@@ -3047,7 +3047,8 @@ the look: `Look` (`FUN_00508e70` past the training, called from `ParkPeople.Trai
 (`FUN_00509990`, `FUN_005099a0`). `StaffBehaviour.GoOnStrike` is the decide's first arm, with
 `ParkRides.GateStatus` and the four draws; state 4 thinks `0x15` every turn and ends on strike, arrived or
 failed; `Picket` is state 5's turn, the facing held in `PeepWalk.Heading`, the end by a shut and empty park, and
-the walk to `EntranceA`. `Staff.SettingOffForTheStrike` is `+0x188`.
+the walk to `EntranceA`. `Staff.SettingOffForTheStrike` is `+0x188`. A saved park carries the force and the five
+records (Q523; `saves.md`, "OpenTPW's writer, the strike records").
 
 **Counted, not built.** The three posts, where `FUN_00508f70` makes them: `STRIKE_WARNING_TO_THE_ADVISOR`,
 `STRIKE_TO_THE_ADVISOR`, `STRIKE_CALLED_OFF_TO_THE_ADVISOR` (`docs/PLAYER-GAPS.md` gap 4: the park's advisor

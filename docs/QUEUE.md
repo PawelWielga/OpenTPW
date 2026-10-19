@@ -77,9 +77,13 @@ filed the items that cite it.
   bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no handyman. Row 291's response 551
   does not exist (a raised row 291 would be silent; nothing found posts it). Rows 125 to 127 are Q228's, rows 167 and
   168 Q703's. Not run.
+  From Q523 (`saves.md`, "OpenTPW's writer, the strike records"): the strike records and the force are written, so the
+  nearest piece is the economy thing's loans and rings (Q241j's too). The original ends a strike one look early in a
+  file this game wrote, its first tick after the load being a month's change (Q149). In no game run: a calling-off
+  saved, a force word not 0 or 1, Full Simulation (not asked: the strike is either mode's), the other three themes.
   From Q443 (`park.md`, "Arrivals: who comes, on what, and how often"): the leavers' draw is on the save's seed, which
   is written back, so the nearest piece is the staff strike's five records and `mForceStrike` (`ParkWorld.StaffHqState`;
-  a strike changes them, Q138b, and the writer leaves them the file's, `saves.md`, the staff HQ), then the economy
+  a strike changes them, Q138b; written, Q523), then the economy
   thing's rings and the loans. In no game run: the original's own vehicle at the same summons (its generator is drawn
   by every system and reseeded at each arrival, ours by the leavers alone: moving those onto `ParkState.RandomSeed` is
   not filed as a piece of this item), Full Simulation (not asked: the summons is either mode's), the other three themes.
@@ -948,7 +952,7 @@ filed the items that cite it.
   list the original writes (`ParkWorld.People.cs`, `saves.md`, "The chains"): since Q446 a file chain [A, B] whose B
   walks off and back runs [B, A] and is written [A, B]. Write the running order.
 - [ ] **Q241j. The writer: the managers, then Save Game saves.** From Q241e. The economy thing's loans and rings,
-  the staff HQ's strikes, the calendar's and the weather's fields; then `ParkSaveScreen.Save` writes
+  the calendar's and the weather's fields (the staff HQ's strikes are written, Q523); then `ParkSaveScreen.Save` writes
   (`SAVE_GAME_WRITER` gone), an overwrite replaces the file, and the Load Park list shows it. Confirm: a park
   played, saved from the menu under a typed name, loaded by OpenTPW and by the original under Proton; the tick,
   the cash and the guest count predicted; a screenshot of each.

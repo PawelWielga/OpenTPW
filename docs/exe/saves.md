@@ -659,7 +659,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | The cells | a path or queue laid or cleared, land, a footprint, the chain of who stands where | patched cell by cell, each record where it lies (every cell has its map and track parts); `mWho` with the things it names; the effects part written again from the running grid, last of all ("OpenTPW's writer, the region effects") |
 | A guest, a member of staff | everything they do | carried records patched from `ParkPeople`; one made here written whole; one gone left out |
 | A catalogue object | its door, price, counts, rings, queue, script handle | carried records patched; one bought here written whole; one sold left out |
-| The economy thing, the staff HQ | the balance, the loans, the rings; the strikes, the training budgets | the balance is written, and the staff HQ's five budgets and `mHaveEverTrained` ("OpenTPW's writer, the training budgets"); the loans, the rings and the strikes are the file's |
+| The economy thing, the staff HQ | the balance, the loans, the rings; the strikes, the training budgets | the balance is written, and the staff HQ's five budgets and `mHaveEverTrained` ("OpenTPW's writer, the training budgets") and its `mForceStrike` and five strike records ("OpenTPW's writer, the strike records"); the loans, the rings and `mStaffMemberPickedUp` are the file's |
 | The analyser, the research lab, the weather, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar and weather run here | carried, but for the mechanics' HQ's `mNextObject` (model 10, `PutMechanicCursor`) and the analyser's `mLastStaffHired` (model 13, `PutLastStaffHired`: the calendar as the newest member of staff was made, which the advisor's row 7 counts its thirty days from; `advisor-park.md`, "More rides than the mechanics can keep"; the original read this game's stamp from a file saved after a hire here, Q333) and its `mLastObjectBuilt` (`PutLastObjectBuilt`: the calendar as the newest object was made, a sale leaving it; `advisor-park.md`, "The newest build"; the original read this game's from files saved after a purchase and after its sale, Q334) and its `mParkLastOpened` (`PutParkLastOpened`: the calendar at the newest request to open the park; `hud.md`, "The analyser's other stamps"; the original read this game's, Q397); the analyser's three other stamps, which the original never moves, and its counts, and what the weather and the calendar run here, are not written |
 
 **What is not settled, and belongs to the build that meets it.** A record made here has bytes no reader here
@@ -3207,7 +3207,7 @@ park made with no file, Full Simulation.
 Q352. The staff HQ (thing 1, model 9, 103 bytes; FileFormats `saves.md`, "The staff HQ") is written with the
 running park's five `mBudget`, the dwords at its `+82`, and `mHaveEverTrained`, the byte at `+102`
 (`ParkWorld.PutTrainingBudgets`, handed `ParkPeople.TrainingBudgets` and `HaveEverTrained` by
-`ParkFileWriter.Running.Training`); its strike fields are still the file's. In memory they are thing 1's `+0xc`
+`ParkFileWriter.Running.Training`); its strike fields are the next section's. In memory they are thing 1's `+0xc`
 to `+0x1c` and `+0x20`, which only the Staff Training Budgets screen writes (`hud.md`, "The Staff Training
 Budgets screen"). A load reads both (`StaffHqState.Budgets`, `HaveEverTrained`).
 
@@ -3224,8 +3224,33 @@ the month's change, the mechanic's `mPercentageThroughGrade` (thing 26's `+0x1e8
 point (run b). This game given its own file read `budgets 0,75,0,0,0 evertrained 1` and trained the same 15 at
 its own month's change (`q352/run-month2`).
 
-Not written: the strike records (the file's), and nothing else of thing 1. Not run: a park made with no file
-saved (`SAVE_PARK_WITH_NO_FILE`), a file with all five budgets set.
+Not run: a park made with no file saved (`SAVE_PARK_WITH_NO_FILE`), a file with all five budgets set.
+
+### OpenTPW's writer, the strike records
+
+Q523. The staff HQ's `mForceStrike`, the dword at `+16`, and its five `mStrikeLevel` records, three dwords a kind
+from `+22` (level, flag, stamp; FileFormats `saves.md`, "The staff HQ"), are written from the running park's
+(`ParkWorld.PutStrikes`, handed `ParkStrikes.ForceWord` and `Records` by `ParkFileWriter.Running.Strikes`). In
+memory they are thing 1's `+0x64` and `+0x24` on (`ride-operation.md`, "The strike"). A saved force word other than
+1 is written back as it was; the console's `forcestrike 1` writes 1. `mStaffMemberPickedUp`, the two bytes at
+`+20` between them, is the file's (a worker in the hand is written where they were picked up: Q241j's note). The
+save logs `Save: strikes written: force F recs [...]`.
+
+**Both games** (`q523/`: `confirm.py`, `PREDICTION.txt`, `run1`, `run2-one`, `run3`, `control1`, `orig/`). The stock park
+with `forcestrike 1` and the clock written 16,836: saved on 16843, the file's thing 1 read 1 at `+16`, nought at
+`+20` and (2, 1, 16843) five times; loaded back here, `strikes` read the same and all five staff set off for the
+picket within 25 sweeps and stood on row 9 (`run1/2-picket.png`; the final build's `run3`, within 48). Main's build wrote the stock file's (0, 0, 715)
+and no force, and nobody struck. **The original** given the file read force 1 and (2, 1, 16843) at the load, then
+ran a month's look on the first tick (16844) and ended the strike, the level kept 2: it closes a month on the first
+tick after loading a file this game saved past its first month, the clock block being the file's ("Inside `WRLD`",
+the clock; Q149). Given the file saved on 16837 with (1, 0, 16837), that first-tick look raised every kind to (2, 1,
+16838) and all five set off within two seconds; its 1 January 2002 look on 16843 ended it. Run on, its look on
+17557 struck again, (3, 1, 17557), from the force alone, all five on row 9 (`orig/c-picket-before-save.png`). **The
+original's own file** saved there from its menu (`orig/Q523ORIG-by-the-original.TPWS`) holds 1 at `+16`, nought at
+`+20` and (3, 1, 17557) five times: the layout and the kind of values this game writes.
+
+Not run: a calling-off saved and loaded (a level of 1 with no cause), a file whose force word is not 0 or 1, a park
+made with no file, Full Simulation (not asked: the strike is either mode's).
 
 ## What OpenTPW builds
 

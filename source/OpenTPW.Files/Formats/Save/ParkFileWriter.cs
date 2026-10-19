@@ -65,7 +65,8 @@ public static class ParkFileWriter
 	/// the file's where it is null. <see cref="LastObjectBuilt"/> is its stamp of the newest object made
 	/// (<see cref="ParkWorld.PutLastObjectBuilt"/>); the file's where it is null. <see cref="Training"/> is the staff
 	/// HQ's five training budgets and whether one was ever set (<see cref="ParkWorld.PutTrainingBudgets"/>); the
-	/// file's where it is null. <see cref="MonthRings"/> is the analyser's eight money rings, its park value and its
+	/// file's where it is null. <see cref="Strikes"/> is the staff HQ's <c>mForceStrike</c> and five strike records
+	/// (<see cref="ParkWorld.PutStrikes"/>); the file's where it is null. <see cref="MonthRings"/> is the analyser's eight money rings, its park value and its
 	/// lifetime visitors (<see cref="ParkWorld.PutMonthRings"/>); the file's where it is null. <see cref="Visitors"/> is
 	/// the analyser's lifetime visitors and dearest ticket (<see cref="ParkWorld.PutLifetimeVisitors"/>); the file's
 	/// where it is null. <see cref="MisbehavingKids"/> is the analyser's three counts of misbehaving kids
@@ -85,7 +86,8 @@ public static class ParkFileWriter
 		int? AdvisorPollCursor = null, long? LastStaffHired = null, long? LastObjectBuilt = null,
 		(IReadOnlyList<int> Budgets, bool HaveEverTrained)? Training = null,
 		ParkWorld.MonthRingSet? MonthRings = null, (int Lifetime, int MostPaidForTicket)? Visitors = null,
-		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null, long? ParkLastOpened = null, uint? RandomSeed = null );
+		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null, long? ParkLastOpened = null, uint? RandomSeed = null,
+		(int ForceStrike, IReadOnlyList<ParkWorld.StrikeRecord> Records)? Strikes = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -269,6 +271,9 @@ public static class ParkFileWriter
 
 		if ( running.Training is { } training )
 			loaded.PutTrainingBudgets( body, training.Budgets, training.HaveEverTrained );
+
+		if ( running.Strikes is { } strikes )
+			loaded.PutStrikes( body, strikes.ForceStrike, strikes.Records );
 
 		if ( running.AdvisorHistories is { } histories )
 			loaded.PutAdvisorHistories( body, histories );
