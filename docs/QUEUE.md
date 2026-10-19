@@ -53,15 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q244. The happiness gauge draws two copies of its bar.** `docs/PLAYER-GAPS.md` gap 5, found by Alexah playing:
-  the bar draws in the wrong place, split down the middle. That page holds a lead read from the code and not
-  measured (`UiMeter.OnDraw`'s sampler); measure before touching the meter's arithmetic. The number it shows is
-  not the fault, and which guests it counts is Q148's. Confirm: the gauge photographed beside the original's.
-  Cause now read (fork watch 2026-10-19, verify-advisor-ui.md L3, verify-other-b.md M3; `hud.md`, "The happiness
-  gauge's two quads"): the original draws two quads sharing one boundary, the texture's right half above the level
-  and the left half below it, each cropped; `UiMeter.OnDraw` samples u 0 to 1, both halves side by side. The
-  on-screen fill direction is NOT settled (which edge the model's y 0 is was not read): settle it against the
-  original's photograph before building.
 - [ ] **Q701. The lab spends a researcher's points and finishes a project.** From Q245 (`park-engine.md`, "The lab
   at work"). Replace the count `RESEARCH_POINTS_TO_THE_LAB` (`StaffBehaviour.Research`) with `Lab_SpendPoints`'s
   share-out (the kinds with an open project, effort / their sum × `mWorkLoad` × ability × 0.01, a float), the finish
@@ -257,7 +248,9 @@ filed the items that cite it.
   taller than wide (59 by 224); the staff screen's two `happygrad.wct` meters are 376 by 45 (`ParkStaffScreen`,
   `0x32d` and `0x32c`). What paints a meter is the two sub-objects `FUN_0066d885` hands the value to (`+0x98`,
   `+0x9c`, their vtable `+0xc`), untraced. Trace their geometry, write it to `hud.md`, and fill each meter the
-  original's way. Confirm: the staff screen at a known happiness, photographed.
+  original's way. Confirm: the staff screen at a known happiness, photographed. Note (Q244): `UiMeter` is now the
+  gadget's gauge alone and its fill direction is read (`hud.md`, "The happiness gauge's two quads"); the remark cited
+  above is gone.
 - [ ] **Q157. Guests' and rides' reached arms that count nothing.** Found by the 2026-09-26 staleness audit. Each is
   reached in Lost Kingdom, unbuilt, and calls no `Unimplemented.Report` (`CLAUDE.md` rule 4). In `PeepBehaviour`:
   `Entering` lacks `FUN_004ffb20`'s guard (park shut or gate not open, back to the gate), reachable since the
@@ -1001,8 +994,10 @@ filed the items that cite it.
   `(m << 10) / 100` (`0x004c9cc0`), the all-staff meter a float mean times 1024 times 0.01f (`0x004c7cc0`, `0x00496a7b`),
   in double (`advisor-park.md`, the FPU's precision). Ours scales the raw mean: 896 against 892 on `q369/skill.TPWS`.
 - [ ] **Q459. The happiness gauge keeps the mean's fraction.** From the week-end audit (D8, `VERIFY-4b.md` Q392 2).
-  `FUN_004c7bb0` ends `fidiv` (`0x004c7c96`); the gauge is trunc(mean x 10.24) of 1024 (`0x004a1d3f`..`0x004a1d5a`). Ours
-  is a whole mean of 100, and `TheMeanIsWholeAndRoundsTowardsNought` pins it. `GuestsInsideHappiness` is the exact routine.
+  `FUN_004c7bb0` ends `fidiv` (`0x004c7c96`); the gauge is trunc(mean x 10.24) of 1024 (`0x004a1d3f`..`0x004a1d5a`).
+  The units are built (Q244, `ParkGadget.GaugeUnits`); the mean handed to them is still whole, `AverageHappiness`'s
+  comment calls `FIDIV` an integer division, and `TheMeanIsWholeAndRoundsTowardsNought` pins it.
+  `GuestsInsideHappiness` is the exact routine.
 - [ ] **Q460. Zlib textures round the chroma terms twice.** From the week-end audit (D9, `VERIFY-13b.md` Q355 1). The
   original stores the Cb and Cr terms as float32 at 1.5 x 2^23 (`0x00594f5e`, `0x00594f87`), integers before Y is added;
   `Held` rounds once: 933 of 986 files differ by 1. Green's rounding (the FPU mode) needs a breakpoint at `0x00594f72`.
@@ -2014,8 +2009,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
 
 ## F. Then
 
-Back to `docs/PLAYER-GAPS.md`: gap 4 (advisor in a park); gap 5 (happiness gauge) is Q244 and gap 7 (saving a
-fresh park) is Q249, both in section A. Also litter and the day ending, whose deferral reasons expired
+Back to `docs/PLAYER-GAPS.md`: gap 4 (advisor in a park); gap 7 (saving a fresh park) is Q249, in section A. Also litter and the day ending, whose deferral reasons expired
 (`docs/REVIEW-2026-09-21.md` section 6).
 
 ## G. The lobby plan's open items

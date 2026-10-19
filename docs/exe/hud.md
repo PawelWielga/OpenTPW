@@ -182,17 +182,36 @@ Built by `FUN_004a1d70` onto the park's layer 0, with no handler for the stream 
 
 ### The happiness gauge's two quads (Q244; fork watch 2026-10-19, verify-advisor-ui.md L3, verify-other-b.md M3)
 
-The `meter.wct` skin of control `0x1f` is drawn by a sub-object built by `FUN_00477870` (vtable `0x006fee88`, slots `+0xc`
-`0x00477db0`, `+0x24` `0x00477cc0`, `+0x28` `0x00477d20`). Message 8 takes the value `x 1/1024 (0x006fee08) x 100 (0x006fee0c)`,
-held 0 to 100, as p, stored at `+0x120` only when it changed, then rebuilds the geometry and the UVs. Eight vertices in two
-quads that share the boundary p: quad A (0,100) (100,100) (100,p) (0,p), quad B (0,p) (100,p) (100,0) (0,0); indices
-(0,1,2) (2,3,0) (4,5,6) (6,7,4). UVs (t = p/100): quad A **u 0.5 to 1.0** (the texture's right half), v t to 1.0; quad B
-**u 0 to 0.5** (the left half), v 0 to t. v runs the same way as y on both, so each half is **cropped at the boundary,
-never scaled**, and together they make one full-width bar. The original's frame (Q355, `q355/gadget-orig-fix-main.png`)
-shows it so: dark empty bar above, orange filled below; OpenTPW's showed the two halves side by side, narrow, because
-`UiMeter.OnDraw` samples u 0 to 1: that is Q244's "two copies". **Not settled:** which screen edge the model's y of 0 is
-(the fill direction on screen rests on the bytes and that photograph, not on a read of the UI model's axis), and the
-pixels of `meter.wct` itself (type 0x13, which `wctorig.py` does not decode).
+The `meter.wct` skin of control `0x1f` is drawn by a sub-object built by `Meter_Construct` `0x00477870` (vtable `0x006fee88`,
+slots `+0xc` `Meter_OnMessage` `0x00477db0`, `+0x24` `Meter_SetQuadGeometry` `0x00477cc0`, `+0x28` `Meter_SetQuadUVs`
+`0x00477d20`). Message 8 takes the value `x 1/1024 (0x006fee08) x 100 (0x006fee0c)`, held 0 to 100, as p, stored at `+0x120`
+only when it changed, then rebuilds the geometry and the UVs. Eight vertices in two quads that share the boundary p: quad A
+(0,100) (100,100) (100,p) (0,p), quad B (0,p) (100,p) (100,0) (0,0); indices (0,1,2) (2,3,0) (4,5,6) (6,7,4). UVs (t = p/100):
+quad A **u 0.5 to 1.0** (the texture's right half), v t to 1.0; quad B **u 0 to 0.5** (the left half), v 0 to t. v runs the
+same way as y on both, so each half is **cropped at the boundary, never scaled**. The constructor builds the geometry with
+p = 0, so before any value and at nought quad A, the dark half, covers the whole box.
+
+**The space's y of 0 is the control's bottom edge, and the bar fills upward** (settled 2026-10-19, Q244): the message's
+call that places the space (`FUN_00476c50`) is handed the control's bottom as its origin, and the texture decides it
+without that read. `meter.wct` (`ui.wad`, `textures\meter.wct`, type 0x13, 128 x 128) is two capsules side by side, each
+with a yellow smiley at its top and a blue sad face at its bottom: the left half lit (blue, grey, orange, yellow from the
+bottom up), the right half black with a white gloss. The original's frames show the lit half below the boundary and the
+dark half above it, so quad B, y 0 to p, is the bottom. Measured in both games on three files whose every guest is at one
+happiness (`q244/`, `lib/gaugesplit.py`): the original's box `(42,550)-(72,662)` of the 1024 x 768 frame (the stream's
+`(85,1100)-(144,1324)` of 2048 x 1536) splits at 67.9%, 28.6% and 0% for 70, 30 and 0, its clock running on through the
+load; OpenTPW's at 69.5%, 29.5% and 0% (paused on 766, the meter at 706, 296 and 0 of 1024; `q244/side-by-side.png`).
+
+**What the gadget hands it** (`Gadget_GaugeOnMessage` `0x004a1cd0`, timer `0x80083` every 2000 ms): the mean of
+`FUN_004c7bb0` times 1024.0f (`0x006ffa34`) times 0.01f (`0x006ffa38`), `__ftol`, so 50 is 511 and 100 is 1023, 0.01f being
+a shade under a hundredth. **The mean is a float**: each guest's happiness `__ftol`ed and masked to a byte is summed as a
+whole number, and the sum is divided by the count with `FILD`/`FIDIV` (`0x004c7c96`), so 657 over 13 is 50.54 (517 units),
+not 50.
+
+**OpenTPW** (`UiMeter.Quads`, `Percent`; `ParkGadget.GaugeUnits`): the two quads as above, the dark half drawn at nought,
+`Max` 1024 and the units as the gadget's. `ParkPeople.AverageHappiness` still hands it a whole mean of every guest, where
+`GuestsInsideHappiness` is the exact routine (Q459, Q148). The log line `UI: meter 0x1f at <units> of 1024,
+the boundary <p>% up` on each change. **Not settled:** the pixels of `meter.wct` against the original's codec (type 0x13,
+which `wctorig.py` does not decode); in the frames the faces read brighter in this game than in the original's.
 
 ### Depth
 

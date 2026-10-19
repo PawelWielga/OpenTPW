@@ -7,7 +7,7 @@ namespace OpenTPW.UI;
 /// <para>
 /// <b>It carries no mesh.</b> <c>FUN_0066d750</c> builds it as the plain
 /// control with three more fields, and the original hands it a <c>meter.wct</c> skin through
-/// <c>FUN_00477870</c> rather than a model - so a control drawing only <see cref="UiControl.Mesh"/> can
+/// <c>Meter_Construct</c> rather than a model - so a control drawing only <see cref="UiControl.Mesh"/> can
 /// never show one. The texture ships in ui.wad at <c>textures\meter.wct</c>, 128x128.
 /// </para>
 /// <para>
@@ -18,19 +18,20 @@ namespace OpenTPW.UI;
 /// scales first - which is why <see cref="Max"/> is taken here rather than assumed.
 /// </para>
 /// <para>
-/// <b>THE PICTURE IS TWO HALVES CROPPED AT ONE BOUNDARY; WHICH WAY IT FILLS IS A CHOICE.</b> The sub-object built by
-/// <c>FUN_00477870</c> holds two quads that share the boundary p (the value as a percentage, <c>0x477cc0</c>,
-/// <c>0x477d20</c>): one above it takes the texture's right half (u 0.5 to 1) and v from p/100 to 1, the other below it
-/// the left half (u 0 to 0.5) and v from 0 to p/100, so each half is cropped and never scaled
-/// (<c>docs/exe/hud.md</c>, "The happiness gauge's two quads"). Which screen edge the model's y of 0 is was not read,
-/// so filling upward from the bottom is a choice that the housing being taller than it is wide and the gauge resting at
-/// its lowest part support; it is not a measurement.
+/// <b>The picture is two halves of the skin cropped at one boundary.</b> The sub-object built by <c>Meter_Construct</c>
+/// holds two quads in a 100 by 100 space sharing the boundary p, the value as a percentage (<c>Meter_OnMessage</c>
+/// <c>0x00477db0</c>): above it the texture's right half (u 0.5 to 1), the dark capsule, and below it the left half
+/// (u 0 to 0.5), the lit one, each with v = y / 100 (<c>Meter_SetQuadGeometry</c> <c>0x00477cc0</c>,
+/// <c>Meter_SetQuadUVs</c> <c>0x00477d20</c>), so neither is ever squashed. The space's y of 0 is the control's bottom
+/// edge (<c>FUN_00476c50</c> is handed the bottom as its origin), and the original's frame agrees: lit below, dark
+/// above, the sad face at the bottom (<c>docs/exe/hud.md</c>, "The happiness gauge's two quads"). At nought the dark
+/// half covers the whole capsule, as the constructor builds it before any value arrives.
 /// </para>
 /// </summary>
 internal sealed class UiMeter : UiControl
 {
 	/// <summary>
-	/// The skin the original gives it: the gadget's gauge takes <c>meter.wct</c> (<c>FUN_00477870</c>). The
+	/// The skin the original gives it: the gadget's gauge takes <c>meter.wct</c> (<c>Meter_Construct</c>). The
 	/// all-staff screen's two meters are not this skin but the stat bars' (<see cref="ParkObjectWindow"/>'s
 	/// <c>UiStatBar</c>, <c>FUN_00477ff0</c>).
 	/// </summary>
@@ -46,7 +47,22 @@ internal sealed class UiMeter : UiControl
 	public int Max { get; init; } = 100;
 
 	/// <summary>How far up it stands, in the same units as <see cref="Max"/>. Out-of-range values are held, not refused.</summary>
-	public int Value { get; set; }
+	public int Value
+	{
+		get => _value;
+		set
+		{
+			if ( value == _value && _set )
+				return;
+
+			_value = value;
+			_set = true;
+			Log.Info( $"UI: meter 0x{Id:x} at {value} of {Max}, the boundary {Percent:F2}% up" );
+		}
+	}
+
+	private int _value;
+	private bool _set;
 
 	protected override void OnDraw()
 	{
@@ -57,30 +73,44 @@ internal sealed class UiMeter : UiControl
 		if ( Max <= 0 )
 			return;
 
-		var filled = Math.Clamp( Value, 0, Max ) / (float)Max;
-
-		// Nothing at all at rest, rather than a sliver: the original's own empty reading is the bottom of
-		// the housing, and a one-pixel band there would read as a value nobody set.
-		if ( filled <= 0f )
-			return;
-
 		if ( !Skins.TryGetValue( Skin, out var skin ) )
 			Skins[Skin] = skin = new Texture( Skin );
 
+		foreach ( var (where, uvs) in Quads( Pixels, Percent ) )
+			Paint( skin, where, uvs );
+	}
+
+	/// <summary>
+	/// Where the boundary stands, 0 to 100: the original's <c>value x 1/1024 x 100</c>, held, in single precision
+	/// (<c>0x006fee08</c>, <c>0x006fee0c</c>) when <see cref="Max"/> is its 1024, and the plain share otherwise.
+	/// </summary>
+	internal float Percent => Math.Clamp( Value, 0, Max ) * (1f / Max) * 100f;
+
+	/// <summary>
+	/// The skin's two quads over a box (top-left origin) for a boundary at <paramref name="percent"/>: the dark right
+	/// half above it and the lit left half below it, each showing the band of the texture that stands where it is
+	/// drawn (this game's v of 0 is the bottom of a quad, as the original's y of 0 is the bottom of the space).
+	/// </summary>
+	internal static (Rectangle Where, Rectangle Uvs)[] Quads( PixelRect box, float percent )
+	{
+		var t = Math.Clamp( percent, 0f, 100f ) * 0.01f;
+		var lit = box.Height * t;
+
+		return
+		[
+			(new Rectangle( box.X, box.Y, box.Width, box.Height - lit ), new Rectangle( 0.5f, t, 0.5f, 1f - t )),
+			(new Rectangle( box.X, box.Y + box.Height - lit, box.Width, lit ), new Rectangle( 0f, 0f, 0.5f, t ))
+		];
+	}
+
+	private static void Paint( Texture skin, Rectangle where, Rectangle uvs )
+	{
+		if ( where.Width <= 0f || where.Height <= 0f )
+			return;
+
 		Material.UI.Set( "Color", skin );
 
-		var area = Pixels;
-		var height = area.Height * filled;
-		var top = area.Y + area.Height - height;
-
-		// The bottom of the texture for the bottom of the bar, so the artwork is cropped rather than
-		// squashed - a squashed gauge shows every part of its face at every value, which is exactly what
-		// a meter must not do.
-		// DEVIATION: this samples u 0 to 1, the whole texture, so both halves show side by side and narrow; the
-		// original crops the right half above the boundary and the left half below it (the cause of Q244).
-		var uvs = new Rectangle( 0f, 1f - filled, 1f, filled );
-
 		using ( _ = new Graphics.Scope( Screen.Size ) )
-			Graphics.Quad( new Rectangle( area.X, Screen.Height - top - height, area.Width, height ), uvs, Material.UI );
+			Graphics.Quad( new Rectangle( where.X, Screen.Height - where.Y - where.Height, where.Width, where.Height ), uvs, Material.UI );
 	}
 }

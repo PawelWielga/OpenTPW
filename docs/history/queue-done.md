@@ -9205,6 +9205,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     Confirmed beside the original on the stock Drinks Shop (`q31/side-by-side.png`, `side-by-side-door.png`): 8 of 8 of
     the original's predictions and 6 of 6 of ours on the final build. `UIStrings` 37 to 40 corrected. The scrap value shows
     the build price ($ 650 against the original's $ 325, `SCRAP_VALUE_DEPRECIATION`, as the ride's). Left: Q547, Q548.
+- [x] **Q244. The happiness gauge draws two copies of its bar.** `docs/PLAYER-GAPS.md` gap 5, found by Alexah playing:
+  the bar draws in the wrong place, split down the middle. That page holds a lead read from the code and not
+  measured (`UiMeter.OnDraw`'s sampler); measure before touching the meter's arithmetic. The number it shows is
+  not the fault, and which guests it counts is Q148's. Confirm: the gauge photographed beside the original's.
+  Cause now read (fork watch 2026-10-19, verify-advisor-ui.md L3, verify-other-b.md M3; `hud.md`, "The happiness
+  gauge's two quads"): the original draws two quads sharing one boundary, the texture's right half above the level
+  and the left half below it, each cropped; `UiMeter.OnDraw` samples u 0 to 1, both halves side by side. The
+  on-screen fill direction is NOT settled (which edge the model's y 0 is was not read): settle it against the
+  original's photograph before building.
+  **Done 2026-10-19:** `UiMeter` draws the original's two quads (the lit left half below the value, the dark right
+  half above, each cropped, the dark capsule whole at nought; the bar fills upward, read from the texture and the
+  original's frames), and takes the gadget's 1024ths (`ParkGadget.GaugeUnits`). Every guest at 70, 30 and 0: ours
+  69.5%, 29.5%, 0% (`UI: meter 0x1f at 706 of 1024`, 296, 0), the original 67.9%, 28.6%, 0% (`q244/side-by-side.png`);
+  `UiMeterTests`, 9 of 9 bugs put back caught. The mean's fraction stays Q459's.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

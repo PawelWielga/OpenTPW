@@ -261,18 +261,19 @@ internal sealed class ParkGadget : UiWindow
 		} );
 
 		// Control type 9 in the stream, which is a meter: FUN_0066d750 is the plain control with three
-		// more fields, and FUN_004a1cd0 arms a 2000ms timer - id 0x80083 - that fills it. It carries no
-		// mesh at all, because the original hands it a meter.wct skin instead (FUN_00477870, from
+		// more fields, and Gadget_GaugeOnMessage arms a 2000ms timer - id 0x80083 - that fills it. It carries no
+		// mesh at all, because the original hands it a meter.wct skin instead (Meter_Construct, from
 		// FUN_004a1d70), which is why a control that draws only a mesh shows nothing here.
 		//
 		// What the timer asks for is
 		// FUN_004c7bb0 - the mean happiness of the park's guests, and nought while the park is shut. See
 		// ParkPeople.AverageHappiness for the arithmetic and for the one term of it that is deliberately
-		// not reproduced, and UiMeter for how far up the skin is drawn and why that part is a choice.
+		// not reproduced, and UiMeter for the skin's two halves.
 		_happiness = gaugeHousing.Add( new UiMeter
 		{
 			Id = 0x1f,
-			Rect = new UiRect( 85, 1100, 144, 1324 )
+			Rect = new UiRect( 85, 1100, 144, 1324 ),
+			Max = 0x400
 		} );
 
 		_date = body.Add( new UiControl
@@ -1482,16 +1483,22 @@ internal sealed class ParkGadget : UiWindow
 
 	/// <summary>
 	/// How happy the park's visitors are, which is the one thing the gauge has ever been for - see
-	/// <see cref="ParkPeople.AverageHappiness"/> for the number, and <see cref="UiMeter"/> for the drawing
-	/// and for which part of it is a choice.
+	/// <see cref="ParkPeople.AverageHappiness"/> for the number, and <see cref="UiMeter"/> for the drawing.
 	///
 	/// <para>
 	/// <b>Read every frame where the original reads it every two seconds, and that is a departure.</b> Its
-	/// meter arms a 2000ms timer (<c>FUN_004a1cd0</c>, id 0x80083) because the value costs a walk over
+	/// meter arms a 2000ms timer (<c>Gadget_GaugeOnMessage</c>, id 0x80083) because the value costs a walk over
 	/// every thing in the park; this walks the park's guests alone. What differs on screen is a gauge
 	/// that moves smoothly rather than in steps, and putting the timer back would mean keeping a clock
 	/// here in order to make the reading worse.
 	/// </para>
 	/// </summary>
-	private void ShowHappiness() => _happiness.Value = ParkPeople.Current?.AverageHappiness() ?? 0;
+	private void ShowHappiness() => _happiness.Value = GaugeUnits( ParkPeople.Current?.AverageHappiness() ?? 0 );
+
+	/// <summary>
+	/// What the gauge's timer hands its meter: the mean times 1024 times 0.01f, truncated (<c>0x004a1d44</c>, the
+	/// floats <c>0x006ffa34</c> and <c>0x006ffa38</c>, then <c>__ftol</c>), so 50 is 511 of 1024 and 100 is 1023, as
+	/// 0.01f is a shade under a hundredth. The original's mean keeps its fraction; this one is whole (Q459).
+	/// </summary>
+	internal static int GaugeUnits( double happiness ) => (int)( happiness * 1024.0 * 0.01f );
 }

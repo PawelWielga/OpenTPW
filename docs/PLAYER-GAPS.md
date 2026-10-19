@@ -1,7 +1,7 @@
 # What a player notices
 
 What a player notices, **ordered by when a player meets it**, not by size or by how interesting it is to build.
-**This is not the work queue: `docs/QUEUE.md` is**. Its section F returns to gap 4; gap 5 is its Q244 and gap 7 its Q249 (a fresh park saved), in its section A.
+**This is not the work queue: `docs/QUEUE.md` is**. Its section F returns to gap 4; gap 7 is its Q249 (a fresh park saved), in its section A.
 Drawn up 2026-09-20 from `docs/STATUS.md`, the 42-thing Lost Kingdom census
 (`docs/history/current-task-archive.md`, grep `THE PARK IS FULLY DECODED`) and the live plan.
 
@@ -49,13 +49,13 @@ Confirmed from the engine as well as the data: `FUN_00471860` indexes the table 
 | ~~2~~ | ~~Four of the six gadget buttons do nothing~~ **DONE 2026-09-21** — five of six now open something | — |
 | ~~3~~ | ~~Nobody new ever arrives~~ **DONE 2026-09-20** — and on all three vehicles | — |
 | 4 | The advisor says one line in a park, and nothing after it | — |
-| 5 | The happiness gauge reads wrong | — |
+| ~~5~~ | ~~The happiness gauge reads wrong~~ **DONE 2026-10-19** (Q244) | — |
 | ~~6~~ | ~~Nobody goes home and no day ever ends~~ **DONE 2026-09-20** — same loop as 3 | — |
 | 7 | A park cannot be saved | — |
 | ~~8~~ | ~~Guests cannot buy anything from a shop, and barely from a sideshow~~ **DONE 2026-09-20** | — |
 
-**Three remain: 4, 5 and 7.** Every one of them is independent of the others — none is blocked on
-anything now built, and none blocks another.
+**Two remain: 4 and 7.** Each is independent of the other — neither is blocked on
+anything now built, and neither blocks the other.
 
 ---
 
@@ -307,26 +307,18 @@ from the crossing. So the arrival path they would take is the one the shipped sa
   91 and 92, over the gate's opinion ring, which OpenTPW does not keep) and a shop's great satisfaction come from the
   park's own figures (`advisor-park.md`; `ride-operation.md`, "The settle-up's bookkeeping").
 
-## 5. The happiness gauge reads wrong
+## 5. The happiness gauge reads wrong — DONE, 2026-10-19 (Q244)
 
-- [ ] **Seen:** the bar draws in the wrong place, as two copies split down the middle.
-- **IT IS A RENDERING FAULT, IN ALEXAH'S WORDS OF 2026-09-21:** *"The bar image
-  just appears to not be rendering within the actual location properly, it looks like two copies of the
-  bar split down the middle like it's repeating."* It is not the gauge failing to track the park: the
-  artwork is in the wrong place and it is repeated.
-- **SUPERSEDED (fork watch 2026-10-19): the cause is the sampler's u 0 to 1 over a texture the original draws as two cropped halves; `docs/exe/hud.md`, "The happiness gauge's two quads", and Q244.** The lead below was read from the code and not measured. **A lead, READ FROM THE CODE AND NOT MEASURED — do not report it as a finding.** `UiMeter.OnDraw`
-  builds its skin as `new Texture( Skin )` with **no flags**, so `Texture.SamplerFor( None )` returns
-  `AnisotropicRepeat`, which is `SamplerAddressMode.Mirror` — any UV outside 0..1 then draws a
-  **mirrored second copy**, which is exactly what is described, and is the same family as the lobby
-  sea (see `Texture.Cache`'s note on the sea drawn with the default `Mirror` on the way back from a park). **But its own UV rect reads as in-range**
-  (`0, 1 - filled, 1, filled`, the same x/y/w/h shape as its position rect), so look at
-  `Graphics.Quad`'s UV handling and at whether `Pixels` is the housing's true rect **before** touching
-  the meter's arithmetic.
-- **Lives:** the `meter.wct` mapping. `ParkGadget.ShowHappiness` and `UiMeter` draw it;
-  `ParkPeople.AverageHappiness` supplies the number and is *not* the fault.
-- **Largely exonerated already:** `UiMeter.Max` is 100 and it is handed 50. The mapping from the skin to
-  the drawn height is what is left.
-- **It was found by playing; confirm the fix the same way.**
+- [x] **Seen:** the bar drew in the wrong place, as two copies split down the middle. *"The bar image just appears to
+      not be rendering within the actual location properly, it looks like two copies of the bar split down the middle
+      like it's repeating"* (Alexah, 2026-09-21).
+- **The cause:** `meter.wct` holds two capsules side by side, a lit one and a dark one, and the original draws the lit
+  left half below the boundary and the dark right half above it, each cropped; `UiMeter` drew the whole texture's top
+  slice squeezed into the bottom of the capsule, both halves side by side. Now it draws the original's two quads, the
+  dark capsule whole at nought (`docs/exe/hud.md`, "The happiness gauge's two quads").
+- **Confirmed beside the original** on three files whose every guest is at 70, 30 and 0: 69.5%, 29.5% and 0% in
+  OpenTPW against 67.9%, 28.6% and 0% in the original, whose clock ran on through the load (`q244/side-by-side.png`).
+- **Still open, and not this gap:** which guests the mean counts (Q148) and its fraction (Q459).
 
 ## 6. Nobody goes home and no day ever ends — DONE, 2026-09-20
 
