@@ -2041,7 +2041,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( 4, UI.ParkGadget.HireTabOf( nineteen.Button1 ), "the researchers' tab, the fifth" );
 
 		// A month is thirty days of 23.04 sweeps: fifteen are 10,368 sweeps, and 10,367 is fourteen.
-		Assert.AreEqual( (1, 14, 15), (ParkAdvisorMessages.MonthsSinceTheFirstSweep( 768 ), ParkAdvisorMessages.MonthsSinceTheFirstSweep( 10367 ), ParkAdvisorMessages.MonthsSinceTheFirstSweep( 10368 )) );
+		Assert.AreEqual( (1, 14, 15), (ParkStrikes.MonthsSinceTheFirstSweep( 768 ), ParkStrikes.MonthsSinceTheFirstSweep( 10367 ), ParkStrikes.MonthsSinceTheFirstSweep( 10368 )) );
 		Round( 10367 );
 		Assert.AreEqual( ("no-score", 0), (messages.PollAnswer( 17 ), said.Count), "fourteen months" );
 		Assert.AreEqual( " closed=0 months=14 researchers=1 candidates=3 ability=12/120", messages.PollFacts( topic ), "the poll line names what the score read" );

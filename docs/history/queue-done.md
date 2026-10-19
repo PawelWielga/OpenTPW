@@ -8113,6 +8113,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `wearing 13,14` with tag 5 (`q530/run1-thirsty`), at hunger 100 `score=93 ... tick=771` and sample 10 with tag 6
   (`run1-hungry`); main's build said nothing (`control1`); the original moved message 3's record on 770 and 4's on
   771 with the same tags, filmed in the same hat and spatula (`orig/a-load.log`, `orig/b-load.log`, `side-by-side.png`).
+- [x] **Q531. The advisor's months are the strike's.** Q420's piece. Row 17's gate (`0x0059d041`) and its poll line
+  call `ParkStrikes.MonthsSinceTheFirstSweep` (`FUN_004f8800` over thirty days); `ParkAdvisorMessages`' copy of the same
+  formula is gone (`advisor-park.md`, "Research too slow, and researchers to hire"). Done 2026-10-19: Q422's scene with the key at 2 polled
+  `tick=784 result=no-score closed=0 months=1` and `tick=1404 result=post closed=0 months=2`, said sample 49 on 1404, and
+  the console's `strikes` read `months 1` on 792 and `months 2` on 1422 (`q531/run-month2l1`, `1-end.png`); 5 of 5
+  predictions held; mutations 5/5 against the advisor's tests alone. Nothing the player sees changed, so the original
+  was not re-run: Q422 compared the same numbers with it.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

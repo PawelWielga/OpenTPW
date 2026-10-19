@@ -2804,11 +2804,13 @@ unsaid. Nothing about the research itself is asked: neither the lab's projects n
 on its researchers' tab, the fifth), no second, thirty seconds. String 23 reads "Your research is taking a long time. You
 might speed things up by hiring more scientists." (`Language/american`'s, "researchers").
 
-### OpenTPW (`ParkAdvisorMessages.HireMoreResearchers`, a topic's `SlowResearch`, `MonthsSinceTheFirstSweep`; `ParkFacts.ResearcherCandidates`; tag row 19)
+### OpenTPW (`ParkAdvisorMessages.HireMoreResearchers`, a topic's `SlowResearch`; `ParkStrikes.MonthsSinceTheFirstSweep`; `ParkFacts.ResearcherCandidates`; tag row 19)
 
 The topic is scored from `ParkFacts`, which now carry the staff pool's researchers to hire (`ParkStaffPool.OfKind`, kind
 4, of `ParkStaffPool.Current`) beside the researchers, their ability and the most row 76 already reads; the months are
-counted from the poll's tick as `DaysSinceTheFirstSweep` counts days. The poll line ends ` closed=N months=M
+the strike's, `ParkStrikes.MonthsSinceTheFirstSweep` (`ride-operation.md`, "The strike, in both games"), from the poll's
+tick, so the console's `strikes` and the poll line say the same months (Q531: `months 1` on 792 and `months 2` on 1422,
+the poll's `months=1` on 784 and `months=2` on 1404). The poll line ends ` closed=N months=M
 researchers=N candidates=C ability=A/M`. `ParkTags.Rows` lists row 19.
 
 **The scenes**: `stock.TPWS` (`lib/stockscene.py`, the stock park paused on 771, nothing done) and `nohire.TPWS`, the same

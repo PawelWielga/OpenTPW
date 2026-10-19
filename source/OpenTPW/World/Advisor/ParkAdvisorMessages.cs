@@ -793,13 +793,6 @@ internal sealed class ParkAdvisorMessages
 		=> (int)((long)(uint)tick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond / 86400);
 
 	/// <summary>
-	/// Whole months of thirty days since mGameTick nought: FUN_004f8800 over 0x1792F8648000 (0x0059d041), as
-	/// <see cref="DaysSinceTheFirstSweep"/> counts days.
-	/// </summary>
-	internal static int MonthsSinceTheFirstSweep( int tick )
-		=> (int)((long)(uint)tick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond / (30 * 86400));
-
-	/// <summary>
 	/// A row's score function (+0x10). The control panel's (0x005a06c0) and the tips' (0x005a0720) are their
 	/// section's Score while the park is more than AfterTime and less than CutoffTime days old, and nought
 	/// otherwise; row 1's (0x0059c8d0) is its key's value for each guest waiting at the booths of a shut park
@@ -1023,7 +1016,8 @@ internal sealed class ParkAdvisorMessages
 			// The most comes before the months, and the researchers before those to hire (0x0059d00a to 0x0059d07f); the share
 			// is an unsigned divide, so a most of nought is nought before it.
 			if ( _park?.Invoke() is not { Closed: false, MostResearchAbility: > 0 } lab ) return 0;
-			if ( MonthsSinceTheFirstSweep( gameTick ) < Value( $"{slow}.MonthsIntoGameForConsideration" ) ) return 0;
+			// FUN_004f8800 over 0x1792F8648000 at 0x0059d041, the strike's months.
+			if ( ParkStrikes.MonthsSinceTheFirstSweep( gameTick ) < Value( $"{slow}.MonthsIntoGameForConsideration" ) ) return 0;
 			if ( lab.Researchers < 1 || lab.ResearcherCandidates < 1 ) return 0;
 			return (uint)lab.ResearchAbility * 100 / (uint)lab.MostResearchAbility < (uint)Value( $"{slow}.SlowerThan" ) ? Value( topic.ScoreKey ) : 0;
 		}
@@ -1158,7 +1152,7 @@ internal sealed class ParkAdvisorMessages
 		if ( (topic.MostRidesBuilt != null || topic.EveryRideBuilt) && _park?.Invoke() is { } unresearched )
 			shut = $" closed={(unresearched.Closed ? 1 : 0)} researchers={unresearched.Researchers} unfinished={unresearched.RideProjectsUnfinished} kinds={unresearched.RideKindsStanding}/{unresearched.RideKindsOnOffer}";
 		if ( topic.SlowResearch != null && _park?.Invoke() is { } lab )
-			shut = $" closed={(lab.Closed ? 1 : 0)} months={MonthsSinceTheFirstSweep( _lastTick )} researchers={lab.Researchers} candidates={lab.ResearcherCandidates} ability={lab.ResearchAbility}/{lab.MostResearchAbility}";
+			shut = $" closed={(lab.Closed ? 1 : 0)} months={ParkStrikes.MonthsSinceTheFirstSweep( _lastTick )} researchers={lab.Researchers} candidates={lab.ResearcherCandidates} ability={lab.ResearchAbility}/{lab.MostResearchAbility}";
 		if ( topic.BusyWithNoEntertainer != null && _park?.Invoke() is { } busyPark )
 			shut = $" closed={(busyPark.Closed ? 1 : 0)} entertainers={busyPark.Staff.Entertainers.Members} inside={busyPark.GuestsInside} unhappy={busyPark.GuestsUnhappy} crowd={ParkAudio.CrowdLevel( busyPark.GuestsInside )}";
 		if ( topic.BusyWithNoGuard != null && _park?.Invoke() is { } thronged )

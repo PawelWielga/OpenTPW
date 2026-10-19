@@ -56,9 +56,7 @@ filed the items that cite it.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From the run review (2026-10-17): `ParkAdvisorMessages.MonthsSinceTheFirstSweep` (Q422) copies
-  `ParkStrikes.MonthsSinceTheFirstSweep`, the same formula over `FUN_004f8800` and `0x1792F8648000`: call the one and drop
-  the copy. The locator's patrol edges (Q426) are always blue here, where the original lays them red after a tool's last
+  From the run review (2026-10-17): the locator's patrol edges (Q426) are always blue here, where the original lays them red after a tool's last
   pass left its refusal latched (`DAT_00816d50`, `DAT_0081b604`); said at `ParkBuildMarkers.QueuePatrolEdges`, not run (a
   refused path click, then Ctrl+S and the mechanics' button, read with `squares.py`). A quick right click (Q438): `Level`
   also tests the 200 ms on the release frame, where the original tests it only on message `0x1e` (`0x0048821f`), which
@@ -66,9 +64,13 @@ filed the items that cite it.
   (`q438/orig/b-7-outline.png`, the latch `[0x00816d48]` 1 at the anchor and 0 after) where `Level.PatrolCursor` shows
   `c_noplace` only while red: look when the patrol pointer is next touched. World clicks with a locator or person window
   open (Q424, Q431, Q432): Q444.
+  From Q531 (`advisor-park.md`, "Research too slow, and researchers to hire"): the advisor's row 17 counts its months by
+  `ParkStrikes.MonthsSinceTheFirstSweep`, the strike's, and its copy is gone; the rest of this item is the patrol edges'
+  red and the quick right click, above. In no game run: Full Simulation (not asked: the months are either mode's), the
+  other three themes.
   From Q530 (`advisor-park.md`, "Thirsty and hungry guests"): the advisor's rows 3 and 4 are built and said in both
   games, in the fast-food hat with the spatula, and row 85 answers nought, as the original's; the rest of this item is
-  the patrol edges' red, the quick right click and `MonthsSinceTheFirstSweep`'s copy, above. In no game run: a need
+  the patrol edges' red, the quick right click and `MonthsSinceTheFirstSweep`'s copy (one call since, Q531), above. In no game run: a need
   that rose to 100 on its own (written into the file), Full Simulation (not asked: both rows' `+0x0c` is 2, either
   mode's), the other three themes. From the fork watch (2026-10-16, `verify-advisor.md`): row 86 has one fact for
   whoever builds rows 86 to 89: it bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no
@@ -78,7 +80,7 @@ filed the items that cite it.
   the original loading a file this game writes runs on with its weather (it rained, and delivered this game's
   forecast on its own clock); a load here still reads only the wind (Q529). The managers' fields Q241j names are all
   written now; the rest of this item is the pieces above (the advisor's rows, built since, Q530; the
-  `MonthsSinceTheFirstSweep` copy; the patrol edges; the quick right click).
+  `MonthsSinceTheFirstSweep` copy, one call since, Q531; the patrol edges; the quick right click).
   In no game run: snow (only hallow snows), a forced quality held against a delivery (nothing found sets `mOverridden` but a load),
   Full Simulation (not asked: the weather is either mode's), the other three themes.
   From Q526 (`saves.md`, "OpenTPW's writer, the calendar's fields"): the park clock's month and day are written as the
