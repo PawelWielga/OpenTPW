@@ -46,6 +46,8 @@ public class ParkAdvisorMessageTests
 			+ "FeaturesResearchMore.Score 60\nSideshowsResearchMore.Score 75\n"
 			+ "MessageGroups[4].MinTimeSameMessage 900\nMessageGroups[4].SayOnlyOnce 0\nMessageGroups[4].DiscardAfterSlaps 0\n"
 			+ "FeaturesNoToilets.Score 90\nFeaturesNoToilets.NeedingMoreThan 60\nFeaturesNoToilets.MorePeopleThanThisNeeding 25\n"
+			+ "VisitorsThirsty.ScorePerThirstyPerson 3\nVisitorsThirsty.ThirstierThan 99\nVisitorsHungry.ScorePerHungryPerson 2\nVisitorsHungry.HungrierThan 346\n"
+			+ "FeaturesNotEnoughToilets.AverageQueueLongerThan 2.5\nFeaturesNotEnoughToilets.Score 100\n"
 			+ "ShopsBuildMoreShops.ShopsPerRideRatio 0.15\nShopsBuildMoreShops.WealthMoreThan 20000\nShopsBuildMoreShops.Score 70\n"
 			+ "SideshowsBuildMoreSideshows.SideshowsPerRideRatio 0.2\nSideshowsBuildMoreSideshows.WealthMoreThan 20000\nSideshowsBuildMoreSideshows.Score 80\n"
 			+ "StaffTrainMechanics.WorseThan 1\nStaffTrainMechanics.Score 30\nStaffTrainHandymen.WorseThan 1\nStaffTrainHandymen.Score 31\n"
@@ -166,7 +168,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 60, written.Count );
+		Assert.AreEqual( 63, written.Count );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -963,7 +965,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 111, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 108, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -1026,7 +1028,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 100 ), "before any sweep has handed the park in" );
 		foreach ( var response in new[] { 2, 3, 4 } )
 			Assert.AreEqual( (ParkAdvisorMessages.TicketHat, 0), ParkAdvisorMessages.PropsOf( response ) );
-		Assert.AreEqual( (0, 0), ParkAdvisorMessages.PropsOf( 8 ), "row 3's first line is not built" );
+		Assert.AreEqual( (ParkAdvisorMessages.FastFoodHat, ParkAdvisorMessages.Spatula), ParkAdvisorMessages.PropsOf( 8 ), "row 3's first line is its own" );
 
 		// One waiting: 20, scored and under the threshold of 25.
 		facts = facts with { WaitingToOpen = 1 };
@@ -3251,6 +3253,99 @@ public class ParkAdvisorMessageTests
 	}
 
 	/// <summary>
+	/// Rows 3 and 4, messages 3 and 4, are polled (0x0059c9d0, 0x0059ca00): VisitorsThirsty.ScorePerThirstyPerson, 3,
+	/// for each guest inside over the thirst, and VisitorsHungry.ScorePerHungryPerson, 2, for each over the hunger,
+	/// the door and the guests inside not asked: eight thirsty, 24, are under the threshold, 25, and nine, 27, are
+	/// told of, as thirteen hungry, 26, are. Three lines each in turn, in the fast-food hat with the spatula, with tags
+	/// 5 and 6, whose bar carries the buy button of type 10. Row 85 (0x0059e420) is polled and scores nought
+	/// whatever the park, so it is never said and no longer counted as unbuilt.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the count not multiplied, or by the other row's key; the thirsty counted for the hungry; the door
+	/// or the guests inside asked; a row not polled; row 85 its key's value; the second prop nought, or the first; the
+	/// response, the sample, the group or a tag row another's; the hunger's level not its low byte; the poll line's words.
+	/// </remarks>
+	[TestMethod]
+	public void ThirstyAndHungryGuestsAreToldOfByHowManyAndTheTooFewToiletsRowIsNought()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor { Row = 3 };
+		var settings = Settings();
+		var messages = new ParkAdvisorMessages( settings, cursor: cursor );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 3, Sideshows: 1, WaitingToOpen: 0, GuestsInside: 40,
+			GuestsThirsty: 8, GuestsHungry: 13, GuestsNeedingToilet: 30 );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		void Round( int row, int at )
+		{
+			cursor.Row = row;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 5000; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+		}
+
+		var thirsty = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.VisitorsThirsty );
+		var hungry = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.VisitorsHungry );
+		var toilets = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.NotEnoughToilets );
+		Assert.AreEqual( (3, "VisitorsThirsty.ScorePerThirstyPerson", 8, 7, 3, 1, 0, true, 5, 13, 14, -1, true, false),
+			(thirsty.Id, thirsty.ScoreKey, thirsty.FirstResponse, thirsty.FirstSample, thirsty.Lines, thirsty.MaxInstances, thirsty.Category, thirsty.Polled, thirsty.Group, thirsty.Prop, thirsty.SecondProp, thirsty.GestureRowLine, thirsty.PerThirstyGuest, thirsty.PerHungryGuest) );
+		Assert.AreEqual( (4, "VisitorsHungry.ScorePerHungryPerson", 11, 10, 3, 1, 0, true, 6, 13, 14, -1, false, true),
+			(hungry.Id, hungry.ScoreKey, hungry.FirstResponse, hungry.FirstSample, hungry.Lines, hungry.MaxInstances, hungry.Category, hungry.Polled, hungry.Group, hungry.Prop, hungry.SecondProp, hungry.GestureRowLine, hungry.PerThirstyGuest, hungry.PerHungryGuest) );
+		Assert.AreEqual( (0x55, "FeaturesNotEnoughToilets.Score", 233, 231, 2, 1, 0, true, 87, 0, 0, -1, true),
+			(toilets.Id, toilets.ScoreKey, toilets.FirstResponse, toilets.FirstSample, toilets.Lines, toilets.MaxInstances, toilets.Category, toilets.Polled, toilets.Group, toilets.Prop, toilets.SecondProp, toilets.GestureRowLine, toilets.AlwaysNought) );
+		Assert.AreEqual( (1, 1, 1), (ParkAdvisorMessages.ParkTopics.Count( one => one.PerThirstyGuest ), ParkAdvisorMessages.ParkTopics.Count( one => one.PerHungryGuest ),
+			ParkAdvisorMessages.ParkTopics.Count( one => one.AlwaysNought )), "no other row is scored so" );
+		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 3 ) && ParkAdvisorMessages.IsPolled( 4 ) && ParkAdvisorMessages.IsPolled( 85 ) );
+		CollectionAssert.AreEqual( Enumerable.Repeat( (13, 14), 6 ).ToArray(), Enumerable.Range( 8, 6 ).Select( ParkAdvisorMessages.PropsOf ).ToArray() );
+		Assert.AreEqual( ((9, 0), (5, 0), (0, 0)), (ParkAdvisorMessages.PropsOf( 7 ), ParkAdvisorMessages.PropsOf( 14 ), ParkAdvisorMessages.PropsOf( 233 )), "row 2's last line and row 5's first are theirs" );
+		Assert.AreEqual( (0, 0), (ParkAdvisorMessages.SlotOf( 8 ), ParkAdvisorMessages.SlotOf( 13 )), "the lobby's model says them, not the theme's" );
+		var five = ParkTags.Rows.Single( one => one.Id == 5 );
+		var six = ParkTags.Rows.Single( one => one.Id == 6 );
+		Assert.AreEqual( ((ParkTags.NoTag, 2, 9, 10, 0, 30000, 0), (ParkTags.NoTag, 2, 10, 10, 0, 30000, 0)),
+			((five.Key, five.Picture, five.String, five.Button1, five.Button2, five.Life, five.Kind), (six.Key, six.Picture, six.String, six.Button1, six.Button2, six.Life, six.Kind)) );
+		Assert.AreEqual( (99, 90), (messages.ThirstierThan, messages.HungrierThan), "346's low byte is 90" );
+		Assert.AreEqual( (0, 0), (messages.ScoreOf( thirsty, 1594 ), messages.ScoreOf( hungry, 1594 )), "before any sweep has handed the park in" );
+
+		// Eight thirsty, 24, are under the threshold.
+		Round( 3, 1594 );
+		Assert.AreEqual( (24, "under-threshold", 4, 0), (messages.ScoreOf( thirsty, 1594 ), messages.PollAnswer( 3 ), cursor.Row, said.Count) );
+		Assert.AreEqual( " thirsty=8/40 over=99", messages.PollFacts( thirsty ), "the poll line names what the score read" );
+		Assert.AreEqual( " hungry=13/40 over=90", messages.PollFacts( hungry ) );
+
+		// Nine are, and thirteen hungry; neither asks the door, the guests inside or the park's age.
+		facts = facts with { GuestsThirsty = 9 };
+		Assert.AreEqual( (27, 26), (messages.ScoreOf( thirsty, 1594 ), messages.ScoreOf( hungry, 1594 )) );
+		facts = facts with { Closed = true, GuestsInside = 0, Rides = 0, Sideshows = 0, WaitingToOpen = 7 };
+		Assert.AreEqual( (27, 26), (messages.ScoreOf( thirsty, 3 ), messages.ScoreOf( hungry, 3 )), "a shut park with nobody counted inside" );
+		facts = facts with { GuestsThirsty = 0, GuestsHungry = 0 };
+		Assert.AreEqual( (0, 0), (messages.ScoreOf( thirsty, 1594 ), messages.ScoreOf( hungry, 1594 )) );
+		facts = facts with { Closed = false, GuestsInside = 40, GuestsThirsty = 9, GuestsHungry = 13 };
+
+		// Each is said on its turn, its first line in the fast-food hat, with its own tag.
+		Round( 3, 1594 );
+		Assert.AreEqual( "post", messages.PollAnswer( 3 ) );
+		Round( 4, 2074 );
+		Assert.AreEqual( "post", messages.PollAnswer( 4 ) );
+		Round( 3, 2554 );
+		CollectionAssert.AreEqual( new[] { (1594, 8, 7), (2074, 11, 10), (2554, 9, 8) }, said );
+		CollectionAssert.AreEqual( new[] { (5, 0), (6, 0), (5, 0) }, groups );
+
+		// Row 85 is nought in any park, its key whatever it holds, and is no gap.
+		var unbuilt = Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" );
+		facts = facts with { Toilets = 1, ToiletsShut = 0, GuestsNeedingToilet = 40 };
+		Assert.AreEqual( 0, messages.ScoreOf( toilets, 3034 ) );
+		Round( 85, 3034 );
+		Assert.AreEqual( ("no-score", 86, 3), (messages.PollAnswer( 0x55 ), cursor.Row, said.Count) );
+		Assert.AreEqual( unbuilt, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+
+		// The keys are each its own row's.
+		Set( settings, "VisitorsThirsty.ScorePerThirstyPerson", 4 );
+		Assert.AreEqual( (36, 26), (messages.ScoreOf( thirsty, 1594 ), messages.ScoreOf( hungry, 1594 )) );
+		Set( settings, "VisitorsThirsty.ScorePerThirstyPerson", 3 );
+		Set( settings, "VisitorsHungry.ScorePerHungryPerson", 5 );
+		Assert.AreEqual( (27, 65), (messages.ScoreOf( thirsty, 1594 ), messages.ScoreOf( hungry, 1594 )) );
+		Set( settings, "VisitorsHungry.ScorePerHungryPerson", 2 );
+	}
+
+	/// <summary>
 	/// Row 76 (0x0059dfd0), <c>SideshowsResearchMore</c>, Full Simulation's alone: its key's 75 in a park with a
 	/// researcher on the staff where a kind of sideshow stands, the lab holds a sideshow's project not done, the
 	/// lab's sideshow research is getting no work at all (<c>FUN_00503980</c> answers nought) and the kinds of
@@ -4611,7 +4706,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 44, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 47, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>

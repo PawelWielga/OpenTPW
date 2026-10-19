@@ -1489,11 +1489,11 @@ public sealed partial class ParkPeople : Entity
 
 	/// <summary>
 	/// Sets a level the deciding turn's unbuilt arms test, for the debug console's <c>need</c>: vomit, litter or
-	/// prankery. An INSTRUMENT, as <see cref="SetToilet"/> is: a visit adds only a little illness, two drinks fill
-	/// their litter, and one arrival in twenty is a prankster.
+	/// prankery, or the hunger the advisor's row 4 counts. An INSTRUMENT, as <see cref="SetToilet"/> is: a visit adds
+	/// only a little illness, two drinks fill their litter, and one arrival in twenty is a prankster.
 	/// </summary>
 	/// <param name="only">One guest's thing id, or nought for every guest.</param>
-	/// <returns>How many guests were set, or -1 for a name that is none of the three.</returns>
+	/// <returns>How many guests were set, or -1 for a name that is none of the four.</returns>
 	internal int SetNeed( string which, int level, int only = 0 )
 	{
 		var set = 0;
@@ -1507,6 +1507,7 @@ public sealed partial class ParkPeople : Entity
 			{
 				case "vomit": peep.Vomit = Math.Clamp( level, Peep.Least, Peep.Most ); break;
 				case "litter": peep.Litter = Math.Clamp( level, Peep.Least, Peep.Most ); break;
+				case "hunger": peep.Hunger = Math.Clamp( level, Peep.Least, Peep.Most ); break;
 				case "prankery": peep.PrankeryIndex = level; break;
 				default: return -1;
 			}
@@ -2737,7 +2738,8 @@ public sealed partial class ParkPeople : Entity
 	/// (0x004c9070, <see cref="ParkState.DaysSinceObjectBuilt"/>); and the bank's balance (FUN_005195d0's
 	/// thing's +0xc, <see cref="ParkState.Balance"/>); and the guests inside the park (FUN_004c9130,
 	/// <see cref="GateGuestCensus"/>) with those of them whose toilet need is over the advisor's level
-	/// (0x004c9290); and the researchers (FUN_004c9960 asked for type 8) and the lab's projects of a feature's
+	/// (0x004c9290), whose thirst is over its row 3's (0x004c93f0) and whose hunger is over its row 4's (0x004c9340), each
+	/// need's whole number taken to its low byte; and the researchers (FUN_004c9960 asked for type 8) and the lab's projects of a feature's
 	/// kind that are not done (0x004ca690, <see cref="ParkResearch.Unfinished"/>), and of a ride's (0x004ca630); and the map's developed cells
 	/// (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and this month's misbehaving kids (FUN_004c94a0 asked with
 	/// nought, <see cref="ParkState.MisbehavingKids"/>); and the guests inside under <see cref="ParkAdvisorMessages.UnhappyBelow"/>
@@ -2760,12 +2762,16 @@ public sealed partial class ParkPeople : Entity
 		// The need is taken as its whole number's low byte, as the original compares it (0x004c9301); with no
 		// advisor there is no level to be over.
 		var toiletNeedOver = State.AdvisorMessages?.ToiletNeedOver ?? 0xff;
-		var (inside, needing, unhappy) = (0, 0, 0);
+		var thirstierThan = State.AdvisorMessages?.ThirstierThan ?? 0xff;
+		var hungrierThan = State.AdvisorMessages?.HungrierThan ?? 0xff;
+		var (inside, needing, unhappy, thirsty, hungry) = (0, 0, 0, 0, 0);
 		foreach ( var peep in _peeps )
 		{
 			if ( !InsideGateCensus( peep.Navigator ) ) continue;
 			++inside;
 			if ( ((int)peep.Toilet & 0xff) > toiletNeedOver ) ++needing;
+			if ( ((int)peep.Thirst & 0xff) > thirstierThan ) ++thirsty;
+			if ( ((int)peep.Hunger & 0xff) > hungrierThan ) ++hungry;
 			if ( ((int)peep.Happiness & 0xff) < ParkAdvisorMessages.UnhappyBelow ) ++unhappy;
 		}
 
@@ -2834,7 +2840,7 @@ public sealed partial class ParkPeople : Entity
 			new ParkAdvisorMessages.StaffTraining( TrainingOf( 0 ), TrainingOf( 1 ), TrainingOf( 2 ), TrainingOf( 3 ), TrainingOf( 4 ) ),
 			State.DevelopedCells(), State.MisbehavingKids.Month, unhappy, State.LitterShare(), State.MisbehavingKids.GotAwayThisMonth,
 			_research?.Unfinished( ItemDescriptionFile.Ride ) ?? 0,
-			ParkStaffPool.Current?.OfKind( ParkStaffPool.Kinds - 1 ).Count() ?? 0 );
+			ParkStaffPool.Current?.OfKind( ParkStaffPool.Kinds - 1 ).Count() ?? 0, thirsty, hungry );
 	}
 
 	/// <summary>

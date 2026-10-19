@@ -1259,7 +1259,7 @@ first (event 10, `0x0054f24e`; not built here, Q454), so there it can be said.
 ### OpenTPW (`ParkAdvisorMessages.ExplainTooltips`, a second topic with `Polled` and an `AgeSection`)
 
 A row of `ParkTopics` and nothing else: the poll, the score by the park's age, the gate, the records, the slots
-and the action are Q312's to Q316's. `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` was counted for 153 rows a round then, and is for 145 since rows 1, 2, 62, 113 and 259 to 262 were built.
+and the action are Q312's to Q316's. `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` was counted for 153 rows a round then; it is counted for the polled rows no topic builds, 108 a round since Q530.
 
 **Predicted first** (`q317/PREDICTION.txt`, `q317/confirm.py stock|control|fresh|nofile|cutoff`; twelve of
 twelve, every number written before any build or run). **The stock park** (four of four): `restored message=282
@@ -4448,6 +4448,67 @@ read: row 83's one response, 230, is sample 227 again with group 85, and row 84'
 `FeaturesFarToToilets.Score` alone (60); what was looked for of their posters is in "Every feature built, and
 more to research", above, with row 80. Not heard in either game.
 
+## Thirsty and hungry guests (messages 3 and 4, and row 85, Q530)
+
+**Rows 3 and 4, messages 3 and 4, `VisitorsThirsty` and `VisitorsHungry`:** polled, category 0, either game mode, one
+copy, three lines in turn (selection 2). Row 3's responses 8 to 10 are **samples 7 to 9** and row 4's 11 to 13 **samples
+10 to 12**: the random gesture chain, model slot 0, **props 13 and 14, the fast-food hat and the spatula** (the table's
+only pair with a second prop but the bowler's), groups 5 and 6 (`advisorrow.py 3 4`). From the shipped park's cursor
+their turns are the two before row 5's: ticks 770 and 771 in Q415's scene, and every 155 on. The transcripts
+(`global-speech-transcripts.tsv`): "lots of your visitors are thirsty maybe you should build some more drinks shops"
+(sample 8), "people are getting hungry and there aren't enough food shops do you think you should build some more"
+(sample 10), and four more in the same vein.
+
+**Their scores, `AdvisorScore_VisitorsThirsty` `0x0059c9d0` and `AdvisorScore_VisitorsHungry` `0x0059ca00`** (named
+2026-10-19): the analyser (`FUN_00519510` on the world, which takes no argument and returns it) is asked
+`Analyser_CountGuestsThirstierThan` `0x004c93f0` (`Analyser_CountGuestsHungrierThan` `0x004c9340`) with the byte
+`[ECX + 0xb0]`, `VisitorsThirsty.ThirstierThan` (`[+0xb8]`, `VisitorsHungry.HungrierThan`), and the count is multiplied
+by `[+0xac]`, `ScorePerThirstyPerson` (`[+0xb4]`, `ScorePerHungryPerson`). The count walks the used thing list for things
+of kind 1 whose cell `FUN_004fa990` passes, the guests inside, and counts each whose float `+0x1a4` (`+0x1a8`), `__ftol`
+and its low byte, is above the key (`CMP AL`, `JBE`: unsigned): the code of row 82's
+`Analyser_CountGuestsNeedingToiletMoreThan` `0x004c9290` (made a function then) with another field. **No door, no
+division by the guests inside and no age is asked.** Shipped 99 and 1 each: with `MinScoreForConsideration` 25, 26
+guests at 100 are needed (the needs are held to 0..100; FileFormats `saves.md`, the guest record).
+
+**Row 85, `FeaturesNotEnoughToilets`, `AdvisorScore_NotEnoughToilets` `0x0059e420`** (defined and named 2026-10-19):
+`mParkClosed` (`FUN_0051a280`); in an open park the toilets' average queue (`FUN_004cca40`) is taken and dropped
+(`FSTP ST0` at `0x0059e444`); either way `XOR EAX,EAX` and `RET` at `0x0059e446`. **Always nought**: neither
+`.AverageQueueLongerThan` nor `.Score` is read, and responses 233 and 234 (samples 231 and 232, "you don't have enough
+bathrooms for a park this size...") are never said.
+
+**Their tags** are rows 5 and 6 of the tag table: key 383, picture 2, strings 9 and 10, the bar's first button of type
+10 (the buy screen, row 73's), no second, thirty seconds. English's string 9 reads "Lots of your visitors are thirsty.
+Maybe you should build some more drinks shops?" (`Language/american`'s "drink shops"), string 10 "People are getting
+hungry and there aren't enough food shops. Do you think you should build some more?". Row 85's group, 87, is not listed:
+nothing says it.
+
+### OpenTPW (`ParkAdvisorMessages.VisitorsThirsty`, `VisitorsHungry`, `NotEnoughToilets`; a topic's `PerThirstyGuest`, `PerHungryGuest`, `AlwaysNought`, `SecondProp`; `ParkFacts.GuestsThirsty`, `GuestsHungry`; tag rows 5 and 6)
+
+`ParkPeople.AdvisorFacts` counts the guests inside over `ThirstierThan` and `HungrierThan` (each key's low byte), each
+need cut to its whole number's low byte, beside row 82's count. Rows 3 and 4 score the count times the key; the poll line
+ends ` thirsty=N/inside over=N` (` hungry=`). A topic's `SecondProp` is the response's `+0x18`, and `PropsOf` answers both.
+Row 85 is a topic that answers nought, so it leaves the `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` census (108 rows a round,
+from 111). The console's `need hunger N` sets every guest's hunger, as `thirst N` the thirst.
+
+**The scenes** (`q530/mkscene.py`): Q415's `ent.TPWS` (93 inside, the entertainer kept) with every guest inside at thirst
+100 (`thirsty.TPWS`, the record's `+509`) or hunger 100 (`hungry.TPWS`, `+426`).
+
+**This game** (`q530/confirm.py thirsty|hungry|control`, on the desktop, the final build): *thirsty* (`run1-thirsty`):
+`poll message=3 row=3 days=33 score=93 threshold=25 tick=770 result=post thirsty=93/96 over=99`, said on that tick
+(`attempt=1 message=3 ... response=8 sample=7 line=0 tick=770`), `Advisor: sample 7 ... wearing 13,14 on model slot 0`,
+tag 5 lettered string 9 (`1-line.png`: the white paper hat with its logo, the red spatula in his gloved right hand, no
+antennae); row 4 on 771 `score=0 ... hungry=0/97`; row 85 on 820 `score=0 ... result=no-score`. *hungry* (`run1-hungry`):
+`poll message=4 ... score=93 ... tick=771 result=post hungry=93/97 over=99`, sample 10, the same props, tag 6. **Main's
+build** on *thirsty* (`control1`): no line of message 3, 4 or 85, nothing said, no tag, to tick 950.
+
+**The original** (`q530/orig/run.sh <file>`, `advisor.py ... 0x3,0x4,0x55 poll` beside `tags.py` and `thingwords.py`
+on guest 34's `+0x1a4` and `+0x1a8`, filmed): *thirsty*: message 3's record from (0, -1, 0, 0) to (770, 0, 1, 0) on
+tick 770, the tag "Lots of your visitors are thirsty. Maybe you should build some more drink shops?", guest 34's thirst
+100.0; *hungry*: message 4's to (771, 0, 1, 0) on 771, its tag, hunger 100.0. In each film the advisor wears the white
+paper hat and holds the red spatula, as ours (`q530/side-by-side.png`). Its live response table holds 13 and 14 for
+responses 8 to 13, as the file's. The stills came after the lines: `loadfile.sh` returns about 16 s after its click.
+No difference was seen.
+
 ## An open park's shut rides (message `0x103`, Q323)
 
 **Row 259:** polled, category 0, either game mode, one copy, three lines in turn. Its responses are 501 to 503,
@@ -4877,17 +4938,15 @@ game run. Row numbers are metadata rows; the rows' keys are in the Advisor.sam s
 
 | Row | Callback | What it scores | State here |
 |---|---|---|---|
-| 3 `VisitorsThirsty` (message 3) | `0x0059c9d0` | the count of park guests whose thirst float `+0x1a4`, cut by `__ftol` to its low byte, is above `VisitorsThirsty.ThirstierThan` (`+0xb0`), times `.ScorePerThirstyPerson` (`+0xac`); the count is `0x004c93f0`, ECX ignored | unbuilt |
-| 4 `VisitorsHungry` (message 4) | `0x0059ca00` | the same with hunger `+0x1a8` (`0x004c9340`), `HungrierThan` `+0xb8`, `ScorePerHungryPerson` `+0xb4` | unbuilt |
-| 85 `FeaturesNotEnoughToilets` | `0x0059e420` | **always nought**: it runs the average toilet queue (`0x004cca40`) and discards it (`FSTP ST0`; `XOR EAX,EAX; RET` at `0x0059e444`), reading neither `.AverageQueueLongerThan` nor `.Score`. Its lines (responses 233-234) are never said by the original | polled, counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; a faithful nought leaves the census |
+| 3 `VisitorsThirsty` (message 3) | `0x0059c9d0` | the count of park guests whose thirst float `+0x1a4`, cut by `__ftol` to its low byte, is above `VisitorsThirsty.ThirstierThan` (`+0xb0`), times `.ScorePerThirstyPerson` (`+0xac`); the count is `0x004c93f0`, ECX ignored | built, Q530 ("Thirsty and hungry guests") |
+| 4 `VisitorsHungry` (message 4) | `0x0059ca00` | the same with hunger `+0x1a8` (`0x004c9340`), `HungrierThan` `+0xb8`, `ScorePerHungryPerson` `+0xb4` | built, Q530 |
+| 85 `FeaturesNotEnoughToilets` | `0x0059e420` | **always nought**: it runs the average toilet queue (`0x004cca40`) and discards it (`FSTP ST0` at `0x0059e444`; `XOR EAX,EAX; RET` at `0x0059e446`), reading neither `.AverageQueueLongerThan` nor `.Score`. Its lines (responses 233-234) are never said by the original | built as a nought, Q530 |
 | 125-127 prank advice | `0x0059f360`, `0x0059f370`, `0x0059f380` | the keys `PrankSbomb.Score`, `PrankLitter.Score`, `PrankBalloon.Score` (`+0x3d4`, `+0x3d8`, `+0x3dc`), 35 each in the shipped file (above the 25 cut) | unbuilt |
 | 167 (message `0xa7`) | `0x0059f9a0` | the constant 10000; posted when the last research project is finished, at `0x00503ee9` in Instant Action and at `0x00503f8d` in Full Simulation once every park of the player's is all researched (`park-engine.md`, "The lab at work") | unbuilt |
 | 168 (message `0xa8`) | `0x0059f9b0` | the constant 9999; nothing found posts it | unbuilt |
 
-- Rows 3 and 4 ask for no door (`0x0051a280` is not called, unlike rows 82, 85 and 86), no guests-inside division and no age: the
-  same shape as row 82's toilet count `0x004c9290`, which `ParkPeople.AdvisorFacts` already builds. With the shipped 99 and 1, if a need
-  tops out at 100 (the original's clamp was not re-read), only a guest whose need truncates to 100 counts, and the score must pass 25, so 26 or more such guests. Selection mode 2, category 0, max 1;
-  row 3 responses 8-10, row 4 responses 11-13.
+- Rows 3 and 4 ask for no door (`0x0051a280` is not called, unlike rows 82, 85 and 86), no guests-inside division and no age:
+  "Thirsty and hungry guests", above, where they are built and run in both games (Q530).
 - Rows 125-127: the post (`0x004ff2c7` to `0x004ff307`) sends the guest's id twice and `id % 3` (`DIV 3` at `0x004ff2f8`) in the
   record's `+0xc`, vtable `0x007007a8`. The receiver `ReceiveMessage` `0x0059b060` arm for message type `0xe` (`0x0059b221`) builds a record
   with the guest's id (message `+8`) and the guest's packed cell (`byte[+7] << 7 + byte[+5] + 1`, `0x0059b25c` to `0x0059b26e`) and

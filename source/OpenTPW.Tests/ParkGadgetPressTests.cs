@@ -718,8 +718,8 @@ public class ParkGadgetPressTests
 	public void TheBarLeavesTheArmWithItsTag()
 	{
 		var (stack, gadget) = AGadget();
-		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 5, ParkTags.NoTag, 1, 0, 0x13, ParkTags.DeclineButton, 30000, 0 ),
-			new ParkTags.Row( 6, ParkTags.NoTag, 1, 0, 4, 0, 30000, 0 )] );
+		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 20, ParkTags.NoTag, 1, 0, 0x13, ParkTags.DeclineButton, 30000, 0 ),
+			new ParkTags.Row( 21, ParkTags.NoTag, 1, 0, 4, 0, 30000, 0 )] );
 		var camcorder = (UI.UiButton)Find( gadget, 0x27 );
 
 		// Erase.
@@ -809,7 +809,7 @@ public class ParkGadgetPressTests
 
 		// An offer of research, and to decline, which is not built.
 		var buttons = Times( "TAG_BAR_BUTTON" );
-		var offer = tags.Said( 5, 0, 7000 )!;
+		var offer = tags.Said( 20, 0, 7000 )!;
 		Frame( stack, false, new Vector2( 1000, 100 ), 7.1f );
 		Assert.IsTrue( stack.ClickAt( 119, 866 ), "the second tag up" );
 		Settle( gadget );
@@ -826,7 +826,7 @@ public class ParkGadgetPressTests
 
 		// mb_locate of the other type, which goes by the item (FUN_004868d0, not read): counted, and the camera left.
 		var looked = ParkOrbitCameraMode.PointOfInterest;
-		var byItem = tags.Said( 6, 13, 7200 )!;
+		var byItem = tags.Said( 21, 13, 7200 )!;
 		Frame( stack, false, new Vector2( 1000, 100 ), 7.3f );
 		Assert.IsTrue( stack.ClickAt( 119, 791 ), "the third tag up" );
 		Settle( gadget );
@@ -859,7 +859,7 @@ public class ParkGadgetPressTests
 	public void TheBuyButtonOpensTheBuyScreenOnItsTabAndTakesItsTagOff()
 	{
 		var (stack, gadget) = AGadget();
-		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 6, ParkTags.NoTag, 1, 0, 0xb, 0, 30000, 0 )] );
+		var tags = gadget.Tags = new ParkTags( [.. ParkTags.Rows, new ParkTags.Row( 21, ParkTags.NoTag, 1, 0, 0xb, 0, 30000, 0 )] );
 		var buttons = Times( "TAG_BAR_BUTTON" );
 		var rows = Times( "TAG_BAR_BUY_ITEM_ROW" );
 
@@ -891,7 +891,7 @@ public class ParkGadgetPressTests
 		// The screen open: a tag of type 0xb picks the sideshows tab on it.
 		Frame( stack, false, new Vector2( 1000, 100 ), 2.6f );
 		Assert.AreEqual( 0, tags.Standing.Count );
-		var second = tags.Said( 6, 0, 3000, item: 1303 )!;
+		var second = tags.Said( 21, 0, 3000, item: 1303 )!;
 		Frame( stack, false, new Vector2( 1000, 100 ), 3.1f );
 		Time.PinWall( 3500 );
 		Assert.IsTrue( stack.ClickAt( 119, 941 ) );

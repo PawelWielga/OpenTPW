@@ -953,7 +953,7 @@ public static class DebugConsole
 				var needSet = needy.SetNeed( needName, (int)Argument( 2, 100 ), (int)Argument( 3, 0 ) );
 
 				Reply( needSet < 0
-					? "need: vomit, litter or prankery, then a level and optionally a guest"
+					? "need: vomit, litter, hunger or prankery, then a level and optionally a guest"
 					: $"need: {needSet} guests are now {needName} {(int)Argument( 2, 100 )}" );
 
 				break;

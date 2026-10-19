@@ -688,6 +688,11 @@ whole list):
   `"admit 52 34"` x45 (thing 27 is the stock entertainer; each command takes about 2.5 s) pauses on 765 with 93 inside,
   then `parkfile.thing_set( ..., guest, 422, '<f', h )` writes each happiness (`q415/mkscene.py`; `parkfile.py -g` counts
   them). **Five of the stock guests on the road walk in by tick 781**, in both games (the original's `inside.py ... 60 30` reads 98 on 773): count 98 inside there. The original says a line before its stills: film it (`record.sh start` in the `POLL`, `q415/orig/run.sh` with `RECORD=`; Q415).
+  **Thirsty or hungry, the same way:** the guest record's thirst is `+509` and its hunger `+426` (floats);
+  `q530/mkscene.py` writes 100 into every guest inside Q415's `ent.TPWS`, and both games say rows 3 and 4 on ticks 770
+  and 771. `loadfile.sh` returns about 16 s after its Load Park click, so a still taken after it misses a line said
+  at the load: read the film (`record.sh frames`), and under `set -o pipefail` wait with `grep -c`, never `| grep -q`,
+  whose early exit fails the pipe on the SIGPIPE (`q530/orig/run.sh`; Q530).
 - **Two crowds from one run, past a hire's 30 days:** a script on `lib/parkrun.py` (`q416/mkscenes.py`) pauses the stock
   park on 1233 (it stops on 1236; 12 inside), gives `fire 28` (the guard), admits 168 and calls `save()`, then admits 32
   more and calls `save()` again: one game, two files, 178 and 210 inside (each `admit` about 2.5 s, so ~9 minutes). The

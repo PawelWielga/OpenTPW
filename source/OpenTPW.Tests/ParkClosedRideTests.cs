@@ -865,6 +865,74 @@ public class ParkClosedRideTests
 	}
 
 	/// <summary>
+	/// What the advisor's rows 3 and 4 read of the park (0x0059c9d0, 0x0059ca00): the guests inside it whose thirst
+	/// (<c>0x004c93f0</c>) or hunger (<c>0x004c9340</c>), cut to a whole number and to its low byte, is over the advisor's
+	/// VisitorsThirsty.ThirstierThan or VisitorsHungry.HungrierThan, 99 each in the shipped file.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a guest outside counted; 99 over 99; the need rounded, not cut; the low byte not taken; the
+	/// two needs or their two levels each other's; the levels nought with no advisor; the toilet's need read for either.</remarks>
+	[TestMethod]
+	public void TheAdvisorsParkFactsCountTheGuestsInsideOverTheThirstAndTheHunger()
+	{
+		var park = Open();
+
+		try
+		{
+			(int Thirsty, int Hungry) Read() => (park.People.AdvisorFacts().GuestsThirsty, park.People.AdvisorFacts().GuestsHungry);
+			var guests = park.People.Peeps;
+			Assert.AreEqual( 13, guests.Count );
+			var (ox, oy) = (-1, -1);
+			for ( var y = 0; y < ParkWorld.MapSize && ox < 0; ++y )
+				for ( var x = 0; x < ParkWorld.MapSize && ox < 0; ++x )
+					if ( !Peep.CountsOn( park.State.Record( x, y ).Type ) ) (ox, oy) = (x, y);
+			Assert.IsTrue( ox >= 0, "a cell that is not the park's" );
+
+			foreach ( var guest in guests )
+			{
+				guest.Navigator.Position = FixedVector.AtCell( 60, 60 );
+				guest.Thirst = 100f;
+				guest.Hunger = 100f;
+				guest.Toilet = 100f;
+			}
+
+			Assert.AreEqual( (0, 0), Read(), "with no advisor there is no level to be over" );
+			var settings = new SettingsFile( "Advisor/Advisor.sam" );
+			park.State.AdvisorMessages = new ParkAdvisorMessages( settings );
+			Assert.AreEqual( (99, 99), (park.State.AdvisorMessages.ThirstierThan, park.State.AdvisorMessages.HungrierThan) );
+			Assert.AreEqual( (13, 13), Read(), "100 is over 99" );
+			foreach ( var guest in guests )
+			{
+				guest.Thirst = 99.99f;
+				guest.Hunger = 99f;
+			}
+
+			Assert.AreEqual( (0, 0), Read(), "99.99 is cut to 99, and 99 is not over 99" );
+			guests[0].Thirst = 100f;
+			guests[1].Thirst = 355f;
+			guests[2].Thirst = 256f;
+			Assert.AreEqual( (1, 0), Read(), "the low byte: 355 is 99, not over, and 256 nought; the hunger is not the thirst" );
+			guests[3].Thirst = 356f;
+			guests[4].Hunger = 100f;
+			guests[5].Hunger = 100.5f;
+			Assert.AreEqual( (2, 2), Read(), "356 is 100" );
+			guests[1].Toilet = 0f;
+			Assert.AreEqual( (2, 2), Read(), "the toilet need is not asked" );
+
+			// Each level is its own key's: the thirst's at 98 counts a guest at 99 thirst, and the hunger's stays.
+			var index = settings.Entries.FindIndex( pair => pair.Key == "VisitorsThirsty.ThirstierThan" );
+			settings.Entries[index] = new SettingsPair( "VisitorsThirsty.ThirstierThan", "98" );
+			Assert.AreEqual( (12, 2), Read(), "every guest at 99.99, 99 cut, is over 98 but the one at 256" );
+			guests[0].Navigator.Position = FixedVector.AtCell( ox, oy );
+			guests[4].Navigator.Position = FixedVector.AtCell( ox, oy );
+			Assert.AreEqual( (10, 1), Read(), "a guest outside the park is neither, the second one thirsty too" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
 	/// What the advisor's row 14 reads of the park (0x0059ce30): the guests inside it under 30 happiness, each one's
 	/// cut to a whole number and to its low byte (<c>FUN_004c9750</c> asked with 30), beside the guests inside.
 	/// </summary>

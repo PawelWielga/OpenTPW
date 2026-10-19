@@ -41,6 +41,10 @@ internal sealed class ParkAdvisorMessages
 	internal const int OpenPark = 1;
 	/// <summary>Message 2, polled: the line about an open park with nothing to ride, scored where neither a ride nor a sideshow stands (0x0059c960).</summary>
 	internal const int ClosePark = 2;
+	/// <summary>Message 3, polled: the line about thirsty guests, scored by how many guests' thirst is over VisitorsThirsty.ThirstierThan (0x0059c9d0).</summary>
+	internal const int VisitorsThirsty = 3;
+	/// <summary>Message 4, polled: the line about hungry guests, scored by how many guests' hunger is over VisitorsHungry.HungrierThan (0x0059ca00).</summary>
+	internal const int VisitorsHungry = 4;
 	/// <summary>Message 5, polled: the line about worn rides in a park with no mechanic, scored by how many rides are worn or broken down (0x0059ca30).</summary>
 	internal const int HireMechanics = 5;
 	/// <summary>Message 6, polled: the line about rides breaking down in a park with no mechanic, scored by how many rides are broken down (0x0059ca80).</summary>
@@ -98,6 +102,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int BuildFeatures = 0x51;
 	/// <summary>Message 0x52, polled: the line about a park with no toilet, scored by the share of the guests inside who need one (0x0059e380).</summary>
 	internal const int NoToilets = 0x52;
+	/// <summary>Message 0x55, polled: the line about too few toilets, whose score is always nought (0x0059e420), so that it is never said.</summary>
+	internal const int NotEnoughToilets = 0x55;
 	/// <summary>Message 0x4e, polled: the line about too few sideshows for the park's size, whose score sets the kinds of ride standing against the kinds of sideshow (0x0059e110).</summary>
 	internal const int BuildMoreSideshows = 0x4e;
 	/// <summary>Message 0x4a, polled: the line about too few shops for the park's size, whose score sets the kinds of shop standing against themselves (0x0059de80).</summary>
@@ -169,7 +175,8 @@ internal sealed class ParkAdvisorMessages
 	/// response's sample, how many lines it rotates (+0x28) and how many copies the slots may hold (+0x20).
 	/// <paramref name="GestureRowLine"/> is the one line whose response names a row of the gesture table
 	/// (the response table's +0x0c), -1 where every line's is the random chain. <paramref name="Prop"/> is what
-	/// he wears for every line of it (the response table's +0x14; each built row's +0x18 is nought).
+	/// he wears for every line of it (the response table's +0x14), and <paramref name="SecondProp"/> what he puts on
+	/// after it (+0x18), nought for none.
 	/// <paramref name="Group"/> is the group of every line of it (the response table's +0x1c), the id of the tag
 	/// a said line leaves (<see cref="ParkTags"/>). <paramref name="Category"/> is the row's +0x08, the
 	/// MessageGroups entry of Advisor.sam the gate reads for it. <paramref name="Polled"/> is whether the row's
@@ -272,6 +279,10 @@ internal sealed class ParkAdvisorMessages
 	/// staff's research could be any at all, at least the section's MonthsIntoGameForConsideration whole months of thirty
 	/// days since mGameTick nought, with a researcher and a researcher to hire, the key's value where the researchers'
 	/// ability added up, in whole per cent of the most, is under the section's SlowerThan; nought otherwise.
+	/// <paramref name="PerThirstyGuest"/> is the score of row 3 (0x0059c9d0): the key's value for each guest inside whose
+	/// thirst is over <see cref="ThirstierThan"/>, shut or open, and <paramref name="PerHungryGuest"/> row 4's (0x0059ca00),
+	/// the same of the hunger over <see cref="HungrierThan"/>.
+	/// <paramref name="AlwaysNought"/> is the score of row 85 (0x0059e420): nought, whatever the park.
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -288,7 +299,8 @@ internal sealed class ParkAdvisorMessages
 		string? MorePranksters = null, string? BusyWithNoEntertainer = null, string? BusyWithNoGuard = null,
 		string? LitterWithNoHandyman = null, bool Filthy = false, string? GotAwayMoreThan = null,
 		string? MostRidesBuilt = null, bool EveryRideBuilt = false, string? SlowResearch = null,
-		string? GotAwayWithAGuard = null );
+		string? GotAwayWithAGuard = null, int SecondProp = 0, bool PerThirstyGuest = false, bool PerHungryGuest = false,
+		bool AlwaysNought = false );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -357,7 +369,8 @@ internal sealed class ParkAdvisorMessages
 	/// (FUN_004c94a0 asked with one); and what
 	/// rows 15 and 16's read besides: the lab's projects of a ride's kind that are not done (0x004ca630, FUN_00503b30 asked
 	/// for kind nought); and what row 17's reads besides: the staff pool's researchers to hire (FUN_00508380 asked for kind
-	/// four: a slot whose mValid is set).
+	/// four: a slot whose mValid is set); and what rows 3 and 4's read: the guests inside whose thirst, or hunger, is over
+	/// <see cref="ThirstierThan"/>, or <see cref="HungrierThan"/> (0x004c93f0, 0x004c9340).
 	/// </summary>
 	internal readonly record struct ParkFacts( bool Closed, int Rides, int Sideshows, int WaitingToOpen,
 		int Shops = 0, int Toilets = 0, int ShopsShut = 0, int SideshowsShut = 0, int ToiletsShut = 0, int RidesShut = 0,
@@ -369,7 +382,7 @@ internal sealed class ParkAdvisorMessages
 		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
 		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
 		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0, int GuestsUnhappy = 0, int LitterShare = 0,
-		int KidsGotAway = 0, int RideProjectsUnfinished = 0, int ResearcherCandidates = 0 )
+		int KidsGotAway = 0, int RideProjectsUnfinished = 0, int ResearcherCandidates = 0, int GuestsThirsty = 0, int GuestsHungry = 0 )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -465,6 +478,10 @@ internal sealed class ParkAdvisorMessages
 	internal const int ResearchHat = 10;
 	/// <summary>The handymen's cap, costume id 7: the prop of every line about their training.</summary>
 	internal const int HandymanCap = 7;
+	/// <summary>The fast-food hat, costume id 13, which rows 3 and 4's lines put on first.</summary>
+	internal const int FastFoodHat = 13;
+	/// <summary>The spatula, costume id 14, which rows 3 and 4's lines put on second, in place of his right hand.</summary>
+	internal const int Spatula = 14;
 	/// <summary>The guards' cap, costume id 6: the prop of every line about guards, and of the pranksters' line.</summary>
 	internal const int GuardCap = 6;
 
@@ -491,6 +508,11 @@ internal sealed class ParkAdvisorMessages
 	[
 		.. DoorTopics,
 		.. ShutTopics,
+
+		// Rows 3 and 4's three responses each put on the fast-food hat and the spatula (docs/exe/advisor-park.md,
+		// "Thirsty and hungry guests").
+		new( VisitorsThirsty, "VisitorsThirsty.ScorePerThirstyPerson", 8, 7, Lines: 3, Prop: FastFoodHat, SecondProp: Spatula, Group: 5, Polled: true, PerThirstyGuest: true ),
+		new( VisitorsHungry, "VisitorsHungry.ScorePerHungryPerson", 11, 10, Lines: 3, Prop: FastFoodHat, SecondProp: Spatula, Group: 6, Polled: true, PerHungryGuest: true ),
 		new( HireMechanics, "StaffHireMechanics1.ScorePerWornRide", 14, 13, Lines: 3, Prop: HardHat, Group: 7, Polled: true, PerWornRideWithNoMechanic: true ),
 		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
@@ -539,6 +561,10 @@ internal sealed class ParkAdvisorMessages
 		// (docs/exe/advisor-park.md, "A park with sideshows and no feature").
 		new( BuildFeatures, "FeaturesBuildFeatures.Score", 226, 224, Lines: 1, Prop: AdvisorProps.ThemeCostume, Group: 83, Polled: true, PerDayWithNoFeature: "FeaturesBuildFeatures.AdditionalPerDay" ),
 		new( NoToilets, "FeaturesNoToilets.Score", 227, 225, Lines: 3, Group: 84, Polled: true, NeedingToiletWithNone: "FeaturesNoToilets" ),
+
+		// Row 85 scores nought whatever the park, so its two lines are never said, as the original's are not
+		// (docs/exe/advisor-park.md, "Thirsty and hungry guests").
+		new( NotEnoughToilets, "FeaturesNotEnoughToilets.Score", 233, 231, Group: 87, Polled: true, AlwaysNought: true ),
 		new( ResearchMoreFeatures, "FeaturesResearchMore.Score", 225, 223, Lines: 1, Prop: ResearchHat, Group: 82, Category: ResearchMore, Polled: true, EveryFeatureBuilt: true, FullSimulationOnly: true ),
 		new( ResearchMoreSideshows, "SideshowsResearchMore.Score", 217, 215, Prop: ResearchHat, Group: 78, Category: ResearchMore, Polled: true, EverySideshowBuilt: true, FullSimulationOnly: true ),
 		new( BuildMoreSideshows, "SideshowsBuildMoreSideshows.Score", 221, 219, Prop: HardHat, Group: 80, Polled: true, SideshowsPerRide: "SideshowsBuildMoreSideshows" ),
@@ -568,7 +594,7 @@ internal sealed class ParkAdvisorMessages
 		foreach ( var topic in ParkTopics )
 		{
 			if ( response >= topic.FirstResponse && response < topic.FirstResponse + topic.Lines )
-				return (topic.Prop, 0);
+				return (topic.Prop, topic.SecondProp);
 		}
 
 		return (0, 0);
@@ -620,6 +646,10 @@ internal sealed class ParkAdvisorMessages
 	internal int WornBelow => Value( "StaffHireMechanics1.PoorerStateThan" );
 	/// <summary>The toilet need a guest is over for row 82's score, the byte its function hands 0x004c9290 ([ECX + 0x2b8]'s low byte).</summary>
 	internal int ToiletNeedOver => Value( "FeaturesNoToilets.NeedingMoreThan" ) & 0xff;
+	/// <summary>The thirst a guest is over for row 3's score, the byte its function hands 0x004c93f0 ([ECX + 0xb0]).</summary>
+	internal int ThirstierThan => Value( "VisitorsThirsty.ThirstierThan" ) & 0xff;
+	/// <summary>The hunger a guest is over for row 4's score, the byte its function hands 0x004c9340 ([ECX + 0xb8]).</summary>
+	internal int HungrierThan => Value( "VisitorsHungry.HungrierThan" ) & 0xff;
 
 	/// <summary>
 	/// The game type the debug console holds the poll to, whatever the player's is: true Instant Action's, false
@@ -822,11 +852,20 @@ internal sealed class ParkAdvisorMessages
 	/// its key's value where the kinds standing are as many as those on offer; row 17's (0x0059cfe0) is its key's value
 	/// in an open park run for its section's months, with a researcher and one to hire, whose research is slower than
 	/// its section's SlowerThan, and nought otherwise;
-	/// the staff rows' and the pranksters' are their sections', each said on its Topic;
+	/// the staff rows' and the pranksters' are their sections', each said on its Topic; rows 3 and 4's (0x0059c9d0,
+	/// 0x0059ca00) are their key's value for each guest inside over the thirst or the hunger, and row 85's (0x0059e420)
+	/// is nought;
 	/// every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
+		// Row 85 runs the toilets' average queue and drops it (FSTP ST0 at 0x0059e444), then answers nought.
+		if ( topic.AlwaysNought ) return 0;
+
+		// Rows 3 and 4 ask neither the door nor how many are inside: the count alone, times the key.
+		if ( topic.PerThirstyGuest ) return _park?.Invoke() is { } thirsty ? thirsty.GuestsThirsty * Value( topic.ScoreKey ) : 0;
+		if ( topic.PerHungryGuest ) return _park?.Invoke() is { } hungry ? hungry.GuestsHungry * Value( topic.ScoreKey ) : 0;
+
 		if ( topic.PerWaitingGuest )
 		{
 			if ( _park?.Invoke() is not { Closed: true } park || (park.Rides < 1 && park.Sideshows < 1) ) return 0;
@@ -1137,6 +1176,10 @@ internal sealed class ParkAdvisorMessages
 			shut = $" shopkinds={plain.ShopKindsStanding} sideshowkinds={plain.SideshowKindsStanding} sincebuild={plain.DaysSinceObjectBuilt}";
 		if ( topic.PerDayWithNoFeature != null && _park?.Invoke() is { } drab )
 			shut = $" sideshowkinds={drab.SideshowKindsStanding} featurekinds={drab.FeatureKindsStanding} sincebuild={drab.DaysSinceObjectBuilt}";
+		if ( topic.PerThirstyGuest && _park?.Invoke() is { } thirsty )
+			shut = $" thirsty={thirsty.GuestsThirsty}/{thirsty.GuestsInside} over={ThirstierThan}";
+		if ( topic.PerHungryGuest && _park?.Invoke() is { } hungry )
+			shut = $" hungry={hungry.GuestsHungry}/{hungry.GuestsInside} over={HungrierThan}";
 		if ( topic.NeedingToiletWithNone != null && _park?.Invoke() is { } crossed )
 			shut = $" closed={(crossed.Closed ? 1 : 0)} toilets={crossed.Toilets} needing={crossed.GuestsNeedingToilet}/{crossed.GuestsInside}";
 		if ( topic.EveryFeatureBuilt && _park?.Invoke() is { } built )

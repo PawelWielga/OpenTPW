@@ -8104,6 +8104,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `control1`); stepped on, a forecast made here on 17004 saved valid 1; the original given the first rained, ran the
   drops to 440 and made its own forecast on 17040, and given the second delivered this game's 83 on 17097
   (`orig/a-load.log`, `orig/c-load.log`, `side-by-side.png`).
+- [x] **Q530. The advisor's rows 3 and 4, thirsty and hungry guests, and row 85.** Q420's piece. Rows 3 and 4
+  (`VisitorsThirsty`, `VisitorsHungry`; `0x0059c9d0`, `0x0059ca00`) score the guests inside whose thirst or hunger,
+  cut to its low byte, is over the key's 99, times the key's 1, and are said in the fast-food hat with the spatula
+  (props 13 and 14, a topic's `SecondProp`), leaving tags 5 and 6; row 85 (`0x0059e420`) answers nought, as the
+  original's, and leaves the unbuilt census (`advisor-park.md`, "Thirsty and hungry guests"). Done 2026-10-19: Q415's
+  scene with every guest inside at thirst 100 polled `score=93 ... tick=770 result=post thirsty=93/96`, said sample 7
+  `wearing 13,14` with tag 5 (`q530/run1-thirsty`), at hunger 100 `score=93 ... tick=771` and sample 10 with tag 6
+  (`run1-hungry`); main's build said nothing (`control1`); the original moved message 3's record on 770 and 4's on
+  771 with the same tags, filmed in the same hat and spatula (`orig/a-load.log`, `orig/b-load.log`, `side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

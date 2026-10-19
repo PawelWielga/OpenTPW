@@ -66,21 +66,19 @@ filed the items that cite it.
   (`q438/orig/b-7-outline.png`, the latch `[0x00816d48]` 1 at the anchor and 0 after) where `Level.PatrolCursor` shows
   `c_noplace` only while red: look when the patrol pointer is next touched. World clicks with a locator or person window
   open (Q424, Q431, Q432): Q444.
-  From the fork watch (2026-10-16, `verify-advisor.md`; `advisor-park.md`, "Rows settled from the bytes"): three
-  polled rows (3, 4 and 85) are settled from the bytes and ready to build, none yet named by an item, and row 86 has
-  one fact. Rows 3 and 4 (`VisitorsThirsty`, `VisitorsHungry`, `0x0059c9d0`, `0x0059ca00`) score the count of park
-  guests whose thirst (`+0x1a4`) or hunger (`+0x1a8`), cut to a low byte, is above the key, times the key
-  (`0x004c93f0`, `0x004c9340`; the shape of row 82's toilet count, which `ParkPeople.AdvisorFacts` builds); shipped 99
-  and 1, so, if a need tops out at 100 (the original's clamp is not re-read), 26 guests at 100 are needed. Row 85
-  (`FeaturesNotEnoughToilets`, `0x0059e420`) is always nought, so it builds as a faithful nought and leaves the
-  `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` census; its lines are never said by the original. The one fact for row 86: it
-  bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no handyman. Row 291's response 551
-  does not exist (a raised row 291 would be silent; nothing found posts it). Rows 125 to 127 are Q228's, rows 167 and
-  168 Q703's. Not run.
+  From Q530 (`advisor-park.md`, "Thirsty and hungry guests"): the advisor's rows 3 and 4 are built and said in both
+  games, in the fast-food hat with the spatula, and row 85 answers nought, as the original's; the rest of this item is
+  the patrol edges' red, the quick right click and `MonthsSinceTheFirstSweep`'s copy, above. In no game run: a need
+  that rose to 100 on its own (written into the file), Full Simulation (not asked: both rows' `+0x0c` is 2, either
+  mode's), the other three themes. From the fork watch (2026-10-16, `verify-advisor.md`): row 86 has one fact for
+  whoever builds rows 86 to 89: it bounds its filth by `FeaturesDirtyToilets3.FilthierThan` too, after asking for no
+  handyman. Row 291's response 551 does not exist (a raised row 291 would be silent; nothing found posts it). Rows 125
+  to 127 are Q228's, rows 167 and 168 Q703's.
   From Q528 (`saves.md`, "OpenTPW's writer, the weather thing"): the weather thing is written from the running park, so
   the original loading a file this game writes runs on with its weather (it rained, and delivered this game's
   forecast on its own clock); a load here still reads only the wind (Q529). The managers' fields Q241j names are all
-  written now; the rest of this item is the pieces above (the advisor's rows, the patrol edges, the quick right click).
+  written now; the rest of this item is the pieces above (the advisor's rows, built since, Q530; the patrol edges, the
+  quick right click).
   In no game run: snow (only hallow snows), a forced quality held against a delivery (`mOverridden` is never set),
   Full Simulation (not asked: the weather is either mode's), the other three themes.
   From Q526 (`saves.md`, "OpenTPW's writer, the calendar's fields"): the park clock's month and day are written as the
