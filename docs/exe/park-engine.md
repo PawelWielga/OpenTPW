@@ -1264,9 +1264,10 @@ projects, by kind [11,5,3,20,9], 13 items with no tier left to research, the kin
 outputs [49,6,14,6,4]`. Every item is taken as loaded. **The five kinds' efforts and outputs are made as
 `FUN_00503330` makes them** (`ParkResearch.FreshKinds`, Q350; a loaded park's are its file's,
 `ParkWorld.ResearchKinds`), for the advisor's row 76, which reads the sideshows' (`advisor-park.md`, "Every
-sideshow built, and more to research"). **Not made: each kind's current project and highest group, `mWorkLoad`
-beyond its use in the outputs, `mMostExpensiveProject` and `mLabActive`**, which nothing here reads; nothing
-researches, and the event's upgrade project is not made.
+sideshow built, and more to research"). **Each kind's current project and highest group are made as
+`Lab_SetupKinds` makes them** (Q701: the first open project of the kind at or under group 1, 4, 41, 46, 17 and 0
+in Lost Kingdom, each group 1), and `mWorkLoad` is `Research.StartingWorkLoad`; **not made: `mMostExpensiveProject`
+and `mLabActive`**, which nothing here reads.
 
 **Predicted first** (`q349/PREDICTION.txt`). The test pins the 48 projects and the 70 control records of
 Alexah's file, in order. **This game** (`q349/confirm.py`; a player folder with no `gms.dat`, so a fresh Full
@@ -1301,7 +1302,7 @@ Not heard in either game.
 
 ### The lab at work: the spending, a project finished, the end of research
 
-Q245, read in the private Ghidra copy (lane B, 2026-10-18); nothing built, neither game run. The lab is the
+Q245, read in the private Ghidra copy (lane B, 2026-10-18); built and run in both games by Q701 (below). The lab is the
 thing above. In memory a project is 20 bytes from `+0xc` (`+0` the item's word, `+4` `mCat` a dword, `+8` the
 group's byte, `+9` the upgrade level's, `+0xc` `mCost`, `+0x10` `mResearchDone`, both floats) and a kind 16 bytes
 from `+0x140c` (`+0` effort, `+4` output, `+8` current project, `+0xc` highest group, a byte); `mNumProjects`
@@ -1377,8 +1378,37 @@ first on tick 760 as Q134 counted them):
 Dino Karts (1150) researched on the 95th hand-out, tick 2640, with the rides' group raised to 2; Stone Head
 (1414) on the 162nd, tick 3980; Laughing Hyenas (1304) on the 384th, tick 8420; Fries (1212) on the 496th, tick 10660,
 its float sum landing on 450 to a rounding; the last of the 24, Super Toilet (1419), on the 1177th, tick 24280, about twelve
-minutes in, and with it row 167 and the End. `labsim.py` takes `ResearchTech[5..]` as nought, which moves only
-when rows 133 to 136 are posted: no Easymode project is above group 4. Not run in either game.
+minutes in, and with it row 167 and the End. `labsim.py` takes `ResearchTech[5..]` as nought, as the executable's
+image holds them (`0x00785550` on, read in Ghidra), which moves only when rows 133 to 136 are posted: no Easymode
+project is above group 4. **The precision is the sweep's 53-bit** (the control word `0x27f` read in the running
+park, `advisor-park.md`, q343): `labsim.py --fpu 53`, its default, shares in doubles and compares the double sum
+before the float store; `--fpu 24` gives the same 24 hand-outs, Fries included.
+
+**The original, stock Easymode left alone** (Q701, `q701/orig/`, `labread.py` polling the live lab; its park
+clock ran 1.4 times real time, so only ticks are compared): the file's lab on entering; Dino Karts finished on
+tick 2920 at exactly 600 (594 on 2918: 280 ticks, fourteen hand-outs, lost to the researcher's rest), the rides'
+current project 1 to 2 and their highest group 1 to 2 on the same sweep; Stone Head on 4660 at 250.5, the
+features' current 8 to 9, no raise; Mayan Spinner (1108) on 5000 at 504. On tick 5526 its buy screen lists
+DinoKarts at $6500 and Mayan Spinner at $750, each with the recently researched star (`orig/o-buy-rides.png`).
+
+**OpenTPW** (Q701; `ParkResearch.SpendPoints`, one lab the level owns, which the buy list reads and
+`StaffBehaviour.Lab` spends into): the share in doubles stored as a float, the double sum compared with the cost
+before its float store, the control record's flag and tier, `LabProject_MakeNextUpgrade`'s project appended (the
+table held at 256, where the original writes past it), `Lab_RaiseHighestGroup` against `ResearchTech[highest +
+1]` (`ParkResearch.GroupOpensAt`), `Lab_PickNextProject` with kind 4's researched and unlocked test, all as above.
+`ParkWorld` reads each kind's current project and highest group and `mWorkLoad`, and the park file is written
+with the lab's projects, kinds and `mNumProjects` and each control's flag and tier (`ParkWorld.PutLab`). Counted
+where the original sends them: message `0x11` to the advisor and to the analyser (`RESEARCH_FINISHED_TO_THE_ADVISOR`,
+`_ANALYSER`; Q702), a ride's to the challenges (`_CHALLENGES`), a raise with work left
+(`RESEARCH_GROUP_TO_THE_ADVISOR`; Q702) and the end (`RESEARCH_ALL_DONE`; Q703). The console's `research` prints the
+lab. **In the running game** (`q701/run2/`, the final build; `run1/` the same on the build before a comment): the
+file's lab on entering, the first hand-out on 760, Dino Karts finished on the 95th hand-out on tick 3020 (2980 in
+run1), at 600, the rides on group 2 and project 2; its row on the buy list's rides tab where it had none on hand-out
+60, picked by a click and put down on (69,25) for 6500 (`2-after-rides-tab.png`, `5-dino-karts-built.png`; beside
+the original's list, `q701/side-by-side.png`); Stone Head on the 162nd, tick 4760 (4620), at 250.5, the features on
+project 9. **The ticks between the two games are the researcher's rest**, not the lab: ours set off on 2199 (2210)
+and ended on 2578 (2553), nineteen (seventeen) hand-outs missed against the original's fourteen, its rest from about
+2290, so each finish falls on the same hand-out at a different tick (Q549).
 
 ### Entering and leaving first person: a click on the ground
 

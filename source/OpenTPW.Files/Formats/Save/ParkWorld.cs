@@ -1795,11 +1795,11 @@ public sealed partial class ParkWorld : IParkInitialState
 
 	/// <summary>
 	/// One of the lab's five kinds of research (FileFormats <c>saves.md</c>, "The research lab"; a kind is a
-	/// project's <c>mCat</c>): the effort the kind is given, 0 to 100, and its output, its share of the lab's
-	/// work load by that effort (<c>FUN_00503330</c>). The kind's current project and highest group follow them
-	/// in the file and are not read.
+	/// project's <c>mCat</c>): the effort the kind is given, 0 to 100, its output, its share of the lab's
+	/// work load by that effort (<c>FUN_00503330</c>), the index of the project it is working on (-1 for none) and
+	/// the highest group of its projects open to it.
 	/// </summary>
-	public readonly record struct ResearchKind( int Effort, int Output );
+	public readonly record struct ResearchKind( int Effort, int Output, int CurrentProject = -1, int HighestGroup = 1 );
 
 	/// <summary>The lab's five kinds' records, in the file's order; none where the file holds no lab.</summary>
 	public IReadOnlyList<ResearchKind> ResearchKinds { get; private set; } = [];
@@ -1816,7 +1816,77 @@ public sealed partial class ParkWorld : IParkInitialState
 	private ResearchKind[] ReadResearchKinds( int start )
 		=> Enumerable.Range( 0, ResearchKindCount )
 			.Select( kind => start + ResearchKindsAt + kind * ResearchKindSize )
-			.Select( at => new ResearchKind( ReadInt32At( at ), ReadInt32At( at + 4 ) ) ).ToArray();
+			.Select( at => new ResearchKind( ReadInt32At( at ), ReadInt32At( at + 4 ), ReadInt32At( at + 8 ), ReadByteAt( at + 12 ) ) ).ToArray();
+
+	/// <summary>The lab's <c>mWorkLoad</c>, after <c>mNumProjects</c>; nought where the file holds no lab.</summary>
+	public int ResearchWorkLoad { get; private set; }
+
+	/// <summary>Where <c>mWorkLoad</c> sits in the lab's record.</summary>
+	private const int ResearchWorkLoadAt = 4181;
+
+	/// <summary>Where the lab's record begins in the payload, or -1 where the file holds none.</summary>
+	public int ResearchLabAt { get; private set; } = -1;
+
+	/// <summary>
+	/// The lab and the object controls' research as the running park has them, for <see cref="PutLab"/>: the
+	/// projects in the table's order, the five kinds, and each item's researched flag and tier.
+	/// </summary>
+	public sealed record WrittenLab( IReadOnlyList<ResearchProject> Projects, IReadOnlyList<ResearchKind> Kinds,
+		IReadOnlyDictionary<int, (bool Researched, int Tier)> Controls );
+
+	/// <summary>
+	/// Writes the lab over its record in <paramref name="body"/> (FileFormats <c>saves.md</c>, "The research lab"):
+	/// each used project's sixteen bytes, each kind's thirteen and <c>mNumProjects</c>; the work load, the dearest
+	/// project, <c>mLabActive</c> and the unused projects stay the file's. Then each object control's researched flag
+	/// (<c>+0x10</c>) and tier (<c>+0x14</c>) for the items <paramref name="lab"/> answers.
+	/// </summary>
+	/// <returns>How many projects were written, or -1 where the file holds no lab.</returns>
+	public int PutLab( byte[] body, WrittenLab lab )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+		ArgumentNullException.ThrowIfNull( lab );
+
+		for ( var i = 0; i < ObjectControlRecords.Count && _controlsAt >= 0; ++i )
+		{
+			if ( !lab.Controls.TryGetValue( ObjectControlRecords[i].ItemId, out var control ) )
+				continue;
+
+			var at = _controlsAt + (i * ObjectControlSize);
+			body[at + 0x10] = control.Researched ? (byte)1 : (byte)0;
+			PutInt32( body, at + 0x14, control.Tier );
+		}
+
+		if ( ResearchLabAt < 0 )
+			return -1;
+
+		var projects = Math.Min( lab.Projects.Count, ResearchProjectSlots );
+
+		for ( var i = 0; i < projects; ++i )
+		{
+			var at = ResearchLabAt + ResearchProjectsAt + i * ResearchProjectSize;
+			var project = lab.Projects[i];
+
+			System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian( body.AsSpan( at ), (ushort)project.ItemId );
+			PutInt32( body, at + 2, project.Category );
+			body[at + 6] = (byte)project.Group;
+			body[at + 7] = (byte)project.UpgradeLevel;
+			System.Buffers.Binary.BinaryPrimitives.WriteSingleLittleEndian( body.AsSpan( at + 8 ), project.Cost );
+			System.Buffers.Binary.BinaryPrimitives.WriteSingleLittleEndian( body.AsSpan( at + 12 ), project.Done );
+		}
+
+		for ( var kind = 0; kind < Math.Min( lab.Kinds.Count, ResearchKindCount ); ++kind )
+		{
+			var at = ResearchLabAt + ResearchKindsAt + kind * ResearchKindSize;
+
+			PutInt32( body, at, lab.Kinds[kind].Effort );
+			PutInt32( body, at + 4, lab.Kinds[kind].Output );
+			PutInt32( body, at + 8, lab.Kinds[kind].CurrentProject );
+			body[at + 12] = (byte)lab.Kinds[kind].HighestGroup;
+		}
+
+		PutInt32( body, ResearchLabAt + ResearchProjectCountAt, projects );
+		return projects;
+	}
 
 	/// <summary>The model number of the research lab, the thing the header's <c>mResearchLab</c> names.</summary>
 	private const int ResearchLabModel = 14;
@@ -2149,8 +2219,10 @@ public sealed partial class ParkWorld : IParkInitialState
 				AdvisorAt = start;
 			else if ( model == ResearchLabModel )
 			{
+				ResearchLabAt = start;
 				ResearchProjects = ReadResearchProjects( start );
 				ResearchKinds = ReadResearchKinds( start );
+				ResearchWorkLoad = ReadInt32At( start + ResearchWorkLoadAt );
 			}
 			else if ( model == AnalyserModel )
 			{

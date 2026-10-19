@@ -9219,6 +9219,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   original's frames), and takes the gadget's 1024ths (`ParkGadget.GaugeUnits`). Every guest at 70, 30 and 0: ours
   69.5%, 29.5%, 0% (`UI: meter 0x1f at 706 of 1024`, 296, 0), the original 67.9%, 28.6%, 0% (`q244/side-by-side.png`);
   `UiMeterTests`, 9 of 9 bugs put back caught. The mean's fraction stays Q459's.
+- [x] **Q701. The lab spends a researcher's points and finishes a project.** From Q245 (`park-engine.md`, "The lab
+  at work"). Replace the count `RESEARCH_POINTS_TO_THE_LAB` (`StaffBehaviour.Research`) with `Lab_SpendPoints`'s
+  share-out (the kinds with an open project, effort / their sum × `mWorkLoad` × ability × 0.01, a float), the finish
+  (the control record's researched flag and tier, `ParkResearch.IsResearched` and the buy list following), the next
+  upgrade appended (`LabProject_MakeNextUpgrade`), the group raise against `ResearchTech[highest + 1]` and the next
+  project's pick. `ParkWorld` reads each kind's current project and highest group and the lab's `mWorkLoad`
+  (FileFormats `saves.md` has their bytes). Messages to the advisor, the analyser and the end are Q702 and Q703:
+  count them where they would go. Confirm in stock Easymode with its one researcher, predicted from `lib/labsim.py`:
+  Dino Karts researched on the 95th hand-out (tick 2640 if he never rests; later by his first break, near tick 2230) (log and census), then bought from the buy list
+  (photograph); Stone Head on the 162nd. A test with values a wrong share or a wrong group index gets wrong.
+  **Done (2026-10-19, lane A):** `ParkResearch.SpendPoints` and the lab's handler, one lab shared by the level, the
+  people and the buy list; the file's kinds and work load read and the lab written back (`ParkWorld.PutLab`). In the
+  running game (`q701/run2`, the final build) Dino Karts finished on the 95th hand-out, tick 3020, at 600, the rides
+  on group 2; its row on the rides tab, picked and put down for 6500; Stone Head on the 162nd, tick 4760, at 250.5.
+  The original (`q701/orig`, `labread.py`): Dino Karts on its 95th, tick 2920, Stone Head on 4660; the ticks part by
+  the rest (Q549).
+  `ParkLabTests` pins labsim's 24 finishes; mutate.py: 25 of 25 bugs fail a test (two after a test was added).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

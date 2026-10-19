@@ -297,19 +297,20 @@ public class ParkResearchTests
 		var data = GameData.Required();
 		FileSystem = data;
 		var shipped = ShippedPark( data );
-		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 49 ), new( 15, 6 ), new( 30, 14 ), new( 25, 11 ), new( 0, 0 ) }, shipped.ResearchKinds.ToArray() );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 49, 1 ), new( 15, 6, 20 ), new( 30, 14, 22 ), new( 25, 11, 8 ), new( 0, 0 ) }, shipped.ResearchKinds.ToArray() );
 
 		var catalogue = new ParkItemCatalogue( "jungle", data );
 		var fresh = new FreshPark( "jungle", new ParkBalance( "jungle", easyMode: false ), catalogue, data );
-		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 49 ), new( 15, 6 ), new( 30, 14 ), new( 15, 6 ), new( 10, 4 ) }, fresh.ResearchKinds.ToArray() );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 49, 4 ), new( 15, 6, 41 ), new( 30, 14, 46 ), new( 15, 6, 17 ), new( 10, 4, 0 ) }, fresh.ResearchKinds.ToArray() );
 		StringAssert.EndsWith( fresh.Census(), "the kinds' efforts [100,15,30,15,10] and outputs [49,6,14,6,4]" );
 
 		// The shipped park's efforts make the shipped park's outputs, so the rule is the file's own.
-		CollectionAssert.AreEqual( shipped.ResearchKinds.ToArray(), ParkResearch.FreshKinds( [100, 15, 30, 25, 0], 85 ).ToArray() );
-		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 28 ), new( 100, 28 ), new( 100, 28 ) }, ParkResearch.FreshKinds( [100, 250, -1], 85 ).ToArray(), "an effort is held to 100, a negative one too: the compare is unsigned" );
-		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 99, 49 ), new( 100, 50 ) }, ParkResearch.FreshKinds( [99, 100], 100 ).ToArray() );
-		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 0, 0 ), new( 0, 0 ) }, ParkResearch.FreshKinds( [0, 0], 85 ).ToArray(), "no effort at all" );
-		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 1, 28 ), new( 2, 56 ) }, ParkResearch.FreshKinds( [1, 2], 85 ).ToArray(), "33 and 66 per cent of 85, each a whole number's" );
+		CollectionAssert.AreEqual( shipped.ResearchKinds.Select( kind => (kind.Effort, kind.Output) ).ToArray(),
+			ParkResearch.FreshKinds( [100, 15, 30, 25, 0], 85 ).Select( kind => (kind.Effort, kind.Output) ).ToArray() );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 100, 28 ), new( 100, 28 ), new( 100, 28 ) }, ParkResearch.FreshKinds( [100, 250, -1], 85 ).Select( kind => kind with { CurrentProject = -1, HighestGroup = 1 } ).ToArray(), "an effort is held to 100, a negative one too: the compare is unsigned" );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 99, 49 ), new( 100, 50 ) }, ParkResearch.FreshKinds( [99, 100], 100 ).Select( kind => kind with { CurrentProject = -1, HighestGroup = 1 } ).ToArray() );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 0, 0 ), new( 0, 0 ) }, ParkResearch.FreshKinds( [0, 0], 85 ).Select( kind => kind with { CurrentProject = -1, HighestGroup = 1 } ).ToArray(), "no effort at all" );
+		CollectionAssert.AreEqual( new ParkWorld.ResearchKind[] { new( 1, 28 ), new( 2, 56 ) }, ParkResearch.FreshKinds( [1, 2], 85 ).Select( kind => kind with { CurrentProject = -1, HighestGroup = 1 } ).ToArray(), "33 and 66 per cent of 85, each a whole number's" );
 
 		var research = new ParkResearch( shipped.ObjectControlRecords, catalogue, shipped.ResearchProjects, shipped.ResearchKinds );
 		// Instant Action's Lost Kingdom: six researchers of the top grade's 20 are the most, 120.

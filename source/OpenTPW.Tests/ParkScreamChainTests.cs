@@ -790,6 +790,7 @@ public class ParkScreamChainTests
 		public IReadOnlyList<ParkWorld.ObjectControl> ObjectControlRecords => source.ObjectControlRecords;
 		public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects => source.ResearchProjects;
 		public IReadOnlyList<ParkWorld.ResearchKind> ResearchKinds => source.ResearchKinds;
+		public int ResearchWorkLoad => source.ResearchWorkLoad;
 	}
 
 	/// <summary>

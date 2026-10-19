@@ -78,7 +78,8 @@ public static class ParkFileWriter
 	/// <see cref="Balance"/> is written and the rest are the file's. <see cref="Calendar"/> is the park clock's
 	/// <c>mMonthAtLastUpdate</c> (nought-based) and <c>mDayAtLastUpdate</c> (<see cref="ParkWorld.PutCalendar"/>);
 	/// the file's where it is null. <see cref="Weather"/> is the weather thing's fields (<see cref="ParkWorld.PutWeather"/>);
-	/// the file's where it is null.
+	/// the file's where it is null. <see cref="Lab"/> is the research lab and the object controls' researched flags and
+	/// tiers (<see cref="ParkWorld.PutLab"/>); the file's where it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -95,7 +96,7 @@ public static class ParkFileWriter
 		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null, long? ParkLastOpened = null, uint? RandomSeed = null,
 		(int ForceStrike, IReadOnlyList<ParkWorld.StrikeRecord> Records)? Strikes = null,
 		ParkWorld.EconomyState? Economy = null, (int Month, int Day)? Calendar = null,
-		ParkWorld.WeatherState? Weather = null );
+		ParkWorld.WeatherState? Weather = null, ParkWorld.WrittenLab? Lab = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -261,6 +262,9 @@ public static class ParkFileWriter
 
 		if ( running.Weather is { } weather )
 			loaded.PutWeather( body, weather );
+
+		if ( running.Lab is { } lab )
+			loaded.PutLab( body, lab );
 
 		if ( running.Arrival is { } arrival )
 			loaded.PutArrival( body, arrival.TimeSig, arrival.PeopleOnBus, arrival.Offloading, arrival.CurrentVehicle, arrival.Vehicles );

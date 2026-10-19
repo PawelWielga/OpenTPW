@@ -4008,8 +4008,8 @@ used projects from the file, `ParkResearch.Unfinished( kind )` counts those not 
 `ParkPeople.AdvisorFacts` hands the score the researchers on the staff and the features' count. The poll line
 ends ` researchers=N kinds=K/T unfinished=N`. `ParkTags.Rows` lists row 82.
 
-**The lab's projects are the file's, and stay so**: nothing here researches (`ParkResearch`), so a project is
-never finished and a kind never comes on offer. **A park made with no file has the projects the original's
+**The lab's projects are the file's at the load, and the researchers' hand-outs finish them** (Q701,
+`park-engine.md`, "The lab at work"), so a kind comes on offer as its projects are researched. **A park made with no file has the projects the original's
 world setup gives it** (Q349; `park-engine.md`, "A fresh world's research lab"): 48 in Lost Kingdom, 20 of them
 features', so the row speaks in the one kind of park whose game it is, on tick 50 of a fresh one with a
 researcher hired and all eight kinds of feature built.

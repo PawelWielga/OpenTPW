@@ -1,9 +1,9 @@
 namespace OpenTPW;
 
 /// <summary>
-/// Which items the running park has researched, and to which upgrade tier - the researched flag and tier of each
-/// of <c>CControlManager</c>'s records (<c>+0x10</c>, <c>+0x14</c>), which the buy list asks before it lists an item
-/// (<c>0x004ab023</c>; <c>docs/exe/hud.md</c>, "What the buy list actually filters on").
+/// The running park's research lab and which items it has researched, to which upgrade tier - the researched flag and
+/// tier of each of <c>CControlManager</c>'s records (<c>+0x10</c>, <c>+0x14</c>), which the buy list asks before it
+/// lists an item (<c>0x004ab023</c>; <c>docs/exe/hud.md</c>, "What the buy list actually filters on").
 ///
 /// <para>
 /// <b>At a park load the save's word is the flag</b>: world setup seeds every catalogued item researched when its
@@ -13,9 +13,11 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// <b>Research completing is not built</b> (<c>FUN_00504630</c>, which sets the flag and the tier): this game has no
-/// research, and nothing here changes after the load or after a fresh world is made (<see cref="FreshLab"/>), the lab's projects (<see cref="Unfinished"/>) and its kinds' outputs (<see cref="Rate"/>) included. The points a researcher would hand the lab are counted where
-/// the original hands them, <c>RESEARCH_POINTS_TO_THE_LAB</c> in <see cref="StaffBehaviour"/>.
+/// <b>The lab at work</b> (<c>docs/exe/park-engine.md</c>, "The lab at work"): a researcher's hand-out is
+/// <see cref="SpendPoints"/>, a project reaching its cost marks its item researched, and the lab appends the item's
+/// next upgrade, raises the kind's highest group and picks the kind's next project. What a finished project sends the
+/// advisor, the park analyser and the challenge manager, a group's raise to the advisor and the end of research are
+/// counted where the original sends them.
 /// </para>
 /// </summary>
 public sealed class ParkResearch
@@ -28,18 +30,45 @@ public sealed class ParkResearch
 	/// <inheritdoc cref="FromSave"/>
 	public int Seeded { get; }
 
-	private readonly IReadOnlyList<ParkWorld.ResearchProject> _projects;
+	private readonly List<ParkWorld.ResearchProject> _projects;
+
+	private readonly ParkWorld.ResearchKind[] _kinds;
+
+	private readonly Dictionary<int, ParkItemCatalogue.Item> _catalogue = [];
+
+	private readonly int[] _groupOpensAt;
+
+	/// <summary>The lab's <c>mWorkLoad</c> (<c>+0x1460</c>), the file's: no screen here changes it.</summary>
+	public int WorkLoad { get; }
+
+	/// <summary>How many hand-outs the lab has had since the park was entered, for the log.</summary>
+	public int HandOuts { get; private set; }
+
+	/// <summary>
+	/// Whether the player has unlocked an item with a golden-ticket cost (<c>FUN_004d4b70</c>), which a project of
+	/// kind 4 asks of the item it upgrades. Null where nobody is playing: nothing is unlocked.
+	/// </summary>
+	public Func<int, bool>? Unlocked { get; set; }
 
 	/// <param name="records">The save's records, <see cref="ParkWorld.ObjectControlRecords"/>.</param>
-	private readonly IReadOnlyList<ParkWorld.ResearchKind> _kinds;
-
 	/// <param name="projects">The save's lab's projects, <see cref="ParkWorld.ResearchProjects"/>; none where no file gave any.</param>
 	/// <param name="kinds">The save's lab's kinds' records, <see cref="ParkWorld.ResearchKinds"/>; none where no file gave any.</param>
+	/// <param name="workLoad">The lab's <c>mWorkLoad</c>, <see cref="ParkWorld.ResearchWorkLoad"/>.</param>
+	/// <param name="groupOpensAt">
+	/// The share done, in whole per cent, at which each highest group opens the next: <see cref="GroupOpensAt"/>.
+	/// Missing entries are nought, as the executable's image holds them.
+	/// </param>
 	public ParkResearch( IEnumerable<ParkWorld.ObjectControl> records, ParkItemCatalogue catalogue,
-		IReadOnlyList<ParkWorld.ResearchProject>? projects = null, IReadOnlyList<ParkWorld.ResearchKind>? kinds = null )
+		IReadOnlyList<ParkWorld.ResearchProject>? projects = null, IReadOnlyList<ParkWorld.ResearchKind>? kinds = null,
+		int workLoad = 0, IReadOnlyList<int>? groupOpensAt = null )
 	{
-		_projects = projects ?? [];
-		_kinds = kinds ?? [];
+		_projects = [.. projects ?? []];
+		_kinds = [.. kinds ?? []];
+		WorkLoad = workLoad;
+		_groupOpensAt = new int[MostGroup];
+
+		for ( var highest = 0; highest < _groupOpensAt.Length && highest < (groupOpensAt?.Count ?? 0); ++highest )
+			_groupOpensAt[highest] = groupOpensAt![highest];
 
 		foreach ( var record in records )
 		{
@@ -49,25 +78,37 @@ public sealed class ParkResearch
 
 		foreach ( var item in catalogue.All )
 		{
+			_catalogue.TryAdd( item.Id, item );
+
 			if ( _items.TryAdd( item.Id, (item.ResearchCost == 0, 0) ) )
 				++Seeded;
 		}
-
 	}
 
 	/// <summary>How many items are researched and where their flags came from, for the log.</summary>
 	public string Summary => $"Research: {_items.Values.Count( entry => entry.Researched )} of {_items.Count} items researched, "
-		+ $"{FromSave} from the save's records and {Seeded} seeded from their files";
+		+ $"{FromSave} from the save's records and {Seeded} seeded from their files; the lab {_projects.Count} projects, "
+		+ $"{_projects.Count( IsDone )} done, work load {WorkLoad}, the kinds' current projects "
+		+ $"[{string.Join( ",", _kinds.Select( kind => kind.CurrentProject ) )}] and highest groups "
+		+ $"[{string.Join( ",", _kinds.Select( kind => kind.HighestGroup ) )}]";
 
 	/// <summary>Whether the item is researched - the flag the buy list lists by. An item nobody knows is not.</summary>
 	public bool IsResearched( int itemId ) => _items.TryGetValue( itemId, out var entry ) && entry.Researched;
 
+	/// <summary>The lab's projects as they stand, in the table's order.</summary>
+	public IReadOnlyList<ParkWorld.ResearchProject> Projects => _projects;
+
+	/// <summary>The lab's five kinds as they stand.</summary>
+	public IReadOnlyList<ParkWorld.ResearchKind> Kinds => _kinds;
+
 	/// <summary>
 	/// How many of the lab's projects of <paramref name="kind"/>, a project's <c>mCat</c>, are not done: the
-	/// points put to them are under their cost (<c>FUN_00503b30</c>). They are the file's, as nothing here
-	/// researches.
+	/// points put to them are under their cost (<c>FUN_00503b30</c>).
 	/// </summary>
-	public int Unfinished( int kind ) => _projects.Count( project => project.Category == kind && project.Done < project.Cost );
+	public int Unfinished( int kind ) => _projects.Count( project => project.Category == kind && !IsDone( project ) );
+
+	/// <summary>A project is done once its points are at or over its cost; a done project stays in the table.</summary>
+	private static bool IsDone( ParkWorld.ResearchProject project ) => !(project.Done < project.Cost);
 
 	/// <summary>
 	/// How much of the lab's work a kind of research is getting from the researchers on the staff
@@ -78,23 +119,323 @@ public sealed class ParkResearch
 	/// The outputs are the file's or the fresh world's, as no screen here changes a kind's effort.
 	/// </summary>
 	public int Rate( int kind, int ability, int most )
-		=> most == 0 || kind < 0 || kind >= _kinds.Count ? 0
+		=> most == 0 || kind < 0 || kind >= _kinds.Length ? 0
 			: (int)((uint)_kinds[kind].Output * ((uint)(ability * 100) / (uint)most) / 100);
 
 	/// <summary>
-	/// A fresh world's five kinds' records (<c>FUN_00503330</c>): each kind's effort is its
+	/// The highest group a kind's raise stops below (<c>0x00503c2a</c>): the loop leaves at a highest group over 6.
+	/// </summary>
+	public const int MostGroup = 7;
+
+	/// <summary>How many projects the lab's table holds (<c>FUN_00502dc0</c>).</summary>
+	public const int ProjectSlots = 256;
+
+	/// <summary>
+	/// The share done at which each highest group opens the next, indexed by the highest group: the dword at
+	/// <c>0x00785540 + 4 * highest</c>, which is <c>ResearchTech[highest + 1].PercentageForThisTech</c> (slot 317 is
+	/// <c>ResearchTech[0]</c>, <c>0x0078553c</c>). <c>Standard.sam</c> sets the first five; the rest are nought in the
+	/// executable's image.
+	/// </summary>
+	public static int[] GroupOpensAt( ParkBalance? balance )
+		=> [.. Enumerable.Range( 1, MostGroup ).Select( tech => balance?.Int( $"ResearchTech[{tech}].PercentageForThisTech" ) ?? 0 )];
+
+	/// <summary>A project finished by a hand-out, for the log and the tests.</summary>
+	/// <param name="Project">Its index in the table.</param>
+	/// <param name="Raised">The kind's highest group after the raise, or -1 where it was not raised.</param>
+	/// <param name="Next">The kind's current project after the pick.</param>
+	/// <param name="Appended">The index of the upgrade project appended for the item, or -1.</param>
+	/// <param name="AllDone">Whether every project in the table is done after it.</param>
+	public readonly record struct Finished( int Project, int ItemId, int Kind, int Tier, float Points, int Raised,
+		int Next, int Appended, bool AllDone );
+
+	/// <summary>
+	/// One researcher's hand-out to the lab (<c>Lab_SpendPoints</c>, <c>0x00503430</c>): the efforts of the kinds whose
+	/// current project is set and not done are added up, once; with none, nothing is spent. Then each kind, 0 to 4,
+	/// with an effort and a current project, gets effort / that sum × <see cref="WorkLoad"/> × <paramref name="ability"/>
+	/// × 0.01 (the float at <c>0x007007e4</c>), worked at the sweep's 53-bit precision and stored as a float
+	/// (<c>0x005034d0</c>), put to its project (<see cref="AddPoints"/>).
+	/// </summary>
+	/// <returns>The projects this hand-out finished, in the order they finished.</returns>
+	public IReadOnlyList<Finished> SpendPoints( int ability, int tick )
+	{
+		++HandOuts;
+		var sum = 0;
+
+		foreach ( var kind in _kinds )
+		{
+			if ( kind.CurrentProject >= 0 && kind.CurrentProject < _projects.Count && !IsDone( _projects[kind.CurrentProject] ) )
+				sum += kind.Effort;
+		}
+
+		if ( sum == 0 || _kinds.Length == 0 )
+			return [];
+
+		var finished = new List<Finished>();
+
+		for ( var kind = 0; kind < _kinds.Length; ++kind )
+		{
+			var (effort, current) = (_kinds[kind].Effort, _kinds[kind].CurrentProject);
+
+			if ( effort == 0 || current < 0 || current >= _projects.Count )
+				continue;
+
+			// The effort is loaded as an unsigned dword (FILD qword with a nought high half), the rest as signed.
+			var share = (float)((double)(uint)effort / sum * WorkLoad * ability * (double)ShareScale);
+
+			if ( AddPoints( current, share, tick ) is { } done )
+				finished.Add( done );
+		}
+
+		return finished;
+	}
+
+	/// <summary>The float a hand-out's share is scaled by, <c>[0x007007e4]</c>.</summary>
+	private const float ShareScale = 0.01f;
+
+	/// <summary>
+	/// Puts <paramref name="share"/> to a project not yet done (<c>LabProject_AddPoints</c>, <c>0x00504630</c>). The sum
+	/// is compared with the cost before it is stored as a float (<c>fcom</c> <c>0x0050466f</c>, <c>fstp</c>
+	/// <c>0x00504672</c>), so a sum just under the cost that rounds onto it is kept at the cost and does not finish.
+	/// Reaching the cost marks the item's control record researched at the project's tier and sends message
+	/// <c>0x11</c> to the four listeners at once: the lab's own handler is <see cref="LabOnFinished"/>; the
+	/// advisor's, the park analyser's and the challenge manager's are counted.
+	/// </summary>
+	private Finished? AddPoints( int index, float share, int tick )
+	{
+		var project = _projects[index];
+
+		if ( IsDone( project ) )
+			return null;
+
+		var sum = (double)project.Done + share;
+		_projects[index] = project with { Done = (float)sum };
+
+		if ( sum < project.Cost )
+			return null;
+
+		_items[project.ItemId] = (true, project.UpgradeLevel);
+
+		// The advisor's lines by mCat, rows 93 to 97 (Advisor_OnMessage 0x0059b060): Q702.
+		Unimplemented.Report( "RESEARCH_FINISHED_TO_THE_ADVISOR" );
+		// The analyser's ring of the recently researched, the buy list's row state 2 (FUN_004c7370): Q702.
+		Unimplemented.Report( "RESEARCH_FINISHED_TO_THE_ANALYSER" );
+
+		// A ride researched is challenge type 0x10 (ChallengeManager_OnMessage 0x004d2860): no challenge is built.
+		if ( project.Category == ItemDescriptionFile.Ride )
+			Unimplemented.Report( "RESEARCH_FINISHED_TO_THE_CHALLENGES" );
+
+		var (appended, raised, next, allDone) = LabOnFinished( project );
+		var result = new Finished( index, project.ItemId, project.Category, project.UpgradeLevel, (float)sum, raised, next,
+			appended, allDone );
+
+		Log.Info( $"Research: hand-out {HandOuts} on mGameTick {tick} finishes project {index}, item {project.ItemId} "
+			+ $"(kind {project.Category}, tier {project.UpgradeLevel}), at {(float)sum:0.###} of {project.Cost:0.###}; "
+			+ (raised >= 0 ? $"the kind's highest group raised to {raised}; " : "")
+			+ (appended >= 0 ? $"its next upgrade appended as project {appended}; " : "")
+			+ $"the kind's next project {next}; {_projects.Count( IsDone )} of {_projects.Count} done" );
+
+		return result;
+	}
+
+	/// <summary>
+	/// The lab's handler of message <c>0x11</c> (<c>Lab_OnMessage</c>, <c>0x00503d40</c>): the item's next upgrade
+	/// appended (<see cref="MakeNextUpgrade"/>), the kind's highest group raised (<see cref="RaiseHighestGroup"/>),
+	/// message <c>0x12</c>'s pick of the kind's next project (<c>Research_OnKindFinished</c>, <c>0x004aaec0</c>:
+	/// unless the kind's current project is set and open, <see cref="PickNextProject"/>), then the end test.
+	/// </summary>
+	private (int Appended, int Raised, int Next, bool AllDone) LabOnFinished( ParkWorld.ResearchProject project )
+	{
+		var appended = -1;
+
+		if ( _catalogue.TryGetValue( project.ItemId, out var item ) && MakeNextUpgrade( item ) is { } upgrade )
+		{
+			// The original writes the table's next slot unchecked (0x00503da2); a full table takes no more.
+			if ( _projects.Count < ProjectSlots )
+			{
+				appended = _projects.Count;
+				_projects.Add( upgrade );
+			}
+			else
+				Log.Warning( $"Research: the lab's {ProjectSlots} projects are full; item {item.Id}'s upgrade is not appended" );
+		}
+
+		var kind = project.Category;
+
+		if ( kind < 0 || kind >= _kinds.Length )
+		{
+			Log.Warning( $"Research: project of item {project.ItemId} is of kind {kind}, which the lab keeps no record of" );
+			return (appended, -1, -1, _projects.All( IsDone ));
+		}
+
+		var raised = RaiseHighestGroup( kind ) ? _kinds[kind].HighestGroup : -1;
+
+		if ( !KindHasOpenProject( kind ) )
+			PickNextProject( kind );
+
+		var allDone = _projects.All( IsDone );
+
+		// Every project done marks the park all researched in the player's progress, and in Instant Action raises row
+		// 167 and the End feature (0x00503e15..0x00503fb7): Q703.
+		if ( allDone )
+			Unimplemented.Report( "RESEARCH_ALL_DONE" );
+
+		return (appended, raised, _kinds[kind].CurrentProject, allDone);
+	}
+
+	/// <summary>
+	/// The item's next upgrade project (<c>LabProject_MakeNextUpgrade</c>, <c>0x00504580</c>): for an item whose own
+	/// <c>Research.Category</c> is not 4, the tiers after its control record's, while under 3. A tier whose
+	/// <c>Upgrades[tier].CostOfResearch</c> is above nought is the project, kind 4, group 0, at that cost; a tier that
+	/// costs nothing is written to the record as researched and the next looked at.
+	/// </summary>
+	private ParkWorld.ResearchProject? MakeNextUpgrade( ParkItemCatalogue.Item item )
+	{
+		if ( item.ResearchCategory == Upgrade || !_items.TryGetValue( item.Id, out var record ) )
+			return null;
+
+		for ( var tier = record.Tier + 1; tier < Tiers; ++tier )
+		{
+			var cost = tier == 1 ? item.UpgradeResearchCost1 : item.UpgradeResearchCost2;
+
+			if ( cost > 0 )
+				return new ParkWorld.ResearchProject( item.Id, Upgrade, 0, tier, cost, 0 );
+
+			_items[item.Id] = _items[item.Id] with { Tier = tier };
+		}
+
+		return null;
+	}
+
+	/// <summary>How many upgrade tiers an item has, 0 to 2.</summary>
+	private const int Tiers = 3;
+
+	/// <summary>
+	/// <c>Lab_RaiseHighestGroup</c> (<c>0x00503b80</c>): while the kind's projects at or under its highest group are
+	/// done, in whole per cent, at least <see cref="GroupOpensAt"/> of the highest, and the highest is under 7, the
+	/// highest goes up one. A raise with any of the kind's projects not done posts advisor message <c>0x85</c> + kind
+	/// for kinds 0 to 3, rows 133 to 136: counted.
+	/// </summary>
+	/// <returns>Whether the highest group was raised.</returns>
+	private bool RaiseHighestGroup( int kind )
+	{
+		var highest = RaisedGroup( _projects, kind, _kinds[kind].HighestGroup, _groupOpensAt );
+		var raised = highest != _kinds[kind].HighestGroup;
+		_kinds[kind] = _kinds[kind] with { HighestGroup = highest };
+
+		if ( raised && kind <= ItemDescriptionFile.Feature && _projects.Any( project => project.Category == kind && !IsDone( project ) ) )
+			Unimplemented.Report( "RESEARCH_GROUP_TO_THE_ADVISOR" );
+
+		return raised;
+	}
+
+	/// <summary>The raise's loop alone: the kind's highest group after it.</summary>
+	private static int RaisedGroup( IReadOnlyList<ParkWorld.ResearchProject> projects, int kind, int highest,
+		IReadOnlyList<int> groupOpensAt )
+	{
+		while ( true )
+		{
+			var under = projects.Where( project => project.Category == kind && project.Group <= highest ).ToArray();
+			var share = under.Length == 0 ? 0u : (uint)(under.Count( IsDone ) * 100) / (uint)under.Length;
+
+			if ( highest >= MostGroup || share < (uint)groupOpensAt[highest] )
+				return highest;
+
+			++highest;
+		}
+	}
+
+	/// <summary>Whether the kind's current project is set and not done (<c>Lab_KindHasOpenProject</c>, <c>0x00504040</c>).</summary>
+	private bool KindHasOpenProject( int kind )
+		=> _kinds[kind].CurrentProject is var current && current >= 0 && current < _projects.Count && !IsDone( _projects[current] );
+
+	/// <summary>
+	/// <c>Lab_PickNextProject</c> (<c>0x005034f0</c>): the first project of the kind, not done and at or under its
+	/// highest group, after the current one; else the first such before it; else none, the current set to -1 where it
+	/// is done. A project of kind 4 is taken only while the item it upgrades (<c>AddOn.UpgradesId</c>, <c>+0x284</c>,
+	/// or the item itself) is researched and, where that item has a golden-ticket cost, unlocked.
+	/// </summary>
+	private void PickNextProject( int kind )
+	{
+		var current = _kinds[kind].CurrentProject;
+		var before = -1;
+
+		for ( var i = 0; i < _projects.Count; ++i )
+		{
+			var project = _projects[i];
+
+			if ( project.Category != kind || project.Group > _kinds[kind].HighestGroup || IsDone( project ) || !Eligible( project ) )
+				continue;
+
+			if ( i < current )
+			{
+				if ( before < 0 )
+					before = i;
+			}
+			else if ( i > current )
+			{
+				_kinds[kind] = _kinds[kind] with { CurrentProject = i };
+				return;
+			}
+		}
+
+		if ( before >= 0 )
+			_kinds[kind] = _kinds[kind] with { CurrentProject = before };
+		else if ( current >= 0 && current < _projects.Count && IsDone( _projects[current] ) )
+			_kinds[kind] = _kinds[kind] with { CurrentProject = -1 };
+	}
+
+	private bool Eligible( ParkWorld.ResearchProject project )
+	{
+		if ( project.Category != Upgrade )
+			return true;
+
+		var upgrades = _catalogue.TryGetValue( project.ItemId, out var item ) && item.AddOnUpgradesId != 0
+			? item.AddOnUpgradesId : project.ItemId;
+
+		if ( !IsResearched( upgrades ) )
+			return false;
+
+		return !(_catalogue.TryGetValue( upgrades, out var upgraded ) && upgraded.GoldenTicketCost > 0
+			&& Unlocked?.Invoke( upgrades ) != true);
+	}
+
+	/// <summary>
+	/// The lab and the control records' research as they stand, for the park file (<see cref="ParkWorld.PutLab"/>).
+	/// </summary>
+	public ParkWorld.WrittenLab Written
+		=> new( [.. _projects], [.. _kinds], _items.ToDictionary( entry => entry.Key, entry => (entry.Value.Researched, entry.Value.Tier) ) );
+
+	/// <summary>
+	/// A fresh world's five kinds' records (<c>Lab_SetupKinds</c>, <c>FUN_00503330</c>): each kind's effort is its
 	/// <c>ResearchCategories[kind].Effort</c> held to 100, and its output that effort's share of the five in whole
 	/// per cent, times <paramref name="workLoad"/>, <c>Research.StartingWorkLoad</c>, over a hundred; nought
-	/// where the efforts add up to nothing.
+	/// where the efforts add up to nothing. Each kind starts at highest group 1 (<c>FUN_00502d20</c>); its current
+	/// project is the first of the kind not done at or under that group, and the group is then raised as a finished
+	/// project raises it (<see cref="GroupOpensAt"/>; a raise there would post the advisor's row, which is not counted).
 	/// </summary>
-	public static IReadOnlyList<ParkWorld.ResearchKind> FreshKinds( IEnumerable<int> efforts, int workLoad )
+	public static IReadOnlyList<ParkWorld.ResearchKind> FreshKinds( IEnumerable<int> efforts, int workLoad,
+		IReadOnlyList<ParkWorld.ResearchProject>? projects = null, IReadOnlyList<int>? groupOpensAt = null )
 	{
 		var held = efforts.Select( effort => (uint)effort > 99 ? 100u : (uint)effort ).ToArray();
 		var sum = (uint)held.Sum( effort => effort );
+		projects ??= [];
+		var opens = new int[MostGroup];
 
-		return held.Select( effort => new ParkWorld.ResearchKind( (int)effort,
-			sum == 0 ? 0 : (int)(effort * 100 / sum * (uint)workLoad / 100) ) ).ToArray();
+		for ( var highest = 0; highest < opens.Length && highest < (groupOpensAt?.Count ?? 0); ++highest )
+			opens[highest] = groupOpensAt![highest];
+
+		return held.Select( ( effort, kind ) =>
+		{
+			var current = Enumerable.Range( 0, projects.Count ).FirstOrDefault( i => projects[i].Category == kind
+				&& projects[i].Group <= FreshHighestGroup && !IsDone( projects[i] ), -1 );
+
+			return new ParkWorld.ResearchKind( (int)effort, sum == 0 ? 0 : (int)(effort * 100 / sum * (uint)workLoad / 100),
+				current, RaisedGroup( projects, kind, FreshHighestGroup, opens ) );
+		} ).ToArray();
 	}
+
+	/// <summary>The highest group each kind of a fresh world starts at (<c>FUN_00502d20</c>).</summary>
+	public const int FreshHighestGroup = 1;
 
 	/// <summary>The kind of research an upgrade's project is, whatever its item's own (<c>0x005045fc</c>).</summary>
 	public const int Upgrade = 4;
@@ -135,6 +476,6 @@ public sealed class ParkResearch
 		return (projects, tiers);
 	}
 
-	/// <summary>The upgrade tier researched, 0 to 2 (<c>+0x14</c>); nothing reads it yet.</summary>
+	/// <summary>The upgrade tier researched, 0 to 2 (<c>+0x14</c>), which a finished item's next upgrade starts after.</summary>
 	public int TierResearched( int itemId ) => _items.TryGetValue( itemId, out var entry ) ? entry.Tier : 0;
 }

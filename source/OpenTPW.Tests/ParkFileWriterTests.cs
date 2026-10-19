@@ -136,6 +136,47 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
+	/// The lab is written as it runs and read back: Dino Karts researched on the 95th hand-out, at tier 2, its
+	/// project at its cost, the rides on their next project in group 2, and an appended project counted in
+	/// <c>mNumProjects</c>; the work load and every byte past the lab's used fields stay the file's. With no lab
+	/// given the file's own stands.
+	/// </summary>
+	[TestMethod]
+	public void TheLabIsWrittenAsItRuns()
+	{
+		var catalogue = new ParkItemCatalogue( "jungle", FileSystem, instantAction: true );
+		var lab = new ParkResearch( shipped.ObjectControlRecords, catalogue, shipped.ResearchProjects, shipped.ResearchKinds,
+			shipped.ResearchWorkLoad, ParkResearch.GroupOpensAt( new ParkBalance( "jungle", easyMode: true ) ) );
+
+		while ( lab.HandOuts < 95 )
+			lab.SpendPoints( 12, 760 + lab.HandOuts * 20 );
+
+		var written = lab.Written with { Projects = [.. lab.Projects, new( 1150, ParkResearch.Upgrade, 0, 1, 250f, 12.5f )] };
+		var read = Read( ParkFileWriter.Write( shipped, Played with { Lab = written } ) );
+
+		Assert.IsNull( read.Problem );
+		Assert.AreEqual( 25, read.ResearchProjects.Count );
+		Assert.AreEqual( new ParkWorld.ResearchProject( 1150, 0, 1, 0, 600f, 600f ), read.ResearchProjects[1] );
+		Assert.AreEqual( new ParkWorld.ResearchProject( 1150, 4, 0, 1, 250f, 12.5f ), read.ResearchProjects[24] );
+		Assert.AreEqual( 150f, read.ResearchProjects[8].Done, "Stone Head: 7.5 and 95 of 1.5" );
+		Assert.AreEqual( new ParkWorld.ResearchKind( 100, 49, 2, 2 ), read.ResearchKinds[0] );
+		Assert.AreEqual( shipped.ResearchKinds[1], read.ResearchKinds[1] );
+		Assert.AreEqual( 85, read.ResearchWorkLoad );
+		Assert.IsTrue( read.ObjectControlRecords.Single( control => control.ItemId == 1150 ) is { Researched: true, TierResearched: 2 } );
+		Assert.IsFalse( shipped.ObjectControlRecords.Single( control => control.ItemId == 1150 ).Researched );
+		Assert.IsTrue( new ParkResearch( read.ObjectControlRecords, catalogue ).IsResearched( 1150 ), "the buy list lists it after a load" );
+
+		var mine = Inflate( ParkFileWriter.Write( shipped, Played with { Lab = written } ) );
+		var theirs = Inflate( ParkFileWriter.Write( shipped, Played ) );
+		var lab0 = read.ResearchLabAt;
+		Assert.AreEqual( theirs.Length, mine.Length );
+		CollectionAssert.AreEqual( theirs[(lab0 + 4181)..(lab0 + 4190)], mine[(lab0 + 4181)..(lab0 + 4190)], "the work load, the dearest, mLabActive" );
+		CollectionAssert.AreEqual( theirs[(lab0 + 16 + 25 * 16)..(lab0 + 4112)], mine[(lab0 + 16 + 25 * 16)..(lab0 + 4112)], "the unused projects" );
+		Assert.AreEqual( shipped.ResearchProjects.Count, Read( ParkFileWriter.Write( shipped, Played ) ).ResearchProjects.Count );
+		CollectionAssert.AreEqual( shipped.ResearchProjects.ToArray(), Read( ParkFileWriter.Write( shipped, Played ) ).ResearchProjects.ToArray() );
+	}
+
+	/// <summary>
 	/// The advisor's last action is written over the file's and read back: the start and the wait at 196 and 200
 	/// of his thing and the message playing in its last dword, 5842, and no other byte of the file moves. It is
 	/// asked for with the second stopwatch's reading the file holds, the file's own where the clock is not

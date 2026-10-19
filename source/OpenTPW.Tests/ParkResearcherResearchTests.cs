@@ -278,7 +278,7 @@ public class ParkResearcherResearchTests
 	}
 
 	/// <summary>
-	/// The pre-step counts the grade's points for the lab on every sweep the clock divides by twenty, in any
+	/// The pre-step hands the grade's points to the lab on every sweep the clock divides by twenty, in any
 	/// state but the two of rest, the two of the strike and carried, and for no other kind.
 	/// </summary>
 	[DataTestMethod]
@@ -294,17 +294,19 @@ public class ParkResearcherResearchTests
 	[DataRow( StaffActivity.OnStrike, 1000, Researcher, 0 )]
 	[DataRow( StaffActivity.Held, 1000, Researcher, 0 )]
 	[DataRow( StaffActivity.Idle, 1000, Guard, 0 )]
-	public void ThePreStepCountsThePointsForTheLab( StaffActivity activity, int tick, int id, int points )
+	public void ThePreStepHandsThePointsToTheLab( StaffActivity activity, int tick, int id, int points )
 	{
 		var (member, walk, state) = OnThePath( activity, id );
-		var behaviour = new StaffBehaviour( Balance(), new CountedDraw( 0 ), state );
-		var before = Counted( "RESEARCH_POINTS_TO_THE_LAB" );
+		var lab = new ParkResearch( [], new ParkItemCatalogue( "none", new BaseFileSystem( Path.GetTempPath() ) ),
+			[new( 1150, 0, 1, 0, 600f, 0f )], [new( 100, 0, 0, 1 )], workLoad: 85 );
+		var behaviour = new StaffBehaviour( Balance(), new CountedDraw( 0 ), state ) { Lab = lab };
 
 		member.TimeStartedIdling = tick;
 		behaviour.Step( member, walk, playing: null, tick );
 
-		Assert.AreEqual( points, behaviour.ResearchPointsCounted );
-		Assert.AreEqual( points == 0 ? 0 : 1, Counted( "RESEARCH_POINTS_TO_THE_LAB" ) - before );
+		Assert.AreEqual( points, behaviour.ResearchPointsHanded );
+		Assert.AreEqual( points == 0 ? 0 : 1, lab.HandOuts );
+		Assert.AreEqual( points == 0 ? 0f : 10.2f, lab.Projects[0].Done, "85 x 12 x 0.01 spent at once" );
 	}
 
 	/// <summary>The points are the grade's own and add up over a run.</summary>
@@ -320,7 +322,7 @@ public class ParkResearcherResearchTests
 		for ( var tick = 1000; tick <= 1040; ++tick )
 			behaviour.Step( member, walk, playing: null, tick );
 
-		Assert.AreEqual( 60, behaviour.ResearchPointsCounted, "20 on each of 1000, 1020 and 1040" );
+		Assert.AreEqual( 60, behaviour.ResearchPointsHanded, "20 on each of 1000, 1020 and 1040" );
 	}
 
 	/// <summary>

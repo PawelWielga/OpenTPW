@@ -183,13 +183,18 @@ public sealed partial class ParkPeople : Entity
 	/// <param name="behaviourRandom">Guest decisions; null keeps an independent runtime generator.</param>
 	/// <param name="rideRandom">Ride settlement choices; null keeps an independent runtime generator.</param>
 	/// <param name="staffRandom">Staff decisions; null keeps an independent runtime generator.</param>
+	/// <param name="research">
+	/// The park's lab, which the level owns and the buy list reads; a researcher's hand-out spends into it. Null makes
+	/// one from <paramref name="park"/>, which is what a test wants.
+	/// </param>
 	public ParkPeople( IParkInitialState? park, ParkBalance? balance = null, System.Func<int>? gateStatus = null,
 		ParkState? state = null, ParkItemCatalogue? catalogue = null,
 		System.Func<int, RideScript?>? scriptFor = null, Random? random = null, ParkSpriteBanks? banks = null,
-		Random? behaviourRandom = null, Random? rideRandom = null, Random? staffRandom = null )
+		Random? behaviourRandom = null, Random? rideRandom = null, Random? staffRandom = null, ParkResearch? research = null )
 	{
 		_scriptFor = scriptFor;
-		_research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects, park.ResearchKinds );
+		_research = research ?? (park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue,
+			park.ResearchProjects, park.ResearchKinds, park.ResearchWorkLoad, ParkResearch.GroupOpensAt( balance ) ));
 		_gateThing = park?.ParkGates ?? 0;
 		_banks = banks ?? new ParkSpriteBanks( 0, 0, 0 );
 		_arrivalRandom = random ?? new Random();
@@ -316,6 +321,7 @@ public sealed partial class ParkPeople : Entity
 		Strikes = new ParkStrikes( park?.StaffHq );
 		_staffBehaviour = new StaffBehaviour( balance, staffRandom, State )
 		{
+			Lab = _research,
 			Strikes = Strikes,
 			GateStatus = gateStatus,
 			GuestsInside = () => GateGuestCensus,

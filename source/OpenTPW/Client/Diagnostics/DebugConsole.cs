@@ -1169,6 +1169,30 @@ public static class DebugConsole
 
 				break;
 
+			// The research lab as it runs: its hand-outs, each kind's current project and highest group, and each project
+			// with its points.
+			case "research":
+				if ( Level.Current?.Research is not { } lab )
+				{
+					Reply( "research: none - a park has to be loaded" );
+					break;
+				}
+
+				Reply( $"research hand-outs {lab.HandOuts}, {lab.Projects.Count( project => !(project.Done < project.Cost) )} of "
+					+ $"{lab.Projects.Count} projects done, work load {lab.WorkLoad}" );
+
+				for ( var labKind = 0; labKind < lab.Kinds.Count; ++labKind )
+					Reply( $"  kind {labKind}: effort {lab.Kinds[labKind].Effort}, current {lab.Kinds[labKind].CurrentProject}, highest group {lab.Kinds[labKind].HighestGroup}" );
+
+				for ( var slot = 0; slot < lab.Projects.Count; ++slot )
+				{
+					var project = lab.Projects[slot];
+					Reply( $"  project {slot}: item {project.ItemId} kind {project.Category} group {project.Group} tier {project.UpgradeLevel} "
+						+ $"{project.Done:0.###} of {project.Cost:0.###}, item researched {(lab.IsResearched( project.ItemId ) ? 1 : 0)}" );
+				}
+
+				break;
+
 			// The staff as the simulation holds them: `peeps` is guests only, and `guests` shows staff only as sprites.
 			case "staff":
 				if ( ParkPeople.Current is not { } employer )

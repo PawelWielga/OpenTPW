@@ -53,16 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q701. The lab spends a researcher's points and finishes a project.** From Q245 (`park-engine.md`, "The lab
-  at work"). Replace the count `RESEARCH_POINTS_TO_THE_LAB` (`StaffBehaviour.Research`) with `Lab_SpendPoints`'s
-  share-out (the kinds with an open project, effort / their sum × `mWorkLoad` × ability × 0.01, a float), the finish
-  (the control record's researched flag and tier, `ParkResearch.IsResearched` and the buy list following), the next
-  upgrade appended (`LabProject_MakeNextUpgrade`), the group raise against `ResearchTech[highest + 1]` and the next
-  project's pick. `ParkWorld` reads each kind's current project and highest group and the lab's `mWorkLoad`
-  (FileFormats `saves.md` has their bytes). Messages to the advisor, the analyser and the end are Q702 and Q703:
-  count them where they would go. Confirm in stock Easymode with its one researcher, predicted from `lib/labsim.py`:
-  Dino Karts researched on the 95th hand-out (tick 2640 if he never rests; later by his first break, near tick 2230) (log and census), then bought from the buy list
-  (photograph); Stone Head on the 162nd. A test with values a wrong share or a wrong group index gets wrong.
 - [ ] **Q702. A finished project tells the advisor and the buy list.** From Q245, after Q701. Message `0x11` to the
   advisor: rows 93 to 97 (`Research*Researched`, by `mCat`, scores 150, 130, 130, 110, 90) and, on a group raised
   with work left, rows 133 to 136 (`NewResearchGroup*`, score 40); to the park analyser: the tab's ring of the
@@ -1310,6 +1300,13 @@ filed the items that cite it.
   `UI_SetTitle`'s font 5 in (234, 239, 102) with its shadow over the widened rect (`hud.md`, "The shop's window"), as the
   visitor's and the staff member's do; `ParkObjectWindow` letters the ride's title white in the stream's own rect. Read the
   ride's load for the same call (`FUN_004ae940` or `0x004af030`), then photograph the Belly Bounce's window beside the original's.
+- [ ] **Q549. The researcher tires about 80 sweeps sooner here and rests longer.** From Q701: stock Easymode, left
+  alone, our researcher (thing 30) set off for the Staff Room on tick 2210 and 2199 in two runs and ended the rest on
+  2553 and 2578, skipping 17 and 19 hand-outs; the original's last hand-out before its rest was on 2280 and it gave the
+  next near 2590, skipping 14 (`q701/run1/run.log`, `run2/run.log`, `q701/orig/a-poll2.log`). So Dino Karts' 95th
+  hand-out falls on 2980 or 3020 here and 2920 there. Read
+  both games' rest level each sweep from tick 755 (`q134/orig/watch.py`'s reader; `staff`) and find where the drain
+  or the walk to the room parts (`ride-operation.md`, "The staff turn"; Q326's search, arrival and rest).
 
 ## B. Docs and comments
 

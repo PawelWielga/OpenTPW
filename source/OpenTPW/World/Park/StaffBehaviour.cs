@@ -276,11 +276,11 @@ public sealed class StaffBehaviour
 	/// <summary>A researcher hands the lab points on every sweep the clock divides by this - <c>0x0050297f</c>.</summary>
 	public const int ResearchPointsEvery = 20;
 
-	/// <summary>
-	/// The points researchers have been counted as handing the lab since the park loaded, which nothing
-	/// spends: there is no lab.
-	/// </summary>
-	public int ResearchPointsCounted { get; private set; }
+	/// <summary>The points researchers have handed the lab since the park loaded.</summary>
+	public int ResearchPointsHanded { get; private set; }
+
+	/// <summary>The park's lab, which spends a researcher's hand-out (<see cref="ParkResearch.SpendPoints"/>); null spends nothing.</summary>
+	public ParkResearch? Lab { get; init; }
 
 	/// <summary>How much rest one turn of work costs, before the grade multiplier - the float at <c>0x00700858</c>.</summary>
 	public const float TirednessPerWorkingTurn = 0.025f;
@@ -348,16 +348,16 @@ public sealed class StaffBehaviour
 
 		// A researcher's pre-step hands the lab the grade's ResearchAbility on every sweep the clock divides by
 		// twenty, in any state but going to rest, resting, the two strike states and carried (FUN_00502960,
-		// FUN_005064f0 answering 3, 4 or 5). The lab's spending of them, FUN_00503430, is not built: counted.
+		// FUN_005064f0 answering 3, 4 or 5), and the lab spends them at once (Lab_SpendPoints, 0x005029d1).
 		if ( staff.Model == ResearcherModel && (uint)tick % ResearchPointsEvery == 0
 			&& staff.Activity is not (StaffActivity.GoingToRest or StaffActivity.Resting
 				or StaffActivity.GoingOnStrike or StaffActivity.OnStrike or StaffActivity.Held) )
 		{
-			Unimplemented.Report( "RESEARCH_POINTS_TO_THE_LAB" );
-			ResearchPointsCounted += ResearchAbilityAt( staff.PayGrade );
+			ResearchPointsHanded += ResearchAbilityAt( staff.PayGrade );
+			var finished = Lab?.SpendPoints( ResearchAbilityAt( staff.PayGrade ), tick ).Count ?? 0;
 
 			Log.Info( $"Staff: {staff.ThingId} hands the lab {ResearchAbilityAt( staff.PayGrade )} research points "
-				+ $"on mGameTick {tick}, counted and not spent: {ResearchPointsCounted} so far" );
+				+ $"on mGameTick {tick}, hand-out {Lab?.HandOuts ?? 0}, {finished} projects finished: {ResearchPointsHanded} so far" );
 		}
 
 		switch ( staff.Activity )

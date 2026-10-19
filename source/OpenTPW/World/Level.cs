@@ -361,7 +361,11 @@ public class Level
 		}
 		load.Mark( "park state" );
 
-		Research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects, park.ResearchKinds );
+		Research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects,
+			park.ResearchKinds, park.ResearchWorkLoad, ParkResearch.GroupOpensAt( Balance ) )
+		{
+			Unlocked = id => Players.Roster.Current?.File.RideIds.Contains( (ushort)id ) == true
+		};
 		if ( Research is { } researched )
 			Log.Info( researched.Summary );
 
@@ -438,7 +442,7 @@ public class Level
 		load.Mark( "staff pool" );
 
 		_ = new ParkPeople( park, Balance, () => rides.GateStatus( park ), ParkState, catalogue,
-			thingId => rides.Scheduler.Find( rides.ScriptFor( thingId ) ), banks: banks );
+			thingId => rides.Scheduler.Find( rides.ScriptFor( thingId ) ), banks: banks, research: Research );
 		load.Mark( "people" );
 
 		// Each group of sound at the volume the options give it, and then the park's own music - which
@@ -601,7 +605,7 @@ public class Level
 			Log.Info( $"Save: the idle mode is installed before the park is written: {letGo}" );
 
 		return WritePark( Park, state, ThemeName, name, ParkPeople.Current, ParkStaffPool.Current, ParkRides.Current, Catalogue,
-			extension );
+			extension, Research );
 	}
 
 	/// <summary>The name the park is written under as it is left (<c>0x00747a58</c>).</summary>
@@ -653,7 +657,7 @@ public class Level
 	/// <summary><see cref="WritePark(string, string)"/> for a park's own parts, the camera's being the orbit camera's.</summary>
 	internal static string? WritePark( IParkInitialState? park, ParkState state, string theme, string name,
 		ParkPeople? people = null, ParkStaffPool? pool = null, ParkRides? rides = null, ParkItemCatalogue? catalogue = null,
-		string extension = SaveFolder.SavedParkExtension )
+		string extension = SaveFolder.SavedParkExtension, ParkResearch? research = null )
 	{
 		if ( Players.Roster.Current is not { } player )
 		{
@@ -815,7 +819,7 @@ public class Level
 			state.MonthRings, (state.LifetimeVisitors, state.MostPaidForTicket), state.MisbehavingKids, state.ParkLastOpened,
 			state.RandomSeed,
 			people != null ? (people.Strikes.ForceWord, people.Strikes.Records) : null,
-			state.Economy, state.CalendarAtLastUpdate, ParkWeather.Current?.Written( loaded.WeatherRecord ) );
+			state.Economy, state.CalendarAtLastUpdate, ParkWeather.Current?.Written( loaded.WeatherRecord ), research?.Written );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;

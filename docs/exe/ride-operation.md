@@ -2809,8 +2809,9 @@ A second watch, with the pointer steered onto the researcher for a photograph, r
 same park for 240 s, `sweeps`, `staff` and `guests` read about three times a second, predicted first, 7 of 7
 (`q134/confirm.py`, `run1/`): Walking on 365 readings and Researching on 217 from 775 on, never Idle; twelve
 spells, each ended on its stamp + 31 in a walk; 199 of 199 readings in a spell on script 402, set 4, frames 0 to 3;
-the place still in each; the whole-number rest down 3 or 4 a spell; fifty lots of 12 points counted,
-`RESEARCH_POINTS_TO_THE_LAB`, one for each multiple of twenty from 755 to 1740.
+the place still in each; the whole-number rest down 3 or 4 a spell; fifty lots of 12 points, one for each multiple
+of twenty from 755 to 1740, then counted for a lab that did not exist; the lab spends them since Q701
+(`park-engine.md`, "The lab at work").
 **Beside the original** (`q134/sheet-beside-original.png`): the same white-coated researcher seen from behind, arm
 raised over what they hold; the two cameras are not at the same height, and OpenTPW's is cut along its lower edge by
 the ground, as every sprite is.
@@ -3091,7 +3092,7 @@ park, a walk that fails (tested only).
 | The stand as a member goes idle | SetState(0) queues animation 3 every time (`FUN_004fa460`) | queued from a performance and after a clean only; any other idle keeps the picture it had | every idle |
 | State scripts 1 to 3 (words 1800, 1812, 1824) and a bank with no group | played; an animation past the table | not copied, counted `SPRITE_STATE_ANIMATION_NOT_STARTED`; counted `ENTERTAINER_BANK_WITHOUT_A_STATE_GROUP` | no shipped bank |
 | The entertainer's region effect | the pre-step `FUN_004d4660` moves `RegionFX[0]` with them, cell by cell | built, `ParkPeople.MoveEffect`, before the member's turn ("The region effects") | every cell the entertainer crosses |
-| The researcher's research | state `0xf` on a draw of nought or with nowhere to walk, WorkDuration + 1 sweeps, then a walk or the same again; the points to the lab every 20 sweeps ("The research, in both games") | built (`StaffBehaviour.Research`); the points counted, `RESEARCH_POINTS_TO_THE_LAB`, and spent by nothing: there is no lab | a quarter of the researcher's decides; the points every 20 sweeps |
+| The researcher's research | state `0xf` on a draw of nought or with nowhere to walk, WorkDuration + 1 sweeps, then a walk or the same again; the points to the lab every 20 sweeps ("The research, in both games") | built (`StaffBehaviour.Research`); the points spent by the lab at once, `ParkResearch.SpendPoints` (Q701) | a quarter of the researcher's decides; the points every 20 sweeps |
 | Staff sounds | fourteen cat_staff effects | twelve built (`StaffBehaviour.DrawForSound`, `ParkAudio.StaffSound`; `audio.md`, "The staff's voices"); the chase's `0x88` and `0x89` have no site | every idle and walking turn, a researching turn; a performance's end; a guard's chase and catch wait on the chase |
 | Tired | the byte `<=` 1 | the same (`StaffBehaviour.TiredOrCarryingOn`) | a rest under 2 |
 | Tired with no rest area found or reached | `FUN_00506a40` answers 0 and the kind's choice follows; three kinds' searches and the research ask `FUN_00506680` first | the same (`TooTiredToWork`) | once the Staff Room at (58,16) is sold or cannot be routed to |

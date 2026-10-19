@@ -48,6 +48,7 @@ public class ParkGateTests
 		public IReadOnlyList<ParkWorld.ObjectControl> ObjectControlRecords => source.ObjectControlRecords;
 		public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects => source.ResearchProjects;
 		public IReadOnlyList<ParkWorld.ResearchKind> ResearchKinds => source.ResearchKinds;
+		public int ResearchWorkLoad => source.ResearchWorkLoad;
 		public int ParkGates => source.ParkGates;
 		public int TrafficLights => source.TrafficLights;
 		public int FirstObject => source.FirstObject;
