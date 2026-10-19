@@ -461,11 +461,42 @@ nothing and counted `SAVE_GAME` (`q241d/control`).
 
 | Site | What |
 |---|---|
-| `FUN_0040bf90`, `FUN_0040c040` (reached through a table, no direct caller) | Quicksave and quickload: the name is the theme's (`FUN_005c5520`), so `<theme>.TPWS` |
+| `GameKey_QuickSave` (`0x0040bf90`), `GameKey_QuickLoad` (`0x0040c040`) (the game table's rows 12 and 11, no direct caller) | Alt+S and Alt+L, the quicksave and quickload of `<theme>.TPWS`: "The quicksave and quickload keys", below |
 | `0x0054ff10` in `Game_StateMachine`; `0x00424bd7` in `GameOptions_RestartBox_Tick` | `FUN_005ac610( L"autosave" )`: "Leaving a park: the autosave", below |
 | `0x00550c23`; `0x0055036c` | `restart.INTS` written when the folder has none; read by Restart Park |
 | `0x00407eae` in `FUN_00407e00` | a `.TPWS` loaded by name as the world is made |
 | `FUN_005accf0`, `0x0054f12b` | entering a park: the newest `*.TPW*` in the folder ("Entering a park", below) |
+
+### The quicksave and quickload keys
+
+**Alt+S writes the running park as `<theme>.TPWS` and Alt+L loads that file over it.** They are rows 12 and 11 of the
+game table (`0x00748028`, rows of `0x14` bytes; `park-engine.md`, "Keyboard bindings and the shortcut tables"): key
+`0x53` and `0x4c` with the modifier byte `0x30`, Alt alone, handlers `GameKey_QuickSave` (`0x0040bf90`, at `0x00748124`) and `GameKey_QuickLoad` (`0x0040c040`,
+at `0x00748110`), run on the key's release as every row is. Each copies the string at the head of the game object
+`0x00786b68` (`FUN_005c5520` answers its `this`; `FUN_005f6040` copies), the same string `FUN_005c8890` names the
+player's theme folder by, widens it (`FUN_00424e10`) and hands it to the save manager `0x00f7b560`: `FUN_005ac610`, "The
+save" above whole, `gms.dat` first and then the file written over the last; or `FUN_005ac5d0`, "The load" above, which
+fails at the open with nothing taken down when there is no file. "QuickSave OK", "Quicksave failed", "QuickSave Loaded"
+and "QuickSave Load Failed" (`0x007486ac`, `0x00748698`, `0x00747ed4`, `0x007486bc`) go to the empty logger
+`FUN_005da3c0`, so the player is shown nothing either way. The game table is off while a park screen is open
+(`park-engine.md`, "A park screen is open"). The file is a saved park like any other: Load Park lists it, and entering
+the park finds it when it is the newest.
+
+**OpenTPW** (`Level.GameTableKeys`, `QuickSaveKey`, `QuickLoadKey`): `InputButton.QuickSave` and `QuickLoad`, asked by
+`Input.KeyUp` so the letter's release with Alt alone held is the press. Alt+S is `Level.WritePark( theme )`, as the menu's
+Save Game; Alt+L asks for the player's `<theme>.TPWS` (`SaveFolder.SavedParkPath`, any case) and loads it as a Load
+Park row does, ending the scene and building it again from the file where the original reads it over the running park,
+and with no such file, or nobody playing, loads nothing. The four strings are logged.
+
+**Measured (Q545).** In the original under Proton, the stock park loaded from the list: Alt+S wrote `jungle.TPWS`, lower
+case, 29 ms after `gms.dat`, holding 989, the tick read straight after S's key-up; Alt+L 14 s later put the tick back
+to 989 inside the key-up, with no loading screen (`q545/orig/b.out`, `b-load.log`, `b-after-l-1.png`; run a's miss was
+the tick stamped before Alt went down). Nothing was drawn for either. In OpenTPW (`q545/run2`, four of four): Alt+L
+with no quicksave logged `Quickload: QuickSave Load Failed - ref's jungle folder holds no jungle.TPWS` and loaded
+nothing; the park paused at 823 with 88112 and 13 guests, Alt+S logged `Quicksave: QuickSave OK - written to
+users/1ref/jungle/jungle.TPWS`, `gms.dat` 0.11 s before it, the file holding the three; run on to 849, Alt+L read that
+file and started at 823 with the same. Main's binary did nothing for either key (`q545/control`). Alt+L with no file
+in the original, and the keys under a park screen, were not run.
 
 ### Leaving a park: the autosave
 

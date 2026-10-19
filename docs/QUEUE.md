@@ -53,10 +53,10 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). The quicksave
-  and quickload keys (`<theme>.TPWS`); `restart.INTS` written when the folder has none, and read by Restart Park.
-  After Q241j. `gms.dat` before every park file is built (Q241j: `Level.WritePark` writes it first and installs
-  the idle mode for every caller, so each of these is a call of it); the autosave on leaving is Q544.
+- [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). Left:
+  `restart.INTS` written when the folder has none, and read by Restart Park. After Q241j. `gms.dat` before every
+  park file is built (Q241j: `Level.WritePark` writes it first and installs the idle mode for every caller, so each
+  of these is a call of it); the autosave on leaving is Q544, the quicksave keys Q545.
   - **Note (fork watch 2026-10-17, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-17/verify-save.md` L5):** the analyser record's undecoded part (FileFormats `saves.md`, its
     first 62,598 bytes) is mostly 1,024 records of 61 bytes, four ints then nine caches, each a count and an
     `mWorkedOut` byte, measured at the record's +36 to +62,500 in two files; no cache stamp is saved (`0x004cd9c0`).

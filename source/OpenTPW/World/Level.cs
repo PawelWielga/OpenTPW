@@ -1378,7 +1378,7 @@ public class Level
 		if ( Kind == Scene.Park )
 		{
 			WorldClick();
-			BuildKeys();
+			GameTableKeys();
 			ShowToolCursor();
 		}
 
@@ -2050,17 +2050,18 @@ public class Level
 	private static UI.ParkLocator.Kind LocatorOpen => Current?.Locator?.Open ?? UI.ParkLocator.Kind.None;
 
 	/// <summary>
-	/// The build keys, on release as the original's game table fires them: Backspace and Delete. Not
-	/// while a box has the keyboard, and not while a window holds the park - which is inferred for the pausing
-	/// windows. Not while a park screen is open: opening one switches the game table off (<c>FUN_00485b70</c>,
-	/// <c>0x00485ce6</c>) and its handler runs the shortcuts' alone (<c>FUN_00488ba0</c>). And not under the
-	/// full-screen view, whose control runs the camera's table alone (<c>0x004a2918</c>).
+	/// The game table's keys built here, on release as the original fires them: the build keys, Backspace and
+	/// Delete, and the quicksave and quickload, Alt+S and Alt+L. Not while a box has the keyboard, and not while a
+	/// window holds the park - which is inferred for the pausing windows. Not while a park screen is open: opening
+	/// one switches the game table off (<c>FUN_00485b70</c>, <c>0x00485ce6</c>) and its handler runs the shortcuts'
+	/// alone (<c>FUN_00488ba0</c>). And not under the full-screen view, whose control runs the camera's table alone
+	/// (<c>0x004a2918</c>).
 	/// </summary>
 	/// <remarks>
-	/// The release edge here also fires when a modifier changes while the key is held, which the
-	/// original's key-up does not.
+	/// The build keys' release edge also fires when a modifier changes while the key is held, which the
+	/// original's key-up does not; the quick keys are the key-up itself (<see cref="Input.KeyUp"/>).
 	/// </remarks>
-	private void BuildKeys()
+	private void GameTableKeys()
 	{
 		if ( Input.TextCaptured || PausedByWindow() || FullScreenView || UI.WindowStack.ParkScreenOpen )
 			return;
@@ -2070,6 +2071,46 @@ public class Level
 
 		if ( Input.Released( InputButton.Clear ) )
 			Log.Info( ClearKey() );
+
+		if ( Input.KeyUp( InputButton.QuickSave ) )
+			Log.Info( QuickSaveKey() );
+
+		if ( Input.KeyUp( InputButton.QuickLoad ) )
+			Log.Info( QuickLoadKey() );
+	}
+
+	/// <summary>
+	/// Alt+S, the game table's row 12, <c>GameKey_QuickSave</c> (<c>0x0040bf90</c>): the running park written as <c>&lt;theme&gt;.TPWS</c>, the
+	/// theme's name being the one its folder is named by (the game object's string, <c>0x00786b68</c>), through the
+	/// same save as the menu's Save Game (<see cref="WritePark(string)"/>, <c>FUN_005ac610</c>), over the last one and
+	/// with no question. The original hands "QuickSave OK" or "Quicksave failed" to its empty logger, so nothing is
+	/// shown either way (<c>docs/exe/saves.md</c>, "The quicksave and quickload keys").
+	/// </summary>
+	internal string QuickSaveKey()
+		=> WritePark( ThemeName ) is { } written
+			? $"Quicksave: QuickSave OK - written to {written}"
+			: "Quicksave: Quicksave failed - the log says why";
+
+	/// <summary>
+	/// Alt+L, the game table's row 11, <c>GameKey_QuickLoad</c> (<c>0x0040c040</c>): <c>&lt;theme&gt;.TPWS</c> loaded over the running park, as a
+	/// Load Park row's click loads a file (<c>FUN_005ac5d0</c>). With no such file nothing happens, the original's load
+	/// failing at the open before it takes anything down.
+	/// </summary>
+	/// <remarks>
+	/// <b>A deviation</b>, Load Park's: the park's scene is ended and built again from the file behind the loading
+	/// screen, where the original reads the file over the running park, and keeps the hand (<c>docs/exe/park-engine.md</c>,
+	/// "In-park loads keep the hand").
+	/// </remarks>
+	internal string QuickLoadKey()
+	{
+		if ( Players.Roster.Current is not { } player )
+			return "Quickload: QuickSave Load Failed - nobody is playing, so there is no folder to load from";
+
+		if ( SaveFolder.SavedParkPath( player.Slot, player.Name, ThemeName, ThemeName ) is not { } path )
+			return $"Quickload: QuickSave Load Failed - {player.Name}'s {ThemeName} folder holds no {ThemeName}.TPWS";
+
+		Game.RequestParkLoad( ThemeName, path );
+		return $"Quickload: QuickSave Loaded - {path} is loaded";
 	}
 
 	/// <summary>

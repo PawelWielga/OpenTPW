@@ -1266,6 +1266,11 @@ GH=766` there, or the pointer is off):
   at 1280 x 720, so the breaks compare). Over the gate (475,155) 110 180 and the Belly Bounce (480,265) 150 180 both
   rows wrap; a land row on the buy screen holds a break of its own. Measure the white ink inside the strip's band, and
   keep the gadget out of the band (its white triangle sits at x ~420 on our frame).
+- **An Alt chord in both games** (Q545, `q545/orig/run.sh`, `q545/confirm.py`): the original's on `:77` is `xdotool
+  keydown Alt_L`, the letter down and up, then `keyup Alt_L`; ours is `key( "s", what, mods=("Alt_L",) )` through
+  `parkrun.py`. Both act on the letter's release, so stamp a reading straight after its key-up, not before Alt goes
+  down: there the original's clock had run 3 ticks on (run a's miss). The quicksave the original writes, `jungle.TPWS`,
+  must be taken out after (the script does it).
 
 ## The original under Proton
 

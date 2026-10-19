@@ -440,6 +440,14 @@ internal static class SaveFolder
 	}
 
 	/// <summary>
+	/// Where a player's saved park of this name is in their folder for a theme, the path 0x005ac650 builds to load
+	/// <c>&lt;name&gt;.TPWS</c> (<c>docs/exe/saves.md</c>, "The load"), a file of that name in another case being the one
+	/// found, as on the original's file system; null where there is none.
+	/// </summary>
+	public static string? SavedParkPath( int slot, string name, string theme, string saveName )
+		=> Find( saveName + SavedParkExtension, Path.Join( PlayerFolder( slot, name ), theme ) );
+
+	/// <summary>
 	/// Writes a saved park into a player's folder for a theme as <c>&lt;name&gt;.TPWS</c> - the path 0x005ac780
 	/// builds (<c>docs/exe/saves.md</c>, "The save") - and answers its path, or null where it could not be written.
 	/// A file of that name in another case is the one replaced, as on the original's file system.

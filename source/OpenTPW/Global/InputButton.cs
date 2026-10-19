@@ -6,11 +6,12 @@ namespace OpenTPW;
 /// Every key the game binds, with the default each one ships on.
 ///
 /// <para>
-/// <b>Ten of these forty-one have a production listener; the other thirty-one are declared, bound and
-/// consumed by nothing.</b> Recorded here once so that it is not rediscovered a screen at a time. The ten
+/// <b>Twelve of these forty-three have a production listener; the other thirty-one are declared, bound and
+/// consumed by nothing.</b> Recorded here once so that it is not rediscovered a screen at a time. The twelve
 /// that work are <see cref="HideUI"/>, <see cref="ToggleHelpBar"/>, <see cref="FreezeCamera"/>,
 /// <see cref="NextIsland"/>, <see cref="PreviousIsland"/>, <see cref="RotateLeft"/>,
-/// <see cref="RotateRight"/>, <see cref="CamcorderMode"/>, <see cref="Delete"/> and <see cref="Clear"/>.
+/// <see cref="RotateRight"/>, <see cref="CamcorderMode"/>, <see cref="Delete"/>, <see cref="Clear"/>,
+/// <see cref="QuickSave"/> and <see cref="QuickLoad"/>.
 /// <see cref="Menu"/> is not one of them: both scenes read Escape from its release instead.
 /// </para>
 /// <para>
@@ -265,6 +266,22 @@ public enum InputButton
 	/// </summary>
 	[DefaultKey( Key.Delete )]
 	Clear,
+
+	/// <summary>
+	/// Quicksave (Alt + S)
+	/// Writes the running park as <c>&lt;theme&gt;.TPWS</c>: the game table's row 12, key 0x53 with Alt (0x30),
+	/// <c>GameKey_QuickSave</c> (<c>0x0040bf90</c>) (<c>docs/exe/saves.md</c>, "The quicksave and quickload keys").
+	/// </summary>
+	[DefaultKey( Key.AltLeft, Key.S )]
+	QuickSave,
+
+	/// <summary>
+	/// Quickload (Alt + L)
+	/// Loads <c>&lt;theme&gt;.TPWS</c> over the running park: the game table's row 11, key 0x4c with Alt,
+	/// <c>GameKey_QuickLoad</c> (<c>0x0040c040</c>).
+	/// </summary>
+	[DefaultKey( Key.AltLeft, Key.L )]
+	QuickLoad,
 
 	/// <summary>
 	/// Time Speed Up (Numpad +)

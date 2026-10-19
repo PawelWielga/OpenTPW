@@ -9125,6 +9125,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   window's close; `Level.WriteParkOnLeaving`, called by `Game` before the lobby's reload and after the frame loop.
   Confirmed: the stock park left by Exit To Lobby and entered again at the tick it was left on, in both games
   (`q544/`), and Quit Game's file at its own tick; the control on main wrote nothing and re-entered at 755.
+- [x] **Q545. Alt+S quicksave and Alt+L quickload.** Q248's second piece (`saves.md`, "The quicksave and quickload
+  keys"). The game table's rows 12 and 11 (`GameKey_QuickSave` `0x0040bf90`, `GameKey_QuickLoad` `0x0040c040`, Alt
+  alone) save and load `<theme>.TPWS`, the theme being the folder's own name; `Level.GameTableKeys`, `QuickSaveKey`,
+  `QuickLoadKey`. Confirmed: in both games Alt+S wrote `jungle.TPWS` at the running tick and Alt+L put the park back
+  to it (`q545/`); with no file ours loaded nothing; the control on main did nothing for either key.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

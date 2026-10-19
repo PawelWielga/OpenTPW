@@ -694,7 +694,7 @@ The table object itself is `0x18` bytes: `+0x00` rows, `+0x04` u16 count, `+0x06
 
 **OpenTPW has no table to switch off**, which matters before blaming a binding that does not fire: each reader asks
 what the gate would have said. While one of a park's screens is open the camera, cheat and game tables are off and only
-the shortcuts' is run ("A park screen is open"), which here is `WindowStack.ParkScreenOpen`, asked by `Level.BuildKeys`,
+the shortcuts' is run ("A park screen is open"), which here is `WindowStack.ParkScreenOpen`, asked by `Level.GameTableKeys`,
 the orbit camera's keys and `ParkFrontEnd.ToggleFullScreen`.
 
 ### How a key is matched — exact, and first match wins
@@ -819,7 +819,7 @@ still drawn, and the advisor is drawn while he speaks: he is not on layer 0.
 
 **OpenTPW builds it** as `ParkFrontEnd.ToggleFullScreen` over `WindowStack.Covered`: F3 let go with no modifier
 toggles it, refused in first person; on, nothing of the window stack is drawn or pointed at, every press is the
-cover's, and `Level.BuildKeys` and the orbit camera's C are not heard; the camera's keys and wheel are; F3 or a plain
+cover's, and `Level.GameTableKeys` and the orbit camera's C are not heard; the camera's keys and wheel are; F3 or a plain
 Escape takes it off and is spent doing it; Ctrl+P is counted, `FULL_SCREEN_VIEW_POSTCARD`. The pointer wears the plain
 arrow. Where it parts from the original:
 
@@ -3080,7 +3080,7 @@ The map's own key-up case is the same test as the screens' (`FUN_005f1130`, `0x0
 screen, the game menu or the map opens (`UiWindow.ClosesParkScreen`); the gadget's Buy does nothing over an open buy
 screen; `WindowStack.OnParkScreen` gives the screen's whole rectangle to the interface for both buttons and hides the
 controls behind it; `Level.KeptFromThePark` keeps a left press beside a screen from the park unless a tool is armed or
-the hand holds something; `Level.BuildKeys`, the orbit camera's keys and F3 are not heard while one is open
+the hand holds something; `Level.GameTableKeys`, the orbit camera's keys and F3 are not heard while one is open
 (`WindowStack.ParkScreenOpen`); the idle pointer and its help row are the plain ones; `ParkGadget.Update` folds the arm
 when a screen opens. A plain Escape let go closes the screen in front, or the map, and is spent doing it; with a
 modifier held it does nothing (`ParkFrontEnd.MenuKey`). Where it parts from the original:

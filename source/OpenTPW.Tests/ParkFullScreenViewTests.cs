@@ -355,7 +355,7 @@ public class ParkFullScreenViewTests
 	/// <b>The build keys and C are not heard under the view</b>: Delete let go leaves the tool in the hand, and C let go
 	/// leaves the camera in orbit. With the view off each does its own.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> taking the view's test out of <c>Level.BuildKeys</c> puts the tool away; out of the
+	/// <remarks><b>Mutations:</b> taking the view's test out of <c>Level.GameTableKeys</c> puts the tool away; out of the
 	/// orbit camera's C, goes into first person.</remarks>
 	[TestMethod]
 	public void TheBuildKeysAndCAreNotHeardUnderTheView()
@@ -457,7 +457,7 @@ public class ParkFullScreenViewTests
 	private static void WorldFrame( UI.WindowStack stack, Level park, params KeyEvent[] keys )
 	{
 		Frame( stack, keys );
-		typeof( Level ).GetMethod( "BuildKeys", BindingFlags.Instance | BindingFlags.NonPublic )!.Invoke( park, [] );
+		typeof( Level ).GetMethod( "GameTableKeys", BindingFlags.Instance | BindingFlags.NonPublic )!.Invoke( park, [] );
 		Camera.Update();
 	}
 

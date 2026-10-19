@@ -919,7 +919,7 @@ public class ParkScreenTests
 	private static void WorldFrame( UI.WindowStack stack, Level park, params KeyEvent[] keys )
 	{
 		Keys( stack, keys );
-		typeof( Level ).GetMethod( "BuildKeys", BindingFlags.Instance | BindingFlags.NonPublic )!.Invoke( park, [] );
+		typeof( Level ).GetMethod( "GameTableKeys", BindingFlags.Instance | BindingFlags.NonPublic )!.Invoke( park, [] );
 		Camera.Update();
 	}
 

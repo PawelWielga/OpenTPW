@@ -66,6 +66,7 @@ public class ParkSaveScreenTests
 		if ( root == null )
 			return;
 
+		ForgetWhatWasAsked();
 		SetCurrentPlayer( null );
 		SaveFileSystem = oldSaves;
 		Directory.Delete( root, true );
@@ -413,6 +414,103 @@ public class ParkSaveScreenTests
 		Assert.AreEqual( "autosave.TPWS", Path.GetFileName( SaveFolder.NewestPark( 0, "Test", "jungle" ) ) );
 		Assert.AreEqual( "", Counted() );
 	}
+
+	/// <summary>
+	/// <b>Alt+S writes the running park under the theme's name</b> (the game table's row 12, <c>FUN_0040bf90</c>), as
+	/// the menu's save does, the player first, over a file of that name in another case with no question. S alone,
+	/// Ctrl+Alt+S and Alt+L write nothing.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the binding without Alt writes on a plain S; the name <c>autosave</c>; the key-up not asked
+	/// for writes nothing; S and L swapped writes on Alt+L.
+	/// </remarks>
+	[TestMethod]
+	public void AltSWritesTheRunningParkAsTheThemesQuicksave()
+	{
+		Put( "Jungle.TPWS", DateTime.Now );
+		RunningPark( 1234 );
+
+		QuickKey( Key.S );
+		QuickKey( Key.S, Key.ControlLeft, Key.AltLeft );
+		QuickKey( Key.L, Key.AltLeft );
+		Assert.AreEqual( 4, new FileInfo( Path.Combine( Jungle, "Jungle.TPWS" ) ).Length, "nothing is written but by Alt+S" );
+		Assert.IsFalse( File.Exists( Path.Combine( Jungle, "..", "gms.dat" ) ) );
+
+		QuickKey( Key.S, Key.AltLeft );
+		Assert.AreEqual( "Jungle.TPWS", Parks(), "the one file, written over" );
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "Jungle.TPWS" ) ), "with the running park" );
+		Assert.IsTrue( File.Exists( Path.Combine( Jungle, "..", "gms.dat" ) ), "and the player with it" );
+		Assert.AreEqual( "", Counted() );
+	}
+
+	/// <summary>
+	/// <b>Alt+L loads the theme's quicksave</b> (row 11, <c>FUN_0040c040</c>), found in any case, as a Load Park row's
+	/// click asks for a file; with none in the folder, or with nobody playing, nothing is asked for. L alone does not.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the file's name not the theme's asks for nothing; the missing file not checked asks for one
+	/// that is not there; the binding without Alt asks on a plain L.
+	/// </remarks>
+	[TestMethod]
+	public void AltLLoadsTheThemesQuicksaveAndNothingWithoutOne()
+	{
+		Put( "New Save.TPWS", DateTime.Now );
+		RunningPark( 900 );
+		ForgetWhatWasAsked();
+
+		QuickKey( Key.L, Key.AltLeft );
+		Assert.AreEqual( (null, null), WhatWasAsked(), "no jungle.TPWS, no load" );
+
+		Put( "JUNGLE.TPWS", DateTime.Now );
+		QuickKey( Key.L );
+		Assert.AreEqual( (null, null), WhatWasAsked(), "L alone is not the key" );
+
+		GameTableFrames( [Down( Key.AltLeft ), Down( Key.L )], [Up( Key.AltLeft )], [Up( Key.L )] );
+		Assert.AreEqual( (null, null), WhatWasAsked(), "Alt let go first leaves L to come up alone" );
+
+		QuickKey( Key.L, Key.AltLeft );
+		Assert.AreEqual( ("jungle", "users/1Test/jungle/JUNGLE.TPWS"), WhatWasAsked() );
+
+		ForgetWhatWasAsked();
+		SetCurrentPlayer( null );
+		QuickKey( Key.L, Key.AltLeft );
+		Assert.AreEqual( (null, null), WhatWasAsked(), "nobody playing, no folder" );
+	}
+
+	/// <summary>
+	/// The key let go with the modifiers held round it, a frame each, the running level's game-table keys asked after
+	/// every frame as <c>Level.Update</c> asks them.
+	/// </summary>
+	private static void QuickKey( Key key, params Key[] held )
+		=> GameTableFrames( [.. held.Select( Down ), Down( key )], [Up( key )], [.. held.Select( Up )] );
+
+	/// <summary>A frame for each set of key events, the running level's game-table keys asked after each.</summary>
+	private static void GameTableFrames( params KeyEvent[][] frames )
+	{
+		var keys = typeof( Level ).GetMethod( "GameTableKeys", BindingFlags.Instance | BindingFlags.NonPublic )!;
+
+		foreach ( var frame in frames )
+		{
+			Input.UpdateFrom( new Snapshot( frame, "", Grass, false ) );
+			keys.Invoke( Level.Current, [] );
+		}
+	}
+
+	private static KeyEvent Down( Key key ) => new( key, true, ModifierKeys.None );
+
+	private static KeyEvent Up( Key key ) => new( key, false, ModifierKeys.None );
+
+	/// <summary>The park the game has been asked to load between frames, and the file to load it from.</summary>
+	private static (string? Theme, string? File) WhatWasAsked()
+		=> ((string?)Asked( "_parkAsked" ).GetValue( null ), (string?)Asked( "_parkFileAsked" ).GetValue( null ));
+
+	private static void ForgetWhatWasAsked()
+	{
+		Asked( "_parkAsked" ).SetValue( null, null );
+		Asked( "_parkFileAsked" ).SetValue( null, null );
+	}
+
+	private static FieldInfo Asked( string field ) => typeof( Game ).GetField( field, BindingFlags.Static | BindingFlags.NonPublic )!;
 
 	/// <summary>
 	/// The shipped park running in a level of its own at a tick of its own, which is not the file's 755, so a save
