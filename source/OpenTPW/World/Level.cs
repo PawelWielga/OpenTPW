@@ -549,8 +549,8 @@ public class Level
 
 	/// <summary>
 	/// Writes the running park into the player's folder for the theme as <c>&lt;name&gt;.TPWS</c>, the park file
-	/// <c>FUN_005ac610</c> writes (<c>docs/exe/saves.md</c>, "The save" and "Module by module"), and answers where,
-	/// or null where nothing was written.
+	/// <c>FUN_005ac610</c> writes (<c>docs/exe/saves.md</c>, "The save" and "Module by module"), or under the extension
+	/// given, as <c>FUN_005ac630</c> writes <c>restart.INTS</c>, and answers where, or null where nothing was written.
 	///
 	/// <para>
 	/// <b>The stages built are the ones <c>docs/exe/saves.md</c>'s "OpenTPW's writer" sections describe</b>
@@ -574,7 +574,7 @@ public class Level
 	/// there is no folder, and nothing is written; the original has a player on every entry.
 	/// </para>
 	/// </summary>
-	internal string? WritePark( string name )
+	internal string? WritePark( string name, string extension = SaveFolder.SavedParkExtension )
 	{
 		if ( Kind != Scene.Park || ParkState is not { } state )
 		{
@@ -587,7 +587,8 @@ public class Level
 		if ( ParkHand.LetGo() is { } letGo )
 			Log.Info( $"Save: the idle mode is installed before the park is written: {letGo}" );
 
-		return WritePark( Park, state, ThemeName, name, ParkPeople.Current, ParkStaffPool.Current, ParkRides.Current, Catalogue );
+		return WritePark( Park, state, ThemeName, name, ParkPeople.Current, ParkStaffPool.Current, ParkRides.Current, Catalogue,
+			extension );
 	}
 
 	/// <summary>The name the park is written under as it is left (<c>0x00747a58</c>).</summary>
@@ -611,9 +612,35 @@ public class Level
 		return written;
 	}
 
-	/// <summary><see cref="WritePark(string)"/> for a park's own parts, the camera's being the orbit camera's.</summary>
+	/// <summary>
+	/// Writes the park just entered as <c>restart.INTS</c> where the player's folder for the theme holds none, as the
+	/// original's state 0xf does after the park's load and before its first tick (<c>FUN_00550b30</c>;
+	/// <c>docs/exe/saves.md</c>, "Restart Park: restart.INTS"): the save whole, the player's <c>gms.dat</c> first. A file
+	/// there already is left as it is, so Restart Park goes back to the park as the theme was first entered. The original
+	/// skips it only online, which is not built. Answers where it was written, or null.
+	/// </summary>
+	internal string? WriteRestartOnEntering()
+	{
+		if ( Kind != Scene.Park || Players.Roster.Current is not { } player )
+			return null;
+
+		if ( SaveFolder.RestartParkPath( player.Slot, player.Name, ThemeName ) is { } there )
+		{
+			Log.Info( $"Entering the park: {there} is there already, so it is not written" );
+			return null;
+		}
+
+		var written = WritePark( SaveFolder.RestartName, SaveFolder.RestartExtension );
+		Log.Info( $"Entering the park: {SaveFolder.RestartName}{SaveFolder.RestartExtension} "
+			+ (written is null ? "is not written" : $"is written to {written}") );
+
+		return written;
+	}
+
+	/// <summary><see cref="WritePark(string, string)"/> for a park's own parts, the camera's being the orbit camera's.</summary>
 	internal static string? WritePark( IParkInitialState? park, ParkState state, string theme, string name,
-		ParkPeople? people = null, ParkStaffPool? pool = null, ParkRides? rides = null, ParkItemCatalogue? catalogue = null )
+		ParkPeople? people = null, ParkStaffPool? pool = null, ParkRides? rides = null, ParkItemCatalogue? catalogue = null,
+		string extension = SaveFolder.SavedParkExtension )
 	{
 		if ( Players.Roster.Current is not { } player )
 		{
@@ -791,7 +818,7 @@ public class Level
 			return null;
 		}
 
-		if ( SaveFolder.WritePark( player.Slot, player.Name, theme, name, file ) is not { } path )
+		if ( SaveFolder.WritePark( player.Slot, player.Name, theme, name, file, extension ) is not { } path )
 			return null;
 
 		if ( people != null )
@@ -2082,7 +2109,7 @@ public class Level
 	/// <summary>
 	/// Alt+S, the game table's row 12, <c>GameKey_QuickSave</c> (<c>0x0040bf90</c>): the running park written as <c>&lt;theme&gt;.TPWS</c>, the
 	/// theme's name being the one its folder is named by (the game object's string, <c>0x00786b68</c>), through the
-	/// same save as the menu's Save Game (<see cref="WritePark(string)"/>, <c>FUN_005ac610</c>), over the last one and
+	/// same save as the menu's Save Game (<see cref="WritePark(string, string)"/>, <c>FUN_005ac610</c>), over the last one and
 	/// with no question. The original hands "QuickSave OK" or "Quicksave failed" to its empty logger, so nothing is
 	/// shown either way (<c>docs/exe/saves.md</c>, "The quicksave and quickload keys").
 	/// </summary>

@@ -191,10 +191,16 @@ internal static class Game
 			var parkFile = _parkFileAsked;
 			_parkFileAsked = null;
 
-			UI.ParkCategoryScreens.ParkAsked( fromAPark: Level.Current.Kind == Level.Scene.Park );
+			var fromAPark = Level.Current.Kind == Level.Scene.Park;
+			UI.ParkCategoryScreens.ParkAsked( fromAPark );
 
 			Level.Current.Unload();
 			LoadPark( themeName, parkFile );
+
+			// State 9 goes on to 0xf, which writes restart.INTS when the folder has none (0x0054f3f7). A park built again
+			// from a park here (Load Park's row, Alt+L, Restart Park) is loaded in place there and never passes it.
+			if ( !fromAPark )
+				Level.Current.WriteRestartOnEntering();
 
 			return;
 		}

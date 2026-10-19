@@ -147,7 +147,8 @@ Accepting the options dialog writes only `Config.tcf`. Player options reach disk
 ## Parks: the `.TPWS` container
 
 Written as `<playerdir>\<theme>\<name>.TPWS` for a menu save, `<theme>.TPWS` for a quicksave, and `autosave.TPWS`.
-Alongside them: `restart.INTS`, `Refresh.INTS` (written around a sound-quality change) and `upload.LAYS` (layout only).
+Alongside them: `restart.INTS` (the park as the theme was first entered, "Restart Park: restart.INTS" below),
+`Refresh.INTS` (written and read back around a sound-quality change, through the same pair) and `upload.LAYS` (layout only).
 
 ### Version is 400 **or** 500
 
@@ -463,7 +464,7 @@ nothing and counted `SAVE_GAME` (`q241d/control`).
 |---|---|
 | `GameKey_QuickSave` (`0x0040bf90`), `GameKey_QuickLoad` (`0x0040c040`) (the game table's rows 12 and 11, no direct caller) | Alt+S and Alt+L, the quicksave and quickload of `<theme>.TPWS`: "The quicksave and quickload keys", below |
 | `0x0054ff10` in `Game_StateMachine`; `0x00424bd7` in `GameOptions_RestartBox_Tick` | `FUN_005ac610( L"autosave" )`: "Leaving a park: the autosave", below |
-| `0x00550c23`; `0x0055036c` | `restart.INTS` written when the folder has none; read by Restart Park |
+| `0x00550c23` in `Park_WriteRestartIfNone` (state 0xf); `0x0055036c` in `Game_StateMachine` (state 0xe) | `restart.INTS` written as a park is entered when the folder has none; read by Restart Park: "Restart Park: restart.INTS", below |
 | `0x00407eae` in `FUN_00407e00` | a `.TPWS` loaded by name as the world is made |
 | `FUN_005accf0`, `0x0054f12b` | entering a park: the newest `*.TPW*` in the folder ("Entering a park", below) |
 
@@ -533,6 +534,47 @@ To Lobby logged `Leaving the park: autosave is written to users/1ref/jungle/auto
 three, `park jungle` read it and started at 823; run on to 845, Quit Game's tick wrote 845 as the game closed
 (`q544/run1`, four predictions of four). Main's binary wrote nothing and came back at 755 (`q544/control`). The
 window's own close, a Full Simulation park and the options screen's box were not run.
+
+### Restart Park: restart.INTS
+
+**Entering a park writes it as `restart.INTS` when the player's theme folder has none, and Restart Park loads that
+file.** State 9, the park's build, goes on to state 0xf, which calls `Park_WriteRestartIfNone` (`0x00550b30`, at
+`0x0054f3f7`) unless the game mode `[0x00fb3b7c]` is 1, online, and then goes to 10. It builds the path
+`<player's folder>\<theme>` (`FUN_005c8890`), `\` (`0x00878f18`), `restart` (`0x00878a68`, from `0x00747a6c`) and
+`.INTS` (`0x00877f38`, from `0x00747a20`), and opens it for reading (`FUN_005f7ed0` with `0x80000000`). Where the open
+fails it calls `FUN_005ac630( "restart" )` on the save manager `0x00f7b560`, which is `FUN_005ac780` with the extension
+`.INTS` (`0x00f7adf8`): "The save" above whole, `gms.dat` first and then the park as the newest file left it; where the
+open succeeds it closes the file and writes nothing. So the file is the park as the theme was first entered, after the
+newest `*.TPW*` was loaded over the new world and before its first tick, and once written it stays: no other caller
+writes it, and the load from the list, the quickload and Restart Park itself, which load in place, never pass state 0xf.
+
+The park menu's Restart Park writes leave reason 1 on its question's tick (`FUN_0048b5b0`); state 10 goes to 0xd and
+0xd to 0xe, which quietens the advisor (`Advisor_StopQuietly( 1 )`, `0x005996d0`) and calls `FUN_005ac5f0( "restart" )`
+(`0x0055036c`), `FUN_005ac650` with `.INTS`: "The load" above, over the running park, so a missing file fails at the
+open with nothing taken down. Then state 10 again, the reason nought. `Refresh.INTS` (`0x0078dcf0`, from `0x00747a7c`)
+is the options screen's pair of the same two calls (`0x0042383d`, `0x0042386b`).
+
+**OpenTPW** (`Level.WriteRestartOnEntering`, `SaveFolder.RestartParkPath`, `ParkFrontEnd.RestartPark`): `Game` calls
+the write after a park is built from the lobby, and not after one built again from a park (Load Park's row, Alt+L,
+Restart Park), and it is `Level.WritePark( "restart", ".INTS" )`. Restart Park quietens the advisor and asks for the
+player's `restart.INTS`, found in any case, as a Load Park row does, ending the scene and building it again from the
+file where the original reads it over the running park; with no such file it logs and loads nothing. A park made fresh
+is counted and not written (`SAVE_PARK_WITH_NO_FILE`, Q249), so its Restart Park, with no file, makes it fresh again.
+With nobody playing, which only the console's `park` reaches, the copy beside the level is read again.
+
+**Measured (Q248).** In the original under Proton, the reference player's `restart.INTS` moved aside and Lost Kingdom
+entered from the lobby on its `easymode.TPWI`: the file was written within the load, 28 ms after `gms.dat`, version
+500, `mGameTick` 755, balance 87,987, 13 guests (`q248/orig/a-restart-written.INTS`). Played to 939, Exit To Lobby wrote
+the autosave and entering again read it (0, then 939); neither touched `restart.INTS`. Restart Park's tick put the
+tick back to 755 and the park ran on from it; with the file then taken out, Restart Park's tick left the tick running
+on from 1008 and the park up (`q248/orig/a-tick.log`, `a-restarted.png`, `a-restarted-none.png`). In OpenTPW
+(`q248/run3`, five of five): entering logged `Entering the park: restart.INTS is written to
+users/1ref/jungle/restart.INTS`, holding 755, 87987 and 13; Exit To Lobby's autosave at 825 was read on entering again
+with `... restart.INTS is there already, so it is not written`; Restart Park logged `Park menu: Restart Park - loading
+users/1ref/jungle/restart.INTS` and the clock started at 755, $87987 (`4-restarted.png`); with the file taken out it
+logged `... holds no restart file, so nothing is loaded` and the tick ran on. Main's binary wrote nothing and its
+Restart Park read the autosave, starting at 825 (`q248/control`). A Full Simulation park and the original's camera
+after the restart were not compared.
 
 ### Entering a park
 

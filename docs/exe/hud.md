@@ -297,9 +297,9 @@ opener with its screen up picks its tab again and no more.
 
 **The seed is the entry from the front end and nothing else.** `FUN_004a1d70` is called by `FUN_00489f50`, that
 by `FUN_004813e0`, and that by `Game_StateMachine` at `0x0054ed25`, state 9, alone. A park loaded from the
-park's own Load Park list keeps what the park before it left, and so does Restart Park. Restart Park is
-measured, not read: its confirm `FUN_0048b5b0` asks `FUN_005508b0( 1 )`, and what serves that was not read to
-its end (my guess from the part read, that it passes state 9, was wrong).
+park's own Load Park list keeps what the park before it left, and so does Restart Park: its confirm `FUN_0048b5b0`
+asks `FUN_005508b0( 1 )`, served by states 0xd and 0xe, which load `restart.INTS` over the running park and go back
+to state 10 without passing state 9 (`saves.md`, "Restart Park: restart.INTS").
 
 Measured in the original, the stock file in four fresh programs, each predicted first (`q330/PREDICTION.txt`;
 `q330/orig/run.sh <file> a|b|r|l`, `original/screens.py` beside `advisor.py`; nine of ten, the miss Restart

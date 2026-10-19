@@ -53,10 +53,8 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). Left:
-  `restart.INTS` written when the folder has none, and read by Restart Park. After Q241j. `gms.dat` before every
-  park file is built (Q241j: `Level.WritePark` writes it first and installs the idle mode for every caller, so each
-  of these is a call of it); the autosave on leaving is Q544, the quicksave keys Q545.
+- [ ] **Q546. The analyser record's 61-byte records and the sound block, to FileFormats.** Q248's note, which was not
+  its writer's work:
   - **Note (fork watch 2026-10-17, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-17/verify-save.md` L5):** the analyser record's undecoded part (FileFormats `saves.md`, its
     first 62,598 bytes) is mostly 1,024 records of 61 bytes, four ints then nine caches, each a count and an
     `mWorkedOut` byte, measured at the record's +36 to +62,500 in two files; no cache stamp is saved (`0x004cd9c0`).
@@ -1870,8 +1868,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     their channels is restored; the fantasy and hallow saves and the shipped park walk closed (`q174cprobe/out.txt`).
   - **Note (Q181b):** a park built from the jungle `New Save.TPWS` throws in `ParkGuestSprites` (`People.ToDictionary` by
     `SpriteSlot`: two people share slot 0), after the scripts are bound; the game exits (`q181b/run1/run.log`).
-  - **Note (fork review, 2026-09-30):** `restart.INTS` is the original's own fresh park. `FUN_00550b30` writes the new world's
-    state once, on the first state-0xf frame, and Restart Park (`FUN_005ac5f0`) loads it back. Each of the three holds
+  - **Note (fork review, 2026-09-30):** `restart.INTS` is the park as the theme was first entered (`saves.md`, "Restart
+    Park: restart.INTS"), here the original's own fresh park. `FUN_00550b30` writes the new world's state once, on the first state-0xf frame, and Restart Park (`FUN_005ac5f0`) loads it back. Each of the three holds
     twelve things (the ten managers, then the unplaced gates and lights, catalogue objects x601 and x603), no people
     and no placed objects, `mGameTick` 0, the park closed, fee 20 and the shipped `Standard.sam`'s loans (APR 18-23);
     only the cash shows the edited data folder. It is Q197's reference. Review items gap3-2..gap3-11.

@@ -162,7 +162,7 @@ internal sealed class ParkFrontEnd : Panel
 	private bool _quitting;
 
 	/// <param name="themeName">
-	/// Which park this is, so Restart Park can load the same one again rather than guessing at it.
+	/// Which park this is, the theme whose folder Restart Park finds its restart file in.
 	/// </param>
 	public ParkFrontEnd( WindowStack stack, string themeName )
 	{
@@ -542,31 +542,46 @@ internal sealed class ParkFrontEnd : Panel
 	}
 
 	/// <summary>
-	/// Restart Park, once its box is ticked (UITEXT 11, handler case 3).
-	///
+	/// Restart Park, once its box is ticked (UITEXT 11, handler case 3): the tick writes leave reason 1
+	/// (<c>FUN_0048b5b0</c>), and states 0xd and 0xe quieten the advisor (<c>Advisor_StopQuietly(1)</c>) and load the
+	/// player's <c>restart.INTS</c>, the park as the theme was first entered (<c>0x0055036c</c>; <c>docs/exe/saves.md</c>,
+	/// "Restart Park: restart.INTS"), and go back to state 10. Where the folder holds no such file the load fails at the
+	/// open, nothing is taken down, and the park runs on.
 	/// <para>
-	/// <b>This is a departure, and a traced one.</b> The original's tick is FUN_0048b5b0, and it writes exit
-	/// reason <b>1</b> - not the 2 that Exit To Lobby writes. Against the state machine, reason 1 sends the
-	/// in-park loop to 0xd and then 0xe, which quietens the advisor and calls FUN_005ac5f0, and goes
-	/// <i>back into state 10</i>; only 2 and 3 reach 0xb, where a park is torn down. So the original
-	/// restarts a park <b>in place, with no teardown and no load</b>. What FUN_005ac5f0 resets is not
-	/// established: it forwards to FUN_005ac650, whose decompilation is unreliable - an unrecovered frame
-	/// with unaff_EBX and unaff_ESI standing in for arguments - so nothing is claimed about it here.
-	/// </para>
-	/// <para>
-	/// What this does instead is load the park again from the copy that ships beside it, which is where
-	/// every park still starts. While nothing is ever written back that file is still where the park
-	/// began, so reading it again is the closest thing to a reset that exists here. <b>When a
-	/// park can be saved and played on, this has to start meaning "back to the beginning" rather than "read
-	/// the file again"</b>, and it should stop reloading the scene when there is a state to reset in place.
+	/// <b>Deviations.</b> The file is loaded by building the scene again from it, as a Load Park row is, where the
+	/// original reads it over the running park. A park made fresh was never written as <c>restart.INTS</c>
+	/// (<see cref="Level.WriteRestartOnEntering"/> counts it), so with no file it is made fresh again, the world the
+	/// original's file would hold. With nobody playing, which only the console's <c>park</c> reaches, there is no folder,
+	/// and the copy that ships beside the level is read again.
 	/// </para>
 	/// </summary>
 	private void RestartPark( GameMenu menu )
 	{
 		_stack.Close( menu );
-		Log.Info( $"Park menu: Restart Park - loading {_themeName} again" );
+		Advisor.Current?.StopQuietly();
 
-		Game.RequestParkLoad( _themeName );
+		if ( Players.Roster.Current is not { } player )
+		{
+			Log.Info( $"Park menu: Restart Park - nobody is playing, so {_themeName} is read again from the copy beside the level" );
+			Game.RequestParkLoad( _themeName );
+			return;
+		}
+
+		if ( SaveFolder.RestartParkPath( player.Slot, player.Name, _themeName ) is { } restart )
+		{
+			Log.Info( $"Park menu: Restart Park - loading {restart}" );
+			Game.RequestParkLoad( _themeName, restart );
+			return;
+		}
+
+		if ( Level.Current?.Park?.Save is null )
+		{
+			Log.Info( $"Park menu: Restart Park - no restart file, and this park was made fresh, so it is made fresh again" );
+			Game.RequestParkLoad( _themeName );
+			return;
+		}
+
+		Log.Info( $"Park menu: Restart Park - {player.Name}'s {_themeName} folder holds no restart file, so nothing is loaded" );
 	}
 
 	/// <summary>

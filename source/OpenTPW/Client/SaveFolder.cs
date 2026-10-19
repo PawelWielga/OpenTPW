@@ -398,7 +398,13 @@ internal static class SaveFolder
 	}
 
 	// A saved park's extension: the Load and Save screens' search is "*" and then ".TPWS" (0x00f7b948, 0x00f7b548).
-	private const string SavedParkExtension = ".TPWS";
+	public const string SavedParkExtension = ".TPWS";
+
+	// The extension the park as first entered is written under, and Restart Park reads (0x00f7adf8, from 0x00747a20).
+	public const string RestartExtension = ".INTS";
+
+	// That file's name (0x00878a68, from 0x00747a6c).
+	public const string RestartName = "restart";
 
 	/// <summary>A saved park as the Load Park screen lists it: its name, where it is, and when it was last written, in local time.</summary>
 	public readonly record struct SavedPark( string Name, string Path, DateTime Written );
@@ -448,14 +454,24 @@ internal static class SaveFolder
 		=> Find( saveName + SavedParkExtension, Path.Join( PlayerFolder( slot, name ), theme ) );
 
 	/// <summary>
-	/// Writes a saved park into a player's folder for a theme as <c>&lt;name&gt;.TPWS</c> - the path 0x005ac780
-	/// builds (<c>docs/exe/saves.md</c>, "The save") - and answers its path, or null where it could not be written.
-	/// A file of that name in another case is the one replaced, as on the original's file system.
+	/// Where a player's <c>restart.INTS</c> is in their folder for a theme, the file state 0xf writes when there is none
+	/// and Restart Park loads (<c>FUN_00550b30</c>, <c>0x0055036c</c>; <c>docs/exe/saves.md</c>, "Restart Park: restart.INTS"),
+	/// found in any case; null where there is none.
 	/// </summary>
-	public static string? WritePark( int slot, string name, string theme, string saveName, byte[] file )
+	public static string? RestartParkPath( int slot, string name, string theme )
+		=> Find( RestartName + RestartExtension, Path.Join( PlayerFolder( slot, name ), theme ) );
+
+	/// <summary>
+	/// Writes a park file into a player's folder for a theme as <c>&lt;name&gt;.TPWS</c>, or under the extension given -
+	/// the path 0x005ac780 builds from the name and the extension its callers hand it (<c>docs/exe/saves.md</c>, "The
+	/// save") - and answers its path, or null where it could not be written. A file of that name in another case is the
+	/// one replaced, as on the original's file system.
+	/// </summary>
+	public static string? WritePark( int slot, string name, string theme, string saveName, byte[] file,
+		string extension = SavedParkExtension )
 	{
 		var folder = Path.Join( PlayerFolder( slot, name ), theme );
-		var path = Find( saveName + SavedParkExtension, folder ) ?? Path.Join( folder, saveName + SavedParkExtension );
+		var path = Find( saveName + extension, folder ) ?? Path.Join( folder, saveName + extension );
 
 		try
 		{

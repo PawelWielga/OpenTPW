@@ -25,7 +25,7 @@ namespace OpenTPW.UI;
 /// </para>
 /// <para>
 /// <b>The save</b> is <c>FUN_0049e9b0</c>'s: the player and then the park written under the box's name
-/// (<c>FUN_005ac610</c>, <see cref="Level.WritePark(string)"/>), and the screen closes whatever it answered.
+/// (<c>FUN_005ac610</c>, <see cref="Level.WritePark(string, string)"/>), and the screen closes whatever it answered.
 /// </para>
 /// </summary>
 internal sealed class ParkSaveScreen : ParkFileScreen

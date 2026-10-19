@@ -416,6 +416,80 @@ public class ParkSaveScreenTests
 	}
 
 	/// <summary>
+	/// <b>Entering a park writes it as <c>restart.INTS</c> where the folder holds none</b> (state 0xf, <c>FUN_00550b30</c>),
+	/// the player first, and never again once it is there; it is not a saved park, and entering does not find it.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the file there not looked for writes it again at the later tick; the extension <c>.TPWS</c> puts
+	/// it among the saved parks; the guard on the scene turned round writes nothing from a park.
+	/// </remarks>
+	[TestMethod]
+	public void EnteringAParkWritesRestartIntsOnlyWhereThereIsNone()
+	{
+		Put( "easymode.TPWI", new DateTime( 2026, 10, 1, 14, 18, 0, DateTimeKind.Local ) );
+		RunningPark( 1234 );
+
+		Assert.AreEqual( "users/1Test/jungle/restart.INTS", Level.Current.WriteRestartOnEntering() );
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "restart.INTS" ) ) );
+		Assert.IsTrue( File.Exists( Path.Combine( Jungle, "..", "gms.dat" ) ), "the player is written first" );
+		Assert.AreEqual( "", Parks(), "not a saved park" );
+		Assert.AreEqual( "easymode.TPWI", Path.GetFileName( SaveFolder.NewestPark( 0, "Test", "jungle" ) ), "nor entered with" );
+
+		RunningPark( 2000 );
+		Assert.IsNull( Level.Current.WriteRestartOnEntering() );
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "restart.INTS" ) ), "the park as first entered stays" );
+		Assert.AreEqual( "", Counted() );
+	}
+
+	/// <summary>
+	/// <b>Restart Park loads <c>restart.INTS</c></b> (state 0xe, <c>0x0055036c</c>), found in any case, however much
+	/// newer an autosave or a saved park is. With no such file a loaded park loads nothing; a park made fresh is made
+	/// fresh again.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the park entered again from the newest file (the menu's restart before <c>restart.INTS</c>) asks
+	/// for no file; the fresh park's case taken for every missing file asks for one there too; the missing file not
+	/// looked for asks for nothing at all.
+	/// </remarks>
+	[TestMethod]
+	public void RestartParkLoadsRestartIntsAndNotTheNewestFile()
+	{
+		RunningPark( 900 );
+		var stack = APark();
+		ForgetWhatWasAsked();
+
+		Restart( stack );
+		Assert.AreEqual( (null, null), WhatWasAsked(), "a loaded park with no restart file loads nothing" );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ) );
+
+		Put( "RESTART.ints", new DateTime( 2026, 9, 29, 8, 51, 0, DateTimeKind.Local ) );
+		Put( "autosave.TPWS", DateTime.Now );
+		Restart( stack );
+		Assert.AreEqual( ("jungle", "users/1Test/jungle/RESTART.ints"), WhatWasAsked() );
+
+		ForgetWhatWasAsked();
+		File.Delete( Path.Combine( Jungle, "RESTART.ints" ) );
+		typeof( Level ).GetProperty( nameof( Level.Park ) )!.SetValue( Level.Current, null );
+		Restart( stack );
+		Assert.AreEqual( ("jungle", null), WhatWasAsked(), "a park made fresh is made again" );
+	}
+
+	/// <summary>The game menu's third row, Restart Park, and its question's tick.</summary>
+	private static void Restart( UI.WindowStack stack )
+	{
+		Press( stack, Key.Escape );
+
+		if ( !stack.Windows.OfType<UI.GameMenu>().Any() )
+			Press( stack, Key.Escape );
+
+		var menu = stack.Windows.OfType<UI.GameMenu>().Single();
+		var choices = (IList)typeof( UI.GameMenu ).GetField( "_choices", BindingFlags.Instance | BindingFlags.NonPublic )!.GetValue( menu )!;
+
+		((UI.UiControl)choices[2]!).LeftClicked!();
+		Click( stack.Windows.OfType<UI.MessageBox>().Single(), QuestionTick );
+	}
+
+	/// <summary>
 	/// <b>Alt+S writes the running park under the theme's name</b> (the game table's row 12, <c>FUN_0040bf90</c>), as
 	/// the menu's save does, the player first, over a file of that name in another case with no question. S alone,
 	/// Ctrl+Alt+S and Alt+L write nothing.

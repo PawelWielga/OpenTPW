@@ -696,6 +696,12 @@ whole list):
   rewrites `gms.dat` with the same bytes**: `loadfile.sh stop` then says the sum changed; take the autosave out
   (it is the newest file there, so the next start would enter the park on it) and the sum is the one before.
   `q544/orig/run.sh <tag>` does the whole round with `tick.py` and takes the autosave out (Q544).
+  **Entering a park from the lobby writes `restart.INTS` where the player's jungle folder has none, in both games**
+  (Q248), and Restart Park reads it: the reference player's and parkrun's private player's are there already (755),
+  so a run that needs it written moves it aside first and puts it back with its time (`cp -p`), or the sum changes.
+  `loadfile.sh` enters from the lobby when it starts the original, so its first load writes one where none is.
+  `q248/orig/run.sh <tag>` and `q248/confirm.py <out> <bin> [control]` do the round: entered, Exit To Lobby, entered
+  again, Restart Park (the tick falls to 755), the file taken out and Restart Park again (no fall).
   In OpenTPW `menu`, a click on `control 3`'s middle, then on `control 9873c9`'s, the question's tick (Return
   through XTEST does not answer it); `lobby` and `park jungle` are the console's way out and in
   (`q330/confirm.py fix|restart`, `q330/orig/run.sh <file> r|l`; Q330).

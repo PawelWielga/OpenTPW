@@ -9130,6 +9130,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   alone) save and load `<theme>.TPWS`, the theme being the folder's own name; `Level.GameTableKeys`, `QuickSaveKey`,
   `QuickLoadKey`. Confirmed: in both games Alt+S wrote `jungle.TPWS` at the running tick and Alt+L put the park back
   to it (`q545/`); with no file ours loaded nothing; the control on main did nothing for either key.
+- [x] **Q248. The writer's other callers.** From Q241 and Q241e (`saves.md`, "The other callers"). The autosave on
+  leaving is Q544, the quicksave keys Q545; this last piece is `restart.INTS` (`saves.md`, "Restart Park:
+  restart.INTS"): state 0xf's `Park_WriteRestartIfNone` (`0x00550b30`) writes it as a park is entered from the lobby
+  where the folder has none, and state 0xe loads it (`0x0055036c`); `Level.WriteRestartOnEntering`,
+  `SaveFolder.RestartParkPath`, `ParkFrontEnd.RestartPark`. It closes the review's finding on Q544 (Restart Park read
+  the newest file, the autosave after any exit). Confirmed: in both games, after an Exit To Lobby's autosave, Restart
+  Park went back to 755 (`q248/`); the control on main read the autosave at 825. Its fork-watch note is Q546.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

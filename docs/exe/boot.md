@@ -63,9 +63,9 @@ one write is 0, in the initializer `FUN_0046c0b0`; a write through a pointer is 
 | 2 | **Lobby loop**, while lobby object +0x14 == 1: `Advisor_Update`, sound listener, render, present, and fixed 31 ms ticks of 0x00520130 with at most 500 ms of catch-up. Otherwise 3. |
 | 3 | **Leave the lobby.** 0x005d5cf0 gives the choice (2 means play a park). Frees the lobby, begins a loading screen and loads the "levels" list. Then 9, or 0xc to quit. |
 | 9 | **Park load**, behind a new loading screen whose Begin resets the bar. An online-park branch comes first, keyed on `DAT_00f7d88c` +0x3f0 (0x005b50b0's object, ONLINE NEWS). Then: RSSE scripts init (0x00551600), particles, the player (a "debug" slot when there is no front end), weather textures, advisor paths (0x00457a90), 0x00407d80, the level load (0x00407e00; it loads a QuickSave first only while `DAT_00788160`, written by the options parser 0x0040f000, is set), 0x00457c30. Any failure returns 2, which quits. Offline, and only while `DAT_00788268` is zero (`0x0054f019`; a non-zero value skips the game type 1 load below as well), the park's own save then loads over the new world: the newest `*.TPW*` in the player's theme folder (`FUN_005accf0`, `0x0054f12b`; `park.md`, "Arrivals"), through `FUN_00414d40` in mode 2, which restores the saved clock (`FUN_00415140`). Game type 1 (`[0x00fb3b7c]`, `0x0054f059`) loads in mode 1 instead (`0x0054f113`): the action recording alone, no clock restore, then the layout replay (`0x0054f11f`). Game type 1 runs the online chat init, with a 5-minute timeout. `LoadingScreen_End`, then 0xf. |
-| 0xf | 0x00550b30 when not online, then 10. |
+| 0xf | `Park_WriteRestartIfNone` (0x00550b30) when not online: writes `restart.INTS` where the player's theme folder has none (`saves.md`, "Restart Park: restart.INTS"); then 10. |
 | 10 | **In-park loop.** Fixed 31 ms ticks with at most 2000 ms of catch-up; see [Tick rates](#tick-rates) for what runs at which frequency. Ticks run only while the app is active or windowed. Also each pass: listener, `Advisor_Update`, render, present, `Scr%05ld.tga` screenshots and the "E W R P S" timings line. `DAT_00879088` == 1 goes to 0xd; 2 or 3 goes to 0xb. |
-| 0xd | Goes to 0xe, which calls `Advisor_StopQuietly(1)` (0x005996d0) to stop the advisor and 0x005ac5f0, then goes back to 10. |
+| 0xd | Goes to 0xe, which calls `Advisor_StopQuietly(1)` (0x005996d0) to stop the advisor and 0x005ac5f0, the load of `restart.INTS` over the running park (`saves.md`, "Restart Park: restart.INTS"), then goes back to 10 with the reason nought. |
 | 0xb | **Leave the park:** the park written as `autosave.TPWS` unless online (`0x0054ff10`; `saves.md`, "Leaving a park: the autosave"), then teardown. Then 0xc (quit) if `DAT_00879088` == 3 or there is no front end; otherwise 9 if another park is pending (+0x3f0), else 1, back to the lobby. |
 | 0xc | Final teardown of the players and online objects; sets the quit bit. |
 
@@ -306,7 +306,7 @@ Evidence is a Ghidra trace of `/testme.exe` throughout; the column names what in
 | 0x00407d80 | | Part of the park load. | State 9 |
 | 0x00407e00 | | The park's level load: `FUN_005156a0` (which zeroes `mGameTick`), a QuickSave only while `DAT_00788160` is set, then the level (0x00407f20). | State 9, `0x0054ed3f` |
 | 0x00457c30 | | Called after the level load (`0x0054ed4e`); the park's save loads after it, later in the same pass (`0x0054f12b`). | State 9 |
-| 0x00550b30 | | Runs in state 0xf when not online. | State 0xf |
+| 0x00550b30 | `Park_WriteRestartIfNone` | Runs in state 0xf when not online: writes `restart.INTS` where there is none (`saves.md`). | State 0xf |
 | 0x00546c80 | | The track-ride tick, every tick. | Magic `DAT_00877b58` = 0x4a454647 "GFEJ" |
 | `DAT_00877b58` | | That magic word, read across 0x00542000–0x0054b000. | Read sites |
 | 0x00543560 | | The save's **TRAK** module loader, inside that range. | Module tag |
@@ -322,4 +322,4 @@ Evidence is a Ghidra trace of `/testme.exe` throughout; the column names what in
 | 0x0055a470 | | Called at `0054f828`, inside the every-8th gate (its `JNZ` at `0054f66f` skips it), so every 8th tick; not online-only. See "Tick rates" above. | 0054f828 |
 | `DAT_00879088` | | Leave-the-park reason: 1 → 0xd, 2 or 3 → 0xb, 3 quits. | State 10 |
 | 0x005996d0 | `Advisor_StopQuietly` | Called (1) to stop the advisor with a fade; see `ui.md`. | State 0xe |
-| 0x005ac5f0 | | Runs with it in state 0xe. | State 0xe |
+| 0x005ac5f0 | | Runs with it in state 0xe: the save manager's load of `<name>.INTS`, here `restart.INTS` (`saves.md`). | State 0xe |
