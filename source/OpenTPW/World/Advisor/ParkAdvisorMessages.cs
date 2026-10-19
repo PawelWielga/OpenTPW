@@ -140,6 +140,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int PatrolTool = 193;
 	/// <summary>Message 0x12e, posted as the visitor's window is built (FUN_004b79b0) and withdrawn as it is destroyed (FUN_004b7720, event 0x14).</summary>
 	internal const int VisitorWindow = 302;
+	/// <summary>Message 0xd1, posted as the shop's window is built (FUN_004b0e30) and withdrawn as it is destroyed (FUN_004b0b30, event 0x14).</summary>
+	internal const int ShopWindow = 209;
 	/// <summary>Message 0x131, posted as the camcorder button goes down (FUN_00498bb0) and withdrawn as it comes up (FUN_00498bd0) or a button on its panel is clicked (FUN_00498ad0, 0x100).</summary>
 	internal const int CamcorderPanel = 305;
 	/// <summary>Message 0xb9, polled: the line about the control panel, scored by the park's age in days (0x005a06c0).</summary>
@@ -583,6 +585,7 @@ internal sealed class ParkAdvisorMessages
 		new( StaffWindowPatrol, "HelpMessage.Score", 431, 457, Lines: 1, Category: Tutorial ),
 		new( PatrolTool, "HelpMessage.Score", 412, 385, Lines: 1, Category: Tutorial ),
 		new( VisitorWindow, "HelpMessage.Score", 562, 580, Lines: 1, Category: Tutorial ),
+		new( ShopWindow, "HelpMessage.Score", 428, 397, Lines: 1, Category: Tutorial ),
 		new( CamcorderPanel, "HelpMessage.Score", 565, 583, Lines: 1, Category: Tutorial ),
 		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" ),
 		new( ExplainTooltips, "TutorialExplainTooltips.Score", 542, 559, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialExplainTooltips" )

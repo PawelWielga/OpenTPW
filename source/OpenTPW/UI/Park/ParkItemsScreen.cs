@@ -108,6 +108,11 @@ internal sealed class ParkItemsScreen : UiWindow
 	/// </summary>
 	private UiTimer _refresh = new( RefreshEvery );
 
+	/// <summary>The tab shown, and the thing whose row is picked on it (-1 for none).</summary>
+	internal int ShownTab => _tab;
+
+	internal int Picked => _lists[Tabs[_tab].Columns].Selected;
+
 	/// <summary>Which tab the screen was last left on - the original keeps the same in a global.</summary>
 	private static int _lastTab;
 
@@ -118,7 +123,9 @@ internal sealed class ParkItemsScreen : UiWindow
 	/// </summary>
 	private static readonly int[] _sorts = [1, 1, 1, 1];
 
-	public ParkItemsScreen( WindowStack stack ) : base( stack )
+	/// <param name="openOn">The tab to open on, or -1 for the one last left (<c>FUN_00495aa0</c>'s first argument).</param>
+	/// <param name="pick">A thing whose row is picked and brought into view, or nought (its second, <c>FUN_00664d2a</c>).</param>
+	public ParkItemsScreen( WindowStack stack, int openOn = -1, int pick = 0 ) : base( stack )
 	{
 		// Built onto the park's own layer (0x00495abe) - see UiWindow.ParkScreen.
 		ParkScreen = true;
@@ -208,7 +215,13 @@ internal sealed class ParkItemsScreen : UiWindow
 			Clicked = () => Stack.Close( this )
 		} );
 
-		Show( _lastTab );
+		Show( openOn < 0 ? _lastTab : openOn );
+
+		if ( pick != 0 )
+		{
+			_lists[Tabs[_tab].Columns].Pick( pick );
+			LogOrder( _lists[Tabs[_tab].Columns] );
+		}
 	}
 
 	/// <summary>One of the three list shapes, built once and shown when its tab is chosen.</summary>

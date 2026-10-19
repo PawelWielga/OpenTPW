@@ -3211,6 +3211,9 @@ placed object, on the item's `WhichUIType`:
 **The identification is proven by the UIHELPTEXT rows compiled into each stream** - "delete the ride"
 vs "the shop" vs "the sideshow" vs "the toilet" - not inferred.
 
+Built in OpenTPW: the ride's (`ParkObjectWindow`), the shop's (`ParkShopWindow`, `hud.md`, "The shop's window"), the staff
+member's and the visitor's; the other five are counted where they are reached (Q31b).
+
 Five verbs live in the shared base: cycle forward, cycle back, move, delete, close. **The ride's three
 sliders are buffered and committed only when the window closes OR either cycle button is pressed**, and
 capacity and duration commit **byte-wide** where speed is a dword.

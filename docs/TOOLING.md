@@ -306,6 +306,14 @@ Each was found by trial in the item named, and cost a run to find.
   the member walks on with the window up: a frame from before the strip's click is not the view at the pickup. Shoot
   the window, the carry and the drop, which share a camera.
 
+- **The shop's window in either game** (Q31, `q31/orig/run.sh`, `run2.sh`, `q31/confirm.py`): the stock park at camera
+  (480,265) 130 180; in the original **align the pointer before `setcam.py`**, as the align's sweep to the edges scrolls
+  the park (round a's miss), then the Drinks Shop is (799,675) of the 1024 x 768 frame, the amount's thumb (483,338), the
+  quality's (265,345), the price's plus (786,330), the door (766,434), OK (856,431); the window's buffered quality,
+  amount and price are `0x007cc27c`, `0x007cc280`, `0x007cc284`, the shop `[0x007c2658]`. A drag there is `xdotool
+  mousedown`, a `gmove.py` glide, `mouseup`. Here `shopwindow` is the census, `control c066` the root (a stream point
+  maps through its rect, `confirm.py`'s `vpix`), and a drag is XTEST press, ten motions, release. The original's fast
+  clock (NOT TRUE) turns a day and sells a drink within the run: read its figures from the opening frame.
 - **The staff member's window in either game** (Q431, `q431/orig/run.sh`, `q431/confirm.py`): Ctrl+S, the mechanics'
   button (360,613), then the strip (380,505) of the original's 1024 x 768 frame opens it on Mike Cooper; its `b_ardown`
   is (810,182), `b_arup` (816,138), `b_locate` (809,231), `b_allstaff` (809,284), the preview (259,206), OK (816,378),

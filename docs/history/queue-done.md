@@ -9180,6 +9180,31 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `0x004f85a0`, kept over an in-place load; day -1 with no file). Lost Kingdom enters on 2/2/2000 tick 755 and turns
   its first day on 761 and month on 1383 in both games (`q149/run1`, `orig/a`, `side-by-side.png`); main read
   1/1/2000. 15 of 15 bugs put back fail a test.
+- [x] **Q31. The shop's object window.** `Level.OpenObjectWindow` opens only a ride's (`UiType 0`). Shops,
+  sideshows and the rest stop at `SHOP_WINDOW`, `SIDESHOW_WINDOW` and `FEATURE_WINDOW`; a staff member's click
+  opens their window (Q431); a clicked visitor reaches nothing counted. `park-engine.md`, "The
+  per-object management screen is nine screens", lists the nine. This item is the shop's; the other seven are Q31b (the visitor's and the staff member's are built, Q430, Q431: five are left).
+  From Q177: the shop, sideshow and toilet windows' figures are decoded (`ride-operation.md`, "The settle-up's
+  bookkeeping"): customer satisfaction, profit last month, customers as "C of M", winners last month, the cost of
+  goods from the window's pending sliders (applied on close, on stepping to the next or by apply to all), and a
+  toilet's users last month. `UIStrings` 37 to 39 are one row off: UITEXT 37 is "Scrap value", 38 "Local happiness",
+  39 "Quality of goods", 40 "Sale price"; nothing uses the three members yet.
+  - **Note (fork review 2, 2026-10-16, `verify-ui-hud.md` L6):** the shop window `FUN_004b01d0` and the sideshow's
+    `FUN_004b16c0` bind their rows: the 30-day takings (`0xc077`, `0xa093`), the satisfaction gauges, the scrap rows
+    and the cell's happiness (`FUN_004cd880( cell, 1 )`). The row labels need the streams `0x00755908` and
+    `0x00755e80` parsed.
+  - **Note (fork watch 2026-10-16, `verify-ui-hud.md` H1):** the shop window's load, apply, ranges and buttons are
+    decoded (`hud.md`, "The shop, sideshow and ride windows"): the setters `0x004e21e0`, `0x004e2190` (the slider x
+    50) and `0x004e2770`, applied on close, on a step or by apply to all (`0xc081`), which reaches every object of the
+    **same item**, not every shop; the sliders' ranges (quality 0 to 2, amount 0 to 100, price 0 to 500); Up and Down
+    step the window.
+  - **Done (2026-10-19, `alexah/634-shop-window`):** `ParkShopWindow` from the stream `0x00755908` (`hud.md`, "The shop's
+    window"): the seven figures (C of M, the pending cost of goods, takings, profit, the satisfaction bar, the scrap value,
+    the local happiness `FUN_004cd880`), the three buffered settings written on the close, an arrow or apply to all (the
+    same item's shops), the door and its CLOSED box, b_allthings to the shops tab with the row picked, the advisor's 0xd1.
+    Confirmed beside the original on the stock Drinks Shop (`q31/side-by-side.png`, `side-by-side-door.png`): 8 of 8 of
+    the original's predictions and 6 of 6 of ours on the final build. `UIStrings` 37 to 40 corrected. The scrap value shows
+    the build price ($ 650 against the original's $ 325, `SCRAP_VALUE_DEPRECIATION`, as the ride's). Left: Q547, Q548.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

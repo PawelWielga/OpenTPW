@@ -90,8 +90,8 @@ counted, `RESEARCH_SCREEN`.
       COLUMN COUNT, which is why buy pushes three and hire two.
 - [x] **Clicking a placed ride opens its management window** - `ParkObjectWindow`, stream
       `0x00755150`. **There are nine such windows**, dispatched by `FUN_00486920` on the thing's kind
-      byte and the item's `WhichUIType`; the others stop at four counted names (`SHOP_WINDOW`, `SIDESHOW_WINDOW`,
-      `FEATURE_WINDOW` for toilets, staff rooms, misc items and upgrades alike); the staff member's is built (Q431),
+      byte and the item's `WhichUIType`; the shop's is built (`ParkShopWindow`, Q31), and the others stop at counted names
+      (`SIDESHOW_WINDOW`, `FEATURE_WINDOW` for toilets, staff rooms, misc items and upgrades alike); the staff member's is built (Q431),
       its FIRE and PICK UP too (Q432), and so is the visitor's (Q430), which a visitor's world click does not reach. Close, delete, move and
       the two cycle arrows work.
 - [x] **The rides panel - 2026-09-21; two rows still counted.** All three sliders take their

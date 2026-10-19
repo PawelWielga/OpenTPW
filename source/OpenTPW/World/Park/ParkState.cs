@@ -1890,7 +1890,6 @@ public sealed class ParkState
 	}
 
 	/// <summary>The thing standing behind this one on the same cell, or nought - the original's thing <c>+10</c>.</summary>
-	/// Dead by CODE: only tests call it (ParkStateTests, ParkFootprintOccupancyTests and ParkStaffPlacementTests).
 	public int NextOnCell( int thingId ) => _onCellNext.GetValueOrDefault( thingId );
 
 	/// <summary>

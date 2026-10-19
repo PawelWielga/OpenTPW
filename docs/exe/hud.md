@@ -3758,6 +3758,56 @@ sideshow `0x004b20b0`). Window objects are globals: shop `0x007cc258`, sideshow 
   count, or UITEXT `0x88` when 0. Which tab value is rides is inferred. The hire gauge `0x2482` is the candidate's byte `+8` x 1024 / 5
   (`0x0049b8c3` to `0x0049b8f8`).
 
+### The shop's window (Q31)
+
+Built (`ParkShopWindow`), read in Ghidra and compared with the original over the stock Drinks Shop (`q31/orig`, rounds
+b and c; `q31/side-by-side.png`). Named in Ghidra: `ShopWindow_Build` `0x004b0e30`, `ShopWindow_Open` `0x004b0640`,
+`ShopWindow_Load` `0x004b0950`, `ShopWindow_Labels` `0x004afc10`, `ShopWindow_Refresh` `0x004b01d0`, `ShopWindow_Handler`
+`0x004b0b30`, `Cell_LocalHappiness` `0x004cd880`, `Object_IngredientName` `0x004e2200`. The stream `0x00755908` walks (`lib/uistream.py`) to a balanced close at `0x00755e7e`.
+Builder `FUN_004b0e30( shop )` keeps the shop in `[0x007cc288]`, calls the base `FUN_0048cea0( stream, FUN_004b0b30, 0xc06c,
+0xc06f, 0xc06d )`, then posts the advisor message `0xd1` (209: response 428, sample 397, a Tutorial line; the destroy, message
+`0x14`, withdraws it with `FUN_00486b40( 0xd1 )`). The base builds nothing while a window of the class is up
+(`param_1[4]`), so a second shop's click leaves the window where it is; who writes `[0x007c2658]` for that click is not traced.
+
+- **Open, vtable `+0` (`0x004b0640`).** Both arrows hidden when `FUN_0048ca00( shop )` counts fewer than two; quality's slider
+  `0xc06b` 0 to 2, the amount's `0xc086` 0 to 100, the price spinner `0xc085` a money painter (`FUN_00490250`) 0 to 500 step 1,
+  font 6, black, centred; `0xc07e` UITEXT 39 "Quality of goods", `0xc084` the ingredient's name, `0xc083` UITEXT 40 "Sale
+  price", each black and centred; the title `0xc06e` through `FUN_0048d290` (`UI_SetTitle`: font 5, (234, 239, 102), shadow).
+  Neither slider has an op 3, so each track is its own rect: the original's thumbs reach both ends of the control (b-2, b-3).
+- **Labels, vtable `+0xc` (`0x004afc10`).** The left cells take UITEXT 32 to 38 in the rows' order (`0xc075` Customers last
+  month, `0xc071` Cost of goods, `0xc072` Takings last month, `0xc073` Profit last month, `0xc074` Customer satisfaction,
+  `0xc07a` Scrap value (row 37, the ride's is 23), `0xc07b` Local happiness); `0xc070` is a label, `0xc076`, `0xc077`, `0xc078`
+  and `0xc07d` money painters; `0xc079` a bar in `ridestatbar.wct` starting at 50, `0xc07c` one in `happygrad.wct` starting at
+  100, both inset 10.
+- **Load, vtable `+4` (`0x004b0950`).** The name (`+0x34`), the preview (`+0x18`, `0x004afb70`: the item's model `+0x490`), the
+  refresh, the door `0xc082` down where `0x004e0440` (`+0x68` nought) says shut, the quality slider at `+0x18c`'s low byte / 50,
+  the amount at `+0x198`'s, and the price at `0x004e1a00`; each value setter posts `0x800`, so the buffered values follow.
+  The amount's slider and its label show only where `FUN_004e2200` names an ingredient: the item's `+0x158` 1 to 4 as row
+  0 to 3 of `INGREDIENT.str` (the boot's table at `[0x0078ba8c]`, `+0x55c` of `0x0078b530`): "Amount of fat", "Amount of
+  salt", "Amount of ice", "Amount of sugar".
+- **Refresh, vtable `+0x14` (`FUN_004b01d0`).** `0xc070` UITEXT 460 "{P25} of {P26}": P25 the customers ring's last thirty
+  finished days, P26 those plus the walk-aways ring's (the rings are told apart by their asserts on `+0x228` and `+0x2b0`);
+  `0xc076` `FUN_004e1a30( pending quality x 50, pending amount )`; `0xc077` the takings ring's thirty days (`+0xf0`); `0xc079`
+  `(FUN_004e1e30 << 10) / 100` (no low byte); `0xc078` `FUN_004e1c70`; `0xc07d` `FUN_004e2400`; `0xc07c` `(FUN_004cd880( cell, 1 )
+  << 10) / 100`; then `FUN_00485f60( shop, 2 )`, and the status box (`+0x24`) only when it changed. The handler reruns it on
+  each slider's `0x800`, after apply to all, on the door and on timer `0x80080` (4000 ms, armed on `0x15`).
+- **Local happiness, `FUN_004cd880( cell, r )`.** The things on every cell from x - r to x + r and y - r to y + r, the far ends
+  held to 127 and the near ones not (the packed id is cut to a word, so x - 1 at x 0 is the row above's last cell); each thing
+  of kind 1 adds its `+0x19c` happiness, `__ftol`'d, low byte; the sum over their count, nought with none.
+- **Handler `FUN_004b0b30`.** `0xc067` (`b_allthings`, help 34) calls `FUN_00495aa0( 1, shop )`: the open park screen closed,
+  the all-items screen on its shops tab, the shop's row picked (`FUN_00664d2a`, `FUN_00665739`). `0xc069` (`b_ardown`) is
+  `FUN_0048cbe0` and `0xc06a` (`b_arup`) `FUN_0048caf0`, the other way round from the ride's meshes. `0xc06b`'s `0x800` keeps
+  the index and sets the type-13 control `0xc07f` to `1 << index`: its setter (`FUN_0066c85a`) passes each op-0x10 child its bit
+  (`FUN_0065d3a3`), and the child's mesh (`l_low`, `l_med`, `l_high`) shows its `on` texture for a set bit, `off` otherwise.
+  The rest as listed above (Q177's note: `0xc081`, `0xc082`, the setters).
+
+**Measured in the original** (Proton, `q31/orig/run.sh` round b, `run2.sh` round c, the stock park): the window over the Drinks
+Shop (thing at `[0x007c2658]`, item 1203) reads "0 of 0", "$ 20", "$ 0", "$ 0", the satisfaction bar half, scrap "$ 325", price
+"$ 30", buffered 1, 50, 30; the amount's thumb dragged to the left end and the quality's to the right give 0 and 2, "$ 30" and
+the high icon lit, and OK writes `+0x18c` 100, `+0x198` 0; five clicks on plus make 35 and "$ 35" (the cost unchanged); the
+door makes `+0x68` 0 and a grey "CLOSED" box over the preview, and again 1 with no box; OK writes `+0x194` 35. The two
+readouts under the amount and the price are lettered over their panels, though the stream makes them first.
+
 ## The Park Status screen's Top 3 Thoughts (fork watch 2026-10-19)
 
 Read from the listing of `testme.exe`; no game run (fork watch 2026-10-19, `verify-other-b.md` H2). The screen is `PARK_STATUS_SCREEN`,

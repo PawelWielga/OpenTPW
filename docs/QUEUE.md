@@ -53,24 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q31. The shop's object window.** `Level.OpenObjectWindow` opens only a ride's (`UiType 0`). Shops,
-  sideshows and the rest stop at `SHOP_WINDOW`, `SIDESHOW_WINDOW` and `FEATURE_WINDOW`; a staff member's click
-  opens their window (Q431); a clicked visitor reaches nothing counted. `park-engine.md`, "The
-  per-object management screen is nine screens", lists the nine. This item is the shop's; the other seven are Q31b (the visitor's and the staff member's are built, Q430, Q431: five are left).
-  From Q177: the shop, sideshow and toilet windows' figures are decoded (`ride-operation.md`, "The settle-up's
-  bookkeeping"): customer satisfaction, profit last month, customers as "C of M", winners last month, the cost of
-  goods from the window's pending sliders (applied on close, on stepping to the next or by apply to all), and a
-  toilet's users last month. `UIStrings` 37 to 39 are one row off: UITEXT 37 is "Scrap value", 38 "Local happiness",
-  39 "Quality of goods", 40 "Sale price"; nothing uses the three members yet.
-  - **Note (fork review 2, 2026-10-16, `verify-ui-hud.md` L6):** the shop window `FUN_004b01d0` and the sideshow's
-    `FUN_004b16c0` bind their rows: the 30-day takings (`0xc077`, `0xa093`), the satisfaction gauges, the scrap rows
-    and the cell's happiness (`FUN_004cd880( cell, 1 )`). The row labels need the streams `0x00755908` and
-    `0x00755e80` parsed.
-  - **Note (fork watch 2026-10-16, `verify-ui-hud.md` H1):** the shop window's load, apply, ranges and buttons are
-    decoded (`hud.md`, "The shop, sideshow and ride windows"): the setters `0x004e21e0`, `0x004e2190` (the slider x
-    50) and `0x004e2770`, applied on close, on a step or by apply to all (`0xc081`), which reaches every object of the
-    **same item**, not every shop; the sliders' ranges (quality 0 to 2, amount 0 to 100, price 0 to 500); Up and Down
-    step the window.
 - [ ] **Q244. The happiness gauge draws two copies of its bar.** `docs/PLAYER-GAPS.md` gap 5, found by Alexah playing:
   the bar draws in the wrong place, split down the middle. That page holds a lead read from the code and not
   measured (`UiMeter.OnDraw`'s sampler); measure before touching the meter's arithmetic. The number it shows is
@@ -454,7 +436,7 @@ filed the items that cite it.
   cell's middle where `0x00452bb0` truncates corner offsets: measure it on raised ground. (6) The original rolls a
   rider's head sprite to its node (`FUN_0044b510`, `0x0044ba04`); `DrawHead` does not, and it is counted (`RIDER_HEAD_ROLL`): build
   it. (7) `Peep.Pace` works at 24 bits and `ShopCostOfGoods` at 53 under one control word: settle which, the pinned
-  18 may be 19. (8) Two docs lines not yet re-measured: `park.md`'s selector table rows 8 and 9 leave out the
+  18 may be 19 (the shop window's amount slider now sets an amount off the steps of 50, Q31). (8) Two docs lines not yet re-measured: `park.md`'s selector table rows 8 and 9 leave out the
   `0x4000` and type gates of `FUN_00544c80` and `FUN_00544e50`; FileFormats `sound-categories.md` says the masks use
   bits 1, 2 and 4 beside 645 speech variations holding 100.
   - **Note on (7) (fork watch 2026-10-18, `verify-world-a.md` H2; `park-engine.md`, "Which rounding is live is not
@@ -1323,6 +1305,16 @@ filed the items that cite it.
   nothing there. Find the poster (a post of message 0 at the world's setup, or the park's first tick), whether an
   Instant Action park made with no file and a loaded park post it too, and what sample 1's 31 s is. Then build it.
   Confirm: a fresh park's first seconds in both games, the record and a frame.
+- [ ] **Q547. The cursor Up and Down keys step an object window.** From Q31. The base window proc `0x0048d200` takes key
+  down `0x2600` and `0x2800` to `0x0048cbe0` and `0x0048caf0` (`hud.md`, "The shop, sideshow and ride windows"), which
+  apply and step to the next or the previous object of the class; no object window here hears a key. Build it for the
+  ride's and the shop's windows (and the staff member's and the visitor's, if the same proc serves them: read first), and
+  confirm in either game: the stock park with a second Drinks Shop bought, Down in the shop's window, the title and the
+  `shopwindow` census naming the other shop.
+- [ ] **Q548. The ride window's title is white; `UI_SetTitle` letters it yellow.** From Q31: the shop's window takes
+  `UI_SetTitle`'s font 5 in (234, 239, 102) with its shadow over the widened rect (`hud.md`, "The shop's window"), as the
+  visitor's and the staff member's do; `ParkObjectWindow` letters the ride's title white in the stream's own rect. Read the
+  ride's load for the same call (`FUN_004ae940` or `0x004af030`), then photograph the Belly Bounce's window beside the original's.
 
 ## B. Docs and comments
 

@@ -2482,7 +2482,8 @@ public class Level
 	/// <summary>
 	/// Opens the management window for one thing - the original's <c>FUN_00486920</c>, which switches
 	/// on the thing's kind byte at <c>+2</c> and then, for a placed object, on the item's
-	/// <c>WhichUIType</c>. <b>Nine windows share one base</b>; of the placed objects' only the ride's is built (the visitor's is
+	/// <c>WhichUIType</c>. <b>Nine windows share one base</b>; of the placed objects' the ride's and the shop's
+	/// (<see cref="UI.ParkShopWindow"/>) are built (the visitor's is
 	/// <see cref="UI.ParkVisitorWindow"/>, opened from the locator and the visitors list, and the staff member's
 	/// <see cref="UI.ParkStaffWindow"/>).
 	/// </summary>
@@ -2499,11 +2500,16 @@ public class Level
 
 		// 0 rides, 1 shops, 2 sideshows, 3 features - the files' own numbering, and the same field the
 		// buy screen's four tabs are sorted by.
+		if ( item.UiType == 1 )
+		{
+			UI.ParkShopWindow.Open( windows, thingId );
+			return;
+		}
+
 		if ( item.UiType != 0 )
 		{
 			Unimplemented.Report( item.UiType switch
 			{
-				1 => "SHOP_WINDOW",
 				2 => "SIDESHOW_WINDOW",
 				_ => "FEATURE_WINDOW"
 			} );
@@ -2719,12 +2725,18 @@ public class Level
 			{
 				if ( window is UI.ParkObjectWindow ride )
 					ride.DrawPreview();
+				else if ( window is UI.ParkShopWindow shop )
+					shop.DrawPreview();
 			}
 
 			// Draw the active warning after every preview, but beneath the advisor. Covered windows
 			// keep their HUD drawing order; the preview pass has its own existing overlay behaviour.
-			if ( showing.Windows.LastOrDefault( window => !window.Hidden && !window.PutAway ) is UI.ParkObjectWindow activeRide )
+			var active = showing.Windows.LastOrDefault( window => !window.Hidden && !window.PutAway );
+
+			if ( active is UI.ParkObjectWindow activeRide )
 				activeRide.DrawStatus();
+			else if ( active is UI.ParkShopWindow activeShop )
+				activeShop.DrawStatus();
 		}
 
 		Entity.All.ForEach( entity => entity.RenderOverlay() );

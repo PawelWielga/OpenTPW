@@ -656,6 +656,12 @@ public static class DebugConsole
 					.FirstOrDefault()?.Census() ?? "staff window: none" );
 				break;
 
+			case "shopwindow":
+				// The shop's window: its shop, title, figures, bars, settings, door and status, or that none is up.
+				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows.OfType<UI.ParkShopWindow>()
+					.FirstOrDefault() is { } shopWindow ? $"shop window: {shopWindow.Census()}" : "shop window: none" );
+				break;
+
 			case "visitorwindow":
 				// The visitor's window: its guest, title, figures, bar and thought, or that none is up.
 				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows.OfType<UI.ParkVisitorWindow>()

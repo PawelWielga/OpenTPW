@@ -3714,7 +3714,7 @@ Opus skeptic; reports in `~/.cache/tpw-harnesses/q177c/map/`):
   passes `DDSCL_FPUPRESERVE`).
 - **Where the amount leaves the steps of 50**: the shop window's amount slider (`0xc086`) runs 0 to 100 (`0x004b06d2`),
   its quality slider (`0xc06b`) 0 to 2, times 50 (`0x004b06b7`), so only the amount does; no save read holds one off
-  the steps, and the shop window is not built here.
+  the steps. The shop window is built here (Q31, `hud.md`, "The shop's window"), so a player can now set one off them.
 - **The booking's order in `FUN_004fe1e0`**: event 8 (`0x004fe204`); a sideshow books `FUN_004e1a10` (`0x004fe225`)
   and then pays the same to the guest (`0x004fe231`); a shop books `FUN_004e1b40` (`0x004fe251`); a ride or a feature
   books nothing. `FUN_004e1920` tests nothing, books the object's two even while withdrawals are off, and posts to the
