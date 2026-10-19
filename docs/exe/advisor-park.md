@@ -4981,3 +4981,64 @@ Read from the listing of `testme.exe` (`verify-advisor.md`, `~/.cache/tpw-harnes
   (`0x004c9960( 4 )`) at least `[+0x12c]` and `0x004c9b40( 4 )` non-zero. These rows are **Full Simulation's alone** (the mode-0 list
   above holds 18 to 21 and 23 to 27), so the shipped Lost Kingdom park never reaches them; the guard's coverage callbacks
   (`0x005d60c0`, registered at `0x005a1238` and `0x005a1257`) were never measured.
+
+## Shop and sideshow value and satisfaction, rows 238 to 257 (fork watch 2026-10-19)
+
+Read from the listing of `testme.exe`, every callback whole (fork watch 2026-10-19, `verify-advisor-ui.md` L1; no game run).
+Rows 239 to 241 (`0x0059fbd0`, `0x0059fc40`, `0x0059fcb0`) were not opened. The score callback of row N is the dword at
+`0x0076e300 + N x 0x38 + 0x10` (the stores `0x005a5f7f`..`0x005a6527`). Each callback first asks its helper for a qualifying
+object (a handle, kept at record `+4`) and its figure `v` (kept at `+8`), nought if none.
+
+| Row | Callback | Helper (group) | Scores | Log |
+|---|---|---|---|---|
+| 238 | `0x0059fb60` | `0x004cadf0` (2) | `v` below `[+0x4d8]`: ( `v` - it ) x `[+0x4dc]` | string `0x00773040` |
+| 242 | `0x0059fd20` | `0x004cc090` | `v` below `[+0x4f8]`: ( `v` - it ) x `[+0x4fc]` | "sideshows poor value (%d)" |
+| 243 | `0x0059fd90` | `0x004cb200` (2) | `v` below `[+0x500]` | "Food poor satisfaction" |
+| 244 | `0x0059fe00` | `0x004cba90` | `v` below `[+0x508]` | "shops poor satisfaction" |
+| 245 | `0x0059fe70` | `0x004cb200` (3) | `v` below `[+0x510]` | "restaurant poor satisfaction" |
+| 246 | `0x0059fee0` | `0x004cb200` (4) | `v` below `[+0x518]` | "drinks poor satisfaction" |
+| 247 | `0x0059ff50` | `0x004cc090` | `v` below `[+0x520]`: ( `v` - it ) x `[+0x524]` | "sideshows poor satisfaction" |
+| 248 | `0x0059ffc0` | `0x004caae0` (2) | `v` above `[+0x528]`: ( `v` - it ) x `[+0x52c]` | none |
+| 249 | `0x005a0010` | `0x004cb300` | `v` above `[+0x530]` | none |
+| 250 | `0x005a0060` | `0x004caae0` (3) | `v` above `[+0x538]` | none |
+| 251 | `0x005a00b0` | `0x004caae0` (4) | `v` above `[+0x540]` | none |
+| 252 | `0x005a0100` | `0x004cbba0` | `v` above `[+0x548]` | none |
+| 253 | `0x005a0150` | `0x004cb100` (2) | `v` above `[+0x550]` | none |
+| 254 | `0x005a01a0` | `0x004cb980` | `v` above `[+0x558]` | none |
+| 255 | `0x005a01f0` | `0x004cb100` (3) | `v` above `[+0x560]` | none |
+| 256 | `0x005a0240` | `0x004cb100` (4) | `v` above `[+0x568]`: ( `v` - it ) x `[+0x56c]` | none |
+| 257 | `0x005a0290` | `0x004cbec0` | `v` above `[+0x570]` | none |
+
+- **The groups are the log strings' words.** `UsageInfo.ShopType` (`+0x164`): 2 food, 3 restaurant, 4 drinks; the shops
+  `0x004cba90` and `0x004cb980` take types 1, 5 and 6; the sideshows are `Info.WhichUIType` (`+0x4ac`) 2 (`0x004cc090` at
+  `0x004cc121`, `0x004cbec0` at `0x004cbf4d`). Satisfaction is `FUN_004e1e30` (`ride-operation.md`, "Customer
+  satisfaction"); the helpers `0x004cb100`, `0x004cb200`, `0x004cb980` and `0x004cba90` keep the best or worst of the group by
+  `FUN_004e1e30`, strictly, the first of equals winning.
+- **"Value" is the walk-away percentage.** `0x004caae0` and `0x004cc090` take the things of the group (type 3) older than
+  30 days (`0x004dd670` above `0x1e`) whose customers ring (`+0x1a8`, the last min( filled, 30 ) days through
+  `0x00495cf0`) sums above nought (`0x004cac23`, `0x004cc1e0`), and make `v` = the sum of the walk-aways ring (`+0x230`)
+  x 100 / the sum of the customers, an unsigned `DIV`; `0x004caae0` keeps the highest (strict), `0x004cc090` the lowest
+  (strict), the first of equals. **So the "great value" rows 248 to 252 fire for a shop whose walk-aways pass 80% of its
+  paying customers** (shipped `ValueBetterThan` 80, `ScorePerPoint` 5: 86% scores 30). It is the original's quirk, kept as
+  it is when built. Walk-aways are counted only on a price refusal (`ride-operation.md`, "Walk-aways").
+- **The poor rows never play.** Rows 238 to 247 score ( `v` - line ) x `ScorePerPoint` only when `v` is below the line, so
+  never above nought with the shipped positive `ScorePerPoint`.
+- **Not proven:** that the settings words `+0x4d8`..`+0x574` are the keys the fork names (the settings reader's name to
+  offset map was not read), so `Advisor.sam`'s key names stay unmatched; the meaning of rows 239 to 241.
+- **In Lost Kingdom** rows 248 to 257 are reachable once a shop or sideshow is older than 30 days; 238 to 247 build as
+  faithful noughts. Nothing here is built: all twenty are counted in `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`, and OpenTPW does
+  not read `ShopType` (Q713).
+
+## Row 172 and row 72 read whole (fork watch 2026-10-19)
+
+- **Row 172** (`0x0059fb10`, record store `0x007708b0`): all staff (`0x004c9a10`, things of kind 4 to 8) above `[+0x4d0]`
+  (strict) **and** the headquarters thing's (`0x00519450`) byte `+0x20` nought scores `[+0x4d4]`. That byte is
+  `mHaveEverTrained` (set by the training budget screen at `0x004b25d0`, saved by `0x0050c640`; `hud.md`, "The Staff Training
+  Budgets screen"; FileFormats `saves.md`, byte 102): staff above the limit and no budget ever set. Shipped, the limit is 15
+  and the score 50 (`Advisor.sam`; the key names `TrainStaffGeneral.MinStaffForMessage` and `.Score` are the fork's, offsets
+  not tied): sixteen staff and never a budget (fork watch 2026-10-19, `verify-advisor-ui.md` L5).
+- **Row 72** (`0x0059dd40`, record store `0x0076f2d0`) reads, in order: researchers `0x004c9960( 8 )` non-zero; `0x004ca7b0(
+  1, 0 )` = n non-zero; `0x004ca650` non-zero (the shop-research test: the lab `0x00519550( 1 )` into `0x00503b30`, kind 1, the
+  twin of `0x004ca630`, `0x004ca670` and `0x004ca690` for kinds 0, 2 and 3); the research rate `0x00503980` of kind 1 nought
+  (a `JA` leaves otherwise); `0x004ca510( 0 )` equal to n; then `[+0x264]`, else nought. Not proven: what `0x004ca7b0( 1, 0 )`
+  and `0x004ca510( 0 )` count (the fork says shop types built and available) (fork watch 2026-10-19, `verify-advisor-ui.md` L6).

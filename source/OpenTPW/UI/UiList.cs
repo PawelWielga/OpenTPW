@@ -307,6 +307,11 @@ internal sealed class UiList : UiControl
 	/// They are children of the LIST, and they survive <see cref="Build"/> because it clears only the row
 	/// cells it made itself - the same reason the tab groups survive it.
 	/// </para>
+	/// <para>
+	/// <b>A deviation (Q711):</b> the original clicks <c>Select3</c> (<c>0xbd</c>) for a heading, because the click hook
+	/// (<c>0x00485780</c>) picks the sound by the list's style bit <c>0x10</c>; this heading is a button with
+	/// <c>Toggles</c> false and plays <c>BUTTON01</c> (<c>hud.md</c>, "Which window the click sound is for").
+	/// </para>
 	/// </remarks>
 	internal UiButton AddHeading( int column, UiRect rect, string text, string? mesh = null, int? font = null,
 		UiColour? colour = null, int help = -1 )

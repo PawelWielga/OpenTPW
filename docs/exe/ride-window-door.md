@@ -25,8 +25,43 @@ Read in a private copy of the `SimThemePark` Ghidra project, with all
   green and blue: **128/128/128** and **255/150/30**. The text table starts
   at `0x0074fbc0`; `FUN_004861d0` supplies the list's colour.
 - Condemned, missing/unfinished track, maintenance and breakdown statuses
-  precede ordinary closure. Exit-disconnected status 24 can also precede it.
-  A closed flag alone does not prove the original would show code 1.
+  precede ordinary closure. Exit-disconnected status 24 also precedes it, and it
+  is asked whatever the open word: the routine reads its second argument (every
+  caller pushes 2) only after the exit test, so an OPEN ride with its exit cut
+  off shows 24 too (`0x00486191`..`0x004861b9`; fork watch 2026-10-19,
+  verify-world.md L1). A closed flag alone does not prove the original would
+  show code 1.
+
+### The statuses behind Q212 (fork watch 2026-10-19, verify-advisor-ui.md L2, verify-world.md L1)
+
+`FUN_00485f60`, the first that applies (the item record's `Info.WhichUIType` `+0x4ac` is 0 for a ride):
+
+1. State `+0x19c` 4 (`0x004e0380`): 3, UITEXT 367, condemned.
+2. Track descriptor `+0x9c` 1 or 2 with `+0x2c` 0: `0x19` (386); 3: `0x00441910` 0 gives `0x19`, `0x00441940` 0 gives `0x1a` (387).
+3. State 2, waiting for an upgrade (`0x004e03e0`): no mechanic (world `+0x1da73e` nought) 5 (372); mechanics on strike
+   (`0x00519450( 1 )`, `0x00509990`) 7 (371); nobody assigned (`0x004e0220`) 6 (370); assigned and at work 9 (373), else 8 (369).
+4. A service requested (`+0x64`, `0x004e03d0`): a toilet (`+0x32` bit 0) asks the handyman (`+0x1da73c`): none `0xb` (378),
+   on strike (`0x00519450( 0 )`) `0xd` (377), unassigned `0xc` (376), at work `0xf` (379), else `0xe` (375); otherwise the
+   mechanics: `0x11` (384), `0x13` (383), `0x12` (382), at work `0x15` (385), else `0x14` (381).
+5. State 1, broken down (`0x004e0370`): the assignee at work `0x15` (385), **else 2 (366), whether or not someone is assigned**.
+6. `+0x32` bit 3 and not `0x004de4a0`: `0x16` + (`+0x68` 0) (388/389); a ride with no exit (`0x004e2710`), `+0x288` not 2 and
+   not `0x004de5a0`: `0x18` (390); then by mode.
+
+"At work" is `0x005065d0`, reached through `0x004e02f0` (which answers 0 when `0x004e0220` finds nobody): a mechanic (thing
+kind 4) whose `+0x218` is the object in state `0xd`, or a handyman (kind 5) whose `+0x21a` is it in state `0xb`; another
+kind asserts and answers 0. So the toilet statuses are `0xb`..`0xf` and the mechanic's `0x11`..`0x15`, the upgrade's are
+5..9, and `0x15` is shown only while the worker is at work. Statuses 4, `0xa` and `0x10` ("Waiting to be ...", 368, 374,
+380) are never answered by this routine. Colours (`0x0074fb50`): blue `0x5064ff` for 4..`0x15`, orange `0xff961e` for
+`0x16`..`0x1a`, red `0xff321e` for 2 and 3, grey for 1.
+
+**The exit test `FUN_004de5a0`, status 24 (UITEXT 390, "EXIT NOT CONNECTED", 255/150/30, the colour of 22 and 23).**
+The cell is `[0x008023a0] + mExitPos * 0x44 - 0x44` (`mExitPos` `+0x38`, `mEntryPos` `+0x36`). The side is that cell's
+`mDirection` (`+0xd`), made opposite when `mExitPos` equals `mEntryPos`, as ExitRide does for its destination
+(`ride-operation.md`, ExitRide). `FUN_004d97e0` steps to the cell beyond the exit. For each of the other three sides (the
+byte table 0x01, 0x04, 0x10, 0x40, skipping the one looking back at the exit) the edge test `FUN_004d8750` is asked from
+that cell in walking mode 0; the first side that answers open logs "Connected in direction %d" and the exit is connected.
+None: status 24. Its only effect is the window's status; nothing closes the ride. Not measured: whether any shipped Lost
+Kingdom exit answers 0.
 
 ## Implementation and boundaries
 

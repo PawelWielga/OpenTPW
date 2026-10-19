@@ -314,7 +314,7 @@ from the crossing. So the arrival path they would take is the one the shipped sa
   just appears to not be rendering within the actual location properly, it looks like two copies of the
   bar split down the middle like it's repeating."* It is not the gauge failing to track the park: the
   artwork is in the wrong place and it is repeated.
-- **A lead, READ FROM THE CODE AND NOT MEASURED — do not report it as a finding.** `UiMeter.OnDraw`
+- **SUPERSEDED (fork watch 2026-10-19): the cause is the sampler's u 0 to 1 over a texture the original draws as two cropped halves; `docs/exe/hud.md`, "The happiness gauge's two quads", and Q244.** The lead below was read from the code and not measured. **A lead, READ FROM THE CODE AND NOT MEASURED — do not report it as a finding.** `UiMeter.OnDraw`
   builds its skin as `new Texture( Skin )` with **no flags**, so `Texture.SamplerFor( None )` returns
   `AnisotropicRepeat`, which is `SamplerAddressMode.Mirror` — any UV outside 0..1 then draws a
   **mirrored second copy**, which is exactly what is described, and is the same family as the lobby

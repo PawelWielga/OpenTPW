@@ -788,6 +788,19 @@ a plain Escape opens the game menu (`GameMenu_Open( 0 )`, `0x004a2942`) and the 
 So an ended park is left in the full-screen view under its banner, and by the handler's state-4 arm nothing brings
 the interface back. The two meshes' names are not resolved, and the end of a park was not run.
 
+**The End feature's handler `0x0048a970`** (Q703; fork watch 2026-10-19, verify-world.md L2). Message `0x15` stamps
+`[0x007c2508]` with the time (`0x0048ac16`). Message `0x1000b`, a key: `0x1b` (Escape) with `arg3 & 0xff0000` clear
+(`0x0048a99e`..`0x0048a9af`), with no time gate. Message `0x10006`, a button: button 1, `[0x0078d911]` (RMB cancel) set and
+`time - [0x007c2508] > 2000` strictly (`jle` at `0x0048aaf8`). Both arms run one body: control message 4 to the window,
+`FUN_00516c10` (deletes the End feature, asserting on its handle `0x007cf4f4`), message 6 to `[0x007cb2b0]` (0) and
+`[0x007cb2ac]` (1), `FUN_0040cf60` (the keys back), byte `0x007c24d0` set to 0, and `FUN_004862a0` (re-focuses a window).
+When the game type `[0x00fb3b7c]` is 2 (Instant Action) it also shows UITEXT **471** through `0x006ace60( 0x1d7 )` and
+`FUN_0047f020( ..., 2, ... )` (`0x0048aa4f`..`0x0048aac2`): "Congratulations! Now you've completed Instant Action mode
+you should try the Full Simulation game! Just return to the Lobby to start." It writes no profile state: the bit it sets at
+`[0x00fb34c7]` is the compiler's one-time guard for the mode object at `0x00fb3b7c` (constructed once by `FUN_00550ca0`, its
+destructor `0x005d1750` a bare RET registered through `0x0067a7d0`). Not read: what message 6 with 0 and 1 does to the two
+layers, and `FUN_004862a0`'s effect.
+
 **In the original** (the reference park under Proton, the state read from memory after each key let go, a frame
 grabbed with it): F2 changed nothing; F3 took `[0x007cb2e8]` 0 to 1, `[0x007cb2b4]` from nought to a control, and bit
 0 of layer 0's `+0x48` 1 to 0, the gadget, the money and the help bar gone from the frame; F3 again put all three
@@ -3624,6 +3637,17 @@ ours reads within 0.03 of the original's at every depth, its departures from the
 (`q485/run5/linefit.txt`); at the stock band the pixels the fog changes are the far hills and the far path and fence in
 both (4,062 here, 3,593 there). A shadow under the fog is the fog colour times the shadow's own fogged colour, (20, 183,
 241) when whole.
+
+**Entering or leaving first person shows 300 ms of television static** (Q712; fork watch 2026-10-19, verify-advisor-ui.md L4).
+`Game_StateMachine` (`0x0054fabb`..`0x0054fb63`): on either edge of `([0x00790ab0] & 0x16) != 0` against the latch byte
+`[0x00878e84]` it toggles the render word `[0x008bcbc8] ^= 0x2080` (the fog above), re-runs `FUN_0051c700` with
+`[0x0078d908]`, and sets the timer `[0x0087502c]` to 300 with its stamp `[0x00875028]` (`GetTickCount`, `0x0054faf7`). While the
+timer is above 0 (tested at `0x0054fb20`, before the elapsed time is taken off at `0x0054fb46`..`0x0054fb57`) the frame is
+the static `FUN_0053e760` **instead of** the frame renderer (`FUN_00576ec0`; the jump at `0x0054fb63` skips it). The static
+is 320 x 240 into `[0x00874fd0]`, x outer and y inner, one `rand()` (`0x0067b5c0`) a pixel: `& 3` non-zero black, else a
+second draw, `& 1` white, else grey 150 (75% black, 12.5% white, 12.5% grey); blitted (`0x005f92e0`) from (0,0,320,240) to
+(0,0,`[0x007a1968]`,`[0x007a1930]`), taken as the screen size, not checked. The mask `0x16` is the camera flags of a ride's
+view and first person (the camcorder, "Camcorder mode"). Read from the executable, not run; not built here.
 
 **Land outside the park is drawn at half light.** `FUN_00450d10` runs on a fresh park's load (`FUN_005323f0`,
 `0x00532629`), on a saved park's (`FUN_00415140`, `0x0041517f`) and after Buy Land (`FUN_005327e0`, `0x005328c3`). It

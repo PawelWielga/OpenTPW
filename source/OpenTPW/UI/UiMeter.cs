@@ -18,13 +18,13 @@ namespace OpenTPW.UI;
 /// scales first - which is why <see cref="Max"/> is taken here rather than assumed.
 /// </para>
 /// <para>
-/// <b>WHICH WAY IT FILLS IS A CHOICE, AND IT IS SAID SO RATHER THAN IMPLIED.</b> The two sub-objects
-/// above are what actually paint, and their geometry has not been traced - slot <c>+0x08</c> of that
-/// vtable is a destructor, not a paint. What is known is that the
-/// housing is taller than it is wide (the gauge's meter is 59 by 224 on the virtual screen) and that the
-/// original's gauge "rests at its lowest part" when it has nothing to show. Filling upward from the
-/// bottom is the reading those two facts support; it is not a measurement, and if the artwork is ever
-/// read back properly this is the line to correct.
+/// <b>THE PICTURE IS TWO HALVES CROPPED AT ONE BOUNDARY; WHICH WAY IT FILLS IS A CHOICE.</b> The sub-object built by
+/// <c>FUN_00477870</c> holds two quads that share the boundary p (the value as a percentage, <c>0x477cc0</c>,
+/// <c>0x477d20</c>): one above it takes the texture's right half (u 0.5 to 1) and v from p/100 to 1, the other below it
+/// the left half (u 0 to 0.5) and v from 0 to p/100, so each half is cropped and never scaled
+/// (<c>docs/exe/hud.md</c>, "The happiness gauge's two quads"). Which screen edge the model's y of 0 is was not read,
+/// so filling upward from the bottom is a choice that the housing being taller than it is wide and the gauge resting at
+/// its lowest part support; it is not a measurement.
 /// </para>
 /// </summary>
 internal sealed class UiMeter : UiControl
@@ -76,6 +76,8 @@ internal sealed class UiMeter : UiControl
 		// The bottom of the texture for the bottom of the bar, so the artwork is cropped rather than
 		// squashed - a squashed gauge shows every part of its face at every value, which is exactly what
 		// a meter must not do.
+		// DEVIATION: this samples u 0 to 1, the whole texture, so both halves show side by side and narrow; the
+		// original crops the right half above the boundary and the left half below it (the cause of Q244).
 		var uvs = new Rectangle( 0f, 1f - filled, 1f, filled );
 
 		using ( _ = new Graphics.Scope( Screen.Size ) )

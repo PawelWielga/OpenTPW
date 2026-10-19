@@ -23,6 +23,9 @@ internal static class ParkClosedStatus
 		if ( ride.HasQueuePath && !ParkRideOperation.BackOfQueueConnected( park, ride ) )
 			return ride.CanLoad == 0 ? 23 : 22;
 
+		// DEVIATION: the original asks for the exit-disconnected arm (status 24, FUN_004de5a0) before the
+		// closed test, so an open ride with its exit cut off shows 24 there; this returns 0 for an open ride
+		// before that arm (docs/exe/ride-window-door.md, "The statuses behind Q212").
 		if ( ride.CanLoad != 0 )
 			return 0;
 

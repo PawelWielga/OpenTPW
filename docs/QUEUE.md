@@ -479,7 +479,7 @@ filed the items that cite it.
   From Q352 (`hud.md`, "The Staff Training Budgets screen"): the account's Cash in, Other costs and Balance are
   built, on it and on the hire screen (Q385).
   The skill bars wear `ridestatbar.wct` (Q353). The screen's lettering is smaller than the original's at this window size (not looked into). The
-  finances and loans screens its buttons go to are not built. What reads `mHaveEverTrained` was not looked for.
+  finances and loans screens its buttons go to are not built. What reads `mHaveEverTrained` is advisor row 172 (`0x0059fb10`, not built; `advisor-park.md`, "Row 172 and row 72 read whole"; fork watch 2026-10-19, `verify-advisor-ui.md` L5).
   No file of the original's own with a budget was made (its memory was read). **This game's month does not
   turn on the file's calendar** (Q149: 715 ticks after a load, where the original's turned on 1383). In no
   game run: Full Simulation (the loans button enabled there), a budget at 10000, the three other themes.
@@ -589,7 +589,7 @@ filed the items that cite it.
   twice more with nothing bought**, to tick 1158's on tick 1158 in `q337/shop30.TPWS` and to tick 1170's on
   tick 1170 in `q337/noride30.TPWS` (`q337/orig/c-load.log`, `d-load.log`); still not read (below). The six
   other rows that read the newest build are not built or read (74, 75, 77 to 79 and 81; row 72, `0x0059dd40`,
-  not a reader of it, is undefined bytes whose first test is a count asked with 8). In no game run: line 2,
+  not a reader of it, reads whole: `advisor-park.md`, "Row 172 and row 72 read whole"; fork watch 2026-10-19, `verify-advisor-ui.md` L6). In no game run: line 2,
   the line again past its cooldown, a golden-ticket shop or ride standing, a shop built after the line (the
   test holds each), the bar's button with the buy screen open, a park made with no file, Full Simulation. Not
   heard in either game.
@@ -1046,6 +1046,11 @@ filed the items that cite it.
   the bar draws in the wrong place, split down the middle. That page holds a lead read from the code and not
   measured (`UiMeter.OnDraw`'s sampler); measure before touching the meter's arithmetic. The number it shows is
   not the fault, and which guests it counts is Q148's. Confirm: the gauge photographed beside the original's.
+  Cause now read (fork watch 2026-10-19, verify-advisor-ui.md L3, verify-other-b.md M3; `hud.md`, "The happiness
+  gauge's two quads"): the original draws two quads sharing one boundary, the texture's right half above the level
+  and the left half below it, each cropped; `UiMeter.OnDraw` samples u 0 to 1, both halves side by side. The
+  on-screen fill direction is NOT settled (which edge the model's y 0 is was not read): settle it against the
+  original's photograph before building.
 - [ ] **Q701. The lab spends a researcher's points and finishes a project.** From Q245 (`park-engine.md`, "The lab
   at work"). Replace the count `RESEARCH_POINTS_TO_THE_LAB` (`StaffBehaviour.Research`) with `Lab_SpendPoints`'s
   share-out (the kinds with an open project, effort / their sum × `mWorkLoad` × ability × 0.01, a float), the finish
@@ -1068,6 +1073,10 @@ filed the items that cite it.
   (`FUN_00516b00`); in Full Simulation only once every park record is marked. Row 168 (`0xa8`) has no poster found.
   `lib/labsim.py` puts Easymode's last project, Super Toilet, on the 1177th hand-out, tick 24280, with one researcher;
   a run can hire more or start from a file with less left. Decode what the End feature does first if no item has.
+  The End feature's handler is read (fork watch 2026-10-19, verify-world.md L2; `park-engine.md`, "The End feature's
+  handler `0x0048a970`"): Escape at any time, or a right click after 2000 ms with RMB cancel on, deletes the feature,
+  gives the keys back, and in Instant Action shows UITEXT 471; it writes no profile state. Not read: message 6's effect on
+  the two layers.
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge
@@ -1113,6 +1122,20 @@ filed the items that cite it.
   spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
   Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
   spent one on `tourride`.
+- [ ] **Q713. The advisor's shop and sideshow value and satisfaction rows, 238 to 257.** From the fork watch, 2026-10-19
+  (`verify-advisor-ui.md` L1; `advisor-park.md`, "Shop and sideshow value and satisfaction, rows 238 to 257"). Twenty
+  polled rows, counted in `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; rows 239 to 241 were not opened, so read those three
+  callbacks (`0x0059fbd0`, `0x0059fc40`, `0x0059fcb0`) first. Build them on the built rows' machinery
+  (`ParkAdvisorMessages` topics with `Polled` and `ScoreOf`): the helpers pick the best or worst shop (`UsageInfo.ShopType`
+  2 food, 3 restaurant, 4 drinks, 1/5/6 shops) or sideshow (`Info.WhichUIType` 2) older than 30 days by
+  `ParkObjectRings.Satisfaction` or by the walk-away percentage (the sum of the last 30 days' walk-aways x 100 / the sum of
+  the customers, unsigned; the lowest for `0x004cc090`, the highest for `0x004caae0`; strict, the first of equals).
+  **Said at the site as the original's quirk:** the "great value" rows 248 to 252 fire when walk-aways pass 80% of the
+  paying customers (shipped line 80, 5 a point), not when value is good. The poor rows 238 to 247 score negative with the
+  shipped settings and never play; build them anyway, as faithful noughts. Lost Kingdom reaches rows 248 to 257. The
+  `Advisor.sam` key names against the settings words `+0x4d8`..`+0x574` are unproven (the settings reader's map was not
+  read): match them with `lib/advisorschema.py` before naming a field. Confirm: a shop older than 30 days with a high
+  walk-away share in a park file made for it, the row's poll line and score beside the original's.
 - [ ] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
   what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
   turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a
@@ -1315,9 +1338,13 @@ filed the items that cite it.
   member and posts `0xc0` again); and PICK UP's "not drawn", shown by the census predicate alone (the draw loop's
   `InTheHand` skip in `ParkGuestSprites` survives; show his cell on screen).
 - [ ] **Q212. The ride window's other statuses. Decode first.** Found by the 2026-10-04 review (`u7-ride-door-6`,
-  `-7`, `-9`, `-10`). `FUN_00485f60` answers `0xb`..`0x14` (80/100/255) for a ride with a mechanic called (`+0x64`),
-  2 (UITEXT 366) for state 1 with nobody assigned and `0x15` (UITEXT 385, "REPAIRS IN PROGRESS") with one, 24 for an
-  exit not connected; `ParkClosedStatus` answers 1, 22 and 23 only, shows grey CLOSED for a mechanic call, and
+  `-7`, `-9`, `-10`). `FUN_00485f60` answers (80/100/255) 5..9 for a ride waiting for an upgrade, `0xb`..`0xf` for a toilet's
+  call to the handyman and `0x11`..`0x15` for a mechanic called (`+0x64`), `0x15` (UITEXT 385, "REPAIRS IN PROGRESS")
+  only while the worker is at work; 2 (UITEXT 366) for state 1 broken down with its assignee not at work, whether or
+  not one is assigned; 24 for an exit not connected, asked whatever the open word, so an open ride with its exit cut
+  off shows 24 (ours returns 0 for an open ride before that arm). The order and the tests are in
+  `ride-window-door.md`, "The statuses behind Q212" (fork watch 2026-10-19, verify-advisor-ui.md L2, verify-world.md
+  L1). `ParkClosedStatus` answers 1, 22 and 23 only, shows grey CLOSED for a mechanic call, and
   `ParkObjectWindow` shows BROKEN DOWN from `VAR_BROKEN` with no decode behind it. `OBJECT_WINDOW_EXIT_CONNECTION_STATUS`
   and `QUEUE_VERDICT_CORNER_RULE` are reported every frame a window is open (9,631 and 24,273 in one run): report on
   a change. Confirm: each status photographed beside the original's.
@@ -1531,6 +1558,11 @@ filed the items that cite it.
   From Q241f: no load here reads the camera module, which the writer now writes (`ParkWorld.Camera` holds it,
   `FUN_0042cec0`; `saves.md`, "Loading the modules", Camera): a loaded park opens on the default view, where the
   original's opens where the save's camera stood. The file's rotation is the orbit camera's yaw negated.
+  - **Note (fork watch 2026-10-19, `verify-audio-fx.md` M2; `hud.md`, "Which window the click sound is for"):** the bar's
+    arrows are repeating buttons (flag `0x21`): first repeat after 500 ms, then every 125 ms (`+0x13c`, `+0x140` of every
+    button). An arrow clicked without repeating plays `Select3` (`0xbd`, the bar's flags `0x10`); one held past 500 ms
+    plays **nothing**, neither at the repeats nor on release (the repeat messages are not `0x100`, and the release posts
+    none after a repeat). The thumb and the track play nothing.
 
 - [ ] **Q249. A park that was never loaded from a file has nothing to carry.** From Q241e. The fresh world (a
   Full Simulation park, or a player whose folder holds no park file) is made by `FreshPark`, so the writer's
@@ -1896,6 +1928,18 @@ filed the items that cite it.
     window's **Buy Upgrades list** (`FUN_004ae560`, handler `0x004ae430`, rows from `FUN_004ae140`), and the `0x1D` it plays
     (`0x00486ae0`) is for an **add-on** row dearer than the balance only: a level row dearer than the balance gives no cue at
     all (`0x004af4e9`, strictly below). `ride-operation.md`, "The ride window's Buy Upgrades list". Q512 builds the list.
+- [ ] **Q711. A list heading clicks Select3 (`0xbd`) in the original; ours clicks `BUTTON01` (`0x1f`).** From the fork watch,
+  2026-10-19 (`verify-audio-fx.md` M2, "MISS (live in our code)"; `docs/exe/hud.md`, "Which window the click sound is for").
+  **Insert next to Q402**, whose 2026-10-16 note asks which list rows make style `0x10` and whether ours set `Toggles`: this
+  answers it for the headings. The click hook (`0x00485780`) plays on every message `0x100` by the RECEIVER's own style word,
+  bit `0x10` (`0x004857cb`) giving `Select3` (`0xbd`), else `0x1f`. A list heading is a button (op `0xc`,
+  `( 2, 1, n+0x10 )`, `0x006606a8`..`0x006606b2`) whose parent is the list, and every sorted list record carries `0x10` (walked
+  `0x00750ab8`, `0x00750ba0`, `0x00750ca0`, type 7, flags `0x291`; the buy list `0x91`, the rest `0x291`). So a
+  heading click plays `Select3`. Ours: the headings (`UiList.AddHeading`, `AddFramedHeading`; hire, buy, all-staff, all-items,
+  visitors) are plain `UiButton`s with `Toggles` false and parent `UiList`, so `WindowStack.Release` plays
+  `UiSounds.Click( toggle: false )` = `0x1f` (said at both sites). Build the rule the original has, not a per-button flag: toggle
+  when the receiver (the parent) is a list flagged `0x10`. A radio group's children already toggle (`UiRadioGroup`). Not heard in
+  either game yet. Confirm: a heading clicked on the hire list, caught by the disk driver, beside the original.
 
 - [ ] **Q403. The balance's colour and the cost in hand.** From the fork review 2, 2026-10-16 (`verify-ui-hud.md` L5).
   The HUD letters the balance in one of six colours (table `0x00752e30`, index (balance + 999) / 1000 clamped to 0..5:
@@ -1966,6 +2010,10 @@ filed the items that cite it.
 - [ ] **Q463. A tag's first show: half a second, and particle 0x5a.** From the week-end audit (D12, `VERIFY-7b.md`
   Q309 1). The mast posts message 6 (show) 500 ms after a tag is put on (`0x004a1286`); its first show starts effect
   0x5a (`0x0048dfa6`, not while paused). Ours shows it at once and counts nothing (rule 4): count it first.
+  - **Note (fork watch 2026-10-19, `verify-audio-fx.md` M3; `hud.md`, "A tag's effects follow its visibility"):** the live
+    effect `0x5b` (property 9) is shown and hidden with the tag (`0x0051ff10( h, 0 )` at `0x0048dff9`, `( h, 1 )` at
+    `0x0048e02e`), and message `0x13` moves it onto the tag's middle (`0x0051fe30`, `0x0048df88`). Ours counts neither the
+    hide / show nor the move (`ParkTags.cs` counts only the `0x5b` at the show): count them with `0x5a`.
 - [ ] **Q464. A written corner cell's made vehicles run newest first.** From the week-end audit (D13, `VERIFY-2b.md`
   Q342 1). With ferry and seaplane both made, `ParkWorld.People.cs` writes cell (0,0)'s chain oldest first; the
   original's file (`q257x/orig/fixed-by-the-original.TPWS`) and our running list run newest first. No effect on reading
@@ -2040,20 +2088,22 @@ filed the items that cite it.
 - [ ] **Q509. Sound_StopFading: the original's fade law, and FADEOBJ as a cut at low detail.** From the fork watch,
   2026-10-18 (`verify-other-a.md` H1, `verify-audio-fx.md` F1; `docs/exe/audio.md`, "The fade, the SoundInfo settings
   and the reverb"). The original's `Sound_StopFading` (`0x0051c300`) and `FADEOBJ`'s sound arm are a **x0.6 volume step
-  per library service pass** (the 60 is a percentage kept, not milliseconds) while sound detail is above
+  per fade step** (the 60 is a percentage kept, not milliseconds; a worker thread makes the steps, 100 ms apart, not
+  the service pass) while sound detail is above
   `SoundInfo.FADETOGGLE` (30, `sound.sam`; stock detail is `DEFAULTQUALITY` 50, and 25 at boot on low graphics detail,
   `0x0054de17`), and a **hard stop** (the same as `KILLOBJ` / `Sound_Stop`) at 30 or below. At 0, or with no channel, the
-  voice is stopped on the next pass. OpenTPW stands a flat 0.06 s ramp in for both, said at the site in
+  voice is stopped on the next service pass. OpenTPW stands a flat 0.06 s ramp in for both, said at the site in
   `Advisor.QuietenSeconds`, `ParkAudio`'s rain and crowd fades and `ParkCarSounds`. Build: (1) the fade as a geometric
-  decay on the voice's volume per service tick (the service rate is **not measured**: measure it first, the service runs
-  whenever `Sound_ApplyGroupVolumes` posts `0x700b6c`, `audio.md`, "The service", and pick the pass length from that,
-  rather than from a guess), ending in a stop at 0; (2) `FADEOBJ` and `Sound_StopFading` as a cut when sound detail is
+  decay on the voice's volume, one step every 100 ms (250 ms before the first when nothing was fading), each step
+  `own = trunc( 60 x round( own x group product ) / 100 )` with the group gains folded in at each step, ending in a stop
+  at 0 (the rate is read, not to be measured: `audio.md`, "The fade", fork watch 2026-10-19, `verify-other-b.md` H1); (2) `FADEOBJ` and `Sound_StopFading` as a cut when sound detail is
   30 or below, the detail being the options' sound quality slider (`0x00423850`), so the options screen's slider must
   reach it; (3) the stop-all at a level's end (`0x0051bcb0`, handed 90, `Level.StopAllSeconds`): trace whether the 90 is
   the same kind of percentage before changing it. Confirm: the advisor quietened (options screen) and the bumper cars'
   unload with a capture of the mix at detail 50 and at 30, beside the original at the same detail; predict the decay
-  per pass first. Predicted per pass: 100, 60, 36, 22, 13, 8, 5, 3, 2, 1, 0 of the starting volume (before the
-  device's integer rounding, not read).
+  per pass first. Predicted per step: at group product 1.0 the volume runs 100, 60, 36, 21, 12, 7, 4, 2, 1, 0 (nine steps, about 0.9 s
+  after the first step's wait of up to 250 ms); at the effects' measured 0.75 the device gets 75, 45, 20, 9, 4, 1, 0
+  (six steps, about 0.6 s). (Fork watch 2026-10-19, `verify-other-b.md` H1; `audio.md` holds the chain.)
 - [ ] **Q510. The hidden wide zoom: press it in the original, then build. Confirm first.** From the fork watch
   (2026-10-18, `verify-world-a.md` H1; `docs/exe/park-engine.md`, "A hidden wide zoom"). Camera row `0x11` (`0x00748298`,
   key `0x20`, modifier `0x3f`, handler `0x0042a520`) flips bit `0x200` of `[0x00790aac]`; by our key decode that is
@@ -2163,6 +2213,17 @@ filed the items that cite it.
   next change (filmed, `q528/orig/e-rain-film.png`), and its voice's handle is the saving process's. Confirm: q528's `run3/q528-fix2.TPWS`
   loaded here and in the original, the quality, the drops and the forecast's delivery tick (17097) predicted, a frame
   of each.
+- [ ] **Q712. The television static on entering or leaving first person.** From the fork watch of 2026-10-19
+  (verify-advisor-ui.md L4; `park-engine.md`, "Entering or leaving first person shows 300 ms of television static"),
+  with Q485's first person. On either edge of the camera flags `& 0x16` (a ride's view, first person) the original's
+  `Game_StateMachine` (`0x0054fabb`..`0x0054fb63`) toggles the fog's render bits and sets a 300 ms timer (`0x0087502c`,
+  stamped from `GetTickCount`); while it runs the frame is a 320 x 240 static (`FUN_0053e760`: one `rand()` a pixel, 75%
+  black, 12.5% white, 12.5% grey 150) stretched to the screen **instead of** the frame renderer. Lost Kingdom reaches it
+  from every ride view and the camcorder. Count `FIRST_PERSON_STATIC` where the swap would go, then build it timed on
+  `Time.WallMilliseconds` (it is real time in the original), the frame replaced as the original's is. Not measured: the
+  pixels in a running original; the screen the blit is stretched to is read as the screen size, not checked. Confirm:
+  the static photographed in the original under Proton on entering first person, then ours beside it; predict the 300 ms
+  from the frame count.
 
 ## B. Docs and comments
 
@@ -2417,6 +2478,14 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     records the rename as action-recorder entries `0x50` and `0x55` (`0x00403fd0`, replayed by `0x00404f70`), which is
     how it outlives a save. Lines reading "Kevin the" and "Cosmic Cow" turn the cheats on (`0x004053c0( 1 )`). A ride
     board takes its name from `OBJECT_NAMES` until a load (Q399).
+  - **Note (fork watch 2026-10-19, `verify-audio-fx.md` M1, `verify-other-b.md` M5; `hud.md`, "Which window the click sound is
+    for ... the rename boxes' keys"):** in the two-line boxes (park, object) Enter on the **first line moves the focus to
+    the second with no click**, Tab swaps the lines, Enter on the second applies and clicks (`0x1f`), Escape closes silently
+    (`0x00658d9f( w, 4 )`). Our generic Enter click (`WindowStack.Keyboard`, `UiSounds.Click( toggle: false )` before
+    `front.Accept()`) would click on the first line's Enter: the box must move the focus without it. The **staff rename box**
+    (`0x004b6110`, callback `0x004b6320`, table `0x007572e8`): one edit of 32 characters, title UITEXT 195, first text the
+    thing's current name, write through `0x00506830` (no length or empty test), refused while a box is open or with no
+    selected thing of class 4..8; a box does not open a second time while one is open.
 - [ ] **Q29. Parity with the original's hardware renderer.** `render-states.md`, "Texture addressing", counts the
   MIN/MAG/MIPFILTER and LOD-bias sites but does not decode their values; no shade-mode row exists; ZFUNC
   is LESSEQUAL there and Less here. The renderer lights per pixel with 16x anisotropic filtering and
@@ -2844,6 +2913,20 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   three apart: the raw latch (`Latched`, no copy of `+8` into it when nothing was latched), `PersonUnderCursor` (`+4`)
   and `ObjectUnderCursor` (`+8`; Q474); compare Q444 before building. Confirm each
   beside the original.
+  - **Note (fork watch 2026-10-19, `verify-other-b.md` M2):** the map's thing codes 1 to 8 are coloured, by default, by the
+    thing's state of repair through the three-stop ramp (`hud.md`, "The park map": the stops, the clamp, the eight sites);
+    for codes 1, 2, 3 and 8 the radio's settings 2 and 3 use `FUN_004e0860` and `FUN_004e1e30` instead. Part (2)'s "which record colours which code" is
+    answered for those eight codes.
+- [ ] **Q714. The Park Status screen (`PARK_STATUS_SCREEN`), starting with the Top 3 Thoughts.** From the fork watch,
+  2026-10-19 (`verify-other-b.md` H2; `hud.md`, "The Park Status screen's Top 3 Thoughts"). Counted when opened, never
+  asked for by an item (the notes under Q420 list the rings it graphs). The screen shows people in the park, arrival rate,
+  average happiness, average time, park rating, the Top 3 Thoughts, the happiness gauges (`hap.wct`, `sad_undec.wct`),
+  total visitors and the 1/3/12-year graph (`hud.md`, the nine screens). Decode the rest first (labels, the graph's draw
+  `0x004a47bf`, the series colours at `0x004a45e0`, the scale `0x004801d0`/`0x004802a0` read in `hud.md`), then build.
+  The Top 3 is read: count the peeps' thought (`+0x30`) over those `0x004fa990` allows, the three largest (ties to the
+  first, id 3 to `0x16`, none left is `0x17`), slot 0 the rightmost icon, the icon's frame the id less one, its help row
+  of `THOUGHTS.str` the frame plus one, refreshed every 1000 ms. Unproven: whether an icon hidden for no thought is shown
+  again. Confirm: the screen photographed beside the original's in the shipped park.
 
 ## F. Then
 
@@ -2880,3 +2963,10 @@ state machine.
 - [ ] **Q80. Two tests the lobby audit asked for (plan item 13, the rest).** A save round trip against a real
   game-written file (it wants a sitting with the original to make one), and `LobbyScript` over the four shipped island
   scripts. Sound categories are covered by `SoundCategoryTests`.
+- [ ] **Q715. The lobby's bolt inverts the screen for one frame (low priority: the lobby, not Lost Kingdom's park).** From
+  the fork watch, 2026-10-19 (`verify-other-b.md` M1; `lobby.md`, "The lobby's bolt inverts the screen for one frame").
+  The park's bolt has none, so only the lobby is affected. After the lobby bolt's call the original sets a flag, and the next
+  frame draws a white full-screen quad through INVDESTCOLOR/ZERO blending (1 - destination) once. Not traced: the state
+  word's path to the blend states, and no run of the original has shown the frame (the fork's capture saw none either), so
+  film the original's lobby in a storm (`record.sh`) before building, and count the unbuilt flash `LOBBY_BOLT_FLASH` (rule 4) until it is. Pairs
+  with Q152 (the bolt's lifetime).

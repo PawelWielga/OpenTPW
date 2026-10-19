@@ -744,6 +744,24 @@ less for the time left on channel 0. Every isle ships exactly an M1 and an M2 in
 isle's clips in turn, M1 first (`LobbyModel.Update`), and counts the unbuilt draw as `LOBBY_ISLE_RANDOM_CLIP`, once for
 each isle as its first choice (`LobbyIsland.OnUpdate`): four for each lobby built. The later draws are not counted.
 
+## The lobby's bolt inverts the screen for one frame (fork watch 2026-10-19)
+
+Read from the listing of `testme.exe`; no game run, and not seen in play (fork watch 2026-10-19, `verify-other-b.md` M1, the
+confirmed part). The flash is the **lobby's alone**: the park's bolt (`0x00512b4c` calling `0x00580320`) never sets it, so Lost
+Kingdom's park has none (Q715).
+
+- The flag is the byte `[this+4]` of the flash object; its one writer is `0x0057dc70` (`MOV [ECX+4], 1`), whose one
+  caller is `0x005e110b`, right after the lobby camera update's bolt call (`0x005e1100`, `CALL 0x00580320`). No data pointer to
+  `0x0057dc70`, `0x0057ed50` or `0x0057ee30` exists in the image.
+- `0x0057ee30` calls `0x0057ed50` only while `[this+4]` is non-zero. `0x0057ed50` clears the flag (`0x0057ed59`), builds a quad
+  over the whole screen, (-1,-1), (1,-1), (1,1), (-1,1), at z 0.001, w 1, colour `0xffffffff`, state word `0x9a1` (`0x0057ed75`),
+  and draws it through `0x00565f90`.
+- `0x005679b0` sets the render states SRCBLEND (0x13) to `( p >> 4 ) & 0xf` = 0xa, INVDESTCOLOR, and DESTBLEND (0x14) to `p & 0xf` = 1,
+  ZERO: a white quad gives 1 - dst, **the frame inverted, for one frame per bolt**.
+- Not traced: the state word's path `0x00565f90` to `0x00567620` to `0x005679b0` (the low byte is what reaches `0x005679b0`
+  by the pattern at `0x0056797d`..`0x0056798b`, not proven).
+- OpenTPW has no inverted pass in `World/Lobby` or `World/Weather`.
+
 ## Park names and the locale tables
 
 The four park display names **are** in the shipped data, measured with OpenTPW's own

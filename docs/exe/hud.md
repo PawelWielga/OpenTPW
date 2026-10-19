@@ -180,6 +180,20 @@ Built by `FUN_004a1d70` onto the park's layer 0, with no handler for the stream 
 | `0x1f` | Takes the `meter.wct` skin | Confirmed twice, independently |
 | `0x20` | The date is **black** — `FUN_0065c5d5(0,0,0,0xff)` with font slot 3 (`_DAT_007cb2d4 = 3`) | Confirmed twice, independently |
 
+### The happiness gauge's two quads (Q244; fork watch 2026-10-19, verify-advisor-ui.md L3, verify-other-b.md M3)
+
+The `meter.wct` skin of control `0x1f` is drawn by a sub-object built by `FUN_00477870` (vtable `0x006fee88`, slots `+0xc`
+`0x00477db0`, `+0x24` `0x00477cc0`, `+0x28` `0x00477d20`). Message 8 takes the value `x 1/1024 (0x006fee08) x 100 (0x006fee0c)`,
+held 0 to 100, as p, stored at `+0x120` only when it changed, then rebuilds the geometry and the UVs. Eight vertices in two
+quads that share the boundary p: quad A (0,100) (100,100) (100,p) (0,p), quad B (0,p) (100,p) (100,0) (0,0); indices
+(0,1,2) (2,3,0) (4,5,6) (6,7,4). UVs (t = p/100): quad A **u 0.5 to 1.0** (the texture's right half), v t to 1.0; quad B
+**u 0 to 0.5** (the left half), v 0 to t. v runs the same way as y on both, so each half is **cropped at the boundary,
+never scaled**, and together they make one full-width bar. The original's frame (Q355, `q355/gadget-orig-fix-main.png`)
+shows it so: dark empty bar above, orange filled below; OpenTPW's showed the two halves side by side, narrow, because
+`UiMeter.OnDraw` samples u 0 to 1: that is Q244's "two copies". **Not settled:** which screen edge the model's y of 0 is
+(the fill direction on screen rests on the bytes and that photograph, not on a read of the UI model's axis), and the
+pixels of `meter.wct` itself (type 0x13, which `wctorig.py` does not decode).
+
 ### Depth
 
 `FUN_0065f16b( this, n )` writes n to the control's `+0xe0`, clamps at `0x100`, and recurses into children
@@ -668,7 +682,7 @@ up from the opening, and a file whose budgets are over nought with `mHaveEverTra
 opening alone. The original, off-screen (`q352/orig/run2.sh`): given `q352/set75.TPWS` (the mechanics' 75) it read
 "$ 75" and "-$ 11750" on 27 February, weeks before the month's change (run c); given `q351/bud2.TPWS` (25 and 50
 written by hand, the flag nought) thing 1's `+0x20` went 0 to 1 on tick 1095, the tick the screen came up, the row
-"$ 75" (run d). What reads `mHaveEverTrained` was not looked for.
+"$ 75" (run d). **Its reader is advisor row 172** (`0x0059fb10`: more than 15 staff and none ever trained; `advisor-park.md`, "Row 172 and row 72 read whole"; fork watch 2026-10-19, `verify-advisor-ui.md` L5), not built.
 
 **OpenTPW** (`ParkStaffCostsScreen`; `ParkCategoryScreens.StaffCosts`; `ParkPeople.SetTrainingBudget`,
 `HaveEverTrained`, `TrainingOf`; `ParkGadget`'s bar button of type `0x15`; the console's `budgets`). The stream's
@@ -1105,6 +1119,36 @@ short press would. Not built: a list's column message `0x404`, which no screen a
 repeating button; a control's flag `0x8`. A button that the pointer leaves and comes back to keeps its press here as
 there, but the two are not compared.
 
+### Which window the click sound is for, the scroll bar's arrows and the rename boxes' keys (fork watch 2026-10-19, `verify-audio-fx.md` M1, M2)
+
+The click hook (`0x00485780`, installed at `0x00489da6` through `0x006590ea`) plays on **every** message `0x100` delivered, by the
+**receiver's** own style word: `0x0065d57c` reads `[ecx+0x48]` (`0x0065d586`), and bit `0x10` set (`0x004857cb`) gives `Select3`
+(`0xbd`), else `BUTTON01` (`0x1f`), through `0x0051bfc0`, which gates only on the sound system being up, not on the pause. The base
+control constructor stores the layout's flags at `+0x48` (`0x0065bd2c`) and the parent at `+0x60` (`0x0065bd52`).
+
+- **A list's heading** is a button (op `0xc`, `( 2, 1, n+0x10 )`, `0x006606a8`..`0x006606b2`) whose parent is the list, and every sorted
+  list record carries `0x10` (walked `0x00750ab8`, `0x00750ba0`, `0x00750ca0`: type 7, flags `0x291`; buy `0x91`, the rest `0x291`). A heading
+  click plays **`0xbd`**. Ours plays `0x1f` (Q711).
+- **The scroll bar's arrows** are buttons built under the type-3 bar (op 9 `0x0065dd7b( 3, 0x10, 1 )`, `0x00660495`..`0x006604a1`; ops 6 and 7,
+  the arrows, `( 2, 0x21, 1|2 )`, `0x0066024b`..`0x00660257`; op 8, the thumb, `( 2, 1, 3 )`, `0x006602f5`). Every button constructor (`0x006688b3`)
+  sets `+0x13c` 500 and `+0x140` 125 (`0x00668902`, `0x0066890f`); only a button with flag `0x20` (the arrows') repeats. The release posts `0x100`
+  to `[button+0x60]` (`0x006691e5`..`0x006691f9`) only while `0x00668eff` answers 1, which it does not after a repeat (`+0x15a` 2, `0x00668f18`).
+  So an arrow clicked without repeating plays **`0xbd`** (its receiver is the bar, flags `0x10`), and an arrow **held past 500 ms plays nothing**: the
+  repeats `0x10009` / `0x10008` are not `0x100`. The thumb and the track post no `0x100`. Q247 builds the bar.
+- **The rename boxes' keys.** The edit control sends `0x802` (Enter, only when its own `+0x48` lacks `0x80`), `0x803` (Tab) and `0x804` (Escape) to its
+  parent at once (`0x00667fee`: `0x00668020`, `0x00668054`, `0x00668078`). In the two-line boxes (the object's, handler `0x0048d640`, layout `0x00750090`,
+  opener `0x0048d370`; the park's, `0x004993e0`, layout `0x00751928`, opener `0x004990f0`), **Enter on the first line (control `0x3943c`) moves the focus
+  to `0x3943d` with no click** (`0x00499707`..`0x00499711`), Tab swaps the lines, **Enter on the second line posts `0x100` with -1 and clicks**
+  (`0x00499736`..`0x0049973e`), and **Escape closes by `0x00658d9f( window, 4 )`, silent** (`0x004996bf`..`0x004996ca`). Every root carries layout flags
+  `0x1`, so the click is `0x1f`. Save Park (`0x0049ea30`) is the one box that clicks on Escape too (it posts `0x100` with -2).
+- **The staff rename box.** `0x004b6110` is refused while a box is open (`[edi+0xc]`) or with no selected thing (`[0x007c2658]`), and the thing's class
+  byte `[+2]` must be 4, 5, 6, 7 or 8. It opens table `0x007572e8` with callback `0x004b6320` (`0x0065fd0e`), properties 0 = the thing and 1 = the window;
+  the title control `0x5daa` reads **UITEXT 195** (`0x004b6226`), the one edit `0x5dab` has buffer `0x007cc360` and a limit of **32** characters
+  (`0x004b62c5`), and its first text is `0x00506860( thing )` (`0x004b62ec`). The callback, on message `0x100` with -1, writes through `0x00506830`
+  (property 0, the buffer; no length or empty test) and closes; `0x00506830` copies at most 32 wide characters to the thing's `+0x1a0` and puts a
+  terminator at `+0x1e0`. The same callback closes without writing on -2 and `0x804`; the verifier's read lists `0x802` among them too, which is not reconciled with
+  the Enter site (`0x004b6400`..`0x004b640a`, which posts `0x100` with -1 and clicks). Not read: whether the edit refuses Enter on an empty field. Q28 builds the boxes.
+
 ## The other park streams
 
 | Address | What it is | Contents |
@@ -1164,6 +1208,13 @@ A tag's left click (`FUN_0048dae0`, `0x10006` with button 0) plays sound `0xc0`,
    the first button's type (5 to 3), the second's (6 to 4), the item (8 to 5).
 3. `FUN_004a2590( bar, 1 )` asks the arm for the bar, `[0x007ca094]` is the tag, and advisor message `0x11c` is
    posted (`FUN_00486b00`).
+
+**A tag's effects follow its visibility** (fork watch 2026-10-19, `verify-audio-fx.md` M3): message `0x11` is the visibility notice (the setter
+`0x0065d90b` sends `0x11, shown` to the control's proc, `0x0065d998`). With shown set and property 0xa unset (`0x0048dfae`) `0x00486b90( 0x5a, tag )`
+(`0x0048dfbe`) spawns the first-show effect at the tag's middle, only when the tag is visible (`0x0065d773`) and not paused (`[0x00786b84]`, `0x00486bce`),
+the handle not kept; property 0xa becomes 1 (`0x0048dfcc`). A new tag resets property 9 to -1 and 0xa to 0 (`0x0048ed71`..`0x0048ed82`) before posting
+`0x100001`. On every show and hide the live **0x5b** handle (property 9, `0x005222e0`) is shown or hidden (`0x0051ff10( h, 0 )` at `0x0048dff9`,
+`0x0051ff10( h, 1 )` at `0x0048e02e`), and message `0x13` moves it onto the tag's middle (`0x0051fe30`, `0x0048df88`). Q463.
 
 ### The bar's handler, `FUN_0048e2f0`
 
@@ -1642,8 +1693,13 @@ space).
 `FUN_005f09a0` is **not** a sprite selector — it is a **three-stop colour ramp**: clamp a value to 0-100,
 blend stop1->stop2 below 50 and stop2->stop3 above, patch R/G/B into the descriptor and force alpha 0xff.
 The stops are `DAT_00f86bd8`, `DAT_00f86bfc`, `DAT_00f86c20` (beyond `.data`'s raw bytes, so a static read gives zeros;
-they are filled by the initialiser `0x005f0700`, below). The value is a **per-thing metric** fetched differently per radio setting
-(`FUN_004e0860`, `FUN_004e1e30`). The first is built (`ParkRideScore.ExcitementOf`); the second's days are kept
+they are filled by the initialiser `0x005f0700`, below). The value is a **per-thing metric**: for cell codes 1, 2, 3 and 8 with the radio (`[map+0x20]`) at 2 it is
+`FUN_004e0860` (`0x005f24eb`), at 3 `FUN_004e1e30` (`0x005f2565`); **otherwise, in the radio's default setting, each thing
+code 1 to 8 tests its own layer bit (`[map+0x18]`) and is coloured by `__ftol( [thing + 0x44] ) & 0xff`, its state of repair**
+(`ride-operation.md`, `park-engine.md`; eight sites `0x005f2602`, `0x005f2681`, `0x005f2705`, `0x005f2784`, `0x005f2809`,
+`0x005f288d`, `0x005f290b`, `0x005f298a`, the jump table `0x005f2f9c`; fork watch 2026-10-19, `verify-other-b.md` M2). The ramp
+`0x005f09a0` clamps it to 0 to 100 and blends below 50 by `( v << 16 ) / 50`, from 50 by `( ( v - 50 ) << 16 ) / 50`. The first
+radio metric is built (`ParkRideScore.ExcitementOf`); the second's days are kept
 (`ParkObjectRings.Satisfaction`) and its average is not; the thing layers are unbuilt. The base image plus the cell codes 9-12 (below) is the honest first cut.
 
 ### The map's colours are immediates in `0x005f0700`
@@ -1657,7 +1713,7 @@ black, green (0, 255, 0), cyan (0, 255, 255), orange (254, 78, 0), yellow (252, 
 `0x005f0970` records from `0x00f86b00` (R, G, B, A): (31, 166, 31), (37, 198, 37), (0, 23, 0), (0, 23, 0, 128),
 (25, 25, 150, 200), (25, 25, 250, 200), the ramp's three, then (32, 168, 248), (248, 132, 0), (248, 252, 0), (0, 0, 0),
 (255, 0, 0), (200, 250, 200). The channel order is inferred, not proven: a photograph of the original's map would settle it.
-Which record colours which land code, thing kind or layer is not traced.
+The thing codes 1 to 8's colour is the state of repair through the ramp above (`0x005f09a0` over the stops (248, 0, 0), (248, 200, 0), (48, 252, 0), pushed at `0x005f08a5`..`0x005f08df`); which record colours which land code or other layer is not traced.
 
 ### Controls
 
@@ -2243,6 +2299,20 @@ Neither month so far is written. **Readers**: the park status screen's graph (`F
 (`+0x20f10`), the 15th (`+0x21160`) and the 16th (`+0x213b0`); its labels are not read. **Nothing reads the 12th**: its
 every operand is the constructor's, the close's, the serialiser's and the load factory's (`FUN_005179c0`, which empties
 every ring before the read, `FUN_0051ae30`).
+
+**The graph's scale, a ring's largest month (`0x004801d0` over integers, `0x004802a0` over floats; fork watch 2026-10-19,
+`verify-world.md` L4).** The argument 0, 1 or 2 gives a window of 12, 36 or 144 months. The samples are `0` to the window
+inclusive, and stop at the ring's count (`+0x248`): sample `i` is `data[ head - i ]` (`+4`; the head is `+0x244`), or
+`data[ head - i + count ]` past the start only when the wrapped byte (`+0x24c`) is set, else the scan stops. A sample is kept
+only when strictly greater than the best so far (`0x00480323`..`0x0048032c` for floats); the float is truncated
+(`0x0067a830`) and raises `*out` if greater. Both keep the **index** of the best (start -1) and re-read the ring there after
+the loop, so **with no sample above nought** the index is -1 and they read `data[ head + 1 ]`, the slot past the newest: the oldest month in a wrapped ring, an
+emptied slot in an unwrapped one, and at head 143 the head word `+0x244` itself. Only an index past an unwrapped head takes the
+limit fallback (`0x0048028d`, `0x00480365`). So an all-nought recent window takes its scale from that slot. (The fork's "0 when
+none is above 0" is wrong.) In each of the status screen's seven folds (`FUN_004a4b90`, `0x004a51d0`, `0x004a5e10`; e.g.
+`0x004a4c86`..`0x004a4d27`) bit 2 of `[0x00753c48]` takes the 14th ring (`+0x20f10`, the happiness float) through `0x004802a0`,
+bits 1, 4, 8 and `0x10` take `+0x20cc0`, `+0x21160`, `+0x205d0` and `+0x213b0` through `0x004801d0`; then `0x0047fb30( 0, max, 10 )`.
+The finances screen (`0x0049a7e2`..`0x0049a8d7`) uses `0x004801d0` only. Nothing here is built.
 
 **Measured** (`q390/sweep.py`): the shipped `Easymode.TPWI` holds the 10th one month closed on 0 and the 12th on 1, the
 Belly Bounce; over all 587 park files on hand both months so far are 0; in all 188 whose park value sums to their 2nd
@@ -3612,3 +3682,25 @@ sideshow `0x004b20b0`). Window objects are globals: shop `0x007cc258`, sideshow 
   `0x1ef` <- `+0x1b0` x 1024 / 100 (`Upgrades[0].WearRate`); tab 2 only gauge `0x1ee`; other tabs none; text `0x1f5` <- `0x004ca8c0`'s
   count, or UITEXT `0x88` when 0. Which tab value is rides is inferred. The hire gauge `0x2482` is the candidate's byte `+8` x 1024 / 5
   (`0x0049b8c3` to `0x0049b8f8`).
+
+## The Park Status screen's Top 3 Thoughts (fork watch 2026-10-19)
+
+Read from the listing of `testme.exe`; no game run (fork watch 2026-10-19, `verify-other-b.md` H2). The screen is `PARK_STATUS_SCREEN`,
+not built (Q714).
+
+- **The ranking, `0x004c8430`.** It zeroes 23 counters and walks the thing list `[0x0080239c]` (`0x00516130`, `0x00516160`):
+  a thing whose type byte (`+2`) is 1 and for which `0x004fa990` answers true adds one to `counts[ thing + 0x30 ]` (its
+  thought). `counts[ 0 ]` is then set to nought, and three slots are filled in turn: for each id 3 to `0x16` the slot takes the
+  id whose count most exceeds the slot's own, strictly above nought and the first of equals winning (`JLE`); a slot left with
+  a count of nought is written `0x17`. Slot 0 goes to the first output argument, 1 to the second, 2 to the third.
+- **Whose thought counts, `0x004fa990`.** The thing's cell (`[+7] x 128 + [+5] + 1`, record `[0x008023a0] + cell x 0x44 - 0x44`)
+  must have a type byte (`+8`) of 0, 1, 3, 9 or 10 (tests `0x00536310`, `0x00536320`, `0x00536340`, `0x00536350`, `0x00536390`).
+- **The icons, `0x004a4ab0`.** Slot 0 sets the control `0x4a68d4`, slot 1 `0x4a68d3`, slot 2 `0x4a68d2`. An id 1 to `0x16` sets
+  the icon's frame to id - 1 (vtable `+0x1c`); 0 or `0x17` and over calls `0x0065d9dd( 0 )`. The table `0x007537d0` puts them
+  (type 6; records `0x00753bd2`, `0x00753bfa`, `0x00753c22`): `0x4a68d2` at x 305 to 409, `0x4a68d3` 432 to 536, `0x4a68d4`
+  562 to 666, all y 646 to 726. So **slot 0, the commonest thought, is the rightmost icon**, slot 2 the leftmost.
+- **Hover, `0x004a4700`.** Message `0xc` sets the help to row (the icon's stored frame + 1) of `THOUGHTS.str` (`[0x0078ba9c]`,
+  `0x006ace60`): each icon names its own thought (the type-6 setter `0x0066da4d` stores `+0x13c`, the getter `0x0066dad2` reads it).
+- **Refresh:** the builder arms a timer of `0x3e8` (1000 ms) with id `0x80083` (`0x004a5309`).
+- **Not proven:** whether an icon hidden by `0x0065d9dd( 0 )` is ever shown again (neither setter calls a show; the window proc
+  `0x004a4830` was not read).

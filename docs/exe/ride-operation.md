@@ -4165,7 +4165,7 @@ cells (codes 1, 2, 3, 8 of `FUN_005f2050`), so a toilet's is shown nowhere and a
 reads it for shops and sideshows more than 30 days old: the drinks "great satisfaction" row (256, response 496) scores
 (sat − 70) × 4 and can pass the advisor's 25 from 77; the "poor" rows 243 to 246 (food, shops, restaurant, drinks) score a satisfaction
 below their line, and row 247 (sideshows, though its log says "satisfaction") the lowest thirty-day walk-away
-percentage below its line (`FUN_004cc090`), each times a positive `ScorePerPoint`, never above nought, so they never
+percentage below its line (`FUN_004cc090`, which row 242, "sideshows poor value", reads too, with its own line `+0x4f8`), each times a positive `ScorePerPoint`, never above nought, so they never
 play with the shipped `Advisor.sam`. Nothing in a
 guest's choice reads it.
 
