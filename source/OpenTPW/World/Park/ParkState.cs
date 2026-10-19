@@ -936,11 +936,10 @@ public sealed class ParkState
 	/// (<c>FUN_004db090</c>, <c>0x004db66a</c>) and its age is measured against it (<see cref="AgeInDays"/>).
 	/// </summary>
 	/// <remarks>
-	/// The start and the rate are <see cref="GameCalendar.Epoch"/> and <see cref="GameCalendar.Rate"/>, the clock
-	/// constructor's own: the save's clock block is read (<see cref="ParkWorld.Calendar"/>) but its start and rate are not
-	/// used, and Lost Kingdom's holds the same two (the rate
-	/// <c>docs/exe/weather.md</c>, the start <c>docs/exe/ride-operation.md</c>, "What it gives the three rides"). This
-	/// is not <see cref="GameCalendar.Now"/>, which counts from nought (Q149).
+	/// The start is <see cref="GameCalendar.Epoch"/>, the clock constructor's own: the save's clock block is read
+	/// (<see cref="ParkWorld.Calendar"/>) but its start is not used, and every park file holds the same one
+	/// (<c>docs/exe/ride-operation.md</c>, "What it gives the three rides"). The rate is <see cref="GameCalendar.Rate"/>,
+	/// the loaded file's. <see cref="GameCalendar.Now"/> is the same date as of the last frame's sweeps.
 	/// </remarks>
 	public DateTime CalendarNow
 		=> GameCalendar.Epoch.AddTicks( (long)(uint)GameTick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond
@@ -951,7 +950,7 @@ public sealed class ParkState
 	/// now: <c>Calendar_Update</c> (<c>0x004f8260</c>) stores the date of <c>mGameTick</c> at the end of every sweep, the
 	/// same sweep that counts it on (<c>World_SweepTail</c>, <c>0x004d7b20</c>), so between sweeps they are
 	/// <see cref="CalendarNow"/>'s month and day. A save writes them (<c>docs/exe/saves.md</c>, "OpenTPW's writer, the
-	/// calendar's fields"). Not <see cref="GameCalendar.Now"/>'s, which counts from nought (Q149).
+	/// calendar's fields").
 	/// </summary>
 	public (int Month, int Day) CalendarAtLastUpdate => (CalendarNow.Month - 1, CalendarNow.Day);
 
@@ -1672,10 +1671,6 @@ public sealed class ParkState
 	/// The year's change reaches the bank - message <c>0xd</c>, whose arm of the bank's handler zeroes
 	/// <see cref="ProfitThisYear"/> and does nothing else (<c>0x004d034e</c>).
 	/// </summary>
-	/// <remarks>
-	/// The edge is <see cref="GameCalendar"/>'s, which counts from nought rather than from the save's clock, so after
-	/// a load the year turns at another moment than the original's would (<c>docs/QUEUE.md</c> Q149).
-	/// </remarks>
 	public void TurnTheYear()
 	{
 		ProfitThisYear = 0;

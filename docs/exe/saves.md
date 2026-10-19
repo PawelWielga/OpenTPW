@@ -3395,8 +3395,8 @@ same and every slot.
 park with the balance 100 and loan 4 (18000 over 24 at 750) bought, five repaid (`parkfile.economy_set`). Loaded here,
 the fee raised to 28 by three clicks on the entry-price screen's plus, the clock written 17556 and stepped over the
 month: the loan's 750 and five wages took the balance to -1188 on 17557, `mTurnEnteredRed` 17557, and a year's change
-zeroed the profit. The console's `clock` raises it: `GameCalendar.SetCounter` leaves the year edge at the load's 2000
-(Q149). The original, loading into its running 2002 park, had none on 17557 (from a fresh entry its first sweep would
+zeroed the profit. The console's `clock` raises it: the calendar's year compares against the entry's 2000
+(`GameCalendar.Rebase`, the original's seed, Q149). The original, loading into its running 2002 park, had none on 17557 (from a fresh entry its first sweep would
 have zeroed it on 16844 instead, `weather.md`); saved, the file read fee 28 balance -1188 batch 0 withdrawals 1 last -1188 red 17557 profit 0 and loan
 4 repaid 6, and loaded back the same, the screen at 28 (`run2/3-reloaded-fee.png`). Main's build wrote the balance alone:
 fee 25, last 87787, red 0, profit -12013, repaid 5 (`control1`). **The original** given the file read all of it at the
@@ -3421,7 +3421,8 @@ the date of the running park's `mGameTick` (`ParkWorld.PutCalendar`, handed `Par
 sweeps they are the tick's date. The start, the session and the rate are the file's, as the original's own load leaves
 them (`Calendar_Serialise` reads all five and writes them back as they lie); the year at `+0x18` is not in the file.
 The save logs `Save: calendar written: month M day D, the date of tick T, YYYY-MM-DD`. A load here reads the block
-(`ParkWorld.Calendar`) and runs nothing on it: this game's month edges are its own calendar's, from nought (Q149).
+(`ParkWorld.Calendar`): the first sweep's date is compared with its month and day and the rate is its own
+(`GameCalendar.Rebase`, Q149), as the original's.
 
 **Measured across the files** (`q526/clocksweep.py`, the 741 park files on this machine): of the 48 park files in the original's
 folders (its save folder, Alexah's Full Simulation saves, the items' `orig/` folders), 41 hold the date of their own tick
@@ -3472,7 +3473,7 @@ from the running park (`ParkWorld.PutWeather`, handed `ParkWeather.Written` by `
 **Deviations, said at `ParkWorld.PutWeather` and `ParkWeather.Written`.** The original writes its live voice's handle,
 which names nothing in the process that loads the file and, being not nought, keeps that one's rain voice from starting
 until the drops next end or it snows (modes 1 and 2 stop the handle, whatever it names, and set it to nought); this game writes nought (in all 48 park files in the original's folders it is nought: none was raining).
-This park's schedule counts day edges of its own calendar (Q149), not the original's instants, so its forecast is made
+This park's schedule counts day edges of its own calendar (Q529), not the original's instants, so its forecast is made
 and delivered on a whole day where the original's is made on the first tick past an instant; the stamps written are
 the park calendar's on the tick it happened here, so the original loading the file runs its own schedule from them.
 A load here still reads only `mWindDir` (Q493): the quality, the forecast and the storm are rolled fresh (Q529).

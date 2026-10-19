@@ -6,148 +6,138 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace OpenTPW.Tests;
 
 /// <summary>
-/// The park's calendar: how long a day is, that only ticks move it, and that a season is always one of
-/// the four rows the balance file declares. Driven as a park's frame drives it -
-/// <see cref="Time.Update"/> from the renderer, then <see cref="GameClock.Update"/> and
-/// <see cref="GameCalendar.Update"/> from <see cref="Level.Update"/>.
+/// The park's calendar: the date of the park's own clock, <c>mGameTick</c>, and the day's, the month's and the year's
+/// edges against the date it last compared, as <c>Calendar_Update</c> (<c>0x004f8260</c>) makes them at the tail of a
+/// sweep. Driven as <see cref="Level.Update"/> drives it: <see cref="GameCalendar.Update"/> with the park's tick once a
+/// frame's sweeps have counted it on.
 /// </summary>
 [TestClass]
 public class GameCalendarTests
 {
+	/// <summary>Lost Kingdom's Easymode.TPWI: tick 755, its clock block's month 1 (February, nought-based) and day 2.</summary>
+	private static readonly ParkWorld.CalendarBlock LostKingdom = new( 125911584000000000, 0, 1, 2, 15000 );
+
 	[TestInitialize]
-	public void Setup()
-	{
-		Time.Paused = false;
-		Time.StepFrames = 0;
-		Start();
-	}
+	public void Setup() => GameCalendar.Rebase();
 
-	/// <summary>One frame, through all three clocks, in the order a park's frame runs them.</summary>
-	private static void Frame( float seconds, bool paused = false )
-	{
-		Time.Update( seconds );
-		GameClock.Update( paused, GameClock.ParkCatchUp );
-		GameCalendar.Update();
-	}
+	[TestCleanup]
+	public void TearDown() => GameCalendar.Rebase();
 
-	/// <summary>Entering a park, and the one frame <see cref="GameClock.Rebase"/> throws away with it.</summary>
-	private static void Start()
+	/// <summary>Sweeps the park's clock on from where the calendar last read it, one tick a frame, until <paramref name="stop"/>.</summary>
+	private static bool SweepUntil( Func<bool> stop, int mostSweeps = 20000 )
 	{
-		GameClock.Rebase();
-		GameCalendar.Rebase();
-		Frame( 0f );
-	}
-
-	/// <summary>
-	/// Runs frames until <paramref name="stop"/> is true, or gives up. A park frame at sixty is the
-	/// ordinary case; nothing here wants the catch-up path.
-	/// </summary>
-	private static bool RunUntil( Func<bool> stop, int mostFrames = 200000 )
-	{
-		for ( int frame = 0; frame < mostFrames; ++frame )
+		for ( var sweep = 0; sweep < mostSweeps; ++sweep )
 		{
+			GameCalendar.Update( GameCalendar.Counter + 1 );
+
 			if ( stop() )
 				return true;
-
-			Frame( 1f / 60f );
 		}
 
-		return stop();
+		return false;
 	}
 
 	/// <summary>
-	/// A day is a little under six seconds, and the exact figure is worth pinning because it is not the
-	/// one the arithmetic suggests.
-	///
-	/// <para>
-	/// 86,400 funny seconds at 15,000 a second reads as 5.76s, but the counter only advances every eighth
-	/// 31ms tick - 248ms - while the conversion divides by four as though it arrived every 250ms. So the
-	/// first day turns on the 24th advance, which is 192 ticks, and days average 23.04 advances from there.
-	/// </para>
+	/// <b>Entering Lost Kingdom puts the date on the park's tick 755</b>, 2 February 2000 at 18:27:30 (755 × 15,000 / 4
+	/// seconds), not on 1 January. The file's day 2 matches, so the first sweep turns nothing; the day turns on tick 761,
+	/// the first past 3 February (760.32), and the month on tick 1383, the first past 1 March (1382.4), as the original's
+	/// do (<c>docs/exe/ride-operation.md</c>, "The month's change").
 	/// </summary>
+	/// <remarks><b>Mutations:</b> the calendar started from nought; the file's month or day not read; the edges compared
+	/// against the date before the sweep.</remarks>
 	[TestMethod]
-	public void ADayTurnsOnTheTwentyFourthAdvance()
+	public void LostKingdomsDateIsTheDateOfItsTick755()
 	{
-		Assert.AreEqual( 0, GameCalendar.Days );
+		GameCalendar.Rebase( 755, LostKingdom );
 
-		// GameClock.Ticks counts from when the process started and a re-base deliberately leaves it
-		// alone, so the only meaningful figure is the difference across this test.
-		var before = GameClock.Ticks;
+		Assert.AreEqual( new DateTime( 2000, 2, 2, 18, 27, 30 ), GameCalendar.Now );
+		Assert.AreEqual( 755, GameCalendar.Counter );
 
-		Assert.IsTrue( RunUntil( () => GameCalendar.Days >= 1 ), "the day never turned" );
+		GameCalendar.Update( 756 );
+		Assert.AreEqual( (false, false, false), (GameCalendar.DayRolled, GameCalendar.MonthRolled, GameCalendar.YearRolled),
+			"the file's own date turns nothing on the first sweep" );
 
-		Assert.AreEqual( 1, GameCalendar.Days );
-		Assert.AreEqual( 24, GameCalendar.Counter, "the day turned on the wrong advance" );
+		Assert.IsTrue( SweepUntil( () => GameCalendar.DayRolled ) );
+		Assert.AreEqual( (761, 1), (GameCalendar.Counter, GameCalendar.Days) );
 
-		// 24 advances of 8 ticks each.
-		Assert.AreEqual( 24 * 8, GameClock.Ticks - before, "a day took the wrong number of ticks" );
+		Assert.IsTrue( SweepUntil( () => GameCalendar.MonthRolled ) );
+		Assert.AreEqual( 1383, GameCalendar.Counter );
+		Assert.AreEqual( new DateTime( 2000, 3, 1 ), GameCalendar.Now.Date );
+		Assert.IsTrue( GameCalendar.DayRolled );
+		Assert.IsFalse( GameCalendar.YearRolled );
 	}
 
 	/// <summary>
-	/// Ten days take 231 advances rather than ten of the first day's 24: a day is 23.04 advances on
-	/// average, so the tenth turns on the first advance past 230.4.
+	/// <b>A park with no file turns a day on its first sweep</b> and nothing else: the clock's constructor leaves the day at
+	/// -1 (<c>0x004f7ebd</c>), park init seeds the month and year from tick nought (<c>FUN_004f85a0</c>). The second day
+	/// turns on the 24th tick, 86,400 × 4 / 15,000 being 23.04: the tick is fed every 248 ms while the conversion divides
+	/// by four, so a day is a little under six seconds.
 	/// </summary>
+	/// <remarks><b>Mutations:</b> the day seeded 1 rather than -1; the month seeded off by one.</remarks>
+	[TestMethod]
+	public void AParkWithNoFileTurnsADayOnItsFirstSweep()
+	{
+		Assert.AreEqual( GameCalendar.Epoch, GameCalendar.Now );
+
+		GameCalendar.Update( 1 );
+		Assert.AreEqual( (true, false, false, 1), (GameCalendar.DayRolled, GameCalendar.MonthRolled, GameCalendar.YearRolled,
+			GameCalendar.Days) );
+
+		Assert.IsTrue( SweepUntil( () => GameCalendar.DayRolled ) );
+		Assert.AreEqual( (24, 2), (GameCalendar.Counter, GameCalendar.Days) );
+		Assert.AreEqual( new DateTime( 2000, 1, 2 ), GameCalendar.Now.Date );
+	}
+
+	/// <summary>Ten days on, the original's slightly fast pace: 1 January's 231st tick is the first of 11 January.</summary>
 	[TestMethod]
 	public void TheDaysKeepTheOriginalsSlightlyFastPace()
 	{
-		Assert.IsTrue( RunUntil( () => GameCalendar.Days >= 10 ), "ten days never passed" );
+		GameCalendar.Update( 230 );
+		Assert.AreEqual( new DateTime( 2000, 1, 10 ), GameCalendar.Now.Date );
 
-		Assert.AreEqual( 231, GameCalendar.Counter );
+		GameCalendar.Update( 231 );
+		Assert.AreEqual( new DateTime( 2000, 1, 11 ), GameCalendar.Now.Date );
+		Assert.IsTrue( GameCalendar.DayRolled );
 	}
 
-	/// <summary>
-	/// The day is an edge, not a count - the original compares the derived day against the one it stored
-	/// and fires on the difference (0x004f8321), so <see cref="GameCalendar.DayRolled"/> is true for one
-	/// update and not for the hundreds either side of it.
-	/// </summary>
+	/// <summary>The day is an edge, not a count: true for the one sweep it turns on and not the twenty-odd either side.</summary>
 	[TestMethod]
 	public void TheDayRollsOnceAndOnlyOnce()
 	{
 		var rolls = 0;
 
-		for ( int frame = 0; frame < 4000; ++frame )
+		for ( var tick = 1; tick <= 1000; ++tick )
 		{
-			Frame( 1f / 60f );
-
-			if ( GameCalendar.DayRolled )
-				rolls++;
+			GameCalendar.Update( tick );
+			rolls += GameCalendar.DayRolled ? 1 : 0;
 		}
 
-		Assert.AreEqual( GameCalendar.Days, rolls, "the edge fired a different number of times than days passed" );
-		Assert.IsTrue( rolls > 1, "not enough time passed to be worth asserting" );
+		Assert.AreEqual( GameCalendar.Days, rolls );
+		Assert.AreEqual( 44, rolls, "tick 1000 is 13 February: 1 January's turn on the first sweep and 43 more" );
 	}
 
 	/// <summary>
-	/// A held park holds its date. Nothing here tests a paused flag: no ticks come due, so no advance
-	/// happens, which is the whole of how the original does it too.
+	/// A frame with no sweep compares nothing and a held park sweeps nothing, so its date stands and no edge fires, the
+	/// same tick read again.
 	/// </summary>
+	/// <remarks><b>Mutations:</b> the edges left standing from the last sweep.</remarks>
 	[TestMethod]
-	public void AHeldParkKeepsItsDate()
+	public void AFrameWithNoSweepKeepsTheDate()
 	{
-		RunUntil( () => GameCalendar.Days >= 1 );
+		GameCalendar.Rebase( 755, LostKingdom );
+		Assert.IsTrue( SweepUntil( () => GameCalendar.DayRolled ) );
 
-		var counter = GameCalendar.Counter;
 		var now = GameCalendar.Now;
+		GameCalendar.Update( GameCalendar.Counter );
 
-		for ( int frame = 0; frame < 600; ++frame )
-			Frame( 1f / 60f, paused: true );
-
-		Assert.AreEqual( counter, GameCalendar.Counter, "a held park advanced its clock" );
-		Assert.AreEqual( now, GameCalendar.Now, "a held park aged" );
-		Assert.IsFalse( GameCalendar.DayRolled );
+		Assert.AreEqual( now, GameCalendar.Now );
+		Assert.IsFalse( GameCalendar.DayRolled, "an edge is for one update only" );
 	}
 
 	/// <summary>
-	/// The season is always one of the four rows the balance file declares, and over a year it is all
-	/// four of them.
-	///
-	/// <para>
-	/// This is the test that pins the one place the original is deliberately not copied. Its season is
-	/// <c>wMonth / 3</c> on the raw 1-based month with no bounds check (0x004f87e7), so <b>December
-	/// gives 4</b> - one past a four-entry table - and it reads the array's own element count and two
-	/// scheduling fields as if they were weather numbers. Clamping is a divergence, and an intentional
-	/// one; this says so in a way that fails if anyone ever "restores" the overrun.
-	/// </para>
+	/// The season is always one of the four rows the balance file declares, and over a year it is all four of them.
+	/// The original's is <c>wMonth / 3</c> on the raw 1-based month with no bounds check (0x004f87e7), so December gives
+	/// 4, one past a four-entry table; clamping is a deliberate divergence, and this fails if the overrun comes back.
 	/// </summary>
 	[TestMethod]
 	public void ASeasonIsAlwaysOneOfTheFourTheBalanceFileDeclares()
@@ -155,64 +145,94 @@ public class GameCalendarTests
 		var seen = new HashSet<int>();
 		var months = new HashSet<int>();
 
-		// A year is about thirty-five minutes of game time, so this runs on well past December.
-		for ( int frame = 0; frame < 150000; ++frame )
+		for ( var tick = 1; tick < 9000 && months.Count < 12; tick += 7 )
 		{
-			Frame( 1f / 60f );
-
+			GameCalendar.Update( tick );
 			seen.Add( GameCalendar.Season );
 			months.Add( GameCalendar.Now.Month );
-
-			if ( months.Count == 12 )
-				break;
 		}
 
 		Assert.AreEqual( 12, months.Count, "the run was too short to reach every month" );
-
 		Assert.IsTrue( seen.SetEquals( new[] { 0, 1, 2, 3 } ),
 			$"seasons outside the four declared rows, or not all of them: {string.Join( ",", seen.Order() )}" );
 	}
 
-	/// <summary>Entering a park starts the date again, as the original zeroes its counter at park init.</summary>
-	[TestMethod]
-	public void EnteringAParkStartsTheDateAgain()
-	{
-		RunUntil( () => GameCalendar.Days >= 2 );
-
-		Assert.IsTrue( GameCalendar.Counter > 0 );
-
-		Start();
-
-		Assert.AreEqual( 0, GameCalendar.Counter );
-		Assert.AreEqual( 0, GameCalendar.Days );
-		Assert.AreEqual( GameCalendar.Epoch, GameCalendar.Now );
-	}
-
 	/// <summary>
 	/// <b>The month and the year each turn on their own edge</b>, the calendar's second and third compares
-	/// (FUN_004f8260, messages <c>0xc</c> and <c>0xd</c>): the month on the update that takes the date from
-	/// 31 January to 1 February, with the day's, and the year on the one that reaches 2001, with both.
+	/// (messages <c>0xc</c> and <c>0xd</c>): the month on the sweep that reaches 1 February, with the day's, and the year
+	/// on the one that reaches 2001, with both.
 	/// </summary>
 	[TestMethod]
 	public void TheMonthAndTheYearTurnOnTheirOwnEdges()
 	{
 		var months = 0;
 
-		Assert.IsTrue( RunUntil( () => GameCalendar.MonthRolled ), "the month never turned" );
+		Assert.IsTrue( SweepUntil( () => GameCalendar.MonthRolled ), "the month never turned" );
 		Assert.AreEqual( (2000, 2, 1, true, false), (GameCalendar.Now.Year, GameCalendar.Now.Month, GameCalendar.Now.Day,
 			GameCalendar.DayRolled, GameCalendar.YearRolled) );
 
-		Frame( 1f / 60f );
-		Assert.IsFalse( GameCalendar.MonthRolled, "for one update only" );
-
-		Assert.IsTrue( RunUntil( () =>
+		Assert.IsTrue( SweepUntil( () =>
 		{
 			months += GameCalendar.MonthRolled ? 1 : 0;
 			return GameCalendar.YearRolled;
-		}, mostFrames: 400000 ), "the year never turned" );
+		} ), "the year never turned" );
 
 		Assert.AreEqual( (2001, 1, 1, true, true), (GameCalendar.Now.Year, GameCalendar.Now.Month, GameCalendar.Now.Day,
 			GameCalendar.DayRolled, GameCalendar.MonthRolled) );
 		Assert.AreEqual( 11, months, "March to December, and January with the year" );
+	}
+
+	/// <summary>
+	/// <b>A file saved in another year turns a year on its first sweep after entering</b>, its month and day matching:
+	/// the load reads the month and the day but not the year, which keeps the entry's seed, 2000 (<c>Calendar_Serialise</c>).
+	/// <b>Loaded over a running park in that year it turns nothing</b>, the original's load going into the running park,
+	/// whose year it does not write.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the year seeded from the file's tick; the running year not carried.</remarks>
+	[TestMethod]
+	public void AFileFromAnotherYearTurnsTheYearOnlyWhenEnteredFromTheLobby()
+	{
+		// Tick 16972 is 6 January 2002.
+		var saved = LostKingdom with { MonthAtLastUpdate = 0, DayAtLastUpdate = 6 };
+
+		GameCalendar.Rebase( 16972, saved );
+		GameCalendar.Update( 16973 );
+		Assert.AreEqual( (false, false, true), (GameCalendar.DayRolled, GameCalendar.MonthRolled, GameCalendar.YearRolled) );
+
+		GameCalendar.CarryTheYear();
+		GameCalendar.Rebase( 16972, saved );
+		GameCalendar.Update( 16973 );
+		Assert.AreEqual( (false, false, false), (GameCalendar.DayRolled, GameCalendar.MonthRolled, GameCalendar.YearRolled) );
+
+		// Spent: the next park entered seeds 2000 again.
+		GameCalendar.Rebase( 16972, saved );
+		GameCalendar.Update( 16973 );
+		Assert.IsTrue( GameCalendar.YearRolled );
+	}
+
+	/// <summary>
+	/// A file whose month and day are not its tick's turns both on its first sweep, as the original turns them on a file
+	/// this game wrote before its writer carried the pair (<c>docs/exe/saves.md</c>, "OpenTPW's writer, the calendar's
+	/// fields").
+	/// </summary>
+	[TestMethod]
+	public void AFileWhosePairIsStaleTurnsTheDayAndTheMonthOnItsFirstSweep()
+	{
+		GameCalendar.Rebase( 755, LostKingdom with { MonthAtLastUpdate = 3, DayAtLastUpdate = 9 } );
+		GameCalendar.Update( 756 );
+
+		Assert.AreEqual( (true, true, false), (GameCalendar.DayRolled, GameCalendar.MonthRolled, GameCalendar.YearRolled) );
+	}
+
+	/// <summary>The rate is the file's <c>mFunnySecsPerRealSec</c>: at 30,000 tick 4 is 08:20, and a rate under one is the default's.</summary>
+	/// <remarks><b>Mutations:</b> the file's rate not read.</remarks>
+	[TestMethod]
+	public void TheRateIsTheFilesOwn()
+	{
+		GameCalendar.Rebase( 4, LostKingdom with { FunnySecsPerRealSec = 30000 } );
+		Assert.AreEqual( new DateTime( 2000, 1, 1, 8, 20, 0 ), GameCalendar.Now );
+
+		GameCalendar.Rebase( 4, LostKingdom with { FunnySecsPerRealSec = 0 } );
+		Assert.AreEqual( new DateTime( 2000, 1, 1, 4, 10, 0 ), GameCalendar.Now );
 	}
 }

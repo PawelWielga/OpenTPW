@@ -10,9 +10,9 @@ namespace OpenTPW;
 /// they differ. Nothing accumulates days. See <c>docs/exe/weather.md</c>, the section on the calendar.
 /// </para>
 /// <para>
-/// The conversion is <c>funny_seconds = counter * mFunnySecsPerRealSec / 4</c>, where the counter is
-/// bumped once per world tick, and the park loop runs that only on every <b>eighth</b> 31ms game tick.
-/// Eight ticks is 248ms, so the counter runs at about four a second.
+/// The conversion is <c>funny_seconds = mGameTick * mFunnySecsPerRealSec / 4</c>, where <c>mGameTick</c> is the park's
+/// own clock (<see cref="ParkState.GameTick"/>), one up a thing sweep, and the park loop runs a sweep only on every
+/// <b>eighth</b> 31ms game tick. Eight ticks is 248ms, so the clock runs at about four a second.
 /// </para>
 /// <para>
 /// <b>The rate is park data, not a constant.</b> <c>mFunnySecsPerRealSec</c> lives in the world clock's
@@ -34,14 +34,8 @@ namespace OpenTPW;
 public static class GameCalendar
 {
 	/// <summary>
-	/// How many game ticks pass between counter advances: every eighth, from the park loop's own
-	/// <c>TEST byte ptr [0x00877d34],0x7</c> at 0x0054f668.
-	/// </summary>
-	public const int TicksPerAdvance = 8;
-
-	/// <summary>
-	/// The divisor in <c>counter * rate / 4</c> (0x004f8792). It is a hard-coded four everywhere the
-	/// conversion appears, and it assumes the counter arrives at 250ms - which it does not.
+	/// The divisor in <c>mGameTick * rate / 4</c> (0x004f8792). It is a hard-coded four everywhere the
+	/// conversion appears, and it assumes a sweep arrives every 250ms - which it does not.
 	/// </summary>
 	public const int AdvancesPerSecond = 4;
 
@@ -52,19 +46,6 @@ public static class GameCalendar
 	public const int DefaultRate = 15000;
 
 	/// <summary>
-	/// The most counter advances one frame may run, from <c>CMP EAX,0x3</c> at 0x0054f680.
-	///
-	/// <para>
-	/// The original caps the world clock at three advances a pass of its park loop, on top of the tick loop's own
-	/// catch-up clamp, and drops the rest: on a machine that stutters its calendar loses time and can never gain it.
-	/// <b>Here the advances a long frame could not run are carried to the frames after it</b>
-	/// (<see cref="Update"/> counts from the tick clock), so the calendar catches up where the original's does not:
-	/// a deviation, <c>docs/QUEUE.md</c> Q149.
-	/// </para>
-	/// </summary>
-	public const int LongestCatchUp = 3;
-
-	/// <summary>
 	/// Where the clock starts, <c>mFunnyTimeStart</c>: 2000-01-01 00:00, what the clock constructor seeds it with
 	/// (<c>FUN_004f7e80</c>, <c>0x004f7ea0</c>, through <c>SystemTimeToFileTime</c>) and what jungle's
 	/// Easymode.TPWI clock block holds. It decides which month a park opens in, and every thing's age is measured
@@ -72,16 +53,19 @@ public static class GameCalendar
 	/// </summary>
 	public static readonly DateTime Epoch = new( 2000, 1, 1 );
 
-	/// <summary>Funny seconds per real second. Park data; the shipped park uses <see cref="DefaultRate"/>.</summary>
+	/// <summary>Funny seconds per real second: the loaded park's own, <see cref="DefaultRate"/> in a park with no file.</summary>
 	public static int Rate { get; private set; } = DefaultRate;
 
-	/// <summary>The world-tick counter, bumped once per <see cref="TicksPerAdvance"/> game ticks.</summary>
+	/// <summary>The park's <c>mGameTick</c> as the calendar last read it (<see cref="Update"/>).</summary>
 	public static int Counter { get; private set; }
 
-	/// <summary>The date and time in the park, derived rather than accumulated.</summary>
+	/// <summary>
+	/// The date and time in the park, the published calendar at <c>0x007ced58</c>: <see cref="Epoch"/> plus
+	/// <see cref="Counter"/> × <see cref="Rate"/> / 4 whole seconds (<c>Calendar_Update</c>, <c>0x004f8281</c>..<c>0x004f82f6</c>).
+	/// </summary>
 	public static DateTime Now { get; private set; } = Epoch;
 
-	/// <summary>How many whole days have passed since the park opened.</summary>
+	/// <summary>How many days have turned since the scene began.</summary>
 	public static int Days { get; private set; }
 
 	/// <summary>
@@ -124,96 +108,87 @@ public static class GameCalendar
 	/// </summary>
 	public static int Season => Math.Clamp( Now.Month / 3, 0, 3 );
 
-	private static int _ticksAtStart;
+	// The clock's mMonthAtLastUpdate (1-based here), mDayAtLastUpdate and the year at +0x18.
 	private static int _dayAtLastUpdate;
 	private static int _monthAtLastUpdate;
 	private static int _yearAtLastUpdate;
 
+	// The running park's year, kept for the next park's Rebase when that park is loaded in place (CarryTheYear).
+	private static int? _carriedYear;
+
 	/// <summary>
-	/// Starts the calendar over from nought. The original zeroes its counter, <c>mGameTick</c>, at park
-	/// init (<c>MOV dword ptr [EBP + 0x1da70c],EBX</c> at 0x00515865, in the same function that loads
-	/// the balance file), but loading the player's save for the theme then sets it to the save's own -
-	/// 755 in the Easymode.TPWI an Instant Action player starts from (<c>docs/exe/park.md</c>, "Arrivals").
-	/// Here it counts from nought whatever the save holds.
+	/// Puts the calendar on a park's clock as the park is entered: <paramref name="gameTick"/> is the park's
+	/// <c>mGameTick</c>, nought with no file and the file's own after a load (755 in Lost Kingdom's Easymode.TPWI).
+	///
+	/// <para>
+	/// The compares start where the original's do. Park init seeds the month and the year from tick nought
+	/// (<c>FUN_004f85a0</c>, called at <c>0x00515886</c> just after <c>mGameTick</c> is zeroed at 0x00515865), and the
+	/// constructor leaves the day at -1 (<c>0x004f7ebd</c>), so a park with no file turns a day on its first sweep. A
+	/// load then reads the file's month and day over them (<c>Calendar_Serialise</c>, <c>0x004f7f30</c>) and its rate,
+	/// but not the year, so a park saved in another year turns a year on its first sweep. A park loaded over a running
+	/// park keeps that park's year (<see cref="CarryTheYear"/>).
+	/// </para>
 	/// </summary>
-	/// <param name="rate">
-	/// Funny seconds per real second: the park's own is in <see cref="ParkWorld.Calendar"/>, which no
-	/// caller passes yet, so every caller passes the default.
-	/// </param>
-	public static void Rebase( int rate = DefaultRate )
+	/// <param name="saved">The loaded file's clock block, or null for a park with no file.</param>
+	public static void Rebase( int gameTick = 0, ParkWorld.CalendarBlock? saved = null )
 	{
-		Rate = rate < 1 ? DefaultRate : rate;
-		Counter = 0;
+		Rate = saved is { FunnySecsPerRealSec: >= 1 } ? saved.FunnySecsPerRealSec : DefaultRate;
+		Counter = gameTick;
+		Now = DateOf( gameTick );
 		Days = 0;
 		DayRolled = false;
 		MonthRolled = false;
 		YearRolled = false;
-		Now = Epoch;
 
-		_ticksAtStart = GameClock.Ticks;
-		_dayAtLastUpdate = Epoch.Day;
-		_monthAtLastUpdate = Epoch.Month;
-		_yearAtLastUpdate = Epoch.Year;
+		var seed = DateOf( 0 );
+		_monthAtLastUpdate = saved is null ? seed.Month : saved.MonthAtLastUpdate + 1;
+		_dayAtLastUpdate = saved?.DayAtLastUpdate ?? -1;
+		_yearAtLastUpdate = _carriedYear ?? seed.Year;
+		_carriedYear = null;
 	}
 
 	/// <summary>
-	/// Writes the counter, for the console's <c>clock</c>, which puts the park's <c>mGameTick</c> and this on one
-	/// reading as the original's are. The date and its edges follow on the next <see cref="Update"/>, so a write
-	/// into another month is itself a month's change, as a write to the original's memory is. The next advance
-	/// comes on the next game tick that divides by <see cref="TicksPerAdvance"/>, the thing sweep's own, so the
-	/// two count together from here.
+	/// Keeps the running park's year for the park about to be built over it - Load Park's row, Alt+L, Restart Park -
+	/// which the original loads into the running park, whose year at <c>+0x18</c> no load writes. Spent by the next
+	/// <see cref="Rebase"/>.
 	/// </summary>
-	internal static void SetCounter( int counter )
-	{
-		Counter = counter;
-		_ticksAtStart = (GameClock.Ticks & ~(TicksPerAdvance - 1)) - (counter * TicksPerAdvance);
-	}
+	public static void CarryTheYear() => _carriedYear = _yearAtLastUpdate;
 
 	/// <summary>
-	/// Brings the calendar up to whatever <see cref="GameClock"/> has counted, and sets the day's, the month's and the
-	/// year's edges. Driven from <see cref="Level.Update"/> after the clock, and only in a park - the
-	/// original's counter is advanced from the park loop and nowhere else, so the lobby has no calendar.
-	///
-	/// <para>
-	/// Because it is derived from <see cref="GameClock.Ticks"/>, a paused park stops the calendar for
-	/// free: no ticks come due, so no counter advances and the date cannot move. That is exactly how the
-	/// original behaves, and it was worth proving rather than assuming - the park loop reads its "now"
-	/// through 0x00402d70, which reaches the pause-aware accessor FUN_004030d0, and Game_Pause
-	/// freezes the very object it reads (<c>MOV ECX,0x785970</c> at both 0x004092c3 and 0x0054f47a).
-	/// </para>
+	/// Reads the date of the park's clock and sets the day's, the month's and the year's edges, as
+	/// <c>Calendar_Update</c> (<c>0x004f8260</c>) does at the tail of every sweep. Driven from <see cref="Level.Update"/>
+	/// after the frame's sweeps, and only in a park, so the lobby has no calendar. A frame with no sweep compares
+	/// nothing; a paused park sweeps nothing, so its date stands. The sweeps dropped past three a frame
+	/// (<see cref="ParkPeople.SweepsAFrame"/>) are dropped from the date with them, as the original's are.
 	/// </summary>
-	public static void Update()
+	public static void Update( int gameTick )
 	{
-		var wanted = (GameClock.Ticks - _ticksAtStart) / TicksPerAdvance;
-		var behind = wanted - Counter;
+		DayRolled = false;
+		MonthRolled = false;
+		YearRolled = false;
 
-		if ( behind <= 0 )
-		{
-			DayRolled = false;
-			MonthRolled = false;
-			YearRolled = false;
+		if ( gameTick == Counter )
 			return;
-		}
 
-		Counter += Math.Min( behind, LongestCatchUp );
-
-		// counter * rate / 4, in whole seconds and in that order, so the truncation falls where the
-		// original's 64-bit multiply-then-divide puts it.
-		var seconds = (long)Counter * Rate / AdvancesPerSecond;
-
-		Now = Epoch.AddSeconds( seconds );
+		Counter = gameTick;
+		Now = DateOf( gameTick );
 
 		DayRolled = Now.Day != _dayAtLastUpdate;
 		MonthRolled = Now.Month != _monthAtLastUpdate;
 		YearRolled = Now.Year != _yearAtLastUpdate;
 
+		_dayAtLastUpdate = Now.Day;
 		_monthAtLastUpdate = Now.Month;
 		_yearAtLastUpdate = Now.Year;
 
-		if ( !DayRolled )
-			return;
-
-		_dayAtLastUpdate = Now.Day;
-		Days++;
+		if ( DayRolled )
+			Days++;
 	}
+
+	/// <summary>
+	/// The date of a park tick: <c>mFunnyTimeStart</c> plus <c>tick × rate / 4</c> whole seconds, the tick taken unsigned and
+	/// the truncation where the original's 64-bit multiply-then-divide puts it.
+	/// </summary>
+	private static DateTime DateOf( int gameTick )
+		=> Epoch.AddSeconds( (long)(uint)gameTick * Rate / AdvancesPerSecond );
 }

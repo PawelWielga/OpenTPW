@@ -173,10 +173,10 @@ public class Level
 		// and the original doing the same as it enters a park (0x0054ed7c).
 		GameClock.Rebase();
 
-		// And the calendar starts over with it, from nought, where the original zeroes its world-tick
-		// counter at park init (0x00515865) and then loads the save's - see GameCalendar.Rebase. Unconditional rather than park-only so a lobby cannot be left showing the
-		// date of the park before it; only a park ever advances it - see the Update below.
-		GameCalendar.Rebase();
+		// The lobby has no calendar, so it starts over from nought and stays there, rather than showing the date of the
+		// park before it. A park's is put on the park's own clock once the park is read (SetupParkEntities).
+		if ( kind != Scene.Park )
+			GameCalendar.Rebase();
 
 		if ( kind == Scene.Park )
 		{
@@ -334,6 +334,9 @@ public class Level
 
 		var park = CreatePark( ThemeName, Balance, catalogue, _parkFile );
 		Park = park;
+
+		StartTheCalendar( ThemeName, park );
+
 		ParkState = new ParkState( park )
 		{
 			RegionEffects = ParkRegionEffects.From( Balance ),
@@ -504,6 +507,16 @@ public class Level
 		var park = new FreshPark( theme, balance, catalogue );
 		Log.Info( $"{theme}: {park.Census()}" );
 		return park;
+	}
+
+	/// <summary>
+	/// Puts the calendar on the park's own clock, <c>mGameTick</c>, with the file's month, day and rate - see
+	/// <see cref="GameCalendar.Rebase"/>.
+	/// </summary>
+	internal static void StartTheCalendar( string theme, IParkInitialState? park )
+	{
+		GameCalendar.Rebase( park?.GameTick ?? 0, park?.Save?.Calendar );
+		Log.Info( $"{theme}: the calendar starts on {GameCalendar.Now:yyyy-MM-dd HH:mm:ss}, the date of mGameTick {GameCalendar.Counter}" );
 	}
 
 	/// <summary>
@@ -1348,23 +1361,26 @@ public class Level
 		// choice that closes one screen and opens another never lets the world go in between.
 		GameClock.Update( PausedByWindow(), Kind == Scene.Park ? GameClock.ParkCatchUp : GameClock.LobbyCatchUp );
 
-		// Then the date, which only a park keeps: the original's counter is advanced from the park
-		// loop's every-eighth-tick gate (0x0054f668) and from nowhere else, so the lobby has no calendar
-		// at all. It reads the ticks the line above just counted, so a held park stops the date for
-		// free rather than by testing anything.
-		if ( Kind == Scene.Park )
-			GameCalendar.Update();
-
 		Entity.All.ForEach( entity => entity.Update() );
 
 		// The bumper rides' boats stood where this frame's track ticks left their cars, outside the walk above, which
 		// cannot take the entities a new boat adds.
 		ParkBumperBoats.Current?.Sync();
 
-		// The day's change after every thing has had its turn, as the original's calendar sends it at the end of the
-		// world tick (0x00516695), so a settle-up in the same frame counts into the day that is closing. The edge is
-		// GameCalendar's, which counts from nought rather than from the save's clock, so after a load the days turn
-		// at other moments than the original's (docs/QUEUE.md Q149).
+		// The date of the park's clock once this frame's sweeps have counted it on, as the original's calendar reads it at
+		// the end of the world tick (0x00516695), so a settle-up in the same frame counts into the day that is closing.
+		// Only a park keeps a date.
+		if ( Kind == Scene.Park && ParkState is { } clocked )
+		{
+			GameCalendar.Update( clocked.GameTick );
+
+			if ( GameCalendar.DayRolled || GameCalendar.MonthRolled || GameCalendar.YearRolled )
+				Log.Info( $"Calendar: {GameCalendar.Now:yyyy-MM-dd} on mGameTick {GameCalendar.Counter}, the day's change"
+					+ (GameCalendar.DayRolled ? "" : " NOT") + (GameCalendar.MonthRolled ? ", the month's" : "")
+					+ (GameCalendar.YearRolled ? ", the year's" : "") );
+		}
+
+		// Then the day's change.
 		if ( Kind == Scene.Park && GameCalendar.DayRolled )
 			ParkState?.RollTheDay();
 

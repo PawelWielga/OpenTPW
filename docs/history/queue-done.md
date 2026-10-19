@@ -9148,6 +9148,38 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     `mWorkedOut` byte, measured at the record's +36 to +62,500 in two files; no cache stamp is saved (`0x004cd9c0`).
     The sound block after the 84 bytes is three dwords and a length L, ending at +12+L in 487 of 487 park files
     (`0x0051c547`, L3); what the three words are is not read. Both go to FileFormats `saves.md` (rule 14).
+- [x] **Q149. The calendar keeps its own game tick, from nought, and makes up the advances the original loses.** Found
+  by the 2026-09-26 staleness audit. The original's calendar counter is `mGameTick` (`+0x1da70c`, `weather.md`, "The
+  calendar"), which a loaded save sets to its own (755 in `Easymode.TPWI`, as `GameCalendar.Rebase` says);
+  `GameCalendar.Counter` starts at nought beside `ParkState.GameTick`, which carries the 755, so the date and the
+  weather's days run about 33 days behind the original's. And `GameCalendar.Update` adds at most three advances a
+  frame but carries the rest to later frames (`wanted - Counter`), where `0x0054f680` drops them for good, as
+  `LongestCatchUp`'s own remark says. Check that the published calendar (`0x007ced58`) adds the counter to
+  `mFunnyTimeStart` alone, then drive the calendar from `ParkState.GameTick`, so Q126's cap holds the date too.
+  Confirm: the gadget's date on entering Lost Kingdom, predicted from 755 advances; a screenshot.
+  Q165c gave the ride score and the object window's Age the original's calendar (`ParkState.CalendarNow`, from the
+  save's `mGameTick`); the gadget's date and the weather's days still count from nought.
+  From Q177b: the objects' day rings roll on `GameCalendar.DayRolled` too, so their days turn about 18 world ticks
+  later than the original's after Lost Kingdom's load (its first changes at ticks 761, 784, 807), and a load never
+  rolls on its first tick where the file's `mDayAtLastUpdate` differs from the loaded date.
+  From Q198: the month's change comes to the bank and the staff on `GameCalendar.MonthRolled`, so here on 2/1/2000,
+  177 s in, where the original's first after the load is at tick 1383, 3.1 (measured). A load reads the month and the
+  day but not the year, which keeps the entry's seed, 2000 (`weather.md`), so a park saved in another year gets `0xd`
+  on its first sweep and zeroes `mProfitThisYear` (decoded, not measured).
+  From Q126: the thing sweep is capped at three a frame now and `ParkState.GameTick` with it, so after a 2 s stall
+  `GameCalendar` (which carries its advances over) runs five ahead of `ParkState.CalendarNow`, and the weather's
+  tick and the day's, month's and year's work with it; the original drops all of them with the sweep
+  (`FUN_004d7b20`, `FUN_00512880`). `LongestCatchUp`'s remark says so and calls it a deviation.
+  From the week-end audit, 2026-10-17 (`VERIFY-RT.md`): every load starts the calendar again at 1/1/2000
+  (`Level.cs`, `GameCalendar.Rebase()`), where the original's clock block keeps the date (`0x004f7f5f`..`0x004f81ed`).
+  A game run saved on day 7 and read day 0 after the load. So a player who saves and loads more often than once a
+  month never reaches a month's change: no wages, no month's accounts, no year's turn.
+  Done: the published calendar is `mFunnyTimeStart` + `mGameTick` x rate / 4 alone (`0x004f8281`..`0x004f82f6`);
+  `GameCalendar` is now the date of `ParkState.GameTick`, read after the frame's sweeps (so Q126's cap holds it), its
+  compares started as the original's (the file's month, day and rate; the year of tick 0, `Calendar_SeedMonthAndYear`
+  `0x004f85a0`, kept over an in-place load; day -1 with no file). Lost Kingdom enters on 2/2/2000 tick 755 and turns
+  its first day on 761 and month on 1383 in both games (`q149/run1`, `orig/a`, `side-by-side.png`); main read
+  1/1/2000. 15 of 15 bugs put back fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

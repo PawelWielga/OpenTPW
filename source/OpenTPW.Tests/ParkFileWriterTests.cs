@@ -1848,25 +1848,17 @@ public class ParkFileWriterTests
 		var file = shipped.WeatherRecord!.Value;
 		var state = new ParkState( shipped );
 		state.SetGameTick( 16970 );
-		Time.Paused = false;
-		Time.StepFrames = 0;
-		GameClock.Rebase();
 		GameCalendar.Rebase();
-		Time.Update( 0f );
-		GameClock.Update( false, GameClock.ParkCatchUp );
-		GameCalendar.Update();
 		var weather = new ParkWeather( 139f, drawn: false );
 
 		try
 		{
 			weather.DebugQuality( 50 );
 
-			// Frames at sixty a second until the third day has turned (70 advances, about a thousand frames).
-			for ( var frame = 0; frame < 5000 && GameCalendar.Days < 3; ++frame )
+			// A sweep a frame until the third day has turned (47 sweeps, the first turning 1 January).
+			for ( var tick = 1; tick < 5000 && GameCalendar.Days < 3; ++tick )
 			{
-				Time.Update( 1f / 60f );
-				GameClock.Update( false, GameClock.ParkCatchUp );
-				GameCalendar.Update();
+				GameCalendar.Update( tick );
 				weather.Update();
 			}
 
@@ -1894,6 +1886,33 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
+	/// <b>Entering the shipped Lost Kingdom puts the calendar on its own clock</b>: tick 755, 2 February 2000 at 18:27:30,
+	/// the file's month 1 and day 2 the same date, so its first sweep turns nothing; a park with no file starts on
+	/// 1 January and turns a day on its first sweep.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the park's tick not passed; the file's clock block not passed.</remarks>
+	[TestMethod]
+	public void EnteringTheShippedParkStartsTheCalendarOnItsTick()
+	{
+		try
+		{
+			Level.StartTheCalendar( "jungle", shipped );
+			Assert.AreEqual( (755, new DateTime( 2000, 2, 2, 18, 27, 30 )), (GameCalendar.Counter, GameCalendar.Now) );
+
+			GameCalendar.Update( 756 );
+			Assert.IsFalse( GameCalendar.DayRolled || GameCalendar.MonthRolled || GameCalendar.YearRolled );
+
+			Level.StartTheCalendar( "jungle", null );
+			GameCalendar.Update( 1 );
+			Assert.AreEqual( (GameCalendar.Epoch.Date, true), (GameCalendar.Now.Date, GameCalendar.DayRolled) );
+		}
+		finally
+		{
+			GameCalendar.Rebase();
+		}
+	}
+
+	/// <summary>
 	/// <b>The thunder's count falls every weather tick, armed or not</b>, as the original's does: a dry park five weather
 	/// ticks in holds -5, the stock park's -755 on its tick 755 the same rule from nought.
 	/// </summary>
@@ -1902,15 +1921,43 @@ public class ParkFileWriterTests
 	public void TheThundersCountFallsEveryWeatherTick()
 	{
 		_ = new ParkState( shipped );
+		GameCalendar.Rebase();
 		var weather = new ParkWeather( 139f, drawn: false );
 
 		try
 		{
 			weather.DebugQuality( 78 );
-			GameCalendar.SetCounter( 5 );
+			GameCalendar.Update( 5 );
 			weather.Update();
 
 			Assert.AreEqual( -5, weather.Written( null ).ThunderCountdown );
+		}
+		finally
+		{
+			weather.Delete();
+			GameCalendar.Rebase();
+		}
+	}
+
+	/// <summary>
+	/// <b>A loaded park's weather ticks only for the sweeps run since it was made</b>: entered on tick 755 and swept to
+	/// 758, its thunder count stands at -3, not the -758 of a weather that counted from nought.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the weather's tick started from nought.</remarks>
+	[TestMethod]
+	public void ALoadedParksWeatherTicksFromItsOwnClock()
+	{
+		_ = new ParkState( shipped );
+		GameCalendar.Rebase( shipped.GameTick, shipped.Calendar );
+		var weather = new ParkWeather( 139f, drawn: false );
+
+		try
+		{
+			weather.DebugQuality( 78 );
+			GameCalendar.Update( 758 );
+			weather.Update();
+
+			Assert.AreEqual( -3, weather.Written( null ).ThunderCountdown );
 		}
 		finally
 		{

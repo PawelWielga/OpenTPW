@@ -103,7 +103,9 @@ public sealed class ParkWeather : Entity
 	private int _thunderCountdown;
 	private int _lastChangedDay;
 	private int _forecastDueDay = -1;
-	private int _counterSeen;
+	// The park's clock as this weather last ticked: where the calendar stood when it was made, so a loaded park's
+	// weather ticks only for the sweeps run since.
+	private int _counterSeen = GameCalendar.Counter;
 
 	// What the thing's saved record holds (FUN_00512010): the park calendar, a FILETIME, as the quality was last
 	// applied (FUN_00512f00 stamps mLastChanged) and as the last forecast was made, with its due time and quality
@@ -284,7 +286,7 @@ public sealed class ParkWeather : Entity
 	}
 
 	/// <summary>
-	/// Runs one weather tick for each advance the calendar has made, so the weather keeps the
+	/// Runs one weather tick for each sweep the calendar has read, so the weather keeps the
 	/// original's four-a-second beat however fast or slow the frames are coming.
 	/// </summary>
 	protected override void OnUpdate()
@@ -629,7 +631,7 @@ public sealed class ParkWeather : Entity
 	/// and quality are <paramref name="file"/>'s, as the original's load leaves them; its <c>mValid</c> is this park's,
 	/// whose forecast from the file is not read. The location is in the original's axes, y up.
 	/// <para>
-	/// <b>A deviation:</b> this park's schedule counts day edges of <see cref="GameCalendar"/> (Q149), so its forecast is
+	/// <b>A deviation:</b> this park's schedule counts day edges of <see cref="GameCalendar"/> (<c>docs/QUEUE.md</c> Q529), so its forecast is
 	/// made and falls due on a whole day where the original's is made on the first tick past an instant
 	/// (<c>0x00512995</c>); the stamps are the park calendar's on the tick it happened here, so the original loading the
 	/// file runs its own schedule from them.

@@ -676,39 +676,29 @@ public class ParkStrikeTests
 	}
 
 	/// <summary>
-	/// The console's clock writes the calendar's counter with the park's, so the next advance reads the date of
-	/// that tick and a write into another month is a month's change.
+	/// The console's clock writes the park's, and the calendar reads the date of that tick after the next sweeps, so a
+	/// write into another month is a month's change: tick 16837 is 31 December 2001.
 	/// </summary>
 	[TestMethod]
-	public void WritingTheCalendarsCounterIsAMonthsChange()
+	public void WritingTheParksClockIsAMonthsChange()
 	{
-		Time.Paused = false;
-		Time.StepFrames = 0;
-		GameClock.Rebase();
-		GameCalendar.Rebase();
-		Time.Update( 0f );
-		GameClock.Update( false, GameClock.ParkCatchUp );
-		GameCalendar.Update();
+		var state = new ParkState( null );
+		GameCalendar.Rebase( state.GameTick );
 
-		GameCalendar.SetCounter( 16836 );
-
-		Assert.AreEqual( 16836, GameCalendar.Counter );
-
-		var turned = false;
-
-		for ( var frame = 0; frame < 600 && GameCalendar.Counter == 16836; ++frame )
+		try
 		{
-			Time.Update( 1f / 60f );
-			GameClock.Update( false, GameClock.ParkCatchUp );
-			GameCalendar.Update();
-			turned |= GameCalendar.MonthRolled;
+			state.SetGameTick( 16836 );
+			state.AdvanceGameTick();
+			GameCalendar.Update( state.GameTick );
+
+			Assert.AreEqual( 16837, GameCalendar.Counter );
+			Assert.AreEqual( new DateTime( 2001, 12, 31 ), GameCalendar.Now.Date );
+			Assert.IsTrue( GameCalendar.MonthRolled, "January 2000 to December 2001 is a month's change" );
 		}
-
-		Assert.AreEqual( 16837, GameCalendar.Counter );
-		Assert.AreEqual( new DateTime( 2001, 12, 31 ), GameCalendar.Now.Date );
-		Assert.IsTrue( turned, "January 2000 to December 2001 is a month's change" );
-
-		GameCalendar.Rebase();
+		finally
+		{
+			GameCalendar.Rebase();
+		}
 	}
 
 	/// <summary>

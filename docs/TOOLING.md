@@ -106,6 +106,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/memhold.py PID SECS ADDR[:fmt]=VALUE ...` | The original's memory, **written**: holds static words of the image (`I i H h B f`, `tpwmem.py`'s kinds) at values for SECS, a line a rewrite, then puts each back as it was. The fog's start and end `0x008bd490:f`/`0x008bd494:f`, the compositor's word `0x008bd550` (Q479); the game clock's paused flag `0x007859a0:I=1` (`0x00785970` + 0x30, not a real pause) holds the park still, every person in one pose, while the frame goes on drawing (Q477) |
 | `original/compstate.py PID`, `tilecap.sh OUTDIR [HITS] [SECS]`, `lndcmp.py <base.lnd> OUTDIR` | The original's procedural ground compositor: its state read once (the ready bit, the box, the cache's tile size and count, the lnd object), every tile it makes caught by `gdb` as it is made (move the camera while it runs), with a path tile's record and texels (`rec-*`, `tex-*`, Q489), and each caught tile against `lib/lndtile.py`'s (Q483) |
 | `original/waiting.py PID SECS` | The original's memory: the park analyser's count of guests waiting for a shut park to open (its `+0x1f0d4`, written each time the advisor's row 1 is scored past its two early ends, -999 before), beside the same count taken live (things of type 1 in state 3 on the two ticket booths' cells, by id), `mParkClosed` and every guest's state, a line a change with the wall clock and `mGameTick`. A `POLL` for `loadfile.sh` |
+| `original/gadgetdate.sh OUTDIR TAG TICK...` | The original, off-screen, enters Lost Kingdom from the lobby (the reference player's newest jungle file, the stock one on tick 755) and grabs the frame as `mGameTick` first reaches each TICK, the tick read just before and after each grab, the gadget cropped (`TAG-TICK-gadget.png`; its date box is (80,530)-(200,560) of the 1024 x 768 frame); `tick.py` beside it; nothing saved, `save/` summed either side. The gadget's date at a tick (Q149; Q527 wants it) |
 | `original/tags.py PID SECS` | The original's memory: the tags on the gadget's aerial (how many are held, each one's control rectangle on the 2048 x 1536 layout and its text, the mast's rectangle, the tag on the bar), a line a change with the wall clock and `mGameTick`. Says when a line leaves a tag, where it stands and when it goes. A `POLL` for `loadfile.sh` |
 | `original/staffpool.py PID SECS` | The original's memory: the staff pool, each slot in use as slot:kind/name row/grade (`[0x007cf83c]`, 32 records of 0x14 bytes), beside the hire screen's tab and whether it is up, a block a change with `mGameTick`. The hire list fills in slot order, so the first of a kind is the first handed over; it shows each timeout and top-up. Resolve a name row with `strdump`. A `POLL` for `loadfile.sh` (Q356) |
 | `original/bank.py PID` | The original's money, read once: the bank balance, the analyser's staff costs this month, the hand's worker (its low word), the current mode, the staff window's kept member and `mGameTick`, one line. Read it either side of a click to measure what the click cost (Q432: a dismissal's wage, 161) |
@@ -480,7 +481,7 @@ whole list):
   the screen; `thingwords.py ... 1:0xc:i 1:0x10:i 1:0x14:i 1:0x18:i 1:0x1c:i 1:0x20:B` the original's. **Opening
   the screen writes every budget back, so it sets `mHaveEverTrained` by itself**: read the flag before it. A
   tag's count taken from the log before the load's click is stale (`run.sh`'s `held`): click a tag only after a
-  fresh `tags.py` line. This game's month turns about 715 ticks after a load, not on the file's calendar (Q149).
+  fresh `tags.py` line. Both games' months turn on the loaded file's calendar (Q149).
 - **The harbour's sea at one phase in both games** (Q490): this game `pause`, then `sea phase P` (the console's `sea`
   prints the corner, phase, folder and words; `sea y H` sinks it to read `Line01` alone); the original
   `memhold.py %PID% 4 0x00871f60:f=P`, a frame grabbed 2 s in (`q490/orig/run.sh`). The same P draws the same wave in
@@ -1277,6 +1278,7 @@ GH=766` there, or the pointer is off):
   `parkrun.py`. Both act on the letter's release, so stamp a reading straight after its key-up, not before Alt goes
   down: there the original's clock had run 3 ticks on (run a's miss). The quicksave the original writes, `jungle.TPWS`,
   must be taken out after (the script does it).
+- **The gadget's date at a known tick in both games** (Q149): here `enter()`, `pause`, `tick()` (the console's `sweeps`) and a `shot()`, the gadget at (20,390)-(230,710) of the 1280 x 720 window; each turn of the calendar is logged `Calendar: <date> on mGameTick <T>, the day's change[, the month's][, the year's]`. The original: `original/gadgetdate.sh` with the ticks wanted. The date of tick T is 2000-01-01 plus T x 3,750 s; ours letters it M/D/YYYY, the original M.D.YYYY (Q527).
 
 ## The original under Proton
 

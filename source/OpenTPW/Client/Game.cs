@@ -194,6 +194,10 @@ internal static class Game
 			var fromAPark = Level.Current.Kind == Level.Scene.Park;
 			UI.ParkCategoryScreens.ParkAsked( fromAPark );
 
+			// The original loads into the running park, whose calendar year no file holds.
+			if ( fromAPark )
+				GameCalendar.CarryTheYear();
+
 			Level.Current.Unload();
 			LoadPark( themeName, parkFile );
 

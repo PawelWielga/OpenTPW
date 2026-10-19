@@ -20,7 +20,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00401d8b` | | OpenTPW.Files/Formats/ItemDescriptionFile.cs  |
 | `0x00402938` | Shape reader `FUN_00402720`: start of the row swap that turns a picture upside down | OpenTPW.Files/Formats/ItemDescriptionFile.cs OpenTPW.Tests/ParkEntryCellTests.cs  |
 | `0x004029ab` | Shape reader: end of the row swap | OpenTPW.Files/Formats/ItemDescriptionFile.cs OpenTPW.Tests/ParkEntryCellTests.cs  |
-| `0x00402d70` | | OpenTPW/Global/GameCalendar.cs OpenTPW/VM/RideScript.cs  |
+| `0x00402d70` | | OpenTPW/VM/RideScript.cs  |
 | `0x00402d90` | | OpenTPW/Global/GameClock.cs OpenTPW/World/Advisor/Advisor.cs  |
 | `0x00402db0` | | OpenTPW/Global/GameClock.cs  |
 | `0x00402e6b` | FUN_00402e60, the save's clock snapshot: +0x4c = the clock's reading, the first dword of KOLC | OpenTPW.Files/Formats/Save/ParkClock.cs  |
@@ -38,7 +38,6 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x004092a0` | | OpenTPW/Audio/Audio.cs OpenTPW/UI/UiWindow.cs OpenTPW/World/Advisor/Advisor.cs OpenTPW/World/Level.cs  |
 | `0x004092a3` | | OpenTPW/Global/GameClock.cs  |
 | `0x004092ad` | | OpenTPW/Global/GameClock.cs  |
-| `0x004092c3` | | OpenTPW/Global/GameCalendar.cs  |
 | `0x00409303` | | OpenTPW/Global/GameClock.cs  |
 | `0x00409353` | | OpenTPW/Global/GameClock.cs  |
 | `0x0040bda0` | Backspace handler, game-table row 5 and the coaster table's `backtrack` (undefined bytes in Ghidra) | OpenTPW/World/Level.cs OpenTPW/World/Park/ParkPathBuilding.cs  |
@@ -449,7 +448,12 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x004e26c6` | The win roll FUN_004e2670: r drawn from the park's generator FUN_00516330, won when the object's chance >= r % 100 | OpenTPW.Files/Formats/ItemDescriptionFile.cs OpenTPW/World/Park/ParkRideOperation.cs  |
 | `0x004f7ea0` | Clock constructor FUN_004f7e80: mFunnyTimeStart seeded 2000-01-01 00:00 through SystemTimeToFileTime | OpenTPW/Global/GameCalendar.cs  |
 | `0x004f7ea9` | | OpenTPW/Global/GameCalendar.cs  |
-| `0x004f8321` | Calendar FUN_004f8260: the day of the month compared with mDayAtLastUpdate; a difference sends the day's change, message 0xb | OpenTPW.Tests/GameCalendarTests.cs OpenTPW/Global/GameCalendar.cs OpenTPW/World/Park/ParkState.cs  |
+| `0x004f7ebd` | Calendar_Construct FUN_004f7e80: the day at +0x14 seeded -1, so a park with no file turns a day on its first sweep | OpenTPW.Tests/GameCalendarTests.cs OpenTPW/Global/GameCalendar.cs  |
+| `0x004f7f30` | Calendar_Serialise: the clock block read or written field by field; the year at +0x18 is not in it | OpenTPW.Files/Formats/Save/ParkWorld.cs OpenTPW/Global/GameCalendar.cs  |
+| `0x004f8260` | Calendar_Update: the date of mGameTick, its three compares and the stores, at the tail of every sweep | OpenTPW.Files/Formats/Save/ParkWorld.Pool.cs OpenTPW.Tests/GameCalendarTests.cs OpenTPW/Global/GameCalendar.cs OpenTPW/World/Park/ParkState.cs  |
+| `0x004f8281` | Calendar_Update: mGameTick read for the published calendar, mFunnyTimeStart + tick x rate / 4 | OpenTPW/Global/GameCalendar.cs  |
+| `0x004f82f6` | Calendar_Update: the published calendar 0x007ced58 split out of that FILETIME | OpenTPW/Global/GameCalendar.cs  |
+| `0x004f8321` | Calendar FUN_004f8260: the day of the month compared with mDayAtLastUpdate; a difference sends the day's change, message 0xb | OpenTPW/Global/GameCalendar.cs OpenTPW/World/Park/ParkState.cs  |
 | `0x004f83b9` | Calendar FUN_004f8260: the month compared on its own; a change sends message 0xc | OpenTPW/Global/GameCalendar.cs  |
 | `0x004f84d0` | FUN_004f8260: the year compared on its own; a change sends message 0xd | OpenTPW/Global/GameCalendar.cs  |
 | `0x004f8792` | | OpenTPW/Global/GameCalendar.cs  |
@@ -761,7 +765,8 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0051295c` | | OpenTPW/World/Park/ParkWeather.cs  |
 | `0x00512a5e` | | OpenTPW/World/Park/ParkWeather.cs  |
 | `0x00512b4c` | | OpenTPW/World/Weather/Lightning.cs  |
-| `0x00515865` | | OpenTPW/Global/GameCalendar.cs OpenTPW/World/Level.cs OpenTPW/World/Park/PeepBehaviour.cs  |
+| `0x00515865` | | OpenTPW/Global/GameCalendar.cs OpenTPW/World/Park/PeepBehaviour.cs  |
+| `0x00515886` | Park init FUN_005156a0 calls Calendar_SeedMonthAndYear (through FUN_004d7af0): month and year of tick nought | OpenTPW/Global/GameCalendar.cs  |
 | `0x00516330` | The park's generator: the state at world +0x1da708 times 0x19660d plus 0x3c6ef35f, rolled right 13 and kept; answers its magnitude | OpenTPW.Tests/ParkPeopleTests.cs  |
 | `0x0051635f` | World generator FUN_00516330: NEG leaves 0x80000000 unchanged, which RAND and FINDSCRIPTRAND then halve | OpenTPW.Tests/RideScriptClockTests.cs OpenTPW/VM/RideScript.cs OpenTPW/World/Park/ParkGenerator.cs  |
 | `0x00516394` | Thing sweep `FUN_00516380`: `mGameTick` up by one | OpenTPW/World/Park/ParkPeople.cs OpenTPW/World/Park/ParkState.cs OpenTPW/World/Park/PeepBehaviour.cs  |
@@ -956,7 +961,6 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0054ed7c` | | OpenTPW/Global/GameClock.cs OpenTPW/World/Level.cs  |
 | `0x0054f455` | | OpenTPW/Global/GameClock.cs  |
 | `0x0054f45f` | | OpenTPW/Global/GameClock.cs  |
-| `0x0054f47a` | | OpenTPW/Global/GameCalendar.cs  |
 | `0x0054f47f` | | OpenTPW/World/Park/ParkRides.cs  |
 | `0x0054f493` | | OpenTPW/Global/GameClock.cs  |
 | `0x0054f49b` | | OpenTPW/Global/GameClock.cs  |
@@ -965,8 +969,8 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0054f4c4` | | OpenTPW/Global/GameClock.cs  |
 | `0x0054f56b` | | OpenTPW/VM/RideScriptScheduler.cs  |
 | `0x0054f5fb` | Game_StateMachine: CALL FUN_00475360, the sprites' step, before the thing gate and outside the three-sweep cap | OpenTPW.Tests/ParkSweepCapTests.cs  |
-| `0x0054f668` | | OpenTPW/Global/GameCalendar.cs OpenTPW/World/Level.cs OpenTPW/World/Park/ParkWeather.cs  |
-| `0x0054f680` | | OpenTPW.Tests/ParkSweepCapTests.cs OpenTPW/Global/GameCalendar.cs OpenTPW/World/Park/ParkPeople.cs  |
+| `0x0054f668` | | OpenTPW/World/Park/ParkWeather.cs  |
+| `0x0054f680` | | OpenTPW.Tests/ParkSweepCapTests.cs OpenTPW/World/Park/ParkPeople.cs  |
 | `0x0054f683` | Re-stamps the peep beat's baseline `[0x00878a1c]` inside the every-eighth-tick gate | OpenTPW/World/Park/ParkPeople.cs  |
 | `0x0054f7bb` | | OpenTPW/Global/GameCalendar.cs  |
 | `0x0054f82d` | Game_StateMachine: TEST [0x00877d34],0x1f, the every-32nd-step block that sets the music's level | OpenTPW.Tests/ParkScreamTests.cs OpenTPW/World/Park/ParkAudio.cs  |
@@ -1426,6 +1430,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x007cc4b8` | | OpenTPW/UI/FrontEnd/Screens/IslandPanel.cs  |
 | `0x007cdb98` | | OpenTPW/World/Park/ParkState.cs  |
 | `0x007cdba0` | The static initialisers of the eight ring-order directions | OpenTPW/World/Park/ParkPathNeighbours.cs  |
+| `0x007ced58` | The published calendar, written by Calendar_Update every sweep | OpenTPW/Global/GameCalendar.cs  |
 | `0x007ced88` | | OpenTPW/World/Park/PeepBehaviour.cs  |
 | `0x007cedd4` | The bob's phase, a global only FUN_004fa030 writes, never reset | OpenTPW/World/Park/Balloon.cs OpenTPW/World/Park/ParkGuestSprites.cs  |
 | `0x007cedd8` | The bob's count toward its next step, a float | OpenTPW/World/Park/Balloon.cs OpenTPW/World/Park/ParkGuestSprites.cs  |
@@ -1440,7 +1445,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0080cef8` | | OpenTPW/World/Particles/ParticleSystem.cs  |
 | `0x00818800` | The footprint grid FUN_0052c5b0 fills: 16 columns of 16 dwords, the width at +0x400 and the depth at +0x404 | OpenTPW/UI/Park/ParkFootprintPicture.cs  |
 | `0x0081b740` | The pending list of run ends Backspace pops; count `DAT_00820a8c` | OpenTPW.Tests/ParkBuildModeTests.cs OpenTPW/World/Park/ParkBuildMode.cs  |
-| `0x00877d34` | | OpenTPW/Global/GameCalendar.cs OpenTPW/Global/GameClock.cs OpenTPW/World/Park/ParkAudio.cs OpenTPW/World/Park/ParkPeople.cs  |
+| `0x00877d34` | | OpenTPW/Global/GameClock.cs OpenTPW/World/Park/ParkAudio.cs OpenTPW/World/Park/ParkPeople.cs  |
 | `0x00878128` | | OpenTPW/Global/GameClock.cs  |
 | `0x008786bc` | The per-frame clock sample the three beat fractions share | OpenTPW/World/Park/ParkPeople.cs  |
 | `0x00878a1c` | The peep beat's baseline, re-stamped at `0x0054f683` | OpenTPW/World/Park/ParkPeople.cs  |

@@ -53,32 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q149. The calendar keeps its own game tick, from nought, and makes up the advances the original loses.** Found
-  by the 2026-09-26 staleness audit. The original's calendar counter is `mGameTick` (`+0x1da70c`, `weather.md`, "The
-  calendar"), which a loaded save sets to its own (755 in `Easymode.TPWI`, as `GameCalendar.Rebase` says);
-  `GameCalendar.Counter` starts at nought beside `ParkState.GameTick`, which carries the 755, so the date and the
-  weather's days run about 33 days behind the original's. And `GameCalendar.Update` adds at most three advances a
-  frame but carries the rest to later frames (`wanted - Counter`), where `0x0054f680` drops them for good, as
-  `LongestCatchUp`'s own remark says. Check that the published calendar (`0x007ced58`) adds the counter to
-  `mFunnyTimeStart` alone, then drive the calendar from `ParkState.GameTick`, so Q126's cap holds the date too.
-  Confirm: the gadget's date on entering Lost Kingdom, predicted from 755 advances; a screenshot.
-  Q165c gave the ride score and the object window's Age the original's calendar (`ParkState.CalendarNow`, from the
-  save's `mGameTick`); the gadget's date and the weather's days still count from nought.
-  From Q177b: the objects' day rings roll on `GameCalendar.DayRolled` too, so their days turn about 18 world ticks
-  later than the original's after Lost Kingdom's load (its first changes at ticks 761, 784, 807), and a load never
-  rolls on its first tick where the file's `mDayAtLastUpdate` differs from the loaded date.
-  From Q198: the month's change comes to the bank and the staff on `GameCalendar.MonthRolled`, so here on 2/1/2000,
-  177 s in, where the original's first after the load is at tick 1383, 3.1 (measured). A load reads the month and the
-  day but not the year, which keeps the entry's seed, 2000 (`weather.md`), so a park saved in another year gets `0xd`
-  on its first sweep and zeroes `mProfitThisYear` (decoded, not measured).
-  From Q126: the thing sweep is capped at three a frame now and `ParkState.GameTick` with it, so after a 2 s stall
-  `GameCalendar` (which carries its advances over) runs five ahead of `ParkState.CalendarNow`, and the weather's
-  tick and the day's, month's and year's work with it; the original drops all of them with the sweep
-  (`FUN_004d7b20`, `FUN_00512880`). `LongestCatchUp`'s remark says so and calls it a deviation.
-  From the week-end audit, 2026-10-17 (`VERIFY-RT.md`): every load starts the calendar again at 1/1/2000
-  (`Level.cs`, `GameCalendar.Rebase()`), where the original's clock block keeps the date (`0x004f7f5f`..`0x004f81ed`).
-  A game run saved on day 7 and read day 0 after the load. So a player who saves and loads more often than once a
-  month never reaches a month's change: no wages, no month's accounts, no year's turn.
 - [ ] **Q31. The shop's object window.** `Level.OpenObjectWindow` opens only a ride's (`UiType 0`). Shops,
   sideshows and the rest stop at `SHOP_WINDOW`, `SIDESHOW_WINDOW` and `FEATURE_WINDOW`; a staff member's click
   opens their window (Q431); a clicked visitor reaches nothing counted. `park-engine.md`, "The
@@ -1260,7 +1234,7 @@ filed the items that cite it.
   (`ParkGadget.ShowDate`, `ToShortDateString`, so it follows the computer's culture). Seen, not decoded: no
   "%d.%d.%d" format is among the executable's strings, the first candidate is UITEXT 448, `{17}.{16}.{18}` in the american
   tables (`saves.md`, the Load Park rows): check the gadget's date draw for `0x1c0`. Ours draws `GameCalendar.Now`,
-  which counts from nought after a load (Q149), so the two gadgets agree only after a console `clock`. Confirm by both
+  the date of the park's tick (Q149), so the two gadgets show one date in two letterings (`q149/side-by-side.png`). Confirm by both
   gadgets on one date.
 - [ ] **Q529. A loaded park's weather runs on from the file's.** From Q528 (`saves.md`, "OpenTPW's writer, the weather
   thing"): the original's load reads all of the weather thing over its constructor's (`Weather_Serialise`,

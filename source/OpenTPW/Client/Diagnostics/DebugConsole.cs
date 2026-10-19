@@ -1556,14 +1556,12 @@ public static class DebugConsole
 
 				break;
 
-			// An instrument: writes the park's clock, mGameTick, and puts the calendar's counter on the same
-			// reading, so the months turn on the ticks the original's do. A write into another month is a
-			// month's change.
+			// An instrument: writes the park's clock, mGameTick, which the calendar reads after the next frame's
+			// sweeps. A write into another month is a month's change.
 			case "clock":
 				if ( parts.Length > 1 && Level.Current?.ParkState is { } clocked )
 				{
 					clocked.SetGameTick( (int)Argument( 1 ) );
-					GameCalendar.SetCounter( (int)Argument( 1 ) );
 					Reply( $"clock: mGameTick {clocked.GameTick}, {clocked.CalendarNow:d/M/yyyy}" );
 				}
 				else

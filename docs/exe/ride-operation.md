@@ -2110,7 +2110,6 @@ column is the chooser before Q165b and Q165c built what the decode column shows.
 | A coaster's excitement | `trunc( 50 + f / 2 )` of its node's rating, or nought before `COAST 8` binds it | its `ExcitementLevel`, counted (`RIDE_EXCITEMENT_COASTER_TRACK`) | Alexah's saved Temple Of Gloom, which is offered (Q167); a bought one is refused before it is scored |
 | A tier past the third | the divisors read from the fields after `Upgrades` (`+0x260`, `+0x268`) | its base without the ratios, counted (`RIDE_EXCITEMENT_UPGRADE_TIER`) | only by a save's byte; no save read has one |
 | The longest queue at a tier past the third, or for an item the catalogue lacks | the constant and speed read from past `Upgrades`, or through a null descriptor | counted, and both gates let the guest through (`QUEUE_CAPACITY_UPGRADE_TIER`, `QUEUE_CAPACITY_UNKNOWN_ITEM`) | only by a save's byte; no save read has one |
-| The calendar at load | the save's `mGameTick`, 755: 2000-02-02 18:27:30 | the score's calendar is the original's (`ParkState.CalendarNow`); the gadget's date and the weather's days count from nought (`GameCalendar.Rebase`, Q149) | every load |
 
 **Built: the three readings at the back cell** (`docs/QUEUE.md` Q105). `ParkRideChooser.ScoreOf` takes
 `GetBackOfQueue`'s cell (`ParkRideChoice.QueueCellsFor`) and measures the guest's cell against it, so the distance
@@ -3057,9 +3056,8 @@ says none of these three). The handymen's cell ratio, `STRIKE_HANDYMEN_CELL_RATI
 
 **Differences, each said at its site.** The look's guest count is taken as the month turns, where the
 original's is the analyser's, up to five of its timer's units old (`FUN_004c7fa0( 5 )`). The month's change
-itself still comes from `GameCalendar`, which counts from nought (Q149), so a park left alone turns its months
-on other ticks than the original's; the console's `clock <tick>` writes `ParkState.GameTick` and the calendar's
-counter together, which puts them on the original's. A striker walking back is in state 1, so the walk is
+comes from `GameCalendar`, the date of `mGameTick` (Q149), so it turns on the original's ticks; the console's
+`clock <tick>` writes `ParkState.GameTick`, which the calendar reads after the next frame's sweeps. A striker walking back is in state 1, so the walk is
 stepped under the wander's filters (`staff-wandering.md`).
 
 **Instruments.** `forcestrike <0|1>` writes the force (one word for the park; `strike` was taken by the lobby's
@@ -4015,7 +4013,9 @@ challenge manager, objects and guests subscribe to other messages). Entering a p
 year from tick 0 (`FUN_004f85a0`); a load then reads the month and the day but not the year (`FUN_004f7f30`,
 `0x004f81b5`, `0x004f81f7`), so loading `Easymode.TPWI` (tick 755, 2 February 2000) sends nothing, and its first
 month's change is at tick 1383, 1 March, 628 sweeps in. A park saved in a year other than 2000 would get `0xd` on its
-first sweep and lose `mProfitThisYear` (decoded, not measured; `QUEUE.md` Q149).
+first sweep and lose `mProfitThisYear` (decoded, not measured). OpenTPW's `GameCalendar.Rebase` starts the same
+compares (Q149), and a park built over a running park keeps that park's year (`GameCalendar.CarryTheYear`), the
+original loading into the running park.
 
 **The training, `FUN_0050c800`.** Thing 1 keeps five monthly budgets, `mBudget[0..4]` at `+0xc` (file 82; FileFormats
 `saves.md`, "The staff HQ"), the handymen's, mechanics', entertainers', guards' and researchers' in that order, set on
@@ -4102,8 +4102,8 @@ ascending thing id). The strike look thing 1 makes after the training is built (
 (`BANK_PARK_ENDS_IN_THE_RED`, `ADVISOR_PARK_ENDED_IN_THE_RED`). A grade with no `PoundsPerTrainingPoint`, which the
 original divides by unguarded and no shipped file has below grade 4, is counted (`STAFF_TRAINING_NO_POINT_COST`) and
 buys nothing. The Staff Training Budgets screen sets the budgets (Q352; `hud.md`); no screen buys a loan yet, so the loans keep what the save holds. OpenTPW's calendar
-counts from nought (Q149), so its first month's change is 1 February, 177 s in, where the original's after the same
-load is 1 March.
+is the date of `mGameTick` (Q149): its first month's change after the same load is 1 March on tick 1383, as the
+original's (`q149/run1`).
 
 **Measured in the game after the build** (`q198brun.py`, `q198b-run1/`, silent, the stock park, the pool's first
 candidate hired at 36; predicted first; `save/` unchanged; 15 of 15): stepped paused over 2/1/2000, six training
@@ -4422,8 +4422,9 @@ step is a no-op in both games (said at the site). Each object's six rings and tw
 from its record, fresh for a thing built, dropped with a thing sold; the charge credits today's takings and the door's
 refusal counts the walk-away; the charge banks the price and a shop's or won sideshow's cost of goods is booked and
 withdrawn ("The cost of goods and the park's money", OpenTPW). The day's change rolls every object the park holds after the frame's turns, on
-`GameCalendar`'s edge; that calendar counts from nought rather than from the save's clock (`GameCalendar.Rebase`), so
-its days turn at other moments than the original's would after the same load, and it does not roll on the first tick.
+`GameCalendar`'s edge, the date of `mGameTick` against the loaded file's day (`GameCalendar.Rebase`, Q149), so its
+days turn on the original's ticks (Lost Kingdom's first on 761), and a park with no file, or a file whose day is not
+its tick's, rolls on its first sweep.
 The join's snapshot is `Peep.JoinHappiness`. The ride window's Users last month (filled on show and every four
 seconds, on the frame clock) and the all-visitors list's Rides Ridden read them. Counted by name: `SETTLE_UP_EVENT_HISTORY`, `_BALLOON_EVENT`, `_COSTUME_EVENT`, `_ANALYSER_SAMPLE` (step 6),
 `_SIDESHOW_THOUGHT` and the toilet's three. Its win roll (`PeepBehaviour`, `Succeeds`) and the ingredient's docks (the
