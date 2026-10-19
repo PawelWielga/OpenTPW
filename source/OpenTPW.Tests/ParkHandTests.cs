@@ -105,6 +105,7 @@ public class ParkHandTests
 			Time.PinWall( 5000 );
 			level.RightButton( true, Pointer );
 			Time.PinWall( 5300 );
+			level.RightTick();
 			Assert.IsNull( level.RightButton( false, Pointer ), "300 ms of real time with the frame clock still: no click" );
 			Assert.AreEqual( item, ParkBuilding.Carrying, "the hand is full" );
 
@@ -119,6 +120,69 @@ public class ParkHandTests
 		{
 			Time.Now = frameClock;
 		}
+	}
+
+	/// <summary>
+	/// <b>The release reads only the flag; the clock is read by the frame's tick</b>, which comes after the frame's
+	/// buttons, as the original's UI pass hands out its queued presses and releases (<c>UI_DispatchQueue</c>) before it sends
+	/// the tick <c>0x1e</c> (<c>0x0048821f</c>). So a release 400 ms after its press, in the frame after one that stopped
+	/// for that long, is still a quick click and lets go; one 300 ms on, in a frame after one that was held to 250 ms, is not.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the release testing the clock (the hand stays full after the stopped frame); the tick run before
+	/// the frame's steps, or not run at all (the held click lets go).
+	/// </remarks>
+	[TestMethod]
+	public void AReleaseAfterAStoppedFrameIsStillAQuickClick()
+	{
+		var (_, item) = MoveTheBellyBounceIntoTheHand();
+		var level = ALevel();
+		var stack = new UI.WindowStack();
+		var worldClick = typeof( Level ).GetMethod( "WorldClick", BindingFlags.Instance | BindingFlags.NonPublic )!;
+		var at = new Vector2( 1024, 600 );
+
+		GameOptions.Current.RmbCancel = true;
+
+		void Frame( bool down, long wall )
+		{
+			Time.PinWall( wall );
+			Input.Mouse = new() { Right = down, Position = at };
+			stack.Update();
+			worldClick.Invoke( level, [] );
+		}
+
+		Frame( true, 70000 );
+		Frame( true, 70250 );
+		Frame( false, 70300 );
+		Assert.AreEqual( item, ParkBuilding.Carrying, "held to a frame 250 ms on, so the release 50 ms later is no click" );
+
+		Frame( true, 80000 );
+		Frame( false, 80400 );
+		Assert.AreEqual( 0, ParkBuilding.Carrying, "let go 400 ms on, the frame between stopped: still a click, which lets go" );
+	}
+
+	/// <summary>
+	/// <b>With RMB cancel off the tick reads nothing</b>, as the park's mouse proc tests the switch before any message
+	/// (<c>0x004881de</c>): a click armed with it on, held past 200 ms while it was off, is still a click once it is on again.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the tick run whatever the switch says keeps the hand full.</remarks>
+	[TestMethod]
+	public void WithRmbCancelOffTheTickLeavesTheClickArmed()
+	{
+		MoveTheBellyBounceIntoTheHand();
+		var level = ALevel();
+
+		GameOptions.Current.RmbCancel = true;
+		Time.PinWall( 90000 );
+		level.RightButton( true, Pointer );
+
+		GameOptions.Current.RmbCancel = false;
+		Time.PinWall( 90300 );
+		level.RightTick();
+		GameOptions.Current.RmbCancel = true;
+
+		Assert.IsNotNull( level.RightButton( false, Pointer ), "the tick with the switch off left it armed" );
+		Assert.AreEqual( 0, ParkBuilding.Carrying, "so the release lets go" );
 	}
 
 	/// <summary>
@@ -150,7 +214,8 @@ public class ParkHandTests
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> emptying the hand on the press; dropping the time test; dropping the distance test; or
-	/// testing either on the press rather than the release, each empty the hand before the quick click.
+	/// testing either on the press rather than the release, each empty the hand before the quick click. The clock is
+	/// read by the frame's tick (<see cref="Level.RightTick"/>), so the held click is given one before its release.
 	/// </remarks>
 	[TestMethod]
 	public void WithRmbCancelOnOnlyAQuickClickLetsGo()
@@ -166,7 +231,8 @@ public class ParkHandTests
 		Assert.AreEqual( item, ParkBuilding.Carrying, "the press leaves the hand full" );
 
 		Time.PinWall( 10300 );
-		Assert.IsNull( level.RightButton( false, Pointer ), "a release 300 ms on does nothing" );
+		level.RightTick();
+		Assert.IsNull( level.RightButton( false, Pointer ), "a release 300 ms on, after a frame's tick, does nothing" );
 		Assert.AreEqual( item, ParkBuilding.Carrying, "a held click leaves the hand full" );
 
 		Time.PinWall( 20000 );
@@ -219,8 +285,8 @@ public class ParkHandTests
 
 	/// <summary>
 	/// <b>A click is timed and measured from the press</b>, however many frames it is held for: held still for
-	/// 250 ms, or dragged 10 units in steps of 5, is not a click. And the 200 ms is 200: 210 ms is not a click,
-	/// 190 ms is.
+	/// 250 ms, or dragged 10 units in steps of 5, is not a click. And the 200 ms is 200: a frame's tick 201 ms on
+	/// lets it go, one 200 ms on does not.
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> re-stamping the press on every held frame, or measuring the move from the frame before
@@ -238,13 +304,14 @@ public class ParkHandTests
 		Time.PinWall( 60000 );
 		level.RightButton( true, Pointer );
 
-		foreach ( var at in new[] { 60.05f, 60.1f, 60.15f, 60.2f } )
+		foreach ( var at in new[] { 60.05f, 60.1f, 60.15f, 60.2f, 60.25f } )
 		{
 			Time.PinWall( (long)System.MathF.Round( at * 1000f ) );
 			level.RightButton( true, Pointer );
+			level.RightTick();
 		}
 
-		Time.PinWall( 60250 );
+		Time.PinWall( 60300 );
 		Assert.IsNull( level.RightButton( false, Pointer ), "held still for 250 ms over five frames" );
 
 		Time.PinWall( 70000 );
@@ -257,13 +324,15 @@ public class ParkHandTests
 		Time.PinWall( 80000 );
 		level.RightButton( true, Pointer );
 		Time.PinWall( 80201 );
-		Assert.IsNull( level.RightButton( false, Pointer ), "201 ms is not a click" );
+		level.RightTick();
+		Assert.IsNull( level.RightButton( false, Pointer ), "a tick 201 ms on, before the release: not a click" );
 		Assert.AreEqual( item, ParkBuilding.Carrying, "and none of those let go" );
 
 		Time.PinWall( 90000 );
 		level.RightButton( true, Pointer );
 		Time.PinWall( 90200 );
-		Assert.IsNotNull( level.RightButton( false, Pointer ), "200 ms is a click" );
+		level.RightTick();
+		Assert.IsNotNull( level.RightButton( false, Pointer ), "a tick 200 ms on: still a click" );
 		Assert.AreEqual( 0, ParkBuilding.Carrying, "which lets go" );
 	}
 

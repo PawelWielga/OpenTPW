@@ -1349,6 +1349,8 @@ public class Level
 			BuildKeys();
 			ShowToolCursor();
 		}
+
+		DebugConsole.StallFrame();
 	}
 
 	private bool _worldRightWasDown;
@@ -2078,10 +2080,22 @@ public class Level
 
 	/// <summary>
 	/// How long a right press stays a quick click: a frame's tick more than 200 ms after it disarms it
-	/// (<c>0x0048823f</c>). The original's release reads no clock, only the flag (<c>0x0048836f</c>). Here a frame's
-	/// tick is tested before its release, the order the original's two arrive in after a stopped frame.
+	/// (<c>0x0048823f</c>, <see cref="RightTick"/>). The release reads no clock, only the flag (<c>0x0048836f</c>).
 	/// </summary>
 	internal const long QuickClickLimit = 200;
+
+	/// <summary>
+	/// The park's frame tick for the right button (message <c>0x1e</c>, <c>0x0048821f</c>): a click still armed more
+	/// than <see cref="QuickClickLimit"/> after its press is let go, as a held press. Run once a frame, after the
+	/// frame's steps, as the original's UI pass hands out the queued buttons (<c>UI_DispatchQueue</c>) before its tick
+	/// (<c>UI_TickTree</c>; <c>docs/exe/park-engine.md</c>, "The hand's ways out"), so a release that waited out a
+	/// stopped frame is still a click.
+	/// </summary>
+	internal void RightTick()
+	{
+		if ( GameOptions.Current.RmbCancel && _rightClick.Armed && Time.WallMilliseconds - _rightClick.At > QuickClickLimit )
+			_rightClick.Armed = false;
+	}
 
 	/// <summary>
 	/// A press on the park itself. Clicking a placed thing opens its management window -
@@ -2117,6 +2131,8 @@ public class Level
 				putAway = true;
 			}
 		}
+
+		RightTick();
 
 		// Ours: the original's one queue keeps the two buttons' order (0x00486c70); here a frame whose quick right click
 		// put something away hands the park none of its left presses (docs/exe/hud.md, "A click and a double click").
@@ -2170,8 +2186,8 @@ public class Level
 	/// <remarks>
 	/// <b>Only a quick click does anything</b>, and only with the Options switch "RMB cancel" on - see
 	/// <see cref="QuickRightClick"/>. With it on the park's mouse proc arms a click on the press, and lets it
-	/// go once the button has been held more than 200 ms or the pointer has moved more than 8 units across or
-	/// down from where it went down; a release while it is still armed is the click (<c>0x0048842b</c>;
+	/// go once a frame's tick finds the button held more than 200 ms (<see cref="RightTick"/>) or the pointer has moved
+	/// more than 8 units across or down from where it went down; a release while it is still armed is the click (<c>0x0048842b</c>;
 	/// <c>docs/exe/park-engine.md</c>, "The hand's ways out"). A press, a held or dragged click, or any click
 	/// with the option off leaves the hand as it is, because the right-button slots of every mode are bare
 	/// <c>RET 8</c>.
@@ -2194,9 +2210,12 @@ public class Level
 		if ( pressed )
 			_rightClick = (!taken, Time.WallMilliseconds, at);
 
-		if ( _rightClick.Armed && (Time.WallMilliseconds - _rightClick.At > QuickClickLimit
-			|| MathF.Abs( at.X - _rightClick.Where.X ) > 8f || MathF.Abs( at.Y - _rightClick.Where.Y ) > 8f) )
+		// The move test (0x00488265): the frame's pointer stands for the moves posted before this step.
+		if ( _rightClick.Armed && (MathF.Abs( at.X - _rightClick.Where.X ) > 8f || MathF.Abs( at.Y - _rightClick.Where.Y ) > 8f) )
 			_rightClick.Armed = false;
+
+		if ( released )
+			Log.Info( $"right release: armed={(_rightClick.Armed ? 1 : 0)} held={Time.WallMilliseconds - _rightClick.At} ms" );
 
 		if ( !released || !_rightClick.Armed )
 			return null;

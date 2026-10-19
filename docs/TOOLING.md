@@ -248,7 +248,12 @@ Each was found by trial in the item named, and cost a run to find.
   cells at the camera's own point (`q438/orig/run.sh`, `AIMREL=1`). A right press of any length lands, one let go inside a slow frame too (Q499; `button(3, what, held=0)` is
   the original's one call `xdotool mousedown 3 mouseup 3`); with the hand full by `carry 1100` and `rmbcancel on`, a
   put-away is the log's `world click: right click - drop:` and `hand` reading `item 0` (`q499/confirm.py`, which also
-  leaves first person by it; the original's `q499/orig/run.sh` reads first person by `helpbar.py`'s flags). **A refused click in the original** (Q439,
+  leaves first person by it; the original's `q499/orig/run.sh` reads first person by `helpbar.py`'s flags). Each
+  release logs `right release: armed=<0|1> held=<ms> ms`. **A stopped frame** (Q533): here the console's `stall <ms>`
+  stops the frame once the park has had its buttons and tick (`DebugConsole.StallFrame`, the end of `Level.Update`); send
+  it 50 ms after an XTEST press and the release 300 ms later (`q533/confirm.py`). In the original, `kill -STOP` the
+  game's pid, the release, then `kill -CONT` (`q533/orig/run.sh`): where the stop falls in its frame is not chosen, so
+  count rounds (3 of 5 put away). **A refused click in the original** (Q439,
   `q439/orig/run.sh` with `AIMB=1`): `camto.py %PID% 48,18`, then `outside.py` for the nearest band of outside cells and
   `cellfind.py` for each corner, read straight before its click. Its sound under the music scored 0.32 only: switch the music off first (`q439/PREDICTION.txt`). With it off
   (Q442, `q442/orig/run.sh`): `setcam.py PID 435,165 110 0 off` draws (43,16)'s middle at the frame's middle (512,384),

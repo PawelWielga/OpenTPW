@@ -8128,6 +8128,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the Belly Bounce's (51,24) left `d50` 1 and the 48 texture 1, and the path tool armed again and put away by Escape
   left 0 and texture 0; the same clicks here (`q532/run5`) gave `latch` 0, 1, 0 and the 48 markers 0, 1, 0
   (`side-by-side.png`); 3 of 3 predictions held in the original and 5 of 5 here, after one miss recorded; mutations 14/14.
+- [x] **Q533. A quick right click's release reads only the flag.** Q420's piece (the run review of 2026-10-17). The
+  original's 200 ms is read by the tick `0x1e` alone (`0x0048821f`), and its UI pass `UI_RunPass` hands out the queued
+  buttons (`UI_DispatchQueue`) before it sends the tick (`park-engine.md`, "The hand's ways out", "Where each test
+  sits"), so a release that waited out a stopped frame is still a click. Done 2026-10-19: `Level.RightTick` runs once a
+  frame after the steps; the release reads the flag. Ours on the final build (`q533/run3`, the stock park, the hand full by
+  `carry 1100`): quick 3 of 3 `right release: armed=1` and put away; a press, the console's `stall 600`, the release
+  meanwhile, 5 of 5 `armed=1 held=652..654 ms` and put away (`2-full.png`, `2-after.png`); held 0.4 s, 3 of 3 `armed=0`,
+  kept. The original (`q533/orig/run.sh`, the patrol tool, the process stopped 0.605 s): 3 of 5 put away, 2 kept, held 0.4 s
+  2 of 2 kept (`side-by-side.png`); run1's miss recorded (`PREDICTION.txt`); mutations 6/6.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

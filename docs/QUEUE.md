@@ -56,15 +56,18 @@ filed the items that cite it.
 - [ ] **Q420. The writer: what else a made record leaves out.** The old Q310's other pieces, each counted or
   said in `saves.md`. Confirm: each piece's bytes beside a file of the original's own, and the file loaded in
   the original under Proton.
-  From the run review (2026-10-17): a quick right click (Q438): `Level`
-  also tests the 200 ms on the release frame, where the original tests it only on message `0x1e` (`0x0048821f`), which
-  differs only if no `0x1e` arrives between; and the original's no-entry pointer showed over a blue outline
+  From the run review (2026-10-17): the original's no-entry pointer showed over a blue outline
   (`q438/orig/b-7-outline.png`, the latch `[0x00816d48]` 1 at the anchor and 0 after) where `Level.PatrolCursor` shows
   `c_noplace` only while red: look when the patrol pointer is next touched. World clicks with a locator or person window
   open (Q424, Q431, Q432): Q444.
+  From Q533 (`park-engine.md`, "The hand's ways out", "Where each test sits"): a quick right click's release reads the
+  flag alone and the 200 ms is the frame's tick, after the frame's buttons, in both games; the rest of this item is the
+  queue tool's pass (`QUEUE_PASS_REFUSAL_LATCH`, below) and the patrol pointer over a blue outline, above. A stop before our frame's tick
+  disarms it as the original's rounds 1 and 4 did (`q533/run1`, 5 of 5 `armed=0`). In no game run: a move then a return inside one frame (the original sees each move, ours the frame's last point),
+  Full Simulation (not asked: the button is either mode's), the other three themes.
   From Q532 (`hud.md`, "The patrol edges"): the patrol edges are red after a tool's last pass left the refusal latch
   `DAT_00816d50` set, in both games (the path tool's two latches built, the patrol tool's test); the rest of this item
-  is the quick right click, above, and the queue tool's pass, whose arm sets `d50` or `d58` by refusal
+  is the quick right click (since, Q533), and the queue tool's pass, whose arm sets `d50` or `d58` by refusal
   (`QUEUE_PASS_REFUSAL_LATCH`: the queue verdict here does not tell them apart, so its pass leaves the latch clear; the
   arm is read in `hud.md`). In no game run: a refused queue or patrol click before the edges, a track's refusal (tested),
   Full Simulation (not asked: the tools are either mode's), the other three themes.

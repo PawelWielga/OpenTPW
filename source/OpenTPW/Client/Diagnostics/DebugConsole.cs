@@ -317,6 +317,14 @@ public static class DebugConsole
 				Reply( $"stepping {Time.StepFrames}" );
 				break;
 
+			// Stops this frame for that many milliseconds of real time once the park has had its buttons (StallFrame),
+			// as a slow draw does: what the window system is sent meanwhile arrives in the next frame together (the quick
+			// right click's tick, Level.RightTick).
+			case "stall":
+				_stall = parts.Length > 1 ? (int)Argument( 1 ) : 500;
+				Reply( $"stall: {_stall} ms asked at wall {Time.WallMilliseconds}" );
+				break;
+
 			case "unfreeze":
 				LobbyCameraMode.Paused = false;
 				Reply( "running" );
@@ -2533,6 +2541,19 @@ public static class DebugConsole
 		}
 
 		return null;
+	}
+
+	private static int _stall;
+
+	/// <summary>Runs the stop `stall` asked for, if any: called at the end of the level's update.</summary>
+	internal static void StallFrame()
+	{
+		if ( _stall <= 0 )
+			return;
+
+		Reply( $"stall: {_stall} ms from wall {Time.WallMilliseconds}" );
+		System.Threading.Thread.Sleep( _stall );
+		_stall = 0;
 	}
 
 	private static void Reply( string message )

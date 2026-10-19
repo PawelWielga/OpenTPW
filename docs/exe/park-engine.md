@@ -2840,6 +2840,19 @@ whatever the current mode is - there is no type test - then calls `FUN_0052f200(
 which closes the coaster bar if it is up (`0x0048842b`..`0x0048843c`). Every mode's right-button slots are
 `RET 8`, so nothing else a right press does reaches the hand.
 
+**Where each test sits** (Q533). The clock is read only by the tick, message `0x1e` (`0x0048821f`..`0x00488244`, then
+`0x00488282`); the move test only by a move, `0x10003` (`0x00488246`..`0x0048827f`); the release, `0x10004`
+(`0x0048836f`), reads the flag `DAT_007c2500` alone, no clock and no point. A press and a release are not handed to the
+layer when the window procedure sees them: `UI_PostButtonPress` and `UI_PostButtonRelease` put them in a queue
+(`UI_QueueMessage`, `0x00658ccc` → `FUN_006697e3`, a ring of 16-byte messages). The UI pass `UI_RunPass` (`0x0048a580`) hands
+that queue out first (`UI_DispatchQueue( 0x400 )`, `0x00658e42`) and only then sends every control the tick (`UI_TickRoot`,
+`0x00658f6c` → `UI_TickTree` →
+`FUN_00658d9f( ..., 0x1e )`, called, not queued). So a release that arrived while the game stood still is handed out
+before the tick that would find the 200 ms passed, and is still a click; a stop that ends before the pass's tick, with
+the button still down, is not. Measured (`q533/orig/run.sh`; the patrol tool armed, a right press, the whole process
+stopped 0.605 s with the release sent meanwhile): 3 of 5 put the tool away (mode `0x36` to 0), 2 kept it, where the stop
+fell; a press held 0.4 s with the game running kept it 2 of 2.
+
 **Whose a right press is** (decoded for `docs/QUEUE.md` Q56: three decoders, each put to a refuter; static only).
 The window procedure posts a right press as it does a left one (`0x0046b6a5`, button 1) to the control under the
 pointer (`UI_PostButtonPress`, `0x00658af1`), with no hit test at the press, and the release to that same control wherever the pointer
@@ -2865,7 +2878,11 @@ closes the window (the 500 ms click limit `[0x0077c480]`), never touching the ha
 camera and arms nothing ("The full-screen view: F3"). A press made before a window
 opens keeps the capture on the layer (`0x004882ba`), so its release can still let go.
 
-**OpenTPW.** `WindowStack.TakesRightPress`: a control under the pointer, a modal window, or a park screen's root
+**OpenTPW.** `Level.RightButton` arms on the press and tests the move at each of the frame's steps (the frame's pointer
+stands for the moves before it); the release reads the flag alone. `Level.RightTick`, run once a frame after the frame's
+steps (`Level.WorldClick`), is the tick's clock test. The console's `stall <ms>` stops a frame after its tick: a release
+sent meanwhile let go 5 of 5 (`q533/run3`).
+`WindowStack.TakesRightPress`: a control under the pointer, a modal window, or a park screen's root
 (`UiWindow.ParkScreen`, `WindowStack.OnParkScreen`) takes it, and `Level.RightPressTaken` adds first person (and gives
 the park every press while F2 hides the HUD). A left press reads the same three (`WindowStack.PointerTaken`). No park
 screen is modal, so the gadget answers beside one. The gadget's body takes a press inside its outline,
