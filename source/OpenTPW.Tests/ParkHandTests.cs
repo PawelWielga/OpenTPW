@@ -113,7 +113,8 @@ public class ParkHandTests
 			level.RightButton( true, Pointer );
 			Time.Now += 5f;
 			Time.PinWall( 9050 );
-			Assert.IsNotNull( level.RightButton( false, Pointer ), "50 ms of real time, five seconds on the frame clock: a click" );
+			level.RightTick();
+			Assert.IsNotNull( level.RightButton( false, Pointer ), "50 ms of real time and a tick, five seconds on the frame clock: still a click" );
 			Assert.AreEqual( 0, ParkBuilding.Carrying, "which lets go" );
 		}
 		finally
@@ -213,8 +214,9 @@ public class ParkHandTests
 	/// units either way. A held click and a dragged one leave the hand as it is, and so does the press on its own.
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> emptying the hand on the press; dropping the time test; dropping the distance test; or
-	/// testing either on the press rather than the release, each empty the hand before the quick click. The clock is
+	/// <b>Mutations:</b> emptying the hand on the press; dropping the time test or the distance test; or testing the
+	/// time on the press rather than the frame's tick, or the distance on the press rather than each step, each empty
+	/// the hand before the quick click. The clock is
 	/// read by the frame's tick (<see cref="Level.RightTick"/>), so the held click is given one before its release.
 	/// </remarks>
 	[TestMethod]

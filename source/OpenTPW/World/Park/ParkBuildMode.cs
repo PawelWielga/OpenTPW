@@ -50,8 +50,9 @@ public static class ParkBuildMode
 	/// <summary>
 	/// The refusal latch as the last tool's pass left it - the original's <c>DAT_00816d50</c>. Each pass clears it first
 	/// (<c>FUN_005234d0</c>, <c>0x005234f2</c>) and its verdicts set it; putting the tool away leaves it
-	/// (<c>FUN_0052f200( 0 )</c> clears only the placer's <c>DAT_0081b604</c>), so a followed member's patrol edges are
-	/// red after a refused click until a tool's next pass (<see cref="ParkBuildMarkers.QueuePatrolEdges"/>; a park's
+	/// (<c>FUN_0052f200( 0 )</c> clears the placer's <c>DAT_0081b604</c> and <c>d48</c>, never <c>d50</c>), so a followed
+	/// member's patrol edges are red after a refused click until the next tool is installed or passes
+	/// (<see cref="Arm"/>, <see cref="ParkBuilding.Hold"/>, <see cref="ParkBuildMarkers.QueuePatrolEdges"/>; a park's
 	/// start clears it, <c>FUN_0052f050</c>). docs/exe/hud.md, "The patrol edges".
 	/// </summary>
 	public static bool RefusalLatched { get; set; }
@@ -73,10 +74,22 @@ public static class ParkBuildMode
 		if ( mode != Current && Level.Current?.ParkState?.AdvisorMessages is { } lines )
 			lines.Withdraw( ParkAdvisorMessages.PatrolTool, (long)(GameClock.Now * 1000), () => Advisor.Current?.StopSpeaking() );
 
+		// Installing a tool runs a pass under the old mode first, which clears the latch (FUN_0046d5a0, 0x0046d5e8);
+		// putting a tool away installs the idle handler, which runs none. The original's install is followed by hover
+		// passes over the pointer's cell, whose verdicts can set it again before the click lands; here the latch is
+		// not taken from RunPath's own pass over the clicked cell (Q535), so an empty-hand click on one unaffordable cell
+		// reads clear where the original reads set.
+		if ( mode != None )
+			RefusalLatched = false;
+
+		// Arming the patrol tool over itself sets no cursor in the original (FUN_0052f200 sets one only for modes 3 and
+		// 1), so the pointer's refusal stays; any other Arm clears it. Not watched in the original's running game (Q537).
+		if ( mode != Patrol || Current != Patrol )
+			ParkPatrolTool.PointerRefused = false;
+
 		Current = mode;
 		Serves = serves;
 		Anchor = (-1, -1);
-		ParkPatrolTool.PointerRefused = false;
 
 		return mode switch
 		{

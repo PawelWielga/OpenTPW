@@ -736,7 +736,7 @@ public class ParkStaffWindowTests
 		Assert.IsFalse( ParkPatrolTool.Refuses( park, (2, 2), (3, 3) ), "one cell of the park is enough" );
 
 		// The anchor's own cell refused, then a rectangle taking in a park cell: blue, and the pointer stays c_noplace
-		// (FUN_0052f950 sets cursor 8 on d48 and nothing else in mode 0x36), until the tool is armed again.
+		// (FUN_0052f950 sets cursor 8 on d48 and nothing else in mode 0x36), until the tool is put away.
 		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
 		ParkBuildMode.AnchorAt( 3, 3 );
 		Assert.AreEqual( Input.CursorTypes.Normal, Level.PatrolCursor(), "armed: the ordinary pointer" );
@@ -745,6 +745,7 @@ public class ParkStaffWindowTests
 		Assert.AreEqual( Input.CursorTypes.NoGo, Level.PatrolCursor( 2, 2 ), "a blue outline keeps the refusal's pointer" );
 		Assert.AreEqual( Input.CursorTypes.NoGo, Level.PatrolCursor(), "off the cells too" );
 
+		ParkBuildMode.Disarm();
 		ParkBuildMode.Arm( ParkBuildMode.Patrol, member.ThingId );
 		ParkBuildMode.AnchorAt( 3, 3 );
 		Assert.IsTrue( ParkPatrolTool.Strip( 2, 2, out var accepted ).All( square => square.Marker == ParkPathBuilding.MarkerBlue ) );
@@ -752,6 +753,37 @@ public class ParkStaffWindowTests
 		Assert.AreEqual( Input.CursorTypes.Normal, Level.PatrolCursor( 2, 2 ), "no cursor of its own" );
 		ParkPatrolTool.Run( 2, 2 );
 		Assert.AreEqual( (MapStep.CellId( 2, 2 ), MapStep.CellId( 3, 3 )), (member.PatrolBottomLeft, member.PatrolTopRight) );
+	}
+
+	/// <summary>
+	/// <b>The patrol tool's refused pointer outlives arming the tool over itself</b> (<c>FUN_0046d5a0</c> and the setter
+	/// <c>FUN_0052f200</c> set no cursor for mode <c>0x36</c>; <c>docs/exe/hud.md</c>, "The patrol pointer"), and is cleared by
+	/// putting the tool away or arming another; off the cells <c>Level.WantedCursor</c> wears it.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> <c>Arm</c> clearing the flag on every call; <c>WantedCursor</c> returning the ordinary
+	/// pointer off the cells with the tool armed.</remarks>
+	[TestMethod]
+	public void ArmingThePatrolToolAgainKeepsTheRefusedPointer()
+	{
+		ParkPicking.Forget();
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, 7 );
+		ParkPatrolTool.PointerRefused = true;
+		Assert.AreEqual( Input.CursorTypes.NoGo, Level.Current!.WantedCursor(), "off the cells, armed: the refusal's pointer" );
+
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, 7 );
+		Assert.IsTrue( ParkPatrolTool.PointerRefused, "armed over itself: no cursor is set, the flag stands" );
+		Assert.AreEqual( Input.CursorTypes.NoGo, Level.PatrolCursor() );
+		Assert.AreEqual( Input.CursorTypes.NoGo, Level.Current!.WantedCursor() );
+
+		ParkBuildMode.Disarm();
+		Assert.IsFalse( ParkPatrolTool.PointerRefused, "put away: cleared" );
+
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, 7 );
+		ParkPatrolTool.PointerRefused = true;
+		ParkBuildMode.Arm( ParkBuildMode.Path );
+		Assert.IsFalse( ParkPatrolTool.PointerRefused, "another tool armed: cleared" );
+		ParkBuildMode.Arm( ParkBuildMode.Patrol, 7 );
+		Assert.IsFalse( ParkPatrolTool.PointerRefused, "and arming the patrol tool from it starts clear" );
 	}
 
 	/// <summary>

@@ -1243,10 +1243,16 @@ public static class ParkBuilding
 		Carrying = catalogueId;
 		CarryingAngle = angle;
 
+		// The install of mode 4 (and of the move tool) runs a pass first, which clears the refusal latch a followed
+		// member's patrol edges read (DAT_00816d50, FUN_0046d5a0, 0x0046d5e8). The place mode's later passes set it
+		// again while the price is above the balance (0x0052365c, a golden-ticket item not yet paid for excepted) and
+		// where the placer finds an entrance or exit facing off the map (0x005295e8, 0x00529730); none of those is
+		// built, so a carried item leaves the latch clear (Q536).
+		ParkBuildMode.RefusalLatched = false;
+
 		// While carrying, the original draws the footprint in coloured squares every tick - m_front along
 		// its front row, m_enter on the cell before the entrance, m_exit before the exit - out of the same
-		// marker vocabulary the queue tool uses. Only the path and queue tools' strips are built, so a carried item's pass
-		// neither clears nor sets the refusal latch a followed member's patrol edges read (DAT_00816d50, ParkBuildMode.RefusalLatched).
+		// marker vocabulary the queue tool uses. Only the path and queue tools' strips are built.
 		Unimplemented.Report( "CARRY_PREVIEW_MARKERS" );
 	}
 

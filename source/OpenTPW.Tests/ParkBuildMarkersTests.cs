@@ -195,7 +195,7 @@ public class ParkBuildMarkersTests
 	/// and with nothing armed it stands (<c>q532/orig/a-run.out</c>: <c>d50</c> 1 after the refused path click, still 1
 	/// with the locator out, 0 after the path tool was armed again and put away).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the latch taken from a frame with no tool armed; kept over an armed tool's pass.</remarks>
+	/// <remarks><b>Mutations:</b> the latch taken from a frame with no tool armed; kept over an armed tool's pass; the pass taken with no cell picked (our own choice, pinned).</remarks>
 	[TestMethod]
 	public void OnlyAnArmedToolsPassMovesTheLatch()
 	{
@@ -203,14 +203,16 @@ public class ParkBuildMarkersTests
 		Assert.IsFalse( ParkBuildMarkers.LatchAfterFrame( true, ParkBuildMode.Path, true, false ), "an accepted pass" );
 		Assert.IsTrue( ParkBuildMarkers.LatchAfterFrame( true, ParkBuildMode.None, true, false ), "nothing armed: it stands" );
 		Assert.IsFalse( ParkBuildMarkers.LatchAfterFrame( false, ParkBuildMode.None, true, true ) );
+		Assert.IsTrue( ParkBuildMarkers.LatchAfterFrame( true, ParkBuildMode.Path, false, false ), "no cell picked: no pass" );
 	}
 
 	/// <summary>
-	/// <b>Putting a tool away leaves the refusal latch as its last pass left it</b>: the setter clears only the placer's
-	/// <c>DAT_0081b604</c> (<c>FUN_0052f200( 0 )</c>), and arming another tool runs no pass until a frame does. Leaving the
+	/// <b>Putting a tool away leaves the refusal latch as its last pass left it</b>: the setter clears the placer's
+	/// <c>DAT_0081b604</c> and <c>d48</c> (<c>FUN_0052f200( 0 )</c>), never <c>d50</c>. <b>Installing a tool clears it</b>,
+	/// because the install runs a pass under the old mode first (<c>FUN_0046d5a0</c>, <c>0x0046d5e8</c>). Leaving the
 	/// park forgets it, as a park's start clears it (<c>FUN_0052f050</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the latch cleared by <c>Disarm</c> or <c>Arm</c>; not cleared by <c>Forget</c>.</remarks>
+	/// <remarks><b>Mutations:</b> the latch cleared by <c>Disarm</c>; kept by <c>Arm</c> of a tool; not cleared by <c>Forget</c>.</remarks>
 	[TestMethod]
 	public void PuttingAToolAwayLeavesTheRefusalLatch()
 	{
@@ -223,7 +225,7 @@ public class ParkBuildMarkersTests
 			Assert.IsTrue( ParkBuildMode.RefusalLatched, "put away" );
 
 			ParkBuildMode.Arm( ParkBuildMode.Patrol, 26 );
-			Assert.IsTrue( ParkBuildMode.RefusalLatched, "another tool armed, no pass yet" );
+			Assert.IsFalse( ParkBuildMode.RefusalLatched, "another tool armed: the install's pass cleared it" );
 
 			ParkBuildMode.Forget();
 			Assert.IsFalse( ParkBuildMode.RefusalLatched, "the park left" );

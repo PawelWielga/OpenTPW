@@ -2850,8 +2850,8 @@ that queue out first (`UI_DispatchQueue( 0x400 )`, `0x00658e42`) and only then s
 `FUN_00658d9f( ..., 0x1e )`, called, not queued). So a release that arrived while the game stood still is handed out
 before the tick that would find the 200 ms passed, and is still a click; a stop that ends before the pass's tick, with
 the button still down, is not. Measured (`q533/orig/run.sh`; the patrol tool armed, a right press, the whole process
-stopped 0.605 s with the release sent meanwhile): 3 of 5 put the tool away (mode `0x36` to 0), 2 kept it, where the stop
-fell; a press held 0.4 s with the game running kept it 2 of 2.
+stopped 0.605 s with the release sent meanwhile): 3 of 5 put the tool away (mode `0x36` to 0), 2 kept it (by the
+decode, a stop that fell between the frame's input pump and its UI pass's tick; not measured); a press held 0.4 s with the game running kept it 2 of 2.
 
 **Whose a right press is** (decoded for `docs/QUEUE.md` Q56: three decoders, each put to a refuter; static only).
 The window procedure posts a right press as it does a left one (`0x0046b6a5`, button 1) to the control under the

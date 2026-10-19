@@ -178,6 +178,35 @@ public class ParkMoveTests
 	}
 
 	/// <summary>
+	/// <b>Taking an item into the hand clears the refusal latch</b>: the install of the move tool runs a pass first
+	/// (<c>FUN_0046d5a0</c>, <c>0x0046d5e8</c>), which clears <c>d50</c>, so a followed member's patrol edges are blue
+	/// after a refused path click once the hand has taken something.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> <c>Hold</c> leaving <see cref="ParkBuildMode.RefusalLatched"/> alone keeps it set.</remarks>
+	[TestMethod]
+	public void TakingAnItemIntoTheHandClearsTheRefusalLatch()
+	{
+		var world = World();
+		var catalogue = new ParkItemCatalogue( Theme, data );
+		var state = new ParkState( world );
+
+		try
+		{
+			ParkBuildMode.RefusalLatched = true;
+
+			var reply = ParkBuilding.Move( state, world, catalogue, null, null, BellyBounceThing, 58, 16 );
+
+			Assert.AreNotEqual( 0, ParkBuilding.Carrying, $"in the hand: {reply}" );
+			Assert.IsFalse( ParkBuildMode.RefusalLatched, "the install's pass cleared it" );
+		}
+		finally
+		{
+			ParkHand.LetGo();
+			ParkBuildMode.Forget();
+		}
+	}
+
+	/// <summary>
 	/// <b>Picking up asks nothing of the balance.</b> The original's pickup has no affordability test; a
 	/// put-down the park cannot afford is refused like a taken cell, and the hand keeps the thing.
 	/// </summary>

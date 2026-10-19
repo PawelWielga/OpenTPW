@@ -8,8 +8,8 @@ namespace OpenTPW;
 /// the keyboard - reproducing a camera angle exactly, forcing an effect that is otherwise random,
 /// or reading back frame timings.
 ///
-/// Disabled unless OPENTPW_DEBUG_CONSOLE=1 is set, and costs one boolean test per frame when off.
-/// To remove entirely: delete this file, the one call site in Level.Update(), Time.Paused and Time.StepFrames, and
+/// Disabled unless OPENTPW_DEBUG_CONSOLE=1 is set, and costs a boolean test and an integer test per frame when off (Poll's and StallFrame's).
+/// To remove entirely: delete this file, the two call sites in Level.Update() (Poll at its top, StallFrame at its end), Time.Paused and Time.StepFrames, and
 /// every member whose summary says it exists for the debug console alone (grep "debug console", "DebugConsole" and
 /// "from the console"), plus Advisor.Say, and ParkGuestSprites' debug dash: the white square Load adds to the atlas
 /// and the second quad a person Build reserves. ParkPeople.Current, LobbyAudio.Current and Game.RequestLobbyReload

@@ -2761,10 +2761,12 @@ before it (`0x0053319a`); both are left by a tool's own pass, so after a park lo
 texture 0, blue, lifted over a built cell and walled as any tool's ("Placement feedback"). Every frame, since the marker
 draw empties its list. **The latch outlives the tool**
 (read 2026-10-19, Q532): the pass `FUN_005234d0` clears `d48`, `d50` and `d58` at its start (`0x005234ec`..`0x005234f8`)
-and its verdicts set them; the setter `FUN_0052f200( 0 )` clears only `DAT_0081b604` (`0x0052f38d`); the click
+and its verdicts set them; the setter `FUN_0052f200( 0 )` clears `DAT_0081b604` (`0x0052f38d`) and `d48` (`FUN_00527940( 0 )`, `0x0052f477`), never `d50`; installing a tool
+(`FUN_0046c350` -> the shell's `FUN_0046d5a0`) runs the pass first, under the old mode (`0x0046d5e8`, before the setter at `0x0046d5f6`), so
+arming any tool, the path and patrol tools, the move tool and a carried item (mode 4) clears `d50` at once; the click
 `FUN_00524960` and the press `FUN_00524790` clear `d50` only under the replay (`[0x00785a2c]`); a park's start clears all
 (`FUN_0052f050`). So a tool put away, by its refused click, Escape or a commit, leaves its last pass's `d50`, and the edges
-are red until a tool's next pass. The path verdict (mode 1) sets `d50` itself on a thing's cell (types 4, 9, 10, unless a
+are red until the next tool is installed or passes. The path verdict (mode 1) sets `d50` itself on a thing's cell (types 4, 9, 10, unless a
 lower overwrite priority lets it bulldoze), track type `0x19`, a run dearer than the balance and a queue that is not a loose
 end; it sets only `DAT_00816d58` on a type `0x15` cell or a track corner (`0x00535b9f`, `0x00535d57`), which the NEXT
 square's verdict copies into `d50` (`0x00535885`) after its outside-the-park test, which answers first; land outside the
@@ -2790,8 +2792,15 @@ the Belly Bounce's cell, refused with `d50` 1 (`d48` 1 too while the red edges w
 (`ParkBuildMode.RefusalLatched`, set by each frame's pass in `ParkBuildMarkers.LatchAfterFrame`; the path verdict's two
 latches, `ParkPathBuilding.Latches`; the edges by `ParkBuildMarkers.PatrolSquares`): the same clicks on the final build
 (`q532/run5`) gave the same three, `tool`'s `latch` 0, 1, 0 and `strip`'s `| patrol 48` markers all 0, all 1, all 0
-(`q532/side-by-side.png`). The queue tool's pass leaves the latch clear here, its arm's latches not told apart by this
-verdict (`QUEUE_PASS_REFUSAL_LATCH`), and a carried item draws no preview, so leaves the latch as it was
+(`q532/side-by-side.png` holds the first two states; the third, Escape and blue, is `q532/run5/3-edges.png` and
+`q532/orig/a-3-edges.png`). The queue tool's pass leaves the latch clear here, its arm's latches not told apart by this
+verdict (`QUEUE_PASS_REFUSAL_LATCH`). Two clears are built from the listing alone (in no game run, 2026-10-19 review):
+`ParkBuildMode.Arm` of a tool and taking an item into the hand (`ParkBuilding.Hold`, which the move tool also reaches)
+clear the latch. Not built: between the press and the release the original runs mode-1 hover passes over the clicked
+cell, so an empty-hand click on one unaffordable cell leaves `d50` 1 (the money arm, `0x00535931`) where ours leaves it 0;
+and mode 4's passes (`0x005235bb`..) set `d50` and `d5c` each tick while the item's price is above the bank's balance
+(`0x00523658`; the golden-ticket cost `+0xc4` unpaid sets neither, `0x005235e6`..`0x0052360b`) and the placer sets it on an
+entrance or exit facing off the map (`0x005295e8`, `0x00529730`), where ours leaves a carried item's latch clear
 (`CARRY_PREVIEW_MARKERS`). In no game run: a refused queue or patrol click before the edges, a track's refusal (no shipped
 track reaches the path tool here; tested), a square lifted over a built cell on an edge (none of the stock areas crosses
 one; the lift is the tools', tested), a fence drawn in play (the patrol tool, built: "The patrol switch and the patrol tool" below), Full Simulation (not
@@ -2984,9 +2993,12 @@ answers track type `0x19`** (its own track record, `FUN_004d0af0`, or its parent
 `FUN_0053ad90`), so a single cell of the park lets it through. The verdict `FUN_00535670( 0x36 )` is the latch alone
 (`0x005356df`), so the outline is all blue or all red, and the anchored one-cell rectangle on land outside the park
 is red already. **The patrol pointer** (read 2026-10-19, Q534): the cursor (`FUN_0052f950`) has no case for `0x36`; it
-sets cursor 8, `c_noplace`, on a frame whose pass left `DAT_00816d48` (`FUN_00527950` answers it), and nothing else sets
-a cursor while the tool is armed (`BuildTool_SetMode` sets none for `0x36`; `FUN_004a2aa0` only stores what it is
-handed), so once refused the pointer stays `c_noplace` over a blue outline until the tool is put away or armed again.
+sets cursor 8, `c_noplace`, on a frame whose pass left `DAT_00816d48` (`FUN_00527950` answers it); `FUN_0052f950` and the
+setter (`BuildTool_SetMode`) set no cursor for `0x36`, and `FUN_004981d0` writes the same control's cursor through
+`FUN_004a2aa0` (not looked at with the tool armed), so once refused the pointer stays `c_noplace` over a blue outline
+until the tool is put away. A re-arm through the staff window sets none (`FUN_004b5b50` -> `FUN_0046c350` ->
+`FUN_0046d5a0`; the setter's cursor calls are for modes 3 and 1 only, and the cursor is the view control's own,
+`FUN_0065f11d` +0x50); it has not been watched in the original's running game (Q537).
 The original (`q438/orig/b-run.log`, `b-7-outline.png`): (54,17) anchored with `d48` 1, the pointer on (57,16), `d48`
 0, the outline texture 0 and the no-entry pointer over it. **OpenTPW** (`ParkPatrolTool.PointerRefused`, set by
 `Level.PatrolCursor`, cleared by `ParkBuildMode.Arm`): the final build (`q534/run4`, the stock park, five of five

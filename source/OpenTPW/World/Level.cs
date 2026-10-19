@@ -1456,7 +1456,7 @@ public class Level
 	/// <summary>
 	/// The patrol tool sets no cursor of its own (<c>FUN_0052f950</c> has no case for mode <c>0x36</c>), only
 	/// <c>c_noplace</c> on a frame its outline is red (cursor 8, the refusal <c>DAT_00816d48</c>), which then stays until
-	/// the tool is armed again or put away (<see cref="ParkPatrolTool.PointerRefused"/>); before that the ordinary pointer.
+	/// the tool is put away (<see cref="ParkPatrolTool.PointerRefused"/>); before that the ordinary pointer.
 	/// </summary>
 	internal static Input.CursorTypes PatrolCursor( int x, int y )
 	{

@@ -67,7 +67,7 @@ filed the items that cite it.
   From Q533 (`park-engine.md`, "The hand's ways out", "Where each test sits"): a quick right click's release reads the
   flag alone and the 200 ms is the frame's tick, after the frame's buttons, in both games; the rest of this item is the
   queue tool's pass (`QUEUE_PASS_REFUSAL_LATCH`, below) and the patrol pointer over a blue outline (since, Q534), above. A stop before our frame's tick
-  disarms it as the original's rounds 1 and 4 did (`q533/run1`, 5 of 5 `armed=0`). In no game run: a move then a return inside one frame (the original sees each move, ours the frame's last point),
+  disarms it (`q533/run1`, 5 of 5 `armed=0`), as the decode says the original's does; its rounds 1 and 4 fit that but were not measured. In no game run: a move then a return inside one frame (the original sees each move, ours the frame's last point),
   Full Simulation (not asked: the button is either mode's), the other three themes.
   From Q532 (`hud.md`, "The patrol edges"): the patrol edges are red after a tool's last pass left the refusal latch
   `DAT_00816d50` set, in both games (the path tool's two latches built, the patrol tool's test); the rest of this item
@@ -2270,6 +2270,31 @@ filed the items that cite it.
   `LetGo` answers null); it bites if anything the quick click does is ever not a no-op in first person. Fix: record at
   the stack's press step whether `ViewRightClick` answered, in a static of its own, and read that in `RightPressTaken`.
   Said at the site (`Level.WorldClick`, "Latent").
+- [ ] **Q535. An empty-hand path click takes the latch from its own pass.** From the run 5 review (Q532 1). Between
+  the press and the release the original runs mode-1 hover passes over the clicked cell, so an empty-hand click on
+  ground whose one cell is unaffordable leaves `DAT_00816d50` 1 (the money arm, `0x00535931`); ours arms (which clears
+  the latch, as the install's pass does at `0x0046d5e8`) and leaves it 0. Give `PathStrip` an out `latched`, as
+  `ParkPathBuilding.Strip( x, y, out latched )` has, and have `RunPath` store it in `ParkBuildMode.RefusalLatched`
+  after `Arm`. Confirm with the original (the stock park, an unaffordable single cell, `d50` read at
+  `q532/orig/a-run.out`'s addresses) and a test whose price a wrong rule gets wrong. Said at the site
+  (`ParkBuildMode.Arm`).
+- [ ] **Q536. A carried item's passes set the latch.** From the run 5 review (Q532 2). Mode 4's pass clears
+  `DAT_00816d50` at `0x005234f2` and sets it and `d5c` at `0x0052365c`/`0x00523662` each tick when the item's
+  BuildPrice (`+0x1b8`) is above the bank's balance, unless the golden-ticket cost `+0xc4` is positive and
+  `FUN_004d4b70` says it is unpaid (then the pending price is 0 and d50 stays clear), and not under the replay
+  (`[0x00785a2c]`). The placer (`FUN_00528a70`, `0x0052390e`) also sets d50 at `0x005295e8` and `0x00529730` for an
+  entrance or exit facing off the map (trigger not re-derived). Build both in `ParkBuildMarkers.OnUpdate` while
+  `ParkBuilding.Carrying != 0`; the player reaches it by a move with the price above the balance, which `Carry`
+  refuses but `Move` does not. `Hold` clears the latch for now; said at the site (`ParkBuilding.Hold`).
+- [ ] **Q537. The patrol pointer after a re-arm, watched in the original.** From the run 5 review (Q534 1). Re-arming
+  the patrol tool over itself keeps `c_noplace` here (`ParkBuildMode.Arm`), by the decode (`FUN_004b5b50` ->
+  `FUN_0046c350` -> `FUN_0046d5a0`; the setter `FUN_0052f200` sets a cursor for modes 3 and 1 only); not watched in
+  either game. In ours the route Ctrl+S, the mechanics' button, the strip did not reopen Mike's window with the tool
+  in the hand (`fix-run5/c-control`): find the original's route first (the locator, or the gadget's staff screen),
+  then patrol anchor outside the park, the pointer on a park cell (`c_noplace`), the switch down again, the pointer
+  back on a park cell, and read the cursor; predict `c_noplace`. Also read the pointer over the gadget's camera
+  control with the tool armed (`FUN_004981d0` writes the same control's cursor). Write the result into
+  `docs/exe/hud.md`, "The patrol pointer", and drop the "not watched" sentence there and at `Arm`.
 ## B. Docs and comments
 
 - [ ] **Q14. Comment sweep of the cleanup commits.** Replace history-voice comments with what the code does now,

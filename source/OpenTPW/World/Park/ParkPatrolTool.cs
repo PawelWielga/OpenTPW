@@ -23,9 +23,10 @@ public static class ParkPatrolTool
 {
 	/// <summary>
 	/// Whether the tool's pointer is <c>c_noplace</c>. The original sets cursor 8 on a frame its pass left the refusal
-	/// <c>DAT_00816d48</c> (<c>FUN_0052f950</c>, <c>FUN_00527950</c>) and sets no other while mode <c>0x36</c> is armed
-	/// (<c>BuildTool_SetMode</c> sets none for it), so it stays over a blue outline until the tool is armed again or put
-	/// away (<see cref="ParkBuildMode.Arm"/> clears it). docs/exe/hud.md, "The patrol pointer".
+	/// <c>DAT_00816d48</c> (<c>FUN_0052f950</c>, <c>FUN_00527950</c>); <c>FUN_0052f950</c> and the mode setter set no cursor
+	/// for mode <c>0x36</c> (<c>FUN_004981d0</c> writes the same control's cursor, not looked at with the tool armed), so it
+	/// stays over a blue outline until the tool is put away (<see cref="ParkBuildMode.Arm"/> clears it; arming the tool
+	/// again keeps it). docs/exe/hud.md, "The patrol pointer".
 	/// </summary>
 	public static bool PointerRefused { get; set; }
 
