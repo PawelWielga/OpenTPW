@@ -9137,6 +9137,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `SaveFolder.RestartParkPath`, `ParkFrontEnd.RestartPark`. It closes the review's finding on Q544 (Restart Park read
   the newest file, the autosave after any exit). Confirmed: in both games, after an Exit To Lobby's autosave, Restart
   Park went back to 755 (`q248/`); the control on main read the autosave at 825. Its fork-watch note is Q546.
+- [x] **Q546. The analyser record's 61-byte records and the sound block, to FileFormats.** Q248's note, which was not
+  its writer's work. Done: FileFormats `saves.md`, "The park analyser", lays out the record's +16 to +62,598 from
+  `FUN_004c5d70` (five grid dwords, 1,024 blocks of 61 bytes, four small rings of 17, six kept answers), and "Sound"
+  the records' length; `docs/exe/saves.md`'s `SOUN` row. Measured in all 539 different park bodies of 787 files
+  (`q546/sweep.py`, every prediction held). Confirmed: a park ours saves carries the 62,590 analyser bytes and the
+  1,453-byte sound block byte for byte as loaded (`q546/run2`).
+  - **Note (fork watch 2026-10-17, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-17/verify-save.md` L5):** the analyser record's undecoded part (FileFormats `saves.md`, its
+    first 62,598 bytes) is mostly 1,024 records of 61 bytes, four ints then nine caches, each a count and an
+    `mWorkedOut` byte, measured at the record's +36 to +62,500 in two files; no cache stamp is saved (`0x004cd9c0`).
+    The sound block after the 84 bytes is three dwords and a length L, ending at +12+L in 487 of 487 park files
+    (`0x0051c547`, L3); what the three words are is not read. Both go to FileFormats `saves.md` (rule 14).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

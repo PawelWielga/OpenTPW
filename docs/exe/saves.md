@@ -767,7 +767,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | `KAME` | zoom, rotation, flags, two points of interest, a saved rotation | the camera | patched: the zoom, the rotation and the point's two ground coordinates; the flags, the point's height, the saved point and the saved rotation the file's |
 | `COAS` | the coasters | nothing: none can be built here | carried |
 | `ADVS` | 360 bytes of the advisor and a buffer | nothing kept here | carried |
-| `SOUN` | two dwords, 84 bytes, then records not decoded | nothing kept here | carried |
+| `SOUN` | two dwords, 84 bytes, then records that open with three dwords and their length L and end at +12+L (a loader with no sound skips L - 4, `0x0051c547`); what they hold is not decoded | nothing kept here | carried |
 | `CHTS` | two bytes | nothing | carried |
 | `ADSC` | one dword: the row the advisor's poll starts from (`advisor-park.md`, "The poll, and the control panel's line") | the poll's cursor | written (Q316) |
 | The UI block | a count and 540 bytes for each tag standing on the aerial | each tag as it stands ("OpenTPW's writer, the aerial's tags") | written |

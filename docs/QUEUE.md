@@ -53,13 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q546. The analyser record's 61-byte records and the sound block, to FileFormats.** Q248's note, which was not
-  its writer's work:
-  - **Note (fork watch 2026-10-17, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-17/verify-save.md` L5):** the analyser record's undecoded part (FileFormats `saves.md`, its
-    first 62,598 bytes) is mostly 1,024 records of 61 bytes, four ints then nine caches, each a count and an
-    `mWorkedOut` byte, measured at the record's +36 to +62,500 in two files; no cache stamp is saved (`0x004cd9c0`).
-    The sound block after the 84 bytes is three dwords and a length L, ending at +12+L in 487 of 487 park files
-    (`0x0051c547`, L3); what the three words are is not read. Both go to FileFormats `saves.md` (rule 14).
 - [ ] **Q149. The calendar keeps its own game tick, from nought, and makes up the advances the original loses.** Found
   by the 2026-09-26 staleness audit. The original's calendar counter is `mGameTick` (`+0x1da70c`, `weather.md`, "The
   calendar"), which a loaded save sets to its own (755 in `Easymode.TPWI`, as `GameCalendar.Rebase` says);
