@@ -22,7 +22,7 @@ effort sliders over research groups, or a message box in Instant Action or with 
 research screen; Lost Kingdom's one researcher (thing 30) walks and researches as the original's does (Q134), and
 the lab spends the points and finishes projects (Q701). Its two message boxes are built (Q410): in Lost Kingdom's
 Instant Action the button and R open "Research is automatic in Instant Action mode.", as the original's; the screen
-behind them is counted, `RESEARCH_SCREEN`. The lab at work is built (Q701), and a finished project is told to the advisor and starred on the buy list (Q702); the end of research marks the park and posts row 167 (Q550), its End feature is `docs/QUEUE.md` Q703, and the screen is Q705, Full Simulation only.
+behind them, Full Simulation only, is built (Q590: the bars, labels, arrows, effort and work-load sliders; its pumps' motion and sounds are Q705). The lab at work is built (Q701), and a finished project is told to the advisor and starred on the buy list (Q702); the end of research marks the park and posts row 167 (Q550), and its End feature is built (Q703).
 
 **Park status (screen 3) is deferred by Alexah, 2026-09-21** — *"I'm okay delaying work on the Info
 screen. It's not important at the moment."* The Information category is therefore seeded to screen **4**
@@ -82,8 +82,8 @@ drew in a running park and were photographed**. Research is not a category at al
 case `0x2b` goes straight to `FUN_004aa480`, as the map does), and its one screen is six effort
 sliders over research groups: this game has **no research screen** (the lab spends its researchers' points and
 finishes projects, Q701; the advisor's lines on it and the end of research are Q702 and Q703), so there is nothing to
-put behind the button. The button and R, the shortcut to the same function, open its two message boxes (Q410); the screen is
-counted, `RESEARCH_SCREEN`.
+put behind the button. The button and R, the shortcut to the same function, open its two message boxes (Q410) and, in Full
+Simulation with a researcher, the screen (Q590).
 
 - [x] **Buy** opens `ParkBuyScreen` (stream `0x00754cf8`), which cross-links to `ParkHireScreen`
       (stream `0x00751fa8`). Both are built on the original's control **type 7**, a scrolling
@@ -132,8 +132,8 @@ counted, `RESEARCH_SCREEN`.
       is the guest's `mNumRides` (Q177b); shops, sideshows and visitors' Time In Park stay blank and counted
       rather than carrying a plausible wrong quantity. **UITEXT row 117 is literally `"?"`** - the original ships that visitor
       column unnamed too.
-- [ ] **RESEARCH** - its two boxes are built (Q410); its screen is counted (`RESEARCH_SCREEN`), and blocked on a system that does not exist rather than on effort. See
-      the note at the head of this item.
+- [ ] **RESEARCH** - its two boxes are built (Q410) and its screen (Q590); the pumps' motion and the screen's sounds are
+      counted (`RESEARCH_PUMPS`, `RESEARCH_SCREEN_SOUNDS`, Q705).
 - [x] **PATHS - DONE 2026-09-21, and verified in the running game.** `path 10 10` lays one for
       **20** (`Costs.PathCell`, measured from `Standard.sam` and confirmed through the game's own
       balance reader); `delpath` lifts one and **refunds nothing**, which is the original's own
@@ -190,8 +190,8 @@ counted, `RESEARCH_SCREEN`.
 ### The original section, for the part still open
 
 - [x] **Was seen:** Info, Money and Research do nothing. **Five of the six now open something**, as of
-      2026-09-21 — Buy, Camcorder, Map, Info and Money; Research's boxes since Q410, its screen counted.
-- **Lives:** `ParkGadget.cs` — `b_resrch` runs `ParkResearchOpener`, whose screen is counted as `RESEARCH_SCREEN`. `b_info` and `b_money` go through
+      2026-09-21 — Buy, Camcorder, Map, Info and Money; Research's boxes since Q410, its screen since Q590.
+- **Lives:** `ParkGadget.cs` — `b_resrch` runs `ParkResearchOpener`, which opens `ParkResearchScreen`. `b_info` and `b_money` go through
   `ParkCategoryScreens.Open`, which is the original's own remembered-tab picker.
 - **The real dispatch is decoded** in `docs/exe/hud.md`: `FUN_004a0940( n )` opens *the screen that
   category was last left on*, from three globals seeded 1 / 3 / 10. **The HUD is six category pickers,

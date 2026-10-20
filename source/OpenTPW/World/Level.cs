@@ -373,7 +373,8 @@ public class Level
 		load.Mark( "park state" );
 
 		Research = park == null || catalogue == null ? null : new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects,
-			park.ResearchKinds, park.ResearchWorkLoad, ParkResearch.GroupOpensAt( Balance ) )
+			park.ResearchKinds, park.ResearchWorkLoad, ParkResearch.GroupOpensAt( Balance ),
+			park.ResearchMostExpensiveProject )
 		{
 			Unlocked = id => Players.Roster.Current?.File.RideIds.Contains( (ushort)id ) == true
 		};

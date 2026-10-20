@@ -4075,8 +4075,8 @@ Full Simulation park", below: the original's own fresh park said it on tick 2755
 both); in no game run: the line again past its
 900 quarter-ticks (the test holds it), a kind standing that is not on offer, a project finished by the
 original's own research and what that does to the kinds on offer, the other three themes' labs. Of the lab's
-record this game reads the projects alone: the five kinds' effort, output, current project and highest group,
-`mWorkLoad`, `mMostExpensiveProject` and `mLabActive` are named and not read. The hold's turn in the two games
+record this game reads the projects, the five kinds' records (Q701), `mWorkLoad` and `mMostExpensiveProject` (Q590);
+`mLabActive` is named and not read. The hold's turn in the two games
 is not the same turn (972 here, 1127 there): the original's byte was not held through its load, which reads
 the game type for its catalogue. Row 76 (`SideshowsResearchMore`) is built since, below; the other twenty-nine
 polled rows of mode 0 are not. **Rows 83 and 84 are posted and no poster is found**: row 83's score is the stub
@@ -4842,6 +4842,13 @@ slaps 2; said on tick 959; closed: slaps 3; a fourth opening: nothing in 10 s. *
 after it said the line on tick 784 (`q328/run-saved/Q329.TPWS`): the record read (784, 0, 1, 0) and an action
 of 19997 from the load, the click opened the screen, no slot held `0xbc` in 11 s and nobody is up
 (`orig/c-open.png`).
+
+**Row 200**, the research screen's (`ResearchScreen_Open` `0x004aa480` posts it last, its destroy, event `0x14`,
+withdraws it; `q177/skeptic-analyser/meta_full.json` at `0x00770ec0`): posted only, category 1, **game mode 0, Full
+Simulation alone** (the screen opens only there), score `0x0059e8c0` (`HelpMessage.Score`), one copy, first response
+419, one line; response 419 is sample 391 (`hud.md`, "Opening and closing", has its words). Built as
+`ParkAdvisorMessages.ResearchScreen` (Q590): said on the first tick the clock ran with the screen open,
+`attempt=1 message=200 ... response=419 sample=391` (`q705/run3`).
 
 ### OpenTPW (`ParkAdvisorMessages.BuyScreen`; `ParkBuyScreen.Shown`, `Closed`)
 

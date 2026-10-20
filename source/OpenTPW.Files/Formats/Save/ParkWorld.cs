@@ -1771,11 +1771,12 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// "The object controls"): the item's id, whether it is researched (<c>+0x10</c>), the upgrade tier
 	/// researched (<c>+0x14</c>), how many of the item stand in the park (<c>+0x18</c>) and <c>mGameTick</c> as the
 	/// first of them was built (<c>+0x1c</c>, nought until one is). What the park load keeps of the first two is
-	/// <c>docs/exe/hud.md</c>, "What the buy list actually filters on"; the last two are the park's worth's
-	/// (<c>docs/exe/park.md</c>, "The headcount score").
+	/// <c>docs/exe/hud.md</c>, "What the buy list actually filters on"; the next two are the park's worth's
+	/// (<c>docs/exe/park.md</c>, "The headcount score"). <c>Price</c> is <c>+0x04</c>, what buying one costs as the
+	/// record was made (<c>Upgrades[0].CostOfUpgrade</c>), which the research screen letters (<c>Lab_KindEstimatedPrice</c>).
 	/// </summary>
 	public readonly record struct ObjectControl( int ItemId, bool Researched, int TierResearched, int Standing = 0,
-		uint FirstBuilt = 0 );
+		uint FirstBuilt = 0, int Price = 0 );
 
 	/// <summary>
 	/// One of the research lab's projects (FileFormats <c>saves.md</c>, "The research lab"): the item it would
@@ -1824,20 +1825,27 @@ public sealed partial class ParkWorld : IParkInitialState
 	/// <summary>Where <c>mWorkLoad</c> sits in the lab's record.</summary>
 	private const int ResearchWorkLoadAt = 4181;
 
+	/// <summary>The lab's <c>mMostExpensiveProject</c>, the index of the dearest project; -1 where the file holds no lab.</summary>
+	public int ResearchMostExpensiveProject { get; private set; } = -1;
+
+	/// <summary>Where <c>mMostExpensiveProject</c> sits in the lab's record, after <c>mWorkLoad</c>.</summary>
+	private const int ResearchMostExpensiveProjectAt = 4185;
+
 	/// <summary>Where the lab's record begins in the payload, or -1 where the file holds none.</summary>
 	public int ResearchLabAt { get; private set; } = -1;
 
 	/// <summary>
 	/// The lab and the object controls' research as the running park has them, for <see cref="PutLab"/>: the
-	/// projects in the table's order, the five kinds, and each item's researched flag and tier.
+	/// projects in the table's order, the five kinds, each item's researched flag and tier, the work load (which the
+	/// research screen's slider sets) and the dearest project.
 	/// </summary>
 	public sealed record WrittenLab( IReadOnlyList<ResearchProject> Projects, IReadOnlyList<ResearchKind> Kinds,
-		IReadOnlyDictionary<int, (bool Researched, int Tier)> Controls );
+		IReadOnlyDictionary<int, (bool Researched, int Tier)> Controls, int WorkLoad, int MostExpensiveProject );
 
 	/// <summary>
 	/// Writes the lab over its record in <paramref name="body"/> (FileFormats <c>saves.md</c>, "The research lab"):
-	/// each used project's sixteen bytes, each kind's thirteen and <c>mNumProjects</c>; the work load, the dearest
-	/// project, <c>mLabActive</c> and the unused projects stay the file's. Then each object control's researched flag
+	/// each used project's sixteen bytes, each kind's thirteen, <c>mNumProjects</c>, <c>mWorkLoad</c> and
+	/// <c>mMostExpensiveProject</c>; <c>mLabActive</c> and the unused projects stay the file's. Then each object control's researched flag
 	/// (<c>+0x10</c>) and tier (<c>+0x14</c>) for the items <paramref name="lab"/> answers.
 	/// </summary>
 	/// <returns>How many projects were written, or -1 where the file holds no lab.</returns>
@@ -1885,6 +1893,8 @@ public sealed partial class ParkWorld : IParkInitialState
 		}
 
 		PutInt32( body, ResearchLabAt + ResearchProjectCountAt, projects );
+		PutInt32( body, ResearchLabAt + ResearchWorkLoadAt, lab.WorkLoad );
+		PutInt32( body, ResearchLabAt + ResearchMostExpensiveProjectAt, lab.MostExpensiveProject );
 		return projects;
 	}
 
@@ -1943,7 +1953,7 @@ public sealed partial class ParkWorld : IParkInitialState
 		{
 			var at = start + i * ObjectControlSize;
 			records[i] = new ObjectControl( ReadUInt16At( at ), ReadByteAt( at + 0x10 ) != 0, ReadInt32At( at + 0x14 ),
-				ReadInt32At( at + 0x18 ), unchecked((uint)ReadInt32At( at + 0x1c )) );
+				ReadInt32At( at + 0x18 ), unchecked((uint)ReadInt32At( at + 0x1c )), ReadInt32At( at + 4 ) );
 		}
 
 		ObjectControlRecords = records;
@@ -2223,6 +2233,7 @@ public sealed partial class ParkWorld : IParkInitialState
 				ResearchProjects = ReadResearchProjects( start );
 				ResearchKinds = ReadResearchKinds( start );
 				ResearchWorkLoad = ReadInt32At( start + ResearchWorkLoadAt );
+				ResearchMostExpensiveProject = ReadInt32At( start + ResearchMostExpensiveProjectAt );
 			}
 			else if ( model == AnalyserModel )
 			{

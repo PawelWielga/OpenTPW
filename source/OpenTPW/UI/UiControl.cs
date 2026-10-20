@@ -604,6 +604,12 @@ internal sealed class UiSlider : UiControl
 	public UiRect HitRect { get; init; }
 
 	/// <summary>
+	/// Whether the thumb runs up and down, the top the highest value (<c>Slider_SetPosition</c> and
+	/// <c>Slider_ReadThumb</c> with the slider's <c>+0x14c</c> bit 2 clear), rather than across, the left the lowest.
+	/// </summary>
+	public bool Vertical { get; init; }
+
+	/// <summary>
 	/// Whether it can be moved at all. A slider that is switched off shows its thumb in the disabled
 	/// part of its mesh and lets the pointer through, the way the original's disabled button does (a
 	/// button here still takes it, <c>docs/QUEUE.md</c> Q66): the options screen's resolution only means
@@ -691,35 +697,57 @@ internal sealed class UiSlider : UiControl
 	/// (<c>Slider_Callback</c> on <c>0x11006</c>, which tests no button; <c>Slider_PageTowards</c>). A press alone, or
 	/// one held half a second, pages nothing.
 	/// </summary>
-	internal override void LeftClickedAt( float x, float y ) => PageTowards( x );
+	internal override void LeftClickedAt( float x, float y ) => PageTowards( x, y );
 
-	internal override void RightClickedAt( float x, float y ) => PageTowards( x );
+	internal override void RightClickedAt( float x, float y ) => PageTowards( x, y );
 
-	private void PageTowards( float x )
+	/// <summary>A page down where the click is left of the thumb, or below its top on a vertical slider; else a page up.</summary>
+	private void PageTowards( float x, float y )
 	{
 		if ( Thumb == null || !Enabled )
 			return;
 
-		MoveBy( VirtualScreen.ToVirtualX( x, Anchor ) < Thumb.Rect.Left ? -Page : Page );
+		var down = Vertical ? VirtualScreen.ToVirtualY( y, VerticalAnchor ) > Thumb.Rect.Top
+			: VirtualScreen.ToVirtualX( x, Anchor ) < Thumb.Rect.Left;
+
+		MoveBy( down ? -Page : Page );
 	}
 
-	internal void Grab( float x )
+	/// <summary>Where along the slider's travel the pointer is: across, or down on a vertical slider.</summary>
+	private int Along( float x, float y )
+		=> Vertical ? (int)VirtualScreen.ToVirtualY( y, VerticalAnchor ) : (int)VirtualScreen.ToVirtualX( x, Anchor );
+
+	internal void Grab( float x, float y )
 	{
 		if ( Thumb != null )
-			_grab = (int)VirtualScreen.ToVirtualX( x, Anchor ) - Thumb.Rect.Left;
+			_grab = Along( x, y ) - (Vertical ? Thumb.Rect.Top : Thumb.Rect.Left);
 	}
 
-	internal void Drag( float x )
+	internal void Drag( float x, float y )
 	{
 		if ( Thumb == null )
 			return;
 
 		var thumb = Thumb.Rect;
-		var left = Math.Clamp( (int)VirtualScreen.ToVirtualX( x, Anchor ) - _grab, Track.Left, Track.Right - thumb.Width );
-		Thumb.Rect = thumb with { Left = left, Right = left + thumb.Width };
+		int value;
 
-		var travel = Track.Width - thumb.Width;
-		var value = travel > 0 ? ((left - Track.Left) * (Maximum - Minimum) / travel) + Minimum : Minimum;
+		if ( Vertical )
+		{
+			var top = Math.Clamp( Along( x, y ) - _grab, Track.Top, Track.Bottom - thumb.Height );
+			Thumb.Rect = thumb with { Top = top, Bottom = top + thumb.Height };
+
+			// Slider_ReadThumb: the thumb's height above the track's foot, over the travel.
+			var travel = Track.Height - thumb.Height;
+			value = travel > 0 ? ((Track.Bottom - (top + thumb.Height)) * (Maximum - Minimum) / travel) + Minimum : Minimum;
+		}
+		else
+		{
+			var left = Math.Clamp( Along( x, y ) - _grab, Track.Left, Track.Right - thumb.Width );
+			Thumb.Rect = thumb with { Left = left, Right = left + thumb.Width };
+
+			var travel = Track.Width - thumb.Width;
+			value = travel > 0 ? ((left - Track.Left) * (Maximum - Minimum) / travel) + Minimum : Minimum;
+		}
 
 		if ( value == Value )
 			return;
@@ -749,6 +777,14 @@ internal sealed class UiSlider : UiControl
 
 		var thumb = Thumb.Rect;
 		var range = Maximum - Minimum;
+
+		if ( Vertical )
+		{
+			var top = range != 0 ? ((Maximum - Value) * (Track.Height - thumb.Height) / range) + Track.Top : Track.Top;
+			Thumb.Rect = thumb with { Top = top, Bottom = top + thumb.Height };
+			return;
+		}
+
 		var left = range != 0 ? ((Value - Minimum) * (Track.Width - thumb.Width) / range) + Track.Left : Track.Left;
 
 		Thumb.Rect = thumb with { Left = left, Right = left + thumb.Width };
@@ -769,13 +805,13 @@ internal sealed class UiSliderThumb : UiButton
 	internal override void PointerPressed( float x, float y )
 	{
 		if ( Enabled )
-			Slider?.Grab( x );
+			Slider?.Grab( x, y );
 	}
 
 	internal override void PointerDragged( float x, float y )
 	{
 		if ( Enabled )
-			Slider?.Drag( x );
+			Slider?.Drag( x, y );
 	}
 
 	internal override void PointerReleased()

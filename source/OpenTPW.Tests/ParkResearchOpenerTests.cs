@@ -6,7 +6,7 @@ namespace OpenTPW.Tests;
 /// <summary>
 /// The research opener, <c>FUN_004aa480</c> (<see cref="UI.ParkResearchOpener"/>): the park screen that is open closed
 /// first, then in Instant Action the box of UITEXT <c>0x1d4</c>, with no researcher the box of UITEXT <c>0x1d3</c>, each
-/// with its cross alone, else the research screen, counted. These read the interface's strings and meshes from the
+/// with its cross alone, else the research screen (<see cref="UI.ParkResearchScreen"/>). These read the interface's strings and meshes from the
 /// shipped game and are skipped where there is no installation - see <see cref="GameData"/>.
 /// </summary>
 [TestClass]
@@ -43,7 +43,6 @@ public class ParkResearchOpenerTests
 	{
 		var stack = new UI.WindowStack();
 		var screen = new AScreen( stack );
-		var screens = Times( "RESEARCH_SCREEN" );
 
 		Assert.AreEqual( "Research is automatic in Instant Action mode.", InstantActionText, "UITEXT 0x1d4" );
 
@@ -54,7 +53,6 @@ public class ParkResearchOpenerTests
 		var box = (UI.MessageBox)stack.Windows.Single();
 		Assert.AreEqual( InstantActionText, TextOf( box ) );
 		CollectionAssert.AreEqual( new[] { "0x9873c8" }, Buttons( box ), "the cross alone, in the bottom place" );
-		Assert.AreEqual( screens, Times( "RESEARCH_SCREEN" ) );
 
 		Assert.IsTrue( stack.ClickAt( 1428, 652 ), "the cross" );
 		Assert.AreEqual( 0, stack.Windows.Count, "closed, and nothing more" );
@@ -62,14 +60,15 @@ public class ParkResearchOpenerTests
 
 	/// <summary>
 	/// <b>In Full Simulation with no researcher it opens the box of UITEXT <c>0x1d3</c></b>, the same box; with one it
-	/// counts the research screen, which is not built, the park screen closed the same.
+	/// opens the research screen, the park screen closed the same, and with that screen up it does nothing more
+	/// (<c>[0x007cc1d8]</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the researchers' test taken out or turned round; the two texts exchanged; the count left out.</remarks>
+	/// <remarks><b>Mutations:</b> the researchers' test taken out or turned round; the two texts exchanged; the screen
+	/// left unopened; the test of a screen up taken out, which opens a second.</remarks>
 	[TestMethod]
-	public void InFullSimulationItAsksForScientistsOrCountsTheScreen()
+	public void InFullSimulationItAsksForScientistsOrOpensTheScreen()
 	{
 		var stack = new UI.WindowStack();
-		var screens = Times( "RESEARCH_SCREEN" );
 
 		Assert.AreEqual( "You need to hire some scientists before you can carry out any research!",
 			Localization.Get( UIStrings.NeedToHireScientists ), "UITEXT 0x1d3" );
@@ -83,7 +82,11 @@ public class ParkResearchOpenerTests
 		var screen = new AScreen( stack );
 		stack.Open( screen );
 		UI.ParkResearchOpener.Open( stack, instantAction: false, researchers: 2 );
-		Assert.AreEqual( (0, screens + 1), (stack.Windows.Count, Times( "RESEARCH_SCREEN" )), "the screen closed, the research screen counted" );
+		var research = stack.Windows.Single();
+		Assert.IsInstanceOfType( research, typeof( UI.ParkResearchScreen ), "the park screen closed, the research screen open" );
+
+		UI.ParkResearchOpener.Open( stack, instantAction: false, researchers: 2 );
+		Assert.AreSame( research, stack.Windows.Single(), "with its screen up the opener does nothing" );
 	}
 
 	/// <summary>The message box's text, its dialog's (<c>0x9873c7</c>).</summary>
@@ -94,8 +97,6 @@ public class ParkResearchOpenerTests
 
 	private static System.Collections.Generic.IEnumerable<UI.UiControl> Controls( UI.UiControl control )
 		=> new[] { control }.Concat( control.Children.SelectMany( Controls ) );
-
-	private static int Times( string what ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == what ).Times;
 
 	/// <summary>A bare park screen.</summary>
 	private sealed class AScreen : UI.UiWindow

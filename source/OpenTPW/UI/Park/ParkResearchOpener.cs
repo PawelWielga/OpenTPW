@@ -11,8 +11,7 @@ namespace OpenTPW.UI;
 /// <c>0x1d4</c>, "Research is automatic in Instant Action mode.", and with no researcher on the staff
 /// (<c>mFirstResearcher</c>, <c>+0x1da742</c>, nought) one reading UITEXT <c>0x1d3</c>. Each is the plain box in
 /// white in font 4 with its cross in the bottom place and nothing else (<c>MessageBox_Open( text, 2, 0, 0, ... )</c>).
-/// Past both it builds the research screen, six effort sliders, which is not built here: counted,
-/// <c>RESEARCH_SCREEN</c> (<c>docs/exe/hud.md</c>, "The nine screens behind Info, Money and Research").
+/// Past both it builds the research screen (<see cref="ParkResearchScreen"/>), unless that screen is up already.
 /// </para>
 /// </summary>
 internal static class ParkResearchOpener
@@ -25,6 +24,10 @@ internal static class ParkResearchOpener
 	/// <param name="researchers">The researchers on the staff; only whether there is one matters.</param>
 	internal static void Open( WindowStack stack, bool instantAction, int researchers )
 	{
+		// With its screen up ([0x007cc1d8]) the opener does nothing.
+		if ( stack.Windows.Any( window => window is ParkResearchScreen ) )
+			return;
+
 		stack.CloseParkScreen();
 
 		if ( instantAction )
@@ -41,7 +44,7 @@ internal static class ParkResearchOpener
 			return;
 		}
 
-		Unimplemented.Report( "RESEARCH_SCREEN" );
-		Log.Info( $"Park: research opener: {researchers} researcher(s), so the research screen, which is not built" );
+		Log.Info( $"Park: research opener: {researchers} researcher(s), so the research screen" );
+		stack.Open( new ParkResearchScreen( stack ) );
 	}
 }

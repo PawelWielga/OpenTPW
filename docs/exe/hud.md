@@ -529,7 +529,7 @@ the effort gauge and the six sliders. `MessageBox_Open`'s second argument is the
 pauses the park (`g_ParkRunning`) and holds the key tables off (`FUN_00486b70`) until it closes.
 
 **Built** (`ParkResearchOpener`, `MessageBox` with no tick): both boxes, at all three callers; the bar's type `0x13`
-answers 2, the tag taken off. The screen is counted, `RESEARCH_SCREEN`. In the running game (`q410/run-fix2`): R over the
+answers 2, the tag taken off. The screen behind them is built (Q590, "The research screen's panels"). In the running game (`q410/run-fix2`): R over the
 stock park logged `Park: research opener: Instant Action, so the box of UITEXT 0x1d4`, the box up with its cross alone
 (`1-r.png`) and the park's clock at tick 769 for 3 s under it; the gadget's button the same; B then R closed the buy
 screen and opened the box. A fresh Full Simulation park (`run-fs1`) gave the `0x1d3` box, and with a scientist hired
@@ -627,12 +627,26 @@ unchanged; the workload slider's value is held to the limit and `Lab_SetWorkLoad
 five bars are set, the dial `0xd2d11` to frame `2 x (30 x value / limit) / 7` (0 to 8), and the parameters `0xc` and `0xd`
 of both loop sounds (`0x9a`, `0x9b`) to `value x 100 / 1024`. A press on an effort slider (`0x801`) starts sound `0x9c`
 with its parameters `0xb` and `0xa` the value, a drag updates them, the release (`0x802`) fades it. The limit and the knob
-are set again on `0x1e` when the researchers' summed ability changes. **Read, not measured:** a slider's value setter
+are set again on `0x1e` when the researchers' summed ability changes. **Measured in the original (Q590):** a slider's value setter
 (vtable `+0x1c`, `Slider_SetValue` `0x0066b508`, then `Slider_SetPosition`) sends `0x800` to its parent whenever the
 value changes, and the opening sets the knob after the limit, so the opening, and each `0x1e` that finds the summed ability changed, runs
 `Lab_SetWorkLoad` on the knob's round trip, `30 x ((w - 70) x limit / 30) / limit + 70` in whole numbers, which is `w - 1` where it does not divide back. With
 Full Simulation's `most` of 60, of the summed abilities 2 to 12 those of 3, 6, 9 and 12 do so at 85, and each opening would take the work load
-down one (85, 84, 83...; `q704/knob-roundtrip.txt`). The efforts' seeding writes each effort back unchanged.
+down one (85, 84, 83...; `q704/knob-roundtrip.txt`): with one researcher of grade 1 the original's `mWorkLoad` read 85, 84, 83 and
+82 across three openings (`q705/orig/d/drive.log`). The efforts' seeding writes each effort back unchanged. `Lab_SetEffort`
+(`0x00503870`) and `Lab_SetWorkLoad` (`0x00503900`) each hold their value to 100 as an unsigned number (so one under
+nought is 100 too) and work every kind's output out again, `effort x 100 / the efforts' sum x mWorkLoad / 100` in whole
+unsigned numbers, nought where the sum is: after the first opening the original's outputs read 48, 6, 14, 6 and 4. The
+screen does not pause the park: its tick ran on while it was open.
+
+**The two sliders' directions** (`Slider_SetPosition` `0x0066b088`, `Slider_ReadThumb` `0x0066af19`, `Slider_PageTowards`
+`0x0066b8aa`). With the slider's `+0x14c` bit 2 set the thumb runs across, the left the lowest value; with it clear, up
+and down, **the top the highest**: its top at `(highest - value) x travel / range` below the track's, the travel the
+track's height less the thumb's. A click off the thumb pages the value down where it is left of the thumb, or below the
+thumb's top, and up otherwise (`+0x144` positive). The effort sliders (flags `0x61`) run across, the work-load slider
+(`0x51`) up and down; each one's track is its stream text rect. The stream's op 2 on a panel is a skin looked up by
+the same mesh hash as op 1's (`UI_ParseTreeStream` `0x0065fd58`): the panel's `res_pipe`, drawn in the panel's text
+rect, as the frame shows it, between the bar and the pump.
 
 **Opening and closing.** The opening loops sounds `0x9a` and `0x9b` and ends with `FUN_00486b00( 200 )`, the
 advisor's line for the screen (row 200, posted-only, response 419, sample 391: "this is where you discover new stuff to
@@ -641,8 +655,27 @@ and those pumps on the right show how fast the work is going; if you want to cha
 click the left and right arrow buttons; drag the vertical slider on the left to determine how hard your researchers
 work", `global-speech-transcripts.tsv`). Message 5 and the close button close it; `0x14` (destroyed) stops the three
 sounds and withdraws message 200. The knob's own proc (`ResearchScreen_KnobProc`, `0x004a9f90`) clears `[0x007cc1dc]`
-when it goes. Not read: the pump's frame count in `res_fluid`, how the gauge and the dial draw, what the sounds'
-parameters do.
+when it goes. Not read: the pump's frame count in `res_fluid`, how the dial draws, what the sounds'
+parameters do. The gauge is `Meter_Construct`'s (`0x00477870`), the happiness gauge's two-halves meter with
+`effortguage.wct`, at 0 to 1024; the bars `FUN_00477ff0`'s, the stat bars' skin with `bluebar.wct`, whose filled part
+is the dark half, from the left.
+
+**Built** (Q590, `ParkResearchScreen`, opened by `ParkResearchOpener`; the lab's `SetEffort`, `SetWorkLoad`,
+`PercentLeftOfDearest`, `EstimatedPrice`, `PickNext`, `PickPrevious`, `MostExpensiveProject`; `UiSlider.Vertical`): the
+stream's frame, title, five panels with icon, arrows, bar, label, pipe and pump, five effort sliders, the work-load
+slider with its gauge and dial, the tick, the 1000 ms timer, the ability watched on every pass, the opening's round trip,
+and advisor row 200 posted as it opens and withdrawn as it goes. A kind's price is the item's control record's `+0x04`,
+read from the park file (a fresh park's, the item's own); a fresh world's dearest project is the fill's (`0x00503225`).
+`mWorkLoad` and `mMostExpensiveProject` are written with the park. Counted, not built: the pumps' motion
+(`RESEARCH_PUMPS`, each standing at frame `0x30`) and the three sounds and their parameters (`RESEARCH_SCREEN_SOUNDS`);
+the rest of the item is Q705. **Confirmed in both games** on one scene (`q705/fs1.TPWS`, q327's `FSFRESH.TPWS` with its
+researcher written to grade 1), predicted first (`q705/PREDICTION.txt`): the original's work load 85 to 82 over three
+openings and its five bars within a frame pixel of the rule (round O, `q705/orig/d/t4-open1.png`); this game's census at
+the opening `workload 84 limit 597 knob 298 dial 4 gauge 597 ability 3 most 60`, bars 624, 839, 686, 501 and 839, the
+original's five labels, then 83 and 82, the rides' right arrow to "Sun God / Estimated price : $ 1500" at 593, the knob
+dragged to the top held at 597 (work load 100, dial 8), the rides' effort dragged to nought (outputs 0, 14, 21, 42, 21),
+and response 419, sample 391 said once the clock ran (round G, `q705/run3`). The knob stands at the same height in both
+frames (layout y 534 there, 532 here).
 
 ### The Staff Training Budgets screen (Q352)
 

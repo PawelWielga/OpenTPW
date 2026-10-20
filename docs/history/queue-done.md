@@ -9440,6 +9440,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   original (`q581/PREDICTION.txt`, rounds A to D, two misses recorded: the queue is armed first, the track tool from
   the track): both rides bought, looped, opened and ridden, every section and buoy as predicted. The build is Q587 to
   Q589. `original/trackride.py` new.
+- [x] **Q590. The research screen, built (Q705's first piece, Full Simulation only).** From Q704. `ParkResearchScreen`
+  replaces the count `RESEARCH_SCREEN`: the stream `0x00754490`'s frame, title, five panels (icon, arrows, bar, red label
+  UITEXT 446 or 185, pipe, pump at frame `0x30`), five effort sliders (`Lab_SetEffort`), the work-load slider, gauge and
+  dial (`Lab_SetWorkLoad`, the opening's knob round trip), the 1000 ms timer, the ability watched each pass, advisor row 200
+  posted and withdrawn; `mWorkLoad` and `mMostExpensiveProject` read and written. Confirmed in both games on
+  `q705/fs1.TPWS` (`hud.md`, "The research screen's panels", Built): the original's work load 85, 84, 83, 82 over three
+  openings and its bars within a pixel of the rule; this game's census `workload 84 limit 597 knob 298`, bars 624, 839,
+  686, 501, 839, the original's labels, the arrows, both drags and response 419 said (`q705/run3`, 8 of 8).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

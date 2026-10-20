@@ -949,6 +949,7 @@ public class ParkScreamChainTests
 		public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects => source.ResearchProjects;
 		public IReadOnlyList<ParkWorld.ResearchKind> ResearchKinds => source.ResearchKinds;
 		public int ResearchWorkLoad => source.ResearchWorkLoad;
+		public int ResearchMostExpensiveProject => source.ResearchMostExpensiveProject;
 	}
 
 	/// <summary>

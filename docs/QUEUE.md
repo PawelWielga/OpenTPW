@@ -83,19 +83,14 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
-  "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
-  stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge
-  (`Lab_SetWorkLoad`), the arrows (`Lab_PickNextProject`, `Lab_PickPreviousProject`), each bar's fill and red label
-  (UITEXT 446, or 185 with nothing left), the pumps (speed per UI pass; lane A measures the original's passes a second first, a pump's frames a second
-  under `play.sh`'s 30 fps cap or `0x1e` posts a second, then on `Time.Delta` at that rate: say the deviation at the site), the 1000 ms timer, sounds `0x9a` to `0x9c`, advisor message 200 posted and withdrawn.
-  After Q701 (the lab spends): without it the bars and pumps never move. Confirm in a Full Simulation jungle from
-  Alexah's `restart.INTS` with a researcher hired: the five bars at 552, 675, 481, 829 and 829 of 1024 on an opening before the researcher's first hand-out (the clock
-  paused at the hire), else as `lib/labsim.py`'s done at the opening's tick predicts (log and
-  census) and the screen photographed beside the original's (lane A). Before copying the knob round trip (the opening, and a researcher hired, trained or lost with the screen open),
-  lane A checks it in the original (`tpwmem.py`, the lab's `+0x1460`): with one researcher whose summed ability is 3,
-  does each opening take the work load from 85 down one (`hud.md` predicts 84, then 83)? Not read: the pump's frame
-  count in `res_fluid`, how the gauge and dial draw, the sounds' parameters.
+- [ ] **Q705. The research screen's pumps and sounds (Full Simulation only).** What Q590 left counted: the pumps'
+  motion (`RESEARCH_PUMPS`; `hud.md`, "The research screen's panels", "The pump": speed per UI pass; lane A measures
+  the original's passes a second first, a pump's frames a second under `play.sh`'s 30 fps cap or `0x1e` posts a
+  second, then on `Time.Delta` at that rate: say the deviation at the site), `ResearchScreen_RefreshPumps`' rates
+  (`Lab_KindRate`; with one researcher of ability 3 only the rides' pump runs in the original, `q705/orig/d/t4-open1.png`),
+  and the sounds `0x9a` to `0x9c` with their parameters (`RESEARCH_SCREEN_SOUNDS`). Confirm on `q705/fs1.TPWS` beside
+  the original (`q705/orig/d` is how it was loaded there: `fsload.sh` failed twice on it). Not read: the pump's frame
+  count in `res_fluid`, the sounds' parameters.
 - [ ] **Q706. Golden tickets awarded in Full Simulation (the checks and the award).** From Q141 (`ride-operation.md`,
   "Golden tickets"; `saves.md`, "Keys and tickets"). **Alexah (2026-10-18): after Q327**, the Full Simulation catch-up, is done. On the sweep that makes `mGameTick` a
   multiple of 100, in Full Simulation alone: the six Local tests (each skipped when the park holds it), the four

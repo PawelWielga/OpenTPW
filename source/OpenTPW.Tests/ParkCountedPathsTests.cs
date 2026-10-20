@@ -175,7 +175,7 @@ public class ParkCountedPathsTests
 
 		Press( stack, Key.T );
 		Assert.IsFalse( Asked( stack ), "T" );
-		Assert.AreEqual( 0, Times( "RESEARCH_SCREEN" ) );
+		Assert.IsFalse( stack.Windows.Any( window => window is UI.ParkResearchScreen ), "Instant Action: the box, never the screen" );
 	}
 
 	/// <summary>

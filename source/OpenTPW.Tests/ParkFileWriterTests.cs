@@ -138,15 +138,17 @@ public class ParkFileWriterTests
 	/// <summary>
 	/// The lab is written as it runs and read back: Dino Karts researched on the 95th hand-out, at tier 2, its
 	/// project at its cost, the rides on their next project in group 2, and an appended project counted in
-	/// <c>mNumProjects</c>; the work load and every byte past the lab's used fields stay the file's. With no lab
-	/// given the file's own stands.
+	/// <c>mNumProjects</c>; the work load and the dearest project are written as the lab holds them, the file's here,
+	/// and every byte past the lab's used fields stays the file's. A work load the research screen set is written.
+	/// With no lab given the file's own stands.
 	/// </summary>
 	[TestMethod]
 	public void TheLabIsWrittenAsItRuns()
 	{
 		var catalogue = new ParkItemCatalogue( "jungle", FileSystem, instantAction: true );
 		var lab = new ParkResearch( shipped.ObjectControlRecords, catalogue, shipped.ResearchProjects, shipped.ResearchKinds,
-			shipped.ResearchWorkLoad, ParkResearch.GroupOpensAt( new ParkBalance( "jungle", easyMode: true ) ) );
+			shipped.ResearchWorkLoad, ParkResearch.GroupOpensAt( new ParkBalance( "jungle", easyMode: true ) ),
+			shipped.ResearchMostExpensiveProject );
 
 		while ( lab.HandOuts < 95 )
 			lab.SpendPoints( 12, 760 + lab.HandOuts * 20 );
@@ -173,6 +175,11 @@ public class ParkFileWriterTests
 		CollectionAssert.AreEqual( theirs[(lab0 + 4181)..(lab0 + 4190)], mine[(lab0 + 4181)..(lab0 + 4190)], "the work load, the dearest, mLabActive" );
 		CollectionAssert.AreEqual( theirs[(lab0 + 16 + 25 * 16)..(lab0 + 4112)], mine[(lab0 + 16 + 25 * 16)..(lab0 + 4112)], "the unused projects" );
 		Assert.AreEqual( shipped.ResearchProjects.Count, Read( ParkFileWriter.Write( shipped, Played ) ).ResearchProjects.Count );
+
+		lab.SetWorkLoad( 83 );
+		var set = Read( ParkFileWriter.Write( shipped, Played with { Lab = lab.Written } ) );
+		Assert.AreEqual( (83, shipped.ResearchMostExpensiveProject), (set.ResearchWorkLoad, set.ResearchMostExpensiveProject) );
+		Assert.AreEqual( 48, set.ResearchKinds[0].Output, "the rides' output worked again: their share, 58 of a hundred, times 83, over a hundred" );
 		CollectionAssert.AreEqual( shipped.ResearchProjects.ToArray(), Read( ParkFileWriter.Write( shipped, Played ) ).ResearchProjects.ToArray() );
 	}
 

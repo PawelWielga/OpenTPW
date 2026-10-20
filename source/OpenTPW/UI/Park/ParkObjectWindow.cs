@@ -766,21 +766,24 @@ internal sealed class ParkObjectWindow : UiWindow
 		/// <summary>Whether a value was set at all - an unfilled bar and a zero one are different things.</summary>
 		internal bool Known { get; set; }
 
+		/// <summary>Its mesh, the bar, then its text over the bar: the research screen letters its labels in its bars' skin slot.</summary>
 		protected override void OnDraw()
 		{
-			base.OnDraw();
+			Mesh?.Draw( Frame + State, Pixels, Rect );
 
-			if ( !Known )
-				return;
-
-			if ( _skin == null && !Skins.TryGetValue( Skin, out _skin ) )
+			if ( Known )
 			{
-				Skins[Skin] = _skin = new Texture( Skin );
-				Log.Info( $"UI: the stat bars' skin {Skin} is {_skin.Width}x{_skin.Height}, its ramp {Ramp( new TextureFile( Skin ).Data )}" );
+				if ( _skin == null && !Skins.TryGetValue( Skin, out _skin ) )
+				{
+					Skins[Skin] = _skin = new Texture( Skin );
+					Log.Info( $"UI: the stat bars' skin {Skin} is {_skin.Width}x{_skin.Height}, its ramp {Ramp( new TextureFile( Skin ).Data )}" );
+				}
+
+				foreach ( var (where, uvs) in Parts( Pixels, At ) )
+					Paint( _skin, where, uvs );
 			}
 
-			foreach ( var (where, uvs) in Parts( Pixels, At ) )
-				Paint( _skin, where, uvs );
+			DrawText( Text );
 		}
 
 		/// <summary>The decoded colours of the ramp's row 4 at texels 1, 4, 8 and 24, for the log.</summary>

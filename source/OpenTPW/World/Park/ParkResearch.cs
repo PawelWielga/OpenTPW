@@ -39,8 +39,18 @@ public sealed class ParkResearch
 
 	private readonly int[] _groupOpensAt;
 
-	/// <summary>The lab's <c>mWorkLoad</c> (<c>+0x1460</c>), the file's: no screen here changes it.</summary>
-	public int WorkLoad { get; }
+	/// <summary>The lab's <c>mWorkLoad</c> (<c>+0x1460</c>): the file's, then the research screen's (<see cref="SetWorkLoad"/>).</summary>
+	public int WorkLoad { get; private set; }
+
+	/// <summary>
+	/// The lab's <c>mMostExpensiveProject</c> (<c>+0x1464</c>), the index of the project a bar is measured against
+	/// (<see cref="PercentLeftOfDearest"/>): the file's, or a fresh world's <see cref="MostExpensive"/>. Nothing after
+	/// the fill moves it, not an appended upgrade either.
+	/// </summary>
+	public int MostExpensiveProject { get; }
+
+	/// <summary>Each item's control record's <c>+0x04</c>, what buying one costs as the record was made.</summary>
+	private readonly Dictionary<int, int> _prices = [];
 
 	/// <summary>How many hand-outs the lab has had since the park was entered, for the log.</summary>
 	public int HandOuts { get; private set; }
@@ -79,13 +89,15 @@ public sealed class ParkResearch
 	/// The share done, in whole per cent, at which each highest group opens the next: <see cref="GroupOpensAt"/>.
 	/// Missing entries are nought, as the executable's image holds them.
 	/// </param>
+	/// <param name="mostExpensiveProject">The lab's <c>mMostExpensiveProject</c>, <see cref="ParkWorld.ResearchMostExpensiveProject"/>.</param>
 	public ParkResearch( IEnumerable<ParkWorld.ObjectControl> records, ParkItemCatalogue catalogue,
 		IReadOnlyList<ParkWorld.ResearchProject>? projects = null, IReadOnlyList<ParkWorld.ResearchKind>? kinds = null,
-		int workLoad = 0, IReadOnlyList<int>? groupOpensAt = null )
+		int workLoad = 0, IReadOnlyList<int>? groupOpensAt = null, int mostExpensiveProject = -1 )
 	{
 		_projects = [.. projects ?? []];
 		_kinds = [.. kinds ?? []];
 		WorkLoad = workLoad;
+		MostExpensiveProject = mostExpensiveProject;
 		_groupOpensAt = new int[MostGroup];
 
 		for ( var highest = 0; highest < _groupOpensAt.Length && highest < (groupOpensAt?.Count ?? 0); ++highest )
@@ -94,12 +106,18 @@ public sealed class ParkResearch
 		foreach ( var record in records )
 		{
 			if ( _items.TryAdd( record.ItemId, (record.Researched, record.TierResearched) ) )
+			{
+				_prices[record.ItemId] = record.Price;
 				++FromSave;
+			}
 		}
 
 		foreach ( var item in catalogue.All )
 		{
 			_catalogue.TryAdd( item.Id, item );
+
+			// FUN_004d3e00's record for an item the save has none of: the item's own price.
+			_prices.TryAdd( item.Id, item.BuildPrice );
 
 			if ( _items.TryAdd( item.Id, (item.ResearchCost == 0, 0) ) )
 				++Seeded;
@@ -137,7 +155,7 @@ public sealed class ParkResearch
 	/// kind's output times the share, in whole per cent, that <paramref name="ability"/>, the staff's researchers'
 	/// <c>ResearchAbility</c> added up, is of <paramref name="most"/>, the most researchers a park may employ
 	/// times the top grade's ability, over a hundred; each division a whole number's. Nought with no such most.
-	/// The outputs are the file's or the fresh world's, as no screen here changes a kind's effort.
+	/// The outputs are the file's or the fresh world's, and the research screen's sliders work them again (<see cref="SetEffort"/>).
 	/// </summary>
 	public int Rate( int kind, int ability, int most )
 		=> most == 0 || kind < 0 || kind >= _kinds.Length ? 0
@@ -436,7 +454,8 @@ public sealed class ParkResearch
 	/// The lab and the control records' research as they stand, for the park file (<see cref="ParkWorld.PutLab"/>).
 	/// </summary>
 	public ParkWorld.WrittenLab Written
-		=> new( [.. _projects], [.. _kinds], _items.ToDictionary( entry => entry.Key, entry => (entry.Value.Researched, entry.Value.Tier) ) );
+		=> new( [.. _projects], [.. _kinds], _items.ToDictionary( entry => entry.Key, entry => (entry.Value.Researched, entry.Value.Tier) ),
+			WorkLoad, MostExpensiveProject );
 
 	/// <summary>
 	/// A fresh world's five kinds' records (<c>Lab_SetupKinds</c>, <c>FUN_00503330</c>): each kind's effort is its
@@ -462,9 +481,158 @@ public sealed class ParkResearch
 			var current = Enumerable.Range( 0, projects.Count ).FirstOrDefault( i => projects[i].Category == kind
 				&& projects[i].Group <= FreshHighestGroup && !IsDone( projects[i] ), -1 );
 
-			return new ParkWorld.ResearchKind( (int)effort, sum == 0 ? 0 : (int)(effort * 100 / sum * (uint)workLoad / 100),
-				current, RaisedGroup( projects, kind, FreshHighestGroup, opens ) );
+			return new ParkWorld.ResearchKind( (int)effort, Output( effort, sum, workLoad ), current,
+				RaisedGroup( projects, kind, FreshHighestGroup, opens ) );
 		} ).ToArray();
+	}
+
+	/// <summary>A kind's output: its effort's share of the efforts' sum in whole per cent, times the work load, over a hundred, all unsigned; nought where the sum is.</summary>
+	private static int Output( uint effort, uint sum, int workLoad )
+		=> sum == 0 ? 0 : (int)(effort * 100 / sum * (uint)workLoad / 100);
+
+	/// <summary>
+	/// A fresh world's <c>mMostExpensiveProject</c> (the fill, <c>0x00503225</c> and <c>0x005032f4</c>): the first
+	/// project strictly dearer than every one before it, -1 for none.
+	/// </summary>
+	public static int MostExpensive( IReadOnlyList<ParkWorld.ResearchProject> projects )
+	{
+		var dearest = -1;
+
+		for ( var i = 0; i < projects.Count; ++i )
+		{
+			if ( dearest < 0 || projects[dearest].Cost < projects[i].Cost )
+				dearest = i;
+		}
+
+		return dearest;
+	}
+
+	/// <summary>
+	/// <c>Lab_SetEffort</c> (<c>0x00503870</c>), the research screen's effort slider: the kind's effort, held to 100,
+	/// and every kind's output worked out again by the work load standing. Answers the effort kept.
+	/// </summary>
+	public int SetEffort( int kind, int effort )
+	{
+		if ( kind < 0 || kind >= _kinds.Length )
+			return 0;
+
+		_kinds[kind] = _kinds[kind] with { Effort = (uint)effort > 99 ? 100 : effort };
+		RecomputeOutputs();
+		return _kinds[kind].Effort;
+	}
+
+	/// <summary>
+	/// <c>Lab_SetWorkLoad</c> (<c>0x00503900</c>), the research screen's work-load slider: <c>mWorkLoad</c>, held to
+	/// 100, and every kind's output worked out again by it.
+	/// </summary>
+	public void SetWorkLoad( int workLoad )
+	{
+		WorkLoad = (uint)workLoad > 99 ? 100 : workLoad;
+		RecomputeOutputs();
+	}
+
+	private void RecomputeOutputs()
+	{
+		var sum = 0u;
+
+		foreach ( var kind in _kinds )
+			sum += (uint)kind.Effort;
+
+		for ( var kind = 0; kind < _kinds.Length; ++kind )
+			_kinds[kind] = _kinds[kind] with { Output = Output( (uint)_kinds[kind].Effort, sum, WorkLoad ) };
+	}
+
+	/// <summary>The catalogue's item of that id (<c>FUN_00412e90</c>), or null where it holds none.</summary>
+	public ParkItemCatalogue.Item? Item( int itemId ) => _catalogue.TryGetValue( itemId, out var item ) ? item : null;
+
+	/// <summary>The item of the kind's current project, done or not, or nought with none (<c>Lab_KindCurrentItem</c>, <c>0x005039f0</c>).</summary>
+	public int CurrentItem( int kind ) => CurrentProjectOf( kind )?.ItemId ?? 0;
+
+	/// <summary>The kind's current project, done or not; null with none.</summary>
+	private ParkWorld.ResearchProject? CurrentProjectOf( int kind )
+		=> kind >= 0 && kind < _kinds.Length && _kinds[kind].CurrentProject is var current && current >= 0 && current < _projects.Count
+			? _projects[current] : null;
+
+	/// <summary>
+	/// <c>Lab_PercentLeftOfDearest</c> (<c>0x00503ac0</c>): the points left in the kind's current project as a per cent
+	/// of the dearest project's cost, <c>(mCost - mResearchDone) × 100 / dearest</c> in the FPU's doubles and cut
+	/// toward nought (<c>__ftol</c>). Nought with no current project, a cost of 0.1 or less, or a dearest cost of 1.0
+	/// or less.
+	/// </summary>
+	public int PercentLeftOfDearest( int kind )
+	{
+		// A dearest index outside the table, which no file or fresh world holds, reads as no dearest project.
+		if ( CurrentProjectOf( kind ) is not { } project || MostExpensiveProject < 0 || MostExpensiveProject >= _projects.Count )
+			return 0;
+
+		var dearest = _projects[MostExpensiveProject].Cost;
+
+		if ( !(project.Cost > 0.1f) || !(dearest > 1.0f) )
+			return 0;
+
+		return (int)(((double)project.Cost - project.Done) * 100.0 / dearest);
+	}
+
+	/// <summary>
+	/// <c>Lab_KindEstimatedPrice</c> (<c>0x00503a20</c>), what the research screen's bar letters: for kinds 0 to 3 the
+	/// current project's item's control record's price, and for kind 4 the <c>CostOfUpgrade</c> of the project's own
+	/// item at the project's tier. Nought with no current project.
+	/// </summary>
+	public int EstimatedPrice( int kind )
+	{
+		if ( CurrentProjectOf( kind ) is not { } project )
+			return 0;
+
+		if ( kind == Upgrade )
+			return _catalogue.TryGetValue( project.ItemId, out var item ) ? item.UpgradeCostAt( project.UpgradeLevel ) : 0;
+
+		return _prices.GetValueOrDefault( project.ItemId );
+	}
+
+	/// <summary>The research screen's right arrow: <see cref="PickNextProject"/>.</summary>
+	public void PickNext( int kind )
+	{
+		if ( kind >= 0 && kind < _kinds.Length )
+			PickNextProject( kind );
+	}
+
+	/// <summary>
+	/// The research screen's left arrow, <c>Lab_PickPreviousProject</c> (<c>0x005036a0</c>): from the table's end down,
+	/// the nearest project of the kind open, at or under its highest group and taken by the same test as forward's
+	/// (<see cref="Eligible"/>) before the current one; else the last such after it; else none, the current set to -1
+	/// where it is done.
+	/// </summary>
+	public void PickPrevious( int kind )
+	{
+		if ( kind < 0 || kind >= _kinds.Length )
+			return;
+
+		var current = _kinds[kind].CurrentProject;
+		var after = -1;
+
+		for ( var i = _projects.Count - 1; i >= 0; --i )
+		{
+			var project = _projects[i];
+
+			if ( project.Category != kind || project.Group > _kinds[kind].HighestGroup || IsDone( project ) || !Eligible( project ) )
+				continue;
+
+			if ( i > current )
+			{
+				if ( after < 0 )
+					after = i;
+			}
+			else if ( i < current )
+			{
+				_kinds[kind] = _kinds[kind] with { CurrentProject = i };
+				return;
+			}
+		}
+
+		if ( after >= 0 )
+			_kinds[kind] = _kinds[kind] with { CurrentProject = after };
+		else if ( current >= 0 && current < _projects.Count && IsDone( _projects[current] ) )
+			_kinds[kind] = _kinds[kind] with { CurrentProject = -1 };
 	}
 
 	/// <summary>The highest group each kind of a fresh world starts at (<c>FUN_00502d20</c>).</summary>

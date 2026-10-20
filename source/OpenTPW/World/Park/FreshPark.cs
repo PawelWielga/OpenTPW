@@ -36,6 +36,7 @@ public sealed class FreshPark : IParkInitialState
 	public IReadOnlyList<ParkWorld.ResearchProject> ResearchProjects { get; }
 	public IReadOnlyList<ParkWorld.ResearchKind> ResearchKinds { get; }
 	public int ResearchWorkLoad { get; }
+	public int ResearchMostExpensiveProject { get; }
 
 	public FreshPark( string theme, ParkBalance balance, ParkItemCatalogue catalogue, BaseFileSystem? files = null )
 	{
@@ -48,13 +49,14 @@ public sealed class FreshPark : IParkInitialState
 		var (projects, tiers) = ParkResearch.FreshLab( catalogue.All );
 		ResearchProjects = projects;
 		ResearchWorkLoad = balance.Int( "Research.StartingWorkLoad" );
+		ResearchMostExpensiveProject = ParkResearch.MostExpensive( projects );
 		ResearchKinds = ParkResearch.FreshKinds(
 			Enumerable.Range( 0, ParkWorld.ResearchKindCount ).Select( kind => balance.Int( $"ResearchCategories[{kind}].Effort" ) ),
 			ResearchWorkLoad, projects, ParkResearch.GroupOpensAt( balance ) );
 		ObjectControlRecords = Array.AsReadOnly( catalogue.All
 			.Select( item => new ParkWorld.ObjectControl( item.Id, item.ResearchCost == 0, tiers.GetValueOrDefault( item.Id ),
 				// The two fixed objects are counted as the original's constructor counts them, made on tick nought.
-				Objects.Count( placed => placed.CatalogueId == item.Id ) ) ).ToArray() );
+				Objects.Count( placed => placed.CatalogueId == item.Id ), Price: item.BuildPrice ) ).ToArray() );
 
 		var loans = Enumerable.Range( 0, ParkWorld.EconomyState.LoanSlots ).Select( at => Loan( balance, at ) ).ToArray();
 		Economy = new( balance.Int( "BankAccountInfo.InitialAdmissionFee" ), balance.Int( "BankAccountInfo.InitialCash" ),

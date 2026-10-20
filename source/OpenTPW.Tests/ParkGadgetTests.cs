@@ -41,8 +41,6 @@ public class ParkGadgetTests
 	{
 		var stack = AStack();
 		stack.Open( new UI.ParkGadget( stack ) );
-		var screens = Times( "RESEARCH_SCREEN" );
-
 		Assert.IsTrue( Level.InstantAction, "no player: Instant Action" );
 		Assert.IsTrue( stack.ClickAt( 333, 1313 ), "the middle of 0x2b's (274,1254)-(392,1372)" );
 		Assert.AreEqual( ParkResearchOpenerTests.InstantActionText, ParkResearchOpenerTests.TextOf( (UI.MessageBox)stack.Windows[^1] ) );
@@ -55,10 +53,7 @@ public class ParkGadgetTests
 		Assert.IsTrue( stack.ClickAt( 115, 1200 ), "the gauge, 0x1e" );
 		CollectionAssert.AreEqual( new[] { "ParkGadget" }, stack.Windows.Select( window => window.GetType().Name ).ToArray(),
 			"the gauge's click opens nothing" );
-		Assert.AreEqual( screens, Times( "RESEARCH_SCREEN" ) );
 	}
-
-	private static int Times( string what ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == what ).Times;
 
 	/// <summary>A window stack with no windows, made without its constructor.</summary>
 	private static UI.WindowStack AStack()

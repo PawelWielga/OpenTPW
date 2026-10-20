@@ -128,6 +128,8 @@ internal sealed class ParkAdvisorMessages
 	internal const int BuyScreen = 188;
 	/// <summary>Message 0xbd, posted as the hire screen is built (FUN_0049bdd0) and withdrawn as it is destroyed (FUN_0049b650, event 0x14).</summary>
 	internal const int HireScreen = 189;
+	/// <summary>Message 0xc8, posted as the research screen is built (ResearchScreen_Open, 0x004aa480) and withdrawn as it is destroyed (ResearchScreen_OnMessage, event 0x14).</summary>
+	internal const int ResearchScreen = 200;
 	/// <summary>Message 0xc6, posted as the staff's locator opens (FUN_004b3f60) and withdrawn as the arm folds a locator away (FUN_004b3790, 0x1001d8).</summary>
 	internal const int StaffLocator = 198;
 	/// <summary>Message 0x11f, posted as the visitors' locator opens (FUN_004b4280) and withdrawn as the arm folds a locator away (FUN_004b3790, 0x1001d8).</summary>
@@ -611,6 +613,8 @@ internal sealed class ParkAdvisorMessages
 		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial ),
 		new( BuyScreen, "HelpMessage.Score", 407, 380, Lines: 1, Category: Tutorial ),
 		new( HireScreen, "HelpMessage.Score", 408, 381, Lines: 1, Category: Tutorial ),
+		// Row 200's game mode is 0, Full Simulation (+0x0c; the screen opens only there).
+		new( ResearchScreen, "HelpMessage.Score", 419, 391, Lines: 1, Category: Tutorial, FullSimulationOnly: true ),
 		new( StaffLocator, "HelpMessage.Score", 417, 389, Lines: 1, Category: Tutorial ),
 		new( VisitorLocator, "HelpMessage.Score", 547, 564, Lines: 1, Category: Tutorial ),
 		new( StaffWindow, "HelpMessage.Score", 411, 384, Lines: 1, Category: Tutorial ),

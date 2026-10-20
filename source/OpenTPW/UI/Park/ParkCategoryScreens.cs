@@ -173,7 +173,8 @@ internal static class ParkCategoryScreens
 			6 => ("ALL_VISITORS_SCREEN", "nothing - it is built and opened above"),
 			7 => ("FINANCE_SCREEN", "the monthly cash-in and cost ring buffers, and the year graph"),
 			8 => ("LOANS_SCREEN", "the loan display and borrowing controls; the saved mLoans[] records are read"),
-			_ => ("RESEARCH_SCREEN", "researchers, research groups and per-group research points")
+			// Dead by CODE: the categories hold screens 1 to 10 alone; the research screen is no category's (ParkResearchOpener).
+			_ => ("UNKNOWN_CATEGORY_SCREEN", "nothing - no category is left on such a screen")
 		};
 
 		Unimplemented.Report( name );

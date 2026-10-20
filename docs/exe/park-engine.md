@@ -1424,8 +1424,9 @@ outputs [49,6,14,6,4]`. Every item is taken as loaded. **The five kinds' efforts
 `ParkWorld.ResearchKinds`), for the advisor's row 76, which reads the sideshows' (`advisor-park.md`, "Every
 sideshow built, and more to research"). **Each kind's current project and highest group are made as
 `Lab_SetupKinds` makes them** (Q701: the first open project of the kind at or under group 1, 4, 41, 46, 17 and 0
-in Lost Kingdom, each group 1), and `mWorkLoad` is `Research.StartingWorkLoad`; **not made: `mMostExpensiveProject`
-and `mLabActive`**, which nothing here reads.
+in Lost Kingdom, each group 1), and `mWorkLoad` is `Research.StartingWorkLoad`; `mMostExpensiveProject` is the fill's,
+project 3 (Q590, `ParkResearch.MostExpensive`, which the research screen's bars are measured against); **not made:
+`mLabActive`**, which nothing here reads.
 
 **Predicted first** (`q349/PREDICTION.txt`). The test pins the 48 projects and the 70 control records of
 Alexah's file, in order. **This game** (`q349/confirm.py`; a player folder with no `gms.dat`, so a fresh Full

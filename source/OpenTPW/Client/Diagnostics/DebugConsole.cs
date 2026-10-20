@@ -667,6 +667,12 @@ public static class DebugConsole
 					.FirstOrDefault() is { } shopWindow ? $"shop window: {shopWindow.Census()}" : "shop window: none" );
 				break;
 
+			case "researchscreen":
+				// The research screen: the work load, the slider's limit, knob, dial and gauge, and each kind's bar, effort, output and label.
+				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows.OfType<UI.ParkResearchScreen>()
+					.FirstOrDefault() is { } researchScreen ? $"research screen: {researchScreen.Census()}" : "research screen: none" );
+				break;
+
 			case "visitorwindow":
 				// The visitor's window: its guest, title, figures, bar and thought, or that none is up.
 				Reply( Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault()?.Windows.OfType<UI.ParkVisitorWindow>()
