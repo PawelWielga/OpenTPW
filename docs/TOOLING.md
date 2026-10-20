@@ -140,7 +140,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/savepark.sh <NAME> <dest.TPWS>` | The RUNNING original (off-screen) saves its park from its own menu: Escape, Save, NAME typed, the tick; the file is moved out of the reference player's jungle folder to `dest` (frames `dest-typed.png`, `-after.png`), so the install's `save/` sum stays (`gms.dat`'s time changes). A file of the original's own to set beside this game's (Q523) |
 | `original/advdraw.py PID [SECS] [STEP]` | Is the original drawing its advisor, live, a line a change: `gui_CameraFlags`, `g_Advisor_Busy`, the speaking slot, the one view's flags, and for slots 0 and 1 the node word, whether the model's renderable is in render list 1 and whether its draw stamped it in the last two frames (`drawn`, `stale`, `never`), each line ending with the wall clock to time a `record.sh` film by. A `POLL` for `loadfile.sh` (Q556; `ui.md`, "How he reaches the screen") |
 | `original/original.sh`, `tpwmem.py`, `gmove.py`, `record.sh`, `watch.sh` | Starting, reading, clicking, filming and watchpointing the original ("The original under Proton", below) |
-| `original/timens.py SECONDS CMD...` | A command run in a time namespace where the computer has been up SECONDS: the original's park clock without a restart (warning 1, below). **It fails outside the VS Code sandbox** (`PermissionError` on `/proc/self/setgroups`, tried 2026-10-10), so a session started from a plain terminal cannot use it as it is |
+| `original/timens.py SECONDS CMD...` | A command run in a time namespace where the computer has been up SECONDS: the original's park clock without a restart (warning 1, below). `original.sh start` runs the game in it, 60 s, by default (`ORIG_TIMENS=0` starts it plainly). Ubuntu's `kernel.apparmor_restrict_unprivileged_userns=1` refuses it to a plain process (`PermissionError` on `/proc/self/setgroups`), so it runs under Steam's AppArmor profile, which allows user namespaces: `aa-exec -p steam -- python3 timens.py 60 CMD` |
 | `original/kwinwl-start.sh` | A private display on `:78` drawn by the graphics card (`kwin_wayland --virtual` with Xwayland) for the original, where Xvfb draws by software. `:78` is `parkrun.py`'s too. **Not run since it was written**: try it before leaning on it |
 | `q119/lib.py` | What `parkrun.py` is built on: the launch, the console pipe, XTEST clicks and keys, the frame grab. Use it through `parkrun.py` |
 | `fork-review-2/forkwatch.py [--from SHA] [--keep]` | The daily fork watch's first step (read-only): fetches the meneerkrabs fork's clone (`~/.cache/tpw-fork-krabs/repo`), takes the PC addresses in the lines added since the last look, maps each to its function by `funcs-all.tsv` (every function's ranges, dumped from Ghidra 2026-10-16), drops the functions our tree and the FileFormats clone cite now and those an earlier look handed on, and writes `watch-<sha>.json`; `--keep` records the new tip in `watch-state.json` once the leads go to a sweep |
@@ -1474,12 +1474,16 @@ put it back to 800 after. A number of the original's measured before 2026-10-15 
 
 ### Warnings, most important first
 
-1. **The park clock is wrong once the computer has been on for days.** The park clock is a double of
-   "milliseconds since boot", added to each frame at 24-bit precision (`docs/exe/park-engine.md`, "The park clock
-   loses precision with uptime"). Measured at 6.5 days of uptime: uncapped, the park froze (0 ticks in 30 s); at 30 fps
-   it ran 1.38 to 1.54 times real time; at about 4.5 fps it ran at real time. **Run `tpwmem.py clock` before any
-   timing, and discard timings it calls NOT TRUE** (`VERIFYING.md` rule 127). The fix is a restart, and the ask is
-   Alexah's. The 30 fps cap stays on.
+1. **The park clock follows the computer's uptime, so `original.sh` starts the game in a fresh-boot clock.** The
+   park clock is a double of "milliseconds since boot", added to each frame at 24-bit precision (`docs/exe/park-engine.md`,
+   "The park clock loses precision with uptime"). Measured at 6.5 days of uptime: uncapped, the park froze (0 ticks in
+   30 s); at 30 fps it ran 1.38 to 1.54 times real time; at about 4.5 fps it ran at real time. Since 2026-10-20
+   `original.sh start` runs the game in a time namespace that reads 60 s since boot (`timens.py`, above): at 8.5 days of
+   uptime, started plainly it ran 1.44 times real time (46.5 ticks a second, its clock 732,223,744 ms); in the namespace
+   1.00 (32.2 ticks a second, its clock 215,367 ms), `tpwmem.py clock` TRUE (`timens-clock/PREDICTION.txt`). No
+   restart is needed. **Still run `tpwmem.py clock` before any timing, and discard timings it calls NOT TRUE**
+   (`VERIFYING.md` rule 127): `original.sh` says when the namespace could not be made and starts the game plainly. The
+   30 fps cap stays on; uncapped in the namespace is not tried.
 2. **Never point it at `~/Games/TPWorld`.** The original writes `save/`, `Config.tcf`, `enginedebug.txt` and
    `fallback.txt` into its own folder. The reference install is its own copy.
 3. **On the real screen it takes the whole display and the mouse.** Start it only when the other session is idle;
@@ -1511,7 +1515,7 @@ put it back to 800 after. A number of the original's measured before 2026-10-15 
     `FUN_0043ce20` (return addresses on its stack, sampled with `gdb -p` on the host): its stored matrices are readable,
     its clock never runs. Seen at 6.9 days of uptime, and at 8.1 (2026-10-20, Q558) loaded by a fresh Full Simulation
     player, off-screen through llvmpipe and through zink alike: frozen on tick 19007, the frame unchanged for 150 s. Whether
-    a restart cures it is not tested.
+    a restart, or the fresh-boot clock `original.sh` gives since 2026-10-20 (warning 1), cures it is not tested.
 
 ### What it is not
 

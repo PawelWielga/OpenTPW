@@ -204,8 +204,9 @@ The ones that have bitten more than once.
   multiset (the count of each `warning CSxxxx`) as well, which a shift cannot fool, and never the total (rule 45).
 - **127** — **A timing taken on the original is only as true as its park clock.** The park clock is a double of
   milliseconds since boot, added to each frame at reduced precision, so it drifts with uptime and frame rate. At
-  6.5 days up it froze uncapped and ran 1.38-1.54x at 30 fps, while the game looked normal. Run `tpwmem.py clock`
-  first and discard anything it calls NOT TRUE (`docs/TOOLING.md`).
+  6.5 days up it froze uncapped and ran 1.38-1.54x at 30 fps, while the game looked normal. `original.sh` starts it in a
+  fresh-boot clock since 2026-10-20, which ran 1.00x at 8.5 days; still run `tpwmem.py clock` first and discard anything
+  it calls NOT TRUE (`docs/TOOLING.md`, warning 1).
 - **128** — **A reference frame of the original comes from the real GPU.** Off-screen (llvmpipe), Lost Kingdom's gate
   was drawn without its sign, and nothing else looked wrong. Also, the first grab after a scene change can repeat the
   previous scene: take two, a few seconds apart.
