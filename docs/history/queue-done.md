@@ -9448,6 +9448,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `q705/fs1.TPWS` (`hud.md`, "The research screen's panels", Built): the original's work load 85, 84, 83, 82 over three
   openings and its bars within a pixel of the rule; this game's census `workload 84 limit 597 knob 298`, bars 624, 839,
   686, 501, 839, the original's labels, the arrows, both drags and response 419 said (`q705/run3`, 8 of 8).
+- [x] **Q705. The research screen's pumps and sounds (Full Simulation only).** What Q590 left counted
+  (`RESEARCH_PUMPS`, `RESEARCH_SCREEN_SOUNDS`), built: `ResearchPump` (`0x004a95b0`, `0x004a9fc0`; `res_fluid`'s 64 parts),
+  `RefreshPumps` with `Lab_KindRate` and the mean on `0x9a`'s `0x12`, moved on `Time.Delta` at 30 passes a second (the
+  original's, measured on the real screen at its 30 fps cap with `original/respump.py`: 30.00, a pass a frame; the
+  deviation said at `ParkResearchScreen.PassesPerSecond`); the loops `0x9a` and `0x9b` and the thumb's `0x9c` as `cat_ui`
+  voices with their controllers, a set past slot 0 applying volume and pitch at once (`ParkAudio.ApplyControllers`,
+  `0x006bbbe0`); `UiSlider.ThumbPressed`/`ThumbReleased` (`0x801`, `0x802`); and, from the review of Q590 (VERIFY-3), a
+  kind finishing with the screen open lettered and filled again at once (`ParkResearch.KindFinished`,
+  `0x004aaec0`). Confirmed in both games on `q705/fs1.TPWS` (`q705b/PREDICTION.txt`, `hud.md`, "The research screen's
+  sounds"): the original's 30.00 passes and 13.14 frames a second, the voices' keys, values, volumes and frequencies
+  (round O, `orig/b`); this game's census, 29.9 passes a second, the pumps' frame beside the original's, the sounds'
+  values (round G, `run2`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

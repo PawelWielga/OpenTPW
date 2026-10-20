@@ -660,6 +660,12 @@ internal sealed class UiSlider : UiControl
 	/// <summary>The pointer or the wheel changed the value - message 0x800.</summary>
 	public Action? Moved { get; set; }
 
+	/// <summary>The thumb was taken hold of - message 0x801 (<c>Slider_NotifyPressed</c>, on the thumb's <c>0x10005</c>).</summary>
+	public Action? ThumbPressed { get; set; }
+
+	/// <summary>The thumb was let go, after it is put where its value belongs - message 0x802 (<c>Slider_NotifyReleased</c>, <c>0x0066b9ef</c>, on <c>0x10004</c>).</summary>
+	public Action? ThumbReleased { get; set; }
+
 	internal override bool TakesMouse => Enabled;
 
 	internal override PixelRect HitArea => VirtualScreen.ToPixels( HitRect, Anchor, VerticalAnchor );
@@ -719,8 +725,11 @@ internal sealed class UiSlider : UiControl
 
 	internal void Grab( float x, float y )
 	{
-		if ( Thumb != null )
-			_grab = Along( x, y ) - (Vertical ? Thumb.Rect.Top : Thumb.Rect.Left);
+		if ( Thumb == null )
+			return;
+
+		_grab = Along( x, y ) - (Vertical ? Thumb.Rect.Top : Thumb.Rect.Left);
+		ThumbPressed?.Invoke();
 	}
 
 	internal void Drag( float x, float y )
@@ -756,7 +765,11 @@ internal sealed class UiSlider : UiControl
 		Moved?.Invoke();
 	}
 
-	internal void LetGo() => PlaceThumb();
+	internal void LetGo()
+	{
+		PlaceThumb();
+		ThumbReleased?.Invoke();
+	}
 
 	private void MoveBy( int amount )
 	{

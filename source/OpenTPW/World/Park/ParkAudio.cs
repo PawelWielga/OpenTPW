@@ -208,14 +208,21 @@ public sealed partial class ParkAudio : Entity
 	/// otherwise; with neither, a draw from <c>low</c> up to, not including, <c>high</c>.
 	/// </summary>
 	internal static int Controlled( SoundCategoryFile.Variation header, int bit, int parameter, int level, Random random )
+		=> ControlledBy( header, bit, header.FirstKey == parameter ? level : 0, header.SecondKey == parameter ? level : 0, random );
+
+	/// <summary>
+	/// The same with the two controllers' values given: <paramref name="first"/> the first's (slot 1), <paramref name="second"/>
+	/// the second's (slot 2).
+	/// </summary>
+	internal static int ControlledBy( SoundCategoryFile.Variation header, int bit, int first, int second, Random random )
 	{
 		var range = bit == 1 ? header.Volume : header.Pitch;
 
 		if ( (header.GapByParameter & bit) != 0 )
-			return ParkCarSounds.Controlled( header.FirstKey == parameter ? level : 0, range );
+			return ParkCarSounds.Controlled( first, range );
 
 		if ( (header.SecondMask & bit) != 0 )
-			return ParkCarSounds.Controlled( header.SecondKey == parameter ? level : 0, range );
+			return ParkCarSounds.Controlled( second, range );
 
 		var (low, high) = range.High < range.Low ? (range.High, range.Low) : range;
 

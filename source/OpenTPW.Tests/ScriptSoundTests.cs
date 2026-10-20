@@ -751,8 +751,8 @@ public class ScriptSoundTests
 	/// own <c>ADDOBJ 8 1 6 1</c> and <c>SETOBJPARAM 1 20 0</c> on its model: the global ambient's 6, key 20, first its first
 	/// variation at a pitch of -24 (variation 1's controller is key 21, which nothing sets, so its value is nought) that
 	/// every later sample keeps, though variations 5 to 7 hold a pitch of nought. At 0 the idles 1 to 4, never the one
-	/// before; at 75 the rev, 5, then 6 again and again; back at 0, 7 and then the idles. The handle stays while the voice
-	/// lives (<c>0x006b6620</c>); past every zone the voice is parked at <c>0x7f</c> and a set to anything else wakes it.
+	/// before; at 75 the rev, 5, then 6 again and again; back at 0, 7 and then the idles. A set of key 21 on an idle applies
+	/// its pitch at once (<c>0x006bbbe0</c>). The handle stays while the voice lives (<c>0x006b6620</c>); past every zone the voice is parked at <c>0x7f</c> and a set to anything else wakes it.
 	/// </summary>
 	[TestMethod]
 	public void AnEffectOf406IsTheMusicsClassWhoseParameterPicksItsZones()
@@ -819,10 +819,12 @@ public class ScriptSoundTests
 			Assert.AreEqual( 6, Next(), "the slowing" );
 			Assert.IsTrue( Next() is >= 0 and <= 3, "and an idle" );
 
-			// A set past slot 0 (key 21, the idle's controller) is counted and leaves the parameter.
+			// A set past slot 0 (key 21, the idle's controller of its pitch) applies at once: 50 x 60 / 100 - 24 = 6, and
+			// the parameter is left as it was.
+			var applies = park.ScriptParameterApplies;
 			Set( 21, 50 );
-			Assert.IsTrue( Counted( "RIDE_EFFECT_SOUND_PARAMETER_APPLIES" ) );
-			Assert.AreEqual( 0, bus.Parameter );
+			Assert.AreEqual( (0, 50, 6, applies + 1), (bus.Parameter, bus.Values[1], bus.Kept.Pitch, park.ScriptParameterApplies) );
+			Assert.AreEqual( MathF.Pow( 2f, 7f / 96f ), (float)bus.Voice!.Rate, 1e-4f );
 
 			// No idle's zone holds 101: parked at 0x7f, and nothing more plays until a set to anything else.
 			Set( 20, 101 );
@@ -1659,6 +1661,102 @@ public class ScriptSoundTests
 		} );
 
 		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>The research screen's two loops take the work load's parameters</b> (<c>docs/exe/hud.md</c>, "The research
+	/// screen's sounds"). Opened over a fresh lab with one researcher of ability 3, the knob's round trip sets 298, so
+	/// <c>298 × 100 / 1024</c> = 29: <c>0x9a</c> (the music's class, key 18) takes 29 on slot 1 (key 12, its volume),
+	/// <c>29 × 77 / 100 + 8</c> = 30, and the rates' mean, nought, on slot 0; <c>0x9b</c> (key 13 on slots 0 and 1) takes 29
+	/// on both, a volume of <c>29 × 18 / 100 + 2</c> = 7 and a pitch of <c>29 × 16 / 100 - 8</c> = -4. Both flat, the first
+	/// sample of each its effect's first variation. At the mean nought <c>0x9a</c>'s next is its second variation (zone 0 to
+	/// 0). Of ability 60 the limit is past the slider's top: the knob dragged to 1023 is 99, and <c>0x9b</c>'s next is its
+	/// second variation (zone 81 to 100), <c>0x9a</c>'s mean 15 its first. The screen's close stops both.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the loops started after the knob is set; a set of slot 0 applying; the work load over
+	/// 1000; the apply's volume from slot 2; the mean over four.</remarks>
+	[TestMethod]
+	public void TheResearchScreensLoopsTakeTheWorkLoad()
+	{
+		WithAParksAudio( park =>
+		{
+			var stack = new UI.WindowStack();
+			var screen = new UI.ParkResearchScreen( stack, ParkResearchScreenTests.FreshLab( (BaseFileSystem)FileSystem ), () => 3, 60, park );
+			var loop = park.ScriptVoices.Single( sound => sound.Effect == 0x9a );
+			var work = park.ScriptVoices.Single( sound => sound.Effect == 0x9b );
+
+			Assert.AreEqual( ("the interface", 9), (loop.Owner, loop.Type) );
+			Assert.IsNull( loop.Place, "flat" );
+			Assert.IsTrue( loop.Music && work.Music );
+			CollectionAssert.AreEqual( new[] { 0, 29, 0, 0 }, loop.Values );
+			CollectionAssert.AreEqual( new[] { 29, 29, 0, 0 }, work.Values );
+			Assert.AreEqual( ((30, 0), (7, -4), 0, 0), (loop.Kept, work.Kept, loop.Variation, work.Variation) );
+			Assert.AreEqual( ParkAudio.ChannelGain( 30 ), loop.Voice!.Volume, 1e-5f );
+			Assert.AreEqual( MathF.Pow( 2f, -5f / 96f ), (float)work.Voice!.Rate, 1e-4f );
+
+			loop.Voice.Stop();
+			work.Voice.Stop();
+			park.ServeScriptSounds();
+			Assert.AreEqual( (1, 0, (30, 0)), (loop.Variation, work.Variation, loop.Kept), "the mean nought's zone, and the volume kept" );
+
+			stack.Open( screen );
+			stack.Close( screen );
+			Assert.IsTrue( loop.Stopped && work.Stopped, "the close stops both" );
+
+			var all = new UI.ParkResearchScreen( new UI.WindowStack(), ParkResearchScreenTests.FreshLab( (BaseFileSystem)FileSystem ), () => 60, 60, park );
+			var allLoop = park.ScriptVoices.Single( sound => sound.Effect == 0x9a && !sound.Stopped );
+			var allWork = park.ScriptVoices.Single( sound => sound.Effect == 0x9b && !sound.Stopped );
+			var knob = all.Root.Children.OfType<UI.UiSlider>().Single( slider => slider.Id == 0xd2d10 );
+
+			Assert.AreEqual( 15, allLoop.Parameter, "(48 + 6 + 14 + 6 + 4) / 5" );
+			knob.SetValue( 1023 );
+			knob.Moved!();
+			CollectionAssert.AreEqual( new[] { 99, 99, 0, 0 }, allWork.Values );
+			Assert.AreEqual( (99 * 18 / 100 + 2, 99 * 16 / 100 - 8), allWork.Kept );
+
+			allLoop.Voice!.Stop();
+			allWork.Voice!.Stop();
+			park.ServeScriptSounds();
+			Assert.AreEqual( (0, 1), (allLoop.Variation, allWork.Variation) );
+		} );
+	}
+
+	/// <summary>
+	/// <b>An effort thumb held plays <c>0x9c</c>, its volume and pitch the effort</b>: the plain class, keys 10 (volume, 2 to
+	/// 15) and 11 (pitch, -24 to 36). Pressed at the rides' 100 it is <c>15</c> and <c>36</c>; dragged to 50, <c>8</c> and
+	/// <c>6</c>, each set applied at once; let go, faded. A drag with no thumb held sets nothing.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the parameters swapped; the press not playing; the release cutting rather than fading.</remarks>
+	[TestMethod]
+	public void AnEffortThumbHeldPlaysItsSound()
+	{
+		WithAParksAudio( park =>
+		{
+			var screen = new UI.ParkResearchScreen( new UI.WindowStack(), ParkResearchScreenTests.FreshLab( (BaseFileSystem)FileSystem ), () => 3, 60, park );
+			var rides = screen.Root.Children.OfType<UI.UiSlider>().Single( slider => slider.Id == 0xd2d0e );
+
+			rides.SetValue( 60 );
+			rides.Moved!();
+			Assert.IsFalse( park.ScriptVoices.Any( sound => sound.Effect == 0x9c ), "no thumb held" );
+
+			rides.SetValue( 100 );
+			rides.ThumbPressed!();
+			var effort = park.ScriptVoices.Single( sound => sound.Effect == 0x9c );
+
+			Assert.IsTrue( effort.Plain );
+			CollectionAssert.AreEqual( new[] { 0, 100, 100, 0 }, effort.Values );
+			Assert.AreEqual( (15, 36), effort.Kept );
+			Assert.AreEqual( MathF.Pow( 2f, 37f / 96f ), (float)effort.Voice!.Rate, 1e-4f );
+
+			rides.SetValue( 50 );
+			rides.Moved!();
+			Assert.AreEqual( (8, 6), effort.Kept );
+			Assert.AreEqual( ParkAudio.ChannelGain( 8 ), effort.Voice.Volume, 1e-5f );
+
+			var faded = park.ScriptSounds.Faded;
+			rides.ThumbReleased!();
+			Assert.AreEqual( (true, faded + 1), (effort.Stopped, park.ScriptSounds.Faded) );
+		} );
 	}
 
 	/// <summary>The End's sound node 10 on its model, in whole units of the world, the height last.</summary>

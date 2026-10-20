@@ -132,8 +132,8 @@ Simulation with a researcher, the screen (Q590).
       is the guest's `mNumRides` (Q177b); shops, sideshows and visitors' Time In Park stay blank and counted
       rather than carrying a plausible wrong quantity. **UITEXT row 117 is literally `"?"`** - the original ships that visitor
       column unnamed too.
-- [ ] **RESEARCH** - its two boxes are built (Q410) and its screen (Q590); the pumps' motion and the screen's sounds are
-      counted (`RESEARCH_PUMPS`, `RESEARCH_SCREEN_SOUNDS`, Q705).
+- [x] **RESEARCH** - built: its two boxes (Q410), its screen (Q590), and the screen's pumps and three sounds (Q705),
+      each confirmed beside the original.
 - [x] **PATHS - DONE 2026-09-21, and verified in the running game.** `path 10 10` lays one for
       **20** (`Costs.PathCell`, measured from `Standard.sam` and confirmed through the game's own
       balance reader); `delpath` lifts one and **refunds nothing**, which is the original's own

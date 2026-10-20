@@ -30,9 +30,20 @@ namespace OpenTPW.UI;
 /// </para>
 ///
 /// <para>
-/// Not built here, each counted where the original does it: the pumps' motion (<c>RESEARCH_PUMPS</c>; a pump stands at
-/// the frame the opening gives it, <c>0x30</c>) and the screen's three sounds and their parameters
-/// (<c>RESEARCH_SCREEN_SOUNDS</c>).
+/// <b>The pumps</b> (<see cref="ResearchPump"/>) are handed each kind's rate, <c>Lab_KindRate</c> where the kind has a
+/// current project and nought where not, at the opening, after a drag and for a kind left with nothing to research
+/// (<c>ResearchScreen_RefreshPumps</c>, <c>0x004a9c70</c>). The original moves them once a UI pass, on no clock;
+/// <b>here they move on <see cref="Time.Delta"/> at <see cref="PassesPerSecond"/></b>, the passes measured in the
+/// original under its 30 frames a second, so a pump runs as fast at any frame rate (a deviation, <c>docs/exe/hud.md</c>,
+/// "The pump").
+/// </para>
+///
+/// <para>
+/// <b>The sounds</b>, out of <c>cat_ui</c> and flat: two loops started as it opens, <c>0x9a</c> (the music's class; its
+/// zone parameter <c>0x12</c> the five rates' mean, its volume parameter <c>0xc</c>) and <c>0x9b</c> (the music's class,
+/// parameter <c>0xd</c> both its zone and its volume and pitch), both <c>0xc</c> and <c>0xd</c> set from the work-load
+/// slider's value, <c>v × 100 / 1024</c>; and <c>0x9c</c> (the plain class) while an effort thumb is held, its volume
+/// parameter <c>0xa</c> and pitch parameter <c>0xb</c> the effort, faded at the release. All three stop as it goes.
 /// </para>
 /// </summary>
 internal sealed class ParkResearchScreen : UiWindow
@@ -50,8 +61,17 @@ internal sealed class ParkResearchScreen : UiWindow
 	/// <summary>How often the screen's timer sets the bars again, in real milliseconds (<c>0x80080</c>, armed with 1000 on message <c>0x15</c>).</summary>
 	internal const long TickEvery = 1000;
 
-	/// <summary>The frame each pump is given as the screen opens (<c>FUN_0065d3a3( 0x30 )</c>).</summary>
-	internal const int PumpFrame = 0x30;
+	/// <summary>
+	/// The original's UI passes a second, each of which moves a pump once (message <c>0x1e</c>, <c>UI_TickTree</c>), measured
+	/// with the screen open under its 30 frames a second (<c>docs/exe/hud.md</c>, "The pump").
+	/// </summary>
+	internal const float PassesPerSecond = 30f;
+
+	/// <summary>The screen's three sounds in <c>cat_ui</c>, and the parameters it sets on them.</summary>
+	internal const int LoopSound = 0x9a, WorkSound = 0x9b, EffortSound = 0x9c;
+
+	internal const int RateParameter = 0x12, LoopVolumeParameter = 0xc, WorkParameter = 0xd, EffortVolumeParameter = 0xa,
+		EffortPitchParameter = 0xb;
 
 	/// <summary>The bars' label: font slot 6 (<c>FUN_00485a70</c>), red (<c>FUN_0065c5d5( 0xe0, 0x56, 0x56, 0xff )</c>), in the middle both ways.</summary>
 	private const int LabelFont = 6;
@@ -88,6 +108,10 @@ internal sealed class ParkResearchScreen : UiWindow
 
 	private readonly ParkObjectWindow.UiStatBar[] _bars = new ParkObjectWindow.UiStatBar[ParkWorld.ResearchKindCount];
 	private readonly UiControl[] _pumps = new UiControl[ParkWorld.ResearchKindCount];
+	private readonly ResearchPump[] _pumpStates = Enumerable.Range( 0, ParkWorld.ResearchKindCount ).Select( _ => new ResearchPump() ).ToArray();
+
+	/// <summary>The passes owed and not yet run, as a fraction of one.</summary>
+	private float _passesOwed;
 	private readonly UiSlider[] _efforts = new UiSlider[ParkWorld.ResearchKindCount];
 	private readonly UiSlider _workLoad;
 	private readonly UiControl _dial;
@@ -108,17 +132,25 @@ internal sealed class ParkResearchScreen : UiWindow
 	/// <summary>The park whose advisor this screen has asked for its line.</summary>
 	private ParkState? _asked;
 
+	/// <summary>The two loops (<c>[0x007cc1d0]</c>, <c>[0x007cc1cc]</c>) and the effort's sound while a thumb is held (<c>[0x007cc1d4]</c>).</summary>
+	private readonly ParkAudio? _audio;
+	private readonly ParkAudio.ScriptVoice? _loop, _work;
+	private ParkAudio.ScriptVoice? _effort;
+
 	public ParkResearchScreen( WindowStack stack )
-		: this( stack, Level.Current?.Research, () => ParkPeople.Current?.ResearchAbility ?? 0, ParkPeople.Current?.MostResearchAbility ?? 0 ) { }
+		: this( stack, Level.Current?.Research, () => ParkPeople.Current?.ResearchAbility ?? 0, ParkPeople.Current?.MostResearchAbility ?? 0,
+			ParkAudio.Current ) { }
 
 	/// <param name="ability">The researchers' <c>ResearchAbility</c> added up, asked as the screen opens and on every pass (<c>FUN_004c9e60</c>).</param>
 	/// <param name="most">The most research the staff could do (<c>FUN_004c9ed0</c>), asked as the screen opens.</param>
-	internal ParkResearchScreen( WindowStack stack, ParkResearch? lab, Func<int> ability, int most ) : base( stack )
+	/// <param name="audio">The park's sounds, which play the screen's; null for none.</param>
+	internal ParkResearchScreen( WindowStack stack, ParkResearch? lab, Func<int> ability, int most, ParkAudio? audio = null ) : base( stack )
 	{
 		// Built onto the park's own layer, as the other park screens are: not modal, and the park goes on.
 		ParkScreen = true;
 		_lab = lab;
 		_abilityNow = ability;
+		_audio = audio;
 
 		// w_res: the stream's hash 0x6c9ffd68 is the node "research_wind".
 		Root = new UiControl
@@ -179,8 +211,9 @@ internal sealed class ParkResearchScreen : UiWindow
 
 		_seeding = true;
 
-		// The opening's sounds 0x9a and 0x9b, looped: not built.
-		Unimplemented.Report( "RESEARCH_SCREEN_SOUNDS" );
+		// The opening's two loops, started before the knob is set, so its round trip sets their parameters.
+		_loop = _audio?.PlayInterfaceSound( LoopSound );
+		_work = _audio?.PlayInterfaceSound( WorkSound );
 
 		_most = most;
 		SetLimit( ability() );
@@ -209,7 +242,14 @@ internal sealed class ParkResearchScreen : UiWindow
 	internal string Census()
 		=> $"workload {_lab?.WorkLoad ?? 0} limit {_limit} knob {_workLoad.Value} dial {_dial.Frame} gauge {_gauge.Value} ability {_ability} most {_most}; "
 			+ string.Join( "; ", KindOrder.Select( kind => $"kind {kind} bar {_bars[kind].Units} effort {_efforts[kind].Value} "
-				+ $"output {(_lab is { } lab && kind < lab.Kinds.Count ? lab.Kinds[kind].Output : 0)} label '{_bars[kind].Text?.Replace( "\n", " / " )}'" ) );
+				+ $"output {(_lab is { } lab && kind < lab.Kinds.Count ? lab.Kinds[kind].Output : 0)} label '{_bars[kind].Text?.Replace( "\n", " / " )}'"
+				+ $" rate {PumpRate( kind )} pump {_pumpStates[kind]} passes {_pumpStates[kind].Passes}" ) )
+			+ $"; sounds {Sound( "loop", _loop )}, {Sound( "work", _work )}, {Sound( "effort", _effort )}";
+
+	private static string Sound( string name, ParkAudio.ScriptVoice? sound )
+		=> sound is null ? $"{name} none"
+			: $"{name} {sound.Effect} {(sound.Stopped ? "stopped" : sound.Voice is { Playing: true } ? "playing" : "silent")} variation {sound.Variation + 1} "
+				+ $"samples {sound.Samples} values {string.Join( ",", sound.Values )} volume {sound.Kept.Volume} pitch {sound.Kept.Pitch}";
 
 	/// <summary>One kind's panel: <c>res_panel</c> skinned <c>res_pipe</c> in its text rect, its icon, arrows, bar and pump.</summary>
 	private UiControl Panel( Row row )
@@ -251,7 +291,7 @@ internal sealed class ParkResearchScreen : UiWindow
 			Rect = new UiRect( 1555, 196 + down, 1712, 264 + down ),
 			HelpText = 260,
 			Mesh = UiMesh.Get( "res_fluid" ),
-			Frame = PumpFrame
+			Frame = ResearchPump.RestFrame
 		} );
 
 		return panel;
@@ -293,6 +333,8 @@ internal sealed class ParkResearchScreen : UiWindow
 		};
 
 		slider.Moved = () => EffortMoved( row.Kind, slider.Value );
+		slider.ThumbPressed = () => EffortPressed( slider.Value );
+		slider.ThumbReleased = EffortReleased;
 		slider.AddThumb( new UiSliderThumb { Id = 3, Rect = row.Thumb, Mesh = UiMesh.Get( "b_scroller" ) } );
 
 		return slider;
@@ -309,19 +351,47 @@ internal sealed class ParkResearchScreen : UiWindow
 			EffortMoved( kind, _efforts[kind].Value );
 	}
 
-	/// <summary>Message <c>0x800</c> from an effort slider: <c>Lab_SetEffort</c> with the value, then (past the opening) the pumps.</summary>
+	/// <summary>
+	/// Message <c>0x800</c> from an effort slider: <c>Lab_SetEffort</c> with the value, then (past the opening) the pumps,
+	/// and the effort's sound's parameters <c>0xb</c> and <c>0xa</c> where one is held.
+	/// </summary>
 	private void EffortMoved( int kind, int value )
 	{
 		_lab?.SetEffort( kind, value );
 
 		if ( !_seeding )
-		{
 			RefreshPumps( -1 );
 
-			// The press's sound 0x9c and its parameters 0xb and 0xa: not built.
-			Unimplemented.Report( "RESEARCH_SCREEN_SOUNDS" );
+		SetParameter( _effort, EffortPitchParameter, value );
+		SetParameter( _effort, EffortVolumeParameter, value );
+
+		if ( !_seeding )
 			Log.Info( $"Research screen: effort of kind {kind} to {value}, {Census()}" );
-		}
+	}
+
+	/// <summary>Message <c>0x801</c>, an effort thumb taken hold of: sound <c>0x9c</c>, its parameters <c>0xb</c> and <c>0xa</c> the effort.</summary>
+	private void EffortPressed( int value )
+	{
+		_effort = _audio?.PlayInterfaceSound( EffortSound );
+		SetParameter( _effort, EffortPitchParameter, value );
+		SetParameter( _effort, EffortVolumeParameter, value );
+		Log.Info( $"Research screen: an effort thumb pressed at {value}, sound {EffortSound} {(_effort == null ? "not made" : "made")}" );
+	}
+
+	/// <summary>Message <c>0x802</c>, an effort thumb let go: its sound faded (<c>Sound_StopFading</c>) and forgotten.</summary>
+	private void EffortReleased()
+	{
+		if ( _effort != null )
+			_audio?.StopScriptSound( _effort, fade: true );
+
+		_effort = null;
+	}
+
+	/// <summary><c>Sound_SetParameter</c> on one of the screen's voices; nothing for none, as a handle of nought finds none.</summary>
+	private void SetParameter( ParkAudio.ScriptVoice? sound, int id, int value )
+	{
+		if ( sound != null )
+			_audio?.SetScriptSoundParameter( sound, id, value );
 	}
 
 	/// <summary>
@@ -363,8 +433,13 @@ internal sealed class ParkResearchScreen : UiWindow
 		SetFills();
 		_dial.Frame = 2 * along / 7;
 
-		// The two loops' parameters 0xc and 0xd: not built.
-		Unimplemented.Report( "RESEARCH_SCREEN_SOUNDS" );
+		// Both loops' 0xc and 0xd, in the original's order: 0x9a takes 0xc, 0x9b 0xd.
+		var level = _workLoad.Value * 100 / 1024;
+		SetParameter( _loop, LoopVolumeParameter, level );
+		SetParameter( _work, LoopVolumeParameter, level );
+		SetParameter( _loop, WorkParameter, level );
+		SetParameter( _work, WorkParameter, level );
+
 		Log.Info( $"Research screen: work load slider at {_workLoad.Value}, {Census()}" );
 	}
 
@@ -398,14 +473,54 @@ internal sealed class ParkResearchScreen : UiWindow
 	/// <summary>UITEXT 446, "{P14}" over "Estimated price : $ {P13}".</summary>
 	internal const int ProjectText = 446;
 
-	/// <summary><c>ResearchScreen_RefreshPumps</c> (<c>0x004a9c70</c>): each pump handed its kind's rate. Not built.</summary>
-	private static void RefreshPumps( int kind ) => Unimplemented.Report( "RESEARCH_PUMPS" );
+	/// <summary>
+	/// <c>ResearchScreen_RefreshPumps</c> (<c>0x004a9c70</c>): the pump of <paramref name="kind"/>, or of every kind for -1,
+	/// handed its rate; then the loop <c>0x9a</c>'s parameter <c>0x12</c> set to the five rates' mean, in whole numbers.
+	/// </summary>
+	private void RefreshPumps( int kind )
+	{
+		foreach ( var each in KindOrder )
+		{
+			if ( kind < 0 || kind == each )
+				_pumpStates[each].SetRate( PumpRate( each ) );
+		}
+
+		SetParameter( _loop, RateParameter, KindOrder.Sum( PumpRate ) / KindOrder.Length );
+		ShowPumps();
+	}
+
+	/// <summary>A kind's pump's rate: <c>Lab_KindRate</c> (<see cref="ParkResearch.Rate"/>) with a current project, else nought.</summary>
+	internal int PumpRate( int kind )
+		=> _lab is { } lab && lab.CurrentItem( kind ) != 0 ? lab.Rate( kind, _abilityNow(), _most ) : 0;
+
+	private void ShowPumps()
+	{
+		foreach ( var kind in KindOrder )
+			_pumps[kind].Frame = _pumpStates[kind].Frame;
+	}
+
+	/// <summary>A kind's pump, for the tests.</summary>
+	internal ResearchPump Pump( int kind ) => _pumpStates[kind];
 
 	private int CurrentProject( int kind ) => _lab is { } lab && kind < lab.Kinds.Count ? lab.Kinds[kind].CurrentProject : -1;
+
+	/// <summary>
+	/// <c>Research_OnKindFinished</c> (<c>0x004aaec0</c>) while the screen is up: the finished kind's label and bar again,
+	/// which for a kind left with nothing stops its pump.
+	/// </summary>
+	private void KindFinished( int kind )
+	{
+		SetProjectText( kind );
+		SetFill( kind );
+		Log.Info( $"Research screen: kind {kind} finished a project, now project {CurrentProject( kind )}, {Census()}" );
+	}
 
 	/// <summary>The opener's last act (<c>FUN_00486b00( 200 )</c>): the advisor is posted the screen's line.</summary>
 	protected internal override void Shown()
 	{
+		if ( _lab != null )
+			_lab.KindFinished = KindFinished;
+
 		if ( _asked != null || Level.Current?.ParkState is not { AdvisorMessages: { } lines } park )
 			return;
 
@@ -413,9 +528,23 @@ internal sealed class ParkResearchScreen : UiWindow
 		lines.Post( ParkAdvisorMessages.ResearchScreen, park.GameTick );
 	}
 
-	/// <summary>The screen's destroy (event <c>0x14</c>): message 200 withdrawn, which cuts him off where he is saying it.</summary>
+	/// <summary>
+	/// The screen's destroy (event <c>0x14</c>): the three sounds stopped (<c>Sound_Stop</c>, the effort's where one is held)
+	/// and message 200 withdrawn, which cuts him off where he is saying it.
+	/// </summary>
 	protected internal override void Closed()
-		=> _asked?.AdvisorMessages?.Withdraw( ParkAdvisorMessages.ResearchScreen, (long)(GameClock.Now * 1000), () => Advisor.Current?.StopSpeaking() );
+	{
+		if ( _lab?.KindFinished == KindFinished )
+			_lab.KindFinished = null;
+
+		foreach ( var sound in new[] { _loop, _work, _effort } )
+		{
+			if ( sound != null )
+				_audio?.StopScriptSound( sound, fade: false );
+		}
+
+		_asked?.AdvisorMessages?.Withdraw( ParkAdvisorMessages.ResearchScreen, (long)(GameClock.Now * 1000), () => Advisor.Current?.StopSpeaking() );
+	}
 
 	protected internal override void Update()
 	{
@@ -429,5 +558,24 @@ internal sealed class ParkResearchScreen : UiWindow
 			Log.Info( $"Research screen: the researchers' ability is {ability}, was {_ability}" );
 			SetLimit( ability );
 		}
+
+		RunPasses( Time.Delta );
+	}
+
+	/// <summary>
+	/// The pumps' passes owed over <paramref name="seconds"/> at <see cref="PassesPerSecond"/>, each moving every pump once,
+	/// a second's worth at most after a long frame.
+	/// </summary>
+	internal void RunPasses( float seconds )
+	{
+		_passesOwed = MathF.Min( _passesOwed + (seconds * PassesPerSecond), PassesPerSecond );
+
+		for ( ; _passesOwed >= 1f; _passesOwed -= 1f )
+		{
+			foreach ( var pump in _pumpStates )
+				pump.Pass();
+		}
+
+		ShowPumps();
 	}
 }

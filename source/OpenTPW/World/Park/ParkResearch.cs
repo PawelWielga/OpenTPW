@@ -81,6 +81,13 @@ public sealed class ParkResearch
 	/// </summary>
 	public Action<int>? AllDone { get; set; }
 
+	/// <summary>
+	/// A project finished and its kind's next picked: the kind. The research screen, while open, letters and fills that
+	/// kind's panel again (<c>Research_OnKindFinished</c>, <c>0x004aaec0</c>, on the lab's message <c>0x12</c>), and with
+	/// nothing left to research stops its pump.
+	/// </summary>
+	public Action<int>? KindFinished { get; set; }
+
 	/// <param name="records">The save's records, <see cref="ParkWorld.ObjectControlRecords"/>.</param>
 	/// <param name="projects">The save's lab's projects, <see cref="ParkWorld.ResearchProjects"/>; none where no file gave any.</param>
 	/// <param name="kinds">The save's lab's kinds' records, <see cref="ParkWorld.ResearchKinds"/>; none where no file gave any.</param>
@@ -308,6 +315,8 @@ public sealed class ParkResearch
 
 		if ( !KindHasOpenProject( kind ) )
 			PickNextProject( kind );
+
+		KindFinished?.Invoke( kind );
 
 		var allDone = _projects.All( IsDone );
 

@@ -988,9 +988,12 @@ channel, though its parameter had gone to 75, and then took 5 ("A voice out of r
 **OpenTPW** builds the class for a script (`ScriptVoiceClass.Music`, `ScriptVoice.Music`, `Key`, `Parameter`, `Parked`;
 `ParkAudio.SetScriptSoundParameter`): served as the plain class is, each later sample by the zones at its parameter,
 the volume and pitch its first drew; `SETOBJPARAM` sets slot 0 on its record's voice and keeps the handle while the voice
-lives (`RideEffects.SetParameter`), nought with no sound. Counted: a set whose key is a slot past 0's
-(`RIDE_EFFECT_SOUND_PARAMETER_APPLIES`) and a set on a voice of another class (`RIDE_EFFECT_SOUND_PARAMETER_OTHER_CLASS`),
-neither shipped. A parked voice is woken as the original's, which no shipped zone reaches (effect 6's hold 0 to 100). The
+lives (`RideEffects.SetParameter`), nought with no sound. A set whose key is a slot past 0's applies the volume and
+the pitch again at once (`ParkAudio.ApplyControllers`, `0x006bbbe0`), on this class and the plain one, whose slot
+`+0x28` is the same base: the research screen's loops and its effort sound are its users (Q705, `hud.md`, "The research
+screen's sounds"), no script's. A voice's first sample takes its volume and pitch from its controllers' values as they
+stand (`ParkAudio.ControlledSample`). Counted: a set on a voice of another class (`RIDE_EFFECT_SOUND_PARAMETER_OTHER_CLASS`),
+none shipped. A parked voice is woken as the original's, which no shipped zone reaches (effect 6's hold 0 to 100). The
 bus's nodes stand as its file holds them, root and all (`ParkRides.Stand`, as the End's), and its route keys carry them
 (`NodePoser`; `park.md`, "Clip content: tracks, hide lists, rotation, visibility"). The bus here (`q561/confirm.py`, run4, the final binary): the voice from (686,-77) along
 the road, variation 1 first, 26 samples by the zones, each at pitch -24 and 0.3740, stopped by `KILLOBJ 1`. **Not the

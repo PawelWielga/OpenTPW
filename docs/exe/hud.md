@@ -610,12 +610,20 @@ to `(rate + 20) x 0x10000 / 100` (a rate of nought leaves the speed as it was). 
 each panel's proc runs) acts on message `0x1e`, which `UI_TickTree` sends every control of the tree once a UI pass
 (`FUN_0048a580`, run from six places in `Game_StateMachine`), so no clock paces it: state 1 runs frames `0x00` to `0x1f`
 and starts again; state 3 runs `0x30` to `0x3f`, then state 1 from 0; state 2 runs `0x20` to `0x2f`, then stops in state 0
-at `0x30`. Each pass adds twice the speed, so a pump moves `2 x (rate + 20) / 100` frames a pass. The rate is
+at `0x30`. Each pass adds twice the speed, so a pump moves `2 x (rate + 20) / 100` frames a pass. `res_fluid` holds 64
+parts, the frames: `fluid` to `fluid32` (0 to `0x1f`, the run) and `empty01` to `empty32` (`0x20` to `0x3f`, the drain and
+the fill; `0x30` is the rest). **Measured in the original (Q705, `q705b/orig/b`, the real screen, the 30 frames a second
+cap, the clock TRUE; `original/respump.py`):** the rides' pump at rate 2 took 600 passes in 20.00 s of the wall clock,
+30.00 a second, its stamps 33 ms apart (25 to 42), so a pass a frame, and ran 13.14 frames a second; after a drag, rides
+and sideshows at rate 1 (speed 13762) 30.00 passes and 12.46 frames a second each. The rate is
 `Lab_KindRate( kind )` (`0x00503980`; `advisor-park.md`, "The rate") where the kind has a current project
 (`Lab_KindCurrentItem`, `0x005039f0`), and nought where not. `ResearchScreen_RefreshPumps( kind or -1 )` (`0x004a9c70`)
-hands the pumps their rates, then sets the parameter `0x12` of the loop sound `0x9a` to the mean of the five rates. It
-runs at the opening, after an effort or workload drag (not while the opening seeds the sliders, `[0x007cc1bc]`), and
-for a kind left with no project.
+hands the pumps their rates, then sets the parameter `0x12` of the loop sound `0x9a` to the mean of the five rates (all
+five, whatever the kind asked). It runs at the opening, after an effort or workload drag (not while the opening seeds
+the sliders, `[0x007cc1bc]`), and for a kind left with no project. `Research_OnKindFinished` (`0x004aaec0`), the lab's
+message `0x12` for a finished project, picks the kind's next where it has none open and, with the screen up, letters
+and fills that kind's panel again (`ResearchScreen_SetProjectText`, `ResearchScreen_SetFill`), which for a kind left with
+nothing stops its pump.
 
 **The arrows.** A panel's proc on `0x100` (a click): `0xd2d03` runs `Lab_PickPreviousProject( kind )` (`0x005036a0`), the
 other `Lab_PickNextProject`, then the text and the bar. Back takes the nearest open project of the kind at or under its
@@ -625,8 +633,12 @@ it is done; for kind 4 the same test of the upgraded item as forward's (`park-en
 **The sliders.** Message `0x800` from a slider: the five efforts go to `Lab_SetEffort( kind, value )`, the value
 unchanged; the workload slider's value is held to the limit and `Lab_SetWorkLoad( 30 x value / limit + 70 )`, then all
 five bars are set, the dial `0xd2d11` to frame `2 x (30 x value / limit) / 7` (0 to 8), and the parameters `0xc` and `0xd`
-of both loop sounds (`0x9a`, `0x9b`) to `value x 100 / 1024`. A press on an effort slider (`0x801`) starts sound `0x9c`
-with its parameters `0xb` and `0xa` the value, a drag updates them, the release (`0x802`) fades it. The limit and the knob
+of both loop sounds (`0x9a`, `0x9b`) to `value x 100 / 1024`, in the order (`0x9a`, `0xc`), (`0x9b`, `0xc`), (`0x9a`, `0xd`),
+(`0x9b`, `0xd`). A press on an effort slider's thumb (`0x801`, `Slider_NotifyPressed` `0x0066b9bc` on the thumb's `0x10005`;
+a click on the track pages and sends none) starts sound `0x9c` with its parameters `0xb` and `0xa` the value, each `0x800`
+of an effort slider sets them again on the handle `[0x007cc1d4]` (nought with no thumb held, which finds no voice), and
+the release (`0x802`, `Slider_NotifyReleased` `0x0066b9ef` on `0x10004`, after the thumb is put where its value belongs) fades it
+(`Sound_StopFading`) and clears the handle. The limit and the knob
 are set again on `0x1e` when the researchers' summed ability changes. **Measured in the original (Q590):** a slider's value setter
 (vtable `+0x1c`, `Slider_SetValue` `0x0066b508`, then `Slider_SetPosition`) sends `0x800` to its parent whenever the
 value changes, and the opening sets the knob after the limit, so the opening, and each `0x1e` that finds the summed ability changed, runs
@@ -655,10 +667,26 @@ and those pumps on the right show how fast the work is going; if you want to cha
 click the left and right arrow buttons; drag the vertical slider on the left to determine how hard your researchers
 work", `global-speech-transcripts.tsv`). Message 5 and the close button close it; `0x14` (destroyed) stops the three
 sounds and withdraws message 200. The knob's own proc (`ResearchScreen_KnobProc`, `0x004a9f90`) clears `[0x007cc1dc]`
-when it goes. Not read: the pump's frame count in `res_fluid`, how the dial draws, what the sounds'
-parameters do. The gauge is `Meter_Construct`'s (`0x00477870`), the happiness gauge's two-halves meter with
+when it goes. Not read: how the dial draws. The gauge is `Meter_Construct`'s (`0x00477870`), the happiness gauge's two-halves meter with
 `effortguage.wct`, at 0 to 1024; the bars `FUN_00477ff0`'s, the stat bars' skin with `bluebar.wct`, whose filled part
 is the dark half, from the left.
+
+**The research screen's sounds** (`cat_ui`, `lib/sfxmap.py`; every effect of the category flagged `0x200`, so flat;
+`audio.md`, "A voice's two controllers" for the rule). `0x9a`: flags `0x0606`, the music's class, its zone parameter key
+18 (`0x12`); two variations of three samples each, every one volume 8 to 85 controlled by key 12 (`0xc`, mask 1), no
+pitch, no wait; from either, a parameter of 1 to 100 goes to variation 1 and 0 to variation 2. `0x9b`: `0x0606`, key 13
+(`0xd`) both the zone parameter and, in every variation, the controller of volume 2 to 20 and pitch -8 to 8 (mask 3);
+variation 1 one sample, variation 2 ten; 0 to 80 goes to 1, 81 to 100 to 2. `0x9c`: `0x0206`, the plain class, no key;
+four variations of one sample each, volume 2 to 15 by key 10 (`0xa`) and pitch -24 to 36 by key 11 (`0xb`), no wait. So
+the work-load knob's `0xc` is `0x9a`'s volume and `0xd` `0x9b`'s zone, volume and pitch; the rates' mean picks `0x9a`'s
+variation; the effort is `0x9c`'s volume and pitch, each set applied to the sounding sample at once. **Measured in the
+original (Q705, `q705b/orig/b`; `musicvoices.py`, `mixfreq.py 2d`), predicted first:** with one researcher of grade 1
+(rates 2, 0, 0, 0, 0, the mean 0) the opening left `0x9a` keys 18,12,0,0 values 0,29,0,0 on variation 1 and then 2
+throughout, its channel 22 of 127 at its sample's own rate; `0x9b` keys 13,13,0,0 values 29,29,0,0 on variation 1, 5 of
+127 at 21268 (22050 × 2^(-5/96), pitch -4); the rides' thumb pressed at 100, `0x9c` came with keys 0,10,11,0 values
+0,100,100,0 at 11 of 127 and 28803 (pitch 36), each draw a variation other than the one before; dragged to 51, values
+93, 84 ... 51 and 6 of 127 at 23193 (volume 8, pitch 6); let go, gone 337 ms later. While the advisor spoke row 200
+every channel read lower (the music 22 of its 60, `0x9a` 8, `0x9b` 2): his duck.
 
 **Built** (Q590, `ParkResearchScreen`, opened by `ParkResearchOpener`; the lab's `SetEffort`, `SetWorkLoad`,
 `PercentLeftOfDearest`, `EstimatedPrice`, `PickNext`, `PickPrevious`, `MostExpensiveProject`; `UiSlider.Vertical`): the
@@ -666,9 +694,19 @@ stream's frame, title, five panels with icon, arrows, bar, label, pipe and pump,
 slider with its gauge and dial, the tick, the 1000 ms timer, the ability watched on every pass, the opening's round trip,
 and advisor row 200 posted as it opens and withdrawn as it goes. A kind's price is the item's control record's `+0x04`,
 read from the park file (a fresh park's, the item's own); a fresh world's dearest project is the fill's (`0x00503225`).
-`mWorkLoad` and `mMostExpensiveProject` are written with the park. Counted, not built: the pumps' motion
-(`RESEARCH_PUMPS`, each standing at frame `0x30`) and the three sounds and their parameters (`RESEARCH_SCREEN_SOUNDS`);
-the rest of the item is Q705. **Confirmed in both games** on one scene (`q705/fs1.TPWS`, q327's `FSFRESH.TPWS` with its
+`mWorkLoad` and `mMostExpensiveProject` are written with the park. **The pumps and the sounds** (Q705; `ResearchPump`,
+`ParkResearchScreen.RefreshPumps`, `RunPasses`; `ParkAudio.PlayInterfaceSound`, `SetScriptSoundParameter`,
+`ApplyControllers`; `UiSlider.ThumbPressed`, `ThumbReleased`; `ParkResearch.KindFinished`): the pumps' states and rates
+as above, moved on `Time.Delta` at 30 passes a second, the original's measured rate under its 30 frames a second cap,
+where the original moves them once a frame at whatever rate it draws (**a deviation**, said at
+`ParkResearchScreen.PassesPerSecond`); the three sounds as script voices of `cat_ui` with their controllers, each set
+past slot 0 applying the volume and pitch to the sounding sample; a finished kind lettered again at once. Said: a held
+voice's next sample is drawn as the last ends here, where the original's queues it soon after the last starts, so a
+parameter changed in between picks here and not there. **Confirmed in both games** (Q705, `q705b/PREDICTION.txt`
+rounds O and G): above for the original; here the same census (`researchscreen`: rides rate 2, starting at `0x30` at
+14417; the loops' values and volumes 30/0 and 7/-4), 29.93 passes a second, the rides' pump green and the other four
+dark in both frames (`q705b/run2/2-pumps.png`, `q705b/orig/b/o4-pump1.png`), the thumb's `0x9c` at 15/36 and, dragged to
+49, 8/5, faded at the release, and the loops stopped at the close. **Q590's, confirmed in both games** on one scene (`q705/fs1.TPWS`, q327's `FSFRESH.TPWS` with its
 researcher written to grade 1), predicted first (`q705/PREDICTION.txt`): the original's work load 85 to 82 over three
 openings and its five bars within a frame pixel of the rule (round O, `q705/orig/d/t4-open1.png`); this game's census at
 the opening `workload 84 limit 597 knob 298 dial 4 gauge 597 ability 3 most 60`, bars 624, 839, 686, 501 and 839, the

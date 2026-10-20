@@ -184,11 +184,20 @@ public sealed partial class ParkAudio
 		public bool Held { get; init; }
 
 		/// <summary>
-		/// The parameter, controller slot 0, which picks among the zones: nought at the start, as the controllers are
-		/// made zeroed (<c>FUN_006b7150</c>), and set by <c>SETOBJPARAM</c> (<see cref="SetScriptSoundParameter"/>), whose
-		/// only shipped users set the bus's music voice.
+		/// The four controllers' values (<c>[voice+0x4c] + 4</c>), nought as they are made (<c>FUN_006b7150</c>) and set by
+		/// <see cref="SetScriptSoundParameter"/>. Slot 0's key is <see cref="Key"/>, slots 1 and 2 carry the current
+		/// variation's two keys and slot 3 the key nought (<c>FUN_006bbf00</c>), which leaves the values as they were.
 		/// </summary>
-		public int Parameter { get; set; }
+		public int[] Values { get; } = new int[4];
+
+		/// <summary>
+		/// The parameter, controller slot 0, which picks among the zones: set by <c>SETOBJPARAM</c>, whose only shipped
+		/// users set the bus's music voice, and by the research screen's loops.
+		/// </summary>
+		public int Parameter { get => Values[0]; set => Values[0] = value; }
+
+		/// <summary>Who started it, for the log: a script, or the interface (<see cref="InterfaceOwner"/>).</summary>
+		public string Owner => Script == InterfaceOwner ? "the interface" : $"script {Script}";
 
 		/// <summary>When a chain's next child is made: its newest child's start and that child's wait (<c>0x006bdb88</c>).</summary>
 		public float NextAt { get; set; }
@@ -366,7 +375,7 @@ public sealed partial class ParkAudio
 		_scriptVoices.Add( sound );
 		ScriptSounds = ScriptSounds with { Started = ScriptSounds.Started + 1 };
 
-		Log.Info( $"Park audio: script {scriptId} started effect {effect} of type {type} (flags 0x{flags:x}, {sound.Kind}) "
+		Log.Info( $"Park audio: {sound.Owner} started effect {effect} of type {type} (flags 0x{flags:x}, {sound.Kind}) "
 			+ $"sample '{sound.Voice?.Name ?? sound.Clip?.Name}'{(sound.Away ? " held" : "")} volume {sound.Voice?.Volume ?? 0f:0.0000} "
 			+ (sound.Place is { } place ? $"at ({place.X:0},{place.Y:0},{place.Z:0}) range {sound.Voice?.Range ?? 0f:0} gain {sound.Voice?.DistanceGain ?? 0f:0.0000}" : "flat") );
 
@@ -422,7 +431,7 @@ public sealed partial class ParkAudio
 			? ScriptSounds with { Faded = ScriptSounds.Faded + 1 }
 			: ScriptSounds with { Stopped = ScriptSounds.Stopped + 1 };
 
-		Log.Info( $"Park audio: script {sound.Script}'s effect {sound.Effect} of type {sound.Type} {(fade ? sound.Chain ? "faded (cut, a chain)" : "faded" : "stopped")} after {sound.Samples} sample(s)" );
+		Log.Info( $"Park audio: {sound.Owner}'s effect {sound.Effect} of type {sound.Type} {(fade ? sound.Chain ? "faded (cut, a chain)" : "faded" : "stopped")} after {sound.Samples} sample(s)" );
 	}
 
 	/// <summary>A place with each coordinate cut toward nought, as <c>__ftol</c> cuts it.</summary>
@@ -517,7 +526,7 @@ public sealed partial class ParkAudio
 		if ( sound.Refused )
 		{
 			++ScriptOneShotsRefused;
-			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} let go, its start refused, after {sound.Samples} sample(s)" );
+			Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} let go, its start refused, after {sound.Samples} sample(s)" );
 
 			return true;
 		}
@@ -525,7 +534,7 @@ public sealed partial class ParkAudio
 		if ( !sound.Looped && Time.Now > sound.DropAt )
 		{
 			++ScriptOneShotsDropped;
-			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} dropped after {sound.Samples} sample(s), "
+			Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} dropped after {sound.Samples} sample(s), "
 				+ $"its length and 250 ms past{(sound.Away ? ", out of range" : "")}" );
 
 			return true;
@@ -606,7 +615,7 @@ public sealed partial class ParkAudio
 		if ( !sound.Looped && (Time.Now > sound.DropAt || LateStart( sound )) )
 		{
 			sound.Refused = true;
-			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} start refused, "
+			Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} start refused, "
 				+ $"{(Time.Now - sound.SetUpAt) * 1000f:0} ms after its set-up into {sound.LengthMilliseconds} ms" );
 
 			return;
@@ -630,7 +639,7 @@ public sealed partial class ParkAudio
 		++sound.Samples;
 
 		if ( again )
-			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} in range again: sample '{sound.Voice.Name}' "
+			Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} in range again: sample '{sound.Voice.Name}' "
 				+ $"from the top (start {sound.Samples}), volume {sound.Voice.Volume:F4}, {sound.DropAt - Time.Now:F3} s before its drop" );
 	}
 
@@ -638,8 +647,9 @@ public sealed partial class ParkAudio
 	/// A plain or music voice's next sample: a plain voice's variation drawn among all of the effect's
 	/// (<see cref="AnyVariation"/>), a music voice's among the zones of the one before that hold its parameter
 	/// (<see cref="ParkScreams.NextVariation"/>, <c>0x006be450</c>), the first the effect's first; the volume and pitch
-	/// its first drew (<see cref="HeldSample"/>), and after each, the first included, a silence drawn from the variation's
-	/// wait (<c>0x006bdf00</c>, which a first start reaches through <c>FUN_006bc410</c>'s slot <c>+0x48</c>). A music voice
+	/// its first drew from the controllers (<see cref="ControlledSample"/>), or a set's apply since
+	/// (<see cref="ApplyControllers"/>), and after each, the first included, a silence drawn from the variation's wait
+	/// (<c>0x006bdf00</c>, which a first start reaches through <c>FUN_006bc410</c>'s slot <c>+0x48</c>). A music voice
 	/// with no zone for its parameter is parked (<c>0x006be55e</c>).
 	/// </summary>
 	private void NextScriptSample( ScriptVoice sound )
@@ -656,7 +666,7 @@ public sealed partial class ParkAudio
 			{
 				sound.Parked = true;
 				sound.Parameter = ParkedParameter;
-				Log.Info( $"Park audio: script {sound.Script}'s music {sound.Effect} parked: no zone of variation {sound.Variation + 1} holds its parameter" );
+				Log.Info( $"Park audio: {sound.Owner}'s music {sound.Effect} parked: no zone of variation {sound.Variation + 1} holds its parameter" );
 			}
 
 			return;
@@ -664,7 +674,7 @@ public sealed partial class ParkAudio
 
 		sound.Variation = next;
 		sound.Wait = ParkScreams.GapMilliseconds( headers[next], _scriptRandom );
-		sound.Kept = HeldSample( headers[next], first, sound.Kept, 0, 0, _scriptRandom );
+		sound.Kept = first ? ControlledSample( headers[next], sound.Values, _scriptRandom ) : sound.Kept;
 		sound.EndedAt = null;
 		sound.Clip = sound.Category.PickFrom( sound.Effect, next );
 
@@ -676,7 +686,7 @@ public sealed partial class ParkAudio
 			return;
 
 		if ( !first )
-			Log.Info( $"Park audio: script {sound.Script}'s effect {sound.Effect}, sample '{sound.Voice!.Name}' variation {next + 1} "
+			Log.Info( $"Park audio: {sound.Owner}'s effect {sound.Effect}, sample '{sound.Voice!.Name}' variation {next + 1} "
 				+ (sound.Music ? $"at parameter {sound.Parameter} " : "")
 				+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, {sound.Wait} ms of silence after it" );
 	}
@@ -691,7 +701,7 @@ public sealed partial class ParkAudio
 			sound.Voice = null;
 			sound.EndedAt = UnheardEnd( sound.Clip, sound.Kept.Pitch );
 			++sound.Unheard;
-			Log.Info( $"Park audio: script {sound.Script}'s effect {sound.Effect}, variation {sound.Variation + 1} unheard while the world is held, ending at {sound.EndedAt:F3} s, {sound.Wait} ms of silence after it" );
+			Log.Info( $"Park audio: {sound.Owner}'s effect {sound.Effect}, variation {sound.Variation + 1} unheard while the world is held, ending at {sound.EndedAt:F3} s, {sound.Wait} ms of silence after it" );
 			return false;
 		}
 
@@ -720,12 +730,12 @@ public sealed partial class ParkAudio
 		sound.Away = false;
 		sound.EndedAt = null;
 		sound.Wait = ParkScreams.GapMilliseconds( headers[sound.Variation], _scriptRandom );
-		sound.Kept = HeldSample( headers[sound.Variation], first: true, sound.Kept, 0, 0, _scriptRandom );
+		sound.Kept = ControlledSample( headers[sound.Variation], sound.Values, _scriptRandom );
 
 		if ( !PlayScriptSample( sound ) )
 			return;
 
-		Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} in range again: sample '{sound.Voice!.Name}' variation {sound.Variation + 1} afresh, "
+		Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} in range again: sample '{sound.Voice!.Name}' variation {sound.Variation + 1} afresh, "
 			+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, {sound.Wait} ms of silence after it" );
 	}
 
@@ -743,13 +753,13 @@ public sealed partial class ParkAudio
 		if ( !near )
 		{
 			sound.Away = true;
-			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} out of range at ({sound.Place!.Value.X:0},{sound.Place.Value.Y:0}), "
+			Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} out of range at ({sound.Place!.Value.X:0},{sound.Place.Value.Y:0}), "
 				+ $"variation {sound.Variation + 1} held after {sound.Samples} sample(s)" );
 		}
 		else if ( sound.Chain )
 		{
 			sound.Away = false;
-			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} in range again after {sound.Samples} child(ren)" );
+			Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} in range again after {sound.Samples} child(ren)" );
 		}
 
 		return near;
@@ -786,13 +796,14 @@ public sealed partial class ParkAudio
 	internal int ScriptParameterSets { get; private set; }
 
 	/// <summary>
-	/// <c>FUN_0051bc40( handle, id, level )</c> on a script's voice, for <c>SETOBJPARAM</c>: answers whether the voice still
-	/// lives, which is whether the original's lookup (<c>0x006b6620</c>) finds it and answers its handle rather than
-	/// nought. Every controller slot whose key is <paramref name="id"/>'s low byte takes <paramref name="level"/>'s
-	/// (<c>0x006bbb80</c>); slot 0's key is the effect's own (<see cref="ScriptVoice.Key"/>), and on a music voice it is the
-	/// zone parameter, a parked voice drawing again at a set to anything but <see cref="ParkedParameter"/>
-	/// (<c>0x006be580</c>). A match past slot 0 applies volume and pitch again (<c>0x006bbbe0</c>), and a set on a voice of
-	/// another class: both counted, as no shipped script reaches either (the bus sets its effect's own key 20 alone).
+	/// <c>FUN_0051bc40( handle, id, level )</c> on a script's or the interface's voice (<c>SETOBJPARAM</c>, the research
+	/// screen): answers whether the voice still lives, which is whether the original's lookup (<c>0x006b6620</c>) finds it
+	/// and answers its handle rather than nought. Every controller slot whose key is <paramref name="id"/>'s low byte takes
+	/// <paramref name="level"/>'s (<c>0x006bbb80</c>); slot 0's key is the effect's own (<see cref="ScriptVoice.Key"/>), and
+	/// on a music voice it is the zone parameter, a parked voice drawing again at a set to anything but
+	/// <see cref="ParkedParameter"/> (<c>0x006be580</c>). A match past slot 0 applies the volume and the pitch again
+	/// (<see cref="ApplyControllers"/>). Built for the plain class and the music's, whose slot <c>+0x28</c> is that base
+	/// (or calls it first); a set on a voice of another class is counted.
 	/// </summary>
 	internal bool SetScriptSoundParameter( ScriptVoice? sound, int id, int level )
 	{
@@ -803,7 +814,7 @@ public sealed partial class ParkAudio
 		var key = id & 0xff;
 		var value = level & 0xff;
 
-		if ( !sound.Music )
+		if ( !sound.Follows )
 		{
 			Unimplemented.Report( "RIDE_EFFECT_SOUND_PARAMETER_OTHER_CLASS" );
 			return true;
@@ -813,24 +824,77 @@ public sealed partial class ParkAudio
 		var current = sound.Variation >= 0 && sound.Variation < headers.Count ? headers[sound.Variation] : (SoundCategoryFile.Variation?)null;
 
 		// Slots 1 and 2 carry the current variation's keys, slot 3 the key nought (FUN_006bbf00).
-		if ( key == 0 || (current is { } header && (header.FirstKey == key || header.SecondKey == key)) )
-			Unimplemented.Report( "RIDE_EFFECT_SOUND_PARAMETER_APPLIES" );
-
-		if ( key != sound.Key )
-			return true;
-
+		int[] keys = [sound.Key, current?.FirstKey ?? 0, current?.SecondKey ?? 0, 0];
 		var before = sound.Parameter;
-		sound.Parameter = value;
+		var applies = false;
 
-		if ( sound.Parked && value != ParkedParameter )
+		for ( var slot = 0; slot < keys.Length; ++slot )
+		{
+			if ( keys[slot] != key )
+				continue;
+
+			sound.Values[slot] = value;
+			applies |= slot > 0;
+		}
+
+		if ( key == sound.Key && sound.Parked && value != ParkedParameter )
 			sound.Parked = false;
 
-		if ( value != before )
-			Log.Info( $"Park audio: script {sound.Script}'s music {sound.Effect} parameter {key} set to {value} (was {before}), on variation {sound.Variation + 1}"
+		if ( sound.Parameter != before )
+			Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} parameter {key} set to {value} (was {before}), on variation {sound.Variation + 1}"
 				+ (sound.Place is { } place ? $" at ({place.X:0},{place.Y:0},{place.Z:0})" : "") );
+
+		if ( applies && current is { } header )
+			ApplyControllers( sound, header, key );
 
 		return true;
 	}
+
+	/// <summary>How many parameter sets applied a volume and a pitch again (<see cref="ApplyControllers"/>).</summary>
+	internal int ScriptParameterApplies { get; private set; }
+
+	/// <summary>
+	/// The apply (<c>0x006bbbe0</c>) a set matching past slot 0 reaches: on a voice with a channel, the volume
+	/// (<c>FUN_006bc090</c>) and the pitch (<c>FUN_006bc170</c>) again from the controllers, or drawn where none drives
+	/// them, handed to the channel. The channel keeps them for every later sample (<c>docs/exe/audio.md</c>, "A held
+	/// voice's next sample"), so they are the voice's kept pair here; a voice out of range has no channel and is not
+	/// applied. One whose sample has ended plays its next at them.
+	/// </summary>
+	private void ApplyControllers( ScriptVoice sound, SoundCategoryFile.Variation header, int key )
+	{
+		if ( sound.Away )
+			return;
+
+		sound.Kept = ControlledSample( header, sound.Values, _scriptRandom );
+		sound.Voice?.SetVolume( ChannelGain( sound.Kept.Volume ) );
+		sound.Voice?.SetRate( ParkCarSounds.Rate( sound.Kept.Pitch ) );
+		++ScriptParameterApplies;
+
+		Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect} parameter {key} applied: values {string.Join( ",", sound.Values )}, "
+			+ $"volume {sound.Kept.Volume} plays {ChannelGain( sound.Kept.Volume ):F4} pitch {sound.Kept.Pitch} on variation {sound.Variation + 1}" );
+	}
+
+	/// <summary>
+	/// A volume and a pitch from a voice's controllers (<c>FUN_006bc090</c>, <c>FUN_006bc170</c>): the first of the
+	/// variation's two controllers whose mask has the bit gives <c>value × range / 100 + low</c> from its slot's value
+	/// (slot 1 the first's, slot 2 the second's), and with neither a draw (<see cref="Controlled"/>).
+	/// </summary>
+	internal static (int Volume, int Pitch) ControlledSample( SoundCategoryFile.Variation header, int[] values, Random random )
+		=> (ControlledBy( header, 1, values[1], values[2], random ), ControlledBy( header, 2, values[1], values[2], random ));
+
+	/// <summary>The name an interface voice is started under (<see cref="PlayInterfaceSound"/>), where a script's is its id.</summary>
+	internal const int InterfaceOwner = -1;
+
+	/// <summary>The type a script names <c>cat_ui</c> by (<c>FUN_005573d0</c>), the category <c>UI_PlaySound</c> plays in.</summary>
+	private const int InterfaceType = 9;
+
+	/// <summary>
+	/// One of the interface's own sounds that a screen holds and sets (<c>UI_PlaySound</c>, <c>0x00485aa0</c>:
+	/// <c>Sound_PlayEffect( 0, cat_ui, effect, 0, 0, 0 )</c>, its handle kept), made as a script's sound of
+	/// <c>cat_ui</c> is: every effect of that category is flagged <c>0x200</c>, so flat. Null where none was made.
+	/// </summary>
+	internal ScriptVoice? PlayInterfaceSound( int effect )
+		=> StartScriptSound( InterfaceOwner, InterfaceType, effect, null, out var sound ) == ScriptSoundStart.Started ? sound : null;
 
 	/// <summary>
 	/// A chain's next child (<c>0x006c3a80</c>): a variation, a sample of it at a volume and a pitch of its own
@@ -862,7 +926,7 @@ public sealed partial class ParkAudio
 		{
 			sound.Voice = null;
 			++sound.Unheard;
-			Log.Info( $"Park audio: script {sound.Script}'s chain {sound.Effect}, a child unheard at {Time.Now:F3} s while the world is held, the next in {sound.Wait} ms" );
+			Log.Info( $"Park audio: {sound.Owner}'s chain {sound.Effect}, a child unheard at {Time.Now:F3} s while the world is held, the next in {sound.Wait} ms" );
 			return;
 		}
 
@@ -875,7 +939,7 @@ public sealed partial class ParkAudio
 		sound.Voice.SetRate( ParkCarSounds.Rate( sound.Kept.Pitch ) );
 		++sound.Samples;
 
-		Log.Info( $"Park audio: script {sound.Script}'s {(sound.Held ? "held chain" : "chain")} {sound.Effect}, child {sound.Samples} at {Time.Now:F3} s, sample '{sound.Voice.Name}' variation {next + 1} "
+		Log.Info( $"Park audio: {sound.Owner}'s {(sound.Held ? "held chain" : "chain")} {sound.Effect}, child {sound.Samples} at {Time.Now:F3} s, sample '{sound.Voice.Name}' variation {next + 1} "
 			+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, the next in {sound.Wait} ms" );
 	}
 
@@ -912,9 +976,10 @@ public sealed partial class ParkAudio
 				: "flat";
 
 			var music = sound.Music ? $" parameter {sound.Parameter} variation {sound.Variation + 1}{(sound.Parked ? " parked" : "")} pitch {sound.Kept.Pitch}" : "";
+			var values = sound.Follows ? $" values {string.Join( ",", sound.Values )} kept {sound.Kept.Volume}/{sound.Kept.Pitch}" : "";
 
-			lines.Add( $"script {sound.Script} type {sound.Type} effect {sound.Effect} {sound.Kind} "
-				+ $"'{voice?.Name}' volume {voice?.Volume ?? 0f:F4} {(voice is { Playing: true } ? "playing" : "silent")}{(sound.Away ? " away" : "")} samples {sound.Samples}{music} {where}" );
+			lines.Add( $"{sound.Owner} type {sound.Type} effect {sound.Effect} {sound.Kind} "
+				+ $"'{voice?.Name}' volume {voice?.Volume ?? 0f:F4} {(voice is { Playing: true } ? "playing" : "silent")}{(sound.Away ? " away" : "")} samples {sound.Samples}{music}{values} {where}" );
 		}
 
 		return string.Join( "; ", lines );

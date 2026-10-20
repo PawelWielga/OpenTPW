@@ -31,7 +31,10 @@ public class ParkResearchScreenTests
 	[TestCleanup]
 	public void PutTheScreenBack() => Screen.Size = _screen;
 
-	private ParkResearch FreshLab()
+	private ParkResearch FreshLab() => FreshLab( data );
+
+	/// <summary>A fresh Full Simulation jungle's lab, as the park's setup makes it.</summary>
+	internal static ParkResearch FreshLab( BaseFileSystem data )
 	{
 		var catalogue = new ParkItemCatalogue( "jungle", data );
 		var balance = new ParkBalance( "jungle", easyMode: false );
@@ -234,5 +237,89 @@ public class ParkResearchScreenTests
 		ability = 6;
 		screen.Update();
 		StringAssert.StartsWith( screen.Census(), "workload 83 limit 631 knob 294 " );
+	}
+
+	/// <summary>
+	/// <b>The pumps take their kinds' rates as the screen opens, and move 30 passes a second</b>: with one researcher of
+	/// ability 3 of a most of 60 the rides' output 48 is a rate of <c>48 × 5 / 100</c> = 2 and the others' 6, 14, 6 and 4
+	/// nought; the rides' pump starts at <c>0x30</c> at 14417, the rest stand. A second is 30 passes, and
+	/// <c>0x300000 + 30 × 28834</c> is frame <c>0x3d</c>, drawn on the panel's pump. The rides' effort dragged to nought takes
+	/// its output, and its rate, to nought: the pump drains from <c>0x20</c>. Of ability 60 every kind's rate is its
+	/// output, and every pump starts.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the rate given without a current project's test; 60 passes a second; the drag's refresh
+	/// skipped; the pumps refreshed before the opening's efforts are seeded.</remarks>
+	[TestMethod]
+	public void ThePumpsTakeTheirRatesAndMove()
+	{
+		var lab = FreshLab();
+		var screen = Open( new UI.WindowStack(), lab, ability: 3 );
+		var rides = screen.Pump( 0 );
+
+		CollectionAssert.AreEqual( new[] { 2, 0, 0, 0, 0 }, Enumerable.Range( 0, 5 ).Select( screen.PumpRate ).ToArray() );
+		Assert.AreEqual( (UI.ResearchPump.PumpState.Starting, 14417), (rides.State, rides.Speed) );
+		CollectionAssert.AreEqual( new[] { "Stopped", "Stopped", "Stopped", "Stopped" },
+			new[] { 1, 2, 3, 4 }.Select( kind => screen.Pump( kind ).State.ToString() ).ToArray() );
+
+		screen.RunPasses( 0.5f );
+		screen.RunPasses( 0.5f );
+		Assert.AreEqual( (30, 0x3d), (rides.Passes, rides.Frame) );
+
+		var drawn = Controls( screen.Root ).Single( control => control.Id == 0xd2d01 ).Children.Single( control => control.Id == 0xd2d06 );
+		Assert.AreEqual( 0x3d, drawn.Frame );
+
+		var effort = Slider( screen, 0xd2d0e );
+		effort.SetValue( 0 );
+		effort.Moved!();
+		Assert.AreEqual( (UI.ResearchPump.PumpState.Stopping, 0x20, 0x20), (rides.State, rides.Frame, drawn.Frame) );
+
+		var all = Open( new UI.WindowStack(), FreshLab(), ability: 60 );
+		CollectionAssert.AreEqual( new[] { 48, 6, 14, 6, 4 }, Enumerable.Range( 0, 5 ).Select( all.PumpRate ).ToArray() );
+		Assert.IsTrue( Enumerable.Range( 0, 5 ).All( kind => all.Pump( kind ).State == UI.ResearchPump.PumpState.Starting ) );
+
+		// The sideshows with no current project: "All Items Researched", a rate of nought whatever their output, a pump
+		// that stands, and the loop's mean of the other four.
+		var catalogue = new ParkItemCatalogue( "jungle", data );
+		var balance = new ParkBalance( "jungle", easyMode: false );
+		var fresh = new FreshPark( "jungle", balance, catalogue, data );
+		var none = fresh.ResearchKinds.Select( ( kind, at ) => at == ItemDescriptionFile.SideShow ? kind with { CurrentProject = -1 } : kind ).ToArray();
+		var bare = new ParkResearch( fresh.ObjectControlRecords, catalogue, fresh.ResearchProjects, none, fresh.ResearchWorkLoad,
+			ParkResearch.GroupOpensAt( balance ), fresh.ResearchMostExpensiveProject );
+		var left = Open( new UI.WindowStack(), bare, ability: 60 );
+
+		Assert.AreNotEqual( 0, bare.Kinds[ItemDescriptionFile.SideShow].Output );
+		Assert.AreEqual( (0, UI.ResearchPump.PumpState.Stopped), (left.PumpRate( ItemDescriptionFile.SideShow ), left.Pump( ItemDescriptionFile.SideShow ).State) );
+		StringAssert.Contains( Bar( left, 0xd2d09 ).Text, Localization.Get( UIStrings.AllItemsResearched ) );
+	}
+
+	/// <summary>
+	/// <b>A kind that finishes a project with the screen open is lettered and filled again at once</b>
+	/// (<c>Research_OnKindFinished</c>, <c>0x004aaec0</c>): Dino Karts finished by hand-outs of ability 1000, the rides'
+	/// label is the next project's and its bar that project's fill, not Dino Karts' until the next arrow. Closed, the
+	/// screen hears no more.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the telling not raised; raised before the lab's pick; the closed screen left listening.</remarks>
+	[TestMethod]
+	public void AFinishedKindIsLetteredAgainAtOnce()
+	{
+		var lab = FreshLab();
+		var stack = new UI.WindowStack();
+		var screen = Open( stack, lab, ability: 3 );
+		var bar = Bar( screen, 0xd2d01 );
+		var before = bar.Text;
+		StringAssert.Contains( before, "DinoKarts" );
+
+		var finished = new List<ParkResearch.Finished>();
+
+		for ( var tick = 0; tick < 50 && !finished.Any( done => done.Kind == 0 ); tick += 20 )
+			finished.AddRange( lab.SpendPoints( 1000, tick ) );
+
+		Assert.AreEqual( 1150, finished.First( done => done.Kind == 0 ).ItemId );
+		Assert.AreNotEqual( before, bar.Text );
+		StringAssert.Contains( bar.Text, ParkObjectNames.NameOf( lab.Item( lab.CurrentItem( 0 ) )!.Value ) );
+		Assert.AreEqual( (100 - lab.PercentLeftOfDearest( 0 )) * 1024 / 100, bar.Units );
+
+		stack.Close( screen );
+		Assert.IsNull( lab.KindFinished );
 	}
 }
