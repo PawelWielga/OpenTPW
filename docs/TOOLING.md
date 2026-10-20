@@ -99,6 +99,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/mixer.py PID [SECS]` | The original's memory, inside `QMixer.dll`: the session and its listener, and every open channel's flags, place, distance mapping, volume, the mixer's own distance, and its cone, distance and final gains, with the gain the law gives beside the one read. How loud the mixer is playing a voice, where `voices.py` says only whether it sounds. A `POLL` for `loadfile.sh` |
 | `original/crowdmix.py PID SECS` | The original's memory: the crowd's voice (level, handle, keys, values, the current variation with its weight, the sample record) beside every flat mixer channel's volume of 127, in ONE log stamped with the wall clock and `mGameTick`, a line a change, 20 ms a poll. Use it where `crowd.py` and `mixer.py` would have to be held together by eye; `mixer.py` prints nothing for a change of volume alone. A `POLL` for `loadfile.sh` |
 | `original/mixfreq.py PID SECS [2d]` | The original's memory, inside `QMixer.dll`: every open 3D channel's place, far end, volume of 127 and FREQUENCY (`+0x1f4`), a stamped line each time one opens or changes, and at the end a count by far end, volume and frequency. Which pitch each sample of an effect plays at; `2d` reads the flat channels instead. A `POLL` for `loadfile.sh` |
+| `original/chains.py PID SECS [POLL_MS]` | The original's memory: every chain voice (effect flags `0x4` without `0x2`: the held chain `0x404` and the chain of any variation `0x4`) by the service's own list, a line when one comes or goes and when it makes a child (its time word, the gap to the one before, sample record, variation, channel), and at the end per effect the children, the distinct samples and the gaps' spread. A chain out of range (`0x800`) makes none. The place reads (x, height, z). Read-only (Q558) |
 | `original/rainmix.py PID SECS` | The original's memory: the weather thing's quality, forecast, drops, target and its own rain handle, the global rain handle, the two rain voices (controller keys and values, the current variation's volume bytes) and every flat mixer channel under 40 of 127 with its frequency, in ONE stamped log, a line a change. How loud the rain is and what sets it; `crowdmix.py` is the same for the crowd's voice. A `POLL` for `loadfile.sh` |
 | `original/advisor.py PID SECS MESSAGE[,MESSAGE...] [THING]` | The original's memory: the park advisor (the thing `FUN_005194d0` answers): each named message's own record (the tick last said, the line, said, slaps), the eight slots (subject thing, line asked for, message, score), the last action's start and duration, and a thing's State of repair beside them, a line a change with `mGameTick`. Says whether and when he was told a message and whether he said it. A last argument `poll` ends each line with the poll's cursor (`[0x00fb3540]`, the row of the metadata table the next tick starts from; Q316). A `POLL` for `loadfile.sh` |
 | `original/advisortable.py PID [meta_full.json]` | The original's memory: the advisor's metadata table as the running game holds it (the image holds zeros): the polled rows as ranges with their count, a few rows' places in a round, and every dword where it differs from the emulated table (two, both row 0's). A `POLL` for `loadfile.sh` |
@@ -801,6 +802,13 @@ after its poller starts**, so a key meant inside either line cannot be sent afte
   Pot on (41,23): `buy 1140 41 23 0`, node (43,22), path (43,21); four boats are out six seconds on (Q257r).
 - **Fill a ride:** `admit <x> <y>` on a path cell answers a new guest's id, `send <guest> <thing>` sends them; poll
   the ride's census (`bumpers`, `rides`) until it counts them (Q179d, Q257r).
+- **A Crazy Ape running in both games** (Q558): `q558/confirm.py <out> <bin>` pauses the stock park, `buy 1101 41 22 0`
+  (thing 43, its queue node (42,21)), `tool queue 43`, `worldclick 42 21`, `worldclick 43 21`, `tool off`, resumes, admits
+  six guests on (43,21) and sends them to it, waits for the first loop's `KILLOBJ 10` and saves the park after it
+  (`run4/q558ape.TPWS`). The original loads that file with `loadfile.sh` and plays the Ape's loops on (`q558/orig/run2.sh`);
+  on the real screen `q558/orig/screen.sh` enters it with `screenpark.sh`'s clicks and puts the camera on it with
+  `setcam.py PID 430,240 90 0 off`. Alexah's Full Simulation park, which holds a Crazy Ape too, froze in the original
+  (warning 13).
 - **The happiness gauge at a known value in both games** (Q244): `q244/mkscene.py` writes one happiness into every
   guest of Q415's `noent.TPWS` (`parkfile.thing_set` on `+422`, all model-1 things, so the mean is the same whichever
   guests a game counts); ours loads it from the Load Park list (`q244/confirm.py`: `load()`, the log's `UI: meter 0x1f at
@@ -1460,7 +1468,9 @@ put it back to 800 after. A number of the original's measured before 2026-10-15 
     afterwards.
 13. **Alexah's Full Simulation jungle park stalls at park tick 43**, its main thread busy in the track rides' stepper
     `FUN_0043ce20` (return addresses on its stack, sampled with `gdb -p` on the host): its stored matrices are readable,
-    its clock never runs. Seen at 6.9 days of uptime; whether a restart cures it is not tested.
+    its clock never runs. Seen at 6.9 days of uptime, and at 8.1 (2026-10-20, Q558) loaded by a fresh Full Simulation
+    player, off-screen through llvmpipe and through zink alike: frozen on tick 19007, the frame unchanged for 150 s. Whether
+    a restart cures it is not tested.
 
 ### What it is not
 

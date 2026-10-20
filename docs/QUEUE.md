@@ -54,16 +54,18 @@ The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses
 filed the items that cite it.
 
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
-  the one-shot and the plain class (`audio.md`, "A script's sounds"). Counted and not started: the held chain
-  (`RIDE_EFFECT_SOUND_CLASS_6BDD30`, flags `0x404`: the level ambient's 177 to 180, the gates' and the speakers', and the
-  staff's 188), the class of `0x4` alone (`_6BDC60`, not decoded: the rides' 89 and 100, the monkey, the lava spurt and
-  the volcano), the music's class (`_6BE610`, `0x406`: the bus's global ambient 6, which `SETOBJPARAM`'s `( 1, 20, v )`
-  steers through `FUN_0051bc40` on a live voice; `RideEffects.SetParameter` still zeroes the handle), `_6BE680` and
-  `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped script) and a placed sound with
-  nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's 173, ADDOBJ 8 on node 1,
-  whose scripts run with no nodes). Decode `0x006bdc60` first, build each class on `ParkScreams` and the music's rule,
-  and confirm by `voices.py` and `mixer.py` beside `scriptsounds`. Also measure whether a park entered fresh from a file
-  hears its scripts' looped sounds in the original (Q553's run loaded into a park whose fountain already sounded).
+  the one-shot and the plain class, and Q558, which built the chain of `0x4` alone (`audio.md`, "A script's sounds").
+  Counted and not started: the held chain (`RIDE_EFFECT_SOUND_CLASS_6BDD30`, flags `0x404`: the level ambient's 177 to
+  180, the gates' and the speakers', and the staff's 188), the music's class (`_6BE610`, `0x406`: the bus's global ambient
+  6, which `SETOBJPARAM`'s `( 1, 20, v )` steers through `FUN_0051bc40` on a live voice; `RideEffects.SetParameter` still
+  zeroes the handle), `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped
+  script) and a placed sound with nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's
+  173, ADDOBJ 8 on node 1, whose scripts run with no nodes). Build each class on `ParkScreams`, `NextChainChild` and the
+  music's rule, and confirm by `voices.py`, `mixer.py` and `chains.py` beside `scriptsounds`. Also measured (Q558) and not
+  built: the original's chain out of range (voice flag `0x800`) makes no child at all, where ours makes them unheard;
+  read where the service leaves such a voice unticked. Also measure whether a park entered fresh from a file hears its
+  scripts' looped sounds in the original (Q553's run loaded into a park whose fountain already sounded).
+
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge

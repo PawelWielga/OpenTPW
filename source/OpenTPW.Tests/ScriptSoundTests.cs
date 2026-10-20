@@ -19,7 +19,8 @@ public class ScriptSoundTests
 
 	/// <summary>
 	/// The class an effect's flags word makes (<c>0x006b6774</c>..<c>0x006b67f2</c>): bit <c>0x4</c> clear is a one-shot
-	/// whatever else is set, and with it set <c>0x10</c> wins, then <c>0x2</c> splits the rest by <c>0x400</c> and <c>0x100</c>.
+	/// whatever else is set, and with it set <c>0x10</c> wins, then <c>0x2</c> splits the rest by <c>0x400</c> and <c>0x100</c>,
+	/// and without <c>0x2</c> <c>0x400</c> is the held chain and anything else the chain of any variation.
 	/// </summary>
 	[DataTestMethod]
 	[DataRow( 0x0, "OneShot", null )]
@@ -33,8 +34,9 @@ public class ScriptSoundTests
 	[DataRow( 0x106, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE330" )]
 	[DataRow( 0x416, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE680" )]
 	[DataRow( 0x404, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BDD30" )]
-	[DataRow( 0x104, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BDC60" )]
-	[DataRow( 0x4, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BDC60" )]
+	[DataRow( 0x104, "Chain", null )]
+	[DataRow( 0x204, "Chain", null )]
+	[DataRow( 0x4, "Chain", null )]
 	public void AnEffectsFlagsPickItsVoicesClass( int flags, string kind, string? gap )
 	{
 		var (made, named) = ParkAudio.ClassOf( flags );
@@ -272,6 +274,101 @@ public class ScriptSoundTests
 			scheduler.Advance( 0f );
 			Assert.AreEqual( NodePlace, sound.Place, "moved back on tick 11" );
 		} );
+	}
+
+	/// <summary>
+	/// <b>An effect of <c>0x4</c> alone is a chain: a child at once, the next its wait after the last one's start, the one
+	/// before playing out, and a stop cuts the newest.</b> The level's <c>cat_rides</c> 100 (the Lava Fountain's and
+	/// Eruption's: one variation of eleven samples, volume 68, waits 300 to 700, range 75) and 89 (the Crazy Ape's: volume
+	/// 85, waits 500 to 1000, range 100) on the End's node 9. A child is made only once the clock is past the newest one's
+	/// time, and a <c>FADEOBJ</c> cuts a chain's newest child as a <c>KILLOBJ</c> does (<c>0x006bcc71</c>).
+	/// </summary>
+	[TestMethod]
+	public void AnEffectOfFourAloneIsAChainOfChildren()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 3, 9, 100, 40,
+				Word( Opcode.ADDOBJ ), 3, 9, 89, 10,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = nodes, Id = 905 };
+
+			script.Turn( 0f );
+
+			var effects = script.Effects!;
+			var lava = effects.Records.Single( record => record.Tag == 40 ).Sound!;
+			var ape = effects.Records.Single( record => record.Tag == 10 ).Sound!;
+
+			Assert.AreEqual( (2, 0, 0, 0, 0), park.ScriptSounds );
+			Assert.IsFalse( Counted( "RIDE_EFFECT_SOUND_CLASS_6BDC60" ) );
+			Assert.AreEqual( "chain", lava.Kind );
+			Assert.IsTrue( lava.Chain && !lava.Plain && !lava.Looped );
+			Assert.AreEqual( 1, lava.Samples, "the first child at once" );
+			Assert.AreEqual( ParkAudio.ChannelGain( 68 ), lava.Voice!.Volume, 1e-6f );
+			Assert.AreEqual( 75f, lava.Voice.Range );
+			Assert.IsFalse( lava.Voice.Loop, "a child plays its one sample once" );
+			Assert.AreEqual( new Vector3( 21f, 57f, 16f ), lava.Voice.Place, "where the chain stands, the End's node 9" );
+			Assert.AreEqual( ParkAudio.ChannelGain( 85 ), ape.Voice!.Volume, 1e-6f );
+			Assert.AreEqual( 100f, ape.Voice.Range );
+
+			var waits = new List<int>();
+			var madeAt = 100f;
+			var children = new List<Voice> { lava.Voice };
+
+			for ( var turn = 0; turn < 400; ++turn )
+			{
+				var newest = lava.Voice!;
+				var made = lava.Samples;
+
+				waits.Add( lava.Wait );
+				Assert.AreEqual( madeAt + (lava.Wait / 1000f), lava.NextAt, 1e-4f, "each child's wait counts from its own start" );
+
+				Time.Now = lava.NextAt;
+				park.ServeScriptSounds();
+				Assert.AreEqual( made, lava.Samples, "not on the newest child's time itself" );
+
+				Time.Now = lava.NextAt + 0.001f;
+				park.ServeScriptSounds();
+				Assert.AreEqual( made + 1, lava.Samples, "a child once the clock is past it" );
+				Assert.AreNotSame( newest, lava.Voice );
+				Assert.IsTrue( newest.Playing && !newest.Ending, "the child before plays out" );
+				Assert.AreEqual( ParkAudio.ChannelGain( 68 ), lava.Voice!.Volume, 1e-6f, "each child at the variation's volume" );
+
+				children.Add( lava.Voice );
+				madeAt = Time.Now;
+			}
+
+			Assert.IsTrue( waits.All( wait => wait >= 300 && wait < 700 ), $"waits {waits.Min()} to {waits.Max()}" );
+			Assert.IsTrue( waits.Min() < 320 && waits.Max() > 680, $"waits {waits.Min()} to {waits.Max()} over the variation's range" );
+			Assert.IsTrue( ape.Samples > 1, "the Crazy Ape's chain goes on beside it" );
+
+			var kill = new RideScript( Build( Word( Opcode.FADEOBJ ), 40, Word( Opcode.KILLOBJ ), 10, Word( Opcode.END ) ) );
+			var lavaNewest = lava.Voice!;
+			var apeNewest = ape.Voice!;
+
+			script.Effects = null;
+			kill.Effects = effects;
+			kill.Turn( 0f );
+
+			Assert.AreEqual( (2, 0, 1, 1, 0), park.ScriptSounds );
+			Assert.IsFalse( lavaNewest.Playing, "a chain's fade is a cut" );
+			Assert.IsFalse( apeNewest.Playing, "and its kill" );
+			Assert.IsTrue( children[^2].Playing, "the child before the newest is not touched" );
+			Assert.AreEqual( 0, park.ScriptVoices.Count );
+
+			var counts = (lava.Samples, ape.Samples);
+
+			Time.Now += 10f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( counts, (lava.Samples, ape.Samples), "a stopped chain makes no child" );
+		} );
+
+		Time.Now = nowBefore;
 	}
 
 	/// <summary>The End's sound node 10 on its model, in whole units of the world, the height last.</summary>

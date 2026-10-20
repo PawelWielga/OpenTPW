@@ -62,6 +62,7 @@ Every use of that int as a delay in OpenTPW is OpenTPW's own: `SoundCategory.Pla
 |---|---|---|
 | no bit `0x4` (for example 0, `0x200`, `0x8`) | One-shot: plays one sample and dies; with bit `0x8` the sample is looped and the voice lives on ("A voice's range", below). Freed at start + length + 250 ms (`0x006bc01b`), or when its channel ends. | 1,067 of the 1,267 records, SINGLESCREAM's 75-90 and 105-109 among them; 30 more carry bit `0x1` and go through a deferred queue first (`0x006b66d0`) |
 | `0x0404` | Held chain, final vtable `0x0070a2e0`. The constructor stores `0x0070a390`, then overwrites it at `0x006bdde5`. | 18 records: kids 71-74, staff 188, and the ambient beds with `0x120404`/`0x170404` |
+| `0x4` with neither `0x2` nor `0x400` | The chain of any variation (`Voice_MakeAnyChain` `0x006bdc60`): the held chain's base class `0x0070a390` kept, whose children draw their variation among all of the effect's ("A script's sounds", below) | 17 records, each of one variation: Lost Kingdom's rides 89, 100, 147, 170 among them |
 | bits `0x4` and `0x2` | Four constructors by the other bits (`0x006b677d`..`0x006b67c3`): with `0x10`, `0x006be680`; else with `0x400`, `FUN_006be610`, **the music's class**, below; else with `0x100`, `0x006be330`; else `0x006be090`, which draws its variation from all of the effect's and follows each later sample with the variation's wait ("The plain class: any variation, and a silence after a sample", below). The `0x10` and `0x100` ones are not decoded. | 135 records (`classes.py`): 106 to `0x006be090` (`0x0006`, `0x0206`), 27 to `FUN_006be610` (`0x0406` 16, `0x0606` 11: music 2 in every theme, kids 91, global ambient 33, jungle's rides 204, 216 and 217 among them), 2 to `0x006be680` (`0x0016`), none to `0x006be330` |
 
 **The music's class: the parameter picks the variation, and nothing else** (`FUN_006be610`, constructor `FUN_006be660`, vtable `0x0070a498`; fix 4 of the 2026-10-06 review). The voice plays one sample after another. Its slot `+0x38` (`FUN_006be5e0`) reads its first controller's value, the byte at `[[voice+0x4c]+4]`, and hands it to `FUN_006be450`, which is the chain's rule (`0x006c3e00`) again:
@@ -474,7 +475,7 @@ the sample again each time its channel ends and the handle lives for the whole g
 **Which class an effect's flags word makes** (`0x006b6774`..`0x006b67f2`, the play entry): bit `0x4` clear, a
 one-shot; `0x4` with `0x10`, `FUN_006be680`; `0x4` with `0x2`, `FUN_006be610` with `0x400`, `FUN_006be330` with
 `0x100`, else `FUN_006be090` (vtable `0x0070a338`, 194's class); `0x4` alone, `FUN_006bdd30` with `0x400` (the held
-chain), else `FUN_006bdc60`. **The voice's own flags** (`FUN_006bbe90`, `+0x30`): effect `0x8` gives `6`, effect `0x4`
+chain), else `Voice_MakeAnyChain` (`0x006bdc60`, the chain of any variation). **The voice's own flags** (`FUN_006bbe90`, `+0x30`): effect `0x8` gives `6`, effect `0x4`
 gives `2`, `0x200` gives `8`, `0x20` gives `0x200`, `+0x11` bit `0x40` gives `0x20000`. **A voice with `2` never
 times out** (`FUN_006bcb60`); one without it is freed at start + length + 250 ms. When its channel ends
 (`0x006bbe40`) it clears `1` and, unless it holds `0x40` or `0x4800`, is marked finished (`0x10`) and freed by the
@@ -808,10 +809,11 @@ after it**, the place `FUN_00556b90`'s under `0x200` cut to whole numbers (`__ft
 The effect's flags word makes the voice's class as for any caller (`0x006b6774`..`0x006b67f2`, "How the engine plays an
 effect"): no `0x4` the one-shot `0x006bd7b0`, looped under `0x8`; `0x4` with `0x10` `0x006be680`; with `0x2`, `0x400` the
 music's `0x006be610`, `0x100` `0x006be330`, else the plain class `0x006be090`; without `0x2`, `0x400` the held chain
-`0x006bdd30`, else **`0x006bdc60`, not decoded** (Lost Kingdom's rides 89 and 100, flags `0x4`). Lost Kingdom's 81
+`0x006bdd30`, else the chain of any variation `0x006bdc60` (below). Lost Kingdom's 81
 scripts ask for a sound 198 times (`ADDOBJ` 82, `EVENT` 116; `rselisting` over the `.RSE` corpus, each effect's flags
 from its category's file): 116 one-shots with no flag, 45 looped, 2 flat (`cat_ui` 185, and 186 looped too), 20 of the
-plain class, 6 held chains (the level ambient's 177 to 180, the staff's 188), 4 of `0x006bdc60`, 1 of the music's class
+plain class, 6 held chains (the level ambient's 177 to 180, the staff's 188), 4 chains of any variation (the Crazy Ape's 89,
+the Lava Fountain's 100 and Eruption's two 100s), 1 of the music's class
 (the bus's global ambient 6) and 4 ids their category lacks (`park.md`).
 
 **Measured in the original's End** (q550's scene, `a-voices.log`, `a-mixer.log`): the listener at (481, 200, 10) in the
@@ -822,19 +824,57 @@ reason not read); 186 flat (voice flags `0x0f`) on a 2D channel
 at 75; AnimCtrl's three 209 on Endm1's planes, first at (480, 441, 61), (453, 468, 60) and (505, 468, 61), each found
 moved at every 0.25 s read and silenced (`0x800`) while more than 100 off; the music's channel at nought (`DIPMUSIC`).
 
+**The chain of any variation** (flags `0x4` with neither `0x2` nor `0x400`; read for Q558). `Voice_MakeAnyChain`
+(`0x006bdc60`) builds its voice with `AnyChain_Construct` (`0x006bdcb0`), which stores the vtable `0x0070a390` and keeps
+it: the held chain's maker `0x006bdd30` runs the same constructor and then overwrites it with `0x0070a2e0` (`0x006bdde5`).
+The two vtables differ only in the destructor, slot `+0x50` (4 against 6) and the child maker, slot `+0x54`: here
+`AnyChain_MakeChild` (`0x006b7250`), a 0x50-byte child built by `AnyChainChild_Construct` (`0x006c3a00`, vtable
+`0x0070a970`), where the held chain's `0x006b72f0` builds `0x0070a9e0` (`FUN_006c3de0`). The tick (`0x006bdae0`), the
+stop (`0x006bd9b0`) and the move are the held chain's ("A held voice is a chain", above), and so is the child's every slot
+but `+0x38`, the variation: `FUN_006bc810`, the plain class's draw by weight among all of the effect's, where the scream's
+child takes `0x006c3e00`'s zones. `0x006c3a80` asks it with 0, so the rule against the variation before is never applied.
+A child is therefore a one-shot of any variation at a volume and a pitch of its own (`0x006c3ae0`), the next made once the
+clock passes this one's start plus its variation's wait (`0x006bc2d0`); the child before is pruned without a stop and plays
+out. A child sounds where its chain stands: its request's place is a pointer to the parent's `+0x10` (`0x006c3bea`), and
+the parent's move, slot `+0x24` (`0x006bda20`), moves every child still in the chain (`FUN_006c3c70`). The parent has no
+channel, so `Sound_StopFading` cuts it as `Sound_Stop` does (`0x006bcc71`). All 17 shipped records of this class hold one
+variation (FileFormats `sound-categories.md`), so the draw among all is never heard.
+
+**Measured in the original** (`q558/orig/`; uptime 8.2 days, so its park clock ran 1.46 to 1.55 times real time and
+the loops were short; the sound clock is wall time and was not touched): the Crazy Ape bought in the stock park, its queue
+joined and six guests sent in this game, saved, and loaded by the original (`chains.py`, `mixer.py`). Each loop of its go
+made a chain of 89 (`0x0004`) at (430, 0, 240), the place's height second, gone at the loop's `KILLOBJ 10`. Its children
+came 513 to 1001 ms apart over 32 gaps, 8 to 10 to a loop, all nine samples heard; the channels at that place read a far
+end of 100 and 64 of 127 (85 x 0.75). With the camera away from it the chain stood flagged `0x800`, out of range, and
+made no child at all through six loops: where the service leaves such a voice unticked is not read.
+
 **OpenTPW** (`ParkAudio.StartScriptSound`, `RideScript.StartSound`, `SoundPlace`, `SweepEffects`, `StopEffect`): the
-seven categories by type, the one-shot (looped under `0x8`) and the plain class played (`ServeScriptSounds`, the land's
-own way, "The plain class"), flat under `0x200`, else placed over the variation's range; each at its variation's own
+seven categories by type, the one-shot (looped under `0x8`), the plain class and the chain of any variation played (`ServeScriptSounds`, the land's
+own way, "The plain class"), a chain a child at a time (`ServeScriptSounds`, `NextChainChild`: each child a variation by
+`AnyVariation` with no variation before, its own volume and pitch, the next once the frame clock passes its start plus its
+wait, a `FADEOBJ` a cut), flat under `0x200`, else placed over the variation's range; each at its variation's own
 volume and a pitch drawn from it, a plain voice keeping its first sample's; moved by the sweep on its script's eighth
 tick; stopped by `KILLOBJ` and the script's end, faded by `FADEOBJ` (0.06 s, the deviation of "The fade"). An effect its
 category lacks, or a node its model lacks, frees an `ADDOBJ`'s record. Counted and not started:
-`RIDE_EFFECT_SOUND_CLASS_<constructor>` for the other five classes, `RIDE_EFFECT_SOUND_ITEM_BANK` for type 10, and
+`RIDE_EFFECT_SOUND_CLASS_<constructor>` for the other four classes, `RIDE_EFFECT_SOUND_ITEM_BANK` for type 10, and
 `RIDE_EFFECT_SOUND_NO_PLACE` for a placed sound of a script with no model here, or of no node with no placed thing
 (the ferry's 172 and the seaplane's 173, whose scripts run with no nodes). The End here: the same places, distances,
 gains and volumes (`q553/PREDICTION.txt`; the console's `scriptsounds`). **Said:** a record a load put back starts
 nothing, as the loader `FUN_005597a0` copies it raw; whether a park entered fresh from a file hears its looped script
 sounds in the original is not measured (its run loaded into a park whose fountain was already sounding). There is no
-voice pool here (Q43): every script voice sounds, where the original's service keeps twelve.
+voice pool here (Q43): every script voice sounds, where the original's service keeps twelve. A chain out of range makes
+its children here and they play unheard, where the original's makes none (Q557). The Crazy Ape's chain here
+(`q558/confirm.py`, run4, the final binary): 14 children a loop, each gap the stated wait within 0.007 s, waits 512 to 976
+ms, volume 0.3520 (64 of 127) at (430,240,0) over 100, stopped after 14 by `KILLOBJ 10`.
+
+| Address | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x006bdc60` | `Voice_MakeAnyChain` | The maker for flags `0x4` with neither `0x2` nor `0x400` | Decompiled |
+| `0x006bdcb0`, `0x0070a390` | `AnyChain_Construct` | The chain's constructor and the vtable it keeps (the held chain's base) | Decompiled; the vtables read side by side |
+| `0x006b7250` | `AnyChain_MakeChild` | Slot `+0x54`: a 0x50-byte child, `AnyChainChild_Construct` | Decompiled |
+| `0x006c3a00`, `0x0070a970` | `AnyChainChild_Construct` | The child's constructor and vtable: the scream child's but slot `+0x38`, `FUN_006bc810` | Decompiled; the vtables read side by side |
+| `0x006bda20` | — | The chain's move, slot `+0x24`: its own place, then every child in the chain (`FUN_006c3c70`) | Disassembly |
+| `0x006c3bea` | — | A child's request takes a pointer to its parent's place, `+0x10` | Disassembly |
 
 ## Node lookup is by id AND a capability flag
 

@@ -13,11 +13,12 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// The effect's flags word picks the voice's class (<c>0x006b6774</c>..<c>0x006b67f2</c>). Two are built here: the
-/// one-shot (no bit <c>0x4</c>), looped under <c>0x8</c>, and the plain class (<c>0x4</c> and <c>0x2</c>, none of
+/// The effect's flags word picks the voice's class (<c>0x006b6774</c>..<c>0x006b67f2</c>). Three are built here: the
+/// one-shot (no bit <c>0x4</c>), looped under <c>0x8</c>; the plain class (<c>0x4</c> and <c>0x2</c>, none of
 /// <c>0x10</c>, <c>0x100</c> and <c>0x400</c>), one sample after another, served as the land's own are
-/// (<see cref="ServeFollowing"/>). Either is flat under <c>0x200</c>, else placed and heard over its variation's
-/// range. The other classes and type 10 are counted, and start nothing.
+/// (<see cref="ServeFollowing"/>); and the chain of <c>0x4</c> alone, a one-shot child after another, each of any
+/// variation. Each is flat under <c>0x200</c>, else placed and heard over its variation's range. The other classes
+/// and type 10 are counted, and start nothing.
 /// </para>
 /// </summary>
 public sealed partial class ParkAudio
@@ -71,6 +72,12 @@ public sealed partial class ParkAudio
 		/// <summary>One sample after another from any variation, a silence after each (<c>0x006be090</c>).</summary>
 		Plain,
 
+		/// <summary>
+		/// A chain of one-shot children, each of any variation at its own volume and pitch, the next a wait after the
+		/// last one's start (<c>0x006bdc60</c>): the held scream's chain with the plain class's draw.
+		/// </summary>
+		Chain,
+
 		/// <summary>A class not built here; <see cref="ClassOf"/> names its constructor.</summary>
 		NotBuilt
 	}
@@ -79,7 +86,7 @@ public sealed partial class ParkAudio
 	/// The class of voice an effect of <paramref name="flags"/> makes (<c>0x006b6774</c>..<c>0x006b67f2</c>), and for one
 	/// not built the name its count goes under, by its constructor: <c>0x10</c> <c>0x006be680</c>; with <c>0x2</c>,
 	/// <c>0x400</c> the music's <c>0x006be610</c> and <c>0x100</c> <c>0x006be330</c>; without it, <c>0x400</c> the held
-	/// chain <c>0x006bdd30</c> and else <c>0x006bdc60</c>.
+	/// chain <c>0x006bdd30</c> and else the chain of any variation, <c>0x006bdc60</c>.
 	/// </summary>
 	internal static (ScriptVoiceClass Class, string? Gap) ClassOf( int flags )
 	{
@@ -101,7 +108,7 @@ public sealed partial class ParkAudio
 
 		return (flags & 0x400) != 0
 			? (ScriptVoiceClass.NotBuilt, "RIDE_EFFECT_SOUND_CLASS_6BDD30")
-			: (ScriptVoiceClass.NotBuilt, "RIDE_EFFECT_SOUND_CLASS_6BDC60");
+			: (ScriptVoiceClass.Chain, null);
 	}
 
 	/// <summary>How a script's sound fared at its start.</summary>
@@ -134,6 +141,15 @@ public sealed partial class ParkAudio
 
 		/// <summary>Whether it is of the plain class, served a sample at a time.</summary>
 		public bool Plain { get; init; }
+
+		/// <summary>Whether it is a chain of children (<see cref="ScriptVoiceClass.Chain"/>); <see cref="Voice"/> is its newest.</summary>
+		public bool Chain { get; init; }
+
+		/// <summary>When a chain's next child is made: its newest child's start and that child's wait (<c>0x006bdb88</c>).</summary>
+		public float NextAt { get; set; }
+
+		/// <summary>What it is, for the log and the census.</summary>
+		public string Kind => Plain ? "plain" : Chain ? "chain" : Looped ? "looped" : "one-shot";
 
 		/// <summary>Whether its one sample loops (flag <c>0x8</c>).</summary>
 		public bool Looped { get; init; }
@@ -222,6 +238,7 @@ public sealed partial class ParkAudio
 			Effect = effect,
 			Category = category,
 			Plain = kind == ScriptVoiceClass.Plain,
+			Chain = kind == ScriptVoiceClass.Chain,
 			Looped = kind == ScriptVoiceClass.OneShot && (flags & SoundCategory.LoopedFlag) != 0,
 			Place = flat ? null : Whole( at!.Value )
 		};
@@ -229,6 +246,10 @@ public sealed partial class ParkAudio
 		if ( sound.Plain )
 		{
 			NextScriptSample( sound );
+		}
+		else if ( sound.Chain )
+		{
+			NextChainChild( sound );
 		}
 		else
 		{
@@ -240,7 +261,7 @@ public sealed partial class ParkAudio
 		_scriptVoices.Add( sound );
 		ScriptSounds = ScriptSounds with { Started = ScriptSounds.Started + 1 };
 
-		Log.Info( $"Park audio: script {scriptId} started effect {effect} of type {type} (flags 0x{flags:x}, {(sound.Plain ? "plain" : sound.Looped ? "looped" : "one-shot")}) "
+		Log.Info( $"Park audio: script {scriptId} started effect {effect} of type {type} (flags 0x{flags:x}, {sound.Kind}) "
 			+ $"sample '{sound.Voice?.Name}' volume {sound.Voice?.Volume ?? 0f:0.0000} "
 			+ (sound.Place is { } place ? $"at ({place.X:0},{place.Y:0},{place.Z:0}) range {sound.Voice?.Range ?? 0f:0} gain {sound.Voice?.DistanceGain ?? 0f:0.0000}" : "flat") );
 
@@ -268,7 +289,9 @@ public sealed partial class ParkAudio
 
 	/// <summary>
 	/// A script sound stopped: <c>Sound_Stop</c> for a <c>KILLOBJ</c> and a script's end, <c>Sound_StopFading</c> for a
-	/// <c>FADEOBJ</c> (<paramref name="fade"/>), which fades here over <see cref="ScriptFadeSeconds"/>.
+	/// <c>FADEOBJ</c> (<paramref name="fade"/>), which fades here over <see cref="ScriptFadeSeconds"/>. A chain's newest
+	/// child is cut either way: the chain has no channel to fade, and its stop cuts the children (<c>0x006bcc71</c>,
+	/// <c>0x006bd9b0</c>); an older child plays out.
 	/// </summary>
 	internal void StopScriptSound( ScriptVoice sound, bool fade )
 	{
@@ -277,7 +300,7 @@ public sealed partial class ParkAudio
 
 		sound.Stopped = true;
 
-		if ( fade )
+		if ( fade && !sound.Chain )
 			sound.Voice?.FadeOut( ScriptFadeSeconds );
 		else
 			sound.Voice?.Stop();
@@ -291,7 +314,7 @@ public sealed partial class ParkAudio
 			? ScriptSounds with { Faded = ScriptSounds.Faded + 1 }
 			: ScriptSounds with { Stopped = ScriptSounds.Stopped + 1 };
 
-		Log.Info( $"Park audio: script {sound.Script}'s effect {sound.Effect} of type {sound.Type} {(fade ? "faded" : "stopped")} after {sound.Samples} sample(s)" );
+		Log.Info( $"Park audio: script {sound.Script}'s effect {sound.Effect} of type {sound.Type} {(fade ? sound.Chain ? "faded (cut, a chain)" : "faded" : "stopped")} after {sound.Samples} sample(s)" );
 	}
 
 	/// <summary>A place with each coordinate cut toward nought, as <c>__ftol</c> cuts it.</summary>
@@ -299,13 +322,22 @@ public sealed partial class ParkAudio
 
 	/// <summary>
 	/// Each plain script voice's next sample once the last has ended and its silence is over, as a following voice's
-	/// is (<see cref="ServeFollowing"/>), and every one-shot whose sample has ended let go.
+	/// is (<see cref="ServeFollowing"/>), each chain's next child once the clock passes its newest child's time, and
+	/// every one-shot whose sample has ended let go.
 	/// </summary>
-	private void ServeScriptSounds()
+	internal void ServeScriptSounds()
 	{
 		for ( var index = _scriptVoices.Count - 1; index >= 0; --index )
 		{
 			var sound = _scriptVoices[index];
+
+			if ( sound.Chain )
+			{
+				if ( Time.Now > sound.NextAt )
+					NextChainChild( sound );
+
+				continue;
+			}
 
 			if ( sound.Voice is { Playing: true } )
 				continue;
@@ -357,6 +389,37 @@ public sealed partial class ParkAudio
 				+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, {sound.Wait} ms of silence after it" );
 	}
 
+	/// <summary>
+	/// A chain's next child (<c>0x006c3a80</c>, a child of class <c>0x0070a970</c>): a variation drawn by weight among all
+	/// of the effect's (<c>FUN_006bc810</c> asked with 0, so with no rule against the one before), a sample of it at a
+	/// volume and a pitch of its own (<c>0x006c3ae0</c>), where the chain stands now, and the next child its variation's
+	/// wait after this one's start (<c>0x006bc2d0</c>). The child before plays out, as the original prunes it without a stop.
+	/// </summary>
+	private void NextChainChild( ScriptVoice sound )
+	{
+		var headers = sound.Category.VariationsOf( sound.Effect );
+		var next = AnyVariation( headers, -1, _scriptRandom );
+
+		if ( next < 0 )
+			return;
+
+		sound.Variation = next;
+		sound.Kept = HeldSample( headers[next], first: true, sound.Kept, 0, 0, _scriptRandom );
+		sound.Wait = ParkScreams.GapMilliseconds( headers[next], _scriptRandom );
+		sound.NextAt = Time.Now + (sound.Wait / 1000f);
+		sound.Voice = Audio.Play( sound.Category.PickFrom( sound.Effect, next ), ChannelGain( sound.Kept.Volume ),
+			bus: AudioBus.Effects, position: sound.Place, range: sound.Place is null ? null : headers[next].Range );
+
+		if ( sound.Voice is null )
+			return;
+
+		sound.Voice.SetRate( ParkCarSounds.Rate( sound.Kept.Pitch ) );
+		++sound.Samples;
+
+		Log.Info( $"Park audio: script {sound.Script}'s chain {sound.Effect}, child {sound.Samples} at {Time.Now:F3} s, sample '{sound.Voice.Name}' variation {next + 1} "
+			+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, the next in {sound.Wait} ms" );
+	}
+
 	/// <summary>Every script sound let go as the park ends.</summary>
 	private void StopScriptSounds()
 	{
@@ -389,7 +452,7 @@ public sealed partial class ParkAudio
 				? $"at ({place.X:F0},{place.Y:F0},{place.Z:F0}) {(place - ears).Length:F1} off range {voice?.Range ?? 0f:F0} gain {voice?.DistanceGain ?? 0f:F4}"
 				: "flat";
 
-			lines.Add( $"script {sound.Script} type {sound.Type} effect {sound.Effect} {(sound.Plain ? "plain" : sound.Looped ? "looped" : "one-shot")} "
+			lines.Add( $"script {sound.Script} type {sound.Type} effect {sound.Effect} {sound.Kind} "
 				+ $"'{voice?.Name}' volume {voice?.Volume ?? 0f:F4} {(voice is { Playing: true } ? "playing" : "silent")} samples {sound.Samples} {where}" );
 		}
 

@@ -9314,6 +9314,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   0.8424 and 0.8361, 75 and 38 of 127; the planes' 209 started at the original's three places to the unit; 186 found in
   the mix (`q553/side-by-side.png`). The other classes are Q557. Tests 3571, 0 fail with the game; 20 of 20 bugs put
   back fail a test.
+- [x] **Q558. A script's chain of any variation: effect flags `0x4` alone** (Q557's first piece). `Voice_MakeAnyChain`
+  (`0x006bdc60`) keeps the held chain's base class `0x0070a390`; its children (`0x0070a970`) draw their variation among
+  all of the effect's (`FUN_006bc810`) where a scream's take the zones (`audio.md`, "A script's sounds"). Built in
+  `ParkAudio.NextChainChild`: the Crazy Ape's 89 in each loop of its go, 14 children a loop, each gap its stated wait
+  within 0.007 s, 64 of 127 over 100 at (430,240,0), stopped by `KILLOBJ 10`; the original from the same file at the same
+  place, children 513 to 1001 ms apart, 64 of 127 over 100 (`q558/side-by-side.png`, `q558/PREDICTION.txt`). Tests 3573,
+  0 fail with the game; 14 of 14 bugs put back fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
