@@ -9252,6 +9252,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   feature (`RESEARCH_END_FEATURE`). Confirmed: the original (`q550/orig`, 5 of 6 held, the keys byte's miss the box's
   own take) and ours (`q550/run2` 8 of 8 in Instant Action; `run7`, `run8` 5 of 5 in Full Simulation, the scene's two
   misses in `run3` to `run6` recorded); `mutate.py` 14 of 14.
+- [x] **Q551. The End feature, decoded.** Q703's "decode first"; the decode only, lane A, nothing built.
+  `park-engine.md`, "The End feature's view": the End is the ride view of the End object itself (`FUN_004e15b0` on
+  it, `FUN_0042a560`), on its model's `camera` record (id 1 under `0x1000`; End.MD2 node 38 at (480.5, 10, 200),
+  turned 16° up), with `UsageInfo.ConstrainCamera` (the item's `+0x11c`; `+0x80` is `Info.FirstPersonSprites`, by the
+  field table's order) setting `gui_CameraFlags` `0x800`, so no look offset is worked; the camera mixes the node's
+  matrix with the last frame's by `(1000 - ms) x 0.0005`. Message 6 is a control's visibility. The show is the End's
+  own scripts: `End.RSE` (`DIPMUSIC 1`, `cat_ui` 186, `cat_rides` 200 to 202, `P_EFFECT_Firework2` once a second on
+  `fwork01`-`04`) and `AnimCtrl.RSE` (the three flypast clips 0, 1, 0, 2, 1, 2, 0, 2, trails 93 to 95, `cat_ambient`
+  209). The executable's own names: `StartWinningSequence`, `EndWinningSequence`. Checked in the original
+  (`q551/PREDICTION.txt`, two rounds, one miss recorded: the dip is the word `0x00803ad0`): flags `0x0b04`, eye
+  (480.53, 10.00, 200.00), look 0 and 0 through the pointer's moves, layer 0 hidden, the dip 1, the tick running; after
+  Escape all back (`q551/orig/a-sheet.png`, `b-sheet.png`). `original/camread.py` new.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

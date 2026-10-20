@@ -786,9 +786,9 @@ a plain Escape opens the game menu (`GameMenu_Open( 0 )`, `0x004a2942`) and the 
 | `FUN_0048adb0` (`0x0048addc`), from `FUN_004815e0` in the load's rebuild `FUN_00415140`, when the saved state is 4 | **on**, if off, and `0x0074fb20` loaded into it |
 
 So an ended park is left in the full-screen view under its banner, and by the handler's state-4 arm nothing brings
-the interface back. The two meshes' names are not resolved, and the end of a park was not run.
+the interface back. No node name in the 312 shipped wads hashes to either mesh (Q551), and the end of a park was not run.
 
-**The End feature's handler `0x0048a970`** (Q703; fork watch 2026-10-19, verify-world.md L2). Message `0x15` stamps
+**The End feature's handler `0x0048a970`** (`EndFeature_OnMessage`; Q703; fork watch 2026-10-19, verify-world.md L2). Message `0x15` stamps
 `[0x007c2508]` with the time (`0x0048ac16`). Message `0x1000b`, a key: `0x1b` (Escape) with `arg3 & 0xff0000` clear
 (`0x0048a99e`..`0x0048a9af`), with no time gate. Message `0x10006`, a button: button 1, `[0x0078d911]` (RMB cancel) set and
 `time - [0x007c2508] > 2000` strictly (`jle` at `0x0048aaf8`). Both arms run one body: control message 4 to the window,
@@ -798,8 +798,9 @@ When the game type `[0x00fb3b7c]` is 2 (Instant Action) it also shows UITEXT **4
 `FUN_0047f020( ..., 2, ... )` (`0x0048aa4f`..`0x0048aac2`): "Congratulations! Now you've completed Instant Action mode
 you should try the Full Simulation game! Just return to the Lobby to start." It writes no profile state: the bit it sets at
 `[0x00fb34c7]` is the compiler's one-time guard for the mode object at `0x00fb3b7c` (constructed once by `FUN_00550ca0`, its
-destructor `0x005d1750` a bare RET registered through `0x0067a7d0`). Not read: what message 6 with 0 and 1 does to the two
-layers, and `FUN_004862a0`'s effect.
+destructor `0x005d1750` a bare RET registered through `0x0067a7d0`). Message 6 is a control's visibility, its argument
+the new state (`FUN_004a2ac0`; `hud.md`, "The help bar in first person"): the body hides layer 1 and shows layer 0, the park's view and the gadget on it.
+Not read: `FUN_004862a0`'s effect.
 
 **In the original** (the reference park under Proton, the state read from memory after each key let go, a frame
 grabbed with it): F2 changed nothing; F3 took `[0x007cb2e8]` 0 to 1, `[0x007cb2b4]` from nought to a control, and bit
@@ -839,6 +840,65 @@ hides the viewfinder. `RootPanel.Hidden` stops the interface drawing and updatin
 the park every right press while it is set.
 
 ---
+
+**The End feature's view** (Q551). The executable's own names for the pair are `StartWinningSequence` and
+`EndWinningSequence` (the assert "Calling EndWinningSequence before StartWinningSequence", `0x00762720`, in
+`World_DeleteEndFeature`). The view is **the ride view of the End object itself**: `World_MakeEndFeature` hands the
+object it made to `FUN_0048ae70` (through `FUN_00481b60`), which leaves first person or a ride view and calls
+`FUN_004e15b0( 0 )` with that object as `this` (`0x0048aeb4`), the "Ride it!" call. `FUN_004e15b0` passes the item's
+`+0x80` and `+0x11c` to `FUN_0042a560`. The catalogue item keeps its `.sam` fields in the order of the executable's
+field table (records of `0x3c` bytes, `0x00744c60` on): `Info.DontApplyOffset` `+0x38` and `Info.DoHeadProcessing`
+`+0x84` sit 19 records apart, and `UsageInfo.GoldenTicketCost` (`+0xc4`, read at `0x004db4a6` by the ticket test)
+sits 22 before `UsageInfo.ConstrainCamera`, so **`+0x80` is `Info.FirstPersonSprites` and `+0x11c` is
+`UsageInfo.ConstrainCamera`**. `FUN_0042a560` finds the model's first lookup record of id 1 under `0x1000`
+(`FUN_0044b220`), marks it stored each frame (runtime bit 4), keeps its matrix at `[0x00790a30]` and the model at
+`[0x00790a44]`, and sets the mode through `FUN_0042ab20( 4, 1, model, 0, 0, ConstrainCamera )`: `gui_CameraFlags`
+bit `0x4`, and with ConstrainCamera bit **`0x800`** with the look offsets `[0x00790adc]` and `[0x00790ae0]` noughted
+(`0x0042abd5`). Entering it also sets `0x200` and turns the compositor off where it is on (`FUN_00457a40`, `0x6000`
+of `[0x007a1a8c]`), stops the model highlight (`FUN_0045d660( 1 )`, `[0x007afda4]`), sets bit `0x8000` on each node of
+the viewed model whose lookup record carries `0x10000000` and clears it where the record carries `0x20000000`, and
+calls `FUN_00481470( 1 )`, whose layer switch `FUN_004a2ac0` does nothing while the End exists (`FUN_00516c00`): so `FUN_0048ae70` hides both layers
+itself (`0x0048af00`..`0x0048af21`). It ends in the sprite swap (`0x0042a6ee`): `FirstPersonSprites` is 1 in no
+shipped file and entering the ride view clears flag `0x02`, so the End keeps the `.TPC` pictures.
+
+Each frame the camera update `FUN_0042b1c0`, under `& 0x3c` (`0x0042ca0a`), takes the record's world matrix for the
+camera, mixed with the last frame's matrix by `w = ( 1000 - t ) x 0.0005`, `t` the milliseconds since the last update
+(`FUN_00402d80`'s clock, QueryPerformanceCounter or `timeGetTime`; 100 past 200, 1 at nought or below, so `w` is 0.4
+to 0.4995; `0x0042ca13`..`0x0042cb7d`; the last frame's is the record's own matrix, `[0x00790948]`, not the mixed
+one), and the eye at the matrix's translation (`0x0042cb83`..`0x0042cb96`). It
+then turns the picture by the look offsets (`FUN_0046f6f0( ..., 4, ... )`, `0x0042cbc3`). Those are worked from the
+pointer only when `uVar13 = ~flags >> 11 & 1` or the right button is held (`[0x00790aac]` bit 4, `FUN_0042a760`'s
+button 1), so with ConstrainCamera they stay nought, and the End's handler forwards nothing to `FUN_0042a760` in any
+case. **So the End's picture is its `camera` node, still**: End.MD2's record 0, node 38, id 1, flag word `0x1031`, at
+world (480.5, 10, 200), three cells inside the jungle gate and ten up, turned 16° up about -X; no clip moves it.
+`World_DeleteEndFeature` deletes the thing (`FUN_0050b780`), noughts `0x007cf4f4` and leaves the ride view
+(`FUN_0042a190`: `FUN_0042a560` again, which `FUN_0042ab20` turns off; the layers come back by `FUN_004a2ac0( 1 )`),
+so the orbit returns where it was.
+
+**What plays in it is the End's own script.** `end.sam` (id 1605, `Info.WhichUIType 4`, `Info.DontApplyOffset 1`,
+`UsageInfo.ConstrainCamera 1`) and `end.wad`'s `End.MD2` (eight planes, `_f_endplane01`-`08`, each with its
+propellers and three smoke nodes) with three clips, `Endm1`-`Endm3` (500 frames; three planes fly towards the view,
+two cross it, three climb away). `End.RSE` ("End Anim"): `SPAWNCHILD AnimCtrl.rse`, `VAR_ENDTIME` now + 10000,
+`DIPMUSIC 1`, `ADDOBJ 9 -1 186 2` (`cat_ui` 186, no node), `ADDOBJ 5 9 200 1` and `ADDOBJ 5 10 201 1` (`cat_rides` on
+`fwork05` and `fwork06`, sound ids 9 and 10), then for ever once a second: `EVENT 5 10 202`, and `EVENT 1 n 6` on
+particle ids 17 to 20 (`fwork01`, `fwork02`, `fwork04`, `fwork03`), effect 6 `P_EFFECT_Firework2`; past the end time
+it sets `VAR_STATUS` 1 and carries on (what reads it was not traced). `AnimCtrl.RSE` ("End Anim Control") plays the
+clips 0, 1, 0, 2, 1, 2, 0, 2 and over, each by `WAITANIM 5 k` after starting the trails of the planes in it on their
+particle ids (`ADDOBJ 1 n 93..95 1`, `P_EFFECT_SmokeTrailR`, `B`, `W`, drawn as red, blue and yellow stars) and
+`cat_ambient` 209 on their sound ids, and kills tag 1 after. The sounds were not listened to. The full-screen control
+`FUN_0048ae70` puts up holds one control of mesh `0x706de86b` (stream `0x0074faf0`, `lib/uistream.py`): that hash is
+no node name in any of the 312 shipped wads (as `0xf3a7aff4`, the end of a park's, is not), and the original's frame
+shows no banner.
+
+**In the original** (Q551; `q551/orig/run.sh`, `q550/alldone576.TPWS` loaded into the reference install,
+`original/camread.py` every 0.1 s, two rounds, `q551/PREDICTION.txt`): on tick 800 the End's id 43 was set and
+`gui_CameraFlags` went from `0x0100` to `0x0b04` (`0x4`, `0x800`, `0x200`, the compositor's `0x4000` off), the
+ride view's model 91, the eye (480.53, 10.00, 200.00), the look offsets 0 and 0 while the pointer was moved to the
+window's four corners, layer 0 hidden, layer 1 hidden, the dip word `[0x00803ad0]` 1 (`[0x00803ac8]` is only the
+volumes' dirty flag); the tick ran on, 800 to 1052 in 41 s. The frames (`q551/orig/a-sheet.png`, `b-sheet.png`): a
+low view up the path from inside the gate to the sky, the planes trailing yellow, blue and red stars, the bursts,
+the pointer still drawn. Escape: `0x0100`, the orbit's eye back, layer 0 shown, the dip 0, UITEXT 471's box over the
+park with the gadget, the tick standing under it; stars an `EVENT` made still in the sky.
 
 ## The park management gadget
 
@@ -1371,7 +1431,8 @@ no thing, as rows 93 to 97 are. **The End feature** (`World_MakeEndFeature`, `0x
 whose name at `+0x390` is `End` (a wide compare with the string object `0x007cf9c0`), made as an object at
 (0, 0, 0) (`FUN_004db090`, `0x00516b8b`), its thing id stored at `0x007cf4f4`; with none it logs "Could not find
 the %s feature" and stores nought. Then `FUN_0048ae70` takes the screen (above, "Everything else that calls it") with
-the handler `0x0048a970` (above, "The End feature's handler").
+the handler `0x0048a970` (above, "The End feature's handler") and puts the camera in the End's own ride view, on its
+model's `camera` node, while its script flies the planes and fires the fireworks (above, "The End feature's view").
 
 **The automatic mode is the screen refused, nothing more.** The efforts and the work load have one writer
 each besides the set-up and the load, `Lab_SetEffort` (`0x00503870`) and `Lab_SetWorkLoad` (`0x00503900`), both
@@ -1484,8 +1545,9 @@ whose `+0x4ac` is nought gets `FUN_004e15b0( 0 )` instead.
   which picks `.tpc`/`.fpc` over `.tps`/`.fps` (`0x008757a8`, `0x00875598`), is 1 in the image and nothing writes
   it, so the `.tps`/`.fps` arms are never taken. An `.FPC` picture is the same figure seen from ground level
   (FileFormats, "Sprites"). The ride view's `FUN_0042a560` also ends in the swap (`0x0042a6ee`): to `.FPC` when its
-  second argument is 1 or flag `0x02` is set, otherwise back to `.TPC`. Its callers' second argument is not traced,
-  and OpenTPW reaches no ride view.
+  second argument is 1 or flag `0x02` is set, otherwise back to `.TPC`. `FUN_004e15b0`, the "Ride it!" call, passes
+  the item's `Info.FirstPersonSprites` (`+0x80`), which no shipped file sets to 1 ("The End feature's view"); the
+  other callers' are not traced, and OpenTPW reaches no ride view.
 
 The pick point is written only by `FUN_0045bf90` (called at `0x0054e2d5`, and only while `& 0x16` is clear). It is
 a terrain hit inside its own cell's rectangle, with the cells clamped to the 96 by 85 heightfield, or a point on a

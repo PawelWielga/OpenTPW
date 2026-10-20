@@ -54,18 +54,21 @@ The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses
 filed the items that cite it.
 
 - [ ] **Q703. The End feature.** From Q245, after Q550 (the end test, the mark and row 167 are built; the End is
-  counted, `RESEARCH_END_FEATURE`, in `Level.EndOfResearch`). Build `World_MakeEndFeature` (`0x00516b00`;
-  `park-engine.md`, "The lab at work"): the catalogue item named `End` (jungle's `End` model, with a view node of its
-  own) made as an object at (0, 0, 0), its thing id kept (`0x007cf4f4`, which the bank's end of the park reads), then
-  `FUN_0048ae70` taking the screen (a ride view left, the keys taken, the open screen closed, layers 0 and 1 hidden,
-  the full-screen control of stream `0x0074faf0` with the handler `0x0048a970`), and the handler's ending: Escape,
-  or a right click after 2000 ms with RMB cancel on, deletes it (`World_DeleteEndFeature`), gives the keys back and
-  in Instant Action shows UITEXT 471's box ("Congratulations! Now you've completed Instant Action mode ...").
-  The original's frame (`q550/orig/a-4-after-end.png`): the gadget and money gone, the view turned up to a blue sky
-  with stars and fireworks over the park's edge; after Escape (`a-7-after-escape.png`) the box over the park, the
-  park's tick standing under it. Decode first what makes that view (the End model's script or view node, the
-  fireworks' effect) and what message 6 with 0 and 1 does to the two layers. `q550/alldone576.TPWS` ends research on
-  tick 800 in both games (`TOOLING.md`, "The end of research on demand"). Row 168 (`0xa8`) has no poster found.
+  counted, `RESEARCH_END_FEATURE`, in `Level.EndOfResearch`) and Q551 (the decode: `park-engine.md`, "The End
+  feature's view", "The End feature's handler"). Build `World_MakeEndFeature` (`0x00516b00`): the catalogue item
+  named `End` (jungle's `features/end.wad`, id 1605) made as a fixed object at (0, 0, 0) running `End.RSE` and its
+  child `AnimCtrl.RSE` on our VM, its thing id kept (`0x007cf4f4`, which the bank's end of the park reads); then the
+  screen taken as `FUN_0048ae70` does (a ride view or first person left, the keys taken, the open screen closed, the
+  park's view and the gadget hidden, the pointer still drawn) and **the camera put on the End model's `camera`
+  node** (id 1 under `0x1000`), still, mixed with the last frame's matrix by `(1000 - ms) x 0.0005` (OpenTPW has no ride
+  view: build only this constrained one, a general "Ride it!" is not this item; say the deviation where `Time.Delta`
+  replaces the milliseconds). The handler's ending: Escape, or a right click after 2000 ms with RMB cancel on,
+  deletes the End (its scripts end, the music dip with them; an `EVENT`'s particles stay), gives the keys back,
+  shows the park's view and the orbit where it was, and in Instant Action shows UITEXT 471's box. Confirm on
+  `q550/alldone576.TPWS` (tick 800 in both games; `TOOLING.md`, "The end of research on demand") beside the
+  original's frames (`q551/orig/`): the view up the path from inside the gate, the planes' star trails and the bursts,
+  the census of the End's scripts and their effects; then Escape and the box. Not decoded: `FUN_004862a0`'s effect;
+  what reads `VAR_STATUS`; the sounds were not listened to. Row 168 (`0xa8`) has no poster found.
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge
