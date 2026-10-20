@@ -263,7 +263,8 @@ heard from the midpoint of the eye and the point it looks at (`CameraMode.Ears`)
 sounds are given their record's range (`park.md`, "The land's own sounds"), and every other placed voice of a
 park its variation's (`SoundCategory.RangeOf`, Q265): a ride's screams and single screams, a guest put off, a
 yawn, the staff's voices, thunder and a bumper ride's engine. A voice out of range plays on unheard, where the
-original gives its channel up, and a voice is still panned by a plain left and right. The lobby's placed voices
+original gives its channel up (a ride's scream and a script's chain make no child there, "A voice out of range makes
+nothing next", below), and a voice is still panned by a plain left and right. The lobby's placed voices
 are OpenTPW's own and take no range.
 
 **Measured here, 2026-10-10** (`q265/confirm.py`, predicted first in `q265/PREDICTION.txt`; fix 4 of 4 on the
@@ -1001,8 +1002,22 @@ bus here (`q563/confirm.py`, run5, the final binary): "out of range at (686,-77)
 "in range again ... variation 1 afresh", then 5; the camera away, "out of range at (568,64), variation 1 held after 1
 sample(s)", no sample, "variation 1 afresh" on its return; 17 samples to `KILLOBJ 1`. **Said:** where the original's
 voice left range in a silence, its next sample was already queued (slot 0) and it plays that one on its return; here the
-one that last played (when the original queues the next is not read). Not built: the land's own screams
-(`ParkScreams`) and a script's one-shots out of range (Q557); the pool of twelve (Q43).
+one that last played (when the original queues the next is not read). Not built: a script's one-shots out of range
+(Q557); the pool of twelve (Q43).
+
+**A ride's scream is the same** (Q564, `q564/`). `STARTSCREAM` (`FUN_00551130`) calls `Sound_PlayEffect` with no range,
+so the held chain (`0x0404`, kids 71 to 74) is in range by its newest child's variation's, 95 on every one, and out of it
+makes no child, its first included. **Measured in the original** (`q564/orig/run.sh`, run a on the real screen,
+`chains.py`; predicted first, `q564/PREDICTION.txt`): the stock park, 40 s each with the camera on the Belly Bounce
+(525, 250), at (200, 200) and back. Near, 14 chains came flagged `0x22`, each its first child at once, 65 children; away,
+7 came `0x802` and made none; back, 11 and 81 children. A chain that came `0x802` made its first child (v1) as the camera
+came back. The listener (`voices.py`) stood at the midpoint of the eye and the point looked at, (525, 35, 222), 28 from
+the ride. **OpenTPW** (`ParkScreams.InRange`, `Chain.Away`): each chain is asked each pass, over the ground's two axes and
+its newest child's variation's range, before its first the first variation's; away it makes no child and the one before
+plays out; in range again it makes one at once, the next its wait after; a chain let go by a second start the same. The
+stock park (`q564/confirm.py`, run2, the final binary): near 6 chains and 53 children; away 12 chains, each "out of
+range at (525,250) after 0 child(ren)", and none; back 20, a chain started away "in range again after 0 child(ren)"
+then its first; main's binary made 87 children away.
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|

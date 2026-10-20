@@ -139,8 +139,12 @@ public class ParkScreamChainTests
 		}
 	}
 
-	/// <summary>A chain driver with a player that writes down what it was asked for, and nothing else.</summary>
-	private static (ParkScreams Screams, List<(ParkScreams.Chain Chain, int Variation)> Played) Driver( int seed = 1 )
+	/// <summary>
+	/// A chain driver with a player that writes down what it was asked for, and nothing else, heard from
+	/// <paramref name="ears"/> (at <see cref="Here"/>, beside every chain these start, when not given).
+	/// </summary>
+	private static (ParkScreams Screams, List<(ParkScreams.Chain Chain, int Variation)> Played) Driver( int seed = 1,
+		Func<Vector3>? ears = null )
 	{
 		var played = new List<(ParkScreams.Chain, int)>();
 		var variations = new Dictionary<int, IReadOnlyList<SoundCategoryFile.Variation>>();
@@ -152,12 +156,84 @@ public class ParkScreamChainTests
 				played.Add( (chain, variation) );
 				return null;
 			},
+			ears ?? (() => Here),
 			new Random( seed ) );
 
 		return (screams, played);
 	}
 
 	private static readonly Vector3 Here = new( 425f, 252f, 5f );
+
+	/// <summary>
+	/// A chain out of range of the listener makes no child, its first included, as the original's sound service ticks
+	/// only the voices in range (<c>SoundService_Pass</c>, <c>0x006b62b0</c>): over the ground's two axes alone, against
+	/// the newest child's variation's range (95 on every kids' scream), a distance of exactly the range in. In range again
+	/// it makes one child at once and no more in that pass, however many waits passed while it was away.
+	/// </summary>
+	[TestMethod]
+	public void AScreamOutOfRangeMakesNoChild()
+	{
+		var ears = Here;
+		var (screams, played) = Driver( ears: () => ears );
+
+		var chain = screams.Start( 13, 0x47, 1, 20, Here, now: 100f );
+
+		Assert.AreEqual( 1, played.Count, "in range, the first child at once" );
+		Assert.IsFalse( chain.Away );
+
+		// The other ground axis, 96 off: out, where a rule over x and the height would call it in.
+		ears = Here + new Vector3( 0f, 96f, 0f );
+
+		for ( var now = 101f; now < 140f; now += 0.5f )
+			screams.Pump( now );
+
+		Assert.AreEqual( 1, played.Count, "out of range, no child through 39 s of passes" );
+		Assert.AreEqual( 1, chain.Plays );
+		Assert.IsTrue( chain.Away, "the original's 0x800" );
+
+		ears = Here + new Vector3( 0f, 95f, 0f );
+		screams.Pump( 140f );
+
+		Assert.AreEqual( 2, played.Count, "exactly the range off is in range: one child at once" );
+		Assert.IsFalse( chain.Away );
+
+		screams.Pump( 140f );
+		Assert.AreEqual( 2, played.Count, "one child a pass, never one for each wait missed" );
+
+		// The height counts for nothing.
+		ears = Here + new Vector3( 0f, 0f, 500f );
+		screams.Pump( chain.NextAt + 0.01f );
+		Assert.AreEqual( 3, played.Count, "500 above the ride is still in range" );
+
+		// Started out of range, the first child waits for the listener, and is still the effect's first variation.
+		ears = Here + new Vector3( 200f, 0f, 0f );
+		var late = screams.Start( 43, 0x47, 1, 20, Here, now: 150f );
+
+		Assert.AreEqual( 3, played.Count, "a chain started away makes nothing" );
+		Assert.AreEqual( 0, late.Plays );
+		Assert.IsTrue( late.Away );
+
+		screams.Stop( 13 );
+		screams.Pump( 160f );
+		Assert.AreEqual( 3, played.Count );
+
+		ears = Here;
+		screams.Pump( 161f );
+
+		Assert.AreEqual( 4, played.Count, "in range, its first child" );
+		Assert.AreSame( late, played[^1].Chain );
+		Assert.AreEqual( 0, played[^1].Variation, "the first variation, whatever the wait" );
+
+		// A chain a second start let go is in the same pass, and out of range makes nothing either.
+		screams.LetGo( 43 );
+		ears = Here + new Vector3( -200f, 0f, 0f );
+		screams.Pump( 200f );
+		Assert.AreEqual( 4, played.Count, "the let-go chain away makes no child" );
+
+		ears = Here;
+		screams.Pump( 201f );
+		Assert.AreEqual( 5, played.Count, "and one in range again" );
+	}
 
 	/// <summary>
 	/// The heart of it. Two rides holding the SAME scream each make their first child at once, side by
@@ -815,9 +891,13 @@ public class ParkScreamChainTests
 		ready.SetValue( null, true );
 
 		ParkAudio? park = null;
+		var listener = typeof( Audio ).GetField( "_listener", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static )!;
+		var heardFrom = listener.GetValue( null );
 
 		try
 		{
+			// Heard from beside the ride, so its chain is in range (ParkScreams.InRange).
+			Audio.SetListener( Here, Vector3.Right );
 			park = new ParkAudio( theme );
 
 			Time.Paused = false;
@@ -836,6 +916,7 @@ public class ParkScreamChainTests
 				Audio.Voices.RemoveAll( voice => !before.Contains( voice ) );
 
 			Audio.HoldPlaced( false );
+			listener.SetValue( null, heardFrom );
 			ready.SetValue( null, false );
 			GameClock.Rebase();
 		}

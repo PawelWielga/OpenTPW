@@ -16,6 +16,11 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
+/// A chain out of range of the listener makes no child, its first included, and one at once in range again: the
+/// sound service ticks only the voices in range (<c>SoundService_Pass</c>, <c>0x006b62b0</c>; <see cref="InRange"/>).
+/// </para>
+///
+/// <para>
 /// Engine only. What a child sounds like - which category, how loud, where - is handed in by
 /// <see cref="ParkAudio"/>, so the clock runs the same with no sound device.
 /// </para>
@@ -57,6 +62,12 @@ internal sealed class ParkScreams
 
 		/// <summary>Whether a second start let this chain go - see <see cref="LetGo"/>.</summary>
 		public bool HeldByNothing;
+
+		/// <summary>
+		/// Whether the listener was last found past its range (<see cref="InRange"/>): the original's voice flag
+		/// <c>0x800</c> (<c>FUN_006bca70</c>).
+		/// </summary>
+		public bool Away;
 	}
 
 	private readonly Dictionary<int, Chain> _chains = [];
@@ -65,19 +76,22 @@ internal sealed class ParkScreams
 	private readonly List<(int ScriptId, Chain Chain)> _letGo = [];
 	private readonly Func<int, IReadOnlyList<SoundCategoryFile.Variation>> _variationsOf;
 	private readonly Func<Chain, int, Voice?> _play;
+	private readonly Func<Vector3> _ears;
 	private readonly Random _random;
 
 	/// <param name="variationsOf">An effect's variation headers - its waits and its zones.</param>
 	/// <param name="play">Sounds one child: a sample of the given variation, for the given chain.</param>
+	/// <param name="ears">Where the listener stands, which a chain must be in range of to make a child (<see cref="InRange"/>).</param>
 	/// <param name="random">
 	/// The draws. The original takes every one from a single generator at <c>0x00fb1f20</c>; the values
 	/// differ from it, and the ranges they are drawn over do not.
 	/// </param>
 	internal ParkScreams( Func<int, IReadOnlyList<SoundCategoryFile.Variation>> variationsOf,
-		Func<Chain, int, Voice?> play, Random? random = null )
+		Func<Chain, int, Voice?> play, Func<Vector3> ears, Random? random = null )
 	{
 		_variationsOf = variationsOf;
 		_play = play;
+		_ears = ears;
 		_random = random ?? new Random();
 	}
 
@@ -90,20 +104,23 @@ internal sealed class ParkScreams
 	/// <summary>The scream a script is holding, or null.</summary>
 	internal Chain? Find( int scriptId ) => _chains.GetValueOrDefault( scriptId );
 
-	/// <summary>Starts a chain for a script, and makes its first child now.</summary>
+	/// <summary>Starts a chain for a script, and makes its first child now, or, out of range, once it is in range.</summary>
 	internal Chain Start( int scriptId, int effect, int band, int level, Vector3 at, float now )
 	{
 		var chain = new Chain { Effect = effect, Band = band, Level = level, At = at };
 
 		_chains[scriptId] = chain;
-		Step( scriptId, chain, now );
+
+		if ( Reached( scriptId, chain ) )
+			Step( scriptId, chain, now );
 
 		return chain;
 	}
 
 	/// <summary>
-	/// Makes the next child of every chain whose clock has passed its newest child's time - the
-	/// original's <c>now &gt; +0x1c</c> (<c>0x006bdb88</c>).
+	/// Makes the next child of every chain in range whose clock has passed its newest child's time - the
+	/// original's <c>now &gt; +0x1c</c> (<c>0x006bdb88</c>). A chain out of range makes none; in range again its time
+	/// has long passed, so it makes one at once, and the next its wait after that.
 	/// </summary>
 	/// <remarks>
 	/// Called every frame. The original's service runs whenever the group volumes are applied
@@ -114,14 +131,14 @@ internal sealed class ParkScreams
 	{
 		foreach ( var (scriptId, chain) in _chains )
 		{
-			if ( chain.Plays == 0 || now > chain.NextAt )
+			if ( Reached( scriptId, chain ) && (chain.Plays == 0 || now > chain.NextAt) )
 				Step( scriptId, chain, now );
 		}
 
 		// A chain nobody holds is still in the engine's voice list, and its tick knows nothing of the handle.
 		foreach ( var (scriptId, chain) in _letGo )
 		{
-			if ( chain.Plays == 0 || now > chain.NextAt )
+			if ( Reached( scriptId, chain ) && (chain.Plays == 0 || now > chain.NextAt) )
 				Step( scriptId, chain, now );
 		}
 	}
@@ -172,6 +189,46 @@ internal sealed class ParkScreams
 
 		_chains.Clear();
 		_letGo.Clear();
+	}
+
+	/// <summary>
+	/// Whether a chain is in range of the listener (<see cref="InRange"/>), with <see cref="Chain.Away"/> set as the
+	/// original's <c>0x800</c> is (<c>FUN_006bca70</c>) and each change logged. The child before plays out: the chain has
+	/// no channel to give up, and its children are not in the service's pass.
+	/// </summary>
+	private bool Reached( int scriptId, Chain chain )
+	{
+		var near = InRange( chain, _variationsOf( chain.Effect ), _ears() );
+
+		if ( near != chain.Away )
+			return near;
+
+		chain.Away = !near;
+		Log.Info( $"Park audio: script {scriptId} scream effect {chain.Effect} "
+			+ (near ? "in range again" : $"out of range at ({chain.At.X:0},{chain.At.Y:0})")
+			+ $" after {chain.Plays} child(ren)" + (chain.HeldByNothing ? ", held by nothing" : "") );
+
+		return near;
+	}
+
+	/// <summary>
+	/// Whether a chain at <see cref="Chain.At"/> is in range of <paramref name="ears"/>, as the sound service's pass asks
+	/// of each voice (<c>FUN_006bca10</c>, from <c>SoundService_Pass</c>, <c>0x006b62b0</c>): the squared distance over
+	/// the ground's two axes alone (<c>FUN_006bb9f0</c>) not past the range's square. <c>STARTSCREAM</c> gives no range
+	/// (<c>FUN_00551130</c>), so the range is the newest child's variation's, which the child's draw writes into the chain
+	/// (<c>FUN_006bc650</c>, <c>0x006c3e00</c>), and before its first the effect's first variation's. Only a voice in
+	/// range is ticked (slot <c>+0x14</c>, <c>0x006bdae0</c>), so out of range a chain makes no child.
+	/// </summary>
+	internal static bool InRange( Chain chain, IReadOnlyList<SoundCategoryFile.Variation> variations, Vector3 ears )
+	{
+		if ( variations.Count == 0 )
+			return true;
+
+		var range = variations[Math.Clamp( chain.Variation, 0, variations.Count - 1 )].Range;
+		var x = chain.At.X - ears.X;
+		var y = chain.At.Y - ears.Y;
+
+		return x * x + y * y <= range * range;
 	}
 
 	/// <summary>

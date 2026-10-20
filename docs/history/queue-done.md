@@ -9341,6 +9341,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   through 6.4 s away and came back on v5, then v6; ours (`q563/confirm.py`, run5, the final binary, 4 of 4) "out of range
   at (568,64), variation 1 held after 1 sample(s)", no sample, "variation 1 afresh"; main's binary drew 4 samples away;
   `q563/side-by-side.png`; test `AVoiceOutOfRangeMakesNothingNext`, 10 of 10 bugs put back fail it.
+- [x] **Q564. A ride's scream out of range makes no child.** Q557's piece. `STARTSCREAM` (`FUN_00551130`) gives no
+  range, so the held chain's is its newest child's variation's (95), and the sound service ticks only voices in range
+  (`SoundService_Pass` `0x006b62b0`; `audio.md`, "A voice out of range makes nothing next"). Built in `ParkScreams`
+  (`InRange`, `Chain.Away`): away no child, its first included; back one at once. Proof: the original (`q564/orig/`, run
+  a) near 14 chains and 65 children, away 7 chains `0x802` and none, back 81; ours (`q564/confirm.py`, run2, the final
+  binary, 4 of 4) near 53 children, away 12 chains "out of range at (525,250) after 0 child(ren)" and none, back 20;
+  main's binary made 87 away; `q564/side-by-side.png`; test `AScreamOutOfRangeMakesNoChild`, 9 of 9 bugs put back fail.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

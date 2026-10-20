@@ -530,7 +530,7 @@ public sealed partial class ParkAudio : Entity
 	{
 		Current = this;
 
-		_screams = new ParkScreams( effect => _kids?.VariationsOf( effect ) ?? [], PlayScream );
+		_screams = new ParkScreams( effect => _kids?.VariationsOf( effect ) ?? [], PlayScream, () => Audio.Listener.Position );
 
 		// Nothing to load and nothing to play without a device, exactly as the lobby's does.
 		if ( !Audio.Ready )
@@ -1082,6 +1082,7 @@ public sealed partial class ParkAudio : Entity
 			? $"effect {scream.Effect} band {scream.Band} level {scream.Level} variation {scream.Variation + 1} "
 				+ $"sample '{scream.Sample}' pitch {scream.Pitch} plays {scream.Plays} next in {Math.Max( 0f, scream.NextAt - Time.Now ):0.00}s"
 				+ (scream.Voice is { Playing: true } ? "" : " (between)")
+				+ (scream.Away ? " away" : "")
 			: "none";
 
 	/// <summary>

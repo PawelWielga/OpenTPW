@@ -832,6 +832,12 @@ after its poller starts**, so a key meant inside either line cannot be sent afte
   take the log's mark before sending the camera command, as the line can come inside its reply). **Build nothing while
   `screenchains.sh` starts the original**: its lobby clicks are on fixed sleeps, and a build beside it left the game on
   the player menu (run a).
+- **A ride's screams taken out of range and back, in both games** (Q564): the stock park's Belly Bounce screams in
+  short chains (kids 71 to 73, 1 to 3 s each, about one a second near). The original: `screenchains.sh` with `KEEP=1
+  CAM=525,250`, then 40 s there, `setcam.py PID 200,200 90 0 off` for 40 s and back, `chains.py`'s log split by its line
+  count at each move (`q564/orig/run.sh`; the listener stands 28 from the ride). Ours: `camera 525 250 90 0`, `camera 200
+  200 90 0` and back, the log's `screaming, band`, `scream N, effect`, `out of range at` and `in range again` lines and
+  `rides`' scream state (`q564/confirm.py`).
 - **The happiness gauge at a known value in both games** (Q244): `q244/mkscene.py` writes one happiness into every
   guest of Q415's `noent.TPWS` (`parkfile.thing_set` on `+422`, all model-1 things, so the mean is the same whichever
   guests a game counts); ours loads it from the Load Park list (`q244/confirm.py`: `load()`, the log's `UI: meter 0x1f at

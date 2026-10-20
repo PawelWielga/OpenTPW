@@ -55,14 +55,15 @@ filed the items that cite it.
 
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
   the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
-  the music's class `0x406`, and Q563, a voice out of range (`audio.md`, "A script's sounds"). Counted and not started:
+  the music's class `0x406`, Q563, a voice out of range, and Q564, a ride's scream out of range (`audio.md`, "A
+  script's sounds"). Counted and not started:
   `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped script) and a
   placed sound with nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's 173, ADDOBJ 8
   on node 1). Both are of the plain class (flags `0x6`), already built: what they lack is nodes, as `ParkRides`' second
   pass binds the vehicles the file does not name with no `Nodes`. **Build it after Q26c:** those two stand and run from
   the park's load here, so with nodes they would sound at the arrivals' stop from the start, where the original has no
-  ferry and no seaplane until its first summons. Not built from Q563's rule: the land's own screams (`ParkScreams`'
-  chains make their children out of range) and a script's one-shots out of range (the original starts none away and
+  ferry and no seaplane until its first summons. Not built from Q563's rule: a script's one-shots out of range (the
+  original starts none away and
   drops it once its length has passed; a looped one starts afresh on its return: measure before building). Also measure
   whether a park entered fresh from a file hears its scripts' looped sounds in the original (Q553's run loaded into a
   park whose fountain already sounded; Q560 says why).

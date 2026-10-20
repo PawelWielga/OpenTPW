@@ -121,6 +121,8 @@ public class ParkVoiceRangeTests
 			before = [.. Audio.Voices];
 
 		ParkAudio? park = null;
+		var listener = typeof( Audio ).GetField( "_listener", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static )!;
+		var heardFrom = listener.GetValue( null );
 
 		Voice Last()
 		{
@@ -175,6 +177,8 @@ public class ParkVoiceRangeTests
 			Assert.IsTrue( park.StaffSound( 0x87, at ) );
 			Assert.AreEqual( 90f, Last().Range );
 
+			// A held scream makes its first child only in range of the listener (ParkScreams.InRange).
+			Audio.SetListener( at, Vector3.Right );
 			Assert.IsTrue( park.Scream( 7, 1, 50, at ) );
 
 			var child = Last();
@@ -216,6 +220,7 @@ public class ParkVoiceRangeTests
 			lock ( Audio.Lock )
 				Audio.Voices.RemoveAll( voice => !before.Contains( voice ) );
 
+			listener.SetValue( null, heardFrom );
 			ready.SetValue( null, false );
 		}
 	}
