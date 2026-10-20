@@ -45,7 +45,10 @@ fork watch).
 
 ## A. Bugs first
 
-**Ordered at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
+**Ordered at Alexah's word (2026-10-20):** the ferry, seaplane and bus made on demand (Q26c, which Q557's rest waits
+on), then the rides, shops and sideshows that run for guests (Q580, Q581), then the research screen and golden tickets
+(Q705 to Q709), then the sounds; the optional sound measurements Q575, Q576 and Q578 stand at the queue's end.
+**Before that, at Alexah's word (2026-10-08):** what a playable Lost Kingdom park needs most comes first (saving a
 park, the calendar, the shop's window, the gauge, the research lab), then the rest of this section in its old order.
 The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its findings are
 `~/.cache/tpw-harnesses/handoff/review2/q<N>/FINDINGS.md`). Q452 to Q465 come from the week-end audit of 2026-10-17
@@ -53,95 +56,38 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
-  the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
-  the music's class `0x406`, Q563, a voice out of range, Q564, a ride's scream out of range, and Q565, a script's
-  one-shot out of range (`audio.md`, "A script's sounds"). Counted and not started:
-  `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped script) and a
-  placed sound with nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's 173, ADDOBJ 8
-  on node 1). Both are of the plain class (flags `0x6`), already built: what they lack is nodes, as `ParkRides`' second
-  pass binds the vehicles the file does not name with no `Nodes`. **Build it after Q26c:** those two stand and run from
-  the park's load here, so with nodes they would sound at the arrivals' stop from the start, where the original has no
-  ferry and no seaplane until its first summons.
-- [ ] **Q567. The original sounds the global rides' 208 at the sideshows (decode first).** From Q565. In the stock park
-  the original made 208 (flags `0x0`, one sample of 1158 ms) 30 to 60 times a run at (525, 0, 300), by the Jungle Spray,
-  and (434, 0, 303) (`q565/orig/`, b to d, `oneshots.py`); no jungle script asks for 208 (`lib/soundsweep.py`), and ours
-  never plays it. Find its caller (a `Sound_PlayEffect` of category `[0x00803a28]`, effect 208) and what it marks.
-- [ ] **Q575. A plain voice's first silence, measured in the original.** From the run 6 review of Q563 (`handoff/review6/VERIFY-18.md`,
-  Q563 2). Read from the listing and built (fix group P): every start of a plain or music voice, the first and a start
-  in range again included, draws its variation's silence (`FUN_006bc410` -> slot `+0x48` `0x006bdf00` -> `0x006c5220`),
-  where Q302/Q553 had the first followed at once (`audio.md`, "The plain class"). Predict before the run: the land's gulls
-  (global ambient 2, one variation, wait 0 to 10000 ms) in the stock park, with the camera on the harbour, put their
-  first sample's channel and their second's 0 to 10 s apart beyond the first's length, not at once; and the bus's voice
-  back in range (waits nought) unchanged. Confirm in both games (`mixer.py`, `voices.py`; ours `scriptsounds` and the
-  `Park audio: the land's own ambient 2 ... ms of silence after it` lines, which now print on the first too).
-- [ ] **Q576. A chain's range before its first child, and a chain of any variation's, by the set-up's draw** (optional; reach
-  only the staff's 188). From the run 6 review of Q563 and Q564 (`VERIFY-18.md`, Q563 4, Q564 1). The original's chain of any
-  variation ranges for its whole life by the variation its set-up drew by weight among all (`0x006bbfc5` ->
-  `FUN_006bc810`), its children writing nothing into it, and a held chain does before its first child; ours ranges by the
-  newest child's or the effect's first. Said at `ParkAudio.InRange` and `ParkScreams.InRange`. In Lost Kingdom only the
-  staff's 188 (a held chain, its fourth variation 85 of weight 1354 of 65532, the rest 90) can differ, and only in its
-  start window away. Build: draw the set-up's variation for range alone (kept apart from the first child's variation 1).
-- [ ] **Q577. The sound commands 2 and 3: a script voice's drop suspended on focus loss and by the P key's pause.** From the
-  run 6 review of Q565 (VERIFY-19, finding 3). The window losing focus (`0x0046b73c` -> `0x0051bcf0` -> message `0x00700b64`
-  -> `0x006b5640`, type 2) and the P key's pause (`Game_TogglePause` `0x00409350`, its pause branch `0x004093af`) send
-  the sound service command 2; their resumes (`0x0046b70a` -> `0x0051bd30` -> `0x006b5670`, type 3; `0x00409381`,
-  `Game_Resume` `0x0040932b`) send 3 (`0x006bcab0`). Command 2 suspends a voice's drop only while its `+0x3c` is nought
-  (`0x6bcafd`/`0x6bcb02`); command 3 leaves `+0x3c` and flag `0x2000` set, so the drop stays far out until a channel
-  start rewrites `+0x3c` (`audio.md`, "A script's one-shot"). Ours sends neither: its script one-shots are dropped by
-  their time through a focus loss and a P pause. Decode what each command does to the other voice classes, then build
-  them where ours has the two paths (find first whether ours pauses on focus loss at all). Confirm: in the original,
-  a one-shot away from the camera kept past its length + 250 ms across an alt-tab (`oneshots.py`).
-- [ ] **Q578. Whether the land's following voices are heard through a pause in the original.** From the run 6 review (group N, Q558 1's decode, `audio.md`, "The pause substitution"): a voice
-  with a rectangle (flag `0x1000`) is moved by `FUN_006bd5f0` to the listener's own height from `[manager + 0x60]`
-  (`0x006bd5ff`), and the service's range test ignores height. If `[manager + 0x60]` holds the listener the pause lifts
-  (`FUN_0051c1d0` -> `0x006b5ba0` -> `0x006b8b60`), the gulls and the sea stay at the listener's distance and are heard
-  through a park's menu, where ours holds them (`Audio.HoldPlaced`) and lets their samples pass unheard. Read what
-  `[manager + 0x60]` points to and who writes it, then measure the original's mix in a paused Lost Kingdom park
-  (`mixer.py`: the sea's channel volume and distance with the menu open).
-- [ ] **Q560. A park file's live voices put back (decode first).** From Q559. Every park file carries the sound
-  manager's voices after the sound module's 84 bytes (`Sound_SaveModule` `0x0051c350` through `0x006b5c10`), and the
-  original's load puts them back (`Sound_LoadModule` `0x0051c400`, `0x0051c497` -> `0x006b5c30` -> `FUN_006ba150` ->
-  `SoundManager_SerializeVoices` `0x006b6da0`, which only reads, a case per class: 6 a held chain; the writer is
-  `0x006b6c30`). So the stock park's gates' held chain 177 sounds from the entry in the original (`q559/orig/` runs c
-  to g: a saved child of variation 8's sample, and the chain's own variation drawn afresh at the load, v8, v7, v1 and v2,
-  as its set-up redraws `+0x8` after the load restores it, `0x006bbfc5`), where ours makes none: its gate script is
-  resumed open and reaches no `EVENT`. A held chain is to be put back with its saved child's sample, a fresh draw for its
-  own variation and no flag `0x20`, so the first time its child list empties it restarts at variation 1, once
-  (`audio.md`, "Which variation it plays"). Counted at every park read: `PARK_FILE_SOUND_VOICES`. First session: decode the records (FileFormats `saves.md`, "Sound": 1,349 bytes in
-  `Easymode.TPWI`; `docs/exe/saves.md`'s `SOUN` row) and which voices they hold in the stock park and in Alexah's Full
-  Simulation saves (the gates', the crowd's, the rain's, a scream's), and whether a voice's handle in a script's record
-  or the weather's `mRainSoundHandle` is matched to one put back. Second: build what the jungle's files hold, and say what
-  this game's writer leaves out.
-- [ ] **Q719. Does a loaded park play at the save's sound volumes? (one game check)** From the fork watch, 2026-10-20
-  (`verify-world.md` M2; `saves.md`, "Sound"). The loader `0x0051c400` overwrites the live sound words at `0x00803aa0` with
-  the save's (the volumes and the three on-flags; all 558 park files on hand hold 100/75/60/75 and on/on/on) and sets
-  nothing else; the tick `0x0051bd70` pushes them. The profile applier `0x00423dd0`, which would put the player's options
-  back, is reached only from `GameOptions_Construct`, the options screen and two table references, and from no load
-  path found. If so, a loaded park overrides the player's volume options until they are touched. Confirm in the original
-  under Proton: set music off in the options, load `Easymode.TPWI` (or a copy), and listen or record the mix
-  (`record.sh`); then decide whether OpenTPW's load should do the same (it keeps the player's options today) and say the
-  result at the site. Nothing is built before the check.
-- [ ] **Q723. The sample draw as `FUN_006bc680` draws it.** From the upstream look, 2026-10-19 (`verify-sound-ui.md`, "The
-  music roll rule"; `audio.md`, "The sample draw"). The original rolls 0 to 65,535 and walks the samples for the first whose
-  odds are at least the roll, and plays NOTHING when none reaches it; with the avoid-repeat argument set and more than two
-  samples a pick equal to the last moves on to the next. `SoundCategory.PickIn` rolls 0 to the last odds, so a list always
-  plays, and has no avoid-repeat step. The first is a deviation of at most 20 in 65,536 (201 of the 1,592 lists in the 31
-  SFX maps end below 65,535, the lowest at 65,516), said at the site and not worth a change on its own. The second matters
-  for the lobby: all four `cat_locallobbymusic` effect 1 hold one variation of three samples (odds 21,845, 43,690, 65,535,
-  flags `0x206`, the plain class that asks with 1), so the original's lobby music never plays a track twice running, and ours
-  can. None of the voices that ask for it builds the step (the lobby's music, and the land's, the crowd's and the park music's voices; `audio.md`). Build the
-  draw once (rolled 0 to 65,535, no sample past the last odds, the previous-pick step where the class asks) for every
-  caller, or count the unbuilt step `SAMPLE_NO_REPEAT` (rule 4) until it is. Confirm: the lobby's music over ten
-  selections, never the same track twice running, caught by the disk driver.
-
-- [ ] **Q562. The bus drives facing along its route, and stands at the original's stops.** From Q561. Our bus drives its
-  route turned as it was parked (the route key's facing `0x400`, counted `ANIM_PATH_FACING`; `park.md`, "Clip content"),
-  where the original's faces along the road (`q561/side-by-side.png`); and it stands at (510, 65) and (422, 65), the route's
-  points at its clips' last keys (42.437 and 55.996), where the original's bus voice stood at (529, 64) and (439, 65),
-  19 and 17 back along the route. Decode the route sampler and the facing (`FUN_00474840` and its callers) against
-  ours (`LobbyModel.SampleRoute`), measure the original's bus matrix at its stops, and build the facing for the drawn
-  bus and its nodes (`NodePoser`). The seaplane's route too.
+- [ ] **Q26c. Ferry, seaplane and bus are always there.** `ParkFixedItems.Items` stands all three
+  permanently, and `VehicleFor` gives a load under 36 the bus, so only the bus is called in the stock park (its
+  loads are 13 and fewer since Q26b; three new rides make 30).
+  The original creates the vehicle on demand (`FUN_0051a2f0`,
+  `park.md`, "Arrivals: who comes, on what, and how often").
+  From Q238: the original hands a new thing the id last freed (its load's first guest took 38, a leaver's, the
+  rest 43 on); `ParkState.NextThingId` never uses one twice, said at the site, so a load's ids part from the
+  original's once anybody has gone.
+  Build create-on-demand and the bus / ferry / plane ordering; the pause between loads is built (Q68b).
+  From Q342: the THING is made on demand now, an object on cell (0,0) the writer writes (`saves.md`,
+  "OpenTPW's writer, a vehicle made at its summons"); the model and the script still stand from the load, and
+  the id is not the original's.
+- [ ] **Q580. Which rides, shops and sideshows run for guests: one check each, then the website's list.** From the
+  queue reorder of 2026-10-20 (a read-only check of `main` against the website). The website's `running` list
+  (`OpenTPW.Website/inc/lands.php`) names three, the Belly Bounce, the Drinks Shop and the Jungle Spray, and was never
+  brought up to date; the repo records more run with guests: the Hot Pot (Q179b), the Crazy Ape, Rocky Racers and
+  Mumbo (Q190), Aztec Mayhem (Q257u), the Inca Totem, the Balloon, Costume and Ice Cream Shops, the Laughing Hyenas
+  and the Strength Bird (`docs/history/queue-done.md`). Five more are built and never seen with guests: Tom Tom
+  Twister (`spider`, HOP/DELHEAD as Mumbo), Mayan Spinner (`lookout`, WALKGET as the Totem), the Burger and Fries
+  Shops and the Giant Puzzle (the COPY handshake as the Drinks Shop, `ride-operation.md`); no unbuilt opcode in their
+  scripts but REPAIREFFECT, which the Belly Bounce carries too. Four run only in Full Simulation (no `Easy_` file):
+  Sun God, the Gift Shop, the Steak Restaurant, the Arcade. Confirm each in the game with a guest on it (predicted
+  first; the console's `buy` and `send`, Full Simulation by `gmsfile.put` mode 0 for the four), file what fails as its
+  own item, and add every confirmed one to the website's `running` list (`docs/WORKFLOW.md`, "The website").
+  Split it by group if it is long: the five unseen first.
+- [ ] **Q581. The kart and water rides run for guests: Dino Karts and Splish Splash (decode first).** From the queue
+  reorder of 2026-10-20. A bought one's `mIsTrackRideValid` stays 0, so guests are never offered it
+  (`ParkRideChoice.cs`, `ride-operation.md`): there is no car or water-track tool (`PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`,
+  `ParkBuilding.cs`), no car record for BumperType -4 or -5 (`ParkBumperCars.cs`), so every BUMP is a counted no-op
+  (`RideScript.cs`), and the cars' steering to the buoys is not decoded (`park.md`). Dino Karts is the lab's first
+  project (Q701), so a Lost Kingdom player reaches it early. Decode the track tool for these two, the -4/-5 car records
+  and the steering first, then split the build. Q449 (2) holds only the sale refund; Q448 has BUMP 17.
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge
@@ -197,6 +143,73 @@ filed the items that cite it.
   spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
   Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
   spent one on `tourride`.
+- [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
+  the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
+  the music's class `0x406`, Q563, a voice out of range, Q564, a ride's scream out of range, and Q565, a script's
+  one-shot out of range (`audio.md`, "A script's sounds"). Counted and not started:
+  `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped script) and a
+  placed sound with nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's 173, ADDOBJ 8
+  on node 1). Both are of the plain class (flags `0x6`), already built: what they lack is nodes, as `ParkRides`' second
+  pass binds the vehicles the file does not name with no `Nodes`. **Build it after Q26c:** those two stand and run from
+  the park's load here, so with nodes they would sound at the arrivals' stop from the start, where the original has no
+  ferry and no seaplane until its first summons.
+- [ ] **Q567. The original sounds the global rides' 208 at the sideshows (decode first).** From Q565. In the stock park
+  the original made 208 (flags `0x0`, one sample of 1158 ms) 30 to 60 times a run at (525, 0, 300), by the Jungle Spray,
+  and (434, 0, 303) (`q565/orig/`, b to d, `oneshots.py`); no jungle script asks for 208 (`lib/soundsweep.py`), and ours
+  never plays it. Find its caller (a `Sound_PlayEffect` of category `[0x00803a28]`, effect 208) and what it marks.
+- [ ] **Q577. The sound commands 2 and 3: a script voice's drop suspended on focus loss and by the P key's pause.** From the
+  run 6 review of Q565 (VERIFY-19, finding 3). The window losing focus (`0x0046b73c` -> `0x0051bcf0` -> message `0x00700b64`
+  -> `0x006b5640`, type 2) and the P key's pause (`Game_TogglePause` `0x00409350`, its pause branch `0x004093af`) send
+  the sound service command 2; their resumes (`0x0046b70a` -> `0x0051bd30` -> `0x006b5670`, type 3; `0x00409381`,
+  `Game_Resume` `0x0040932b`) send 3 (`0x006bcab0`). Command 2 suspends a voice's drop only while its `+0x3c` is nought
+  (`0x6bcafd`/`0x6bcb02`); command 3 leaves `+0x3c` and flag `0x2000` set, so the drop stays far out until a channel
+  start rewrites `+0x3c` (`audio.md`, "A script's one-shot"). Ours sends neither: its script one-shots are dropped by
+  their time through a focus loss and a P pause. Decode what each command does to the other voice classes, then build
+  them where ours has the two paths (find first whether ours pauses on focus loss at all). Confirm: in the original,
+  a one-shot away from the camera kept past its length + 250 ms across an alt-tab (`oneshots.py`).
+- [ ] **Q560. A park file's live voices put back (decode first).** From Q559. Every park file carries the sound
+  manager's voices after the sound module's 84 bytes (`Sound_SaveModule` `0x0051c350` through `0x006b5c10`), and the
+  original's load puts them back (`Sound_LoadModule` `0x0051c400`, `0x0051c497` -> `0x006b5c30` -> `FUN_006ba150` ->
+  `SoundManager_SerializeVoices` `0x006b6da0`, which only reads, a case per class: 6 a held chain; the writer is
+  `0x006b6c30`). So the stock park's gates' held chain 177 sounds from the entry in the original (`q559/orig/` runs c
+  to g: a saved child of variation 8's sample, and the chain's own variation drawn afresh at the load, v8, v7, v1 and v2,
+  as its set-up redraws `+0x8` after the load restores it, `0x006bbfc5`), where ours makes none: its gate script is
+  resumed open and reaches no `EVENT`. A held chain is to be put back with its saved child's sample, a fresh draw for its
+  own variation and no flag `0x20`, so the first time its child list empties it restarts at variation 1, once
+  (`audio.md`, "Which variation it plays"). Counted at every park read: `PARK_FILE_SOUND_VOICES`. First session: decode the records (FileFormats `saves.md`, "Sound": 1,349 bytes in
+  `Easymode.TPWI`; `docs/exe/saves.md`'s `SOUN` row) and which voices they hold in the stock park and in Alexah's Full
+  Simulation saves (the gates', the crowd's, the rain's, a scream's), and whether a voice's handle in a script's record
+  or the weather's `mRainSoundHandle` is matched to one put back. Second: build what the jungle's files hold, and say what
+  this game's writer leaves out.
+- [ ] **Q719. Does a loaded park play at the save's sound volumes? (one game check)** From the fork watch, 2026-10-20
+  (`verify-world.md` M2; `saves.md`, "Sound"). The loader `0x0051c400` overwrites the live sound words at `0x00803aa0` with
+  the save's (the volumes and the three on-flags; all 558 park files on hand hold 100/75/60/75 and on/on/on) and sets
+  nothing else; the tick `0x0051bd70` pushes them. The profile applier `0x00423dd0`, which would put the player's options
+  back, is reached only from `GameOptions_Construct`, the options screen and two table references, and from no load
+  path found. If so, a loaded park overrides the player's volume options until they are touched. Confirm in the original
+  under Proton: set music off in the options, load `Easymode.TPWI` (or a copy), and listen or record the mix
+  (`record.sh`); then decide whether OpenTPW's load should do the same (it keeps the player's options today) and say the
+  result at the site. Nothing is built before the check.
+- [ ] **Q723. The sample draw as `FUN_006bc680` draws it.** From the upstream look, 2026-10-19 (`verify-sound-ui.md`, "The
+  music roll rule"; `audio.md`, "The sample draw"). The original rolls 0 to 65,535 and walks the samples for the first whose
+  odds are at least the roll, and plays NOTHING when none reaches it; with the avoid-repeat argument set and more than two
+  samples a pick equal to the last moves on to the next. `SoundCategory.PickIn` rolls 0 to the last odds, so a list always
+  plays, and has no avoid-repeat step. The first is a deviation of at most 20 in 65,536 (201 of the 1,592 lists in the 31
+  SFX maps end below 65,535, the lowest at 65,516), said at the site and not worth a change on its own. The second matters
+  for the lobby: all four `cat_locallobbymusic` effect 1 hold one variation of three samples (odds 21,845, 43,690, 65,535,
+  flags `0x206`, the plain class that asks with 1), so the original's lobby music never plays a track twice running, and ours
+  can. None of the voices that ask for it builds the step (the lobby's music, and the land's, the crowd's and the park music's voices; `audio.md`). Build the
+  draw once (rolled 0 to 65,535, no sample past the last odds, the previous-pick step where the class asks) for every
+  caller, or count the unbuilt step `SAMPLE_NO_REPEAT` (rule 4) until it is. Confirm: the lobby's music over ten
+  selections, never the same track twice running, caught by the disk driver.
+
+- [ ] **Q562. The bus drives facing along its route, and stands at the original's stops.** From Q561. Our bus drives its
+  route turned as it was parked (the route key's facing `0x400`, counted `ANIM_PATH_FACING`; `park.md`, "Clip content"),
+  where the original's faces along the road (`q561/side-by-side.png`); and it stands at (510, 65) and (422, 65), the route's
+  points at its clips' last keys (42.437 and 55.996), where the original's bus voice stood at (529, 64) and (439, 65),
+  19 and 17 back along the route. Decode the route sampler and the facing (`FUN_00474840` and its callers) against
+  ours (`LobbyModel.SampleRoute`), measure the original's bus matrix at its stops, and build the facing for the drawn
+  bus and its nodes (`NodePoser`). The seaplane's route too.
 - [ ] **Q713. The advisor's shop and sideshow value and satisfaction rows, 238 to 257.** From the fork watch, 2026-10-19
   (`verify-advisor-ui.md` L1; `advisor-park.md`, "Shop and sideshow value and satisfaction, rows 238 to 257"). Twenty
   polled rows, counted in `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; rows 239 to 241 were not opened, so read those three
@@ -1743,18 +1756,6 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   click on a hoarding (617, 378), and one at (700, 450) or (617, 500), left the pick up (the no-entry cursor, seen
   at (617, 500)); one at (512, 420) or (450, 450) dropped it back to the orbit's mode `0x6fea10` with no first person;
   one on the path inside the gate (290, 395) stood the viewer there.
-- [ ] **Q26c. Ferry, seaplane and bus are always there.** `ParkFixedItems.Items` stands all three
-  permanently, and `VehicleFor` gives a load under 36 the bus, so only the bus is called in the stock park (its
-  loads are 13 and fewer since Q26b; three new rides make 30).
-  The original creates the vehicle on demand (`FUN_0051a2f0`,
-  `park.md`, "Arrivals: who comes, on what, and how often").
-  From Q238: the original hands a new thing the id last freed (its load's first guest took 38, a leaver's, the
-  rest 43 on); `ParkState.NextThingId` never uses one twice, said at the site, so a load's ids part from the
-  original's once anybody has gone.
-  Build create-on-demand and the bus / ferry / plane ordering; the pause between loads is built (Q68b).
-  From Q342: the THING is made on demand now, an object on cell (0,0) the writer writes (`saves.md`,
-  "OpenTPW's writer, a vehicle made at its summons"); the model and the script still stand from the load, and
-  the id is not the original's.
 - [ ] **Q27. Pushing the mouse at the screen edge does not scroll.** The "push scroll" option exists and
   is read by nothing. `ParkOrbitCameraMode.Update` scrolls from keys only. Decode the camera
   binding table at `0x00748158` (`park-engine.md`, "The park camera"), then build.
@@ -2294,3 +2295,25 @@ state machine.
   the opened gate. Then turn the isles and gates, set `GateHeading` from the island, and fix the sun in
   `Level.SetupEntities`, which stands in front of gates that all face one way. Lost Kingdom's island first. Confirm: the
   lobby with the island and gate of Lost Kingdom beside the original's.
+- [ ] **Q575. A plain voice's first silence, measured in the original.** From the run 6 review of Q563 (`handoff/review6/VERIFY-18.md`,
+  Q563 2). Read from the listing and built (fix group P): every start of a plain or music voice, the first and a start
+  in range again included, draws its variation's silence (`FUN_006bc410` -> slot `+0x48` `0x006bdf00` -> `0x006c5220`),
+  where Q302/Q553 had the first followed at once (`audio.md`, "The plain class"). Predict before the run: the land's gulls
+  (global ambient 2, one variation, wait 0 to 10000 ms) in the stock park, with the camera on the harbour, put their
+  first sample's channel and their second's 0 to 10 s apart beyond the first's length, not at once; and the bus's voice
+  back in range (waits nought) unchanged. Confirm in both games (`mixer.py`, `voices.py`; ours `scriptsounds` and the
+  `Park audio: the land's own ambient 2 ... ms of silence after it` lines, which now print on the first too).
+- [ ] **Q576. A chain's range before its first child, and a chain of any variation's, by the set-up's draw** (optional; reach
+  only the staff's 188). From the run 6 review of Q563 and Q564 (`VERIFY-18.md`, Q563 4, Q564 1). The original's chain of any
+  variation ranges for its whole life by the variation its set-up drew by weight among all (`0x006bbfc5` ->
+  `FUN_006bc810`), its children writing nothing into it, and a held chain does before its first child; ours ranges by the
+  newest child's or the effect's first. Said at `ParkAudio.InRange` and `ParkScreams.InRange`. In Lost Kingdom only the
+  staff's 188 (a held chain, its fourth variation 85 of weight 1354 of 65532, the rest 90) can differ, and only in its
+  start window away. Build: draw the set-up's variation for range alone (kept apart from the first child's variation 1).
+- [ ] **Q578. Whether the land's following voices are heard through a pause in the original.** From the run 6 review (group N, Q558 1's decode, `audio.md`, "The pause substitution"): a voice
+  with a rectangle (flag `0x1000`) is moved by `FUN_006bd5f0` to the listener's own height from `[manager + 0x60]`
+  (`0x006bd5ff`), and the service's range test ignores height. If `[manager + 0x60]` holds the listener the pause lifts
+  (`FUN_0051c1d0` -> `0x006b5ba0` -> `0x006b8b60`), the gulls and the sea stay at the listener's distance and are heard
+  through a park's menu, where ours holds them (`Audio.HoldPlaced`) and lets their samples pass unheard. Read what
+  `[manager + 0x60]` points to and who writes it, then measure the original's mix in a paused Lost Kingdom park
+  (`mixer.py`: the sea's channel volume and distance with the menu open).
