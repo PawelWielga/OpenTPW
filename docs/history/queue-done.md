@@ -9407,6 +9407,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   re-predicted from `MatchTheExcitement` and held); a helper named `queue` broke the first R1 (now in `parkrun.py`'s
   list of unsafe names). Seen and filed: the Spinner's
   riders drawn at its steps (Q585). Website: these five join the `running` list (the Sentinel's).
+- [x] **Q580. Which rides, shops and sideshows run for guests: one check each, then the website's list.** From the
+  queue reorder of 2026-10-20. Q584 was its first piece (the five built and never seen with guests). The four that run
+  only in Full Simulation (no `Easy_` file) run for guests: no code changed, confirmed on main's build in the stock park
+  entered by the private player put to Full Simulation (`lib/fsplayer.py`; the log's "Full Simulation", "catalogued 70
+  items"), each bought on (40,22) as thing 43, four guests sent from (43,21), silent, predicted first
+  (`q580fs/PREDICTION.txt`, `q580fs/confirm.py`). Sun God (1106, node (42,21) joined at (43,21)), `run-S2` 4 of 4: five
+  riders, every excitement 75 (+15 under a gap of 15, +5 under 40), onride 4 (`S-sun.png`), heads 3/32 at `S-heads.png`
+  and 14/32 at most. The Steak Restaurant (1208), `run-K` 3 of 3: four paid 45, each "+21 since using" (`K-steak.png`).
+  The Gift Shop (1211), `run-G` 3 of 3: four paid 75, each +66 (`G-gift.png`). The Arcade (1309), `run-A` 3 of 3: twelve
+  paid 10, excitement 27, onride 3 (`A-arcade.png`). The only gap of the four scripts is `Inca God: SETREVERB` at 162 and
+  188 (noted under Q157; reverb is cut). The original, a Full Simulation player given each scene (`q580fs/orig/run.sh`,
+  `original/fsload.sh`): a guest loaded at thing 43 in each, 10.5 s to 13.3 s after the load; its Sun God's riders queue
+  and climb as ours (`q580fs/side-by-side-sungod.png`), its Arcade's guests show the same bored bubbles (`orig/A/o-t814`).
+  No prediction missed. Seen and filed: the Sun God's brazier plates (Q586). The website's `running` list (it names the
+  Belly Bounce, the Drinks Shop, the Jungle Spray) is the coordinating session's to bring up to date: the Hot Pot
+  (Q179b), the Crazy Ape, Rocky Racers and Mumbo (Q190), Aztec Mayhem (Q257u), the Inca Totem, the Balloon, Costume and
+  Ice Cream Shops, the Laughing Hyenas, the Strength Bird, Q584's five and these four.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

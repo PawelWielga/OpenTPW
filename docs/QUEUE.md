@@ -69,18 +69,6 @@ filed the items that cite it.
   `TRIGWAITANIM` on the model's Bezier path (`ParkFixedItems`, `LobbyModel.Paths`): find which of the path, the clip's
   end frame or the root's turn differs, against the original's frames of its drive-in (`orig3/o-t11*.png`); the ferry
   was not seen docked in the original, so photograph it too.
-- [ ] **Q580. Which rides, shops and sideshows run for guests: one check each, then the website's list.** From the
-  queue reorder of 2026-10-20 (a read-only check of `main` against the website). The website's `running` list
-  (`OpenTPW.Website/inc/lands.php`) names three, the Belly Bounce, the Drinks Shop and the Jungle Spray, and was never
-  brought up to date; the repo records more run with guests: the Hot Pot (Q179b), the Crazy Ape, Rocky Racers and
-  Mumbo (Q190), Aztec Mayhem (Q257u), the Inca Totem, the Balloon, Costume and Ice Cream Shops, the Laughing Hyenas
-  and the Strength Bird (`docs/history/queue-done.md`). The five built and never seen with guests (Tom Tom
-  Twister, Mayan Spinner, the Burger and Fries Shops, the Giant Puzzle) run for them: Q584. Four run only in Full
-  Simulation (no `Easy_` file): Sun God, the Gift Shop, the Steak Restaurant, the Arcade. Confirm each in the game
-  with a guest on it (predicted first; the console's `buy` and `send`, Full Simulation by `gmsfile.put` mode 0 for the
-  four), file what fails as its
-  own item, and add every confirmed one to the website's `running` list (`docs/WORKFLOW.md`, "The website").
-  What is left: the four Full Simulation ones, then the website's list.
 - [ ] **Q581. The kart and water rides run for guests: Dino Karts and Splish Splash (decode first).** From the queue
   reorder of 2026-10-20. A bought one's `mIsTrackRideValid` stays 0, so guests are never offered it
   (`ParkRideChoice.cs`, `ride-operation.md`): there is no car or water-track tool (`PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`,
@@ -96,6 +84,12 @@ filed the items that cite it.
   The Lookout's heads ride its lift (`ride-operation.md`, "Lost Kingdom's legs"); find why ours has no head node for
   them (the Aztec Mayhem's are drawn on its benches, Q257u) and draw a Carried rider where the original does; compare
   frames of both games at 580,240 zoom 70.
+- [ ] **Q586. The Sun God's two brazier plates are drawn dark where the original's are gold.** From Q580
+  (`q580fs/side-by-side-sungod.png`: ours `run-S2/S-heads.png`, the original `orig/S2/o-t813.png`, both at 412,240 zoom
+  70 rotation 0). Ours draws each plate beside the steps as a dark square with its fire in it (`S-sun.png` and
+  `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
+  (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
+  against `incagod`'s model.
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge
@@ -380,6 +374,10 @@ filed the items that cite it.
     change), and `[0x0078578c]` is the level key `Sound.Reverb` (0 in `Standard.sam`, 3 in hallow's, none in jungle's,
     so Lost Kingdom's is 0). A negative ride `+0xd8` sends nothing. The preset reaches EAX 2.0 hardware only; reverb
     itself stays cut (`audio.md`).
+  - **Note (Q580, 2026-10-20):** the Sun God reaches `SETREVERB` (`incagod` at 162 and 188, in every run of it), counted
+    at the dispatch default as `Inca God: SETREVERB at 162`. Building it is the store of its operand at the script's
+    `+0xd8` for the preset holder above; with reverb cut nothing would read it, so a name of its own in the count is all
+    it needs (`q580fs/run-S2`).
 - [ ] **Q158. Five park-screen readouts are stand-ins, and nothing counts them.** Found by the 2026-09-26 staleness
   audit (`CLAUDE.md` rule 4). `ParkObjectWindow`'s Age row prints a bare number: its wording, `FUN_006acd60` with
   `0x1b1`, is not decoded. Its scrap row prints the build price, where `FUN_004e2400` scales it by the age bucket's
