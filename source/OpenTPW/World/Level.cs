@@ -1504,6 +1504,9 @@ public class Level
 		// cannot take the entities a new boat adds.
 		ParkBumperBoats.Current?.Sync();
 
+		// And the model of an arrival vehicle made at a summons in the walk, for the same reason.
+		ParkFixedItems.Current?.Sync();
+
 		// The date of the park's clock once this frame's sweeps have counted it on, compared once a frame after the last of
 		// them, and the day's, month's and year's work run on its edges. Only a park keeps a date.
 		// A deviation: the original compares at the tail of every sweep (0x00516695), so in a frame of two or three sweeps

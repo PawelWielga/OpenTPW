@@ -100,8 +100,8 @@ public sealed class ParkFixedItems : Entity
 
 	/// <summary>
 	/// The thing this park stood <paramref name="item"/> as, or nought where it stood none. The three
-	/// vehicles are the ones worth asking for: two of them carry ids the save never gave them, so
-	/// there is nowhere else to look them up.
+	/// vehicles are the ones worth asking for: one is a thing only once it has been made, at its first
+	/// summons (<see cref="Make"/>), and has no header handle of its own.
 	/// </summary>
 	internal int ThingFor( string item ) => _thingOf.GetValueOrDefault( item );
 
@@ -128,21 +128,60 @@ public sealed class ParkFixedItems : Entity
 	internal static bool IsVehicle( int catalogueId ) => catalogueId is BusCatalogueId or SeaplaneCatalogueId or FerryCatalogueId;
 
 	/// <summary>
-	/// A vehicle stood under an id of this class's own has been made a thing at its summons
-	/// (<c>ParkPeople.MakeVehicle</c>): its model, its animations and its script go under the new thing.
+	/// A vehicle made a thing at its summons (<c>ParkPeople.MakeVehicle</c>), as the original's object constructor
+	/// makes it (<c>FUN_0051a2f0</c>, <c>FUN_004db090</c>): its animations are loaded now, for its script to be bound to,
+	/// and its model is stood with them under the new thing at the next <see cref="Sync"/>, where the park's sweep
+	/// reaches it. The thing is recorded whether or not either reads. Answers the animations, or null where there are
+	/// none to bind.
 	/// </summary>
-	internal void Made( int vehicle, int thing )
+	internal RideAnimations? Make( int vehicle, int thing )
 	{
 		var item = VehicleName( vehicle );
 
-		if ( !_thingOf.TryGetValue( item, out var stood ) || stood == thing )
-			return;
+		if ( _thingOf.TryGetValue( item, out var made ) && made == thing )
+			return null;
 
-		ParkObjects.Current?.Restand( stood, thing );
-		ParkRides.Current?.Rebind( stood, thing );
 		_thingOf[item] = thing;
 
-		Log.Info( $"{ThemeName}: fixed item '{item}' was thing {stood} and is thing {thing}" );
+		// A park with nothing to sweep its fixed items stands none, as the constructor's own null leaves them inert.
+		if ( _objects is null )
+			return null;
+
+		var directory = $"{_features}/{item}";
+
+		try
+		{
+			var animations = RideAnimations.Load( directory, item, FileSystem, ChannelsFor( directory, item ) );
+
+			_owed.Add( (item, thing, VehicleItem( vehicle ), animations) );
+
+			return animations;
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"{ThemeName}: fixed item '{item}' would not load, so it is missing from the park - {e.Message}" );
+			return null;
+		}
+	}
+
+	/// <summary>The vehicles made since the last <see cref="Sync"/>, whose models are still to stand.</summary>
+	private readonly List<(string Item, int Thing, int CatalogueId, RideAnimations Animations)> _owed = [];
+
+	/// <summary>
+	/// Stands the model of each vehicle made since the last call, outside the frame's entity walk, which cannot take
+	/// the entities a model adds (<c>Level.Update</c>): the summons runs inside it, in the people's sweep.
+	/// </summary>
+	internal void Sync()
+	{
+		if ( _owed.Count == 0 )
+			return;
+
+		var owed = _owed.ToArray();
+
+		_owed.Clear();
+
+		foreach ( var (item, thing, catalogueId, animations) in owed )
+			Stand( item, false, thing, catalogueId, animations );
 	}
 
 	/// <summary>
@@ -167,10 +206,9 @@ public sealed class ParkFixedItems : Entity
 		("gates", true, world => world.ParkGates),
 		("lights", false, world => world.TrafficLights),
 
-		// The three vehicles, which are not scenery - see the remarks on this class. Lost Kingdom's save
-		// names only the bus; the ferry and the seaplane are given ids below and stood anyway, so all three
-		// run their own scripts, and each takes a thing of the park's at its first summons (Made). The
-		// original makes the whole vehicle only then - docs/QUEUE.md Q26c.
+		// The three vehicles, which are not scenery - see the remarks on this class. Only one the file names a
+		// thing for is stood as the park loads: Lost Kingdom's names the bus alone, and the ferry and the seaplane
+		// are made, model, script and all, at their first summons (Make).
 		("bus", false, world => ThingByCatalogue( world, BusCatalogueId )),
 		("ferry", false, world => ThingByCatalogue( world, FerryCatalogueId )),
 		("seaplane", false, world => ThingByCatalogue( world, SeaplaneCatalogueId ))
@@ -253,7 +291,7 @@ public sealed class ParkFixedItems : Entity
 	/// <param name="world">
 	/// The park's own save, or null where the theme ships none - three of the four do not. It is asked for
 	/// the thing ids a script is bound against: the two its header names, and each vehicle's by its
-	/// catalogue number (<see cref="ThingByCatalogue"/>).
+	/// catalogue number (<see cref="ThingByCatalogue"/>); a vehicle it names none for is not stood.
 	/// </param>
 	/// <param name="objects">
 	/// What is already standing in this park, so these are swept along with it rather than keeping a
@@ -266,86 +304,91 @@ public sealed class ParkFixedItems : Entity
 		Name = $"{themeName} fixed items";
 		Current = this;
 
-		var features = $"levels/{themeName.ToLowerInvariant()}/features";
+		_features = $"levels/{themeName.ToLowerInvariant()}/features";
+		_objects = objects;
 
 		foreach ( var (item, carriesSign, thingOf) in Items )
 		{
-			// Each .wad stands in for a directory of its own name, the same way terrain.wad gives the
-			// terrain its terrain/ paths.
-			var directory = $"{features}/{item}";
-
-			try
+			// Under the thing id the save's own header gives it, or for a vehicle the thing its item is.
+			var thing = world == null ? 0 : thingOf( world );
+			var catalogueId = item switch
 			{
-				if ( carriesSign )
-					_sign = BuildSign( directory, themeName );
+				"bus" => BusCatalogueId,
+				"ferry" => FerryCatalogueId,
+				"seaplane" => SeaplaneCatalogueId,
+				_ => 0
+			};
 
-				// The twelve roles this item's archive ships, read exactly as a placed thing's are. The model
-				// is bound against all of them because an animation player names a role outright: the gate's
-				// own script asks for role 5 entries 0, 1 and 2, and a probe for a numbered run would have
-				// found them by luck rather than because they were asked for.
-				var animations = RideAnimations.Load( directory, item, FileSystem, ChannelsFor( directory, item ) );
-
-				var model = new LobbyModel(
-					$"{directory}/{item}.MD2",
-					$"{directory}/textures",
-					Vector3.Zero,
-					textureOverrides: carriesSign ? _sign : null,
-					clips: animations.AllClips );
-
-				_models.Add( model );
-				_modelNames.Add( item );
-
-				// And into the one registry this park sweeps, under the thing id the save's own header
-				// gives it.
-				var thing = world == null ? 0 : thingOf( world );
-
-				// <b>A vehicle the save does not name is given an id here and stood anyway.</b> The save
-				// records a vehicle only once a crowd of that size has arrived, because the engine makes
-				// the thing the first time it needs one (FUN_0051a2f0) rather than shipping it - so Lost
-				// Kingdom names a bus and neither a ferry nor a seaplane. Without an id nothing binds
-				// their scripts and they cannot move.
-				//
-				// The id counts DOWN from the top of the ushort the save keeps thing ids in, because
-				// ParkPeople.Admit hands arriving guests ids UP from one past the highest the file used.
-				// Two allocators sharing one numbering would eventually collide; these cannot meet. It is
-				// derived from the row rather than counted, so a vehicle keeps the same id every load.
-				var catalogueId = item switch
-				{
-					"bus" => BusCatalogueId,
-					"ferry" => FerryCatalogueId,
-					"seaplane" => SeaplaneCatalogueId,
-					_ => 0
-				};
-
-				if ( thing == 0 && catalogueId != 0 )
-					thing = ushort.MaxValue - Array.FindIndex( Items, row => row.Name == item );
-
-				// The catalogue number goes with it, so that a vehicle the save never named can still be
-				// given a script - see ParkObjects.Stood. The gates and the lights carry theirs too and
-				// lose nothing by it: they are in the save's object list already, so ParkRides binds them
-				// on its first pass and the second one steps over them.
-				if ( thing != 0 )
-					objects?.Stand( thing, model, animations, catalogueId );
-
-				// Kept by name, so that whatever drives a vehicle can find the thing it has to command.
-				// A dictionary rather than a list beside _models, because this one is asked by name and
-				// two lists that must stay in step are two lists that can fall out of it.
-				if ( thing != 0 )
-					_thingOf[item] = thing;
-
-				// Said out loud because two of these carry ids this park's save never gave them, and
-				// whether they were stood at all is otherwise only visible by their not moving - which
-				// looks identical to being stood and never driven.
-				Log.Info( $"{themeName}: fixed item '{item}' is thing {thing}"
-					+ (catalogueId == 0 ? "" : $", catalogue {catalogueId}")
-					+ (thing == 0 ? " - NOT STOOD" : "") );
-			}
-			catch ( Exception e )
+			// <b>A vehicle the file names no thing for is not made yet.</b> The engine makes the thing, its model and its
+			// script the first time a load or a leaver summons it (FUN_0051a2f0), so until then nothing of it is drawn or
+			// run; the file records one only once it has come.
+			if ( thing == 0 && catalogueId != 0 )
 			{
-				// A theme missing one of these is a broken installation, but the park is still worth
-				// looking at without it - and saying which one is missing beats an empty entrance.
-				Log.Warning( $"{themeName}: fixed item '{item}' would not load, so it is missing from the park - {e.Message}" );
+				Log.Info( $"{themeName}: fixed item '{item}' is not made, catalogue {catalogueId}: the file names no thing for it" );
+				continue;
 			}
+
+			Stand( item, carriesSign, thing, catalogueId );
+		}
+	}
+
+	/// <summary>Where this theme's fixed items' archives are, each <c>.wad</c> a directory of its own name.</summary>
+	private readonly string _features = "";
+
+	/// <summary>What the park sweeps, which a fixed item made after the load is stood into too; null in a park not drawn.</summary>
+	private readonly ParkObjects? _objects;
+
+	/// <summary>
+	/// Loads one fixed item's model, and its animations where <paramref name="loaded"/> holds none, and stands them
+	/// under <paramref name="thing"/>; a load that fails leaves the park without it, said.
+	/// </summary>
+	private void Stand( string item, bool carriesSign, int thing, int catalogueId, RideAnimations? loaded = null )
+	{
+		// Each .wad stands in for a directory of its own name, the same way terrain.wad gives the
+		// terrain its terrain/ paths.
+		var directory = $"{_features}/{item}";
+
+		try
+		{
+			if ( carriesSign )
+				_sign = BuildSign( directory, ThemeName );
+
+			// The twelve roles this item's archive ships, read exactly as a placed thing's are. The model
+			// is bound against all of them because an animation player names a role outright: the gate's
+			// own script asks for role 5 entries 0, 1 and 2, and a probe for a numbered run would have
+			// found them by luck rather than because they were asked for.
+			var animations = loaded ?? RideAnimations.Load( directory, item, FileSystem, ChannelsFor( directory, item ) );
+
+			var model = new LobbyModel(
+				$"{directory}/{item}.MD2",
+				$"{directory}/textures",
+				Vector3.Zero,
+				textureOverrides: carriesSign ? _sign : null,
+				clips: animations.AllClips );
+
+			_models.Add( model );
+			_modelNames.Add( item );
+
+			// The catalogue number goes with it, which a vehicle's script is bound by; the gates and the lights
+			// are in the save's object list, which ParkRides binds them from.
+			if ( thing != 0 )
+				_objects?.Stand( thing, model, animations, catalogueId );
+
+			// Kept by name, so that whatever drives a vehicle can find the thing it has to command.
+			// A dictionary rather than a list beside _models, because this one is asked by name and
+			// two lists that must stay in step are two lists that can fall out of it.
+			if ( thing != 0 )
+				_thingOf[item] = thing;
+
+			Log.Info( $"{ThemeName}: fixed item '{item}' is thing {thing}"
+				+ (catalogueId == 0 ? "" : $", catalogue {catalogueId}")
+				+ (thing == 0 ? " - NOT STOOD" : "") );
+		}
+		catch ( Exception e )
+		{
+			// A theme missing one of these is a broken installation, but the park is still worth
+			// looking at without it - and saying which one is missing beats an empty entrance.
+			Log.Warning( $"{ThemeName}: fixed item '{item}' would not load, so it is missing from the park - {e.Message}" );
 		}
 	}
 

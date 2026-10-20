@@ -19,7 +19,7 @@ public class ParkFileWriterMadeVehicleTests
 {
 	private const string Theme = "jungle";
 	private const string ShippedPark = "levels/jungle/Easymode.TPWI";
-	private const int FerryItem = 1604, Bus = 15, StoodFerry = 65531, StoodSeaplane = 65530;
+	private const int FerryItem = 1604, Bus = 15;
 
 	private BaseFileSystem data = null!;
 	private BaseFileSystem oldSaves = null!;
@@ -28,6 +28,7 @@ public class ParkFileWriterMadeVehicleTests
 	private ParkWorld shipped = null!;
 	private ParkItemCatalogue catalogue = null!;
 	private readonly List<Entity> made = [];
+	private int scriptsBeforeTheSummons;
 
 	private string Jungle => Path.Combine( root!, "users", "1Test", "jungle" );
 
@@ -84,13 +85,13 @@ public class ParkFileWriterMadeVehicleTests
 
 	private static int Times( string gap ) => Unimplemented.Summary.Where( counted => counted.What == gap ).Sum( counted => counted.Times );
 
-	/// <summary>The park's fixed items as a scene leaves them: the bus the file's thing, the two others under ids of the scene's own.</summary>
+	/// <summary>The park's fixed items as the load leaves them: the bus the file's thing, the two others not made.</summary>
 	private static void StandVehicles()
 	{
 		var items = (ParkFixedItems)RuntimeHelpers.GetUninitializedObject( typeof( ParkFixedItems ) );
 
 		typeof( ParkFixedItems ).GetField( "_thingOf", BindingFlags.NonPublic | BindingFlags.Instance )!
-			.SetValue( items, new Dictionary<string, int> { ["bus"] = Bus, ["seaplane"] = StoodSeaplane, ["ferry"] = StoodFerry } );
+			.SetValue( items, new Dictionary<string, int> { ["bus"] = Bus } );
 
 		typeof( ParkFixedItems ).GetProperty( nameof( ParkFixedItems.Current ) )!.SetValue( null, items );
 	}
@@ -109,8 +110,8 @@ public class ParkFileWriterMadeVehicleTests
 	}
 
 	/// <summary>
-	/// The shipped park with its ferry stood and scripted under the scene's id, a load of sixty-one forced and swept
-	/// until the ferry is summoned, and so made.
+	/// The shipped park, its ferry not made, a load of sixty-one forced and swept until the ferry is summoned, and so
+	/// made.
 	/// </summary>
 	private (ParkPeople People, ParkRides Rides, int Ferry) FerrySummoned()
 	{
@@ -122,8 +123,7 @@ public class ParkFileWriterMadeVehicleTests
 		made.Add( rides );
 		StandVehicles();
 
-		Assert.IsTrue( catalogue.TryGet( FerryItem, out var item ), "the jungle's catalogue has the ferry" );
-		Assert.IsTrue( rides.BindNew( ParkBuilding.Constructed( item, StoodFerry, 0, 0, 0, 1, 1, default ), item ), "the stood ferry runs its script" );
+		Assert.IsTrue( catalogue.TryGet( FerryItem, out _ ), "the jungle's catalogue has the ferry" );
 
 		var people = new ParkPeople( shipped, new ParkBalance( Theme, easyMode: true ), () => ParkRides.GateIsOpen, state, catalogue,
 			thing => rides.Scheduler.Find( rides.ScriptFor( thing ) ), random: new Random( 5 ), behaviourRandom: new Random( 5 ),
@@ -136,6 +136,7 @@ public class ParkFileWriterMadeVehicleTests
 		GameClock.Update( paused: false, GameClock.ParkCatchUp );
 
 		Assert.AreEqual( 3, people.ForceArrival( 61 ), "sixty-one come by the third vehicle" );
+		scriptsBeforeTheSummons = rides.Scheduler.Scripts.Count();
 		Sweep( people );
 		Assert.AreEqual( 3, people.CurrentVehicle, "summoned on the sweep that finds none" );
 
@@ -143,20 +144,26 @@ public class ParkFileWriterMadeVehicleTests
 	}
 
 	/// <summary>
-	/// <b>The stood ferry's script goes under the thing the summons makes</b>, and nothing is left under the
-	/// scene's id: the script's own thing is what its record in a park file names.
+	/// <b>The made ferry runs its own script, bound under its thing from its top</b> (<c>FUN_004db090</c> through
+	/// <c>FUN_0051a2f0</c>): <c>Ferry.RSE</c> at word 0, given <c>VAR_STATUS</c> 1 and no trigger (<c>0x0051a5ed</c>), and
+	/// no other script is made; the seaplane, not summoned, is not made.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the script left under the scene's id; bound under both; its own thing left the scene's.</remarks>
+	/// <remarks>
+	/// <b>Mutations:</b> no script bound; bound under another thing; triggered as a vehicle that was a thing; not given
+	/// status 1; the seaplane made with it.
+	/// </remarks>
 	[TestMethod]
-	public void TheStoodVehiclesScriptGoesUnderTheMadeThing()
+	public void TheMadeVehicleRunsItsOwnScriptFromItsTop()
 	{
 		var (_, rides, ferry) = FerrySummoned();
+		var script = rides.Scheduler.Find( rides.ScriptFor( ferry ) );
 
-		Assert.AreEqual( 0, rides.ScriptFor( StoodFerry ), "nothing runs under the scene's id" );
-		Assert.AreNotEqual( 0, rides.ScriptFor( ferry ), "the script runs under the made thing" );
-		Assert.AreEqual( ferry, rides.Scheduler.Find( rides.ScriptFor( ferry ) )!.ThingId, "and names it" );
+		Assert.IsNotNull( script, "a script runs under the made thing" );
+		Assert.AreEqual( (ferry, 2, 0), (script.ThingId, script.Variables.Count, script.Position), "naming it, Ferry.RSE's two variables, at its top" );
+		Assert.AreEqual( (0, 1), (script["VAR_TRIGGER"], script["VAR_STATUS"]), "given status 1, not triggered" );
+		Assert.AreEqual( scriptsBeforeTheSummons + 1, rides.Scheduler.Scripts.Count(), "and no other script is made" );
 		Assert.AreEqual( ferry, ParkFixedItems.Current!.ThingFor( "ferry" ) );
-		Assert.AreEqual( StoodSeaplane, ParkFixedItems.Current.ThingFor( "seaplane" ), "the seaplane, not summoned, is where it was" );
+		Assert.AreEqual( 0, ParkFixedItems.Current.ThingFor( "seaplane" ), "the seaplane, not summoned, is not made" );
 	}
 
 	/// <summary>
@@ -264,16 +271,123 @@ public class ParkFileWriterMadeVehicleTests
 	private static byte[] Dwords( params int[] values ) => [.. values.SelectMany( BitConverter.GetBytes )];
 
 	/// <summary>
-	/// <b>A park with no item for the vehicle makes nothing</b>: the summons is counted, no thing is made, nothing is
-	/// stamped, and the file's slot stays nought.
+	/// <b>A park with no item for the vehicle makes nothing, and the summons falls back to the bus the file names</b>
+	/// (<c>FUN_0051a2f0</c>'s bitmask walk): the ferry asked for and the seaplane after it each said and counted, no
+	/// thing made, nothing stamped, and the bus, a thing already, current and its two slots nought.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> a thing made of no item; the stamp moved all the same; nothing counted.</remarks>
+	/// <remarks><b>Mutations:</b> a thing made of no item; the stamp moved all the same; nothing counted; no fallback, so
+	/// the ferry current with no thing; the bus tried before the seaplane.</remarks>
 	[TestMethod]
-	public void WithNoItemForTheVehicleNothingIsMade()
+	public void WithNoItemForTheVehicleTheSummonsFallsBackToTheBus()
 	{
 		var state = new ParkState( shipped );
 		var people = new ParkPeople( shipped, new ParkBalance( Theme, easyMode: true ), () => ParkRides.GateIsOpen, state );
 		var stamp = state.LastObjectBuilt;
+		var missing = new List<string>();
+		Logger.LogDelegate note = ( _, text ) =>
+		{
+			if ( text.Contains( "Could not find the '" ) )
+				missing.Add( text[(text.IndexOf( '\'' ) + 1)..text.LastIndexOf( '\'' )] );
+		};
+
+		Time.Paused = false;
+		Time.StepFrames = 0;
+		GameClock.Rebase();
+		Time.Update( 0f );
+		GameClock.Update( paused: false, GameClock.ParkCatchUp );
+
+		Logger.OnLog += note;
+
+		try
+		{
+			people.ForceArrival( 61 );
+			Sweep( people );
+		}
+		finally
+		{
+			Logger.OnLog -= note;
+		}
+
+		Assert.AreEqual( 1, people.CurrentVehicle, "the bus" );
+		CollectionAssert.AreEqual( new[] { "ferry", "seaplane" }, missing, "after the ferry and the seaplane, in that order" );
+		Assert.AreEqual( (Bus, 0, 0), (people.VehicleThings[0], people.VehicleThings[1], people.VehicleThings[2]) );
+		Assert.AreEqual( stamp, state.LastObjectBuilt );
+		Assert.AreEqual( shipped.Objects.Count, state.Objects.Count );
+		Assert.AreEqual( 2, Times( "VEHICLE_MADE_NO_ITEM" ) );
+	}
+
+	/// <summary>
+	/// <b>A theme without the ferry's item has the seaplane made for a load of sixty-one</b> (<c>FUN_0051a2f0</c>'s walk
+	/// from the ferry to the seaplane): the ferry said and counted once, the seaplane made a thing in the second slot and
+	/// current, its own script bound under it at status 1, and the third slot nought.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the made vehicle not made current; the bus tried before the seaplane; no fallback.</remarks>
+	[TestMethod]
+	public void WithNoFerryTheSeaplaneIsMadeForTheLoad()
+	{
+		typeof( Players ).GetProperty( nameof( Players.Current ) )!.SetValue( Players.Roster, new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
+
+		var items = (Dictionary<int, ParkItemCatalogue.Item>)typeof( ParkItemCatalogue )
+			.GetField( "_items", BindingFlags.NonPublic | BindingFlags.Instance )!.GetValue( catalogue )!;
+
+		Assert.IsTrue( items.Remove( FerryItem ), "the ferry taken out of this theme" );
+
+		var state = new ParkState( shipped );
+		var rides = new ParkRides( Theme, shipped, catalogue, data );
+
+		made.Add( rides );
+		StandVehicles();
+
+		var people = new ParkPeople( shipped, new ParkBalance( Theme, easyMode: true ), () => ParkRides.GateIsOpen, state, catalogue,
+			thing => rides.Scheduler.Find( rides.ScriptFor( thing ) ), random: new Random( 5 ), behaviourRandom: new Random( 5 ),
+			rideRandom: new Random( 5 ), staffRandom: new Random( 5 ) );
+
+		Time.Paused = false;
+		Time.StepFrames = 0;
+		GameClock.Rebase();
+		Time.Update( 0f );
+		GameClock.Update( paused: false, GameClock.ParkCatchUp );
+
+		Assert.AreEqual( 3, people.ForceArrival( 61 ) );
+		Sweep( people );
+
+		var seaplane = people.VehicleThings[1];
+
+		Assert.AreEqual( 2, people.CurrentVehicle, "the seaplane, current" );
+		Assert.AreEqual( (Bus, 0), (people.VehicleThings[0], people.VehicleThings[2]), "made in the second slot alone" );
+		Assert.IsTrue( state.TryObject( seaplane, out var made2 ) && made2.CatalogueId == 1602, $"thing {seaplane} is the seaplane's item" );
+		Assert.AreEqual( 1, rides.Scheduler.Find( rides.ScriptFor( seaplane ) )?["VAR_STATUS"], "its own script, at status 1" );
+		Assert.AreEqual( 1, Times( "VEHICLE_MADE_NO_ITEM" ), "the ferry counted once" );
+	}
+
+	/// <summary>
+	/// <b>A made vehicle's script is bound to the animations its model will stand with</b>: <see cref="ParkFixedItems.Make"/>
+	/// loads them in the sweep and keeps them for <see cref="ParkFixedItems.Sync"/>, which stands the model outside the
+	/// frame's walk, and the script plays on that same set, so what it triggers is what the drawn model is posed from.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the script given a set of its own; the thing not recorded.</remarks>
+	[TestMethod]
+	public void AMadeVehiclesScriptPlaysTheAnimationsItsModelWillStandWith()
+	{
+		typeof( Players ).GetProperty( nameof( Players.Current ) )!.SetValue( Players.Roster, new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
+
+		var state = new ParkState( shipped );
+		var rides = new ParkRides( Theme, shipped, catalogue, data );
+
+		made.Add( rides );
+		StandVehicles();
+
+		// A park to stand into, which Make only keeps the vehicle for: Sync, which makes the model's entities, is not run.
+		var items = ParkFixedItems.Current!;
+		var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+
+		typeof( ParkFixedItems ).GetField( "_objects", flags )!.SetValue( items, RuntimeHelpers.GetUninitializedObject( typeof( ParkObjects ) ) );
+		typeof( ParkFixedItems ).GetField( "_features", flags )!.SetValue( items, $"levels/{Theme}/features" );
+		typeof( ParkFixedItems ).GetField( "_owed", flags )!.SetValue( items, new List<(string, int, int, RideAnimations)>() );
+
+		var people = new ParkPeople( shipped, new ParkBalance( Theme, easyMode: true ), () => ParkRides.GateIsOpen, state, catalogue,
+			thing => rides.Scheduler.Find( rides.ScriptFor( thing ) ), random: new Random( 5 ), behaviourRandom: new Random( 5 ),
+			rideRandom: new Random( 5 ), staffRandom: new Random( 5 ) );
 
 		Time.Paused = false;
 		Time.StepFrames = 0;
@@ -284,10 +398,25 @@ public class ParkFileWriterMadeVehicleTests
 		people.ForceArrival( 61 );
 		Sweep( people );
 
-		Assert.AreEqual( 3, people.CurrentVehicle );
-		Assert.AreEqual( 0, people.VehicleThings[2] );
-		Assert.AreEqual( stamp, state.LastObjectBuilt );
-		Assert.AreEqual( shipped.Objects.Count, state.Objects.Count );
-		Assert.AreEqual( 1, Times( "VEHICLE_MADE_NO_ITEM" ) );
+		var ferry = people.VehicleThings[2];
+		var owed = (List<(string Item, int Thing, int CatalogueId, RideAnimations Animations)>)typeof( ParkFixedItems ).GetField( "_owed", flags )!.GetValue( items )!;
+
+		Assert.AreEqual( 1, owed.Count, "one model owed" );
+		Assert.AreEqual( ("ferry", ferry, FerryItem), (owed[0].Item, owed[0].Thing, owed[0].CatalogueId) );
+		Assert.AreSame( owed[0].Animations, rides.Scheduler.Find( rides.ScriptFor( ferry ) )!.Animations, "the script plays the set the model will stand with" );
+		Assert.AreEqual( ferry, items.ThingFor( "ferry" ) );
+	}
+
+	/// <summary>
+	/// <b>The order a summons tries the vehicles in</b>: the one asked for, then the ferry, the seaplane and the bus of
+	/// the others (<c>FUN_0051a2f0</c>, bits 4, 2 and 1).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the others in the sizes' order; the asked one tried twice; one left out.</remarks>
+	[TestMethod]
+	public void TheSummonsTriesTheFerryTheSeaplaneAndTheBusAfterTheOneAskedFor()
+	{
+		CollectionAssert.AreEqual( new[] { 1, 3, 2 }, ParkPeople.FallbackOrder( 1 ).ToArray(), "the bus, then the ferry and the seaplane" );
+		CollectionAssert.AreEqual( new[] { 2, 3, 1 }, ParkPeople.FallbackOrder( 2 ).ToArray(), "the seaplane, then the ferry and the bus" );
+		CollectionAssert.AreEqual( new[] { 3, 2, 1 }, ParkPeople.FallbackOrder( 3 ).ToArray(), "the ferry, then the seaplane and the bus" );
 	}
 }

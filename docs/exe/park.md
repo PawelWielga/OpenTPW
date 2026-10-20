@@ -1773,9 +1773,10 @@ on (53,5) with the current vehicle the small crowd's (`+0x1da72a` and `+0x1da72c
 guest, (53,5), a bus load of six by hand all (53,5), and forty by the second vehicle all (53,3), which the original
 was not made to send. A current vehicle is reused whatever size the load asked for, there (`0x0051a314`) and here
 (`Summon`), and `ArrivalCell` asks the vehicle that is current, so a vehicle summoned for a leaver can be the one a
-load then finds. **Not the original's in one way**: when the wanted feature is missing `FUN_0051a2f0` falls back
-through the ferry, the seaplane and the bus, where a vehicle with no script here still has its guests made at the
-wanted vehicle's cell.
+load then finds. When the wanted feature is missing `FUN_0051a2f0` falls back through the ferry, the seaplane and the
+bus, a slot that holds a thing taken as it is, and so does `ParkPeople.Summon` (Q26c; every theme ships all three, so no
+shipped park reaches it). **Not the original's in one way**: with none of the three to be had the original sets no
+vehicle current, and here the one asked for is current with no thing, so its guests are still made at its cell.
 
 **The spent vehicle** (Q131, decoded first-hand and run in the original; the build is Q131b). A vehicle's script
 ends its circuit at status 6 and then spins on `VAR_TRIGGER` (`bus.RSE` 112 to 120). Whoever next asks its status
@@ -1822,13 +1823,24 @@ load's first guest was made on the call's own sweep.
 
 What it does not reproduce, each said at its site: the two refusals, in world state 4 and with the park full, where the original calls a load
 of nobody and still sends its vehicle (neither reached in Lost Kingdom; a load that would pass the cap is cut to what fits, counted here on everybody and not on `FUN_004c7fa0`'s crowd); a load saved half-dropped is carried on by its count and flag, and by the vehicle the save names current where that is one of its three sizes' things (`saves.md`, "OpenTPW's writer, the arrival vehicle"; another thing is counted, `SAVED_CURRENT_ARRIVAL_VEHICLE`, and the rest then come by the vehicle their number summons); guests made with no script to ask, on the sweep after the one that calls the load;
-and the ferry
-and the seaplane, stood as the park loads where the original makes each at its first summons: they stand at their
-first spin at status 2 from the start, in view at the arrivals' stop, and a first summons finds the drive in done
-and sets no trigger (`ParkPeople.Summon`; making the model and the script on demand is Q26c's). The THING is made at
-that summons, an object on cell (0,0) as the original's, and the stood model and script go under it (Q342; `saves.md`,
-"OpenTPW's writer, a vehicle made at its summons"). (The second load in the older measurement above dropped on the sweep that called
-it because the spent bus was then sent round again: Q131b took that out.)
+and a made vehicle's id, one past the highest used where the original takes the id last freed (Q582).
+(The second load in the older measurement above dropped on the sweep that called it because the spent bus was then
+sent round again: Q131b took that out.)
+
+**A vehicle the file names no thing for is made whole at its first summons** (Q26c; Q342 made the thing). Nothing of it
+stands or runs before: `ParkFixedItems` stands only the vehicles the file names. At the summons the object is made on
+cell (0,0) (`saves.md`, "OpenTPW's writer, a vehicle made at its summons"), its script bound from its top through
+`ParkRides.BindNew`, as the object constructor binds a bought thing's, given `VAR_STATUS` 1 and no trigger
+(`0x0051a5ed`), and its model stood just after the frame's entity walk (`ParkFixedItems.Sync`; made inside the walk,
+its entities stopped the game, "Collection was modified"). Measured (`q26c/`, each predicted first): main's build stood
+the ferry and the seaplane at the load and drove both into the harbour with nothing summoned, the ferry at status 2 76
+ticks after entry (`run-A2/A2-docked.png`); this build stands neither (`fixed item 'ferry' is not made, catalogue
+1604`), and `load 61` made the ferry thing 43 on its next sweep (764), status 1 and trigger 0, its first guest at
+(53,3) on 845, 81 ticks on; `load 40` made the seaplane, its first guest 48 ticks on. The original given
+`q340/late30.TPWS` (`q26c/orig2`, `orig3`) made the seaplane on 1094 (thing 14, `size2` and current), its script
+reading trigger 0 and status 1 from the first poll, 2 on 1141 (47 on), 3 on 1143, 6 on 1222, forgotten on 1223; Q341's
+run of the same file made the ferry. **Where the seaplane floats at status 2 is not the original's** (Q583): its body
+level at the harbour's top middle, nose left, there, and here at the harbour's left and turned, in main's build too.
 
 ### The headcount score
 

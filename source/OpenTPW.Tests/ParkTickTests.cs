@@ -896,7 +896,7 @@ public class ParkTickTests
 	/// <b>Mutations:</b> a leaver taken out at the crossing; not held while the bus drives in, unloads or moves on;
 	/// sent to stop B's cells; no vehicle summoned for one standing at the stop; a vehicle at 2 with its load off not
 	/// sent on for them; gone at a status other than 4; left standing at 4; the wrong pair of cells for the vehicle that came; a guest on
-	/// the stop who is not going home counted as waiting; a vehicle stood at its first spin triggered when summoned; the
+	/// the stop who is not going home counted as waiting; a vehicle that is a thing not triggered when summoned; the
 	/// more-than-nine arm of the wait dropped or moved; a guest who goes left on their cell until the sweep's end; one who is not
 	/// the head of their cell going; the vehicle sent off from 4 while one still stands there; the stay's sample not counted.
 	/// </remarks>
@@ -912,9 +912,7 @@ public class ParkTickTests
 		var script = rides.Scheduler.Find( rides.Scheduler.Spawn( ParkRides.ScriptPathFor( busItem ) ) );
 		var standingBefore = ParkFixedItems.Current;
 
-		const int seaplaneThing = 60000, ferryThing = 60001;
-
-		StandVehicles( ("bus", busThing), ("seaplane", seaplaneThing), ("ferry", ferryThing) );
+		StandVehicles( ("bus", busThing) );
 
 		// Seeded, so the vehicle the summons draws and the cells the walks end on are the same every run.
 		var people = new ParkPeople( world, new ParkBalance( Theme, easyMode: true ),
@@ -1063,15 +1061,15 @@ public class ParkTickTests
 			Assert.IsFalse( people.Guests.ContainsKey( second ), "and so is the one who stood behind them, on the same sweep" );
 			Assert.AreEqual( 1, Triggered(), "and with nobody left at the stop it is sent off" );
 
-			// A vehicle found standing at its first spin, unloading, when it is first summoned is made current and
-			// not triggered: its drive in is done, and a trigger would send it on empty.
+			// A vehicle that is a thing already, summoned with none current, is triggered whatever it reports
+			// (FUN_0051a2f0's existing-slot arm): the bus, which the file names.
 			Plays( 6 );
 			Sweep( people );
 			Plays( 2 );
 			people.ForceArrival( 1 );
 			Sweep( people );
-			Assert.AreEqual( 0, Triggered(), "summoned while it stands unloading: not triggered" );
-			Assert.AreNotEqual( ParkPeople.NoVehicle, people.VehicleStatus(), "and current" );
+			Assert.AreEqual( 1, Triggered(), "summoned with none current, the bus is triggered" );
+			Assert.AreEqual( 1, people.CurrentVehicle, "and current" );
 		}
 		finally
 		{
@@ -1099,7 +1097,7 @@ public class ParkTickTests
 	/// dropping; a vehicle spent with its load held never forgotten; the tail run before the manager; the leavers'
 	/// summons always the bus; a made vehicle stamping nothing; one made at every summons; the bus made; the
 	/// stamp a tick off; a made vehicle given no thing, an id in use, the bus's item, a cell of its own, an end of
-	/// nought, left off the object list or the cell's, its script left under the stand-in id; its slot or the
+	/// nought, left off the object list or the cell's, its script not bound, triggered or not given status 1; its slot or the
 	/// current vehicle written nought, or written with a thing the file leaves out.
 	/// </remarks>
 	[TestMethod]
@@ -1114,9 +1112,7 @@ public class ParkTickTests
 		var script = rides.Scheduler.Find( rides.Scheduler.Spawn( ParkRides.ScriptPathFor( busItem ) ) );
 		var standingBefore = ParkFixedItems.Current;
 
-		const int seaplaneThing = 60000, ferryThing = 60001;
-
-		StandVehicles( ("bus", busThing), ("seaplane", seaplaneThing), ("ferry", ferryThing) );
+		StandVehicles( ("bus", busThing) );
 
 		var state = new ParkState( world );
 		var people = new ParkPeople( world, new ParkBalance( Theme, easyMode: true ),
@@ -1159,7 +1155,7 @@ public class ParkTickTests
 			Assert.AreEqual( 3, people.ForceArrival( 61 ), "sixty-one come by the third vehicle" );
 			Sweep( people );
 			Assert.IsTrue( people.LargerVehicleIsCurrent, "the load's own vehicle is current" );
-			Assert.AreEqual( 1, Triggered(), "and triggered" );
+			Assert.AreEqual( (0, 1), (Triggered(), script["VAR_STATUS"]), "made, so given VAR_STATUS 1 and not triggered (0x0051a5ed)" );
 
 			var ferryStamp = Stamp();
 
@@ -1169,7 +1165,7 @@ public class ParkTickTests
 
 			// And it is a thing: an object of the ferry's item on the corner cell, as the original's own files hold one
 			// (saves.md, "OpenTPW's writer, a vehicle made at its summons"), at the head of the object list and of the
-			// cell's, with the stood model and script under it.
+			// cell's, with its own script bound under it from its top.
 			var ferry = people.VehicleThings[2];
 
 			Assert.IsTrue( ferry > highest, $"thing {ferry} is an id nothing has used ({highest} the highest)" );
@@ -1184,8 +1180,10 @@ public class ParkTickTests
 			CollectionAssert.AreEqual( new[] { ferry, firstObject }, state.ObjectsInChainOrder().Take( 2 ).Select( thing => thing.ThingId ).ToArray(),
 				"the head of the object list, before the head there was" );
 			Assert.AreEqual( ferry, state.CellAt( 0, 0 ).Occupant, "and of the corner cell's list" );
-			Assert.AreEqual( ferry, ParkFixedItems.Current!.ThingFor( "ferry" ), "the stood ferry is that thing" );
-			Assert.AreEqual( seaplaneThing, ParkFixedItems.Current.ThingFor( "seaplane" ), "and the seaplane is not" );
+			Assert.AreEqual( ferry, ParkFixedItems.Current!.ThingFor( "ferry" ), "the made ferry is that thing" );
+			Assert.AreEqual( 0, ParkFixedItems.Current.ThingFor( "seaplane" ), "and the seaplane is not made" );
+			Assert.AreEqual( ferry, rides.Scheduler.Find( rides.ScriptFor( ferry ) )?.ThingId, "the ferry's own script is bound under it" );
+			Assert.AreEqual( 0, rides.Scheduler.Find( rides.ScriptFor( ferry ) )!.Position, "and stands at its top" );
 
 			// A park file holds the load, the vehicle's slot and the vehicle as current, where its thing is written;
 			// where the writer leaves the thing out both are nought, and counted.
@@ -1504,18 +1502,15 @@ public class ParkTickTests
 		var bus = rides.Scheduler.Find( rides.Scheduler.Spawn( ParkRides.ScriptPathFor( busItem ) ) );
 		var standingBefore = ParkFixedItems.Current;
 
-		// A seaplane stood beside it, answering through the bus's script, so a load big enough for it can report 3
-		// without the bus: nobody runs for any vehicle but the small crowd's (FUN_0051aad0).
-		const int seaplaneThing = 60000;
-
-		StandVehicles( ("bus", busThing), ("seaplane", seaplaneThing) );
+		// Every vehicle answering through the bus's script, a seaplane made at its summons too, so a load big enough
+		// for it can report 3 without the bus: nobody runs for any vehicle but the small crowd's (FUN_0051aad0).
+		StandVehicles( ("bus", busThing) );
 
 		// Every generator seeded: left to the clock's seed, one of the saved guests now and then gave up and reached
 		// the stop while this ran, and the vehicle summoned for them is current where the test asks for none.
 		var people = new ParkPeople( world, new ParkBalance( Theme, easyMode: true ),
 			() => ParkRides.GateIsOpen, new ParkState( world ), catalogue,
-			thingId => thingId is var id && (id == busThing || id == seaplaneThing)
-				? bus : rides.Scheduler.Find( rides.ScriptFor( thingId ) ),
+			thingId => IsAVehicle( thingId ) ? bus : rides.Scheduler.Find( rides.ScriptFor( thingId ) ),
 			random: new Random( 1 ), behaviourRandom: new Random( 1 ), rideRandom: new Random( 1 ),
 			staffRandom: new Random( 1 ) );
 
@@ -1640,15 +1635,16 @@ public class ParkTickTests
 		Assert.AreEqual( from + 1, people.State.GameTick, "one sweep" );
 	}
 
-	/// <summary>
-	/// A <see cref="ParkFixedItems"/> that answers only which thing each vehicle was stood as, made without its
-	/// constructor: <see cref="ParkPeople"/> finds a vehicle's script through <see cref="ParkFixedItems.Current"/>,
-	/// and the real one builds every fixed item's model, which no test can.
-	/// </summary>
-	/// <summary>Whether the park's fixed items name a vehicle by this thing now: a made vehicle's thing is not the one it was stood as.</summary>
+	/// <summary>Whether the park's fixed items name a vehicle by this thing now: one the file names, or one made since.</summary>
 	private static bool IsAVehicle( int thing )
-		=> ParkFixedItems.Current is { } items && new[] { "bus", "seaplane", "ferry" }.Any( name => items.ThingFor( name ) == thing );
+		=> thing != 0 && ParkFixedItems.Current is { } items && new[] { "bus", "seaplane", "ferry" }.Any( name => items.ThingFor( name ) == thing );
 
+	/// <summary>
+	/// A <see cref="ParkFixedItems"/> that answers only which thing each vehicle is, made without its constructor, so
+	/// with nothing to stand a made vehicle's model into (<see cref="ParkFixedItems.Make"/> records its thing alone):
+	/// <see cref="ParkPeople"/> finds a vehicle's script through <see cref="ParkFixedItems.Current"/>, and the real one
+	/// builds every fixed item's model, which no test can.
+	/// </summary>
 	private static void StandVehicles( params (string Name, int Thing)[] vehicles )
 	{
 		var items = (ParkFixedItems)RuntimeHelpers.GetUninitializedObject( typeof( ParkFixedItems ) );

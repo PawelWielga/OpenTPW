@@ -56,18 +56,19 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q26c. Ferry, seaplane and bus are always there.** `ParkFixedItems.Items` stands all three
-  permanently, and `VehicleFor` gives a load under 36 the bus, so only the bus is called in the stock park (its
-  loads are 13 and fewer since Q26b; three new rides make 30).
-  The original creates the vehicle on demand (`FUN_0051a2f0`,
-  `park.md`, "Arrivals: who comes, on what, and how often").
-  From Q238: the original hands a new thing the id last freed (its load's first guest took 38, a leaver's, the
-  rest 43 on); `ParkState.NextThingId` never uses one twice, said at the site, so a load's ids part from the
-  original's once anybody has gone.
-  Build create-on-demand and the bus / ferry / plane ordering; the pause between loads is built (Q68b).
-  From Q342: the THING is made on demand now, an object on cell (0,0) the writer writes (`saves.md`,
-  "OpenTPW's writer, a vehicle made at its summons"); the model and the script still stand from the load, and
-  the id is not the original's.
+- [ ] **Q582. A made vehicle takes the id last freed.** From Q26c (and Q238): the original's summons hands a made vehicle
+  the id last freed (its ferry from `q340/late30.TPWS` was thing 14 in Q341's run, its seaplane 14 in `q26c/orig2`),
+  and `ParkState.NextThingId` gives one past the highest used (43), said at `ParkPeople.MakeVehicle`. Decode the
+  original's free list (`FUN_0050b350`, the id's source at the summons) and build it for every thing made, the guests of
+  a load too, which part from the original's ids once anybody has gone; then confirm from late30, whose freed 14 the
+  original reuses.
+- [ ] **Q583. The seaplane floats elsewhere at its stop than the original's.** From Q26c's comparison
+  (`q26c/side-by-side-seaplane.png`): at status 2, at the camera 540,-20 zoom 130 rotation 0, the original's seaplane
+  lies level at the harbour's top middle, nose left (`q26c/orig3/o-t1141.png`), and ours at the harbour's left and
+  turned (`q26c/run-C/C-docked.png`), as main's stood one did (`run-A2/A2-docked.png`). Its route and clips play through
+  `TRIGWAITANIM` on the model's Bezier path (`ParkFixedItems`, `LobbyModel.Paths`): find which of the path, the clip's
+  end frame or the root's turn differs, against the original's frames of its drive-in (`orig3/o-t11*.png`); the ferry
+  was not seen docked in the original, so photograph it too.
 - [ ] **Q580. Which rides, shops and sideshows run for guests: one check each, then the website's list.** From the
   queue reorder of 2026-10-20 (a read-only check of `main` against the website). The website's `running` list
   (`OpenTPW.Website/inc/lands.php`) names three, the Belly Bounce, the Drinks Shop and the Jungle Spray, and was never
@@ -150,9 +151,10 @@ filed the items that cite it.
   `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped script) and a
   placed sound with nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's 173, ADDOBJ 8
   on node 1). Both are of the plain class (flags `0x6`), already built: what they lack is nodes, as `ParkRides`' second
-  pass binds the vehicles the file does not name with no `Nodes`. **Build it after Q26c:** those two stand and run from
-  the park's load here, so with nodes they would sound at the arrivals' stop from the start, where the original has no
-  ferry and no seaplane until its first summons.
+  pass bound the vehicles the file does not name with no `Nodes`. **Since Q26c** both are made at their first summons
+  through `ParkRides.BindNew`, which gives them nodes: in `q26c/run-B2` and `run-C` the log reads "Park audio: script
+  16's effect 172, sample 'mk_ferry_1.mp2' ... plays" and "effect 173, sample 'mk_plane_6.mp2' ... plays", and main's
+  runs counted `RIDE_EFFECT_SOUND_NO_PLACE`; not heard and not set beside the original's: confirm that here.
 - [ ] **Q567. The original sounds the global rides' 208 at the sideshows (decode first).** From Q565. In the stock park
   the original made 208 (flags `0x0`, one sample of 1158 ms) 30 to 60 times a run at (525, 0, 300), by the Jungle Spray,
   and (434, 0, 303) (`q565/orig/`, b to d, `oneshots.py`); no jungle script asks for 208 (`lib/soundsweep.py`), and ours

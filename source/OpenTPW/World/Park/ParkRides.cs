@@ -68,27 +68,10 @@ public sealed class ParkRides : Entity
 	public static ParkRides? Current { get; private set; }
 
 	/// <summary>
-	/// Puts the script bound to <paramref name="from"/>, and every script it has spawned, under
-	/// <paramref name="to"/>: a vehicle made a thing at its summons.
-	/// </summary>
-	internal void Rebind( int from, int to )
-	{
-		if ( _scripts.Remove( from, out var id ) )
-			_scripts[to] = id;
-
-		if ( _animated.Remove( from ) )
-			_animated.Add( to );
-
-		foreach ( var script in Scheduler.Scripts )
-		{
-			if ( script.ThingId == from )
-				script.ThingId = to;
-		}
-	}
-
-	/// <summary>
 	/// Gives a newly built thing its script, the way the load gives one to everything the save placed.
-	/// Answers whether it got one - an item with no <c>.RSE</c> is ordinary data, not a failure.
+	/// Answers whether it got one - an item with no <c>.RSE</c> is ordinary data, not a failure. The script is bound to
+	/// <paramref name="animations"/> where given, a made vehicle's whose model stands later in the frame, else to what
+	/// stands as the thing.
 	/// </summary>
 	/// <remarks>
 	/// The engine does this inside the object constructor itself (<c>FUN_004dcf90</c>, called from
@@ -96,7 +79,7 @@ public sealed class ParkRides : Entity
 	/// two call sites of the same three steps - spawn, bind the thing, hand over its own animation
 	/// player - and the capacity and duration come from the object record exactly as they do at load.
 	/// </remarks>
-	public bool BindNew( ParkWorld.CatalogueObject placed, ParkItemCatalogue.Item item )
+	public bool BindNew( ParkWorld.CatalogueObject placed, ParkItemCatalogue.Item item, RideAnimations? animations = null )
 	{
 		if ( _scripts.ContainsKey( placed.ThingId ) )
 			return true;
@@ -124,7 +107,7 @@ public sealed class ParkRides : Entity
 		// holds the clip at frame nought until the script, run from word 0, plays it. A save has state
 		// to restore and a new thing has none, so calling Resume here would be putting back a past it never
 		// had - and would stop the one animation a player is waiting to watch.
-		script.Animations = PlayersFor( placed.ThingId, item );
+		script.Animations = animations ?? PlayersFor( placed.ThingId, item );
 		script.Nodes = NodesFor( script, placed, item );
 		BindTrackRide( script, placed, item, Scheduler );
 
@@ -462,79 +445,6 @@ public sealed class ParkRides : Entity
 				// fourteen things frozen for good. See Restore.
 				if ( _saved.TryGetValue( placed.ThingId, out var savedThing ) )
 					Restore( script, savedThing );
-			}
-		}
-
-		// <b>And the things this park stood that the save never named.</b> The loop above walks
-		// world.Objects, so it reaches only what the file placed. A vehicle this park has not used is
-		// not in that list at all - the engine makes the thing the first time a crowd of that size
-		// arrives rather than shipping one - so without this pass the ferry and the seaplane would be stood
-		// and drawn with no script, and sit at their spawns.
-		//
-		// Nothing new is needed to bind them: ParkFixedItems records which catalogue item each was
-		// stood as, and the script path comes from that item exactly as it does above. A thing already
-		// bound by the first pass is stepped over, which is how the gates and the lights - which ARE in
-		// the save's list - fall out of this without being named here.
-		if ( _objects is { } stood )
-		{
-			// What the first pass managed on its own, so that what this one adds is a measured
-			// difference rather than a number inferred from a census counting a different population.
-			//
-			// Only the baseline is said here. What this pass then does is reported thing by thing
-			// below, which is both more use and one fewer walk of an iterator that is about to be
-			// walked anyway.
-			Log.Info( $"{ThemeName}: {Bound} things bound from the save's own list, before the ones it "
-				+ "does not name" );
-
-			foreach ( var (thingId, catalogueId) in stood.Stood() )
-			{
-				// Already bound by the pass above, which is how the gates and the lights - which ARE in
-				// the save's object list - step out of this without being named here.
-				if ( _scripts.ContainsKey( thingId ) )
-				{
-					Log.Info( $"{ThemeName}: thing {thingId} (catalogue {catalogueId}) was already bound" );
-					continue;
-				}
-
-				// Said rather than skipped in silence: a thing standing in the park as a catalogue
-				// number this theme has no item for can never be given a script, and the only symptom
-				// is that it never moves - which looks exactly like a thing that is bound and idle.
-				if ( !catalogue.TryGet( catalogueId, out var item ) )
-				{
-					Log.Warning( $"{ThemeName}: thing {thingId} stands as catalogue item {catalogueId}, "
-						+ "which this theme has no description for, so it can run no script" );
-
-					++Scriptless;
-					continue;
-				}
-
-				var id = Scheduler.Spawn( ScriptPathFor( item ) );
-
-				if ( id == 0 )
-				{
-					++Scriptless;
-					continue;
-				}
-
-				_scripts[thingId] = id;
-
-				Log.Info( $"{ThemeName}: thing {thingId} (catalogue {catalogueId}) now runs "
-					+ ScriptPathFor( item ) );
-
-				if ( Scheduler.Find( id ) is not { } script )
-					continue;
-
-				script.ThingId = thingId;
-
-				script.Animations = PlayersFor( thingId, item );
-
-				// A thing the file does not name has no file's words to start from: a fresh model's, as a thing
-				// bought has, which a park file written after the vehicle is made a thing holds.
-				if ( TableModel( catalogueId ) is { } fresh )
-					script.Animations.Nodes = new ParkModelTables.Running( fresh.Model, script.Animations.ChannelCount );
-
-				if ( script.Animations.Loaded > 0 )
-					_animated.Add( thingId );
 			}
 		}
 

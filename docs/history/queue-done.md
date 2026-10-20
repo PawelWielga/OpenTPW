@@ -9372,6 +9372,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   with no sample, where the original plays 212's one sample of 1442 ms (`q565/orig/`, `oneshots.py`: effect 212, length
   1442; `lib/soundsweep.py`). Find why the walk takes no sample record for them (FileFormats `sound-categories.md`) and
   read them; measure all 31 category files for any other effect left empty.
+- [x] **Q26c. Ferry, seaplane and bus are always there.** Done: a vehicle the file names no thing for is made whole
+  at its first summons, the thing (Q342), its script from its top at `VAR_STATUS` 1 with no trigger (`0x0051a5ed`,
+  `ParkRides.BindNew`) and its model after the frame's walk (`ParkFixedItems.Make`, `Sync`); the summons falls back
+  through the ferry, the seaplane and the bus (`ParkPeople.FallbackOrder`; no shipped theme lacks one). The stock park
+  stands neither (`fixed item 'ferry' is not made, catalogue 1604`; `q26c/run-B2/B1-entry.png`, the harbour empty where
+  main's drove both in unasked, `run-A2/A2-docked.png`); `load 61` made the ferry thing 43 on 764 at status 1, its first
+  guest at (53,3) 81 ticks on (`B3-docked.png`), saved and loaded back as thing 43; `load 40`'s seaplane 48 ticks on,
+  the original's made seaplane at 2 on its make + 47 (`q26c/orig3`). Left: the id (Q582), the seaplane's dock (Q583).
+  The item as written: `ParkFixedItems.Items` stands all three
+  permanently, and `VehicleFor` gives a load under 36 the bus, so only the bus is called in the stock park (its
+  loads are 13 and fewer since Q26b; three new rides make 30).
+  The original creates the vehicle on demand (`FUN_0051a2f0`,
+  `park.md`, "Arrivals: who comes, on what, and how often").
+  From Q238: the original hands a new thing the id last freed (its load's first guest took 38, a leaver's, the
+  rest 43 on); `ParkState.NextThingId` never uses one twice, said at the site, so a load's ids part from the
+  original's once anybody has gone.
+  Build create-on-demand and the bus / ferry / plane ordering; the pause between loads is built (Q68b).
+  From Q342: the THING is made on demand now, an object on cell (0,0) the writer writes (`saves.md`,
+  "OpenTPW's writer, a vehicle made at its summons"); the model and the script still stand from the load, and
+  the id is not the original's.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

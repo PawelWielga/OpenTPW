@@ -1591,7 +1591,7 @@ public sealed partial class ParkPeople : Entity
 
 			if ( script is null )
 			{
-				yield return $"{name}: thing {thing}, NO SCRIPT BOUND";
+				yield return thing == 0 ? $"{name}: not made" : $"{name}: thing {thing}, NO SCRIPT BOUND";
 				continue;
 			}
 
@@ -1766,16 +1766,15 @@ public sealed partial class ParkPeople : Entity
 	/// The summons - <c>FUN_0051a2f0</c>, the one thing that sets a vehicle's <c>VAR_TRIGGER</c>. With a vehicle
 	/// current it triggers that one whatever <paramref name="size"/> says (<c>0x0051a663</c>), which is how a load all
 	/// dropped and a vehicle standing for leavers are sent on. With none, the vehicle of that size is made current and
-	/// triggered, which starts its script's circuit from its last spin.
+	/// triggered, which starts its script's circuit from its last spin; one the park has no thing for is made first
+	/// (<see cref="MakeVehicle"/>), and its script, which starts at its top, is given <c>VAR_STATUS</c> 1 and no trigger
+	/// (<c>0x0051a5ed</c>, the same call with the other variable). One whose item this theme lacks is passed over for the
+	/// ferry, the seaplane and the bus in that order (<see cref="FallbackOrder"/>).
 	/// </summary>
 	/// <remarks>
-	/// <b>Not the original's in two ways.</b> All three vehicles' models and scripts are stood as the park loads
-	/// here, where the original makes one at its first summons and starts it from its script's top by
-	/// <c>VAR_STATUS</c> 1 (<c>0x0051a5ed</c>, the same call with the other variable); the thing itself is made at
-	/// that summons here too (<see cref="MakeVehicle"/>). The ferry and the seaplane so stand at their first
-	/// spin, at status 2, from the start, and a first summons finds the drive in already done: it makes the vehicle
-	/// current and sets no trigger, which would send it on empty. And the original falls back through the other two
-	/// when the wanted one's feature is missing; here a vehicle with no script is current all the same.
+	/// <b>Not the original's in one way</b>: where none of the three has an item the original sets no vehicle current
+	/// (its <c>"Fatal error: Could not find either the bus or the plane feature"</c>), and here the one asked for is
+	/// current with no thing, so the guests still come (<see cref="StepArrivals"/>). Every theme ships all three.
 	/// </remarks>
 	private void Summon( int size )
 	{
@@ -1784,18 +1783,32 @@ public sealed partial class ParkPeople : Entity
 			// Size nought is one of the three at random, the leavers' summons: one draw of the park's generator, the
 			// save's own seed (FUN_0051a2f0).
 			var seed = State.RandomSeed;
+			var asked = size != 0 ? size : VehicleAtRandom( State.Draw() );
 
-			_arrivalVehicle = size != 0 ? size : VehicleAtRandom( State.Draw() );
-
-			Log.Info( $"People: the {ParkFixedItems.VehicleName( _arrivalVehicle )} summoned on mGameTick {State.GameTick}"
+			Log.Info( $"People: the {ParkFixedItems.VehicleName( asked )} summoned on mGameTick {State.GameTick}"
 				+ (size == 0 ? $", at random: mRandomSeed 0x{seed:x8} to 0x{State.RandomSeed:x8}" : "") );
 
-			if ( _vehicleThings[_arrivalVehicle - 1] == 0 )
-				_vehicleThings[_arrivalVehicle - 1] = MakeVehicle( _arrivalVehicle );
+			_arrivalVehicle = asked;
 
-			// One that is stood at its first spin already, unloading, has done its drive in: it is current and no more.
-			if ( VehicleScript( _arrivalVehicle ) is { } stood && stood[VehicleState] == VehicleIsUnloading )
+			foreach ( var tried in FallbackOrder( asked ) )
+			{
+				if ( _vehicleThings[tried - 1] != 0 )
+				{
+					_arrivalVehicle = tried;
+					break;
+				}
+
+				if ( MakeVehicle( tried ) is not (var thing and not 0) )
+					continue;
+
+				_vehicleThings[tried - 1] = thing;
+				_arrivalVehicle = tried;
+
+				if ( VehicleScript( tried ) is { } made )
+					made.Set( VehicleState, 1 );
+
 				return;
+			}
 		}
 
 		if ( VehicleScript( _arrivalVehicle ) is { } vehicle && !vehicle.Set( VehicleTrigger, 1 ) )
@@ -1806,12 +1819,28 @@ public sealed partial class ParkPeople : Entity
 	}
 
 	/// <summary>
-	/// Makes the thing of a vehicle the file names none for, as the summons does through the object constructor
+	/// The vehicles a summons tries, in turn, for the one <paramref name="asked"/> for: that one, then of the others
+	/// the ferry, the seaplane and the bus, as <c>FUN_0051a2f0</c>'s bitmask walks them (bus 1, seaplane 2, ferry 4).
+	/// </summary>
+	internal static IEnumerable<int> FallbackOrder( int asked )
+	{
+		yield return asked;
+
+		foreach ( var vehicle in new[] { 3, 2, 1 } )
+		{
+			if ( vehicle != asked )
+				yield return vehicle;
+		}
+	}
+
+	/// <summary>
+	/// Makes the vehicle the file names no thing for, as the summons does through the object constructor
 	/// (<c>FUN_0051a2f0</c>, <c>FUN_004db090</c>; <c>docs/exe/saves.md</c>, "OpenTPW's writer, a vehicle made at its
 	/// summons"): an object of the vehicle's item on cell (0,0), facing nought, its two ends that cell, at the head
-	/// of the object list and of the cell's own, which stamps the analyser's <c>mLastObjectBuilt</c>. The model and
-	/// the script stood under a stand-in id since the load take the new thing's (<see cref="ParkFixedItems.Made"/>).
-	/// Answers the thing, or nought where this park has no such item: counted, and nothing is made.
+	/// of the object list and of the cell's own, which stamps the analyser's <c>mLastObjectBuilt</c>; its script bound from
+	/// its top to its animations (<see cref="ParkRides.BindNew"/>), and its model stood after the frame's walk
+	/// (<see cref="ParkFixedItems.Make"/>).
+	/// Answers the thing, or nought where this theme has no such item: said, counted, and nothing is made.
 	/// </summary>
 	/// <remarks>
 	/// <b>A deviation:</b> the id is <see cref="ParkState.NextThingId"/>'s, one past the highest used, where the
@@ -1821,16 +1850,20 @@ public sealed partial class ParkPeople : Entity
 	{
 		if ( _behaviour.Catalogue is not { } catalogue || !catalogue.TryGet( ParkFixedItems.VehicleItem( vehicle ), out var item ) )
 		{
+			Log.Warning( $"People: Could not find the '{ParkFixedItems.VehicleName( vehicle )}' feature" );
 			Unimplemented.Report( "VEHICLE_MADE_NO_ITEM" );
 			return 0;
 		}
 
 		var corner = MapStep.CellId( 0, 0 );
 		var thing = State.NextThingId();
+		var placed = ParkBuilding.Constructed( item, thing, 0, 0, 0, corner, corner, ParkWorld.BuiltWhen.At( State.CalendarNow ) );
 
-		State.AddObject( ParkBuilding.Constructed( item, thing, 0, 0, 0, corner, corner, ParkWorld.BuiltWhen.At( State.CalendarNow ) ) );
+		State.AddObject( placed );
 		State.EnterCell( 0, 0, thing );
-		ParkFixedItems.Current?.Made( vehicle, thing );
+		var animations = ParkFixedItems.Current?.Make( vehicle, thing );
+
+		ParkRides.Current?.BindNew( placed, item, animations );
 
 		Log.Info( $"People: the {ParkFixedItems.VehicleName( vehicle )} is made thing {thing} on mGameTick {State.GameTick}" );
 

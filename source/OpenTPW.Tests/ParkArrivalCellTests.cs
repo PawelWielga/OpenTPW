@@ -30,9 +30,9 @@ public class ParkArrivalCellTests
 
 	/// <summary>
 	/// <b>Every guest of a load is made on that cell, in Lost Kingdom's own park</b>: three by bus at (53,5), on three
-	/// sweeps running, none at the first stop (42,5); forty by the second vehicle at (53,3). No vehicle's script is
-	/// bound here, so the guests come without waiting for one: what is pinned is the load's vehicle number reaching
-	/// the cell, not a vehicle standing at the stop, which the game run shows.
+	/// sweeps running, none at the first stop (42,5); forty by the second vehicle, made at its summons, at (53,3). No
+	/// vehicle's script is bound here, so the guests come without waiting for one: what is pinned is the load's vehicle
+	/// number reaching the cell, not a vehicle standing at the stop, which the game run shows.
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the stops taken in turn by the sweep's parity; the first stop used; the vehicle not asked, so
@@ -48,7 +48,7 @@ public class ParkArrivalCellTests
 		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
 
 		using var clock = new SimulationClockScope();
-		var people = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ) );
+		var people = new ParkPeople( world, new ParkBalance( "jungle", easyMode: true ), catalogue: new ParkItemCatalogue( "jungle", data ) );
 
 		var cells = new List<string>();
 		Logger.LogDelegate note = ( _, text ) =>

@@ -981,7 +981,7 @@ follow the list. It runs after the scripts, the track rides and the models are s
   field. One made here is written whole, ahead of the file's things and newest first, the park's own turn order.
   One gone is left out. Every other thing's record goes out as it lies. Each record's first dword and `Used
   Thing Head` are written from the new order. **A deviation:** a made thing's id is the park's own, one past
-  the highest it has given, where the original gives a freed id out again (Q26c); the reader takes any id.
+  the highest it has given, where the original gives a freed id out again (Q582); the reader takes any id.
 - **A record's fields** are the FileFormats page's, from `ParkPeople`: `mX` and `mY`, the slot, `mNextAnim`,
   `mNextServiceInterval`, `mAccurateDestX`/`Y` (the target in `mX`'s units, as 18 of 18 and 392 of 392 hold it),
   the four speeds, `mCount`, `mESPSprite`, `mSpriteID`, `mPreviousX`/`Y` (the navigator's fixed point),
@@ -3323,9 +3323,9 @@ thing's own `mTopLeft` cell. A vehicle's `.sam` sets neither override and costs 
 
 **Built.** `ParkPeople.Summon` makes the thing where the slot is nought (`MakeVehicle`):
 `ParkBuilding.Constructed( item, id, 0, 0, 0, 1, 1 )` through `ParkState.AddObject`, which links it at the head
-of the object list and stamps `mLastObjectBuilt` as the constructor's tail does, and `EnterCell( 0, 0 )`. The
-model and the script that have stood since the load under an id of the scene's own go under the new thing
-(`ParkFixedItems.Made`, `ParkObjects.Restand`, `ParkRides.Rebind`). The writer then writes it as a thing bought
+of the object list and stamps `mLastObjectBuilt` as the constructor's tail does, and `EnterCell( 0, 0 )`. Its
+script is bound then from its top (`ParkRides.BindNew`) and its model stood after the frame's walk
+(`ParkFixedItems.Make` and `Sync`; Q26c, `park.md`, "Arrivals"). The writer then writes it as a thing bought
 ("OpenTPW's writer, a thing bought and a thing sold"), with three differences: its model's record is a fixed
 item's (`ParkThingStates.MadeRecord`'s `vehicle`: `FixedItemFlags`, `FixedItemCellX` and `Y`, one cell, and
 `ParkModelTables.SharedFlags` without the heads' bit); a made object stands on its cell's chain before the
@@ -3351,7 +3351,9 @@ as that line; the object list 43, 15, 24...; cell (0,0)'s chain 43, 15, 12, 11..
 the original's own of the item in every byte outside its links, date, model handle, name's unwritten words,
 script handle and rings**; the seaplane's model record (`run-fix3`) the original's length, 135 bytes, and equal
 outside its script handle, node words and channel. One gap counted at the save, the script of the vehicle not
-yet made (`SAVE_PARK_SCRIPT_MADE_SINCE_THE_LOAD`; main's build counts both). Loaded back from the Load Park
+yet made (`SAVE_PARK_SCRIPT_MADE_SINCE_THE_LOAD`; main's build counts both; none since Q26c, which stands no vehicle
+before it is made: `q26c/run-B2`, the ferry made for a load of 61 and saved unloading, "mCurrentArrivalVehicle 43,
+mArrivalVehicle_Size1..3 15 0 43", and the file loaded back with the ferry stood as thing 43 and nothing made). Loaded back from the Load Park
 list: `fixed item 'ferry' is thing 43, catalogue 1604`, "the save's current arrival vehicle is thing 43,
 vehicle 3 (ferry)", nothing made and nothing stamped, and the vehicle drove on and was spent, the ferry on tick
 1265 and the seaplane on 1211. *Main's build* (Q341's own file, `q341/run-fix1/q341-fix.TPWS`): slots 15, 0, 0,
@@ -3372,12 +3374,12 @@ its load.
 |---|---|---|
 | A vehicle's first summons | makes an object on cell (0,0), slot and stamp with it | the same |
 | Its id | the id last freed (14, 41) | one past the highest used (43) |
-| Its model and script | made then, the script from its top | stood since the load under the scene's id, put under the thing then (Q26c) |
+| Its model and script | made then, the script from its top | the same (Q26c): nothing of it stands before |
 | A file written after | slot, current vehicle, record, script, a fixed item's model | the same |
 | That file loaded | the vehicle current on its thing, nothing made | the same, in both games |
 | Its rings | the ferry's hold numbers | nought: what counts into them is not read |
 
-**Not built or not seen.** The id, the standing from the load and the rings (above; Q343, Q26c). The default
+**Not built or not seen.** The id and the rings (above; Q343, Q582). The default
 cell's two globals are not traced to their key, and no other theme's vehicle record is measured. The first
 round of bugs put back (42) ran before the model record's mend; the eleven for the mend ran after it. In no
 game run: both vehicles made in one park (the test holds it), a load of sixty-one's own summons, the ferry's
