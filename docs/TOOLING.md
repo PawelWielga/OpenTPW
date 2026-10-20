@@ -824,6 +824,14 @@ after its poller starts**, so a key meant inside either line cannot be sent afte
   is summoned about 66 s into the park (its voice came at +181 s, +182 s and +193 s of the pid in three runs, the park
   clock fast), so `SHOTS="200 203 206"` or later catches it at its first stop. Ours: `q561/confirm.py <out> <bin>` reads
   the log's `music 6` lines and `scriptsounds`; the bus is summoned on `mGameTick` about 1264.
+- **A voice taken out of range and back, in both games** (Q563): the original under `screenchains.sh` with `KEEP=1`
+  (so it stays in the park), a watcher on `<TAG>-musicvoices.log` that waits for the bus voice's first line with a
+  channel, then `setcam.py PID 200,200 90 0 off` and after a while `setcam.py PID 475,60 90 0 off`, a frame each way
+  (`q563/orig/run.sh`; `musicvoices.py` marks it `0x802`, `ch 0x0`). Ours: `camera 200 200 90 0` and back once the log
+  says `in range again`, the log's `out of range at` / `in range again` lines and `scriptsounds`' `away` (`q563/confirm.py`;
+  take the log's mark before sending the camera command, as the line can come inside its reply). **Build nothing while
+  `screenchains.sh` starts the original**: its lobby clicks are on fixed sleeps, and a build beside it left the game on
+  the player menu (run a).
 - **The happiness gauge at a known value in both games** (Q244): `q244/mkscene.py` writes one happiness into every
   guest of Q415's `noent.TPWS` (`parkfile.thing_set` on `+422`, all model-1 things, so the mean is the same whichever
   guests a game counts); ours loads it from the Load Park list (`q244/confirm.py`: `load()`, the log's `UI: meter 0x1f at

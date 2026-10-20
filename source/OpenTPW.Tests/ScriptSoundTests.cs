@@ -97,6 +97,8 @@ public class ScriptSoundTests
 			_before.AddRange( Audio.Voices );
 
 		ParkAudio? park = null;
+		var listener = typeof( Audio ).GetField( "_listener", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static )!;
+		var heardFrom = listener.GetValue( null );
 
 		try
 		{
@@ -112,12 +114,16 @@ public class ScriptSoundTests
 			lock ( Audio.Lock )
 				Audio.Voices.RemoveAll( voice => !_before.Contains( voice ) );
 
+			listener.SetValue( null, heardFrom );
 			ready.SetValue( null, false );
 			Unimplemented.Forget();
 		}
 	}
 
 	private static bool Counted( string what ) => Unimplemented.Summary.Any( entry => entry.What == what );
+
+	/// <summary>The listener put at <paramref name="at"/>, in the world's axes, the height last.</summary>
+	private static void HearFrom( Vector3 at ) => Audio.SetListener( at, Vector3.Right );
 
 	/// <summary>
 	/// <b>Each type plays in its own category, and a stop takes what its tag names.</b> On the End's model: the global
@@ -481,6 +487,8 @@ public class ScriptSoundTests
 				Word( Opcode.SETOBJPARAM ), 1, 20, 0,
 				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = nodes, Id = 907 };
 
+			// Beside the bus's sound node, (-183, -284) with the model unplaced.
+			HearFrom( new Vector3( -180f, -280f, 0f ) );
 			script.Turn( 0f );
 
 			var record = script.Effects!.Records.Single();
@@ -561,6 +569,161 @@ public class ScriptSoundTests
 			script.StopEffects();
 			Assert.IsFalse( park.SetScriptSoundParameter( bus, 20, 75 ) );
 		} );
+	}
+
+	/// <summary>
+	/// <b>A voice out of range makes nothing next</b> (<c>FUN_006b62b0</c> ticks only a voice in range, <c>FUN_006bca10</c>):
+	/// the bus's music started far off holds its first variation through a set to 75, and in range plays it, then the rev;
+	/// cut as it leaves, it draws nothing until it is back, and then plays the same variation afresh. The Lava Fountain's
+	/// chain 100 makes no child away, its child before playing out, and one at once on its return, not one for each wait
+	/// missed. The staff's held chain 188 started away makes its first child, the effect's first, once in range. The range
+	/// is over the ground alone, and a chain's is its newest child's: 188's variation 4 holds 85 where the others hold 90.
+	/// </summary>
+	[TestMethod]
+	public void AVoiceOutOfRangeMakesNothingNext()
+	{
+		var nowBefore = Time.Now;
+		var far = new Vector3( 1000f, 1000f, 0f );
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+			HearFrom( far );
+
+			var busNodes = RideNodes.Load( "levels/jungle/features/bus", "bus", (BaseFileSystem)FileSystem, false, [] )!;
+			var busScript = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 8, 1, 6, 1,
+				Word( Opcode.SETOBJPARAM ), 1, 20, 75,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = busNodes, Id = 908 };
+
+			busScript.Turn( 0f );
+
+			var bus = busScript.Effects!.Records.Single().Sound!;
+			var at = bus.Place!.Value;
+
+			Assert.AreEqual( (0, 0, 75, true), (bus.Samples, bus.Variation, bus.Parameter, bus.Away), "started away: v1 held, nothing played" );
+			Assert.IsNull( bus.Voice );
+
+			for ( var pass = 0; pass < 5; ++pass )
+			{
+				Time.Now += 1f;
+				park.ServeScriptSounds();
+			}
+
+			Assert.AreEqual( (0, 0), (bus.Samples, bus.Variation), "nothing drawn while away, though the parameter is 75" );
+
+			HearFrom( at + new Vector3( 10f, 0f, 0f ) );
+			park.ServeScriptSounds();
+			Assert.AreEqual( (1, 0, false), (bus.Samples, bus.Variation, bus.Away), "in range: the held v1 plays" );
+			Assert.IsTrue( bus.Voice!.Playing );
+
+			bus.Voice.Stop();
+			park.ServeScriptSounds();
+			Assert.AreEqual( (2, 4), (bus.Samples, bus.Variation), "then the rev, by the zones at 75" );
+
+			var cut = bus.Voice!;
+
+			HearFrom( far );
+			park.ServeScriptSounds();
+			Assert.IsFalse( cut.Playing, "leaving range cuts the sample" );
+			Assert.IsTrue( bus.Away );
+
+			for ( var pass = 0; pass < 5; ++pass )
+			{
+				Time.Now += 1f;
+				park.ServeScriptSounds();
+			}
+
+			Assert.AreEqual( (2, 4), (bus.Samples, bus.Variation), "and nothing is drawn away" );
+
+			HearFrom( at );
+			park.ServeScriptSounds();
+			Assert.AreEqual( (3, 4, false), (bus.Samples, bus.Variation, bus.Away), "back in range, the rev afresh, not the run" );
+			Assert.AreNotSame( cut, bus.Voice );
+			Assert.IsTrue( bus.Voice!.Playing );
+
+			// Ended in range, and away before its silence is over: nothing drawn.
+			bus.Voice!.Stop();
+			HearFrom( far );
+
+			for ( var pass = 0; pass < 5; ++pass )
+			{
+				park.ServeScriptSounds();
+				Time.Now += 1f;
+			}
+
+			Assert.AreEqual( (3, 4, true), (bus.Samples, bus.Variation, bus.Away), "nothing drawn in a silence run out away" );
+
+			// Over the ground alone: a listener 5000 above is in range, and the edge is the range itself.
+			Assert.IsTrue( ParkAudio.InRange( bus, at + new Vector3( 0f, 0f, 5000f ) ) );
+			Assert.IsTrue( ParkAudio.InRange( bus, at + new Vector3( 60f, 80f, 0f ) ) );
+			Assert.IsFalse( ParkAudio.InRange( bus, at + new Vector3( 60.5f, 80f, 0f ) ) );
+
+			// The Lava Fountain's chain on the End's node 9, (21, 57).
+			var endNodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var lavaScript = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 3, 9, 100, 40,
+				Word( Opcode.ADDOBJ ), 7, 9, 188, 41,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = endNodes, Id = 909 };
+
+			HearFrom( new Vector3( 21f, 57f, 0f ) );
+			lavaScript.Turn( 0f );
+
+			var lava = lavaScript.Effects!.Records.Single( record => record.Tag == 40 ).Sound!;
+			var staff = lavaScript.Effects!.Records.Single( record => record.Tag == 41 ).Sound!;
+
+			Assert.AreEqual( 1, lava.Samples );
+
+			var before = lava.Voice!;
+
+			HearFrom( far );
+
+			for ( var pass = 0; pass < 10; ++pass )
+			{
+				Time.Now = lava.NextAt + 1f;
+				park.ServeScriptSounds();
+			}
+
+			Assert.AreEqual( (1, true), (lava.Samples, lava.Away), "no child away" );
+			Assert.IsTrue( before.Playing, "the child before plays out" );
+
+			HearFrom( new Vector3( 21f, 57f, 0f ) );
+			park.ServeScriptSounds();
+			Assert.AreEqual( (2, false), (lava.Samples, lava.Away), "one child at once in range again" );
+			park.ServeScriptSounds();
+			Assert.AreEqual( 2, lava.Samples, "and not one for each wait missed" );
+
+			Time.Now = lava.NextAt + 0.001f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( 3, lava.Samples, "then each after its wait" );
+
+			// 188 started away: its first child, the effect's first variation, once in range.
+			var staffNodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var staffScript = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 7, 9, 188, 42,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = staffNodes, Id = 910 };
+
+			HearFrom( far );
+			staffScript.Turn( 0f );
+
+			var late = staffScript.Effects!.Records.Single().Sound!;
+
+			Assert.AreEqual( (0, -1, true), (late.Samples, late.Variation, late.Away) );
+
+			HearFrom( new Vector3( 21f, 57f, 0f ) );
+			park.ServeScriptSounds();
+			Assert.AreEqual( (1, 0), (late.Samples, late.Variation), "the first child, the effect's first" );
+
+			// A chain's range is its newest child's: 188's variation 4 holds 85, the others 90.
+			var place = staff.Place!.Value;
+
+			staff.Variation = 3;
+			Assert.IsFalse( ParkAudio.InRange( staff, place + new Vector3( 87f, 0f, 0f ) ) );
+			staff.Variation = 0;
+			Assert.IsTrue( ParkAudio.InRange( staff, place + new Vector3( 87f, 0f, 0f ) ) );
+		} );
+
+		Time.Now = nowBefore;
 	}
 
 	/// <summary>

@@ -9333,6 +9333,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   while the voice lives (`0x006b6620`); the bus's nodes stand as its file holds them and ride its route
   (`audio.md`, "The music's class of a script"). Run4, final binary: 27 samples, v1 first, idles never twice running,
   v5 v6 v6 v7 at each drive's end, every one at pitch -24 and 0.3740, as the original's (18408 Hz, 68 of 127).
+- [x] **Q563. A script voice out of range makes nothing next.** Q557's piece. The original's sound service ticks only the
+  voices in range (`SoundService_Pass` `0x006b62b0`, `FUN_006bca10`; `audio.md`, "A voice out of range makes nothing
+  next"; review VERIFY-17): a chain out of range makes no child and one at once on its return, a plain or music voice
+  holds its variation and plays it afresh on its return. Built for a script's plain, music and chain voices
+  (`ParkAudio.InRange`, `Reached`, `SoundAgain`). Proof: the original's bus voice (`q563/orig/`, run b) held v5 `0x802`
+  through 6.4 s away and came back on v5, then v6; ours (`q563/confirm.py`, run5, the final binary, 4 of 4) "out of range
+  at (568,64), variation 1 held after 1 sample(s)", no sample, "variation 1 afresh"; main's binary drew 4 samples away;
+  `q563/side-by-side.png`; test `AVoiceOutOfRangeMakesNothingNext`, 10 of 10 bugs put back fail it.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

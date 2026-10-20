@@ -212,6 +212,15 @@ public sealed partial class ParkAudio
 		/// <summary>When a plain voice's last sample was found ended, or null while one plays.</summary>
 		public float? EndedAt { get; set; }
 
+		/// <summary>A plain or music voice's sample of its variation, drawn with it, which a start out of range holds.</summary>
+		public AudioClip? Clip { get; set; }
+
+		/// <summary>
+		/// Whether the listener was last found past its range (<see cref="InRange"/>): the original's voice flag
+		/// <c>0x800</c>, its channel given up and nothing next made until it is in range again.
+		/// </summary>
+		public bool Away { get; set; }
+
 		/// <summary>How many samples it has started.</summary>
 		public int Samples { get; set; }
 
@@ -300,7 +309,9 @@ public sealed partial class ParkAudio
 		}
 		else if ( sound.Chain )
 		{
-			NextChainChild( sound );
+			// Out of range at the start, its first child waits for the listener (FUN_006b62b0 ticks it no sooner).
+			if ( Reached( sound ) )
+				NextChainChild( sound );
 		}
 		else
 		{
@@ -374,7 +385,8 @@ public sealed partial class ParkAudio
 	/// <summary>
 	/// Each plain script voice's next sample once the last has ended and its silence is over, as a following voice's
 	/// is (<see cref="ServeFollowing"/>), each chain's next child once the clock passes its newest child's time, and
-	/// every one-shot whose sample has ended let go.
+	/// every one-shot whose sample has ended let go. A plain, music or chain voice out of range makes nothing
+	/// (<see cref="InRange"/>): a plain or music voice's sample is cut, and in range again its sample starts afresh.
 	/// </summary>
 	internal void ServeScriptSounds()
 	{
@@ -384,6 +396,10 @@ public sealed partial class ParkAudio
 
 			if ( sound.Chain )
 			{
+				// The child before plays out: the chain has no channel to give up, and its children are not in the pass.
+				if ( !Reached( sound ) )
+					continue;
+
 				if ( Time.Now > sound.NextAt )
 					NextChainChild( sound );
 
@@ -391,7 +407,12 @@ public sealed partial class ParkAudio
 			}
 
 			if ( sound.Voice is { Playing: true } )
+			{
+				if ( sound.Follows && !Reached( sound ) )
+					sound.Voice.Stop();
+
 				continue;
+			}
 
 			if ( !sound.Follows )
 			{
@@ -400,6 +421,19 @@ public sealed partial class ParkAudio
 			}
 
 			if ( sound.Parked )
+				continue;
+
+			// In range again, the tick starts a channel on the sample the voice holds, its volume and pitch drawn as a
+			// first's are (0x006bdf50, its slot +0x44 FUN_006bc410), with no silence before it.
+			if ( sound.Away )
+			{
+				if ( Reached( sound ) )
+					SoundAgain( sound );
+
+				continue;
+			}
+
+			if ( !Reached( sound ) )
 				continue;
 
 			sound.EndedAt ??= Time.Now;
@@ -442,19 +476,104 @@ public sealed partial class ParkAudio
 		sound.Kept = HeldSample( headers[next], first, sound.Kept, 0, 0, _scriptRandom );
 		sound.Wait = first ? 0 : ParkScreams.GapMilliseconds( headers[next], _scriptRandom );
 		sound.EndedAt = null;
-		sound.Voice = Audio.Play( sound.Category.PickFrom( sound.Effect, next ), ChannelGain( sound.Kept.Volume ),
-			bus: AudioBus.Effects, position: sound.Place, range: sound.Place is null ? null : headers[next].Range );
+		sound.Clip = sound.Category.PickFrom( sound.Effect, next );
+
+		// Started out of range, it holds its first variation and plays nothing until it is in range (see SoundAgain).
+		if ( first && !Reached( sound ) )
+			return;
+
+		if ( !PlayScriptSample( sound ) )
+			return;
+
+		if ( !first )
+			Log.Info( $"Park audio: script {sound.Script}'s effect {sound.Effect}, sample '{sound.Voice!.Name}' variation {next + 1} "
+				+ (sound.Music ? $"at parameter {sound.Parameter} " : "")
+				+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, {sound.Wait} ms of silence after it" );
+	}
+
+	/// <summary>A plain or music voice's sample (<see cref="ScriptVoice.Clip"/>) played at its kept volume and pitch.</summary>
+	private bool PlayScriptSample( ScriptVoice sound )
+	{
+		var headers = sound.Category.VariationsOf( sound.Effect );
+
+		sound.Voice = Audio.Play( sound.Clip, ChannelGain( sound.Kept.Volume ), bus: AudioBus.Effects, position: sound.Place,
+			range: sound.Place is null ? null : headers[sound.Variation].Range );
 
 		if ( sound.Voice is null )
-			return;
+			return false;
 
 		sound.Voice.SetRate( ParkCarSounds.Rate( sound.Kept.Pitch ) );
 		++sound.Samples;
 
-		if ( !first )
-			Log.Info( $"Park audio: script {sound.Script}'s effect {sound.Effect}, sample '{sound.Voice.Name}' variation {next + 1} "
-				+ (sound.Music ? $"at parameter {sound.Parameter} " : "")
-				+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, {sound.Wait} ms of silence after it" );
+		return true;
+	}
+
+	/// <summary>
+	/// A plain or music voice in range again: the sample it holds started afresh at once, a volume and a pitch drawn for
+	/// it as for a first (<c>0x006bdf50</c>, <c>FUN_006bc410</c>). <b>A deviation:</b> one that left range in a silence
+	/// plays here the sample that last played, where the original's has already queued the next (slot 0,
+	/// <c>0x006bde00</c>); when the original queues it is not read.
+	/// </summary>
+	private void SoundAgain( ScriptVoice sound )
+	{
+		var headers = sound.Category.VariationsOf( sound.Effect );
+
+		sound.Away = false;
+		sound.EndedAt = null;
+		sound.Kept = HeldSample( headers[sound.Variation], first: true, sound.Kept, 0, 0, _scriptRandom );
+
+		if ( !PlayScriptSample( sound ) )
+			return;
+
+		Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} in range again: sample '{sound.Voice!.Name}' variation {sound.Variation + 1} afresh, "
+			+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}" );
+	}
+
+	/// <summary>
+	/// Whether a script voice is in range of the listener (<see cref="InRange"/>), with <see cref="ScriptVoice.Away"/> set
+	/// as the original's <c>0x800</c> is (<c>FUN_006bca70</c>) and each change logged.
+	/// </summary>
+	private bool Reached( ScriptVoice sound )
+	{
+		var near = InRange( sound, Audio.Listener.Position );
+
+		if ( near != sound.Away )
+			return near;
+
+		if ( !near )
+		{
+			sound.Away = true;
+			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} out of range at ({sound.Place!.Value.X:0},{sound.Place.Value.Y:0}), "
+				+ $"variation {sound.Variation + 1} held after {sound.Samples} sample(s)" );
+		}
+		else if ( sound.Chain )
+		{
+			sound.Away = false;
+			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} in range again after {sound.Samples} child(ren)" );
+		}
+
+		return near;
+	}
+
+	/// <summary>
+	/// Whether a script voice at <see cref="ScriptVoice.Place"/> is in range of <paramref name="ears"/>, as the sound
+	/// service's pass asks of each voice (<c>FUN_006bca10</c>, from <c>FUN_006b62b0</c>): the squared distance over the
+	/// ground's two axes alone (<c>FUN_006bb9f0</c>) not past the range's square, the range its current variation's
+	/// (<c>FUN_006bc650</c>; a chain's is its newest child's, which the child's draw writes into it, <c>0x006c3e00</c>,
+	/// and before its first the effect's first variation's). A flat voice is never out of range. Past it the original
+	/// flags the voice <c>0x800</c> and gives its channel up (<c>FUN_006bca70</c>), and only a voice in range is ticked
+	/// (slot <c>+0x14</c>): so it makes no child and draws no next sample.
+	/// </summary>
+	internal static bool InRange( ScriptVoice sound, Vector3 ears )
+	{
+		if ( sound.Place is not { } place )
+			return true;
+
+		var range = sound.Category.VariationsOf( sound.Effect )[Math.Max( sound.Variation, 0 )].Range;
+		var x = place.X - ears.X;
+		var y = place.Y - ears.Y;
+
+		return x * x + y * y <= range * range;
 	}
 
 	/// <summary>The parameter a parked music voice is left at (<c>0x006be55e</c>); a set to it does not wake the voice.</summary>
@@ -580,7 +699,7 @@ public sealed partial class ParkAudio
 			var music = sound.Music ? $" parameter {sound.Parameter} variation {sound.Variation + 1}{(sound.Parked ? " parked" : "")} pitch {sound.Kept.Pitch}" : "";
 
 			lines.Add( $"script {sound.Script} type {sound.Type} effect {sound.Effect} {sound.Kind} "
-				+ $"'{voice?.Name}' volume {voice?.Volume ?? 0f:F4} {(voice is { Playing: true } ? "playing" : "silent")} samples {sound.Samples}{music} {where}" );
+				+ $"'{voice?.Name}' volume {voice?.Volume ?? 0f:F4} {(voice is { Playing: true } ? "playing" : "silent")}{(sound.Away ? " away" : "")} samples {sound.Samples}{music} {where}" );
 		}
 
 		return string.Join( "; ", lines );
