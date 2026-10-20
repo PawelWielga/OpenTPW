@@ -849,14 +849,14 @@ end of 100 and 64 of 127 (85 x 0.75). With the camera away from it the chain sto
 made no child at all through six loops: where the service leaves such a voice unticked is not read.
 
 **OpenTPW** (`ParkAudio.StartScriptSound`, `RideScript.StartSound`, `SoundPlace`, `SweepEffects`, `StopEffect`): the
-seven categories by type, the one-shot (looped under `0x8`), the plain class, the chain of any variation and the held chain played (`ServeScriptSounds`, the land's
+seven categories by type, the one-shot (looped under `0x8`), the plain class, the music's class (below), the chain of any variation and the held chain played (`ServeScriptSounds`, the land's
 own way, "The plain class"), a chain a child at a time (`ServeScriptSounds`, `NextChainChild`: each child of a chain of any variation a variation by
 `AnyVariation` with no variation before, each of a held chain by `ParkScreams.NextVariation` at the parameter nought, its own volume and pitch, the next once the frame clock passes its start plus its
 wait, a `FADEOBJ` a cut), flat under `0x200`, else placed over the variation's range; each at its variation's own
 volume and a pitch drawn from it, a plain voice keeping its first sample's; moved by the sweep on its script's eighth
 tick; stopped by `KILLOBJ` and the script's end, faded by `FADEOBJ` (0.06 s, the deviation of "The fade"). An effect its
 category lacks, or a node its model lacks, frees an `ADDOBJ`'s record. Counted and not started:
-`RIDE_EFFECT_SOUND_CLASS_<constructor>` for the other three classes, `RIDE_EFFECT_SOUND_HELD_CHAIN_NO_KEY` for a held chain whose effect has no key (none shipped), `RIDE_EFFECT_SOUND_ITEM_BANK` for type 10, and
+`RIDE_EFFECT_SOUND_CLASS_<constructor>` for the other two classes (`0x006be680`, `0x006be330`), `RIDE_EFFECT_SOUND_HELD_CHAIN_NO_KEY` for a held chain whose effect has no key (none shipped), `RIDE_EFFECT_SOUND_ITEM_BANK` for type 10, and
 `RIDE_EFFECT_SOUND_NO_PLACE` for a placed sound of a script with no model here, or of no node with no placed thing
 (the ferry's 172 and the seaplane's 173, whose scripts run with no nodes). The End here: the same places, distances,
 gains and volumes (`q553/PREDICTION.txt`; the console's `scriptsounds`). **Said:** a record a load put back starts
@@ -918,6 +918,52 @@ one makes children (Q560). The Loudspeaker here (`q559/confirm.py`, run2): its c
 | `0x006c3e00` | `HeldChainChild_PickVariation` | The held chain's child: the effect's first, else a weighted draw among the zones of the chain's own that hold its parameter | Decompiled; `brk.sh`, runs e to g |
 | `0x0051c350`, `0x0051c400` | `Sound_SaveModule`, `Sound_LoadModule` | A park file's sound module: the 84 bytes, then the live voices (`0x006b5c10`, `0x006b5c30`) | Decompiled; runs c to g |
 | `0x006b6da0` | `SoundManager_SerializeVoices` | The voice list written or read; on a read, case 6 rebuilds a held chain | Decompiled |
+
+**The music's class of a script** (flags `0x406`, `0x006be610`; read for Q561, `q561/`). Its one user in Lost Kingdom is
+the bus: `bus.RSE` opens each lap with `ADDOBJ 8 1 6 1`, the global ambient's 6 on the bus's sound node, then
+`SETOBJPARAM 1 20 0`; it sets 75 three seconds before each of its two drives ends and 0 again once the bus has stood
+(after the drop-off and after the guests' boarding), and `KILLOBJ 1` ends the lap. Effect 6's key is 20; its
+variations ("The music's class", above, the rule): 1 to 4 the idles (each one sample, volume 90, pitch -24 to 36 by
+controller key 21), whose zones go 0-50 to the other three and 51-100 to 5; 5 the rev (0-100 to 6); 6 the run (51-100
+to itself, 0-50 to 7); 7 the slowing (0-100 to 1-4). So at 0 the bus idles, never the same sample twice, and at 75 it
+revs, runs, and slows when the parameter drops.
+
+**`SETOBJPARAM`'s answer is the handle while the voice lives.** `Sound_SetParameter` (`FUN_0051bc40`) answers nought
+with the sound system down, else hands the call to slot `+0xc` of the manager's service object
+(`SoundManager_SetVoiceParameter`, `0x006b8ad0`, both vtables `0x0070a2a0` and `0x0070a588`), which with a voice list
+calls `SoundService_SetVoiceParameter` (`0x006b6620`): the voice found by its handle (`FUN_006b6830`), its slot `+0x28`
+set, the handle answered; nought for a voice not found. So the record keeps its handle, and `KILLOBJ` still stops the
+voice. The music's class's slot `+0x28` (`MusicVoice_SetParameter`, `0x006be580`) sets the keys as any voice's
+(`0x006bbb80`) and wakes a parked voice (`0x40`) at a value other than `0x7f`.
+
+**Measured in the original** (`q561/orig/`, the real screen, `musicvoices.py` and `mixfreq.py`; predicted first,
+`q561/PREDICTION.txt`): the stock park, the camera on the bus stop. Each lap's voice came at the body's place in the
+model's file, (296, 5, -114), keys 20, 21, 0, 0, variation 1, then rode the bus (677, 5, -75) ... (529, 5, 64) at the
+first stop and (439, 5, 65) at the second, and went. Its variations ran v1 v5 v6 v7 then v1 to v4 never twice running,
+v5 v6 v7 at each drive's end, the keys of slots 1 and 2 following the variation (20, 21 on 1 to 4; 20, 0 on 5 to 7).
+Its channel played 68 of 127 (90 x 0.75) at 18408 Hz on every sample, 22050 x 2^(-25/96): the first sample's pitch,
+-24 (slot 1's key 21 is never set, so its value is nought), kept by every later one ("A held voice's next sample").
+**Out of range (`0x800`, no channel) it drew no next sample**: it held variation 1 from its coming until it had a
+channel, though its parameter had gone to 75, and then took 5; where the service leaves such a voice is not read (Q557).
+
+**OpenTPW** builds the class for a script (`ScriptVoiceClass.Music`, `ScriptVoice.Music`, `Key`, `Parameter`, `Parked`;
+`ParkAudio.SetScriptSoundParameter`): served as the plain class is, each later sample by the zones at its parameter,
+the volume and pitch its first drew; `SETOBJPARAM` sets slot 0 on its record's voice and keeps the handle while the voice
+lives (`RideEffects.SetParameter`), nought with no sound. Counted: a set whose key is a slot past 0's
+(`RIDE_EFFECT_SOUND_PARAMETER_APPLIES`) and a set on a voice of another class (`RIDE_EFFECT_SOUND_PARAMETER_OTHER_CLASS`),
+neither shipped. A parked voice is woken as the original's, which no shipped zone reaches (effect 6's hold 0 to 100). The
+bus's nodes stand as its file holds them, root and all (`ParkRides.Stand`, as the End's), and its route keys carry them
+(`NodePoser`; `park.md`, "Clip content: tracks, hide lists, rotation, visibility"). The bus here (`q561/confirm.py`, run4, the final binary): the voice from (686,-77) along
+the road, variation 1 first, 26 samples by the zones, each at pitch -24 and 0.3740, stopped by `KILLOBJ 1`. **Not the
+original's:** its samples run on out of range, unheard (Q557); and our bus stands at (510, 65) and (422, 65), 19 and 17
+along its route past the original's stops, turned askew where the original's faces along the road (Q562).
+
+| Address | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x0051bc40` | `Sound_SetParameter` | A voice's parameter set by handle; nought with the sound system down, else the handle or nought | Decompiled |
+| `0x006b8ad0` | `SoundManager_SetVoiceParameter` | Slot `+0xc` of the service object (vtables `0x0070a2a0`, `0x0070a588`) | Disassembly; the vtables read |
+| `0x006b6620` | `SoundService_SetVoiceParameter` | The voice by its handle, its slot `+0x28` called, the handle answered; nought for none | Decompiled |
+| `0x006be580` | `MusicVoice_SetParameter` | The music's class's slot `+0x28`: the keys set, a parked voice woken at a value other than `0x7f` | Disassembly |
 
 ## Node lookup is by id AND a capability flag
 

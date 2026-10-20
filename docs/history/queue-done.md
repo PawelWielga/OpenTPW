@@ -9328,6 +9328,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Loudspeaker's chain of 177 at (455, 0, 205), first child variation 1, later ones drawn from the one before's zones,
   never a repeat. Ours (`q559/confirm.py`): first child variation 1, 27 children, no repeat, each gap its wait within
   0.006 s; 11 of 11 bugs put back fail a test. Found: the original puts a park file's live voices back (Q560).
+- [x] **Q561. A script's voice of the music's class: the bus's engine (Q557's piece).** `bus.RSE`'s `ADDOBJ 8 1 6 1`
+  plays the global ambient's 6 (`0x406`) by its zones at the parameter `SETOBJPARAM 1 20 0|75` sets, the handle kept
+  while the voice lives (`0x006b6620`); the bus's nodes stand as its file holds them and ride its route
+  (`audio.md`, "The music's class of a script"). Run4, final binary: 27 samples, v1 first, idles never twice running,
+  v5 v6 v6 v7 at each drive's end, every one at pitch -24 and 0.3740, as the original's (18408 Hz, 68 of 127).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

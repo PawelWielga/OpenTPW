@@ -315,10 +315,11 @@ public sealed class RideEffects
 	/// </para>
 	///
 	/// <para>
-	/// <b>With no sound system that answer is nought, and the nought is the engine's own rather than a
-	/// stand-in for one.</b> <c>FUN_0051bc40</c> tests two flags that only the sound system's own init
-	/// and teardown ever write, and returns 0 when it is down - so the handle is zeroed. The walk, the
-	/// two cases and the zero are all the engine's; nothing here is invented.
+	/// <b>The answer is the handle itself while the voice lives, and nought otherwise.</b> <c>FUN_0051bc40</c>
+	/// answers nought with the sound system down (two flags only its init and teardown write), and otherwise
+	/// <c>0x006b6620</c> looks the handle up, sets the voice's parameter (its slot <c>+0x28</c>) and answers the
+	/// handle, or nought for a voice it does not find. <paramref name="set"/> is that call on a record's voice,
+	/// answering whether it lives; with none, every sound record's handle is zeroed, as with no sound system.
 	/// </para>
 	///
 	/// <para>
@@ -327,7 +328,8 @@ public sealed class RideEffects
 	/// ever exists - so there is no branch for it rather than a branch that can never be taken.
 	/// </para>
 	/// </summary>
-	public int SetParameter( int tag, int parameter, int value )
+	/// <param name="set">The parameter set on a record's voice, answering whether the voice lives; null with no sound.</param>
+	public int SetParameter( int tag, int parameter, int value, Func<Record, bool>? set = null )
 	{
 		var touched = 0;
 
@@ -338,7 +340,9 @@ public sealed class RideEffects
 			if ( record.Tag != tag || record.IsParticle )
 				continue;
 
-			record.Handle = 0;
+			if ( set?.Invoke( record ) != true )
+				record.Handle = 0;
+
 			++touched;
 		}
 

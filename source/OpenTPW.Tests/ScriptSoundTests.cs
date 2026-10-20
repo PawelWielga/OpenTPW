@@ -29,8 +29,8 @@ public class ScriptSoundTests
 	[DataRow( 0x412, "OneShot", null )]
 	[DataRow( 0x6, "Plain", null )]
 	[DataRow( 0x206, "Plain", null )]
-	[DataRow( 0x406, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE610" )]
-	[DataRow( 0x606, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE610" )]
+	[DataRow( 0x406, "Music", null )]
+	[DataRow( 0x606, "Music", null )]
 	[DataRow( 0x106, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE330" )]
 	[DataRow( 0x416, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE680" )]
 	[DataRow( 0x404, "HeldChain", null )]
@@ -460,6 +460,131 @@ public class ScriptSoundTests
 		} );
 
 		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>An effect of <c>0x406</c> is the music's class, and <c>SETOBJPARAM</c>'s parameter picks its zones.</b> The bus's
+	/// own <c>ADDOBJ 8 1 6 1</c> and <c>SETOBJPARAM 1 20 0</c> on its model: the global ambient's 6, key 20, first its first
+	/// variation at a pitch of -24 (variation 1's controller is key 21, which nothing sets, so its value is nought) that
+	/// every later sample keeps, though variations 5 to 7 hold a pitch of nought. At 0 the idles 1 to 4, never the one
+	/// before; at 75 the rev, 5, then 6 again and again; back at 0, 7 and then the idles. The handle stays while the voice
+	/// lives (<c>0x006b6620</c>); past every zone the voice is parked at <c>0x7f</c> and a set to anything else wakes it.
+	/// </summary>
+	[TestMethod]
+	public void AnEffectOf406IsTheMusicsClassWhoseParameterPicksItsZones()
+	{
+		WithAParksAudio( park =>
+		{
+			var nodes = RideNodes.Load( "levels/jungle/features/bus", "bus", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 8, 1, 6, 1,
+				Word( Opcode.SETOBJPARAM ), 1, 20, 0,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = nodes, Id = 907 };
+
+			script.Turn( 0f );
+
+			var record = script.Effects!.Records.Single();
+			var bus = record.Sound!;
+			var rate = MathF.Pow( 2f, -25f / 96f );
+
+			Assert.AreEqual( "music", bus.Kind );
+			Assert.IsTrue( bus.Music && bus.Follows && !bus.Plain && !bus.Chain );
+			Assert.IsFalse( Counted( "RIDE_EFFECT_SOUND_CLASS_6BE610" ) );
+			Assert.AreEqual( (20, 0, 0, 1), (bus.Key, bus.Parameter, bus.Variation, bus.Samples) );
+			Assert.AreEqual( -24, bus.Kept.Pitch );
+			Assert.AreEqual( rate, (float)bus.Voice!.Rate, 1e-4f, "22050 x 2^(-25/96) = 18408, the original's frequency" );
+			Assert.AreEqual( 100f, bus.Voice.Range );
+			Assert.AreNotEqual( 0, record.Handle, "the set answers the handle of a voice that lives" );
+			Assert.AreEqual( 1, park.ScriptParameterSets );
+
+			int Next()
+			{
+				bus.Voice!.Stop();
+				park.ServeScriptSounds();
+				Assert.AreEqual( -24, bus.Kept.Pitch, "a later sample keeps the first's pitch" );
+				Assert.AreEqual( rate, (float)bus.Voice.Rate, 1e-4f );
+				return bus.Variation;
+			}
+
+			void Set( int id, int value )
+				=> Assert.IsTrue( park.SetScriptSoundParameter( bus, id, value ), "the voice lives" );
+
+			var idles = new HashSet<int>();
+
+			for ( var sample = 0; sample < 200; ++sample )
+			{
+				var before = bus.Variation;
+				var next = Next();
+
+				Assert.IsTrue( next is >= 0 and <= 3 && next != before, $"{before + 1} then {next + 1} at 0" );
+				idles.Add( next );
+			}
+
+			Assert.AreEqual( 4, idles.Count, "every one of the four idles" );
+
+			Set( 20, 75 );
+			Assert.AreEqual( 75, bus.Parameter );
+			Assert.AreEqual( 4, Next(), "the rev" );
+
+			for ( var sample = 0; sample < 5; ++sample )
+				Assert.AreEqual( 5, Next(), "the run, and again" );
+
+			Set( 20, 0 );
+			Assert.AreEqual( 6, Next(), "the slowing" );
+			Assert.IsTrue( Next() is >= 0 and <= 3, "and an idle" );
+
+			// A set past slot 0 (key 21, the idle's controller) is counted and leaves the parameter.
+			Set( 21, 50 );
+			Assert.IsTrue( Counted( "RIDE_EFFECT_SOUND_PARAMETER_APPLIES" ) );
+			Assert.AreEqual( 0, bus.Parameter );
+
+			// No idle's zone holds 101: parked at 0x7f, and nothing more plays until a set to anything else.
+			Set( 20, 101 );
+			var samples = bus.Samples;
+
+			bus.Voice!.Stop();
+			park.ServeScriptSounds();
+			park.ServeScriptSounds();
+			Assert.IsTrue( bus.Parked );
+			Assert.AreEqual( (ParkAudio.ParkedParameter, samples), (bus.Parameter, bus.Samples) );
+
+			Set( 20, ParkAudio.ParkedParameter );
+			park.ServeScriptSounds();
+			Assert.AreEqual( samples, bus.Samples, "a set to 0x7f leaves it parked" );
+
+			Set( 20, 0 );
+			park.ServeScriptSounds();
+			Assert.IsFalse( bus.Parked );
+			Assert.AreEqual( samples + 1, bus.Samples, "woken by the set, it plays" );
+
+			// Stopped, the voice is gone and the set answers nought.
+			script.StopEffects();
+			Assert.IsFalse( park.SetScriptSoundParameter( bus, 20, 75 ) );
+		} );
+	}
+
+	/// <summary>
+	/// <b>An arrival vehicle's nodes stand where its file holds them</b>, as the original's bus voice came at its body's
+	/// place, (296, 5, -114): the bus's sound node 1 there, its root <c>Line02</c>'s (480, 0, 170) kept, where a thing
+	/// stood at its cells has its root's place replaced by theirs (here cell (0, 0), with no ground).
+	/// </summary>
+	[TestMethod]
+	public void AnArrivalVehicleStandsWhereItsFileHoldsIt()
+	{
+		var data = GameData.Required();
+		var bus = RideNodes.Load( "levels/jungle/features/bus", "bus", data, false, [] )!;
+		var other = RideNodes.Load( "levels/jungle/features/bus", "bus", data, false, [] )!;
+
+		ParkRides.Stand( bus, 1600, 0, 0, 0 );
+		ParkRides.Stand( other, 1417, 0, 0, 0 );
+
+		Assert.AreEqual( NodeEnd.Posed, bus.Find( 1, RideNodes.SoundSpace, out var fixedAt ) );
+		Assert.AreEqual( 296.27f, fixedAt.X, 0.01f );
+		Assert.AreEqual( 5.67f, fixedAt.Y, 0.01f );
+		Assert.AreEqual( -114.16f, fixedAt.Z, 0.01f );
+
+		other.Find( 1, RideNodes.SoundSpace, out var celled );
+		Assert.IsTrue( celled.X < 0f && celled.Z < 0f, $"at its cells the root's (480, 0, 170) is gone: {celled}" );
 	}
 
 	/// <summary>The End's sound node 10 on its model, in whole units of the world, the height last.</summary>

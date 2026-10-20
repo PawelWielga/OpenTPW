@@ -370,7 +370,10 @@ is a multiple of three rather than `3n+1` because the loop is **closed**, which 
 modulo arm above is wrapping. The scalar that drives it is a separate per-frame array on an animation
 track setting channel `0x200`, and it is a **percentage**: space's slide runs exactly 0 to 100 and the
 haunted house 0 to 200, which is two laps. It does not always rise — the ferry runs its route backwards.
-Layout and counts are in the FileFormats clone under Models (`*.MD2`); they are not repeated here.
+Layout and counts are in the FileFormats clone under Models (`*.MD2`); they are not repeated here. **OpenTPW** carries a node along its route both where it draws the model (`LobbyModel.Pose`) and where a script finds a
+node on it (`NodePoser`, Q561): the route's point at the key's percentage is the node's translation within its parent.
+In Lost Kingdom only the bus's and the seaplane's clips carry route keys. The facing along the route (`0x400`) is
+counted, `ANIM_PATH_FACING` (Q562).
 
 **Rotation keys carry an easing curve id** at key`+0x02` (`0xFFFF` = none) indexing an **8-byte** table at track descriptor `+0x34`, remapped through a **9-segment** ramp: **457 of 1,166 clips carry one**. Three things that matter: the id belongs to the **lower** key of the pair; the id is **not** the key's own index (**3,070 of 12,428 eased keys disagree**, ids reach 100, so the table is indexed not walked); and the ramp's endpoints are **implied** (0 before the first byte, 1 after the last), which is what makes it nine segments from eight bytes.
 
@@ -947,7 +950,7 @@ What OpenTPW plays of it is `audio.md`, "A script's sounds".
 
 ### `SETOBJPARAM` (12) and `DIPMUSIC` (104) — both buildable with no world
 
-`SETOBJPARAM` at `0x005524d9` is `<tag> <param> <value>`, walking **`+0xb0`** — the same record list `ADDOBJ` fills — and matching the record's tag at `+0x18`. Type dispatch (byte map `0x5569c4`, jump table `0x5569b8`) has **two cases only: particle types 1-2 do nothing**, sound types 3-10 call `FUN_0051bc40(record+0xc, param, value)` and store the answer back at `+0xc`. **That call returns 0 when the sound system is down** (`DAT_00802bc8`/`DAT_00802bd4`, written only by the sound init and its teardown), so with no world the record's handle becomes nought — the engine's own answer. All 20 uses are in `bus.RSE`, **one copy per theme — four scripts, not one** — as `(1, 20, 0)` x12 and `(1, 20, 75)` x8. It is a **third reader** of the list and rewrites `+0xc`, the handle itself. **Its byte table is `[0,0,1,1,...]`, NOT `KILLOBJ`/`FADEOBJ`'s `[0,1,2,2,...]`** — do not carry the one over to the other. It is a no-op on a particle record. The handler has not been read in full.
+`SETOBJPARAM` at `0x005524d9` is `<tag> <param> <value>`, walking **`+0xb0`** — the same record list `ADDOBJ` fills — and matching the record's tag at `+0x18`. Type dispatch (byte map `0x5569c4`, jump table `0x5569b8`) has **two cases only: particle types 1-2 do nothing**, sound types 3-10 call `FUN_0051bc40(record+0xc, param, value)` (`Sound_SetParameter`) and store the answer back at `+0xc`: the handle itself while the voice lives, nought otherwise (`audio.md`, "The music's class of a script"). **That call returns 0 when the sound system is down** (`DAT_00802bc8`/`DAT_00802bd4`, written only by the sound init and its teardown), so with no world the record's handle becomes nought — the engine's own answer. All 20 uses are in `bus.RSE`, **one copy per theme — four scripts, not one** — as `(1, 20, 0)` x12 and `(1, 20, 75)` x8. It is a **third reader** of the list and rewrites `+0xc`, the handle itself. **Its byte table is `[0,0,1,1,...]`, NOT `KILLOBJ`/`FADEOBJ`'s `[0,1,2,2,...]`** — do not carry the one over to the other. It is a no-op on a particle record. The handler has not been read in full.
 
 `DIPMUSIC` at `0x005564c0` resolves its operand, stores the low byte at frame **`+0xb9`**, and calls `FUN_0051e710`, which is only `DAT_00803ac8 = 1; DAT_00803ad0 = value`. **The frame byte is its lifetime**: `FUN_00558500` tests `+0xb9` and calls `FUN_0051e710(0)`, so a script's death un-dips the music. All 8 shipped uses pass a literal 1.
 

@@ -729,7 +729,7 @@ public sealed class LobbyModel
 	/// three rather than <c>3n+1</c>.
 	/// </para>
 	/// </summary>
-	private static System.Numerics.Vector3 SampleRoute( ModelFile.ModelPath route, float percent )
+	internal static System.Numerics.Vector3 SampleRoute( ModelFile.ModelPath route, float percent )
 	{
 		var points = route.Points;
 

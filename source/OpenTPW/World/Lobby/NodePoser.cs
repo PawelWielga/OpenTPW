@@ -18,6 +18,13 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
+/// <b>A route key puts the node at its route's point</b> (channel <c>0x200</c>): the model's route the node's path id
+/// names, sampled at the key's percentage as <see cref="LobbyModel.SampleRoute"/> samples it, is the node's translation
+/// within its parent, as the drawn model moves it (<see cref="LobbyModel.Pose"/>), so a node hanging off the bus rides
+/// with it. Its facing along the route (<c>0x400</c>) is not built, as the drawn model's is not.
+/// </para>
+///
+/// <para>
 /// What a pose leaves is kept: the next pose starts from it, and only <see cref="Rest"/> puts nodes back, as the engine
 /// keeps each node's matrix between advances and restores it only on a change of clip (<c>FUN_00472310</c>).
 /// </para>
@@ -35,6 +42,8 @@ public sealed class NodePoser
 	private readonly Matrix4x4[] _restTurnInverse;
 	private readonly int[] _parents;
 	private readonly bool _adds;
+	private readonly IReadOnlyList<ModelFile.ModelPath> _routes;
+	private readonly int[] _routeIds;
 
 	private readonly Matrix4x4[] _local;
 	private readonly Matrix4x4[] _world;
@@ -43,11 +52,15 @@ public sealed class NodePoser
 	/// <param name="locals">Each node's own transform within its parent, in the file's axes.</param>
 	/// <param name="parents">Each node's parent, or -1 for the root.</param>
 	/// <param name="headerFlags">The model's header word at <c>0x30</c> (<see cref="ModelFile.HeaderFlags"/>).</param>
-	public NodePoser( IReadOnlyList<Matrix4x4> locals, IReadOnlyList<int> parents, uint headerFlags )
+	/// <param name="routes">The model's routes (<see cref="ModelFile.Paths"/>), and <paramref name="routeIds"/> each node's path id.</param>
+	public NodePoser( IReadOnlyList<Matrix4x4> locals, IReadOnlyList<int> parents, uint headerFlags,
+		IReadOnlyList<ModelFile.ModelPath>? routes = null, IReadOnlyList<int>? routeIds = null )
 	{
 		_rest = [.. locals];
 		_parents = [.. parents];
 		_adds = (headerFlags & 0x4) != 0;
+		_routes = routes ?? [];
+		_routeIds = [.. routeIds ?? []];
 
 		_local = [.. _rest];
 		_world = new Matrix4x4[_rest.Length];
@@ -69,7 +82,7 @@ public sealed class NodePoser
 
 	public NodePoser( ModelFile model )
 		: this( [.. model.Nodes.Select( node => node.LocalTransform )], [.. model.Nodes.Select( node => node.ParentIndex )],
-			model.HeaderFlags )
+			model.HeaderFlags, model.Paths, [.. model.Nodes.Select( node => node.PathId )] )
 	{
 	}
 
@@ -120,6 +133,19 @@ public sealed class NodePoser
 
 			var local = _local[node];
 			local.Translation = _adds ? _rest[node].Translation + point : point;
+			_local[node] = local;
+		}
+
+		foreach ( var track in clip.PathTracks )
+		{
+			var node = track.TargetIndex;
+			var which = node >= 0 && node < _routeIds.Length ? _routeIds[node] : 0;
+
+			if ( !Holds( node ) || which < 0 || which >= _routes.Count )
+				continue;
+
+			var local = _local[node];
+			local.Translation = LobbyModel.SampleRoute( _routes[which], track.Sample( frame ) );
 			_local[node] = local;
 		}
 

@@ -3654,7 +3654,12 @@ public sealed class RideScript
 			return;
 		}
 
-		Effects.SetParameter( Value( operands[0] ), Value( operands[1] ), Value( operands[2] ) );
+		var parameter = Value( operands[1] );
+		var value = Value( operands[2] );
+		var audio = ParkAudio.Current;
+
+		Effects.SetParameter( Value( operands[0] ), parameter, value,
+			audio is null ? null : record => audio.SetScriptSoundParameter( record.Sound, parameter, value ) );
 	}
 
 	/// <summary>

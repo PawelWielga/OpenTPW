@@ -54,16 +54,16 @@ The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses
 filed the items that cite it.
 
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
-  the one-shot and the plain class, Q558, which built the chain of `0x4` alone, and Q559, the held chain `0x404`
-  (`audio.md`, "A script's sounds"). Counted and not started: the music's class (`_6BE610`, `0x406`: the bus's global ambient
-  6, which `SETOBJPARAM`'s `( 1, 20, v )` steers through `FUN_0051bc40` on a live voice; `RideEffects.SetParameter` still
-  zeroes the handle), `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped
+  the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, and Q561,
+  the music's class `0x406` (`audio.md`, "A script's sounds"). Counted and not started: `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped
   script) and a placed sound with nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's
   173, ADDOBJ 8 on node 1, whose scripts run with no nodes). Build each class on `ParkScreams`, `NextChainChild` and the
   music's rule, and confirm by `voices.py`, `mixer.py` and `chains.py` beside `scriptsounds`. Also measured (Q558) and not
   built: the original's chain out of range (voice flag `0x800`) makes no child at all, where ours makes them unheard;
   read where the service leaves such a voice unticked (Q559's runs saw the stock park's screams 71 to 73 come and go at
-  `0x802` with no child; the gates' 177 at `0x802` was seen making children once: measure before building). Also measure
+  `0x802` with no child; the gates' 177 at `0x802` was seen making children once: measure before building). The music's
+  class too: the bus's voice out of range drew no next sample (Q561, `q561/orig/a-musicvoices.log`), where ours plays on
+  unheard. Also measure
   whether a park entered fresh from a file hears its scripts' looped sounds in the original (Q553's run loaded into a
   park whose fountain already sounded; Q560 says why).
 - [ ] **Q560. A park file's live voices put back (decode first).** From Q559. Every park file carries the sound
@@ -78,6 +78,13 @@ filed the items that cite it.
   or the weather's `mRainSoundHandle` is matched to one put back. Second: build what the jungle's files hold, and say what
   this game's writer leaves out.
 
+- [ ] **Q562. The bus drives facing along its route, and stands at the original's stops.** From Q561. Our bus drives its
+  route turned as it was parked (the route key's facing `0x400`, counted `ANIM_PATH_FACING`; `park.md`, "Clip content"),
+  where the original's faces along the road (`q561/side-by-side.png`); and it stands at (510, 65) and (422, 65), the route's
+  points at its clips' last keys (42.437 and 55.996), where the original's bus voice stood at (529, 64) and (439, 65),
+  19 and 17 back along the route. Decode the route sampler and the facing (`FUN_00474840` and its callers) against
+  ours (`LobbyModel.SampleRoute`), measure the original's bus matrix at its stops, and build the facing for the drawn
+  bus and its nodes (`NodePoser`). The seaplane's route too.
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge

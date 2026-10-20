@@ -2180,7 +2180,7 @@ and the three lists are empty. Its own Jungle Spray then started and stopped `(3
 a load (the toilet's two are the same five words; the rule is the reader's listing and the tests). No effect was
 drawn or heard in OpenTPW in that run, and the original draws no smoke on a made kiosk with either file, so the photographs
 show the things bought and do not tell the fix from the control. **Not built:** the engine's spawn that fails
-and frees its record (every `ADDOBJ` of a known type keeps one here); the handle `SETOBJPARAM` stores back. The
+and frees its record (every `ADDOBJ` of a known type keeps one here). (`SETOBJPARAM`'s store-back is built, Q561: the handle while the voice lives.) The
 emitter itself is "OpenTPW's writer, an emitter started".
 
 ### OpenTPW's writer, a person's sprite inside a loop
