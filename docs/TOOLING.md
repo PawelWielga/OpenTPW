@@ -139,6 +139,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `fork-review-2/forkwatch.py [--from SHA] [--keep]` | The daily fork watch's first step (read-only): fetches the meneerkrabs fork's clone (`~/.cache/tpw-fork-krabs/repo`), takes the PC addresses in the lines added since the last look, maps each to its function by `funcs-all.tsv` (every function's ranges, dumped from Ghidra 2026-10-16), drops the functions our tree and the FileFormats clone cite now and those an earlier look handed on, and writes `watch-<sha>.json`; `--keep` records the new tip in `watch-state.json` once the leads go to a sweep |
 | `fork-review-2/mkwatchev.py <watch-SHA.json> <dir>` | The watch's evidence builder: splits the leads into areas (advisor, ui-hud, audio-fx, world, other) by the fork file citing each most, and writes `<dir>/claims-<area>-N.txt` (the fork's citing lines, +-2, read from the watched tip, for the sweeps) and `<dir>/code-<area>-N.txt` (our Ghidra decompile of each function, for the verifiers) from `<dir>/decomp.json`, which a Ghidra dump script (`watch/2026-10-16/dump.py`, a model for the next) writes |
 | `gen_addresses.py` | Regenerating `docs/exe/addresses.md` |
+| `lib/cliptracks/` (a project: `dotnet run --project ~/.cache/tpw-harnesses/lib/cliptracks -c Release -- <data dir> [clip]`) | Every shipped clip's position tracks against its model (Q554): the counts (late first keys, last keys before the declared span, additive models, nodes under a moved node, a route in the same clip) and the lists `late.txt`, `past.txt`, `offrest.txt`, `nested.txt`, `adds.txt` in the working folder; with a clip's path, its declared span and each position track's keys and samples. Builds the repo's `OpenTPW.Files` in Release |
 | `wadcat`, `strdump`, `nodenames/` | A wad's entries, a string table's lines, a UI wad's node names (`CLAUDE.local.md`). `strdump` prints every part of a row, a parameter as `{Pn}` (since Q372: a row that starts with one, as UITEXT 441 "{P11} hours", read blank before); name the table under the data folder, `Language/English/UITEXT.str` (it reads through the tree it is built on, which decodes each language folder through its own `MBToUni.dat` from Q710) |
 | console `strings <table> <row>...` | A string table's rows in the running game, through the table's own folder's character table (Q710): `strings Language/american/THEMENAMES.str 0` answers `strings: Language/american/THEMENAMES.str row 0 of 4: "Lost Kingdom"`. The log's `Character table: <path>, <n> characters` says each character table opened, once each |
 
@@ -464,8 +465,10 @@ whole list):
   the End's id and frames every 2 s, moving the pointer). Ours: the console's `endfeature` is the End's census (its
   thing, its two scripts, the eye and the look, the cover, the dip), and `q703/confirm.py <out> <bin> a|b` runs the
   scene through the End to Escape (`a`) or to a right click (`b`). First person's fog, drawn in the End's view too,
-  hides what stands past about 150 units (the End's planes at rest): `fog 2000 2100` pushes it out for a look
-  (`q703/exp-fog.py`).
+  hides what stands past about 150 units: `fog 2000 2100` pushes it out for a look (`q703/exp-fog.py`). Its planes' flight
+  (Q554): `endfeature` adds an `endfeature planes:` line, each `_f_endplane`'s drawn place and whether it is shown;
+  `q554/confirm.py <out> <bin> a|b` samples it every ~0.7 s and frames every ~1.4 s (`b` with the fog pushed out), and
+  `q554/orig/run.sh` films the original's End every second. Endm1's three come over the view about 4 s in.
 - **A park bigger than its handymen, or its guards** (Q411, Q412; `lib/pathscene.py`, Q411's `q411/mkscene.py` made it
   first): the stock park paused on 765 and `path X Y` given for the first N cells of the 17 x 17 bare block at (60,15) (`parkfile.bare_blocks`), each
   with a 0.15 s wait (`stockscene.py`'s 2.5 s a command is twelve minutes for 289), then saved: 126 + N developed

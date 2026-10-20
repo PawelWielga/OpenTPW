@@ -53,18 +53,13 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q703. The End's planes fly, their trails follow, and the advisor is not drawn over it.** From Q552 (the End
-  made, its view, its keys and its ways out are built; `park-engine.md`, "The End feature's view", "OpenTPW builds it").
-  Three parts, each seen beside the original's frames (`q551/orig/b-sheet.png`, `q550/orig/a-4`, `a-5`):
-  (1) **Clip position tracks** (channel `0x1`, `AnimationFile.PositionTracks`) are read and posed nowhere, counted
-  `ANIM_POSITION_TRACK` in `LobbyModel.Pose`: 455 of the 4,318 shipped clips carry one (`wadcat --anim`, `pos N`;
-  end.wad 12, and Lost Kingdom rides among them: bouncy, junspray, totem, volcano, monkey), so a node a clip moves
-  stands where it rests. Decode how the pose walk applies a key (in the parent's frame or the world's; a parent's
-  turn), measure it across every such clip, and build it in `MeshRotator`/`LobbyModel`: the End's eight planes then fly
-  `Endm1`-`Endm3` (run `fog 2000 2100` to see them where first person's fog would hide them: `q703/exp1/`).
-  (2) **An emitter on a clip's node is not moved with it** (`PARK_PARTICLE_NODE_ON_A_CLIP`; the engine walks a script's
+- [ ] **Q703. The End's trails follow their planes, and the advisor is not drawn over it.** From Q552 and Q554 (the End
+  made, its view, keys and ways out; its planes fly; `park-engine.md`, "The End feature's view", "OpenTPW builds it").
+  Two parts, each seen beside the original's frames (`q554/orig/`, `q551/orig/b-sheet.png`, `q550/orig/a-4`, `a-5`):
+  (1) **An emitter on a clip's node is not moved with it** (`PARK_PARTICLE_NODE_ON_A_CLIP`; the engine walks a script's
   effect list every tick, `FUN_005516b0`, and moves what plays by its lookup record): the planes' star trails (93 to 95
-  on `Dummy01`-`24`) and the Jungle Spray's jet. (3) **The advisor is drawn through the End in ours**, speaking row
+  on `Dummy01`-`24`, nodes under the planes that `NodePoser` now carries) and the Jungle Spray's jet. `RideNodes` still
+  stands every node at rest. (2) **The advisor is drawn through the End in ours**, speaking row
   167, where the original's frames show none while its `0xa7` and `0x5d` play: decode what hides him (the ride view,
   the End's control, or a layer) before building. Also Q551's text to check against the run: `EVENT 1 18 3` and
   `1 20 3` are `P_EFFECT_Firework1` (ours started 6, 3, 6, 3 on nodes 17 to 20, `q703/run4/run.log`).

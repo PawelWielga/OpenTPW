@@ -9276,6 +9276,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `ANIM_POSITION_TRACK` (Q703). Console `endfeature`. Confirmed on `q550/alldone576.TPWS` (`q703/PREDICTION.txt`, five
   rounds, three misses recorded; final build 6/6 by Escape and 6/6 by a right click): the eye (480.53, 200.00, 10.00)
   looking (0.000, 0.961, 0.276), the tick running, the bursts, the box (`q703/side-by-side.png`); 16/16 mutations.
+- [x] **Q554. A clip's position tracks are posed, so the End's planes fly** (Q703's first piece; lane A). `NodePoser`:
+  for a clip with a position track, rotation and position over the whole node tree, local x parent from the root as the
+  pose walk (`FUN_004702d0`); a key replaces the node's translation within its parent (`Anim_PoseTrack` `0x00471860`,
+  `0x0047208b`), left where it is before the first key (`Anim_FindKey` `0x00470b60`), added to the rest on a header
+  `0x4` model; a change of clip puts back what the outgoing moved less what the incoming moves on the same channel
+  (`Anim_RestoreOutgoing` `0x00472310`; `LobbyModel.Rest`'s `incoming`). `ANIM_POSITION_TRACK` gone; counted
+  `ANIM_ADDITIVE_ROTATION`. Measured over every clip (1,208 tracks in 447 clips; 47 start past nought, none ends
+  before its span, 451 under a moved node, 43 additive). Console `endfeature planes:`. Confirmed on `alldone576.TPWS`
+  (`q554/PREDICTION.txt`, three rounds, one miss recorded): Endm1's three down the park and over the view, Endm2's two
+  across, as the original's frames (`q554/side-by-side.png`); 15/15 mutations.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

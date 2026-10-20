@@ -920,9 +920,10 @@ orbit made again where it was, the cover off and, in Instant Action, UITEXT 471'
 original's (`q703/PREDICTION.txt`, `q703/side-by-side.png`): on tick 800 the eye (480.53, 200.00, 10.00) in the park's
 axes looking (0.000, 0.961, 0.276), the scripts "End Anim" and "End Anim Control", the dip 1, the tick running, the
 bursts over the path, the interface gone; after Escape or the right click the orbit's eye as before and the box.
-**Not the original's:** the planes stand where they rest, no clip's position track being posed (`ANIM_POSITION_TRACK`),
-which puts them beyond first person's fog; their trails' emitters stand on their nodes' rest spots
-(`PARK_PARTICLE_NODE_ON_A_CLIP`); no sound of the two scripts is played (`RIDE_EFFECT_SOUND`); and the advisor is drawn
+**The planes fly** (Q554, `NodePoser`): Endm1's three come down the park three abreast and over the view, plane 02 from
+(480.3, 443.4) to (480.3, 90.4) at height 59, Endm2's two cross from the sides, Endm3's three climb away, as the
+original's frames (`q554/PREDICTION.txt`, `q554/side-by-side.png`; the console's `endfeature planes:`).
+**Not the original's:** their trails' emitters stand on their nodes' rest spots (`PARK_PARTICLE_NODE_ON_A_CLIP`); no sound of the two scripts is played (`RIDE_EFFECT_SOUND`); and the advisor is drawn
 through the End, where the original's frames 4 s and 10 s in show none while he speaks (`q550/orig/a-4`, `a-5`). Q703
 and Q553 hold them.
 

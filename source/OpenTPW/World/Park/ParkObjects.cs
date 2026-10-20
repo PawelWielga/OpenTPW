@@ -787,7 +787,7 @@ public sealed class ParkObjects : Entity
 				if ( !ReferenceEquals( clip, standing.Posed[index] ) )
 				{
 					if ( standing.Posed[index] is { } previous )
-						standing.Model.Rest( previous );
+						standing.Model.Rest( previous, clip );
 
 					standing.Posed[index] = clip;
 				}

@@ -381,7 +381,7 @@ internal sealed class ParkObjectPreview
 		if ( !ReferenceEquals( clip, _posed ) )
 		{
 			if ( _posed is { } previous )
-				_model.Rest( previous );
+				_model.Rest( previous, clip );
 
 			_posed = clip;
 		}

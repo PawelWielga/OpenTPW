@@ -1334,6 +1334,21 @@ public static class DebugConsole
 						+ $", made {Time.WallMilliseconds - end.MadeAt} ms ago; camera eye ({Camera.Position.X:F2}, {Camera.Position.Y:F2}, "
 						+ $"{Camera.Position.Z:F2}) look ({look.X:F3}, {look.Y:F3}, {look.Z:F3}) ride view {(ParkRideViewCameraMode.Active ? "on" : "off")}"
 						+ $"; cover {(Level.Current?.FullScreenView == true ? "on" : "off")}; music dip {scheduler?.MusicDip}" );
+
+					// Where each plane is drawn, and whether it is shown: what the clips' position tracks move.
+					if ( ParkObjects.Current?.ModelFor( end.ThingId ) is { } model )
+					{
+						var planes = model.Source.Meshes
+							.Select( ( mesh, index ) => (Name: mesh.Name.TrimEnd( '\0' ), Index: index) )
+							.Where( mesh => mesh.Name.StartsWith( "_f_endplane", StringComparison.OrdinalIgnoreCase ) )
+							.OrderBy( mesh => mesh.Name, StringComparer.Ordinal )
+							.Select( mesh => model.Entities[mesh.Index] is var drawn
+								? $"{mesh.Name[^2..]} ({drawn.Position.X:F1}, {drawn.Position.Y:F1}, {drawn.Position.Z:F1}){(drawn.Opacity > 0f ? "" : " hidden")}"
+								: "" );
+
+						Reply( $"endfeature planes: {string.Join( "; ", planes )}" );
+					}
+
 					break;
 				}
 

@@ -99,6 +99,12 @@ public sealed class LobbyModel
 
 	public MeshRotator? Rotator { get; }
 
+	/// <summary>Poses the whole node tree for a clip that moves nodes about, where one of this model's clips does - see <see cref="NodePoser"/>.</summary>
+	private readonly NodePoser? _poser;
+
+	/// <summary>The scale the model was loaded at, which a posed node's place is built with as its rest one was.</summary>
+	private readonly float _scale;
+
 	/// <summary>
 	/// The clips this model plays, in the order the engine probes them - M1, M2, and so on.
 	///
@@ -344,6 +350,16 @@ public sealed class LobbyModel
 				return new Vector3( local.M41, local.M43, local.M42 );
 			} )
 		];
+
+		_scale = scale;
+
+		if ( animations.Any( NodePoser.Drives ) )
+		{
+			_poser = new NodePoser( modelFile );
+
+			Log.Info( $"{modelPath}: posing {animations.Count( NodePoser.Drives )} of {animations.Length} clip(s) over the node tree, " +
+				$"{animations.Sum( clip => clip.PositionTracks.Count )} position track(s)" );
+		}
 
 		if ( animations.Length > 0 )
 		{
@@ -612,6 +628,24 @@ public sealed class LobbyModel
 	}
 
 	/// <summary>
+	/// Every mesh where <see cref="_poser"/> last put its node: its turn as <see cref="ToWorldSpace"/> converts it, and
+	/// its place swizzled, about wherever the model was last put, as <see cref="Place"/> puts the rest pose.
+	/// </summary>
+	private void PlacePosed()
+	{
+		var scale = Matrix4x4.CreateScale( _scale );
+
+		for ( int i = 0; i < Entities.Length && i < _file.Nodes.Count; ++i )
+		{
+			var world = _poser!.World( i ) * scale;
+			var offset = System.Numerics.Vector3.Transform( Swizzle( world.Translation ), _placedRotation );
+
+			Entities[i].LinearTransform = ToWorldSpace( world );
+			Entities[i].Position = (Vector3)offset + _placedOrigin;
+		}
+	}
+
+	/// <summary>
 	/// Shows <paramref name="animation"/> at <paramref name="frame"/> and leaves it there, without any
 	/// clock of this model's own - for a caller holding an animation player that says which clip is
 	/// running and how far into it the model has reached.
@@ -625,16 +659,22 @@ public sealed class LobbyModel
 	/// </para>
 	///
 	/// <para>
-	/// <b>Position tracks are deliberately not applied here</b>, and that is a gap rather than a decision
-	/// that they do nothing: the engine drives them (mask <c>0x1</c> and <c>0x200</c>, writing the node's
-	/// own translation row). A position key is parent-local exactly as a rotation key is, and this class
-	/// composes no per-mesh node tree to put one back into - <c>AdvisorModel</c> keeps one and is the
-	/// pattern to copy when they are wanted.
+	/// <b>A clip carrying position tracks is posed by <see cref="NodePoser"/></b>, rotation and position together over
+	/// the whole node tree, so a node a key moves carries what hangs off it, turned by its parents (the End's planes
+	/// and their propellers); every other clip turns its meshes through <see cref="Rotator"/>.
 	/// </para>
 	/// </summary>
 	public void Pose( AnimationFile animation, float frame )
 	{
-		Rotator?.Pose( animation, frame );
+		if ( _poser != null && NodePoser.Drives( animation ) )
+		{
+			_poser.Pose( animation, frame );
+			PlacePosed();
+		}
+		else
+		{
+			Rotator?.Pose( animation, frame );
+		}
 
 		// Held at whatever the last entry before this frame said, and left alone entirely before the
 		// first - which is what VisibleAt answers null for, and what the engine does by simply not
@@ -662,7 +702,8 @@ public sealed class LobbyModel
 			var point = SampleRoute( Paths[which], track.Sample( frame ) );
 
 			// The same Y/Z swizzle every mesh offset went through at load, so a route point lands in
-			// the world by the rule the model's own geometry landed by.
+			// the world by the rule the model's own geometry landed by. From the rest pose, not the posed tree: no
+			// shipped clip moves a node by both, though hallow's haunted house moves nodes by one and routes by the other.
 			MoveAlongRoute( target, new Vector3( point.X, point.Z, point.Y ) );
 
 			// The engine also samples the route's tangent and turns the thing to face along it - the
@@ -671,11 +712,6 @@ public sealed class LobbyModel
 			if ( track.OrientsAlongRoute )
 				Unimplemented.Report( "ANIM_PATH_FACING" );
 		}
-
-		// Where a node sits over time - channel 0x1: read (AnimationFile.PositionTracks) and posed nowhere, so a node a
-		// clip moves stands where it rests (the End's planes; 455 of the shipped clips carry one).
-		if ( animation.PositionTracks.Count > 0 )
-			Unimplemented.Report( "ANIM_POSITION_TRACK" );
 
 		foreach ( var animator in Animators )
 			animator.Pose( animation, frame );
@@ -793,8 +829,24 @@ public sealed class LobbyModel
 	/// see <see cref="MeshRotator.Rest"/> for the mask that decides how much of it, and for why what a
 	/// clip hid stays hidden.
 	/// </summary>
-	public void Rest( AnimationFile outgoing )
+	/// <param name="incoming">
+	/// The clip about to play, whose own channels the engine leaves as <paramref name="outgoing"/> left them - see
+	/// <see cref="NodePoser.Rest"/>.
+	/// </param>
+	public void Rest( AnimationFile outgoing, AnimationFile? incoming = null )
 	{
+		if ( _poser != null )
+		{
+			_poser.Rest( outgoing, incoming );
+
+			// What the tree's pose turned, carried or not, back as it was built; the incoming clip's pose comes after.
+			if ( NodePoser.Drives( outgoing ) )
+			{
+				for ( int i = 0; i < Entities.Length; ++i )
+					Entities[i].LinearTransform = _linearTransforms[i];
+			}
+		}
+
 		Rotator?.Rest( outgoing );
 
 		foreach ( var animator in Animators )

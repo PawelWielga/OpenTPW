@@ -582,6 +582,23 @@ public class AnimationFile : BaseFormat
 
 		public bool IsBezier { get; init; }
 
+		/// <summary>
+		/// The node's position at <paramref name="frame"/> as the engine's poser takes it, or false before the first key,
+		/// where the key search answers nought and the node is left where it is (<c>FUN_00470b60</c>, called from
+		/// <c>0x00471ea3</c>). Past the last key it holds the last point: no shipped clip's declared span runs past its
+		/// last position key, and the poser poses nothing past that span (<c>FUN_00471860</c>'s first test).
+		/// </summary>
+		public bool TrySample( float frame, out System.Numerics.Vector3 position )
+		{
+			position = default;
+
+			if ( FrameIndices.Length == 0 || MathF.Floor( frame ) < FrameIndices[0] )
+				return false;
+
+			position = Sample( frame );
+			return true;
+		}
+
 		/// <summary>The node's position at <paramref name="frame"/>, held at the ends.</summary>
 		public System.Numerics.Vector3 Sample( float frame )
 		{
