@@ -23,7 +23,7 @@ namespace OpenTPW;
 ///
 ///     so a one-in-sixteen chance each frame of one of effects 3, 4 and 5, picked evenly.
 ///   - <b>leaving for a park</b> (0x005e1e30) plays effect 4 of the global lobby sfx category,
-///     keyexplode, which is silent here - see <see cref="ParkEntry"/>.
+///     keyexplode - see <see cref="ParkEntry"/>.
 ///
 /// Every one of those calls passes (0,0,0) as the position, so none of the lobby's sound is
 /// placed in the world - it is all played flat, and only the selected island's is played at all.
@@ -307,12 +307,9 @@ public sealed class LobbyAudio : Entity
 	/// what the original's park-entry handler reaches for (0x005e1e30).
 	///
 	/// <para>
-	/// <b>It is silent here, and the shipped data is not why.</b> Effect 4 holds one sample, keyexplode,
-	/// the fifth in Sound\Sfx and one of the five MPEG-1 entries the game ships. <see cref="MP2File.Duration"/>
-	/// reads its length from the MPEG-2 bitrate table, 4,076 ms against the map's 3,041, so
-	/// <see cref="SoundCategoryFile.ReadSamples"/> turns its record away and the category loads as
-	/// "3 bank(s), 4 effect(s) [1x4, 2x2, 3x4, 4x0]". <see cref="SoundCategory.Play"/> returns null for an
-	/// effect with no samples, so nothing plays.
+	/// Effect 4 holds one sample, keyexplode, the fifth in Sound\Sfx and one of the five MPEG-1 entries the
+	/// game ships; the category reads its record by the walk (<see cref="SoundCategoryFile.ReadVariations"/>),
+	/// "3 bank(s), 4 effect(s) [1x4, 2x2, 3x4, 4x1]".
 	/// </para>
 	/// </summary>
 	internal void ParkEntry()

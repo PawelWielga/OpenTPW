@@ -100,6 +100,35 @@ public class SoundCategoryTests
 	}
 
 	/// <summary>
+	/// The global rides' 212 is one sample of 1,442 ms, the length the original's one-shot held for the Jungle
+	/// Spray (Q565's run); its record names one of the MPEG-1 samples, so a category that takes the scan's lists
+	/// has none. 203 is 395 ms, and 202 picks between three samples where the scan gave it 203's as its second.
+	/// </summary>
+	[TestMethod]
+	public void TheGlobalRidesPlayTheSamplesTheirRecordsName()
+	{
+		var rides = new SoundCategory( "global", "global/sound", "rides" );
+
+		Assert.IsTrue( rides.IsValid, "the global rides should load" );
+
+		foreach ( var (effect, milliseconds) in new[] { (212, 1442), (211, 999), (203, 395) } )
+		{
+			Assert.IsNotNull( rides.PickSample( effect, out var variation, out var length ), $"effect {effect} should decode" );
+			Assert.AreEqual( (0, milliseconds), (variation, (int)length.TotalMilliseconds), $"effect {effect}'s sample" );
+		}
+
+		var lengths = new System.Collections.Generic.HashSet<int>();
+
+		for ( int i = 0; i < 400; ++i )
+		{
+			rides.PickSample( 202, out _, out var length );
+			lengths.Add( (int)length.TotalMilliseconds );
+		}
+
+		CollectionAssert.AreEquivalent( new[] { 1794, 1452, 944 }, lengths.ToArray(), "202's three samples, never 203's" );
+	}
+
+	/// <summary>
 	/// And the lobby's categories declare one variation per effect, which is why a gap rule gives no
 	/// wrong answer there - and this says so rather than leaving it to
 	/// be rediscovered the next time the lobby's sound changes for no apparent reason.

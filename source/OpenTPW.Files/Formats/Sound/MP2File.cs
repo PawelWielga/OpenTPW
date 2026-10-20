@@ -52,8 +52,8 @@ public sealed class MP2File : ArchiveFile
 	/// How long this entry is, worked out from the bitrate in its own first frame header.
 	///
 	/// Not from <see cref="DecodedSize"/>, which is the length the game plays, 0.59 to 2.58 frames short
-	/// of what the stream decodes to - see <see cref="SoundCategoryFile.ReadSamples"/>, which needs
-	/// lengths accurate enough to tell two samples in a bank apart.
+	/// of what the stream decodes to - see <see cref="SoundCategoryFile.ReadSamples"/>, the scan a category
+	/// falls back on, which needs lengths accurate enough to tell two samples in a bank apart.
 	/// </summary>
 	public TimeSpan Duration
 	{

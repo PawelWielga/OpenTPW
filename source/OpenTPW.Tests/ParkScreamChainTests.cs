@@ -80,6 +80,62 @@ public class ParkScreamChainTests
 	}
 
 	/// <summary>
+	/// Every sample record the walk reads names a bank of its category and a sample in it, and the
+	/// categories play these. The scan by content turns away a record whose sample's length is not the map's
+	/// (the five MPEG-1 samples), so it left the global rides' 203, 211 and 212 and the lobby's 4 empty, and
+	/// the effects after a variation it could not see took the wrong lists.
+	/// </summary>
+	[TestMethod]
+	public void EveryWalkedSampleRecordNamesASampleOfItsCategory()
+	{
+		var records = 0;
+		var differ = new List<string>();
+		var emptied = new List<string>();
+
+		foreach ( var (directory, name) in EveryCategory )
+		{
+			var file = new SoundCategoryFile( directory, name );
+			var root = directory.StartsWith( "global" ) ? "global" : string.Join( '/', directory.Split( '/' ).Take( 2 ) );
+			var banks = file.Banks.Select( bank => SoundBank.Load( root, bank ) ).ToList();
+			var walked = file.ReadVariations();
+			var scanned = file.ReadSamples( banks.Select( bank => (IReadOnlyList<TimeSpan>)(bank?.Durations ?? []) ).ToList() );
+
+			for ( int i = 0; i < walked.Count; ++i )
+			{
+				var lists = walked[i].Select( variation => variation.Records! ).ToList();
+
+				foreach ( var sample in lists.SelectMany( list => list ) )
+				{
+					Assert.IsTrue( sample.Bank >= 0 && sample.Bank < banks.Count && banks[sample.Bank] != null,
+						$"{directory}/{name} effect {file.Effects[i].Id}: bank {sample.Bank}" );
+					Assert.IsTrue( sample.Index >= 0 && sample.Index < banks[sample.Bank]!.Durations.Count,
+						$"{directory}/{name} effect {file.Effects[i].Id}: sample {sample.Index}" );
+					records++;
+				}
+
+				var same = lists.Count == scanned[i].Count
+					&& lists.Zip( scanned[i] ).All( pair => pair.First.SequenceEqual( pair.Second ) );
+
+				if ( !same )
+					differ.Add( $"{directory}/{name} {file.Effects[i].Id}" );
+
+				if ( lists.Sum( list => list.Count ) > 0 && scanned[i].Sum( list => list.Count ) == 0 )
+					emptied.Add( $"{directory}/{name} {file.Effects[i].Id}" );
+			}
+		}
+
+		Assert.AreEqual( 3631, records, "sample records across every category" );
+		Assert.AreEqual( 99, differ.Count, "effects the scan reads otherwise" );
+		CollectionAssert.AreEquivalent( new[] { "global/sound/rides 202", "global/sound/rides 203", "global/sound/rides 211",
+			"global/sound/rides 212" }, differ.Where( effect => effect.StartsWith( "global/sound/rides" ) ).ToArray(),
+			"the global rides' effects the scan reads otherwise" );
+		Assert.IsFalse( differ.Any( effect => effect.Contains( "jungle" ) ), "no jungle category reads otherwise" );
+		CollectionAssert.AreEquivalent( new[] { "global/sound/globallobbysfx 4", "global/sound/rides 203", "global/sound/rides 211",
+			"global/sound/rides 212", "levels/hallow/Sound/rides 188", "levels/hallow/Sound/rides 190",
+			"levels/space/Sound/rides 191" }, emptied, "the effects the scan leaves empty" );
+	}
+
+	/// <summary>
 	/// The walk steps over the sample records by the count each header gives, and the sample scan
 	/// finds them by what they contain. They have to agree list for list, or a chain's variation would
 	/// name one list while the category played another.

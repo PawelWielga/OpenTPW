@@ -56,8 +56,7 @@ namespace OpenTPW.UI;
 /// lobby leaving for the park, plays effect 4 of the global lobby sfx and a burst of particles at the key,
 /// and closes this panel. All four happen
 /// here, in one call, and the park is then built between frames rather than during one - see
-/// <see cref="Game.RequestParkLoad"/>. The cue is silent here, though effect 4 ships a sample,
-/// keyexplode - see <see cref="LobbyAudio.ParkEntry"/>. Escape while the camera is still on its way cancels
+/// <see cref="Game.RequestParkLoad"/>. The cue is keyexplode - see <see cref="LobbyAudio.ParkEntry"/>. Escape while the camera is still on its way cancels
 /// the leave and brings this panel back (0x005e1890), and nothing was spent, so the park can be entered
 /// again at once.
 /// </para>

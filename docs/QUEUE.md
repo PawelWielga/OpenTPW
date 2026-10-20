@@ -63,11 +63,6 @@ filed the items that cite it.
   pass binds the vehicles the file does not name with no `Nodes`. **Build it after Q26c:** those two stand and run from
   the park's load here, so with nodes they would sound at the arrivals' stop from the start, where the original has no
   ferry and no seaplane until its first summons.
-- [ ] **Q566. The global rides' 203, 211 and 212 hold no sample here.** From Q565. The category's load logs "203x0,
-  211x0, 212x0" (`SoundCategoryFile`'s sample walk), so the Jungle Spray's `EVENT 5 -1 212` (and the Hyenas') starts
-  with no sample, where the original plays 212's one sample of 1442 ms (`q565/orig/`, `oneshots.py`: effect 212, length
-  1442; `lib/soundsweep.py`). Find why the walk takes no sample record for them (FileFormats `sound-categories.md`) and
-  read them; measure all 31 category files for any other effect left empty.
 - [ ] **Q567. The original sounds the global rides' 208 at the sideshows (decode first).** From Q565. In the stock park
   the original made 208 (flags `0x0`, one sample of 1158 ms) 30 to 60 times a run at (525, 0, 300), by the Jungle Spray,
   and (434, 0, 303) (`q565/orig/`, b to d, `oneshots.py`); no jungle script asks for 208 (`lib/soundsweep.py`), and ours
@@ -163,10 +158,9 @@ filed the items that cite it.
   2026-09-26 staleness audit. The getter never reads the header's version bits (`(SoundData[1] >> 3) & 3`) and always
   takes the MPEG-2 bitrate tables. By the audit's census of all 47 `.sdt`, five entries are MPEG-1 Layer I (header
   `ffff22c0`, bitrate index 2, 64 kbit/s read as 48): `keyexplode` in global `SfxHD.sdt`, and `tp_riderepaired`,
-  `tp_sideshowwin_`, `mortar_2` and `mortar_3` in global `RideHD.sdt`. Their lengths come out 4/3 too long,
-  `SoundCategoryFile.ReadSamples` turns away every map record that names one (its class summary says so), and the
-  effects after it in its category are shifted along: by the audit's reading global lobby sfx 4 (the park entry) and
-  global rides 203, 211 and 212 play nothing, and rides 202 the wrong list. Read the version and take MPEG-1's tables
+  `tp_sideshowwin_`, `mortar_2` and `mortar_3` in global `RideHD.sdt`. Their lengths come out 4/3 too long, which
+  `SoundCategory.Length` and the scan a category falls back on (`SoundCategoryFile.ReadSamples`) read; since Q566 the
+  categories take their records from the walk, so global lobby sfx 4 and global rides 202, 203, 211 and 212 play. Read the version and take MPEG-1's tables
   for it; the two `SoundCategoryFile` remarks that rest on the lengths ("every sample in every bank", "26 to 83ms")
   change with it, and the version split goes to FileFormats `sounds.md` (rule 14). Q43's structural walk is the other
   half, for the variations with no samples. Confirm: a test over every shipped bank that each entry's length agrees
@@ -1627,7 +1621,6 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   - the top-N voice pool, keyed by priority and closeness (N is 12, at most 30);
   - weighted variation picks (4 of 63 effects are uneven, and `SoundCategory.Pick` is even);
   - whether parameter 6 is also a level (OpenTPW hears it as the scream's gain);
-  - replacing `ReadSamples`' scan with the structural walk.
 
   From Q135: in the original's mix the performance's end (`TADA.mp2`, staff `0x87`) was found on five of ten ends
   and two of the others fell where the mix was near silent (`ride-operation.md`, "The staff's sounds, in both

@@ -9360,6 +9360,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   held none away; `q565/side-by-side.png`; test `AScriptsOneShotStartsOnlyInRangeAndIsDroppedByItsTime`, 11 of 11 bugs
   put back fail. The question of a park entered fresh from a file: the original's does hear its looped script sounds,
   put back from the file (Q560).
+- [x] **Q566. The global rides' 203, 211 and 212 hold no sample here.** From Q565. Done: the scan by content
+  (`SoundCategoryFile.ReadSamples`) turned away the records of the MPEG-1 samples, whose lengths `MP2File.Duration` reads
+  4/3 too long (Q147); a category now takes the records the walk of its headers steps to (`ReadVariations`, the loader's
+  `0x006c0510`), the scan only where the walk fails. All 31 measured: 3,631 records, each naming a sample of its
+  category; the scan read 99 effects otherwise (global lobby sfx 4, global rides 202, 203, 211, 212, hallow's rides 36,
+  space's 58, no jungle category) and left 7 empty. The Spray's win "sample 'tp_sideshowwin_'" (`q566/run1`).
+  The item as written: The category's load logs "203x0,
+  211x0, 212x0" (`SoundCategoryFile`'s sample walk), so the Jungle Spray's `EVENT 5 -1 212` (and the Hyenas') starts
+  with no sample, where the original plays 212's one sample of 1442 ms (`q565/orig/`, `oneshots.py`: effect 212, length
+  1442; `lib/soundsweep.py`). Find why the walk takes no sample record for them (FileFormats `sound-categories.md`) and
+  read them; measure all 31 category files for any other effect left empty.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

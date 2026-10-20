@@ -20,7 +20,7 @@ public sealed class SoundCategory
 		/// <summary>
 		/// The weighted lists this effect picks between. Most effects have exactly one; hallow's
 		/// repeating ambient effects have three to ten, and space's five to fourteen - see
-		/// <see cref="SoundCategoryFile.ReadSamples"/>.
+		/// <see cref="SoundCategoryFile.ReadVariations"/>.
 		/// </summary>
 		public List<List<SoundCategoryFile.Sample>> Variations = new();
 
@@ -75,15 +75,19 @@ public sealed class SoundCategory
 			// by position and dropping one would shift every sample after it onto the wrong file.
 			_banks.Add( SoundBank.Load( root, bankPath ) ?? SoundBank.Empty( bankPath ) );
 
-		var lists = file.ReadSamples( _banks.Select( bank => bank.Durations ).ToList() );
+		// The walk steps to each variation's sample records by its header's count, as the original's loader
+		// does (0x006c0510), so a record whose sample is longer or shorter than the map says is read all the
+		// same. The scan by content stands in only for a file the walk cannot finish.
 		var headers = file.ReadVariations();
+		var lists = headers.Count == file.Effects.Count
+			? headers.Select( effect => effect.Select( variation => variation.Records!.ToList() ).ToList() ).ToList()
+			: file.ReadSamples( _banks.Select( bank => bank.Durations ).ToList() );
 
 		if ( headers.Count != file.Effects.Count )
 			Log.Warning( $"Sound category {Name}: its variation headers did not walk to the end of the file" );
 
-		// The lists come back in the order the file gives them, which is the order of the effect
-		// table - so effect n takes list n. An effect with no list plays nothing rather than
-		// falling back to some other effect's samples, which would be worse than silence.
+		// Effect n takes list n, in the order of the effect table. An effect with no list plays nothing
+		// rather than falling back to some other effect's samples, which would be worse than silence.
 		for ( int i = 0; i < file.Effects.Count; ++i )
 		{
 			_effects.Add( new Effect

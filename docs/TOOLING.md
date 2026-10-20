@@ -842,7 +842,7 @@ after its poller starts**, so a key meant inside either line cannot be sent afte
   200 90 0` and back, the log's `screaming, band`, `scream N, effect`, `out of range at` and `in range again` lines and
   `rides`' scream state (`q564/confirm.py`).
 - **A script's one-shots taken out of range and back, in both games** (Q565): the Jungle Spray (`Junspray.RSE`'s `EVENT`s
-  159 and 174 to 176 at (525, 315), 90 range, and 212, silent here, Q566) sounds every few seconds; the toilets' kids 48 to 53 only when a guest visits,
+  159 and 174 to 176 at (525, 315), 90 range, and 212, a win: once in `q566`'s 60 s, none in its 60 and 150 s controls) sounds every few seconds; the toilets' kids 48 to 53 only when a guest visits,
   and some 40 s runs have none. The original: `run.sh` with `CX=525 CZ=300` (`screenchains.sh`, `EXTRA="oneshots.py"`),
   40 s there, (200, 200), back; `oneshots-phases.py` splits the log at the line marks. Ours: `WARM=40` before the near
   phase, as our park starts no script sound in its first ~40 s after the entry; `camera 525 300 90 0`, the log's

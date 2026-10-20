@@ -28,8 +28,9 @@ namespace OpenTPW;
 /// <b>The SFX file is decoded to its last byte.</b> After the effect table each effect holds one
 /// 42-byte header per variation, and then, per variation, its 16-byte sample records and its 8-byte
 /// zone records - <see cref="ReadVariations"/> walks exactly that, and ends at the end of the file in
-/// all thirty-one categories the game ships. <see cref="ReadSamples"/> finds the sample records by
-/// what they contain instead, and the two readers agree except in four
+/// all thirty-one categories the game ships, and keeps each variation's sample records, 3,631 in all, each naming
+/// a sample of its category; a category plays these. <see cref="ReadSamples"/> finds the sample records by
+/// what they contain instead, and stands in only where the walk fails; the two readers agree except in four
 /// categories. The scan turns away every record naming one of the five MPEG-1 samples, whose length
 /// <see cref="MP2File.Duration"/> reads from the MPEG-2 bitrate table (the global lobby sfx and the global
 /// rides), and it cannot see a variation with no samples (hallow's rides 98 and 103, space's rides 112), so
@@ -117,9 +118,13 @@ public sealed class SoundCategoryFile
 	/// The float at <c>+0x22</c>: how far off, in the world's units, a voice of this variation is heard, where the
 	/// voice was given no range of its own (<c>FUN_006bc650</c>). 95 in every scream variation.
 	/// </param>
+	/// <param name="Records">
+	/// The variation's sample records, as many as <paramref name="Samples"/>, read where the walk steps over them;
+	/// null when the variation was made without them.
+	/// </param>
 	public readonly record struct Variation( int Samples, int GapMin, int GapMax, int GapByParameter,
 		long Weight, IReadOnlyList<Zone> Zones, (int Low, int High) Volume = default, (int Low, int High) Pitch = default,
-		int FirstKey = 0, int SecondKey = 0, int SecondMask = 0, float Range = 0f );
+		int FirstKey = 0, int SecondKey = 0, int SecondMask = 0, float Range = 0f, IReadOnlyList<Sample>? Records = null );
 
 	/// <summary>
 	/// One 8-byte zone record: a held voice whose parameter lies within <paramref name="Low"/> to
@@ -388,7 +393,14 @@ public sealed class SoundCategoryFile
 
 			foreach ( var header in headers )
 			{
-				offset += header.Samples * SampleStride;
+				if ( offset + (header.Samples * SampleStride) > _sfx.Length )
+					return [];
+
+				var records = new Sample[header.Samples];
+
+				for ( int r = 0; r < records.Length; ++r, offset += SampleStride )
+					records[r] = new Sample( BitConverter.ToInt32( _sfx, offset + 12 ) - 1, BitConverter.ToInt32( _sfx, offset ) - 1,
+						BitConverter.ToUInt16( _sfx, offset + 4 ), TimeSpan.FromMilliseconds( BitConverter.ToInt32( _sfx, offset + 8 ) ) );
 
 				if ( header.Zones < 0 || offset + (header.Zones * ZoneStride) > _sfx.Length )
 					return [];
@@ -400,7 +412,7 @@ public sealed class SoundCategoryFile
 
 				variations.Add( new Variation( header.Samples, header.GapMin, header.GapMax, header.GapByParameter,
 					header.Weight, zones, header.Volume, header.Pitch, header.FirstKey, header.SecondKey, header.SecondMask,
-					header.Range ) );
+					header.Range, records ) );
 			}
 
 			effects.Add( variations );
