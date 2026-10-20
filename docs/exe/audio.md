@@ -61,7 +61,7 @@ Every use of that int as a delay in OpenTPW is OpenTPW's own: `SoundCategory.Pla
 | Flags word | Voice class | Shipped users |
 |---|---|---|
 | no bit `0x4` (for example 0, `0x200`, `0x8`) | One-shot: plays one sample and dies; with bit `0x8` the sample is looped and the voice lives on ("A voice's range", below). Freed at start + length + 250 ms (`0x006bc01b`), or when its channel ends. | 1,067 of the 1,267 records, SINGLESCREAM's 75-90 and 105-109 among them; 30 more carry bit `0x1` and go through a deferred queue first (`0x006b66d0`) |
-| `0x0404` | Held chain, final vtable `0x0070a2e0`. The constructor stores `0x0070a390`, then overwrites it at `0x006bdde5`. | 18 records: kids 71-74, staff 188, and the ambient beds with `0x120404`/`0x170404` |
+| `0x0404` | Held chain (`Voice_MakeHeldChain` `0x006bdd30`), final vtable `0x0070a2e0`. The constructor stores `0x0070a390`, then overwrites it at `0x006bdde5`. | 18 records: kids 71-74, staff 188, and the ambient beds with `0x120404`/`0x170404` |
 | `0x4` with neither `0x2` nor `0x400` | The chain of any variation (`Voice_MakeAnyChain` `0x006bdc60`): the held chain's base class `0x0070a390` kept, whose children draw their variation among all of the effect's ("A script's sounds", below) | 17 records, each of one variation: Lost Kingdom's rides 89, 100, 147, 170 among them |
 | bits `0x4` and `0x2` | Four constructors by the other bits (`0x006b677d`..`0x006b67c3`): with `0x10`, `0x006be680`; else with `0x400`, `FUN_006be610`, **the music's class**, below; else with `0x100`, `0x006be330`; else `0x006be090`, which draws its variation from all of the effect's and follows each later sample with the variation's wait ("The plain class: any variation, and a silence after a sample", below). The `0x10` and `0x100` ones are not decoded. | 135 records (`classes.py`): 106 to `0x006be090` (`0x0006`, `0x0206`), 27 to `FUN_006be610` (`0x0406` 16, `0x0606` 11: music 2 in every theme, kids 91, global ambient 33, jungle's rides 204, 216 and 217 among them), 2 to `0x006be680` (`0x0016`), none to `0x006be330` |
 
@@ -87,7 +87,7 @@ Nothing on this path writes a volume. A sample's volume comes from its variation
   - Bit 4 of the header's `+0x18` takes the wait from the voice's parameter instead (`0x006c3d80`). No scream variation sets it.
   - It is counted from the child's start, and the sample's length does not come into it.
   - Shipped for the four screams: 71 1000-3000 ms, 72 500-2000, 73 100-1000, 74 0-500.
-- **Which variation it plays.** The first child takes the effect's first variation, whatever the parameter (`0x006c3e26`..`0x006c3e33`). Every later child draws, weighted by each target's `+0x1e`, among the current variation's zone records whose `lo..hi` holds the voice's parameter byte (`0x006c3e1c`, `0x006c3e89`..`0x006c3e97`). No match parks the chain until a new parameter arrives (`0x006c3f49`).
+- **Which variation it plays.** The first child takes the effect's first variation, whatever the parameter (`0x006c3e26`..`0x006c3e33`): with no child yet, `HeldChain_HeadOrFirstChild` (`0x006bdb10`) noughts the chain's own variation, which its set-up drew among all (`0x006bbf60`), where the effect has a key (`+0x12`) and the voice's flag `0x20` is clear, and sets `0x20`. All 18 shipped records have a key (6, 18, 19 or 23); a chain put back from a park file keeps its saved child and never comes there first ("A script's sounds", below). Every later child draws, weighted by each target's `+0x1e`, among the current variation's zone records whose `lo..hi` holds the voice's parameter byte (`0x006c3e1c`, `0x006c3e89`..`0x006c3e97`). No match parks the chain until a new parameter arrives (`0x006c3f49`).
 - **Where the parameter comes from.** For the screams it is parameter 6. STARTSCREAM sets it to `clamp((operand + speed) / 2, 0, 100)` straight after the play (`0x00551261`..`0x00551265`), and SCREAMLEVEL resets it. The zones send 0-25 to variation 1, 26-50 to 2, 51-75 to 3 and 76-100 to 4, so Lost Kingdom's Belly Bounce, at `(20 + 50) / 2 = 35`, screams variation 1 once and variation 2 ever after.
 - **Pruning.** A child is pruned when the clock reaches its time (`0x006bdc23`). The prune deletes it without stopping its channel (`0x006b71f0` → `0x006bb9b0`), so its sample most likely plays out over the next one's start. Whether the device reclaims that channel early is **not traced**.
 - **The clock.** It is wall time in milliseconds (`0x005f5fa0`: QueryPerformanceCounter, or timeGetTime), read once per service pass (`0x006b62c1`). It does not pause with the game.
@@ -812,7 +812,7 @@ music's `0x006be610`, `0x100` `0x006be330`, else the plain class `0x006be090`; w
 `0x006bdd30`, else the chain of any variation `0x006bdc60` (below). Lost Kingdom's 81
 scripts ask for a sound 198 times (`ADDOBJ` 82, `EVENT` 116; `rselisting` over the `.RSE` corpus, each effect's flags
 from its category's file): 116 one-shots with no flag, 45 looped, 2 flat (`cat_ui` 185, and 186 looped too), 20 of the
-plain class, 6 held chains (the level ambient's 177 to 180, the staff's 188), 4 chains of any variation (the Crazy Ape's 89,
+plain class, 6 held chains (the level ambient's 177 to 180, the staff's 188; below), 4 chains of any variation (the Crazy Ape's 89,
 the Lava Fountain's 100 and Eruption's two 100s), 1 of the music's class
 (the bus's global ambient 6) and 4 ids their category lacks (`park.md`).
 
@@ -849,14 +849,14 @@ end of 100 and 64 of 127 (85 x 0.75). With the camera away from it the chain sto
 made no child at all through six loops: where the service leaves such a voice unticked is not read.
 
 **OpenTPW** (`ParkAudio.StartScriptSound`, `RideScript.StartSound`, `SoundPlace`, `SweepEffects`, `StopEffect`): the
-seven categories by type, the one-shot (looped under `0x8`), the plain class and the chain of any variation played (`ServeScriptSounds`, the land's
-own way, "The plain class"), a chain a child at a time (`ServeScriptSounds`, `NextChainChild`: each child a variation by
-`AnyVariation` with no variation before, its own volume and pitch, the next once the frame clock passes its start plus its
+seven categories by type, the one-shot (looped under `0x8`), the plain class, the chain of any variation and the held chain played (`ServeScriptSounds`, the land's
+own way, "The plain class"), a chain a child at a time (`ServeScriptSounds`, `NextChainChild`: each child of a chain of any variation a variation by
+`AnyVariation` with no variation before, each of a held chain by `ParkScreams.NextVariation` at the parameter nought, its own volume and pitch, the next once the frame clock passes its start plus its
 wait, a `FADEOBJ` a cut), flat under `0x200`, else placed over the variation's range; each at its variation's own
 volume and a pitch drawn from it, a plain voice keeping its first sample's; moved by the sweep on its script's eighth
 tick; stopped by `KILLOBJ` and the script's end, faded by `FADEOBJ` (0.06 s, the deviation of "The fade"). An effect its
 category lacks, or a node its model lacks, frees an `ADDOBJ`'s record. Counted and not started:
-`RIDE_EFFECT_SOUND_CLASS_<constructor>` for the other four classes, `RIDE_EFFECT_SOUND_ITEM_BANK` for type 10, and
+`RIDE_EFFECT_SOUND_CLASS_<constructor>` for the other three classes, `RIDE_EFFECT_SOUND_HELD_CHAIN_NO_KEY` for a held chain whose effect has no key (none shipped), `RIDE_EFFECT_SOUND_ITEM_BANK` for type 10, and
 `RIDE_EFFECT_SOUND_NO_PLACE` for a placed sound of a script with no model here, or of no node with no placed thing
 (the ferry's 172 and the seaplane's 173, whose scripts run with no nodes). The End here: the same places, distances,
 gains and volumes (`q553/PREDICTION.txt`; the console's `scriptsounds`). **Said:** a record a load put back starts
@@ -867,6 +867,41 @@ its children here and they play unheard, where the original's makes none (Q557).
 (`q558/confirm.py`, run4, the final binary): 14 children a loop, each gap the stated wait within 0.007 s, waits 512 to 976
 ms, volume 0.3520 (64 of 127) at (430,240,0) over 100, stopped after 14 by `KILLOBJ 10`.
 
+**The held chain of a script** (flags `0x404` without `0x2`; read for Q559, `q559/`). `Voice_MakeHeldChain`
+(`0x006bdd30`) is the scream's maker ("A held voice is a chain", above): its first child the effect's first variation,
+each later one drawn by weight among the zones of the child before that hold the chain's parameter
+(`HeldChainChild_PickVariation`, `0x006c3e00`), a wait after its start, a volume and a pitch of its own. A script's
+`Sound_PlayEffect` sets no parameter after it, the constructor zeroes the controllers (`HeldChain_Construct`,
+`0x006bdd80`), and the one setter, `FUN_0051bc40`, is reached from a script only by `SETOBJPARAM`, whose 20 uses are the
+bus's (`park.md`): so a script's held chain draws at the parameter nought, and every Lost Kingdom zone runs 0 to 100.
+Lost Kingdom's users (`rselisting` over the corpus): the gates' `EVENT 4 1 177` as they open (never stopped: each opening
+adds a chain, which only the pool's twelve bound in the original, Q43), the four Loudspeakers' `ADDOBJ 4 -1 177..180 10`
+for their lives, and the Staff Room's `ADDOBJ 7 -1 188 1` while `VAR_STAFFIN` holds anyone, `KILLOBJ 1` after.
+The zones of 177, 178 and 180 name every variation but their own; 179's first two name 3 to 7 alone, and each of its third to
+seventh names 1 and 2 once and the others of 3 to 7 twice, so those are drawn twice as often.
+
+**Every park file carries the live voices, and the original puts them back.** `Sound_SaveModule` (`0x0051c350`) writes
+the manager's voices after the 84 bytes, and `Sound_LoadModule` (`0x0051c400`, `0x0051c497`) reads them back through
+`0x006b5c30`, `FUN_006ba150` and `SoundManager_SerializeVoices` (`0x006b6da0`), whose case 6 rebuilds a held chain
+(vtable `0x0070a2e0`). So the stock park's gates' 177 is not started at the entry: it comes back from `Easymode.TPWI`
+with its own variation and its saved child, whose sample was variation 8's in all four runs, and its flags never hold
+`0x20`. The gate's script itself is resumed open, so it reaches no `EVENT`.
+
+**Measured in the original** (`q559/orig/`, the real screen, `chains.py` and `brk.sh`; predicted first,
+`q559/PREDICTION.txt`): the stock park entered, the gates' chain of 177 at (450, 0, 160), key 18, parameter 0, its
+children each drawn from the one before (`0x006c3aba`, 14 in runs e and f: never a repeat, gaps 1080 to 3676 ms). A
+Loudspeaker bought on (45,20) here and saved before its script turned, loaded by the original (run g): its chain at
+(455, 0, 205) came through `0x006bdb1d` with key 18, flags `0x2` and its own variation 2, and its first child was
+variation 1 with variation 1's sample, the chain's flags `0x22` after; its next six v4 v5 v6 v1 v4 v2, beside the
+gates' restored chain (v6 v1 v7 v5 v3 v8). **A breakpoint set before the sound service's thread exists never reaches
+it** (run d): set it once the lobby is up.
+
+**OpenTPW** builds the held chain for a script (`ScriptVoiceClass.HeldChain`, `ScriptVoice.Held`, `Parameter`):
+the same children as the chain of any variation, the variation by the zones. It puts back no voice from a park file
+(`PARK_FILE_SOUND_VOICES`, at every park read), so the stock park's gates make no chain here where the original's restored
+one makes children (Q560). The Loudspeaker here (`q559/confirm.py`, run2): its chain at (455,205,0), first child variation 1,
+27 children with no repeat, waits 1079 to 3819 ms, each gap its stated wait within 0.006 s.
+
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
 | `0x006bdc60` | `Voice_MakeAnyChain` | The maker for flags `0x4` with neither `0x2` nor `0x400` | Decompiled |
@@ -875,6 +910,14 @@ ms, volume 0.3520 (64 of 127) at (430,240,0) over 100, stopped after 14 by `KILL
 | `0x006c3a00`, `0x0070a970` | `AnyChainChild_Construct` | The child's constructor and vtable: the scream child's but slot `+0x38`, `FUN_006bc810` | Decompiled; the vtables read side by side |
 | `0x006bda20` | — | The chain's move, slot `+0x24`: its own place, then every child in the chain (`FUN_006c3c70`) | Disassembly |
 | `0x006c3bea` | — | A child's request takes a pointer to its parent's place, `+0x10` | Disassembly |
+| `0x006bdd30` | `Voice_MakeHeldChain` | The maker for flags `0x404` without `0x2`: `HeldChain_Construct`, then the set-up (slot `+0x10`, `0x006bbf60`) | Decompiled |
+| `0x006bdd80` | `HeldChain_Construct` | The chain of any variation's constructor, its controllers zeroed, then vtable `0x0070a2e0` | Decompiled |
+| `0x006bdb10` | `HeldChain_HeadOrFirstChild` | The chain's first child: with a key and no `0x20`, its own variation noughted first (`0x006bdb1d`) | Disassembly; `brk.sh`, run g |
+| `0x006bdb50`, `0x006bdbb0`, `0x006bdc10` | `HeldChain_Extend`, `HeldChain_AppendChild`, `HeldChain_Prune` | The tick's two halves and the child appended after the newest | Disassembly |
+| `0x006c3a80` | `ChainChild_Start` | A child's variation (slot `+0x38`), sample (`+0x3c`) and time (`+0x4c` plus now) | Disassembly; `brk.sh` at `0x006c3aa3`/`0x006c3aba` |
+| `0x006c3e00` | `HeldChainChild_PickVariation` | The held chain's child: the effect's first, else a weighted draw among the zones of the chain's own that hold its parameter | Decompiled; `brk.sh`, runs e to g |
+| `0x0051c350`, `0x0051c400` | `Sound_SaveModule`, `Sound_LoadModule` | A park file's sound module: the 84 bytes, then the live voices (`0x006b5c10`, `0x006b5c30`) | Decompiled; runs c to g |
+| `0x006b6da0` | `SoundManager_SerializeVoices` | The voice list written or read; on a read, case 6 rebuilds a held chain | Decompiled |
 
 ## Node lookup is by id AND a capability flag
 

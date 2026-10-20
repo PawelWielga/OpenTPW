@@ -586,6 +586,10 @@ public class Level
 
 			Log.Info( $"{themeName}: park file holds {world.ThingCount} things, {world.Objects.Count} of them objects" );
 
+			// Every park file holds the sound manager's live voices, which the original's load puts back (FUN_0051c400,
+			// 0x0051c497): the stock park's gates' held chain among them. They are carried here and none is started.
+			Unimplemented.Report( "PARK_FILE_SOUND_VOICES" );
+
 			return world;
 		}
 		catch ( Exception e )

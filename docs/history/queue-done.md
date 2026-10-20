@@ -9321,6 +9321,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   within 0.007 s, 64 of 127 over 100 at (430,240,0), stopped by `KILLOBJ 10`; the original from the same file at the same
   place, children 513 to 1001 ms apart, 64 of 127 over 100 (`q558/side-by-side.png`, `q558/PREDICTION.txt`). Tests 3573,
   0 fail with the game; 14 of 14 bugs put back fail a test.
+- [x] **Q559. A script's held chain (flags `0x404`).** Q557's first piece. Built: `ScriptVoiceClass.HeldChain`, each
+  child by `ParkScreams.NextVariation` at the parameter nought (no script sets a held chain's key), the first the effect's
+  first variation (`HeldChain_HeadOrFirstChild`, `0x006bdb10`); a key-less effect counted
+  (`RIDE_EFFECT_SOUND_HELD_CHAIN_NO_KEY`, none shipped). Held in the original (`q559/orig/`, `brk.sh` set in the lobby): a
+  Loudspeaker's chain of 177 at (455, 0, 205), first child variation 1, later ones drawn from the one before's zones,
+  never a repeat. Ours (`q559/confirm.py`): first child variation 1, 27 children, no repeat, each gap its wait within
+  0.006 s; 11 of 11 bugs put back fail a test. Found: the original puts a park file's live voices back (Q560).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

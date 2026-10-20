@@ -54,17 +54,29 @@ The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses
 filed the items that cite it.
 
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
-  the one-shot and the plain class, and Q558, which built the chain of `0x4` alone (`audio.md`, "A script's sounds").
-  Counted and not started: the held chain (`RIDE_EFFECT_SOUND_CLASS_6BDD30`, flags `0x404`: the level ambient's 177 to
-  180, the gates' and the speakers', and the staff's 188), the music's class (`_6BE610`, `0x406`: the bus's global ambient
+  the one-shot and the plain class, Q558, which built the chain of `0x4` alone, and Q559, the held chain `0x404`
+  (`audio.md`, "A script's sounds"). Counted and not started: the music's class (`_6BE610`, `0x406`: the bus's global ambient
   6, which `SETOBJPARAM`'s `( 1, 20, v )` steers through `FUN_0051bc40` on a live voice; `RideEffects.SetParameter` still
   zeroes the handle), `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped
   script) and a placed sound with nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's
   173, ADDOBJ 8 on node 1, whose scripts run with no nodes). Build each class on `ParkScreams`, `NextChainChild` and the
   music's rule, and confirm by `voices.py`, `mixer.py` and `chains.py` beside `scriptsounds`. Also measured (Q558) and not
   built: the original's chain out of range (voice flag `0x800`) makes no child at all, where ours makes them unheard;
-  read where the service leaves such a voice unticked. Also measure whether a park entered fresh from a file hears its
-  scripts' looped sounds in the original (Q553's run loaded into a park whose fountain already sounded).
+  read where the service leaves such a voice unticked (Q559's runs saw the stock park's screams 71 to 73 come and go at
+  `0x802` with no child; the gates' 177 at `0x802` was seen making children once: measure before building). Also measure
+  whether a park entered fresh from a file hears its scripts' looped sounds in the original (Q553's run loaded into a
+  park whose fountain already sounded; Q560 says why).
+- [ ] **Q560. A park file's live voices put back (decode first).** From Q559. Every park file carries the sound
+  manager's voices after the sound module's 84 bytes (`Sound_SaveModule` `0x0051c350` through `0x006b5c10`), and the
+  original's load puts them back (`Sound_LoadModule` `0x0051c400`, `0x0051c497` -> `0x006b5c30` -> `FUN_006ba150` ->
+  `SoundManager_SerializeVoices` `0x006b6da0`, a case per class: 6 a held chain). So the stock park's gates' held chain
+  177 sounds from the entry in the original (`q559/orig/` runs c to g: its own variation and a saved child of variation 8's
+  sample), where ours makes none: its gate script is resumed open and reaches no `EVENT`. Counted at every park read:
+  `PARK_FILE_SOUND_VOICES`. First session: decode the records (FileFormats `saves.md`, "Sound": 1,349 bytes in
+  `Easymode.TPWI`; `docs/exe/saves.md`'s `SOUN` row) and which voices they hold in the stock park and in Alexah's Full
+  Simulation saves (the gates', the crowd's, the rain's, a scream's), and whether a voice's handle in a script's record
+  or the weather's `mRainSoundHandle` is matched to one put back. Second: build what the jungle's files hold, and say what
+  this game's writer leaves out.
 
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the

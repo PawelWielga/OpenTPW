@@ -767,7 +767,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | `KAME` | zoom, rotation, flags, two points of interest, a saved rotation | the camera | patched: the zoom, the rotation and the point's two ground coordinates; the flags, the point's height, the saved point and the saved rotation the file's |
 | `COAS` | the coasters | nothing: none can be built here | carried |
 | `ADVS` | 360 bytes of the advisor and a buffer | nothing kept here | carried |
-| `SOUN` | two dwords, 84 bytes, then records that open with three dwords and their length L and end at +12+L (a loader with no sound skips L - 4, `0x0051c547`); what they hold is not decoded | nothing kept here | carried |
+| `SOUN` | two dwords, 84 bytes, then records that open with three dwords and their length L and end at +12+L (a loader with no sound skips L - 4, `0x0051c547`): the sound manager's live voices (`Sound_SaveModule` writes them through `0x006b5c10`, `Sound_LoadModule` puts them back through `0x006b5c30`, `SoundManager_SerializeVoices` `0x006b6da0`, whose case 6 rebuilds a held chain; `audio.md`, "A script's sounds"); the records' layout is not decoded | nothing kept here: no voice is put back (`PARK_FILE_SOUND_VOICES`) | carried |
 | `CHTS` | two bytes | nothing | carried |
 | `ADSC` | one dword: the row the advisor's poll starts from (`advisor-park.md`, "The poll, and the control panel's line") | the poll's cursor | written (Q316) |
 | The UI block | a count and 540 bytes for each tag standing on the aerial | each tag as it stands ("OpenTPW's writer, the aerial's tags") | written |
@@ -2987,7 +2987,8 @@ The objects' other rules above are the ten files' and the listing's.
 **Not run in either game:** a guest gone (tested; one run met one), a table grown past its hundred slots, a
 person written on an object's cell, a member of staff resting or in the hand at the save. **Not read:** what the sprite
 record's words past `+0xcc` hold, which a made record leaves at nought and the original walked on with. The
-readers of the sound module and the advisor scoring were not read, only their writers (the UI block's is read
+advisor scoring's reader was not read, only its writer; the sound module's reader puts the file's live voices back
+(`Sound_LoadModule`, `0x0051c400`; Q559), whose records are not decoded (the UI block's is read
 since: "OpenTPW's writer, the aerial's tags"). What
 `VANT`'s clock is for, what the action recording is read by after a load, and `FUN_005408f0` are not traced. The
 fresh world's save was not looked at. `addresses.md` is not regenerated.

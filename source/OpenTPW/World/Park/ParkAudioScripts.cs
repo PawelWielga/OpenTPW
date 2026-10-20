@@ -16,8 +16,9 @@ namespace OpenTPW;
 /// The effect's flags word picks the voice's class (<c>0x006b6774</c>..<c>0x006b67f2</c>). Three are built here: the
 /// one-shot (no bit <c>0x4</c>), looped under <c>0x8</c>; the plain class (<c>0x4</c> and <c>0x2</c>, none of
 /// <c>0x10</c>, <c>0x100</c> and <c>0x400</c>), one sample after another, served as the land's own are
-/// (<see cref="ServeFollowing"/>); and the chain of <c>0x4</c> alone, a one-shot child after another, each of any
-/// variation. Each is flat under <c>0x200</c>, else placed and heard over its variation's range. The other classes
+/// (<see cref="ServeFollowing"/>); the chain of <c>0x4</c> alone, a one-shot child after another, each of any
+/// variation; and the held chain of <c>0x404</c>, the same chain with each later child drawn among its variation's
+/// zones. Each is flat under <c>0x200</c>, else placed and heard over its variation's range. The other classes
 /// and type 10 are counted, and start nothing.
 /// </para>
 /// </summary>
@@ -78,6 +79,13 @@ public sealed partial class ParkAudio
 		/// </summary>
 		Chain,
 
+		/// <summary>
+		/// The held chain (<c>0x006bdd30</c>): the same chain, its first child the effect's first variation and each
+		/// later one drawn by weight among the zones of the variation before that hold the voice's parameter
+		/// (<c>0x006c3e00</c>), as a held scream's are.
+		/// </summary>
+		HeldChain,
+
 		/// <summary>A class not built here; <see cref="ClassOf"/> names its constructor.</summary>
 		NotBuilt
 	}
@@ -107,7 +115,7 @@ public sealed partial class ParkAudio
 		}
 
 		return (flags & 0x400) != 0
-			? (ScriptVoiceClass.NotBuilt, "RIDE_EFFECT_SOUND_CLASS_6BDD30")
+			? (ScriptVoiceClass.HeldChain, null)
 			: (ScriptVoiceClass.Chain, null);
 	}
 
@@ -145,11 +153,20 @@ public sealed partial class ParkAudio
 		/// <summary>Whether it is a chain of children (<see cref="ScriptVoiceClass.Chain"/>); <see cref="Voice"/> is its newest.</summary>
 		public bool Chain { get; init; }
 
+		/// <summary>Whether it is a held chain (<see cref="ScriptVoiceClass.HeldChain"/>), whose children follow their zones.</summary>
+		public bool Held { get; init; }
+
+		/// <summary>
+		/// A held chain's parameter, its controller slot 0, which picks among the zones: nought, as the constructor
+		/// zeroes the controllers (<c>0x006bdd80</c>) and no shipped script sets the key of a held chain's effect.
+		/// </summary>
+		public int Parameter { get; init; }
+
 		/// <summary>When a chain's next child is made: its newest child's start and that child's wait (<c>0x006bdb88</c>).</summary>
 		public float NextAt { get; set; }
 
 		/// <summary>What it is, for the log and the census.</summary>
-		public string Kind => Plain ? "plain" : Chain ? "chain" : Looped ? "looped" : "one-shot";
+		public string Kind => Plain ? "plain" : Held ? "held chain" : Chain ? "chain" : Looped ? "looped" : "one-shot";
 
 		/// <summary>Whether its one sample loops (flag <c>0x8</c>).</summary>
 		public bool Looped { get; init; }
@@ -223,6 +240,14 @@ public sealed partial class ParkAudio
 			return ScriptSoundStart.NotBuilt;
 		}
 
+		// The first child takes the effect's first variation only for an effect with a key (FUN_006bdb10); one with
+		// none would draw its first from the zones of the parent's own draw (0x006bbf60). All 18 shipped have a key.
+		if ( kind == ScriptVoiceClass.HeldChain && category.ParameterOf( effect ) == 0 )
+		{
+			Unimplemented.Report( "RIDE_EFFECT_SOUND_HELD_CHAIN_NO_KEY" );
+			return ScriptSoundStart.NotBuilt;
+		}
+
 		var flat = (flags & SoundCategory.NoPlaceFlag) != 0;
 
 		if ( !flat && at is null )
@@ -238,7 +263,8 @@ public sealed partial class ParkAudio
 			Effect = effect,
 			Category = category,
 			Plain = kind == ScriptVoiceClass.Plain,
-			Chain = kind == ScriptVoiceClass.Chain,
+			Chain = kind is ScriptVoiceClass.Chain or ScriptVoiceClass.HeldChain,
+			Held = kind == ScriptVoiceClass.HeldChain,
 			Looped = kind == ScriptVoiceClass.OneShot && (flags & SoundCategory.LoopedFlag) != 0,
 			Place = flat ? null : Whole( at!.Value )
 		};
@@ -390,15 +416,19 @@ public sealed partial class ParkAudio
 	}
 
 	/// <summary>
-	/// A chain's next child (<c>0x006c3a80</c>, a child of class <c>0x0070a970</c>): a variation drawn by weight among all
-	/// of the effect's (<c>FUN_006bc810</c> asked with 0, so with no rule against the one before), a sample of it at a
-	/// volume and a pitch of its own (<c>0x006c3ae0</c>), where the chain stands now, and the next child its variation's
-	/// wait after this one's start (<c>0x006bc2d0</c>). The child before plays out, as the original prunes it without a stop.
+	/// A chain's next child (<c>0x006c3a80</c>): a variation, a sample of it at a volume and a pitch of its own
+	/// (<c>0x006c3ae0</c>), where the chain stands now, and the next child its variation's wait after this one's start
+	/// (<c>0x006bc2d0</c>). The child before plays out, as the original prunes it without a stop. A chain of any variation's
+	/// child (class <c>0x0070a970</c>) draws by weight among all of the effect's (<c>FUN_006bc810</c> asked with 0, so with
+	/// no rule against the one before); a held chain's (<c>0x0070a9e0</c>) takes the zones' rule (<c>0x006c3e00</c>), and
+	/// with no zone for its parameter makes nothing, as the original parks it.
 	/// </summary>
 	private void NextChainChild( ScriptVoice sound )
 	{
 		var headers = sound.Category.VariationsOf( sound.Effect );
-		var next = AnyVariation( headers, -1, _scriptRandom );
+		var next = sound.Held
+			? ParkScreams.NextVariation( headers, sound.Variation, sound.Parameter, _scriptRandom )
+			: AnyVariation( headers, -1, _scriptRandom );
 
 		if ( next < 0 )
 			return;
@@ -416,7 +446,7 @@ public sealed partial class ParkAudio
 		sound.Voice.SetRate( ParkCarSounds.Rate( sound.Kept.Pitch ) );
 		++sound.Samples;
 
-		Log.Info( $"Park audio: script {sound.Script}'s chain {sound.Effect}, child {sound.Samples} at {Time.Now:F3} s, sample '{sound.Voice.Name}' variation {next + 1} "
+		Log.Info( $"Park audio: script {sound.Script}'s {(sound.Held ? "held chain" : "chain")} {sound.Effect}, child {sound.Samples} at {Time.Now:F3} s, sample '{sound.Voice.Name}' variation {next + 1} "
 			+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, the next in {sound.Wait} ms" );
 	}
 

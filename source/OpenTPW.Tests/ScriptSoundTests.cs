@@ -33,7 +33,9 @@ public class ScriptSoundTests
 	[DataRow( 0x606, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE610" )]
 	[DataRow( 0x106, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE330" )]
 	[DataRow( 0x416, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BE680" )]
-	[DataRow( 0x404, "NotBuilt", "RIDE_EFFECT_SOUND_CLASS_6BDD30" )]
+	[DataRow( 0x404, "HeldChain", null )]
+	[DataRow( 0x604, "HeldChain", null )]
+	[DataRow( 0x504, "HeldChain", null )]
 	[DataRow( 0x104, "Chain", null )]
 	[DataRow( 0x204, "Chain", null )]
 	[DataRow( 0x4, "Chain", null )]
@@ -121,8 +123,8 @@ public class ScriptSoundTests
 	/// <b>Each type plays in its own category, and a stop takes what its tag names.</b> On the End's model: the global
 	/// ambient's 209 looped (flags <c>0x8</c>) on node 1 over its variation's 100; the interface's 186 flat (<c>0x208</c>);
 	/// the global rides' 200 of the plain class (<c>0x6</c>) on node 9 over 170, and 202 a one-shot that keeps no record.
-	/// The level's ambient holds no 6, so its record is freed, while the global ambient holds a 6; its 177 is a held
-	/// chain, counted and kept. A placed sound of no node, with no placed thing to stand on, is counted and kept.
+	/// The level's ambient holds no 6, so its record is freed, while the global ambient holds a 6. A placed sound of no
+	/// node, with no placed thing to stand on, is counted and kept: the level ambient's 177, a held chain, and 201.
 	/// </summary>
 	[TestMethod]
 	public void EachTypePlaysInItsOwnCategoryAndAStopTakesItsTag()
@@ -148,8 +150,8 @@ public class ScriptSoundTests
 				"the level ambient's 6 is freed, every other record kept" );
 			Assert.AreEqual( 1, effects.Freed );
 			Assert.AreEqual( (4, 1, 0, 0, 0), park.ScriptSounds );
-			Assert.IsTrue( Counted( "RIDE_EFFECT_SOUND_CLASS_6BDD30" ), "the gates' 177 is a held chain" );
-			Assert.IsNull( effects.Records[1].Sound, "and has no voice" );
+			Assert.IsFalse( Counted( "RIDE_EFFECT_SOUND_CLASS_6BDD30" ), "the gates' 177 is a held chain, built" );
+			Assert.IsNull( effects.Records[1].Sound, "and with nowhere to stand has no voice" );
 			Assert.IsTrue( Counted( "RIDE_EFFECT_SOUND_NO_PLACE" ), "201 has nowhere to stand" );
 			Assert.IsNull( effects.Records[0].Sound );
 
@@ -366,6 +368,95 @@ public class ScriptSoundTests
 			Time.Now += 10f;
 			park.ServeScriptSounds();
 			Assert.AreEqual( counts, (lava.Samples, ape.Samples), "a stopped chain makes no child" );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>An effect of <c>0x404</c> is a held chain: its first child the effect's first variation, each later one drawn
+	/// among the zones of the variation before.</b> The level ambient's 177 (the gates' and the first speaker's: nine
+	/// variations of one sample, each one's zones naming the other eight over 0 to 100, waits 1000 to 4000, volume 20 to
+	/// 100, pitch -4 to 4) and 179 (seven: the first two's zones name 3 to 7 alone, and the third's name 4 to 7 twice
+	/// each) on the End's node 9, at the parameter nought. Neither ever repeats the variation before, as a chain of any
+	/// variation would, and 179 never goes from its first two to its first two.
+	/// </summary>
+	[TestMethod]
+	public void AnEffectOf404IsAHeldChainWhoseChildrenFollowTheirZones()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 4, 9, 177, 1,
+				Word( Opcode.EVENT ), 4, 9, 179,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = nodes, Id = 906 };
+
+			script.Turn( 0f );
+
+			var gates = script.Effects!.Records.Single( record => record.Tag == 1 ).Sound!;
+			var speaker = park.ScriptVoices.Single( sound => sound.Effect == 179 );
+
+			Assert.AreEqual( (2, 0, 0, 0, 0), park.ScriptSounds );
+			Assert.IsFalse( Counted( "RIDE_EFFECT_SOUND_CLASS_6BDD30" ) );
+			Assert.AreEqual( "held chain", gates.Kind );
+			Assert.IsTrue( gates.Chain && gates.Held && !gates.Plain && !gates.Looped );
+			Assert.AreEqual( 0, gates.Parameter );
+			Assert.AreEqual( (0, 0), (gates.Variation, speaker.Variation), "each first child the effect's first variation" );
+			Assert.AreEqual( new Vector3( 21f, 57f, 16f ), gates.Voice!.Place );
+			Assert.AreEqual( 100f, gates.Voice.Range );
+
+			var seen177 = new HashSet<int> { gates.Variation };
+			var after179 = new Dictionary<int, int[]>();
+			var waits = new List<int>();
+			var volumes = new HashSet<int>();
+			var pitches = new HashSet<int>();
+
+			for ( var turn = 0; turn < 2000; ++turn )
+			{
+				var (before177, before179) = (gates.Variation, speaker.Variation);
+				var made = (gates.Samples, speaker.Samples);
+
+				waits.Add( gates.Wait );
+				Time.Now = Math.Max( gates.NextAt, speaker.NextAt ) + 0.001f;
+				park.ServeScriptSounds();
+
+				Assert.AreEqual( (made.Item1 + 1, made.Item2 + 1), (gates.Samples, speaker.Samples), "a child each" );
+				Assert.AreNotEqual( before177, gates.Variation, "177's zones never name the variation they belong to" );
+				seen177.Add( gates.Variation );
+				volumes.Add( gates.Kept.Volume );
+				pitches.Add( gates.Kept.Pitch );
+
+				after179.TryAdd( before179, new int[7] );
+				++after179[before179][speaker.Variation];
+			}
+
+			Assert.AreEqual( 9, seen177.Count, "every one of 177's nine" );
+			Assert.IsTrue( waits.All( wait => wait >= 1000 && wait < 4000 ), $"waits {waits.Min()} to {waits.Max()}" );
+			Assert.IsTrue( volumes.Min() == 20 && volumes.Max() == 99, $"volumes {volumes.Min()} to {volumes.Max()}, a child's own" );
+			Assert.IsTrue( pitches.Min() == -4 && pitches.Max() == 3, $"pitches {pitches.Min()} to {pitches.Max()}" );
+
+			foreach ( var from in new[] { 0, 1 } )
+				Assert.AreEqual( 0, after179.GetValueOrDefault( from )?.Take( 2 ).Sum() ?? 0, $"179 from {from + 1} only to 3 to 7" );
+
+			// After 179's third, 4 to 7 are named twice each and 1 and 2 once: about two to one.
+			var third = after179[2];
+			Assert.AreEqual( 0, third[2] );
+			Assert.IsTrue( third[3] + third[4] + third[5] + third[6] > 3 * (third[0] + third[1]),
+				$"after the third: {string.Join( ",", third )}" );
+
+			// An event's held chain keeps no record: nothing a script asks stops it, and it makes children on.
+			script.StopEffects();
+			var count = speaker.Samples;
+
+			Time.Now = speaker.NextAt + 0.001f;
+			park.ServeScriptSounds();
+			Assert.IsTrue( gates.Stopped && !speaker.Stopped );
+			Assert.AreEqual( count + 1, speaker.Samples );
 		} );
 
 		Time.Now = nowBefore;
