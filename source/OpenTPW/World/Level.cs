@@ -334,6 +334,7 @@ public class Level
 
 		var park = CreatePark( ThemeName, Balance, catalogue, _parkFile );
 		Park = park;
+		TakeParticleDensity( ThemeName, park, ParticleSystem.Current );
 
 		StartTheCalendar( ThemeName, park );
 
@@ -481,6 +482,29 @@ public class Level
 		load.Done();
 
 		Camera.SetCameraMode<ParkOrbitCameraMode>();
+	}
+
+	/// <summary>
+	/// A park read from a file runs its particles at the file's density, as the original's loader leaves it
+	/// (<c>FUN_0051f7a0</c> copies the file's live header, its density at <c>+0x20</c>); a park made fresh, or a file
+	/// whose particles module will not read, keeps the options' (<c>docs/exe/park.md</c>, "A park's particles").
+	/// Answers the density taken, or null where the options' stands.
+	/// </summary>
+	internal static int? TakeParticleDensity( string themeName, IParkInitialState? park, ParticleSystem? particles )
+	{
+		if ( particles == null || park is not ParkWorld world )
+			return null;
+
+		if ( world.Particles.Problem is { } problem )
+		{
+			Log.Info( $"Particles: {themeName}'s park file has no particles module to read ({problem}), so effects run at the options' density {particles.Density}" );
+			return null;
+		}
+
+		Log.Info( $"Particles: {themeName}'s park file holds density {world.Particles.Density}, which replaces the options' {particles.Density}" );
+		particles.TakeFileDensity( world.Particles.Density );
+
+		return world.Particles.Density;
 	}
 
 	/// <summary>
@@ -1257,7 +1281,8 @@ public class Level
 	///
 	/// Its density comes from the detail file for the options' graphics quality - low.sam, med.sam or
 	/// high.sam, going by their names - which starts at medium (0x00423690). The quality is only read as
-	/// a level loads, as the original's state machine reads it for the particles (0x0051fd80).
+	/// a level loads, as the original's state machine reads it for the particles (0x0051fd80). A park read from a file
+	/// then runs at the file's (<see cref="TakeParticleDensity"/>).
 	/// </summary>
 	private static void SetupParticles()
 	{

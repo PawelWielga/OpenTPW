@@ -1980,9 +1980,21 @@ engine frees and this keeps (`PARK_PARTICLE_NOT_STARTED`). A loaded emitter begi
 running words are not read (`LOADED_EMITTER_LIFE_PART_RUN` where its life is not the template's). An effect added
 without its alpha (flags `0x4` with no `0x2000`) is drawn scaled by it (`WORLD_PARTICLE_ADDED_WITHOUT_ALPHA`).
 Not started at all, and counted under their own keys: a rider's puffs (`BUMPER_RIDER_PARTICLE`) and a leaver's (`LEAVER_BOARDING_PARTICLE`) (a broken boat's smoke is started since Q259, below). The
-writer is as it was: an emitter is written as it starts, not as the running one stands. The density is the
-options' (1000 at medium), where the file loaded in the original carries its own (500), so a density-scaled
-effect holds about twice the particles here: the stink 17 to 19 against 8 to 9.
+writer is as it was: an emitter is written as it starts, not as the running one stands.
+
+**The density is the park file's** (Q703). The loader copies the file's whole live header over the system's
+(`FUN_0051f7a0`, `0x0051f857`), the density at `+0x20` with it, so a park read from any file (Instant Action's
+`Easymode.TPWI`, a save, `restart.INTS`) starts every effect at the file's density, not the options': 500 in the
+shipped park and the files saved from it, 1500 in Alexah's played Full Simulation saves (`lib/parkfile.py`'s
+`particle_density`). A park made fresh reads no file, so OpenTPW keeps the options' for it; that the original's
+fresh park does the same is not traced (the 1500 of those saves is `high.sam`'s, which agrees). A rate of -2 at 500 is -1, so the End's trails
+(93 to 95, rate -2, most 500) make one star a tick, at most 244, where the options' 1000 left them one every two
+ticks. OpenTPW takes it as the park is read (`Level.TakeParticleDensity`, `ParticleSystem.TakeFileDensity`; the log's
+"Particles: jungle's park file holds density 500"). **Measured** over `q550/alldone576.TPWS` (`q703d/PREDICTION.txt`):
+the original's live `[0x0080cef0]` 500 and its trails at rates (-1, -1, -1, -1), most 244, 90 to 106 stars each once
+5 s old (`original/emitters.py`); ours before at 48 to 54, after at 98 to 107 with the same rates and most (the
+console's `particles`, which prints the density and each emitter's rates and most); the stars' sizes the same in both
+(`particles <slot>`, `original/particledump.py`; `q703d/side-by-side.png`).
 
 ### A broken boat's smoke
 
@@ -2104,8 +2116,8 @@ later, and 24 to 28 from then on; its frame shows the spray at the same place
 (`waterfall-opentpw-left-original-right.png`, the same side of the fall, not the same zoom).
 
 **Not compared:** the spray's size and brightness in the two pictures (the lens, Q260, and the two views differ).
-The density is the options' (1000) where the original's is the file's 500; both scale this effect's rates to
-one a tick, so the counts agree. **Not run in either game:** a park of another theme (the tests: none starts a
+The density was then the options' (1000) where the original's is the file's 500 (OpenTPW's too since Q703); both
+scale this effect's rates to one a tick, so the counts agree. **Not run in either game:** a park of another theme (the tests: none starts a
 particle), a Full Simulation park with no file. Of 23 bugs put back, 23 fail a test (`q262/mutations.py`); the
 call in `Level` is held by the control run alone.
 

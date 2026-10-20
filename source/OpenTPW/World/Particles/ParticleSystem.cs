@@ -60,11 +60,11 @@ internal sealed class ParticleSystem
 	public ParticleLibraryFile Library { get; }
 
 	/// <summary>
-	/// The particle density setting, in 1024ths: effects that do not say otherwise emit at their rates
-	/// and counts scaled by it (0x00521d60). The detail files set it - <c>GameOptions.PARTICLEDENSITY</c>
-	/// is 500 in low.sam, 1000 in med.sam and 1500 in high.sam.
+	/// The particle density, in 1024ths: effects that do not say otherwise emit at their rates and counts scaled
+	/// by it as they start (0x00521d60). The detail files set it - <c>GameOptions.PARTICLEDENSITY</c> is 500 in
+	/// low.sam, 1000 in med.sam and 1500 in high.sam - until a park file's replaces it (<see cref="TakeFileDensity"/>).
 	/// </summary>
-	public int Density { get; }
+	public int Density { get; private set; }
 
 	internal readonly Emitter[] Emitters = new Emitter[EmitterCount];
 	internal readonly Effector[] Effectors = new Effector[EffectorCount];
@@ -429,6 +429,14 @@ internal sealed class ParticleSystem
 			EmitRing( slot );
 		}
 	}
+
+	/// <summary>
+	/// The density a park file's particles module holds, taken as the park is read: the original's loader copies
+	/// the file's whole live header over the system's, the density at its <c>+0x20</c> with it (<c>FUN_0051f7a0</c>),
+	/// so every effect the park starts from then on is scaled by the file's, not the options'. Only effects
+	/// started after it are; the original's loader runs before its park starts any.
+	/// </summary>
+	public void TakeFileDensity( int density ) => Density = density;
 
 	/// <summary>The rate for the quarter of its life the emitter is in (0x00520470).</summary>
 	private static int Rate( Emitter emitter )

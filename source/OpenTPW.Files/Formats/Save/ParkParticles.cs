@@ -90,6 +90,12 @@ public sealed class ParkParticles
 	/// <summary>Where the live image lies in the body; -1 where the module did not read.</summary>
 	public int LiveAt { get; } = -1;
 
+	/// <summary>
+	/// The particle density the live header holds at <c>+0x20</c>, in 1024ths: the one the park ran at as it was
+	/// saved (500 in the shipped parks). Nought where the module did not read.
+	/// </summary>
+	public int Density => Int32( _live, DensityAt );
+
 	/// <param name="body">The inflated body of the file.</param>
 	/// <param name="at">Where the module's magic should be: the byte after the sprite table's trailer.</param>
 	public ParkParticles( byte[] body, int at )

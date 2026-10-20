@@ -932,8 +932,10 @@ End (`q556/orig/q556c.mkv`, `original/advdraw.py`) row 167 on slot 1, the pith-h
 through its line (ticks 801 to 838) and row 93 on slot 0 through its (850 to 884), and none between or after
 (`ui.md`, "The advisor on screen", his draw); ours says the same two on the same slots and draws them so
 (`q556/side-by-side.png`). Frames taken between his lines show none (`q550/orig/a-4`, `a-5`).
-**Not the original's:** no sound of the two scripts is played (`RIDE_EFFECT_SOUND`, Q553); the original's trails look
-denser, with bigger stars (Q703).
+**Their trails are as dense as the original's** (Q703): the park runs its particles at its file's density, 500 in
+this scene, so each trail makes a star a tick and holds about a hundred in both games (90 to 106 there, 98 to 107 here), the stars the same sizes (`park.md`,
+"A park's particles, started and drawn", "The density is the park file's"; `q703d/side-by-side.png`).
+**Not the original's:** no sound of the two scripts is played (`RIDE_EFFECT_SOUND`, Q553).
 
 ## The park management gadget
 

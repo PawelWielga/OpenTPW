@@ -126,7 +126,7 @@ BGRA palette).
 | `+0x14` | — | A particle's position within its record | Field read in the step routine |
 | `0x0078d90e` | — | The glint gate byte = **Popup Help** (options case `0x1d4c3`, label UIStrings 327) | Options screen wiring |
 | `0x005ed920` | `UIParticles_ButtonGlintStart` | Spawns the button hover glints (effect 35) when that option is on | Disassembly |
-| `0x007858c8` | — | Particle density global, filled at boot: `FUN_0044de20` (from the window's creation only) picks the quality's detail file (`FUN_0044dc60`: `low.sam`, `med.sam` or `high.sam`) and loads it through the schema at `0x007442fc`, whose PARTICLEDENSITY field lands here. The options start on medium (`0x00423690` writes quality 1 at `0x0042369f`), so 1000; a quality change only flags a restart (`FUN_00423bc0`) | `med.sam` has `GameOptions.PARTICLEDENSITY 1000` (low 500, high 1500) |
+| `0x007858c8` | — | Particle density global, filled at boot: `FUN_0044de20` (from the window's creation only) picks the quality's detail file (`FUN_0044dc60`: `low.sam`, `med.sam` or `high.sam`) and loads it through the schema at `0x007442fc`, whose PARTICLEDENSITY field lands here. The options start on medium (`0x00423690` writes quality 1 at `0x0042369f`), so 1000; a quality change only flags a restart (`FUN_00423bc0`). `Particles_Init` copies it to the system's own `0x0080cef0`, which a park read from a file then replaces with the file's (`park.md`, "The density is the park file's") | `med.sam` has `GameOptions.PARTICLEDENSITY 1000` (low 500, high 1500) |
 
 **Screen mapping** (from Particles_Render and SpriteBatch_DrawParticles): across
 `((x - 3125) * 16) / 49`, down `(z * 16 - 37500) / 37`, both `/1024` into -1..1; `size >> 6 / 2048`

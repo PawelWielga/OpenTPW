@@ -721,4 +721,49 @@ public class ParkParticleTests
 
 		Assert.AreEqual( saved.Life != system.Library.Effects[Jet].Lifetime, Counted( "LOADED_EMITTER_LIFE_PART_RUN" ) );
 	}
+
+	/// <summary>
+	/// <b>A park read from a file runs at the file's particle density</b>, not the options' (<c>FUN_0051f7a0</c> copies
+	/// the file's live header, density and all): the shipped park holds 500, so the End's red trail (rate -2, most
+	/// 500) starts at one a tick and at most 244, where the options' medium 1000 leaves it at one every two ticks
+	/// and 488 (<c>docs/exe/park.md</c>, "A park's particles, started and drawn").
+	/// </summary>
+	[TestMethod]
+	public void AParkReadFromAFileRunsAtItsDensity()
+	{
+		const int Trail = (int)ParLib.P_EFFECT_SmokeTrailR;
+
+		Assert.AreEqual( 500, shipped.Particles.Density, "the shipped park's header" );
+		CollectionAssert.AreEqual( new[] { -2, -2, -2, -2 }, system.Library.Effects[Trail].Rates.Select( rate => (int)rate ).ToArray(), "the library's own rate" );
+
+		Assert.IsTrue( system.TryEmitter( system.Spawn( Trail, 0, 0, 0 ), out var before ) );
+		CollectionAssert.AreEqual( new[] { -2, -2, -2, -2 }, before.Rates, "at the options' 1000" );
+		Assert.AreEqual( 488, before.MaxParticles );
+
+		Assert.AreEqual( 500, Level.TakeParticleDensity( Theme, shipped, system ) );
+		Assert.AreEqual( 500, system.Density );
+
+		Assert.IsTrue( system.TryEmitter( system.Spawn( Trail, 0, 0, 0 ), out var after ) );
+		CollectionAssert.AreEqual( new[] { -1, -1, -1, -1 }, after.Rates, "at the file's 500" );
+		Assert.AreEqual( 244, after.MaxParticles );
+		CollectionAssert.AreEqual( new[] { -2, -2, -2, -2 }, before.Rates, "one started before keeps its own" );
+
+		// Sixty ticks, the system's first of which does nothing: none has lived its 100 yet, so each holds what it has made.
+		for ( var tick = 0; tick < 60; ++tick )
+			system.Tick();
+
+		Assert.AreEqual( 59, after.Count, "one a tick" );
+		Assert.AreEqual( 30, before.Count, "one every two ticks" );
+	}
+
+	/// <summary>
+	/// <b>A park made fresh keeps the options' density</b>: no file, no header to take.
+	/// </summary>
+	[TestMethod]
+	public void AParkMadeFreshKeepsTheOptionsDensity()
+	{
+		Assert.IsNull( Level.TakeParticleDensity( Theme, null, system ) );
+		Assert.AreEqual( 1000, system.Density );
+		Assert.IsNull( Level.TakeParticleDensity( Theme, shipped, null ), "and nothing is taken with no system running" );
+	}
 }

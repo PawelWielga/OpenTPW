@@ -9297,6 +9297,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`0x1f31`) draws it every frame under the ride view's `0x0b04` (`original/advdraw.py`); its film shows row 167's
   pith-helmet fly and row 93's global fly in the lower right (`q556/orig/c-film-21.0`, `24.0`, `29.0`).
   `q550/orig/a-4`, `a-5` fell between his lines. Ours says and draws the same two (`q556/side-by-side.png`); no change.
+- [x] **Q703. The End's trails as dense as the original's: a park runs at its file's particle density.** From Q552,
+  Q554 and Q555. The original's park loader copies the file's live particle header (`FUN_0051f7a0`, `0x0051f857`), its
+  density at `+0x20` with it: 500 in the shipped park, so the trails' rate -2 is -1, one star a tick, most 244.
+  Measured over `q550/alldone576.TPWS` (`q703d/PREDICTION.txt`): the original's live density 500 and its trails at 90
+  to 106 stars; ours at the options' 1000 held 48 to 54, and with `Level.TakeParticleDensity` 98 to 107 at rates -1
+  and most 244, the stars' sizes the same (`q703d/side-by-side.png`). A copy of Alexah's Full Simulation autosave
+  read 1500 live in both (`q703d/fs/`). Tests 3555, 0 fail with the game; 8 of 8 bugs put back fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
