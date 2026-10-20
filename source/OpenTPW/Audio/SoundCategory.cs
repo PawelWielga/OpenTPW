@@ -154,11 +154,47 @@ public sealed class SoundCategory
 		if ( respectDelay && Time.Now < effect.AvailableAt )
 			return null;
 
-		var clip = Pick( effect, out var variation );
+		var clip = Pick( effect, out var variation, out _ );
 
 		if ( clip == null )
 			return null;
 
+		return Play( effect, clip, variation, volume, loop, fadeInSeconds, bus, position, range, ownRange, gain, rate );
+	}
+
+	/// <summary>
+	/// Picks one of effect <paramref name="id"/>'s samples as <see cref="Play(int, float, bool, float, bool, AudioBus, Vector3?, float?, bool, Func{SoundCategoryFile.Variation, float}?, Func{SoundCategoryFile.Variation, float}?)"/>
+	/// does, without playing it: what a one-shot's set-up draws and holds for its life (<c>0x006bbf60</c>).
+	/// </summary>
+	/// <param name="length">The sample record's length (FileFormats <c>sound-categories.md</c>, its <c>+0x08</c>).</param>
+	/// <returns>The sample, or null for an unknown or empty effect, or one that would not decode.</returns>
+	public AudioClip? PickSample( int id, out int variation, out TimeSpan length )
+	{
+		variation = -1;
+		length = TimeSpan.Zero;
+		var effect = _effects.FirstOrDefault( candidate => candidate.Id == id );
+
+		return effect == null || effect.SampleCount == 0 ? null : Pick( effect, out variation, out length );
+	}
+
+	/// <summary>
+	/// Plays <paramref name="clip"/>, a sample of variation <paramref name="variation"/> of effect <paramref name="id"/>
+	/// that <see cref="PickSample"/> drew, as <see cref="Play(int, float, bool, float, bool, AudioBus, Vector3?, float?, bool, Func{SoundCategoryFile.Variation, float}?, Func{SoundCategoryFile.Variation, float}?)"/>
+	/// plays what it picks, with no repeat delay asked.
+	/// </summary>
+	public Voice? PlaySample( int id, AudioClip clip, int variation, bool loop = false, AudioBus bus = AudioBus.Effects,
+		Vector3? position = null, bool ownRange = false, Func<SoundCategoryFile.Variation, float>? gain = null,
+		Func<SoundCategoryFile.Variation, float>? rate = null )
+	{
+		var effect = _effects.FirstOrDefault( candidate => candidate.Id == id );
+
+		return effect == null ? null : Play( effect, clip, variation, 1f, loop, 0f, bus, position, null, ownRange, gain, rate );
+	}
+
+	private Voice? Play( Effect effect, AudioClip clip, int variation, float volume, bool loop, float fadeInSeconds,
+		AudioBus bus, Vector3? position, float? range, bool ownRange, Func<SoundCategoryFile.Variation, float>? gain,
+		Func<SoundCategoryFile.Variation, float>? rate )
+	{
 		if ( ownRange && position is not null )
 			range ??= RangeOf( effect, variation );
 
@@ -288,16 +324,21 @@ public sealed class SoundCategory
 	/// A sample that would not decode gives silence rather than a re-roll: re-rolling would
 	/// quietly change the odds, and nothing in the lobby's banks fails to decode anyway.
 	/// </summary>
-	private AudioClip? Pick( Effect effect, out int variation )
+	private AudioClip? Pick( Effect effect, out int variation, out TimeSpan length )
 	{
 		variation = _random.Next( effect.Variations.Count );
 
-		return PickIn( effect.Variations[variation] );
+		return PickIn( effect.Variations[variation], out length );
 	}
 
 	/// <summary>One sample of one weighted list, by its running total out of 65,535.</summary>
-	private AudioClip? PickIn( List<SoundCategoryFile.Sample> variation )
+	private AudioClip? PickIn( List<SoundCategoryFile.Sample> variation ) => PickIn( variation, out _ );
+
+	/// <summary>One sample of one weighted list, by its running total out of 65,535, and its record's length.</summary>
+	private AudioClip? PickIn( List<SoundCategoryFile.Sample> variation, out TimeSpan length )
 	{
+		length = TimeSpan.Zero;
+
 		if ( variation.Count == 0 )
 			return null;
 
@@ -308,6 +349,7 @@ public sealed class SoundCategory
 			if ( roll > sample.Weight )
 				continue;
 
+			length = sample.Duration;
 			return sample.Bank < _banks.Count ? _banks[sample.Bank][sample.Index] : null;
 		}
 

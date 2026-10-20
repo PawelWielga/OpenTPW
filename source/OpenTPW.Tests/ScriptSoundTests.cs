@@ -148,6 +148,8 @@ public class ScriptSoundTests
 				Word( Opcode.EVENT ), 5, 10, 202,
 				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = nodes, Id = 903 };
 
+			// In range of both placed starts: 91 from node 1's 209 (its range 100), 125 from node 9's 200 (170).
+			HearFrom( new Vector3( 0f, 180f, 0f ) );
 			script.Turn( 0f );
 
 			var effects = script.Effects!;
@@ -721,6 +723,115 @@ public class ScriptSoundTests
 			Assert.IsFalse( ParkAudio.InRange( staff, place + new Vector3( 87f, 0f, 0f ) ) );
 			staff.Variation = 0;
 			Assert.IsTrue( ParkAudio.InRange( staff, place + new Vector3( 87f, 0f, 0f ) ) );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>A script's one-shot starts only in range, and is dropped by its time</b> (<c>0x006bd800</c>, <c>0x006bcb60</c>):
+	/// the toilet's kids 51 (one sample of 3251 ms, range 70) on the End's node 9. Started away it plays nothing and is
+	/// dropped 250 ms after its length has passed; started near, it is cut away and starts from the top on its return,
+	/// and its drop lets a sample still playing play out; ended by itself it is let go. The global ambient's 209, looped,
+	/// is never dropped by time, and starts afresh on its return.
+	/// </summary>
+	[TestMethod]
+	public void AScriptsOneShotStartsOnlyInRangeAndIsDroppedByItsTime()
+	{
+		var nowBefore = Time.Now;
+		var far = new Vector3( 1000f, 1000f, 0f );
+		var near = new Vector3( 21f, 57f, 0f );
+
+		WithAParksAudio( park =>
+		{
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			ParkAudio.ScriptVoice Start( int type, int node, int effect, int id )
+			{
+				new RideScript( Build( Word( Opcode.EVENT ), type, node, effect, Word( Opcode.END ) ) )
+					{ Effects = new RideEffects(), Nodes = nodes, Id = id }.Turn( 0f );
+
+				return park.ScriptVoices.Last( sound => sound.Effect == effect );
+			}
+
+			Time.Now = 200f;
+			HearFrom( far );
+
+			var away = Start( 6, 9, 51, 911 );
+
+			Assert.AreEqual( (0, true), (away.Samples, away.Away), "started away: nothing plays" );
+			Assert.IsNull( away.Voice );
+			Assert.AreEqual( 203.501f, away.DropAt, 0.0005f, "its start, 250 ms and the record's 3251 ms" );
+
+			Time.Now = 203.5f;
+			park.ServeScriptSounds();
+			Assert.IsTrue( park.ScriptVoices.Contains( away ), "kept until its time" );
+
+			Time.Now = 203.502f;
+			park.ServeScriptSounds();
+			Assert.IsFalse( park.ScriptVoices.Contains( away ), "dropped once it has passed, never played" );
+			Assert.AreEqual( (1, 0), (park.ScriptOneShotsDropped, away.Samples) );
+
+			HearFrom( near );
+			Time.Now = 300f;
+
+			var cut = Start( 6, 9, 51, 912 );
+			var first = cut.Voice!;
+
+			Assert.AreEqual( 1, cut.Samples );
+			Assert.IsTrue( first.Playing );
+
+			HearFrom( far );
+			park.ServeScriptSounds();
+			Assert.IsFalse( first.Playing, "leaving range cuts it" );
+			Assert.IsTrue( cut.Away );
+
+			HearFrom( near );
+			Time.Now = 302f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( (2, false), (cut.Samples, cut.Away), "in range again: from the top" );
+			Assert.AreNotSame( first, cut.Voice );
+
+			var again = cut.Voice!;
+
+			Time.Now = cut.DropAt + 0.001f;
+			park.ServeScriptSounds();
+			Assert.IsFalse( park.ScriptVoices.Contains( cut ), "dropped by its time while it plays" );
+			Assert.IsTrue( again.Playing, "and its sample plays out" );
+			Assert.AreEqual( 2, park.ScriptOneShotsDropped );
+
+			var ended = Start( 6, 9, 51, 913 );
+
+			ended.Voice!.Stop();
+			park.ServeScriptSounds();
+			Assert.IsFalse( park.ScriptVoices.Contains( ended ), "ended by itself in range: let go" );
+			Assert.AreEqual( 2, park.ScriptOneShotsDropped, "not by its time" );
+
+			// The global ambient's 209, looped (0x8), on node 1 at (0, 271), over 100.
+			HearFrom( far );
+
+			var looped = Start( 8, 1, 209, 914 );
+
+			Assert.IsTrue( looped.Looped );
+			Time.Now += 60f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( (0, true), (looped.Samples, looped.Away), "held away, and never dropped by time" );
+			Assert.IsTrue( park.ScriptVoices.Contains( looped ) );
+
+			HearFrom( new Vector3( 0f, 271f, 0f ) );
+			park.ServeScriptSounds();
+			Assert.AreEqual( 1, looped.Samples );
+			Assert.IsTrue( looped.Voice!.Loop && looped.Voice.Playing );
+
+			var loop = looped.Voice;
+
+			HearFrom( far );
+			park.ServeScriptSounds();
+			Assert.IsFalse( loop.Playing, "cut away" );
+
+			HearFrom( new Vector3( 0f, 271f, 0f ) );
+			park.ServeScriptSounds();
+			Assert.AreEqual( 2, looped.Samples, "afresh on its return" );
+			Assert.IsTrue( looped.Voice!.Playing );
 		} );
 
 		Time.Now = nowBefore;

@@ -862,8 +862,9 @@ category lacks, or a node its model lacks, frees an `ADDOBJ`'s record. Counted a
 `RIDE_EFFECT_SOUND_NO_PLACE` for a placed sound of a script with no model here, or of no node with no placed thing
 (the ferry's 172 and the seaplane's 173, whose scripts run with no nodes). The End here: the same places, distances,
 gains and volumes (`q553/PREDICTION.txt`; the console's `scriptsounds`). **Said:** a record a load put back starts
-nothing, as the loader `FUN_005597a0` copies it raw; whether a park entered fresh from a file hears its looped script
-sounds in the original is not measured (its run loaded into a park whose fountain was already sounding). There is no
+nothing, as the loader `FUN_005597a0` copies it raw; the original's park entered fresh from a file does hear its looped
+script sounds, as the file puts their voices back (the stock park's fountain, `q565/orig/`, run b; Q560), where here the
+fountain is silent. There is no
 voice pool here (Q43): every script voice sounds, where the original's service keeps twelve. A chain out of range makes
 no child here either, and one at once in range again ("A voice out of range makes nothing next", below). The Crazy Ape's chain here
 (`q558/confirm.py`, run4, the final binary): 14 children a loop, each gap the stated wait within 0.007 s, waits 512 to 976
@@ -1002,8 +1003,7 @@ bus here (`q563/confirm.py`, run5, the final binary): "out of range at (686,-77)
 "in range again ... variation 1 afresh", then 5; the camera away, "out of range at (568,64), variation 1 held after 1
 sample(s)", no sample, "variation 1 afresh" on its return; 17 samples to `KILLOBJ 1`. **Said:** where the original's
 voice left range in a silence, its next sample was already queued (slot 0) and it plays that one on its return; here the
-one that last played (when the original queues the next is not read). Not built: a script's one-shots out of range
-(Q557); the pool of twelve (Q43).
+one that last played (when the original queues the next is not read). Not built: the pool of twelve (Q43).
 
 **A ride's scream is the same** (Q564, `q564/`). `STARTSCREAM` (`FUN_00551130`) calls `Sound_PlayEffect` with no range,
 so the held chain (`0x0404`, kids 71 to 74) is in range by its newest child's variation's, 95 on every one, and out of it
@@ -1019,11 +1019,49 @@ stock park (`q564/confirm.py`, run2, the final binary): near 6 chains and 53 chi
 range at (525,250) after 0 child(ren)", and none; back 20, a chain started away "in range again after 0 child(ren)"
 then its first; main's binary made 87 children away.
 
+**A script's one-shot** (effect flags without `0x4`, looped under `0x8`; read for Q565, `q565/`). `Voice_SetUp`
+(`0x006bbf60`, slot `+0x10`) draws the voice's variation and its sample once (`+0x8`, `+0xc`) and writes at `+0x1c` the
+wall clock plus 250 ms plus the sample record's length (its `+0x08`, FileFormats `sound-categories.md`). Each pass
+(`SoundService_Pass`) first drops a voice flagged `0x10`, then a voice without voice flag `0x2` whose `+0x1c` the clock
+has passed (`Voice_IsPastDrop`, `0x006bcb60`; `+0x3c` is added, nought but under the sound commands 2 and 3,
+`0x006bcab0`), and only then asks the range. The drop (`SoundService_DropVoice`, `0x006b6440`) moves the voice to the free
+list (`0x006b6a50`) and stops no channel. A one-shot in range is ticked (`OneShot_Tick`, `0x006bd800`): with neither
+`0x1` nor `0x10` it starts a channel on its held sample, its volume and pitch drawn (slot `+0x44`). A channel's end
+(`Voice_ChannelEnded`, slot `+0x4`, `0x006bbe40`) clears `0x1` and the handle, and flags `0x10` only for an end of its own
+with none of `0x40`, `0x800` and `0x4000`. So a one-shot started out of range plays nothing and goes 250 ms after its
+length; one cut by leaving range starts again from the top if it is in range before that; a sample playing at the drop
+plays out. A looped one (voice flags `0x6`) is never dropped by time: out of range its channel is given up, in range
+again a fresh channel.
+
+**Measured in the original** (`q565/orig/run.sh`, run b on the real screen, `oneshots.py`; predicted first,
+`q565/PREDICTION.txt`): the stock park, 40 s each with the camera on the toilets (555, 165), at (200, 200) and back. Of
+the one-shots that came, every one never played went 3 to 45 ms after its drop word (the pass and the 10 ms poll); in
+the 40 s away none was played (the toilets' 7, the Jungle Spray's 6 at (525, 315), the guests' others), each gone at its
+length plus 250 ms, -5 to +39 ms; back, the toilets' 14 were played and went by their own end or their drop. The Round
+Fountain's looped 107 (`0x0008`) at (585, 0, 185) was in the list from the park's entry, put back from the file (Q560),
+`0x806` until the camera came, then a channel; away `0x806` with none, back a new channel. **Not measured:** a one-shot
+cut while it plays and in range again before its drop (the decode alone).
+
+**OpenTPW** (`ScriptVoice.DropAt`, `ServeOneShot`, `StartOneShot`; `SoundCategory.PickSample`, `PlaySample`): a script's
+one-shot draws its sample at its start and holds it; it plays only in range, over the ground's two axes and its
+variation's range; away it is cut, and in range again it starts from the top with a volume and pitch drawn afresh; not
+looped, it is dropped at its start plus 250 ms plus its record's length, a sample still playing left to play out (the
+console's `scriptsounds`: "one-shots dropped"). The stock park here (`q565/confirm.py`, the final binary), the camera
+on the Jungle Spray (525, 300) as in the original's run d (where its 10 near were played and its 9 away were not, -1 to
++26 ms): run5 near its 8 played, away 21 one-shots each "held" and "dropped after 0 sample(s), its length and 250 ms
+past, out of range"; run3 back its 8 played; main's binary held none of 8 away. The frame clock stands for the
+original's wall clock, as for a chain.
+
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
 | `0x006b62b0` | `SoundService_Pass` | Ticks (slot `+0x14`) only the voices `FUN_006bca10` finds in range, as many as the pool holds | Decompiled; VERIFY-17 |
 | `0x006b6bc0` | — | A voice put in the pass's array, sorted by its key at `+0x20` | Decompiled |
 | `0x006bdf50` | — | The plain and music classes' slot `+0x14`: a channel started on the held sample when bit `0x1` is clear | Disassembly |
+| `0x006bbf60` | `Voice_SetUp` | Slot `+0x10`: the variation and sample drawn and held, and `+0x1c` the clock + 250 + the sample's length | Decompiled |
+| `0x006bcb60` | `Voice_IsPastDrop` | Without voice flag `0x2`, whether the clock has passed `+0x1c` (+ `+0x3c`) | Disassembly; `oneshots.py`, run b |
+| `0x006b6440`, `0x006b6a50` | `SoundService_DropVoice`, — | A voice dropped: its destructor, then onto the free list; no channel stopped | Decompiled |
+| `0x006bd800` | `OneShot_Tick` | A one-shot's slot `+0x14`: a channel on its held sample when neither `0x1` nor `0x10` is set | Disassembly |
+| `0x006bbe40` | `Voice_ChannelEnded` | Slot `+0x4`: `0x1` and the handle cleared; `0x10` for an end of its own outside `0x40`, `0x800`, `0x4000` | Disassembly; `oneshots.py` (lobby `0x9` to `0x18`) |
 
 ## Node lookup is by id AND a capability flag
 

@@ -55,18 +55,23 @@ filed the items that cite it.
 
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
   the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
-  the music's class `0x406`, Q563, a voice out of range, and Q564, a ride's scream out of range (`audio.md`, "A
-  script's sounds"). Counted and not started:
+  the music's class `0x406`, Q563, a voice out of range, Q564, a ride's scream out of range, and Q565, a script's
+  one-shot out of range (`audio.md`, "A script's sounds"). Counted and not started:
   `_6BE680` and `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped script) and a
   placed sound with nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's 173, ADDOBJ 8
   on node 1). Both are of the plain class (flags `0x6`), already built: what they lack is nodes, as `ParkRides`' second
   pass binds the vehicles the file does not name with no `Nodes`. **Build it after Q26c:** those two stand and run from
   the park's load here, so with nodes they would sound at the arrivals' stop from the start, where the original has no
-  ferry and no seaplane until its first summons. Not built from Q563's rule: a script's one-shots out of range (the
-  original starts none away and
-  drops it once its length has passed; a looped one starts afresh on its return: measure before building). Also measure
-  whether a park entered fresh from a file hears its scripts' looped sounds in the original (Q553's run loaded into a
-  park whose fountain already sounded; Q560 says why).
+  ferry and no seaplane until its first summons.
+- [ ] **Q566. The global rides' 203, 211 and 212 hold no sample here.** From Q565. The category's load logs "203x0,
+  211x0, 212x0" (`SoundCategoryFile`'s sample walk), so the Jungle Spray's `EVENT 5 -1 212` (and the Hyenas') starts
+  with no sample, where the original plays 212's one sample of 1442 ms (`q565/orig/`, `oneshots.py`: effect 212, length
+  1442; `lib/soundsweep.py`). Find why the walk takes no sample record for them (FileFormats `sound-categories.md`) and
+  read them; measure all 31 category files for any other effect left empty.
+- [ ] **Q567. The original sounds the global rides' 208 at the sideshows (decode first).** From Q565. In the stock park
+  the original made 208 (flags `0x0`, one sample of 1158 ms) 30 to 60 times a run at (525, 0, 300), by the Jungle Spray,
+  and (434, 0, 303) (`q565/orig/`, b to d, `oneshots.py`); no jungle script asks for 208 (`lib/soundsweep.py`), and ours
+  never plays it. Find its caller (a `Sound_PlayEffect` of category `[0x00803a28]`, effect 208) and what it marks.
 - [ ] **Q560. A park file's live voices put back (decode first).** From Q559. Every park file carries the sound
   manager's voices after the sound module's 84 bytes (`Sound_SaveModule` `0x0051c350` through `0x006b5c10`), and the
   original's load puts them back (`Sound_LoadModule` `0x0051c400`, `0x0051c497` -> `0x006b5c30` -> `FUN_006ba150` ->

@@ -9348,6 +9348,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   a) near 14 chains and 65 children, away 7 chains `0x802` and none, back 81; ours (`q564/confirm.py`, run2, the final
   binary, 4 of 4) near 53 children, away 12 chains "out of range at (525,250) after 0 child(ren)" and none, back 20;
   main's binary made 87 away; `q564/side-by-side.png`; test `AScreamOutOfRangeMakesNoChild`, 9 of 9 bugs put back fail.
+- [x] **Q565. A script's one-shot out of range plays nothing and is dropped 250 ms after its length.** Q557's piece.
+  `Voice_SetUp` (`0x006bbf60`) holds the sample it draws and writes its drop time, the clock + 250 ms + the sample
+  record's length; each pass drops a voice without flag `0x2` past it (`Voice_IsPastDrop` `0x006bcb60`), in range or
+  not, and stops no channel; `OneShot_Tick` (`0x006bd800`), called in range only, starts the held sample whenever none
+  plays; a looped one is never dropped (`audio.md`, "A script's one-shot"). Built in `ParkAudioScripts` (`ServeOneShot`,
+  `StartOneShot`, `ScriptVoice.DropAt`; `SoundCategory.PickSample`, `PlaySample`). Proof: the original (`q565/orig/`,
+  runs b to d, `oneshots.py`) away no one-shot played, each gone at length + 250 ms (-5 to +39 ms), near and back
+  played, the fountain's looped 107 put back from the file; ours (`q565/confirm.py`, the final binary) run5 near the
+  Spray's 8 played, away 21 held and "dropped after 0 sample(s) ..., out of range", run3 back 8 played; main's binary
+  held none away; `q565/side-by-side.png`; test `AScriptsOneShotStartsOnlyInRangeAndIsDroppedByItsTime`, 11 of 11 bugs
+  put back fail. The question of a park entered fresh from a file: the original's does hear its looped script sounds,
+  put back from the file (Q560).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

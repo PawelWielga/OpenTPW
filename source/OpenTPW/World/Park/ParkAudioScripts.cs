@@ -212,8 +212,17 @@ public sealed partial class ParkAudio
 		/// <summary>When a plain voice's last sample was found ended, or null while one plays.</summary>
 		public float? EndedAt { get; set; }
 
-		/// <summary>A plain or music voice's sample of its variation, drawn with it, which a start out of range holds.</summary>
+		/// <summary>
+		/// A plain or music voice's sample of its variation, drawn with it, which a start out of range holds; a one-shot's
+		/// one sample, drawn at its start and held for its life (<c>0x006bbf60</c>, the voice's <c>+0xc</c>).
+		/// </summary>
 		public AudioClip? Clip { get; set; }
+
+		/// <summary>
+		/// When a one-shot not looped is dropped wherever it is: its start, 250 ms and its sample record's length
+		/// (<c>0x006bbf60</c>'s <c>+0x1c</c>, read by <c>0x006bcb60</c> on each pass).
+		/// </summary>
+		public float DropAt { get; set; }
 
 		/// <summary>
 		/// Whether the listener was last found past its range (<see cref="InRange"/>): the original's voice flag
@@ -315,16 +324,20 @@ public sealed partial class ParkAudio
 		}
 		else
 		{
-			sound.Voice = category.Play( effect, loop: sound.Looped, respectDelay: false, bus: AudioBus.Effects,
-				position: sound.Place, ownRange: true, gain: OneShotGain, rate: OneShotRate );
-			sound.Samples = sound.Voice is null ? 0 : 1;
+			sound.Clip = category.PickSample( effect, out var variation, out var length );
+			sound.Variation = variation;
+			sound.DropAt = Time.Now + OneShotGraceSeconds + (float)length.TotalSeconds;
+
+			// Out of range at the start it plays nothing until it is in range (FUN_006b62b0 ticks it no sooner).
+			if ( Reached( sound ) )
+				StartOneShot( sound );
 		}
 
 		_scriptVoices.Add( sound );
 		ScriptSounds = ScriptSounds with { Started = ScriptSounds.Started + 1 };
 
 		Log.Info( $"Park audio: script {scriptId} started effect {effect} of type {type} (flags 0x{flags:x}, {sound.Kind}) "
-			+ $"sample '{sound.Voice?.Name}' volume {sound.Voice?.Volume ?? 0f:0.0000} "
+			+ $"sample '{sound.Voice?.Name ?? sound.Clip?.Name}'{(sound.Away ? " held" : "")} volume {sound.Voice?.Volume ?? 0f:0.0000} "
 			+ (sound.Place is { } place ? $"at ({place.X:0},{place.Y:0},{place.Z:0}) range {sound.Voice?.Range ?? 0f:0} gain {sound.Voice?.DistanceGain ?? 0f:0.0000}" : "flat") );
 
 		return ScriptSoundStart.Started;
@@ -385,8 +398,8 @@ public sealed partial class ParkAudio
 	/// <summary>
 	/// Each plain script voice's next sample once the last has ended and its silence is over, as a following voice's
 	/// is (<see cref="ServeFollowing"/>), each chain's next child once the clock passes its newest child's time, and
-	/// every one-shot whose sample has ended let go. A plain, music or chain voice out of range makes nothing
-	/// (<see cref="InRange"/>): a plain or music voice's sample is cut, and in range again its sample starts afresh.
+	/// every one-shot served (<see cref="ServeOneShot"/>). A voice out of range makes nothing (<see cref="InRange"/>): a
+	/// plain, music or one-shot voice's sample is cut, and in range again its sample starts afresh.
 	/// </summary>
 	internal void ServeScriptSounds()
 	{
@@ -406,17 +419,19 @@ public sealed partial class ParkAudio
 				continue;
 			}
 
-			if ( sound.Voice is { Playing: true } )
+			if ( !sound.Follows )
 			{
-				if ( sound.Follows && !Reached( sound ) )
-					sound.Voice.Stop();
+				if ( ServeOneShot( sound ) )
+					_scriptVoices.RemoveAt( index );
 
 				continue;
 			}
 
-			if ( !sound.Follows )
+			if ( sound.Voice is { Playing: true } )
 			{
-				_scriptVoices.RemoveAt( index );
+				if ( !Reached( sound ) )
+					sound.Voice.Stop();
+
 				continue;
 			}
 
@@ -443,6 +458,73 @@ public sealed partial class ParkAudio
 
 			NextScriptSample( sound );
 		}
+	}
+
+	/// <summary>The time a one-shot is kept past its sample's length before it is dropped (<c>0x006bbf60</c>: 0xfa ms).</summary>
+	internal const float OneShotGraceSeconds = 0.25f;
+
+	/// <summary>How many one-shots were dropped by their time (<see cref="ScriptVoice.DropAt"/>).</summary>
+	internal int ScriptOneShotsDropped { get; private set; }
+
+	/// <summary>
+	/// A one-shot's turn of the sound service (<c>FUN_006b62b0</c>), answering whether it is let go. Not looped, it is
+	/// dropped once its time passes (<c>0x006bcb60</c>), in range or not, and a sample still playing plays out, as the
+	/// drop moves the voice to the free list and stops no channel (<c>0x006b6440</c>, <c>0x006b6a50</c>). Ended by
+	/// itself in range, it is let go (voice flag <c>0x10</c>, <c>0x006bbe40</c>). Out of range its sample is cut
+	/// (<c>FUN_006bca70</c>); in range again it starts afresh from the top, a volume and a pitch drawn for it again
+	/// (<c>0x006bd800</c>, which starts a channel whenever none plays). A looped one is never dropped by time.
+	/// </summary>
+	private bool ServeOneShot( ScriptVoice sound )
+	{
+		if ( !sound.Looped && Time.Now > sound.DropAt )
+		{
+			++ScriptOneShotsDropped;
+			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} dropped after {sound.Samples} sample(s), "
+				+ $"its length and 250 ms past{(sound.Away ? ", out of range" : "")}" );
+
+			return true;
+		}
+
+		if ( sound.Voice is { Playing: true } )
+		{
+			if ( !Reached( sound ) )
+				sound.Voice.Stop();
+
+			return false;
+		}
+
+		if ( !sound.Away )
+			return true;
+
+		if ( Reached( sound ) )
+			StartOneShot( sound, again: true );
+
+		return false;
+	}
+
+	/// <summary>
+	/// A one-shot's held sample started (<c>0x006bd800</c>): at its variation's own volume and a pitch drawn from it
+	/// (<see cref="OneShotGain"/>, <see cref="OneShotRate"/>; <c>FUN_006bc410</c>), looped under <c>0x8</c>.
+	/// </summary>
+	/// <param name="again">Whether it is in range again after a start or a stretch out of range, which the log says.</param>
+	private void StartOneShot( ScriptVoice sound, bool again = false )
+	{
+		sound.Away = false;
+
+		if ( sound.Clip is null )
+			return;
+
+		sound.Voice = sound.Category.PlaySample( sound.Effect, sound.Clip, sound.Variation, loop: sound.Looped,
+			bus: AudioBus.Effects, position: sound.Place, ownRange: true, gain: OneShotGain, rate: OneShotRate );
+
+		if ( sound.Voice is null )
+			return;
+
+		++sound.Samples;
+
+		if ( again )
+			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} in range again: sample '{sound.Voice.Name}' "
+				+ $"from the top (start {sound.Samples}), volume {sound.Voice.Volume:F4}, {sound.DropAt - Time.Now:F3} s before its drop" );
 	}
 
 	/// <summary>
@@ -686,7 +768,7 @@ public sealed partial class ParkAudio
 		var (started, absent, stopped, faded, moved) = ScriptSounds;
 		var lines = new List<string>
 		{
-			$"listener ({ears.X:F0},{ears.Y:F0},{ears.Z:F0}), started {started}, absent {absent}, stopped {stopped}, faded {faded}, moved {moved}, sounding {_scriptVoices.Count}"
+			$"listener ({ears.X:F0},{ears.Y:F0},{ears.Z:F0}), started {started}, absent {absent}, stopped {stopped}, faded {faded}, moved {moved}, one-shots dropped {ScriptOneShotsDropped}, sounding {_scriptVoices.Count}"
 		};
 
 		foreach ( var sound in _scriptVoices )
