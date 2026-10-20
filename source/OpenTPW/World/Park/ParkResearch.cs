@@ -153,6 +153,9 @@ public sealed class ParkResearch
 	/// </summary>
 	public int Unfinished( int kind ) => _projects.Count( project => project.Category == kind && !IsDone( project ) );
 
+	/// <summary>How many of the lab's projects of every kind are not done: <c>FUN_00503b30</c> asked for kind 5, which it takes as any.</summary>
+	public int UnfinishedOfAnyKind => _projects.Count( project => !IsDone( project ) );
+
 	/// <summary>A project is done once its points are at or over its cost; a done project stays in the table.</summary>
 	private static bool IsDone( ParkWorld.ResearchProject project ) => !(project.Done < project.Cost);
 

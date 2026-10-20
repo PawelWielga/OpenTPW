@@ -125,8 +125,8 @@ Each clip word is a clip number and flag bits. **Rows 1 and 13 are the only ones
 `0x40000` plays `cat_ui` effect 197 and tops it to two of 49, `0x80000` to three of 49, `0x100000` empties it and tops it
 to two of 44, and `0x200000`, which no row uses, empties it. Effects 44 and 49 are the golden ticket's glints (`ParLib`).
 Every response using rows 1 and 13 is a golden-ticket line on model slot 1, the park's own advisor; clips 16 to 20 ship
-only in a level's `advisor.wad`, so the lobby's advisor, slot 0, never plays them. OpenTPW awards no golden ticket, so
-nothing reaches the glints (`lobby.md`, "World sprites"; `ride-operation.md`, "Golden tickets", Q707).
+only in a level's `advisor.wad`, so the lobby's advisor, slot 0, never plays them. OpenTPW awards golden tickets in Full
+Simulation (Q591) and counts their lines rather than posting them (`GOLDEN_TICKET_MESSAGE`), so nothing reaches the glints (`lobby.md`, "World sprites"; `ride-operation.md`, "Golden tickets", Q707).
 
 **A row and the voice's start** (`FUN_00598bf0( row, length )`, from `Advisor_SayResponse` at `0x005993a4` with the
 gesture less 16 and the sample's length plus 500 ms): it copies the row's clip words to `0x00f79718` and sums their

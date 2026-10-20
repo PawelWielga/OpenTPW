@@ -55,6 +55,42 @@ public class ParkGadgetTests
 			"the gauge's click opens nothing" );
 	}
 
+	/// <summary>
+	/// <b>The corner shows the keys held and the tickets not spent, the ticket hidden at none</b> (<c>0x004a1092</c>..):
+	/// two jungle tickets and the first key, one spent, read "1 x" and "1 x" as the original's did before its award
+	/// (<c>q706/orig/O/g-05.png</c>); both spent hide the ticket and its count, the keys staying.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the tickets earned shown; the spent added; the ticket left shown at none.</remarks>
+	[TestMethod]
+	public void TheCornerShowsTheKeysAndTheTicketsNotSpent()
+	{
+		var file = new PlayerFile { InstantAction = false, KeysGiven = 1, TicketsSpent = 1 };
+		file.Park( "jungle" ).Tickets[0] = file.Park( "jungle" ).Tickets[2] = 1;
+		var current = typeof( Players ).GetProperty( nameof( Players.Current ) )!;
+
+		try
+		{
+			current.SetValue( Players.Roster, new Player( 0, "Test", file ) );
+			var gadget = new UI.ParkGadget( AStack() );
+
+			Assert.AreEqual( ("1 x", true, true), (Find( gadget.Root, 0x37 ).Text, Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible) );
+			Assert.AreEqual( "1 x", Find( gadget.Root, 0x36 ).Text, "two tickets and the key given: one key" );
+
+			file.TicketsSpent = 2;
+			gadget = new UI.ParkGadget( AStack() );
+
+			Assert.AreEqual( (false, false), (Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible), "none unspent: hidden" );
+			Assert.AreEqual( "1 x", Find( gadget.Root, 0x36 ).Text );
+		}
+		finally
+		{
+			current.SetValue( Players.Roster, null );
+		}
+	}
+
+	private static UI.UiControl Find( UI.UiControl control, int id )
+		=> control.Id == id ? control : control.Children.Select( child => Find( child, id ) ).FirstOrDefault( found => found != null )!;
+
 	/// <summary>A window stack with no windows, made without its constructor.</summary>
 	private static UI.WindowStack AStack()
 	{

@@ -2266,7 +2266,29 @@ public class Level
 
 		if ( Input.KeyUp( InputButton.QuickLoad ) )
 			Log.Info( QuickLoadKey() );
+
+		foreach ( var release in Input.Releases )
+		{
+			if ( release.Held == Input.Modifiers.Alt && CheatRows.FirstOrDefault( row => row.Key == release.Key ).Name is { } cheat )
+				Unimplemented.Report( cheat );
+		}
 	}
+
+	/// <summary>
+	/// The cheat table's twelve rows (<c>DAT_0078733c</c>; <c>docs/exe/park-engine.md</c>, "The cheat table"), each Alt
+	/// alone on the key's release: research, ten thousand, the Local golden tickets 0 to 5 (<c>G</c>, the keypad's 1 to 5)
+	/// and the Global 0 to 3 (the keypad's 6 to 9). None is built; each is counted. Whether the cheat flag lets them
+	/// fire in the original, and whether the keypad's digits reach their rows, is not settled (Q720).
+	/// </summary>
+	private static readonly (NeoVeldrid.Key Key, string Name)[] CheatRows =
+	[
+		(NeoVeldrid.Key.R, "CHEAT_RESEARCH"), (NeoVeldrid.Key.Number1, "CHEAT_MONEY"), (NeoVeldrid.Key.G, "CHEAT_LOCAL_TICKET"),
+		(NeoVeldrid.Key.Keypad1, "CHEAT_LOCAL_TICKET"), (NeoVeldrid.Key.Keypad2, "CHEAT_LOCAL_TICKET"),
+		(NeoVeldrid.Key.Keypad3, "CHEAT_LOCAL_TICKET"), (NeoVeldrid.Key.Keypad4, "CHEAT_LOCAL_TICKET"),
+		(NeoVeldrid.Key.Keypad5, "CHEAT_LOCAL_TICKET"), (NeoVeldrid.Key.Keypad6, "CHEAT_GLOBAL_TICKET"),
+		(NeoVeldrid.Key.Keypad7, "CHEAT_GLOBAL_TICKET"), (NeoVeldrid.Key.Keypad8, "CHEAT_GLOBAL_TICKET"),
+		(NeoVeldrid.Key.Keypad9, "CHEAT_GLOBAL_TICKET")
+	];
 
 	/// <summary>
 	/// Alt+S, the game table's row 12, <c>GameKey_QuickSave</c> (<c>0x0040bf90</c>): the running park written as <c>&lt;theme&gt;.TPWS</c>, the

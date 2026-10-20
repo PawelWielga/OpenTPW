@@ -3836,8 +3836,10 @@ x87 control word (`0x0059e96a` `FSTP DWORD`).
 ### Golden tickets
 
 Re-read for Q194 from the fork review (`economy-8`, `economy-9`; `wf_cba77d07-b66`, a read-only Opus verifier in
-Ghidra and over every shipped `.sam`), and decoded whole for Q141. **None of it is built in OpenTPW**: the checks and
-awards are Q706, the advisor's ticket lines Q707, the hints Q708.
+Ghidra and over every shipped `.sam`), decoded whole for Q141, and **built for Q591** (`ParkGoldenTickets`, the awards in
+`PlayerFile`): every test and award but Global 0's measure, the coaster's highest point, which is measured as nought and
+counted where a coaster stands (`GOLDEN_TICKET_COASTER_HEIGHT`, Q706). The advisor's ticket lines are counted
+(`GOLDEN_TICKET_MESSAGE`, `GOLDEN_TICKET_FIRST_LINES`; Q707), the hints are Q708, the cheat rows counted (Q592).
 
 **The tick.** `FUN_004d4a00`, from `FUN_004d7b20` (`0x004d7b60`) on a thing sweep (`0x00516695`) whose world counter
 `+0x1da70c`, `mGameTick`, is a multiple of 100 (`DIV`, `0x004d7b54`; the sweep raises it first, `0x00516398`, and calls
@@ -3916,11 +3918,27 @@ three as decoded: the lab has projects undone (Local 3), the bank's profit this 
 and the visitors of the last six months are 759 less the ring's 500, 259 against 350 (Local 5); its secret measure is 17
 per cent (the stock `Easymode.TPWI`, 3). OpenTPW loads the same measures (`money`: lifetime visitors 759, profit -33596)
 and over ticks 19007 to 19147 awards nothing; the original would not either for the Locals (held) and Global 0 (the record
-is this park's, `FUN_005af940` returns 0); Globals 1 and 2 were not measured (the park has a go-kart ride).
+is this park's, `FUN_005af940` returns 0). Measured for Q591 (`q706/`), at tick 19100: the go-kart ride's excitement 81
+(against 90), no water ride, 1,240 cells covered (against 2,000; `parkfile.py -T` reads the same of the file), 17 per cent
+watched; so nothing.
+
+**Checked in the original by its award** (Q591, `q706/PREDICTION.txt` round O): the same park loaded by a copy of the
+profile with jungle Locals 0 and 1 taken out (`gmsfile.put`; `freshfs.sh` `GMS=`), off-screen under the fresh-boot clock,
+won both on tick 19100 and nothing else (`original/progress.py`: jungle `[0,0,1,...]` to `[1,1,1,0,0,0]`, the records,
+secret tickets and key given unchanged); the clock ran past tick 19007, where `TOOLING.md`'s warning 13 saw it stall. Its
+gadget's corner went from "1 x" tickets and "1 x" keys to "3 x" and "2 x" (`hud.md`, the gadget's update). This
+game's run of the same (`q706/run2-L`) wins the same two on the same tick.
+
+**The log.** Each teller first logs `Won a Local golden ticket (type - <result>, num - <index>)` (`0x0075a5f8`; Global
+`0x0075a788`, Secret `0x0075a868`), then by the result `Local ticket only`, `Local ticket and key`, `Local ticket, key and
+park` (`0x0075a554`..; `Global ticket award moved here` for a Global 4), and the checker then logs `You have %d total
+golden tickets` (`0x0075a530`) with `PlayerProgress_CountTicketsNoSecret` (`0x005af4a0`) straight after that award, so
+two awards on one tick give two counts. The first ticket's two lines are asked after each award in turn, so only an award
+that makes the tickets of every kind one posts them.
 
 **What reaches it in Lost Kingdom.** Instant Action (`Easymode.TPWI`, game type 2) never: play awards nothing, every
 ticket row and hint is game type 0's, and only the cheats award. A Full Simulation jungle reaches all of it: a gap
-(`CLAUDE.md` rule 3), Q706 to Q708. OpenTPW counts nothing there yet.
+(`CLAUDE.md` rule 3): built but for Global 0's measure (Q706), the lines (Q707) and the hints (Q708).
 
 ### Challenges
 

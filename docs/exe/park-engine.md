@@ -770,6 +770,9 @@ rows are 20 bytes each, every one with modifier `0x30` (**Alt alone**, matched b
 | 3-7 | `0x61`-`0x65` | `0x0040c6e0`, `0x0040c700`, `0x0040c720`, `0x0040c740`, `0x0040c760` | the same with Local 1 to 5 |
 | 8-11 | `0x66`-`0x69` | `0x0040c780`, `0x0040c7a0`, `0x0040c7c0`, `0x0040c7e0` | `push 0x64; push i; ... call 0x005af940`: the Global golden ticket 0 to 3 |
 
+OpenTPW builds none of the twelve: each is counted on its key's release with Alt alone (`Level.CheatRows`;
+`CHEAT_RESEARCH`, `CHEAT_MONEY`, `CHEAT_LOCAL_TICKET`, `CHEAT_GLOBAL_TICKET`; Q591), the build waiting on Q592.
+
 `0x0046b420` builds the modifier bits, and the window proc has the same code inline (`0x0046ba15`, `0x0046bb0b`): the mods ride in the
 posted message's bits 16-23, taken at the key-up (`0x0046bb0b`..`0x0046bb47`), so a cheat fires on the **release**, with Alt
 held alone. No earlier table holds a cheat chord: `game` has only Alt+L, Alt+S and Alt+V (rows 11, 12, 14), and

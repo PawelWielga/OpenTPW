@@ -172,7 +172,7 @@ public sealed class LobbyIsland : Entity
 		return null;
 	}
 
-	private static (int Keys, bool Loaded) ReadKeysToEnter( string themeName )
+	internal static (int Keys, bool Loaded) ReadKeysToEnter( string themeName )
 	{
 		SettingsFile global;
 

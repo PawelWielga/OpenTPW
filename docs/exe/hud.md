@@ -174,6 +174,7 @@ Built by `FUN_004a1d70` onto the park's layer 0, with no handler for the stream 
 |---|---|---|
 | `0x36`, `0x37` | **Text labels**, `LabelSkin_Construct`, colour **white** (0xff,0xff,0xff,0xff), font `FUN_00485a70(2)`, both seeded with the string at `0x00752f24`. They sit to the LEFT of the two icons, so the cluster is icon+count twice | Disassembly of `FUN_004a1d70` |
 | `0x34` (`gkey`) | Takes **frame 3** (`FUN_0065d3a3(3)`) — what the four `gkey0-3.wct` textures are for — and **is hidden outright in Instant Action** (`DAT_00fb3b7c == 2` -> `UI_SetVisible(0)`) | Disassembly |
+| `0x36`, `0x37`, `0x35` on the gadget's update (`0x004a1092`..`0x004a115b`, Q591) | `0x36` takes the keys held (`PlayerProgress_CountKeys` `0x005af680`) as `"%d x"` (`0x00752ef8`). `0x37` takes the tickets **less those spent** (`FUN_005af5d0`: every ticket, the two secret ones too, less `+0x1c`), written only when that count changes (the last at `0x00752ec4`): at nought `0x37` and the ticket `0x35` are hidden, else both shown and `0x37` reads `"%d x"`. In the original's Full Simulation jungle (Alexah's profile less two jungle tickets, one spent) the corner read "1 x" and "1 x" before the award of tick 19100 and "3 x" and "2 x" after (`q706/orig/O/g-05.png`, `g-40.png`) | Disassembly; the original's frames |
 | `0x30` | **Yellow** (0xff,0xff,0,0xff), font 2, and **starts hidden** (`UI_SetVisible(0)`) — matches it being the price of the item in hand, absent when your hand is empty | Disassembly |
 | `0x2f` | Its field is sized by **measuring the string `999999999`** (`UI_MeasureText` on the string at `0x00752f10`), white, font `FUN_00485a70(1)`, skin `FUN_0048fde0(0)`; `0x32`'s rect is then computed from that measurement rather than being fixed | Disassembly |
 | `0x2d` / `0x2e` | Callbacks `LAB_004a11e0` and `FUN_004a1190`; the mast is shrunk to eight units and the top follows it down ("The arm and the aerial as built" below) | Disassembly |
@@ -2363,7 +2364,7 @@ in 4, no admission since in 13), never above `mMostPaidForTicket`.
 in a park made with no file; `Take`, the gate fee, raises them as `FUN_004c7520` does; `TurnTheMonth` pushes the count
 into `MonthVisitors`; the writer writes all three (`ParkWorld.PutLifetimeVisitors`, `PutMonthRings`); `money` prints
 them. The challenge message is counted (`GATE_FEE_CHALLENGE_POST`). Nothing here reads them: the park status screen is
-not built (`PARK_STATUS_SCREEN`), nor the golden tickets (Q706). **Confirmed** (`q389/`): the stock park with its fee
+not built (`PARK_STATUS_SCREEN`); the golden tickets' Local 0 reads the lifetime visitors and Local 5 the ring (Q591). **Confirmed** (`q389/`): the stock park with its fee
 written to 26 took 18 fees before its close on tick 1474 (`Park: lifetime visitors 9` .. `26, most paid for a ticket
 26`), closed `visitors 26` with the gate's 668 = 200 + 26 x 18, and wrote 26, 26 and the ring [0, 26]; main's build
 wrote the file's 8, 25 and [0]. The original given this game's file read 26, 26, [0, 26], closed 26 into its third slot

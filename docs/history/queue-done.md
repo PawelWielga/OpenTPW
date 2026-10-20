@@ -9460,6 +9460,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   sounds"): the original's 30.00 passes and 13.14 frames a second, the voices' keys, values, volumes and frequencies
   (round O, `orig/b`); this game's census, 29.9 passes a second, the pumps' frame beside the original's, the sounds'
   values (round G, `run2`).
+- [x] **Q591. Golden tickets awarded in Full Simulation: every test and the award but Global 0's measure (Q706's first
+  piece).** `ParkGoldenTickets` on every hundredth sweep in Full Simulation alone, after the staff pool's turn: the six
+  Locals (each skipped when held), Globals 1 to 3, the Secret; `PlayerFile.AwardLocal`/`AwardGlobal`/`AwardSecret`
+  (results 1 to 4, a result 3 when the new keys are a park's `Keys.CostToEnter`), each award logged in the original's
+  words with its own count; the lines counted (`GOLDEN_TICKET_MESSAGE`, `GOLDEN_TICKET_FIRST_LINES`, Q707), the cheat
+  rows counted (Q592); the park gadget's corner shows the tickets less those spent, hidden at none, as the original's
+  (`0x004a10cd`). Confirmed in both games with Alexah's profile less jungle Locals 0 and 1 and her jungle `New Save`
+  (`q706/PREDICTION.txt`): both won on tick 19100 ("Local ticket and key", "You have 3", then "Local ticket only", "You
+  have 4"), nothing on 19200, `gms.dat` read back after the save, the corner 1 x / 1 x to 3 x / 2 x; her own profile wins
+  nothing; Instant Action tests nothing. 31 of 31 bugs put back caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

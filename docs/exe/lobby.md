@@ -188,8 +188,8 @@ runs the four sprite-script ops their scripts use and the three and the end word
 
 The advisor's clip glints are not world sprites and not the lobby's: they are UI particle channel 0 (effects 49 and 44),
 started by clip-word flags that only gesture rows 1 and 13 carry (`scenes.md`, "Gesture table"), and only the park
-advisor's golden-ticket lines use those rows. Nothing here awards a golden ticket, so nothing reaches them, and they have
-no counter.
+advisor's golden-ticket lines use those rows. A Full Simulation park awards tickets (Q591), but their lines are counted, not
+posted (`GOLDEN_TICKET_MESSAGE`, Q707), so nothing reaches the glints, and they have no counter of their own.
 `.TPC` and `.FPC` are **not** open questions — all 46 `.TPC` and all 29 `.FPC` files in
 `esprites.wad` are version 3 (second word 3); an `.FPC` is the figure seen from ground level, for first
 person (FileFormats, "Sprites", has the counts).

@@ -90,6 +90,23 @@ public sealed class ParkMonthRing
 			: 0;
 
 	/// <summary>
+	/// The entry <paramref name="months"/> before the newest, or null where the ring does not reach that far back:
+	/// <c>Analyser_RecentVisitors</c>'s read (<c>0x004c94d0</c>), which asks only for fewer months than the ring's
+	/// length, takes the slot that many before the current one, and past the first slot the one round the end once the
+	/// ring has wrapped.
+	/// </summary>
+	public int? Back( int months )
+	{
+		if ( months >= Length )
+			return null;
+
+		if ( months <= Current )
+			return _months[Current - months];
+
+		return Wrapped ? _months[Current - months + Length] : null;
+	}
+
+	/// <summary>
 	/// The mean of the newest <paramref name="count"/> entries, or of as many as the ring has, as the month's close takes
 	/// it for the 15th ring (<c>0x004c79d7</c>..<c>0x004c7a13</c>): <c>FUN_004cef30</c> sums them newest first as a double,
 	/// and the close divides by how many it took and truncates (<c>__ftol</c>); nought with none.

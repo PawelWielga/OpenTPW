@@ -83,23 +83,14 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q706. Golden tickets awarded in Full Simulation (the checks and the award).** From Q141 (`ride-operation.md`,
-  "Golden tickets"; `saves.md`, "Keys and tickets"). **Alexah (2026-10-18): after Q327**, the Full Simulation catch-up, is done. On the sweep that makes `mGameTick` a
-  multiple of 100, in Full Simulation alone: the six Local tests (each skipped when the park holds it), the four
-  Global (Global 3's cells as `hud.md`'s predicates; Global 1's excitement and Global 2's section list as decoded
-  there), the secret; each award into `PlayerFile` as `FUN_005af810`/`FUN_005af940`/`FUN_005afb00` return 1 to 4 (the
-  record moved between parks, never raised), written at the next `gms.dat` write; the island panel's keys follow.
-  Count what is not built: the posts (`GOLDEN_TICKET_MESSAGE`, until Q707) and the cheat rows. Confirm in Alexah's
-  Full Simulation jungle (a copy of the player and the file): a test that passes is awarded on the next 100th tick
-  (log and `gms.dat` read back), and the stored three plus the record award nothing (the original's own profile).
-  Measures not yet held here (the coaster's highest point, the cell security words) are a piece each.
-  - **Note (fork watch 2026-10-20, `verify-other-ui-audio.md` O-L1, O-L2, O-G):** the cheat rows to count are decoded in
-    `park-engine.md`, "The cheat table": twelve rows, all Alt alone and fired on the key's release: `R` research
-    (`0x0040c430` -> `0x00503ff0`, which sets the researched byte of every item with an open lab project and nothing else), `1`
-    ten thousand, `G` the Local ticket 0 (`0x005af810`), the keypad's `0x61`-`0x65` Local 1 to 5 and `0x66`-`0x69` the Global
-    0 to 3 (`0x005af940`). In a fresh launch the first key to reach the cheat check clears the cheat flag (the constructor
-    re-run behind `0x00fb34c8`), so `Easymode.TPWI`'s set byte does not by itself make the keys work; whether the keypad
-    digits reach their rows at all is Q720.
+- [ ] **Q706. Golden tickets: Global 0's measure, a coaster's highest track point.** What Q591 left. `FUN_004cc920( &id,
+  0 )` (`ride-operation.md`, "Golden tickets", the table's Global 0): over the rides on a coaster track, the float at
+  `+0x110` of the coaster's record on `DAT_00790fe0`'s list, which the track's analysis `FUN_0043c450` sets to the largest
+  y of its points but the first and last. `ParkGoldenTickets.Measure` reads nought and counts
+  `GOLDEN_TICKET_COASTER_HEIGHT` where a coaster stands (Alexah's jungle `New Save` holds one; its record 0 is the
+  jungle's at 106, so the award returns nought there whatever the height). Needs a coaster's track points held here:
+  decode which of the save's track records hold them first. Confirm with a park whose coaster beats 105, against the
+  original's `progress.py`.
 - [ ] **Q707. The advisor's golden-ticket lines.** After Q706. The thirteen posts (`0xd7`-`0xd9`, `0xdc`-`0xde`,
   `0xe1`-`0xe3`, `0xea`-`0xed`, the ticket index as the line; score 99000, the moved rows 500, posted on the message bus) and the first ticket's `0x137` and `0x13b`,
   on model slot 1, the park's own advisor, from the level's `advisor.wad` (clips 16 to 20, which OpenTPW does not
@@ -149,6 +140,11 @@ filed the items that cite it.
   an obstacle, × 0.998 a tick, turn `+0x58 / 128`; the term the contact sets is not read). Confirm against
   `q581/orig/D-track.log` and `D2-track.log` and a frame of a ring in the channel (`D-13-boats.png`). Moves the
   website's rides list.
+- [ ] **Q592. The cheat table's twelve rows.** From Q591 (`park-engine.md`, "The cheat table"): each is counted on its key's
+  release with Alt alone (`Level.CheatRows`: `CHEAT_RESEARCH`, `CHEAT_MONEY`, `CHEAT_LOCAL_TICKET`, `CHEAT_GLOBAL_TICKET`).
+  Build them as the original's after Q720 settles whether the keypad's digits reach their rows and the cheat flag's
+  first-key clear is run in the original; whether this game's R binding also opens the research screen under Alt
+  (the original's row needs no modifier, matched by `==`) is to be checked in the same session.
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
   the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
   the music's class `0x406`, Q563, a voice out of range, Q564, a ride's scream out of range, and Q565, a script's

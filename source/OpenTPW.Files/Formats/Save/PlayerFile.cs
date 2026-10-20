@@ -103,6 +103,93 @@ public sealed class PlayerFile
 	/// <summary>Golden keys held - PlayerProgress_CountKeys (0x005af680): every three tickets make a key, and the keys given outright count too.</summary>
 	public int CountKeys( Func<string, bool> isPark ) => (CountTickets( isPark ) / 3) + KeysGiven;
 
+	/// <summary>
+	/// <see cref="CountTickets"/> less the two secret tickets - PlayerProgress_CountTicketsNoSecret (0x005af4a0), the
+	/// count each award's "You have %d total golden tickets" line gives.
+	/// </summary>
+	public int CountTicketsBesidesSecret( Func<string, bool> isPark ) => CountTickets( isPark ) - BonusTickets.Count( b => b != 0 );
+
+	/// <summary>Whether the park holds its goal ticket <paramref name="index"/> - PlayerProgress_ParkHoldsTicket (0x005af7f0).</summary>
+	public bool ParkHoldsTicket( string park, int index ) => Park( park ).Tickets[index] != 0;
+
+	/// <summary>
+	/// The park's goal ticket <paramref name="index"/> awarded - PlayerProgress_AwardLocal (0x005af810). Nought when the
+	/// park holds it already; else the ticket set and what it brought, by <see cref="AwardResult"/>.
+	/// </summary>
+	/// <param name="keysToEnter">A park's <c>Keys.CostToEnter</c>, or null where its global.sam does not load (0x005b11a0).</param>
+	public int AwardLocal( string park, int index, Func<string, bool> isPark, Func<string, int?> keysToEnter )
+	{
+		var tickets = Park( park ).Tickets;
+
+		if ( tickets[index] == 1 )
+			return 0;
+
+		tickets[index] = 1;
+		return AwardResult( isPark, keysToEnter );
+	}
+
+	/// <summary>
+	/// The player-wide record ticket <paramref name="index"/> measured at <paramref name="value"/> in a park -
+	/// PlayerProgress_AwardGlobal (0x005af940). A player without the ticket gets it with the record held by this park at
+	/// the value, and the result is <see cref="AwardResult"/>'s. A player with it gets no ticket: when this park does
+	/// not hold the record and another of the player's parks holds it at a smaller value, the record moves here at the
+	/// value and the result is 4; else nought. A record a park holds is never raised.
+	/// </summary>
+	public int AwardGlobal( string park, int index, int value, Func<string, bool> isPark, Func<string, int?> keysToEnter )
+	{
+		var here = Park( park );
+
+		if ( RecordTickets[index] == 1 )
+		{
+			if ( here.HoldsRecord[index] != 0 )
+				return 0;
+
+			foreach ( var other in Parks )
+			{
+				if ( other.HoldsRecord[index] == 0 || other.RecordValues[index] >= value )
+					continue;
+
+				other.HoldsRecord[index] = 0;
+				here.HoldsRecord[index] = 1;
+				here.RecordValues[index] = value;
+				return 4;
+			}
+
+			return 0;
+		}
+
+		RecordTickets[index] = 1;
+		here.HoldsRecord[index] = 1;
+		here.RecordValues[index] = value;
+		return AwardResult( isPark, keysToEnter );
+	}
+
+	/// <summary>The secret ticket <paramref name="index"/> awarded - PlayerProgress_AwardSecret (0x005afb00), as <see cref="AwardLocal"/> on the player's own.</summary>
+	public int AwardSecret( int index, Func<string, bool> isPark, Func<string, int?> keysToEnter )
+	{
+		if ( BonusTickets[index] == 1 )
+			return 0;
+
+		BonusTickets[index] = 1;
+		return AwardResult( isPark, keysToEnter );
+	}
+
+	/// <summary>
+	/// What a ticket just set brought, the tail the three awards share: 1, the ticket only; else, when the tickets make a
+	/// whole number of keys and the player holds any, 3 if the keys now held are what one of the player's parks costs to
+	/// enter (a park whose global.sam does not load costing -1), and 2 if not.
+	/// </summary>
+	private int AwardResult( Func<string, bool> isPark, Func<string, int?> keysToEnter )
+	{
+		var tickets = CountTickets( isPark );
+		var keys = (tickets / 3) + KeysGiven;
+
+		if ( keys <= 0 || tickets % 3 != 0 )
+			return 1;
+
+		return Parks.Any( p => (keysToEnter( p.Name ) ?? -1) == keys ) ? 3 : 2;
+	}
+
 	/// <summary>The park's record, made if there is none yet - 0x005b09c0.</summary>
 	public ParkRecord Park( string name )
 	{

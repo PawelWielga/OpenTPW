@@ -2377,6 +2377,9 @@ public sealed partial class ParkPeople : Entity
 				kind => _staff.Count( member => ParkStaffPool.KindFor( member.Model ) == kind ),
 				StaffNamed );
 
+			// Then, past the calendar's update, the golden tickets on every hundredth (0x004d7b60).
+			ParkGoldenTickets.Sweep( State.GameTick, State, this );
+
 			TakeTheRidesTurns( thingTick );
 			RetryGateClose();
 

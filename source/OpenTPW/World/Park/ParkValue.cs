@@ -97,7 +97,7 @@ public static class ParkValue
 	/// Whether a cell's track record is one that adds: its own, or for a type 12 or 17 its parent's, none where that names
 	/// no parent (<c>FUN_005363f0</c>, <c>FUN_0053ad90</c>, <c>FUN_0053ad30</c>).
 	/// </summary>
-	private static bool TrackCounts( ParkState state, ParkWorld.MapCell cell )
+	internal static bool TrackCounts( ParkState state, ParkWorld.MapCell cell )
 	{
 		if ( !CellEdge.TrackDefersToParent( cell.TrackType ) )
 			return CellEdge.TrackCounts( cell.TrackType );

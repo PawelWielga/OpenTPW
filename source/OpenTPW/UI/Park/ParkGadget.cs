@@ -197,6 +197,7 @@ internal sealed class ParkGadget : UiWindow
 
 	private readonly UiControl _keyCount;
 	private readonly UiControl _ticketCount;
+	private readonly UiControl _ticket;
 
 	/// <summary>
 	/// The gauge's moving part - the stream's 0x1f, control type 9. See <see cref="UiMeter"/> for why it
@@ -602,8 +603,8 @@ internal sealed class ParkGadget : UiWindow
 			Rect = new UiRect( 1688, 48, 1963, 278 )
 		} );
 
-		// The ticket, which every player has whether or not they have earned any.
-		earned.Add( new UiControl
+		// The ticket, shown with its count while the player holds any unspent (ShowEarned).
+		_ticket = earned.Add( new UiControl
 		{
 			Id = 0x35,
 			Rect = new UiRect( 1853, 54, 1955, 156 ),
@@ -1421,8 +1422,9 @@ internal sealed class ParkGadget : UiWindow
 	private void ShowDate() => _date.Text = GameCalendar.Now.ToShortDateString();
 
 	/// <summary>
-	/// The golden keys and tickets the player has earned, read from their gms.dat the way the lobby's
-	/// island panel reads them - see <see cref="IslandPanel.ShowKeys"/>.
+	/// The golden keys the player holds and the golden tickets they have not spent, read from their progress the way
+	/// the lobby's island panel reads them - see <see cref="IslandPanel.ShowKeys"/>. The tickets are the count less the
+	/// spent (<c>FUN_005af5d0</c>, <c>0x004a10cd</c>), and the ticket and its count are hidden while that is nought.
 	///
 	/// <para>
 	/// The format is the original's own: the string FUN_004a1d70 seeds both counts with, at 0x00752f24,
@@ -1437,7 +1439,10 @@ internal sealed class ParkGadget : UiWindow
 
 		_keyRow.Visible = player is not { InstantAction: true };
 		_keyCount.Text = $"{player?.Keys ?? 0} x";
-		_ticketCount.Text = $"{player?.Tickets ?? 0} x";
+		var tickets = player?.TicketsUnspent ?? 0;
+
+		_ticket.Visible = _ticketCount.Visible = tickets != 0;
+		_ticketCount.Text = $"{tickets} x";
 	}
 
 	/// <summary>
