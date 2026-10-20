@@ -39,7 +39,7 @@ namespace OpenTPW;
 /// <c>Sound_PlayEffect</c> and keeps what they answer; this keeps the request and answers a handle of
 /// its own. The script that owns the list starts a particle's emitter in the park's particle system and
 /// keeps its handle on the record (<see cref="Record.Emitter"/>, <c>RideScript.StartParticle</c>); no
-/// sound is started from a record.</item>
+/// sound is started from a record or an <c>EVENT</c>, and each one asked for is counted (<see cref="SoundGap"/>).</item>
 /// <item>There is no position. The engine resolves one through <c>FUN_00556b90</c> from the model and
 /// the node, and <b>walks this whole list every tick</b> (in <c>FUN_005516b0</c>) to move what is
 /// playing as the ride moves. Nothing here moves one; a record keeps the lookup
@@ -177,6 +177,9 @@ public sealed class RideEffects
 
 		++Started;
 
+		if ( type > LastParticleType )
+			Unimplemented.Report( SoundGap );
+
 		var record = new Record
 		{
 			Type = type,
@@ -245,8 +248,17 @@ public sealed class RideEffects
 
 		++Started;
 
+		if ( type > LastParticleType )
+			Unimplemented.Report( SoundGap );
+
 		return true;
 	}
+
+	/// <summary>
+	/// The count of a sound asked for by <c>ADDOBJ</c> or <c>EVENT</c> (types 3 to 10), which the engine starts through
+	/// <c>Sound_PlayEffect</c> and nothing here plays.
+	/// </summary>
+	public const string SoundGap = "RIDE_EFFECT_SOUND";
 
 	/// <summary>
 	/// <c>KILLOBJ</c>: stop <b>every</b> record whose tag matches, and answer how many that was.

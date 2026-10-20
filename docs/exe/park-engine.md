@@ -819,7 +819,7 @@ standing, and the next Escape put it away. In those frames the pointer is the pl
 still drawn, and the advisor is drawn while he speaks: he is not on layer 0.
 
 **OpenTPW builds it** as `ParkFrontEnd.ToggleFullScreen` over `WindowStack.Covered`: F3 let go with no modifier
-toggles it, refused in first person; on, nothing of the window stack is drawn or pointed at, every press is the
+toggles it, refused in first person and in the End's ride view; on, nothing of the window stack is drawn or pointed at, every press is the
 cover's, and `Level.GameTableKeys` and the orbit camera's C are not heard; the camera's keys and wheel are; F3 or a plain
 Escape takes it off and is spent doing it; Ctrl+P is counted, `FULL_SCREEN_VIEW_POSTCARD`. The pointer wears the plain
 arrow. Where it parts from the original:
@@ -830,7 +830,8 @@ arrow. Where it parts from the original:
   over the entry-price screen left `[0x007cb2e8]` at 0 in the original.
 - **The armed tool's squares still follow the pointer** under the view, since the pointer's cell is picked every frame;
   the original's mouse proc hears nothing there, so its square should stand still. Not measured.
-- **The end of a park** turns the view on and off and gives Escape the game menu under it; no park ends here.
+- **The end of a park** turns the view on and off and gives Escape the game menu under it; no park ends here. The End
+  feature's cover is its own, with its own keys (below, "OpenTPW builds it", under "The End feature's view").
 
 **F2 stays, at Alexah's word** (`docs/DECISIONS.md`): `InputButton.HideUI`, OpenTPW's own key beside F3. Measured
 before the build, each predicted from the code: it acts on the press, in the lobby too; it hides the pointer with the
@@ -862,10 +863,11 @@ itself (`0x0048af00`..`0x0048af21`). It ends in the sprite swap (`0x0042a6ee`): 
 shipped file and entering the ride view clears flag `0x02`, so the End keeps the `.TPC` pictures.
 
 Each frame the camera update `FUN_0042b1c0`, under `& 0x3c` (`0x0042ca0a`), takes the record's world matrix for the
-camera, mixed with the last frame's matrix by `w = ( 1000 - t ) x 0.0005`, `t` the milliseconds since the last update
-(`FUN_00402d80`'s clock, QueryPerformanceCounter or `timeGetTime`; 100 past 200, 1 at nought or below, so `w` is 0.4
-to 0.4995; `0x0042ca13`..`0x0042cb7d`; the last frame's is the record's own matrix, `[0x00790948]`, not the mixed
-one), and the eye at the matrix's translation (`0x0042cb83`..`0x0042cb96`). It
+camera with its turn, the three rows of three, mixed with the last frame's: `(1 - w) x now + w x last`, `w = ( 1000 - t )
+x 0.0005`, `t` the milliseconds since the last update (`FUN_00402d80`'s clock, QueryPerformanceCounter or `timeGetTime`;
+100 past 200, 1 at nought or below, so `w` is 0.4 to 0.4995; `0x0042ca13`..`0x0042cb7d`; the last frame's is the
+record's own matrix, `[0x00790948]`, not the mixed one), and the eye copied from the record's own translation, unmixed
+(`0x0042cb83`..`0x0042cb96`). It
 then turns the picture by the look offsets (`FUN_0046f6f0( ..., 4, ... )`, `0x0042cbc3`). Those are worked from the
 pointer only when `uVar13 = ~flags >> 11 & 1` or the right button is held (`[0x00790aac]` bit 4, `FUN_0042a760`'s
 button 1), so with ConstrainCamera they stay nought, and the End's handler forwards nothing to `FUN_0042a760` in any
@@ -880,8 +882,9 @@ so the orbit returns where it was.
 propellers and three smoke nodes) with three clips, `Endm1`-`Endm3` (500 frames; three planes fly towards the view,
 two cross it, three climb away). `End.RSE` ("End Anim"): `SPAWNCHILD AnimCtrl.rse`, `VAR_ENDTIME` now + 10000,
 `DIPMUSIC 1`, `ADDOBJ 9 -1 186 2` (`cat_ui` 186, no node), `ADDOBJ 5 9 200 1` and `ADDOBJ 5 10 201 1` (`cat_rides` on
-`fwork05` and `fwork06`, sound ids 9 and 10), then for ever once a second: `EVENT 5 10 202`, and `EVENT 1 n 6` on
-particle ids 17 to 20 (`fwork01`, `fwork02`, `fwork04`, `fwork03`), effect 6 `P_EFFECT_Firework2`; past the end time
+`fwork05` and `fwork06`, sound ids 9 and 10), then for ever once a second: `EVENT 5 10 202`, and `EVENT 1 17 6`,
+`1 18 3`, `1 19 6`, `1 20 3` on `fwork01`, `fwork02`, `fwork04`, `fwork03`: effect 6 `P_EFFECT_Firework2` and 3
+`P_EFFECT_Firework1` (OpenTPW's run starts the four so, `q703/run4/run.log`); past the end time
 it sets `VAR_STATUS` 1 and carries on (what reads it was not traced). `AnimCtrl.RSE` ("End Anim Control") plays the
 clips 0, 1, 0, 2, 1, 2, 0, 2 and over, each by `WAITANIM 5 k` after starting the trails of the planes in it on their
 particle ids (`ADDOBJ 1 n 93..95 1`, `P_EFFECT_SmokeTrailR`, `B`, `W`, drawn as red, blue and yellow stars) and
@@ -899,6 +902,29 @@ volumes' dirty flag); the tick ran on, 800 to 1052 in 41 s. The frames (`q551/or
 low view up the path from inside the gate to the sky, the planes trailing yellow, blue and red stars, the bursts,
 the pointer still drawn. Escape: `0x0100`, the orbit's eye back, layer 0 shown, the dip 0, UITEXT 471's box over the
 park with the gadget, the tick standing under it; stars an `EVENT` made still in the sky.
+
+**OpenTPW builds it** (Q552; `ParkEndFeature`, `ParkRideViewCameraMode`). `Level.EndOfResearch` asks for the End and
+`Level.Update` makes it after the frame's entity walk, since its model adds entities the walk cannot take (the
+original makes it inside the lab's message). The item is the catalogue's named `End`; the thing takes the park's next id
+(43 in the scene, as the original's) and is not put in the park's object list, which only the save reads and nothing
+saves while the End has the keys. Its model and its nodes stand as the file holds them (`RideNodes.PlaceFixed`): End.MD2's
+root, `parent`, keeps its own (480, 0, 170), which a placement at a cell would replace, and that is what puts the view
+node at the original's (480.53, 10, 200). `End.RSE` is bound from word 0 (`ParkRides.BindFixed`) and spawns its child
+on its first tick. The camera is the constrained ride view only, the general "Ride it!" one not built: the turn mixed as
+above with `t` from `Time.Delta`, the first frame's last matrix the record's own, and first person's fog drawn in it
+(`gui_CameraFlags & 0x16`). The full-screen view goes off if it was on, the park screen closes, and a cover with keys and
+a right click of its own goes over the park's layer (`WindowStack.CoverKeys`, `CoverRightClick`); F3 is refused in the
+ride view as in first person. Escape with no modifier, or a right click with RMB cancel on more than 2000 ms after it was
+made, ends it: the thing's scripts (their `ADDOBJ` particles stopped, an `EVENT`'s left), the dip, the model, then the
+orbit made again where it was, the cover off and, in Instant Action, UITEXT 471's box with its cross. Run beside the
+original's (`q703/PREDICTION.txt`, `q703/side-by-side.png`): on tick 800 the eye (480.53, 200.00, 10.00) in the park's
+axes looking (0.000, 0.961, 0.276), the scripts "End Anim" and "End Anim Control", the dip 1, the tick running, the
+bursts over the path, the interface gone; after Escape or the right click the orbit's eye as before and the box.
+**Not the original's:** the planes stand where they rest, no clip's position track being posed (`ANIM_POSITION_TRACK`),
+which puts them beyond first person's fog; their trails' emitters stand on their nodes' rest spots
+(`PARK_PARTICLE_NODE_ON_A_CLIP`); no sound of the two scripts is played (`RIDE_EFFECT_SOUND`); and the advisor is drawn
+through the End, where the original's frames 4 s and 10 s in show none while he speaks (`q550/orig/a-4`, `a-5`). Q703
+and Q553 hold them.
 
 ## The park management gadget
 
@@ -1513,11 +1539,10 @@ park's tick stood under the box. OpenTPW (`ParkResearch.AllDone` and `MarkAllRes
 `ParkAdvisorMessages` row 167; `q550/run2`, 8 of 8 on the final build): the same tick and figures, the posts of 93,
 then the mark ("ref's jungle record marked all researched"), then 167 at 10000, said on tick 800 with sample 452
 (found in the game's own mix) and 93 after it; `gms.dat` saved with jungle's byte 1 and the other three 0. The End
-feature is counted (`RESEARCH_END_FEATURE`, Q703), so the park stays in its own view with the gadget
-(`q550/side-by-side.png`). In Full Simulation (`q550/confirm-fs.py`, the private player's `gms.dat` put to mode 0;
+feature then follows (above, "OpenTPW builds it"). In Full Simulation (`q550/confirm-fs.py`, the private player's `gms.dat` put to mode 0;
 `stone240-fs.TPWS`, Stone Head last, as a ride's finish there appends its costed upgrade and kind 4 has no effort in
 the file): with the other three records 0 the jungle one is marked and nothing follows (`run7`), with them 1 row 167
-is said on the end's tick and the End counted (`run8`). The original's Full Simulation arm is the listing's alone.
+is said on the end's tick (`run8`). The original's Full Simulation arm is the listing's alone.
 
 ### Entering and leaving first person: a click on the ground
 
@@ -1547,7 +1572,7 @@ whose `+0x4ac` is nought gets `FUN_004e15b0( 0 )` instead.
   (FileFormats, "Sprites"). The ride view's `FUN_0042a560` also ends in the swap (`0x0042a6ee`): to `.FPC` when its
   second argument is 1 or flag `0x02` is set, otherwise back to `.TPC`. `FUN_004e15b0`, the "Ride it!" call, passes
   the item's `Info.FirstPersonSprites` (`+0x80`), which no shipped file sets to 1 ("The End feature's view"); the
-  other callers' are not traced, and OpenTPW reaches no ride view.
+  other callers' are not traced, and OpenTPW reaches only the End's ride view, which keeps the `.TPC` pictures.
 
 The pick point is written only by `FUN_0045bf90` (called at `0x0054e2d5`, and only while `& 0x16` is clear). It is
 a terrain hit inside its own cell's rectangle, with the cells clamped to the 96 by 85 heightfield, or a point on a

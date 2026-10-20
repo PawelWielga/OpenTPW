@@ -1314,6 +1314,29 @@ public static class DebugConsole
 				Reply( ParkOrbitCameraMode.State() );
 				break;
 
+			// The End feature's census: the thing, its two scripts, the camera's eye and look, the cover and the music dip.
+			case "endfeature":
+				{
+					if ( ParkEndFeature.Current is not { } end )
+					{
+						Reply( $"endfeature: none standing; camera eye ({Camera.Position.X:F2}, {Camera.Position.Y:F2}, {Camera.Position.Z:F2}) ride view "
+							+ $"{(ParkRideViewCameraMode.Active ? "on" : "off")}; music dip {ParkRides.Current?.Scheduler.MusicDip}" );
+						break;
+					}
+
+					var scheduler = ParkRides.Current?.Scheduler;
+					var own = scheduler?.Find( end.Script.Id );
+					var child = own is { ChildId: not 0 } ? scheduler?.Find( own.ChildId ) : null;
+					var look = Camera.Rotation.Forward;
+
+					Reply( $"endfeature: thing {end.ThingId}, script {end.Script.Id} {end.Script.Name} {(own?.Running == true ? "running" : "ended")}"
+						+ $" VAR_STATUS {(own is null ? "-" : own["VAR_STATUS"].ToString())}, child {(child is null ? "none" : $"{child.Id} {child.Name}")}"
+						+ $", made {Time.WallMilliseconds - end.MadeAt} ms ago; camera eye ({Camera.Position.X:F2}, {Camera.Position.Y:F2}, "
+						+ $"{Camera.Position.Z:F2}) look ({look.X:F3}, {look.Y:F3}, {look.Z:F3}) ride view {(ParkRideViewCameraMode.Active ? "on" : "off")}"
+						+ $"; cover {(Level.Current?.FullScreenView == true ? "on" : "off")}; music dip {scheduler?.MusicDip}" );
+					break;
+				}
+
 			// Down to eye level and back, which is the only way to see a park's sky: from the orbit
 			// camera the horizon sits above the top of the frame. `camcorder` toggles; two arguments
 			// stand the viewer at a world position first.

@@ -141,6 +141,53 @@ public sealed class ParkRides : Entity
 	}
 
 	/// <summary>
+	/// Gives a fixed item made at its summons its item's script from word 0, its standing animation players and its model's
+	/// nodes standing as the file holds them (<see cref="RideNodes.PlaceFixed"/>): the End feature
+	/// (<c>World_MakeEndFeature</c>, <c>0x00516b00</c>; <see cref="ParkEndFeature"/>). Answers the script, or null where
+	/// none would run. <see cref="Unbind"/> takes it down.
+	/// </summary>
+	public RideScript? BindFixed( int thingId, ParkItemCatalogue.Item item )
+	{
+		if ( _scripts.ContainsKey( thingId ) )
+			return null;
+
+		var id = Scheduler.Spawn( ScriptPathFor( item ) );
+
+		if ( id == 0 || Scheduler.Find( id ) is not { } script )
+		{
+			++Scriptless;
+			return null;
+		}
+
+		_scripts[thingId] = id;
+
+		script.ThingId = thingId;
+		script.Animations = PlayersFor( thingId, item );
+
+		if ( script.WalkSlots != 0 || script.UsesHeads || script.UsesEffectNodes )
+		{
+			try
+			{
+				script.Nodes = RideNodes.Load( item.Directory, item.Stem, _files, item.DoHeadProcessing,
+					script.Animations.AllClips );
+				script.Nodes?.PlaceFixed();
+			}
+			catch ( Exception e )
+			{
+				Log.Warning( $"{ThemeName}: thing {thingId} ('{item.Name}')'s model will not read, so its effects stand on "
+					+ $"no node - {e.Message}" );
+			}
+		}
+
+		if ( script.Animations.Loaded > 0 )
+			_animated.Add( thingId );
+
+		Log.Info( $"{ThemeName}: thing {thingId} ('{item.Name}') now runs {ScriptPathFor( item )}, standing as its file holds it" );
+
+		return script;
+	}
+
+	/// <summary>
 	/// Takes a sold thing's script down, and whatever that script spawned with it - the object destructor's
 	/// last word on its script (<c>0x004dd2c9</c>). Answers whether the thing had been given a script at all;
 	/// one that never was is the original's id-nought no-op. See <c>docs/exe/park.md</c>, "What selling a

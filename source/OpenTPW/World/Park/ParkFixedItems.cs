@@ -26,9 +26,10 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// <b>Five of the six fixed items are here; end is not.</b> None of the vehicles is scenery: the bus spawns at
+/// <b>Five of the six fixed items are here; the sixth, end, is made only at the end of research</b>
+/// (<see cref="ParkEndFeature"/>). None of the vehicles is scenery: the bus spawns at
 /// cell (29.7,-11.5) and the ferry at (90.0,-17.6), both off the map on negative depth, and the seaplane off it on
-/// negative x; end.wad is three aircraft 59 units in the air. Each vehicle runs its own <c>.RSE</c> in
+/// negative x; end.wad is eight aircraft 59 units in the air. Each vehicle runs its own <c>.RSE</c> in
 /// <see cref="RideScript"/> and travels the Bezier route authored in its model file (<see cref="ModelFile.Paths"/>,
 /// which <see cref="LobbyModel"/> takes up): not one of the nine vehicle clips carries a position track
 /// (<c>Endm1/2/3</c> do, which is the control). <c>ParkPeople.StepVehicle</c> releases them round their circuits.

@@ -461,7 +461,11 @@ whole list):
   that backed-up file, `q550/confirm-fs.py`) a finished ride appends its upgrade from the items' own files, which
   kind 4's nought effort never funds: end on a feature (`q550/stone240-fs.TPWS`, Stone Head at 240, tick 800). The
   End's view itself, with the camera and the layers read, is `q551/orig/run.sh` (`original/camread.py`; it waits for
-  the End's id and frames every 2 s, moving the pointer).
+  the End's id and frames every 2 s, moving the pointer). Ours: the console's `endfeature` is the End's census (its
+  thing, its two scripts, the eye and the look, the cover, the dip), and `q703/confirm.py <out> <bin> a|b` runs the
+  scene through the End to Escape (`a`) or to a right click (`b`). First person's fog, drawn in the End's view too,
+  hides what stands past about 150 units (the End's planes at rest): `fog 2000 2100` pushes it out for a look
+  (`q703/exp-fog.py`).
 - **A park bigger than its handymen, or its guards** (Q411, Q412; `lib/pathscene.py`, Q411's `q411/mkscene.py` made it
   first): the stock park paused on 765 and `path X Y` given for the first N cells of the 17 x 17 bare block at (60,15) (`parkfile.bare_blocks`), each
   with a 0.15 s wait (`stockscene.py`'s 2.5 s a command is twelve minutes for 289), then saved: 126 + N developed

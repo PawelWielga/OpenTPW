@@ -574,7 +574,8 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 	/// <b>One branch of the original's loop is not built.</b> After every pass it asks <c>FUN_0042a340</c>
 	/// whether the cell it ends in rides something (<see cref="RideAt"/>), and on finding a ride starts that
 	/// ride's view from first person - the ride window's "Ride it!", <c>FUN_004e15b0</c> - and ends the sweep.
-	/// There is no ride view here, so the walk carries on and the pass is counted instead.
+	/// A ride's own view is not built here (only the End feature's, <see cref="ParkRideViewCameraMode"/>), so the walk
+	/// carries on and the pass is counted instead.
 	/// </para>
 	/// </summary>
 	/// <param name="blocked">

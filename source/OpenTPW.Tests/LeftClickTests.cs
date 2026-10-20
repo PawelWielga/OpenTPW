@@ -542,6 +542,50 @@ public class LeftClickTests
 	}
 
 	/// <summary>
+	/// <b>A cover with a handler of its own hears a right click</b>, the End feature's (<c>0x0048aaf8</c>), asked at the
+	/// press, and the view's answer is not asked under it; the cover taken off takes its handlers with it, and the full-screen
+	/// view's cover, which has none, answers no click.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the cover's answer not asked; the view's asked under the cover; the handlers kept off.</remarks>
+	[TestMethod]
+	public void ACoverWithAHandlerOfItsOwnHearsTheRightClick()
+	{
+		int cover = 0, view = 0;
+
+		_stack.ViewRightClick = () => () => ++view;
+
+		try
+		{
+			Frame( true, Nowhere, 1000, right: true );
+			Frame( false, Nowhere, 1100, right: true );
+			Assert.AreEqual( 1, view, "off the cover a right click is the view's" );
+
+			_stack.Cover( true );
+			_stack.CoverRightClick = () => () => ++cover;
+			_stack.CoverKeys = _ => { };
+			Frame( true, Nowhere, 3000, right: true );
+			Frame( false, Nowhere, 3100, right: true );
+			Assert.AreEqual( 1, cover, "the cover's handler hears it" );
+			Assert.AreEqual( 1, view, "and the view does not" );
+
+			_stack.Cover( false );
+			Assert.IsNull( _stack.CoverRightClick );
+			Assert.IsNull( _stack.CoverKeys );
+
+			_stack.Cover( true );
+			Frame( true, Nowhere, 5000, right: true );
+			Frame( false, Nowhere, 5100, right: true );
+			Assert.AreEqual( 1, cover, "the full-screen view's cover answers none" );
+			Assert.AreEqual( 1, view, "nor does the view under it" );
+		}
+		finally
+		{
+			_stack.Cover( false );
+			_stack.ViewRightClick = null;
+		}
+	}
+
+	/// <summary>
 	/// <b>A press let go inside one frame is still a click</b>, a button's and a control's, and a double click whose two
 	/// presses fall in one frame is still a click and a double click's second, as the original is sent each message.
 	/// </summary>

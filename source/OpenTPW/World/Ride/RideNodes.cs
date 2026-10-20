@@ -131,6 +131,7 @@ public sealed class RideNodes
 	/// </summary>
 	public void Place( Vector3 origin, int degrees )
 	{
+		_fixed = false;
 		_origin = new Numerics.Vector3( origin.X, origin.Z, origin.Y );
 
 		// The two table indices as FUN_00467030 forms them (0x0046717c): the turn in radians as a float, times the
@@ -142,6 +143,21 @@ public sealed class RideNodes
 		_sin = Table( (int)Math.Round( sine, MidpointRounding.ToEven ) );
 		_cos = Table( (int)Math.Round( cosine, MidpointRounding.ToEven ) );
 	}
+
+	/// <summary>
+	/// Stands the model as its file holds it, the root's own matrix kept whole: a fixed item's (<c>Info.DontApplyOffset</c>),
+	/// whose model the object constructor makes world-placed (<c>FUN_004dd500</c>'s flags <c>0x361</c>; <c>docs/exe/saves.md</c>,
+	/// "Q342"). The End's view node read so in the original at End.MD2's own (480.53, 10, 200) (<c>q551/orig</c>).
+	/// </summary>
+	public void PlaceFixed()
+	{
+		_fixed = true;
+		_origin = Numerics.Vector3.Zero;
+		_sin = 0f;
+		_cos = 1f;
+	}
+
+	private bool _fixed;
 
 	/// <summary>
 	/// One entry of the engine's sine table (<c>FUN_004708d0</c>): <c>sin( i / 4096 × 6.2831855f )</c>, stored as a float,
@@ -356,6 +372,26 @@ public sealed class RideNodes
 		return RidesAClip( node ) ? NodeEnd.RestPose : NodeEnd.Posed;
 	}
 
+	/// <summary>
+	/// The ride view's eye: the model's first lookup record of id 1 under <c>0x1000</c> (<c>FUN_0042a560</c> through
+	/// <c>FUN_0044b220</c>) and its whole stored matrix, in the model's own axes (y up). The view marks its record stored
+	/// each frame (runtime bit 4), so a node with no matrix of its own is posed all the same; only a model without one is
+	/// <see cref="NodeEnd.Missing"/>.
+	/// </summary>
+	public NodeEnd FindView( out Numerics.Matrix4x4 world )
+	{
+		world = Numerics.Matrix4x4.Identity;
+
+		var node = _model.FindNode( ParkEntranceGate.ViewNodeId, ParkEntranceGate.ViewSpace );
+
+		if ( node < 0 )
+			return NodeEnd.Missing;
+
+		world = Stored( node );
+
+		return RidesAClip( node ) ? NodeEnd.RestPose : NodeEnd.Posed;
+	}
+
 	/// <summary>The space a particle's node is found in (<c>FUN_00557970</c>, types 1 and 2).</summary>
 	public const uint ParticleSpace = 0x100;
 
@@ -426,6 +462,9 @@ public sealed class RideNodes
 	/// </summary>
 	private Numerics.Matrix4x4 Root( Numerics.Matrix4x4 file )
 	{
+		if ( _fixed )
+			return file;
+
 		(float X, float Z) Turn( float x, float z )
 			=> ((float)((double)x * _cos + (double)z * _sin), (float)((double)z * _cos - (double)x * _sin));
 

@@ -68,12 +68,12 @@ public class Level
 	/// up, nought otherwise (<see cref="LinearFogFor"/>).
 	/// </summary>
 	internal static System.Numerics.Vector4 LinearFog =>
-		LinearFogFor( Current?.Kind, ParkCamcorderCameraMode.Active, Current?.FirstPersonFog );
+		LinearFogFor( Current?.Kind, ParkCamcorderCameraMode.Active || ParkRideViewCameraMode.Active, Current?.FirstPersonFog );
 
 	/// <summary>
-	/// First person's fog where it reaches: in a park, in first person (the original's render-word <c>0x2000</c>, set
-	/// with <c>0x80</c> by <c>Game_StateMachine</c>'s <c>XOR 0x2080</c> at <c>0x0054fae2</c> while
-	/// <c>gui_CameraFlags &amp; 0x16</c> is; the ride's view, the other view it sets it for, is not built).
+	/// First person's fog where it reaches: in a park, in first person or a ride's view (the original's render-word
+	/// <c>0x2000</c>, set with <c>0x80</c> by <c>Game_StateMachine</c>'s <c>XOR 0x2080</c> at <c>0x0054fae2</c> while
+	/// <c>gui_CameraFlags &amp; 0x16</c> is; the End feature's is the only ride view built).
 	/// </summary>
 	internal static System.Numerics.Vector4 LinearFogFor( Scene? kind, bool firstPerson, FirstPersonFog? fog ) =>
 		kind == Scene.Park && firstPerson && fog != null ? fog.Uniform : default;
@@ -640,8 +640,8 @@ public class Level
 	/// <summary>
 	/// The end of research (<see cref="ParkResearch.AllDone"/>; <c>Lab_OnMessage</c>, <c>0x00503e15</c>..<c>0x00503fb7</c>):
 	/// the park marked all researched in the player's progress and, where <see cref="ParkResearch.MarkAllResearched"/>
-	/// says they follow, advisor message <c>0xa7</c> (row 167) posted about no thing and the End feature
-	/// (<c>World_MakeEndFeature</c>, <c>0x00516b00</c>), which is counted.
+	/// says they follow, advisor message <c>0xa7</c> (row 167) posted about no thing and the End feature made
+	/// (<c>World_MakeEndFeature</c>, <c>0x00516b00</c>; <see cref="ParkEndFeature"/>).
 	/// </summary>
 	private void EndOfResearch( ParkState state, int tick )
 	{
@@ -655,8 +655,21 @@ public class Level
 			return;
 
 		state.AdvisorMessages?.Post( ParkAdvisorMessages.AllResearched, tick );
-		Unimplemented.Report( "RESEARCH_END_FEATURE" );
+
+		if ( Catalogue is not { } catalogue || ParkRides.Current is not { } rides || ParkObjects.Current is not { } objects
+			|| _windows is not { } windows )
+		{
+			Log.Warning( "Research: the park has no catalogue, rides, objects or windows, so no End feature is made" );
+			return;
+		}
+
+		// Made after this frame's entity walk, in which the lab's sweep runs: the original makes it inside the lab's
+		// message (0x00503fb7), so ours stands up later in the same frame, before anything is drawn.
+		_endFeatureOwed = () => ParkEndFeature.Make( catalogue, state, rides, objects, windows, InstantAction );
 	}
+
+	/// <summary>The End feature owed by <see cref="EndOfResearch"/>, made after the frame's entity walk.</summary>
+	private Action? _endFeatureOwed;
 
 	/// <summary>
 	/// Writes the park just entered as <c>restart.INTS</c> where the player's folder for the theme holds none, as the
@@ -1396,6 +1409,13 @@ public class Level
 		GameClock.Update( PausedByWindow(), Kind == Scene.Park ? GameClock.ParkCatchUp : GameClock.LobbyCatchUp );
 
 		Entity.All.ForEach( entity => entity.Update() );
+
+		// The End feature asked for in the walk above, made outside it: its model adds entities, which the walk cannot take.
+		if ( _endFeatureOwed is { } owed )
+		{
+			_endFeatureOwed = null;
+			owed();
+		}
 
 		// The bumper rides' boats stood where this frame's track ticks left their cars, outside the walk above, which
 		// cannot take the entities a new boat adds.
@@ -2711,6 +2731,8 @@ public class Level
 		// the first one was left looking at, and standing wherever it was last walked to.
 		ParkCamcorderCameraMode.Forget();
 		ParkOrbitCameraMode.Forget();
+		ParkRideViewCameraMode.Leave();
+		ParkEndFeature.Forget();
 
 		// And whatever build mode was armed, for exactly the reason the two cameras above are forgotten:
 		// it is static so that it survives a frame, which means it survives the SCENE as well unless

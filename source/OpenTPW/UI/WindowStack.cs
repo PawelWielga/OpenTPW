@@ -246,7 +246,11 @@ internal sealed class WindowStack : Panel
 		Covered = covered;
 
 		if ( !covered )
+		{
+			CoverKeys = null;
+			CoverRightClick = null;
 			return;
+		}
 
 		_leftPress = default;
 		_rightPress = default;
@@ -258,6 +262,18 @@ internal sealed class WindowStack : Panel
 		_pressed.PointerReleased();
 		_pressed = null;
 	}
+
+	/// <summary>
+	/// The keys of a cover with a handler of its own, in place of the full-screen view's, each as it is let go: the End
+	/// feature's control (<c>EndFeature_OnMessage</c>, <c>0x0048a970</c>). Null for the full-screen view's; taken off with the cover.
+	/// </summary>
+	internal Action<Input.KeyRelease>? CoverKeys { get; set; }
+
+	/// <summary>
+	/// What a right click on a cover with a handler of its own answers, asked at the press as <see cref="ViewRightClick"/>
+	/// is; null for the full-screen view's, which answers none. Taken off with the cover.
+	/// </summary>
+	internal Func<Action?>? CoverRightClick { get; set; }
 
 	/// <summary>Whether a modal window is up, which takes every press that misses its controls - see <see cref="PointerTaken"/>.</summary>
 	internal bool ModalUp => _windows.Exists( window => window.Modal && !window.Hidden && !window.PutAway );
@@ -368,6 +384,8 @@ internal sealed class WindowStack : Panel
 		_mouseWasDown = false;
 		_rightWasDown = false;
 		Covered = false;
+		CoverKeys = null;
+		CoverRightClick = null;
 		ParkScreenOpen = false;
 		_pointed = null;
 		PostHelp( -1, [] );
@@ -623,7 +641,7 @@ internal sealed class WindowStack : Panel
 	{
 		if ( down && !_rightWasDown )
 		{
-			var answer = RightPointerTaken ? null : ViewRightClick?.Invoke();
+			var answer = Covered ? CoverRightClick?.Invoke() : RightPointerTaken ? null : ViewRightClick?.Invoke();
 
 			var now = Time.WallMilliseconds;
 

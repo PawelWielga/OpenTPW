@@ -196,7 +196,8 @@ internal sealed class ParkFrontEnd : Panel
 	/// <para>
 	/// F3 let go with no modifier held is the game table's row 4 (key 0x72, <c>0x0040c4b0</c>), the full-screen view's
 	/// toggle - see <see cref="ToggleFullScreen"/>. While the view is on every key is its control's
-	/// (<see cref="FullScreenKey"/>), each in the order it came up, so an Escape that turns it off opens no menu.
+	/// (<see cref="FullScreenKey"/>), each in the order it came up, so an Escape that turns it off opens no menu. A cover
+	/// with keys of its own, the End feature's, hears them instead (<see cref="WindowStack.CoverKeys"/>).
 	/// </para>
 	/// </summary>
 	private void ParkKeys()
@@ -206,7 +207,9 @@ internal sealed class ParkFrontEnd : Panel
 			if ( release.Key is Key.Escape or Key.F3 )
 				Log.Info( $"Park keys: {release.Key} let go, {release.Held} held as it came up, {Input.Held} as the frame ends" );
 
-			if ( _stack.Covered )
+			if ( _stack.Covered && _stack.CoverKeys is { } cover )
+				cover( release );
+			else if ( _stack.Covered )
 				FullScreenKey( release );
 			else if ( release.Key == Key.Escape )
 				MenuKey( _stack.Windows.Count > 0 ? _stack.Windows[^1] : null, release.Plain );
@@ -351,8 +354,8 @@ internal sealed class ParkFrontEnd : Panel
 	/// The full-screen view's toggle, <c>FUN_004a29d0</c> (<c>docs/exe/park-engine.md</c>, "The full-screen view: F3").
 	/// Turning it on puts a full-screen control over the park's layer, which takes the focus, and hides the layer: the
 	/// gadget, the money, the help bar and any park screen go, and the pointer stays (<see cref="WindowStack.Covered"/>).
-	/// It is refused in first person (<c>gui_CameraFlags &amp; 0x16</c>, <c>0x004a29e6</c>; the ride view the same test
-	/// refuses does not exist here). Turning it off shows the layer and hands the focus back.
+	/// It is refused in first person and in the ride view (<c>gui_CameraFlags &amp; 0x16</c>, <c>0x004a29e6</c>; the End
+	/// feature's is the only ride view built). Turning it off shows the layer and hands the focus back.
 	/// </summary>
 	/// <remarks>
 	/// <b>Over a window that has the keys F3 is not heard.</b> The game menu, a message box, the options screen and the
@@ -366,6 +369,10 @@ internal sealed class ParkFrontEnd : Panel
 	/// </remarks>
 	internal void ToggleFullScreen()
 	{
+		// The End feature's control is a cover of its own, which F3 does not take off.
+		if ( _stack.CoverKeys != null )
+			return;
+
 		if ( _stack.Covered )
 		{
 			_stack.Cover( false );
@@ -373,7 +380,7 @@ internal sealed class ParkFrontEnd : Panel
 			return;
 		}
 
-		if ( ParkCamcorderCameraMode.Active )
+		if ( ParkCamcorderCameraMode.Active || ParkRideViewCameraMode.Active )
 			return;
 
 		if ( _stack.ModalUp || _stack.ParkScreenUp )

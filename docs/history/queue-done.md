@@ -9264,6 +9264,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`q551/PREDICTION.txt`, two rounds, one miss recorded: the dip is the word `0x00803ad0`): flags `0x0b04`, eye
   (480.53, 10.00, 200.00), look 0 and 0 through the pointer's moves, layer 0 hidden, the dip 1, the tick running; after
   Escape all back (`q551/orig/a-sheet.png`, `b-sheet.png`). `original/camread.py` new.
+- [x] **Q552. The End feature, made, viewed and ended** (Q703's first piece; lane A). `ParkEndFeature`: the catalogue
+  item named `End` (1605) made after the frame's entity walk as a thing (id the park's next, 43 here) whose model stands
+  as its file holds it (`RideNodes.PlaceFixed`: End.MD2's root keeps its own (480, 0, 170)), `End.RSE` bound from
+  word 0 (`ParkRides.BindFixed`) with its child; the camera in `ParkRideViewCameraMode` on the view node (id 1 under
+  `0x1000`, `RideNodes.FindView`), the turn mixed with the last frame's by `(1000 - t) x 0.0005`, the eye copied
+  (`0x0042cb83`), `t` from `Time.Delta`; first person's fog in it; the full-screen view off, the park screen closed and
+  a cover with keys of its own (`WindowStack.CoverKeys`, `CoverRightClick`). Escape with no modifier, or a right click
+  with RMB cancel on past 2000 ms, deletes it (scripts, dip and `ADDOBJ` particles with it), the orbit and the layer back,
+  and in Instant Action UITEXT 471's box; F3 refused in the ride view. Counted: `RIDE_EFFECT_SOUND` (Q553) and
+  `ANIM_POSITION_TRACK` (Q703). Console `endfeature`. Confirmed on `q550/alldone576.TPWS` (`q703/PREDICTION.txt`, five
+  rounds, three misses recorded; final build 6/6 by Escape and 6/6 by a right click): the eye (480.53, 200.00, 10.00)
+  looking (0.000, 0.961, 0.276), the tick running, the bursts, the box (`q703/side-by-side.png`); 16/16 mutations.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

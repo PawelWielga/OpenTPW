@@ -53,22 +53,26 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q703. The End feature.** From Q245, after Q550 (the end test, the mark and row 167 are built; the End is
-  counted, `RESEARCH_END_FEATURE`, in `Level.EndOfResearch`) and Q551 (the decode: `park-engine.md`, "The End
-  feature's view", "The End feature's handler"). Build `World_MakeEndFeature` (`0x00516b00`): the catalogue item
-  named `End` (jungle's `features/end.wad`, id 1605) made as a fixed object at (0, 0, 0) running `End.RSE` and its
-  child `AnimCtrl.RSE` on our VM, its thing id kept (`0x007cf4f4`, which the bank's end of the park reads); then the
-  screen taken as `FUN_0048ae70` does (a ride view or first person left, the keys taken, the open screen closed, the
-  park's view and the gadget hidden, the pointer still drawn) and **the camera put on the End model's `camera`
-  node** (id 1 under `0x1000`), still, mixed with the last frame's matrix by `(1000 - ms) x 0.0005` (OpenTPW has no ride
-  view: build only this constrained one, a general "Ride it!" is not this item; say the deviation where `Time.Delta`
-  replaces the milliseconds). The handler's ending: Escape, or a right click after 2000 ms with RMB cancel on,
-  deletes the End (its scripts end, the music dip with them; an `EVENT`'s particles stay), gives the keys back,
-  shows the park's view and the orbit where it was, and in Instant Action shows UITEXT 471's box. Confirm on
-  `q550/alldone576.TPWS` (tick 800 in both games; `TOOLING.md`, "The end of research on demand") beside the
-  original's frames (`q551/orig/`): the view up the path from inside the gate, the planes' star trails and the bursts,
-  the census of the End's scripts and their effects; then Escape and the box. Not decoded: `FUN_004862a0`'s effect;
-  what reads `VAR_STATUS`; the sounds were not listened to. Row 168 (`0xa8`) has no poster found.
+- [ ] **Q703. The End's planes fly, their trails follow, and the advisor is not drawn over it.** From Q552 (the End
+  made, its view, its keys and its ways out are built; `park-engine.md`, "The End feature's view", "OpenTPW builds it").
+  Three parts, each seen beside the original's frames (`q551/orig/b-sheet.png`, `q550/orig/a-4`, `a-5`):
+  (1) **Clip position tracks** (channel `0x1`, `AnimationFile.PositionTracks`) are read and posed nowhere, counted
+  `ANIM_POSITION_TRACK` in `LobbyModel.Pose`: 455 of the 4,318 shipped clips carry one (`wadcat --anim`, `pos N`;
+  end.wad 12, and Lost Kingdom rides among them: bouncy, junspray, totem, volcano, monkey), so a node a clip moves
+  stands where it rests. Decode how the pose walk applies a key (in the parent's frame or the world's; a parent's
+  turn), measure it across every such clip, and build it in `MeshRotator`/`LobbyModel`: the End's eight planes then fly
+  `Endm1`-`Endm3` (run `fog 2000 2100` to see them where first person's fog would hide them: `q703/exp1/`).
+  (2) **An emitter on a clip's node is not moved with it** (`PARK_PARTICLE_NODE_ON_A_CLIP`; the engine walks a script's
+  effect list every tick, `FUN_005516b0`, and moves what plays by its lookup record): the planes' star trails (93 to 95
+  on `Dummy01`-`24`) and the Jungle Spray's jet. (3) **The advisor is drawn through the End in ours**, speaking row
+  167, where the original's frames show none while its `0xa7` and `0x5d` play: decode what hides him (the ride view,
+  the End's control, or a layer) before building. Also Q551's text to check against the run: `EVENT 1 18 3` and
+  `1 20 3` are `P_EFFECT_Firework1` (ours started 6, 3, 6, 3 on nodes 17 to 20, `q703/run4/run.log`).
+- [ ] **Q553. A script's sound effects play.** From Q552. `ADDOBJ` and `EVENT` of types 3 to 10 (`Sound_PlayEffect`
+  through `FUN_00557970`) start no sound here and are counted, `RIDE_EFFECT_SOUND` (`RideEffects`; 39 in the End's first
+  30 s, End.RSE's `cat_ui` 186 and `cat_rides` 200 to 202, AnimCtrl's `cat_ambient` 209; every ride with a sound node
+  counts too). Decode the sound's place (its node in space `0x200`), its category and its stop by `KILLOBJ`, build it,
+  and confirm by the game's own mix (`lib/mixmatch.py`) beside the original's.
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge

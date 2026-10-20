@@ -672,6 +672,11 @@ public sealed class LobbyModel
 				Unimplemented.Report( "ANIM_PATH_FACING" );
 		}
 
+		// Where a node sits over time - channel 0x1: read (AnimationFile.PositionTracks) and posed nowhere, so a node a
+		// clip moves stands where it rests (the End's planes; 455 of the shipped clips carry one).
+		if ( animation.PositionTracks.Count > 0 )
+			Unimplemented.Report( "ANIM_POSITION_TRACK" );
+
 		foreach ( var animator in Animators )
 			animator.Pose( animation, frame );
 	}
