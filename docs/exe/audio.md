@@ -436,7 +436,7 @@ layouts and the jungle values). `FUN_0055a3e0( script, slot )` answers the child
 | 0 | `FUN_004392a0` (`0x0043932f`) | coaster, per train (list `DAT_00790fe0`) | plays it into the train's `+100`, after stopping the old voices; skipped while `DAT_00785a2c` is set |
 | 1 | `FUN_004392a0` (`0x00439363`) | the same | plays it into the train's `+0x68` |
 | 5-8 | `FUN_004392a0`, `FUN_004396e0` | the same | stored in the train at `+0x54`..`+0x60` (use not read) |
-| 0 | `Bumper_Retarget` `FUN_0054a040` (`0x0054a366`, `0x0054a682`, `0x0054a909`) | bumper, go-kart, water arms | plays it into the car's held voice `+0x20` |
+| 0 | `Bumper_Retarget` `FUN_0054a040` (`0x0054a366`, `0x0054a682`, `0x0054a909`) | bumper, go-kart, water arms | plays it into the car's held voice `+0x20`; the go-kart and water arms for every new car (`0x100000`), so each kart and boat has its own (`park.md`, "The karts' and the water ride's track, buoys and race") |
 | 1 | `FUN_0054ae50` (`0x0054b01d`) | go-karts only (types -4, -7, -9, -10), as a car is taken off | plays it; every other type fades its voice |
 | 3 | `Bumper_PlayCarSound` `FUN_00547170` (`0x00547311`) | bumper, go-kart, water | case 2, the toot (logs "TOOT") |
 | 4 | the same (`0x00547425`) | the same | case 4 |
@@ -445,7 +445,7 @@ layouts and the jungle values). `FUN_0055a3e0( script, slot )` answers the child
 
 So slot 10 is `VAR_PAR0` of the 11-variable layout and slots 5-8 are `VAR_PAR0`-`VAR_PAR3` of the 10-variable one. **No
 caller reads slot 2**, so the coasters' `VAR_EVT2` (69, not an effect in jungle's `cat_rides`) is never played. Not read:
-what sets the car's case to 2 or 4, the gates on the go-kart and water arms of `Bumper_Retarget`, and what
+what sets the car's case to 2 or 4, and what
 `DAT_00785a2c` is. `FUN_0055a3e0` answers 0 for a script with no sound script or a slot past its variable count.
 
 ### The bumper arm's engine (read for Q202, measured in the original)

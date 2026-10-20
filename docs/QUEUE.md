@@ -69,13 +69,6 @@ filed the items that cite it.
   `TRIGWAITANIM` on the model's Bezier path (`ParkFixedItems`, `LobbyModel.Paths`): find which of the path, the clip's
   end frame or the root's turn differs, against the original's frames of its drive-in (`orig3/o-t11*.png`); the ferry
   was not seen docked in the original, so photograph it too.
-- [ ] **Q581. The kart and water rides run for guests: Dino Karts and Splish Splash (decode first).** From the queue
-  reorder of 2026-10-20. A bought one's `mIsTrackRideValid` stays 0, so guests are never offered it
-  (`ParkRideChoice.cs`, `ride-operation.md`): there is no car or water-track tool (`PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`,
-  `ParkBuilding.cs`), no car record for BumperType -4 or -5 (`ParkBumperCars.cs`), so every BUMP is a counted no-op
-  (`RideScript.cs`), and the cars' steering to the buoys is not decoded (`park.md`). Dino Karts is the lab's first
-  project (Q701), so a Lost Kingdom player reaches it early. Decode the track tool for these two, the -4/-5 car records
-  and the steering first, then split the build. Q449 (2) holds only the sale refund; Q448 has BUMP 17.
 - [ ] **Q585. The Mayan Spinner's riders stand in a heap at its steps.** From Q584 (`q580/explore5/v00..v29.png`,
   `q580/run-R1c/R1-spinner.png`). Ours: each rider walks on from node 1 to their own node (2 to 7) and is then Carried,
   and every Carried rider is drawn at the top of the steps, heaped, through the whole ride, while the drum rises and
@@ -145,6 +138,30 @@ filed the items that cite it.
   spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
   Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
   spent one on `tourride`.
+- [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
+  the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
+  (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to
+  edit this track") arms mode 0xb or 0x10 with it the anchor; each click lays a straight run, sound 0xce; the walk sets
+  `+0x2c` and makes the sections, their collision objects and buoys (`ParkTrackRideTable`); a closed loop with the open
+  guard opens the ride, and a later queue edit opens a closed valid one (the tail `ride-operation.md` cites). Decode
+  first what it leaves unread: which `gk_trck*`/`wr_trck*` model a piece draws, a piece's cost and refund,
+  `FUN_0052c6f0`/`FUN_0052ccb0`. Confirm on `q581/karts.TPWS` by the same clicks as `q581/orig` (stations at (32,25)
+  and (20,20), loops to (34,29)/(28,29) and (22,23)/(16,23)): sections and buoys against `q581/orig/A-track.log` and
+  `D-track.log`, and the pieces photographed beside the original's (`B-5-closed.png`, `D-13-boats.png`).
+- [ ] **Q588. Dino Karts race for guests.** After Q587. The -4 record (`Bumper_LayRide`'s grid and start buoys, the
+  template's 3 laps, 2048 arrival), `BUMP 7` to state 1 and the race's first buoy, `BUMP 4` a kart a rider (mesh
+  `cars % 4`), the retarget's grid and race arms with the thrust bonus, the buoy arm's laps, state 3 and the end at the
+  unload point, `BUMP 14` and `BUMP 3`, the step's clips 5 and 0xc by speed, and the track's objects in the point test,
+  the rim and the obstacles (quarters, rectangles, 0x40 circles). Not read, to decode or count: the seat a rider takes
+  (`FUN_00549c60`), a kart's height over the track. Confirm against `q581/orig/C-track.log` (the grid, 9 to 16 and 8,
+  the timer -3 to 0, state 3, the next kart at the centre) and a frame of a kart on the track (`C-4-race.png`). Moves the
+  website's rides list.
+- [ ] **Q589. Splish Splash runs for guests.** After Q588. The -5 record (one start buoy, unload point a third of the
+  way to it, 512 arrival, 64 boats), `BUMP 7` straight to state 2, a boat carrying the whole boarding list straight to
+  the race, one lap, removed at the unload point with the ride left at 2, and the boat's spin (`+0x58` set at a rim or
+  an obstacle, × 0.998 a tick, turn `+0x58 / 128`; the term the contact sets is not read). Confirm against
+  `q581/orig/D-track.log` and `D2-track.log` and a frame of a ring in the channel (`D-13-boats.png`). Moves the
+  website's rides list.
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
   the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
   the music's class `0x406`, Q563, a voice out of range, Q564, a ride's scream out of range, and Q565, a script's

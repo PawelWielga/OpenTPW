@@ -141,6 +141,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/research.py <in> <out> <item> [0]` | A copy of a jungle park file with one item marked researched, so Instant Action's buy list offers it; with a last `0`, marked not researched, which both games keep for an item whose research costs nothing (Q335) |
 | `original/savepark.sh <NAME> <dest.TPWS>` | The RUNNING original (off-screen) saves its park from its own menu: Escape, Save, NAME typed, the tick; the file is moved out of the reference player's jungle folder to `dest` (frames `dest-typed.png`, `-after.png`), so the install's `save/` sum stays (`gms.dat`'s time changes). A file of the original's own to set beside this game's (Q523) |
 | `original/advdraw.py PID [SECS] [STEP]` | Is the original drawing its advisor, live, a line a change: `gui_CameraFlags`, `g_Advisor_Busy`, the speaking slot, the one view's flags, and for slots 0 and 1 the node word, whether the model's renderable is in render list 1 and whether its draw stamped it in the last two frames (`drawn`, `stale`, `never`), each line ending with the wall clock to time a `record.sh` film by. A `POLL` for `loadfile.sh` (Q556; `ui.md`, "How he reaches the screen") |
+| `original/trackride.py PID SECS [BT]` | The original's track rides (karts, water rides, bumper rides), live, a block a change: each record of `[0x00877b60]` (BumperType BT alone if given) with the object holding it and that object's `mIsTrackRideValid`, duration, state, cars, seated, its motion record at its performance, centre, unload point, turn flags and race buoy; every buoy (flags, place, object) and section (type, cell, collision objects with their flags and radii); each live car (flags, place, velocity, buoy, timer, bonus, patience, heading, `+0x58`, turn, mesh, clip); and the build tool's mode and anchor (Q581) |
 | `original/original.sh`, `tpwmem.py`, `gmove.py`, `record.sh`, `watch.sh` | Starting, reading, clicking, filming and watchpointing the original ("The original under Proton", below) |
 | `original/timens.py SECONDS CMD...` | A command run in a time namespace where the computer has been up SECONDS: the original's park clock without a restart (warning 1, below). `original.sh start` runs the game in it, 60 s, by default (`ORIG_TIMENS=0` starts it plainly). Ubuntu's `kernel.apparmor_restrict_unprivileged_userns=1` refuses it to a plain process (`PermissionError` on `/proc/self/setgroups`), so it runs under Steam's AppArmor profile, which allows user namespaces: `aa-exec -p steam -- python3 timens.py 60 CMD` |
 | `original/kwinwl-start.sh` | A private display on `:78` drawn by the graphics card (`kwin_wayland --virtual` with Xwayland) for the original, where Xvfb draws by software. `:78` is `parkrun.py`'s too. **Not run since it was written**: try it before leaning on it |
@@ -1405,6 +1406,19 @@ GH=766` there, or the pointer is off):
   at 1280 x 720, so the breaks compare). Over the gate (475,155) 110 180 and the Belly Bounce (480,265) 150 180 both
   rows wrap; a land row on the buy screen holds a break of its own. Measure the white ink inside the strip's band, and
   keep the gadget out of the band (its white triangle sits at x ~420 on our frame).
+- **A karts' or water ride's loop laid by clicks in the original** (Q581, `q581/orig/`, off-screen on `:77` through
+  `loadfile.sh`): on `q581/karts.TPWS` (Dino Karts and Splish Splash researched, the bank 60,000) the buy screen
+  (113, 590) lists Dino Karts at y 277 and Splish Splash at y 341 (`helpbar.py`'s `buy item` while moving down x 620).
+  Picked up, the tool is 4 and the preview's cell `[0x008186b8]`, `[0x008186b4]` follows, so `camto.py` then
+  `cellfind.py` find a cell; in mode 0 the preview stands still, so find a cell with `PICK=1` (the picker's) or arm a
+  tool first. Put down, it arms the queue (3), not the track: Escape leaves it. The track tool is armed by clicking a
+  mouth piece ("Left-click to edit this track"); then each click is a straight run, and `cellfind.py` reaches only
+  cells on the anchor's row or column (the preview snaps there), so map the next corner after each click. A
+  Splish Splash on (32,15) was refused, its red footprint on the park's fence (`D-2-aim.png`). The purchase leaves a path cell
+  before the exit, and a queue run from the entrance ends at once on it: extend that path to the park's (click it,
+  "Left-click to extend this path", then the far cell), then click the queue's cell and that path cell to edit the
+  queue, which opens the closed, looped ride. A click on a person opens their window: check the mode after each
+  click and close a window with its tick (815, 380) before going on. `trackride.py` reads it all.
 - **An Alt chord in both games** (Q545, `q545/orig/run.sh`, `q545/confirm.py`): the original's on `:77` is `xdotool
   keydown Alt_L`, the letter down and up, then `keyup Alt_L`; ours is `key( "s", what, mods=("Alt_L",) )` through
   `parkrun.py`. Both act on the letter's release, so stamp a reading straight after its key-up, not before Alt goes

@@ -9424,6 +9424,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Belly Bounce, the Drinks Shop, the Jungle Spray) is the coordinating session's to bring up to date: the Hot Pot
   (Q179b), the Crazy Ape, Rocky Racers and Mumbo (Q190), Aztec Mayhem (Q257u), the Inca Totem, the Balloon, Costume and
   Ice Cream Shops, the Laughing Hyenas, the Strength Bird, Q584's five and these four.
+- [x] **Q581. The kart and water rides run for guests: Dino Karts and Splish Splash (decode first).** From the queue
+  reorder of 2026-10-20. A bought one's `mIsTrackRideValid` stays 0, so guests are never offered it
+  (`ParkRideChoice.cs`, `ride-operation.md`): there is no car or water-track tool (`PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`,
+  `ParkBuilding.cs`), no car record for BumperType -4 or -5 (`ParkBumperCars.cs`), so every BUMP is a counted no-op
+  (`RideScript.cs`), and the cars' steering to the buoys is not decoded (`park.md`). Dino Karts is the lab's first
+  project (Q701), so a Lost Kingdom player reaches it early. Decode the track tool for these two, the -4/-5 car records
+  and the steering first, then split the build. Q449 (2) holds only the sale refund; Q448 has BUMP 17.
+  **Done 2026-10-20, decode only (lane A), nothing built.** `park.md`, "The karts' and the water ride's track, buoys
+  and race"; FileFormats `saves.md` (a section's type) and `sam.md` (`Bumper.WhichTrackType`). The purchase lays the
+  station and both mouths on the track grid and arms the queue first; the track tool (0xb, 0x10) is armed from a piece
+  and lays straight runs; the walk (`TrackRide_WalkCircuit`) gives `+0x2c` and the sections, each with its collision
+  objects and one buoy; the -4 record lays a grid and a start buoy, the -5 a start buoy; karts load to the grid and race
+  minus `VAR_DURATION` laps, the first home putting state 3; boats run one lap at state 2 and spin. Checked in the
+  original (`q581/PREDICTION.txt`, rounds A to D, two misses recorded: the queue is armed first, the track tool from
+  the track): both rides bought, looped, opened and ridden, every section and buoy as predicted. The build is Q587 to
+  Q589. `original/trackride.py` new.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

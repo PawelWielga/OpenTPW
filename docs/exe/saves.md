@@ -2603,7 +2603,7 @@ boat afterwards:
 | `+0x24`, `+0x28` | the lookup records of the model's two emitter nodes, `FUN_0044b220( model, 0x100, 2 )` and `( model, 0x100, 1 )` | the placement, `Bumper_Retarget` for a car still flagged `0x100000` (`0x0054a1b0`..`0x0054a1ea`) | 3 and 2, from its placement on |
 | `+0x58` | the heading the drawn heading turns to | `Bumper_StepCar`, only while the ride's state is 2: the steering heading `+0x50` for BumperType -1, the velocity's heading for the others | nought until its ride's first go, then `+0x50` as the last tick of a go left it |
 | `+0x60` | how far the turn `+0x5c` changed in the last tick | `Bumper_StepCar`'s last arm alone, which the bumper family's arm never reaches; the draw reads it for a car flagged `0x1000` | nought |
-| `+0x68` | the thrust bonus (`park.md`, "How a bumper ride's cars move") | the karts' and the water ride's arms | nought |
+| `+0x68` | the thrust bonus (`park.md`, "How a bumper ride's cars move") | the karts' race retarget, `(3 − (rand & 7)) × thrust / 9`; the water ride's sets nought (`park.md`, "The karts' and the water ride's track, buoys and race") | nought |
 | `+0x84` | nothing: no instruction of `0x00543000`..`0x0054c000` reads or writes a register's `+0x84` | the launch's zeroing | nought |
 | `+0xa0` | a float, the height the car was last drawn at | the draw, every frame, each car of the ride drawn (`0x00546969`) | the pot's water, about 29.80, plus its bob |
 | `+0xa4` | the stuck count (`park.md`, "Kept in the pot") | the launch (nought), then the placement, `Bumper_Retarget`'s bumper arm for a car still flagged `0x100000` (`0x0054a246`) | -1 |

@@ -1283,7 +1283,8 @@ empties the ride sets state 1, "Ride Over - reset to loading", except for the wa
 **What the bumper family's chain does not need.** The cars' motion (`FUN_0054a040` picks each car's next buoy,
 `DAT_00877b78`, or another car to chase; `FUN_00547f50` steps it) and their sounds and emitters are apart from the
 unload: nothing in the chain above reads a car's position. Go-karts and the water ride end their cars by reaching
-buoys instead (`FUN_005474b0`'s buoy arm, "GoKart Race Over"), so building them needs the steering.
+buoys instead (`FUN_005474b0`'s buoy arm, "GoKart Race Over"): "The karts' and the water ride's track, buoys and
+race", below.
 
 ### Where a bumper ride's cars float
 
@@ -1501,7 +1502,9 @@ boats bump silently.
 flagged `0x40` that holds it, `| 0x10000`; in none, it is put on the rim: velocity (with this tick's bumps)
 `× e / 1024`, then turned by `2 × ( h_out − h_v ) − 256`, `h_out` the heading from the centre and `h_v` that of
 `+0x44`, which reflects it; position `centre + offset × radius / d`. `+0xa4`, the stuck count, is −1 for every bumper
-car, so it never counts. `Bumper_PushOffObstacles` acts on objects flagged `0x40`, which only the unused type −2 lays.
+car, so it never counts. `Bumper_PushOffObstacles` acts on objects flagged `0x40`: the unused type −2's, and the
+inner circle of every bend and crossing of the karts' and the water ride's track ("The karts' and the water ride's
+track, buoys and race", below).
 
 **Measured in the original** (Q179c, `q179c/boatlog.py`, the reference park patched to research the Hot Pot, bought at
 speed 60 and capacity 4; its clock ran 1.56 times real time at 8 days' uptime, so only ticks were counted, not
@@ -1527,6 +1530,114 @@ back, not ahead**: `Game_StateMachine` passes `FUN_00519060` (and so `FUN_005462
 (`0x0054f4c4`), so between −1 and 0; a car is drawn at its position plus its velocity times that, its heading plus
 `+0x5c` times it, and each corner's bob `s[p×m] + (s[p×m] − s[p×m − m]) ×` it. OpenTPW's own per-tick census, replayed
 through Q179c's step check, matched 285 transitions of 285 (`q179d/run4/`).
+
+### The karts' and the water ride's track, buoys and race
+
+Read for Q581, first-hand in Ghidra (the decompiles are kept in `q581/`), and checked in the original under Proton on
+`q581/karts.TPWS` (`q495/cash1500.TPWS` with the bank at 60,000 and both rides researched) with `original/trackride.py`
+(`q581/PREDICTION.txt`, rounds A to D). Dino Karts (1150) is BumperType −4 and `Bumper.WhichTrackType` 1, Splish Splash
+(1160) −5 and 2. Every arm below takes the other themes' karts (−7, −9, −10) with −4 and their water rides (−8, −12,
+−13) with −5. North is −z, the direction ring's (`park-engine.md`).
+
+**Bought.** The place commit (`FUN_00524960` from `0x00524d8c`) lays the footprint, and for track type 1 or 2
+`FUN_0052a050` the queue's first cell and `TrackRide_LayStation` (`FUN_0052a1a0`) the station: a run of track type 0xd
+(karts) or 0x12 (water) over the station's two 2 × 2 sections by the track grid's own ops (`FUN_0053aac0`: the type,
+`0x80`, `0x82`, `0x83`), its first section kept as the circuit's start (`DAT_007639e0`, `e4`), and the mouth, two cells
+past the station's far end, handed back. `FUN_0052f580( 0xb )` (or `0x10`) then arms the track tool, whose type the next
+ops lay at the mouth (`0x87`, the type, `0x80`, `0x83`, `0x85`, `0x86`), and **the queue's seeding re-arms mode 3 over
+it, so the queue comes first**. Measured at turn 0 on preview cell (32,25): the footprint x 30 to 33, z 24 to 26,
+entrance (31,24), exit (32,24), the queue's cell (31,23) and a path cell before the exit (32,23); on the track grid the
+station (0xd) at (30,25) and (32,25), laid track (0xb) at the mouth (34,25) and at (28,25), where the circuit comes back
+in, every other cell of a 2 × 2 0xc; mIsTrackRideValid (`+0x2c`) 0; the tool 4 then 3 (`q581/orig/A-8-put.png`). Splish
+Splash is the same a row further up its 4 × 4 (0x12, 0x10; its other cells 0x11).
+
+**The track tool** (modes 0xb and 0x10; the hoardings' 0x19 shares its arm, `0x00525a1c`) is armed by a click on a piece
+of track, "Left-click to edit this track", with that piece's cell its anchor (`DAT_0081ede4`, `e8`). A click (on the
+button's release) plays sound 0xce and lays a straight run in 2-cell steps from the anchor to the click, moved onto the
+anchor's row or column, whichever is farther (the preview's cell reads the moved one), by ops `0x87`, the type, `0x80`,
+`0x82`, `0x83`, `0x85`, `0x86` and `0x81`. While `0x81` answers not nought the anchor moves to the click and the tool
+stays (`FUN_0052c6f0`, `FUN_0052ccb0` on the object, not read). When it answers nought (the run met track) or the click
+does not move the anchor, the circuit is walked into `+0x2c`; with 1 and the open guard (`FUN_004df290`) the ride opens
+(`FUN_004df390`); the pieces are put to clip 0xc (`TrackRide_PlayPiecesFromMouth`, `FUN_0052a490`, and with no circuit
+`TrackRide_PlayPiecesFromEnd`, `FUN_0052a700`, too; `BUMP 17` plays them 5 or 0xc the same way); the anchor goes to −1,
+and the tool to the queue (mode 3 at the entrance's front) when the queue pointer `0x008186c0` is set, else idle. A
+move's put-down (`0x00524c00`) clears the ride's sections (`TrackRide_ClearSections`, `FUN_00545450`) and walks again.
+Measured: clicks on (34,25), (34,29), (28,29), (28,25): 0xb with the anchor at each, `+0x2c` 0, then 1 and idle on the
+last.
+
+**The walk** (`TrackRide_WalkCircuit( check )`, `FUN_0052a970`) goes from the circuit's start in 2-cell steps the way
+each cell's flow (`+0xd`) and links (`+0xc`) send it: a cell with two links at right angles is a bend
+(`TrackCell_BendLinks`, `FUN_0053ae00`), two opposite a straight (`TrackCell_StraightLinks`, `0x0053ae50`), three or
+more a crossing (`TrackCell_CrossingLinks`, `0x0053ae90`), through which it goes straight on. It answers 1 when it is
+back at its start, and 0 at a cell that is not track (`TrackCell_IsTrack`, `0x0053ad30`: 0xb, 0xd, 0x10, 0x12, 0x19) or
+whose way on has no link. Unless checking, it first lets the ride's sections go and makes one a piece
+(`TrackRide_AddSection`): bend 5 (links north and east), 6 (north, west), 7 (south, west), 8 (east, south); straight 9
+east–west, 10 north–south, 12 and 13 the same with an add-on (the cell's flag 0x10, "Found upgrade... modify?"; the
+section keeps the add-on's model); crossing 11. The first two, the station's, are flagged 0x10000 and lay no buoy. A
+cell's `+0x24` takes its step.
+
+**A section** (`TrackRide_AddSection( handle, x, z, type, … )`, `FUN_0054b2f0`, pool `DAT_00877b80`, 1024 of 0x28; x and
+z its top-left cell × 3072) joins the ride's list (`+0xbc`); a place already there is refused
+("Duplicate track section - IGNORED!"). Its collision objects (pool `DAT_00877b70`, 2048 of 0x20), with `w` the template's `+0x0c` and `r` the
+car's radius: a straight is one rectangle (0x3f, 0x20 square) at its middle, 3104 (0xc20) along and `w − r` across; a
+bend a quarter circle of radius `3072 + w − r` about the corner it turns round (0x1f less the bits of the two sides it
+is open to: 2 x below, 4 x above, 8 z above, 0x10 z below; not whole, so a car in it gets three quarters of its thrust,
+`Bumper_SteerToward`), and the same quarter of radius `3072 − w + r` flagged 0x40, an obstacle
+(`Bumper_PushOffObstacles`); a crossing a round object at its middle (radius not read; flagged 0x80 for the water
+family) and four obstacle quarters at its corners. Its buoy (`Bumper_MakeBuoy`, `FUN_0054b170`; pool `DAT_00877b78`,
+1024 of 0x1c), flagged 1 with the section's first object, is at a bend's arc middle (offsets 0xf84 and 0x87c by the
+bend) or at a straight's or crossing's middle, and joins the ride's buoys (`+0xa8`, count `+0xac`). **Measured**: every
+section, type, place, object and buoy of both rides' ten as predicted (`A-track.log` 496 s; `D-track.log` 171 s): the
+karts' straights 3104 × 1148 and bends 4220 and 1924, the water's 3104 × 257, 3329 and 2815.
+
+**The two templates** (`0x764178`, "How a bumper ride ends a go"): −4 duration −3 (laps), car radius 900, `w` 2048,
+meshes 4 from 0 (`gk_blue`, `gk_green`, `gk_orange`, `gk_purple`), thrust 16–30, friction 960–950, turn 18–34,
+restitution 900, most cars 8, arrival radius 2048; −5 duration −1, radius 1024, `w` 1281, one mesh (`wr_ring`), 4–9,
+970–1000, 7–14, 980, most 64, arrival 512. At 60, measured: 24, 954, 27, 900 and 7, 988, 11, 980. `Bumper_LayRide`
+(`FUN_00545890`) puts the centre and the unload point (`+0x74`, `+0x90`) at the placer's point and lays, for the karts,
+a grid buoy flagged 2 for each car slot `i` below most at `C + R( (most − i − 2) × 1024, i even ? 1024 : −1024 )`, then
+the start buoy flagged 4 at `C + R( −3072, 0 )`; for the water ride the start buoy alone, its unload point `C + R(
+−3072, 0 ) / 3`. `R` is the turn's flags `+0xb0` (0, 5, 6 and 1 for 0, 90, 180 and 270): 1 swaps the pair, then 2
+negates x and 4 z. State 0. Measured: all nine and the one, and the water's unload point.
+
+**Opened** (`BUMP 7`, `Bumper_OpenRide`, `FUN_00544840`), only from state 0: the race's first buoy `+0xa4` is the first
+after the start buoy not flagged 2 (wrapping), and the karts go to state 1 (loading), the water ride to 2 at once. `BUMP
+14` stores minus the laps; `BUMP 3` puts the karts to state 2 and times every car to them (not the water family's).
+Measured: karts 0 → 1 → 2, water 0 → 2.
+
+**A car** (`BUMP 4`, `Bumper_LaunchCar`) takes the whole boarding list and stands at the centre, mesh `cars % count +
+base` (the karts' colours in turn, green first). `Bumper_Retarget`'s arm clears flags 2, 4, 0x10, 0x20, 0x40 and
+0x40000, sets patience 0, and for a new car (0x100000) starts its own looped sound (the sound script's slot 0, for every
+car, not the lead's alone: `audio.md`) and, a kart, its emitter (`0x100` id 1) and, flagged 0x2000 (−9 and −10 set
+0x3c00), a second model. A kart in a loading ride takes the n-th buoy flagged 2, n its ride's cars, flags | 0x10048
+(0x40: to the grid); in a running ride the race's next buoy (`+0xa4`'s when it has none), flags | 0x10008, and a thrust
+bonus `+0x68` = `(3 − (rand & 7)) × (thrust / 9)` from the park's generator. A water boat takes the race buoy in any
+state, bonus 0.
+
+**The buoy arm** (`Bumper_CarTick`). The timer counts down only while at least 0, so a lap count never moves there. A
+car at its buoy (flag 8, no 0x20) steers at it; within the arrival radius: a grid car (0x40) within a quarter of it is
+flagged 0x90000 (0x80000: no thrust) and takes the race's first buoy; a race car at the start buoy (flag 4) in state 2
+adds 1 to its timer, and at 0 (or in states 0 or 3) ends: 0x20, its offset nought, and a kart in state 2 puts the ride
+to state 3 ("GoKart Race Over"), after which every other kart ends at its next start buoy; otherwise it is retargeted.
+Then, if the buoy has an object and the car is not in it, it keeps that buoy with its offset zeroed; else it takes the
+next buoy in the list not flagged 2 (wrapping to the head), the offset's x to z and x `arrival / 2 − rand % arrival`.
+**An ended car** steers at the unload point and within the arrival radius is removed (`FUN_0054ae50`: its riders to the
+leaving list; a kart plays sound 1; a ride left with no kart goes back to state 1, "Ride Over - reset to loading"; the
+water family's stays at 2). Measured: a kart buoys 9 to 16 and the start 8, its timer −3, −2, −1, 0 on the three passes,
+state 3, removed by the unload point, state 1 and the next rider's kart at the centre; a boat 18 to 25 and the start 17,
+ended on its one pass, removed, the ride in state 2 throughout (`C-4-race.png`, `D-13-boats.png`).
+
+**The step** (`Bumper_StepCar`). A kart's drawn heading turns to its velocity's as a bumper car's does; under speed 41
+it plays clip 0xc, at 41 or more clip 5; worn (`+0x54` 1) and over 80, every 32nd tick the private generator gives
+particle 1 (two in eight) or 10 (once). A water boat's heading does not follow its velocity: `+0x58` is a spin that a
+rim or obstacle contact sets (`0x00549b26`, `0x00549787`: ±48 × a term not read), held at × 0.998 a tick while over 48,
+and its turn `+0x5c` is `+0x58 / 128` held to ±16; particle 0x60 one tick in eight of every 32nd in a go. Each car's
+looped sound is pitched speed / 3. Measured: 1287 to 1266 in eight ticks, turn 13 at 1772.
+
+**Not read**: which track model a piece draws (`gk_trck*`, `wr_trck*`; the track grid's tile rule, `FUN_0053afa0`,
+`FUN_0053a540`), what a piece costs or refunds, `FUN_0052c6f0` and `FUN_0052ccb0`, a crossing's middle radius, the
+add-ons (12 and 13) and the hills (`gk_trckH*`), the seat a rider takes (`FUN_00549c60`), a car's height over the track,
+−9's and −10's flags 0x3c00, and the term in a boat's spin.
 
 ### The ride object
 
