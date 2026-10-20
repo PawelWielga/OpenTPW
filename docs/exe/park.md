@@ -39,7 +39,7 @@ Confirmed from `WadArchive.cs` and verified by hand against the header: 4 magic 
 
 ## `.MAP` — the TP2M attribute map
 
-`base.map` / `terrain.map` are self-describing. Layout confirmed against all four parks:
+`base.map` / `terrain.map` are self-describing. Exactly five files in the game open `TP2M` (the four parks' `base.map` and jungle's `terrain.map`), all 16,464 bytes, and the layout holds in all five:
 
     0x00  "TP2M"
     0x04  "Theme Park 2 Attribute Map File\0"   (32 bytes)
@@ -47,9 +47,14 @@ Confirmed from `WadArchive.cs` and verified by hand against the header: 4 magic 
     0x28  uint32 chunk length = 16412
     0x2C  uint32 width  = 128
     0x30  uint32 height = 128
-    0x34  uint32 x5     = 8, 8, 8, 8, 8         (20 bytes, meaning unknown)
+    0x34  uint32 x5     = 8, 8, 8, 8, 8         (20 bytes, in all five files; meaning unknown)
     0x48  128 x 128 attribute bytes              <- body starts at 72, NOT 80
-          (file is 16464; 44 + 16412 = 16456, leaving 8 trailing bytes unexplained)
+    0x4048  "END " + uint32 0                     (8 bytes: 44 + 16412 = 16456, plus this trailer = 16464)
+
+The MAP handler (`0x004d8cf0`) reads width at payload+0 and height at +4, then steps over the five words
+(`add esi,0x14`, `0x004d8d17`) and copies the cells from payload+0x1c, file `0x48`: it never reads them, so they
+have no name in the original (upstream look 2026-10-19, `verify-terrain.md` #1, #2). It places the byte for file
+position (i, j) at cell (i - `MapInfo.XStart`, j - `MapInfo.YStart`), both 0 in every `Standard.sam`.
 
 **Indexing is `index = x * 128 + y`** — X is the major axis. Proven, not assumed: all ten `FixedItemInfo` positions from `Standard.sam` land on a meaningful attribute under `x*128+y` and on 0 under `y*128+x`. TicketBooth (47,13)/(48,13) -> 148; BusStop (42,5)/(53,5), both Crossings and StrikeAreaStart (40,9) -> 144; Entrance (47,17)/(48,17) and FixedItemOrigin -> 8.
 
@@ -379,7 +384,7 @@ counted, `ANIM_PATH_FACING` (Q562).
 
 **The restore mask `0x289` includes position**, so unlike visibility a clip's position IS put back.
 
-**Confirmed, do not re-derive:** morph decode-then-lerp is right; the engine's morph key cursor lives in **shared clip data** and a stateless search is the safe divergence; every clip declares first frame 0, so "elapsed from 0" and "absolute frame" are the same number. The morph channel-count rule is `+2` only when the descriptor's bit `0x2` is set, `+1` otherwise — **unmeasured, flagged not asserted.**
+**Confirmed, do not re-derive:** morph decode-then-lerp is right; the engine's morph key cursor lives in **shared clip data** and a stateless search is the safe divergence; every clip declares first frame 0, so "elapsed from 0" and "absolute frame" are the same number. The morph channel count is the target mesh's vertex count `+2` under both flag values (bit `0x2` set or clear), measured: 1,337 of 1,337 flag-`0x01` and 397 of 397 flag-`0x03` descriptors whose base model resolves (FileFormats `models.md`, "Vertex morph"; upstream look 2026-10-19, `verify-models.md` L2).
 
 ### A rotation key is the orientation inside the parent, not in the model
 

@@ -274,7 +274,9 @@ public partial class ModelFile : BaseFormat
 	public class MaterialData
 	{
 		public uint FrameOffset;
+		/// <summary>The material's first face (+4): its faces are the run starting here.</summary>
 		public ushort a;
+		/// <summary>How many faces the run holds (+6). Runs tile the faces when sorted by first face (FileFormats <c>models.md</c>, "Materials").</summary>
 		public ushort b;
 		public ushort StartIndex;
 		public ushort EndIndex;

@@ -19,7 +19,7 @@ FileFormats `lnd.md`.
 
 ## The heightfield lives inside base.MD2
 
-A 0x30-byte block header, located by invariants rather than a fixed offset.
+A 0x30-byte block header, located by the MD2 header's pointer at `0x6C` (FileFormats `models.md`, "Heightfield"; the engine reads `[[0x007a0854] + 0x6c]`). Of the 2,129 `.md2` files exactly five set it: the four parks' `base.MD2` and the lobby's `terrain\Base.MD2`, and in each the pointer names the block the invariants below find (jungle `0x144e30`, fantasy `0x115840`, hallow `0x1129c8`, space `0x11a3b0`, lobby `0x1a348`), with no other 4-aligned offset passing them (upstream look 2026-10-19, `verify-terrain.md` #3). `HeightfieldFile` still finds it by the invariants; it does not read the pointer.
 
 | Offset | What it is |
 |---|---|
@@ -4241,7 +4241,7 @@ the cell's own tile on 84 of 122 cells, OpenTPW's on 115.
 1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). Settled for the picker (Q472): the terrain is tested over the heightfield's 96x85 cells and the cell is held below `HeightfieldWidth` and `HeightfieldHeight`, 0..94 and 0..83 ("The picker never hands the mode a cell off the map"). The camera sweep's `FUN_0042cd40` holds to the same; what else reads them is not read: of the 22 read instructions of `[0x007a0314]` in 17 functions, Q472 read three functions (`FUN_0042cd40`, `FUN_0045cdc0`, `FUN_0045d560`) and Q479 a fourth (`FUN_00450d10`, its clamp at `0x00450d4d`), which leaves 18 sites in 13 functions (`FUN_0055abf0`, with four, among them).
 2. ~~The lighting model.~~ Settled: see "The lighting model" above. `LightNormal` is the direction light travels.
 3. ~~The diagonal-choice bit.~~ Settled: see "The triangle diagonal" above (`0x0002` drawn, `0x0004` heights).
-4. `base.MD2`'s container walking — the heightfield was found by validated signature search, **not** by walking the chunk table.
+4. ~~`base.MD2`'s container walking.~~ Settled: the heightfield is the block the header's `0x6C` pointer names ("The heightfield lives inside base.MD2", above); nothing walks a chunk table.
 5. `base.map`'s per-bit semantics beyond `0x08`.
 6. ~~The procedural compositor.~~ Settled: see "The procedural ground" above. Its entry is `FUN_004504c0` (from
    `FUN_00457a90` on a park's load, and from the lobby's `FUN_005d84a0`): past the gate above it builds `%sbase.lnd` and

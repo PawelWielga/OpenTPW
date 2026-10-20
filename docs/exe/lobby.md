@@ -391,7 +391,21 @@ per-frame step. There is no swing and no jerk to find.
 |---|---|
 | 0 | Orbit advance, `angle += delta × SPINSPEED`, wrapped against 2π (`0x00702c18` = π) |
 | 1 | Homes the angle onto the island's own heading `island[+0x14] + π`, shortest way round, at `0.05 × delta`; on arrival plays the gate's M1 once (`FUN_005d83f0(0,0)` on `island+8`, `0x005e06e4`) and goes to 2 |
-| 2 | Locks that heading, then decays radius `[8]` at **0.07** and vertical `[9]` at **0.6** per delta — the `GLOBERADIUSOUT`→`GLOBERADIUSIN` pull-in — and when the radius falls below **8.0** calls vtable `+0x48`. It also darkens the screen as the radius closes (see "Escape cancels the fly-in") |
+| 2 | Locks that heading, then decays radius `[8]` (`+0x20`, which states 0 and 1 fill with `SPINRADIUS`, below) at **0.07** and vertical `[9]` at **0.6** per delta — the pull-in; what `GLOBERADIUSOUT` and `GLOBERADIUSIN` do here is not shown — and when the radius falls below **8.0** calls vtable `+0x48`. It also darkens the screen as the radius closes (see "Escape cancels the fly-in") |
+
+**The island's heading** (upstream look 2026-10-19, `verify-sound-ui.md` L2, from the stored dump of `0x005dfa60`, the island
+constructor): `island[+0x14]` is the ISLAND line's heading field times π/180 (`FLD [0x00702c18]` = π, `FMUL [0x00702c54]` =
+1/180). The same radian value is then handed twice to `FUN_005d8380`, with the isle's model instance (`[island+4]`) and the gate's
+(`[island+8]`) as `this`, and `FUN_005d8190` is called on both with the ISLANDCAMERAPOSITION vector (height nought). The camera's
+eye is `island(+0x3c,+0x40,+0x44) + (sin a × r, vertical, cos a × r)` (`FUN_005e1210`), and state 1 homes `a` onto
+`+0x14 + π`. Every `*_gate` mesh in `lobby.wad` sits on the model's −Z side (z −9.6 to −14.4), so a yaw of `heading` about Y
+puts the gate at (−sin h, −cos h), where state 1 parks the camera: the reading in which the original's own homing faces the
+gate is that `FUN_005d8380` turns the isle and the gate about the vertical by the heading. **Not yet read:** what
+`FUN_005d8380` writes into the instance and its sign and axis convention (the argument numbering through Ghidra's signature
+is also the reader's, not a decompile fact). The check that settles it is the island camera's `+0x18` at state 2 after Enter
+on Lost Kingdom: π/2 + π if the heading is used. The parser `FUN_005e3210` takes an island's slot from the ISLAND line's first field unless its slot argument
+is non-negative, and `IslandLobby_Start` pushes −1 (`0x005e19d3`, `0x005e1a3e`); which of the call's pushed arguments is that
+parameter is not certain.
 
 `+0x48` is `__amsg_exit(0x19)` — MSVC's **pure virtual** stub — in this vtable, so the running object
 is a derived class that overrides it.

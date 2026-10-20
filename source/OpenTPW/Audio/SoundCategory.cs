@@ -338,7 +338,14 @@ public sealed class SoundCategory
 	/// <summary>One sample of one weighted list, by its running total out of 65,535.</summary>
 	private AudioClip? PickIn( List<SoundCategoryFile.Sample> variation ) => PickIn( variation, out _ );
 
-	/// <summary>One sample of one weighted list, by its running total out of 65,535, and its record's length.</summary>
+	/// <summary>
+	/// One sample of one weighted list, by its running total out of 65,535, and its record's length.
+	///
+	/// Deviation from the original (<c>docs/exe/audio.md</c>, "The sample draw", <c>FUN_006bc680</c>): the
+	/// original rolls 0 to 65,535 and plays nothing when the roll is above the last odds; this rolls 0 to
+	/// the last odds, so a list always plays. It also has no avoid-repeat step for the sample before (the
+	/// lobby's music asks for one). Queued as Q723.
+	/// </summary>
 	private AudioClip? PickIn( List<SoundCategoryFile.Sample> variation, out TimeSpan length )
 	{
 		length = TimeSpan.Zero;

@@ -363,10 +363,12 @@ public class LobbyCameraMode : CameraMode
 	/// The heading the camera swings onto before it flies in.
 	///
 	/// <para>
-	/// The original homes onto <c>island[+0x14] + pi</c>, the island's own heading turned about. These
-	/// islands are all placed at the same heading, and this project has already measured that their gates
-	/// face the island's <b>-Y</b> side - which is <c>orbit pi</c>. The two agree, so the gate is what the
-	/// camera ends up looking at, which is the point of the manoeuvre.
+	/// The original homes onto <c>island[+0x14] + pi</c> (<c>docs/exe/lobby.md</c>), where <c>+0x14</c> is the
+	/// island's own ISLAND heading in radians (<c>0x005dfa60</c>: heading x pi / 180), so it differs per island.
+	/// This is one fixed pi for all four, which is right only where the heading is 0 (Space Zone). Our islands
+	/// and gates are never turned by their heading (<c>LobbyIsland</c>, <c>LobbyGate</c> only set a position),
+	/// so the gates all face the island's <b>-Y</b> side, which is <c>orbit pi</c>; the other three islands
+	/// are turned wrongly against the original. Queued as Q721.
 	/// </para>
 	/// </summary>
 	private const float GateHeading = MathF.PI;

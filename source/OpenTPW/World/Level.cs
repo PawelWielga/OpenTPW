@@ -204,6 +204,10 @@ public class Level
 		// 421-vertex worm whose bulk pulls the centroid sideways; its parts sit at -8.5 and -13.3 in
 		// Y with the rest. So one light can face all four, and this is it.
 		//
+		// Deviation: the original turns each island and its gate by the island's ISLAND heading
+		// (docs/exe/lobby.md, 0x005dfa60), which this never does; once Q721 turns them the gates face four
+		// different ways and this one sun no longer faces them all.
+		//
 		// The shader takes this as a point, not a direction, so how far away it stands decides how
 		// alike the four islands are lit. They span 283 units corner to corner, so the spread in
 		// direction across them is atan(283/distance): at four thousand units it is four degrees,

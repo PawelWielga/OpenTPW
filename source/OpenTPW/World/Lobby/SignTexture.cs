@@ -78,8 +78,11 @@ public static class SignTexture
 	}
 
 	/// <summary>
-	/// Splits a park name over the sign's two lines. "Lost Kingdom" reads as "Lost" above
-	/// "Kingdom"; a single-word park keeps the whole name on the top line.
+	/// Splits a park name over the sign's two lines at its FIRST space: "Lost Kingdom" reads as "Lost"
+	/// above "Kingdom"; a single-word park keeps the whole name on the top line. The original splits at
+	/// the space nearest the middle of the name, searching outward (FUN_00467a80; FileFormats
+	/// <c>sgn.md</c>), so a name of three words breaks differently there ("Tom Tom Twister" is "Tom Tom"
+	/// above "Twister"); this is a deviation, queued as Q722.
 	/// </summary>
 	private static (string First, string Second) SplitName( string parkName )
 	{

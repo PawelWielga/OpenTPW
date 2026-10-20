@@ -17,12 +17,15 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// The block is found by searching for its own invariants rather than at a fixed offset, because it
-/// sits somewhere different in every theme - 0x144e30 in the jungle, 0x115840 in fantasy, 0x1129c8 in
-/// hallow and 0x11a3b0 in space - and the header is stored <i>after</i> the two arrays it points at.
-/// The invariants are strong enough that no other position in any of the four files satisfies them:
-/// the two counts have to agree with the two dimensions both ways round, and the gap between the two
-/// array offsets has to be exactly four bytes per vertex.
+/// The original finds the block through the MD2 header's pointer at 0x6C (FileFormats <c>models.md</c>; the
+/// engine reads <c>[[0x007a0854] + 0x6c]</c>, <c>docs/exe/park-engine.md</c>). This reader does not read
+/// that pointer: it searches for the block by its own invariants, because the block sits somewhere
+/// different in every theme - 0x144e30 in the jungle, 0x115840 in fantasy, 0x1129c8 in hallow and
+/// 0x11a3b0 in space - and the header is stored <i>after</i> the two arrays it points at. On all five
+/// files that set 0x6C (the four parks' and the lobby's) the pointer names the offset the search
+/// finds, and no other 4-aligned position satisfies the invariants: the two counts have to agree with
+/// the two dimensions both ways round, and the gap between the two array offsets has to be exactly four
+/// bytes per vertex.
 /// </para>
 ///
 /// <para>
@@ -297,9 +300,9 @@ public sealed class HeightfieldFile
 	}
 
 	/// <summary>
-	/// Walks the file looking for a header whose fields agree with one another. Every one of these has
-	/// to hold, and together they are specific enough that the four shipped parks each yield exactly
-	/// one match:
+	/// Walks the file looking for a header whose fields agree with one another (the original follows the
+	/// pointer at 0x6C instead; see the class remarks). Every one of these has to hold, and together they
+	/// are specific enough that the four shipped parks each yield exactly one match:
 	///
 	/// <list type="bullet">
 	/// <item>the vertex and cell counts at +0x04 and +0x06 are both plausible sizes;</item>

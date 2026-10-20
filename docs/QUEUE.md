@@ -904,6 +904,21 @@ filed the items that cite it.
   Kingdom's 17 boards) nor the line's y (`+0x148`); the original fits a line by a binary search on `LOGFONT.lfWidth`
   (`0x005eab70`). The ink block's four unknown fields are the grow or shrink radius, the blur's sigma, dx and dy (a
   Gaussian of 3 + trunc( 2.5σ ) taps). Confirm: Dino Karts' board and one other beside the original's.
+  - **Note (upstream look 2026-10-19, `verify-images.md` L1):** the ink block is the letters' EDGE, not their colour. The
+    letters are filled from the line's 16 x 128 fill (bytes 1 to 3 are R, G, B, tiled, `FUN_005eb8a0`; `park.md`), the ink
+    shaped (radius, sigma, dx, dy) under them. Photo: the Wonder Land board's "Wonder" is lime and "Land" yellow-orange,
+    both edged olive, and `Fan_gate.sgn`'s two ink blocks are the same olive over two different fills. FileFormats
+    `sgn.md` "Line ink" and the `SignFile`/`SignTexture` comments now say so; `SignTexture` still letters in the flat ink
+    colour. Settle in Ghidra first, in `FUN_005ecb40`, for modes 1 and 2: the call order of `0x5EBF10` (shape the ink mask),
+    `0x5E7F60` (blend the ink through it) and `FUN_005eb8a0` (fill the unshaped glyph mask); whether `0x5EB8A0` blends by
+    coverage or overwrites and what it writes into byte 0; how `+0x24`, `+0x28`, `+0x3c` map the 128 fill rows onto the line
+    (its height or the whole board); and in mode 2 (`0x5E77C0`, `0x5E7EF0`) which line's fill and ink are used (19 of the 27
+    `(2,2)` signs have two different fills; Space's photograph looks like fill 1, unproven). 162 ink blocks ship, 101 with a
+    non-zero offset. A hypothesis only: 47 of the 168 fills have byte 0 = 0 throughout (the rest 255), among them both of the
+    jungle park gate's (`gates.sgn`), `Jun_isle`'s and five jungle ride boards'; a fill byte 0 of 0 landing in the
+    A4R4G4B4 alpha nibble would blank the letters, a rival to `textures.md`'s blame of Wine's GDI fonts for the original
+    under Proton lettering no name on the jungle gate. No Proton frame of a byte-0-is-255 board's lettering was found to
+    split the two; film one.
 
 - [ ] **Q400. Animated textures.** From the fork review 2, 2026-10-16 (`verify-formats.md` H2). 19 texture slots with
   several frames in 9 jungle wads (the queue fire, the 5x5 rock's waterfall, the monkey's face, `tvsim`, the hyenas,

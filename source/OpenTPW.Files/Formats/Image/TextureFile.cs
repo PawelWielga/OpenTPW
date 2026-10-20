@@ -188,6 +188,9 @@ public partial class TextureFile : BaseFormat
 			}
 		}
 
+		// Each channel is cut to a byte by truncation. The original (FUN_00595920) indexes its channel tables by
+		// the channel's ROUNDED value (docs/exe/textures.md, "A channel is cut to its top bits"), so this is
+		// up to one level low, on average 0.48 a channel; queued as Q724.
 		List<byte> textureData = Enumerable.Repeat( (byte)0, fileData.Width * fileData.Height * 4 ).ToList();
 		for ( int i = 0; i < outputBytes.Count; i++ )
 		{

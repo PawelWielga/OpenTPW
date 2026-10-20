@@ -75,8 +75,9 @@ namespace OpenTPW;
 /// <para>
 /// The two fill textures are skipped here but they are real data, not padding: each is one line's
 /// 16x128 fill pattern, which the engine resamples to the text's height and tiles across the glyph
-/// mask (FUN_005eb8a0), and many of them are pure vertical ramps. Lettering a line in the flat colour
-/// from its ink block, as this does, is an approximation of that gradient.
+/// mask (FUN_005eb8a0), and many of them are pure vertical ramps. The letters are the fill; the
+/// ink block is the shaped edge laid under them (FileFormats <c>sgn.md</c>, "Line ink"). The caller
+/// letters in the ink block's flat colour instead, which is wrong for the letters (Q399).
 /// </para>
 /// </summary>
 public sealed class SignFile : BaseFormat
@@ -116,17 +117,19 @@ public sealed class SignFile : BaseFormat
 	private const int ChunkedArtworkType = 4;
 
 	/// <param name="Colour">
-	/// The colour this line is lettered in, and how strongly it is laid over the board. Both come
-	/// from the line's own ink block, not from the font record.
+	/// The colour and strength of this line's ink block, read from the block and not from the font
+	/// record. In the original the ink is the edge effect under the letters (the letters are the line's
+	/// fill gradient); <c>SignTexture</c> letters in it anyway (Q399).
 	/// </param>
 	public sealed record Font( string Name, string FileName, LineColour Colour );
 
 	/// <summary>
 	/// One line's ink: a colour and the strength it is blended at, 0..1 each.
 	///
-	/// The engine composites the glyph mask over the board with this, so the opacity is a real
-	/// blend and not a threshold - see FUN_005e7f60, which walks the glyph coverage and moves each
-	/// board pixel that fraction of the way toward this colour.
+	/// The engine blends the (shaped) ink mask over the board with this, so the opacity is a real
+	/// blend and not a threshold - see FUN_005e7f60, which walks the mask coverage and moves each
+	/// board pixel that fraction of the way toward this colour. The letters themselves are filled
+	/// from the line's fill gradient (FUN_005eb8a0), not from this colour.
 	/// </summary>
 	public readonly record struct LineColour( float R, float G, float B, float Opacity );
 

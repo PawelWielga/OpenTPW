@@ -615,6 +615,19 @@ from the frame the sample is found ended. Built for the land's own type 3 sounds
 "The land's own sounds". The sample draw's own rule against the sample before (`FUN_006bc680` asked with 1, for a
 variation of more than two samples) is not built, here or for the crowd's and the music's voices.
 
+**The sample draw, `FUN_006bc680( voice, avoidRepeat )`** (read from the stored dump of the same program; upstream look
+2026-10-19, `verify-sound-ui.md`, "The music roll rule"). A variation with no samples gives none; a variation with one
+sample gives it with no draw (the helper `FUN_006bd7a0` returns the count). Otherwise one step of the shared
+generator (`DAT_00fb1f20 * 0x19660d + 0x3c6ef35f`) is rotated right 13 and shifted right 16, a roll of **0 to 65,535**,
+and the samples are walked in order: the **first whose odds (record `+4`) are at least the roll** wins. If no sample's
+odds reach the roll (a list whose last odds are below 65,535) the draw gives **no sample**, and the voice plays
+nothing. With the argument set and more than two samples, a pick equal to the voice's last (`+0x46`) moves on to the next
+index, modulo the count; the pick is stored at `+0x46`. The lobby's music asks with 1: all four `cat_locallobbymusic`
+effect 1 hold one variation of three samples (odds 21,845, 43,690, 65,535), so the rule applies to the lobby's music (flags `0x206`, the plain class). 201 of
+the 1,592 sample lists in the 31 SFX maps end below 65,535 (lowest 65,516; the global lobby music effect 2 ends at
+65,534), so the no-sample case happens at most 20 times in 65,536. OpenTPW's `SoundCategory.PickIn` rolls 0 to the
+last odds and so never plays nothing, and builds no avoid-repeat step (said at the site).
+
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
 | `0x006be090`, `0x006be0e0`, `0x0070a338` | — | The plain class's maker, constructor and vtable | Disassembly; the vtable read beside `0x0070a498` |
