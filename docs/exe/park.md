@@ -912,7 +912,7 @@ builds. No `TRIGWAITANIM`, trigger or `WAIT4ANIM` decided apart in either phase.
 
 **The effect id is NOT range-checked.** No shipped script names a particle above 95, but `FUN_005573d0` tests the id for **bit 15** and remaps it through `FUN_004145d0`. A corpus range is not an engine invariant.
 
-**The record is a live binding, which the handlers alone do not show.** `FUN_005516b0` walks the `+0xb0` list **every tick, for every script**: `0x55188f MOV EDI,[ESI+0xb0]`, advancing at `0x551ab2`, dispatching per record on `+0x8` through a byte map at `0x551b18`. For each it **re-reads the model at `+0xc8`, re-resolves the node through the cached index at `+0x14`, and pushes the position back into the particle or sound system through the handle at `+0xc`.** So `ADDOBJ` is not "spawn and keep a handle" — the record is what glues a playing effect to a moving ride, and that is the shape any world-side adapter must take.
+**The record is a live binding, which the handlers alone do not show.** `FUN_005516b0` walks the `+0xb0` list **every tick, for every script**, due a turn or not (a script not due jumps from `0x5516f6` straight here): `0x55188f MOV EDI,[ESI+0xb0]`, advancing at `0x551ab2`, dispatching per record on `+0x8` through a byte map at `0x551b18`. For each it **re-reads the model at `+0xc8`, re-resolves the node through the cached index at `+0x14`, and pushes the position back into the particle or sound system through the handle at `+0xc`.** So `ADDOBJ` is not "spawn and keep a handle" — the record is what glues a playing effect to a moving ride, and that is the shape any world-side adapter must take.
 
 **Other writers of the `+0xb0` list**, so nothing here reads as ADDOBJ's private property: `ADDOBJ_EXT`; the **save-state reader** `FUN_005597a0`, which rebuilds it from an `"OBJ "` section (no shipped `.RSE` has one — they all begin `RSSE`); the teardown `FUN_00558500`; and `FUN_005516b0` itself.
 
@@ -1962,9 +1962,18 @@ inside seven seconds; the save still wrote its three. The bubbles' highest read 
 original's 42.2 and 38.4 in 40 s; the prediction's band (26 to 36, taken from a twelve second look) was wrong.
 `bubbles-opentpw-left-original-right.png` is the two games' shop.
 
-**Deviations and gaps, each counted where it is reached.** The engine's sweep moves and aims an emitter to its
-node every tick (`0x0055190f`); nothing here does, so one on a node that rides a clip stays where the node rests
-(`PARK_PARTICLE_NODE_ON_A_CLIP`: the Jungle Spray's jet). Started nowhere: an effect of the item's own
+**The sweep carries each emitter with its node** (Q555; `RideScript.SweepEffects`): every tick, for every script
+with a record, due a turn or not (`0x005516f6` jumps a script not due straight to the list walk at `0x0055188f`), a
+particle record with a node has its emitter put where the node stands, cut to whole units (`0x0055190f`), and a type
+2's aimed again (`0x00551943`). A node a clip carries is taken from the thing's players as its drawn model is posed
+(`RideNodes.Follow`), so the End's trails go with their planes (`q555/run1`). The Jungle Spray's jet node moves under
+none of its clips but the build clip (`q555/spray-probe.out`), so its jet stands where it was started.
+**Not the original's:** the engine's lookup record holds the pose of the frame the model was last drawn in, so an
+emitter on a model off the screen stands still there, where this follows the players; and a record whose lookup
+record has no matrix is moved to the origin there (`0x005518f9`, the float at `0x00700fd8` is nought) and passed over
+here, where no emitter is started on one.
+
+**Deviations and gaps, each counted where it is reached.** Started nowhere: an effect of the item's own
 (`PARK_PARTICLE_ITEM_EFFECT`), a record with no node or one the model lacks (`PARK_PARTICLE_NO_PLACE`), a type 2
 whose node's matrix is never stored (`PARK_PARTICLE_NO_DIRECTION`), a start the system refuses, whose record the
 engine frees and this keeps (`PARK_PARTICLE_NOT_STARTED`). A loaded emitter begins its effect again: the file's

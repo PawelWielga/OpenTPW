@@ -15,7 +15,8 @@ namespace OpenTPW;
 /// </para>
 /// <para>
 /// <b>It deviates for a node that rides a clip-driven ancestor</b>: the engine stores such a node where the last
-/// drawn frame left it, and nothing here poses one, so it stands at rest (<see cref="NodeEnd.RestPose"/>). Every
+/// drawn frame left it. Only a particle's node is carried so here (<see cref="Follow"/>, then <c>carried</c>); a walk's
+/// and a head's stand at rest (<see cref="NodeEnd.RestPose"/>). Every
 /// shipped walk comes at a pose that gives the rest-pose legs - the Aztec Mayhem's measured, the Lookout's and the
 /// Totem's worked out - but a ride left off screen mid-cycle keeps the engine's snapshot and not this. A head on a
 /// face of a morphing mesh is the other deviation (<see cref="NodeEnd.OnAFace"/>).
@@ -159,6 +160,49 @@ public sealed class RideNodes
 
 	private bool _fixed;
 
+	/// <summary>The node tree as the thing's players last posed it (<see cref="Follow"/>); null until it is followed.</summary>
+	private NodePoser? _carrier;
+
+	/// <summary>The clip each of the players' channels was last posed from, so a change of clip puts back what it moved.</summary>
+	private AnimationFile?[] _carriedClips = [];
+
+	/// <summary>
+	/// Poses the node tree as the thing's drawn model is posed (<see cref="ParkObjects.Sweep"/>): every channel's clip at
+	/// the frame its player has reached, a change of clip putting back what the one before moved. A <c>carried</c> find
+	/// then reads this pose, which is what the engine's lookup record holds after the last drawn frame
+	/// (<c>docs/exe/saves.md</c>, "The sweep moves it").
+	/// </summary>
+	/// <remarks>
+	/// <b>Not the original's:</b> the engine stores a pose only for a model it draws, so one off the screen keeps the
+	/// pose of the frame it was last drawn in; this follows the players whether the model is seen or not.
+	/// </remarks>
+	public void Follow( RideAnimations players )
+	{
+		_carrier ??= new NodePoser( _model );
+
+		if ( _carriedClips.Length != players.ChannelCount )
+			Array.Resize( ref _carriedClips, players.ChannelCount );
+
+		for ( var index = 0; index < _carriedClips.Length; ++index )
+		{
+			if ( players.Channel( index ) is not { } channel || channel.IsIdle )
+				continue;
+
+			if ( players.Clip( channel.AnimID, channel.SubAnim ) is not { } clip )
+				continue;
+
+			if ( !ReferenceEquals( clip, _carriedClips[index] ) )
+			{
+				if ( _carriedClips[index] is { } previous )
+					_carrier.Rest( previous, clip );
+
+				_carriedClips[index] = clip;
+			}
+
+			_carrier.Pose( clip, channel.AnimFrame );
+		}
+	}
+
 	/// <summary>
 	/// One entry of the engine's sine table (<c>FUN_004708d0</c>): <c>sin( i / 4096 × 6.2831855f )</c>, stored as a float,
 	/// the index wrapping as the engine masks it.
@@ -169,9 +213,9 @@ public sealed class RideNodes
 	/// <summary>
 	/// Where the node <paramref name="id"/> in <paramref name="space"/> stands, in the model's own axes, and how that
 	/// was found. <see cref="NodeEnd.Posed"/>, <see cref="NodeEnd.RestPose"/> and <see cref="NodeEnd.OnAFace"/> give a
-	/// position.
+	/// position. <paramref name="carried"/> reads the pose <see cref="Follow"/> last left, once it has been followed.
 	/// </summary>
-	public NodeEnd Find( int id, uint space, out Numerics.Vector3 position )
+	public NodeEnd Find( int id, uint space, out Numerics.Vector3 position, bool carried = false )
 	{
 		position = default;
 
@@ -192,15 +236,18 @@ public sealed class RideNodes
 			|| (!_hasChild[node] && (flags & StoredWhenChildless) == 0 && !_doHeadProcessing) )
 			return NodeEnd.Unposed;
 
-		position = Posed( node );
+		position = Posed( node, carried );
 
 		var parent = _nodes[node].ParentIndex;
 
 		if ( (flags & FromAFace) != 0 && parent >= 0 && parent < _nodes.Length && _morphed[parent] )
 			return NodeEnd.OnAFace;
 
-		return RidesAClip( node ) ? NodeEnd.RestPose : NodeEnd.Posed;
+		return RidesAClip( node ) && !Carries( carried ) ? NodeEnd.RestPose : NodeEnd.Posed;
 	}
+
+	/// <summary>Whether a find asked for <paramref name="carried"/> reads a followed pose rather than the rest.</summary>
+	private bool Carries( bool carried ) => carried && _carrier != null;
 
 	/// <summary>
 	/// Which of eight ways a walker faces going from <paramref name="from"/> to <paramref name="to"/>, a walk slot's
@@ -286,9 +333,9 @@ public sealed class RideNodes
 	/// axes: the third row of its stored matrix over its length, negated where its lookup record carries <c>0x10</c>
 	/// (<c>FUN_00551b30</c>, which the sweep aims a type 2 particle by every tick). A node with no matrix points along
 	/// z. <see cref="NodeEnd.Unposed"/> is a matrix the pose walk never stores, whose direction is no number, and
-	/// <paramref name="direction"/> is then nought.
+	/// <paramref name="direction"/> is then nought. <paramref name="carried"/> reads the pose <see cref="Follow"/> last left.
 	/// </summary>
-	public NodeEnd FindDirection( int id, uint space, out Numerics.Vector3 direction )
+	public NodeEnd FindDirection( int id, uint space, out Numerics.Vector3 direction, bool carried = false )
 	{
 		direction = default;
 
@@ -311,7 +358,7 @@ public sealed class RideNodes
 		if ( !_hasChild[node] && (flags & StoredWhenChildless) == 0 && !_doHeadProcessing )
 			return NodeEnd.Unposed;
 
-		var world = Stored( node );
+		var world = Stored( node, carried );
 		var about = (_nodes[node].Flags & TurnedAbout) != 0 ? -1f : 1f;
 		float x = about * world.M31, y = about * world.M32, z = about * world.M33;
 
@@ -325,7 +372,7 @@ public sealed class RideNodes
 		if ( (flags & FromAFace) != 0 && parent >= 0 && parent < _nodes.Length && _morphed[parent] )
 			return NodeEnd.OnAFace;
 
-		return RidesAClip( node ) ? NodeEnd.RestPose : NodeEnd.Posed;
+		return RidesAClip( node ) && !Carries( carried ) ? NodeEnd.RestPose : NodeEnd.Posed;
 	}
 
 	/// <summary>
@@ -431,16 +478,21 @@ public sealed class RideNodes
 	}
 
 	/// <summary>The node's translation as the pose walk stores it.</summary>
-	private Numerics.Vector3 Posed( int node )
+	private Numerics.Vector3 Posed( int node, bool carried = false )
 	{
-		var world = Stored( node );
+		var world = Stored( node, carried );
 
 		return new Numerics.Vector3( world.M41, world.M42, world.M43 );
 	}
 
-	/// <summary>The node's matrix as the pose walk stores it: root first, each matrix local times parent.</summary>
-	private Numerics.Matrix4x4 Stored( int node )
+	/// <summary>
+	/// The node's matrix as the pose walk stores it: root first, each matrix local times parent; each local as
+	/// <see cref="Follow"/> last posed it where <paramref name="carried"/> asks and it has been followed.
+	/// </summary>
+	private Numerics.Matrix4x4 Stored( int node, bool carried = false )
 	{
+		var carrier = carried ? _carrier : null;
+
 		var chain = new List<int>();
 
 		for ( var at = node; at >= 0 && at < _nodes.Length && chain.Count <= _nodes.Length; at = _nodes[at].ParentIndex )
@@ -448,10 +500,12 @@ public sealed class RideNodes
 
 		chain.Reverse();
 
-		var world = Root( _nodes[chain[0]].LocalTransform );
+		Numerics.Matrix4x4 Local( int at ) => carrier?.Local( at ) ?? _nodes[at].LocalTransform;
+
+		var world = Root( Local( chain[0] ) );
 
 		for ( var i = 1; i < chain.Count; ++i )
-			world = Compose( _nodes[chain[i]].LocalTransform, world );
+			world = Compose( Local( chain[i] ), world );
 
 		return world;
 	}

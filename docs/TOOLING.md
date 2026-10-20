@@ -468,7 +468,9 @@ whole list):
   hides what stands past about 150 units: `fog 2000 2100` pushes it out for a look (`q703/exp-fog.py`). Its planes' flight
   (Q554): `endfeature` adds an `endfeature planes:` line, each `_f_endplane`'s drawn place and whether it is shown;
   `q554/confirm.py <out> <bin> a|b` samples it every ~0.7 s and frames every ~1.4 s (`b` with the fog pushed out), and
-  `q554/orig/run.sh` films the original's End every second. Endm1's three come over the view about 4 s in.
+  `q554/orig/run.sh` films the original's End every second. Endm1's three come over the view about 4 s in. Their trails
+(Q555): an `endfeature trails:` line, each particle of the two scripts as `script:effect@node (x, y, height)` and how
+many moves the sweep has made (`carried`); `q555/confirm.py <out> <bin>` checks plane 02's two against it.
 - **A park bigger than its handymen, or its guards** (Q411, Q412; `lib/pathscene.py`, Q411's `q411/mkscene.py` made it
   first): the stock park paused on 765 and `path X Y` given for the first N cells of the 17 x 17 bare block at (60,15) (`parkfile.bare_blocks`), each
   with a 0.15 s wait (`stockscene.py`'s 2.5 s a command is twelve minutes for 289), then saved: 126 + N developed

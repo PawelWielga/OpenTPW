@@ -9286,6 +9286,12 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   before its span, 451 under a moved node, 43 additive). Console `endfeature planes:`. Confirmed on `alldone576.TPWS`
   (`q554/PREDICTION.txt`, three rounds, one miss recorded): Endm1's three down the park and over the view, Endm2's two
   across, as the original's frames (`q554/side-by-side.png`); 15/15 mutations.
+- [x] **Q555. The End's trails follow their planes** (Q703's first piece). Every tick, for every script with a record,
+  due a turn or not, each particle's emitter is put where its node stands and a type 2's aimed again
+  (`RideScript.SweepEffects`, `FUN_005516b0` from `0x0055188f`); a node a clip carries is taken from the thing's
+  players as the drawn model is posed (`RideNodes.Follow`). `PARK_PARTICLE_NODE_ON_A_CLIP` is gone. Confirmed by
+  `q555/confirm.py` (plane 02's two trails at its x plus and minus 9, about 7.5 behind it, through all of Endm1;
+  `q555/side-by-side.png`). The Jungle Spray's jet node moves under none of its clips but the build clip.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

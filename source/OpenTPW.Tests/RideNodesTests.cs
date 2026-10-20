@@ -251,4 +251,42 @@ public class RideNodesTests
 		Assert.AreEqual( NodeEnd.Missing, god.FindDirection( 99, RideNodes.WalkSpace, out _ ) );
 		Assert.AreEqual( NodeEnd.NegativeId, god.FindDirection( -1, RideNodes.WalkSpace, out _ ) );
 	}
+	/// <summary>
+	/// <b>A followed tree is posed as the drawn model is</b>: on <c>Endm1</c> the End's node 5, under plane 02, is carried down
+	/// the park and found posed; a change of channel 0 to <c>Endm3</c>, which flies other planes, puts it back where it rests,
+	/// as the engine puts back what the outgoing clip moved; and a find not asked for <c>carried</c> reads the rest throughout.
+	/// Endm3's node 11 climbs away, so the way it points turns.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the change of clip putting nothing back; a carried find reading the rest.</remarks>
+	[TestMethod]
+	public void AFollowedTreeIsPosedAsTheDrawnModelIs()
+	{
+		const string End = "levels/jungle/features/end";
+
+		var players = RideAnimations.Load( End, "end", _data, 1 );
+		var nodes = RideNodes.Load( End, "end", _data, false, players.AllClips )!;
+
+		nodes.PlaceFixed();
+		nodes.Find( 5, RideNodes.ParticleSpace, out var rest );
+		nodes.FindDirection( 11, RideNodes.ParticleSpace, out var climbingAtRest );
+
+		players.Trigger( 5, 0, 0, 1f, 0 );
+		players.Advance( 4000 );
+		nodes.Follow( players );
+
+		Assert.AreEqual( NodeEnd.Posed, nodes.Find( 5, RideNodes.ParticleSpace, out var flown, carried: true ) );
+		Assert.IsTrue( rest.Z - flown.Z > 100f, $"plane 02 comes down the park: {rest.Z} to {flown.Z}" );
+		Assert.AreEqual( NodeEnd.RestPose, nodes.Find( 5, RideNodes.ParticleSpace, out var uncarried ) );
+		Assert.AreEqual( rest, uncarried, "a find not carried reads the rest" );
+
+		players.Trigger( 5, 2, AnimTimeControl.StartAtOnceFlag, 1f, 4000 );
+		players.Advance( 9000 );
+		nodes.Follow( players );
+
+		nodes.Find( 5, RideNodes.ParticleSpace, out var back, carried: true );
+		Assert.AreEqual( rest, back, "Endm3 does not fly plane 02, and the change of clip put it back" );
+
+		Assert.AreEqual( NodeEnd.Posed, nodes.FindDirection( 11, RideNodes.ParticleSpace, out var climbing, carried: true ) );
+		Assert.IsTrue( System.Numerics.Vector3.Distance( climbingAtRest, climbing ) > 0.05f, $"node 11 turns as it climbs: {climbingAtRest} to {climbing}" );
+	}
 }

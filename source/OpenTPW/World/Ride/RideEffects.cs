@@ -40,10 +40,10 @@ namespace OpenTPW;
 /// its own. The script that owns the list starts a particle's emitter in the park's particle system and
 /// keeps its handle on the record (<see cref="Record.Emitter"/>, <c>RideScript.StartParticle</c>); no
 /// sound is started from a record or an <c>EVENT</c>, and each one asked for is counted (<see cref="SoundGap"/>).</item>
-/// <item>There is no position. The engine resolves one through <c>FUN_00556b90</c> from the model and
-/// the node, and <b>walks this whole list every tick</b> (in <c>FUN_005516b0</c>) to move what is
-/// playing as the ride moves. Nothing here moves one; a record keeps the lookup
-/// record the engine would move it by (<see cref="Record.Index"/>, <see cref="RideNodes.EffectIndex"/>).</item>
+/// <item>The engine resolves a position through <c>FUN_00556b90</c> from the model and the node, and <b>walks
+/// this whole list every tick</b> (in <c>FUN_005516b0</c>) to move what is playing as the ride moves:
+/// <c>RideScript.SweepEffects</c> does that for a particle; a record keeps the lookup record the engine moves it
+/// by (<see cref="Record.Index"/>, <see cref="RideNodes.EffectIndex"/>), and a sound has no position here.</item>
 /// <item>One of the list's other writers is not here: <c>ADDOBJ_EXT</c>, which no shipped script
 /// uses at all. The save-state reader (<c>FUN_005597a0</c>), which rebuilds the list from a park file's
 /// <c>"OBJ "</c> section, is <see cref="Restore"/>, and <see cref="Written"/> is what goes back into one.</item>

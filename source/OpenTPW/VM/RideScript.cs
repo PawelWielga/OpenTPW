@@ -1231,8 +1231,8 @@ public sealed class RideScript
 	/// <para>
 	/// A particle with a direction (type 2) is aimed the way its node points. Counted, and left with no emitter
 	/// and a handle of nought: one whose node has no direction, an effect of the item's own (bit 15 of the id),
-	/// and a record with no node or whose node the model does not hold. A node that rides a clip is taken where
-	/// it rests, and aimed as it rests.
+	/// and a record with no node or whose node the model does not hold. A node that rides a clip is taken, and
+	/// aimed, where the thing's players last posed it, as the sweep leaves it (<see cref="SweepEffects"/>).
 	/// </para>
 	/// </summary>
 	private ParkParticles.Spawn?[]? WrittenEmitters()
@@ -1249,7 +1249,7 @@ public sealed class RideScript
 			if ( !record.IsParticle || record.Restored )
 				continue;
 
-			switch ( Placed( record.Type, record.Node, record.Effect, out var spawn, out _ ) )
+			switch ( Placed( record.Type, record.Node, record.Effect, out var spawn ) )
 			{
 				case Unplaced.ItemEffect:
 					Unimplemented.Report( "SAVE_PARK_EMITTER_ITEM_EFFECT" );
@@ -1291,31 +1291,31 @@ public sealed class RideScript
 	/// <summary>
 	/// The emitter a particle of <paramref name="type"/> on <paramref name="node"/> starts: the effect at the node's
 	/// place cut to whole units and, for a type 2, the way the node points, each of the three times 1024 and cut
-	/// to a whole number (<c>0x005519d8</c>). <paramref name="atRest"/> says the node rides a clip and was taken
-	/// where it rests.
+	/// to a whole number (<c>0x005519d8</c>). A node a clip carries is taken where the thing's players last posed it
+	/// (<see cref="RideNodes.Follow"/>).
 	/// </summary>
-	private Unplaced Placed( int type, int node, int effect, out ParkParticles.Spawn spawn, out bool atRest )
+	private Unplaced Placed( int type, int node, int effect, out ParkParticles.Spawn spawn )
 	{
 		spawn = default;
-		atRest = false;
 
 		if ( (effect & ItemEffectBit) != 0 )
 			return Unplaced.ItemEffect;
 
 		var place = System.Numerics.Vector3.Zero;
 
+		if ( node >= 0 && Animations is { } players )
+			Nodes?.Follow( players );
+
 		// A node with no matrix kept reads as the origin in the engine, and the emitter is put there.
-		if ( node < 0 || Nodes?.Find( node, RideNodes.ParticleSpace, out place ) is not { } end
+		if ( node < 0 || Nodes?.Find( node, RideNodes.ParticleSpace, out place, carried: true ) is not { } end
 			|| end is NodeEnd.Missing or NodeEnd.NegativeId )
 			return Unplaced.NoPlace;
-
-		atRest = end is NodeEnd.RestPose;
 
 		(int, int, int)? direction = null;
 
 		if ( type != RideEffects.FirstType )
 		{
-			if ( Nodes!.FindDirection( node, RideNodes.ParticleSpace, out var way ) is NodeEnd.Unposed )
+			if ( Nodes!.FindDirection( node, RideNodes.ParticleSpace, out var way, carried: true ) is NodeEnd.Unposed )
 				return Unplaced.NoDirection;
 
 			direction = ((int)(way.X * 1024f), (int)(way.Y * 1024f), (int)(way.Z * 1024f));
@@ -1330,15 +1330,14 @@ public sealed class RideScript
 	/// Starts the emitter of a particle this script asks for in the park's particle system
 	/// (<c>FUN_005573d0</c>'s cases 1 and 2), and answers its handle, or nought where none was started: with no
 	/// particle system, or counted, an effect of the item's own, a node with no place or no direction, and a start
-	/// the system refuses. A node that rides a clip is counted too, and its emitter stays where the node rests:
-	/// the engine's sweep moves and aims an emitter to its node every tick (<c>0x0055190f</c>), and nothing here does.
+	/// the system refuses. <see cref="SweepEffects"/> carries it with its node from then on.
 	/// </summary>
 	private int StartParticle( int type, int node, int effect )
 	{
 		if ( ParticleSystem.Current is not { } system )
 			return 0;
 
-		switch ( Placed( type, node, effect, out var spawn, out var atRest ) )
+		switch ( Placed( type, node, effect, out var spawn ) )
 		{
 			case Unplaced.ItemEffect:
 				Unimplemented.Report( "PARK_PARTICLE_ITEM_EFFECT" );
@@ -1353,18 +1352,7 @@ public sealed class RideScript
 				return 0;
 		}
 
-		if ( atRest )
-			Unimplemented.Report( "PARK_PARTICLE_NODE_ON_A_CLIP" );
-
-		ParticleVector? aim = null;
-
-		// A directed start's own velocity: the direction times the effect's speed, over 1024 toward nought.
-		if ( spawn.Direction is { } direction && effect >= 0 && effect < system.Library.Effects.Length )
-		{
-			var speed = system.Library.Effects[effect].VelocityScale;
-
-			aim = new ParticleVector( direction.X * speed / 1024, direction.Height * speed / 1024, direction.Z * speed / 1024 );
-		}
+		var aim = spawn.Direction is { } direction ? AimOf( system, effect, direction ) : null;
 
 		var handle = system.Spawn( spawn.Template, spawn.X, spawn.Height, spawn.Z, aim: aim );
 
@@ -1374,6 +1362,77 @@ public sealed class RideScript
 			Log.Info( $"Particles: script {Id} of thing {ThingId} started effect {effect} (type {type}, node {node}) at ({spawn.X >> 10},{spawn.Height >> 10},{spawn.Z >> 10}), handle 0x{handle:x}" );
 
 		return handle;
+	}
+
+	/// <summary>
+	/// A directed emitter's own velocity: the direction times the effect's speed, over 1024 toward nought
+	/// (<c>Particles_SpawnFull</c>, <c>Particles_SetVelocity</c>).
+	/// </summary>
+	private static ParticleVector? AimOf( ParticleSystem system, int effect, (int X, int Height, int Z) direction )
+	{
+		if ( effect < 0 || effect >= system.Library.Effects.Length )
+			return null;
+
+		var speed = system.Library.Effects[effect].VelocityScale;
+
+		return new ParticleVector( direction.X * speed / 1024, direction.Height * speed / 1024, direction.Z * speed / 1024 );
+	}
+
+	/// <summary>
+	/// How many emitters <see cref="SweepEffects"/> has put somewhere other than where they stood, for the console's
+	/// <c>emitters</c> and the tests.
+	/// </summary>
+	public int EmittersCarried { get; private set; }
+
+	/// <summary>
+	/// The engine's walk of a script's effect list, every tick for every script, due a turn or not (<c>FUN_005516b0</c>,
+	/// <c>0x0055188f</c>, reached from <c>0x005516f6</c> for a script not due): each particle record with a node has its
+	/// emitter put where the node stands, each coordinate cut to a whole unit and shifted up ten bits
+	/// (<c>Particles_Move</c>), and a type 2's aimed again by the node's direction times 1024 (<c>0x00551943</c>,
+	/// <c>Particles_SetVelocity</c>). The node is where the thing's players last posed it (<see cref="RideNodes.Follow"/>),
+	/// so a trail on a clip's node goes with it, where the engine's holds the pose of the frame the model was last drawn
+	/// in. A record whose node has no matrix is passed over here, where the engine moves its emitter to the origin
+	/// (<c>0x005518f9</c>); no emitter is started on one (<see cref="StartParticle"/>). Sounds are not moved:
+	/// none is played (<see cref="RideEffects.SoundGap"/>).
+	/// </summary>
+	public void SweepEffects()
+	{
+		if ( Effects is null || Nodes is null || ParticleSystem.Current is not { } system )
+			return;
+
+		var followed = false;
+
+		foreach ( var record in Effects.Records )
+		{
+			if ( !record.IsParticle || record.Emitter == 0 || record.Node < 0 )
+				continue;
+
+			if ( !followed && Animations is { } players )
+				Nodes.Follow( players );
+
+			followed = true;
+
+			if ( Nodes.Find( record.Node, RideNodes.ParticleSpace, out var place, carried: true )
+				is NodeEnd.Missing or NodeEnd.NegativeId or NodeEnd.Unposed )
+				continue;
+
+			if ( !system.TryEmitter( record.Emitter, out var emitter ) )
+				continue;
+
+			int x = (int)place.X << 10, height = (int)place.Y << 10, z = (int)place.Z << 10;
+
+			if ( emitter.X != x >> 4 || emitter.Y != height >> 4 || emitter.Z != z >> 4 )
+				++EmittersCarried;
+
+			system.Move( record.Emitter, x, height, z );
+
+			if ( record.Type == RideEffects.FirstType
+				|| Nodes.FindDirection( record.Node, RideNodes.ParticleSpace, out var way, carried: true ) is NodeEnd.Unposed )
+				continue;
+
+			if ( AimOf( system, emitter.Effect, ((int)(way.X * 1024f), (int)(way.Y * 1024f), (int)(way.Z * 1024f)) ) is { } aim )
+				system.Aim( record.Emitter, aim );
+		}
 	}
 
 	/// <summary>

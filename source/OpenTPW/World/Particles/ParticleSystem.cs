@@ -220,6 +220,16 @@ internal sealed class ParticleSystem
 		emitter.Z = z >> 4;
 	}
 
+	/// <summary>
+	/// Aims a directed effect's emitter again (Particles_SetVelocity, 0x0051fd90): each particle it throws out from now
+	/// starts at <paramref name="aim"/>.
+	/// </summary>
+	public void Aim( int handle, ParticleVector aim )
+	{
+		if ( TryEmitter( handle, out var emitter ) )
+			emitter.Aim = aim;
+	}
+
 	/// <summary>Starts effector <paramref name="effector"/> (0x00522360) and returns its handle, or 0.</summary>
 	public int SpawnEffector( int effector, int x, int y, int z, Anchor anchor, UiWindow? owner = null )
 	{

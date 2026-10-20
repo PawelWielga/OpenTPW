@@ -354,14 +354,15 @@ public sealed class RideScriptScheduler
 		{
 			var entry = _walk[i];
 
-			if ( !RunsOn( entry.Id, Tick, entry.Script.EveryTick ) )
-				continue;
+			if ( RunsOn( entry.Id, Tick, entry.Script.EveryTick ) && _entries.Contains( entry ) )
+			{
+				++TurnsGiven;
+				entry.Script.Turn( now );
+			}
 
-			if ( !_entries.Contains( entry ) )
-				continue;
-
-			++TurnsGiven;
-			entry.Script.Turn( now );
+			// Due a turn or not, the engine then walks the script's effect list (0x005516f6 into 0x0055188f).
+			if ( entry.Script.Effects is { Count: > 0 } && _entries.Contains( entry ) )
+				entry.Script.SweepEffects();
 		}
 
 		// The engine drops a script whose program counter has gone negative, and what it calls to do it is

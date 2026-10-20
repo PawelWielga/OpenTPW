@@ -923,7 +923,11 @@ bursts over the path, the interface gone; after Escape or the right click the or
 **The planes fly** (Q554, `NodePoser`): Endm1's three come down the park three abreast and over the view, plane 02 from
 (480.3, 443.4) to (480.3, 90.4) at height 59, Endm2's two cross from the sides, Endm3's three climb away, as the
 original's frames (`q554/PREDICTION.txt`, `q554/side-by-side.png`; the console's `endfeature planes:`).
-**Not the original's:** their trails' emitters stand on their nodes' rest spots (`PARK_PARTICLE_NODE_ON_A_CLIP`); no sound of the two scripts is played (`RIDE_EFFECT_SOUND`); and the advisor is drawn
+**Their trails follow them** (Q555, `RideScript.SweepEffects`, `RideNodes.Follow`): each tick the emitters AnimCtrl
+started on the planes' nodes are put where the players have posed those nodes, so the stars stream behind the planes
+as in the original's frames (`q555/PREDICTION.txt`, `q555/side-by-side.png`; the console's `endfeature trails:`, plane
+02's two at its x plus and minus 9 and about 7.5 behind it along the park through the whole of Endm1).
+**Not the original's:** no sound of the two scripts is played (`RIDE_EFFECT_SOUND`); and the advisor is drawn
 through the End, where the original's frames 4 s and 10 s in show none while he speaks (`q550/orig/a-4`, `a-5`). Q703
 and Q553 hold them.
 

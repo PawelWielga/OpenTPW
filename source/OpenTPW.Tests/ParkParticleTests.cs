@@ -298,8 +298,113 @@ public class ParkParticleTests
 		Assert.AreEqual( (template.EmitterVelocity.X, template.EmitterVelocity.Y, template.EmitterVelocity.Z), (jet.VX, jet.VY, jet.VZ) );
 		Assert.AreEqual( 40, template.VelocityScale );
 
-		// The Spray's node rides a clip: counted, and the jet stays where the node rests.
-		Assert.IsTrue( Counted( "PARK_PARTICLE_NODE_ON_A_CLIP" ) );
+		// The Spray's node rides a clip, and with its players idle the node stands where it rests.
+	}
+
+	/// <summary>
+	/// <b>A trail on a clip's node goes with it</b>: the End's plane 02 flies down the park on <c>Endm1</c>, and the
+	/// trail <c>AnimCtrl.RSE</c> starts on its node 5 is started where the players have posed the node and carried
+	/// there by every sweep, due a turn or not, each place cut to whole units, not left where the node rests.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the sweep moving nothing; the node found at rest; the players not followed; the
+	/// scheduler sweeping only a script due a turn; the place rounded rather than cut.</remarks>
+	[TestMethod]
+	public void ATrailOnAClipsNodeGoesWithIt()
+	{
+		const string End = "levels/jungle/features/end";
+		const int Trail = 95, Node = 5;
+
+		var data = GameData.Required();
+		var players = RideAnimations.Load( End, "end", data, 1 );
+		var nodes = RideNodes.Load( End, "end", data, false, players.AllClips )!;
+
+		nodes.PlaceFixed();
+		Assert.AreEqual( NodeEnd.RestPose, nodes.Find( Node, RideNodes.ParticleSpace, out var rest ) );
+
+		// Endm1 is role 5's first clip; 1.5 s into it the plane has come some way down the park.
+		players.Trigger( 5, 0, 0, 1f, 0 );
+		players.Advance( 1500 );
+
+		var host = new RideScriptScheduler();
+		var script = new RideScript( Build( Word( Opcode.ADDOBJ ), 1, Node, Trail, 1, Word( Opcode.WAIT ), 30000, Word( Opcode.END ) ) )
+			{ Effects = new RideEffects(), Nodes = nodes, Animations = players, ThingId = 43 };
+
+		// Its first turn alone, so the start is seen before any sweep.
+		script.Turn( 0f );
+
+		Assert.IsTrue( system.TryEmitter( script.Effects!.Records.Single().Emitter, out var trail ) );
+		Assert.AreEqual( NodeEnd.Posed, nodes.Find( Node, RideNodes.ParticleSpace, out var flown, carried: true ) );
+		Assert.IsTrue( rest.Z - flown.Z > 20f, $"the plane has come down the park: {rest.Z} to {flown.Z}" );
+		Assert.AreEqual( Units( (int)flown.X, (int)flown.Y, (int)flown.Z ), PlaceOf( trail ), "started where the node is posed" );
+
+		// Id 1 is due a turn on tick 1 and next on tick 9.
+		host.Add( 1, script );
+		host.Advance( 0f );
+		Assert.AreEqual( 1, host.TurnsGiven );
+
+		// Three more seconds of the clip, and seven ticks on which the script is not due a turn.
+		players.Advance( 4500 );
+
+		var expected = RideNodes.Load( End, "end", data, false, players.AllClips )!;
+
+		expected.PlaceFixed();
+		expected.Follow( players );
+		expected.Find( Node, RideNodes.ParticleSpace, out var further, carried: true );
+		Assert.IsTrue( flown.Z - further.Z > 20f, $"on down the park: {flown.Z} to {further.Z}" );
+
+		for ( var tick = 2; tick <= 8; ++tick )
+			host.Advance( tick * 31f );
+
+		Assert.AreEqual( 1, host.TurnsGiven, "swept on ticks the script was not due a turn" );
+		Assert.AreEqual( Units( (int)further.X, (int)further.Y, (int)further.Z ), PlaceOf( trail ), "carried, cut to whole units" );
+		Assert.IsTrue( script.EmittersCarried > 0 );
+	}
+
+	/// <summary>
+	/// <b>A directed particle on a clip's node is aimed again by every sweep</b>: a type 2 on the End's node 11, which
+	/// <c>Endm3</c> turns as its plane climbs, takes the node's direction times 1024 times the effect's speed, over 1024
+	/// toward nought, as it is then (<c>Particles_SetVelocity</c>), not as it was started.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the sweep not aiming; the aim taken at rest.</remarks>
+	[TestMethod]
+	public void ADirectedParticleOnAClipsNodeIsAimedAgain()
+	{
+		const string End = "levels/jungle/features/end";
+		const int Node = 11;
+
+		var data = GameData.Required();
+		var players = RideAnimations.Load( End, "end", data, 1 );
+		var nodes = RideNodes.Load( End, "end", data, false, players.AllClips )!;
+
+		nodes.PlaceFixed();
+		players.Trigger( 5, 2, 0, 1f, 0 );
+		players.Advance( 1000 );
+
+		var host = new RideScriptScheduler();
+		var script = new RideScript( Build( Word( Opcode.ADDOBJ ), 2, Node, Jet, 1, Word( Opcode.WAIT ), 30000, Word( Opcode.END ) ) )
+			{ Effects = new RideEffects(), Nodes = nodes, Animations = players, ThingId = 43 };
+
+		host.Add( 1, script );
+		host.Advance( 0f );
+
+		Assert.IsTrue( system.TryEmitter( script.Effects!.Records.Single().Emitter, out var jet ) );
+
+		var started = jet.Aim;
+
+		players.Advance( 9000 );
+		host.Advance( 31f );
+
+		var expected = RideNodes.Load( End, "end", data, false, players.AllClips )!;
+
+		expected.PlaceFixed();
+		expected.Follow( players );
+		expected.FindDirection( Node, RideNodes.ParticleSpace, out var way, carried: true );
+
+		var speed = system.Library.Effects[Jet].VelocityScale;
+		int x = (int)(way.X * 1024f), height = (int)(way.Y * 1024f), z = (int)(way.Z * 1024f);
+
+		Assert.AreEqual( new ParticleVector( x * speed / 1024, height * speed / 1024, z * speed / 1024 ), jet.Aim );
+		Assert.AreNotEqual( started, jet.Aim, "the node has turned since the start" );
 	}
 
 	/// <summary>

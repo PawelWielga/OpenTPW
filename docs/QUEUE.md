@@ -53,16 +53,12 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q703. The End's trails follow their planes, and the advisor is not drawn over it.** From Q552 and Q554 (the End
-  made, its view, keys and ways out; its planes fly; `park-engine.md`, "The End feature's view", "OpenTPW builds it").
-  Two parts, each seen beside the original's frames (`q554/orig/`, `q551/orig/b-sheet.png`, `q550/orig/a-4`, `a-5`):
-  (1) **An emitter on a clip's node is not moved with it** (`PARK_PARTICLE_NODE_ON_A_CLIP`; the engine walks a script's
-  effect list every tick, `FUN_005516b0`, and moves what plays by its lookup record): the planes' star trails (93 to 95
-  on `Dummy01`-`24`, nodes under the planes that `NodePoser` now carries) and the Jungle Spray's jet. `RideNodes` still
-  stands every node at rest. (2) **The advisor is drawn through the End in ours**, speaking row
-  167, where the original's frames show none while its `0xa7` and `0x5d` play: decode what hides him (the ride view,
-  the End's control, or a layer) before building. Also Q551's text to check against the run: `EVENT 1 18 3` and
-  `1 20 3` are `P_EFFECT_Firework1` (ours started 6, 3, 6, 3 on nodes 17 to 20, `q703/run4/run.log`).
+- [ ] **Q703. The advisor is not drawn over the End.** From Q552, Q554 and Q555 (`park-engine.md`, "The End feature's
+  view", "OpenTPW builds it"). The advisor is drawn through the End in ours, speaking row 167, where the original's
+  frames show none while its `0xa7` and `0x5d` play (`q550/orig/a-4`, `a-5`; ours `q555/run1/s01`..`s10`): decode what
+  hides him (the ride view, the End's control, or a layer) before building. Seen beside the original's frames, not
+  measured: the original's trails look denser, with bigger stars, than ours (`q554/orig/a-e08` against
+  `q555/run1/s10`).
 - [ ] **Q553. A script's sound effects play.** From Q552. `ADDOBJ` and `EVENT` of types 3 to 10 (`Sound_PlayEffect`
   through `FUN_00557970`) start no sound here and are counted, `RIDE_EFFECT_SOUND` (`RideEffects`; 39 in the End's first
   30 s, End.RSE's `cat_ui` 186 and `cat_rides` 200 to 202, AnimCtrl's `cat_ambient` 209; every ride with a sound node

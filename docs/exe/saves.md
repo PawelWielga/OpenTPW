@@ -2860,8 +2860,9 @@ direction's x is -0.0113: -11 times 40 over 1024 is nought, where a shift down w
 its node (`ParkParticles.Spawn.Direction`), and `Edit.Start` then makes no draw and writes the three words.
 `ParkParticles.Aim` reads them; the console's `emitters` prints each emitter's.
 
-**Deviations, said at `RideScript.WrittenEmitters`:** a node that rides a clip is aimed as it rests (the
-Spray's jet nodes ride one, and all six of the files' records are the rest pose's words); and a node whose
+**A node that rides a clip** is written, place and aim, where the thing's players last posed it, as the sweep leaves
+it (Q555, `RideNodes.Follow`); the Spray's jet nodes ride one and move under none of its clips but the build clip,
+and all six of the files' records are the rest pose's words. **A deviation, said at `RideScript.WrittenEmitters`:** a node whose
 matrix the pose walk never stores, whose direction is no number, is counted and written with no emitter
 (`SAVE_PARK_EMITTER_DIRECTED`: no Lost Kingdom particle node is one).
 

@@ -1349,6 +1349,19 @@ public static class DebugConsole
 						Reply( $"endfeature planes: {string.Join( "; ", planes )}" );
 					}
 
+					// Where each particle the two scripts started stands now, in the park's axes: what the sweep carries.
+					if ( ParticleSystem.Current is { } trailSystem )
+					{
+						var trails = new[] { own, child }.Where( script => script?.Effects is not null )
+							.SelectMany( script => script!.Effects!.Records.Where( record => record.IsParticle && record.Emitter != 0 )
+								.Select( record => trailSystem.TryEmitter( record.Emitter, out var emitter )
+									? $"{script.Id}:{record.Effect}@{record.Node} ({emitter.X / 64f:F1}, {emitter.Z / 64f:F1}, {emitter.Y / 64f:F1})"
+										+ (emitter.Lifetime < 0 ? " killed" : "")
+									: $"{script.Id}:{record.Effect}@{record.Node} gone" ) );
+
+						Reply( $"endfeature trails: carried {(own?.EmittersCarried ?? 0) + (child?.EmittersCarried ?? 0)}; {string.Join( "; ", trails )}" );
+					}
+
 					break;
 				}
 
