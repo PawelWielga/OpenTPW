@@ -374,6 +374,7 @@ public class Level
 			researched.Researched = ( item, kind, tick )
 				=> state.HearResearched( item, kind, catalogue!.TryGet( item, out var made ) ? made.UiType : -1, tick );
 			researched.GroupOpened = state.HearGroupOpened;
+			researched.AllDone = tick => EndOfResearch( state, tick );
 		}
 
 		_ = new ParkGround( ThemeName, park, Balance, ParkLight.Lit, ProceduralTileSize() );
@@ -634,6 +635,27 @@ public class Level
 		Log.Info( $"Leaving the park: {AutosaveName} {(written is null ? "is not written" : $"is written to {written}")}" );
 
 		return written;
+	}
+
+	/// <summary>
+	/// The end of research (<see cref="ParkResearch.AllDone"/>; <c>Lab_OnMessage</c>, <c>0x00503e15</c>..<c>0x00503fb7</c>):
+	/// the park marked all researched in the player's progress and, where <see cref="ParkResearch.MarkAllResearched"/>
+	/// says they follow, advisor message <c>0xa7</c> (row 167) posted about no thing and the End feature
+	/// (<c>World_MakeEndFeature</c>, <c>0x00516b00</c>), which is counted.
+	/// </summary>
+	private void EndOfResearch( ParkState state, int tick )
+	{
+		var player = Players.Roster.Current;
+		var follows = ParkResearch.MarkAllResearched( player?.File, ThemeName, InstantAction );
+		Log.Info( $"Research: every project done on mGameTick {tick}; "
+			+ (player is null ? "nobody is playing, so no park is marked" : $"{player.Name}'s {ThemeName} record marked all researched")
+			+ (follows ? ", so row 167 and the End feature follow" : ", and a park of theirs is not, so nothing follows") );
+
+		if ( !follows )
+			return;
+
+		state.AdvisorMessages?.Post( ParkAdvisorMessages.AllResearched, tick );
+		Unimplemented.Report( "RESEARCH_END_FEATURE" );
 	}
 
 	/// <summary>

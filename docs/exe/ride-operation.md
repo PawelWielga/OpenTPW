@@ -3781,7 +3781,7 @@ every such purchase, as the purchase does not ask the player's `RideIds`) and a 
   time since `mTurnEnteredRed` by 30 days and at 6 or more broadcasts message `0x13` with 2 (`0x004d054c`,
   `0x004d05b2`), which the bank's handler turns into the end of the park (`FUN_004d02d0`, `FUN_005168f0`) unless the world's state
   (`+0x1da738`) is already 4 or `FUN_00516c00` finds the word at `0x007cf4f4` set (`0x004d030d`, `0x004d031b`): the
-  thing id of the "End" feature, which `FUN_00516b00` builds and stores (`0x00516bad`) and `FUN_00516c10` deletes and
+  thing id of the "End" feature, which `World_MakeEndFeature` (`0x00516b00`) builds and stores (`0x00516bad`) and `World_DeleteEndFeature` (`0x00516c10`) deletes and
   zeroes (`0x00516c6a`). A deposit
   never writes `mLastBalance`, so climbing out on deposits alone does not clear the stamp: if the next withdrawal takes
   the balance below nought again, `mTurnEnteredRed` is not stamped afresh and the count runs from the first entry. Any

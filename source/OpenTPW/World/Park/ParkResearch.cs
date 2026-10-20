@@ -16,8 +16,9 @@ namespace OpenTPW;
 /// <b>The lab at work</b> (<c>docs/exe/park-engine.md</c>, "The lab at work"): a researcher's hand-out is
 /// <see cref="SpendPoints"/>, a project reaching its cost marks its item researched, and the lab appends the item's
 /// next upgrade, raises the kind's highest group and picks the kind's next project. A finished project is told to the
-/// advisor and the park analyser (<see cref="Researched"/>) and a group's raise to the advisor (<see cref="GroupOpened"/>);
-/// what it sends the challenge manager and the end of research are counted where the original sends them.
+/// advisor and the park analyser (<see cref="Researched"/>), a group's raise to the advisor (<see cref="GroupOpened"/>)
+/// and the last project's finish to the level (<see cref="AllDone"/>); what it sends the challenge manager is counted
+/// where the original sends it.
 /// </para>
 /// </summary>
 public sealed class ParkResearch
@@ -63,6 +64,12 @@ public sealed class ParkResearch
 	/// kind, 0 to 3, and the tick; <see cref="ParkState.HearGroupOpened"/> posts it to the advisor.
 	/// </summary>
 	public Action<int, int>? GroupOpened { get; set; }
+
+	/// <summary>
+	/// Every project in the table done, after the finish that did it (<c>Lab_OnMessage</c>'s end test, <c>0x00503e15</c>):
+	/// the tick. The level marks the park all researched and raises what follows (<see cref="MarkAllResearched"/>).
+	/// </summary>
+	public Action<int>? AllDone { get; set; }
 
 	/// <param name="records">The save's records, <see cref="ParkWorld.ObjectControlRecords"/>.</param>
 	/// <param name="projects">The save's lab's projects, <see cref="ParkWorld.ResearchProjects"/>; none where no file gave any.</param>
@@ -286,12 +293,26 @@ public sealed class ParkResearch
 
 		var allDone = _projects.All( IsDone );
 
-		// Every project done marks the park all researched in the player's progress, and in Instant Action raises row
-		// 167 and the End feature (0x00503e15..0x00503fb7): Q703.
 		if ( allDone )
-			Unimplemented.Report( "RESEARCH_ALL_DONE" );
+			AllDone?.Invoke( tick );
 
 		return (appended, raised, _kinds[kind].CurrentProject, allDone);
+	}
+
+	/// <summary>
+	/// The player's half of the end of research (<c>0x00503e58</c>..<c>0x00503f77</c>): the current park's record in the
+	/// player's progress is marked all researched (<c>PlayerProgress_MarkParkAllResearched</c>, <c>0x005b0ca0</c>: its
+	/// <c>mAllResearchCompleted</c>, which <c>gms.dat</c> keeps), and the answer is whether advisor row 167 and the End
+	/// feature follow: in Instant Action always; in Full Simulation only when every park record the player holds is
+	/// marked (<c>PlayerProgress_AllParksAllResearched</c>, <c>0x005b0c40</c>; none held is every one). With nobody
+	/// playing nothing is marked, and the park is Instant Action's.
+	/// </summary>
+	public static bool MarkAllResearched( PlayerFile? progress, string theme, bool instantAction )
+	{
+		if ( progress is not null )
+			progress.Park( theme ).AllResearchCompleted = true;
+
+		return instantAction || progress is null || progress.Parks.All( park => park.AllResearchCompleted );
 	}
 
 	/// <summary>

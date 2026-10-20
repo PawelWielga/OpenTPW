@@ -133,7 +133,7 @@ public class ParkLabTests
 	[TestMethod]
 	public void AFinishedProjectMarksItsItemRaisesTheGroupAndPicksTheNext()
 	{
-		var counts = new[] { "RESEARCH_FINISHED_TO_THE_CHALLENGES", "RESEARCH_ALL_DONE" };
+		var counts = new[] { "RESEARCH_FINISHED_TO_THE_CHALLENGES" };
 		int[] Since( int[] before ) => [.. counts.Select( ( name, i ) => Counted( name ) - before[i] )];
 		var before = counts.Select( Counted ).ToArray();
 
@@ -145,6 +145,8 @@ public class ParkLabTests
 		var opened = new System.Collections.Generic.List<(int Kind, int Tick)>();
 		lab.Researched = ( item, kind, tick ) => told.Add( (item, kind, tick, lab.Kinds[kind].CurrentProject) );
 		lab.GroupOpened = ( kind, tick ) => opened.Add( (kind, tick) );
+		var ended = new System.Collections.Generic.List<int>();
+		lab.AllDone = ended.Add;
 
 		var first = lab.SpendPoints( 12, 20 ).Single();
 		Assert.AreEqual( new ParkResearch.Finished( 2, 1150, 0, 0, 6f, Raised: 2, Next: 3, Appended: 3 + 1, AllDone: false ), first,
@@ -152,7 +154,7 @@ public class ParkLabTests
 		Assert.IsTrue( lab.IsResearched( 1150 ) );
 		CollectionAssert.AreEqual( new[] { (1150, 0, 20, 2) }, told, "told before the lab picks: the kind's current is still the finished one" );
 		CollectionAssert.AreEqual( new[] { (0, 20) }, opened );
-		CollectionAssert.AreEqual( new[] { 1, 0 }, Since( before ) );
+		CollectionAssert.AreEqual( new[] { 1 }, Since( before ) );
 
 		Assert.AreEqual( 0, lab.SpendPoints( 12, 40 ).Count );
 		var second = lab.SpendPoints( 12, 60 ).Single();
@@ -163,14 +165,15 @@ public class ParkLabTests
 		Assert.AreEqual( (0, 3, 1), (third.Project, third.Raised, third.Next), "group 1 and 2 all done opens 3; three of four is under 80" );
 		CollectionAssert.AreEqual( new[] { 1150, 1102, 1101 }, told.Select( call => call.Item ).ToArray() );
 		CollectionAssert.AreEqual( new[] { (0, 20), (0, 100) }, opened );
-		CollectionAssert.AreEqual( new[] { 3, 0 }, Since( before ) );
+		CollectionAssert.AreEqual( new[] { 3 }, Since( before ) );
 
 		lab.SpendPoints( 12, 120 );
 		var last = lab.SpendPoints( 12, 140 ).Single();
 		Assert.AreEqual( (1, ParkResearch.MostGroup, -1, false), (last.Project, last.Raised, last.Next, last.AllDone),
 			"every ride done: raised to the most, nothing left to pick; the kart's upgrade is still open" );
 		CollectionAssert.AreEqual( new[] { (0, 20), (0, 100) }, opened, "a raise with no ride left is not told" );
-		CollectionAssert.AreEqual( new[] { 4, 0 }, Since( before ) );
+		CollectionAssert.AreEqual( new[] { 4 }, Since( before ) );
+		Assert.AreEqual( 0, ended.Count, "the end is not told while a project is open" );
 		Assert.AreEqual( (1108, 0, 140), (told[^1].Item, told[^1].Kind, told[^1].Tick) );
 		Assert.IsTrue( lab.IsResearched( 1108 ) );
 		Assert.AreEqual( 0, lab.SpendPoints( 12, 160 ).Count, "kind 4 has no effort here" );
@@ -249,6 +252,8 @@ public class ParkLabTests
 		var lab = new ParkResearch( park.ObjectControlRecords, catalogue, park.ResearchProjects, park.ResearchKinds, park.ResearchWorkLoad,
 			ParkResearch.GroupOpensAt( balance ) );
 		var finished = new System.Collections.Generic.List<(int HandOut, int Item)>();
+		var ended = new System.Collections.Generic.List<int>();
+		lab.AllDone = ended.Add;
 
 		while ( lab.HandOuts < 2000 && finished.Count < 24 )
 			finished.AddRange( lab.SpendPoints( 12, 760 + lab.HandOuts * 20 ).Select( done => (lab.HandOuts, done.ItemId) ) );
@@ -260,6 +265,7 @@ public class ParkLabTests
 		Assert.AreEqual( 24, lab.Projects.Count, "no ride's upgrade costs anything in the Easy layer" );
 		Assert.AreEqual( 2, lab.TierResearched( 1150 ) );
 		Assert.AreEqual( 0, lab.SpendPoints( 12, 0 ).Count, "nothing left" );
+		CollectionAssert.AreEqual( new[] { 760 + 1176 * 20 }, ended, "the end told once, on the 1,177th hand-out's tick 24280" );
 
 		var fresh = new FreshPark( "jungle", new ParkBalance( "jungle", easyMode: false ), new ParkItemCatalogue( "jungle", data ), data );
 		CollectionAssert.AreEqual( new[] { (4, 1), (41, 1), (46, 1), (17, 1), (0, 1) },

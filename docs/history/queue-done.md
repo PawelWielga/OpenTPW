@@ -9245,6 +9245,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   **Done** (2026-10-19, `q702/`): from `dino576.TPWS` both games finish Dino Karts on tick 820, push 1150 into the rides
   ring, say `0x5d` line 0 (sample 282, found in our mix at 1.000) on the same tick, slot `0x85` at -1, and star the row
   and sort it alike (9 of 9 here, O1-O7 there; `side-by-side.png`); mutate.py 20 of 20.
+- [x] **Q550. The end of research marks the park and posts row 167** (Q703's first piece). When every project is
+  done the lab marks the player's current park record all researched (`mAllResearchCompleted`, `gms.dat`'s byte;
+  `ParkResearch.MarkAllResearched`) and, in Instant Action or in Full Simulation with every park record marked,
+  posts row 167 (`0xa7`, the constant 10000, responses 380-381 on the theme's advisor, no tag) and counts the End
+  feature (`RESEARCH_END_FEATURE`). Confirmed: the original (`q550/orig`, 5 of 6 held, the keys byte's miss the box's
+  own take) and ours (`q550/run2` 8 of 8 in Instant Action; `run7`, `run8` 5 of 5 in Full Simulation, the scene's two
+  misses in `run3` to `run6` recorded); `mutate.py` 14 of 14.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -177,6 +177,12 @@ internal sealed class ParkAdvisorMessages
 	/// </summary>
 	internal const int NewRideGroup = 0x85;
 
+	/// <summary>
+	/// Message 0xa7, posted only: every project of the lab done (Lab_OnMessage, 0x00503ee9 in Instant Action, 0x00503f8d
+	/// in Full Simulation), row 167, scored the constant 10000 (0x0059f9a0).
+	/// </summary>
+	internal const int AllResearched = 0xa7;
+
 	/// <summary>The message a finished project of research kind <paramref name="kind"/> posts, null for a kind past 4 (the original logs "unknown research category").</summary>
 	internal static int? ResearchedOf( int kind ) => kind switch
 	{
@@ -310,6 +316,7 @@ internal sealed class ParkAdvisorMessages
 	/// thirst is over <see cref="ThirstierThan"/>, shut or open, and <paramref name="PerHungryGuest"/> row 4's (0x0059ca00),
 	/// the same of the hunger over <see cref="HungrierThan"/>.
 	/// <paramref name="AlwaysNought"/> is the score of row 85 (0x0059e420): nought, whatever the park.
+	/// <paramref name="Constant"/> is a score read from no key, row 167's 10000 (0x0059f9a0).
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -327,7 +334,7 @@ internal sealed class ParkAdvisorMessages
 		string? LitterWithNoHandyman = null, bool Filthy = false, string? GotAwayMoreThan = null,
 		string? MostRidesBuilt = null, bool EveryRideBuilt = false, string? SlowResearch = null,
 		string? GotAwayWithAGuard = null, int SecondProp = 0, bool PerThirstyGuest = false, bool PerHungryGuest = false,
-		bool AlwaysNought = false );
+		bool AlwaysNought = false, int? Constant = null );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -625,7 +632,10 @@ internal sealed class ParkAdvisorMessages
 		new( NewRideGroup, "NewResearchGroupRide.Score", 318, 432, Prop: ResearchHat, Group: 155, FullSimulationOnly: true ),
 		new( NewRideGroup + 1, "NewResearchGroupShop.Score", 320, 434, Prop: ResearchHat, Group: 156, FullSimulationOnly: true ),
 		new( NewRideGroup + 2, "NewResearchGroupSideshow.Score", 322, 436, Prop: ResearchHat, Group: 157, FullSimulationOnly: true ),
-		new( NewRideGroup + 3, "NewResearchGroupFeature.Score", 324, 438, Prop: ResearchHat, Group: 158, FullSimulationOnly: true )
+		new( NewRideGroup + 3, "NewResearchGroupFeature.Score", 324, 438, Prop: ResearchHat, Group: 158, FullSimulationOnly: true ),
+
+		// Row 167's two responses name the theme's own advisor model and its costume; its group, 0x17f, leaves no tag.
+		new( AllResearched, "", 380, 452, Prop: AdvisorProps.ThemeCostume, Constant: 10000 )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -888,6 +898,7 @@ internal sealed class ParkAdvisorMessages
 	/// the staff rows' and the pranksters' are their sections', each said on its Topic; rows 3 and 4's (0x0059c9d0,
 	/// 0x0059ca00) are their key's value for each guest inside over the thirst or the hunger, and row 85's (0x0059e420)
 	/// is nought;
+	/// row 167's (0x0059f9a0) is the constant 10000;
 	/// every other built row's is its key's value.
 	/// </summary>
 	/// <summary>FUN_0059bf20: the row's score, or -1 for a row of the other game (a Full Simulation row in Instant Action).</summary>
@@ -898,6 +909,7 @@ internal sealed class ParkAdvisorMessages
 	{
 		// Row 85 runs the toilets' average queue and drops it (FSTP ST0 at 0x0059e444), then answers nought.
 		if ( topic.AlwaysNought ) return 0;
+		if ( topic.Constant is { } constant ) return constant;
 
 		// Rows 3 and 4 ask neither the door nor how many are inside: the count alone, times the key.
 		if ( topic.PerThirstyGuest ) return _park?.Invoke() is { } thirsty ? thirsty.GuestsThirsty * Value( topic.ScoreKey ) : 0;

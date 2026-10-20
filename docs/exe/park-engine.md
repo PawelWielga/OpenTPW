@@ -781,7 +781,7 @@ a plain Escape opens the game menu (`GameMenu_Open( 0 )`, `0x004a2942`) and the 
 | `FUN_004815d0`, from the save loader `FUN_00414d40` (`0x00415088`) | off, if on |
 | `FUN_004a9180`, the end of the postcard's capture, which the UI pass `FUN_0048a580` calls on the third pass after `FUN_004a9380` and which then opens the postcard's screen (`FUN_004a8c00`) (`0x004a923a`) | off, if on, when `DAT_00fb3b7c` is not 1 |
 | `FUN_0048ac40` (`0x0048aca4`), from the end-of-park routine `FUN_005168f0`, which sets the world's state to 4 and passes the park gates | it leaves first person or a ride view, calls `FUN_004e15b0( 0 )` and takes the keys away (`FUN_0040cfa0`); then off, if on. Then it closes the open screen, hides layers 0 and 1 itself (message 6) and puts up a full-screen control, id `0x7472`, handler `0x0048a740`, holding stream `0x0074fb20`: one control, id `0x5a`, (174,500)-(1874,1000), mesh `0xf3a7aff4` |
-| `FUN_0048ae70` (`0x0048aed4`), from `FUN_00516b00`, which makes the "End" feature | the same, with stream `0x0074faf0` (id `0x321`, (102,536)-(1946,940), mesh `0x706de86b`) and handler `0x0048a970` |
+| `FUN_0048ae70` (`0x0048aed4`), from `World_MakeEndFeature` (`0x00516b00`), which makes the "End" feature | the same, with stream `0x0074faf0` (id `0x321`, (102,536)-(1946,940), mesh `0x706de86b`) and handler `0x0048a970` |
 | the handler `0x0048a740` (`0x0048a7f3`, `0x0048a8d8`) | **on.** A right click with RMB cancel on, more than 2000 ms after the control was made, or a plain Escape: it sends its control message 4, leaves the ride view (`FUN_0042a190`), turns the full-screen view on, loads `0x0074fb20` again into the view's own control, and gives the keys back (`FUN_0040cf60`) |
 | `FUN_0048adb0` (`0x0048addc`), from `FUN_004815e0` in the load's rebuild `FUN_00415140`, when the saved state is 4 | **on**, if off, and `0x0074fb20` loaded into it |
 
@@ -792,7 +792,7 @@ the interface back. The two meshes' names are not resolved, and the end of a par
 `[0x007c2508]` with the time (`0x0048ac16`). Message `0x1000b`, a key: `0x1b` (Escape) with `arg3 & 0xff0000` clear
 (`0x0048a99e`..`0x0048a9af`), with no time gate. Message `0x10006`, a button: button 1, `[0x0078d911]` (RMB cancel) set and
 `time - [0x007c2508] > 2000` strictly (`jle` at `0x0048aaf8`). Both arms run one body: control message 4 to the window,
-`FUN_00516c10` (deletes the End feature, asserting on its handle `0x007cf4f4`), message 6 to `[0x007cb2b0]` (0) and
+`World_DeleteEndFeature` (`0x00516c10`; deletes the End feature, asserting on its handle `0x007cf4f4`), message 6 to `[0x007cb2b0]` (0) and
 `[0x007cb2ac]` (1), `FUN_0040cf60` (the keys back), byte `0x007c24d0` set to 0, and `FUN_004862a0` (re-focuses a window).
 When the game type `[0x00fb3b7c]` is 2 (Instant Action) it also shows UITEXT **471** through `0x006ace60( 0x1d7 )` and
 `FUN_0047f020( ..., 2, ... )` (`0x0048aa4f`..`0x0048aac2`): "Congratulations! Now you've completed Instant Action mode
@@ -1359,9 +1359,19 @@ the current set to -1. For kind 4 a project is eligible only while the item it u
 **The end of research** (`0x00503e15`..`0x00503fb7`): when every project in the table is done, the player's
 progress (`[0x00f7c58c]`, made if absent) marks this park all researched (`PlayerProgress_MarkParkAllResearched`,
 `0x005b0ca0`: byte `+0xb9` of its current park's record). In game type 2, Instant Action, the lab then raises
-advisor message `0xa7` (row 167, `0x00503ee9`) and the world builds the "End" feature (`FUN_00516b00`); in type 0,
+advisor message `0xa7` (row 167, `0x00503ee9`) and the world builds the "End" feature (`World_MakeEndFeature`); in type 0,
 Full Simulation, the same only when every park record of the player's is so marked
-(`PlayerProgress_AllParksAllResearched`, `0x005b0c40`, `0x00503f8d`); in type 1 nothing more.
+(`PlayerProgress_AllParksAllResearched`, `0x005b0c40`, `0x00503f8d`); in type 1 nothing more. The current park's
+record is the progress's `+0x48`, set on entering a park by its theme's name (`PlayerProgress_SetCurrentPark`,
+`0x005b08a0`, which makes one where the player has none). `+0xb9` is the record's `mAllResearchCompleted`, the last
+byte of its theme record in `gms.dat` (`0x005b1163`; `saves.md`, "`gms.dat`"); a new record zeroes it
+(`0x005b0b4e`), and the all-parks test is its only reader. The tree holds one record a theme, made at the player's
+selection (four for the disc's four themes), so in Full Simulation one park finished says nothing. Row 167 is posted about
+no thing, as rows 93 to 97 are. **The End feature** (`World_MakeEndFeature`, `0x00516b00`) is the catalogue item
+whose name at `+0x390` is `End` (a wide compare with the string object `0x007cf9c0`), made as an object at
+(0, 0, 0) (`FUN_004db090`, `0x00516b8b`), its thing id stored at `0x007cf4f4`; with none it logs "Could not find
+the %s feature" and stores nought. Then `FUN_0048ae70` takes the screen (above, "Everything else that calls it") with
+the handler `0x0048a970` (above, "The End feature's handler").
 
 **The automatic mode is the screen refused, nothing more.** The efforts and the work load have one writer
 each besides the set-up and the load, `Lab_SetEffort` (`0x00503870`) and `Lab_SetWorkLoad` (`0x00503900`), both
@@ -1406,8 +1416,8 @@ table held at 256, where the original writes past it), `Lab_RaiseHighestGroup` a
 with the lab's projects, kinds and `mNumProjects` and each control's flag and tier (`ParkWorld.PutLab`). Message
 `0x11` reaches the advisor and the analyser before the lab (`ParkResearch.Researched`, `ParkState.HearResearched`;
 Q702, below), a raise with work left the advisor (`ParkResearch.GroupOpened`, `ParkState.HearGroupOpened`); counted
-where the original sends them: a ride's to the challenges (`RESEARCH_FINISHED_TO_THE_CHALLENGES`) and the end
-(`RESEARCH_ALL_DONE`; Q703). The console's `research` prints the lab and the analyser's four rings. **In the running game** (`q701/run2/`, the final build; `run1/` the same on the build before a comment): the
+where the original sends it: a ride's to the challenges (`RESEARCH_FINISHED_TO_THE_CHALLENGES`). The end of research
+is Q550's, below. The console's `research` prints the lab and the analyser's four rings. **In the running game** (`q701/run2/`, the final build; `run1/` the same on the build before a comment): the
 file's lab on entering, the first hand-out on 760, Dino Karts finished on the 95th hand-out on tick 3020 (2980 in
 run1), at 600, the rides on group 2 and project 2; its row on the buy list's rides tab where it had none on hand-out
 60, picked by a click and put down on (69,25) for 6500 (`2-after-rides-tab.png`, `5-dino-karts-built.png`; beside
@@ -1427,6 +1437,26 @@ OpenTPW (`ParkAdvisorMessages` rows 93 to 97 and 133 to 136, `ParkResearchedRing
 same tick, the same order (the post with the item, the ring, the raise's post at -1), the line said on tick 820, sp_282 found in the game's own mix, tag 95 reading "Your scientists have researched
 the Dino Karts ride!", the star and the sort as the original's (`q702/side-by-side.png`), and a saved park holding the
 ring.
+
+**The end of research, in both games** (Q550; `q550/alldone576.TPWS`, the Q702 file with every other project at its
+cost, so only the rides' kind is funded and Dino Karts takes 10.2 a hand-out: `labsim.py` puts the end on the third,
+tick 800). The original (`q550/orig/run.sh`, off-screen, started on `dino576` first because it enters the park on
+the newest file; `labread.py`, `advisor.py`, `progress.py`, watches on `0x007cf4f4` and `0x007c24d0`): on tick 800
+Dino Karts at 606.6, the rides' highest group 1 to 7 and their current project -1; the Instant Action player's four
+park records, the jungle one current, and its all-researched 0 to 1 alone; `0xa7` said on 800, line 0, with `0x5d`
+waiting at 150 and said on 850; the End feature's thing id 0 to 43 and the keys taken. Its frame is the End
+feature: the gadget and the money gone and the view turned up to a blue sky with stars and fireworks over the park's
+edge, no banner. Escape put the id back to 0 and showed UITEXT 471's box with its cross over the park, the gadget
+back; the keys byte read 1 throughout, as the box takes the keys again itself (`FUN_0047f020`, `0x0047f241`). The
+park's tick stood under the box. OpenTPW (`ParkResearch.AllDone` and `MarkAllResearched`, `Level.EndOfResearch`,
+`ParkAdvisorMessages` row 167; `q550/run2`, 8 of 8 on the final build): the same tick and figures, the posts of 93,
+then the mark ("ref's jungle record marked all researched"), then 167 at 10000, said on tick 800 with sample 452
+(found in the game's own mix) and 93 after it; `gms.dat` saved with jungle's byte 1 and the other three 0. The End
+feature is counted (`RESEARCH_END_FEATURE`, Q703), so the park stays in its own view with the gadget
+(`q550/side-by-side.png`). In Full Simulation (`q550/confirm-fs.py`, the private player's `gms.dat` put to mode 0;
+`stone240-fs.TPWS`, Stone Head last, as a ride's finish there appends its costed upgrade and kind 4 has no effort in
+the file): with the other three records 0 the jungle one is marked and nothing follows (`run7`), with them 1 row 167
+is said on the end's tick and the End counted (`run8`). The original's Full Simulation arm is the listing's alone.
 
 ### Entering and leaving first person: a click on the ground
 

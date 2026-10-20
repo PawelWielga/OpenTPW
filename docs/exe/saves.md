@@ -100,7 +100,7 @@ Version 12, `FUN_005aff50`. Defaults come from the progress object constructor `
 | — | 4×5 | records | 4 × (byte "holds record i" flag, dword record value); the value is garbage while its flag is 0 |
 | — | 33×4 | park name | 33 × (word `mSignNameA`, word `mSignNameB`) — UTF-16 |
 | — | 1 | `mNameChanged` | |
-| — | 1 | `mAllResearchCompleted` | |
+| — | 1 | `mAllResearchCompleted` | the record's `+0xb9`: set when every research project of that park is done (`PlayerProgress_MarkParkAllResearched` `0x005b0ca0`), read only by the Full Simulation end's test that every record is set (`0x005b0c40`; `park-engine.md`, "The lab at work"). Q550 |
 
 Theme records are created lazily: at select, one per theme in the list at `DAT_00786b90`. They are held in a tree
 sorted by case-sensitive byte compare and written in that order. Duplicate names fail the load.

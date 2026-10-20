@@ -2870,7 +2870,7 @@ park is made), the serialiser `FUN_004c5d70` (twice), this routine, its reader (
 zeroes the six. **Nothing a sale runs writes it.** The object constructor has five callers: the placer
 `FUN_00529e10` (a purchase, and a move's put-down), the world's set-up `FUN_005156a0` (twice, the two fixed
 items, on tick nought), the vehicle summons `FUN_0051a2f0` (a vehicle whose slot is empty is made at its first
-summons, `park.md`, "The vehicle thing is made on demand") and `FUN_00516b00` (the "End" feature).
+summons, `park.md`, "The vehicle thing is made on demand") and `World_MakeEndFeature` (`0x00516b00`, the "End" feature).
 
 **What reads it.** One routine, loose and undefined bytes at `0x004c9070`: the twin of `FUN_004c90d0`
 ("More rides than the mechanics can keep"), the whole days since the stamp. Nine calls reach it, each in an
@@ -5011,7 +5011,7 @@ game run. Row numbers are metadata rows; the rows' keys are in the Advisor.sam s
 | 4 `VisitorsHungry` (message 4) | `0x0059ca00` | the same with hunger `+0x1a8` (`0x004c9340`), `HungrierThan` `+0xb8`, `ScorePerHungryPerson` `+0xb4` | built, Q530 |
 | 85 `FeaturesNotEnoughToilets` | `0x0059e420` | **always nought**: it runs the average toilet queue (`0x004cca40`) and discards it (`FSTP ST0` at `0x0059e444`; `XOR EAX,EAX; RET` at `0x0059e446`), reading neither `.AverageQueueLongerThan` nor `.Score`. Its lines (responses 233-234) are never said by the original | built as a nought, Q530 |
 | 125-127 prank advice | `0x0059f360`, `0x0059f370`, `0x0059f380` | the keys `PrankSbomb.Score`, `PrankLitter.Score`, `PrankBalloon.Score` (`+0x3d4`, `+0x3d8`, `+0x3dc`), 35 each in the shipped file (above the 25 cut) | unbuilt |
-| 167 (message `0xa7`) | `0x0059f9a0` | the constant 10000; posted when the last research project is finished, at `0x00503ee9` in Instant Action and at `0x00503f8d` in Full Simulation once every park of the player's is all researched (`park-engine.md`, "The lab at work") | unbuilt |
+| 167 (message `0xa7`) | `0x0059f9a0` | the constant 10000; posted when the last research project is finished, at `0x00503ee9` in Instant Action and at `0x00503f8d` in Full Simulation once every park of the player's is all researched (`park-engine.md`, "The lab at work") | built, Q550: posted about no thing, responses 380-381 (samples 452-453) on the theme's own advisor, group `0x17f` (no tag); said first on the end's tick in both games |
 | 168 (message `0xa8`) | `0x0059f9b0` | the constant 9999; nothing found posts it | unbuilt |
 
 - Rows 3 and 4 ask for no door (`0x0051a280` is not called, unlike rows 82, 85 and 86), no guests-inside division and no age:
