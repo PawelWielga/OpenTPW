@@ -4970,6 +4970,36 @@ five hire buttons (types `0xd` to `0x11`; built since, "Worn rides and no mechan
 word is row 188's, either mode). The American strings name the first tab "Hire Janitors", the English "Hire
 Cleaners": the reference install reads the American. Not heard in either game.
 
+## A project finished, and a group raised (messages `0x5d` to `0x61` and `0x85` to `0x88`, Q702)
+
+The posters are the lab's message `0x11` (`park-engine.md`, "The lab at work"). **The rows** (the metadata table,
+`meta_full.json`; the response table `0x00768fb8`, 32 bytes a response; the tag table `0x0075eca8`):
+
+| Row | Message | Poster | Mode | Copies | Responses | Samples | Group | Tag (key, string, button, kind) |
+|---|---|---|---|---|---|---|---|---|
+| 93 `ResearchRideResearched`, 150 | `0x5d` | `mCat` 0 | both | 255 | 248, 249 | 282, 283 | 95 | 63, 114, 9, 2 |
+| 94 `ResearchAddonResearched`, 130 | `0x5e` | `mCat` 4 | both | 255 | 250 | 284 | 96 | 65, 115, `0x13`, 2 |
+| 95 `ResearchShopResearched`, 130 | `0x5f` | `mCat` 1 | both | 255 | 251, 252 | 285, 286 | 97 | 74, 116, `0xa`, 2 |
+| 96 `ResearchSideshowResearched`, 110 | `0x60` | `mCat` 2 | both | 255 | 253, 254 | 287, 288 | 98 | 78, 117, `0xb`, 2 |
+| 97 `ResearchFeatureResearched`, 90 | `0x61` | `mCat` 3 | both | 255 | 255, 256 | 289, 290 | 99 | 82, 118, `0xc`, 2 |
+| 133 to 136 `NewResearchGroup{Ride,Shop,Sideshow,Feature}`, 40 | `0x85` to `0x88` | a raise, kinds 0 to 3 | Full Simulation | 1 | 318, 320, 322, 324 (two each) | 432 to 439 | 155 to 158 | none, 154, `0x13`, 0 |
+
+Every row is posted only, category 0, the research hat (prop 10), no gesture row; each score function is a bare
+`MOV EAX,[ECX+off]` of its key (`0x0059e7f0`..`0x0059e830`, `0x0059f3d0`..`0x0059f400`). The finish's post
+(`Advisor_OnMessage` `0x0059b0c6`) is about no thing, the item the record's second word, so the tag's text (kind 2)
+names it: string 114 "Your scientists have researched the {P0} ride!". The raise's post (`Lab_RaiseHighestGroup`
+`0x00503c8e`) hands nought for both. **A Full Simulation row posted in Instant Action is slotted at -1**: `AdvisorPost_Make`
+(`0x0059b590`) takes the score from `Advisor_RowScore` (`0x0059bf20`), -1 for a row of the other game, and `Advisor_Post`
+(`0x0059a940`) slots it past the gate all the same; the tick never says a slot at or under the threshold. The samples were
+checked against `global-speech-transcripts.tsv` (282 "the researchers have come up with a new ride", 432 "a new set of rides
+has become available to research").
+
+**Measured** (`q702/orig`, the original off-screen, `advisor.py 0x5d,0x85`): the stock park's finish on tick 820 said
+`0x5d` on the same tick, line 0, the action 7498 ms, and held `0x85` at -1 to the end of the run. **OpenTPW**
+(`ParkAdvisorMessages.ResearchedOf`, `RideResearched` and the eight beside it, `NewRideGroup`; `Post`'s `secondary`;
+`FilteredScoreOf`; tag rows 95 to 99 and 155 to 158; `q702/run1`, `run2`): `0x5d` said on tick 820, line 0, `0x85` held at -1, and sp_282 found in its own mix. The action's
+length is the speaker's and was not compared (6498 + 1000 ms in run1, 5665 + 1000 in run2).
+
 ## Rows settled from the bytes by the fork watch (2026-10-16)
 
 Read from the listing of `testme.exe` (`verify-advisor.md`, `~/.cache/tpw-harnesses/fork-review-2/watch/2026-10-16/`); no

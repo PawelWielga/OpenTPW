@@ -163,6 +163,31 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>Message 0x108, polled: the line about pranksters, scored by this month's misbehaving kids over a number (0x005a04f0).</summary>
 	internal const int LotsOfPranks = 264;
 
+	/// <summary>
+	/// Messages 0x5d to 0x61, posted only: a project finished, by the project's kind (Advisor_OnMessage 0x0059b060's
+	/// arm 0x11): rides 0x5d, upgrades 0x5e, shops 0x5f, sideshows 0x60, features 0x61, rows 93 to 97, each scored by
+	/// its Research*Researched key.
+	/// </summary>
+	internal const int RideResearched = 0x5d, UpgradeResearched = 0x5e, ShopResearched = 0x5f, SideshowResearched = 0x60,
+		FeatureResearched = 0x61;
+
+	/// <summary>
+	/// Messages 0x85 to 0x88, posted only: a kind's highest group raised with work of the kind left
+	/// (Lab_RaiseHighestGroup 0x00503b80), rides, shops, sideshows, features, rows 133 to 136, Full Simulation's alone.
+	/// </summary>
+	internal const int NewRideGroup = 0x85;
+
+	/// <summary>The message a finished project of research kind <paramref name="kind"/> posts, null for a kind past 4 (the original logs "unknown research category").</summary>
+	internal static int? ResearchedOf( int kind ) => kind switch
+	{
+		0 => RideResearched,
+		1 => ShopResearched,
+		2 => SideshowResearched,
+		3 => FeatureResearched,
+		4 => UpgradeResearched,
+		_ => null
+	};
+
 	/// <summary>The tutorial messages' category (a row's +0x08): MessageGroups[1], refused while the Tutorial option is off (FUN_0059c610).</summary>
 	internal const int Tutorial = 1;
 
@@ -588,7 +613,19 @@ internal sealed class ParkAdvisorMessages
 		new( ShopWindow, "HelpMessage.Score", 428, 397, Lines: 1, Category: Tutorial ),
 		new( CamcorderPanel, "HelpMessage.Score", 565, 583, Lines: 1, Category: Tutorial ),
 		new( ControlPanel, "TutorialUIPanel.Score", 404, 377, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialUIPanel" ),
-		new( ExplainTooltips, "TutorialExplainTooltips.Score", 542, 559, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialExplainTooltips" )
+		new( ExplainTooltips, "TutorialExplainTooltips.Score", 542, 559, Lines: 1, Category: Tutorial, Polled: true, AgeSection: "TutorialExplainTooltips" ),
+
+		// Rows 93 to 97 and 133 to 136, the lab's (docs/exe/park-engine.md, "The lab at work"): each score function a bare
+		// read of its key (0x0059e7f0..0x0059e830, 0x0059f3d0..0x0059f400).
+		new( RideResearched, "ResearchRideResearched.Score", 248, 282, MaxInstances: 255, Prop: ResearchHat, Group: 95 ),
+		new( UpgradeResearched, "ResearchAddonResearched.Score", 250, 284, Lines: 1, MaxInstances: 255, Prop: ResearchHat, Group: 96 ),
+		new( ShopResearched, "ResearchShopResearched.Score", 251, 285, MaxInstances: 255, Prop: ResearchHat, Group: 97 ),
+		new( SideshowResearched, "ResearchSideshowResearched.Score", 253, 287, MaxInstances: 255, Prop: ResearchHat, Group: 98 ),
+		new( FeatureResearched, "ResearchFeatureResearched.Score", 255, 289, MaxInstances: 255, Prop: ResearchHat, Group: 99 ),
+		new( NewRideGroup, "NewResearchGroupRide.Score", 318, 432, Prop: ResearchHat, Group: 155, FullSimulationOnly: true ),
+		new( NewRideGroup + 1, "NewResearchGroupShop.Score", 320, 434, Prop: ResearchHat, Group: 156, FullSimulationOnly: true ),
+		new( NewRideGroup + 2, "NewResearchGroupSideshow.Score", 322, 436, Prop: ResearchHat, Group: 157, FullSimulationOnly: true ),
+		new( NewRideGroup + 3, "NewResearchGroupFeature.Score", 324, 438, Prop: ResearchHat, Group: 158, FullSimulationOnly: true )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -619,7 +656,7 @@ internal sealed class ParkAdvisorMessages
 		public int Slaps;
 	}
 
-	/// <summary>A taken slot. <paramref name="Secondary"/> is the record's second word where a park file gave it, null for a post made here.</summary>
+	/// <summary>A taken slot. <paramref name="Secondary"/> is the record's second word where a park file or the poster gave it, null for a post made here about its subject.</summary>
 	private sealed record Pending( Topic Topic, int Score, int Subject, int? Secondary = null );
 	private readonly SettingsFile _settings;
 	private readonly Dictionary<int, Topic> _topics;
@@ -853,6 +890,10 @@ internal sealed class ParkAdvisorMessages
 	/// is nought;
 	/// every other built row's is its key's value.
 	/// </summary>
+	/// <summary>FUN_0059bf20: the row's score, or -1 for a row of the other game (a Full Simulation row in Instant Action).</summary>
+	private int FilteredScoreOf( Topic topic, int gameTick )
+		=> topic.FullSimulationOnly && InstantAction ? -1 : ScoreOf( topic, gameTick );
+
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
 		// Row 85 runs the toilets' average queue and drops it (FSTP ST0 at 0x0059e444), then answers nought.
@@ -1212,7 +1253,7 @@ internal sealed class ParkAdvisorMessages
 		}
 
 		var otherGame = topic.FullSimulationOnly && InstantAction;
-		var score = otherGame ? -1 : ScoreOf( topic, gameTick );
+		var score = FilteredScoreOf( topic, gameTick );
 		var result = otherGame ? "other-game" : score <= 0 ? "no-score" : Refusal( topic, gameTick ) ?? (score > Threshold ? "post" : "under-threshold");
 		if ( !_polled.TryGetValue( topic.Id, out var last ) || last != result )
 		{
@@ -1225,14 +1266,15 @@ internal sealed class ParkAdvisorMessages
 
 	/// <summary>
 	/// FUN_0059a940 after FUN_0059b590: a message through the accept gate (<see cref="Refusal"/>) into a slot,
-	/// at its score function's answer. <paramref name="subject"/> is the thing the record's first word names,
-	/// nought for none; nothing here reads it but the log.
+	/// at its score function's answer, or -1 for a row of the other game (FUN_0059bf20), which is slotted all the same
+	/// and never said. <paramref name="subject"/> is the thing the record's first word names, nought for none;
+	/// <paramref name="secondary"/> its second word where the poster hands one (an item), null for the subject's item.
 	/// </summary>
-	internal bool Post( int id, int gameTick, int subject = 0 )
+	internal bool Post( int id, int gameTick, int subject = 0, int? secondary = null )
 	{
 		_lastTick = gameTick;
 		var topic = _topics[id];
-		var score = ScoreOf( topic, gameTick );
+		var score = FilteredScoreOf( topic, gameTick );
 		var reason = Refusal( topic, gameTick ) ?? "queued";
 		if ( reason == "queued" )
 		{
@@ -1245,9 +1287,9 @@ internal sealed class ParkAdvisorMessages
 					if ( _slots[i] is { } held && (index < 0 || held.Score < _slots[index]!.Score) ) index = i;
 				if ( index < 0 || score <= _slots[index]!.Score ) reason = "priority";
 			}
-			if ( reason == "queued" ) _slots[index] = new Pending( topic, score, subject );
+			if ( reason == "queued" ) _slots[index] = new Pending( topic, score, subject, secondary );
 		}
-		Log.Info( $"Park advisor: post message={id} subject={subject} score={score} threshold={Threshold} tick={gameTick} result={reason} pending={PendingCount}" );
+		Log.Info( $"Park advisor: post message={id} subject={subject}{(secondary is { } second ? $" secondary={second}" : "")} score={score} threshold={Threshold} tick={gameTick} result={reason} pending={PendingCount}" );
 		return reason == "queued";
 	}
 
@@ -1287,10 +1329,16 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>
 	/// One world sweep: the poll's one row, then, past the wait, the best slot. Playback returns the response duration (zero when the speaker cannot start).
 	/// The helper still succeeds after a zero playback return; its score recheck alone can reject here.
-	/// <paramref name="said"/> hears the event a said line sends, with the response's group and the subject.
+	/// <paramref name="said"/> hears the event a said line sends, with the response's group, the subject and the record's
+	/// second word where the poster handed one.
 	/// <paramref name="park"/> answers what a score function reads of the running park; with none, such a score is nought.
 	/// </summary>
 	internal void Tick( int gameTick, long milliseconds, Func<int, int, int> play, Action<int, int>? said = null,
+		Func<ParkFacts>? park = null )
+		=> Tick( gameTick, milliseconds, play, said == null ? null : ( group, subject, _ ) => said( group, subject ), park );
+
+	/// <inheritdoc cref="Tick(int, long, Func{int, int, int}, Action{int, int}?, Func{ParkFacts}?)"/>
+	internal void Tick( int gameTick, long milliseconds, Func<int, int, int> play, Action<int, int, int?>? said,
 		Func<ParkFacts>? park = null )
 	{
 		_lastTick = gameTick;
@@ -1304,7 +1352,7 @@ internal sealed class ParkAdvisorMessages
 
 		var pending = _slots[index]!;
 		_slots[index] = null;
-		var score = ScoreOf( pending.Topic, gameTick );
+		var score = FilteredScoreOf( pending.Topic, gameTick );
 		if ( score < Threshold )
 		{
 			Log.Info( $"Park advisor: dropped message={pending.Topic.Id} subject={pending.Subject} queued={pending.Score} score={score} threshold={Threshold} tick={gameTick}" );
@@ -1329,7 +1377,7 @@ internal sealed class ParkAdvisorMessages
 		++Attempts;
 		// The helper then sends an event of type 0x18 carrying the response's group and the record's subject
 		// (FUN_0059b620, FUN_0040f740, FUN_0040fb10); its one hearer is the tag system (FUN_00509bf0).
-		said?.Invoke( pending.Topic.Group, pending.Subject );
+		said?.Invoke( pending.Topic.Group, pending.Subject, pending.Secondary );
 		Log.Info( $"Park advisor: attempt={Attempts} message={pending.Topic.Id} subject={pending.Subject} score={score} threshold={Threshold} response={response} sample={sample} line={line} tick={gameTick} duration={duration} waitUntil={WaitUntil}" );
 	}
 

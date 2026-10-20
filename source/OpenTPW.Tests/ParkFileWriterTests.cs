@@ -487,6 +487,27 @@ public class ParkFileWriterTests
 	}
 
 	/// <summary>
+	/// The level hands the writer the analyser's rings of the recently researched as the running park holds them: a push
+	/// into the shops' ring is written, the other three stay the shipped file's, never pushed.
+	/// </summary>
+	[TestMethod]
+	public void TheLevelWritesTheRingsOfTheRecentlyResearched()
+	{
+		SetCurrentPlayer( new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
+
+		var state = new ParkState( shipped );
+		state.RecentlyResearched.Push( 1, 1212 );
+
+		Level.WritePark( shipped, state, "jungle", "Rings" );
+
+		var written = Read( File.ReadAllBytes( Path.Combine( Jungle, "Rings.TPWS" ) ) ).RecentlyResearched!;
+
+		Assert.AreEqual( (0, 3, false), (written[1].Current, written[1].Entries, written[1].Wrapped) );
+		CollectionAssert.AreEqual( new ushort[] { 1212, 0xCDCD, 0xCDCD }, written[1].Data );
+		Assert.IsTrue( new[] { 0, 2, 3 }.All( tab => written[tab].Current == -1 && written[tab].Data.All( slot => slot == 0xCDCD ) ) );
+	}
+
+	/// <summary>
 	/// The level hands the writer the analyser's three counts of misbehaving kids as the running park holds them: a
 	/// park read from a body holding 5, 2 and 9 holds 5, 2 and nought (the third is never read), written over the shipped
 	/// file's nought, nought and nought.

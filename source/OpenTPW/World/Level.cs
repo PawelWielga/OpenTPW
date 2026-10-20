@@ -367,7 +367,14 @@ public class Level
 			Unlocked = id => Players.Roster.Current?.File.RideIds.Contains( (ushort)id ) == true
 		};
 		if ( Research is { } researched )
+		{
 			Log.Info( researched.Summary );
+			var state = ParkState;
+			// The analyser's ring is the item's buy list tab's (FUN_00412e90, its +0x4ac).
+			researched.Researched = ( item, kind, tick )
+				=> state.HearResearched( item, kind, catalogue!.TryGet( item, out var made ) ? made.UiType : -1, tick );
+			researched.GroupOpened = state.HearGroupOpened;
+		}
 
 		_ = new ParkGround( ThemeName, park, Balance, ParkLight.Lit, ProceduralTileSize() );
 		load.Mark( "ground" );
@@ -819,7 +826,8 @@ public class Level
 			state.MonthRings, (state.LifetimeVisitors, state.MostPaidForTicket), state.MisbehavingKids, state.ParkLastOpened,
 			state.RandomSeed,
 			people != null ? (people.Strikes.ForceWord, people.Strikes.Records) : null,
-			state.Economy, state.CalendarAtLastUpdate, ParkWeather.Current?.Written( loaded.WeatherRecord ), research?.Written );
+			state.Economy, state.CalendarAtLastUpdate, ParkWeather.Current?.Written( loaded.WeatherRecord ), research?.Written,
+			state.RecentlyResearched.Written );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;

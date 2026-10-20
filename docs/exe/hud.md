@@ -3715,14 +3715,19 @@ Kingdom** (Instant Action, under Proton, 2026-09-30, Q178b): exactly those, and 
 eight whose cost is nought, and no mystery row. **OpenTPW lists the same** (Q201b, `ParkResearch`: the save's
 records, an item it lacks seeded from its cost; `q201b/run2/`: rides 4, sideshows 2, shops 3). **A project finished
 marks its item, and the list lists it from its next filling** (Q701; `park-engine.md`, "The lab at work"): Dino Karts
-on the rides tab after its 95th hand-out in both games; the original's row bears the recently researched star, row
-state 2, which this list does not set (Q702).
+on the rides tab after its 95th hand-out in both games, with the recently researched star, row state 2 (Q702, below).
 
 **The row state is {0,1,2} and both non-zero values are pinned**: 1 = you already own at least one
 (`desc+0x18`, incremented on placement and decremented on demolition), 2 = one of the three most
 recently **RESEARCHED** items in that tab — a 3-entry ring per tab fed only by the research-complete
 message, **not** by building. The game's own help row 146 says the same thing: "sort the list by items
-already owned or recently researched".
+already owned or recently researched". **Read whole** (Q702; `BuyScreen_FillList` `0x004aaf70`, `0x004ab097`..`0x004ab0f7`):
+owned (`FUN_004ca8c0` at or over 1) is 1 before anything else; else the item against the tab's ring 0, 1 and 2 back from
+its newest (`Analyser_RecentlyResearchedBack` `0x004caa70`: at or before the newest slot, that slot; further back, only
+once the ring has wrapped, else nought), 2 on a match; else 0. The ring is the analyser's (`park-engine.md`, "The lab at
+work", message `0x11`). Built (`ParkBuyScreen.StateOf`, `ParkResearchedRings`): Dino Karts starred and the Belly Bounce
+ticked in both games, and the state heading's sort the original's (`q702/side-by-side.png`). The original draws an empty
+box on a row of state 0, this list nothing (Q158).
 
 **The mystery row** is inside the researched test, never an unresearched item's (`0x004ab023`): a researched item
 whose `UsageInfo.GoldenTicketCost` (`item+0xC4`, a dword; `Research.Group` is `+0x178`) is above nought and whose id

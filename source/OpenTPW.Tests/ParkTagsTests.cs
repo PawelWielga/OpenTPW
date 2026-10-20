@@ -40,9 +40,9 @@ public class ParkTagsTests
 		Assert.AreEqual( unlisted + 1, Times( "TAG_ROW_NOT_LISTED" ) );
 		Assert.AreEqual( 1, tags.Standing.Count );
 
-		CollectionAssert.AreEqual( new[] { 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 30, 31, 32, 33, 34, 62, 64, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 100, 68, 70, 71, 72, 135, 150, 151 }, ParkTags.Rows.Select( row => row.Id ).ToArray() );
-		CollectionAssert.AreEqual( new[] { 4, 3, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 68, 68, 68, 383, 151, 150 }, ParkTags.Rows.Select( row => row.Key ).ToArray() );
-		CollectionAssert.AreEqual( new[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 0, 1, 1 }, ParkTags.Rows.Select( row => row.Picture ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 30, 31, 32, 33, 34, 62, 64, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 95, 96, 97, 98, 99, 100, 155, 156, 157, 158, 68, 70, 71, 72, 135, 150, 151 }, ParkTags.Rows.Select( row => row.Id ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 4, 3, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 63, 65, 74, 78, 82, 383, 383, 383, 383, 383, 383, 68, 68, 68, 383, 151, 150 }, ParkTags.Rows.Select( row => row.Key ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1 }, ParkTags.Rows.Select( row => row.Picture ).ToArray() );
 		Assert.IsTrue( ParkTags.Rows.All( row => row.Life == 30000 ) );
 
 		// The shut park's line: part 2, the entry-price button, no thing.
@@ -57,7 +57,7 @@ public class ParkTagsTests
 		Assert.AreEqual( (135, ParkTags.NoTag, 0, 134, 3, 0, 0, 0, 37000L),
 			(unjoined.Row.Id, unjoined.Row.Key, unjoined.Row.Picture, unjoined.Row.String, unjoined.Row.Button1, unjoined.Row.Button2, unjoined.Row.Kind, unjoined.Subject, unjoined.HideAt) );
 		Assert.AreEqual( 3, tags.Standing.Count );
-		CollectionAssert.AreEqual( new[] { 150, 151, 3, 4, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, ParkTags.NoTag, 100, 30, 31, 32, 33, 34, 62, 73, 77, 81, 75, 76, 79, 83, 84, 87, 82, 78, 80, 64, 135, 68, 70, 71, 72, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag }, ParkAdvisorMessages.ParkTopics.Select( topic => topic.Group ).ToArray(),
+		CollectionAssert.AreEqual( new[] { 150, 151, 3, 4, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, ParkTags.NoTag, 100, 30, 31, 32, 33, 34, 62, 73, 77, 81, 75, 76, 79, 83, 84, 87, 82, 78, 80, 64, 135, 68, 70, 71, 72, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, ParkTags.NoTag, 95, 96, 97, 98, 99, 155, 156, 157, 158 }, ParkAdvisorMessages.ParkTopics.Select( topic => topic.Group ).ToArray(),
 			"each built topic's lines' group" );
 	}
 

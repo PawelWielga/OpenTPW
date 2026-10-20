@@ -53,12 +53,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q702. A finished project tells the advisor and the buy list.** From Q245, after Q701. Message `0x11` to the
-  advisor: rows 93 to 97 (`Research*Researched`, by `mCat`, scores 150, 130, 130, 110, 90) and, on a group raised
-  with work left, rows 133 to 136 (`NewResearchGroup*`, score 40); to the park analyser: the tab's ring of the
-  recently researched, the buy list's row state 2 (`ParkBuyScreen` holds it at 0 today; `hud.md`). The challenge
-  manager's type `0x10` (a ride researched) stays counted until challenges are built. Confirm: Dino Karts' line
-  heard and its row sorted as recently researched, beside the original's at the same tick if lane A can run it.
 - [ ] **Q703. The end of research.** From Q245, after Q701. When every project in the table is done the player's
   progress marks the park all researched (`+0xb9` of its park record, `0x005b0ca0`; whether `gms.dat` keeps it is
   not read), then in Instant Action advisor row 167 (`0xa7`, score 10000, responses 380-381) and the End feature

@@ -1184,6 +1184,12 @@ public static class DebugConsole
 				for ( var labKind = 0; labKind < lab.Kinds.Count; ++labKind )
 					Reply( $"  kind {labKind}: effort {lab.Kinds[labKind].Effort}, current {lab.Kinds[labKind].CurrentProject}, highest group {lab.Kinds[labKind].HighestGroup}" );
 
+				if ( Level.Current.ParkState is { } researchState )
+				{
+					for ( var tab = 0; tab < ParkWorld.ResearchedRings; ++tab )
+						Reply( $"  recently researched, tab {tab}: {researchState.RecentlyResearched.Census( tab )}" );
+				}
+
 				for ( var slot = 0; slot < lab.Projects.Count; ++slot )
 				{
 					var project = lab.Projects[slot];

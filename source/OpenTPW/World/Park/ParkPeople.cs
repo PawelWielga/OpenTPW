@@ -2357,10 +2357,10 @@ public sealed partial class ParkPeople : Entity
 					var (first, second) = ParkAdvisorMessages.PropsOf( response );
 					return Advisor.Current?.PlayParkResponse( response, sample, first, second, ParkAdvisorMessages.SlotOf( response ) ) ?? 0;
 				},
-				(group, subject) =>
+				(group, subject, second) =>
 				{
-					// The event's item word is the subject's item (FUN_0059b620, the record's +0x04).
-					var item = State.TryObject( subject, out var about ) ? about.CatalogueId : 0;
+					// The event's item word is the record's +0x04 (FUN_0059b620): the item a poster handed, else the subject's.
+					var item = second ?? (State.TryObject( subject, out var about ) ? about.CatalogueId : 0);
 					var name = _behaviour.Catalogue is { } catalogue && catalogue.TryGet( item, out var named ) ? named.Name : null;
 					State.Tags.Said( group, subject, Time.WallMilliseconds, item, name );
 				},

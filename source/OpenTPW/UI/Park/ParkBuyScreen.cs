@@ -378,18 +378,15 @@ internal sealed class ParkBuyScreen : UiWindow
 	private static bool IsMystery( ParkItemCatalogue.Item item ) => IsMystery( item, Players.Roster.Current?.File.RideIds );
 
 	/// <summary>
-	/// The row's state column: <b>1 if the park already owns at least one</b>, 2 for one of the three
-	/// most recently researched, 0 otherwise.
+	/// The row's state column (<c>0x004ab097</c>..<c>0x004ab0f7</c>): <b>1 if the park already owns at least one</b>,
+	/// else 2 for one of the three items its tab's ring of the recently researched holds
+	/// (<see cref="ParkResearchedRings.IsRecent"/>), else 0. The ring is fed only by a project finishing, never by
+	/// building. The game's own help row 146 names both halves: "sort the list by items already owned or recently
+	/// researched".
 	/// </summary>
-	/// <remarks>
-	/// <b>State 2 is never produced here, and that is a gap rather than a simplification.</b> The
-	/// original's ring is fed only by research COMPLETING - not by building - and this game has no
-	/// research, so nothing can be recently researched. The game's own help row 146 names both halves:
-	/// "sort the list by items already owned or recently researched".
-	/// </remarks>
-	private static int StateOf( ParkItemCatalogue.Item item )
+	internal static int StateOf( ParkItemCatalogue.Item item, ParkState? state )
 	{
-		if ( Level.Current?.ParkState is not { } state )
+		if ( state is null )
 			return 0;
 
 		foreach ( var placed in state.Objects )
@@ -398,8 +395,10 @@ internal sealed class ParkBuyScreen : UiWindow
 				return 1;
 		}
 
-		return 0;
+		return state.RecentlyResearched.IsRecent( item.UiType, item.Id ) ? 2 : 0;
 	}
+
+	private static int StateOf( ParkItemCatalogue.Item item ) => StateOf( item, Level.Current?.ParkState );
 
 	/// <summary>
 	/// A row was chosen. The original checks the price against the balance and, if it passes, puts the

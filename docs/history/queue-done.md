@@ -9236,6 +9236,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   The original (`q701/orig`, `labread.py`): Dino Karts on its 95th, tick 2920, Stone Head on 4660; the ticks part by
   the rest (Q549).
   `ParkLabTests` pins labsim's 24 finishes; mutate.py: 25 of 25 bugs fail a test (two after a test was added).
+- [x] **Q702. A finished project tells the advisor and the buy list.** From Q245, after Q701. Message `0x11` to the
+  advisor: rows 93 to 97 (`Research*Researched`, by `mCat`, scores 150, 130, 130, 110, 90) and, on a group raised
+  with work left, rows 133 to 136 (`NewResearchGroup*`, score 40); to the park analyser: the tab's ring of the
+  recently researched, the buy list's row state 2 (`ParkBuyScreen` holds it at 0 today; `hud.md`). The challenge
+  manager's type `0x10` (a ride researched) stays counted until challenges are built. Confirm: Dino Karts' line
+  heard and its row sorted as recently researched, beside the original's at the same tick if lane A can run it.
+  **Done** (2026-10-19, `q702/`): from `dino576.TPWS` both games finish Dino Karts on tick 820, push 1150 into the rides
+  ring, say `0x5d` line 0 (sample 282, found in our mix at 1.000) on the same tick, slot `0x85` at -1, and star the row
+  and sort it alike (9 of 9 here, O1-O7 there; `side-by-side.png`); mutate.py 20 of 20.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

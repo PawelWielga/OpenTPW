@@ -15,9 +15,9 @@ namespace OpenTPW;
 /// <para>
 /// <b>The lab at work</b> (<c>docs/exe/park-engine.md</c>, "The lab at work"): a researcher's hand-out is
 /// <see cref="SpendPoints"/>, a project reaching its cost marks its item researched, and the lab appends the item's
-/// next upgrade, raises the kind's highest group and picks the kind's next project. What a finished project sends the
-/// advisor, the park analyser and the challenge manager, a group's raise to the advisor and the end of research are
-/// counted where the original sends them.
+/// next upgrade, raises the kind's highest group and picks the kind's next project. A finished project is told to the
+/// advisor and the park analyser (<see cref="Researched"/>) and a group's raise to the advisor (<see cref="GroupOpened"/>);
+/// what it sends the challenge manager and the end of research are counted where the original sends them.
 /// </para>
 /// </summary>
 public sealed class ParkResearch
@@ -49,6 +49,20 @@ public sealed class ParkResearch
 	/// kind 4 asks of the item it upgrades. Null where nobody is playing: nothing is unlocked.
 	/// </summary>
 	public Func<int, bool>? Unlocked { get; set; }
+
+	/// <summary>
+	/// Message <c>0x11</c>'s listeners before the lab's own handler, a project finished: the item, its project's kind
+	/// and the tick. They hear it in the order of their thing ids, as every listener set is walked (the shipped park's:
+	/// the advisor 3, the park analyser 5, the lab 6, the challenge manager 10); <see cref="ParkState.HearResearched"/> is
+	/// the advisor's and the analyser's.
+	/// </summary>
+	public Action<int, int, int>? Researched { get; set; }
+
+	/// <summary>
+	/// A kind's highest group raised with work of the kind left (<c>Lab_RaiseHighestGroup</c>, <c>0x00503c8e</c>): the
+	/// kind, 0 to 3, and the tick; <see cref="ParkState.HearGroupOpened"/> posts it to the advisor.
+	/// </summary>
+	public Action<int, int>? GroupOpened { get; set; }
 
 	/// <param name="records">The save's records, <see cref="ParkWorld.ObjectControlRecords"/>.</param>
 	/// <param name="projects">The save's lab's projects, <see cref="ParkWorld.ResearchProjects"/>; none where no file gave any.</param>
@@ -197,8 +211,8 @@ public sealed class ParkResearch
 	/// is compared with the cost before it is stored as a float (<c>fcom</c> <c>0x0050466f</c>, <c>fstp</c>
 	/// <c>0x00504672</c>), so a sum just under the cost that rounds onto it is kept at the cost and does not finish.
 	/// Reaching the cost marks the item's control record researched at the project's tier and sends message
-	/// <c>0x11</c> to the four listeners at once: the lab's own handler is <see cref="LabOnFinished"/>; the
-	/// advisor's, the park analyser's and the challenge manager's are counted.
+	/// <c>0x11</c> to the four listeners at once: the advisor's and the park analyser's are <see cref="Researched"/>, the
+	/// lab's own handler is <see cref="LabOnFinished"/>, and the challenge manager's is counted.
 	/// </summary>
 	private Finished? AddPoints( int index, float share, int tick )
 	{
@@ -215,16 +229,14 @@ public sealed class ParkResearch
 
 		_items[project.ItemId] = (true, project.UpgradeLevel);
 
-		// The advisor's lines by mCat, rows 93 to 97 (Advisor_OnMessage 0x0059b060): Q702.
-		Unimplemented.Report( "RESEARCH_FINISHED_TO_THE_ADVISOR" );
-		// The analyser's ring of the recently researched, the buy list's row state 2 (FUN_004c7370): Q702.
-		Unimplemented.Report( "RESEARCH_FINISHED_TO_THE_ANALYSER" );
+		// The advisor and the park analyser, then the lab, then the challenge manager.
+		Researched?.Invoke( project.ItemId, project.Category, tick );
+
+		var (appended, raised, next, allDone) = LabOnFinished( project, tick );
 
 		// A ride researched is challenge type 0x10 (ChallengeManager_OnMessage 0x004d2860): no challenge is built.
 		if ( project.Category == ItemDescriptionFile.Ride )
 			Unimplemented.Report( "RESEARCH_FINISHED_TO_THE_CHALLENGES" );
-
-		var (appended, raised, next, allDone) = LabOnFinished( project );
 		var result = new Finished( index, project.ItemId, project.Category, project.UpgradeLevel, (float)sum, raised, next,
 			appended, allDone );
 
@@ -243,7 +255,7 @@ public sealed class ParkResearch
 	/// message <c>0x12</c>'s pick of the kind's next project (<c>Research_OnKindFinished</c>, <c>0x004aaec0</c>:
 	/// unless the kind's current project is set and open, <see cref="PickNextProject"/>), then the end test.
 	/// </summary>
-	private (int Appended, int Raised, int Next, bool AllDone) LabOnFinished( ParkWorld.ResearchProject project )
+	private (int Appended, int Raised, int Next, bool AllDone) LabOnFinished( ParkWorld.ResearchProject project, int tick )
 	{
 		var appended = -1;
 
@@ -267,7 +279,7 @@ public sealed class ParkResearch
 			return (appended, -1, -1, _projects.All( IsDone ));
 		}
 
-		var raised = RaiseHighestGroup( kind ) ? _kinds[kind].HighestGroup : -1;
+		var raised = RaiseHighestGroup( kind, tick ) ? _kinds[kind].HighestGroup : -1;
 
 		if ( !KindHasOpenProject( kind ) )
 			PickNextProject( kind );
@@ -312,18 +324,18 @@ public sealed class ParkResearch
 	/// <summary>
 	/// <c>Lab_RaiseHighestGroup</c> (<c>0x00503b80</c>): while the kind's projects at or under its highest group are
 	/// done, in whole per cent, at least <see cref="GroupOpensAt"/> of the highest, and the highest is under 7, the
-	/// highest goes up one. A raise with any of the kind's projects not done posts advisor message <c>0x85</c> + kind
-	/// for kinds 0 to 3, rows 133 to 136: counted.
+	/// highest goes up one. A raise with any of the kind's projects not done tells <see cref="GroupOpened"/> for kinds 0
+	/// to 3 (advisor message <c>0x85</c> + kind, rows 133 to 136).
 	/// </summary>
 	/// <returns>Whether the highest group was raised.</returns>
-	private bool RaiseHighestGroup( int kind )
+	private bool RaiseHighestGroup( int kind, int tick )
 	{
 		var highest = RaisedGroup( _projects, kind, _kinds[kind].HighestGroup, _groupOpensAt );
 		var raised = highest != _kinds[kind].HighestGroup;
 		_kinds[kind] = _kinds[kind] with { HighestGroup = highest };
 
 		if ( raised && kind <= ItemDescriptionFile.Feature && _projects.Any( project => project.Category == kind && !IsDone( project ) ) )
-			Unimplemented.Report( "RESEARCH_GROUP_TO_THE_ADVISOR" );
+			GroupOpened?.Invoke( kind, tick );
 
 		return raised;
 	}

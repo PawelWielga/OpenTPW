@@ -2230,6 +2230,7 @@ public sealed partial class ParkWorld : IParkInitialState
 				LastStaffHired = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastStaffHiredAt, 8 ) );
 				LastObjectBuilt = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserLastObjectBuiltAt, 8 ) );
 				ParkLastOpened = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian( _data.AsSpan( start + AnalyserParkLastOpenedAt, 8 ) );
+				RecentlyResearched = ReadRecentlyResearched( start );
 				MonthBalance = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthBalanceRing ), ParkMonthRing.Size ) );
 				MonthParkValue = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthParkValueRing ), ParkMonthRing.Size ) );
 				MonthCosts = ParkMonthRing.Read( _data.AsSpan( start + AnalyserMonthRingAt( MonthCostsRing ), ParkMonthRing.Size ) );
@@ -2841,6 +2842,84 @@ public sealed partial class ParkWorld : IParkInitialState
 
 		System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(
 			body.AsSpan( AnalyserAt + AnalyserLastStaffHiredAt, 8 ), lastStaffHired );
+	}
+
+	/// <summary>
+	/// One of the park analyser's four rings of the recently researched, a buy list's tab each in <c>Info.WhichUIType</c>'s
+	/// order (memory <c>+0x1f068</c> + 0x14 × tab; <c>FUN_004cdb80</c> writes it): <c>mCurrentEntry</c>, the slot last
+	/// pushed (-1 before any), <c>mNumEntries</c> (3), <c>mWrappedAround</c>, <c>mTemp</c>, which nothing moves, and the
+	/// three item ids. A slot never pushed holds whatever the allocator left (<c>0xCDCD</c> in the shipped park).
+	/// </summary>
+	public sealed record ResearchedRing( int Current, int Entries, bool Wrapped, ushort Temp, ushort[] Data )
+	{
+		/// <summary>The four rings of a park made with no file (<c>FUN_004c58c0</c>): nothing pushed.</summary>
+		public static ResearchedRing Fresh => new( -1, Slots, false, 0, new ushort[Slots] );
+
+		/// <summary>How many item ids a ring holds.</summary>
+		public const int Slots = 3;
+
+		/// <summary>One ring's bytes in a file.</summary>
+		public const int Size = 4 + 4 + 1 + 2 + 2 * Slots;
+	}
+
+	/// <summary>
+	/// The analyser's four <see cref="ResearchedRing"/>s, rides, shops, sideshows, features. Null where the file holds no
+	/// analyser, or a ring whose <c>mNumEntries</c> is not 3, which no file on hand has and which would move every field
+	/// after it.
+	/// </summary>
+	public IReadOnlyList<ResearchedRing>? RecentlyResearched { get; private set; }
+
+	/// <summary>Where the four <see cref="ResearchedRing"/>s start in the analyser's record, one after another (<c>FUN_004c5d70</c>).</summary>
+	private const int AnalyserRecentlyResearchedAt = 62500;
+
+	/// <summary>How many rings of the recently researched the analyser keeps: one a tab of the buy list.</summary>
+	public const int ResearchedRings = 4;
+
+	private IReadOnlyList<ResearchedRing>? ReadRecentlyResearched( int start )
+	{
+		var rings = new ResearchedRing[ResearchedRings];
+
+		for ( var tab = 0; tab < ResearchedRings; ++tab )
+		{
+			var at = start + AnalyserRecentlyResearchedAt + tab * ResearchedRing.Size;
+			var entries = ReadInt32At( at + 4 );
+
+			if ( entries != ResearchedRing.Slots )
+				return null;
+
+			var data = new ushort[ResearchedRing.Slots];
+			for ( var slot = 0; slot < data.Length; ++slot )
+				data[slot] = (ushort)ReadUInt16At( at + 11 + 2 * slot );
+
+			rings[tab] = new( ReadInt32At( at ), entries, _data[at + 8] != 0, (ushort)ReadUInt16At( at + 9 ), data );
+		}
+
+		return rings;
+	}
+
+	/// <summary>
+	/// Writes the analyser's four <see cref="ResearchedRing"/>s over the file's in <paramref name="body"/>, a copy of this
+	/// park's own. A park with no analyser, or whose rings did not read, is left alone.
+	/// </summary>
+	public void PutRecentlyResearched( byte[] body, IReadOnlyList<ResearchedRing> rings )
+	{
+		ArgumentNullException.ThrowIfNull( body );
+		ArgumentNullException.ThrowIfNull( rings );
+
+		if ( AnalyserAt < 0 || RecentlyResearched == null || rings.Count != ResearchedRings )
+			return;
+
+		for ( var tab = 0; tab < ResearchedRings; ++tab )
+		{
+			var at = body.AsSpan( AnalyserAt + AnalyserRecentlyResearchedAt + tab * ResearchedRing.Size, ResearchedRing.Size );
+			var ring = rings[tab];
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at, ring.Current );
+			System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian( at[4..], ring.Entries );
+			at[8] = (byte)(ring.Wrapped ? 1 : 0);
+			System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian( at[9..], ring.Temp );
+			for ( var slot = 0; slot < ResearchedRing.Slots; ++slot )
+				System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian( at[(11 + 2 * slot)..], ring.Data[slot] );
+		}
 	}
 
 	/// <summary>

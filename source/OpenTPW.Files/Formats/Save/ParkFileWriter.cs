@@ -79,7 +79,9 @@ public static class ParkFileWriter
 	/// <c>mMonthAtLastUpdate</c> (nought-based) and <c>mDayAtLastUpdate</c> (<see cref="ParkWorld.PutCalendar"/>);
 	/// the file's where it is null. <see cref="Weather"/> is the weather thing's fields (<see cref="ParkWorld.PutWeather"/>);
 	/// the file's where it is null. <see cref="Lab"/> is the research lab and the object controls' researched flags and
-	/// tiers (<see cref="ParkWorld.PutLab"/>); the file's where it is null.
+	/// tiers (<see cref="ParkWorld.PutLab"/>); the file's where it is null. <see cref="RecentlyResearched"/> is the
+	/// analyser's four rings of the recently researched (<see cref="ParkWorld.PutRecentlyResearched"/>); the file's where
+	/// it is null.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -96,7 +98,8 @@ public static class ParkFileWriter
 		ParkWorld.MisbehavingKidCounts? MisbehavingKids = null, long? ParkLastOpened = null, uint? RandomSeed = null,
 		(int ForceStrike, IReadOnlyList<ParkWorld.StrikeRecord> Records)? Strikes = null,
 		ParkWorld.EconomyState? Economy = null, (int Month, int Day)? Calendar = null,
-		ParkWorld.WeatherState? Weather = null, ParkWorld.WrittenLab? Lab = null );
+		ParkWorld.WeatherState? Weather = null, ParkWorld.WrittenLab? Lab = null,
+		IReadOnlyList<ParkWorld.ResearchedRing>? RecentlyResearched = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -280,6 +283,9 @@ public static class ParkFileWriter
 
 		if ( running.ParkLastOpened is { } opened )
 			loaded.PutParkLastOpened( body, opened );
+
+		if ( running.RecentlyResearched is { } researched )
+			loaded.PutRecentlyResearched( body, researched );
 
 		if ( running.MonthRings is { } rings )
 			loaded.PutMonthRings( body, rings );

@@ -1323,13 +1323,16 @@ cost and never finishes; the precision the sweep runs at is not read; points pas
 project and carried nowhere): the item's control record (`FUN_004d3d10`) is marked researched (`+0x10`,
 `0x005046a1`) and its tier set to the project's level (`+0x14`, `0x005046c0`), and message `0x11` (vtable
 `0x006fd800`, the item at `+8`, `mCat` at `+0xc`) is sent at once to its four listeners (`MsgBus_Send`,
-`0x0040fb10`, through `Thing_DispatchMessage` `0x0050b550` by the listener's kind byte):
+`0x0040fb10`, through `Thing_DispatchMessage` `0x0050b550` by the listener's kind byte), in the order of the
+listeners' thing ids, as every listener set is walked: in the shipped park set `0x11` is things 3, 5, 6 and 10, the
+advisor, the analyser, the lab and the challenge manager (`parkfile.py -x`), so the advisor's post comes before the
+lab's raise:
 
 | Listener | On message `0x11` |
 |---|---|
 | the lab (kind `0xe`, `Lab_OnMessage` `0x00503d40`) | `LabProject_MakeNextUpgrade` (`0x00504580`) writes the item's next tier with a research cost at the table's end and counts it in `mNumProjects` (`0x00503da2`); `Lab_RaiseHighestGroup` (`0x00503b80`) for kind `mCat`; then message `0x12` with `mCat`; then the end test (below) |
-| the advisor (kind `0xb`, `Advisor_OnMessage` `0x0059b060`) | by `mCat`: 0 → message `0x5d`, 1 → `0x5f`, 2 → `0x60`, 3 → `0x61`, 4 → `0x5e`: rows 93 to 97, `Research*Researched`, scores 150, 130, 130, 110 and 90 in `Advisor.sam`; any other kind logs "unknown research category" |
-| the park analyser (kind `0xd`, made by `FUN_004c58c0`, subscribed in `FUN_004c7a90`; handler `FUN_004c7370`) | the item into its tab's ring of the recently researched, the tab the item's `Info.WhichUIType` (`hud.md`, the row state 2) |
+| the advisor (kind `0xb`, `Advisor_OnMessage` `0x0059b060`) | by `mCat`: 0 → message `0x5d`, 1 → `0x5f`, 2 → `0x60`, 3 → `0x61`, 4 → `0x5e`: rows 93 to 97 (`ResearchRide`, `Addon`, `Shop`, `Sideshow`, `FeatureResearched` in row order), scores 150, 130, 130, 110 and 90 in `Advisor.sam` (each score function a bare read of its key, `0x0059e7f0`..`0x0059e830`); posted (`AdvisorPost_Make` `0x0059b590`, `Advisor_Post` `0x0059a940`) about no thing, the item the record's second word (`+4`), which the tag's text names; any other kind logs "unknown research category" |
+| the park analyser (kind `0xd`, made by `FUN_004c58c0`, subscribed in `FUN_004c7a90`; handler `Analyser_OnMessage` `0x004c7370`) | the item into its tab's ring of the recently researched (`0x004c73ab`): ring `0x18d2` + the item's `Info.WhichUIType`, so at `+0x1f068` + 0x14 × tab, `mTemp` `+0`, three `mData` words from `+2`, `mCurrentEntry` `+8`, `mNumEntries` (3) `+0xc`, `mWrappedAround` `+0x10`; the entry steps on, to 0 and wrapped past the last, and takes the item. Nothing else pushes it. A tab past 3 would write over the next fields; no researched item is of one |
 | the challenge manager (kind `0x13`, `ChallengeManager_OnMessage` `0x004d2860`) | for `mCat` 0 only, challenge type `0x10` with 1 (`FUN_004d27a0`) |
 
 **The group.** `Lab_RaiseHighestGroup( kind )` takes the kind's projects at or under its highest group and their
@@ -1341,6 +1344,9 @@ it out: each kind's highest group is 1 in Alexah's fresh `restart.INTS` and in `
 opens group 2 at 80% done, group 2 opens 3 at 85% and 3 opens 4 at 85%; `ResearchTech[5..]` are set by no file
 and were not read. A raise with any of the kind's projects not done posts advisor
 message `0x85` + kind for kinds 0 to 3, rows 133 to 136 `NewResearchGroup*`, score 40; kind 4 posts nothing.
+Each of the four rows is Full Simulation's alone (the row's `+0x0c` nought): in Instant Action `Advisor_RowScore`
+(`0x0059bf20`) answers -1, and `Advisor_Post` slots the message at -1 all the same, never to be said (the original,
+`q702/orig/a-advisor.log`: `0x85` at -1 beside `0x80` at 20 from the finish to the end of the run).
 
 **The next project.** Message `0x12` reaches kind `0x11`'s handler (`FUN_0050ca50`), whose case `0x12` runs
 `Research_OnKindFinished` (`0x004aaec0`, through `0x00481520`), screen open or not: unless the kind's current
@@ -1397,11 +1403,11 @@ before its float store, the control record's flag and tier, `LabProject_MakeNext
 table held at 256, where the original writes past it), `Lab_RaiseHighestGroup` against `ResearchTech[highest +
 1]` (`ParkResearch.GroupOpensAt`), `Lab_PickNextProject` with kind 4's researched and unlocked test, all as above.
 `ParkWorld` reads each kind's current project and highest group and `mWorkLoad`, and the park file is written
-with the lab's projects, kinds and `mNumProjects` and each control's flag and tier (`ParkWorld.PutLab`). Counted
-where the original sends them: message `0x11` to the advisor and to the analyser (`RESEARCH_FINISHED_TO_THE_ADVISOR`,
-`_ANALYSER`; Q702), a ride's to the challenges (`_CHALLENGES`), a raise with work left
-(`RESEARCH_GROUP_TO_THE_ADVISOR`; Q702) and the end (`RESEARCH_ALL_DONE`; Q703). The console's `research` prints the
-lab. **In the running game** (`q701/run2/`, the final build; `run1/` the same on the build before a comment): the
+with the lab's projects, kinds and `mNumProjects` and each control's flag and tier (`ParkWorld.PutLab`). Message
+`0x11` reaches the advisor and the analyser before the lab (`ParkResearch.Researched`, `ParkState.HearResearched`;
+Q702, below), a raise with work left the advisor (`ParkResearch.GroupOpened`, `ParkState.HearGroupOpened`); counted
+where the original sends them: a ride's to the challenges (`RESEARCH_FINISHED_TO_THE_CHALLENGES`) and the end
+(`RESEARCH_ALL_DONE`; Q703). The console's `research` prints the lab and the analyser's four rings. **In the running game** (`q701/run2/`, the final build; `run1/` the same on the build before a comment): the
 file's lab on entering, the first hand-out on 760, Dino Karts finished on the 95th hand-out on tick 3020 (2980 in
 run1), at 600, the rides on group 2 and project 2; its row on the buy list's rides tab where it had none on hand-out
 60, picked by a click and put down on (69,25) for 6500 (`2-after-rides-tab.png`, `5-dino-karts-built.png`; beside
@@ -1409,6 +1415,18 @@ the original's list, `q701/side-by-side.png`); Stone Head on the 162nd, tick 476
 project 9. **The ticks between the two games are the researcher's rest**, not the lab: ours set off on 2199 (2210)
 and ended on 2578 (2553), nineteen (seventeen) hand-outs missed against the original's fourteen, its rest from about
 2290, so each finish falls on the same hand-out at a different tick (Q549).
+
+**What a finish tells, in both games** (Q702; `q702/`, the stock park with Dino Karts at 576 of 600, lab thing 6
+`+44`, so both finish it on the fourth hand-out). The original (`q702/orig/run.sh`, off-screen; `advisor.py`,
+`labread.py`, `thingwords.py` on the analyser's ring): on tick 820 Dino Karts at 600, the rides ring from (-1, 3,
+unwrapped, `0xCDCD` x 3) to entry 0 holding 1150, the advisor's record of `0x5d` said on the same tick, line 0 (sample
+282), and `0x85` in a slot at -1; its buy screen's rides tab stars DinoKarts and ticks the Belly Bounce, and its state
+heading sorts the three unmarked, the Belly Bounce, DinoKarts, reversed on a second click (`orig/sorted-pair.png`).
+OpenTPW (`ParkAdvisorMessages` rows 93 to 97 and 133 to 136, `ParkResearchedRings`, `ParkBuyScreen.StateOf`,
+`ParkWorld.RecentlyResearched` and `PutRecentlyResearched`; `q702/run1`, 9 of 9, and `run2` on the final build): the
+same tick, the same order (the post with the item, the ring, the raise's post at -1), the line said on tick 820, sp_282 found in the game's own mix, tag 95 reading "Your scientists have researched
+the Dino Karts ride!", the star and the sort as the original's (`q702/side-by-side.png`), and a saved park holding the
+ring.
 
 ### Entering and leaving first person: a click on the ground
 

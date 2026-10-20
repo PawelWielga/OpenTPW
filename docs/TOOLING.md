@@ -438,6 +438,16 @@ whole list):
   line on tick 1109 in the original**, so a line said after it waits some twenty ticks and its tag is the second
   on the mast: click it at game point (59, 433), not the first tag's (59, 471). A run that ends with a box or a
   screen open (the bar's research button leaves one) breaks the next `loadfile.sh` load: make it the chain's last.
+- **A research project finished on demand, in both games** (Q702): `parkfile.thing_set( src, dst, 6, 16 + 16 * n +
+  12, '<f', points )` writes the stock lab's (thing 6) project n's `mResearchDone`; Dino Karts is project 1 and takes 6
+  a hand-out, so 576 finishes it on the fourth hand-out after the file's tick 755, on 820 in both games
+  (`q702/dino576.TPWS`). Here the file is the private player's newest jungle file, entered from the lobby; in the
+  original `loadfile.sh` loads it. The analyser's ring of tab t is `thingwords.py %PID% SECS 5:0x1f068+0x14t:H:temp
+  5:...+2:H:d0 ... 5:...+8:i:cur 5:...+0x10:B:wrapped` (thing 5 in the stock park); `advisor.py %PID% SECS 0x5d,0x85`
+  shows the finish's line said and the raise's post at -1. The buy list's state heading is layout point (1696, 368),
+  the original's (848, 184) of 1024 x 768: a click sorts by the state ascending, a second descending; the census is the
+  log's `Buy list: tab 0, sort 3, ...`. The advisor's sample is `mixmatch.template( speechHD.SDT, sample - 1 )`
+  (`sp_282.mp2` is index 281) matched over the whole capture.
 - **A park bigger than its handymen, or its guards** (Q411, Q412; `lib/pathscene.py`, Q411's `q411/mkscene.py` made it
   first): the stock park paused on 765 and `path X Y` given for the first N cells of the 17 x 17 bare block at (60,15) (`parkfile.bare_blocks`), each
   with a 0.15 s wait (`stockscene.py`'s 2.5 s a command is twelve minutes for 289), then saved: 126 + N developed

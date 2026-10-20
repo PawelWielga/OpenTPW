@@ -127,13 +127,13 @@ public class ParkLabTests
 	/// <remarks>
 	/// <b>Mutations:</b> the table read at highest + 1 (no raise on the first finish); the raise's share counted over
 	/// every group; the pick taking the first open project from the start; the pick ignoring the group; the pick keeping
-	/// a done project; the tier not the project's; the raise's advisor count with no work left.
+	/// a done project; the tier not the project's; the raise told with no work left; the finish told after the lab's
+	/// pick (the kind's current project already the next) or not at all.
 	/// </remarks>
 	[TestMethod]
 	public void AFinishedProjectMarksItsItemRaisesTheGroupAndPicksTheNext()
 	{
-		var counts = new[] { "RESEARCH_FINISHED_TO_THE_ADVISOR", "RESEARCH_FINISHED_TO_THE_ANALYSER", "RESEARCH_FINISHED_TO_THE_CHALLENGES",
-			"RESEARCH_GROUP_TO_THE_ADVISOR", "RESEARCH_ALL_DONE" };
+		var counts = new[] { "RESEARCH_FINISHED_TO_THE_CHALLENGES", "RESEARCH_ALL_DONE" };
 		int[] Since( int[] before ) => [.. counts.Select( ( name, i ) => Counted( name ) - before[i] )];
 		var before = counts.Select( Counted ).ToArray();
 
@@ -141,12 +141,18 @@ public class ParkLabTests
 		ParkWorld.ResearchProject[] projects = [Project( 1101, 0, 1, 10f ), Project( 1108, 0, 3, 10f ), Project( 1150, 0, 1, 6f, level: 0 ),
 			Project( 1102, 0, 1, 10f )];
 		var lab = new ParkResearch( [], Catalogue(), projects, [new( 100, 0, 2, 1 )], workLoad: 50, groupOpensAt: [0, 30, 100, 80, 85] );
+		var told = new System.Collections.Generic.List<(int Item, int Kind, int Tick, int CurrentThen)>();
+		var opened = new System.Collections.Generic.List<(int Kind, int Tick)>();
+		lab.Researched = ( item, kind, tick ) => told.Add( (item, kind, tick, lab.Kinds[kind].CurrentProject) );
+		lab.GroupOpened = ( kind, tick ) => opened.Add( (kind, tick) );
 
 		var first = lab.SpendPoints( 12, 20 ).Single();
 		Assert.AreEqual( new ParkResearch.Finished( 2, 1150, 0, 0, 6f, Raised: 2, Next: 3, Appended: 3 + 1, AllDone: false ), first,
 			"a third done of group 1 is at least 30: group 2 opens; the kart's second tier is appended" );
 		Assert.IsTrue( lab.IsResearched( 1150 ) );
-		CollectionAssert.AreEqual( new[] { 1, 1, 1, 1, 0 }, Since( before ) );
+		CollectionAssert.AreEqual( new[] { (1150, 0, 20, 2) }, told, "told before the lab picks: the kind's current is still the finished one" );
+		CollectionAssert.AreEqual( new[] { (0, 20) }, opened );
+		CollectionAssert.AreEqual( new[] { 1, 0 }, Since( before ) );
 
 		Assert.AreEqual( 0, lab.SpendPoints( 12, 40 ).Count );
 		var second = lab.SpendPoints( 12, 60 ).Single();
@@ -155,13 +161,17 @@ public class ParkLabTests
 		lab.SpendPoints( 12, 80 );
 		var third = lab.SpendPoints( 12, 100 ).Single();
 		Assert.AreEqual( (0, 3, 1), (third.Project, third.Raised, third.Next), "group 1 and 2 all done opens 3; three of four is under 80" );
-		CollectionAssert.AreEqual( new[] { 3, 3, 3, 2, 0 }, Since( before ) );
+		CollectionAssert.AreEqual( new[] { 1150, 1102, 1101 }, told.Select( call => call.Item ).ToArray() );
+		CollectionAssert.AreEqual( new[] { (0, 20), (0, 100) }, opened );
+		CollectionAssert.AreEqual( new[] { 3, 0 }, Since( before ) );
 
 		lab.SpendPoints( 12, 120 );
 		var last = lab.SpendPoints( 12, 140 ).Single();
 		Assert.AreEqual( (1, ParkResearch.MostGroup, -1, false), (last.Project, last.Raised, last.Next, last.AllDone),
 			"every ride done: raised to the most, nothing left to pick; the kart's upgrade is still open" );
-		CollectionAssert.AreEqual( new[] { 4, 4, 4, 2, 0 }, Since( before ), "a raise with no ride left is not counted" );
+		CollectionAssert.AreEqual( new[] { (0, 20), (0, 100) }, opened, "a raise with no ride left is not told" );
+		CollectionAssert.AreEqual( new[] { 4, 0 }, Since( before ) );
+		Assert.AreEqual( (1108, 0, 140), (told[^1].Item, told[^1].Kind, told[^1].Tick) );
 		Assert.IsTrue( lab.IsResearched( 1108 ) );
 		Assert.AreEqual( 0, lab.SpendPoints( 12, 160 ).Count, "kind 4 has no effort here" );
 	}

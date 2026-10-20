@@ -69,7 +69,18 @@ internal sealed class ParkTags
 		new( 82, NoTag, 2, 84, 0, 0, 30000, 0 ),
 		new( 83, NoTag, 2, 85, 12, 0, 30000, 0 ),
 		new( 84, NoTag, 2, 86, 12, 0, 30000, 0 ),
+		// Rows 93 to 97's lines, a project finished: the text names the item, the post's second word.
+		new( 95, 63, 0, 114, 9, 0, 30000, 2 ),
+		new( 96, 65, 0, 115, 19, 0, 30000, 2 ),
+		new( 97, 74, 0, 116, 10, 0, 30000, 2 ),
+		new( 98, 78, 0, 117, 11, 0, 30000, 2 ),
+		new( 99, 82, 0, 118, 12, 0, 30000, 2 ),
 		new( 100, NoTag, 1, 119, 0, 0, 30000, 0 ),
+		// Rows 133 to 136's lines, a kind's group raised (said in Full Simulation alone).
+		new( 155, NoTag, 0, 154, 19, 0, 30000, 0 ),
+		new( 156, NoTag, 0, 154, 19, 0, 30000, 0 ),
+		new( 157, NoTag, 0, 154, 19, 0, 30000, 0 ),
+		new( 158, NoTag, 0, 154, 19, 0, 30000, 0 ),
 		new( 68, NoTag, 1, 71, 3, 0, 30000, 2 ),
 		new( 70, 68, 1, 72, 3, 0, 30000, 2 ),
 		new( 71, 68, 1, 73, 3, 0, 30000, 2 ),

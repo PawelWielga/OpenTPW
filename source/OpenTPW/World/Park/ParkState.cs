@@ -741,6 +741,7 @@ public sealed class ParkState
 		LastStaffHired = park.Save?.LastStaffHired ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 		LastObjectBuilt = park.Save?.LastObjectBuilt ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
 		ParkLastOpened = park.Save?.ParkLastOpened ?? ParkWorld.StaffState.FileTimeOf( GameCalendar.Epoch );
+		RecentlyResearched = new( park.Save?.RecentlyResearched );
 		MonthBalance = park.Save?.MonthBalance?.Copy() ?? new();
 		MonthParkValue = park.Save?.MonthParkValue?.Copy() ?? new();
 		MonthGuestsInside = park.Save?.MonthGuestsInside?.Copy() ?? new();
@@ -1188,6 +1189,31 @@ public sealed class ParkState
 	/// alone), so a file's own go out as they came in (<c>docs/exe/hud.md</c>, "The analyser's other stamps").
 	/// </remarks>
 	public long ParkLastOpened { get; private set; }
+
+	/// <summary>The analyser's four rings of the recently researched, the file's at a load (<see cref="ParkResearchedRings"/>).</summary>
+	public ParkResearchedRings RecentlyResearched { get; private set; } = new();
+
+	/// <summary>
+	/// Message <c>0x11</c>, a project finished (<see cref="ParkResearch.Researched"/>), as the advisor and the park analyser
+	/// hear it: the advisor is posted the kind's line (<see cref="ParkAdvisorMessages.ResearchedOf"/>; Advisor_OnMessage
+	/// <c>0x0059b0c6</c>), about no thing and with <paramref name="item"/> its second word, which names the item on its
+	/// tag; then the item goes into the ring of buy list tab <paramref name="tab"/>, its <c>Info.WhichUIType</c>.
+	/// </summary>
+	internal void HearResearched( int item, int kind, int tab, int tick )
+	{
+		if ( ParkAdvisorMessages.ResearchedOf( kind ) is { } message )
+			AdvisorMessages?.Post( message, tick, secondary: item );
+		else
+			Log.Warning( $"Research: item {item}'s project is of kind {kind}, which the advisor has no line for" );
+
+		RecentlyResearched.Push( tab, item );
+	}
+
+	/// <summary>
+	/// A kind's highest group raised with work left (<see cref="ParkResearch.GroupOpened"/>): advisor message
+	/// <c>0x85</c> + kind about no thing (<c>0x00503c8e</c>), which Instant Action slots at -1 and never says.
+	/// </summary>
+	internal void HearGroupOpened( int kind, int tick ) => AdvisorMessages?.Post( ParkAdvisorMessages.NewRideGroup + kind, tick );
 
 	/// <summary>
 	/// Whole days since the newest member of staff was made - <c>FUN_004c90d0</c>: now less
