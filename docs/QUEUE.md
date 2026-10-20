@@ -109,6 +109,13 @@ filed the items that cite it.
   Full Simulation jungle (a copy of the player and the file): a test that passes is awarded on the next 100th tick
   (log and `gms.dat` read back), and the stored three plus the record award nothing (the original's own profile).
   Measures not yet held here (the coaster's highest point, the cell security words) are a piece each.
+  - **Note (fork watch 2026-10-20, `verify-other-ui-audio.md` O-L1, O-L2, O-G):** the cheat rows to count are decoded in
+    `park-engine.md`, "The cheat table": twelve rows, all Alt alone and fired on the key's release: `R` research
+    (`0x0040c430` -> `0x00503ff0`, which sets the researched byte of every item with an open lab project and nothing else), `1`
+    ten thousand, `G` the Local ticket 0 (`0x005af810`), the keypad's `0x61`-`0x65` Local 1 to 5 and `0x66`-`0x69` the Global
+    0 to 3 (`0x005af940`). In a fresh launch the first key to reach the cheat check clears the cheat flag (the constructor
+    re-run behind `0x00fb34c8`), so `Easymode.TPWI`'s set byte does not by itself make the keys work; whether the keypad
+    digits reach their rows at all is Q720.
 - [ ] **Q707. The advisor's golden-ticket lines.** After Q706. The thirteen posts (`0xd7`-`0xd9`, `0xdc`-`0xde`,
   `0xe1`-`0xe3`, `0xea`-`0xed`, the ticket index as the line; score 99000, the moved rows 500, posted on the message bus) and the first ticket's `0x137` and `0x13b`,
   on model slot 1, the park's own advisor, from the level's `advisor.wad` (clips 16 to 20, which OpenTPW does not
@@ -1906,6 +1913,13 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     pi, weight |vector| x car-type `+0x6c` held to 1.0, the roll wrapped and stored at sample `+0x18`, past `[track+0x134]`
     scaled by 1 - clamp( (i - start) / (`+0xa8` - start), 0, 1 ); the vector is turned by three sample angles. Not read: that
     `+0x6c` is `ForceMultiplier`.
+  - **Note (fork watch 2026-10-20, `verify-world.md` M1):** a loaded coaster's crossing lists hold **chain positions**: after the
+    stack pass (`0x0043827b`..`0x004382a3`) `0x0043e520( ctl+0x3c, n )` walks `n` links (`+0x64`) from the head (`ctl+0x54`) and the
+    node's `+0xb4+4i` takes the node found. The saver writes each partner's `node+0` (`0x004375ad`..`0x004375b7`). The loader stores
+    the counts unbounded (`0x00437d19`, `0x00437f72`); the runtime holds eight (`0x00439fda`, `0x0043a018`). Not traced: who numbers
+    `node+0`, and whether deleting a node renumbers the rest. No park file on hand holds a crossing (the two with a coaster have
+    counts 0), and the offer gate refuses a self-crossing coaster, so Lost Kingdom meets none. FileFormats `saves.md`, "The coasters
+    module", has it.
 - [ ] **Q406. Coaster building: the track tool.** From the fork review 2, 2026-10-16 (`verify-coasters-build.md`
   L1-L11). A piece costs `fCostPerHeight` × H × 0.1 + `fCostPer2DLength` × length × 0.1, plus `fCostPerUnit` only on
   placing a pylon (`0x00447830`, `0x00435020`; the cursor's preview `0x00435d50`); placing takes trunc( cost ), a
@@ -2033,6 +2047,10 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   first, id 3 to `0x16`, none left is `0x17`), slot 0 the rightmost icon, the icon's frame the id less one, its help row
   of `THOUGHTS.str` the frame plus one, refreshed every 1000 ms. Unproven: whether an icon hidden for no thought is shown
   again. Confirm: the screen photographed beside the original's in the shipped park.
+  - **Note (fork watch 2026-10-20, `verify-other-ui-audio.md` A-L1):** the graph's backdrop is decoded in `hud.md`, "The graph's
+    backdrop": the plot box (the control's size less 20, from 4), the colours, ten grid rows, the columns' step of 1, 3 or 12 for 12,
+    36 or 144 samples (any other count leaves the step unset, an original defect), the zero axis when ymin is below nought, and the
+    `%d` labels. Not read: how the finance screen's 36 and 144 reach the count word, and the `0x7d00` added to each label's place.
 
 ## F. Then
 

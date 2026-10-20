@@ -740,6 +740,39 @@ Since `+0x10` is null in every row, the down path invokes nothing and only latch
 
 **Deliberate deviation in OpenTPW:** each `[DefaultKey]` is split into `Modifiers` and `Keys`, `BindingMatches` compares held modifiers for **equality**, and `PressedFrom` also requires one of the binding's own keys among the frame's `KeysPressed`. `Clone` being Ctrl alone is a deliberate held state, not a binding bug.
 
+### The cheat table (`DAT_0078733c`, rows at `0x007484d0`) and the cheat flag
+
+(Fork watch 2026-10-20, `verify-other-ui-audio.md` O-L1, O-L2, O-G; read from the bytes of `testme.exe`; not run.) The twelve
+rows are 20 bytes each, every one with modifier `0x30` (**Alt alone**, matched by `==` as above), `+0x10` and the name null:
+
+| Row | Key | Handler | What it does |
+|---|---|---|---|
+| 0 | `R` (`0x52`) | `0x0040c430` | **research**: `0x00519550` answers the lab (the thing whose id is world `+0x1da722`), and `0x00503ff0( lab )` sets the researched byte `+0x10` to 1 in the control record (`0x004d3d10( world+0x1d943c, id, 0 )`) of every item with an open lab project (project `i` is the word at `lab + 0xc + i*20`, `i` below the count at `lab+0x145c`). It writes nothing else: no project removed, no `mResearchDone`, no `+0x14` tier, no message, so no "recently researched" entry; research carries on as before. `hud.md`, "What the buy list actually filters on", lists the byte's other writers |
+| 1 | `1` (`0x31`) | `0x0040c450` | `push 0x2710; call 0x005195d0; call 0x004d0190`: ten thousand to the money (`ride-operation.md`, `0x0040c462`) |
+| 2 | `G` (`0x47`) | `0x0040c6c0` | `push 0; call 0x00409410; call 0x005af810`: the Local golden ticket 0 |
+| 3-7 | `0x61`-`0x65` | `0x0040c6e0`, `0x0040c700`, `0x0040c720`, `0x0040c740`, `0x0040c760` | the same with Local 1 to 5 |
+| 8-11 | `0x66`-`0x69` | `0x0040c780`, `0x0040c7a0`, `0x0040c7c0`, `0x0040c7e0` | `push 0x64; push i; ... call 0x005af940`: the Global golden ticket 0 to 3 |
+
+`0x0046b420` builds the modifier bits, and the window proc has the same code inline (`0x0046ba15`, `0x0046bb0b`): the mods ride in the
+posted message's bits 16-23, taken at the key-up (`0x0046bb0b`..`0x0046bb47`), so a cheat fires on the **release**, with Alt
+held alone. No earlier table holds a cheat chord: `game` has only Alt+L, Alt+S and Alt+V (rows 11, 12, 14), and
+the camera's rows 15 and 16 (`0x64`, `0x66`) have modifier 0, so Alt+Num4 and Alt+Num6 never latch the pan.
+
+**Unsettled:** both key edges replace the vk by `MapVirtualKeyA( vk, 2 )` when that answers non-zero, excluding only the keypad's
+`*`, `+`, `-`, `.`, `/` (`0x6a`, `0x6b`, `0x6d`, `0x6e`, `0x6f`, which become `vk << 8`; `0x0046b9c0`..`0x0046b9f5`, `0x0046bab8`..`0x0046baeb`).
+The digits `0x60`-`0x69` are not excluded. If the call answers `'1'` for `VK_NUMPAD1`, rows 3-11 (and the camera's keypad rows
+13-22) are unreachable and Alt+Num1 fires row 1. Bytes cannot settle it: Q720.
+
+**The cheat flag is cleared by the first key.** The flag is `+0xa` of the object at `0x00fb3520`, whose constructor `0x004053b0`
+clears `+9`, `+0xa` and `+0xb`. That constructor is run again behind three separate first-use guard bytes (bit 1 each): `0x00fb3519`
+(the loader `0x00415c22`, writer `0x00416c61`), `0x00fb34c4` (rename, `0x004995d5`) and `0x00fb34c8` (both key paths of
+`Park_MouseMessageProc`, `0x004888d2` and `0x00488961`). In a fresh launch the first key that falls through the camera, game
+and shortcuts tables (one no earlier row consumed) runs the key guard, which re-runs the constructor and clears the flag before
+`0x00405560` reads it; the flag set by a loaded `Easymode.TPWI` therefore holds only for the byte, and the cheat rows work from
+a later park of the same run (the key guard is spent), or after a rename once a key has already reached the check. Not run in the
+original. The one caller of `0x004053c0` is `0x0049960a` (with 1). Message type `0x15` (`0x00405530`, `mov eax,0x15; ret`) is
+what `0x004053c0` posts when it turns the flag on (through `0x0040fb10` on `[0x00788d3c]`); its listener was not looked for.
+
 ### The full-screen view: F3, `FUN_004a29d0`
 
 Decoded for `docs/QUEUE.md` Q114, and pressed in the original.

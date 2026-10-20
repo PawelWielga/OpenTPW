@@ -1094,7 +1094,7 @@ is never judged: the list's does (`0x00665d22`), so a press on a list is a click
 | the gadget's top, `FUN_004a1190` | `0x10006` | the right button only |
 | the first-person layer, `FUN_00488a00` | `0x10006` | the right button, with RMB cancel |
 | `FUN_004bed60` (two controls of `FUN_004bf460`) | `0x10006` | hides itself |
-| `FUN_004c56e0` (five controls of `FUN_004c4fb0`) | `0x10006` | `FUN_005b7910` with its index; not identified |
+| `FUN_004c56e0` (five controls of `FUN_004c4fb0`) | `0x10006` | the online globe's chat satellite: `FUN_005b7910( index - 1 )` (`0x004c573f`..`0x004c5751`, once the online manager `0x0048b390`'s four lists are loaded) opens satellite `i`'s park details (`FUN_004c0ae0`, cancel `0x004c4fa0`, success `0x004c0830`); its message `0x1e` calls `FUN_004c4bb0`, which pushes "ONLINE CHATELLITES" (`0x00759924`). Online only (fork watch 2026-10-20, `verify-world.md`, side note) |
 | `0x005d58e0` (a control of `FrontEnd_Init`) | `0x10006` | `FUN_004bc710`, or message box `0x1d9`; not identified |
 | the two park's-end views, `0x0048a740` | `0x10006` | after their 2000 ms |
 | two lobby objects, `FUN_005dd530`, `FUN_005dd840` | `0x10006` | the middle button toggles a flag |
@@ -2332,6 +2332,26 @@ none is above 0" is wrong.) In each of the status screen's seven folds (`FUN_004
 `0x004a4c86`..`0x004a4d27`) bit 2 of `[0x00753c48]` takes the 14th ring (`+0x20f10`, the happiness float) through `0x004802a0`,
 bits 1, 4, 8 and `0x10` take `+0x20cc0`, `+0x21160`, `+0x205d0` and `+0x213b0` through `0x004801d0`; then `0x0047fb30( 0, max, 10 )`.
 The finances screen (`0x0049a7e2`..`0x0049a8d7`) uses `0x004801d0` only. Nothing here is built.
+
+**The graph's backdrop (fork watch 2026-10-20, `verify-other-ui-audio.md` A-L1; read from the bytes, not run).** The span primitives
+are `0x005f9860( x, y, len, colour )`, which clips (x, y)-(x+len, y+1), and `0x005f98d0`, which clips (x, y)-(x+1, y+len): the
+third argument is a **length**. **Setup** `0x004806a0( graph, rect, ymin, ymax, ydivs, xmin, xmax, count )`: w = (rect.r - rect.l)
+x `[0x00faa5c4]` / 2048, h = (rect.b - rect.t) x `[0x00faa5c0]` / 1536 (the control's size at the screen's resolution);
+`0x0047fb50( 4, 4, w - 20, h - 20 )` stores left `+8`, top `+0xc`, right `+0x10`, bottom `+0x14`, width `+0` and height `+4`;
+`0x0047fb30` stores `+0x1c` ymin, `+0x24` ymax, `+0x2c` the divisions, and `0x0047fb10` `+0x18`, `+0x20`, `+0x28` the count. The
+colours (`0x005f73a0`): `+0x30` and `+0x35` (0, 200, 0) the axes, `+0x3f` (0, 0, 0) the fill, `+0x3a` (0, 100, 0) the grid. The
+status screen's call (`0x004a5132`) passes 10 divisions and a count of 12 (`0x004a511f`..`0x004a5124`); the finance call
+(`0x0049a734`) pushes 10 and 12 too (how its 36 and 144 reach `+0x28` was not read). **Draw** (`0x004808bd`..`0x004808cb`): the fill
+`0x0047fc00`, the grid `0x0047fcd0`, the axes `0x0047fc50`.
+
+- **Grid columns** step by the sample count: 12 draws every sample, 36 every 3rd, 144 every 12th (`0x0047fd06`..`0x0047fd5d`); **any
+  other count leaves the step an unwritten stack word, an original defect**. x starts at left + width / count, a float advanced each
+  sample; a column is `0x005f98d0( (int)x, top, bottom )` (bottom as the length), labelled `%d` (`0x0074f9d8`, wide) with sample + 1
+  at (max( x, 2 ), max( bottom + 4, 2 )), through `0x00492750` (each coordinate also takes `0x7d00`, not read).
+- **Grid rows**: dy = height / divisions, y0 = bottom - dy - (-1.0) (`0x006ff06c` is `0xbf800000`), each drawn
+  `0x005f9860( left, (int)y, right )` (right as the length), y -= dy.
+- **The zero axis** `0x0047fc50`: row = bottom + 1, or bottom + height x ymin / (ymax - ymin) when ymin < 0 and ymax - ymin > 0;
+  `0x005f9860( left - 1, row, right + 1 )` and `0x005f98d0( left - 1, top - 1, bottom + 1 )`.
 
 **Measured** (`q390/sweep.py`): the shipped `Easymode.TPWI` holds the 10th one month closed on 0 and the 12th on 1, the
 Belly Bounce; over all 587 park files on hand both months so far are 0; in all 188 whose park value sums to their 2nd
@@ -3706,6 +3726,9 @@ park load meets them:
    the save has none for; an item the save holds keeps the save's byte.
 3. **Research completing** (`FUN_00504630`) sets `+0x10` to 1 (`0x005046a1`) and `+0x14` to the upgrade tier reached;
    `FUN_00504580` steps `+0x14` past a tier whose research costs nothing, so `+0x14` is the tier researched, 0 to 2.
+4. **The Alt+R cheat** (`0x00503ff0`, from `0x0040c430`; `park-engine.md`, "The cheat table") sets `+0x10` to 1 for the item of
+   every open lab project and writes nothing else: no project removed, no `+0x14` tier, no message (fork watch 2026-10-20,
+   `verify-other-ui-audio.md` O-L1).
 
 **Measured in `Easymode.TPWI`** (`q201/ctrldump`, all 50 records): `+0x10` is 1 on 26, exactly the 26 whose item's own
 file, with its `Easy_` layer, sets `Upgrades[0].CostOfResearch` 0 - the two rules agree in the shipped park, and differ

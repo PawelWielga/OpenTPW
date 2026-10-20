@@ -194,7 +194,38 @@ every played file, a pointer into a string in `Easymode.TPWI`. The reader drops 
 writes them (`0x00416c98`). `+0x0a` is the cheats flag (getter `FUN_00405560`): `Park_MouseMessageProc` checks it
 (`0x004888fd`, `0x0048898c`) before it runs the cheat table at `DAT_0078733c`, and `FUN_004053c0( 1 )` sets it in
 play (from `FUN_004993e0`, `0x0049960a`, after two compares with obfuscated strings). `+0x0b` is touched by nothing
-else but the constructor `FUN_004053b0`; its meaning is unknown. `Easymode.TPWI` ships the flag set.
+else but the constructor `FUN_004053b0`; its meaning is unknown. `Easymode.TPWI` ships the flag set, **which is true of the byte only**: the constructor is re-run behind three first-use guards (`0x00fb3519` at the load, `0x00fb34c4` at a rename, `0x00fb34c8` on a key), so in a fresh launch the first key that reaches the cheat check clears `+0x0a` before `FUN_00405560` reads it (`park-engine.md`, "The cheat table"; fork watch 2026-10-20, `verify-other-ui-audio.md` O-G; bytes only, not run in the original).
+
+**Sound** (fork watch 2026-10-20, `verify-world.md` M2; from the bytes, not run; the bytes are FileFormats `saves.md`, "The advisor,
+sound and advisor scoring modules"). The writer `FUN_0051c350` (called `0x00416c02`) writes `[0x00802bd4]`, `[0x00802bc8]`, the
+dword `0x54` and the 84 bytes at `0x00803aa0`, then, only when both dwords are non-zero, posts command vtable `0x00700bb0`
+through `0x006b5bd0`, which reaches `0x006ba0c0`: three dwords from the library object's `+0x28`, `+0x2c`, `+0x30`, then the voice
+list `0x006b6c30`. **The loader `FUN_0051c400`** (called `0x00415ba2`): the first dword goes to a local only (`0x00802bd4` is not
+written); the second goes straight into `0x00802bc8`; the third is a length and that many bytes are read into `0x00803aa0` with
+**no bound**. A saved first dword of 0 puts back the pre-load `0x00802bc8` when that was non-zero (`0x0051c555`) and returns;
+otherwise, with the library (`[0x00802bcc]`), it posts `0x00700bb4` -> `0x006b5c30` -> `0x006ba150`, which reads the three
+dwords and **discards them** (`0x006ba15b`..`0x006ba182`) and calls the voice reader `0x006b6da0`, and then re-sends the reverb
+preset `[0x00803ab4]` (table `+0x14`) through `0x00700b30`. Without the library it reads the three dwords and L and seeks L - 4
+(`0x0051c4d0`..`0x0051c547`). **The voice list** `0x006b6c30` notes the start, writes L (back-patched to end - start, so **L counts
+itself**), a **voice count** (back-patched), a record (`0x006bead0` -> `0x006c0dc0`), the handle counter (`[obj+0x28]`) and, per
+voice, its handle (`+0x2c`) and a record (`0x006bccf0`); it skips a voice whose `+0x30` has both `0x10` and `0x400`. **The reader**
+`0x006b6da0` first stops and removes every live voice (vtable `+0x18`, `0x006b6440`); it reads L, seeks L - 4 when the flag byte is
+clear, else reads the count, the record (`0x006c0f50`) and the handle counter, advances the allocator by saved minus current
+(`0x006b69b0`) and, per voice, reads the handle (low 16 bits) and a type 1 to 6 (jump table `0x006b7020`) and rebuilds the voice.
+
+**The 84 bytes are 21 words** at `0x00803aa0`, by every reference to `0x00803aa0`..`0x00803af4` in the text: `+0x00` written only by
+`0x0051e730`; `+0x04` by `0x0051e7b0`; `+0x08` written only by the init `0x0051b660` (`0x0051b6fa`) and read by `0x0051e7b0` (`audio.md`
+calls it "sound is up"); `+0x0c` by `0x0051e830`; `+0x10` by `0x0051e7b0`; `+0x14` the reverb preset (init, `0x0051b9c7`, `0x0051c8d0` and
+the loader); `+0x18`, `+0x1c`, `+0x20`, `+0x24` set by `0x0051bb60`, `0x0051bba0`, `0x0051bb80`, `0x0051bbc0`; `+0x28` set by those seven
+setters and by `0x0051e710`, read and cleared by the tick `0x0051bd70` (`0x0051bf90`); `+0x2c` by `0x0051e6f0`; `+0x30` (u16) by
+`0x0051e710`, the music dip: while it is set the tick sends 0 to command `0x00700b88`, which is music; `+0x32` (u16) by `0x0051c1c0`,
+which the post-load pass `0x00415140` calls with 0 (`0x00415254`); `+0x38`, `+0x3c`, `+0x40` by `0x0051bc00`, `0x0051bbe0`, `0x0051bc20`
+and the init (`0x0051b73b`..`0x0051b747`); `+0x34` and `+0x44`..`+0x50` are referenced by nothing. The tick pushes seven values (music,
+effects, master, speech, speech on, music on, effects on), and when `+0x2c`, `+0x40` and `+0x24 > 0` are all set it scales music and
+effects by `[0x00785914]` / 100 (the speech duck). **Not settled:** whether a loaded park then plays at the saved volumes and on-flags
+(the profile applier `0x00423dd0`, reached only from `GameOptions_Construct` `0x00423690`, `0x004237f0` and two table references,
+was found on no load path): Q719. The three discarded dwords are library-object words; "listener position" is the fork's name for
+them and is unproven.
 
 **Camera.** `FUN_0042cec0` reads the zoom, the rotation, the flags, the point looked at, a saved point and a saved
 rotation into `0x007909ec`, `0x00790a38`, `0x00790ab0`, `0x007908f0`, `0x00790ad0` and `0x00790a9c`
@@ -767,7 +798,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | `KAME` | zoom, rotation, flags, two points of interest, a saved rotation | the camera | patched: the zoom, the rotation and the point's two ground coordinates; the flags, the point's height, the saved point and the saved rotation the file's |
 | `COAS` | the coasters | nothing: none can be built here | carried |
 | `ADVS` | 360 bytes of the advisor and a buffer | nothing kept here | carried |
-| `SOUN` | two dwords, 84 bytes, then records that open with three dwords and their length L and end at +12+L (a loader with no sound skips L - 4, `0x0051c547`): the sound manager's live voices (`Sound_SaveModule` writes them through `0x006b5c10`, `Sound_LoadModule` puts them back through `0x006b5c30`, `SoundManager_SerializeVoices` `0x006b6da0`, whose case 6 rebuilds a held chain; `audio.md`, "A script's sounds"); the records' layout is not decoded | nothing kept here: no voice is put back (`PARK_FILE_SOUND_VOICES`) | carried |
+| `SOUN` | two dwords, 84 bytes (the volumes and flags at `0x00803aa0`), then the voice list: three dwords, its length L, a voice count, a record, the handle counter and a record per voice (FileFormats `saves.md`, "The advisor, sound and advisor scoring modules"; a loader with no sound skips L - 4, `0x0051c547`): the sound manager's live voices (`Sound_SaveModule` writes them through `0x006b5c10`, `Sound_LoadModule` puts them back through `0x006b5c30`, `SoundManager_SerializeVoices` `0x006b6da0`, whose case 6 rebuilds a held chain; `audio.md`, "A script's sounds") | nothing kept here: no voice is put back (`PARK_FILE_SOUND_VOICES`) | carried |
 | `CHTS` | two bytes | nothing | carried |
 | `ADSC` | one dword: the row the advisor's poll starts from (`advisor-park.md`, "The poll, and the control panel's line") | the poll's cursor | written (Q316) |
 | The UI block | a count and 540 bytes for each tag standing on the aerial | each tag as it stands ("OpenTPW's writer, the aerial's tags") | written |
@@ -2987,9 +3018,8 @@ The objects' other rules above are the ten files' and the listing's.
 **Not run in either game:** a guest gone (tested; one run met one), a table grown past its hundred slots, a
 person written on an object's cell, a member of staff resting or in the hand at the save. **Not read:** what the sprite
 record's words past `+0xcc` hold, which a made record leaves at nought and the original walked on with. The
-advisor scoring's reader was not read, only its writer; the sound module's reader puts the file's live voices back
-(`Sound_LoadModule`, `0x0051c400`; Q559), whose records are not decoded (the UI block's is read
-since: "OpenTPW's writer, the aerial's tags"). What
+reader of the advisor scoring was not read, only its writer; the sound module's reader is (FileFormats `saves.md`, "The advisor, sound and advisor scoring modules"; fork watch
+2026-10-20, `verify-world.md` M2: `0x0051c400`, `0x006ba150`, `0x006b6da0`), and puts the file's live voices back (`Sound_LoadModule`; Q559); so is the UI block's ("OpenTPW's writer, the aerial's tags"). What
 `VANT`'s clock is for, what the action recording is read by after a load, and `FUN_005408f0` are not traced. The
 fresh world's save was not looked at. `addresses.md` is not regenerated.
 
