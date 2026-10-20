@@ -50,7 +50,7 @@ Jungle: **96x85 cells, 97x86 vertices, 8342 heights, 8160 cell records.** Valida
 
 | Flag bit | What it is | Confidence |
 |---|---|---|
-| `0x0001` | **Hides the cell from the terrain pass.** `FUN_0056f670` skips any cell carrying it (`TEST byte [EAX],0x1` at `0x0056f9ce`). Set in `base.MD2` on exactly the 1,159 jungle-grid cells of mType 2, 30 and 7, and at run time on every cell the tile rule answers (0,8) — footprint, entrance, exit and queue cells (`FUN_0046df50`, `OR 0x101` at `0x0046e012`). The pass rebuilds the ground every frame (called from `FUN_00576a00`), so the bit takes effect at once: written on four grass cells of the running original it opened a black hole two cells square on the next frame (Q360, `textures.md`, "What a floor's clear border shows"). A second, optional pass (`FUN_00570d90`, gated on `DAT_008bcbc8 & 0x10000`, off in the park) has no such test | Confirmed 2026-09-22; in the running original, Q360 |
+| `0x0001` | **Hides the cell from the terrain pass.** `FUN_0056f670` skips any cell carrying it (`TEST byte [EAX],0x1` at `0x0056f9ce`). Set in `base.MD2` on exactly the 1,159 jungle-grid cells of mType 2, 30 and 7, and at run time on every cell the tile rule answers (0,8) — footprint, entrance, exit and queue cells (`FUN_0046df50`, `OR 0x101` at `0x0046e012`). The pass rebuilds the ground every frame (called from `Render_DrawView`), so the bit takes effect at once: written on four grass cells of the running original it opened a black hole two cells square on the next frame (Q360, `textures.md`, "What a floor's clear border shows"). A second, optional pass (`FUN_00570d90`, gated on `DAT_008bcbc8 & 0x10000`, off in the park) has no such test | Confirmed 2026-09-22; in the running original, Q360 |
 | `0x0002` | **The drawn diagonal.** Set: the terrain pass splits the cell from (x,z) to (x+1,z+1); clear: from (x+1,z) to (x,z+1). Preserved by the footprint stamper | Confirmed 2026-10-16 (Ghidra) - see below |
 | `0x0004` | **The height diagonal**, the same split read the other way: clear is (x,z)-(x+1,z+1), set is (x+1,z)-(x,z+1). Every ground cell carries exactly one of `0x0002` and `0x0004`. Preserved by the footprint stamper | Confirmed 2026-10-16 (Ghidra) - see below |
 | `0x0008` / `0x0010` / `0x0020` | Rotation, one field of exactly four states (`flags & 0x38`) | Confirmed |
@@ -927,9 +927,13 @@ original's frames (`q554/PREDICTION.txt`, `q554/side-by-side.png`; the console's
 started on the planes' nodes are put where the players have posed those nodes, so the stars stream behind the planes
 as in the original's frames (`q555/PREDICTION.txt`, `q555/side-by-side.png`; the console's `endfeature trails:`, plane
 02's two at its x plus and minus 9 and about 7.5 behind it along the park through the whole of Endm1).
-**Not the original's:** no sound of the two scripts is played (`RIDE_EFFECT_SOUND`); and the advisor is drawn
-through the End, where the original's frames 4 s and 10 s in show none while he speaks (`q550/orig/a-4`, `a-5`). Q703
-and Q553 hold them.
+**The advisor speaks over it, in both games** (Q556): nothing in the ride view hides him. In the original's film of the
+End (`q556/orig/q556c.mkv`, `original/advdraw.py`) row 167 on slot 1, the pith-helmet fly, is drawn in the lower right
+through its line (ticks 801 to 838) and row 93 on slot 0 through its (850 to 884), and none between or after
+(`ui.md`, "The advisor on screen", his draw); ours says the same two on the same slots and draws them so
+(`q556/side-by-side.png`). Frames taken between his lines show none (`q550/orig/a-4`, `a-5`).
+**Not the original's:** no sound of the two scripts is played (`RIDE_EFFECT_SOUND`, Q553); the original's trails look
+denser, with bigger stars (Q703).
 
 ## The park management gadget
 
@@ -1819,7 +1823,7 @@ his origin's row of 720, with the locator open and folded, where before they sto
 him up to 18 px over it (`q477/run1-main`); with the pull taken out and depth still written they stop at the origin, the
 squares now kept off him above it; people behind the park gate stay hidden by its stone.
 
-**A person's shadow** (Q480, decoded and measured). Each frame the ground's draw `FUN_00576a00` empties a list of up to
+**A person's shadow** (Q480, decoded and measured). Each frame the ground's draw `Render_DrawView` empties a list of up to
 four shadow lights at `0x008c1658` (`ShadowLights_Clear`, `0x00584b10`; `ShadowLights_Init`, `0x00584a70`, makes it at start) and, unless the render word
 `[0x008bcbc8]` holds `0x20000`, hands `ShadowLights_Add` (`0x00584be0`) the direction of each light its list gives (`0x00576d1c` to
 `0x00576d60`; a park has one, the sun). `ShadowLights_Add` normalises it (L) and, only where L·(0, 1, 0) × -127
@@ -3812,7 +3816,7 @@ alone at or past an end, `f = (d - start) / (end - start)` between. The start an
 `GraphicalOptions.FIRSTPERSONVIEWDISTANCE` (`0x007858b4`; the detail file, `low`/`med`/`high.sam`): 0 gives 50 to 60,
 1 gives 100 to 110, 2 gives 135 to 150 and 3 gives 230 to 250, with `0x008bd4c0` 200, 325, 450 or 700 beside
 them; the startup default is 100 to 130 (`0x00582de5`), the lobby's own 50 to 300 (`FUN_005d8b50`, `0x005d8bfc` to `0x005d8c10`), and 50 to 250 in the three lobby states that call `FUN_005d9680` (`0x005e1407`, `0x005e1980`, `0x005e24a2`), each followed by `FUN_005d96a0( 0xff44ddff, 50.0, 250.0 )`. Each frame
-`FUN_00576a00` hands the three to the device's fog setter (vtable `0x00701330` slot 6, `FUN_00567ad0`), which sets
+`Render_DrawView` hands the three to the device's fog setter (vtable `0x00701330` slot 6, `FUN_00567ad0`), which sets
 the colour and, where the card passes the table-fog probe `FUN_005673d0`, linear table fog. Where it fails
 (render-word bits `0x4000` or `0x8000`) the game fogs each vertex itself as a batch is flushed (`FUN_00565590`,
 `FUN_00565ee0`): under `0x4000` `Fog_VertexSpecular` (`0x005747d0`) scales the vertex colour by `1 - f` and puts the fog colour times `f`
@@ -3940,11 +3944,11 @@ next start applies it. Every reference to `0x008bcbc8` was walked (188); these a
 | `0x0800` | the terrain pass `FUN_0056f670`, 16 sites | No corner at half light ("What the render-state `0x0800` tests are") |
 | `0x0800` | the vertex colour, `Light_GroundVertexColours` (`0x00574530`) and `Light_ModelVertexColours` (`0x00574660`) | Every vertex takes the channel mask `[[0x0087a248]+0x2c]` (`0xFFFFFFFF` in play) instead of the lighter `FUN_005741b0`'s sum: each face fullbright, its texture's own colour, the sun and the ambient unread ("The lighting model") |
 | `0x0800` | the models' light setup `Light_ModelSetup` (`0x0057aa10`) | Skipped whole: the chain's reset `FUN_00576230`, the model's own lights `FUN_005744d0`, the point light `FUN_00574110` (under `0x0400`), the sun turned into the model's space `FUN_005743a0` |
-| `0x0800` | `FUN_0057a750` (`0x0057a822`) | Copied as `0x10000000` into a draw record, only where the renderer `[0x008bd524]` is 4 (live 1) |
+| `0x0800` | `ModelRenderable_Draw` (`0x0057a822`) | Copied as `0x10000000` into a draw record, only where the renderer `[0x008bd524]` is 4 (live 1) |
 | `0x1000` | `Light_ModelSetup`, once, inside the `0x0800`-clear branch | Clear, `FUN_005744d0` chains the model's own lights onto `[0x00879dec]`. Its one writer moves it with `0x0800`, so it changes nothing under any value of the key |
 
 `FUN_00576ec0` also sets `0x0800` (with `0x20000`) for each frame when the renderer `[0x008bd524]` is 4 (`or eax,0x20800` at
-`0x00576f02`, the word restored at the frame's end; live 1), the renderer-4 arm beside `FUN_0057a750`'s; `FUN_00570d90`'s
+`0x00576f02`, the word restored at the frame's end; live 1), the renderer-4 arm beside `ModelRenderable_Draw`'s; `FUN_00570d90`'s
 `or ah,0x8` (`0x00570e94`) is on a texture-format word, not this one; nothing else sets `0x0800` or tests either bit.
 
 **Measured in the original** (`q487/PREDICTION.txt`, `q487/orig/`: the stock park, the Options screen's quality track

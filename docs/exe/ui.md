@@ -17,6 +17,19 @@ He is placed in screen space in the lower right from the engine's own numbers, a
 | 30 fps | `AnimationFile.FramesPerSecond` | Every `.md2` clip plays at 30 fps. Engine-confirmed, everywhere, not just here | Ghidra |
 | `Sphere_Black2`, material flag `0x2` | — | His head and body are flat discs in a see-through material that writes no depth | Model data |
 
+**How he reaches the screen** (Q556). `FUN_00429ba0` marks his model's data `+0x30 |= 0x200` (`FUN_0045bed0`), the
+flag that sends his renderable down the screen-space arm of its draw (`ModelRenderable_Draw`, `0x0057a750`: his own two
+matrices, `[0x008bb624] |= 0x2000000`). A clip started on him (`FUN_004732a0`, `0x004732dd`) puts that renderable in
+render list 1 of the manager `[0x0087a6d0]` (`Model_ShowInRenderList`, `0x0045bd30`, with 1: `RenderList_Add( 0x10 )`,
+node word `|= 0x11`); `FUN_0045bdd0` takes it out (`Advisor_KillModel` calls it), and in the End it was out a tick
+after each line (839 after 838's end); which caller does that was not traced. The park has one view, made by
+`FUN_00576310` at the manager's `+0x48` with flags `0x1f31`; `Render_DrawView` (`0x00576a00`) draws lists 1 to 6 under
+its `0x20`, and nothing in his path reads `gui_CameraFlags`, so the ride view (the End's, `0x0b04`) draws him as the
+orbit does. His draw stamps the renderable's `+0x90`/`+0x94` with the frame counter `[0x008bcc40]` (`FUN_00583790`)
+and the views drawn in it `[0x008bcc44]`; `original/advdraw.py` reads that. Measured in the End
+(`q556/PREDICTION.txt` rounds 1 to 3): the view `0x1f31` throughout; each line's slot in list 1 and drawn every frame
+of it, and seen (`q556/orig/c-film-21.0`, `24.0`, `29.0`).
+
 **Draw order.** Because of the see-through discs, the model draws in two passes: every solid half first, then every see-through half in file order. Drawn mesh by mesh, a hand behind him shows through. Any future screen-drawn model with see-through parts needs the same two passes.
 
 **Lighting** is tuned against Alexah's reference screenshots in `content/ReferenceScreenshots/` (untracked) by measuring glove and eye brightness in captures, never by eye. It uses the shader's per-draw ambient and world-normals uniforms.

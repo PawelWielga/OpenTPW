@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-10-19. **This header names no branch and no sha, deliberately**: a line in the commit that moves the tip cannot name it. Read the current state from the repository, which cannot lag: `git log --oneline -1`. **`docs/QUEUE.md` is the work queue**, one item per session, taken from the top unless Alexah reorders.
+Last updated: 2026-10-20. **This header names no branch and no sha, deliberately**: a line in the commit that moves the tip cannot name it. Read the current state from the repository, which cannot lag: `git log --oneline -1`. **`docs/QUEUE.md` is the work queue**, one item per session, taken from the top unless Alexah reorders.
 
 ## Works
 
@@ -49,21 +49,21 @@ Last updated: 2026-10-19. **This header names no branch and no sha, deliberately
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q703** (no advisor drawn over the End) in section A: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q703** (the End's trails as dense as the original's) in section A: the queue was reordered at Alexah's word, 2026-10-08, for a playable park. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q555 (the End's trails follow their planes): `q555/run2` on the final build (OpenTPW.dll `30639c3e`), `alldone576.TPWS` on the desk, 4 of 4: AnimCtrl's trails started on nodes 1 to 6 (93, 94, 95) and no `PARK_PARTICLE_` gap; `endfeature trails:` plane 02's two at x 489.0 and 471.0, height 61.0, the park y about 7.5 behind plane 02's through 25 Endm1 samples, 421 to 121; `carried` growing every sample; End.RSE's fireworks 6, 3, 6, 3 on nodes 17 to 20 as `park-engine.md` says; frames `run2/s03`..`s11` (`run2/sheet.png`; round 1 `run1/sheet.png`) beside the original's (`q555/side-by-side.png`: the stars behind the planes; before, `q554/run4/a-s04`, none). Not seen: the Jungle Spray's jet moved (its node moves under none of its clips but the build clip, `q555/spray-probe.out`), any other theme's emitter on a clip, an emitter off the screen (ours follows the players, the engine's stands with the last drawn frame), Full Simulation's End. The original's trails look denser than ours (not measured; filed with Q703).
+- Q556 (what hides the advisor over the End: nothing; no code change): the original over `alldone576.TPWS` off-screen, three rounds (`q556/PREDICTION.txt`, one miss recorded: the item's premise). `original/advdraw.py`: the view `0x1f31` throughout the End's `0x0b04`; row 167's slot 1 in render list 1 and drawn every frame, ticks 801 to 838, row 93's slot 0, 850 to 884; the film `q556/orig/q556c.mkv` shows them (`c-film-21.0`, `24.0`, `29.0`) and none between (`c-film-26.3`, `34.0`). Ours, `q556/run1` on this branch's build (OpenTPW.dll `1f687144`), the desk, 2 of 2: `message=167 ... sample=452 ... tick=800` on model slot 1 and `message=93 ... sample=282 ... tick=834` on slot 0, drawn in the lower right in `s04.1` and `s12.3`, none in `s25.9` (`q556/side-by-side.png`). Not tested: a line cut by Escape under the End (Escape landed 1.6 s after row 93 ended); Full Simulation's End; the pith helmet's paler shade (`advisor-park.md`, his light). Row 93 comes on tick 834 here and 850 in the original, about 8 s after the End in both.
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **77** of 106 | 2026-10-10, `case Opcode.` labels vs enum members |
-| Tests | **3553**, 0 fail, 0 skip with the game | 2026-10-19, Q555, alone in a worktree |
-| Tests without the game | **1225** ran, **2328** skipped, of 3553 | 2026-10-19, Q555, alone in a worktree |
+| Tests | **3553**, 0 fail, 0 skip with the game | 2026-10-20, Q556, alone in a worktree |
+| Tests without the game | **1225** ran, **2328** skipped, of 3553 | 2026-10-20, Q556, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

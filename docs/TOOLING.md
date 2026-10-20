@@ -132,6 +132,7 @@ figure; `parkfile.py -w <file>...` prints the cells and objects; Q388); `money_r
 | `original/camread.py PID [SECS] [STEP]` | The original's park camera and interface, live, a line a change: `gui_CameraFlags`, the ride view's model, the look offsets, the eye, layer 0's and layer 1's visibility bit, the music dip word (`[0x00803ad0]`; `[0x00803ac8]` is only the volumes' dirty flag), the End feature's id and the compositor word, with the tick. A `POLL` for `loadfile.sh` (Q551: the End's ride view, `q551/orig/run.sh`; `park-engine.md`, "The End feature's view") |
 | `original/research.py <in> <out> <item> [0]` | A copy of a jungle park file with one item marked researched, so Instant Action's buy list offers it; with a last `0`, marked not researched, which both games keep for an item whose research costs nothing (Q335) |
 | `original/savepark.sh <NAME> <dest.TPWS>` | The RUNNING original (off-screen) saves its park from its own menu: Escape, Save, NAME typed, the tick; the file is moved out of the reference player's jungle folder to `dest` (frames `dest-typed.png`, `-after.png`), so the install's `save/` sum stays (`gms.dat`'s time changes). A file of the original's own to set beside this game's (Q523) |
+| `original/advdraw.py PID [SECS] [STEP]` | Is the original drawing its advisor, live, a line a change: `gui_CameraFlags`, `g_Advisor_Busy`, the speaking slot, the one view's flags, and for slots 0 and 1 the node word, whether the model's renderable is in render list 1 and whether its draw stamped it in the last two frames (`drawn`, `stale`, `never`), each line ending with the wall clock to time a `record.sh` film by. A `POLL` for `loadfile.sh` (Q556; `ui.md`, "How he reaches the screen") |
 | `original/original.sh`, `tpwmem.py`, `gmove.py`, `record.sh`, `watch.sh` | Starting, reading, clicking, filming and watchpointing the original ("The original under Proton", below) |
 | `original/timens.py SECONDS CMD...` | A command run in a time namespace where the computer has been up SECONDS: the original's park clock without a restart (warning 1, below). **It fails outside the VS Code sandbox** (`PermissionError` on `/proc/self/setgroups`, tried 2026-10-10), so a session started from a plain terminal cannot use it as it is |
 | `original/kwinwl-start.sh` | A private display on `:78` drawn by the graphics card (`kwin_wayland --virtual` with Xwayland) for the original, where Xvfb draws by software. `:78` is `parkrun.py`'s too. **Not run since it was written**: try it before leaning on it |
@@ -471,6 +472,10 @@ whole list):
   `q554/orig/run.sh` films the original's End every second. Endm1's three come over the view about 4 s in. Their trails
 (Q555): an `endfeature trails:` line, each particle of the two scripts as `script:effect@node (x, y, height)` and how
 many moves the sweep has made (`carried`); `q555/confirm.py <out> <bin>` checks plane 02's two against it.
+The advisor over the End (Q556): `q556/orig/run3.sh` films the original's End at 15 fps from before the click with
+`original/advdraw.py` beside it; take a frame at a `drawn` line's wall clock less the film's `.t0`. Row 167 is drawn
+about 7.7 s to 14 s after the poller starts and row 93 about 16 s to 22 s, and **`loadfile.sh` returns about 23.5 s
+after its poller starts**, so a key meant inside either line cannot be sent after it: send it from the `POLL`.
 - **A park bigger than its handymen, or its guards** (Q411, Q412; `lib/pathscene.py`, Q411's `q411/mkscene.py` made it
   first): the stock park paused on 765 and `path X Y` given for the first N cells of the 17 x 17 bare block at (60,15) (`parkfile.bare_blocks`), each
   with a 0.15 s wait (`stockscene.py`'s 2.5 s a command is twelve minutes for 289), then saved: 126 + N developed

@@ -62,7 +62,7 @@ no ground under a footprint (`ParkObjects.CoversGround`), so nothing lies under 
 30 (a built thing's footprint is 4, 9 and 10); `FUN_00450470` hands that to `FUN_0046df50`, which ORs `0x101` into the
 heightfield cell's flag word (`[[0x007a0854] + 0x6c] + 0x2c`, four bytes a cell, the flag word low and the ground's
 texture index high) and clears `0x80`. The ground's drawer is the terrain pass `FUN_0056f670`, called by the scene's
-draw `FUN_00576a00` (`0x00576c8b`) every frame: it builds the ground's vertices afresh from `[[0x00879d60]] + 0x2c`
+draw `Render_DrawView` (`0x00576c8b`) every frame: it builds the ground's vertices afresh from `[[0x00879d60]] + 0x2c`
 over each row's visible columns (`+0x128`..`+0x12c` the rows, `+0x130 + r`..`+0x1b0 + r` a row's cells) and skips a
 cell whose flag word has `0x1` (`0x0056f9ce`); its texture fetch `FUN_0056f090` skips the same cells. The second pass
 `FUN_00570d90` is a layer of its own heights and colour, off in the park (`[0x008bcbc8]` is `0x01444100`: no `0x10000`).

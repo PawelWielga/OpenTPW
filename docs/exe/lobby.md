@@ -546,7 +546,7 @@ fully before it shuts.
 (`0x005e052f`-`0x005e05b4`), and `0x10000` just before `+0x48`. States 0 and 1 and the attract flight write 0. The render
 camera's update (`0x005d8cb0`) eases `+0x5c` toward it by an eighth of the gap per lobby pass (`SAR 3`, not scaled by
 the delta), and while it is above 0 sets bit `0x80000` of `0x008bcbc8` and writes a black colour with alpha
-`min( +0x5c >> 8, 255 )` to `0x008bd4e4`, which `FUN_00576a00` hands to the renderer's `+0x28` with the screen's size -
+`min( +0x5c >> 8, 255 )` to `0x008bd4e4`, which `Render_DrawView` hands to the renderer's `+0x28` with the screen's size -
 a black rectangle over the view. The cancel does not touch it; the next state-0 update sets the target to 0 and it lifts
 over about 42 passes. **Not built** (`LOBBY_FLY_IN_FADE`, `docs/QUEUE.md` Q61).
 

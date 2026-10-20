@@ -53,12 +53,11 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q703. The advisor is not drawn over the End.** From Q552, Q554 and Q555 (`park-engine.md`, "The End feature's
-  view", "OpenTPW builds it"). The advisor is drawn through the End in ours, speaking row 167, where the original's
-  frames show none while its `0xa7` and `0x5d` play (`q550/orig/a-4`, `a-5`; ours `q555/run1/s01`..`s10`): decode what
-  hides him (the ride view, the End's control, or a layer) before building. Seen beside the original's frames, not
-  measured: the original's trails look denser, with bigger stars, than ours (`q554/orig/a-e08` against
-  `q555/run1/s10`).
+- [ ] **Q703. The End's trails as dense as the original's.** From Q552, Q554 and Q555 (`park-engine.md`, "The End
+  feature's view", "OpenTPW builds it"). Seen beside the original's frames, not measured: its trails look denser, with
+  bigger stars, than ours (`q556/side-by-side.png`, `q554/orig/a-e08` against `q555/run1/s10`). Measure both first,
+  in the same moment of the same clip (stars on the screen per trail, their size; `original/particledump.py` and the
+  console's `endfeature trails:`), then decode the difference (emission rate, life, size in `Tp2.plb` for 93 to 95).
 - [ ] **Q553. A script's sound effects play.** From Q552. `ADDOBJ` and `EVENT` of types 3 to 10 (`Sound_PlayEffect`
   through `FUN_00557970`) start no sound here and are counted, `RIDE_EFFECT_SOUND` (`RideEffects`; 39 in the End's first
   30 s, End.RSE's `cat_ui` 186 and `cat_rides` 200 to 202, AnimCtrl's `cat_ambient` 209; every ride with a sound node

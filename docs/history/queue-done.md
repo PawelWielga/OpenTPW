@@ -9292,6 +9292,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   players as the drawn model is posed (`RideNodes.Follow`). `PARK_PARTICLE_NODE_ON_A_CLIP` is gone. Confirmed by
   `q555/confirm.py` (plane 02's two trails at its x plus and minus 9, about 7.5 behind it, through all of Endm1;
   `q555/side-by-side.png`). The Jungle Spray's jet node moves under none of its clips but the build clip.
+- [x] **Q556. What hides the advisor over the End: nothing** (Q703's first piece). The original draws him through the
+  End as anywhere: a line's slot sits in render list 1 (`Model_ShowInRenderList`, `0x0045bd30`) and the one view
+  (`0x1f31`) draws it every frame under the ride view's `0x0b04` (`original/advdraw.py`); its film shows row 167's
+  pith-helmet fly and row 93's global fly in the lower right (`q556/orig/c-film-21.0`, `24.0`, `29.0`).
+  `q550/orig/a-4`, `a-5` fell between his lines. Ours says and draws the same two (`q556/side-by-side.png`); no change.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
