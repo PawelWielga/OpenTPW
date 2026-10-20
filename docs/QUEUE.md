@@ -74,14 +74,13 @@ filed the items that cite it.
   (`OpenTPW.Website/inc/lands.php`) names three, the Belly Bounce, the Drinks Shop and the Jungle Spray, and was never
   brought up to date; the repo records more run with guests: the Hot Pot (Q179b), the Crazy Ape, Rocky Racers and
   Mumbo (Q190), Aztec Mayhem (Q257u), the Inca Totem, the Balloon, Costume and Ice Cream Shops, the Laughing Hyenas
-  and the Strength Bird (`docs/history/queue-done.md`). Five more are built and never seen with guests: Tom Tom
-  Twister (`spider`, HOP/DELHEAD as Mumbo), Mayan Spinner (`lookout`, WALKGET as the Totem), the Burger and Fries
-  Shops and the Giant Puzzle (the COPY handshake as the Drinks Shop, `ride-operation.md`); no unbuilt opcode in their
-  scripts but REPAIREFFECT, which the Belly Bounce carries too. Four run only in Full Simulation (no `Easy_` file):
-  Sun God, the Gift Shop, the Steak Restaurant, the Arcade. Confirm each in the game with a guest on it (predicted
-  first; the console's `buy` and `send`, Full Simulation by `gmsfile.put` mode 0 for the four), file what fails as its
+  and the Strength Bird (`docs/history/queue-done.md`). The five built and never seen with guests (Tom Tom
+  Twister, Mayan Spinner, the Burger and Fries Shops, the Giant Puzzle) run for them: Q584. Four run only in Full
+  Simulation (no `Easy_` file): Sun God, the Gift Shop, the Steak Restaurant, the Arcade. Confirm each in the game
+  with a guest on it (predicted first; the console's `buy` and `send`, Full Simulation by `gmsfile.put` mode 0 for the
+  four), file what fails as its
   own item, and add every confirmed one to the website's `running` list (`docs/WORKFLOW.md`, "The website").
-  Split it by group if it is long: the five unseen first.
+  What is left: the four Full Simulation ones, then the website's list.
 - [ ] **Q581. The kart and water rides run for guests: Dino Karts and Splish Splash (decode first).** From the queue
   reorder of 2026-10-20. A bought one's `mIsTrackRideValid` stays 0, so guests are never offered it
   (`ParkRideChoice.cs`, `ride-operation.md`): there is no car or water-track tool (`PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`,
@@ -89,6 +88,14 @@ filed the items that cite it.
   (`RideScript.cs`), and the cars' steering to the buoys is not decoded (`park.md`). Dino Karts is the lab's first
   project (Q701), so a Lost Kingdom player reaches it early. Decode the track tool for these two, the -4/-5 car records
   and the steering first, then split the build. Q449 (2) holds only the sale refund; Q448 has BUMP 17.
+- [ ] **Q585. The Mayan Spinner's riders stand in a heap at its steps.** From Q584 (`q580/explore5/v00..v29.png`,
+  `q580/run-R1c/R1-spinner.png`). Ours: each rider walks on from node 1 to their own node (2 to 7) and is then Carried,
+  and every Carried rider is drawn at the top of the steps, heaped, through the whole ride, while the drum rises and
+  spins as the original's does; `rides` reads "heads 0/0" for thing 44 with five Carried. The original's riders stand
+  apart round the drum and go up with it (`q580/orig/a-t869..907`, `a-t1265..1319`; the drum's rise `a-t915..985`).
+  The Lookout's heads ride its lift (`ride-operation.md`, "Lost Kingdom's legs"); find why ours has no head node for
+  them (the Aztec Mayhem's are drawn on its benches, Q257u) and draw a Carried rider where the original does; compare
+  frames of both games at 580,240 zoom 70.
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge

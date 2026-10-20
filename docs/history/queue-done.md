@@ -9392,6 +9392,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   From Q342: the THING is made on demand now, an object on cell (0,0) the writer writes (`saves.md`,
   "OpenTPW's writer, a vehicle made at its summons"); the model and the script still stand from the load, and
   the id is not the original's.
+- [x] **Q584. The five built and never seen with guests run for them: Tom Tom Twister, Mayan Spinner, the Burger and
+  Fries Shops, the Giant Puzzle** (Q580's first piece). No code changed: confirmed on main's build in the stock park,
+  silent, predicted first (`q580/PREDICTION.txt`, `q580/confirm.py`). Bought by the console: Tom Tom Twister (1113) on
+  (40,22), queue node (42,21) joined at (43,21) (on (41,22) its node falls on the path and no queue joins); Mayan Spinner
+  (1108) on (57,23), node (58,22) joined at (56,22); the Burger (1207) and the Fries (1212) on (41,30); the Giant Puzzle
+  (1307) on (40,22) (on (46,29) no guest from (43,21) has a route). `run-R1c`, 5 of 5: ten Twister riders, every
+  excitement line 75 with +15 under a gap of 15 and +5 under 40, onride 9 and heads 9/40 (`R1-twister.png`); six used
+  the Spinner, onride 5 (`R1-spinner.png`); three paid 30 at the Burger, each +21 (`R1-burger.png`). `run-R2`, 4 of 4:
+  eight paid 30 at the Fries, each +21 (`R2-fries.png`); six paid 10 at the Puzzle, onride 1 (`R2-puzzle.png`). No gap
+  of the five scripts counted. The original given the two scenes saved here (`q580/orig`, `run.sh a 2` and `b`):
+  `object.py` shows a guest loaded at each of the five, 12 s (the Twister) to 81 s (the Burger) after the load, and its
+  Puzzle a player and a queue as ours (`b-t934.png`). Missed and recorded: the Twister's happiness set (P2;
+  re-predicted from `MatchTheExcitement` and held); a helper named `queue` broke the first R1 (now in `parkrun.py`'s
+  list of unsafe names). Seen and filed: the Spinner's
+  riders drawn at its steps (Q585). Website: these five join the `running` list (the Sentinel's).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

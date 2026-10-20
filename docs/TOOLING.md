@@ -808,6 +808,15 @@ after its poller starts**, so a key meant inside either line cannot be sent afte
   Pot on (41,23): `buy 1140 41 23 0`, node (43,22), path (43,21); four boats are out six seconds on (Q257r).
 - **Fill a ride:** `admit <x> <y>` on a path cell answers a new guest's id, `send <guest> <thing>` sends them; poll
   the ride's census (`bumpers`, `rides`) until it counts them (Q179d, Q257r).
+- **The rest of Lost Kingdom's rides, shops and sideshows with guests** (Q584, `q580/confirm.py`): Tom Tom Twister
+  `buy 1113 40 22 0`, node (42,21) joined at (43,21) (on (41,22) its node lands on the path and no queue joins); Mayan
+  Spinner `buy 1108 57 23 0`, node (58,22) joined at (56,22); the Burger `1207` or the Fries `1212` on (41,30); the Giant
+  Puzzle `1307` on (40,22) (on (46,29) a guest from (43,21) has no route). `send` refuses a guest still in their
+  arrival's spot animation: send again each second for up to 12 s. A shop's visit is the log's `paid P at object N`
+  then `Happiness changed by X since using object N` (X is the whole wait's change; the ride's own part is the
+  `excitement` line before it). A spot that may not reach the path: buy, send one guest, `sell` on "no route", next spot.
+- **Several `object.py` readers in one `loadfile.sh` POLL** (Q584, `q580/orig/run.sh`): their lines name no thing, so
+  tag each, `python3 -u object.py %PID% SECS N | sed -u "s/^/[N] /"`.
 - **A Crazy Ape running in both games** (Q558): `q558/confirm.py <out> <bin>` pauses the stock park, `buy 1101 41 22 0`
   (thing 43, its queue node (42,21)), `tool queue 43`, `worldclick 42 21`, `worldclick 43 21`, `tool off`, resumes, admits
   six guests on (43,21) and sends them to it, waits for the first loop's `KILLOBJ 10` and saves the park after it
