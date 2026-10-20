@@ -53,11 +53,17 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q553. A script's sound effects play.** From Q552. `ADDOBJ` and `EVENT` of types 3 to 10 (`Sound_PlayEffect`
-  through `FUN_00557970`) start no sound here and are counted, `RIDE_EFFECT_SOUND` (`RideEffects`; 39 in the End's first
-  30 s, End.RSE's `cat_ui` 186 and `cat_rides` 200 to 202, AnimCtrl's `cat_ambient` 209; every ride with a sound node
-  counts too). Decode the sound's place (its node in space `0x200`), its category and its stop by `KILLOBJ`, build it,
-  and confirm by the game's own mix (`lib/mixmatch.py`) beside the original's.
+- [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
+  the one-shot and the plain class (`audio.md`, "A script's sounds"). Counted and not started: the held chain
+  (`RIDE_EFFECT_SOUND_CLASS_6BDD30`, flags `0x404`: the level ambient's 177 to 180, the gates' and the speakers', and the
+  staff's 188), the class of `0x4` alone (`_6BDC60`, not decoded: the rides' 89 and 100, the monkey, the lava spurt and
+  the volcano), the music's class (`_6BE610`, `0x406`: the bus's global ambient 6, which `SETOBJPARAM`'s `( 1, 20, v )`
+  steers through `FUN_0051bc40` on a live voice; `RideEffects.SetParameter` still zeroes the handle), `_6BE680` and
+  `_6BE330` (none in Lost Kingdom), type 10 (`RIDE_EFFECT_SOUND_ITEM_BANK`, no shipped script) and a placed sound with
+  nowhere to stand here (`RIDE_EFFECT_SOUND_NO_PLACE`: the ferry's 172 and the seaplane's 173, ADDOBJ 8 on node 1,
+  whose scripts run with no nodes). Decode `0x006bdc60` first, build each class on `ParkScreams` and the music's rule,
+  and confirm by `voices.py` and `mixer.py` beside `scriptsounds`. Also measure whether a park entered fresh from a file
+  hears its scripts' looped sounds in the original (Q553's run loaded into a park whose fountain already sounded).
 - [ ] **Q705. The research screen (Full Simulation only).** From Q704 (`hud.md`, "The research screen's panels" and
   "The research screen's workload slider and its red text"). Replace the count `RESEARCH_SCREEN` with the screen: the
   stream `0x00754490`'s frame, five panels, five effort sliders (`Lab_SetEffort`), the workload slider, dial and gauge
@@ -1076,7 +1082,7 @@ filed the items that cite it.
   `SoundInfo.FADETOGGLE` (30, `sound.sam`; stock detail is `DEFAULTQUALITY` 50, and 25 at boot on low graphics detail,
   `0x0054de17`), and a **hard stop** (the same as `KILLOBJ` / `Sound_Stop`) at 30 or below. At 0, or with no channel, the
   voice is stopped on the next service pass. OpenTPW stands a flat 0.06 s ramp in for both, said at the site in
-  `Advisor.QuietenSeconds`, `ParkAudio`'s rain and crowd fades and `ParkCarSounds`. Build: (1) the fade as a geometric
+  `Advisor.QuietenSeconds`, `ParkAudio`'s rain and crowd fades, `ParkCarSounds` and `FADEOBJ`'s (`ParkAudio.ScriptFadeSeconds`, Q553). Build: (1) the fade as a geometric
   decay on the voice's volume, one step every 100 ms (250 ms before the first when nothing was fading), each step
   `own = trunc( 60 x round( own x group product ) / 100 )` with the group gains folded in at each step, ending in a stop
   at 0 (the rate is read, not to be measured: `audio.md`, "The fade", fork watch 2026-10-19, `verify-other-b.md` H1); (2) `FADEOBJ` and `Sound_StopFading` as a cut when sound detail is

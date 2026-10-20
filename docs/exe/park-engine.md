@@ -935,7 +935,9 @@ through its line (ticks 801 to 838) and row 93 on slot 0 through its (850 to 884
 **Their trails are as dense as the original's** (Q703): the park runs its particles at its file's density, 500 in
 this scene, so each trail makes a star a tick and holds about a hundred in both games (90 to 106 there, 98 to 107 here), the stars the same sizes (`park.md`,
 "A park's particles, started and drawn", "The density is the park file's"; `q703d/side-by-side.png`).
-**Not the original's:** no sound of the two scripts is played (`RIDE_EFFECT_SOUND`, Q553).
+**Their sounds play** (Q553): `End.RSE`'s 186 flat, 200 and 201 on its sound nodes 9 and 10 and a 202 each second,
+AnimCtrl's 209 on the planes and moved with them, at the original's places, distances, gains and volumes (`audio.md`,
+"A script's sounds"; `q553/PREDICTION.txt`; the console's `scriptsounds`).
 
 ## The park management gadget
 

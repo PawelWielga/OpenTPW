@@ -1392,19 +1392,48 @@ public sealed class RideScript
 	/// <c>Particles_SetVelocity</c>). The node is where the thing's players last posed it (<see cref="RideNodes.Follow"/>),
 	/// so a trail on a clip's node goes with it, where the engine's holds the pose of the frame the model was last drawn
 	/// in. A record whose node has no matrix is passed over here, where the engine moves its emitter to the origin
-	/// (<c>0x005518f9</c>); no emitter is started on one (<see cref="StartParticle"/>). Sounds are not moved:
-	/// none is played (<see cref="RideEffects.SoundGap"/>).
+	/// (<c>0x005518f9</c>); no emitter is started on one (<see cref="StartParticle"/>).
+	///
+	/// <para>
+	/// A sound record with a node is moved only on the script's own eighth tick, <paramref name="soundsDue"/>
+	/// (<c>0x00551a1c</c>: the script's id against the tick, as its turn is), to the node's place cut to whole units
+	/// (<c>FUN_0051c270</c>), the origin for a node with no matrix (<c>0x00551a66</c>). One with no node stays where it
+	/// started.
+	/// </para>
 	/// </summary>
-	public void SweepEffects()
+	public void SweepEffects( bool soundsDue = false )
 	{
-		if ( Effects is null || Nodes is null || ParticleSystem.Current is not { } system )
+		if ( Effects is null || Nodes is null )
 			return;
 
+		var system = ParticleSystem.Current;
 		var followed = false;
 
 		foreach ( var record in Effects.Records )
 		{
-			if ( !record.IsParticle || record.Emitter == 0 || record.Node < 0 )
+			if ( record.Node < 0 )
+				continue;
+
+			if ( record.Sound is { } sound )
+			{
+				if ( !soundsDue || ParkAudio.Current is not { } audio )
+					continue;
+
+				if ( !followed && Animations is { } carriers )
+					Nodes.Follow( carriers );
+
+				followed = true;
+
+				var end = Nodes.Find( record.Node, RideNodes.SoundSpace, out var at, carried: true );
+
+				if ( end is NodeEnd.Missing or NodeEnd.NegativeId )
+					continue;
+
+				audio.MoveScriptSound( sound, end is NodeEnd.Unposed ? Vector3.Zero : new Vector3( at.X, at.Z, at.Y ) );
+				continue;
+			}
+
+			if ( system is null || !record.IsParticle || record.Emitter == 0 )
 				continue;
 
 			if ( !followed && Animations is { } players )
@@ -1479,20 +1508,27 @@ public sealed class RideScript
 	}
 
 	/// <summary>
-	/// Stops every emitter this script's records hold, as its end does (<c>FUN_0051ff70( handle, -2 )</c>): each
-	/// stops emitting, and what it threw out lives out its time.
+	/// Stops every emitter and every sound this script's records hold, as its end does (<c>FUN_00558500</c>):
+	/// <c>FUN_0051ff70( handle, -2 )</c> for a particle, which stops emitting while what it threw out lives out its
+	/// time, and <c>Sound_Stop</c> for a sound.
 	/// </summary>
-	internal void StopParticles()
+	internal void StopEffects()
 	{
 		if ( Effects is null )
 			return;
 
 		foreach ( var record in Effects.Records )
-			StopParticle( record );
+			StopEffect( record, fade: false );
 	}
 
-	private static void StopParticle( RideEffects.Record record )
+	private static void StopEffect( RideEffects.Record record, bool fade )
 	{
+		if ( record.Sound is { } sound )
+		{
+			ParkAudio.Current?.StopScriptSound( sound, fade );
+			record.Sound = null;
+		}
+
 		if ( record.Emitter == 0 )
 			return;
 
@@ -2106,10 +2142,8 @@ public sealed class RideScript
 				break;
 
 			// What a ride starts playing, and what stops it again. ADDOBJ keeps the engine's own record so
-			// that a later KILLOBJ can find it by tag; EVENT deliberately keeps nothing, because its
-			// handler throws the handle away and so nothing it starts is ever killable. FADEOBJ is NOT
-			// among them - 113 instructions that complete no further script, and a fade differs from a
-			// kill only in stopping a sound gently, which nothing here can yet hear.
+			// that a later KILLOBJ or FADEOBJ can find it by tag; EVENT deliberately keeps nothing, because its
+			// handler throws the handle away and so nothing it starts is ever killable.
 			case Opcode.ADDOBJ:
 				AddObject( operands );
 				break;
@@ -2120,6 +2154,10 @@ public sealed class RideScript
 
 			case Opcode.KILLOBJ:
 				KillObjects( operands[0] );
+				break;
+
+			case Opcode.FADEOBJ:
+				FadeObjects( operands[0] );
 				break;
 
 			// Limbo: where a shop or a toilet keeps a guest while they are inside it. All five handlers
@@ -2547,6 +2585,20 @@ public sealed class RideScript
 
 		if ( record is { IsParticle: true } )
 			record.Emitter = StartParticle( type, node, effect );
+		else if ( record != null )
+		{
+			// A spawn that answers nought frees the record it was given (FUN_00557970, 0x005579f9).
+			switch ( StartSound( type, node, effect, out var sound ) )
+			{
+				case ParkAudio.ScriptSoundStart.Absent:
+					Effects.Free( record );
+					break;
+
+				case ParkAudio.ScriptSoundStart.Started:
+					record.Sound = sound;
+					break;
+			}
+		}
 	}
 
 	/// <summary>
@@ -2566,8 +2618,75 @@ public sealed class RideScript
 		var node = Value( operands[1] );
 		var effect = Value( operands[2] );
 
-		if ( Effects.Trigger( type, node, effect ) && type <= RideEffects.LastParticleType )
+		if ( !Effects.Trigger( type, node, effect ) )
+			return;
+
+		if ( type <= RideEffects.LastParticleType )
 			StartParticle( type, node, effect );
+		else
+			StartSound( type, node, effect, out _ );
+	}
+
+	/// <summary>
+	/// Starts a sound this script asks for in the park's audio (<c>FUN_005573d0</c>'s cases 3 to 10) where
+	/// <see cref="SoundPlace"/> puts it. A node the model does not hold answers nought, as the engine's
+	/// "RSSE: Invalid Node ID" does, and so does an effect its category lacks; with no park audio nothing is played.
+	/// </summary>
+	private ParkAudio.ScriptSoundStart StartSound( int type, int node, int effect, out ParkAudio.ScriptVoice? sound )
+	{
+		sound = null;
+
+		if ( ParkAudio.Current is not { } audio )
+			return ParkAudio.ScriptSoundStart.NoDevice;
+
+		if ( !SoundPlace( node, out var at ) )
+		{
+			Log.Info( $"Park audio: script {Id} of thing {ThingId} asked for effect {effect} of type {type} on sound node {node}, which its model does not hold" );
+			return ParkAudio.ScriptSoundStart.Absent;
+		}
+
+		return audio.StartScriptSound( Id, type, effect, at, out sound );
+	}
+
+	/// <summary>
+	/// Where a sound of this script on <paramref name="node"/> sounds, in the world's axes (<c>FUN_00556b90</c> under
+	/// <c>0x200</c>): a node's place in the model, posed where the thing's players last left it (<see cref="RideNodes.Follow"/>),
+	/// or the origin for one with no matrix; for no node, the middle of the thing's cells (<see cref="ParkObjects.TrySoundPlace"/>).
+	/// False for a node the model does not hold. Null where this script has no model here to find it on, or no placed thing:
+	/// the engine's origin is for a script with no model, and every one the park runs has one there, a vehicle's too.
+	/// </summary>
+	private bool SoundPlace( int node, out Vector3? at )
+	{
+		at = null;
+
+		if ( node < 0 )
+		{
+			if ( ParkObjects.Current is { } objects && objects.TrySoundPlace( ThingId, out var middle ) )
+				at = middle;
+
+			return true;
+		}
+
+		if ( Nodes is null )
+			return true;
+
+		if ( Animations is { } players )
+			Nodes.Follow( players );
+
+		switch ( Nodes.Find( node, RideNodes.SoundSpace, out var place, carried: true ) )
+		{
+			case NodeEnd.Missing:
+				return false;
+
+			case NodeEnd.Unposed or NodeEnd.NegativeId:
+				at = Vector3.Zero;
+				return true;
+		}
+
+		// The model's axes have the height second; the world's have it last.
+		at = new Vector3( place.X, place.Z, place.Y );
+
+		return true;
 	}
 
 	/// <summary>
@@ -2588,10 +2707,34 @@ public sealed class RideScript
 		foreach ( var record in Effects.Records )
 		{
 			if ( record.Tag == killed )
-				StopParticle( record );
+				StopEffect( record, fade: false );
 		}
 
 		Effects.Kill( killed );
+	}
+
+	/// <summary>
+	/// <c>FADEOBJ</c>: the walk of <c>KILLOBJ</c>, every record of the tag stopped and taken off, a sound with
+	/// <c>Sound_StopFading</c> (<c>0x005523d0</c>); a particle's stop is the same call either way.
+	/// </summary>
+	private void FadeObjects( RideOperand tag )
+	{
+		if ( Effects is null )
+		{
+			++NotImplemented;
+			Unimplemented.Report( $"{Name}: FADEOBJ, with no effects to stop" );
+			return;
+		}
+
+		var faded = Value( tag );
+
+		foreach ( var record in Effects.Records )
+		{
+			if ( record.Tag == faded )
+				StopEffect( record, fade: true );
+		}
+
+		Effects.Fade( faded );
 	}
 
 	/// <summary>

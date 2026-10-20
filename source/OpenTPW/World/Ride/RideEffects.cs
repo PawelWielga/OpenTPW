@@ -38,17 +38,18 @@ namespace OpenTPW;
 /// <item>Nothing is started or heard here. The engine hands the spawn to <c>Particles_Spawn</c> or
 /// <c>Sound_PlayEffect</c> and keeps what they answer; this keeps the request and answers a handle of
 /// its own. The script that owns the list starts a particle's emitter in the park's particle system and
-/// keeps its handle on the record (<see cref="Record.Emitter"/>, <c>RideScript.StartParticle</c>); no
-/// sound is started from a record or an <c>EVENT</c>, and each one asked for is counted (<see cref="SoundGap"/>).</item>
+/// keeps its handle on the record (<see cref="Record.Emitter"/>, <c>RideScript.StartParticle</c>), and a sound's
+/// voice in the park's audio (<see cref="Record.Sound"/>, <c>RideScript.StartSound</c>).</item>
 /// <item>The engine resolves a position through <c>FUN_00556b90</c> from the model and the node, and <b>walks
 /// this whole list every tick</b> (in <c>FUN_005516b0</c>) to move what is playing as the ride moves:
-/// <c>RideScript.SweepEffects</c> does that for a particle; a record keeps the lookup record the engine moves it
-/// by (<see cref="Record.Index"/>, <see cref="RideNodes.EffectIndex"/>), and a sound has no position here.</item>
+/// <c>RideScript.SweepEffects</c> does that, a particle every tick and a sound on its script's every eighth; a
+/// record keeps the lookup record the engine moves it by (<see cref="Record.Index"/>, <see cref="RideNodes.EffectIndex"/>).</item>
 /// <item>One of the list's other writers is not here: <c>ADDOBJ_EXT</c>, which no shipped script
 /// uses at all. The save-state reader (<c>FUN_005597a0</c>), which rebuilds the list from a park file's
 /// <c>"OBJ "</c> section, is <see cref="Restore"/>, and <see cref="Written"/> is what goes back into one.</item>
 /// <item>A spawn that answers nought leaves no record in the engine: <c>FUN_00557970</c> frees the node it
-/// has just linked. Nothing here spawns, so every <c>ADDOBJ</c> of a known type keeps its record.</item>
+/// has just linked. Here a sound its category does not hold, or on a node the model lacks, is freed so
+/// (<see cref="Free"/>); a particle that is not started keeps its record.</item>
 /// </list>
 /// </summary>
 public sealed class RideEffects
@@ -124,6 +125,9 @@ public sealed class RideEffects
 		/// </summary>
 		public int Emitter { get; internal set; }
 
+		/// <summary>The voice the park's audio is playing for this sound, or null: a particle, or a sound not started.</summary>
+		internal ParkAudio.ScriptVoice? Sound { get; set; }
+
 		/// <summary>Whether this is one of the two particle types rather than one of the eight sound types.</summary>
 		public bool IsParticle => Type <= LastParticleType;
 	}
@@ -176,9 +180,6 @@ public sealed class RideEffects
 		}
 
 		++Started;
-
-		if ( type > LastParticleType )
-			Unimplemented.Report( SoundGap );
 
 		var record = new Record
 		{
@@ -248,17 +249,20 @@ public sealed class RideEffects
 
 		++Started;
 
-		if ( type > LastParticleType )
-			Unimplemented.Report( SoundGap );
-
 		return true;
 	}
 
 	/// <summary>
-	/// The count of a sound asked for by <c>ADDOBJ</c> or <c>EVENT</c> (types 3 to 10), which the engine starts through
-	/// <c>Sound_PlayEffect</c> and nothing here plays.
+	/// Frees a record whose spawn answered nought, as <c>FUN_00557970</c> unlinks and frees it at once (<c>0x005579f9</c>).
 	/// </summary>
-	public const string SoundGap = "RIDE_EFFECT_SOUND";
+	public void Free( Record record )
+	{
+		if ( _records.Remove( record ) )
+			++Freed;
+	}
+
+	/// <summary>Every record freed because its spawn answered nought.</summary>
+	public int Freed { get; private set; }
 
 	/// <summary>
 	/// <c>KILLOBJ</c>: stop <b>every</b> record whose tag matches, and answer how many that was.
@@ -272,9 +276,9 @@ public sealed class RideEffects
 	/// </para>
 	///
 	/// <para>
-	/// <c>FADEOBJ</c> is the same walk and is deliberately not implemented: it differs only for a sound,
-	/// where it calls <c>Sound_StopFading</c> in place of <c>Sound_Stop</c>, and for a particle the two are
-	/// byte for byte the same call. With nothing yet sounding there is no difference here to express.
+	/// <c>FADEOBJ</c> is the same walk (<see cref="Fade"/>): it differs only for a sound, where it calls
+	/// <c>Sound_StopFading</c> in place of <c>Sound_Stop</c>, and for a particle the two are byte for byte the
+	/// same call.
 	/// </para>
 	/// </summary>
 	public int Kill( int tag )
@@ -285,6 +289,19 @@ public sealed class RideEffects
 
 		return killed;
 	}
+
+	/// <summary><c>FADEOBJ</c>: the walk of <see cref="Kill"/>, every record of the tag taken off, counted apart.</summary>
+	public int Fade( int tag )
+	{
+		var faded = _records.RemoveAll( record => record.Tag == tag );
+
+		Faded += faded;
+
+		return faded;
+	}
+
+	/// <summary>Everything a <c>FADEOBJ</c> has stopped.</summary>
+	public int Faded { get; private set; }
 
 	/// <summary>
 	/// <c>SETOBJPARAM</c>: set a parameter on everything carrying a tag, and answer how many that was.

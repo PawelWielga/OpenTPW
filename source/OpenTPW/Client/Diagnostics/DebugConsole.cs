@@ -607,6 +607,11 @@ public static class DebugConsole
 				Reply( ParkAudio.Current?.PlacedCensus() ?? "no park audio" );
 				break;
 
+			// The sounds the park's scripts have started with ADDOBJ and EVENT, each with its place and voice.
+			case "scriptsounds":
+				Reply( ParkAudio.Current?.ScriptSoundCensus() ?? "no park audio" );
+				break;
+
 			// Plays one of the island's ambient samples at a place of the caller's choosing, so a pan
 			// can be measured at angles the lobby's own marked place never reaches: the Space antenna
 			// sits almost on the camera's look axis, so it never pans more than about a seventh of the

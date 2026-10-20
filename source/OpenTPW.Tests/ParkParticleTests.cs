@@ -236,7 +236,7 @@ public class ParkParticleTests
 		Assert.AreEqual( 0, script.Effects!.Count );
 		Assert.IsFalse( Counted( "PARK_PARTICLE" ), "a sound's event asks the particles for nothing" );
 
-		script.StopParticles();
+		script.StopEffects();
 
 		Assert.AreNotEqual( -2, started.Lifetime );
 	}

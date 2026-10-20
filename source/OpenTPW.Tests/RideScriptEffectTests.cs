@@ -276,39 +276,31 @@ public class RideScriptEffectTests
 	}
 
 	/// <summary>
-	/// <b><c>FADEOBJ</c> is deliberately counted; <c>SETOBJPARAM</c> is built.</b> The two are pinned
-	/// side by side because the reason they differ is worth keeping.
+	/// <b><c>FADEOBJ</c> takes every record of its tag, as <c>KILLOBJ</c> does, and <c>SETOBJPARAM</c> walks a particle past.</b>
 	///
 	/// <para>
-	/// <c>FADEOBJ</c> is 113 instructions and the only unbuilt one in five scripts, the four seaplanes and
-	/// hallow's firework, and it differs from <c>KILLOBJ</c> only in stopping a sound gently, which nothing
-	/// here can yet hear.
-	/// <c>SETOBJPARAM</c> completes four, and everything it does is in reach: it matches on a tag in the
-	/// record list this already keeps, and the value it stores is the one the engine's own call answers
-	/// when the sound system is down.
-	/// </para>
-	///
-	/// <para>
-	/// <b>The script below also exercises the particle case, so it asserts it.</b>
-	/// The record it adds is type 1 - a particle - and carries the very tag the <c>SETOBJPARAM</c> names,
-	/// and the engine's dispatch walks particles past: it is the record's type that decides, not its tag.
-	/// So nothing is reached, and a machine that matched on the tag alone would show one here.
+	/// The record added is type 1 - a particle - and carries the very tag the <c>SETOBJPARAM</c> names, and the
+	/// engine's dispatch walks particles past: it is the record's type that decides, not its tag. So nothing is
+	/// reached, and a machine that matched on the tag alone would show one here. The fade then takes the record,
+	/// counted as a fade and not a kill.
 	/// </para>
 	/// </summary>
 	[TestMethod]
-	public void FadingIsStillCountedButSettingParametersIsNot()
+	public void FadingTakesItsTagAndSettingParametersWalksAParticlePast()
 	{
 		var script = WithEffects(
 			Word( Opcode.ADDOBJ ), Lit( 1 ), Lit( -1 ), Lit( 16 ), Lit( 10 ),
-			Word( Opcode.FADEOBJ ), Lit( 10 ),
+			Word( Opcode.ADDOBJ ), Lit( 1 ), Lit( -1 ), Lit( 16 ), Lit( 11 ),
 			Word( Opcode.SETOBJPARAM ), Lit( 10 ), Lit( 1 ), Lit( 2 ),
+			Word( Opcode.FADEOBJ ), Lit( 10 ),
 			Word( Opcode.END ) );
 
 		script.Turn( 0f );
 
-		Assert.AreEqual( 1, script.NotImplemented, "only the fade should be counted now" );
-		Assert.AreEqual( 1, script.Effects!.Count, "and the record a fade would have taken is still there" );
+		Assert.AreEqual( 0, script.NotImplemented, "nothing is counted" );
 		Assert.AreEqual( 0, script.Effects!.Parameters, "the particle carrying that tag was not walked past" );
+		Assert.AreEqual( 11, script.Effects.Records.Single().Tag, "the fade took tag 10 and left 11" );
+		Assert.AreEqual( (1, 0), (script.Effects.Faded, script.Effects.Stopped) );
 	}
 
 	/// <summary>

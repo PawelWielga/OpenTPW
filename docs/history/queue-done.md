@@ -9304,6 +9304,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   to 106 stars; ours at the options' 1000 held 48 to 54, and with `Level.TakeParticleDensity` 98 to 107 at rates -1
   and most 244, the stars' sizes the same (`q703d/side-by-side.png`). A copy of Alexah's Full Simulation autosave
   read 1500 live in both (`q703d/fs/`). Tests 3555, 0 fail with the game; 8 of 8 bugs put back fail a test.
+- [x] **Q553. A script's sound effects play (the one-shot and the plain class).** From Q552. `ADDOBJ` and `EVENT` of
+  types 3 to 9 play in their seven categories (`FUN_005573d0`: 3 and 4 the level's rides and ambient, 5 to 9 the global
+  rides, kids, staff, ambient and ui), flat under `0x200`, else at their sound node's place (space `0x200`) or the
+  thing's cells' middle, cut to whole numbers; moved by the sweep on the script's eighth tick (`0x00551a1c`); stopped by
+  `KILLOBJ` and the script's end (`Sound_Stop`), faded by `FADEOBJ`, now built; an absent effect or node frees the record
+  (`audio.md`, "A script's sounds"; `park.md`, "The effect subsystem"). Measured in both games' End
+  (`q553/PREDICTION.txt`, 12 held, 1 missed): 200 and 201 at (501,227,16) and (458,227,16), 34.4 and 35.7 off, gains
+  0.8424 and 0.8361, 75 and 38 of 127; the planes' 209 started at the original's three places to the unit; 186 found in
+  the mix (`q553/side-by-side.png`). The other classes are Q557. Tests 3571, 0 fail with the game; 20 of 20 bugs put
+  back fail a test.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

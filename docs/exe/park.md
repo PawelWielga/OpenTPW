@@ -936,6 +936,15 @@ answer at `+0xc`, looks the node up for `+0x14` (`FUN_0044b220` under `0x100` fo
 10) and writes the tag last; **where the spawn answered nought it unlinks and frees the record instead**. The
 whole record, and how a park file holds the list, is `saves.md`, the same section.
 
+**A sound record is moved on its script's eighth tick, a particle on every one.** The walk's byte map at `0x00551b18`
+sends types 3 to 10 to one arm (`0x00551a1c`) which acts only when the script's id against the tick, `( [frame +0x8] ^
+[0x008791a4] ) & 7`, is nought, the test a script's turn takes (`0x005516e9`): it reads the node's stored matrix
+through the cached index and hands `FUN_0051c270( handle, x, y, z )`, a set of the voice's place, the translation cut to
+whole numbers, or (0, 0, 0) for a record with no matrix (`0x00551a66`). A record of no node is never moved, by either arm
+(`0x005518a0`). **`KILLOBJ` stops a sound with `Sound_Stop` (`0x0051c2c0`), `FADEOBJ` with `Sound_StopFading`, and the
+script's end (`FUN_00558500`) every record's sound with `Sound_Stop`** and every particle's with `FUN_0051ff70( handle, -2 )`.
+What OpenTPW plays of it is `audio.md`, "A script's sounds".
+
 ### `SETOBJPARAM` (12) and `DIPMUSIC` (104) — both buildable with no world
 
 `SETOBJPARAM` at `0x005524d9` is `<tag> <param> <value>`, walking **`+0xb0`** — the same record list `ADDOBJ` fills — and matching the record's tag at `+0x18`. Type dispatch (byte map `0x5569c4`, jump table `0x5569b8`) has **two cases only: particle types 1-2 do nothing**, sound types 3-10 call `FUN_0051bc40(record+0xc, param, value)` and store the answer back at `+0xc`. **That call returns 0 when the sound system is down** (`DAT_00802bc8`/`DAT_00802bd4`, written only by the sound init and its teardown), so with no world the record's handle becomes nought — the engine's own answer. All 20 uses are in `bus.RSE`, **one copy per theme — four scripts, not one** — as `(1, 20, 0)` x12 and `(1, 20, 75)` x8. It is a **third reader** of the list and rewrites `+0xc`, the handle itself. **Its byte table is `[0,0,1,1,...]`, NOT `KILLOBJ`/`FADEOBJ`'s `[0,1,2,2,...]`** — do not carry the one over to the other. It is a no-op on a particle record. The handler has not been read in full.

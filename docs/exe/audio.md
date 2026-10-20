@@ -786,6 +786,56 @@ its envelope is 0.022 to 0.032 of the sample's, where Q236b's crowd samples read
 the same scale to within the spread, at that one camera. How the original's level falls with distance was not
 measured, and its placed voice matches the sample at 0.24 at best, so the library changes it on the way.
 
+### A script's sounds
+
+Read for Q553 (`park.md`, "The effect subsystem") and held against the running original's End (`q553/orig/run.sh`:
+`voices.py`, `mixer.py`; `q553/PREDICTION.txt`).
+
+**`FUN_005573d0`'s types 3 to 9 are one `Sound_PlayEffect( 0, category, effect, x, y, z )` each, with no level set
+after it**, the place `FUN_00556b90`'s under `0x200` cut to whole numbers (`__ftol`):
+
+| Type | Category | Global |
+|---|---|---|
+| 3 | the level's `cat_rides` | `[0x00803a3c]` |
+| 4 | the level's `cat_ambient` | `[0x00803a38]` (`FUN_0051ec50`) |
+| 5 | the global `cat_rides` | `[0x00803a28]` |
+| 6 | `cat_kids` | `[0x00803a24]` |
+| 7 | `cat_staff` | `[0x00803a30]` |
+| 8 | the global `cat_ambient` | `[0x00803a20]` |
+| 9 | `cat_ui` | `[0x00803a2c]` |
+| 10 | the thing's own bank, `FUN_004145e0`, nought with none ("RSSE: Tried to trigger a custom e...") | — |
+
+The effect's flags word makes the voice's class as for any caller (`0x006b6774`..`0x006b67f2`, "How the engine plays an
+effect"): no `0x4` the one-shot `0x006bd7b0`, looped under `0x8`; `0x4` with `0x10` `0x006be680`; with `0x2`, `0x400` the
+music's `0x006be610`, `0x100` `0x006be330`, else the plain class `0x006be090`; without `0x2`, `0x400` the held chain
+`0x006bdd30`, else **`0x006bdc60`, not decoded** (Lost Kingdom's rides 89 and 100, flags `0x4`). Lost Kingdom's 81
+scripts ask for a sound 198 times (`ADDOBJ` 82, `EVENT` 116; `rselisting` over the `.RSE` corpus, each effect's flags
+from its category's file): 116 one-shots with no flag, 45 looped, 2 flat (`cat_ui` 185, and 186 looped too), 20 of the
+plain class, 6 held chains (the level ambient's 177 to 180, the staff's 188), 4 of `0x006bdc60`, 1 of the music's class
+(the bus's global ambient 6) and 4 ids their category lacks (`park.md`).
+
+**Measured in the original's End** (q550's scene, `a-voices.log`, `a-mixer.log`): the listener at (481, 200, 10) in the
+world's axes; `End.RSE`'s 200 on its sound node 9 at (501, 227, 16) and 201 and each second's 202 on node 10 at (458,
+227, 16), 34.41 and 35.68 off, gains 0.8424 and 0.8361 on a far end of 170, channels of 75, 38 and 75 of 127 (100, 50
+and 100 times the effects' 0.75; 28, 14 and 28 for the End's first seven seconds or so, the effects turned down for a
+reason not read); 186 flat (voice flags `0x0f`) on a 2D channel
+at 75; AnimCtrl's three 209 on Endm1's planes, first at (480, 441, 61), (453, 468, 60) and (505, 468, 61), each found
+moved at every 0.25 s read and silenced (`0x800`) while more than 100 off; the music's channel at nought (`DIPMUSIC`).
+
+**OpenTPW** (`ParkAudio.StartScriptSound`, `RideScript.StartSound`, `SoundPlace`, `SweepEffects`, `StopEffect`): the
+seven categories by type, the one-shot (looped under `0x8`) and the plain class played (`ServeScriptSounds`, the land's
+own way, "The plain class"), flat under `0x200`, else placed over the variation's range; each at its variation's own
+volume and a pitch drawn from it, a plain voice keeping its first sample's; moved by the sweep on its script's eighth
+tick; stopped by `KILLOBJ` and the script's end, faded by `FADEOBJ` (0.06 s, the deviation of "The fade"). An effect its
+category lacks, or a node its model lacks, frees an `ADDOBJ`'s record. Counted and not started:
+`RIDE_EFFECT_SOUND_CLASS_<constructor>` for the other five classes, `RIDE_EFFECT_SOUND_ITEM_BANK` for type 10, and
+`RIDE_EFFECT_SOUND_NO_PLACE` for a placed sound of a script with no model here, or of no node with no placed thing
+(the ferry's 172 and the seaplane's 173, whose scripts run with no nodes). The End here: the same places, distances,
+gains and volumes (`q553/PREDICTION.txt`; the console's `scriptsounds`). **Said:** a record a load put back starts
+nothing, as the loader `FUN_005597a0` copies it raw; whether a park entered fresh from a file hears its looped script
+sounds in the original is not measured (its run loaded into a park whose fountain was already sounding). There is no
+voice pool here (Q43): every script voice sounds, where the original's service keeps twelve.
+
 ## Node lookup is by id AND a capability flag
 
 `FUN_0044b220` walks the `.MD2` id table for a record whose **id matches** *and* whose **flag word shares a bit** with a given mask, and answers the first such record. Not by id alone. The masks include `0x200` sound, `0x100` particles and `0x400` costume; walk nodes take `0x800` and heads `0x80`. A mask sharing no bit with `0x3da1f83` is swapped for `0x3da1f82` first (`0x0044b226`..`0x0044b22e`); none of the masks above is.

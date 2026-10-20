@@ -480,6 +480,11 @@ and by the effect its own header names: a trail its clip has killed holds only i
 census named may hold another effect by the dump). A trail's plateau is its largest count: a killed one empties
 by 30 or more between samples. The original's frames start only when `loadfile.sh` returns, some 14 s
 into the End, so pair the two games' frames by the clip seen, not the clock (`q703d/side-by-side.png`).
+Its sounds (Q553): `q553/orig/run.sh` runs the original's End with `original/voices.py` and `mixer.py` beside it (the
+End's voices and their channels; for its first ~7 s a volume of 100 reads 28 of 127, then 75), `q553/confirm.py <out> <bin>`
+runs ours with the mix to a file and the console's `scriptsounds` polled (every script voice: its type, effect, class,
+sample, volume, place, distance, range and gain), and `q553/mixcheck.py <run>` finds the End's samples in that mix. 200,
+201 and 202 play at a drawn pitch and match weakly at pitch 0: read their loudness from the census, not the mix.
 The advisor over the End (Q556): `q556/orig/run3.sh` films the original's End at 15 fps from before the click with
 `original/advdraw.py` beside it; take a frame at a `drawn` line's wall clock less the film's `.t0`. Row 167 is drawn
 about 7.7 s to 14 s after the poller starts and row 93 about 16 s to 22 s, and **`loadfile.sh` returns about 23.5 s

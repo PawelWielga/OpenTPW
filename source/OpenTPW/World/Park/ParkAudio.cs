@@ -27,7 +27,7 @@ namespace OpenTPW;
 /// split <see cref="LobbyAudio"/> sits on.
 /// </para>
 /// </summary>
-public sealed class ParkAudio : Entity
+public sealed partial class ParkAudio : Entity
 {
 	/// <summary>The one park audio system. There is only ever one, and none in the lobby.</summary>
 	internal static ParkAudio? Current { get; private set; }
@@ -538,11 +538,10 @@ public sealed class ParkAudio : Entity
 
 		// A category names its banks relative to the LEVEL folder rather than to the folder its own
 		// .map files sit in - cat_music's bank path reads "Music\Music" - so the root is the level and
-		// the maps are the Music folder beside it. Two park categories are deliberately not loaded:
-		// the level's own cat_ambient, whose effects are placed emitters that come out of the level's scape.omp
-		// (the OBJ_ chunk FUN_00550e00 reads; the global category's are started, StartPlaced), and cat_speech is where the advisor's five bank-1 responses
-		// play from (docs/exe/advisor-park.md, the response table's +0x10), and a park here says none of
-		// them. cat_rides is loaded below, for the bumper cars' engines (ParkCarSounds).
+		// the maps are the Music folder beside it. One park category is deliberately not loaded: cat_speech, where
+		// the advisor's five bank-1 responses play from (docs/exe/advisor-park.md, the response table's +0x10), and a
+		// park here says none of them. cat_rides is loaded below, for the bumper cars' engines (ParkCarSounds) and the
+		// scripts' type 3; the level's own cat_ambient with the scripts' other categories (LoadScriptCategories).
 		var root = $"levels/{themeName.ToLowerInvariant()}";
 
 		_music = new SoundCategory( root, $"{root}/Music", "music" );
@@ -576,6 +575,8 @@ public sealed class ParkAudio : Entity
 			Log.Warning( "Park audio: the global kids category would not load, so nobody can scream" );
 		else
 			Log.Info( $"Park audio: kids category ready, screams are {string.Join( ", ", ScreamEffects )}" );
+
+		LoadScriptCategories( root );
 	}
 
 	/// <summary>
@@ -1358,6 +1359,8 @@ public sealed class ParkAudio : Entity
 
 		_following.Clear();
 
+		StopScriptSounds();
+
 		// The voice was holding the effect - see SoundCategory.Play - so the category has to be told
 		// it may start again, or the next park in this process waits out a delay counted against a
 		// voice that is no longer playing.
@@ -1441,6 +1444,7 @@ public sealed class ParkAudio : Entity
 		NextRainSample( RainBed, "the rain's bed" );
 		NextRainSample( RainOwn, "the weather's own rain voice" );
 		ServeFollowing();
+		ServeScriptSounds();
 
 		if ( _music is not { IsValid: true } )
 			return;

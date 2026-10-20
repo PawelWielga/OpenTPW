@@ -284,8 +284,9 @@ public sealed class RideScriptScheduler
 		if ( script.Screaming )
 			ParkAudio.Current?.StopScream( script.Id );
 
-		// And every particle its records hold is stopped (FUN_0051ff70 with -2, from the same destructor).
-		script.StopParticles();
+		// And every particle and sound its records hold is stopped (FUN_0051ff70 with -2, and Sound_Stop, from the
+		// same destructor).
+		script.StopEffects();
 	}
 
 	/// <summary>
@@ -360,9 +361,10 @@ public sealed class RideScriptScheduler
 				entry.Script.Turn( now );
 			}
 
-			// Due a turn or not, the engine then walks the script's effect list (0x005516f6 into 0x0055188f).
+			// Due a turn or not, the engine then walks the script's effect list (0x005516f6 into 0x0055188f), and moves
+			// its sounds on the script's own eighth tick (0x00551a1c).
 			if ( entry.Script.Effects is { Count: > 0 } && _entries.Contains( entry ) )
-				entry.Script.SweepEffects();
+				entry.Script.SweepEffects( RunsOn( entry.Id, Tick, everyTick: false ) );
 		}
 
 		// The engine drops a script whose program counter has gone negative, and what it calls to do it is
