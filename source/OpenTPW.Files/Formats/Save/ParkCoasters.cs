@@ -25,6 +25,28 @@ public readonly record struct SavedCoaster( int Flags, int MeshInstance, int Han
 }
 
 /// <summary>
+/// One of a coaster's 34-byte piece records, a pylon of its track (FileFormats <c>saves.md</c>, "The coasters module";
+/// the loader <c>Coaster_LoadModule</c> <c>0x00437b60</c>).
+/// </summary>
+/// <param name="Flags">The dword at <c>+0x00</c>: <c>0x1</c>, <c>0x2</c> and <c>0x4</c> keep the yaw, incline and bank; <c>0x10</c> a loop pylon.</param>
+/// <param name="X">Its cell on the ground heightfield's grid, across (<c>+0x08</c>).</param>
+/// <param name="Y">And down (<c>+0x0a</c>).</param>
+/// <param name="Stack">Its stack ordinal (<c>+0x0c</c>): nought for a pylon standing on the ground.</param>
+/// <param name="Loft">How far up its pylon's range it stands, 0 to 1 (<c>+0x0d</c>).</param>
+/// <param name="Bank">Its bank, radians (<c>+0x11</c>).</param>
+/// <param name="Incline">Its incline, radians, positive down (<c>+0x15</c>).</param>
+/// <param name="Yaw">Its yaw, radians (<c>+0x19</c>).</param>
+/// <param name="Loop">A loop pylon's rotation (<c>+0x1d</c>).</param>
+public readonly record struct SavedCoasterPiece( int Flags, int X, int Y, int Stack, float Loft, float Bank, float Incline,
+	float Yaw, float Loop )
+{
+	/// <summary>The flag that makes a piece a loop pylon, read with its rotation in place of the bank (<c>0x00437de9</c>).</summary>
+	public const int LoopFlag = 0x10;
+
+	public bool IsLoop => (Flags & LoopFlag) != 0;
+}
+
+/// <summary>
 /// The coasters module of a park save (<c>SAOC</c>), as far as it can be read: how many coasters it holds, and the
 /// first one's header. FileFormats <c>saves.md</c>, "The coasters module".
 ///
@@ -64,6 +86,9 @@ public sealed class ParkCoasters
 	/// <summary>The first coaster's header, or null where there is none or the module was refused.</summary>
 	public SavedCoaster? First { get; private set; }
 
+	/// <summary>The first coaster's piece records, in the track's order from the station; empty where there is none.</summary>
+	public IReadOnlyList<SavedCoasterPiece> FirstPieces { get; private set; } = [];
+
 	/// <summary>How many coasters' headers could not be found - every one after the first.</summary>
 	public int Unread => Math.Max( 0, Count - (First != null ? 1 : 0) );
 
@@ -83,6 +108,7 @@ public sealed class ParkCoasters
 		{
 			Count = 0;
 			First = null;
+			FirstPieces = [];
 			Problem ??= e.Message;
 		}
 	}
@@ -123,14 +149,43 @@ public sealed class ParkCoasters
 			Pieces: BitConverter.ToUInt16( _data, at + 0x16 ),
 			Clashes: BitConverter.ToInt32( _data, at + 0x1c ) );
 
-		// The header and its pieces have to end before the module's tag does.
-		var pieces = at + HeaderSize + (first.Pieces * PieceSize);
+		// The third node's crossing partners, a u32 count and that many u16s, then each piece with its own after it.
+		var walk = at + HeaderSize;
+		var partners = BitConverter.ToInt32( _data, walk );
 
-		if ( !TagAtOrAfter( pieces ) )
+		if ( partners < 0 || walk + 4 + (partners * 2) > _data.Length )
+			throw new InvalidDataException( $"the first coaster's header says {partners} crossing partners" );
+
+		walk += 4 + (partners * 2);
+
+		var records = new List<SavedCoasterPiece>( first.Pieces );
+
+		for ( var i = 0; i < first.Pieces; ++i )
+		{
+			if ( walk + PieceSize > _data.Length )
+				throw new InvalidDataException( $"the first coaster's piece {i} runs past the payload" );
+
+			records.Add( new SavedCoasterPiece(
+				Flags: BitConverter.ToInt32( _data, walk ),
+				X: BitConverter.ToUInt16( _data, walk + 0x08 ),
+				Y: BitConverter.ToUInt16( _data, walk + 0x0a ),
+				Stack: _data[walk + 0x0c],
+				Loft: BitConverter.ToSingle( _data, walk + 0x0d ),
+				Bank: BitConverter.ToSingle( _data, walk + 0x11 ),
+				Incline: BitConverter.ToSingle( _data, walk + 0x15 ),
+				Yaw: BitConverter.ToSingle( _data, walk + 0x19 ),
+				Loop: BitConverter.ToSingle( _data, walk + 0x1d ) ) );
+
+			walk += PieceSize + (_data[walk + PieceSize - 1] * 2);
+		}
+
+		// The header and its pieces have to end before the module's tag does.
+		if ( !TagAtOrAfter( walk ) )
 			throw new InvalidDataException( $"no {Trailer} tag follows the first coaster's {first.Pieces} pieces" );
 
 		Count = count;
 		First = first;
+		FirstPieces = records;
 	}
 
 	/// <summary>The module's start: right after the first <c>EMAK</c> tag, which is the only one in all nine park files read.</summary>

@@ -83,22 +83,6 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q706. Golden tickets: Global 0's measure, a coaster's highest track point.** What Q591 and Q593 left: build the
-  measure as Q593 decoded it (`ride-operation.md`, "A coaster's highest track point"). `ParkCoasters` reads the pieces
-  (FileFormats `saves.md`, the piece record; it reads only the first header now); the nodes' places from the ground
-  heightfield, the station's three from the ride model's nodes flagged `0x400000` posed at the object (Temple Of Gloom's
-  measured at x 185, 210 and 235, y 14.542, z 355; which model node gives which is not traced); the knots, handles, Bezier
-  and sampler; `ParkGoldenTickets.Measure` takes the highest over the coasters in place of nought and
-  `GOLDEN_TICKET_COASTER_HEIGHT` goes. Pose the pylon's incline animation rather than copy the `StdPylon`'s -1.25 where
-  `coaster1`'s and `Coaster3`'s pylons differ (not measured); a loop pylon and a stacked one are not decoded (none in
-  Lost Kingdom's files on hand): count them. Confirm: Alexah's jungle `New Save` measures 106 (the original's 106.0722,
-  `q706b/O1/load.log`), and with a copy of her profile whose jungle record 0 is cleared (`gmsfile.put`) the park wins
-  Global 0 on tick 19100 in both games (`progress.py`).
-  - **Note (the Sentinel, 2026-10-20, from a first reading of Q591):** `FUN_004cc920` has no UI-type test, only model 3
-    and `0x004e2b50`'s track type 3, where `Measure`'s coaster flag sits inside a ride-type filter today; its maximum is
-    compared as a QWORD `FILD` of the truncated value so far against the float, then truncated by `__ftol`
-    (`0x004cc9c7`..`0x004cc9e4`). A Global result 4 logs a second line by ticket index at `0x004d5512` (coaster height
-    `0x0075a6f8`, ...), which `ParkGoldenTickets.cs:119` leaves out.
 - [ ] **Q707. The advisor's golden-ticket lines.** After Q706. The thirteen posts (`0xd7`-`0xd9`, `0xdc`-`0xde`,
   `0xe1`-`0xe3`, `0xea`-`0xed`, the ticket index as the line; score 99000, the moved rows 500, posted on the message bus) and the first ticket's `0x137` and `0x13b`,
   on model slot 1, the park's own advisor, from the level's `advisor.wad` (clips 16 to 20, which OpenTPW does not
@@ -153,6 +137,13 @@ filed the items that cite it.
   Build them as the original's after Q720 settles whether the keypad's digits reach their rows and the cheat flag's
   first-key clear is run in the original; whether this game's R binding also opens the research screen under Alt
   (the original's row needs no modifier, matched by `==`) is to be checked in the same session.
+- [ ] **Q594. A loaded coaster's track and pylons are drawn.** From Q706 (`q706c/side-by-side-coaster.png`: the
+  original's `q706b/O2/o-t19061.png` beside ours `q706c/run3-A/A-coaster.png`, both at 310,355 zoom 130 rotation 0, Alexah's
+  jungle `New Save`). The original draws the Temple Of Gloom's track over its 38 pylons; ours draws neither, though Q706
+  rebuilds the track's knots, curve and samples from the save (`ParkCoasterHeights`, `ParkCoasterPylon`). Build the
+  pylons (each piece's `StdPylon` posed by its loft, rotate, incline and bank clips at its cell, as `ParkCoasterPylon`
+  poses the knot) and the track's mesh from the samples and the `coaster.sam` cross sections (FileFormats `sam.md`, "A
+  `coaster.sam`'s tables"; the mesh builder not decoded: decode first). Confirm by the same two frames side by side.
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
   the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
   the music's class `0x406`, Q563, a voice out of range, Q564, a ride's scream out of range, and Q565, a script's
@@ -774,9 +765,11 @@ filed the items that cite it.
   (one rotation track in the 22 additive clips that carry a position track) and `LobbyModel.Pose` for a clip that only
   turns, which `MeshRotator` would pose as a replacement (49 such clips, 50 tracks: the coaster pylons, Lost Kingdom's
   `coaster1` StdPylonI/R, `coaster3` looppylonr1/r2 and stdpylonb/i/r, `minecart` LoopPylonR1/R2 and StdPylonB/I/R among
-  them). Dead by content today: no source loads a pylon model. Decode `FUN_00470d10` (the order of the key and the rest
-  turn, and whether the additive restore `FUN_00473c70`/`0x00473d0c` puts the turn back every advance), then build it in
-  both posers when the coaster pylons are built. Confirm by a pylon's turn beside the original's.
+  them). `ParkCoasterPylon` (Q706) loads the pylon models for Global 0's measure and poses its knot's turns itself, where
+  the knot and its parent have no turn of their own. `FUN_00470d10` (`Anim_ComposeAdditiveTurn`) is a 3 x 3 product of the
+  key's matrix (`Anim_QuatToMatrix3`, `0x00474120`) and the node's own rows; decode the order exactly and whether the
+  additive restore `FUN_00473c70`/`0x00473d0c` puts the turn back every advance, then build it in both posers when the
+  coaster pylons are drawn (Q594). Confirm by a pylon's turn beside the original's.
 - [ ] **Q573. A node a clip's route moves, followed (`RIDE_NODE_ON_A_ROUTE`).** From the run 6 review of Q555 (`VERIFY-14.md`, Q555 5).
   `RideNodes.Follow` poses a thing's node tree for its particle records through `NodePoser`, which reads rotation and
   position tracks and no path track, where the drawn model moves a node along its route (`LobbyModel.Pose`,

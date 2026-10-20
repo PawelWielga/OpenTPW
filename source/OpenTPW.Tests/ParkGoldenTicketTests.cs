@@ -155,14 +155,23 @@ public class ParkGoldenTicketTests
 	private static string Only( ParkGoldenTickets.Measures measures )
 		=> string.Join( ",", ParkGoldenTickets.Check( measures, Jungle, Player(), "jungle", IsPark, KeysToEnter ).Select( w => $"{w.Kind} {w.Index}" ) );
 
-	/// <summary>The original's log words for each result and the count (<c>0x0075a554</c>.., <c>0x0075a5f8</c>, <c>0x0075a530</c>).</summary>
+	/// <summary>
+	/// The original's log words for each result and the count (<c>0x0075a554</c>.., <c>0x0075a5f8</c>, <c>0x0075a530</c>); a
+	/// Global result 4 adds the ticket's own line by its index (<c>0x004d5512</c>).
+	/// </summary>
 	[TestMethod]
 	public void TheAwardsAreLoggedInTheOriginalsWords()
 	{
 		Assert.AreEqual( "Won a Local golden ticket (type - 1, num - 4); Local ticket only; You have 5 total golden tickets",
 			ParkGoldenTickets.Told( new( "Local", 4, 1, 5 ) ) );
-		Assert.AreEqual( "Won a Global golden ticket (type - 4, num - 0); Global ticket award moved here; You have 2 total golden tickets",
+		Assert.AreEqual( "Won a Global golden ticket (type - 4, num - 0); Global ticket award moved here; "
+			+ "Global ticket award coaster height; You have 2 total golden tickets",
 			ParkGoldenTickets.Told( new( "Global", 0, 4, 2 ) ) );
+		Assert.AreEqual( "Won a Global golden ticket (type - 4, num - 2); Global ticket award moved here; "
+			+ "Global ticket award water length; You have 3 total golden tickets",
+			ParkGoldenTickets.Told( new( "Global", 2, 4, 3 ) ) );
+		Assert.AreEqual( "Won a Global golden ticket (type - 2, num - 0); Global ticket and key; You have 3 total golden tickets",
+			ParkGoldenTickets.Told( new( "Global", 0, 2, 3 ) ) );
 		Assert.AreEqual( "Won a Secret golden ticket (type - 3, num - 0); Secret ticket, key and park; You have 8 total golden tickets",
 			ParkGoldenTickets.Told( new( "Secret", 0, 3, 8 ) ) );
 	}

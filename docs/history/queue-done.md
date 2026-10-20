@@ -9472,13 +9472,35 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   nothing; Instant Action tests nothing. 31 of 31 bugs put back caught.
 - [x] **Q593. A coaster's track points, decoded (Q706's second piece, decode only).** `ride-operation.md`, "A coaster's
   highest track point", and FileFormats `saves.md`, "The coasters module" (the piece record): the chain is the station's
-  three nodes, one node a saved piece in order, and the closing node; a node stands at its cell's ground vertex plus (5,
-  `fMinHeight` + span x loft, 5); the `StdPylon`'s knot is the node's place, its direction the yaw and a pitch of -1.25 x
-  incline held at pi/4; handles of d x 1.25 / 3 (y scaled 0.7); a cubic Bezier sampled every 3.0 of chord in 0.05 steps;
+  three nodes, one node a saved piece in order, and the closing node; a node stands at its cell's ground (the midpoint of
+  its four corners' lowest and highest, as Q706 found) plus (5, `fMinHeight` + span x loft, 5); the `StdPylon`'s knot is
+  the node's place, its direction the yaw and about -1.25 x incline held at pi/4 (the rotate and incline clips blended on
+  the engine's sine table, as Q706 found); handles of d x 1.25 / 3 (y scaled 0.7); a cubic Bezier sampled every 3.0 of chord in 0.05 steps;
   `+0x110` the largest y of samples 1 to n-2. Measured in the original (`q706b/PREDICTION.txt`, two loads of Alexah's
   jungle `New Save`): Temple Of Gloom's `+0x110` 106.0722 at sample 61 of 719 (the jungle's record 106 is this
   coaster's); rebuilt from the dumped knots to 0.0013, and from the file's yaw and incline to 106.0669. Twenty Ghidra
   names (`Coaster_*`). Tools: `original/coaster.py`, `parkfile.py` `coasters()` (`-K`).
+- [x] **Q706. Golden tickets: Global 0's measure, a coaster's highest track point.** What Q591 and Q593 left: build the
+  measure as Q593 decoded it (`ride-operation.md`, "A coaster's highest track point"). `ParkCoasters` reads the pieces
+  (FileFormats `saves.md`, the piece record; it reads only the first header now); the nodes' places from the ground
+  heightfield, the station's three from the ride model's nodes flagged `0x400000` posed at the object (Temple Of Gloom's
+  measured at x 185, 210 and 235, y 14.542, z 355; which model node gives which is not traced); the knots, handles, Bezier
+  and sampler; `ParkGoldenTickets.Measure` takes the highest over the coasters in place of nought and
+  `GOLDEN_TICKET_COASTER_HEIGHT` goes. Pose the pylon's incline animation rather than copy the `StdPylon`'s -1.25 where
+  `coaster1`'s and `Coaster3`'s pylons differ (not measured); a loop pylon and a stacked one are not decoded (none in
+  Lost Kingdom's files on hand): count them. Confirm: Alexah's jungle `New Save` measures 106 (the original's 106.0722,
+  `q706b/O1/load.log`), and with a copy of her profile whose jungle record 0 is cleared (`gmsfile.put`) the park wins
+  Global 0 on tick 19100 in both games (`progress.py`).
+  - **Note (the Sentinel, 2026-10-20, from a first reading of Q591):** `FUN_004cc920` has no UI-type test, only model 3
+    and `0x004e2b50`'s track type 3, where `Measure`'s coaster flag sits inside a ride-type filter today; its maximum is
+    compared as a QWORD `FILD` of the truncated value so far against the float, then truncated by `__ftol`
+    (`0x004cc9c7`..`0x004cc9e4`). A Global result 4 logs a second line by ticket index at `0x004d5512` (coaster height
+    `0x0075a6f8`, ...), which `ParkGoldenTickets.cs:119` leaves out.
+  - **Done (2026-10-20):** `ParkCoasterTrack`, `ParkCoasterPylon`, `ParkCoasterHeights`; the Temple Of Gloom measures
+    106.0722, the original's figure (places exact, directions to 0.00005), and wins Global 0 on tick 19100 in both games
+    with the record cleared (type 1) and moved (type 4, with the second line); `q706c/PREDICTION.txt`. 24 of 24 bugs put
+    back caught. The station's pylon loft, the cell midpoint and the clips' table slerp decoded on the way
+    (`ride-operation.md`). The ticket test before the calendar's turn is left as it was: not in this measure's path.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

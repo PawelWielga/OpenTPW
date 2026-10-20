@@ -8,9 +8,7 @@ namespace OpenTPW;
 /// <c>docs/exe/saves.md</c>, "Keys and tickets").
 /// </summary>
 /// <remarks>
-/// The advisor's ticket lines are counted, not posted (<c>GOLDEN_TICKET_MESSAGE</c>, <c>GOLDEN_TICKET_FIRST_LINES</c>),
-/// and so is Global 0's measure, the highest track point of a coaster, where one stands (<c>GOLDEN_TICKET_COASTER_HEIGHT</c>):
-/// it is measured as nought there, so that ticket is never won.
+/// The advisor's ticket lines are counted, not posted (<c>GOLDEN_TICKET_MESSAGE</c>, <c>GOLDEN_TICKET_FIRST_LINES</c>).
 /// </remarks>
 public static class ParkGoldenTickets
 {
@@ -116,12 +114,16 @@ public static class ParkGoldenTickets
 			(_, 1) => $"{award.Kind} ticket only",
 			(_, 2) => $"{award.Kind} ticket and key",
 			(_, 3) => $"{award.Kind} ticket, key and park",
-			("Global", 4) => "Global ticket award moved here",
+			// GoldenTicket_TellGlobal's arm 4 (0x004d54fa) logs a second line by the ticket's index (0x004d5512).
+			("Global", 4) => $"Global ticket award moved here; Global ticket award {GlobalNames[Math.Clamp( award.Index, 0, 3 )]}",
 			_ => $"CGoldenTicketControl::TellTheWorld ({award.Kind}) is being passed an unrecognised type value ({award.Result})"
 		};
 
 		return $"Won a {award.Kind} golden ticket (type - {award.Result}, num - {award.Index}); {what}; You have {award.Total} total golden tickets";
 	}
+
+	/// <summary>The four Global tickets' words in arm 4's second line, by index (<c>0x0075a6f8</c>, <c>0x0075a6d0</c>, <c>0x0075a6ac</c>, <c>0x0075a68c</c>).</summary>
+	private static readonly string[] GlobalNames = ["coaster height", "gokart excitement", "water length", "big park"];
 
 	/// <summary>The measures of the park as it stands now.</summary>
 	internal static Measures Measure( ParkState state, ParkPeople people, ParkItemCatalogue? catalogue, ParkResearch? research,
@@ -129,7 +131,6 @@ public static class ParkGoldenTickets
 	{
 		var kart = 0;
 		var water = 0;
-		var coaster = false;
 
 		foreach ( var placed in state.Objects )
 		{
@@ -138,10 +139,6 @@ public static class ParkGoldenTickets
 
 			switch ( item.TrackType )
 			{
-				case ItemDescriptionFile.CoasterTrack:
-					coaster = true;
-					break;
-
 				// FUN_004cc3b0: the highest excitement, its low byte, of a ride on a car track.
 				case ItemDescriptionFile.CarTrack:
 					kart = Math.Max( kart, ParkRideScore.ExcitementOf( placed, item, state.TrackRides ) & 0xff );
@@ -154,8 +151,8 @@ public static class ParkGoldenTickets
 			}
 		}
 
-		if ( coaster )
-			Unimplemented.Report( "GOLDEN_TICKET_COASTER_HEIGHT" );
+		// Park_HighestCoasterPoint (0x004cc920): over every thing whose item's track type is 3, whatever its UI type.
+		var coaster = ParkCoasterTrack.Best( ParkCoasterHeights.Of( state, catalogue, FileSystem ) );
 
 		var (covered, secured) = Cells( state );
 
@@ -164,7 +161,7 @@ public static class ParkGoldenTickets
 			state.ProfitThisYear,
 			state.MonthVisitors.Back( recentVisitorMonths ) is { } then ? state.LifetimeVisitors - then : 0,
 			ParkStrikes.MonthsSinceTheFirstSweep( state.GameTick ),
-			0, kart, water, covered, secured );
+			coaster, kart, water, covered, secured );
 	}
 
 	/// <summary>
