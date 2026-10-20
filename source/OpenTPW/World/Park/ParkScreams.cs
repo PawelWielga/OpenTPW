@@ -68,6 +68,9 @@ internal sealed class ParkScreams
 		/// <c>0x800</c> (<c>FUN_006bca70</c>).
 		/// </summary>
 		public bool Away;
+
+		/// <summary>How many children it made with no voice while the world was held (<c>ParkAudio.Unheard</c>).</summary>
+		public int Unheard;
 	}
 
 	private readonly Dictionary<int, Chain> _chains = [];
@@ -123,9 +126,9 @@ internal sealed class ParkScreams
 	/// has long passed, so it makes one at once, and the next its wait after that.
 	/// </summary>
 	/// <remarks>
-	/// Called every frame. The original's service runs whenever the group volumes are applied
-	/// (<c>0x0051bfab</c>), at a rate not measured, and starts a new child on the pass after the one that
-	/// makes it; both put a child here at most a frame from where the original's lands.
+	/// Called every frame, a park's menu or not. The original's service runs whenever the group volumes are applied
+	/// (<c>0x0051bfab</c>), each frame through a pause, at a rate not measured, and starts a new child on the pass after
+	/// the one that makes it; both put a child here at most a frame from where the original's lands.
 	/// </remarks>
 	internal void Pump( float now )
 	{
@@ -216,8 +219,10 @@ internal sealed class ParkScreams
 	/// of each voice (<c>FUN_006bca10</c>, from <c>SoundService_Pass</c>, <c>0x006b62b0</c>): the squared distance over
 	/// the ground's two axes alone (<c>FUN_006bb9f0</c>) not past the range's square. <c>STARTSCREAM</c> gives no range
 	/// (<c>FUN_00551130</c>), so the range is the newest child's variation's, which the child's draw writes into the chain
-	/// (<c>FUN_006bc650</c>, <c>0x006c3e00</c>), and before its first the effect's first variation's. Only a voice in
-	/// range is ticked (slot <c>+0x14</c>, <c>0x006bdae0</c>), so out of range a chain makes no child.
+	/// (<c>FUN_006bc650</c>, <c>0x006c3e00</c>). Only a voice in range is ticked (slot <c>+0x14</c>, <c>0x006bdae0</c>), so
+	/// out of range a chain makes no child. <b>Not the original's:</b> before its first child the original's ranges by
+	/// the variation its set-up drew by weight among all (<c>0x006bbfc5</c>), and this by the effect's first; every
+	/// variation of every kids' scream is 95, so nothing differs.
 	/// </summary>
 	internal static bool InRange( Chain chain, IReadOnlyList<SoundCategoryFile.Variation> variations, Vector3 ears )
 	{
@@ -257,13 +262,14 @@ internal sealed class ParkScreams
 
 		Log.Info( $"Park audio: script {scriptId} scream {chain.Plays}, effect {chain.Effect} "
 			+ $"variation {next + 1} sample '{chain.Sample}' pitch {chain.Pitch}, the next in {gap} ms"
-			+ (chain.HeldByNothing ? ", held by nothing" : "") );
+			+ (chain.HeldByNothing ? ", held by nothing" : "") + (chain.Voice is null ? ", no voice" : "") );
 	}
 
 	/// <summary>
 	/// Which variation a chain's next child plays (<c>0x006c3e00</c>). The first takes the effect's
 	/// first variation whatever the parameter says. Each later one draws, by weight, among the
-	/// variations the current one's zones allow for this parameter.
+	/// variations the current one's zones allow for this parameter: the first zone whose running total of weights is at
+	/// least the roll (<c>0x006c3f12</c>..<c>0x006c3f16</c>), the roll being a draw below the total.
 	/// </summary>
 	/// <param name="current">The variation the newest child played, or -1 before the first.</param>
 	/// <param name="parameter">The chain's parameter - for a scream, parameter 6, <see cref="ParkAudio.ScreamVolume"/>.</param>
@@ -296,7 +302,7 @@ internal sealed class ParkScreams
 		{
 			roll -= variations[zone.Variation].Weight;
 
-			if ( roll < 0 )
+			if ( roll <= 0 )
 				return zone.Variation;
 		}
 

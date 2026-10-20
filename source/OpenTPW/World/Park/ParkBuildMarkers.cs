@@ -394,8 +394,9 @@ public sealed class ParkBuildMarkers : ModelEntity
 
 		// Each wall under a square not refused also zeroes the refusal latches DAT_00816d50 and d58 (0x005333bd). That
 		// changes nothing the path and queue tools read, so it is not done: such a square leaves both at nought already,
-		// but for the queue's join, the strip's last square, whose path cell is never lifted, and the d58 a join leaves
-		// is read next by a pass, which clears it first. docs/exe/park-engine.md, "The walls".
+		// but for the queue's join, the strip's last square, whose path cell only a track thing lifts (counted here,
+		// MARKER_LIFT_OVER_TRACK_THING), and the d58 a join leaves is read next by a pass, which clears it first.
+		// docs/exe/park-engine.md, "The walls".
 
 		_strip.AddRange( stranded.Where( cell => OnTheField( cell.X, cell.Y ) )
 			.Select( cell => new Square( cell.X, cell.Y, ParkPathBuilding.MarkerRed, StrandedLift ) ) );

@@ -422,6 +422,40 @@ public class ParkFullScreenViewTests
 		}
 	}
 
+	/// <summary>
+	/// <b>A cover with keys of its own, the End feature's, hears every key let go</b> (<c>EndFeature_OnMessage</c>,
+	/// <c>0x0048a970</c>), F3 and Escape among them, so neither takes the cover off nor opens the menu; and the full-screen
+	/// toggle itself refuses such a cover.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the park's keys not handed to the cover's (F3 heard by the view); the toggle not refusing it.</remarks>
+	[TestMethod]
+	public void ACoverWithKeysOfItsOwnHearsEveryKeyAndF3LeavesIt()
+	{
+		var stack = new UI.WindowStack();
+		var front = new UI.ParkFrontEnd( stack, "jungle" );
+		var heard = new List<Key>();
+
+		try
+		{
+			stack.Cover( true );
+			stack.CoverKeys = release => heard.Add( release.Key );
+
+			Press( stack, Key.F3 );
+			Press( stack, Key.Escape );
+
+			CollectionAssert.AreEqual( new[] { Key.F3, Key.Escape }, heard, "the cover's handler hears both" );
+			Assert.IsTrue( stack.Covered, "and stays on" );
+			Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "no menu opened" );
+
+			front.ToggleFullScreen();
+			Assert.IsTrue( stack.Covered, "the toggle refuses a cover with keys of its own" );
+		}
+		finally
+		{
+			stack.Cover( false );
+		}
+	}
+
 	/// <summary>A park's interface: the real front end over a real stack, its gadget and viewfinder up.</summary>
 	private static UI.WindowStack APark()
 	{

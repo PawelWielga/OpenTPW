@@ -289,4 +289,95 @@ public class RideNodesTests
 		Assert.AreEqual( NodeEnd.Posed, nodes.FindDirection( 11, RideNodes.ParticleSpace, out var climbing, carried: true ) );
 		Assert.IsTrue( System.Numerics.Vector3.Distance( climbingAtRest, climbing ) > 0.05f, $"node 11 turns as it climbs: {climbingAtRest} to {climbing}" );
 	}
+
+	/// <summary>
+	/// The End's model as <c>LobbyModel</c> draws a clip that moves nodes, through the same statics: the node tree posed,
+	/// each mesh placed from it (<c>PlacePosed</c>), and a change of clip putting back the outgoing's meshes
+	/// (<c>RestMeshes</c>); standing at the origin unturned at scale 1, as the End's does.
+	/// </summary>
+	private sealed class Drawn : IChannelPosed
+	{
+		public readonly NodePoser Poser;
+		public readonly ModelEntity[] Entities;
+		private readonly int[] _parents;
+
+		public Drawn( ModelFile model )
+		{
+			Poser = new NodePoser( model );
+			Entities = [.. model.Meshes.Select( _ => new ModelEntity() )];
+			_parents = [.. model.Nodes.Select( node => node.ParentIndex )];
+
+			LobbyModel.PlacePosed( Entities, Poser, 1f, System.Numerics.Quaternion.Identity, Vector3.Zero );
+		}
+
+		public void Rest( AnimationFile outgoing, AnimationFile? incoming )
+			=> LobbyModel.RestMeshes( Entities, new Vector3[Entities.Length], _parents, Poser, 1f,
+				System.Numerics.Quaternion.Identity, Vector3.Zero, outgoing, incoming );
+
+		public void Pose( AnimationFile clip, float frame )
+		{
+			Assert.IsTrue( NodePoser.Drives( clip ), "the End's clips are drawn through the tree" );
+
+			Poser.Pose( clip, frame );
+			LobbyModel.PlacePosed( Entities, Poser, 1f, System.Numerics.Quaternion.Identity, Vector3.Zero );
+		}
+	}
+
+	/// <summary>
+	/// <b>A followed node stands where the drawn model draws it</b>: the End's trail nodes 5 and 6 and plane 06's climbing
+	/// node 11, from one set of players, found by <see cref="RideNodes.Follow"/> (its own composition, the engine's
+	/// float order) and drawn as <c>LobbyModel</c> draws them (each mesh from the posed tree, the node inside its nearest
+	/// mesh, <c>LobbyModel.DrawnInMesh</c>), at rest, 1.5 s and 4 s into Endm1, and 5 s into Endm3 after the change of
+	/// clip. Agreeing within a hundredth of a unit each time, the y and z of one read as the z and y of the other.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> Follow posing a stale clip after the change (no Rest); a drawn mesh placed unswizzled.</remarks>
+	[TestMethod]
+	public void AFollowedNodeStandsWhereTheDrawnModelDrawsIt()
+	{
+		const string End = "levels/jungle/features/end";
+
+		var players = RideAnimations.Load( End, "end", _data, 1 );
+		var nodes = RideNodes.Load( End, "end", _data, false, players.AllClips )!;
+		var drawn = new Drawn( nodes.Model );
+		var posed = new AnimationFile?[1];
+
+		nodes.PlaceFixed();
+
+		void Agree( string when )
+		{
+			nodes.Follow( players );
+			players.PoseOnto( drawn, posed );
+
+			foreach ( var id in new[] { 5, 6, 11 } )
+			{
+				nodes.Find( id, RideNodes.ParticleSpace, out var followed, carried: true );
+
+				var index = nodes.Model.FindNode( id, RideNodes.ParticleSpace );
+
+				Assert.IsTrue( LobbyModel.DrawnInMesh( nodes.Model, drawn.Entities, index, out var at ), $"node {id} hangs in a mesh" );
+				Assert.IsTrue( System.Numerics.Vector3.Distance( new( followed.X, followed.Z, followed.Y ), at.GetSystemVector3() ) < 0.01f,
+					$"{when}: node {id} followed at {followed}, drawn at {at}" );
+			}
+		}
+
+		nodes.Find( 5, RideNodes.ParticleSpace, out var rest );
+
+		players.Trigger( 5, 0, 0, 1f, 0 );
+		players.Advance( 0 );
+		Agree( "at rest" );
+
+		players.Advance( 1500 );
+		Agree( "1.5 s into Endm1" );
+
+		players.Advance( 4000 );
+		Agree( "4 s into Endm1" );
+
+		nodes.Find( 5, RideNodes.ParticleSpace, out var flown, carried: true );
+		Assert.IsTrue( rest.Z - flown.Z > 100f, $"plane 02 has come down the park: {rest.Z} to {flown.Z}" );
+
+		players.Trigger( 5, 2, AnimTimeControl.StartAtOnceFlag, 1f, 4000 );
+		players.Advance( 9000 );
+		Agree( "5 s into Endm3" );
+	}
 }
+

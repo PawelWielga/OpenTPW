@@ -115,15 +115,35 @@ public class ScriptSoundTests
 				Audio.Voices.RemoveAll( voice => !_before.Contains( voice ) );
 
 			listener.SetValue( null, heardFrom );
+			Audio.HoldPlaced( false );
+			GameClock.Rebase();
 			ready.SetValue( null, false );
 			Unimplemented.Forget();
 		}
+	}
+
+	/// <summary>A park's frame with the world held or not, as <c>Level.Update</c> runs one: the clock, then the park's audio.</summary>
+	private static void Frame( ParkAudio park, bool held )
+	{
+		GameClock.Update( held, GameClock.ParkCatchUp );
+		park.Update();
+	}
+
+	private static int VoiceCount()
+	{
+		lock ( Audio.Lock )
+			return Audio.Voices.Count;
 	}
 
 	private static bool Counted( string what ) => Unimplemented.Summary.Any( entry => entry.What == what );
 
 	/// <summary>The listener put at <paramref name="at"/>, in the world's axes, the height last.</summary>
 	private static void HearFrom( Vector3 at ) => Audio.SetListener( at, Vector3.Right );
+
+	/// <summary>The park's draws for its script voices taken from <paramref name="random"/> from now on.</summary>
+	private static void DrawFrom( ParkAudio park, Random random )
+		=> typeof( ParkAudio ).GetField( "_scriptRandom", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance )!
+			.SetValue( park, random );
 
 	/// <summary>
 	/// <b>Each type plays in its own category, and a stop takes what its tag names.</b> On the End's model: the global
@@ -465,6 +485,262 @@ public class ScriptSoundTests
 			park.ServeScriptSounds();
 			Assert.IsTrue( gates.Stopped && !speaker.Stopped );
 			Assert.AreEqual( count + 1, speaker.Samples );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>Types 6 and 7 play in <c>cat_kids</c> and <c>cat_staff</c>, a one-shot at its variation's own volume.</b> The
+	/// toilet's 53 is the kids' (volume 38, range 75) and the global rides' too (100, 100); the staff's 165 (24, 60) is in
+	/// no other category. A one-shot is played at its variation's volume through the channel law, not at full.
+	/// </summary>
+	[TestMethod]
+	public void TheKidsAndTheStaffPlayInTheirOwnCategoriesAtTheirVariationsVolume()
+	{
+		WithAParksAudio( park =>
+		{
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			HearFrom( new Vector3( 21f, 57f, 0f ) );
+			var script = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 6, 9, 53, 1,
+				Word( Opcode.ADDOBJ ), 7, 9, 165, 2,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = nodes, Id = 910 };
+
+			script.Turn( 0f );
+
+			var effects = script.Effects!;
+
+			Assert.AreEqual( (2, 0, 0, 0, 0), park.ScriptSounds, "both found in their categories" );
+
+			var kids = effects.Records.Single( record => record.Tag == 1 ).Sound!;
+			var staff = effects.Records.Single( record => record.Tag == 2 ).Sound!;
+
+			Assert.AreEqual( "one-shot", kids.Kind );
+			Assert.AreEqual( 75f, kids.Voice!.Range, "the kids' 53, not the global rides' over 100" );
+			Assert.AreEqual( ParkAudio.ChannelGain( 38 ), kids.Voice.Volume, 1e-6f );
+			Assert.AreEqual( "one-shot", staff.Kind );
+			Assert.AreEqual( 60f, staff.Voice!.Range );
+			Assert.AreEqual( ParkAudio.ChannelGain( 24 ), staff.Voice.Volume, 1e-6f );
+		} );
+	}
+
+	/// <summary>
+	/// <b>A plain voice plays one sample after another, each after its silence, at the volume and pitch its first
+	/// drew.</b> The global ambient's 2 (the gulls': volume 49, a pitch of -2 to 2, a wait of 0 to 10000 ms) on the End's
+	/// node 9, type 8. Each sample, the first included (<c>FUN_006bc410</c> -> <c>0x006bdf00</c>), is followed by a silence
+	/// drawn from its variation's wait; the next is not started before it is over, and is started on the pass that finds
+	/// it over. The draws are a seeded generator's, whose first wait is seconds long.
+	/// </summary>
+	[TestMethod]
+	public void APlainVoicesNextSampleComesAfterItsSilenceAtItsFirstsVolume()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+			DrawFrom( park, new Random( 3 ) );
+			HearFrom( new Vector3( 21f, 57f, 0f ) );
+
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build( Word( Opcode.ADDOBJ ), 8, 9, 2, 1, Word( Opcode.END ) ) )
+				{ Effects = new RideEffects(), Nodes = nodes, Id = 911 };
+
+			script.Turn( 0f );
+
+			var gulls = script.Effects!.Records.Single().Sound!;
+			var kept = gulls.Kept;
+
+			Assert.AreEqual( "plain", gulls.Kind );
+			Assert.AreEqual( (1, 49), (gulls.Samples, kept.Volume) );
+			Assert.IsTrue( gulls.Wait is > 1000 and < 10000, $"the first's silence drawn, {gulls.Wait} ms" );
+			Assert.AreEqual( ParkAudio.ChannelGain( 49 ), gulls.Voice!.Volume, 1e-6f, "37 of 127, not full" );
+
+			var waits = new List<int>();
+
+			for ( var sample = 2; sample <= 30; ++sample )
+			{
+				var last = gulls.Voice!;
+				var wait = gulls.Wait;
+
+				park.ServeScriptSounds();
+				Assert.AreSame( last, gulls.Voice, "nothing new while a sample plays" );
+
+				last.Stop();
+				var ended = Time.Now;
+
+				park.ServeScriptSounds();
+
+				if ( wait > 0 )
+				{
+					Assert.AreEqual( sample - 1, gulls.Samples, "a silence after it" );
+					Assert.AreEqual( ended, gulls.EndedAt, "counted from the pass that found the sample ended" );
+
+					Time.Now = ended + (wait / 1000f) - 0.01f;
+					park.ServeScriptSounds();
+					Assert.AreEqual( sample - 1, gulls.Samples, "silent to its wait's end" );
+
+					Time.Now = ended + (wait / 1000f);
+					park.ServeScriptSounds();
+				}
+
+				Assert.AreEqual( sample, gulls.Samples );
+				Assert.AreNotSame( last, gulls.Voice );
+				Assert.AreEqual( kept, gulls.Kept, "every sample at what the first drew" );
+				Assert.AreEqual( ParkAudio.ChannelGain( 49 ), gulls.Voice!.Volume, 1e-6f );
+				Assert.AreEqual( ParkCarSounds.Rate( kept.Pitch ), (float)gulls.Voice.Rate, 1e-6f );
+
+				waits.Add( gulls.Wait );
+				Time.Now += 0.5f;
+			}
+
+			Assert.IsTrue( waits.All( wait => wait is >= 0 and < 10000 ), $"waits {waits.Min()} to {waits.Max()}" );
+			Assert.IsTrue( waits.Count( wait => wait > 1000 ) > 10, "most of the silences are seconds long" );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>Through a park's menu a placed chain's clock runs on and its children are made unheard; none is held to start
+	/// with the rest on resume.</b> The original's service is posted each frame, pause or not, on wall time, and its range
+	/// test is over x and z alone, which the pause's lifted listener leaves alone: its chains go on making children that
+	/// its mixer plays at nought (<c>docs/exe/audio.md</c>, "The pause substitution"). The Lava Fountain's 100 (waits 300
+	/// to 700 ms) held for ten seconds: no voice is started, the children are drawn on time, and after the resume the next
+	/// child comes at the time the running clock gives it, alone.
+	/// </summary>
+	[TestMethod]
+	public void AHeldParksChainMakesItsChildrenUnheardAndNoneBurstsOnResume()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build( Word( Opcode.ADDOBJ ), 3, 9, 100, 40, Word( Opcode.END ) ) )
+				{ Effects = new RideEffects(), Nodes = nodes, Id = 912 };
+
+			script.Turn( 0f );
+
+			var lava = script.Effects!.Records.Single().Sound!;
+			var first = lava.Voice!;
+
+			Frame( park, held: true );
+
+			Assert.IsTrue( Audio.PlacedHeld && first.IsHeld, "the menu holds the chain's child" );
+
+			var voices = VoiceCount();
+
+			for ( var pass = 0; pass < 1000; ++pass )
+			{
+				Time.Now += 0.01f;
+				Frame( park, held: true );
+				Assert.IsTrue( lava.NextAt > Time.Now - 0.001f && lava.NextAt <= Time.Now + 0.7f, "its clock runs on" );
+			}
+
+			Assert.AreEqual( 1, lava.Samples, "no child's voice started under the hold" );
+			Assert.AreEqual( voices, VoiceCount(), "and none waits in the pool" );
+			Assert.IsTrue( lava.Unheard is >= 14 and <= 34, $"{lava.Unheard} children in ten seconds of waits of 300 to 700 ms" );
+			Assert.IsNull( lava.Voice, "its newest child is an unheard one" );
+
+			var due = lava.NextAt;
+
+			Time.Now = due;
+			Frame( park, held: false );
+
+			Assert.IsFalse( first.IsHeld, "the resume lets the held child go" );
+			Assert.AreEqual( 1, lava.Samples, "not before the newest child's time" );
+
+			Time.Now = due + 0.001f;
+			Frame( park, held: false );
+
+			Assert.AreEqual( 2, lava.Samples, "one child on its time" );
+			Assert.AreEqual( voices + 1, VoiceCount(), "and only that one" );
+			Assert.IsFalse( lava.Voice!.IsHeld );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>Through a park's menu a plain voice's samples are drawn on time and let pass unheard.</b> The gulls' 2 on the
+	/// End's node 9: a sample that ends under the hold is followed by an unheard one, which lasts as its sample would at
+	/// its pitch; after the resume the next sample comes once that one's end and its silence are past, and is heard. A
+	/// flat one, <c>cat_ui</c>'s 180 (<c>0x206</c>), is not held, and goes on being heard.
+	/// </summary>
+	[TestMethod]
+	public void AHeldParksPlainVoiceLetsItsSamplesPassUnheard()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 8, 9, 2, 1,
+				Word( Opcode.ADDOBJ ), 9, 9, 180, 2,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = nodes, Id = 913 };
+
+			HearFrom( new Vector3( 21f, 57f, 0f ) );
+			script.Turn( 0f );
+
+			var gulls = script.Effects!.Records.Single( record => record.Tag == 1 ).Sound!;
+			var flat = script.Effects!.Records.Single( record => record.Tag == 2 ).Sound!;
+
+			Assert.IsTrue( flat.Plain && flat.Place is null );
+
+			Frame( park, held: true );
+
+			flat.Voice!.Stop();
+			Frame( park, held: true );
+			Time.Now += flat.Wait / 1000f;
+			Frame( park, held: true );
+
+			Assert.AreEqual( (2, 0), (flat.Samples, flat.Unheard), "a flat voice's next sample is heard under the hold" );
+			Assert.IsFalse( flat.Voice!.IsHeld );
+
+			var voices = VoiceCount();
+
+			// The sample ends as the hold begins: the next is due once the first's silence is over.
+			gulls.Voice!.Stop();
+			Frame( park, held: true );
+			Time.Now += gulls.Wait / 1000f;
+			Frame( park, held: true );
+
+			Assert.AreEqual( (1, 1), (gulls.Samples, gulls.Unheard), "drawn, and no voice started" );
+			Assert.AreEqual( voices, VoiceCount() );
+			Assert.IsNull( gulls.Voice );
+			Assert.IsTrue( gulls.EndedAt > Time.Now, "an unheard sample lasts as its sample would" );
+
+			for ( var pass = 0; pass < 6000; ++pass )
+			{
+				Time.Now += 0.01f;
+				Frame( park, held: true );
+			}
+
+			Assert.AreEqual( 1, gulls.Samples, "a minute held, and not one sample heard" );
+			Assert.AreEqual( voices, VoiceCount() );
+			Assert.IsTrue( gulls.Unheard > 1, $"{gulls.Unheard} drawn on time" );
+
+			var due = gulls.EndedAt!.Value + (gulls.Wait / 1000f);
+
+			if ( due > Time.Now )
+			{
+				Frame( park, held: false );
+				Assert.AreEqual( 1, gulls.Samples, "the unheard one's end and silence still to come" );
+			}
+
+			Time.Now = MathF.Max( due, Time.Now );
+			Frame( park, held: false );
+
+			Assert.AreEqual( 2, gulls.Samples, "the next is heard" );
+			Assert.IsFalse( gulls.Voice!.IsHeld );
+			Assert.AreEqual( voices + 1, VoiceCount() );
 		} );
 
 		Time.Now = nowBefore;
@@ -837,6 +1113,388 @@ public class ScriptSoundTests
 		Time.Now = nowBefore;
 	}
 
+	/// <summary>The park's draws of a one-shot's volume and pitch taken from <paramref name="random"/> from now on.</summary>
+	private static void DrawOneShotsFrom( ParkAudio park, Random random )
+		=> typeof( ParkAudio ).GetField( "_screamRandom", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance )!
+			.SetValue( park, random );
+
+	/// <summary>
+	/// <b>A one-shot started late in its sample is refused, and let go</b> (<c>0x006bc410</c>, <c>0x006bc534</c>..
+	/// <c>0x006bc55d</c>; <c>0x006bd8fa</c>): kids 132 (one sample of 2681 ms, a pitch of -5 to 5) on the End's node 9, cut
+	/// away and back 2.0 s after its set-up, 681 ms before its sample's end: no channel, its volume and pitch drawn all the
+	/// same, and gone on the next pass, not by its time. The toilet's kids 51 (3251 ms) back 2.0 s after, 1251 ms before its
+	/// end, starts from the top. The time is counted round its length, and a flat one is never refused.
+	/// </summary>
+	[TestMethod]
+	public void AOneShotStartedLateInItsSampleIsRefusedAndLetGo()
+	{
+		var nowBefore = Time.Now;
+		var far = new Vector3( 1000f, 1000f, 0f );
+		var near = new Vector3( 21f, 57f, 0f );
+
+		WithAParksAudio( park =>
+		{
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			ParkAudio.ScriptVoice Start( int effect, int id )
+			{
+				new RideScript( Build( Word( Opcode.EVENT ), 6, 9, effect, Word( Opcode.END ) ) )
+					{ Effects = new RideEffects(), Nodes = nodes, Id = id }.Turn( 0f );
+
+				return park.ScriptVoices.Last( sound => sound.Effect == effect );
+			}
+
+			HearFrom( near );
+			Time.Now = 400f;
+
+			var late = Start( 132, 921 );
+
+			Assert.AreEqual( (2681, 1), (late.LengthMilliseconds, late.Samples) );
+
+			var first = late.Voice!;
+
+			HearFrom( far );
+			park.ServeScriptSounds();
+			Assert.IsTrue( late.Away );
+
+			var header = late.Category.VariationsOf( 132 )[late.Variation];
+
+			Assert.AreNotEqual( header.Pitch.Low, header.Pitch.High, "a pitch drawn, so a draw is seen" );
+
+			var twin = new Random( 5 );
+
+			DrawOneShotsFrom( park, new Random( 5 ) );
+			ParkAudio.Controlled( header, 1, 0, 0, twin );
+			var pitch = ParkAudio.Controlled( header, 2, 0, 0, twin );
+
+			HearFrom( near );
+			Time.Now = 402f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( (1, true), (late.Samples, late.Refused), "no channel, 2000 ms in and 681 left" );
+			Assert.AreSame( first, late.Voice );
+			Assert.IsFalse( first.Playing );
+			Assert.AreEqual( pitch, park.OneShotPitch, "its volume and pitch drawn before the refusal" );
+			Assert.IsTrue( park.ScriptVoices.Contains( late ) );
+
+			park.ServeScriptSounds();
+			Assert.IsFalse( park.ScriptVoices.Contains( late ), "let go on the next pass" );
+			Assert.AreEqual( (1, 0), (park.ScriptOneShotsRefused, park.ScriptOneShotsDropped), "as 0x10, not by its time" );
+
+			// Back 2.0 s in, 1251 ms are left: from the top.
+			Time.Now = 500f;
+
+			var early = Start( 51, 922 );
+
+			HearFrom( far );
+			park.ServeScriptSounds();
+			HearFrom( near );
+			Time.Now = 502f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( (2, false), (early.Samples, early.Refused) );
+			Assert.IsTrue( early.Voice!.Playing );
+
+			// Its position is counted round its length: 5751 ms after its set-up is 2500 ms into its sample.
+			Assert.IsFalse( ParkAudio.LateStart( early ) );
+			Time.Now = 500f + 5.751f;
+			Assert.IsTrue( ParkAudio.LateStart( early ) );
+			Time.Now = 500f + 3.251f + 1.0f;
+			Assert.IsFalse( ParkAudio.LateStart( early ), "1000 ms in, not past it" );
+
+			// One heard flat (0x200) has no place: never refused.
+			Time.Now = 600f;
+
+			var flat = Start( 51, 923 );
+
+			flat.Place = null;
+			Time.Now = 602.5f;
+			Assert.IsFalse( ParkAudio.LateStart( flat ), "a flat one-shot starts wherever it is in its sample" );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>Each start of a one-shot draws its variation's wait, which puts its drop back</b> (<c>0x006bc4f4</c>..
+	/// <c>0x006bc4fa</c>, the voice's <c>+0x3c</c>, read by <c>0x006bcb60</c>): the Monkey's 82 (level rides, one sample of
+	/// 1695 ms, a wait of 1000 ms both ways) on the End's node 9 is dropped at its set-up, 250 ms, its length and the wait,
+	/// not a second sooner.
+	/// </summary>
+	[TestMethod]
+	public void AOneShotsStartDrawsItsWaitWhichPutsItsDropBack()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+
+			HearFrom( new Vector3( 21f, 57f, 0f ) );
+			Time.Now = 500f;
+			new RideScript( Build( Word( Opcode.EVENT ), 3, 9, 82, Word( Opcode.END ) ) )
+				{ Effects = new RideEffects(), Nodes = nodes, Id = 931 }.Turn( 0f );
+
+			var monkey = park.ScriptVoices.Last( sound => sound.Effect == 82 );
+			var header = monkey.Category.VariationsOf( 82 )[monkey.Variation];
+
+			Assert.AreEqual( ("one-shot", 1695, 1000, 1000), (monkey.Kind, monkey.LengthMilliseconds, header.GapMin, header.GapMax) );
+			Assert.AreEqual( 1, monkey.Samples );
+			Assert.AreEqual( 500f + 0.25f + 1.695f + 1f, monkey.DropAt, 0.0005f );
+
+			Time.Now = 502.5f;
+			park.ServeScriptSounds();
+			Assert.IsTrue( park.ScriptVoices.Contains( monkey ), "past its length and 250 ms, inside the wait" );
+
+			Time.Now = 502.946f;
+			park.ServeScriptSounds();
+			Assert.IsFalse( park.ScriptVoices.Contains( monkey ) );
+			Assert.AreEqual( 1, park.ScriptOneShotsDropped );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>Under a park's menu a one-shot that comes into range passes unheard</b> (<see cref="ParkAudio"/>'s
+	/// <c>Unheard</c>; the original's lifted listener, <c>0x0051c1c0</c>): kids 51 started away, then the listener brought in
+	/// under the hold: no voice, one sample counted, its end held; cut on leaving range and unheard again on its return;
+	/// let go at its sample's end; nothing sounds when the hold is lifted.
+	/// </summary>
+	[TestMethod]
+	public void UnderAMenuAOneShotComingIntoRangePassesUnheard()
+	{
+		var nowBefore = Time.Now;
+		var far = new Vector3( 1000f, 1000f, 0f );
+		var near = new Vector3( 21f, 57f, 0f );
+
+		WithAParksAudio( park =>
+		{
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+
+			HearFrom( far );
+			Time.Now = 600f;
+			new RideScript( Build( Word( Opcode.EVENT ), 6, 9, 51, Word( Opcode.END ) ) )
+				{ Effects = new RideEffects(), Nodes = nodes, Id = 941 }.Turn( 0f );
+
+			var kids = park.ScriptVoices.Last( sound => sound.Effect == 51 );
+
+			Assert.IsTrue( kids.Away );
+
+			var voices = VoiceCount();
+
+			Audio.HoldPlaced( true );
+			HearFrom( near );
+			Time.Now = 600.1f;
+			park.ServeScriptSounds();
+			Assert.IsNull( kids.Voice, "no voice born held" );
+			Assert.AreEqual( (1, 1, voices), (kids.Samples, kids.Unheard, VoiceCount()) );
+			Assert.AreEqual( 600.1f + kids.Clip!.Duration / ParkCarSounds.Rate( park.OneShotPitch ), kids.UnheardUntil!.Value, 0.0005f );
+
+			HearFrom( far );
+			park.ServeScriptSounds();
+			Assert.AreEqual( (true, (float?)null), (kids.Away, kids.UnheardUntil), "cut on leaving range" );
+
+			HearFrom( near );
+			Time.Now = 600.2f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( (2, 2), (kids.Samples, kids.Unheard), "unheard again in range" );
+
+			Time.Now = kids.UnheardUntil!.Value - 0.001f;
+			park.ServeScriptSounds();
+			Assert.IsTrue( park.ScriptVoices.Contains( kids ), "as playing until its sample's end" );
+
+			Time.Now = kids.UnheardUntil!.Value + 0.001f;
+			park.ServeScriptSounds();
+			Assert.IsFalse( park.ScriptVoices.Contains( kids ), "let go at its end" );
+			Assert.AreEqual( 0, park.ScriptOneShotsDropped, "not by its time" );
+
+			Audio.HoldPlaced( false );
+			Assert.AreEqual( voices, VoiceCount(), "nothing sounds on the resume" );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>A one-shot keeps its sample through every return, and draws its volume and pitch afresh at each</b>
+	/// (<c>0x006bbf60</c>'s <c>+0xc</c>; <c>FUN_006bc410</c>): kids 49 (eight samples) on the End's node 9, cut and back ten
+	/// times before its drop; each start plays the first's sample at the pitch a seeded generator gives it, and its drop
+	/// stays where its set-up put it.
+	/// </summary>
+	[TestMethod]
+	public void AOneShotKeepsItsSampleAndDrawsAfreshAtEachReturn()
+	{
+		var nowBefore = Time.Now;
+		var far = new Vector3( 1000f, 1000f, 0f );
+		var near = new Vector3( 21f, 57f, 0f );
+
+		WithAParksAudio( park =>
+		{
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+
+			HearFrom( near );
+			Time.Now = 700f;
+			new RideScript( Build( Word( Opcode.EVENT ), 6, 9, 49, Word( Opcode.END ) ) )
+				{ Effects = new RideEffects(), Nodes = nodes, Id = 951 }.Turn( 0f );
+
+			var kids = park.ScriptVoices.Last( sound => sound.Effect == 49 );
+			var headers = kids.Category.VariationsOf( 49 );
+			var header = headers[kids.Variation];
+			var name = kids.Voice!.Name;
+			var dropAt = kids.DropAt;
+
+			Assert.AreEqual( 8, headers.Sum( variation => variation.Samples ), "eight samples to draw among" );
+			Assert.AreNotEqual( header.Pitch.Low, header.Pitch.High, "a pitch drawn, so a kept one is seen" );
+
+			// Every return inside its length and 250 ms, before its drop.
+			var step = (kids.LengthMilliseconds / 1000f + 0.2f) / 11f;
+
+			for ( var turn = 1; turn <= 10; ++turn )
+			{
+				HearFrom( far );
+				Time.Now = 700f + (turn - 0.5f) * step;
+				park.ServeScriptSounds();
+
+				var twin = new Random( turn );
+
+				DrawOneShotsFrom( park, new Random( turn ) );
+				ParkAudio.Controlled( header, 1, 0, 0, twin );
+				var pitch = ParkAudio.Controlled( header, 2, 0, 0, twin );
+
+				HearFrom( near );
+				Time.Now = 700f + turn * step;
+				park.ServeScriptSounds();
+				Assert.AreEqual( (turn + 1, name), (kids.Samples, kids.Voice!.Name), $"return {turn}: the first's sample" );
+				Assert.AreEqual( pitch, park.OneShotPitch, $"return {turn}: its pitch drawn afresh" );
+				Assert.AreEqual( (double)ParkCarSounds.Rate( pitch ), kids.Voice.Rate, 1e-5 );
+				Assert.AreEqual( dropAt, kids.DropAt, $"return {turn}: its drop kept" );
+			}
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>A one-shot let go is neither stopped nor moved by its script after</b> (<c>0x006bb9b3</c>..<c>0x006bb9c7</c>, the
+	/// handle masked): kids 51 near on the End's node 9, dropped by its time with its sample playing; a <c>KILLOBJ</c>'s stop
+	/// and the eighth-tick move find nothing, and the sample plays out where it is.
+	/// </summary>
+	[TestMethod]
+	public void AOneShotLetGoIsNeitherStoppedNorMovedAfter()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+
+			HearFrom( new Vector3( 21f, 57f, 0f ) );
+			Time.Now = 800f;
+			new RideScript( Build( Word( Opcode.EVENT ), 6, 9, 51, Word( Opcode.END ) ) )
+				{ Effects = new RideEffects(), Nodes = nodes, Id = 961 }.Turn( 0f );
+
+			var kids = park.ScriptVoices.Last( sound => sound.Effect == 51 );
+			var voice = kids.Voice!;
+			var place = kids.Place;
+
+			Time.Now = kids.DropAt + 0.001f;
+			park.ServeScriptSounds();
+			Assert.IsFalse( park.ScriptVoices.Contains( kids ) );
+			Assert.IsTrue( voice.Playing );
+
+			var counts = park.ScriptSounds;
+
+			park.MoveScriptSound( kids, place!.Value + new Vector3( 5f, 0f, 0f ) );
+			park.StopScriptSound( kids, fade: false );
+			Assert.AreEqual( counts, park.ScriptSounds, "neither moved nor stopped" );
+			Assert.AreEqual( place, kids.Place );
+			Assert.IsTrue( voice.Playing, "its sample plays out" );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>A voice in range again draws its silence, volume and pitch afresh, as a first start does</b> (<c>0x006bdf50</c>,
+	/// <c>FUN_006bc410</c>, whose slot <c>+0x48</c> draws the wait before the volume and the pitch). The gulls (global
+	/// ambient 2: volume 49, a pitch of -2 to 2, a wait of 0 to 10000 ms) on the End's node 9: the sample ends in range,
+	/// the listener leaves in its silence and comes back a minute on. The held sample plays again at the wait, volume and
+	/// pitch a seeded generator gives a first, and the next comes only once a silence counted from that sample's own end
+	/// is over.
+	/// </summary>
+	[TestMethod]
+	public void AVoiceInRangeAgainDrawsItsSilenceVolumeAndPitchAfresh()
+	{
+		var nowBefore = Time.Now;
+		var near = new Vector3( 21f, 57f, 0f );
+		const int seed = 5;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+			DrawFrom( park, new Random( 1 ) );
+			HearFrom( near );
+
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build( Word( Opcode.ADDOBJ ), 8, 9, 2, 1, Word( Opcode.END ) ) )
+				{ Effects = new RideEffects(), Nodes = nodes, Id = 916 };
+
+			script.Turn( 0f );
+
+			var gulls = script.Effects!.Records.Single().Sound!;
+			var header = gulls.Category.VariationsOf( gulls.Effect )[0];
+			var first = gulls.Kept;
+
+			Assert.AreEqual( (1, 0), (gulls.Samples, gulls.Variation) );
+
+			// The sample ends in range, and in its silence the listener leaves.
+			gulls.Voice!.Stop();
+			park.ServeScriptSounds();
+			Assert.IsTrue( gulls.EndedAt is not null && gulls.Wait > 0, "in its silence" );
+
+			HearFrom( new Vector3( 1000f, 1000f, 0f ) );
+			park.ServeScriptSounds();
+			Time.Now += 60f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( (1, true), (gulls.Samples, gulls.Away), "nothing drawn away" );
+
+			// Back: the draws of a first start, in its order.
+			var probe = new Random( seed );
+			var wait = ParkScreams.GapMilliseconds( header, probe );
+			var kept = ParkAudio.HeldSample( header, true, first, 0, 0, probe );
+
+			Assert.AreNotEqual( first.Pitch, kept.Pitch, "the seed draws another pitch than the first's" );
+			Assert.IsTrue( wait > 1000, $"the seed draws a silence of seconds, {wait} ms" );
+
+			DrawFrom( park, new Random( seed ) );
+			HearFrom( near );
+			park.ServeScriptSounds();
+
+			Assert.AreEqual( (2, 0, false), (gulls.Samples, gulls.Variation, gulls.Away), "the held sample afresh" );
+			Assert.AreEqual( (wait, kept), (gulls.Wait, gulls.Kept) );
+			Assert.AreEqual( ParkCarSounds.Rate( kept.Pitch ), (float)gulls.Voice!.Rate, 1e-6f );
+
+			// Its silence counts from its own end, not from the end of the sample before the leaving.
+			Time.Now += 1f;
+			gulls.Voice.Stop();
+
+			var ended = Time.Now;
+
+			park.ServeScriptSounds();
+			Assert.AreEqual( 2, gulls.Samples );
+			Assert.AreEqual( ended, gulls.EndedAt );
+
+			Time.Now = ended + (wait / 1000f) - 0.01f;
+			park.ServeScriptSounds();
+			Assert.AreEqual( 2, gulls.Samples, "silent to its wait's end" );
+
+			Time.Now = ended + (wait / 1000f);
+			park.ServeScriptSounds();
+			Assert.AreEqual( 3, gulls.Samples );
+			Assert.AreEqual( kept, gulls.Kept, "the next at what the return drew" );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
 	/// <summary>
 	/// <b>An arrival vehicle's nodes stand where its file holds them</b>, as the original's bus voice came at its body's
 	/// place, (296, 5, -114): the bus's sound node 1 there, its root <c>Line02</c>'s (480, 0, 170) kept, where a thing
@@ -849,8 +1507,8 @@ public class ScriptSoundTests
 		var bus = RideNodes.Load( "levels/jungle/features/bus", "bus", data, false, [] )!;
 		var other = RideNodes.Load( "levels/jungle/features/bus", "bus", data, false, [] )!;
 
-		ParkRides.Stand( bus, 1600, 0, 0, 0 );
-		ParkRides.Stand( other, 1417, 0, 0, 0 );
+		ParkRides.Stand( bus, 1600, ParkObjects.OriginFor( 0, 0, 0 ), 0 );
+		ParkRides.Stand( other, 1417, ParkObjects.OriginFor( 0, 0, 0 ), 0 );
 
 		Assert.AreEqual( NodeEnd.Posed, bus.Find( 1, RideNodes.SoundSpace, out var fixedAt ) );
 		Assert.AreEqual( 296.27f, fixedAt.X, 0.01f );
@@ -859,6 +1517,148 @@ public class ScriptSoundTests
 
 		other.Find( 1, RideNodes.SoundSpace, out var celled );
 		Assert.IsTrue( celled.X < 0f && celled.Z < 0f, $"at its cells the root's (480, 0, 170) is gone: {celled}" );
+	}
+
+	/// <summary>
+	/// <b>Through a park's menu a held chain's children are drawn on their zones and made unheard; none is held to start
+	/// with the rest on resume.</b> The global staff's 188, the Staff Room's (<c>ADDOBJ 7 -1 188 1</c>, whose two heaviest
+	/// variations wait 100 to 500 ms), on the End's node 9, held for ten seconds: no voice is started, each child is
+	/// drawn on time among the zones of the one before at the parameter nought, and after the resume the next child
+	/// comes at the time the running clock gives it, alone. The original's service ticks it through a pause and its
+	/// mixer plays the children at nought (<c>docs/exe/audio.md</c>, "The pause substitution").
+	/// </summary>
+	[TestMethod]
+	public void AHeldParksHeldChainMakesItsChildrenUnheardAndNoneBurstsOnResume()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+
+			var nodes = RideNodes.Load( "levels/jungle/features/end", "End", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build( Word( Opcode.ADDOBJ ), 7, 9, 188, 1, Word( Opcode.END ) ) )
+				{ Effects = new RideEffects(), Nodes = nodes, Id = 914 };
+
+			script.Turn( 0f );
+
+			var staff = script.Effects!.Records.Single().Sound!;
+			var headers = staff.Category.VariationsOf( 188 );
+			var longest = headers.Max( header => Math.Max( header.GapMin, header.GapMax ) ) / 1000f;
+			var first = staff.Voice!;
+
+			Assert.AreEqual( "held chain", staff.Kind );
+			Assert.AreEqual( 0, staff.Variation, "its first child the effect's first variation" );
+
+			Frame( park, held: true );
+
+			Assert.IsTrue( Audio.PlacedHeld && first.IsHeld, "the menu holds the chain's child" );
+
+			var voices = VoiceCount();
+			var steps = 0;
+
+			for ( var pass = 0; pass < 1000; ++pass )
+			{
+				var before = staff.Variation;
+
+				Time.Now += 0.01f;
+				Frame( park, held: true );
+				Assert.IsTrue( staff.NextAt > Time.Now - 0.001f && staff.NextAt <= Time.Now + longest, "its clock runs on" );
+
+				if ( staff.Variation == before )
+					continue;
+
+				++steps;
+				Assert.IsTrue( headers[before].Zones.Any( zone => zone.Variation == staff.Variation && zone.Low <= 0 && zone.High >= 0 ),
+					$"{before + 1} to {staff.Variation + 1} under the hold, by the zones" );
+			}
+
+			Assert.AreEqual( 1, staff.Samples, "no child's voice started under the hold" );
+			Assert.AreEqual( voices, VoiceCount(), "and none waits in the pool" );
+			Assert.IsTrue( staff.Unheard >= Math.Max( 2, (int)(10f / longest) ),
+				$"{staff.Unheard} children in ten seconds of waits up to {longest:0.0} s, {steps} changes of variation" );
+			Assert.IsNull( staff.Voice, "its newest child is an unheard one" );
+
+			var due = staff.NextAt;
+
+			Time.Now = due;
+			Frame( park, held: false );
+
+			Assert.IsFalse( first.IsHeld, "the resume lets the held child go" );
+			Assert.AreEqual( 1, staff.Samples, "not before the newest child's time" );
+
+			Time.Now = due + 0.001f;
+			Frame( park, held: false );
+
+			Assert.AreEqual( 2, staff.Samples, "one child on its time" );
+			Assert.AreEqual( voices + 1, VoiceCount(), "and only that one" );
+			Assert.IsFalse( staff.Voice!.IsHeld );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>Through a park's menu a music voice's samples are drawn on its zones and let pass unheard.</b> The bus's 6 at
+	/// the parameter 75, on its model: its first sample ends as the hold begins, and the rev (5) follows unheard, then the
+	/// run (6) again and again, each lasting as its sample would at the first's pitch; no voice is started. After the
+	/// resume the next sample comes once the unheard one's end is past, and is heard.
+	/// </summary>
+	[TestMethod]
+	public void AHeldParksMusicVoiceLetsItsSamplesPassUnheard()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+
+			var nodes = RideNodes.Load( "levels/jungle/features/bus", "bus", (BaseFileSystem)FileSystem, false, [] )!;
+			var script = new RideScript( Build(
+				Word( Opcode.ADDOBJ ), 8, 1, 6, 1,
+				Word( Opcode.SETOBJPARAM ), 1, 20, 75,
+				Word( Opcode.END ) ) ) { Effects = new RideEffects(), Nodes = nodes, Id = 915 };
+
+			HearFrom( new Vector3( -180f, -280f, 0f ) );
+			script.Turn( 0f );
+
+			var bus = script.Effects!.Records.Single().Sound!;
+
+			Assert.AreEqual( (1, 0, 75), (bus.Samples, bus.Variation, bus.Parameter) );
+			Assert.IsNotNull( bus.Place );
+
+			Frame( park, held: true );
+
+			var voices = VoiceCount();
+
+			bus.Voice!.Stop();
+			Frame( park, held: true );
+
+			Assert.AreEqual( (1, 1, 4), (bus.Samples, bus.Unheard, bus.Variation), "the rev drawn, and no voice started" );
+			Assert.IsNull( bus.Voice );
+			Assert.AreEqual( voices, VoiceCount() );
+			Assert.IsTrue( bus.EndedAt > Time.Now, "an unheard sample lasts as its sample would" );
+
+			for ( var pass = 0; pass < 3000; ++pass )
+			{
+				Time.Now += 0.01f;
+				Frame( park, held: true );
+			}
+
+			Assert.AreEqual( 1, bus.Samples, "thirty seconds held, and not one sample heard" );
+			Assert.AreEqual( voices, VoiceCount() );
+			Assert.IsTrue( bus.Unheard > 2, $"{bus.Unheard} drawn on time" );
+			Assert.AreEqual( 5, bus.Variation, "the run, again and again" );
+
+			Time.Now = MathF.Max( bus.EndedAt!.Value + (bus.Wait / 1000f), Time.Now );
+			Frame( park, held: false );
+
+			Assert.AreEqual( 2, bus.Samples, "the next is heard" );
+			Assert.IsFalse( bus.Voice!.IsHeld );
+			Assert.AreEqual( voices + 1, VoiceCount() );
+		} );
+
+		Time.Now = nowBefore;
 	}
 
 	/// <summary>The End's sound node 10 on its model, in whole units of the world, the height last.</summary>

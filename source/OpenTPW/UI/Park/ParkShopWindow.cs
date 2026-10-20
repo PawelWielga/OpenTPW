@@ -540,6 +540,8 @@ internal sealed class ParkShopWindow : UiWindow
 				// The packed id y * 128 + x + 1 cut to a word (0x004cd901), which wraps a row at x = -1.
 				var cell = ((y * ParkWorld.MapSize) + x + 1) & 0xffff;
 
+				// Cell 0 (a shop at (0,0)) and row -1 (a shop on row 0) are off the map: 0x004cd906 reads their records
+				// unchecked, before and past the array; skipped here.
 				if ( cell == 0 || cell > ParkWorld.MapSize * ParkWorld.MapSize )
 					continue;
 
@@ -630,13 +632,13 @@ internal sealed class ParkShopWindow : UiWindow
 		};
 
 	/// <summary>
-	/// Apply to all's reach (<c>0x00482040</c> on mask <c>0x200</c>, then <c>0x004b0ae0</c>): the placed shops whose item
-	/// is the shown one's, by thing.
+	/// Apply to all's reach (<c>0x00482040</c> on mask <c>0x200</c>, then <c>0x004b0ae0</c>): the placed shops that fit
+	/// no ride (<c>+0x284</c> nought) whose item is the shown one's, by thing.
 	/// </summary>
 	internal static int[] ShopsOfItem( IEnumerable<ParkWorld.CatalogueObject> objects, ParkItemCatalogue catalogue, int catalogueId )
 		=> [.. objects
 			.Where( placed => placed.IsPlaced && placed.CatalogueId == catalogueId
-				&& catalogue.TryGet( placed.CatalogueId, out var item ) && item.UiType == 1 )
+				&& catalogue.TryGet( placed.CatalogueId, out var item ) && item.UiType == 1 && item.AddOnUpgradesId == 0 )
 			.Select( placed => placed.ThingId )];
 
 	/// <summary>
@@ -661,17 +663,9 @@ internal sealed class ParkShopWindow : UiWindow
 		Refresh();
 	}
 
-	/// <summary>The shops on mask <c>0x200</c> (<c>0x00482040</c>): every placed object whose item is a shop, newest first.</summary>
-	private List<int> Siblings()
-	{
-		if ( Level.Current is not { ParkState: { } state, Catalogue: { } catalogue } )
-			return [];
-
-		return [.. state.Objects
-			.Where( placed => placed.IsPlaced && catalogue.TryGet( placed.CatalogueId, out var item ) && item.UiType == 1 )
-			.Select( placed => placed.ThingId )
-			.OrderByDescending( id => id )];
-	}
+	/// <summary>The shops an arrow walks, mask <c>0x200</c>: <see cref="ParkObjectWindow.Siblings"/> on UI type 1, newest first.</summary>
+	private static List<int> Siblings()
+		=> Level.Current is { ParkState: { } state, Catalogue: { } catalogue } ? ParkObjectWindow.Siblings( state, catalogue, uiType: 1 ) : [];
 
 	/// <summary>
 	/// An arrow (<c>FUN_0048cbe0</c>, <c>FUN_0048caf0</c>): the settings applied first, then the next shop either way
@@ -690,10 +684,14 @@ internal sealed class ParkShopWindow : UiWindow
 		Show();
 	}
 
-	/// <summary><c>0xc068</c>, <c>FUN_0048cd10</c>: the shop demolished at its own cell, then the window closed.</summary>
+	/// <summary>
+	/// <c>0xc068</c>, <c>FUN_0048cd10</c>: the box of UITEXT 396 first where Confirmations is on (<see
+	/// cref="ParkObjectWindow.AskToDelete"/>), then the window closed with no shop shown, so the settings are not applied.
+	/// </summary>
 	private void Delete()
 	{
-		Log.Info( $"Shop window: {ParkBuilding.Sell( ThingId )}" );
+		ParkObjectWindow.AskToDelete( Stack, ThingId, "Shop window" );
+		ThingId = 0;
 		Stack.Close( this );
 	}
 

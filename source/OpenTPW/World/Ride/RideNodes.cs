@@ -81,6 +81,7 @@ public sealed class RideNodes
 		_hasChild = new bool[_nodes.Length];
 		_moved = new bool[_nodes.Length];
 		_morphed = new bool[_nodes.Length];
+		_routed = new bool[_nodes.Length];
 
 		foreach ( var node in _nodes )
 		{
@@ -173,8 +174,13 @@ public sealed class RideNodes
 	/// (<c>docs/exe/saves.md</c>, "The sweep moves it").
 	/// </summary>
 	/// <remarks>
-	/// <b>Not the original's:</b> the engine stores a pose only for a model it draws, so one off the screen keeps the
-	/// pose of the frame it was last drawn in; this follows the players whether the model is seen or not.
+	/// <b>Not the original's:</b> the engine stores a pose at the build, under the ride view, at every advance of a model
+	/// it draws, and off the screen only for a model whose header word <c>0x30</c> carries <c>0x4</c>
+	/// (<c>docs/exe/ride-operation.md</c>, "How long a leg lasts, and where its ends are"), so any other model off the
+	/// screen keeps the pose of the frame it was last drawn in; this follows the players whether the model is seen or not.
+	/// <b>A path track is not followed:</b> <see cref="NodePoser"/> poses rotation and position tracks, where the drawn
+	/// model moves a node along its route (<see cref="LobbyModel.Pose"/>), so a node on a route, or under one, is answered
+	/// where it stands without it, counted <c>RIDE_NODE_ON_A_ROUTE</c> where a carried find reads one.
 	/// </remarks>
 	public void Follow( RideAnimations players )
 	{
@@ -183,25 +189,22 @@ public sealed class RideNodes
 		if ( _carriedClips.Length != players.ChannelCount )
 			Array.Resize( ref _carriedClips, players.ChannelCount );
 
-		for ( var index = 0; index < _carriedClips.Length; ++index )
+		players.PoseOnto( _carrier, _carriedClips );
+
+		Array.Clear( _routed );
+
+		foreach ( var clip in _carriedClips )
 		{
-			if ( players.Channel( index ) is not { } channel || channel.IsIdle )
-				continue;
-
-			if ( players.Clip( channel.AnimID, channel.SubAnim ) is not { } clip )
-				continue;
-
-			if ( !ReferenceEquals( clip, _carriedClips[index] ) )
+			foreach ( var track in clip?.PathTracks ?? [] )
 			{
-				if ( _carriedClips[index] is { } previous )
-					_carrier.Rest( previous, clip );
-
-				_carriedClips[index] = clip;
+				if ( track.TargetIndex >= 0 && track.TargetIndex < _routed.Length )
+					_routed[track.TargetIndex] = true;
 			}
-
-			_carrier.Pose( clip, channel.AnimFrame );
 		}
 	}
+
+	/// <summary>The nodes a route moves in the clips <see cref="Follow"/> last posed.</summary>
+	private readonly bool[] _routed;
 
 	/// <summary>
 	/// One entry of the engine's sine table (<c>FUN_004708d0</c>): <c>sin( i / 4096 × 6.2831855f )</c>, stored as a float,
@@ -501,6 +504,9 @@ public sealed class RideNodes
 		chain.Reverse();
 
 		Numerics.Matrix4x4 Local( int at ) => carrier?.Local( at ) ?? _nodes[at].LocalTransform;
+
+		if ( carrier != null && chain.Any( at => _routed[at] ) )
+			Unimplemented.Report( "RIDE_NODE_ON_A_ROUTE" );
 
 		var world = Root( Local( chain[0] ) );
 

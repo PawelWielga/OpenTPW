@@ -368,7 +368,7 @@ internal sealed class ParkObjectWindow : UiWindow
 		var name = Level.Current is { } level && level.ParkState is { } state
 			&& state.TryObject( thingId, out var placed )
 			&& level.Catalogue is { } catalogue && catalogue.TryGet( placed.CatalogueId, out var item )
-				? item.Name
+				? ParkObjectNames.NameOf( item )
 				: $"thing {thingId}";
 
 		_title.Text = name;
@@ -386,9 +386,9 @@ internal sealed class ParkObjectWindow : UiWindow
 	}
 
 	/// <summary>
-	/// The next or previous thing of the same kind - <c>FUN_0048cbe0</c> and <c>FUN_0048caf0</c>, which
-	/// differ only in which way they walk. The original asks a class MASK (a ride is 0x80), and the
-	/// nearest thing here is the item's own UI type, which is what the dispatcher keys off as well.
+	/// An arrow: <c>FUN_0048cbe0</c> (b_arup, <c>0x3e26</c>) the next ride towards the newest, <c>FUN_0048caf0</c>
+	/// (b_ardown, <c>0x3e27</c>) the next towards the oldest, each round from the far end, on the rides' mask <c>0x80</c>
+	/// (<see cref="Siblings"/>, <see cref="ParkVisitorWindow.Next"/>); the ride shown again shows nothing new.
 	/// </summary>
 	private void Cycle( bool forward )
 	{
@@ -396,35 +396,47 @@ internal sealed class ParkObjectWindow : UiWindow
 		// vtable +0x3c first - so the ride you were adjusting keeps what you set it to.
 		Commit();
 
-		if ( Level.Current is not { } level || level.ParkState is not { } state
-			|| level.Catalogue is not { } catalogue )
+		if ( Level.Current is not { ParkState: { } state, Catalogue: { } catalogue } )
 			return;
 
-		if ( !state.TryObject( ThingId, out var current )
-			|| !catalogue.TryGet( current.CatalogueId, out var mine ) )
+		var next = ParkVisitorWindow.Next( Siblings( state, catalogue, uiType: 0 ), ThingId, newer: forward );
+
+		if ( next == 0 || next == ThingId )
 			return;
 
-		var siblings = new List<int>();
+		Show( next );
+	}
 
-		foreach ( var placed in state.Objects )
-		{
-			if ( placed.IsPlaced && catalogue.TryGet( placed.CatalogueId, out var item )
-				&& item.UiType == mine.UiType )
-				siblings.Add( placed.ThingId );
-		}
+	/// <summary>
+	/// What an arrow walks (<c>FUN_004828f0( uiType, current )</c>, from <c>0x004824d0</c> and <c>0x00482da0</c>, on
+	/// mask <c>0x80</c> for rides and <c>0x200</c> for shops): every placed object whose item has this UI type
+	/// (<c>+0x4ac</c>) and fits no ride (<c>AddOn.UpgradesId</c>, <c>+0x284</c>, nought), in the used-thing list's order,
+	/// newest first (<see cref="ParkState.ObjectsInUsedOrder"/>).
+	/// </summary>
+	internal static List<int> Siblings( ParkState state, ParkItemCatalogue catalogue, int uiType )
+		=> [.. state.ObjectsInUsedOrder()
+			.Where( placed => placed.IsPlaced && catalogue.TryGet( placed.CatalogueId, out var item )
+				&& item.UiType == uiType && item.AddOnUpgradesId == 0 )
+			.Select( placed => placed.ThingId )];
 
-		siblings.Sort();
+	/// <summary>
+	/// Delete, <c>FUN_0048cd10</c>, which every object window shares: where the Confirmations option is on
+	/// (<c>[0x0078d90f]</c>) a box on UITEXT 396 whose tick (<c>0x0048cde0</c>) demolishes the thing as the box opened
+	/// and whose cross does nothing; where it is off the demolish at once. The caller then closes its window with no
+	/// thing shown, as the original zeroes <c>[0x007c2658]</c> first (<c>0x0048cdc9</c>), so its settings are not applied.
+	/// </summary>
+	internal static void AskToDelete( WindowStack stack, int thingId, string window )
+	{
+		void Demolish() => Log.Info( $"{window}: {ParkBuilding.Sell( thingId )}" );
 
-		var at = siblings.IndexOf( ThingId );
+		var asks = GameOptions.Current.Confirmations;
 
-		if ( at < 0 || siblings.Count < 2 )
-			return;
+		if ( asks )
+			stack.Open( new MessageBox( stack, Localization.Get( UIStrings.DeleteItem ), Demolish ) );
+		else
+			Demolish();
 
-		var next = forward
-			? (at + 1) % siblings.Count
-			: (at - 1 + siblings.Count) % siblings.Count;
-
-		Show( siblings[next] );
+		Log.Info( $"{window}: delete on thing {thingId}, {(asks ? "the box of UITEXT 396 asks first" : "demolished at once")}" );
 	}
 
 	/// <summary>
@@ -1014,9 +1026,10 @@ internal sealed class ParkObjectWindow : UiWindow
 	{
 		switch ( id )
 		{
-			// FUN_0048cd10: demolish at the thing's own cell, then close.
+			// FUN_0048cd10: the box first where Confirmations is on, then close with nothing shown, so nothing is committed.
 			case 0x3e2b:
-				Log.Info( $"Ride window: {ParkBuilding.Sell( ThingId )}" );
+				AskToDelete( Stack, ThingId, "Ride window" );
+				ThingId = 0;
 				Stack.Close( this );
 				return;
 

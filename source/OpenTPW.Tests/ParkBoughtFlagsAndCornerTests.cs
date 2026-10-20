@@ -123,6 +123,82 @@ public class ParkBoughtFlagsAndCornerTests
 		Assert.AreEqual( "1427 5x5rck,1501 mammtunn", string.Join( ",", catalogue.All.Where( item => item.MapOffsetX != 0 || item.MapOffsetY != 0 ).Select( item => $"{item.Id} {item.Stem}" ) ), "the rock, and one upgrade, have an offset" );
 	}
 
+	/// <summary>
+	/// <b>An object's model stands on its corner</b> (<c>ParkObjects.ModelCell</c>; <c>FUN_004dd500</c> makes the model on
+	/// <c>mTopLeft</c>, <c>0x004dd5d3</c>): the Huge Hollow Rock anchored at (19, 27), as in Alexah's Full Simulation save,
+	/// stands a row before it unturned (19, 26), where the file's corner is, a column before it at 90 degrees (18, 27), a
+	/// row after at 180 (19, 28) and a column after at 270 (20, 27); a camera, with no offset, on its anchor. On the anchor
+	/// the rock would stand a cell off at every angle.
+	/// </summary>
+	/// <remarks>
+	/// Its <c>.hmp</c> is laid from the model's own place and height: halfway between the lowest and highest ground under its
+	/// footprint (<see cref="APlacedObjectStandsAtItsFootprintsHeight"/>), where the ground under the model's cell would
+	/// give -7, -6, -5 and -6. <b>Mutations:</b> the model stood on the anchor; the base on the ground under the model's cell.
+	/// </remarks>
+	[TestMethod]
+	[DataRow( 0, 19, 26, -4.5f )]
+	[DataRow( 90, 18, 27, -7.5f )]
+	[DataRow( 180, 19, 28, -6.5f )]
+	[DataRow( 270, 20, 27, -3.5f )]
+	public void AnObjectsModelStandsOnItsCorner( int angle, int x, int y, float height )
+	{
+		var catalogue = new ParkItemCatalogue( "jungle", GameData.Required() );
+
+		Assert.IsTrue( catalogue.TryGet( HollowRock, out var rock ) );
+		Assert.IsTrue( catalogue.TryGet( CameraItem, out var camera ) );
+
+		Assert.AreEqual( (x, y), ParkObjects.ModelCell( rock, 19, 27, angle ) );
+		Assert.AreEqual( (19, 27), ParkObjects.ModelCell( camera, 19, 27, angle ) );
+
+		var placed = ParkBuilding.Constructed( rock, 900, 19, 27, angle, 1, 1, default );
+
+		Assert.AreEqual( ParkObjects.OriginFor( x, y, angle ), ParkObjects.ModelOriginFor( rock, placed ) );
+		Assert.AreEqual( placed.TopLeft, MapStep.CellId( x, y ), "the cell the file's corner names" );
+
+		// Its .hmp is laid from the same place, on the ground under that cell.
+		using var ground = GameData.Required().OpenRead( "levels/jungle/terrain/base.MD2" )!;
+		var field = new HeightfieldFile( ground );
+		var (origin, under) = ParkItemHeights.BaseOf( rock, placed, field );
+
+		Assert.AreEqual( ParkObjects.OriginFor( x, y, angle ).GetSystemVector3() with { Z = 0f }, origin with { Z = 0f } );
+		Assert.AreEqual( height, under, 0.001f );
+	}
+
+	/// <summary>
+	/// <b>A placed object stands halfway between the lowest and the highest ground under its footprint</b>
+	/// (<c>ParkObjects.BaseHeight</c>; <c>FUN_00466d70</c>, <c>docs/exe/park-engine.md</c>, "Where a placed object's model
+	/// stands"), so its nodes, and the effects its script starts on them, stand where the original's do: each row is an
+	/// emitter of Alexah's Full Simulation jungle autosave, its place in whole units as that file holds it (the emitter's
+	/// words over 64; all 55 node-placed emitters of the thirteen park files of the original's read here agree). On the ground
+	/// under the model's cell the rock's would stand at 9, the Sun God's at -1, the drinks shop's at 2 and the hyenas' at 0.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the model on the ground under its cell.</remarks>
+	[TestMethod]
+	[DataRow( HollowRock, 19, 27, 0, 1, 216, 12, 291, DisplayName = "the Huge Hollow Rock's water, node 1" )]
+	[DataRow( HollowRock, 19, 27, 0, 2, 211, 12, 281, DisplayName = "the Huge Hollow Rock's water, node 2" )]
+	[DataRow( 1106, 15, 26, 270, 1, 150, 0, 269, DisplayName = "the Sun God, turned three quarters" )]
+	[DataRow( 1203, 32, 29, 0, 1, 330, 3, 302, DisplayName = "a drinks shop on a slope" )]
+	[DataRow( 1304, 30, 27, 180, 5, 295, -1, 271, DisplayName = "the Laughing Hyenas, turned a half" )]
+	[DataRow( 1411, 20, 24, 180, 1, 199, 11, 240, DisplayName = "a staff room, turned a half" )]
+	public void APlacedObjectStandsAtItsFootprintsHeight( int id, int x, int y, int angle, int node, int fileX, int fileHeight, int fileZ )
+	{
+		var data = GameData.Required();
+		var catalogue = new ParkItemCatalogue( "jungle", data );
+
+		using var ground = data.OpenRead( "levels/jungle/terrain/base.MD2" )!;
+		var field = new HeightfieldFile( ground );
+
+		Assert.IsTrue( catalogue.TryGet( id, out var item ) );
+
+		var placed = ParkBuilding.Constructed( item, 900, x, y, angle, 1, 1, default );
+		var nodes = RideNodes.Load( item.Directory, item.Stem, data, item.DoHeadProcessing, [] )!;
+
+		nodes.Place( ParkObjects.ModelOriginFor( item, placed, field ), angle );
+		nodes.Find( node, RideNodes.ParticleSpace, out var at );
+
+		Assert.AreEqual( (fileX, fileHeight, fileZ), ((int)at.X, (int)at.Y, (int)at.Z) );
+	}
+
 	/// <summary>Every placed object of the shipped park holds the corner its item and its angle give.</summary>
 	[TestMethod]
 	public void EveryPlacedObjectsCornerIsItsItems()

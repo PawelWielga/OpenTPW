@@ -55,6 +55,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00413ffe` | | OpenTPW.Files/Formats/ItemDescriptionFile.cs  |
 | `0x00415193` | FUN_00415140, the post-load rebuild: FUN_00402e80 makes both clocks read their saved KOLC readings | OpenTPW.Files/Formats/Save/ParkClock.cs OpenTPW/VM/RideScript.cs OpenTPW/World/Park/ParkRides.cs  |
 | `0x00415270` | the whole-game restore chain: seventeen modules in order, each checked against a four-character tag that follows it | OpenTPW.Files/Formats/Save/ParkScriptStates.cs  |
+| `0x00415437` | The whole-game restore chain calls the particle loader `FUN_0051f7a0`: the park file's density taken as it is read | OpenTPW/World/Level.cs  |
 | `0x004162c2` | | OpenTPW.Files/Formats/Save/SaveReader.cs  |
 | `0x00419710` | | OpenTPW/UI/UiFonts.cs  |
 | `0x00423690` | | OpenTPW/Client/GameOptions.cs OpenTPW/World/Level.cs  |
@@ -801,7 +802,6 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0051f370` | | OpenTPW.Files/Formats/Particle/ParticleLibraryFile.cs  |
 | `0x0051faa0` | | OpenTPW/World/Particles/ParticleSystem.cs  |
 | `0x0051fd20` | | OpenTPW/World/Particles/ParticleSystem.cs  |
-| `0x0051fd80` | | OpenTPW/World/Level.cs  |
 | `0x0051fe30` | | OpenTPW/World/Particles/ParticleSystem.cs  |
 | `0x0051feb0` | | OpenTPW/World/Particles/ParticleSystem.cs  |
 | `0x0051ff10` | | OpenTPW/World/Particles/ParticleSystem.cs  |
@@ -1094,6 +1094,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00559da7` | | OpenTPW.Files/Formats/Save/ParkScriptStates.cs  |
 | `0x00564790` | | OpenTPW.Files/Formats/Sprite/SpritePackFile.cs  |
 | `0x0056695c` | | OpenTPW/World/Lobby/LobbyModel.cs  |
+| `0x00576a00` | `Render_DrawView`: walks the view's render lists and draws the batches furthest first | OpenTPW/World/Entity/Entity.cs  |
 | `0x00579e00` | | OpenTPW/Render/Assets/Asset.cs  |
 | `0x0057c620` | | OpenTPW/UI/ScreenParticles.cs  |
 | `0x00580320` | | OpenTPW/World/Weather/Lightning.cs  |
@@ -1412,6 +1413,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00785070` | PeepInfo.RideVomitDivisor, an int: the excitement over it, times the fullness | OpenTPW/World/Park/ParkAdmission.cs  |
 | `0x007850e0` | | OpenTPW/World/Park/ParkAdmission.cs  |
 | `0x007854f4` | | OpenTPW/Global/GameCalendar.cs  |
+| `0x007858c8` | The particle density global, filled from the detail file once at boot (`lobby.md`) | OpenTPW/World/Level.cs  |
 | `0x00785914` | | OpenTPW/World/Advisor/Advisor.cs  |
 | `0x00785970` | The game's global clock object; `GameClock_Pause`/`Resume` act on it and `Game_Pause` freezes it | OpenTPW/Global/GameCalendar.cs OpenTPW/Global/GameClock.cs OpenTPW/VM/RideScript.cs  |
 | `0x00786b84` | | OpenTPW/Global/GameClock.cs  |

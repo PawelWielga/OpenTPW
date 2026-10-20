@@ -81,8 +81,8 @@ public class Entity
 	/// <summary>
 	/// Draws the world, a pass at a time over every entity in the order they were made: the solid geometry,
 	/// then everything see-through, then the sprites. The original hands its particles' quads to the batches
-	/// after the scene's models and draws the batches furthest first (FUN_00576a00; park.md, "The sprite pass");
-	/// nothing here is sorted, so the sprites take a pass of their own, last.
+	/// after the scene's models and draws the batches furthest first (Render_DrawView, 0x00576a00; park.md, "The
+	/// sprite pass"); nothing here is sorted, so the sprites take a pass of their own, last.
 	/// </summary>
 	internal static void RenderWorld()
 	{

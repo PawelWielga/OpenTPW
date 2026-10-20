@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace OpenTPW.Tests;
@@ -208,6 +209,56 @@ public class GameCalendarTests
 		GameCalendar.Rebase( 16972, saved );
 		GameCalendar.Update( 16973 );
 		Assert.IsTrue( GameCalendar.YearRolled );
+	}
+
+	/// <summary>
+	/// <b>The year is carried through the scene change only from a park</b> (<c>Game.ChangeSceneIfAsked</c>): a 2002 file
+	/// loaded over a running 2002 park turns no year on its first sweep, and the same file entered from the lobby turns
+	/// one. The lobby's calendar is left in 2002 here, which the real lobby's own <see cref="GameCalendar.Rebase"/> never
+	/// leaves it, so that a carry from the lobby would show.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the carry deleted, or moved below the load, turns the year from a park; the guard on the
+	/// scene dropped turns none from the lobby.</remarks>
+	[TestMethod]
+	public void TheSceneChangeCarriesTheYearOnlyFromAPark()
+	{
+		// Tick 16972 is 6 January 2002.
+		var saved = LostKingdom with { MonthAtLastUpdate = 0, DayAtLastUpdate = 6 };
+		var was = Level.Current;
+
+		try
+		{
+			bool YearTurnedOnEntering( Level.Scene from )
+			{
+				// The running scene's calendar stands in 2002.
+				GameCalendar.Rebase( 16972, saved );
+				GameCalendar.Update( 16973 );
+
+				var scene = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
+				typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( scene, from );
+				Level.Current = scene;
+
+				var turned = (bool?)null;
+
+				Game.RequestParkLoad( "jungle" );
+				Game.ChangeSceneIfAsked( () => { }, ( _, _ ) =>
+				{
+					// What the park's own build does with the file's clock block (Level.StartTheCalendar).
+					GameCalendar.Rebase( 16972, saved );
+					GameCalendar.Update( 16973 );
+					turned = GameCalendar.YearRolled;
+				}, () => { } );
+
+				return turned ?? throw new AssertFailedException( "the park was not loaded" );
+			}
+
+			Assert.IsFalse( YearTurnedOnEntering( Level.Scene.Park ), "from a park in 2002, the year is carried" );
+			Assert.IsTrue( YearTurnedOnEntering( Level.Scene.Lobby ), "from the lobby, the entry's seed, 2000" );
+		}
+		finally
+		{
+			Level.Current = was;
+		}
 	}
 
 	/// <summary>

@@ -759,13 +759,19 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// <summary>The light a frame's shadows are cast by where the sprites stand in no level: a test's.</summary>
 	internal Vector3? ShadowLight { get; set; }
 
-	/// <summary>Whether the last frame pulled the people's bodies toward the eye (<see cref="Pull"/>): not in first person.</summary>
+	/// <summary>Whether the last frame pulled the people's bodies toward the eye (<see cref="Pull"/>).</summary>
 	internal bool Pulled { get; private set; }
+
+	/// <summary>
+	/// Whether the people's bodies are pulled toward the eye this frame: not in a view from inside the park
+	/// (<see cref="Level.InsideView"/>; the original's render word <c>0x2000</c>, tested at <c>0x00589f24</c>).
+	/// </summary>
+	internal static bool PullsBodies => !Level.InsideView;
 
 	protected override void OnRenderTranslucent()
 	{
 		_drawn.Clear();
-		Pulled = !ParkCamcorderCameraMode.Active;
+		Pulled = PullsBodies;
 
 		if ( TranslucentModel == null || _atlas == null )
 			return;
@@ -1388,7 +1394,8 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// pixels and is tested that much nearer: what lies under a person's origin and just in front of it, the ground
 	/// and a tool's squares, no longer hides their feet. The original pulls only a sprite whose flags carry
 	/// <c>0x200</c>, a person's body, and not under the render word's <c>0x2000</c>, set by the ride and first-person
-	/// views; first person is the one of those built here, so the caller asks for no pull there.
+	/// views; first person and the End's ride view are those built here, so the caller asks for no pull in either
+	/// (<see cref="PullsBodies"/>).
 	/// </summary>
 	internal static void Pull( Span<Vertex> corners, Vector3 eye, Vector3 forward )
 	{

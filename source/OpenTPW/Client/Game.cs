@@ -126,14 +126,23 @@ internal static class Game
 		Render.PostUpdate += ReloadLobbyIfAsked;
 		Render.Run();
 
+		LeaveOnClose();
+
+		Audio.Shutdown();
+	}
+
+	/// <summary>
+	/// What the game does with the park and the player as it closes. Apart from the constructor only so a test can
+	/// reach its order.
+	/// </summary>
+	internal static void LeaveOnClose()
+	{
 		// The game closed with a park up leaves the park first, as Game_Shutdown runs state 0xb (0x005503f0), so
 		// Quit Game and the window's own close both write the autosave before the player is saved.
 		Level.Current.WriteParkOnLeaving();
 
 		// Whoever is still playing is saved as the game closes, however it was closed (WinMain_Main, 0x0045acfc).
 		Players.Roster.SaveAndDeselect();
-
-		Audio.Shutdown();
 	}
 
 	/// <summary>Whether the lobby is to be built again once the frame in progress has been shown - see <see cref="RequestLobbyReload"/>.</summary>
@@ -182,6 +191,13 @@ internal static class Game
 	/// screen draws its own frames with.
 	/// </summary>
 	private static void ReloadLobbyIfAsked()
+		=> ChangeSceneIfAsked( Level.Current.Unload, LoadPark, () => LoadLobby( openAudio: false ) );
+
+	/// <summary>
+	/// <see cref="ReloadLobbyIfAsked"/> with the scene's unload and the two loads handed in, apart only so a test can
+	/// reach which way of leaving writes the autosave.
+	/// </summary>
+	internal static void ChangeSceneIfAsked( Action unload, Action<string, string?> loadPark, Action loadLobby )
 	{
 		// A park first, because asking for one supersedes asking for the lobby again.
 		if ( _parkAsked is { } themeName )
@@ -198,8 +214,8 @@ internal static class Game
 			if ( fromAPark )
 				GameCalendar.CarryTheYear();
 
-			Level.Current.Unload();
-			LoadPark( themeName, parkFile );
+			unload();
+			loadPark( themeName, parkFile );
 
 			// State 9 goes on to 0xf, which writes restart.INTS when the folder has none (0x0054f3f7). A park built again
 			// from a park here (Load Park's row, Alt+L, Restart Park) is loaded in place there and never passes it.
@@ -216,8 +232,8 @@ internal static class Game
 
 		// State 0xb writes the autosave before it takes a park down; Restart Park and Load Park pass it by.
 		Level.Current.WriteParkOnLeaving();
-		Level.Current.Unload();
-		LoadLobby( openAudio: false );
+		unload();
+		loadLobby();
 	}
 
 	/// <summary>Which park has been asked for, to be built once the frame in progress has been shown.</summary>

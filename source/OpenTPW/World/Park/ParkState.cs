@@ -248,6 +248,24 @@ public sealed class ParkState
 	/// </summary>
 	public IReadOnlyList<ParkWorld.CatalogueObject> Objects => _objects;
 
+	/// <summary>How many of <see cref="Objects"/>' first entries are the file's: everything built since is appended after them.</summary>
+	private int _fromFile;
+
+	/// <summary>
+	/// The standing objects in the original's used-thing list order (<c>[0x007cf56c]</c>, walked by <c>0x00516130</c> and
+	/// <c>0x00516160</c>): a new thing heads it (<c>FUN_00516270</c>), so what was built here comes newest first, then the
+	/// file's in the order it lists them (<c>docs/exe/ride-operation.md</c>, <c>FUN_00516270</c>'s row). The object
+	/// windows' arrows walk it.
+	/// </summary>
+	public IEnumerable<ParkWorld.CatalogueObject> ObjectsInUsedOrder()
+	{
+		for ( var i = _objects.Count - 1; i >= _fromFile; --i )
+			yield return _objects[i];
+
+		for ( var i = 0; i < _fromFile; ++i )
+			yield return _objects[i];
+	}
+
 	/// <summary>The head of the object chain - the save's <c>mFirstObject</c>, the engine's <c>+0x1da746</c>.</summary>
 	private int _firstObject;
 
@@ -443,6 +461,9 @@ public sealed class ParkState
 
 		CountSold( _objects[at].CatalogueId );
 		_objects.RemoveAt( at );
+
+		if ( at < _fromFile )
+			--_fromFile;
 		_hoardings.Remove( thingId );
 		_rings.Remove( thingId );
 		Unlink( thingId );
@@ -727,6 +748,7 @@ public sealed class ParkState
 		// Everything the file placed, copied so that what is built and sold afterwards moves here rather
 		// than in ParkWorld, which describes a file.
 		_objects.AddRange( park.Objects );
+		_fromFile = _objects.Count;
 
 		// The save's word on how many of each item stand and when the first was built: the file's objects are
 		// counted in it already, so none of them is counted here.

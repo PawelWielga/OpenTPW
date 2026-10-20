@@ -90,4 +90,53 @@ public static class ParkObjectNames
 
 		return (names[rows.RowA], names[rows.RowB]);
 	}
+
+	/// <summary>
+	/// An item's name as <c>0x004146b0</c> joins its two lines: the first without its hyphen and the second straight
+	/// after where the first ends in '-', else the two with a space between, or the first alone where the second is
+	/// empty. So Dino Karts, rows 2 and 3, is "DinoKarts" (<c>docs/exe/hud.md</c>, "What the buy list actually filters on").
+	/// </summary>
+	public static string Joined( string first, string second )
+		=> first.Length > 0 && first[^1] == '-' ? first[..^1] + second
+			: second.Length == 0 ? first
+			: $"{first} {second}";
+
+	/// <summary><paramref name="itemId"/>'s name out of <paramref name="names"/> (<see cref="Joined"/>), or null where <see cref="Lines"/> is.</summary>
+	public static string? Name( int itemId, StringFile? names )
+		=> Lines( itemId, names ) is { } lines ? Joined( lines.A, lines.B ) : null;
+
+	/// <summary>
+	/// The name the park's lists and windows letter for <paramref name="item"/>: its <c>OBJECT_NAMES</c> rows joined
+	/// (<c>0x00412fb0</c>, which asks <c>0x004146b0</c> where the item has no object text file, and no shipped item
+	/// has one). Deviation: an item the table does not name keeps its <c>.sam</c> <c>Info.Name</c>, where the original
+	/// letters nothing; every shipped item is in the table.
+	/// </summary>
+	public static string NameOf( ParkItemCatalogue.Item item ) => Name( item.Id, Table ) ?? item.Name;
+
+	private static StringFile? _table;
+	private static BaseFileSystem? _tableFrom;
+
+	/// <summary>The running language's table, read once for each file system, or null where it will not read.</summary>
+	public static StringFile? Table
+	{
+		get
+		{
+			if ( _tableFrom == FileSystem && _tableFrom != null )
+				return _table;
+
+			_tableFrom = FileSystem;
+
+			try
+			{
+				_table = new StringFile( TablePath );
+			}
+			catch ( Exception e ) when ( e is IOException or InvalidDataException or ArgumentException or NullReferenceException )
+			{
+				Log.Warning( $"Object names: {TablePath} did not read - {e.Message}" );
+				_table = null;
+			}
+
+			return _table;
+		}
+	}
 }

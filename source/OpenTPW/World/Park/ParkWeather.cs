@@ -288,6 +288,11 @@ public sealed class ParkWeather : Entity
 	/// <summary>
 	/// Runs one weather tick for each sweep the calendar has read, so the weather keeps the
 	/// original's four-a-second beat however fast or slow the frames are coming.
+	/// <para>
+	/// A deviation: the calendar reads the frame's sweeps after the entity walk, so these ticks run in the next frame,
+	/// and each reads <see cref="GameCalendar.Days"/> as compared after the last of those sweeps. The original's
+	/// <c>FUN_00512880</c> runs inside its sweep, before that sweep's compare (<c>docs/exe/weather.md</c>).
+	/// </para>
 	/// </summary>
 	protected override void OnUpdate()
 	{

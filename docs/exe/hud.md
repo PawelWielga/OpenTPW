@@ -202,16 +202,20 @@ happiness (`q244/`, `lib/gaugesplit.py`): the original's box `(42,550)-(72,662)`
 load; OpenTPW's at 69.5%, 29.5% and 0% (paused on 766, the meter at 706, 296 and 0 of 1024; `q244/side-by-side.png`).
 
 **What the gadget hands it** (`Gadget_GaugeOnMessage` `0x004a1cd0`, timer `0x80083` every 2000 ms): the mean of
-`FUN_004c7bb0` times 1024.0f (`0x006ffa34`) times 0.01f (`0x006ffa38`), `__ftol`, so 50 is 511 and 100 is 1023, 0.01f being
-a shade under a hundredth. **The mean is a float**: each guest's happiness `__ftol`ed and masked to a byte is summed as a
+`FUN_004c7bb0` times 1024.0f (`0x006ffa34`) times 0.01f (`0x006ffa38`), `__ftol`, so 50 is 511 and 100 is 1023 at 53-bit
+precision, 0.01f being a shade under a hundredth; at 24 bits the products round up first and 50 is 512 and 100 is 1024
+(70 is 716 at either). Which precision the timer message runs under is not read (`park-engine.md`, "Which rounding is
+live"); ours is the 53-bit answer. **The mean is a float**: each guest's happiness `__ftol`ed and masked to a byte is summed as a
 whole number, and the sum is divided by the count with `FILD`/`FIDIV` (`0x004c7c96`), so 657 over 13 is 50.54 (517 units),
 not 50.
 
 **OpenTPW** (`UiMeter.Quads`, `Percent`; `ParkGadget.GaugeUnits`): the two quads as above, the dark half drawn at nought,
 `Max` 1024 and the units as the gadget's. `ParkPeople.AverageHappiness` still hands it a whole mean of every guest, where
 `GuestsInsideHappiness` is the exact routine (Q459, Q148). The log line `UI: meter 0x1f at <units> of 1024,
-the boundary <p>% up` on each change. **Not settled:** the pixels of `meter.wct` against the original's codec (type 0x13,
-which `wctorig.py` does not decode); in the frames the faces read brighter in this game than in the original's.
+the boundary <p>% up` on each change. **Not settled:** the faces show sharp in this game and blurred in the original's
+frames (the eyes and mouths gone, the colours not darker, the gadget's other pictures crisp), the mark of how the texture
+is sampled when minified, its filter and mip levels (Q29, Q519), not checked; the type-0x13 pixels of `meter.wct` are not
+checked against the original's codec either (`wctorig.py` does not decode them).
 
 ### Depth
 
@@ -718,7 +722,7 @@ size (not looked into). The finances and the loans are not built, so those two b
 
 **Predicted first, both games** (`q352/PREDICTION.txt`, three rounds; `q352/confirm.py <out> <bin>
 fix|money|bud2|month|control`, `q352/orig/run.sh` and `run2.sh`). Two predictions missed, both mine: the month's
-change at the original's tick 1383 in this game, whose calendar counts from the park's making (Q241j), and the
+change at the original's tick 1383 in this game, whose calendar counts from the scene's start (Q149), and the
 Staff costs row empty at the opening, which this game matched and the original did not: found by the original's
 run, then built as above and run again.
 
@@ -2855,12 +2859,15 @@ the strips `49,22,0;50,22,1` latch 1 (`1b-hover.png`), Escape latch 1 and `| pat
 verdict, console-driven (no player route on the stock park, so in no run of the original): the queue tool anchored on
 the NOMODIFY avenue cell (48,17) with the pointer held on (48,16), flags `0x04c0`, drew `(48,17):1[is marked NOMODIFY]
 (48,16):1[is outside the park]`, latch 1, and the edges red after Escape (`5b-hover.png`, `5-edges.png`).
-**Under a wall** (Q540): the edges are drawn after the tool's pass, so where one crosses a lifted cell its walls zero the latches the pass left (`park-engine.md`, "The walls"),
-and only a queue's join leaves one set then. In the original (`q540/orig/`, `q325/stock.TPWS`, `q540/PREDICTION.txt`
+**Under a wall** (Q540): the edges are drawn after the tool's pass, so where a blue edge crosses a lifted cell its walls zero `d50` and `d58` (`park-engine.md`, "The walls"; a red
+edge's, from the refused arm at `0x00533927`, zero neither). An edge is blue only with `d50` already nought (mode `0x36`
+answers by `d50` alone, `0x005356e4`), and only a queue's join leaves `d58` set then. In the original (`q540/orig/`, `q325/stock.TPWS`, `q540/PREDICTION.txt`
 round 1): Mike Cooper's fence drawn with the patrol tool, (52,26)-(54,27), and the locator following him laid 11 records,
 6 squares and 5 walls under (52,26) and (53,26), texture 0; the Belly Bounce's queue edited and the pointer on the join
 (49,28), `d60` 1 and `d58` 0 with the edges drawn (`a-16-join28-edges.png`), 1 with the follow off (`setcam.py off`, no
-edges, `a-17`), 0 again on; the click there laid the same five cells for $375 either way (`a-19-*`, `b-1-*`), so nothing
+edges, `a-17-join28-noedges.png`), 0 again on (no frame kept). The latch values were printed to the terminal by
+`q540/orig/lib.sh`'s `words` and are kept only as `q540/PREDICTION.txt`'s round-1 prose (eight reads of eight, four of
+four), not in a log; the frames and `.squares` are stored. The click there laid the same five cells for $375 either way (`a-19-*`, `b-1-*`), so nothing
 reads that `d58`. **OpenTPW** keeps no `d58` past a pass, so it zeroes nothing: the same clicks on the final build
 (`q540/run2`) gave "thing 26 patrols (52, 26)-(54, 27), its edges 6 squares a frame", with the queue tool still armed
 `49,22..49,27` marker 0 and `49,28` marker 8, `| patrol 6` and `| walls 5` all 0, latch 0 (`3-join-edges.png`, beside the
@@ -3738,7 +3745,8 @@ Kingdom** (Instant Action, under Proton, 2026-09-30, Q178b): exactly those, and 
 eight whose cost is nought, and no mystery row. **OpenTPW lists the same** (Q201b, `ParkResearch`: the save's
 records, an item it lacks seeded from its cost; `q201b/run2/`: rides 4, sideshows 2, shops 3). **A project finished
 marks its item, and the list lists it from its next filling** (Q701; `park-engine.md`, "The lab at work"): Dino Karts
-on the rides tab after its 95th hand-out in both games, with the recently researched star, row state 2 (Q702, below).
+on the rides tab after its 95th hand-out in both games (Q701). It bears the recently researched star, row state 2, in
+both (Q702, from `q702/dino576.TPWS`, its 4th hand-out after the load, below).
 
 **The row state is {0,1,2} and both non-zero values are pinned**: 1 = you already own at least one
 (`desc+0x18`, incremented on placement and decremented on demolition), 2 = one of the three most
@@ -3762,6 +3770,18 @@ inserts nothing. The set is the player's, saved in `gms.dat` (`FUN_005aff50`; `s
 across every park and theme. No researched item in Instant Action's Lost Kingdom has a ticket cost, which is why the
 original showed no mystery row. OpenTPW draws the row from the current player's `RideIds` (none with nobody playing); buying one
 with tickets is not built, counted `MYSTERY_RIDE_PURCHASE`.
+
+**A row's name** is `0x00412fb0`'s (called at `0x004ab079`, 0x42 characters). It takes the item's `+0x4f4` when that
+is set and is not "MISSING STRING" (`0x006fd880`): the first of the strings `NAME`, `SIGNA` and `SIGNB` (the table at
+`0x007487f8`) that `0x00413600` parses from an item's "object text file", each starting as "MISSING STRING". No shipped
+file holds those fields (none of the 274 item wads' `.txt` entries, all `qickload.txt`, nor any loose file under
+`data/`), so the name is `0x004146b0`'s: the item's two `OBJECT_NAMES` rows by the table at `0x007488d8` (both empty
+for an item it lacks), a first row ending in '-' cut and the second joined straight on (`%s%s`, `0x00749850`), else
+`%s%s%s` with a space (`0x0074986c`) between where the second is not empty and nothing where it is. Dino Karts is rows 2
+"DinoKarts" and 3 "", so its row reads "DinoKarts" where its `.sam` `Info.Name` says "Dino Karts" (Q701's frame).
+OpenTPW letters that name (`ParkObjectNames.NameOf`) in the buy list, which sorts by it, the items list, the object
+window's title and, through `FUN_004e2780`'s join, the visitor window's thought; an item the table lacks keeps its
+`.sam` name there, where the original letters nothing.
 
 **Buy Land is item 101 and Clear Land is 102**, both `WhichUIType` 4 — which is exactly *why*
 `FUN_004aaf70` appends them as synthetic rows **-1** and **-2** on tab 3 rather than finding them in the
@@ -3844,7 +3864,10 @@ Builder `FUN_004b0e30( shop )` keeps the shop in `[0x007cc288]`, calls the base 
   of kind 1 adds its `+0x19c` happiness, `__ftol`'d, low byte; the sum over their count, nought with none.
 - **Handler `FUN_004b0b30`.** `0xc067` (`b_allthings`, help 34) calls `FUN_00495aa0( 1, shop )`: the open park screen closed,
   the all-items screen on its shops tab, the shop's row picked (`FUN_00664d2a`, `FUN_00665739`). `0xc069` (`b_ardown`) is
-  `FUN_0048cbe0` and `0xc06a` (`b_arup`) `FUN_0048caf0`, the other way round from the ride's meshes. `0xc06b`'s `0x800` keeps
+  `FUN_0048cbe0` and `0xc06a` (`b_arup`) `FUN_0048caf0`, the other way round from the ride's meshes: each applies first
+  (`+0x3c`), then takes the next shop towards the newest (`0x00482da0`) or the oldest (`0x004824d0`), round from the far end,
+  through `FUN_004828f0( 1, current )` over the used-thing list (`0x00516130`, `0x00516160`): kind 3, the item's `+0x284`
+  nought and `+0x4ac` 1. `0xc068` is delete, `FUN_0048cd10` (`park-engine.md`, the confirmation box). `0xc06b`'s `0x800` keeps
   the index and sets the type-13 control `0xc07f` to `1 << index`: its setter (`FUN_0066c85a`) passes each op-0x10 child its bit
   (`FUN_0065d3a3`), and the child's mesh (`l_low`, `l_med`, `l_high`) shows its `on` texture for a set bit, `off` otherwise.
   The rest as listed above (Q177's note: `0xc081`, `0xc082`, the setters).

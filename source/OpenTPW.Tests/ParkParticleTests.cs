@@ -297,8 +297,42 @@ public class ParkParticleTests
 
 		Assert.AreEqual( (template.EmitterVelocity.X, template.EmitterVelocity.Y, template.EmitterVelocity.Z), (jet.VX, jet.VY, jet.VZ) );
 		Assert.AreEqual( 40, template.VelocityScale );
+	}
 
-		// The Spray's node rides a clip, and with its players idle the node stands where it rests.
+	/// <summary>
+	/// <b>A bought Huge Hollow Rock starts its water where the original's does</b>: anchored at (19, 27) unturned, as in
+	/// Alexah's Full Simulation save, its script's two type 1s (effect 17 on nodes 1 and 2) stand where that file's emitters
+	/// stand across and along the park, (216, 291) and (211, 281) in whole units (<c>q257v/census.out</c>), its model and
+	/// nodes standing on its corner a row before the anchor (<c>ParkObjects.ModelCell</c>). On the anchor they would stand
+	/// at (216, 301) and (211, 291). The height is the ground's, which this park does not hold.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the nodes stood on the anchor.</remarks>
+	[TestMethod]
+	public void ABoughtHollowRocksWaterStartsWhereTheOriginals()
+	{
+		const int HollowRock = 1427, Thing = 900, Water = 17;
+
+		var rides = Rides( shipped );
+
+		Assert.IsTrue( catalogue.TryGet( HollowRock, out var rock ) );
+		Assert.IsTrue( rides.BindNew( ParkBuilding.Constructed( rock, Thing, 19, 27, 0, 1, 1, default ), rock ) );
+
+		var script = rides.Scheduler.Find( rides.ScriptFor( Thing ) )!;
+
+		// Its script waits for the construction clip (WAITANIM), then starts the two.
+		for ( var now = 0; now <= 60000 && script.Effects!.Records.Count( record => record.IsParticle ) < 2; now += 250 )
+		{
+			script.Animations!.Advance( now );
+			script.Turn( now );
+		}
+
+		var placed = script.Effects!.Records.Where( record => record.IsParticle )
+			.Select( record => system.TryEmitter( record.Emitter, out var emitter ) ? (record.Node, emitter) : default )
+			.ToDictionary( pair => pair.Node, pair => pair.emitter! );
+
+		Assert.AreEqual( Water, placed[1].Effect );
+		Assert.AreEqual( (216 * 64, 291 * 64), (placed[1].X, placed[1].Z), "node 1" );
+		Assert.AreEqual( (211 * 64, 281 * 64), (placed[2].X, placed[2].Z), "node 2" );
 	}
 
 	/// <summary>
@@ -765,5 +799,23 @@ public class ParkParticleTests
 		Assert.IsNull( Level.TakeParticleDensity( Theme, null, system ) );
 		Assert.AreEqual( 1000, system.Density );
 		Assert.IsNull( Level.TakeParticleDensity( Theme, shipped, null ), "and nothing is taken with no system running" );
+	}
+
+	/// <summary>
+	/// <b>The park's read takes the density</b>, so it stands before anything of the park starts an effect (the
+	/// restored emitters of <see cref="ParkRides"/>, the land's waterfall): with nobody playing, <c>Level.CreatePark</c>
+	/// reads the shipped park and the running system is at its 500 once it answers.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the read's <c>TakeParticleDensity</c> call deleted.</remarks>
+	[TestMethod]
+	public void ReadingTheParkTakesItsDensity()
+	{
+		Assert.IsNull( Players.Roster.Current, "nobody is playing" );
+		Assert.AreSame( system, ParticleSystem.Current );
+
+		var park = Level.CreatePark( Theme, new ParkBalance( Theme, easyMode: true ), catalogue );
+
+		Assert.IsInstanceOfType( park, typeof( ParkWorld ) );
+		Assert.AreEqual( 500, system.Density );
 	}
 }

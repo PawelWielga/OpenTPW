@@ -1380,7 +1380,7 @@ public sealed class RideScript
 
 	/// <summary>
 	/// How many emitters <see cref="SweepEffects"/> has put somewhere other than where they stood, for the console's
-	/// <c>emitters</c> and the tests.
+	/// <c>endfeature</c> and the tests.
 	/// </summary>
 	public int EmittersCarried { get; private set; }
 
@@ -1391,8 +1391,8 @@ public sealed class RideScript
 	/// (<c>Particles_Move</c>), and a type 2's aimed again by the node's direction times 1024 (<c>0x00551943</c>,
 	/// <c>Particles_SetVelocity</c>). The node is where the thing's players last posed it (<see cref="RideNodes.Follow"/>),
 	/// so a trail on a clip's node goes with it, where the engine's holds the pose of the frame the model was last drawn
-	/// in. A record whose node has no matrix is passed over here, where the engine moves its emitter to the origin
-	/// (<c>0x005518f9</c>); no emitter is started on one (<see cref="StartParticle"/>).
+	/// in. A record whose node has no matrix is started at the origin (<see cref="StartParticle"/>) and passed over here,
+	/// so it stays there, as the engine's, which moves it to the origin every tick (<c>0x005518f9</c>).
 	///
 	/// <para>
 	/// A sound record with a node is moved only on the script's own eighth tick, <paramref name="soundsDue"/>
@@ -2587,7 +2587,8 @@ public sealed class RideScript
 			record.Emitter = StartParticle( type, node, effect );
 		else if ( record != null )
 		{
-			// A spawn that answers nought frees the record it was given (FUN_00557970, 0x005579f9).
+			// A spawn that answers nought frees the record it was given (FUN_00557970, 0x005579f9). With no sound
+			// device the record is kept, where the original frees it (ScriptSoundStart.NoDevice).
 			switch ( StartSound( type, node, effect, out var sound ) )
 			{
 				case ParkAudio.ScriptSoundStart.Absent:

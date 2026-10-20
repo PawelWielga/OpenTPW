@@ -87,11 +87,11 @@ Nothing on this path writes a volume. A sample's volume comes from its variation
   - Bit 4 of the header's `+0x18` takes the wait from the voice's parameter instead (`0x006c3d80`). No scream variation sets it.
   - It is counted from the child's start, and the sample's length does not come into it.
   - Shipped for the four screams: 71 1000-3000 ms, 72 500-2000, 73 100-1000, 74 0-500.
-- **Which variation it plays.** The first child takes the effect's first variation, whatever the parameter (`0x006c3e26`..`0x006c3e33`): with no child yet, `HeldChain_HeadOrFirstChild` (`0x006bdb10`) noughts the chain's own variation, which its set-up drew among all (`0x006bbf60`), where the effect has a key (`+0x12`) and the voice's flag `0x20` is clear, and sets `0x20`. All 18 shipped records have a key (6, 18, 19 or 23); a chain put back from a park file keeps its saved child and never comes there first ("A script's sounds", below). Every later child draws, weighted by each target's `+0x1e`, among the current variation's zone records whose `lo..hi` holds the voice's parameter byte (`0x006c3e1c`, `0x006c3e89`..`0x006c3e97`). No match parks the chain until a new parameter arrives (`0x006c3f49`).
+- **Which variation it plays.** The first child takes the effect's first variation, whatever the parameter (`0x006c3e26`..`0x006c3e33`): with no child yet, `HeldChain_HeadOrFirstChild` (`0x006bdb10`) noughts the chain's own variation, which its set-up drew among all (`0x006bbf60`), where the effect has a key (`+0x12`) and the voice's flag `0x20` is clear, and sets `0x20`. All 18 shipped records have a key (6, 18, 19 or 23); a chain put back from a park file comes back without `0x20` and with its saved child, so it comes there once, the first time its list empties ("A script's sounds", below): Extend appends only when `now > +0x1c` (`0x006bdb88`) and Prune deletes when `now >= +0x1c` (`0x006bdc23`), so a newest child due exactly then goes with no successor, as does one whose append failed (`0x006bdbe9`) and a parked chain's (`0x006c3f49`). A fresh chain already holds `0x20`, and an empty list there continues from its own variation. Every later child draws, weighted by each target's `+0x1e`, among the current variation's zone records whose `lo..hi` holds the voice's parameter byte (`0x006c3e1c`, `0x006c3e89`..`0x006c3e97`). No match parks the chain until a new parameter arrives (`0x006c3f49`).
 - **Where the parameter comes from.** For the screams it is parameter 6. STARTSCREAM sets it to `clamp((operand + speed) / 2, 0, 100)` straight after the play (`0x00551261`..`0x00551265`), and SCREAMLEVEL resets it. The zones send 0-25 to variation 1, 26-50 to 2, 51-75 to 3 and 76-100 to 4, so Lost Kingdom's Belly Bounce, at `(20 + 50) / 2 = 35`, screams variation 1 once and variation 2 ever after.
 - **Pruning.** A child is pruned when the clock reaches its time (`0x006bdc23`). The prune deletes it without stopping its channel (`0x006b71f0` → `0x006bb9b0`), so its sample most likely plays out over the next one's start. Whether the device reclaims that channel early is **not traced**.
 - **The clock.** It is wall time in milliseconds (`0x005f5fa0`: QueryPerformanceCounter, or timeGetTime), read once per service pass (`0x006b62c1`). It does not pause with the game.
-- **The service.** The service runs whenever `Sound_ApplyGroupVolumes` posts message `0x700b6c` (`0x0051bfab`). How often that is has **not been measured**. A child made in one pass starts on the next (`0x006bdb79`).
+- **The service.** The service runs whenever `Sound_ApplyGroupVolumes` posts message `0x700b6c` (`0x0051bfab`): in a park each frame, pause or not ("The pause substitution", below); how many passes that makes a second is **not measured**. A child made in one pass starts on the next (`0x006bdb79`).
 
 **A stop takes down one chain.**
 - `Sound_Stop` and `Sound_StopFading` find the voice by its exact handle (`0x006b6830`, generation-checked at `0x006b6876`).
@@ -263,8 +263,9 @@ heard from the midpoint of the eye and the point it looks at (`CameraMode.Ears`)
 sounds are given their record's range (`park.md`, "The land's own sounds"), and every other placed voice of a
 park its variation's (`SoundCategory.RangeOf`, Q265): a ride's screams and single screams, a guest put off, a
 yawn, the staff's voices, thunder and a bumper ride's engine. A voice out of range plays on unheard, where the
-original gives its channel up (a ride's scream and a script's chain make no child there, "A voice out of range makes
-nothing next", below), and a voice is still panned by a plain left and right. The lobby's placed voices
+original gives its channel up, except a ride's scream and a script's plain, music, chain and one-shot voices, which the service
+leaves unticked as the original's: a plain or music voice is cut and draws nothing, a chain makes no child ("A voice
+out of range makes nothing next", below), and a one-shot plays nothing and is dropped at its time ("A script's one-shot"). A voice is still panned by a plain left and right. The lobby's placed voices
 are OpenTPW's own and take no range.
 
 **Measured here, 2026-10-10** (`q265/confirm.py`, predicted first in `q265/PREDICTION.txt`; fix 4 of 4 on the
@@ -585,7 +586,10 @@ next sample", above): the volume and the pitch are drawn once, as the voice star
   then chains a stage of class `0x0070ab58` after the sample's (`FUN_006c6730`): the wait in milliseconds times the
   format's rate over a thousand, in bytes, and its read (`0x006c67f0`) passes the sample through to its end and
   then writes that many bytes of nought before it answers that it has ended. The voice's first sample goes
-  through `FUN_006bc410`, which sets no wait, so the first is followed at once.
+  through `FUN_006bc410`, which calls slot `+0x48` too (`0x006bc443`, before the volume's draw at `0x006bc461` and the
+  pitch's at `0x006bc496`) and clears nothing after it, so every start, the first and a start in range again included,
+  carries its own silence: the gulls' first sample is followed by 0 to 10 s of it (read for the review of Q563,
+  `handoff/review6/VERIFY-18.md`; not measured).
 
 **The two shipped users a park's land places** (`lib/sfxmap.py`): global ambient 2, the gulls, one variation of
 two samples at volume 49, a pitch of -2 to 2 and a wait of 0 to 10000; and 3, the sea, three variations of one
@@ -610,7 +614,7 @@ which.
 
 **What OpenTPW does** (`ParkAudio.StartFollowing`, `ServeFollowing`, `AnyVariation`, `PlaysFollowing`): a voice
 of this class is a variation drawn as `FUN_006bc810` draws it, a sample of it, the volume and pitch of the first
-kept, and after every sample but the first a silence drawn from its variation's wait, timed on the frame clock
+kept, and after every sample, the first included, a silence drawn from its variation's wait, timed on the frame clock
 from the frame the sample is found ended. Built for the land's own type 3 sounds alone; the run is in `park.md`,
 "The land's own sounds". The sample draw's own rule against the sample before (`FUN_006bc680` asked with 1, for a
 variation of more than two samples) is not built, here or for the crowd's and the music's voices.
@@ -824,7 +828,7 @@ after it**, the place `FUN_00556b90`'s under `0x200` cut to whole numbers (`__ft
 The effect's flags word makes the voice's class as for any caller (`0x006b6774`..`0x006b67f2`, "How the engine plays an
 effect"): no `0x4` the one-shot `0x006bd7b0`, looped under `0x8`; `0x4` with `0x10` `0x006be680`; with `0x2`, `0x400` the
 music's `0x006be610`, `0x100` `0x006be330`, else the plain class `0x006be090`; without `0x2`, `0x400` the held chain
-`0x006bdd30`, else the chain of any variation `0x006bdc60` (below). Lost Kingdom's 81
+`0x006bdd30`, else the chain of any variation `0x006bdc60` (below). 33 of Lost Kingdom's 81
 scripts ask for a sound 198 times (`ADDOBJ` 82, `EVENT` 116; `rselisting` over the `.RSE` corpus, each effect's flags
 from its category's file): 116 one-shots with no flag, 45 looped, 2 flat (`cat_ui` 185, and 186 looped too), 20 of the
 plain class, 6 held chains (the level ambient's 177 to 180, the staff's 188; below), 4 chains of any variation (the Crazy Ape's 89,
@@ -845,9 +849,11 @@ it: the held chain's maker `0x006bdd30` runs the same constructor and then overw
 The two vtables differ only in the destructor, slot `+0x50` (4 against 6) and the child maker, slot `+0x54`: here
 `AnyChain_MakeChild` (`0x006b7250`), a 0x50-byte child built by `AnyChainChild_Construct` (`0x006c3a00`, vtable
 `0x0070a970`), where the held chain's `0x006b72f0` builds `0x0070a9e0` (`FUN_006c3de0`). The tick (`0x006bdae0`), the
-stop (`0x006bd9b0`) and the move are the held chain's ("A held voice is a chain", above), and so is the child's every slot
-but `+0x38`, the variation: `FUN_006bc810`, the plain class's draw by weight among all of the effect's, where the scream's
-child takes `0x006c3e00`'s zones. `0x006c3a80` asks it with 0, so the rule against the variation before is never applied.
+stop (`0x006bd9b0`) and the move are the held chain's ("A held voice is a chain", above). The child's vtable is the
+scream child's (`0x0070a9e0`) at every slot but three: `+0x38`, the variation, `FUN_006bc810`, the plain class's draw by
+weight among all of the effect's, where the scream's child takes `0x006c3e00`'s zones; `+0x50`, the class number, 7
+(`0x0040f3a0`) against 9 (`0x0040f440`); and from `+0x54` on, where the scream child's has two more slots (`0x006c4010`,
+`0x006c3fc0`) and this table has ended: its `+0x54` is the float 2.0 that `0x006c3b95` compares against. `0x006c3a80` asks it with 0, so the rule against the variation before is never applied.
 A child is therefore a one-shot of any variation at a volume and a pitch of its own (`0x006c3ae0`), the next made once the
 clock passes this one's start plus its variation's wait (`0x006bc2d0`); the child before is pruned without a stop and plays
 out. A child sounds where its chain stands: its request's place is a pointer to the parent's `+0x10` (`0x006c3bea`), and
@@ -859,9 +865,11 @@ variation (FileFormats `sound-categories.md`), so the draw among all is never he
 the loops were short; the sound clock is wall time and was not touched): the Crazy Ape bought in the stock park, its queue
 joined and six guests sent in this game, saved, and loaded by the original (`chains.py`, `mixer.py`). Each loop of its go
 made a chain of 89 (`0x0004`) at (430, 0, 240), the place's height second, gone at the loop's `KILLOBJ 10`. Its children
-came 513 to 1001 ms apart over 32 gaps, 8 to 10 to a loop, all nine samples heard; the channels at that place read a far
-end of 100 and 64 of 127 (85 x 0.75). With the camera away from it the chain stood flagged `0x800`, out of range, and
-made no child at all through six loops ("A voice out of range makes nothing next", below).
+came 513 to 1006 ms apart over 45 gaps in the four runs, 8 to 10 to a loop, all nine samples heard; the channels at that
+place read a far end of 100 and 64 of 127 (85 x 0.75). With the camera away from it the chain stood flagged `0x800`, out of
+range, and made no child at all through six loops ("A voice out of range makes nothing next", below). Only 89 was
+measured so: the level ambient's held chain 177, first seen at `0x802` in the same run, made children at +755 to +9815 ms
+(`chains.py` prints the flags at first sight only, so it may have come into range).
 
 **OpenTPW** (`ParkAudio.StartScriptSound`, `RideScript.StartSound`, `SoundPlace`, `SweepEffects`, `StopEffect`): the
 seven categories by type, the one-shot (looped under `0x8`), the plain class, the music's class (below), the chain of any variation and the held chain played (`ServeScriptSounds`, the land's
@@ -879,7 +887,12 @@ nothing, as the loader `FUN_005597a0` copies it raw; the original's park entered
 script sounds, as the file puts their voices back (the stock park's fountain, `q565/orig/`, run b; Q560), where here the
 fountain is silent. There is no
 voice pool here (Q43): every script voice sounds, where the original's service keeps twelve. A chain out of range makes
-no child here either, and one at once in range again ("A voice out of range makes nothing next", below). The Crazy Ape's chain here
+no child here either, and one at once in range again ("A voice out of range makes nothing next", below). With no sound
+device a record is kept (`ParkAudio.ScriptSoundStart.NoDevice`), where the original's `Sound_PlayEffect` answers nought
+with its sound system down (`0x0051bfc8`, `0x0051bfd1`) and the record is freed (`0x005579f9`); the original with no device
+faults before a park (`0x006b7e76`, above). Through a park's menu a placed chain's children (the held chain's too) and
+a plain or music voice's samples are drawn on time and let pass unheard (`ParkAudio.Unheard`, "The pause substitution"),
+and out of range nothing is drawn under the hold either, as the pause lifts the listener in height alone. The Crazy Ape's chain here
 (`q558/confirm.py`, run4, the final binary): 14 children a loop, each gap the stated wait within 0.007 s, waits 512 to 976
 ms, volume 0.3520 (64 of 127) at (430,240,0) over 100, stopped after 14 by `KILLOBJ 10`.
 
@@ -898,10 +911,15 @@ seventh names 1 and 2 once and the others of 3 to 7 twice, so those are drawn tw
 
 **Every park file carries the live voices, and the original puts them back.** `Sound_SaveModule` (`0x0051c350`) writes
 the manager's voices after the 84 bytes, and `Sound_LoadModule` (`0x0051c400`, `0x0051c497`) reads them back through
-`0x006b5c30`, `FUN_006ba150` and `SoundManager_SerializeVoices` (`0x006b6da0`), whose case 6 rebuilds a held chain
-(vtable `0x0070a2e0`). So the stock park's gates' 177 is not started at the entry: it comes back from `Easymode.TPWI`
-with its own variation and its saved child, whose sample was variation 8's in all four runs, and its flags never hold
-`0x20`. The gate's script itself is resumed open, so it reaches no `EVENT`.
+`0x006b5c30`, `FUN_006ba150` and the reader `SoundManager_SerializeVoices` (`0x006b6da0`), whose case 6 rebuilds a held
+chain (vtable `0x0070a2e0`). So the stock park's gates' 177 is not started at the entry: it comes back from
+`Easymode.TPWI` with its saved child, whose sample was variation 8's in all four runs (`+0xc` restored at `0x006bd487`,
+kept by the set-up at `0x006bbfda`). Its own variation is drawn again: the load restores `+0x8` (`0x006bd454`..`0x006bd47c`),
+then the chain's set-up redraws it by weight among all the variations (`0x006bbfc5` -> `0x006bc810`), so it read v8, v7,
+v1 and v2 at first sight in runs c to f. The set-up also noughts the flags first (`0x006bbe93`) and never sets `0x20`, so
+the chain comes back without it, and the first time its child list empties it takes the first-child branch once and
+restarts at variation 1 ("Which variation it plays", above; run e's chain read `0x22` at every later hit). The gate's
+script itself is resumed open, so it reaches no `EVENT`.
 
 **Measured in the original** (`q559/orig/`, the real screen, `chains.py` and `brk.sh`; predicted first,
 `q559/PREDICTION.txt`): the stock park entered, the gates' chain of 177 at (450, 0, 160), key 18, parameter 0, its
@@ -909,21 +927,24 @@ children each drawn from the one before (`0x006c3aba`, 14 in runs e and f: never
 Loudspeaker bought on (45,20) here and saved before its script turned, loaded by the original (run g): its chain at
 (455, 0, 205) came through `0x006bdb1d` with key 18, flags `0x2` and its own variation 2, and its first child was
 variation 1 with variation 1's sample, the chain's flags `0x22` after; its next six v4 v5 v6 v1 v4 v2, beside the
-gates' restored chain (v6 v1 v7 v5 v3 v8). **A breakpoint set before the sound service's thread exists never reaches
-it** (run d): set it once the lobby is up.
+gates' restored chain (v6 v1 v7 v5 v3 v8). Run d's one breakpoint, `0x006bdb1d`, never hit,
+and nothing there could reach it: every fresh chain (71 to 73) stood out of range at `0x802` and made no child, and the
+restored 177 already had one (`0x006bdb1b`). Whether a breakpoint set as the game starts reaches the sound thread is not
+tested; run g set its breakpoints once the lobby was up.
 
 **OpenTPW** builds the held chain for a script (`ScriptVoiceClass.HeldChain`, `ScriptVoice.Held`, `Parameter`):
 the same children as the chain of any variation, the variation by the zones. It puts back no voice from a park file
 (`PARK_FILE_SOUND_VOICES`, at every park read), so the stock park's gates make no chain here where the original's restored
-one makes children (Q560). The Loudspeaker here (`q559/confirm.py`, run2): its chain at (455,205,0), first child variation 1,
-27 children with no repeat, waits 1079 to 3819 ms, each gap its stated wait within 0.006 s.
+one makes children (Q560). The Loudspeaker here (`q559/confirm.py`, run3 on the final binary): its chain at (455,205,0), first child
+variation 1, 22 children with no repeat, waits 1124 to 3993 ms, each gap its stated wait within 0.001 to 0.006 s
+(run2, the first build: 27, 1079 to 3819 ms).
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
 | `0x006bdc60` | `Voice_MakeAnyChain` | The maker for flags `0x4` with neither `0x2` nor `0x400` | Decompiled |
 | `0x006bdcb0`, `0x0070a390` | `AnyChain_Construct` | The chain's constructor and the vtable it keeps (the held chain's base) | Decompiled; the vtables read side by side |
 | `0x006b7250` | `AnyChain_MakeChild` | Slot `+0x54`: a 0x50-byte child, `AnyChainChild_Construct` | Decompiled |
-| `0x006c3a00`, `0x0070a970` | `AnyChainChild_Construct` | The child's constructor and vtable: the scream child's but slot `+0x38`, `FUN_006bc810` | Decompiled; the vtables read side by side |
+| `0x006c3a00`, `0x0070a970` | `AnyChainChild_Construct` | The child's constructor and vtable: the scream child's but slot `+0x38` (`FUN_006bc810`), slot `+0x50` (7 against 9) and the scream child's two slots from `+0x54` | Decompiled; the vtables read side by side |
 | `0x006bda20` | — | The chain's move, slot `+0x24`: its own place, then every child in the chain (`FUN_006c3c70`) | Disassembly |
 | `0x006c3bea` | — | A child's request takes a pointer to its parent's place, `+0x10` | Disassembly |
 | `0x006bdd30` | `Voice_MakeHeldChain` | The maker for flags `0x404` without `0x2`: `HeldChain_Construct`, then the set-up (slot `+0x10`, `0x006bbf60`) | Decompiled |
@@ -933,7 +954,8 @@ one makes children (Q560). The Loudspeaker here (`q559/confirm.py`, run2): its c
 | `0x006c3a80` | `ChainChild_Start` | A child's variation (slot `+0x38`), sample (`+0x3c`) and time (`+0x4c` plus now) | Disassembly; `brk.sh` at `0x006c3aa3`/`0x006c3aba` |
 | `0x006c3e00` | `HeldChainChild_PickVariation` | The held chain's child: the effect's first, else a weighted draw among the zones of the chain's own that hold its parameter | Decompiled; `brk.sh`, runs e to g |
 | `0x0051c350`, `0x0051c400` | `Sound_SaveModule`, `Sound_LoadModule` | A park file's sound module: the 84 bytes, then the live voices (`0x006b5c10`, `0x006b5c30`) | Decompiled; runs c to g |
-| `0x006b6da0` | `SoundManager_SerializeVoices` | The voice list written or read; on a read, case 6 rebuilds a held chain | Decompiled |
+| `0x006b6c30` | — | The voice list written (from `0x006ba0c0`, `0x006ba137`), all through the stream's slot `+0xc`: L and the count as placeholders, the manager's record, the handle counter, a handle and a record per voice; L and the count written back last | Disassembly |
+| `0x006b6da0` | `SoundManager_SerializeVoices` | The voice list READ back, only (the stream's slot `+0x8`, `0x006b6e2d`): every live voice stopped and unlinked first (`0x006b6deb`..`0x006b6e16`), then a case per class, 6 rebuilding a held chain. The project's name says more than it does | Decompiled; disassembly |
 
 **The music's class of a script** (flags `0x406`, `0x006be610`; read for Q561, `q561/`). Its one user in Lost Kingdom is
 the bus: `bus.RSE` opens each lap with `ADDOBJ 8 1 6 1`, the global ambient's 6 on the bus's sound node, then
@@ -956,7 +978,8 @@ voice. The music's class's slot `+0x28` (`MusicVoice_SetParameter`, `0x006be580`
 `q561/PREDICTION.txt`): the stock park, the camera on the bus stop. Each lap's voice came at the body's place in the
 model's file, (296, 5, -114), keys 20, 21, 0, 0, variation 1, then rode the bus (677, 5, -75) ... (529, 5, 64) at the
 first stop and (439, 5, 65) at the second, and went. Its variations ran v1 v5 v6 v7 then v1 to v4 never twice running,
-v5 v6 v7 at each drive's end, the keys of slots 1 and 2 following the variation (20, 21 on 1 to 4; 20, 0 on 5 to 7).
+v5 v6 v7 at each drive's end, slot 0's key 20 throughout and slot 1's following the variation (21 on 1 to 4, nought on 5
+to 7; `0x006bbf00` writes key bytes 1 and 2 from the variation's `+0x16` and `+0x1a`).
 Its channel played 68 of 127 (90 x 0.75) at 18408 Hz on every sample, 22050 x 2^(-25/96): the first sample's pitch,
 -24 (slot 1's key 21 is never set, so its value is nought), kept by every later one ("A held voice's next sample").
 **Out of range (`0x800`, no channel) it drew no next sample**: it held variation 1 from its coming until it had a
@@ -993,12 +1016,22 @@ against the voice's current variation's (`FUN_006bc650`); past it the voice is f
   child, the child before playing out (the children are not in the voice list). In range again `HeldChain_Extend`
   appends one child at once, its newest child's time long past, and the next its wait after that: one a pass, never one
   for each wait missed. A held chain's range is its newest child's: the child's draw writes its variation into the chain
-  (`0x006c3e00`). Of the 48 effects of a chain, the plain class or the music's that Lost Kingdom's categories hold, only
-  the staff's 188 has variations of two ranges (its fourth 85, the others 90).
+  (`0x006c3e00`). A chain of any variation's child (class `0x0070a970`, slot `+0x38` `FUN_006bc810`) writes only its own
+  `+0x8`, and its start (`0x006c3a80`) nothing of the chain's, so that chain ranges by its set-up's draw for its whole
+  life (`0x006bbfc5`, by weight among all), and a held chain does too before its first child (`0x006bdb2b` noughts it
+  inside the first tick, which is in range). Of the 48 placed effects flagged `0x4` that Lost Kingdom's categories hold
+  (47 of a chain, the plain class or the music's, and the global rides' 115 of the `0x10` class), only the staff's 188,
+  a held chain, has variations of two ranges (its fourth 85, the others 90).
 - **The plain class and the music's** (slot `+0x14`, `0x006bdf50`): with bit `0x1` clear the tick starts a channel on the
-  sample the voice holds, its volume and pitch drawn by slot `+0x44` (`FUN_006bc410`), as at a first start. The next
-  sample is slot 0 (`0x006bde00`), queued on the channel, so with no channel nothing is drawn: the voice holds its
-  variation until it is in range again, and then plays that variation's sample afresh.
+  sample the voice holds, its silence, volume and pitch drawn by slot `+0x44` (`FUN_006bc410`), as at a first start.
+  The next sample is slot 0 (`0x006bde00`), and only a stage on the channel calls it: under request bit `0x800` the source
+  builder (`0x006ba610`, `0x006ba8db`) wraps the sample's stages, the silence's included, in a stage of class
+  `0x0070a6c8` whose `+0x18` is the voice, and that stage's read (`0x006c74e0`) calls `0x006c75d0`, and it the voice's
+  slot 0, only once its inner stage answers that it has ended, which the silence's stage (`0x006c67f0`) does after its
+  last nought byte. So the next sample is drawn at the end of the silence, never at the sample's start or end, and with no
+  channel nothing is drawn: the voice holds the sample that last played, through a silence too, until it is in range
+  again, and then plays that sample afresh, followed by a silence drawn afresh (read for the review of Q563,
+  `handoff/review6/VERIFY-18.md`).
 
 **Measured in the original** (`q563/orig/run.sh`, run b on the real screen, `musicvoices.py`; predicted first,
 `q563/PREDICTION.txt`): the stock park, the camera on the bus stop; when the bus's voice first had a channel the camera
@@ -1010,13 +1043,13 @@ idles. Out of range at the lap's end (374, 5, 57) it held v1 until it went.
 **OpenTPW** (`ParkAudio.InRange`, `Reached`, `SoundAgain`, `ScriptVoice.Away`): a script's plain, music and chain voices
 are asked each frame whether the listener is in range, over the ground's two axes and the current variation's range.
 Away, a plain or music voice's sample is cut and nothing is drawn; in range again its held sample starts at once with a
-volume and pitch drawn afresh, and the next follows as before. A chain makes no child away, and one at once on its
+silence, a volume and a pitch drawn afresh, and the next follows as before. A chain makes no child away, and one at once on its
 return. Started out of range, a voice holds its first variation (a chain its first child) until it is in range. The
 bus here (`q563/confirm.py`, run5, the final binary): "out of range at (686,-77), variation 1 held after 0 sample(s)",
 "in range again ... variation 1 afresh", then 5; the camera away, "out of range at (568,64), variation 1 held after 1
-sample(s)", no sample, "variation 1 afresh" on its return; 17 samples to `KILLOBJ 1`. **Said:** where the original's
-voice left range in a silence, its next sample was already queued (slot 0) and it plays that one on its return; here the
-one that last played (when the original queues the next is not read). Not built: the pool of twelve (Q43).
+sample(s)", no sample, "variation 1 afresh" on its return; 17 samples to `KILLOBJ 1`. A voice that left range in a
+silence plays on its return the sample that last played, as the original's, whose next is drawn only at the silence's
+end (the bullet above). Not built: the pool of twelve (Q43).
 
 **A ride's scream is the same** (Q564, `q564/`). `STARTSCREAM` (`FUN_00551130`) calls `Sound_PlayEffect` with no range,
 so the held chain (`0x0404`, kids 71 to 74) is in range by its newest child's variation's, 95 on every one, and out of it
@@ -1026,7 +1059,8 @@ makes no child, its first included. **Measured in the original** (`q564/orig/run
 7 came `0x802` and made none; back, 11 and 81 children. A chain that came `0x802` made its first child (v1) as the camera
 came back. The listener (`voices.py`) stood at the midpoint of the eye and the point looked at, (525, 35, 222), 28 from
 the ride. **OpenTPW** (`ParkScreams.InRange`, `Chain.Away`): each chain is asked each pass, over the ground's two axes and
-its newest child's variation's range, before its first the first variation's; away it makes no child and the one before
+its newest child's variation's range, before its first the first variation's (the original's is its set-up's weighted
+draw, `0x006bc810`; every kids' scream variation is 95, so nothing differs); away it makes no child and the one before
 plays out; in range again it makes one at once, the next its wait after; a chain let go by a second start the same. The
 stock park (`q564/confirm.py`, run2, the final binary): near 6 chains and 53 children; away 12 chains, each "out of
 range at (525,250) after 0 child(ren)", and none; back 20, a chain started away "in range again after 0 child(ren)"
@@ -1036,14 +1070,29 @@ then its first; main's binary made 87 children away.
 (`0x006bbf60`, slot `+0x10`) draws the voice's variation and its sample once (`+0x8`, `+0xc`) and writes at `+0x1c` the
 wall clock plus 250 ms plus the sample record's length (its `+0x08`, FileFormats `sound-categories.md`). Each pass
 (`SoundService_Pass`) first drops a voice flagged `0x10`, then a voice without voice flag `0x2` whose `+0x1c` the clock
-has passed (`Voice_IsPastDrop`, `0x006bcb60`; `+0x3c` is added, nought but under the sound commands 2 and 3,
-`0x006bcab0`), and only then asks the range. The drop (`SoundService_DropVoice`, `0x006b6440`) moves the voice to the free
-list (`0x006b6a50`) and stops no channel. A one-shot in range is ticked (`OneShot_Tick`, `0x006bd800`): with neither
-`0x1` nor `0x10` it starts a channel on its held sample, its volume and pitch drawn (slot `+0x44`). A channel's end
+has passed (`Voice_IsPastDrop`, `0x006bcb60`; `+0x3c` is added, the wait each channel start draws, below, and nought
+before the first), and only then asks the range. The drop (`SoundService_DropVoice`, `0x006b6440`) moves the voice to the free
+list (`0x006b6a50`) and stops no channel; the base destructor masks its handle (`0x006bb9b3`..`0x006bb9c7`), so a later
+`Sound_Stop` or move finds nothing. A one-shot in range is ticked (`OneShot_Tick`, `0x006bd800`): with neither `0x1` nor
+`0x10` it starts a channel on its held sample (slot `+0x44`, `0x006bc410`). That start draws the volume (`0x006bc090`),
+the pitch (`0x006bc170`) and the variation's wait (slot `+0x4c`, `0x006bc2d0`; "How the wait is drawn", above) and writes
+the wait to `+0x3c` (`0x006bc4fa`), so a one-shot that has had a channel is dropped at its set-up, 250 ms, its length and
+that wait. Then, its draws spent, it refuses (answers nought) a voice past that drop (`0x006bc4fd`), and a placed one
+(without voice flag `0x8`, which effect flag `0x200` gives), not looped (`0x2`), whose record is over 1000 ms and whose time
+since its set-up, counted round its length (`0x006bc53e`), is past 1000 ms with under 1000 ms left
+(`0x006bc540`..`0x006bc55d`). `OneShot_Tick` then flags it `0x10` (`0x006bd8fa`) and the next pass drops it unheard. The
+sound commands 2 and 3 (`0x006bcab0`), sent on focus loss (`0x0046b73c`) and by the P key's pause (`0x004093af`) and their
+resumes, also write `+0x3c`: 2 pushes the drop far out while it is nought, and 3 leaves it so until a channel start
+rewrites it. A park's menu sends neither (the pause helper `0x004092a0` with 0 only lifts the listener), so a one-shot's
+drop runs on through a menu. A channel's end
 (`Voice_ChannelEnded`, slot `+0x4`, `0x006bbe40`) clears `0x1` and the handle, and flags `0x10` only for an end of its own
 with none of `0x40`, `0x800` and `0x4000`. So a one-shot started out of range plays nothing and goes 250 ms after its
-length; one cut by leaving range starts again from the top if it is in range before that; a sample playing at the drop
-plays out. A looped one (voice flags `0x6`) is never dropped by time: out of range its channel is given up, in range
+length; one cut by leaving range starts again from the top if it is in range before that, unless it is back in the
+last second of a sample over a second long and more than a second in (in Lost Kingdom kids 51 from 2.25 to 3.25 s after
+its set-up; level rides 78, 108, 140, 142, 143, 149, 153, 168, 184 and 219, level ambient 190 to 192 and global ambient
+195 the same; kids 49's longest sample leaves 4 ms; the Gates' 185 is flat and never refused); a sample playing at the
+drop plays out. The Lost Kingdom one-shots with a wait are the Monkey's level rides 82, 83, 86 and 87 (1000, 500, 1000 and
+1000 ms, each the same both ways). A looped one (voice flags `0x6`) is never dropped by time: out of range its channel is given up, in range
 again a fresh channel.
 
 **Measured in the original** (`q565/orig/run.sh`, run b on the real screen, `oneshots.py`; predicted first,
@@ -1052,17 +1101,28 @@ the one-shots that came, every one never played went 3 to 45 ms after its drop w
 the 40 s away none was played (the toilets' 7, the Jungle Spray's 6 at (525, 315), the guests' others), each gone at its
 length plus 250 ms, -5 to +39 ms; back, the toilets' 14 were played and went by their own end or their drop. The Round
 Fountain's looped 107 (`0x0008`) at (585, 0, 185) was in the list from the park's entry, put back from the file (Q560),
-`0x806` until the camera came, then a channel; away `0x806` with none, back a new channel. **Not measured:** a one-shot
-cut while it plays and in range again before its drop (the decode alone).
+`0x806` until the camera came, then a channel; away `0x806` with none, back a new channel. The original's park clock ran
+1.61, 1.50 and 1.60 times too fast in runs b, c and d (the computer up 8.4 days; `q565/orig/*-screenchains.out`): the
+drop timings are on the sound service's own clock (`0x005f5fa0`) and stand, while the counts of each stretch and the
+first sounds' times ride the fast park clock. **Not measured:** a one-shot cut while it plays and in range again before
+its drop, and a start refused late in its sample (the decode alone; no run brought the camera in in a long one-shot's
+last second).
 
 **OpenTPW** (`ScriptVoice.DropAt`, `ServeOneShot`, `StartOneShot`; `SoundCategory.PickSample`, `PlaySample`): a script's
 one-shot draws its sample at its start and holds it; it plays only in range, over the ground's two axes and its
-variation's range; away it is cut, and in range again it starts from the top with a volume and pitch drawn afresh; not
-looped, it is dropped at its start plus 250 ms plus its record's length, a sample still playing left to play out (the
-console's `scriptsounds`: "one-shots dropped"). The stock park here (`q565/confirm.py`, the final binary), the camera
-on the Jungle Spray (525, 300) as in the original's run d (where its 10 near were played and its 9 away were not, -1 to
-+26 ms): run5 near its 8 played, away 21 one-shots each "held" and "dropped after 0 sample(s), its length and 250 ms
-past, out of range"; run3 back its 8 played; main's binary held none of 8 away. The frame clock stands for the
+variation's range; away it is cut, and in range again it starts from the top with a volume, a pitch and a wait drawn
+afresh, unless its start is refused as the original's (`ParkAudio.LateStart`, or past its drop), when it is let go on the
+next pass; not looped, it is dropped at its set-up plus 250 ms plus its record's length plus its newest start's wait, a
+sample still playing left to play out, and its script neither stops nor moves it after (the console's `scriptsounds`:
+"one-shots dropped", "refused"). Under a park's menu an unlooped one that starts in range passes unheard
+(`ScriptVoice.UnheardUntil`: its draws made and no voice), cut by leaving range and let go at its sample's end; a looped
+one is born held and sounds on the resume, where the original's has looped on unheard (the same sample, its phase
+apart). The stock park here (`q565/confirm.py`, Q565's final binary), the camera on the Jungle Spray
+(525, 300) as in the original's run d (where its 10 near were played and its 9 away were not, -1 to +26 ms): run5 near 8
+started, 6 played and two the global rides' 212, with no sample before Q566, away 21 one-shots each "held" and "dropped after 0
+sample(s), its length and 250 ms past, out of range", 9 of them the Spray's and 12 the toilets'; run3 back its 8 played;
+main's binary held none of 8 away. **Not built:** the sound commands 2 and 3, so here a drop is not suspended on focus loss or by the
+P key's pause (queued from the review of Q565). The frame clock stands for the
 original's wall clock, as for a chain.
 
 | Address | Original name | What it is | Evidence |
@@ -1071,10 +1131,14 @@ original's wall clock, as for a chain.
 | `0x006b6bc0` | — | A voice put in the pass's array, sorted by its key at `+0x20` | Decompiled |
 | `0x006bdf50` | — | The plain and music classes' slot `+0x14`: a channel started on the held sample when bit `0x1` is clear | Disassembly |
 | `0x006bbf60` | `Voice_SetUp` | Slot `+0x10`: the variation and sample drawn and held, and `+0x1c` the clock + 250 + the sample's length | Decompiled |
-| `0x006bcb60` | `Voice_IsPastDrop` | Without voice flag `0x2`, whether the clock has passed `+0x1c` (+ `+0x3c`) | Disassembly; `oneshots.py`, run b |
+| `0x006bcb60` | `Voice_IsPastDrop` | Without voice flag `0x2`, whether the clock has passed `+0x1c` + `+0x3c` (the wait a channel start draws) | Disassembly; `oneshots.py`, run b; VERIFY-19 |
 | `0x006b6440`, `0x006b6a50` | `SoundService_DropVoice`, — | A voice dropped: its destructor, then onto the free list; no channel stopped | Decompiled |
-| `0x006bd800` | `OneShot_Tick` | A one-shot's slot `+0x14`: a channel on its held sample when neither `0x1` nor `0x10` is set | Disassembly |
+| `0x006bd800` | `OneShot_Tick` | A one-shot's slot `+0x14`: a channel on its held sample when neither `0x1` nor `0x10` is set; `0x10` when slot `+0x44` refuses (`0x006bd8fa`) | Disassembly; VERIFY-19 |
+| `0x006bc4f4`..`0x006bc55d` | — | In `0x006bc410` (a one-shot's slot `+0x44`): after the volume and pitch, the wait drawn into `+0x3c`, then a start past the drop, or placed, unlooped, over 1000 ms and past 1000 ms into its sample (from its set-up, round its length) with under 1000 ms left, refused | Disassembly; VERIFY-19 |
 | `0x006bbe40` | `Voice_ChannelEnded` | Slot `+0x4`: `0x1` and the handle cleared; `0x10` for an end of its own outside `0x40`, `0x800`, `0x4000` | Disassembly; `oneshots.py` (lobby `0x9` to `0x18`) |
+| `0x0070a6c8` | — | The queue stage's vtable: wraps a plain or music voice's sample and silence under request bit `0x800`, its `+0x18` the voice (`0x006ba8db`..`0x006ba900`) | Disassembly; VERIFY-18 |
+| `0x006c74e0` | — | The queue stage's read (slot `+0x1c`): reads its inner stage, and when that answers ended calls `0x006c75d0` | Disassembly; VERIFY-18 |
+| `0x006c75d0` | — | Calls the voice's slot 0 (`0x006bde00`): the next variation and sample drawn, at the end of the silence | Disassembly; VERIFY-18 |
 
 ## Node lookup is by id AND a capability flag
 
@@ -1156,6 +1220,22 @@ That last one is why the flag is better read as **"the world is not being heard 
 There is also a genuine **2D path**, so "a 2D sound is just one played at (0,0,0)" is true of `Sound_PlayEffect`'s shape but misleading about the engine: wrapper slot `+0x74` (`0x006d2640`) takes a flag — non-zero calls `QSWaveMixSetSourcePosition` (listener-relative), zero calls `QSWaveMixSetPosition` (**listener-independent**). The choice is made per voice at one place, `FUN_006b7fa0`, from **bit `0x20` of `params+0xc`**, which `FUN_006bc410` sets for a placed voice (`0x006bc5d7`) and leaves clear for a voice with flag `0x8`, which is given bit `0x1` instead (`0x006bc52d`). The music's and the UI's effect records hold `0x200` (music 2 is `0x0606` in all four themes, and all 45 effects of `cat_uiSFX.map` carry the bit), so their voices take the `QSWaveMixSetPosition` path; what the mixer makes of that path under the lift is not read.
 
 OpenTPW reproduces the *which* and the *how much* by another means: `Audio.HoldPlaced` holds every voice that has a place to silence, where the original lifts the listener past their ranges.
+
+**The service does not stop for a pause.** It is posted each frame straight after the listener's update that makes the
+lift (`Sound_ApplyGroupVolumes`, `0x0051bd70`, called at `0x0054f9f4`, after `FUN_0051c1d0` at `0x0054f9e4`), its clock is wall time
+(`0x005f5fa0`, read at `0x006b62c1`), and its range test (`FUN_006bca10`) measures over x and z alone (`FUN_006bb9f0`,
+`0x006bba0d`..`0x006bba17`), which the lift leaves as they were. So through a pause every placed voice stays in range
+or out of it as before, and one in range is ticked: a chain goes on making children (`0x006bdae0`), a voice of the plain class goes on with
+its samples, a one-shot coming into range starts its channel and its drop runs on (only focus loss and the P key's pause
+suspend a drop, "A script's one-shot", below), and the mixer plays them all at nought; on
+resume whatever is still sounding is heard from where it has got to. OpenTPW's hold freezes a voice instead, and one
+started under it would be born held and let go with every other on resume, so a placed chain's child or plain sample due
+under the hold, the land's following voices' too, is drawn and its time let pass with no voice (`ParkAudio.Unheard`):
+the clock and the draws are the original's, and an unheard one still sounding at the resume is not heard. A scream is
+the same held chain (vtable `0x0070a2e0`, whose slot `+0x14` is the tick `0x006bdae0`, as is `0x0070a390`'s), so the
+screams' pump runs through the hold the same way (`ParkAudio.OnUpdate`, `PlayScream`): a child due under it is drawn
+with no voice, and after the resume the next comes at the time the running clock gives it. A voice out of range makes
+nothing under the hold either, here as there ("A voice out of range makes nothing next").
 
 ### The QMixer wrapper vtable
 

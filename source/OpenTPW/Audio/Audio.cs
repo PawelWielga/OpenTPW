@@ -283,6 +283,12 @@ public static class Audio
 	private static bool _placedHeld;
 
 	/// <summary>
+	/// Whether voices that sound somewhere in the world are being held, so that a placed voice started now would be
+	/// born held (<see cref="HoldPlaced"/>, <see cref="Play"/>).
+	/// </summary>
+	public static bool PlacedHeld => _placedHeld;
+
+	/// <summary>
 	/// Holds every voice that sounds somewhere in the world, or lets them all go again, while the
 	/// rest of the mix carries on. Idempotent: telling it what it already is costs nothing.
 	///
@@ -377,9 +383,11 @@ public static class Audio
 
 			// A placed voice started while the world is held is born held, so "nothing placed sounds
 			// while a park is paused" is true by construction rather than by the accident that every
-			// placed source happens to be driven by the game clock. Nothing can reach here today with
-			// the clock stopped - the weather and the ride VM both tick on it - which is exactly why
-			// the invariant is worth stating in code instead of resting on that.
+			// placed source happens to be driven by the game clock. Some are not: the park's serve
+			// loops run on Time through the hold, and they ask PlacedHeld first and start no placed
+			// voice under it (ParkAudio.ServeFollowing, ParkAudio.ServeScriptSounds, PlayScream), since a
+			// voice born held here is let go with every other on resume. A script's looped one-shot is
+			// the one born held (ParkAudio.StartOneShot).
 			if ( _placedHeld && voice.IsPlaced )
 				voice.Pause();
 

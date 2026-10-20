@@ -24,11 +24,14 @@ render list 1 of the manager `[0x0087a6d0]` (`Model_ShowInRenderList`, `0x0045bd
 node word `|= 0x11`); `FUN_0045bdd0` takes it out (`Advisor_KillModel` calls it), and in the End it was out a tick
 after each line (839 after 838's end); which caller does that was not traced. The park has one view, made by
 `FUN_00576310` at the manager's `+0x48` with flags `0x1f31`; `Render_DrawView` (`0x00576a00`) draws lists 1 to 6 under
-its `0x20`, and nothing in his path reads `gui_CameraFlags`, so the ride view (the End's, `0x0b04`) draws him as the
+its `0x20`, and neither his draw nor the lists' walk reads `gui_CameraFlags` (`Render_DrawView`'s one read,
+`0x00576a9f`, `& 0x16`, only picks the ground's cell set), so the ride view (the End's, `0x0b04`) draws him as the
 orbit does. His draw stamps the renderable's `+0x90`/`+0x94` with the frame counter `[0x008bcc40]` (`FUN_00583790`)
 and the views drawn in it `[0x008bcc44]`; `original/advdraw.py` reads that. Measured in the End
-(`q556/PREDICTION.txt` rounds 1 to 3): the view `0x1f31` throughout; each line's slot in list 1 and drawn every frame
-of it, and seen (`q556/orig/c-film-21.0`, `24.0`, `29.0`).
+(`q556/PREDICTION.txt` rounds 1 to 3): the view `0x1f31` throughout; each line's slot in list 1 and his draw entered
+at every poll of it (`advdraw.py` polls every 0.05 s and takes a stamp up to two frames old; the stamp is written before
+the draw's return on the renderable's flag `0x4`, `0x0057a85f`, so it says the draw was entered, not that he was
+drawn), and seen in the film (`q556/orig/c-film-21.0`, `24.0`, `29.0`).
 
 **Draw order.** Because of the see-through discs, the model draws in two passes: every solid half first, then every see-through half in file order. Drawn mesh by mesh, a hand behind him shows through. Any future screen-drawn model with see-through parts needs the same two passes.
 
@@ -265,7 +268,7 @@ The click's level was measured by disk capture rather than read from the `.sdt`.
 | `-2` / `b_exit` | — | Cancel | Layout stream |
 | `0x0078d8d8` | GameOptions object | The live options object | Ghidra |
 | `0x00423690` | `GameOptions_Construct` | Where the defaults come from | Ghidra |
-| `0x00423740` | `GameOptions_CheckChanges` | Compares each option with its value when the screen opened: a new graphics quality reloads the detail file, and other changes raise a restart level at `+0x94` | Decompile |
+| `0x00423740` | `GameOptions_CheckChanges` | Compares each option with its value when the screen opened, raising a restart level at `+0x94`: for a new graphics quality, `0x00423bc0` reads that quality's detail file into a local only to compare it with the values loaded at boot (`FUN_0044dc60`, the one loader of the live detail file; `lobby.md`'s `0x007858c8` row), and a difference raises the level | Decompile |
 | `0x004237f0` | `GameOptions_Accept` | The tick: calls `CheckChanges` (`0x00423814`), reads `+0x94`, and shows RESTART GAME (UITEXT 403, pushed at `0x0042387d`) instead of closing when a restart is due. The box's tick (`GameOptions_RestartBox_Tick` `0x00424bb0`) leaves a park through the autosave (`saves.md`, "Leaving a park: the autosave"). OpenTPW's `OptionsScreen` skips that check; its display and resolution take effect on the tick, with no restart | Disassembly |
 | — | `Sound_ApplyGroupVolumes` | Speech volume 0 disables the duck — **proven** here | Ghidra |
 | `0x1d4c8` | — | The rendering row's control | Layout stream |

@@ -180,6 +180,91 @@ public class ParkResearchMessagesTests
 	}
 
 	/// <summary>
+	/// A played ring's <c>mWrappedAround</c> and <c>mTemp</c> go through the file in <c>FUN_004cdb80</c>'s order: the
+	/// wrapped byte at +8, then <c>mTemp</c>'s two bytes at +9. A body whose rides ring holds (2, 3, wrapped, mTemp 7,
+	/// 1102, 1104, 1108), as a played park's can, reads so; a push wraps it to slot 0 and keeps <c>mTemp</c>; and the
+	/// written bytes are the same three, 1, 7, 0.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the wrapped byte and <c>mTemp</c> swapped in the reader, or in the writer.</remarks>
+	[TestMethod]
+	public void AWrappedRingAndItsTempAreReadAndWrittenInTheirPlaces()
+	{
+		var data = GameData.Required();
+		var body = new SaveReader( new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) ) ).ReadFile();
+		var shipped = new ParkWorld( body );
+		// The rides ring's place in the analyser's record (FUN_004c5d70).
+		var at = shipped.AnalyserAt + 62500;
+
+		var played = body.ToArray();
+		byte[] ring = [2, 0, 0, 0, 3, 0, 0, 0, 1, 7, 0, 0x4e, 0x04, 0x50, 0x04, 0x54, 0x04];
+		ring.CopyTo( played, at );
+		var read = new ParkWorld( played ).RecentlyResearched!;
+
+		Assert.AreEqual( (2, 3, true, (ushort)7), (read[0].Current, read[0].Entries, read[0].Wrapped, read[0].Temp) );
+		CollectionAssert.AreEqual( new ushort[] { 1102, 1104, 1108 }, read[0].Data );
+
+		var rings = new ParkResearchedRings( read );
+		rings.Push( 0, 1150 );
+		var written = body.ToArray();
+		shipped.PutRecentlyResearched( written, rings.Written );
+
+		CollectionAssert.AreEqual( new byte[] { 0, 0, 0, 0, 3, 0, 0, 0, 1, 7, 0, 0x7e, 0x04, 0x50, 0x04, 0x54, 0x04 }, written[at..(at + 17)],
+			"slot 0 takes 1150, wrapped stays 1 at +8, mTemp 7 at +9" );
+		var again = new ParkWorld( written ).RecentlyResearched!;
+		Assert.AreEqual( (0, true, (ushort)7), (again[0].Current, again[0].Wrapped, again[0].Temp) );
+		CollectionAssert.AreEqual( new[] { 1150, 1108, 1104 }, Enumerable.Range( 0, 3 ).Select( back => new ParkResearchedRings( again ).Back( 0, back ) ).ToArray() );
+	}
+
+	/// <summary>
+	/// The level's hooks on the lab (Level.HearResearch) over the stock park: a finish goes into the ring of the item's
+	/// buy list tab, not its project's kind, so an upgrade of the Dino Karts (kind 4) stars the rides tab (0x004c73c3);
+	/// a group raised posts its advisor line; and the end marks the player's jungle record and posts row 167.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the ring's tab the project's kind (an upgrade pushes nothing); GroupOpened not hooked; AllDone
+	/// not hooked, or the end with another theme.</remarks>
+	[TestMethod]
+	public void TheLevelHooksTheLabToTheItemsTabTheAdvisorAndTheEnd()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+		var park = new ParkWorld( new SaveReader( new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) ) ).ReadFile() );
+		var catalogue = new ParkItemCatalogue( "jungle", data, instantAction: true );
+		var state = new ParkState( park ) { AdvisorMessages = new ParkAdvisorMessages( Settings(), instantAction: () => true ) };
+		var file = new PlayerFile { InstantAction = true };
+		LobbyCountedGapsTests.SetCurrentPlayer( new Player( 0, "Test", file ) );
+
+		try
+		{
+			Assert.IsTrue( catalogue.TryGet( 1150, out var karts ) );
+			Assert.AreEqual( 0, karts.UiType );
+
+			// The kart's upgrade alone, kind 4, a hand-out from done: 100 / 100 x 50 x 12 x 0.01 = 6.
+			var lab = new ParkResearch( [], catalogue, [new( 1150, ParkResearch.Upgrade, 0, 1, 6f, 0f )],
+				[new( 0, 0 ), new( 0, 0 ), new( 0, 0 ), new( 0, 0 ), new( 100, 0, 0, 0 )], workLoad: 50 );
+			var ends = 0;
+			Level.HearResearch( lab, state, catalogue, "jungle", () => ++ends );
+
+			Assert.AreEqual( (1150, true), (lab.SpendPoints( 12, 820 ).Single().ItemId, lab.Projects.All( project => project.Done >= project.Cost )) );
+			Assert.AreEqual( "[1150,0,0] current 0 wrapped 0", state.RecentlyResearched.Census( 0 ), "the rides tab's ring" );
+			Assert.IsTrue( Enumerable.Range( 1, 3 ).All( tab => state.RecentlyResearched.Written[tab].Current == -1 ) );
+
+			var slots = state.AdvisorMessages!.WrittenSlots( _ => -1 ).Where( written => written is { Valid: true } ).Select( written => written!.Value );
+			CollectionAssert.AreEquivalent( new[] { (ParkAdvisorMessages.UpgradeResearched, 1150), (ParkAdvisorMessages.AllResearched, 0) },
+				slots.Select( slot => (slot.Message, slot.Secondary) ).ToArray(), "the upgrade's line and row 167" );
+			Assert.IsTrue( file.Park( "jungle" ).AllResearchCompleted );
+			Assert.AreEqual( 1, ends, "the End feature follows" );
+
+			lab.GroupOpened!( 1, 840 );
+			Assert.IsTrue( state.AdvisorMessages.WrittenSlots( _ => -1 ).Any( written => written is { Valid: true } && written.Value.Message == ParkAdvisorMessages.NewRideGroup + 1 ),
+				"the shops' new group" );
+		}
+		finally
+		{
+			LobbyCountedGapsTests.SetCurrentPlayer( null );
+		}
+	}
+
+	/// <summary>
 	/// The level's hearing of a finish over the stock park (ParkState.HearResearched): the advisor's slot holds the
 	/// rides' line about no thing with the item its second word, the rides ring holds the item, and the buy list marks
 	/// it 2; the Belly Bounce, which the park owns, stays 1 though pushed too; the Crazy Ape stays 0; a shop's finish

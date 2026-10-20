@@ -1364,6 +1364,21 @@ public sealed class ParkRides : Entity
 	}
 
 	/// <summary>
+	/// Stands a placed thing's nodes: at <paramref name="origin"/>, where its model stands
+	/// (<see cref="ParkObjects.ModelOriginFor(ParkItemCatalogue.Item, ParkWorld.CatalogueObject)"/>), turned by its angle,
+	/// but an arrival vehicle where its model's file puts
+	/// it, root and all, as the End stands (<see cref="BindFixed"/>), since its cells name no place: the original's bus voice
+	/// came at its body's place in the file, (296, 5, -114) (<c>docs/exe/audio.md</c>, "The music's class of a script").
+	/// </summary>
+	internal static void Stand( RideNodes nodes, int catalogueId, Vector3 origin, int angle )
+	{
+		if ( ParkFixedItems.IsVehicle( catalogueId ) )
+			nodes.PlaceFixed();
+		else
+			nodes.Place( origin, angle );
+	}
+
+	/// <summary>
 	/// The model nodes a bound script walks its riders between or hangs their heads on, standing where its thing
 	/// stands - read only for a script that declares walk slots or carries <c>ADDHEAD</c> or <c>ADDOBJ</c>, the
 	/// three families that ask (<see cref="RideNodes"/>), and giving the second its head slots. Null where the model
@@ -1380,19 +1395,6 @@ public sealed class ParkRides : Entity
 	/// declares a walk slot or carries <c>ADDHEAD</c>.
 	/// </para>
 	/// </remarks>
-	/// <summary>
-	/// Stands a placed thing's nodes: at its cells, turned by its angle, but an arrival vehicle where its model's file puts
-	/// it, root and all, as the End stands (<see cref="BindFixed"/>), since its cells name no place: the original's bus voice
-	/// came at its body's place in the file, (296, 5, -114) (<c>docs/exe/audio.md</c>, "The music's class of a script").
-	/// </summary>
-	internal static void Stand( RideNodes nodes, int catalogueId, int cellX, int cellY, int angle )
-	{
-		if ( ParkFixedItems.IsVehicle( catalogueId ) )
-			nodes.PlaceFixed();
-		else
-			nodes.Place( ParkObjects.OriginFor( cellX, cellY, angle ), angle );
-	}
-
 	private RideNodes? NodesFor( RideScript script, ParkWorld.CatalogueObject placed, ParkItemCatalogue.Item item )
 	{
 		if ( script.WalkSlots == 0 && !script.UsesHeads && !script.UsesEffectNodes )
@@ -1424,7 +1426,7 @@ public sealed class ParkRides : Entity
 			return null;
 		}
 
-		Stand( nodes, placed.CatalogueId, placed.CellX, placed.CellY, placed.Angle );
+		Stand( nodes, placed.CatalogueId, ParkObjects.ModelOriginFor( item, placed ), placed.Angle );
 
 		if ( script.UsesHeads )
 			script.SizeHeads( nodes.HeadCount() );

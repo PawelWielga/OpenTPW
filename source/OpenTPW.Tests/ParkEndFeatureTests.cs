@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Numerics = System.Numerics;
 
@@ -15,15 +18,17 @@ namespace OpenTPW.Tests;
 public class ParkEndFeatureTests
 {
 	/// <summary>
-	/// The last frame's weight is <c>(1000 - t) x 0.0005</c>, <c>t</c> held to 100 past 200 and to 1 at nought or below
-	/// (<c>0x0042ca13</c>).
+	/// The last frame's weight is <c>(1000 - t) x 0.0005</c>, <c>t</c> held to 100 past 200 and raised to 1 below 1
+	/// (<c>0x0042b2c7</c>, <c>0x0042ca44</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> t held to 200 past 200; nought not raised to 1; the weight's sign turned.</remarks>
+	/// <remarks><b>Mutations:</b> t held to 200 past 200; nought not raised to 1; half a millisecond kept; the weight's sign
+	/// turned.</remarks>
 	[TestMethod]
 	[DataRow( 16f, 0.492f )]
 	[DataRow( 200f, 0.4f )]
 	[DataRow( 250f, 0.45f )]
 	[DataRow( 0f, 0.4995f )]
+	[DataRow( 0.5f, 0.4995f )]
 	[DataRow( -5f, 0.4995f )]
 	public void TheLastFramesWeightIsHeldAsTheOriginalHoldsIt( float milliseconds, float weight )
 		=> Assert.AreEqual( weight, ParkRideViewCameraMode.LastWeight( milliseconds ), 1e-6f );
@@ -32,19 +37,126 @@ public class ParkEndFeatureTests
 	/// Only the turn, three rows of three, is mixed with the last frame's; the translation, the eye, is the record's own
 	/// (<c>0x0042cb83</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the whole matrix mixed; the two weights swapped.</remarks>
+	/// <remarks><b>Mutations:</b> the whole matrix mixed; the two weights swapped; the third row, the one the camera looks
+	/// along, left unmixed; a second-row entry mixed into the third.</remarks>
 	[TestMethod]
 	public void OnlyTheTurnIsMixed()
 	{
 		var now = Numerics.Matrix4x4.CreateTranslation( 1f, 2f, 3f );
-		var last = Numerics.Matrix4x4.CreateRotationY( MathF.PI / 2f ) * Numerics.Matrix4x4.CreateTranslation( 9f, 9f, 9f );
+		var last = Numerics.Matrix4x4.CreateRotationX( MathF.PI / 6f ) * Numerics.Matrix4x4.CreateRotationY( MathF.PI / 2f )
+			* Numerics.Matrix4x4.CreateTranslation( 9f, 9f, 9f );
 
 		var mixed = ParkRideViewCameraMode.Mix( now, last, 100f );
 
 		// w = 0.45: (1 - w) x 1 + w x cos 90.
 		Assert.AreEqual( 0.55f, mixed.M11, 1e-5f, "the turn is mixed, the record's own weighted 1 - w" );
 		Assert.AreEqual( 0.45f * last.M13, mixed.M13, 1e-5f );
+		Assert.AreEqual( 0.55f + 0.45f * last.M22, mixed.M22, 1e-5f, "the second row" );
+
+		// The third row, which the camera looks along: last's is (0.5, -0.866, 0) turned, its M32 not its M23.
+		Assert.AreEqual( 0.45f * last.M31, mixed.M31, 1e-5f, "the third row" );
+		Assert.AreEqual( 0.45f * last.M32, mixed.M32, 1e-5f );
+		Assert.AreEqual( 0.55f + 0.45f * last.M33, mixed.M33, 1e-5f );
+		Assert.AreNotEqual( last.M23, last.M32, 1e-3f, "a slip between the second row and the third shows" );
 		Assert.AreEqual( new Numerics.Vector3( 1f, 2f, 3f ), mixed.Translation, "the eye is the record's own" );
+	}
+
+	/// <summary>
+	/// <b>In the End's ride view no body is pulled toward the eye and the world is fogged</b>, as in first person: the
+	/// original's render word <c>0x2000</c> is set for <c>gui_CameraFlags &amp; 0x16</c> (<c>0x0054fae2</c>), whose
+	/// <c>0x4</c> the ride view sets, and the pull is skipped under it (<c>0x00589f24</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the pull keyed to first person alone; the inside view not holding the ride view.</remarks>
+	[TestMethod]
+	public void InTheRideViewNoBodyIsPulledAsInFirstPerson()
+	{
+		Assert.IsTrue( ParkGuestSprites.PullsBodies, "over the orbit the bodies are pulled" );
+
+		try
+		{
+			ParkRideViewCameraMode.Viewed = () => Numerics.Matrix4x4.Identity;
+			Camera.SetCameraMode<ParkRideViewCameraMode>();
+
+			Assert.IsTrue( Level.InsideView );
+			Assert.IsFalse( ParkGuestSprites.PullsBodies, "in the ride view none is" );
+		}
+		finally
+		{
+			ParkRideViewCameraMode.Leave();
+			Camera.SetCameraMode<CameraMode>();
+		}
+
+		Assert.IsTrue( ParkGuestSprites.PullsBodies, "and once it is left they are again" );
+	}
+
+	/// <summary>
+	/// <b>Escape under the End ends it once and gives the screen back</b> (<c>0x0048a9b5</c> on): its script ended, the
+	/// handle noughted, the ride view left for the orbit, the cover and its keys off, and UITEXT 471's box put up in
+	/// Instant Action alone (<c>[0x00fb3b7c] == 2</c>). A second ending does nothing.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the box in either mode; the box not put up; the script left running; the ride view not left;
+	/// the cover left on; the handle not noughted (a second Escape opens a second box).
+	/// </remarks>
+	[TestMethod]
+	[DataRow( true )]
+	[DataRow( false )]
+	public void EscapeEndsItOnceAndOnlyInstantActionGetsTheBox( bool instantAction )
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+		Log ??= new();
+		var world = new ParkWorld( new SaveReader( new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) ) ).ReadFile() );
+		var catalogue = new ParkItemCatalogue( "jungle", data, instantAction: instantAction );
+		var item = ParkEndFeature.Find( catalogue )!.Value;
+		var rides = new ParkRides( "jungle", world, catalogue, data );
+		var objects = new ParkObjects( "jungle", null, null );
+		var stack = new UI.WindowStack();
+
+		try
+		{
+			var scripts = rides.Scheduler.Count;
+			var script = rides.BindFixed( 43, item );
+			Assert.IsNotNull( script );
+			Assert.AreEqual( scripts + 1, rides.Scheduler.Count );
+
+			var view = RideNodes.Load( item.Directory, item.Stem, data, false, [] )!;
+			view.PlaceFixed();
+
+			var end = (ParkEndFeature)Activator.CreateInstance( typeof( ParkEndFeature ), BindingFlags.NonPublic | BindingFlags.Instance,
+				null, [43, script, item, view, stack, rides, objects, instantAction], null )!;
+			typeof( ParkEndFeature ).GetProperty( nameof( ParkEndFeature.Current ), BindingFlags.NonPublic | BindingFlags.Static )!
+				.SetValue( null, end );
+
+			ParkRideViewCameraMode.Viewed = () => Numerics.Matrix4x4.Identity;
+			Camera.SetCameraMode<ParkRideViewCameraMode>();
+			stack.Cover( true );
+			var keys = typeof( ParkEndFeature ).GetMethod( "KeyReleased", BindingFlags.NonPublic | BindingFlags.Instance )!
+				.CreateDelegate<Action<Input.KeyRelease>>( end );
+			stack.CoverKeys = keys;
+
+			stack.CoverKeys( new Input.KeyRelease( NeoVeldrid.Key.Escape, Input.Modifiers.None ) );
+
+			Assert.IsNull( ParkEndFeature.Current, "the handle noughted" );
+			Assert.AreEqual( scripts, rides.Scheduler.Count, "End.RSE ended" );
+			Assert.IsFalse( ParkRideViewCameraMode.Active, "the ride view left" );
+			Assert.IsInstanceOfType( typeof( Camera ).GetField( "CameraMode", BindingFlags.NonPublic | BindingFlags.Static )!
+				.GetValue( null ), typeof( ParkOrbitCameraMode ), "for the orbit" );
+			Assert.IsFalse( stack.Covered, "the layer shown" );
+			Assert.IsNull( stack.CoverKeys, "the keys given back" );
+			Assert.AreEqual( instantAction ? 1 : 0, stack.Windows.OfType<UI.MessageBox>().Count(), "UITEXT 471's box in Instant Action alone" );
+
+			keys( new Input.KeyRelease( NeoVeldrid.Key.Escape, Input.Modifiers.None ) );
+			Assert.AreEqual( instantAction ? 1 : 0, stack.Windows.OfType<UI.MessageBox>().Count(), "a second ending does nothing" );
+		}
+		finally
+		{
+			ParkEndFeature.Forget();
+			ParkRideViewCameraMode.Leave();
+			Camera.SetCameraMode<CameraMode>();
+			rides.Delete();
+			Entity.ApplyDeletions();
+		}
 	}
 
 	/// <summary>

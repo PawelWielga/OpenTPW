@@ -28,6 +28,8 @@ public class ParkShopWindowTests
 	private ParkState _state = null!;
 	private WindowStack _stack = null!;
 	private Level _park = null!;
+	private bool _confirmations;
+	private ParkObjects? _objects;
 
 	private void LoadThePark()
 	{
@@ -61,13 +63,17 @@ public class ParkShopWindowTests
 		_screen = Screen.Size;
 		_now = Time.Now;
 		_looksAt = ParkOrbitCameraMode.PointOfInterest;
+		_confirmations = GameOptions.Current.Confirmations;
 	}
 
 	[TestCleanup]
 	public void PutItAllBack()
 	{
+		ParkHand.LetGo();
+		_objects?.Delete();
 		_people?.Delete();
 		Entity.ApplyDeletions();
+		GameOptions.Current.Confirmations = _confirmations;
 		Level.Current = _level!;
 		Screen.Size = _screen;
 		Time.Now = _now;
@@ -304,6 +310,247 @@ public class ParkShopWindowTests
 
 		var applied = ParkShopWindow.Applied( objects[0], quality: 1, amount: 7, price: 45 );
 		Assert.AreEqual( (50, 7, 45), (applied.QualityOfGoods, applied.AmountOfSpecialIngredient, applied.PricePerUse) );
+	}
+
+	private ParkWorld.CatalogueObject? Of( int thingId ) => _state.TryObject( thingId, out var placed ) ? placed : null;
+
+	/// <summary>The window's quality slider moved to the right, as a drag would: the buffered quality 2.</summary>
+	private static void QualityToTheRight( ParkShopWindow window )
+	{
+		var quality = (UiSlider)Find( window.Root, 0xc06b );
+		quality.SetValue( 2 );
+		quality.Moved!();
+	}
+
+	/// <summary>
+	/// <b>The used-thing order</b> (<see cref="ParkState.ObjectsInUsedOrder"/>, <c>FUN_00516270</c>'s head insert): what is
+	/// bought comes newest first, then the file's objects in the order the file lists them, which is not thing-id order;
+	/// a sold file object leaves the rest where they were.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the bought ones oldest first; a sold file object not counted off the file's part.</remarks>
+	[TestMethod]
+	public void TheUsedThingOrderIsTheBoughtNewestFirstThenTheFiles()
+	{
+		LoadThePark();
+		var file = _state.Objects.Select( placed => placed.ThingId ).ToList();
+		CollectionAssert.AreNotEqual( file.OrderByDescending( id => id ).ToList(), file, "the control: the file's list is not in id order" );
+
+		_state.AddObject( new ParkWorld.CatalogueObject( 60, 1203, 32 << 8, 30 << 8, 0 ) );
+		_state.AddObject( new ParkWorld.CatalogueObject( 61, 1209, 30 << 8, 30 << 8, 0 ) );
+		Assert.IsTrue( _state.RemoveObject( file[0] ) );
+
+		CollectionAssert.AreEqual( new[] { 61, 60 }.Concat( file.Skip( 1 ) ).ToArray(),
+			_state.ObjectsInUsedOrder().Select( placed => placed.ThingId ).ToArray() );
+	}
+
+	/// <summary>
+	/// <b>The arrows walk the used-thing list, applying first</b> (<c>FUN_0048cbe0</c>, <c>FUN_0048caf0</c> on mask
+	/// <c>0x200</c>, <c>FUN_004828f0( 1, current )</c>): a Balloon Shop bought, then a Drinks Shop, head the list newest
+	/// first, so it reads 60, 61, then the file's 16. From 16, <c>0xc069</c> steps towards the newest, to 61 (thing-id
+	/// order would give 60), with 16's moved quality written first; <c>0xc06a</c> steps back to 16, and again round from the
+	/// tail to the head, 60.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the list in thing-id order; the arrows' directions swapped; the apply before the step gone.</remarks>
+	[TestMethod]
+	public void TheArrowsWalkTheUsedThingListApplyingFirst()
+	{
+		LoadThePark();
+		_state.AddObject( new ParkWorld.CatalogueObject( 61, 1209, 30 << 8, 30 << 8, 0 ) );
+		_state.AddObject( new ParkWorld.CatalogueObject( 60, 1203, 32 << 8, 30 << 8, 0 ) );
+
+		var window = Open();
+		Assert.IsTrue( Find( window.Root, 0xc069 ).Visible && Find( window.Root, 0xc06a ).Visible, "three shops: the arrows" );
+		QualityToTheRight( window );
+
+		Click( window.Root, 0xc069 );
+		Assert.AreEqual( (61, 100), (window.ThingId, Shop.QualityOfGoods), "towards the newest, 16's quality applied first" );
+
+		Click( window.Root, 0xc06a );
+		Assert.AreEqual( DrinksShop, window.ThingId, "towards the oldest" );
+
+		Click( window.Root, 0xc06a );
+		Assert.AreEqual( 60, window.ThingId, "round from the tail to the head" );
+	}
+
+	/// <summary>
+	/// <b>Apply to all, pressed, writes every shop of the shown one's item</b> (<c>0xc081</c>, <c>FUN_00481bc0( 0x200,
+	/// 0x004b0ae0 )</c>): a second Drinks Shop takes the shown one's quality 100 and price 35 with it; a Balloon Shop does
+	/// not move.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> apply to all reduced to the shown shop.</remarks>
+	[TestMethod]
+	public void ApplyToAllWritesEveryShopOfTheItem()
+	{
+		LoadThePark();
+		_state.AddObject( new ParkWorld.CatalogueObject( 60, 1203, 32 << 8, 30 << 8, 0 ) );
+		_state.AddObject( new ParkWorld.CatalogueObject( 61, 1209, 30 << 8, 30 << 8, 0 ) );
+		var balloon = Of( 61 );
+
+		var window = Open();
+		QualityToTheRight( window );
+
+		for ( var i = 0; i < 5; ++i )
+			ClickPlus( window );
+
+		Click( window.Root, 0xc081 );
+
+		Assert.AreEqual( (100, 35), (Shop.QualityOfGoods, Shop.PricePerUse), "the shop shown" );
+		Assert.AreEqual( (100, 35), (Of( 60 )!.Value.QualityOfGoods, Of( 60 )!.Value.PricePerUse), "the other Drinks Shop" );
+		Assert.AreEqual( balloon, Of( 61 ), "the Balloon Shop untouched" );
+		Assert.IsNotNull( Window, "the window stays" );
+	}
+
+	/// <summary><b>Move takes the shop into the hand</b> (<c>0xc080</c>, <c>FUN_0048cfa0</c>): sold, item 1203 held, the window closed.</summary>
+	/// <remarks><b>Mutations:</b> nothing picked up; the window left up.</remarks>
+	[TestMethod]
+	public void MoveTakesTheShopIntoTheHand()
+	{
+		LoadThePark();
+		_objects = new ParkObjects( "jungle", null, null );
+		var window = Open();
+
+		Click( window.Root, 0xc080 );
+
+		Assert.AreEqual( (null, (ParkWorld.CatalogueObject?)null, 1203), (Window, Of( DrinksShop ), ParkBuilding.Carrying) );
+	}
+
+	/// <summary>
+	/// <b>Delete asks first where the Confirmations option is on</b> (<c>0xc068</c>, <c>FUN_0048cd10</c>,
+	/// <c>[0x0078d90f]</c>): the box on UITEXT 396 over the window closed at once, the shop still standing and its moved
+	/// quality NOT written (<c>[0x007c2658]</c> zeroed before the close); the cross keeps it as it was; the tick sells it.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no box; the box's text; the settings applied on the close; the cross selling; the tick
+	/// selling nothing.</remarks>
+	[TestMethod]
+	public void DeleteAsksFirstWhereConfirmationsAreOn()
+	{
+		LoadThePark();
+		GameOptions.Current.Confirmations = true;
+		_objects = new ParkObjects( "jungle", null, null );
+		var before = Shop;
+
+		var window = Open();
+		QualityToTheRight( window );
+		Click( window.Root, 0xc068 );
+
+		var box = _stack.Windows.OfType<MessageBox>().Single();
+		Assert.IsNull( Window, "the window closed behind the box" );
+		Assert.AreEqual( Localization.Get( UIStrings.DeleteItem ), Find( box.Root, 0x9873c7 ).Text );
+		StringAssert.StartsWith( Find( box.Root, 0x9873c7 ).Text, "DELETE ITEM" );
+		Assert.AreEqual( before, Of( DrinksShop ), "asked, not yet sold, and the quality not applied" );
+
+		Click( box.Root, 0x9873c8 );
+		Assert.AreEqual( (0, before), (_stack.Windows.OfType<MessageBox>().Count(), Of( DrinksShop )), "the cross keeps it" );
+
+		Click( Open().Root, 0xc068 );
+		Click( _stack.Windows.OfType<MessageBox>().Single().Root, 0x9873c9 );
+		Assert.IsNull( Of( DrinksShop ), "the tick sells it" );
+	}
+
+	/// <summary><b>With the Confirmations option off Delete sells at once</b>, and the window closes; no box.</summary>
+	/// <remarks><b>Mutations:</b> the option not read; the window left up.</remarks>
+	[TestMethod]
+	public void DeleteSellsAtOnceWhereConfirmationsAreOff()
+	{
+		LoadThePark();
+		GameOptions.Current.Confirmations = false;
+		_objects = new ParkObjects( "jungle", null, null );
+
+		var window = Open();
+		QualityToTheRight( window );
+		Click( window.Root, 0xc068 );
+
+		Assert.AreEqual( (0, (ParkShopWindow?)null, (ParkWorld.CatalogueObject?)null),
+			(_stack.Windows.OfType<MessageBox>().Count(), Window, Of( DrinksShop )) );
+	}
+
+	private ParkObjectWindow? RideWindow => _stack.Windows.OfType<ParkObjectWindow>().FirstOrDefault();
+
+	/// <summary>The ride window open on the Belly Bounce with its first movable slider moved: the ride as it stood before.</summary>
+	private ParkWorld.CatalogueObject OpenTheRideAndMoveASlider()
+	{
+		var before = Of( BellyBounce )!.Value;
+		_park.OpenObjectWindow( BellyBounce );
+		Assert.IsNotNull( RideWindow );
+
+		var slider = new[] { 0x3e30, 0x3e2d, 0x3e2f }.Select( id => (UiSlider)Find( RideWindow!.Root, id ) )
+			.First( each => each.Visible && each.Maximum > each.Minimum );
+		slider.SetValue( slider.Value == slider.Minimum ? slider.Maximum : slider.Minimum );
+		slider.Moved!();
+
+		return before;
+	}
+
+	/// <summary>
+	/// <b>The ride window's delete is the same</b> (<c>0x3e2b</c>, <c>FUN_0048cd10</c>): with Confirmations on, the box on
+	/// UITEXT 396, the window closed with its moved slider not committed, the cross keeping the ride, the tick selling it;
+	/// with it off, sold at once with no box.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no box; the slider committed on the close; the option not read.</remarks>
+	[TestMethod]
+	public void TheRideWindowsDeleteAsksFirstToo()
+	{
+		LoadThePark();
+		GameOptions.Current.Confirmations = true;
+		_objects = new ParkObjects( "jungle", null, null );
+
+		var before = OpenTheRideAndMoveASlider();
+		Click( RideWindow!.Root, 0x3e2b );
+
+		var box = _stack.Windows.OfType<MessageBox>().Single();
+		Assert.AreEqual( Localization.Get( UIStrings.DeleteItem ), Find( box.Root, 0x9873c7 ).Text );
+		Assert.AreEqual( ((ParkObjectWindow?)null, before), (RideWindow, Of( BellyBounce )), "closed, the slider not committed" );
+
+		Click( box.Root, 0x9873c8 );
+		Assert.AreEqual( before, Of( BellyBounce ), "the cross keeps it" );
+
+		OpenTheRideAndMoveASlider();
+		Click( RideWindow!.Root, 0x3e2b );
+		Click( _stack.Windows.OfType<MessageBox>().Single().Root, 0x9873c9 );
+		Assert.IsNull( Of( BellyBounce ), "the tick sells it" );
+	}
+
+	/// <summary><b>With the Confirmations option off the ride window's delete sells at once</b>; no box.</summary>
+	[TestMethod]
+	public void TheRideWindowsDeleteSellsAtOnceWhereConfirmationsAreOff()
+	{
+		LoadThePark();
+		GameOptions.Current.Confirmations = false;
+		_objects = new ParkObjects( "jungle", null, null );
+
+		OpenTheRideAndMoveASlider();
+		Click( RideWindow!.Root, 0x3e2b );
+
+		Assert.AreEqual( (0, (ParkObjectWindow?)null, (ParkWorld.CatalogueObject?)null),
+			(_stack.Windows.OfType<MessageBox>().Count(), RideWindow, Of( BellyBounce )) );
+	}
+
+	/// <summary>
+	/// <b>The ride window's arrows walk the used-thing list too</b> (mask <c>0x80</c>, <c>FUN_004828f0( 0, current )</c>),
+	/// skipping an add-on (<c>+0x284</c> not nought): Belly Bounces bought as 61, then the Lava Jump add-on 62, then 60, so
+	/// the list's head reads 60, 62, 61. From 60 b_ardown (<c>0x3e27</c>) steps towards the oldest past the add-on to 61
+	/// (thing-id order would give a file ride below 60); b_arup (<c>0x3e26</c>) steps back to 60.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the list in thing-id order; the arrows swapped; the add-on not skipped.</remarks>
+	[TestMethod]
+	public void TheRideWindowsArrowsWalkTheUsedThingList()
+	{
+		LoadThePark();
+		Assert.IsTrue( _park.Catalogue!.TryGet( 1500, out var lavaJump ) );
+		Assert.AreEqual( (0, 1150), (lavaJump.UiType, lavaJump.AddOnUpgradesId), "a ride's add-on, UI type 0" );
+
+		_state.AddObject( new ParkWorld.CatalogueObject( 61, 1100, 30 << 8, 30 << 8, 0 ) );
+		_state.AddObject( new ParkWorld.CatalogueObject( 62, 1500, 36 << 8, 30 << 8, 0 ) );
+		_state.AddObject( new ParkWorld.CatalogueObject( 60, 1100, 33 << 8, 30 << 8, 0 ) );
+
+		_park.OpenObjectWindow( 60 );
+		var window = RideWindow!;
+
+		Click( window.Root, 0x3e27 );
+		Assert.AreEqual( 61, window.ThingId, "towards the oldest, past the add-on" );
+
+		Click( window.Root, 0x3e26 );
+		Assert.AreEqual( 60, window.ThingId, "towards the newest" );
 	}
 
 	private static UiControl Find( UiControl root, int id )

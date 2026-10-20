@@ -111,6 +111,13 @@ internal sealed class UiMeter : UiControl
 		Material.UI.Set( "Color", skin );
 
 		using ( _ = new Graphics.Scope( Screen.Size ) )
-			Graphics.Quad( new Rectangle( where.X, Screen.Height - where.Y - where.Height, where.Width, where.Height ), uvs, Material.UI );
+			Graphics.Quad( OnScreen( where, Screen.Height ), uvs, Material.UI );
 	}
+
+	/// <summary>
+	/// A quad's box (top-left origin) in the draw's space, whose y of 0 is the screen's bottom: the flip that makes the
+	/// lit half, last in <see cref="Quads"/>, fill up from the control's bottom edge.
+	/// </summary>
+	internal static Rectangle OnScreen( Rectangle where, float screenHeight ) =>
+		new( where.X, screenHeight - where.Y - where.Height, where.Width, where.Height );
 }

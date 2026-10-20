@@ -359,12 +359,13 @@ public sealed class ParkObjects : Entity
 			// Put away whatever building it left behind before it is stood anywhere.
 			PoseAsBuilt( model, item );
 
-			var origin = OriginFor( placed.CellX, placed.CellY, placed.Angle );
+			var origin = ModelOriginFor( item, placed );
 			var turn = Turn( placed.Angle );
 
 			model.SetTransform( origin, turn );
 
-			var footprint = FootprintOf( item, origin, turn );
+			// The cells the builder marks, from the anchor; the model of an item with a map offset stands off it.
+			var footprint = FootprintAt( item, placed.CellX, placed.CellY, placed.Angle );
 
 			_models.Add( model );
 			_standing[placed.ThingId] = new Standing( model, animations, placed.CatalogueId, sign ) { Footprint = footprint };
@@ -560,18 +561,16 @@ public sealed class ParkObjects : Entity
 	/// <param name="x">The cell the thing is anchored on, across.</param>
 	/// <param name="y">And down.</param>
 	/// <param name="angle">How far round it is saved, in whole degrees.</param>
-	public static Vector3 OriginFor( int x, int y, int angle )
-	{
-		var field = ParkGround.Current?.Heightfield;
+	public static Vector3 OriginFor( int x, int y, int angle ) => OriginFor( x, y, angle, ParkGround.Current?.Heightfield );
 
+	/// <summary><see cref="OriginFor(int, int, int)"/> over a given ground, or none.</summary>
+	internal static Vector3 OriginFor( int x, int y, int angle, HeightfieldFile? field )
+	{
 		var cellX = field?.CellSizeX ?? DefaultCellSize;
 		var cellY = field?.CellSizeY ?? DefaultCellSize;
 
-		// The ground under the anchor cell. The original flattens the land beneath an item as it is
-		// built - its .sam has a DontDeformBase key for the exceptions - and nothing here does, so an
-		// object on a slope would sit at one cell's height rather than being bedded into it. Nothing in
-		// Lost Kingdom shows it: the land under all seven of its footprint groups is dead flat, measured
-		// from the heightfield's own vertices.
+		// The ground at the cell's near corner; a placed object's model takes its footprint's height instead
+		// (ModelOriginFor).
 		var height = field?.HeightAt( x, y ) ?? 0f;
 
 		var pivot = new Vector3( (x + 0.5f) * cellX, (y + 0.5f) * cellY, height );
@@ -580,6 +579,75 @@ public sealed class ParkObjects : Entity
 		var turned = (Vector3)System.Numerics.Vector3.Transform( toCorner.GetSystemVector3(), Turn( angle ) );
 
 		return pivot + turned;
+	}
+
+	/// <summary>
+	/// The cell an object's model stands on: its <c>mTopLeft</c>, which the object's model is made on
+	/// (<c>FUN_004dd500</c>, <c>0x004dd5d3</c>, for every placed object at every angle; the turn about the cell is
+	/// the same for every item, <see cref="OriginFor"/>). That is the anchor for an item with no map offset, and a row
+	/// or a column off it for one with: the Huge Hollow Rock and the Dino Karts Tunnel. Taken from the item's offset
+	/// (<see cref="ParkBuilding.TopLeftFor"/>), which a file's <c>mTopLeft</c> is on every placed object measured
+	/// (<c>docs/exe/saves.md</c>, "<c>mTopLeft</c>").
+	/// </summary>
+	public static (int X, int Y) ModelCell( ParkItemCatalogue.Item item, int cellX, int cellY, int angle )
+	{
+		var id = ParkBuilding.TopLeftFor( item, cellX, cellY, angle ) - 1;
+
+		return (id & (ParkWorld.MapSize - 1), id / ParkWorld.MapSize);
+	}
+
+	/// <summary>
+	/// Where an object's model and its nodes stand: <see cref="OriginFor(int, int, int)"/> its <see cref="ModelCell"/>, at
+	/// the height its footprint gives it (<see cref="BaseHeight"/>).
+	/// </summary>
+	public static Vector3 ModelOriginFor( ParkItemCatalogue.Item item, ParkWorld.CatalogueObject placed )
+		=> ModelOriginFor( item, placed, ParkGround.Current?.Heightfield );
+
+	/// <summary><see cref="ModelOriginFor(ParkItemCatalogue.Item, ParkWorld.CatalogueObject)"/> over a given ground, or none.</summary>
+	internal static Vector3 ModelOriginFor( ParkItemCatalogue.Item item, ParkWorld.CatalogueObject placed, HeightfieldFile? field )
+	{
+		var (x, y) = ModelCell( item, placed.CellX, placed.CellY, placed.Angle );
+		var origin = OriginFor( x, y, placed.Angle, field );
+
+		return field == null ? origin : origin with { Z = BaseHeight( item.Shape, origin, placed.Angle, field ) ?? origin.Z };
+	}
+
+	/// <summary>
+	/// The height the model maker stands a placed object at (<c>FUN_00466d70</c>; <c>docs/exe/park-engine.md</c>, "Where a
+	/// placed object's model stands"): halfway between the lowest and the highest ground vertex at the corners of the cells its
+	/// <c>Info.Shape</c> fills (a kind whose low four bits are not nought), each carried through the model's place and
+	/// turn. Null where the item has no shape or the shape fills no cell, which leaves the ground under the model's cell.
+	/// </summary>
+	internal static float? BaseHeight( ItemShape? shape, Vector3 origin, int angle, HeightfieldFile field )
+	{
+		if ( shape == null )
+			return null;
+
+		var turn = Turn( angle );
+		float low = float.MaxValue, high = float.MinValue;
+
+		for ( var row = 0; row < shape.Depth; ++row )
+		{
+			for ( var column = 0; column < shape.Width; ++column )
+			{
+				if ( (shape.KindAt( column, row ) & 0xf) == 0 )
+					continue;
+
+				for ( var corner = 0; corner < 4; ++corner )
+				{
+					var local = new System.Numerics.Vector3( (column + (corner & 1)) * field.CellSizeX,
+						(row + (corner >> 1)) * field.CellSizeY, 0f );
+					var at = System.Numerics.Vector3.Transform( local, turn ) + origin.GetSystemVector3();
+					// The vertex, a tenth added and cut, as FUN_00454050 does.
+					var height = field.HeightAt( (int)((at.X / field.CellSizeX) + 0.1f), (int)((at.Y / field.CellSizeY) + 0.1f) );
+
+					low = MathF.Min( low, height );
+					high = MathF.Max( high, height );
+				}
+			}
+		}
+
+		return low > high ? null : (low + high) * 0.5f;
 	}
 
 	/// <summary>A cell's size in world units, for the one case where there is no ground to ask.</summary>
@@ -770,32 +838,10 @@ public sealed class ParkObjects : Entity
 		{
 			standing.Animations.Advance( now );
 
-			// Every player, not only the first. A sideshow runs one per lane - the Jungle Spray declares
-			// three in UsageInfo.NumSimultAnims and triggers a lane onto each - and the engine's own sweep
-			// walks the whole array rather than a single channel (FUN_004735d0). Posing only channel nought
-			// would leave lanes two and three standing still however loudly their scripts asked.
-			for ( var index = 0; index < standing.Posed.Length; ++index )
-			{
-				if ( standing.Animations.Channel( index ) is not { } channel || channel.IsIdle )
-					continue;
-
-				if ( standing.Animations.Clip( channel.AnimID, channel.SubAnim ) is not { } clip )
-					continue;
-
-				// A change of clip puts back what the one before it moved, which is what the engine does on
-				// every role change - see MeshRotator.Rest for how much of it, and for what stays put.
-				if ( !ReferenceEquals( clip, standing.Posed[index] ) )
-				{
-					if ( standing.Posed[index] is { } previous )
-						standing.Model.Rest( previous, clip );
-
-					standing.Posed[index] = clip;
-				}
-
-				// The frame the player has reached, counted from the start of its own clip - see
-				// MeshRotator.Pose for why that is not the clip's first keyed frame.
-				standing.Model.Pose( clip, channel.AnimFrame );
-			}
+			// Every player, not only the first: a sideshow runs one per lane - the Jungle Spray declares three in
+			// UsageInfo.NumSimultAnims and triggers a lane onto each. The frame is counted from the start of the
+			// player's own clip - see MeshRotator.Pose for why that is not the clip's first keyed frame.
+			standing.Animations.PoseOnto( standing.Model, standing.Posed );
 		}
 	}
 	/// <summary>

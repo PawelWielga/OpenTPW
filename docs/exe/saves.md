@@ -351,7 +351,7 @@ match it saves (`FUN_0049e9b0`). With one it opens a message box, UITEXT 205 han
    before the park file is opened. Under Proton `gms.dat` was written 28 ms before the park file, its bytes unchanged.
 2. **The path** is `FUN_005c8890`'s folder, `\` (`0x00f7b888`), the name, the extension.
 3. **`FUN_00414920( path, 0, 2 )`** on the object at `0x0078a450`, whose `+4` takes a failure's number: 1 the file
-   would not open, 2 no memory, 3 a write failed, 5 a module failed. A failure deletes the file (`FUN_005f5d60`), three apart: the first open failing (`0x0041497b`), the memory file not made (`0x00414a69`), and the deflated block's write coming up short (`0x00414c37`), which closes the file and leaves it.
+   would not open, 2 no memory, 3 a write failed, 5 a module failed. A failure deletes the file (`FUN_005f5d60`, a `DeleteFileA` wrapper, called at `0x00414afc`, `0x00414bd4`, `0x00414cc1` and `0x00414d0a`), three apart: the first open failing (`0x0041497b`), the memory file not made (`0x00414a69`), and the deflated block's write coming up short (`0x00414c37`), which closes the file and leaves it.
    Nothing was found that shows the number to the player.
 
 `FUN_00414920`'s third argument is the mode, which must not be nought; 1 writes the action recording alone (the
@@ -511,24 +511,28 @@ save" above whole, `gms.dat` first and then the file written over the last; or `
 fails at the open with nothing taken down when there is no file. "QuickSave OK", "Quicksave failed", "QuickSave Loaded"
 and "QuickSave Load Failed" (`0x007486ac`, `0x00748698`, `0x00747ed4`, `0x007486bc`) go to the empty logger
 `FUN_005da3c0`, so the player is shown nothing either way. The game table is off while a park screen is open
-(`park-engine.md`, "A park screen is open"). The file is a saved park like any other: Load Park lists it, and entering
-the park finds it when it is the newest.
+(`park-engine.md`, "A park screen is open"), and in first person: the viewfinder's layer 1 (`0x007cb2b0`) has the
+focus whenever it is shown (`0x0048634d`), and its handler `FUN_00488a00` runs only the camera table on a key-up
+(`0x00488ae3`), so Alt+S and Alt+L, like Backspace and Delete, do nothing there. The file is a saved park like any
+other: Load Park lists it, and entering the park finds it when it is the newest.
 
 **OpenTPW** (`Level.GameTableKeys`, `QuickSaveKey`, `QuickLoadKey`): `InputButton.QuickSave` and `QuickLoad`, asked by
-`Input.KeyUp` so the letter's release with Alt alone held is the press. Alt+S is `Level.WritePark( theme )`, as the menu's
-Save Game; Alt+L asks for the player's `<theme>.TPWS` (`SaveFolder.SavedParkPath`, any case) and loads it as a Load
-Park row does, ending the scene and building it again from the file where the original reads it over the running park,
-and with no such file, or nobody playing, loads nothing. The four strings are logged.
+`Input.KeyUp` so the letter's release with Alt alone held is the press. Alt+S is `Level.WritePark( theme )`, as the
+menu's Save Game; Alt+L asks for the player's `<theme>.TPWS` (`SaveFolder.SavedParkPath`, any case) and loads it as a
+Load Park row does, ending the scene and building it again from the file where the original reads it over the running
+park, and with no such file, or nobody playing, loads nothing. The four strings are logged. They share the build keys'
+gate: nothing while a box has the keys, a pausing window or a park screen is open, or under the full-screen view or in
+first person.
 
 **Measured (Q545).** In the original under Proton, the stock park loaded from the list: Alt+S wrote `jungle.TPWS`, lower
-case, 29 ms after `gms.dat`, holding 989, the tick read straight after S's key-up; Alt+L 14 s later put the tick back
+case, 28 ms after `gms.dat`, holding 989, the tick read straight after S's key-up; Alt+L 14 s later put the tick back
 to 989 inside the key-up, with no loading screen (`q545/orig/b.out`, `b-load.log`, `b-after-l-1.png`; run a's miss was
 the tick stamped before Alt went down). Nothing was drawn for either. In OpenTPW (`q545/run2`, four of four): Alt+L
 with no quicksave logged `Quickload: QuickSave Load Failed - ref's jungle folder holds no jungle.TPWS` and loaded
 nothing; the park paused at 823 with 88112 and 13 guests, Alt+S logged `Quicksave: QuickSave OK - written to
 users/1ref/jungle/jungle.TPWS`, `gms.dat` 0.11 s before it, the file holding the three; run on to 849, Alt+L read that
 file and started at 823 with the same. Main's binary did nothing for either key (`q545/control`). Alt+L with no file
-in the original, and the keys under a park screen, were not run.
+in the original, and the keys under a park screen or in first person, were not run.
 
 ### Leaving a park: the autosave
 
@@ -537,9 +541,13 @@ string object at `0x00877c60`, made from `L"autosave"` (`0x00747a58`) by a stati
 to `FUN_005ac610` on the save manager `0x00f7b560`, so it is "The save" above whole: `gms.dat` first, then the file
 in the player's theme folder, written over the last one. It is skipped only when the game mode `[0x00fb3b7c]` is 1,
 online (`0x0054fefd`, `EBX` 1 since `0x0054e3d6`), so a Full Simulation and an Instant Action park are both written.
-State 0xb is reached by the leave reasons 2 and 3 (`DAT_00879088`; `boot.md`, the state table): the park menu's
-Exit To Lobby and Quit Game; and `Game_Shutdown` (`0x005503f0`) runs it whenever a park is up, so the window closed
-from a park writes it too. Restart Park (reason 1, states 0xd and 0xe) and a load from the list do not pass it.
+State 0xb is reached by the leave reasons 2 and 3 (`DAT_00879088`; `boot.md`, the state table): the park menu's Exit
+To Lobby (reason 2) and Quit Game (reason 3, `0x0048b31d`); and `Game_Shutdown` (`0x005503f0`) runs it whenever a park
+is up, so the window closed from a park writes it too. Reason 2 is also written by Publish Park's tick (`0x0048b400`,
+the box of menu case 4's question, call at `0x0048b4b5`), by menu cases 0x13 and 0x18, which share Exit To Lobby's
+code (the jump table `0x0048bbc8` to `0x0048ba01`; what they are on screen is not identified), and by the callback
+`0x004e5230` (`0x004e5250`) when its argument is nought, which stands beside the ONLINE NEWS object and so is probably
+online only (not decoded). Restart Park (reason 1, states 0xd and 0xe) and a load from the list do not pass it.
 
 The second site is the options screen's RESTART GAME box (UITEXT 403, `GameOptions_Accept`): its tick,
 `GameOptions_RestartBox_Tick` (`0x00424bb0`, handed to the box at `0x004238a8`), writes leave reason 2 and, when no
@@ -553,9 +561,9 @@ is entered at the tick it was left on.
 **OpenTPW** (`Level.WriteParkOnLeaving`): `Game` calls it before the scene goes on the lobby's reload (Exit To Lobby,
 and the console's `lobby` and `reload`) and after the frame loop ends (Quit Game, the window's close), and it calls
 `Level.WritePark( "autosave" )` when the scene is a park. The console's `quit` ends the process at once and writes
-nothing. Load Park's row and Restart Park, which end the scene here where the original loads in place, write
-nothing, as the original's. A park made fresh is counted and not written (`SAVE_PARK_WITH_NO_FILE`, Q249), as every
-save of one is.
+nothing. The two calls are `Game.LeaveOnClose` and `Game.ChangeSceneIfAsked`, apart so a test reaches their order.
+Load Park's row and Restart Park, which end the scene here where the original loads in place, write nothing, as the
+original's. A park made fresh is counted and not written (`SAVE_PARK_WITH_NO_FILE`, Q249), as every save of one is.
 
 **Measured (Q544).** In the original under Proton, the stock park loaded from the list and held by the menu at
 `mGameTick` 986: Exit To Lobby wrote `autosave.TPWS` holding 986, 27 ms after `gms.dat` (whose bytes were the same),
@@ -564,7 +572,9 @@ and the park entered again from the lobby read 0 in the new world and then 986, 
 To Lobby logged `Leaving the park: autosave is written to users/1ref/jungle/autosave.TPWS`, the file held the
 three, `park jungle` read it and started at 823; run on to 845, Quit Game's tick wrote 845 as the game closed
 (`q544/run1`, four predictions of four). Main's binary wrote nothing and came back at 755 (`q544/control`). The
-window's own close, a Full Simulation park and the options screen's box were not run.
+window's own close, Restart Park and Load Park in ours, the original's own Quit Game (its first run stopped at the
+question, `q544/orig/miss-a`; the listing at `0x0048b31d` is the evidence), a Full Simulation park and the options
+screen's box were not run.
 
 ### Restart Park: restart.INTS
 
@@ -604,8 +614,10 @@ users/1ref/jungle/restart.INTS`, holding 755, 87987 and 13; Exit To Lobby's auto
 with `... restart.INTS is there already, so it is not written`; Restart Park logged `Park menu: Restart Park - loading
 users/1ref/jungle/restart.INTS` and the clock started at 755, $87987 (`4-restarted.png`); with the file taken out it
 logged `... holds no restart file, so nothing is loaded` and the tick ran on. Main's binary wrote nothing and its
-Restart Park read the autosave, starting at 825 (`q248/control`). A Full Simulation park and the original's camera
-after the restart were not compared.
+Restart Park read the autosave, starting at 825 (`q248/control`). The original's camera went back to the file's area
+with the restart, near the view it was entered on but not the same (about 25 px right and 55 px up on the 1024 x 768
+frame, `a-restarted.png` against `a-entered.png`), and its date went back (2.16.2000 before, 2.11.2000 after); ours
+opens on the default view, as on any load (Q247). A Full Simulation park was not compared.
 
 ### Entering a park
 
@@ -798,7 +810,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | `KAME` | zoom, rotation, flags, two points of interest, a saved rotation | the camera | patched: the zoom, the rotation and the point's two ground coordinates; the flags, the point's height, the saved point and the saved rotation the file's |
 | `COAS` | the coasters | nothing: none can be built here | carried |
 | `ADVS` | 360 bytes of the advisor and a buffer | nothing kept here | carried |
-| `SOUN` | two dwords, 84 bytes (the volumes and flags at `0x00803aa0`), then the voice list: three dwords, its length L, a voice count, a record, the handle counter and a record per voice (FileFormats `saves.md`, "The advisor, sound and advisor scoring modules"; a loader with no sound skips L - 4, `0x0051c547`): the sound manager's live voices (`Sound_SaveModule` writes them through `0x006b5c10`, `Sound_LoadModule` puts them back through `0x006b5c30`, `SoundManager_SerializeVoices` `0x006b6da0`, whose case 6 rebuilds a held chain; `audio.md`, "A script's sounds") | nothing kept here: no voice is put back (`PARK_FILE_SOUND_VOICES`) | carried |
+| `SOUN` | two dwords (`[0x00802bd4]`, `[0x00802bc8]`), the length `0x54` and 84 bytes (the volumes and flags at `0x00803aa0`), then the voice list: three dwords, its length L, a voice count, a record, the handle counter and a record per voice, a voice flagged both `0x10` and `0x400` left out (FileFormats `saves.md`, "The advisor, sound and advisor scoring modules"; a loader with no sound skips L - 4, `0x0051c547`): the sound manager's live voices (`Sound_SaveModule` writes them through `0x006b5c10` and the writer `0x006b6c30`; `Sound_LoadModule` puts them back through `0x006b5c30` and `SoundManager_SerializeVoices` `0x006b6da0`, which only reads, stops every live voice first, and in its case 6 rebuilds a held chain; `audio.md`, "A script's sounds") | nothing kept here: no voice is put back (`PARK_FILE_SOUND_VOICES`) | carried |
 | `CHTS` | two bytes | nothing | carried |
 | `ADSC` | one dword: the row the advisor's poll starts from (`advisor-park.md`, "The poll, and the control panel's line") | the poll's cursor | written (Q316) |
 | The UI block | a count and 540 bytes for each tag standing on the aerial | each tag as it stands ("OpenTPW's writer, the aerial's tags") | written |
@@ -808,7 +820,7 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | Part | Play here changes | A writer here |
 |---|---|---|
 | The header | `mGameTick`, `mParkClosed`, `mNumberOfVisitorsToDate`; the five staff heads and `mFirstObject` as things are made and gone; the arrival vehicles' handles | patched. `mRandomSeed` is the park's generator as it stands (`ParkState.RandomSeed`), which only the leavers' summons draws here: every other system keeps a generator of its own (Q443) |
-| The object controls | an item's standing count and first-build stamp (nothing here researches an item: its researched flags are the file's) | patched |
+| The object controls | an item's standing count and first-build stamp; its researched flag (`+0x10`) and tier (`+0x14`) as the lab has them | patched; the researched flag and tier by `PutLab` (Q701) for each item the lab answers |
 | The staff pool | every candidate, the top-up's counts and mark | written slot for slot from `ParkStaffPool`; an empty slot keeps its bytes and loses `mValid` |
 | The clock and arrival fields | the date, the arrival timer | patched: the timer's mark, count and flag are written, and the clock's `mMonthAtLastUpdate` and `mDayAtLastUpdate` ("OpenTPW's writer, the calendar's fields"); its start, session and rate are the file's |
 | The cells | a path or queue laid or cleared, land, a footprint, the chain of who stands where | patched cell by cell, each record where it lies (every cell has its map and track parts); `mWho` with the things it names; the effects part written again from the running grid, last of all ("OpenTPW's writer, the region effects") |
@@ -816,7 +828,8 @@ OpenTPW runs written over and records added and taken out. **Afresh** means writ
 | A catalogue object | its door, price, counts, rings, queue, script handle | carried records patched; one bought here written whole; one sold left out |
 | The economy thing, the staff HQ | the fee, the balance, the profit, the red stamp, the loans; the strikes, the training budgets | the economy thing's seven fields and eight loans are written ("OpenTPW's writer, the economy thing"), and the staff HQ's five budgets and `mHaveEverTrained` ("OpenTPW's writer, the training budgets") and its `mForceStrike` and five strike records ("OpenTPW's writer, the strike records"); `mStaffMemberPickedUp` is the file's |
 | The weather | its quality, the rain, the lightning and thunder, the forecast, the wind | written from the running park ("OpenTPW's writer, the weather thing"); `mPType` and `mOverridden` the file's, `mRainSoundHandle` nought |
-| The analyser, the research lab, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar runs here | carried, but for the mechanics' HQ's `mNextObject` (model 10, `PutMechanicCursor`) and the analyser's `mLastStaffHired` (model 13, `PutLastStaffHired`: the calendar as the newest member of staff was made, which the advisor's row 7 counts its thirty days from; `advisor-park.md`, "More rides than the mechanics can keep"; the original read this game's stamp from a file saved after a hire here, Q333) and its `mLastObjectBuilt` (`PutLastObjectBuilt`: the calendar as the newest object was made, a sale leaving it; `advisor-park.md`, "The newest build"; the original read this game's from files saved after a purchase and after its sale, Q334) and its `mParkLastOpened` (`PutParkLastOpened`: the calendar at the newest request to open the park; `hud.md`, "The analyser's other stamps"; the original read this game's, Q397); the analyser's three other stamps, which the original never moves, and its counts, and what the calendar runs here, are not written |
+| The research lab | a hand-out's points, a finish, an appended upgrade, a kind's current project and highest group | patched (`PutLab`, Q701): each used project's 16 bytes, the five kinds' 13 and `mNumProjects`; `mWorkLoad`, `mMostExpensiveProject`, `mLabActive` and the unused slots the file's |
+| The analyser, the challenge manager, things of models 10, 11, 12 and 17 | what the calendar runs here | carried, but for the mechanics' HQ's `mNextObject` (model 10, `PutMechanicCursor`) and the analyser's `mLastStaffHired` (model 13, `PutLastStaffHired`: the calendar as the newest member of staff was made, which the advisor's row 7 counts its thirty days from; `advisor-park.md`, "More rides than the mechanics can keep"; the original read this game's stamp from a file saved after a hire here, Q333) and its `mLastObjectBuilt` (`PutLastObjectBuilt`: the calendar as the newest object was made, a sale leaving it; `advisor-park.md`, "The newest build"; the original read this game's from files saved after a purchase and after its sale, Q334) and its `mParkLastOpened` (`PutParkLastOpened`: the calendar at the newest request to open the park; `hud.md`, "The analyser's other stamps"; the original read this game's, Q397); the analyser's three other stamps, which the original never moves, and its counts, and what the calendar runs here, are not written |
 
 **What is not settled, and belongs to the build that meets it.** A record made here has bytes no reader here
 names: whether nought is safe in each is to be measured by loading a made guest and a bought ride in the
@@ -850,11 +863,18 @@ over the copy, never the one held.
   fifth's; a queue cell's model the sixth's; the arrival vehicle, a balloon let go and a thought read back
   the seventh's; a vehicle made at its summons its own section's; a model record's two tables, a rider's head and a made object's flags and corner their own
   sections' below; the rest is Q257e.
-- **Where.** `Level.WritePark( name )` writes `<player's folder>/<theme>/<name>.TPWS`, replacing a file of that
-  name in another case, the player's `gms.dat` first and the idle mode installed before it, as the original's. The
-  Save Park screen's OK and the console's `savepark <name>` are its callers (Q241j). **Deviations:** a park made
+- **Where.** `Level.WritePark( name )` writes `<player's folder>/<theme>/<name>.TPWS`, replacing a file of that name
+  in another case, the player's `gms.dat` first and the idle mode installed before it, as the original's. The Save
+  Park screen's OK and the console's `savepark <name>` are its callers (Q241j), with `Level.WriteParkOnLeaving`, which
+  `Game` calls as a park is left ("Leaving a park: the autosave"; Q544), and Alt+S, `Level.QuickSaveKey` ("The
+  quicksave and quickload keys"; Q545). **Deviations:** a park made
   fresh, with no file behind it, is counted (`SAVE_PARK_WITH_NO_FILE`, Q249) and not written; with nobody playing,
-  which only the console's `park` reaches, nothing is written.
+  which only the console's `park` reaches, nothing is written. A save that fails leaves the file already at its path
+  as it was, where the original deletes it on all but three of its failures ("The save", step 3): a fill in the
+  player's favour, so a failed save never costs them the old one. The bytes go to a file beside the path that then
+  takes its place, so no failure leaves a part-written park. Any failure is logged and the game goes on, the screen
+  closing, as the original's does whatever its save answered. Where the folder holds the name in two cases, which
+  only a file copied in can make, the one in the typed case is written, the one the question named.
 - **The load does not read the camera module**: a park loaded here opens on the default view (Q247).
 
 **Measured (Q241f, `q241f/`).** Lost Kingdom entered by a player holding `easymode.TPWI` alone (755, 87987, no
@@ -2187,8 +2207,8 @@ words, the two links left), and where it is not the record is written again with
 effect `?` on one a load put back, since the file does not hold it.
 
 **A deviation, said at `RideEffects.Record.SavedHandle`:** a sound's record started here is written with a
-handle of nought, where the engine's holds what its spawn answered and never nought. Nothing here plays a
-script's sound, so there is nothing for a handle to name; nought is the one value no call acts on. A
+handle of nought, where the engine's holds what its spawn answered and never nought. A sound started here has a
+voice (`Record.Sound`) but no engine handle to write, so nought is written: the one value no call acts on. A
 particle's record is written with the handle of the emitter the writer starts for it ("OpenTPW's writer, an
 emitter started"), and a record a load put back goes out with its file's handle.
 
@@ -2804,9 +2824,14 @@ and Alexah's eight). 61 particle records, each naming an emitter in use. **61 of
 the words that run on (the particles at `+0x06` and `+0x08`, the life of the four that have one, the countdown
 at `+0x66`, the box, and a type 2's `+0x38` to `+0x42`). **61 of 61 stand on whole units**, and of the 59 whose
 model reads 55 stand where `RideNodes.Find` puts the record's node, cut to whole units, across and down; the
-four that do not are the Huge Hollow Rock's two in two files, a cell out in one axis (its origin, not looked
-into). The height agrees in 44, on the shipped park's flat ground; the other 15 are on the hills of the played
-park, which the census did not load.
+four that did not are the Huge Hollow Rock's two in two files, a row out: the census stood the rock's model on its
+anchor, where the original makes it on `mTopLeft` (`park-engine.md`, `FUN_004dd500`), as `ParkObjects.ModelCell` now
+does; a rock bought at that file's anchor starts its two at the file's places across and along
+(`ParkParticleTests.ABoughtHollowRocksWaterStartsWhereTheOriginals`). The height agrees in 44, on the shipped park's flat ground; the other 15 are on the hills of the played
+park, which the census did not load. Measured again with the ground (run 6's review): the 55 node-placed emitters of
+thirteen park files the original wrote (Alexah's Full Simulation saves of three themes, four of the harness's, the
+shipped park) all stand at their file's height, cut to whole units, once the model stands where the model maker puts it
+(`park-engine.md`, "Where a placed object's model stands"); on the ground under the model's cell, 44 do.
 
 **What OpenTPW writes.** `RideScript.WrittenEmitters` hands the writer, beside each list, the emitter each
 particle started here asks for: its effect at its node's place in whole units (`WrittenScript.Emitters`).
@@ -2892,8 +2917,8 @@ its node (`ParkParticles.Spawn.Direction`), and `Edit.Start` then makes no draw 
 `ParkParticles.Aim` reads them; the console's `emitters` prints each emitter's.
 
 **A node that rides a clip** is written, place and aim, where the thing's players last posed it, as the sweep leaves
-it (Q555, `RideNodes.Follow`); the Spray's jet nodes ride one and move under none of its clips but the build clip,
-and all six of the files' records are the rest pose's words. **A deviation, said at `RideScript.WrittenEmitters`:** a node whose
+it (Q555, `RideNodes.Follow`); the Spray's node 2 rides one and moves under none of its clips but the build clip (its
+nodes 1 and 3 not measured: `park.md`, "The sweep carries each emitter"), and all six of the files' records are the rest pose's words. **A deviation, said at `RideScript.WrittenEmitters`:** a node whose
 matrix the pose walk never stores, whose direction is no number, is counted and written with no emitter
 (`SAVE_PARK_EMITTER_DIRECTED`: no Lost Kingdom particle node is one).
 

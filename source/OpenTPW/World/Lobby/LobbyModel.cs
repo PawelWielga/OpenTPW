@@ -10,7 +10,7 @@ namespace OpenTPW;
 /// exactly one mesh, identified by its vertex count; a rotation animation turns whole meshes,
 /// naming each one it drives. A model can have both - see <see cref="AnimationFile"/>.
 /// </summary>
-public sealed class LobbyModel
+public sealed class LobbyModel : IChannelPosed
 {
 	public ModelEntity[] Entities { get; }
 
@@ -37,6 +37,15 @@ public sealed class LobbyModel
 	// Each mesh's parent, so moving a thing along its route carries what hangs off it: the bus's two
 	// wheels and its sound node all hang off the body the route actually drives.
 	private readonly int[] _meshParents = Array.Empty<int>();
+
+	// Each node's parent, so a change of clip finds the meshes under the nodes it moved.
+	private readonly int[] _nodeParents = Array.Empty<int>();
+
+	// The model's own path, for the log.
+	private readonly string _modelPath;
+
+	// Whether the model's header word 0x30 carries 0x4: a clip's keys are composed with each node's own (the coaster parts).
+	private readonly bool _additive;
 
 	// Which route each node follows, from its record's +0x52. The engine indexes the model's path
 	// table by exactly this - see ModelFile.ReadPaths.
@@ -99,8 +108,12 @@ public sealed class LobbyModel
 
 	public MeshRotator? Rotator { get; }
 
-	/// <summary>Poses the whole node tree for a clip that moves nodes about, where one of this model's clips does - see <see cref="NodePoser"/>.</summary>
-	private readonly NodePoser? _poser;
+	/// <summary>
+	/// Poses the whole node tree for a clip that moves nodes about - see <see cref="NodePoser"/>. Made by the first such
+	/// clip posed (<see cref="Poser"/>), so a model nobody poses through <see cref="Pose"/> makes none: the advisor's,
+	/// which <see cref="AdvisorModel"/> poses itself.
+	/// </summary>
+	private NodePoser? _poser;
 
 	/// <summary>The scale the model was loaded at, which a posed node's place is built with as its rest one was.</summary>
 	private readonly float _scale;
@@ -176,6 +189,8 @@ public sealed class LobbyModel
 	{
 		var modelFile = new ModelFile( modelPath );
 		_file = modelFile;
+		_modelPath = modelPath;
+		_additive = (modelFile.HeaderFlags & 0x4) != 0;
 		var opaque = opaqueFrames?.Invoke( modelFile ) ?? NoFrames;
 		var meshCount = modelFile.Meshes.Count;
 
@@ -339,6 +354,7 @@ public sealed class LobbyModel
 		Paths = modelFile.Paths;
 		_meshParents = [.. modelFile.Meshes.Select( mesh => mesh.ParentIndex )];
 		_nodePathIds = [.. modelFile.Nodes.Select( node => node.PathId )];
+		_nodeParents = [.. modelFile.Nodes.Select( node => node.ParentIndex )];
 
 		// Scaled and swizzled the same way Offsets was, so the two can be subtracted.
 		_nodeRestLocal =
@@ -352,14 +368,6 @@ public sealed class LobbyModel
 		];
 
 		_scale = scale;
-
-		if ( animations.Any( NodePoser.Drives ) )
-		{
-			_poser = new NodePoser( modelFile );
-
-			Log.Info( $"{modelPath}: posing {animations.Count( NodePoser.Drives )} of {animations.Length} clip(s) over the node tree, " +
-				$"{animations.Sum( clip => clip.PositionTracks.Count )} position track(s)" );
-		}
 
 		if ( animations.Length > 0 )
 		{
@@ -537,8 +545,10 @@ public sealed class LobbyModel
 	/// mesh ancestor is drawn, as it rests in that mesh. Answers which of the two it took.
 	/// </summary>
 	/// <remarks>
-	/// The second is OpenTPW's: the engine poses every node of the tree, and this one turns and moves meshes only, so a
-	/// clip that turns a node which is not a mesh does not carry what hangs from it here.
+	/// The second is OpenTPW's: the engine stores every node's posed matrix, where this answers a node that is not a mesh
+	/// from its rest place inside its nearest mesh ancestor as drawn, so a clip that turns or moves such a node itself
+	/// (bouncy's <c>camera</c>, the volcano's <c>lavarock1</c>-<c>5</c>, the lookout's <c>Dummy01</c>) does not carry it
+	/// here, though <see cref="NodePoser"/> carries the meshes under it.
 	/// </remarks>
 	public DrawnNode TryGetDrawnNode( int index, out Vector3 position )
 	{
@@ -558,19 +568,35 @@ public sealed class LobbyModel
 			return DrawnNode.OnAFace;
 		}
 
-		// The nearest ancestor that is a mesh: the first meshes are the first nodes. Guarded against a parent chain that loops.
-		var mesh = parent;
-
-		for ( var guard = _file.Nodes.Count; mesh >= Entities.Length && guard > 0; --guard )
-			mesh = _file.Nodes[mesh].ParentIndex;
-
-		if ( mesh < 0 || mesh >= Entities.Length || !Matrix4x4.Invert( _file.Meshes[mesh].WorldTransform, out var unplaced ) )
+		if ( !DrawnInMesh( _file, Entities, index, out position ) )
 			return TryGetPlacedNode( node.Name, out position ) ? DrawnNode.AtRest : DrawnNode.Missing;
+
+		return DrawnNode.OnAMesh;
+	}
+
+	/// <summary>
+	/// Where node <paramref name="index"/> is drawn as it rests inside its nearest mesh ancestor, as
+	/// <paramref name="entities"/> draw that mesh; false where it has none.
+	/// </summary>
+	internal static bool DrawnInMesh( ModelFile file, ModelEntity[] entities, int index, out Vector3 position )
+	{
+		position = default;
+
+		var node = file.Nodes[index];
+
+		// The nearest ancestor that is a mesh: the first meshes are the first nodes. Guarded against a parent chain that loops.
+		var mesh = node.ParentIndex;
+
+		for ( var guard = file.Nodes.Count; mesh >= entities.Length && guard > 0; --guard )
+			mesh = file.Nodes[mesh].ParentIndex;
+
+		if ( mesh < 0 || mesh >= entities.Length || !Matrix4x4.Invert( file.Meshes[mesh].WorldTransform, out var unplaced ) )
+			return false;
 
 		var within = System.Numerics.Vector3.Transform( node.WorldTransform.Translation, unplaced );
 
-		position = (Vector3)System.Numerics.Vector3.Transform( Swizzle( within ), Entities[mesh].ModelMatrix );
-		return DrawnNode.OnAMesh;
+		position = (Vector3)System.Numerics.Vector3.Transform( Swizzle( within ), entities[mesh].ModelMatrix );
+		return true;
 	}
 
 	/// <summary>A point in the file's axes (y up) as a mesh's vertices are built, z up.</summary>
@@ -617,32 +643,89 @@ public sealed class LobbyModel
 	private Quaternion _placedRotation = Quaternion.Identity;
 
 	/// <summary>Every mesh at the offset it was built with, about wherever the model was last put.</summary>
-	private void Place()
-	{
-		for ( int i = 0; i < Entities.Length; ++i )
-		{
-			var offset = System.Numerics.Vector3.Transform( Offsets[i].GetSystemVector3(), _placedRotation );
+	private void Place() => Place( Entities, Offsets, _placedRotation, _placedOrigin );
 
-			Entities[i].Position = (Vector3)offset + _placedOrigin;
+	/// <summary>
+	/// Each mesh <paramref name="only"/> marks (every one where it is null) at the offset it was built with, turned by
+	/// <paramref name="rotation"/> about <paramref name="origin"/>.
+	/// </summary>
+	internal static void Place( ModelEntity[] entities, Vector3[] offsets, Quaternion rotation, Vector3 origin, bool[]? only = null )
+	{
+		for ( int i = 0; i < entities.Length; ++i )
+		{
+			if ( only != null && (i >= only.Length || !only[i]) )
+				continue;
+
+			var offset = System.Numerics.Vector3.Transform( offsets[i].GetSystemVector3(), rotation );
+
+			entities[i].Position = (Vector3)offset + origin;
+		}
+	}
+
+	/// <summary>The node tree's poser, made by the first clip that moves a node (<see cref="NodePoser.Drives"/>).</summary>
+	private NodePoser Poser()
+	{
+		if ( _poser == null )
+		{
+			_poser = new NodePoser( _file );
+
+			Log.Info( $"{_modelPath}: posing {Clips.Count( NodePoser.Drives )} of {Clips.Count} clip(s) over the node tree, " +
+				$"{Clips.Sum( clip => clip.PositionTracks.Count )} position track(s)" );
+		}
+
+		return _poser;
+	}
+
+	/// <summary>
+	/// Each mesh <paramref name="only"/> marks (every one where it is null) where <paramref name="poser"/> last put its
+	/// node: its turn as <see cref="ToWorldSpace"/> converts it at <paramref name="scale"/>, and its place swizzled, turned
+	/// by <paramref name="rotation"/> about <paramref name="origin"/>, as <see cref="Place"/> puts the rest pose.
+	/// </summary>
+	internal static void PlacePosed( ModelEntity[] entities, NodePoser poser, float scale, Quaternion rotation, Vector3 origin,
+		bool[]? only = null )
+	{
+		var scaling = Matrix4x4.CreateScale( scale );
+
+		for ( int i = 0; i < entities.Length && i < poser.Count; ++i )
+		{
+			if ( only != null && (i >= only.Length || !only[i]) )
+				continue;
+
+			var world = poser.World( i ) * scaling;
+			var offset = System.Numerics.Vector3.Transform( Swizzle( world.Translation ), rotation );
+
+			entities[i].LinearTransform = ToWorldSpace( world );
+			entities[i].Position = (Vector3)offset + origin;
 		}
 	}
 
 	/// <summary>
-	/// Every mesh where <see cref="_poser"/> last put its node: its turn as <see cref="ToWorldSpace"/> converts it, and
-	/// its place swizzled, about wherever the model was last put, as <see cref="Place"/> puts the rest pose.
+	/// The meshes a change from <paramref name="outgoing"/> puts back: each node it turns, moves or routes that is a mesh,
+	/// and every mesh under one, of the first <paramref name="meshCount"/> nodes (<c>FUN_00472310</c> restores the outgoing
+	/// clip's nodes alone, <c>0x0047244b</c>, and the pose walk composes what hangs off them again).
 	/// </summary>
-	private void PlacePosed()
+	internal static bool[] MeshesRested( AnimationFile outgoing, IReadOnlyList<int> parents, int meshCount )
 	{
-		var scale = Matrix4x4.CreateScale( _scale );
+		var driven = new HashSet<int>( outgoing.RotationTracks.Select( track => track.TargetIndex )
+			.Concat( outgoing.PositionTracks.Select( track => track.TargetIndex ) )
+			.Concat( outgoing.PathTracks.Select( track => track.TargetIndex ) ) );
 
-		for ( int i = 0; i < Entities.Length && i < _file.Nodes.Count; ++i )
+		var rested = new bool[meshCount];
+
+		for ( var mesh = 0; mesh < meshCount; ++mesh )
 		{
-			var world = _poser!.World( i ) * scale;
-			var offset = System.Numerics.Vector3.Transform( Swizzle( world.Translation ), _placedRotation );
-
-			Entities[i].LinearTransform = ToWorldSpace( world );
-			Entities[i].Position = (Vector3)offset + _placedOrigin;
+			// Up the chain from the mesh itself. The guard is against a parent chain that loops back on itself.
+			for ( int at = mesh, guard = parents.Count; at >= 0 && at < parents.Count && guard >= 0; at = parents[at], --guard )
+			{
+				if ( driven.Contains( at ) )
+				{
+					rested[mesh] = true;
+					break;
+				}
+			}
 		}
+
+		return rested;
 	}
 
 	/// <summary>
@@ -666,13 +749,23 @@ public sealed class LobbyModel
 	/// </summary>
 	public void Pose( AnimationFile animation, float frame )
 	{
-		if ( _poser != null && NodePoser.Drives( animation ) )
+		if ( NodePoser.Drives( animation ) )
 		{
-			_poser.Pose( animation, frame );
-			PlacePosed();
+			// Every mesh from the one tree. Not the original's, whose tree holds every channel's turns: a clip that only
+			// turns, on a channel posed before this one, is drawn at rest until it is posed again, the next frame. No Lost
+			// Kingdom model plays one on a channel below a clip that moves nodes (the Inca Totem's are channels 1 to 3).
+			var poser = Poser();
+
+			poser.Pose( animation, frame );
+			PlacePosed( Entities, poser, _scale, _placedRotation, _placedOrigin );
 		}
 		else
 		{
+			// FUN_00470d10 composes an additive model's rotation key with the node's own; not decoded, and MeshRotator would
+			// replace the turn. The 49 such clips are the coaster pylons' and their kin's, and no source loads a pylon model.
+			if ( _additive && animation.RotationTracks.Count > 0 )
+				Unimplemented.Report( "ANIM_ADDITIVE_ROTATION" );
+
 			Rotator?.Pose( animation, frame );
 		}
 
@@ -782,7 +875,7 @@ public sealed class LobbyModel
 	///
 	/// <para>
 	/// Written straight onto the entity rather than into <see cref="Offsets"/>, which stays the rest
-	/// pose: <see cref="Rest"/> calls <see cref="Place"/>, and that puts every position back from it.
+	/// pose: <see cref="Rest"/> puts the routed meshes back from it when the clip changes.
 	/// </para>
 	/// </summary>
 	private void MoveAlongRoute( int target, Vector3 offset )
@@ -835,24 +928,32 @@ public sealed class LobbyModel
 	/// </param>
 	public void Rest( AnimationFile outgoing, AnimationFile? incoming = null )
 	{
-		if ( _poser != null )
-		{
-			_poser.Rest( outgoing, incoming );
-
-			// What the tree's pose turned, carried or not, back as it was built; the incoming clip's pose comes after.
-			if ( NodePoser.Drives( outgoing ) )
-			{
-				for ( int i = 0; i < Entities.Length; ++i )
-					Entities[i].LinearTransform = _linearTransforms[i];
-			}
-		}
-
 		Rotator?.Rest( outgoing );
 
 		foreach ( var animator in Animators )
 			animator.Rest();
 
-		Place();
+		RestMeshes( Entities, Offsets, _nodeParents, _poser, _scale, _placedRotation, _placedOrigin, outgoing, incoming );
+	}
+
+	/// <summary>
+	/// The places half of <see cref="Rest"/>: the node tree's nodes <paramref name="outgoing"/> moved put back, all but
+	/// those <paramref name="incoming"/> moves (<see cref="NodePoser.Rest"/>), and then only the meshes it moved and what
+	/// hangs off them placed again (<see cref="MeshesRested"/>), from the tree where there is one and from the rest
+	/// offsets where there is none, as the engine puts back only the outgoing clip's nodes: what a clip on another channel
+	/// moved stays.
+	/// </summary>
+	internal static void RestMeshes( ModelEntity[] entities, Vector3[] offsets, IReadOnlyList<int> nodeParents, NodePoser? poser,
+		float scale, Quaternion rotation, Vector3 origin, AnimationFile outgoing, AnimationFile? incoming )
+	{
+		poser?.Rest( outgoing, incoming );
+
+		var rested = MeshesRested( outgoing, nodeParents, entities.Length );
+
+		if ( poser != null )
+			PlacePosed( entities, poser, scale, rotation, origin, rested );
+		else
+			Place( entities, offsets, rotation, origin, rested );
 	}
 
 	/// <summary>

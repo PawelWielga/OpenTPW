@@ -247,4 +247,131 @@ public class NodePoserTests
 
 		Near( new( 599.86f, 5.67f, 45.92f ), poser.World( 3 ).Translation, "on frame 100", 0.05f );
 	}
+
+	/// <summary>
+	/// <b>A change of clip on a channel hands the incoming clip over</b> (<c>RideAnimations.PoseChannel</c>, which
+	/// <c>ParkObjects.Sweep</c>, <c>RideNodes.Follow</c> and the object window's preview all pose through): the plane flown
+	/// to (0, 59, -77) stays there when a clip that also moves it, from its frame 5, takes the channel at frame 0. Rested
+	/// with no incoming it would be back at (0, 59, 273).
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the change rested with no incoming.</remarks>
+	[TestMethod]
+	public void AChannelsChangeOfClipHandsTheIncomingOver()
+	{
+		var poser = Tree();
+		var flight = Clip( Flight() );
+		AnimationFile? posed = null;
+
+		RideAnimations.PoseChannel( poser, ref posed, flight, 20 );
+		Near( new( 0, 59, -77 ), poser.Local( 0 ).Translation, "flown" );
+
+		var later = Clip( new AnimationFile.PositionTrack
+		{
+			TargetIndex = 0,
+			FrameIndices = [5, 15],
+			Points = [new( 0, 59, 0 ), new( 0, 59, 100 )],
+			IsBezier = false
+		} );
+
+		RideAnimations.PoseChannel( poser, ref posed, later, 0 );
+		Assert.AreSame( later, posed );
+		Near( new( 0, 59, -77 ), poser.Local( 0 ).Translation, "kept until the incoming's first key" );
+
+		RideAnimations.PoseChannel( poser, ref posed, Clip( Flight( 1 ) ), 0 );
+		Near( new( 0, 59, 273 ), poser.Local( 0 ).Translation, "put back by a clip that moves another node" );
+	}
+
+	/// <summary>The tree's three nodes as meshes, each placed where the tree rests (the swizzle: the file's y is up, ours z).</summary>
+	private static (ModelEntity[] Entities, OpenTPW.Vector3[] Offsets) Meshes( NodePoser poser )
+	{
+		var entities = new ModelEntity[poser.Count];
+		var offsets = new OpenTPW.Vector3[poser.Count];
+
+		for ( var i = 0; i < entities.Length; ++i )
+		{
+			var at = poser.World( i ).Translation;
+
+			entities[i] = new ModelEntity();
+			offsets[i] = new Vector3( at.X, at.Z, at.Y );
+		}
+
+		LobbyModel.Place( entities, offsets, Quaternion.Identity, Vector3.Zero );
+
+		return (entities, offsets);
+	}
+
+	private static void Delete( ModelEntity[] entities )
+	{
+		foreach ( var entity in entities )
+			entity.Delete();
+
+		Entity.ApplyDeletions();
+	}
+
+	/// <summary>
+	/// <b>A posed mesh is placed as the model was placed</b> (<c>LobbyModel.PlacePosed</c>): the resting plane, at
+	/// (753, 59, 170) in the file, at scale 2 is (1506, 340, 118) in ours, a quarter turn about up takes that to
+	/// (-340, 1506, 118), and the placement's (100, 200, 0) to (-240, 1706, 118); its turn carries the scale. Unturned it
+	/// would stand at (1606, 540, 118); unscaled, at (-70, 953, 59).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the placement's turn left out; the scale left out.</remarks>
+	[TestMethod]
+	public void APosedMeshIsPlacedAsTheModelWas()
+	{
+		var poser = Tree();
+		var (entities, _) = Meshes( poser );
+
+		LobbyModel.PlacePosed( entities, poser, 2f, Quaternion.CreateFromAxisAngle( Vector3.UnitZ, MathF.PI / 2 ), new( 100, 200, 0 ) );
+
+		Near( new( -240, 1706, 118 ), entities[0].Position.GetSystemVector3(), "the plane" );
+		Assert.AreEqual( 2f, Vector3.Transform( Vector3.UnitX, entities[0].LinearTransform!.Value ).Length(), 0.001f, "scaled twice" );
+
+		Delete( entities );
+	}
+
+	/// <summary>
+	/// <b>A change of clip puts back only the meshes the outgoing clip moved</b> (<c>LobbyModel.RestMeshes</c>;
+	/// <c>FUN_00472310</c> restores the outgoing clip's nodes alone): with the plane flown by one clip and the propeller
+	/// moved by another, resting the propeller's clip puts the propeller back on the flown plane, (6, 7, 3) off it turned
+	/// by the root, and leaves the plane where it was flown and the root where another channel's turn left it. A model with
+	/// no tree puts back the propeller's rest offset and leaves the plane's place alone.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> every mesh put back (the blanket reset and <c>Place</c>).</remarks>
+	[TestMethod]
+	public void AChangeOfClipPutsBackOnlyTheMeshesTheOutgoingMoved()
+	{
+		var poser = Tree();
+		var (entities, offsets) = Meshes( poser );
+		var parents = new[] { 2, 0, -1 };
+		var plane = Clip( Flight() );
+		var propeller = Clip( Flight( 1 ) );
+
+		poser.Pose( plane, 20 );
+		poser.Pose( propeller, 20 );
+		LobbyModel.PlacePosed( entities, poser, 1f, Quaternion.Identity, Vector3.Zero );
+
+		var flown = entities[0].Position.GetSystemVector3();
+
+		Near( new( 480 - 77, 170, 59 ), flown, "the plane flown" );
+
+		// The root as a clip that only turns, on another channel, would leave it (MeshRotator, outside the tree).
+		entities[2].Position = new OpenTPW.Vector3( 7, 8, 9 );
+
+		LobbyModel.RestMeshes( entities, offsets, parents, poser, 1f, Quaternion.Identity, Vector3.Zero, propeller, null );
+
+		Near( flown, entities[0].Position.GetSystemVector3(), "the plane stays where it was flown" );
+		Near( new( 7, 8, 9 ), entities[2].Position.GetSystemVector3(), "the root stays where another channel left it" );
+		Near( flown + new Vector3( 3, -6, 7 ), entities[1].Position.GetSystemVector3(), "the propeller back on the plane" );
+
+		// No tree: the propeller's rest offset back, the plane's place left as it is.
+		entities[0].Position = new OpenTPW.Vector3( 1, 2, 3 );
+		entities[1].Position = new OpenTPW.Vector3( 4, 5, 6 );
+
+		LobbyModel.RestMeshes( entities, offsets, parents, null, 1f, Quaternion.Identity, Vector3.Zero, propeller, null );
+
+		Near( new( 1, 2, 3 ), entities[0].Position.GetSystemVector3(), "the plane left" );
+		Near( offsets[1].GetSystemVector3(), entities[1].Position.GetSystemVector3(), "the propeller at rest" );
+
+		Delete( entities );
+	}
 }

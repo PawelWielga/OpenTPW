@@ -1989,13 +1989,13 @@ public static class DebugConsole
 					break;
 				}
 
-				// A square marked $ refused for money (c_cash); the run price is what the run owes after its last square.
+				// A square marked $ refused for money (c_cash); the run total is what the run owes after its last square, the second charges in it.
 				var stripSquares = ParkPathBuilding.Strip( (int)Argument( 1 ), (int)Argument( 2 ), out var stripLatched );
 
 				Reply( "strip: " + string.Join( " ", stripSquares
 					.Select( square => $"({square.X},{square.Y}):{square.Marker}" + (square.Unaffordable ? "$" : "")
 						+ (square.Why is { } why ? $"[{why}]" : "") ) )
-					+ $" | run price {(stripSquares.Count > 0 ? stripSquares[^1].Owed : 0)}, latch {(stripLatched ? 1 : 0)}" );
+					+ $" | run total {(stripSquares.Count > 0 ? stripSquares[^1].Owed : 0)}, latch {(stripLatched ? 1 : 0)}" );
 				break;
 
 			// The harbour's moving sea: its corner, phase, folder and texture words; `sea y <h>` moves its corner's

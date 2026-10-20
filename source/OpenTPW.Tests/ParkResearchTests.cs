@@ -342,4 +342,39 @@ public class ParkResearchTests
 		CollectionAssert.AreEqual( new[] { "Balloon Shop", "Burger Shop", "Drinks Shop" }, Tab( 1 ) );
 		CollectionAssert.AreEqual( new[] { "Jungle Spray", "Strength Bird" }, Tab( 2 ) );
 	}
+
+	/// <summary>
+	/// <b>An item's name is its two <c>OBJECT_NAMES</c> lines joined</b> (<c>0x004146b0</c>): a space between, none
+	/// where the second is empty, and a first line's closing hyphen cut with the second joined straight on.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a space always; the hyphen kept.</remarks>
+	[TestMethod]
+	public void AnItemsNameIsItsTwoLinesJoined()
+	{
+		Assert.AreEqual( "Crazy Ape", ParkObjectNames.Joined( "Crazy", "Ape" ) );
+		Assert.AreEqual( "DinoKarts", ParkObjectNames.Joined( "DinoKarts", "" ) );
+		Assert.AreEqual( "Overpath", ParkObjectNames.Joined( "Over-", "path" ) );
+		Assert.AreEqual( " Ape", ParkObjectNames.Joined( "", "Ape" ), "%s%s%s with the space, as the original joins it" );
+	}
+
+	/// <summary>
+	/// <b>The park's lists letter the <c>OBJECT_NAMES</c> name, not the <c>.sam</c>'s</b> (<c>0x00412fb0</c>):
+	/// Dino Karts is "DinoKarts" (rows 2 and 3; the original's buy list, <c>q701/side-by-side.png</c>), and the
+	/// Loudspeaker is "Speaker: Wild Beasts" (row 61; <c>docs/exe/saves.md</c>, the Loudspeaker bought in the original).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the <c>.sam</c>'s <c>Info.Name</c> lettered.</remarks>
+	[TestMethod]
+	public void TheListsLetterTheObjectNamesRows()
+	{
+		var data = GameData.Required();
+		FileSystem = data;
+
+		var catalogue = new ParkItemCatalogue( "jungle", data, instantAction: true );
+
+		Assert.IsTrue( catalogue.TryGet( 1150, out var karts ) );
+		Assert.IsTrue( catalogue.TryGet( 1417, out var speaker ) );
+		Assert.AreEqual( ("Dino Karts", "Loudspeaker"), (karts.Name, speaker.Name), "the .sam's names" );
+		Assert.AreEqual( "DinoKarts", ParkObjectNames.NameOf( karts ) );
+		Assert.AreEqual( "Speaker: Wild Beasts", ParkObjectNames.NameOf( speaker ) );
+	}
 }

@@ -35,7 +35,7 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <list type="bullet">
-/// <item>Nothing is started or heard here. The engine hands the spawn to <c>Particles_Spawn</c> or
+/// <item>This list starts nothing itself. The engine hands the spawn to <c>Particles_Spawn</c> or
 /// <c>Sound_PlayEffect</c> and keeps what they answer; this keeps the request and answers a handle of
 /// its own. The script that owns the list starts a particle's emitter in the park's particle system and
 /// keeps its handle on the record (<see cref="Record.Emitter"/>, <c>RideScript.StartParticle</c>), and a sound's
@@ -96,7 +96,8 @@ public sealed class RideEffects
 
 		/// <summary>
 		/// What the spawn answered - the engine's field <c>+0x0c</c>, and <b>ours rather than the
-		/// original's</b>, since nothing here starts a particle or a sound to get a real one.
+		/// original's</b>: this list's own count, since the particle system's and the park audio's answers are kept
+		/// apart, in <see cref="Emitter"/> and <see cref="Sound"/>.
 		///
 		/// <para>
 		/// It is settable rather than fixed because the engine writes it back: <c>SETOBJPARAM</c> hands
@@ -110,7 +111,8 @@ public sealed class RideEffects
 
 		/// <summary>
 		/// The engine's handle as a park file holds it at <c>+0x0c</c>: the file's own for a record a load put back,
-		/// and nought for one started here, where nothing spawns a particle or a sound to answer one. Nought names
+		/// and nought for one started here: its particle's emitter and its sound's voice are kept apart
+		/// (<see cref="Emitter"/>, <see cref="Sound"/>), and a voice has no engine handle to write. Nought names
 		/// no particle (<c>FUN_0051ff70</c>). The park file's writer starts a particle's emitter in the file and
 		/// writes that handle over this one (<c>RideScript.WrittenEmitters</c>).
 		/// </summary>

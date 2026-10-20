@@ -367,8 +367,6 @@ internal sealed class ParkVisitorWindow : UiWindow
 			: second.Length == 0 ? first
 			: $"{first} {second}";
 
-	private static StringFile? _objectNames;
-
 	/// <summary>
 	/// A placed thing's name (<c>FUN_004e2780</c>): its item's two lines joined (<see cref="JoinName"/>), the catalogue's
 	/// name where the table has no row for it, and nothing for a thing not placed.
@@ -379,9 +377,7 @@ internal sealed class ParkVisitorWindow : UiWindow
 			|| !state.TryObject( thingId, out var placed ) )
 			return string.Empty;
 
-		_objectNames ??= new StringFile( ParkObjectNames.TablePath );
-
-		if ( ParkObjectNames.Lines( placed.CatalogueId, _objectNames ) is { } lines )
+		if ( ParkObjectNames.Lines( placed.CatalogueId, ParkObjectNames.Table ) is { } lines )
 			return JoinName( lines.A, lines.B );
 
 		return catalogue.TryGet( placed.CatalogueId, out var item ) ? item.Name : string.Empty;

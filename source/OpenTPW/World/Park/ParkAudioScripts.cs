@@ -138,7 +138,12 @@ public sealed partial class ParkAudio
 		/// <summary>Of a class, or a type, not built here: counted, and the record kept.</summary>
 		NotBuilt,
 
-		/// <summary>No sound device: nothing loaded and nothing played.</summary>
+		/// <summary>
+		/// No sound device, or no park audio: nothing loaded and nothing played, and an <c>ADDOBJ</c>'s record kept, where
+		/// the original's <c>Sound_PlayEffect</c> answers nought with its sound system down and the record is freed
+		/// (<c>docs/exe/audio.md</c>, "A script's sounds"). The original with no device faults before a park; a park here
+		/// runs without one, and a file it saves keeps the records one saved with sound holds.
+		/// </summary>
 		NoDevice
 	}
 
@@ -219,10 +224,30 @@ public sealed partial class ParkAudio
 		public AudioClip? Clip { get; set; }
 
 		/// <summary>
-		/// When a one-shot not looped is dropped wherever it is: its start, 250 ms and its sample record's length
-		/// (<c>0x006bbf60</c>'s <c>+0x1c</c>, read by <c>0x006bcb60</c> on each pass).
+		/// When a one-shot not looped is dropped wherever it is: its set-up, 250 ms and its sample record's length
+		/// (<c>0x006bbf60</c>'s <c>+0x1c</c>), and the wait its newest start drew (<c>+0x3c</c>, <c>0x006bc4fa</c>), read
+		/// by <c>0x006bcb60</c> on each pass. <b>Not the original's:</b> its sound commands 2 and 3 (<c>0x006bcab0</c>), sent on
+		/// focus loss and by the P key's pause, also write <c>+0x3c</c> and suspend the drop; neither is built here.
 		/// </summary>
 		public float DropAt { get; set; }
+
+		/// <summary>When a one-shot was set up, which its late-start refusal counts from (<see cref="ParkAudio.LateStart"/>).</summary>
+		public float SetUpAt { get; set; }
+
+		/// <summary>A one-shot's sample record's length in milliseconds (its <c>+0x08</c>).</summary>
+		public int LengthMilliseconds { get; set; }
+
+		/// <summary>
+		/// A one-shot started while the world was held: when its sample, drawn and given no voice, would have ended
+		/// (<see cref="ParkAudio.Unheard"/>), or null.
+		/// </summary>
+		public float? UnheardUntil { get; set; }
+
+		/// <summary>
+		/// A one-shot whose start was refused (<c>0x006bc410</c> answering nought): the original's voice flag <c>0x10</c>
+		/// (<c>0x006bd8fa</c>), let go on the next pass.
+		/// </summary>
+		public bool Refused { get; set; }
 
 		/// <summary>
 		/// Whether the listener was last found past its range (<see cref="InRange"/>): the original's voice flag
@@ -232,6 +257,9 @@ public sealed partial class ParkAudio
 
 		/// <summary>How many samples it has started.</summary>
 		public int Samples { get; set; }
+
+		/// <summary>How many samples or children it drew and let pass with no voice while the world was held (<see cref="ParkAudio.Unheard"/>).</summary>
+		public int Unheard { get; set; }
 
 		/// <summary>Whether a <c>KILLOBJ</c>, a <c>FADEOBJ</c> or its script's end has stopped it.</summary>
 		public bool Stopped { get; set; }
@@ -326,6 +354,8 @@ public sealed partial class ParkAudio
 		{
 			sound.Clip = category.PickSample( effect, out var variation, out var length );
 			sound.Variation = variation;
+			sound.SetUpAt = Time.Now;
+			sound.LengthMilliseconds = (int)length.TotalMilliseconds;
 			sound.DropAt = Time.Now + OneShotGraceSeconds + (float)length.TotalSeconds;
 
 			// Out of range at the start it plays nothing until it is in range (FUN_006b62b0 ticks it no sooner).
@@ -349,7 +379,8 @@ public sealed partial class ParkAudio
 	/// </summary>
 	internal void MoveScriptSound( ScriptVoice sound, Vector3 at )
 	{
-		if ( sound.Stopped || sound.Place is null )
+		// One let go (a one-shot dropped by its time, or ended) is off the service's list, its handle masked (0x006bb9b3).
+		if ( sound.Stopped || sound.Place is null || !_scriptVoices.Contains( sound ) )
 			return;
 
 		var whole = Whole( at );
@@ -370,7 +401,9 @@ public sealed partial class ParkAudio
 	/// </summary>
 	internal void StopScriptSound( ScriptVoice sound, bool fade )
 	{
-		if ( sound.Stopped )
+		// One let go is off the service's list and its handle masked (0x006bb9b3): Sound_Stop finds nothing, and a sample
+		// still playing plays out.
+		if ( sound.Stopped || !_scriptVoices.Contains( sound ) )
 			return;
 
 		sound.Stopped = true;
@@ -399,7 +432,11 @@ public sealed partial class ParkAudio
 	/// Each plain script voice's next sample once the last has ended and its silence is over, as a following voice's
 	/// is (<see cref="ServeFollowing"/>), each chain's next child once the clock passes its newest child's time, and
 	/// every one-shot served (<see cref="ServeOneShot"/>). A voice out of range makes nothing (<see cref="InRange"/>): a
-	/// plain, music or one-shot voice's sample is cut, and in range again its sample starts afresh.
+	/// plain, music or one-shot voice's sample is cut, and in range again its sample starts afresh (a one-shot's unless its
+	/// start is refused, <see cref="StartOneShot"/>).
+	/// It runs on <see cref="Time"/>, through a park's menu as the original's runs on wall time (<c>0x005f5fa0</c>); a
+	/// placed sample or child due while the world is held is drawn and let pass unheard (<see cref="Unheard"/>), so none
+	/// but a looped one-shot is born held to start with the rest on resume.
 	/// </summary>
 	internal void ServeScriptSounds()
 	{
@@ -438,8 +475,8 @@ public sealed partial class ParkAudio
 			if ( sound.Parked )
 				continue;
 
-			// In range again, the tick starts a channel on the sample the voice holds, its volume and pitch drawn as a
-			// first's are (0x006bdf50, its slot +0x44 FUN_006bc410), with no silence before it.
+			// In range again, the tick starts a channel on the sample the voice holds, its silence, volume and pitch drawn
+			// as a first's are (0x006bdf50, its slot +0x44 FUN_006bc410), with no silence before it.
 			if ( sound.Away )
 			{
 				if ( Reached( sound ) )
@@ -467,15 +504,24 @@ public sealed partial class ParkAudio
 	internal int ScriptOneShotsDropped { get; private set; }
 
 	/// <summary>
-	/// A one-shot's turn of the sound service (<c>FUN_006b62b0</c>), answering whether it is let go. Not looped, it is
-	/// dropped once its time passes (<c>0x006bcb60</c>), in range or not, and a sample still playing plays out, as the
-	/// drop moves the voice to the free list and stops no channel (<c>0x006b6440</c>, <c>0x006b6a50</c>). Ended by
-	/// itself in range, it is let go (voice flag <c>0x10</c>, <c>0x006bbe40</c>). Out of range its sample is cut
-	/// (<c>FUN_006bca70</c>); in range again it starts afresh from the top, a volume and a pitch drawn for it again
-	/// (<c>0x006bd800</c>, which starts a channel whenever none plays). A looped one is never dropped by time.
+	/// A one-shot's turn of the sound service (<c>FUN_006b62b0</c>), answering whether it is let go. One whose start was
+	/// refused is let go first (voice flag <c>0x10</c>, <c>0x006b62d5</c>). Not looped, it is dropped once its time passes
+	/// (<c>0x006bcb60</c>), in range or not, and a sample still playing plays out, as the drop moves the voice to the free
+	/// list and stops no channel (<c>0x006b6440</c>, <c>0x006b6a50</c>). Ended by itself in range, or its unheard sample's
+	/// time over, it is let go (voice flag <c>0x10</c>, <c>0x006bbe40</c>). Out of range its sample is cut
+	/// (<c>FUN_006bca70</c>); in range again it is started afresh (<see cref="StartOneShot"/>, <c>0x006bd800</c>, which starts
+	/// a channel whenever none plays). A looped one is never dropped by time.
 	/// </summary>
 	private bool ServeOneShot( ScriptVoice sound )
 	{
+		if ( sound.Refused )
+		{
+			++ScriptOneShotsRefused;
+			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} let go, its start refused, after {sound.Samples} sample(s)" );
+
+			return true;
+		}
+
 		if ( !sound.Looped && Time.Now > sound.DropAt )
 		{
 			++ScriptOneShotsDropped;
@@ -493,6 +539,18 @@ public sealed partial class ParkAudio
 			return false;
 		}
 
+		// Started under a park's menu, its sample passes unheard: cut by leaving range, let go at its end.
+		if ( sound.UnheardUntil is { } until )
+		{
+			if ( Time.Now >= until )
+				return true;
+
+			if ( !Reached( sound ) )
+				sound.UnheardUntil = null;
+
+			return false;
+		}
+
 		if ( !sound.Away )
 			return true;
 
@@ -502,9 +560,32 @@ public sealed partial class ParkAudio
 		return false;
 	}
 
+	/// <summary>How many one-shots were let go as their start was refused (<see cref="LateStart"/>, or their time past).</summary>
+	internal int ScriptOneShotsRefused { get; private set; }
+
 	/// <summary>
-	/// A one-shot's held sample started (<c>0x006bd800</c>): at its variation's own volume and a pitch drawn from it
-	/// (<see cref="OneShotGain"/>, <see cref="OneShotRate"/>; <c>FUN_006bc410</c>), looped under <c>0x8</c>.
+	/// Whether the channel start refuses a one-shot started late in its sample (<c>0x006bc410</c>, <c>0x006bc534</c>..
+	/// <c>0x006bc55d</c>): placed, not looped, its record over 1000 ms, and the time since its set-up, counted round its
+	/// length, past 1000 ms with under 1000 ms left. <c>docs/exe/audio.md</c>, "A script's one-shot".
+	/// </summary>
+	internal static bool LateStart( ScriptVoice sound )
+	{
+		if ( sound.Place is null || sound.Looped || sound.LengthMilliseconds <= 1000 )
+			return false;
+
+		var since = (long)MathF.Floor( (Time.Now - sound.SetUpAt) * 1000f );
+		var position = (int)(Math.Max( 0L, since ) % sound.LengthMilliseconds);
+
+		return position > 1000 && sound.LengthMilliseconds - position < 1000;
+	}
+
+	/// <summary>
+	/// A one-shot's held sample started (<c>0x006bd800</c>, its slot <c>+0x44</c> <c>FUN_006bc410</c>): its volume, its pitch
+	/// (<see cref="OneShotGain"/>, <see cref="OneShotRate"/>) and its variation's wait drawn, in that order, the wait moving
+	/// its drop (<see cref="ScriptVoice.DropAt"/>); then a start past that drop or late in its sample
+	/// (<see cref="LateStart"/>) is refused, its draws spent, and let go on the next pass. Looped under <c>0x8</c>. Under a
+	/// park's menu an unlooped one passes unheard (<see cref="Unheard"/>); a looped one is born held and sounds on the
+	/// resume, where the original's has looped on unheard: the same sample, its phase apart.
 	/// </summary>
 	/// <param name="again">Whether it is in range again after a start or a stretch out of range, which the log says.</param>
 	private void StartOneShot( ScriptVoice sound, bool again = false )
@@ -514,8 +595,34 @@ public sealed partial class ParkAudio
 		if ( sound.Clip is null )
 			return;
 
+		var headers = sound.Category.VariationsOf( sound.Effect );
+		SoundCategoryFile.Variation? header = sound.Variation >= 0 && sound.Variation < headers.Count ? headers[sound.Variation] : null;
+		var gain = header is { } forGain ? OneShotGain( forGain ) : 1f;
+		var rate = header is { } forRate ? OneShotRate( forRate ) : 1f;
+		var wait = header is { } forWait ? ParkScreams.GapMilliseconds( forWait, _scriptRandom ) : 0;
+
+		sound.DropAt = sound.SetUpAt + OneShotGraceSeconds + (sound.LengthMilliseconds + wait) / 1000f;
+
+		if ( !sound.Looped && (Time.Now > sound.DropAt || LateStart( sound )) )
+		{
+			sound.Refused = true;
+			Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} start refused, "
+				+ $"{(Time.Now - sound.SetUpAt) * 1000f:0} ms after its set-up into {sound.LengthMilliseconds} ms" );
+
+			return;
+		}
+
+		if ( !sound.Looped && Unheard( sound.Place ) )
+		{
+			sound.UnheardUntil = UnheardEnd( sound.Clip, OneShotPitch );
+			++sound.Samples;
+			++sound.Unheard;
+
+			return;
+		}
+
 		sound.Voice = sound.Category.PlaySample( sound.Effect, sound.Clip, sound.Variation, loop: sound.Looped,
-			bus: AudioBus.Effects, position: sound.Place, ownRange: true, gain: OneShotGain, rate: OneShotRate );
+			bus: AudioBus.Effects, position: sound.Place, ownRange: true, gain: _ => gain, rate: _ => rate );
 
 		if ( sound.Voice is null )
 			return;
@@ -531,8 +638,9 @@ public sealed partial class ParkAudio
 	/// A plain or music voice's next sample: a plain voice's variation drawn among all of the effect's
 	/// (<see cref="AnyVariation"/>), a music voice's among the zones of the one before that hold its parameter
 	/// (<see cref="ParkScreams.NextVariation"/>, <c>0x006be450</c>), the first the effect's first; the volume and pitch
-	/// its first drew (<see cref="HeldSample"/>), and after any but the first a silence drawn from the variation's wait
-	/// (<c>0x006bdf00</c>). A music voice with no zone for its parameter is parked (<c>0x006be55e</c>).
+	/// its first drew (<see cref="HeldSample"/>), and after each, the first included, a silence drawn from the variation's
+	/// wait (<c>0x006bdf00</c>, which a first start reaches through <c>FUN_006bc410</c>'s slot <c>+0x48</c>). A music voice
+	/// with no zone for its parameter is parked (<c>0x006be55e</c>).
 	/// </summary>
 	private void NextScriptSample( ScriptVoice sound )
 	{
@@ -555,8 +663,8 @@ public sealed partial class ParkAudio
 		}
 
 		sound.Variation = next;
+		sound.Wait = ParkScreams.GapMilliseconds( headers[next], _scriptRandom );
 		sound.Kept = HeldSample( headers[next], first, sound.Kept, 0, 0, _scriptRandom );
-		sound.Wait = first ? 0 : ParkScreams.GapMilliseconds( headers[next], _scriptRandom );
 		sound.EndedAt = null;
 		sound.Clip = sound.Category.PickFrom( sound.Effect, next );
 
@@ -578,6 +686,15 @@ public sealed partial class ParkAudio
 	{
 		var headers = sound.Category.VariationsOf( sound.Effect );
 
+		if ( Unheard( sound.Place ) )
+		{
+			sound.Voice = null;
+			sound.EndedAt = UnheardEnd( sound.Clip, sound.Kept.Pitch );
+			++sound.Unheard;
+			Log.Info( $"Park audio: script {sound.Script}'s effect {sound.Effect}, variation {sound.Variation + 1} unheard while the world is held, ending at {sound.EndedAt:F3} s, {sound.Wait} ms of silence after it" );
+			return false;
+		}
+
 		sound.Voice = Audio.Play( sound.Clip, ChannelGain( sound.Kept.Volume ), bus: AudioBus.Effects, position: sound.Place,
 			range: sound.Place is null ? null : headers[sound.Variation].Range );
 
@@ -591,10 +708,10 @@ public sealed partial class ParkAudio
 	}
 
 	/// <summary>
-	/// A plain or music voice in range again: the sample it holds started afresh at once, a volume and a pitch drawn for
-	/// it as for a first (<c>0x006bdf50</c>, <c>FUN_006bc410</c>). <b>A deviation:</b> one that left range in a silence
-	/// plays here the sample that last played, where the original's has already queued the next (slot 0,
-	/// <c>0x006bde00</c>); when the original queues it is not read.
+	/// A plain or music voice in range again: the sample it holds started afresh at once, a silence, a volume and a pitch
+	/// drawn for it as for a first (<c>0x006bdf50</c>, <c>FUN_006bc410</c>). The original draws a voice's next sample only
+	/// when the last one's silence has ended (its queue stage's read, <c>docs/exe/audio.md</c>, "A voice out of range makes
+	/// nothing next"), so one cut in its silence holds the sample that last played and plays it again, as here.
 	/// </summary>
 	private void SoundAgain( ScriptVoice sound )
 	{
@@ -602,13 +719,14 @@ public sealed partial class ParkAudio
 
 		sound.Away = false;
 		sound.EndedAt = null;
+		sound.Wait = ParkScreams.GapMilliseconds( headers[sound.Variation], _scriptRandom );
 		sound.Kept = HeldSample( headers[sound.Variation], first: true, sound.Kept, 0, 0, _scriptRandom );
 
 		if ( !PlayScriptSample( sound ) )
 			return;
 
 		Log.Info( $"Park audio: script {sound.Script}'s {sound.Kind} {sound.Effect} in range again: sample '{sound.Voice!.Name}' variation {sound.Variation + 1} afresh, "
-			+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}" );
+			+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, {sound.Wait} ms of silence after it" );
 	}
 
 	/// <summary>
@@ -641,8 +759,11 @@ public sealed partial class ParkAudio
 	/// Whether a script voice at <see cref="ScriptVoice.Place"/> is in range of <paramref name="ears"/>, as the sound
 	/// service's pass asks of each voice (<c>FUN_006bca10</c>, from <c>FUN_006b62b0</c>): the squared distance over the
 	/// ground's two axes alone (<c>FUN_006bb9f0</c>) not past the range's square, the range its current variation's
-	/// (<c>FUN_006bc650</c>; a chain's is its newest child's, which the child's draw writes into it, <c>0x006c3e00</c>,
-	/// and before its first the effect's first variation's). A flat voice is never out of range. Past it the original
+	/// (<c>FUN_006bc650</c>; a held chain's is its newest child's, which the child's draw writes into it, <c>0x006c3e00</c>).
+	/// <b>Not the original's:</b> a chain of any variation, whose children write nothing into it, and a held chain before
+	/// its first child range by the variation the set-up drew by weight among all (<c>0x006bbfc5</c>), where here they
+	/// range by the newest child's or the first's: of Lost Kingdom's effects only the staff's 188, a held chain, has two
+	/// ranges (its fourth 85, the rest 90). A flat voice is never out of range. Past it the original
 	/// flags the voice <c>0x800</c> and gives its channel up (<c>FUN_006bca70</c>), and only a voice in range is ticked
 	/// (slot <c>+0x14</c>): so it makes no child and draws no next sample.
 	/// </summary>
@@ -718,6 +839,7 @@ public sealed partial class ParkAudio
 	/// child (class <c>0x0070a970</c>) draws by weight among all of the effect's (<c>FUN_006bc810</c> asked with 0, so with
 	/// no rule against the one before); a held chain's (<c>0x0070a9e0</c>) takes the zones' rule (<c>0x006c3e00</c>), and
 	/// with no zone for its parameter makes nothing, as the original parks it.
+	/// One due while the world is held is made unheard (<see cref="Unheard"/>): its draws and its wait, and no voice.
 	/// </summary>
 	private void NextChainChild( ScriptVoice sound )
 	{
@@ -733,7 +855,18 @@ public sealed partial class ParkAudio
 		sound.Kept = HeldSample( headers[next], first: true, sound.Kept, 0, 0, _scriptRandom );
 		sound.Wait = ParkScreams.GapMilliseconds( headers[next], _scriptRandom );
 		sound.NextAt = Time.Now + (sound.Wait / 1000f);
-		sound.Voice = Audio.Play( sound.Category.PickFrom( sound.Effect, next ), ChannelGain( sound.Kept.Volume ),
+
+		var clip = sound.Category.PickFrom( sound.Effect, next );
+
+		if ( Unheard( sound.Place ) )
+		{
+			sound.Voice = null;
+			++sound.Unheard;
+			Log.Info( $"Park audio: script {sound.Script}'s chain {sound.Effect}, a child unheard at {Time.Now:F3} s while the world is held, the next in {sound.Wait} ms" );
+			return;
+		}
+
+		sound.Voice = Audio.Play( clip, ChannelGain( sound.Kept.Volume ),
 			bus: AudioBus.Effects, position: sound.Place, range: sound.Place is null ? null : headers[next].Range );
 
 		if ( sound.Voice is null )
@@ -768,7 +901,7 @@ public sealed partial class ParkAudio
 		var (started, absent, stopped, faded, moved) = ScriptSounds;
 		var lines = new List<string>
 		{
-			$"listener ({ears.X:F0},{ears.Y:F0},{ears.Z:F0}), started {started}, absent {absent}, stopped {stopped}, faded {faded}, moved {moved}, one-shots dropped {ScriptOneShotsDropped}, sounding {_scriptVoices.Count}"
+			$"listener ({ears.X:F0},{ears.Y:F0},{ears.Z:F0}), started {started}, absent {absent}, stopped {stopped}, faded {faded}, moved {moved}, one-shots dropped {ScriptOneShotsDropped}, refused {ScriptOneShotsRefused}, sounding {_scriptVoices.Count}"
 		};
 
 		foreach ( var sound in _scriptVoices )

@@ -292,6 +292,32 @@ public class ParkScreamChainTests
 	}
 
 	/// <summary>
+	/// A chain is in range by its newest child's variation's range (<c>FUN_006bc650</c>, which <c>0x006c3e00</c> writes),
+	/// and before its first child by the effect's first variation's: with hand-made variations of 50 and 95, a listener 70
+	/// off is out after a child of the first and in after a child of the second, and out again after one of the first.
+	/// No shipped scream can tell them apart: every kids' scream variation is 95.
+	/// </summary>
+	[TestMethod]
+	public void AChainIsInRangeByItsNewestChildsVariation()
+	{
+		var variations = new SoundCategoryFile.Variation[]
+		{
+			new( 1, 0, 0, 0, 1, [], Range: 50f ),
+			new( 1, 0, 0, 0, 1, [], Range: 95f ),
+		};
+		var chain = new ParkScreams.Chain { Effect = 0x47, Band = 1, At = Here };
+		var ears = Here + new Vector3( 70f, 0f, 0f );
+
+		Assert.IsFalse( ParkScreams.InRange( chain, variations, ears ), "before its first child, the first variation's 50" );
+
+		chain.Variation = 1;
+		Assert.IsTrue( ParkScreams.InRange( chain, variations, ears ), "after a child of the second, its 95" );
+
+		chain.Variation = 0;
+		Assert.IsFalse( ParkScreams.InRange( chain, variations, ears ), "after one of the first again, 50" );
+	}
+
+	/// <summary>
 	/// The heart of it. Two rides holding the SAME scream each make their first child at once, side by
 	/// side: nothing in the original is kept per effect for one to wait on the other.
 	/// </summary>
@@ -998,31 +1024,35 @@ public class ParkScreamChainTests
 	}
 
 	/// <summary>
-	/// <b>A park makes each child of a held scream on the first frame its time has passed, and none while the
-	/// world is held</b>: <see cref="ParkAudio"/>'s update pumps the chains the tests above pump by hand. Two rides
-	/// scream, the second starting later, and each keeps its own clock; each first wait counts from the call.
+	/// <b>A park makes each child of a held scream on the first frame its time has passed, a park's menu or not; one due
+	/// while the world is held is made with no voice</b>: <see cref="ParkAudio"/>'s update pumps the chains the tests
+	/// above pump by hand. Two rides scream, the second starting later, and each keeps its own clock; each first wait
+	/// counts from the call. Through a pause the original's service ticks its chains on wall time and its mixer plays
+	/// their children at nought (<c>docs/exe/audio.md</c>, "The pause substitution"), so none is held here to start with
+	/// the rest on resume, and after it the next child comes at its own time.
 	/// </summary>
 	/// <remarks>
 	/// The second row is a theme with no music to load, whose update returns early and must pump first. The park's
 	/// chains draw their waits from an unseeded generator, so each due time is read off its chain rather than
 	/// predicted. The hold lasts 200 frames, longer than effect 71's longest wait of 3 s, so a due time always
-	/// passes inside it. <b>Mutations:</b> taking the pump out of the update, pumping behind the music's guard,
-	/// pumping while the world is held or on another clock, stepping only the first chain or stopping at the first
-	/// not due, and starting a chain's clock anywhere but now, each fail an assertion here. Not pinned: whether the
-	/// pump comes before or after the hold in the update, which no listener could tell apart, and the debug
-	/// console's own pause, which the update ignores on purpose.
+	/// passes inside it. <b>Mutations:</b> taking the pump out of the update, pumping behind the music's guard, not
+	/// pumping while the world is held, giving a child due under the hold a voice (born held, it would start with the
+	/// rest on resume), pumping on another clock, stepping only the first chain or stopping at the first not due, and
+	/// starting a chain's clock anywhere but now, each fail an assertion here. Not pinned: whether the pump comes before
+	/// or after the hold in the update, which no listener could tell apart, and the debug console's own pause, which the
+	/// update ignores on purpose.
 	/// </remarks>
 	[TestMethod]
 	[DataRow( "jungle" )]
 	[DataRow( "nomusic" )]
-	public void AParkMakesEachChildWhenItsTimeHasPassedAndNoneWhileHeld( string theme )
+	public void AParkMakesEachChildWhenItsTimeHasPassedUnheardWhileHeld( string theme )
 	{
 		const int SecondFrom = 40, HoldFrom = 300, HoldTo = 500, Frames = 900;
 
 		InAPark( theme, park =>
 		{
 			var chains = new List<(int Script, ParkScreams.Chain Chain)>();
-			var passedWhileHeld = new HashSet<int>();
+			var madeWhileHeld = new HashSet<int>();
 
 			void Start( int script, Vector3 at )
 			{
@@ -1045,39 +1075,90 @@ public class ParkScreamChainTests
 					Start( 43, Here + new Vector3( 40f, 0f, 0f ) );
 
 				var held = frame is >= HoldFrom and < HoldTo;
-				var before = chains.Select( entry => (entry.Chain.NextAt, entry.Chain.Plays) ).ToList();
+				var before = chains.Select( entry => (entry.Chain.NextAt, entry.Chain.Plays, entry.Chain.Unheard) ).ToList();
+				List<Voice> voices;
+
+				lock ( Audio.Lock )
+					voices = [.. Audio.Voices];
 
 				Frame( held );
 				park.Update();
 
+				if ( held )
+				{
+					lock ( Audio.Lock )
+						Assert.AreEqual( 0, Audio.Voices.Count( voice => voice.IsPlaced && !voices.Contains( voice ) ),
+							$"frame {frame} started a placed voice while the world was held" );
+				}
+
 				for ( var i = 0; i < chains.Count; ++i )
 				{
 					var (script, chain) = chains[i];
-					var (due, plays) = before[i];
+					var (due, plays, unheard) = before[i];
 
 					if ( chain.Plays == plays )
 					{
-						Assert.IsTrue( held || Time.Now <= due,
+						Assert.IsTrue( Time.Now <= due,
 							$"script {script}, frame {frame} at {Time.Now:0.000} s is past the child due at {due:0.000} s, and made none" );
-
-						if ( held && Time.Now > due )
-							passedWhileHeld.Add( script );
-
 						continue;
 					}
 
-					Assert.IsFalse( held, $"script {script}, frame {frame} made a child while the world was held" );
 					Assert.IsTrue( Time.Now > due, $"script {script}, frame {frame} at {Time.Now:0.000} s made a child due at {due:0.000} s" );
 					Assert.AreEqual( plays + 1, chain.Plays, "one child at a time" );
+
+					if ( held )
+					{
+						Assert.AreEqual( unheard + 1, chain.Unheard, $"script {script}, frame {frame}: the child made under the hold is unheard" );
+						Assert.IsNull( chain.Voice, "and has no voice" );
+						madeWhileHeld.Add( script );
+					}
+					else
+					{
+						Assert.AreEqual( unheard, chain.Unheard );
+						Assert.IsFalse( chain.Voice?.IsHeld ?? true, $"script {script}, frame {frame}: a child after the hold is heard" );
+					}
 				}
 			}
 
 			foreach ( var (script, chain) in chains )
 			{
-				Assert.IsTrue( passedWhileHeld.Contains( script ), $"script {script}: a child fell due inside the hold, or the hold proves nothing" );
+				Assert.IsTrue( madeWhileHeld.Contains( script ), $"script {script}: a child fell due inside the hold, or the hold proves nothing" );
 				Assert.IsTrue( chain.Plays >= 5, $"script {script}: fifteen seconds with waits of one to three made {chain.Plays}" );
 			}
 		} );
+	}
+
+	/// <summary>Answers each roll it is given, in turn, whatever the bound.</summary>
+	private sealed class Rolls( params long[] rolls ) : Random
+	{
+		private int _next;
+
+		public override long NextInt64( long maxValue ) => rolls[_next++];
+	}
+
+	/// <summary>
+	/// <b>A chain's draw takes the first zone whose running total of weights is at least the roll</b> (<c>0x006c3f12</c>
+	/// <c>add</c>, <c>0x006c3f14</c> <c>cmp</c>, <c>jae</c>): between a zone to variation 2 of weight 3 and one to 3 of
+	/// weight 5, the roll 3 is 2's and 4 is 3's; and a first zone of weight nought takes the roll nought. Taking a zone
+	/// only once the total is past the roll gives 3 and 2.
+	/// </summary>
+	[TestMethod]
+	public void AChainsDrawTakesTheFirstZoneWhoseTotalReachesTheRoll()
+	{
+		var variations = new SoundCategoryFile.Variation[]
+		{
+			new( 1, 0, 0, 0, 1, [new( 1, 0, 100 ), new( 2, 0, 100 )] ),
+			new( 1, 0, 0, 0, 3, [new( 3, 0, 100 ), new( 1, 0, 100 )] ),
+			new( 1, 0, 0, 0, 5, [] ),
+			new( 1, 0, 0, 0, 0, [] ),
+		};
+
+		Assert.AreEqual( 1, ParkScreams.NextVariation( variations, 0, 0, new Rolls( 0 ) ) );
+		Assert.AreEqual( 1, ParkScreams.NextVariation( variations, 0, 0, new Rolls( 3 ) ), "the total 3 reaches the roll 3" );
+		Assert.AreEqual( 2, ParkScreams.NextVariation( variations, 0, 0, new Rolls( 4 ) ) );
+		Assert.AreEqual( 2, ParkScreams.NextVariation( variations, 0, 0, new Rolls( 7 ) ) );
+		Assert.AreEqual( 3, ParkScreams.NextVariation( variations, 1, 0, new Rolls( 0 ) ), "a first zone of weight nought takes the roll nought" );
+		Assert.AreEqual( 1, ParkScreams.NextVariation( variations, 1, 0, new Rolls( 1 ) ) );
 	}
 
 	/// <summary>

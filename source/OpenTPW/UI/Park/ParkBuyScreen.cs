@@ -341,7 +341,7 @@ internal sealed class ParkBuyScreen : UiWindow
 			{
 				_list.Add( IsMystery( item )
 					? new UiList.Row( item.Id, Localization.Get( UIStrings.MysteryRide ), -item.GoldenTicketCost, StateOf( item ) )
-					: new UiList.Row( item.Id, item.Name, item.BuildPrice, StateOf( item ) ) );
+					: new UiList.Row( item.Id, ParkObjectNames.NameOf( item ), item.BuildPrice, StateOf( item ) ) );
 			}
 		}
 
@@ -363,7 +363,7 @@ internal sealed class ParkBuyScreen : UiWindow
 	/// </summary>
 	internal static IEnumerable<ParkItemCatalogue.Item> Listed( ParkItemCatalogue catalogue, ParkResearch research, int tab )
 		=> catalogue.All.Where( item => item.UiType == tab && research.IsResearched( item.Id ) )
-			.OrderBy( item => item.Name, StringComparer.OrdinalIgnoreCase );
+			.OrderBy( ParkObjectNames.NameOf, StringComparer.OrdinalIgnoreCase );
 
 	/// <summary>
 	/// The mystery row (<c>0x004ab023</c>..<c>0x004ab063</c>): a ride with a golden-ticket cost that the player has not

@@ -364,8 +364,10 @@ internal sealed class ParkItemsScreen : UiWindow
 				{
 					var owned = state.BuiltOf( placed.CatalogueId ).Standing;
 
-					chosen.Add( new UiList.Row( placed.ThingId, each.Name, owned ) );
-					Log.Info( $"Items list: tab {_tab}, row {placed.ThingId} {each.Name}: owned {owned}" );
+					var name = ParkObjectNames.NameOf( each );
+
+					chosen.Add( new UiList.Row( placed.ThingId, name, owned ) );
+					Log.Info( $"Items list: tab {_tab}, row {placed.ThingId} {name}: owned {owned}" );
 				}
 			}
 
@@ -382,12 +384,13 @@ internal sealed class ParkItemsScreen : UiWindow
 			}
 
 			var numbers = NumbersOf( tab.Index, placed, item, state );
+			var name = ParkObjectNames.NameOf( item );
 
-			chosen.Add( new UiList.Row( placed.ThingId, item.Name, 0, Values: ValuesOf( tab, numbers ),
+			chosen.Add( new UiList.Row( placed.ThingId, name, 0, Values: ValuesOf( tab, numbers ),
 				Colour: ParkClosedStatus.Colour( ParkClosedStatus.For( level.Park, placed, item.TrackType ) ),
 				Numbers: numbers ) );
 
-			Log.Info( $"Items list: tab {_tab}, row {placed.ThingId} {item.Name}: {Census( numbers )}" );
+			Log.Info( $"Items list: tab {_tab}, row {placed.ThingId} {name}: {Census( numbers )}" );
 		}
 
 		LogOrder( chosen );

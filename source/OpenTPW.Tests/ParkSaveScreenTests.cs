@@ -387,6 +387,151 @@ public class ParkSaveScreenTests
 	}
 
 	/// <summary>
+	/// <b>The player's gms.dat is written before the park</b> (<c>FUN_005c8a10</c>, the save's step 1): every line
+	/// the save logs that finds the park file finds the player's file too, and one finds the player's alone.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the player saved after the writer leaves the park on the disc without them.</remarks>
+	[TestMethod]
+	public void ThePlayerIsWrittenBeforeThePark()
+	{
+		RunningPark( 900 );
+
+		var player = Path.Combine( Jungle, "..", "gms.dat" );
+		var park = Path.Combine( Jungle, "ordered.TPWS" );
+		var seen = new List<(bool Player, bool Park)>();
+		Logger.LogDelegate look = ( _, _ ) => seen.Add( (File.Exists( player ), File.Exists( park )) );
+
+		Logger.OnLog += look;
+
+		try
+		{
+			Assert.IsNotNull( Level.Current.WritePark( "ordered" ) );
+		}
+		finally
+		{
+			Logger.OnLog -= look;
+		}
+
+		Assert.IsTrue( seen.Any( line => line.Player && !line.Park ), "the player is on the disc while the park is still to be written" );
+		Assert.IsFalse( seen.Any( line => line.Park && !line.Player ), "the park is never there without the player" );
+	}
+
+	/// <summary>
+	/// <b>A worker in the hand is put down before the park is written</b> (<c>0x00516d13</c>): back on the middle of
+	/// the cell they were picked up from, and written there, not where they hung.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the hand let go of after the writer writes them where they were picked up.</remarks>
+	[TestMethod]
+	public void AWorkerInTheHandIsPutDownBeforeTheParkIsWritten()
+	{
+		RunningPark( 900 );
+
+		var people = new ParkPeople( Level.Current.Park, state: Level.Current.ParkState );
+
+		try
+		{
+			var member = people.Staff.First( staff => staff.Activity == StaffActivity.Walking );
+			var (cellX, cellY) = member.Navigator.Position.Cell;
+			var centre = (PeepNavigator.WaypointCentre( cellX ), PeepNavigator.WaypointCentre( cellY ));
+
+			member.Navigator.Position = new FixedVector( centre.Item1 + 9000, centre.Item2 - 7000 );
+			Assert.AreEqual( (cellX, cellY), member.Navigator.Position.Cell, "off the middle, in the same cell" );
+			Assert.IsTrue( people.PickUp( member.ThingId ) );
+
+			Assert.IsNotNull( Level.Current.WritePark( "held" ) );
+			Assert.AreEqual( 0, people.CarriedStaff, "put down" );
+
+			var read = ParkIn( Path.Combine( Jungle, "held.TPWS" ) ).People.Single( person => person.ThingId == member.ThingId );
+
+			Assert.AreEqual( centre, (read.Navigator.X, read.Navigator.Y), "written on the middle of their cell" );
+			Assert.AreEqual( (int)StaffActivity.Idle, read.Staff!.Value.State );
+		}
+		finally
+		{
+			TestRun.DeleteEvery<ParkPeople>();
+		}
+	}
+
+	/// <summary>
+	/// <b>A save that fails is logged and the game goes on</b>: the screen and the question close as on a save made,
+	/// as the original's do whatever its save answered (<c>0x0049e9fa</c>), and the old file is left as it was, where
+	/// the original deletes it (a deviation, <c>docs/exe/saves.md</c>, "Where").
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no catch around the save lets the failure out of the click.</remarks>
+	[TestMethod]
+	public void AFailedSaveIsLoggedAndTheScreenCloses()
+	{
+		Put( "New Save.TPWS", DateTime.Now );
+		RunningPark( 900 );
+
+		var failing = DispatchProxy.Create<IParkInitialState, FailingPark>();
+		((FailingPark)(object)failing).Park = Level.Current.Park!;
+		typeof( Level ).GetProperty( nameof( Level.Park ) )!.SetValue( Level.Current, failing );
+
+		var errors = new List<string>();
+		Logger.LogDelegate look = ( severity, text ) =>
+		{
+			if ( severity == Logger.Level.Error )
+				errors.Add( text );
+		};
+
+		var stack = APark();
+
+		OpenSavePark( stack );
+		Press( stack, Key.Enter );
+		Logger.OnLog += look;
+
+		try
+		{
+			Click( stack.Windows.OfType<UI.MessageBox>().Single(), QuestionTick );
+		}
+		finally
+		{
+			Logger.OnLog -= look;
+		}
+
+		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "the question and the screen close" );
+		Assert.IsTrue( errors.Single().Contains( "the disc is full" ), "the failure is logged" );
+		Assert.AreEqual( 4, new FileInfo( OldSave ).Length, "and the old save is left whole" );
+	}
+
+	/// <summary>
+	/// <b>A name the folder holds in two cases is written in the case the question named</b>: only a file copied in
+	/// makes two, and the question compares by case, so <c>A</c> asks about and writes <c>A.TPWS</c>, and <c>a</c>
+	/// <c>a.TPWS</c>.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the first file in any case writes one of the two names over the other's file.</remarks>
+	[TestMethod]
+	public void ANameInTwoCasesIsWrittenInTheCaseAskedAbout()
+	{
+		Put( "a.TPWS", DateTime.Now );
+		Put( "A.TPWS", DateTime.Now );
+		RunningPark( 1234 );
+
+		var stack = APark();
+
+		OpenSavePark( stack );
+		Type( stack, "A" );
+		Press( stack, Key.Enter );
+		Assert.AreEqual( "A exists\n\nOverwrite ?", Question( stack ) );
+		Click( stack.Windows.OfType<UI.MessageBox>().Single(), QuestionTick );
+
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "A.TPWS" ) ), "A is written" );
+		Assert.AreEqual( 4, new FileInfo( Path.Combine( Jungle, "a.TPWS" ) ).Length, "and a is not" );
+
+		RunningPark( 2345 );
+		OpenSavePark( stack );
+		Type( stack, "a" );
+		Press( stack, Key.Enter );
+		Assert.AreEqual( "a exists\n\nOverwrite ?", Question( stack ) );
+		Click( stack.Windows.OfType<UI.MessageBox>().Single(), QuestionTick );
+
+		Assert.AreEqual( 2345, TickIn( Path.Combine( Jungle, "a.TPWS" ) ), "a is written" );
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "A.TPWS" ) ), "and A is not" );
+		Assert.AreEqual( "A.TPWS, a.TPWS", Parks() );
+	}
+
+	/// <summary>
 	/// <b>Leaving a park writes it as <c>autosave.TPWS</c></b> (state 0xb, <c>0x0054ff10</c>), at the tick it was left
 	/// on, beside the menu's saves, and entering the theme again finds it as the newest park file. Leaving the lobby
 	/// writes nothing.
@@ -444,12 +589,12 @@ public class ParkSaveScreenTests
 	/// <summary>
 	/// <b>Restart Park loads <c>restart.INTS</c></b> (state 0xe, <c>0x0055036c</c>), found in any case, however much
 	/// newer an autosave or a saved park is. With no such file a loaded park loads nothing; a park made fresh is made
-	/// fresh again.
+	/// fresh again. The advisor is quietened first, file or none (state 0xe, <c>Advisor_StopQuietly(1)</c>).
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the park entered again from the newest file (the menu's restart before <c>restart.INTS</c>) asks
 	/// for no file; the fresh park's case taken for every missing file asks for one there too; the missing file not
-	/// looked for asks for nothing at all.
+	/// looked for asks for nothing at all; the quiet stop dropped leaves his line to come.
 	/// </remarks>
 	[TestMethod]
 	public void RestartParkLoadsRestartIntsAndNotTheNewestFile()
@@ -458,7 +603,23 @@ public class ParkSaveScreenTests
 		var stack = APark();
 		ForgetWhatWasAsked();
 
-		Restart( stack );
+		var advisor = (Advisor)RuntimeHelpers.GetUninitializedObject( typeof( Advisor ) );
+		var current = typeof( Advisor ).GetProperty( nameof( Advisor.Current ), BindingFlags.Static | BindingFlags.NonPublic )!;
+		var pending = typeof( Advisor ).GetField( "_pending", BindingFlags.Instance | BindingFlags.NonPublic )!;
+		var advisorBefore = current.GetValue( null );
+		pending.SetValue( advisor, 412 );
+		current.SetValue( null, advisor );
+
+		try
+		{
+			Restart( stack );
+		}
+		finally
+		{
+			current.SetValue( null, advisorBefore );
+		}
+
+		Assert.AreEqual( 0, pending.GetValue( advisor ), "the advisor is quietened, file or none (0x0055035a)" );
 		Assert.AreEqual( (null, null), WhatWasAsked(), "a loaded park with no restart file loads nothing" );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ) );
 
@@ -552,6 +713,213 @@ public class ParkSaveScreenTests
 	}
 
 	/// <summary>
+	/// <b>Alt+S on a folder with no quicksave writes <c>jungle.TPWS</c></b>, lower case, the theme folder's own string,
+	/// as the original wrote it (<c>docs/exe/saves.md</c>, "The quicksave and quickload keys", "Measured (Q545)").
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the theme's name written with a capital writes <c>Jungle.TPWS</c>.</remarks>
+	[TestMethod]
+	public void AltSOnAFolderWithNoQuicksaveWritesTheThemesLowerCaseName()
+	{
+		RunningPark( 1234 );
+
+		QuickKey( Key.S, Key.AltLeft );
+
+		Assert.AreEqual( "jungle.TPWS", Parks() );
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "jungle.TPWS" ) ) );
+	}
+
+	/// <summary>
+	/// <b>In first person the game table's keys do nothing</b>: the viewfinder's layer has the focus and its key-up runs
+	/// the camera's table alone (<c>FUN_00488a00</c>, <c>0x00488ae3</c>), so Alt+S writes nothing, Alt+L loads nothing,
+	/// and Backspace and Delete leave the queue tool armed. Back in orbit each does its own.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> first person taken out of <c>Level.GameTableKeys</c>' gate writes, loads, counts the queue's
+	/// undo and puts the tool away.</remarks>
+	[TestMethod]
+	public void TheGameTableKeysDoNothingInFirstPerson()
+	{
+		Put( "jungle.TPWS", DateTime.Now );
+		RunningPark( 1234 );
+		ForgetWhatWasAsked();
+
+		FirstPerson( true );
+
+		try
+		{
+			TheFourKeysDoNothing( "in first person" );
+		}
+		finally
+		{
+			FirstPerson( false );
+		}
+
+		TheFourKeys();
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "jungle.TPWS" ) ), "in orbit Alt+S writes the park" );
+		Assert.AreEqual( ("jungle", "users/1Test/jungle/jungle.TPWS"), WhatWasAsked(), "Alt+L loads it" );
+		Assert.AreEqual( ParkBuildMode.None, ParkBuildMode.Current, "and Delete puts the tool away" );
+		Assert.AreEqual( "1x BACKSPACE_UNDO_QUEUE_RUN, 1x CLEAR_LAND_TOOL", Counted(), "Backspace's undo of the queue is counted" );
+	}
+
+	/// <summary>
+	/// <b>Behind a park screen, a pausing window or the full-screen view the quick keys do nothing</b>, as the build keys
+	/// do not: the gate is the game table's (<c>Level.GameTableKeys</c>).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the quick keys asked above the gate's return write and load under each.</remarks>
+	[TestMethod]
+	public void TheQuickKeysDoNothingBehindAParkScreenAPausingWindowOrTheView()
+	{
+		Put( "jungle.TPWS", DateTime.Now );
+		RunningPark( 1234 );
+		ForgetWhatWasAsked();
+
+		var screenOpen = typeof( UI.WindowStack ).GetProperty( "ParkScreenOpen", BindingFlags.Static | BindingFlags.NonPublic )!;
+		screenOpen.SetValue( null, true );
+
+		try
+		{
+			TheFourKeysDoNothing( "behind a park screen" );
+		}
+		finally
+		{
+			screenOpen.SetValue( null, false );
+		}
+
+		// The armed tool would take the first Escape.
+		ParkBuildMode.Forget();
+		var menu = APark();
+		Press( menu, Key.Escape );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, GameMenu", Names( menu ) );
+		Windows( menu );
+		Assert.IsTrue( Level.Current.PausedByWindow() );
+		TheFourKeysDoNothing( "behind the game menu" );
+
+		var view = new UI.WindowStack();
+		view.Cover( true );
+		Windows( view );
+		Assert.IsTrue( Level.Current.FullScreenView );
+		TheFourKeysDoNothing( "under the full-screen view" );
+
+		Windows( null );
+		TheFourKeys();
+		Assert.AreEqual( ("jungle", "users/1Test/jungle/jungle.TPWS"), WhatWasAsked(), "with none of them the keys are heard" );
+	}
+
+	/// <summary>Backspace, Delete, Alt+S and Alt+L let go in turn, with the queue tool armed.</summary>
+	private static void TheFourKeys()
+	{
+		ParkBuildMode.Arm( ParkBuildMode.Queue );
+		Unimplemented.Forget();
+
+		QuickKey( Key.BackSpace );
+		QuickKey( Key.Delete );
+		QuickKey( Key.S, Key.AltLeft );
+		QuickKey( Key.L, Key.AltLeft );
+	}
+
+	/// <summary><see cref="TheFourKeys"/>, and nothing done: the four-byte quicksave as it was, no load asked for, the tool armed and nothing counted.</summary>
+	private void TheFourKeysDoNothing( string where )
+	{
+		TheFourKeys();
+
+		Assert.AreEqual( 4, new FileInfo( Path.Combine( Jungle, "jungle.TPWS" ) ).Length, $"{where}: Alt+S writes nothing" );
+		Assert.AreEqual( (null, null), WhatWasAsked(), $"{where}: Alt+L loads nothing" );
+		Assert.AreEqual( ParkBuildMode.Queue, ParkBuildMode.Current, $"{where}: Delete and Alt+S leave the tool armed" );
+		Assert.AreEqual( "", Counted(), $"{where}: Backspace counts no undo" );
+	}
+
+	private static void FirstPerson( bool on )
+		=> typeof( ParkCamcorderCameraMode ).GetProperty( nameof( ParkCamcorderCameraMode.Active ) )!.SetValue( null, on );
+
+	/// <summary>The running level's window stack.</summary>
+	private static void Windows( UI.WindowStack? stack )
+		=> typeof( Level ).GetField( "_windows", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( Level.Current, stack );
+
+	/// <summary>
+	/// <b>Closing the game writes the autosave before the player is saved and let go</b> (<c>Game.LeaveOnClose</c>):
+	/// Quit Game and the window's close, as <c>Game_Shutdown</c> runs state 0xb.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the write moved below <c>SaveAndDeselect</c> writes nothing, nobody being left playing.</remarks>
+	[TestMethod]
+	public void ClosingTheGameWritesTheAutosaveBeforeThePlayerIsSaved()
+	{
+		RunningPark( 1234 );
+
+		Game.LeaveOnClose();
+
+		Assert.AreEqual( 1234, TickIn( Path.Combine( Jungle, "autosave.TPWS" ) ) );
+		Assert.IsNull( Players.Roster.Current, "and the player is saved and let go" );
+	}
+
+	/// <summary>
+	/// <b>Only the lobby asked for writes the autosave as the park is left</b>, before the scene is unloaded
+	/// (<c>Game.ChangeSceneIfAsked</c>): Restart Park and a Load Park row ask for a park, which passes state 0xb by, and
+	/// write nothing. With nothing asked for nothing is done.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a write added on the park's branch writes the autosave for Restart Park; the lobby's write
+	/// moved below the unload writes it after.</remarks>
+	[TestMethod]
+	public void OnlyTheLobbyAskedForWritesTheAutosaveAsTheParkIsLeft()
+	{
+		Put( "New Save.TPWS", DateTime.Now );
+		RunningPark( 1234 );
+
+		var autosave = Path.Combine( Jungle, "autosave.TPWS" );
+		var done = new List<string>();
+
+		void Leave() => Game.ChangeSceneIfAsked(
+			() => done.Add( File.Exists( autosave ) ? "unload, the autosave written" : "unload" ),
+			( theme, file ) => done.Add( $"park {theme} {file ?? "as entered"}" ),
+			() => done.Add( "lobby" ) );
+
+		Leave();
+		Assert.AreEqual( "", string.Join( ", ", done ), "nothing asked for" );
+
+		Game.RequestParkLoad( "jungle" );
+		Leave();
+		Game.RequestParkLoad( "jungle", "users/1Test/jungle/New Save.TPWS" );
+		Leave();
+		Assert.AreEqual( "unload, park jungle as entered, unload, park jungle users/1Test/jungle/New Save.TPWS", string.Join( ", ", done ) );
+		Assert.AreEqual( "New Save.TPWS", Parks(), "Restart Park and Load Park write nothing" );
+
+		done.Clear();
+		Game.RequestLobbyReload();
+		Leave();
+		Assert.AreEqual( "unload, the autosave written, lobby", string.Join( ", ", done ) );
+		Assert.AreEqual( 1234, TickIn( autosave ) );
+	}
+
+	/// <summary>
+	/// <b>A park entered from the lobby is written as <c>restart.INTS</c> once it is built</b> (state 9 on to 0xf,
+	/// <c>Game.ChangeSceneIfAsked</c>); a park built again from a park (a Load Park row, Alt+L, Restart Park) is loaded
+	/// in place in the original, never passes 0xf, and writes none.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the call dropped writes nothing from the lobby; the guard on the scene dropped writes the
+	/// file for a Load Park row.</remarks>
+	[TestMethod]
+	public void OnlyAParkEnteredFromTheLobbyWritesRestartInts()
+	{
+		var lobby = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
+		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( lobby, Level.Scene.Lobby );
+		Level.Current = lobby;
+
+		var restart = Path.Combine( Jungle, "restart.INTS" );
+		var tick = 755;
+
+		void Change() => Game.ChangeSceneIfAsked( () => { }, ( _, _ ) => RunningPark( tick ), () => { } );
+
+		Game.RequestParkLoad( "jungle" );
+		Change();
+		Assert.AreEqual( 755, File.Exists( restart ) ? TickIn( restart ) : -1, "entered from the lobby, the park as built" );
+
+		File.Delete( restart );
+		tick = 900;
+		Game.RequestParkLoad( "jungle", "users/1Test/jungle/New Save.TPWS" );
+		Change();
+		Assert.IsFalse( File.Exists( restart ), "a Load Park row or Alt+L, from a park, writes none" );
+		Assert.AreEqual( "", Counted() );
+	}
+
+	/// <summary>
 	/// The key let go with the modifiers held round it, a frame each, the running level's game-table keys asked after
 	/// every frame as <c>Level.Update</c> asks them.
 	/// </summary>
@@ -612,12 +980,28 @@ public class ParkSaveScreenTests
 	private string OldSave => Path.Combine( Jungle, "New Save.TPWS" );
 
 	/// <summary>The <c>mGameTick</c> a park file holds.</summary>
-	private static int TickIn( string path )
+	private static int TickIn( string path ) => ParkIn( path ).GameTick;
+
+	/// <summary>A park file, read.</summary>
+	private static ParkWorld ParkIn( string path )
 	{
 		using var stream = new MemoryStream( File.ReadAllBytes( path ) );
 		var reader = new SaveReader( stream );
 
-		return new ParkWorld( reader.ReadFile(), reader.Preamble ).GameTick;
+		return new ParkWorld( reader.ReadFile(), reader.Preamble );
+	}
+
+	/// <summary>The overwrite question's text.</summary>
+	private static string Question( UI.WindowStack stack )
+		=> Everything( stack.Windows.OfType<UI.MessageBox>().Single().Root ).Single( control => control.Id == 0x9873c7 ).Text!;
+
+	/// <summary>The park as it stands, but for its file, which fails to be read as a full disc would fail a write.</summary>
+	public class FailingPark : DispatchProxy
+	{
+		public IParkInitialState Park = null!;
+
+		protected override object? Invoke( MethodInfo? method, object?[]? args )
+			=> method!.Name == $"get_{nameof( IParkInitialState.Save )}" ? throw new IOException( "the disc is full" ) : method.Invoke( Park, args );
 	}
 
 	/// <summary>What has been counted, less the list's own count of a first row it does not select.</summary>

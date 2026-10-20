@@ -294,6 +294,44 @@ public sealed class RideAnimations
 	}
 
 	/// <summary>
+	/// Poses <paramref name="target"/> from every channel that is playing, each its clip at the frame it has reached, a
+	/// change of clip first putting back what the one before it moved (<see cref="PoseChannel"/>). <paramref name="posed"/>
+	/// holds the clip each channel was last posed from, one per channel this caller poses. The engine's sweep walks the
+	/// whole array of players (<c>FUN_004735d0</c>): the Jungle Spray runs one per lane.
+	/// </summary>
+	public void PoseOnto( IChannelPosed target, AnimationFile?[] posed )
+	{
+		for ( var index = 0; index < posed.Length; ++index )
+		{
+			if ( Channel( index ) is not { } channel || channel.IsIdle )
+				continue;
+
+			if ( Clip( channel.AnimID, channel.SubAnim ) is not { } clip )
+				continue;
+
+			PoseChannel( target, ref posed[index], clip, channel.AnimFrame );
+		}
+	}
+
+	/// <summary>
+	/// One channel's clip on <paramref name="target"/> at <paramref name="frame"/>, the frame counted from the start of the
+	/// clip. A change of clip first puts back what the one before moved, all but what the incoming clip moves on the same
+	/// channel, which the engine does on every role change (<c>FUN_00472310</c>; <see cref="NodePoser.Rest"/>).
+	/// </summary>
+	internal static void PoseChannel( IChannelPosed target, ref AnimationFile? posed, AnimationFile clip, float frame )
+	{
+		if ( !ReferenceEquals( clip, posed ) )
+		{
+			if ( posed is { } previous )
+				target.Rest( previous, clip );
+
+			posed = clip;
+		}
+
+		target.Pose( clip, frame );
+	}
+
+	/// <summary>
 	/// The model's node words as its clips start, for a park file's model record (<see cref="ParkModelTables.Running"/>);
 	/// null where nobody keeps them. Set once the channels stand as they began: a load's own starts are not a
 	/// clip bound, the file's words already holding them.
@@ -486,4 +524,14 @@ public sealed class RideAnimations
 			return null;
 		}
 	}
+}
+
+/// <summary>What a thing's players pose: its drawn model (<see cref="LobbyModel"/>) or its node tree (<see cref="NodePoser"/>).</summary>
+public interface IChannelPosed
+{
+	/// <summary>Puts back what <paramref name="outgoing"/> moved, all but what <paramref name="incoming"/> moves.</summary>
+	void Rest( AnimationFile outgoing, AnimationFile? incoming );
+
+	/// <summary>Shows <paramref name="clip"/> at <paramref name="frame"/>.</summary>
+	void Pose( AnimationFile clip, float frame );
 }

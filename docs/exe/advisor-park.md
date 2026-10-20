@@ -345,7 +345,7 @@ The ids seen so far: `0xbc` when buy opens, `0xbd` when hire opens, `0xc6` and `
 |---|---|
 | The loader that fills `0x0076e300` | **Found** and emulated: the static initializer at `0x005a0a50` (above); the 40 screen-posted ids are posted-only rows of one line each |
 | The u16 at message `+0x00` | Unknown — it is written by `FUN_0059c0a0` but is not the gating id |
-| `Welcome` (section 2) | Row 0 of the metadata table is posted only in the running game (the emulated table has it polled), its score function (`0x0059c8c0`, `MOV EAX,[ECX + 0xa0]`) is `Welcome.Score`, and the shipped park's file holds message 0 as said on tick 1; its poster is not read A park made with no file in the original holds it in a slot at 100,000 on tick 0 and says it on tick 1 for 31.3 s ("A fresh Full Simulation park", Q327; Q543). Its line looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
+| `Welcome` (section 2) | Row 0 of the metadata table is posted only in the running game (the emulated table has it polled), its score function (`0x0059c8c0`, `MOV EAX,[ECX + 0xa0]`) is `Welcome.Score`, and the shipped park's file holds message 0 as said on tick 1; its poster is not read. A park made with no file in the original holds it in a slot at 100,000 on tick 0 and says it on tick 1 for 31.3 s ("A fresh Full Simulation park", Q327; Q543). Its line looks like a **stub**: group 2 holds four rows, all `sample=1, anim=16`, and sample 1 is an *OpenPark* line. The park welcome probably has no audio of its own (read from the response table alone; no code that posts `Welcome` was traced) |
 | Responses 399-402 | All carry sample 1, an `OpenPark` line — the same stub shape |
 
 ## Q90b — the posted door path (2026-10-03)
@@ -1382,7 +1382,7 @@ line of message 1, no attempt, no tag at tick 941.
 | The count's place | left in the analyser's `+0x1f0d4` | not kept |
 
 **Not built or not seen.** Rows 259 and 263. Lines 3 and 4 (samples 2 and 3) were in no game run, nor the
-refusal inside 480 ticks, a second load of guests (a bus does come to a shut park: Q327's fresh park, tick 604 in both games),
+refusal inside 480 ticks, a second load of guests (a bus does come to a shut park: Q327's fresh park, tick 604 in this game; in the original only before `0x119`'s turn on 612, not read to the tick),
 a park opened while he says it (whether anything withdraws message 1 was not looked for), or a tag 3 taking the place of a tag 4. The entry-price screen's own
 line, `0x12f`, is not posted here (`hud.md`). Not heard in either game.
 
@@ -2712,7 +2712,7 @@ and "You have no researchers").
 ### OpenTPW (`ParkAdvisorMessages.HireResearchers`, `HireResearchersAllBuilt`, a topic's `MostRidesBuilt`, `EveryRideBuilt`; `ParkFacts.RideProjectsUnfinished`; tag rows 17 and 18)
 
 Two topics scored from the same `ParkFacts`, which now carry the lab's ride projects not done (`ParkResearch.Unfinished`
-asked for kind nought, the file's projects, as nothing here researches) beside the researchers, the kinds on offer and the
+asked for kind nought, the lab's projects as they stand, Q701) beside the researchers, the kinds on offer and the
 kinds standing rows 60 and 80 already read. The poll line ends ` closed=N researchers=N unfinished=N kinds=S/O`.
 `ParkTags.Rows` lists rows 17 and 18; the bar's button of type 17 was built for the hire screen (Q331).
 
@@ -3188,7 +3188,7 @@ what was made then is not read (the vehicle summons and the "End" feature are th
 newest build"), and here nothing moves it, so past such a moment this game's row 60 would speak again where
 the original's waits thirty days more. In no game run: lines 2 and 3 (samples 174 and 175; the test holds the
 turn), the line said again past its 120 quarter-ticks, a golden-ticket ride standing or on offer, a kind
-researched in the park (no research is built), a thing built after the line (the stamp then silences the row
+researched in the park (research is built since Q701; not run here), a thing built after the line (the stamp then silences the row
 for thirty days, the test's last step), the bar's button with the buy screen open, a park made with no file,
 Full Simulation: the mode is not asked by row 60's score, and its catalogue offers the same four on the shipped
 save. Not heard in either game.
@@ -3290,8 +3290,8 @@ with no purchase, `mLastObjectBuilt` went to tick 1085's on tick 1085, and in ru
 ticks 1136 and 1135 (in Q335's park it moved on tick 1400); what was made is still not read ("The newest
 build"), and here nothing moves it. In no game run: line 2 (sample 206; the test holds the turn), the line said
 again past its 120 quarter-ticks, a golden-ticket shop (no Lost Kingdom shop costs one: the two tests of it are
-held by the unit test alone), a kind researched in the park (no research is built; the files' bytes were
-written), a thing built after the line, the bar's button with the buy screen open, a park made with no file,
+held by the unit test alone), a kind researched in the park (research is built since Q701; not run here, the
+files' bytes were written), a thing built after the line, the bar's button with the buy screen open, a park made with no file,
 Full Simulation: the mode is not asked by row 71's score, and the regular catalogue's two more shops (the Steak
 Restaurant and the Gift Shop) are not researched on the shipped save. The shipped park cannot reach the row at
 all without research: three kinds on offer. Not heard in either game.
@@ -3603,8 +3603,8 @@ fresh in every run here) is "Every sideshow built, and more to research". Whethe
 `mLastObjectBuilt` moved in these runs was not polled ("A poor selection of shops", above, has it moving with
 nothing bought). In no game run: line 2 (sample 214; the test holds the turn), the line said again past its 120
 quarter-ticks, a golden-ticket sideshow (no Lost Kingdom sideshow costs one), the Arcade (the regular
-catalogue's fifth: one kind of five is 20), a kind researched in the park (no research is built; the files'
-bytes were written), a thing built after the line, the bar's button with the buy screen open, a park made with
+catalogue's fifth: one kind of five is 20), a kind researched in the park (research is built since Q701; not
+run here, the files' bytes were written), a thing built after the line, the bar's button with the buy screen open, a park made with
 no file, Full Simulation: the mode is not asked by row 75's score. Not heard in either game.
 
 ## A park with shops and no sideshow (message `0x4d`, Q340)
@@ -4786,8 +4786,8 @@ fresh program, nothing done). Each row's turn is its place among the 155 polled 
 The order is the same, and the scores in the original's slots are this game's poll lines. **Two lines this game
 does not build come first there.** Message 0 (row 0, `Welcome`; response 1, sample 1, slot 1) is in a slot at
 100,000 on tick 0 and said on tick 1, for 31.3 s, in every fresh park the original made (two of two); its poster is
-not read (Q543). Message `0x119` (row 281, `GoldTicketExplanation`, Q708) is said on 612, its turn after the first
-bus's load (604 in both games), for 25 s, so row 282's line waits to 775 and row 62's to 861. A line's length in
+not read (Q543). Message `0x119` (row 281, `GoldTicketExplanation`, Q708) is said on 612, its turn, the first bus's
+load having come (on 604 in this game; in the original only before 612, which bounds it, not read to the tick), for 25 s, so row 282's line waits to 775 and row 62's to 861. A line's length in
 sweeps is not compared: the original's sweep ran about 6.5 a second here and this game's 4.8.
 
 **Row 80 in the original's own fresh park.** Its buy screen's misc tab bought one of each of the eight features on
@@ -4797,7 +4797,11 @@ record made fresh (`parkfile.advisor_forget`), row 80 was said on 3615 in both, 
 on 3912, score 457, line 2, refused on 3602 and 3757 by the same-message wait (`side-L.png`). The same file with
 `mParkClosed` written nought (the fresh park opened with nothing to ride) had row 2 said on 3567 in both, score 99,
 in the green ticket cap with tag 4 (`side-O.png`). The original said row 107's `0x6b` there on 3633 (score 90)
-and one line no named message accounts for on 3825; neither is built here.
+and one line no named message accounts for on 3825; neither is built here. In every one of these frames the
+gadget's counters differ, the original's 3 tickets and 2 keys against this game's 0 and 0, because the players
+differ, not the games: `freshfs.sh` copies Alexah's Full Simulation `gms.dat` into the original's player, and
+`freshpark.py` makes this game's with none, picked from the list, which is given no first key (`FrontEnd.cs`,
+`ClosePlayerSlots( newPlayer: false )`; only a player made in the slots is). This game with the same profile was not run.
 
 ## The buy screen's own line (message `0xbc`, Q328)
 

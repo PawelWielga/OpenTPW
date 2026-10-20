@@ -68,12 +68,19 @@ public class Level
 	/// up, nought otherwise (<see cref="LinearFogFor"/>).
 	/// </summary>
 	internal static System.Numerics.Vector4 LinearFog =>
-		LinearFogFor( Current?.Kind, ParkCamcorderCameraMode.Active || ParkRideViewCameraMode.Active, Current?.FirstPersonFog );
+		LinearFogFor( Current?.Kind, InsideView, Current?.FirstPersonFog );
 
 	/// <summary>
-	/// First person's fog where it reaches: in a park, in first person or a ride's view (the original's render-word
-	/// <c>0x2000</c>, set with <c>0x80</c> by <c>Game_StateMachine</c>'s <c>XOR 0x2080</c> at <c>0x0054fae2</c> while
-	/// <c>gui_CameraFlags &amp; 0x16</c> is; the End feature's is the only ride view built).
+	/// Whether the camera is in a view from inside the park, <c>gui_CameraFlags &amp; 0x16</c>: first person (<c>0x2</c>)
+	/// or a ride's view (<c>0x4</c>; the End feature's is the only one built). The original sets its render word's
+	/// <c>0x2000</c> with <c>0x80</c> while it is (<c>Game_StateMachine</c>'s <c>XOR 0x2080</c>, <c>0x0054fae2</c>), which
+	/// fogs the world and stops the pull on the people's bodies, and skips the picker under the same test
+	/// (<c>0x0054e2c0</c>). The view of <c>0x10</c> is not decoded.
+	/// </summary>
+	internal static bool InsideView => ParkCamcorderCameraMode.Active || ParkRideViewCameraMode.Active;
+
+	/// <summary>
+	/// First person's fog where it reaches: in a park, in first person or a ride's view (<see cref="InsideView"/>).
 	/// </summary>
 	internal static System.Numerics.Vector4 LinearFogFor( Scene? kind, bool firstPerson, FirstPersonFog? fog ) =>
 		kind == Scene.Park && firstPerson && fog != null ? fog.Uniform : default;
@@ -338,7 +345,6 @@ public class Level
 
 		var park = CreatePark( ThemeName, Balance, catalogue, _parkFile );
 		Park = park;
-		TakeParticleDensity( ThemeName, park, ParticleSystem.Current );
 
 		StartTheCalendar( ThemeName, park );
 
@@ -375,11 +381,7 @@ public class Level
 		{
 			Log.Info( researched.Summary );
 			var state = ParkState;
-			// The analyser's ring is the item's buy list tab's (FUN_00412e90, its +0x4ac).
-			researched.Researched = ( item, kind, tick )
-				=> state.HearResearched( item, kind, catalogue!.TryGet( item, out var made ) ? made.UiType : -1, tick );
-			researched.GroupOpened = state.HearGroupOpened;
-			researched.AllDone = tick => EndOfResearch( state, tick );
+			HearResearch( researched, state, catalogue!, ThemeName, () => OweTheEndFeature( state ) );
 		}
 
 		_ = new ParkGround( ThemeName, park, Balance, ParkLight.Lit, ProceduralTileSize() );
@@ -560,7 +562,8 @@ public class Level
 	}
 
 	/// <summary>
-	/// A park file, walked, or null where there is nothing to read.
+	/// A park file, walked, or null where there is nothing to read. The running particle system takes the file's density
+	/// (<see cref="TakeParticleDensity"/>).
 	///
 	/// <para>
 	/// Only the jungle ships one beside its level, which is also why Lost Kingdom is the only park a new Instant
@@ -593,6 +596,10 @@ public class Level
 			// Every park file holds the sound manager's live voices, which the original's load puts back (FUN_0051c400,
 			// 0x0051c497): the stock park's gates' held chain among them. They are carried here and none is started.
 			Unimplemented.Report( "PARK_FILE_SOUND_VOICES" );
+
+			// Taken as the file is read, before anything of the park starts an effect, as the original's file read
+			// calls its loader (0x00415437).
+			TakeParticleDensity( themeName, world, ParticleSystem.Current );
 
 			return world;
 		}
@@ -628,7 +635,13 @@ public class Level
 	/// </para>
 	/// <para>
 	/// <b>Deviations.</b> A park made fresh, with no file behind it, is counted and not written. With nobody playing
-	/// there is no folder, and nothing is written; the original has a player on every entry.
+	/// there is no folder, and nothing is written; the original has a player on every entry. A save that fails
+	/// leaves the file already at its path as it was, where the original deletes it on most failures after the
+	/// open (<c>docs/exe/saves.md</c>, "The save", step 3): a fill in the player's favour, so a failed save never
+	/// costs them the old one. The bytes go to a file beside it that then takes its place
+	/// (<see cref="BaseFileSystem.WriteAllBytes"/>), so a failure never leaves a part-written park either. A failure
+	/// of any kind is logged and answered with null, and the game goes on, as the original's save answers a failure
+	/// number and its screen closes all the same.
 	/// </para>
 	/// </summary>
 	internal string? WritePark( string name, string extension = SaveFolder.SavedParkExtension )
@@ -639,13 +652,21 @@ public class Level
 			return null;
 		}
 
-		Players.Roster.Current?.Save();
+		try
+		{
+			Players.Roster.Current?.Save();
 
-		if ( ParkHand.LetGo() is { } letGo )
-			Log.Info( $"Save: the idle mode is installed before the park is written: {letGo}" );
+			if ( ParkHand.LetGo() is { } letGo )
+				Log.Info( $"Save: the idle mode is installed before the park is written: {letGo}" );
 
-		return WritePark( Park, state, ThemeName, name, ParkPeople.Current, ParkStaffPool.Current, ParkRides.Current, Catalogue,
-			extension, Research );
+			return WritePark( Park, state, ThemeName, name, ParkPeople.Current, ParkStaffPool.Current, ParkRides.Current, Catalogue,
+				extension, Research );
+		}
+		catch ( Exception e )
+		{
+			Log.Error( $"Save: '{name}' is not written - the save failed: {e}" );
+			return null;
+		}
 	}
 
 	/// <summary>The name the park is written under as it is left (<c>0x00747a58</c>).</summary>
@@ -670,24 +691,49 @@ public class Level
 	}
 
 	/// <summary>
+	/// Hooks the lab's three tellings to the running park: a finish to the advisor and to the analyser's ring of the
+	/// item's buy list tab, its <c>Info.WhichUIType</c> whatever the project's kind (<c>FUN_00412e90</c>'s <c>+0x4ac</c>,
+	/// read at <c>0x004c73c3</c>), a group raised to the advisor, and the end to <see cref="EndOfResearch"/>, with
+	/// <paramref name="endFeature"/> run where the End feature follows.
+	/// </summary>
+	internal static void HearResearch( ParkResearch research, ParkState state, ParkItemCatalogue catalogue, string theme,
+		Action endFeature )
+	{
+		research.Researched = ( item, kind, tick )
+			=> state.HearResearched( item, kind, catalogue.TryGet( item, out var made ) ? made.UiType : -1, tick );
+		research.GroupOpened = state.HearGroupOpened;
+		research.AllDone = tick =>
+		{
+			if ( EndOfResearch( state, theme, tick ) )
+				endFeature();
+		};
+	}
+
+	/// <summary>
 	/// The end of research (<see cref="ParkResearch.AllDone"/>; <c>Lab_OnMessage</c>, <c>0x00503e15</c>..<c>0x00503fb7</c>):
 	/// the park marked all researched in the player's progress and, where <see cref="ParkResearch.MarkAllResearched"/>
-	/// says they follow, advisor message <c>0xa7</c> (row 167) posted about no thing and the End feature made
-	/// (<c>World_MakeEndFeature</c>, <c>0x00516b00</c>; <see cref="ParkEndFeature"/>).
+	/// says they follow, advisor message <c>0xa7</c> (row 167) posted about no thing; true where the End feature follows.
 	/// </summary>
-	private void EndOfResearch( ParkState state, int tick )
+	private static bool EndOfResearch( ParkState state, string theme, int tick )
 	{
 		var player = Players.Roster.Current;
-		var follows = ParkResearch.MarkAllResearched( player?.File, ThemeName, InstantAction );
+		var follows = ParkResearch.MarkAllResearched( player?.File, theme, InstantAction );
 		Log.Info( $"Research: every project done on mGameTick {tick}; "
-			+ (player is null ? "nobody is playing, so no park is marked" : $"{player.Name}'s {ThemeName} record marked all researched")
+			+ (player is null ? "nobody is playing, so no park is marked" : $"{player.Name}'s {theme} record marked all researched")
 			+ (follows ? ", so row 167 and the End feature follow" : ", and a park of theirs is not, so nothing follows") );
 
-		if ( !follows )
-			return;
+		if ( follows )
+			state.AdvisorMessages?.Post( ParkAdvisorMessages.AllResearched, tick );
 
-		state.AdvisorMessages?.Post( ParkAdvisorMessages.AllResearched, tick );
+		return follows;
+	}
 
+	/// <summary>
+	/// The End feature made at the end of research (<c>World_MakeEndFeature</c>, <c>0x00516b00</c>;
+	/// <see cref="ParkEndFeature"/>), owed until this frame's entity walk is over.
+	/// </summary>
+	private void OweTheEndFeature( ParkState state )
+	{
 		if ( Catalogue is not { } catalogue || ParkRides.Current is not { } rides || ParkObjects.Current is not { } objects
 			|| _windows is not { } windows )
 		{
@@ -700,7 +746,7 @@ public class Level
 		_endFeatureOwed = () => ParkEndFeature.Make( catalogue, state, rides, objects, windows, InstantAction );
 	}
 
-	/// <summary>The End feature owed by <see cref="EndOfResearch"/>, made after the frame's entity walk.</summary>
+	/// <summary>The End feature owed by <see cref="OweTheEndFeature"/>, made after the frame's entity walk.</summary>
 	private Action? _endFeatureOwed;
 
 	/// <summary>
@@ -1288,9 +1334,13 @@ public class Level
 	/// The particle system, which the state machine loads before the lobby itself (Data\Particle\Tp2.plb).
 	///
 	/// Its density comes from the detail file for the options' graphics quality - low.sam, med.sam or
-	/// high.sam, going by their names - which starts at medium (0x00423690). The quality is only read as
-	/// a level loads, as the original's state machine reads it for the particles (0x0051fd80). A park read from a file
-	/// then runs at the file's (<see cref="TakeParticleDensity"/>).
+	/// high.sam, going by their names - which starts at medium. A park read from a file then runs at the file's
+	/// (<see cref="TakeParticleDensity"/>).
+	///
+	/// <b>A deviation:</b> the detail file is read as each level loads, where the original reads it once, at boot, and
+	/// copies that density into the system at each state's entry (<c>0x007858c8</c>; <c>docs/exe/lobby.md</c>'s row for
+	/// it). It shows only after a graphics quality changed mid-run, whose RESTART GAME is left out
+	/// (<see cref="OptionsScreen"/>): here the next level takes the new quality's density.
 	/// </summary>
 	private static void SetupParticles()
 	{
@@ -1454,9 +1504,12 @@ public class Level
 		// cannot take the entities a new boat adds.
 		ParkBumperBoats.Current?.Sync();
 
-		// The date of the park's clock once this frame's sweeps have counted it on, as the original's calendar reads it at
-		// the end of the world tick (0x00516695), so a settle-up in the same frame counts into the day that is closing.
-		// Only a park keeps a date.
+		// The date of the park's clock once this frame's sweeps have counted it on, compared once a frame after the last of
+		// them, and the day's, month's and year's work run on its edges. Only a park keeps a date.
+		// A deviation: the original compares at the tail of every sweep (0x00516695), so in a frame of two or three sweeps
+		// whose day turns before the last, its rings roll and its month turns between two sweeps, and ours after the last,
+		// the later sweeps counting into the closing day. The sweep is split across the entities here, so a compare per
+		// sweep waits on one sweep loop for all of them (docs/exe/park-engine.md, "Still parted").
 		if ( Kind == Scene.Park && ParkState is { } clocked )
 		{
 			GameCalendar.Update( clocked.GameTick );
@@ -1485,11 +1538,12 @@ public class Level
 
 		// What the pointer is over, before the interface deals out this frame's clicks - so a click
 		// and the cell it landed on are the same frame's answer. Only a park has ground to point at.
-		// A gap: the original skips the picker in first person ([0x790ab0] & 0x16, 0x0054e2c0), so its cell stands where
-		// it was and the crowd voice counts round it; ours keeps following the pointer (docs/QUEUE.md Q505).
+		// A gap: the original skips the picker in first person and a ride's view ([0x790ab0] & 0x16, 0x0054e2c0), so its
+		// cell stands where it was and the crowd voice counts round it; ours keeps following the pointer, counted in both
+		// (docs/QUEUE.md Q505).
 		if ( Kind == Scene.Park )
 		{
-			if ( ParkCamcorderCameraMode.Active )
+			if ( InsideView )
 				Unimplemented.Report( "PICK_IN_FIRST_PERSON" );
 
 			ParkPicking.Update();
@@ -2184,8 +2238,9 @@ public class Level
 	/// Delete, and the quicksave and quickload, Alt+S and Alt+L. Not while a box has the keyboard, and not while a
 	/// window holds the park - which is inferred for the pausing windows. Not while a park screen is open: opening
 	/// one switches the game table off (<c>FUN_00485b70</c>, <c>0x00485ce6</c>) and its handler runs the shortcuts'
-	/// alone (<c>FUN_00488ba0</c>). And not under the full-screen view, whose control runs the camera's table alone
-	/// (<c>0x004a2918</c>).
+	/// alone (<c>FUN_00488ba0</c>). Not under the full-screen view, whose control runs the camera's table alone
+	/// (<c>0x004a2918</c>). And not in first person, where the viewfinder's layer has the focus and its key-up runs the
+	/// camera's table alone (<c>FUN_00488a00</c>, <c>0x00488ae3</c>; <c>docs/exe/saves.md</c>, "The quicksave and quickload keys").
 	/// </summary>
 	/// <remarks>
 	/// The build keys' release edge also fires when a modifier changes while the key is held, which the
@@ -2193,7 +2248,7 @@ public class Level
 	/// </remarks>
 	private void GameTableKeys()
 	{
-		if ( Input.TextCaptured || PausedByWindow() || FullScreenView || UI.WindowStack.ParkScreenOpen )
+		if ( Input.TextCaptured || PausedByWindow() || FullScreenView || UI.WindowStack.ParkScreenOpen || ParkCamcorderCameraMode.Active )
 			return;
 
 		if ( Input.Released( InputButton.Delete ) )

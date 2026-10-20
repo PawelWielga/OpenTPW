@@ -118,9 +118,12 @@ public class ItemHeightMapTests
 	}
 
 	/// <summary>
-	/// A Belly Bounce stood on the hill at (76,64), where the ground is 37: its corner cell is 29 / 2.55 = 11.4 high
-	/// over a base of 37, so ceil10( 48 ) = 50. The ground alone would give 40 and the item alone 20.
+	/// A Belly Bounce stood on the hill at (73,66), where the ground is 32.7: its corner cell is 29 / 2.55 = 11.4 high
+	/// over its base, 43.1, halfway between the lowest and the highest ground under its footprint (its model's height,
+	/// <c>ParkObjects.BaseHeight</c>), so ceil10( 54 ) = 60. The ground alone would give 40, the item alone 20, and a base on
+	/// the ground under its cell 50.
 	/// </summary>
+	/// <remarks><b>Mutation:</b> the base on the ground under the model's cell.</remarks>
 	[TestMethod]
 	public void TheLiftCountsTheGroundUnderTheThing()
 	{
@@ -133,12 +136,12 @@ public class ItemHeightMapTests
 		using ( var terrain = data.OpenRead( "levels/jungle/terrain/base.MD2" ) )
 			field = new HeightfieldFile( terrain );
 
-		Assert.AreEqual( 37, (int)field.HeightAt( 76, 64 ), "the hill" );
-		Assert.AreEqual( 40f, ParkBuildMarkers.LiftOver( state, catalogue, field, 76, 64 ), "the bare hill: its ground" );
+		Assert.AreEqual( 32, (int)field.HeightAt( 73, 66 ), "the hill" );
+		Assert.AreEqual( 40f, ParkBuildMarkers.LiftOver( state, catalogue, field, 73, 66 ), "the bare hill: its ground" );
 
-		state.AddObject( new ParkWorld.CatalogueObject( state.NextThingId(), 1100, 76 << 8, 64 << 8, 0 ) );
+		state.AddObject( new ParkWorld.CatalogueObject( state.NextThingId(), 1100, 73 << 8, 66 << 8, 0 ) );
 
-		Assert.AreEqual( 50f, ParkBuildMarkers.LiftOver( state, catalogue, field, 76, 64 ) );
+		Assert.AreEqual( 60f, ParkBuildMarkers.LiftOver( state, catalogue, field, 73, 66 ) );
 	}
 
 	/// <summary>The original's rounding: <c>(t + 9) / 10 * 10</c>, integer division towards nought.</summary>

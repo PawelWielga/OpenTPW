@@ -21,7 +21,7 @@ namespace OpenTPW;
 /// </para>
 /// <para>
 /// <b>This is not a defect list.</b> Some of the thirty-one wait on features that do not exist yet - there
-/// is no research and no time control to speed up - and they are declared ahead of those on
+/// is no research screen and no time control to speed up - and they are declared ahead of those on
 /// purpose, because the binding is what the options screen offers and the original ships all of them. The
 /// ones worth noticing are those whose feature <i>does</i> exist, among them <see cref="OpenPark"/> and
 /// <see cref="ClosePark"/>, which have <see cref="ParkState.SetParkClosed"/> to call, and the screens the

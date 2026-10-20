@@ -25,9 +25,12 @@ namespace OpenTPW;
 /// layer is shown and the keys given back, and in Instant Action UITEXT 471's box is put up with its cross alone.
 /// </para>
 /// <para>
-/// <b>Not the original's:</b> the thing is not put in the park's object list, which only the save reads, and nothing
-/// saves while the End has the keys. Its id is the park's next. <c>FUN_004862a0</c>, the re-focus at the end, is not
-/// decoded and has nothing to do here: the cover gives the keys back.
+/// <b>Not the original's:</b> the thing is not put in the park's object list, which only the save reads. The keys
+/// reach no save while the End has them, but closing the window does: it writes <c>autosave.TPWS</c>
+/// (<see cref="Level.WriteParkOnLeaving"/>) with no End in it, its scripts not written
+/// (<c>SAVE_PARK_SCRIPT_MADE_SINCE_THE_LOAD</c>). Whether the original's save as it closes holds its End is not
+/// measured. Its id is the park's next. <c>FUN_004862a0</c>, the re-focus at the end, is not decoded and has nothing
+/// to do here: the cover gives the keys back.
 /// </para>
 /// </remarks>
 internal sealed class ParkEndFeature

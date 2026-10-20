@@ -842,6 +842,10 @@ internal sealed class ParkAdvisorMessages
 	internal static int DaysSinceTheFirstSweep( int tick )
 		=> (int)((long)(uint)tick * GameCalendar.Rate / GameCalendar.AdvancesPerSecond / 86400);
 
+	/// <summary>FUN_0059bf20: the row's score, or -1 for a row of the other game (a Full Simulation row in Instant Action).</summary>
+	private int FilteredScoreOf( Topic topic, int gameTick )
+		=> topic.FullSimulationOnly && InstantAction ? -1 : ScoreOf( topic, gameTick );
+
 	/// <summary>
 	/// A row's score function (+0x10). The control panel's (0x005a06c0) and the tips' (0x005a0720) are their
 	/// section's Score while the park is more than AfterTime and less than CutoffTime days old, and nought
@@ -901,10 +905,6 @@ internal sealed class ParkAdvisorMessages
 	/// row 167's (0x0059f9a0) is the constant 10000;
 	/// every other built row's is its key's value.
 	/// </summary>
-	/// <summary>FUN_0059bf20: the row's score, or -1 for a row of the other game (a Full Simulation row in Instant Action).</summary>
-	private int FilteredScoreOf( Topic topic, int gameTick )
-		=> topic.FullSimulationOnly && InstantAction ? -1 : ScoreOf( topic, gameTick );
-
 	internal int ScoreOf( Topic topic, int gameTick )
 	{
 		// Row 85 runs the toilets' average queue and drops it (FSTP ST0 at 0x0059e444), then answers nought.

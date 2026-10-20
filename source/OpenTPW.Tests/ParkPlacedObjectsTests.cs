@@ -491,10 +491,33 @@ public class ParkPlacedObjectsTests
 		Assert.AreEqual( -1, ParkAudio.AnyVariation( [], -1, random ) );
 	}
 
+	/// <summary>Answers each roll it is given, in turn, whatever the bound.</summary>
+	private sealed class Rolls( params long[] rolls ) : Random
+	{
+		private int _next;
+
+		public override long NextInt64( long maxValue ) => rolls[_next++];
+	}
+
+	/// <summary>
+	/// <b>A following voice's draw takes the first variation whose running total of weights is at least the roll</b>
+	/// (<c>0x006bc86d</c> <c>add</c>, <c>0x006bc870</c> <c>cmp</c>, <c>jae</c>): of weights 3, 5 and 7 the roll 3 is the
+	/// first's, 4 and 8 the second's and 9 the third's. Taking one only once the total is past the roll gives the second
+	/// at 3 and the third at 8.
+	/// </summary>
+	[TestMethod]
+	public void AFollowingVoicesDrawTakesTheFirstVariationWhoseTotalReachesTheRoll()
+	{
+		var three = new[] { Weighing( 3 ), Weighing( 5 ), Weighing( 7 ) };
+
+		CollectionAssert.AreEqual( new[] { 0, 0, 1, 1, 2, 2 },
+			new long[] { 0, 3, 4, 8, 9, 14 }.Select( roll => ParkAudio.AnyVariation( three, -1, new Rolls( roll ) ) ).ToArray() );
+	}
+
 	/// <summary>
 	/// The wiring, with a device stood in: the jungle's gulls and sea become two voices of the park's sound that play
 	/// one sample after another beside the listener, each at the volume and pitch its first drew, the gulls with a
-	/// silence after every sample but the first.
+	/// silence after every sample, the first included (<c>FUN_006bc410</c> -> <c>0x006bdf00</c>).
 	/// </summary>
 	[TestMethod]
 	public void TheJunglesGullsAndSeaPlaySampleAfterSampleBesideTheListener()
@@ -533,8 +556,9 @@ public class ParkPlacedObjectsTests
 
 			park.Update();
 
-			// The first sample: no silence after it, the variation's volume, a pitch drawn from -2 up to 1.
-			Assert.AreEqual( (0, 49, 1, 0), (gulls.Variation, gulls.Kept.Volume, gulls.Samples, gulls.Wait) );
+			// The first sample: a silence of 0 to 10 s after it, the variation's volume, a pitch drawn from -2 up to 1.
+			Assert.AreEqual( (0, 49, 1), (gulls.Variation, gulls.Kept.Volume, gulls.Samples) );
+			Assert.IsTrue( gulls.Wait is >= 0 and < 10000, $"wait {gulls.Wait}" );
 			Assert.IsTrue( gulls.Kept.Pitch is >= -2 and <= 1, $"pitch {gulls.Kept.Pitch}" );
 			Assert.IsTrue( sea.Kept.Volume is 33 or 55 );
 			Assert.AreEqual( (1, 0, 0), (sea.Samples, sea.Kept.Pitch, sea.Wait) );
@@ -588,10 +612,7 @@ public class ParkPlacedObjectsTests
 				Assert.AreEqual( ParkAudio.ChannelGain( kept.Item2.Volume ), sea.Voice!.Volume, 1e-6f );
 				Assert.AreEqual( 0, sea.Wait );
 
-				// The gulls' first is followed at once; each later one by its own silence, under ten seconds.
-				if ( sample == 2 )
-					Assert.AreEqual( 0, wait );
-
+				// Each gull, the first included, is followed by its own silence, under ten seconds.
 				if ( wait > 100 )
 				{
 					waited = true;
@@ -626,12 +647,22 @@ public class ParkPlacedObjectsTests
 			for ( var more = 0; more < 40; ++more )
 				Assert.IsTrue( park.StartFollowing( sea.Sound ) );
 
+			// And a first gull's silence is drawn: of forty more gulls, every one waits a draw of 0 to 10 s.
+			for ( var more = 0; more < 40; ++more )
+				Assert.IsTrue( park.StartFollowing( gulls.Sound ) );
+
 			park.Update();
 
-			var firsts = park.Following.Skip( 2 ).Select( following => (following.Samples, following.Kept.Volume) ).ToArray();
+			var firsts = park.Following.Skip( 2 ).Take( 40 ).Select( following => (following.Samples, following.Kept.Volume) ).ToArray();
 
 			Assert.IsTrue( firsts.All( first => first.Samples == 1 ) );
 			Assert.IsTrue( firsts.Any( first => first.Volume == 33 ) && firsts.Any( first => first.Volume == 55 ), "both volumes among forty starts" );
+
+			var gullWaits = park.Following.Skip( 42 ).Select( following => (following.Samples, following.Wait) ).ToArray();
+
+			Assert.AreEqual( 40, gullWaits.Length );
+			Assert.IsTrue( gullWaits.All( first => first.Samples == 1 && first.Wait is >= 0 and < 10000 ) );
+			Assert.IsTrue( gullWaits.Count( first => first.Wait > 1000 ) > 20, "most first silences are seconds long" );
 
 			var voices = park.Following.Select( following => following.Voice! ).ToArray();
 
@@ -650,6 +681,105 @@ public class ParkPlacedObjectsTests
 			lock ( Audio.Lock )
 				Audio.Voices.RemoveAll( voice => !before.Contains( voice ) );
 
+			ready.SetValue( null, false );
+			Time.Now = now;
+			ParkOrbitCameraMode.PointOfInterest = looksAt;
+			Camera.SetCameraMode<CameraMode>();
+		}
+	}
+
+	/// <summary>
+	/// <b>Through a park's menu the land's following voices draw their samples on time and let them pass unheard.</b>
+	/// The original's service runs on through a pause and its mixer plays them at nought (<c>docs/exe/audio.md</c>, "The
+	/// pause substitution"); ours holds a placed voice, so a sample due under the hold starts no voice, which would be
+	/// born held and let go with the rest on resume. The jungle's sea, with no silence between its samples: a minute held
+	/// starts nothing, and after the resume its next is heard once the unheard one's time is past.
+	/// </summary>
+	[TestMethod]
+	public void AHeldParksFollowingVoicesLetTheirSamplesPassUnheard()
+	{
+		FileSystem = GameData.Required();
+
+		var ready = typeof( Audio ).GetProperty( nameof( Audio.Ready ) )!;
+		var now = Time.Now;
+		var looksAt = ParkOrbitCameraMode.PointOfInterest;
+
+		Camera.SetCameraMode<ParkOrbitCameraMode>();
+		ParkOrbitCameraMode.PointOfInterest = new Vector3( 400f, 60f, 0f );
+
+		System.Collections.Generic.List<Voice> before;
+
+		lock ( Audio.Lock )
+			before = [.. Audio.Voices];
+
+		int Voices()
+		{
+			lock ( Audio.Lock )
+				return Audio.Voices.Count;
+		}
+
+		ready.SetValue( null, true );
+
+		ParkAudio? park = null;
+
+		try
+		{
+			park = new ParkAudio( "jungle" );
+			Time.Now = 1000f;
+
+			ParkPlacedObjects.StartSounds( "jungle", park.StartPlaced, park.StartFollowing );
+
+			var sea = park.Following[1];
+
+			Assert.AreEqual( 3, sea.Sound.Effect );
+
+			park.Update();
+			Assert.AreEqual( 1, sea.Samples );
+
+			GameClock.Update( paused: true, GameClock.ParkCatchUp );
+			park.Update();
+
+			var voices = Voices();
+
+			sea.Voice!.Stop();
+			park.Update();
+
+			Assert.AreEqual( (1, 1), (sea.Samples, sea.Unheard), "drawn, and no voice started" );
+			Assert.IsNull( sea.Voice );
+			Assert.IsTrue( sea.EndedAt > Time.Now, "it lasts as its sample would" );
+
+			for ( var pass = 0; pass < 6000; ++pass )
+			{
+				Time.Now += 0.01f;
+				park.Update();
+			}
+
+			Assert.AreEqual( 1, sea.Samples, "a minute held, and not one sample heard" );
+			Assert.AreEqual( voices, Voices(), "and none waits in the pool" );
+			Assert.IsTrue( sea.Unheard > 1, $"{sea.Unheard} drawn on time" );
+
+			var due = sea.EndedAt!.Value;
+
+			GameClock.Update( paused: false, GameClock.ParkCatchUp );
+			park.Update();
+			Assert.AreEqual( 1, sea.Samples, "the unheard one's time still to run" );
+
+			Time.Now = due;
+			park.Update();
+
+			Assert.AreEqual( 2, sea.Samples, "the next is heard" );
+			Assert.IsFalse( sea.Voice!.IsHeld );
+		}
+		finally
+		{
+			park?.Delete();
+			Entity.ApplyDeletions();
+
+			lock ( Audio.Lock )
+				Audio.Voices.RemoveAll( voice => !before.Contains( voice ) );
+
+			Audio.HoldPlaced( false );
+			GameClock.Rebase();
 			ready.SetValue( null, false );
 			Time.Now = now;
 			ParkOrbitCameraMode.PointOfInterest = looksAt;

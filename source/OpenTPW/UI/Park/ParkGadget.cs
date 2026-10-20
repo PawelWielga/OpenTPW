@@ -269,12 +269,7 @@ internal sealed class ParkGadget : UiWindow
 		// FUN_004c7bb0 - the mean happiness of the park's guests, and nought while the park is shut. See
 		// ParkPeople.AverageHappiness for the arithmetic and for the one term of it that is deliberately
 		// not reproduced, and UiMeter for the skin's two halves.
-		_happiness = gaugeHousing.Add( new UiMeter
-		{
-			Id = 0x1f,
-			Rect = new UiRect( 85, 1100, 144, 1324 ),
-			Max = 0x400
-		} );
+		_happiness = gaugeHousing.Add( HappinessGauge() );
 
 		_date = body.Add( new UiControl
 		{
@@ -1497,8 +1492,20 @@ internal sealed class ParkGadget : UiWindow
 
 	/// <summary>
 	/// What the gauge's timer hands its meter: the mean times 1024 times 0.01f, truncated (<c>0x004a1d44</c>, the
-	/// floats <c>0x006ffa34</c> and <c>0x006ffa38</c>, then <c>__ftol</c>), so 50 is 511 of 1024 and 100 is 1023, as
-	/// 0.01f is a shade under a hundredth. The original's mean keeps its fraction; this one is whole (Q459).
+	/// floats <c>0x006ffa34</c> and <c>0x006ffa38</c>, then <c>__ftol</c>), so 50 is 511 of 1024 and 100 is 1023 at
+	/// 53-bit precision, as 0.01f is a shade under a hundredth (512 and 1024 at 24 bits; which one the original runs
+	/// is not read, <c>docs/exe/hud.md</c>). The original's mean keeps its fraction; this one is whole (Q459).
 	/// </summary>
 	internal static int GaugeUnits( double happiness ) => (int)( happiness * 1024.0 * 0.01f );
+
+	/// <summary>
+	/// The gauge's meter, control 0x1f: full at 1024, the original's own clamp (<c>FUN_0066d885</c>), as
+	/// <see cref="GaugeUnits"/> hands it 1024ths.
+	/// </summary>
+	internal static UiMeter HappinessGauge() => new()
+	{
+		Id = 0x1f,
+		Rect = new UiRect( 85, 1100, 144, 1324 ),
+		Max = 0x400
+	};
 }

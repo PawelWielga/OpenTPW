@@ -11,8 +11,8 @@ namespace OpenTPW;
 /// <para>
 /// Each frame the camera update (<c>FUN_0042b1c0</c>, <c>0x0042ca13</c>..<c>0x0042cb7d</c>) takes the record's turn, its
 /// three rows of three, mixed with the last frame's record matrix's, <c>(1 - w) x now + w x last</c> element by element,
-/// with <c>w = (1000 - t) x 0.0005</c>, <c>t</c> the milliseconds since the last update held to 100 past 200 and to 1 at
-/// nought or below, and copies the eye from the record's own translation (<c>0x0042cb83</c>); it looks along the mixed
+/// with <c>w = (1000 - t) x 0.0005</c>, <c>t</c> the milliseconds since the last update held to 100 past 200 and raised
+/// to 1 below 1, and copies the eye from the record's own translation (<c>0x0042cb83</c>); it looks along the mixed
 /// third row.
 /// <b>Ours takes <c>t</c> from <see cref="Time.Delta"/></b> where the original reads its own clock
 /// (<c>FUN_00402d80</c>), and the first frame mixes the matrix with itself, where the original's last matrix is whatever
@@ -70,10 +70,13 @@ public sealed class ParkRideViewCameraMode : CameraMode
 		Rotation = Rotation.LookAt( new Vector3( mixed.M31, mixed.M33, mixed.M32 ) );
 	}
 
-	/// <summary>The weight of the last frame's matrix after <paramref name="milliseconds"/>, <c>(1000 - t) x 0.0005</c>.</summary>
+	/// <summary>
+	/// The weight of the last frame's matrix after <paramref name="milliseconds"/>, <c>(1000 - t) x 0.0005</c>: <c>t</c>
+	/// held to 100 past 200 and 1 at nought or below (<c>0x0042b2c7</c>), then raised to 1 below 1 (<c>0x0042ca44</c>).
+	/// </summary>
 	internal static float LastWeight( float milliseconds )
 	{
-		var t = milliseconds > 200f ? 100f : milliseconds <= 0f ? 1f : milliseconds;
+		var t = milliseconds > 200f ? 100f : milliseconds < 1f ? 1f : milliseconds;
 
 		return (1000f - t) * 0.0005f;
 	}

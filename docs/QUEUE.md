@@ -67,17 +67,73 @@ filed the items that cite it.
   the original made 208 (flags `0x0`, one sample of 1158 ms) 30 to 60 times a run at (525, 0, 300), by the Jungle Spray,
   and (434, 0, 303) (`q565/orig/`, b to d, `oneshots.py`); no jungle script asks for 208 (`lib/soundsweep.py`), and ours
   never plays it. Find its caller (a `Sound_PlayEffect` of category `[0x00803a28]`, effect 208) and what it marks.
+- [ ] **Q575. A plain voice's first silence, measured in the original.** From the run 6 review of Q563 (`handoff/review6/VERIFY-18.md`,
+  Q563 2). Read from the listing and built (fix group P): every start of a plain or music voice, the first and a start
+  in range again included, draws its variation's silence (`FUN_006bc410` -> slot `+0x48` `0x006bdf00` -> `0x006c5220`),
+  where Q302/Q553 had the first followed at once (`audio.md`, "The plain class"). Predict before the run: the land's gulls
+  (global ambient 2, one variation, wait 0 to 10000 ms) in the stock park, with the camera on the harbour, put their
+  first sample's channel and their second's 0 to 10 s apart beyond the first's length, not at once; and the bus's voice
+  back in range (waits nought) unchanged. Confirm in both games (`mixer.py`, `voices.py`; ours `scriptsounds` and the
+  `Park audio: the land's own ambient 2 ... ms of silence after it` lines, which now print on the first too).
+- [ ] **Q576. A chain's range before its first child, and a chain of any variation's, by the set-up's draw** (optional; reach
+  only the staff's 188). From the run 6 review of Q563 and Q564 (`VERIFY-18.md`, Q563 4, Q564 1). The original's chain of any
+  variation ranges for its whole life by the variation its set-up drew by weight among all (`0x006bbfc5` ->
+  `FUN_006bc810`), its children writing nothing into it, and a held chain does before its first child; ours ranges by the
+  newest child's or the effect's first. Said at `ParkAudio.InRange` and `ParkScreams.InRange`. In Lost Kingdom only the
+  staff's 188 (a held chain, its fourth variation 85 of weight 1354 of 65532, the rest 90) can differ, and only in its
+  start window away. Build: draw the set-up's variation for range alone (kept apart from the first child's variation 1).
+- [ ] **Q577. The sound commands 2 and 3: a script voice's drop suspended on focus loss and by the P key's pause.** From the
+  run 6 review of Q565 (VERIFY-19, finding 3). The window losing focus (`0x0046b73c` -> `0x0051bcf0` -> message `0x00700b64`
+  -> `0x006b5640`, type 2) and the P key's pause (`Game_TogglePause` `0x00409350`, its pause branch `0x004093af`) send
+  the sound service command 2; their resumes (`0x0046b70a` -> `0x0051bd30` -> `0x006b5670`, type 3; `0x00409381`,
+  `Game_Resume` `0x0040932b`) send 3 (`0x006bcab0`). Command 2 suspends a voice's drop only while its `+0x3c` is nought
+  (`0x6bcafd`/`0x6bcb02`); command 3 leaves `+0x3c` and flag `0x2000` set, so the drop stays far out until a channel
+  start rewrites `+0x3c` (`audio.md`, "A script's one-shot"). Ours sends neither: its script one-shots are dropped by
+  their time through a focus loss and a P pause. Decode what each command does to the other voice classes, then build
+  them where ours has the two paths (find first whether ours pauses on focus loss at all). Confirm: in the original,
+  a one-shot away from the camera kept past its length + 250 ms across an alt-tab (`oneshots.py`).
+- [ ] **Q578. Whether the land's following voices are heard through a pause in the original.** From the run 6 review (group N, Q558 1's decode, `audio.md`, "The pause substitution"): a voice
+  with a rectangle (flag `0x1000`) is moved by `FUN_006bd5f0` to the listener's own height from `[manager + 0x60]`
+  (`0x006bd5ff`), and the service's range test ignores height. If `[manager + 0x60]` holds the listener the pause lifts
+  (`FUN_0051c1d0` -> `0x006b5ba0` -> `0x006b8b60`), the gulls and the sea stay at the listener's distance and are heard
+  through a park's menu, where ours holds them (`Audio.HoldPlaced`) and lets their samples pass unheard. Read what
+  `[manager + 0x60]` points to and who writes it, then measure the original's mix in a paused Lost Kingdom park
+  (`mixer.py`: the sea's channel volume and distance with the menu open).
 - [ ] **Q560. A park file's live voices put back (decode first).** From Q559. Every park file carries the sound
   manager's voices after the sound module's 84 bytes (`Sound_SaveModule` `0x0051c350` through `0x006b5c10`), and the
   original's load puts them back (`Sound_LoadModule` `0x0051c400`, `0x0051c497` -> `0x006b5c30` -> `FUN_006ba150` ->
-  `SoundManager_SerializeVoices` `0x006b6da0`, a case per class: 6 a held chain). So the stock park's gates' held chain
-  177 sounds from the entry in the original (`q559/orig/` runs c to g: its own variation and a saved child of variation 8's
-  sample), where ours makes none: its gate script is resumed open and reaches no `EVENT`. Counted at every park read:
-  `PARK_FILE_SOUND_VOICES`. First session: decode the records (FileFormats `saves.md`, "Sound": 1,349 bytes in
+  `SoundManager_SerializeVoices` `0x006b6da0`, which only reads, a case per class: 6 a held chain; the writer is
+  `0x006b6c30`). So the stock park's gates' held chain 177 sounds from the entry in the original (`q559/orig/` runs c
+  to g: a saved child of variation 8's sample, and the chain's own variation drawn afresh at the load, v8, v7, v1 and v2,
+  as its set-up redraws `+0x8` after the load restores it, `0x006bbfc5`), where ours makes none: its gate script is
+  resumed open and reaches no `EVENT`. A held chain is to be put back with its saved child's sample, a fresh draw for its
+  own variation and no flag `0x20`, so the first time its child list empties it restarts at variation 1, once
+  (`audio.md`, "Which variation it plays"). Counted at every park read: `PARK_FILE_SOUND_VOICES`. First session: decode the records (FileFormats `saves.md`, "Sound": 1,349 bytes in
   `Easymode.TPWI`; `docs/exe/saves.md`'s `SOUN` row) and which voices they hold in the stock park and in Alexah's Full
   Simulation saves (the gates', the crowd's, the rain's, a scream's), and whether a voice's handle in a script's record
   or the weather's `mRainSoundHandle` is matched to one put back. Second: build what the jungle's files hold, and say what
   this game's writer leaves out.
+- [ ] **Q719. Does a loaded park play at the save's sound volumes? (one game check)** From the fork watch, 2026-10-20
+  (`verify-world.md` M2; `saves.md`, "Sound"). The loader `0x0051c400` overwrites the live sound words at `0x00803aa0` with
+  the save's (the volumes and the three on-flags; all 558 park files on hand hold 100/75/60/75 and on/on/on) and sets
+  nothing else; the tick `0x0051bd70` pushes them. The profile applier `0x00423dd0`, which would put the player's options
+  back, is reached only from `GameOptions_Construct`, the options screen and two table references, and from no load
+  path found. If so, a loaded park overrides the player's volume options until they are touched. Confirm in the original
+  under Proton: set music off in the options, load `Easymode.TPWI` (or a copy), and listen or record the mix
+  (`record.sh`); then decide whether OpenTPW's load should do the same (it keeps the player's options today) and say the
+  result at the site. Nothing is built before the check.
+- [ ] **Q723. The sample draw as `FUN_006bc680` draws it.** From the upstream look, 2026-10-19 (`verify-sound-ui.md`, "The
+  music roll rule"; `audio.md`, "The sample draw"). The original rolls 0 to 65,535 and walks the samples for the first whose
+  odds are at least the roll, and plays NOTHING when none reaches it; with the avoid-repeat argument set and more than two
+  samples a pick equal to the last moves on to the next. `SoundCategory.PickIn` rolls 0 to the last odds, so a list always
+  plays, and has no avoid-repeat step. The first is a deviation of at most 20 in 65,536 (201 of the 1,592 lists in the 31
+  SFX maps end below 65,535, the lowest at 65,516), said at the site and not worth a change on its own. The second matters
+  for the lobby: all four `cat_locallobbymusic` effect 1 hold one variation of three samples (odds 21,845, 43,690, 65,535,
+  flags `0x206`, the plain class that asks with 1), so the original's lobby music never plays a track twice running, and ours
+  can. None of the voices that ask for it builds the step (the lobby's music, and the land's, the crowd's and the park music's voices; `audio.md`). Build the
+  draw once (rolled 0 to 65,535, no sample past the last odds, the previous-pick step where the class asks) for every
+  caller, or count the unbuilt step `SAMPLE_NO_REPEAT` (rule 4) until it is. Confirm: the lobby's music over ten
+  selections, never the same track twice running, caught by the disk driver.
 
 - [ ] **Q562. The bus drives facing along its route, and stands at the original's stops.** From Q561. Our bus drives its
   route turned as it was parked (the route key's facing `0x400`, counted `ANIM_PATH_FACING`; `park.md`, "Clip content"),
@@ -130,8 +186,8 @@ filed the items that cite it.
 - [ ] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
   tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
   one load). `0x13e` and the rows no code posts stay unsaid, as the original's.
-  From Q327: a fresh Full Simulation park in the original says `0x119` on tick 612, the turn after the first bus's
-  load (604 here too), for 25 s, and row 282's line waits behind it (`advisor-park.md`, "A fresh Full Simulation park").
+  From Q327: a fresh Full Simulation park in the original says `0x119` on tick 612, its turn, the first bus's load
+  having come before it (on 604 in this game; in the original only before 612, not read to the tick), for 25 s, and row 282's line waits behind it (`advisor-park.md`, "A fresh Full Simulation park").
 - [ ] **Q709. Spending golden tickets: the mystery ride's purchase.** From Q177c, carried from Q141 when it was ticked.
   The buy list and its click read the same list of ticket-bought items as the purchase: a row whose item has a
   `GoldenTicketCost` not yet bought with tickets is named "??? Mystery Ride! ???" with its negated ticket cost for a
@@ -169,8 +225,11 @@ filed the items that cite it.
   `SoundCategory.Length` and the scan a category falls back on (`SoundCategoryFile.ReadSamples`) read; since Q566 the
   categories take their records from the walk, so global lobby sfx 4 and global rides 202, 203, 211 and 212 play. Read the version and take MPEG-1's tables
   for it; the two `SoundCategoryFile` remarks that rest on the lengths ("every sample in every bank", "26 to 83ms")
-  change with it, and the version split goes to FileFormats `sounds.md` (rule 14). Q43's structural walk is the other
-  half, for the variations with no samples. Confirm: a test over every shipped bank that each entry's length agrees
+  change with it, and the version split goes to FileFormats `sounds.md` (rule 14). Since Q566 the walk is what a
+  category plays; the scan is only its fallback. The fix moves what Q566's test pins
+  (`ParkScreamChainTests.EveryWalkedSampleRecordNamesASampleOfItsCategory`: 99 effects read otherwise and 7 left empty;
+  global lobby sfx 4 and global rides 202, 203, 211 and 212 should then agree, hallow's and space's stay), and the
+  `SoundCategoryFile` summary's "the two readers agree except in four categories" (a forecast, not measured). Confirm: a test over every shipped bank that each entry's length agrees
   with its decode, `ReadSamples` and `ReadVariations` agreeing in both global categories, and the park-entry effect
   heard by capture.
 - [ ] **Q148. The music and the happiness gauge count guests the original leaves out.** Found by the 2026-09-26
@@ -196,6 +255,21 @@ filed the items that cite it.
   (`FUN_00516270`; `ride-operation.md`, "Where a ride's turn comes from"). `ParkPeople` sweeps the guests, then the
   staff, then the rides, each in that order among its own, so a hire or a thing bought after a guest still takes
   its turn after every guest.
+- [ ] **Q570. The calendar compared after each sweep, and the weather ticked inside it.** From the run 6 review of Q149
+  (`review6/VERIFY-7.md`, Q149 1 and the hunt's new finding). The original's `Calendar_Update` (`0x004f8260`) runs at
+  the tail of every sweep (`0x00516695` -> `0x004d7b3b`), so in a frame of two or three sweeps whose day turns before
+  the last, the objects' rings roll and the month's bank and staff work turn between two sweeps; ours compares once a
+  frame after the entity walk (`Level.Update`, `GameCalendar.Update`), so the later sweeps count into the closing day.
+  And `ParkWeather` ticks off `GameCalendar.Counter`, which moves only after the walk, so its ticks for a frame's sweeps
+  run in the next frame and read `GameCalendar.Days` as compared after the last of them; the original's
+  `FUN_00512880` runs inside its sweep, before that sweep's compare. Both are said at the site. The sweep is split
+  across the entities (`ParkPeople.OnUpdate`, `ParkRides`, `ParticleSystem` each loop over `GameClock.TicksDue`), so the
+  fix is one sweep loop that runs every entity's sweep work, then the weather's tick, then the compare and
+  `RollTheDay` / `TurnTheMonth` / `TurnTheYear`, per sweep. The weather's day phase is moot once Q529 schedules on
+  instants; its one-frame lag is not. Test: a frame of three sweeps whose day turns on the second rolls the rings
+  before the third sweep's settle-up (put the once-a-frame compare back and see it fail). Reached only in a frame
+  owing 16 or more ticks (a hitch); no game run shows it unless a hitch is forced (the console's `pause`/`step` or a
+  stopped process, as `park-engine.md`'s "+5, +5, +6" measurement did).
 - [ ] **Q151. A park's sky draws the lobby's horizon band. Decode first.** Found by the 2026-09-26 staleness audit.
   `FUN_005863c0` gives the band's four rings, per half, 0.99, `c08` + 0.5, `c0c` + 0.5, `v` + 0.5 and then 0.49,
   `c08`, `c0c`, `v`, with `c08`, `c0c`, `v` 0.34, 0.17, 0.01 (`0x00701f88`) by default and 0.19, 0.01, 0.49
@@ -589,6 +663,27 @@ filed the items that cite it.
   (three are in Alexah's saves), make each afresh, and take the legal text from the level's shipped park file.
   After Q241j. Confirm: a fresh Full Simulation park saved and loaded by the original under Proton.
   From Q241f: `Level.WritePark` counts such a park as `SAVE_PARK_WITH_NO_FILE` and writes nothing.
+- [ ] **Q569. Where the original puts down a worker held at a save, decode first.** From the run 6 review of Q241j (VERIFY-3,
+  "anything the first reader missed"; unsettled). The world writer installs the idle mode over the hand
+  (`FUN_0046c350` at `0x00516d13`), which runs the outgoing mode's uninstall: for a worker picked up, the type-6
+  mode's vtable `+0x2c`. Ours puts them back on the middle of the cell they stand in, the one they were picked up
+  from (`ParkHand.LetGo` -> `ParkPeople.PutBack` -> `DropStaff`), and writes them there. Neither `docs/exe/` nor the
+  commit shows that the original does the same (`PutBack`'s comment names `0x0046cdc0` as that uninstall, unshown). Decode the type-6 mode's `+0x2c` in Ghidra (vtable `0x006fea70`):
+  where the worker goes (their pick-up cell, the cell under the pointer, or left where they hung), whether they are
+  set idle and whether a mechanic goes to his job search there too. Write it in `docs/exe/park-engine.md`, "The
+  hand's ways out", and only then change `PutBack` if it differs. Confirm: the original under Proton saving with a
+  worker in the hand, read back with `parkfile.py` (their position and state), against ours
+  (`ParkSaveScreenTests.AWorkerInTheHandIsPutDownBeforeTheParkIsWritten` holds ours).
+- [ ] **Q571. What the original's autosave holds when its window is closed under the End.** From the run 6 review of Q552
+  (`handoff/review6/VERIFY-12.md`, Q552 3). Ours writes `autosave.TPWS` on a window close with the End up
+  (`Game.cs` -> `Level.WriteParkOnLeaving`), with no End in it and its two scripts not written
+  (`SAVE_PARK_SCRIPT_MADE_SINCE_THE_LOAD`), said at `ParkEndFeature` and in `park-engine.md`, "OpenTPW builds it". The
+  original's End is a whole object (`0x004db090`, registered by `0x0050b350`, handle `0x007cf4f4`) and nothing found in
+  objdump skips it in the state-`0xb` save. Measure: in the original under Proton, `q550/alldone576.TPWS` to tick 800
+  (the End up), close the window, then read its autosave with `parkfile.py` (is thing 43, catalogue 1605, in the object
+  list; are `End.RSE` and `AnimCtrl.RSE`'s states written). If it holds the End, decide with Alexah whether ours writes
+  it too (and what loading a park with the End in it does in the original); otherwise say at the site that both leave
+  it out.
 
 - [ ] **Q270. The park music's level counts every guest, where the original counts only those on five kinds of cell.**
   From the week-end audit (stage 4; read twice from the listing, not yet measured in the original). `FUN_004c7fa0`
@@ -645,6 +740,39 @@ filed the items that cite it.
   every other channel's clip again, so a track bit two channels' clips share stays set here where the original
   drops it; its summary gives the rebinding as the original's. Confirm: a model with two channels sharing a track,
   its node words after one clip is replaced, against the original's save.
+- [ ] **Q572. An additive model's rotation key (`ANIM_ADDITIVE_ROTATION`).** From the run 6 review of Q554 (`handoff/review6/VERIFY-13.md`,
+  Q554 5). On a model whose header word `0x30` carries `0x4` the engine composes a rotation key with the node's own turn
+  (`FUN_00470d10`) rather than replacing it. Ours counts it, `ANIM_ADDITIVE_ROTATION`, in two places: `NodePoser.Pose`
+  (one rotation track in the 22 additive clips that carry a position track) and `LobbyModel.Pose` for a clip that only
+  turns, which `MeshRotator` would pose as a replacement (49 such clips, 50 tracks: the coaster pylons, Lost Kingdom's
+  `coaster1` StdPylonI/R, `coaster3` looppylonr1/r2 and stdpylonb/i/r, `minecart` LoopPylonR1/R2 and StdPylonB/I/R among
+  them). Dead by content today: no source loads a pylon model. Decode `FUN_00470d10` (the order of the key and the rest
+  turn, and whether the additive restore `FUN_00473c70`/`0x00473d0c` puts the turn back every advance), then build it in
+  both posers when the coaster pylons are built. Confirm by a pylon's turn beside the original's.
+- [ ] **Q573. A node a clip's route moves, followed (`RIDE_NODE_ON_A_ROUTE`).** From the run 6 review of Q555 (`VERIFY-14.md`, Q555 5).
+  `RideNodes.Follow` poses a thing's node tree for its particle records through `NodePoser`, which reads rotation and
+  position tracks and no path track, where the drawn model moves a node along its route (`LobbyModel.Pose`,
+  `MoveAlongRoute`); a carried find of a node on a route, or under one, reads it where it stands without the route,
+  counted `RIDE_NODE_ON_A_ROUTE` in `RideNodes.Stored`. Lost Kingdom's route clips (`bus`, `Ferry`, `seaplane`) start no
+  particle record; whether any other clip with a route carries one is not measured. Measure it across the shipped
+  scripts and clips (`cliptracks`, the `.RSE` corpus); where one is reached, pose path tracks in `NodePoser` as
+  `LobbyModel` does and drop the count.
+- [ ] **Q574. One node tree for every channel of a drawn model.** From the run 6 review of Q554 (`VERIFY-13.md`, Q554 2). The engine
+  keeps one matrix per node for all of a model's channels; ours poses a clip that moves nodes through `NodePoser` and
+  places every mesh from it (`LobbyModel.PlacePosed`), and a clip that only turns through `MeshRotator`, so a
+  rotation-only clip on a channel posed before a node-moving one is drawn at rest until it is posed again, the next frame
+  (said at `LobbyModel.Pose`). No Lost Kingdom model shows it: the Inca Totem's rotation-only channels are 1 to 3, above
+  its node-moving channel 0; other themes not swept. Sweep every multi-channel script's roles against its clips; where a
+  model is reached, pose every clip of a model that has a node-moving clip through the one tree.
+- [ ] **Q725. The Lost Kingdom speakers' raw vertex frames are skipped.** From the upstream look, 2026-10-19
+  (`verify-models.md` L3; FileFormats `models.md`, "Raw vertex frames"). `AnimationFile` skips every track that sets bit
+  `0x4000` (30 in the game); Lost Kingdom has the 8 of `speaker1c` to `speaker4c` (4 x 16 vertices and 4 x 8). The data is
+  read: each track's positions are whole frames, the descriptor's `+0x0C` plus one of them (30 of 30), indexed by the track's
+  index table. Classify first (rule 3): GAP if a placed Lost Kingdom thing plays a speaker construction clip, otherwise dead
+  by CONTENT. **Not settled:** whether the original interpolates between the whole frames (the second fork review reads
+  `0x00471aa1` and `0x00471943` as blending one address with t and 1 - t; not re-read here) and whether `+0x0C` or the
+  block's last frame bounds the frames (equal in all 30). Re-read both in Ghidra into `docs/exe/` before building; until then
+  count the unbuilt path `RAW_VERTEX_FRAMES` (rule 4). Confirm: a speaker's construction beside the original's.
 
 - [ ] **Q278. An entertainer whose bank has no state group performs on animation 0.** From the week-end audit
   (stage 4; read twice from the listing). `FUN_00541fa0`'s count is tested for not 1 (`0x004d47cc`), so nought
@@ -926,6 +1054,15 @@ filed the items that cite it.
     A4R4G4B4 alpha nibble would blank the letters, a rival to `textures.md`'s blame of Wine's GDI fonts for the original
     under Proton lettering no name on the jungle gate. No Proton frame of a byte-0-is-255 board's lettering was found to
     split the two; film one.
+- [ ] **Q722. A park's name split over the sign's two lines at the space nearest the middle.** From the upstream look,
+  2026-10-19 (`verify-images.md` L4). `SignTexture.SplitName` splits at the FIRST space; the original searches outward from
+  the middle of the string for a space, alternating (`FUN_00467a80`; FileFormats `sgn.md`). Lost Kingdom reaches it: "Tom
+  Tom Twister" is "Tom" / "Tom Twister" here and "Tom Tom" / "Twister" by the centre rule (the space at index 7 of 15). Q399
+  covers where the text comes from and its widths, not the split. **Not settled:** the tie. For a name whose two nearest
+  spaces are equally far from the middle ("The Hot Pot": spaces at 3 and 7 around 5) the left gives "The" / "Hot Pot" and
+  the right "The Hot" / "Pot"; read `0x00467b41` in Ghidra for the start index (len / 2 or not) and which side is tested
+  first. The comment on `SplitName` says the deviation. Confirm: a three-word name on a gate or a ride board beside the
+  original's.
 
 - [ ] **Q400. Animated textures.** From the fork review 2, 2026-10-16 (`verify-formats.md` H2). 19 texture slots with
   several frames in 9 jungle wads (the queue fire, the 5x5 rock's waterfall, the monkey's face, `tvsim`, the hyenas,
@@ -973,8 +1110,8 @@ filed the items that cite it.
 
 - [ ] **Q403. The balance's colour and the cost in hand.** From the fork review 2, 2026-10-16 (`verify-ui-hud.md` L5).
   The HUD letters the balance in one of six colours (table `0x00752e30`, index (balance + 999) / 1000 clamped to 0..5:
-  red at nought or below, white over 4000), and control `0x30` shows the cost of the item in hand, only for mode types
-  3, 4 and 8 with `[0x0079c658] & 1` (-9999 hides it, -999 resets it). The keys counter is skipped in Instant Action,
+  red at nought or below, white over 4000), and control `0x30` shows the cost of the item in hand (`0x004a0d38`..`0x004a0d94`),
+  only for mode types 3 and 4, and 8 when `[0x0079c658] & 1` is set (-9999 hides it, -999 resets it). The keys counter is skipped in Instant Action,
   the tickets counter runs in every mode. Read what this game does first. Confirm: the balance at 500 and 5000 beside
   the original.
 
@@ -1032,6 +1169,15 @@ filed the items that cite it.
   Q489 saw it through type `0x13` too: the running original's 16-bit surfaces of eleven jungle `pathtex` files hold
   each channel's top four bits, and where OpenTPW's byte ends in `0xf` about half (19,265 of 35,399) are one higher
   (`q489/PREDICTION.txt` a3, `conv3.py`); hold those files' nibbles to the original's once fixed.
+- [ ] **Q724. A 0x13 image's channels rounded, as the original rounds them.** From the upstream look, 2026-10-19
+  (`verify-images.md` L4). `textures.md` says `FUN_00595920` (the LZSS codec) indexes its channel tables "by the channel's
+  rounded value"; `TextureFile.Decode` cuts each float channel with `(byte)Clamp( 0, 255 )`, a truncation, which is low by
+  up to one level (mean 0.48 a channel, 2.6% of nibbles after the A4R4G4B4 cut, over 120 random 0x13 files). Reached by all 7,407 files
+  that carry type `0x13`. **Settle first:** read the column pass and colour
+  step of `FUN_00595920` in Ghidra (where the rounding falls: after the column pass, or on the colour step; the 12582912.0
+  constant at `0x007026ac` is the codec's own), then match the original's decode of a few files, as Q483 matched the
+  ground's. The comment at the cut says the deviation. Confirm: three Lost Kingdom `.wct` of type `0x13` beside the
+  original's decode, pixel by pixel.
 - [ ] **Q461. The tag bar's meshless buttons are disabled in the original.** From the week-end audit (D10,
   `TIEBREAK-Q311.md`). A type-0 tag's second button and a decline's erase button are shown and disabled (vtable +0x14
   with 0 at `0x0048e991`, `0x0048e43c`); the hit test skips a disabled control (`0x0065db3b`). Q427 made them take the
@@ -1086,10 +1232,10 @@ filed the items that cite it.
   sea's phase, so wrapping the shared phase at either breaks the other at the wrap. Fix: keep two phases (the sea's
   wrapped at 4 pi, the flags' at 20, both stepped alike from the same `Advance`), say it as a deviation at the site,
   and test that a phase either side of each wrap gives the same wave. Said at `ParkSea.Phase`.
-- [ ] **Q505. The picker stands still in first person.** From the review of Q472b (`handoff/review3/VERIFY-13.md`, q472b 1): the original skips the picker and the packer while
+- [ ] **Q505. The picker stands still in first person, a ride's view and the view of `0x10`.** From the review of Q472b (`handoff/review3/VERIFY-13.md`, q472b 1): the original skips the picker and the packer while
   `[0x790ab0] & 0x16` is set (`0x0054e2c0` `test al,0x16`, then `jne`; first person is `0x202`), so its cell stays where it
-  was. Ours runs `ParkPicking.Update` every park frame, counted `PICK_IN_FIRST_PERSON` in `Level.Update`, so the crowd
-  voice (`ParkAudio.cs`, the original's `0x0054f875`) counts guests round a cell that follows the pointer. Decode which
+  was. Ours runs `ParkPicking.Update` every park frame, counted `PICK_IN_FIRST_PERSON` in `Level.Update` in first
+  person and the End's ride view (`Level.InsideView`), so the crowd voice (`ParkAudio.cs`, the original's `0x0054f875`) counts guests round a cell that follows the pointer. Decode which
   modes set `0x4` and `0x10`, then hold the picker under all three bits. Confirm in both games: the crowd voice's count
   in first person against the cell before it.
 - [ ] **Q506. A frame's second press: acted on at the park, or not (`PARK_PRESSES_IN_ONE_FRAME`).** From the review of Q476
@@ -1147,6 +1293,15 @@ filed the items that cite it.
   predicting 300 and 40 first), also after a park load. Then build it: the key, the bit kept across a load, the two ranges.
   The pitch is computed from the zoom by the same expression and extrapolates past the range; read the camera's pitch clamp
   ([0, 84.27] in `park-engine.md`) at zoom 300 in the original before building it. Q23 is the camera's other work.
+- [ ] **Q720. Do the keypad digits reach the cheat and camera rows? (one key press in the original)** From the fork watch,
+  2026-10-20 (`verify-other-ui-audio.md`, "Miss found here"; `park-engine.md`, "The cheat table"). Both key edges
+  (`0x0046b9c0`..`0x0046b9f5`, `0x0046bab8`..`0x0046baeb`) replace the vk by `MapVirtualKeyA( vk, 2 )` when it answers
+  non-zero, excluding only the keypad's `* + - . /`; the digits `0x60`-`0x69` are not excluded. If the call answers `'1'`..`'9'`
+  for `VK_NUMPAD1`..`9`, every row keyed `0x61`-`0x69` is unreachable (cheat rows 3-11, the Local 1-5 and Global 0-3 ticket
+  cheats; camera rows 13-22, the keypad pan) and Alt+Num1 fires the ten-thousand cheat. If it answers 0 the rows work as the
+  tables say. Confirm: in the original under Proton, in a park, NumLock on, hold keypad 4 (or 6) and see whether the camera
+  pans; with `Easymode.TPWI`'s cheat flag possibly cleared by the first key (the same section), press a harmless first key, then
+  Alt+Num1 and read the money. Then correct the keypad rows in `park-engine.md` (the camera's pan keys, near line 394, and the cheat table) and OpenTPW's keypad bindings if they differ.
 - [ ] **Q511. A bouncing rider is lifted on a sine.** From the fork watch, 2026-10-18 (`verify-world-b.md` L4). The Belly
   Bounce's riders are drawn standing on their node here (`ParkGuestSprites.Seated`); the original's positioner
   `FUN_00557ab0` lifts each on a sine (`0x00557c75`): the phase is `( trunc( elapsed x ( 0.8 + 0.005 x the short +0xc0 ) )
@@ -1207,6 +1362,9 @@ filed the items that cite it.
   `0x0058d400`); ours makes every level down to one texel, each the rounded mean of the eight-bit level above, cut, a
   filter not read. Read the filler (what writes a level below the first: the codecs, or a downsample of the surface),
   then build it. Confirm by a far camera over the sea and the brick in both games.
+  - **Note (run 6 review, Q244):** confirm by the happiness gauge too, a fixed screen-space target: its faces are
+    sharp in ours and blurred in the original's frames (`q244/side-by-side.png`; `hud.md`, "The happiness gauge's two
+    quads"). If the mip levels do not explain it, the filter states are Q29's.
 - [ ] **Q520. A person's shadow under a tool's squares.** From Q480 (`park-engine.md`, "A person's shadow"): the
   original's patrol squares (and any tool's) are drawn over the people's shadows, which show through them
   (`q480/orig/a-2-on.png`: Mike's shadow on the squares darkens 0.556, 0.716, 0.835); ours draws `ParkBuildMarkers`
@@ -1236,9 +1394,11 @@ filed the items that cite it.
 - [ ] **Q527. The gadget's date: the original letters it month.day.year with full stops.** From Q526
   (`q526/side-by-side.png`): on 10 January 2002 the original's gadget reads "1.10.2002" (`orig/a-2-loaded-gadget.png`,
   the poll's day word 10 at that moment), where ours letters .NET's short date, "1/6/2002" on 6 January
-  (`ParkGadget.ShowDate`, `ToShortDateString`, so it follows the computer's culture). Seen, not decoded: no
-  "%d.%d.%d" format is among the executable's strings, the first candidate is UITEXT 448, `{17}.{16}.{18}` in the american
-  tables (`saves.md`, the Load Park rows): check the gadget's date draw for `0x1c0`. Ours draws `GameCalendar.Now`,
+  (`ParkGadget.ShowDate`, `ToShortDateString`, so it follows the computer's culture). Decoded (run 6 review):
+  `FUN_004a0e30` letters UITEXT row `0x1c0` (448, `{17}.{16}.{18}` in the american tables, `saves.md`, the Load Park
+  rows) into a buffer of `0x1f` (the call at `0x004a0ea1`), token 16 the day, 17 the month (1-based, the +1 at
+  `0x0048156c`) and 18 the year + 1900: month.day.year with full stops. It is redrawn on a day's change, from
+  `0x00481570` inside the day-changed block (the call at `0x004f83ac`), and once at set-up (`0x0048166f`). Ours draws `GameCalendar.Now`,
   the date of the park's tick (Q149), so the two gadgets show one date in two letterings (`q149/side-by-side.png`). Confirm by both
   gadgets on one date.
 - [ ] **Q529. A loaded park's weather runs on from the file's.** From Q528 (`saves.md`, "OpenTPW's writer, the weather
@@ -1313,18 +1473,35 @@ filed the items that cite it.
   back on a park cell, and read the cursor; predict `c_noplace`. Also read the pointer over the gadget's camera
   control with the tool armed (`FUN_004981d0` writes the same control's cursor). Write the result into
   `docs/exe/hud.md`, "The patrol pointer", and drop the "not watched" sentence there and at `Arm`.
-- [ ] **Q541. The build tools' run price, decode first.** Seen in Q540's runs, read nowhere: with the queue tool
+- [ ] **Q541. The build tools' run total, shown as Q403's cost in hand.** Seen in Q540's runs: with the queue tool
   anchored on the stock park the original shows a yellow "$ 375" under the balance (`q540/orig/a-16-join28-edges.png`,
-  `b-1-before-click.png`), the run's price, gone after the click; ours shows none (`q540/run2/3-join-edges.png`). Read
-  who draws it, for which modes, and what `FUN_0052fb90`'s -9999 (the patrol tool's) does to it.
+  `b-1-before-click.png`), gone after the click; ours shows none (`q540/run2/3-join-edges.png`). Q403 already decodes
+  that display: `FUN_004a0ab0` reads the total (`0x004a0d38`) into control `0x30`, for interaction-mode types 3 and 4
+  (8 only when `[0x0079c658] & 1`), -999 skipping the show and -9999 (the patrol tool's `FUN_0052fb90`) hiding it
+  (`0x004a0d68`..`0x004a0d74`); the build tools are type 3 (`park-engine.md`, "The build-tool interaction mode is
+  object type 3"). Build it with Q403 or after it; what is left to read is how often message `0x1e` comes against the pass.
   From Q542: the total is `DAT_0081af4c` (`FUN_0052fba0` adds, `FUN_0052fbc0` reads); the path and queue passes never
-  zero it, `FUN_004a0db0`'s message `0x1e` does (`0x004a0dee`), calling `FUN_004a0ab0` first on every second one. A red
-  square's second verdict adds to it (`park-engine.md`, "The path tool"), so the label may show more than the run's
-  price: read it beside `strip`'s `run price`.
+  zero it, `FUN_004a0db0`'s message `0x1e` does (`0x004a0dee`), calling `FUN_004a0ab0` first on every third one (the
+  counter `[0x007cb2e0]`, reset at `0x004a0de2`, which message `0x15` also zeroes, `0x004a0e02`). A red square's second
+  verdict adds to it (`park-engine.md`, "The path tool"), so the label may show more than the click charges: read it
+  beside `strip`'s `run total`.
+- [ ] **Q568. The second charge's carry flag, settled by the original first.** From the review of run 6 (VERIFY-2, M1,
+  UNSETTLED). The second verdict's charge also needs `[0x008186d4]` == 0 (`0x005358df`). The mode-4 and `0x3b` arms of
+  the pass (`0x005235d4`, `0x00523967`) and of the click (`0x00524b4a`, `0x005253e9`) set it to 1; only the click
+  (`0x005249c2`, `0x00525a06`) and `0x005239fc` clear it, and `FUN_0052f200` (the tool setter) does not touch it. So a
+  path or queue tool armed from the toolbar straight after carrying an item might preview with no second charge (and so
+  no `c_cash`) until the first world click. `ParkPathBuilding.JudgedAgain` never models the flag. Run the original
+  first: carry an item, put it down or drop it, press the path button, and hold the pointer on bare ground past a red
+  square with a balance under 20; watch `[0x0081af4c]`, `[0x008186d4]` and the cursor `[0x007cb2d8]`
+  (`docs/TOOLING.md`, the path tool's recipe). Build it only if the run shows the flag held; otherwise write in
+  `docs/exe/park-engine.md`, "The path tool", that it is cleared before a tool can be armed. Confirm: the same steps in
+  ours beside the original's frames.
 - [ ] **Q543. The welcome a park made with no file says on tick 1, decode first.** From Q327 (`advisor-park.md`, "A
   fresh Full Simulation park", and "Still unknown", `Welcome`). In both of the original's fresh Full Simulation parks
   message 0 (row 0, posted only; response 1, sample 1, slot 1, `Welcome.Score` by `0x0059c8c0`) stood in a slot at
-  100,000 on tick 0 and was said on tick 1 for 31.3 s (`q327/orig/a/fresh.log`; record (1, 0, 1, 0)); this game posts
+  100,000 on tick 0 and was said on tick 1 for 31.3 s (the record (1, 0, 1, 0) in `q327/orig/FSFRESH.TPWS`, read with
+  `parkfile.py -a`; the slots in `q327/orig/a-restart.INTS` and `q327/orig/o/fresh/proton-restart.INTS`;
+  `q327/orig/a/fresh.log` holds the slot and the 31,332 ms action only); this game posts
   nothing there. Find the poster (a post of message 0 at the world's setup, or the park's first tick), whether an
   Instant Action park made with no file and a loaded park post it too, and what sample 1's 31 s is. Then build it.
   Confirm: a fresh park's first seconds in both games, the record and a frame.
@@ -1388,7 +1565,8 @@ filed the items that cite it.
   longest route in the shipped park", true of the save only) and `SoundCategoryTests` ("happened to work here"). Test
   names: `AnimationUvTests.ATwoKeyTrackReadsAsItAlwaysDid`,
   `BalanceFieldTests.AKeyThatNamesOneFieldIsReadExactlyAsBefore`,
-  `GameCalendarTests.TheDaysKeepTheOriginalsSlightlyFastPace` (it asserts only a count of 231),
+  `GameCalendarTests.TheDaysKeepTheOriginalsSlightlyFastPace` (it asserts 10 January on tick 230 and 11 January with
+  `DayRolled` on 231, the tick's date, and nothing of the 248 ms pace),
   `ParkEvictionTests.EveryQueuerIsPutOutOfTheQueueAndLosesBothChanges` (its summary: the drain has already put out all
   from the fifth place back) and `ParkWeatherTests.TheWeatherTurnsEverySevenDaysAndIsDecidedThreeDaysBefore` (four
   days, `weather.md`). `ParkPathTests`' summary says "SEVEN tests fail" without the `ReferenceEquals` guard, measured
@@ -1418,6 +1596,11 @@ filed the items that cite it.
     in Ghidra: `FUN_004d0810` (some offer passes and is untaken), `FUN_004d0970` (a taken offer's remaining owed) and
     `FUN_004d0a00` (the total owed), and `ride-operation.md`'s rows on them are corrected ("The loan helpers and the money
     rows"). The Ghidra project was not touched: their functions and names are still to make there.
+- [ ] **Q579. The voice list's reader and writer named in the Ghidra project.** From the review of run 6 (VERIFY-17,
+  Q559 4; group O's notes). The project's `SoundManager_SerializeVoices` (`0x006b6da0`) only reads the voice list
+  (stream slot `+0x8`), and its writer `0x006b6c30` (slot `+0xc`) is unnamed. Rename both in the project (a reader and
+  a writer name), then use the new names in `audio.md`'s table and "A script's sounds", `saves.md`'s `SOUN` row and
+  Q560's text, which keep the old name today. Docs and names only; nothing to confirm in the game.
 
 - [ ] **Q294. The FileFormats pages changed since 2026-09-26, against the game's files.** Left by the week-end
   audit's stage 8. 1,557 layout statements on 22 pages, `saves.md` and `models.md` most of them, packed into 56
@@ -1818,8 +2001,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
 - [ ] **Q32. Graphics tiers.** `Level` reads the detail files (`low.sam`, `med.sam`, `high.sam`) for `GameOptions.PARTICLEDENSITY`
   and `NUMKIDS` (the kid and staff bank caps) and for three `GraphicalOptions.*` keys: `LIGHTING` (a counted no-op),
   `TEXTUREQUALITY` (the sea's and the flags' folder) and `PROCEDURALTEXTURING` (the ground's tile size). `SPRITESHADOW` is read too (Q480: medium's silhouette built, the own
-  picture counted). Nothing reads the rest (texture filtering, sky, the sky's and models' shadows, fog, mipmaps, view distance); `SKYQUALITY` and `FIRSTPERSONVIEWDISTANCE` are named only in comments. The detail-file loader is `0x00423bc0` (`OptionsScreen`'s
-  restart note). Decode what it does with each key - the lobby plan's item 11 names three: the `stexture` set,
+  picture counted). Nothing reads the rest (texture filtering, sky, the sky's and models' shadows, fog, mipmaps, view distance); `SKYQUALITY` and `FIRSTPERSONVIEWDISTANCE` are named only in comments. The live detail file is loaded once, at boot
+  (`FUN_0044dc60`, `lobby.md`'s `0x007858c8` row); `0x00423bc0` (`OptionsScreen`'s restart note) only reads a new
+  quality's file into a local to compare it and flag a restart. Decode what it does with each key - the lobby plan's item 11 names three: the `stexture` set,
   `SKYQUALITY` and the particle low-detail byte - then build low / medium / high.
 - [ ] **Q33. UI scale.** The UI has one fixed virtual size (`VirtualScreen`, 2048 by 1536). Add Auto / small / medium
   / large in the dead Video Card row (`OptionsScreen.cs:71-72`).
@@ -2093,3 +2277,20 @@ state machine.
   word's path to the blend states, and no run of the original has shown the frame (the fork's capture saw none either), so
   film the original's lobby in a storm (`record.sh`) before building, and count the unbuilt flash `LOBBY_BOLT_FLASH` (rule 4) until it is. Pairs
   with Q152 (the bolt's lifetime).
+- [ ] **Q721. Each lobby island and gate turned by its ISLAND heading.** From the upstream look, 2026-10-19
+  (`verify-sound-ui.md` L2). The island constructor `0x005dfa60` stores `island[+0x14]` = the ISLAND line's heading field
+  x pi / 180, hands that radian value twice to `FUN_005d8380` (the isle's model instance `[island+4]`, then the gate's
+  `[island+8]`), and calls `FUN_005d8190` on both with ISLANDCAMERAPOSITION; the camera homes onto `+0x14 + pi`
+  (`FUN_005e1210`, `lobby.md`, "The island's heading"). Every `*_gate` mesh in `lobby.wad` sits on its model's -Z side, and
+  a yaw of `heading` puts the gate where the homing parks the camera, which is why the heading is read as the island's and
+  gate's yaw. Ours: `LobbyCameraMode.GateHeading` is one fixed pi, and `LobbyIsland` and `LobbyGate` never turn (only a
+  position, `Level.cs`), which agrees with the original only where the heading is 0 (Space Zone). Predicted, unproven: the
+  original's Lost Kingdom gate stands at our -X (ours -Y), Wonder Land's at +X and Halloween's at +Y. The comments say the
+  deviation now; FileFormats `lobby-scripts.md` and `lobby.md` are corrected to what is known. **Settle first, in Ghidra or
+  under Proton:** what `FUN_005d8380` writes into the model instance and how its draw matrix (built by `0x005d8870`, flags
+  `0xc0`) turns the float into a rotation (axis, sign, row or column convention), and that the stack argument `[ESP+0x48]`
+  at `0x005dfb90` is the ISLAND line's sixth field; or, cheaper, read the island camera's `+0x18` at state 2 after Enter on
+  Lost Kingdom with `tpwmem.py` (pi / 2 + pi = 4.712 if the heading is used, as predicted; ours pi) and film one frame of
+  the opened gate. Then turn the isles and gates, set `GateHeading` from the island, and fix the sun in
+  `Level.SetupEntities`, which stands in front of gates that all face one way. Lost Kingdom's island first. Confirm: the
+  lobby with the island and gate of Lost Kingdom beside the original's.

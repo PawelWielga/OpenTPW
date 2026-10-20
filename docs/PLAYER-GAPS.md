@@ -80,8 +80,9 @@ Buy carries the whole purchase/hire/management half; paths, queues and building 
 laid and verified; and Info and Money now open real screens - **all four of their buildable screens
 drew in a running park and were photographed**. Research is not a category at all (`FUN_004a0840`'s
 case `0x2b` goes straight to `FUN_004aa480`, as the map does), and its one screen is six effort
-sliders over research groups: this game has **no research and no groups**, so there is nothing to put behind the
-button. The button and R, the shortcut to the same function, open its two message boxes (Q410); the screen is
+sliders over research groups: this game has **no research screen** (the lab spends its researchers' points and
+finishes projects, Q701; the advisor's lines on it and the end of research are Q702 and Q703), so there is nothing to
+put behind the button. The button and R, the shortcut to the same function, open its two message boxes (Q410); the screen is
 counted, `RESEARCH_SCREEN`.
 
 - [x] **Buy** opens `ParkBuyScreen` (stream `0x00754cf8`), which cross-links to `ParkHireScreen`

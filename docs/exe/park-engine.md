@@ -208,7 +208,24 @@ This matches the value derived from the data alone. The camera's default POI **(
 | Address | What it is | Evidence |
 |---|---|---|
 | `FUN_004d8610` | Packs a ticket booth's cell to a packed cell id, `y * 128 + x + 1`: `FixedItemInfo.TicketBoothA` (`0x0078559c`, `0x007855a0`) for argument 0, `TicketBoothB` (`0x007855a4`, `0x007855a8`) otherwise. `FUN_004d8650` (bus stops), `FUN_004d8690` (entrances) and `FUN_004d86d0` do the same for theirs (`park.md`, "Arrivals") | Disassembly: `SHL EAX,0x7` on the Y, then `LEA ..,[EAX + ECX + 1]` (`0x004d8623`, `0x004d8626`). The values are used as cell numbers with no scaling |
-| `FUN_004dd500` | Builds a placed thing's model (`FUN_00463060`, or `FUN_00463ab0` to rebuild) at an integer cell: the thing's packed cell id `+0x34` unpacked as `x = (id - 1) & 0x7f`, `y = (id - 1) >> 7` (`0x004dd5d3`..`0x004dd5e5`), or, for an item whose `+0x38` is set, the item's own `+0x20`/`+0x24` with `MapInfo.FixedItemOriginX`/`Y` (`[0x00785594]`/`[0x00785598]`, the two value slots before `TicketBoothAPosX`'s `0x0078559c` in the balance table's order) where they are nought. It calls none of the FixedItemInfo packers | Disassembly. From the data: `base.map`'s `0x08`/`0x90`/`0x94` bits land exactly on the FixedItemInfo coordinates in all four themes |
+| `FUN_004dd500` | Builds a placed thing's model (`FUN_00463060`, or `FUN_00463ab0` to rebuild) at an integer cell: the thing's packed cell id `+0x34` unpacked as `x = (id - 1) & 0x7f`, `y = (id - 1) >> 7` (`0x004dd5d3`..`0x004dd5e5`; `+0x34` is `mTopLeft`, so an item with a map offset is made a row or a column off its anchor, the Huge Hollow Rock a row before it unturned, the one arm every placed object takes, at every angle, so the turn about that cell is every item's (`OriginFor`'s, matched at 0, 90, 180 and 270 degrees on items with no offset, `q257v/census.out`); **OpenTPW builds it**, `ParkObjects.ModelCell`, for the model, its nodes and its `.hmp`), or, for an item whose `+0x38` is set, the item's own `+0x20`/`+0x24` with `MapInfo.FixedItemOriginX`/`Y` (`[0x00785594]`/`[0x00785598]`, the two value slots before `TicketBoothAPosX`'s `0x0078559c` in the balance table's order) where they are nought. It calls none of the FixedItemInfo packers | Disassembly. From the data: `base.map`'s `0x08`/`0x90`/`0x94` bits land exactly on the FixedItemInfo coordinates in all four themes |
+
+### Where a placed object's model stands
+
+**Its height is halfway between the lowest and the highest ground under its footprint.** `FUN_004dd500` hands the model
+maker `FUN_00463060` the flags `0x32f` and a place `{ x, y, angle, footprint }`, the footprint being the item's parsed
+`Info.Shape` at item `+0x18` ("The buy screen's footprint picture"). Under the flag `0x8` with a footprint
+(`0x004632a5`..`0x004632ac`) the height is `FUN_00466d70`'s: for every cell of the shape whose kind's low four bits are
+not nought (`FUN_00469930`), its four corners carried through the angle to ground vertices (`FUN_00454050`, 0.1 added and
+cut to whole vertices), the lowest and highest of their heights kept (`0x00466ef6`..`0x00466f13`, from 10000 and -10000), and
+`(lowest + highest) * 0.5` answered (`0x00466f74`..`0x00466f80`). Without a footprint the height is the ground's vertex
+at the model's cell (`0x004632d7`..`0x004632ec`). **Measured:** the 55 node-placed emitters of thirteen park files the
+original wrote all stand at their file's height cut to whole units under this rule, and 44 under the vertex at the
+model's cell (`saves.md`, "Measured on eighteen files"): the Huge Hollow Rock of Alexah's Full Simulation jungle
+autosave, on the slope from -7 to -2 under its rows 26 to 30, stands at -4.5, its water at 12 (`768 / 64`), where the
+vertex gives -7 and 9. **OpenTPW builds it** (`ParkObjects.ModelOriginFor`, `BaseHeight`): the model, its nodes and the
+base its `.hmp` is laid from. Not separated by any file read: a shape's empty cells, whose corners no file's ground
+tells apart from their neighbours'.
 
 ---
 
@@ -880,8 +897,9 @@ the park every right press while it is set.
 `World_DeleteEndFeature`). The view is **the ride view of the End object itself**: `World_MakeEndFeature` hands the
 object it made to `FUN_0048ae70` (through `FUN_00481b60`), which leaves first person or a ride view and calls
 `FUN_004e15b0( 0 )` with that object as `this` (`0x0048aeb4`), the "Ride it!" call. `FUN_004e15b0` passes the item's
-`+0x80` and `+0x11c` to `FUN_0042a560`. The catalogue item keeps its `.sam` fields in the order of the executable's
-field table (records of `0x3c` bytes, `0x00744c60` on): `Info.DontApplyOffset` `+0x38` and `Info.DoHeadProcessing`
+`+0x80` to `FUN_0042a560` in all three of its arms, and `+0x11c` only in the arm for a thing viewed on its own
+model (`0x004e1644`..`0x004e1651`); the track ride's lead-car arm (`0x004e15ee`) and the tour arm (`0x004e1623`)
+pass nought there. The catalogue item keeps its `.sam` fields in the order of the executable's field table (records of `0x3c` bytes, `0x00744c60` on): `Info.DontApplyOffset` `+0x38` and `Info.DoHeadProcessing`
 `+0x84` sit 19 records apart, and `UsageInfo.GoldenTicketCost` (`+0xc4`, read at `0x004db4a6` by the ticket test)
 sits 22 before `UsageInfo.ConstrainCamera`, so **`+0x80` is `Info.FirstPersonSprites` and `+0x11c` is
 `UsageInfo.ConstrainCamera`**. `FUN_0042a560` finds the model's first lookup record of id 1 under `0x1000`
@@ -892,13 +910,16 @@ bit `0x4`, and with ConstrainCamera bit **`0x800`** with the look offsets `[0x00
 of `[0x007a1a8c]`), stops the model highlight (`FUN_0045d660( 1 )`, `[0x007afda4]`), sets bit `0x8000` on each node of
 the viewed model whose lookup record carries `0x10000000` and clears it where the record carries `0x20000000`, and
 calls `FUN_00481470( 1 )`, whose layer switch `FUN_004a2ac0` does nothing while the End exists (`FUN_00516c00`): so `FUN_0048ae70` hides both layers
-itself (`0x0048af00`..`0x0048af21`). It ends in the sprite swap (`0x0042a6ee`): `FirstPersonSprites` is 1 in no
-shipped file and entering the ride view clears flag `0x02`, so the End keeps the `.TPC` pictures.
+itself (`0x0048af00`..`0x0048af21`). It ends in the sprite swap (`0x0042a6ee`): the End, a feature, reads `FirstPersonSprites` 0
+(`Features.sam` and `end.sam` do not declare it) and entering the ride view clears flag `0x02`, so it keeps the `.TPC`
+pictures. All four themes' `Rides.sam` set it 1 and no other loose `.sam` does, so every ride but the four tours reads 1
+(the item's own file wins, and the tours' set 0), and "Ride it!" on one swaps to the `.FPC` pictures.
 
 Each frame the camera update `FUN_0042b1c0`, under `& 0x3c` (`0x0042ca0a`), takes the record's world matrix for the
 camera with its turn, the three rows of three, mixed with the last frame's: `(1 - w) x now + w x last`, `w = ( 1000 - t )
 x 0.0005`, `t` the milliseconds since the last update (`FUN_00402d80`'s clock, QueryPerformanceCounter or `timeGetTime`;
-100 past 200, 1 at nought or below, so `w` is 0.4 to 0.4995; `0x0042ca13`..`0x0042cb7d`; the last frame's is the
+100 past 200 and 1 at nought or below on whole milliseconds, `0x0042b2c7`..`0x0042b2ed`; then held to 1000 and raised
+to 1 below 1, `0x0042ca1b`..`0x0042ca53`; so `w` is 0.4 to 0.4995; `0x0042ca13`..`0x0042cb7d`; the last frame's is the
 record's own matrix, `[0x00790948]`, not the mixed one), and the eye copied from the record's own translation, unmixed
 (`0x0042cb83`..`0x0042cb96`). It
 then turns the picture by the look offsets (`FUN_0046f6f0( ..., 4, ... )`, `0x0042cbc3`). Those are worked from the
@@ -912,8 +933,8 @@ so the orbit returns where it was.
 
 **What plays in it is the End's own script.** `end.sam` (id 1605, `Info.WhichUIType 4`, `Info.DontApplyOffset 1`,
 `UsageInfo.ConstrainCamera 1`) and `end.wad`'s `End.MD2` (eight planes, `_f_endplane01`-`08`, each with its
-propellers and three smoke nodes) with three clips, `Endm1`-`Endm3` (500 frames; three planes fly towards the view,
-two cross it, three climb away). `End.RSE` ("End Anim"): `SPAWNCHILD AnimCtrl.rse`, `VAR_ENDTIME` now + 10000,
+propellers, two trail nodes, particle records of flags `0x111`, and one sound node, flags `0x211`) with three clips,
+`Endm1`-`Endm3` (500 frames; three planes fly towards the view, two cross it, three climb away). `End.RSE` ("End Anim"): `SPAWNCHILD AnimCtrl.rse`, `VAR_ENDTIME` now + 10000,
 `DIPMUSIC 1`, `ADDOBJ 9 -1 186 2` (`cat_ui` 186, no node), `ADDOBJ 5 9 200 1` and `ADDOBJ 5 10 201 1` (`cat_rides` on
 `fwork05` and `fwork06`, sound ids 9 and 10), then for ever once a second: `EVENT 5 10 202`, and `EVENT 1 17 6`,
 `1 18 3`, `1 19 6`, `1 20 3` on `fwork01`, `fwork02`, `fwork04`, `fwork03`: effect 6 `P_EFFECT_Firework2` and 3
@@ -939,13 +960,16 @@ park with the gadget, the tick standing under it; stars an `EVENT` made still in
 **OpenTPW builds it** (Q552; `ParkEndFeature`, `ParkRideViewCameraMode`). `Level.EndOfResearch` asks for the End and
 `Level.Update` makes it after the frame's entity walk, since its model adds entities the walk cannot take (the
 original makes it inside the lab's message). The item is the catalogue's named `End`; the thing takes the park's next id
-(43 in the scene, as the original's) and is not put in the park's object list, which only the save reads and nothing
-saves while the End has the keys. Its model and its nodes stand as the file holds them (`RideNodes.PlaceFixed`): End.MD2's
+(43 in the scene, as the original's) and is not put in the park's object list, which only the save reads. No key
+reaches a save under the End, but closing the window writes `autosave.TPWS` (`Level.WriteParkOnLeaving`) with no End in
+it and its two scripts not written (`SAVE_PARK_SCRIPT_MADE_SINCE_THE_LOAD`); the original's save as it closes under the
+End (its state `0xb`) is not measured. Its model and its nodes stand as the file holds them (`RideNodes.PlaceFixed`): End.MD2's
 root, `parent`, keeps its own (480, 0, 170), which a placement at a cell would replace, and that is what puts the view
 node at the original's (480.53, 10, 200). `End.RSE` is bound from word 0 (`ParkRides.BindFixed`) and spawns its child
 on its first tick. The camera is the constrained ride view only, the general "Ride it!" one not built: the turn mixed as
 above with `t` from `Time.Delta`, the first frame's last matrix the record's own, and first person's fog drawn in it
-(`gui_CameraFlags & 0x16`). The full-screen view goes off if it was on, the park screen closes, and a cover with keys and
+and the people's bodies not pulled toward the eye (`gui_CameraFlags & 0x16`, `Level.InsideView`); the picker still
+follows the pointer there, counted `PICK_IN_FIRST_PERSON` (Q505). The full-screen view goes off if it was on, the park screen closes, and a cover with keys and
 a right click of its own goes over the park's layer (`WindowStack.CoverKeys`, `CoverRightClick`); F3 is refused in the
 ride view as in first person. Escape with no modifier, or a right click with RMB cancel on more than 2000 ms after it was
 made, ends it: the thing's scripts (their `ADDOBJ` particles stopped, an `EVENT`'s left), the dip, the model, then the
@@ -955,7 +979,9 @@ axes looking (0.000, 0.961, 0.276), the scripts "End Anim" and "End Anim Control
 bursts over the path, the interface gone; after Escape or the right click the orbit's eye as before and the box.
 **The planes fly** (Q554, `NodePoser`): Endm1's three come down the park three abreast and over the view, plane 02 from
 (480.3, 443.4) to (480.3, 90.4) at height 59, Endm2's two cross from the sides, Endm3's three climb away, as the
-original's frames (`q554/PREDICTION.txt`, `q554/side-by-side.png`; the console's `endfeature planes:`).
+original's frames (`q554/PREDICTION.txt`, `q554/side-by-side.png`; the console's `endfeature planes:`; Endm3's in
+`q554/run4/run.log` from 24.3 s, plane 06 from height 47 to 240, frames `run4/a-s24`..`a-s33`, beside the original's
+`q554/orig/a-e16.png`).
 **Their trails follow them** (Q555, `RideScript.SweepEffects`, `RideNodes.Follow`): each tick the emitters AnimCtrl
 started on the planes' nodes are put where the players have posed those nodes, so the stars stream behind the planes
 as in the original's frames (`q555/PREDICTION.txt`, `q555/side-by-side.png`; the console's `endfeature trails:`, plane
@@ -1617,8 +1643,9 @@ whose `+0x4ac` is nought gets `FUN_004e15b0( 0 )` instead.
   it, so the `.tps`/`.fps` arms are never taken. An `.FPC` picture is the same figure seen from ground level
   (FileFormats, "Sprites"). The ride view's `FUN_0042a560` also ends in the swap (`0x0042a6ee`): to `.FPC` when its
   second argument is 1 or flag `0x02` is set, otherwise back to `.TPC`. `FUN_004e15b0`, the "Ride it!" call, passes
-  the item's `Info.FirstPersonSprites` (`+0x80`), which no shipped file sets to 1 ("The End feature's view"); the
-  other callers' are not traced, and OpenTPW reaches only the End's ride view, which keeps the `.TPC` pictures.
+  the item's `Info.FirstPersonSprites` (`+0x80`), which every ride but the four tours reads as 1 from its theme's
+  `Rides.sam` ("The End feature's view"); the other callers' are not traced. OpenTPW reaches only the End's ride view,
+  which keeps the `.TPC` pictures, and nothing here reads `FirstPersonSprites`.
 
 The pick point is written only by `FUN_0045bf90` (called at `0x0054e2d5`, and only while `& 0x16` is clear). It is
 a terrain hit inside its own cell's rectangle, with the cells clamped to the 96 by 85 heightfield, or a point on a
@@ -2330,7 +2357,8 @@ nought. `FUN_00452ae0` finds the thing on the cell in two steps. First it reads 
 reads the cell's thing id (`FUN_00527e80`), which must be an object (type byte 3). From that object it reads the
 `.hmp` at `+0xcc` and the root node's matrix (model `+0x78`; translation `+0x40`, `+0x44`, `+0x48`). It carries the
 cell's corner back into the object's unturned space by its rotation at model `+0x10`, a quarter turn at a time
-(`0x00452bb0`..`0x00452c1d`). It answers the `.hmp`'s cell-grid byte × 1/2.55 plus the root's world height. With no
+(`0x00452bb0`..`0x00452c1d`). It answers the `.hmp`'s cell-grid byte × 1/2.55 plus the root's world height (the height the model maker gave it,
+"Where a placed object's model stands"). With no
 object, it answers the ground height at the cell's corner (`FUN_004527f0`). **The wave branch of `FUN_0053ddd0` then
 adds the ground height at each corner again**, so on raised ground the ground counts twice: once in the object's base
 or the fallback, and once here.
@@ -2361,8 +2389,11 @@ latches** `DAT_00816d58` and `DAT_00816d50` (`0x005333bd`, `0x0053357a`, `0x0053
 the refused arm's walls zero neither). **That changes nothing a path or queue reader sees** (read 2026-10-19, Q540): every
 answer of the mode-1 and mode-3 verdict that is not red leaves both at nought, but the queue's join (`m_link`, the strip's
 last square, `d58` and `DAT_00816d60` set, `0x00535c78`), on a path cell, which only a track thing's height lifts; the
-click's walks (ops `0x81`..`0x87`, `0x15`, `0x32`) never reach the verdict, which only ops with `0x100` or `0x200` call,
-and the other reader of `d58`, `FUN_00539760`, runs under the track modes alone (`0x0e`, `0x13`, `0x14`, `0x16`, `0x1a`).
+anchored click's walks (`0x87`, the stamp, `0x80`, `0x82`, `0x85`, `0x86`, `0x83`, `0x81`) carry neither `0x100` nor
+`0x200`, the only ops whose arm of `FUN_00532fc0` asks the verdict; the click asks it itself only unanchored
+(`0x0052727b` mode 1, `0x0052729d` mode 3, no latch clear first), and a join is always anchored (mode 3 is entered by
+`FUN_0052f580(3,0)`, which keeps the anchor); and the other reader of `d58`,
+`FUN_00539760`, runs under the track modes alone (`0x0e`, `0x13`, `0x14`, `0x16`, `0x1a`).
 So the one wall that zeroes a set latch is a patrol edge the locator draws after a join's pass, over a lifted cell;
 the next pass clears `d58` first.
 Measured in the original (`q436/orig/a-5-squares.txt`, the stock park, Mike Cooper's patrol outline (51,26)-(54,27)): (52,26)
@@ -2390,8 +2421,10 @@ red; a ride, entrance or exit cell is blue only when its item's `+0x54` is below
 ride's is 5; after a refusal that latches every later cell is red (which ones latch: `hud.md`, "The patrol
 edges"; land outside the park and a type the queue may not be laid over do not), and any red switches the cursor to
 `c_noplace.cur` (`FUN_0052f950`). Only bare ground is charged (`FUN_00535600`'s mode 3 with a path left out by its
-caller), and the track-corner test is the path tool's, asked at the same site (`0x00535bd9`, `0x00535be8`) of bare
-ground and a path that is not the run's last. **The anchor is always the first square**, so the cell before a new
+caller), and the track-corner test is the path tool's, asked at the same site (`0x00535bd9`, `0x00535be8`) of every
+cell the type-3 and type-`0x15` tests let through, before the type-0 answer and the path arm: bare ground, a path and
+any other type. So a corner under the run's last path is red with `d58`, never `m_link`, and one under any other type
+is red with `d58`, never the unlatched "other type" answer. **The anchor is always the first square**, so the cell before a new
 ride's entrance is marked the moment it is placed.
 
 **While a thing is carried** (mode 4) the placer runs twice a tick, a test pass that turns everything red
@@ -2509,7 +2542,12 @@ queue button builds one too; see "Editing a queue").
 see "Selling and the people on it" below.
 
 There IS a confirmation box, UITEXT 396, **gated on an options checkbox** (`DAT_0078d90f`) - the same
-flag gates the staff dismissal box, UITEXT 397.
+flag gates the staff dismissal box, UITEXT 397. Set, `FUN_0048cd10` opens `0x0047f020( box, 2, 0, 1, 0x0048cde0, 0, 0,
+0 )`, Quit Game's shape: the cross does nothing, the tick (`0x0048cde0`) demolishes the thing handed in the box; clear,
+it demolishes at once (`0x0048cd6f`..`0x0048cdc1`). **Either way it then zeroes `[0x007c2658]` (`0x0048cdc9`) and
+closes**, so the close applies none of the window's buffered settings. Every object window's delete comes here (the
+ride's `0x3e2b`, the shop's `0xc068`, and `0x004977fd`, `0x00499cf0`, `0x004b2396`, `0x004b510d`, `0x004b6930`). OpenTPW:
+`ParkObjectWindow.AskToDelete`, from the ride's and the shop's windows.
 
 **Every caller of `FUN_004de1f0` is in the cell-editing family**, as this project suspected: five
 functions, eight call sites: the map-click apply `FUN_00524960` (four), the footprint applier `FUN_00528a70`,
@@ -3573,8 +3611,8 @@ window `+0x4c`.. -0.66015625, 0.25, 0.404296875, 0.5390625 (the panel (348,162).
 item's own model posed as built, wearing the name board where both models name both halves, its first M clip looped,
 fitted and placed by the arithmetic above. Differences, each said at its site: the light is OpenTPW's own; the turn
 and the clip run on the frame clock, so the console's `pause` holds them; the first angle is nought
-(`OBJECT_PREVIEW_START_ANGLE`). Only the ride window exists here: the shop window's and the buy screen's panels
-(Q158) take the same path when they are built. The buy screen also paints a small picture of the item's footprint
+(`OBJECT_PREVIEW_START_ANGLE`). The ride's and the shop's windows draw it (`ParkObjectWindow`, `ParkShopWindow`); the
+buy screen's panel (Q158) takes the same path when it is built. The buy screen also paints a small picture of the item's footprint
 at its panel's lower left, which the windows do not: the next section.
 
 ### The buy screen's footprint picture
@@ -4787,9 +4825,10 @@ the balance sets `d50`, `d48` and `DAT_00816d5c`). So a red square after a latch
 a red square the first call charged (a corner on bare ground, a cash refusal) is paid for twice, and once the total
 passes the balance the cursor is `c_cash` (`FUN_0052f950` asks `d5c` last), where the squares' own verdicts would leave
 `c_noplace`. The pass does not reset the total for these two tools: `FUN_004a0db0`, a control's message handler,
-sets it to nought on its message `0x1e` (`0x004a0dee`) and on every second one first calls `FUN_004a0ab0`; how often
+sets it to nought on its message `0x1e` (`0x004a0dee`) and on every third one (the counter `[0x007cb2e0]`'s old value has bit 1 set, `0x004a0dcb`; reset at `0x004a0de2`,
+and zeroed by message `0x15` too, `0x004a0e02`) first calls `FUN_004a0ab0`; how often
 that comes against the pass, and what is drawn of the total, is Q541's. Built (Q542): `ParkPathBuilding.JudgedAgain`, the run's total each square's `Owed`, the console's `strip X Y`
-printing it as `run price` and a `$` on a square refused for money.
+printing it as `run total` and a `$` on a square refused for money.
 
 **A click** (`0x005271b7`..`0x00527655`, on release at the preview's target): any red square lays
 nothing, plays `0xaf` and puts the tool away — the arming click included, so a click outside the park's

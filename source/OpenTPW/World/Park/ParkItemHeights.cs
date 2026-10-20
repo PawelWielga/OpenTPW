@@ -76,15 +76,25 @@ internal static class ParkItemHeights
 			|| For( item ) is not { } file )
 			return null;
 
-		// The thing's base is the ground under its anchor, where OriginFor stands it.
-		var origin = ParkObjects.OriginFor( placed.CellX, placed.CellY, placed.Angle ).GetSystemVector3();
+		var (origin, under) = BaseOf( item, placed, field );
 
 		if ( AboveBase( file, origin, placed.Angle, field, x, y ) is not { } above )
 			return null;
 
-		var under = field.HeightAt( placed.CellX, placed.CellY );
-
 		return (placed, file, under, above + under);
+	}
+
+	/// <summary>
+	/// Where a thing's <c>.hmp</c> is laid from and how high its base stands: its model's place and height. The original
+	/// reads the model's own matrix (<c>0x00452bc6</c>, its height at <c>0x00452c5f</c>), which stands on <c>mTopLeft</c>
+	/// at its footprint's height (<see cref="ParkObjects.ModelOriginFor(ParkItemCatalogue.Item, ParkWorld.CatalogueObject)"/>).
+	/// </summary>
+	internal static (System.Numerics.Vector3 Origin, float Under) BaseOf( ParkItemCatalogue.Item item,
+		ParkWorld.CatalogueObject placed, HeightfieldFile field )
+	{
+		var origin = ParkObjects.ModelOriginFor( item, placed, field ).GetSystemVector3();
+
+		return (origin, origin.Z);
 	}
 
 	/// <summary>

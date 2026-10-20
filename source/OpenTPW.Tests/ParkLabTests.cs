@@ -30,6 +30,8 @@ public class ParkLabTests
 		Write( "rides/ready/ready.sam", "Info.Id 1102\nInfo.Name \"Ready\"\nUpgrades[1].CostOfResearch 100\n" );
 		Write( "upgrades/Upgrades.sam", "Info.WhichUIType 0\n" );
 		Write( "upgrades/addon/addon.sam", "Info.Id 1501\nInfo.Name \"Addon\"\nResearch.Category 4\nAddOn.UpgradesId 1101\n" );
+		Write( "upgrades/ticketaddon/ticketaddon.sam", "Info.Id 1502\nInfo.Name \"TicketAddon\"\nResearch.Category 4\nAddOn.UpgradesId 1190\n" );
+		Write( "upgrades/dearaddon/dearaddon.sam", "Info.Id 1503\nInfo.Name \"DearAddon\"\nResearch.Category 4\nUsageInfo.GoldenTicketCost 5\nAddOn.UpgradesId 1102\n" );
 	}
 
 	[TestCleanup]
@@ -48,7 +50,7 @@ public class ParkLabTests
 
 	private ParkItemCatalogue Catalogue() => new( "test", new BaseFileSystem( _root ) );
 
-	private static int Counted( string name ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == name ).Times;
+	internal static int Counted( string name ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == name ).Times;
 
 	private static ParkWorld.ResearchProject Project( int item, int kind, int group, float cost, float done = 0f, int level = 0 )
 		=> new( item, kind, group, level, cost, done );
@@ -102,9 +104,11 @@ public class ParkLabTests
 	[TestMethod]
 	public void ASumThatRoundsOntoTheCostIsKeptThereAndNeverFinishes()
 	{
-		var before = Counted( "RESEARCH_FINISHED_TO_THE_ADVISOR" );
+		var before = Counted( "RESEARCH_FINISHED_TO_THE_CHALLENGES" );
 		var lab = new ParkResearch( [], Catalogue(), [Project( 1150, 0, 1, 450f, 449.99997f ), Project( 1108, 0, 1, 1e9f )],
 			[new( 1, 0, 0, 1 ), new( 499, 0, 1, 1 )], workLoad: 1 );
+		var told = 0;
+		lab.Researched = ( _, _, _ ) => ++told;
 
 		Assert.AreEqual( 0, lab.SpendPoints( 1, 20 ).Count );
 		Assert.AreEqual( 450f, lab.Projects[0].Done );
@@ -114,15 +118,16 @@ public class ParkLabTests
 
 		Assert.AreEqual( 0, lab.SpendPoints( 1, 40 ).Count );
 		Assert.IsFalse( lab.IsResearched( 1150 ), "a done project takes no more points" );
-		Assert.AreEqual( before, Counted( "RESEARCH_FINISHED_TO_THE_ADVISOR" ) );
+		Assert.AreEqual( 0, told, "no finish is told to the advisor and the analyser" );
+		Assert.AreEqual( before, Counted( "RESEARCH_FINISHED_TO_THE_CHALLENGES" ), "a ride's finish would be counted for the challenges" );
 	}
 
 	/// <summary>
 	/// A finished project marks its item researched at the project's tier, raises the kind's highest group against
 	/// the table at the highest itself (<c>ResearchTech[highest + 1]</c>), and picks the kind's next project: the
 	/// first open one after the current at or under the group, else the first before it, else none. Each finish is
-	/// counted for the advisor and the analyser, a ride's for the challenges, a raise with work left for the advisor,
-	/// and the last for the end of research.
+	/// told to Researched before the lab's pick, a ride's counted for the challenges, a raise with work left told to
+	/// GroupOpened, and the last told to AllDone.
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the table read at highest + 1 (no raise on the first finish); the raise's share counted over
@@ -227,6 +232,30 @@ public class ParkLabTests
 		var unlocked = Lab();
 		unlocked.Unlocked = id => id == 1190;
 		Assert.AreEqual( 2, unlocked.SpendPoints( 12, 20 ).Single().Next );
+	}
+
+	/// <summary>
+	/// The golden-ticket test of a kind-4 project is on the item it upgrades, not on its own item
+	/// (<c>0x005035bd</c>..<c>0x005035df</c> push the <c>+0x284</c> id): an add-on of the ticket ride waits for that
+	/// ride's unlock though it costs no ticket itself, and an add-on that costs a ticket, of a ride that costs none, does not wait.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the ticket cost and the unlock read on the project's own item.</remarks>
+	[TestMethod]
+	public void AnUpgradesTicketIsTheUpgradedItemsNotItsOwn()
+	{
+		ParkWorld.ObjectControl[] records = [new( 1190, true, 0 ), new( 1102, true, 0 ), new( 1150, true, 0 ), new( 1502, true, 0 ), new( 1503, true, 0 )];
+
+		ParkResearch Lab( int addOn ) => new( records, Catalogue(),
+			[Project( 1150, 4, 0, 6f, level: 1 ), Project( addOn, 4, 0, 100f ), Project( 1102, 4, 0, 100f, level: 1 )],
+			[new( 0, 0, -1, 1 ), new( 0, 0, -1, 1 ), new( 0, 0, -1, 1 ), new( 0, 0, -1, 1 ), new( 100, 0, 0, 1 )], workLoad: 50 );
+
+		Assert.AreEqual( 2, Lab( 1502 ).SpendPoints( 12, 20 ).Single().Next, "the ticket ride's add-on waits for the ride's unlock" );
+
+		var unlocked = Lab( 1502 );
+		unlocked.Unlocked = id => id == 1190;
+		Assert.AreEqual( 1, unlocked.SpendPoints( 12, 20 ).Single().Next, "the ride unlocked, its add-on is picked" );
+
+		Assert.AreEqual( 1, Lab( 1503 ).SpendPoints( 12, 20 ).Single().Next, "the add-on's own ticket cost is not asked" );
 	}
 
 	/// <summary>

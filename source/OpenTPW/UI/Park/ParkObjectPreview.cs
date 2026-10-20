@@ -378,15 +378,7 @@ internal sealed class ParkObjectPreview
 			|| _animations.Clip( channel.AnimID, channel.SubAnim ) is not { } clip )
 			return;
 
-		if ( !ReferenceEquals( clip, _posed ) )
-		{
-			if ( _posed is { } previous )
-				_model.Rest( previous, clip );
-
-			_posed = clip;
-		}
-
-		_model.Pose( clip, channel.AnimFrame );
+		RideAnimations.PoseChannel( _model, ref _posed, clip, channel.AnimFrame );
 	}
 
 	/// <summary>Lets go of the instance, as the original does when the window shows another thing or closes (<c>FUN_004690a0</c>).</summary>

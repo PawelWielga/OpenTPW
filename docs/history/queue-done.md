@@ -9319,15 +9319,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   all of the effect's (`FUN_006bc810`) where a scream's take the zones (`audio.md`, "A script's sounds"). Built in
   `ParkAudio.NextChainChild`: the Crazy Ape's 89 in each loop of its go, 14 children a loop, each gap its stated wait
   within 0.007 s, 64 of 127 over 100 at (430,240,0), stopped by `KILLOBJ 10`; the original from the same file at the same
-  place, children 513 to 1001 ms apart, 64 of 127 over 100 (`q558/side-by-side.png`, `q558/PREDICTION.txt`). Tests 3573,
+  place, children 513 to 1006 ms apart, 64 of 127 over 100 (`q558/side-by-side.png`, `q558/PREDICTION.txt`). Tests 3573,
   0 fail with the game; 14 of 14 bugs put back fail a test.
 - [x] **Q559. A script's held chain (flags `0x404`).** Q557's first piece. Built: `ScriptVoiceClass.HeldChain`, each
   child by `ParkScreams.NextVariation` at the parameter nought (no script sets a held chain's key), the first the effect's
   first variation (`HeldChain_HeadOrFirstChild`, `0x006bdb10`); a key-less effect counted
   (`RIDE_EFFECT_SOUND_HELD_CHAIN_NO_KEY`, none shipped). Held in the original (`q559/orig/`, `brk.sh` set in the lobby): a
   Loudspeaker's chain of 177 at (455, 0, 205), first child variation 1, later ones drawn from the one before's zones,
-  never a repeat. Ours (`q559/confirm.py`): first child variation 1, 27 children, no repeat, each gap its wait within
-  0.006 s; 11 of 11 bugs put back fail a test. Found: the original puts a park file's live voices back (Q560).
+  never a repeat. Ours (`q559/confirm.py`, run3 on the final binary): first child variation 1, 22 children, no repeat, each gap its
+  wait within 0.001 to 0.006 s; 11 of 11 bugs put back fail a test. Found: the original puts a park file's live voices back (Q560).
 - [x] **Q561. A script's voice of the music's class: the bus's engine (Q557's piece).** `bus.RSE`'s `ADDOBJ 8 1 6 1`
   plays the global ambient's 6 (`0x406`) by its zones at the parameter `SETOBJPARAM 1 20 0|75` sets, the handle kept
   while the voice lives (`0x006b6620`); the bus's nodes stand as its file holds them and ride its route
@@ -9356,7 +9356,8 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `StartOneShot`, `ScriptVoice.DropAt`; `SoundCategory.PickSample`, `PlaySample`). Proof: the original (`q565/orig/`,
   runs b to d, `oneshots.py`) away no one-shot played, each gone at length + 250 ms (-5 to +39 ms), near and back
   played, the fountain's looped 107 put back from the file; ours (`q565/confirm.py`, the final binary) run5 near the
-  Spray's 8 played, away 21 held and "dropped after 0 sample(s) ..., out of range", run3 back 8 played; main's binary
+  Spray's 8 started, 6 played (two 212, with no sample before Q566), away 21 held (9 the Spray's, 12 the toilets') and "dropped after
+  0 sample(s) ..., out of range", run3 back 8 played; main's binary
   held none away; `q565/side-by-side.png`; test `AScriptsOneShotStartsOnlyInRangeAndIsDroppedByItsTime`, 11 of 11 bugs
   put back fail. The question of a park entered fresh from a file: the original's does hear its looped script sounds,
   put back from the file (Q560).

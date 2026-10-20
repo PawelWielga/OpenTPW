@@ -29,7 +29,7 @@ namespace OpenTPW;
 /// keeps each node's matrix between advances and restores it only on a change of clip (<c>FUN_00472310</c>).
 /// </para>
 /// </summary>
-public sealed class NodePoser
+public sealed class NodePoser : IChannelPosed
 {
 	/// <summary>The channels whose nodes a change of clip puts back (<c>FUN_00472310</c>'s mask).</summary>
 	private const uint RestoredChannels = 0x289;
@@ -89,6 +89,9 @@ public sealed class NodePoser
 	/// <summary>Whether a clip is posed here rather than by <see cref="MeshRotator"/>: one that moves a node.</summary>
 	public static bool Drives( AnimationFile clip ) => clip.PositionTracks.Count > 0;
 
+	/// <summary>How many nodes the tree holds.</summary>
+	public int Count => _local.Length;
+
 	/// <summary>Where node <paramref name="node"/> stands in the model, as last posed, in the file's axes.</summary>
 	public Matrix4x4 World( int node ) => _world[node];
 
@@ -101,7 +104,7 @@ public sealed class NodePoser
 		if ( _adds )
 		{
 			// FUN_00470d10 composes an additive model's rotation key with the node's own; not decoded here. One
-			// rotation track in the 22 additive clips the game ships.
+			// rotation track in the 22 additive clips with a position track the game ships.
 			if ( clip.RotationTracks.Count > 0 )
 				Unimplemented.Report( "ANIM_ADDITIVE_ROTATION" );
 		}

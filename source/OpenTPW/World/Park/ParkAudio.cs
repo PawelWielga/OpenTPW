@@ -770,7 +770,8 @@ public sealed partial class ParkAudio : Entity
 			+ $"parameter {ScreamVolume( level )} volume {ScreamChildVolume( effect, 0, level )} "
 			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0})" );
 
-		// Its first child now, the rest from OnUpdate, each on this ride's own clock.
+		// Its first child now if the listener is in range (else on the first pass that finds it so), the rest from
+		// OnUpdate, each on this ride's own clock.
 		_screams.Start( scriptId, effect, band, level, at, Time.Now );
 
 		return true;
@@ -780,7 +781,7 @@ public sealed partial class ParkAudio : Entity
 	/// Sounds one child of a held scream: a sample of that variation, placed at the ride, at the
 	/// variation's own volume (<see cref="ChannelGain"/>) and pitch, heard over the variation's own range
 	/// (<see cref="SoundCategory.RangeOf"/>). <see cref="ParkScreams"/> decides when and which; this is only
-	/// the sound.
+	/// the sound. One due while the world is held is drawn and given no voice (<see cref="Unheard"/>).
 	/// </summary>
 	/// <remarks>
 	/// A child is a voice of its own, so each is given a volume and a pitch as its channel is set up
@@ -795,6 +796,12 @@ public sealed partial class ParkAudio : Entity
 		var volume = ScreamChildVolume( chain.Effect, variation, chain.Level );
 
 		chain.Pitch = ScreamChildPitch( chain.Effect, variation, chain.Level );
+
+		if ( Unheard( chain.At ) )
+		{
+			++chain.Unheard;
+			return null;
+		}
 
 		var voice = Audio.Play( _kids?.PickFrom( chain.Effect, variation ), ChannelGain( volume ),
 			bus: AudioBus.Effects, position: chain.At, range: _kids?.RangeOf( chain.Effect, variation ) );
@@ -1050,12 +1057,10 @@ public sealed partial class ParkAudio : Entity
 	/// does. It does nothing at all when no scream is held, which is the engine's own guard on a nought handle.
 	/// </summary>
 	/// <remarks>
-	/// <b>One thing the engine does here is deliberately NOT reproduced.</b> Its handler writes the
-	/// return of the <i>volume call</i> back over the scream handle at <c>+0xd0</c>
-	/// (<c>0x00556009</c>), and what that value is cannot be determined from the executable - the
-	/// chain ends in a bare virtual call. Copying it would mean a later <c>STOPSCREAM</c> fading
-	/// something that is not the voice. The level is carried on the held scream instead, so a replay
-	/// keeps it.
+	/// The engine writes the parameter call's answer back over the scream handle at <c>+0xd0</c>
+	/// (<c>0x00556009</c>): the handle itself while the voice lives (<c>0x006b6620</c>), nought with no sound device
+	/// (<c>0x0051bc6d</c>). So with a device keeping the held scream is the engine's own outcome; the level is carried
+	/// on it, so a replay keeps it. With none, no scream is held here to move (<see cref="Scream"/>).
 	/// </remarks>
 	/// <returns>Whether a scream was there to change.</returns>
 	internal bool ScreamLevel( int scriptId, int level )
@@ -1171,6 +1176,9 @@ public sealed partial class ParkAudio : Entity
 		/// <summary>How many samples it has started since the park began.</summary>
 		public int Samples { get; set; }
 
+		/// <summary>How many samples it drew and let pass with no voice while the world was held (<see cref="ParkAudio.Unheard"/>).</summary>
+		public int Unheard { get; set; }
+
 		public Voice? Voice { get; set; }
 	}
 
@@ -1209,7 +1217,8 @@ public sealed partial class ParkAudio : Entity
 
 	/// <summary>
 	/// The variation such a voice's next sample is of (<c>FUN_006bc810</c>): a draw by weight among all of the
-	/// effect's, and for a sample after the first, of more than two, never the one before: the next round takes its
+	/// effect's, the first whose running total of weights is at least the roll (<c>0x006bc86d</c>..<c>0x006bc872</c>), and
+	/// for a sample after the first, of more than two, never the one before: the next round takes its
 	/// place. -1 with none.
 	/// </summary>
 	internal static int AnyVariation( IReadOnlyList<SoundCategoryFile.Variation> variations, int last, Random random )
@@ -1225,7 +1234,7 @@ public sealed partial class ParkAudio : Entity
 		{
 			roll -= variations[index].Weight;
 
-			if ( roll < 0 )
+			if ( roll <= 0 )
 			{
 				drawn = index;
 				break;
@@ -1236,10 +1245,26 @@ public sealed partial class ParkAudio : Entity
 	}
 
 	/// <summary>
+	/// Whether a sample or a chain's child due now at <paramref name="place"/> is drawn and let pass with no voice:
+	/// a placed one while the world is held (<see cref="Audio.PlacedHeld"/>). The original's service runs on wall time
+	/// through a pause and tests a voice's range over x and z alone (<c>FUN_006bb9f0</c>), which its pause's lifted
+	/// listener leaves as they were, so its voices go on drawing samples and making children that its mixer plays at
+	/// nought (<c>docs/exe/audio.md</c>, "The pause substitution"). Ours holds a placed voice instead of lifting the
+	/// listener, and one started under the hold would be born held and let go with all the others on resume; so the
+	/// draw is made and its time passes, with no voice. One that would still be sounding when the hold ends is not
+	/// heard from where it has got to, as the original's is.
+	/// </summary>
+	private static bool Unheard( Vector3? place ) => place is not null && Audio.PlacedHeld;
+
+	/// <summary>When a sample of <paramref name="clip"/> drawn now at <paramref name="pitch"/>, and let pass unheard, would end.</summary>
+	private static float UnheardEnd( AudioClip? clip, int pitch ) => Time.Now + (clip?.Duration ?? 0f) / ParkCarSounds.Rate( pitch );
+
+	/// <summary>
 	/// Each following voice moved beside the listener (<c>FUN_006bd5f0</c>, each service pass), and its next sample
 	/// started once the last has ended and its wait is over. A voice's first sample draws the volume and pitch it
-	/// keeps (<c>FUN_006bc410</c>); each later one is queued with its sample and the silence that follows it, a draw
-	/// from its variation's wait (<c>0x006bdf00</c>, <c>FUN_006c6730</c>).
+	/// keeps (<c>FUN_006bc410</c>); every sample, the first included, is followed by a silence drawn from its variation's
+	/// wait (<c>0x006bdf00</c>, <c>FUN_006c6730</c>). While the world is held a sample due is drawn and let pass unheard
+	/// (<see cref="Unheard"/>).
 	/// </summary>
 	private void ServeFollowing()
 	{
@@ -1271,10 +1296,22 @@ public sealed partial class ParkAudio : Entity
 				continue;
 
 			following.Variation = next;
+			following.Wait = ParkScreams.GapMilliseconds( headers[next], _followingRandom );
 			following.Kept = HeldSample( headers[next], first, following.Kept, 0, 0, _followingRandom );
-			following.Wait = first ? 0 : ParkScreams.GapMilliseconds( headers[next], _followingRandom );
 			following.EndedAt = null;
-			following.Voice = Audio.Play( _ambient.PickFrom( following.Sound.Effect, next ), ChannelGain( following.Kept.Volume ),
+
+			var clip = _ambient.PickFrom( following.Sound.Effect, next );
+
+			if ( Unheard( place ) )
+			{
+				following.Voice = null;
+				following.EndedAt = UnheardEnd( clip, following.Kept.Pitch );
+				++following.Unheard;
+				Log.Info( $"Park audio: the land's own ambient {following.Sound.Effect}, variation {next + 1} unheard while the world is held, ending at {following.EndedAt:F3} s, {following.Wait} ms of silence after it" );
+				continue;
+			}
+
+			following.Voice = Audio.Play( clip, ChannelGain( following.Kept.Volume ),
 				bus: AudioBus.Effects, position: place, range: headers[next].Range );
 
 			if ( following.Voice is null )
@@ -1395,11 +1432,10 @@ public sealed partial class ParkAudio : Entity
 		Audio.HoldPlaced( GameClock.Paused );
 
 		// The screams are pumped BEFORE the music's own guard below, because a theme whose music would
-		// not load must still let its rides scream - and not while the world is held, because a child
-		// starting mid-pause would be a new voice nobody asked for. The chains' clock is Time, which the
-		// hold does not stop, so a chain whose time passed during it makes its next child on the first
-		// pass after; the original's clock is wall time too (0x005f5fa0).
-		if ( Audio.Ready && !GameClock.Paused )
+		// not load must still let its rides scream; and through a park's menu, as the original's service ticks
+		// its chains on wall time through a pause (0x0051bfab, 0x005f5fa0): a child due under the hold is made
+		// with no voice (PlayScream, Unheard), and after the resume the next comes at the time the clock gives it.
+		if ( Audio.Ready )
 			_screams.Pump( Time.Now );
 
 		if ( !Audio.Ready )

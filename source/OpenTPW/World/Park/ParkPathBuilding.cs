@@ -419,8 +419,7 @@ public static class ParkPathBuilding
 		for ( var step = 0; step <= steps; ++step )
 		{
 			var (x, y) = (fromX + (acrossBy * step), fromY + (downBy * step));
-			var (marker, why) = Verdict( state, park, x, y, serves, step == steps, price, ref owed, ref latches );
-			var broke = marker == MarkerRed && owed > state.Balance;
+			var (marker, why, broke) = Verdict( state, park, x, y, serves, step == steps, price, ref owed, ref latches );
 
 			if ( marker == MarkerRed )
 				broke |= JudgedAgain( state, park, x, y, ParkBuildMode.Queue, price, ref owed, ref latches );
@@ -435,19 +434,20 @@ public static class ParkPathBuilding
 
 	/// <summary>
 	/// One square of the queue tool's preview - <c>FUN_00535670</c>'s mode-3 arm, in its own order, answering blue,
-	/// red, <c>m_link</c> or <c>m_end</c>. docs/exe/hud.md, "The patrol edges", lists what sets each latch.
+	/// red, <c>m_link</c> or <c>m_end</c>, and whether the money test refused it (the original's <c>DAT_00816d5c</c>,
+	/// the <c>c_cash</c> cursor). docs/exe/hud.md, "The patrol edges", lists what sets each latch.
 	/// </summary>
-	private static (int Marker, string? Why) Verdict( ParkState state, IParkInitialState park, int x, int y, int serves,
+	private static (int Marker, string? Why, bool Unaffordable) Verdict( ParkState state, IParkInitialState park, int x, int y, int serves,
 		bool last, int price, ref int owed, ref Latches latches )
 	{
 		if ( !ParkState.OnMap( x, y ) )
-			return (MarkerRed, "is off the map");
+			return (MarkerRed, "is off the map", false);
 
 		var cell = ParkState.CellFor( park, x, y );
 		var thing = cell.Type is CellEdge.Footprint or CellEdge.RideEnd or CellEdge.RideFarEnd;
 
 		if ( (cell.Flags & OutsideThePark) != 0 )
-			return (MarkerRed, "is outside the park");
+			return (MarkerRed, "is outside the park", false);
 
 		// A thing's own cells, NOMODIFY or not (the verdict's early NOMODIFY answer, 0x005356aa, is for modes 4, 9
 		// and 10), are red unless its item's overwrite priority is below the queue tool's 3, in which case the
@@ -458,14 +458,14 @@ public static class ParkPathBuilding
 			Unimplemented.Report( "QUEUE_RUN_OVER_A_LOW_PRIORITY_THING" );
 			latches.Refused = true;
 
-			return (MarkerRed, "has something built on it");
+			return (MarkerRed, "has something built on it", false);
 		}
 
 		if ( latches.Pending )
 			latches.Refused = true;
 
 		if ( latches.Refused )
-			return (MarkerRed, "comes after a refused square");
+			return (MarkerRed, "comes after a refused square", false);
 
 		var track = TrackRecord( park, cell );
 
@@ -473,7 +473,7 @@ public static class ParkPathBuilding
 		{
 			latches.Refused = true;
 
-			return (MarkerRed, "is part of a track");
+			return (MarkerRed, "is part of a track", false);
 		}
 
 		// Only bare ground is paid for in the preview (FUN_00535600's mode 3): a path is left out, though
@@ -481,11 +481,12 @@ public static class ParkPathBuilding
 		if ( cell.Type == NothingType )
 			owed += price;
 
-		if ( state.Balance < owed )
+		// The money is tested only once something is owed (0x0053590a), so a park in the red may still join or close.
+		if ( owed != 0 && state.Balance < owed )
 		{
 			latches.Refused = true;
 
-			return (MarkerRed, $"would bring the run to {owed} against a balance of {state.Balance}");
+			return (MarkerRed, $"would bring the run to {owed} against a balance of {state.Balance}", true);
 		}
 
 		// This ride's own queue: a cell NOT joined exactly two ways - its end, or its node - may close a
@@ -498,29 +499,29 @@ public static class ParkPathBuilding
 				: null;
 
 			if ( why == null )
-				return last ? (MarkerEnd, null) : (MarkerBlue, null);
+				return last ? (MarkerEnd, null, false) : (MarkerBlue, null, false);
 
 			latches.Refused = true;
 
-			return (MarkerRed, why);
+			return (MarkerRed, why, false);
 		}
 
 		if ( cell.Type == 0x15 )
 		{
 			latches.Pending = true;
 
-			return (MarkerRed, "is part of a track");
+			return (MarkerRed, "is part of a track", false);
 		}
 
 		if ( TrackCornerOrJunction( track ) )
 		{
 			latches.Pending = true;
 
-			return (MarkerRed, "is a track corner or junction");
+			return (MarkerRed, "is a track corner or junction", false);
 		}
 
 		if ( cell.Type == NothingType )
-			return (MarkerBlue, null);
+			return (MarkerBlue, null, false);
 
 		if ( cell.Type == PathType )
 		{
@@ -530,18 +531,18 @@ public static class ParkPathBuilding
 			{
 				latches.Pending = true;
 
-				return (MarkerLink, null);
+				return (MarkerLink, null, false);
 			}
 
 			if ( (cell.Flags & NoModify) == 0 )
-				return (MarkerBlue, null);
+				return (MarkerBlue, null, false);
 
 			latches.Pending = true;
 
-			return (MarkerRed, "is marked NOMODIFY");
+			return (MarkerRed, "is marked NOMODIFY", false);
 		}
 
-		return (MarkerRed, $"is type {cell.Type}, which queue may not be laid over");
+		return (MarkerRed, $"is type {cell.Type}, which queue may not be laid over", false);
 	}
 
 	/// <summary>
@@ -741,11 +742,12 @@ public static class ParkPathBuilding
 			return (MarkerRed, "is part of a track", false);
 		}
 
-		// Only bare ground and queue are paid for: laying over path is free.
+		// Only bare ground and queue are paid for: laying over path is free. The money is tested only once
+		// something is owed (0x0053590a).
 		if ( cell.Type is NothingType or ParkRideChoice.QueueCellType )
 			owed += price;
 
-		if ( state.Balance < owed )
+		if ( owed != 0 && state.Balance < owed )
 		{
 			latches.Refused = true;
 

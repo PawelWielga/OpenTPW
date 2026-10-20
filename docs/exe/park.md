@@ -359,12 +359,12 @@ Channels are per-model animation players, count at `model+0x0e`, array at `+0x10
 
 | Address | What it is | Notes |
 |---|---|---|
-| `FUN_00470b60` | the key search (`Anim_FindKey`) | `param_4 == 1 -> 4` (position), `== 2 -> 0x14` (rotation), `== 4 -> 0x10` (UV). Returns a **normalised t** between two key frames, and **returns 0 when the frame precedes the first key**, so the engine skips the track rather than clamping to the first point. It finds the last key at or before the floored frame; past the last key it hands the sampler that key and the frame one after it (`param_5` 0, which the poser passes), so a straight track would read a point past its array and a Bezier one wraps: **no shipped clip reaches it**, as no position track ends before its clip's declared span (1,208 read, Q554) and the poser poses nothing past that span (its first test, `+0x1c` against `+0x20`) |
+| `FUN_00470b60` | the key search (`Anim_FindKey`) | `param_4 == 1 -> 4` (position), `== 2 -> 0x14` (rotation), `== 4 -> 0x10` (UV). Returns a **normalised t** between two key frames, and **returns 0 when the frame precedes the first key**, so the engine skips the track rather than clamping to the first point. It finds the last key at or before the floored frame; on the last key (`0x00470be3`, equality included) it hands the sampler that key and the frame one after it (`param_5` 0, which the poser passes), with t the frame less the last key's. **Every track whose last key is its clip's declared end reaches that arm on that frame, with t = 0** (1,201 of the 1,216 position tracks, in 455 clips, Q554): the straight sampler `0x00474bf0` then reads the point past the array times nought (finite floats there on all 421 straight such tracks), so the last key's own point comes out. A frame past the last key would read further (a Bezier wraps); no shipped clip reaches that, as no position track ends before its clip's declared span and the poser poses nothing past that span (its first test, `+0x1c` against `+0x20`) |
 | `FUN_00474840` | a plain cubic **Bezier**, not a spline | constants at `0x006fecb8` are 1, 3, -3, -6; expands to `P0 + 3(P1-P0)t + 3(P0-2P1+P2)t^2 + (-P0+3P1-3P2+P3)t^3`. The modulo wraparound is the **looping** arm |
 | `FUN_00474bf0` | the straight lerp | |
 | `FUN_00474cc0` | the third sampler (neither bit) | **used by nothing** |
 | `FUN_004745c0` | the UV sampler | our sampler matches it line for line — **confirmed, do not re-derive** |
-| `FUN_00471860` | the poser (`Anim_PoseTrack`) | assigns the node's **own local translation row** `node+0x40/+0x44/+0x48`; a node record's transform is a 4x4 at `+0x10`, so that row IS the translation, parent-local, exactly as a rotation key is. A model flagged `&4` at `+0x30` **adds** instead of assigning. Before a position track's first key (`0x00471ea3`, the search answering 0) the node keeps whatever translation it holds: the rest after a change of clip, but the last key of the clip's previous pass when the same clip comes round, which nothing restores. An additive (`&4`) model's nodes are put back every advance (`FUN_00473c70` calls `FUN_00472310` for each channel, `0x00473d0c`), so its point is added to the rest. **OpenTPW builds it** (Q554): `NodePoser`, rotation and position composed down the whole node tree for a clip with a position track; the additive rotation arm (`FUN_00470d10`) is counted, `ANIM_ADDITIVE_ROTATION` (one track in the 22 additive clips) |
+| `FUN_00471860` | the poser (`Anim_PoseTrack`) | assigns the node's **own local translation row** `node+0x40/+0x44/+0x48`; a node record's transform is a 4x4 at `+0x10`, so that row IS the translation, parent-local, exactly as a rotation key is. A model flagged `&4` at `+0x30` **adds** instead of assigning. Before a position track's first key (`0x00471ea3`, the search answering 0) the node keeps whatever translation it holds: the rest after a change of clip, but the last key of the clip's previous pass when the same clip comes round, which nothing restores. An additive (`&4`) model's nodes are put back every advance (`FUN_00473c70` calls `FUN_00472310` for each channel, `0x00473d0c`), so its point is added to the rest. Before a rotation track's first key the engine skips the track too (`0x00471c56`), so the node keeps its turn. **OpenTPW builds it** (Q554): `NodePoser`, rotation and position composed down the whole node tree for a clip with a position track. **Not the original's:** before a rotation track's first key `NodePoser` holds the first key; 79 of the 2,021 rotation tracks in the 455 position-track clips start past frame 0, four in Lost Kingdom (`volcanoe` node 1 at 55, `porkpies` node 37 at 10, `puzzlem1` and `puzzlem2` node 4 at 71), and in each of the four the first key, the last key and the node's rest turn are one turn, so neither a first play nor a clip coming round again shows it there. The additive rotation arm (`FUN_00470d10`) is counted, `ANIM_ADDITIVE_ROTATION`: one track in the 22 additive clips with a position track, and the 49 rotation-only clips (50 tracks) of additive models, which `MeshRotator` would pose as a replacement (the coaster pylons, Lost Kingdom's `coaster1`, `coaster3` and `minecart` among them); no source loads a pylon model, so those are dead by content |
 | `0x00471c83`-`0x00471d32` | rotation-key easing | see below |
 | `0x006febe4` | the easing segment constant **8.999995231628418** | deliberately under nine so `t == 1` stays in the last segment |
 | `0x006febec` | the easing byte scale, 1/255 | |
@@ -377,7 +377,8 @@ track setting channel `0x200`, and it is a **percentage**: space's slide runs ex
 haunted house 0 to 200, which is two laps. It does not always rise — the ferry runs its route backwards.
 Layout and counts are in the FileFormats clone under Models (`*.MD2`); they are not repeated here. **OpenTPW** carries a node along its route both where it draws the model (`LobbyModel.Pose`) and where a script finds a
 node on it (`NodePoser`, Q561): the route's point at the key's percentage is the node's translation within its parent.
-In Lost Kingdom only the bus's and the seaplane's clips carry route keys. The facing along the route (`0x400`) is
+In Lost Kingdom only the bus's, the ferry's and the seaplane's clips carry route keys (`Busm1`..`3`, `FerryM1`..`3`,
+`Seaplanem1`..`3`, each on node 0), none of them with a position track, so `LobbyModel` never draws them through `NodePoser`. The facing along the route (`0x400`) is
 counted, `ANIM_PATH_FACING` (Q562).
 
 **Rotation keys carry an easing curve id** at key`+0x02` (`0xFFFF` = none) indexing an **8-byte** table at track descriptor `+0x34`, remapped through a **9-segment** ramp: **457 of 1,166 clips carry one**. Three things that matter: the id belongs to the **lower** key of the pair; the id is **not** the key's own index (**3,070 of 12,428 eased keys disagree**, ids reach 100, so the table is indexed not walked); and the ramp's endpoints are **implied** (0 before the first byte, 1 after the last), which is what makes it nine segments from eight bytes.
@@ -1983,12 +1984,18 @@ original's 42.2 and 38.4 in 40 s; the prediction's band (26 to 36, taken from a 
 with a record, due a turn or not (`0x005516f6` jumps a script not due straight to the list walk at `0x0055188f`), a
 particle record with a node has its emitter put where the node stands, cut to whole units (`0x0055190f`), and a type
 2's aimed again (`0x00551943`). A node a clip carries is taken from the thing's players as its drawn model is posed
-(`RideNodes.Follow`), so the End's trails go with their planes (`q555/run1`). The Jungle Spray's jet node moves under
-none of its clips but the build clip (`q555/spray-probe.out`), so its jet stands where it was started.
+(`RideNodes.Follow`), so the End's trails go with their planes (`q555/run1`). The Jungle Spray's node 2 moves under
+none of its clips but the build clip (`q555/spray-probe.out`, which asked that node alone), so that jet stands where it
+was started. Not measured: its nodes 1 and 3, which `Junspray.RSE` starts effect 37 on too (words 59 and 183), and the
+other carried records in Lost Kingdom, the Laughing Hyenas' on nodes 4 to 6, the rides' effect 16 smoke nodes, the
+torches, the Volcano's, the Inca God's, the gift shop's, and the type 1s of `lavajump`, `Coconut`, `Staff`, `watertun`
+and `5x5rck`: which of them a clip moves is not known, and moving them is the engine's behaviour.
 **Not the original's:** the engine's lookup record holds the pose of the frame the model was last drawn in, so an
-emitter on a model off the screen stands still there, where this follows the players; and a record whose lookup
-record has no matrix is moved to the origin there (`0x005518f9`, the float at `0x00700fd8` is nought) and passed over
-here, where no emitter is started on one.
+emitter on a model off the screen stands still there, where this follows the players. A record whose lookup record has
+no matrix is started at the origin (`RideScript.StartParticle`; a type 2 aimed along (0, 0, 1)) and passed over here,
+so it stays there, as the engine's, which moves it to the origin every tick (`0x005518f9`, the float at `0x00700fd8` is
+nought). A node a clip's route moves, or one under it, is read where it stands without the route, as `RideNodes.Follow`
+poses no path track, counted `RIDE_NODE_ON_A_ROUTE`.
 
 **Deviations and gaps, each counted where it is reached.** Started nowhere: an effect of the item's own
 (`PARK_PARTICLE_ITEM_EFFECT`), a record with no node or one the model lacks (`PARK_PARTICLE_NO_PLACE`), a type 2
@@ -2006,8 +2013,10 @@ shipped park and the files saved from it, 1500 in Alexah's played Full Simulatio
 `particle_density`). A park made fresh reads no file, so OpenTPW keeps the options' for it; that the original's
 fresh park does the same is not traced (the 1500 of those saves is `high.sam`'s, which agrees). A rate of -2 at 500 is -1, so the End's trails
 (93 to 95, rate -2, most 500) make one star a tick, at most 244, where the options' 1000 left them one every two
-ticks. OpenTPW takes it as the park is read (`Level.TakeParticleDensity`, `ParticleSystem.TakeFileDensity`; the log's
-"Particles: jungle's park file holds density 500"). **Measured** over `q550/alldone576.TPWS` (`q703d/PREDICTION.txt`):
+ticks. OpenTPW takes it as the park file is read (`Level.ReadPark` calls `Level.TakeParticleDensity`,
+`ParticleSystem.TakeFileDensity`; the log's "Particles: jungle's park file holds density 500"), as the original's file
+read calls its loader (`0x00415437`), so it stands before anything of the park starts an effect; a test holds the call
+in the read (`ReadingTheParkTakesItsDensity`). **Measured** over `q550/alldone576.TPWS` (`q703d/PREDICTION.txt`):
 the original's live `[0x0080cef0]` 500 and its trails at rates (-1, -1, -1, -1), most 244, 90 to 106 stars each once
 5 s old (`original/emitters.py`); ours before at 48 to 54, after at 98 to 107 with the same rates and most (the
 console's `particles`, which prints the density and each emitter's rates and most); the stars' sizes the same in both
@@ -2233,7 +2242,8 @@ written to a file, the music's group at nought). Run 3 held 16 of 16 and the con
 | `camera 400 400 110 180` | 397.87 off, law 0.0000 | 407.87 off, law and gain 0.0000 |
 
 Over 75 s at the second camera the gulls' fourteen log lines each read volume 49 playing at 0.2035 and the one
-pitch the voice drew (1; -1 in run 2), the first followed by no silence and the rest by 85 to 9913 ms; the sea's
+pitch the voice drew (1; -1 in run 2), the first followed by no silence (that build's rule; the first draws its
+silence too since the review of Q563, `audio.md`, "The plain class") and the rest by 85 to 9913 ms; the sea's
 nine each read 55 playing at 0.2255 (33 at 0.1375 in run 1), no two running of one variation. In the mix every
 sea sample named was found at 1.00 and a gain of 0.1073, the 0.2255 times the master's 0.5 times 0.9518 owed
 (0.0654 in run 1, its 33's), and every gull, read at its pitch, at 0.91 to 0.96 and 0.0990 to 0.0997 where 0.1017

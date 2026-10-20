@@ -465,7 +465,7 @@ internal static class SaveFolder
 	/// Writes a park file into a player's folder for a theme as <c>&lt;name&gt;.TPWS</c>, or under the extension given -
 	/// the path 0x005ac780 builds from the name and the extension its callers hand it (<c>docs/exe/saves.md</c>, "The
 	/// save") - and answers its path, or null where it could not be written. A file of that name in another case is the
-	/// one replaced, as on the original's file system.
+	/// one replaced, as on the original's file system, unless the name is there in its own case too (<see cref="Find"/>).
 	/// </summary>
 	public static string? WritePark( int slot, string name, string theme, string saveName, byte[] file,
 		string extension = SavedParkExtension )
@@ -571,15 +571,23 @@ internal static class SaveFolder
 		}
 	}
 
-	/// <summary>The name a file in the save folder goes by, whatever its case, or null if there is none.</summary>
+	/// <summary>
+	/// The name a file in the save folder goes by, whatever its case, or null if there is none. Where the folder holds
+	/// the name in more than one case, which only a file copied in can make, the one in exactly the case asked for is
+	/// it, so the Save Park screen's question, which compares by case, and the file written agree.
+	/// </summary>
 	private static string? Find( string name, string directory = "" )
 	{
 		if ( !SaveFileSystem.DirectoryExists( directory ) )
 			return null;
 
-		var match = SaveFileSystem.GetFiles( directory )
+		var files = SaveFileSystem.GetFiles( directory )
 			.Select( Path.GetFileName )
-			.FirstOrDefault( file => string.Equals( file, name, StringComparison.OrdinalIgnoreCase ) );
+			.OfType<string>()
+			.ToArray();
+
+		var match = files.FirstOrDefault( file => string.Equals( file, name, StringComparison.Ordinal ) )
+			?? files.FirstOrDefault( file => string.Equals( file, name, StringComparison.OrdinalIgnoreCase ) );
 
 		return match == null ? null : Path.Join( directory, match );
 	}

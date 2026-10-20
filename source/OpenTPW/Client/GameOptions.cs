@@ -104,7 +104,7 @@ internal sealed class GameOptions
 	/// <summary>+0x36: the interface's pop-up help - the help bar, and the glints round a button.</summary>
 	public bool PopupHelp { get; set; } = true;
 
-	/// <summary>+0x37: whether a park asks before deleting (0x0048cd10). Nothing reads it yet.</summary>
+	/// <summary>+0x37: whether a park asks before deleting (0x0048cd10) or dismissing a member of staff.</summary>
 	public bool Confirmations { get; set; } = true;
 
 	/// <summary>+0x38: Right button scroll rather than Pushscroll. Nothing reads it yet.</summary>
