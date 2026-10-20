@@ -3838,7 +3838,8 @@ x87 control word (`0x0059e96a` `FSTP DWORD`).
 Re-read for Q194 from the fork review (`economy-8`, `economy-9`; `wf_cba77d07-b66`, a read-only Opus verifier in
 Ghidra and over every shipped `.sam`), decoded whole for Q141, and **built for Q591** (`ParkGoldenTickets`, the awards in
 `PlayerFile`): every test and award but Global 0's measure, the coaster's highest point, which is measured as nought and
-counted where a coaster stands (`GOLDEN_TICKET_COASTER_HEIGHT`, Q706). The advisor's ticket lines are counted
+counted where a coaster stands (`GOLDEN_TICKET_COASTER_HEIGHT`, Q706; decoded for Q593, "A coaster's highest track point",
+below). The advisor's ticket lines are counted
 (`GOLDEN_TICKET_MESSAGE`, `GOLDEN_TICKET_FIRST_LINES`; Q707), the hints are Q708, the cheat rows counted (Q592).
 
 **The tick.** `FUN_004d4a00`, from `FUN_004d7b20` (`0x004d7b60`) on a thing sweep (`0x00516695`) whose world counter
@@ -3860,7 +3861,7 @@ global"): `GoldenTicketLocal`'s seven keys at `0x00785790`..`0x007857a8`, `Golde
 | Local 3 | `FUN_004ca6b0()`; no `.sam` key. **Everything researched, and one of every item standing**: false while the lab (the thing world `+0x1da722` names, `FUN_00519550`) has a project of any kind left undone (`FUN_00503b30( 5 )`: `mResearchDone` under `mCost`; `advisor-park.md`, "Every feature built, and more to research"); then true only if every item of the catalogue `0x007890a0` (`FUN_00412e60`/`FUN_00412e70`) is not shown in the UI (`WhichUIType`, `+0x4ac`, 4), or has at least one standing (its control record's `+0x18`, `FUN_004d3d80`), or costs a golden ticket (`+0xc4`) | none |
 | Local 4 | the bank's `mProfitThisYear` (`+0x124`, below) | `ProfitYear` `0x007857a0` |
 | Local 5 | `FUN_004c94d0(RecentVisitorMonths)` (cumulative visitors less the monthly ring's entry that many months back: ring `+0x20824`, index `+0x20a64`, size `+0x20a68`, wrapped `+0x20a6c`; 0 when it does not reach back) `>` `RecentVisitors`, **and** the months into the game `>` `RecentVisitorMonths`: `FUN_004f8800` on the park calendar (world `+0x2a0`, `0x004d4de6`), its now less its start, over thirty days (`/ 0x1792f8648000`), as `advisor-park.md`'s "The months into the game" | `0x007857a4`, `0x007857a8` |
-| Global 0 | `FUN_004cc920(&id, 0)`: **the highest track point of any coaster**, truncated: over the things of model 3 whose item's track type (`+0x9c`, `FUN_004e2b50`) is 3, the float `FUN_0043e0e0` reads at `+0x110` of the coaster's record on the list `DAT_00790fe0` (`FUN_00436860`, keyed by the thing's `+0x20`). The track's analysis `FUN_0043c450` takes the largest `+0x08` (the y of the point's x, y, z at `+4..+0xc`; points 0x38 bytes from the track's `+0x9c`, the first and the last left out, the maximum starting at 0) over the track's points and stores it there through `FUN_0043df90` (`0x0043e093`), with the top speed at `+0x114`. `FUN_004cc810` is the same walk over `+0x108` | `CoasterHeight` `0x007857ac` |
+| Global 0 | `FUN_004cc920(&id, 0)`: **the highest track point of any coaster**, truncated: over the things of model 3 whose item's track type (`+0x9c`, `FUN_004e2b50`) is 3, the float `FUN_0043e0e0` reads at `+0x110` of the coaster's record on the list `DAT_00790fe0` (`FUN_00436860`, keyed by the thing's `+0x20`). The track's analysis `FUN_0043c450` takes the largest `+0x08` (the y of the point's x, y, z at `+4..+0xc`; points 0x38 bytes from the track's `+0x9c`, the first and the last left out, the maximum starting at 0) over the track's points and stores it there through `FUN_0043df90` (`0x0043e093`), with the top speed at `+0x114`. `FUN_004cc810` is the same walk over `+0x108`. How the points are made: "A coaster's highest track point", below | `CoasterHeight` `0x007857ac` |
 | Global 1 | `FUN_004cc3b0`: the highest excitement (`FUN_004e0860`) over rides of `WhichTrackType` 1, car track | `GokartExcitement` `0x007857b0` |
 | Global 2 | `FUN_004cc6f0(&id, 2)`: the longest `FUN_00545310` section list over rides of `WhichTrackType` 2, water | `WaterLength` `0x007857b4` |
 | Global 3 | `FUN_004cd7f0`: the cells of kind 9, 10, 4 or `0x15`, or whose record is track type 11, 13, 16, 18 or 25 (`hud.md`'s cell predicates) | `MinCellsCovered` `0x007857bc` |
@@ -3939,6 +3940,62 @@ that makes the tickets of every kind one posts them.
 **What reaches it in Lost Kingdom.** Instant Action (`Easymode.TPWI`, game type 2) never: play awards nothing, every
 ticket row and hint is game type 0's, and only the cheats award. A Full Simulation jungle reaches all of it: a gap
 (`CLAUDE.md` rule 3): built but for Global 0's measure (Q706), the lines (Q707) and the hints (Q708).
+
+### A coaster's highest track point
+
+Decoded for Q593 (the build is Q706), from Ghidra and the original's memory (`original/coaster.py`; `q706b/`,
+`PREDICTION.txt`). Global 0 reads `+0x110` of the coaster's record on `DAT_00790fe0`'s list ("Golden tickets", above).
+`Coaster_AnalyseSamples` (`0x0043c450`) stores there, through `Coaster_StoreTrackStats` (`0x0043df90`), the largest `y`
+of the track's samples 1 to n-2, the maximum starting at 0. The samples are made by the track's rebuild
+`Coaster_RebuildTrack` (`0x0043eb70`), every frame for a track marked to run it (Q405's notes); each step below is one of
+its callees, and each was measured on Alexah's jungle `New Save` (Temple Of Gloom, the Minecart).
+
+1. **The nodes.** The record's chain (head `+0x54`, next `+0x64`) is the station's nodes and one node a saved piece, in
+   the file's order. Temple Of Gloom has 42: nodes 0, 1 and 2 the station's, 3 to 40 the file's 38 pieces in order (each
+   piece's cell is its node's), and 41, node 0's place again, closing the circuit. A piece is put back by the loader
+   `Coaster_LoadModule` (`0x00437b60`): `Coaster_PlacePylon` (`0x00435020`) at its cell, then its loft
+   (`Coaster_SetLoft`, `0x00444150`, node `+0xe8`), yaw (`Coaster_SetYaw`, `+0xe0`), and bank and incline
+   (`Coaster_SetBankIncline`, `+0xd8` and `+0xdc`; a loop pylon's rotation `+0xf8` instead); FileFormats `saves.md`, "The
+   coasters module", has the record. The station's nodes are made by `Coaster_MakeStationNodes` (`0x00436ac0`) at the
+   world places of the ride model's nodes flagged `0x400000` numbered 2 and 3 (`FUN_0044b220`), and a type-7 node after
+   them. Measured: nodes 0, 1 and 2 at (185, 14.542, 355), (210, 14.542, 355) and (235, 14.542, 355), along the
+   station; 0 and 2 on ground cells with pylons (loft 0.0227), 1 on none. Which model node gives which was not traced.
+2. **A node's place** (`Coaster_KnotPass`, `0x00430ed0`) is its cell's place plus (5, H, 5). A cell
+   (`Coaster_NewCell`, `0x00432c10`) is one of the ground heightfield's (`[[0x007a0854] + 0x6c]`, 96 to a row, 10 units
+   apart: cell 3378 is x 18, y 35), placed at (10x, the ground vertex's height `FUN_00466d70( x, y )`, 10y). H is
+   `Coaster_PylonHeight` (`0x004346a0`): `fMinHeight + ( fMaxHeight - fMinHeight ) x loft` of the pylon type (`+0xbc`,
+   `+0xc0`; the Minecart's `StdPylon` 10 and 100), so a node stands 10 to 100 above its ground. A stacked pylon (node `+4`
+   not nought) stands at the height of the one it names plus H plus `+0xc4` (20). Measured on all 40 pylon nodes.
+3. **The knots.** Each node holds a knot on each of two rails (`+0x90`: count, rail 1, rail 2; 0x58 bytes, place at
+   `+0x40`). Rail 1's knot is the pylon model's track node after `Coaster_PosePylon` (`0x00430ca0`) poses it; the
+   `StdPylon`'s is the node's place (all 42 measured). Its direction (`+0x28`) is that node's axis: heading the node's yaw,
+   pitch from the model's incline animation at `clamp( incline / 2 pi x fInclineAnimMultiplier + fInclineAnimAdd + 0.5,
+   fInclineAnimStartCap, fInclineAnimEndCap )` (pylon type `+0xf0`..`+0xfc`). For the `StdPylon` (4.5, 0, 0 to 1) the pitch
+   measured is `-1.25 x incline`, held at plus or minus pi/4 (node 3: incline -0.7168, pitch 0.7854). The bank does not move it.
+4. **The yaw and incline** of a node are worked out again at every rebuild from its neighbours, unless the piece's flags
+   keep them (flag values 1, 2 and 4: yaw, incline, bank; the loader copies them to node `+8`; a bank not kept is nought, or the auto-bank `FUN_0043c160` where the coaster type's flag `0x10` asks): `Coaster_NodeTangent`
+   (`0x00431660`) takes the direction square to the bisector of the unit vectors to its two neighbours, in their plane
+   (straight on when they lie within 0.999 of opposite), and `Coaster_TangentAngles` (`0x0043e590`) its heading and pitch.
+   The file holds the values worked out when it was saved, so a load holds the file's: all 38 pieces' yaw, incline and
+   bank equal the running game's (node 13: 0.3928 from its neighbours, 0.3928 in the file).
+5. **The handles** (`Coaster_KnotHandles`, `0x00432430`, with `Coaster_KnotDistances`, `0x00432840`): out (`+0x4c`) =
+   P + u x d x F / 3 with d the distance to the next knot, in (`+0x34`) = P - u x d x F / 3 with d the distance to the
+   previous one; u the unit direction, each distance taken with its y scaled by 0.7 and 1.0 at the chain's ends, and F the
+   coaster type's `+8` (the Minecart's 1.25). A loop pylon (type flag `0x4000`) takes another arm, not read.
+6. **The curve** between two knots is the cubic Bezier through P, out, the next knot's in and its P
+   (`Coaster_BezierPoint`, `0x0043e1b0`; `Coaster_BezierTangent`, `0x0043e320`, its derivative).
+7. **The samples** (`Coaster_SampleTrack`, `0x00440c10`): each segment is walked in steps of 0.05 in t, the chords
+   summed, and a sample put on the chord at every `+0xac` (3.0) of length; sample 0 is the head knot and the last is
+   doubled (count `+0xa4`, 0x38 bytes each from `+0x9c`, x, y and z at `+4`).
+
+**Measured.** Temple Of Gloom's `+0x110` read 106.0722 in two loads (`q706b/O1`, `O2`), at sample 61 of 719, between
+nodes 4 and 5, both 100 high: the curve rises 6.07 above the tallest pylons, so the pylon tops alone do not give the
+measure. Truncated it is 106, the jungle's record 0 in Alexah's profile ("Golden tickets", above): this coaster set it. The
+719 samples rebuilt from the dumped knots and handles by steps 6 and 7 match to 0.0013 (`q706b/curvecheck.py`); rebuilt
+from the node places, the file's yaw and incline, step 3's pitch and step 5 they match to 0.0247, the highest 106.0669
+(`q706b/chain.py`). Not decoded: a loop pylon's knots and handles, a stacked pylon (none in the file), which model node
+gives each station node, and the other two jungle coasters' pylons (`coaster1`, `Coaster3`), whose incline animations
+were not measured.
 
 ### Challenges
 

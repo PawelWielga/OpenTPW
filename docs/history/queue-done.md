@@ -9470,6 +9470,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`q706/PREDICTION.txt`): both won on tick 19100 ("Local ticket and key", "You have 3", then "Local ticket only", "You
   have 4"), nothing on 19200, `gms.dat` read back after the save, the corner 1 x / 1 x to 3 x / 2 x; her own profile wins
   nothing; Instant Action tests nothing. 31 of 31 bugs put back caught.
+- [x] **Q593. A coaster's track points, decoded (Q706's second piece, decode only).** `ride-operation.md`, "A coaster's
+  highest track point", and FileFormats `saves.md`, "The coasters module" (the piece record): the chain is the station's
+  three nodes, one node a saved piece in order, and the closing node; a node stands at its cell's ground vertex plus (5,
+  `fMinHeight` + span x loft, 5); the `StdPylon`'s knot is the node's place, its direction the yaw and a pitch of -1.25 x
+  incline held at pi/4; handles of d x 1.25 / 3 (y scaled 0.7); a cubic Bezier sampled every 3.0 of chord in 0.05 steps;
+  `+0x110` the largest y of samples 1 to n-2. Measured in the original (`q706b/PREDICTION.txt`, two loads of Alexah's
+  jungle `New Save`): Temple Of Gloom's `+0x110` 106.0722 at sample 61 of 719 (the jungle's record 106 is this
+  coaster's); rebuilt from the dumped knots to 0.0013, and from the file's yaw and incline to 106.0669. Twenty Ghidra
+  names (`Coaster_*`). Tools: `original/coaster.py`, `parkfile.py` `coasters()` (`-K`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

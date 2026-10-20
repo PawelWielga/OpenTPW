@@ -83,14 +83,22 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q706. Golden tickets: Global 0's measure, a coaster's highest track point.** What Q591 left. `FUN_004cc920( &id,
-  0 )` (`ride-operation.md`, "Golden tickets", the table's Global 0): over the rides on a coaster track, the float at
-  `+0x110` of the coaster's record on `DAT_00790fe0`'s list, which the track's analysis `FUN_0043c450` sets to the largest
-  y of its points but the first and last. `ParkGoldenTickets.Measure` reads nought and counts
-  `GOLDEN_TICKET_COASTER_HEIGHT` where a coaster stands (Alexah's jungle `New Save` holds one; its record 0 is the
-  jungle's at 106, so the award returns nought there whatever the height). Needs a coaster's track points held here:
-  decode which of the save's track records hold them first. Confirm with a park whose coaster beats 105, against the
-  original's `progress.py`.
+- [ ] **Q706. Golden tickets: Global 0's measure, a coaster's highest track point.** What Q591 and Q593 left: build the
+  measure as Q593 decoded it (`ride-operation.md`, "A coaster's highest track point"). `ParkCoasters` reads the pieces
+  (FileFormats `saves.md`, the piece record; it reads only the first header now); the nodes' places from the ground
+  heightfield, the station's three from the ride model's nodes flagged `0x400000` posed at the object (Temple Of Gloom's
+  measured at x 185, 210 and 235, y 14.542, z 355; which model node gives which is not traced); the knots, handles, Bezier
+  and sampler; `ParkGoldenTickets.Measure` takes the highest over the coasters in place of nought and
+  `GOLDEN_TICKET_COASTER_HEIGHT` goes. Pose the pylon's incline animation rather than copy the `StdPylon`'s -1.25 where
+  `coaster1`'s and `Coaster3`'s pylons differ (not measured); a loop pylon and a stacked one are not decoded (none in
+  Lost Kingdom's files on hand): count them. Confirm: Alexah's jungle `New Save` measures 106 (the original's 106.0722,
+  `q706b/O1/load.log`), and with a copy of her profile whose jungle record 0 is cleared (`gmsfile.put`) the park wins
+  Global 0 on tick 19100 in both games (`progress.py`).
+  - **Note (the Sentinel, 2026-10-20, from a first reading of Q591):** `FUN_004cc920` has no UI-type test, only model 3
+    and `0x004e2b50`'s track type 3, where `Measure`'s coaster flag sits inside a ride-type filter today; its maximum is
+    compared as a QWORD `FILD` of the truncated value so far against the float, then truncated by `__ftol`
+    (`0x004cc9c7`..`0x004cc9e4`). A Global result 4 logs a second line by ticket index at `0x004d5512` (coaster height
+    `0x0075a6f8`, ...), which `ParkGoldenTickets.cs:119` leaves out.
 - [ ] **Q707. The advisor's golden-ticket lines.** After Q706. The thirteen posts (`0xd7`-`0xd9`, `0xdc`-`0xde`,
   `0xe1`-`0xe3`, `0xea`-`0xed`, the ticket index as the line; score 99000, the moved rows 500, posted on the message bus) and the first ticket's `0x137` and `0x13b`,
   on model slot 1, the park's own advisor, from the level's `advisor.wad` (clips 16 to 20, which OpenTPW does not
