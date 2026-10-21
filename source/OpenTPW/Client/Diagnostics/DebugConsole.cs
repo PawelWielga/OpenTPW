@@ -643,6 +643,19 @@ public static class DebugConsole
 				if ( ParkState.Current?.AdvisorMessages is { } messages ) Reply( messages.Census() );
 				break;
 
+			case "sayas":
+				// An instrument: the park advisor's next line is said as response N (a row of the response table only).
+				if ( ParkState.Current?.AdvisorMessages is not { } sayAs )
+					Reply( "no park" );
+				else if ( parts.Length < 2 || !int.TryParse( parts[1], out var asResponse ) || ParkAdvisorMessages.ResponseOf( asResponse ) == null )
+					Reply( "sayas: give a response of the table" );
+				else
+				{
+					sayAs.SayAs = asResponse;
+					Reply( $"sayas: the next line is said as response {asResponse}, gesture row {ParkAdvisorMessages.GestureRowOf( asResponse )}" );
+				}
+				break;
+
 			case "tags":
 				// The tags on the gadget's aerial, the oldest first, and where the gadget has drawn them.
 				Reply( ParkState.Current?.Tags.Census( Time.WallMilliseconds ) ?? "no park" );

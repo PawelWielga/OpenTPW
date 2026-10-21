@@ -107,15 +107,26 @@ Lobby lines are pushed at front-end call sites, through the queue. Park lines by
 
 Laid out in `advisor-park.md`, "`AdvisorResponseTable` at `0x00768fb8`".
 
-### Gesture table `0x0076dc18`
+### Gesture table `0x0076dc18` (`AdvisorGestureTable`)
 
 Rows are `0x50` bytes.
 
 | Row | Cue | Used by |
 |---|---|---|
+| 0 | — | Responses 1 and 399–402 (clip 16) |
 | 1 | — | Responses 259–261 and 434–445 |
+| 5 | — | Responses 18 and 129 (clips 14, 5, 11, 15) |
+| 6 | — | Response 37 (14, 11, 1, 12, 1, 15) |
+| 7 | — | Responses 53, 82, 84 and 97 (14, 11, 11, 5, 15) |
+| 9 | — | Response 90 (14, 11, 4, 15) |
+| 10 | — | Response 206 (14, 5, 1, 11, 6, 15) |
+| 11 | — | Response 258 (14, 11, 9, 15) |
 | 12 | 17000 | The lobby tour, response 393 |
 | 13 | 1000 | Responses 374–378 and 446–469 |
+
+Rows 2, 3, 4 and 8 are empty, and no response names them. A response's gesture (its `+0x0c` in the table at `0x00768fb8`)
+is the row plus 16, -1 for the random chain; the response's id is its row's `+0x00`, not its place in the table (they part
+at place 393, which holds 398). Every response of the table was read for it (Q596).
 
 A cue counts from the end of the preceding clips, not from the start of the line.
 
@@ -182,8 +193,9 @@ nought on the speaking model (none loaded), the random chain (`FUN_00598b20`) is
 (`0x00f79668`) and the cue count from the clock less 200 (`0x00f79664`), which a line with a lead-in moves on by 1000
 (`0x0059944c`) and a row line does not: row 13's key comes 7798 ms after it, its clips end 8798 ms after it, and
 `original/advisorline.py` read the voice's time nought from the line's first moment (`q707/orig/O3`), where a line of the
-random chain has it for 0.8 s. **Built** (Q595, `AdvisorGestures`): a park line given a row of a ticket response plays
-it; the other topics' rows (5 to 11) are counted as before (`ADVISOR_RESPONSE_GESTURE_ROW`, Q596).
+random chain has it for 0.8 s. **Built** (Q595, Q596, `AdvisorGestures`): a park line whose response names a row plays
+it, the ticket lines' and the other topics' (rows 5 to 11, each with its lead-in; the original's clip words read beside
+ours, `q596/orig`).
 
 ## Leaving the lobby (state 3), in order
 

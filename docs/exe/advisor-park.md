@@ -507,7 +507,7 @@ ride. Main's build, off-screen, posted nothing and counted `MECHANIC_ON_HIS_WAY_
 |---|---|---|
 | The post | from the mechanic's decide, with the ride and its item | built; the item is not kept |
 | When it is said | the tick of the post | the same: "The advisor's turn in the sweep", below |
-| Response 206's own gesture row | played (`FUN_00598bf0`) | the random chain, counted `ADVISOR_RESPONSE_GESTURE_ROW` |
+| Response 206's own gesture row | played (`FUN_00598bf0`) | the same: row 10, clips 14, 5, 1, 11, 6, 15 (Q596) |
 | The hard hat | drawn | built: "What he wears for a line", below |
 | Lines 205 and 206, a second ride's own slot, a called ride's silence | the listing's | built and held by the tests alone |
 
@@ -695,7 +695,7 @@ mechanic's decide posts began `Advisor: sample 202 ... wearing 5,0`, `advisor` r
 | The props of a line | put on after every clip's start | put on as the line begins |
 | The hat's colour | a full yellow | paler: he is lit past his textures (`AdvisorModel`'s light, set against his gloves) |
 | The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows: in Lost Kingdom the fly in an explorer's hat, no antennae (`q344/orig/a-told.png`) | the same, paler ("The theme's own advisor and its costume", below) |
-| A clip word's `0x10000` (no prop, the head hidden) and its particles | a gesture row's | not built: the gesture rows are counted, `ADVISOR_RESPONSE_GESTURE_ROW` |
+| A clip word's `0x10000` (no prop, the head hidden) and its particles | a gesture row's | the same (Q595): only rows 1 and 13 carry flags |
 
 ## The theme's own advisor and its costume (Q346)
 
@@ -1789,7 +1789,7 @@ in both language folders: "The rides are breaking down but you have no mechanics
 A thirteenth polled topic, scored from the same `ParkFacts`: where the facts count no mechanic, its key's value
 for each ride they count broken. `ParkPeople.AdvisorFacts` counts, of the ride things, each whose state is 1.
 Its poll line ends ` broken=N mechanics=N` (`PollFacts` makes every polled row's ending). `ParkTags.Rows` lists
-row 8. The second line's gesture row is counted (`ADVISOR_RESPONSE_GESTURE_ROW`), as the mechanic's third's is.
+row 8. The second line plays its gesture row, row 5 (Q596), as the mechanic's third plays row 10.
 
 **The scene** (`q332/scene.py <out> <bin> <name> <N>`): a ride bought and never opened does not break when its
 script is told to, so the three broken rides are three open ones. The stock park, mechanic 26 fired; two Crazy
@@ -1845,7 +1845,7 @@ on tick 1394 in run a and was said on tick 1447, after the hire screen's line; i
 | Row 124, later in that park | said (tick 1317) | not built: counted with the other polled rows |
 
 **Not built or not seen.** Row 124. In no game run: lines 2 and 3 (samples 17 and 18; the test holds the
-turn and the second's gesture row, which is counted, not played), the line said again past its 120
+turn and the second's gesture row, which Q596 plays; said by its topic in no run, only through `sayas`), the line said again past its 120
 quarter-ticks, a mechanic kept (he mends the rides before a turn; the test holds `no-score`) or hired from the
 screen after the line, a broken sideshow beside the rides (the test holds it), Full Simulation: the mode is not
 asked by row 6's score. A second file loaded into the original with the hire screen left open did not load
@@ -2249,8 +2249,7 @@ top-up, not this row (Q356's note).
 
 **Row 12, message `0xc`, `StaffHireGuards2`:** polled, category 0, either game mode (the row's `+0x0c` is 2), one
 copy, first response 35, three lines in turn. Responses 35 to 37 are **samples 35 to 37**, model slot 0, prop 6 (the
-guards' cap), group 14; the first two take the random gesture chain and the third names gesture value 22, row 6 (the caller takes `0x10` off, `0x0059939f`; counted,
-`ADVISOR_RESPONSE_GESTURE_ROW`, as row 6's second line). From the shipped park's cursor its turns are one before row
+guards' cap), group 14; the first two take the random gesture chain and the third names gesture value 22, row 6 (the caller takes `0x10` off, `0x0059939f`; played, Q596). From the shipped park's cursor its turns are one before row
 13's: ticks 779, 934, 1089 and every 155 on. The transcripts (`global-speech-transcripts.tsv`): "the park doesn't
 have any guards and some of the visitors are getting out of hand, you should hire some soon", "if you don't knock it
 off right now I'll turn this park around... some of the visitors are misbehaving and you don't have any guards...",
@@ -2324,7 +2323,7 @@ pranks", below). `q413/side-by-side.png` sets this game's line beside the origin
 | The tag and the bar | row 14, part 2, string 18; button 16 builds the hire screen on its guards' tab, tag off | the same |
 | Row 264, more than two kids | posted on 903 | the same since Q414 ("Lots of pranks") |
 
-**Not built or not seen.** In no game run: lines 2 and 3 (samples 36 and 37, the third's gesture row counted; the test
+**Not built or not seen.** In no game run: lines 2 and 3 by the topic itself (samples 36 and 37; the third's gesture row, row 6, is played, Q596, through `sayas`; the test
 holds the turn), a kid counted in play (nothing here counts one), two guards or more, a guard hired after the line,
 Full Simulation (not asked: the row is either mode's), the other three themes. Not heard in either game. The last staff
 row, 17, is not built (Q420; rows 8, 9, 11 and 14 to 16 are, above and below).
@@ -2395,7 +2394,7 @@ either mode's), the other three themes. Not heard in either game. Row 98, which 
 category 0, either game mode (`+0x0c` 2), score function `0x0059e840`, one copy, first response 257, **two lines**,
 selection 2. Responses 257 and 258 (`0x0076afd8`, read in the image) are **samples 291 and 292**, model slot 0, prop 6
 (the guards' cap), no second prop, group 100; the first takes the random gesture chain and the second names gesture value
-27, row 11 (counted, `ADVISOR_RESPONSE_GESTURE_ROW`). From the shipped park's cursor its turn is 75 polled rows before
+27, row 11 (played, Q596). From the shipped park's cursor its turn is 75 polled rows before
 row 264's: ticks 828, 983 and every 155 on. The transcripts (`global-speech-transcripts.tsv`): "some of the visitors are
 getting a little wild and your security hasn't noticed make sure your guards are patrolling the whole park or build some
 security cameras" (9.5 s), "hey did you see what that guy just did some of the visitors or misbehaving and security
@@ -2453,7 +2452,7 @@ no tag (`orig/c-end.png`). `q418/side-by-side.png` sets this game's bar beside t
 | One guard, three got away | said on 828 | the same (60, `guards=1`) |
 | No guard, one got away | not said | the same (`no-score`) |
 
-**Not built or not seen.** In no game run: the second line (sample 292; its gesture row counted, the test holds the
+**Not built or not seen.** In no game run: the second line by the topic itself (sample 292; its gesture row, row 11, is played, Q596, through `sayas`; the test holds the
 turn), a kid getting away in play (nothing here counts one), a shut park (the test holds it scoring), Full Simulation
 (not asked: the row is either mode's), the other three themes. Not heard in either game.
 
@@ -3032,11 +3031,11 @@ seconds. The English folder this game reads says "Training your cleaners would m
 "Your scientists could do their job better and faster if you trained them." where the american one the original
 reads says "janitors" and "researchers"; the other three are the same words in both.
 
-### OpenTPW (`ParkAdvisorMessages.TrainMechanics` to `TrainResearchers`, a topic's `Untrained`, `StaffKind`, `SecondGestureRowLine`; `KindTraining`, `StaffTraining`, `ParkFacts.Staff`; tag rows 30 to 34)
+### OpenTPW (`ParkAdvisorMessages.TrainMechanics` to `TrainResearchers`, a topic's `Untrained`, `StaffKind`; `KindTraining`, `StaffTraining`, `ParkFacts.Staff`; tag rows 30 to 34)
 
 Five polled topics more, thirty-one in all. `ParkPeople.AdvisorFacts` hands the score each kind's members, its
 budget (`TrainingBudgets`, the file's) and its members' grades added up. The poll line ends ` members=N budget=N
-grades=N share=N`. A response that names a gesture row is counted (`ADVISOR_RESPONSE_GESTURE_ROW`), as before.
+grades=N share=N`. A response that names a gesture row plays it (Q596): 82 and 84 row 7, 90 row 9.
 
 **The bar's staff-costs button opens the Staff Training Budgets screen and takes the tag off** (Q352;
 `hud.md`, "The Staff Training Budgets screen"), as the original's: a budget set there is the one these rows read,
@@ -3061,8 +3060,8 @@ reading and the click); round 1's run holds that click.
 `run-fix2`): `poll message=28 row=28 days=47 score=30 threshold=25 tick=1105 result=post members=1 budget=0
 grades=0 share=0`, and the same of 29 to 32 on ticks 1106 to 1109; all five said, in the table's order, on
 ticks 1105, 1163, 1190, 1217 and 1268 (1265 in the second run: a line's length is its drawn gesture chain's),
-`wearing 5,0`, `7,0`, `6,0` on model slot 0, `-1,0 on model slot 1`, `10,0` on slot 0, the first counting
-`ADVISOR_RESPONSE_GESTURE_ROW`; the hard hat, the cap, the police cap, the theme's fly in the pith helmet and
+`wearing 5,0`, `7,0`, `6,0` on model slot 0, `-1,0 on model slot 1`, `10,0` on slot 0, the first naming
+gesture row 7, then counted; the hard hat, the cap, the police cap, the theme's fly in the pith helmet and
 the research hat's hair (`run-fix2/hats.png`). Tags 31 to 34 stood a second after the fifth, the newest on top.
 The top tag clicked (`run-fix1`): `message bar: tag 34 subject 0 item 0 bar: out=1 ... first=b_staffcost/help=533
 second=hidden erase=mb_erase` and the words (`4-bar.png`); the button clicked: `button type 21 is not built, so
@@ -3100,8 +3099,7 @@ and the budgets read as written in every run (`bud0` 25, `bud2` 50 in run c).
 | The bar | button 21 and the bomb | the same (`b_staffcost`, help 533) |
 | The bar's button | opens the Staff Training Budgets screen, the tag off | the same since Q352; in these runs counted, nothing opened |
 
-**Not built or not seen.** The gesture rows of responses 82, 84 and 90
-(counted). In no game run: lines 2 and 3 of any row, a line again past its 120 quarter-ticks' wait, two members
+**Not built or not seen.** In no game run: lines 2 and 3 of any row, a line again past its 120 quarter-ticks' wait, two members
 of a kind (the tests hold the sum and the share), twenty-one members with one grade, a budget below nought, a
 budget set on the original's own screen, the researchers' line's hat in this item's frames of the original
 (Q350's `a2-g3.png` shows it), a park made with no file, Full Simulation (not asked: the rows are either

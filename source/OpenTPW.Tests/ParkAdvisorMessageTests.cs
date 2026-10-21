@@ -240,11 +240,11 @@ public class ParkAdvisorMessageTests
 		for ( var i = 0; i < 4; ++i )
 		{
 			var tick = 1000 + i * 480;
-			var before = Times( "ADVISOR_RESPONSE_GESTURE_ROW" );
+			var before = Gestured( said );
 			Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, tick, 13 ) );
 			Assert.IsTrue( messages.Census().Contains( "pending=1 attempts=" + i + " threshold=25 slot=70/subject=13 " ), messages.Census() );
 			messages.Tick( tick, i * 100000L, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
-			rows.Add( Times( "ADVISOR_RESPONSE_GESTURE_ROW" ) - before );
+			rows.Add( Gestured( said ) - before );
 		}
 		CollectionAssert.AreEqual( new[] { (204, 202), (205, 203), (206, 204), (204, 202) }, said );
 		CollectionAssert.AreEqual( new[] { 0, 0, 1, 0 }, rows, "response 206 alone names a gesture row" );
@@ -263,7 +263,7 @@ public class ParkAdvisorMessageTests
 		FileSystem = GameData.Required();
 		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
 		var said = new List<(int, int)>();
-		var rows = Times( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var rows = Gestured( said );
 		for ( var i = 0; i < 4; ++i )
 		{
 			var tick = 1000 + i * 480;
@@ -273,7 +273,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( tick, i * 100000L + 50000, ( r, s ) => 0 );
 		}
 		CollectionAssert.AreEqual( new[] { (response, sample), (response + 2, sample + 2), (response + 1, sample + 1), (response, sample) }, said );
-		Assert.AreEqual( rows, Times( "ADVISOR_RESPONSE_GESTURE_ROW" ), "none of the six names a gesture row" );
+		Assert.AreEqual( rows, Gestured( said ), "none of the six names a gesture row" );
 		Assert.IsTrue( messages.Census().Contains( $"message={message}/score={score}/line=1/lastTick=2440" ), messages.Census() );
 	}
 
@@ -310,6 +310,22 @@ public class ParkAdvisorMessageTests
 	}
 
 	private static int Times( string gap ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == gap ).Times;
+
+	/// <summary>The lines of <paramref name="topic"/> whose response names a row of the gesture table, in order.</summary>
+	private static int[] GestureLines( ParkAdvisorMessages.Topic topic )
+		=> Enumerable.Range( 0, topic.Lines ).Where( line => ParkAdvisorMessages.GestureRowOf( topic.FirstResponse + line ) >= 0 ).ToArray();
+
+	/// <summary>The first line of <paramref name="topic"/> that plays a row of the gesture table, -1 for none.</summary>
+	private static int GestureLine( ParkAdvisorMessages.Topic topic ) => GestureLines( topic ) is [var first, ..] ? first : -1;
+
+	/// <summary>The second line of <paramref name="topic"/> that plays a row of the gesture table, -1 for none.</summary>
+	private static int SecondGestureLine( ParkAdvisorMessages.Topic topic ) => GestureLines( topic ) is [_, var second, ..] ? second : -1;
+
+	/// <summary>How many of the lines said play a row of the gesture table, their response's own.</summary>
+	private static int Gestured( IEnumerable<(int Response, int Sample)> said ) => said.Count( one => ParkAdvisorMessages.GestureRowOf( one.Response ) >= 0 );
+
+	/// <inheritdoc cref="Gestured(IEnumerable{ValueTuple{int, int}})"/>
+	private static int Gestured( IEnumerable<(int Tick, int Response, int Sample)> said ) => said.Count( one => ParkAdvisorMessages.GestureRowOf( one.Response ) >= 0 );
 
 	[TestMethod]
 	public void EveryWornRideHasItsOwnSlotWhereADoorHasOne()
@@ -1324,7 +1340,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireMechanicsBroken );
 		Assert.AreEqual( (6, "StaffHireMechanics2.ScorePerBrokenRide", true, false, 17, 16, 3, 1, 0, true, 8, ParkAdvisorMessages.HardHat, 1),
-			(topic.Id, topic.ScoreKey, topic.PerBrokenRideWithNoMechanic, topic.PerWornRideWithNoMechanic, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.PerBrokenRideWithNoMechanic, topic.PerWornRideWithNoMechanic, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.PerBrokenRideWithNoMechanic ) );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 6 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 1083 ), "before any sweep has handed the park in" );
@@ -1349,23 +1365,23 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (20, "under-threshold", 0), (messages.ScoreOf( topic, 1085 ), messages.PollAnswer( 6 ), said.Count), "20 is not above 25" );
 		facts = facts with { RidesWorn = 4 };
 		Assert.AreEqual( (" broken=2 mechanics=0", " worn=4 mechanics=0"), (messages.PollFacts( topic ), messages.PollFacts( worn )), "each poll line names what its score read" );
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		facts = facts with { RidesBroken = 3, RidesWorn = 3, Closed = true, Rides = 3 };
 		Assert.AreEqual( 30, messages.ScoreOf( topic, 1088 ) );
 		Round( 1088 );
 		CollectionAssert.AreEqual( new[] { (1088, 17, 16) }, said );
 		CollectionAssert.AreEqual( new[] { (8, 0) }, groups );
 		StringAssert.Contains( messages.Census(), "message=6/score=30/line=0/lastTick=1088/said=1/slaps=0" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the first line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "the first line's gesture is the random chain" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the next line is said.
 		Round( 1088 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 6 ), said.Count) );
 		Round( 1088 + 480 );
-		Assert.AreEqual( gestures + 1, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the second line's response names a gesture row" );
+		Assert.AreEqual( gestures + 1, Gestured( said ), "the second line's response names a gesture row" );
 		Round( 1088 + 960 );
 		Round( 1088 + 1440 );
-		Assert.AreEqual( gestures + 1, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ) );
+		Assert.AreEqual( gestures + 1, Gestured( said ) );
 		CollectionAssert.AreEqual( new[] { (1088, 17, 16), (1568, 18, 17), (2048, 19, 18), (2528, 17, 16) }, said, "three lines in turn, then the first again" );
 
 		// A mechanic hired: nought again.
@@ -1404,7 +1420,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireMoreMechanics );
 		Assert.AreEqual( (7, "StaffHireMechanics3.ScorePerExtraRide", "StaffHireMechanics3.IdealNumberOfRidesPerMechanic", 20, 20, 3, 1, 0, true, 9, ParkAdvisorMessages.HardHat, -1),
-			(topic.Id, topic.ScoreKey, topic.RidesAMechanic, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.RidesAMechanic, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( "WaitingTimes.DaysForStaff", ParkAdvisorMessages.DaysForStaff );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.RidesAMechanic != null ) );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 7 ) );
@@ -1440,14 +1456,14 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=7/score=30/line=0/lastTick=932/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the next line is said.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 932 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 7 ), said.Count) );
 		Round( 932 + 480 );
 		Round( 932 + 960 );
 		Round( 932 + 1440 );
 		CollectionAssert.AreEqual( new[] { (932, 20, 20), (1412, 21, 21), (1892, 22, 22), (2372, 20, 20) }, said, "three lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// A member of staff hired: nought again for thirty days.
 		facts = facts with { DaysSinceStaffHired = 0 };
@@ -1488,7 +1504,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireMoreHandymen );
 		Assert.AreEqual( (0xa, "StaffHireHandymen3.ScorePerExtra10Cells", "StaffHireHandymen3", 29, 29, 3, 1, 0, true, 12, ParkAdvisorMessages.HandymanCap, -1),
-			(topic.Id, topic.ScoreKey, topic.CellsAHandyman, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.CellsAHandyman, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.CellsAHandyman != null ) );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 10 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 929 ), "before any sweep has handed the park in" );
@@ -1536,14 +1552,14 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=10/score=30/line=0/lastTick=932/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the next line is said.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 932 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 10 ), said.Count) );
 		Round( 932 + 480 );
 		Round( 932 + 960 );
 		Round( 932 + 1440 );
 		CollectionAssert.AreEqual( new[] { (932, 29, 29), (1412, 30, 30), (1892, 31, 31), (2372, 29, 29) }, said, "three lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 	}
 
 	/// <summary>
@@ -1582,7 +1598,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireMoreGuards );
 		Assert.AreEqual( (0xd, "StaffHireGuards3.ScorePerExtra10Cells", "StaffHireGuards3", 38, 38, 3, 1, 0, true, 15, ParkAdvisorMessages.GuardCap, -1),
-			(topic.Id, topic.ScoreKey, topic.CellsAGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.CellsAGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.CellsAGuard != null ) );
 		Assert.IsNull( topic.CellsAHandyman );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 13 ) );
@@ -1633,14 +1649,14 @@ public class ParkAdvisorMessageTests
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the next line is said.
 		facts = facts with { Closed = false };
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 1871 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 13 ), said.Count), "quarter-tick 467 is 119 past 348" );
 		Round( 1872 );
 		Round( 2352 );
 		Round( 2832 );
 		CollectionAssert.AreEqual( new[] { (1395, 38, 38), (1872, 39, 39), (2352, 40, 40), (2832, 38, 38) }, said, "three lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 	}
 
 	/// <summary>
@@ -1676,7 +1692,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireGuards );
 		Assert.AreEqual( (0xc, "StaffHireGuards2.Score", "StaffHireGuards2", 35, 35, 3, 1, 0, true, 14, ParkAdvisorMessages.GuardCap, 2),
-			(topic.Id, topic.ScoreKey, topic.KidsWithNoGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.KidsWithNoGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.KidsWithNoGuard != null ) );
 		Assert.IsNull( topic.CellsAGuard );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 12 ) );
@@ -1717,13 +1733,13 @@ public class ParkAdvisorMessageTests
 
 		// Past 120 quarter-sweeps the next line is said; the third names a gesture row, counted.
 		facts = facts with { Closed = false };
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 1260 );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the second line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "the second line's gesture is the random chain" );
 		Round( 1740 );
 		Round( 2220 );
 		CollectionAssert.AreEqual( new[] { (780, 35, 35), (1260, 36, 36), (1740, 37, 37), (2220, 35, 35) }, said, "three lines in turn, then the first again" );
-		Assert.AreEqual( gestures + 1, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the third line's gesture row" );
+		Assert.AreEqual( gestures + 1, Gestured( said ), "the third line's gesture row" );
 	}
 
 	/// <summary>
@@ -1756,7 +1772,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.LotsOfPranks );
 		Assert.AreEqual( (0x108, "LotsOfPranks.Score", "LotsOfPranks.MorePrankstersThan", 514, 505, 1, 1, 0, true, ParkTags.NoTag, ParkAdvisorMessages.GuardCap, -1),
-			(topic.Id, topic.ScoreKey, topic.MorePranksters, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.MorePranksters, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.MorePranksters != null ) );
 		Assert.IsNull( topic.KidsWithNoGuard );
 		Assert.IsFalse( topic.FullSimulationOnly );
@@ -1821,7 +1837,7 @@ public class ParkAdvisorMessageTests
 			MisbehavingKids: 5, KidsGotAway: 1 );
 		var said = new List<(int Tick, int Response, int Sample)>();
 		var groups = new List<(int, int)>();
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		void Round( int at )
 		{
 			cursor.Row = 98;
@@ -1831,7 +1847,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.LaxSecurity );
 		Assert.AreEqual( (0x62, "GeneralLaxSecurity.ScorePerGetAway", "GeneralLaxSecurity.MoreThanThisGotAway", 257, 291, 2, 1, 0, true, 100, ParkAdvisorMessages.GuardCap, 1),
-			(topic.Id, topic.ScoreKey, topic.GotAwayMoreThan, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.GotAwayMoreThan, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.GotAwayMoreThan != null ) );
 		Assert.IsNull( topic.MorePranksters );
 		Assert.IsFalse( topic.FullSimulationOnly );
@@ -1853,7 +1869,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (180, "post", 1), (messages.ScoreOf( topic, 829 ), messages.PollAnswer( 98 ), said.Count), "9 is more than 1" );
 		StringAssert.Contains( messages.Census(), "message=98/score=180/line=0/lastTick=829/said=1/slaps=0" );
 		CollectionAssert.AreEqual( new[] { (100, 0) }, groups );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the first line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "the first line's gesture is the random chain" );
 
 		// Neither a shut park nor a guard is asked; the caught kids are not the count.
 		facts = facts with { Closed = true, Staff = facts.Staff with { Guards = guard with { Members = 3 } }, MisbehavingKids = 40, KidsGotAway = 2 };
@@ -1872,7 +1888,7 @@ public class ParkAdvisorMessageTests
 		Round( 1309 );
 		Round( 1789 );
 		CollectionAssert.AreEqual( new[] { (829, 257, 291), (1309, 258, 292), (1789, 257, 291) }, said, "two lines in turn" );
-		Assert.AreEqual( gestures + 1, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the second line's gesture row" );
+		Assert.AreEqual( gestures + 1, Gestured( said ), "the second line's gesture row" );
 		CollectionAssert.AreEqual( new[] { (100, 0), (100, 0), (100, 0) }, groups );
 	}
 
@@ -1902,7 +1918,7 @@ public class ParkAdvisorMessageTests
 			RideKindsOnOffer: 4, RideKindsStanding: 3, Researchers: 1, RideProjectsUnfinished: 8, FeatureProjectsUnfinished: 11 );
 		var said = new List<(int Tick, int Response, int Sample)>();
 		var groups = new List<(int, int)>();
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		void Round( int row, int at )
 		{
 			cursor.Row = row;
@@ -1913,9 +1929,9 @@ public class ParkAdvisorMessageTests
 		var most = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireResearchers );
 		var all = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireResearchersAllBuilt );
 		Assert.AreEqual( (0xf, "StaffHireResearchers1.PointsPerExtraPct", "StaffHireResearchers1", false, 44, 44, 3, 1, 0, true, 17, ParkAdvisorMessages.ResearchHat, -1),
-			(most.Id, most.ScoreKey, most.MostRidesBuilt, most.EveryRideBuilt, most.FirstResponse, most.FirstSample, most.Lines, most.MaxInstances, most.Category, most.Polled, most.Group, most.Prop, most.GestureRowLine) );
+			(most.Id, most.ScoreKey, most.MostRidesBuilt, most.EveryRideBuilt, most.FirstResponse, most.FirstSample, most.Lines, most.MaxInstances, most.Category, most.Polled, most.Group, most.Prop, GestureLine( most )) );
 		Assert.AreEqual( (0x10, "StaffHireResearchers2.Score", (string?)null, true, 47, 47, 2, 1, 0, true, 18, ParkAdvisorMessages.ResearchHat, -1),
-			(all.Id, all.ScoreKey, all.MostRidesBuilt, all.EveryRideBuilt, all.FirstResponse, all.FirstSample, all.Lines, all.MaxInstances, all.Category, all.Polled, all.Group, all.Prop, all.GestureRowLine) );
+			(all.Id, all.ScoreKey, all.MostRidesBuilt, all.EveryRideBuilt, all.FirstResponse, all.FirstSample, all.Lines, all.MaxInstances, all.Category, all.Polled, all.Group, all.Prop, GestureLine( all )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.MostRidesBuilt != null ) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.EveryRideBuilt ) );
 		Assert.IsFalse( most.FullSimulationOnly || all.FullSimulationOnly );
@@ -1950,7 +1966,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (90, "post", 1), (messages.ScoreOf( all, 938 ), messages.PollAnswer( 16 ), said.Count) );
 		StringAssert.Contains( messages.Census(), "message=16/score=90/line=0/lastTick=938/said=1/slaps=0" );
 		CollectionAssert.AreEqual( new[] { (18, 0) }, groups );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "the random chain" );
 
 		// Each gate before the kinds.
 		Assert.AreEqual( 0, Score( facts with { Closed = true } ), "a shut park" );
@@ -2024,7 +2040,7 @@ public class ParkAdvisorMessageTests
 			Researchers: 1, ResearcherCandidates: 3, ResearchAbility: 12, MostResearchAbility: 120 );
 		var said = new List<(int Tick, int Response, int Sample)>();
 		var groups = new List<(int, int)>();
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		void Round( int at )
 		{
 			cursor.Row = 17;
@@ -2034,7 +2050,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireMoreResearchers );
 		Assert.AreEqual( (0x11, "StaffHireResearchers3.Score", "StaffHireResearchers3", 49, 49, 3, 1, 4, true, 19, ParkAdvisorMessages.ResearchHat, -1),
-			(topic.Id, topic.ScoreKey, topic.SlowResearch, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.SlowResearch, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.SlowResearch != null ) );
 		Assert.IsFalse( topic.FullSimulationOnly, "the row's +0x0c is 2" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 17 ) );
@@ -2058,7 +2074,7 @@ public class ParkAdvisorMessageTests
 		CollectionAssert.AreEqual( new[] { (10368, 49, 49) }, said );
 		StringAssert.Contains( messages.Census(), "message=17/score=50/line=0/lastTick=10368/said=1/slaps=0" );
 		CollectionAssert.AreEqual( new[] { (19, 0) }, groups );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "the random chain" );
 		Assert.AreEqual( " closed=0 months=15 researchers=1 candidates=3 ability=12/120", messages.PollFacts( topic ) );
 
 		// Each gate.
@@ -2132,7 +2148,7 @@ public class ParkAdvisorMessageTests
 			MisbehavingKids: 2, KidsGotAway: 4 );
 		var said = new List<(int Tick, int Response, int Sample)>();
 		var groups = new List<(int, int)>();
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		void Round( int at )
 		{
 			cursor.Row = 22;
@@ -2142,7 +2158,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.BuildCameras );
 		Assert.AreEqual( (0x16, "StaffGuardBuildCamera.Score", "StaffGuardBuildCamera", 64, 64, 3, 1, 0, true, 24, ParkAdvisorMessages.GuardCap, -1),
-			(topic.Id, topic.ScoreKey, topic.GotAwayWithAGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.GotAwayWithAGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.GotAwayWithAGuard != null ) );
 		Assert.IsNull( topic.GotAwayMoreThan );
 		Assert.IsFalse( topic.FullSimulationOnly, "the row's +0x0c is 2" );
@@ -2164,7 +2180,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (45, "post", 1), (messages.ScoreOf( topic, 829 ), messages.PollAnswer( 22 ), said.Count), "5 is more than 4" );
 		StringAssert.Contains( messages.Census(), "message=22/score=45/line=0/lastTick=829/said=1/slaps=0" );
 		CollectionAssert.AreEqual( new[] { (24, 0) }, groups );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "the random chain" );
 
 		// Each gate: no guard is nought, a shut park is not asked, nor the caught kids.
 		Assert.AreEqual( 0, Score( facts with { Staff = facts.Staff with { Guards = guard with { Members = 0 } }, KidsGotAway = 40 } ), "no guard" );
@@ -2201,7 +2217,7 @@ public class ParkAdvisorMessageTests
 		Round( 1789 );
 		Round( 2269 );
 		CollectionAssert.AreEqual( new[] { (829, 64, 64), (1309, 65, 65), (1789, 66, 66), (2269, 64, 64) }, said, "three lines in turn" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "no line has a gesture row" );
+		Assert.AreEqual( gestures, Gestured( said ), "no line has a gesture row" );
 		CollectionAssert.AreEqual( new[] { (24, 0), (24, 0), (24, 0), (24, 0) }, groups );
 	}
 
@@ -2240,7 +2256,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireEntertainers );
 		Assert.AreEqual( (0xe, "StaffHireEntertainers1.ScorePerExtraBusyPoint", "StaffHireEntertainers1", 41, 41, 3, 1, 0, true, 16, AdvisorProps.ThemeCostume, -1),
-			(topic.Id, topic.ScoreKey, topic.BusyWithNoEntertainer, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.BusyWithNoEntertainer, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.BusyWithNoEntertainer != null ) );
 		Assert.IsNull( topic.CellsAGuard );
 		Assert.IsFalse( topic.FullSimulationOnly );
@@ -2299,14 +2315,14 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( 45, messages.ScoreOf( topic, 782 ) );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the next line is said.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 1259 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 14 ), said.Count), "quarter-tick 314 is 119 past 195" );
 		Round( 1260 );
 		Round( 1740 );
 		Round( 2220 );
 		CollectionAssert.AreEqual( new[] { (781, 41, 41), (1260, 42, 42), (1740, 43, 43), (2220, 41, 41) }, said, "three lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 	}
 
 	/// <summary>
@@ -2346,9 +2362,9 @@ public class ParkAdvisorMessageTests
 		var untidy = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireHandymen );
 		var filthy = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireHandymenFilthy );
 		Assert.AreEqual( (8, "StaffHireHandymen1.ScorePerLitterPoint", "StaffHireHandymen1", false, 23, 23, 3, 1, 0, true, 10, ParkAdvisorMessages.HandymanCap, -1),
-			(untidy.Id, untidy.ScoreKey, untidy.LitterWithNoHandyman, untidy.Filthy, untidy.FirstResponse, untidy.FirstSample, untidy.Lines, untidy.MaxInstances, untidy.Category, untidy.Polled, untidy.Group, untidy.Prop, untidy.GestureRowLine) );
+			(untidy.Id, untidy.ScoreKey, untidy.LitterWithNoHandyman, untidy.Filthy, untidy.FirstResponse, untidy.FirstSample, untidy.Lines, untidy.MaxInstances, untidy.Category, untidy.Polled, untidy.Group, untidy.Prop, GestureLine( untidy )) );
 		Assert.AreEqual( (9, "StaffHireHandymen2.ScorePerLitterPoint", "StaffHireHandymen2", true, 26, 26, 3, 1, 0, true, 11, ParkAdvisorMessages.HandymanCap, -1),
-			(filthy.Id, filthy.ScoreKey, filthy.LitterWithNoHandyman, filthy.Filthy, filthy.FirstResponse, filthy.FirstSample, filthy.Lines, filthy.MaxInstances, filthy.Category, filthy.Polled, filthy.Group, filthy.Prop, filthy.GestureRowLine) );
+			(filthy.Id, filthy.ScoreKey, filthy.LitterWithNoHandyman, filthy.Filthy, filthy.FirstResponse, filthy.FirstSample, filthy.Lines, filthy.MaxInstances, filthy.Category, filthy.Polled, filthy.Group, filthy.Prop, GestureLine( filthy )) );
 		Assert.AreEqual( 2, ParkAdvisorMessages.ParkTopics.Count( one => one.LitterWithNoHandyman != null ) );
 		Assert.IsFalse( untidy.FullSimulationOnly || filthy.FullSimulationOnly );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 8 ) && ParkAdvisorMessages.IsPolled( 9 ) );
@@ -2451,7 +2467,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.HireGuardsBusy );
 		Assert.AreEqual( (0xb, "StaffHireGuards1.ScorePerExtraBusyPoint", "StaffHireGuards1", 32, 32, 3, 1, 9, true, 13, ParkAdvisorMessages.GuardCap, -1),
-			(topic.Id, topic.ScoreKey, topic.BusyWithNoGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.BusyWithNoGuard, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.BusyWithNoGuard != null ) );
 		Assert.AreEqual( ParkAdvisorMessages.SaidOnce, topic.Category );
 		Assert.IsNull( topic.BusyWithNoEntertainer );
@@ -2551,7 +2567,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorSelection );
 		Assert.AreEqual( (0x3c, "RidesPoorSelection.Score", "RidesPoorSelection", 176, 173, 3, 1, 0, true, 62, 0, -1),
-			(topic.Id, topic.ScoreKey, topic.PoorSelection, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.PoorSelection, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( "WaitingTimes.DaysForObjects", ParkAdvisorMessages.DaysForObjects );
 		Assert.AreEqual( 4, ParkAdvisorMessages.ParkTopics.Count( one => one.PoorSelection != null ) );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 60 ) );
@@ -2612,14 +2628,14 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=60/score=30/line=0/lastTick=956/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the next line is said.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 956 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 60 ), said.Count) );
 		Round( 956 + 480 );
 		Round( 956 + 960 );
 		Round( 956 + 1440 );
 		CollectionAssert.AreEqual( new[] { (956, 176, 173), (1436, 177, 174), (1916, 178, 175), (2396, 176, 173) }, said, "three lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// A thing built: nought again for thirty days.
 		facts = facts with { DaysSinceObjectBuilt = 0 };
@@ -2661,7 +2677,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorShopSelection );
 		Assert.AreEqual( (0x47, "ShopsPoorSelection.Score", "ShopsPoorSelection", ParkAdvisorMessages.Shut.Shops, 207, 205, 2, 1, 0, true, 73, 0, -1),
-			(topic.Id, topic.ScoreKey, topic.PoorSelection, topic.PoorOf, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.PoorSelection, topic.PoorOf, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		var rides = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorSelection );
 		Assert.AreEqual( ParkAdvisorMessages.Shut.Rides, rides.PoorOf );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 71 ) );
@@ -2737,13 +2753,13 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=71/score=50/line=0/lastTick=956/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the other line is said, and then the first again.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 956 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 71 ), said.Count) );
 		Round( 956 + 480 );
 		Round( 956 + 960 );
 		CollectionAssert.AreEqual( new[] { (956, 207, 205), (1436, 208, 206), (1916, 207, 205) }, said, "two lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// A thing built: nought again for thirty days.
 		facts = facts with { DaysSinceObjectBuilt = 0 };
@@ -2787,7 +2803,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorSideshowSelection );
 		Assert.AreEqual( (0x4b, "SideshowsPoorSelection.Score", "SideshowsPoorSelection", ParkAdvisorMessages.Shut.Sideshows, 215, 213, 2, 1, 0, true, 77, 0, -1),
-			(topic.Id, topic.ScoreKey, topic.PoorSelection, topic.PoorOf, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.PoorSelection, topic.PoorOf, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		var rides = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorSelection );
 		var shops = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorShopSelection );
 		Assert.AreEqual( (ParkAdvisorMessages.Shut.Rides, ParkAdvisorMessages.Shut.Shops), (rides.PoorOf, shops.PoorOf) );
@@ -2876,13 +2892,13 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=75/score=45/line=0/lastTick=956/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the other line is said, and then the first again.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 956 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 75 ), said.Count) );
 		Round( 956 + 480 );
 		Round( 956 + 960 );
 		CollectionAssert.AreEqual( new[] { (956, 215, 213), (1436, 216, 214), (1916, 215, 213) }, said, "two lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// A thing built: nought again for thirty days.
 		facts = facts with { DaysSinceObjectBuilt = 0 };
@@ -2927,7 +2943,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorFeatureSelection );
 		Assert.AreEqual( (0x4f, "FeaturesPoorSelection.Score", "FeaturesPoorSelection", ParkAdvisorMessages.Shut.Features, 223, 221, 2, 1, 0, true, 81, -1, -1),
-			(topic.Id, topic.ScoreKey, topic.PoorSelection, topic.PoorOf, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.PoorSelection, topic.PoorOf, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		var rides = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorSelection );
 		var shops = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorShopSelection );
 		var sideshows = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.PoorSideshowSelection );
@@ -3021,13 +3037,13 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=79/score=26/line=0/lastTick=956/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the other line is said, and then the first again.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 956 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 79 ), said.Count) );
 		Round( 956 + 480 );
 		Round( 956 + 960 );
 		CollectionAssert.AreEqual( new[] { (956, 223, 221), (1436, 224, 222), (1916, 223, 221) }, said, "two lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// A thing built: nought again for thirty days.
 		facts = facts with { DaysSinceObjectBuilt = 0 };
@@ -3069,7 +3085,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.BuildShops );
 		Assert.AreEqual( (0x49, "ShopsBuildShops.Score", "ShopsBuildShops.AdditionalPerDay", 211, 209, 2, 1, 0, true, 75, ParkAdvisorMessages.HardHat, -1),
-			(topic.Id, topic.ScoreKey, topic.PerDayWithNoShop, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.PerDayWithNoShop, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.PerDayWithNoShop != null ), "no other row is scored so" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 73 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 965 ), "before any sweep has handed the park in" );
@@ -3139,13 +3155,13 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=73/score=132/line=0/lastTick=964/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the other line is said, and then the first again.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 964 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 73 ), said.Count) );
 		Round( 964 + 480 );
 		Round( 964 + 960 );
 		CollectionAssert.AreEqual( new[] { (964, 211, 209), (1444, 212, 210), (1924, 211, 209) }, said, "two lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// A shop built: nought, by the kind standing and by the thirty days again.
 		facts = facts with { ShopKindsStanding = 1, DaysSinceObjectBuilt = 0 };
@@ -3185,7 +3201,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.NoToilets );
 		Assert.AreEqual( (0x52, "FeaturesNoToilets.Score", "FeaturesNoToilets", 227, 225, 3, 1, 0, true, 84, 0, -1),
-			(topic.Id, topic.ScoreKey, topic.NeedingToiletWithNone, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.NeedingToiletWithNone, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.NeedingToiletWithNone != null ), "no other row is scored so" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 82 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 1594 ), "before any sweep has handed the park in" );
@@ -3292,11 +3308,11 @@ public class ParkAdvisorMessageTests
 		var hungry = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.VisitorsHungry );
 		var toilets = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.NotEnoughToilets );
 		Assert.AreEqual( (3, "VisitorsThirsty.ScorePerThirstyPerson", 8, 7, 3, 1, 0, true, 5, 13, 14, -1, true, false),
-			(thirsty.Id, thirsty.ScoreKey, thirsty.FirstResponse, thirsty.FirstSample, thirsty.Lines, thirsty.MaxInstances, thirsty.Category, thirsty.Polled, thirsty.Group, thirsty.Prop, thirsty.SecondProp, thirsty.GestureRowLine, thirsty.PerThirstyGuest, thirsty.PerHungryGuest) );
+			(thirsty.Id, thirsty.ScoreKey, thirsty.FirstResponse, thirsty.FirstSample, thirsty.Lines, thirsty.MaxInstances, thirsty.Category, thirsty.Polled, thirsty.Group, thirsty.Prop, thirsty.SecondProp, GestureLine( thirsty ), thirsty.PerThirstyGuest, thirsty.PerHungryGuest) );
 		Assert.AreEqual( (4, "VisitorsHungry.ScorePerHungryPerson", 11, 10, 3, 1, 0, true, 6, 13, 14, -1, false, true),
-			(hungry.Id, hungry.ScoreKey, hungry.FirstResponse, hungry.FirstSample, hungry.Lines, hungry.MaxInstances, hungry.Category, hungry.Polled, hungry.Group, hungry.Prop, hungry.SecondProp, hungry.GestureRowLine, hungry.PerThirstyGuest, hungry.PerHungryGuest) );
+			(hungry.Id, hungry.ScoreKey, hungry.FirstResponse, hungry.FirstSample, hungry.Lines, hungry.MaxInstances, hungry.Category, hungry.Polled, hungry.Group, hungry.Prop, hungry.SecondProp, GestureLine( hungry ), hungry.PerThirstyGuest, hungry.PerHungryGuest) );
 		Assert.AreEqual( (0x55, "FeaturesNotEnoughToilets.Score", 233, 231, 2, 1, 0, true, 87, 0, 0, -1, true),
-			(toilets.Id, toilets.ScoreKey, toilets.FirstResponse, toilets.FirstSample, toilets.Lines, toilets.MaxInstances, toilets.Category, toilets.Polled, toilets.Group, toilets.Prop, toilets.SecondProp, toilets.GestureRowLine, toilets.AlwaysNought) );
+			(toilets.Id, toilets.ScoreKey, toilets.FirstResponse, toilets.FirstSample, toilets.Lines, toilets.MaxInstances, toilets.Category, toilets.Polled, toilets.Group, toilets.Prop, toilets.SecondProp, GestureLine( toilets ), toilets.AlwaysNought) );
 		Assert.AreEqual( (1, 1, 1), (ParkAdvisorMessages.ParkTopics.Count( one => one.PerThirstyGuest ), ParkAdvisorMessages.ParkTopics.Count( one => one.PerHungryGuest ),
 			ParkAdvisorMessages.ParkTopics.Count( one => one.AlwaysNought )), "no other row is scored so" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 3 ) && ParkAdvisorMessages.IsPolled( 4 ) && ParkAdvisorMessages.IsPolled( 85 ) );
@@ -3383,7 +3399,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ResearchMoreSideshows );
 		Assert.AreEqual( (0x4c, "SideshowsResearchMore.Score", true, false, 217, 215, 2, 1, 4, true, 78, 10, -1),
-			(topic.Id, topic.ScoreKey, topic.EverySideshowBuilt, topic.EveryFeatureBuilt, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.EverySideshowBuilt, topic.EveryFeatureBuilt, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.EverySideshowBuilt ), "no other row is scored so" );
 		Assert.IsTrue( topic.FullSimulationOnly );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 76 ) );
@@ -3492,7 +3508,7 @@ public class ParkAdvisorMessageTests
 		{
 			var topic = Topic( row.Id );
 			Assert.AreEqual( ($"{row.Section}.Score", row.Section, row.Kind, row.Response, row.Sample, 3, 1, 0, true, row.Group, row.Prop, row.Gesture, row.Second, false),
-				(topic.ScoreKey, topic.Untrained, topic.StaffKind, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine, topic.SecondGestureRowLine, topic.FullSimulationOnly), $"row {row.Id}" );
+				(topic.ScoreKey, topic.Untrained, topic.StaffKind, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic ), SecondGestureLine( topic ), topic.FullSimulationOnly), $"row {row.Id}" );
 			Assert.IsTrue( ParkAdvisorMessages.IsPolled( row.Id ) );
 			for ( var line = 0; line < 3; ++line )
 				Assert.AreEqual( ((row.Prop, 0), row.Slot), (ParkAdvisorMessages.PropsOf( row.Response + line ), ParkAdvisorMessages.SlotOf( row.Response + line )), $"row {row.Id} line {line}" );
@@ -3550,7 +3566,6 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( ("no-score", 1), (messages.PollAnswer( 0x20 ), said.Count) );
 
 		// The mechanics' first and third lines and the guards' third name a row of the gesture table.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
 		var guards = new ParkAdvisorMessages( Settings(), cursor: cursor, instantAction: () => false );
 		facts = With( 3, new( 1, 0, 0 ) ) with { Staff = new( none, new( 1, 0, 0 ), none, new( 1, 0, 0 ), none ) };
 		var lines = new List<int>();
@@ -3570,7 +3585,7 @@ public class ParkAdvisorMessageTests
 		}
 
 		CollectionAssert.AreEquivalent( new[] { 82, 83, 84, 88, 89, 90 }, lines.ToArray() );
-		Assert.AreEqual( gestures + 3, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "responses 82, 84 and 90" );
+		CollectionAssert.AreEquivalent( new[] { 7, -1, 7, -1, -1, 9 }, lines.Select( ParkAdvisorMessages.GestureRowOf ).ToArray(), "responses 82, 84 and 90" );
 	}
 
 	/// <summary>
@@ -3608,7 +3623,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ResearchMoreFeatures );
 		Assert.AreEqual( (0x50, "FeaturesResearchMore.Score", true, 225, 223, 1, 1, 4, true, 82, 10, -1),
-			(topic.Id, topic.ScoreKey, topic.EveryFeatureBuilt, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.EveryFeatureBuilt, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( (4, 10), (ParkAdvisorMessages.ResearchMore, ParkAdvisorMessages.ResearchHat) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.EveryFeatureBuilt ), "no other row is scored so" );
 		Assert.AreEqual( (true, 26), (topic.FullSimulationOnly, ParkAdvisorMessages.ParkTopics.Count( one => one.FullSimulationOnly )),
@@ -3728,7 +3743,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.BuildFeatures );
 		Assert.AreEqual( (0x51, "FeaturesBuildFeatures.Score", "FeaturesBuildFeatures.AdditionalPerDay", 226, 224, 1, 1, 0, true, 83, AdvisorProps.ThemeCostume, -1),
-			(topic.Id, topic.ScoreKey, topic.PerDayWithNoFeature, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.PerDayWithNoFeature, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.PerDayWithNoFeature != null ), "no other row is scored so" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 81 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 1593 ), "before any sweep has handed the park in" );
@@ -3838,7 +3853,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.BuildSideshows );
 		Assert.AreEqual( (0x4d, "SideshowsBuildSideshows.Score", "SideshowsBuildSideshows.AdditionalPerDay", 219, 217, 2, 1, 0, true, 79, ParkAdvisorMessages.HardHat, -1),
-			(topic.Id, topic.ScoreKey, topic.PerDayWithNoSideshow, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.PerDayWithNoSideshow, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.PerDayWithNoSideshow != null ), "no other row is scored so" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 77 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 1124 ), "before any sweep has handed the park in" );
@@ -3909,13 +3924,13 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=77/score=26/line=0/lastTick=1124/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the other line is said, and then the first again.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 1124 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 77 ), said.Count) );
 		Round( 1124 + 480 );
 		Round( 1124 + 960 );
 		CollectionAssert.AreEqual( new[] { (1124, 219, 217), (1604, 220, 218), (2084, 219, 217) }, said, "two lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// A sideshow built: nought, by the kind standing and by the thirty days again.
 		facts = facts with { SideshowKindsStanding = 1, DaysSinceObjectBuilt = 0 };
@@ -3958,7 +3973,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.BuildMoreShops );
 		Assert.AreEqual( (0x4a, "ShopsBuildMoreShops.Score", "ShopsBuildMoreShops", 213, 211, 2, 1, 0, true, 76, ParkAdvisorMessages.HardHat, -1),
-			(topic.Id, topic.ScoreKey, topic.ShopsPerRide, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.ShopsPerRide, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.ShopsPerRide != null ), "no other row is scored so" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 74 ) );
 		foreach ( var response in new[] { 213, 214 } )
@@ -4035,13 +4050,13 @@ public class ParkAdvisorMessageTests
 		StringAssert.Contains( messages.Census(), "message=74/score=70/line=0/lastTick=964/said=1/slaps=0" );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the other line is said, and then the first again.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 964 + 479 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 74 ), said.Count) );
 		Round( 964 + 480 );
 		Round( 964 + 960 );
 		CollectionAssert.AreEqual( new[] { (964, 213, 211), (1444, 214, 212), (1924, 213, 211) }, said, "two lines in turn, then the first again" );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// The shipped ratio again: silent.
 		Set( settings, "ShopsBuildMoreShops.ShopsPerRideRatio", "0.15" );
@@ -4087,7 +4102,7 @@ public class ParkAdvisorMessageTests
 
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.BuildMoreSideshows );
 		Assert.AreEqual( (0x4e, "SideshowsBuildMoreSideshows.Score", "SideshowsBuildMoreSideshows", 221, 219, 2, 1, 0, true, 80, ParkAdvisorMessages.HardHat, -1),
-			(topic.Id, topic.ScoreKey, topic.SideshowsPerRide, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
+			(topic.Id, topic.ScoreKey, topic.SideshowsPerRide, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, GestureLine( topic )) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.SideshowsPerRide != null ), "no other row is scored so" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 78 ) );
 		foreach ( var response in new[] { 221, 222 } )
@@ -4186,14 +4201,14 @@ public class ParkAdvisorMessageTests
 		Set( settings, "WaitingTimes.DaysForStaff", 30 );
 
 		// Inside 120 quarter-sweeps of it the gate refuses the same message; past them the other line is said, and then the first again.
-		var gestures = Counted( "ADVISOR_RESPONSE_GESTURE_ROW" );
+		var gestures = Gestured( said );
 		Round( 1447 );
 		Assert.AreEqual( ("cooldown", 1), (messages.PollAnswer( 78 ), said.Count), "quarter-sweep 361 is 119 after 242" );
 		Round( 1448 );
 		Round( 1928 );
 		CollectionAssert.AreEqual( new[] { (970, 221, 219), (1448, 222, 220), (1928, 221, 219) }, said, "two lines in turn, then the first again" );
 		CollectionAssert.AreEqual( new[] { (80, 0), (80, 0), (80, 0) }, groups );
-		Assert.AreEqual( gestures, Counted( "ADVISOR_RESPONSE_GESTURE_ROW" ), "every line's gesture is the random chain" );
+		Assert.AreEqual( gestures, Gestured( said ), "every line's gesture is the random chain" );
 
 		// The shipped ratio again, one kind of ride: silent.
 		Set( settings, "SideshowsBuildMoreSideshows.SideshowsPerRideRatio", "0.2" );
@@ -4232,7 +4247,7 @@ public class ParkAdvisorMessageTests
 		foreach ( var row in new[] { shops, sideshows, toilets } )
 		{
 			Assert.AreEqual( (3, 1, 0, true, ParkTags.NoTag, ParkAdvisorMessages.TicketHat, -1),
-				(row.Lines, row.MaxInstances, row.Category, row.Polled, row.Group, row.Prop, row.GestureRowLine), $"row {row.Id}" );
+				(row.Lines, row.MaxInstances, row.Category, row.Polled, row.Group, row.Prop, GestureLine( row )), $"row {row.Id}" );
 			Assert.AreEqual( 0, messages.ScoreOf( row, 100 ), "before any sweep has handed the park in" );
 		}
 		Assert.AreEqual( ("ShopsClosed.Score", "ShopsClosed", "SideshowsClosed.Score", "SideshowsClosed", "ToiletsClosed.Score", "ToiletsClosed"),
@@ -4336,7 +4351,7 @@ public class ParkAdvisorMessageTests
 
 		var room = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.StaffroomClosed );
 		Assert.AreEqual( (263, 513, 638, 1, 1, 0, true, ParkTags.NoTag, 0, -1),
-			(room.Id, room.FirstResponse, room.FirstSample, room.Lines, room.MaxInstances, room.Category, room.Polled, room.Group, room.Prop, room.GestureRowLine) );
+			(room.Id, room.FirstResponse, room.FirstSample, room.Lines, room.MaxInstances, room.Category, room.Polled, room.Group, room.Prop, GestureLine( room )) );
 		Assert.AreEqual( ("StaffroomClosed.Score", "StaffroomClosed", null, ParkAdvisorMessages.Shut.StaffRooms),
 			(room.ScoreKey, room.ShutSection, room.OpenWithAtLeast, room.ShutShare) );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 263 ) );
@@ -4427,7 +4442,7 @@ public class ParkAdvisorMessageTests
 
 		var rides = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.RidesClosed );
 		Assert.AreEqual( (259, 501, 484, 3, 1, 0, true, ParkTags.NoTag, ParkAdvisorMessages.TicketHat, -1),
-			(rides.Id, rides.FirstResponse, rides.FirstSample, rides.Lines, rides.MaxInstances, rides.Category, rides.Polled, rides.Group, rides.Prop, rides.GestureRowLine) );
+			(rides.Id, rides.FirstResponse, rides.FirstSample, rides.Lines, rides.MaxInstances, rides.Category, rides.Polled, rides.Group, rides.Prop, GestureLine( rides )) );
 		Assert.AreEqual( ("RidesClosed.Score", "RidesClosed", "RidesClosed.AtLeastThisManyRides", ParkAdvisorMessages.Shut.Rides),
 			(rides.ScoreKey, rides.ShutSection, rides.OpenWithAtLeast, rides.ShutShare) );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 259 ) );
@@ -4525,7 +4540,7 @@ public class ParkAdvisorMessageTests
 
 		var queue = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.QueueUnconnected );
 		Assert.AreEqual( (113, 288, 312, 2, 255, 0, true, 135, 0, -1),
-			(queue.Id, queue.FirstResponse, queue.FirstSample, queue.Lines, queue.MaxInstances, queue.Category, queue.Polled, queue.Group, queue.Prop, queue.GestureRowLine) );
+			(queue.Id, queue.FirstResponse, queue.FirstSample, queue.Lines, queue.MaxInstances, queue.Category, queue.Polled, queue.Group, queue.Prop, GestureLine( queue )) );
 		Assert.AreEqual( ("QueueUnconnected.Score", true), (queue.ScoreKey, queue.QueueNotJoined) );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 113 ) );
 		Assert.AreEqual( (0, 0), ParkAdvisorMessages.PropsOf( 288 ) );
@@ -4737,7 +4752,7 @@ public class ParkAdvisorMessageTests
 		var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ExplainTooltips );
 		Assert.AreEqual( 282, topic.Id );
 		Assert.AreEqual( new ParkAdvisorMessages.Topic( 282, "TutorialExplainTooltips.Score", 542, 559, Lines: 1, MaxInstances: 1,
-			GestureRowLine: -1, Prop: 0, Group: ParkTags.NoTag, Category: ParkAdvisorMessages.Tutorial, Polled: true,
+			Prop: 0, Group: ParkTags.NoTag, Category: ParkAdvisorMessages.Tutorial, Polled: true,
 			AgeSection: "TutorialExplainTooltips" ), topic );
 		Assert.AreEqual( (0, 0), ParkAdvisorMessages.PropsOf( 542 ) );
 		Assert.AreEqual( 147, Enumerable.Range( 0, 282 ).Count( ParkAdvisorMessages.IsPolled ), "147 polled rows stand before row 282" );
@@ -4914,6 +4929,57 @@ public class ParkAdvisorMessageTests
 	}
 
 	/// <summary>
+	/// The other topics' lines that name a row of the gesture table (the response table's +0x0c less 16): ten responses, rows
+	/// 5 to 11, each response's sample, lip and group the topic's rule and its slot the generic advisor's; the lines either
+	/// side of each play the random chain.
+	/// </summary>
+	[TestMethod]
+	public void TheOtherTopicsLinesNameTheirGestureRows()
+	{
+		var rows = new Dictionary<int, int> { [18] = 5, [37] = 6, [53] = 7, [82] = 7, [84] = 7, [90] = 9, [97] = 7, [129] = 5, [206] = 10, [258] = 11 };
+		foreach ( var (response, row) in rows )
+		{
+			Assert.AreEqual( row, ParkAdvisorMessages.GestureRowOf( response ), $"response {response}" );
+			Assert.AreEqual( 0, ParkAdvisorMessages.SlotOf( response ), $"response {response}" );
+			foreach ( var beside in new[] { response - 1, response + 1 } )
+				if ( !rows.ContainsKey( beside ) )
+					Assert.AreEqual( -1, ParkAdvisorMessages.GestureRowOf( beside ), $"response {beside}" );
+		}
+
+		foreach ( var topic in ParkAdvisorMessages.ParkTopics )
+			for ( var line = 0; line < topic.Lines; ++line )
+				if ( ParkAdvisorMessages.ResponseOf( topic.FirstResponse + line ) is { Gesture: >= 21 and <= 27 } named )
+					Assert.AreEqual( (topic.FirstSample + line, topic.FirstSample + line, topic.Group),
+						(named.Sample, named.Lip, named.Group), $"message {topic.Id} line {line}" );
+
+		Assert.AreEqual( (292, 100, 11), (ParkAdvisorMessages.ResponseOf( 258 )!.Value.Sample, ParkAdvisorMessages.ResponseOf( 258 )!.Value.Group,
+			ParkAdvisorMessages.GestureRowOf( 258 )) );
+		CollectionAssert.AreEquivalent( new[] { 18, 37, 82, 84, 90, 206, 258 }, ParkAdvisorMessages.ParkTopics
+			.SelectMany( topic => GestureLines( topic ).Select( line => topic.FirstResponse + line ) )
+			.Where( response => ParkAdvisorMessages.GestureRowOf( response ) is >= 5 and <= 11 ).ToArray(), "the built topics' lines" );
+	}
+
+	/// <summary>
+	/// The console's <c>sayas</c>: the next line said is said as the response given, its sample the table's, the message's
+	/// own history kept; the line after is the topic's own again.
+	/// </summary>
+	[TestMethod]
+	public void SayAsSaysTheNextLineAsTheResponseGiven()
+	{
+		FileSystem = GameData.Required();
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var said = new List<(int, int)>();
+		messages.SayAs = 90;
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 1000, 13 ) );
+		messages.Tick( 1000, 0, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 1480, 13 ) );
+		messages.Tick( 1480, 100000, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		CollectionAssert.AreEqual( new[] { (90, 88), (205, 203) }, said );
+		Assert.AreEqual( (-1, 1), (messages.SayAs, Gestured( said )) );
+		StringAssert.Contains( messages.Census(), "message=70/score=110/line=1/lastTick=1480" );
+	}
+
+	/// <summary>
 	/// The first ticket's two lines (GoldenTicket_TellFirst, 0x004d5b30): 0x137 scores 1000 and 0x13b 999, so the first
 	/// is said first, as Advisor.sam's comment asks; both Full Simulation's alone.
 	/// </summary>
@@ -4980,7 +5046,7 @@ public class ParkAdvisorMessageTests
 		foreach ( var hint in new[] { explanation, first, visitors, happiness } )
 		{
 			Assert.IsTrue( hint.Polled && ParkAdvisorMessages.IsPolled( hint.Id ) && hint.FullSimulationOnly, $"{hint.Id:x}" );
-			Assert.AreEqual( (1, 1, ParkTags.NoTag, AdvisorProps.ThemeCostume, -1), (hint.Lines, hint.MaxInstances, hint.Group, hint.Prop, hint.GestureRowLine) );
+			Assert.AreEqual( (1, 1, ParkTags.NoTag, AdvisorProps.ThemeCostume, -1), (hint.Lines, hint.MaxInstances, hint.Group, hint.Prop, GestureLine( hint )) );
 			Assert.AreEqual( Advisor.ThemeSlot, ParkAdvisorMessages.SlotOf( hint.FirstResponse ), "the park's own advisor" );
 		}
 		Assert.AreEqual( (ParkAdvisorMessages.Tutorial, 0, 0, 0), (explanation.Category, first.Category, visitors.Category, happiness.Category) );

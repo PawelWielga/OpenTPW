@@ -9651,6 +9651,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (175,144,48) against main's dark (`runB2`, (67,55,26) and (69,57,30)), `side-by-side-plates.png` beside the
   original's `q580fs/orig/S2/o-t764.png`; the park's opening and wide views and the lobby whole. 15 of 20 predictions
   held, 5 missed with their causes. Left: Q608.
+- [x] **Q596. The other topics' gesture rows.** From Q595. The response table (`0x00768fb8`, `+0x0c` the row plus 16)
+  read whole: ten lines of other topics name rows 5 to 11, 18 (row 5), 37 (6), 53, 82, 84, 97 (7), 90 (9), 129 (5), 206
+  (10), 258 (11); rows 2, 3, 4 and 8 are named by none. Their rows are in `ParkAdvisorMessages.Responses`, so
+  `PlayParkResponse` plays them as the ticket lines' (`scenes.md`, "Gesture table"); a topic's `GestureRowLine` and
+  `ADVISOR_RESPONSE_GESTURE_ROW` are gone; the console's `sayas N` and `original/sayas.sh` say a chosen response.
+  Confirmed in both games on a fresh Full Simulation park (`q596/PREDICTION.txt`): the seven built topics' lines said on
+  the same ticks with the same clip lists, lengths, samples and hats (`orig/e/fresh.log`, `run-G3/run.log`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

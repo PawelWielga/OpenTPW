@@ -56,11 +56,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q596. The other topics' gesture rows.** From Q595. Rows 5 to 11 of the gesture table (`AdvisorGestures`;
-  `scenes.md`, "Gesture table") are fixed clip lists opening on clip 14 (row 5: 14, 5, 11, 15), named by responses of
-  built topics (`GestureRowLine`: 17, 37, 53, 82, 84, 90, 97, 129, 206, 258): hand them to `PlayParkResponse` as the
-  ticket lines' are, replacing `ADVISOR_RESPONSE_GESTURE_ROW`; rows 2, 3, 4 and 8 are empty, so their lines keep the
-  random chain. Confirm a line of each in the original.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,

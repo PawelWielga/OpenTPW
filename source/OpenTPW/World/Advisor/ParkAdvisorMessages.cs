@@ -229,14 +229,29 @@ internal sealed class ParkAdvisorMessages
 
 	/// <summary>
 	/// The rows of the responses whose sample, lip file, gesture or group is not the topic's rule (the first sample plus
-	/// the line, its own lip, the random chain, the slot of its prop, one group): the golden tickets' lines, 434 to 477,
-	/// and the first ticket's, 571 and 575. Copied from the executable's table.
+	/// the line, its own lip, the random chain, the slot of its prop, one group): the ten lines of other topics that name
+	/// a row of the gesture table, the golden tickets' lines, 434 to 477, and the first ticket's, 571 and 575. Copied from
+	/// the executable's table.
 	/// </summary>
-	private static readonly Dictionary<int, Response> _responses = TicketResponses();
+	private static readonly Dictionary<int, Response> _responses = Responses();
 
-	private static Dictionary<int, Response> TicketResponses()
+	private static Dictionary<int, Response> Responses()
 	{
-		var rows = new Dictionary<int, Response>();
+		var rows = new Dictionary<int, Response>
+		{
+			// The other topics' lines with a gesture row of their own (rows 5 to 11, each opening on clip 14), their
+			// sample, lip, slot and group the topic's rule. 53, 97 and 129 are lines of topics not built.
+			[18] = new( 17, 17, 21, 0, 8 ),
+			[37] = new( 37, 37, 22, 0, 14 ),
+			[53] = new( 53, 53, 23, 0, ParkTags.NoTag ),
+			[82] = new( 80, 80, 23, 0, 30 ),
+			[84] = new( 82, 82, 23, 0, 30 ),
+			[90] = new( 88, 88, 25, 0, 32 ),
+			[97] = new( 95, 95, 23, 0, 35 ),
+			[129] = new( 127, 127, 21, 0, 45 ),
+			[206] = new( 204, 204, 26, 0, 72 ),
+			[258] = new( 292, 292, 27, 0, 100 )
+		};
 		int[] ticketOnly = [293, 294, 295];
 
 		// 434 to 445: "ticket only", samples 293 to 295 in turn, every lip file 293's, gesture 17 (row 1); groups 102 to 113.
@@ -260,7 +275,7 @@ internal sealed class ParkAdvisorMessages
 		return rows;
 	}
 
-	/// <summary>The row of <paramref name="response"/> where it is one of <see cref="TicketResponses"/>, null for any other.</summary>
+	/// <summary>The row of <paramref name="response"/> where it is one of <see cref="Responses"/>, null for any other.</summary>
 	internal static Response? ResponseOf( int response ) => _responses.TryGetValue( response, out var row ) ? row : null;
 
 	/// <summary>The lip file <paramref name="response"/>'s line moves his mouth by (the response table's +0x08): its sample's, but where its row names another.</summary>
@@ -292,8 +307,7 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>
 	/// A row of the metadata table 0x0076e300: the message, its score's key, its first response and that
 	/// response's sample, how many lines it rotates (+0x28) and how many copies the slots may hold (+0x20).
-	/// <paramref name="GestureRowLine"/> is the one line whose response names a row of the gesture table
-	/// (the response table's +0x0c), -1 where every line's is the random chain. <paramref name="Prop"/> is what
+	/// The row of the gesture table a line plays is its response's (<see cref="GestureRowOf"/>). <paramref name="Prop"/> is what
 	/// he wears for every line of it (the response table's +0x14), and <paramref name="SecondProp"/> what he puts on
 	/// after it (+0x18), nought for none.
 	/// <paramref name="Group"/> is the group of every line of it (the response table's +0x1c), the id of the tag
@@ -356,8 +370,6 @@ internal sealed class ParkAdvisorMessages
 	/// <see cref="ParkStaffPool"/>'s order, is on the staff, the kind's monthly training budget is nought or less,
 	/// and the kind's grades added up are under the section's WorseThan per cent, in whole numbers, of the top
 	/// grade for every member; nought otherwise.
-	/// <paramref name="SecondGestureRowLine"/> is a second line whose response names a row of the gesture table,
-	/// -1 for none.
 	/// <paramref name="LitterWithNoHandyman"/> makes the score rows 8 and 9's (0x0059cb40, 0x0059cbb0), and names the
 	/// section: in an open park with no handyman, the key's value for each point of the litter share less the section's
 	/// LitterPointCutoffLow, below nought too; nought where the share is over the section's LitterPointCutoffHigh (row 8),
@@ -408,14 +420,14 @@ internal sealed class ParkAdvisorMessages
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
 	internal sealed record Topic( int Id, string ScoreKey, int FirstResponse, int FirstSample, int Lines = 2, int MaxInstances = 1,
-		int GestureRowLine = -1, int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
+		int Prop = 0, int Group = ParkTags.NoTag, int Category = 0, bool Polled = false,
 		string? AgeSection = null, bool PerWaitingGuest = false, bool NothingToRide = false, Shut ShutShare = Shut.None, string? ShutSection = null,
 		string? PerDayWithNoRide = null, string? OpenWithAtLeast = null, bool QueueNotJoined = false,
 		bool PerWornRideWithNoMechanic = false, bool PerBrokenRideWithNoMechanic = false, string? RidesAMechanic = null,
 		string? PoorSelection = null, Shut PoorOf = Shut.Rides, string? PerDayWithNoShop = null, string? ShopsPerRide = null,
 		string? PerDayWithNoSideshow = null, string? SideshowsPerRide = null, string? PerDayWithNoFeature = null,
 		string? NeedingToiletWithNone = null, bool EveryFeatureBuilt = false, bool FullSimulationOnly = false,
-		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0, int SecondGestureRowLine = -1,
+		bool EverySideshowBuilt = false, string? Untrained = null, int StaffKind = 0,
 		string? CellsAHandyman = null, string? CellsAGuard = null, string? KidsWithNoGuard = null,
 		string? MorePranksters = null, string? BusyWithNoEntertainer = null, string? BusyWithNoGuard = null,
 		string? LitterWithNoHandyman = null, bool Filthy = false, string? GotAwayMoreThan = null,
@@ -643,13 +655,13 @@ internal sealed class ParkAdvisorMessages
 		new( VisitorsThirsty, "VisitorsThirsty.ScorePerThirstyPerson", 8, 7, Lines: 3, Prop: FastFoodHat, SecondProp: Spatula, Group: 5, Polled: true, PerThirstyGuest: true ),
 		new( VisitorsHungry, "VisitorsHungry.ScorePerHungryPerson", 11, 10, Lines: 3, Prop: FastFoodHat, SecondProp: Spatula, Group: 6, Polled: true, PerHungryGuest: true ),
 		new( HireMechanics, "StaffHireMechanics1.ScorePerWornRide", 14, 13, Lines: 3, Prop: HardHat, Group: 7, Polled: true, PerWornRideWithNoMechanic: true ),
-		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, GestureRowLine: 1, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
+		new( HireMechanicsBroken, "StaffHireMechanics2.ScorePerBrokenRide", 17, 16, Lines: 3, Prop: HardHat, Group: 8, Polled: true, PerBrokenRideWithNoMechanic: true ),
 		new( HireMoreMechanics, "StaffHireMechanics3.ScorePerExtraRide", 20, 20, Lines: 3, Prop: HardHat, Group: 9, Polled: true, RidesAMechanic: "StaffHireMechanics3.IdealNumberOfRidesPerMechanic" ),
 		new( HireHandymen, "StaffHireHandymen1.ScorePerLitterPoint", 23, 23, Lines: 3, Prop: HandymanCap, Group: 10, Polled: true, LitterWithNoHandyman: "StaffHireHandymen1" ),
 		new( HireHandymenFilthy, "StaffHireHandymen2.ScorePerLitterPoint", 26, 26, Lines: 3, Prop: HandymanCap, Group: 11, Polled: true, LitterWithNoHandyman: "StaffHireHandymen2", Filthy: true ),
 		new( HireMoreHandymen, "StaffHireHandymen3.ScorePerExtra10Cells", 29, 29, Lines: 3, Prop: HandymanCap, Group: 12, Polled: true, CellsAHandyman: "StaffHireHandymen3" ),
 		new( HireGuardsBusy, "StaffHireGuards1.ScorePerExtraBusyPoint", 32, 32, Lines: 3, Prop: GuardCap, Group: 13, Category: SaidOnce, Polled: true, BusyWithNoGuard: "StaffHireGuards1" ),
-		new( HireGuards, "StaffHireGuards2.Score", 35, 35, Lines: 3, GestureRowLine: 2, Prop: GuardCap, Group: 14, Polled: true, KidsWithNoGuard: "StaffHireGuards2" ),
+		new( HireGuards, "StaffHireGuards2.Score", 35, 35, Lines: 3, Prop: GuardCap, Group: 14, Polled: true, KidsWithNoGuard: "StaffHireGuards2" ),
 		new( HireMoreGuards, "StaffHireGuards3.ScorePerExtra10Cells", 38, 38, Lines: 3, Prop: GuardCap, Group: 15, Polled: true, CellsAGuard: "StaffHireGuards3" ),
 
 		// Row 14's three responses name the theme's own advisor model and its costume, as the entertainers' training
@@ -666,13 +678,13 @@ internal sealed class ParkAdvisorMessages
 
 		// Row 98's two responses are in the guards' cap, the second with a gesture row of its own (docs/exe/advisor-park.md,
 		// "Kids who got away").
-		new( LaxSecurity, "GeneralLaxSecurity.ScorePerGetAway", 257, 291, Lines: 2, GestureRowLine: 1, Prop: GuardCap, Group: 100, Polled: true, GotAwayMoreThan: "GeneralLaxSecurity.MoreThanThisGotAway" ),
+		new( LaxSecurity, "GeneralLaxSecurity.ScorePerGetAway", 257, 291, Lines: 2, Prop: GuardCap, Group: 100, Polled: true, GotAwayMoreThan: "GeneralLaxSecurity.MoreThanThisGotAway" ),
 
 		// Rows 28 to 32, one a kind of staff in the table's own order. The entertainers' three responses name the
 		// theme's own advisor model and its costume (docs/exe/advisor-park.md, "Staff nobody has trained").
-		new( TrainMechanics, "StaffTrainMechanics.Score", 82, 80, Lines: 3, GestureRowLine: 0, SecondGestureRowLine: 2, Prop: HardHat, Group: 30, Polled: true, Untrained: "StaffTrainMechanics", StaffKind: 1 ),
+		new( TrainMechanics, "StaffTrainMechanics.Score", 82, 80, Lines: 3, Prop: HardHat, Group: 30, Polled: true, Untrained: "StaffTrainMechanics", StaffKind: 1 ),
 		new( TrainHandymen, "StaffTrainHandymen.Score", 85, 83, Lines: 3, Prop: HandymanCap, Group: 31, Polled: true, Untrained: "StaffTrainHandymen", StaffKind: 0 ),
-		new( TrainGuards, "StaffTrainGuards.Score", 88, 86, Lines: 3, GestureRowLine: 2, Prop: GuardCap, Group: 32, Polled: true, Untrained: "StaffTrainGuards", StaffKind: 3 ),
+		new( TrainGuards, "StaffTrainGuards.Score", 88, 86, Lines: 3, Prop: GuardCap, Group: 32, Polled: true, Untrained: "StaffTrainGuards", StaffKind: 3 ),
 		new( TrainEntertainers, "StaffTrainEntertainers.Score", 91, 89, Lines: 3, Prop: AdvisorProps.ThemeCostume, Group: 33, Polled: true, Untrained: "StaffTrainEntertainers", StaffKind: 2 ),
 		new( TrainResearchers, "StaffTrainResearchers.Score", 94, 92, Lines: 3, Prop: ResearchHat, Group: 34, Polled: true, Untrained: "StaffTrainResearchers", StaffKind: 4 ),
 		new( PoorSelection, "RidesPoorSelection.Score", 176, 173, Lines: 3, Group: 62, Polled: true, PoorSelection: "RidesPoorSelection" ),
@@ -702,7 +714,7 @@ internal sealed class ParkAdvisorMessages
 		new( RideWornOut, "RidesBreakdownImminent.Score", 194, 191, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 68 ),
 		new( NoMechanics, "RidesBreakdownNoMechanics.Score", 198, 196, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 70 ),
 		new( MechanicsBusy, "RidesBreakdownBusyMechanics.Score", 201, 199, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 71 ),
-		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, GestureRowLine: 2, Prop: HardHat, Group: 72 ),
+		new( MechanicOnHisWay, "RidesBreakdownMechanicOnIt.Score", 204, 202, Lines: 3, MaxInstances: 255, Prop: HardHat, Group: 72 ),
 		new( TagMessage, "HelpMessage.Score", 544, 561, Lines: 1, Category: Tutorial ),
 		new( BuyScreen, "HelpMessage.Score", 407, 380, Lines: 1, Category: Tutorial ),
 		new( HireScreen, "HelpMessage.Score", 408, 381, Lines: 1, Category: Tutorial ),
@@ -813,6 +825,13 @@ internal sealed class ParkAdvisorMessages
 	private Func<ParkFacts>? _park;
 	private long WaitUntil => (_started ?? 0) + _duration;
 	internal int Attempts { get; private set; }
+	/// <summary>
+	/// An instrument, the console's <c>sayas</c>: the next line said is said as this response of <see cref="Responses"/>
+	/// (its sample, lip file, props, slot, gesture row and group), the message's own history kept, as
+	/// <c>original/sayas.sh</c> makes the original's <c>Advisor_SayResponse</c> (<c>0x00599050</c>) do. -1 for none.
+	/// </summary>
+	internal int SayAs = -1;
+
 	internal int PendingCount => _slots.Count( slot => slot != null ) + _carried.Count( carried => carried );
 	internal int Threshold => Value( "GeneralAdvisor.MinScoreForConsideration" );
 	/// <summary>The State of repair a ride is worn under for row 5's score, the limit its function hands FUN_004ca3a0 ([ECX + 0xc0]).</summary>
@@ -1539,11 +1558,13 @@ internal sealed class ParkAdvisorMessages
 		var history = _histories[pending.Topic.Id];
 		var line = pending.Line >= 0 ? pending.Line : (history.Line + 1) % pending.Topic.Lines;
 		var response = pending.Topic.FirstResponse + (line < pending.Topic.Lines ? line : 0);
+		if ( SayAs >= 0 )
+		{
+			Log.Info( $"Park advisor: said as response={SayAs} in place of response={response}" );
+			response = SayAs;
+			SayAs = -1;
+		}
 		var sample = ResponseOf( response )?.Sample ?? pending.Topic.FirstSample + (line < pending.Topic.Lines ? line : 0);
-		// A response with a gesture of its own plays that row of the gesture table (FUN_00598bf0); the speaker
-		// here builds the random chain for every line.
-		if ( line == pending.Topic.GestureRowLine || line == pending.Topic.SecondGestureRowLine )
-			Unimplemented.Report( "ADVISOR_RESPONSE_GESTURE_ROW" );
 		var duration = play( response, sample );
 		_started = milliseconds;
 		_duration = duration + 1000;

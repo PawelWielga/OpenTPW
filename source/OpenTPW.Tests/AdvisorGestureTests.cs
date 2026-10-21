@@ -71,6 +71,32 @@ public class AdvisorGestureTests
 	}
 
 	/// <summary>
+	/// Rows 5 to 11, the other topics' lines: each opens on clip 14 and keeps its lead-in, ends on clip 15, carries no flag
+	/// and no cue; row 8 is empty, so a line naming it would play the random chain.
+	/// </summary>
+	[TestMethod]
+	public void RowsFiveToElevenAreFixedClipListsWithALeadIn()
+	{
+		var rows = new Dictionary<int, (int[] Clips, int Milliseconds)>
+		{
+			[5] = ([14, 5, 11, 15], 8999),
+			[6] = ([14, 11, 1, 12, 1, 15], 12331),
+			[7] = ([14, 11, 11, 5, 15], 12332),
+			[9] = ([14, 11, 4, 15], 8165),
+			[10] = ([14, 5, 1, 11, 6, 15], 18165),
+			[11] = ([14, 11, 9, 15], 14832)
+		};
+		foreach ( var (index, expected) in rows )
+		{
+			var row = AdvisorGestures.Read( index, Length )!.Value;
+			CollectionAssert.AreEqual( expected.Clips, row.Clips.Select( clip => clip.Clip ).ToArray(), $"row {index}" );
+			Assert.AreEqual( (expected.Milliseconds, (int?)null, true, 0), (row.Milliseconds, row.CueAt, row.LeadIn, row.Clips.Sum( clip => clip.Flags )), $"row {index}" );
+		}
+
+		Assert.AreEqual( 0, AdvisorGestures.Read( 8, Length )!.Value.Clips.Count );
+	}
+
+	/// <summary>
 	/// A clip lasts its declared span (FUN_00474070): Lost Kingdom's clip 20 declares 60 frames and keys 89, so it lasts
 	/// 2000 ms, the original's figure, where the keys' span would say 2966.
 	/// </summary>
