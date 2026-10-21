@@ -2465,9 +2465,10 @@ constructor fills no load, so a slot no load has reached holds whatever memory h
 nought in the original's own fresh parks). The serialiser reads and writes it whole (`FUN_004ce660`, the stays' shape,
 from `0x004c69e8` and `0x004c70de`). It has three readers: advisor row 124's score (`FUN_0059f220`, at `0x005a368f`: the newest load against the one
 before, only while the park is younger than `[+0x3c8]` 30-day months), row 140's (`FUN_0059f440`, at `0x005a3c50`: the
-newest load), none of them built, and `FUN_005a0780`, a challenge's test in the table at `0x00772088`:
-how many loads have been called (five once wrapped, else the slot plus one), and the challenge's `+0x5f4` when that is
-exactly one; the challenges are not built. **Readers**: the park status screen's graph plots the 13th as its first series (bit
+newest load), neither of them built, and `AdvisorScore_GoldTicketExplanation` (`0x005a0780`, at `0x00772088`, the
+`+0x10` of advisor row `0x119` in the metadata table): how many loads have been called (five once wrapped, else the slot
+plus one), and `GoldTicketExplanation.Score` (`+0x5f4`) when that is exactly one; built for Q708 (`ride-operation.md`,
+"Golden tickets", "The hints"). **Readers**: the park status screen's graph plots the 13th as its first series (bit
 `1` of `DAT_00753c48`; `FUN_004a51d0`, `FUN_004a5e10` and the draw at `0x004a4750` take its month so far's address,
 the ring's head); its labels are not read.
 

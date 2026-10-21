@@ -199,6 +199,24 @@ internal sealed class ParkAdvisorMessages
 	/// </summary>
 	internal const int WonFirstTicket = 0x137, TicketClues = 0x13b;
 
+	/// <summary>
+	/// The golden tickets' hints, polled rows of Full Simulation alone (docs/exe/ride-operation.md, "Golden tickets", "The
+	/// hints"): 0x119, what a golden ticket is, while one arrival load has been called; 0x13a, near the first ticket;
+	/// 0x13c, near Local 0's visitors; 0x13d, near Local 2's happiness. 0x13e, near Local 4's profit, is posted only and
+	/// nothing posts it, so it is not built.
+	/// </summary>
+	internal const int TicketExplanation = 0x119, NearFirstTicket = 0x13a, NearVisitorsTicket = 0x13c, NearHappinessTicket = 0x13d;
+
+	/// <summary>Which hint's score a row's is, <see cref="TicketHint.None"/> for every other row.</summary>
+	internal enum TicketHint
+	{
+		None,
+		Explanation,
+		NearFirst,
+		NearVisitors,
+		NearHappiness
+	}
+
 	/// <summary>The golden tickets' category (a row's +0x08): MessageGroups[2], no wait between two sayings.</summary>
 	internal const int GoldenTickets = 2;
 
@@ -385,6 +403,7 @@ internal sealed class ParkAdvisorMessages
 	/// the same of the hunger over <see cref="HungrierThan"/>.
 	/// <paramref name="AlwaysNought"/> is the score of row 85 (0x0059e420): nought, whatever the park.
 	/// <paramref name="Constant"/> is a score read from no key, row 167's 10000 (0x0059f9a0).
+	/// <paramref name="Hint"/> makes the score a golden-ticket hint's (<see cref="TicketHint"/>, 0x005a0780 to 0x005a05f0).
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -402,7 +421,7 @@ internal sealed class ParkAdvisorMessages
 		string? LitterWithNoHandyman = null, bool Filthy = false, string? GotAwayMoreThan = null,
 		string? MostRidesBuilt = null, bool EveryRideBuilt = false, string? SlowResearch = null,
 		string? GotAwayWithAGuard = null, int SecondProp = 0, bool PerThirstyGuest = false, bool PerHungryGuest = false,
-		bool AlwaysNought = false, int? Constant = null );
+		bool AlwaysNought = false, int? Constant = null, TicketHint Hint = TicketHint.None );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -484,7 +503,8 @@ internal sealed class ParkAdvisorMessages
 		int GuestsInside = 0, int GuestsNeedingToilet = 0, int Researchers = 0, int FeatureProjectsUnfinished = 0,
 		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
 		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0, int GuestsUnhappy = 0, int LitterShare = 0,
-		int KidsGotAway = 0, int RideProjectsUnfinished = 0, int ResearcherCandidates = 0, int GuestsThirsty = 0, int GuestsHungry = 0 )
+		int KidsGotAway = 0, int RideProjectsUnfinished = 0, int ResearcherCandidates = 0, int GuestsThirsty = 0, int GuestsHungry = 0,
+		int LifetimeVisitors = 0, float Happiness = 0, int LoadsCalled = 0, TicketFacts? Tickets = null )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -509,6 +529,13 @@ internal sealed class ParkAdvisorMessages
 			_ => (RideKindsOnOffer, RideKindsStanding, Rides, "MoreRidesThan", "rides")
 		};
 	}
+
+	/// <summary>
+	/// What the golden-ticket hints read of the player and the park's thresholds: the player's tickets less the secret
+	/// ones (PlayerProgress_CurrentTicketsNoSecret, 0x004d4ac0), whether the park holds Local 0 and Local 2
+	/// (PlayerProgress_ParkHoldsTicket, 0x005af7f0), and the theme's GoldenTicketLocal keys.
+	/// </summary>
+	internal readonly record struct TicketFacts( int HeldBesidesSecret, bool HoldsLocal0, bool HoldsLocal2, ParkGoldenTickets.Thresholds Thresholds );
 
 	/// <summary>
 	/// What rows 28 to 32's scores read of one kind of staff: its members (FUN_004c9960: a thing of the kind's type
@@ -724,7 +751,13 @@ internal sealed class ParkAdvisorMessages
 		new( AwardMovedHere + 3, "AwardMoved.Score", 477, 536, Lines: 1, MaxInstances: 255, Category: GoldenTickets, FullSimulationOnly: true ),
 		// 0x137 scores 0x005a0520, 0x13b 0x005a0590, one copy each, MessageGroups[0].
 		new( WonFirstTicket, "WonFirstGoldenTicket.Score", 571, 589, Lines: 1, Prop: AdvisorProps.ThemeCostume, FullSimulationOnly: true ),
-		new( TicketClues, "GoldTicketCluesForRemainder.Score", 575, 598, Lines: 1, Prop: AdvisorProps.ThemeCostume, FullSimulationOnly: true )
+		new( TicketClues, "GoldTicketCluesForRemainder.Score", 575, 598, Lines: 1, Prop: AdvisorProps.ThemeCostume, FullSimulationOnly: true ),
+
+		// The hints, polled, one copy each; 0x119 is a tutorial row (+0x08 1, said once).
+		new( TicketExplanation, "GoldTicketExplanation.Score", 541, 558, Lines: 1, Prop: AdvisorProps.ThemeCostume, Category: Tutorial, Polled: true, FullSimulationOnly: true, Hint: TicketHint.Explanation ),
+		new( NearFirstTicket, "GoldTicketNearToFirstOne.Score", 574, 597, Lines: 1, Prop: AdvisorProps.ThemeCostume, Polled: true, FullSimulationOnly: true, Hint: TicketHint.NearFirst ),
+		new( NearVisitorsTicket, "GoldTicketNearToXPeeps.Score", 576, 599, Lines: 1, Prop: AdvisorProps.ThemeCostume, Polled: true, FullSimulationOnly: true, Hint: TicketHint.NearVisitors ),
+		new( NearHappinessTicket, "GoldTicketNearToXHappiness.Score", 577, 600, Lines: 1, Prop: AdvisorProps.ThemeCostume, Polled: true, FullSimulationOnly: true, Hint: TicketHint.NearHappiness )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -1001,6 +1034,8 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.AlwaysNought ) return 0;
 		if ( topic.Constant is { } constant ) return constant;
 
+		if ( topic.Hint != TicketHint.None ) return HintScore( topic );
+
 		// Rows 3 and 4 ask neither the door nor how many are inside: the count alone, times the key.
 		if ( topic.PerThirstyGuest ) return _park?.Invoke() is { } thirsty ? thirsty.GuestsThirsty * Value( topic.ScoreKey ) : 0;
 		if ( topic.PerHungryGuest ) return _park?.Invoke() is { } hungry ? hungry.GuestsHungry * Value( topic.ScoreKey ) : 0;
@@ -1222,6 +1257,37 @@ internal sealed class ParkAdvisorMessages
 		return Value( topic.ScoreKey );
 	}
 
+	/// <summary>
+	/// A golden-ticket hint's score. 0x119's (0x005a0780) is its key's value while exactly one arrival load has been
+	/// called, the door and the tickets not asked. The other three take a threshold times their multiplier, a float, cut
+	/// to an int (__ftol, 0x0067a830), and pass strictly over it: 0x13a's (0x005a0530) the lifetime visitors over
+	/// Visitors times its PeopleMultiplier while the player holds no ticket besides the secret ones; 0x13c's (0x005a05a0)
+	/// the same over its own multiplier while the park does not hold Local 0; 0x13d's (0x005a05f0) the happiness of the
+	/// guests inside over Happiness times its HappinessMultiplier, the guests inside over AtLeastThisManyHappyPeople as it
+	/// stands, and the park not holding Local 2. Nought otherwise, and with no player.
+	/// </summary>
+	private int HintScore( Topic topic )
+	{
+		if ( _park?.Invoke() is not { } park ) return 0;
+		if ( topic.Hint == TicketHint.Explanation ) return park.LoadsCalled == 1 ? Value( topic.ScoreKey ) : 0;
+		if ( park.Tickets is not { } tickets ) return 0;
+
+		var section = topic.ScoreKey[..topic.ScoreKey.LastIndexOf( '.' )];
+		// FILD of the int, FMUL of the float: the product of the two is exact in a double, as in the x87's 64 bits.
+		int Cut( int threshold, string multiplier ) => (int)(threshold * (double)Fraction( $"{section}.{multiplier}" ));
+
+		var passes = topic.Hint switch
+		{
+			TicketHint.NearFirst => tickets.HeldBesidesSecret <= 0 && park.LifetimeVisitors > Cut( tickets.Thresholds.Visitors, "PeopleMultiplier" ),
+			TicketHint.NearVisitors => park.LifetimeVisitors > Cut( tickets.Thresholds.Visitors, "PeopleMultiplier" ) && !tickets.HoldsLocal0,
+			TicketHint.NearHappiness => park.Happiness > Cut( tickets.Thresholds.Happiness, "HappinessMultiplier" )
+				&& park.GuestsInside > tickets.Thresholds.AtLeastThisManyHappyPeople && !tickets.HoldsLocal2,
+			_ => false
+		};
+
+		return passes ? Value( topic.ScoreKey ) : 0;
+	}
+
 	internal bool PostDoor( bool closed, int gameTick ) => Post( closed ? Closed : Opened, gameTick );
 
 	/// <summary>
@@ -1332,6 +1398,12 @@ internal sealed class ParkAdvisorMessages
 			shut = FormattableString.Invariant( $" shopkinds={sized.ShopKindsStanding} ratio={Fraction( $"{crowded}.ShopsPerRideRatio" )} balance={sized.Balance} sincebuild={sized.DaysSinceObjectBuilt}" );
 		if ( topic.SideshowsPerRide is { } showy && _park?.Invoke() is { } fair )
 			shut = FormattableString.Invariant( $" sideshowkinds={fair.SideshowKindsStanding} ridekinds={fair.RideKindsStanding} ratio={Fraction( $"{showy}.SideshowsPerRideRatio" )} balance={fair.Balance} sincebuild={fair.DaysSinceObjectBuilt}" );
+		if ( topic.Hint == TicketHint.Explanation && _park?.Invoke() is { } arrived )
+			shut = $" loads={arrived.LoadsCalled}";
+		else if ( topic.Hint != TicketHint.None && _park?.Invoke() is { } near )
+			shut = near.Tickets is { } held
+				? FormattableString.Invariant( $" visitors={near.LifetimeVisitors} happiness={near.Happiness:0.###} inside={near.GuestsInside} tickets={held.HeldBesidesSecret} local0={(held.HoldsLocal0 ? 1 : 0)} local2={(held.HoldsLocal2 ? 1 : 0)}" )
+				: " noplayer";
 		return shut;
 	}
 

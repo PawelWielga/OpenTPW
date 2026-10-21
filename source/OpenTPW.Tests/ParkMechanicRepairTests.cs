@@ -93,7 +93,9 @@ public class ParkMechanicRepairTests
 			+ "RidesBreakdownBusyMechanics.Score 107\nRidesBreakdownMechanicOnIt.Score 110\n"
 			+ "MessageGroups[0].DiscardAfterSlaps 0\nMessageGroups[1].MinTimeSameMessage 0\nMessageGroups[1].SayOnlyOnce 1\nMessageGroups[1].DiscardAfterSlaps 3\nHelpMessage.Score 1000\nTutorialUIPanel.AfterTime 10\nTutorialUIPanel.CutoffTime 60\nTutorialUIPanel.Score 110\nTutorialExplainTooltips.AfterTime 20\nTutorialExplainTooltips.CutoffTime 80\nTutorialExplainTooltips.Score 100\n"
 			+ "ResearchRideResearched.Score 150\nResearchAddonResearched.Score 130\nResearchShopResearched.Score 130\nResearchSideshowResearched.Score 110\nResearchFeatureResearched.Score 90\nNewResearchGroupRide.Score 40\nNewResearchGroupShop.Score 40\nNewResearchGroupSideshow.Score 40\nNewResearchGroupFeature.Score 40\n"
-			+ "GeneralWonGoldenTicket.Score 99000\nAwardMoved.Score 500\nWonFirstGoldenTicket.Score 1000\nGoldTicketCluesForRemainder.Score 999\n" ) ) ) );
+			+ "GeneralWonGoldenTicket.Score 99000\nAwardMoved.Score 500\nWonFirstGoldenTicket.Score 1000\nGoldTicketCluesForRemainder.Score 999\n"
+			+ "GoldTicketExplanation.Score 200\nGoldTicketNearToFirstOne.PeopleMultiplier 0.65\nGoldTicketNearToFirstOne.Score 150\n"
+			+ "GoldTicketNearToXPeeps.PeopleMultiplier 0.9\nGoldTicketNearToXPeeps.Score 100\nGoldTicketNearToXHappiness.HappinessMultiplier 0.85\nGoldTicketNearToXHappiness.Score 100\n" ) ) ) );
 
 	private static int Counted( string gap ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == gap ).Times;
 

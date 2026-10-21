@@ -30,6 +30,8 @@ public class ParkAdvisorMessageTests
 			+ "MessageGroups[9].MinTimeSameMessage 0\nMessageGroups[9].SayOnlyOnce 1\nMessageGroups[9].DiscardAfterSlaps 0\n"
 			+ "MessageGroups[2].MinTimeSameMessage 0\nMessageGroups[2].SayOnlyOnce 0\nMessageGroups[2].DiscardAfterSlaps 0\n"
 			+ "GeneralWonGoldenTicket.Score 99000\nAwardMoved.Score 500\nWonFirstGoldenTicket.Score 1000\nGoldTicketCluesForRemainder.Score 999\n"
+			+ "GoldTicketExplanation.Score 200\nGoldTicketNearToFirstOne.PeopleMultiplier 0.65\nGoldTicketNearToFirstOne.Score 150\n"
+			+ "GoldTicketNearToXPeeps.PeopleMultiplier 0.9\nGoldTicketNearToXPeeps.Score 100\nGoldTicketNearToXHappiness.HappinessMultiplier 0.85\nGoldTicketNearToXHappiness.Score 100\n"
 			+ "StaffHireGuards2.Score 10\nStaffHireGuards2.AdditionalPerMisbehavingKid 5\n"
 			+ "LotsOfPranks.MorePrankstersThan 2\nLotsOfPranks.Score 100\n"
 			+ "GeneralLaxSecurity.MoreThanThisGotAway 1\nGeneralLaxSecurity.ScorePerGetAway 20\n"
@@ -172,7 +174,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 90, written.Count, "every built topic's record, the golden tickets' fifteen among them" );
+		Assert.AreEqual( 94, written.Count, "every built topic's record, the golden tickets' fifteen and their four hints among them" );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -969,7 +971,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 108, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 104, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -3609,8 +3611,8 @@ public class ParkAdvisorMessageTests
 			(topic.Id, topic.ScoreKey, topic.EveryFeatureBuilt, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
 		Assert.AreEqual( (4, 10), (ParkAdvisorMessages.ResearchMore, ParkAdvisorMessages.ResearchHat) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.EveryFeatureBuilt ), "no other row is scored so" );
-		Assert.AreEqual( (true, 22), (topic.FullSimulationOnly, ParkAdvisorMessages.ParkTopics.Count( one => one.FullSimulationOnly )),
-			"rows 76, 133 to 136, 200 and the golden tickets' fifteen are the others; every other built row is either game's" );
+		Assert.AreEqual( (true, 26), (topic.FullSimulationOnly, ParkAdvisorMessages.ParkTopics.Count( one => one.FullSimulationOnly )),
+			"rows 76, 133 to 136, 200, the golden tickets' fifteen and their four hints are the others; every other built row is either game's" );
 		Assert.AreEqual( 3, ParkAdvisorMessages.ParkTopics.Count( one => one.Category == ParkAdvisorMessages.ResearchMore ), "rows 76 and 17 are the others of its category" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 80 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 972 ), "before any sweep has handed the park in" );
@@ -4711,7 +4713,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 47, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 51, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>
@@ -4931,5 +4933,137 @@ public class ParkAdvisorMessageTests
 		var none = new List<int>();
 		instant.Tick( 101, 100000, ( response, _ ) => { none.Add( response ); return 0; } );
 		Assert.AreEqual( 0, none.Count, "Instant Action never says it" );
+	}
+
+	/// <summary>
+	/// <b>The golden tickets' four hints</b> (docs/exe/ride-operation.md, "Golden tickets", "The hints"): rows 0x119, 0x13a,
+	/// 0x13c and 0x13d, polled, Full Simulation's alone, one line and one copy each, on the park's own advisor in the
+	/// theme's costume with no tag. 0x119 (0x005a0780) scores 200 while one arrival load has been called, whatever the
+	/// tickets; it is a tutorial row, said once, and not with the Tutorial option off. The others cut the theme's
+	/// threshold times their float multiplier to an int and pass strictly over it: 0x13a 150 with the lifetime visitors
+	/// over Visitors x 0.65 (64 of 100, so 65 passes, where 0.65 as a decimal would want 66) while the player holds no
+	/// ticket besides the secret ones; 0x13c 100 over Visitors x 0.9 (89, so 90 passes) while the park does not hold
+	/// Local 0; 0x13d 100 with the happiness over Happiness x 0.85 (63 of 75, so 63.5 passes, where the uncut 63.75
+	/// would not), more than AtLeastThisManyHappyPeople inside and Local 2 not held.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the load count's one taken as at least one; a multiplier's product not cut, or rounded; a compare
+	/// made not strict; 0x13a's ticket test dropped or made Local 0's; 0x13c's Local 0 test dropped or made Local 2's;
+	/// 0x13d's people or Local 2 test dropped; 0x119 not a tutorial row; a hint scored in Instant Action.
+	/// </remarks>
+	[TestMethod]
+	public void TheGoldenTicketHintsScoreAsTheOriginals()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor();
+		var tutorial = true;
+		var instant = false;
+		var messages = new ParkAdvisorMessages( Settings(), tutorial: () => tutorial, cursor: cursor, instantAction: () => instant );
+		var thresholds = new ParkGoldenTickets.Thresholds( Visitors: 100, PeopleInPark: 200, Happiness: 75, AtLeastThisManyHappyPeople: 150,
+			ProfitYear: 15000, RecentVisitors: 350, RecentVisitorMonths: 6, CoasterHeight: 105, GokartExcitement: 90, WaterLength: 100, MinCellsCovered: 2000 );
+		var none = new ParkAdvisorMessages.TicketFacts( 0, false, false, thresholds );
+		var facts = new ParkAdvisorMessages.ParkFacts( false, 1, 0, 0, GuestsInside: 151, LifetimeVisitors: 90, Happiness: 63.5f, LoadsCalled: 1, Tickets: none );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		void Turn( int row, int at )
+		{
+			cursor.Row = row;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 5000; }, park: () => facts );
+		}
+
+		ParkAdvisorMessages.Topic Of( int id ) => ParkAdvisorMessages.ParkTopics.Single( one => one.Id == id );
+		var explanation = Of( ParkAdvisorMessages.TicketExplanation );
+		var first = Of( ParkAdvisorMessages.NearFirstTicket );
+		var visitors = Of( ParkAdvisorMessages.NearVisitorsTicket );
+		var happiness = Of( ParkAdvisorMessages.NearHappinessTicket );
+		Assert.AreEqual( (0x119, 0x13a, 0x13c, 0x13d), (explanation.Id, first.Id, visitors.Id, happiness.Id) );
+		CollectionAssert.AreEqual( new[] { (541, 558), (574, 597), (576, 599), (577, 600) },
+			new[] { explanation, first, visitors, happiness }.Select( one => (one.FirstResponse, one.FirstSample) ).ToArray() );
+		foreach ( var hint in new[] { explanation, first, visitors, happiness } )
+		{
+			Assert.IsTrue( hint.Polled && ParkAdvisorMessages.IsPolled( hint.Id ) && hint.FullSimulationOnly, $"{hint.Id:x}" );
+			Assert.AreEqual( (1, 1, ParkTags.NoTag, AdvisorProps.ThemeCostume, -1), (hint.Lines, hint.MaxInstances, hint.Group, hint.Prop, hint.GestureRowLine) );
+			Assert.AreEqual( Advisor.ThemeSlot, ParkAdvisorMessages.SlotOf( hint.FirstResponse ), "the park's own advisor" );
+		}
+		Assert.AreEqual( (ParkAdvisorMessages.Tutorial, 0, 0, 0), (explanation.Category, first.Category, visitors.Category, happiness.Category) );
+		Assert.IsFalse( ParkAdvisorMessages.IsPolled( 0x13e ), "the profit hint is posted only, and nothing posts it" );
+		Assert.IsFalse( ParkAdvisorMessages.ParkTopics.Any( one => one.Id == 0x13e ) );
+
+		// Before a sweep has handed the park in, nothing scores.
+		Assert.AreEqual( (0, 0, 0, 0), (messages.ScoreOf( explanation, 612 ), messages.ScoreOf( first, 612 ), messages.ScoreOf( visitors, 612 ), messages.ScoreOf( happiness, 612 )) );
+		Turn( ParkAdvisorMessages.OpenPark, 1 );
+		Assert.AreEqual( 0, said.Count );
+
+		// Every hint at its least: each passes.
+		Assert.AreEqual( (200, 150, 100, 100), (messages.ScoreOf( explanation, 612 ), messages.ScoreOf( first, 612 ), messages.ScoreOf( visitors, 612 ), messages.ScoreOf( happiness, 612 )) );
+		Assert.AreEqual( " loads=1", messages.PollFacts( explanation ) );
+		Assert.AreEqual( " visitors=90 happiness=63.5 inside=151 tickets=0 local0=0 local2=0", messages.PollFacts( first ) );
+
+		// 0x119: one load exactly; neither none nor two, nor five once the ring has wrapped; the tickets are not asked.
+		foreach ( var (loads, score) in new[] { (0, 0), (2, 0), (5, 0), (1, 200) } )
+		{
+			facts = facts with { LoadsCalled = loads };
+			Assert.AreEqual( score, messages.ScoreOf( explanation, 612 ), $"{loads} loads" );
+		}
+		facts = facts with { Tickets = null };
+		Assert.AreEqual( (200, 0, 0, 0), (messages.ScoreOf( explanation, 612 ), messages.ScoreOf( first, 612 ), messages.ScoreOf( visitors, 612 ), messages.ScoreOf( happiness, 612 )), "no player" );
+		Assert.AreEqual( " noplayer", messages.PollFacts( first ) );
+		facts = facts with { Tickets = none };
+
+		// 0x13a: the cut 64 is not passed by 64; one ticket besides the secret ones and it is nought; Local 0 is not asked.
+		facts = facts with { LifetimeVisitors = 64 };
+		Assert.AreEqual( 0, messages.ScoreOf( first, 612 ) );
+		facts = facts with { LifetimeVisitors = 65, Tickets = none with { HeldBesidesSecret = 1 } };
+		Assert.AreEqual( 0, messages.ScoreOf( first, 612 ), "a ticket held" );
+		facts = facts with { Tickets = none with { HoldsLocal0 = true, HoldsLocal2 = true } };
+		Assert.AreEqual( 150, messages.ScoreOf( first, 612 ), "the tickets are counted, not the park's" );
+
+		// 0x13c: the cut 89; Local 0 held and it is nought, whatever else is held; Local 2 is not asked.
+		facts = facts with { LifetimeVisitors = 89, Tickets = none };
+		Assert.AreEqual( 0, messages.ScoreOf( visitors, 612 ) );
+		facts = facts with { LifetimeVisitors = 90 };
+		Assert.AreEqual( 100, messages.ScoreOf( visitors, 612 ) );
+		facts = facts with { Tickets = none with { HoldsLocal0 = true } };
+		Assert.AreEqual( 0, messages.ScoreOf( visitors, 612 ), "Local 0 held" );
+		facts = facts with { Tickets = none with { HeldBesidesSecret = 3, HoldsLocal2 = true } };
+		Assert.AreEqual( 100, messages.ScoreOf( visitors, 612 ), "other tickets held" );
+
+		// 0x13d: the cut 63 is not passed by 63; 150 inside is not over 150; Local 2 held and it is nought; Local 0 is not asked.
+		facts = facts with { Tickets = none, Happiness = 63f };
+		Assert.AreEqual( 0, messages.ScoreOf( happiness, 612 ) );
+		facts = facts with { Happiness = 63.5f, GuestsInside = 150 };
+		Assert.AreEqual( 0, messages.ScoreOf( happiness, 612 ), "150 inside" );
+		facts = facts with { GuestsInside = 151, LifetimeVisitors = 0, Tickets = none with { HoldsLocal2 = true } };
+		Assert.AreEqual( 0, messages.ScoreOf( happiness, 612 ), "Local 2 held" );
+		facts = facts with { Tickets = none with { HeldBesidesSecret = 2, HoldsLocal0 = true } };
+		Assert.AreEqual( 100, messages.ScoreOf( happiness, 612 ), "the visitors and other tickets are not asked" );
+
+		// The multipliers are their keys: a happiness multiplier of 0.8 cuts 60.
+		var settings = Settings();
+		var other = new ParkAdvisorMessages( settings, tutorial: () => true, cursor: new(), instantAction: () => false );
+		Set( settings, "GoldTicketNearToXHappiness.HappinessMultiplier", "0.8" );
+		Set( settings, "GoldTicketNearToXPeeps.PeopleMultiplier", "0.5" );
+		other.Tick( 1, 250, ( _, _ ) => 0, park: () => facts with { Happiness = 60.5f, LifetimeVisitors = 51, Tickets = none } );
+		Assert.AreEqual( (100, 100), (other.ScoreOf( happiness, 1 ), other.ScoreOf( visitors, 1 )) );
+		Assert.AreEqual( 0, other.ScoreOf( first, 1 ), "0x13a's multiplier is its own key" );
+
+		// On its turn 0x119 is said, its one line, and only once: a tutorial row; with the Tutorial option off it is refused.
+		facts = facts with { LoadsCalled = 1, LifetimeVisitors = 90, Tickets = none };
+		tutorial = false;
+		Turn( 0x119, 612 );
+		Assert.AreEqual( ("tutorial-off", 0), (messages.PollAnswer( 0x119 ), said.Count) );
+		tutorial = true;
+		Turn( 0x119, 613 );
+		Assert.AreEqual( "post", messages.PollAnswer( 0x119 ) );
+		CollectionAssert.AreEqual( new[] { (613, 541, 558) }, said );
+		Turn( 0x119, 9000 );
+		Assert.AreEqual( "said-once", messages.PollAnswer( 0x119 ) );
+
+		// In Instant Action none is scored by the poll.
+		instant = true;
+		Turn( 0x13c, 9100 );
+		Assert.AreEqual( ("other-game", 1), (messages.PollAnswer( 0x13c ), said.Count) );
+		instant = false;
+		Turn( 0x13c, 9200 );
+		Assert.AreEqual( "post", messages.PollAnswer( 0x13c ) );
+		CollectionAssert.AreEqual( new[] { (613, 541, 558), (9200, 576, 599) }, said );
 	}
 }

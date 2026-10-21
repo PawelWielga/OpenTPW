@@ -2790,7 +2790,9 @@ public sealed partial class ParkPeople : Entity
 	/// (FUN_004c81b0, <see cref="ParkState.DevelopedCells"/>); and this month's misbehaving kids (FUN_004c94a0 asked with
 	/// nought, <see cref="ParkState.MisbehavingKids"/>); and the guests inside under <see cref="ParkAdvisorMessages.UnhappyBelow"/>
 	/// happiness, each one's truncated to its low byte (FUN_004c9750); and the staff pool's researchers to hire
-	/// (FUN_00508380 asked for kind four). With no catalogue no kind is counted.
+	/// (FUN_00508380 asked for kind four); and the lifetime visitors (FUN_004c94c0), <see cref="GuestsInsideHappiness"/>
+	/// (FUN_004c7bb0), the arrival loads called (five once the ring of loads has wrapped, else its slot plus one;
+	/// 0x005a0797) and <see cref="AdvisorTicketFacts"/>, which the golden-ticket hints read. With no catalogue no kind is counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
@@ -2885,7 +2887,21 @@ public sealed partial class ParkPeople : Entity
 			new ParkAdvisorMessages.StaffTraining( TrainingOf( 0 ), TrainingOf( 1 ), TrainingOf( 2 ), TrainingOf( 3 ), TrainingOf( 4 ) ),
 			State.DevelopedCells(), State.MisbehavingKids.Month, unhappy, State.LitterShare(), State.MisbehavingKids.GotAwayThisMonth,
 			_research?.Unfinished( ItemDescriptionFile.Ride ) ?? 0,
-			ParkStaffPool.Current?.OfKind( ParkStaffPool.Kinds - 1 ).Count() ?? 0, thirsty, hungry );
+			ParkStaffPool.Current?.OfKind( ParkStaffPool.Kinds - 1 ).Count() ?? 0, thirsty, hungry,
+			State.LifetimeVisitors, GuestsInsideHappiness,
+			State.ArrivalLoads.Wrapped ? State.ArrivalLoads.Length : State.ArrivalLoads.Current + 1, AdvisorTicketFacts() );
+	}
+
+	/// <summary>
+	/// What the golden-ticket hints read of the player (<c>[0x00f7c58c]</c>, the progress the awards write) and the
+	/// level's thresholds; null with no player or no balance, so that no hint scores.
+	/// </summary>
+	private static ParkAdvisorMessages.TicketFacts? AdvisorTicketFacts()
+	{
+		if ( Level.Current is not { Balance: { } balance } level || Players.Roster.Current is not { } player )
+			return null;
+
+		return ParkGoldenTickets.HintFacts( player.File, level.ThemeName, ParkGoldenTickets.Thresholds.From( balance ), SaveFolder.IsTheme );
 	}
 
 	/// <summary>

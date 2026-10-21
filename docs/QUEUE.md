@@ -83,11 +83,6 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
-  tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
-  one load). `0x13e` and the rows no code posts stay unsaid, as the original's.
-  From Q327: a fresh Full Simulation park in the original says `0x119` on tick 612, its turn, the first bus's load
-  having come before it (on 604 in this game; in the original only before 612, not read to the tick), for 25 s, and row 282's line waits behind it (`advisor-park.md`, "A fresh Full Simulation park").
 - [ ] **Q709. Spending golden tickets: the mystery ride's purchase.** From Q177c, carried from Q141 when it was ticked.
   The buy list and its click read the same list of ticket-bought items as the purchase: a row whose item has a
   `GoldenTicketCost` not yet bought with tickets is named "??? Mystery Ride! ???" with its negated ticket cost for a
@@ -110,6 +105,16 @@ filed the items that cite it.
   Three clips carry nothing else and so read as no clip (`IsValid`): Lost Kingdom's `tvsime` and `tvsims`, fantasy's
   `sign1c`. Pose them on every model a clip moves (`NodePoser`, `MeshRotator`) and confirm one of each kind beside
   the original's frames.
+- [ ] **Q602. The advisor's row 19, message 0x13, and its line in the hard hat.** From Q708 (`q707/orig/O2/line.log`,
+  `q708/PREDICTION.txt` round G2): Alexah's jungle `New Save` loaded on 19004 by her Full Simulation profile with no ticket,
+  the original says sample 57 in the hard hat (props 5, 0) on tick 19084, response 57 of row 19 (polled, first response 55,
+  three lines, score `0x0059d180`); this game counts the row (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`), so its advisor is free
+  where the original's is busy, and says the hints `0x13a` (19059) and `0x13c` where the original's wait in their slots.
+  Decode the score (`0x0059d180`) and build it on the polled rows' machinery; confirm the 19084 line in both.
+- [ ] **Q603. The gadget's corner reads "-1 x" tickets where the original's reads "0 x".** From Q708 (`q708/run2-F/F-hints.png`
+  against `q707/orig/O2/g-05.png`): with `q707/gms-none.dat` (no ticket, one spent, one key given) this game's corner
+  shows the tickets less those spent, -1, and the original's 0. A profile spending more than it won is not one play makes;
+  decode the corner's count (`hud.md`, the gadget's update) for its floor and say at the site what it is.
 - [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
   the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
   (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to
@@ -228,6 +233,8 @@ filed the items that cite it.
   `Advisor.sam` key names against the settings words `+0x4d8`..`+0x574` are unproven (the settings reader's map was not
   read): match them with `lib/advisorschema.py` before naming a field. Confirm: a shop older than 30 days with a high
   walk-away share in a park file made for it, the row's poll line and score beside the original's.
+  - **Note (Q708):** the original says row 257's sample 525 (props 8, 0; response 497) on tick 19040 of Alexah's jungle
+    `New Save` loaded on 19004 by her Full Simulation profile with no ticket (`q707/orig/O2/line.log`): a ready case.
 - [ ] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
   what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
   turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a

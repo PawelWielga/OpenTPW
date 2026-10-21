@@ -299,4 +299,24 @@ public class ParkGoldenTicketTests
 		ParkGoldenTickets.Tell( new( "Local", 1, 4, Total: 1, Every: 1 ), ( message, line ) => posted.Add( (message, line) ) );
 		CollectionAssert.AreEqual( new[] { (0x137, -1), (0x13b, -1) }, posted, "an unknown result posts no row, and the first lines still" );
 	}
+
+	/// <summary>
+	/// <b>What the advisor's hints read of the player</b>: the tickets of every park and the records, the secret ones
+	/// left out; and whether this park holds Local 0 and Local 2, each its own.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the secret tickets counted; Local 0 read for Local 2, or another park's read.</remarks>
+	[TestMethod]
+	public void TheHintsReadThePlayersTicketsAndTheParksLocals()
+	{
+		var player = Player();
+		Assert.AreEqual( new ParkAdvisorMessages.TicketFacts( 0, false, false, Jungle ), ParkGoldenTickets.HintFacts( player, "jungle", Jungle, IsPark ) );
+
+		player.BonusTickets[0] = 1;
+		player.Park( "jungle" ).Tickets[2] = 1;
+		player.Park( "fantasy" ).Tickets[0] = 1;
+		player.RecordTickets[1] = 1;
+		Assert.AreEqual( new ParkAdvisorMessages.TicketFacts( 3, false, true, Jungle ), ParkGoldenTickets.HintFacts( player, "jungle", Jungle, IsPark ),
+			"jungle's Local 2, fantasy's Local 0 and a record; the secret one not counted" );
+		Assert.AreEqual( new ParkAdvisorMessages.TicketFacts( 3, true, false, Jungle ), ParkGoldenTickets.HintFacts( player, "fantasy", Jungle, IsPark ) );
+	}
 }

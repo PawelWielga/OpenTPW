@@ -3839,8 +3839,8 @@ Re-read for Q194 from the fork review (`economy-8`, `economy-9`; `wf_cba77d07-b6
 Ghidra and over every shipped `.sam`), decoded whole for Q141, and **built for Q591** (`ParkGoldenTickets`, the awards in
 `PlayerFile`): every test and award, Global 0's measure, the coaster's highest point, built for Q706 (`ParkCoasterHeights`;
 "A coaster's highest track point", below). The advisor's ticket lines are posted and
-said (Q595, "The advisor's ticket lines", below; their big ticket grown, Q599, and their glints drawn, Q600; their tags put on the aerial, Q707), the hints are Q708, the
-cheat rows counted (Q592).
+said (Q595, "The advisor's ticket lines", below; their big ticket grown, Q599, and their glints drawn, Q600; their tags put on the aerial, Q707), the hints are
+polled and said (Q708, "The hints", below), the cheat rows counted (Q592).
 
 **The tick.** `FUN_004d4a00`, from `FUN_004d7b20` (`0x004d7b60`) on a thing sweep (`0x00516695`) whose world counter
 `+0x1da70c`, `mGameTick`, is a multiple of 100 (`DIV`, `0x004d7b54`; the sweep raises it first, `0x00516398`, and calls
@@ -3914,15 +3914,39 @@ channel 0, Q600; `scenes.md`, "Where the glints stand"), and so is each line's t
 threshold in its text (Q707; `advisor-park.md`, "The tag a line leaves on the aerial"). The big
 ticket of clips 18 to 20 is grown by its scale track, as the original's (Q599; `ui.md`, "The big ticket is a scale track").
 
-**The hints** (polled rows, game type 0 alone; `Advisor.sam` scores): `0x13a` (sample 597, "you're really close to winning
-a golden ticket...") scores `GoldTicketNearToFirstOne.Score` 150 while the player holds no ticket, the secret ones not
-counted (`FUN_004d4ac0`, `FUN_005af4a0`) and the cumulative visitors pass `Visitors` × 0.65; `0x13c` (sample 599) 100 when they
-pass `Visitors` × 0.9 and Local 0 is not held; `0x13d` (sample 600) 100 when the average happiness passes `Happiness` ×
-0.85, people in the park pass `AtLeastThisManyHappyPeople` and Local 2 is not held; `0x119` (sample 558, "do you know
-about theme park golden tickets...") `GoldTicketExplanation.Score` 200 while the arrival loads ring (`+0x216d8`, `hud.md`,
-"The arrivals") holds exactly one load. Each product is cut to an int (`__ftol`, `0x0067a830`) and every compare is strict.
-`0x13e` (sample 601, the profit hint, `0x005a0670`: profit past `ProfitYear` × 0.9, Local 4 not held) is a posted-only
-row, and no `PUSH 0x13e` posts it: the original never says it.
+**The hints** (polled rows, game type 0 alone, one copy and one line each; `Advisor.sam` scores, each key behind its
+balance offset by `advisorschema.py`). `0x13a` (`AdvisorScore_GoldTicketNearToFirstOne`, `0x005a0530`; response 574,
+sample 597, "you're really close to winning a golden ticket...") scores `GoldTicketNearToFirstOne.Score` (`+0x5bc`) 150
+while the player holds no ticket, the secret ones not counted (`PlayerProgress_CurrentTicketsNoSecret` `0x004d4ac0`, which
+asks the progress object `FUN_00409410` for `FUN_005af4a0`; above nought, `JG`, the score is nought), and the cumulative visitors
+(`FUN_004c94c0`) pass `Visitors` × its `PeopleMultiplier` (`+0x5b8`, 0.65); `0x13c` (`0x005a05a0`; 576, sample 599) 100
+(`GoldTicketNearToXPeeps`, `+0x5c4`, `+0x5c8`) when they pass `Visitors` × 0.9 and the park does not hold Local 0
+(`PlayerProgress_ParkHoldsTicket( 0 )`), the tickets not counted; `0x13d` (`0x005a05f0`; 577, sample 600) 100
+(`GoldTicketNearToXHappiness`, `+0x5cc`, `+0x5d0`) when the average happiness (`FUN_004c7bb0( 0 )`, Local 2's) passes
+`Happiness` × 0.85 (the cut int loaded again, `FILD`, `FCOMPP`, `JZ` past unless below), people in the park pass
+`AtLeastThisManyHappyPeople` as it stands, and Local 2 is not held; `0x119` (`AdvisorScore_GoldTicketExplanation`,
+`0x005a0780`; 541, sample 558, "do you know about theme park golden tickets...") `GoldTicketExplanation.Score`
+(`+0x5f4`) 200 while the loads called are exactly one: the arrival loads ring's (`+0x216d8`, `hud.md`, "The arrivals")
+count `+0x1c` once wrapped (`+0x20`), else its slot `+0x18` plus one; neither tickets nor the door are asked. Each product
+is the int threshold (`FILD`) times the float multiplier (`FMUL`) cut to an int (`__ftol`, `0x0067a830`): 64 of 100 for
+0.65, 89 for 0.9, 63 of 75 for 0.85; every compare is strict, and every other path answers nought. `0x119` is the
+tutorial category's (`+0x08` 1: said once, refused with the Tutorial option off); the other three category 0's. Each
+line is the random chain on slot 1 in the theme's costume (prop -1), group 383, no tag. `0x13e` (sample 601, the profit
+hint, `AdvisorScore_GoldTicketNearToXProfit` `0x005a0670`: profit past `ProfitYear` × 0.9, Local 4 not held) is a
+posted-only row, and no `PUSH 0x13e` posts it: the original never says it.
+**Measured in the original** (Q708; `q708/PREDICTION.txt`). A fresh Full Simulation park (`freshfs.sh`,
+`original/loads.py`): the ring took its first load, of four, on tick 604, and `0x119` was said on 612, its turn, with no
+slot holding it first; row 282's `0x11a` waited in a slot behind it. Alexah's jungle `New Save` loaded on 19004 by her
+profile with no ticket (`q707/orig/O2`): `0x13a` 150 on 19059, `0x13c` 100 on 19060 and `0x13d` 100 on 19061, the poll's
+three turns; by her profile less Locals 0 and 1 (`q707/orig/O`): `0x13c` alone. There the advisor was busy with two lines
+this game does not say (row 257's sample 525 on 19040, Q713; row 19's sample 57 on 19084, Q602), so each hint waited in
+its slot: on 19100 `0xdc` took `0x13c`'s, `0x13a`'s was let go on 19502 at its turn, nought by then, and `0x13d` still
+waited on 19561.
+**OpenTPW** (Q708: `ParkAdvisorMessages.TicketExplanation` to `NearHappinessTicket`, `TicketHint`, `HintScore`;
+`ParkFacts.LifetimeVisitors`, `Happiness`, `LoadsCalled`, `Tickets`; `ParkGoldenTickets.HintFacts`): the same rows on the
+same turns, `0x119` said on 612 after a load of four on 604; the poll line ends ` loads=N`, or ` visitors=... happiness=...
+inside=... tickets=... local0=... local2=...`. With the advisor free there, this game says `0x13a` on 19059 (and `0x13c`
+on 19060 with the second profile) where the original waits.
 
 **Rows no code posts.** Of the ticket rows `0xd7` to `0xed` the posters push only the thirteen above (and `0x137`, `0x13b`).
 `0xda`, `0xdb`, `0xdf`, `0xe0`, `0xe4` and `0xe5` repeat the result-3 rows' lines; `0xe6` to `0xe9` (`AwardGiven.Score`,

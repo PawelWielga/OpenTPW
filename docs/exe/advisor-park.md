@@ -1184,7 +1184,7 @@ of the 53 calls of the withdrawal (`FUN_00486b40`, `FUN_0059aa70`) pushes a cons
 a park**, and is said on the first of those ticks the cursor stands on row 185. Row 282's (`0x005a0720`, message
 `0x11a`) is the same function on `TutorialExplainTooltips` (20, 80, 100), built in "The tips' line", below, and
 row 281's (`0x005a0780`, message `0x119`) is `GoldTicketExplanation.Score` while the arrival loads ring holds one load
-(`ride-operation.md`, "Golden tickets"), not built (Q708).
+(`ride-operation.md`, "Golden tickets", "The hints"), built for Q708.
 
 **What the shipped park holds.** `Easymode.TPWI`'s record of `0xb9` is (257, line 0, said 1, slaps 0): its makers'
 park said the line on its eleventh day, and the file begins on tick 755. So **Instant Action's Lost Kingdom never
@@ -4799,16 +4799,18 @@ fresh program, nothing done). Each row's turn is its place among the 155 polled 
 | Row | Turns | Answer | OpenTPW | The original |
 |---|---|---|---|---|
 | 185 | 110, 265 | 0 on day 4, 110 on day 11 | said on 265 | said on 265 |
-| 282 | 148 to 458, 613 | 0 to day 19, 100 on day 26 | said on 613 | posted on 613, said on 775 |
-| 62 | 502, 657 | 13 (day 21, under 25), 34 (day 28) | posted on 657, said on 664 | posted on 657, said on 861 |
+| 282 | 148 to 458, 613 | 0 to day 19, 100 on day 26 | posted on 613, said on 707 | posted on 613, said on 775 |
+| 62 | 502, 657 | 13 (day 21, under 25), 34 (day 28) | posted on 657, said on 755 | posted on 657, said on 861 |
 | 1, 2 | every 155 from 1, 2 | 0: shut, nothing to ride | never said | never said |
 | 80, 113, 259 to 263 | | 0: no researcher, no queue, nothing to be shut | never said | never said |
 
-The order is the same, and the scores in the original's slots are this game's poll lines. **Two lines this game
-does not build come first there.** Message 0 (row 0, `Welcome`; response 1, sample 1, slot 1) is in a slot at
+The order is the same, and the scores in the original's slots are this game's poll lines. **One line this game
+does not build comes first there.** Message 0 (row 0, `Welcome`; response 1, sample 1, slot 1) is in a slot at
 100,000 on tick 0 and said on tick 1, for 31.3 s, in every fresh park the original made (two of two); its poster is
-not read (Q543). Message `0x119` (row 281, `GoldTicketExplanation`, Q708) is said on 612, its turn, the first bus's
-load having come (on 604 in this game; in the original only before 612, which bounds it, not read to the tick), for 25 s, so row 282's line waits to 775 and row 62's to 861. A line's length in
+not read (Q543). Message `0x119` (row 281, `GoldTicketExplanation`) is said on 612 in both, its turn, the first bus's
+load of four having come on 604 in both (Q708, `q708/orig/O/loads.log`), his action about 24 s in each (24,164 ms there,
+23,330 here, the random chain's gestures drawn anew), so
+row 282's line waits to 775 there and 707 here, and row 62's to 861 and 755 (`q708/run3-G1`). A line's length in
 sweeps is not compared: the original's sweep ran about 6.5 a second here and this game's 4.8.
 
 **Row 80 in the original's own fresh park.** Its buy screen's misc tab bought one of each of the eight features on

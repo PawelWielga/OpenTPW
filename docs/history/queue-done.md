@@ -9530,6 +9530,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   life 0), counted `TAG_ROW_NOT_LISTED`. **Done:** rows 102 to 113 listed, kinds 5 to 8 written from the balance's
   `GoldenTicketLocal` keys (`TagSystem_WriteText` `0x00509e10`, `Varm_Construct` `0x004a77a0`; `advisor-park.md`, "The
   text"); both games' tags of the 0xd8 and 0xd7 lines held text for text (`q707/p707t/`).
+- [x] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
+  tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
+  one load). `0x13e` and the rows no code posts stay unsaid, as the original's.
+  From Q327: a fresh Full Simulation park in the original says `0x119` on tick 612, its turn, the first bus's load
+  having come before it (on 604 in this game; in the original only before 612, not read to the tick), for 25 s, and row 282's line waits behind it (`advisor-park.md`, "A fresh Full Simulation park").
+  **Done:** the four rows polled and scored as the original's (`AdvisorScore_GoldTicket*`, `0x005a0530` to `0x005a0780`;
+  the float multipliers' cut, 64, 89 and 63 of the jungle's thresholds), `ParkFacts`' visitors, happiness, loads called and
+  the player's tickets. A fresh park's first load of four came on 604 and `0x119` was said on 612 in both games; Alexah's
+  `New Save` with no ticket posted `0x13a` 150, `0x13c` 100 and `0x13d` 100 on 19059 to 19061 in both, and with Locals 0 and
+  1 out `0x13c` alone (`q708/PREDICTION.txt`). 21 of 21 bugs put back fail a test. Q602 and Q603 filed.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

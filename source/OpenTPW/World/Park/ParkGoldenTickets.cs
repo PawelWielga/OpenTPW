@@ -246,6 +246,14 @@ public static class ParkGoldenTickets
 	}
 
 	/// <summary>
+	/// What the advisor's hints read of <paramref name="player"/> in <paramref name="park"/>: the tickets less the secret
+	/// ones (<c>PlayerProgress_CurrentTicketsNoSecret</c>, <c>0x004d4ac0</c>), whether the park holds Local 0 and Local 2
+	/// (<c>PlayerProgress_ParkHoldsTicket</c>), and the thresholds.
+	/// </summary>
+	internal static ParkAdvisorMessages.TicketFacts HintFacts( PlayerFile player, string park, Thresholds thresholds, Func<string, bool> isPark )
+		=> new( player.CountTicketsBesidesSecret( isPark ), player.ParkHoldsTicket( park, 0 ), player.ParkHoldsTicket( park, 2 ), thresholds );
+
+	/// <summary>
 	/// What a teller posts for <paramref name="award"/>, through <paramref name="post"/> (a message and the line asked):
 	/// its own row (<see cref="Posted"/>), then, from GoldenTicket_TellFirst (0x004d5b30), the first ticket's two lines,
 	/// 0x137 and 0x13b, where the tickets of every kind are one after it.

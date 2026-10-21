@@ -1064,8 +1064,8 @@ public sealed class ParkState
 
 	/// <summary>
 	/// The arrival manager's ring of the last five loads, on the park analyser (<c>+0x216d8</c>): <see cref="AddArrivalLoad"/>
-	/// pushes each load's size as the load is called. Nothing here reads it: the challenge whose test counts its loads
-	/// (<c>FUN_005a0780</c>) is not built.
+	/// pushes each load's size as the load is called. The advisor's golden-ticket explanation, row 0x119, scores while one
+	/// has been called (<c>AdvisorScore_GoldTicketExplanation</c>, <c>0x005a0780</c>; <see cref="ParkPeople.AdvisorFacts"/>).
 	/// </summary>
 	public ParkMonthRing ArrivalLoads { get; private set; } = new( ParkMonthRing.Loads );
 
