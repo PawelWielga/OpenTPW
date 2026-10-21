@@ -3836,13 +3836,56 @@ box on a row of state 0, this list nothing (Q158).
 **The mystery row** is inside the researched test, never an unresearched item's (`0x004ab023`): a researched item
 whose `UsageInfo.GoldenTicketCost` (`item+0xC4`, a dword; `Research.Group` is `+0x178`) is above nought and whose id
 the player has not unlocked (`FUN_004d4b70`, `0x004ab047`) is named UITEXT 137 "??? Mystery Ride! ???" and priced at
-**the negated ticket cost** (`0x004ab050`..`0x004ab063`). The unlocks are `PlayerProgress`'s set of item ids
+**the negated ticket cost** (`0x004ab050`..`0x004ab063`), which its price cell letters "1 gt" ("Spending golden tickets", below). The unlocks are `PlayerProgress`'s set of item ids
 (`DAT_00f7c58c`, built lazily by `FUN_00409410`; `FUN_005af780` finds an id), inserted only by the purchase
 (`FUN_004db090` -> `FUN_004d4ad0`) when the tickets suffice, the cost added to the tickets spent; in game type 1 it
 inserts nothing. The set is the player's, saved in `gms.dat` (`FUN_005aff50`; `saves.md`, the "ride ids" rows),
 across every park and theme. No researched item in Instant Action's Lost Kingdom has a ticket cost, which is why the
 original showed no mystery row. OpenTPW draws the row from the current player's `RideIds` (none with nobody playing); buying one
 with tickets is not built, counted `MYSTERY_RIDE_PURCHASE`.
+
+**Spending golden tickets** (decoded for Q604, Q709's first piece; confirmed in the original on a fresh Full
+Simulation park whose player had 4 tickets earned, 2 spent and no ride bought, `q709/orig/a`). Two tests on the
+player's progress (`[0x00f7c58c]`) serve every reader: `GoldenTicket_RideBought` (`0x004d4b70`) asks the ride-id set
+(`PlayerProgress_RideBought` `0x005af780`: an MSVC set of words, head `+0x2c`, nil `[0x00f7c970]`, a node's id at its
+`+0xc`), and `GoldenTicket_CanBuyRide` (`0x004d4b90`) whether the item's `GoldenTicketCost` (`+0xc4`) is at most
+`PlayerProgress_TicketsLeft` (`0x005af5d0`): `PlayerProgress_CountTickets` less `+0x1c`, the spent count, with no floor.
+Their readers:
+
+- **The row's lettering.** The list's row is a name label, a price cell on its own skin (`PriceSkin_Construct`
+  `0x004904c0`, by `BuyList_MakeRowCells` `0x004ad340`) and the tick box. The price cell's setter (`PriceSkin_SetValue`
+  `0x00490650`) letters a number at or above nought by UITEXT 449 "$ {P13}" and one below nought by **455 "{P23} gt"**
+  with its negation, so the mystery row reads "1 gt" and "3 gt" (a number past ±`0xeeeeeee` takes 449 or 450 less that
+  bias). Both cells are coloured by `BuyList_CellColourCallback` (`0x004acb70`, on message `0x403`): a land row
+  (231, 239, 75); a mystery row **gold (255, 224, 0)** where `GoldenTicket_CanBuyRide` passes and **red (255, 0, 0)**
+  where it fails; any other row white, or red where its price (`FUN_004d3d10`'s `+4`) is above the bank. Measured: the
+  -1 row's ink (255, 227, 0) at its purest, the -3 row's (243, 0, 0), the cash rows white (`q709/orig/a-lists.png`).
+- **The click** (`BuyScreen_OnMessage` `0x004ac270`, message `0x400`): an item whose cost is nought, or already bought,
+  goes through the bank test; a mystery item through `GoldenTicket_CanBuyRide` alone (`0x004ac5a9`), **the bank not
+  asked**. Passing, both arms are the same: the carry tool (`FUN_0046c5a0( 4, item )`), the screen closed, advisor
+  message `0xce` (`0xc9` where the item's `+0x4c` is nought and `FUN_004824d0( 0x80, 0 )` answers nought). Failing, `0x00486ae0` (the refusal sound, `cat_ui` `0x1D`) and the
+  screen stays. Measured: the -3 row's click left the screen up and the pick's mode; the -1 row's closed it and put
+  the ride in the hand.
+- **The carry** (`BuildTool_PreviewPass`, `0x005235e6`..`0x00523613`): an item with a cost not yet bought sets the run's
+  price to nought (`FUN_0052fb90( 0 )`) and skips the price-against-bank test below it, so it is never refused for
+  money; the original shows "$ 0" under the balance while carrying it (`q709/orig/a-place.png`).
+- **The purchase** (`Object_Construct` `0x004db090`, `0x004db4a6`..`0x004db4f6`): such an item calls
+  `GoldenTicket_SpendForRide` (`0x004d4ad0`) **in place of** the withdrawal of its price, and ignores its answer.
+  In game type 1 (online) that does nothing; in any other, where the tickets suffice, `PlayerProgress_BuyRide`
+  (`0x005af740`) inserts the id and, only when the insert is new, adds the cost to the spent count. No cash is taken
+  either way, so an item placed with too few tickets would be built free; the click's test is what stops it. Every
+  later purchase of the item finds it bought and pays the price in cash. Measured: the bank 50000 either side of the
+  put-down; `progress.py` "spent 2 ... rides []" to "spent 3 ... rides [1170]" on tick 291; the gadget's corner "2 x"
+  to "1 x".
+- **The save.** Nothing here writes `gms.dat`; the progress object is written at its next write ("Load Game and Save
+  Game", `saves.md`): after a park save the file read spent 3 and ride ids [1170], the rest as before
+  (`q709/orig/a/gms-after.dat`). Afterwards the row is the ride's own, "Jurassic Tours" at "$ 3000", with the owned tick.
+- **The lab** asks the same set for a kind-4 project (`park-engine.md`, "The next project").
+
+**OpenTPW** (round G, `q709/run1-G`, the item not yet built): the rows and their help states as the original's, but
+lettered bare ("-1", "-3"; Q238's note files the "$ ") and white; the two mystery rows in the other order (Eruption's
+first here, Jurassic Tours' there: the tie on the shown name broken differently, not decoded); a click on either refused
+and counted, `MYSTERY_RIDE_PURCHASE`; a placed ticket ride paid in cash and counted, `PURCHASE_GOLDEN_TICKET_ARM`. Q709 builds it.
 
 **A row's name** is `0x00412fb0`'s (called at `0x004ab079`, 0x42 characters). It takes the item's `+0x4f4` when that
 is set and is not "MISSING STRING" (`0x006fd880`): the first of the strings `NAME`, `SIGNA` and `SIGNB` (the table at

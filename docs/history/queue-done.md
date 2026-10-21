@@ -9540,6 +9540,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the player's tickets. A fresh park's first load of four came on 604 and `0x119` was said on 612 in both games; Alexah's
   `New Save` with no ticket posted `0x13a` 150, `0x13c` 100 and `0x13d` 100 on 19059 to 19061 in both, and with Locals 0 and
   1 out `0x13c` alone (`q708/PREDICTION.txt`). 21 of 21 bugs put back fail a test. Q602 and Q603 filed.
+- [x] **Q604. Spending golden tickets, decoded (Q709's first piece).** Decode only: `hud.md`, "Spending golden tickets"
+  (the two tests on the player's progress, the price cell's "$ " and " gt", the rows' colours, the click, the carry, the
+  purchase in place of the withdrawal, the save), checked in the original under Proton (`q709/PREDICTION.txt`, round O:
+  11 held, 1 missed and recorded) and beside this game's unbuilt list (round G); FileFormats `options-and-players.md`,
+  "Spending tickets". Ghidra names: `GoldenTicket_SpendForRide`, `GoldenTicket_RideBought`, `GoldenTicket_CanBuyRide`,
+  `PlayerProgress_TicketsLeft`, `PlayerProgress_BuyRide`, `PlayerProgress_RideBought`, `RideIdSet_LowerBound`,
+  `BuyScreen_OnMessage`, `Object_Construct`, `PriceSkin_Construct`, `PriceSkin_SetValue`, `BuyList_MakeRowCells`.
+  Tools: `lib/gmsfile.py` `put( spent=, ride_ids= )`, `original/progress.py` prints the ride-id set,
+  `original/savepark.sh` `PLAYER=`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

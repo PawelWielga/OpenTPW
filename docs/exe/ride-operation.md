@@ -3761,7 +3761,7 @@ in double ("What a thing is worth to a guest", "Where OpenTPW differs", the FPU'
 (Q386; `hud.md`, "The mini-balance is a MONTHLY ACCOUNT"), and the gate fee's lifetime visitors and dearest ticket
 (Q389; `hud.md`, "The lifetime visitors"). Counted, not built: the gate fee's challenge post (`GATE_FEE_CHALLENGE_POST`), the booking's (`COST_OF_GOODS_CHALLENGE_POST`), the purchase's golden-ticket arm (`PURCHASE_GOLDEN_TICKET_ARM`, on
 every such purchase, as the purchase does not ask the player's `RideIds`) and a kart or water ride's track at a sale
-(`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row is built (`hud.md`, "The mystery row"); a click on it is refused whatever tickets the player holds and counted, `MYSTERY_RIDE_PURCHASE`, as its ticket test is not built (Q709).
+(`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row is built (`hud.md`, "The mystery row"); a click on it is refused whatever tickets the player holds and counted, `MYSTERY_RIDE_PURCHASE`, as its ticket test is not built (Q709; the spending is decoded in `hud.md`, "Spending golden tickets").
 
 **Who reads what the booking moves**:
 

@@ -83,15 +83,18 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q709. Spending golden tickets: the mystery ride's purchase.** From Q177c, carried from Q141 when it was ticked.
-  The buy list and its click read the same list of ticket-bought items as the purchase: a row whose item has a
-  `GoldenTicketCost` not yet bought with tickets is named "??? Mystery Ride! ???" with its negated ticket cost for a
-  price (`0x004ab02e`), and a click on it is refused when the player holds too few tickets (`FUN_004d4b90`,
-  `0x004ac5a9`). The row is built, from the player's `RideIds` (`docs/exe/hud.md`, "The mystery row"); a click on it
-  is refused always and counted, `MYSTERY_RIDE_PURCHASE`. The ticket test and the spending of tickets (`gms.dat`'s
-  spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
-  Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
-  spent one on `tourride`.
+- [ ] **Q709. Spending golden tickets: the mystery ride's purchase.** From Q177c, carried from Q141 when it was ticked;
+  decoded by Q604 (`hud.md`, "Spending golden tickets"). Build it as decoded: the player's tickets left (counted less
+  spent, no floor) and their `RideIds` asked by the buy list, the click, the carry and the purchase; **the price cell's
+  setter** (`PriceSkin_SetValue` `0x00490650`: UITEXT 449 "$ {P13}", 455 "{P23} gt" below nought; this takes the "$ "
+  of Q238's note too) and **the rows' colours** (`BuyList_CellColourCallback` `0x004acb70`: gold or red for a mystery
+  row by the tickets, white or red for any other by the bank, the land rows' (231, 239, 75)); the click on a mystery
+  row carrying the ride when the tickets suffice, the bank not asked, and refusing with `cat_ui` `0x1D` when not
+  (replacing `MYSTERY_RIDE_PURCHASE`); the carry's price nought and no refusal by money; the purchase spending the
+  tickets in place of the price, inserting the id and adding the cost only when the id is new (replacing
+  `PURCHASE_GOLDEN_TICKET_ARM`); `gms.dat` written at its next write. The original lists the two mystery rows
+  Jurassic Tours' first where this game lists Eruption's first: find the tie's rule and follow it. Confirm on
+  `q709/gms-two.dat` (4 tickets, 2 spent, none bought) beside `q709/orig/a` (`q709/confirm.py` and `orig/run.sh`).
 - [ ] **Q596. The other topics' gesture rows.** From Q595. Rows 5 to 11 of the gesture table (`AdvisorGestures`;
   `scenes.md`, "Gesture table") are fixed clip lists opening on clip 14 (row 5: 14, 5, 11, 15), named by responses of
   built topics (`GestureRowLine`: 17, 37, 53, 82, 84, 90, 97, 129, 206, 258): hand them to `PlayParkResponse` as the
