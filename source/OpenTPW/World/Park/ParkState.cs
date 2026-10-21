@@ -390,6 +390,13 @@ public sealed class ParkState
 	/// (<see cref="DeleteThing"/>, <see cref="FreeDeletedThings"/>). <c>docs/exe/ride-operation.md</c>, "Where a
 	/// ride's turn comes from".
 	/// </para>
+	/// <para>
+	/// <b>With every id up to <see cref="LastThingId"/> held it answers nought, and the caller makes nothing.</b> The
+	/// original's allocator answers nought too, but its constructor carries on and links thing nought in through the
+	/// table's empty node 0, a write to address 8 (<c>FUN_004d91f0</c>): the game falls over. DEVIATION: here nothing
+	/// is made and the park goes on, until a delete frees an id (<c>docs/exe/ride-operation.md</c>, the
+	/// <c>FUN_00516270</c> row).
+	/// </para>
 	/// </summary>
 	public int NextThingId()
 	{
@@ -402,14 +409,22 @@ public sealed class ParkState
 			_freeIds.RemoveFirst();
 			thingId = head.Value;
 		}
+		else if ( _nextThingId > LastThingId )
+		{
+			// Said once a time it fills, as each thing tick of an unloading vehicle asks again.
+			if ( !_saidFull )
+				Log.Warning( $"Park: the thing table is full, every id to {LastThingId} held, so nothing is made" );
+
+			_saidFull = true;
+
+			return 0;
+		}
 		else
 		{
-			// The original's table holds 0x2800 nodes and gives nought past the last ("Thing Array is full").
-			if ( _nextThingId > LastThingId )
-				Unimplemented.Report( "THING_ARRAY_FULL" );
-
 			thingId = _nextThingId++;
 		}
+
+		_saidFull = false;
 
 		// The node goes to the head of the used list as it is taken (FUN_00516270), so the newest made heads it.
 		_madeAt[thingId] = ++_makes;
@@ -429,6 +444,7 @@ public sealed class ParkState
 	/// </summary>
 	public IReadOnlySet<int> DeletedSinceLoad => _deletedSinceLoad;
 
+	private bool _saidFull;
 	private readonly Dictionary<int, long> _madeAt = [];
 	private readonly HashSet<int> _deletedSinceLoad = [];
 	private long _makes;
@@ -494,7 +510,9 @@ public sealed class ParkState
 	{
 		SeedFreeIds();
 
-		return _freeIds.Take( count ).Concat( Enumerable.Range( _nextThingId, Math.Max( 0, count - _freeIds.Count ) ) );
+		var past = Math.Max( 0, Math.Min( count - _freeIds.Count, LastThingId + 1 - _nextThingId ) );
+
+		return _freeIds.Take( count ).Concat( Enumerable.Range( _nextThingId, past ) );
 	}
 
 	/// <summary>The ids deleted this sweep and not yet freed, newest first.</summary>

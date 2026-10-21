@@ -124,6 +124,15 @@ internal sealed class ParkEndFeature
 		view.PlaceFixed();
 
 		var thingId = state.NextThingId();
+
+		if ( thingId == 0 )
+		{
+			Log.Warning( "End feature: the thing table is full, so no End is made" );
+			foreach ( var entity in model.Entities )
+				entity.Delete();
+			return null;
+		}
+
 		objects.Stand( thingId, model, animations, item.Id );
 
 		if ( rides.BindFixed( thingId, item ) is not { } script )

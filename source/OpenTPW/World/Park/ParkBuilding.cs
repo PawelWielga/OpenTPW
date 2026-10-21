@@ -97,6 +97,10 @@ public static class ParkBuilding
 
 		var thingId = state.NextThingId();
 
+		// A full thing table builds nothing and charges nothing (ParkState.NextThingId).
+		if ( thingId == 0 )
+			return new( $"buy: '{item.Name}' cannot be built - the thing table is full", Refused: true );
+
 		// The flags word the original builds bit by bit out of the item's own description while it
 		// constructs the object, and mCanLoad, which the same constructor writes as 1 outright
 		// (FUN_004db090: `*(param_1 + 0x68) = 1`). A bought thing left at the record's defaults carries

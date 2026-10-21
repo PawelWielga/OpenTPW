@@ -127,12 +127,10 @@ filed the items that cite it.
   pylons (each piece's `StdPylon` posed by its loft, rotate, incline and bank clips at its cell, as `ParkCoasterPylon`
   poses the knot) and the track's mesh from the samples and the `coaster.sam` cross sections (FileFormats `sam.md`, "A
   `coaster.sam`'s tables"; the mesh builder not decoded: decode first). Confirm by the same two frames side by side.
-- [ ] **Q605. The deletes this game never makes, and a full thing table.** From Q582 (`ride-operation.md`, the
-  `FUN_0050b780` row): the original also deletes a guest a guard throws out (`FUN_004feb50`, from the guard's catch
-  `FUN_004d6790`), one in state `0x11` whom no guard holds (`FUN_005019f0`) and a thing an online message names
-  (`FUN_004e6e80` case `0x26`); the first two wait on the guard's chase, unbuilt. And past id `0x27ff` the original logs
-  `FATAL ERROR - Thing Array is full` and makes nothing, where `ParkState.NextThingId` counts `THING_ARRAY_FULL` and
-  hands out the next id.
+- [ ] **Q605. The deletes this game never makes.** From Q582 (`ride-operation.md`, the `FUN_0050b780` row): the
+  original also deletes a guest a guard throws out (`FUN_004feb50`, from the guard's catch `FUN_004d6790`), one in
+  state `0x11` whom no guard holds (`FUN_005019f0`) and a thing an online message names (`FUN_004e6e80` case `0x26`);
+  the first two wait on the guard's chase, unbuilt. The full thing table, its other half, is Q610.
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
   the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
   the music's class `0x406`, Q563, a voice out of range, Q564, a ride's scream out of range, and Q565, a script's

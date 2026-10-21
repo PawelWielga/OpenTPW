@@ -225,6 +225,42 @@ public class ParkBuyGoldenTicketTests
 	}
 
 	/// <summary>
+	/// <b>A full thing table builds nothing and charges nothing</b> (<see cref="ParkState.NextThingId"/>): at a cell where
+	/// the ride passes every test, with every id held the build is refused and the bank keeps its money. The original
+	/// falls over here (<c>FUN_004d91f0</c>).
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the build going on with id nought.</remarks>
+	[TestMethod]
+	public void AFullThingTableBuildsNothingAndChargesNothing()
+	{
+		var file = TwoLeft();
+		var (catalogue, _, _) = ParkFootprintPictureTests.BuyScreen();
+		var state = Level.Current!.ParkState!;
+		SetBalance( 10000 );
+		file.RideIds.Add( 1170 );
+
+		var build = typeof( ParkBuilding ).GetMethods( BindingFlags.NonPublic | BindingFlags.Static )
+			.Single( method => method.Name == "Build" && method.GetParameters().Length == 9 );
+
+		string Answer( int x, int y )
+		{
+			var built = build.Invoke( null, [state, Level.Current.Park, catalogue, null, null, 1170, x, y, 0] )!;
+			return (string)built.GetType().GetProperty( "Answer" )!.GetValue( built )!;
+		}
+
+		var cell = Enumerable.Range( 0, 128 * 128 ).Select( at => (X: at % 128, Y: at / 128) )
+			.First( at => Answer( at.X, at.Y ).Contains( "would not load" ) );
+
+		// Bounded, so a table with no end fails rather than spins.
+		for ( var taken = 0; taken <= ParkState.LastThingId && state.NextThingId() != 0; ++taken )
+		{
+		}
+
+		StringAssert.Contains( Answer( cell.X, cell.Y ), "the thing table is full" );
+		Assert.AreEqual( 10000, state.Balance, "nothing paid" );
+	}
+
+	/// <summary>
 	/// A cash row the bank cannot pay is refused with the same sound as a mystery row the tickets cannot buy
 	/// (<c>0x004ac6ca</c> to <c>0x004ac7f6</c>, <c>0x00486ae0</c>); one the bank can pay is carried, silently.
 	/// </summary>

@@ -55,15 +55,15 @@ Last updated: 2026-10-21. **This header names no branch and no sha, deliberately
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q602 (decode: the advisor's row 19, message `0x13`, `advisor-park.md`, "The mechanics' patrol areas"; no code): confirmed in the original, off-screen, on Q707's O2 load (`q602/PREDICTION.txt`, round R1, two held and one held but for one word): `orig-R1/brk.log` "tick 19084 eax 1b", "eax 5", "eax 23 ecx 19", "eax 145 ecx 12c" (27 months, 5 mechanics, share 35, score 325 against 300), `adv.log` "poll=20" on 19084, `line.log` "tick 19084 ... sample=57 props=(5, 0)", `orig-R1/g-10.png` him in the hard hat. Missed: the record's `said` stayed 1 (a flag), predicted 2. Not confirmed: a load where a test fails, mode 2's turn back to line 0; nothing in this game (the build is Q609).
+- Q610 (a full thing table makes nothing; Q605's buildable piece): confirmed in this game on the final binary on the desk (`q605/PREDICTION.txt`, round G, 6 of 6): alldone576 paused at tick 763, `thingfill` "10197 ids taken and held by nothing, 0 left free" after next 43 44 45; `arrive` "the park would not take one"; `buy 1140 41 23` "cannot be built - the thing table is full"; research ended on tick 800 with "End feature: the thing table is full, so no End is made" and `endfeature` none standing (`run2/g2-no-end.png`); guests 18 to 18; a guest gone home freed 42, which `arrive` took, and the table was full again (`g3-one-more.png`). Beside the original, off-screen on late30 with its free-list head held at nought (`memhold.py`): it fell over 34 s on, "Unhandled page fault on write access to 00000008 at address 004D9269" (`orig-O1/fault.txt`), as decoded. Not confirmed in the game: a hire and a vehicle's summons refused for the full table (tested only); the End's refusal survives the unit tests (it needs a graphics device) and is G4's alone.
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3801**, 0 fail, 0 skip with the game | 2026-10-21, the review of run 7, alone in a worktree |
-| Tests without the game | **1327** ran, **2474** skipped, of 3801 | 2026-10-21, the review of run 7, alone in a worktree |
+| Tests | **3807**, 0 fail, 0 skip with the game | 2026-10-21, Q610, alone in a worktree |
+| Tests without the game | **1330** ran, **2477** skipped, of 3807 | 2026-10-21, Q610, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

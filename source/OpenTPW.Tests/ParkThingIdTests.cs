@@ -110,6 +110,50 @@ public class ParkThingIdTests
 		CollectionAssert.AreEqual( new[] { 3, 5, 6 }, state.FreeThingIds( 3 ).ToArray() );
 		CollectionAssert.AreEqual( new[] { 3, 5 }, Take( state, 2 ) );
 	}
+
+	/// <summary>
+	/// <b>0x27ff is the last id given out, and past it nought</b>: the original's table holds the ids 1 to 0x27ff
+	/// (<c>FUN_00515f30</c>) and its allocator answers nought with none free (<c>FUN_00516270</c>).
+	/// </summary>
+	[TestMethod]
+	public void PastTheLastIdNoughtIsGivenOut()
+	{
+		var state = Holding( 0x27fe );
+
+		CollectionAssert.AreEqual( Enumerable.Range( 1, 0x27fd ).ToArray(), Take( state, 0x27fd ), "the holes first" );
+		Assert.AreEqual( 0x27ff, state.NextThingId(), "the table's last node" );
+		CollectionAssert.AreEqual( new[] { 0, 0 }, Take( state, 2 ), "and then none" );
+		Assert.IsFalse( state.MadeAt.ContainsKey( 0 ), "nothing was made" );
+	}
+
+	/// <summary><b>An id freed once the table is full is given out again</b>, and then it is full once more.</summary>
+	[TestMethod]
+	public void AnIdFreedInAFullTableIsGivenOutAgain()
+	{
+		var state = Holding( 0x27ff );
+
+		Take( state, 0x27fe );
+		Assert.AreEqual( 0, state.NextThingId() );
+
+		state.DeleteThing( 7 );
+		Assert.AreEqual( 0, state.NextThingId(), "held through the sweep" );
+
+		state.FreeDeletedThings();
+		CollectionAssert.AreEqual( new[] { 7, 0 }, Take( state, 2 ) );
+	}
+
+	/// <summary>The console's look at a nearly full table lists no id past the last.</summary>
+	[TestMethod]
+	public void TheLookAtTheFreeListStopsAtTheLastId()
+	{
+		var state = Holding( 0x27fc );
+
+		Take( state, 0x27fb );
+		CollectionAssert.AreEqual( new[] { 0x27fd, 0x27fe, 0x27ff }, state.FreeThingIds( 5 ).ToArray() );
+
+		Take( state, 3 );
+		Assert.AreEqual( 0, state.FreeThingIds( 5 ).Count() );
+	}
 }
 
 /// <summary>
@@ -143,6 +187,42 @@ public class ParkThingIdDeletionTests
 			new ParkItemCatalogue( "jungle", data ) );
 
 		return (world, state, people);
+	}
+
+	/// <summary>Takes every free id, held by no thing, as the console's <c>thingfill</c> does.</summary>
+	private static void Fill( ParkState state )
+	{
+		// Bounded, so a table with no end fails rather than spins.
+		for ( var taken = 0; taken <= ParkState.LastThingId && state.NextThingId() != 0; ++taken )
+		{
+		}
+	}
+
+	/// <summary>
+	/// <b>A full table admits no guest and hires nobody</b>, and a guest gone home makes room for one more. The original
+	/// falls over here (<c>FUN_004d91f0</c>); here nothing is made.
+	/// </summary>
+	[TestMethod]
+	public void AFullTableMakesNobodyUntilAnIdIsFreed()
+	{
+		var (_, state, people) = Park();
+		var guests = people.Peeps.Count;
+		var staff = people.Staff.Count;
+
+		Fill( state );
+
+		Assert.AreEqual( 0, people.Admit( 55, 30 ), "no guest" );
+		Assert.AreEqual( 0, people.Hire( new ParkStaffPool.Candidate( Id: 999, Kind: 1, Name: "Test", Grade: 0, Costume: 0, Wage: 69 ), 55, 30 ),
+			"no hire" );
+		Assert.AreEqual( (guests, staff), (people.Peeps.Count, people.Staff.Count), "nobody made" );
+
+		var leaver = people.Peeps.First( peep => !PeepBehaviour.HeldByAThing( peep ) ).ThingId;
+
+		Assert.IsTrue( people.Depart( leaver ) );
+		state.FreeDeletedThings();
+
+		Assert.AreEqual( leaver, people.Admit( 55, 30 ), "the freed id" );
+		Assert.AreEqual( 0, people.Admit( 55, 30 ), "and full again" );
 	}
 
 	/// <summary>The shipped park holds 1 to 42 with no hole, so its first id made is 43.</summary>

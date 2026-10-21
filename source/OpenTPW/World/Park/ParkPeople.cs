@@ -520,6 +520,11 @@ public sealed partial class ParkPeople : Entity
 		// ParkState.NextThingId. The counter here is the fallback for a ParkPeople built without a running
 		// park, which the tests do.
 		var thingId = ParkState.Current?.NextThingId() ?? _nextThingId++;
+
+		// A full thing table makes nobody (ParkState.NextThingId).
+		if ( thingId == 0 )
+			return 0;
+
 		var slot = _nextSpriteSlot++;
 
 		// The middle of the cell, the way every other position in this park is measured - and the way a
@@ -698,6 +703,11 @@ public sealed partial class ParkPeople : Entity
 		// ParkState.NextThingId. The counter here is the fallback for a ParkPeople built without a running
 		// park, which the tests do.
 		var thingId = ParkState.Current?.NextThingId() ?? _nextThingId++;
+
+		// A full thing table makes nobody (ParkState.NextThingId).
+		if ( thingId == 0 )
+			return 0;
+
 		var slot = _nextSpriteSlot++;
 
 		var x = (cellX * one) + (one / 2);
@@ -1858,6 +1868,10 @@ public sealed partial class ParkPeople : Entity
 
 		var corner = MapStep.CellId( 0, 0 );
 		var thing = State.NextThingId();
+
+		// A full thing table makes no vehicle (ParkState.NextThingId).
+		if ( thing == 0 )
+			return 0;
 		var placed = ParkBuilding.Constructed( item, thing, 0, 0, 0, corner, corner, ParkWorld.BuiltWhen.At( State.CalendarNow ) );
 
 		State.AddObject( placed );

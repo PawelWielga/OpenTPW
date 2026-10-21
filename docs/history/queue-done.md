@@ -9669,6 +9669,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   mechanic's area ) x 5, nought below 300, from month 13 with three mechanics and one with an area; the original, off-screen
   (`q602/orig-R1`, `brk.sh`), polled it on 19084 with 27 months, 5 mechanics, share 35, score **325**, and said sample 57
   in the hard hat at once, as `q602/predict.py` read the file. The build is Q609.
+- [x] **Q610. A full thing table makes nothing.** The buildable piece of Q605. Past id `0x27ff` the original's
+  allocator answers nought and its constructor writes through node 0's null thing (`FUN_004d91f0`, `0x004d9269`): it
+  falls over (`ride-operation.md`, the `FUN_00516270` row). Here `ParkState.NextThingId` answers nought and the guest,
+  the hire, the vehicle, the End and the buy are not made, said at the site as a deviation; the console's `thingfill`
+  fills the table.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -1188,6 +1188,27 @@ public static class DebugConsole
 
 				break;
 
+			// An instrument: takes ids off the free list, held by no thing, until N are left free (nought fills the table),
+			// so a full thing table can be met in a park far smaller than 0x27ff things - see ParkState.NextThingId. A save
+			// made after it is not a park file to keep.
+			case "thingfill":
+				if ( ParkState.Current is not { } filled )
+				{
+					Reply( "thingfill: none - a park has to be loaded" );
+					break;
+				}
+
+				var keepFree = Math.Max( 0, (int)Argument( 1, 0 ) );
+				var freeIds = filled.FreeThingIds( ParkState.LastThingId + 1 ).Count();
+				var takenIds = 0;
+
+				for ( ; freeIds - takenIds > keepFree; ++takenIds )
+					filled.NextThingId();
+
+				Reply( $"thingfill: {takenIds} ids taken and held by nothing, {freeIds - takenIds} left free" );
+
+				break;
+
 			// What this session has reached and not built. Each gap announces itself once on the console
 			// when it is first reached and is counted after that, so this is how to ask what a whole run
 			// hit without scrolling back through it - see Unimplemented.

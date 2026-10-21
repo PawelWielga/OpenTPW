@@ -345,6 +345,39 @@ public class ParkFileWriterMadeVehicleTests
 	}
 
 	/// <summary>
+	/// <b>With the thing table full the summons makes no vehicle and falls back to the bus the file names</b>
+	/// (<see cref="ParkState.NextThingId"/>): no thing made, nothing stamped, the two slots nought. The original falls
+	/// over here (<c>FUN_004d91f0</c>).
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the ferry made as thing nought.</remarks>
+	[TestMethod]
+	public void WithTheThingTableFullTheSummonsMakesNoVehicle()
+	{
+		var state = new ParkState( shipped );
+		var people = new ParkPeople( shipped, new ParkBalance( Theme, easyMode: true ), () => ParkRides.GateIsOpen, state, catalogue );
+		var stamp = state.LastObjectBuilt;
+
+		Time.Paused = false;
+		Time.StepFrames = 0;
+		GameClock.Rebase();
+		Time.Update( 0f );
+		GameClock.Update( paused: false, GameClock.ParkCatchUp );
+
+		// Bounded, so a table with no end fails rather than spins.
+		for ( var taken = 0; taken <= ParkState.LastThingId && state.NextThingId() != 0; ++taken )
+		{
+		}
+
+		people.ForceArrival( 61 );
+		Sweep( people );
+
+		Assert.AreEqual( 1, people.CurrentVehicle, "the bus" );
+		Assert.AreEqual( (Bus, 0, 0), (people.VehicleThings[0], people.VehicleThings[1], people.VehicleThings[2]) );
+		Assert.AreEqual( stamp, state.LastObjectBuilt );
+		Assert.AreEqual( shipped.Objects.Count, state.Objects.Count );
+	}
+
+	/// <summary>
 	/// <b>A theme without the ferry's item has the seaplane made for a load of sixty-one</b> (<c>FUN_0051a2f0</c>'s walk
 	/// from the ferry to the seaplane): the ferry said and counted once, the seaplane made a thing in the second slot and
 	/// current, its own script bound under it at status 1, and the third slot nought.
