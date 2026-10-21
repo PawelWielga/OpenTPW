@@ -43,7 +43,7 @@ namespace OpenTPW;
 ///     0x10000   UV animation descriptor at +0x2C                 690  yes
 ///     0x20000   visibility, count (ushort) at +0x16, at +0x30    2536  yes
 ///     0x00001   position record at +0x18                          1216  yes
-///     0x80|0x100 scale, count (ushort) at +0x12, at +0x20         644  not read here (FileFormats models.md, "Scale")
+///     0x80|0x100 scale, count (ushort) at +0x12, at +0x20         644  yes (FileFormats models.md, "Scale")
 ///     0x00200   path progress, data at +0x24                      71  yes
 ///
 /// Every one of those correspondences is exact - across all 1279 files, not one track sets a
@@ -632,6 +632,50 @@ public class AnimationFile : BaseFormat
 		}
 	}
 
+	/// <summary>
+	/// How long a node's three axes are over time - channel 0x80, which always comes with 0x100: a count at the
+	/// descriptor's +0x12 and that many 16-byte keys at its +0x20, each a frame, a ushort that is nought in every key
+	/// the game ships, and three floats (FileFormats models.md, "Scale").
+	/// </summary>
+	public class ScaleTrack
+	{
+		public int TargetIndex { get; init; }
+
+		/// <summary>One per key, strictly ascending on all 644 of the game's tracks.</summary>
+		public ushort[] FrameIndices { get; init; } = Array.Empty<ushort>();
+
+		/// <summary>The lengths of the node's x, y and z axes at each key.</summary>
+		public System.Numerics.Vector3[] Scales { get; init; } = Array.Empty<System.Numerics.Vector3>();
+
+		/// <summary>
+		/// The axes' lengths at <paramref name="frame"/> as Anim_PoseTrack takes them (<c>0x00471d8d</c>): the two keys
+		/// about the frame lerped, or false before the first key, where the key search answers nought and the node's axes
+		/// are left as they are. Past the last key it holds the last: the poser poses nothing past the clip's declared span,
+		/// and 632 of the 644 tracks end on it, the other 12 past it.
+		/// </summary>
+		public bool TrySample( float frame, out System.Numerics.Vector3 scale )
+		{
+			scale = default;
+
+			if ( FrameIndices.Length == 0 || MathF.Floor( frame ) < FrameIndices[0] )
+				return false;
+
+			if ( frame >= FrameIndices[^1] )
+			{
+				scale = Scales[^1];
+				return true;
+			}
+
+			var segment = 0;
+			for ( int k = 1; k < FrameIndices.Length - 1 && FrameIndices[k] <= frame; ++k )
+				segment = k;
+
+			float from = FrameIndices[segment], to = FrameIndices[segment + 1];
+			scale = System.Numerics.Vector3.Lerp( Scales[segment], Scales[segment + 1], Math.Clamp( (frame - from) / (to - from), 0f, 1f ) );
+			return true;
+		}
+	}
+
 	/// <summary>When a node is shown - channel 0x20000. See the class remarks.</summary>
 	public class VisibilityTrack
 	{
@@ -722,6 +766,13 @@ public class AnimationFile : BaseFormat
 	public List<RotationTrack> RotationTracks { get; } = new();
 
 	/// <summary>
+	/// The clip's scale tracks. Read whatever else the clip carries, but counted in neither <see cref="IsValid"/> nor the
+	/// frames: three of the game's clips carry nothing else (Lost Kingdom's <c>tvsime</c> and <c>tvsims</c>, fantasy's
+	/// <c>sign1c</c>), and they read as no clip.
+	/// </summary>
+	public List<ScaleTrack> ScaleTracks { get; } = new();
+
+	/// <summary>
 	/// Every track of the table as the file gives it, read or not: the node it poses and its flag word, the bits of
 	/// the table in this class's remarks. What the engine marks a model's nodes from as it binds the clip
 	/// (<c>FUN_00472d70</c>).
@@ -737,7 +788,7 @@ public class AnimationFile : BaseFormat
 
 	/// <summary>
 	/// False when this file holds no rotation, morph or UV track this reader can read - callers must check
-	/// it. Position, visibility and path tracks are read either way, so a clip carrying only those reads
+	/// it. Position, visibility, path and scale tracks are read either way, so a clip carrying only those reads
 	/// false although those lists are filled.
 	/// </summary>
 	public bool IsValid { get; private set; }
@@ -960,6 +1011,10 @@ public class AnimationFile : BaseFormat
 			if ( (flags & 0x10000) != 0 )
 				ReadUvChannel( data, BitConverter.ToUInt32( data, offset + 0x2C ), target );
 
+			// The engine tests 0x80 alone (0x00471d8d); 0x100 is set with it on every one of the 644.
+			if ( (flags & 0x80) != 0 )
+				ReadScaleChannel( data, offset, target );
+
 			if ( (flags & 0x1) != 0 )
 				ReadPositionChannel( data, BitConverter.ToUInt32( data, offset + 0x18 ), target );
 
@@ -1012,6 +1067,35 @@ public class AnimationFile : BaseFormat
 			Values = values,
 			OrientsAlongRoute = (flags & 0x400) != 0
 		} );
+	}
+
+	/// <summary>Channel 0x80's keys: the count at the descriptor's +0x12, the keys at its +0x20. See <see cref="ScaleTrack"/>.</summary>
+	private void ReadScaleChannel( byte[] data, int descriptor, int target )
+	{
+		int count = BitConverter.ToUInt16( data, descriptor + 0x12 );
+		var keysAt = BitConverter.ToUInt32( data, descriptor + 0x20 );
+
+		if ( count <= 0 || keysAt < 0x9C || keysAt + (16L * count) > data.Length )
+			return;
+
+		var frames = new ushort[count];
+		var scales = new System.Numerics.Vector3[count];
+
+		for ( int k = 0; k < count; ++k )
+		{
+			var at = (int)keysAt + (16 * k);
+
+			frames[k] = BitConverter.ToUInt16( data, at );
+			if ( k > 0 && frames[k] <= frames[k - 1] )
+				return;
+
+			scales[k] = new System.Numerics.Vector3(
+				BitConverter.ToSingle( data, at + 4 ),
+				BitConverter.ToSingle( data, at + 8 ),
+				BitConverter.ToSingle( data, at + 12 ) );
+		}
+
+		ScaleTracks.Add( new ScaleTrack { TargetIndex = target, FrameIndices = frames, Scales = scales } );
 	}
 
 	private void ReadPositionChannel( byte[] data, uint recordAt, int target )

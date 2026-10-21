@@ -761,7 +761,7 @@ slot 0` and `3-hardhat.png` shows the lobby's fly in the hard hat. Main's build 
 | The costume | four pairs of the theme's `Standard.sam`, put on after every clip's start | the same pairs, put on as the line begins |
 | The helmet's colour | tan, with a grey band | **paler: yellow with a white band**, as the hard hat is paler (`AdvisorModel`'s light, set against the lobby model's gloves) |
 | The chain's clip lengths | the park's model's, for both slots | the same |
-| Clips 16 to 20, the map, the tickets and the mutant eye | the golden ticket's lines (`scenes.md`, "Gesture table") | clips 17 to 20 played by the ticket lines (Q595); the big ticket of 18 to 20 drawn at its own size, its scale track not read (`ui.md`, "The big ticket is a scale track"; Q707); clip 16 (row 0's) by no park line |
+| Clips 16 to 20, the map, the tickets and the mutant eye | the golden ticket's lines (`scenes.md`, "Gesture table") | clips 17 to 20 played by the ticket lines (Q595); the big ticket of 18 to 20 grown by its scale track (Q599; `ui.md`, "The big ticket is a scale track"); clip 16 (row 0's) by no park line |
 
 Not run: the original, this session (its frames of this file are Q344's and Q345's); a slot 0 line straight
 after a slot 1 line in the original; the three other themes' models and costumes (not measured); Full

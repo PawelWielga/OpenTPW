@@ -90,8 +90,8 @@ public sealed class RideNodes
 		}
 
 		// A clip's rotation, position and path tracks are what move a node. Its scale channel (0x80) would too, and
-		// AnimationFile does not read it; every node a shipped walk finds that hangs from a scaled node, a clip also
-		// turns or moves that node. The morph tracks it reads leave out the ones it skips as unreadable.
+		// NodePoser does not pose it; every node a shipped walk finds that hangs from a scaled node, a clip also
+		// turns or moves that node. The morph tracks AnimationFile reads leave out the ones it skips as unreadable.
 		foreach ( var clip in clips )
 		{
 			foreach ( var track in clip.RotationTracks )

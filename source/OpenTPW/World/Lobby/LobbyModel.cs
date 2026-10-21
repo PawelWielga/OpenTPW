@@ -769,6 +769,11 @@ public sealed class LobbyModel : IChannelPosed
 			Rotator?.Pose( animation, frame );
 		}
 
+		// A scale track sets a node's axis lengths after its turn (Anim_PoseTrack 0x00471d8d); only the advisor poses them
+		// (AdvisorModel.Pose). 128 of the game's 644 are in Lost Kingdom's shops, rides, sideshows and features.
+		if ( animation.ScaleTracks.Count > 0 )
+			Unimplemented.Report( "ANIM_SCALE_TRACK" );
+
 		// Held at whatever the last entry before this frame said, and left alone entirely before the
 		// first - which is what VisibleAt answers null for, and what the engine does by simply not
 		// writing the node's flag.

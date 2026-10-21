@@ -114,11 +114,23 @@ public sealed class AdvisorModel
 	/// node the incoming clip's tracks name, then the incoming clip's hide list is hidden. So the small ticket, which
 	/// clips 1 to 16 hide and clip 17 does not, shows on clip 17, and the head that clips 19 and 20 leave hidden comes
 	/// back with the next clip that moves it (clip 14's and 17's position keys).
+	/// <para>
+	/// Not the original's rule: its FUN_00472310 shows the nodes the OUTGOING clip's tracks name (FileFormats models.md,
+	/// "Starting a clip"), and every node when the animation object's +4 holds 0x8, which is not read for him. No Lost
+	/// Kingdom frame is known to differ, and by the outgoing rule alone his head would stay hidden 633 ms where the
+	/// original's film shows it.
+	/// </para>
 	/// </summary>
 	internal void StartClip( int clip )
 	{
 		if ( _startedClip >= 1 && _startedClip < _clips.Length && _clips[_startedClip] is { } outgoing )
 		{
+			// The lengths the outgoing clip's scale tracks left, beside advnodes.py's lines from the original.
+			if ( outgoing.ScaleTracks.Count > 0 )
+				Log.Info( $"Advisor: clip {_startedClip} leaves " + string.Join( ", ", outgoing.ScaleTracks.Select( track => track.TargetIndex )
+					.Where( node => node >= 0 && node < _local.Length )
+					.Select( node => $"{NodeName( node )} at {AxisLengths( _local[node] ):0.000} t {_local[node].Translation:0.000}" ) ) );
+
 			foreach ( var node in outgoing.HideList )
 				SetMeshVisible( node, true );
 		}
@@ -168,31 +180,7 @@ public sealed class AdvisorModel
 		{
 			var frame = MathF.Min( animation.FirstFrame + (seconds * AnimationFile.FramesPerSecond), animation.LastFrame );
 
-			foreach ( var track in animation.RotationTracks )
-			{
-				var node = track.TargetIndex;
-
-				if ( node < 0 || node >= _local.Length || track.Rotations.Length == 0 )
-					continue;
-
-				_local[node] = Turned( _restLocal[node], track.Sample( frame ) );
-			}
-
-			// A position key replaces where the node sits relative to its parent, as a rotation
-			// key replaces its orientation. Clips 14 and 15 are the ones with these: they raise his
-			// head and body from below the screen and drop them back down out of sight.
-			foreach ( var track in animation.PositionTracks )
-			{
-				var node = track.TargetIndex;
-
-				if ( node < 0 || node >= _local.Length )
-					continue;
-
-				var position = track.Sample( frame );
-				_local[node].M41 = position.X;
-				_local[node].M42 = position.Y;
-				_local[node].M43 = position.Z;
-			}
+			PoseNodes( animation, frame, _restLocal, _local );
 
 			// Visibility keys switch a node on or off from a frame on, and leave it that way - which
 			// is how he blinks, swapping his eyes for his eyelids for four frames at a time.
@@ -311,9 +299,8 @@ public sealed class AdvisorModel
 	/// </para>
 	/// <para>
 	/// It is affine, as the original's screen-space draw is (ModelRenderable_Draw 0x0057a750; docs/exe/ui.md, "His projection
-	/// is affine"): how far toward the viewer a node stands changes no size. The golden ticket that Lost Kingdom's clips 18
-	/// to 20 grow twelvefold is a scale track, which AnimationFile does not read, so here it is drawn at its own size
-	/// (docs/QUEUE.md Q707).
+	/// is affine"): how far toward the viewer a node stands changes no size. The golden ticket that fills the screen in Lost
+	/// Kingdom's clips 18 to 20 is his own, grown twelvefold by its scale track (<see cref="Pose"/>).
 	/// </para>
 	public static Matrix4x4 ScreenProjection()
 	{
@@ -355,6 +342,81 @@ public sealed class AdvisorModel
 			: turn * translation;
 	}
 
+	/// <summary>
+	/// His nodes' own transforms <paramref name="frame"/> frames into <paramref name="animation"/>, from <paramref name="rest"/>:
+	/// each rotation key's turn, then each scale key's axis lengths, then each position key's place, as Anim_PoseTrack takes
+	/// a track's channels (0x00471860).
+	/// </summary>
+	internal static void PoseNodes( AnimationFile animation, float frame, Matrix4x4[] rest, Matrix4x4[] local )
+	{
+		foreach ( var track in animation.RotationTracks )
+		{
+			var node = track.TargetIndex;
+
+			if ( node < 0 || node >= local.Length || track.Rotations.Length == 0 )
+				continue;
+
+			local[node] = Turned( rest[node], track.Sample( frame ) );
+		}
+
+		// A scale key sets the lengths of the node's three axes, after its turn (Anim_PoseTrack 0x00471d8d,
+		// Matrix_SetAxisLengths 0x0046f910): Lost Kingdom's golden ticket grows twelvefold through clip 18 and falls to
+		// three times in 20, and clips 17 and 18 squash his body and head (docs/exe/ui.md, "The big ticket is a scale
+		// track").
+		Scale( animation, frame, local );
+
+		// A position key replaces where the node sits relative to its parent, as a rotation
+		// key replaces its orientation. Clips 14 and 15 raise his head and body from below the
+		// screen and drop them back down out of sight; Lost Kingdom's 17 to 20 carry the ticket.
+		foreach ( var track in animation.PositionTracks )
+		{
+			var node = track.TargetIndex;
+
+			if ( node < 0 || node >= local.Length )
+				continue;
+
+			var position = track.Sample( frame );
+			local[node].M41 = position.X;
+			local[node].M42 = position.Y;
+			local[node].M43 = position.Z;
+		}
+	}
+
+	/// <summary>Each node a scale track of <paramref name="animation"/> keys at <paramref name="frame"/>, its axes set to the keyed lengths.</summary>
+	internal static void Scale( AnimationFile animation, float frame, Matrix4x4[] local )
+	{
+		foreach ( var track in animation.ScaleTracks )
+		{
+			var node = track.TargetIndex;
+
+			if ( node < 0 || node >= local.Length || !track.TrySample( frame, out var lengths ) )
+				continue;
+
+			local[node] = WithAxisLengths( local[node], lengths );
+		}
+	}
+
+	/// <summary>
+	/// Matrix_SetAxisLengths (0x0046f910): each of the node's three axis rows scaled to the given length, its direction
+	/// and its translation kept.
+	/// </summary>
+	internal static Matrix4x4 WithAxisLengths( Matrix4x4 local, System.Numerics.Vector3 lengths )
+	{
+		var x = new System.Numerics.Vector3( local.M11, local.M12, local.M13 );
+		var y = new System.Numerics.Vector3( local.M21, local.M22, local.M23 );
+		var z = new System.Numerics.Vector3( local.M31, local.M32, local.M33 );
+
+		x *= lengths.X / x.Length();
+		y *= lengths.Y / y.Length();
+		z *= lengths.Z / z.Length();
+
+		return new Matrix4x4(
+			x.X, x.Y, x.Z, local.M14,
+			y.X, y.Y, y.Z, local.M24,
+			z.X, z.Y, z.Z, local.M34,
+			local.M41, local.M42, local.M43, local.M44 );
+	}
+
 	/// <summary>Composes the node tree and hands each mesh its place, the way LobbyModel builds them.</summary>
 	private void Place()
 	{
@@ -371,6 +433,14 @@ public sealed class AdvisorModel
 			_model.Entities[i].Position = new Vector3( world.M41, world.M43, world.M42 );
 		}
 	}
+
+	private static System.Numerics.Vector3 AxisLengths( Matrix4x4 m ) => new(
+		new System.Numerics.Vector3( m.M11, m.M12, m.M13 ).Length(),
+		new System.Numerics.Vector3( m.M21, m.M22, m.M23 ).Length(),
+		new System.Numerics.Vector3( m.M31, m.M32, m.M33 ).Length() );
+
+	private string NodeName( int node )
+		=> node < _file.Meshes.Count ? _file.Meshes[node].Name.TrimEnd( '\0' ).Trim() : $"node {node}";
 
 	private int MeshNamed( string name )
 	{

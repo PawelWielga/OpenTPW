@@ -83,18 +83,12 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q707. The advisor's golden-ticket lines: the glints, the tags and the big ticket.** Q595 says the lines. Left:
-  (1) the glints, UI particle channel 0 (`UIParticles_SetChannelCount` `0x005ed5a0`, `FUN_005ed660`, `FUN_005ed700`,
-  placed each frame by `UIParticles_PlaceChannels` from `0x00599800`; effects 44 and 49, `cat_ui` 197 on clip 18), counted
-  `ADVISOR_CLIP_GLINTS`: decode where the particles stand (the model's `T_Particle1` to `3` and `Rotate1` to `3` nodes,
-  space `0x100`, are the candidates) and build them; (2) the tags of groups 102 to 113 (`lib/tagtable.py`: picture 3,
-  strings 180 to 191, text kinds 5 to 8, life 0), counted `TAG_ROW_NOT_LISTED`; (3) **the big ticket and his squash**
-  (Q597, `ui.md`, "The big ticket is a scale track"): read the scale track (`0x80|0x100`, FileFormats `models.md`,
-  "Scale") in `AnimationFile` and pose it in `AdvisorModel` as `Anim_PoseTrack` does (the two keys lerped about the
-  frame, `0x00471dca`, and the node's three axes set to those lengths after the turn, `Matrix_SetAxisLengths`
-  `0x0046f910`): `Ticket2` grows twelvefold through clip 18 and falls to three times in 20, his body and head squash in
-  17 and 18, the map in 16. Through clip 19 the original holds clip 18's last pose rather than 19's keys (one per cent;
-  cause not traced). Confirm beside `q707/p597/orig/O/g-15.png` (the ticket 550 of 1024 px wide) and `advnodes.py`'s lines.
+- [ ] **Q707. The advisor's golden-ticket lines: the glints and the tags.** Q595 says the lines; Q599 grows the big
+  ticket. Left: (1) the glints, UI particle channel 0 (`UIParticles_SetChannelCount` `0x005ed5a0`, `FUN_005ed660`,
+  `FUN_005ed700`, placed each frame by `UIParticles_PlaceChannels` from `0x00599800`; effects 44 and 49, `cat_ui` 197 on
+  clip 18), counted `ADVISOR_CLIP_GLINTS`: decode where the particles stand (the model's `T_Particle1` to `3` and
+  `Rotate1` to `3` nodes, space `0x100`, are the candidates) and build them; (2) the tags of groups 102 to 113
+  (`lib/tagtable.py`: picture 3, strings 180 to 191, text kinds 5 to 8, life 0), counted `TAG_ROW_NOT_LISTED`.
 - [ ] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
   tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
   one load). `0x13e` and the rows no code posts stay unsaid, as the original's.
@@ -118,8 +112,10 @@ filed the items that cite it.
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
   `wateride`, `bouncy`, the sideshows `hyenas`, `junspray`, `arc2x3`, `squark`, the features `bigpalm`, `supbog`, `toilet`.
-  `AnimationFile` reads none (`RideNodes` says so). After Q707's reader, pose them on every model a clip moves and
-  confirm one of each kind beside the original's frames.
+  `AnimationFile` reads them (Q599) and only the advisor poses them; `LobbyModel.Pose` counts the rest, `ANIM_SCALE_TRACK`.
+  Three clips carry nothing else and so read as no clip (`IsValid`): Lost Kingdom's `tvsime` and `tvsims`, fantasy's
+  `sign1c`. Pose them on every model a clip moves (`NodePoser`, `MeshRotator`) and confirm one of each kind beside
+  the original's frames.
 - [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
   the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
   (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to

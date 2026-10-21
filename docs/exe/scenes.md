@@ -133,7 +133,9 @@ the rows' clips (Q595) and counts each clip that sets the channel (`ADVISOR_CLIP
 
 **A clip's start** (`Advisor_Update` `0x00599a2a`, then `FUN_00599800` calls `Advisor_ClipStarted` `0x00598dc0` once the
 model reads it started): the model's clip change (`FUN_004726d0`) shows again what the outgoing clip's hide list hid and
-the nodes the incoming clip's tracks name, then hides the incoming hide list (`park.md`, "The per-clip hide list"); then
+the nodes the outgoing clip's tracks name (`FUN_00472310`; every node of the model when the animation object's `+4` holds
+`0x8`), then hides the incoming hide list (FileFormats `models.md`, "Starting a clip"; OpenTPW shows the incoming clip's
+track nodes instead, `AdvisorModel.StartClip`, no frame known to differ); then
 his five mouths are hidden, the line's props are put on again (`FUN_00598ca0`), and where the clip word carries `0x10000`
 no add-on and no prop is shown and the node `bug head` (`FUN_0044b2e0( model, 0, -1 )`, node 0 where none is named so) is
 hidden, and `Advisor_Update` shows no mouth (`0x00599b8c`). Lost Kingdom's clips 19 and 20 hide everything of him but the

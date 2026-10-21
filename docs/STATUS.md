@@ -49,21 +49,21 @@ Last updated: 2026-10-20. **This header names no branch and no sha, deliberately
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q707** (the golden-ticket lines' glints, tags and big ticket, which Q597 found is a scale track; Q595 said the lines) in section A, then Q708 (Q596, Q598, Q587 to Q589, the karts' and the water ride's build, are filed after Q709; Q582, Q583, Q585 and Q586 stand above the ordered block until they are moved below it): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next **Q707** (the golden-ticket lines' glints and tags; Q595 said the lines, Q599 grew the big ticket) in section A, then Q708 (Q596, Q598, Q587 to Q589, the karts' and the water ride's build, are filed after Q709; Q582, Q583, Q585 and Q586 stand above the ordered block until they are moved below it): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q597 (Q707's first rest piece, the advisor's projection, decoded; decode only, nothing built or drawn differently): read in the original under Proton (`q707/p597/PREDICTION.txt`, `orig/O/load.log` from `original/advnodes.py`, Alexah's jungle `New Save` loaded by her Full Simulation profile less Locals 0 and 1, the ticket line said on tick 19115): `A 1 0 0 0 | 0 -1 0 0 | 0 0 1 0 | 0.6 0.6 0.2 1`, `B` the identity, every one of 539 node lines `chainw (0.0, 0.0, 0.0, 1.0)`; `Ticket2` rising to `lens (11.9665, 11.3815, 8.9017)` in clip 18 and falling to `(3.0233, 2.8715, 2.2394)` in 20; the big ticket 550 of 1024 px wide in `g-15.png`. Missed and recorded: through clip 19 the ticket held clip 18's last pose, not clip 19's keys 12.093 (one per cent; cause not traced). Not done: the film (`record.sh` started before display `:77` was up; the stills stand in); this game not run (no code changed but a comment).
+- Q599 (Q707's piece: the scale track read and posed, the big ticket and his squash): confirmed on the final binary on the desktop (`q707/p599/PREDICTION.txt`, run 4, Alexah's jungle `New Save` loaded by her Full Simulation profile less Locals 0 and 1, the 0xd8 and 0xd7 ticket lines): "clip 18 leaves ... Ticket2 at <12.093, 11.486, 8.958> t <-38.226, 0.000, 42.049>", the original's own node at clip 18's end (Q597's `load.log` line 279); clip 19 the same; "clip 20 leaves Ticket2 at <3.023, 2.872, 2.239>"; his body squashed in clip 17 (1.12 to 1.20 across); the big ticket of clip 19 0.746 of the height across and 0.435 left of his anchor beside the original's 0.738 and 0.436 (`side-by-side.png`, `lib/ticketbox.py`); census `ANIM_SCALE_TRACK` (every other model's, Q598). Missed and recorded: G1 (the log reads the last pose drawn, a frame short of clip 17's last key). Not compared: the map's squash in clip 16 (no park line plays it), the head's squash on screen (measured in the log only); the film (stills stand in). Not heard. Full Simulation's path only (the ticket lines are its).
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3698**, 0 fail, 0 skip with the game | 2026-10-21, Q595, alone in a worktree |
-| Tests without the game | **1275** ran, **2423** skipped, of 3698 | 2026-10-21, Q595, alone in a worktree |
+| Tests | **3703**, 0 fail, 0 skip with the game | 2026-10-21, Q599, alone in a worktree |
+| Tests without the game | **1277** ran, **2426** skipped, of 3703 | 2026-10-21, Q599, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

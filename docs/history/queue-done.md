@@ -9513,6 +9513,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `AdvisorModel.ScreenProjection`; the big ticket is a scale track on `Ticket2` (clips 18 to 20, twelvefold), which
   `AnimationFile` does not read (`ui.md`, "His projection is affine", "The big ticket is a scale track"). Read in the
   running original (`q707/p597/PREDICTION.txt`, `original/advnodes.py`); Q707 (3) rewritten, Q598 filed.
+- [x] **Q599. The big ticket and his squash: the scale track read and posed (Q707's piece).** `AnimationFile.ScaleTracks`
+  reads channel `0x80` (count at `+0x12`, 16-byte keys at `+0x20`); `AdvisorModel.PoseNodes` sets each keyed node's axis
+  lengths to the two keys lerped about the frame after its turn (`Anim_PoseTrack` `0x00471d8d`, `Anim_FindKey` type 4,
+  `Matrix_SetAxisLengths` `0x0046f910`); every other model's are counted, `ANIM_SCALE_TRACK` (Q598). Confirmed in the
+  game (`q707/p599/PREDICTION.txt`, run 4): the ticket's node at clip 18's end the original's own (12.093, 11.486, 8.958
+  at -38.226, 0, 42.049, its `load.log` line 279), clip 20's 3.023, 2.872, 2.239; the big ticket 0.740 of the height
+  across beside the original's 0.738 (`ticketbox.py`); 12 of 12 bugs put back caught.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

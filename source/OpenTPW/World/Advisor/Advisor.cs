@@ -641,6 +641,7 @@ public sealed class Advisor : Entity
 		var flags = _clipFlags.Count > index ? _clipFlags[index] : 0;
 		_faceAway = (flags & AdvisorGestures.FaceAway) != 0;
 
+		Log.Info( $"Advisor: clip {_gestures[index]} starts, {index + 1} of {_gestures.Count}" );
 		_speaker.StartClip( _gestures[index] );
 		_speaker.DressForClip( _wearing.First, _wearing.Second, _costume, _faceAway );
 		_mouth = 0;

@@ -47,17 +47,20 @@ flag `[0x008bb624] |= 0x2000000` rides into each mesh's draw entry (`DrawList_Ad
 `original/advnodes.py`): A = 1 0 0 0 | 0 -1 0 0 | 0 0 1 0 | 0.6 0.6 0.2 1 and B the identity throughout, every node's
 w column (0, 0, 0, 1), the root's axes 0.01125, 0.001, 0.015.
 
-**The big ticket is a scale track** (Q597). Lost Kingdom's `Advisor_JUNm18` keys `Ticket2` (node 12) from 0.748,
-0.964, 1.158 at frame 0 to 3.273, 4.214, 5.063 at 38 and 12.093, 11.486, 8.958 at 70; `m19` keys 12.093, 11.486, 8.958
-at 0 and 39; `m20` from that to 3.023, 2.872, 2.239 at 25 (`Wave01`, the ticket's glint ring, 0.249 to 0.488 in 18).
-`Anim_PoseTrack` lerps the two keys about the frame (`0x00471dca`) and sets the lengths of the node's three axes to them
-(`Matrix_SetAxisLengths`, `0x0046f910`), after the turn. In the original, the ticket's axes rose in clip 18 and in
-clip 20 fell to exactly 3.0233, 2.8715, 2.2394; through clip 19 they held clip 18's last pose (11.97 in one line, 12.08
-in the next: clip 18's lerp at frame 69.54 and 69.96), not clip 19's own 12.093, a one per cent difference whose cause
-was not traced. On screen the ticket of clip 19 spans 550 of the 1024-wide frame, the one in his hand about 40
-(`q707/p597/orig/O/g-15.png`, `g-18.png`). Clips 17 and 18 squash his body (1.243, 0.838, 0.838 to 1) and head the same
-way, and clip 16 the map. `AnimationFile` reads no scale track, so this game draws the ticket at its own size and him
-unsquashed (Q707).
+**The big ticket is a scale track** (Q597, Q599). Lost Kingdom's `Advisor_JUNm18` keys `Ticket2` (node 12, hung from
+`Bug Head`) from 0.748, 0.964, 1.158 at frame 0 to 3.273, 4.214, 5.063 at 38 and 12.093, 11.486, 8.958 at 70; `m19` keys
+12.093, 11.486, 8.958 at 0 and 39; `m20` from that to 3.023, 2.872, 2.239 at 25 (`Wave01`, the ticket's glint ring, 0.249
+to 0.488 in 18). `Anim_PoseTrack` tests `0x80` (`0x00471d8d`), finds the keys with `Anim_FindKey` type 4 (`0x00471db5`,
+16-byte keys; nought before the first key, and then no scale is set), lerps the two keys about the frame
+(`0x00471ddd`..`0x00471e2a`, the frame's fraction included) and sets the lengths of rows 0, 1 and 2 of the node's matrix to
+them (`Matrix_SetAxisLengths`, `0x0046f910`), after the turn and before the place. In the original the ticket's axes rise
+through clip 18, read 12.0933, 11.486, 8.9577 at its place -38.226, 0, 42.049 at clip 18's end and through clip 19
+(`q707/p597/orig/O/load.log` line 279), and fall in clip 20 to exactly 3.0233, 2.8715, 2.2394. On screen the ticket of clip
+19 spans 0.738 of the frame's height across, its middle 0.436 of the height left of his anchor (`g-15.png`, `ticketbox.py`);
+the one in his hand about 0.05. Clips 17 and 18 squash his body (1.243, 0.838, 0.838 to 1) and head the same way, and clip
+16 the map. **OpenTPW poses them** (Q599): `AnimationFile.ScaleTracks`, `AdvisorModel.PoseNodes`; the same node lengths and
+place at clip 18's end, and the ticket 0.740 of the height across, 0.438 left of his anchor (`q707/p599`). Every other
+model's scale tracks are counted, `ANIM_SCALE_TRACK` (Q598).
 
 **Draw order.** Because of the see-through discs, the model draws in two passes: every solid half first, then every see-through half in file order. Drawn mesh by mesh, a hand behind him shows through. Any future screen-drawn model with see-through parts needs the same two passes.
 
