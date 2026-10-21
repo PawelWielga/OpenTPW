@@ -159,20 +159,20 @@ filed the items that cite it.
   their time through a focus loss and a P pause. Decode what each command does to the other voice classes, then build
   them where ours has the two paths (find first whether ours pauses on focus loss at all). Confirm: in the original,
   a one-shot away from the camera kept past its length + 250 ms across an alt-tab (`oneshots.py`).
-- [ ] **Q560. A park file's live voices put back (decode first).** From Q559. Every park file carries the sound
-  manager's voices after the sound module's 84 bytes (`Sound_SaveModule` `0x0051c350` through `0x006b5c10`), and the
-  original's load puts them back (`Sound_LoadModule` `0x0051c400`, `0x0051c497` -> `0x006b5c30` -> `FUN_006ba150` ->
-  `SoundManager_SerializeVoices` `0x006b6da0`, which only reads, a case per class: 6 a held chain; the writer is
-  `0x006b6c30`). So the stock park's gates' held chain 177 sounds from the entry in the original (`q559/orig/` runs c
-  to g: a saved child of variation 8's sample, and the chain's own variation drawn afresh at the load, v8, v7, v1 and v2,
-  as its set-up redraws `+0x8` after the load restores it, `0x006bbfc5`), where ours makes none: its gate script is
-  resumed open and reaches no `EVENT`. A held chain is to be put back with its saved child's sample, a fresh draw for its
-  own variation and no flag `0x20`, so the first time its child list empties it restarts at variation 1, once
-  (`audio.md`, "Which variation it plays"). Counted at every park read: `PARK_FILE_SOUND_VOICES`. First session: decode the records (FileFormats `saves.md`, "Sound": 1,349 bytes in
-  `Easymode.TPWI`; `docs/exe/saves.md`'s `SOUN` row) and which voices they hold in the stock park and in Alexah's Full
-  Simulation saves (the gates', the crowd's, the rain's, a scream's), and whether a voice's handle in a script's record
-  or the weather's `mRainSoundHandle` is matched to one put back. Second: build what the jungle's files hold, and say what
-  this game's writer leaves out.
+
+- [ ] **Q612. A park file's voices put back (Q560's build).** From Q560 (`audio.md`, "A park file's voices"; FileFormats
+  `saves.md`, "The voice list"; `parkfile.py -N` prints any file's list with the record or word that keeps each handle).
+  At a park read, rebuild what Lost Kingdom's files hold and this game plays: the held chains (the gates' 177 with its
+  saved child's sample, a fresh draw for its own variation and no flag `0x20`, so its first empty child list restarts it
+  at variation 1 once; the Loudspeakers' 177 to 180, the Staff Room's 188, the screams' kids 71 to 73), the crowd (kids
+  91, the sound block's word at `+0x4` naming it), the music's class (the jungle music, the rides' 204, 216, 217), the
+  plain voices (the litter bins' 93, the two rectangle voices global ambient 2 and 3) and the one-shots (the level's
+  placed 7, 8 and 181, the Fountain's 107...), each under its saved handle, so that a script record's `KILLOBJ`,
+  `FADEOBJ` or `SETOBJPARAM` and the crowd's beat reach it as in the original. Decide, and say at the site, how the
+  land's own placed sounds (started here at the entry) meet the file's copies, which the original's reader stops first.
+  Say what this game's writer leaves out (it carries the loaded file's block unchanged today). Count a class 2 or 10
+  voice if one is ever met (none in 580 bodies). Confirm: the stock park's gates' chain making children from the entry
+  (`chains.py` against the original's run b), and a Loudspeaker's chain saved and loaded, stopped by its script.
 - [ ] **Q719. Does a loaded park play at the save's sound volumes? (one game check)** From the fork watch, 2026-10-20
   (`verify-world.md` M2; `saves.md`, "Sound"). The loader `0x0051c400` overwrites the live sound words at `0x00803aa0` with
   the save's (the volumes and the three on-flags; all 558 park files on hand hold 100/75/60/75 and on/on/on) and sets
@@ -1776,8 +1776,8 @@ filed the items that cite it.
 - [ ] **Q579. The voice list's reader and writer named in the Ghidra project.** From the review of run 6 (VERIFY-17,
   Q559 4; group O's notes). The project's `SoundManager_SerializeVoices` (`0x006b6da0`) only reads the voice list
   (stream slot `+0x8`), and its writer `0x006b6c30` (slot `+0xc`) is unnamed. Rename both in the project (a reader and
-  a writer name), then use the new names in `audio.md`'s table and "A script's sounds", `saves.md`'s `SOUN` row and
-  Q560's text, which keep the old name today. Docs and names only; nothing to confirm in the game.
+  a writer name), then use the new names in `audio.md`'s tables and "A script's sounds", which keep the old name
+  today. Docs and names only; nothing to confirm in the game.
 
 - [ ] **Q294. The FileFormats pages changed since 2026-09-26, against the game's files.** Left by the week-end
   audit's stage 8. 1,557 layout statements on 22 pages, `saves.md` and `models.md` most of them, packed into 56

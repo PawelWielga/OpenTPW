@@ -9684,6 +9684,30 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   category 4 = `[0x00803a24]`, from the charge, at (525, 0, 300) for the Jungle Spray's 20 and (434, 0, 303) for the
   Coconut Kiosk's 30 (`a-after.png`). Ours (`q567/run1`, main's binary): 17 charges and "17x CHARGE_SOUND"
   (`spray.png`). The build is Q611.
+- [x] **Q560. A park file's live voices put back (decode first).** From Q559. Every park file carries the sound
+  manager's voices after the sound module's 84 bytes (`Sound_SaveModule` `0x0051c350` through `0x006b5c10`), and the
+  original's load puts them back (`Sound_LoadModule` `0x0051c400`, `0x0051c497` -> `0x006b5c30` -> `FUN_006ba150` ->
+  `SoundManager_SerializeVoices` `0x006b6da0`, which only reads, a case per class: 6 a held chain; the writer is
+  `0x006b6c30`). So the stock park's gates' held chain 177 sounds from the entry in the original (`q559/orig/` runs c
+  to g: a saved child of variation 8's sample, and the chain's own variation drawn afresh at the load, v8, v7, v1 and v2,
+  as its set-up redraws `+0x8` after the load restores it, `0x006bbfc5`), where ours makes none: its gate script is
+  resumed open and reaches no `EVENT`. A held chain is to be put back with its saved child's sample, a fresh draw for its
+  own variation and no flag `0x20`, so the first time its child list empties it restarts at variation 1, once
+  (`audio.md`, "Which variation it plays"). Counted at every park read: `PARK_FILE_SOUND_VOICES`. First session: decode the records (FileFormats `saves.md`, "Sound": 1,349 bytes in
+  `Easymode.TPWI`; `docs/exe/saves.md`'s `SOUN` row) and which voices they hold in the stock park and in Alexah's Full
+  Simulation saves (the gates', the crowd's, the rain's, a scream's), and whether a voice's handle in a script's record
+  or the weather's `mRainSoundHandle` is matched to one put back. Second: build what the jungle's files hold, and say what
+  this game's writer leaves out.
+  **Done (decode, 2026-10-21):** the list is the writer `0x006b6c30` and `Voice_WriteRecord` (`0x006bccf0`), read back by
+  `0x006b6da0` and `Voice_ReadRecord` (`0x006bd0a0`): the category slots' names, the pool's blocks, then per voice its
+  handle, class (1 music, 2 flag `0x10`, 3 one-shot, 4 any chain, 5 plain, 6 held chain; children 7 and 9) and a record
+  of place, range, category slot, effect, variation and sample places, controllers, flag `0x1000`, and a child; the
+  voice goes back under its exact saved handle. All 580 different park bodies on hand parse to their end (31 different
+  lists); the original entering the stock park held its ten voices with the file's handles and classes (`q560/orig/`,
+  run b, `b-voices.log`, `b-1.png`). Script records name a saved voice in 1,394 of 1,581, the crowd's word in 569 of
+  569, the rain's in its one. 7 of 8 sweep predictions held (P8, the three floats' height, missed on 3 files), all 4 of
+  the original's and all 3 of ours. FileFormats `saves.md`, "The voice list"; `audio.md`, "A park file's voices".
+  The build is Q612.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
