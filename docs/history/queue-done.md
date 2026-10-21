@@ -9594,6 +9594,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   left, 1.2 px from the original's (`side-by-side-seaplane.png`); the ferry where the original's lies, at its slant
   (`side-by-side-ferry.png`; the original's from `late30` with seed 1, `lib/seedfile.py`); the bus at (529.1, 64.4)
   and (439.9, 64.8) (`bus-stops.png`). `mutate.py` 20 of 21, one equivalent.
+- [x] **Q606. An id given out again is saved as a new thing (Q582's review defects).** From the review of Q582
+  (`~/.cache/tpw-harnesses/handoff/review7/VERIFY-12.md`: D1, D2, N1, M1, M2, M3; first reader `review7/q582/FINDINGS.md`).
+  The park file's writer paired the running park with the file's records by thing id, so once Q582 gave a freed id out
+  again a hire, a buy or a vehicle on a departed guest's id threw and the save was lost, and a guest or an object on
+  the same kind's id was written over the old record (D1); a new object on a sold one's id kept its totals, queue head
+  and nominee (D2, N1); the made were written in falling id, not newest made first (M1); `saves.md` kept the old rule
+  (M2) and no test wrote a file after a reuse (M3). **Done:** `ParkState.DeletedSinceLoad` and `MadeAt`, handed to the
+  writer as `ParkWorld.ThingIds`: a file's thing on a deleted id is gone, its new holder written whole as made, newest
+  first by making (the list, the object list, a cell's chain, model and sprite slots); `AddObject` zeroes the totals,
+  queue head and nominee as `FUN_004db090` does, a sale takes them away (`saves.md`, "OpenTPW's writer, an id given out
+  again"). **Proved:** the original's own file after late30 (`q606/orig/orig-a.TPWS`) opens 40 (the ferry, summoned on
+  departed guest 40's id), 54..43, 38 (a new guest on departed 38's), 14, then late30's own; ours from late30 with a hire,
+  an ape, a Racers on sold 16, the seaplane and a guest each on an id just freed is written (it threw before) and opens
+  36, 38, 16, 40, 41, and loads back with all five (`q606/run2`, `run3`, 9 of 9 each); in Full Simulation a Balloon
+  Shop bought on sold 47's id reads totals 0 0 where the old one had 17908 21780 (`runF2`); 21 of 21 bugs put back
+  caught. U1 to U3 stay unsettled. A sold object the writer cannot take out (a tracked ride) keeps its id in the file, so
+  a thing made on it is counted `SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING` and left out, with `SAVE_PARK_OBJECT_SOLD`'s gap.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

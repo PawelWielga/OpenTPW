@@ -81,7 +81,9 @@ public static class ParkFileWriter
 	/// the file's where it is null. <see cref="Lab"/> is the research lab and the object controls' researched flags and
 	/// tiers (<see cref="ParkWorld.PutLab"/>); the file's where it is null. <see cref="RecentlyResearched"/> is the
 	/// analyser's four rings of the recently researched (<see cref="ParkWorld.PutRecentlyResearched"/>); the file's where
-	/// it is null.
+	/// it is null. <see cref="Ids"/> is what the park has done to the numbering since the load (<see cref="ParkWorld.ThingIds"/>):
+	/// the file's ids deleted, each a new thing wherever it is held again, and when each thing made was made; with
+	/// it null nothing was deleted and the higher id is the newer.
 	/// </summary>
 	public readonly record struct Running( int GameTick, bool ParkClosed, int VisitorsToDate, int Balance,
 		ParkCameraModule.View Camera, IReadOnlyDictionary<int, ParkWorld.MapCell>? Cells = null,
@@ -99,7 +101,7 @@ public static class ParkFileWriter
 		(int ForceStrike, IReadOnlyList<ParkWorld.StrikeRecord> Records)? Strikes = null,
 		ParkWorld.EconomyState? Economy = null, (int Month, int Day)? Calendar = null,
 		ParkWorld.WeatherState? Weather = null, ParkWorld.WrittenLab? Lab = null,
-		IReadOnlyList<ParkWorld.ResearchedRing>? RecentlyResearched = null );
+		IReadOnlyList<ParkWorld.ResearchedRing>? RecentlyResearched = null, ParkWorld.ThingIds? Ids = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -328,7 +330,7 @@ public static class ParkFileWriter
 		if ( running.Things is { } run )
 		{
 			// First: a started emitter's handle goes into its script's record, which is written below.
-			var emitters = PutEmitters( loaded, body, ref run );
+			var emitters = PutEmitters( loaded, body, ref run, running.Ids );
 
 			var objects = loaded.PutObjects( body, run.Objects );
 			var scripts = loaded.ScriptStates.Put( body, run.SchedulerTick, run.NextHandle, run.Scripts );
@@ -343,7 +345,7 @@ public static class ParkFileWriter
 
 			// The heads are sprites, so they are written with the people or not at all.
 			if ( running.People != null )
-				heads = PlanHeads( loaded, run, running.People, headSlots, madeHeadSlots, carSlots, cars, carHeadSlots );
+				heads = PlanHeads( loaded, run, running.People, headSlots, madeHeadSlots, carSlots, cars, carHeadSlots, running.Ids );
 
 			var models = run.ModelStates.Put( body, run.Models, heads != null ? headSlots : null );
 
@@ -399,7 +401,7 @@ public static class ParkFileWriter
 				// things were bought and cells tiled. Here the slots are dealt as the file is written: the
 				// objects first, the oldest first, then the queue cells in the map's order, then each car's and its
 				// wake's in pool order. Every handle still names its own record, which is all a load reads.
-				var oldestFirst = made.OrderBy( thing => thing.Object.Object.ThingId ).ToList();
+				var oldestFirst = OldestFirst( made, running.Ids ).ToList();
 				var laid = cellsInOrder.Where( entry => entry.Value != null ).ToList();
 				var carModels = cars.Sum( car => car.Wake != null ? 2 : 1 );
 				var slots = run.ModelStates.Plan( goneSlots, oldestFirst.Count + laid.Count + carModels );
@@ -505,7 +507,7 @@ public static class ParkFileWriter
 		// After the modules behind the world are spliced: the people change the world's length, and only the map's effects follow.
 		if ( running.People is { } written )
 		{
-			body = loaded.PutPeople( body, written, edits, running.LetGo, heads, out var report );
+			body = loaded.PutPeople( body, written, edits, running.LetGo, heads, running.Ids, out var report );
 			people = report;
 		}
 
@@ -540,7 +542,7 @@ public static class ParkFileWriter
 	/// fixed, gone or sold is killed.
 	/// </para>
 	/// </summary>
-	private static EmittersWritten? PutEmitters( ParkWorld loaded, byte[] body, ref RunningThings run )
+	private static EmittersWritten? PutEmitters( ParkWorld loaded, byte[] body, ref RunningThings run, ParkWorld.ThingIds? ids )
 	{
 		var made = run.Made ?? [];
 		var tracks = run.Tracks ?? [];
@@ -612,7 +614,7 @@ public static class ParkFileWriter
 		run = run with
 		{
 			Scripts = [.. run.Scripts.Select( Started )],
-			Made = made.Count == 0 ? run.Made : [.. made.OrderBy( thing => thing.Object.Object.ThingId )
+			Made = made.Count == 0 ? run.Made : [.. OldestFirst( made, ids )
 				.Select( thing => thing.Script is { } script ? thing with { Script = script with { Script = Started( script.Script ) } } : thing )]
 		};
 
@@ -702,7 +704,7 @@ public static class ParkFileWriter
 	/// </summary>
 	private static ParkWorld.HeadEdits PlanHeads( ParkWorld loaded, RunningThings run, IReadOnlyList<ParkWorld.WrittenPerson> people,
 		Dictionary<(int Slot, int Record), int> kept, Dictionary<(int Thing, int Record), int> made,
-		IReadOnlySet<int> carSlots, IReadOnlyList<WrittenCar> cars, Dictionary<(int Car, int Record), int> onCars )
+		IReadOnlySet<int> carSlots, IReadOnlyList<WrittenCar> cars, Dictionary<(int Car, int Record), int> onCars, ParkWorld.ThingIds? ids )
 	{
 		var looks = people.ToDictionary( person => person.Person.ThingId, person => (person.Person.SpriteKind, person.Person.SpriteBank) );
 		var hung = new List<ParkWorld.WrittenHead>();
@@ -757,7 +759,7 @@ public static class ParkFileWriter
 		foreach ( var thing in loaded.Objects.Where( thing => run.Gone?.Contains( thing.ThingId ) == true && thing.MeshInstance > 0 ) )
 			gone.UnionWith( run.ModelStates.AttachedOn( thing.MeshInstance - 1 ).Values );
 
-		foreach ( var thing in (run.Made ?? []).OrderBy( thing => thing.Object.Object.ThingId ) )
+		foreach ( var thing in OldestFirst( run.Made ?? [], ids ) )
 		{
 			foreach ( var (record, visitor) in thing.Heads?.Hung ?? [] )
 			{
@@ -797,6 +799,14 @@ public static class ParkFileWriter
 	private const int CostumeSpriteKind = 2;
 
 	/// <summary>A made thing's tables with each head hung in its lookup record: <c>0x2</c> and the sprite's slot, and the shared <c>0x4</c>.</summary>
+	/// <summary>
+	/// The things bought, the oldest made first: by the park's stamps (<see cref="ParkWorld.ThingIds.MadeAt"/>), and by
+	/// id among those it does not stamp.
+	/// </summary>
+	private static IEnumerable<MadeThing> OldestFirst( IEnumerable<MadeThing> made, ParkWorld.ThingIds? ids )
+		=> made.OrderBy( thing => ids?.MadeAt.GetValueOrDefault( thing.Object.Object.ThingId ) ?? 0 )
+			.ThenBy( thing => thing.Object.Object.ThingId );
+
 	private static ParkThingStates.ModelTables? WithHeads( MadeThing thing, Dictionary<(int Thing, int Record), int> slots )
 	{
 		if ( thing.Tables is not { } tables || thing.Heads is not { } heads )

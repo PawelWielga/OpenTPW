@@ -1535,6 +1535,14 @@ filed the items that cite it.
   both games' rest level each sweep from tick 755 (`q134/orig/watch.py`'s reader; `staff`) and find where the drain
   or the walk to the room parts (`ride-operation.md`, "The staff turn"; Q326's search, arrival and rest).
 
+- [ ] **Q607. A thing made on the id of a sold object the file keeps.** From Q606. The park file's writer cannot take
+  out a sold object it cannot write (a tracked ride, a kart or water ride with cars: `SAVE_PARK_OBJECT_SOLD`, Q420's
+  gap), so the file keeps that object's id, and a guest, a hire, a buy or a vehicle made on the id since the sale is
+  counted `SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING` and left out of the file (`Level.WritePark`, `ParkState.WrittenObjects`;
+  `saves.md`, "OpenTPW's writer, an id given out again"). Reached by selling a coaster a loaded park holds, then
+  playing on (not run). Goes with the writer taking such a ride out; until then, confirm a save after the sale and one make
+  counts the gap once and loads back without the made thing.
+
 ## B. Docs and comments
 
 - [ ] **Q14. Comment sweep of the cleanup commits.** Replace history-voice comments with what the code does now,

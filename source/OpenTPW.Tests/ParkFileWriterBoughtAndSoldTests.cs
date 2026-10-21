@@ -554,7 +554,10 @@ public class ParkFileWriterBoughtAndSoldTests
 		Assert.AreEqual( shipped.ObjectControlRecords.Single( control => control.ItemId == CrazyApe ).Researched, ape.Researched, "the rest of a control is the file's" );
 	}
 
-	/// <summary>What cannot be written is refused: a made id the file holds, a gone id that is no object, a thing with no people given.</summary>
+	/// <summary>
+	/// What cannot be written is refused: a made id the file holds for a thing still standing (42 and 13 are not
+	/// deleted here), a gone id that is no object, a thing with no people given, an object of the file's deleted and kept.
+	/// </summary>
 	[TestMethod]
 	public void WhatCannotBeWrittenIsRefused()
 	{
@@ -566,6 +569,8 @@ public class ParkFileWriterBoughtAndSoldTests
 		Assert.ThrowsException<InvalidOperationException>( () => ParkFileWriter.Body( shipped, Running( Things( [Ape( 20000 )] ) ) ), "an id past the table" );
 		Assert.ThrowsException<InvalidOperationException>( () => ParkFileWriter.Body( shipped, Running( Things( [Ape()] ), people: false ) ), "with no people" );
 		Assert.ThrowsException<InvalidOperationException>( () => ParkFileWriter.Body( shipped, Running( Things( gone: [DrinksShop] ), people: false ) ) );
+		Assert.ThrowsException<InvalidOperationException>( () => ParkFileWriter.Body( shipped, Running( Things() ) with
+			{ Ids = new ParkWorld.ThingIds( new HashSet<int> { DrinksShop }, new Dictionary<int, long>() ) } ), "deleted and not gone" );
 	}
 
 	// ---- the running park's half
@@ -621,6 +626,26 @@ public class ParkFileWriterBoughtAndSoldTests
 		Assert.AreEqual( (0, 0, 2), (bought.Count, gone.Count, Times( "SAVE_PARK_OBJECT_SOLD" )), "with no test nothing is made or taken out" );
 		Assert.AreEqual( (1, (uint)state.GameTick), state.BuiltItems[CrazyApe] );
 		Assert.AreEqual( 0, state.BuiltItems[DrinksShopItem].Standing );
+	}
+
+	/// <summary>
+	/// A sold thing the file keeps (the camera, which here will not write) keeps its id there: a thing bought on the
+	/// id is counted and not handed over, and nothing is taken out.
+	/// </summary>
+	[TestMethod]
+	public void AThingBoughtOnAKeptSoldThingsIdIsNotWritten()
+	{
+		var state = new ParkState( shipped );
+
+		Assert.IsTrue( state.RemoveObject( 18 ) );
+		state.DeleteThing( 18 );
+		state.FreeDeletedThings();
+
+		var ape = Buy( state, null, CrazyApe, 41, 22 );
+		var kept = state.WrittenObjects( shipped, thing => thing.CatalogueId != CameraItem, out var bought, out var gone );
+
+		Assert.AreEqual( (18, 0, 0, 13), (ape.ThingId, bought.Count, gone.Count, kept.Count) );
+		Assert.AreEqual( (1, 1, 0), (Times( "SAVE_PARK_OBJECT_SOLD" ), Times( "SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING" ), Times( "SAVE_PARK_OBJECT_BOUGHT" )) );
 	}
 
 	/// <summary>A thing bought, then sold again before the save, is in neither list.</summary>

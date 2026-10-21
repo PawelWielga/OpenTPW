@@ -355,16 +355,33 @@ public sealed partial class ParkWorld
 		=> PutPeople( body, people, objects, letGo, null, out report );
 
 	/// <summary>
+	/// <see cref="PutPeople(byte[], IReadOnlyList{WrittenPerson}, ObjectEdits?, IReadOnlyList{WrittenSprite}?, HeadEdits?, ThingIds?, out PeopleWritten)"/>
+	/// with nothing deleted since the load and the higher id taken as the newer.
+	/// </summary>
+	internal byte[] PutPeople( byte[] body, IReadOnlyList<WrittenPerson> people, ObjectEdits? objects,
+		IReadOnlyList<WrittenSprite>? letGo, HeadEdits? heads, out PeopleWritten report )
+		=> PutPeople( body, people, objects, letGo, heads, null, out report );
+
+	/// <summary>
 	/// <see cref="PutPeople(byte[], IReadOnlyList{WrittenPerson}, ObjectEdits?, IReadOnlyList{WrittenSprite}?, out PeopleWritten)"/>,
 	/// with the riders' heads. Each is written on the slot it is given, before any slot is dealt to a person made:
 	/// over the file's record where the slot holds a head already, its kind and bank alone, and on a record made
 	/// anew where it does not (<see cref="HeadSprite"/>). A head gone gives its slot up.
+	///
+	/// <para>
+	/// <b>An id <paramref name="ids"/> names deleted names a new thing wherever it is held</b>: the file's person on
+	/// it is gone (the record left out, the sprite, balloon and bubble let go, out of every chain and set), the file's
+	/// object on it must be in the objects gone, and a person or an object on it now is written whole as made. The
+	/// made, people and objects together, go newest first by its stamps.
+	/// </para>
 	/// </summary>
 	internal byte[] PutPeople( byte[] body, IReadOnlyList<WrittenPerson> people, ObjectEdits? objects,
-		IReadOnlyList<WrittenSprite>? letGo, HeadEdits? heads, out PeopleWritten report )
+		IReadOnlyList<WrittenSprite>? letGo, HeadEdits? heads, ThingIds? ids, out PeopleWritten report )
 	{
 		var madeObjects = objects?.Made ?? [];
 		var goneObjects = objects?.Gone ?? new HashSet<int>();
+		var deleted = ids?.Deleted ?? new HashSet<int>();
+		var madeAt = ids?.MadeAt ?? new Dictionary<int, long>();
 
 		if ( ThingHeadAt < 0 || WorldEndAt < 0 || MapAt < 0 || !ClosedOnTrailer )
 			throw new InvalidOperationException( "the park file it was loaded from holds no thing list" );
@@ -375,6 +392,15 @@ public sealed partial class ParkWorld
 		var (setsAt, setsEndAt, sets) = ReadMessageSets( body, SpritesEndAt + SpriteTrailer.Length );
 		var fileRecords = _records.ToDictionary( record => record.Id );
 		var running = new Dictionary<int, WrittenPerson>();
+
+		// Whether the file's record of an id is the thing that holds it now.
+		bool Kept( int id ) => fileRecords.ContainsKey( id ) && !deleted.Contains( id );
+
+		foreach ( var id in deleted )
+		{
+			if ( fileRecords.TryGetValue( id, out var held ) && held.Model == CatalogueObjectModel && !goneObjects.Contains( id ) )
+				throw new InvalidOperationException( $"thing {id}, deleted, is an object the file keeps" );
+		}
 
 		foreach ( var person in people )
 		{
@@ -387,8 +413,8 @@ public sealed partial class ParkWorld
 				|| (person.Person.Model != GuestModel) != (person.Person.Staff != null) )
 				throw new InvalidOperationException( $"thing {id} is no guest and no member of staff" );
 
-			if ( fileRecords.TryGetValue( id, out var held ) && held.Model != person.Person.Model )
-				throw new InvalidOperationException( $"thing {id} is model {held.Model} in the file and {person.Person.Model} in the park" );
+			if ( Kept( id ) && fileRecords[id].Model != person.Person.Model )
+				throw new InvalidOperationException( $"thing {id} is model {fileRecords[id].Model} in the file and {person.Person.Model} in the park" );
 
 			if ( person.Person.RawX >> 8 >= MapSize || person.Person.RawY >> 8 >= MapSize || person.Person.RawX < 0 || person.Person.RawY < 0 )
 				throw new InvalidOperationException( $"thing {id} stands off the map" );
@@ -404,7 +430,7 @@ public sealed partial class ParkWorld
 			if ( id < 1 || id > HighestThingId )
 				throw new InvalidOperationException( $"thing {id} is past the {HighestThingId} ids a park file can name" );
 
-			if ( fileRecords.ContainsKey( id ) || running.ContainsKey( id ) || !boughtIds.Add( id )
+			if ( Kept( id ) || running.ContainsKey( id ) || !boughtIds.Add( id )
 				|| record.Length != RecordSizes[CatalogueObjectModel] )
 				throw new InvalidOperationException( $"thing {id}, an object bought, is in the file or the park already" );
 		}
@@ -426,7 +452,7 @@ public sealed partial class ParkWorld
 		// The list: the made, newest first, then the file's without the gone.
 		var list = new List<(int Id, int Model, byte[] Record, bool Made)>();
 
-		foreach ( var person in people.Where( person => !fileRecords.ContainsKey( person.Person.ThingId ) ) )
+		foreach ( var person in people.Where( person => !Kept( person.Person.ThingId ) ) )
 			list.Add( (person.Person.ThingId, person.Person.Model, new byte[RecordSizes[person.Person.Model]], true) );
 
 		var made = list.Count;
@@ -434,7 +460,8 @@ public sealed partial class ParkWorld
 		foreach ( var (id, record) in madeObjects )
 			list.Add( (id, CatalogueObjectModel, (byte[])record.Clone(), true) );
 
-		list.Sort( ( a, b ) => b.Id.CompareTo( a.Id ) );
+		list = [.. Newest( list, entry => entry.Id, madeAt )];
+		var madeObjectIds = Newest( madeObjects.Select( entry => entry.Id ), id => id, madeAt ).ToList();
 		var gone = 0;
 
 		// The file's chains, before anything is moved: which cells held a person, and each cell's other things in order.
@@ -468,7 +495,7 @@ public sealed partial class ParkWorld
 			if ( goneObjects.Contains( record.Id ) )
 				continue;
 
-			if ( IsPerson( record.Model ) && !running.ContainsKey( record.Id ) )
+			if ( IsPerson( record.Model ) && (!running.ContainsKey( record.Id ) || deleted.Contains( record.Id )) )
 			{
 				// Gone: their record is left out, and their sprite, balloon and bubble let go.
 				FreeSlots( body, record, sprites, own: true, balloon: true, bubble: true );
@@ -514,7 +541,7 @@ public sealed partial class ParkWorld
 		var slotOf = new Dictionary<int, int>();
 		var unmatched = 0;
 
-		foreach ( var (id, model, record, isMade) in list.Where( entry => IsPerson( entry.Model ) ).OrderBy( entry => entry.Id ) )
+		foreach ( var (id, model, record, isMade) in Oldest( list.Where( entry => IsPerson( entry.Model ) ) ) )
 		{
 			var person = running[id];
 
@@ -541,7 +568,7 @@ public sealed partial class ParkWorld
 		var balloonOf = new Dictionary<int, int>();
 		var bubbleOf = new Dictionary<int, int>();
 
-		foreach ( var (id, model, record, isMade) in list.Where( entry => IsPerson( entry.Model ) ).OrderBy( entry => entry.Id ) )
+		foreach ( var (id, model, record, isMade) in Oldest( list.Where( entry => IsPerson( entry.Model ) ) ) )
 		{
 			var person = running[id];
 
@@ -563,6 +590,13 @@ public sealed partial class ParkWorld
 			foreach ( var bursting in letGo )
 				PutOther( 0, bursting );
 		}
+
+		// The newest made first, or the oldest: by the park's stamps, and by id among those it does not stamp.
+		static IEnumerable<T> Newest<T>( IEnumerable<T> things, Func<T, int> idOf, IReadOnlyDictionary<int, long> madeAt )
+			=> things.OrderByDescending( thing => madeAt.GetValueOrDefault( idOf( thing ) ) ).ThenByDescending( idOf );
+
+		IEnumerable<(int Id, int Model, byte[] Record, bool Made)> Oldest( IEnumerable<(int Id, int Model, byte[] Record, bool Made)> entries )
+			=> entries.OrderBy( entry => madeAt.GetValueOrDefault( entry.Id ) ).ThenBy( entry => entry.Id );
 
 		int FreeSlot()
 		{
@@ -623,9 +657,11 @@ public sealed partial class ParkWorld
 
 		// An object made stands on its anchor cell, behind whoever stands there and before the file's own things.
 		var objectsOn = new Dictionary<int, List<int>>();
+		var madeRecords = madeObjects.ToDictionary( entry => entry.Id, entry => entry.Record );
 
-		foreach ( var (id, record) in madeObjects )
+		foreach ( var id in madeObjectIds )
 		{
+			var record = madeRecords[id];
 			var cell = (record[11] * MapSize) + record[9];
 
 			if ( cell >= _cells.Length )
@@ -662,7 +698,7 @@ public sealed partial class ParkWorld
 		// The object list: the made, newest first, then the file's own chain without the gone.
 		if ( madeObjects.Count > 0 || goneObjects.Count > 0 )
 		{
-			var chain = madeObjects.Select( entry => entry.Id ).OrderByDescending( id => id ).ToList();
+			var chain = madeObjectIds.ToList();
 			var steps = 0;
 
 			for ( var id = (int)BinaryPrimitives.ReadUInt16LittleEndian( body.AsSpan( HeaderAt + HeaderFieldAt( FirstObjectField ) ) ); id != 0; )
@@ -694,7 +730,7 @@ public sealed partial class ParkWorld
 			// Rebuilt by id and the file's order, not the running list the original saves: a file chain [A, B] whose B
 			// walked off and back runs [B, A] here too and is written [A, B] (docs/exe/saves.md, "The chains"; Q420).
 			var here = peopleOn.GetValueOrDefault( cell ) ?? [];
-			var before = stood.GetValueOrDefault( cell ) ?? [];
+			var before = (stood.GetValueOrDefault( cell ) ?? []).Where( id => !deleted.Contains( id ) ).ToList();
 			var chain = here.Where( id => !before.Contains( id ) ).ToList();
 
 			chain.AddRange( before.Where( here.Contains ) );
@@ -719,7 +755,13 @@ public sealed partial class ParkWorld
 			++headed;
 		}
 
-		// The sets.
+		// The sets: the gone and the deleted out of each, then the people's three as they run.
+		if ( madeObjects.Count > 0 || goneObjects.Count > 0 || deleted.Count > 0 )
+		{
+			for ( var set = 0; set < sets.Count; ++set )
+				sets[set] = [.. sets[set].Where( id => !goneObjects.Contains( id ) && !deleted.Contains( id ) )];
+		}
+
 		var isStaff = list.Where( entry => IsPerson( entry.Model ) && entry.Model != GuestModel ).Select( entry => entry.Id ).ToList();
 
 		sets[EverybodySet] = Members( sets[EverybodySet], fileRecords, list.Where( entry => IsPerson( entry.Model ) ).Select( entry => entry.Id ) );
@@ -728,9 +770,6 @@ public sealed partial class ParkWorld
 
 		if ( madeObjects.Count > 0 || goneObjects.Count > 0 )
 		{
-			for ( var set = 0; set < sets.Count; ++set )
-				sets[set] = [.. sets[set].Where( id => !goneObjects.Contains( id ) )];
-
 			if ( sets.Count <= ObjectSet )
 				throw new InvalidOperationException( "the park file it was loaded from holds no set for the day's change" );
 

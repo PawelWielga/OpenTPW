@@ -113,7 +113,7 @@ public class ParkFileWriterMadeVehicleTests
 	/// The shipped park, its ferry not made, a load of sixty-one forced and swept until the ferry is summoned, and so
 	/// made.
 	/// </summary>
-	private (ParkPeople People, ParkRides Rides, int Ferry) FerrySummoned()
+	private (ParkPeople People, ParkRides Rides, int Ferry) FerrySummoned( Action<ParkPeople>? first = null )
 	{
 		typeof( Players ).GetProperty( nameof( Players.Current ) )!.SetValue( Players.Roster, new Player( 0, "Test", new PlayerFile { InstantAction = true } ) );
 
@@ -135,6 +135,7 @@ public class ParkFileWriterMadeVehicleTests
 		Time.Update( 0f );
 		GameClock.Update( paused: false, GameClock.ParkCatchUp );
 
+		first?.Invoke( people );
 		Assert.AreEqual( 3, people.ForceArrival( 61 ), "sixty-one come by the third vehicle" );
 		scriptsBeforeTheSummons = rides.Scheduler.Scripts.Count();
 		Sweep( people );
@@ -179,6 +180,28 @@ public class ParkFileWriterMadeVehicleTests
 	/// left out of the file; its record on another cell; its ends nought; the cell's list left the bus's; the script
 	/// or the model not written; the bus's slot lost; a load of the file making the vehicle again.
 	/// </remarks>
+	[TestMethod]
+	public void AVehicleMadeOnADepartedGuestsIdIsWrittenWhole()
+	{
+		var guest = 0;
+		var (people, rides, ferry) = FerrySummoned( running =>
+		{
+			guest = running.Peeps.First( peep => !PeepBehaviour.HeldByAThing( peep ) ).ThingId;
+			Assert.IsTrue( running.Depart( guest ) );
+			running.State.FreeDeletedThings();
+		} );
+
+		Assert.AreEqual( guest, ferry, "the summons takes the free list's head" );
+		Assert.IsNotNull( Level.WritePark( shipped, people.State, Theme, "FerryOnAGuest", people, null, rides, catalogue ) );
+
+		var written = Read( File.ReadAllBytes( Path.Combine( Jungle, "FerryOnAGuest.TPWS" ) ), out _ );
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( (FerryItem, 0, 0), written.Objects.Where( thing => thing.ThingId == ferry ).Select( thing => (thing.CatalogueId, thing.CellX, thing.CellY) ).Single() );
+		Assert.IsFalse( written.People.Any( person => person.ThingId == ferry ), "the guest is gone from the file" );
+		Assert.AreEqual( ferry, written.CurrentArrivalVehicle );
+	}
+
 	[TestMethod]
 	public void AParkWrittenAfterTheSummonsHoldsTheVehicleAsAThing()
 	{

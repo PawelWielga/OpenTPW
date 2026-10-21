@@ -395,18 +395,43 @@ public sealed class ParkState
 	{
 		SeedFreeIds();
 
+		int thingId;
+
 		if ( _freeIds.First is { } head )
 		{
 			_freeIds.RemoveFirst();
-			return head.Value;
+			thingId = head.Value;
+		}
+		else
+		{
+			// The original's table holds 0x2800 nodes and gives nought past the last ("Thing Array is full").
+			if ( _nextThingId > LastThingId )
+				Unimplemented.Report( "THING_ARRAY_FULL" );
+
+			thingId = _nextThingId++;
 		}
 
-		// The original's table holds 0x2800 nodes and gives nought past the last ("Thing Array is full").
-		if ( _nextThingId > LastThingId )
-			Unimplemented.Report( "THING_ARRAY_FULL" );
+		// The node goes to the head of the used list as it is taken (FUN_00516270), so the newest made heads it.
+		_madeAt[thingId] = ++_makes;
 
-		return _nextThingId++;
+		return thingId;
 	}
+
+	/// <summary>
+	/// When each thing made since the load was made, the newer the greater: the order the original's used list holds
+	/// them in from its head, which its writer walks (<c>docs/exe/saves.md</c>, "OpenTPW's writer, an id given out again").
+	/// </summary>
+	public IReadOnlyDictionary<int, long> MadeAt => _madeAt;
+
+	/// <summary>
+	/// Every id deleted since the load, whatever holds it now. One the file held names a thing that is gone from it:
+	/// a thing made on the id since is a new one, built from nought by its constructor (<c>FUN_0050afe0</c>).
+	/// </summary>
+	public IReadOnlySet<int> DeletedSinceLoad => _deletedSinceLoad;
+
+	private readonly Dictionary<int, long> _madeAt = [];
+	private readonly HashSet<int> _deletedSinceLoad = [];
+	private long _makes;
 
 	/// <summary>
 	/// Marks a thing deleted (<c>FUN_0050b780</c>): its id is pushed onto the head of the deleted list
@@ -419,6 +444,7 @@ public sealed class ParkState
 
 		SeedFreeIds();
 		_deletedIds.Push( thingId );
+		_deletedSinceLoad.Add( thingId );
 	}
 
 	/// <summary>
@@ -509,6 +535,14 @@ public sealed class ParkState
 		CountBuilt( placed.CatalogueId );
 		_rings[placed.ThingId] = new ParkObjectRings();
 
+		// The constructor zeroes its totals, its queue's head and its nominee (FUN_004db090: +0x180 and +0x184 at
+		// 0x004db163, mFirstInQ at 0x004db0fe, mPersonBeingLoaded at 0x004db132): nothing passes to it from a thing
+		// that held its id before.
+		_takings.Remove( placed.ThingId );
+		_costs.Remove( placed.ThingId );
+		_queueHead.Remove( placed.ThingId );
+		_beingLoaded.Remove( placed.ThingId );
+
 		_nextObject[placed.ThingId] = _firstObject;
 		_firstObject = placed.ThingId;
 
@@ -533,6 +567,11 @@ public sealed class ParkState
 			--_fromFile;
 		_hoardings.Remove( thingId );
 		_rings.Remove( thingId );
+		_takings.Remove( thingId );
+		_costs.Remove( thingId );
+		_queueHead.Remove( thingId );
+		_beingLoaded.Remove( thingId );
+		_queuesInvalidated.Remove( thingId );
 		Unlink( thingId );
 
 		return true;
@@ -628,7 +667,7 @@ public sealed class ParkState
 	/// with its queue's head, the guest it is loading, its two totals and its rings; and its queue's back cell and
 	/// size as measured since the queue was last edited, the file's where it was not
 	/// (<see cref="ParkRideChoice.QueueCellsFor"/>). An object sold since the load is left out, and counted: its
-	/// record is still the file's.
+	/// record is still the file's. So is one whose id was deleted since, whatever holds the id now.
 	/// </summary>
 	internal List<ParkWorld.CatalogueObject> WrittenObjects( ParkWorld loaded )
 		=> WrittenObjects( loaded, null, out _, out _ );
@@ -636,8 +675,10 @@ public sealed class ParkState
 	/// <summary>
 	/// <see cref="WrittenObjects(ParkWorld)"/>, with the objects bought and sold since the load
 	/// (<c>docs/exe/saves.md</c>, "OpenTPW's writer, a thing bought and a thing sold"): in <paramref name="made"/>
-	/// each object the park holds and the file does not, the newest first, as it runs; in <paramref name="gone"/>
-	/// the id of each object of the file's that no longer stands.
+	/// each object the park holds and the file does not, as it runs, the newest made first; in <paramref name="gone"/>
+	/// the id of each object of the file's that no longer stands. <b>An id deleted since the load names a new thing
+	/// wherever it is held again</b>: the file's object on it is gone, and an object on it now is made
+	/// (<c>docs/exe/saves.md</c>, "OpenTPW's writer, an id given out again").
 	///
 	/// <para>
 	/// <b>Only a thing <paramref name="writable"/> passes is written so.</b> Any other (a track ride of a
@@ -650,6 +691,7 @@ public sealed class ParkState
 	{
 		var written = new List<ParkWorld.CatalogueObject>( loaded.Objects.Count );
 		var held = new HashSet<int>();
+		var kept = new HashSet<int>();
 
 		made = [];
 		gone = [];
@@ -674,29 +716,38 @@ public sealed class ParkState
 			};
 		}
 
+		// A file's object whose id was deleted is gone whatever holds the id now: that is a new thing.
 		foreach ( var file in loaded.Objects )
 		{
-			held.Add( file.ThingId );
-
-			if ( !TryObject( file.ThingId, out var now ) )
+			if ( _deletedSinceLoad.Contains( file.ThingId ) || !TryObject( file.ThingId, out var now ) )
 			{
 				if ( writable?.Invoke( file ) == true )
 					gone.Add( file.ThingId );
 				else
+				{
 					Unimplemented.Report( "SAVE_PARK_OBJECT_SOLD" );
+					held.Add( file.ThingId );
+				}
 
 				continue;
 			}
 
+			held.Add( file.ThingId );
+			kept.Add( file.ThingId );
 			written.Add( AsItRuns( now ) );
 		}
 
 		if ( writable == null )
 			return written;
 
-		foreach ( var now in _objects.Where( thing => !held.Contains( thing.ThingId ) ).OrderByDescending( thing => thing.ThingId ) )
+		// The made, newest first, as the original's used list holds them from its head.
+		foreach ( var now in _objects.Where( thing => !kept.Contains( thing.ThingId ) )
+			.OrderByDescending( thing => _madeAt.GetValueOrDefault( thing.ThingId ) ).ThenByDescending( thing => thing.ThingId ) )
 		{
-			if ( writable( now ) )
+			// The file keeps a sold thing it cannot write without, so a thing made on its id is not written.
+			if ( held.Contains( now.ThingId ) )
+				Unimplemented.Report( "SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING" );
+			else if ( writable( now ) )
 				made.Add( AsItRuns( now ) );
 			else
 				Unimplemented.Report( "SAVE_PARK_OBJECT_BOUGHT" );

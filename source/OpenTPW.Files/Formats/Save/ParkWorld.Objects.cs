@@ -78,6 +78,21 @@ public sealed partial class ParkWorld
 	/// <summary>The objects bought and sold since the load, for <see cref="PutPeople"/>: each made one's whole record, newest first, and the ids gone.</summary>
 	internal sealed record ObjectEdits( IReadOnlyList<(int Id, byte[] Record)> Made, IReadOnlySet<int> Gone );
 
+	/// <summary>
+	/// What the running park has done to the numbering since the load, for <see cref="PutPeople"/>
+	/// (<c>docs/exe/saves.md</c>, "OpenTPW's writer, an id given out again").
+	/// </summary>
+	/// <param name="Deleted">
+	/// Each of the file's ids whose thing was deleted and is taken out of the file: its record is left out as a
+	/// departed person's or a sold object's is, and a thing that holds the id now is a new one, written whole as made.
+	/// </param>
+	/// <param name="MadeAt">
+	/// When each thing made since the load was made, the newer the greater: the made are written newest first by it,
+	/// as the original's used list holds them from its head. A thing it does not name is taken as made before every
+	/// one it does, and the higher id as the newer.
+	/// </param>
+	public sealed record ThingIds( IReadOnlySet<int> Deleted, IReadOnlyDictionary<int, long> MadeAt );
+
 	/// <summary>How many characters each line of an object's name holds, its terminator among them.</summary>
 	private const int NameLength = 33;
 

@@ -192,6 +192,43 @@ public class ParkThingIdDeletionTests
 	}
 
 	/// <summary>
+	/// <b>Nothing of a sold object passes to the next object on its id</b>: its totals, its queue's head and its
+	/// nominee go with it, and the constructor zeroes them on the new one (<c>FUN_004db090</c>, 0x004db163, 0x004db169,
+	/// 0x004db0fe, 0x004db132).
+	/// </summary>
+	[TestMethod]
+	public void AnObjectOnASoldObjectsIdStartsFromNought()
+	{
+		var (world, state, people) = Park();
+		var catalogue = new ParkItemCatalogue( "jungle", data );
+		var guest = people.Peeps.First( peep => !PeepBehaviour.HeldByAThing( peep ) ).ThingId;
+
+		state.TakeAt( DrinksShop, 50 );
+		state.BookCostOfGoods( DrinksShop, 20 );
+		state.JoinQueue( DrinksShop, guest );
+		state.NominateForLoading( DrinksShop, guest );
+		StringAssert.StartsWith( ParkBuilding.Sell( state, world, catalogue, null, null, DrinksShop, people ), "sell: " );
+
+		Assert.AreEqual( (0, 0, 0, 0), (state.TakingsFor( DrinksShop ), state.CostsFor( DrinksShop ), state.FirstInQueue( DrinksShop ),
+			state.PersonBeingLoaded( DrinksShop )), "gone with the sale" );
+
+		// Left by hand on the freed id, as a queue head kept by nothing else would be: the constructor zeroes them all.
+		state.FreeDeletedThings();
+		state.TakeAt( DrinksShop, 7 );
+		state.BookCostOfGoods( DrinksShop, 3 );
+		state.JoinQueue( DrinksShop, guest );
+		state.NominateForLoading( DrinksShop, guest );
+		Assert.AreEqual( guest, state.FirstInQueue( DrinksShop ) );
+
+		var id = state.NextThingId();
+
+		state.AddObject( new ParkWorld.CatalogueObject( id, 1101, 41 << 8, 22 << 8, 0 ) );
+
+		Assert.AreEqual( DrinksShop, id );
+		Assert.AreEqual( (0, 0, 0, 0), (state.TakingsFor( id ), state.CostsFor( id ), state.FirstInQueue( id ), state.PersonBeingLoaded( id )) );
+	}
+
+	/// <summary>
 	/// <b>The park's own sweep deletes its leavers in its order and frees them at its end</b>: of two leavers the
 	/// one swept first is given out first, and nothing is left on the deleted list.
 	/// </summary>

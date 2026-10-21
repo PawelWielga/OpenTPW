@@ -978,11 +978,11 @@ The third stage (Q241h). `ParkPeople.Written` hands the writer every guest and m
 and `ParkWorld.PutPeople` puts the thing list together again around them, with the three parts of the file that
 follow the list. It runs after the scripts, the track rides and the models are spliced, which lie behind the world in the body, and only the cells' effects (`PutEffects`), which lie ahead of the thing list, follow it: each changes the body's length.
 
-- **The thing list.** A person the file holds and the park still has keeps their record, written over field by
-  field. One made here is written whole, ahead of the file's things and newest first, the park's own turn order.
-  One gone is left out. Every other thing's record goes out as it lies. Each record's first dword and `Used
-  Thing Head` are written from the new order. **A deviation:** a made thing's id is the park's own, one past
-  the highest it has given, where the original gives a freed id out again (Q582); the reader takes any id.
+- **The thing list.** A person the file holds and the park still has, on an id not deleted since the load, keeps
+  their record, written over field by field. One made here is written whole, ahead of the file's things and newest
+  first by their making, the park's own turn order. One gone is left out, and so is the file's thing on any id
+  deleted since the load, whatever holds the id now ("OpenTPW's writer, an id given out again"). Every other
+  thing's record goes out as it lies. Each record's first dword and `Used Thing Head` are written from the new order.
 - **A record's fields** are the FileFormats page's, from `ParkPeople`: `mX` and `mY`, the slot, `mNextAnim`,
   `mNextServiceInterval`, `mAccurateDestX`/`Y` (the target in `mX`'s units, as 18 of 18 and 392 of 392 hold it),
   the four speeds, `mCount`, `mESPSprite`, `mSpriteID`, `mPreviousX`/`Y` (the navigator's fixed point),
@@ -1491,6 +1491,48 @@ before the save, a save with no people handed over (refused). **Not run in the o
 guest queueing or riding (the ape was shut), a made thing turned, a made shop. **In the original the things, the
 slots and the scripts are its memory's** (`orig/look.py`); the two things in its frame are told from the file's
 own by where they stand, by eye. `docs/exe/addresses.md` not regenerated.
+
+### OpenTPW's writer, an id given out again
+
+Q606, from the review of Q582, which gives a deleted thing's id out again as the original's free list does
+(`ride-operation.md`, "Where a ride's turn comes from"). **The original never pairs a thing with a record of the
+file it was loaded from:** its writer walks the used list from its head and has each live thing write itself
+(above, "The thing list"); a deleted thing was destructed (`FUN_0050b780`) and its node freed (`FUN_00516200`), and
+whatever the constructor (`FUN_0050afe0`, an object's `FUN_004db090`) later built on the node is a new thing made
+from nought. So a file holds each thing as it now is and nothing of a record whose thing was deleted.
+
+OpenTPW's writer patches the file it loaded, matching by id, so the id alone no longer names a thing once one comes
+back. `ParkState` keeps every id deleted since the load (`DeletedSinceLoad`) and when each thing was made
+(`MadeAt`, stamped as `NextThingId` hands the id out, where `FUN_00516270` links the node at the used list's head).
+For the file's ids among the deleted, `ParkWorld.ThingIds` tells the writer that the file's thing is gone and a
+thing on the id now is made:
+
+- **A person of the file's on such an id** is left out (their sprite, balloon and bubble let go, out of every chain
+  and set), as a departed one is; one made on it is written whole, at the list's head, on a new sprite slot, at the
+  head of its cell's chain.
+- **An object of the file's on such an id** is handed over as gone (`WrittenObjects`): its three records, its
+  script, its model and its cells' chain link go. One made on it, bought or a vehicle summoned, is handed over as
+  made, its script and model with it; a track ride on it is judged as a ride made, not by the file's track records.
+- **The made, people and objects together, go newest first by `MadeAt`**, as the used list holds them: the thing
+  list, the object list (`mFirstObject`, `mNext`), the made on one cell; their model slots and their heads'
+  sprite slots are dealt oldest first by it, as are a made person's sprite, balloon and bubble slots.
+- **An object sold that the file keeps** (one the writer cannot take out, counted `SAVE_PARK_OBJECT_SOLD`: a
+  tracked ride) keeps its id in the file, so a thing made on that id is counted
+  `SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING` and not written, a person or an object. **A deviation**, the writer's
+  own gap, gone with `SAVE_PARK_OBJECT_SOLD`'s.
+
+A new object's totals, queue head and nominee start at nought, as the constructor writes them (`0x004db163`,
+`0x004db169`, `0x004db0fe`, `0x004db132`): `ParkState.AddObject` zeroes them and a sale takes them away.
+
+**Confirmed** (Q606, `q606/PREDICTION.txt`). The original's own file after `late30` (`q606/orig/orig-a.TPWS`, saved by
+`savepark.sh`, its used list watched by `usedlist.py`) opens 40, 54 to 43, 38, 14: the ferry summoned on departed guest
+40's id, the seaplane's guests, a new guest on departed guest 38's id, the seaplane, newest made first; then `late30`'s
+own in its order without the deleted. The ferry heads the object list and cell (0,0)'s chain. Ours from `late30`, each
+make on an id just freed (a hire, a Crazy Ape, a Rocky Racers on the sold Drinks Shop's 16, the seaplane, a guest), is
+written, where the commit before threw at the hire, opens 36, 38, 16, 40, 41 and loads back with all five
+(`q606/run2`, `run3`). In Full Simulation a Balloon Shop bought on sold shop 47's id reads its totals 0 0 (`runF2`).
+**Not run in either game:** a person made on a sold object's id; in the original, an object made on a sold object's
+id; a thing made on a kept sold object's id (Q607).
 
 ### OpenTPW's writer, a queue cell's model
 

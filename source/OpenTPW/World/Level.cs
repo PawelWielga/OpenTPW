@@ -822,7 +822,9 @@ public class Level
 			if ( thing.TrackRide == 0 )
 				return true;
 
-			if ( loaded.Objects.Any( file => file.ThingId == thing.ThingId ) )
+			// The file's own record, or a thing on its id that is still it: an id deleted since the load names a new thing.
+			if ( loaded.Objects.Any( file => file.ThingId == thing.ThingId
+				&& (file == thing || !state.DeletedSinceLoad.Contains( thing.ThingId )) ) )
 				return FileRideWritable( thing.TrackRide );
 
 			// A ride of the file's sold and left in the file keeps its slot there, and no ride made takes it.
@@ -916,12 +918,29 @@ public class Level
 		var cells = WrittenCells( loaded, state, made, gone, pieces );
 		var written = WrittenThings( loaded, made, gone );
 
+		// The file's ids deleted since the load and taken out of it: a thing on one now is a new one, written whole as
+		// made (docs/exe/saves.md, "OpenTPW's writer, an id given out again"). An object sold that the file keeps,
+		// counted above, keeps its id there, and a person made on it is left out, counted.
+		var keptObjects = new HashSet<int>( loaded.Objects.Select( thing => thing.ThingId ).Where( id => !gone.Contains( id ) ) );
+		var fileIds = new HashSet<int>( loaded.Things.Select( thing => thing.ThingId ) );
+		var ids = new ParkWorld.ThingIds( state.DeletedSinceLoad.Where( id => fileIds.Contains( id ) && !keptObjects.Contains( id ) ).ToHashSet(),
+			state.MadeAt );
+
+		var writtenPeople = people?.Written( written.Contains ).Where( person =>
+		{
+			if ( !keptObjects.Contains( person.Person.ThingId ) )
+				return true;
+
+			Unimplemented.Report( "SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING" );
+			return false;
+		} ).ToList();
+
 		if ( things != null && pieces!.Count > 0 )
 			things = things with { QueueCells = pieces };
 
 		var running = new ParkFileWriter.Running( state.GameTick, state.ParkIsClosed, state.VisitorsToDate, state.Balance,
 			new ParkCameraModule.View( ParkOrbitCameraMode.Zoom, -ParkOrbitCameraMode.Yaw, point.X, point.Y ), cells,
-			people?.Written( written.Contains ), pool?.Written(), people?.WrittenArrival( things != null ? written.Contains : null ), things, people?.WrittenLetGo(),
+			writtenPeople, pool?.Written(), people?.WrittenArrival( things != null ? written.Contains : null ), things, people?.WrittenLetGo(),
 			WrittenEffects( loaded, state, written.Contains, asTheFile: things == null ),
 			written.Contains( state.MechanicCursor ) ? state.MechanicCursor : 0,
 			// The aerial's tags end the file (FUN_0048ee50). A file whose own block did not read keeps its bytes.
@@ -941,7 +960,7 @@ public class Level
 			state.RandomSeed,
 			people != null ? (people.Strikes.ForceWord, people.Strikes.Records) : null,
 			state.Economy, state.CalendarAtLastUpdate, ParkWeather.Current?.Written( loaded.WeatherRecord ), research?.Written,
-			state.RecentlyResearched.Written );
+			state.RecentlyResearched.Written, ids );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;
