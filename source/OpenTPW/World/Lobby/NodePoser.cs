@@ -3,9 +3,9 @@ using System.Numerics;
 namespace OpenTPW;
 
 /// <summary>
-/// Poses a model's whole node tree from a clip that moves nodes about: its rotation and position tracks, each node's
+/// Poses a model's whole node tree from a clip that moves nodes about: its rotation, position and route tracks, each node's
 /// own transform within its parent, composed down from the root as the engine's pose walk does (<c>FUN_0044ab30</c>,
-/// local x parent, <c>FUN_004702d0</c>). <see cref="LobbyModel.Pose"/> uses it for a clip carrying position tracks
+/// local x parent, <c>FUN_004702d0</c>). <see cref="LobbyModel.Pose"/> uses it for a clip carrying position or route tracks
 /// (<see cref="Drives"/>) and <see cref="MeshRotator"/> for the rest.
 ///
 /// <para>
@@ -18,10 +18,13 @@ namespace OpenTPW;
 /// </para>
 ///
 /// <para>
-/// <b>A route key puts the node at its route's point</b> (channel <c>0x200</c>): the model's route the node's path id
-/// names, sampled at the key's percentage as <see cref="LobbyModel.SampleRoute"/> samples it, is the node's translation
-/// within its parent, as the drawn model moves it (<see cref="LobbyModel.Pose"/>), so a node hanging off the bus rides
-/// with it. Its facing along the route (<c>0x400</c>) is not built, as the drawn model's is not.
+/// <b>A route key puts the node at its route's point</b> (channel <c>0x200</c>): the route its parent path node names
+/// (flag <c>0x8</c>, path id at <c>+0x52</c>), sampled at the key's percentage (<see cref="LobbyModel.SampleRoute"/>),
+/// is the node's translation within its parent, so a node hanging off the bus rides with it. <b>With <c>0x400</c> it
+/// also faces along the route</b> (<c>0x004720aa</c>..<c>0x00472192</c>, <c>Matrix_FaceAlongTangent</c>): its turn within its
+/// parent is made from the route's tangent, normalised, as its third row, its side the up row crossed with that, normalised,
+/// and its up the tangent crossed with the side. The up row it starts from is (0, 1, 0), or the turn the clip's rotation
+/// key gave it where the node has one.
 /// </para>
 ///
 /// <para>
@@ -37,6 +40,7 @@ public sealed class NodePoser : IChannelPosed
 	private const uint PositionChannel = 0x1;
 	private const uint RotationChannel = 0x8;
 	private const uint PathChannel = 0x200;
+	private const uint PathNodeFlag = 0x8;
 
 	private readonly Matrix4x4[] _rest;
 	private readonly Matrix4x4[] _restTurnInverse;
@@ -82,12 +86,25 @@ public sealed class NodePoser : IChannelPosed
 
 	public NodePoser( ModelFile model )
 		: this( [.. model.Nodes.Select( node => node.LocalTransform )], [.. model.Nodes.Select( node => node.ParentIndex )],
-			model.HeaderFlags, model.Paths, [.. model.Nodes.Select( node => node.PathId )] )
+			model.HeaderFlags, model.Paths, [.. model.Nodes.Select( node => RouteOf( model, node ) )] )
 	{
 	}
 
-	/// <summary>Whether a clip is posed here rather than by <see cref="MeshRotator"/>: one that moves a node.</summary>
-	public static bool Drives( AnimationFile clip ) => clip.PositionTracks.Count > 0;
+	/// <summary>
+	/// The route a node's route key follows: its parent's path id, where the parent is a path node (flag <c>0x8</c>), and
+	/// -1 elsewhere (<c>0x00471f27</c> reads the id at <c>+0x52</c> of the node's <c>+4</c>, its parent, once its <c>0x8</c> is tested).
+	/// </summary>
+	internal static int RouteOf( ModelFile model, ModelFile.Node node )
+	{
+		var parent = node.ParentIndex;
+
+		return parent >= 0 && parent < model.Nodes.Count && (model.Nodes[parent].Flags & PathNodeFlag) != 0
+			? model.Nodes[parent].PathId
+			: -1;
+	}
+
+	/// <summary>Whether a clip is posed here rather than by <see cref="MeshRotator"/>: one that moves a node, by a key or a route.</summary>
+	public static bool Drives( AnimationFile clip ) => clip.PositionTracks.Count > 0 || clip.PathTracks.Count > 0;
 
 	/// <summary>How many nodes the tree holds.</summary>
 	public int Count => _local.Length;
@@ -147,13 +164,47 @@ public sealed class NodePoser : IChannelPosed
 			if ( !Holds( node ) || which < 0 || which >= _routes.Count )
 				continue;
 
+			var percent = track.Sample( frame );
 			var local = _local[node];
-			local.Translation = LobbyModel.SampleRoute( _routes[which], track.Sample( frame ) );
+
+			if ( track.OrientsAlongRoute )
+				local = FacingAlong( local, LobbyModel.RouteTangent( _routes[which], percent ), Turned( clip, node ) );
+
+			local.Translation = LobbyModel.SampleRoute( _routes[which], percent );
 			_local[node] = local;
 		}
 
 		Compose();
 	}
+
+	/// <summary>
+	/// <paramref name="local"/> turned to face along <paramref name="tangent"/> (<c>Matrix_FaceAlongTangent</c>): the tangent
+	/// normalised is the third row, the up row crossed with it and normalised the first, and the tangent crossed with
+	/// that the second. The up row is (0, 1, 0) unless <paramref name="keyed"/>, where the rotation key just set it.
+	/// A tangent of nought, which the engine divides by, leaves the turn as it was; no shipped route has one where a
+	/// clip's key stands.
+	/// </summary>
+	internal static Matrix4x4 FacingAlong( Matrix4x4 local, System.Numerics.Vector3 tangent, bool keyed )
+	{
+		var length = tangent.Length();
+
+		if ( length <= 0f || !float.IsFinite( length ) )
+			return local;
+
+		var forward = tangent / length;
+		var up = keyed ? new System.Numerics.Vector3( local.M21, local.M22, local.M23 ) : System.Numerics.Vector3.UnitY;
+		var side = System.Numerics.Vector3.Normalize( System.Numerics.Vector3.Cross( up, forward ) );
+		var over = System.Numerics.Vector3.Cross( forward, side );
+
+		local.M11 = side.X; local.M12 = side.Y; local.M13 = side.Z;
+		local.M21 = over.X; local.M22 = over.Y; local.M23 = over.Z;
+		local.M31 = forward.X; local.M32 = forward.Y; local.M33 = forward.Z;
+
+		return local;
+	}
+
+	/// <summary>Whether <paramref name="clip"/> carries a rotation key for <paramref name="node"/> (its track's <c>0x8</c>).</summary>
+	private static bool Turned( AnimationFile clip, int node ) => clip.RotationTracks.Exists( track => track.TargetIndex == node );
 
 	/// <summary>
 	/// Puts back the nodes <paramref name="outgoing"/> moved, all but those <paramref name="incoming"/> moves on the

@@ -360,8 +360,12 @@ Channels are per-model animation players, count at `model+0x0e`, array at `+0x10
 | Address | What it is | Notes |
 |---|---|---|
 | `FUN_00470b60` | the key search (`Anim_FindKey`) | `param_4 == 1 -> 4` (position), `== 2 -> 0x14` (rotation), `== 4 -> 0x10` (scale, `0x00471db5`). Returns a **normalised t** between two key frames, and **returns 0 when the frame precedes the first key**, so the engine skips the track rather than clamping to the first point. It finds the last key at or before the floored frame; on the last key (`0x00470be3`, equality included) it hands the sampler that key and the frame one after it (`param_5` 0, which the poser passes), with t the frame less the last key's. **Every track whose last key is its clip's declared end reaches that arm on that frame, with t = 0** (1,201 of the 1,216 position tracks, in 455 clips, Q554): the straight sampler `0x00474bf0` then reads the point past the array times nought (finite floats there on all 421 straight such tracks), so the last key's own point comes out. A frame past the last key would read further (a Bezier wraps); no shipped clip reaches that, as no position track ends before its clip's declared span and the poser poses nothing past that span (its first test, `+0x1c` against `+0x20`) |
-| `FUN_00474840` | a plain cubic **Bezier**, not a spline | constants at `0x006fecb8` are 1, 3, -3, -6; expands to `P0 + 3(P1-P0)t + 3(P0-2P1+P2)t^2 + (-P0+3P1-3P2+P3)t^3`. The modulo wraparound is the **looping** arm |
-| `FUN_00474bf0` | the straight lerp | |
+| `Route_SampleBezier` `0x00474840` | a plain cubic **Bezier**, not a spline | constants at `0x006fecb8` are 1, 3, -3, -6; expands to `P0 + 3(P1-P0)t + 3(P0-2P1+P2)t^2 + (-P0+3P1-3P2+P3)t^3`. The modulo wraparound is the **looping** arm |
+| `Route_SampleStraight` `0x00474bf0` | the straight lerp | points `k` and `k + 1`, no wrap |
+| `Route_BezierTangent` `0x00474a20` | the Bezier's first derivative | the same four points; what a route key's facing (`0x400`) turns by |
+| `Route_StraightTangent` `0x00474c70` | a straight route's step | point `k + 1` less point `k` |
+| `Anim_SamplePathPercent` `0x00474ea0` | a route key's percentage at a frame | the two frames' values blended; more than 50 apart (`0x006fece0`), the smaller is taken plus 100 (`0x006fece4` is -100) and the blend modulo 100 (`0x006fece8`) |
+| `Matrix_FaceAlongTangent` `0x00470780` | a node turned to face along a tangent | rows: side = normalise(up x t), up = t x side, forward = t, where t is normalised before the call (`0x00472110`..`0x00472172`) and up is the node's second row |
 | `FUN_00474cc0` | the third sampler (neither bit) | **used by nothing** |
 | `FUN_004745c0` | the UV sampler | our sampler matches it line for line — **confirmed, do not re-derive** |
 | `FUN_00471860` | the poser (`Anim_PoseTrack`) | assigns the node's **own local translation row** `node+0x40/+0x44/+0x48`; a node record's transform is a 4x4 at `+0x10`, so that row IS the translation, parent-local, exactly as a rotation key is. A model flagged `&4` at `+0x30` **adds** instead of assigning. Before a position track's first key (`0x00471ea3`, the search answering 0) the node keeps whatever translation it holds: the rest after a change of clip, but the last key of the clip's previous pass when the same clip comes round, which nothing restores. An additive (`&4`) model's nodes are put back every advance (`FUN_00473c70` calls `FUN_00472310` for each channel, `0x00473d0c`), so its point is added to the rest. Before a rotation track's first key the engine skips the track too (`0x00471c56`), so the node keeps its turn. **OpenTPW builds it** (Q554): `NodePoser`, rotation and position composed down the whole node tree for a clip with a position track. **Not the original's:** before a rotation track's first key `NodePoser` holds the first key; 79 of the 2,021 rotation tracks in the 455 position-track clips start past frame 0, four in Lost Kingdom (`volcanoe` node 1 at 55, `porkpies` node 37 at 10, `puzzlem1` and `puzzlem2` node 4 at 71), and in each of the four the first key, the last key and the node's rest turn are one turn, so neither a first play nor a clip coming round again shows it there. The additive rotation arm (`FUN_00470d10`) is counted, `ANIM_ADDITIVE_ROTATION`: one track in the 22 additive clips with a position track, and the 49 rotation-only clips (50 tracks) of additive models, which `MeshRotator` would pose as a replacement (the coaster pylons, Lost Kingdom's `coaster1`, `coaster3` and `minecart` among them); no source loads a pylon model, so those are dead by content |
@@ -371,15 +375,33 @@ Channels are per-model animation players, count at `model+0x0e`, array at `+0x10
 
 **What those samplers run over, for a vehicle, is not a track but the model's own path table** — the
 array at model file `0xac`, whose records name a run of 12-byte XYZ points. A Bezier route's point count
-is a multiple of three rather than `3n+1` because the loop is **closed**, which is what `FUN_00474840`'s
-modulo arm above is wrapping. The scalar that drives it is a separate per-frame array on an animation
+is a multiple of three rather than `3n+1`: a closed route's (type `0x1`) last segment runs back to point 0, which is what
+`Route_SampleBezier`'s modulo arm above is wrapping, and an open one's last two points are never sampled (the three
+vehicles' routes are open, below). The scalar that drives it is a separate per-frame array on an animation
 track setting channel `0x200`, and it is a **percentage**: space's slide runs exactly 0 to 100 and the
 haunted house 0 to 200, which is two laps. It does not always rise — the ferry runs its route backwards.
 Layout and counts are in the FileFormats clone under Models (`*.MD2`); they are not repeated here. **OpenTPW** carries a node along its route both where it draws the model (`LobbyModel.Pose`) and where a script finds a
 node on it (`NodePoser`, Q561): the route's point at the key's percentage is the node's translation within its parent.
 In Lost Kingdom only the bus's, the ferry's and the seaplane's clips carry route keys (`Busm1`..`3`, `FerryM1`..`3`,
-`Seaplanem1`..`3`, each on node 0), none of them with a position track, so `LobbyModel` never draws them through `NodePoser`. The facing along the route (`0x400`) is
-counted, `ANIM_PATH_FACING` (Q562).
+`Seaplanem1`..`3`, each on node 0), none of them with a position track; since Q583 a clip with a route track is drawn through
+`NodePoser` too.
+
+**Where a route key puts its node** (Q583; `Anim_PoseTrack` `0x00471ecf`..`0x00472192`). The node's parent must be a path
+node (flag `0x8`); its path id is read at the parent's `+0x52` (`0x00471f27`). The key's percentage at the frame
+(`Anim_SamplePathPercent`, only while the frame is within the track's start and start plus count) is taken plus 1000 modulo
+100 (`0x006febf0` -1000, `0x006febf8` 100) and times the route's segments and 0.01 (`0x006fec00`); the whole part, `ftol`,
+is the segment `k` and the rest `t` (`0x00471fc3`..`0x00471fe2`). **The segments are `points / 3` for a Bezier route and
+`points` for a straight one, less one unless the route's type carries `0x1`** (`0x00471f9a`..`0x00471fbd`), so an open route
+never runs back to its point 0: the bus's 45 points make 14 segments, the seaplane's and the ferry's 33 make 10. A Bezier
+segment starts at point `3k` (`0x00471fed` passes `3k + 1`, the sampler reads one point before it). The point replaces the
+node's translation within its parent. **With `0x400` the node also faces along the route** (`0x004720aa`): the tangent
+(`Route_BezierTangent`, `Route_StraightTangent`) is normalised, the node's second row is set to (0, 1, 0) unless its track also
+carries rotation keys (`0x8`, `0x00472148`..`0x00472186`), and `Matrix_FaceAlongTangent` writes its three rows. The
+model's own turn of the node is thrown away while the clip plays. **OpenTPW builds it** (Q583): `LobbyModel.SampleRoute`,
+`LobbyModel.RouteTangent`, `NodePoser` (`FacingAlong`, `RouteOf`), `AnimationFile.PathTrack.Sample`; the bus's sound node at
+its two stops comes out at (529.2, 64.8) and (440.0, 65.2), where the original's bus voice stood, (529, 64) and (439, 65)
+(Q562). Not the original's: a tangent of nought, which the engine divides by, leaves the turn as it was (no shipped route
+has one at a key).
 
 **Rotation keys carry an easing curve id** at key`+0x02` (`0xFFFF` = none) indexing an **8-byte** table at track descriptor `+0x34`, remapped through a **9-segment** ramp: **457 of 1,166 clips carry one**. Three things that matter: the id belongs to the **lower** key of the pair; the id is **not** the key's own index (**3,070 of 12,428 eased keys disagree**, ids reach 100, so the table is indexed not walked); and the ramp's endpoints are **implied** (0 before the first byte, 1 after the last), which is what makes it nine segments from eight bytes.
 
@@ -1950,8 +1972,10 @@ ticks after entry (`run-A2/A2-docked.png`); this build stands neither (`fixed it
 (53,3) on 845, 81 ticks on; `load 40` made the seaplane, its first guest 48 ticks on. The original given
 `q340/late30.TPWS` (`q26c/orig2`, `orig3`) made the seaplane on 1094 (thing 14, `size2` and current), its script
 reading trigger 0 and status 1 from the first poll, 2 on 1141 (47 on), 3 on 1143, 6 on 1222, forgotten on 1223; Q341's
-run of the same file made the ferry. **Where the seaplane floats at status 2 is not the original's** (Q583): its body
-level at the harbour's top middle, nose left, there, and here at the harbour's left and turned, in main's build too.
+run of the same file made the ferry. **The vehicles stop where the original's do** (Q583;
+"Where a route key puts its node"): at status 2 the seaplane lies level at the harbour's top middle, nose left, its
+red and yellow 1.2 px from the original's (`q583/side-by-side-seaplane.png`), and the ferry at its top right of middle at
+the original's slant (`side-by-side-ferry.png`, the original's ferry from `late30` with seed 1).
 
 ### The headcount score
 

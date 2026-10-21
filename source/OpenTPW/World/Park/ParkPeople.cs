@@ -1603,7 +1603,7 @@ public sealed partial class ParkPeople : Entity
 
 			yield return $"{name}: thing {thing} script '{script.Name}' pc {script.Position} "
 				+ $"running {script.Running} {VehicleState} {script[VehicleState]} "
-				+ $"{VehicleTrigger} {script[VehicleTrigger]}{carrying}";
+				+ $"{VehicleTrigger} {script[VehicleTrigger]}{carrying}{ParkFixedItems.Current?.BodyCensus( name )}";
 		}
 	}
 

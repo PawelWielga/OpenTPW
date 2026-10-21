@@ -269,13 +269,11 @@ and a bus**. All three are shipped fixed items, and **none of them is missing ar
 **`ParkFixedItems` now loads gates, lights and all three vehicles.** Only the End sign is still held
 back. All six carry `DontApplyOffset 1` and `WhichUIType 4`.
 
-**Routes:** ferry 33 points, seaplane 33, both closed Bézier loops; both rest **exactly** on their own route,
-which the bus does not quite manage.
+**Routes:** ferry 33 points, seaplane 33, bus 45, all open Bézier routes (type 2): 10, 10 and 14 segments, the last
+two points never sampled; both rest **exactly** on their own route, which the bus does not quite manage.
 
-**One limitation carried forward, and it is visible:** a vehicle **does not turn to face its direction
-of travel**, so the bus arrives sitting diagonally across the crossing. That is a real engine behaviour
-left unbuilt on purpose and counted as `ANIM_PATH_FACING` — the engine samples the route's first
-derivative (`FUN_00474a20`) and builds a basis from the tangent (`FUN_00470780`).
+**A vehicle turns to face its direction of travel** (Q583): the route's first derivative (`Route_BezierTangent`)
+normalised, and a basis built from it (`Matrix_FaceAlongTangent`; `exe/park.md`, "Where a route key puts its node").
 
 **The bus runs its circuit repeatedly** (`ParkPeople.StepVehicle`), watched through statuses 1, 2, 3, 4 and 5, and
 the seaplane and ferry both loop back to the start of theirs.

@@ -56,13 +56,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q583. The seaplane floats elsewhere at its stop than the original's.** From Q26c's comparison
-  (`q26c/side-by-side-seaplane.png`): at status 2, at the camera 540,-20 zoom 130 rotation 0, the original's seaplane
-  lies level at the harbour's top middle, nose left (`q26c/orig3/o-t1141.png`), and ours at the harbour's left and
-  turned (`q26c/run-C/C-docked.png`), as main's stood one did (`run-A2/A2-docked.png`). Its route and clips play through
-  `TRIGWAITANIM` on the model's Bezier path (`ParkFixedItems`, `LobbyModel.Paths`): find which of the path, the clip's
-  end frame or the root's turn differs, against the original's frames of its drive-in (`orig3/o-t11*.png`); the ferry
-  was not seen docked in the original, so photograph it too.
 - [ ] **Q585. The Mayan Spinner's riders stand in a heap at its steps.** From Q584 (`q580/explore5/v00..v29.png`,
   `q580/run-R1c/R1-spinner.png`). Ours: each rider walks on from node 1 to their own node (2 to 7) and is then Carried,
   and every Carried rider is drawn at the top of the steps, heaped, through the whole ride, while the drum rises and
@@ -203,13 +196,12 @@ filed the items that cite it.
   caller, or count the unbuilt step `SAMPLE_NO_REPEAT` (rule 4) until it is. Confirm: the lobby's music over ten
   selections, never the same track twice running, caught by the disk driver.
 
-- [ ] **Q562. The bus drives facing along its route, and stands at the original's stops.** From Q561. Our bus drives its
-  route turned as it was parked (the route key's facing `0x400`, counted `ANIM_PATH_FACING`; `park.md`, "Clip content"),
-  where the original's faces along the road (`q561/side-by-side.png`); and it stands at (510, 65) and (422, 65), the route's
-  points at its clips' last keys (42.437 and 55.996), where the original's bus voice stood at (529, 64) and (439, 65),
-  19 and 17 back along the route. Decode the route sampler and the facing (`FUN_00474840` and its callers) against
-  ours (`LobbyModel.SampleRoute`), measure the original's bus matrix at its stops, and build the facing for the drawn
-  bus and its nodes (`NodePoser`). The seaplane's route too.
+- [ ] **Q562. The bus at its stops beside the original's.** From Q561. Q583 built what this asked for, for every route
+  clip: the open route's segment count and the facing along the route (`park.md`, "Where a route key puts its node");
+  the bus now stands at (529.1, 64.4) and (439.9, 64.8) facing along the road (`q583/bus-stops.png`, `vehicles`), where
+  the original's bus voice stood at (529, 64) and (439, 65) (`q561/side-by-side.png`). Left: the original's bus
+  photographed at both stops at one camera beside ours (`q583/confirm.py ... bus`, camera 485,45 zoom 130), and its
+  matrix there read from its memory, its nose against ours (-1.00, 0.00, 0.04) and (-1.00, -0.00, -0.04).
 - [ ] **Q713. The advisor's shop and sideshow value and satisfaction rows, 238 to 257.** From the fork watch, 2026-10-19
   (`verify-advisor-ui.md` L1; `advisor-park.md`, "Shop and sideshow value and satisfaction, rows 238 to 257"). Twenty
   polled rows, counted in `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; rows 239 to 241 were not opened, so read those three
@@ -769,10 +761,10 @@ filed the items that cite it.
   additive restore `FUN_00473c70`/`0x00473d0c` puts the turn back every advance, then build it in both posers when the
   coaster pylons are drawn (Q594). Confirm by a pylon's turn beside the original's.
 - [ ] **Q573. A node a clip's route moves, followed (`RIDE_NODE_ON_A_ROUTE`).** From the run 6 review of Q555 (`VERIFY-14.md`, Q555 5).
-  `RideNodes.Follow` poses a thing's node tree for its particle records through `NodePoser`, which reads rotation and
-  position tracks and no path track, where the drawn model moves a node along its route (`LobbyModel.Pose`,
-  `MoveAlongRoute`); a carried find of a node on a route, or under one, reads it where it stands without the route,
-  counted `RIDE_NODE_ON_A_ROUTE` in `RideNodes.Stored`. Lost Kingdom's route clips (`bus`, `Ferry`, `seaplane`) start no
+  `RideNodes.Follow` poses a thing's node tree for its particle records through `NodePoser`, which since Q561 carries a
+  node along its route and since Q583 turns it to face along it, and through which `LobbyModel.Pose` now draws every
+  route clip; `RideNodes.Stored` still counts a carried find of a node on a route, or under one, as
+  `RIDE_NODE_ON_A_ROUTE` (its remarks say the route is not followed): check first whether the count is now stale. Lost Kingdom's route clips (`bus`, `Ferry`, `seaplane`) start no
   particle record; whether any other clip with a route carries one is not measured. Measure it across the shipped
   scripts and clips (`cliptracks`, the `.RSE` corpus); where one is reached, pose path tracks in `NodePoser` as
   `LobbyModel` does and drop the count.

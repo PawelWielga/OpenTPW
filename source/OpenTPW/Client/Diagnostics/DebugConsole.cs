@@ -1003,7 +1003,7 @@ public static class DebugConsole
 				break;
 
 			// Which routes the park's fixed items loaded, out of the path table at model file 0xac.
-			// The bus is the one worth reading: 45 points, closed Bezier, first point near
+			// The bus is the one worth reading: 45 points, open Bezier, first point near
 			// (207.4, 0.0, -247.8). Read it in a live park - a test proves the file parses, not that
 			// the park loaded it.
 			case "paths":

@@ -34,10 +34,6 @@ public sealed class LobbyModel : IChannelPosed
 	/// <summary>The origin the model was loaded at - see <see cref="TryGetNode"/>.</summary>
 	private readonly Vector3 _origin;
 
-	// Each mesh's parent, so moving a thing along its route carries what hangs off it: the bus's two
-	// wheels and its sound node all hang off the body the route actually drives.
-	private readonly int[] _meshParents = Array.Empty<int>();
-
 	// Each node's parent, so a change of clip finds the meshes under the nodes it moved.
 	private readonly int[] _nodeParents = Array.Empty<int>();
 
@@ -46,16 +42,6 @@ public sealed class LobbyModel : IChannelPosed
 
 	// Whether the model's header word 0x30 carries 0x4: a clip's keys are composed with each node's own (the coaster parts).
 	private readonly bool _additive;
-
-	// Which route each node follows, from its record's +0x52. The engine indexes the model's path
-	// table by exactly this - see ModelFile.ReadPaths.
-	private readonly int[] _nodePathIds = Array.Empty<int>();
-
-	// Each node's own translation, before its parents are applied. A route's points are in the same
-	// space as this - parent-local - so it is what a sampled point replaces. Offsets is no use for
-	// that: it is the COMPOSED position, and using it drops whatever the parents contribute, which
-	// for the three vehicles is their spline root's (480, 0, 170).
-	private readonly Vector3[] _nodeRestLocal = Array.Empty<Vector3>();
 
 	/// <summary>
 	/// How far this model reaches from its own origin, after scaling - a loose bounding radius
@@ -352,20 +338,7 @@ public sealed class LobbyModel : IChannelPosed
 
 		Clips = animations;
 		Paths = modelFile.Paths;
-		_meshParents = [.. modelFile.Meshes.Select( mesh => mesh.ParentIndex )];
-		_nodePathIds = [.. modelFile.Nodes.Select( node => node.PathId )];
 		_nodeParents = [.. modelFile.Nodes.Select( node => node.ParentIndex )];
-
-		// Scaled and swizzled the same way Offsets was, so the two can be subtracted.
-		_nodeRestLocal =
-		[
-			.. modelFile.Nodes.Select( node =>
-			{
-				var local = node.LocalTransform * Matrix4x4.CreateScale( scale );
-
-				return new Vector3( local.M41, local.M43, local.M42 );
-			} )
-		];
 
 		_scale = scale;
 
@@ -662,6 +635,12 @@ public sealed class LobbyModel : IChannelPosed
 		}
 	}
 
+	/// <summary>
+	/// Where node <paramref name="node"/> stands in the model's own axes as the node tree last posed it, or null where no
+	/// clip has posed the tree: for the debug console's <c>vehicles</c>.
+	/// </summary>
+	internal Matrix4x4? Posed( int node ) => _poser != null && node >= 0 && node < _poser.Count ? _poser.World( node ) : null;
+
 	/// <summary>The node tree's poser, made by the first clip that moves a node (<see cref="NodePoser.Drives"/>).</summary>
 	private NodePoser Poser()
 	{
@@ -670,7 +649,7 @@ public sealed class LobbyModel : IChannelPosed
 			_poser = new NodePoser( _file );
 
 			Log.Info( $"{_modelPath}: posing {Clips.Count( NodePoser.Drives )} of {Clips.Count} clip(s) over the node tree, " +
-				$"{Clips.Sum( clip => clip.PositionTracks.Count )} position track(s)" );
+				$"{Clips.Sum( clip => clip.PositionTracks.Count )} position track(s), {Clips.Sum( clip => clip.PathTracks.Count )} route track(s)" );
 		}
 
 		return _poser;
@@ -742,9 +721,10 @@ public sealed class LobbyModel : IChannelPosed
 	/// </para>
 	///
 	/// <para>
-	/// <b>A clip carrying position tracks is posed by <see cref="NodePoser"/></b>, rotation and position together over
-	/// the whole node tree, so a node a key moves carries what hangs off it, turned by its parents (the End's planes
-	/// and their propellers); every other clip turns its meshes through <see cref="Rotator"/>.
+	/// <b>A clip carrying position or route tracks is posed by <see cref="NodePoser"/></b>, rotation, position and route
+	/// together over the whole node tree, so a node a key or a route moves carries what hangs off it, turned by its parents
+	/// (the End's planes and their propellers, the seaplane's propellers as it turns along its route); every other clip
+	/// turns its meshes through <see cref="Rotator"/>.
 	/// </para>
 	/// </summary>
 	public void Pose( AnimationFile animation, float frame )
@@ -783,91 +763,33 @@ public sealed class LobbyModel : IChannelPosed
 				SetMeshVisible( track.TargetIndex, visible );
 		}
 
-		// How far along its route the thing has travelled - channel 0x200. The route is the model's
-		// own, picked by the node's path id, and the scalar is a percentage of it.
-		foreach ( var track in animation.PathTracks )
-		{
-			var target = track.TargetIndex;
-
-			if ( target < 0 || target >= Entities.Length || Paths.Count == 0 )
-				continue;
-
-			var which = target < _nodePathIds.Length ? _nodePathIds[target] : 0;
-
-			if ( which < 0 || which >= Paths.Count )
-				continue;
-
-			var point = SampleRoute( Paths[which], track.Sample( frame ) );
-
-			// The same Y/Z swizzle every mesh offset went through at load, so a route point lands in
-			// the world by the rule the model's own geometry landed by. From the rest pose, not the posed tree: no
-			// shipped clip moves a node by both, though hallow's haunted house moves nodes by one and routes by the other.
-			MoveAlongRoute( target, new Vector3( point.X, point.Z, point.Y ) );
-
-			// The engine also samples the route's tangent and turns the thing to face along it - the
-			// 0x400 that rides with 0x200 on 62 of the game's 71 route tracks. Not built, so the bus
-			// drives its route facing whichever way it was parked.
-			if ( track.OrientsAlongRoute )
-				Unimplemented.Report( "ANIM_PATH_FACING" );
-		}
-
 		foreach ( var animator in Animators )
 			animator.Pose( animation, frame );
 	}
 
 	/// <summary>
-	/// Where a percentage along <paramref name="route"/> puts a thing.
+	/// Where a percentage along <paramref name="route"/> puts a thing, in the route's own space (<c>Anim_PoseTrack</c>,
+	/// <c>0x00471f5b</c>..<c>0x00472037</c>; <c>docs/exe/park.md</c>, "Clip content").
 	///
 	/// <para>
-	/// A hundred is the whole loop. The engine floors <c>percent * 0.01 * segments</c> into a segment
-	/// (the 0.01 is the constant at <c>0x006fec00</c>) and hands the sampler the fraction that is left,
-	/// with the segment riding in a separate argument as <c>3k + 1</c>; it then reads one point either
-	/// side of that, which is the same four points as <c>3k</c> to <c>3k + 3</c>. The last of those
-	/// wraps, because the loop is closed - that is why a Bezier route's point count is a multiple of
-	/// three rather than <c>3n+1</c>.
+	/// The percentage is taken plus 1000, modulo 100, and times the route's segments and 0.01; the whole part is the
+	/// segment and the rest how far into it. A Bezier route has a segment for each three points and a straight one a
+	/// segment for each point, <b>less one unless the route is closed</b> (type bit <c>0x1</c>), so an open route's last
+	/// segment ends on its point 3n-3 and never runs back to point 0: the bus's 45 points make 14 segments and the
+	/// seaplane's and the ferry's 33 make 10.
 	/// </para>
 	/// </summary>
 	internal static System.Numerics.Vector3 SampleRoute( ModelFile.ModelPath route, float percent )
 	{
-		var points = route.Points;
-
-		if ( points.Length == 0 )
+		if ( !RouteSegment( route, percent, out var points, out var b, out var t ) )
 			return System.Numerics.Vector3.Zero;
 
-		// Past the end it wraps, and the authored scalars really do go past it: the bus's three clips
-		// run 42.4 to 142.5, one lap that happens to start part of the way round.
-		var wrapped = percent % 100f;
+		// Route_SampleStraight, the straight lerp; only space's slide is a straight route.
+		if ( !route.IsBezier )
+			return System.Numerics.Vector3.Lerp( points[b], points[(b + 1) % points.Length], t );
 
-		if ( wrapped < 0f )
-			wrapped += 100f;
-
-		// Only space's slide is a straight route, and its points are plain waypoints.
-		//
-		// The points are this project's own Vector3, not System.Numerics' - a model file's are, where
-		// an animation file's position track spells System.Numerics out - so they are converted rather
-		// than mixed.
-		if ( !route.IsBezier || points.Length < 4 )
-		{
-			var along = wrapped / 100f * points.Length;
-			var first = (int)along % points.Length;
-
-			return System.Numerics.Vector3.Lerp(
-				points[first].GetSystemVector3(),
-				points[(first + 1) % points.Length].GetSystemVector3(),
-				along - (int)along );
-		}
-
-		var segments = points.Length / 3;
-		var travelled = wrapped / 100f * segments;
-		var segment = (int)travelled % segments;
-		var t = travelled - (int)travelled;
-		var b = 3 * segment;
-
-		var p0 = points[b % points.Length].GetSystemVector3();
-		var p1 = points[(b + 1) % points.Length].GetSystemVector3();
-		var p2 = points[(b + 2) % points.Length].GetSystemVector3();
-		var p3 = points[(b + 3) % points.Length].GetSystemVector3();
-
+		// Route_SampleBezier, the cubic Bezier over points 3k to 3k + 3, which wraps on a closed route.
+		var (p0, p1, p2, p3) = RouteWindow( points, b );
 		var u = 1f - t;
 
 		return (p0 * (u * u * u)) + (p1 * (3f * u * u * t))
@@ -875,52 +797,65 @@ public sealed class LobbyModel : IChannelPosed
 	}
 
 	/// <summary>
-	/// Puts mesh <paramref name="target"/> at <paramref name="offset"/> in the model's own space, and
-	/// carries everything hanging off it by the same amount - the bus's wheels ride on its body.
-	///
-	/// <para>
-	/// Written straight onto the entity rather than into <see cref="Offsets"/>, which stays the rest
-	/// pose: <see cref="Rest"/> puts the routed meshes back from it when the clip changes.
-	/// </para>
+	/// Which way the route runs at a percentage along it, unscaled: the Bezier's first derivative
+	/// (<c>Route_BezierTangent</c>), or a straight route's step from one point to the next (<c>Route_StraightTangent</c>). What a
+	/// route key's facing (<c>0x400</c>) turns a node by (<see cref="NodePoser"/>).
 	/// </summary>
-	private void MoveAlongRoute( int target, Vector3 offset )
+	internal static System.Numerics.Vector3 RouteTangent( ModelFile.ModelPath route, float percent )
 	{
-		// Against the node's OWN translation, not its composed one. A route's points are parent-local,
-		// so the distance travelled is how far the sampled point is from where the node rests inside
-		// its parent - and adding that to the composed offsets keeps whatever the parents contribute.
-		// Measured against Offsets instead, the bus would drive its route 480 west and 170 south of
-		// where it belongs, because its spline root sits at (480, 0, 170).
-		var rest = target < _nodeRestLocal.Length ? _nodeRestLocal[target] : Offsets[target];
-		var shift = offset - rest;
+		if ( !RouteSegment( route, percent, out var points, out var b, out var t ) )
+			return System.Numerics.Vector3.Zero;
 
-		for ( int mesh = 0; mesh < Entities.Length; ++mesh )
-		{
-			if ( mesh != target && !HangsOff( mesh, target ) )
-				continue;
+		if ( !route.IsBezier )
+			return points[(b + 1) % points.Length] - points[b];
 
-			var moved = System.Numerics.Vector3.Transform(
-				(Offsets[mesh] + shift).GetSystemVector3(), _placedRotation );
+		var (p0, p1, p2, p3) = RouteWindow( points, b );
 
-			Entities[mesh].Position = (Vector3)moved + _placedOrigin;
-		}
+		return (3f * (p1 - p0)) + (6f * t * (p0 - (2f * p1) + p2)) + (3f * t * t * ((3f * p1) - p0 - (3f * p2) + p3));
 	}
 
-	/// <summary>Whether <paramref name="mesh"/> is somewhere under <paramref name="ancestor"/>.</summary>
-	private bool HangsOff( int mesh, int ancestor )
+	/// <summary>
+	/// The segment a percentage falls in, as its first point's index, and how far into it. False for a route with no
+	/// points, or a Bezier one too short for a segment.
+	/// </summary>
+	private static bool RouteSegment( ModelFile.ModelPath route, float percent, out System.Numerics.Vector3[] points,
+		out int first, out float t )
 	{
-		var parent = mesh < _meshParents.Length ? _meshParents[mesh] : -1;
+		// The points are this project's own Vector3, not System.Numerics' - a model file's are, where an animation
+		// file's position track spells System.Numerics out - so they are converted rather than mixed.
+		points = [.. route.Points.Select( point => point.GetSystemVector3() )];
+		first = 0;
+		t = 0f;
 
-		// The guard is against a parent chain that loops back on itself, as MeshRotator's does.
-		for ( int guard = _meshParents.Length; guard > 0 && parent >= 0; --guard )
-		{
-			if ( parent == ancestor )
-				return true;
+		var segments = route.IsBezier ? points.Length / 3 : points.Length;
 
-			parent = parent < _meshParents.Length ? _meshParents[parent] : -1;
-		}
+		if ( (route.Type & 0x1) == 0 )
+			--segments;
 
-		return false;
+		if ( segments <= 0 )
+			return false;
+
+		// 0x006febf0 and 0x006febf8: -1000 and 100. Below -1000 the engine's remainder is negative and so is its
+		// segment; ours is wrapped back onto the route. No shipped key is below -0.02.
+		var wrapped = (float)((percent + 1000.0) % 100.0);
+
+		if ( wrapped < 0f )
+			wrapped += 100f;
+
+		var travelled = wrapped * 0.01f * segments;
+		var segment = Math.Min( (int)travelled, segments - 1 );
+
+		t = travelled - segment;
+		first = route.IsBezier ? 3 * segment : segment;
+
+		return true;
 	}
+
+	/// <summary>A Bezier segment's four points from <paramref name="first"/>, wrapped round the route.</summary>
+	private static (System.Numerics.Vector3, System.Numerics.Vector3, System.Numerics.Vector3, System.Numerics.Vector3)
+		RouteWindow( System.Numerics.Vector3[] points, int first )
+		=> (points[first % points.Length], points[(first + 1) % points.Length],
+			points[(first + 2) % points.Length], points[(first + 3) % points.Length]);
 
 	/// <summary>
 	/// Puts back what <paramref name="outgoing"/> moved, which the engine does on every role change -

@@ -730,12 +730,16 @@ public class AnimationFile : BaseFormat
 
 		/// <summary>
 		/// Whether the thing also turns to face the way it is going - bit 0x400, set on 62 of the
-		/// game's 71 route tracks. The engine samples the route's first derivative (FUN_00474a20,
+		/// game's 71 route tracks. The engine samples the route's first derivative (Route_BezierTangent,
 		/// the same window with the constant term dropped) and builds a basis from that tangent.
 		/// </summary>
 		public bool OrientsAlongRoute { get; init; }
 
-		/// <summary>How far along at <paramref name="frame"/>, held at the ends.</summary>
+		/// <summary>
+		/// How far along at <paramref name="frame"/>, held at the ends: the two frames' values blended
+		/// (<c>Anim_SamplePathPercent</c>), and where they are more than 50 apart (<c>0x006fece0</c>) the short way round the
+		/// loop, the smaller taken plus 100 and the blend modulo 100.
+		/// </summary>
 		public float Sample( float frame )
 		{
 			if ( Values.Length == 0 )
@@ -748,8 +752,19 @@ public class AnimationFile : BaseFormat
 				return Values[^1];
 
 			var i = (int)frame;
+			var along = frame - i;
+			var from = Values[i];
+			var to = Values[i + 1];
 
-			return Values[i] + ((Values[i + 1] - Values[i]) * (frame - i));
+			if ( MathF.Abs( from - to ) <= 50f )
+				return from + ((to - from) * along);
+
+			if ( from < to )
+				from += 100f;
+			else
+				to += 100f;
+
+			return (float)((((1f - along) * from) + (along * to)) % 100.0);
 		}
 	}
 

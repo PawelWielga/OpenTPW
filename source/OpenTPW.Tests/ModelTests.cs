@@ -71,11 +71,12 @@ public class ModelTests
 	/// existed, so they fail if the record is read at the wrong offset rather than merely agreeing with
 	/// whatever the reader happens to do.
 	///
-	/// 45 is a multiple of three and not 3n+1, which is what says the loop is CLOSED - the last cubic
-	/// segment ends back at point 0. A reader that assumed an open chain would want 46.
+	/// 45 is a multiple of three and not 3n+1, as every Bezier route's is; the type word, 2 with no 0x1, says it is
+	/// OPEN: the engine counts 14 segments, over points 0 to 42, and never samples the last two (docs/exe/park.md,
+	/// "Where a route key puts its node").
 	/// </summary>
 	[TestMethod]
-	public void TheBusCarriesOneClosedBezierRouteOfFortyFivePoints()
+	public void TheBusCarriesOneOpenBezierRouteOfFortyFivePoints()
 	{
 		var model = Read( "levels/jungle/features/bus/Bus.MD2" );
 
@@ -84,7 +85,8 @@ public class ModelTests
 		var route = model.Paths[0];
 
 		Assert.AreEqual( 45, route.Points.Length, "45 points" );
-		Assert.AreEqual( 0, route.Points.Length % 3, "a closed Bezier loop is a multiple of three" );
+		Assert.AreEqual( 0, route.Points.Length % 3, "a Bezier route's points are a multiple of three" );
+		Assert.AreEqual( 2u, route.Type, "open: type 2, no 0x1, so its last two points are never sampled" );
 		Assert.IsTrue( route.IsBezier, "the bus's route is Bezier" );
 		Assert.IsFalse( route.IsStraight, "and not a straight polyline" );
 

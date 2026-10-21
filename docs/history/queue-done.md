@@ -9578,6 +9578,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   binary (`q582/PREDICTION.txt`, run 4): late30's next 14 43 44; the seaplane made thing 41, the id last freed
   (`G8-seaplane-A.png`); the original given late30 the same (`orig/b-load.log`, `original/usedlist.py`). `mutate.py` 13
   of 13 and one equivalent. The rest is Q605.
+- [x] **Q583. The seaplane floats elsewhere at its stop than the original's.** From Q26c's comparison
+  (`q26c/side-by-side-seaplane.png`): at status 2, at the camera 540,-20 zoom 130 rotation 0, the original's seaplane
+  lies level at the harbour's top middle, nose left (`q26c/orig3/o-t1141.png`), and ours at the harbour's left and
+  turned (`q26c/run-C/C-docked.png`), as main's stood one did (`run-A2/A2-docked.png`). Its route and clips play through
+  `TRIGWAITANIM` on the model's Bezier path (`ParkFixedItems`, `LobbyModel.Paths`): find which of the path, the clip's
+  end frame or the root's turn differs, against the original's frames of its drive-in (`orig3/o-t11*.png`); the ferry
+  was not seen docked in the original, so photograph it too.
+  **Done (2026-10-21):** both the path and the root's turn differed (`park.md`, "Where a route key puts its node"): an
+  open route counts one segment fewer than its points make (`0x00471f9a`), so the three vehicles' routes run 10, 10 and
+  14 segments where ours ran 11, 11 and 15; and `0x400` faces the node along the route's normalised tangent from up
+  (0, 1, 0) (`Matrix_FaceAlongTangent`), which was counted, not built. Built for every route clip, drawn through
+  `NodePoser`, with the route its parent path node names and the short-way blend of far keys. Confirmed on the final
+  binary (`q583/PREDICTION.txt`, 12 held, 4 missed with causes): the seaplane level at the harbour's top middle, nose
+  left, 1.2 px from the original's (`side-by-side-seaplane.png`); the ferry where the original's lies, at its slant
+  (`side-by-side-ferry.png`; the original's from `late30` with seed 1, `lib/seedfile.py`); the bus at (529.1, 64.4)
+  and (439.9, 64.8) (`bus-stops.png`). `mutate.py` 20 of 21, one equivalent.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

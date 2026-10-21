@@ -393,6 +393,27 @@ public sealed class ParkFixedItems : Entity
 	}
 
 	/// <summary>
+	/// Where a fixed item's routed node stands and which way its nose points, in its model's own axes (y up), as its last
+	/// route clip posed it: " body (x, y, z) nose (x, y, z)", or empty where it has no model or none is posed yet. The
+	/// node is the one its clips' route tracks carry (node 0 in each of the three vehicles).
+	/// </summary>
+	internal string BodyCensus( string item )
+	{
+		var at = _modelNames.IndexOf( item );
+
+		if ( at < 0 || at >= _models.Count )
+			return "";
+
+		var model = _models[at];
+		var node = model.Clips.SelectMany( clip => clip.PathTracks ).Select( track => track.TargetIndex ).DefaultIfEmpty( -1 ).First();
+
+		if ( model.Posed( node ) is not { } world )
+			return "";
+
+		return $" body ({world.M41:F1}, {world.M42:F1}, {world.M43:F1}) nose ({world.M31:F2}, {world.M32:F2}, {world.M33:F2})";
+	}
+
+	/// <summary>
 	/// What routes each fixed item loaded. A model reads its routes when it loads, so a reader
 	/// looking at the wrong offset shows up here as "no route" rather than as a crash - which is why
 	/// this prints the point count and the first point rather than merely saying yes.

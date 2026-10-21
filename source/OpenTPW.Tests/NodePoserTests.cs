@@ -218,9 +218,10 @@ public class NodePoserTests
 
 	/// <summary>
 	/// The bus's first clip carries its body, <c>_fbustemp</c> (node 0), along the model's route by a route key alone
-	/// (channel <c>0x200</c>): on frame 0, 99.835 of the way round, the route's point (206.74, 0, -247.88) within the root
-	/// <c>Line02</c> at (480, 0, 170), where it rests at (296.5, 0, -114.5); its sound node 3 rides with it, as the
-	/// original's bus voice drove from (677, 5, -75). Read from the game's own <c>bus.wad</c>.
+	/// (channel <c>0x200</c>): on frame 0, 99.835 of the way round its open route's 14 segments, the route's point 42,
+	/// (-183.50, 0, -284.52) within the root <c>Line02</c> at (480, 0, 170), which is where it rests, (296.5, 0, -114.5);
+	/// on frame 100 it has turned the corner past the route's point 0, and its sound node 3 rides with it, turned with
+	/// it. Read from the game's own <c>bus.wad</c>.
 	/// </summary>
 	[TestMethod]
 	public void TheBusRidesItsRouteAndCarriesItsSoundNode()
@@ -234,18 +235,18 @@ public class NodePoserTests
 		var clip = new AnimationFile( clipStream );
 		var poser = new NodePoser( model );
 
-		Assert.IsFalse( NodePoser.Drives( clip ), "a route key, no position key" );
+		Assert.IsTrue( NodePoser.Drives( clip ), "a route key is posed over the tree" );
 		Near( new( 296.5f, 0f, -114.5f ), poser.World( 0 ).Translation, "the body at rest", 0.1f );
 		Near( new( 296.3f, 5.67f, -114.2f ), poser.World( 3 ).Translation, "the sound node at rest", 0.1f );
 
 		poser.Pose( clip, 0f );
 
-		Near( new( 686.74f, 0f, -77.88f ), poser.World( 0 ).Translation, "the body on frame 0", 0.05f );
-		Near( new( 686.51f, 5.67f, -77.52f ), poser.World( 3 ).Translation, "the sound node with it", 0.05f );
+		Near( new( 296.50f, 0f, -114.52f ), poser.World( 0 ).Translation, "the body on frame 0", 0.05f );
+		Near( new( 296.26f, 5.67f, -114.16f ), poser.World( 3 ).Translation, "the sound node with it", 0.05f );
 
 		poser.Pose( clip, 100f );
 
-		Near( new( 599.86f, 5.67f, 45.92f ), poser.World( 3 ).Translation, "on frame 100", 0.05f );
+		Near( new( 605.25f, 5.67f, 39.35f ), poser.World( 3 ).Translation, "on frame 100", 0.05f );
 	}
 
 	/// <summary>
