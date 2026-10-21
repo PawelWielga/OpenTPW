@@ -5081,7 +5081,46 @@ Read from the listing of `testme.exe` (`verify-advisor.md`, `~/.cache/tpw-harnes
   comment on `StaffMechanicCoverage.Score` and its kin); the mechanics' one first needs months at least `[+0x138]`, mechanics
   (`0x004c9960( 4 )`) at least `[+0x12c]` and `0x004c9b40( 4 )` non-zero. These rows are **Full Simulation's alone** (the mode-0 list
   above holds 18 to 21 and 23 to 27), so the shipped Lost Kingdom park never reaches them; the guard's coverage callbacks
-  (`0x005d60c0`, registered at `0x005a1238` and `0x005a1257`) were never measured.
+  (`0x005d60c0`, registered at `0x005a1238` and `0x005a1257`) were never measured. The mechanics' row (19) is measured in
+  "The mechanics' patrol areas", below.
+
+## The mechanics' patrol areas (message `0x13`, row 19, Q602, decode)
+
+**Row 19, message `0x13`:** polled (`+0x00` nought), category 0, game mode `+0x0c` nought (Full Simulation alone, as the
+role-coverage bullet above says), one copy, first response 55, three lines, selection mode 2 (advance). The three
+responses are samples 55, 56 and 57, each with no gesture row, model slot 0, props (5, 0), the hard hat, and group 383
+(no tag): "there's never a mechanic around when you need one...", "the mechanics are patrolling all of the areas in your
+park...", "there are areas in your park without a mechanic patrolling them" (`global-speech-transcripts.tsv`). The
+second says the opposite of the row's condition; it is said as the cycle comes to it.
+
+**Its score, `0x0059d180`** (`Advisor_Score_MechanicCoverage` in Ghidra, made for Q602; in no function before), ECX the balance object:
+
+1. Months: `FUN_004f8800`'s time since `mGameTick` nought over `0x1792F8648000` (30 days) by `__alldiv`; below `[+0x138]`
+   (`StaffSetMechanicArea.MonthsIntoGameForConsideration`, 13): nought.
+2. Mechanics, `0x004c9960( 4 )` on the park analyser: below `[+0x12c]` (`StaffSetMechanicArea.AtLeastThisMany`, 3): nought.
+3. `0x004c9b40( 4 )`, the staff of kind 4 to 8 that equal the role (or every one for role nought) and have a patrol area
+   (`0x00506eb0`: corners not (1, `0x4000`), the whole map): nought answers nought.
+4. The share, `0x004cd500( 4, 2 )` (the bullet above): the cells of `mType` 9, the entrances (`park-engine.md`), inside any
+   mechanic's area, x 100 over all of them, cut. The score is ( 100 - share ) x `[+0x140]`
+   (`StaffMechanicCoverage.ScorePerNonCoveredPercent`, 5), nought below `[+0x13c]` (`StaffMechanicCoverage.Score`, 300):
+   **said while the mechanics' areas hold 40% of the entrances or fewer**, scoring 300 to 500. A mechanic patrolling the
+   whole map counts in 2 and not in 3 or 4. `StaffSetMechanicArea.DontBotherIfPatrolledUp` and `.ScorePerUnpatrolledPct`
+   (`+0x130`, `+0x134`) are not read here.
+
+**When it is said.** As any polled row (above, "The poll"): on the tick the cursor stands on row 19, posted and said on that
+tick where the advisor is free, else it waits in a slot. Measured in the original, off-screen (`q602/run.sh`, Q707's O2
+setup: Alexah's jungle `New Save` loaded on tick 19004 by her Full Simulation profile with no ticket; `brk.sh` on the four
+compares): the poll stood on row 19 on tick **19084** (`advisor.py`'s `poll=20`), and every reading was the file's
+(`q602/predict.py`, `parkfile.py -V`: five mechanics, each with an area, 25 of 71 entrances inside them): `eax 1b` (27 months), `eax 5`,
+`eax 23` (share 35; ECX 25, EDX 15 the remainder), `eax 145` (score 325 against 300). The same four on the same tick
+again, the tick's rescore of its answer (`FUN_0059bf20`). Said at once: sample 57 in the hard hat, props (5, 0)
+(`orig-R1/line.log`, `g-10.png`), the record from (18464, 1, 1, 0) to (19084, 2, 1, 0): line 2 after the file's line 1, and
+`said` a flag that stays 1. Not measured: the line after the third (mode 2's turn back to line 0), and a park whose
+share or mechanics fail a test.
+
+**OpenTPW** does not build it: the row is counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`, so on that load it says no line on
+19084, and its advisor, freer than the original's, says the hint `0x13a` that the original's leaves waiting
+(`ride-operation.md`, "The hints"). The build is Q609.
 
 ## Shop and sideshow value and satisfaction, rows 238 to 257 (fork watch 2026-10-19)
 

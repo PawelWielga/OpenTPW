@@ -64,12 +64,13 @@ filed the items that cite it.
   Three clips carry nothing else and so read as no clip (`IsValid`): Lost Kingdom's `tvsime` and `tvsims`, fantasy's
   `sign1c`. Pose them on every model a clip moves (`NodePoser`, `MeshRotator`) and confirm one of each kind beside
   the original's frames.
-- [ ] **Q602. The advisor's row 19, message 0x13, and its line in the hard hat.** From Q708 (`q707/orig/O2/line.log`,
-  `q708/PREDICTION.txt` round G2): Alexah's jungle `New Save` loaded on 19004 by her Full Simulation profile with no ticket,
-  the original says sample 57 in the hard hat (props 5, 0) on tick 19084, response 57 of row 19 (polled, first response 55,
-  three lines, score `0x0059d180`); this game counts the row (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`), so its advisor is free
-  where the original's is busy, and says the hints `0x13a` (19059) and `0x13c` where the original's wait in their slots.
-  Decode the score (`0x0059d180`) and build it on the polled rows' machinery; confirm the 19084 line in both.
+- [ ] **Q609. Build the advisor's row 19, message 0x13 (Q602's rest).** From Q602 (`advisor-park.md`, "The mechanics'
+  patrol areas"). A topic on the polled rows' machinery: months from tick nought by 30 days at least 13, mechanics at least
+  3, a mechanic with an area (not the whole map), the share of `mType` 9 cells inside a mechanic's rectangle, ( 100 -
+  share ) x 5, nought below 300; three lines from response 55, mode 2, props (5, 0). Take
+  `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` off row 19. Confirm on Q708's load (Alexah's jungle `New Save`, `q707/gms-none.dat`,
+  loaded on 19004): `poll message=19 ... score=325 ... tick=19084`, sample 57 in the hard hat, and the hint `0x13a` left
+  waiting as the original's (`q707/orig/O2`, `q602/orig-R1`).
 - [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
   the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
   (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to

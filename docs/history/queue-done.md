@@ -9662,6 +9662,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   against `q707/orig/O2/g-05.png`): with `q707/gms-none.dat` (no ticket, one spent, one key given) this game's corner
   shows the tickets less those spent, -1, and the original's 0. A profile spending more than it won is not one play makes;
   decode the corner's count (`hud.md`, the gadget's update) for its floor and say at the site what it is.
+- [x] **Q602. The advisor's row 19, message 0x13: its score and when it is said (decode).** Done 2026-10-21:
+  `advisor-park.md`, "The mechanics' patrol areas". Row 19 (`0x0059d180`) scores ( 100 - the share of entrances inside a
+  mechanic's area ) x 5, nought below 300, from month 13 with three mechanics and one with an area; the original, off-screen
+  (`q602/orig-R1`, `brk.sh`), polled it on 19084 with 27 months, 5 mechanics, share 35, score **325**, and said sample 57
+  in the hard hat at once, as `q602/predict.py` read the file. The build is Q609.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

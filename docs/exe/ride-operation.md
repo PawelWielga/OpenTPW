@@ -3943,7 +3943,7 @@ posted-only row, and no `PUSH 0x13e` posts it: the original never says it.
 slot holding it first; row 282's `0x11a` waited in a slot behind it. Alexah's jungle `New Save` loaded on 19004 by her
 profile with no ticket (`q707/orig/O2`): `0x13a` 150 on 19059, `0x13c` 100 on 19060 and `0x13d` 100 on 19061, the poll's
 three turns; by her profile less Locals 0 and 1 (`q707/orig/O`): `0x13c` alone. There the advisor was busy with two lines
-this game does not say (row 257's sample 525 on 19040, Q713; row 19's sample 57 on 19084, Q602), so each hint waited in
+this game does not say (row 257's sample 525 on 19040, Q713; row 19's sample 57 on 19084, Q602's decode, Q609's build), so each hint waited in
 its slot: on 19100 `0xdc` took `0x13c`'s, `0x13a`'s was let go on 19502 at its turn, nought by then, and `0x13d` still
 waited on 19561.
 **OpenTPW** (Q708: `ParkAdvisorMessages.TicketExplanation` to `NearHappinessTicket`, `TicketHint`, `HintScore`;
