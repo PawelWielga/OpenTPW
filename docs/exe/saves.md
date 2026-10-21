@@ -215,8 +215,8 @@ clear, else reads the count, the record (`0x006c0f50`) and the handle counter, a
 (`0x006b69b0`) and, per voice, reads the handle (low 16 bits) and a type 1 to 6 (jump table `0x006b7020`) and rebuilds the voice.
 
 **The 84 bytes are 21 words** at `0x00803aa0`, by every reference to `0x00803aa0`..`0x00803af4` in the text: `+0x00` written only by
-`0x0051e730`; `+0x04` by `0x0051e7b0`; `+0x08` written only by the init `0x0051b660` (`0x0051b6fa`) and read by `0x0051e7b0` (`audio.md`
-calls it "sound is up"); `+0x0c` by `0x0051e830`; `+0x10` by `0x0051e7b0`; `+0x14` the reverb preset (init, `0x0051b9c7`, `0x0051c8d0` and
+`0x0051e730`, the music voice's handle (`audio.md`, "A park file's voices"); `+0x04` by `0x0051e7b0`; `+0x08` written only by the init `0x0051b660` (`0x0051b6fa`) and read by `0x0051e7b0` (`audio.md`
+calls it "sound is up"); `+0x0c` by `0x0051e830`, a voice's handle too; `+0x10` by `0x0051e7b0`; `+0x14` the reverb preset (init, `0x0051b9c7`, `0x0051c8d0` and
 the loader); `+0x18`, `+0x1c`, `+0x20`, `+0x24` set by `0x0051bb60`, `0x0051bba0`, `0x0051bb80`, `0x0051bbc0`; `+0x28` set by those seven
 setters and by `0x0051e710`, read and cleared by the tick `0x0051bd70` (`0x0051bf90`); `+0x2c` by `0x0051e6f0`; `+0x30` (u16) by
 `0x0051e710`, the music dip: while it is set the tick sends 0 to command `0x00700b88`, which is music; `+0x32` (u16) by `0x0051c1c0`,

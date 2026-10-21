@@ -420,6 +420,7 @@ public sealed class ParkBuildMarkers : ModelEntity
 			elements[element++] = corner + 3;
 		}
 
+		// Both faces drawn, where the original culls (render-states.md, "Which draws the test covers"; Q613).
 		var material = new Material<ObjectUniformBuffer>( "content/shaders/test.shader", MaterialFlags.DisableCulling );
 		material.Set( "Color", _textures );
 

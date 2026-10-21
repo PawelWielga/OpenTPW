@@ -168,10 +168,15 @@ filed the items that cite it.
   91, the sound block's word at `+0x4` naming it), the music's class (the jungle music, the rides' 204, 216, 217), the
   plain voices (the litter bins' 93, the two rectangle voices global ambient 2 and 3) and the one-shots (the level's
   placed 7, 8 and 181, the Fountain's 107...), each under its saved handle, so that a script record's `KILLOBJ`,
-  `FADEOBJ` or `SETOBJPARAM` and the crowd's beat reach it as in the original. Decide, and say at the site, how the
+  `FADEOBJ` or `SETOBJPARAM`, the crowd's beat (`0x0051e7b0`) and the music's (`0x0051e790`, the sound block's word
+  `+0x0`; `+0xc` keeps one more) reach it as in the original. Build each voice's class from the record's type, as
+  `0x006b6f1c` does, not from the effect's flags (the stock file's 181 is a one-shot by type, though its flags `0x0206`
+  make the plain class), and map the category slots by the slot's file name, since their number and order change by file
+  and theme. Decide, and say at the site, how the
   land's own placed sounds (started here at the entry) meet the file's copies, which the original's reader stops first.
   Say what this game's writer leaves out (it carries the loaded file's block unchanged today). Count a class 2 or 10
-  voice if one is ever met (none in 580 bodies). Confirm: the stock park's gates' chain making children from the entry
+  voice if one is ever met (none in 580 bodies), and a record whose handle's number has no free slot, which the
+  original skips unread the same way (`0x006b6f04`). Confirm: the stock park's gates' chain making children from the entry
   (`chains.py` against the original's run b), and a Loudspeaker's chain saved and loaded, stopped by its script.
 - [ ] **Q719. Does a loaded park play at the save's sound volumes? (one game check)** From the fork watch, 2026-10-20
   (`verify-world.md` M2; `saves.md`, "Sound"). The loader `0x0051c400` overwrites the live sound words at `0x00803aa0` with
@@ -236,6 +241,14 @@ filed the items that cite it.
   Ours fits `s_X1`'s part to the control `0x1e0eb` (`IslandPanel`, 1045,191 to 1405,416). Read what bounds the
   original fits (`UiControl_PlaceMesh`, `0x00476f10`: the node `0x00476e80` answers, `+0x78..+0x8c` through its chain)
   and how the "x N" part is chosen, then fit as it does; confirm "x 1" beside the original's.
+- [ ] **Q615. A make that fails after it took its id gives the id back.** From the run 8 review of Q610 (`review8/VERIFY-1.md`, the Note). `ParkBuilding.Build` takes its thing id
+  (`ParkState.NextThingId`) before `PlaceNow`; on "would not load" it returns without `DeleteThing` (it frees the
+  track-ride slot only), and `ParkEndFeature.Make` on "script would not run" does `objects.Remove` and no `DeleteThing`.
+  Each such failure strands an id (and a `_madeAt` stamp) until the park is reloaded, now that a full table is a real
+  end (Q610). Pre-existing. Settle the reach first: sweep every Lost Kingdom item through `PlaceNow` and
+  `BindFixed` and count the ones that fail; if none does, this is dead by CONTENT and only the two comments at the
+  sites are owed. If any does, free the id on those two returns. Check what the original does at the same failure
+  before changing anything (rule: recreate the original).
 - [ ] **Q147. `MP2File.Duration` reads every sample as MPEG-2, and five shipped samples are MPEG-1.** Found by the
   2026-09-26 staleness audit. The getter never reads the header's version bits (`(SoundData[1] >> 3) & 3`) and always
   takes the MPEG-2 bitrate tables. By the audit's census of all 47 `.sdt`, five entries are MPEG-1 Layer I (header
@@ -1777,8 +1790,8 @@ filed the items that cite it.
 - [ ] **Q579. The voice list's reader and writer named in the Ghidra project.** From the review of run 6 (VERIFY-17,
   Q559 4; group O's notes). The project's `SoundManager_SerializeVoices` (`0x006b6da0`) only reads the voice list
   (stream slot `+0x8`), and its writer `0x006b6c30` (slot `+0xc`) is unnamed. Rename both in the project (a reader and
-  a writer name), then use the new names in `audio.md`'s tables and "A script's sounds", which keep the old name
-  today. Docs and names only; nothing to confirm in the game.
+  a writer name), then use the new names in `audio.md`'s tables and "A script's sounds" and in `saves.md`'s `SOUN` row, which keep the
+  old name today. Docs and names only; nothing to confirm in the game.
 
 - [ ] **Q294. The FileFormats pages changed since 2026-09-26, against the game's files.** Left by the week-end
   audit's stage 8. 1,557 layout statements on 22 pages, `saves.md` and `models.md` most of them, packed into 56

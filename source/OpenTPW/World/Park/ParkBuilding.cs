@@ -97,7 +97,7 @@ public static class ParkBuilding
 
 		var thingId = state.NextThingId();
 
-		// A full thing table builds nothing and charges nothing (ParkState.NextThingId).
+		// A full thing table builds nothing, and the refusal comes before PayFor (ParkState.NextThingId).
 		if ( thingId == 0 )
 			return new( $"buy: '{item.Name}' cannot be built - the thing table is full", Refused: true );
 
@@ -152,6 +152,7 @@ public static class ParkBuilding
 
 		if ( objects?.PlaceNow( placed, catalogue ) != true )
 		{
+			// The id taken above is not given back: nothing here deletes the thing (a queued item).
 			if ( trackRide != 0 )
 				state.TrackRides.Free( trackRide );
 

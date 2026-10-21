@@ -406,8 +406,8 @@ public sealed class ParkGround : ModelEntity
 			}
 		}
 
-		// The shader the models use, both faces drawn: the terrain has a renderer of its own (0x0056f670), not the models'
-		// face test (Face_KeptByWinding), and whether it culls is not read.
+		// The shader the models use, both faces drawn, where the original culls: its terrain renderer (0x0056f670) carries
+		// its own copy of the face test (render-states.md, "Which draws the test covers"; Q613 builds it).
 		var material = new Material<ObjectUniformBuffer>( "content/shaders/test.shader", MaterialFlags.DisableCulling );
 		material.Set( "Color", textures );
 

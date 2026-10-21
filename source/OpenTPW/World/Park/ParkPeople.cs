@@ -1781,7 +1781,8 @@ public sealed partial class ParkPeople : Entity
 	/// triggered, which starts its script's circuit from its last spin; one the park has no thing for is made first
 	/// (<see cref="MakeVehicle"/>), and its script, which starts at its top, is given <c>VAR_STATUS</c> 1 and no trigger
 	/// (<c>0x0051a5ed</c>, the same call with the other variable). One whose item this theme lacks is passed over for the
-	/// ferry, the seaplane and the bus in that order (<see cref="FallbackOrder"/>).
+	/// ferry, the seaplane and the bus in that order (<see cref="FallbackOrder"/>), and so is one the full thing table
+	/// cannot make (<see cref="ParkState.NextThingId"/>).
 	/// </summary>
 	/// <remarks>
 	/// <b>Not the original's in one way</b>: where none of the three has an item the original sets no vehicle current
@@ -1852,7 +1853,8 @@ public sealed partial class ParkPeople : Entity
 	/// of the object list and of the cell's own, which stamps the analyser's <c>mLastObjectBuilt</c>; its script bound from
 	/// its top to its animations (<see cref="ParkRides.BindNew"/>), and its model stood after the frame's walk
 	/// (<see cref="ParkFixedItems.Make"/>).
-	/// Answers the thing, or nought where this theme has no such item: said, counted, and nothing is made.
+	/// Answers the thing, or nought where this theme has no such item (said and counted) or the thing table is full
+	/// (<see cref="ParkState.NextThingId"/>, a deviation: the original falls over); either way nothing is made.
 	/// </summary>
 	/// <remarks>
 	/// Its id is the free list's head (<see cref="ParkState.NextThingId"/>), as the original's summons takes it.

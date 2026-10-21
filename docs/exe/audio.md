@@ -475,7 +475,10 @@ the sample again each time its channel ends and the handle lives for the whole g
 
 ## A voice's two controllers
 
-**Which class an effect's flags word makes** (`0x006b6774`..`0x006b67f2`, the play entry): bit `0x4` clear, a
+**Which class an effect's flags word makes** (`0x006b6774`..`0x006b67f2`, the play entry; before it, `0x006b6751`..
+`0x006b6766` calls slot 0 of the factory's third argument and, when that answers 1, takes the constructor `0x006be750`
+(`0x006be7a0`, vtable `0x0070a8d0`) ahead of any flag test, a class whose `+0x50` answers 5: the park file writes it as
+type 5 and the reader rebuilds it as `0x0070a338`; **when that path runs is not settled**): bit `0x4` clear, a
 one-shot; `0x4` with `0x10`, `FUN_006be680`; `0x4` with `0x2`, `FUN_006be610` with `0x400`, `FUN_006be330` with
 `0x100`, else `FUN_006be090` (vtable `0x0070a338`, 194's class); `0x4` alone, `FUN_006bdd30` with `0x400` (the held
 chain), else `Voice_MakeAnyChain` (`0x006bdc60`, the chain of any variation). **The voice's own flags** (`FUN_006bbe90`, `+0x30`): effect `0x8` gives `6`, effect `0x4`
@@ -780,7 +783,7 @@ won or lost.
 camera on the Jungle Spray (525, 300), `brk.sh` on `Sound_PlayEffect` and its range form (`0x0051c130`) for effect 208
 alone. All 8 hits were at `0x0051bfc0` with category 4, the word at `[0x00803a24]` (rides' `[0x00803a28]` held 2), the
 return chain `0x004faa52` (`Person_PlaySound`), `0x004fe1d0` (the charge), `0x004fd9e0` (the settle-up), `0x005015f9`
-(`ExitRide`), `0x004e14ba` (`FUN_004e1410`). Six at (525, 0, 300) with the price 20 in `edi` (the Jungle Spray's), two
+(`ExitRide`), `0x004e14ba` (`FUN_004e1410`). Four at (525, 0, 300) with the price 20 in `edi` (the Jungle Spray's), four
 at (434 or 435, 0, 303 or 304) with 30 (the Coconut Kiosk's, whose bubbles stand at (440, 6, 312)). Q565's runs counted
 30 to 60 a run at the same two places (`oneshots.py`). **OpenTPW** (`ParkRideOperation.Charge`) banks the price and
 takes it off the guest at the same point and plays nothing: `CHARGE_SOUND` is counted. The stock park here (`q567/run1`,
@@ -940,7 +943,7 @@ seventh names 1 and 2 once and the others of 3 to 7 twice, so those are drawn tw
 
 **Every park file carries the live voices, and the original puts them back.** `Sound_SaveModule` (`0x0051c350`) writes
 the manager's voices after the 84 bytes, and `Sound_LoadModule` (`0x0051c400`, `0x0051c497`) reads them back through
-`0x006b5c30`, `FUN_006ba150` and the reader `SoundManager_SerializeVoices` (`0x006b6da0`), whose case 6 rebuilds a held
+`0x006b5c30`, `SoundManager_ReadState` (`0x006ba150`) and the reader (`0x006b6da0`), whose case 6 rebuilds a held
 chain (vtable `0x0070a2e0`). So the stock park's gates' 177 is not started at the entry: it comes back from
 `Easymode.TPWI` with its saved child, whose sample was variation 8's in all four runs (`+0xc` restored at `0x006bd487`,
 kept by the set-up at `0x006bbfda`). Its own variation is drawn again: the load restores `+0x8` (`0x006bd454`..`0x006bd47c`),
@@ -1194,8 +1197,9 @@ live voice (`0x006b6deb`), reads the categories back (`SoundLibrary_ReadCategori
 until there are as many as saved (`VoicePool_AddBlock`, `0x006b69b0`: 100 slots of `0x50` bytes, numbered on), then for
 each voice takes the free slot whose number is the handle's low 16 bits (`VoicePool_FindFreeByNumber`, `0x006b6970`),
 builds the class its type names (1 `0x0070a498` the music's, 2 `0x0070a440` flag `0x10`'s, 3 `0x0070a3e8` the
-one-shot, 4 `0x0070a390` the chain of any variation, 5 `0x0070a338` the plain class, 6 `0x0070a2e0` the held chain),
-reads the record (`Voice_ReadRecord`, `0x006bd0a0`), gives it the whole saved handle (`0x006b6fc3`) and links it at the
+one-shot, 4 `0x0070a390` the chain of any variation, 5 `0x0070a338` the plain class, 6 `0x0070a2e0` the held chain;
+the writer's type 5 is also what a second class, vtable `0x0070a8d0` (above), answers, so a load turns that class into
+the plain one), reads the record (`Voice_ReadRecord`, `0x006bd0a0`), gives it the whole saved handle (`0x006b6fc3`) and links it at the
 head (`VoicePool_TakeFree`, `0x006b6930`). The record's category slot, effect, variation and sample become the voice's
 pointers again; the voice is then set up through its slot `+0x10` as a new one would be, with its place and range
 (for the held chain, "A script's sounds", above: the chain's own variation drawn again, the saved child kept), and
@@ -1203,14 +1207,24 @@ flag `0x1000` set again where it was saved. A category slot that names none leav
 set up. A child is rebuilt as class 7 (`AnyChainChild_Construct`) or 9 (`0x006c3de0`) and read the same way.
 **The class of flag `0x100` (`0x006be330`, vtable `0x0070a878`) answers 10, which the reader's switch has no case for**
 (`0x006b6f13`): its record would be left unread and every voice after it read from the wrong bytes. No file on hand
-holds one, and Lost Kingdom's scripts play none ("A script's sounds").
+holds one, and Lost Kingdom's scripts play none ("A script's sounds"). **A voice with no free slot of its handle's
+number is left unread the same way** (`0x006b6efd` -> `0x006b6970`, `je 0x006b6fcb`, the target of the type 10's `ja` at
+`0x006b6f16`): the handle and type are read and the record is not. No file on hand reaches it (every handle's low word is
+at most 99, with one block, and no slot is named twice).
 
 **So a handle kept elsewhere names the same voice after a load.** The crowd's handle in the sound block's 84 bytes
 (`0x00803aa4`) names a saved voice in all 569 bodies where it is set, so `FUN_0051e7b0`'s next beat sets the restored
 voice's parameter rather than starting a new one (run b: the word held `0x01fb0060` for four blocks, then nought, the
 voice gone); a script's object-list record names one in 1,394 of 1,581 records,
 so its `KILLOBJ`, `FADEOBJ` and `SETOBJPARAM` reach the voice put back (the other 187 name none: their voices had
-ended or were left out); the weather's `mRainSoundHandle` is set in one body of the 580 and names a saved voice.
+ended or were left out); the weather's `mRainSoundHandle` is set in one body of the 580 and names a saved voice. **Two more words of the 84 bytes
+keep one**: the sound block's `+0x0` (`0x00803aa0`) is the music voice's handle (`0x0051e730` starts music effect 2 of
+`[0x00803a44]` through `0x0051bfc0` and stores it there, called at `0x0054ec9f`; `0x0051e770` stops it, `0x0051e790` sets
+its parameter 4, called from `0x0054f870`), and `+0xc` (`0x00803aac`) is the handle of `0x0051e830`'s voice (effect
+`0x21` of `[0x00803a20]`, parameter 8; callers `0x00512ad0`, `0x00550032`). Over the 65 different lists on hand `+0x0`
+names a saved voice in 59 (always type 1, the `cat_music` category's effect index 0) and nought in 6; `+0xc` names one in
+1 (`cat_ambient` index 7), nought in 59 and a handle with no voice in 5. **Whether `0x0051e730` at the level's start runs
+before or after the list is read, which decides whether the saved music handle is reused or replaced, is not settled.**
 
 **The stock park's ten**, as read in the original's memory on entering it (run b, the first block holding the gates'
 handle; `b-1.png`), with the file's handles and classes: the jungle music's 2 (`0x0126005a`, the music's class); the
@@ -1220,7 +1234,11 @@ global ambient's 2 and 3 (`0x0127005b`, `0x0128005f`, plain, each following the 
 of 19), the level's placed sounds ("A voice's range", above); the gates' held chain 177 (`0x012e0055`, (450, 0, 160));
 the jungle rides' 107 (`0x01320063`, (585, 0, 185)) and the global rides' 93 (`0x01330061`, (445, 0, 295)), the
 handles of the Fountain's and the Litter Bin's scripts' object-list records (script handles 14 and 7); and kids 91, the crowd (`0x01fb0060`, the word at
-`0x00803aa4` too). The block before it held the entry's own one-shots 7 and 8 under other handles, gone at the load.
+`0x00803aa4` too). The block before it held six voices under other handles, all gone at the load: the entry's one-shots 7 and 8, 181
+(`0x00aa005d`, effect flags `0x0206`, which make it the plain class (5) there), the rectangle voices 3 and 2
+(`0x00a90060`, `0x00a80061`) and the music's 2 (`0x00a70062`). The file's 181 comes back as type 3, a one-shot
+(`0x01290059`), so the class a load builds comes from the record's type (`0x006b6f0c`..`0x006b6f1c`), not from the
+effect's flags.
 Over the 580 bodies on hand (31 different lists) the voices are also the screams' held chains (kids 71 to 73, held by
 no saved record), the Loudspeakers' 177 to 180 and the Staff Room's 188 (each a script's record), rides' voices of
 the music's class (jungle rides 204, 216 and 217 in Alexah's Full Simulation autosave); never a type 2 or 10.

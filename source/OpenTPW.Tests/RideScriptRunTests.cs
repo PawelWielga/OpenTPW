@@ -226,8 +226,10 @@ public class RideScriptRunTests
 	/// <c>SPAWNSOUND</c>. Taking 200 turns by the script's own listing: the first runs <c>NAME</c>,
 	/// <c>SPAWNSOUND</c> (1) and <c>WAITANIM</c> (with no model its wait is already over, and costs the turn); the
 	/// second <c>COAST 8</c> and <c>COAST 5</c> before <c>ENDSLICE</c>; each one after a pass of the main loop, five
-	/// <c>COAST</c>s, that <c>CRIT_UNLOCK</c> ends. 1 + 2 + 198 * 5 = 993, each one also reported. A gap that acted on
-	/// a guess, or was not counted, or not reported, fails it.
+	/// <c>COAST</c>s, that <c>CRIT_UNLOCK</c> ends. 1 + 2 + 198 * 5 = 993, each one also reported. A gap that was not
+	/// counted, or not reported, fails it, and so does a guess that changes which <c>COAST</c>s run (a non-zero
+	/// <c>COAST 3</c>) or a no-ride <c>COAST 8</c> that records the look-up. A guessed <c>COAST 2</c> answer does
+	/// not: <c>TEST VAR_LETMEON</c> sends the script to the same place.
 	/// </para>
 	/// </summary>
 	[TestMethod]
@@ -241,6 +243,7 @@ public class RideScriptRunTests
 			script.Turn( 0f );
 
 		Assert.AreEqual( 993, script.NotImplemented, "not every gap with no ride and no scheduler was counted" );
+		Assert.IsFalse( script.Initialised, "a COAST 8 with no ride recorded a look-up it never made" );
 
 		CollectionAssert.AreEqual(
 			new[] { ("Coaster: COAST, with no ride state to work on", 992), ("Coaster: SPAWN, with no scheduler to put the script in", 1) },

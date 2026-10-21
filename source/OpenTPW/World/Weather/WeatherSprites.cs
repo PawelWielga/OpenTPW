@@ -129,7 +129,8 @@ public abstract class WeatherSprites : ModelEntity
 
 		// Depth-tested so weather sits behind the islands properly, but not depth-writing:
 		// these are transparent and drawn in whatever order the pool happens to be in, so
-		// letting them occlude each other would show as sprite-shaped holes.
+		// letting them occlude each other would show as sprite-shaped holes. Culled, where the original draws weather
+		// both-sided (render-states.md, "Which draws the test covers"; Q613); its quads face the camera, so none is lost.
 		var material = new Material<ObjectUniformBuffer>( "content/shaders/weather.shader",
 			MaterialFlags.DisableDepthWrite | MaterialFlags.Additive );
 

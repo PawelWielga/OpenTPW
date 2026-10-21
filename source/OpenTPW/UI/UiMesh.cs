@@ -173,6 +173,8 @@ internal sealed class UiMesh
 			// that reaches past it, to repeat it, wraps.
 			var withinTexture = mesh.TexCoords.All( uv => uv.X >= -0.001f && uv.X <= 1.001f && uv.Y >= -0.001f && uv.Y <= 1.001f );
 
+			// Both faces drawn, where the original keeps a clockwise face only (render-states.md, "Which draws the test
+			// covers"; Q613).
 			var shading = new Material<ObjectUniformBuffer>( "content/shaders/test.shader",
 				MaterialFlags.DisableDepth | MaterialFlags.DisableCulling );
 			shading.Set( "Color", textures, withinTexture ? SamplerType.Anisotropic : SamplerType.AnisotropicWrap );

@@ -106,6 +106,7 @@ public sealed class ParkSea : ModelEntity
 
 		var elements = Elements( _vertices.Length / 4 );
 
+		// Both faces drawn, where the original culls (render-states.md, "Which draws the test covers"; Q613).
 		var material = new Material<ObjectUniformBuffer>( "content/shaders/test.shader", MaterialFlags.DisableCulling );
 		material.Set( "Color", textures );
 

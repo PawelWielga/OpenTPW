@@ -225,13 +225,17 @@ public class ParkBuyGoldenTicketTests
 	}
 
 	/// <summary>
-	/// <b>A full thing table builds nothing and charges nothing</b> (<see cref="ParkState.NextThingId"/>): at a cell where
-	/// the ride passes every test, with every id held the build is refused and the bank keeps its money. The original
-	/// falls over here (<c>FUN_004d91f0</c>).
+	/// <b>A full thing table builds nothing</b> (<see cref="ParkState.NextThingId"/>): at a cell where the ride passes
+	/// every test, with every id held the build is refused and says why. The original falls over here
+	/// (<c>FUN_004d91f0</c>).
 	/// </summary>
-	/// <remarks><b>Mutation:</b> the build going on with id nought.</remarks>
+	/// <remarks>
+	/// <b>Mutation:</b> the build going on with id nought. With no object layer here every build that goes on ends at
+	/// "would not load" before <c>PayFor</c>, so the balance check below fails only a payment moved ahead of the id
+	/// test; that the refusal comes before <c>PayFor</c> is by code order, not measured.
+	/// </remarks>
 	[TestMethod]
-	public void AFullThingTableBuildsNothingAndChargesNothing()
+	public void AFullThingTableBuildsNothing()
 	{
 		var file = TwoLeft();
 		var (catalogue, _, _) = ParkFootprintPictureTests.BuyScreen();
@@ -257,7 +261,7 @@ public class ParkBuyGoldenTicketTests
 		}
 
 		StringAssert.Contains( Answer( cell.X, cell.Y ), "the thing table is full" );
-		Assert.AreEqual( 10000, state.Balance, "nothing paid" );
+		Assert.AreEqual( 10000, state.Balance, "nothing paid before the id test" );
 	}
 
 	/// <summary>

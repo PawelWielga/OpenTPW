@@ -127,6 +127,8 @@ internal sealed class ParkEndFeature
 
 		if ( thingId == 0 )
 		{
+			// Not asked for again this session: the End is owed once, when the last item is researched
+			// (Level.OweTheEndFeature), and the owing is cleared before this runs.
 			Log.Warning( "End feature: the thing table is full, so no End is made" );
 			foreach ( var entity in model.Entities )
 				entity.Delete();
@@ -137,6 +139,7 @@ internal sealed class ParkEndFeature
 
 		if ( rides.BindFixed( thingId, item ) is not { } script )
 		{
+			// The id taken above is not given back: nothing here deletes the thing (a queued item).
 			Log.Warning( $"End feature: thing {thingId}'s script would not run, so no End is made" );
 			objects.Remove( thingId );
 			return null;
