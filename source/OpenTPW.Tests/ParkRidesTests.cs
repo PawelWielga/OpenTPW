@@ -116,10 +116,9 @@ public class ParkRidesTests
 		// instruction boundary, across all the scripts this park binds rather than just this one.
 		//
 		// What is deliberately NOT asserted is `Bound == Resumed`. That equality holds only because this
-		// fixture passes no ParkObjects: with one, the second binding pass spawns things the save never
-		// named - the ferry and the seaplane - which have no saved state and correctly do not resume, so
-		// the running game has Bound > Resumed. Asserting it here would have pinned a property of the
-		// fixture that production breaks.
+		// fixture passes no ParkObjects: with one, a thing with no saved script state is bound from its top
+		// and is not resumed, so the running game can have Bound > Resumed. Asserting it here would have
+		// pinned a property of the fixture that production can break.
 		Assert.AreEqual( 0, rides.NotResumed, "no bound script was left at its beginning" );
 		Assert.AreNotEqual( 0, rides.Resumed, "and something was actually resumed" );
 		Assert.IsTrue( rides.Resumed <= rides.Bound,

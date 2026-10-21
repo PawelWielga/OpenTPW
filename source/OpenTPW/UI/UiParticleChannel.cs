@@ -39,9 +39,10 @@ internal sealed class UiParticleChannel
 	/// <summary>
 	/// Starts or ends effects until there are <paramref name="count"/> (UIParticles_SetChannelCount, 0x005ed5a0): new
 	/// ones of <paramref name="effect"/>, the last first when there are too many. Says how many were started, or minus
-	/// how many were ended.
+	/// how many were ended. The new ones are pinned across by <paramref name="anchor"/> and down by <paramref name="down"/>,
+	/// wherever they are moved to; with no <paramref name="down"/> each takes its pin down from where it stands.
 	/// </summary>
-	public int SetCount( int count, int effect = 0, Anchor anchor = Anchor.Centre, UiWindow? owner = null )
+	public int SetCount( int count, int effect = 0, Anchor anchor = Anchor.Centre, UiWindow? owner = null, VerticalAnchor? down = null )
 	{
 		var system = ParticleSystem.Current;
 		var started = 0;
@@ -56,7 +57,7 @@ internal sealed class UiParticleChannel
 
 		while ( _handles.Count < count )
 		{
-			_handles.Add( system?.Spawn( effect, 0, 0, 0, anchor, owner ) ?? 0 );
+			_handles.Add( system?.Spawn( effect, 0, 0, 0, anchor, owner, down: down ) ?? 0 );
 			_effects.Add( effect );
 			++started;
 		}

@@ -439,7 +439,7 @@ public sealed partial class ParkAudio
 
 	/// <summary>
 	/// Each plain script voice's next sample once the last has ended and its silence is over, as a following voice's
-	/// is (<see cref="ServeFollowing"/>), each chain's next child once the clock passes its newest child's time, and
+	/// is (<see cref="ServeFollowing"/>; drawn then, not as the original queues it: <see cref="NextScriptSample"/>), each chain's next child once the clock passes its newest child's time, and
 	/// every one-shot served (<see cref="ServeOneShot"/>). A voice out of range makes nothing (<see cref="InRange"/>): a
 	/// plain, music or one-shot voice's sample is cut, and in range again its sample starts afresh (a one-shot's unless its
 	/// start is refused, <see cref="StartOneShot"/>).
@@ -651,6 +651,9 @@ public sealed partial class ParkAudio
 	/// (<see cref="ApplyControllers"/>), and after each, the first included, a silence drawn from the variation's wait
 	/// (<c>0x006bdf00</c>, which a first start reaches through <c>FUN_006bc410</c>'s slot <c>+0x48</c>). A music voice
 	/// with no zone for its parameter is parked (<c>0x006be55e</c>).
+	/// <b>Deviation:</b> the sample is drawn as the last ends, where the original queues the next soon after the last
+	/// starts, so a parameter changed in between picks its zone here and not there (<c>docs/exe/hud.md</c>, "The pumps and
+	/// the sounds").
 	/// </summary>
 	private void NextScriptSample( ScriptVoice sound )
 	{

@@ -174,7 +174,7 @@ Built by `FUN_004a1d70` onto the park's layer 0, with no handler for the stream 
 |---|---|---|
 | `0x36`, `0x37` | **Text labels**, `LabelSkin_Construct`, colour **white** (0xff,0xff,0xff,0xff), font `FUN_00485a70(2)`, both seeded with the string at `0x00752f24`. They sit to the LEFT of the two icons, so the cluster is icon+count twice | Disassembly of `FUN_004a1d70` |
 | `0x34` (`gkey`) | Takes **frame 3** (`FUN_0065d3a3(3)`) — what the four `gkey0-3.wct` textures are for — and **is hidden outright in Instant Action** (`DAT_00fb3b7c == 2` -> `UI_SetVisible(0)`) | Disassembly |
-| `0x36`, `0x37`, `0x35` on the gadget's update (`0x004a1092`..`0x004a115b`, Q591) | `0x36` takes the keys held (`PlayerProgress_CountKeys` `0x005af680`) as `"%d x"` (`0x00752ef8`). `0x37` takes the tickets **less those spent** (`FUN_005af5d0`: every ticket, the two secret ones too, less `+0x1c`), written only when that count differs from the last written (`0x00752ec4`, `0x004a10d2`), which is -1 in the image and is put back to -1 by the gadget's message 0x15 (`0x004a1160`, with `0x00752ec8`); so a count of -1 (more spent than won) is never written and the corner keeps `FUN_004a1d70`'s seed, `"0  x"` (`0x00752f24`), the ticket shown (Q603: `q707/orig/O2/g-05.png`; this game `q603/run1-F/F-corner.png`). Once written: at nought `0x37` and the ticket `0x35` are hidden, else both shown and `0x37` reads `"%d x"`. In the original's Full Simulation jungle (Alexah's profile less two jungle tickets, one spent) the corner read "1 x" and "1 x" before the award of tick 19100 and "3 x" and "2 x" after (`q706/orig/O/g-05.png`, `g-40.png`) | Disassembly; the original's frames |
+| `0x36`, `0x37`, `0x35` on the gadget's update (`0x004a1092`..`0x004a115b`, Q591) | `0x36` takes the keys held (`PlayerProgress_CountKeys` `0x005af680`), written only when that count changes (the last at `0x00752ec8`) and not at all in Instant Action (`0x004a1002`): at nought `0x36` and the key `0x34` are hidden (`0x004a1045`..`0x004a1067`), else both shown and `0x36` reads `"%d  x"` (`0x00752ef8`, two spaces between the number and the x). `0x37` takes the tickets **less those spent** (`FUN_005af5d0`: every ticket, the two secret ones too, less `+0x1c`), written only when that count differs from the last written (`0x00752ec4`, `0x004a10d2`), which is -1 in the image and is put back to -1 by the gadget's message 0x15 (`0x004a1160`, with `0x00752ec8`); so -1 is never the first count written (a later -1, or a -2, is written as any count) and a profile that spent one more than it won keeps `FUN_004a1d70`'s seed, `"0  x"` (`0x00752f24`), the ticket shown (Q603: `q707/orig/O2/g-05.png`; this game `q603/run1-F/F-corner.png`). Once written: at nought `0x37` and the ticket `0x35` are hidden, else both shown and `0x37` reads `"%d  x"` (the same string). In the original's Full Simulation jungle (Alexah's profile less two jungle tickets, one spent) the corner read "1 x" and "1 x" before the award of tick 19100 and "3 x" and "2 x" after (`q706/orig/O/g-05.png`, `g-40.png`) | Disassembly; the original's frames |
 | `0x30` | **Yellow** (0xff,0xff,0,0xff), font 2, and **starts hidden** (`UI_SetVisible(0)`) — matches it being the price of the item in hand, absent when your hand is empty | Disassembly |
 | `0x2f` | Its field is sized by **measuring the string `999999999`** (`UI_MeasureText` on the string at `0x00752f10`), white, font `FUN_00485a70(1)`, skin `FUN_0048fde0(0)`; `0x32`'s rect is then computed from that measurement rather than being fixed | Disassembly |
 | `0x2d` / `0x2e` | Callbacks `LAB_004a11e0` and `FUN_004a1190`; the mast is shrunk to eight units and the top follows it down ("The arm and the aerial as built" below) | Disassembly |
@@ -655,8 +655,8 @@ screen does not pause the park: its tick ran on while it was open.
 **The two sliders' directions** (`Slider_SetPosition` `0x0066b088`, `Slider_ReadThumb` `0x0066af19`, `Slider_PageTowards`
 `0x0066b8aa`). With the slider's `+0x14c` bit 2 set the thumb runs across, the left the lowest value; with it clear, up
 and down, **the top the highest**: its top at `(highest - value) x travel / range` below the track's, the travel the
-track's height less the thumb's. A click off the thumb pages the value down where it is left of the thumb, or below the
-thumb's top, and up otherwise (`+0x144` positive). The effort sliders (flags `0x61`) run across, the work-load slider
+track's height less the thumb's. A click off the thumb pages the value down where it is left of the thumb's right edge, or below
+its bottom edge, and up otherwise (`+0x144` positive). The effort sliders (flags `0x61`) run across, the work-load slider
 (`0x51`) up and down; each one's track is its stream text rect. The stream's op 2 on a panel is a skin looked up by
 the same mesh hash as op 1's (`UI_ParseTreeStream` `0x0065fd58`): the panel's `res_pipe`, drawn in the panel's text
 rect, as the frame shows it, between the bar and the pump.
@@ -3846,11 +3846,15 @@ with tickets ("Spending golden tickets", below).
 
 **Spending golden tickets** (decoded for Q604, Q709's first piece; confirmed in the original on a fresh Full
 Simulation park whose player had 4 tickets earned, 2 spent and no ride bought, `q709/orig/a`). Two tests on the
-player's progress (`[0x00f7c58c]`) serve every reader: `GoldenTicket_RideBought` (`0x004d4b70`) asks the ride-id set
+player's progress (`[0x00f7c58c]`) serve these readers: `GoldenTicket_RideBought` (`0x004d4b70`) asks the ride-id set
 (`PlayerProgress_RideBought` `0x005af780`: an MSVC set of words, head `+0x2c`, nil `[0x00f7c970]`, a node's id at its
 `+0xc`), and `GoldenTicket_CanBuyRide` (`0x004d4b90`) whether the item's `GoldenTicketCost` (`+0xc4`) is at most
 `PlayerProgress_TicketsLeft` (`0x005af5d0`): `PlayerProgress_CountTickets` less `+0x1c`, the spent count, with no floor.
-Their readers:
+The listing's callers of `0x004d4b70` are 0x4ab047, 0x4ab290, 0x4abdc3, 0x4ac590, 0x4acbfa, 0x4db4c3, 0x5035df, 0x503792
+and 0x523601; of `0x004d4b90` 0x4abddc, 0x4ac5a9 and 0x4acc10; of `0x005af5d0` 0x4a10cd (the gadget's corner), 0x4d4b3d
+and 0x4d4bad. The bullets name the list's rows (0x4ab047 is the list fill's mystery naming, `BuyScreen_FillList`, above),
+the cell colour, the click, the carry, the purchase and the lab; the help state (0x4abdc3, 0x4abddc) and the panel's fill
+(0x4ab290) ask the same two tests for the panel's text and are not read further. Their readers:
 
 - **The row's lettering.** The list's row is a name label, a price cell on its own skin (`PriceSkin_Construct`
   `0x004904c0`, by `BuyList_MakeRowCells` `0x004ad340`) and the tick box. The price cell's setter (`PriceSkin_SetValue`
@@ -3868,19 +3872,21 @@ Their readers:
   the ride in the hand.
 - **The carry** (`BuildTool_PreviewPass`, `0x005235e6`..`0x00523613`): an item with a cost not yet bought sets the run's
   price to nought (`FUN_0052fb90( 0 )`) and skips the price-against-bank test below it, so it is never refused for
-  money; the original shows "$ 0" under the balance while carrying it (`q709/orig/a-place.png`).
+  money; the original shows "$ 0" under the balance while carrying it (`q709/orig/a-place.png`). The move tool's put-down (`0x00523940`..`0x005239fc`) has no such exemption: it sets the run's price to the item's full `+0x1b8` (`0x0052398b`) and meets the cell test `0x00535905`..`0x0053592b`, so a moved ticket ride is refused where its price is above the bank (read from the listing, not observed; OpenTPW's `ParkBuilding.Build` skips the test for a move too).
 - **The purchase** (`Object_Construct` `0x004db090`, `0x004db4a6`..`0x004db4f6`): such an item calls
   `GoldenTicket_SpendForRide` (`0x004d4ad0`) **in place of** the withdrawal of its price, and ignores its answer.
   In game type 1 (online) that does nothing; in any other, where the tickets suffice, `PlayerProgress_BuyRide`
   (`0x005af740`) inserts the id and, only when the insert is new, adds the cost to the spent count. No cash is taken
   either way, so an item placed with too few tickets would be built free; the click's test is what stops it. Every
   later purchase of the item finds it bought and pays the price in cash. Measured: the bank 50000 either side of the
-  put-down; `progress.py` "spent 2 ... rides []" to "spent 3 ... rides [1170]" on tick 291; the gadget's corner "2 x"
-  to "1 x".
+  put-down; `progress.py` "spent 2 ... rides []" to "spent 3 ... rides [1170]" on tick 291; the gadget's ticket count
+  (`0x37`) "2 x" to "1 x", the keys' `0x36` "2 x" unchanged.
 - **The save.** Nothing here writes `gms.dat`; the progress object is written at its next write ("Load Game and Save
   Game", `saves.md`): after a park save the file read spent 3 and ride ids [1170] (`q709/orig/a/gms-after.dat`);
   one byte more changed, file offset `0x13` (the swear filter, `+0x25`) from 1 to 0, which none of the functions above
-  writes (the reference install has no swear lists: a likely cause, not traced), so no test is built on "nothing else
+  writes: the profile loader `FUN_005afd70` sets `+0x25` to 1, then clears it when `swears.txt` under
+  `Data\Language\<language>\` does not open (`0x005afeba`..`0x005aff37`; `saves.md`), and a disc copy (the reference
+  install) has no `Language\American\swears.txt` where an installed game has it, so an installed game keeps 1, so no test is built on "nothing else
   changes". Afterwards the row is the ride's own, "Jurassic Tours" at "$ 3000", with the owned tick.
 - **The lab** asks the same set for a kind-4 project (`park-engine.md`, "The next project").
 

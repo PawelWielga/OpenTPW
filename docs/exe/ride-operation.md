@@ -1912,7 +1912,7 @@ script starter then writes the id to it (`FUN_004dcf90` to `FUN_004685c0`, the m
 are live. The run is redone on the next state tick (`FUN_00435a30` from `0x0054fa8f`) for a node whose `node[0]` bit 0
 is set, as `FUN_0043c3d0` sets it whenever the speed setting changes: the cap `+0x34` = `80 × ( 1 − s / 100 ) + 130 × s
 / 100` (`fMaxSpeedAtMinSetting`, `fMaxSpeedAtMaxSetting`). The script's speed word `+0xc0` is pushed at `COAST 8`
-(`0x00554ab4`) and on every VM turn (`0x005517d7`..`0x005517ea`), redoing the run only on a change (`0x0043b2c6`), so
+(`0x00554ab4`) and on every VM turn (`0x005517d7`..`0x005517ea`), redoing the run only on a change (`0x0043b2c6`) and not at all, while no layout replay runs (`DAT_00785a2c` nought), for a node whose `+0` has bit `0x8000` (`0x0043b2ca..0x0043b2d9`; that bit is set only by the replayed speed action, `0x00447e30` from `0x00404ad3`, action `0x45` of the online park load, and nothing clears it: dead by CONTENT offline; fork watch 2026-10-21, verify-world-other L1), so
 the player's speed and an upgrade's (`0x004dfabc`) reach `f` through the cap; the tier does not. A new node starts at
 setting 60, cap 110 (`FUN_004368f0`'s `FUN_0043c3d0( node, 0x3c )`). The coasters module (`SAOC`) saves neither rating
 nor `+0x24`; its loader pairs each record with its object by mesh instance and marks the node for a rerun
@@ -3848,7 +3848,9 @@ polled and said (Q708, "The hints", below), the cheat rows counted (Q592).
 
 **The tick.** `FUN_004d4a00`, from `FUN_004d7b20` (`0x004d7b60`) on a thing sweep (`0x00516695`) whose world counter
 `+0x1da70c`, `mGameTick`, is a multiple of 100 (`DIV`, `0x004d7b54`; the sweep raises it first, `0x00516398`, and calls
-`FUN_004d7b20` near its end). A sweep is every 8th 31 ms tick (`boot.md`, "Tick rates"), so the tickets are tested once every 100
+`FUN_004d7b20` near its end). `FUN_004d7b20` runs the arrival manager, the staff pool (`0x004d7b30`), **the calendar
+(`FUN_004f8260`, `0x004d7b3b`)**, then the `% 100` test and the tickets (`0x004d7b60`): a tick that is a multiple of 100 and turns a
+month or a year is tested on the park after the month's ring push and the year's profit zeroing. A sweep is every 8th 31 ms tick (`boot.md`, "Tick rates"), so the tickets are tested once every 100
 sweeps, about 24.8 seconds, on ticks 100, 200 and so on. It does nothing unless
 the game type `DAT_00fb3b7c` is 0 (`0x004d4a31`..`0x004d4a40`), so play awards no ticket in Instant Action or online
 (`saves.md`, "Keys and tickets"). It runs the six Local tickets (`FUN_004d4bc0`), the four Global (`FUN_004d4e50`), then
@@ -3900,7 +3902,7 @@ rows `0x0040c780`..`0x0040c7e0`, `PUSH 0x64; PUSH i; ... CALL 0x005af940`, which
 **The advisor's ticket lines.** Lines of result 1 use gesture 17, the gesture table's row 1; results 2 and 3, gesture 29,
 row 13 (`scenes.md`, "Gesture table": clips 17 to 20 of the level's `advisor.wad`, the glints, and row 13's key); the
 "moved" and first-ticket lines the random chain. All are on model slot 1, the park's own advisor. **The line asked for
-is said as asked**: the tick (`FUN_0059a550`, `0x0059a76b`) takes a record's `+0x08` where it is not below nought, with
+is said as asked**: the tick (`FUN_0059a550`, `0x0059a6e1`) takes a record's `+0x08` where it is not below nought, with
 no selection mode, and keeps it as the message's last line even past the count; `FUN_0059b620` then says the first
 response plus it, or the first response where it is past the count. A response's sample and lip file are its own row's
 (`0x00768fb8`): the "ticket only" lines rotate samples 293 to 295 and all move the mouth by lip file 293. Measured in
@@ -3966,7 +3968,7 @@ three as decoded: the lab has projects undone (Local 3), the bank's profit this 
 and the visitors of the last six months are 759 less the ring's 500, 259 against 350 (Local 5); its secret measure is 17
 per cent (the stock `Easymode.TPWI`, 3). OpenTPW loads the same measures (`money`: lifetime visitors 759, profit -33596)
 and over ticks 19007 to 19147 awards nothing; the original would not either for the Locals (held) and Global 0 (the record
-is this park's, `FUN_005af940` returns 0). Measured for Q591 (`q706/`), at tick 19100: the go-kart ride's excitement 81
+is this park's, `FUN_005af940` returns 0). OpenTPW's own measure for Q591 (its log line, `q706/run2-A.out`; not read from the original), at tick 19100: the go-kart ride's excitement 81
 (against 90), no water ride, 1,240 cells covered (against 2,000; `parkfile.py -T` reads the same of the file), 17 per cent
 watched; so nothing.
 
@@ -3988,7 +3990,7 @@ that makes the tickets of every kind one posts them.
 
 **What reaches it in Lost Kingdom.** Instant Action (`Easymode.TPWI`, game type 2) never: play awards nothing, every
 ticket row and hint is game type 0's, and only the cheats award. A Full Simulation jungle reaches all of it: a gap
-(`CLAUDE.md` rule 3): built, and its lines said (Q595), but for their tags (Q707) and the hints (Q708).
+(`CLAUDE.md` rule 3): built, with its lines (Q595), its tags (Q707) and its hints (Q708).
 
 ### A coaster's highest track point
 
@@ -4012,8 +4014,9 @@ Save` (Temple Of Gloom, the Minecart).
    `0x400000` (`FUN_0044b220`; without it, 2 and 3, each with no pylon), node k from track node k + 1. Nodes 0 and 2
    stand on a pylon of the type's first kind (`+0xa8`) on the middle of the ground cell under the track node (`trunc( x × 0.1 )`,
    `trunc( z × 0.1 )`), at the loft that stands the pylon's knot at the track node's height over the model's root (the
-   track node's `y` less the root's world height, `[[model + 8] + 4] + 0x78] + 0x44`, held to the type's `fMinHeight`
-   and `fMaxHeight`, `+0x68` and `+0x6c`, its share of `+0xbc` to `+0xc0` held to 0 and 1: argument 4 of `Coaster_AddNode` (`0x00434060`),
+   track node's `y` less the root's world height, `[[[model + 8] + 4] + 0x78] + 0x44` with the model `[0x007a4610 + 4 x instance]`
+   (`0x00436b38`..`0x00436bb9`), held to the type's `fMinHeight` and `fMaxHeight`, `+0x68` and `+0x6c`, the first raised to `+0xbc`
+   where that is larger (`0x004309a4`..`0x004309bb`), its share of `+0xbc` to `+0xc0` held to 0 and 1: argument 4 of `Coaster_AddNode` (`0x00434060`),
    `Coaster_StackNodeOnCell` (`0x00433bd0`), `Coaster_LoftForHeight` (`0x00433790`)); node 1 is a cell-less node (`0x13`) at the track node's own place; the type-7 node
    (`0x00436c92`) is made after them and is the chain's last. Measured: nodes 0, 1 and 2 at (185, 14.542, 355), (210,
    14.542, 355) and (235, 14.542, 355), the Minecart's `Railnode01`..`03` with the model at (190, 2.5, 340): loft 0.0227
@@ -4043,8 +4046,10 @@ Save` (Temple Of Gloom, the Minecart).
    (`Anim_SlerpOnSineTable`, `0x004742a0`: within 0.001 of one key mixed straight, else each weight a sine over the sine of the whole angle, every
    sine read from the 4096-entry table, `FUN_004708d0`, its angle rounded), so every pitch and heading the original holds
    is a whole multiple of pi/1024. The Minecart's `StdPylonR` turns `mc_pylon` once round over 100 frames, and `StdPylonI`
-   the knot from 45 degrees up to 45 degrees down over frames 1 to 19 of 20 (about -1.25 x incline, held at plus or minus
-   pi/4); the bank clip rolls the knot about its z axis and does not move the direction.
+   the knot from 45 degrees up to 45 degrees down over frames 1 to 19 of 20: its frame is `incline / 2 pi x fInclineAnimMultiplier
+   + 0.5` held to the clip's caps (`0x00431157`..`0x00431171`, `0x00430e3b`..`0x00430e76`), and the pitch it gives is not a rule
+   in the incline (a frame held to 0 reads pi/4, a frame of 0.068 reads 246 pi/1024 = 0.7547, where a line straight in the frame would read 0.873); the
+   bank clip rolls the knot about its z axis and does not move the direction.
 4. **The yaw and incline** of a node are worked out again at every rebuild from its neighbours, unless the piece's flags
    keep them (flag values 1, 2 and 4: yaw, incline, bank; the loader copies them to node `+8`; a bank not kept is nought, or the auto-bank `FUN_0043c160` where the coaster type's flag `0x10` asks): `Coaster_NodeTangent`
    (`0x00431660`) takes the direction square to the bisector of the unit vectors to its two neighbours, in their plane
@@ -4061,17 +4066,19 @@ Save` (Temple Of Gloom, the Minecart).
 7. **The samples** (`Coaster_SampleTrack`, `0x00440c10`): each segment is walked in steps of 0.05 in t, the chords
    summed, and a sample put on the chord at every `+0xac` (3.0, set when the record is made, `0x004369b7`) of length;
    sample 0 is the head knot. Past the last knot the walk goes on along the curve from it to node 1's knot until one more
-   sample is put, and stops: that sample, 3.0 past the one before, is the count's last (n - 1), which the measure leaves
-   out; the copy at `0x00441783` goes into slot n, outside the count (count `+0xa4`, 0x38 bytes each from `+0x9c`, x, y and
-   z at `+4`). After a sample the walk goes on from the sample's own place in t (`0x00440fc8`..), not from the next whole
-   step; OpenTPW's goes on from the next step.
+   sample is put, and stops: that sample, 3.0 past the one before, is slot n - 1 of the count's n, which the measure leaves
+   out; the copy at `0x00441783` goes into slot n, which the count (`+0xa4`, the slot pointer's offset over 0x38) takes in
+   where the walk's `modf` of `+0xa8` has a fraction to round up (`0x0044178f`..`0x004417d5`), so the count's last is not always
+   the sample past the close; the Temple Of Gloom's measure is not moved by it (samples 0x38 bytes each from `+0x9c`, x, y and
+   z at `+4`). After a sample the walk goes on from the next whole step in t, the same step: it re-evaluates
+   t + 0.05 - fmod( t, 0.05 ) (`0x00441010`..`0x00441069`, `_CIfmod`), the chord running on from the sample's place
+   (`0x00440fc8`..), as OpenTPW's does.
 
 **Measured.** Temple Of Gloom's `+0x110` read 106.0722 in two loads (`q706b/O1`, `O2`), at sample 61 of 719, between
 nodes 4 and 5, both 100 high: the curve rises 6.07 above the tallest pylons, so the pylon tops alone do not give the
 measure. Truncated it is 106, the jungle's record 0 in Alexah's profile ("Golden tickets", above): this coaster set it.
 **Built (Q706):** OpenTPW's chain from the file, the shipped Minecart's files and the jungle ground puts all 42 nodes at
-the original's places to 0.0001 and their directions to 0.00005, its 718 samples within 0.0008 of the original's first
-718, and the highest at 106.0722 (`q706c/cmp.py`; `ParkCoasterTrackTests`). Not decoded: a loop pylon's knots and
+the original's places to 0.0001 and their directions to 0.00005, its first 718 samples within 0.0008 of the original's (the dump's three decimals and 0.0003), and the highest at 106.0722 (`q706c/cmp.py`; `ParkCoasterTrackTests`). Not decoded: a loop pylon's knots and
 handles, a stacked pylon and a pylon with more than one knot a node (Chak Atak's; none is placed in Lost Kingdom's files
 on hand): each is counted (`COASTER_LOOP_PYLON`, `COASTER_STACKED_PYLON`, `COASTER_PYLON_KNOTS`) and gives its coaster no
 height, as does a coaster with no saved track (`COASTER_TRACK_UNSAVED`) or past the module's first
@@ -4848,9 +4855,10 @@ The progress is the stepper's `( now × 1000 − start × 1000 ) / ( due − sta
 holds it at 1000 (signed). A carried slot under 0 or 7 and up reaches no arm and leaves the sprite as it stood. The
 facing is the slot's (`+0x14`), the same word a walking person's sprite faces by (`+0xc0`): in the sixteen park files
 the original wrote here, a guest walking has a sprite facing the octant of their angle 854 times in 897, and **every one of
-the 39 walk slots in use holds its rider's sprite as this table says**: carried under 1 (13) and 4 (10) no sprite; under 5
-(4) and 6 (7) on the head node to the thousandth, facing the slot, on script 172 and 140; walking on (1) and off (3) on
-the leg, facing the slot, on script 42 (`walkriders`, its output kept in `q585/walkriders-saves.out`). The node's
+the 38 walk slots in use holds its rider's sprite as this table says**: carried under 1 (13) and 4 (10) no sprite; under 5
+(4) and 6 (7) on the head node to the thousandth, facing the slot, under 5 on script 172 and under 6 six on 140 (the
+fantasy Aqua Spray's on 90); walking on (1) and off (3) on the leg, facing the slot, three on script 42 and one just off on
+140 (the placer's animation 1 not yet put back, as the Aqua Spray's; `walkriders`, its output kept in `q585/walkriders-saves.out`). The node's
 position is the stored matrix of the last drawn frame (above, "How long a leg lasts"), so a rider on a node a clip carries
 rides with it: **the Mayan Spinner's (`Lookout.RSE`, `WALKON` action 6 to node `VAR_ONRIDE` plus 2) stand apart round the
 drum and go up with it** (`q585/orig/o1-t900`, `o1-t961`).

@@ -168,18 +168,10 @@ public class ParkFileWriterMadeVehicleTests
 	}
 
 	/// <summary>
-	/// <b>A park written after the summons holds the ferry as the original's own files hold one</b>
-	/// (<c>q257x/orig/fixed-by-the-original.TPWS</c>, thing 32): the header's third slot and its current vehicle
-	/// name the thing; its record is an object of item 1604 at the middle of cell (0,0), facing nought, state 3,
-	/// its corner and both ends cell 1, its door open, named "Ferry", with its script and its model; it heads the
-	/// object list and the corner cell's, the bus behind it. Nothing is counted. Read back, the park has the
-	/// ferry current on that thing and makes nothing at its next summons.
+	/// <b>A vehicle summoned on a departed guest's id is written whole, and the guest is gone</b>: the summons takes the
+	/// free list's head, which is the departed guest's id; the file holds the ferry as an object on that id at cell (0,0),
+	/// no person on it, and names it the current arrival vehicle.
 	/// </summary>
-	/// <remarks>
-	/// <b>Mutations:</b> the slot left nought; the second slot written; the current vehicle left nought; the object
-	/// left out of the file; its record on another cell; its ends nought; the cell's list left the bus's; the script
-	/// or the model not written; the bus's slot lost; a load of the file making the vehicle again.
-	/// </remarks>
 	[TestMethod]
 	public void AVehicleMadeOnADepartedGuestsIdIsWrittenWhole()
 	{
@@ -202,6 +194,19 @@ public class ParkFileWriterMadeVehicleTests
 		Assert.AreEqual( ferry, written.CurrentArrivalVehicle );
 	}
 
+	/// <summary>
+	/// <b>A park written after the summons holds the ferry as the original's own files hold one</b>
+	/// (<c>q257x/orig/fixed-by-the-original.TPWS</c>, thing 32): the header's third slot and its current vehicle
+	/// name the thing; its record is an object of item 1604 at the middle of cell (0,0), facing nought, state 3,
+	/// its corner and both ends cell 1, its door open, named "Ferry", with its script and its model; it heads the
+	/// object list and the corner cell's, the bus behind it. Nothing is counted. Read back, the park has the
+	/// ferry current on that thing and makes nothing at its next summons.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the slot left nought; the second slot written; the current vehicle left nought; the object
+	/// left out of the file; its record on another cell; its ends nought; the cell's list left the bus's; the script
+	/// or the model not written; the bus's slot lost; a load of the file making the vehicle again.
+	/// </remarks>
 	[TestMethod]
 	public void AParkWrittenAfterTheSummonsHoldsTheVehicleAsAThing()
 	{

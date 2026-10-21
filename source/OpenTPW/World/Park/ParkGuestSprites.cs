@@ -1016,9 +1016,9 @@ public sealed class ParkGuestSprites : ModelEntity
 	/// rider on the Mayan Spinner's node goes up with its drum. The clock is the park's, to the frame (<see cref="GameClock.PartialTick"/>),
 	/// as the engine reads its own live.
 	/// </summary>
-	internal static (bool Hidden, Vector3 At, short Facing)? WalkedOnRide( ParkPeople? people, int thingId )
+	internal static (bool Hidden, Vector3 At, short Facing)? WalkedOnRide( ParkPeople? people, int thingId, int goingThing = 0 )
 	{
-		if ( people == null || !people.TryWalkOf( thingId, out var script, out var slot ) || WalkRiders.Of( slot ) is not { } placed )
+		if ( people == null || !people.TryWalkOf( thingId, out var script, out var slot, goingThing ) || WalkRiders.Of( slot ) is not { } placed )
 			return null;
 
 		if ( placed.Hidden )

@@ -125,9 +125,13 @@ public static class ParkGoldenTickets
 	/// <summary>The four Global tickets' words in arm 4's second line, by index (<c>0x0075a6f8</c>, <c>0x0075a6d0</c>, <c>0x0075a6ac</c>, <c>0x0075a68c</c>).</summary>
 	private static readonly string[] GlobalNames = ["coaster height", "gokart excitement", "water length", "big park"];
 
-	/// <summary>The measures of the park as it stands now.</summary>
-	internal static Measures Measure( ParkState state, ParkPeople people, ParkItemCatalogue? catalogue, ParkResearch? research,
-		int recentVisitorMonths )
+	/// <summary>
+	/// The measures of the park as it stands now: <paramref name="peopleInPark"/> and <paramref name="happiness"/> are the
+	/// gate census and the mean happiness of the guests it counts (<see cref="ParkPeople.GateGuestCensus"/>,
+	/// <see cref="ParkPeople.GuestsInsideHappiness"/>).
+	/// </summary>
+	internal static Measures Measure( ParkState state, int peopleInPark, float happiness, ParkItemCatalogue? catalogue,
+		ParkResearch? research, int recentVisitorMonths )
 	{
 		var kart = 0;
 		var water = 0;
@@ -156,7 +160,7 @@ public static class ParkGoldenTickets
 
 		var (covered, secured) = Cells( state );
 
-		return new( state.LifetimeVisitors, people.GateGuestCensus, people.GuestsInsideHappiness,
+		return new( state.LifetimeVisitors, peopleInPark, happiness,
 			EverythingDone( state, catalogue, research ),
 			state.ProfitThisYear,
 			state.MonthVisitors.Back( recentVisitorMonths ) is { } then ? state.LifetimeVisitors - then : 0,
@@ -219,9 +223,31 @@ public static class ParkGoldenTickets
 	/// <summary>The measures and awards of the last test, for the console's <c>tickets</c>.</summary>
 	internal static (int Tick, Measures Measures, List<Award> Won)? Last { get; private set; }
 
+	/// <summary>The tick of a sweep that owes the test, until <see cref="TakeOwed"/> takes it.</summary>
+	private static int? _owed;
+
 	/// <summary>
-	/// The test on a sweep, from the sweep's tail after the staff pool's turn (<c>0x004d7b60</c>): nothing unless the
-	/// park's clock is a multiple of <see cref="EverySweeps"/> and the game is Full Simulation (<c>DAT_00fb3b7c</c> 0).
+	/// A sweep's tail owes the test when the park's clock is a multiple of <see cref="EverySweeps"/>. The test itself waits
+	/// for <see cref="Level.TurnTheCalendar"/>, which runs it after the calendar's turns, as the original's tail does
+	/// (<c>0x004d7b20</c> calls the calendar, <c>0x004f8260</c>, before the tickets, <c>0x004d4a00</c>).
+	/// </summary>
+	internal static void Owe( int gameTick )
+	{
+		if ( gameTick % EverySweeps == 0 )
+			_owed = gameTick;
+	}
+
+	/// <summary>The tick that owes the test, once; null when none is owed.</summary>
+	internal static int? TakeOwed()
+	{
+		var owed = _owed;
+		_owed = null;
+		return owed;
+	}
+
+	/// <summary>
+	/// The test of a tick that owed it (<see cref="Owe"/>): nothing unless the game is Full Simulation
+	/// (<c>DAT_00fb3b7c</c> 0).
 	/// </summary>
 	internal static void Sweep( int gameTick, ParkState state, ParkPeople people )
 	{
@@ -230,7 +256,8 @@ public static class ParkGoldenTickets
 			return;
 
 		var thresholds = Thresholds.From( balance );
-		var measures = Measure( state, people, level.Catalogue, level.Research, thresholds.RecentVisitorMonths );
+		var measures = Measure( state, people.GateGuestCensus, people.GuestsInsideHappiness, level.Catalogue, level.Research,
+			thresholds.RecentVisitorMonths );
 		var won = Check( measures, thresholds, player.File, level.ThemeName, SaveFolder.IsTheme, KeysToEnter );
 
 		Last = (gameTick, measures, won);

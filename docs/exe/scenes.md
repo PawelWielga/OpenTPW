@@ -151,31 +151,39 @@ once; the centre's call restarts the clock only for a time that is not nought. E
 `i/n + f * turns`, its fraction (`CRT_modf` `0x0067b280`) in 512ths, round the centre eased by `f` and the radii eased by
 `f` held to 1: x = (cx + rx sin + 1) × 50000, down = (cy - ry cos + 1) × 37500, the centre and radii in half screens, down
 positive. So the centre runs on past its mark once its time is up. `Advisor_ClipStarted`'s arguments are literals,
-the time being the starting clip's length (`0x00f796c8[clip - 1]`, `0x00f7976c` the clip less one), and only one flag acts:
+the time being the starting clip's length (`0x00f796c8[clip - 1]`, `0x00f7976c` the clip less one), and only one flag acts,
+and only while a line is being said: the word's flags are read at `0x00598e7d`, and with `0x00f7966c` (`g_Advisor_Busy`, set
+at `0x00599497` as a line's clips are fixed; cleared at `0x00598ad5`, `0x00599532`, `0x00599653`, `0x00599719` and `0x0059992d`) clear only `0x200000` acts, emptying the channel (`0x00598e88`, `0x0059902e`; `Advisor` empties it
+when it is not `Busy`):
 
 | Flag | Count | Centre | Radii | Turns in the clip |
 |---|---|---|---|---|
 | `0x20000` | tops up to 1 of 44; the rest only where that started one | (0.34, 0.62) at once | (0.01, 0.2) at once | 1 |
 | `0x40000` | `cat_ui` 197, then up to 2 of 49 | eased to (0, 0) | eased to (0.6, 0.4) | 2 |
-| `0x80000` | up to 3 of 49 | (0, 0) | (0.6, 0.4) | 3 |
+| `0x80000` | up to 3 of 49 | eased to (0, 0) | eased to (0.6, 0.4) | 3 |
 | `0x100000` | emptied, then 2 of 44 | eased to (0.8, -0.8) | eased to (0, 0) | 2 |
 | `0x200000` | emptied | | | |
 
 A line's start (`0x005993b3`), its end (`0x0059993e`), `Advisor_StopSpeaking` and `Advisor_StopQuietly` empty the channel.
-The original's film beside ours (`q707/p600/run1/side-by-side.png`): a column beside his hand through clip 17, a ring
+The original's film beside ours (`q707/p600/side-by-side.png`): a column beside his hand through clip 17, a ring
 round the big ticket through 18 and 19, a trail up to the counts at the top right in 20. **OpenTPW** builds it
-(`UiParticleChannel`, `Advisor.SetGlints`); the glints are pinned to the right of a window wider than 4:3, as he is.
+(`UiParticleChannel`, `Advisor.SetGlints`); the glints are pinned to the right of a window wider than 4:3 and to the bottom of one taller, as he is, wherever they move
+(`Emitter.Down`, `ScreenParticles.PinDown`); the original's screen is 4:3 and has neither.
 
-**A clip's start** (`Advisor_Update` `0x00599a2a`, then `FUN_00599800` calls `Advisor_ClipStarted` `0x00598dc0` once the
-model reads it started): the model's clip change (`FUN_004726d0`) shows again what the outgoing clip's hide list hid and
-the nodes the outgoing clip's tracks name (`FUN_00472310`; every node of the model when the animation object's `+4` holds
-`0x8`), then hides the incoming hide list (FileFormats `models.md`, "Starting a clip"; OpenTPW shows the incoming clip's
-track nodes instead, `AdvisorModel.StartClip`, no frame known to differ); then
+**A clip's start** (`Advisor_Update` starts the next clip at `0x00599a46`, then `FUN_00599800` calls `Advisor_ClipStarted`
+`0x00598dc0` once the model reads it started): the model's clip change is `FUN_00472f60`, which shows again what the
+OUTGOING clip's hide list hid and the nodes its tracks name (`FUN_00472310`, called at `0x004730a9` with the outgoing
+clip) and then hides the INCOMING clip's hide list (`FUN_00472d70`, called at `0x00473117`); FileFormats `models.md`,
+"Starting a clip", holds the rule and its `0x8` case. OpenTPW shows the incoming clip's track nodes instead
+(`AdvisorModel.StartClip`, no frame known to differ); then
 his five mouths are hidden, the line's props are put on again (`FUN_00598ca0`), and where the clip word carries `0x10000`
 no add-on and no prop is shown and the node `bug head` (`FUN_0044b2e0( model, 0, -1 )`, node 0 where none is named so) is
-hidden, and `Advisor_Update` shows no mouth (`0x00599b8c`). Lost Kingdom's clips 19 and 20 hide everything of him but the
-big ticket (`hidelists.py`), and his head comes back with the next clip that moves it (14's and 17's position keys): the
-original's second ticket line shows his face (`q707/orig/O/film/O-second-line-crop.png`). **A clip's length is its
+hidden, and `Advisor_Update` shows no mouth (`0x00599ba3`). Lost Kingdom's clips 19 and 20 hide everything of him but the
+big ticket (`hidelists.py`). What shows his head again in the original is **not settled**: clip 20's hide list and
+tracks name no node 0, so the outgoing rule alone would keep it hidden for the second line's first clip (633 ms), yet
+its second ticket line shows his face by then (`q707/orig/O/film/O-second-line-crop.png`); the likely cause is the animation object's
+`+4 & 0x8` path, which shows every node, and is not read for him. OpenTPW shows it with the next clip whose tracks name node 0
+(14's and 17's position keys, 17's the second line's first). **A clip's length is its
 declared span** (`Anim_ClipMilliseconds` `0x00474070`: block `+8` times 1000 over 30): clip 20 declares 60 frames and keys to 89, so 2000 ms,
 the original's own table (`q707/orig/O/line.log`).
 

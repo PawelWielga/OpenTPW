@@ -452,14 +452,32 @@ public partial class Material : Asset
 	/// <summary>
 	/// The faces a material's pipeline drops: those whose screen corners wind against <see cref="KeptWinding"/>, unless it
 	/// asks for <see cref="MaterialFlags.DisableCulling"/>. The original's own test is <c>Face_KeptByWinding</c>
-	/// (<c>0x00581320</c>), on every model face; it weighs each corner by its rhw where the card's test takes the corners
-	/// as projected, which can differ only for a face seen almost edge on with its corners at different depths.
+	/// (<c>0x00581320</c>), on every model face, over the clip coordinates before the divide; that is the winding of the
+	/// projected corners the card tests (<c>docs/exe/render-states.md</c>, "The software back-face test").
 	/// </summary>
 	internal static FaceCullMode CullModeFor( MaterialFlags flags )
 		=> flags.HasFlag( MaterialFlags.DisableCulling ) ? FaceCullMode.None : FaceCullMode.Back;
 
 	/// <summary>The winding kept: clockwise on the screen, the original's (<c>Face_KeptByWinding</c>) in this engine's axes.</summary>
 	internal const FrontFace KeptWinding = FrontFace.Clockwise;
+
+	/// <summary>The depth and stencil description a material's pipeline is built with: what <see cref="SetupResources"/> uses.</summary>
+	internal static DepthStencilStateDescription DepthStateFor( MaterialFlags flags )
+		=> new(
+			!flags.HasFlag( MaterialFlags.DisableDepthTest ),
+			!flags.HasFlag( MaterialFlags.DisableDepthWrite ),
+			DepthComparisonFor( flags )
+		);
+
+	/// <summary>The rasterizer description a material's pipeline is built with: what <see cref="SetupResources"/> uses.</summary>
+	internal static RasterizerStateDescription RasterizerStateFor( MaterialFlags flags )
+		=> new(
+			CullModeFor( flags ),
+			PolygonFillMode.Solid,
+			KeptWinding,
+			true,
+			false
+		);
 
 	private static bool _depthTestLogged;
 
@@ -491,19 +509,9 @@ public partial class Material : Asset
 				? BlendStateDescription.SingleAdditiveBlend
 				: BlendStateDescription.SingleAlphaBlend,
 
-			DepthStencilState = new DepthStencilStateDescription(
-				!flags.HasFlag( MaterialFlags.DisableDepthTest ),
-				!flags.HasFlag( MaterialFlags.DisableDepthWrite ),
-				DepthComparisonFor( flags )
-			),
+			DepthStencilState = DepthStateFor( flags ),
 
-			RasterizerState = new RasterizerStateDescription(
-				CullModeFor( flags ),
-				PolygonFillMode.Solid,
-				KeptWinding,
-				true,
-				false
-			),
+			RasterizerState = RasterizerStateFor( flags ),
 
 			PrimitiveTopology = PrimitiveTopology.TriangleList,
 			ResourceLayouts = [.. _resourceLayouts],

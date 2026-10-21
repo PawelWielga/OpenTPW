@@ -319,4 +319,128 @@ public class ParkGoldenTicketTests
 			"jungle's Local 2, fantasy's Local 0 and a record; the secret one not counted" );
 		Assert.AreEqual( new ParkAdvisorMessages.TicketFacts( 3, true, false, Jungle ), ParkGoldenTickets.HintFacts( player, "fantasy", Jungle, IsPark ) );
 	}
+
+	/// <summary>
+	/// <b>A tick is owed the test only on a multiple of a hundred, and only once</b>: 99, 101, 50 and 150 owe nothing, 100 owes tick 100,
+	/// taken once; a later multiple replaces one not yet taken.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the modulus changed; the owed tick left standing after it is taken.</remarks>
+	[TestMethod]
+	public void ATickIsOwedTheTestOnlyOnAMultipleOfAHundredAndOnlyOnce()
+	{
+		ParkGoldenTickets.TakeOwed();
+
+		ParkGoldenTickets.Owe( 99 );
+		ParkGoldenTickets.Owe( 101 );
+		ParkGoldenTickets.Owe( 50 );
+		ParkGoldenTickets.Owe( 150 );
+		Assert.IsNull( ParkGoldenTickets.TakeOwed() );
+
+		ParkGoldenTickets.Owe( 100 );
+		Assert.AreEqual( 100, ParkGoldenTickets.TakeOwed() );
+		Assert.IsNull( ParkGoldenTickets.TakeOwed(), "taken once" );
+
+		ParkGoldenTickets.Owe( 100 );
+		ParkGoldenTickets.Owe( 200 );
+		Assert.AreEqual( 200, ParkGoldenTickets.TakeOwed() );
+	}
+
+	/// <summary>
+	/// <b>A tick that is a multiple of a hundred and turns a year is tested after the calendar's turns</b> (<c>0x004d7b20</c>: the
+	/// calendar, <c>0x004d7b3b</c>, then <c>% 100</c> and the tickets, <c>0x004d7b60</c>). Tick 648,000 is the first
+	/// multiple of a hundred that turns a year (2077-01-01 00:00:00, 3,750 seconds a tick); a park that closed 2076 at 20,000
+	/// profit, past Local 4's 15,000, has the year's change zero it first, and Local 4 is not won; the month's change pushes the
+	/// lifetime visitors on the ring first, so Local 5 reads the new month. Tested before the turns, as the tickets once were,
+	/// Local 4 is won on the closed year.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the owed tickets tested before the calendar's turns in <see cref="Level.TurnTheCalendar"/>.</remarks>
+	[TestMethod]
+	public void ATickThatTurnsAYearIsTestedAfterTheCalendarsTurns()
+	{
+		const int Tick = 648000;
+
+		GameCalendar.Rebase();
+
+		try
+		{
+			var state = new ParkState( parkIsClosed: false, visitorsToDate: 0, balance: 0 );
+			state.Deposit( 20000 );
+			Admit( state, 30 );
+
+			// The calendar has read the tick before and its date: only this tick's edges are the year's.
+			GameCalendar.Update( Tick - 1 );
+			Assert.AreEqual( 2076, GameCalendar.Now.Year );
+			Assert.AreEqual( 20000, state.ProfitThisYear );
+
+			var ring = state.MonthVisitors.Back( 0 );
+			var tested = new List<(int Tick, int Profit, int? Ring)>();
+
+			ParkGoldenTickets.Owe( Tick );
+			Level.TurnTheCalendar( state, null, null, tick => tested.Add( (tick, state.ProfitThisYear, state.MonthVisitors.Back( 0 )) ) );
+
+			Assert.IsTrue( GameCalendar.YearRolled && GameCalendar.MonthRolled );
+			Assert.AreEqual( 1, tested.Count );
+			Assert.AreEqual( Tick, tested[0].Tick );
+			Assert.AreEqual( 0, tested[0].Profit, "the year's change has zeroed the profit before the test reads it" );
+			Assert.AreEqual( 30, tested[0].Ring, "the month's change has pushed the visitors before the test reads them" );
+			Assert.IsNull( ring );
+
+			var measures = AtEveryThreshold with { ProfitThisYear = tested[0].Profit };
+			Assert.AreEqual( "", Only( measures ), "Local 4 is not won on a closed year's profit" );
+			Assert.AreEqual( "Local 4", Only( AtEveryThreshold with { ProfitThisYear = 20000 } ) );
+		}
+		finally
+		{
+			GameCalendar.Rebase();
+			ParkGoldenTickets.TakeOwed();
+		}
+	}
+
+	/// <summary>Admits <paramref name="visitors"/> guests at a fee of nought: each is one of the lifetime visitors.</summary>
+	private static void Admit( ParkState state, int visitors )
+	{
+		for ( var guest = 0; guest < visitors; ++guest )
+			state.Take( 0 );
+	}
+
+	/// <summary>
+	/// <b>The measures are the park's own</b>: the lifetime visitors less the month ring's count the threshold's months back
+	/// (30 now, a ring of 10 then 25 pushed: six back reaches nothing, one back is the 10, so 20 recent), the gate census
+	/// and happiness as handed, the profit as it stands; a go-kart ride (track type 1) scores the low byte of its excitement as
+	/// the kart measure and no water, and a water ride (track type 2) with no track laid scores no section, so the two cases are
+	/// not each other's.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the CarTrack and WaterTrack cases swapped; the recent count as the ring's slot or the lifetime
+	/// alone; the census or the happiness swapped. Not held: the low byte (no shipped ride's excitement passes 255) and the
+	/// section count of a laid water ride (a table of laid track is not built by a test).</remarks>
+	[TestMethod]
+	public void TheMeasuresAreTheParksOwn()
+	{
+		FileSystem = GameData.Required();
+		var catalogue = new ParkItemCatalogue( "jungle", FileSystem );
+		var kart = catalogue.All.FirstOrDefault( item => item.UiType == ItemDescriptionFile.Ride && item.TrackType == ItemDescriptionFile.CarTrack && item.ExcitementLevel > 0 );
+		var water = catalogue.All.FirstOrDefault( item => item.UiType == ItemDescriptionFile.Ride && item.TrackType == ItemDescriptionFile.WaterTrack );
+
+		Assert.AreNotEqual( 0, kart.Id, "Lost Kingdom has a go-kart ride" );
+
+		var state = new ParkState( parkIsClosed: false, visitorsToDate: 0, balance: 0 );
+		state.Deposit( 4321 );
+		Admit( state, 30 );
+		state.MonthVisitors.Push( 10 );
+		state.MonthVisitors.Push( 25 );
+
+		var thing = new ParkWorld.CatalogueObject( 9, kart.Id, 0, 0, 0 );
+		state.AddObject( thing );
+
+		if ( water.Id != 0 )
+			state.AddObject( new ParkWorld.CatalogueObject( 10, water.Id, 0, 0, 0 ) );
+
+		var measures = ParkGoldenTickets.Measure( state, 17, 61.5f, catalogue, null, recentVisitorMonths: 1 );
+
+		Assert.AreEqual( ParkRideScore.ExcitementOf( thing, kart, state.TrackRides ) & 0xff, measures.KartExcitement );
+		Assert.IsTrue( measures.KartExcitement > 0 );
+		Assert.AreEqual( 0, measures.WaterSections, "a water ride with no track laid" );
+		Assert.AreEqual( (30, 17, 61.5f, 4321, 20), (measures.LifetimeVisitors, measures.PeopleInPark, measures.Happiness, measures.ProfitThisYear, measures.RecentVisitors) );
+		Assert.AreEqual( 0, ParkGoldenTickets.Measure( state, 17, 61.5f, catalogue, null, recentVisitorMonths: 6 ).RecentVisitors, "the ring does not reach six back" );
+	}
 }

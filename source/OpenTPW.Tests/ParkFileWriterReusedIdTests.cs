@@ -277,4 +277,67 @@ public class ParkFileWriterReusedIdTests
 		Assert.IsTrue( written.Objects.Single( thing => thing.ThingId == 43 ).MeshInstance < written.Objects.Single( thing => thing.ThingId == DrinksShop ).MeshInstance,
 			"the older takes the lower model slot" );
 	}
+
+	/// <summary>
+	/// The shop sold, kept in the file because no catalogue is handed to say it can be written (the same gap as a tracked
+	/// ride's, <c>SAVE_PARK_OBJECT_SOLD</c>), and its id freed: the park written by <c>Level.WritePark</c>.
+	/// </summary>
+	private (ParkPeople People, ParkState State, ParkRides Rides) KeptSoldShop()
+	{
+		var park = Park();
+
+		StringAssert.StartsWith( ParkBuilding.Sell( park.State, shipped, catalogue, null, park.Rides, DrinksShop, park.People ), "sell: " );
+		park.State.FreeDeletedThings();
+
+		return park;
+	}
+
+	/// <summary>
+	/// <b>A guest on the id of a sold object the file keeps is left out, counted, and the file still reads</b>: the shop
+	/// stays in the file (a deviation: the original writes the guest and drops the shop), the guest who took its id is
+	/// not written, and the write is not refused for "thing 16 is model 3 in the file and 1 in the park".
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the person filter in <c>Level.WritePark</c> removed (the write throws); the kept ids left among
+	/// the deleted ones (the write throws).</remarks>
+	[TestMethod]
+	public void AGuestOnAKeptSoldObjectsIdIsLeftOut()
+	{
+		var (people, state, rides) = KeptSoldShop();
+		var arrived = people.Admit( 47, 21 );
+
+		Assert.AreEqual( DrinksShop, arrived );
+		Unimplemented.Forget();
+		Assert.IsNotNull( Level.WritePark( shipped, state, Theme, "GuestOnTheKeptShop", people, null, rides, null ), "the park is written" );
+
+		var written = Read( File.ReadAllBytes( Path.Combine( Jungle, "GuestOnTheKeptShop.TPWS" ) ) );
+
+		Assert.IsNull( written.Problem );
+		Assert.IsTrue( written.Objects.Any( thing => thing.ThingId == DrinksShop ), "the shop is kept" );
+		Assert.IsFalse( written.People.Any( person => person.ThingId == DrinksShop ), "the guest is left out" );
+		Assert.AreEqual( shipped.People.Count, written.People.Count, "and nobody else" );
+		Assert.AreEqual( (1, 1), (Times( "SAVE_PARK_OBJECT_SOLD" ), Times( "SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING" )) );
+	}
+
+	/// <summary>
+	/// <b>An object bought on the id of a sold object the file keeps is left out, and the file still reads</b>: the file's
+	/// shop stays and the ape is not written (with no catalogue nothing bought is).
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the kept sold ids not held back from the deleted ids handed to the writer (the write throws).</remarks>
+	[TestMethod]
+	public void AnObjectBoughtOnAKeptSoldObjectsIdIsLeftOut()
+	{
+		var (people, state, rides) = KeptSoldShop();
+		var ape = Buy( state, rides, CrazyApe, 41, 22 );
+
+		Assert.AreEqual( DrinksShop, ape.ThingId );
+		Unimplemented.Forget();
+		Assert.IsNotNull( Level.WritePark( shipped, state, Theme, "ApeOnTheKeptShop", people, null, rides, null ), "the park is written" );
+
+		var written = Read( File.ReadAllBytes( Path.Combine( Jungle, "ApeOnTheKeptShop.TPWS" ) ) );
+
+		Assert.IsNull( written.Problem );
+		Assert.AreEqual( shipped.Objects.Single( thing => thing.ThingId == DrinksShop ).CatalogueId, written.Objects.Single( thing => thing.ThingId == DrinksShop ).CatalogueId, "the file's shop, not the ape" );
+		Assert.AreEqual( shipped.Objects.Count, written.Objects.Count );
+		Assert.AreEqual( 1, Times( "SAVE_PARK_OBJECT_SOLD" ), "the shop counted kept; with no catalogue nothing bought is written either" );
+	}
 }

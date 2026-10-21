@@ -179,4 +179,77 @@ public class ParkBuyGoldenTicketTests
 		Assert.IsFalse( mystery.Contains( "and the park has" ), mystery );
 		Assert.AreEqual( (2, 0), (file.TicketsSpent, state.Balance + 1000), "nothing paid where nothing was built" );
 	}
+
+	/// <summary>
+	/// The click only carries the ride (<c>BuyScreen_OnMessage</c>, <c>0x004ac270</c>); the tickets are spent where it is put
+	/// down (<c>Object_Construct</c>, <c>0x004db4a6</c>): after the click the spent count and the ride ids are as they were,
+	/// a put-down that does not stand the ride spends nothing either, and <see cref="ParkBuilding.PayFor(ParkState, ParkItemCatalogue.Item, Player)"/>,
+	/// which <c>Build</c> calls once the ride stands, spends the cost once and takes no cash.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the tickets spent at the click; the tickets spent before the ride stands; <c>PayFor</c> leaving the
+	/// tickets alone; the cash taken as well. What is not reached here: <c>Build</c>'s own call of <c>PayFor</c> after a ride
+	/// stands, because standing a ride wants a graphics device (<c>ParkObjects.Place</c>).
+	/// </remarks>
+	[TestMethod]
+	public void TheTicketsAreSpentWhereTheRideIsPutDownNotWhereItIsClicked()
+	{
+		var file = TwoLeft();
+		var (catalogue, screen, _) = ParkFootprintPictureTests.BuyScreen();
+		var state = Level.Current!.ParkState!;
+		SetBalance( 10000 );
+
+		ListOf( screen ).Activated!( 1170 );
+
+		Assert.AreEqual( 1170, ParkBuilding.Carrying );
+		Assert.AreEqual( (2, ""), (file.TicketsSpent, string.Join( ' ', file.RideIds )), "carried, not yet bought" );
+
+		var build = typeof( ParkBuilding ).GetMethods( BindingFlags.NonPublic | BindingFlags.Static )
+			.Single( method => method.Name == "Build" && method.GetParameters().Length == 9 );
+		var objects = new ParkObjects( "jungle", null, null );
+
+		string Answer( int x, int y )
+		{
+			var built = build.Invoke( null, [state, Level.Current.Park, catalogue, objects, null, 1170, x, y, 0] )!;
+			return (string)built.GetType().GetProperty( "Answer" )!.GetValue( built )!;
+		}
+
+		var cell = Enumerable.Range( 0, 128 * 128 ).Select( at => (X: at % 128, Y: at / 128) )
+			.First( at => Answer( at.X, at.Y ).Contains( "would not load" ) );
+
+		Assert.AreEqual( (2, "", 10000), (file.TicketsSpent, string.Join( ' ', file.RideIds ), state.Balance), "not stood, not paid" );
+
+		var item = catalogue.All.Single( i => i.Id == 1170 );
+		Assert.AreEqual( "1 golden tickets", ParkBuilding.PayFor( state, item, Players.Roster.Current ) );
+		Assert.AreEqual( (3, "1170", 10000), (file.TicketsSpent, string.Join( ' ', file.RideIds ), state.Balance), "put down: paid in tickets" );
+	}
+
+	/// <summary>
+	/// A cash row the bank cannot pay is refused with the same sound as a mystery row the tickets cannot buy
+	/// (<c>0x004ac6ca</c> to <c>0x004ac7f6</c>, <c>0x00486ae0</c>); one the bank can pay is carried, silently.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the refusal silent on the cash arm; the price compared strictly.</remarks>
+	[TestMethod]
+	public void ACashRowTheBankCannotPayIsRefusedWithTheSound()
+	{
+		TwoLeft();
+		var (catalogue, screen, stack) = ParkFootprintPictureTests.BuyScreen();
+		var list = ListOf( screen );
+		var bounce = catalogue.All.Single( item => item.Id == 1100 );
+		Assert.AreEqual( 500, bounce.BuildPrice );
+
+		SetBalance( 499 );
+		UiSounds.LastAsked = null;
+		list.Activated!( 1100 );
+
+		Assert.AreEqual( (0, ParkBuyScreen.RefusedSound), (ParkBuilding.Carrying, UiSounds.LastAsked) );
+		Assert.IsTrue( stack.Windows.Contains( screen ), "the screen stays" );
+
+		SetBalance( 500 );
+		UiSounds.LastAsked = null;
+		list.Activated!( 1100 );
+
+		Assert.AreEqual( (1100, (int?)null), (ParkBuilding.Carrying, UiSounds.LastAsked) );
+		Assert.IsFalse( stack.Windows.Contains( screen ) );
+	}
 }

@@ -86,6 +86,9 @@ public static class ParkBuilding
 		// the placement mode - and, for a move, which has no such click, in the put-down's own preview,
 		// where a price above the balance turns the cell red (FUN_00535670). A mystery ride's preview sets the run's
 		// price to nought and skips the test (BuildTool_PreviewPass, 0x005235e6..0x00523613): it is never refused for money.
+		// NOT MATCHED for a move: Build cannot tell a move from a carry, so the skip also covers the move tool's put-down,
+		// where the original prices the ride in full (0x0052398b, FUN_00535670) and refuses it above the balance; only a park
+		// holding a ticket ride its player has not bought reaches it (docs/exe/hud.md, "Spending golden tickets").
 		if ( !GoldenTickets.IsMystery( item ) && state.Balance < item.BuildPrice )
 			return new( $"buy: '{item.Name}' costs {item.BuildPrice} and the park has {state.Balance}", Refused: true );
 
@@ -410,7 +413,7 @@ public static class ParkBuilding
 		Log.Info( $"Building: '{item.Name}' ({item.Id}) is a mystery ride: {item.GoldenTicketCost} golden tickets of {tickets} left, "
 			+ (bought ? $"bought, {player!.File.TicketsSpent} spent" : "not bought") + ", no cash taken" );
 
-		return $"{item.GoldenTicketCost} golden tickets";
+		return bought ? $"{item.GoldenTicketCost} golden tickets" : "no golden tickets";
 	}
 
 	/// <inheritdoc cref="PayFor(ParkState, ParkItemCatalogue.Item, Player)"/>

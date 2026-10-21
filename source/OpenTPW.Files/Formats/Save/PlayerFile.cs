@@ -55,7 +55,10 @@ public sealed class PlayerFile
 	/// <summary>Instant Action rather than Full Simulation, as the new player dialog chose.</summary>
 	public bool InstantAction;
 
-	/// <summary>Whether swearing is filtered out of what the player types (swears.txt, alloweds.txt). On for a new player.</summary>
+	/// <summary>Whether swearing is filtered out of what the player types (swears.txt, alloweds.txt). On for a new player.
+	/// NOT MATCHED: the original clears it after a read when <c>Data\Language\&lt;language&gt;\swears.txt</c> does not open
+	/// (<c>FUN_005afd70</c>, <c>0x005afeba</c>..<c>0x005aff37</c>; <c>docs/exe/saves.md</c>), so a disc copy writes 0 where an
+	/// installed game keeps 1. This keeps what it read, and writes 1 for a new player; nothing here reads the flag.</summary>
 	public bool FilterSwearing = true;
 
 	/// <summary>Set until the player's first park starts, when the state machine clears it (0x005b0cc0). On for a new player.</summary>

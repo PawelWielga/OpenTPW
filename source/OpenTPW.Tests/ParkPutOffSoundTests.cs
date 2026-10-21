@@ -25,22 +25,44 @@ public class ParkPutOffSoundTests
 	private const int Origin = (int)ParkPeople.PutOffSound.Origin;
 	private const int Seat = (int)ParkPeople.PutOffSound.Seat;
 	private const int Feet = (int)ParkPeople.PutOffSound.Feet;
+	private const int Walk = (int)ParkPeople.PutOffSound.Walk;
 
 	[TestMethod]
-	[DataRow( Riding, 35, BellyBounceFlags, true, Seat )]
-	[DataRow( Riding, 35, BellyBounceFlags, false, Feet )]
-	[DataRow( Riding, 35, WithoutTheBit, true, Origin )]
-	[DataRow( Riding, 35, WithoutTheBit, false, Origin )]
-	[DataRow( Queueing, 32, BellyBounceFlags, false, Feet )]
-	[DataRow( Queueing, 8, BellyBounceFlags, false, Feet )]
-	[DataRow( Queueing, 44, BellyBounceFlags, false, None )]
-	[DataRow( Queueing, 29, BellyBounceFlags, false, None )]
-	[DataRow( Queueing, 42, WithoutTheBit, false, None )]
-	[DataRow( Heading, 32, BellyBounceFlags, false, None )]
-	[DataRow( No, 32, BellyBounceFlags, false, None )]
-	public void TheSoundFollowsTheArmTheIdAndTheFlag( int how, int guestId, int thingFlags, bool seated, int expected )
+	[DataRow( Riding, 35, BellyBounceFlags, true, false, Seat )]
+	[DataRow( Riding, 35, BellyBounceFlags, false, false, Feet )]
+	[DataRow( Riding, 35, BellyBounceFlags, false, true, Walk )]
+	[DataRow( Riding, 35, WithoutTheBit, true, false, Origin )]
+	[DataRow( Riding, 35, WithoutTheBit, false, false, Origin )]
+	[DataRow( Riding, 35, WithoutTheBit, false, true, Origin )]
+	[DataRow( Queueing, 32, BellyBounceFlags, false, false, Feet )]
+	[DataRow( Queueing, 8, BellyBounceFlags, false, false, Feet )]
+	[DataRow( Queueing, 44, BellyBounceFlags, false, false, None )]
+	[DataRow( Queueing, 29, BellyBounceFlags, false, false, None )]
+	[DataRow( Queueing, 42, WithoutTheBit, false, false, None )]
+	[DataRow( Heading, 32, BellyBounceFlags, false, false, None )]
+	[DataRow( No, 32, BellyBounceFlags, false, false, None )]
+	public void TheSoundFollowsTheArmTheIdAndTheFlag( int how, int guestId, int thingFlags, bool seated, bool walked, int expected )
 	{
 		Assert.AreEqual( (ParkPeople.PutOffSound)expected,
-			ParkPeople.SoundFor( (PeepBehaviour.PutOff)how, guestId, thingFlags, seated ) );
+			ParkPeople.SoundFor( (PeepBehaviour.PutOff)how, guestId, thingFlags, seated, walked ) );
+	}
+
+	/// <summary>
+	/// <b>A walk's rider is heard where the placer left their sprite</b> (<c>FUN_004fb3c3</c>): hidden by the placer
+	/// (<c>FUN_004f9ed0</c> wrote the sprite handle 0), the origin - the old rule, the navigator's feet, is not it;
+	/// stood, the point the placer put them at; a seat as before.
+	/// </summary>
+	[TestMethod]
+	public void AWalksRiderIsHeardWhereThePlacerLeftThem()
+	{
+		var seat = new Vector3( 1f, 2f, 3f );
+		var at = new Vector3( 465f, 279.07f, 12f );
+
+		Assert.AreEqual( Vector3.Zero, ParkPeople.PutOffPoint( ParkPeople.PutOffSound.Walk, null, true, at ) );
+		Assert.AreEqual( at, ParkPeople.PutOffPoint( ParkPeople.PutOffSound.Walk, null, false, at ) );
+		Assert.AreEqual( seat, ParkPeople.PutOffPoint( ParkPeople.PutOffSound.Seat, seat, false, at ) );
+		Assert.AreEqual( Vector3.Zero, ParkPeople.PutOffPoint( ParkPeople.PutOffSound.Origin, null, false, at ) );
+		Assert.IsNull( ParkPeople.PutOffPoint( ParkPeople.PutOffSound.None, null, false, at ) );
+		Assert.IsNull( ParkPeople.PutOffPoint( ParkPeople.PutOffSound.Feet, null, false, at ) );
 	}
 }

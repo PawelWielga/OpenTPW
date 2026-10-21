@@ -1887,6 +1887,18 @@ public sealed partial class ParkPeople : Entity
 		=> _arrivalVehicle is 2 or 3 ? NoVehicle : VehicleStatus();
 
 	/// <summary>
+	/// The park advisor's turn hands a line to the speaker: the response's two props, its slot, its lip file and its row of
+	/// the gesture table (<see cref="ParkAdvisorMessages.GestureRowOf"/>, -1 for the random chain). <paramref name="speak"/>
+	/// is the speaker's <c>PlayParkResponse</c> (response, sample, props, slot, lip, row), none while there is no speaker.
+	/// </summary>
+	internal static int SpeakResponse( Func<int, int, int, int, int, int, int, int>? speak, int response, int sample )
+	{
+		var (first, second) = ParkAdvisorMessages.PropsOf( response );
+		return speak?.Invoke( response, sample, first, second, ParkAdvisorMessages.SlotOf( response ),
+			ParkAdvisorMessages.LipOf( response, sample ), ParkAdvisorMessages.GestureRowOf( response ) ) ?? 0;
+	}
+
+	/// <summary>
 	/// The manager's tail, which it reaches on every sweep (<c>FUN_004cf3e0</c>, <c>0x004cf4b6</c>). It asks the
 	/// vehicle's status, which is what forgets a spent one (<see cref="VehicleStatus"/>), and acts by whether a guest
 	/// stands at the stop to go home (<see cref="LeaverAtTheStop"/>). <b>Nobody</b>: a vehicle at status 4, the stand
@@ -2387,12 +2399,7 @@ public sealed partial class ParkPeople : Entity
 			// Catch-up sweeps share a frame timestamp here; the native running clock may query the OS per call.
 			// GameClock.Now keeps the engine's clamped-frame timing deviation (docs/exe/advisor-park.md).
 			State.AdvisorMessages?.Tick( State.GameTick, (long)(GameClock.Now * 1000),
-				(response, sample) =>
-				{
-					var (first, second) = ParkAdvisorMessages.PropsOf( response );
-					return Advisor.Current?.PlayParkResponse( response, sample, first, second, ParkAdvisorMessages.SlotOf( response ),
-						ParkAdvisorMessages.LipOf( response, sample ), ParkAdvisorMessages.GestureRowOf( response ) ) ?? 0;
-				},
+				( response, sample ) => SpeakResponse( Advisor.Current is { } advisor ? advisor.PlayParkResponse : null, response, sample ),
 				(group, subject, second) =>
 				{
 					// The event's item word is the record's +0x04 (FUN_0059b620): the item a poster handed, else the subject's.
@@ -2405,10 +2412,11 @@ public sealed partial class ParkPeople : Entity
 			// The sweep's end: the ids of the things deleted in it go back on the free list (0x00516654..0x00516685), before the tail.
 			State.FreeDeletedThings();
 
-			// Then the sweep's tail, after every thing's turn and so after the advisor's: past the calendar's update, the
-			// golden tickets on every hundredth (0x004d7b60), so a ticket's line waits for the next sweep's turn
-			// (FUN_00516380 turns the things at 0x005163fb and calls the tail at 0x00516695).
-			ParkGoldenTickets.Sweep( State.GameTick, State, this );
+			// Then the sweep's tail, after every thing's turn and so after the advisor's (FUN_00516380 turns the things at
+			// 0x005163fb and calls the tail at 0x00516695): the golden tickets on every hundredth tick (0x004d7b60) are
+			// owed here and tested by Level.TurnTheCalendar once the calendar has turned, as the original's tail has them
+			// (0x004d7b20), so a ticket's line waits for the next sweep's turn.
+			ParkGoldenTickets.Owe( State.GameTick );
 		}
 
 		if ( dropped == 0 )
@@ -3126,6 +3134,11 @@ public sealed partial class ParkPeople : Entity
 				? SeatOn( thing, peep )
 				: null;
 
+			// Asked before the answer too, while the ride's walk still holds them.
+			var walked = peep.MajorDest == thing.ThingId && peep.State == PeepState.Riding
+				? ParkGuestSprites.WalkedOnRide( this, peep.ThingId, thing.ThingId )
+				: null;
+
 			var how = _behaviour.ThingRemoved( peep, thing.ThingId, thingTick );
 
 			if ( how == PeepBehaviour.PutOff.No )
@@ -3134,13 +3147,10 @@ public sealed partial class ParkPeople : Entity
 			Log.Info( $"People: guest {peep.ThingId} put off thing {thing.ThingId} ({how}), "
 				+ $"now {peep.State} with happiness {peep.Happiness:0}" );
 
-			Vector3? heardAt = SoundFor( how, peep.ThingId, thing.Flags, seat is not null ) switch
-			{
-				PutOffSound.Origin => Vector3.Zero,
-				PutOffSound.Seat => seat,
-				PutOffSound.Feet => ParkGuestSprites.Feet( peep.Navigator.Position ),
-				_ => null
-			};
+			var sound = SoundFor( how, peep.ThingId, thing.Flags, seat is not null, walked is not null );
+			Vector3? heardAt = sound == PutOffSound.Feet
+				? ParkGuestSprites.Feet( peep.Navigator.Position )
+				: PutOffPoint( sound, seat, walked?.Hidden ?? false, walked?.At ?? default );
 
 			if ( heardAt is { } at )
 				ParkAudio.Current?.PutOff( at );
@@ -3210,7 +3220,8 @@ public sealed partial class ParkPeople : Entity
 		None,
 		Origin,
 		Seat,
-		Feet
+		Feet,
+		Walk
 	}
 
 	/// <summary>
@@ -3225,19 +3236,36 @@ public sealed partial class ParkPeople : Entity
 	/// whose position is still nought when the sound reads it (<c>0x004fb3cd</c>, then <c>FUN_004faa00</c>),
 	/// so it plays at the world's origin.
 	/// <para>
-	/// <b>A deviation:</b> a walk-on rider (the Jungle Spray's <c>WALKON</c>) is where the <c>WALK</c> stepper
-	/// last put their sprite (<c>FUN_005580a0</c>, <c>FUN_004f9e60</c>). Nothing here places a walk-on rider, so
-	/// with no seat the sound plays at the rider's feet.
+	/// A walk-on rider (the Jungle Spray's <c>WALKON</c>) has the sprite the <c>WALK</c> placer last put
+	/// (<c>FUN_005580a0</c>) while it stands, and the sound plays at that point; one the placer hid (carried
+	/// under action 1, 2 or 4: <c>FUN_004f9ed0</c> frees the sprite and writes its handle 0) has none, so the
+	/// eviction makes one and the sound plays at the origin, as for a thing without the flag
+	/// (<c>docs/exe/ride-operation.md</c>, "Where a walk's rider is drawn"). The point is <see cref="ParkGuestSprites.WalkedOnRide"/>'s,
+	/// the absolute one as <see cref="PutOffSound.Seat"/>'s is: the original's sprite height is the point's less the
+	/// ground, and every coordinate is truncated to a whole unit.
 	/// </para>
 	/// </remarks>
-	internal static PutOffSound SoundFor( PeepBehaviour.PutOff how, int guestId, int thingFlags, bool seated )
+	internal static PutOffSound SoundFor( PeepBehaviour.PutOff how, int guestId, int thingFlags, bool seated, bool walked = false )
 		=> how switch
 		{
 			PeepBehaviour.PutOff.Riding when (thingFlags & ParkWorld.CatalogueObject.KeepsRidersSpriteFlag) == 0
 				=> PutOffSound.Origin,
-			PeepBehaviour.PutOff.Riding => seated ? PutOffSound.Seat : PutOffSound.Feet,
+			PeepBehaviour.PutOff.Riding => seated ? PutOffSound.Seat : walked ? PutOffSound.Walk : PutOffSound.Feet,
 			PeepBehaviour.PutOff.Queueing when (guestId & 7) == 0 => PutOffSound.Feet,
 			_ => PutOffSound.None
+		};
+
+	/// <summary>
+	/// Where a put-off sound other than <see cref="PutOffSound.Feet"/> plays: the origin, the seat, or a walk's rider
+	/// (hidden by the placer: the origin; else the point it put them at), null for none.
+	/// </summary>
+	internal static Vector3? PutOffPoint( PutOffSound sound, Vector3? seat, bool walkHidden, Vector3 walkAt )
+		=> sound switch
+		{
+			PutOffSound.Origin => Vector3.Zero,
+			PutOffSound.Seat => seat,
+			PutOffSound.Walk => walkHidden ? Vector3.Zero : walkAt,
+			_ => null
 		};
 
 	/// <summary>The seat node a ride's script holds this rider on, in the world, or null.</summary>
@@ -3322,10 +3350,18 @@ public sealed partial class ParkPeople : Entity
 
 	/// <summary>
 	/// The script whose walk holds this guest in a slot, and that slot (<see cref="RideScript.TryWalkOf"/>), or false where
-	/// none does - asked of the scripts for the reason <see cref="TrySeatOf"/> gives.
+	/// none does - asked of the scripts for the reason <see cref="TrySeatOf"/> gives. <paramref name="goingThing"/> names a thing
+	/// the park has already let go of (a sale unlinks the object before its riders are put off), whose script is asked first.
 	/// </summary>
-	internal bool TryWalkOf( int guestThingId, out RideScript? script, out RideScript.WalkView slot )
+	internal bool TryWalkOf( int guestThingId, out RideScript? script, out RideScript.WalkView slot, int goingThing = 0 )
 	{
+		if ( goingThing != 0 && _scriptFor?.Invoke( goingThing ) is { } going && going.TryWalkOf( guestThingId, out slot ) )
+		{
+			script = going;
+
+			return true;
+		}
+
 		if ( _scriptFor != null )
 		{
 			foreach ( var thing in _behaviour.State.Objects )

@@ -198,7 +198,34 @@ public class ParkCoasterTrackTests
 		Assert.IsTrue( gorilla.Posable );
 		Assert.AreEqual( 15.558f, gorilla.Lowest, 0.001f );
 		Assert.AreEqual( 95.557f, gorilla.Highest, 0.001f );
+		Assert.AreEqual( 15.558f, gorilla.MinHeight, 0.001f, "fMinHeight 10, raised to the loft-0 height (0x004309a4)" );
+		Assert.AreEqual( 10f, minecart.MinHeight );
 		Assert.AreEqual( 1.25f, ParkCoasterHeights.Curviness( Minecart, data ) );
+	}
+
+	/// <summary>
+	/// <b>The loft that stands a knot at a height holds the height to the type's range and its share to 0 and 1</b>
+	/// (<c>Coaster_LoftForHeight</c> <c>0x00433790</c>): the Minecart's 5 and 150 give 0 and 1, 55 gives a half; the Gorilla
+	/// Thrilla's 150 gives 1, not 1.056 (its share's own hold: its fMaxHeight 100 is above its highest knot 95.557); a type whose
+	/// fMaxHeight is 50 over knots 10 to 100 gives 80 the share of 50, 0.444, not 0.778 (the height's own hold; no shipped file
+	/// has such a type, so the rule is given its numbers).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> both holds removed; the share's hold alone (the Gorilla's 150); the height's hold alone (the 50 type).</remarks>
+	[TestMethod]
+	public void TheLoftForAHeightIsHeldToTheTypesRangeAndToNoughtAndOne()
+	{
+		var data = GameData.Required();
+		var minecart = ParkCoasterPylon.Load( Minecart, data )!;
+		var gorilla = ParkCoasterPylon.Load( "levels/jungle/rides/coaster3", data )!;
+
+		Assert.AreEqual( 0f, minecart.LoftFor( 5f ) );
+		Assert.AreEqual( 1f, minecart.LoftFor( 150f ) );
+		Assert.AreEqual( 0.5f, minecart.LoftFor( 55f ), 1e-5f );
+		Assert.AreEqual( 0f, gorilla.LoftFor( 5f ) );
+		Assert.AreEqual( 1f, gorilla.LoftFor( 150f ) );
+
+		Assert.AreEqual( 40f / 90f, ParkCoasterPylon.LoftShare( 80f, 10f, 50f, 10f, 100f ), 1e-5f );
+		Assert.AreEqual( 0f, ParkCoasterPylon.LoftShare( 30f, 10f, 50f, 40f, 40f ), "no range" );
 	}
 
 	/// <summary>The measure leaves out the first sample and starts from nought, and takes the last.</summary>

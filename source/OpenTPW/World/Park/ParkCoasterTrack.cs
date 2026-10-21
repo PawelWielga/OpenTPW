@@ -37,10 +37,11 @@ public static class ParkCoasterTrack
 	/// the head knot.
 	/// </summary>
 	/// <remarks>
-	/// <b>Not the original's sampler step for step:</b> after a sample the original walks on from the sample's own place in
-	/// the parameter, and this from the next whole step; rebuilt so from the original's own knots and handles, the
-	/// Temple Of Gloom's 719 samples lie within 0.0013 of its (<c>q706b/curvecheck.py</c>). The one sample the original
-	/// takes past the last knot, on the closing curve towards the second node, is left out of the measure and not made here.
+	/// After a sample the original goes on from the next whole step in the parameter, as this does: it re-evaluates
+	/// t + 0.05 - fmod( t, 0.05 ), the same step (<c>0x00441010</c>..<c>0x00441069</c>), and the chord runs on from the sample's
+	/// place. Rebuilt from the original's own knots and handles (the dump's three decimals), the first 718 of the Temple Of
+	/// Gloom's samples lie within 0.0008 of its (<c>q706c/cmp.py</c>). The one sample the original takes past the last knot,
+	/// on the closing curve towards the second node, is left out of the measure and not made here.
 	/// </remarks>
 	/// <param name="curviness">The coaster type's <c>fCurviness</c> (<c>+8</c>).</param>
 	public static List<Numerics.Vector3> Samples( IReadOnlyList<Knot> chain, float curviness )
@@ -379,11 +380,14 @@ public sealed class ParkCoasterPylon
 	/// ground): the height held to <see cref="MinHeight"/> and <see cref="MaxHeight"/>, its share of
 	/// <see cref="Lowest"/> to <see cref="Highest"/>, held to 0 and 1.
 	/// </summary>
-	public float LoftFor( float height )
-	{
-		height = Math.Clamp( height, MinHeight, MathF.Max( MinHeight, MaxHeight ) );
+	public float LoftFor( float height ) => LoftShare( height, MinHeight, MaxHeight, Lowest, Highest );
 
-		return Highest == Lowest ? 0f : Math.Clamp( (height - Lowest) / (Highest - Lowest), 0f, 1f );
+	/// <summary><see cref="LoftFor"/> of a pylon whose heights are given: held to <paramref name="minHeight"/> and <paramref name="maxHeight"/>, then its share of <paramref name="lowest"/> to <paramref name="highest"/>, held to 0 and 1.</summary>
+	internal static float LoftShare( float height, float minHeight, float maxHeight, float lowest, float highest )
+	{
+		height = Math.Clamp( height, minHeight, MathF.Max( minHeight, maxHeight ) );
+
+		return highest == lowest ? 0f : Math.Clamp( (height - lowest) / (highest - lowest), 0f, 1f );
 	}
 
 	/// <summary>

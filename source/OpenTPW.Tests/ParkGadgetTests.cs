@@ -56,13 +56,15 @@ public class ParkGadgetTests
 	}
 
 	/// <summary>
-	/// <b>The corner shows the keys held and the tickets not spent, the ticket hidden at none</b> (<c>0x004a1092</c>..):
-	/// two jungle tickets and the first key, one spent, read "1 x" and "1 x" as the original's did before its award
-	/// (<c>q706/orig/O/g-05.png</c>); both spent hide the ticket and its count, the keys staying; three spent, -1, is
-	/// never written, so the corner keeps its seeded "0 x" and the ticket shown, as the original's (<c>q707/orig/O2/g-05.png</c>).
+	/// <b>The corner shows the keys held and the tickets not spent, each with its icon hidden at none</b> (<c>0x004a1002</c>..
+	/// <c>0x004a115b</c>): two jungle tickets and the first key, one spent, read "1  x" and "1  x" (two spaces, <c>0x00752ef8</c>)
+	/// as the original's did before its award (<c>q706/orig/O/g-05.png</c>); both spent hide the ticket and its count, the keys
+	/// staying; three spent, -1, is never the first count written, so the corner keeps its seeded "0  x" and the ticket shown, as the original's
+	/// (<c>q707/orig/O2/g-05.png</c>); no key given hides the key row; Instant Action hides it whatever the keys.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the tickets earned shown; the spent added; the ticket left shown at none; the count
-	/// written whatever the last; the seed left out; the last written starting at 0.</remarks>
+	/// written whatever the last, or floored at nought; the last written not stored; the seed left out; the last written starting at 0; the key left shown at none or in
+	/// Instant Action; a single space in the format.</remarks>
 	[TestMethod]
 	public void TheCornerShowsTheKeysAndTheTicketsNotSpent()
 	{
@@ -75,20 +77,47 @@ public class ParkGadgetTests
 			current.SetValue( Players.Roster, new Player( 0, "Test", file ) );
 			var gadget = new UI.ParkGadget( AStack() );
 
-			Assert.AreEqual( ("1 x", true, true), (Find( gadget.Root, 0x37 ).Text, Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible) );
-			Assert.AreEqual( "1 x", Find( gadget.Root, 0x36 ).Text, "two tickets and the key given: one key" );
+			Assert.AreEqual( ("1  x", true, true), (Find( gadget.Root, 0x37 ).Text, Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible) );
+			Assert.AreEqual( "1  x", Find( gadget.Root, 0x36 ).Text, "two tickets and the key given: one key" );
+			Assert.IsTrue( Find( gadget.Root, 0x1e0f0 ).Visible, "the key row, one key held" );
 
 			file.TicketsSpent = 2;
 			gadget = new UI.ParkGadget( AStack() );
 
 			Assert.AreEqual( (false, false), (Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible), "none unspent: hidden" );
-			Assert.AreEqual( "1 x", Find( gadget.Root, 0x36 ).Text );
+			Assert.AreEqual( "1  x", Find( gadget.Root, 0x36 ).Text );
 
 			file.TicketsSpent = 3;
 			gadget = new UI.ParkGadget( AStack() );
 
-			Assert.AreEqual( ("0 x", true, true), (Find( gadget.Root, 0x37 ).Text, Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible),
+			Assert.AreEqual( ("0  x", true, true), (Find( gadget.Root, 0x37 ).Text, Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible),
 				"one more spent than won, -1, equals the last written's -1: never written, the seed stays (0x004a10d2)" );
+
+			file.TicketsSpent = 4;
+			gadget = new UI.ParkGadget( AStack() );
+
+			Assert.AreEqual( ("-2  x", true, true), (Find( gadget.Root, 0x37 ).Text, Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible),
+				"-2 differs from the last written's -1: written as any count" );
+
+			file.TicketsSpent = 1;
+			gadget = new UI.ParkGadget( AStack() );
+			file.TicketsSpent = 3;
+			gadget.ShowEarned();
+
+			Assert.AreEqual( ("-1  x", true, true), (Find( gadget.Root, 0x37 ).Text, Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible),
+				"-1 after a written 1 differs from the last written: written; only a first count of -1 keeps the seed" );
+			file.TicketsSpent = 3;
+
+			file.KeysGiven = 0;
+			gadget = new UI.ParkGadget( AStack() );
+
+			Assert.IsFalse( Find( gadget.Root, 0x1e0f0 ).Visible, "no key held: the key and its count are hidden" );
+
+			file.KeysGiven = 1;
+			file.InstantAction = true;
+			gadget = new UI.ParkGadget( AStack() );
+
+			Assert.IsFalse( Find( gadget.Root, 0x1e0f0 ).Visible, "Instant Action: no key row" );
 		}
 		finally
 		{

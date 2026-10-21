@@ -538,6 +538,22 @@ public sealed class Advisor : Entity
 	}
 
 	/// <summary>
+	/// When a line given at <paramref name="now"/> has its voice start, its cue fall and its clips end. The voice starts
+	/// after the lead-in, or at once without one. The clips and a row's cue count from the clock less 200, moved on by the
+	/// lead-in's 1000 where there is one (0x00598c56, 0x0059944c); a cue the message gave counts from <paramref name="now"/>.
+	/// A row's own cue, <paramref name="rowCueMilliseconds"/>, replaces it.
+	/// </summary>
+	internal static (float SpeakAt, float CueAt, float GesturesEndAt) LineTimes( float now, bool leadIn, float cueSeconds,
+		int? rowCueMilliseconds, int gesturesMilliseconds )
+	{
+		var counted = now + (leadIn ? LeadInSeconds : -0.2f);
+
+		return (now + (leadIn ? LeadInSeconds : 0f),
+			rowCueMilliseconds is { } rowCue ? counted + (rowCue / 1000f) : now + cueSeconds,
+			counted + (gesturesMilliseconds / 1000f));
+	}
+
+	/// <summary>
 	/// Advisor_SayResponse: ducks the mix now, starts him moving now, and speaks the sample after
 	/// the lead-in.
 	///
@@ -566,19 +582,11 @@ public sealed class Advisor : Entity
 		_glints.SetCount( 0 );
 
 		_pending = sample;
-		_speakAt = _now + (leadIn ? LeadInSeconds : 0f);
-
-		// The moment the line's clips and its row's cue count from: the clock less 200, moved on by the lead-in's 1000.
-		var counted = _now + (leadIn ? LeadInSeconds : -0.2f);
 
 		_cue = cue?.Action;
-		_cueAt = _now + (cue?.Seconds ?? 0f);
 
-		if ( row is { CueAt: { } rowCue } )
-		{
+		if ( row is { CueAt: not null } )
 			_cue = HandOverKey;
-			_cueAt = counted + (rowCue / 1000f);
-		}
 
 		var sampleMilliseconds = (int)_speech.Length( sample ).TotalMilliseconds;
 		int gesturesMilliseconds;
@@ -603,7 +611,7 @@ public sealed class Advisor : Entity
 			_clipFlags.AddRange( _gestures.Select( _ => 0 ) );
 		}
 
-		_gesturesEndAt = counted + (gesturesMilliseconds / 1000f);
+		(_speakAt, _cueAt, _gesturesEndAt) = LineTimes( _now, leadIn, cue?.Seconds ?? 0f, row?.CueAt, gesturesMilliseconds );
 
 		// What he is seen doing is the clips at their full lengths, clip 14 included, starting now.
 		// The line's clips are started on the model its slot names (0x005993d5), and that one alone is on the screen.
@@ -642,9 +650,10 @@ public sealed class Advisor : Entity
 	}
 
 	/// <summary>
-	/// A clip of the line starting (Advisor_Update 0x00599a2a, then Advisor_ClipStarted 0x00598dc0 from 0x00599800): the
+	/// A clip of the line starting (Advisor_Update 0x00599a46, then Advisor_ClipStarted 0x00598dc0 from 0x00599800): the
 	/// model's hide lists turn over, he puts on the line's props again, and the clip word's flags act. 0x10000 shows no
-	/// add-on, no mouth and no head; 0x20000 to 0x200000 set UI particle channel 0, the glints (<see cref="SetGlints"/>).
+	/// add-on, no mouth and no head; 0x20000 to 0x200000 set UI particle channel 0, the glints (<see cref="SetGlints"/>), and
+	/// 0x40000 also plays cat_ui 197.
 	/// </summary>
 	private void StartClipAt( int index )
 	{
@@ -676,16 +685,16 @@ public sealed class Advisor : Entity
 	/// three times round; 0x100000 empties it and starts two of 44, which close in on 0.8, -0.8, the top right, twice
 	/// round; 0x200000 empties it. Says whether the channel was set.
 	///
-	/// <b>A deviation:</b> the original's screen is 4:3; here the glints are pinned to the right of a wider window, as
-	/// he is (<see cref="AdvisorModel.ScreenProjection"/>). They belong to no window, as the row's key does
-	/// (<see cref="HandOverKey"/>).
+	/// <b>A deviation:</b> the original's screen is 4:3; here the glints are pinned to the right of a wider window and
+	/// to the bottom of a taller one, as he is (<see cref="AdvisorModel.ScreenProjection"/>), however far they move. They
+	/// belong to no window, as the row's key does (<see cref="HandOverKey"/>).
 	/// </summary>
 	internal static bool SetGlints( UI.UiParticleChannel glints, int flags, float clipSeconds, float now )
 	{
 		switch ( flags & 0x3e0000 )
 		{
 			case 0x20000:
-				if ( glints.SetCount( 1, (int)ParLib.P_EFFECT_GoldenTicket, UI.Anchor.Right ) == 0 )
+				if ( glints.SetCount( 1, (int)ParLib.P_EFFECT_GoldenTicket, UI.Anchor.Right, down: UI.VerticalAnchor.Bottom ) == 0 )
 					return false;
 
 				glints.SetCentre( true, 0.34f, 0.62f, clipSeconds, now );
@@ -694,20 +703,20 @@ public sealed class Advisor : Entity
 
 			case 0x40000:
 				Log.Info( $"Advisor: cat_ui 197 for the glints, {(UI.UiSounds.Interface( 197 ) ? "a voice" : "no voice")}" );
-				glints.SetCount( 2, (int)ParLib.P_EFFECT_GoldenTicket2, UI.Anchor.Right );
+				glints.SetCount( 2, (int)ParLib.P_EFFECT_GoldenTicket2, UI.Anchor.Right, down: UI.VerticalAnchor.Bottom );
 				glints.SetCentre( false, 0f, 0f, clipSeconds, now );
 				glints.SetRadius( false, 0.6f, 0.4f, 2f );
 				return true;
 
 			case 0x80000:
-				glints.SetCount( 3, (int)ParLib.P_EFFECT_GoldenTicket2, UI.Anchor.Right );
+				glints.SetCount( 3, (int)ParLib.P_EFFECT_GoldenTicket2, UI.Anchor.Right, down: UI.VerticalAnchor.Bottom );
 				glints.SetCentre( false, 0f, 0f, clipSeconds, now );
 				glints.SetRadius( false, 0.6f, 0.4f, 3f );
 				return true;
 
 			case 0x100000:
 				glints.SetCount( 0 );
-				glints.SetCount( 2, (int)ParLib.P_EFFECT_GoldenTicket, UI.Anchor.Right );
+				glints.SetCount( 2, (int)ParLib.P_EFFECT_GoldenTicket, UI.Anchor.Right, down: UI.VerticalAnchor.Bottom );
 				glints.SetCentre( false, 0.8f, -0.8f, clipSeconds, now );
 				glints.SetRadius( false, 0f, 0f, 2f );
 				return true;
@@ -818,7 +827,7 @@ public sealed class Advisor : Entity
 
 		if ( _faceAway )
 		{
-			// A clip of 0x10000 shows no mouth (0x00599b8c).
+			// A clip of 0x10000 shows no mouth (0x00599ba3).
 		}
 		else if ( !talking )
 		{

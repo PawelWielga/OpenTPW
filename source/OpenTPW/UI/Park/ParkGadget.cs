@@ -36,8 +36,9 @@ namespace OpenTPW.UI;
 /// 0x33, holds two rows of icon-and-count - the ticket 0x35 with its number 0x37, the key 0x34 with its
 /// number 0x36 - and both numbers already exist here, because a player's gms.dat has carried them since
 /// the lobby was built. So this one is not chrome: it shows what the player actually has, in the format
-/// the original seeds it with, "0 x". The key row goes away entirely in Instant Action, which is what
-/// FUN_004a1d70 does with it, and is why <see cref="IslandPanel"/> hides its own.
+/// the original seeds it with, "0  x" (two spaces; <c>docs/exe/hud.md</c>, "How FUN_004a1d70 populates the clusters"). The
+/// key row goes away entirely in Instant Action, which is what FUN_004a1d70 does with it, and is why
+/// <see cref="IslandPanel"/> hides its own; it goes away at nought keys too, as the ticket does at nought tickets.
 /// </para>
 /// <para>
 /// <b>The arm is a carrier, not a lid.</b> 0x21, with 0x22 and 0x23 on its far end and the retract
@@ -201,6 +202,9 @@ internal sealed class ParkGadget : UiWindow
 
 	/// <summary>The ticket count last written to the corner, -1 before the first (0x00752ec4).</summary>
 	private int _ticketsWritten = -1;
+
+	/// <summary>The key count last written to the corner, -1 before the first (0x00752ec8).</summary>
+	private int _keysWritten = -1;
 
 	/// <summary>
 	/// The gauge's moving part - the stream's 0x1f, control type 9. See <see cref="UiMeter"/> for why it
@@ -614,9 +618,9 @@ internal sealed class ParkGadget : UiWindow
 			Mesh = UiMesh.Get( "gtick" )
 		} );
 
-		// Seeded "0 x" as FUN_004a1d70 seeds it (0x00752f24); ShowEarned writes it only on a change.
+		// Seeded "0  x" (two spaces) as FUN_004a1d70 seeds it (0x00752f24); ShowEarned writes it only on a change.
 		_ticketCount = earned.Add( Count( 0x37, new UiRect( 1688, 60, 1829, 150 ) ) );
-		_ticketCount.Text = "0 x";
+		_ticketCount.Text = "0  x";
 
 		// The key row, which FUN_004a1d70 hides outright while the game type is 2 - Instant Action, where
 		// keys mean nothing because every park is already open.
@@ -639,6 +643,7 @@ internal sealed class ParkGadget : UiWindow
 		} );
 
 		_keyCount = _keyRow.Add( Count( 0x36, new UiRect( 1688, 171, 1829, 261 ) ) );
+		_keyCount.Text = "0  x";
 
 		ShowDate();
 		ShowEarned();
@@ -1429,34 +1434,51 @@ internal sealed class ParkGadget : UiWindow
 	/// <summary>
 	/// The golden keys the player holds and the golden tickets they have not spent, read from their progress the way
 	/// the lobby's island panel reads them - see <see cref="IslandPanel.ShowKeys"/>. The tickets are the count less the
-	/// spent (<c>FUN_005af5d0</c>, <c>0x004a10cd</c>), and the ticket and its count are hidden while that is nought.
+	/// spent (<c>FUN_005af5d0</c>, <c>0x004a10cd</c>), and the ticket and its count, like the key and its count, are hidden
+	/// while theirs is nought (<c>0x004a1045</c>).
 	///
 	/// <para>
 	/// The format is the original's own: the string FUN_004a1d70 seeds both counts with, at 0x00752f24,
-	/// is "0 x", so the number leads and the multiplication sign follows it. Nobody being picked yet -
+	/// is "0  x" and the update's is "%d  x" (0x00752ef8), so the number leads and the multiplication sign follows it
+	/// after two spaces. Nobody being picked yet -
 	/// a park reached from the debug console rather than through the lobby - reads as none rather than
 	/// as an error, because the count is a fact about a player and there is no player.
 	/// </para>
 	/// </summary>
-	private void ShowEarned()
+	internal void ShowEarned()
 	{
 		var player = Players.Roster.Current;
 
-		_keyRow.Visible = player is not { InstantAction: true };
-		_keyCount.Text = $"{player?.Keys ?? 0} x";
+		// Each count is written only when it differs from the last written, which starts at -1 and goes back to it on the
+		// gadget's message 0x15 (0x004a1160, posted once as the gadget is built): keys 0x004a101c, tickets 0x004a10d2. So
+		// -1 is never the first count written, and a profile that spent one more than it won keeps the seeded "0  x" and
+		// the ticket as the tree has it; at nought a count's icon and text are hidden and no text is written.
+		if ( player is { InstantAction: true } )
+			_keyRow.Visible = false;
+		else
+		{
+			var keys = player?.Keys ?? 0;
+
+			if ( keys != _keysWritten )
+			{
+				_keysWritten = keys;
+				_keyRow.Visible = keys != 0;
+
+				if ( keys != 0 )
+					_keyCount.Text = $"{keys}  x";
+			}
+		}
+
 		var tickets = player?.TicketsUnspent ?? 0;
 
-		// Written only when the count differs from the last written, which starts at -1 and goes back to it on the
-		// gadget's message 0x15 (0x004a1160). So a profile that spent more than it won, -1, is never written, and
-		// the corner keeps its seeded "0 x" and the ticket as the tree has it (0x004a10d2).
-		if ( tickets == _ticketsWritten )
-			return;
+		if ( tickets != _ticketsWritten )
+		{
+			_ticketsWritten = tickets;
+			_ticket.Visible = _ticketCount.Visible = tickets != 0;
 
-		_ticketsWritten = tickets;
-		_ticket.Visible = _ticketCount.Visible = tickets != 0;
-
-		if ( tickets != 0 )
-			_ticketCount.Text = $"{tickets} x";
+			if ( tickets != 0 )
+				_ticketCount.Text = $"{tickets}  x";
+		}
 	}
 
 	/// <summary>

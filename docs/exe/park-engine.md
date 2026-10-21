@@ -2689,8 +2689,8 @@ object with flag bit `0x02` by squared cell distance along the live chain, **tes
 **What OpenTPW builds** (`PeepBehaviour.ThingRemoved`, `StaffBehaviour.ThingRemoved`, called through
 `ParkPeople.ThingRemoved` from the demolisher): all of the guest's answer but the event ring, which it does not keep -
 a saved major naming the thing is let go of by every guest (`Peep.SavedMajorDest`, `0x004fb4a6`..`0x004fb4b3`), and
-`mPreviousRides` and the refusal beside it are cleared (`Peep.ForgetThing`, `0x004fb4ba`); the sound, at the seat node, the origin by flag `0x20`, or - a deviation - at the feet of a walk-on rider, whom
-the original's `WALK` stepper places and nothing here does; and the staff rest-area arms, after a handyman's toilet job or a mechanic's ride job is dropped, to idle, where it names the
+`mPreviousRides` and the refusal beside it are cleared (`Peep.ForgetThing`, `0x004fb4ba`); the sound, at the seat node, at a walk-on rider's sprite (the point the `WALK` placer left, the origin where it hid
+them: `ParkGuestSprites.WalkedOnRide`), at the origin for a thing without flag `0x20`, and at the feet otherwise; and the staff rest-area arms, after a handyman's toilet job or a mechanic's ride job is dropped, to idle, where it names the
 thing. The `VAR_STAFFIN` count and message 15 are unbuilt wherever the original touches them - arriving to rest
 (`FUN_00505fe0`), the end of a rest (`FUN_005061d0` at `0x00506286`) and the eviction - and all three count
 `REST_AREA_OCCUPANCY`. Entering state 0 queues the stand (`FUN_005054d0` through `FUN_004fa460`), which OpenTPW's

@@ -41,25 +41,29 @@ times A in the plain 4-wide transform (`XformVerts_Fpu`, `0x00579250`, no divide
 -0.6, 0.2) times diag(1, -1, 1, 1), written by `Renderable_SetMatrix` (`0x0057a260`, mode 1, its only mode in use) from
 `Model_ShowInRenderList`. Every matrix in it is affine, so w is 1 and `ClipToScreen_Fpu`'s divide by w (`0x00579690`)
 changes nothing: how far toward the viewer a node stands changes no size, as in `AdvisorModel.ScreenProjection`. His
-depth, about 0.2 (the root's 0.001 a unit about it), falls under `[0x008bcc28]` (0.311), the z-buffer's linear "ui" range. The
+depth, about 0.2 (the root's 0.001 a unit about it), is written in `ClipToScreen` mode 2, not the "ui" range's: the draw entry's
+flag below picks the mode (`(entry+8 >> 24) & 2`, `0x00581065..0x00581092`), and the mode 2 arm (`0x00579733..0x0057979a`) stores
+z x `[0x008bcc20]` (0.1, written once at `0x00582ddf`) with no range test; the `[0x008bcc28]` (0.311) range test is mode 0's arm
+(fork watch 2026-10-21, verify-audio-ui M2). The
 flag `[0x008bb624] |= 0x2000000` rides into each mesh's draw entry (`DrawList_AddMesh`, `0x00581cd0`), where
 `DrawList_Flush` (`0x00581e9b`) files the entry in its batch's unordered list. Read in the running original (`q707/p597/PREDICTION.txt`,
 `original/advnodes.py`): A = 1 0 0 0 | 0 -1 0 0 | 0 0 1 0 | 0.6 0.6 0.2 1 and B the identity throughout, every node's
-w column (0, 0, 0, 1), the root's axes 0.01125, 0.001, 0.015.
+w column (0, 0, 0, 1), the root's axes 0.0112 (`advnodes.py` prints four places), 0.001, 0.015.
 
 **The big ticket is a scale track** (Q597, Q599). Lost Kingdom's `Advisor_JUNm18` keys `Ticket2` (node 12, hung from
 `Bug Head`) from 0.748, 0.964, 1.158 at frame 0 to 3.273, 4.214, 5.063 at 38 and 12.093, 11.486, 8.958 at 70; `m19` keys
 12.093, 11.486, 8.958 at 0 and 39; `m20` from that to 3.023, 2.872, 2.239 at 25 (`Wave01`, the ticket's glint ring, 0.249
 to 0.488 in 18). `Anim_PoseTrack` tests `0x80` (`0x00471d8d`), finds the keys with `Anim_FindKey` type 4 (`0x00471db5`,
-16-byte keys; nought before the first key, and then no scale is set), lerps the two keys about the frame
+16-byte keys; nought before the first key, and then no scale is set: FileFormats `models.md`, "Scale"), lerps the two keys about the frame
 (`0x00471ddd`..`0x00471e2a`, the frame's fraction included) and sets the lengths of rows 0, 1 and 2 of the node's matrix to
 them (`Matrix_SetAxisLengths`, `0x0046f910`), after the turn and before the place. In the original the ticket's axes rise
 through clip 18, read 12.0933, 11.486, 8.9577 at its place -38.226, 0, 42.049 at clip 18's end and through clip 19
 (`q707/p597/orig/O/load.log` line 279), and fall in clip 20 to exactly 3.0233, 2.8715, 2.2394. On screen the ticket of clip
 19 spans 0.738 of the frame's height across, its middle 0.436 of the height left of his anchor (`g-15.png`, `ticketbox.py`);
-the one in his hand about 0.05. Clips 17 and 18 squash his body (1.243, 0.838, 0.838 to 1) and head the same way, and clip
-16 the map. **OpenTPW poses them** (Q599): `AnimationFile.ScaleTracks`, `AdvisorModel.PoseNodes`; the same node lengths and
-place at clip 18's end, and the ticket 0.740 of the height across, 0.438 left of his anchor (`q707/p599`). Every other
+the one in his hand about 0.05. Clip 17 squashes his body (1.243, 0.838, 0.838, to 1 at frame 9 and back to 1.2112, 0.8592, 0.8592 at 19) and his head the
+other way (1.1018, 0.979, 0.9407 to 0.9002, 1.0997, 1.0997 at 9), clip 18 leaves the head at 0.9947, 1.0427, 1.0249, and clip
+16 keys the map. **OpenTPW poses them** (Q599): `AnimationFile.ScaleTracks`, `AdvisorModel.PoseNodes`; the same node lengths and
+place at clip 18's end, and the ticket 0.746 of the height across, 0.435 left of his anchor (`q707/p599`, its last run). Every other
 model's scale tracks are counted, `ANIM_SCALE_TRACK` (Q598).
 
 **Draw order.** Because of the see-through discs, the model draws in two passes: every solid half first, then every see-through half in file order. Drawn mesh by mesh, a hand behind him shows through. Any future screen-drawn model with see-through parts needs the same two passes.

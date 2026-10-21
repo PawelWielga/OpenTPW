@@ -1157,7 +1157,10 @@ public sealed partial class ParkWorld
 	/// interval, the place (the navigator's, ten world units to a cell), alpha, kind, bank, set, frame and facing,
 	/// and with <see cref="WrittenPerson.SpriteLoops"/> its loop stack: the room left, the words pushed and the
 	/// count of loops it is inside (<c>0x004763c6</c>), the words below the room left as they lie, as a pop leaves them
-	/// (<c>FUN_00475260</c>), and with <see cref="WrittenPerson.SpriteFlags"/> its drawing flags.</summary>
+	/// (<c>FUN_00475260</c>), and with <see cref="WrittenPerson.SpriteFlags"/> its drawing flags.
+	/// <para>A deviation: a walk's rider is written here as anyone, at the navigator, where the original's files hold none
+	/// for a rider the walk hides and the placer's point for one it shows (<c>docs/exe/saves.md</c>, "A walk's rider is saved
+	/// with a sprite").</para></summary>
 	private static void PutSprite( byte[] record, WrittenPerson person, Sprite picture )
 	{
 		Put32( record, SpritePcAt, picture.Pc );

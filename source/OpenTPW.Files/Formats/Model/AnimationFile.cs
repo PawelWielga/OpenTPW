@@ -649,8 +649,8 @@ public class AnimationFile : BaseFormat
 
 		/// <summary>
 		/// The axes' lengths at <paramref name="frame"/> as Anim_PoseTrack takes them (<c>0x00471d8d</c>): the two keys
-		/// about the frame lerped, or false before the first key, where the key search answers nought and the node's axes
-		/// are left as they are. Past the last key it holds the last: the poser poses nothing past the clip's declared span,
+		/// about the frame lerped, or false before the first key, where the key search answers nought and no scale is set: the
+		/// node keeps the lengths its matrix holds once that frame's turn is written (FileFormats models.md, "Scale"). Past the last key it holds the last: the poser poses nothing past the clip's declared span,
 		/// and 632 of the 644 tracks end on it, the other 12 past it.
 		/// </summary>
 		public bool TrySample( float frame, out System.Numerics.Vector3 scale )
@@ -739,6 +739,9 @@ public class AnimationFile : BaseFormat
 		/// How far along at <paramref name="frame"/>, held at the ends: the two frames' values blended
 		/// (<c>Anim_SamplePathPercent</c>), and where they are more than 50 apart (<c>0x006fece0</c>) the short way round the
 		/// loop, the smaller taken plus 100 and the blend modulo 100.
+		/// <b>Not the original's:</b> past the last value this always holds it, where the executable's fifth argument (the
+		/// route's closed bit) wraps to the first on a closed route (<c>docs/exe/park.md</c>, <c>Anim_SamplePathPercent</c>);
+		/// no shipped clip's span reaches a frame past its last value.
 		/// </summary>
 		public float Sample( float frame )
 		{
@@ -783,7 +786,8 @@ public class AnimationFile : BaseFormat
 	/// <summary>
 	/// The clip's scale tracks. Read whatever else the clip carries, but counted in neither <see cref="IsValid"/> nor the
 	/// frames: three of the game's clips carry nothing else (Lost Kingdom's <c>tvsime</c> and <c>tvsims</c>, fantasy's
-	/// <c>sign1c</c>), and they read as no clip.
+	/// <c>sign1c</c>), and <see cref="TryLoad"/>, which asks <see cref="IsValid"/>, reads them as no clip. A direct
+	/// <c>new AnimationFile</c>, as the rides' and the features' clips are read, takes them with their tracks.
 	/// </summary>
 	public List<ScaleTrack> ScaleTracks { get; } = new();
 

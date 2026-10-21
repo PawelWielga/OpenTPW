@@ -744,7 +744,8 @@ public sealed class ParkState
 		foreach ( var now in _objects.Where( thing => !kept.Contains( thing.ThingId ) )
 			.OrderByDescending( thing => _madeAt.GetValueOrDefault( thing.ThingId ) ).ThenByDescending( thing => thing.ThingId ) )
 		{
-			// The file keeps a sold thing it cannot write without, so a thing made on its id is not written.
+			// The file keeps a sold thing it cannot write without, so a thing made on its id is not written. A deviation: the
+			// original writes it and drops the sold object. What is written still names the id as the kept object (Level.WritePark).
 			if ( held.Contains( now.ThingId ) )
 				Unimplemented.Report( "SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING" );
 			else if ( writable( now ) )
@@ -1019,7 +1020,8 @@ public sealed class ParkState
 	/// to it, every <see cref="Spend"/> takes from it, and the year's change zeroes it (<see cref="TurnTheYear"/>).
 	/// </summary>
 	/// <remarks>
-	/// Nothing reads it here. The original's readers, golden ticket 4 and an advisor row, are not built.
+	/// Golden ticket Local 4 reads it (<see cref="ParkGoldenTickets.Measure"/>; <c>0x004d4d6b</c>). No advisor row reads it here (row 318,
+	/// the profit hint, is never said by the original).
 	/// </remarks>
 	public int ProfitThisYear { get; private set; }
 

@@ -14,7 +14,7 @@ internal static class AdvisorGestures
 	/// <summary>The bits of a clip word that are its flags (<c>0x7f0000</c>).</summary>
 	internal const uint FlagBits = 0x7f0000;
 
-	/// <summary>A clip word's flag: the clip shows no add-on, no mouth and no head (<c>0x00598dc0</c>, <c>0x00599b8c</c>).</summary>
+	/// <summary>A clip word's flag: the clip shows no add-on, no mouth and no head (<c>0x00598dc0</c>, <c>0x00599ba3</c>).</summary>
 	internal const int FaceAway = 0x10000;
 
 	/// <summary>A word that is a cue, its time the word after (<c>0x00598c25</c>).</summary>

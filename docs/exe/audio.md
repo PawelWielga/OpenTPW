@@ -996,9 +996,9 @@ stand (`ParkAudio.ControlledSample`). Counted: a set on a voice of another class
 none shipped. A parked voice is woken as the original's, which no shipped zone reaches (effect 6's hold 0 to 100). The
 bus's nodes stand as its file holds them, root and all (`ParkRides.Stand`, as the End's), and its route keys carry them
 (`NodePoser`; `park.md`, "Clip content: tracks, hide lists, rotation, visibility"). The bus here (`q561/confirm.py`, run4, the final binary): the voice from (686,-77) along
-the road, variation 1 first, 26 samples by the zones, each at pitch -24 and 0.3740, stopped by `KILLOBJ 1`. **Not the
-original's:** our bus stands at (510, 65) and (422, 65), 19 and 17 along its route past the original's stops, turned
-askew where the original's faces along the road (Q562).
+the road, variation 1 first, 26 samples by the zones, each at pitch -24 and 0.3740, stopped by `KILLOBJ 1`. Q583 built the
+bus's stops as (529.1, 64.4) and (439.9, 64.8), its route's own, facing along the road as the original's does
+(`park.md`, "Where a route key puts its node").
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|

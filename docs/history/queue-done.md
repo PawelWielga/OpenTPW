@@ -9397,11 +9397,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   silent, predicted first (`q580/PREDICTION.txt`, `q580/confirm.py`). Bought by the console: Tom Tom Twister (1113) on
   (40,22), queue node (42,21) joined at (43,21) (on (41,22) its node falls on the path and no queue joins); Mayan Spinner
   (1108) on (57,23), node (58,22) joined at (56,22); the Burger (1207) and the Fries (1212) on (41,30); the Giant Puzzle
-  (1307) on (40,22) (on (46,29) no guest from (43,21) has a route). `run-R1c`, 5 of 5: ten Twister riders, every
+  (1307) on (40,22) (with the Twister on (41,22) its node takes (43,21), and a guest admitted there has no route to anything). `run-R1c`, 5 of 5: ten Twister riders, every
   excitement line 75 with +15 under a gap of 15 and +5 under 40, onride 9 and heads 9/40 (`R1-twister.png`); six used
-  the Spinner, onride 5 (`R1-spinner.png`); three paid 30 at the Burger, each +21 (`R1-burger.png`). `run-R2`, 4 of 4:
-  eight paid 30 at the Fries, each +21 (`R2-fries.png`); six paid 10 at the Puzzle, onride 1 (`R2-puzzle.png`). No gap
-  of the five scripts counted. The original given the two scenes saved here (`q580/orig`, `run.sh a 2` and `b`):
+  the Spinner, onride 5 (`R1-spinner.png`); three paid 30 at the Burger, each logging 21 (3 x its change since joining; `R1-burger.png`). `run-R2`, 4 of 4:
+  eight paid 30 at the Fries, each logging 21 (`R2-fries.png`); six paid 10 at the Puzzle, onride 1 (`R2-puzzle.png`). No gap
+  of the five scripts counted (counted on the way, each known: `RIDER_HEAD_TURN_AT_REST` for the Twister,
+  `WALK_LEG_REST_POSE` and `WALK_FACING_REST_POSE` for the Spinner, `SETTLE_UP_SIDESHOW_EVENT` for any sideshow's
+  settle-up, the stock Jungle Spray's too). The original given the two scenes saved here (`q580/orig`, `run.sh a 2` and `b`):
   `object.py` shows a guest loaded at each of the five, 12 s (the Twister) to 81 s (the Burger) after the load, and its
   Puzzle a player and a queue as ours (`b-t934.png`). Missed and recorded: the Twister's happiness set (P2;
   re-predicted from `MatchTheExcitement` and held); a helper named `queue` broke the first R1 (now in `parkrun.py`'s
@@ -9414,11 +9416,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   items"), each bought on (40,22) as thing 43, four guests sent from (43,21), silent, predicted first
   (`q580fs/PREDICTION.txt`, `q580fs/confirm.py`). Sun God (1106, node (42,21) joined at (43,21)), `run-S2` 4 of 4: five
   riders, every excitement 75 (+15 under a gap of 15, +5 under 40), onride 4 (`S-sun.png`), heads 3/32 at `S-heads.png`
-  and 14/32 at most. The Steak Restaurant (1208), `run-K` 3 of 3: four paid 45, each "+21 since using" (`K-steak.png`).
-  The Gift Shop (1211), `run-G` 3 of 3: four paid 75, each +66 (`G-gift.png`). The Arcade (1309), `run-A` 3 of 3: twelve
-  paid 10, excitement 27, onride 3 (`A-arcade.png`). The only gap of the four scripts is `Inca God: SETREVERB` at 162 and
-  188 (noted under Q157; reverb is cut). The original, a Full Simulation player given each scene (`q580fs/orig/run.sh`,
-  `original/fsload.sh`): a guest loaded at thing 43 in each, 10.5 s to 13.3 s after the load; its Sun God's riders queue
+  and 14/32 at most. The Steak Restaurant (1208), `run-K` 3 of 3: four paid 45, each logging "changed by 21" (3 x their +7 since joining; `K-steak.png`).
+  The Gift Shop (1211), `run-G` 3 of 3: four paid 75, each logging 66 (3 x +22; `G-gift.png`). The Arcade (1309), `run-A` 3 of 3: twelve
+  paid 10, excitement 27, onride 3 (`A-arcade.png`). Of the four scripts' opcodes the only gap is `Inca God: SETREVERB` at 162 and
+  188 (noted under Q157; reverb is cut); `RIDER_HEAD_TURN_AT_REST` (the Sun God's ADDHEAD) was counted on the way, known. The original, a Full Simulation player given each scene (`q580fs/orig/run.sh`,
+  `original/fsload.sh`): a guest loaded at thing 43 in each, 10.5 s to 13.3 s after the reader's start (about 9.4 s to 12.5 s after the load); its Sun God's riders queue
   and climb as ours (`q580fs/side-by-side-sungod.png`), its Arcade's guests show the same bored bubbles (`orig/A/o-t814`).
   No prediction missed. Seen and filed: the Sun God's brazier plates (Q586). The website's `running` list (it names the
   Belly Bounce, the Drinks Shop, the Jungle Spray) is the coordinating session's to bring up to date: the Hot Pot
@@ -9437,8 +9439,8 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   and lays straight runs; the walk (`TrackRide_WalkCircuit`) gives `+0x2c` and the sections, each with its collision
   objects and one buoy; the -4 record lays a grid and a start buoy, the -5 a start buoy; karts load to the grid and race
   minus `VAR_DURATION` laps, the first home putting state 3; boats run one lap at state 2 and spin. Checked in the
-  original (`q581/PREDICTION.txt`, rounds A to D, two misses recorded: the queue is armed first, the track tool from
-  the track): both rides bought, looped, opened and ridden, every section and buoy as predicted. The build is Q587 to
+  original (`q581/PREDICTION.txt`, rounds A to D, three misses recorded: the purchase arms the queue, not the track (A1), the track is armed from a piece
+  (A1b), and the closing click left the tool idle (B1)): both rides bought, looped, opened and ridden, every section and buoy as predicted. The build is Q587 to
   Q589. `original/trackride.py` new.
 - [x] **Q590. The research screen, built (Q705's first piece, Full Simulation only).** From Q704. `ParkResearchScreen`
   replaces the count `RESEARCH_SCREEN`: the stream `0x00754490`'s frame, title, five panels (icon, arrows, bar, red label
@@ -9518,7 +9520,7 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   lengths to the two keys lerped about the frame after its turn (`Anim_PoseTrack` `0x00471d8d`, `Anim_FindKey` type 4,
   `Matrix_SetAxisLengths` `0x0046f910`); every other model's are counted, `ANIM_SCALE_TRACK` (Q598). Confirmed in the
   game (`q707/p599/PREDICTION.txt`, run 4): the ticket's node at clip 18's end the original's own (12.093, 11.486, 8.958
-  at -38.226, 0, 42.049, its `load.log` line 279), clip 20's 3.023, 2.872, 2.239; the big ticket 0.740 of the height
+  at -38.226, 0, 42.049, its `load.log` line 279), clip 20's 3.023, 2.872, 2.239; the big ticket 0.746 of the height
   across beside the original's 0.738 (`ticketbox.py`); 12 of 12 bugs put back caught.
 - [x] **Q600. The golden ticket's glints.** Q707's piece (1). UI particle channel 0 decoded (`scenes.md`, "Where the
   glints stand": three channels at `0x00f86900`, the clip flags' literal centres, radii and turns, placed every frame by
@@ -9624,7 +9626,7 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   its stepper `FUN_00557d80` hands it every slot (`WalkRiders`, `RideScript.TryWalkOf`, `ParkGuestSprites.WalkedOnRide`,
   `ParkPeople.AskTheWalk`; `ride-operation.md`, "Where a walk's rider is drawn"): on the leg walking, on the node riding
   its pose while carried under 3, 5 or 6 on animations 3, 8 and 5, hidden under 1, 2 or 4. The rule is the original's
-  saves': 39 of 39 walk slots in use in sixteen park files it wrote (`lib/walkriders`, new). In this game on the final
+  saves': 38 of 38 walk slots in use in sixteen park files it wrote (`lib/walkriders`, new). In this game on the final
   binary (`q585/PREDICTION.txt`): `run-F2S` 7 of 7, six Spinner riders on nodes 2 to 7 at their rest points and facings,
   script 140, up 40.121 with the drum, off along the leg to node 16; `run-F2B` 5 of 5, a Balloon Shop customer carried
   and not drawn, a Jungle Spray player on lane node 2 at (525.127, 308.005). Beside the original given Q584's scene, both

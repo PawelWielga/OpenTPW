@@ -120,6 +120,40 @@ public class Level
 	public ParkResearch? Research { get; private set; }
 
 	/// <summary>
+	/// The calendar's compare and its turns, then the golden tickets the sweeps owed (<see cref="ParkGoldenTickets.Owe"/>),
+	/// in the order the original's sweep tail has them: the calendar (<c>0x004f8260</c>), then the tickets' test on every
+	/// hundredth tick (<c>0x004d7b54</c>, <c>docs/exe/ride-operation.md</c>, "Golden tickets"), so a tick that turns a year
+	/// is tested on the new year's profit. A deviation: the original compares at the tail of every sweep, so in a frame of
+	/// two or three sweeps whose day turns before the last, its rings roll and its month turns between two sweeps, and ours
+	/// after the last, the later sweeps counting into the closing day; the tickets owed by an earlier sweep of the frame are
+	/// tested here on the park as that frame leaves it. The sweep is split across the entities, so a compare per sweep waits on
+	/// one sweep loop for all of them (<c>docs/exe/park-engine.md</c>, "Still parted").
+	/// </summary>
+	/// <param name="tickets">The ticket test, given the tick that owed it.</param>
+	internal static void TurnTheCalendar( ParkState state, ParkPeople? people, ParkItemCatalogue? catalogue, Action<int> tickets )
+	{
+		GameCalendar.Update( state.GameTick );
+
+		if ( GameCalendar.DayRolled || GameCalendar.MonthRolled || GameCalendar.YearRolled )
+			Log.Info( $"Calendar: {GameCalendar.Now:yyyy-MM-dd} on mGameTick {GameCalendar.Counter}, the day's change"
+				+ (GameCalendar.DayRolled ? "" : " NOT") + (GameCalendar.MonthRolled ? ", the month's" : "")
+				+ (GameCalendar.YearRolled ? ", the year's" : "") );
+
+		// The day's change, then the month's and the year's, which the calendar sends after the day's in the same tick.
+		if ( GameCalendar.DayRolled )
+			state.RollTheDay();
+
+		if ( GameCalendar.MonthRolled )
+			ParkPeople.TurnTheMonth( people, state, catalogue );
+
+		if ( GameCalendar.YearRolled )
+			state.TurnTheYear();
+
+		if ( ParkGoldenTickets.TakeOwed() is { } owed )
+			tickets( owed );
+	}
+
+	/// <summary>
 	/// Whether the park is Instant Action's, the original's game type 2: the balance lays <c>Easy_Standard.sam</c> and
 	/// the catalogue each item's <c>Easy_</c> file, both on this one condition.
 	/// </summary>
@@ -920,7 +954,13 @@ public class Level
 
 		// The file's ids deleted since the load and taken out of it: a thing on one now is a new one, written whole as
 		// made (docs/exe/saves.md, "OpenTPW's writer, an id given out again"). An object sold that the file keeps,
-		// counted above, keeps its id there, and a person made on it is left out, counted.
+		// counted above, keeps its id there, and a person made on it is left out, counted. A deviation: the original writes
+		// the person and drops the object. Where the things go out as the file's (above: a file whose clock, scripts or models
+		// did not read, as Alexah's jungle Full Simulation saves' RSYS module, Q167) every object of the file is kept, sold or
+		// not, so a person on any sold object's id is left out. What is written then still names the left-out thing: the other
+		// guests' queue links, and in the things-written case the ride's head and nominee, a script's slots, a handle, the
+		// arrival slots, the mechanic's cursor and the region effects name the id, which the file holds as the kept object
+		// (docs/exe/saves.md, "OpenTPW's writer, an id given out again"; Q607).
 		var keptObjects = new HashSet<int>( loaded.Objects.Select( thing => thing.ThingId ).Where( id => !gone.Contains( id ) ) );
 		var fileIds = new HashSet<int>( loaded.Things.Select( thing => thing.ThingId ) );
 		var ids = new ParkWorld.ThingIds( state.DeletedSinceLoad.Where( id => fileIds.Contains( id ) && !keptObjects.Contains( id ) ).ToHashSet(),
@@ -1537,31 +1577,14 @@ public class Level
 		ParkFixedItems.Current?.Sync();
 
 		// The date of the park's clock once this frame's sweeps have counted it on, compared once a frame after the last of
-		// them, and the day's, month's and year's work run on its edges. Only a park keeps a date.
-		// A deviation: the original compares at the tail of every sweep (0x00516695), so in a frame of two or three sweeps
-		// whose day turns before the last, its rings roll and its month turns between two sweeps, and ours after the last,
-		// the later sweeps counting into the closing day. The sweep is split across the entities here, so a compare per
-		// sweep waits on one sweep loop for all of them (docs/exe/park-engine.md, "Still parted").
+		// them, and the day's, month's and year's work run on its edges, then the golden tickets owed by this frame's sweeps.
+		// Only a park keeps a date.
 		if ( Kind == Scene.Park && ParkState is { } clocked )
-		{
-			GameCalendar.Update( clocked.GameTick );
-
-			if ( GameCalendar.DayRolled || GameCalendar.MonthRolled || GameCalendar.YearRolled )
-				Log.Info( $"Calendar: {GameCalendar.Now:yyyy-MM-dd} on mGameTick {GameCalendar.Counter}, the day's change"
-					+ (GameCalendar.DayRolled ? "" : " NOT") + (GameCalendar.MonthRolled ? ", the month's" : "")
-					+ (GameCalendar.YearRolled ? ", the year's" : "") );
-		}
-
-		// Then the day's change.
-		if ( Kind == Scene.Park && GameCalendar.DayRolled )
-			ParkState?.RollTheDay();
-
-		// Then the month's change and the year's, which the calendar sends after the day's in the same tick.
-		if ( Kind == Scene.Park && GameCalendar.MonthRolled )
-			ParkPeople.TurnTheMonth( ParkPeople.Current, ParkState, Catalogue );
-
-		if ( Kind == Scene.Park && GameCalendar.YearRolled )
-			ParkState?.TurnTheYear();
+			TurnTheCalendar( clocked, ParkPeople.Current, Catalogue, tick =>
+			{
+				if ( ParkPeople.Current is { } people )
+					ParkGoldenTickets.Sweep( tick, clocked, people );
+			} );
 
 		// Whatever was deleted during that walk leaves the list now the walk is over - see Entity.Delete.
 		Entity.ApplyDeletions();

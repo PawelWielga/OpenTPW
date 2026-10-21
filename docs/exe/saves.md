@@ -84,7 +84,7 @@ Version 12, `FUN_005aff50`. Defaults come from the progress object constructor `
 | `+0x1c` | 4 | golden tickets | tickets **spent** |
 | `+0x20` | 4 | golden keys | keys **given outright** |
 | `+0x24` | 1 | mode | 1 = Instant Action, 0 = Full Simulation |
-| `+0x25` | 1 | swear filter | default 1. Set after the read, `FUN_005afd70` loads `%s\Language\%s\swears.txt` and `alloweds.txt` through `FUN_005d3140`, and clears it when they fail to load |
+| `+0x25` | 1 | swear filter | default 1. Set after the read, `FUN_005afd70` loads `%s\Language\%s\swears.txt` and `alloweds.txt` through `FUN_005d3140`, and clears it when `swears.txt` fails to open (`alloweds.txt`'s answer is ignored, `0x005d3226`). The path's language is the registry's `Language` value (`0x005c0d00`: 0x409 "American", 0x809 "English"). A disc copy has no `Data\Language\American\swears.txt`, so it writes 0; the US installer copies the lists there (`USEnglish\Setup\bffl.fls`), so an installed game keeps 1 |
 | `+0x4c` | 1 | first park not started | default 1 |
 | — | 4 | N | theme count, starts 0 |
 | — | var | themes | N × (dword name length + name chars + theme record) |
@@ -1283,7 +1283,7 @@ and a model's channels their count, so nothing moves, and they go in before the 
   body and the strings. The effects it has started are written where the list is as long as the file's, and
   spliced in where it is not ("OpenTPW's writer, a script's started effects"). A bounce slot and a walk slot are written
   whole, in use or let go ("OpenTPW's writer, a bounce slot let go", "a walk slot's facing", "a walk slot let go"). **Counted:** a script the file holds no record for (`SAVE_PARK_SCRIPT_MADE_SINCE_THE_LOAD`:
-  a thing bought and left out of the file (`SAVE_PARK_OBJECT_BOUGHT`), a child spawned, and the ferry's and the seaplane's, which a load here makes, two a save), and
+  a thing bought and left out of the file (`SAVE_PARK_OBJECT_BOUGHT`), a child spawned), and
   a record whose script has ended (`SAVE_PARK_SCRIPT_ENDED`), left the file's.
 - **A model** (`ParkRides.Written`, `ParkThingStates.Put`), into the record that names its thing's script: each
   channel as the engine keeps one. A running channel's clip time and third stamp are the save's moment and its
@@ -1412,8 +1412,8 @@ and the object constructor `FUN_004db090` was read beside the two files.
 - **A made object** (`ParkWorld.MadeObjectRecord`): the record as the constructor and the serialiser leave one.
   `mTopLeft` and `mFlags` are the item's ("OpenTPW's writer, a made object's flags and corner"). The bytes past a name's terminator are nought. The date is the park's own stamp of
   the purchase. Its queue's back cell and size are read off the map (`ParkState.WrittenObjects`).
-- **The lists** (`ParkWorld.PutPeople`): the made go into the thing list newest first, people and objects by id
-  together, and to the head of the object list; the gone are left out of both and the list closes over them. A
+- **The lists** (`ParkWorld.PutPeople`): the made go into the thing list newest made first (`ParkState.MadeAt`), people and
+  objects together, and to the head of the object list; the gone are left out of both and the list closes over them. A
   made object stands on its anchor cell's chain behind whoever stands there, and a gone one's cell is headed
   anew. Set `0xb` takes the made and every set loses the gone.
 - **The cells** (`Level.WrittenCells`): a cell that has joined the footprint of a thing written, or left the
@@ -1452,7 +1452,7 @@ Shop), `savepark Q253` under `pause` at `mGameTick` 848. `rides` read script 18 
 and script 19 at word 8 with 384 ms to wait for the camera. A Python reader of the file found 43 things headed 44,
 43, 42; fifteen objects, the chain 44, 43, 15, 24 and on; **thing 43's record the same as the original's own
 bought ape's in every byte** outside the list link, the date, the name's tail, the script handle (18 for 16: the
-ferry's and the seaplane's scripts take 16 and 17 at a load here), the rings, and the queue's back cell and size
+ferry's and the seaplane's scripts took 16 and 17 at a load here then, before Q26c), the rings, and the queue's back cell and size
 (below); the names `Crazy` and `Ape`; **the script's record the original's own in every dword of the struct** but
 the addresses and the handle, with the same body, strings, variables and head table (its stack's twenty slots,
 none of them live, are nought here and mostly `0xFFFFFFFF` there, and its folder reads `rides` for `Rides`);
@@ -1516,10 +1516,16 @@ thing on the id now is made:
 - **The made, people and objects together, go newest first by `MadeAt`**, as the used list holds them: the thing
   list, the object list (`mFirstObject`, `mNext`), the made on one cell; their model slots and their heads'
   sprite slots are dealt oldest first by it, as are a made person's sprite, balloon and bubble slots.
-- **An object sold that the file keeps** (one the writer cannot take out, counted `SAVE_PARK_OBJECT_SOLD`: a
-  tracked ride) keeps its id in the file, so a thing made on that id is counted
-  `SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING` and not written, a person or an object. **A deviation**, the writer's
-  own gap, gone with `SAVE_PARK_OBJECT_SOLD`'s.
+- **An object sold that the file keeps** keeps its id in the file, so a thing made on that id is counted
+  `SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING` and not written, a person or an object. **A deviation**: the original
+  writes the person and drops the object. Two reaches. A tracked ride the writer cannot take out
+  (`SAVE_PARK_OBJECT_SOLD`) is kept, gone with Q420's teardown. And a file whose things go out as the file's
+  (`SAVE_PARK_THINGS_AS_THE_FILE`: its clock, scripts or models did not read, as the RSYS module of Alexah's jungle
+  Full Simulation saves does not walk closed, Q167) keeps every object it holds, sold or not, so a person made on any
+  sold object's id is left out of every save of that park; gone when that module reads (Q167). The id is the next
+  make's after a sale, or a later one once the park grows past the ids freed above it. What is written still names
+  the left-out thing as the kept object (model 3): the other guests' queue links, and in the first reach the ride's
+  head and nominee, a script's slots, a handle, the arrival slots, the mechanic's cursor and the region effects.
 
 A new object's totals, queue head and nominee start at nought, as the constructor writes them (`0x004db163`,
 `0x004db169`, `0x004db0fe`, `0x004db132`): `ParkState.AddObject` zeroes them and a sale takes them away.
@@ -2443,7 +2449,7 @@ record** (type 5: the handle, the car's `0xac` bytes as they lie in memory, the 
 `[+0x98]+4` and `+8`, then the handle of its buoy's ride and the buoy's `+8` and `+0xc`, nought for the handle
 where `+0x7c` is -1), **each followed by a type 9 for every node of its rider list `+0x30`** (the handle, the
 peep, the seat id `+0xc`); **a type 7 for every node of the leaving list `+0xc8`** and **a type 8 for every node
-of the boarding list `+0xc4`** (the handle and the peep); and **the close** (type 6: the handle).
+of the boarding list `+0xc4`** (the handle and the peep); and **the close** (type 6: the handle, and nothing else: `0x0054392c` reads four bytes).
 
 **The loader `FUN_00543560`** lays a ride with `Bumper_LayRide( 0, x, z, orientation, handle, item )`, which takes the
 slot the handle names and fills it from the BumperType's template; then `Bumper_SetPerformance`, the two mesh
@@ -2454,6 +2460,20 @@ handed the handle its `+0x08` holds**, the item's supplemental mesh `+0x04` and 
 from `+0x0c` where the car's flags hold `0x2002000`; the lead (`0x400000`) is named on the record, and the buoy
 is found again by its place. A type 9 puts its peep on the car last read. A type 8 goes through
 `FUN_0054aa80`, `BUMP 1`'s call, and a type 7 through `FUN_0054abd0`.
+
+**The close (type 6, `0x00543928`; fork watch 2026-10-21, verify-world-other L6).** The dispatch is `0x00543625`
+(`jmp [type - 2 + 0x00544124]`). The arm reads the handle; with the `GFEJ` magic (`0x00877b58`) the record is
+`0x00877b60 + (handle & 0xff) * 0xd0` and the handle must equal `slot | [record+0] << 8` (`0x0054397e..0x005439a0`), else
+it does nothing and says nothing (`0x005439f3`). Then a switch on the record's BumperType (`[record+0] + 13`, at most 9;
+byte table `0x00544154`, jump table `0x00544144`):
+
+| BumperType | Arm | What it does |
+|---|---|---|
+| -13, -12, -10, -9, -8, -7, -5, -4 (the karts' and water rides' of every theme) | `0x005439bb` | from the buoy chain head `+0xa8`, walks `+0x14` to the first buoy flagged 4 (the start buoy; no null guard), takes the next, a null wrapping to the head, skipping buoys flagged 2 (no guard against all flagged 2), and stores it in `+0xa4`: the race's first buoy, by the rule of `Bumper_OpenRide` (`park.md`, "The karts' and the water ride's track, buoys and race"). The writer never saves `+0xa4`, so a ride loaded open gets it back here |
+| -11, -6 and everything outside -13 to -4 (-1 the Hot Pot, -2, -3, -14) | `0x005439e6` | logs "###WARNING### Ride not properly initialised after load" (`0x00764d44`) through `0x005da3c0` and sets nothing |
+
+So the close is a logged no-op for every bumper-family ride. Nothing in the stock park has a track ride, so this is met
+only by a park saved with a kart or water ride (Q588, Q589).
 
 **The placer's orientation code** (`FUN_00529e10`): 0, 5, 6 and 1 for a turn of 0, 90, 180 and 270 degrees.
 
@@ -2558,6 +2578,13 @@ Nothing here destroys a rider's sprite, and a guest's head in a boat is drawn th
 `ParkPeople` makes it at the load: standing, on a new slot, of the person's `mESPSprite` and `mSpriteID`. Before
 this a rider loaded so was drawn by nothing, on the ride or after it.
 
+**A walk's rider is saved with a sprite where the original saves none or another place, a deviation.** The writer keeps a
+sprite for a rider of a thing with `mFlags` `0x20` (every walk thing) and `PutSprite` writes it at the navigator with the
+picture's height. The original's files (`q585/walkriders-saves.out`, 38 walk slots) hold no sprite for the 23 riders the
+placer hid (carried under action 1 or 4: `FUN_004f9ed0` frees it), and for the 15 it shows the placer's point with the
+height above the ground and the slot's facing ("Where a walk's rider is drawn", `ride-operation.md`). Harmless to a load in
+either game (both re-place every frame, and the original's hide frees a loaded sprite again); counted in the queue.
+
 **Confirmed in the game** (`q257p/confirm.py`, on the desktop: scene `later` 4 of 4 at the second run, scene
 `open` 2 of 2, the control 2 of 2; `PREDICTION.txt` holds every prediction and miss). The park entered on the
 original's own `hotpot-later.TPWS`: the log read four cars 0 to 3 at (134047,77741), (131374,75555),
@@ -2644,9 +2671,9 @@ boat afterwards:
 | Word | What it is | Who writes it | A Hot Pot boat's |
 |---|---|---|---|
 | `+0x24`, `+0x28` | the lookup records of the model's two emitter nodes, `FUN_0044b220( model, 0x100, 2 )` and `( model, 0x100, 1 )` | the placement, `Bumper_Retarget` for a car still flagged `0x100000` (`0x0054a1b0`..`0x0054a1ea`) | 3 and 2, from its placement on |
-| `+0x58` | the heading the drawn heading turns to | `Bumper_StepCar`, only while the ride's state is 2: the steering heading `+0x50` for BumperType -1, the velocity's heading for the others | nought until its ride's first go, then `+0x50` as the last tick of a go left it |
+| `+0x58` | the heading the drawn heading turns to | `Bumper_StepCar`, only while the ride's state is 2: the steering heading `+0x50` for BumperType -1, the velocity's heading for the others but the water family's, whose `+0x58` is a spin a rim or obstacle contact moves and `Bumper_StepCar` decays (`park.md`, "The karts' and the water ride's track, buoys and race") | nought until its ride's first go, then `+0x50` as the last tick of a go left it |
 | `+0x60` | how far the turn `+0x5c` changed in the last tick | `Bumper_StepCar`'s last arm alone, which the bumper family's arm never reaches; the draw reads it for a car flagged `0x1000` | nought |
-| `+0x68` | the thrust bonus (`park.md`, "How a bumper ride's cars move") | the karts' race retarget, `(3 − (rand & 7)) × thrust / 9`; the water ride's sets nought (`park.md`, "The karts' and the water ride's track, buoys and race") | nought |
+| `+0x68` | the thrust bonus (`park.md`, "How a bumper ride's cars move") | the karts' race retarget, `(3 − (rand & 7)) × (thrust / 9)`; the water ride's sets nought (`park.md`, "The karts' and the water ride's track, buoys and race") | nought |
 | `+0x84` | nothing: no instruction of `0x00543000`..`0x0054c000` reads or writes a register's `+0x84` | the launch's zeroing | nought |
 | `+0xa0` | a float, the height the car was last drawn at | the draw, every frame, each car of the ride drawn (`0x00546969`) | the pot's water, about 29.80, plus its bob |
 | `+0xa4` | the stuck count (`park.md`, "Kept in the pot") | the launch (nought), then the placement, `Bumper_Retarget`'s bumper arm for a car still flagged `0x100000` (`0x0054a246`) | -1 |

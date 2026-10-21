@@ -110,15 +110,16 @@ public sealed class AdvisorModel
 	private int _startedClip;
 
 	/// <summary>
-	/// A clip's start (FUN_004726d0, FUN_00472d70): the nodes the clip before it hid are shown again, and so is every
-	/// node the incoming clip's tracks name, then the incoming clip's hide list is hidden. So the small ticket, which
-	/// clips 1 to 16 hide and clip 17 does not, shows on clip 17, and the head that clips 19 and 20 leave hidden comes
-	/// back with the next clip that moves it (clip 14's and 17's position keys).
+	/// A clip's start: the nodes the clip before it hid are shown again, and so is every node the incoming clip's tracks
+	/// name, then the incoming clip's hide list is hidden. So the small ticket, which clips 1 to 16 hide and clip 17 does
+	/// not, shows on clip 17, and the head that clips 19 and 20 leave hidden comes back with the next clip that moves it
+	/// (clip 14's and 17's position keys).
 	/// <para>
-	/// Not the original's rule: its FUN_00472310 shows the nodes the OUTGOING clip's tracks name (FileFormats models.md,
-	/// "Starting a clip"), and every node when the animation object's +4 holds 0x8, which is not read for him. No Lost
-	/// Kingdom frame is known to differ, and by the outgoing rule alone his head would stay hidden 633 ms where the
-	/// original's film shows it.
+	/// Not the original's rule: the model's clip change, FUN_00472f60, calls FUN_00472310 with the OUTGOING clip (0x004730a9),
+	/// which shows the nodes that clip's tracks name, and every node when the animation object's +4 holds 0x8 (not read for
+	/// him); then FUN_00472d70 hides the INCOMING clip's list (0x00473117). FileFormats models.md, "Starting a clip", and
+	/// docs/exe/scenes.md, "A clip's start", hold it. No Lost Kingdom frame is known to differ, and by the outgoing rule
+	/// alone his head would stay hidden 633 ms where the original's film shows it, so what shows it there is unsettled.
 	/// </para>
 	/// </summary>
 	internal void StartClip( int clip )
@@ -300,7 +301,7 @@ public sealed class AdvisorModel
 	/// <para>
 	/// It is affine, as the original's screen-space draw is (ModelRenderable_Draw 0x0057a750; docs/exe/ui.md, "His projection
 	/// is affine"): how far toward the viewer a node stands changes no size. The golden ticket that fills the screen in Lost
-	/// Kingdom's clips 18 to 20 is his own, grown twelvefold by its scale track (<see cref="Pose"/>).
+	/// Kingdom's clips 18 to 20 is his own, grown by its scale track in clip 18, held through 19 and shrunk to three in 20 (<see cref="Pose"/>).
 	/// </para>
 	public static Matrix4x4 ScreenProjection()
 	{

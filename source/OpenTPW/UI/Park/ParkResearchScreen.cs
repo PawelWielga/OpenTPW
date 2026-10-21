@@ -16,7 +16,8 @@ namespace OpenTPW.UI;
 /// <b>The bar</b> is filled to <c>(100 - left) × 1024 / 100</c>, <c>left</c> the points left in the kind's current
 /// project as a whole per cent of the dearest project's cost (<see cref="ParkResearch.PercentLeftOfDearest"/>), and
 /// lettered with UITEXT 446, the project's item and its price, or 185 with nothing left. The bars are set as the screen
-/// opens, on each tick of its 1000 ms timer, after a work-load drag and after an arrow.
+/// opens, on each tick of its 1000 ms timer, after a work-load drag, after an arrow, and for a kind alone when that kind
+/// finishes (<see cref="ParkResearch.KindFinished"/>).
 /// </para>
 ///
 /// <para>

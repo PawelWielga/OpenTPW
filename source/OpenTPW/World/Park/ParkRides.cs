@@ -1301,8 +1301,8 @@ public sealed class ParkRides : Entity
 	/// which changes nothing it does.
 	/// </para>
 	/// <para>
-	/// The fixed items bound from what stands rather than from the save are given none: no fixed item's script
-	/// declares a walk slot or carries <c>ADDHEAD</c>.
+	/// A vehicle made at its summons comes through <c>BindNew</c> and is given its nodes as its model's file stands
+	/// them (<c>Stand</c>); no fixed item's script declares a walk slot or carries <c>ADDHEAD</c>.
 	/// </para>
 	/// </remarks>
 	private RideNodes? NodesFor( RideScript script, ParkWorld.CatalogueObject placed, ParkItemCatalogue.Item item )

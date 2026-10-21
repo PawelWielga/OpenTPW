@@ -223,9 +223,10 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>
 	/// A response's own row in the response table at 0x00768fb8 (0x20 bytes): its sample (+0x04), its lip file (+0x08), its
 	/// gesture (+0x0c, the gesture table's row plus 16, -1 for the random chain), its model slot (+0x10, low half) and its
-	/// group (+0x1c), the tag it leaves.
+	/// group (+0x1c), the tag it leaves. <paramref name="Prop"/> is its first prop (+0x14), kept only for the rows of no built
+	/// topic (53, 97, 129: prop 5, the hard hat), whose props <see cref="PropsOf"/> cannot take from a topic.
 	/// </summary>
-	internal readonly record struct Response( int Sample, int Lip, int Gesture, int Slot, int Group );
+	internal readonly record struct Response( int Sample, int Lip, int Gesture, int Slot, int Group, int Prop = 0 );
 
 	/// <summary>
 	/// The rows of the responses whose sample, lip file, gesture or group is not the topic's rule (the first sample plus
@@ -243,12 +244,12 @@ internal sealed class ParkAdvisorMessages
 			// sample, lip, slot and group the topic's rule. 53, 97 and 129 are lines of topics not built.
 			[18] = new( 17, 17, 21, 0, 8 ),
 			[37] = new( 37, 37, 22, 0, 14 ),
-			[53] = new( 53, 53, 23, 0, ParkTags.NoTag ),
+			[53] = new( 53, 53, 23, 0, ParkTags.NoTag, Prop: 5 ),
 			[82] = new( 80, 80, 23, 0, 30 ),
 			[84] = new( 82, 82, 23, 0, 30 ),
 			[90] = new( 88, 88, 25, 0, 32 ),
-			[97] = new( 95, 95, 23, 0, 35 ),
-			[129] = new( 127, 127, 21, 0, 45 ),
+			[97] = new( 95, 95, 23, 0, 35, Prop: 5 ),
+			[129] = new( 127, 127, 21, 0, 45, Prop: 5 ),
 			[206] = new( 204, 204, 26, 0, 72 ),
 			[258] = new( 292, 292, 27, 0, 100 )
 		};
@@ -415,7 +416,7 @@ internal sealed class ParkAdvisorMessages
 	/// the same of the hunger over <see cref="HungrierThan"/>.
 	/// <paramref name="AlwaysNought"/> is the score of row 85 (0x0059e420): nought, whatever the park.
 	/// <paramref name="Constant"/> is a score read from no key, row 167's 10000 (0x0059f9a0).
-	/// <paramref name="Hint"/> makes the score a golden-ticket hint's (<see cref="TicketHint"/>, 0x005a0780 to 0x005a05f0).
+	/// <paramref name="Hint"/> makes the score a golden-ticket hint's (<see cref="TicketHint"/>; its scorers are 0x005a0530, 0x005a05a0, 0x005a05f0 and 0x005a0780).
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
 	/// </summary>
@@ -772,7 +773,10 @@ internal sealed class ParkAdvisorMessages
 		new( NearHappinessTicket, "GoldTicketNearToXHappiness.Score", 577, 600, Lines: 1, Prop: AdvisorProps.ThemeCostume, Polled: true, FullSimulationOnly: true, Hint: TicketHint.NearHappiness )
 	];
 
-	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
+	/// <summary>
+	/// The two props <paramref name="response"/>'s row names: its built topic's, else the first prop its own row of
+	/// <see cref="Responses"/> holds (53, 97 and 129 are lines of topics not built); nought and nought for any other.
+	/// </summary>
 	internal static (int First, int Second) PropsOf( int response )
 	{
 		foreach ( var topic in ParkTopics )
@@ -781,7 +785,7 @@ internal sealed class ParkAdvisorMessages
 				return (topic.Prop, topic.SecondProp);
 		}
 
-		return (0, 0);
+		return (ResponseOf( response )?.Prop ?? 0, 0);
 	}
 
 	/// <summary>
@@ -827,8 +831,9 @@ internal sealed class ParkAdvisorMessages
 	internal int Attempts { get; private set; }
 	/// <summary>
 	/// An instrument, the console's <c>sayas</c>: the next line said is said as this response of <see cref="Responses"/>
-	/// (its sample, lip file, props, slot, gesture row and group), the message's own history kept, as
-	/// <c>original/sayas.sh</c> makes the original's <c>Advisor_SayResponse</c> (<c>0x00599050</c>) do. -1 for none.
+	/// (its sample, lip file, props, slot and gesture row), the message's own history kept, and the tag it leaves the
+	/// posted response's group, as <c>original/sayas.sh</c> makes the original's <c>Advisor_SayResponse</c> (<c>0x00599050</c>)
+	/// do: the group is read from the posted response (<c>0x0059b7ba</c>). -1 for none.
 	/// </summary>
 	internal int SayAs = -1;
 
@@ -1045,6 +1050,7 @@ internal sealed class ParkAdvisorMessages
 	/// 0x0059ca00) are their key's value for each guest inside over the thirst or the hunger, and row 85's (0x0059e420)
 	/// is nought;
 	/// row 167's (0x0059f9a0) is the constant 10000;
+	/// a golden-ticket hint's is <see cref="HintScore"/>;
 	/// every other built row's is its key's value.
 	/// </summary>
 	internal int ScoreOf( Topic topic, int gameTick )
@@ -1554,10 +1560,11 @@ internal sealed class ParkAdvisorMessages
 		}
 
 		// A line the poster asked for is said as asked, and kept as the message's last even past its count, where the
-		// first line is said (FUN_0059a550 at 0x0059a76b, FUN_0059b620); otherwise the next of the topic's own rotation.
+		// first line is said (FUN_0059a550 at 0x0059a6e1, FUN_0059b620); otherwise the next of the topic's own rotation.
 		var history = _histories[pending.Topic.Id];
 		var line = pending.Line >= 0 ? pending.Line : (history.Line + 1) % pending.Topic.Lines;
 		var response = pending.Topic.FirstResponse + (line < pending.Topic.Lines ? line : 0);
+		var posted = response;
 		if ( SayAs >= 0 )
 		{
 			Log.Info( $"Park advisor: said as response={SayAs} in place of response={response}" );
@@ -1575,7 +1582,7 @@ internal sealed class ParkAdvisorMessages
 		++Attempts;
 		// The helper then sends an event of type 0x18 carrying the response's group and the record's subject
 		// (FUN_0059b620, FUN_0040f740, FUN_0040fb10); its one hearer is the tag system (FUN_00509bf0).
-		said?.Invoke( ResponseOf( response )?.Group ?? pending.Topic.Group, pending.Subject, pending.Secondary );
+		said?.Invoke( ResponseOf( posted )?.Group ?? pending.Topic.Group, pending.Subject, pending.Secondary );
 		Log.Info( $"Park advisor: attempt={Attempts} message={pending.Topic.Id} subject={pending.Subject} score={score} threshold={Threshold} response={response} sample={sample} line={line} tick={gameTick} duration={duration} waitUntil={WaitUntil}" );
 	}
 

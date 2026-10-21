@@ -55,6 +55,9 @@ public class ParkResearchScreenTests
 
 	private static UI.UiSlider Slider( UI.ParkResearchScreen screen, int id ) => Controls( screen.Root ).OfType<UI.UiSlider>().Single( slider => slider.Id == id );
 
+	/// <summary>The id of the panel a kind stands in.</summary>
+	private static int Panel( int kind ) => UI.ParkResearchScreen.Rows.Single( row => row.Kind == kind ).Panel;
+
 	/// <summary>Each kind's bar, by the panel it stands in.</summary>
 	private static UI.ParkObjectWindow.UiStatBar Bar( UI.ParkResearchScreen screen, int panel )
 		=> screen.Root.Children.Single( control => control.Id == panel ).Children.OfType<UI.ParkObjectWindow.UiStatBar>().Single();
@@ -308,6 +311,7 @@ public class ParkResearchScreenTests
 		var bar = Bar( screen, 0xd2d01 );
 		var before = bar.Text;
 		StringAssert.Contains( before, "DinoKarts" );
+		var others = new[] { 4, 1, 2, 3 }.Select( kind => (Bar( screen, Panel( kind ) ).Text, Bar( screen, Panel( kind ) ).Units) ).ToArray();
 
 		var finished = new List<ParkResearch.Finished>();
 
@@ -318,8 +322,266 @@ public class ParkResearchScreenTests
 		Assert.AreNotEqual( before, bar.Text );
 		StringAssert.Contains( bar.Text, ParkObjectNames.NameOf( lab.Item( lab.CurrentItem( 0 ) )!.Value ) );
 		Assert.AreEqual( (100 - lab.PercentLeftOfDearest( 0 )) * 1024 / 100, bar.Units );
+		CollectionAssert.AreEqual( others, new[] { 4, 1, 2, 3 }.Select( kind => (Bar( screen, Panel( kind ) ).Text, Bar( screen, Panel( kind ) ).Units) ).ToArray(),
+			"the other kinds are left as they stand" );
 
 		stack.Close( screen );
 		Assert.IsNull( lab.KindFinished );
+	}
+
+	/// <summary>A slider running up and down in a 2048 x 1536 window (a virtual unit is a pixel), a thumb 40 high on a track 400 high.</summary>
+	private static (UI.UiSlider Slider, UI.UiSliderThumb Thumb) AVerticalSlider()
+	{
+		var slider = new UI.UiSlider
+		{
+			Rect = new UI.UiRect( 0, 100, 100, 500 ), HitRect = new UI.UiRect( 0, 100, 100, 500 ),
+			Track = new UI.UiRect( 0, 100, 100, 500 ), Maximum = 100, Vertical = true
+		};
+		var thumb = slider.AddThumb( new UI.UiSliderThumb { Rect = new UI.UiRect( 0, 100, 100, 140 ) } );
+
+		return (slider, thumb);
+	}
+
+	/// <summary>A slider running across, a thumb 40 wide on a track 400 wide.</summary>
+	private static (UI.UiSlider Slider, UI.UiSliderThumb Thumb) AnAcrossSlider()
+	{
+		var slider = new UI.UiSlider
+		{
+			Rect = new UI.UiRect( 0, 0, 400, 100 ), HitRect = new UI.UiRect( 0, 0, 400, 100 ),
+			Track = new UI.UiRect( 0, 0, 400, 100 ), Maximum = 100
+		};
+		var thumb = slider.AddThumb( new UI.UiSliderThumb { Rect = new UI.UiRect( 0, 0, 40, 100 ) } );
+
+		return (slider, thumb);
+	}
+
+	/// <summary>
+	/// <b>A vertical slider's thumb is dragged and its value read from the thumb's height above the track's foot</b>
+	/// (<c>Slider_ReadThumb</c>, <c>0x0066af19</c>): at 50 the thumb stands 280 to 320; taken at y 300 and drawn to 240 its
+	/// top is 220, 240 above the foot over a travel of 360, so 66; dragged past the top it stops there at 100, and past the
+	/// foot at nought.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the drag read as an across one; the value taken from the top down.</remarks>
+	[TestMethod]
+	public void AVerticalSliderIsDraggedByItsThumbsHeight()
+	{
+		var screen = Screen.Size;
+		Screen.Size = new Point2( 2048, 1536 );
+
+		try
+		{
+			var (slider, thumb) = AVerticalSlider();
+			slider.SetValue( 50 );
+			Assert.AreEqual( (280, 320), (thumb.Rect.Top, thumb.Rect.Bottom) );
+
+			var moved = 0;
+			slider.Moved = () => ++moved;
+			thumb.PointerPressed( 50, 300 );
+			thumb.PointerDragged( 50, 240 );
+			Assert.AreEqual( (66, 220, 260, 1), (slider.Value, thumb.Rect.Top, thumb.Rect.Bottom, moved) );
+
+			thumb.PointerDragged( 50, 0 );
+			Assert.AreEqual( (100, 100), (slider.Value, thumb.Rect.Top) );
+			thumb.PointerDragged( 50, 1000 );
+			Assert.AreEqual( (0, 460), (slider.Value, thumb.Rect.Top) );
+			thumb.PointerReleased();
+		}
+		finally
+		{
+			Screen.Size = screen;
+		}
+	}
+
+	/// <summary>
+	/// <b>A click off the thumb pages the value towards the click, by the thumb's far edges</b> (<c>Slider_PageTowards</c>,
+	/// <c>0x0066b8aa</c>): a vertical slider pages down where the click is below the thumb's bottom, up otherwise; one
+	/// running across pages down where the click is left of the thumb's right edge, up otherwise. The clicks inside the
+	/// thumb's own band, 300 down a thumb of 280 to 320 and 200 along one of 180 to 220, are the ones a rule of the
+	/// thumb's near edges gets the other way about.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the vertical test against the thumb's top; the across test against its left; either
+	/// direction reversed; a page of more than one.</remarks>
+	[TestMethod]
+	public void APageClickGoesByTheThumbsFarEdge()
+	{
+		var screen = Screen.Size;
+		Screen.Size = new Point2( 2048, 1536 );
+
+		try
+		{
+			var (up, thumb) = AVerticalSlider();
+			up.SetValue( 50 );
+			Assert.AreEqual( (280, 320), (thumb.Rect.Top, thumb.Rect.Bottom) );
+
+			foreach ( var (y, expected) in new[] { (300f, 51), (250f, 51), (320f, 51), (321f, 49), (400f, 49) } )
+			{
+				up.SetValue( 50 );
+				up.LeftClickedAt( 10, y );
+				Assert.AreEqual( expected, up.Value, $"down {y}" );
+			}
+
+			up.SetValue( 50 );
+			up.RightClickedAt( 10, 300 );
+			Assert.AreEqual( 51, up.Value, "a right click pages the same way" );
+
+			var (across, bar) = AnAcrossSlider();
+			across.SetValue( 50 );
+			Assert.AreEqual( (180, 220), (bar.Rect.Left, bar.Rect.Right) );
+
+			foreach ( var (x, expected) in new[] { (200f, 49), (219f, 49), (221f, 51), (300f, 51), (100f, 49) } )
+			{
+				across.SetValue( 50 );
+				across.LeftClickedAt( x, 10 );
+				Assert.AreEqual( expected, across.Value, $"across {x}" );
+			}
+		}
+		finally
+		{
+			Screen.Size = screen;
+		}
+	}
+
+	/// <summary>
+	/// <b>The work-load slider is paged as the original pages it</b>: at the knob's 298 (the thumb 513 to 580) a click at 540,
+	/// inside the thumb's band, is above its bottom and pages up to 299, the work load following; one at 600 pages down.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the vertical test against the thumb's top.</remarks>
+	[TestMethod]
+	public void ThePageClickMovesTheWorkLoad()
+	{
+		var lab = FreshLab();
+		var screen = Open( new UI.WindowStack(), lab, ability: 3 );
+		var slider = Slider( screen, 0xd2d10 );
+		Assert.AreEqual( (513, 580, 298), (slider.Thumb!.Rect.Top, slider.Thumb.Rect.Bottom, slider.Value) );
+
+		slider.LeftClickedAt( 100, 540 );
+		Assert.AreEqual( 299, slider.Value );
+		Assert.AreEqual( 85, lab.WorkLoad );
+		Assert.AreEqual( (512, 579), (slider.Thumb.Rect.Top, slider.Thumb.Rect.Bottom) );
+
+		slider.LeftClickedAt( 100, 600 );
+		Assert.AreEqual( 298, slider.Value );
+	}
+
+	/// <summary>
+	/// <b>The 1000 ms timer sets the five bars again</b> (message <c>0x10</c>): points spent into the rides' project with the
+	/// screen open and nobody to say so leave the bar where it was until the timer's second passes, and then it is the new
+	/// fill.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the timer's fills taken out; the timer owing a tick every pass.</remarks>
+	[TestMethod]
+	public void TheTimerSetsTheFillsAgain()
+	{
+		try
+		{
+			Time.PinWall( 5000 );
+
+			var lab = FreshLab();
+			var screen = new UI.ParkResearchScreen( new UI.WindowStack(), lab, () => 3, Most );
+			var bar = Bar( screen, 0xd2d01 );
+			var before = bar.Units;
+			Assert.AreEqual( 552, before );
+
+			Assert.AreEqual( 0, lab.SpendPoints( 500, 0 ).Count( done => done.Kind == 0 ) );
+			var now = (100 - lab.PercentLeftOfDearest( 0 )) * 1024 / 100;
+			Assert.AreNotEqual( before, now );
+
+			Time.PinWall( 5999 );
+			screen.Update();
+			Assert.AreEqual( before, bar.Units, "not before the second is out" );
+
+			Time.PinWall( 6000 );
+			screen.Update();
+			Assert.AreEqual( now, bar.Units );
+		}
+		finally
+		{
+			Time.PinWall( null );
+		}
+	}
+
+	/// <summary>
+	/// <b>Message 200 is posted as the screen opens and withdrawn as it closes</b> (<c>FUN_00486b00( 200 )</c>; event
+	/// <c>0x14</c>): the advisor's queue holds row 200 while it is up and not after.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the post left out; the withdrawal left out.</remarks>
+	[TestMethod]
+	public void TheAdvisorIsPostedTheScreensLineWhileItIsOpen()
+	{
+		var kept = Level.Current;
+
+		try
+		{
+			var lines = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+			var level = (Level)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
+			typeof( Level ).GetProperty( nameof( Level.ParkState ) )!.SetValue( level, new ParkState( null ) { AdvisorMessages = lines } );
+			Level.Current = level;
+
+			var stack = new UI.WindowStack();
+			var screen = new UI.ParkResearchScreen( stack, FreshLab(), () => 3, Most );
+			StringAssert.Contains( lines.Census(), "pending=0 ", "built, not yet opened" );
+
+			stack.Open( screen );
+			StringAssert.Contains( lines.Census(), "pending=1 " );
+			StringAssert.Contains( lines.Census(), "slot=200/" );
+
+			stack.Close( screen );
+			StringAssert.Contains( lines.Census(), "pending=0 " );
+		}
+		finally
+		{
+			Level.Current = kept;
+		}
+	}
+
+	/// <summary>
+	/// <b>The upgrades' arrows skip a project whose item is not yet researched</b>: of the nine upgrade projects, 37 to 39
+	/// need an item not yet researched and 13 and 15 (items 1170 and 1112) not open in a fresh lab (<c>Eligible</c>), so from
+	/// project 0 the left arrow goes to 14, the last open one, and not to 39; right goes 8, 10, 14 and then round to 0, not
+	/// on to 15 or 37.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the left arrow's eligibility test taken out; the right arrow's.</remarks>
+	[TestMethod]
+	public void TheUpgradeArrowsSkipWhatIsNotYetOpen()
+	{
+		var lab = FreshLab();
+		var screen = Open( new UI.WindowStack(), lab, ability: 3 );
+		Assert.AreEqual( 0, lab.Kinds[ParkResearch.Upgrade].CurrentProject );
+
+		Arrow( screen, 0xd2d07, 0xd2d03 ).Clicked!();
+		Assert.AreEqual( 14, lab.Kinds[ParkResearch.Upgrade].CurrentProject );
+
+		Arrow( screen, 0xd2d07, 0xd2d04 ).Clicked!();
+		Assert.AreEqual( 0, lab.Kinds[ParkResearch.Upgrade].CurrentProject );
+
+		var seen = new List<int>();
+
+		for ( var i = 0; i < 4; ++i )
+		{
+			Arrow( screen, 0xd2d07, 0xd2d04 ).Clicked!();
+			seen.Add( lab.Kinds[ParkResearch.Upgrade].CurrentProject );
+		}
+
+		CollectionAssert.AreEqual( new[] { 8, 10, 14, 0 }, seen );
+	}
+
+	/// <summary>
+	/// <b>Only the effort sliders tell of their thumb's press and release</b> (the 0x801 and 0x802 arms, which the handler
+	/// takes after excluding the work-load slider, <c>0xd2d10</c>, from them): the work load's thumb says nothing.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the work-load slider's two hooks wired as the efforts' are.</remarks>
+	[TestMethod]
+	public void OnlyTheEffortSlidersTellOfTheirThumbs()
+	{
+		var screen = Open( new UI.WindowStack(), FreshLab(), ability: 3 );
+
+		Assert.IsNull( Slider( screen, 0xd2d10 ).ThumbPressed );
+		Assert.IsNull( Slider( screen, 0xd2d10 ).ThumbReleased );
+
+		foreach ( var row in UI.ParkResearchScreen.Rows )
+		{
+			Assert.IsNotNull( Slider( screen, row.Slider ).ThumbPressed, $"{row.Slider:x}" );
+			Assert.IsNotNull( Slider( screen, row.Slider ).ThumbReleased, $"{row.Slider:x}" );
+		}
 	}
 }

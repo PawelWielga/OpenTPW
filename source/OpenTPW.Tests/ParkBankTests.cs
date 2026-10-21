@@ -939,7 +939,7 @@ public class ParkBankTests
 		Assert.AreEqual( (100000 - bounce.BuildPrice - tours.BuildPrice, 3), (bank.Balance, file.TicketsSpent) );
 
 		Assert.AreEqual( 1, player.TicketsUnspent );
-		ParkBuilding.PayFor( bank, eruption, player );
+		Assert.AreEqual( "no golden tickets", ParkBuilding.PayFor( bank, eruption, player ), "nothing was spent, and it says so" );
 		Assert.AreEqual( (100000 - bounce.BuildPrice - tours.BuildPrice, 3, "1170 1200"),
 			(bank.Balance, file.TicketsSpent, string.Join( ' ', file.RideIds )), "too few: built free, nothing spent" );
 

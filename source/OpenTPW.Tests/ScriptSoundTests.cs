@@ -444,7 +444,10 @@ public class ScriptSoundTests
 			var volumes = new HashSet<int>();
 			var pitches = new HashSet<int>();
 
-			for ( var turn = 0; turn < 2000; ++turn )
+			// Ten thousand turns: the chain is unseeded, and from the third variation 1 and 2 follow one time in five, so
+			// the three-to-one bound below fails by chance one run in a hundred at two thousand and in no run at ten thousand,
+			// while a doubled zone counted once (two to one) still fails it.
+			for ( var turn = 0; turn < 10000; ++turn )
 			{
 				var (before177, before179) = (gates.Variation, speaker.Variation);
 				var made = (gates.Samples, speaker.Samples);

@@ -61,16 +61,21 @@ filed the items that cite it.
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
   `wateride`, `bouncy`, the sideshows `hyenas`, `junspray`, `arc2x3`, `squark`, the features `bigpalm`, `supbog`, `toilet`.
   `AnimationFile` reads them (Q599) and only the advisor poses them; `LobbyModel.Pose` counts the rest, `ANIM_SCALE_TRACK`.
-  Three clips carry nothing else and so read as no clip (`IsValid`): Lost Kingdom's `tvsime` and `tvsims`, fantasy's
-  `sign1c`. Pose them on every model a clip moves (`NodePoser`, `MeshRotator`) and confirm one of each kind beside
+  Three clips carry nothing else (Lost Kingdom's `tvsime` and `tvsims`, fantasy's `sign1c`): `TryLoad` reads them as no
+  clip (`IsValid`), while the rides' and features' direct reads take them (`tvsime` and `tvsims` reach `NodePoser`).
+  Before a track's first key no scale is set and the node keeps the lengths its matrix holds after the turn (21 tracks
+  start past frame 0, three in Lost Kingdom: `volcanol` node 1, `wateridec` nodes 15 and 16; `models.md`, "Scale"). Pose them on every model a clip moves (`NodePoser`, `MeshRotator`) and confirm one of each kind beside
   the original's frames.
 - [ ] **Q609. Build the advisor's row 19, message 0x13 (Q602's rest).** From Q602 (`advisor-park.md`, "The mechanics'
   patrol areas"). A topic on the polled rows' machinery: months from tick nought by 30 days at least 13, mechanics at least
   3, a mechanic with an area (not the whole map), the share of `mType` 9 cells inside a mechanic's rectangle, ( 100 -
-  share ) x 5, nought below 300; three lines from response 55, mode 2, props (5, 0). Take
-  `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` off row 19. Confirm on Q708's load (Alexah's jungle `New Save`, `q707/gms-none.dat`,
-  loaded on 19004): `poll message=19 ... score=325 ... tick=19084`, sample 57 in the hard hat, and the hint `0x13a` left
-  waiting as the original's (`q707/orig/O2`, `q602/orig-R1`).
+  share ) x 5, nought below 300; three lines from response 55, mode 2, props (5, 0). Full Simulation only (the row's
+  `+0x0c` is 0: `FullSimulationOnly`); a park with no `mType` 9 cell has a share of nought (`0x004cd6df`), so it scores
+  500 and is said (no divide). Take `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` off row 19. Confirm on Q708's load (Alexah's jungle
+  `New Save`, `q707/gms-none.dat`, loaded on 19004): `poll message=19 ... score=325 ... tick=19084` and sample 57 in the
+  hard hat. The hint `0x13a` left waiting as the original's needs row 257 too (Q713: its sample 525 holds the original's
+  advisor from 19040 to 19076, `q602/orig-R1/line.log`), so with row 19 alone this game still says `0x13a` on 19059 and
+  sample 57 later than 19084: say so, or build after Q713 (run 7 review, `review7/q602/FINDINGS.md`).
 - [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
   the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
   (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to
@@ -78,8 +83,8 @@ filed the items that cite it.
   `+0x2c` and makes the sections, their collision objects and buoys (`ParkTrackRideTable`); a closed loop with the open
   guard opens the ride, and a later queue edit opens a closed valid one (the tail `ride-operation.md` cites). Decode
   first what it leaves unread: which `gk_trck*`/`wr_trck*` model a piece draws, a piece's cost and refund,
-  `FUN_0052c6f0`/`FUN_0052ccb0`. Confirm on `q581/karts.TPWS` by the same clicks as `q581/orig` (stations at (32,25)
-  and (20,20), loops to (34,29)/(28,29) and (22,23)/(16,23)): sections and buoys against `q581/orig/A-track.log` and
+  `FUN_0052c6f0`/`FUN_0052ccb0`. Confirm on `q581/karts.TPWS` by the same clicks as `q581/orig` (bought on preview
+  cells (32,25) and (20,20), whose station sections are (30,25)/(32,25) and (18,19)/(20,19); loops to (34,29)/(28,29) and (22,23)/(16,23)): sections and buoys against `q581/orig/A-track.log` and
   `D-track.log`, and the pieces photographed beside the original's (`B-5-closed.png`, `D-13-boats.png`).
 - [ ] **Q588. Dino Karts race for guests.** After Q587. The -4 record (`Bumper_LayRide`'s grid and start buoys, the
   template's 3 laps, 2048 arrival), `BUMP 7` to state 1 and the race's first buoy, `BUMP 4` a kart a rider (mesh
@@ -89,12 +94,27 @@ filed the items that cite it.
   (`FUN_00549c60`), a kart's height over the track. Confirm against `q581/orig/C-track.log` (the grid, 9 to 16 and 8,
   the timer -3 to 0, state 3, the next kart at the centre) and a frame of a kart on the track (`C-4-race.png`). Moves the
   website's rides list.
+  - **Note (fork watch 2026-10-21, verify-world-other L6):** a loaded ride gets the race's first buoy back from the track-ride
+    loader's close chunk, type 6 (`0x00543928`, `saves.md`, "The close"): for BumperType -4 (this ride), after the handle check, it walks
+    the buoy chain from `+0xa8` to the first buoy after the start buoy (flag 4) not flagged 2, wrapping, into `+0xa4`. Build that
+    on load of a ride saved open; the writer never saves `+0xa4`.
 - [ ] **Q589. Splish Splash runs for guests.** After Q588. The -5 record (one start buoy, unload point a third of the
   way to it, 512 arrival, 64 boats), `BUMP 7` straight to state 2, a boat carrying the whole boarding list straight to
-  the race, one lap, removed at the unload point with the ride left at 2, and the boat's spin (`+0x58` set at a rim or
-  an obstacle, × 0.998 a tick, turn `+0x58 / 128`; the term the contact sets is not read). Confirm against
+  the race, one lap, removed at the unload point with the ride left at 2, and the boat's spin (`+0x58` moved at a rim or
+  an obstacle: p, ±48 × a term not read, when the old spin has p's sign, else old + p; × 0.998 a tick, turn `+0x58 / 128`; the term the contact sets is not read). Confirm against
   `q581/orig/D-track.log` and `D2-track.log` and a frame of a ring in the channel (`D-13-boats.png`). Moves the
   website's rides list.
+  - **Note (fork watch 2026-10-21, verify-world-other L6):** as Q588's: BumperType -5 takes the same close-chunk arm
+    (`0x00543928`, `saves.md`, "The close"), the race's first buoy into `+0xa4` for a ride loaded open.
+- [ ] **Q726. The karts' and the water ride's track add-ons and hills.** From the Q581 review (`park.md`, "The karts'
+  and the water ride's track, buoys and race", "Not read" lists the add-on sections (types 12 and 13) and the hills
+  (`gk_trckH*`)). Lost Kingdom ships three track add-ons in `jungle/upgrades`, each `UpgradeType 1`: `lavajump` 1500 and
+  `mammtunn` 1501 for Dino Karts (`AddOn.UpgradesId 1150`), and `watertun` 1502 for Splish Splash (1160). Each lays a
+  section 12 or 13 (`TrackRide_AddSection`, jump-table arms `0x0054b7e4` and `0x0054b86d`, each `mov ebp,0x100` then the
+  straight's arm), so its rectangle carries flag 0x100, which drives `Bumper_StepCar`'s add-on arm (the object's `+0x10`
+  == `0xdac`, `FUN_00548e80` at `0x00548d11`, `0x00548daa`, `0x00548e1c`). Q587 to Q589 do not ask for it, and Q512 and
+  Q513 cover only the buy list, the snap and the window. Decode the add-on arm and the hills, build them (or count them
+  with `Unimplemented.Report`), and confirm one of each against the original.
 - [ ] **Q592. The cheat table's twelve rows.** From Q591 (`park-engine.md`, "The cheat table"): each is counted on its key's
   release with Alt alone (`Level.CheatRows`: `CHEAT_RESEARCH`, `CHEAT_MONEY`, `CHEAT_LOCAL_TICKET`, `CHEAT_GLOBAL_TICKET`).
   Build them as the original's after Q720 settles whether the keypad's digits reach their rows and the cheat flag's
@@ -203,6 +223,12 @@ filed the items that cite it.
   `ui.wad` holds one mesh with two-sided pairs, `lobby.wad` 43, the advisor 7 (`q586/twins-sweep.txt`). Read whether
   the terrain (`FUN_0056f670`), the paths, the sea, the build markers and the people's and particles' sprites are culled
   in the original, and cull what it culls; confirm a UI model with two-sided pairs in both games.
+  - **Note (fork watch 2026-10-21, verify-audio-ui M2):** the object window's preview is culled in both. The original puts it
+    in render list 1 with diag(1, -1, 1, 1) (flag `0x200`, `0x0045bed0`; `0x0057a260`), its entries carry `0x2000000`
+    (`0x0057a890`) and take `ClipToScreen` mode 2 (`ui.md`) after the same face test as every model. Ours is a `LobbyModel`
+    (`ParkObjectPreview.cs:250`), culled since Q586, and by orientation keeps the same side; not photographed. Settle it with
+    a preview beside the original's, a ride window's asymmetric `P` model (Lost Kingdom's `Pcoaster1` or `Pspider`). The
+    advisor is the same path (`0x00468dc1`, `0x00468ded`).
 - [ ] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
   what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
   turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a
@@ -749,10 +775,12 @@ filed the items that cite it.
   `RideNodes.Follow` poses a thing's node tree for its particle records through `NodePoser`, which since Q561 carries a
   node along its route and since Q583 turns it to face along it, and through which `LobbyModel.Pose` now draws every
   route clip; `RideNodes.Stored` still counts a carried find of a node on a route, or under one, as
-  `RIDE_NODE_ON_A_ROUTE` (its remarks say the route is not followed): check first whether the count is now stale. Lost Kingdom's route clips (`bus`, `Ferry`, `seaplane`) start no
-  particle record; whether any other clip with a route carries one is not measured. Measure it across the shipped
-  scripts and clips (`cliptracks`, the `.RSE` corpus); where one is reached, pose path tracks in `NodePoser` as
-  `LobbyModel` does and drop the count.
+  `RIDE_NODE_ON_A_ROUTE`; the count is stale, as the node found is now carried and turned along its route. Every Lost
+  Kingdom run reaches it: the first reach is that run's vehicle's sound start (the bus's `mk_bus_1`, the seaplane's
+  `mk_plane_1`, the ferry's `mk_ferry_3`; 116, 178 and 94 counts in Q583's runs), not a particle record; whether any
+  other clip with a route carries a particle record is not measured. Measure it across the shipped
+  scripts and clips (`cliptracks`, the `.RSE` corpus); then drop the count, so the gap census no longer overstates the
+  unbuilt work.
 - [ ] **Q574. One node tree for every channel of a drawn model.** From the run 6 review of Q554 (`VERIFY-13.md`, Q554 2). The engine
   keeps one matrix per node for all of a model's channels; ours poses a clip that moves nodes through `NodePoser` and
   places every mesh from it (`LobbyModel.PlacePosed`), and a clip that only turns through `MeshRotator`, so a
@@ -1079,8 +1107,9 @@ filed the items that cite it.
   (`verify-audio-lips-video.md` lead 5). The original plays `cat_ui` `0x1D` when the buy screen refuses a row
   (`FUN_004ac270` at `0x004ac7f6`: a mystery row short of tickets, a row dearer than the balance), when a Ctrl+click
   Clone is dearer than the balance (`FUN_004879d0`, `0x00487b46`), and from `FUN_004af480` (`0x004af5d6`, a control of
-  window stream `0x00755750` not identified). This game refuses a row silently and counts nothing, and Clone has
-  nothing behind it. Confirm: the sound caught by the disk driver on a refused row.
+  window stream `0x00755750` not identified). The buy screen's refusal, both arms, is built (Q709, `ParkBuyScreen.Chose`,
+  `RefusedSound`), not yet caught by the disk driver; `FUN_004af480` is not built, and Clone has nothing behind it.
+  Confirm: the sound caught by the disk driver on a refused row.
   - **Note (fork watch 2026-10-16, `verify-audio-fx.md` A3):** the list rows' click sound is built (`UiSounds`,
     `WindowStack`'s hook `0x00485780`): the control's message `0x100` handler (`0x004857b8`) plays `Select3` (189,
     `0xbd`) when style bit `0x10` of `[this+0x48]` is set (`0x004857cb`), else `0x1f`. Open: which park list rows the
@@ -1091,6 +1120,14 @@ filed the items that cite it.
     window's **Buy Upgrades list** (`FUN_004ae560`, handler `0x004ae430`, rows from `FUN_004ae140`), and the `0x1D` it plays
     (`0x00486ae0`) is for an **add-on** row dearer than the balance only: a level row dearer than the balance gives no cue at
     all (`0x004af4e9`, strictly below). `ride-operation.md`, "The ride window's Buy Upgrades list". Q512 builds the list.
+  - **Note (fork watch 2026-10-21, verify-audio-ui M1):** no list row receives `0x100`, so a row click is silent in the
+    original, as ours. The control factory's table (`0x0065e4f2`, types 1 to 13) builds a button for type 2 only
+    (`0x006688b3`, one call, `0x0065deae`); `0x100` goes out at nine places in the image: the button release
+    (`0x006691f9`) and eight keyboard paths (`0x0048d83b`, `0x0049973e`, `0x0049ec53`, `0x004a6df5`, `0x004b640a`,
+    `0x004b9f06`, `0x004bb020`, `0x004bfc29`); the row templates build types 1, 6 and 9 only (18 calls). The style `0x10` those
+    rows carry is never read by the click hook (`0x00485780`). So the 2026-10-16 note's open sentence ("which of them
+    receive `0x100`") is answered: none; nothing to build for rows. Our rows go through `LeftClickedAt`, silent
+    (`WindowStack.Release` clicks only for a `UiButton { Clicks: true }`).
 - [ ] **Q711. A list heading clicks Select3 (`0xbd`) in the original; ours clicks `BUTTON01` (`0x1f`).** From the fork watch,
   2026-10-19 (`verify-audio-fx.md` M2, "MISS (live in our code)"; `docs/exe/hud.md`, "Which window the click sound is for").
   **Insert next to Q402**, whose 2026-10-16 note asks which list rows make style `0x10` and whether ours set `Toggles`: this
@@ -1520,13 +1557,147 @@ filed the items that cite it.
   both games' rest level each sweep from tick 755 (`q134/orig/watch.py`'s reader; `staff`) and find where the drain
   or the walk to the room parts (`ride-operation.md`, "The staff turn"; Q326's search, arrival and rest).
 
-- [ ] **Q607. A thing made on the id of a sold object the file keeps.** From Q606. The park file's writer cannot take
-  out a sold object it cannot write (a tracked ride, a kart or water ride with cars: `SAVE_PARK_OBJECT_SOLD`, Q420's
-  gap), so the file keeps that object's id, and a guest, a hire, a buy or a vehicle made on the id since the sale is
-  counted `SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING` and left out of the file (`Level.WritePark`, `ParkState.WrittenObjects`;
-  `saves.md`, "OpenTPW's writer, an id given out again"). Reached by selling a coaster a loaded park holds, then
-  playing on (not run). Goes with the writer taking such a ride out; until then, confirm a save after the sale and one make
-  counts the gap once and loads back without the made thing.
+- [ ] **Q607. A thing made on the id of a sold object the file keeps.** From Q606. Two reaches. (1) The park file's
+  writer cannot take out a sold object it cannot write (a tracked ride, a kart or water ride with cars:
+  `SAVE_PARK_OBJECT_SOLD`, Q420's gap), so the file keeps that object's id. (2) A file whose things go out as the file's
+  (`SAVE_PARK_THINGS_AS_THE_FILE`: its clock, scripts or models did not read, as the RSYS module of Alexah's jungle Full
+  Simulation saves does not walk closed, Q167) keeps every object it holds, sold or not. In both, a guest, a hire, a buy or
+  a vehicle made on the id since the sale is counted `SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING` and left out of the file
+  (`Level.WritePark`, `ParkState.WrittenObjects`; `saves.md`, "OpenTPW's writer, an id given out again"); the original
+  writes it and drops the object. Reach (1) by selling a coaster a loaded park holds, then playing on (not run); reach (2)
+  by any sale in a loaded Full Simulation save of Alexah's, then a make on the id (the next make after the sale, or a
+  later one once the park grows past the ids freed above it), and it recurs in every save of that park. What is written
+  still names the left-out thing as the kept object: the other guests' queue links (both reaches) and, in reach (1), the
+  ride's head and nominee, script slots, a handle, the arrival slots, the mechanic's cursor and the region effects; what
+  the original or our reader does with such a file is unproven. Reach (2) goes with Q167 (read that module), reach (1)
+  with the writer taking such a ride out; until then, confirm a save after the sale and one make counts the gap once and
+  loads back without the made thing, and that nothing in the file names the id.
+- [ ] **Q727. A coaster's counted gaps (Global 0's measure).** From the Q706 review (VERIFY-6 F2). Q706 built Global 0's
+  measure and counted eight reached paths, none of which has a queue line. Chak Atak (`coaster1`) is a shipped jungle
+  coaster, so a Lost Kingdom player reaches the first of them; each leaves its coaster with no height (Global 0 reads
+  nought for it). (1) `COASTER_PYLON_KNOTS`: a pylon type whose model has more than one knot a node (Chak Atak's three:
+  In, Centre and Out) is not posed (`ParkCoasterHeights.Measure`; `ParkCoasterPylon.Posable`); decode which knot the
+  track passes through and give the chain its knots from it. (2) `COASTER_LOOP_PYLON`: a loop pylon's knots and handles
+  (`Coaster_KnotHandles`' other arm for type flag `0x4000`, its rotation `+0xf8`; `ride-operation.md`, "A coaster's
+  highest track point", step 5, "not read"). (3) `COASTER_STACKED_PYLON`: a stacked pylon (a node whose `+4` is not
+  nought; second rail, one knot, the height of the node it names plus H plus `+0xc4`). (4) `COASTER_TRACK_UNSAVED`: a
+  coaster made here has no model instance in the module, so no saved track; build the chain for a coaster the player
+  lays (Q406's track tool) and for one past the module's first. (5) `COASTER_TYPE_UNREAD`: a coaster whose pylon,
+  `fCurviness` or station nodes do not read. (6) `COASTER_STATION_NODE`: a station node missing from the coaster's model
+  (track nodes 1 to 3). (7) `ANIM_SLERP_OPPOSITE_KEYS`: two rotation keys within 0.001 of opposite take another arm of
+  `Anim_SlerpOnSineTable` (`0x004742a0`), which no shipped pylon's clip reaches; blended here by `Quaternion.Slerp`. (8)
+  `SAVED_COASTER_HEADER_UNREAD`: a coaster past the module's first, or whose header does not read
+  (`ParkCoasterHeights.Measure`, `ParkRideChoice.CircuitClosed`). Also settle the lead VERIFY-6 M3 left open:
+  `ParkCoasterHeights.Chain` appends the closing node at the station's start for every saved coaster and never reads
+  `SavedCoaster.CircuitClosed`; a save can hold an unclosed coaster (`ParkRideChoice.cs:120-123`), and whether the
+  original chains such a track's pieces before the type-7 node was not read (`Coaster_RebuildTrack` `0x0043eb70`).
+  Decode it in Ghidra, or read the original's `+0x110` with an unfinished coaster saved. Confirm each built piece
+  against the original's `+0x110` (`original/coaster.py`).
+- [ ] **Q728. What shows the advisor's head again at a second ticket line (a live read).** From the run 7 review
+  (VERIFY-7 Q595 2). The original's clip change (`FUN_00472f60`) shows the nodes the OUTGOING clip's tracks name
+  (`FUN_00472310` at `0x004730a9`) and hides the incoming hide list (`FUN_00472d70` at `0x00473117`). Clip 20's hide
+  list and tracks name no node 0 (`Bug Head`), which a clip word's `0x10000` hid on clips 19 and 20, yet the original's
+  film shows the head in the helmet within the first 633 ms of a second ticket line (`q707/orig/O/film/sheet2.png`). The
+  likeliest cause is the animation object's `+4 & 0x8` path, which shows every node (`0x00472345`..`0x00472398`). Read
+  `[[0x0079044c]+4] & 8` in the running original (slot 1's object: `FUN_00429fe0` returns `[slot*0xb0 + 0x0079039c]`)
+  and settle it. Then, and not before, change `AdvisorModel.StartClip` to the original's rule (show the outgoing clip's
+  track nodes, or every node when the bit is set, then hide the incoming list): a pure outgoing-tracks rule alone would
+  hide his head for the first 633 ms of the second line, which the film contradicts. Also not read: the original's
+  `0x80000000` locks against OpenTPW's unconditional shows, and whether `Dress`'s hidden props include a node in clip
+  16's tracks (the map, node 6) on the slot 1 model's first clip, where the original's channel at `0xc` skips
+  `FUN_00472310` (`0x00473096`).
+- [ ] **Q729. A rotation track's last key, held or wrapped.** From the run 7 review (Q599 4's lead). `Anim_FindKey`
+  (`0x00470b60`) takes key 0 as the upper key past a track's last key where its `param_5` is non-zero
+  (`0x00470bee`..`0x00470bf9`), and the rotation call passes 1 (`0x00471c45`), so the original's rotation sampler WRAPS
+  to key 0 between a track's last key and the clip's declared end, where position and scale (param_5 0) hold the last
+  key. `AnimationFile.RotationTrack.Sample` holds the last key (`AnimationFile.cs`, "frame >= FrameIndices[^1]"). Count
+  the rotation tracks whose last key falls before their clip's declared end (a corpus scan over all 2,129 `.md2`); where
+  there are any, and Lost Kingdom's reach one, make `Sample` wrap and confirm one beside the original's frames;
+  otherwise say in `park.md` that none exists and the held last key is dead by CONTENT.
+- [ ] **Q730. The advisor line's wiring has no seam.** From the run 7 review (Q595 4's rest). Not tested, for want of a
+  seam in a unit test: the three `_glints.SetCount( 0 )` calls in `Advisor` (not Busy, `Say`, `Speak`),
+  `AdvisorModel.StartClip`, `ParkPeople` passing the sample's own lip where a row names another, and
+  `ParkGoldenTickets.Sweep`'s order against `TakeTheRidesTurns`. They need an `Advisor` built without its model and
+  audio, or the park run (`parkrun.py`) with the bug put back (`mutate.py`).
+- [ ] **Q731. The swear filter's load after a profile read.** From the run 7 review (Q709 3, VERIFY-11). `FUN_005afd70`
+  (`0x005afeba..0x005aff37`): with `+0x25` set, open `Data\Language\<language>\swears.txt` (the language from the
+  registry's `Language`, `0x005c0d00`: 0x409 "American", else "English"); when it does not open, clear `+0x25`
+  (alloweds.txt's answer is ignored, `0x005d3226`). Build the same test on `PlayerFile.FilterSwearing` after a read. A
+  disc copy (the reference install, `~/Games/TPWorld`) has no `Language/american/swears.txt` and writes 0; the US
+  installer copies the lists there from `USEnglish/Filter/American` (`USEnglish/Setup/bffl.fls`), so an installed game
+  keeps 1. Confirm: gms.dat offset 0x13 after a park save equals the original's on the same folder. (Said at the site:
+  `PlayerFile.FilterSwearing`'s comment, "NOT MATCHED". The docs are corrected: `docs/exe/saves.md` `+0x25` row,
+  `docs/exe/hud.md` "Spending golden tickets", "The save".)
+- [ ] **Q732. A moved ticket ride meets the money test.** From the run 7 review (Q709 4, VERIFY-11). In the original the
+  move tool's put-down (`0x00523940..0x005239fc`) has no ticket exemption: `0x52398b call 0x52fb90( [item+0x1b8] )` sets
+  the run price to the full price, then the shared cell test (`0x528a70` -> `0x532fc0(0x204,0,0)` -> `0x535670(4,0)`,
+  `0x00535905..0x0053592b`) refuses where the price is non-zero and above the bank (latch `0x816d50`, `0x816d5c`). Only
+  the carry pass (`0x005235e6..0x00523613`) sets the price to nought for an unbought ticket ride. `ParkBuilding.Build`
+  skips the money test for a mystery ride on every put-down and cannot tell a move from a carry. Correction: keep the
+  skip to a carry from the buy list (a flag from `PickUp`/`Hold`, the move tool). Not read: which of
+  `0x816d50`/`0x81b604` the move put-down's click honours (assumed the carry's, as ours already does for a cash ride's
+  move). Reach: only a park holding a ticket ride the current player has not bought (a park file from another profile,
+  the console's `buy`); dead by CONTENT in normal play. Confirm: in the original, move an unbought ticket ride with the
+  bank under its `+0x1b8`. (Said at the site: the comment in `ParkBuilding.Build`.) Test seam gap:
+  `ParkBuilding.Build`'s call of `PayFor` after a ride stands cannot be reached in a unit test, because
+  `ParkObjects.Place` needs a graphics device (a null reference inside `LobbyModel`, caught as "would not load"); the
+  test pins the click, the failed put-down and `PayFor`, and `Build`'s own call is covered by the game run only. A seam
+  (an injectable stand-the-ride step) in `ParkBuilding` would close it.
+- [ ] **Q733. `tools/play-the-original/tpw-setup.sh` builds a disc copy, not an installation.** From the run 7 review
+  (VERIFY-11, Q709 3's new lead). `tpw-setup.sh:158` does `cp -r "$DISC"/. "$DEST"/` and nothing of the installer's
+  overlay: `USEnglish/Setup/bffl.fls` ("LFFB", 726 records of 29 bytes from offset 13, then a 564-entry string table)
+  maps `USEnglish\Filter\American\{swears,alloweds}.txt` to `Data\Language\American\` (sizes 0xa06 and 0x414) and
+  `USEnglish\Meshes\American\{bankrupt,congrats,paused}.MD2` to `Data\Language\American\` as well (the meshes are
+  byte-identical to `Data/Language/English/`'s). The script writes `"Language"=dword:00000409` (`:248`), so the original
+  looks under `...\Language\American\`. Effect: the reference install (and `~/Games/TPWorld`) writes the swear byte 0
+  where an installed game keeps 1 (Q731). Fix the script to apply the overlay (player-facing: rule 11 territory), and
+  re-take any reference that depended on it. **Unsettled lead:** whether the original looks for
+  `paused/congrats/bankrupt.MD2` under `Language\American` (a `language\default` string sits at file offset 0x346238);
+  if it does, the reference install shows those signs differently from an installed game. Decide it in the listing
+  before any claim.
+- [ ] **Q734. A test for `Level.TrackWritable`'s `!state.DeletedSinceLoad.Contains` term.** From the run 7 review of
+  Q606 (VERIFY-13, Q606 4). Tried and not written: a Hot Pot (the one jungle ride with a track record) and a kart ride
+  bought on a sold shop's id both pass with the term removed, because on Lost Kingdom data a bumper-family ride made
+  always has a record here, so the file's judgement (`FileRideWritable`) and the made one agree; the karts are refused
+  earlier by the writable predicate. Needs a case where the two differ: a ride made whose record is not in this park's
+  table on a reused id (another theme's bumper family, `HasRecord` false), or Q420's teardown. Write it with that case
+  and show it failing with the term removed.
+- [ ] **Q735. A walk rider's saved sprite.** From Q585 5 (VERIFY-14). `ParkPeople.Written` keeps a sprite for a rider of
+  a thing with `mFlags` `0x20` (every walk thing), and `ParkWorld.PutSprite` writes it at the navigator with the
+  picture's height and the person's facing. The original's files (`q585/walkriders-saves.out`, 38 walk slots) hold **no
+  sprite** for the 23 riders the placer hid (carried under action 1 or 4: `FUN_004f9ed0` frees it, handle 0) and, for
+  the other 15, the placer's point with the height above the ground and the slot's facing (`ride-operation.md`, "Where a
+  walk's rider is drawn"). Build it: write the sprite from `ParkGuestSprites.WalkedOnRide` (its point, its height less
+  the ground, the slot's facing) and none for a hidden rider. Harmless to a load in either game (both re-place every
+  frame; the original's hide frees a loaded sprite again; ours ignores the saved place), so this is a byte difference in
+  a park file, not a behaviour. Said at `PutSprite` and in `saves.md` ("A walk's rider is saved with a sprite where the
+  original saves none or another place, a deviation"). Confirm: a park saved with the Mayan Spinner and the Jungle Spray
+  holding riders, the sprite table beside the original's.
+- [ ] **Q736. Test seams not closed by Review fixes, group G.** From Q585 6 and Q586 F3 (VERIFY-14). (a)
+  `ParkPeople.ThingRemoved`'s own ask of `ParkGuestSprites.WalkedOnRide` (the put-off sound's place for a walk rider)
+  has no seam: its result goes only to `ParkAudio.Current?.PutOff( at )`, which needs a device. The pieces are tested
+  (`ParkPeople.SoundFor` with `walked`, `ParkPeople.PutOffPoint`), but deleting the ask in `ThingRemoved` (the old
+  navigator's-feet point) leaves every test green. A seam (the point returned to a caller, or an injectable sound sink
+  on `ParkPeople`) would close it. (b) `ParkGuestSprites`' census line (`Standing`'s `walked is { Hidden: false } w ?
+  w.At`, ~1722) is read by the console's `sprites` census only; no test reads it. (c) `Material.SetupResources` hands
+  `DepthStateFor` and `RasterizerStateFor` to the device; the call itself is covered by the game run only (a device is
+  needed to build a pipeline). (d) `LobbyModel`'s call of `Material.CullModeFor` through `DrawFlags` is tested; that
+  every model path goes through `DrawFlags` is not (Q608 reads which draws do not).
+- [ ] **Q737. A placed voice out of range releases its output, and a loop comes back with a fresh one.** From the fork
+  watch 2026-10-21 (verify-audio-ui L1). OpenTPW plays a placed voice on unheard when it is out of range
+  (`audio.md:265`, a recorded gap with no queue line and no `Unimplemented.Report`). The original gives the channel up:
+  the range failure sets `0x800` and stops the output (`0x006bca10` -> `0x006bca70`), `0x006bbe40` clears the handle
+  (`+0x24`) and the playing bit `0x1` (the terminal `0x10` only without `0x40`, `0x800`, `0x4000`), and the output-end
+  callback runs `0x006bb7c0` -> `0x006c6260` -> `0x006c8e50`. A looped placed voice (flags `0x6`), in range again, is
+  built a fresh output at the sample's start (`0x006bd800` -> `0x006bc410` -> `0x006b9ab0` with handle 0; measured
+  Q565). Reach: Lost Kingdom's looped placed voices (the Round Fountain, `audio.md:1108`). Build it for the placed
+  voices that are no script's and no ride's scream (those are already the original's, Q557, Q563-Q565), and count what
+  is unbuilt with `Unimplemented.Report`. Confirm: the fountain's loop caught by the disk driver as the camera leaves
+  its range and returns, beside the original's (does the sample restart from its start).
+- [ ] **Q738. `Advisor.Speak` has no test that it uses its gesture row.** From the run 7 review (fix group H;
+  `World/Advisor/Advisor.cs`). Testing it needs the audio (`Audio.Ready`, a `SoundCategory`) and a speaker figure. Ask
+  for a seam (the sample length and the clip table handed in) so a test can see that a line given row N plays the row's
+  clips, not the random chain. The sweep's call into the speaker is tested (`ParkPeople.SpeakResponse`).
 
 ## B. Docs and comments
 
@@ -1963,8 +2134,16 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   coaster node's `+0x124` holds, to `docs/exe/`; the build is the next session.
   - **Note (fork review 2, 2026-10-16, `verify-tours-advisor-rse.md` L12, `verify-ui-hud.md` L13):** the ride view's
     smoothing in `FUN_0042b1c0` weighs the last view by (1000 - dt) × 0.0005, a dt over 200 ms taken as 100 first;
-    leaving puts the camera on the ride's cell's centre, its yaw from `0x00522850 & 0x55` (`0x0042a1d0`). The tour
-    car's view is Q408's.
+    leaving puts the look-at point on the centre of the ride's `mExitPos` cell (`+0x38`), the ride found through the entrance
+    under the look-at point (`0x0042a340`), and the asked rotation `0x00790a38` from that cell's `mDirection & 0x55` (`0x00522850`):
+    0x01 pi, 0x04 pi/2, 0x10 0, 0x40 3pi/2, any other value left as it is (`0x0042a1d0`). The tour car's view is Q408's.
+  - **Note (fork watch 2026-10-21, verify-world-other L2):** the exit cell, not the entrance cell, is where the camera goes
+    (`0x0042a22e` reads `+0x38`; x = `(id-1) & 0x7f`, z = `(id-1) >> 7`, each `10n + 5`, the height untouched). For ten of Lost
+    Kingdom's eleven objects `mExitPos` is the entrance cell, so the old words held there; they differ for the Belly Bounce,
+    exit (52,26), mType 10, `mDirection` 0x10. Every object with a ride-end `mExitPos` in the four park files read has a
+    one-bit cardinal direction, so the yaw is set on every leave. The producer is ours already (`addresses.md`
+    `0x005292b2`, `ParkBuilding`). Not proven: whether the look-at point is still on the entrance when the view is left (else
+    `0x0042a340` answers nothing and the camera stays), nor `0x0042a560`'s answer that gates the leave.
 
 ## E. Large
 - [ ] **Q31b. The other seven object windows.** After Q31's shop window: the sideshow's, the toilet's and the rest
@@ -2043,6 +2222,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   not said above: the RSYS module that does not walk closed in the jungle saves, the `ParkGuestSprites`
   duplicate-slot throw (not run again), and the fantasy and hallow saves, which are outside the Lost Kingdom
   scope.
+  - **Note (Q606 review, VERIFY-13 / fix group F): the RSYS module that does not walk closed makes every save of that
+    park take `SAVE_PARK_THINGS_AS_THE_FILE`, and with it every sold object is kept, so a guest made on any sold
+    object's id is left out as well (`SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING`; Q607's reach 2).)
 
 - [ ] **Q405. Coasters run: their trains, motion and station.** From the fork review 2, 2026-10-16
   (`verify-coasters-run.md` L12-L17, L21). Lost Kingdom's `coaster1`, `Coaster3` and `Minecart`. The train count is
@@ -2313,5 +2495,5 @@ state machine.
 - [ ] **Q601. The gadget's date is written with the machine's culture; the original's reads "4.13.2002".** Seen in
   Q707's runs (`q707/p707t/side-by-side.png`): ours letters `GameCalendar.Now.ToShortDateString()` (`ParkGadget.ShowDate`),
   "4/18/2002" on this machine, and would letter another order on a machine of another culture; the original's frames read
-  "4.9.2002" to "4.14.2002" (`q707/p707t/orig/O/g-*.png`). Decode the original's date writer for the gadget, then write
+  "4.4.2002" to "4.29.2002" (`q707/p707t/orig/O/g-*.png`). Decode the original's date writer for the gadget, then write
   the date its way whatever the machine.

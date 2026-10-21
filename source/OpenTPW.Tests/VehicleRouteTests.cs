@@ -225,4 +225,85 @@ public class VehicleRouteTests
 		Assert.AreEqual( 30f, new AnimationFile.PathTrack { Values = [10f, 50f] }.Sample( 0.5f ), 0.001f, "near keys" );
 		Assert.AreEqual( 97.125f, new AnimationFile.PathTrack { Values = [95f, 3.5f] }.Sample( 0.25f ), 0.001f, "a quarter" );
 	}
+
+	/// <summary>
+	/// A route clip is drawn through the node tree: <c>LobbyModel.Pose</c> of the bus's <c>Busm1</c> (a route key, no
+	/// position key) on frame 100 puts the body's mesh at the place <c>NodePoser</c> finds, (604.88, 0, 39.14) in the
+	/// file's axes and so (604.88, 39.14, 0) swizzled, with its turn; left to the rotation poser it stays unposed.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the dispatch keyed on <c>PositionTracks.Count &gt; 0</c> rather than <c>NodePoser.Drives</c>.</remarks>
+	[TestMethod]
+	public void TheDrawnBusIsPosedOnItsRoute()
+	{
+		Log ??= new();
+
+		var data = GameData.Required();
+		var (file, clip) = Load( data, "levels/jungle/features/bus", "Bus.MD2", "Busm1.MD2" );
+
+		Assert.AreEqual( 0, clip.PositionTracks.Count, "the bus's clip moves by its route alone" );
+		Assert.IsTrue( clip.PathTracks.Count > 0 );
+
+		var model = (LobbyModel)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject( typeof( LobbyModel ) );
+		var meshes = file.Meshes.Select( _ => (ModelEntity)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject( typeof( ModelEntity ) ) ).ToArray();
+
+		void Set( string field, object value ) => typeof( LobbyModel ).GetField( field,
+			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic )!.SetValue( model, value );
+
+		Set( "_file", file );
+		Set( "_modelPath", "Bus.MD2" );
+		Set( "_scale", 1f );
+		Set( "_placedRotation", Quaternion.Identity );
+		Set( "<Entities>k__BackingField", meshes );
+		Set( "<Clips>k__BackingField", new[] { clip } );
+		Set( "<Animators>k__BackingField", Array.Empty<MeshAnimator>() );
+
+		model.Pose( clip, 100f );
+
+		var expected = new NodePoser( file );
+
+		expected.Pose( clip, 100f );
+
+		Assert.IsNotNull( meshes[0].LinearTransform, "the body is turned" );
+		Near( new( 604.879f, 39.144f, 0f ), new( meshes[0].Position.X, meshes[0].Position.Y, meshes[0].Position.Z ), "the body on frame 100" );
+		Near( expected.World( 3 ).Translation, model.Posed( 3 )!.Value.Translation, "the sound node is posed with it" );
+	}
+
+	/// <summary>
+	/// A route key on a node that also has a rotation key faces along the route from the key's up row, not from (0, 1, 0)
+	/// (<c>0x004720aa</c>, the track's own rotation descriptor). A cart under a path node, keyed a quarter turn of 45 degrees
+	/// about z, on a route running along z: its rows are side (0.707, 0.707, 0), up (-0.707, 0.707, 0) and forward (0, 0, 1);
+	/// from (0, 1, 0) they would be (1, 0, 0), (0, 1, 0) and (0, 0, 1). The shipped clips cannot show it: the haunted
+	/// house's <c>hauntc</c>, the one keyed route clip, keys carts that keep their up row at (0, 1, 0).
+	/// </summary>
+	/// <remarks><b>Mutation:</b> <c>NodePoser.Turned</c> answering false.</remarks>
+	[TestMethod]
+	public void ARouteKeyOnAKeyedNodeFacesFromTheKeysUp()
+	{
+		var half = MathF.Sqrt( 0.5f );
+		var route = Route( 2, new( 0, 0, 0 ), new( 0, 0, 10 ), new( 0, 0, 20 ), new( 0, 0, 30 ), new( 0, 0, 40 ), new( 0, 0, 50 ), new( 0, 0, 60 ) );
+		var poser = new NodePoser( [Matrix4x4.Identity, Matrix4x4.Identity], [-1, 0], 0, [route], [-1, 0] );
+
+		var clip = (AnimationFile)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject( typeof( AnimationFile ) );
+
+		foreach ( var property in new[] { "PositionTracks", "RotationTracks", "PathTracks" } )
+		{
+			var field = typeof( AnimationFile ).GetField( $"<{property}>k__BackingField",
+				System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic )!;
+			field.SetValue( clip, field.FieldType.GetConstructor( Type.EmptyTypes )!.Invoke( null ) );
+		}
+
+		var tilt = Quaternion.CreateFromAxisAngle( Vector3.UnitZ, MathF.PI / 4 );
+
+		clip.RotationTracks.Add( new() { TargetIndex = 1, FrameIndices = [0, 10], Rotations = [tilt, tilt], CurveIds = [AnimationFile.RotationTrack.NoCurve, AnimationFile.RotationTrack.NoCurve] } );
+		clip.PathTracks.Add( new() { TargetIndex = 1, Values = [10f, 20f, 30f, 40f, 50f, 60f], OrientsAlongRoute = true } );
+
+		poser.Pose( clip, 3f );
+
+		var cart = poser.Local( 1 );
+
+		Near( new( 0, 0, 12f ), cart.Translation, "40 of the way along its one segment, points 0 to 3", 0.01f );
+		Near( Vector3.UnitZ, Row( cart, 2 ), "forward along z", 0.001f );
+		Near( new( half, half, 0 ), Row( cart, 0 ), "side, from the key's up", 0.001f );
+		Near( new( -half, half, 0 ), Row( cart, 1 ), "up, the key's", 0.001f );
+	}
 }

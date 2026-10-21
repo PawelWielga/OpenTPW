@@ -75,15 +75,15 @@ anything now built, and neither blocks the other.
 
 ## 2. Four of the six gadget buttons do nothing - DONE 2026-09-21, five of six now open something
 
-**TICKED. Only RESEARCH still does nothing, and it is the one with nothing behind it.**
+**TICKED. RESEARCH was the last to do nothing; its screen is built in Full Simulation (Q590).**
 Buy carries the whole purchase/hire/management half; paths, queues and building by pointing are all
 laid and verified; and Info and Money now open real screens - **all four of their buildable screens
 drew in a running park and were photographed**. Research is not a category at all (`FUN_004a0840`'s
 case `0x2b` goes straight to `FUN_004aa480`, as the map does), and its one screen is six effort
-sliders over research groups: this game has **no research screen** (the lab spends its researchers' points and
-finishes projects, Q701; the advisor's lines on it and the end of research are Q702 and Q703), so there is nothing to
-put behind the button. The button and R, the shortcut to the same function, open its two message boxes (Q410) and, in Full
-Simulation with a researcher, the screen (Q590).
+sliders over research groups. Instant Action has no research screen (the lab spends its researchers' points and
+finishes projects, Q701; the advisor's lines on it and the end of research are Q702 and Q703). The button and R, the
+shortcut to the same function, open its two message boxes (Q410) and, in Full Simulation with a researcher, the screen
+(Q590).
 
 - [x] **Buy** opens `ParkBuyScreen` (stream `0x00754cf8`), which cross-links to `ParkHireScreen`
       (stream `0x00751fa8`). Both are built on the original's control **type 7**, a scrolling
@@ -261,16 +261,16 @@ and a bus**. All three are shipped fixed items, and **none of them is missing ar
 
 | Item | `Info.Id` | Where it sits now |
 |---|---|---|
-| Bus | **1600** | **Drives.** Spawns at cell (29.7, −11.5), runs its route, parks at the shelter — world (510.5, 65.5), between `BusStopA` and `BusStopB` |
+| Bus | **1600** | **Drives.** Spawns at cell (29.7, −11.5), runs its route and stops at its two shelters, world (529.1, 64.4) and (439.9, 64.8), where `BusStopA` and `BusStopB` are (Q583) |
 | Seaplane | **1602** | **Flies, lands and unloads.** Photographed on the water in the bay |
 | Ferry — **this is the cruise ship**, confirmed by Alexah 2026-09-20 | **1604** | **Sails and docks.** Photographed alongside the quay |
 | (Gates 1601, Lights 1603, End 1605 — End is three aircraft 59 units up) | | |
 
-**`ParkFixedItems` now loads gates, lights and all three vehicles.** Only the End sign is still held
+**`ParkFixedItems` now loads gates, lights and the vehicles** (the ferry and the seaplane only at their first summons, where the file names no thing for them; Q26c). Only the End sign is still held
 back. All six carry `DontApplyOffset 1` and `WhichUIType 4`.
 
 **Routes:** ferry 33 points, seaplane 33, bus 45, all open Bézier routes (type 2): 10, 10 and 14 segments, the last
-two points never sampled; both rest **exactly** on their own route, which the bus does not quite manage.
+two points never sampled; each stands on its own route.
 
 **A vehicle turns to face its direction of travel** (Q583): the route's first derivative (`Route_BezierTangent`)
 normalised, and a basis built from it (`Matrix_FaceAlongTangent`; `exe/park.md`, "Where a route key puts its node").

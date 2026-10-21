@@ -245,6 +245,55 @@ public class WalkRidersTests
 	}
 
 	/// <summary>
+	/// <b>A ride being sold still answers for its walk</b>: the sale unlinks the object before its riders are put off
+	/// (<see cref="ParkBuilding"/>, then <see cref="ParkPeople.ThingRemoved"/>), so the walk holding a rider is found
+	/// through the thing going, not the park's objects, and the put-off sound plays where the placer left them
+	/// (<c>FUN_004faa00</c>; run 7 review, the desk run that heard it at the feet).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the thing going not asked (the walk looked for among the park's objects alone).</remarks>
+	[TestMethod]
+	public void ARideBeingSoldStillAnswersForItsWalk()
+	{
+		var data = GameData.Required();
+		using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		using var clock = new SimulationClockScope();
+		var previousState = ParkState.Current;
+		var previousPeople = ParkPeople.Current;
+		ParkPeople? people = null;
+
+		try
+		{
+			var state = new ParkState( world );
+			var script = new RideScript( Build( walkSlots: 2, 0 ) );
+
+			people = new ParkPeople( world, state: state, scriptFor: id => id == 13 ? script : null, random: new Random( 1 ),
+				behaviourRandom: new Random( 2 ), rideRandom: new Random( 3 ), staffRandom: new Random( 4 ) );
+
+			script.RestoreRiders( new SavedScript( 1, 0, 0, [], 0, 0, 0, [], 0, 0, 0, 0, 0, Walk:
+			[
+				new SavedWalkSlot( 1, 2, 2, 16, 5000, 5700, 29, 1, (short)RideScript.WalkState.Carried, 1, 0 ),
+				default,
+			] ), reading => reading != 0 ? reading - 5000f : null );
+
+			Assert.IsTrue( people.TryWalkOf( 29, out _, out _ ), "held while the ride stands" );
+
+			state.RemoveObject( 13 );
+
+			Assert.IsFalse( people.TryWalkOf( 29, out _, out _ ), "the park's objects no longer name the ride" );
+			Assert.IsTrue( people.TryWalkOf( 29, out var holder, out _, goingThing: 13 ) && holder == script, "the thing going does" );
+			Assert.AreEqual( true, ParkGuestSprites.WalkedOnRide( people, 29, 13 )?.Hidden, "action 1 hides the rider: heard at the origin" );
+		}
+		finally
+		{
+			people?.Delete();
+			Entity.ApplyDeletions();
+			typeof( ParkPeople ).GetProperty( "Current", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic )!.SetValue( null, previousPeople );
+			typeof( ParkState ).GetProperty( nameof( ParkState.Current ) )!.SetValue( null, previousState );
+		}
+	}
+
+	/// <summary>
 	/// <b>A sweep hands a carried guest the placer's animation, and frees a hidden one's bubble</b>
 	/// (<c>FUN_004f9e60</c>, <c>FUN_004f9ed0</c>): in the stock park, guest 29 riding thing 13 carried under action 6 is on
 	/// animation 5 (script 140) after eight sweeps; carried under action 1, the bubble a thought gave them on the sweep
@@ -310,6 +359,192 @@ public class WalkRidersTests
 			Entity.ApplyDeletions();
 			typeof( ParkPeople ).GetProperty( "Current", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic )!.SetValue( null, previousPeople );
 			typeof( ParkState ).GetProperty( nameof( ParkState.Current ) )!.SetValue( null, previousState );
+		}
+	}
+
+	/// <summary>
+	/// Runs <paramref name="body"/> with a stock park's people whose Mayan Spinner's script (the <c>Lookout</c> model on
+	/// (57, 23), its players loaded) holds <paramref name="slots"/>, the clock at 10 ticks and a bit; the statics put back.
+	/// </summary>
+	private static void WithTheSpinnersWalks( SavedWalkSlot[] slots, Action<ParkPeople, RideAnimations, RideNodes> body )
+	{
+		const string Lookout = "levels/jungle/rides/lookout";
+
+		var data = GameData.Required();
+		using var stream = new MemoryStream( data.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var world = new ParkWorld( new SaveReader( stream ).ReadFile() );
+		using var clock = new SimulationClockScope();
+		var previousState = ParkState.Current;
+		var previousPeople = ParkPeople.Current;
+		ParkPeople? people = null;
+
+		try
+		{
+			var players = RideAnimations.Load( Lookout, "lookout", data, 1 );
+			var nodes = RideNodes.Load( Lookout, "lookout", data, false, players.AllClips )!;
+			nodes.Place( ParkObjects.OriginFor( 57, 23, 0 ), 0 );
+
+			var script = new RideScript( Build( walkSlots: slots.Length, 0 ) ) { Nodes = nodes, Animations = players };
+			var state = new ParkState( world );
+
+			people = new ParkPeople( world, state: state, scriptFor: id => id == 13 ? script : null, random: new Random( 1 ),
+				behaviourRandom: new Random( 2 ), rideRandom: new Random( 3 ), staffRandom: new Random( 4 ) );
+
+			script.RestoreRiders( new SavedScript( 1, 0, 0, [], 0, 0, 0, [], 0, 0, 0, 0, 0, Walk: slots ),
+				reading => reading != 0 ? reading - 5000f : null );
+
+			SimulationClockScope.Frame( 0.3125f );
+			Assert.AreEqual( 10, GameClock.Ticks, "ten ticks and 2.5 ms owed" );
+
+			body( people, players, nodes );
+		}
+		finally
+		{
+			people?.Delete();
+			Entity.ApplyDeletions();
+			typeof( ParkPeople ).GetProperty( "Current", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic )!.SetValue( null, previousPeople );
+			typeof( ParkState ).GetProperty( nameof( ParkState.Current ) )!.SetValue( null, previousState );
+		}
+	}
+
+	/// <summary>
+	/// <b>Where the walk holds a visitor, they are drawn there</b> (<see cref="ParkGuestSprites.WalkedOnRide"/>, through
+	/// <c>NodeAt</c>): on the Mayan Spinner (<c>Lookout</c>, on (57, 23)), a rider carried under action 6 on node 2 stands at
+	/// (581.190, 242.909) and, as the park's axes have it, the model's y is their height; a rider carried under action 1 is
+	/// hidden; a rider walking on is a share of the way from node 1 to node 2 by the park's clock (10.08 ticks of 31 ms of a
+	/// 700 ms leg); and when the drum (role 6) has risen the carried rider has risen with it, the node's stored matrix
+	/// where its clip left it. Nobody the walk does not hold is placed by it.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations (each fails here):</b> <c>( point.X, point.Y, point.Z )</c> for <c>( point.X, point.Z, point.Y )</c>; the
+	/// hidden arm returning the slot's placement; <c>NodeAt</c> without <c>Follow</c> or with <c>carried: false</c>; the
+	/// clock in seconds (<c>* 1000f</c> dropped); the facing dropped.
+	/// </remarks>
+	[TestMethod]
+	public void AWalkHoldingAVisitorPlacesThemOnTheirNodeAndTheDrumCarriesThem()
+	{
+		WithTheSpinnersWalks(
+		[
+			new SavedWalkSlot( 1, 2, 2, 16, 5000, 5700, 900, 6, (short)RideScript.WalkState.Carried, 1, 5 ),
+			new SavedWalkSlot( 1, 2, 2, 16, 5000, 5700, 901, 1, (short)RideScript.WalkState.Carried, 1, 3 ),
+			new SavedWalkSlot( 1, 2, 2, 16, 5000, 5700, 902, 6, (short)RideScript.WalkState.WalkingOn, 1, 6 ),
+		], ( people, players, nodes ) =>
+		{
+			nodes.Find( 1, RideNodes.WalkSpace, out var walkNode );
+			nodes.Find( 2, RideNodes.WalkSpace, out var headNode );
+
+			var carried = ParkGuestSprites.WalkedOnRide( people, 900 );
+
+			Assert.IsTrue( carried is { Hidden: false } );
+			Assert.AreEqual( (short)5, carried!.Value.Facing );
+			Assert.AreEqual( 581.190f, carried.Value.At.X, 0.001f );
+			Assert.AreEqual( 242.909f, carried.Value.At.Y, 0.001f, "the model's z is the park's y" );
+			Assert.AreEqual( headNode.Y, carried.Value.At.Z, 0.001f, "the model's y is the park's height" );
+
+			var hidden = ParkGuestSprites.WalkedOnRide( people, 901 );
+
+			Assert.IsTrue( hidden is { Hidden: true } );
+			Assert.AreEqual( (short)3, hidden!.Value.Facing );
+
+			// A leg of 0 to 700 ms at 10 ticks and 2.5 ms of 31 ms ticks: ( 310 + 2.5 ) * 1000 / 700 thousandths of the way.
+			var now = ((GameClock.Ticks * 31f) + (GameClock.PartialTick * 31f));
+			var share = (int)(now * 1000f / 700f);
+			var walking = ParkGuestSprites.WalkedOnRide( people, 902 );
+
+			Assert.AreEqual( 446, share, "the clock the test stands the walk at" );
+			Assert.IsTrue( walking is { Hidden: false } );
+			Assert.AreEqual( (short)6, walking!.Value.Facing );
+			Assert.AreEqual( walkNode.X + ((headNode.X - walkNode.X) * share / 1000f), walking.Value.At.X, 0.01f );
+			Assert.AreEqual( walkNode.Z + ((headNode.Z - walkNode.Z) * share / 1000f), walking.Value.At.Y, 0.01f );
+			Assert.AreEqual( walkNode.Y + ((headNode.Y - walkNode.Y) * share / 1000f), walking.Value.At.Z, 0.01f );
+
+			Assert.IsNull( ParkGuestSprites.WalkedOnRide( people, 903 ), "a visitor no walk holds" );
+			Assert.IsNull( ParkGuestSprites.WalkedOnRide( null, 900 ) );
+
+			// The drum (role 6) has risen 20 units in two seconds, and the rider with it.
+			players.Trigger( 6, 0, AnimTimeControl.StartAtOnceFlag, 1f, 0 );
+			players.Advance( 2000 );
+
+			var risen = ParkGuestSprites.WalkedOnRide( people, 900 )!.Value;
+
+			Assert.AreEqual( 581.190f, risen.At.X, 0.001f, "it rises, it does not turn" );
+			Assert.AreEqual( headNode.Y + 20.11f, risen.At.Z, 0.01f, "20.379 less the node's 0.269 at rest, plus its own" );
+		} );
+	}
+
+	/// <summary>
+	/// <b>A frame draws the visitors a walk holds where and how it places them</b> (<see cref="ParkGuestSprites.WriteTheFrame"/>):
+	/// of three visitors, the one carried under action 1 is not drawn; the one carried under action 6 on node 2 is drawn
+	/// at the walk's point and facing 0, where the control with no walk is drawn at its own place and facing; and a second
+	/// carried under 6 facing 2 is drawn another picture than the first.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations (each fails here):</b> <c>if ( walked is { Hidden: true } ) continue;</c> deleted; <c>walked?.Facing ??</c>
+	/// dropped from the picture; <c>walked?.At ??</c> dropped from the centre.
+	/// </remarks>
+	[TestMethod]
+	public void AFrameDrawsAWalkedVisitorWhereAndHowTheWalkPlacesThem()
+	{
+		var data = GameData.Required();
+		var bankFile = ParkGuestSprites.BanksIn( data, ParkGuestSprites.FolderFor( 0, "jungle" )!, 0 )[0];
+		var bank = new SpriteBankFile( new MemoryStream( data.ReadAllBytes( bankFile ) ) );
+		var pictures = Enumerable.Range( 0, 1024 ).Select( i => new ParkGuestSprites.Region( 0.25f, 0.1f, 0.5f, 0.3f, i + 1, 50, 22, 42 ) ).ToArray();
+
+		var all = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public;
+		var cameraField = typeof( Camera ).GetField( "CameraMode", all )!;
+		var cameraBefore = cameraField.GetValue( null );
+		var statics = new[] { typeof( ParkBumperBoats ), typeof( ParkGround ), typeof( ParkObjects ) }
+			.Select( type => type.GetProperty( "Current", all )! ).ToArray();
+		var staticsBefore = statics.Select( property => property.GetValue( null ) ).ToArray();
+
+		try
+		{
+			foreach ( var property in statics )
+				property.SetValue( null, null );
+
+			WithTheSpinnersWalks(
+			[
+				new SavedWalkSlot( 1, 2, 2, 16, 5000, 5700, 901, 1, (short)RideScript.WalkState.Carried, 1, 3 ),
+				new SavedWalkSlot( 1, 2, 2, 16, 5000, 5700, 902, 6, (short)RideScript.WalkState.Carried, 1, 0 ),
+				new SavedWalkSlot( 1, 2, 2, 16, 5000, 5700, 903, 6, (short)RideScript.WalkState.Carried, 1, 2 ),
+			], ( people, players, nodes ) =>
+			{
+				Camera.SetCameraMode<CameraMode>();
+				((CameraMode)cameraField.GetValue( null )!).Position = new OpenTPW.Vector3( 100f, -40f, 7f );
+
+				var pool = new ParkGuestSprites( "jungle", null );
+				pool.Resize( 6 );
+
+				var loaded = typeof( ParkGuestSprites ).GetNestedType( "Loaded", all )!;
+				((System.Collections.IDictionary)typeof( ParkGuestSprites ).GetField( "_banks", all )!.GetValue( pool )!)[(0, 0)] = Activator.CreateInstance( loaded, bank, pictures );
+
+				var drawn = (System.Collections.Generic.List<(ParkWorld.Person Person, ParkWorld.Sprite Sprite)>)typeof( ParkGuestSprites ).GetField( "_people", all )!.GetValue( pool )!;
+
+				foreach ( var thing in new[] { 900, 901, 902, 903 } )
+					drawn.Add( (new ParkWorld.Person( thing, 0, 0, 0, thing, 0, default!, null ),
+						new ParkWorld.Sprite( thing, 0, 0, 0, 300f, 200f, 0f, 0, 0, 255, 0, 0, 0 )) );
+
+				var (used, _) = pool.WriteTheFrame();
+				var seen = pool.Drawn.ToDictionary( one => one.Thing );
+
+				Assert.AreEqual( 3, used, "the visitor carried under action 1 is not drawn" );
+				Assert.IsFalse( seen.ContainsKey( 901 ) );
+
+				var placed = ParkGuestSprites.WalkedOnRide( people, 902 )!.Value;
+
+				Assert.AreEqual( placed.At.X, seen[902].Origin.X, 0.001f, "at the walk's point" );
+				Assert.AreEqual( placed.At.Y, seen[902].Origin.Y, 0.001f );
+				Assert.AreEqual( placed.At.Z, seen[902].Origin.Z, 0.001f );
+				Assert.AreNotEqual( placed.At.X, seen[900].Origin.X, 1f, "the control stands at its own place" );
+				Assert.AreNotEqual( seen[902].Width, seen[903].Width, "facing 0 and facing 2 are other pictures" );
+			} );
+		}
+		finally
+		{
+			cameraField.SetValue( null, cameraBefore );
+
+			for ( var i = 0; i < statics.Length; ++i )
+				statics[i].SetValue( null, staticsBefore[i] );
 		}
 	}
 

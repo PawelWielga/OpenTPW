@@ -359,12 +359,12 @@ Channels are per-model animation players, count at `model+0x0e`, array at `+0x10
 
 | Address | What it is | Notes |
 |---|---|---|
-| `FUN_00470b60` | the key search (`Anim_FindKey`) | `param_4 == 1 -> 4` (position), `== 2 -> 0x14` (rotation), `== 4 -> 0x10` (scale, `0x00471db5`). Returns a **normalised t** between two key frames, and **returns 0 when the frame precedes the first key**, so the engine skips the track rather than clamping to the first point. It finds the last key at or before the floored frame; on the last key (`0x00470be3`, equality included) it hands the sampler that key and the frame one after it (`param_5` 0, which the poser passes), with t the frame less the last key's. **Every track whose last key is its clip's declared end reaches that arm on that frame, with t = 0** (1,201 of the 1,216 position tracks, in 455 clips, Q554): the straight sampler `0x00474bf0` then reads the point past the array times nought (finite floats there on all 421 straight such tracks), so the last key's own point comes out. A frame past the last key would read further (a Bezier wraps); no shipped clip reaches that, as no position track ends before its clip's declared span and the poser poses nothing past that span (its first test, `+0x1c` against `+0x20`) |
+| `FUN_00470b60` | the key search (`Anim_FindKey`) | `param_4 == 1 -> 4` (position), `== 2 -> 0x14` (rotation), `== 4 -> 0x10` (scale, `0x00471db5`). Returns a **normalised t** between two key frames, and **returns 0 when the frame precedes the first key**, so the engine skips the track rather than clamping to the first point. It finds the last key at or before the floored frame; on the last key (`0x00470be3`, equality included) it hands the sampler that key and the frame one after it (`param_5` 0, which the poser passes for position, `0x00471e9c`, and scale, `0x00471db3`; the rotation call passes 1, `0x00471c45`, and takes key 0 as the upper key there, `0x00470bee`, so a rotation wraps where the other two hold the last key), with t the frame less the last key's. **Every track whose last key is its clip's declared end reaches that arm on that frame, with t = 0** (1,201 of the 1,216 position tracks, in 455 clips, Q554): the straight sampler `0x00474bf0` then reads the point past the array times nought (finite floats there on all 421 straight such tracks), so the last key's own point comes out. A frame past the last key would read further (a Bezier wraps); no shipped clip reaches that, as no position track ends before its clip's declared span and the poser poses nothing past that span (its first test, `+0x1c` against `+0x20`) |
 | `Route_SampleBezier` `0x00474840` | a plain cubic **Bezier**, not a spline | constants at `0x006fecb8` are 1, 3, -3, -6; expands to `P0 + 3(P1-P0)t + 3(P0-2P1+P2)t^2 + (-P0+3P1-3P2+P3)t^3`. The modulo wraparound is the **looping** arm |
 | `Route_SampleStraight` `0x00474bf0` | the straight lerp | points `k` and `k + 1`, no wrap |
 | `Route_BezierTangent` `0x00474a20` | the Bezier's first derivative | the same four points; what a route key's facing (`0x400`) turns by |
 | `Route_StraightTangent` `0x00474c70` | a straight route's step | point `k + 1` less point `k` |
-| `Anim_SamplePathPercent` `0x00474ea0` | a route key's percentage at a frame | the two frames' values blended; more than 50 apart (`0x006fece0`), the smaller is taken plus 100 (`0x006fece4` is -100) and the blend modulo 100 (`0x006fece8`) |
+| `Anim_SamplePathPercent` `0x00474ea0` | a route key's percentage at a frame | the two frames' values blended; more than 50 apart (`0x006fece0`), the smaller is taken plus 100 (`0x006fece4` is -100) and the blend modulo 100 (`0x006fece8`). Its fifth argument is the route's type `& 0x1` (`0x00471f38`): closed (`0x00474ef3`), the frame after the last value reads `values[0]` (`values[(i+1) % count]`); open (`0x00474f0d`), the last value is read again. `PathTrack.Sample` always holds the last, which differs only for a fractional frame past the last on a closed route, and no shipped clip's span reaches one |
 | `Matrix_FaceAlongTangent` `0x00470780` | a node turned to face along a tangent | rows: side = normalise(up x t), up = t x side, forward = t, where t is normalised before the call (`0x00472110`..`0x00472172`) and up is the node's second row |
 | `FUN_00474cc0` | the third sampler (neither bit) | **used by nothing** |
 | `FUN_004745c0` | the UV sampler | our sampler matches it line for line — **confirmed, do not re-derive** |
@@ -1501,7 +1501,8 @@ drifts where it is pushed.
 first), else 1000 for a broken ride. Velocity `= v × k / 1024`, copied to `+0x44`; speed taken; position
 `+= velocity`. Then the heading, only while running (else `+0x5c` = 0): **the Hot Pot alone** turns its drawn heading
 toward the steering heading, `+0x58 = +0x50`, `+0x5c = wrap( +0x50 − +0x54 ) × speed / 1000`; every other bumper type
-turns toward its velocity's heading at the same rate. `+0x54 = ( +0x54 + +0x5c ) & 0x1ff`. Thrust is at most 9 an axis
+but the water family's turns toward its velocity's heading at the same rate (the water family's `+0x58` is a spin:
+"The karts' and the water ride's track, buoys and race", "The step"). `+0x54 = ( +0x54 + +0x5c ) & 0x1ff`. Thrust is at most 9 an axis
 (the table peaks at 255), so a Hot Pot boat's steady speed is at most 247 a tick (232 along an axis), 2.4 to 2.6
 cells a second. Each tick it also moves the lead's looped sound to the car and sets the parameter the `EventMap`'s slot 10 names to
 speed / 3, which pitches it (`audio.md`, "A voice's two controllers"), and the emitter `+0x2c` to
@@ -1564,16 +1565,22 @@ Read for Q581, first-hand in Ghidra (the decompiles are kept in `q581/`), and ch
 **Bought.** The place commit (`FUN_00524960` from `0x00524d8c`) lays the footprint, and for track type 1 or 2
 `FUN_0052a050` the queue's first cell and `TrackRide_LayStation` (`FUN_0052a1a0`) the station: a run of track type 0xd
 (karts) or 0x12 (water) over the station's two 2 × 2 sections by the track grid's own ops (`FUN_0053aac0`: the type,
-`0x80`, `0x82`, `0x83`), its first section kept as the circuit's start (`DAT_007639e0`, `e4`), and the mouth, two cells
-past the station's far end, handed back. `FUN_0052f580( 0xb )` (or `0x10`) then arms the track tool, whose type the next
-ops lay at the mouth (`0x87`, the type, `0x80`, `0x83`, `0x85`, `0x86`), and **the queue's seeding re-arms mode 3 over
+`0x80`, `0x82`, `0x83`), and the mouth, two cells past the station's far end, handed back. The station's first section is left in
+`DAT_007639e0`/`e4` by `TrackRide_LayStation` (`0x0052a31c`), but the place commit overwrites that at once
+(`0x00524fb6`..`0x00524ff3`; the move's put-down the same, `0x00524cb4`..`0x00524d01`): it ends as the mouth
+(`FUN_0052a3a0`: x + 4, z + 1 at turn 0) and `e8`/`ec` as the other mouth (`FUN_0052a420`: x − 2, z + 1), and the
+circuit's walk (`TrackRide_WalkCircuit`) starts and stops 4 cells back from that, along the turn (x − 4 at turn 0,
+`0x0052a9c2`), on the station's first section. `FUN_0052f580( 0xb )` (or `0x10`) then arms the track tool, whose type the next
+ops lay at the mouth (`0x87`, the type, `0x80`, `0x83`, `0x85`, `0x86`, `0x81`, `0x00524e65`..`0x00524f9a`) and the
+same at the other mouth (`0x0052506c`..`0x0052518c`), and **the queue's seeding re-arms mode 3 over
 it, so the queue comes first**. Measured at turn 0 on preview cell (32,25): the footprint x 30 to 33, z 24 to 26,
 entrance (31,24), exit (32,24), the queue's cell (31,23) and a path cell before the exit (32,23); on the track grid the
 station (0xd) at (30,25) and (32,25), laid track (0xb) at the mouth (34,25) and at (28,25), where the circuit comes back
 in, every other cell of a 2 × 2 0xc; mIsTrackRideValid (`+0x2c`) 0; the tool 4 then 3 (`q581/orig/A-8-put.png`). Splish
 Splash is the same a row further up its 4 × 4 (0x12, 0x10; its other cells 0x11).
 
-**The track tool** (modes 0xb and 0x10; the hoardings' 0x19 shares its arm, `0x00525a1c`) is armed by a click on a piece
+**The track tool** (modes 0xb and 0x10, arm `0x00526cb3`; the dispatch at `0x00525a1c` also sends mode 0x19, track type 0x19's tool, to its
+own arm `0x00525a52`) is armed by a click on a piece
 of track, "Left-click to edit this track", with that piece's cell its anchor (`DAT_0081ede4`, `e8`). A click (on the
 button's release) plays sound 0xce and lays a straight run in 2-cell steps from the anchor to the click, moved onto the
 anchor's row or column, whichever is farther (the preview's cell reads the moved one), by ops `0x87`, the type, `0x80`,
@@ -1605,8 +1612,8 @@ car's radius: a straight is one rectangle (0x3f, 0x20 square) at its middle, 310
 bend a quarter circle of radius `3072 + w − r` about the corner it turns round (0x1f less the bits of the two sides it
 is open to: 2 x below, 4 x above, 8 z above, 0x10 z below; not whole, so a car in it gets three quarters of its thrust,
 `Bumper_SteerToward`), and the same quarter of radius `3072 − w + r` flagged 0x40, an obstacle
-(`Bumper_PushOffObstacles`); a crossing a round object at its middle (radius not read; flagged 0x80 for the water
-family) and four obstacle quarters at its corners. Its buoy (`Bumper_MakeBuoy`, `FUN_0054b170`; pool `DAT_00877b78`,
+(`Bumper_PushOffObstacles`); a crossing a round object at its middle (radius `ftol( sqrt( (w − r)² + 3072² ) )`, `0x0054b8ff`: 3279 for the
+karts, 3082 for the water ride; flagged 0x80 for the water family) and four obstacle quarters at its corners. Its buoy (`Bumper_MakeBuoy`, `FUN_0054b170`; pool `DAT_00877b78`,
 1024 of 0x1c), flagged 1 with the section's first object, is at a bend's arc middle (offsets 0xf84 and 0x87c by the
 bend) or at a straight's or crossing's middle, and joins the ride's buoys (`+0xa8`, count `+0xac`). **Measured**: every
 section, type, place, object and buoy of both rides' ten as predicted (`A-track.log` 496 s; `D-track.log` 171 s): the
@@ -1628,17 +1635,18 @@ after the start buoy not flagged 2 (wrapping), and the karts go to state 1 (load
 Measured: karts 0 → 1 → 2, water 0 → 2.
 
 **A car** (`BUMP 4`, `Bumper_LaunchCar`) takes the whole boarding list and stands at the centre, mesh `cars % count +
-base` (the karts' colours in turn, green first). `Bumper_Retarget`'s arm clears flags 2, 4, 0x10, 0x20, 0x40 and
-0x40000, sets patience 0, and for a new car (0x100000) starts its own looped sound (the sound script's slot 0, for every
+base` (the karts' colours in turn, green first). `Bumper_Retarget`'s arm clears flags 2, 4, 8, 0x10, 0x20, 0x40 and
+0x40000 (mask `0xfffbff81`, `0x0054a57c`), sets patience 0, and for a new car (0x100000) starts its own looped sound (the sound script's slot 0, for every
 car, not the lead's alone: `audio.md`) and, a kart, its emitter (`0x100` id 1) and, flagged 0x2000 (−9 and −10 set
 0x3c00), a second model. A kart in a loading ride takes the n-th buoy flagged 2, n its ride's cars, flags | 0x10048
 (0x40: to the grid); in a running ride the race's next buoy (`+0xa4`'s when it has none), flags | 0x10008, and a thrust
-bonus `+0x68` = `(3 − (rand & 7)) × (thrust / 9)` from the park's generator. A water boat takes the race buoy in any
-state, bonus 0.
+bonus `+0x68` = `(3 − (rand & 7)) × (thrust / 9)` from the park's generator; a kart retargeted in state 0 or 3 jumps
+to `0x0054aa1c`, which clears only 0x100000 and gives it no buoy (no run shows a kart launched then). A water boat
+takes the race buoy in any state, bonus 0.
 
 **The buoy arm** (`Bumper_CarTick`). The timer counts down only while at least 0, so a lap count never moves there. A
 car at its buoy (flag 8, no 0x20) steers at it; within the arrival radius: a grid car (0x40) within a quarter of it is
-flagged 0x90000 (0x80000: no thrust) and takes the race's first buoy; a race car at the start buoy (flag 4) in state 2
+flagged 0x90000 (0x80000: no thrust) and takes the race's first buoy; a race car at the start buoy (flag 4) in state 1 or 2
 adds 1 to its timer, and at 0 (or in states 0 or 3) ends: 0x20, its offset nought, and a kart in state 2 puts the ride
 to state 3 ("GoKart Race Over"), after which every other kart ends at its next start buoy; otherwise it is retargeted.
 Then, if the buoy has an object and the car is not in it, it keeps that buoy with its offset zeroed; else it takes the
@@ -1652,12 +1660,13 @@ ended on its one pass, removed, the ride in state 2 throughout (`C-4-race.png`, 
 **The step** (`Bumper_StepCar`). A kart's drawn heading turns to its velocity's as a bumper car's does; under speed 41
 it plays clip 0xc, at 41 or more clip 5; worn (`+0x54` 1) and over 80, every 32nd tick the private generator gives
 particle 1 (two in eight) or 10 (once). A water boat's heading does not follow its velocity: `+0x58` is a spin that a
-rim or obstacle contact sets (`0x00549b26`, `0x00549787`: ±48 × a term not read), held at × 0.998 a tick while over 48,
+rim or obstacle contact moves (`0x00549b26`, `0x00549787`; with p = ±48 × a term not read: p when the old spin
+already has p's sign, else old + p), held at × 0.998 a tick while over 48,
 and its turn `+0x5c` is `+0x58 / 128` held to ±16; particle 0x60 one tick in eight of every 32nd in a go. Each car's
 looped sound is pitched speed / 3. Measured: 1287 to 1266 in eight ticks, turn 13 at 1772.
 
 **Not read**: which track model a piece draws (`gk_trck*`, `wr_trck*`; the track grid's tile rule, `FUN_0053afa0`,
-`FUN_0053a540`), what a piece costs or refunds, `FUN_0052c6f0` and `FUN_0052ccb0`, a crossing's middle radius, the
+`FUN_0053a540`), what a piece costs or refunds, `FUN_0052c6f0` and `FUN_0052ccb0`, the
 add-ons (12 and 13) and the hills (`gk_trckH*`), the seat a rider takes (`FUN_00549c60`), a car's height over the track,
 −9's and −10's flags 0x3c00, and the term in a boat's spin.
 
@@ -2141,8 +2150,10 @@ and `5x5rck`: which of them a clip moves is not known, and moving them is the en
 emitter on a model off the screen stands still there, where this follows the players. A record whose lookup record has
 no matrix is started at the origin (`RideScript.StartParticle`; a type 2 aimed along (0, 0, 1)) and passed over here,
 so it stays there, as the engine's, which moves it to the origin every tick (`0x005518f9`, the float at `0x00700fd8` is
-nought). A node a clip's route moves, or one under it, is read where it stands without the route, as `RideNodes.Follow`
-poses no path track, counted `RIDE_NODE_ON_A_ROUTE`.
+nought). A node a clip's route moves, or one under it, is read where the route puts it, as `RideNodes.Follow` poses
+through `NodePoser` (Q561, Q583); a carried find of such a node is still counted `RIDE_NODE_ON_A_ROUTE`, a count that is
+stale (Q573): every Lost Kingdom run reaches it at its vehicle's sound start (the bus's `mk_bus_1` at its route's
+frame-0 point, the seaplane's `mk_plane_1`, the ferry's `mk_ferry_3`).
 
 **Deviations and gaps, each counted where it is reached.** Started nowhere: an effect of the item's own
 (`PARK_PARTICLE_ITEM_EFFECT`), a record with no node or one the model lacks (`PARK_PARTICLE_NO_PLACE`), a type 2

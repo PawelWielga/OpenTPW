@@ -4980,6 +4980,48 @@ public class ParkAdvisorMessageTests
 	}
 
 	/// <summary>
+	/// The speaker is handed the response's row of the gesture table, its lip, slot and props (the sweep's call,
+	/// <see cref="ParkPeople.SpeakResponse"/>), and the lines said as 53, 97 and 129 wear the hard hat the table names.
+	/// </summary>
+	[TestMethod]
+	public void TheSpeakerIsHandedTheResponsesGestureRowAndProps()
+	{
+		var handed = new List<int[]>();
+		Func<int, int, int, int, int, int, int, int> speak = ( response, sample, first, second, slot, lip, row ) =>
+		{
+			handed.Add( [response, sample, first, second, slot, lip, row] );
+			return 77;
+		};
+
+		Assert.AreEqual( 77, ParkPeople.SpeakResponse( speak, 90, 88 ) );
+		Assert.AreEqual( 0, ParkPeople.SpeakResponse( null, 90, 88 ) );
+		ParkPeople.SpeakResponse( speak, 129, 127 );
+		ParkPeople.SpeakResponse( speak, 53, 53 );
+		ParkPeople.SpeakResponse( speak, 97, 95 );
+		ParkPeople.SpeakResponse( speak, 204, 204 );
+
+		CollectionAssert.AreEqual( new[] { 90, 88, 6, 0, 0, 88, 9 }, handed[0], "response 90: guard cap, row 9" );
+		CollectionAssert.AreEqual( new[] { 129, 127, 5, 0, 0, 127, 5 }, handed[1], "response 129: hard hat, row 5" );
+		CollectionAssert.AreEqual( new[] { 53, 53, 5, 0, 0, 53, 7 }, handed[2], "response 53: hard hat, row 7" );
+		CollectionAssert.AreEqual( new[] { 97, 95, 5, 0, 0, 95, 7 }, handed[3], "response 97: hard hat, row 7" );
+		Assert.AreEqual( -1, handed[4][6], "a response with no row of its own plays the random chain" );
+	}
+
+	/// <summary>The tag a line said as another response leaves is the posted response's group (0x0059b7ba), not the swapped one's.</summary>
+	[TestMethod]
+	public void SayAsLeavesTheTagOfThePostedResponse()
+	{
+		FileSystem = GameData.Required();
+		var messages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ) );
+		var groups = new List<int>();
+		messages.SayAs = 90;
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.MechanicOnHisWay, 1000, 13 ) );
+		messages.Tick( 1000, 0, ( _, _ ) => 0, ( group, _, _ ) => groups.Add( group ) );
+		Assert.AreEqual( 1, groups.Count );
+		Assert.AreNotEqual( ParkAdvisorMessages.ResponseOf( 90 )!.Value.Group, groups[0], "not the swapped response's group (32)" );
+	}
+
+	/// <summary>
 	/// The first ticket's two lines (GoldenTicket_TellFirst, 0x004d5b30): 0x137 scores 1000 and 0x13b 999, so the first
 	/// is said first, as Advisor.sam's comment asks; both Full Simulation's alone.
 	/// </summary>

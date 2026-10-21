@@ -43,6 +43,33 @@ public class ModelFaceCullingTests
 		Assert.AreEqual( ComparisonKind.LessEqual, Material.DepthComparisonFor( MaterialFlags.DisableDepthWrite ) );
 	}
 
+	/// <summary>
+	/// <b>The descriptions the pipeline is built from</b> (<see cref="Material.DepthStateFor"/>,
+	/// <see cref="Material.RasterizerStateFor"/>, what <c>SetupResources</c> hands the device): a model's material culls the
+	/// back faces, clockwise kept, tests depth less or equal and writes it; a two-sided one culls none; one that does not
+	/// write depth does not write it.
+	/// </summary>
+	[TestMethod]
+	public void TheDescriptionsThePipelineIsBuiltFromCullAndCompareAsTheOriginals()
+	{
+		var model = Material.RasterizerStateFor( LobbyModel.DrawFlags( MaterialFlags.DisableCulling ) );
+
+		Assert.AreEqual( FaceCullMode.Back, model.CullMode );
+		Assert.AreEqual( FrontFace.Clockwise, model.FrontFace );
+		Assert.AreEqual( PolygonFillMode.Solid, model.FillMode );
+		Assert.AreEqual( FaceCullMode.None, Material.RasterizerStateFor( MaterialFlags.DisableCulling ).CullMode );
+		Assert.AreEqual( FrontFace.Clockwise, Material.RasterizerStateFor( MaterialFlags.DisableCulling ).FrontFace );
+
+		var depth = Material.DepthStateFor( MaterialFlags.None );
+
+		Assert.AreEqual( ComparisonKind.LessEqual, depth.DepthComparison );
+		Assert.IsTrue( depth.DepthTestEnabled );
+		Assert.IsTrue( depth.DepthWriteEnabled );
+		Assert.IsFalse( Material.DepthStateFor( MaterialFlags.DisableDepthWrite ).DepthWriteEnabled );
+		Assert.IsFalse( Material.DepthStateFor( MaterialFlags.DisableDepthTest ).DepthTestEnabled );
+		Assert.AreEqual( ComparisonKind.LessEqual, Material.DepthStateFor( MaterialFlags.DisableCulling ).DepthComparison );
+	}
+
 	/// <summary>A material that neither tests nor writes depth compares nothing.</summary>
 	[TestMethod]
 	public void NoDepthComparesNothing()

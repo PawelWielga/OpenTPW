@@ -58,11 +58,19 @@ which code reads them is not traced (Q194, from the bytes). DirectDraw's two cal
 
 Q586. Every model face is culled by the engine before it reaches a batch. `DrawList_Flush` (`0x00581db0`) hands each
 mesh entry's materials to `DrawList_AddMaterialFaces` (`0x00580530`), which copies a material's transformed vertices
-(FVF `0x1c4`: screen x, y in pixels, z, rhw at `[3]`) and, on both of its paths (no clip flags, `0x00580eab`; clipped,
-`0x00581000`), keeps a face only when `Face_KeptByWinding` (`0x00581320`) answers 1 for its corners in the file's own
-order (a, b, c: the face record's words at `+2`, `+4`, `+6`). That test answers 1 when
-`det[[x0, y0, w0], [x1, y1, w1], [x2, y2, w2]] > 0`, `w` the rhw: with equal `w`, `(x1 - x0)(y2 - y0) - (x2 - x0)(y1 - y0) > 0`,
-clockwise on a y-down screen. Nothing bypasses it (its only callers are those two).
+and, on both of its paths (no clip flags, `0x00581000`; clipped, `0x00580eab`), keeps a face only when
+`Face_KeptByWinding` (`0x00581320`) answers 1 for its corners in the file's own order (a, b, c: the face record's words at
+`+2`, `+4`, `+6`). **The test reads clip space, before the divide.** It takes words `[0]`, `[4]` and `[0xc]` of each corner
+(x, y, w; `0x00581324..0x00581392`): at the test they are the clip coordinates, `0x00561bc0` having compared `|x|`, `|y|`,
+`|z|` against `|w|` for the outcodes, and the divide to screen (x, y in pixels, z, rhw at `[3]`, FVF `0x1c4`, the batch's
+final format) comes after both loops, as the transformer's slot `+0xc` on `[0x0087b1d8]` (`0x00581092`). That is one of three
+transformers chosen by CPU at `0x005781d0..0x00578379`: vtable `0x00701920` (SSE, CPUID bit 25) slot `+0xc` is `0x005f525f`
+(`rcpps` and a Newton step), which runs on a present-day CPU; `0x007018f8` (`[0x008bd53c]`) is `0x005f4a46`; and `0x007018d0`
+is `ClipToScreen_Fpu` (`0x00579690`, `fld1 / fdiv [+0xc]`). The test answers 1 when
+`det[[x0, y0, w0], [x1, y1, w1], [x2, y2, w2]] > 0` of the clip coordinates, which is `w0 w1 w2` times the determinant of
+the projected corners: **the projected winding for every face in front of the eye**, clockwise on a y-down screen, and the
+true facing for one across the near plane, as the card's test of the clipped polygon also gives. Every model mesh goes through it
+(or the inline copy below); only the sky has none.
 
 **So a face seen from both sides is authored twice**: the same three points, wound opposite ways, each with its own
 vertex-order entries and normals, so each side is lit its own way. Of the game's `.md2` files under `data/` (2,123
@@ -75,11 +83,15 @@ their lit side first and drew dim under less-or-equal. Culled, both show their l
 
 **OpenTPW** culls a model's faces (`LobbyModel.DrawFlags`) on the card: back faces, clockwise kept
 (`Material.CullModeFor`, `Material.KeptWinding`), which in this engine's axes keeps the original's side (Q586's rounds:
-nothing drawn inside out, `q586/runA3`). **Not the original's to the letter:** the card's test takes the corners as
-projected, the original's weighs each by its rhw, which can differ only for a face seen almost edge on with its corners
-at different depths. Still drawn both-sided, each unread here: the terrain (its own renderer, `FUN_0056f670`), paths,
-the sea, the build markers, people and particles, the sky, and the UI's models (`UiMesh`), which the original also
-sends through `DrawList_AddMesh` (`ui.md`).
+nothing drawn inside out, `q586/runA3`). The card tests the projected corners, which is the original's test (above): no
+deviation. **Two draws do not call `Face_KeptByWinding`.** The sky (`FUN_005863c0`, from `Render_DrawView`,
+`0x00576c78`) draws through `0x00565960`, which makes outcodes (`0x00561bc0`) and clips (`0x00562c90`) and has no winding
+test, so it is two-sided, as ours is (`Sky`, `DisableCulling`). `0x00581a00` carries its own inline copy of the test
+(`0x00581b5b..0x00581c3e`, the same words `0x008c63b0..0x008c63d0`, over a plain 4x4 transform with no divide), so it culls
+too; it is reached from the node walk `0x0057b610` by `FUN_0057b8a0`, which `ModelRenderable_Draw` calls at `0x0057a8eb` (a
+model pass into the renderable's `+0x13c` texture, most likely the model shadow; not named). Still drawn both-sided here,
+each unread: the terrain (its own renderer, `FUN_0056f670`), paths, the sea, the build markers, people and particles, and
+the UI's models (`UiMesh`), which the original also sends through `DrawList_AddMesh` (`ui.md`).
 
 ## The four state words a `.md2` material can get
 

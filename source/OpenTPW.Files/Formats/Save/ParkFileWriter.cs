@@ -798,7 +798,6 @@ public static class ParkFileWriter
 	/// <summary>The person base's <c>mESPSprite</c> of somebody in a costume (<c>FUN_004fcac0</c>).</summary>
 	private const int CostumeSpriteKind = 2;
 
-	/// <summary>A made thing's tables with each head hung in its lookup record: <c>0x2</c> and the sprite's slot, and the shared <c>0x4</c>.</summary>
 	/// <summary>
 	/// The things bought, the oldest made first: by the park's stamps (<see cref="ParkWorld.ThingIds.MadeAt"/>), and by
 	/// id among those it does not stamp.
@@ -807,6 +806,7 @@ public static class ParkFileWriter
 		=> made.OrderBy( thing => ids?.MadeAt.GetValueOrDefault( thing.Object.Object.ThingId ) ?? 0 )
 			.ThenBy( thing => thing.Object.Object.ThingId );
 
+	/// <summary>A made thing's tables with each head hung in its lookup record: <c>0x2</c> and the sprite's slot, and the shared <c>0x4</c>.</summary>
 	private static ParkThingStates.ModelTables? WithHeads( MadeThing thing, Dictionary<(int Thing, int Record), int> slots )
 	{
 		if ( thing.Tables is not { } tables || thing.Heads is not { } heads )

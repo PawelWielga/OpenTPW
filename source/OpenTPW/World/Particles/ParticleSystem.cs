@@ -121,7 +121,8 @@ internal sealed class ParticleSystem
 	/// Starts effect <paramref name="effect"/> at a position in the units effects are started at, and
 	/// returns its handle, or 0 if there is no such effect or no free emitter. An on-screen effect is
 	/// pinned by <paramref name="anchor"/>, or by where it starts when that is not given, and drawn with
-	/// <paramref name="owner"/> when it belongs to a window (see <see cref="Emitter.Owner"/>).
+	/// <paramref name="owner"/> when it belongs to a window (see <see cref="Emitter.Owner"/>). It is pinned down the
+	/// screen by <paramref name="down"/>, or by where it stands as it is drawn when that is not given (see <see cref="Emitter.Down"/>).
 	///
 	/// <para>
 	/// With <paramref name="aim"/> it is the directed start (Particles_SpawnFull, 0x00521930): the same, but it
@@ -129,7 +130,7 @@ internal sealed class ParticleSystem
 	/// <paramref name="aim"/> where the effect's own velocity would be.
 	/// </para>
 	/// </summary>
-	public int Spawn( int effect, int x, int y, int z, Anchor? anchor = null, UiWindow? owner = null, ParticleVector? aim = null )
+	public int Spawn( int effect, int x, int y, int z, Anchor? anchor = null, UiWindow? owner = null, ParticleVector? aim = null, VerticalAnchor? down = null )
 	{
 		if ( effect < 0 || effect >= Library.Effects.Length )
 			return 0;
@@ -164,6 +165,7 @@ internal sealed class ParticleSystem
 		emitter.Linked = 0;
 		emitter.Anchor = anchor ?? AnchorAt( x );
 		emitter.Owner = owner;
+		emitter.Down = down;
 
 		for ( int i = 0; i < 4; ++i )
 			emitter.Rates[i] = template.IgnoresDensity ? template.Rates[i] : ScaleRate( template.Rates[i] );
@@ -231,7 +233,7 @@ internal sealed class ParticleSystem
 	}
 
 	/// <summary>Starts effector <paramref name="effector"/> (0x00522360) and returns its handle, or 0.</summary>
-	public int SpawnEffector( int effector, int x, int y, int z, Anchor anchor, UiWindow? owner = null )
+	public int SpawnEffector( int effector, int x, int y, int z, Anchor anchor, UiWindow? owner = null, VerticalAnchor? down = null )
 	{
 		if ( effector < 0 || effector >= Library.Effectors.Length || _freeEffector < 0 )
 			return 0;
@@ -255,6 +257,7 @@ internal sealed class ParticleSystem
 		instance.Lifetime = template.Lifetime;
 		instance.Anchor = anchor;
 		instance.Owner = owner;
+		instance.Down = down;
 
 		_generation = (_generation % 0xffff) + 1;
 		instance.Generation = _generation;
@@ -303,7 +306,7 @@ internal sealed class ParticleSystem
 				(x, y, z) = (x + (linked.X * 16), y + (linked.Y * 16), z + (linked.Z * 16));
 			}
 
-			var handle = SpawnEffector( template.Linked, x, y, z, emitter.Anchor, emitter.Owner );
+			var handle = SpawnEffector( template.Linked, x, y, z, emitter.Anchor, emitter.Owner, emitter.Down );
 
 			if ( template.LinkedFollows && TryEffector( handle, out var effector ) )
 				effector.Moves = false;
@@ -318,7 +321,7 @@ internal sealed class ParticleSystem
 				(x, y, z) = (x + (linked.X * 16), y + (linked.Y * 16), z + (linked.Z * 16));
 			}
 
-			var handle = Spawn( template.Linked, x, y, z, emitter.Anchor, emitter.Owner );
+			var handle = Spawn( template.Linked, x, y, z, emitter.Anchor, emitter.Owner, down: emitter.Down );
 
 			if ( template.LinkedFollows && TryEmitter( handle, out var follower ) )
 				follower.Moves = false;
@@ -366,9 +369,9 @@ internal sealed class ParticleSystem
 		if ( emitter.EndSpawn >= 0 && emitter.Lifetime == -1 )
 		{
 			if ( template.EndSpawnIsEffector )
-				SpawnEffector( emitter.EndSpawn, emitter.X << 4, emitter.Y << 4, emitter.Z << 4, emitter.Anchor, emitter.Owner );
+				SpawnEffector( emitter.EndSpawn, emitter.X << 4, emitter.Y << 4, emitter.Z << 4, emitter.Anchor, emitter.Owner, emitter.Down );
 			else
-				Spawn( emitter.EndSpawn, emitter.X << 4, emitter.Y << 4, emitter.Z << 4, emitter.Anchor, emitter.Owner );
+				Spawn( emitter.EndSpawn, emitter.X << 4, emitter.Y << 4, emitter.Z << 4, emitter.Anchor, emitter.Owner, down: emitter.Down );
 
 			emitter.EndSpawn = -1;
 		}
@@ -678,9 +681,9 @@ internal sealed class ParticleSystem
 			if ( effector.Lifetime < 0 )
 			{
 				if ( template.EndSpawnIsEffector )
-					SpawnEffector( template.EndSpawn, effector.X << 4, effector.Y << 4, effector.Z << 4, effector.Anchor, effector.Owner );
+					SpawnEffector( template.EndSpawn, effector.X << 4, effector.Y << 4, effector.Z << 4, effector.Anchor, effector.Owner, effector.Down );
 				else
-					Spawn( template.EndSpawn, effector.X << 4, effector.Y << 4, effector.Z << 4, effector.Anchor, effector.Owner );
+					Spawn( template.EndSpawn, effector.X << 4, effector.Y << 4, effector.Z << 4, effector.Anchor, effector.Owner, down: effector.Down );
 
 				Unlink( ref _firstEffector, slot, effector, Effectors );
 				effector.Generation = 0;
@@ -784,7 +787,7 @@ internal sealed class ParticleSystem
 					emitter.Count--;
 
 					if ( template.DeathSpawn >= 0 )
-						Spawn( template.DeathSpawn, particle.X << 4, particle.Y << 4, particle.Z << 4, emitter.Anchor, emitter.Owner );
+						Spawn( template.DeathSpawn, particle.X << 4, particle.Y << 4, particle.Z << 4, emitter.Anchor, emitter.Owner, down: emitter.Down );
 
 					FreeParticle( index, emitter );
 					index = next;
@@ -1004,6 +1007,13 @@ internal sealed class Emitter : ILinked
 	public Anchor Anchor;
 
 	/// <summary>
+	/// The edge it is pinned to down the screen, kept whatever way it moves; or none, and it takes one from where
+	/// it stands each time it is drawn, as an effect with no pin of its own takes one across (see
+	/// <see cref="ScreenParticles.PinDown"/>). What it starts in turn is pinned the same way.
+	/// </summary>
+	public VerticalAnchor? Down;
+
+	/// <summary>
 	/// The window it was started for, which it is drawn with, so that windows opened over that one
 	/// cover it; or none, and it is drawn over the whole interface as the original draws them all. What
 	/// it starts in turn belongs to the same window. See <see cref="ScreenParticles"/>.
@@ -1025,6 +1035,7 @@ internal sealed class Effector : ILinked
 	public int Lifetime;
 	public Anchor Anchor;
 	public UiWindow? Owner;
+	public VerticalAnchor? Down;
 
 	public int Next { get; set; } = -1;
 	public int Previous { get; set; } = -1;

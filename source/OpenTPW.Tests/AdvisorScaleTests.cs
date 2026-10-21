@@ -80,7 +80,8 @@ public class AdvisorScaleTests
 	}
 
 	/// <summary>
-	/// Before the first key the key search answers nought and the node's axes are left alone (Anim_FindKey 0x00470b60).
+	/// Before the first key the key search answers nought and no scale is set (Anim_FindKey 0x00470b60), so the node keeps the
+	/// lengths its matrix holds after the turn (models.md, "Scale").
 	/// 21 of the game's 644 tracks start past frame 0; Lost Kingdom's wateridec keys nodes 15 and 16 from 69.
 	/// </summary>
 	[TestMethod]

@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace OpenTPW.Tests;
 
@@ -55,6 +56,7 @@ public class AdvisorGlintTests
 		Assert.IsTrue( Advisor.SetGlints( glints, 0x40000, 2f, 1f ) );
 
 		Assert.AreEqual( (2, (int?)197), (glints.Count, UI.UiSounds.LastAsked) );
+		Assert.AreEqual( (44, 49), (glints.EffectOf( 0 ), glints.EffectOf( 1 )), "clip 17's glint stays, clip 18's is the new one" );
 		AssertPlace( glints, 0, 2f, 1.17 * 50000, 1.01 * 37500 );
 		AssertPlace( glints, 1, 2f, 1.17 * 50000, 1.61 * 37500 );
 	}
@@ -72,6 +74,7 @@ public class AdvisorGlintTests
 		Advisor.SetGlints( glints, 0x90000, 1f, 3f );
 
 		Assert.AreEqual( 3, glints.Count );
+		Assert.AreEqual( (44, 49, 49), (glints.EffectOf( 0 ), glints.EffectOf( 1 ), glints.EffectOf( 2 )), "the third is clip 19's" );
 		AssertPlace( glints, 0, 3f, 50000, 0.6 * 37500 );
 
 		foreach ( var (index, angle) in new[] { (1, 170), (2, 341) } )
@@ -116,6 +119,59 @@ public class AdvisorGlintTests
 		glints.SetCentre( false, 0.5f, 0f, 0f, 0.5f );
 
 		AssertPlace( glints, 0, 0.75f, 1.375 * 50000, 37500 );
+	}
+
+	/// <summary>
+	/// An emitter with a pin down the screen keeps it wherever it moves; one with none takes the third of the virtual screen
+	/// it stands in, as an effect with no pin of its own takes one across. A glint closing on the top right stands in the top
+	/// third, which would pin it to the top of a window taller than 4:3 and leave the bottom-pinned advisor behind.
+	/// </summary>
+	[TestMethod]
+	public void AnEmittersPinDownIsItsOwnOrWhereItStands()
+	{
+		var top = new Emitter { Z = -7500 };
+		var middle = new Emitter { Z = 37500 / 16 };
+		var bottom = new Emitter { Z = 75000 / 16 };
+
+		Assert.AreEqual( (UI.VerticalAnchor.Top, UI.VerticalAnchor.Middle, UI.VerticalAnchor.Bottom),
+			(UI.ScreenParticles.PinDown( top ), UI.ScreenParticles.PinDown( middle ), UI.ScreenParticles.PinDown( bottom )) );
+
+		top.Down = UI.VerticalAnchor.Bottom;
+		bottom.Down = UI.VerticalAnchor.Top;
+
+		Assert.AreEqual( (UI.VerticalAnchor.Bottom, UI.VerticalAnchor.Top), (UI.ScreenParticles.PinDown( top ), UI.ScreenParticles.PinDown( bottom )) );
+	}
+
+	/// <summary>
+	/// The glints the advisor starts are pinned to the bottom of the window with him (<see cref="Advisor.SetGlints"/>),
+	/// wherever the channel moves them: clip 20's two close on the top right, in the top third, and are still bottom-pinned
+	/// there. Needs the game's particle library.
+	/// </summary>
+	[TestMethod]
+	public void TheGlintsKeepTheAdvisorsBottomPinWhereverTheyMove()
+	{
+		Log ??= new();
+		FileSystem = GameData.Required();
+		var system = new ParticleSystem( "Particle/Tp2.plb", 1000 );
+
+		try
+		{
+			var glints = new UI.UiParticleChannel();
+			Advisor.SetGlints( glints, 0x20000, 0.5f, 0f );
+			Advisor.SetGlints( glints, 0x110000, 2f, 4f );
+			glints.Place( 7f );
+
+			var started = system.Emitters.Where( emitter => emitter.Active ).ToArray();
+
+			Assert.IsTrue( started.Length >= 2, "both glints are running" );
+			Assert.IsTrue( started.All( emitter => UI.ScreenParticles.ScreenY( emitter.Z ) < UI.VirtualScreen.Height / 3f ), "moved into the top third" );
+			Assert.IsTrue( started.All( emitter => UI.ScreenParticles.PinDown( emitter ) == UI.VerticalAnchor.Bottom ) );
+			Assert.IsTrue( started.All( emitter => emitter.Anchor == UI.Anchor.Right ) );
+		}
+		finally
+		{
+			system.Shutdown();
+		}
 	}
 
 	/// <summary>0x200000 empties the channel; a word with two of the glint flags, or with none, leaves it as it was.</summary>

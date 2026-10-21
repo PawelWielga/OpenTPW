@@ -707,14 +707,17 @@ internal sealed class UiSlider : UiControl
 
 	internal override void RightClickedAt( float x, float y ) => PageTowards( x, y );
 
-	/// <summary>A page down where the click is left of the thumb, or below its top on a vertical slider; else a page up.</summary>
+	/// <summary>
+	/// A page down where the click is left of the thumb's right edge, or below its bottom edge on a vertical slider; else
+	/// a page up (<c>0x0066b90e</c>..<c>0x0066b93e</c>; <c>docs/exe/hud.md</c>, "The two sliders' directions").
+	/// </summary>
 	private void PageTowards( float x, float y )
 	{
 		if ( Thumb == null || !Enabled )
 			return;
 
-		var down = Vertical ? VirtualScreen.ToVirtualY( y, VerticalAnchor ) > Thumb.Rect.Top
-			: VirtualScreen.ToVirtualX( x, Anchor ) < Thumb.Rect.Left;
+		var down = Vertical ? VirtualScreen.ToVirtualY( y, VerticalAnchor ) > Thumb.Rect.Bottom
+			: VirtualScreen.ToVirtualX( x, Anchor ) < Thumb.Rect.Right;
 
 		MoveBy( down ? -Page : Page );
 	}

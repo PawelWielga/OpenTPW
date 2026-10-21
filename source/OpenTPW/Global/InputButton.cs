@@ -20,8 +20,8 @@ namespace OpenTPW;
 /// (<c>ParkFrontEnd.ShortcutRow</c>), so their bindings here stay unread.
 /// </para>
 /// <para>
-/// <b>This is not a defect list.</b> Some of the thirty-one wait on features that do not exist yet - there
-/// is no research screen and no time control to speed up - and they are declared ahead of those on
+/// <b>This is not a defect list.</b> Some of the thirty-one wait on a feature that does not exist yet - there
+/// is no time control to speed up - and they are declared ahead of it on
 /// purpose, because the binding is what the options screen offers and the original ships all of them. The
 /// ones worth noticing are those whose feature <i>does</i> exist, among them <see cref="OpenPark"/> and
 /// <see cref="ClosePark"/>, which have <see cref="ParkState.SetParkClosed"/> to call, and the screens the

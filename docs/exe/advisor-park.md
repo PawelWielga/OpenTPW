@@ -692,7 +692,7 @@ mechanic's decide posts began `Advisor: sample 202 ... wearing 5,0`, `advisor` r
 
 | | The original | OpenTPW |
 |---|---|---|
-| The props of a line | put on after every clip's start | put on as the line begins |
+| The props of a line | put on after every clip's start | put on again at every clip's start (Q595) |
 | The hat's colour | a full yellow | paler: he is lit past his textures (`AdvisorModel`'s light, set against his gloves) |
 | The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows: in Lost Kingdom the fly in an explorer's hat, no antennae (`q344/orig/a-told.png`) | the same, paler ("The theme's own advisor and its costume", below) |
 | A clip word's `0x10000` (no prop, the head hidden) and its particles | a gesture row's | the same (Q595): only rows 1 and 13 carry flags |
@@ -758,7 +758,7 @@ slot 0` and `3-hardhat.png` shows the lobby's fly in the hard hat. Main's build 
 | | The original | OpenTPW |
 |---|---|---|
 | Who says a slot 1 line | the level's own model, alone on the screen | the same |
-| The costume | four pairs of the theme's `Standard.sam`, put on after every clip's start | the same pairs, put on as the line begins |
+| The costume | four pairs of the theme's `Standard.sam`, put on after every clip's start | the same pairs, put on again at every clip's start (Q595) |
 | The helmet's colour | tan, with a grey band | **paler: yellow with a white band**, as the hard hat is paler (`AdvisorModel`'s light, set against the lobby model's gloves) |
 | The chain's clip lengths | the park's model's, for both slots | the same |
 | Clips 16 to 20, the map, the tickets and the mutant eye | the golden ticket's lines (`scenes.md`, "Gesture table") | clips 17 to 20 played by the ticket lines (Q595); the big ticket of 18 to 20 grown by its scale track (Q599; `ui.md`, "The big ticket is a scale track"); clip 16 (row 0's) by no park line |
@@ -781,7 +781,8 @@ and `0x19`; any other only logs. For `0x18`:
    the first holding it. No row, no tag.
 2. The tag's life is the event's `+0x10`, or the row's `+0x18` where that is under nought (always, from a line).
 3. `FUN_00509e10` writes the tag's text from the row's string (`+0x0c`) by the row's kind (`+0x1c`): kind 0 the
-   string alone, kind 2 the string with the item's name (`FUN_00412f50`).
+   string alone, kind 2 the string with the item's name (`FUN_00412f50`);
+   the other kinds, 5 to 8 the Local tickets' numbers among them, are in "The text, `FUN_00509e10`" below.
 4. `FUN_00481580` hands the messages control the tag: its id, the row's `+0x04`, the text, the life, the row's
    picture (`+0x08`), the row's two button types (`+0x10`, `+0x14`), the thing and the item.
 
@@ -1845,7 +1846,7 @@ on tick 1394 in run a and was said on tick 1447, after the hire screen's line; i
 | Row 124, later in that park | said (tick 1317) | not built: counted with the other polled rows |
 
 **Not built or not seen.** Row 124. In no game run: lines 2 and 3 (samples 17 and 18; the test holds the
-turn and the second's gesture row, which Q596 plays; said by its topic in no run, only through `sayas`), the line said again past its 120
+turn and the lookup of the second's gesture row, and a seam test that the row reaches the speaker's call (Q596); said by its topic in no run, only through `sayas`), the line said again past its 120
 quarter-ticks, a mechanic kept (he mends the rides before a turn; the test holds `no-score`) or hired from the
 screen after the line, a broken sideshow beside the rides (the test holds it), Full Simulation: the mode is not
 asked by row 6's score. A second file loaded into the original with the hire screen left open did not load
@@ -4161,9 +4162,9 @@ is `FUN_00503980`, and `ParkPeople.AdvisorFacts` hands the score the sideshows' 
 was made of. The poll line ends ` researchers=N kinds=K/T unfinished=N rate=R ability=A/M`. `ParkTags.Rows`
 lists row 78, and the bar wears the research button.
 
-**DEVIATION: the bar's research button does nothing here.** The research screen is not built, so the click is
-counted (`TAG_BAR_BUTTON`) and the tag stays; the original opens its research screen and takes the tag off.
-**The outputs never change here**: no screen sets a kind's effort, so they are the file's or the fresh world's.
+**The bar's research button** opens the research screen in Full Simulation with a researcher (Q590, `hud.md`, "The
+research opener and its two boxes"). **The outputs change with the screen**: its sliders set a kind's effort and the
+work load, and the lab's outputs follow.
 
 **The scenes** (`lib/stockscene.py`; the stock park paused on tick 962 to 964): *both*, a Strength Bird (1305)
 bought beside the stock Jungle Spray, so that both kinds on offer stand, the researcher (thing 30) of grade 2 as
@@ -4233,9 +4234,7 @@ run, and the lab's `+0x1430` 14.
 | The research button | the research screen's opener: in Instant Action a box of one line, and the tag off | the same, built since (Q410; `hud.md`, "The research opener and its two boxes"); in no game run here |
 | A fresh Full Simulation park | not run | said on tick 46 with one scientist, silent with two whose abilities make 8 of 60 |
 
-**Not built or not seen.** The research screen behind the button (`FUN_004aa480`'s last arm; its two boxes are built,
-Q410);
-the training line of a park whose researchers are poorly graded, which the original said in every run with
+**Not built or not seen.** The training line of a park whose researchers are poorly graded, which the original said in every run with
 the grade-0 researcher (built, Q351: "Staff nobody has trained"). In
 no game run: line 2 (sample 216; the test holds the turn), the line again past its 900 quarter-ticks, the row in
 the original's own Full Simulation park (its turn was reached only by holding the game type in an Instant
@@ -5119,8 +5118,10 @@ again, the tick's rescore of its answer (`FUN_0059bf20`). Said at once: sample 5
 share or mechanics fail a test.
 
 **OpenTPW** does not build it: the row is counted `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`, so on that load it says no line on
-19084, and its advisor, freer than the original's, says the hint `0x13a` that the original's leaves waiting
-(`ride-operation.md`, "The hints"). The build is Q609.
+19084. Its advisor says the hint `0x13a` on 19059, which the original's leaves waiting because row 257's sample 525 holds
+it from 19040 to 19076 (`q602/orig-R1/line.log`; `ride-operation.md`, "The hints"), and row 257 is not built either (Q713).
+The row is Full Simulation only (`+0x0c` 0), and with no `mType` 9 cell the share is nought (`0x004cd6df`), the score 500.
+The build is Q609.
 
 ## Shop and sideshow value and satisfaction, rows 238 to 257 (fork watch 2026-10-19)
 

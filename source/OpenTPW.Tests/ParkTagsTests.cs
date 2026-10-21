@@ -303,6 +303,40 @@ public class ParkTagsTests
 	}
 
 	/// <summary>
+	/// <b>Each ticket row names its own string and text kind</b> (rows 102 to 113 of the table at <c>0x0075eca8</c>, read from
+	/// the executable): strings 180 to 191 in order, kinds 5, 6, 0, 0, 7, 8 and then six nought, so that only the four
+	/// strings that carry a number are given one. Every row is said on a list of its own, past the ten-tag cap, from a
+	/// table whose every string is different, so a row given another's string reads another's text.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> rows 104 and 105's strings swapped; two of rows 109 to 113's strings swapped; a kind 5 to 8 given to
+	/// a row whose string has no number; a kind 5 to 8 taken from one whose string has.
+	/// </remarks>
+	[TestMethod]
+	public void EachTicketRowNamesItsOwnStringAndKind()
+	{
+		var rows = ParkTags.Rows.Where( row => row.Id is >= 102 and <= 113 ).OrderBy( row => row.Id ).ToArray();
+		CollectionAssert.AreEqual( Enumerable.Range( 180, 12 ).ToArray(), rows.Select( row => row.String ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 5, 6, 0, 0, 7, 8, 0, 0, 0, 0, 0, 0 }, rows.Select( row => row.Kind ).ToArray() );
+
+		var strings = Enumerable.Range( 0, 192 ).Select( at => new StringPart[] { new( $"string {at}", 0 ) } ).ToArray();
+		var numbered = new[] { 180, 181, 184, 185 };
+		foreach ( var at in numbered )
+			strings[at] = [new( $"string {at} ", 0 ), new( null, 1 )];
+
+		foreach ( var row in rows )
+		{
+			var tags = new ParkTags { Strings = strings, Thresholds = new( Visitors: 11, PeopleInPark: 22, Happiness: 0,
+				AtLeastThisManyHappyPeople: 0, ProfitYear: 44, RecentVisitors: 55, RecentVisitorMonths: 6, CoasterHeight: 0,
+				GokartExcitement: 0, WaterLength: 0, MinCellsCovered: 0 ) };
+			var text = tags.Said( row.Id, 0, 0 )!.Text;
+
+			Assert.AreEqual( numbered.Contains( row.String ), row.Kind != 0, $"row {row.Id}: a number only where its string has one" );
+			StringAssert.StartsWith( text, $"string {row.String}", $"row {row.Id}" );
+		}
+	}
+
+	/// <summary>
 	/// <b>A park's tags write the ticket rows with its own thresholds</b> (<c>Level.DressTags</c>): Lost Kingdom's
 	/// Standard keys, 100 visitors, 200 inside, $15,000 profit, 350 visitors in 6 months, into <c>TAG_SYSTEM.str</c>'s rows
 	/// 180, 181, 184 and 185. Needs the game.

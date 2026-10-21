@@ -15,8 +15,9 @@ namespace OpenTPW;
 /// </para>
 /// <para>
 /// <b>It deviates for a node that rides a clip-driven ancestor</b>: the engine stores such a node where the last
-/// drawn frame left it. Only a particle's node is carried so here (<see cref="Follow"/>, then <c>carried</c>); a walk's
-/// and a head's stand at rest (<see cref="NodeEnd.RestPose"/>). Every
+/// drawn frame left it. A particle's node, a sound's (<c>SoundSpace</c>) and a walk's rider as drawn
+/// (<see cref="ParkGuestSprites.WalkedOnRide"/>) are carried so (<see cref="Follow"/>, then <c>carried</c>); a walk's leg
+/// ends and a head stand at rest (<see cref="NodeEnd.RestPose"/>). Every
 /// shipped walk comes at a pose that gives the rest-pose legs - the Aztec Mayhem's measured, the Lookout's and the
 /// Totem's worked out - but a ride left off screen mid-cycle keeps the engine's snapshot and not this. A head on a
 /// face of a morphing mesh is the other deviation (<see cref="NodeEnd.OnAFace"/>).
@@ -178,9 +179,10 @@ public sealed class RideNodes
 	/// it draws, and off the screen only for a model whose header word <c>0x30</c> carries <c>0x4</c>
 	/// (<c>docs/exe/ride-operation.md</c>, "How long a leg lasts, and where its ends are"), so any other model off the
 	/// screen keeps the pose of the frame it was last drawn in; this follows the players whether the model is seen or not.
-	/// <b>A path track is not followed:</b> <see cref="NodePoser"/> poses rotation and position tracks, where the drawn
-	/// model moves a node along its route (<see cref="LobbyModel.Pose"/>), so a node on a route, or under one, is answered
-	/// where it stands without it, counted <c>RIDE_NODE_ON_A_ROUTE</c> where a carried find reads one.
+	/// <b>A path track is followed:</b> <see cref="NodePoser"/> poses rotation, position and path tracks, carrying a node
+	/// along its route and turning it to face along it, as the drawn model does (<see cref="LobbyModel.Pose"/>). A carried
+	/// find of a node on a route, or under one, is still counted <c>RIDE_NODE_ON_A_ROUTE</c> (<see cref="Stored"/>); that
+	/// count is stale (Q573), reached in every Lost Kingdom run by the vehicle's sound start.
 	/// </remarks>
 	public void Follow( RideAnimations players )
 	{

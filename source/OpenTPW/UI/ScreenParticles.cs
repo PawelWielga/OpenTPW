@@ -185,12 +185,9 @@ internal sealed class ScreenParticles : Panel
 			var ignoresAlpha = adds && (template.DrawFlags & 0x2000) == 0;
 			var offset = VirtualScreen.Offset( emitter.Anchor );
 
-			// And down the screen from wherever the effect itself sits, taken from its own position
-			// the way an effect with no pin of its own takes one across (ParticleSystem.AnchorAt):
-			// the sparkles over the island panel's price keep to the bottom of the window with the
-			// panel, and a button's glints to whichever edge the button keeps to. Zero on any window
-			// at least as wide as 4:3, where there is no room above or below the interface at all.
-			var offsetDown = VirtualScreen.OffsetDown( VirtualScreen.VerticalAnchorAt( ScreenY( emitter.Z ) ) );
+			// And down the screen by the pin the effect was started with, or else from wherever it sits (PinDown).
+			// Zero on any window at least as wide as 4:3, where there is no room above or below the interface at all.
+			var offsetDown = VirtualScreen.OffsetDown( PinDown( emitter ) );
 
 			for ( int index = emitter.FirstParticle; index >= 0; index = system.Particles[index].Next )
 			{
@@ -218,6 +215,15 @@ internal sealed class ScreenParticles : Panel
 		layers.Blended.Draw();
 		layers.Added.Draw();
 	}
+
+	/// <summary>
+	/// The edge an emitter is pinned to down the screen: the one it was started with, as the advisor's glints are pinned
+	/// to the bottom with him wherever they move; or else the one its own position gives, taken the way an effect with no
+	/// pin of its own takes one across (ParticleSystem.AnchorAt): the sparkles over the island panel's price keep to the
+	/// bottom of the window with the panel, and a button's glints to whichever edge the button keeps to.
+	/// </summary>
+	internal static VerticalAnchor PinDown( Emitter emitter )
+		=> emitter.Down ?? VirtualScreen.VerticalAnchorAt( ScreenY( emitter.Z ) );
 
 	private static bool Drawn( Emitter emitter ) => emitter.Active && emitter.Count > 0 && !emitter.Hidden && emitter.Template.OnScreen;
 

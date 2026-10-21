@@ -750,7 +750,7 @@ public sealed class LobbyModel : IChannelPosed
 		}
 
 		// A scale track sets a node's axis lengths after its turn (Anim_PoseTrack 0x00471d8d); only the advisor poses them
-		// (AdvisorModel.Pose). 128 of the game's 644 are in Lost Kingdom's shops, rides, sideshows and features.
+		// (AdvisorModel.Pose). 128 of the game's 644 are in Lost Kingdom's wads: 11 the advisor's, which AdvisorModel poses, and 117 in its shops, rides, sideshows and features.
 		if ( animation.ScaleTracks.Count > 0 )
 			Unimplemented.Report( "ANIM_SCALE_TRACK" );
 
@@ -784,7 +784,9 @@ public sealed class LobbyModel : IChannelPosed
 		if ( !RouteSegment( route, percent, out var points, out var b, out var t ) )
 			return System.Numerics.Vector3.Zero;
 
-		// Route_SampleStraight, the straight lerp; only space's slide is a straight route.
+		// Route_SampleStraight, the straight lerp; only space's slide is a straight route. Not the original's: its sampler
+		// has no wrap (docs/exe/park.md, "Route_SampleStraight"), where this wraps point b + 1 on a closed straight route;
+		// no model ships one, so nothing reaches it.
 		if ( !route.IsBezier )
 			return System.Numerics.Vector3.Lerp( points[b], points[(b + 1) % points.Length], t );
 
