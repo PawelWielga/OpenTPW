@@ -219,12 +219,15 @@ public class RideScriptRunTests
 	}
 
 	/// <summary>
-	/// Nothing is quietly guessed: whatever the machine does not implement, it counts.
+	/// Nothing is quietly guessed: whatever the machine does not implement, it counts, and says.
 	///
 	/// <para>
-	/// The point of the count is that it is visible. A script that spends its whole life in
-	/// unimplemented instructions is not running in any useful sense. What is asserted is only that the
-	/// count is not below nought and that the script names itself; the count is not checked against anything.
+	/// With no ride state every <c>COAST</c> is counted and does nothing, and with no scheduler so is
+	/// <c>SPAWNSOUND</c>. Taking 200 turns by the script's own listing: the first runs <c>NAME</c>,
+	/// <c>SPAWNSOUND</c> (1) and <c>WAITANIM</c> (with no model its wait is already over, and costs the turn); the
+	/// second <c>COAST 8</c> and <c>COAST 5</c> before <c>ENDSLICE</c>; each one after a pass of the main loop, five
+	/// <c>COAST</c>s, that <c>CRIT_UNLOCK</c> ends. 1 + 2 + 198 * 5 = 993, each one also reported. A gap that acted on
+	/// a guess, or was not counted, or not reported, fails it.
 	/// </para>
 	/// </summary>
 	[TestMethod]
@@ -232,11 +235,18 @@ public class RideScriptRunTests
 	{
 		var script = new RideScript( CoasterFile() );
 
-		for ( int turn = 0; turn < 200 && !script.Waiting; ++turn )
+		Unimplemented.Forget();
+
+		for ( int turn = 0; turn < 200; ++turn )
 			script.Turn( 0f );
 
-		Assert.IsTrue( script.NotImplemented >= 0, "the count went backwards" );
-		Assert.IsTrue( script.Name.Length > 0, "the script did not get as far as naming itself" );
+		Assert.AreEqual( 993, script.NotImplemented, "not every gap with no ride and no scheduler was counted" );
+
+		CollectionAssert.AreEqual(
+			new[] { ("Coaster: COAST, with no ride state to work on", 992), ("Coaster: SPAWN, with no scheduler to put the script in", 1) },
+			Unimplemented.Summary.ToArray(),
+			"the count and the reports disagree: "
+				+ string.Join( "; ", Unimplemented.Summary.Select( gap => $"{gap.What} x{gap.Times}" ) ) );
 	}
 
 	/// <summary>

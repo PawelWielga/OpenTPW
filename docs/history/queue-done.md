@@ -9716,6 +9716,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   6,310 faces turn away, in `s_X1`, `s_key` and `warnlite`'s root. Seen on Lost Kingdom's island panel: ours doubles the
   "1" of "x 1" with its back wall's edge, the original does not (`q608/one-side-by-side.png`; `q608/PREDICTION.txt`,
   P1 missed and P1b in part, recorded; P2 and P3 held in part). The build is Q613.
+- [x] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
+  what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
+  turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a
+  floor, not the ceiling its name claims. `RideScriptRunTests.WhatIsNotImplementedIsCountedRatherThanGuessed` asserts a
+  count is not below nought, which cannot fail. Make each assert its claim, and put the bug back to prove it (`CLAUDE.md`
+  rule 6). No game run.
+  **Done:** each asserts its claim. The collect test's second script WAITs between its `WALKGET`s: nought while the
+  rider walks off, then 42, then nought, the slot freed. The lanes test: of nine visitors exactly 1, 2 and 3 taken on,
+  the 9th left waiting, `VAR_ONRIDE` 3, and a script asking regardless finds `WALKON` takes nobody with both slots
+  busy. The coaster test takes 200 turns with no ride: 993 counted (`COAST` 992, `SPAWN` 1, each reported as often);
+  the old loop stopped on turn 1's `WAITANIM` and counted 1. `mutate.py` (`q144/`): 8 bugs, 8 caught by the new tests;
+  the old three caught 1 of them. No game run, as the item says.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

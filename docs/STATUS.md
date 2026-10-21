@@ -55,15 +55,15 @@ Last updated: 2026-10-21. **This header names no branch and no sha, deliberately
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q608 (which draws the original's face test covers, decode only): the ground and paths (the terrain pass's own copy of the test), the sea, the build markers, the flags and the UI's meshes are culled; people, particles, weather and the sky are not (`render-states.md`, "Which draws the test covers"); code read, not photographed for the sheets, which lose nothing seen from above. The UI's rule (clockwise in the file's (x, y), `Renderable_SetMatrix` turning y over) is borne out by `lib/uiwinding.py` (422 of 6,310 `ui.wad` faces turn away, in three models) and on Lost Kingdom's island panel: ours doubles the "1" of "x 1", the original does not (`q608/one-side-by-side.png`; `q608/PREDICTION.txt`: P1's sign missed and recorded, P1b's count held, P2 and P3 held in part; the key's strip not told apart in either game). `warnlite`'s root part: which control shows it was not traced.
+- Q144 (three hollow ride-script tests; tests only, no game run, as the item says): each now asserts its claim, and nothing drawn or run in the game changed. `mutate.py` on the branch: 8 bugs put back in `VM/RideScript.cs`, 8 caught by the new tests; on main's tree the old three caught 1 (`q144/PREDICTION.txt`, `mut-new.stdout`, `mut-old.stdout`: 3 predictions missed and recorded, the SPAWN gap not counted at first, P1's nought for the same cause, and m7, which the old collect test did catch).
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3807**, 0 fail, 0 skip with the game | 2026-10-21, Q610, alone in a worktree |
-| Tests without the game | **1330** ran, **2477** skipped, of 3807 | 2026-10-21, Q610, alone in a worktree |
+| Tests | **3807**, 0 fail, 0 skip with the game | 2026-10-21, Q144, alone in a worktree |
+| Tests without the game | **1330** ran, **2477** skipped, of 3807 | 2026-10-21, Q144, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

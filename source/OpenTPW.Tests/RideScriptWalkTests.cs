@@ -302,16 +302,16 @@ public class RideScriptWalkTests
 	///
 	/// <para>
 	/// <c>WALKGET</c> answers nought until the rider has finished walking off, then answers their handle
-	/// exactly once and frees the slot. <b>Only the "nought first" half is asserted</b>: a <c>WALKGET</c>
-	/// that simply returned whoever was in slot one would fail it. The second script is asserted only to
-	/// run with nothing unimplemented; what its <c>WALKGET</c>s answer is not checked.
+	/// exactly once and frees the slot (<c>0x0055713f</c>). The first script asks while the rider is still
+	/// walking on, the second while they are walking off, after they are done, and once more: nought, the
+	/// handle, nought. A <c>WALKGET</c> that answered whoever was in a slot, answered a walk off not yet
+	/// finished, or kept the slot after answering fails it.
 	/// </para>
 	/// </summary>
 	[TestMethod]
 	public void AWalkIsCollectedOnlyOnceItHasFinished()
 	{
-		// WALKON, then WALKGET before anyone has walked off - which must answer nought. The second script
-		// below adds WALKOFF and two WALKGETs.
+		// WALKON, then WALKGET while they are still walking on - which must answer nought.
 		var file = Build( walkSlots: 2,
 			Word( Opcode.WALKON ), Rider, 1, 1, 1, 1, 1, 1,
 			Word( Opcode.WALKGET ), Var( 0 ),
@@ -324,26 +324,42 @@ public class RideScriptWalkTests
 		script.Turn( 0f );
 
 		Assert.AreEqual( 0, script.NotImplemented, "an instruction in this script is unimplemented" );
+		Assert.AreEqual( 0, script.Variables[0], "WALKGET answered somebody still walking on" );
 
-		// <b>The load-bearing half.</b> A WALKGET that simply handed back whoever was in the first slot
-		// would fail this one. Nothing below asserts the collection itself.
-		Assert.AreEqual( 0, script.Variables[0],
-			"WALKGET answered somebody who had not finished walking off" );
-
-		// Now walk them off and let the stepper carry them to the end.
+		// Each WAIT ends a turn, so each WALKGET asks between two steps of the walk. With no model every leg is
+		// 100 ms: walking off at 93, done by 124 (AFinishedWalkOffKeepsTheLegItWalked).
 		var off = new RideScript( Build( walkSlots: 2,
 			Word( Opcode.WALKON ), Rider, 1, 1, 1, 1, 1, 1,
 			Word( Opcode.WALKOFF ), Rider,
+			Word( Opcode.WAIT ), 1,
 			Word( Opcode.WALKGET ), Var( 0 ),
+			Word( Opcode.WAIT ), 1,
 			Word( Opcode.WALKGET ), Var( 1 ),
+			Word( Opcode.WALKGET ), Var( 0 ),
 			Word( Opcode.END ) ) );
 
-		// Two turns, but the body runs to its END on the first, and a script that has ended takes no
-		// further turn. Nothing steps the walks here (the park's tick does), so the rider is still walking
-		// off when both WALKGETs ask, and both answer nought. Only NotImplemented is asserted.
 		off.Turn( 0f );
-		off.Turn( 10_000f );
+		off.StepTheWalks( 93f );
 
+		Assert.AreEqual( RideScript.WalkState.WalkingOff, off.Walking().Single().State, "not walking off at 93 ms" );
+
+		off.Turn( 93f );
+
+		Assert.AreEqual( 0, off.Variables[0], "WALKGET answered somebody still walking off" );
+
+		off.StepTheWalks( 124f );
+
+		Assert.AreEqual( RideScript.WalkState.Done, off.Walking().Single().State, "not done at 124 ms" );
+
+		// Something the last WALKGET must overwrite, so that its nought is seen to be written.
+		Assert.IsTrue( off.Set( "VAR_0", -1 ), "the builder did not name VAR_0" );
+
+		off.Turn( 124f );
+
+		Assert.AreEqual( Rider, off.Variables[1], "WALKGET did not hand back the rider who had finished walking off" );
+		Assert.AreEqual( 0, off.Variables[0], "WALKGET handed the same rider back twice" );
+		Assert.IsFalse( off.Walking().Any(), "the slot was not freed by collecting its rider" );
+		Assert.IsFalse( off.Running, "the script did not reach its END" );
 		Assert.AreEqual( 0, off.NotImplemented, "an instruction in the second script is unimplemented" );
 	}
 
@@ -537,17 +553,22 @@ public class RideScriptWalkTests
 	}
 
 	/// <summary>
-	/// <b>The declared slots are a ceiling.</b> Offered more visitors than it has lanes, the sideshow
-	/// takes as many as it declared and refuses the rest - <c>WALKON</c> walks the array and takes nobody
-	/// when every slot is busy. What is asserted is only that at least as many visitors were taken on as
-	/// there are lanes; the refusals are not counted.
+	/// <b>The declared slots are a ceiling.</b> Offered more visitors than it has lanes, the sideshow takes one per
+	/// lane and refuses the rest. With no model no lane's clip ever ends (<c>GETANIM_CH</c> answers the register,
+	/// the lane's rider, so <c>BRANCH_PV</c> skips the walk off), so no lane frees: of nine visitors exactly three
+	/// are taken on, the first three, and the other six are left waiting in <c>VAR_LETMEON</c>.
+	///
+	/// <para>
+	/// The sideshow's own <c>VAR_LANE</c> tests refuse before <c>WALKON</c> is reached, so a script that asks
+	/// regardless shows <c>WALKON</c>'s own ceiling: it walks the array and takes nobody when every slot is busy.
+	/// </para>
 	/// </summary>
 	[TestMethod]
 	public void MorePeopleThanLanesCannotAllBeWalkedOn()
 	{
 		var script = new RideScript( JunsprayFile() );
 		var clock = 0f;
-		var takenOn = 0;
+		var takenOn = new List<int>();
 
 		for ( var visitor = 1; visitor <= JunsprayLanes * 3; ++visitor )
 		{
@@ -561,14 +582,30 @@ public class RideScriptWalkTests
 			}
 
 			if ( script["VAR_LETMEON"] == 0 )
-				++takenOn;
+				takenOn.Add( visitor );
 
 			// Whoever came off is collected, so the script is not blocked reporting them.
 			script.Set( "VAR_LETMEOFF", 0 );
 		}
 
-		Assert.IsTrue( takenOn >= JunsprayLanes,
-			$"only {takenOn} of {JunsprayLanes} lanes were ever filled" );
+		CollectionAssert.AreEqual( new[] { 1, 2, 3 }, takenOn, "not the first visitor per lane and nobody else" );
+		Assert.AreEqual( JunsprayLanes * 3, script["VAR_LETMEON"], "the last visitor was not left waiting" );
+		Assert.AreEqual( JunsprayLanes, script["VAR_ONRIDE"], "the ride counts other than one rider per lane" );
+
+		CollectionAssert.AreEqual( new[] { 1, 2, 3 }, script.Walking().Select( walk => walk.Handle ).ToArray(),
+			"the slots do not hold the three visitors taken on" );
+
+		var full = new RideScript( Build( walkSlots: 2,
+			Word( Opcode.WALKON ), 1, 1, 1, 1, 1, 1, 1,
+			Word( Opcode.WALKON ), 2, 1, 1, 1, 1, 1, 1,
+			Word( Opcode.WALKON ), 3, 1, 1, 1, 1, 1, 1,
+			Word( Opcode.END ) ) );
+
+		full.Turn( 0f );
+
+		CollectionAssert.AreEqual( new[] { (0, 1), (1, 2) },
+			full.Walking().Select( walk => (walk.Slot, walk.Handle) ).ToArray(),
+			"a WALKON with every slot busy took somebody" );
 	}
 
 	/// <summary>
