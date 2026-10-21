@@ -768,6 +768,12 @@ after its poller starts**, so a key meant inside either line cannot be sent afte
   `helpbar.py`'s `buy item` (rows about 20 apart from 220). In this game (`q495/confirm.py`) the same layout points
   through the centring above, a row's slot from the `Buy list: tab N, ... rows:` log line and the list's `rows of N
   units`; `pointer` reads the bar and `footprint` the poster's words. The text is in the frame: crop the bar.
+- **A golden-ticket ride bought and put down, in this game** (Q709, `q709/confirm-b.py` on `lib/freshpark.py` with a
+  player's `gms.dat` copied in): the screen's tick logs `Buy list: cells "<name>" "<price>" (R,G,B), ...`, what each
+  slot letters and in which colour; `tickets` reads `spent N left N rides [ids]`. A fresh park opens on its gate,
+  where every click meets the drive: `camera 565 625` and `step 10` put cell (56,62), open park land, mid-window, and a
+  click there puts Jurassic Tours down at (56,61). `savepark` writes the player's `gms.dat` first, though a fresh park's
+  own file is refused (`SAVE_PARK_WITH_NO_FILE`); `lib/gmsfile.py` reads it back.
 - **The hire screen reached by real clicks, in both games, and its advisor line:** the buy screen's button to
   hire is layout point (1917, 634) and the hire screen's exit button (1930, 859), both a park screen's (centred,
   the recipe above); in the original `gmove.py 958 317` and `965 430`. The same point on the hire screen is its

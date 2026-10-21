@@ -2389,6 +2389,7 @@ public static class DebugConsole
 				Reply( Players.Roster.Current is not { } ticketHolder
 					? "tickets: nobody is playing"
 					: $"tickets {ticketHolder.Tickets} besides secret {ticketHolder.File.CountTicketsBesidesSecret( SaveFolder.IsTheme )} keys {ticketHolder.Keys} " +
+						$"spent {ticketHolder.File.TicketsSpent} left {ticketHolder.TicketsUnspent} rides [{string.Join( ",", ticketHolder.File.RideIds )}] " +
 						$"records [{string.Join( ",", ticketHolder.File.RecordTickets )}] secret [{string.Join( ",", ticketHolder.File.BonusTickets )}] " +
 						string.Join( " ", ticketHolder.File.Parks.Select( p => $"{p.Name} [{string.Join( ",", p.Tickets )}] holds [{string.Join( ",", p.HoldsRecord.Select( ( h, i ) => h != 0 ? p.RecordValues[i].ToString() : "-" ) )}]" ) ) +
 						(ParkGoldenTickets.Last is { } last ? $"; last test tick {last.Tick}, {last.Measures}, won {last.Won.Count}" : "; no test yet") );

@@ -2083,8 +2083,8 @@ whenever a sort is set, `HeadingClicked` is `FUN_00665a44` and `Sort` `FUN_00662
 all-items screen one a tab (Q374). A list built with headings and no sort, which only a test builds, counts a heading's
 click (`LIST_HEADING_SORT_NOT_BUILT`).
 Time In Park sorts on its hours (Q372), the "?" column on its thought's part (Q373). The buy list's rows are
-handed over in name order, where the original walks its catalogue (`FUN_00412e60`): that shows only among rows equal
-on the sorted column.
+handed over in the catalogue's order, as the original walks it (`FUN_00412e60`), so rows equal on the sorted column stand
+as the original's: the two mystery rides, Jurassic Tours' (`tourride`) before Eruption's (`volcano`), Q709.
 
 **Measured, both games side by side** (Q130e, 2026-10-07, each predicted first; `q130e/`). The original, on the save's
 own sixteen candidates (every photograph before `mGameTick` 858, when the first times out), and OpenTPW with the park
@@ -3841,8 +3841,8 @@ the player has not unlocked (`FUN_004d4b70`, `0x004ab047`) is named UITEXT 137 "
 (`FUN_004db090` -> `FUN_004d4ad0`) when the tickets suffice, the cost added to the tickets spent; in game type 1 it
 inserts nothing. The set is the player's, saved in `gms.dat` (`FUN_005aff50`; `saves.md`, the "ride ids" rows),
 across every park and theme. No researched item in Instant Action's Lost Kingdom has a ticket cost, which is why the
-original showed no mystery row. OpenTPW draws the row from the current player's `RideIds` (none with nobody playing); buying one
-with tickets is not built, counted `MYSTERY_RIDE_PURCHASE`.
+original showed no mystery row. OpenTPW draws the row from the current player's `RideIds` (none with nobody playing) and buys it
+with tickets ("Spending golden tickets", below).
 
 **Spending golden tickets** (decoded for Q604, Q709's first piece; confirmed in the original on a fresh Full
 Simulation park whose player had 4 tickets earned, 2 spent and no ride bought, `q709/orig/a`). Two tests on the
@@ -3878,14 +3878,26 @@ Their readers:
   put-down; `progress.py` "spent 2 ... rides []" to "spent 3 ... rides [1170]" on tick 291; the gadget's corner "2 x"
   to "1 x".
 - **The save.** Nothing here writes `gms.dat`; the progress object is written at its next write ("Load Game and Save
-  Game", `saves.md`): after a park save the file read spent 3 and ride ids [1170], the rest as before
-  (`q709/orig/a/gms-after.dat`). Afterwards the row is the ride's own, "Jurassic Tours" at "$ 3000", with the owned tick.
+  Game", `saves.md`): after a park save the file read spent 3 and ride ids [1170] (`q709/orig/a/gms-after.dat`);
+  one byte more changed, file offset `0x13` (the swear filter, `+0x25`) from 1 to 0, which none of the functions above
+  writes (the reference install has no swear lists: a likely cause, not traced), so no test is built on "nothing else
+  changes". Afterwards the row is the ride's own, "Jurassic Tours" at "$ 3000", with the owned tick.
 - **The lab** asks the same set for a kind-4 project (`park-engine.md`, "The next project").
 
-**OpenTPW** (round G, `q709/run1-G`, the item not yet built): the rows and their help states as the original's, but
-lettered bare ("-1", "-3"; Q238's note files the "$ ") and white; the two mystery rows in the other order (Eruption's
-first here, Jurassic Tours' there: the tie on the shown name broken differently, not decoded); a click on either refused
-and counted, `MYSTERY_RIDE_PURCHASE`; a placed ticket ride paid in cash and counted, `PURCHASE_GOLDEN_TICKET_ARM`. Q709 builds it.
+**The tie between the two mystery rows** is the list's sorted insert (after every equal row) fed in the catalogue's
+order (`FUN_00412e60`; `park-engine.md`, "The catalogue's order"): `tourride` (Jurassic Tours) is walked before `volcano`
+(Eruption), so it stands first.
+
+**OpenTPW** (Q709): `GoldenTickets` holds the two tests, the mystery test and the spend; `ParkBuyScreen.PriceText` is
+the price skin's setter, `ColourOf` the colour callback (asked through `UiList.RowColour` each time the rows are drawn
+again, as `0x403` is sent from `FUN_00663324` for each cell, `0x00663499`), the click refuses with `cat_ui` `0x1D` on
+either arm; `ParkBuilding.Carry` asks the tickets of a mystery ride, `Build` skips the money test for it and `PayFor`
+spends in place of the price. Confirmed on `q709/gms-two.dat` (round B, `q709/run2-B`, 9 of 9 predicted): the rides tab
+"1 gt" (255, 224, 0) and "3 gt" (255, 0, 0) first in the original's order, "$ 2500" white; the 3 gt click refused with
+the screen up; the 1 gt click carried; put down, the bank 50000 either side, spent 2 to 3, ride ids [1170], the corner
+"1 x"; `gms.dat` spent 3 [1170] after a save; then "Jurassic Tours" "$ 3000" with its tick (`side-by-side-lists.png`,
+`side-by-side-place.png`). Not built: the price in the hand, "$ 0" there (Q541); the click's advisor message `0xce` or
+`0xc9`, for either arm (Q465); the online arm (no game type 1 here).
 
 **A row's name** is `0x00412fb0`'s (called at `0x004ab079`, 0x42 characters). It takes the item's `+0x4f4` when that
 is set and is not "MISSING STRING" (`0x006fd880`): the first of the strings `NAME`, `SIGNA` and `SIGNB` (the table at

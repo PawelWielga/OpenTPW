@@ -212,6 +212,10 @@ internal sealed class ParkBuyScreen : UiWindow
 			Activated = Chose,
 			SelectionChanged = RowSelected,
 
+			// The handler's 0x403 arm, BuyList_CellColourCallback (0x004acb70), asked as the rows are drawn again.
+			RowColour = row => ColourOf( row.Id, Level.Current?.Catalogue, Level.Current?.ParkState?.Balance ?? 0,
+				GoldenTickets.Rides, GoldenTickets.TicketsLeft ),
+
 			// The screen's handler keeps the list's 0x406.
 			SortChanged = word => _sort = word
 		} );
@@ -331,25 +335,25 @@ internal sealed class ParkBuyScreen : UiWindow
 		// list does not (LIST_FIRST_ROW_SELECTED), so the new tab has no item until the pointer selects one.
 		_helpItem = 0;
 
-		// Each row goes in by the list's sort. A deviation: they are handed over in name order, where the original
-		// walks its catalogue (FUN_00412e60), which shows only among rows equal on the sorted column.
+		// Each row goes in by the list's sort, in the catalogue's order as the original walks it (FUN_00412e60), so rows
+		// equal on the sorted column stand in that order: the two mystery rides, Jurassic Tours' before Eruption's.
 		// A deviation: the price is the item file's, where the original shows its control record's +0x04 (0x004ab086),
 		// which the record takes from the same key; the two agree in all 50 of the shipped park's records.
 		if ( Level.Current is { Catalogue: { } catalogue, Research: { } research } )
 		{
 			foreach ( var item in Listed( catalogue, research, _tab ) )
 			{
-				_list.Add( IsMystery( item )
-					? new UiList.Row( item.Id, Localization.Get( UIStrings.MysteryRide ), -item.GoldenTicketCost, StateOf( item ) )
-					: new UiList.Row( item.Id, ParkObjectNames.NameOf( item ), item.BuildPrice, StateOf( item ) ) );
+				_list.Add( GoldenTickets.IsMystery( item )
+					? PricedRow( item.Id, Localization.Get( UIStrings.MysteryRide ), -item.GoldenTicketCost, StateOf( item ) )
+					: PricedRow( item.Id, ParkObjectNames.NameOf( item ), item.BuildPrice, StateOf( item ) ) );
 			}
 		}
 
 		// The land tools, which only the features tab carries - see the constants above.
 		if ( _tab == ItemDescriptionFile.Feature )
 		{
-			_list.Add( new UiList.Row( BuyLandRow, Localization.Get( UIStrings.BuyLand ), 0 ) );
-			_list.Add( new UiList.Row( ClearLandRow, Localization.Get( UIStrings.ClearLand ), 0 ) );
+			_list.Add( PricedRow( BuyLandRow, Localization.Get( UIStrings.BuyLand ), 0 ) );
+			_list.Add( PricedRow( ClearLandRow, Localization.Get( UIStrings.ClearLand ), 0 ) );
 		}
 
 		LogOrder();
@@ -358,24 +362,65 @@ internal sealed class ParkBuyScreen : UiWindow
 	private void LogOrder() => Log.Info( $"Buy list: tab {_tab}, {_list.Census()}" );
 
 	/// <summary>
-	/// The items one tab lists: its kind, and <b>only a researched item</b> (<c>0x004ab023</c>), the park's flag - see
-	/// <see cref="ParkResearch"/>.
+	/// The items one tab lists, in the catalogue's order: its kind, and <b>only a researched item</b>
+	/// (<c>0x004ab023</c>), the park's flag - see <see cref="ParkResearch"/>.
 	/// </summary>
 	internal static IEnumerable<ParkItemCatalogue.Item> Listed( ParkItemCatalogue catalogue, ParkResearch research, int tab )
-		=> catalogue.All.Where( item => item.UiType == tab && research.IsResearched( item.Id ) )
-			.OrderBy( ParkObjectNames.NameOf, StringComparer.OrdinalIgnoreCase );
+		=> catalogue.All.Where( item => item.UiType == tab && research.IsResearched( item.Id ) );
 
 	/// <summary>
-	/// The mystery row (<c>0x004ab023</c>..<c>0x004ab063</c>): a ride with a golden-ticket cost that the player has not
-	/// unlocked is named UITEXT 137 and priced at the ticket cost, negated. The unlocks are the player's, their
-	/// gms.dat's ride ids (<c>FUN_004d4b70</c>; <c>docs/exe/hud.md</c>, "The mystery row"); with nobody playing there
-	/// are none, so every such ride is a mystery.
+	/// A row with its price lettered by the price cell's skin (<see cref="PriceText"/>) and sorted on the number. A mystery
+	/// row (<c>0x004ab023</c>..<c>0x004ab063</c>, <see cref="GoldenTickets.IsMystery(ParkItemCatalogue.Item)"/>) is
+	/// named UITEXT 137 and priced at its ticket cost negated.
 	/// </summary>
-	internal static bool IsMystery( ParkItemCatalogue.Item item, IReadOnlyCollection<ushort>? unlocked )
-		=> item.GoldenTicketCost > 0 && unlocked?.Contains( (ushort)item.Id ) != true;
+	private static UiList.Row PricedRow( int id, string name, int price, int state = 0 )
+		=> new( id, name, price, state, Values: [PriceText( price )] );
 
-	/// <inheritdoc cref="IsMystery(ParkItemCatalogue.Item, IReadOnlyCollection{ushort})"/>
-	private static bool IsMystery( ParkItemCatalogue.Item item ) => IsMystery( item, Players.Roster.Current?.File.RideIds );
+	/// <summary>
+	/// The price cell's setter, <c>PriceSkin_SetValue</c> (<c>0x00490650</c>): a number at or above nought by UITEXT 449
+	/// "$ {P13}", one below nought by 455 "{P23} gt" with its negation. A number past ±<c>0xeeeeeee</c> takes 449 or 450
+	/// "-$ {P19}" less that bias, as the skin letters a biased price.
+	/// </summary>
+	internal static string PriceText( int value )
+	{
+		const int Bias = 0xeeeeeee;
+
+		if ( Math.Abs( (long)value ) <= Bias )
+			return value < 0 ? Localization.Format( 455, (23, $"{-value}") ) : Localization.Format( 449, (13, $"{value}") );
+
+		return value < 0
+			? Localization.Format( 450, (19, $"{Math.Abs( (long)value + Bias )}") )
+			: Localization.Format( 449, (13, $"{value - Bias}") );
+	}
+
+	/// <summary>A land row's lettering, a row id below nought.</summary>
+	internal static readonly UiColour LandColour = new( 231, 239, 75 );
+
+	/// <summary>A mystery row the tickets buy.</summary>
+	internal static readonly UiColour TicketsColour = new( 255, 224, 0 );
+
+	/// <summary>A row the bank or the tickets do not buy.</summary>
+	internal static readonly UiColour ShortColour = new( 255, 0, 0 );
+
+	/// <summary>
+	/// <c>BuyList_CellColourCallback</c> (<c>0x004acb70</c>), the same for a row's every cell: a land row
+	/// <see cref="LandColour"/>; a mystery row gold where <see cref="GoldenTickets.CanBuyRide"/> passes and red where it
+	/// fails; any other white, or red where its price is above the bank.
+	/// </summary>
+	/// <remarks>A deviation, the list's own: the price is the item file's, where the original reads its control record's <c>+0x04</c>.</remarks>
+	internal static UiColour? ColourOf( int rowId, ParkItemCatalogue? catalogue, long balance, IReadOnlyCollection<ushort>? rides, int tickets )
+	{
+		if ( rowId < 0 )
+			return LandColour;
+
+		if ( catalogue is null || !catalogue.TryGet( rowId, out var item ) )
+			return null;
+
+		if ( GoldenTickets.IsMystery( item, rides ) )
+			return GoldenTickets.CanBuyRide( item, tickets ) ? TicketsColour : ShortColour;
+
+		return balance < item.BuildPrice ? ShortColour : UiColour.White;
+	}
 
 	/// <summary>
 	/// The row's state column (<c>0x004ab097</c>..<c>0x004ab0f7</c>): <b>1 if the park already owns at least one</b>,
@@ -401,8 +446,9 @@ internal sealed class ParkBuyScreen : UiWindow
 	private static int StateOf( ParkItemCatalogue.Item item ) => StateOf( item, Level.Current?.ParkState );
 
 	/// <summary>
-	/// A row was chosen. The original checks the price against the balance and, if it passes, puts the
-	/// item in the player's hand and closes the screen - the money is not taken until the thing is
+	/// A row was chosen (<c>BuyScreen_OnMessage</c> <c>0x004ac270</c>, message <c>0x400</c>). The original checks the
+	/// price against the balance, or a mystery ride's ticket cost against the tickets left with the bank not asked, and,
+	/// if it passes, puts the item in the player's hand and closes the screen - neither is taken until the thing is
 	/// actually placed.
 	/// </summary>
 	/// <remarks>
@@ -423,21 +469,16 @@ internal sealed class ParkBuyScreen : UiWindow
 		if ( Level.Current?.Catalogue is not { } catalogue || !catalogue.TryGet( rowId, out var item ) )
 			return;
 
-		// Placing a mystery ride spends golden tickets and unlocks it rather than taking money (FUN_004db090 ->
-		// FUN_004d4ad0); none of that is built, so the row is not taken.
-		if ( IsMystery( item ) )
+		// Into the hand, and the screen closes behind it - which is what the original does, and why the money is not
+		// taken here: it is taken when the thing is actually put down. A mystery ride asks the tickets, not the bank.
+		// Refused either way, the screen stays and the refusal sounds (0x00486ae0).
+		Log.Info( "Buy screen: " + ParkBuilding.Carry( item.Id, out var held ) );
+
+		if ( !held )
 		{
-			Unimplemented.Report( "MYSTERY_RIDE_PURCHASE" );
-			Log.Info( $"Buy screen: {item.Name} is a mystery ride, and buying one with golden tickets is not built" );
+			Log.Info( $"Buy screen: cat_ui 0x{RefusedSound:x} for the refusal, {(UiSounds.Interface( RefusedSound ) ? "a voice" : "no voice")}" );
 			return;
 		}
-
-		// Into the hand, and the screen closes behind it - which is what the original does, and why
-		// the money is not taken here: it is taken when the thing is actually put down.
-		Log.Info( "Buy screen: " + ParkBuilding.Carry( item.Id ) );
-
-		if ( ParkBuilding.Carrying != item.Id )
-			return;
 
 		Stack.Close( this );
 
@@ -445,6 +486,9 @@ internal sealed class ParkBuyScreen : UiWindow
 		// interface did not. `put <x> <y>` still does it from the console, for a test that cannot move
 		// the pointer.
 	}
+
+	/// <summary>The click's refusal, <c>cat_ui</c> <c>0x1D</c> played flat (<c>0x00486ae0</c>).</summary>
+	internal const int RefusedSound = 0x1d;
 
 	/// <summary>How often the screen's own timer ticks, in real milliseconds (<c>0x80080</c>, armed at <c>0x004ac3ee</c>).</summary>
 	internal const long TickEvery = 1000;
@@ -460,6 +504,8 @@ internal sealed class ParkBuyScreen : UiWindow
 	{
 		_list.Refresh();
 		_money.Text = MoneyText();
+
+		Log.Info( $"Buy list: cells {_list.CellsCensus()}" );
 	}
 
 	/// <summary>
@@ -507,7 +553,7 @@ internal sealed class ParkBuyScreen : UiWindow
 		Previewed = rowId;
 
 		_footprint.Shape = rowId > 0 && Level.Current?.Catalogue is { } catalogue && catalogue.TryGet( rowId, out var item )
-			&& !IsMystery( item )
+			&& !GoldenTickets.IsMystery( item )
 				? item.Shape
 				: null;
 	}
@@ -557,8 +603,8 @@ internal sealed class ParkBuyScreen : UiWindow
 	/// </summary>
 	/// <remarks>A deviation, the list's own: the price is the item file's, where the original reads its control record's <c>+0x04</c>.</remarks>
 	internal static int HelpStateOf( ParkItemCatalogue.Item item, long balance, IReadOnlyCollection<ushort>? unlocked, int tickets )
-		=> IsMystery( item, unlocked )
-			? item.GoldenTicketCost <= tickets ? HelpMysteryBought : HelpMysteryShort
+		=> GoldenTickets.IsMystery( item, unlocked )
+			? GoldenTickets.CanBuyRide( item, tickets ) ? HelpMysteryBought : HelpMysteryShort
 			: item.BuildPrice <= balance ? HelpToBuy : HelpDear;
 
 	/// <summary>
@@ -581,7 +627,7 @@ internal sealed class ParkBuyScreen : UiWindow
 		var rows = VirtualScreen.ToPixels( _list.RowArea, _list.Anchor, _list.VerticalAnchor );
 
 		return HelpPost( rows.Contains( mouse.X, mouse.Y ), Level.Current?.ParkState?.Balance ?? 0,
-			Players.Roster.Current?.File.RideIds, Players.Roster.Current?.TicketsUnspent ?? 0 );
+			GoldenTickets.Rides, GoldenTickets.TicketsLeft );
 	}
 
 	/// <summary>

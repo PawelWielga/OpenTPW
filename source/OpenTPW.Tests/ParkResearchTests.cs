@@ -81,7 +81,7 @@ public class ParkResearchTests
 		var research = Research( out var catalogue );
 
 		CollectionAssert.AreEqual( new[] { "Dear", "Unsaved" },
-			ParkBuyScreen.Listed( catalogue, research, 1 ).Select( item => item.Name ).ToArray() );
+			ParkBuyScreen.Listed( catalogue, research, 1 ).Select( item => item.Name ).Order().ToArray() );
 	}
 
 	[TestMethod]
@@ -89,10 +89,10 @@ public class ParkResearchTests
 	{
 		var ride = new ParkItemCatalogue.Item( 1105, "Ride", "", "ride", 1, 1, null, GoldenTicketCost: 5 );
 
-		Assert.IsTrue( ParkBuyScreen.IsMystery( ride, null ), "nobody playing: nothing unlocked" );
-		Assert.IsTrue( ParkBuyScreen.IsMystery( ride, new ushort[] { 1106 } ) );
-		Assert.IsFalse( ParkBuyScreen.IsMystery( ride, new ushort[] { 1105 } ), "unlocked with tickets" );
-		Assert.IsFalse( ParkBuyScreen.IsMystery( ride with { GoldenTicketCost = 0 }, null ), "no ticket cost" );
+		Assert.IsTrue( GoldenTickets.IsMystery( ride, null ), "nobody playing: nothing unlocked" );
+		Assert.IsTrue( GoldenTickets.IsMystery( ride, new ushort[] { 1106 } ) );
+		Assert.IsFalse( GoldenTickets.IsMystery( ride, new ushort[] { 1105 } ), "unlocked with tickets" );
+		Assert.IsFalse( GoldenTickets.IsMystery( ride with { GoldenTicketCost = 0 }, null ), "no ticket cost" );
 	}
 
 	private static ParkWorld ShippedPark( BaseFileSystem data )
@@ -335,7 +335,8 @@ public class ParkResearchTests
 		var catalogue = new ParkItemCatalogue( "jungle", data, instantAction: true );
 		var research = new ParkResearch( ShippedPark( data ).ObjectControlRecords, catalogue );
 
-		string[] Tab( int tab ) => ParkBuyScreen.Listed( catalogue, research, tab ).Select( item => item.Name ).ToArray();
+		// Which items, in name order: the order they stand in is the list's sorted insert (ParkBuyGoldenTicketTests).
+		string[] Tab( int tab ) => ParkBuyScreen.Listed( catalogue, research, tab ).Select( item => item.Name ).Order().ToArray();
 
 		// q178b/orig/s06-s09.png, the original under Proton.
 		CollectionAssert.AreEqual( new[] { "Aztec Mayhem", "Belly Bounce", "Crazy Ape", "Rocky Racers" }, Tab( 0 ) );

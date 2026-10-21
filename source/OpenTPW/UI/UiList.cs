@@ -198,6 +198,13 @@ internal sealed class UiList : UiControl
 	/// <summary>The selection moved - message <c>0x401</c>. Handed the row's id.</summary>
 	internal Action<int>? SelectionChanged { get; set; }
 
+	/// <summary>
+	/// A row's lettering colour, asked each time the rows are pushed into their cells - message <c>0x403</c>, which
+	/// <c>FUN_00663324</c> sends the list's handler with the row's id for every cell it fills (<c>0x00663499</c>). Null,
+	/// or a null answer, leaves the row's own <see cref="Row.Colour"/>.
+	/// </summary>
+	internal Func<Row, UiColour?>? RowColour { get; init; }
+
 	/// <summary>The original's <c>0x402</c>: a right click on the list, with the selected row's id. See <see cref="RightClickedAt"/>.</summary>
 	internal Action<int>? RowRightClicked { get; set; }
 
@@ -506,6 +513,11 @@ internal sealed class UiList : UiControl
 			_rows.Select( row => $"{row.Id} {row.Name} {(numbered ? NumberOf( row, _sortColumn ) : row.Value)}" ) );
 	}
 
+	/// <summary>What each slot with a row letters, its first two cells and their colour as (R,G,B), for the screens' log lines.</summary>
+	internal string CellsCensus()
+		=> string.Join( ", ", _slots.Where( cells => cells[0].Visible ).Select( cells =>
+			$"\"{cells[0].Text}\" \"{(cells.Length > 1 ? cells[1].Text : null)}\" ({cells[0].TextColour.R},{cells[0].TextColour.G},{cells[0].TextColour.B})" ) );
+
 	/// <summary>
 	/// Sorts every row - <c>FUN_006628f4</c>: the first least row goes to the head, then each row from the third on
 	/// is put before the first row it <see cref="SortsBefore"/>. So <b>equal rows keep the order they stood in</b>,
@@ -664,8 +676,10 @@ internal sealed class UiList : UiControl
 
 			var row = _rows[index];
 
+			var colour = RowColour?.Invoke( row ) ?? row.Colour ?? UiColour.White;
+
 			foreach ( var cell in cells )
-				cell.TextColour = row.Colour ?? UiColour.White;
+				cell.TextColour = colour;
 
 			cells[0].Text = row.Name;
 

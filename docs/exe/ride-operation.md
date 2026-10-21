@@ -3759,9 +3759,9 @@ in double ("What a thing is worth to a guest", "Where OpenTPW differs", the FPU'
 (Q97). The four bank fields are seeded from the save, and the year's change zeroes the profit
 (`ParkState.TurnTheYear`, on `GameCalendar.YearRolled`). The analyser's money in and out are kept (Q385), and its gate, shop and sideshow takings
 (Q386; `hud.md`, "The mini-balance is a MONTHLY ACCOUNT"), and the gate fee's lifetime visitors and dearest ticket
-(Q389; `hud.md`, "The lifetime visitors"). Counted, not built: the gate fee's challenge post (`GATE_FEE_CHALLENGE_POST`), the booking's (`COST_OF_GOODS_CHALLENGE_POST`), the purchase's golden-ticket arm (`PURCHASE_GOLDEN_TICKET_ARM`, on
-every such purchase, as the purchase does not ask the player's `RideIds`) and a kart or water ride's track at a sale
-(`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row is built (`hud.md`, "The mystery row"); a click on it is refused whatever tickets the player holds and counted, `MYSTERY_RIDE_PURCHASE`, as its ticket test is not built (Q709; the spending is decoded in `hud.md`, "Spending golden tickets").
+(Q389; `hud.md`, "The lifetime visitors"). Counted, not built: the gate fee's challenge post (`GATE_FEE_CHALLENGE_POST`), the booking's (`COST_OF_GOODS_CHALLENGE_POST`), and a kart or water ride's track at a sale
+(`SALE_TRACK_TEARDOWN`). The month's change is built: "The month's change", below. The buy list's mystery row and its purchase with golden tickets are built (Q709; `hud.md`, "Spending golden tickets",
+`GoldenTickets`): a mystery ride is paid for in the player's tickets in place of its price, no cash taken.
 
 **Who reads what the booking moves**:
 

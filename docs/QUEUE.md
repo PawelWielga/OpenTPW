@@ -83,18 +83,6 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q709. Spending golden tickets: the mystery ride's purchase.** From Q177c, carried from Q141 when it was ticked;
-  decoded by Q604 (`hud.md`, "Spending golden tickets"). Build it as decoded: the player's tickets left (counted less
-  spent, no floor) and their `RideIds` asked by the buy list, the click, the carry and the purchase; **the price cell's
-  setter** (`PriceSkin_SetValue` `0x00490650`: UITEXT 449 "$ {P13}", 455 "{P23} gt" below nought; this takes the "$ "
-  of Q238's note too) and **the rows' colours** (`BuyList_CellColourCallback` `0x004acb70`: gold or red for a mystery
-  row by the tickets, white or red for any other by the bank, the land rows' (231, 239, 75)); the click on a mystery
-  row carrying the ride when the tickets suffice, the bank not asked, and refusing with `cat_ui` `0x1D` when not
-  (replacing `MYSTERY_RIDE_PURCHASE`); the carry's price nought and no refusal by money; the purchase spending the
-  tickets in place of the price, inserting the id and adding the cost only when the id is new (replacing
-  `PURCHASE_GOLDEN_TICKET_ARM`); `gms.dat` written at its next write. The original lists the two mystery rows
-  Jurassic Tours' first where this game lists Eruption's first: find the tie's rule and follow it. Confirm on
-  `q709/gms-two.dat` (4 tickets, 2 spent, none bought) beside `q709/orig/a` (`q709/confirm.py` and `orig/run.sh`).
 - [ ] **Q596. The other topics' gesture rows.** From Q595. Rows 5 to 11 of the gesture table (`AdvisorGestures`;
   `scenes.md`, "Gesture table") are fixed clip lists opening on clip 14 (row 5: 14, 5, 11, 15), named by responses of
   built topics (`GestureRowLine`: 17, 37, 53, 82, 84, 90, 97, 129, 206, 258): hand them to `PlayParkResponse` as the
@@ -398,8 +386,6 @@ filed the items that cite it.
   the title is the park's name and its edit is Q28's. `ParkGadget.ShowDate` prints the machine's short date (Q527). `ParkBuyScreen`'s description panel `0x1ea` draws its frame and the footprint picture, and neither the item's turning model nor its name row `0x1ec`. Count each
   where it is drawn. Confirm: `unimplemented` after opening a ride's window, the entry-price screen and the buy
   screen.
-  From Q238: the buy list's prices are bare numbers where the original letters "$ 2500" (UITEXT `0x1c1`,
-  `UIStrings.Dollar`; `q238/fix/b-buy-screen.png` beside `rv8/orig/b1.png`), and nothing counts it.
   From Q130e, seen beside the original's lists: the hire list's wages are bare numbers too ("$ 63" there); a buy
   row with no state shows an empty box there and nothing here; Buy Land's price is `[0x0078560c]`, 10 there and 0
   here; and the headings' lettering is larger there than the rows', here the same.
@@ -1511,7 +1497,8 @@ filed the items that cite it.
   `b-1-before-click.png`), gone after the click; ours shows none (`q540/run2/3-join-edges.png`). Q403 already decodes
   that display: `FUN_004a0ab0` reads the total (`0x004a0d38`) into control `0x30`, for interaction-mode types 3 and 4
   (8 only when `[0x0079c658] & 1`), -999 skipping the show and -9999 (the patrol tool's `FUN_0052fb90`) hiding it
-  (`0x004a0d68`..`0x004a0d74`); the build tools are type 3 (`park-engine.md`, "The build-tool interaction mode is
+  (`0x004a0d68`..`0x004a0d74`); carrying a mystery ride sets it to nought (`0x0052360a`), so the original shows "$ 0"
+  (`q709/orig/a-place.png`; Q709 built the carry's skipped money test and not this display); the build tools are type 3 (`park-engine.md`, "The build-tool interaction mode is
   object type 3"). Build it with Q403 or after it; what is left to read is how often message `0x1e` comes against the pass.
   From Q542: the total is `DAT_0081af4c` (`FUN_0052fba0` adds, `FUN_0052fbc0` reads); the path and queue passes never
   zero it, `FUN_004a0db0`'s message `0x1e` does (`0x004a0dee`), calling `FUN_004a0ab0` first on every third one (the

@@ -84,8 +84,9 @@ public static class ParkBuilding
 
 		// The affordability test the original makes when a buy row is clicked, before it ever builds
 		// the placement mode - and, for a move, which has no such click, in the put-down's own preview,
-		// where a price above the balance turns the cell red (FUN_00535670).
-		if ( state.Balance < item.BuildPrice )
+		// where a price above the balance turns the cell red (FUN_00535670). A mystery ride's preview sets the run's
+		// price to nought and skips the test (BuildTool_PreviewPass, 0x005235e6..0x00523613): it is never refused for money.
+		if ( !GoldenTickets.IsMystery( item ) && state.Balance < item.BuildPrice )
 			return new( $"buy: '{item.Name}' costs {item.BuildPrice} and the park has {state.Balance}", Refused: true );
 
 		if ( EndRefusal( state, item, cellX, cellY, angle ) is { } blocked )
@@ -165,20 +166,20 @@ public static class ParkBuilding
 
 		var node = LayEnds( state, park, item, thingId, cellX, cellY, angle );
 
-		PayFor( state, item );
+		var paid = PayFor( state, item );
 
 		// The ground draws every cell nothing else owns, so it has to be told that these are owned now
 		// or it keeps drawing grass through the new floor - and the paths and queues are rebuilt with it,
 		// because the three divide the map by cell and one rebuilt alone leaves a hole. See ParkSurfaces.
 		ParkSurfaces.Rebuild();
 
-		Log.Info( $"Building: bought '{item.Name}' for {item.BuildPrice} as thing {thingId} at " +
+		Log.Info( $"Building: bought '{item.Name}' for {paid} as thing {thingId} at " +
 			$"({cellX},{cellY}) turned {angle}, covering ({footprint.Left},{footprint.Top}).." +
 			$"({footprint.Right},{footprint.Bottom}) - the park has {state.Balance} left; price {placed.PricePerUse}, " +
 			$"speed {placed.OperatingSpeed}, capacity {placed.OperatingCapacity}, duration {placed.OperatingDuration}" +
 			(placed.TrackRide != 0 ? $", track 0x{placed.TrackRide:x8}" : "") );
 
-		return new( $"buy: '{item.Name}' built as thing {thingId} at ({cellX},{cellY}) for {item.BuildPrice}, " +
+		return new( $"buy: '{item.Name}' built as thing {thingId} at ({cellX},{cellY}) for {paid}, " +
 			$"balance {state.Balance}" + (node is { } at ? $", queue node at ({at.X},{at.Y})" : ""), thingId, node,
 			item.HasQueue, item.TrackType );
 	}
@@ -389,21 +390,31 @@ public static class ParkBuilding
 		=> Demolish( state, park, catalogue, objects, rides, thingId, people ).Answer;
 
 	/// <summary>
-	/// What a purchase pays - the object constructor's withdrawal of the item's price (<c>FUN_004db090</c>). Internal
-	/// so a test can pay for something without placing it.
+	/// What a purchase pays - the object constructor's withdrawal of the item's price (<c>Object_Construct</c>
+	/// <c>0x004db090</c>), or for a mystery ride <see cref="GoldenTickets.SpendForRide"/> in its place
+	/// (<c>0x004db4a6</c>..<c>0x004db4f6</c>), whose answer is ignored: no cash is taken either way, so a mystery ride
+	/// put down with too few tickets is built free, as the original's is; the click's test is what stops that. Answers
+	/// what it says it was paid. Internal so a test can pay for something without placing it.
 	/// </summary>
-	/// <remarks>
-	/// An item with a golden-ticket cost that the player has not bought with tickets before is paid for in tickets and
-	/// not in cash (<c>docs/exe/ride-operation.md</c>, "The cost of goods and the park's money"); neither the tickets
-	/// nor that list is kept here, so it is paid in cash, and counted.
-	/// </remarks>
-	internal static void PayFor( ParkState state, ParkItemCatalogue.Item item )
+	internal static string PayFor( ParkState state, ParkItemCatalogue.Item item, Player? player )
 	{
-		if ( item.GoldenTicketCost > 0 )
-			Unimplemented.Report( "PURCHASE_GOLDEN_TICKET_ARM" );
+		if ( !GoldenTickets.IsMystery( item, player?.File.RideIds ) )
+		{
+			state.Spend( item.BuildPrice );
+			return $"{item.BuildPrice}";
+		}
 
-		state.Spend( item.BuildPrice );
+		var tickets = player?.TicketsUnspent ?? 0;
+		var bought = GoldenTickets.SpendForRide( player?.File, item, tickets );
+
+		Log.Info( $"Building: '{item.Name}' ({item.Id}) is a mystery ride: {item.GoldenTicketCost} golden tickets of {tickets} left, "
+			+ (bought ? $"bought, {player!.File.TicketsSpent} spent" : "not bought") + ", no cash taken" );
+
+		return $"{item.GoldenTicketCost} golden tickets";
 	}
+
+	/// <inheritdoc cref="PayFor(ParkState, ParkItemCatalogue.Item, Player)"/>
+	internal static string PayFor( ParkState state, ParkItemCatalogue.Item item ) => PayFor( state, item, Players.Roster.Current );
 
 	/// <summary>What one sale did: the line to show, and whether the thing is gone.</summary>
 	private readonly record struct Sold( string Answer, bool Done = false );
@@ -1210,10 +1221,17 @@ public static class ParkBuilding
 
 	/// <summary>
 	/// Takes an item into the hand, refusing the ones no buy list offers and the ones the park cannot
-	/// afford - the two tests the original makes before it builds the placement mode.
+	/// afford - the two tests the original makes before it builds the placement mode. A mystery ride is
+	/// afforded by the player's tickets, the bank not asked (<c>0x004ac5a9</c>).
 	/// </summary>
-	public static string Carry( int catalogueId )
+	public static string Carry( int catalogueId ) => Carry( catalogueId, out _ );
+
+	/// <inheritdoc cref="Carry(int)"/>
+	/// <param name="held">Whether the item went into the hand.</param>
+	public static string Carry( int catalogueId, out bool held )
 	{
+		held = false;
+
 		if ( Level.Current is not { } level || level.ParkState is not { } state
 			|| level.Catalogue is not { } catalogue )
 			return "carry: a park has to be loaded";
@@ -1224,10 +1242,24 @@ public static class ParkBuilding
 		if ( item.UiType is < 0 or > ItemDescriptionFile.Feature )
 			return $"carry: '{item.Name}' is UI type {item.UiType}, which no buy tab lists";
 
+		if ( GoldenTickets.IsMystery( item ) )
+		{
+			var tickets = GoldenTickets.TicketsLeft;
+
+			if ( !GoldenTickets.CanBuyRide( item, tickets ) )
+				return $"carry: '{item.Name}' costs {item.GoldenTicketCost} golden tickets and the player has {tickets}";
+
+			Hold( catalogueId, 0 );
+			held = true;
+
+			return $"carry: holding '{item.Name}' ({catalogueId}) for {item.GoldenTicketCost} golden tickets of {tickets}";
+		}
+
 		if ( state.Balance < item.BuildPrice )
 			return $"carry: '{item.Name}' costs {item.BuildPrice} and the park has {state.Balance}";
 
 		Hold( catalogueId, 0 );
+		held = true;
 
 		return $"carry: holding '{item.Name}' ({catalogueId}) at {item.BuildPrice}";
 	}

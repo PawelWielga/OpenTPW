@@ -906,26 +906,66 @@ public class ParkBankTests
 	private void TurnTheMonth( ParkState bank, ParkPeople people ) => ParkPeople.TurnTheMonth( people, bank, Catalogue() );
 
 	/// <summary>
-	/// <b>A purchase is a withdrawal of the item's price</b>, and one with a golden-ticket cost is counted, as its
-	/// tickets are not built: Lost Kingdom has two such rides, and the Belly Bounce is not one.
+	/// <b>A purchase is a withdrawal of the item's price</b>, and a mystery ride's spends golden tickets in its place
+	/// (<c>docs/exe/hud.md</c>, "Spending golden tickets"), as the original's on <c>q709/gms-two.dat</c>: 4 tickets earned,
+	/// 2 spent. Jurassic Tours (1) is bought, the bank untouched, its id put in order and the spent count 3; bought again
+	/// it is paid in cash and spends nothing; Eruption (3) is more than the one left, so nothing is spent and, as the
+	/// original's, no cash taken either.
 	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> the cash taken as well; the cost added on an id already there; the id appended, not put in
+	/// order; the tickets compared strictly; a mystery ride short of tickets paid in cash.
+	/// </remarks>
 	[TestMethod]
-	public void APurchaseWithdrawsThePriceAndCountsAGoldenTicketCost()
+	public void APurchaseWithdrawsThePriceOrSpendsAMysteryRidesTickets()
 	{
 		var catalogue = Catalogue();
-		var ticketed = catalogue.All.First( item => item.GoldenTicketCost > 0 );
+		var tours = catalogue.All.Single( item => item.Id == 1170 );
+		var eruption = catalogue.All.Single( item => item.Id == 1112 );
+		Assert.AreEqual( (1, 3), (tours.GoldenTicketCost, eruption.GoldenTicketCost) );
 		Assert.IsTrue( catalogue.TryGet( Park().Objects.Single( o => o.ThingId == 13 ).CatalogueId, out var bounce ) );
+
+		var file = new PlayerFile { RecordTickets = [1, 1, 1, 1], TicketsSpent = 2, RideIds = [1200] };
+		var player = new Player( 0, "Test", file );
 		var bank = Bank( balance: 100000 );
-		var before = Times( "PURCHASE_GOLDEN_TICKET_ARM" );
 
-		ParkBuilding.PayFor( bank, bounce );
+		Assert.AreEqual( "500", ParkBuilding.PayFor( bank, bounce, player ) );
+		Assert.AreEqual( 100000 - bounce.BuildPrice, bank.Balance );
 
-		Assert.AreEqual( (before, 100000 - bounce.BuildPrice), (Times( "PURCHASE_GOLDEN_TICKET_ARM" ), bank.LastBalance) );
+		Assert.AreEqual( "1 golden tickets", ParkBuilding.PayFor( bank, tours, player ) );
+		Assert.AreEqual( (100000 - bounce.BuildPrice, 3, "1170 1200"), (bank.Balance, file.TicketsSpent, string.Join( ' ', file.RideIds )) );
 
-		ParkBuilding.PayFor( bank, ticketed );
+		Assert.AreEqual( $"{tours.BuildPrice}", ParkBuilding.PayFor( bank, tours, player ), "bought: its own price" );
+		Assert.AreEqual( (100000 - bounce.BuildPrice - tours.BuildPrice, 3), (bank.Balance, file.TicketsSpent) );
 
-		Assert.AreEqual( before + 1, Times( "PURCHASE_GOLDEN_TICKET_ARM" ), $"'{ticketed.Name}' costs golden tickets" );
-		Assert.AreEqual( 100000 - bounce.BuildPrice - ticketed.BuildPrice, bank.Balance, "and is paid in cash here" );
+		Assert.AreEqual( 1, player.TicketsUnspent );
+		ParkBuilding.PayFor( bank, eruption, player );
+		Assert.AreEqual( (100000 - bounce.BuildPrice - tours.BuildPrice, 3, "1170 1200"),
+			(bank.Balance, file.TicketsSpent, string.Join( ' ', file.RideIds )), "too few: built free, nothing spent" );
+
+		file.TicketsSpent = 1;
+		Assert.AreEqual( 3, player.TicketsUnspent );
+		ParkBuilding.PayFor( bank, eruption, player );
+		Assert.AreEqual( (4, "1112 1170 1200"), (file.TicketsSpent, string.Join( ' ', file.RideIds )), "three left buy a cost of three" );
+	}
+
+	/// <summary>
+	/// <c>PlayerProgress_BuyRide</c> adds the cost only where the id is new, and the tickets have no floor: a player who
+	/// has spent more than they earned is short of any cost.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the cost added on an id already there; the tickets floored at nought.</remarks>
+	[TestMethod]
+	public void TheSpendAddsTheCostOnlyForANewRide()
+	{
+		var ride = new ParkItemCatalogue.Item( 1170, "Ride", "", "ride", 0, 1, null, GoldenTicketCost: 2 );
+		var file = new PlayerFile { TicketsSpent = 5, RideIds = [1170] };
+
+		Assert.IsFalse( GoldenTickets.SpendForRide( file, ride, 9 ) );
+		Assert.AreEqual( 5, file.TicketsSpent );
+
+		Assert.IsFalse( GoldenTickets.CanBuyRide( ride with { GoldenTicketCost = 0 }, -1 ), "no floor: one ticket owed buys not even a cost of nought" );
+		Assert.IsTrue( GoldenTickets.CanBuyRide( ride with { GoldenTicketCost = -2 }, -1 ) );
+		Assert.IsFalse( GoldenTickets.SpendForRide( null, ride, 9 ), "nobody playing" );
 	}
 
 	private static int Times( string what ) => Unimplemented.Summary.FirstOrDefault( gap => gap.What == what ).Times;

@@ -9549,6 +9549,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `BuyScreen_OnMessage`, `Object_Construct`, `PriceSkin_Construct`, `PriceSkin_SetValue`, `BuyList_MakeRowCells`.
   Tools: `lib/gmsfile.py` `put( spent=, ride_ids= )`, `original/progress.py` prints the ride-id set,
   `original/savepark.sh` `PLAYER=`.
+- [x] **Q709. Spending golden tickets: the mystery ride's purchase.** From Q177c, carried from Q141 when it was ticked;
+  decoded by Q604 (`hud.md`, "Spending golden tickets"). Build it as decoded: the player's tickets left (counted less
+  spent, no floor) and their `RideIds` asked by the buy list, the click, the carry and the purchase; **the price cell's
+  setter** (`PriceSkin_SetValue` `0x00490650`: UITEXT 449 "$ {P13}", 455 "{P23} gt" below nought; this takes the "$ "
+  of Q238's note too) and **the rows' colours** (`BuyList_CellColourCallback` `0x004acb70`: gold or red for a mystery
+  row by the tickets, white or red for any other by the bank, the land rows' (231, 239, 75)); the click on a mystery
+  row carrying the ride when the tickets suffice, the bank not asked, and refusing with `cat_ui` `0x1D` when not
+  (replacing `MYSTERY_RIDE_PURCHASE`); the carry's price nought and no refusal by money; the purchase spending the
+  tickets in place of the price, inserting the id and adding the cost only when the id is new (replacing
+  `PURCHASE_GOLDEN_TICKET_ARM`); `gms.dat` written at its next write. The original lists the two mystery rows
+  Jurassic Tours' first where this game lists Eruption's first: find the tie's rule and follow it. Confirm on
+  `q709/gms-two.dat` (4 tickets, 2 spent, none bought) beside `q709/orig/a` (`q709/confirm.py` and `orig/run.sh`).
+  **Done (2026-10-21):** built as decoded (`GoldenTickets`, `ParkBuyScreen.PriceText`/`ColourOf`, `UiList.RowColour`);
+  the tie is the catalogue's order. Round B on the final binary, 9 of 9 (`q709/run2-B`): "1 gt" (255,224,0), "3 gt"
+  (255,0,0), "$ 2500" white, 1170 first; the 3 gt click refused with `cat_ui` `0x1D`; put down, bank 50000 to 50000,
+  spent 2 to 3, ids [1170], corner "1 x", `gms.dat` spent 3 [1170]; then "Jurassic Tours" "$ 3000" (`side-by-side-lists.png`).
+  25 of 25 bugs put back fail a test. `MYSTERY_RIDE_PURCHASE` and `PURCHASE_GOLDEN_TICKET_ARM` are gone.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
