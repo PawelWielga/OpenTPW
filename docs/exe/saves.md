@@ -3375,13 +3375,13 @@ its load.
 | | The original | OpenTPW |
 |---|---|---|
 | A vehicle's first summons | makes an object on cell (0,0), slot and stamp with it | the same |
-| Its id | the id last freed (14, 41) | one past the highest used (43) |
+| Its id | the id last freed (14, 41) | the same: the free list's head (Q582) |
 | Its model and script | made then, the script from its top | the same (Q26c): nothing of it stands before |
 | A file written after | slot, current vehicle, record, script, a fixed item's model | the same |
 | That file loaded | the vehicle current on its thing, nothing made | the same, in both games |
 | Its rings | the ferry's hold numbers | nought: what counts into them is not read |
 
-**Not built or not seen.** The id and the rings (above; Q343, Q582). The default
+**Not built or not seen.** The rings (above; Q343). The default
 cell's two globals are not traced to their key, and no other theme's vehicle record is measured. The first
 round of bugs put back (42) ran before the model record's mend; the eleven for the mend ran after it. In no
 game run: both vehicles made in one park (the test holds it), a load of sixty-one's own summons, the ferry's

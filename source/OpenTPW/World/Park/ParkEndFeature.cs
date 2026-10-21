@@ -58,10 +58,11 @@ internal sealed class ParkEndFeature
 	private readonly WindowStack _stack;
 	private readonly ParkRides _rides;
 	private readonly ParkObjects _objects;
+	private readonly ParkState _state;
 	private readonly bool _instantAction;
 
 	private ParkEndFeature( int thingId, RideScript script, ParkItemCatalogue.Item item, RideNodes view, WindowStack stack,
-		ParkRides rides, ParkObjects objects, bool instantAction )
+		ParkRides rides, ParkObjects objects, ParkState state, bool instantAction )
 	{
 		ThingId = thingId;
 		Script = script;
@@ -70,6 +71,7 @@ internal sealed class ParkEndFeature
 		_stack = stack;
 		_rides = rides;
 		_objects = objects;
+		_state = state;
 		_instantAction = instantAction;
 		MadeAt = Time.WallMilliseconds;
 	}
@@ -135,7 +137,7 @@ internal sealed class ParkEndFeature
 		if ( ParkCamcorderCameraMode.Active )
 			ParkCamcorderCameraMode.Leave();
 
-		var end = Current = new ParkEndFeature( thingId, script, item, view, stack, rides, objects, instantAction );
+		var end = Current = new ParkEndFeature( thingId, script, item, view, stack, rides, objects, state, instantAction );
 
 		ParkRideViewCameraMode.Viewed = end.Eye;
 		Camera.SetCameraMode<ParkRideViewCameraMode>();
@@ -216,6 +218,7 @@ internal sealed class ParkEndFeature
 		var before = _rides.Scheduler.Count;
 		_rides.Unbind( ThingId, _item );
 		_objects.Remove( ThingId );
+		_state.DeleteThing( ThingId );
 		Current = null;
 
 		ParkRideViewCameraMode.Leave();

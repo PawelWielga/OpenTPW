@@ -384,46 +384,113 @@ public sealed class ParkState
 	/// that hands ids out of it.</b>
 	///
 	/// <para>
-	/// <b>It counts rather than rescanning</b>, so that there is one allocator over the one space: a rescan
-	/// never sees a hired staff member, and a private counter never sees a bought object.
-	/// </para>
-	/// <para>
-	/// Counting also stops an id being handed out twice after the thing holding it is sold, which a
-	/// rescan would do as soon as the highest-numbered object was demolished.
-	/// </para>
-	/// <para>
-	/// <b>A deviation:</b> the original takes the first slot of its free list (<c>FUN_00516270</c>), so an id a
-	/// thing gave up is handed out again: measured, the first guest of a load took 38, which a leaver had freed, and
-	/// the rest 43 on (<c>docs/exe/ride-operation.md</c>, "Where a ride's turn comes from"). Here no id is used twice.
+	/// It is the head of the original's free list (<c>FUN_00516270</c>): after a load, every id no thing of the file
+	/// holds, in rising order (<c>FUN_005179c0</c>), so the file's holes first and then one past its highest; and a
+	/// thing deleted goes back on at the head, once the sweep it was deleted in has ended
+	/// (<see cref="DeleteThing"/>, <see cref="FreeDeletedThings"/>). <c>docs/exe/ride-operation.md</c>, "Where a
+	/// ride's turn comes from".
 	/// </para>
 	/// </summary>
 	public int NextThingId()
 	{
-		// Seeded on first use rather than at load, so a state that was never bound to a park still
-		// answers something usable - nought is the sentinel for "nothing", never an id.
-		if ( _nextThingId == 0 )
-			_nextThingId = HighestThingId() + 1;
+		SeedFreeIds();
+
+		if ( _freeIds.First is { } head )
+		{
+			_freeIds.RemoveFirst();
+			return head.Value;
+		}
+
+		// The original's table holds 0x2800 nodes and gives nought past the last ("Thing Array is full").
+		if ( _nextThingId > LastThingId )
+			Unimplemented.Report( "THING_ARRAY_FULL" );
 
 		return _nextThingId++;
 	}
 
-	private int _nextThingId;
-
-	/// <summary>The highest id the file and everything built since have used.</summary>
-	private int HighestThingId()
+	/// <summary>
+	/// Marks a thing deleted (<c>FUN_0050b780</c>): its id is pushed onto the head of the deleted list
+	/// (<c>FUN_00516310</c>, <c>FUN_0051ad40</c>) and is not free until <see cref="FreeDeletedThings"/>.
+	/// </summary>
+	public void DeleteThing( int thingId )
 	{
-		var highest = 0;
+		if ( thingId <= 0 )
+			return;
+
+		SeedFreeIds();
+		_deletedIds.Push( thingId );
+	}
+
+	/// <summary>
+	/// The sweep's end (<c>FUN_00516380</c>, <c>0x00516654</c>..<c>0x00516685</c>): each deleted id is popped from the head of the deleted
+	/// list (<c>FUN_0051ad90</c>) and freed onto the head of the free list (<c>FUN_00516200</c>). The two heads cancel,
+	/// so of the things deleted in one sweep the first deleted is the first given out again, ahead of any older free id.
+	/// </summary>
+	public void FreeDeletedThings()
+	{
+		while ( _deletedIds.TryPop( out var thingId ) )
+		{
+			_freeIds.AddFirst( thingId );
+			Log.Info( $"Park: thing {thingId} freed, the free list's head" );
+		}
+	}
+
+	/// <summary>The last id the original's thing table holds: 0x2800 nodes, nought never a thing.</summary>
+	public const int LastThingId = 0x27ff;
+
+	/// <summary>
+	/// Builds the free list as the reader leaves it, on first use rather than at load, so a state never bound to a
+	/// park still answers: every id under the highest used that no thing holds, rising, and past them a count.
+	/// </summary>
+	private void SeedFreeIds()
+	{
+		if ( _nextThingId != 0 )
+			return;
+
+		var used = UsedThingIds();
+		var highest = used.Count == 0 ? 0 : used.Max();
+
+		for ( var id = 1; id < highest; ++id )
+		{
+			if ( !used.Contains( id ) )
+				_freeIds.AddLast( id );
+		}
+
+		_nextThingId = highest + 1;
+	}
+
+	private int _nextThingId;
+	private readonly LinkedList<int> _freeIds = new();
+	private readonly Stack<int> _deletedIds = new();
+
+	/// <summary>The free list's ids from its head, for the console: <paramref name="count"/> at most.</summary>
+	public IEnumerable<int> FreeThingIds( int count )
+	{
+		SeedFreeIds();
+
+		return _freeIds.Take( count ).Concat( Enumerable.Range( _nextThingId, Math.Max( 0, count - _freeIds.Count ) ) );
+	}
+
+	/// <summary>The ids deleted this sweep and not yet freed, newest first.</summary>
+	public IReadOnlyCollection<int> DeletedThingIds => _deletedIds;
+
+	/// <summary>Every id the file and the objects built before the first id was asked for hold.</summary>
+	private HashSet<int> UsedThingIds()
+	{
+		var used = new HashSet<int>();
 
 		foreach ( var placed in _objects )
-			highest = Math.Max( highest, placed.ThingId );
+			used.Add( placed.ThingId );
 
 		if ( _park != null )
 		{
 			foreach ( var thing in _park.Things )
-				highest = Math.Max( highest, thing.ThingId );
+				used.Add( thing.ThingId );
 		}
 
-		return highest;
+		used.Remove( 0 );
+
+		return used;
 	}
 
 	/// <summary>

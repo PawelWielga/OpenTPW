@@ -1933,8 +1933,8 @@ Before it, the bus was sent round after its first circuit and stood at the arriv
 load's first guest was made on the call's own sweep.
 
 What it does not reproduce, each said at its site: the two refusals, in world state 4 and with the park full, where the original calls a load
-of nobody and still sends its vehicle (neither reached in Lost Kingdom; a load that would pass the cap is cut to what fits, counted here on everybody and not on `FUN_004c7fa0`'s crowd); a load saved half-dropped is carried on by its count and flag, and by the vehicle the save names current where that is one of its three sizes' things (`saves.md`, "OpenTPW's writer, the arrival vehicle"; another thing is counted, `SAVED_CURRENT_ARRIVAL_VEHICLE`, and the rest then come by the vehicle their number summons); guests made with no script to ask, on the sweep after the one that calls the load;
-and a made vehicle's id, one past the highest used where the original takes the id last freed (Q582).
+of nobody and still sends its vehicle (neither reached in Lost Kingdom; a load that would pass the cap is cut to what fits, counted here on everybody and not on `FUN_004c7fa0`'s crowd); a load saved half-dropped is carried on by its count and flag, and by the vehicle the save names current where that is one of its three sizes' things (`saves.md`, "OpenTPW's writer, the arrival vehicle"; another thing is counted, `SAVED_CURRENT_ARRIVAL_VEHICLE`, and the rest then come by the vehicle their number summons); and guests made with no script to ask, on the sweep after the one that calls the load. A made vehicle's id is the
+free list's head, the id last freed, as the original's (Q582).
 (The second load in the older measurement above dropped on the sweep that called it because the spent bus was then
 sent round again: Q131b took that out.)
 

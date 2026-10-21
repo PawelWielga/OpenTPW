@@ -516,9 +516,9 @@ public sealed partial class ParkPeople : Entity
 
 		var one = ParkWorld.NavigatorState.One;
 
-		// ParkState owns the ONE numbering objects and people share - see ParkState.NextThingId, which
-		// records the collision that made this necessary. The counter here is the fallback for a
-		// ParkPeople built without a running park, which the tests do.
+		// ParkState owns the ONE numbering objects and people share, the original's free list - see
+		// ParkState.NextThingId. The counter here is the fallback for a ParkPeople built without a running
+		// park, which the tests do.
 		var thingId = ParkState.Current?.NextThingId() ?? _nextThingId++;
 		var slot = _nextSpriteSlot++;
 
@@ -694,9 +694,9 @@ public sealed partial class ParkPeople : Entity
 
 		var one = ParkWorld.NavigatorState.One;
 
-		// ParkState owns the ONE numbering objects and people share - see ParkState.NextThingId, which
-		// records the collision that made this necessary. The counter here is the fallback for a
-		// ParkPeople built without a running park, which the tests do.
+		// ParkState owns the ONE numbering objects and people share, the original's free list - see
+		// ParkState.NextThingId. The counter here is the fallback for a ParkPeople built without a running
+		// park, which the tests do.
 		var thingId = ParkState.Current?.NextThingId() ?? _nextThingId++;
 		var slot = _nextSpriteSlot++;
 
@@ -969,6 +969,7 @@ public sealed partial class ParkPeople : Entity
 
 		_behaviour.State.Forget( thingId );
 		ParkGuestSprites.Current?.Remove( thingId );
+		State.DeleteThing( thingId );
 
 		_behaviour.State.Spend( severance );
 		_behaviour.State.AddStaffCost( severance );
@@ -1844,8 +1845,7 @@ public sealed partial class ParkPeople : Entity
 	/// Answers the thing, or nought where this theme has no such item: said, counted, and nothing is made.
 	/// </summary>
 	/// <remarks>
-	/// <b>A deviation:</b> the id is <see cref="ParkState.NextThingId"/>'s, one past the highest used, where the
-	/// original takes the id last freed.
+	/// Its id is the free list's head (<see cref="ParkState.NextThingId"/>), as the original's summons takes it.
 	/// </remarks>
 	private int MakeVehicle( int vehicle )
 	{
@@ -2008,6 +2008,8 @@ public sealed partial class ParkPeople : Entity
 		_behaviour.State.Forget( thingId );
 
 		ParkGuestSprites.Current?.Remove( thingId );
+
+		State.DeleteThing( thingId );
 
 		Log.Info( $"People: guest {thingId} went home - {_peeps.Count} guests now" );
 
@@ -2351,19 +2353,16 @@ public sealed partial class ParkPeople : Entity
 			}
 
 			// Anybody who has walked out of the park goes home, taken out here rather than inside the
-			// loop above because removing from a list while it is being walked would throw - and
-			// walked backwards so that removing one does not skip the next. PeepBehaviour puts them
-			// into these states and deliberately does not act on either: it owns what a guest wants,
-			// never the list they are in.
+			// loop above because removing from a list while it is being walked would throw. PeepBehaviour
+			// puts them into these states and deliberately does not act on either: it owns what a guest
+			// wants, never the list they are in.
 			//
 			// A leaver walks HeadingForExit -> PickingACellOutside (19) -> WalkingOutside (20) ->
 			// AtTheBusStop (21) and goes from there when a vehicle stands for them, which PeepBehaviour
 			// answers by putting them in Leaving; the original deletes them in that turn (FUN_0050b780).
-			for ( var at = _peeps.Count - 1; at >= 0; --at )
-			{
-				if ( _peeps[at].State is PeepState.Leaving )
-					Depart( _peeps[at].ThingId );
-			}
+			// Newest first, the sweep's own order, which is the order their ids come free in.
+			foreach ( var leaver in _peeps.Where( peep => peep.State is PeepState.Leaving ).Select( peep => peep.ThingId ).ToList() )
+				Depart( leaver );
 
 			StepArrivals();
 
@@ -2400,6 +2399,9 @@ public sealed partial class ParkPeople : Entity
 					State.Tags.Said( group, subject, Time.WallMilliseconds, item, name );
 				},
 				AdvisorFacts );
+
+			// The sweep's end: the ids of the things deleted in it go back on the free list (0x00516654..0x00516685), before the tail.
+			State.FreeDeletedThings();
 
 			// Then the sweep's tail, after every thing's turn and so after the advisor's: past the calendar's update, the
 			// golden tickets on every hundredth (0x004d7b60), so a ticket's line waits for the next sweep's turn

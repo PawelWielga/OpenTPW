@@ -1161,6 +1161,20 @@ public static class DebugConsole
 
 				break;
 
+			// The ids the next things made will take, the free list from its head, and the ids deleted this sweep
+			// that its end will put back on it, newest first - see ParkState.NextThingId.
+			case "thingids":
+				if ( ParkState.Current is not { } numbered )
+				{
+					Reply( "thingids: none - a park has to be loaded" );
+					break;
+				}
+
+				Reply( $"thingids: next {string.Join( ' ', numbered.FreeThingIds( (int)Argument( 1, 8 ) ) )}; "
+					+ $"deleted {(numbered.DeletedThingIds.Count == 0 ? "none" : string.Join( ' ', numbered.DeletedThingIds ))}" );
+
+				break;
+
 			// What this session has reached and not built. Each gap announces itself once on the console
 			// when it is first reached and is counted after that, so this is how to ask what a whole run
 			// hit without scrolling back through it - see Unimplemented.

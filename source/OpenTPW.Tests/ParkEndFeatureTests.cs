@@ -96,7 +96,7 @@ public class ParkEndFeatureTests
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the box in either mode; the box not put up; the script left running; the ride view not left;
-	/// the cover left on; the handle not noughted (a second Escape opens a second box).
+	/// the cover left on; the handle not noughted (a second Escape opens a second box); the thing not deleted.
 	/// </remarks>
 	[TestMethod]
 	[DataRow( true )]
@@ -123,8 +123,9 @@ public class ParkEndFeatureTests
 			var view = RideNodes.Load( item.Directory, item.Stem, data, false, [] )!;
 			view.PlaceFixed();
 
+			var state = new ParkState( world );
 			var end = (ParkEndFeature)Activator.CreateInstance( typeof( ParkEndFeature ), BindingFlags.NonPublic | BindingFlags.Instance,
-				null, [43, script, item, view, stack, rides, objects, instantAction], null )!;
+				null, [43, script, item, view, stack, rides, objects, state, instantAction], null )!;
 			typeof( ParkEndFeature ).GetProperty( nameof( ParkEndFeature.Current ), BindingFlags.NonPublic | BindingFlags.Static )!
 				.SetValue( null, end );
 
@@ -138,6 +139,7 @@ public class ParkEndFeatureTests
 			stack.CoverKeys( new Input.KeyRelease( NeoVeldrid.Key.Escape, Input.Modifiers.None ) );
 
 			Assert.IsNull( ParkEndFeature.Current, "the handle noughted" );
+			CollectionAssert.AreEqual( new[] { 43 }, state.DeletedThingIds.ToArray(), "its thing deleted, its id freed at the sweep's end" );
 			Assert.AreEqual( scripts, rides.Scheduler.Count, "End.RSE ended" );
 			Assert.IsFalse( ParkRideViewCameraMode.Active, "the ride view left" );
 			Assert.IsInstanceOfType( typeof( Camera ).GetField( "CameraMode", BindingFlags.NonPublic | BindingFlags.Static )!

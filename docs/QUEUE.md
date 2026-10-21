@@ -56,12 +56,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q582. A made vehicle takes the id last freed.** From Q26c (and Q238): the original's summons hands a made vehicle
-  the id last freed (its ferry from `q340/late30.TPWS` was thing 14 in Q341's run, its seaplane 14 in `q26c/orig2`),
-  and `ParkState.NextThingId` gives one past the highest used (43), said at `ParkPeople.MakeVehicle`. Decode the
-  original's free list (`FUN_0050b350`, the id's source at the summons) and build it for every thing made, the guests of
-  a load too, which part from the original's ids once anybody has gone; then confirm from late30, whose freed 14 the
-  original reuses.
 - [ ] **Q583. The seaplane floats elsewhere at its stop than the original's.** From Q26c's comparison
   (`q26c/side-by-side-seaplane.png`): at status 2, at the camera 540,-20 zoom 130 rotation 0, the original's seaplane
   lies level at the harbour's top middle, nose left (`q26c/orig3/o-t1141.png`), and ours at the harbour's left and
@@ -142,6 +136,12 @@ filed the items that cite it.
   pylons (each piece's `StdPylon` posed by its loft, rotate, incline and bank clips at its cell, as `ParkCoasterPylon`
   poses the knot) and the track's mesh from the samples and the `coaster.sam` cross sections (FileFormats `sam.md`, "A
   `coaster.sam`'s tables"; the mesh builder not decoded: decode first). Confirm by the same two frames side by side.
+- [ ] **Q605. The deletes this game never makes, and a full thing table.** From Q582 (`ride-operation.md`, the
+  `FUN_0050b780` row): the original also deletes a guest a guard throws out (`FUN_004feb50`, from the guard's catch
+  `FUN_004d6790`), one in state `0x11` whom no guard holds (`FUN_005019f0`) and a thing an online message names
+  (`FUN_004e6e80` case `0x26`); the first two wait on the guard's chase, unbuilt. And past id `0x27ff` the original logs
+  `FATAL ERROR - Thing Array is full` and makes nothing, where `ParkState.NextThingId` counts `THING_ARRAY_FULL` and
+  hands out the next id.
 - [ ] **Q557. A script's sounds of the other voice classes, and of a script with no nodes here.** From Q553, which built
   the one-shot and the plain class, Q558, which built the chain of `0x4` alone, Q559, the held chain `0x404`, Q561,
   the music's class `0x406`, Q563, a voice out of range, Q564, a ride's scream out of range, and Q565, a script's

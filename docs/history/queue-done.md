@@ -9566,6 +9566,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (255,0,0), "$ 2500" white, 1170 first; the 3 gt click refused with `cat_ui` `0x1D`; put down, bank 50000 to 50000,
   spent 2 to 3, ids [1170], corner "1 x", `gms.dat` spent 3 [1170]; then "Jurassic Tours" "$ 3000" (`side-by-side-lists.png`).
   25 of 25 bugs put back fail a test. `MYSTERY_RIDE_PURCHASE` and `PURCHASE_GOLDEN_TICKET_ARM` are gone.
+- [x] **Q582. A made vehicle takes the id last freed.** From Q26c (and Q238): the original's summons hands a made vehicle
+  the id last freed (its ferry from `q340/late30.TPWS` was thing 14 in Q341's run, its seaplane 14 in `q26c/orig2`),
+  and `ParkState.NextThingId` gives one past the highest used (43), said at `ParkPeople.MakeVehicle`. Decode the
+  original's free list (`FUN_0050b350`, the id's source at the summons) and build it for every thing made, the guests of
+  a load too, which part from the original's ids once anybody has gone; then confirm from late30, whose freed 14 the
+  original reuses.
+  **Done (2026-10-21):** `ParkState.NextThingId` is the original's free list (`ride-operation.md`, "Where a ride's turn
+  comes from"): a load's holes rising, then one past its highest; an id deleted (a guest home, a hire fired, an object
+  sold, the End feature) back at the head from its sweep's end, the first deleted first. Confirmed, 8 of 9 on the final
+  binary (`q582/PREDICTION.txt`, run 4): late30's next 14 43 44; the seaplane made thing 41, the id last freed
+  (`G8-seaplane-A.png`); the original given late30 the same (`orig/b-load.log`, `original/usedlist.py`). `mutate.py` 13
+  of 13 and one equivalent. The rest is Q605.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

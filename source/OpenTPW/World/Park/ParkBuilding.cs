@@ -479,6 +479,7 @@ public static class ParkBuilding
 			state.TrackRides.Free( placed.TrackRide );
 
 		state.RemoveObject( thingId );
+		state.DeleteThing( thingId );
 
 		Unstamp( state, footprint, placed.CellX, placed.CellY, thingId );
 
