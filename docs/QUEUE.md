@@ -70,10 +70,6 @@ filed the items that cite it.
   three lines, score `0x0059d180`); this game counts the row (`PARK_ADVISOR_POLLED_ROW_NOT_BUILT`), so its advisor is free
   where the original's is busy, and says the hints `0x13a` (19059) and `0x13c` where the original's wait in their slots.
   Decode the score (`0x0059d180`) and build it on the polled rows' machinery; confirm the 19084 line in both.
-- [ ] **Q603. The gadget's corner reads "-1 x" tickets where the original's reads "0 x".** From Q708 (`q708/run2-F/F-hints.png`
-  against `q707/orig/O2/g-05.png`): with `q707/gms-none.dat` (no ticket, one spent, one key given) this game's corner
-  shows the tickets less those spent, -1, and the original's 0. A profile spending more than it won is not one play makes;
-  decode the corner's count (`hud.md`, the gadget's update) for its floor and say at the site what it is.
 - [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
   the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
   (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to

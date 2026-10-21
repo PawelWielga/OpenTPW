@@ -58,9 +58,11 @@ public class ParkGadgetTests
 	/// <summary>
 	/// <b>The corner shows the keys held and the tickets not spent, the ticket hidden at none</b> (<c>0x004a1092</c>..):
 	/// two jungle tickets and the first key, one spent, read "1 x" and "1 x" as the original's did before its award
-	/// (<c>q706/orig/O/g-05.png</c>); both spent hide the ticket and its count, the keys staying.
+	/// (<c>q706/orig/O/g-05.png</c>); both spent hide the ticket and its count, the keys staying; three spent, -1, is
+	/// never written, so the corner keeps its seeded "0 x" and the ticket shown, as the original's (<c>q707/orig/O2/g-05.png</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the tickets earned shown; the spent added; the ticket left shown at none.</remarks>
+	/// <remarks><b>Mutations:</b> the tickets earned shown; the spent added; the ticket left shown at none; the count
+	/// written whatever the last; the seed left out; the last written starting at 0.</remarks>
 	[TestMethod]
 	public void TheCornerShowsTheKeysAndTheTicketsNotSpent()
 	{
@@ -81,6 +83,12 @@ public class ParkGadgetTests
 
 			Assert.AreEqual( (false, false), (Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible), "none unspent: hidden" );
 			Assert.AreEqual( "1 x", Find( gadget.Root, 0x36 ).Text );
+
+			file.TicketsSpent = 3;
+			gadget = new UI.ParkGadget( AStack() );
+
+			Assert.AreEqual( ("0 x", true, true), (Find( gadget.Root, 0x37 ).Text, Find( gadget.Root, 0x37 ).Visible, Find( gadget.Root, 0x35 ).Visible),
+				"one more spent than won, -1, equals the last written's -1: never written, the seed stays (0x004a10d2)" );
 		}
 		finally
 		{

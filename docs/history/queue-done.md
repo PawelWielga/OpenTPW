@@ -9658,6 +9658,10 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `ADVISOR_RESPONSE_GESTURE_ROW` are gone; the console's `sayas N` and `original/sayas.sh` say a chosen response.
   Confirmed in both games on a fresh Full Simulation park (`q596/PREDICTION.txt`): the seven built topics' lines said on
   the same ticks with the same clip lists, lengths, samples and hats (`orig/e/fresh.log`, `run-G3/run.log`).
+- [x] **Q603. The gadget's corner reads "-1 x" tickets where the original's reads "0 x".** From Q708 (`q708/run2-F/F-hints.png`
+  against `q707/orig/O2/g-05.png`): with `q707/gms-none.dat` (no ticket, one spent, one key given) this game's corner
+  shows the tickets less those spent, -1, and the original's 0. A profile spending more than it won is not one play makes;
+  decode the corner's count (`hud.md`, the gadget's update) for its floor and say at the site what it is.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

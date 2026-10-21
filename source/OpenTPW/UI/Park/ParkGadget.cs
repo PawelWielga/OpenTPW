@@ -199,6 +199,9 @@ internal sealed class ParkGadget : UiWindow
 	private readonly UiControl _ticketCount;
 	private readonly UiControl _ticket;
 
+	/// <summary>The ticket count last written to the corner, -1 before the first (0x00752ec4).</summary>
+	private int _ticketsWritten = -1;
+
 	/// <summary>
 	/// The gauge's moving part - the stream's 0x1f, control type 9. See <see cref="UiMeter"/> for why it
 	/// takes a skin rather than a mesh, and <see cref="ParkPeople.AverageHappiness"/> for the number.
@@ -611,7 +614,9 @@ internal sealed class ParkGadget : UiWindow
 			Mesh = UiMesh.Get( "gtick" )
 		} );
 
+		// Seeded "0 x" as FUN_004a1d70 seeds it (0x00752f24); ShowEarned writes it only on a change.
 		_ticketCount = earned.Add( Count( 0x37, new UiRect( 1688, 60, 1829, 150 ) ) );
+		_ticketCount.Text = "0 x";
 
 		// The key row, which FUN_004a1d70 hides outright while the game type is 2 - Instant Action, where
 		// keys mean nothing because every park is already open.
@@ -1441,8 +1446,17 @@ internal sealed class ParkGadget : UiWindow
 		_keyCount.Text = $"{player?.Keys ?? 0} x";
 		var tickets = player?.TicketsUnspent ?? 0;
 
+		// Written only when the count differs from the last written, which starts at -1 and goes back to it on the
+		// gadget's message 0x15 (0x004a1160). So a profile that spent more than it won, -1, is never written, and
+		// the corner keeps its seeded "0 x" and the ticket as the tree has it (0x004a10d2).
+		if ( tickets == _ticketsWritten )
+			return;
+
+		_ticketsWritten = tickets;
 		_ticket.Visible = _ticketCount.Visible = tickets != 0;
-		_ticketCount.Text = $"{tickets} x";
+
+		if ( tickets != 0 )
+			_ticketCount.Text = $"{tickets} x";
 	}
 
 	/// <summary>
