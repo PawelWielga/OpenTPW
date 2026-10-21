@@ -310,9 +310,9 @@ public sealed class AdvisorModel
 	/// virtual screen, which on a 4:3 window is the window.
 	/// </para>
 	/// <para>
-	/// <b>A deviation:</b> this projection ignores how far toward the viewer a node stands. The original's screen-space draw
-	/// has two matrices of his own (ModelRenderable_Draw 0x0057a750), not decoded, and draws the golden ticket that Lost
-	/// Kingdom's clips 19 and 20 hold 42 units toward the viewer filling the screen; here it is drawn at its own size
+	/// It is affine, as the original's screen-space draw is (ModelRenderable_Draw 0x0057a750; docs/exe/ui.md, "His projection
+	/// is affine"): how far toward the viewer a node stands changes no size. The golden ticket that Lost Kingdom's clips 18
+	/// to 20 grow twelvefold is a scale track, which AnimationFile does not read, so here it is drawn at its own size
 	/// (docs/QUEUE.md Q707).
 	/// </para>
 	public static Matrix4x4 ScreenProjection()

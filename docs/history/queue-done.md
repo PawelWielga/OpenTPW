@@ -9508,6 +9508,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   rows 1 and 13 play clips 17 to 20 with no lead-in, the original's wait, each clip's hide list and props, `0x10000`'s
   face away, and row 13's key (effect 87 at the counts, goldkey); a clip lasts its declared span (clip 20, 2000 ms).
   Confirmed in both games (`q707/PREDICTION.txt`; `ride-operation.md`, "The advisor's ticket lines").
+- [x] **Q597. The advisor's projection, decoded (Q707's first rest piece).** Decode only. His screen-space draw is affine
+  (A = the record's `+8` matrix times diag(1, -1, 1, 1), B the identity, w 1 for every vertex), as this game's
+  `AdvisorModel.ScreenProjection`; the big ticket is a scale track on `Ticket2` (clips 18 to 20, twelvefold), which
+  `AnimationFile` does not read (`ui.md`, "His projection is affine", "The big ticket is a scale track"). Read in the
+  running original (`q707/p597/PREDICTION.txt`, `original/advnodes.py`); Q707 (3) rewritten, Q598 filed.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

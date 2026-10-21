@@ -3911,7 +3911,8 @@ by slot: the two posted into full slots took the lowest (the opening's 20, a hin
 turn, so it is said on the next sweep at the earliest (`q707/run3-L`: posted on 19100, said on 19101); the row's clips,
 no lead-in, the wait and row 13's key (effect 87 at the counts, goldkey) are the original's. Not built: the glints (UI
 particle channel 0, `ADVISOR_CLIP_GLINTS`), the tags of groups 102 to 113 (`TAG_ROW_NOT_LISTED`), and the big ticket of
-clips 19 and 20, which this game draws at its own size because its advisor's projection is orthographic (Q707).
+clips 18 to 20, a scale track on `Ticket2` that `AnimationFile` does not read, so this game draws it at its own size
+(`ui.md`, "The big ticket is a scale track"; Q707).
 
 **The hints** (polled rows, game type 0 alone; `Advisor.sam` scores): `0x13a` (sample 597, "you're really close to winning
 a golden ticket...") scores `GoldTicketNearToFirstOne.Score` 150 while the player holds no ticket, the secret ones not

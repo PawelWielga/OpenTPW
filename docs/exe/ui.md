@@ -33,6 +33,32 @@ at every poll of it (`advdraw.py` polls every 0.05 s and takes a stamp up to two
 the draw's return on the renderable's flag `0x4`, `0x0057a85f`, so it says the draw was entered, not that he was
 drawn), and seen in the film (`q556/orig/c-film-21.0`, `24.0`, `29.0`).
 
+**His projection is affine** (Q597). The screen-space arm hands `ModelRenderable_DrawNodes` (`0x0057a530`) the
+renderable's two matrices, A at `+0x10` and B at `+0x50`; each node's vertices go through its chain of local matrices
+times A in the plain 4-wide transform (`XformVerts_Fpu`, `0x00579250`, no divide), and B's chain goes to the lights
+(`Light_ModelSetup`). Where the park's arm uses the draw matrix `[0x0087b088]` (the camera inverted, the projection, the
+`0x0087b0d0` scale: `park-engine.md`), A is the advisor record's `+8` matrix (`0x00429ba0`: identity, translation 0.6,
+-0.6, 0.2) times diag(1, -1, 1, 1), written by `Renderable_SetMatrix` (`0x0057a260`, mode 1, its only mode in use) from
+`Model_ShowInRenderList`. Every matrix in it is affine, so w is 1 and `ClipToScreen_Fpu`'s divide by w (`0x00579690`)
+changes nothing: how far toward the viewer a node stands changes no size, as in `AdvisorModel.ScreenProjection`. His
+depth, about 0.2 (the root's 0.001 a unit about it), falls under `[0x008bcc28]` (0.311), the z-buffer's linear "ui" range. The
+flag `[0x008bb624] |= 0x2000000` rides into each mesh's draw entry (`DrawList_AddMesh`, `0x00581cd0`), where
+`DrawList_Flush` (`0x00581e9b`) files the entry in its batch's unordered list. Read in the running original (`q707/p597/PREDICTION.txt`,
+`original/advnodes.py`): A = 1 0 0 0 | 0 -1 0 0 | 0 0 1 0 | 0.6 0.6 0.2 1 and B the identity throughout, every node's
+w column (0, 0, 0, 1), the root's axes 0.01125, 0.001, 0.015.
+
+**The big ticket is a scale track** (Q597). Lost Kingdom's `Advisor_JUNm18` keys `Ticket2` (node 12) from 0.748,
+0.964, 1.158 at frame 0 to 3.273, 4.214, 5.063 at 38 and 12.093, 11.486, 8.958 at 70; `m19` keys 12.093, 11.486, 8.958
+at 0 and 39; `m20` from that to 3.023, 2.872, 2.239 at 25 (`Wave01`, the ticket's glint ring, 0.249 to 0.488 in 18).
+`Anim_PoseTrack` lerps the two keys about the frame (`0x00471dca`) and sets the lengths of the node's three axes to them
+(`Matrix_SetAxisLengths`, `0x0046f910`), after the turn. In the original, the ticket's axes rose in clip 18 and in
+clip 20 fell to exactly 3.0233, 2.8715, 2.2394; through clip 19 they held clip 18's last pose (11.97 in one line, 12.08
+in the next: clip 18's lerp at frame 69.54 and 69.96), not clip 19's own 12.093, a one per cent difference whose cause
+was not traced. On screen the ticket of clip 19 spans 550 of the 1024-wide frame, the one in his hand about 40
+(`q707/p597/orig/O/g-15.png`, `g-18.png`). Clips 17 and 18 squash his body (1.243, 0.838, 0.838 to 1) and head the same
+way, and clip 16 the map. `AnimationFile` reads no scale track, so this game draws the ticket at its own size and him
+unsquashed (Q707).
+
 **Draw order.** Because of the see-through discs, the model draws in two passes: every solid half first, then every see-through half in file order. Drawn mesh by mesh, a hand behind him shows through. Any future screen-drawn model with see-through parts needs the same two passes.
 
 **Lighting** is tuned against Alexah's reference screenshots in `content/ReferenceScreenshots/` (untracked) by measuring glove and eye brightness in captures, never by eye. It uses the shader's per-draw ambient and world-normals uniforms.

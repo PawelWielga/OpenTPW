@@ -2186,7 +2186,7 @@ Q261, split by the session: the item's other pieces are Q262. The question was Q
 | Address / value | Name | What it is | Evidence |
 |---|---|---|---|
 | `0x00576a00` | `Render_DrawView` | A scene's frame. The six model lists are walked first; `SpriteBatch_DrawParticles` is called after them (`0x00576cbd`), handing each particle's quad to the batches; `FUN_0058a660` and then `FUN_00582170` draw | Decompiled |
-| `0x00582170` | | `FUN_00581db0`, then `FUN_00582ad0`: the per-batch sort, furthest first (`render-states.md`, "Three back-to-front sorts") | Decompiled |
+| `0x00582170` | | `DrawList_Flush` (`0x00581db0`), then `FUN_00582ad0`: the per-batch sort, furthest first (`render-states.md`, "Three back-to-front sorts") | Decompiled |
 | `0x0051ef30` | `Particles_Render` | A particle's colour word goes into its sprite record as it stands, whatever the effect's draw flags | Decompiled |
 | `0x0057c620` | `SpriteBatch_DrawParticles` | An effect without draw flag `0x4` takes its state word from its picture's texture (`Texture_BlendStateWord`), so `0x2000` alone changes nothing in the draw | Decompiled |
 
