@@ -125,18 +125,39 @@ Each clip word is a clip number and flag bits. **Rows 1 and 13 are the only ones
 `0x40000` plays `cat_ui` effect 197 and tops it to two of 49, `0x80000` to three of 49, `0x100000` empties it and tops it
 to two of 44, and `0x200000`, which no row uses, empties it. Effects 44 and 49 are the golden ticket's glints (`ParLib`).
 Every response using rows 1 and 13 is a golden-ticket line on model slot 1, the park's own advisor; clips 16 to 20 ship
-only in a level's `advisor.wad`, so the lobby's advisor, slot 0, never plays them. OpenTPW awards golden tickets in Full
-Simulation (Q591) and counts their lines rather than posting them (`GOLDEN_TICKET_MESSAGE`), so nothing reaches the glints (`lobby.md`, "World sprites"; `ride-operation.md`, "Golden tickets", Q707).
+only in a level's `advisor.wad`, so the lobby's advisor, slot 0, never plays them. The original's counts of channel 0
+as Local 0's ticket and key was said (`q707/orig/O`, `original/advisorline.py`): 1 on clip 17, 2 on 18, 3 on 19, 2 on 20,
+nought when he is free (`Advisor_Update` empties it). Where the particles stand is set by `FUN_005ed660` and
+`FUN_005ed700` and placed every frame by `UIParticles_PlaceChannels` (`0x00599800`'s tail): not decoded. OpenTPW plays
+the rows' clips (Q595) and counts each clip that sets the channel (`ADVISOR_CLIP_GLINTS`): the glints are Q707's.
 
-**A row and the voice's start** (`FUN_00598bf0( row, length )`, from `Advisor_SayResponse` at `0x005993a4` with the
+**A clip's start** (`Advisor_Update` `0x00599a2a`, then `FUN_00599800` calls `Advisor_ClipStarted` `0x00598dc0` once the
+model reads it started): the model's clip change (`FUN_004726d0`) shows again what the outgoing clip's hide list hid and
+the nodes the incoming clip's tracks name, then hides the incoming hide list (`park.md`, "The per-clip hide list"); then
+his five mouths are hidden, the line's props are put on again (`FUN_00598ca0`), and where the clip word carries `0x10000`
+no add-on and no prop is shown and the node `bug head` (`FUN_0044b2e0( model, 0, -1 )`, node 0 where none is named so) is
+hidden, and `Advisor_Update` shows no mouth (`0x00599b8c`). Lost Kingdom's clips 19 and 20 hide everything of him but the
+big ticket (`hidelists.py`), and his head comes back with the next clip that moves it (14's and 17's position keys): the
+original's second ticket line shows his face (`q707/orig/O/film/O-second-line-crop.png`). **A clip's length is its
+declared span** (`Anim_ClipMilliseconds` `0x00474070`: block `+8` times 1000 over 30): clip 20 declares 60 frames and keys to 89, so 2000 ms,
+the original's own table (`q707/orig/O/line.log`).
+
+**A row and the voice's start** (`Advisor_PlayGestureRow`, `FUN_00598bf0( row, length )`, from `Advisor_SayResponse` at `0x005993a4` with the
 gesture less 16 and the sample's length plus 500 ms): it copies the row's clip words to `0x00f79718` and sums their
-lengths from the model's table `0x00f796c4`, a cue word (`0x400000`) setting the cue timer `0x00f79778` instead. **When
+lengths from the model's table `0x00f796c4`, a cue word (`0x400000`) setting the cue timer `0x00f79778` to the clips
+before it plus the word after it instead, and not copied (`0x00598c33`: the copy's index is not stepped); it returns the
+sum, which `Advisor_SayResponse` returns plus 1000 and clip 15's length, and the advisor waits that plus 1000. **When
 the row's first clip, its flag bits `0x7f0000` masked off, is not 14, it zeroes `0x00f79694`**, the time
 `Advisor_SayResponse` set for the voice after the lead-in (`0x0059922a`; 800 ms, `ui.md`): the voice it has just started
 (`0x00599339`) is then left playing (`0x00599409`..`0x0059944c`) rather than stopped (`Sound_Stop`) and started again by
 `Advisor_Update` when the lead-in ends, so
 **a row that does not open on clip 14 has no lead-in**. Rows 1 and 13 open on clip 17. When the row's clips sum to
-nought on the speaking model (none loaded), the random chain (`FUN_00598b20`) is built in their place.
+nought on the speaking model (none loaded), the random chain (`FUN_00598b20`) is built in their place. The clips' end
+(`0x00f79668`) and the cue count from the clock less 200 (`0x00f79664`), which a line with a lead-in moves on by 1000
+(`0x0059944c`) and a row line does not: row 13's key comes 7798 ms after it, its clips end 8798 ms after it, and
+`original/advisorline.py` read the voice's time nought from the line's first moment (`q707/orig/O3`), where a line of the
+random chain has it for 0.8 s. **Built** (Q595, `AdvisorGestures`): a park line given a row of a ticket response plays
+it; the other topics' rows (5 to 11) are counted as before (`ADVISOR_RESPONSE_GESTURE_ROW`, Q596).
 
 ## Leaving the lobby (state 3), in order
 

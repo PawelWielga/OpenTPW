@@ -2377,9 +2377,6 @@ public sealed partial class ParkPeople : Entity
 				kind => _staff.Count( member => ParkStaffPool.KindFor( member.Model ) == kind ),
 				StaffNamed );
 
-			// Then, past the calendar's update, the golden tickets on every hundredth (0x004d7b60).
-			ParkGoldenTickets.Sweep( State.GameTick, State, this );
-
 			TakeTheRidesTurns( thingTick );
 			RetryGateClose();
 
@@ -2392,7 +2389,8 @@ public sealed partial class ParkPeople : Entity
 				(response, sample) =>
 				{
 					var (first, second) = ParkAdvisorMessages.PropsOf( response );
-					return Advisor.Current?.PlayParkResponse( response, sample, first, second, ParkAdvisorMessages.SlotOf( response ) ) ?? 0;
+					return Advisor.Current?.PlayParkResponse( response, sample, first, second, ParkAdvisorMessages.SlotOf( response ),
+						ParkAdvisorMessages.LipOf( response, sample ), ParkAdvisorMessages.GestureRowOf( response ) ) ?? 0;
 				},
 				(group, subject, second) =>
 				{
@@ -2402,6 +2400,11 @@ public sealed partial class ParkPeople : Entity
 					State.Tags.Said( group, subject, Time.WallMilliseconds, item, name );
 				},
 				AdvisorFacts );
+
+			// Then the sweep's tail, after every thing's turn and so after the advisor's: past the calendar's update, the
+			// golden tickets on every hundredth (0x004d7b60), so a ticket's line waits for the next sweep's turn
+			// (FUN_00516380 turns the things at 0x005163fb and calls the tail at 0x00516695).
+			ParkGoldenTickets.Sweep( State.GameTick, State, this );
 		}
 
 		if ( dropped == 0 )

@@ -261,4 +261,42 @@ public class ParkGoldenTicketTests
 
 		Assert.AreEqual( (616, 3), ParkGoldenTickets.Cells( state ) );
 	}
+
+	/// <summary>
+	/// The message each award posts and the line it asks for (GoldenTicket_TellLocal 0x004d4fa0, TellGlobal 0x004d5270,
+	/// TellSecret 0x004d5870): result less one past the kind's first row, the ticket's index as the line; a Global's result
+	/// 4 the moved row of its index with no line; nothing for a result the tellers do not know.
+	/// </summary>
+	[TestMethod]
+	public void EachAwardPostsItsKindsRowAndAsksForItsIndex()
+	{
+		Assert.AreEqual( (0xd8, 0), ParkGoldenTickets.Posted( new( "Local", 0, 2 ) ) );
+		Assert.AreEqual( (0xd7, 1), ParkGoldenTickets.Posted( new( "Local", 1, 1 ) ) );
+		Assert.AreEqual( (0xd9, 5), ParkGoldenTickets.Posted( new( "Local", 5, 3 ) ) );
+		Assert.AreEqual( (0xdd, 3), ParkGoldenTickets.Posted( new( "Global", 3, 2 ) ) );
+		Assert.AreEqual( (0xe3, 0), ParkGoldenTickets.Posted( new( "Secret", 0, 3 ) ) );
+		Assert.AreEqual( (0xec, -1), ParkGoldenTickets.Posted( new( "Global", 2, 4 ) ) );
+		Assert.IsNull( ParkGoldenTickets.Posted( new( "Local", 2, 4 ) ) );
+		Assert.IsNull( ParkGoldenTickets.Posted( new( "Global", 0, 0 ) ) );
+	}
+
+	/// <summary>
+	/// The first ticket's two lines follow the award that makes the tickets of every kind one - the Secret's and the
+	/// records' counted, so an award whose park tickets are one but whose every kind is two posts its own row alone.
+	/// </summary>
+	[TestMethod]
+	public void TheFirstTicketsLinesFollowTheAwardThatMakesEveryKindOne()
+	{
+		var posted = new List<(int, int)>();
+		ParkGoldenTickets.Tell( new( "Local", 0, 1, Total: 1, Every: 1 ), ( message, line ) => posted.Add( (message, line) ) );
+		CollectionAssert.AreEqual( new[] { (0xd7, 0), (0x137, -1), (0x13b, -1) }, posted );
+
+		posted.Clear();
+		ParkGoldenTickets.Tell( new( "Local", 1, 1, Total: 1, Every: 2 ), ( message, line ) => posted.Add( (message, line) ) );
+		CollectionAssert.AreEqual( new[] { (0xd7, 1) }, posted );
+
+		posted.Clear();
+		ParkGoldenTickets.Tell( new( "Local", 1, 4, Total: 1, Every: 1 ), ( message, line ) => posted.Add( (message, line) ) );
+		CollectionAssert.AreEqual( new[] { (0x137, -1), (0x13b, -1) }, posted, "an unknown result posts no row, and the first lines still" );
+	}
 }

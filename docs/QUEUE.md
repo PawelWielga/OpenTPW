@@ -83,17 +83,16 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q707. The advisor's golden-ticket lines.** After Q706. The thirteen posts (`0xd7`-`0xd9`, `0xdc`-`0xde`,
-  `0xe1`-`0xe3`, `0xea`-`0xed`, the ticket index as the line; score 99000, the moved rows 500, posted on the message bus) and the first ticket's `0x137` and `0x13b`,
-  on model slot 1, the park's own advisor, from the level's `advisor.wad` (clips 16 to 20, which OpenTPW does not
-  load); lines of result 1 on gesture row 1, results 2 and 3 on row 13, with the glints (`scenes.md`, "Gesture table",
-  effects 44 and 49) and no lead-in (`scenes.md`, "A row and the voice's start"); `ADVISOR_RESPONSE_GESTURE_ROW` is
-  the counter there now.
-  - **Note (fork watch 2026-10-16, `verify-audio-fx.md` A5):** gesture rows 12 and 13 (values 28 and 29; table
-    `0x0076dc18`, stride `0x50`) alone carry the `0x400000` cue that `0x00598bf0` turns into the key timer, so a
-    golden-ticket line (row 13) plays goldkey `0xc6`, particle 87 and `0x004b9340` at its due time (`0x00599991` to
-    `0x005999d1`). `FrontEnd.KeyHandedOver` is row 12's build; row 13's has no site. Whether `0x004b9340` does
-    anything in a park is not proven.
+- [ ] **Q707. The advisor's golden-ticket lines: the glints, the tags and the big ticket.** Q595 says the lines. Left:
+  (1) the glints, UI particle channel 0 (`UIParticles_SetChannelCount` `0x005ed5a0`, `FUN_005ed660`, `FUN_005ed700`,
+  placed each frame by `UIParticles_PlaceChannels` from `0x00599800`; effects 44 and 49, `cat_ui` 197 on clip 18), counted
+  `ADVISOR_CLIP_GLINTS`: decode where the particles stand (the model's `T_Particle1` to `3` and `Rotate1` to `3` nodes,
+  space `0x100`, are the candidates) and build them; (2) the tags of groups 102 to 113 (`lib/tagtable.py`: picture 3,
+  strings 180 to 191, text kinds 5 to 8, life 0), counted `TAG_ROW_NOT_LISTED`; (3) **the big ticket**: clips 19 and 20
+  hold `Ticket2` 42 units toward the viewer, which the original's screen-space draw (`ModelRenderable_Draw` `0x0057a750`,
+  the renderable's two matrices at `-0x144` and `-0x104`, `[0x008bb624] |= 0x2000000`) shows filling the screen
+  (`q707/orig/O/film/O-bigticket-93.00.png`) and this game's orthographic `AdvisorModel.ScreenProjection` shows at its
+  own size (`q707/run3-L/G-6.2.png`): decode the advisor's projection first.
 - [ ] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
   tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
   one load). `0x13e` and the rows no code posts stay unsaid, as the original's.
@@ -108,6 +107,11 @@ filed the items that cite it.
   spent count and `RideIds`) are not built, and the purchase's own arm is counted (`PURCHASE_GOLDEN_TICKET_ARM`).
   Decode the spending first. Lost Kingdom's `tourride` (1) and `volcano` (3) carry a ticket cost; Alexah's profile
   spent one on `tourride`.
+- [ ] **Q596. The other topics' gesture rows.** From Q595. Rows 5 to 11 of the gesture table (`AdvisorGestures`;
+  `scenes.md`, "Gesture table") are fixed clip lists opening on clip 14 (row 5: 14, 5, 11, 15), named by responses of
+  built topics (`GestureRowLine`: 17, 37, 53, 82, 84, 90, 97, 129, 206, 258): hand them to `PlayParkResponse` as the
+  ticket lines' are, replacing `ADVISOR_RESPONSE_GESTURE_ROW`; rows 2, 3, 4 and 8 are empty, so their lines keep the
+  random chain. Confirm a line of each in the original.
 - [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
   the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
   (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to

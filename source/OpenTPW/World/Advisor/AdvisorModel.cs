@@ -94,11 +94,65 @@ public sealed class AdvisorModel
 	/// Dead by CODE: nothing calls it.
 	public int ClipCount => _clips.Length - 1;
 
-	/// <summary>How long clip <paramref name="clip"/> plays for, in the engine's whole milliseconds.</summary>
+	/// <summary>
+	/// How long clip <paramref name="clip"/> plays for, in the engine's whole milliseconds: the span the clip declares
+	/// times 1000 over 30 (Anim_ClipMilliseconds, 0x00474070), not the span its keys cover. Lost Kingdom's clip 20 declares 60 frames and
+	/// keys 89, so it lasts 2000 ms (the original's own table, q707/orig/O).
+	/// </summary>
 	public int ClipMilliseconds( int clip )
-		=> clip >= 1 && clip < _clips.Length && _clips[clip] is { } animation
-			? (int)(Math.Max( animation.LastFrame - animation.FirstFrame, 0 ) * 1000 / AnimationFile.FramesPerSecond)
-			: 0;
+		=> clip >= 1 && clip < _clips.Length && _clips[clip] is { } animation ? MillisecondsOf( animation ) : 0;
+
+	/// <summary>A clip's length as <see cref="ClipMilliseconds"/> counts it: its declared span, in whole milliseconds.</summary>
+	internal static int MillisecondsOf( AnimationFile animation )
+		=> (int)(Math.Max( animation.DeclaredLastFrame - animation.DeclaredFirstFrame, 0 ) * 1000 / AnimationFile.FramesPerSecond);
+
+	/// <summary>The clip last started on him, whose hide list the next start shows again; nought before the first.</summary>
+	private int _startedClip;
+
+	/// <summary>
+	/// A clip's start (FUN_004726d0, FUN_00472d70): the nodes the clip before it hid are shown again, and so is every
+	/// node the incoming clip's tracks name, then the incoming clip's hide list is hidden. So the small ticket, which
+	/// clips 1 to 16 hide and clip 17 does not, shows on clip 17, and the head that clips 19 and 20 leave hidden comes
+	/// back with the next clip that moves it (clip 14's and 17's position keys).
+	/// </summary>
+	internal void StartClip( int clip )
+	{
+		if ( _startedClip >= 1 && _startedClip < _clips.Length && _clips[_startedClip] is { } outgoing )
+		{
+			foreach ( var node in outgoing.HideList )
+				SetMeshVisible( node, true );
+		}
+
+		if ( clip >= 1 && clip < _clips.Length && _clips[clip] is { } incoming )
+		{
+			foreach ( var node in incoming.RotationTracks.Select( track => track.TargetIndex )
+				.Concat( incoming.PositionTracks.Select( track => track.TargetIndex ) )
+				.Concat( incoming.VisibilityTracks.Select( track => track.TargetIndex ) )
+				.Concat( incoming.MorphTracks.Select( track => track.TargetIndex ) ) )
+				SetMeshVisible( node, true );
+
+			foreach ( var node in incoming.HideList )
+				SetMeshVisible( node, false );
+		}
+
+		_startedClip = clip;
+	}
+
+	/// <summary>
+	/// Advisor_ClipStarted (0x00598dc0), after a clip's start: his five mouths hidden for the update to show one, the
+	/// line's two props put on, and with the clip word's <c>0x10000</c> no add-on shown and his head, the node
+	/// named <c>bug head</c> (node 0 where there is none, FUN_0044b2e0), hidden too.
+	/// </summary>
+	internal void DressForClip( int first, int second, IReadOnlyList<(int AddOn, int SubOff)>? costume, bool faceAway )
+	{
+		foreach ( var mouth in _mouths )
+			SetMeshVisible( mouth, false );
+
+		AdvisorProps.Wear( _file, [], first, second, costume, SetMeshVisible, addOnsHidden: faceAway );
+
+		if ( faceAway )
+			SetMeshVisible( Math.Max( MeshNamed( "bug head" ), 0 ), false );
+	}
 
 	/// <summary>
 	/// Poses him <paramref name="seconds"/> into clip <paramref name="clip"/>, holding the last
@@ -154,14 +208,6 @@ public sealed class AdvisorModel
 
 		Place();
 	}
-
-	/// <summary>
-	/// Dresses him for a line that starts on <paramref name="clip"/>, in its response's two props - see
-	/// <see cref="AdvisorProps.Wear"/>. Nought and nought is the lobby's: no add-on, his antennae on.
-	/// <paramref name="costume"/> is the theme's, for the prop -1.
-	/// </summary>
-	internal void Wear( int clip, int first, int second, IReadOnlyList<(int AddOn, int SubOff)>? costume = null )
-		=> AdvisorProps.Wear( _file, clip >= 1 && clip < _clips.Length ? _clips[clip]?.HideList ?? [] : [], first, second, costume, SetMeshVisible );
 
 	/// <summary>Shows mouth <paramref name="shape"/> (1 to 5) and hides the others.</summary>
 	public void ShowMouth( int shape )
@@ -262,6 +308,12 @@ public sealed class AdvisorModel
 	/// window it would walk him a third of the way into the player slots he is talking about, and
 	/// further in the wider the window. So where he stands and how big he is are both taken from the
 	/// virtual screen, which on a 4:3 window is the window.
+	/// </para>
+	/// <para>
+	/// <b>A deviation:</b> this projection ignores how far toward the viewer a node stands. The original's screen-space draw
+	/// has two matrices of his own (ModelRenderable_Draw 0x0057a750), not decoded, and draws the golden ticket that Lost
+	/// Kingdom's clips 19 and 20 hold 42 units toward the viewer filling the screen; here it is drawn at its own size
+	/// (docs/QUEUE.md Q707).
 	/// </para>
 	public static Matrix4x4 ScreenProjection()
 	{

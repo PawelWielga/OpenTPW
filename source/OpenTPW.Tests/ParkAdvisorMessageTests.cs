@@ -28,6 +28,8 @@ public class ParkAdvisorMessageTests
 			+ "StaffHireHandymen2.ScorePerLitterPoint 3\nStaffHireHandymen2.LitterPointCutoffLow 26\n"
 			+ "StaffHireGuards1.AtLeastThisBusy 70\nStaffHireGuards1.ScorePerExtraBusyPoint 1\n"
 			+ "MessageGroups[9].MinTimeSameMessage 0\nMessageGroups[9].SayOnlyOnce 1\nMessageGroups[9].DiscardAfterSlaps 0\n"
+			+ "MessageGroups[2].MinTimeSameMessage 0\nMessageGroups[2].SayOnlyOnce 0\nMessageGroups[2].DiscardAfterSlaps 0\n"
+			+ "GeneralWonGoldenTicket.Score 99000\nAwardMoved.Score 500\nWonFirstGoldenTicket.Score 1000\nGoldTicketCluesForRemainder.Score 999\n"
 			+ "StaffHireGuards2.Score 10\nStaffHireGuards2.AdditionalPerMisbehavingKid 5\n"
 			+ "LotsOfPranks.MorePrankstersThan 2\nLotsOfPranks.Score 100\n"
 			+ "GeneralLaxSecurity.MoreThanThisGotAway 1\nGeneralLaxSecurity.ScorePerGetAway 20\n"
@@ -67,9 +69,9 @@ public class ParkAdvisorMessageTests
 	/// <summary>
 	/// A park file's waiting messages stand in the advisor's slots from the load on: the shipped park's opening
 	/// at 20 waits unsaid under the threshold and refuses the door's next post as its one copy; a waiting message
-	/// over the threshold is said on the first sweep with its file's subject; a message of no built topic, or one
-	/// asking for a line, keeps its slot and is never said; and the slots are handed back to a save as they
-	/// stand, a post made here with its thing's item.
+	/// over the threshold is said on the first sweep with its file's subject; one asking for a line is said with that
+	/// line (FUN_0059a550 takes the record's +0x08 as it is); a message of no built topic keeps its slot and is never
+	/// said; and the slots are handed back to a save as they stand, a post made here with its thing's item.
 	/// </summary>
 	[TestMethod]
 	public void AParkFilesWaitingMessagesStandInTheSlots()
@@ -80,11 +82,11 @@ public class ParkAdvisorMessageTests
 			[1] = new( 0, 0, 190, 1000, false, -1, false, false ),
 			[2] = new( 0, 0, ParkAdvisorMessages.Opened, 20, true, -1, false, false ),
 			[3] = new( 0, 0, 190, 1000, true, -1, false, false ),
-			[5] = new( 14, 1140, ParkAdvisorMessages.RideWornOut, 100, true, 1, false, false )
+			[5] = new( 14, 1140, ParkAdvisorMessages.RideWornOut, 100, true, 2, false, false )
 		};
 		var messages = new ParkAdvisorMessages( Settings() );
-		Assert.AreEqual( 2, messages.RestoreSlots( index => file.TryGetValue( index, out var slot ) ? slot : null ) );
-		Assert.AreEqual( 4, messages.PendingCount, "two to say and two carried" );
+		Assert.AreEqual( 3, messages.RestoreSlots( index => file.TryGetValue( index, out var slot ) ? slot : null ) );
+		Assert.AreEqual( 4, messages.PendingCount, "three to say and one carried" );
 		StringAssert.Contains( messages.Census(), "slot=69/subject=13 slot=128/subject=0 " );
 
 		var asRead = messages.WrittenSlots( _ => 7 );
@@ -94,7 +96,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( file[2], asRead[2] );
 		Assert.IsNull( asRead[3], "an unbuilt message's slot is the file's" );
 		Assert.AreEqual( default( ParkWorld.AdvisorSlot ), asRead[4] );
-		Assert.IsNull( asRead[5], "a line asked for by number is the file's" );
+		Assert.AreEqual( file[5], asRead[5], "a line asked for by number is written back as asked" );
 
 		Assert.IsFalse( messages.PostDoor( closed: false, 900 ), "the file's copy is the one copy the slots may hold" );
 		Assert.IsTrue( messages.Post( ParkAdvisorMessages.RideWornOut, 900, 14 ), "the first free slot is 1" );
@@ -108,9 +110,10 @@ public class ParkAdvisorMessageTests
 		for ( var sweep = 0; sweep < 6; ++sweep )
 			messages.Tick( 901 + sweep, 100000L * (sweep + 1), ( response, sample ) => { said.Add( (response, sample) ); return 0; },
 				( group, subject ) => subjects.Add( (group, subject) ) );
-		CollectionAssert.AreEqual( new[] { (204, 202), (201, 199), (194, 191) }, said, "by score: 110, 107, 100; the opening at 20 never" );
-		CollectionAssert.AreEqual( new[] { (72, 15), (71, 13), (68, 14) }, subjects );
-		Assert.AreEqual( 3, messages.PendingCount, "the opening and the two carried wait on" );
+		CollectionAssert.AreEqual( new[] { (204, 202), (201, 199), (194, 191), (196, 193) }, said,
+			"by score: 110, 107, then the two at 100 by slot, the file's with its asked line 2; the opening at 20 never" );
+		CollectionAssert.AreEqual( new[] { (72, 15), (71, 13), (68, 14), (68, 14) }, subjects );
+		Assert.AreEqual( 2, messages.PendingCount, "the opening and the one carried wait on" );
 		var after = messages.WrittenSlots( _ => 0 );
 		Assert.AreEqual( file[2], after[2] );
 		Assert.AreEqual( default( ParkWorld.AdvisorSlot ), after[0] );
@@ -169,7 +172,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 75, written.Count );
+		Assert.AreEqual( 90, written.Count, "every built topic's record, the golden tickets' fifteen among them" );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -3606,7 +3609,8 @@ public class ParkAdvisorMessageTests
 			(topic.Id, topic.ScoreKey, topic.EveryFeatureBuilt, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled, topic.Group, topic.Prop, topic.GestureRowLine) );
 		Assert.AreEqual( (4, 10), (ParkAdvisorMessages.ResearchMore, ParkAdvisorMessages.ResearchHat) );
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Count( one => one.EveryFeatureBuilt ), "no other row is scored so" );
-		Assert.AreEqual( (true, 7), (topic.FullSimulationOnly, ParkAdvisorMessages.ParkTopics.Count( one => one.FullSimulationOnly )), "rows 76, 133 to 136 and 200 are the others; every other built row is either game's" );
+		Assert.AreEqual( (true, 22), (topic.FullSimulationOnly, ParkAdvisorMessages.ParkTopics.Count( one => one.FullSimulationOnly )),
+			"rows 76, 133 to 136, 200 and the golden tickets' fifteen are the others; every other built row is either game's" );
 		Assert.AreEqual( 3, ParkAdvisorMessages.ParkTopics.Count( one => one.Category == ParkAdvisorMessages.ResearchMore ), "rows 76 and 17 are the others of its category" );
 		Assert.IsTrue( ParkAdvisorMessages.IsPolled( 80 ) );
 		Assert.AreEqual( 0, messages.ScoreOf( topic, 972 ), "before any sweep has handed the park in" );
@@ -4846,5 +4850,86 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( ("no-score", "no-score"), (answers[(1, 622)], answers[(2, 622)]), "shut, and nothing to ride" );
 		foreach ( var row in new[] { 80, 113, 259, 260, 261, 262, 263 } )
 			Assert.AreEqual( "no-score", answers[(row, 700)], $"row {row}" );
+	}
+
+	/// <summary>
+	/// The golden tickets' lines (docs/exe/ride-operation.md, "Golden tickets"; q707/orig/O): a ticket's post asks for the
+	/// ticket's index as its line, and that line is said whatever the message said last - Local 0's ticket and key
+	/// (0xd8, line 0) says response 446, Local 1's ticket only (0xd7, line 1) response 435 with sample 294, not the first
+	/// sample plus one; both score 99000, so the one posted first is said first; each leaves its own line's group; a line
+	/// asked past the count says the first response and is kept as asked; a moved record asks for none.
+	/// </summary>
+	[TestMethod]
+	public void AGoldenTicketsLineIsTheTicketsIndex()
+	{
+		var messages = new ParkAdvisorMessages( Settings(), instantAction: () => false );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.WonLocal + 1, 19100, line: 0 ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.WonLocal, 19100, line: 1 ) );
+		StringAssert.Contains( messages.Census(), "message=216/score=99000" );
+
+		var said = new List<(int Response, int Sample)>();
+		var groups = new List<int>();
+		for ( var sweep = 0; sweep < 3; ++sweep )
+			messages.Tick( 19101 + sweep, 100000L * (sweep + 1), ( response, sample ) => { said.Add( (response, sample) ); return 0; },
+				( group, _ ) => groups.Add( group ) );
+		CollectionAssert.AreEqual( new[] { (446, 446), (435, 294) }, said, "posted first, said first; each its asked line" );
+		CollectionAssert.AreEqual( new[] { 102, 103 }, groups, "each line its own group" );
+
+		// Local 3 of the "ticket only" row: response 437 says sample 293, the first of the three again.
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.WonLocal, 19200, line: 3 ) );
+		messages.Tick( 19201, 900000, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		Assert.AreEqual( (437, 293), said[^1] );
+
+		// A line past the count says the first response; the message keeps the number asked.
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.WonSecret, 19300, line: 5 ) );
+		messages.Tick( 19301, 1000000, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		Assert.AreEqual( (444, 294), said[^1] );
+		StringAssert.Contains( messages.Census(), "message=225/score=99000/line=5/" );
+
+		// The record moved here: one line, no line asked, the random chain, on the park's own advisor with no costume.
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.AwardMovedHere + 2, 19400 ) );
+		messages.Tick( 19401, 1100000, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		Assert.AreEqual( (476, 535), said[^1] );
+		Assert.AreEqual( (1, 0, -1), (ParkAdvisorMessages.SlotOf( 476 ), ParkAdvisorMessages.PropsOf( 476 ).First, ParkAdvisorMessages.GestureRowOf( 476 )) );
+		StringAssert.Contains( messages.Census(), "message=236/score=500" );
+	}
+
+	/// <summary>
+	/// What a ticket line's response names (the response table at 0x00768fb8): the "ticket only" lines share lip file 293
+	/// over three samples and play gesture row 1; the key's and the park's lines row 13; every one is on the park's own
+	/// advisor in the theme's costume.
+	/// </summary>
+	[TestMethod]
+	public void AGoldenTicketsResponseNamesItsLipRowAndSlot()
+	{
+		Assert.AreEqual( (293, 1, 1, -1), (ParkAdvisorMessages.LipOf( 435, 294 ), ParkAdvisorMessages.GestureRowOf( 435 ),
+			ParkAdvisorMessages.SlotOf( 435 ), ParkAdvisorMessages.PropsOf( 435 ).First) );
+		Assert.AreEqual( (446, 13, 1), (ParkAdvisorMessages.LipOf( 447, 446 ), ParkAdvisorMessages.GestureRowOf( 447 ), ParkAdvisorMessages.SlotOf( 447 )) );
+		Assert.AreEqual( (622, 13, 103), (ParkAdvisorMessages.ResponseOf( 459 )!.Value.Sample, ParkAdvisorMessages.GestureRowOf( 459 ), ParkAdvisorMessages.ResponseOf( 459 )!.Value.Group) );
+		Assert.AreEqual( (589, -1, 1), (ParkAdvisorMessages.LipOf( 571, 589 ), ParkAdvisorMessages.GestureRowOf( 571 ), ParkAdvisorMessages.SlotOf( 571 )) );
+		Assert.AreEqual( (204, -1, 0), (ParkAdvisorMessages.LipOf( 204, 204 ), ParkAdvisorMessages.GestureRowOf( 204 ), ParkAdvisorMessages.SlotOf( 204 )),
+			"a response of no ticket keeps the topic's rule" );
+	}
+
+	/// <summary>
+	/// The first ticket's two lines (GoldenTicket_TellFirst, 0x004d5b30): 0x137 scores 1000 and 0x13b 999, so the first
+	/// is said first, as Advisor.sam's comment asks; both Full Simulation's alone.
+	/// </summary>
+	[TestMethod]
+	public void TheFirstTicketsLinesAreSaidInTheirScoresOrder()
+	{
+		var messages = new ParkAdvisorMessages( Settings(), instantAction: () => false );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.TicketClues, 100 ) );
+		Assert.IsTrue( messages.Post( ParkAdvisorMessages.WonFirstTicket, 100 ) );
+		var said = new List<(int, int)>();
+		messages.Tick( 101, 100000, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		messages.Tick( 102, 200000, ( response, sample ) => { said.Add( (response, sample) ); return 0; } );
+		CollectionAssert.AreEqual( new[] { (571, 589), (575, 598) }, said );
+
+		var instant = new ParkAdvisorMessages( Settings(), instantAction: () => true );
+		instant.Post( ParkAdvisorMessages.WonFirstTicket, 100 );
+		var none = new List<int>();
+		instant.Tick( 101, 100000, ( response, _ ) => { none.Add( response ); return 0; } );
+		Assert.AreEqual( 0, none.Count, "Instant Action never says it" );
 	}
 }

@@ -333,7 +333,8 @@ transcripts): every row posted-only, model slot 1, bank 0. `0xd7`-`0xd9` (Local)
 each, 474-477. The lines rotate three groups of samples: "ticket only" rows samples 293-295 ("and the winner is... you've won a
 golden ticket"), "ticket and key" sample 446 ("...and now you've got another golden key"), "ticket, key and park" samples 604 and 622
 ("...now you can open a new park"). The "moved" rows are samples 533-536: the rollercoaster, go-kart, water-ride and park-size
-awards moved here.
+awards moved here. Said in a Full Simulation park since Q595 (`ride-operation.md`, "The advisor's ticket lines"), each line as its post
+asks; the lip file of every "ticket only" line is 293's (the response's `+0x08`), which `ParkAdvisorMessages.LipOf` reads.
 
 ## Every HUD screen posts a message
 
@@ -760,7 +761,7 @@ slot 0` and `3-hardhat.png` shows the lobby's fly in the hard hat. Main's build 
 | The costume | four pairs of the theme's `Standard.sam`, put on after every clip's start | the same pairs, put on as the line begins |
 | The helmet's colour | tan, with a grey band | **paler: yellow with a white band**, as the hard hat is paler (`AdvisorModel`'s light, set against the lobby model's gloves) |
 | The chain's clip lengths | the park's model's, for both slots | the same |
-| Clips 16 to 20, the map, the tickets and the mutant eye | the golden ticket's lines (`scenes.md`, "Gesture table") | not built: no built topic names a gesture row of theirs |
+| Clips 16 to 20, the map, the tickets and the mutant eye | the golden ticket's lines (`scenes.md`, "Gesture table") | clips 17 to 20 played by the ticket lines (Q595); the big ticket of 19 and 20 drawn at its own size, the projection being orthographic (Q707); clip 16 (row 0's) by no park line |
 
 Not run: the original, this session (its frames of this file are Q344's and Q345's); a slot 0 line straight
 after a slot 1 line in the original; the three other themes' models and costumes (not measured); Full

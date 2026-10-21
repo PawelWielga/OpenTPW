@@ -3838,8 +3838,9 @@ x87 control word (`0x0059e96a` `FSTP DWORD`).
 Re-read for Q194 from the fork review (`economy-8`, `economy-9`; `wf_cba77d07-b66`, a read-only Opus verifier in
 Ghidra and over every shipped `.sam`), decoded whole for Q141, and **built for Q591** (`ParkGoldenTickets`, the awards in
 `PlayerFile`): every test and award, Global 0's measure, the coaster's highest point, built for Q706 (`ParkCoasterHeights`;
-"A coaster's highest track point", below). The advisor's ticket lines are counted
-(`GOLDEN_TICKET_MESSAGE`, `GOLDEN_TICKET_FIRST_LINES`; Q707), the hints are Q708, the cheat rows counted (Q592).
+"A coaster's highest track point", below). The advisor's ticket lines are posted and
+said (Q595, "The advisor's ticket lines", below; their glints, tags and big ticket are Q707), the hints are Q708, the
+cheat rows counted (Q592).
 
 **The tick.** `FUN_004d4a00`, from `FUN_004d7b20` (`0x004d7b60`) on a thing sweep (`0x00516695`) whose world counter
 `+0x1da70c`, `mGameTick`, is a multiple of 100 (`DIV`, `0x004d7b54`; the sweep raises it first, `0x00516398`, and calls
@@ -3877,8 +3878,10 @@ message through `FUN_0059b590`: results 1, 2, 3 (ticket; ticket and key; ticket,
 (Local), `0xdc`-`0xde` (Global) and `0xe1`-`0xe3` (Secret); a Global result 4, the record moved here, posts `0xea`-`0xed`
 by index (coaster height, go-kart excitement, water length, big park). Their lines are `advisor-park.md`'s, "The message-to-sample rule". Each post is
 `FUN_0059b590( message, thing 0, 0, ticket index, 0, -1 )` (the index is the line said: the row's first response plus the
-index, each line with its own tag group, 102 to 113; a result-4 post passes line -1) sent on the message bus `DAT_00788d3c` (`MsgBus_Send`), not
-handed to the advisor thing as the door's posts are (`FUN_005194d0`; which listener takes it was not traced); every
+index, each line with its own tag group, 102 to 113; a result-4 post passes line -1) sent on the message bus `DAT_00788d3c` (`MsgBus_Send`)
+as an event of type 5 (`FUN_0040f300`, vtable `0x006fd7b0`, whose first slot answers 5), not handed to the advisor thing
+as the door's posts are (`FUN_005194d0`): `Advisor_OnMessage`'s arm 5 (`0x0059b0a3`) hands the record, where its
+`+0x14` is set, to the same gate and slots (`FUN_0059a940`, `advisor-park.md`, "The accept gate"); every
 row is game type 0's alone (`+0x0c` 0), posted only; the nine result 1-3 rows score `GeneralWonGoldenTicket.Score` (`0x0059e890`), 99000, and the four moved
 rows `0xea`-`0xed` `AwardMoved.Score` (`0x0059e8b0`, `+0x324`), 500.
 **Then the first ticket's two lines**: each poster ends in `FUN_004d5b30`, which, when the player's tickets of every
@@ -3891,8 +3894,24 @@ the player's progress object in memory only: nothing here writes `gms.dat`, whic
 rows `0x0040c780`..`0x0040c7e0`, `PUSH 0x64; PUSH i; ... CALL 0x005af940`, which store 100 as the record) award Local and Global tickets in any game type and post nothing.
 
 **The advisor's ticket lines.** Lines of result 1 use gesture 17, the gesture table's row 1; results 2 and 3, gesture 29,
-row 13 (`scenes.md`, "Gesture table": the glints, clips 16 to 20 of the level's `advisor.wad`); the "moved" and
-first-ticket lines the random chain. All are on model slot 1, the park's own advisor.
+row 13 (`scenes.md`, "Gesture table": clips 17 to 20 of the level's `advisor.wad`, the glints, and row 13's key); the
+"moved" and first-ticket lines the random chain. All are on model slot 1, the park's own advisor. **The line asked for
+is said as asked**: the tick (`FUN_0059a550`, `0x0059a76b`) takes a record's `+0x08` where it is not below nought, with
+no selection mode, and keeps it as the message's last line even past the count; `FUN_0059b620` then says the first
+response plus it, or the first response where it is past the count. A response's sample and lip file are its own row's
+(`0x00768fb8`): the "ticket only" lines rotate samples 293 to 295 and all move the mouth by lip file 293. Measured in
+the original (Q595, `q707/orig/O`, `original/advisorline.py`): Alexah's jungle `New Save` with Locals 0 and 1 taken out
+of her profile posts `0xd8` line 0 and `0xd7` line 1 on tick 19100; `0xd8` is said on 19115 (the line before it in its
+wait) with sample 446 on slot 1 in the helmet, its clips ending 8798 ms and its cue 7798 ms after the clock less 200,
+no lead-in, the wait 11464 ms; `0xd7` on 19162 with sample 294. With no ticket of any kind (`q707/orig/O2`) the six
+posts of four awards and the first ticket's two lines are said one a turn, the highest score first and equal scores
+by slot: the two posted into full slots took the lowest (the opening's 20, a hint's 100) and were said first.
+**OpenTPW** (Q595: the fifteen ticket topics of `ParkAdvisorMessages`, `ResponseOf`, `Post`'s line; `ParkGoldenTickets.Tell`;
+`AdvisorGestures`, the row path of `Advisor.Speak`): each award posts its row from the sweep's tail, after the advisor's
+turn, so it is said on the next sweep at the earliest (`q707/run3-L`: posted on 19100, said on 19101); the row's clips,
+no lead-in, the wait and row 13's key (effect 87 at the counts, goldkey) are the original's. Not built: the glints (UI
+particle channel 0, `ADVISOR_CLIP_GLINTS`), the tags of groups 102 to 113 (`TAG_ROW_NOT_LISTED`), and the big ticket of
+clips 19 and 20, which this game draws at its own size because its advisor's projection is orthographic (Q707).
 
 **The hints** (polled rows, game type 0 alone; `Advisor.sam` scores): `0x13a` (sample 597, "you're really close to winning
 a golden ticket...") scores `GoldTicketNearToFirstOne.Score` 150 while the player holds no ticket, the secret ones not
@@ -3940,7 +3959,7 @@ that makes the tickets of every kind one posts them.
 
 **What reaches it in Lost Kingdom.** Instant Action (`Easymode.TPWI`, game type 2) never: play awards nothing, every
 ticket row and hint is game type 0's, and only the cheats award. A Full Simulation jungle reaches all of it: a gap
-(`CLAUDE.md` rule 3): built but for the lines (Q707) and the hints (Q708).
+(`CLAUDE.md` rule 3): built, and its lines said (Q595), but for their glints, tags and big ticket (Q707) and the hints (Q708).
 
 ### A coaster's highest track point
 

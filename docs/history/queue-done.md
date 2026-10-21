@@ -9501,6 +9501,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     with the record cleared (type 1) and moved (type 4, with the second line); `q706c/PREDICTION.txt`. 24 of 24 bugs put
     back caught. The station's pylon loft, the cell midpoint and the clips' table slerp decoded on the way
     (`ride-operation.md`). The ticket test before the calendar's turn is left as it was: not in this measure's path.
+- [x] **Q595. The advisor's golden-ticket lines, said (Q707's first piece).** Each award posts its row (`0xd7`-`0xd9`,
+  `0xdc`-`0xde`, `0xe1`-`0xe3` with the ticket's index as the line, `0xea`-`0xed` with none) and the first ticket its
+  `0x137` and `0x13b`, through the same gate and slots (`Advisor_OnMessage` arm 5), from the sweep's tail after the
+  advisor's turn; a line asked for is said as asked; each response's sample, lip file, slot and group are its own row's;
+  rows 1 and 13 play clips 17 to 20 with no lead-in, the original's wait, each clip's hide list and props, `0x10000`'s
+  face away, and row 13's key (effect 87 at the counts, goldkey); a clip lasts its declared span (clip 20, 2000 ms).
+  Confirmed in both games (`q707/PREDICTION.txt`; `ride-operation.md`, "The advisor's ticket lines").
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

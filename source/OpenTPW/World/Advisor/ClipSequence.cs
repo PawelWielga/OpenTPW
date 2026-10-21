@@ -46,6 +46,20 @@ public sealed class ClipSequence
 	/// <summary>Whether every clip has played out <paramref name="seconds"/> into the run.</summary>
 	public bool IsFinished( float seconds ) => seconds * 1000f >= Milliseconds;
 
+	/// <summary>The place in the run of the clip playing <paramref name="seconds"/> into it, as <see cref="TryLocate"/> finds it; -1 for an empty run.</summary>
+	public int IndexAt( float seconds )
+	{
+		if ( _clips.Length == 0 )
+			return -1;
+
+		var milliseconds = MathF.Max( seconds * 1000f, 0f );
+		var index = 0;
+		while ( index + 1 < _clips.Length && _starts[index + 1] <= milliseconds )
+			index++;
+
+		return index;
+	}
+
 	/// <summary>
 	/// Which clip is playing <paramref name="seconds"/> into the run, and how far into it it is.
 	/// Before the start that is the first clip's first moment; past the end, the last clip's last.

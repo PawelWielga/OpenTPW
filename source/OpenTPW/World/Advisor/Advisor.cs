@@ -247,6 +247,15 @@ public sealed class Advisor : Entity
 
 	private readonly List<int> _gestures = new();
 
+	/// <summary>Each clip's flags, the clip word's <c>0x7f0000</c>: nought for the random chain's.</summary>
+	private readonly List<int> _clipFlags = new();
+
+	/// <summary>Which clip of the line has had its start, -1 before the first.</summary>
+	private int _startedIndex = -1;
+
+	/// <summary>Whether the clip playing carries 0x10000: no add-on, no mouth, no head.</summary>
+	private bool _faceAway;
+
 	/// <summary>The clips for the current line, on a timeline that starts at <see cref="_gesturesStartedAt"/>.</summary>
 	private ClipSequence _sequence = ClipSequence.Empty;
 
@@ -391,9 +400,12 @@ public sealed class Advisor : Entity
 
 	/// <summary>
 	/// Advisor_SayResponse's direct park path; a busy or disabled speaker returns zero. He wears the response's
-	/// two props for the line (<see cref="AdvisorProps"/>), on the model its slot names.
+	/// two props for the line (<see cref="AdvisorProps"/>), on the model its slot names, moves his mouth by its lip file
+	/// <paramref name="lip"/> (nought for the sample's own) and plays its row <paramref name="gestureRow"/> of the gesture
+	/// table (<see cref="AdvisorGestures"/>), -1 for the random chain.
 	/// </summary>
-	internal int PlayParkResponse( int response, int sample, int firstProp = 0, int secondProp = 0, int slot = 0 )
+	internal int PlayParkResponse( int response, int sample, int firstProp = 0, int secondProp = 0, int slot = 0, int lip = 0,
+		int gestureRow = -1 )
 	{
 		if ( Busy || _paused || !CanSpeak )
 		{
@@ -402,10 +414,10 @@ public sealed class Advisor : Entity
 		}
 		_speech ??= new SoundCategory( "global", "global/Speech", "speech" );
 		if ( !_speech.IsValid ) return 0;
-		Speak( sample, cue: null, firstProp, secondProp, slot );
-		// The response adds clip 15 again after the gesture chain (005994ac); docs/exe/advisor-park.md.
+		var gestures = Speak( sample, cue: null, firstProp, secondProp, slot, lip, gestureRow );
+		// The response adds clip 15's length after the clips, a row's too (005994ac); docs/exe/advisor-park.md.
 		Log.Info( $"Advisor: response={response} sample={sample} playback=started" );
-		return ParkResponseDuration( (int)MathF.Round( (_gesturesEndAt - _speakAt) * 1000f ), ClipMilliseconds( EndClip ) );
+		return ParkResponseDuration( gestures, ClipMilliseconds( EndClip ) );
 	}
 
 	internal static int ParkResponseDuration( int gesturesMilliseconds, int endClipMilliseconds )
@@ -519,28 +531,64 @@ public sealed class Advisor : Entity
 	///
 	/// 80 of the 641 samples in the bank are a 315-byte stub that is not valid MPEG - response ids
 	/// with nothing recorded - and those simply come back silent, which ends the line at once.
+	///
+	/// A line given a row of the gesture table plays that row's clips in place of the random chain where they add up
+	/// to more than nought (Advisor_PlayGestureRow, 0x00598bf0); a row that does not open on clip 14 has no lead-in, so
+	/// its voice starts at once and its clips' end and its cue count from the clock less 200 (0x00598c56, 0x0059944c).
+	/// A row's cue hands over the key (<see cref="HandOverKey"/>). Says how long the clips take, in milliseconds.
 	/// </summary>
-	private void Speak( int sample, Cue? cue, int firstProp = 0, int secondProp = 0, int slot = 0 )
+	private int Speak( int sample, Cue? cue, int firstProp = 0, int secondProp = 0, int slot = 0, int lip = 0, int gestureRow = -1 )
 	{
 		// Advisor_SayResponse (0x00599050) says nothing at all while the options have him switched off.
 		if ( !GameOptions.Current.Advisor || _speech is not { IsValid: true } )
 		{
 			// A line that cannot be said still has its consequences.
 			cue?.Action();
-			return;
+			return 0;
 		}
 
+		var row = gestureRow >= 0 ? AdvisorGestures.Read( gestureRow, ClipMilliseconds ) : null;
+		var leadIn = row?.LeadIn ?? true;
+
 		_pending = sample;
-		_speakAt = _now + LeadInSeconds;
+		_speakAt = _now + (leadIn ? LeadInSeconds : 0f);
+
+		// The moment the line's clips and its row's cue count from: the clock less 200, moved on by the lead-in's 1000.
+		var counted = _now + (leadIn ? LeadInSeconds : -0.2f);
 
 		_cue = cue?.Action;
 		_cueAt = _now + (cue?.Seconds ?? 0f);
 
-		var sampleMilliseconds = (int)_speech.Length( sample ).TotalMilliseconds;
-		var gesturesMilliseconds = BuildGestures( sampleMilliseconds + GestureMarginMilliseconds );
+		if ( row is { CueAt: { } rowCue } )
+		{
+			_cue = HandOverKey;
+			_cueAt = counted + (rowCue / 1000f);
+		}
 
-		// The clips' total is counted from the moment the sample is due, not from now.
-		_gesturesEndAt = _speakAt + (gesturesMilliseconds / 1000f);
+		var sampleMilliseconds = (int)_speech.Length( sample ).TotalMilliseconds;
+		int gesturesMilliseconds;
+
+		if ( row is { Milliseconds: > 0 } played )
+		{
+			_gestures.Clear();
+			_clipFlags.Clear();
+
+			foreach ( var (clip, flags) in played.Clips )
+			{
+				_gestures.Add( clip );
+				_clipFlags.Add( flags );
+			}
+
+			gesturesMilliseconds = played.Milliseconds;
+		}
+		else
+		{
+			gesturesMilliseconds = BuildGestures( sampleMilliseconds + GestureMarginMilliseconds );
+			_clipFlags.Clear();
+			_clipFlags.AddRange( _gestures.Select( _ => 0 ) );
+		}
+
+		_gesturesEndAt = counted + (gesturesMilliseconds / 1000f);
 
 		// What he is seen doing is the clips at their full lengths, clip 14 included, starting now.
 		// The line's clips are started on the model its slot names (0x005993d5), and that one alone is on the screen.
@@ -550,18 +598,19 @@ public sealed class Advisor : Entity
 		_sequence = new ClipSequence( _gestures, clip => _speaker?.ClipMilliseconds( clip ) ?? 0 );
 		_gesturesStartedAt = _now;
 
-		_lips = LipFile.TryLoad( $"global/Speech/lips/sp_{sample:000}.lip", out var lips ) ? lips : null;
+		// The response's own lip file (its +0x08): the sample's, but for lines that share one.
+		_lips = LipFile.TryLoad( $"global/Speech/lips/sp_{(lip > 0 ? lip : sample):000}.lip", out var lips ) ? lips : null;
+
+		_wearing = (firstProp, secondProp);
 
 		if ( _speaker != null )
 		{
 			// He is about to be seen again, so start him from a known face rather than from
-			// whatever the last line's clips left behind - see ResetFace.
+			// whatever the last line's clips left behind - see ResetFace. His first clip starts now (0x005993d5).
 			ResetFace();
-			_speaker.Wear( StartClip, firstProp, secondProp, _costume );
+			StartClipAt( 0 );
 			_shown = true;
 		}
-
-		_wearing = (firstProp, secondProp);
 
 		if ( !_ducked )
 		{
@@ -569,8 +618,47 @@ public sealed class Advisor : Entity
 			Audio.Duck( DuckLevel, DuckSeconds );
 		}
 
-		Log.Info( $"Advisor: sample {sample} in {LeadInSeconds:0.0}s through clips [{string.Join( ", ", _gestures )}] "
-			+ $"({gesturesMilliseconds}ms), {_queue.Count} more queued, wearing {firstProp},{secondProp} on model slot {slot}" );
+		Log.Info( $"Advisor: sample {sample} in {(leadIn ? LeadInSeconds : 0f):0.0}s through clips [{string.Join( ", ", _gestures )}] "
+			+ $"({gesturesMilliseconds}ms), {_queue.Count} more queued, wearing {firstProp},{secondProp} on model slot {slot}"
+			+ (row is { Milliseconds: > 0 } ? $", gesture row {gestureRow}, lip {(lip > 0 ? lip : sample)}" : "")
+			+ (row is { CueAt: { } at } ? $", its cue at {at}ms" : "") );
+
+		return gesturesMilliseconds;
+	}
+
+	/// <summary>
+	/// A clip of the line starting (Advisor_Update 0x00599a2a, then Advisor_ClipStarted 0x00598dc0 from 0x00599800): the
+	/// model's hide lists turn over, he puts on the line's props again, and the clip word's flags act. 0x10000 shows no
+	/// add-on, no mouth and no head; 0x20000 to 0x200000 set UI particle channel 0, the glints, which are not built.
+	/// </summary>
+	private void StartClipAt( int index )
+	{
+		_startedIndex = index;
+
+		if ( _speaker == null || index < 0 || index >= _gestures.Count )
+			return;
+
+		var flags = _clipFlags.Count > index ? _clipFlags[index] : 0;
+		_faceAway = (flags & AdvisorGestures.FaceAway) != 0;
+
+		_speaker.StartClip( _gestures[index] );
+		_speaker.DressForClip( _wearing.First, _wearing.Second, _costume, _faceAway );
+		_mouth = 0;
+
+		if ( (flags & 0x3e0000) != 0 )
+			Unimplemented.Report( "ADVISOR_CLIP_GLINTS" );
+	}
+
+	/// <summary>
+	/// A row's cue in a park (Advisor_Update, 0x005999a0): the key effect 87 at the counts in the top right (90000, 0,
+	/// 7000) and goldkey (<c>cat_ui</c> 0xc6). Its third call, IslandPanel_Refresh (0x004b9340), does nothing without
+	/// the lobby's island panel, which a park has not (0x007cc4b4 nought, q707/orig/O).
+	/// </summary>
+	private static void HandOverKey()
+	{
+		Log.Info( "Advisor: the row's cue, the key handed over" );
+		ParticleSystem.Current?.Spawn( (int)ParLib.P_EFFECT_Key, 90000, 0, 7000 );
+		UI.UiSounds.GoldKeyHandedOver();
 	}
 
 	/// <summary>
@@ -643,13 +731,24 @@ public sealed class Advisor : Entity
 		var sinceGesturesStarted = _now - _gesturesStartedAt;
 
 		if ( _sequence.TryLocate( sinceGesturesStarted, out var clip, out var intoClip ) )
+		{
+			// Each clip's start turns his hide lists over and dresses him again, as the original does at every clip.
+			var index = _sequence.IndexAt( sinceGesturesStarted );
+			if ( index != _startedIndex )
+				StartClipAt( index );
+
 			_speaker.Pose( clip, intoClip );
+		}
 
 		// Timed by where the sound itself has got to, not by the game's clock - see Voice.Position.
 		var talking = _voice is { Playing: true } voice && _lips != null
 			&& _lips.IsTalking( voice.Position );
 
-		if ( !talking )
+		if ( _faceAway )
+		{
+			// A clip of 0x10000 shows no mouth (0x00599b8c).
+		}
+		else if ( !talking )
 		{
 			SetMouth( 1 );
 		}

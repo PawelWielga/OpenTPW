@@ -8,7 +8,7 @@ namespace OpenTPW;
 /// <c>docs/exe/saves.md</c>, "Keys and tickets").
 /// </summary>
 /// <remarks>
-/// The advisor's ticket lines are counted, not posted (<c>GOLDEN_TICKET_MESSAGE</c>, <c>GOLDEN_TICKET_FIRST_LINES</c>).
+/// Each award posts the advisor's line of it (<see cref="Posted"/>), and the first ticket its two more.
 /// </remarks>
 public static class ParkGoldenTickets
 {
@@ -239,13 +239,42 @@ public static class ParkGoldenTickets
 		foreach ( var award in won )
 		{
 			Log.Info( $"Golden tickets: {Told( award )}" );
-			Unimplemented.Report( "GOLDEN_TICKET_MESSAGE" );
 
-			// GoldenTicket_TellFirst (0x004d5b30): the first ticket's two lines, 0x137 and 0x13b, when the tickets of every kind are one.
-			if ( award.Every == 1 )
-				Unimplemented.Report( "GOLDEN_TICKET_FIRST_LINES" );
+			if ( state.AdvisorMessages is { } messages )
+				Tell( award, ( message, line ) => messages.Post( message, gameTick, line: line ) );
 		}
 	}
+
+	/// <summary>
+	/// What a teller posts for <paramref name="award"/>, through <paramref name="post"/> (a message and the line asked):
+	/// its own row (<see cref="Posted"/>), then, from GoldenTicket_TellFirst (0x004d5b30), the first ticket's two lines,
+	/// 0x137 and 0x13b, where the tickets of every kind are one after it.
+	/// </summary>
+	public static void Tell( Award award, Action<int, int> post )
+	{
+		if ( Posted( award ) is { } posted )
+			post( posted.Message, posted.Line );
+
+		if ( award.Every == 1 )
+		{
+			post( ParkAdvisorMessages.WonFirstTicket, -1 );
+			post( ParkAdvisorMessages.TicketClues, -1 );
+		}
+	}
+
+	/// <summary>
+	/// The advisor's message an award posts, and the line it asks for (GoldenTicket_TellLocal 0x004d4fa0, TellGlobal
+	/// 0x004d5270, TellSecret 0x004d5870): results 1 to 3 the kind's three won rows with the ticket's index as the line,
+	/// a Global's result 4 the moved row of its index with no line asked; null for a result the tellers do not know.
+	/// </summary>
+	public static (int Message, int Line)? Posted( Award award ) => (award.Kind, award.Result) switch
+	{
+		("Local", >= 1 and <= 3) => (ParkAdvisorMessages.WonLocal + award.Result - 1, award.Index),
+		("Global", >= 1 and <= 3) => (ParkAdvisorMessages.WonGlobal + award.Result - 1, award.Index),
+		("Secret", >= 1 and <= 3) => (ParkAdvisorMessages.WonSecret + award.Result - 1, award.Index),
+		("Global", 4) => (ParkAdvisorMessages.AwardMovedHere + award.Index, -1),
+		_ => null
+	};
 
 	/// <summary>A park's <c>Keys.CostToEnter</c>, read once, or null where its global.sam does not load (<c>0x005b11a0</c>).</summary>
 	private static int? KeysToEnter( string park )

@@ -185,6 +185,72 @@ internal sealed class ParkAdvisorMessages
 	/// </summary>
 	internal const int AllResearched = 0xa7;
 
+	/// <summary>
+	/// The golden tickets' messages, posted only, on the message bus as type 5, which Advisor_OnMessage (0x0059b060) hands to
+	/// the same gate and slots (docs/exe/ride-operation.md, "Golden tickets"): a Local ticket's award of result 1, 2 or 3
+	/// posts 0xd7, 0xd8 or 0xd9, a Global's 0xdc to 0xde, the Secret's 0xe1 to 0xe3, each with the ticket's index as the
+	/// line asked for; a Global's result 4, the record moved here, posts 0xea plus the index with no line asked.
+	/// </summary>
+	internal const int WonLocal = 0xd7, WonGlobal = 0xdc, WonSecret = 0xe1, AwardMovedHere = 0xea;
+
+	/// <summary>
+	/// Messages 0x137 and 0x13b, posted by GoldenTicket_TellFirst (0x004d5b30) when the player's tickets of every kind are
+	/// one: the first ticket won, and the clues to the rest.
+	/// </summary>
+	internal const int WonFirstTicket = 0x137, TicketClues = 0x13b;
+
+	/// <summary>The golden tickets' category (a row's +0x08): MessageGroups[2], no wait between two sayings.</summary>
+	internal const int GoldenTickets = 2;
+
+	/// <summary>
+	/// A response's own row in the response table at 0x00768fb8 (0x20 bytes): its sample (+0x04), its lip file (+0x08), its
+	/// gesture (+0x0c, the gesture table's row plus 16, -1 for the random chain), its model slot (+0x10, low half) and its
+	/// group (+0x1c), the tag it leaves.
+	/// </summary>
+	internal readonly record struct Response( int Sample, int Lip, int Gesture, int Slot, int Group );
+
+	/// <summary>
+	/// The rows of the responses whose sample, lip file, gesture or group is not the topic's rule (the first sample plus
+	/// the line, its own lip, the random chain, the slot of its prop, one group): the golden tickets' lines, 434 to 477,
+	/// and the first ticket's, 571 and 575. Copied from the executable's table.
+	/// </summary>
+	private static readonly Dictionary<int, Response> _responses = TicketResponses();
+
+	private static Dictionary<int, Response> TicketResponses()
+	{
+		var rows = new Dictionary<int, Response>();
+		int[] ticketOnly = [293, 294, 295];
+
+		// 434 to 445: "ticket only", samples 293 to 295 in turn, every lip file 293's, gesture 17 (row 1); groups 102 to 113.
+		for ( var line = 0; line < 12; ++line )
+			rows[434 + line] = new( ticketOnly[line % 3], 293, 17, Advisor.ThemeSlot, 102 + line );
+
+		// 446 to 457: "ticket and key", sample 446; 458 to 469: "ticket, key and park", 604 and 622 in turn; gesture 29 (row 13).
+		for ( var line = 0; line < 12; ++line )
+		{
+			rows[446 + line] = new( 446, 446, 29, Advisor.ThemeSlot, 102 + line );
+			var park = line % 2 == 0 ? 604 : 622;
+			rows[458 + line] = new( park, park, 29, Advisor.ThemeSlot, 102 + line );
+		}
+
+		// 474 to 477, the record moved here: samples 533 to 536, the random chain, no tag.
+		for ( var line = 0; line < 4; ++line )
+			rows[474 + line] = new( 533 + line, 533 + line, -1, Advisor.ThemeSlot, ParkTags.NoTag );
+
+		rows[571] = new( 589, 589, -1, Advisor.ThemeSlot, ParkTags.NoTag );
+		rows[575] = new( 598, 598, -1, Advisor.ThemeSlot, ParkTags.NoTag );
+		return rows;
+	}
+
+	/// <summary>The row of <paramref name="response"/> where it is one of <see cref="TicketResponses"/>, null for any other.</summary>
+	internal static Response? ResponseOf( int response ) => _responses.TryGetValue( response, out var row ) ? row : null;
+
+	/// <summary>The lip file <paramref name="response"/>'s line moves his mouth by (the response table's +0x08): its sample's, but where its row names another.</summary>
+	internal static int LipOf( int response, int sample ) => ResponseOf( response )?.Lip ?? sample;
+
+	/// <summary>The row of the gesture table <paramref name="response"/> plays (its gesture less 16), -1 for the random chain.</summary>
+	internal static int GestureRowOf( int response ) => ResponseOf( response ) is { Gesture: >= 16 } row ? row.Gesture - 16 : -1;
+
 	/// <summary>The message a finished project of research kind <paramref name="kind"/> posts, null for a kind past 4 (the original logs "unknown research category").</summary>
 	internal static int? ResearchedOf( int kind ) => kind switch
 	{
@@ -639,7 +705,26 @@ internal sealed class ParkAdvisorMessages
 		new( NewRideGroup + 3, "NewResearchGroupFeature.Score", 324, 438, Prop: ResearchHat, Group: 158, FullSimulationOnly: true ),
 
 		// Row 167's two responses name the theme's own advisor model and its costume; its group, 0x17f, leaves no tag.
-		new( AllResearched, "", 380, 452, Prop: AdvisorProps.ThemeCostume, Constant: 10000 )
+		new( AllResearched, "", 380, 452, Prop: AdvisorProps.ThemeCostume, Constant: 10000 ),
+
+		// The golden tickets' rows, Full Simulation's alone (+0x0c 0), 255 copies, selection 2; each line's sample,
+		// lip, gesture and group are its response's (ResponseOf). The won rows score 0x0059e890, the moved 0x0059e8b0.
+		new( WonLocal, "GeneralWonGoldenTicket.Score", 434, 293, Lines: 6, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( WonLocal + 1, "GeneralWonGoldenTicket.Score", 446, 446, Lines: 6, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( WonLocal + 2, "GeneralWonGoldenTicket.Score", 458, 604, Lines: 6, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( WonGlobal, "GeneralWonGoldenTicket.Score", 440, 293, Lines: 4, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( WonGlobal + 1, "GeneralWonGoldenTicket.Score", 452, 446, Lines: 4, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( WonGlobal + 2, "GeneralWonGoldenTicket.Score", 464, 604, Lines: 4, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( WonSecret, "GeneralWonGoldenTicket.Score", 444, 294, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( WonSecret + 1, "GeneralWonGoldenTicket.Score", 456, 446, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( WonSecret + 2, "GeneralWonGoldenTicket.Score", 468, 604, MaxInstances: 255, Prop: AdvisorProps.ThemeCostume, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( AwardMovedHere, "AwardMoved.Score", 474, 533, Lines: 1, MaxInstances: 255, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( AwardMovedHere + 1, "AwardMoved.Score", 475, 534, Lines: 1, MaxInstances: 255, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( AwardMovedHere + 2, "AwardMoved.Score", 476, 535, Lines: 1, MaxInstances: 255, Category: GoldenTickets, FullSimulationOnly: true ),
+		new( AwardMovedHere + 3, "AwardMoved.Score", 477, 536, Lines: 1, MaxInstances: 255, Category: GoldenTickets, FullSimulationOnly: true ),
+		// 0x137 scores 0x005a0520, 0x13b 0x005a0590, one copy each, MessageGroups[0].
+		new( WonFirstTicket, "WonFirstGoldenTicket.Score", 571, 589, Lines: 1, Prop: AdvisorProps.ThemeCostume, FullSimulationOnly: true ),
+		new( TicketClues, "GoldTicketCluesForRemainder.Score", 575, 598, Lines: 1, Prop: AdvisorProps.ThemeCostume, FullSimulationOnly: true )
 	];
 
 	/// <summary>The two props <paramref name="response"/>'s row names, nought and nought for one of no built topic.</summary>
@@ -657,10 +742,10 @@ internal sealed class ParkAdvisorMessages
 	/// <summary>
 	/// The model slot <paramref name="response"/>'s row names (the response table's <c>+0x10</c>, low half): 1, the
 	/// park's own advisor, for a built topic that wears the theme's costume, as every row with that prop is on
-	/// that slot; nought for any other.
+	/// that slot, and the slot its own row names for a response of <see cref="ResponseOf"/>; nought for any other.
 	/// </summary>
 	internal static int SlotOf( int response )
-		=> PropsOf( response ).First == AdvisorProps.ThemeCostume ? Advisor.ThemeSlot : 0;
+		=> ResponseOf( response )?.Slot ?? (PropsOf( response ).First == AdvisorProps.ThemeCostume ? Advisor.ThemeSlot : 0);
 
 	private sealed class History
 	{
@@ -670,8 +755,9 @@ internal sealed class ParkAdvisorMessages
 		public int Slaps;
 	}
 
-	/// <summary>A taken slot. <paramref name="Secondary"/> is the record's second word where a park file or the poster gave it, null for a post made here about its subject.</summary>
-	private sealed record Pending( Topic Topic, int Score, int Subject, int? Secondary = null );
+	/// <summary>A taken slot. <paramref name="Secondary"/> is the record's second word where a park file or the poster gave it, null for a post made here about its subject.
+	/// <paramref name="Line"/> is the line the poster asked for (the record's +0x08), -1 for the topic's own choice.</summary>
+	private sealed record Pending( Topic Topic, int Score, int Subject, int? Secondary = null, int Line = -1 );
 	private readonly SettingsFile _settings;
 	private readonly Dictionary<int, Topic> _topics;
 	private readonly Dictionary<int, History> _histories;
@@ -760,7 +846,7 @@ internal sealed class ParkAdvisorMessages
 	/// Takes a park file's waiting messages into the slots they stand in (<paramref name="saved"/> answers null
 	/// for a file with no advisor), as the original's advisor is read back whole with its thing: a built message
 	/// with its file's score, subject and second word. A taken slot this game cannot say - a message of no built
-	/// topic, a line asked for by number, a forced post or a score the poster gave - is counted and stays taken,
+	/// topic, a forced post or a score the poster gave - is counted and stays taken,
 	/// said by nothing and written back as the file's. Says how many were taken to be said.
 	/// </summary>
 	internal int RestoreSlots( Func<int, ParkWorld.AdvisorSlot?> saved )
@@ -769,7 +855,7 @@ internal sealed class ParkAdvisorMessages
 		for ( var index = 0; index < _slots.Length; ++index )
 		{
 			if ( saved( index ) is not { Valid: true } slot ) continue;
-			if ( !_topics.TryGetValue( slot.Message, out var topic ) || slot.Line >= 0 || slot.OverrideOnlyOnce || slot.ScoreOverridden )
+			if ( !_topics.TryGetValue( slot.Message, out var topic ) || slot.OverrideOnlyOnce || slot.ScoreOverridden )
 			{
 				Unimplemented.Report( "PARK_ADVISOR_SAVED_SLOT_NOT_BUILT" );
 				_carried[index] = true;
@@ -777,9 +863,9 @@ internal sealed class ParkAdvisorMessages
 				continue;
 			}
 
-			_slots[index] = new Pending( topic, slot.Score, slot.Thing, slot.Secondary );
+			_slots[index] = new Pending( topic, slot.Score, slot.Thing, slot.Secondary, Math.Max( slot.Line, -1 ) );
 			++taken;
-			Log.Info( $"Park advisor: restored slot={index} message={slot.Message} subject={slot.Thing} secondary={slot.Secondary} score={slot.Score}" );
+			Log.Info( $"Park advisor: restored slot={index} message={slot.Message} subject={slot.Thing} secondary={slot.Secondary} score={slot.Score} line={slot.Line}" );
 		}
 
 		return taken;
@@ -799,7 +885,7 @@ internal sealed class ParkAdvisorMessages
 			if ( _carried[index] ) continue;
 			written[index] = _slots[index] is { } slot
 				? new ParkWorld.AdvisorSlot( slot.Subject, slot.Secondary ?? (slot.Subject != 0 ? itemOf( slot.Subject ) : 0),
-					slot.Topic.Id, slot.Score, true, -1, false, false )
+					slot.Topic.Id, slot.Score, true, slot.Line, false, false )
 				: default( ParkWorld.AdvisorSlot );
 		}
 
@@ -1285,8 +1371,9 @@ internal sealed class ParkAdvisorMessages
 	/// at its score function's answer, or -1 for a row of the other game (FUN_0059bf20), which is slotted all the same
 	/// and never said. <paramref name="subject"/> is the thing the record's first word names, nought for none;
 	/// <paramref name="secondary"/> its second word where the poster hands one (an item), null for the subject's item.
+	/// <paramref name="line"/> is the line the poster asks for (the record's +0x08), -1 for the topic's own choice.
 	/// </summary>
-	internal bool Post( int id, int gameTick, int subject = 0, int? secondary = null )
+	internal bool Post( int id, int gameTick, int subject = 0, int? secondary = null, int line = -1 )
 	{
 		_lastTick = gameTick;
 		var topic = _topics[id];
@@ -1303,9 +1390,9 @@ internal sealed class ParkAdvisorMessages
 					if ( _slots[i] is { } held && (index < 0 || held.Score < _slots[index]!.Score) ) index = i;
 				if ( index < 0 || score <= _slots[index]!.Score ) reason = "priority";
 			}
-			if ( reason == "queued" ) _slots[index] = new Pending( topic, score, subject, secondary );
+			if ( reason == "queued" ) _slots[index] = new Pending( topic, score, subject, secondary, line );
 		}
-		Log.Info( $"Park advisor: post message={id} subject={subject}{(secondary is { } second ? $" secondary={second}" : "")} score={score} threshold={Threshold} tick={gameTick} result={reason} pending={PendingCount}" );
+		Log.Info( $"Park advisor: post message={id} subject={subject}{(secondary is { } second ? $" secondary={second}" : "")}{(line >= 0 ? $" line={line}" : "")} score={score} threshold={Threshold} tick={gameTick} result={reason} pending={PendingCount}" );
 		return reason == "queued";
 	}
 
@@ -1375,10 +1462,12 @@ internal sealed class ParkAdvisorMessages
 			return;
 		}
 
+		// A line the poster asked for is said as asked, and kept as the message's last even past its count, where the
+		// first line is said (FUN_0059a550 at 0x0059a76b, FUN_0059b620); otherwise the next of the topic's own rotation.
 		var history = _histories[pending.Topic.Id];
-		var line = (history.Line + 1) % pending.Topic.Lines;
-		var response = pending.Topic.FirstResponse + line;
-		var sample = pending.Topic.FirstSample + line;
+		var line = pending.Line >= 0 ? pending.Line : (history.Line + 1) % pending.Topic.Lines;
+		var response = pending.Topic.FirstResponse + (line < pending.Topic.Lines ? line : 0);
+		var sample = ResponseOf( response )?.Sample ?? pending.Topic.FirstSample + (line < pending.Topic.Lines ? line : 0);
 		// A response with a gesture of its own plays that row of the gesture table (FUN_00598bf0); the speaker
 		// here builds the random chain for every line.
 		if ( line == pending.Topic.GestureRowLine || line == pending.Topic.SecondGestureRowLine )
@@ -1393,7 +1482,7 @@ internal sealed class ParkAdvisorMessages
 		++Attempts;
 		// The helper then sends an event of type 0x18 carrying the response's group and the record's subject
 		// (FUN_0059b620, FUN_0040f740, FUN_0040fb10); its one hearer is the tag system (FUN_00509bf0).
-		said?.Invoke( pending.Topic.Group, pending.Subject, pending.Secondary );
+		said?.Invoke( ResponseOf( response )?.Group ?? pending.Topic.Group, pending.Subject, pending.Secondary );
 		Log.Info( $"Park advisor: attempt={Attempts} message={pending.Topic.Id} subject={pending.Subject} score={score} threshold={Threshold} response={response} sample={sample} line={line} tick={gameTick} duration={duration} waitUntil={WaitUntil}" );
 	}
 
