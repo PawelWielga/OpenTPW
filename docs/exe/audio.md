@@ -763,6 +763,35 @@ So the level does two things. As the class's zone parameter (controller slot 0) 
 
 **OpenTPW** (`ParkAudio.SetCrowdVoice`, `NextCrowdSample`, `ParkPeople.GuestsNear`): on the music's beat the guests on the cells within four of `ParkPicking.Cell` are counted (nought with no cell), held to 100 and made nought in world state 4. Above nought the voice is held: a flat sample of kids 91 from the first variation, then, as each ends, one from the variation the level's zone gives (`ParkScreams.NextVariation`, the music's rule), at the voice's own volume and pitch (`ParkAudio.HeldSample`): the voice's first sample takes them from `ParkAudio.Controlled` (the level, and a drawn pitch), and a later one keeps them, a twin's too. Each beat's set gives the playing sample the level's volume and a pitch drawn again, at once, where its variation names parameter 7, and nothing on a twin. At nought the sample is faded over 0.06 s (**a deviation**: the original's `Sound_StopFading` is a x0.6 step, stepped by a worker thread every 100 ms, at detail above 30 and a cut otherwise, "The fade", below; Q509) and the voice let go; started again it begins from the first variation. A sample's volume plays at the channel's own number (`ParkAudio.ChannelGain`): 14 is 10 of 127 beside the music's 60, 0.0550 beside 0.33. **Said:** the next sample is started on the frame after the last has ended, where the original's service pass starts it (rate not measured); the voice that ended by itself in Q236's log is not modelled, a held voice here never ends; the count reads each guest's linked cell (`ParkState.CellOf`), the original the cells' own lists. Console: `crowd`.
 
+## The charge's sound
+
+**A guest who pays sounds kids 208 where they stand** (read for Q567). The charge (`Person_PayCharge`, `0x004fe1a0`;
+`ride-operation.md`, "Spending") does nothing at a price of nought; otherwise it banks the price (`FUN_004e16b0`), then
+calls `Person_PlaySound` (`0x004faa00`) with the global kids category `[0x00803a24]` and effect `0xd0`
+(`0x004fe1be`..`0x004fe1cb`), then takes the price off the guest's cash. `Person_PlaySound` reads the person's
+position from its model (`0x004754e0` on `[ecx+0xc]`) and makes `Sound_PlayEffect( 0, category, effect, x, y, z )`: no
+handle, no level, so the voice is a plain one-shot at its variation's own volume. Kids 208 (`cat_kidsSFX.map`, flags
+`0x0`) has one variation, volume 42, pitch and wait nought, range 60, and one sample, `cashD2b.mp2` (bank 2,
+`Sound\UI`, entry 8; 1158 ms): a till. Neither rides map holds a 208. The charge is reached only from the settle-up
+(`FUN_004fd970`, on leaving any visitable thing), so it sounds at a sideshow's or a shop's exit as the guest leaves,
+won or lost.
+
+**Measured in the original** (`q567/orig/run.sh`, run a; predicted first, `q567/PREDICTION.txt`): the stock park, the
+camera on the Jungle Spray (525, 300), `brk.sh` on `Sound_PlayEffect` and its range form (`0x0051c130`) for effect 208
+alone. All 8 hits were at `0x0051bfc0` with category 4, the word at `[0x00803a24]` (rides' `[0x00803a28]` held 2), the
+return chain `0x004faa52` (`Person_PlaySound`), `0x004fe1d0` (the charge), `0x004fd9e0` (the settle-up), `0x005015f9`
+(`ExitRide`), `0x004e14ba` (`FUN_004e1410`). Six at (525, 0, 300) with the price 20 in `edi` (the Jungle Spray's), two
+at (434 or 435, 0, 303 or 304) with 30 (the Coconut Kiosk's, whose bubbles stand at (440, 6, 312)). Q565's runs counted
+30 to 60 a run at the same two places (`oneshots.py`). **OpenTPW** (`ParkRideOperation.Charge`) banks the price and
+takes it off the guest at the same point and plays nothing: `CHARGE_SOUND` is counted. The stock park here (`q567/run1`,
+main's binary): 17 "paid" lines in 150 s, 20 at the Spray (thing 14) and 30 at the Kiosk (thing 16), and the census
+"17x CHARGE_SOUND".
+
+| Address | Original name | What it is | Evidence |
+|---|---|---|---|
+| `0x004fe1a0` | `Person_PayCharge` | The charge: a non-zero price banked, kids 208 at the guest, the price off their cash | Disassembly; `brk.sh`, Q567 run a |
+| `0x004faa00` | `Person_PlaySound` | A person's sound: their model's position, then `Sound_PlayEffect( 0, category, effect, x, y, z )` | Disassembly; `brk.sh`, Q567 run a |
+
 ## The staff's voices
 
 Fourteen effects of the global `cat_staff` (`cat_staffSFX.map`, bank `Sound\Staff`, `[0x00803a30]`) are named by the

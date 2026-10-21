@@ -142,10 +142,13 @@ filed the items that cite it.
   through `ParkRides.BindNew`, which gives them nodes: in `q26c/run-B2` and `run-C` the log reads "Park audio: script
   16's effect 172, sample 'mk_ferry_1.mp2' ... plays" and "effect 173, sample 'mk_plane_6.mp2' ... plays", and main's
   runs counted `RIDE_EFFECT_SOUND_NO_PLACE`; not heard and not set beside the original's: confirm that here.
-- [ ] **Q567. The original sounds the global rides' 208 at the sideshows (decode first).** From Q565. In the stock park
-  the original made 208 (flags `0x0`, one sample of 1158 ms) 30 to 60 times a run at (525, 0, 300), by the Jungle Spray,
-  and (434, 0, 303) (`q565/orig/`, b to d, `oneshots.py`); no jungle script asks for 208 (`lib/soundsweep.py`), and ours
-  never plays it. Find its caller (a `Sound_PlayEffect` of category `[0x00803a28]`, effect 208) and what it marks.
+- [ ] **Q611. The charge's till: kids 208 at a guest who pays (Q567's build).** From Q567 (`audio.md`, "The charge's
+  sound"). `ParkRideOperation.Charge` counts `CHARGE_SOUND` where the original's `Person_PayCharge` (`0x004fe1be`..
+  `0x004fe1cb`) plays `cat_kids` effect 208 at the guest's position, a plain placed one-shot with no handle and no level
+  (as `ParkAudio.SingleScream` plays one): volume 42, pitch nought, range 60, `cashD2b.mp2`. Only when the price is
+  not nought, after the deposit, before the cash comes off. Confirm in the stock park with the camera on the Jungle
+  Spray (525, 300), `q567/confirm.py` with a check for the log's start of effect 208 at the payer's place, and the
+  sample in the game's own mix (`lib/mixmatch.py`); the original's places and count are `q567/orig/` run a.
 - [ ] **Q577. The sound commands 2 and 3: a script voice's drop suspended on focus loss and by the P key's pause.** From the
   run 6 review of Q565 (VERIFY-19, finding 3). The window losing focus (`0x0046b73c` -> `0x0051bcf0` -> message `0x00700b64`
   -> `0x006b5640`, type 2) and the P key's pause (`Game_TogglePause` `0x00409350`, its pause branch `0x004093af`) send

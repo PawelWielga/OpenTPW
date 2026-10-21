@@ -9674,6 +9674,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   falls over (`ride-operation.md`, the `FUN_00516270` row). Here `ParkState.NextThingId` answers nought and the guest,
   the hire, the vehicle, the End and the buy are not made, said at the site as a deviation; the console's `thingfill`
   fills the table.
+- [x] **Q567. The original sounds the global rides' 208 at the sideshows (decode first).** From Q565. In the stock park
+  the original made 208 (flags `0x0`, one sample of 1158 ms) 30 to 60 times a run at (525, 0, 300), by the Jungle Spray,
+  and (434, 0, 303) (`q565/orig/`, b to d, `oneshots.py`); no jungle script asks for 208 (`lib/soundsweep.py`), and ours
+  never plays it. Find its caller (a `Sound_PlayEffect` of category `[0x00803a28]`, effect 208) and what it marks.
+  **Done (decode):** it is **kids** 208, not the rides': the till (`cashD2b.mp2`) a guest sounds where they stand when
+  the charge takes a non-zero price on leaving (`Person_PayCharge` `0x004fe1a0` -> `Person_PlaySound` `0x004faa00`;
+  `audio.md`, "The charge's sound"). The original (`q567/orig/`, run a, `brk.sh` with its new `BRK_COND`): 8 of 8 hits
+  category 4 = `[0x00803a24]`, from the charge, at (525, 0, 300) for the Jungle Spray's 20 and (434, 0, 303) for the
+  Coconut Kiosk's 30 (`a-after.png`). Ours (`q567/run1`, main's binary): 17 charges and "17x CHARGE_SOUND"
+  (`spray.png`). The build is Q611.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
