@@ -856,7 +856,9 @@ after its poller starts**, so a key meant inside either line cannot be sent afte
 - **A golden ticket's line said in both games** (Q595, `q707/`): the same profile and file as the row above;
   `q707/confirm.py <out> <bin> L` stops at 19090 (a stop at 19097 overshot past the award), loads the q707 row (row 2:
   the private folder's own `autosave` is row 1) and shoots the line's clips at set offsets from its `Advisor: sample 446
-  in` line; `F` with `q707/gms-none.dat` (every ticket and record flag cleared) gives the first ticket's two lines. The
+  in` line; `F` with `q707/gms-none.dat` (every ticket and record flag cleared) gives the first ticket's two lines.
+  `q707/p600/confirm.py <out> <bin>` shoots the glints through the same line, and with `PAUSEAT=<s>` pauses there and
+  reads each effect-44 emitter's particles by `particles <slot>` (an on-screen emitter's offsets and velocities). The
   original: `GMS=<copy> POLL=<armed advisor.py + advisorline.py> fsload.sh`, filmed with `record.sh` from the first POLL (started before `fsload.sh`, it finds no display `:77` and films nothing, Q597).
 - **Several `object.py` readers in one `loadfile.sh` POLL** (Q584, `q580/orig/run.sh`): their lines name no thing, so
   tag each, `python3 -u object.py %PID% SECS N | sed -u "s/^/[N] /"`.

@@ -83,12 +83,9 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q707. The advisor's golden-ticket lines: the glints and the tags.** Q595 says the lines; Q599 grows the big
-  ticket. Left: (1) the glints, UI particle channel 0 (`UIParticles_SetChannelCount` `0x005ed5a0`, `FUN_005ed660`,
-  `FUN_005ed700`, placed each frame by `UIParticles_PlaceChannels` from `0x00599800`; effects 44 and 49, `cat_ui` 197 on
-  clip 18), counted `ADVISOR_CLIP_GLINTS`: decode where the particles stand (the model's `T_Particle1` to `3` and
-  `Rotate1` to `3` nodes, space `0x100`, are the candidates) and build them; (2) the tags of groups 102 to 113
-  (`lib/tagtable.py`: picture 3, strings 180 to 191, text kinds 5 to 8, life 0), counted `TAG_ROW_NOT_LISTED`.
+- [ ] **Q707. The advisor's golden-ticket lines: the tags.** Q595 says the lines; Q599 grows the big ticket; Q600 draws
+  the glints. Left: the tags of groups 102 to 113 (`lib/tagtable.py`: picture 3, strings 180 to 191, text kinds 5 to 8,
+  life 0), counted `TAG_ROW_NOT_LISTED`.
 - [ ] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
   tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
   one load). `0x13e` and the rows no code posts stay unsaid, as the original's.

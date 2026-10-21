@@ -187,9 +187,9 @@ runs the four sprite-script ops their scripts use and the three and the end word
 `ride-operation.md`, "A held balloon"). Litter, thought bubbles and the other eleven ops are not built.
 
 The advisor's clip glints are not world sprites and not the lobby's: they are UI particle channel 0 (effects 49 and 44),
-started by clip-word flags that only gesture rows 1 and 13 carry (`scenes.md`, "Gesture table"), and only the park
-advisor's golden-ticket lines use those rows. Those lines are said in a Full Simulation park (Q595) and each clip that
-would set the channel is counted (`ADVISOR_CLIP_GLINTS`, Q707).
+started by clip-word flags that only gesture rows 1 and 13 carry (`scenes.md`, "Gesture table", "Where the glints
+stand"), and only the park advisor's golden-ticket lines use those rows. Those lines are said in a Full Simulation park
+(Q595) and their glints drawn (Q600). The button glints are the same placer's channel 2.
 `.TPC` and `.FPC` are **not** open questions — all 46 `.TPC` and all 29 `.FPC` files in
 `esprites.wad` are version 3 (second word 3); an `.FPC` is the figure seen from ground level, for first
 person (FileFormats, "Sprites", has the counts).

@@ -9520,6 +9520,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   game (`q707/p599/PREDICTION.txt`, run 4): the ticket's node at clip 18's end the original's own (12.093, 11.486, 8.958
   at -38.226, 0, 42.049, its `load.log` line 279), clip 20's 3.023, 2.872, 2.239; the big ticket 0.740 of the height
   across beside the original's 0.738 (`ticketbox.py`); 12 of 12 bugs put back caught.
+- [x] **Q600. The golden ticket's glints.** Q707's piece (1). UI particle channel 0 decoded (`scenes.md`, "Where the
+  glints stand": three channels at `0x00f86900`, the clip flags' literal centres, radii and turns, placed every frame by
+  `UIParticles_PlaceChannels`) and built (`UiParticleChannel`, `Advisor.SetGlints`, `cat_ui` 197 on clip 18);
+  `ADVISOR_CLIP_GLINTS` is gone. The particles stand in screen space, not at the model's `T_Particle` nodes.
+  Confirmed beside the original's film (`q707/p600`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

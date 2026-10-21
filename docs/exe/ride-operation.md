@@ -3839,7 +3839,7 @@ Re-read for Q194 from the fork review (`economy-8`, `economy-9`; `wf_cba77d07-b6
 Ghidra and over every shipped `.sam`), decoded whole for Q141, and **built for Q591** (`ParkGoldenTickets`, the awards in
 `PlayerFile`): every test and award, Global 0's measure, the coaster's highest point, built for Q706 (`ParkCoasterHeights`;
 "A coaster's highest track point", below). The advisor's ticket lines are posted and
-said (Q595, "The advisor's ticket lines", below; their glints, tags and big ticket are Q707), the hints are Q708, the
+said (Q595, "The advisor's ticket lines", below; their big ticket grown, Q599, and their glints drawn, Q600; their tags are Q707), the hints are Q708, the
 cheat rows counted (Q592).
 
 **The tick.** `FUN_004d4a00`, from `FUN_004d7b20` (`0x004d7b60`) on a thing sweep (`0x00516695`) whose world counter
@@ -3909,8 +3909,9 @@ by slot: the two posted into full slots took the lowest (the opening's 20, a hin
 **OpenTPW** (Q595: the fifteen ticket topics of `ParkAdvisorMessages`, `ResponseOf`, `Post`'s line; `ParkGoldenTickets.Tell`;
 `AdvisorGestures`, the row path of `Advisor.Speak`): each award posts its row from the sweep's tail, after the advisor's
 turn, so it is said on the next sweep at the earliest (`q707/run3-L`: posted on 19100, said on 19101); the row's clips,
-no lead-in, the wait and row 13's key (effect 87 at the counts, goldkey) are the original's. Not built: the glints (UI
-particle channel 0, `ADVISOR_CLIP_GLINTS`) and the tags of groups 102 to 113 (`TAG_ROW_NOT_LISTED`), Q707's. The big
+no lead-in, the wait and row 13's key (effect 87 at the counts, goldkey) are the original's; so are the glints (UI particle
+channel 0, Q600; `scenes.md`, "Where the glints stand"). Not built: the tags of groups 102 to 113 (`TAG_ROW_NOT_LISTED`),
+Q707's. The big
 ticket of clips 18 to 20 is grown by its scale track, as the original's (Q599; `ui.md`, "The big ticket is a scale track").
 
 **The hints** (polled rows, game type 0 alone; `Advisor.sam` scores): `0x13a` (sample 597, "you're really close to winning
@@ -3959,7 +3960,7 @@ that makes the tickets of every kind one posts them.
 
 **What reaches it in Lost Kingdom.** Instant Action (`Easymode.TPWI`, game type 2) never: play awards nothing, every
 ticket row and hint is game type 0's, and only the cheats award. A Full Simulation jungle reaches all of it: a gap
-(`CLAUDE.md` rule 3): built, and its lines said (Q595), but for their glints, tags and big ticket (Q707) and the hints (Q708).
+(`CLAUDE.md` rule 3): built, and its lines said (Q595), but for their tags (Q707) and the hints (Q708).
 
 ### A coaster's highest track point
 

@@ -256,6 +256,9 @@ public sealed class Advisor : Entity
 	/// <summary>Whether the clip playing carries 0x10000: no add-on, no mouth, no head.</summary>
 	private bool _faceAway;
 
+	/// <summary>UI particle channel 0, the golden ticket's glints, which the clip words' flags set - see <see cref="SetGlints"/>.</summary>
+	private readonly UI.UiParticleChannel _glints = new();
+
 	/// <summary>The clips for the current line, on a timeline that starts at <see cref="_gesturesStartedAt"/>.</summary>
 	private ClipSequence _sequence = ClipSequence.Empty;
 
@@ -304,6 +307,9 @@ public sealed class Advisor : Entity
 
 		Animate();
 
+		// Placed every frame after a clip's start, on his clock (0x00599800's tail).
+		_glints.Place( _now );
+
 		if ( _cue != null && _now >= _cueAt )
 		{
 			var cue = _cue;
@@ -313,6 +319,9 @@ public sealed class Advisor : Entity
 
 		if ( Busy )
 			return;
+
+		// The line is over: Advisor_Update empties the glints' channel (0x0059993e).
+		_glints.SetCount( 0 );
 
 		if ( _queue.Count > 0 )
 		{
@@ -518,6 +527,9 @@ public sealed class Advisor : Entity
 		_cue = null;
 		_shown = false;
 
+		// Advisor_StopSpeaking and Advisor_StopQuietly empty the glints' channel (0x00599543, 0x0059972a).
+		_glints.SetCount( 0 );
+
 		// Cutting a line abandons its clip wherever it had got to, which is what can leave his face
 		// half-posed - see ResetFace.
 		ResetFace();
@@ -549,6 +561,9 @@ public sealed class Advisor : Entity
 
 		var row = gestureRow >= 0 ? AdvisorGestures.Read( gestureRow, ClipMilliseconds ) : null;
 		var leadIn = row?.LeadIn ?? true;
+
+		// Advisor_SayResponse empties the glints' channel as a line begins (0x005993b3).
+		_glints.SetCount( 0 );
 
 		_pending = sample;
 		_speakAt = _now + (leadIn ? LeadInSeconds : 0f);
@@ -629,7 +644,7 @@ public sealed class Advisor : Entity
 	/// <summary>
 	/// A clip of the line starting (Advisor_Update 0x00599a2a, then Advisor_ClipStarted 0x00598dc0 from 0x00599800): the
 	/// model's hide lists turn over, he puts on the line's props again, and the clip word's flags act. 0x10000 shows no
-	/// add-on, no mouth and no head; 0x20000 to 0x200000 set UI particle channel 0, the glints, which are not built.
+	/// add-on, no mouth and no head; 0x20000 to 0x200000 set UI particle channel 0, the glints (<see cref="SetGlints"/>).
 	/// </summary>
 	private void StartClipAt( int index )
 	{
@@ -646,8 +661,64 @@ public sealed class Advisor : Entity
 		_speaker.DressForClip( _wearing.First, _wearing.Second, _costume, _faceAway );
 		_mouth = 0;
 
-		if ( (flags & 0x3e0000) != 0 )
-			Unimplemented.Report( "ADVISOR_CLIP_GLINTS" );
+		if ( SetGlints( _glints, flags, ClipMilliseconds( _gestures[index] ) / 1000f, _now ) )
+			Log.Info( $"Advisor: glints {_glints.Count} of effects [{string.Join( ", ", Enumerable.Range( 0, _glints.Count ).Select( _glints.EffectOf ) )}] at <{_glints.Centre.X:0.00}, {_glints.Centre.Y:0.00}> radii "
+				+ $"<{_glints.Radius.X:0.00}, {_glints.Radius.Y:0.00}> {_glints.Turns:0} turns in {_glints.Seconds:0.000}s" );
+	}
+
+	/// <summary>
+	/// What a clip word's flags do to the glints, UI particle channel 0, as the clip starts (Advisor_ClipStarted,
+	/// 0x00598e7d): only one flag of <c>0x3e0000</c> acts, and none where two are set. The centre and radii are
+	/// fractions of the half screen; each move takes the starting clip's length, <paramref name="clipSeconds"/>.
+	/// 0x20000 tops the channel up to one golden ticket glint (effect 44) and, where that started one, stands it at
+	/// 0.34, 0.62, going round once a clip on an upright ellipse 0.01 by 0.2; 0x40000 plays <c>cat_ui</c> 197 and tops it
+	/// to two of effect 49, moving to the middle on an ellipse grown to 0.6 by 0.4, twice round; 0x80000 tops it to three,
+	/// three times round; 0x100000 empties it and starts two of 44, which close in on 0.8, -0.8, the top right, twice
+	/// round; 0x200000 empties it. Says whether the channel was set.
+	///
+	/// <b>A deviation:</b> the original's screen is 4:3; here the glints are pinned to the right of a wider window, as
+	/// he is (<see cref="AdvisorModel.ScreenProjection"/>). They belong to no window, as the row's key does
+	/// (<see cref="HandOverKey"/>).
+	/// </summary>
+	internal static bool SetGlints( UI.UiParticleChannel glints, int flags, float clipSeconds, float now )
+	{
+		switch ( flags & 0x3e0000 )
+		{
+			case 0x20000:
+				if ( glints.SetCount( 1, (int)ParLib.P_EFFECT_GoldenTicket, UI.Anchor.Right ) == 0 )
+					return false;
+
+				glints.SetCentre( true, 0.34f, 0.62f, clipSeconds, now );
+				glints.SetRadius( true, 0.01f, 0.2f, 1f );
+				return true;
+
+			case 0x40000:
+				Log.Info( $"Advisor: cat_ui 197 for the glints, {(UI.UiSounds.Interface( 197 ) ? "a voice" : "no voice")}" );
+				glints.SetCount( 2, (int)ParLib.P_EFFECT_GoldenTicket2, UI.Anchor.Right );
+				glints.SetCentre( false, 0f, 0f, clipSeconds, now );
+				glints.SetRadius( false, 0.6f, 0.4f, 2f );
+				return true;
+
+			case 0x80000:
+				glints.SetCount( 3, (int)ParLib.P_EFFECT_GoldenTicket2, UI.Anchor.Right );
+				glints.SetCentre( false, 0f, 0f, clipSeconds, now );
+				glints.SetRadius( false, 0.6f, 0.4f, 3f );
+				return true;
+
+			case 0x100000:
+				glints.SetCount( 0 );
+				glints.SetCount( 2, (int)ParLib.P_EFFECT_GoldenTicket, UI.Anchor.Right );
+				glints.SetCentre( false, 0.8f, -0.8f, clipSeconds, now );
+				glints.SetRadius( false, 0f, 0f, 2f );
+				return true;
+
+			case 0x200000:
+				glints.SetCount( 0 );
+				return true;
+
+			default:
+				return false;
+		}
 	}
 
 	/// <summary>

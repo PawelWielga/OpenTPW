@@ -608,6 +608,9 @@ public class ParkSaveScreenTests
 		var pending = typeof( Advisor ).GetField( "_pending", BindingFlags.Instance | BindingFlags.NonPublic )!;
 		var advisorBefore = current.GetValue( null );
 		pending.SetValue( advisor, 412 );
+
+		// Made without its constructor, so the field its quietening empties is given here.
+		typeof( Advisor ).GetField( "_glints", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( advisor, new UI.UiParticleChannel() );
 		current.SetValue( null, advisor );
 
 		try

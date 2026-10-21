@@ -127,9 +127,33 @@ to two of 44, and `0x200000`, which no row uses, empties it. Effects 44 and 49 a
 Every response using rows 1 and 13 is a golden-ticket line on model slot 1, the park's own advisor; clips 16 to 20 ship
 only in a level's `advisor.wad`, so the lobby's advisor, slot 0, never plays them. The original's counts of channel 0
 as Local 0's ticket and key was said (`q707/orig/O`, `original/advisorline.py`): 1 on clip 17, 2 on 18, 3 on 19, 2 on 20,
-nought when he is free (`Advisor_Update` empties it). Where the particles stand is set by `FUN_005ed660` and
-`FUN_005ed700` and placed every frame by `UIParticles_PlaceChannels` (`0x00599800`'s tail): not decoded. OpenTPW plays
-the rows' clips (Q595) and counts each clip that sets the channel (`ADVISOR_CLIP_GLINTS`): the glints are Q707's.
+nought when he is free (`Advisor_Update` empties it).
+
+**Where the glints stand** (Q600). The UI particle channels are three records of `0x44` bytes at `0x00f86900`: the
+centre eased from (`+0x00`, `+0x04`) to (`+0x08`, `+0x0c`), the time set (`+0x10`, `Advisor_ClockMilliseconds`
+`0x005988e0`, the clock less the time paused) and the time given (`+0x14`), the turns (`+0x18`), the radii eased from
+(`+0x1c`, `+0x20`) to (`+0x24`, `+0x28`), the count (`+0x2c`) and five handles. Channel 0 is the advisor's, channel 2
+the button glints' (`lobby.md`); nothing uses channel 1. `UIParticles_SetChannelCentre` (`0x005ed660`) and
+`UIParticles_SetChannelRadius` (`0x005ed700`) set the marks, from where they were or, with their second argument, at
+once; the centre's call restarts the clock only for a time that is not nought. Every frame, after the clip's start,
+`UIParticles_PlaceChannels` (`0x005ed770`) takes `f` = (now - set) / time and places effect `i` of `n` at the turn
+`i/n + f * turns`, its fraction (`CRT_modf` `0x0067b280`) in 512ths, round the centre eased by `f` and the radii eased by
+`f` held to 1: x = (cx + rx sin + 1) × 50000, down = (cy - ry cos + 1) × 37500, the centre and radii in half screens, down
+positive. So the centre runs on past its mark once its time is up. `Advisor_ClipStarted`'s arguments are literals,
+the time being the starting clip's length (`0x00f796c8[clip - 1]`, `0x00f7976c` the clip less one), and only one flag acts:
+
+| Flag | Count | Centre | Radii | Turns in the clip |
+|---|---|---|---|---|
+| `0x20000` | tops up to 1 of 44; the rest only where that started one | (0.34, 0.62) at once | (0.01, 0.2) at once | 1 |
+| `0x40000` | `cat_ui` 197, then up to 2 of 49 | eased to (0, 0) | eased to (0.6, 0.4) | 2 |
+| `0x80000` | up to 3 of 49 | (0, 0) | (0.6, 0.4) | 3 |
+| `0x100000` | emptied, then 2 of 44 | eased to (0.8, -0.8) | eased to (0, 0) | 2 |
+| `0x200000` | emptied | | | |
+
+A line's start (`0x005993b3`), its end (`0x0059993e`), `Advisor_StopSpeaking` and `Advisor_StopQuietly` empty the channel.
+The original's film beside ours (`q707/p600/run1/side-by-side.png`): a column beside his hand through clip 17, a ring
+round the big ticket through 18 and 19, a trail up to the counts at the top right in 20. **OpenTPW** builds it
+(`UiParticleChannel`, `Advisor.SetGlints`); the glints are pinned to the right of a window wider than 4:3, as he is.
 
 **A clip's start** (`Advisor_Update` `0x00599a2a`, then `FUN_00599800` calls `Advisor_ClipStarted` `0x00598dc0` once the
 model reads it started): the model's clip change (`FUN_004726d0`) shows again what the outgoing clip's hide list hid and
