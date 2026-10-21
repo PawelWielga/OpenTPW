@@ -4,7 +4,8 @@ How Theme Park World sets Direct3D render states. It never sets them per materia
 a single 32-bit **state word** per draw and applies it lazily against a cached copy, so every visual
 difference between opaque, cut-out, graded and additive geometry is one of four constants. Three facts
 matter more than the rest. **CULLMODE is set to `D3DCULL_NONE` once at startup and never rewritten** —
-nothing in the game is one-sided. **See-through geometry still writes depth** — none of the four
+because the engine culls every model face itself, by its screen winding ("The software back-face test"); a face
+seen from both sides is authored twice. **See-through geometry still writes depth** — none of the four
 material words disables depth writes. And the choice between a cut-out (hard-edged) and a graded
 (soft) alpha reference follows, for a `.wct`, **its alpha chunk and its header byte 1**, and for any other
 format a **pixel classifier**, subject to material-load options and the material `0x800` opaque override
@@ -46,12 +47,39 @@ which code reads them is not traced (Q194, from the bytes). DirectDraw's two cal
 
 | Address / value | Original name | What it is | Evidence |
 |---|---|---|---|
-| `0x0056695c` | `CULLMODE = 1 = D3DCULL_NONE` | **Set once at startup and never rewritten anywhere in the program.** Nothing in the game is one-sided; foliage is authored expecting it. Render a park's foliage or fences with backface culling on and they come out half-missing. | All 88 `call [reg+0x58]` sites scanned; no other site writes CULLMODE |
+| `0x0056695c` | `CULLMODE = 1 = D3DCULL_NONE` | **Set once at startup and never rewritten anywhere in the program.** The card culls nothing because the engine has already: every model face passes `Face_KeptByWinding` first ("The software back-face test"). | All 88 `call [reg+0x58]` sites scanned; no other site writes CULLMODE |
 | `0x005669b7` | `ALPHAFUNC = 7 = D3DCMP_GREATEREQUAL` | Alpha test comparison, never changed | Disassembly |
-| `0x00573614` | `ZFUNC = 4 = D3DCMP_LESSEQUAL` | Depth comparison, never changed. OpenTPW uses `Less` — **a difference, not yet shown to matter.** | Disassembly |
+| `0x00573614` | `ZFUNC = 4 = D3DCMP_LESSEQUAL` | Depth comparison, never changed: of two faces at one depth the later drawn shows. OpenTPW's is the same (`Material.DepthComparisonFor`, Q586) | Disassembly (`SetRenderState( 0x17, 4 )`) |
 | `0x00573660` | — | The `EnumZBufferFormats` callback (`FUN_00573080`, `0x005731b3`): keeps the format offered and stops at the first of 16 bits, so the z-buffer is 16-bit wherever the card offers one. At a park's depth 110 a step is about 0.43 units (`park-engine.md`, "What hides a person below their feet") | Disassembly |
 | `DAT_007012d8` | ALPHAREF pair table | `{0x1000, 0xf000, 0x10, 0xf0}` | Data at that address |
 | `FUN_00567270` | — | Probes the card and selects index 2 of that table, so the two references in use are **16 and 240 of 255** | Disassembly |
+
+## The software back-face test
+
+Q586. Every model face is culled by the engine before it reaches a batch. `DrawList_Flush` (`0x00581db0`) hands each
+mesh entry's materials to `DrawList_AddMaterialFaces` (`0x00580530`), which copies a material's transformed vertices
+(FVF `0x1c4`: screen x, y in pixels, z, rhw at `[3]`) and, on both of its paths (no clip flags, `0x00580eab`; clipped,
+`0x00581000`), keeps a face only when `Face_KeptByWinding` (`0x00581320`) answers 1 for its corners in the file's own
+order (a, b, c: the face record's words at `+2`, `+4`, `+6`). That test answers 1 when
+`det[[x0, y0, w0], [x1, y1, w1], [x2, y2, w2]] > 0`, `w` the rhw: with equal `w`, `(x1 - x0)(y2 - y0) - (x2 - x0)(y1 - y0) > 0`,
+clockwise on a y-down screen. Nothing bypasses it (its only callers are those two).
+
+**So a face seen from both sides is authored twice**: the same three points, wound opposite ways, each with its own
+vertex-order entries and normals, so each side is lit its own way. Of the game's `.md2` files under `data/` (2,123
+read), 1,419 meshes carry 27,937 such groups, 27,930 of them turned opposite ways (`lib/twinfaces.py --sweep`). Drawn
+both, the first of a pair at a depth wins under a less test and the later under less-or-equal, neither of which is the
+original's: the Sun God's brazier plates (`incagod.MD2`, `Body`, `Inc_Saucer`, faces 124 to 139) put their undersides
+first and drew dark under a less test; the gate pillars' eyes (`gates.MD2`, `gateway`, `md_pill01`, faces 0 to 15) put
+their lit side first and drew dim under less-or-equal. Culled, both show their lit side, as the original does
+(`q586/orig/G/o-t1008.png`, `q580fs/orig/S2/o-t764.png`).
+
+**OpenTPW** culls a model's faces (`LobbyModel.DrawFlags`) on the card: back faces, clockwise kept
+(`Material.CullModeFor`, `Material.KeptWinding`), which in this engine's axes keeps the original's side (Q586's rounds:
+nothing drawn inside out, `q586/runA3`). **Not the original's to the letter:** the card's test takes the corners as
+projected, the original's weighs each by its rhw, which can differ only for a face seen almost edge on with its corners
+at different depths. Still drawn both-sided, each unread here: the terrain (its own renderer, `FUN_0056f670`), paths,
+the sea, the build markers, people and particles, the sky, and the UI's models (`UiMesh`), which the original also
+sends through `DrawList_AddMesh` (`ui.md`).
 
 ## The four state words a `.md2` material can get
 

@@ -56,12 +56,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q586. The Sun God's two brazier plates are drawn dark where the original's are gold.** From Q580
-  (`q580fs/side-by-side-sungod.png`: ours `run-S2/S-heads.png`, the original `orig/S2/o-t813.png`, both at 412,240 zoom
-  70 rotation 0). Ours draws each plate beside the steps as a dark square with its fire in it (`S-sun.png` and
-  `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
-  (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
-  against `incagod`'s model.
 - [ ] **Q596. The other topics' gesture rows.** From Q595. Rows 5 to 11 of the gesture table (`AdvisorGestures`;
   `scenes.md`, "Gesture table") are fixed clip lists opening on clip 14 (row 5: 14, 5, 11, 15), named by responses of
   built topics (`GestureRowLine`: 17, 37, 53, 82, 84, 90, 97, 129, 206, 258): hand them to `PlayParkResponse` as the
@@ -210,6 +204,13 @@ filed the items that cite it.
   walk-away share in a park file made for it, the row's poll line and score beside the original's.
   - **Note (Q708):** the original says row 257's sample 525 (props 8, 0; response 497) on tick 19040 of Alexah's jungle
     `New Save` loaded on 19004 by her Full Simulation profile with no ticket (`q707/orig/O2/line.log`): a ready case.
+- [ ] **Q608. The draws OpenTPW leaves both-sided, against the original's face test (decode first).** From Q586
+  (`render-states.md`, "The software back-face test"). The original culls every face that reaches a batch through
+  `DrawList_AddMaterialFaces` (`0x00580530`) by `Face_KeptByWinding`; OpenTPW culls models only (`LobbyModel.DrawFlags`).
+  The UI's models go the original's same way (`DrawList_AddMesh`, `ui.md`), and `UiMesh` draws both faces of them;
+  `ui.wad` holds one mesh with two-sided pairs, `lobby.wad` 43, the advisor 7 (`q586/twins-sweep.txt`). Read whether
+  the terrain (`FUN_0056f670`), the paths, the sea, the build markers and the people's and particles' sprites are culled
+  in the original, and cull what it culls; confirm a UI model with two-sided pairs in both games.
 - [ ] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
   what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
   turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a

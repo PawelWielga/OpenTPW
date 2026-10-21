@@ -406,8 +406,8 @@ public sealed class ParkGround : ModelEntity
 			}
 		}
 
-		// The same shader and the same culling rule the rest of the world uses - nothing in this game
-		// is one-sided, so the ground is not either.
+		// The shader the models use, both faces drawn: the terrain has a renderer of its own (0x0056f670), not the models'
+		// face test (Face_KeptByWinding), and whether it culls is not read.
 		var material = new Material<ObjectUniformBuffer>( "content/shaders/test.shader", MaterialFlags.DisableCulling );
 		material.Set( "Color", textures );
 

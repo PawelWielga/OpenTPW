@@ -1093,11 +1093,13 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00559d3d` | | OpenTPW.Files/Formats/Save/ParkScriptStates.cs OpenTPW/VM/RideScript.cs  |
 | `0x00559da7` | | OpenTPW.Files/Formats/Save/ParkScriptStates.cs  |
 | `0x00564790` | | OpenTPW.Files/Formats/Sprite/SpritePackFile.cs  |
-| `0x0056695c` | | OpenTPW/World/Lobby/LobbyModel.cs  |
+| `0x0056f670` | The terrain pass (`park-engine.md`) | OpenTPW/World/Park/ParkGround.cs  |
+| `0x00573614` | `ZFUNC` less or equal, set once (`render-states.md`) | OpenTPW/Render/Assets/Material.cs OpenTPW.Tests/ModelFaceCullingTests.cs  |
 | `0x00576a00` | `Render_DrawView`: walks the view's render lists and draws the batches furthest first | OpenTPW/World/Entity/Entity.cs  |
 | `0x00579e00` | | OpenTPW/Render/Assets/Asset.cs  |
 | `0x0057c620` | | OpenTPW/UI/ScreenParticles.cs  |
 | `0x00580320` | | OpenTPW/World/Weather/Lightning.cs  |
+| `0x00581320` | `Face_KeptByWinding`: the software back-face test on every model face (`render-states.md`) | OpenTPW/Render/Assets/Material.cs OpenTPW/World/Lobby/LobbyModel.cs OpenTPW.Tests/ModelFaceCullingTests.cs  |
 | `0x00582170` | | OpenTPW/UI/ScreenParticles.cs  |
 | `0x00587380` | | OpenTPW/Client/Game.cs OpenTPW/UI/LoadingScreen.cs  |
 | `0x00587479` | | OpenTPW/UI/LoadingScreen.cs  |

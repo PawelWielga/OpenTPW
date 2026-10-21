@@ -1018,6 +1018,15 @@ public sealed class LobbyModel : IChannelPosed
 	}
 
 	/// <summary>
+	/// The flags a model's materials draw with: the caller's, culled, as the original draws a model. Its CULLMODE stays
+	/// none because it culls every model face itself, keeping those whose screen corners wind clockwise
+	/// (<c>Face_KeptByWinding</c>, <c>0x00581320</c>; <c>render-states.md</c>, "The software back-face test").
+	/// A face seen from both sides is authored twice, turned opposite ways and lit each way: of the Sun God's brazier
+	/// plates the lit tops are drawn from above, not the dark undersides that come first in the file.
+	/// </summary>
+	internal static MaterialFlags DrawFlags( MaterialFlags asked ) => asked & ~MaterialFlags.DisableCulling;
+
+	/// <summary>
 	/// The flag word a vertex carries: what the file gave its material with the see-through bit taken from
 	/// <see cref="SeeThrough"/>, plus <see cref="CutOutAlphaFlag"/> where its texture's alpha is not graded and
 	/// <see cref="ClampFlag"/> where its texture does not wrap (<see cref="Wraps"/>).
@@ -1105,12 +1114,7 @@ public sealed class LobbyModel : IChannelPosed
 			return new Model( vertices, [.. indices], material );
 		}
 
-		// Nothing in the game is one-sided: the original sets CULLMODE to D3DCULL_NONE once, at
-		// 0x0056695c, and never writes that state again in the whole program. Foliage is authored
-		// expecting it - a blade of grass is a single quad meant to be seen from behind as well as
-		// in front, and a canopy is a dome that shows its dark inside when its near face is cut
-		// away.
-		var flags = materialFlags | MaterialFlags.DisableCulling;
+		var flags = DrawFlags( materialFlags );
 
 		return [
 			Build( solid, flags ),

@@ -9631,6 +9631,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   at 580,240 zoom 130 (zoom 70 cuts the risen drum off): `side-by-side-boarded.png`, `side-by-side-risen.png`
   (`orig/o1-t900`, `o1-t961`). Tests `WalkRidersTests` (10); `mutate.py` 19 of 19. Found and fixed in the item: the
   drawn model's Jungle Spray lane node stands 0.073 from the composed one, so the nodes are `RideNodes`'. Six Ghidra names.
+- [x] **Q586. The Sun God's two brazier plates are drawn dark where the original's are gold.** From Q580
+  (`q580fs/side-by-side-sungod.png`: ours `run-S2/S-heads.png`, the original `orig/S2/o-t813.png`, both at 412,240 zoom
+  70 rotation 0). Ours draws each plate beside the steps as a dark square with its fire in it (`S-sun.png` and
+  `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
+  (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
+  against `incagod`'s model.
+  **Done.** Neither mesh, texture nor clip: the plates (`incagod.MD2`, `Body`, `Inc_Saucer`, faces 124 to 139) are
+  eight two-sided pairs, each the same three points twice, wound opposite ways, the underside first, and OpenTPW drew
+  both faces of every model, so the first at a depth won and the plates showed their unlit undersides. The original
+  culls every model face itself (`Face_KeptByWinding`, `0x00581320`, from `DrawList_AddMaterialFaces`, `0x00580530`;
+  `render-states.md`, "The software back-face test"), which is why its CULLMODE stays none. Built: a model's faces
+  culled, clockwise kept (`LobbyModel.DrawFlags`, `Material.CullModeFor`, `Material.KeptWinding`), and the original's
+  less-or-equal depth test (`0x00573614`, `Material.DepthComparisonFor`). Drawing every face under less-or-equal alone
+  made the plates gold but the gate pillars' eyes dim (their lit side comes first), against the original's
+  (`q586/orig/G/o-t1008.png`): the cull is the rule. 27,937 such pairs in 1,419 meshes (`lib/twinfaces.py`, new;
+  FileFormats `models.md`, "Faces"). In this game on the final binary (`q586/PREDICTION.txt`, `runA7`): the log's
+  "Depth test: LessEqual, ...; a model's faces culled Back, kept Clockwise", the plates gold, (180,149,45) and
+  (175,144,48) against main's dark (`runB2`, (67,55,26) and (69,57,30)), `side-by-side-plates.png` beside the
+  original's `q580fs/orig/S2/o-t764.png`; the park's opening and wide views and the lobby whole. 15 of 20 predictions
+  held, 5 missed with their causes. Left: Q608.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

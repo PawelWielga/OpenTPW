@@ -21,8 +21,8 @@ public enum MaterialFlags
 	Additive = 4,
 
 	/// <summary>
-	/// Draws both faces, as the original draws every face it has - a blade of grass is one quad seen
-	/// from either side, and the sky is geometry the camera sits inside, with no outward side to cull.
+	/// Draws both faces: the sky, which the camera sits inside, and what is drawn outside the original's model path.
+	/// A model's faces are culled (<see cref="LobbyModel.DrawFlags"/>), as the original culls them itself.
 	/// </summary>
 	DisableCulling = 8,
 
@@ -442,9 +442,36 @@ public partial class Material : Asset
 		}
 	}
 
+	/// <summary>
+	/// The depth test a material's pipeline makes: less or equal, the original's ZFUNC (<c>0x00573614</c>, set once and
+	/// never changed; <c>render-states.md</c>), so of two faces at the same depth the later one drawn shows.
+	/// </summary>
+	internal static ComparisonKind DepthComparisonFor( MaterialFlags flags )
+		=> flags.HasFlag( MaterialFlags.DisableDepth ) ? ComparisonKind.Always : ComparisonKind.LessEqual;
+
+	/// <summary>
+	/// The faces a material's pipeline drops: those whose screen corners wind against <see cref="KeptWinding"/>, unless it
+	/// asks for <see cref="MaterialFlags.DisableCulling"/>. The original's own test is <c>Face_KeptByWinding</c>
+	/// (<c>0x00581320</c>), on every model face; it weighs each corner by its rhw where the card's test takes the corners
+	/// as projected, which can differ only for a face seen almost edge on with its corners at different depths.
+	/// </summary>
+	internal static FaceCullMode CullModeFor( MaterialFlags flags )
+		=> flags.HasFlag( MaterialFlags.DisableCulling ) ? FaceCullMode.None : FaceCullMode.Back;
+
+	/// <summary>The winding kept: clockwise on the screen, the original's (<c>Face_KeptByWinding</c>) in this engine's axes.</summary>
+	internal const FrontFace KeptWinding = FrontFace.Clockwise;
+
+	private static bool _depthTestLogged;
+
 	private void SetupResources( MaterialFlags flags )
 	{
 		var vertexLayout = new VertexLayoutDescription( Vertex.VertexElementDescriptions );
+
+		if ( !_depthTestLogged )
+		{
+			_depthTestLogged = true;
+			Log.Info( $"Depth test: {DepthComparisonFor( MaterialFlags.None )}, the original's ZFUNC (0x00573614); a model's faces culled {CullModeFor( LobbyModel.DrawFlags( MaterialFlags.DisableCulling ) )}, kept {KeptWinding}, as Face_KeptByWinding (0x00581320)" );
+		}
 
 		//
 		// Create resource layout - but only from what we're using/need
@@ -467,13 +494,13 @@ public partial class Material : Asset
 			DepthStencilState = new DepthStencilStateDescription(
 				!flags.HasFlag( MaterialFlags.DisableDepthTest ),
 				!flags.HasFlag( MaterialFlags.DisableDepthWrite ),
-				flags.HasFlag( MaterialFlags.DisableDepthTest | MaterialFlags.DisableDepthWrite ) ? ComparisonKind.Always : ComparisonKind.Less
+				DepthComparisonFor( flags )
 			),
 
 			RasterizerState = new RasterizerStateDescription(
-				flags.HasFlag( MaterialFlags.DisableCulling ) ? FaceCullMode.None : FaceCullMode.Back,
+				CullModeFor( flags ),
 				PolygonFillMode.Solid,
-				FrontFace.Clockwise,
+				KeptWinding,
 				true,
 				false
 			),
