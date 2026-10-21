@@ -2290,6 +2290,8 @@ public sealed partial class ParkPeople : Entity
 				// sits on is not established, and cannot matter here: the walk asks for an animation only
 				// when the sprite is not already playing it, so a turn either way changes nothing after
 				// the first.
+				AskTheWalk( peep, playing );
+
 				if ( playing != null && peep.DueOn( thingTick ) )
 					Apply( peep, playing );
 			}
@@ -3316,6 +3318,57 @@ public sealed partial class ParkPeople : Entity
 		node = 0;
 
 		return false;
+	}
+
+	/// <summary>
+	/// The script whose walk holds this guest in a slot, and that slot (<see cref="RideScript.TryWalkOf"/>), or false where
+	/// none does - asked of the scripts for the reason <see cref="TrySeatOf"/> gives.
+	/// </summary>
+	internal bool TryWalkOf( int guestThingId, out RideScript? script, out RideScript.WalkView slot )
+	{
+		if ( _scriptFor != null )
+		{
+			foreach ( var thing in _behaviour.State.Objects )
+			{
+				if ( _scriptFor( thing.ThingId ) is not { } candidate || !candidate.TryWalkOf( guestThingId, out slot ) )
+					continue;
+
+				script = candidate;
+
+				return true;
+			}
+		}
+
+		script = null;
+		slot = default;
+
+		return false;
+	}
+
+	/// <summary>
+	/// What the walk holding this guest asks of their sprite, once a sweep before the queued animation is handed over:
+	/// the placer's animation where the sprite is neither on it nor queued for it (<c>FUN_004f9e60</c>, its test
+	/// <c>FUN_004d4100</c>), or, for a guest it hides, the thought bubble freed (<c>FUN_004f9ed0</c>,
+	/// <c>FUN_0050c0d0</c>).
+	/// </summary>
+	/// <remarks>
+	/// The engine asks every frame, after its catch-up loop, and its hide frees the sprite itself, which the next placement
+	/// makes again on the walk at once (<c>FUN_004d4140</c>); here it is asked as the sweep hands the queue over, and the
+	/// sprite is kept and put on the walk then.
+	/// </remarks>
+	private void AskTheWalk( Peep peep, SpriteScript? playing )
+	{
+		if ( !TryWalkOf( peep.ThingId, out _, out var slot ) || WalkRiders.Of( slot ) is not { } placed )
+			return;
+
+		if ( placed.Hidden )
+		{
+			peep.Thoughts.Free();
+			return;
+		}
+
+		if ( WalkRiders.Asked( placed, playing, peep.NextAnimation ) is { } animation )
+			peep.NextAnimation = animation;
 	}
 
 	/// <summary>

@@ -443,6 +443,37 @@ public sealed class RideScript
 	}
 
 	/// <summary>
+	/// One walk slot as the engine's stepper hands it to its sprite placer (<c>FUN_00557d80</c> to <c>FUN_005580a0</c>):
+	/// the state, the action and flags, the four node ids, the leg's two clock readings and the facing.
+	/// </summary>
+	public readonly record struct WalkView( WalkState State, short Action, short Flags, short WalkNode, short HeadNode,
+		short OffFrom, short OffTo, float Start, float Due, short Facing );
+
+	/// <summary>
+	/// The walk slot holding <paramref name="handle"/> in any state but free, or false where none does. The stepper places
+	/// every slot in order each frame, so where two held one visitor the later's placement would stand: the last is taken.
+	/// </summary>
+	public bool TryWalkOf( int handle, out WalkView view )
+	{
+		for ( var slot = _walk.Length - 1; handle != 0 && slot >= 0; --slot )
+		{
+			var walking = _walk[slot];
+
+			if ( walking.State == WalkState.Free || walking.Handle != handle )
+				continue;
+
+			view = new WalkView( walking.State, walking.Action, walking.Flags, walking.WalkNode, walking.HeadNode,
+				walking.OffFrom, walking.OffTo, walking.Start, walking.Due, walking.Facing );
+
+			return true;
+		}
+
+		view = default;
+
+		return false;
+	}
+
+	/// <summary>
 	/// Every walk slot let go and not taken again, with the leftovers <c>WALKGET</c> leaves in it: the walk off it
 	/// was let go from, that leg's length and its facing. The console's ride census, and what a test reads.
 	/// </summary>
@@ -587,7 +618,7 @@ public sealed class RideScript
 
 		/// <summary>
 		/// The seventh operand - <c>+0x1a</c>. Bit 0 takes a walking rider's height along the line between the two
-		/// nodes; its only reader is the sprite placement (<c>FUN_005580a0</c>), which nothing here does, and every
+		/// nodes; its only reader is the sprite placement (<c>FUN_005580a0</c>, <see cref="WalkRiders"/>), and every
 		/// shipped <c>WALKON</c> passes 1.
 		/// </summary>
 		public short Flags;
@@ -1766,11 +1797,9 @@ public sealed class RideScript
 	/// state alone (<c>0x00558018</c>), so it keeps the leg it walked, as the engine's save does.
 	/// </para>
 	/// <para>
-	/// <b>What is deliberately absent is every position.</b> The engine spends most of
-	/// <c>FUN_005580a0</c> interpolating between two node positions and handing them to the sprite
-	/// placer, from the same nodes <see cref="Leg"/> finds (<see cref="Nodes"/>). Nothing here draws a walking
-	/// rider (docs/QUEUE.md Q22), so the bookkeeping is reproduced and the placement is not, the same split
-	/// <see cref="_bounceBase"/> already lives with. A rider arrived under action 4 is drawn as the head the engine
+	/// <b>No position is worked out here.</b> The engine's stepper hands every slot to <c>FUN_005580a0</c>, which places
+	/// the rider between two node positions each frame; that is the drawing's (<see cref="WalkRiders"/>, from
+	/// <see cref="TryWalkOf"/>). A rider arrived under action 4 is drawn as the head the engine
 	/// hangs on the head node (<see cref="WalkHeads"/>). The slot's facing is kept, for the park file: a carried
 	/// rider's is taken again here, and the turn <c>WALKST_FLOAT</c>'s shake gives it each frame is not built,
 	/// counted with that instruction.

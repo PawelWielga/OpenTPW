@@ -9611,6 +9611,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Shop bought on sold 47's id reads totals 0 0 where the old one had 17908 21780 (`runF2`); 21 of 21 bugs put back
   caught. U1 to U3 stay unsettled. A sold object the writer cannot take out (a tracked ride) keeps its id in the file, so
   a thing made on it is counted `SAVE_PARK_ID_KEPT_FOR_A_SOLD_THING` and left out, with `SAVE_PARK_OBJECT_SOLD`'s gap.
+- [x] **Q585. The Mayan Spinner's riders stand in a heap at its steps.** From Q584 (`q580/explore5/v00..v29.png`,
+  `q580/run-R1c/R1-spinner.png`). Ours: each rider walks on from node 1 to their own node (2 to 7) and is then Carried,
+  and every Carried rider is drawn at the top of the steps, heaped, through the whole ride, while the drum rises and
+  spins as the original's does; `rides` reads "heads 0/0" for thing 44 with five Carried. The original's riders stand
+  apart round the drum and go up with it (`q580/orig/a-t869..907`, `a-t1265..1319`; the drum's rise `a-t915..985`).
+  The Lookout's heads ride its lift (`ride-operation.md`, "Lost Kingdom's legs"); find why ours has no head node for
+  them (the Aztec Mayhem's are drawn on its benches, Q257u) and draw a Carried rider where the original does; compare
+  frames of both games at 580,240 zoom 70.
+  **Done.** No head node is the rule: `Lookout.RSE` walks its riders on under action 6, onto walk-space node `VAR_ONRIDE`
+  plus 2, and OpenTPW drew a walk's rider only as an action-4 head. Built: the original's walk placer `FUN_005580a0` as
+  its stepper `FUN_00557d80` hands it every slot (`WalkRiders`, `RideScript.TryWalkOf`, `ParkGuestSprites.WalkedOnRide`,
+  `ParkPeople.AskTheWalk`; `ride-operation.md`, "Where a walk's rider is drawn"): on the leg walking, on the node riding
+  its pose while carried under 3, 5 or 6 on animations 3, 8 and 5, hidden under 1, 2 or 4. The rule is the original's
+  saves': 39 of 39 walk slots in use in sixteen park files it wrote (`lib/walkriders`, new). In this game on the final
+  binary (`q585/PREDICTION.txt`): `run-F2S` 7 of 7, six Spinner riders on nodes 2 to 7 at their rest points and facings,
+  script 140, up 40.121 with the drum, off along the leg to node 16; `run-F2B` 5 of 5, a Balloon Shop customer carried
+  and not drawn, a Jungle Spray player on lane node 2 at (525.127, 308.005). Beside the original given Q584's scene, both
+  at 580,240 zoom 130 (zoom 70 cuts the risen drum off): `side-by-side-boarded.png`, `side-by-side-risen.png`
+  (`orig/o1-t900`, `o1-t961`). Tests `WalkRidersTests` (10); `mutate.py` 19 of 19. Found and fixed in the item: the
+  drawn model's Jungle Spray lane node stands 0.073 from the composed one, so the nodes are `RideNodes`'. Six Ghidra names.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

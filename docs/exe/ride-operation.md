@@ -3502,7 +3502,8 @@ child its id gives (`ParkPeople.Admit`, `ParkSpriteBanks.ChildOf`); a load reduc
 undresses (`ParkRideOperation.DressOrUndress`), counting event `0xb` (`SETTLE_UP_COSTUME_EVENT`); and a guest is drawn in
 `Peep.SpriteKind` and `SpriteBank` (`ParkGuestSprites`), every child and costume bank packed. Its departures: the costume's
 draw is the ride turn's generator; the picture changes at the settle-up, which the original's case `0xf` follows straight
-after, where OpenTPW never hides a rider at all (Q52); and the heads drawn here are a bumper boat's riders'
+after, where OpenTPW hides a rider only where a walk carries them under action 1, 2 or 4 (Q52; "Where a walk's rider is
+drawn"); and the heads drawn here are a bumper boat's riders'
 (Q179b, `ParkGuestSprites.DrawHead`: the head of the rider's child bank, or their costume's), `ADDHEAD`'s (Q190,
 `ParkGuestSprites.HeadOnRide`; `park.md`, "The head table") and `WALKON` action 4's (Q257u, `RideScript.WalkHeads`;
 `saves.md`, "OpenTPW's writer, a walk's head"), while the coasters' and the tour cars' are not drawn.
@@ -4789,10 +4790,12 @@ The slot array is the script's `+0x2c`, counted by `+0x7c`, **`0x20` = 32 bytes 
 | `FUN_00557110` | — | `WALKGET`: scans for a slot in **state 4**, clears its state (`0x0055713f`) and its handle (`0x00557149`) and nothing else, returns the handle — 0 if none. The slot keeps the rest until a `WALKON` takes it: 64 such slots in thirteen files (`saves.md`, "OpenTPW's writer, a walk slot let go"). | Disassembly |
 | `FUN_00557d80` | — | The stepper, for one script. Per slot, progress = `(now × 1000 − start × 1000) / (due − start)`, unsigned; at **≥ 1000** state 1 becomes **2** and start becomes now (`0x00557e79`; due is left as it was) — action 4 attaches the rider to the head node (`FUN_0044b410`), action 2 spawns particle `0x13` there — and state 3 becomes **4**, writing nothing else (`0x00558018`). A carried rider (state 2) never advances; for an action other than 1, 2 or 4 its facing is taken again every frame from the head node's direction row. | Disassembly |
 | `FUN_00557ab0` | — | Called once a park frame, after the 31 ms catch-up loop, by its one caller (`0x0054fa08`), for **every** script in the list: places the bounce riders (the only reader of `+0x6e`), then `FUN_00557d80`. Nothing tests whether the ride is on screen. | Disassembly |
-| `FUN_005580a0` | — | Presentation, with one write: for a carried rider (state 2) while the script's timed effect runs (`+0x80` start, `+0x84` length, set by `FUN_00557160`), it steps the slot's facing `+0x14` with the clock each frame, mod 8 (`0x005583e5`), and shakes the sprite. It interpolates between two node positions, `A + (B − A) × min(p, 1000) / 1000` (x and z; y too under flag bit 0), and calls `FUN_004f9e60` to place the sprite. | Disassembly |
+| `FUN_005580a0` | `Walk_PlaceRider` | The walk's sprite placer, called by the stepper for every slot in use, every frame: two node ids, a mode (1: the first in `0x80`; 2: the second) and a progress. The point is `( ( B − A ) × p − A × −1000 ) × 0.001` (`0x00701020`, `0x00700fd4`) in x and z, p held at 1000, and y the same way under flag bit 0 (else `FUN_004511a0`'s surface under it). Not carried: `FUN_004f9e60` with animation 1. Carried: actions 3, 5 and 6 to `FUN_004f9e60` with animations 3, 8 and 5; actions 1, 2 and 4 to the person hide `FUN_004f9ed0`; while the script's shake runs (`+0x84`, `WALKST_FLOAT`) it steps the facing with the clock, mod 8, and lifts and sways the point (animation 2). Below, "Where a walk's rider is drawn". | Decompile |
 | `FUN_00556b90` | — | Resolves a node id **in the ride's MODEL**, in the space its fifth argument names — `0x800` for a walk node and `0x80` for a head node from the walk family, `0x200` for a sound and `0x100` for particles from `FUN_005573d0`. The position is the translation row (`+0x30`..`+0x38`) of the node's stored matrix (below); a record with no matrix gives (0, 0, 0). On a miss it returns 0 having written nothing (`0x00556d2c`), and its "RSSE: Invalid Node ID" goes to `FUN_005da3c0`. | Disassembly |
 | `FUN_005da3c0` | — | The bare `RET` every complaint above goes to (`park-engine.md`, "Every diagnostic string goes to a bare `RET`"): nothing prints or stops. | Disassembly |
-| `FUN_004f9e60` | — | Place a sprite. | Disassembly |
+| `FUN_004f9e60` | `Person_PlaceSprite` | A thiscall on the person: makes their sprite on the animation given where they have none (`FUN_004d4140`), puts it at x, the height less the ground's under the point (`FUN_004527f0`) and z with the facing (`FUN_00475480`: sprite `+0x88`, `+0x8c`, `+0x90`, `+0xc0`), then queues the animation (`FUN_004217f0`) unless `FUN_004d4100` finds the sprite on its script or the person's queue holding it. | Disassembly |
+| `FUN_004f9ed0` | `Person_HideSprite` | The person hide: frees the sprite (`FUN_004d4170`, `+0xc` nought) and the thought bubble's (`FUN_0050c0d0`, the thoughts' `+0x84`), and lets a guest's balloon go (`FUN_004fe950`) where `+0x210` holds one; boarding has already freed it (`0x00502156`). | Disassembly |
+| `FUN_004d4100` | `PersonSprite_IsOnOrQueued` | Whether the sprite runs the script animation n names (`FUN_00475c50`: the instance's entry `+0xc`) or the person's queue (`+0x10`) holds n. | Decompile |
 
 **The operand mapping, measured from the push order** (cdecl, right-to-left, so operands 1..7 are `param_2`..`param_8` of `FUN_00556f40` IN ORDER): 1 handle (`+0x10`), 2 walk node (`+0x00`), 3 head node (`+0x02`), 4 off-from (`+0x04`), 5 off-to (`+0x06`), **6 ACTION (`+0x16`, the one tested against 4)**, 7 flags (`+0x1a`). Confirmed by the corpus: action takes only 1, 4, 5, 6 across Lost Kingdom (2 as well elsewhere, in `Ghostshp` and `scitour`), and the two Lost Kingdom scripts passing **4** — `Totem` and `tvsim` — are exactly the head-node case; across the four themes the five passing 4 are `firepit`, `Totem`, `tvsim`, `hoverbot` and `tv_ride`. `WALKON`'s action operand picks the node space: **4 = a HEAD node (space `0x80`)**, anything else a walk node (space `0x800`).
 
@@ -4827,6 +4830,39 @@ walks on facing 7, 0 and 1, stands 0, and walks off 3, 4 and 5; turned 270 it st
 OpenTPW keeps it (`RideNodes.Facing`, `Octant`, `FindFacing`; `RideScript.WalkSlot.Facing`), taking a carried
 rider's again once a tick from the node at rest (`WALK_FACING_REST_POSE` counts a node a clip moves, as a rider
 arrives); the shake's turn is not built, counted with `WALKST_FLOAT`, which only Space Zone's Zero G carries.
+
+### Where a walk's rider is drawn
+
+**The stepper `FUN_00557d80` (`Walk_StepScript`) hands every slot in use to the placer `FUN_005580a0`
+(`Walk_PlaceRider`) each frame**, with two nodes and a share of the way between them:
+
+| State | First node | Second node | Share | What is drawn |
+|---|---|---|---|---|
+| 1 walking on | walk node, `0x800` | head node, `0x80` under action 4, else `0x800` | progress | animation 1, the walk |
+| 2 carried, action 3, 5 or 6 | head node, `0x800` | the same | 0 | animations 3, 8 and 5 (scripts 90, 172, 140) |
+| 2 carried, action 1, 2 or 4 | walk node | head node | 1 | nothing: the person hide `FUN_004f9ed0` |
+| 3 walking off | off-from, `0x80` under action 4, else `0x800` | off-to, `0x800` | progress | animation 1 |
+| 4 done | off-to | the same | 0 | animation 1 |
+
+The progress is the stepper's `( now × 1000 − start × 1000 ) / ( due − start )` on the live clock, unsigned; the placer
+holds it at 1000 (signed). A carried slot under 0 or 7 and up reaches no arm and leaves the sprite as it stood. The
+facing is the slot's (`+0x14`), the same word a walking person's sprite faces by (`+0xc0`): in the sixteen park files
+the original wrote here, a guest walking has a sprite facing the octant of their angle 854 times in 897, and **every one of
+the 39 walk slots in use holds its rider's sprite as this table says**: carried under 1 (13) and 4 (10) no sprite; under 5
+(4) and 6 (7) on the head node to the thousandth, facing the slot, on script 172 and 140; walking on (1) and off (3) on
+the leg, facing the slot, on script 42 (`walkriders`, its output kept in `q585/walkriders-saves.out`). The node's
+position is the stored matrix of the last drawn frame (above, "How long a leg lasts"), so a rider on a node a clip carries
+rides with it: **the Mayan Spinner's (`Lookout.RSE`, `WALKON` action 6 to node `VAR_ONRIDE` plus 2) stand apart round the
+drum and go up with it** (`q585/orig/o1-t900`, `o1-t961`).
+
+**OpenTPW** (`WalkRiders`, from `RideScript.TryWalkOf`; drawn by `ParkGuestSprites.WalkedOnRide`) places every walk's
+rider so, its nodes from `RideNodes` after `Follow` (the players' pose; the drawn model's Jungle Spray lane node stands
+0.073 from the composed one, which the saves hold). Its departures: the placer's animation is asked for once a sweep, as
+the sweep hands the queue over (`ParkPeople.AskTheWalk`), not each frame, and a hidden rider's sprite is kept, the bubble
+alone freed (`Thoughts.Free`), and put on the walk then where the engine makes it again at once; a slot under an action
+with no arm is drawn as anyone else, counted `WALK_RIDER_ACTION_UNPLACED`; a walk without flag bit 0, a node missed,
+counted `WALK_RIDER_HEIGHT_FROM_THE_SURFACE`, `WALK_RIDER_NODE_MISS`. None of the three is reached by Lost Kingdom. The
+shake is not built (counted with `WALKST_FLOAT`).
 
 **The ends are the nodes' stored matrices, in the world.** `FUN_00556b90` reads the translation row of a matrix kept
 per node-lookup record: the script's model (`[0x7a4610 + handle × 4]`) `+8` → `+0x28` → `+4`, 20 bytes a record, the

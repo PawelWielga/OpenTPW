@@ -56,14 +56,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q585. The Mayan Spinner's riders stand in a heap at its steps.** From Q584 (`q580/explore5/v00..v29.png`,
-  `q580/run-R1c/R1-spinner.png`). Ours: each rider walks on from node 1 to their own node (2 to 7) and is then Carried,
-  and every Carried rider is drawn at the top of the steps, heaped, through the whole ride, while the drum rises and
-  spins as the original's does; `rides` reads "heads 0/0" for thing 44 with five Carried. The original's riders stand
-  apart round the drum and go up with it (`q580/orig/a-t869..907`, `a-t1265..1319`; the drum's rise `a-t915..985`).
-  The Lookout's heads ride its lift (`ride-operation.md`, "Lost Kingdom's legs"); find why ours has no head node for
-  them (the Aztec Mayhem's are drawn on its benches, Q257u) and draw a Carried rider where the original does; compare
-  frames of both games at 580,240 zoom 70.
 - [ ] **Q586. The Sun God's two brazier plates are drawn dark where the original's are gold.** From Q580
   (`q580fs/side-by-side-sungod.png`: ours `run-S2/S-heads.png`, the original `orig/S2/o-t813.png`, both at 412,240 zoom
   70 rotation 0). Ours draws each plate beside the steps as a dark square with its fire in it (`S-sun.png` and
@@ -1710,7 +1702,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   and decoded where a node's position comes from (the posed matrix, refreshed on screen; `ride-operation.md`, "How
   long a leg lasts, and where its ends are"), and `FUN_005580a0`'s interpolation; which frame a rider shows is still
   open. The engine finds a bounce rider's node by id in `0x800` ("Where a rider is drawn"); `ModelFile.FindNode` is
-  that lookup and `RideNodes` the stored positions at rest (Q175b), not the animated pose a rider needs.
+  that lookup and `RideNodes` the stored positions at rest (Q175b), not the animated pose a rider needs. A walk's riders
+  are placed by `FUN_005580a0` from the posed nodes since Q585 (`ride-operation.md`, "Where a walk's rider is drawn").
 - [ ] **Q23. Camera rotation snaps by 45 degrees.** `ParkOrbitCameraMode.Update`, the two rotate keys. The 90-degree
   option exists (`GameOptions.NinetyDegreeRotation`, set on the Options screen and kept in the player file) and the camera does not read it. Decode the original's step
   and its easing (`park-engine.md`, "The park camera", has the saved and required rotation, not the rate). Build what

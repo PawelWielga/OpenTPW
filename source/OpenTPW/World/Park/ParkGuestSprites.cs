@@ -916,6 +916,12 @@ public sealed class ParkGuestSprites : ModelEntity
 				continue;
 			}
 
+			// A visitor a walk holds is placed by it: on their leg, on their node, or not drawn at all.
+			var walked = WalkedOnRide( people, person.ThingId );
+
+			if ( walked is { Hidden: true } )
+				continue;
+
 			var (setNumber, frame, bankOffset) = Showing( people?.SpriteFor( person.ThingId ), sprite );
 
 			if ( !_banks.TryGetValue( (kind, bank + bankOffset), out var loaded ) )
@@ -927,7 +933,7 @@ public sealed class ParkGuestSprites : ModelEntity
 			var (x, y, angle) = StandingFrom( people, cellX, cellY, person, sprite, alpha );
 
 			var set = loaded.Bank.Sets[setNumber & 0xf];
-			var index = Picture( set, frame, Facing( ParkWorld.Person.OctantOf( angle ) ),
+			var index = Picture( set, frame, Facing( walked?.Facing ?? ParkWorld.Person.OctantOf( angle ) ),
 				out var mirrored );
 
 			if ( index < 0 || index >= loaded.Pictures.Length )
@@ -949,7 +955,9 @@ public sealed class ParkGuestSprites : ModelEntity
 			if ( seat != null )
 				Unimplemented.Report( "RIDER_BOUNCE" );
 
-			var centre = Centre( seat, x, y, ground, sprite.Height );
+			// The walk's point is the feet's own: FUN_004f9e60 stores its height above the ground under it, which the
+			// draw adds back.
+			var centre = walked?.At ?? Centre( seat, x, y, ground, sprite.Height );
 
 			WriteQuad( used++, centre, picture, mirrored, sprite.Alpha, pulled: Pulled );
 			_drawn.Add( new SpritePick.Drawn( person.ThingId, centre, picture.Width, picture.Height, picture.OriginX, picture.OriginY, mirrored ) );
@@ -999,6 +1007,54 @@ public sealed class ParkGuestSprites : ModelEntity
 			towards = System.Numerics.Vector3.TransformNormal( towards, inverse );
 
 		return (at, ParkBumperBoats.HeadFrame( towards ));
+	}
+
+	/// <summary>
+	/// Where the walk holding this guest puts them this frame and which way they face (<see cref="WalkRiders"/>), whether
+	/// it hides them, or null where no walk holds them or the placer cannot place them, and they are drawn as anyone else.
+	/// The two nodes stand where the ride's players pose them now, the engine's stored matrix of the last drawn frame: a
+	/// rider on the Mayan Spinner's node goes up with its drum. The clock is the park's, to the frame (<see cref="GameClock.PartialTick"/>),
+	/// as the engine reads its own live.
+	/// </summary>
+	internal static (bool Hidden, Vector3 At, short Facing)? WalkedOnRide( ParkPeople? people, int thingId )
+	{
+		if ( people == null || !people.TryWalkOf( thingId, out var script, out var slot ) || WalkRiders.Of( slot ) is not { } placed )
+			return null;
+
+		if ( placed.Hidden )
+			return (true, default, placed.Facing);
+
+		if ( script?.Nodes is not { } nodes
+			|| NodeAt( script, nodes, placed.From, placed.FromSpace ) is not { } from
+			|| NodeAt( script, nodes, placed.To, placed.ToSpace ) is not { } to )
+		{
+			Unimplemented.Report( "WALK_RIDER_NODE_MISS" );
+			return null;
+		}
+
+		var now = (GameClock.Ticks + GameClock.PartialTick) * GameClock.TickSeconds * 1000f;
+		var progress = WalkRiders.Progress( slot, placed, now );
+
+		// The point in the model's axes, y up; the park's are z up.
+		return WalkRiders.Point( placed, from, to, progress ) is { } point
+			? (false, new Vector3( point.X, point.Z, point.Y ), placed.Facing)
+			: null;
+	}
+
+	/// <summary>
+	/// A walk's node of a ride where the ride's players pose it now (<see cref="RideNodes.Follow"/>), composed as the engine
+	/// composes its stored matrix, in the model's axes (y up), or null where it has none. Not the drawn model's node: the
+	/// original's saves hold a carried rider's sprite on the composed point to the thousandth, where the Jungle Spray's
+	/// drawn lane node stands 0.073 aside.
+	/// </summary>
+	private static System.Numerics.Vector3? NodeAt( RideScript script, RideNodes nodes, int id, uint space )
+	{
+		if ( script.Animations is { } players )
+			nodes.Follow( players );
+
+		return nodes.Find( id, space, out var position, carried: true ) is NodeEnd.Posed or NodeEnd.RestPose or NodeEnd.OnAFace
+			? position
+			: null;
 	}
 
 	/// <summary>The head bank for a rider drawn in a kind and bank - <c>FUN_004fcac0</c>: a costume's head for a costume, else the child's.</summary>
@@ -1663,7 +1719,9 @@ public sealed class ParkGuestSprites : ModelEntity
 			// reading the one the renderer used, so without it a rider drawn up on the ride would be
 			// reported at the cell they queued on.
 			var head = ParkBumperBoats.Current?.SeatOf( person.ThingId );
-			var seated = head?.Seat ?? HeadOnRide( people, person.ThingId )?.At ?? Seated( people, person.ThingId );
+			var walked = WalkedOnRide( people, person.ThingId );
+			var seated = head?.Seat ?? HeadOnRide( people, person.ThingId )?.At ?? (walked is { Hidden: false } w ? w.At : (Vector3?)null)
+				?? Seated( people, person.ThingId );
 
 			if ( seated is { } seat )
 				(x, y) = (seat.X, seat.Y);
@@ -1680,7 +1738,8 @@ public sealed class ParkGuestSprites : ModelEntity
 				// interpolated frame moves them roughly 0.16 world units - which at one decimal place is
 				// barely above the printing granularity and could not be told from a jump.
 				$"drawn ({x:0.000},{y:0.000}) alpha {alpha:0.00}" +
-				$"{(seated is { } on ? $" SEATED z {on.Z:0.0}" : "")}{(head is { } h ? $" HEAD only frame {h.Frame}" : "")} " +
+				$"{(seated is { } on ? $" SEATED z {on.Z:0.0}" : "")}{(head is { } h ? $" HEAD only frame {h.Frame}" : "")}" +
+				$"{(walked is { } by ? (by.Hidden ? " WALK hides" : $" WALK at ({by.At.X:0.000},{by.At.Y:0.000},{by.At.Z:0.000}) facing {by.Facing}") : "")} " +
 				$"saved ({sprite.X:0.0},{sprite.Y:0.0}) " +
 				$"cellsize {cellX:0.##}x{cellY:0.##} walk {(walk == null ? "none" : "found")}" +
 				$"{(InTheHand( people, person.ThingId ) ? " IN THE HAND, not drawn" : "")}";

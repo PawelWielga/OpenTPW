@@ -126,6 +126,9 @@ public sealed class Thoughts
 			Bubble = null;
 	}
 
+	/// <summary>The bubble freed and nothing else, <c>FUN_0050c0d0</c>: the thought and its time stand.</summary>
+	public void Free() => Bubble = null;
+
 	/// <summary>
 	/// What a save kept: the thought, the bubble's time, and the bubble itself where the person's
 	/// <c>mThoughtScript</c> names a sprite: its picture is its script's (<see cref="PictureOfScript"/>), which
