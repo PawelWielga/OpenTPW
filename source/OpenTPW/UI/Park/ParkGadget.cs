@@ -1181,11 +1181,11 @@ internal sealed class ParkGadget : UiWindow
 	/// </summary>
 	internal static int Swell( long sinceOpened ) => (int)(sinceOpened / 100 % 7) switch { 1 or 5 => 2, 2 or 4 => 4, 3 => 6, _ => 0 };
 
-	/// <summary>The bar, its text and buttons, the arm's handle, its move and what it carries, for the debug console's <c>tags</c>.</summary>
+	/// <summary>The bar, its text (a line break written as \n) and buttons, the arm's handle, its move and what it carries, for the debug console's <c>tags</c>.</summary>
 	internal string BarCensus() => $"bar: out={(BarOut ? 1 : 0)} rect={Edges( _bar.Rect )} arm={Edges( _arm.Rect )} handle={Edges( _armEnd.Children[0].Rect )}"
 		+ $" move={Moving} carried={(_onArm is { } carried ? $"{carried.Id:x}@{Edges( carried.Rect )}/shown={(carried.Visible ? 1 : 0)}/depth={carried.DrawDepth}/{Behind( carried )}" : "none")} waiting={_waiting?.Id.ToString( "x" ) ?? "none"}"
 		+ $" retract={(!_retract.Visible ? "hidden" : _retract.Enabled ? "on" : "off")}"
-		+ $" first={Button( _barFirst )} second={Button( _barSecond )} erase={Button( _barErase )} camcorder={(_camcorder.IsDown ? 1 : 0)} text=\"{(BarOut ? _barText.Text : null)}\"";
+		+ $" first={Button( _barFirst )} second={Button( _barSecond )} erase={Button( _barErase )} camcorder={(_camcorder.IsDown ? 1 : 0)} text=\"{(BarOut ? _barText.Text?.Replace( "\n", "\\n" ) : null)}\"";
 
 	/// <summary>How many of a carried panel's shown parts are drawn before the body, and how many before the retract button, of how many.</summary>
 	private string Behind( UiControl panel )

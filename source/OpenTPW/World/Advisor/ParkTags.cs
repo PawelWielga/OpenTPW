@@ -87,7 +87,22 @@ internal sealed class ParkTags
 		new( 72, 68, 1, 74, 3, 0, 30000, 2 ),
 		new( 135, NoTag, 0, 134, 3, 0, 30000, 0 ),
 		new( 150, 151, 1, 149, 0, 0, 30000, 0 ),
-		new( 151, 150, 1, 150, 0, 0, 30000, 0 )
+		new( 151, 150, 1, 150, 0, 0, 30000, 0 ),
+		// The golden tickets' lines, each its own group: Local 0 to 5 are 102 to 107, Global 0 to 3 are 108 to 111, the
+		// Secret 112 (113, the Secret's index 1, is never awarded). Standing until taken off, and their text the ticket's
+		// threshold where the row's kind names one.
+		new( 102, NoTag, 3, 180, 0, 0, 0, 5 ),
+		new( 103, NoTag, 3, 181, 0, 0, 0, 6 ),
+		new( 104, NoTag, 3, 182, 0, 0, 0, 0 ),
+		new( 105, NoTag, 3, 183, 0, 0, 0, 0 ),
+		new( 106, NoTag, 3, 184, 0, 0, 0, 7 ),
+		new( 107, NoTag, 3, 185, 0, 0, 0, 8 ),
+		new( 108, NoTag, 3, 186, 0, 0, 0, 0 ),
+		new( 109, NoTag, 3, 187, 0, 0, 0, 0 ),
+		new( 110, NoTag, 3, 188, 0, 0, 0, 0 ),
+		new( 111, NoTag, 3, 189, 0, 0, 0, 0 ),
+		new( 112, NoTag, 3, 190, 0, 0, 0, 0 ),
+		new( 113, NoTag, 3, 191, 0, 0, 0, 0 )
 	];
 
 	/// <summary>How many the list holds, DAT_00750610.</summary>
@@ -136,6 +151,9 @@ internal sealed class ParkTags
 
 	/// <summary>The tags' strings, each as its parts (<see cref="StringsPath"/>); with none a tag's text is empty.</summary>
 	internal StringPart[][]? Strings { get; set; }
+
+	/// <summary>The park's golden-ticket thresholds, which the ticket rows' kinds 5 to 8 write (the globals 0x00785790 to 0x007857a8).</summary>
+	internal ParkGoldenTickets.Thresholds Thresholds { get; set; }
 
 	/// <summary>The tags on the mast, the oldest first: the oldest stands lowest.</summary>
 	internal IReadOnlyList<Tag> Standing => _tags;
@@ -206,16 +224,16 @@ internal sealed class ParkTags
 	}
 
 	/// <summary>
-	/// A tag's text by its row's kind (FUN_00509e10): kind 0 the row's string alone, kind 2 the string with the
-	/// item's name as its parameter 0. Any other kind, and a kind 2 about no item (which the original logs and
-	/// leaves its buffer as it stood), is counted and written empty.
+	/// A tag's text by its row's kind (FUN_00509e10): the row's string with the kind's variables where their parameters
+	/// stand (<see cref="Arguments"/>). Any other kind, and a kind 2 about no item (which the original logs and leaves
+	/// its buffer as it stood), is counted and written empty.
 	/// </summary>
 	internal string TextOf( Row row, int item, string? itemName )
 	{
 		if ( Strings is not { } strings || row.String < 0 || row.String >= strings.Length )
 			return string.Empty;
 
-		if ( row.Kind != 0 && (row.Kind != 2 || item == 0) )
+		if ( Arguments( row.Kind, item, itemName ) is not { } arguments )
 		{
 			Unimplemented.Report( "TAG_TEXT_KIND" );
 			return string.Empty;
@@ -227,12 +245,35 @@ internal sealed class ParkTags
 		{
 			if ( part.Text != null )
 				text.Append( part.Text );
-			else if ( row.Kind == 2 && part.Parameter == 0 )
-				text.Append( itemName );
+			else
+				text.Append( arguments.FirstOrDefault( argument => argument.Parameter == part.Parameter ).Value );
 		}
 
 		return text.ToString();
 	}
+
+	/// <summary>
+	/// The variables a kind hands the formatter, each with its parameter's number: kind 0 none; kind 2 the item's name
+	/// as parameter 0; kinds 5, 6 and 7 the Local tickets' Visitors, PeopleInPark and ProfitYear as parameter 1; kind 8
+	/// RecentVisitors as parameter 1 and RecentVisitorMonths as 2 (FUN_004a77a0 makes a variable of its number). Null
+	/// for a kind not built.
+	/// </summary>
+	private (int Parameter, string? Value)[]? Arguments( int kind, int item, string? itemName ) => kind switch
+	{
+		0 => [],
+		2 when item != 0 => [(0, itemName)],
+		5 => [(1, Number( Thresholds.Visitors ))],
+		6 => [(1, Number( Thresholds.PeopleInPark ))],
+		7 => [(1, Number( Thresholds.ProfitYear ))],
+		8 => [(1, Number( Thresholds.RecentVisitors )), (2, Number( Thresholds.RecentVisitorMonths ))],
+		_ => null
+	};
+
+	/// <summary>
+	/// A number variable as its writer letters it (0x006add40): "%d" of the value word, which holds the number's size,
+	/// the sign word unread, so a negative number is written without its sign.
+	/// </summary>
+	private static string Number( int value ) => (value < 0 ? unchecked( -value ) : value).ToString( System.Globalization.CultureInfo.InvariantCulture );
 
 	/// <summary>
 	/// The tags as a park file holds them (FUN_0048ee50): every record in use, a hidden tag's too, in the order of
@@ -347,8 +388,9 @@ internal sealed class ParkTags
 		Log.Info( $"Park tags: tag {tag.Row.Id} subject {tag.Subject} off, standing {_tags.Count}" );
 	}
 
+	/// <summary>The tags standing, one line: a text's line breaks are written as \n.</summary>
 	internal string Census( long now ) => $"tags: standing={_tags.Count} "
 		+ string.Join( " ", _tags.Select( tag =>
 			$"tag={tag.Row.Id}/picture={tag.Row.Picture}/subject={tag.Subject}/age={now - tag.Born}/hidden={(tag.Hidden ? 1 : 0)}"
-			+ $"/item={tag.Item}/slot={tag.Slot}/life={tag.Row.Life}/timers={(tag.TimersRun ? 1 : 0)}/open={(tag == OnShow ? 1 : 0)}/text=\"{tag.Text}\"" ) );
+			+ $"/item={tag.Item}/slot={tag.Slot}/life={tag.Row.Life}/timers={(tag.TimersRun ? 1 : 0)}/open={(tag == OnShow ? 1 : 0)}/text=\"{tag.Text.Replace( "\n", "\\n" )}\"" ) );
 }

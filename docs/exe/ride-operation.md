@@ -3839,7 +3839,7 @@ Re-read for Q194 from the fork review (`economy-8`, `economy-9`; `wf_cba77d07-b6
 Ghidra and over every shipped `.sam`), decoded whole for Q141, and **built for Q591** (`ParkGoldenTickets`, the awards in
 `PlayerFile`): every test and award, Global 0's measure, the coaster's highest point, built for Q706 (`ParkCoasterHeights`;
 "A coaster's highest track point", below). The advisor's ticket lines are posted and
-said (Q595, "The advisor's ticket lines", below; their big ticket grown, Q599, and their glints drawn, Q600; their tags are Q707), the hints are Q708, the
+said (Q595, "The advisor's ticket lines", below; their big ticket grown, Q599, and their glints drawn, Q600; their tags put on the aerial, Q707), the hints are Q708, the
 cheat rows counted (Q592).
 
 **The tick.** `FUN_004d4a00`, from `FUN_004d7b20` (`0x004d7b60`) on a thing sweep (`0x00516695`) whose world counter
@@ -3910,8 +3910,8 @@ by slot: the two posted into full slots took the lowest (the opening's 20, a hin
 `AdvisorGestures`, the row path of `Advisor.Speak`): each award posts its row from the sweep's tail, after the advisor's
 turn, so it is said on the next sweep at the earliest (`q707/run3-L`: posted on 19100, said on 19101); the row's clips,
 no lead-in, the wait and row 13's key (effect 87 at the counts, goldkey) are the original's; so are the glints (UI particle
-channel 0, Q600; `scenes.md`, "Where the glints stand"). Not built: the tags of groups 102 to 113 (`TAG_ROW_NOT_LISTED`),
-Q707's. The big
+channel 0, Q600; `scenes.md`, "Where the glints stand"), and so is each line's tag, its group's row with the Local
+threshold in its text (Q707; `advisor-park.md`, "The tag a line leaves on the aerial"). The big
 ticket of clips 18 to 20 is grown by its scale track, as the original's (Q599; `ui.md`, "The big ticket is a scale track").
 
 **The hints** (polled rows, game type 0 alone; `Advisor.sam` scores): `0x13a` (sample 597, "you're really close to winning

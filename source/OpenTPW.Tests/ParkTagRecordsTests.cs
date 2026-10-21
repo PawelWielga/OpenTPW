@@ -153,7 +153,7 @@ public class ParkTagRecordsTests
 		{
 			new ParkTags.Row( 150, 151, 1, 0, 0, 0, 30000, 0 ), new ParkTags.Row( 68, ParkTags.NoTag, 1, 1, 3, 0, 30000, 2 ),
 			new ParkTags.Row( 72, 68, 1, 1, 3, 0, 30000, 2 ), new ParkTags.Row( 9, 9, 1, 1, 0, 0, 0, 2 ),
-			new ParkTags.Row( 5, 5, 1, 1, 0, 0, 0, 5 ), new ParkTags.Row( 6, 6, 1, 0, 0, 0, 0, 0 )
+			new ParkTags.Row( 5, 5, 1, 1, 0, 0, 0, 9 ), new ParkTags.Row( 6, 6, 1, 0, 0, 0, 0, 0 )
 		};
 		var tags = new ParkTags( rows ) { Strings = Strings };
 		var kinds = Times( "TAG_TEXT_KIND" );

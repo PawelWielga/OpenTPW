@@ -354,7 +354,7 @@ public class Level
 			AdvisorMessages = new ParkAdvisorMessages( new SettingsFile( "Advisor/Advisor.sam" ), cursor: ParkAdvisorMessages.ProgramCursor )
 		};
 		Log.Info( $"{ThemeName}: the park's clock starts at mGameTick {ParkState.GameTick}" );
-		ParkState.Tags.Strings = TagStrings()?.Parts;
+		DressTags( ParkState.Tags, Balance );
 
 		if ( park?.Save?.Tags.Problem is { } unread )
 			Log.Warning( $"{ThemeName}: the file's aerial tags did not read - {unread}" );
@@ -1109,6 +1109,15 @@ public class Level
 		things.UnionWith( made.Select( thing => thing.ThingId ) );
 
 		return things;
+	}
+
+	/// <summary>The aerial's tags given the running language's strings and the park's golden-ticket thresholds, which their texts read.</summary>
+	internal static ParkTags DressTags( ParkTags tags, ParkBalance? balance )
+	{
+		tags.Strings = TagStrings()?.Parts;
+		if ( balance != null )
+			tags.Thresholds = ParkGoldenTickets.Thresholds.From( balance );
+		return tags;
 	}
 
 	/// <summary>The running language's table of the aerial tags' strings, or null where it will not read.</summary>

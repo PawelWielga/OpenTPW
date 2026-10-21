@@ -809,6 +809,10 @@ topics' rows:
 | 3 | a shut park people wait outside (2 to 4) | 4 | 2 | 7 | 24, 0 | 30000 | 0 |
 | 150 | the park open (308, 309) | 151 | 1 | 149 | 0, 0 | 30000 | 0 |
 | 151 | the park shut (310, 311) | 150 | 1 | 150 | 0, 0 | 30000 | 0 |
+| 102 to 113 | the golden tickets' lines (434 to 469, each line its own group; `ride-operation.md`, "Golden tickets") | 383, none | 3 | 180 to 191 | 0, 0 | 0 | 5, 6, 0, 0, 7, 8, then 0 |
+
+The ticket rows' tags have no life, so they stand until taken off. Their group is the line's: Local ticket *i* says
+line *i* and leaves 102 + *i*, Global *i* 108 + *i*, the Secret 112 (113, the Secret's index 1, is never awarded).
 
 **The messages control's list, `FUN_0048eb20`** (through `FUN_0048ede0`; nothing is done with the interface down,
 `[0x007cb2ac]` nought). The ten tags are controls made once by `FUN_0048eaa0` (`FUN_0048ea00`: 70 by 65, mesh
@@ -850,8 +854,13 @@ the running language's `TAG_SYSTEM.str` (332 rows). Kind 2 formats it with one a
 name: `FUN_00412f50` on the item manager `0x007890a0`, the wide string at the item's record `+0x410` (what fills
 it is not read: it reads "Belly Bounce" for 1100 and "The Hot Pot" for 1140, each item's `Info.Name`); with the
 event's item nought it logs "Object id is IDNULL in CTagSystem" and leaves the buffer as it stood. Kind 1 writes
-"A string needs to be put in here" for a thing that exists, kind 4 "String and number goes here"; kinds 3 and 5
-to `0x24` format numbers and names from the event and the park's globals, not read further.
+"A string needs to be put in here" for a thing that exists, kind 4 "String and number goes here". **Kinds 5 to 8,
+the Local tickets' rows,** format the park's `GoldenTicketLocal` globals (`ride-operation.md`, "Golden tickets"), each
+a number variable (`Varm_Construct` `0x004a77a0` makes one; its `+8` is the string's parameter number, and the number
+writer `0x006add40` letters `"%d"` of the size and never the sign): kind 5 `Visitors` (`0x00785790`), kind 6
+`PeopleInPark` (`0x00785794`) and kind 7 `ProfitYear` (`0x007857a0`), each as parameter 1; kind 8 `RecentVisitors`
+(`0x007857a4`) as 1 and `RecentVisitorMonths` (`0x007857a8`) as 2. Kind 3 formats the event's number; kinds 9 to `0x24`
+format numbers and names from the event's record, not read further.
 
 **The original** (`q309/orig/run.sh`: Q265's `bounce.TPWS`, `scriptvar.py PID 13 4 1` twenty seconds after the
 load, `original/tags.py`, `advisor.py` and `object.py` polled together): with no tag the mast's rectangle read
@@ -875,16 +884,27 @@ with the tag where over 30% was. Main's build said the same line, moved nothing 
 
 | | The original | OpenTPW |
 |---|---|---|
-| The rows | 382 in the executable | the six the built topics' groups name; any other group with a row is counted, `TAG_ROW_NOT_LISTED` |
+| The rows | 382 in the executable | those the built topics' groups name, the golden tickets' 102 to 113 among them; any other group with a row is counted, `TAG_ROW_NOT_LISTED` |
 | The match of a standing tag | id, thing and item | the same; the item is the subject's catalogue id |
 | The times | the interface's timers, real milliseconds | the same clock (`Time.WallMilliseconds`), from the gadget's update |
 | The red top and the later tags as one goes | played down (streams `0x007502f0`, `0x00752e48`) | put down at once |
 | The particle five seconds before the end | effect `0x5b` over the tag | counted, `TAG_ENDING_PARTICLE` |
 | A left click | sound `0xc0`, the message bar on the arm with the text and the buttons | the same (`hud.md`, "The message bar"), and an opened tag's timers stop there as here |
-| The tag's text | written from the row's string by its kind (`FUN_00509e10`), 37 kinds | kinds 0 and 2, the two the six rows use: the row of `TAG_SYSTEM.str`, and for kind 2 the item's `Info.Name` where its parameter 0 stands; any other kind, and a kind 2 about no item, is counted, `TAG_TEXT_KIND`, and empty. Shown on the message bar, written to a park file and read by `tags` |
+| The tag's text | written from the row's string by its kind (`TagSystem_WriteText` `0x00509e10`), 37 kinds | kinds 0, 2 and 5 to 8, those the listed rows use: the row of `TAG_SYSTEM.str`, for kind 2 the item's `Info.Name` where its parameter 0 stands, for 5 to 8 the balance's `GoldenTicketLocal` keys; any other kind, and a kind 2 about no item, is counted, `TAG_TEXT_KIND`, and empty. Shown on the message bar, written to a park file and read by `tags` (a line break as `\n`) |
 | The sounds' loudness | not measured | each at its variation's own volume, as the boot's |
 | The tags in a park file | written and read | written and read (`saves.md`, "OpenTPW's writer, the aerial's tags") |
 | The other two events (`0x19`, the postcard's) | heard | nothing sends them here |
+
+**The golden tickets' tags, both games (Q707; `q707/p707t/`).** Alexah's jungle `New Save` with her Full Simulation
+profile less Locals 0 and 1 (Standard keys: `Visitors` 100, `PeopleInPark` 200). The original (`orig/O`, `tags.py`):
+at the `0xd8` line, tick 19115, a tag "YOU'VE WON A GOLDEN TICKET!", a blank line, "Congratulations! You've won a golden
+ticket for getting 100 visitors to your park. Keep up the good work!" at (84, 909, 154, 974); at the `0xd7` line, 19162,
+"...for having 200 people in your park at one time. Keep it up!" at (84, 834, 154, 899), in record 0, which the file's
+ticket-price tag had freed at its life's end; both stood 77 s on, at the poll's end, and the frames show the golden
+ticket picture on each (`g-20`, `g-22`). OpenTPW (`run2`): `Park tags: tag 102 picture 3 subject 0 life 0 standing 2`
+and `tag 103 ... standing 2`, the same texts, slots, rectangles and picture; a click on 102 letters both paragraphs on
+the bar with no buttons (`T-bar.png`). Each tag comes with its line, and ours says the `0xd8` line on 19101 where the original said
+it on 19115 (Q595's account, `ride-operation.md`, "Golden tickets").
 
 ## The line of an opened tag message (message `0x11c`, Q312)
 

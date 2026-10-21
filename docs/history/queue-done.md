@@ -9525,6 +9525,11 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `UIParticles_PlaceChannels`) and built (`UiParticleChannel`, `Advisor.SetGlints`, `cat_ui` 197 on clip 18);
   `ADVISOR_CLIP_GLINTS` is gone. The particles stand in screen space, not at the model's `T_Particle` nodes.
   Confirmed beside the original's film (`q707/p600`).
+- [x] **Q707. The advisor's golden-ticket lines: the tags.** Q595 says the lines; Q599 grows the big ticket; Q600 draws
+  the glints. Left: the tags of groups 102 to 113 (`lib/tagtable.py`: picture 3, strings 180 to 191, text kinds 5 to 8,
+  life 0), counted `TAG_ROW_NOT_LISTED`. **Done:** rows 102 to 113 listed, kinds 5 to 8 written from the balance's
+  `GoldenTicketLocal` keys (`TagSystem_WriteText` `0x00509e10`, `Varm_Construct` `0x004a77a0`; `advisor-park.md`, "The
+  text"); both games' tags of the 0xd8 and 0xd7 lines held text for text (`q707/p707t/`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

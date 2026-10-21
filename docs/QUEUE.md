@@ -83,9 +83,6 @@ filed the items that cite it.
   `S-heads.png`, two moments of the ride); the original's are bright gold diamonds with the fire's glow behind them
   (`o-t813`, `o-t922`, `o-t1120`). Find which differs (the plate's mesh or texture, a clip's state, or the light on it)
   against `incagod`'s model.
-- [ ] **Q707. The advisor's golden-ticket lines: the tags.** Q595 says the lines; Q599 grows the big ticket; Q600 draws
-  the glints. Left: the tags of groups 102 to 113 (`lib/tagtable.py`: picture 3, strings 180 to 191, text kinds 5 to 8,
-  life 0), counted `TAG_ROW_NOT_LISTED`.
 - [ ] **Q708. The golden-ticket hints.** After Q706. Four polled rows of game type 0 (`ride-operation.md`, "Golden
   tickets", "The hints"): `0x13a` (150), `0x13c` and `0x13d` (100), `0x119` (200, while the arrival loads ring holds
   one load). `0x13e` and the rows no code posts stay unsaid, as the original's.
@@ -2330,3 +2327,8 @@ state machine.
   through a park's menu, where ours holds them (`Audio.HoldPlaced`) and lets their samples pass unheard. Read what
   `[manager + 0x60]` points to and who writes it, then measure the original's mix in a paused Lost Kingdom park
   (`mixer.py`: the sea's channel volume and distance with the menu open).
+- [ ] **Q601. The gadget's date is written with the machine's culture; the original's reads "4.13.2002".** Seen in
+  Q707's runs (`q707/p707t/side-by-side.png`): ours letters `GameCalendar.Now.ToShortDateString()` (`ParkGadget.ShowDate`),
+  "4/18/2002" on this machine, and would letter another order on a machine of another culture; the original's frames read
+  "4.9.2002" to "4.14.2002" (`q707/p707t/orig/O/g-*.png`). Decode the original's date writer for the gadget, then write
+  the date its way whatever the machine.

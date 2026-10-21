@@ -3271,8 +3271,9 @@ tick 996). Its `save/` ended each run as it began.
   original's is (one poll of each; above).
 - A file whose block does not read (no count after `CSDA` whose records end the body) is written with its own
   bytes, and logged.
-- Only kinds 0 and 2 of a tag's text are written (`TAG_TEXT_KIND` counts another); the name is the item's
-  `Info.Name`, held against the original's text on items 1100 and 1140 alone.
+- Only kinds 0, 2 and 5 to 8 of a tag's text are written (`TAG_TEXT_KIND` counts another); the name is the item's
+  `Info.Name`, held against the original's text on items 1100 and 1140 alone, and the numbers of kinds 5 and 6
+  against its golden tickets' tags (Q707).
 - A record of more than 255 characters is cut there; no tag here is that long.
 
 **Held by the game runs alone, no test:** the call from the said line to the list with the subject's item and

@@ -40,10 +40,10 @@ public class ParkTagsTests
 		Assert.AreEqual( unlisted + 1, Times( "TAG_ROW_NOT_LISTED" ) );
 		Assert.AreEqual( 1, tags.Standing.Count );
 
-		CollectionAssert.AreEqual( new[] { 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 30, 31, 32, 33, 34, 62, 64, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 95, 96, 97, 98, 99, 100, 155, 156, 157, 158, 68, 70, 71, 72, 135, 150, 151 }, ParkTags.Rows.Select( row => row.Id ).ToArray() );
-		CollectionAssert.AreEqual( new[] { 4, 3, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 63, 65, 74, 78, 82, 383, 383, 383, 383, 383, 383, 68, 68, 68, 383, 151, 150 }, ParkTags.Rows.Select( row => row.Key ).ToArray() );
-		CollectionAssert.AreEqual( new[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1 }, ParkTags.Rows.Select( row => row.Picture ).ToArray() );
-		Assert.IsTrue( ParkTags.Rows.All( row => row.Life == 30000 ) );
+		CollectionAssert.AreEqual( new[] { 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 30, 31, 32, 33, 34, 62, 64, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 95, 96, 97, 98, 99, 100, 155, 156, 157, 158, 68, 70, 71, 72, 135, 150, 151, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113 }, ParkTags.Rows.Select( row => row.Id ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 4, 3, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 63, 65, 74, 78, 82, 383, 383, 383, 383, 383, 383, 68, 68, 68, 383, 151, 150, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383, 383 }, ParkTags.Rows.Select( row => row.Key ).ToArray() );
+		CollectionAssert.AreEqual( new[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 }, ParkTags.Rows.Select( row => row.Picture ).ToArray() );
+		Assert.IsTrue( ParkTags.Rows.All( row => row.Life == (row.Id is >= 102 and <= 113 ? 0 : 30000) ) );
 
 		// The shut park's line: part 2, the entry-price button, no thing.
 		var waiting = tags.Said( 3, 0, 6000 );
@@ -254,5 +254,70 @@ public class ParkTagsTests
 		Assert.AreEqual( offer, offers.OnShow, "hidden and still on show until it is off the mast" );
 		offers.Tick( 31500 );
 		Assert.AreEqual( (0, null), (offers.Standing.Count, offers.OnShow) );
+	}
+
+	/// <summary>
+	/// <b>A golden ticket's line leaves a tag of its own group that stands until it is taken off</b> (rows 102 to 113 of
+	/// the tag table; <c>FUN_00509e10</c>): picture 3, no buttons, no life, so no timers and no particle; its text the
+	/// row's string with the Local ticket's threshold where the kind names one, as the number's size, kinds 5, 6 and 7
+	/// as parameter 1, kind 8 the recent visitors as 1 and their months as 2.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> a ticket row unlisted; a life given; kinds 5 and 6 swapped; kind 7 the visitors; kind 8's
+	/// two swapped; a negative number written with its sign; a parameter's number ignored.
+	/// </remarks>
+	[TestMethod]
+	public void ATicketLinesTagStandsWithItsThreshold()
+	{
+		var strings = Enumerable.Range( 0, 192 ).Select( _ => new StringPart[] { new( "plain", 0 ) } ).ToArray();
+		strings[180] = [new( "getting ", 0 ), new( null, 1 ), new( " visitors", 0 )];
+		strings[181] = [new( "having ", 0 ), new( null, 1 ), new( " people", 0 )];
+		strings[184] = [new( "exceeding $", 0 ), new( null, 1 ), new( " profit", 0 )];
+		strings[185] = [new( "getting ", 0 ), new( null, 1 ), new( " visitors in the last ", 0 ), new( null, 2 ), new( " months", 0 )];
+		strings[186] = [new( "a high roller coaster", 0 ), new( null, 1 )];
+		var tags = new ParkTags
+		{
+			Strings = strings,
+			Thresholds = new( Visitors: 1500, PeopleInPark: 320, Happiness: 70, AtLeastThisManyHappyPeople: 90,
+				ProfitYear: -45000, RecentVisitors: 2600, RecentVisitorMonths: 7, CoasterHeight: 40, GokartExcitement: 50,
+				WaterLength: 60, MinCellsCovered: 80 )
+		};
+		var unlisted = Times( "TAG_ROW_NOT_LISTED" );
+		var kinds = Times( "TAG_TEXT_KIND" );
+		var particle = Times( "TAG_ENDING_PARTICLE" );
+
+		var said = Enumerable.Range( 102, 12 ).Select( group => tags.Said( group, 0, 1000 ) ).ToArray();
+		Assert.AreEqual( (unlisted, kinds), (Times( "TAG_ROW_NOT_LISTED" ), Times( "TAG_TEXT_KIND" )) );
+		Assert.IsTrue( said.Take( 10 ).All( tag => tag is { Row.Picture: 3, Row.Button1: 0, Row.Button2: 0, Row.Life: 0, HideAt: long.MaxValue, TimersRun: false } ) );
+		Assert.AreEqual( (10, 10), (tags.Standing.Count, tags.Made), "the list's ten, the eleventh and twelfth refused" );
+		CollectionAssert.AreEqual( new[] { "getting 1500 visitors", "having 320 people", "plain", "plain", "exceeding $45000 profit",
+			"getting 2600 visitors in the last 7 months", "a high roller coaster", "plain", "plain", "plain" },
+			said.Take( 10 ).Select( tag => tag!.Text ).ToArray() );
+
+		tags.Tick( 10_000_000 );
+		Assert.AreEqual( (10, particle), (tags.Standing.Count, Times( "TAG_ENDING_PARTICLE" )), "no life, so no end" );
+
+		var least = new ParkTags { Strings = strings, Thresholds = default( ParkGoldenTickets.Thresholds ) with { ProfitYear = int.MinValue } };
+		Assert.AreEqual( "exceeding $-2147483648 profit", least.Said( 106, 0, 0 )!.Text, "the size of the least int is itself" );
+	}
+
+	/// <summary>
+	/// <b>A park's tags write the ticket rows with its own thresholds</b> (<c>Level.DressTags</c>): Lost Kingdom's
+	/// Standard keys, 100 visitors, 200 inside, $15,000 profit, 350 visitors in 6 months, into <c>TAG_SYSTEM.str</c>'s rows
+	/// 180, 181, 184 and 185. Needs the game.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the thresholds not given; the strings not given.</remarks>
+	[TestMethod]
+	public void AParksTicketTagsReadItsThresholds()
+	{
+		GameData.Required();
+		var tags = Level.DressTags( new ParkTags(), new ParkBalance( "jungle", easyMode: false ) );
+		const string Won = "YOU'VE WON A GOLDEN TICKET!";
+
+		StringAssert.StartsWith( tags.Said( 102, 0, 0 )!.Text, Won );
+		StringAssert.EndsWith( tags.Standing[0].Text, "for getting 100 visitors to your park. Keep up the good work!" );
+		StringAssert.EndsWith( tags.Said( 103, 0, 0 )!.Text, "for having 200 people in your park at one time. Keep it up!" );
+		StringAssert.EndsWith( tags.Said( 106, 0, 0 )!.Text, "for exceeding $15000 profit this year." );
+		StringAssert.EndsWith( tags.Said( 107, 0, 0 )!.Text, "for getting 350 visitors in the last 6 months." );
 	}
 }
