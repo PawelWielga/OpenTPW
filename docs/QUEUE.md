@@ -217,19 +217,25 @@ filed the items that cite it.
   walk-away share in a park file made for it, the row's poll line and score beside the original's.
   - **Note (Q708):** the original says row 257's sample 525 (props 8, 0; response 497) on tick 19040 of Alexah's jungle
     `New Save` loaded on 19004 by her Full Simulation profile with no ticket (`q707/orig/O2/line.log`): a ready case.
-- [ ] **Q608. The draws OpenTPW leaves both-sided, against the original's face test (decode first).** From Q586
-  (`render-states.md`, "The software back-face test"). The original culls every face that reaches a batch through
-  `DrawList_AddMaterialFaces` (`0x00580530`) by `Face_KeptByWinding`; OpenTPW culls models only (`LobbyModel.DrawFlags`).
-  The UI's models go the original's same way (`DrawList_AddMesh`, `ui.md`), and `UiMesh` draws both faces of them;
-  `ui.wad` holds one mesh with two-sided pairs, `lobby.wad` 43, the advisor 7 (`q586/twins-sweep.txt`). Read whether
-  the terrain (`FUN_0056f670`), the paths, the sea, the build markers and the people's and particles' sprites are culled
-  in the original, and cull what it culls; confirm a UI model with two-sided pairs in both games.
+- [ ] **Q613. Cull what the original culls (Q608's build).** From Q608 (`render-states.md`, "Which draws the test
+  covers"). Take `DisableCulling` off `UiMesh`, `ParkGround`, `ParkPaths`, `ParkSea` and `ParkBuildMarkers`, keeping the
+  side the original keeps: for the UI, a face clockwise in the file's (x, y), y up (`lib/uiwinding.py` names the 422
+  faces that go); for the sheets, the upper side, whatever their winding here. Put `DisableCulling` on `WeatherSprites`,
+  two-sided in the original (`Batch_AddPolygon`), though its quads face the camera. Confirm on Lost Kingdom's island
+  panel (`original/lobbypanel.sh`, `q608/confirm.py`): the "1" of "x 1" with no inner edge, as `q608/orig/run-a/a-08.png`,
+  and the ground, paths, sea and markers unchanged from above (a before/after pair, `VERIFYING.md` rule 90).
   - **Note (fork watch 2026-10-21, verify-audio-ui M2):** the object window's preview is culled in both. The original puts it
     in render list 1 with diag(1, -1, 1, 1) (flag `0x200`, `0x0045bed0`; `0x0057a260`), its entries carry `0x2000000`
     (`0x0057a890`) and take `ClipToScreen` mode 2 (`ui.md`) after the same face test as every model. Ours is a `LobbyModel`
     (`ParkObjectPreview.cs:250`), culled since Q586, and by orientation keeps the same side; not photographed. Settle it with
     a preview beside the original's, a ride window's asymmetric `P` model (Lost Kingdom's `Pcoaster1` or `Pspider`). The
     advisor is the same path (`0x00468dc1`, `0x00468ded`).
+- [ ] **Q614. The island panel's "x N" is drawn larger than the original's.** Seen in Q608 (`q608/PREDICTION.txt`, "Seen,
+  not predicted"; `goldspan.py`): beside a key of the same size (the original's 432 units wide, ours 433), the original's
+  "1" stands 118 units high and its "x" 126 wide, ours 254 and 177 (`q608/orig/run-a/a-08.png`, `q608/run1/panel-1.png`).
+  Ours fits `s_X1`'s part to the control `0x1e0eb` (`IslandPanel`, 1045,191 to 1405,416). Read what bounds the
+  original fits (`UiControl_PlaceMesh`, `0x00476f10`: the node `0x00476e80` answers, `+0x78..+0x8c` through its chain)
+  and how the "x N" part is chosen, then fit as it does; confirm "x 1" beside the original's.
 - [ ] **Q144. Three hollow ride-script tests.** Found by the 2026-09-26 staleness audit, whose comment fixes now say
   what each asserts. `RideScriptWalkTests.AWalkIsCollectedOnlyOnceItHasFinished`: its second script ends on its first
   turn, so the stepper never runs and neither `WALKGET` is checked. `MorePeopleThanLanesCannotAllBeWalkedOn` asserts a
@@ -1683,7 +1689,8 @@ filed the items that cite it.
   w.At`, ~1722) is read by the console's `sprites` census only; no test reads it. (c) `Material.SetupResources` hands
   `DepthStateFor` and `RasterizerStateFor` to the device; the call itself is covered by the game run only (a device is
   needed to build a pipeline). (d) `LobbyModel`'s call of `Material.CullModeFor` through `DrawFlags` is tested; that
-  every model path goes through `DrawFlags` is not (Q608 reads which draws do not).
+  every model path goes through `DrawFlags` is not (which draws do not: `render-states.md`, "Which draws the test
+  covers", Q608).
 - [ ] **Q737. A placed voice out of range releases its output, and a loop comes back with a fresh one.** From the fork
   watch 2026-10-21 (verify-audio-ui L1). OpenTPW plays a placed voice on unheard when it is out of range
   (`audio.md:265`, a recorded gap with no queue line and no `Unimplemented.Report`). The original gives the channel up:

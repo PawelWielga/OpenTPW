@@ -9708,6 +9708,14 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   569, the rain's in its one. 7 of 8 sweep predictions held (P8, the three floats' height, missed on 3 files), all 4 of
   the original's and all 3 of ours. FileFormats `saves.md`, "The voice list"; `audio.md`, "A park file's voices".
   The build is Q612.
+- [x] **Q608. The draws OpenTPW leaves both-sided, against the original's face test (decode first).** From Q586. Decoded
+  (`render-states.md`, "Which draws the test covers"): the ground and the paths (the terrain pass's own copy of the test,
+  `0x00570084`, `0x0057020b`, `0x005708de`, `0x005709e4`), the sea, the build markers and the gates' flags (models shown by
+  `0x00425440`) and the UI's meshes are culled; people, shadows, particles, weather and the sky are not. A UI face is kept
+  when it turns clockwise in the file's (x, y): `Renderable_SetMatrix` turns y over. `lib/uiwinding.py`: 422 of `ui.wad`'s
+  6,310 faces turn away, in `s_X1`, `s_key` and `warnlite`'s root. Seen on Lost Kingdom's island panel: ours doubles the
+  "1" of "x 1" with its back wall's edge, the original does not (`q608/one-side-by-side.png`; `q608/PREDICTION.txt`,
+  P1 missed and P1b in part, recorded; P2 and P3 held in part). The build is Q613.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

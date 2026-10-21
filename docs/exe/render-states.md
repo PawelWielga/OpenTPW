@@ -70,7 +70,7 @@ is `ClipToScreen_Fpu` (`0x00579690`, `fld1 / fdiv [+0xc]`). The test answers 1 w
 `det[[x0, y0, w0], [x1, y1, w1], [x2, y2, w2]] > 0` of the clip coordinates, which is `w0 w1 w2` times the determinant of
 the projected corners: **the projected winding for every face in front of the eye**, clockwise on a y-down screen, and the
 true facing for one across the near plane, as the card's test of the clipped polygon also gives. Every model mesh goes through it
-(or the inline copy below); only the sky has none.
+(or the inline copy below); which other draws do, "Which draws the test covers".
 
 **So a face seen from both sides is authored twice**: the same three points, wound opposite ways, each with its own
 vertex-order entries and normals, so each side is lit its own way. Of the game's `.md2` files under `data/` (2,123
@@ -84,14 +84,42 @@ their lit side first and drew dim under less-or-equal. Culled, both show their l
 **OpenTPW** culls a model's faces (`LobbyModel.DrawFlags`) on the card: back faces, clockwise kept
 (`Material.CullModeFor`, `Material.KeptWinding`), which in this engine's axes keeps the original's side (Q586's rounds:
 nothing drawn inside out, `q586/runA3`). The card tests the projected corners, which is the original's test (above): no
-deviation. **Two draws do not call `Face_KeptByWinding`.** The sky (`FUN_005863c0`, from `Render_DrawView`,
-`0x00576c78`) draws through `0x00565960`, which makes outcodes (`0x00561bc0`) and clips (`0x00562c90`) and has no winding
-test, so it is two-sided, as ours is (`Sky`, `DisableCulling`). `0x00581a00` carries its own inline copy of the test
-(`0x00581b5b..0x00581c3e`, the same words `0x008c63b0..0x008c63d0`, over a plain 4x4 transform with no divide), so it culls
-too; it is reached from the node walk `0x0057b610` by `FUN_0057b8a0`, which `ModelRenderable_Draw` calls at `0x0057a8eb` (a
-model pass into the renderable's `+0x13c` texture, most likely the model shadow; not named). Still drawn both-sided here,
-each unread: the terrain (its own renderer, `FUN_0056f670`), paths, the sea, the build markers, people and particles, and
-the UI's models (`UiMesh`), which the original also sends through `DrawList_AddMesh` (`ui.md`).
+deviation. **Not every draw calls `Face_KeptByWinding`**: which do is the next section.
+
+### Which draws the test covers
+
+Q608. `DrawList_AddMesh` (`0x00581cd0`) has one caller, `ModelRenderable_DrawNodes` (`0x0057a6d6`), and
+`DrawList_AddMaterialFaces` one, `DrawList_Flush`; every other draw writes its batch itself. Read for each draw
+`Render_DrawView` (`0x00576a00`) makes:
+
+| Draw | The original | OpenTPW |
+|---|---|---|
+| Every model mesh: the park's and the lobby's models, the advisor (`ui.md`), the object window's preview | Culled, `Face_KeptByWinding` | Culled (`LobbyModel.DrawFlags`) |
+| The three dynamic-faces meshes: the build markers (`BlueprintMesh`), the sea (`WaterMesh`), the gates' flags (`FlagsMesh`), `park-engine.md` | Models: `FUN_0053d790` builds each and `0x00425440` shows it with `Model_ShowInRenderList`. Culled | Markers (`ParkBuildMarkers`) and sea (`ParkSea`) both-sided; flags (`ParkFlags`) culled |
+| The ground, and the paths on it (a path is a ground cell's texture, `park-engine.md`, "A path laid over") | The terrain pass `FUN_0056f670` carries its own copy of the test over the same words `0x008c63b0..0x008c63d0`: a cell's two triangles at `0x00570084` and `0x0057020b`, on the clipped path at `0x005708de` and `0x005709e4`; a cell writes four corners, three or none. `FUN_00570d90`, the second layer (off in the park, `textures.md`), carries the same test (`0x0057178e`, `0x0057190b`, `0x00571d76`, `0x00571e72`). Culled | `ParkGround` and `ParkPaths` both-sided |
+| The UI's meshes (below) | Culled | `UiMesh` both-sided |
+| People, their shadows, particles, weather, everything through `SpriteBatch_AddQuad` (`0x00565f90`), `0x00566220` and `Batch_AddPolygon` (`0x00565bb0`) | No test: `Batch_AddPolygon` makes outcodes (`0x00561bc0`), clips (`0x00562a70`) and writes a fan; its flag `2` only reverses the index order. Two-sided | People (`ParkGuestSprites`) and particles (`WorldParticles`, `ScreenParticles`) both-sided. Weather (`WeatherSprites`) culled, its quads turned to the camera, so it drops none |
+| The sky (`FUN_005863c0`, `0x00576c78`, through `0x00565960`: outcodes and `0x00562c90`'s clip, no test) | Two-sided | Two-sided (`Sky`) |
+
+`0x00581a00` also carries an inline copy (`0x00581b5b..0x00581c3e`, a plain 4x4 transform with no divide), reached from the
+node walk `0x0057b610` by `FUN_0057b8a0`, which `ModelRenderable_Draw` calls at `0x0057a8eb` (a model pass into the
+renderable's `+0x13c` texture, most likely the model shadow; not named): it culls too.
+
+**The ground, paths, sea and markers lose nothing seen from above.** Each is a sheet facing up, and a ray from an eye
+above such a sheet meets its upper side first, so the test drops only faces a nearer one covers. Not photographed.
+
+**The UI's meshes** are renderables: `UiControl_PlaceMesh` (`0x00476f10`) hands `Renderable_SetMatrix` (mode 1) the fit
+`UiControl_FitMatrix` (`0x00476c50`) makes, an affine matrix whose x and y scales are both positive (the part's bounds
+onto the control, then 2 / 2048 and 2 / 1536). `Renderable_SetMatrix` (`0x0057a260`) multiplies every matrix it is handed
+by diag(1, -1, 1, 1), so at the test the file's y is turned over: **a UI face is kept when its corners turn clockwise in
+the file's (x, y), y up**. `lib/uiwinding.py` counts them: of `ui.wad`'s 278 models, 1,185 meshes and 6,310 faces, 422 turn
+the other way, in 13 meshes of three models: `s_X1.md2`'s ten (24 to 50 faces a mesh), `s_key.MD2`'s two (14 each) and
+`warnlite.MD2`'s root mesh `warnlite` (both its faces; which control shows that part was not traced). `ui.wad`'s one twinned
+mesh, `worldlob`, pairs faces turned the same way, so no pair is chosen between there. The key and the "x N" are closed
+solids, so the kept faces cover the whole outline; ours draws every face in file order with no depth test, and a
+turned-away face is painted last over 15.0% of the key and 11.5% of the "x 1" (`q608/coverage.py`). On Lost Kingdom's
+island panel ours doubles the stem of the "1" with its back wall's edge, and the original does not (`q608/one-side-by-side.png`,
+from `q608/run1/panel-1.png` and `q608/orig/run-a/a-08.png`).
 
 ## The four state words a `.md2` material can get
 

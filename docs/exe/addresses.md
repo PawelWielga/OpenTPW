@@ -178,9 +178,9 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x004767e0` | Sprite op SubLocal, two operands: local minus a value | OpenTPW/World/Park/SpriteScript.cs  |
 | `0x0047682f` | SubLocal: the integer SUB for the locals past the six floats | OpenTPW/World/Park/SpriteScript.cs  |
 | `0x0047698c` | Sprite op Frame: a frame of -1 writes +0x114 = 0, hiding the sprite, and still yields | OpenTPW/World/Park/SpriteScript.cs  |
-| `0x00476c50` | | OpenTPW/UI/UiMesh.cs  |
+| `0x00476c50` | `UiControl_FitMatrix`: a UI part's bounds onto its control, then onto clip space, both scales positive (`render-states.md`, "Which draws the test covers") | OpenTPW/UI/UiMesh.cs  |
 | `0x00476e80` | | OpenTPW/UI/UiMesh.cs  |
-| `0x00476f10` | | OpenTPW/UI/UiMesh.cs  |
+| `0x00476f10` | `UiControl_PlaceMesh`: measures the part through its node chain and hands `Renderable_SetMatrix` the fit (`render-states.md`) | OpenTPW/UI/UiMesh.cs  |
 | `0x00477310` | | OpenTPW/UI/UiMesh.cs  |
 | `0x0047ed80` | | OpenTPW/UI/UiWindow.cs  |
 | `0x0047eda3` | UI_LoadModalTree: the full-screen control a modal window is loaded into, over the park's layer | OpenTPW.Tests/ParkHandTests.cs  |
