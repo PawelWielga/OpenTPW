@@ -45,6 +45,24 @@ fork watch).
 
 ## A. Bugs first
 
+**Ordered at Alexah's word (2026-10-21), after their own play of Lost Kingdom:** showing the original's art as well as it can
+be shown comes first, and improvements over the original are ON by default, each said at the site as a deviation (full
+texture depth, smoothing between ticks, flags easing between winds, a more legible font); a "faithful" graphics toggle that
+brings the original's look back comes last (Q645). First the display: Q616 (eight bits a channel by default, reversing
+Q700's 2026-10-18 choice), Q617 and Q618 (the ground's cells at different sharpness, then the paths, queues and ride
+borders; decode how the original draws and filters the ground first), Q619 (the river and the rock not darkened), Q620
+(the boundary wall, split from Q214), Q621 (the advisor's colours), Q158 (the buy screens' 3D preview), Q622 (the seaplane
+invisible), Q623 (the fountain's flash). Then what a player hits: Q624 (the map screen), Q31b (the sideshow and toilet
+windows), Q625 (the camera leaves the park), Q626 (leaving the camcorder), Q25 (its crosshair and its speed), Q51 (staff
+stacked at the staff room), Q627 (vehicles pick up nearly non-stop), Q628 (the staff click range), Q55 (staff walking on
+the spot), Q629 (a golden ticket for a poor park), Q630 (the key animation at entry), Q543 (the advisor's opening lines),
+Q27 (push scroll), Q631 (WASD and the arrow keys), Q632 (path sounds), Q633 (queue previews), Q634 (the cursor behind the
+preview), Q635 (Ctrl+click), Q419 (the hire screen's picture), Q636 (its skill meter), Q637 (the gadget's aerial), Q525
+(the price's "$"), Q638 (the tag's sparkle), Q639 (the golden ticket's centring), Q640 (the pumps' stutter), Q641 (the
+money's arrows). Last the chosen improvements: Q642 (smoothing between ticks), Q643 (flags easing), Q644 (a legible font),
+then Q645. **Alexah's decisions (2026-10-21):** note 1 reverses the 2026-10-18 choice (Q700: four bits by default); W, A, S
+and D all move the camera, and the screen shortcuts on A and S move to other free keys, said at the site (Q631). Their notes
+are in `~/.cache/tpw-harnesses/playtest-2026-10-21/notes.md`, with five screenshots.
 **Ordered at Alexah's word (2026-10-20):** the ferry, seaplane and bus made on demand (Q26c, which Q557's rest waits
 on), then the rides, shops and sideshows that run for guests (Q580, Q581), then the research screen and golden tickets
 (Q705 to Q709), then the sounds; the optional sound measurements Q575, Q576 and Q578 stand at the queue's end.
@@ -56,6 +74,200 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
+- [ ] **Q616. Eight bits a channel is the default: TEXTURE32 on.** From Alexah's play test, 2026-10-21
+  (`playtest-2026-10-21/notes.md` note 1). **Alexah (2026-10-21): this reverses their 2026-10-18 choice (Q700: four bits
+  by default, an option keeps eight).** The four-bit cut beside the crisp UI is unsettling; improvements over the
+  original are on by default. `Level.Texture32` reads the start's detail file once, and `TEXTURE32 1` keeps eight (done
+  in Q700, `docs/history/queue-done.md:8004-8020`); the shipped presets set neither, and the original itself stores `v
+  >> 4`, A4R4G4B4 (`textures.md`; `boot.md:29`). Make eight the default, a key in the detail file (or an option)
+  bringing the original's four back, which Q645's toggle will also set. Say the deviation at the site, in `textures.md`
+  and in the option's text. Q517 (loading screen, pointer and letters, not cut) and Q518 (the 16-bit display) stand.
+  Confirm: the gate's ground and the sea at Q490's camera B shot with the default and with the cut, beside the
+  original's frame; the log's line for the mode; Q717's cost figure is now the cost of the option, not of the default.
+- [ ] **Q617. The ground's cells are not drawn at one sharpness. Decode first.** From Alexah's play test, 2026-10-21
+  (note 5, shots 1 to 3; PRIORITY: show the original as well as we can). The ground shows square cells: most blurred, a
+  few beside them crisp, a hard seam between (shot3: a crisp grass cell beside blurred ones at the gate); worst at the
+  gate. The original is blurry in places too (the gauge faces, QUEUE:1413; `hud.md:216`), and its texture filter values
+  are "not decoded" (Q29, QUEUE:1963-1964), so decode first: how the original draws a ground cell and which texture,
+  size, mip level and filter each gets, read in `ParkGround` and the terrain pass (`park-engine.md:61`), then shoot the
+  same view in both games (Alexah's shot beside `original.sh`'s frame). Open items that could each be part of it (none
+  is tied to the squares: inferred): Q29 (ours 16x anisotropic, full mips), Q519 (four mip levels), Q398 (the other
+  diagonal of 2,708 cells), Q700's cut (Q616 now turns it off by default). Say what differs, then match the original's
+  look; a difference kept on purpose is said at the site. Confirm: a screenshot of the gate beside the original's, the
+  seam gone or the same, and the census of what each cell was given.
+- [ ] **Q618. The paths, the queue lines and the ride borders are blurry. After Q617.** From Alexah's play test,
+  2026-10-21 (note 5, shots 1 and 2). The paths are blurry in both screenshots, and the queue lines and ride borders
+  likewise. Q617's decode of how the original draws and filters its ground is read first: whether paths, queues and
+  borders are the ground's own texture or separate geometry is not read here (decode first, do not guess). Build what it
+  says; confirm a path, a queue and a ride's border beside the original's frame, same camera.
+- [ ] **Q619. The river, its features and the rock at the back are not darkened on unbought land. Decode first.** From
+  Alexah's play test, 2026-10-21 (note 39, shot5). Only the ground around them is half lit (Q482 halves ground cells
+  only, `docs/history/queue-done.md:7612-7627`; the terrain pass halves a cell's corner light where `mFlags` has `0x40`
+  and not `0x80`, `park-engine.md:61`); the river, its banks and the big rock are models and stay at full light, so they
+  look cut out. Whether the original darkens those models is not documented: read the model pass for any such dimming,
+  and the original's frame of the same view. If it does not, the unlit river is the original's, and this item ends as a
+  note. Confirm: shot5's view beside the original's.
+- [ ] **Q620. The boundary wall between the park and the unbought land is not drawn.** From Alexah's play test,
+  2026-10-21 (note 40, shot5), split from Q214. The wall (track types 25 and 12 from `Hoardings.sam`, ho_fos1.MD2
+  anchored at (43,17), (51,17)) is written into the cells and neither drawn nor counted (QUEUE:481-492); the original
+  draws it (Q469: the wall right of the gate in `q469/orig/a-4-cam180.png`, open grass in `q469/run1/2-hoarding.png`).
+  The dark line Alexah sees is the half-lit ground's edge (inferred). Draw the wall and count what is not;
+  `FreshParkBoundary.Apply` throws at its 64th entry where the original stops (`0x00532517`), which Q214 still owns.
+  Confirm: the gate's view beside the original's, with the census of wall pieces.
+- [ ] **Q621. The advisor's colours: hard hat, gloves, safari hat, the scientist's white hair. Decode first.** From
+  Alexah's play test, 2026-10-21 (note 7, shot5). The docs call our hat paler than the original's, "lit past his
+  textures, set against his gloves" (`advisor-park.md:696`, `STATUS.md:40`), yet shot5 shows a saturated yellow hat and
+  bright white gloves; gloves, safari hat and the scientist's hair are named nowhere. Cause not read: the advisor's own
+  light (`AdvisorModel`), the texture cut, or the normals (Q219, QUEUE:528-533). Measure each part's colour on the
+  original's frame and ours (same pose, same advisor), then fix the light. Confirm: the four advisors' frames beside the
+  original's, the numbers predicted first.
+- [ ] **Q622. The seaplane is invisible landing, picking up and dropping off.** From Alexah's play test, 2026-10-21
+  (note 37). Its sounds play and it works otherwise. Q583 placed the seaplane at its stop
+  (`docs/history/queue-done.md:9583-9600`) and Q26c makes vehicles on demand; sound-only vehicles use
+  `RIDE_EFFECT_SOUND_NO_PLACE` (QUEUE:139-143). Not reproduced by the drafter: find whether the thing is created and not
+  drawn (model, track, height or culling) with a `guests` / `rides` census at a seaplane arrival, then draw it. Confirm:
+  a screenshot of the seaplane on the water beside the original's.
+- [ ] **Q623. The round fountain flashes a couple of times when first placed.** From Alexah's play test, 2026-10-21
+  (note 23). Nothing in the docs or the queue names it (the only fountain hits are sounds, QUEUE:170 and :1708); not
+  reproduced. Film the placement (`record.sh`) and count the frames: which draw (placement preview, the object's first
+  frame, an effect) shows twice. Compare the original's placement. Confirm: the frame pair, then the same film with the
+  fix.
+- [ ] **Q624. The map screen is badly broken.** From Alexah's play test, 2026-10-21 (note 26). Known: no overlay, no
+  terrain colours, its zoom and scroll "not decoded" (`source/OpenTPW/UI/Park/ParkMapScreen.cs:22-40`; Q450 (2),
+  QUEUE:2398-2403). "Badly broken" is wider than that and the note lists no faults, so first take the screen's faults on
+  a screenshot beside the original's (stream `0x00774da0`: viewport, scroll and zoom buttons, six layer switches, the
+  map pauses the game: `hud.md:1842-1860`, `:1958`), list each, and file each against Q450 or here. Build the viewport,
+  the zoom and the scroll first. Confirm: the map open in both games, the same park.
+- [ ] **Q625. The park camera can leave the park, to the map's edge and the ocean. Decode first.** From Alexah's play
+  test, 2026-10-21 (note 36, shot4). `ParkOrbitCameraMode` adds to the point of interest with no bound
+  (`ParkOrbitCameraMode.cs:224-226`). The original's pan limit is not documented (only the zoom clamp [70,130],
+  `park-engine.md:349-358`): decode the POI clamp in the camera update (`FUN_0042b1c0` and its pan sites, `0x0042ba37`,
+  `0x0042ba92`) and measure it in the original by holding the pan, then build it. Confirm: the pan held against each
+  edge in both games, the same stopping cell.
+- [ ] **Q626. Leaving the camcorder leaves the camera at an angle that is no multiple of 45 degrees.** From Alexah's
+  play test, 2026-10-21 (note 34, shot2). The original keeps a saved point of interest and a saved rotation and puts
+  them back on leaving (`park-engine.md:379`; Q48 decoded the leave, QUEUE:1924-1926); ours hands back the walk's yaw,
+  "need not be a multiple of pi/4" (`ParkOrbitCameraMode.cs:221-222`). Put the saved point and rotation back, as the
+  original does (split from Q25). Confirm: enter and leave the camcorder after turning in it; the orbit's point and yaw
+  equal the saved ones in a log line, a screenshot beside the original's.
+- [ ] **Q627. Guests are picked up and dropped off by the vehicles almost non-stop. Measure first.** From Alexah's play
+  test, 2026-10-21 (note 38). The arrival pace is decoded and built: the first load 126 s in, the next about 150 s after
+  the last guest got off (`docs/PLAYER-GAPS.md:236-253`, Q68b); the leavers' pick-up rate is not measured (map). The
+  vehicle is chosen by crowd size (under 36 the bus, to 60 the seaplane, beyond that the ferry), one guest per sweep.
+  Count the vehicle's visits over ten park minutes in Lost Kingdom with a crowd, and read the leavers' summons
+  (`STATUS.md:40`, `PeepState.AtTheBusStop`, `PLAYER-GAPS.md:228-231`) against the original's own (decode first).
+  Confirm: the visit times in both games.
+- [ ] **Q628. A staff member's click range is very large. Measure first.** From Alexah's play test, 2026-10-21 (note
+  20). Q468 built the original's pick: a circle about the picture's left edge, radius squared `0.0002 x (span across^2 +
+  span down^2)` (`0x0070203c`), the nearer sprite wins (`park-engine.md:1773-1790`), so a large range may be faithful.
+  Measure the radius ours uses against the formula at one staff sprite, and the nearer-wins order with two close (the
+  note's case); if it matches, say so and file a deviation to narrow it only if Alexah asks. Confirm: a pick census of
+  two staff stood near, in both games.
+- [ ] **Q629. A poor park won a golden ticket for happiness.** From Alexah's play test, 2026-10-21 (note 22). The
+  original's test is local 2: average happiness above `Happiness` and people in the park above
+  `AtLeastThisManyHappyPeople` (`ride-operation.md:3866`); ours is `source/OpenTPW/World/Park/ParkGoldenTickets.cs:89`.
+  The nearest known cause is Q148's average counting guests the original leaves out (QUEUE:267-276; inferred).
+  Reproduce: take the average, the guest count and both thresholds at the award; compare with the original's count on
+  the same save. Confirm: a log line with each number, predicted first.
+- [ ] **Q630. The key animation at park entry is not seen. Decode first.** From Alexah's play test, 2026-10-21 (note 2).
+  Built for Full Simulation from the lobby: effect 98 at the price
+  (`source/OpenTPW/UI/FrontEnd/Screens/IslandPanel.cs:325-337`; the original `lobby.md:55, :140-141, :531`, game type 0
+  only), yet nothing is seen. Inferred, not tested: the puff is owned by the island panel (`IslandPanel.cs:333-334`)
+  which message 6 hides at once (`lobby.md:274`), and owned effects hide with their window (`lobby.md:153`); the
+  original draws effects over every window (`lobby.md:148-157`). Test it (spawn count and the frame after) and Q61's
+  fly-in fade too. Confirm: a frame at entry in Full Simulation beside the original's.
+- [ ] **Q631. WASD scroll the camera, the arrow keys' meaning settled first (notes 6 and 11).** From Alexah's play test,
+  2026-10-21 (notes 6 and 11). **Alexah (2026-10-21): W, A, S and D all move the camera; the screen shortcuts on A and S
+  move to other free keys, said at the site.** Now only W (forward) and D (right) scroll, nothing back or left, a said
+  deviation (`ParkOrbitCameraMode.cs:228-239`; `hud.md:2768-2770`). The arrow keys do not dolly in and out, where the
+  mouse wheel does (`ParkOrbitCameraMode.cs:208-209`). The docs conflict on the original's arrows: they bind pan, with
+  the keypad (`hud.md:2769`; `park-engine.md:411`, "the keypad's 8, 2, 4 and 6"), or they are the zoom's Up and Down
+  (QUEUE:1930; `hud.md:1043`, bits `0x20`, `0x40`, measured in camcorder mode). Settle first, from the camera table at
+  `0x00748158` and the original driven by key, what each arrow does in the orbit view (turn on Left and Right is
+  `park-engine.md:391-393`). Then build: WASD pan on the camera's axes, the arrows as the original's; find the free keys
+  for the all-items and all-staff shortcut rows (`ParkFrontEnd.ShortcutRow`) and say the move at the site and the
+  website's key list. A pan ends a locator's follow (`park-engine.md:405-410`). Confirm: each key held in the running
+  game, the point moved, a log line.
+- [ ] **Q632. Building a path makes no sound. Decode first.** From Alexah's play test, 2026-10-21 (note 9). No doc,
+  queue line or counted gap names a laying sound; only the demolish sound `0x96`-`0x99` by size (`park-engine.md:2599`;
+  Q38, QUEUE:1978-1982, counts the demolish side) and the refusal `0xaf` are known. Find in the original's path tool
+  what plays on a click that lays (by `watch.sh` / the disk driver), then build and count what is not found. Confirm:
+  the sound in the original's mix and in ours (`verifying-audio-by-capture.md`).
+- [ ] **Q633. Building a queue shows the path tool's previews, not the queue's.** From Alexah's play test, 2026-10-21
+  (note 10). The queue tool has its own squares and cursor (`STATUS.md:29`; `hud.md:2955`); not reproduced by the
+  drafter; `CARRY_PREVIEW_MARKERS` and Q541 (QUEUE:1523) are the nearby code. Reproduce from the Queue button and from a
+  ride's hand-over, find which marker set is drawn, fix it. Confirm: a screenshot beside the original's with the tool
+  log.
+- [ ] **Q634. In the shop and ride windows the cursor is hidden behind the 3D model preview.** From Alexah's play test,
+  2026-10-21 (note 15). Nothing in the docs or queue; not reproduced. Find the draw order of the preview's pass against
+  the pointer's (the pointer is drawn last in the original: decode first where). Confirm: a screenshot with the pointer
+  over the preview.
+- [ ] **Q635. Ctrl+click does not keep the same building for continuous placement. Decode first.** From Alexah's play
+  test, 2026-10-21 (note 16). The original's Ctrl+click on a placed object buys another copy of the item into the cursor
+  (`park-engine.md:3477`; help row "Hold CTRL and click to buy another", `park-engine.md:4744`; `FUN_004879d0`, refusal
+  sound `0x1D` if dearer than the balance, Q402, QUEUE:1120-1125, "Clone has nothing behind it"); the Clone binding
+  exists only as a test (`source/OpenTPW.Tests/InputBindingTests.cs:105`). Whether Ctrl while placing keeps the item is
+  not documented: decode first what the original does with Ctrl on a click while an item is in the cursor and on a
+  placed one, then build Clone. Confirm: both games, a ride cloned twice, the money and the log line.
+- [ ] **Q636. The hire screen's skill meter is thicker than the original's.** From Alexah's play test, 2026-10-21 (note
+  19). The bar is control `0x2e8`, (1376,235)-(1592,274), 40 tall, 154 down a row (`hud.md:750`); built (`STATUS.md:27`,
+  `hud.md:2719`); our height is not measured (inferred). Measure it on a frame against 40 virtual units and the
+  original's, then correct. Confirm: the hire screen beside the original's.
+- [ ] **Q637. The gadget's red aerial jumps between positions where the original animates it.** From Alexah's play test,
+  2026-10-21 (note 24). A documented deviation with no queue line: the top and the later tags are put down at once,
+  where the original plays them down by streams `0x007502f0` and `0x00752e48` (`advisor-park.md:836, :841, :891`;
+  `source/OpenTPW/UI/Park/ParkGadget.cs:62-68`; `hud.md:249-257`). Build the two streams. Confirm: a film of closing a
+  tag and of a tag arriving, beside the original's (`record.sh`).
+- [ ] **Q638. A tag leaving the gadget does not sparkle before it goes.** From Alexah's play test, 2026-10-21 (note 27).
+  The original puts effect `0x5b` over the tag five seconds before its end, shown and hidden with the tag
+  (`advisor-park.md:892`; `hud.md:1308-1313`); here it is counted, `TAG_ENDING_PARTICLE`
+  (`source/OpenTPW/World/Advisor/ParkTags.cs:359`). Q463 owns `0x5a` and the move and hide of `0x5b` (QUEUE:1235-1241):
+  build them together; the drafter found no doc that calls the effect a sparkle (inferred). Confirm: a tag's last
+  seconds filmed beside the original's.
+- [ ] **Q639. The golden ticket's screen is not centred with the game maximized in a window.** From Alexah's play test,
+  2026-10-21 (note 29). It sits off to the right. The virtual 2048 x 1536 screen scales to the window without
+  letterboxing at 4:3 and anchors by thirds (`hud.md:964-975`); nothing covers a maximized, non-4:3 window (inferred:
+  the screen's anchor rule is the suspect). Reproduce at 2560 x 1440 and 16:9, find the anchor, and say what the
+  original does at a non-4:3 mode (decode first). Confirm: the ticket screen at two window sizes.
+- [ ] **Q640. The research pumps' animation stutters.** From Alexah's play test, 2026-10-21 (note 30). Q705 built them
+  on `Time.Delta` at 30 passes a second, a said deviation (`hud.md:701-703`); the original steps once per drawn frame,
+  30.00 passes a second and 12-13 drawn frames a second under the 30 fps cap (`hud.md:614-619`), so the stutter may be
+  the original's rhythm. Film both at the same state; if ours differs, fix it, if not, this is Q642's (smoothing between
+  ticks, a chosen improvement). Confirm: frame times of the pumps in both films.
+- [ ] **Q641. The money readout lacks its up and down arrows for the month's profit or loss. Decode first.** From
+  Alexah's play test, 2026-10-21 (note 31). The control is `0x31`, `FUN_004a0e30`: frame 1 when last month's cash in
+  (`+0x1fc94`) is below total costs (`+0x1f5a4`), "likely the red down arrow", which picture each frame is "not
+  established" (`ride-operation.md:3809-3811`, `addresses.md:278`). Nothing in the docs says there is a green up arrow.
+  Find the control's sprite bank and frames, and the original's frame with each state; then build, counted where unbuilt
+  (`ParkGadget.cs:80, :589-598` says no history is kept, which Q385's rings may have outdated: inferred). Confirm: a
+  month ending in profit and in loss, in both games.
+- [ ] **Q642. Smooth the animations between ticks.** From Alexah's play test, 2026-10-21 (note 13). Rides, the bus and
+  perhaps the water look 30 fps or less. The original steps at a fixed 31 ms, about 32 a second (`boot.md:165`): the
+  track rides every tick, the flying cars and sprite every second tick, 62 ms (`boot.md:173-174`), and clips advance in
+  31 ms ticks (`park.md:806`); the reference run is under a 30 fps cap (`CLAUDE.local.md`). Whether the original
+  interpolates a drawn frame is not stated: decode first. Ours already interpolates guests between 248 ms steps
+  (`STATUS.md:31`) and the sea moves on `Time.Delta` (`queue-done.md:7705-7706`). **Alexah (2026-10-21): improvements
+  are on by default.** Interpolate drawn poses between ticks for rides, vehicles and the water; the logic's ticks stay
+  at the original's rate. A deviation said at the site. Confirm: frame-to-frame pose deltas on a ride and the bus,
+  before and after, the tick log unchanged.
+- [ ] **Q643. Flags ease between wind directions.** From Alexah's play test, 2026-10-21 (note 14). The bus stop flags
+  (built by Q493, `queue-done.md:7705-7712`) take `ParkWeather.WindDirection` and snap; the original's flags take
+  `mWindDir` straight, which `FUN_00512f00` moves by `(rand % 90) - 45` at each change of weather
+  (`park-engine.md:4170-4172`, `weather.md:61`), so its flags jump too. **Alexah (2026-10-21):** an eased turn,
+  `Time.SmoothingFactor`, on by default. A deviation said at the site. Q30 (QUEUE:1968) looks stale beside Q493
+  (inferred; check and tick). Confirm: the angle logged across a weather change, a few frames.
+- [ ] **Q644. A more legible font on the hire and buy screens.** From Alexah's play test, 2026-10-21 (note 28). The
+  `.bf4` fonts are drawn faithfully (`boot.md:12`; Q377 and Q378 letter the lists in font 7 at the factories' heights,
+  `queue-done.md:6955, :6962`) and are hard to read. **Alexah (2026-10-21): a more legible font is an improvement, on by
+  default.** Choose a face and size that keep each control's box (decide with Alexah on a sheet of two or three), and
+  render those two screens first; Q213 (QUEUE:478) and Q614 (QUEUE:238) are the nearby lettering items. A deviation said
+  at the site and on the website. Confirm: both screens beside the original's, every string fitting its box.
+- [ ] **Q645. A "faithful" graphics toggle brings the original's look back.** From Alexah's play test, 2026-10-21
+  (decisions, last in the order). One option, off by default, that turns every improvement of this batch off at once:
+  four bits a channel (Q616), the original's rate of animation (Q642), flags' jumps (Q643), the original's letters
+  (Q644), and whatever Q617 to Q621 leave as a chosen difference. Each improvement reads one switch, set at one place
+  (rule 9); say it in the option's own text and at the site. Confirm: a frame pair with the toggle on and off at the
+  gate, the on frame matching the original's.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
@@ -274,6 +486,8 @@ filed the items that cite it.
   established, which the disassembly does not bear out. Build the filter once for both, and for `HeadingForExit`'s
   change of mind when it is built. Confirm: the Belly Bounce full, the music level and the gauge read before and
   after, predicted first; a screenshot of the gauge.
+  - **Note (play test 2026-10-21, note 22):** a poor park won a golden ticket for happiness; Q629 reproduces it, this
+    item's guest count is the nearest known cause (inferred).
 - [ ] **Q150. Scripts and the thing sweep take a frame's ticks in two loops, where the original takes both per tick.**
   Found by the 2026-09-26 staleness audit. The original's park loop runs the scripts (`0x0054f56b`) and the thing
   sweep (`0x0054f7bb`) inside one loop over the frame's ticks. `ParkRides` and `ParkPeople` each loop over
@@ -409,6 +623,10 @@ filed the items that cite it.
   From Q188: the buy screen's panel is the object window's preview (`ParkObjectPreview`, which wants a placed thing
   today: give it an item); in the original it is (437,162) 360 by 363. The footprint picture at its lower left is
   built (Q233b) and is drawn in front of the model; the name row `0x1ec` above it is not built.
+  - **Note (play test 2026-10-21, note 8):** the buy screens show no 3D preview, a black panel. Q158's panel is the
+    object window's preview, (437,162) 360 by 363 (QUEUE:408-411); the object window's preview is built (Q188) but
+    `ParkObjectPreview` wants a placed thing (QUEUE:409). Q450 (1) is the buy stats panel (QUEUE:2398-2402): settle
+    there which of the two owns the buy screen's picture.
 - [ ] **Q159. `SdtArchive.GetFile` matches a truncated name the wrong way round.** Found by the 2026-09-26 staleness
   audit. It tests `x.Name.StartsWith( name )`, the stored name against the one asked for. A `.sdt` name field is 16
   bytes and a longer name is cut to fit, so asking for "TP SCREECH 11.mp2", stored as "TP SCREECH 11.m", never
@@ -491,6 +709,9 @@ filed the items that cite it.
   anchors (43,17) and (51,17), at 7 pixels right of the gate in `q494/orig/a-scan.log`); ours counts
   `PICK_OBJECT_MARCH_TRACK_THING` on every cell of kind 11, 12, 16, 17 or 25 and answers the ground there. Once the
   hoarding is drawn, `ParkPicking.CandidateOn` asks its model first (`FUN_0053bf30`'s `+4`).
+  - **Note (play test 2026-10-21, note 40):** the generated wall between the park and the unbought land is invisible;
+    its border shows as a dark line. Moved to Q620 so the display items come first; the costume and emitter gaps here
+    stay.
 - [ ] **Q215. The park advisor's tick: three paths neither built nor counted, and the original never watched.** Found
   by the 2026-10-04 review (`u5-advisor-door-2`, `-3`, `-9`). `FUN_0059a550` polls a metadata row each tick
   (`FUN_0059c680( 1 )`); `FUN_0059b620` posts a message after `Advisor_SayResponse` (`FUN_0040f740`, `FUN_0040fb10`,
@@ -1171,6 +1392,8 @@ filed the items that cite it.
     `0x00475a10( 0x0074f758, slot )` with the slot by role from `0x0049bb10` (5, 6, 4, 7, 8), the handle kept at
     `[0x007ca310]`, then `0x004755d0( handle, 8, 8.0f )`. The facing and frames 0 to 7 are inside the sprite script
     `0x0074f758`: not read.
+  - **Note (play test 2026-10-21, note 18):** the hire screen shows no staff picture. Figure made at `0x0049bb4a` to
+    `0x0049bb64`, sprite script `0x0074f758`, frames 0 to 7 (QUEUE:1170-1173).
 - [ ] **Q404. A park six months in the red ends.** From the fork review 2, 2026-10-16
   (`verify-economy-guests-paths.md` L4, M2). Counted, `BANK_PARK_ENDS_IN_THE_RED`. What the end does is
   `ride-operation.md`, "The end of the park": world state 4, the end screen, `VAR_BREAKSTAT` 1 on every ride guests
@@ -1438,6 +1661,8 @@ filed the items that cite it.
   usual colours (`orig/a-fee.png` beside `run2/3-reloaded-fee.png`). Seen, not decoded: read the spinner's text
   (`hud.md` names the money skin `FUN_00490250`, "$ 75" and "-$ 11750" on the training screen) and the cash display's
   draw, then letter both as the original does. Confirm by the two frames at one fee and one balance under nought.
+  - **Note (play test 2026-10-21, note 25):** the ticket price box shows "20", not "$20". The original letters UITEXT
+    `0x1c1` "$ " (`hud.md:3294`; QUEUE:1436).
 - [ ] **Q527. The gadget's date: the original letters it month.day.year with full stops.** From Q526
   (`q526/side-by-side.png`): on 10 January 2002 the original's gadget reads "1.10.2002" (`orig/a-2-loaded-gadget.png`,
   the poll's day word 10 at that moment), where ours letters .NET's short date, "1/6/2002" on 6 January
@@ -1553,6 +1778,8 @@ filed the items that cite it.
   nothing there. Find the poster (a post of message 0 at the world's setup, or the park's first tick), whether an
   Instant Action park made with no file and a loaded park post it too, and what sample 1's 31 s is. Then build it.
   Confirm: a fresh park's first seconds in both games, the record and a frame.
+  - **Note (play test 2026-10-21, note 3):** the advisor does not say his opening lines in a fresh park. Nothing here
+    posts message 0 on tick 1 (`map.md`; Q543 is decode first and unstarted).
 - [ ] **Q547. The cursor Up and Down keys step an object window.** From Q31. The base window proc `0x0048d200` takes key
   down `0x2600` and `0x2800` to `0x0048cbe0` and `0x0048caf0` (`hud.md`, "The shop, sideshow and ride windows"), which
   apply and step to the next or the previous object of the class; no object window here hears a key. Build it for the
@@ -1833,6 +2060,9 @@ filed the items that cite it.
   `Input.Right` into `Step`. `park-engine.md`, "Walking on the ground is swept against the cell edges", decodes the sweep by two velocities but not the
   keys. Remove the strafe. Confirm: press the strafe key, the stand position in the `camcorder` census
   does not move sideways, screenshot.
+  - **Note (play test 2026-10-21, note 33):** Alexah felt the strafe as part of an arcade feel; see Q25's note. Q631
+    decides which of A and D remain in the orbit view; the camcorder's A and D stay strafe-free (the original has none).
+    (Inferred from the notes: Alexah's WASD request is stated for the camera scroll, notes 6 and 11, not the camcorder.)
 - [ ] **Q18. The advisor draws in front of the dimmed screen.** `Level.Render` draws the HUD, then
   the overlay pass with the advisor. Pausing does not hide him either; only the options screen's quiet stop takes him off (`ui.md`, "Pausing him"). Draw the
   dimmer over him, or hide him while such a window is open. Confirm: screenshot with the buy screen open.
@@ -1935,12 +2165,19 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   click on a hoarding (617, 378), and one at (700, 450) or (617, 500), left the pick up (the no-entry cursor, seen
   at (617, 500)); one at (512, 420) or (450, 450) dropped it back to the orbit's mode `0x6fea10` with no first person;
   one on the path inside the gate (290, 395) stood the viewer there.
+  - **Note (play test 2026-10-21, notes 32 and 33):** the camcorder button drops straight onto the ground with no
+    crosshair to choose where; the camcorder strafes and feels like a fast arcade game with a lazy camera. The crosshair
+    is this item's own text (cursor 0x13, QUEUE:1923-1926), the speed is the "chosen 40, the original's 21.8"
+    (QUEUE:1927-1930), strafing is Q17 (QUEUE:1832). Note 34 (the camera after leaving) is split into Q626.
 - [ ] **Q27. Pushing the mouse at the screen edge does not scroll.** The "push scroll" option exists and
   is read by nothing. `ParkOrbitCameraMode.Update` scrolls from keys only. Decode the camera
   binding table at `0x00748158` (`park-engine.md`, "The park camera"), then build.
   From Q440 (`park-engine.md`, "The follow"): the original pans at the edge only with `[0x0078d910]` clear, an Options
   toggle (written at `0x004a3882`, control `0x1d4c9`); the update zeroes the pointer's terms when it is set. Which of the
   Options screen's rows it is, and whether it is the "push scroll" row, is not read.
+  - **Note (play test 2026-10-21, note 4):** Alexah finds the game unplayable without edge scrolling; push to scroll
+    does nothing. The original pans only with `[0x0078d910]` clear (`park-engine.md:412`); nothing here reads the option
+    (QUEUE:1938-1939).
 - [ ] **Q28. Renaming parks and rides.** The save carries a name per park (`saves.md`, the `gms.dat` theme record's park name). No rename
   control exists; signs read fixed names (`ParkFixedItems.BuildSign`, `ParkObjects.BuildSign`,
   `LobbyIsland.DisplayNames`). Decode where the original edits the name and what it writes, then build the
@@ -2034,11 +2271,17 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   and from a sale) takes the one back. Neither half is built, and all three sites count `REST_AREA_OCCUPANCY`. Decode
   what the staff-room script does with `VAR_STAFFIN`, and whether a resting member of staff is hidden (entering state
   3 frees the sprite). Confirm: a guard resting, `rides` showing the room's variable.
+  - **Note (play test 2026-10-21, note 35):** staff never go into the staff room and vanish; they stack at its entrance.
+    Q326's photograph shows the guard at the door (`ride-operation.md:2957-2958`); whether a resting member is hidden is
+    the decode this item leaves (QUEUE:2034-2036).
 - [ ] **Q55. A member of staff going idle queues no stand.** Found by Q36's review. The original's state-0 setter
   queues animation 3 every time (`FUN_005054d0` case 0, through `FUN_004fa460`: `PUSH 3`, `FUN_004217f0`);
   `Staff.AnimationFor` answers nothing for `Idle`, so a member who stops keeps the cycle they had - a guard put out of
   a sold rest area walks on the spot. Check every state-0 entry the original makes against the kinds' own sprite
   scripts before adding it. Confirm: a guard walking, then idle, `guests` showing the set change, photographed.
+  - **Note (play test 2026-10-21, note 21):** staff sometimes walk in place. Q55's guard put out of a sold rest area is
+    one cause (QUEUE:2037-2041); the note names no case, so confirm in the play which others there are (Q281, QUEUE:839,
+    is the other known one).
 - [ ] **Q52. A rider on a thing without flag `0x20` is hidden in the original.** Found by Q36's decode. Admission
   tests the object's flag bit `0x20` (`0x0050212b`) and, without it, destroys the rider's sprite (`0x00502147`);
   OpenTPW never hides a rider. Every visitable thing in Lost Kingdom's save carries the bit, so nothing there shows
@@ -2077,6 +2320,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   closes on the gate, and a cancel lifts it. Counted as `LOBBY_FLY_IN_FADE`. The ease is per pass, not per second:
   convert it through `Time.SmoothingFactor` and say so (rule 10). Confirm: `step` into the flight, screenshots at
   three radii with mean brightness falling, then Escape and the brightness back within a second.
+  - **Note (play test 2026-10-21, note 2):** no golden key animation at entry; the key puff is built
+    (IslandPanel.cs:325-337`) and filed as Q630.`
 - [ ] **Q62. What View the online world does offline. Decode first.** Found by Q41's decode. `IslandPanel_Callback`'s
   case for button `0x1e0e9` (`0x004b8c18`-`0x004b8c2f`) calls the island camera's `+0x20`, its deactivate
   (`0x005e1bd0`, which Ghidra names `IslandLobby_ViewOnlineWorld`), and then the online-world child's `+0x1c`, with no
@@ -2186,6 +2431,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     100) and prize (`+0x188`, 0 to 10000) only when `NonWinnableSideshow` (`+0x10c`) is 0, which no shipped `.sam`
     sets (that branch is dead by content); apply to all is `0xa0a9` with mask `0x100`, the same-item rule. Ride: the
     speed, duration and capacity controls and the apply `0x004af440`.
+  - **Note (play test 2026-10-21, notes 12 and 17):** a click on a sideshow, and on a toilet, opens no window. Counted
+    `SIDESHOW_WINDOW` and `FEATURE_WINDOW` (`source/OpenTPW/World/Level.cs:2732-2733`); `docs/PLAYER-GAPS.md:95`.
 - [ ] **Q32. Graphics tiers.** `Level` reads the detail files (`low.sam`, `med.sam`, `high.sam`) for `GameOptions.PARTICLEDENSITY`
   and `NUMKIDS` (the kid and staff bank caps) and for three `GraphicalOptions.*` keys: `LIGHTING` (a counted no-op),
   `TEXTUREQUALITY` (the sea's and the flags' folder) and `PROCEDURALTEXTURING` (the ground's tile size). `SPRITESHADOW` is read too (Q480: medium's silhouette built, the own
