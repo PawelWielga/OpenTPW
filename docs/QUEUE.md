@@ -48,7 +48,7 @@ fork watch).
 **Ordered at Alexah's word (2026-10-21), after their own play of Lost Kingdom:** showing the original's art as well as it can
 be shown comes first, and improvements over the original are ON by default, each said at the site as a deviation (full
 texture depth, smoothing between ticks, flags easing between winds, a more legible font); a "faithful" graphics toggle that
-brings the original's look back comes last (Q645). First the display: Q616 (eight bits a channel by default, reversing
+brings the original's look back comes last (Q645). Q647 first (a console.log per launch, Alexah 2026-10-22, for the play-test fixes after it). Then the display: Q616 (eight bits a channel by default, reversing
 Q700's 2026-10-18 choice), Q617 and Q618 (the ground's cells at different sharpness, then the paths, queues and ride
 borders; decode how the original draws and filters the ground first), Q619 (the river and the rock not darkened), Q620
 (the boundary wall, split from Q214), Q621 (the advisor's colours), Q158 (the buy screens' 3D preview), Q622 (the seaplane
@@ -74,6 +74,17 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
+- [ ] **Q647. Every launch writes `console.log`, the one before kept as `console-prev.log`.** Alexah, 2026-10-22, after
+  the play test's console was lost to a short terminal scrollback: a log file for comparing two runs of one build and for
+  bug reports from other machines. **Alexah (2026-10-22): in the game folder beside `save/`; where that cannot be written
+  (a Program Files install), the user's own data folder (`~/.local/share/OpenTPW`, `%AppData%\OpenTPW`).** At start,
+  rename an existing `console.log` to `console-prev.log` (replacing it), then write everything the process prints, stdout
+  and stderr (`Logger`'s lines, the debug console's `[dbg]` replies, exceptions), with the build's commit and the start
+  time at the top; what is printed before the game folder is found is held and written once it is. An environment
+  variable `OPENTPW_LOG_DIR` puts the two files elsewhere: every harness and test run sets it to its own run folder, so
+  a run never rotates Alexah's own logs away (add it to `parkrun.py` and the desk recipes, `docs/TOOLING.md`). No
+  change to what is drawn. Confirm: two launches, the first's file now `console-prev.log`, the second's `console.log`,
+  both whole beside the terminal's output; a harness run leaves the game folder's pair alone.
 - [ ] **Q616. Eight bits a channel is the default: TEXTURE32 on.** From Alexah's play test, 2026-10-21
   (`playtest-2026-10-21/notes.md` note 1). **Alexah (2026-10-21): this reverses their 2026-10-18 choice (Q700: four bits
   by default, an option keeps eight).** The four-bit cut beside the crisp UI is unsettling; improvements over the
@@ -275,17 +286,6 @@ filed the items that cite it.
   is `0x005ed770`, with `0x00599800`), and `FUN_004ccdf0` and `FUN_004c81b0`, which the project holds no function at
   (`STATUS.md`, `WORKS.md`, `TOOLING.md`). Read each against the listing; correct the doc or the comment, or say why the
   citation stands (`saves.md:2468`'s `0x00544154` is a four-letter tag, not an address). Docs and comments only.
-- [ ] **Q647. Every launch writes `console.log`, the one before kept as `console-prev.log`.** Alexah, 2026-10-22, after
-  the play test's console was lost to a short terminal scrollback: a log file for comparing two runs of one build and for
-  bug reports from other machines. **Alexah (2026-10-22): in the game folder beside `save/`; where that cannot be written
-  (a Program Files install), the user's own data folder (`~/.local/share/OpenTPW`, `%AppData%\OpenTPW`).** At start,
-  rename an existing `console.log` to `console-prev.log` (replacing it), then write everything the process prints, stdout
-  and stderr (`Logger`'s lines, the debug console's `[dbg]` replies, exceptions), with the build's commit and the start
-  time at the top; what is printed before the game folder is found is held and written once it is. An environment
-  variable `OPENTPW_LOG_DIR` puts the two files elsewhere: every harness and test run sets it to its own run folder, so
-  a run never rotates Alexah's own logs away (add it to `parkrun.py` and the desk recipes, `docs/TOOLING.md`). No
-  change to what is drawn. Confirm: two launches, the first's file now `console-prev.log`, the second's `console.log`,
-  both whole beside the terminal's output; a harness run leaves the game folder's pair alone.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
