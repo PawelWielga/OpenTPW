@@ -275,6 +275,17 @@ filed the items that cite it.
   is `0x005ed770`, with `0x00599800`), and `FUN_004ccdf0` and `FUN_004c81b0`, which the project holds no function at
   (`STATUS.md`, `WORKS.md`, `TOOLING.md`). Read each against the listing; correct the doc or the comment, or say why the
   citation stands (`saves.md:2468`'s `0x00544154` is a four-letter tag, not an address). Docs and comments only.
+- [ ] **Q647. Every launch writes `console.log`, the one before kept as `console-prev.log`.** Alexah, 2026-10-22, after
+  the play test's console was lost to a short terminal scrollback: a log file for comparing two runs of one build and for
+  bug reports from other machines. **Alexah (2026-10-22): in the game folder beside `save/`; where that cannot be written
+  (a Program Files install), the user's own data folder (`~/.local/share/OpenTPW`, `%AppData%\OpenTPW`).** At start,
+  rename an existing `console.log` to `console-prev.log` (replacing it), then write everything the process prints, stdout
+  and stderr (`Logger`'s lines, the debug console's `[dbg]` replies, exceptions), with the build's commit and the start
+  time at the top; what is printed before the game folder is found is held and written once it is. An environment
+  variable `OPENTPW_LOG_DIR` puts the two files elsewhere: every harness and test run sets it to its own run folder, so
+  a run never rotates Alexah's own logs away (add it to `parkrun.py` and the desk recipes, `docs/TOOLING.md`). No
+  change to what is drawn. Confirm: two launches, the first's file now `console-prev.log`, the second's `console.log`,
+  both whole beside the terminal's output; a harness run leaves the game folder's pair alone.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
