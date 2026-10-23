@@ -2696,6 +2696,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
 
 Back to `docs/PLAYER-GAPS.md`: gap 4 (advisor in a park); gap 7 (saving a fresh park) is Q249, in section A. Also litter and the day ending, whose deferral reasons expired
 (`docs/REVIEW-2026-09-21.md` section 6).
+- [ ] **Q648. Halloween World: guests stick at the crosswalk.** Alexah's own play, 2026-10-22: the park otherwise ran.
+  Out of scope until Lost Kingdom is whole (`CLAUDE.md`, the goal); kept so it is not lost. Reproduce in `hallow` with a
+  `guests` census at the crossing, then find what the walk asks of the crosswalk cells there.
 
 ## G. The lobby plan's open items
 
