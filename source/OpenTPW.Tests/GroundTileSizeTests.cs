@@ -1,0 +1,130 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
+
+namespace OpenTPW.Tests;
+
+/// <summary>
+/// The procedural ground's tile size (<see cref="Level.TileSizeFor"/>): the size the detail file asks, as the original
+/// asks it (<c>FUN_00457a90</c>), unless opentpw.cfg's <c>ground original</c> takes the 16 the original cuts it to on any
+/// machine over 4 GB (docs/exe/park-engine.md, "The tile size").
+/// </summary>
+[TestClass]
+public class GroundTileSizeTests
+{
+	/// <summary>
+	/// 1, 2 and 3 ask 16, 32 and 64 (<c>0x0044d93e</c> sets bits 4, 2, 1; <c>0x00457ac5</c> reads them in that order),
+	/// any other value 32, and 0 turns the compositor off; the original's 16 for every ask but 0.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> 1 and 3 swapped, the option ignored, the option cutting 0 to 16, or the default 16 for
+	/// an ask the switch does not name, each fails a row.</remarks>
+	[TestMethod]
+	[DataRow( 0, false, 0 )]
+	[DataRow( 1, false, 16 )]
+	[DataRow( 2, false, 32 )]
+	[DataRow( 3, false, 64 )]
+	[DataRow( 5, false, 32 )]
+	[DataRow( 0, true, 0 )]
+	[DataRow( 1, true, 16 )]
+	[DataRow( 2, true, 16 )]
+	[DataRow( 3, true, 16 )]
+	public void TheTileSizeIsTheAskUnlessTheOriginalsIsAsked( int ask, bool original, int expected )
+		=> Assert.AreEqual( expected, Level.TileSizeFor( ask, original ) );
+
+	/// <summary>
+	/// The shipped detail files, read as a park reads them: low.sam's 0 draws no tiles, med.sam's and high.sam's 2 draw
+	/// 32 by default and 16 under <c>ground original</c>. The option is off by default.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the wrong key read, the file's value ignored, or the option not consulted fails a row.</remarks>
+	[TestMethod]
+	public void TheShippedDetailFilesAsk32()
+	{
+		FileSystem = GameData.Required();
+		Log = new();
+		var was = GameOptions.Current;
+
+		try
+		{
+			Assert.IsFalse( new GameOptions().OriginalGroundTiles, "OpenTPW's default" );
+
+			int[] Sizes( bool original )
+			{
+				var sizes = new int[3];
+
+				for ( var quality = 0; quality < 3; ++quality )
+				{
+					GameOptions.Current = new() { GraphicsQuality = quality, OriginalGroundTiles = original };
+					sizes[quality] = Level.ProceduralTileSize();
+				}
+
+				return sizes;
+			}
+
+			CollectionAssert.AreEqual( new[] { 0, 32, 32 }, Sizes( false ), "low, medium, high, as asked" );
+			CollectionAssert.AreEqual( new[] { 0, 16, 16 }, Sizes( true ), "the original's" );
+		}
+		finally { GameOptions.Current = was; }
+	}
+
+	/// <summary>
+	/// opentpw.cfg's <c>ground</c> line: <c>original</c> takes the original's 16, <c>asked</c> or anything else the size
+	/// asked, and the file written says which, read back the same.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the line not read, read as any value, written as the other word, or set by the
+	/// <c>textures</c> line, fails a step.</remarks>
+	[TestMethod]
+	public void TheGroundTilesAreKeptInOpenTpwCfg()
+	{
+		var folder = Path.Combine( Path.GetTempPath(), $"opentpw-ground-{System.Guid.NewGuid():N}" );
+		Directory.CreateDirectory( folder );
+		var was = GameOptions.Current;
+		var wasSaves = SaveFileSystem;
+
+		try
+		{
+			Log = new();
+			SaveFileSystem = new BaseFileSystem( folder );
+			var file = Path.Combine( folder, "opentpw.cfg" );
+
+			GameOptions.Current = new();
+			File.WriteAllText( file, "display windowed\nground original\n" );
+			SaveFolder.LoadDisplay();
+			Assert.IsTrue( GameOptions.Current.OriginalGroundTiles, "original" );
+			Assert.IsFalse( GameOptions.Current.OriginalTextureDepth, "the texture depth is its own line" );
+
+			File.WriteAllText( file, "ground asked\n" );
+			SaveFolder.LoadDisplay();
+			Assert.IsFalse( GameOptions.Current.OriginalGroundTiles, "asked" );
+
+			File.WriteAllText( file, "ground asked\ntextures original\n" );
+			SaveFolder.LoadDisplay();
+			Assert.IsFalse( GameOptions.Current.OriginalGroundTiles, "the texture depth's line leaves the ground alone" );
+			Assert.IsTrue( GameOptions.Current.OriginalTextureDepth );
+
+			foreach ( var other in new[] { "16", "32", "yes", "originals" } )
+			{
+				GameOptions.Current.OriginalGroundTiles = true;
+				File.WriteAllText( file, $"ground {other}\n" );
+				SaveFolder.LoadDisplay();
+				Assert.IsFalse( GameOptions.Current.OriginalGroundTiles, $"\"{other}\" is not \"original\"" );
+			}
+
+			GameOptions.Current = new() { OriginalGroundTiles = true };
+			SaveFolder.SaveDisplay();
+			StringAssert.Contains( File.ReadAllText( file ), "\nground original\n" );
+			StringAssert.Contains( File.ReadAllText( file ), "\ntextures full\n" );
+			GameOptions.Current = new();
+			SaveFolder.LoadDisplay();
+			Assert.IsTrue( GameOptions.Current.OriginalGroundTiles, "written original, read back" );
+
+			GameOptions.Current = new();
+			SaveFolder.SaveDisplay();
+			StringAssert.Contains( File.ReadAllText( file ), "\nground asked\n" );
+		}
+		finally
+		{
+			GameOptions.Current = was;
+			SaveFileSystem = wasSaves;
+			Directory.Delete( folder, true );
+		}
+	}
+}

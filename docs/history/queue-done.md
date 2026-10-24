@@ -9789,6 +9789,31 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (lane B, 2026-10-24):** the stock park's 177 under `0x012e0055` making children from the entry (`TP BEAST 9.mp2` first,
   17 children in 40 s with no repeat, gaps 1,502 to 3,982 ms, the original's 1,080 to 3,676) and the original's
   Loudspeaker file's 177 taken by script 16, saved and loaded again, stopped by its sale (`q612/run5`). The rest is Q741.
+- [x] **Q618. The paths, the queue lines and the ride borders are blurry. After Q617.** From Alexah's play test,
+  2026-10-21 (note 5, shots 1 and 2). The paths are blurry in both screenshots, and the queue lines and ride borders
+  likewise. Q617's decode of how the original draws and filters its ground is read first: whether paths, queues and
+  borders are the ground's own texture or separate geometry is not read here (decode first, do not guess). Build what it
+  says; confirm a path, a queue and a ride's border beside the original's frame, same camera.
+  - **Note (Q617):** a path cell is composited into its ground tile (Q489, built), and four queue cells, (49..52, 22)
+    before the Belly Bounce, are blended into theirs as the queue's model is made, as a footprint's floor is
+    (`park-engine.md`, "A built thing's floor is blended into the ground's tiles"); whether every queue piece is, and what
+    draws a ride's border, is not read. Measure with `lib/sharp.py`.
+  **Done (2026-10-24):** the paths' blur is the tile size: both games composite a path into its cell's tile alike (Q489),
+  and the original cuts the 32 med.sam asks to 16 on any machine over 4 GB. OpenTPW now draws the size asked
+  (`Level.TileSizeFor`, 32 at medium and high; `ground original` in `save/opentpw.cfg` takes 16), as Alexah chose for
+  Q650, built here. Beside the original made to draw 32 (`original/prepoke32.sh`), the gate's path reads 3.20 here and 3.23
+  there, the grass 3.72 and 3.64, where 16 read 1.39 and 1.79 (`q618/side-by-side-gate.png`; `q618/PREDICTION.txt`, 7 held,
+  P2 and P6 missed with their causes). The queue lines and the ride borders are built floors (the stock park's four queue
+  cells are the Belly Bounce's footprint): they stay crisp, the original's blended, Q649.
+- [x] **Q650. The ground's tile size: 16, as the original draws on a large machine, or the 32 it asks. Alexah's
+  choice.** From Q617 (`park-engine.md`, "The tile size" and "Why the ground shows cells of two sharpnesses"). The
+  shipped `med.sam` and `high.sam` ask 32-pixel tiles, `FUN_00572110` gives them wherever it reads 48 MB or more, and
+  only its signed test of `dwTotalPhys` over 4 GB (as under Proton) cuts them to 16, which OpenTPW draws
+  (`Level.ProceduralTileSize`). 32 is what the original drew on the machines of its day and is half as blurred; it is
+  either the original's own look or an improvement said at the site (Q645's toggle). Build what Alexah chooses;
+  confirm at the gate beside the original's frame.
+  **Alexah (2026-10-24): 32 by default; Q645's faithful toggle brings 16 back, said at the site.** Done as Q618's build
+  (`Level.TileSizeFor`; `ground original` in `save/opentpw.cfg` until Q645 sets it).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

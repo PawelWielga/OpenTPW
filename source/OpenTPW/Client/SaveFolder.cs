@@ -30,6 +30,9 @@ internal static class SaveFolder
 	private const string TexturesName = "textures";
 	private const string TexturesFull = "full";
 	private const string TexturesOriginal = "original";
+	private const string GroundName = "ground";
+	private const string GroundAsked = "asked";
+	private const string GroundOriginal = "original";
 	private const string UsersFolder = "users";
 	private const string OnlineFolder = "online";
 	private const string PlayerFileName = "gms.dat";
@@ -116,8 +119,8 @@ internal static class SaveFolder
 	/// <summary>
 	/// Reads save\opentpw.cfg: the settings that are OpenTPW's own, because the original's files have
 	/// nowhere to put them. How the game fills the screen, and the mode full screen asks the display
-	/// for - see <see cref="Display"/>; and the texture depth (<see cref="GameOptions.OriginalTextureDepth"/>), read
-	/// before the first texture is made.
+	/// for - see <see cref="Display"/>; the texture depth (<see cref="GameOptions.OriginalTextureDepth"/>), read
+	/// before the first texture is made; and the ground's tile size (<see cref="GameOptions.OriginalGroundTiles"/>).
 	///
 	/// <para>
 	/// It is a plain text file of its own rather than more fields in Config.tcf, so that the original's
@@ -165,6 +168,11 @@ internal static class SaveFolder
 						GameOptions.Current.OriginalTextureDepth = parts[1].Equals( TexturesOriginal, StringComparison.OrdinalIgnoreCase );
 						break;
 
+					// "original" draws the ground's tiles at the original's 16 pixels; anything else draws the size asked.
+					case GroundName:
+						GameOptions.Current.OriginalGroundTiles = parts[1].Equals( GroundOriginal, StringComparison.OrdinalIgnoreCase );
+						break;
+
 					// What a kind of load cost when it was last measured - see LoadStepCounts. Read before
 					// anything loads, which is why this is called from Game.Run rather than with a scene.
 					case LoadStepCounts.LineName when parts.Length >= 3 && int.TryParse( parts[2], out var steps ):
@@ -206,7 +214,10 @@ internal static class SaveFolder
 				.AppendLine( $"fullscreen {options.FullScreenSize.Width} {options.FullScreenSize.Height} {options.FullScreenSize.RefreshRate}" )
 				.AppendLine( "# textures full: the game's art keeps eight bits a channel, OpenTPW's improvement. textures original:" )
 				.AppendLine( "# cut to four bits a channel, as the original draws it, unless the detail file says TEXTURE32 1." )
-				.AppendLine( $"{TexturesName} {(options.OriginalTextureDepth ? TexturesOriginal : TexturesFull)}" );
+				.AppendLine( $"{TexturesName} {(options.OriginalTextureDepth ? TexturesOriginal : TexturesFull)}" )
+				.AppendLine( "# ground asked: the ground's tiles are the size the detail file asks, 32 pixels at medium and high, as" )
+				.AppendLine( "# the original drew them on the machines of its day. ground original: 16 pixels, as it draws them today." )
+				.AppendLine( $"{GroundName} {(options.OriginalGroundTiles ? GroundOriginal : GroundAsked)}" );
 
 			// How many steps each kind of load took last time, which is how the loading bar knows how far
 			// to fill without being told - see LoadStepCounts. These are measurements rather than choices,

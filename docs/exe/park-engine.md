@@ -4242,6 +4242,16 @@ the ask to 16 when `[0x008bd520]` < 48 MB or the texture memory `[0x008c1624]` <
 (`JL`, `0x0057215f`): read live over 4 GB (under Proton) it is -1, so the original makes **16-pixel tiles whatever the detail asks**
 there. Between 2 and 4 GB is not measured: `testme.exe` is not large-address aware, and if Windows reports
 `0x7fffffff` for it the test is not taken and the texture-memory test decides, so medium could ask 32. Read live at medium: `[0x0079d86c]` `0x82`, `[0x008bd520]` `0xffffffff`, tile size 16, 2,000 tiles.
+**The original at 32** (Q618). With `[0x008bd520]` written 256 MB as soon as the boot has set it, before the first park
+entry (`original/prepoke32.sh`), the running original makes its cache at 32 (`compstate.py`: tile size 32, the lnd
+object's set 1) and draws the stock park's paths and grass about twice as sharp as at 16: at the gate, the path 3.23
+against 1.79 and the grass 3.64 against 1.74 (`lib/sharp.py`; `q618/side-by-side-gate.png`). Written before a later
+load instead, it changes nothing: the cache made at the first entry is kept (`q618/PREDICTION.txt`, P2). **OpenTPW
+draws the size asked** (`Level.TileSizeFor`; 32 at the shipped medium and high, as the original drew on the machines of
+its day, Alexah's choice of 2026-10-24), a deviation from the original as it runs on today's machines; `save/opentpw.cfg`'s
+`ground original` takes the 16. At 32 the two games read alike at the gate (the path 3.20 here against 3.23, the
+grass 3.72 against 3.64), and every 32-pixel tile of the four parks and the stock park's 78 path tiles equal the
+original's code (`ProceduralGroundTests`).
 
 **What fills a tile** (`FUN_0055f780`, thiscall on the lnd object; dest, x, y, record). With N the tile size, the
 set of textures for N (64, 32, 16 are sets 0, 1, 2), r = 84 - y (the map's rows run the other way) and
@@ -4345,7 +4355,7 @@ texel and mip, and the two resolutions (1280 x 720 against 1024 x 768) are not s
 not is a built thing's floor ("A built thing's floor", above). **The 16-pixel tile is the memory test misreading a large
 machine** ("The tile size"): the shipped `med.sam` and `high.sam` ask 32 (`PROCEDURALTEXTURING` 2), which `FUN_00572110`
 keeps wherever `dwTotalPhys` reads as a positive 48 MB or more and the texture memory as bytes a texel x 3 MB or more,
-so on the machines of its day; what OpenTPW draws is Alexah's choice (Q650).
+so on the machines of its day; OpenTPW draws that 32 (Q618, "The original at 32", above).
 
 ---
 

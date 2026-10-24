@@ -271,7 +271,7 @@ texel and magnified bilinear; at `med.sam` (`TEXTUREFILTERING` 1) the mip level 
 allow (`POINT`), at `high.sam` the two nearest blended. What the caps answer under Proton, and so which `MIPFILTER`
 the reference install draws, is not read live. **OpenTPW** samples every material 16x anisotropic over every mip level
 (`Material.CreateSampler`), which differs from the original only where a texture is minified (Q29). The ground's
-16-pixel tiles at the park's own cameras are magnified in both, and bilinear in both (Q617: the gate's path, `q617/path-zoom-ours-left-original-right.png`).
+tiles at the park's own cameras are magnified in both, and bilinear in both, at 16 pixels (Q617: the gate's path, `q617/path-zoom-ours-left-original-right.png`) and at 32 (Q618, `q618/side-by-side-gate.png`; `park-engine.md`, "The original at 32").
 
 ## Three back-to-front sorts — which OpenTPW does not do
 

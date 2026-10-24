@@ -1535,26 +1535,50 @@ public class Level
 	}
 
 	/// <summary>
-	/// The procedural ground's tile size: 0 where the detail file's <c>GraphicalOptions.PROCEDURALTEXTURING</c> is 0
-	/// (low.sam), and 16 for any other. The original asks 16, 32 or 64 for 1, 2 or 3 (<c>FUN_00457a90</c>), but
-	/// <c>FUN_00572110</c> cuts the ask to 16 where the physical memory, a signed test of <c>dwTotalPhys</c>, is under
-	/// 48 MB, which over 4 GB it reads as negative (measured under Proton; between 2 and 4 GB it is not measured, docs/exe/park-engine.md, "The procedural
-	/// ground"). A file that will not read gives medium's 16.
+	/// The procedural ground's tile size for the detail file's <c>GraphicalOptions.PROCEDURALTEXTURING</c> (see
+	/// <see cref="TileSizeFor"/>). A file that will not read is taken as medium's 2.
 	/// </summary>
-	private static int ProceduralTileSize()
+	internal static int ProceduralTileSize()
 	{
+		var ask = 2;
+
 		try
 		{
 			if ( int.TryParse( new SettingsFile( $"/{DetailFile}" )["GraphicalOptions.PROCEDURALTEXTURING"], out var value ) )
-				return value == 0 ? 0 : 16;
+				ask = value;
 		}
 		catch ( Exception e )
 		{
 			Log.Warning( $"Ground: {DetailFile} would not load, so the ground is composited as at medium - {e.Message}" );
 		}
 
-		return 16;
+		var original = GameOptions.Current.OriginalGroundTiles;
+		var size = TileSizeFor( ask, original );
+		Log.Info( size == 0
+			? $"Ground: {DetailFile}'s PROCEDURALTEXTURING 0, so every ground cell draws its own texture"
+			: original
+				? $"Ground: opentpw.cfg's \"ground original\", so {size}-pixel tiles, as the original draws on a machine with over 4 GB"
+				: $"Ground: {DetailFile}'s PROCEDURALTEXTURING {ask}, so {size}-pixel tiles, as asked, OpenTPW's default; opentpw.cfg's \"ground original\" takes the original's 16" );
+		return size;
 	}
+
+	/// <summary>
+	/// The tile size for a <c>PROCEDURALTEXTURING</c> of <paramref name="ask"/>: 0 for 0 (the compositor off, low.sam),
+	/// 16 for 1, 64 for 3 and 32 for any other, as <c>FUN_00457a90</c> asks (<c>0x00457ac5</c>; the shipped med.sam and
+	/// high.sam say 2). The original then cuts the ask to 16 where a signed test reads <c>dwTotalPhys</c> under 48 MB, as it
+	/// reads any machine over 4 GB (<c>FUN_00572110</c>; docs/exe/park-engine.md, "The tile size"), so on today's machines
+	/// it draws 16 whatever is asked. OpenTPW draws the ask, what the original drew on the machines of its day: a
+	/// deviation from the original as it runs now. <paramref name="original"/> (opentpw.cfg's <c>ground original</c>)
+	/// takes the cut. The original's other cuts, on its texture memory, are not modelled.
+	/// </summary>
+	internal static int TileSizeFor( int ask, bool original ) => ask switch
+	{
+		0 => 0,
+		_ when original => 16,
+		1 => 16,
+		3 => 64,
+		_ => 32
+	};
 
 	public void Update()
 	{

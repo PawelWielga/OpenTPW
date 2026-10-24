@@ -74,15 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q618. The paths, the queue lines and the ride borders are blurry. After Q617.** From Alexah's play test,
-  2026-10-21 (note 5, shots 1 and 2). The paths are blurry in both screenshots, and the queue lines and ride borders
-  likewise. Q617's decode of how the original draws and filters its ground is read first: whether paths, queues and
-  borders are the ground's own texture or separate geometry is not read here (decode first, do not guess). Build what it
-  says; confirm a path, a queue and a ride's border beside the original's frame, same camera.
-  - **Note (Q617):** a path cell is composited into its ground tile (Q489, built), and four queue cells, (49..52, 22)
-    before the Belly Bounce, are blended into theirs as the queue's model is made, as a footprint's floor is
-    (`park-engine.md`, "A built thing's floor is blended into the ground's tiles"); whether every queue piece is, and what
-    draws a ride's border, is not read. Measure with `lib/sharp.py`.
 - [ ] **Q619. The river, its features and the rock at the back are not darkened on unbought land. Decode first.** From
   Alexah's play test, 2026-10-21 (note 39, shot5). Only the ground around them is half lit (Q482 halves ground cells
   only, `docs/history/queue-done.md:7612-7627`; the terrain pass halves a cell's corner light where `mFlags` has `0x40`
@@ -251,24 +242,20 @@ filed the items that cite it.
 - [ ] **Q645. A "faithful" graphics toggle brings the original's look back.** From Alexah's play test, 2026-10-21
   (decisions, last in the order). One option, off by default, that turns every improvement of this batch off at once:
   four bits a channel (Q616), the original's rate of animation (Q642), flags' jumps (Q643), the original's letters
-  (Q644), and whatever Q617 to Q621 leave as a chosen difference. Each improvement reads one switch, set at one place
-  (rule 9); say it in the option's own text and at the site. Confirm: a frame pair with the toggle on and off at the
+  (Q644), the ground's 16-pixel tiles (`ground original`, Q618), and whatever Q619 to Q621 leave as a chosen
+  difference. Each improvement reads one switch, set at one place (rule 9); say it in the option's own text and at the
+  site. Confirm: a frame pair with the toggle on and off at the
   gate, the on frame matching the original's.
 - [ ] **Q649. A built thing's floor blended into the ground's tiles.** From Q617 (`park-engine.md`, "A built thing's
   floor is blended into the ground's tiles"). The original composites each used footprint cell's ground tile with the
   cell's floor texture laid over by its alpha (as a path is, `ProceduralGround`'s overlay) and draws the floor's
-  materials with it; ours draws the floor plate's own 128 x 128 texture, crisp beside the 16-pixel ground (the Belly
-  Bounce's floor 10.91 against 1.11, the original's 2.38 against 1.79). Build it for every model the original blends
-  (flag `0x8`, compositor on, root byte `0x40`), queue pieces included, and again when a thing is bought, moved or sold.
+  materials with it; ours draws the floor plate's own 128 x 128 texture, crisp beside the ground's tiles (the Belly
+  Bounce's floor 10.91 against 1.11 at 16 pixels, the original's 2.38 against 1.79; at 32, Q618, 10.91 against 3.68, the
+  original's 4.89 against 3.74, `q618/side-by-side-bounce.png`; `original/prepoke32.sh` makes the original draw 32).
+  Build it for every model the original blends (flag `0x8`, compositor on, root byte `0x40`), queue pieces included, and
+  again when a thing is bought, moved or sold.
   Confirm: `q617/side-by-side-bounce.png`'s view in both games, `lib/sharp.py` floor against ground within the
   original's, and a census of the cells blended (the original's 44 in the stock park).
-- [ ] **Q650. The ground's tile size: 16, as the original draws on a large machine, or the 32 it asks. Alexah's
-  choice.** From Q617 (`park-engine.md`, "The tile size" and "Why the ground shows cells of two sharpnesses"). The
-  shipped `med.sam` and `high.sam` ask 32-pixel tiles, `FUN_00572110` gives them wherever it reads 48 MB or more, and
-  only its signed test of `dwTotalPhys` over 4 GB (as under Proton) cuts them to 16, which OpenTPW draws
-  (`Level.ProceduralTileSize`). 32 is what the original drew on the machines of its day and is half as blurred; it is
-  either the original's own look or an improvement said at the site (Q645's toggle). Build what Alexah chooses;
-  confirm at the gate beside the original's frame.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,

@@ -44,18 +44,23 @@ public class ProceduralGroundTests
 	}
 
 	/// <summary>
-	/// Every cell of the box, 0..95 x 0..84, of all four parks at 16 pixels, as one run of tiles row by row.
+	/// Every cell of the box, 0..95 x 0..84, of all four parks at 16 pixels, the original's size today, and at 32, the size
+	/// OpenTPW draws (<see cref="Level.TileSizeFor"/>), as one run of tiles row by row (<c>lndsheet.py</c>).
 	/// </summary>
 	/// <remarks><b>Mutation:</b> any step of the tile changed - a ramp, the window, a layer's pair, a span's class, the
-	/// frozen u1, the rows' order - changes a hash.</remarks>
+	/// frozen u1, the rows' order - changes a hash; so does a set read for the wrong size.</remarks>
 	[TestMethod]
-	[DataRow( "jungle", "f8c9664ac8568557dadaba9a1610d8edd58d893f6515334cdbf90d6363cb02f7" )]
-	[DataRow( "fantasy", "7078add17d1fc5a4bc00c2aa57b16a338919532febfe5fe03d7f5955b4b9cd04" )]
-	[DataRow( "hallow", "6e86ce1f643687708f5eaa6140d5ff773615f9312ce16daf9098c75b1c4f30b9" )]
-	[DataRow( "space", "b9360aa15ba92dd1fb7d97622f241c520049ecadbbe1148ed8ef4f1d22b0cadd" )]
-	public void EveryTileOfEveryParkIsTheOriginals( string theme, string expected )
+	[DataRow( "jungle", 16, "f8c9664ac8568557dadaba9a1610d8edd58d893f6515334cdbf90d6363cb02f7" )]
+	[DataRow( "fantasy", 16, "7078add17d1fc5a4bc00c2aa57b16a338919532febfe5fe03d7f5955b4b9cd04" )]
+	[DataRow( "hallow", 16, "6e86ce1f643687708f5eaa6140d5ff773615f9312ce16daf9098c75b1c4f30b9" )]
+	[DataRow( "space", 16, "b9360aa15ba92dd1fb7d97622f241c520049ecadbbe1148ed8ef4f1d22b0cadd" )]
+	[DataRow( "jungle", 32, "cc9cbf186cfbeb9e9b72e498c1332a648a8a4812acec971da64525045cd0058b" )]
+	[DataRow( "fantasy", 32, "487cb2ac7ef3d2873730a1a079907fa10e044c653ac16f179a167f68825cfbc1" )]
+	[DataRow( "hallow", 32, "8f90b86d01df7aa80d58dcd2bdc22d382b141b6291cb541186a4ccd99aaf6b95" )]
+	[DataRow( "space", 32, "2332b15821e398d0443b2b10f061938001e3c0f28839ce0c692703b2b0195335" )]
+	public void EveryTileOfEveryParkIsTheOriginals( string theme, int size, string expected )
 	{
-		var ground = Ground( theme );
+		var ground = Ground( theme, size );
 		using var all = new MemoryStream();
 
 		for ( var y = 0; y < 85; ++y )
@@ -228,14 +233,16 @@ public class ProceduralGroundTests
 	/// <summary>
 	/// Every one of the shipped park's 78 path cells, its own tile (by the <c>.tct</c>'s PathTex) laid over its ground
 	/// by the word the path writes, against the original's function given the same texels (<c>oracle.py</c>: the
-	/// surface's A4R4G4B4, measured in the running original). Without the path the same 78 hash
-	/// <c>1724f766...</c>.
+	/// surface's A4R4G4B4, measured in the running original), at 16 pixels and at 32 (<c>q618/oracle32.py</c>). Without
+	/// the path the same 78 hash <c>1724f766...</c> at 16.
 	/// </summary>
 	/// <remarks><b>Mutation:</b> the alpha taken as eight bits, the texture read top down or at every texel rather than
 	/// every w / N, the path turned where the ground should be, or the angle's turn bits swapped, each changes the
 	/// hash.</remarks>
 	[TestMethod]
-	public void EveryPathTileOfTheShippedParkIsTheOriginals() => AtTheOriginalsDepth( () =>
+	[DataRow( 16, "d231594b1b4fd9cd97f7cfb90e92e6ab66c6f09f5a53e29e64adccce9bb4774e" )]
+	[DataRow( 32, "ff4cc84f480366ead174bfcd09a09061a2afc753edeed23f4029971712454332" )]
+	public void EveryPathTileOfTheShippedParkIsTheOriginals( int size, string expected ) => AtTheOriginalsDepth( () =>
 	{
 		var data = GameData.Required();
 		FileSystem = data;
@@ -244,7 +251,7 @@ public class ProceduralGroundTests
 		using var md2 = data.OpenRead( "levels/jungle/terrain/base.MD2" );
 		var field = new HeightfieldFile( md2 );
 		var table = ParkPaths.ReadTable( "jungle" );
-		var ground = Ground( "jungle" );
+		var ground = Ground( "jungle", size );
 		using var all = new MemoryStream();
 		var paths = 0;
 
@@ -269,7 +276,7 @@ public class ProceduralGroundTests
 		}
 
 		Assert.AreEqual( 78, paths );
-		Assert.AreEqual( "d231594b1b4fd9cd97f7cfb90e92e6ab66c6f09f5a53e29e64adccce9bb4774e", Hash( all.ToArray() ) );
+		Assert.AreEqual( expected, Hash( all.ToArray() ) );
 	} );
 
 	/// <summary>

@@ -41,4 +41,10 @@ belongs to or at the end. Grep it by area or Q-number; never read it whole.
   the path below the park gate (147.9, 107.8, 60.6), (137.4, 106.2, 46.2) cut, the original's (139.4, 107.2, 44.4)
   (`q616/side-by-side-gate.png`).
 - **A park file's held chains come back from the file** (Q612): each under its saved handle, its kept child's sample first, its variation drawn again, and the script record that names it takes it, so the stock park's gates make their chain of beasts from the entry (`TP BEAST 9.mp2` first, then 16 to 17 children in 40 s with no repeat) and a Loudspeaker's chain loaded, saved and loaded again stops with its sale; a save leaves out a chain stopped here (`docs/exe/audio.md`, "A park file's voices").
+- **The ground's tiles are the size the detail file asks, a deviation from the original as it runs today** (Q618, Q650,
+  Alexah 2026-10-24): 32 pixels at medium and high, as the original drew on the machines of its day, where on any machine
+  over 4 GB it cuts them to 16; `save/opentpw.cfg`'s `ground original` takes the 16, and the boot log names the size.
+  Every 32-pixel tile of the four parks and the stock park's 78 path tiles equal the original's code. At the gate the
+  path reads 3.20 and the grass 3.72 (`lib/sharp.py`), the original made to draw 32 reads 3.23 and
+  3.64; at 16, 1.39 and 1.20 here (`q618/side-by-side-gate.png`).
 - The original runs under Proton as a reference (Q168, `docs/TOOLING.md`); the console's `admit`/`send` place a guest (Q184).
