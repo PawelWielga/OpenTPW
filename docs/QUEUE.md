@@ -74,22 +74,15 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q617. The ground's cells are not drawn at one sharpness. Decode first.** From Alexah's play test, 2026-10-21
-  (note 5, shots 1 to 3; PRIORITY: show the original as well as we can). The ground shows square cells: most blurred, a
-  few beside them crisp, a hard seam between (shot3: a crisp grass cell beside blurred ones at the gate); worst at the
-  gate. The original is blurry in places too (the gauge faces, QUEUE:1413; `hud.md:216`), and its texture filter values
-  are "not decoded" (Q29, QUEUE:1963-1964), so decode first: how the original draws a ground cell and which texture,
-  size, mip level and filter each gets, read in `ParkGround` and the terrain pass (`park-engine.md:61`), then shoot the
-  same view in both games (Alexah's shot beside `original.sh`'s frame). Open items that could each be part of it (none
-  is tied to the squares: inferred): Q29 (ours 16x anisotropic, full mips), Q519 (four mip levels), Q398 (the other
-  diagonal of 2,708 cells), Q700's cut (Q616 now turns it off by default). Say what differs, then match the original's
-  look; a difference kept on purpose is said at the site. Confirm: a screenshot of the gate beside the original's, the
-  seam gone or the same, and the census of what each cell was given.
 - [ ] **Q618. The paths, the queue lines and the ride borders are blurry. After Q617.** From Alexah's play test,
   2026-10-21 (note 5, shots 1 and 2). The paths are blurry in both screenshots, and the queue lines and ride borders
   likewise. Q617's decode of how the original draws and filters its ground is read first: whether paths, queues and
   borders are the ground's own texture or separate geometry is not read here (decode first, do not guess). Build what it
   says; confirm a path, a queue and a ride's border beside the original's frame, same camera.
+  - **Note (Q617):** a path cell is composited into its ground tile (Q489, built), and four queue cells, (49..52, 22)
+    before the Belly Bounce, are blended into theirs as the queue's model is made, as a footprint's floor is
+    (`park-engine.md`, "A built thing's floor is blended into the ground's tiles"); whether every queue piece is, and what
+    draws a ride's border, is not read. Measure with `lib/sharp.py`.
 - [ ] **Q619. The river, its features and the rock at the back are not darkened on unbought land. Decode first.** From
   Alexah's play test, 2026-10-21 (note 39, shot5). Only the ground around them is half lit (Q482 halves ground cells
   only, `docs/history/queue-done.md:7612-7627`; the terrain pass halves a cell's corner light where `mFlags` has `0x40`
@@ -261,6 +254,21 @@ filed the items that cite it.
   (Q644), and whatever Q617 to Q621 leave as a chosen difference. Each improvement reads one switch, set at one place
   (rule 9); say it in the option's own text and at the site. Confirm: a frame pair with the toggle on and off at the
   gate, the on frame matching the original's.
+- [ ] **Q649. A built thing's floor blended into the ground's tiles.** From Q617 (`park-engine.md`, "A built thing's
+  floor is blended into the ground's tiles"). The original composites each used footprint cell's ground tile with the
+  cell's floor texture laid over by its alpha (as a path is, `ProceduralGround`'s overlay) and draws the floor's
+  materials with it; ours draws the floor plate's own 128 x 128 texture, crisp beside the 16-pixel ground (the Belly
+  Bounce's floor 10.91 against 1.11, the original's 2.38 against 1.79). Build it for every model the original blends
+  (flag `0x8`, compositor on, root byte `0x40`), queue pieces included, and again when a thing is bought, moved or sold.
+  Confirm: `q617/side-by-side-bounce.png`'s view in both games, `lib/sharp.py` floor against ground within the
+  original's, and a census of the cells blended (the original's 44 in the stock park).
+- [ ] **Q650. The ground's tile size: 16, as the original draws on a large machine, or the 32 it asks. Alexah's
+  choice.** From Q617 (`park-engine.md`, "The tile size" and "Why the ground shows cells of two sharpnesses"). The
+  shipped `med.sam` and `high.sam` ask 32-pixel tiles, `FUN_00572110` gives them wherever it reads 48 MB or more, and
+  only its signed test of `dwTotalPhys` over 4 GB (as under Proton) cuts them to 16, which OpenTPW draws
+  (`Level.ProceduralTileSize`). 32 is what the original drew on the machines of its day and is half as blurred; it is
+  either the original's own look or an improvement said at the site (Q645's toggle). Build what Alexah chooses;
+  confirm at the gate beside the original's frame.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
@@ -1623,6 +1631,8 @@ filed the items that cite it.
   - **Note (run 6 review, Q244):** confirm by the happiness gauge too, a fixed screen-space target: its faces are
     sharp in ours and blurred in the original's frames (`q244/side-by-side.png`; `hud.md`, "The happiness gauge's two
     quads"). If the mip levels do not explain it, the filter states are Q29's.
+  - **Note (Q617):** the filter states are decoded (`render-states.md`, "Texture filtering"): a clamped texture is
+    minified by its nearest texel at the mip level the start chose, LOD bias 0.
 - [ ] **Q520. A person's shadow under a tool's squares.** From Q480 (`park-engine.md`, "A person's shadow"): the
   original's patrol squares (and any tool's) are drawn over the people's shadows, which show through them
   (`q480/orig/a-2-on.png`: Mike's shadow on the squares darkens 0.556, 0.716, 0.835); ours draws `ParkBuildMarkers`
@@ -2226,6 +2236,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   is LESSEQUAL there and Less here. The renderer lights per pixel with 16x anisotropic filtering and
   full mipmaps (`test.shader`'s fragment `main`, `Material.CreateSampler`). Decode the values, then match them. Confirm:
   side-by-side screenshots of the same view.
+  - **Note (Q617):** the filter values are decoded (`render-states.md`, "Texture filtering"): MIN POINT but on a wrapped
+    texture, MAG LINEAR but under word bit `0x20000`, MIP chosen once from `TEXTUREFILTERING` and the caps, LOD bias 0.
+    Which MIP the reference install's caps give is not read live.
 - [ ] **Q30. Waving flags at the bus stop.** Nothing found in code or docs. Decode what the original
   draws at `BusStopA/B` (`park.md:54, 98`), then build.
 - [ ] **Q37. The placement terrain rule.** `ParkBuilding.Refusal` counts `PLACEMENT_TERRAIN_RULE` and lets a

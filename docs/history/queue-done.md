@@ -9770,6 +9770,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   default, (115.5, 54.0, 53.8) cut, the original's (116.1, 54.2, 53.4); the gate's path (147.9, 107.8, 60.6), (137.4,
   106.2, 46.2), the original's (139.4, 107.2, 44.4). The oracle tests of the path compositor run at the original's
   depth. 2 tests; 10 of 10 bugs put back fail (`q616/`).
+- [x] **Q617. The ground's cells are not drawn at one sharpness (decode first).** From Alexah's play test, 2026-10-21
+  (note 5, shots 1 to 3). Decoded (`park-engine.md`, "A built thing's floor is blended into the ground's tiles" and "Why
+  the ground shows cells of two sharpnesses"; `render-states.md`, "Texture filtering"). Both games draw every ground cell
+  as a 16-pixel composited tile, magnified bilinear; the original minifies by the nearest texel, its mip level chosen once
+  at the start, its LOD bias 0. The crisp cells at the gate are type 7, the scenery's own surface, crisp in both games:
+  that seam is the original's (strip against ground 8.62 / 1.73 there, 16.12 / 1.20 here; `q617/gate-ours-over-original.png`).
+  The seam the original has not is a built thing's floor: `FUN_0057ace0` blends each used footprint cell's tile with the
+  floor's texture and swaps it into the model's frame table, 44 cells as the stock park loads, every one at 16
+  (`q617/orig/a-load.log`); at the Belly Bounce its floor reads 2.38 against the ground's 1.79, ours 10.91 against 1.11
+  (`q617/side-by-side-bounce.png`). The 16 is the memory test misreading a large machine; `med.sam` asks 32.
+  `q617/PREDICTION.txt`: 6 of 8 held, P3 and P5 missed with their causes. Left: Q649 (blend the floors), Q650 (the tile
+  size, Alexah's choice).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

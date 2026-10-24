@@ -4018,7 +4018,7 @@ went and the plain cell textures showed, the same small flecks in the same place
 With the three set aside, a brick walk and a road agree within 8 a channel ((116, 54, 53) against (112, 61, 61);
 (49, 49, 52) against (51, 50, 59)), so neither the light on lit faces nor the frame's gamma is the gap. OpenTPW's
 sea, fog off, is (1.0, 53.7, 55.9) against the original's (1.4, 55.0, 69.4): the blue is the original's moving quilt
-over the lake, which OpenTPW lays since Q490 ("The park's sea", below); texture filtering is not looked into.
+over the lake, which OpenTPW lays since Q490 ("The park's sea", below); the filters are `render-states.md`, "Texture filtering" (Q617).
 
 ### What `GraphicalOptions.LIGHTING` 0 turns off
 
@@ -4305,10 +4305,26 @@ caught nibbles; every other one is one higher, and only where OpenTPW's byte end
 `0x13` decode stands one above OpenTPW's on about half of those bytes (Q460). The terrain pass then draws the tile by
 the cell's word, as every tile ("Which cell is handed on"), and `FUN_0046ded0(1)` leaves a `0x0080` cell's turn.
 
-**Elsewhere.** `FUN_0057ace0`, reached from the model maker `FUN_00463060`, composites through `FUN_00572630` one
-uncached tile for each cell of a rectangle whose word has `0x0080` and `0x0200` (a footprint's used cell): a lead for
-the procedural base (`textures.md`), not followed. The lobby calls the same load (`FUN_005d84a0`) but no lobby wad
-holds a `base.lnd`, so the bit is not set there.
+**A built thing's floor is blended into the ground's tiles** (Q617). The model maker `FUN_00463060`, asked with
+flag `0x8` (a thing stood on the land), while `[0x007a1a8c]` has `0x4000` (the compositor on) and the model's root byte
+has `0x40`, stamps each used cell of the item's footprint (`0x80` in its entry) into the heightfield, turned by the
+thing's angle: the word `& 0x6 | turn | 0x281` (used `0x80`, stamped `0x200`, and `0x1`, so the terrain pass draws no
+ground there) and the entry's texture index above it. It then calls `FUN_0057ace0` over the footprint's rectangle
+(`0x004635af`), which for each cell holding `0x80` and `0x200` makes a texture (`FUN_00575fa0`) and has
+`FUN_00572630`, on the tile cache `[[0x00879d60] + 0x230]`, composite into it the cell's ground tile at the cache's own
+size (`+4`) with the cell's texture laid over by its alpha, as a path is ("A path laid over", above; the record handed
+on is that texture's bits, width, height, bytes a texel and the word). The new texture takes the place of that index's
+texture in the model's frame table (`[this + 8] + 0x50`, eight bytes an index; the old one is kept in a list at
+`+0x124` to give back), so **the floor's materials draw the composited tile**; a failure logs "Could not blend base
+for ride %s" (`0x0074d36c`). Read in the running original (`q617/orig/run.sh`: `brk.sh` on the call at `0x0057af4b`
+as `loadfile.sh`'s poller): the stock park's load blends 44 cells, all on tick 755, every one at the cache's size 16,
+every texture laid over 128 x 128 at 2 bytes a texel and every word holding `0x281` (`q617/orig/a-load.log`); by
+OpenTPW's `cell` they are 40 footprint cells (types 4, 9 and 10) of eleven things and the four queue cells (type 3)
+at (49..52, 22) before the Belly Bounce (`q617/cells.out`). At the Belly Bounce (camera (525,240) 110 180,
+`q617/side-by-side-bounce.png`) the original's floor is as soft as the ground beside it, sharpness 2.38 against 1.79
+(`q617/sharp.py`, the mean absolute Laplacian of luminance), where OpenTPW draws the floor with its own texture,
+10.91 against 1.11 (`q617/PREDICTION.txt`, P6 to P8): **OpenTPW does not blend a floor** (Q649). The lobby calls the
+same load (`FUN_005d84a0`) but no lobby wad holds a `base.lnd`, so the bit is not set there.
 
 **Which cell is handed on, and how its tile is laid** (Q488). `FUN_0056f090` keys each visible box cell
 `(row - [+0x238]) x 0x100 + col - [+0x234]` and `FUN_00572440` hands `FUN_0055f780` x = the low byte, y = the rest, so
@@ -4317,6 +4333,19 @@ one run; `ProceduralGroundTests` holds (95, 40) to the emulator). The terrain pa
 texture ("The UV rule", above): texel centre to texel centre, row 0 at the cell's y edge and column 0 at its x edge, and
 with the compositor on unturned, but for a path cell (`0x80`), which keeps its word's turn (`0x0046defd`, `test cl,0x81`; "What is laid", above). Measured in both games at camera A (`lib/cellmatch.py`): the original's frame shows
 the cell's own tile on 84 of 122 cells, OpenTPW's on 115.
+
+**Why the ground shows cells of two sharpnesses** (Q617, from Alexah's play test of 2026-10-21). At the park gate
+(Q471's camera (475,155) 110 180, `q617/gate-ours-over-original.png`) both games draw the open ground as 16-pixel tiles
+magnified bilinear (render-states.md, "Texture filtering"), and both draw the strips beside the gate path crisp: those
+cells, (45,18) and (50,18) among them, are type 7, hidden ground the scenery of `base.MD2` covers with its own texture,
+so **the seam there is the original's own**. Sharpness (the mean absolute Laplacian of luminance), strip against ground:
+the original 8.62 against 1.73, OpenTPW 16.12 against 1.20 (`q617/PREDICTION.txt`, P4, P5). OpenTPW's strip is the
+sharper and its ground the softer; eight bits a channel (Q616), the anisotropic sampler against the original's nearest
+texel and mip, and the two resolutions (1280 x 720 against 1024 x 768) are not separated. The one seam the original has
+not is a built thing's floor ("A built thing's floor", above). **The 16-pixel tile is the memory test misreading a large
+machine** ("The tile size"): the shipped `med.sam` and `high.sam` ask 32 (`PROCEDURALTEXTURING` 2), which `FUN_00572110`
+keeps wherever `dwTotalPhys` reads as a positive 48 MB or more and the texture memory as bytes a texel x 3 MB or more,
+so on the machines of its day; what OpenTPW draws is Alexah's choice (Q650).
 
 ---
 
