@@ -74,13 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q621. The advisor's colours: hard hat, gloves, safari hat, the scientist's white hair. Decode first.** From
-  Alexah's play test, 2026-10-21 (note 7, shot5). The docs call our hat paler than the original's, "lit past his
-  textures, set against his gloves" (`advisor-park.md:696`, `STATUS.md:40`), yet shot5 shows a saturated yellow hat and
-  bright white gloves; gloves, safari hat and the scientist's hair are named nowhere. Cause not read: the advisor's own
-  light (`AdvisorModel`), the texture cut, or the normals (Q219, QUEUE:528-533). Measure each part's colour on the
-  original's frame and ours (same pose, same advisor), then fix the light. Confirm: the four advisors' frames beside the
-  original's, the numbers predicted first.
 - [ ] **Q622. The seaplane is invisible landing, picking up and dropping off.** From Alexah's play test, 2026-10-21
   (note 37). Its sounds play and it works otherwise. Q583 placed the seaplane at its stop
   (`docs/history/queue-done.md:9583-9600`) and Q26c makes vehicles on demand; sound-only vehicles use
@@ -264,6 +257,15 @@ filed the items that cite it.
   games, the cliff path, the grass strip and plain rock within 0.05 of the original's ratio, the water unchanged, and
   a census of the vertices made 0.225 (the original's: every normal of `river13` to `river26`, `newcliff01` to `10`,
   `volcanoe`, `newcliff11` 34 of 130; `original/modelnodes.py`).
+- [ ] **Q657. Light the advisor as the original does (Q621's build).** `ui.md`, "How he is lit": per vertex, the
+  theme's `AmbientLightLevel` plus 2 x max(0, -(d.n)) of white, d the record light's (26.667, -26.667, 800) taken into
+  his model's space (the file's axes; `AdvisorModel`'s world has Y and Z swapped), each channel clamped to 1 and
+  rounded to a byte, times the texel; no sun. Measure the lobby first (`original/advlight.py` there: the front end
+  loads him once and writes its own ambient, so the strength and ambient may differ) and check his normals
+  against the original's `+0x64` ones (`advlight.py --json`). Replace `AdvisorModel`'s 1.4 and 0.3 and their comment.
+  Confirm: the four lines of `q621/ours.py` beside `q621/orig/r1-four.png`, each part's median and 95th percentile by
+  `q621/parts.py` within 8 of the original's but the gloves' 239 (our texel's 231 at eight bits, said at the site);
+  predicted first.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,

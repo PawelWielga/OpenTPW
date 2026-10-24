@@ -9869,6 +9869,22 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `_ROW`. Measured: 143 pieces on 143 anchors in the stock park (90 `ho_fos1`, 19 `ho_fos2`, 13 `ho_fos3`, 12 `ho_fob1`,
   8 `ho_fob2`, 1 `ho_fos4`), the wall beside the gate and along row 13 lying on the original's at the same cameras
   (`q620/overlay-gate-final.png`, `overlay-row13-final.png`). Tests 3879, mutants 12 of 12. A fresh park's pieces: Q656.
+- [x] **Q621. The advisor's colours: hard hat, gloves, safari hat, the scientist's white hair. Decode first.** From
+  Alexah's play test, 2026-10-21 (note 7, shot5). The docs call our hat paler than the original's, "lit past his
+  textures, set against his gloves" (`advisor-park.md:696`, `STATUS.md:40`), yet shot5 shows a saturated yellow hat and
+  bright white gloves; gloves, safari hat and the scientist's hair are named nowhere. Cause not read: the advisor's own
+  light (`AdvisorModel`), the texture cut, or the normals (Q219, QUEUE:528-533). Measure each part's colour on the
+  original's frame and ours (same pose, same advisor), then fix the light. Confirm: the four advisors' frames beside the
+  original's, the numbers predicted first.
+  **Done (2026-10-24), decode only:** the original lights him per vertex by the park's model lighter, clamped, and a
+  lit face is its texel at most (`MODULATE`, no `MODULATE2X` in the listing): the theme's ambient (0.333, 0.333,
+  0.408) plus a white light of strength 2 travelling (26.667, -26.667, 800), each advisor record's own (`AdvisorRecord_Construct`,
+  `Advisor_LoadModel`), not the sun. Read live (`original/advlight.py`, two rounds): every lit normal of both models fits
+  `clamp( ambient + 2 x max(0, -(d.n)) )` within 1 (14 meshes; the theme fly's right hand not settled). Frames: gloves
+  239 with shading to 144 against our 255 flat; the hard hat (229, 219, 49) against (255, 255, 95); the hair 174
+  against 249; the helmet (151, 116, 49) with a grey band against (255, 232, 108) and white. Ours is
+  `AdvisorModel`'s 1.4 ambient and 0.3 light, unclamped (`ui.md`, "How he is lit"; `q621/PREDICTION.txt`,
+  `q621/orig/r1-four.png`, `q621/ours-four.png`). The build is Q657.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

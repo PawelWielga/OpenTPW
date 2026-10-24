@@ -3852,8 +3852,9 @@ with `ThemeEngine.AmbientLightLevel`'s R, G, B / 255 (0.333, 0.333, 0.408 in the
 `Standard.sam`; `fantasy/Online_Standard.sam` alone carries 0xFFA0A0B0). For each directional light (`+0x50 & 0xf` =
 2) it adds the light's colour times `-(d.n)` when that is not negative. `d` is the light's direction taken into the
 model's space: `FUN_005743a0` inverts the model matrix (`FUN_00578b20`), turns `+0x2c` into `+0x38` with no
-translation (`FUN_00578d20` mode 3) and normalises it. The park makes one such light, the sun (`FUN_004584d0`, the only
-caller of the light constructor `FUN_00457e70`).
+translation (`FUN_00578d20` mode 3) and normalises it. The park makes one such light for the scene, the sun (`FUN_004584d0`, the only
+caller of the light constructor `FUN_00457e70`); each advisor record holds one more, built in place, which lights
+him alone, and his draw skips the sun's list (`ui.md`, "How he is lit").
 
 **The sign.** `FUN_00458590` normalises `LightNormal` with +1.0 (`0x0074d0d8`) and never negates it, so (0.4, -0.8,
 0.4) is **the direction light travels**: the sun stands above, and a level face gets 0.816 of the sun's colour.
