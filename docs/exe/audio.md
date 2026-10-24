@@ -620,7 +620,8 @@ of this class is a variation drawn as `FUN_006bc810` draws it, a sample of it, t
 kept, and after every sample, the first included, a silence drawn from its variation's wait, timed on the frame clock
 from the frame the sample is found ended. Built for the land's own type 3 sounds alone; the run is in `park.md`,
 "The land's own sounds". The sample draw's own rule against the sample before (`FUN_006bc680` asked with 1, for a
-variation of more than two samples) is not built, here or for the crowd's and the music's voices.
+variation of more than two samples) is not built for the land's following voices, the crowd's or the park music's (counted
+`SAMPLE_NO_REPEAT`, Q742); the lobby's music builds it (Q723).
 
 **The sample draw, `FUN_006bc680( voice, avoidRepeat )`** (read from the stored dump of the same program; upstream look
 2026-10-19, `verify-sound-ui.md`, "The music roll rule"). A variation with no samples gives none; a variation with one
@@ -632,8 +633,9 @@ nothing. With the argument set and more than two samples, a pick equal to the vo
 index, modulo the count; the pick is stored at `+0x46`. The lobby's music asks with 1: all four `cat_locallobbymusic`
 effect 1 hold one variation of three samples (odds 21,845, 43,690, 65,535), so the rule applies to the lobby's music (flags `0x206`, the plain class). 201 of
 the 1,592 sample lists in the 31 SFX maps end below 65,535 (lowest 65,516; the global lobby music effect 2 ends at
-65,534), so the no-sample case happens at most 20 times in 65,536. OpenTPW's `SoundCategory.PickIn` rolls 0 to the
-last odds and so never plays nothing, and builds no avoid-repeat step (said at the site).
+65,534), so the no-sample case happens at most 20 times in 65,536. OpenTPW's `SoundCategory.Draw` is this rule (Q723): the roll is 0 to 65,535, no sample past the last odds, and the
+previous-pick step is kept per effect and asked by the lobby's music alone (confirmed: ten to twelve selections of each
+island in 240 s, no track twice running, `q723/run3`). The park's own voices keep no last pick yet (Q742).
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|

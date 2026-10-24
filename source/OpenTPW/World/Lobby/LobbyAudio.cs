@@ -405,7 +405,7 @@ public sealed class LobbyAudio : Entity
 		var voices = VoicesFor( island.ThemeName );
 
 		voices.Music = _current.Music.Play( LocalMusic, MusicVolume, fadeInSeconds: CrossfadeSeconds,
-			bus: AudioBus.Music );
+			bus: AudioBus.Music, avoidRepeat: true );
 		voices.Bed = _current.Ambience.Play( LocalBed, BedVolume, fadeInSeconds: CrossfadeSeconds );
 
 		Log.Info( $"Lobby audio: {island.ThemeName} - theme '{Describe( voices.Music )}', bed '{Describe( voices.Bed )}'" );
@@ -476,6 +476,9 @@ public sealed class LobbyAudio : Entity
 			KeepParkPlaying( playing, _ambiencePosition );
 	}
 
+	/// <summary>Each theme's music voice whose pick was last logged.</summary>
+	private readonly Dictionary<string, Voice> _lastMusicLogged = new( StringComparer.OrdinalIgnoreCase );
+
 	/// <summary>
 	/// Starts a park's theme or its bed again when either runs out, at the place that park is heard
 	/// from. Neither loops - see the note on <see cref="KeepPlaying"/>.
@@ -488,7 +491,14 @@ public sealed class LobbyAudio : Entity
 		var voices = VoicesFor( theme );
 
 		if ( voices.Music is not { Playing: true } )
-			voices.Music = park.Music.Play( LocalMusic, MusicVolume, bus: AudioBus.Music, position: position );
+			voices.Music = park.Music.Play( LocalMusic, MusicVolume, bus: AudioBus.Music, position: position, avoidRepeat: true );
+
+		if ( voices.Music is { Playing: true } restarted
+			&& !( _lastMusicLogged.TryGetValue( theme, out var logged ) && ReferenceEquals( restarted, logged ) ) )
+		{
+			_lastMusicLogged[theme] = restarted;
+			Log.Info( $"Lobby audio: {theme} music takes '{restarted.Name}'" );
+		}
 
 		if ( voices.Bed is not { Playing: true } )
 			voices.Bed = park.Ambience.Play( LocalBed, BedVolume, position: position );

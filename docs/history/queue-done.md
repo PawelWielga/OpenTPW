@@ -9814,6 +9814,7 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   confirm at the gate beside the original's frame.
   **Alexah (2026-10-24): 32 by default; Q645's faithful toggle brings 16 back, said at the site.** Done as Q618's build
   (`Level.TileSizeFor`; `ground original` in `save/opentpw.cfg` until Q645 sets it).
+- [x] **Q723. The sample draw as `FUN_006bc680` draws it.** The draw is built once (`SoundCategory.Draw`): a list of one is given with no draw, otherwise a roll of 0 to 65,535 and the first sample whose odds are at least the roll, none when the roll is above the last odds, and, where the caller asks, a pick equal to the effect's last moves on to the next (more than two samples only). The lobby's music asks (both of its starts), so no island's track plays twice running: ten to twelve selections of each of the four islands in 240 s, no repeat, all three samples each (`q723/run3`; the bug put back repeats, `q723/mut-m09-laststore`, `mut-m10-lobbyoff`). The deviation of at most 20 in 65,536 (a list ending below 65,535 plays nothing) is now the original's own. The voices that ask in the original and keep no last pick here are counted `SAMPLE_NO_REPEAT` (123 in a jungle park's first 45 s): filed as Q742.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

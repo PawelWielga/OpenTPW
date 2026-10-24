@@ -36,11 +36,7 @@ One line per system; the detail, item by item, is `docs/WORKS.md` (grep it by ar
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q618 (the ground's tiles at the size asked, 32): the original was made to draw 32 by a write to its memory
-  (`original/prepoke32.sh`), not seen at 32 on a machine of its day; its other cut, on texture memory, is not modelled
-  (`Level.TileSizeFor`). The queue lines and ride borders are unchanged, crisp beside the original's blended floors
-  (Q649). Only the stock park at two cameras was measured; the frame rate at 32 was not (the atlas is four times the
-  memory, 3072 x 2720). Full Simulation not run: the tile size is the same code in both.
+- Q723 (the sample draw; lane B, off-screen): textures are drawn white there, so the claims rest on the log and the census, not on a picture (`q723/run3/lobby.png`, `park.png` are named, not evidence). The lobby's music never repeats a track in the attract lobby's four islands (ten to twelve selections each in 240 s, `q723/run3/run.log`); the park's own voices that ask for the step are counted `SAMPLE_NO_REPEAT` and not built (Q742). The no-sample case (a roll above a list's last odds, at most 20 in 65,536) is unit-tested, never seen in a run. Not heard: the mix was not captured, so which track sounded is the log's word. The original was not run in this lane. Full Simulation not run: the draw is the same code. One test failed once in a full run and passed on the re-run unchanged (not identified).
 
 
 ## Numbers (take counts fresh; these go stale within a day)
@@ -48,8 +44,8 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3849**, 0 fail, 0 skip with the game | 2026-10-24, Q618, alone in a worktree |
-| Tests without the game | **1357** ran, **2492** skipped, of 3849 | 2026-10-24, Q618, alone in a worktree |
+| Tests | **3855**, 0 fail, 0 skip with the game | 2026-10-24, Q723 rebased, alone in a worktree |
+| Tests without the game | **1363** ran, **2492** skipped, of 3855 | 2026-10-24, Q723 rebased, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

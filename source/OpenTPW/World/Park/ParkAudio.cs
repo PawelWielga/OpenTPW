@@ -354,7 +354,7 @@ public sealed partial class ParkAudio : Entity
 
 		CrowdVoiceVariation = next;
 		CrowdVoiceSample = HeldSample( headers[next], first, CrowdVoiceSample, CrowdVoiceParameter, CrowdVoiceLevelNow, _crowdRandom );
-		_crowd = Audio.Play( _kids.PickFrom( CrowdVoiceEffect, next ), ChannelGain( CrowdVoiceSample.Volume ), bus: AudioBus.Effects );
+		_crowd = Audio.Play( _kids.PickFrom( CrowdVoiceEffect, next, avoidRepeat: true ), ChannelGain( CrowdVoiceSample.Volume ), bus: AudioBus.Effects );
 
 		if ( _crowd is null )
 			return;
@@ -1334,7 +1334,7 @@ public sealed partial class ParkAudio : Entity
 			following.Kept = HeldSample( headers[next], first, following.Kept, 0, 0, _followingRandom );
 			following.EndedAt = null;
 
-			var clip = _ambient.PickFrom( following.Sound.Effect, next );
+			var clip = _ambient.PickFrom( following.Sound.Effect, next, avoidRepeat: true );
 
 			if ( Unheard( place ) )
 			{
@@ -1532,6 +1532,6 @@ public sealed partial class ParkAudio : Entity
 			Log.Info( $"Park music: variation {VariationNow + 1} to {next.Variation + 1} at level {LevelNow} on tick {GameClock.Ticks}" );
 
 		VariationNow = next.Variation;
-		_voice = Audio.Play( _music.PickFrom( MusicEffect, next.Variation ), next.Volume, bus: AudioBus.Music );
+		_voice = Audio.Play( _music.PickFrom( MusicEffect, next.Variation, avoidRepeat: true ), next.Volume, bus: AudioBus.Music );
 	}
 }

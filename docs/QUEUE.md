@@ -374,18 +374,7 @@ filed the items that cite it.
   under Proton: set music off in the options, load `Easymode.TPWI` (or a copy), and listen or record the mix
   (`record.sh`); then decide whether OpenTPW's load should do the same (it keeps the player's options today) and say the
   result at the site. Nothing is built before the check.
-- [ ] **Q723. The sample draw as `FUN_006bc680` draws it.** From the upstream look, 2026-10-19 (`verify-sound-ui.md`, "The
-  music roll rule"; `audio.md`, "The sample draw"). The original rolls 0 to 65,535 and walks the samples for the first whose
-  odds are at least the roll, and plays NOTHING when none reaches it; with the avoid-repeat argument set and more than two
-  samples a pick equal to the last moves on to the next. `SoundCategory.PickIn` rolls 0 to the last odds, so a list always
-  plays, and has no avoid-repeat step. The first is a deviation of at most 20 in 65,536 (201 of the 1,592 lists in the 31
-  SFX maps end below 65,535, the lowest at 65,516), said at the site and not worth a change on its own. The second matters
-  for the lobby: all four `cat_locallobbymusic` effect 1 hold one variation of three samples (odds 21,845, 43,690, 65,535,
-  flags `0x206`, the plain class that asks with 1), so the original's lobby music never plays a track twice running, and ours
-  can. None of the voices that ask for it builds the step (the lobby's music, and the land's, the crowd's and the park music's voices; `audio.md`). Build the
-  draw once (rolled 0 to 65,535, no sample past the last odds, the previous-pick step where the class asks) for every
-  caller, or count the unbuilt step `SAMPLE_NO_REPEAT` (rule 4) until it is. Confirm: the lobby's music over ten
-  selections, never the same track twice running, caught by the disk driver.
+- [ ] **Q742. The avoid-repeat step for the park's own voices.** From Q723. The crowd's voice, the land's following voices and the park music ask the draw with 1 in the original, and here `SoundCategory.PickFrom( ..., avoidRepeat: true )` counts `SAMPLE_NO_REPEAT` where the variation holds more than two samples, and plays whatever the roll gives. Keep each voice's last pick (the voice's `+0x46`, which a variation change leaves alone: read it in `FUN_006bc680`'s callers before choosing where it lives) and pass it to `SoundCategory.Draw`; confirm by the chosen voice's log (`Crowd voice: sample ...`, the land's following lines) never naming one sample twice running within a variation of three or more, the bug put back.
 
 - [ ] **Q562. The bus at its stops beside the original's.** From Q561. Q583 built what this asked for, for every route
   clip: the open route's segment count and the facing along the route (`park.md`, "Where a route key puts its node");

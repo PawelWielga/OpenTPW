@@ -42,6 +42,9 @@ public sealed class SoundCategory
 		/// original holds as a voice priority (<c>docs/QUEUE.md</c> Q43).
 		/// </summary>
 		public float AvailableAt = float.NegativeInfinity;
+
+		/// <summary>The sample the last draw that asked for the avoid-repeat step took, as the voice's <c>+0x46</c>; -1 for none.</summary>
+		public int LastSample = -1;
 	}
 
 	public string Name { get; }
@@ -163,6 +166,11 @@ public sealed class SoundCategory
 	/// Whether a placed voice given no <paramref name="range"/> takes its variation's, as the original's does
 	/// (<see cref="RangeOf"/>). The lobby's placed voices are this project's own and take none.
 	/// </param>
+	/// <param name="avoidRepeat">
+	/// Asks the sample draw for its step against the sample before (<c>FUN_006bc680</c> asked with 1): with more
+	/// than two samples in the variation, a pick equal to the effect's last moves on to the next. The lobby's
+	/// music asks, the original's plain class asking with 1.
+	/// </param>
 	/// <param name="gain">
 	/// Given, the volume is what it makes of the picked variation's header, and <paramref name="volume"/> is not
 	/// read: the original's voice takes its volume from its variation (<c>FUN_006bc090</c>).
@@ -174,7 +182,7 @@ public sealed class SoundCategory
 	public Voice? Play( int id, float volume = 1f, bool loop = false, float fadeInSeconds = 0f,
 		bool respectDelay = true, AudioBus bus = AudioBus.Effects, Vector3? position = null, float? range = null,
 		bool ownRange = false, Func<SoundCategoryFile.Variation, float>? gain = null,
-		Func<SoundCategoryFile.Variation, float>? rate = null )
+		Func<SoundCategoryFile.Variation, float>? rate = null, bool avoidRepeat = false )
 	{
 		var effect = _effects.FirstOrDefault( candidate => candidate.Id == id );
 
@@ -184,7 +192,7 @@ public sealed class SoundCategory
 		if ( respectDelay && Time.Now < effect.AvailableAt )
 			return null;
 
-		var clip = Pick( effect, out var variation, out _ );
+		var clip = Pick( effect, out var variation, out _, avoidRepeat );
 
 		if ( clip == null )
 			return null;
@@ -279,12 +287,20 @@ public sealed class SoundCategory
 	/// waits on another.
 	/// </summary>
 	/// <returns>The sample, or null for an unknown effect or variation, or one that would not decode.</returns>
-	public AudioClip? PickFrom( int id, int variation )
+	/// <param name="avoidRepeat">
+	/// The voice asks the draw for its step against the sample before, which a held voice's child has no
+	/// place to keep here: where the variation has more than two samples it is counted <c>SAMPLE_NO_REPEAT</c>
+	/// (Q723), the step not built.
+	/// </param>
+	public AudioClip? PickFrom( int id, int variation, bool avoidRepeat = false )
 	{
 		var effect = _effects.FirstOrDefault( candidate => candidate.Id == id );
 
 		if ( effect == null || variation < 0 || variation >= effect.Variations.Count )
 			return null;
+
+		if ( avoidRepeat && effect.Variations[variation].Count > 2 )
+			Unimplemented.Report( "SAMPLE_NO_REPEAT" );
 
 		return PickIn( effect.Variations[variation] );
 	}
@@ -354,42 +370,79 @@ public sealed class SoundCategory
 	/// A sample that would not decode gives silence rather than a re-roll: re-rolling would
 	/// quietly change the odds, and nothing in the lobby's banks fails to decode anyway.
 	/// </summary>
-	private AudioClip? Pick( Effect effect, out int variation, out TimeSpan length )
+	private AudioClip? Pick( Effect effect, out int variation, out TimeSpan length, bool avoidRepeat = false )
 	{
 		variation = _random.Next( effect.Variations.Count );
 
-		return PickIn( effect.Variations[variation], out length );
+		var index = Draw( effect.Variations[variation], _random.Next( RollRange ), avoidRepeat ? effect.LastSample : -1 );
+
+		length = TimeSpan.Zero;
+
+		if ( index < 0 )
+			return null;
+
+		if ( avoidRepeat )
+			effect.LastSample = index;
+
+		return Clip( effect.Variations[variation][index], out length );
+	}
+
+	/// <summary>The sample draw's roll runs 0 to 65,535 (<c>FUN_006bc680</c>); <c>Random.Next</c>'s bound is exclusive.</summary>
+	internal const int RollRange = 65536;
+
+	/// <summary>
+	/// The sample draw (<c>FUN_006bc680</c>, <c>docs/exe/audio.md</c>, "The sample draw"): a list of one gives its
+	/// sample with no draw; otherwise the first sample whose odds are at least <paramref name="roll"/> (0 to 65,535)
+	/// wins, and none does when the roll is above the last odds. With <paramref name="last"/> given (the step the
+	/// original asks for with 1) and more than two samples, a pick equal to it moves on to the next, modulo the count.
+	/// </summary>
+	/// <returns>The index of the sample drawn, or -1 for none.</returns>
+	internal static int Draw( List<SoundCategoryFile.Sample> variation, int roll, int last = -1 )
+	{
+		if ( variation.Count == 0 )
+			return -1;
+
+		if ( variation.Count == 1 )
+			return 0;
+
+		var pick = -1;
+
+		for ( int i = 0; i < variation.Count; ++i )
+		{
+			if ( variation[i].Weight >= roll )
+			{
+				pick = i;
+				break;
+			}
+		}
+
+		if ( pick >= 0 && variation.Count > 2 && pick == last )
+			pick = (pick + 1) % variation.Count;
+
+		return pick;
+	}
+
+	private AudioClip? Clip( SoundCategoryFile.Sample sample, out TimeSpan length )
+	{
+		length = sample.Duration;
+
+		return sample.Bank < _banks.Count ? _banks[sample.Bank][sample.Index] : null;
 	}
 
 	/// <summary>One sample of one weighted list, by its running total out of 65,535.</summary>
 	private AudioClip? PickIn( List<SoundCategoryFile.Sample> variation ) => PickIn( variation, out _ );
 
 	/// <summary>
-	/// One sample of one weighted list, by its running total out of 65,535, and its record's length.
-	///
-	/// Deviation from the original (<c>docs/exe/audio.md</c>, "The sample draw", <c>FUN_006bc680</c>): the
-	/// original rolls 0 to 65,535 and plays nothing when the roll is above the last odds; this rolls 0 to
-	/// the last odds, so a list always plays. It also has no avoid-repeat step for the sample before (the
-	/// lobby's music asks for one). Queued as Q723.
+	/// One sample of one weighted list, by its running total out of 65,535, and its record's length, as the
+	/// original's draw takes it (<see cref="Draw"/>): a roll of 0 to 65,535, and no sample when it is above the
+	/// last odds. A held voice's child asks without the avoid-repeat step; the callers that should ask are counted
+	/// <c>SAMPLE_NO_REPEAT</c> (Q723).
 	/// </summary>
 	private AudioClip? PickIn( List<SoundCategoryFile.Sample> variation, out TimeSpan length )
 	{
 		length = TimeSpan.Zero;
+		var index = Draw( variation, _random.Next( RollRange ) );
 
-		if ( variation.Count == 0 )
-			return null;
-
-		var roll = _random.Next( 0, Math.Max( 1, variation[^1].Weight ) + 1 );
-
-		foreach ( var sample in variation )
-		{
-			if ( roll > sample.Weight )
-				continue;
-
-			length = sample.Duration;
-			return sample.Bank < _banks.Count ? _banks[sample.Bank][sample.Index] : null;
-		}
-
-		return null;
+		return index < 0 ? null : Clip( variation[index], out length );
 	}
 }
