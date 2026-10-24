@@ -1053,6 +1053,33 @@ public sealed partial class ParkAudio : Entity
 		return true;
 	}
 
+	/// <summary>
+	/// The kids' effect <c>0xd0</c>, a till (<c>cashD2b.mp2</c>), which <c>Person_PayCharge</c> plays at the guest who
+	/// pays (<c>0x004fe1be</c>..<c>0x004fe1cb</c> through <c>Person_PlaySound</c>; <c>docs/exe/audio.md</c>, "The charge's
+	/// sound"). No handle and no level, so a plain one-shot at its variation's own volume, over its own range, and not
+	/// held back by the repeat delay.
+	/// </summary>
+	/// <returns>Whether anything started.</returns>
+	internal bool Charge( Vector3 at )
+	{
+		if ( !Audio.Ready || _kids is not { IsValid: true } )
+			return false;
+
+		var voice = _kids.Play( ChargeEffect, respectDelay: false, bus: AudioBus.Effects,
+			position: at, ownRange: true, gain: OneShotGain, rate: OneShotRate );
+
+		if ( voice == null )
+			return false;
+
+		Log.Info( $"Park audio: charge, effect {ChargeEffect} sample '{voice.Name}' volume {voice.Volume:0.0000} pitch {OneShotPitch} "
+			+ $"at ({at.X:0.0},{at.Y:0.0},{at.Z:0.0}) range {voice.Range ?? 0f:0}" );
+
+		return true;
+	}
+
+	/// <summary>The kids' category effect a paying guest plays - see <see cref="Charge"/>.</summary>
+	private const int ChargeEffect = 0xd0;
+
 	/// <summary>The kids' category effect a bored guest's yawn plays - see <see cref="Yawn"/>.</summary>
 	private const int YawnEffect = 0x7e;
 

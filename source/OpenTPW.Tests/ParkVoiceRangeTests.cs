@@ -171,6 +171,12 @@ public class ParkVoiceRangeTests
 			Assert.AreEqual( 100f, voice.Range );
 			Assert.AreEqual( of47, voice.Volume, 1e-6f, "a yawn" );
 
+			// Kids 208, a till: volume 42 is 31.5 of 127, rounded to even 32, beside the music's 60; range 60.
+			Assert.IsTrue( park.Charge( at ) );
+			voice = Last();
+			Assert.AreEqual( 60f, voice.Range, "a till" );
+			Assert.AreEqual( 32f / 60f * 0.33f, voice.Volume, 1e-6f, "a till's volume" );
+
 			Assert.IsTrue( park.StaffSound( 0xa9, at ) );
 			Assert.AreEqual( 75f, Last().Range );
 

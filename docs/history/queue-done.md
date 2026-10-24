@@ -9746,6 +9746,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   is `0x005ed770`, with `0x00599800`), and `FUN_004ccdf0` and `FUN_004c81b0`, which the project holds no function at
   (`STATUS.md`, `WORKS.md`, `TOOLING.md`). Read each against the listing; correct the doc or the comment, or say why the
   citation stands (`saves.md:2468`s `0x00544154` and `0x00544144` are a byte table and a jump table inside `.text`, so they start no instruction by design). Docs and comments only.
+- [x] **Q611. The charge's till: kids 208 at a guest who pays (Q567's build).** From Q567 (`audio.md`, "The charge's
+  sound"). `ParkRideOperation.Charge` counts `CHARGE_SOUND` where the original's `Person_PayCharge` (`0x004fe1be`..
+  `0x004fe1cb`) plays `cat_kids` effect 208 at the guest's position, a plain placed one-shot with no handle and no level
+  (as `ParkAudio.SingleScream` plays one): volume 42, pitch nought, range 60, `cashD2b.mp2`. Only when the price is
+  not nought, after the deposit, before the cash comes off. Confirm in the stock park with the camera on the Jungle
+  Spray (525, 300), `q567/confirm.py` with a check for the log's start of effect 208 at the payer's place, and the
+  sample in the game's own mix (`lib/mixmatch.py`); the original's places and count are `q567/orig/` run a.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -1258,8 +1258,8 @@ public sealed class ParkRideOperation
 	/// <c>+0x194</c>), bank it and credit the object (<c>FUN_004e16b0</c>, <see cref="ParkState.TakeAt"/>), play a
 	/// sound at the guest, and subtract the price from the guest's cash at <c>+0x1a0</c>. A price of nought skips all
 	/// of it - which is this park's one ride, priced free; the Jungle Spray charges 20 and the Drinks Shop 30. A shop's or
-	/// sideshow's price goes onto the park analyser's month of its takings. Counted, not built: the sound and the
-	/// challenge posts.
+	/// sideshow's price goes onto the park analyser's month of its takings. The sound is built (kids 208, at the
+	/// guest); the challenge posts are counted, not built.
 	/// </para>
 	/// <para>
 	/// <b>There is no affordability test and no clamp, and both are the original's.</b> It subtracts
@@ -1291,8 +1291,9 @@ public sealed class ParkRideOperation
 			Unimplemented.Report( "CHARGE_CHALLENGE_POST" );
 		}
 
-		// Sample 0xd0 at the guest (FUN_004faa00, 0x004fe1be..0x004fe1cb).
-		Unimplemented.Report( "CHARGE_SOUND" );
+		// Kids 208 at the guest (Person_PlaySound, 0x004fe1be..0x004fe1cb): after the deposit, before the cash comes off.
+		if ( ParkGuestSprites.Feet( peep.Navigator.Position ) is { } feet )
+			ParkAudio.Current?.Charge( feet );
 
 		peep.Cash -= price;
 

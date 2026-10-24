@@ -786,9 +786,13 @@ return chain `0x004faa52` (`Person_PlaySound`), `0x004fe1d0` (the charge), `0x00
 (`ExitRide`), `0x004e14ba` (`FUN_004e1410`). Four at (525, 0, 300) with the price 20 in `edi` (the Jungle Spray's), four
 at (434 or 435, 0, 303 or 304) with 30 (the Coconut Kiosk's, whose bubbles stand at (440, 6, 312)). Q565's runs counted
 30 to 60 a run at the same two places (`oneshots.py`). **OpenTPW** (`ParkRideOperation.Charge`) banks the price and
-takes it off the guest at the same point and plays nothing: `CHARGE_SOUND` is counted. The stock park here (`q567/run1`,
-main's binary): 17 "paid" lines in 150 s, 20 at the Spray (thing 14) and 30 at the Kiosk (thing 16), and the census
-"17x CHARGE_SOUND".
+takes it off the guest at the same point, and now sounds kids 208 between them (Q611, `ParkAudio.Charge`: `Feet` of the
+guest, its own range 60, no repeat delay, the variation's volume 42, which the channel makes 32 of 127, and pitch
+nought). The stock park here (`q611/run1`, off-screen): 13 "paid" lines in 150 s, 13 charge lines, all `cashD2b.mp2`
+at volume 0.1760, pitch 0, range 60, at (525, 305) (the Spray's) and (435, 305) (the Kiosk's), and the sample is
+in the game's own mix (UIHD entry 7, score 1.000). Its place is the guest's sprite's feet where the original's is its
+model's position (525, 300), five units nearer in y; the original's guest is read at the settle-up, ours as the
+sprite stands, and the two were not matched to the unit.
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
