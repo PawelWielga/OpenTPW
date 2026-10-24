@@ -413,14 +413,6 @@ filed the items that cite it.
   Ours fits `s_X1`'s part to the control `0x1e0eb` (`IslandPanel`, 1045,191 to 1405,416). Read what bounds the
   original fits (`UiControl_PlaceMesh`, `0x00476f10`: the node `0x00476e80` answers, `+0x78..+0x8c` through its chain)
   and how the "x N" part is chosen, then fit as it does; confirm "x 1" beside the original's.
-- [ ] **Q615. A make that fails after it took its id gives the id back.** From the run 8 review of Q610 (`review8/VERIFY-1.md`, the Note). `ParkBuilding.Build` takes its thing id
-  (`ParkState.NextThingId`) before `PlaceNow`; on "would not load" it returns without `DeleteThing` (it frees the
-  track-ride slot only), and `ParkEndFeature.Make` on "script would not run" does `objects.Remove` and no `DeleteThing`.
-  Each such failure strands an id (and a `_madeAt` stamp) until the park is reloaded, now that a full table is a real
-  end (Q610). Pre-existing. Settle the reach first: sweep every Lost Kingdom item through `PlaceNow` and
-  `BindFixed` and count the ones that fail; if none does, this is dead by CONTENT and only the two comments at the
-  sites are owed. If any does, free the id on those two returns. Check what the original does at the same failure
-  before changing anything (rule: recreate the original).
 - [ ] **Q147. `MP2File.Duration` reads every sample as MPEG-2, and five shipped samples are MPEG-1.** Found by the
   2026-09-26 staleness audit. The getter never reads the header's version bits (`(SoundData[1] >> 3) & 3`) and always
   takes the MPEG-2 bitrate tables. By the audit's census of all 47 `.sdt`, five entries are MPEG-1 Layer I (header

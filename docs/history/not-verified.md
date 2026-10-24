@@ -5,6 +5,9 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q621 (the advisor's light, decode only): read in the stock park, Instant Action, four lines (bare, hard hat,
+  research hat, the theme's fly); the lobby's advisor, other themes' ambients, Full Simulation and his other hats
+  were not measured; the theme fly's right hand does not fit the law (4 unsaturated normals), not settled. No code changed.
 - Q620 (the boundary wall): seen only in the stock park, at two cameras (beside the gate, along row 13), Instant Action;
   the other 120 or so pieces, the corners up columns 1, 25, 29, 69, 79 and 93, and the played parks of the other themes
   were not looked at. Full Simulation's stock park reads the same file and was not run. A park made fresh draws none

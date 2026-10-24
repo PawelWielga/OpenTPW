@@ -9885,6 +9885,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   against 249; the helmet (151, 116, 49) with a grey band against (255, 232, 108) and white. Ours is
   `AdvisorModel`'s 1.4 ambient and 0.3 light, unclamped (`ui.md`, "How he is lit"; `q621/PREDICTION.txt`,
   `q621/orig/r1-four.png`, `q621/ours-four.png`). The build is Q657.
+- [x] **Q615. A make that fails after it took its id gives the id back.** Settled as dead by CONTENT, 2026-10-24: every one of Lost Kingdom's
+  61 buyable items (UI type 0 to 3) builds in a Full Simulation park (`q615/run6`, 61 of 61 "built as thing", no "would not load" line; the
+  stock Instant Action park reaches 41, `run5`, the other 20 being left out of its catalogue), each script reads
+  (`ParkMakeFailureReachTests`, which fails with the script path put wrong), and the End, the one item `BindFixed` is asked for, is
+  made and ended (`q615/run7`). So `ParkBuilding.Build`'s "would not load" return and `ParkEndFeature.Make`'s "script would not run"
+  return are met by no shipped content, and both comments at the sites now say so and name the fix (`DeleteThing`) for the day one is.
+  Nothing changed in what runs; the original was not run (lane B), and nothing the original does at that failure was needed.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
