@@ -816,6 +816,8 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00521e60` | | OpenTPW.Files/Formats/Particle/ParticleLibraryFile.cs OpenTPW/World/Particles/ParticleSystem.cs  |
 | `0x00522360` | | OpenTPW.Files/Formats/Particle/ParticleLibraryFile.cs OpenTPW/World/Particles/ParticleSystem.cs  |
 | `0x005224f0` | | OpenTPW/World/Particles/ParticleSystem.cs  |
+| `0x00522ea0` | Hoarding pieces' loader FUN_00522e40: a named row's model made as item `0x4394` (17300) plus its row | OpenTPW/World/Park/ParkBoundaryHoarding.cs  |
+| `0x00522ed2` | Hoarding pieces' loader FUN_00522e40: a row with no name takes the row before's model | OpenTPW/World/Park/ParkBoundaryHoarding.cs OpenTPW.Tests/ParkBoundaryHoardingTests.cs  |
 | `0x005234f2` | Tool pass `FUN_005234d0`: clears the refusal latch `DAT_00816d50` at its start (with `d48`, `d58`), which its verdicts then set | OpenTPW/World/Park/ParkBuildMarkers.cs OpenTPW/World/Park/ParkBuildMode.cs  |
 | `0x00523dd3` | Tool pass, the patrol arm: the rectangle's test `FUN_00532a50` into the refusal latch `DAT_00816d50` | OpenTPW/World/Park/ParkPatrolTool.cs OpenTPW.Tests/ParkStaffWindowTests.cs  |
 | `0x00524a63` | Build commit: a red preview (`DAT_00816d48`) lays nothing, sound `0xaf` | OpenTPW/World/Park/ParkPathBuilding.cs  |
@@ -1383,6 +1385,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x0075d914` | String "The bus is coming!  RUUUUUUUUUUN!!!!", FUN_004ff730's log line when the bus reports 3 | OpenTPW/World/Park/PeepBehaviour.cs  |
 | `0x007622b0` | | OpenTPW/World/Park/CellLine.cs OpenTPW/World/Park/MapStep.cs  |
 | `0x0076338c` | The queue pieces table, twelve bytes a record | OpenTPW/World/Park/ParkQueues.cs  |
+| `0x00763608` | The hoarding table: 28 rows of model, name and node mask, filled by FUN_00522e40 from the theme's `hoarding.wad` | OpenTPW/World/Park/ParkBoundaryHoarding.cs  |
 | `0x00763b38` | The 20-entry marker texture table (`blue`, `red`, ... `m_link`, `m_end`) | OpenTPW/World/Park/ParkBuildMarkers.cs OpenTPW/World/Park/ParkPathBuilding.cs  |
 | `0x00763f88` | Sprite kinds table: fourteen bare kind names | OpenTPW/World/Park/Balloon.cs OpenTPW/World/Park/ParkGuestSprites.cs OpenTPW/World/Park/Thoughts.cs  |
 | `0x00764030` | The four kid banks `Sprites_LoadFolder` loads before its sweep | OpenTPW/World/Park/ParkGuestSprites.cs  |
@@ -1447,6 +1450,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x00803a3c` | | OpenTPW/World/Park/ParkAudio.cs  |
 | `0x0080ced8` | | OpenTPW.Files/Formats/Particle/ParticleLibraryFile.cs  |
 | `0x0080cef8` | | OpenTPW/World/Particles/ParticleSystem.cs  |
+| `0x008179f8` | A boundary piece's footprint, 2 by 2, handed to the model maker by FUN_00522f20 | OpenTPW/World/Park/ParkBoundaryHoarding.cs OpenTPW.Tests/ParkBoundaryHoardingTests.cs  |
 | `0x00818800` | The footprint grid FUN_0052c5b0 fills: 16 columns of 16 dwords, the width at +0x400 and the depth at +0x404 | OpenTPW/UI/Park/ParkFootprintPicture.cs  |
 | `0x0081b740` | The pending list of run ends Backspace pops; count `DAT_00820a8c` | OpenTPW.Tests/ParkBuildModeTests.cs OpenTPW/World/Park/ParkBuildMode.cs  |
 | `0x00877d34` | | OpenTPW/Global/GameClock.cs OpenTPW/World/Park/ParkAudio.cs OpenTPW/World/Park/ParkPeople.cs  |

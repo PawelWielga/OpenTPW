@@ -74,16 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q620. The boundary wall between the park and the unbought land is not drawn.** From Alexah's play test,
-  2026-10-21 (note 40, shot5), split from Q214. The wall (track types 25 and 12 from `Hoardings.sam`, ho_fos1.MD2
-  anchored at (43,17), (51,17)) is written into the cells and neither drawn nor counted (QUEUE:481-492); the original
-  draws it (Q469: the wall right of the gate in `q469/orig/a-4-cam180.png`, open grass in `q469/run1/2-hoarding.png`).
-  The dark line Alexah sees is the half-lit ground's edge (inferred). Draw the wall and count what is not;
-  `FreshParkBoundary.Apply` throws at its 64th entry where the original stops (`0x00532517`), which Q214 still owns.
-  Confirm: the gate's view beside the original's, with the census of wall pieces.
-  - **Note (fork watch 2026-10-24, `verify-world-other.md` L3):** type 25's piece is `FUN_0053a540` -> family 5 ->
-    `FUN_00522f20`, table `0x00763608` from `hoarding.wad` (`park.md`, "The boundary hoarding's piece"). Still to read:
-    table `0x00762ff0`, which gives the anchors' row and rotation.
 - [ ] **Q621. The advisor's colours: hard hat, gloves, safari hat, the scientist's white hair. Decode first.** From
   Alexah's play test, 2026-10-21 (note 7, shot5). The docs call our hat paler than the original's, "lit past his
   textures, set against his gloves" (`advisor-park.md:696`, `STATUS.md:40`), yet shot5 shows a saturated yellow hat and
@@ -245,6 +235,14 @@ filed the items that cite it.
   (`original/fsload.sh`), read `advisor.py ... 0xf8,0x101 poll` and the line: this game said row 248 on 19031 at 100
   (sample 516, props 13, 14) and queued row 257 at 32 behind it (`q713/run4-made.out`). Predict the original's tick and
   score first; a miss in either game's guests (the rolled-in day) is said as such.
+- [ ] **Q656. A park made fresh draws no boundary wall.** From Q620. `FreshParkBoundary` writes the anchors (track type 25)
+  with no model record, no `mHoardingNeighbours` and no `mTileData`, so `ParkBoundaryHoarding` counts each,
+  `BOUNDARY_HOARDING_UNMADE`. Build the original's way: the mask from the four anchors two cells away (FileFormats
+  `saves.md`, "A boundary piece's record"), then `Track_PieceForCell` (`0x0053a540`; `park.md`, "The boundary hoarding's
+  piece"): read `FUN_00522810`, `FUN_00522850` and the gate ends' `FUN_004d8c00` first; the straights' variant rolls the
+  park's generator, so the order the original retiles the anchors in decides which straights are `ho_fos2`/`ho_fos3`
+  (find the caller that walks them at a fresh park's start). Write the records and masks into a saved file as the
+  original does. Confirm: a fresh Full Simulation park's gate in both games (`lib/freshpark.py`, `original/freshfs.sh`).
 - [ ] **Q649. A built thing's floor blended into the ground's tiles.** From Q617 (`park-engine.md`, "A built thing's
   floor is blended into the ground's tiles"). The original composites each used footprint cell's ground tile with the
   cell's floor texture laid over by its alpha (as a path is, `ProceduralGround`'s overlay) and draws the floor's
@@ -659,16 +657,17 @@ filed the items that cite it.
 - [ ] **Q214. A fresh Full Simulation park's four gaps.** Found by the 2026-10-04 review (`u1-startup-1` to `-4`).
   `ParkStaffPool.Roll` gives every candidate costume 0 where `FUN_00507600` stores `FUN_00541f70( kind )` at record
   `+9`, so every hired entertainer and mechanic wears bank 0 (`guests`: `bank 0+0` on all five kinds). The land
-  boundary (track types 25 and 12, from `Hoardings.sam`) is written into the cells and neither drawn nor counted.
+  boundary (track types 25 and 12, from `Hoardings.sam`) is written into the cells; its pieces are counted, not made
+  (Q656; a loaded park's are drawn, Q620).
   The catalogue's emitters are registered and the per-item slot table (item `+0x4dc`, `0x0041455a`) is thrown away.
   `FreshParkBoundary.Apply` throws where the original stops at its 64th entry (`0x00532517`), and a test pins the
   throw. Confirm: several entertainers hired in a fresh park, more than one costume on screen; the boundary beside
-  the original's fresh park. The stock park's boundary is not drawn either (Q469: the wall right of the gate in
-  `q469/orig/a-4-cam180.png`, open grass in `q469/run1/2-hoarding.png`).
+  the original's fresh park (the stock park's is drawn, Q620).
   From Q494: the picker's object march meets the boundary's hoarding in the original (ho_fos1.MD2, its track kind 25
   anchors (43,17) and (51,17), at 7 pixels right of the gate in `q494/orig/a-scan.log`); ours counts
-  `PICK_OBJECT_MARCH_TRACK_THING` on every cell of kind 11, 12, 16, 17 or 25 and answers the ground there. Once the
-  hoarding is drawn, `ParkPicking.CandidateOn` asks its model first (`FUN_0053bf30`'s `+4`).
+  `PICK_OBJECT_MARCH_TRACK_THING` on every cell of kind 11, 12, 16, 17 or 25 and answers the ground there. The
+  hoarding is drawn now (Q620, `ParkBoundaryHoarding`): `ParkPicking.CandidateOn` is to ask its model first
+  (`FUN_0053bf30`'s `+4`).
   - **Note (play test 2026-10-21, note 40):** the generated wall between the park and the unbought land is invisible;
     its border shows as a dark line. Moved to Q620 so the display items come first; the costume and emitter gaps here
     stay.

@@ -47,8 +47,12 @@ public readonly record struct SavedChannel( int Role, int Entry, int Flags, floa
 /// <c>mRideScriptHandle</c>; nought for a piece of queue and other scenery.
 /// </param>
 /// <param name="NodeWords">A flag word a node, as the record holds them (FileFormats <c>saves.md</c>, "The node flag words").</param>
+/// <param name="CellX">The record's <c>0x05</c>: the cell the model was made on, across.</param>
+/// <param name="CellY">The record's <c>0x09</c>: and down.</param>
+/// <param name="Angle">The record's <c>0x27</c>: the angle it was made at, in whole degrees.</param>
 public readonly record struct SavedThing( int CatalogueId, int Slot, SavedChannel[] Channels,
-	uint HoardingFlags = 0, float HoardingProgress = 0f, int ScriptHandle = 0, uint[]? NodeWords = null );
+	uint HoardingFlags = 0, float HoardingProgress = 0f, int ScriptHandle = 0, uint[]? NodeWords = null,
+	int CellX = 0, int CellY = 0, int Angle = 0 );
 
 /// <summary>
 /// One model as a park file's writer takes it (<see cref="ParkThingStates.Put"/>): the slot its record lies in, its
@@ -165,6 +169,12 @@ public sealed partial class ParkThingStates
 
 	/// <summary>The module's three counts: the present slots, the empty ones, and the cursor, the slot the next model made takes.</summary>
 	public (int Present, int Empty, int Cursor) Header { get; private set; }
+
+	/// <summary>The cell the model was made on, across then down (<c>docs/exe/saves.md</c>, "The model table").</summary>
+	private const int CellOffset = 0x05;
+
+	/// <summary>The angle the model was made at.</summary>
+	private const int AngleOffset = 0x27;
 
 	/// <summary>The record's script handle.</summary>
 	private const int ScriptHandleOffset = 0x19;
@@ -528,7 +538,8 @@ public sealed partial class ParkThingStates
 		// FUN_004647a0 maps the packed RSYS word to model bits 0x20..0x800 and restores +0xb8.
 		_things.Add( new SavedThing( catalogueId, slot, channels,
 			(uint)ReadInt32At( record + FlagsOffset ) & HoardingBits, ReadSingleAt( record + ProgressOffset ),
-			ReadInt32At( record + ScriptHandleOffset ), words ) );
+			ReadInt32At( record + ScriptHandleOffset ), words,
+			ReadInt32At( record + CellOffset ), ReadInt32At( record + CellOffset + 4 ), ReadInt32At( record + AngleOffset ) ) );
 	}
 
 	/// <summary>The module's start, found the same way and for the same reason as the script module's.</summary>

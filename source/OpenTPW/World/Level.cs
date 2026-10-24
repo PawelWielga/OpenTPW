@@ -451,6 +451,10 @@ public class Level
 		_ = new ParkFixedItems( ThemeName, park, objects );
 		load.Mark( "fixed items" );
 
+		// The wall round the land the park owns, made again from the file's model records.
+		_ = new ParkBoundaryHoarding( ThemeName, park, catalogue );
+		load.Mark( "boundary" );
+
 		// And the scripts those objects run. After the objects, because a script belongs to something
 		// standing in the park rather than the other way round - and now literally so: a script is handed
 		// the very animation player its own thing's model is posed from, and its tick loop is what drives

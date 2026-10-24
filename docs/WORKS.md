@@ -48,4 +48,11 @@ belongs to or at the end. Grep it by area or Q-number; never read it whole.
   Every 32-pixel tile of the four parks and the stock park's 78 path tiles equal the original's code. At the gate the
   path reads 3.20 and the grass 3.72 (`lib/sharp.py`), the original made to draw 32 reads 3.23 and
   3.64; at 16, 1.39 and 1.20 here (`q618/side-by-side-gate.png`).
+- **The wall between the park and the land not bought is drawn** (Q620): one `hoarding.wad` model to each anchor of the
+  boundary (track type 25), made again from the park file's model records as the original's loader makes them (item 17300
+  plus the hoarding table's row, the record's cell and angle, the middle of the ground under its two cells square;
+  `ParkBoundaryHoarding`, `docs/exe/park.md`, "The boundary hoarding's piece"). The stock park's 143: 90 `ho_fos1`, 19
+  `ho_fos2`, 13 `ho_fos3`, 12 `ho_fob1`, 8 `ho_fob2`, one `ho_fos4`; the console's `boundary [X Y]`. Beside the gate and
+  along row 13 the wall lies on the original's at the same cameras (`q620/overlay-gate-final.png`). A park made fresh has
+  no records: its anchors are counted, `BOUNDARY_HOARDING_UNMADE` (Q656). The load's `boundary` phase took 307 ms.
 - The original runs under Proton as a reference (Q168, `docs/TOOLING.md`); the console's `admit`/`send` place a guest (Q184).

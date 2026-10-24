@@ -5,6 +5,7 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q713 (the advisor's rows 238 to 257; lane B, off-screen): textures are drawn white there, so the claims rest on the poll and attempt lines and the `outlets` census (`q713/run6-made/t19046.png`, `run4-made/t19040.png` are named, not evidence). The original was not run here: its row 257 on 19040 is Q708's record; on the made files it is Q743. On Alexah's file as it is, row 257 scored 24 (sideshow 50 at 76) where the original's said it: the guests' visits in the rolled-in days differ, not the row. Not heard. A great row said again past its 7,200-sweep wait, and the poor rows' negative scores in a run of the original, are not seen. A line queued behind another under the harness's pauses waited far longer in sweeps than the original's would (`TOOLING.md`, recipes, "A gate").
 - Q619 (decode only: the river, cliffs and rock at the back half lit by their normals, the water unlit): nothing built.
   The original was read off-screen (`q325/stock.TPWS`) at two cameras, its colours measured as Q479's were; the
   ambient-only half (a face turned from the sun keeps its light) is the code's alone, no such face found in the frames;

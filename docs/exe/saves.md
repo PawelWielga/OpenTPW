@@ -1190,9 +1190,10 @@ scripts 11, 12 and 13, and `ParkRides.PairSavedThings` pairs each thing with the
 the cell holds (`FUN_00522a90`) and stores `FUN_005229e0`'s, which is `FUN_00463060( [0x00763388 + 12 x tile],
 0x33a, { x, y, 360 - angle }, ..., -1, 0 )`: a new slot at the cursor. Its record's item is 17000 plus the tile's
 index (17002 to 17007 in the files), its cell the cell's: 4 of 4 queue cells in the shipped park and 78 of 78 in
-a played one name such a slot, at their own cell. The other records, the most of them (items 173xx in the shipped park,
-143 of its 161, and 171xx too in a played one), are named by no thing and by no cell's `mMeshInstance`; what
-makes them was not looked for.
+a played one name such a slot, at their own cell. The other records, the most of them, are the boundary's hoarding: items 173xx, 143 of the shipped park's 161, each
+named by its anchor's track sub-record's `mMeshInstance` (a cell of track type 25) and made by `FUN_00522f20` (`park.md`,
+"The boundary hoarding's piece"). The 171xx of a played one (28 in Alexah's jungle New Save) are named by the track
+sub-records of cells of track type 11; what makes them was not looked for (Q620, `q620/trackrec.py`).
 
 **A script's record is its struct, raw, and its tables** (`FUN_00559350` writes, `FUN_005597a0` reads). The
 loader `FUN_005587f0( path, thing, quiet )` makes the struct: all nought, then the counts from the `.RSE` header

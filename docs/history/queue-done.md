@@ -9829,7 +9829,6 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Measured: the cliff path 0.48 of ours, the grass strips 0.53, plain rock 0.51/0.51/0.55, the water 0.90; every river,
   cliff, volcano and water normal 0.225 long (`park-engine.md`, "The terrain model's meshes on that land are half lit
   too"; `q619/side-by-side.png`, `q619/PREDICTION.txt`). The build is Q652.
-- [x] **Q723. The sample draw as `FUN_006bc680` draws it.** The draw is built once (`SoundCategory.Draw`): a list of one is given with no draw, otherwise a roll of 0 to 65,535 and the first sample whose odds are at least the roll, none when the roll is above the last odds, and, where the caller asks, a pick equal to the effect's last moves on to the next (more than two samples only). The lobby's music asks (both of its starts), so no island's track plays twice running: ten to twelve selections of each of the four islands in 240 s, no repeat, all three samples each (`q723/run3`; the bug put back repeats, `q723/mut-m09-laststore`, `mut-m10-lobbyoff`). The deviation of at most 20 in 65,536 (a list ending below 65,535 plays nothing) is now the original's own. The voices that ask in the original and keep no last pick here are counted `SAMPLE_NO_REPEAT` (123 in a jungle park's first 45 s): filed as Q742.
 - [x] **Q713. The advisor's shop and sideshow value and satisfaction rows, 238 to 257.** From the fork watch, 2026-10-19
   (`verify-advisor-ui.md` L1; `advisor-park.md`, "Shop and sideshow value and satisfaction, rows 238 to 257"). Twenty
   polled rows, counted in `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; rows 239 to 241 were not opened, so read those three
@@ -9852,6 +9851,24 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     scored 24 on 19040 (sideshow 50 at 76, one short of the original's). Made files: row 248 `score=100 ... tick=19031
     result=post` and said (sample 516); row 257 `score=68 ... tick=19040` and said, sample 525, props (8, 0)
     (`q713/PREDICTION.txt`). `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` 20 fewer a round. The original on the made file: Q743.
+- [x] **Q620. The boundary wall between the park and the unbought land is not drawn.** From Alexah's play test,
+  2026-10-21 (note 40, shot5), split from Q214. The wall (track types 25 and 12 from `Hoardings.sam`, ho_fos1.MD2
+  anchored at (43,17), (51,17)) is written into the cells and neither drawn nor counted (QUEUE:481-492); the original
+  draws it (Q469: the wall right of the gate in `q469/orig/a-4-cam180.png`, open grass in `q469/run1/2-hoarding.png`).
+  The dark line Alexah sees is the half-lit ground's edge (inferred). Draw the wall and count what is not;
+  `FreshParkBoundary.Apply` throws at its 64th entry where the original stops (`0x00532517`), which Q214 still owns.
+  Confirm: the gate's view beside the original's, with the census of wall pieces.
+  - **Note (fork watch 2026-10-24, `verify-world-other.md` L3):** type 25's piece is `FUN_0053a540` -> family 5 ->
+    `FUN_00522f20`, table `0x00763608` from `hoarding.wad` (`park.md`, "The boundary hoarding's piece"). Still to read:
+    table `0x00762ff0`, which gives the anchors' row and rotation.
+  **Done (2026-10-24):** a loaded park's pieces are made again from its model records (items 17300 plus the hoarding
+  table's row, the record's cell and angle, the middle of the ground under the two cells square), as the original's
+  loader makes them; table `0x00762ff0` and the rest of `Track_PieceForCell` are read (`park.md`, "The boundary
+  hoarding's piece"; FileFormats `saves.md`, "A boundary piece's record", 563 anchors of seven files agree). Built:
+  `ParkBoundaryHoarding`, `SavedThing`'s cell and angle, the console's `boundary [X Y]`, `BOUNDARY_HOARDING_UNMADE` and
+  `_ROW`. Measured: 143 pieces on 143 anchors in the stock park (90 `ho_fos1`, 19 `ho_fos2`, 13 `ho_fos3`, 12 `ho_fob1`,
+  8 `ho_fob2`, 1 `ho_fos4`), the wall beside the gate and along row 13 lying on the original's at the same cameras
+  (`q620/overlay-gate-final.png`, `overlay-row13-final.png`). Tests 3879, mutants 12 of 12. A fresh park's pieces: Q656.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -2505,6 +2505,20 @@ public static class DebugConsole
 				foreach ( var hoardingLine in ParkObjects.Current?.HoardingCensus() ?? [] ) Reply( hoardingLine );
 				break;
 
+			// The wall between the park and the land not bought; `boundary X Y` adds the pieces made on or beside a cell.
+			case "boundary":
+				if ( ParkBoundaryHoarding.Current is not { } boundary )
+				{
+					Reply( "boundary: none - a park has to be loaded" );
+					break;
+				}
+
+				(int X, int Y)? near = parts.Length >= 3 && int.TryParse( parts[1], out var nearX ) && int.TryParse( parts[2], out var nearY )
+					? (nearX, nearY) : null;
+
+				foreach ( var boundaryLine in boundary.Census( near ) ) Reply( boundaryLine );
+				break;
+
 			// What is standing in the park NOW, which is the save's list plus what has been built and
 			// minus what has been sold - the census that says whether buying actually changed anything.
 			case "objects":

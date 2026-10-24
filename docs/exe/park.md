@@ -1666,19 +1666,51 @@ and its turn `+0x5c` is `+0x58 / 128` held to ±16; particle 0x60 one tick in ei
 looped sound is pitched speed / 3. Measured: 1287 to 1266 in eight ticks, turn 13 at 1772.
 
 **Not read**: which track model a piece draws (`gk_trck*`, `wr_trck*`; the track grid's tile rule, `FUN_0053afa0`,
-`FUN_0053a540`, but for type 25, below), what a piece costs or refunds, `FUN_0052c6f0` and `FUN_0052ccb0`, the
+`FUN_0053a540`, but for type 25, below, and its tables `0x00762f30` and `0x00763138`), what a piece costs or refunds, `FUN_0052c6f0` and `FUN_0052ccb0`, the
 add-ons (12 and 13) and the hills (`gk_trckH*`), the seat a rider takes (`FUN_00549c60`), a car's height over the track,
 −9's and −10's flags 0x3c00, and the term in a boat's spin.
 
-**The boundary hoarding's piece** (track type 25; fork watch 2026-10-24, `verify-world-other.md` L3; Q620). `FUN_0053a540`
-looks type 25 up in table `0x00762ff0` (count `[0x00700c1c]`) by the neighbour mask (`FUN_00522770`), exact first, then
-a subset, and answers `row | 0x50000`, family 5 (`0x0053a98f`), which `0x0053b16a` hands to `FUN_00522f20`. Corners add
-0x10 or take rows 0x1a/0x1b; straight runs add a variant of 0, 20 or 23 from a counter (`FUN_00516330() % 30` below 18,
-24, 30; `[0x00820aec]`), only when the variant changed. `FUN_00522f20` turns the piece by 360 minus the rotation and
-moves its cell by one for 90 (y), 180 (x and y) and 270 (x). Its table `0x00763608` is 28 rows of 12 bytes (model,
-name, flag byte), filled from `%s\hoarding` by `FUN_00522e40`; a row with no name takes the row before's model
-(`0x00522ed2`). The names: `ho_fos1`, `ho_end1`, `ho_fob1`, `ho_fos2`..`4`, `ho_fob2`..`4`, all in jungle's
-`hoarding.wad`. Not read: table `0x00762ff0`, so which row and rotation the anchors (43,17) and (51,17) take.
+**The boundary hoarding's piece** (track type 25; fork watch 2026-10-24, `verify-world-other.md` L3; Q620). The cell
+retile `FUN_0053afa0` (`Track_RetileCell`) asks `FUN_0053a540` (`Track_PieceForCell`) for a piece, keeps its family, row and rotation at the track record's `+0x14`,
+`+0x18` and `+0x1c` (`0x0053b02b`..`0x0053b04c`) and, for family 5, frees the model the record holds (`FUN_00522a90`) and
+makes another (`0x0053b16a`). **The row and rotation:** `FUN_0053a540` looks type 25 up by the cell's neighbour mask (the
+track record's byte `+0xc`, `FUN_00522770`) in table `0x00762ff0` (`BoundaryPieceRows`), sixteen rows of `{ row | 0x40000, rotation, mask }`
+(count `[0x00700c1c]`), an exact match first, then the first row whose mask is a subset:
+
+    mask  0x11 0x44   0x10 0x40 0x01 0x04   0x14 0x50 0x41 0x05   0x15 0x45 0x51 0x54   0x55   0x00
+    row   2    2      1    1    1    1      3    3    3    3      5    6    7    8      4      0
+    turn  0    90     0    90   180  270    0    90   180  270    0    0    0    0      0      0
+
+On the gate's two ends (`[0x007639f0]`..`[0x007639fc]`) the mask first takes `FUN_004d8c00`'s bits. A straight (two
+neighbours by `FUN_00522810`, opposite: `0x01` and `0x10`, or `0x04` and `0x40`) whose byte from `FUN_00522850` is `0x40` or
+`0x10` turns 180 more. Where the mask is no straight and `FUN_00522810` answers under three, the track record's flag word
+`+0xe` adds 9, 12 or 15 (bits 1, 2, 8) or makes the row 0x12 (bit 4). A corner (two neighbours at right angles) adds 0x10
+where `FUN_00522850`'s byte and the mask are one of eight pairs (`0x01`/`0x41`, `0x10`/`0x14`, `0x04`/`0x05`, `0x40`/`0x50`,
+`0x40`/`0x14`, `0x01`/`0x50`, `0x04`/`0x41`, `0x10`/`0x05`) and then takes 0x1b where the flags' low four bits are set; any
+other corner with them set takes 0x1a. A straight whose low four flag bits are clear adds a variant, 0 (`[0x00820aec]` under
+18), 20 (18 to 23) or 23 (24 to 29), only when it differs from the last piece's (`[0x00820af0]`), and rolls the next from
+the park's generator (`FUN_00516330() % 30`). The answer is `row | 0x50000`. `FUN_00522810` and `FUN_00522850` are not read.
+**The model:** `FUN_00522f20` (`Hoarding_MakePieceModel`)`( x, y, family, row, rotation, restoring )` turns the piece by 360 less the rotation and moves
+the cell one on for 90 (y), 180 (x and y) and 270 (x), then makes the model with `FUN_00463060( table[row].model, 0x33a,
+{ x, y, angle, 0x008179f8 }, table[row].mask, ..., -1, 0 )`: flags `0x33a` with a footprint, so the height is the middle of
+the lowest and highest ground under it ("Where a placed object's model stands"), and the footprint at `0x008179f8` is
+2 by 2 (`FUN_00522e40` writes both). The table `0x00763608` (`HoardingPieceTable`) is 28 rows of `{ model, name, mask }` that `FUN_00522e40` (`Hoarding_LoadPieceModels`)
+fills from `%s\hoarding`, making each named row's model as item `0x4394 + row` (17300 on) and giving a row with no name the
+row before's model (`0x00522ed2`):
+
+    row   0 fos1  1 end1  2 fos1  3 fob1  4 fos1  5-8 (fos1)  9 fos4  10-11 (fos4)  12 fos4  13-14 (fos4)  15 fos4
+          16-17 (fos4)  18 fos4  19 fob2  20 fos2  21-22 (fos2)  23 fos3  24-25 (fos3)  26 fob3  27 fob4      (ho_*.md2)
+
+So a straight's variants 22 and 25 draw `ho_fos2` and `ho_fos3`, a model of items 17320 and 17323. The row's mask byte goes
+to `FUN_00454a10`, whose `FUN_0044b140` hides (`0x80000010`) each node whose lookup record's `+8` word shares a bit with it;
+none of the 36 hoarding models of the four themes has a lookup record, so it hides nothing.
+**A loaded park makes none of this again**: its model records are made as they were saved (`FUN_004647a0`), and the
+anchor's track record names its piece's handle (FileFormats `saves.md`, "A boundary piece's record"; the mask `+0xc` is the
+file's `mHoardingNeighbours`, the row and rotation its `mTileData`): in the seven park files to hand, 563 anchors of five
+parks and three themes, every anchor names a record of its row's model, on its cell moved by its turn, at 360 less the turn.
+**OpenTPW builds it** from the records (`ParkBoundaryHoarding`); a park made fresh writes its anchors with no record or
+mask (`FreshParkBoundary`), so its pieces are counted, `BOUNDARY_HOARDING_UNMADE` (Q656). Measured: the stock park's
+wall right of the gate and along row 13 in both games at the same cameras (Q620, `q620/overlay-gate.png`).
 
 ### The ride object
 
