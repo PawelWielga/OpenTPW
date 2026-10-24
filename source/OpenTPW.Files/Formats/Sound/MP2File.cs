@@ -59,18 +59,24 @@ public sealed class MP2File : ArchiveFile
 	{
 		get
 		{
-			// The MPEG-2 bitrate tables, Layer I and Layer II, in kbit/s.
-			ReadOnlySpan<int> layer1 = [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256];
-			ReadOnlySpan<int> layer2 = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
+			// The bitrate tables in kbit/s: MPEG-1 and MPEG-2 (and 2.5) each have their own, per layer.
+			ReadOnlySpan<int> mpeg1Layer1 = [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448];
+			ReadOnlySpan<int> mpeg1Layer2 = [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384];
+			ReadOnlySpan<int> mpeg2Layer1 = [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256];
+			ReadOnlySpan<int> mpeg2Layer2 = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
 
 			if ( SoundData.Length < 4 || SoundData[0] != 0xFF || (SoundData[1] & 0xE0) != 0xE0 )
 				return TimeSpan.Zero;
 
+			// The version bits: 3 is MPEG-1, 2 is MPEG-2 (0 is MPEG-2.5, which uses MPEG-2's tables).
+			var mpeg1 = ((SoundData[1] >> 3) & 3) == 3;
 			var layer = (SoundData[1] >> 1) & 3;
 			var bitrateIndex = (SoundData[2] >> 4) & 0xF;
 
 			// 3 is Layer I, 2 is Layer II. Layer III never occurs in the shipped data.
-			var table = layer == 3 ? layer1 : layer2;
+			var table = layer == 3
+				? (mpeg1 ? mpeg1Layer1 : mpeg2Layer1)
+				: (mpeg1 ? mpeg1Layer2 : mpeg2Layer2);
 
 			if ( bitrateIndex is 0 or 0xF )
 				return TimeSpan.Zero;

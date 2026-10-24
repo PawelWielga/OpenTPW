@@ -36,11 +36,10 @@ One line per system; the detail, item by item, is `docs/WORKS.md` (grep it by ar
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q615 (a make that fails after it took its id; lane B, off-screen): a sweep and a decision, no change to what runs. Textures are
-  drawn white there, so the evidence is the census and the log: 61 of 61 buyable items built in a Full Simulation park, 41 of 61 in the
-  stock Instant Action park (the other 20 are not in its catalogue), the End made and ended. Not run: the original at a failed make
-  (no shipped item fails, so there is nothing to compare), the other three themes' items, a purchase through the buy screen's own
-  clicks (the console's `buy` is the same `ParkBuilding.Build`), and a park file with a bought item's id near the table's end.
+- Q147 (`MP2File.Duration` reads the version bits; lane B, off-screen): a length fix. Textures are drawn white there, so the evidence is the
+  log and the suite: the park-entry cue (global effect 4, `keyexplode`, MPEG-1) is 3056.6 ms, 4075.5 ms with the bug put back (ratio 1.3333);
+  3094 of 3094 shipped entries run 14.4 to 78.5 ms longer than the game plays. Not run: the cue heard (the length is what changed, the
+  sample is the same), and Full Simulation's key click that plays it (`parkcue` is the same call).
 
 
 ## Numbers (take counts fresh; these go stale within a day)
@@ -48,8 +47,8 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3881**, 0 fail, 0 skip with the game | 2026-10-24, Q615 rebased, alone in a worktree |
-| Tests without the game | **1378** ran, **2503** skipped, of 3881 | 2026-10-24, Q615 rebased, alone in a worktree |
+| Tests | **3883**, 0 fail, 0 skip with the game | 2026-10-24, Q147, alone in a worktree |
+| Tests without the game | **1379** ran, **2504** skipped, of 3883 | 2026-10-24, Q147, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

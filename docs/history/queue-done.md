@@ -9892,6 +9892,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   made and ended (`q615/run7`). So `ParkBuilding.Build`'s "would not load" return and `ParkEndFeature.Make`'s "script would not run"
   return are met by no shipped content, and both comments at the sites now say so and name the fix (`DeleteThing`) for the day one is.
   Nothing changed in what runs; the original was not run (lane B), and nothing the original does at that failure was needed.
+- [x] **Q147. `MP2File.Duration` reads every sample as MPEG-2, and five shipped samples are MPEG-1.** Found by the
+  2026-09-26 staleness audit. The getter never reads the header's version bits (`(SoundData[1] >> 3) & 3`) and always
+  takes the MPEG-2 bitrate tables. By the audit's census of all 47 `.sdt`, five entries are MPEG-1 Layer I (header
+  `ffff22c0`, bitrate index 2, 64 kbit/s read as 48): `keyexplode` in global `SfxHD.sdt`, and `tp_riderepaired`,
+  `tp_sideshowwin_`, `mortar_2` and `mortar_3` in global `RideHD.sdt`. Their lengths come out 4/3 too long, which
+  `SoundCategory.Length` and the scan a category falls back on (`SoundCategoryFile.ReadSamples`) read; since Q566 the
+  categories take their records from the walk, so global lobby sfx 4 and global rides 202, 203, 211 and 212 play. Read the version and take MPEG-1's tables
+  for it; the two `SoundCategoryFile` remarks that rest on the lengths ("every sample in every bank", "26 to 83ms")
+  change with it, and the version split goes to FileFormats `sounds.md` (rule 14). Since Q566 the walk is what a
+  category plays; the scan is only its fallback. The fix moves what Q566's test pins
+  (`ParkScreamChainTests.EveryWalkedSampleRecordNamesASampleOfItsCategory`: 99 effects read otherwise and 7 left empty;
+  global lobby sfx 4 and global rides 202, 203, 211 and 212 should then agree, hallow's and space's stay), and the
+  `SoundCategoryFile` summary's "the two readers agree except in four categories" (a forecast, not measured). Confirm: a test over every shipped bank that each entry's length agrees
+  with its decode, `ReadSamples` and `ReadVariations` agreeing in both global categories, and the park-entry effect
+  heard by capture.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

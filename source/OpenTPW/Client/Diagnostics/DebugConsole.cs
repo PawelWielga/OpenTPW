@@ -594,6 +594,12 @@ public static class DebugConsole
 				Reply( $"muted={LobbyAudio.Current?.Muted}" );
 				break;
 
+			// The cue the front end plays as a key is spent to enter a park, without the key (Q147).
+			case "parkcue":
+				LobbyAudio.Current?.ParkEntry();
+				Reply( LobbyAudio.Current == null ? "no lobby audio" : "park-entry cue played; see the log" );
+				break;
+
 			case "sound":
 				Reply( LobbyAudio.Current?.State() ?? "no lobby audio" );
 				break;

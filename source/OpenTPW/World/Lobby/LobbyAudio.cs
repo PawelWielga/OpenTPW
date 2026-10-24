@@ -323,7 +323,8 @@ public sealed class LobbyAudio : Entity
 		if ( !Audio.Ready || Muted )
 			return;
 
-		_global?.Play( GlobalParkEntry, ParkEntryVolume );
+		var voice = _global?.Play( GlobalParkEntry, ParkEntryVolume );
+		Log.Info( $"Lobby audio: the park-entry cue is global effect {GlobalParkEntry}, {_global?.Length( GlobalParkEntry ).TotalMilliseconds:F1} ms, voice {(voice == null ? "none" : voice.Name)}" );
 	}
 
 	/// <summary>What is playing right now, for the debug console.</summary>

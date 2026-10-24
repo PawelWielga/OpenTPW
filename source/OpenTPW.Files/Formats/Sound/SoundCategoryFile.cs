@@ -30,11 +30,10 @@ namespace OpenTPW;
 /// zone records - <see cref="ReadVariations"/> walks exactly that, and ends at the end of the file in
 /// all thirty-one categories the game ships, and keeps each variation's sample records, 3,631 in all, each naming
 /// a sample of its category; a category plays these. <see cref="ReadSamples"/> finds the sample records by
-/// what they contain instead, and stands in only where the walk fails; the two readers agree except in four
-/// categories. The scan turns away every record naming one of the five MPEG-1 samples, whose length
-/// <see cref="MP2File.Duration"/> reads from the MPEG-2 bitrate table (the global lobby sfx and the global
-/// rides), and it cannot see a variation with no samples (hallow's rides 98 and 103, space's rides 112), so
-/// each of those takes the next list found and the effects after it in the category are shifted along.
+/// what they contain instead, and stands in only where the walk fails; the two readers agree except where a
+/// variation has no samples, which the scan cannot see (hallow's rides 98 and 103, space's rides 112): each of those
+/// takes the next list found and the effects after it in the category are shifted along. Neither reader is turned
+/// away by an MPEG-1 sample, whose length <see cref="MP2File.Duration"/> reads from MPEG-1's own bitrate table.
 /// </summary>
 public sealed class SoundCategoryFile
 {
@@ -444,7 +443,7 @@ public sealed class SoundCategoryFile
 
 		// The map's length and the sample's own disagree, so this is a tolerance rather than an
 		// equality. The sample is always the longer, and by an amount that does not grow with its
-		// length - by 26 to 83ms across every record in all thirty-one categories the game ships -
+		// length - by 14 to 79ms across every entry of every bank the game ships -
 		// which is what an encoder's delay and the padding of its last frame would add. So the
 		// allowance is a fixed amount, with 6% taking over on long samples. A record turned
 		// away is not just lost, because the next one found then stands in for it, so every effect after

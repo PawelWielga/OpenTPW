@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q615 (a make that fails after it took its id; lane B, off-screen): a sweep and a decision, no change to what runs. Textures are
+  drawn white there, so the evidence is the census and the log: 61 of 61 buyable items built in a Full Simulation park, 41 of 61 in the
+  stock Instant Action park (the other 20 are not in its catalogue), the End made and ended. Not run: the original at a failed make
+  (no shipped item fails, so there is nothing to compare), the other three themes' items, a purchase through the buy screen's own
+  clicks (the console's `buy` is the same `ParkBuilding.Build`), and a park file with a bought item's id near the table's end.
 - Q621 (the advisor's light, decode only): read in the stock park, Instant Action, four lines (bare, hard hat,
   research hat, the theme's fly); the lobby's advisor, other themes' ambients, Full Simulation and his other hats
   were not measured; the theme fly's right hand does not fit the law (4 unsaturated normals), not settled. No code changed.

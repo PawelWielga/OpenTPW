@@ -125,13 +125,10 @@ public class ParkScreamChainTests
 		}
 
 		Assert.AreEqual( 3631, records, "sample records across every category" );
-		Assert.AreEqual( 99, differ.Count, "effects the scan reads otherwise" );
-		CollectionAssert.AreEquivalent( new[] { "global/sound/rides 202", "global/sound/rides 203", "global/sound/rides 211",
-			"global/sound/rides 212" }, differ.Where( effect => effect.StartsWith( "global/sound/rides" ) ).ToArray(),
-			"the global rides' effects the scan reads otherwise" );
+		Assert.AreEqual( 94, differ.Count, "effects the scan reads otherwise" );
+		Assert.IsFalse( differ.Any( effect => effect.StartsWith( "global" ) ), "no global category reads otherwise" );
 		Assert.IsFalse( differ.Any( effect => effect.Contains( "jungle" ) ), "no jungle category reads otherwise" );
-		CollectionAssert.AreEquivalent( new[] { "global/sound/globallobbysfx 4", "global/sound/rides 203", "global/sound/rides 211",
-			"global/sound/rides 212", "levels/hallow/Sound/rides 188", "levels/hallow/Sound/rides 190",
+		CollectionAssert.AreEquivalent( new[] { "levels/hallow/Sound/rides 188", "levels/hallow/Sound/rides 190",
 			"levels/space/Sound/rides 191" }, emptied, "the effects the scan leaves empty" );
 	}
 

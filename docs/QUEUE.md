@@ -413,21 +413,6 @@ filed the items that cite it.
   Ours fits `s_X1`'s part to the control `0x1e0eb` (`IslandPanel`, 1045,191 to 1405,416). Read what bounds the
   original fits (`UiControl_PlaceMesh`, `0x00476f10`: the node `0x00476e80` answers, `+0x78..+0x8c` through its chain)
   and how the "x N" part is chosen, then fit as it does; confirm "x 1" beside the original's.
-- [ ] **Q147. `MP2File.Duration` reads every sample as MPEG-2, and five shipped samples are MPEG-1.** Found by the
-  2026-09-26 staleness audit. The getter never reads the header's version bits (`(SoundData[1] >> 3) & 3`) and always
-  takes the MPEG-2 bitrate tables. By the audit's census of all 47 `.sdt`, five entries are MPEG-1 Layer I (header
-  `ffff22c0`, bitrate index 2, 64 kbit/s read as 48): `keyexplode` in global `SfxHD.sdt`, and `tp_riderepaired`,
-  `tp_sideshowwin_`, `mortar_2` and `mortar_3` in global `RideHD.sdt`. Their lengths come out 4/3 too long, which
-  `SoundCategory.Length` and the scan a category falls back on (`SoundCategoryFile.ReadSamples`) read; since Q566 the
-  categories take their records from the walk, so global lobby sfx 4 and global rides 202, 203, 211 and 212 play. Read the version and take MPEG-1's tables
-  for it; the two `SoundCategoryFile` remarks that rest on the lengths ("every sample in every bank", "26 to 83ms")
-  change with it, and the version split goes to FileFormats `sounds.md` (rule 14). Since Q566 the walk is what a
-  category plays; the scan is only its fallback. The fix moves what Q566's test pins
-  (`ParkScreamChainTests.EveryWalkedSampleRecordNamesASampleOfItsCategory`: 99 effects read otherwise and 7 left empty;
-  global lobby sfx 4 and global rides 202, 203, 211 and 212 should then agree, hallow's and space's stay), and the
-  `SoundCategoryFile` summary's "the two readers agree except in four categories" (a forecast, not measured). Confirm: a test over every shipped bank that each entry's length agrees
-  with its decode, `ReadSamples` and `ReadVariations` agreeing in both global categories, and the park-entry effect
-  heard by capture.
 - [ ] **Q148. The music and the happiness gauge count guests the original leaves out.** Found by the 2026-09-26
   staleness audit. The original's crowd count behind the music (`FUN_004c7fa0`) and its happiness average both take a
   guest only where `FUN_004fa990` passes, and that is decoded: it packs the guest's cell from bytes `+5` and `+7`
