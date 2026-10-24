@@ -125,6 +125,9 @@ filed the items that cite it.
   The dark line Alexah sees is the half-lit ground's edge (inferred). Draw the wall and count what is not;
   `FreshParkBoundary.Apply` throws at its 64th entry where the original stops (`0x00532517`), which Q214 still owns.
   Confirm: the gate's view beside the original's, with the census of wall pieces.
+  - **Note (fork watch 2026-10-24, `verify-world-other.md` L3):** type 25's piece is `FUN_0053a540` -> family 5 ->
+    `FUN_00522f20`, table `0x00763608` from `hoarding.wad` (`park.md`, "The boundary hoarding's piece"). Still to read:
+    table `0x00762ff0`, which gives the anchors' row and rotation.
 - [ ] **Q621. The advisor's colours: hard hat, gloves, safari hat, the scientist's white hair. Decode first.** From
   Alexah's play test, 2026-10-21 (note 7, shot5). The docs call our hat paler than the original's, "lit past his
   textures, set against his gloves" (`advisor-park.md:696`, `STATUS.md:40`), yet shot5 shows a saturated yellow hat and
@@ -389,6 +392,8 @@ filed the items that cite it.
   their time through a focus loss and a P pause. Decode what each command does to the other voice classes, then build
   them where ours has the two paths (find first whether ours pauses on focus loss at all). Confirm: in the original,
   a one-shot away from the camera kept past its length + 250 ms across an alt-tab (`oneshots.py`).
+  - **Note (fork watch 2026-10-24):** the P key's row and the overlay it puts up are read (`hud.md`, the pause
+    overlay); building the overlay is Q739.
 
 - [ ] **Q612. A park file's voices put back (Q560's build).** From Q560 (`audio.md`, "A park file's voices"; FileFormats
   `saves.md`, "The voice list"; `parkfile.py -N` prints any file's list with the record or word that keeps each handle).
@@ -1914,6 +1919,10 @@ filed the items that cite it.
   `paused/congrats/bankrupt.MD2` under `Language\American` (a `language\default` string sits at file offset 0x346238);
   if it does, the reference install shows those signs differently from an installed game. Decide it in the listing
   before any claim.
+  - **Note (fork watch 2026-10-24, `verify-world-other.md` L1, `verify-audio-ui.md` C1):** the unsettled lead is
+    settled: the original looks under `Language\American` (`FUN_004893c0`, Windows language `0x409`; `park-engine.md`, the
+    end of a park). The reference install shows no End, end-of-park or pause banner where an installed game shows one;
+    re-take Q551's and Q703's banner frames once the overlay is applied.
 - [ ] **Q734. A test for `Level.TrackWritable`'s `!state.DeletedSinceLoad.Contains` term.** From the run 7 review of
   Q606 (VERIFY-13, Q606 4). Tried and not written: a Hot Pot (the one jungle ride with a track record) and a kart ride
   bought on a sold shop's id both pass with the term removed, because on Lost Kingdom data a bumper-family ride made
@@ -1958,6 +1967,23 @@ filed the items that cite it.
   `World/Advisor/Advisor.cs`). Testing it needs the audio (`Audio.Ready`, a `SoundCategory`) and a speaker figure. Ask
   for a seam (the sample length and the clip table handed in) so a test can see that a line given row N plays the row's
   clips, not the random chain. The sweep's call into the speaker is tested (`ParkPeople.SpeakResponse`).
+- [ ] **Q739. The pause overlay, and plain P in a park.** From the fork watch 2026-10-24 (`verify-world-other.md` L2,
+  M2; `verify-audio-ui.md` L1). Plain P in a park reaches nothing and counts nothing (`ParkFrontEnd.ShortcutRow` has no
+  plain-P row; `InputButton.Pause` is read only by `InputBindingTests`): a rule 4 gap; first count it. Then build the
+  overlay (`hud.md`, the pause overlay): P's row `0x00747f3c` -> `FUN_0040bf70` -> `Game_TogglePause( 1 )` while
+  `[0x00786b68 + 0x3c]` is 1, and the focus loss (`0x0046b74c`), put up `UI_LoadModalTree( 0x00752e00 )`: the LOLIGHT
+  dimmer and control 5094 at (174,500)-(1874,900) wearing `s_paused` (`Language/English/paused.MD2` in our tree), moving by
+  table `0x00752ed0` every 35 ms (`hud.md`, "The window-animation engine"); every resume takes it down. It replaces
+  `FOCUS_LOSS_PAUSE_OVERLAY`; Q577 is its sounds. Decode first what `[0x00786b68 + 0x3c]` is, whether the dimmer takes
+  the pointer and whether the banner moves while the timers are held. Confirm: P in Lost Kingdom beside the original's
+  (with `paused.MD2` copied into the reference install's `American/`, or after Q733).
+- [ ] **Q740. The End's and the end of a park's banners, with their motion.** From the fork watch 2026-10-24
+  (`verify-world-other.md` L1, M1; `verify-audio-ui.md` L2). The End's control wears `s_congrats` (`congrats.MD2`) and
+  moves by table `0x0074fcf8`; the end of a park's wears `s_bkrupt` (`bankrupt.MD2`) and moves by table `0x0074fc38`,
+  each a step every 35 ms (`park-engine.md`, the end of a park; `hud.md`, "The window-animation engine"). Find what
+  ours draws in those two controls now, build the engine once (the gadget's tag at `0x007502b8` uses it too) and the two
+  banners on it, counting what is not built. Confirm: the End reached in Lost Kingdom beside the original's, with the
+  meshes in its `American/` (Q733).
 
 ## B. Docs and comments
 

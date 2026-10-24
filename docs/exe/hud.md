@@ -1068,7 +1068,13 @@ overlay up (`FUN_004a2790`, tree `0x00752e00`); its one caller is the pause `FUN
 1, which only the window losing the focus passes (`WM_ACTIVATEAPP`, `0x0046b74c`); `FUN_0048a700` lets go and takes
 it down on every resume (`FUN_00409300`, `0x00409315`). `FUN_0048a720` (`0x0048a72e`, `0x0048a733`) toggles the
 overlay and holds or lets go with it, from `Game_TogglePause` (`0x0040935e`), which the overlay's own proc calls on a
-key let go (`0x004a2706`). What the overlay draws and which key reaches the toggle are not read. `FUN_00662420` clears
+key let go (`0x004a2706`). The overlay is `UI_LoadModalTree( 0x00752e00 )` (`0x0047ed80`): the LOLIGHT dimmer and one
+control, 5094, at (174,500)-(1874,900), wearing `s_paused` (`0xa7a845bc`, the language folder's `paused.MD2`,
+`park-engine.md`, the end of a park), which its proc's message `0x15` sets moving for ever by table `0x00752ed0`, a step
+every 35 ms about (937,450) (`FUN_004a2680`, `0x004a2745`). The key is P: its row `0x00747f3c` calls `FUN_0040bf70`,
+which calls `Game_TogglePause( 1 )` (`0x00409350`), and that acts only while `[0x00786b68 + 0x3c]` is 1. Not read: whether
+the dimmer takes the pointer, and whether the banner moves while the timers are held. Fork watch 2026-10-24,
+`verify-world-other.md` L2 and M2, `verify-audio-ui.md` L1 (Q739). `FUN_00662420` clears
 the hold and stamps every timer afresh (`FUN_0066213e`). OpenTPW: `UiTimer`, held by `WindowStack.HoldsTimers` for the
 message box, the game menu, the options screen and the map: the visitors list's 2000 ms, an object window's 4000 ms
 and the buy screen's 1000 ms. The pause overlay is not built; the focus leaving is counted
@@ -1342,8 +1348,15 @@ the advisor's row 1 carries it (`advisor-park.md`, "A shut park people wait outs
 click read as that: a slot took `0x12f`, the handle went back to 331 and no tag was held 0.53 s on.
 
 **The stream at `0x007502b8`** is seven rows of four shorts, a change of the control's left, top, right and bottom:
-three of (-2, -2, 2, 2), three of (2, 2, -2, -2) and the end mark `0xd8f3`. The tag on show swells two a side a
-step for three steps, shrinks the same, rests a step and goes round again.
+three of (-2, -2, 2, 2), three of (2, 2, -2, -2) and a jump (`0xd8f3`, -9997) back to the row its second word names.
+The tag on show swells two a side a step for three steps, shrinks the same, rests a step and goes round again.
+
+**The window-animation engine** (`FUN_0065e72d` starts a stream on a control, `FUN_0065e9a4` steps it at its interval;
+fork watch 2026-10-24, `verify-audio-ui.md` L2): a row of four shorts is a change of the control's left, top, right and
+bottom, unless its first is -9999 (`0xd8f1`, the end), -9998 (an angle), -9997 (`0xd8f3`, a jump to the row its second
+word names, which costs one interval) or -9996 (`FUN_0065d3a3`). The pivot is the rectangle's right and bottom halved
+(`FUN_0065f345`). It moves this tag and the three language banners (`park-engine.md`, the end of a park; the pause
+overlay above).
 
 ### The arm's handler, `0x004a14f0`
 

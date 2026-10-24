@@ -839,12 +839,21 @@ a plain Escape opens the game menu (`GameMenu_Open( 0 )`, `0x004a2942`) and the 
 | `FUN_0048adb0` (`0x0048addc`), from `FUN_004815e0` in the load's rebuild `FUN_00415140`, when the saved state is 4 | **on**, if off, and `0x0074fb20` loaded into it |
 
 So an ended park is left in the full-screen view under its banner, and by the handler's state-4 arm nothing brings
-the interface back. No node name in the 312 shipped wads hashes to either mesh (Q551), and the end of a park was not run.
+the interface back. The two meshes are the loose language meshes' single nodes, `s_bkrupt` (`bankrupt.MD2`) and
+`s_congrats` (`congrats.MD2`): `FUN_004893c0` registers every `data\language\<language>\*.md2` through `FUN_00489060`,
+ui.wad's mesh registrar, and Windows language `0x409` picks `American` (`0x005c0e13`, table `0x00f7ec28`). The disc ships
+the three meshes in `Data/Language/English/` only and its installer copies them into `American/` (Q733). Each banner
+moves by the window-animation engine (`hud.md`, "The window-animation engine"), a step every 35 ms: the end of a park's
+by table `0x0074fc38` about (937,500), wherever `0x0074fb20` is built (`0x0048ad7a`, `0x0048ae39`, `0x0048a85b`,
+`0x0048a935`); the End's by table `0x0074fcf8` about (973,470). Fork watch 2026-10-24, `verify-world-other.md` L1 and M1,
+`verify-audio-ui.md` C1. The end of a park was not run.
 
 **The End feature's handler `0x0048a970`** (`EndFeature_OnMessage`; Q703; fork watch 2026-10-19, verify-world.md L2). Message `0x15` stamps
 `[0x007c2508]` with the time (`0x0048ac16`). Message `0x1000b`, a key: `0x1b` (Escape) with `arg3 & 0xff0000` clear
 (`0x0048a99e`..`0x0048a9af`), with no time gate. Message `0x10006`, a button: button 1, `[0x0078d911]` (RMB cancel) set and
-`time - [0x007c2508] > 2000` strictly (`jle` at `0x0048aaf8`). Both arms run one body: control message 4 to the window,
+`time - [0x007c2508] > 2000` strictly (`jle` at `0x0048aaf8`). Both arms run the same body, in two copies (Escape
+`0x0048a9b5`..`0x0048aac2`, the button `0x0048aafe`..`0x0048ac06`; they differ only in `push 1` against `push edi`, and
+`edi` is 1 there; fork watch 2026-10-24, `verify-audio-ui.md` L5): control message 4 to the window,
 `World_DeleteEndFeature` (`0x00516c10`; deletes the End feature, asserting on its handle `0x007cf4f4`), message 6 to `[0x007cb2b0]` (0) and
 `[0x007cb2ac]` (1), `FUN_0040cf60` (the keys back), byte `0x007c24d0` set to 0, and `FUN_004862a0` (re-focuses a window).
 When the game type `[0x00fb3b7c]` is 2 (Instant Action) it also shows UITEXT **471** through `0x006ace60( 0x1d7 )` and
@@ -946,9 +955,9 @@ it sets `VAR_STATUS` 1 and carries on (what reads it was not traced). `AnimCtrl.
 clips 0, 1, 0, 2, 1, 2, 0, 2 and over, each by `WAITANIM 5 k` after starting the trails of the planes in it on their
 particle ids (`ADDOBJ 1 n 93..95 1`, `P_EFFECT_SmokeTrailR`, `B`, `W`, drawn as red, blue and yellow stars) and
 `cat_ambient` 209 on their sound ids, and kills tag 1 after. The sounds were not listened to. The full-screen control
-`FUN_0048ae70` puts up holds one control of mesh `0x706de86b` (stream `0x0074faf0`, `lib/uistream.py`): that hash is
-no node name in any of the 312 shipped wads (as `0xf3a7aff4`, the end of a park's, is not), and the original's frame
-shows no banner.
+`FUN_0048ae70` puts up holds one control of mesh `0x706de86b` (stream `0x0074faf0`, `lib/uistream.py`): `s_congrats`,
+the node of the language folder's `congrats.MD2` (above, the end of a park). The original's frame shows no banner because
+the reference install has no `Data/Language/American/*.md2` (Q733); an installed game shows it.
 
 **In the original** (Q551; `q551/orig/run.sh`, `q550/alldone576.TPWS` loaded into the reference install,
 `original/camread.py` every 0.1 s, two rounds, `q551/PREDICTION.txt`): on tick 800 the End's id 43 was set and

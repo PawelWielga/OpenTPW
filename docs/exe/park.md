@@ -1666,9 +1666,19 @@ and its turn `+0x5c` is `+0x58 / 128` held to ±16; particle 0x60 one tick in ei
 looped sound is pitched speed / 3. Measured: 1287 to 1266 in eight ticks, turn 13 at 1772.
 
 **Not read**: which track model a piece draws (`gk_trck*`, `wr_trck*`; the track grid's tile rule, `FUN_0053afa0`,
-`FUN_0053a540`), what a piece costs or refunds, `FUN_0052c6f0` and `FUN_0052ccb0`, the
+`FUN_0053a540`, but for type 25, below), what a piece costs or refunds, `FUN_0052c6f0` and `FUN_0052ccb0`, the
 add-ons (12 and 13) and the hills (`gk_trckH*`), the seat a rider takes (`FUN_00549c60`), a car's height over the track,
 −9's and −10's flags 0x3c00, and the term in a boat's spin.
+
+**The boundary hoarding's piece** (track type 25; fork watch 2026-10-24, `verify-world-other.md` L3; Q620). `FUN_0053a540`
+looks type 25 up in table `0x00762ff0` (count `[0x00700c1c]`) by the neighbour mask (`FUN_00522770`), exact first, then
+a subset, and answers `row | 0x50000`, family 5 (`0x0053a98f`), which `0x0053b16a` hands to `FUN_00522f20`. Corners add
+0x10 or take rows 0x1a/0x1b; straight runs add a variant of 0, 20 or 23 from a counter (`FUN_00516330() % 30` below 18,
+24, 30; `[0x00820aec]`), only when the variant changed. `FUN_00522f20` turns the piece by 360 minus the rotation and
+moves its cell by one for 90 (y), 180 (x and y) and 270 (x). Its table `0x00763608` is 28 rows of 12 bytes (model,
+name, flag byte), filled from `%s\hoarding` by `FUN_00522e40`; a row with no name takes the row before's model
+(`0x00522ed2`). The names: `ho_fos1`, `ho_end1`, `ho_fob1`, `ho_fos2`..`4`, `ho_fob2`..`4`, all in jungle's
+`hoarding.wad`. Not read: table `0x00762ff0`, so which row and rotation the anchors (43,17) and (51,17) take.
 
 ### The ride object
 
