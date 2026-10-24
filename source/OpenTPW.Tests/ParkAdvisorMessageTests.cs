@@ -57,7 +57,22 @@ public class ParkAdvisorMessageTests
 			+ "StaffTrainMechanics.WorseThan 1\nStaffTrainMechanics.Score 30\nStaffTrainHandymen.WorseThan 1\nStaffTrainHandymen.Score 31\n"
 			+ "StaffTrainGuards.WorseThan 1\nStaffTrainGuards.Score 32\nStaffTrainEntertainers.WorseThan 1\nStaffTrainEntertainers.Score 33\n"
 			+ "StaffTrainResearchers.WorseThan 41\nStaffTrainResearchers.Score 34\n"
+			+ OutletSettings
 			+ "ResearchRideResearched.Score 150\nResearchAddonResearched.Score 130\nResearchShopResearched.Score 130\nResearchSideshowResearched.Score 110\nResearchFeatureResearched.Score 90\nNewResearchGroupRide.Score 40\nNewResearchGroupShop.Score 40\nNewResearchGroupSideshow.Score 40\nNewResearchGroupFeature.Score 40\n" ) ) );
+
+	/// <summary>
+	/// Rows 238 to 257's keys, each row its own line and ScorePerPoint so that a row reading another's is caught: the poor
+	/// lines 50 to 59 and multipliers 10 to 19, the great value's 80 to 84 and 5 to 9, the great satisfaction's 70 to 74
+	/// and 4, then 20 to 23; and the congratulations' category.
+	/// </summary>
+	private static readonly string OutletSettings = string.Concat( new[] { "Food", "Shops", "Restaurant", "Drinks", "Sideshows" }
+		.SelectMany( ( of, i ) => new[]
+		{
+			$"{of}PoorValue.ValueWorseThan {50 + i}\n{of}PoorValue.ScorePerPoint {10 + i}\n",
+			$"{of}PoorSatisfaction.SatisfactionWorseThan {55 + i}\n{of}PoorSatisfaction.ScorePerPoint {15 + i}\n",
+			$"{of}GreatValue.ValueBetterThan {80 + i}\n{of}GreatValue.ScorePerPoint {5 + i}\n",
+			$"{of}GreatSatisfaction.SatisfactionBetterThan {70 + i}\n{of}GreatSatisfaction.ScorePerPoint {(i == 0 ? 4 : 19 + i)}\n"
+		} ) ) + "MessageGroups[3].MinTimeSameMessage 1800\nMessageGroups[3].SayOnlyOnce 0\nMessageGroups[3].DiscardAfterSlaps 0\n";
 
 	private static void Set( SettingsFile settings, string key, int value )
 	{
@@ -174,7 +189,7 @@ public class ParkAdvisorMessageTests
 		Assert.AreEqual( (308, 342), said[1], "two lines: the one after line 1 is line 0" );
 
 		var written = messages.Written();
-		Assert.AreEqual( 94, written.Count, "every built topic's record, the golden tickets' fifteen and their four hints among them" );
+		Assert.AreEqual( 114, written.Count, "every built topic's record, the golden tickets' fifteen, their four hints and the outlets' twenty among them" );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 911, 0, true, 0 ), written[ParkAdvisorMessages.TagMessage] );
 		Assert.AreEqual( new ParkWorld.AdvisorHistory( 1360, 1, true, 0 ), written[ParkAdvisorMessages.MechanicOnHisWay] );
 		Assert.AreEqual( ParkWorld.AdvisorHistory.Fresh, written[ParkAdvisorMessages.Closed] );
@@ -987,7 +1002,7 @@ public class ParkAdvisorMessageTests
 			messages.Tick( 254 + i, (254 + i) * 250L, Play, ( group, subject ) => groups.Add( (group, subject) ) );
 		CollectionAssert.AreEqual( new[] { (186, 404, 377) }, said );
 		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups );
-		Assert.AreEqual( unbuilt + 104, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
+		Assert.AreEqual( unbuilt + 84, Counted( "PARK_ADVISOR_POLLED_ROW_NOT_BUILT" ) );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.OpenPark ), "row 1 with no park handed in" );
 		Assert.AreEqual( "no-score", messages.PollAnswer( ParkAdvisorMessages.ExplainTooltips ) );
 		Assert.AreEqual( 351, cursor.Row );
@@ -1811,6 +1826,173 @@ public class ParkAdvisorMessageTests
 		Round( 1384 );
 		Round( 1864 );
 		CollectionAssert.AreEqual( new[] { (904, 514, 505), (1384, 514, 505), (1864, 514, 505) }, said, "one line, again and again" );
+	}
+
+	/// <summary>
+	/// Rows 238 to 257 are the metadata table's twenty (advisorrow.py): polled, either game, one copy, one line each, its
+	/// response the row plus 240 and its sample the row plus 268, no tag; the food's, restaurants' and drinks' lines in the
+	/// fast-food hat and the spatula, the shops' and sideshows' in the kiosk hat; the poor ten MessageGroups[0]'s, the
+	/// great ten the congratulations'; each judged by its score function's helper and its section's keys (advisorschema.py).
+	/// </summary>
+	/// <remarks><b>Mutations:</b> a row's response, sample, prop, category or key another row's; a row judged by another
+	/// helper (row 247 by satisfaction, a great row keeping the lowest); a row not polled.</remarks>
+	[TestMethod]
+	public void TheOutletsRowsAreTheTablesTwenty()
+	{
+		var (food, shops, restaurants, drinks, sideshows) = (ParkAdvisorMessages.Outlet.Food, ParkAdvisorMessages.Outlet.Shops,
+			ParkAdvisorMessages.Outlet.Restaurants, ParkAdvisorMessages.Outlet.Drinks, ParkAdvisorMessages.Outlet.Sideshows);
+		var (hat, spatula, kiosk) = (ParkAdvisorMessages.FastFoodHat, ParkAdvisorMessages.Spatula, ParkAdvisorMessages.KioskHat);
+		var expected = new (int Row, int Response, int Sample, int Prop, int Second, int Category, ParkAdvisorMessages.Outlet Of, bool WalkAways, bool Highest, string Line)[]
+		{
+			(238, 478, 506, hat, spatula, 0, food, true, false, "FoodPoorValue.ValueWorseThan"),
+			(239, 479, 507, kiosk, 0, 0, shops, true, false, "ShopsPoorValue.ValueWorseThan"),
+			(240, 480, 508, hat, spatula, 0, restaurants, true, false, "RestaurantPoorValue.ValueWorseThan"),
+			(241, 481, 509, hat, spatula, 0, drinks, true, false, "DrinksPoorValue.ValueWorseThan"),
+			(242, 482, 510, kiosk, 0, 0, sideshows, true, false, "SideshowsPoorValue.ValueWorseThan"),
+			(243, 483, 511, hat, spatula, 0, food, false, false, "FoodPoorSatisfaction.SatisfactionWorseThan"),
+			(244, 484, 512, kiosk, 0, 0, shops, false, false, "ShopsPoorSatisfaction.SatisfactionWorseThan"),
+			(245, 485, 513, hat, spatula, 0, restaurants, false, false, "RestaurantPoorSatisfaction.SatisfactionWorseThan"),
+			(246, 486, 514, hat, spatula, 0, drinks, false, false, "DrinksPoorSatisfaction.SatisfactionWorseThan"),
+			(247, 487, 515, kiosk, 0, 0, sideshows, true, false, "SideshowsPoorSatisfaction.SatisfactionWorseThan"),
+			(248, 488, 516, hat, spatula, 3, food, true, true, "FoodGreatValue.ValueBetterThan"),
+			(249, 489, 517, kiosk, 0, 3, shops, true, true, "ShopsGreatValue.ValueBetterThan"),
+			(250, 490, 518, hat, spatula, 3, restaurants, true, true, "RestaurantGreatValue.ValueBetterThan"),
+			(251, 491, 519, hat, spatula, 3, drinks, true, true, "DrinksGreatValue.ValueBetterThan"),
+			(252, 492, 520, kiosk, 0, 3, sideshows, true, true, "SideshowsGreatValue.ValueBetterThan"),
+			(253, 493, 521, hat, spatula, 3, food, false, true, "FoodGreatSatisfaction.SatisfactionBetterThan"),
+			(254, 494, 522, kiosk, 0, 3, shops, false, true, "ShopsGreatSatisfaction.SatisfactionBetterThan"),
+			(255, 495, 523, hat, spatula, 3, restaurants, false, true, "RestaurantGreatSatisfaction.SatisfactionBetterThan"),
+			(256, 496, 524, hat, spatula, 3, drinks, false, true, "DrinksGreatSatisfaction.SatisfactionBetterThan"),
+			(257, 497, 525, kiosk, 0, 3, sideshows, false, true, "SideshowsGreatSatisfaction.SatisfactionBetterThan")
+		};
+
+		Assert.AreEqual( 20, ParkAdvisorMessages.ParkTopics.Count( one => one.Judges != null ) );
+		foreach ( var row in expected )
+		{
+			var topic = ParkAdvisorMessages.ParkTopics.Single( one => one.Id == row.Row );
+			var section = row.Line[..row.Line.IndexOf( '.' )];
+			Assert.AreEqual( (row.Row, $"{section}.ScorePerPoint", row.Response, row.Sample, 1, 1, row.Category, true, false, ParkTags.NoTag, row.Prop, row.Second, -1),
+				(topic.Id, topic.ScoreKey, topic.FirstResponse, topic.FirstSample, topic.Lines, topic.MaxInstances, topic.Category, topic.Polled,
+					topic.FullSimulationOnly, topic.Group, topic.Prop, topic.SecondProp, GestureLine( topic )), $"row {row.Row}" );
+			Assert.AreEqual( new ParkAdvisorMessages.OutletJudgement( row.Of, row.WalkAways, row.Highest, row.Line, row.Highest ), topic.Judges, $"row {row.Row}" );
+			Assert.IsTrue( ParkAdvisorMessages.IsPolled( row.Row ), $"row {row.Row}" );
+			Assert.AreEqual( (row.Prop, row.Second), ParkAdvisorMessages.PropsOf( row.Response ), $"row {row.Row}" );
+		}
+	}
+
+	/// <summary>
+	/// The helpers (0x004caae0 and its kin): an outlet of the row's kind more than thirty days old, by the walk-away share
+	/// one with customers, a sideshow by satisfaction one with customers too, the highest or the lowest kept strictly so
+	/// the first of equals wins; the share a hundred times the walk-aways over the customers, an unsigned DIV.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> thirty days old let in; an outlet with no customers judged by its share, or a food
+	/// outlet's satisfaction asking for customers; the later of equals kept; another kind judged; the share a signed
+	/// division, or rounded.</remarks>
+	[TestMethod]
+	public void TheOutletsArePickedAsTheHelpersPickThem()
+	{
+		var food = ParkAdvisorMessages.Outlet.Food;
+		var sideshows = ParkAdvisorMessages.Outlet.Sideshows;
+		ParkAdvisorMessages.OutletJudgement Judging( ParkAdvisorMessages.Outlet of, bool walkAways, bool highest )
+			=> new( of, walkAways, highest, "", highest );
+		var outlets = new ParkAdvisorMessages.OutletFigures[]
+		{
+			new( 5, food, Age: 30, Customers: 10, WalkAways: 10, Satisfaction: 99 ),
+			new( 6, food, Age: 31, Customers: 0, WalkAways: 0, Satisfaction: 90 ),
+			new( 7, food, Age: 40, Customers: 50, WalkAways: 43, Satisfaction: 60 ),
+			new( 8, food, Age: 40, Customers: 30, WalkAways: 27, Satisfaction: 60 ),
+			new( 9, food, Age: 40, Customers: 20, WalkAways: 18, Satisfaction: 40 ),
+			new( 10, ParkAdvisorMessages.Outlet.Drinks, Age: 99, Customers: 3, WalkAways: 3, Satisfaction: 100 ),
+			new( 11, sideshows, Age: 45, Customers: 0, WalkAways: 0, Satisfaction: 99 ),
+			new( 12, sideshows, Age: 45, Customers: 3, WalkAways: 0, Satisfaction: 77 ),
+			new( 13, sideshows, Age: 45, Customers: 3, WalkAways: 2, Satisfaction: 77 )
+		};
+
+		Assert.AreEqual( (8, 90), ParkAdvisorMessages.Pick( outlets, Judging( food, true, true ) ), "90 twice: the first; 100 is thirty days old" );
+		Assert.AreEqual( (7, 86), ParkAdvisorMessages.Pick( outlets, Judging( food, true, false ) ) );
+		Assert.AreEqual( (6, 90), ParkAdvisorMessages.Pick( outlets, Judging( food, false, true ) ), "satisfaction asks no customers of food" );
+		Assert.AreEqual( (9, 40), ParkAdvisorMessages.Pick( outlets, Judging( food, false, false ) ) );
+		Assert.AreEqual( (12, 77), ParkAdvisorMessages.Pick( outlets, Judging( sideshows, false, true ) ), "a sideshow with no customers is passed over; 77 twice, the first" );
+		Assert.AreEqual( (12, 0), ParkAdvisorMessages.Pick( outlets, Judging( sideshows, true, false ) ) );
+		Assert.AreEqual( (13, 66), ParkAdvisorMessages.Pick( outlets, Judging( sideshows, true, true ) ), "200 over 3, truncated" );
+		Assert.IsNull( ParkAdvisorMessages.Pick( outlets, Judging( ParkAdvisorMessages.Outlet.Shops, true, true ) ) );
+		Assert.IsNull( ParkAdvisorMessages.Pick( [], Judging( food, true, true ) ) );
+
+		// The DIV is unsigned: walk-aways whose hundredfold passes the int's top come out above it, a negative int.
+		Assert.AreEqual( unchecked((int)2_500_000_000u), new ParkAdvisorMessages.OutletFigures( 1, food, 31, 1, 25_000_000, 0 ).WalkAwayShare );
+		Assert.AreEqual( 1_431_655_732, new ParkAdvisorMessages.OutletFigures( 1, food, 31, 3, -1, 0 ).WalkAwayShare, "-100 taken as 4294967196, over 3" );
+	}
+
+	/// <summary>
+	/// Rows 238 to 257 scored and polled: the picked outlet's figure less the row's line, times its ScorePerPoint, over the
+	/// line for a great row and under it for a poor one, which is below nought and never said; nought with nothing picked.
+	/// The great value row is said of food whose walk-aways pass its line's share of the customers, the original's case.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the score not multiplied, or by another row's key; a poor row made positive or nought;
+	/// over taken as at least; the facts' outlets not read; the poll line naming another outlet.</remarks>
+	[TestMethod]
+	public void TheOutletsRowsScoreThePickedOutletAgainstTheLine()
+	{
+		var cursor = new ParkAdvisorMessages.PollCursor();
+		var settings = Settings();
+		var messages = new ParkAdvisorMessages( settings, cursor: cursor );
+		var food = ParkAdvisorMessages.Outlet.Food;
+		var sideshows = ParkAdvisorMessages.Outlet.Sideshows;
+		var outlets = new ParkAdvisorMessages.OutletList( new ParkAdvisorMessages.OutletFigures[]
+		{
+			new( 21, food, Age: 40, Customers: 50, WalkAways: 43, Satisfaction: 60 ),
+			new( 22, food, Age: 31, Customers: 10, WalkAways: 9, Satisfaction: 75 ),
+			new( 30, sideshows, Age: 45, Customers: 0, WalkAways: 0, Satisfaction: 99 ),
+			new( 31, sideshows, Age: 45, Customers: 3, WalkAways: 0, Satisfaction: 77 )
+		} );
+		var facts = new ParkAdvisorMessages.ParkFacts( Closed: false, Rides: 3, Sideshows: 2, WaitingToOpen: 0, Outlets: outlets );
+		var said = new List<(int Tick, int Response, int Sample)>();
+		var groups = new List<(int, int)>();
+		void Round( int row, int at )
+		{
+			cursor.Row = row;
+			messages.Tick( at, at * 250L, ( response, sample ) => { said.Add( (at, response, sample) ); return 6800; },
+				( group, subject ) => groups.Add( (group, subject) ), () => facts );
+		}
+		ParkAdvisorMessages.Topic Row( int row ) => ParkAdvisorMessages.ParkTopics.Single( one => one.Id == row );
+
+		Assert.AreEqual( 0, messages.ScoreOf( Row( 248 ), 900 ), "before any sweep has handed the park in" );
+
+		// Food's great value: 9 of 10 walked away, 90 over 80, times 5.
+		Round( 248, 900 );
+		Assert.AreEqual( (50, "post", 249), (messages.ScoreOf( Row( 248 ), 900 ), messages.PollAnswer( 248 ), cursor.Row) );
+		Assert.AreEqual( " outlet=Food thing=22 figure=90 line=80 age=31 customers=10 walkaways=9 satisfaction=75", messages.PollFacts( Row( 248 ) ) );
+		CollectionAssert.AreEqual( new[] { (900, 488, 516) }, said );
+		CollectionAssert.AreEqual( new[] { (ParkTags.NoTag, 0) }, groups, "about no thing, and no tag" );
+
+		// Food's poor value: the lowest share, 86, not under 50; under a line of 90, 4 points under, times 10.
+		Assert.AreEqual( 0, messages.ScoreOf( Row( 238 ), 901 ) );
+		Set( settings, "FoodPoorValue.ValueWorseThan", 90 );
+		Assert.AreEqual( -40, messages.ScoreOf( Row( 238 ), 901 ) );
+		Round( 238, 901 );
+		Assert.AreEqual( "no-score", messages.PollAnswer( 238 ) );
+		Assert.AreEqual( " outlet=Food thing=21 figure=86 line=90 age=40 customers=50 walkaways=43 satisfaction=60", messages.PollFacts( Row( 238 ) ) );
+
+		// Food's great satisfaction: 75 over 70, times 4, 20, under the threshold; 70 itself is not over.
+		Assert.AreEqual( 20, messages.ScoreOf( Row( 253 ), 902 ) );
+		Round( 253, 902 );
+		Assert.AreEqual( "under-threshold", messages.PollAnswer( 253 ) );
+		facts = facts with { Outlets = new( [outlets.All[0], outlets.All[1] with { Satisfaction = 70 }] ) };
+		Assert.AreEqual( 0, messages.ScoreOf( Row( 253 ), 902 ) );
+		facts = facts with { Outlets = outlets };
+
+		// The sideshows' great satisfaction: the one with customers, 77 over 74, times 23.
+		Round( 257, 1000 );
+		Assert.AreEqual( (69, "post"), (messages.ScoreOf( Row( 257 ), 1000 ), messages.PollAnswer( 257 )) );
+		Assert.AreEqual( (1000, 497, 525), said[^1] );
+
+		// The sideshows' poor value and poor satisfaction both by the share, nought: 54 and 59 under, times 14 and 19.
+		Assert.AreEqual( (-756, -1121), (messages.ScoreOf( Row( 242 ), 1001 ), messages.ScoreOf( Row( 247 ), 1001 )) );
+
+		// No shop, restaurant or drinks stand: nought.
+		foreach ( var row in new[] { 239, 240, 241, 244, 245, 246, 249, 250, 251, 254, 255, 256 } )
+			Assert.AreEqual( 0, messages.ScoreOf( Row( row ), 1002 ), $"row {row}" );
+		StringAssert.Contains( messages.Census(), "message=248/score=50/line=0/lastTick=900/said=1/slaps=0" );
 	}
 
 	/// <summary>
@@ -4728,7 +4910,7 @@ public class ParkAdvisorMessageTests
 
 		Assert.AreEqual( 1, ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Lines );
 		Assert.IsTrue( ParkAdvisorMessages.ParkTopics.Single( one => one.Id == ParkAdvisorMessages.ControlPanel ).Polled );
-		Assert.AreEqual( 51, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
+		Assert.AreEqual( 71, ParkAdvisorMessages.ParkTopics.Count( one => one.Polled ) );
 	}
 
 	/// <summary>

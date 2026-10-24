@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q619 (decode only: the river, cliffs and rock at the back half lit by their normals, the water unlit): nothing built.
+  The original was read off-screen (`q325/stock.TPWS`) at two cameras, its colours measured as Q479's were; the
+  ambient-only half (a face turned from the sun keeps its light) is the code's alone, no such face found in the frames;
+  Buy Land's re-mark bringing a mesh back to 1.0 is read, not run; Full Simulation not run (the same mark runs on a fresh
+  park's load). Shot5 was Alexah's own park; its view was matched by the same meshes, not the same place.
 - Q723 (the sample draw; lane B, off-screen): textures are drawn white there, so the claims rest on the log and the census, not on a picture (`q723/run3/lobby.png`, `park.png` are named, not evidence). The lobby's music never repeats a track in the attract lobby's four islands (ten to twelve selections each in 240 s, `q723/run3/run.log`); the later samples of the park's plain-class and music-class voices (the crowd, the land's following voices, the park music, a script's plain and music sounds, the interface's loops) ask for the step in the original and are counted `SAMPLE_NO_REPEAT`, not built (Q742); a voice's first sample does not ask and is not counted. The no-sample case (a roll above a list's last odds, at most 20 in 65,536) is unit-tested, never seen in a run. Not heard: the mix was not captured, so which track sounded is the log's word. The original was not run in this lane. Full Simulation not run: the draw is the same code. The test that failed once in a full run was most likely `SoundCategoryTests.TheGlobalRidesPlayTheSamplesTheirRecordsName` (a roll above 202's last odds, 1.8% a run), found by the run 9 review and fixed with a seam for the category's roll.
 - Q618 (the ground's tiles at the size asked, 32): the original was made to draw 32 by a write to its memory
   (`original/prepoke32.sh`), not seen at 32 on a machine of its day; its other cut, on texture memory, is not modelled

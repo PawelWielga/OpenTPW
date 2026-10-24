@@ -36,11 +36,7 @@ One line per system; the detail, item by item, is `docs/WORKS.md` (grep it by ar
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q619 (decode only: the river, cliffs and rock at the back half lit by their normals, the water unlit): nothing built.
-  The original was read off-screen (`q325/stock.TPWS`) at two cameras, its colours measured as Q479's were; the
-  ambient-only half (a face turned from the sun keeps its light) is the code's alone, no such face found in the frames;
-  Buy Land's re-mark bringing a mesh back to 1.0 is read, not run; Full Simulation not run (the same mark runs on a fresh
-  park's load). Shot5 was Alexah's own park; its view was matched by the same meshes, not the same place.
+- Q713 (the advisor's rows 238 to 257; lane B, off-screen): textures are drawn white there, so the claims rest on the poll and attempt lines and the `outlets` census (`q713/run6-made/t19046.png`, `run4-made/t19040.png` are named, not evidence). The original was not run here: its row 257 on 19040 is Q708's record; on the made files it is Q743. On Alexah's file as it is, row 257 scored 24 (sideshow 50 at 76) where the original's said it: the guests' visits in the rolled-in days differ, not the row. Not heard. A great row said again past its 7,200-sweep wait, and the poor rows' negative scores in a run of the original, are not seen. A line queued behind another under the harness's pauses waited far longer in sweeps than the original's would (`TOOLING.md`, recipes, "A gate").
 
 
 ## Numbers (take counts fresh; these go stale within a day)
@@ -48,8 +44,8 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3858**, 0 fail, 0 skip with the game | 2026-10-24, run 9 review fix B, alone in a worktree |
-| Tests without the game | **1363** ran, **2495** skipped, of 3858 | 2026-10-24, run 9 review fix B, alone in a worktree |
+| Tests | **3863**, 0 fail, 0 skip with the game | 2026-10-24, Q713 rebased, alone in a worktree |
+| Tests without the game | **1366** ran, **2497** skipped, of 3863 | 2026-10-24, Q713 rebased, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

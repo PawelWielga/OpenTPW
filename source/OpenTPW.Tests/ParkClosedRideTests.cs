@@ -1042,6 +1042,41 @@ public class ParkClosedRideTests
 	}
 
 	/// <summary>
+	/// What the advisor's rows 238 to 257 read of the park: each shop and sideshow in the chain's order, its outlet by its
+	/// item, its age in whole days and its rings' last thirty days. The shipped park's are the drinks stall and the
+	/// Jungle Spray, 32 days old on the file's day (the running game's `outlets` read the same), neither with a finished
+	/// day of customers; a day's three customers and two walk-aways of the drinks stall make its share 66, and its satisfaction of 90 over its thirty days 53.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> an outlet left out or a ride let in; the walk-aways read from the customers ring; today's
+	/// counts added before the day is finished; the satisfaction another window's.</remarks>
+	[TestMethod]
+	public void TheAdvisorsParkFactsNameTheShopsAndSideshows()
+	{
+		var park = Open();
+
+		try
+		{
+			var drinks = ParkAdvisorMessages.Outlet.Drinks;
+			CollectionAssert.AreEqual( new ParkAdvisorMessages.OutletFigures[] { new( 16, drinks, 32, 0, 0, 50 ), new( 14, ParkAdvisorMessages.Outlet.Sideshows, 32, 0, 0, 50 ) },
+				park.People.AdvisorFacts().Outlets!.All.ToArray() );
+
+			var rings = park.State.RingsFor( 16 );
+			for ( var i = 0; i < 3; ++i ) rings.CountCustomer();
+			rings.CountWalkAway();
+			rings.CountWalkAway();
+			rings.Satisfy( 90 );
+			Assert.AreEqual( new ParkAdvisorMessages.OutletFigures( 16, drinks, 32, 0, 0, 50 ), park.People.AdvisorFacts().Outlets!.All[0], "today's are not counted" );
+			rings.Roll();
+			var stall = park.People.AdvisorFacts().Outlets!.All[0];
+			Assert.AreEqual( (new ParkAdvisorMessages.OutletFigures( 16, drinks, 32, 3, 2, 53 ), 66), (stall, stall.WalkAwayShare) );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
 	/// What the advisor's row 1 reads of the shipped park (<c>FUN_004c9050</c>, <c>FUN_004ca8e0</c>,
 	/// <c>FUN_004c91c0</c>): its door, its things of a ride's item and of a sideshow's, and the guests in state 3
 	/// standing on either ticket booth's cell: not one beside a booth, and not one on a booth judging the fee.
@@ -1067,7 +1102,7 @@ public class ParkClosedRideTests
 				guest.SetState( PeepState.Deciding, 800, random );
 			}
 
-			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1, Features: StockFeatures, FeatureKindsOnOffer: StockFeatureKindsOnOffer, FeatureKindsStanding: StockFeatureKindsStanding, GuestsInside: park.People.GateGuestCensus, Researchers: 1, FeatureProjectsUnfinished: StockFeatureProjectsUnfinished, SideshowProjectsUnfinished: 2, RideProjectsUnfinished: StockRideProjectsUnfinished, SideshowResearchRate: StockSideshowResearchRate, ResearchAbility: StockResearchAbility, MostResearchAbility: StockMostResearchAbility, Staff: StockStaffTraining, DevelopedCells: StockDevelopedCells, LifetimeVisitors: StockLifetimeVisitors, Happiness: 50f, LoadsCalled: StockLoadsCalled ), park.People.AdvisorFacts() );
+			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, 0, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1, Features: StockFeatures, FeatureKindsOnOffer: StockFeatureKindsOnOffer, FeatureKindsStanding: StockFeatureKindsStanding, GuestsInside: park.People.GateGuestCensus, Researchers: 1, FeatureProjectsUnfinished: StockFeatureProjectsUnfinished, SideshowProjectsUnfinished: 2, RideProjectsUnfinished: StockRideProjectsUnfinished, SideshowResearchRate: StockSideshowResearchRate, ResearchAbility: StockResearchAbility, MostResearchAbility: StockMostResearchAbility, Staff: StockStaffTraining, DevelopedCells: StockDevelopedCells, LifetimeVisitors: StockLifetimeVisitors, Happiness: 50f, LoadsCalled: StockLoadsCalled ), park.People.AdvisorFacts() with { Outlets = null } );
 
 			void Put( int index, int x, int y, PeepState state )
 			{
@@ -1084,13 +1119,13 @@ public class ParkClosedRideTests
 
 			park.State.SetParkClosed( true );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1, Features: StockFeatures, FeatureKindsOnOffer: StockFeatureKindsOnOffer, FeatureKindsStanding: StockFeatureKindsStanding, GuestsInside: park.People.GateGuestCensus, Researchers: 1, FeatureProjectsUnfinished: StockFeatureProjectsUnfinished, SideshowProjectsUnfinished: 2, RideProjectsUnfinished: StockRideProjectsUnfinished, SideshowResearchRate: StockSideshowResearchRate, ResearchAbility: StockResearchAbility, MostResearchAbility: StockMostResearchAbility, Staff: StockStaffTraining, DevelopedCells: StockDevelopedCells, LifetimeVisitors: StockLifetimeVisitors, Happiness: 0f, LoadsCalled: StockLoadsCalled ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: StockSideshows, ToiletsShut: StockToilets, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1, Features: StockFeatures, FeatureKindsOnOffer: StockFeatureKindsOnOffer, FeatureKindsStanding: StockFeatureKindsStanding, GuestsInside: park.People.GateGuestCensus, Researchers: 1, FeatureProjectsUnfinished: StockFeatureProjectsUnfinished, SideshowProjectsUnfinished: 2, RideProjectsUnfinished: StockRideProjectsUnfinished, SideshowResearchRate: StockSideshowResearchRate, ResearchAbility: StockResearchAbility, MostResearchAbility: StockMostResearchAbility, Staff: StockStaffTraining, DevelopedCells: StockDevelopedCells, LifetimeVisitors: StockLifetimeVisitors, Happiness: 0f, LoadsCalled: StockLoadsCalled ), park.People.AdvisorFacts() with { Outlets = null } );
 
 			// One toilet opened again, and the sideshow: the door's others stay shut.
 			park.People.SetRideClosed( 22, closed: false );
 			park.People.SetRideClosed( 14, closed: false );
 			Assert.AreEqual( new ParkAdvisorMessages.ParkFacts( true, StockRides, StockSideshows, 3, StockShops, StockToilets,
-				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1, Features: StockFeatures, FeatureKindsOnOffer: StockFeatureKindsOnOffer, FeatureKindsStanding: StockFeatureKindsStanding, GuestsInside: park.People.GateGuestCensus, Researchers: 1, FeatureProjectsUnfinished: StockFeatureProjectsUnfinished, SideshowProjectsUnfinished: 2, RideProjectsUnfinished: StockRideProjectsUnfinished, SideshowResearchRate: StockSideshowResearchRate, ResearchAbility: StockResearchAbility, MostResearchAbility: StockMostResearchAbility, Staff: StockStaffTraining, DevelopedCells: StockDevelopedCells, LifetimeVisitors: StockLifetimeVisitors, Happiness: 0f, LoadsCalled: StockLoadsCalled ), park.People.AdvisorFacts() );
+				ShopsShut: StockShops, SideshowsShut: 0, ToiletsShut: StockToilets - 1, RidesShut: StockRides, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1, Features: StockFeatures, FeatureKindsOnOffer: StockFeatureKindsOnOffer, FeatureKindsStanding: StockFeatureKindsStanding, GuestsInside: park.People.GateGuestCensus, Researchers: 1, FeatureProjectsUnfinished: StockFeatureProjectsUnfinished, SideshowProjectsUnfinished: 2, RideProjectsUnfinished: StockRideProjectsUnfinished, SideshowResearchRate: StockSideshowResearchRate, ResearchAbility: StockResearchAbility, MostResearchAbility: StockMostResearchAbility, Staff: StockStaffTraining, DevelopedCells: StockDevelopedCells, LifetimeVisitors: StockLifetimeVisitors, Happiness: 0f, LoadsCalled: StockLoadsCalled ), park.People.AdvisorFacts() with { Outlets = null } );
 
 			// The door left the staff room open; shut by itself, it alone is one more shut.
 			var before = park.People.AdvisorFacts();
@@ -1140,7 +1175,7 @@ public class ParkClosedRideTests
 			var back = park.State.Record( BackX, BackY );
 			park.State.SetRecord( BackX, BackY, back with { Neighbours = 0x04 } );
 			Assert.AreEqual( BellyBounce, park.People.AdvisorFacts().UnjoinedQueue );
-			Assert.AreEqual( park.People.AdvisorFacts() with { UnjoinedQueue = 0 },
+			Assert.AreEqual( park.People.AdvisorFacts() with { UnjoinedQueue = 0, Outlets = null },
 				new ParkAdvisorMessages.ParkFacts( false, StockRides, StockSideshows, park.People.WaitingToOpen, StockShops, StockToilets, StaffRooms: StockStaffRooms, Mechanics: 1, DaysSinceStaffHired: StockDaysSinceStaffHired, RideKindsOnOffer: StockRideKindsOnOffer, RideKindsStanding: 1, DaysSinceObjectBuilt: StockDaysSinceObjectBuilt, ShopKindsOnOffer: StockShopKindsOnOffer, ShopKindsStanding: 1, Balance: StockBalance, SideshowKindsOnOffer: StockSideshowKindsOnOffer, SideshowKindsStanding: 1, Features: StockFeatures, FeatureKindsOnOffer: StockFeatureKindsOnOffer, FeatureKindsStanding: StockFeatureKindsStanding, GuestsInside: park.People.GateGuestCensus, Researchers: 1, FeatureProjectsUnfinished: StockFeatureProjectsUnfinished, SideshowProjectsUnfinished: 2, RideProjectsUnfinished: StockRideProjectsUnfinished, SideshowResearchRate: StockSideshowResearchRate, ResearchAbility: StockResearchAbility, MostResearchAbility: StockMostResearchAbility, Staff: StockStaffTraining, DevelopedCells: StockDevelopedCells, LifetimeVisitors: StockLifetimeVisitors, Happiness: park.People.GuestsInsideHappiness, LoadsCalled: StockLoadsCalled ), "nothing else moved" );
 
 			// The queue tool armed for it passes it over; armed for another thing, or put away, it does not.

@@ -440,6 +440,14 @@ public sealed partial class ItemDescriptionFile
 	public int AppearanceEffect => _appearanceEffect ?? _category?.AppearanceEffect ?? 0;
 
 	/// <summary>
+	/// What a shop sells, for the advisor's lines about its value and satisfaction - <c>UsageInfo.ShopType</c>,
+	/// descriptor <c>+0x164</c>: 2 food, 3 a restaurant, 4 drinks, and 1, 5 and 6 the other shops
+	/// (<c>docs/exe/advisor-park.md</c>, "Shop and sideshow value and satisfaction"). Every shop sets its own; no
+	/// category file declares it, so anything else reads nought.
+	/// </summary>
+	public int ShopType => _shopType ?? _category?.ShopType ?? 0;
+
+	/// <summary>
 	/// What it costs to buy and build one - <c>Upgrades[0].CostOfUpgrade</c>, whose own comment in every
 	/// category file reads "cash cost when buying this item".
 	///
@@ -658,6 +666,7 @@ public sealed partial class ItemDescriptionFile
 	private int? _ripOffOK;
 	private int? _specialIngredient;
 	private int? _appearanceEffect;
+	private int? _shopType;
 
 	private int? _minSpeed;
 	private int? _maxSpeed;
@@ -1036,6 +1045,10 @@ public sealed partial class ItemDescriptionFile
 
 				case "UsageInfo.AppearanceEffect":
 					_appearanceEffect = Number( line );
+					break;
+
+				case "UsageInfo.ShopType":
+					_shopType = Number( line );
 					break;
 
 				// Slot nought only - the later two are upgrade tiers, not the purchase. See BuildPrice.

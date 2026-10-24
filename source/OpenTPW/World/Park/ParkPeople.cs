@@ -2833,6 +2833,7 @@ public sealed partial class ParkPeople : Entity
 		var (ridesShut, shopsShut, sideshowsShut, toiletsShut) = (0, 0, 0, 0);
 		var (staffRooms, staffRoomsShut) = (0, 0);
 		var unjoined = 0;
+		var outlets = new List<ParkAdvisorMessages.OutletFigures>();
 		var (ridesWorn, ridesBroken) = (0, 0);
 		var wornBelow = State.AdvisorMessages?.WornBelow ?? 0;
 		// The need is taken as its whole number's low byte, as the original compares it (0x004c9301); with no
@@ -2872,6 +2873,13 @@ public sealed partial class ParkPeople : Entity
 			}
 
 			if ( _behaviour.Catalogue is not { } catalogue || !catalogue.TryGet( thing.CatalogueId, out var item ) ) continue;
+
+			if ( ParkAdvisorMessages.OutletOf( item.ShopType, item.UiType ) is var outlet and not ParkAdvisorMessages.Outlet.None )
+			{
+				var days = State.RingsFor( thing.ThingId );
+				outlets.Add( new( thing.ThingId, outlet, State.AgeInDays( thing ), days.Customers.LastDays( 30 ),
+					days.WalkAways.LastDays( 30 ), days.SatisfactionOfLastDays( 30 ) ) );
+			}
 
 			if ( item.UiType == ItemDescriptionFile.Ride )
 			{
@@ -2917,7 +2925,7 @@ public sealed partial class ParkPeople : Entity
 			_research?.Unfinished( ItemDescriptionFile.Ride ) ?? 0,
 			ParkStaffPool.Current?.OfKind( ParkStaffPool.Kinds - 1 ).Count() ?? 0, thirsty, hungry,
 			State.LifetimeVisitors, GuestsInsideHappiness,
-			State.ArrivalLoads.Wrapped ? State.ArrivalLoads.Length : State.ArrivalLoads.Current + 1, AdvisorTicketFacts() );
+			State.ArrivalLoads.Wrapped ? State.ArrivalLoads.Length : State.ArrivalLoads.Current + 1, AdvisorTicketFacts(), new( outlets ) );
 	}
 
 	/// <summary>

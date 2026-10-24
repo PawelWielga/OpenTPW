@@ -154,6 +154,38 @@ public class ParkEasyCatalogueTests
 			Assert.AreEqual( 1, item.NewAttractionDecayTime, item.Name );
 	}
 
+	/// <summary>
+	/// Each of Lost Kingdom's eight shops reads its own <c>UsageInfo.ShopType</c>, and is the advisor's outlet by it (rows 238
+	/// to 257); the five sideshows read nought and are the sideshows' by their <c>WhichUIType</c>; a ride is no outlet.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the key not read, or read into another field; a type mapped to another outlet; a sideshow not an outlet.</remarks>
+	[TestMethod]
+	public void LostKingdomsShopsReadTheirShopType()
+	{
+		var data = GameData.Required();
+		var catalogue = new ParkItemCatalogue( "jungle", data );
+		var food = ParkAdvisorMessages.Outlet.Food;
+		var shops = ParkAdvisorMessages.Outlet.Shops;
+
+		// From each wad's own .sam: giftshop 1, burger, icecream and fries 2, steak 3, coconut 4, cost_shp 5, balloon 6.
+		foreach ( var (id, type, outlet) in new[] { (1211, 1, shops), (1207, 2, food), (1206, 2, food), (1212, 2, food),
+			(1208, 3, ParkAdvisorMessages.Outlet.Restaurants), (1203, 4, ParkAdvisorMessages.Outlet.Drinks), (1202, 5, shops), (1209, 6, shops) } )
+		{
+			Assert.IsTrue( catalogue.TryGet( id, out var item ), $"{id}" );
+			Assert.AreEqual( (type, outlet), (item.ShopType, ParkAdvisorMessages.OutletOf( item.ShopType, item.UiType )), item.Name );
+		}
+
+		foreach ( var id in new[] { 1303, 1304, 1305, 1307, 1309 } )
+		{
+			Assert.IsTrue( catalogue.TryGet( id, out var sideshow ), $"{id}" );
+			Assert.AreEqual( (0, ParkAdvisorMessages.Outlet.Sideshows), (sideshow.ShopType, ParkAdvisorMessages.OutletOf( sideshow.ShopType, sideshow.UiType )), sideshow.Name );
+		}
+
+		Assert.AreEqual( 8, catalogue.All.Count( item => item.ShopType != 0 ), "the shops alone set it" );
+		Assert.IsTrue( catalogue.All.Where( item => item.UiType == ItemDescriptionFile.Ride )
+			.All( ride => ParkAdvisorMessages.OutletOf( ride.ShopType, ride.UiType ) == ParkAdvisorMessages.Outlet.None ) );
+	}
+
 	[TestMethod]
 	public void NoFileLostKingdomShipsHasARefusedLine()
 	{

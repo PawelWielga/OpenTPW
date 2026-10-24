@@ -239,6 +239,12 @@ filed the items that cite it.
   difference. Each improvement reads one switch, set at one place (rule 9); say it in the option's own text and at the
   site. Confirm: a frame pair with the toggle on and off at the
   gate, the on frame matching the original's.
+- [ ] **Q743. The original on Q713's made file: row 248 said of a food stall walked away from.** From Q713 (lane B, which
+  cannot run the original). Load `~/.cache/tpw-harnesses/q713/files/outlets-B.TPWS` (Alexah's jungle `New Save`, row 248's
+  record fresh, food stall 193 a day of 7 walk-aways to its 7 customers) in the original by `q707/gms-none.dat`'s player
+  (`original/fsload.sh`), read `advisor.py ... 0xf8,0x101 poll` and the line: this game said row 248 on 19031 at 100
+  (sample 516, props 13, 14) and queued row 257 at 32 behind it (`q713/run4-made.out`). Predict the original's tick and
+  score first; a miss in either game's guests (the rolled-in day) is said as such.
 - [ ] **Q649. A built thing's floor blended into the ground's tiles.** From Q617 (`park-engine.md`, "A built thing's
   floor is blended into the ground's tiles"). The original composites each used footprint cell's ground tile with the
   cell's floor texture laid over by its alpha (as a path is, `ProceduralGround`'s overlay) and draws the floor's
@@ -280,6 +286,8 @@ filed the items that cite it.
   hard hat. The hint `0x13a` left waiting as the original's needs row 257 too (Q713: its sample 525 holds the original's
   advisor from 19040 to 19076, `q602/orig-R1/line.log`), so with row 19 alone this game still says `0x13a` on 19059 and
   sample 57 later than 19084: say so, or build after Q713 (run 7 review, `review7/q602/FINDINGS.md`).
+  - **Note (Q713, built):** on that load this game's row 257 scores 24 on 19040 (sideshow 50's satisfaction 76 where the
+    original's reached 77), so it is not said and does not hold the advisor (`q713/run3-fs.out`).
 - [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
   the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
   (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to
@@ -386,22 +394,6 @@ filed the items that cite it.
   the original's bus voice stood at (529, 64) and (439, 65) (`q561/side-by-side.png`). Left: the original's bus
   photographed at both stops at one camera beside ours (`q583/confirm.py ... bus`, camera 485,45 zoom 130), and its
   matrix there read from its memory, its nose against ours (-1.00, 0.00, 0.04) and (-1.00, -0.00, -0.04).
-- [ ] **Q713. The advisor's shop and sideshow value and satisfaction rows, 238 to 257.** From the fork watch, 2026-10-19
-  (`verify-advisor-ui.md` L1; `advisor-park.md`, "Shop and sideshow value and satisfaction, rows 238 to 257"). Twenty
-  polled rows, counted in `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; rows 239 to 241 were not opened, so read those three
-  callbacks (`0x0059fbd0`, `0x0059fc40`, `0x0059fcb0`) first. Build them on the built rows' machinery
-  (`ParkAdvisorMessages` topics with `Polled` and `ScoreOf`): the helpers pick the best or worst shop (`UsageInfo.ShopType`
-  2 food, 3 restaurant, 4 drinks, 1/5/6 shops) or sideshow (`Info.WhichUIType` 2) older than 30 days by
-  `ParkObjectRings.Satisfaction` or by the walk-away percentage (the sum of the last 30 days' walk-aways x 100 / the sum of
-  the customers, unsigned; the lowest for `0x004cc090`, the highest for `0x004caae0`; strict, the first of equals).
-  **Said at the site as the original's quirk:** the "great value" rows 248 to 252 fire when walk-aways pass 80% of the
-  paying customers (shipped line 80, 5 a point), not when value is good. The poor rows 238 to 247 score negative with the
-  shipped settings and never play; build them anyway, as faithful noughts. Lost Kingdom reaches rows 248 to 257. The
-  `Advisor.sam` key names against the settings words `+0x4d8`..`+0x574` are unproven (the settings reader's map was not
-  read): match them with `lib/advisorschema.py` before naming a field. Confirm: a shop older than 30 days with a high
-  walk-away share in a park file made for it, the row's poll line and score beside the original's.
-  - **Note (Q708):** the original says row 257's sample 525 (props 8, 0; response 497) on tick 19040 of Alexah's jungle
-    `New Save` loaded on 19004 by her Full Simulation profile with no ticket (`q707/orig/O2/line.log`): a ready case.
 - [ ] **Q613. Cull what the original culls (Q608's build).** From Q608 (`render-states.md`, "Which draws the test
   covers"). Take `DisableCulling` off `UiMesh`, `ParkGround`, `ParkPaths`, `ParkSea` and `ParkBuildMarkers`, keeping the
   side the original keeps: for the UI, a face clockwise in the file's (x, y), y up (`lib/uiwinding.py` names the 422

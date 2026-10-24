@@ -645,6 +645,20 @@ public static class DebugConsole
 				if ( ParkState.Current?.AdvisorMessages is { } messages ) Reply( messages.Census() );
 				break;
 
+			case "outlets":
+				// The shops and sideshows as the advisor's rows 238 to 257 judge them, in the world's thing order.
+				if ( ParkPeople.Current?.AdvisorFacts().Outlets?.All is not { } judged )
+				{
+					Reply( "outlets: a park has to be loaded" );
+					break;
+				}
+
+				Reply( $"outlets {judged.Count} day {GameCalendar.Days} tick {ParkState.Current?.GameTick}" );
+				foreach ( var outlet in judged )
+					Reply( $"  thing {outlet.Thing} {outlet.Of} age {outlet.Age} customers {outlet.Customers} walk-aways {outlet.WalkAways} "
+						+ $"share {(outlet.Customers == 0 ? "-" : outlet.WalkAwayShare.ToString())} satisfaction {outlet.Satisfaction}" );
+				break;
+
 			case "sayas":
 				// An instrument: the park advisor's next line is said as response N (a row of the response table only).
 				if ( ParkState.Current?.AdvisorMessages is not { } sayAs )

@@ -9829,6 +9829,29 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Measured: the cliff path 0.48 of ours, the grass strips 0.53, plain rock 0.51/0.51/0.55, the water 0.90; every river,
   cliff, volcano and water normal 0.225 long (`park-engine.md`, "The terrain model's meshes on that land are half lit
   too"; `q619/side-by-side.png`, `q619/PREDICTION.txt`). The build is Q652.
+- [x] **Q723. The sample draw as `FUN_006bc680` draws it.** The draw is built once (`SoundCategory.Draw`): a list of one is given with no draw, otherwise a roll of 0 to 65,535 and the first sample whose odds are at least the roll, none when the roll is above the last odds, and, where the caller asks, a pick equal to the effect's last moves on to the next (more than two samples only). The lobby's music asks (both of its starts), so no island's track plays twice running: ten to twelve selections of each of the four islands in 240 s, no repeat, all three samples each (`q723/run3`; the bug put back repeats, `q723/mut-m09-laststore`, `mut-m10-lobbyoff`). The deviation of at most 20 in 65,536 (a list ending below 65,535 plays nothing) is now the original's own. The voices that ask in the original and keep no last pick here are counted `SAMPLE_NO_REPEAT` (123 in a jungle park's first 45 s): filed as Q742.
+- [x] **Q713. The advisor's shop and sideshow value and satisfaction rows, 238 to 257.** From the fork watch, 2026-10-19
+  (`verify-advisor-ui.md` L1; `advisor-park.md`, "Shop and sideshow value and satisfaction, rows 238 to 257"). Twenty
+  polled rows, counted in `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`; rows 239 to 241 were not opened, so read those three
+  callbacks (`0x0059fbd0`, `0x0059fc40`, `0x0059fcb0`) first. Build them on the built rows' machinery
+  (`ParkAdvisorMessages` topics with `Polled` and `ScoreOf`): the helpers pick the best or worst shop (`UsageInfo.ShopType`
+  2 food, 3 restaurant, 4 drinks, 1/5/6 shops) or sideshow (`Info.WhichUIType` 2) older than 30 days by
+  `ParkObjectRings.Satisfaction` or by the walk-away percentage (the sum of the last 30 days' walk-aways x 100 / the sum of
+  the customers, unsigned; the lowest for `0x004cc090`, the highest for `0x004caae0`; strict, the first of equals).
+  **Said at the site as the original's quirk:** the "great value" rows 248 to 252 fire when walk-aways pass 80% of the
+  paying customers (shipped line 80, 5 a point), not when value is good. The poor rows 238 to 247 score negative with the
+  shipped settings and never play; build them anyway, as faithful noughts. Lost Kingdom reaches rows 248 to 257. The
+  `Advisor.sam` key names against the settings words `+0x4d8`..`+0x574` are unproven (the settings reader's map was not
+  read): match them with `lib/advisorschema.py` before naming a field. Confirm: a shop older than 30 days with a high
+  walk-away share in a park file made for it, the row's poll line and score beside the original's.
+  - **Note (Q708):** the original says row 257's sample 525 (props 8, 0; response 497) on tick 19040 of Alexah's jungle
+    `New Save` loaded on 19004 by her Full Simulation profile with no ticket (`q707/orig/O2/line.log`): a ready case.
+  - **Done (Q713, lane B, off-screen):** rows 239 to 241 read (shops, restaurants, drinks by the lowest walk-away share)
+    and all forty keys matched (`FoodPoorValue.ValueWorseThan` .. `SideshowsGreatSatisfaction.ScorePerPoint`); twenty
+    topics built, `ShopType` read. On that load rows 238 to 256 polled on 19021 to 19039, each score predicted; row 257
+    scored 24 on 19040 (sideshow 50 at 76, one short of the original's). Made files: row 248 `score=100 ... tick=19031
+    result=post` and said (sample 516); row 257 `score=68 ... tick=19040` and said, sample 525, props (8, 0)
+    (`q713/PREDICTION.txt`). `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` 20 fewer a round. The original on the made file: Q743.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

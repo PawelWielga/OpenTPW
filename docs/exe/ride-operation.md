@@ -5318,7 +5318,7 @@ The Jungle Spray is queued for and invited in **about one run in five** at that 
 - **`FUN_005019f0` case `0x11`**, the walk of the `mFirstGuard` chain through `+0x210` / `+0x212`.
 - **Whether a shop's duration of nought is correct** (it may simply not read it) where `FUN_004df8f0` would take a clamped value from the descriptor's `+0x1a0`. A bought one's is: the constructor writes `+0x5c` only for a starting duration above nought, and every shop's is nought (Q171).
 - **Refuted, so do not repeat:** "only `UNBOUNCE` writes `VAR_LETMEOFF`" — there are six writers, and the claim is false for 16 of the park theme's 17 dismissing ride scripts. "The shops' `mOperatingCapacity` might be nought, leaving them permanently full" — every visitable object has a non-zero capacity.
-- Descriptor keys present in the `.sam` files that OpenTPW does not read yet: `ShopType`, `RequiresTeleport`.
+- Descriptor keys present in the `.sam` files that OpenTPW does not read yet: `RequiresTeleport` (`ShopType` is read for the advisor's rows 238 to 257, Q713; its selling challenge's arm is not built).
 
 ## Measuring the corpus without inventing findings
 

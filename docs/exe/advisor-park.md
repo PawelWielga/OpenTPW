@@ -5125,16 +5125,20 @@ it from 19040 to 19076 (`q602/orig-R1/line.log`; `ride-operation.md`, "The hints
 The row is Full Simulation only (`+0x0c` 0), and with no `mType` 9 cell the share is nought (`0x004cd6df`), the score 500.
 The build is Q609.
 
-## Shop and sideshow value and satisfaction, rows 238 to 257 (fork watch 2026-10-19)
+## Shop and sideshow value and satisfaction, rows 238 to 257 (fork watch 2026-10-19, Q713)
 
-Read from the listing of `testme.exe`, every callback whole (fork watch 2026-10-19, `verify-advisor-ui.md` L1; no game run).
-Rows 239 to 241 (`0x0059fbd0`, `0x0059fc40`, `0x0059fcb0`) were not opened. The score callback of row N is the dword at
+Read from the listing of `testme.exe`, every callback whole (fork watch 2026-10-19, `verify-advisor-ui.md` L1; rows 239
+to 241 and every helper read whole by Q713, `q713/gd/`). The score callback of row N is the dword at
 `0x0076e300 + N x 0x38 + 0x10` (the stores `0x005a5f7f`..`0x005a6527`). Each callback first asks its helper for a qualifying
-object (a handle, kept at record `+4`) and its figure `v` (kept at `+8`), nought if none.
+object (a handle, kept at the balance object's `+4`, which nothing reads: "A queue not joined to a path") and its
+figure `v` (kept at `+8`), nought if none. So the line is about no thing, as every polled line is.
 
 | Row | Callback | Helper (group) | Scores | Log |
 |---|---|---|---|---|
-| 238 | `0x0059fb60` | `0x004cadf0` (2) | `v` below `[+0x4d8]`: ( `v` - it ) x `[+0x4dc]` | string `0x00773040` |
+| 238 | `0x0059fb60` | `0x004cadf0` (2) | `v` below `[+0x4d8]`: ( `v` - it ) x `[+0x4dc]` | "Food poor value (%d)" |
+| 239 | `0x0059fbd0` | `0x004cb640` | `v` below `[+0x4e0]`: ( `v` - it ) x `[+0x4e4]` | "shops poor value (%d)" |
+| 240 | `0x0059fc40` | `0x004cadf0` (3) | `v` below `[+0x4e8]`: ( `v` - it ) x `[+0x4ec]` | "restaurants poor value (%d)" |
+| 241 | `0x0059fcb0` | `0x004cadf0` (4) | `v` below `[+0x4f0]`: ( `v` - it ) x `[+0x4f4]` | "drinks poor value (%d)" |
 | 242 | `0x0059fd20` | `0x004cc090` | `v` below `[+0x4f8]`: ( `v` - it ) x `[+0x4fc]` | "sideshows poor value (%d)" |
 | 243 | `0x0059fd90` | `0x004cb200` (2) | `v` below `[+0x500]` | "Food poor satisfaction" |
 | 244 | `0x0059fe00` | `0x004cba90` | `v` below `[+0x508]` | "shops poor satisfaction" |
@@ -5152,6 +5156,21 @@ object (a handle, kept at record `+4`) and its figure `v` (kept at `+8`), nought
 | 256 | `0x005a0240` | `0x004cb100` (4) | `v` above `[+0x568]`: ( `v` - it ) x `[+0x56c]` | none |
 | 257 | `0x005a0290` | `0x004cbec0` | `v` above `[+0x570]` | none |
 
+Every row scores ( `v` - its line ) x its second word where its comparison holds (the poor rows `JGE` past, the great
+`JLE`, both signed), and nought where the helper finds nothing (the handle's word nought). **The settings words are
+`Advisor.sam`'s keys** (`lib/advisorschema.py`, the schema walked from the executable): `+0x4d8`/`+0x4dc`
+`FoodPoorValue.ValueWorseThan`/`.ScorePerPoint`, then in steps of eight `ShopsPoorValue`, `RestaurantPoorValue`,
+`DrinksPoorValue`, `SideshowsPoorValue`, the five `...PoorSatisfaction.SatisfactionWorseThan`, the five
+`...GreatValue.ValueBetterThan` and the five `...GreatSatisfaction.SatisfactionBetterThan`, each with its
+`ScorePerPoint`, to `+0x574`, in the table's order. Shipped: the poor lines 50 at 10 a point, the great value 80 at 5, the
+great satisfaction 70 at 4. **Row 247 is the sideshows' poor satisfaction by name and judges them by the walk-away share**,
+the helper row 242 calls (`0x0059ff69`); there is no lowest-satisfaction helper for the sideshows. The metadata rows
+(`advisorrow.py`): every one polled, either game, one copy, one line, selection 2, no tag (group 383); response the row
+plus 240, sample the row plus 268 (`global-speech-transcripts.tsv` says each line's words: 506 "visitors don't think your
+food is a very good deal", 525 "people who have played your sideshows don't feel cheated"); the food's, restaurants' and
+drinks' lines in the fast-food hat and the spatula (13, 14), the shops' and sideshows' in the kiosk hat (8, 0); rows 238
+to 247 category 0, rows 248 to 257 category 3, the congratulations (`MinTimeSameMessage` 1800, so a row said waits 7,200
+sweeps before it is said again).
 - **The groups are the log strings' words.** `UsageInfo.ShopType` (`+0x164`): 2 food, 3 restaurant, 4 drinks; the shops
   `0x004cba90` and `0x004cb980` take types 1, 5 and 6; the sideshows are `Info.WhichUIType` (`+0x4ac`) 2 (`0x004cc090` at
   `0x004cc121`, `0x004cbec0` at `0x004cbf4d`). Satisfaction is `FUN_004e1e30` (`ride-operation.md`, "Customer
@@ -5164,13 +5183,50 @@ object (a handle, kept at record `+4`) and its figure `v` (kept at `+8`), nought
   (strict), the first of equals. **So the "great value" rows 248 to 252 fire for a shop whose walk-aways pass 80% of its
   paying customers** (shipped `ValueBetterThan` 80, `ScorePerPoint` 5: 86% scores 30). It is the original's quirk, kept as
   it is when built. Walk-aways are counted only on a price refusal (`ride-operation.md`, "Walk-aways").
+- **What the helpers keep.** The share's helpers (`0x004caae0`, `0x004cadf0`, `0x004cb300`, `0x004cb640`, `0x004cbba0`,
+  `0x004cc090`) and the satisfaction ones (`0x004cb100`, `0x004cb200`, `0x004cb980`, `0x004cba90`, `0x004cbec0`) walk the
+  world's things (`FUN_00516130`), type 3, the group's, more than thirty days old (signed). Only the sideshows' best
+  satisfaction (`0x004cbec0`) also asks for customers in the last thirty days; the other satisfaction helpers take an
+  outlet that had none, at 50. `UsageInfo.ShopType` is in every one of the 32 shops of the four themes and in nothing
+  else (1 four times, 2 twelve, 3 to 6 four each; FileFormats `sam.md`).
 - **The poor rows never play.** Rows 238 to 247 score ( `v` - line ) x `ScorePerPoint` only when `v` is below the line, so
   never above nought with the shipped positive `ScorePerPoint`.
-- **Not proven:** that the settings words `+0x4d8`..`+0x574` are the keys the fork names (the settings reader's name to
-  offset map was not read), so `Advisor.sam`'s key names stay unmatched; the meaning of rows 239 to 241.
-- **In Lost Kingdom** rows 248 to 257 are reachable once a shop or sideshow is older than 30 days; 238 to 247 build as
-  faithful noughts. Nothing here is built: all twenty are counted in `PARK_ADVISOR_POLLED_ROW_NOT_BUILT`, and OpenTPW does
-  not read `ShopType` (Q713).
+- **In Lost Kingdom** rows 248 to 257 are reachable once a shop or sideshow is older than 30 days; 238 to 247 score
+  below nought and are never said, in both games.
+
+### OpenTPW (`ParkAdvisorMessages.OutletTopics`, `Outlet`, `OutletOf`, `OutletJudgement`, `OutletFigures`, `Pick`, a topic's `Judges`; `ParkFacts.Outlets`; `ItemDescriptionFile.ShopType`)
+
+Twenty polled topics built on the poll's machinery. `ParkPeople.AdvisorFacts` lists every shop and sideshow in the chain's
+order with its outlet (`OutletOf`: the item's `ShopType`, else a sideshow's `WhichUIType`), its age
+(`ParkState.AgeInDays`) and its rings' last thirty days (customers and walk-aways added unsigned, satisfaction
+`SatisfactionOfLastDays`); `Pick` keeps the helpers' best or worst, and the score is the callback's. The poll line ends
+` outlet=... thing=N figure=V line=L age=A customers=C walkaways=W satisfaction=S`, the outlet picked; the console's
+`outlets` prints the list. **Said as the original's quirk:** a great value row is said of an outlet whose walk-aways pass
+80% of its customers (the code's own comment says so at `OutletTopics`).
+
+**This game** (`q713/PREDICTION.txt`, rounds A to D, each predicted before its run; `q713/confirm.py`, off-screen in lane
+B, Alexah's jungle `New Save` loaded on tick 19004 by Q707's F player, as the original's `q707/orig/O2` was). *The file
+as it is* (`run3-fs`): rows 238 to 256 polled on ticks 19021 to 19039, each score and outlet as predicted from the load's
+census (238 -500 on food 257, ... 254 `cooldown` 40 on shop 47, its record said on 11907); row 257 on 19040 scored 24,
+`under-threshold`: sideshow 50's satisfaction stayed 76 through the rings' rolls on 19008 and 19032, where the original's
+reached 77 and said it (a miss, its cause the guests' visits, not the row). *Made files* (`parkfile.ring_set`): with food
+stall 193 given a day of seven walk-aways to its seven customers and row 248's record made fresh (`run4-made`), `poll
+message=248 ... score=100 ... tick=19031 result=post outlet=Food thing=193 figure=100 line=80` and the line said on that
+tick, response 488, sample 516, in the fast-food hat and the spatula (13, 14); with sideshow 50's thirty satisfaction days
+40 (`run6-made`, read 87 at a gate on 19034), `poll message=257 ... score=68 ... tick=19040 result=post outlet=Sideshows
+thing=50 figure=87 line=70` and `attempt=1 message=257 ... response=497 sample=525 line=0 tick=19040`, in the kiosk hat
+(8, 0), no tag: the original's tick, sample and props for the same file.
+
+| | The original | OpenTPW |
+|---|---|---|
+| Rows 238 to 257 | polled; the outlet's figure against its line | the same |
+| Row 257 on Alexah's `New Save` | said on 19040, sample 525, props (8, 0) | scored 24 on 19040 (76, one short); with the file's satisfaction made 87, said on 19040, sample 525, (8, 0) |
+| Row 254 on it | slotted at 28 on 19347, after its 7,200-sweep wait from 11907 | `cooldown` on 19037 at 40 (not run to 19347) |
+| A food stall walked away from by all its customers | not run (lane A, Q743) | row 248 said on 19031 at 100 |
+| The poor rows | below nought, never said | the same |
+
+**Not built or not seen.** The original on the made file (Q743). A great row said a second time past its 7,200 sweeps. The
+poor rows only as unit tests (no shipped setting makes them speak). Not heard (off-screen).
 
 ## Row 172 and row 72 read whole (fork watch 2026-10-19)
 

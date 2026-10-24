@@ -141,7 +141,10 @@ public sealed class ParkItemCatalogue
 
 		// The ride an add-on fits and its kind - ItemDescriptionFile.AddOnUpgradesId and AddOnUpgradeType. The hover's
 		// object row reads them (Level.GroundArmAt).
-		int AddOnUpgradesId = 0, int AddOnUpgradeType = 0 )
+		int AddOnUpgradesId = 0, int AddOnUpgradeType = 0,
+
+		// What a shop sells, by which the advisor judges its value and satisfaction - ItemDescriptionFile.ShopType.
+		int ShopType = 0 )
 	{
 		/// <summary>A tier's <c>CostOfUpgrade</c>: tier nought's is <see cref="BuildPrice"/>, nought past the third.</summary>
 		public int UpgradeCostAt( int tier ) => tier switch { 0 => BuildPrice, 1 => UpgradeCost1, 2 => UpgradeCost2, _ => 0 };
@@ -383,7 +386,8 @@ public sealed class ParkItemCatalogue
 					UpgradeResearchCost2: description.UpgradeResearchCostAt( 2 ),
 					UpgradeCost1: description.UpgradeCostAt( 1 ), UpgradeCost2: description.UpgradeCostAt( 2 ),
 					RideTypeStringIndex: description.RideTypeStringIndex,
-					AddOnUpgradesId: description.AddOnUpgradesId, AddOnUpgradeType: description.AddOnUpgradeType );
+					AddOnUpgradesId: description.AddOnUpgradesId, AddOnUpgradeType: description.AddOnUpgradeType,
+					ShopType: description.ShopType );
 
 			return true;
 		}

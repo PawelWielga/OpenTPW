@@ -166,6 +166,16 @@ internal sealed class ParkAdvisorMessages
 	internal const int LotsOfPranks = 264;
 
 	/// <summary>
+	/// Messages 0xee to 0x101, polled: rows 238 to 257, the lines about the value and satisfaction of the food, the
+	/// other shops, the restaurants, the drinks and the sideshows, poor then great (0x0059fb60 to 0x005a0290), each its
+	/// row's number (<see cref="OutletTopics"/>).
+	/// </summary>
+	internal const int FoodPoorValue = 238, FoodGreatValue = 248, SideshowsGreatSatisfaction = 257;
+
+	/// <summary>The congratulations' category (a row's +0x08): MessageGroups[3], half an hour between two sayings of one.</summary>
+	internal const int Congratulations = 3;
+
+	/// <summary>
 	/// Messages 0x5d to 0x61, posted only: a project finished, by the project's kind (Advisor_OnMessage 0x0059b060's
 	/// arm 0x11): rides 0x5d, upgrades 0x5e, shops 0x5f, sideshows 0x60, features 0x61, rows 93 to 97, each scored by
 	/// its Research*Researched key.
@@ -416,6 +426,9 @@ internal sealed class ParkAdvisorMessages
 	/// the same of the hunger over <see cref="HungrierThan"/>.
 	/// <paramref name="AlwaysNought"/> is the score of row 85 (0x0059e420): nought, whatever the park.
 	/// <paramref name="Constant"/> is a score read from no key, row 167's 10000 (0x0059f9a0).
+	/// <paramref name="Judges"/> makes the score rows 238 to 257's (0x0059fb60 to 0x005a0290): where an outlet is picked
+	/// (<see cref="Pick"/>), its figure less the line's key, times the key's value, where the figure is over the line, or
+	/// for a poor row under it; nought otherwise.
 	/// <paramref name="Hint"/> makes the score a golden-ticket hint's (<see cref="TicketHint"/>; its scorers are 0x005a0530, 0x005a05a0, 0x005a05f0 and 0x005a0780).
 	/// <paramref name="FullSimulationOnly"/> is whether the row's +0x0c is nought, so that the poll scores it in
 	/// game type nought alone and never in Instant Action; every other built row's is 2, either game.
@@ -434,7 +447,7 @@ internal sealed class ParkAdvisorMessages
 		string? LitterWithNoHandyman = null, bool Filthy = false, string? GotAwayMoreThan = null,
 		string? MostRidesBuilt = null, bool EveryRideBuilt = false, string? SlowResearch = null,
 		string? GotAwayWithAGuard = null, int SecondProp = 0, bool PerThirstyGuest = false, bool PerHungryGuest = false,
-		bool AlwaysNought = false, int? Constant = null, TicketHint Hint = TicketHint.None );
+		bool AlwaysNought = false, int? Constant = null, TicketHint Hint = TicketHint.None, OutletJudgement? Judges = null );
 
 	/// <summary>The happiness a guest is under to count as unhappy in row 14's score, the argument it hands FUN_004c9750 (0x0059ce63).</summary>
 	internal const int UnhappyBelow = 30;
@@ -517,7 +530,8 @@ internal sealed class ParkAdvisorMessages
 		int SideshowProjectsUnfinished = 0, int SideshowResearchRate = 0, int ResearchAbility = 0, int MostResearchAbility = 0,
 		StaffTraining Staff = default, int DevelopedCells = 0, int MisbehavingKids = 0, int GuestsUnhappy = 0, int LitterShare = 0,
 		int KidsGotAway = 0, int RideProjectsUnfinished = 0, int ResearcherCandidates = 0, int GuestsThirsty = 0, int GuestsHungry = 0,
-		int LifetimeVisitors = 0, float Happiness = 0, int LoadsCalled = 0, TicketFacts? Tickets = null )
+		int LifetimeVisitors = 0, float Happiness = 0, int LoadsCalled = 0, TicketFacts? Tickets = null,
+		OutletList? Outlets = null )
 	{
 		/// <summary>How many of <paramref name="share"/>'s things stand, and how many of them are shut.</summary>
 		internal (int Standing, int Shut) Of( Shut share ) => share switch
@@ -626,6 +640,129 @@ internal sealed class ParkAdvisorMessages
 	internal const int Spatula = 14;
 	/// <summary>The guards' cap, costume id 6: the prop of every line about guards, and of the pranksters' line.</summary>
 	internal const int GuardCap = 6;
+	/// <summary>The kiosk hat, costume id 8, the one hat that leaves his antennae on: the prop of the lines about the shops and sideshows.</summary>
+	internal const int KioskHat = 8;
+
+	/// <summary>
+	/// Rows 238 to 257 (docs/exe/advisor-park.md, "Shop and sideshow value and satisfaction"): one line each, selection
+	/// 2, no tag; the food's, the restaurants' and the drinks' lines in the fast-food hat and the spatula, the shops' and
+	/// the sideshows' in the kiosk hat. The poor rows are MessageGroups[0]'s, the great ones the congratulations'. "Value"
+	/// is the walk-away share, so the great value rows are said of an outlet whose walk-aways pass ValueBetterThan per
+	/// cent of its customers, as the original's are. Row 247, the sideshows' poor satisfaction, judges them by the
+	/// walk-away share as row 242 does: its score function asks the same helper (0x0059ff69). The poor rows score
+	/// below nought with the shipped settings, so are never said, as the original's are not.
+	/// </summary>
+	internal static readonly Topic[] OutletTopics =
+	[
+		Judged( FoodPoorValue, Outlet.Food, WalkAways: true, Highest: false, "FoodPoorValue.ValueWorseThan" ),
+		Judged( FoodPoorValue + 1, Outlet.Shops, WalkAways: true, Highest: false, "ShopsPoorValue.ValueWorseThan" ),
+		Judged( FoodPoorValue + 2, Outlet.Restaurants, WalkAways: true, Highest: false, "RestaurantPoorValue.ValueWorseThan" ),
+		Judged( FoodPoorValue + 3, Outlet.Drinks, WalkAways: true, Highest: false, "DrinksPoorValue.ValueWorseThan" ),
+		Judged( FoodPoorValue + 4, Outlet.Sideshows, WalkAways: true, Highest: false, "SideshowsPoorValue.ValueWorseThan" ),
+		Judged( FoodPoorValue + 5, Outlet.Food, WalkAways: false, Highest: false, "FoodPoorSatisfaction.SatisfactionWorseThan" ),
+		Judged( FoodPoorValue + 6, Outlet.Shops, WalkAways: false, Highest: false, "ShopsPoorSatisfaction.SatisfactionWorseThan" ),
+		Judged( FoodPoorValue + 7, Outlet.Restaurants, WalkAways: false, Highest: false, "RestaurantPoorSatisfaction.SatisfactionWorseThan" ),
+		Judged( FoodPoorValue + 8, Outlet.Drinks, WalkAways: false, Highest: false, "DrinksPoorSatisfaction.SatisfactionWorseThan" ),
+		Judged( FoodPoorValue + 9, Outlet.Sideshows, WalkAways: true, Highest: false, "SideshowsPoorSatisfaction.SatisfactionWorseThan" ),
+		Judged( FoodGreatValue, Outlet.Food, WalkAways: true, Highest: true, "FoodGreatValue.ValueBetterThan" ),
+		Judged( FoodGreatValue + 1, Outlet.Shops, WalkAways: true, Highest: true, "ShopsGreatValue.ValueBetterThan" ),
+		Judged( FoodGreatValue + 2, Outlet.Restaurants, WalkAways: true, Highest: true, "RestaurantGreatValue.ValueBetterThan" ),
+		Judged( FoodGreatValue + 3, Outlet.Drinks, WalkAways: true, Highest: true, "DrinksGreatValue.ValueBetterThan" ),
+		Judged( FoodGreatValue + 4, Outlet.Sideshows, WalkAways: true, Highest: true, "SideshowsGreatValue.ValueBetterThan" ),
+		Judged( FoodGreatValue + 5, Outlet.Food, WalkAways: false, Highest: true, "FoodGreatSatisfaction.SatisfactionBetterThan" ),
+		Judged( FoodGreatValue + 6, Outlet.Shops, WalkAways: false, Highest: true, "ShopsGreatSatisfaction.SatisfactionBetterThan" ),
+		Judged( FoodGreatValue + 7, Outlet.Restaurants, WalkAways: false, Highest: true, "RestaurantGreatSatisfaction.SatisfactionBetterThan" ),
+		Judged( FoodGreatValue + 8, Outlet.Drinks, WalkAways: false, Highest: true, "DrinksGreatSatisfaction.SatisfactionBetterThan" ),
+		Judged( SideshowsGreatSatisfaction, Outlet.Sideshows, WalkAways: false, Highest: true, "SideshowsGreatSatisfaction.SatisfactionBetterThan" )
+	];
+
+	/// <summary>
+	/// Row <paramref name="row"/> of 238 to 257: its response is the row plus 240 and its sample the row plus 268, its
+	/// score's key is its section's ScorePerPoint, and it is great where its line is a BetterThan.
+	/// </summary>
+	private static Topic Judged( int row, Outlet of, bool WalkAways, bool Highest, string line )
+	{
+		var section = line[..line.IndexOf( '.' )];
+		var great = line.EndsWith( "BetterThan", StringComparison.Ordinal );
+		var food = of is Outlet.Food or Outlet.Restaurants or Outlet.Drinks;
+
+		return new( row, $"{section}.ScorePerPoint", row + 240, row + 268, Lines: 1, Prop: food ? FastFoodHat : KioskHat,
+			SecondProp: food ? Spatula : 0, Category: great ? Congratulations : 0, Polled: true,
+			Judges: new OutletJudgement( of, WalkAways, Highest, line, great ) );
+	}
+
+	/// <summary>
+	/// Whose outlets rows 238 to 257 judge: the food (an item's UsageInfo.ShopType 2), the restaurants (3), the drinks
+	/// (4), the other shops (1, 5 and 6), and the sideshows (Info.WhichUIType 2).
+	/// </summary>
+	internal enum Outlet
+	{
+		None,
+		Food,
+		Shops,
+		Restaurants,
+		Drinks,
+		Sideshows
+	}
+
+	/// <summary>The outlet an item of <paramref name="shopType"/> and <paramref name="uiType"/> is, by the helpers' tests (0x004cadf0 and on).</summary>
+	internal static Outlet OutletOf( int shopType, int uiType ) => shopType switch
+	{
+		2 => Outlet.Food,
+		3 => Outlet.Restaurants,
+		4 => Outlet.Drinks,
+		1 or 5 or 6 => Outlet.Shops,
+		_ => uiType == ItemDescriptionFile.SideShow ? Outlet.Sideshows : Outlet.None
+	};
+
+	/// <summary>
+	/// How a row of 238 to 257 judges: the outlets <paramref name="Of"/>, by the walk-away share or by satisfaction,
+	/// keeping the highest or the lowest; <paramref name="Line"/> is the key its figure must be over, where
+	/// <paramref name="Great"/>, or under.
+	/// </summary>
+	internal sealed record OutletJudgement( Outlet Of, bool WalkAways, bool Highest, string Line, bool Great );
+
+	/// <summary>
+	/// One placed outlet as rows 238 to 257 read it: its thing, whose outlet it is, its age in whole days
+	/// (FUN_004dd670), its last thirty finished days' customers and walk-aways, each ring's days added unsigned and
+	/// truncated by __ftol, and its satisfaction (FUN_004e1e30).
+	/// </summary>
+	internal readonly record struct OutletFigures( int Thing, Outlet Of, int Age, int Customers, int WalkAways, int Satisfaction )
+	{
+		/// <summary>The walk-aways as a share of the customers: the walk-aways times a hundred over the customers, an unsigned DIV (0x004caae0).</summary>
+		internal int WalkAwayShare => unchecked((int)((uint)(WalkAways * 100) / (uint)Customers));
+	}
+
+	/// <summary>The outlets of a park's facts, in the world's thing order, compared by their figures as the other facts are.</summary>
+	internal sealed record OutletList( IReadOnlyList<OutletFigures> All )
+	{
+		public bool Equals( OutletList? other ) => other is not null && All.SequenceEqual( other.All );
+
+		public override int GetHashCode() => All.Count;
+	}
+
+	/// <summary>
+	/// The outlet <paramref name="judged"/> picks of <paramref name="outlets"/>, in the world's thing order, and its
+	/// figure; null where none qualifies. One qualifies more than thirty days old (0x1e), and, by the walk-away share,
+	/// with customers in its last thirty days (0x004cac23); a sideshow judged by satisfaction too (0x004cbec0, the one
+	/// satisfaction helper that asks). The best or worst is kept strictly, so the first of equals wins.
+	/// </summary>
+	internal static (int Thing, int Figure)? Pick( IEnumerable<OutletFigures> outlets, OutletJudgement judged )
+	{
+		(int Thing, int Figure)? kept = null;
+
+		foreach ( var outlet in outlets )
+		{
+			if ( outlet.Of != judged.Of || outlet.Age <= 30 ) continue;
+			if ( (judged.WalkAways || judged.Of == Outlet.Sideshows) && outlet.Customers == 0 ) continue;
+
+			var figure = judged.WalkAways ? outlet.WalkAwayShare : outlet.Satisfaction;
+			if ( kept is { } best && (judged.Highest ? figure <= best.Figure : figure >= best.Figure) ) continue;
+			kept = (outlet.Thing, figure);
+		}
+
+		return kept;
+	}
 
 	internal static readonly Topic[] DoorTopics =
 	[
@@ -650,6 +787,7 @@ internal sealed class ParkAdvisorMessages
 	[
 		.. DoorTopics,
 		.. ShutTopics,
+		.. OutletTopics,
 
 		// Rows 3 and 4's three responses each put on the fast-food hat and the spatula (docs/exe/advisor-park.md,
 		// "Thirsty and hungry guests").
@@ -1265,6 +1403,14 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.QueueNotJoined )
 			return _park?.Invoke() is { UnjoinedQueue: not 0 } ? Value( topic.ScoreKey ) : 0;
 
+		if ( topic.Judges is { } judged )
+		{
+			if ( Pick( _park?.Invoke().Outlets?.All ?? [], judged ) is not { } picked ) return 0;
+			var line = Value( judged.Line );
+			if ( judged.Great ? picked.Figure <= line : picked.Figure >= line ) return 0;
+			return unchecked((picked.Figure - line) * Value( topic.ScoreKey ));
+		}
+
 		if ( topic.ShutShare != Shut.None )
 		{
 			var (standing, shut) = _park?.Invoke().Of( topic.ShutShare ) ?? (0, 0);
@@ -1373,6 +1519,14 @@ internal sealed class ParkAdvisorMessages
 		if ( topic.NothingToRide && _park?.Invoke() is { } facts ) shut = $" closed={(facts.Closed ? 1 : 0)} rides={facts.Rides} sideshows={facts.Sideshows}";
 		if ( topic.PerDayWithNoRide != null && _park?.Invoke() is { } park ) shut = $" rides={park.Rides}";
 		if ( topic.QueueNotJoined && _park?.Invoke() is { } queues ) shut = $" unjoined={queues.UnjoinedQueue}";
+		if ( topic.Judges is { } judging && _park?.Invoke() is { } outlets )
+		{
+			var picked = Pick( outlets.Outlets?.All ?? [], judging );
+			var of = outlets.Outlets?.All.FirstOrDefault( outlet => outlet.Thing == picked?.Thing );
+			shut = picked is { } kept && of is { } figures
+				? $" outlet={judging.Of} thing={kept.Thing} figure={kept.Figure} line={Value( judging.Line )} age={figures.Age} customers={figures.Customers} walkaways={figures.WalkAways} satisfaction={figures.Satisfaction}"
+				: $" outlet={judging.Of} thing=0";
+		}
 		if ( topic.PerWornRideWithNoMechanic && _park?.Invoke() is { } wear ) shut = $" worn={wear.RidesWorn} mechanics={wear.Mechanics}";
 		if ( topic.PerBrokenRideWithNoMechanic && _park?.Invoke() is { } breaks ) shut = $" broken={breaks.RidesBroken} mechanics={breaks.Mechanics}";
 		if ( topic.RidesAMechanic != null && _park?.Invoke() is { } staffed ) shut = $" rides={staffed.Rides} mechanics={staffed.Mechanics} sincehire={staffed.DaysSinceStaffHired}";
