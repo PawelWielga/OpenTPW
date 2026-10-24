@@ -5,6 +5,7 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q723 (the sample draw; lane B, off-screen): textures are drawn white there, so the claims rest on the log and the census, not on a picture (`q723/run3/lobby.png`, `park.png` are named, not evidence). The lobby's music never repeats a track in the attract lobby's four islands (ten to twelve selections each in 240 s, `q723/run3/run.log`); the park's own voices that ask for the step are counted `SAMPLE_NO_REPEAT` and not built (Q742). The no-sample case (a roll above a list's last odds, at most 20 in 65,536) is unit-tested, never seen in a run. Not heard: the mix was not captured, so which track sounded is the log's word. The original was not run in this lane. Full Simulation not run: the draw is the same code. One test failed once in a full run and passed on the re-run unchanged (not identified).
 - Q618 (the ground's tiles at the size asked, 32): the original was made to draw 32 by a write to its memory
   (`original/prepoke32.sh`), not seen at 32 on a machine of its day; its other cut, on texture memory, is not modelled
   (`Level.TileSizeFor`). The queue lines and ride borders are unchanged, crisp beside the original's blended floors

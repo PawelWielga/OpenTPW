@@ -58,7 +58,7 @@ Jungle: **96x85 cells, 97x86 vertices, 8342 heights, 8160 cell records.** Valida
 | `0x0080` | Marks a path cell; in a footprint entry it means "this cell of the footprint is used" | Confirmed |
 | `0x0100` | **The composited tile is stale**: on the cell's next view `FUN_0056f090` composites it again even from the cache, and clears the bit ("The procedural ground"). Set with `0x0001` by `FUN_0046df50`; every cell caught on its first composite carried it (Q483) | Ghidra; live, Q483 |
 | `0x0200` | Set by the footprint stamper | Confirmed |
-| `0x0400` | **Land outside the park, drawn at half light**: the terrain pass halves the corner's colour. `FUN_00450d10` sets it where the map cell's `mFlags` has `0x40` and not `0x80` ("The park view's colours") | Confirmed at three separate sites; measured (Q479) |
+| `0x0400` | **Land outside the park, drawn at half light**: the terrain pass halves the corner's colour, and the terrain model's meshes over it take normals 0.225 long. `Terrain_MarkLandOutsidePark` (`0x00450d10`) sets it where the map cell's `mFlags` has `0x40` and not `0x80` ("The park view's colours") | Confirmed at three separate sites; measured (Q479) |
 | `0x0800` | "This cell is not planar." **Computed at load, never stored on disk**: `FUN_004504c0` sets it (`0x0045075d`) where the cell's two triangles' normals differ (dot under 0.9999) | Confirmed |
 
 ### The triangle diagonal
@@ -3983,13 +3983,14 @@ second draw, `& 1` white, else grey 150 (75% black, 12.5% white, 12.5% grey); bl
 (0,0,`[0x007a1968]`,`[0x007a1930]`), taken as the screen size, not checked. The mask `0x16` is the camera flags of a ride's
 view and first person (the camcorder, "Camcorder mode"). Read from the executable, not run; not built here.
 
-**Land outside the park is drawn at half light.** `FUN_00450d10` runs on a fresh park's load (`FUN_005323f0`,
+**Land outside the park is drawn at half light.** `Terrain_MarkLandOutsidePark` (`0x00450d10`) runs on a fresh park's load (`FUN_005323f0`,
 `0x00532629`), on a saved park's (`FUN_00415140`, `0x0041517f`) and after Buy Land (`FUN_005327e0`, `0x005328c3`). It
 walks the heightfield's cells, 96 by 85 (the terrain's `+0x18` and `+0x1c`), asks each one's map cell held to 0 to
 `[0x007a0314] - 1` and 0 to `[0x007a0374] - 1` (`MapInfo`'s 95 and 84, `0x00450d3d` to `0x00450d64`), and sets the
 ground cell's `0x0400` where that cell's `mFlags` has `0x40` (land outside the park, "Building and deleting paths and
-queues") and not `0x80`, clearing it everywhere else; after the walk it calls `FUN_0046f150`, `FUN_00450b30` (the
-terrain's `+0x78`) and `FUN_005836b0` on `0x008bd508`, not read. **`mFlags` `0x80` is the cell's attribute `0x10`**,
+queues") and not `0x80`, clearing it everywhere else (`Terrain_MarkLandOutsidePark`); after the walk it makes an identity
+matrix (`FUN_0046f150`) and calls `Terrain_ScaleNormalsByHalfLight` (`0x00450b30`) on the terrain model's root (`+0x78`)
+and `RenderFlags_ForceRelight` (`0x005836b0`) on `0x008bd508`: the models' half, below. **`mFlags` `0x80` is the cell's attribute `0x10`**,
 which `FUN_00536490` carries over as the map loads (`0x0053656d`): in Lost Kingdom the 552 cells of the approach before
 the gates, rows 0 to 16 of columns 28 to 67, every one also `0x40`, and every one hidden ground (`0x0001`) in the
 running original, so the exception draws no pixel of the stock park. The terrain pass halves a `0x0400` cell's corner
@@ -4000,6 +4001,42 @@ and row whole,
 over the stock file gives every one of the 7,980 cells Q479 read. Cleared over one camera's cells, its grass went from
 (32.8, 65.9, 16.5) to (69.6, 133.4, 35.6), where OpenTPW's reads (29.9, 139.2, 28.6) with its fog off.
 
+**The terrain model's meshes on that land are half lit too, by their normals** (Q619). The river's beds and banks,
+the cliffs and the rock at the back are meshes of `Terrain\base.md2` (`river*`, `newcliff*`, `volcanoe`, the grass
+strips beside them), drawn by the model pass over cells the terrain pass hides (`0x0001`). The model lighter reads no
+cell (`Light_ModelSetup` `0x0057aa10`, `Light_ModelVertexColours` `0x00574660`, `FUN_005741b0`: the ambient plus the
+scene's lights, nothing by place); the darkening is set once, at the mark. `Terrain_ScaleNormalsByHalfLight` walks the
+model's nodes (siblings `+0x8`, children `+0xc`; a transform-only node, `0x200`, has no vertices), poses each mesh's
+vertices into `[0x007aecd4]` with the matrix built down the tree (`FUN_004702d0`, `FUN_00466c80`), and for each of its
+`+0x5e` normals (`+0x64`, 12 bytes each, the vertex `+0x94` names) takes the cell `(int)(x × 0.1)`, `(int)(z × 0.1)`
+(`0x006fe3a0`, truncated by `__ftol`); inside the field (`+0x18` by `+0x1c`) it normalises the normal to **0.225**
+(`0x0074cf30`) where that ground cell carries `0x0400` (`TEST byte [ECX+EAX*4+1],0x4` at `0x00450bf2`, `[0x007a0884]`
+the cells) and to 1.0 (`0x006fe380`) elsewhere; outside it the normal is left. `RenderFlags_ForceRelight` sets
+`0x40000000` in `0x008bd508` with the frame (`[0x008bcc40]`) beside it, and `Light_ModelSetup` lights a mesh again
+whenever that bit is set (`0x0057aa47`), so every mesh takes its new length at once. The ambient is not scaled: a level
+face turned to the sun, `ambient + 0.816 × sun` (clamped to 1.0 on a lit cell), reads **0.333 + 0.225 × 0.816 = 0.517**
+(blue 0.408 + 0.225 × 0.816 × 0.847 = 0.563) on a half-lit one, and a face turned from the sun, the ambient alone,
+does not change. Buy Land calls the mark again, so a cell bought brings its meshes back to 1.0.
+
+**The water is drawn unlit, not half lit.** `DrawList_AddMaterialFaces` (`0x00580530`) gives a material's vertices
+their lit colours (the mesh's colour cache, ANDed with the channel mask) only where bit `0x1` of the material record's
+last word (`+0x0C`, FileFormats `models.md`, "Materials") is clear; where it is set, each vertex takes the channel mask
+itself, white. In `base.md2` exactly the ten water materials carry it (frame word `0x33`: every `surface*` mesh's water
+and `falls02`); the beds under them do not. Game-wide 923 of 12,954 material uses in 650 meshes of the 841 static
+models carry it, and no use carries any other value than 0 or 1 (`lib/matword.py`).
+
+**Measured in the original** (`q619/PREDICTION.txt`, `q619/orig/`, the stock park off-screen, camera (500, 500) 130 at
+rotation 90, `q619/side-by-side.png`): every normal of `river13` to `river26`, `newcliff01` to `newcliff10`, `volcanoe`
+(1,659 of its 1,672; three read NaN) and every water mesh reads 0.225 long, `road_center` (the approach) 1.0, and
+`newcliff11`, across the line, 96 at 1.0 and 34 at 0.225 (`original/modelnodes.py`); a water mesh's lit colours read
+(132, 132, 144), the decode's level face. Against OpenTPW at the same camera, which lights them in full: the cliff path
+0.48 of ours, the grass strip beside the river 0.53 (green), plain rock on the volcano (53.4, 38.4, 46.6) against
+(104.4, 76.0, 85.0), 0.51, 0.51, 0.55; the water 0.90. With `0x0400` cleared on the ground under the view the ground
+doubled (2.04) and no model moved (mad 0.00): the meshes' light is the load's, not the frame's. With the water's normals
+held at 1.0 its lit colours rose to (255, 255, 255) and its pixels did not follow (+4.4% and +1.8%, the frames either
+side −1.5% and +5.0%). A face turned from the sun was not found at these cameras, so the ambient-only half is the
+code's alone.
+
 **OpenTPW draws it** (Q482): `ParkGround.LandOutsideThePark` makes the mask as the park loads and keeps it through
 every rebuild, and `test.shader` floor-halves the corner's byte light under the vertex flag `ParkGround.HalfLight`. At
 camera A the grass went from (29.9, 139.2, 28.6) to (14.9, 69.3, 14.2), 0.498 of it, where the original's reads
@@ -4007,7 +4044,10 @@ camera A the grass went from (29.9, 139.2, 28.6) to (14.9, 69.3, 14.2), 0.498 of
 nothing is halved, and every corner is white (below, Q516). Buy Land is unbuilt
 (Q407); its purchase must make the mask again. Not run in Full Simulation: a fresh park's cells take their `mFlags` from
 `FreshPark` (`0x40` unless a path, `0x80` from attribute `0x10`), which by code follows `FUN_00536490`, so the mask is
-expected to match, and no fresh park was photographed.
+expected to match, and no fresh park was photographed. **The terrain model's meshes are not half lit here**: the
+river, the cliffs, the volcano and the grass strips beside them are drawn at full light over the half-lit ground, so
+they look cut out (Alexah's play test, 2026-10-21, note 39), and the material word's unlit bit is read as padding
+(`ModelFile.MaterialData.Pad`), so the water is lit; both are Q652.
 
 **The brown patches are the procedural compositor's.** `FUN_0056f380` gives every visible cell inside the box at the
 terrain object's words `0x8d` to `0x90` a composited tile when `[0x008bd550]` bit 4 is set (the compositor ready,

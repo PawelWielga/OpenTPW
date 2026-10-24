@@ -74,13 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q619. The river, its features and the rock at the back are not darkened on unbought land. Decode first.** From
-  Alexah's play test, 2026-10-21 (note 39, shot5). Only the ground around them is half lit (Q482 halves ground cells
-  only, `docs/history/queue-done.md:7612-7627`; the terrain pass halves a cell's corner light where `mFlags` has `0x40`
-  and not `0x80`, `park-engine.md:61`); the river, its banks and the big rock are models and stay at full light, so they
-  look cut out. Whether the original darkens those models is not documented: read the model pass for any such dimming,
-  and the original's frame of the same view. If it does not, the unlit river is the original's, and this item ends as a
-  note. Confirm: shot5's view beside the original's.
 - [ ] **Q620. The boundary wall between the park and the unbought land is not drawn.** From Alexah's play test,
   2026-10-21 (note 40, shot5), split from Q214. The wall (track types 25 and 12 from `Hoardings.sam`, ho_fos1.MD2
   anchored at (43,17), (51,17)) is written into the cells and neither drawn nor counted (QUEUE:481-492); the original
@@ -256,6 +249,17 @@ filed the items that cite it.
   again when a thing is bought, moved or sold.
   Confirm: `q617/side-by-side-bounce.png`'s view in both games, `lib/sharp.py` floor against ground within the
   original's, and a census of the cells blended (the original's 44 in the stock park).
+- [ ] **Q652. The terrain model's meshes half lit on land outside the park, and the water drawn unlit.** From Q619
+  (`park-engine.md`, "The terrain model's meshes on that land are half lit too" and "The water is drawn unlit, not half
+  lit"). Give each `base.md2` mesh vertex whose cell carries the half light its normal at 0.225 long (1.0 elsewhere, the
+  cell `(int)(x / 10)`, `(int)(z / 10)` of the posed vertex, left alone off the field), the ambient untouched, so the
+  river beds and banks, the cliffs, the volcano and the grass strips read 0.517 of the sun's level face where the
+  ground beside them is halved; and draw a material whose record's last word has `0x1` (`ModelFile.MaterialData.Pad`
+  today) with white for its light, unlit, everywhere it occurs (923 uses in 650 meshes game-wide, `lib/matword.py`), not
+  only in the park. Again when Buy Land marks the cells (Q407). Confirm: `q619/side-by-side.png`'s two cameras in both
+  games, the cliff path, the grass strip and plain rock within 0.05 of the original's ratio, the water unchanged, and
+  a census of the vertices made 0.225 (the original's: every normal of `river13` to `river26`, `newcliff01` to `10`,
+  `volcanoe`, `newcliff11` 34 of 130; `original/modelnodes.py`).
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
@@ -2579,7 +2583,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   can't-afford pointer `0x14` (`DAT_00816d5c`) unless a layout is replayed; the price is `Costs.MapCell` × the unowned
   cells inside; the purchase `0x005327e0` places the hoardings and clears the flag inside (`0x005311c0`); the debit is
   `0x004d01f0`. Confirm: a rectangle bought, beside the original. The purchase also re-marks the ground's half light
-  (`FUN_00450d10` at `0x005328c3`; Q482): make `ParkGround`'s mask again, and confirm a bought cell's light doubling.
+  (`Terrain_MarkLandOutsidePark` at `0x005328c3`; Q482): make `ParkGround`'s mask again, and confirm a bought cell's
+  light doubling; it also sets the terrain meshes' normals over the bought cells back to 1.0 (Q619, built by Q652).
 
 - [ ] **Q408. TOUR rides: Jurassic Tours.** From the fork review 2, 2026-10-16 (`verify-tours-advisor-rse.md` L1-L6).
   `tourride` (Id 1170), Lost Kingdom's golden-ticket ride, Full Simulation only (no `Easy_` `.sam`), runs 19 TOUR

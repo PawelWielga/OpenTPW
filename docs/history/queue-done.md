@@ -9815,6 +9815,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   **Alexah (2026-10-24): 32 by default; Q645's faithful toggle brings 16 back, said at the site.** Done as Q618's build
   (`Level.TileSizeFor`; `ground original` in `save/opentpw.cfg` until Q645 sets it).
 - [x] **Q723. The sample draw as `FUN_006bc680` draws it.** The draw is built once (`SoundCategory.Draw`): a list of one is given with no draw, otherwise a roll of 0 to 65,535 and the first sample whose odds are at least the roll, none when the roll is above the last odds, and, where the caller asks, a pick equal to the effect's last moves on to the next (more than two samples only). The lobby's music asks (both of its starts), so no island's track plays twice running: ten to twelve selections of each of the four islands in 240 s, no repeat, all three samples each (`q723/run3`; the bug put back repeats, `q723/mut-m09-laststore`, `mut-m10-lobbyoff`). The deviation of at most 20 in 65,536 (a list ending below 65,535 plays nothing) is now the original's own. The voices that ask in the original and keep no last pick here are counted `SAMPLE_NO_REPEAT` (123 in a jungle park's first 45 s): filed as Q742.
+- [x] **Q619. The river, its features and the rock at the back are not darkened on unbought land. Decode first.** From
+  Alexah's play test, 2026-10-21 (note 39, shot5). Only the ground around them is half lit (Q482 halves ground cells
+  only, `docs/history/queue-done.md:7612-7627`; the terrain pass halves a cell's corner light where `mFlags` has `0x40`
+  and not `0x80`, `park-engine.md:61`); the river, its banks and the big rock are models and stay at full light, so they
+  look cut out. Whether the original darkens those models is not documented: read the model pass for any such dimming,
+  and the original's frame of the same view. If it does not, the unlit river is the original's, and this item ends as a
+  note. Confirm: shot5's view beside the original's.
+  **Done (2026-10-24), decode only:** the original darkens them, at load, by their normals: `Terrain_MarkLandOutsidePark`
+  calls `Terrain_ScaleNormalsByHalfLight` (`0x00450b30`), which sets each terrain mesh normal to 0.225 long on a
+  `0x0400` cell and 1.0 elsewhere, and `RenderFlags_ForceRelight` relights them; a level face reads 0.517 (blue 0.563).
+  The water's materials (word `+0x0C` bit `0x1`, `DrawList_AddMaterialFaces` `0x00580530`) are drawn unlit, white.
+  Measured: the cliff path 0.48 of ours, the grass strips 0.53, plain rock 0.51/0.51/0.55, the water 0.90; every river,
+  cliff, volcano and water normal 0.225 long (`park-engine.md`, "The terrain model's meshes on that land are half lit
+  too"; `q619/side-by-side.png`, `q619/PREDICTION.txt`). The build is Q652.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
