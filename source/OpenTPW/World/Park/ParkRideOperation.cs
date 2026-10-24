@@ -24,6 +24,12 @@ namespace OpenTPW;
 /// </summary>
 public sealed class ParkRideOperation
 {
+	/// <summary>Where a paying guest's till sounds; null where the park has no ground to stand on (a test's).</summary>
+	internal Func<Peep, Vector3?> TillPlace { get; init; } = peep => ParkGuestSprites.Feet( peep.Navigator.Position );
+
+	/// <summary>Sounds the till at a place. The game's is the park's audio; a test hands in its own.</summary>
+	internal Action<Vector3> Till { get; init; } = at => ParkAudio.Current?.Charge( at );
+
 	private readonly ParkState _state;
 	private readonly IReadOnlyDictionary<int, Peep> _guests;
 	private readonly ParkAdmission? _admission;
@@ -1292,8 +1298,11 @@ public sealed class ParkRideOperation
 		}
 
 		// Kids 208 at the guest (Person_PlaySound, 0x004fe1be..0x004fe1cb): after the deposit, before the cash comes off.
-		if ( ParkGuestSprites.Feet( peep.Navigator.Position ) is { } feet )
-			ParkAudio.Current?.Charge( feet );
+		// DEVIATION: the original sounds it at the person's model, which ExitRide's teleport (0x004fa930) does not move,
+		// so it is where the guest was last drawn ((525, 300) at the Spray). Ours is the walker, which PutDownAtTheExit
+		// has just set to the exit cell's centre ((525, 305)); docs/exe/audio.md, "A guest who pays sounds kids 208".
+		if ( TillPlace( peep ) is { } at )
+			Till( at );
 
 		peep.Cash -= price;
 

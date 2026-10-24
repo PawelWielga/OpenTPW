@@ -119,6 +119,40 @@ public class TextureCutTests
 	}
 
 	/// <summary>
+	/// The boot wiring (<c>Game.Run</c>): opentpw.cfg's line, read, then the options and the detail file's
+	/// <c>TEXTURE32</c> decide the depth. Eight bits by default whatever the detail file says; at <c>original</c> the
+	/// detail file decides, and is not even read by default.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the arguments swapped, the depth forced to eight, or the detail file read by default fails a step.</remarks>
+	[TestMethod]
+	public void TheBootDepthFollowsTheConfigAndTheDetailFile()
+	{
+		var read = 0;
+		var was = Texture.KeepsEightBits;
+
+		bool Texture32( bool value ) { ++read; return value; }
+
+		var full = new GameOptions { OriginalTextureDepth = false };
+		var original = new GameOptions { OriginalTextureDepth = true };
+
+		try
+		{
+			Texture.KeepsEightBits = false;
+			Assert.IsTrue( Texture.SetDepthFor( full, () => Texture32( false ) ), "the default keeps eight, TEXTURE32 0" );
+			Assert.IsTrue( Texture.KeepsEightBits, "and sets it" );
+			Assert.IsTrue( Texture.SetDepthFor( full, () => Texture32( true ) ), "the default keeps eight, TEXTURE32 1" );
+			Assert.AreEqual( 0, read, "and reads no detail file" );
+
+			Assert.IsFalse( Texture.SetDepthFor( original, () => Texture32( false ) ), "the original's depth with TEXTURE32 0 cuts" );
+			Assert.IsFalse( Texture.KeepsEightBits, "and sets that" );
+			Assert.IsTrue( Texture.SetDepthFor( original, () => Texture32( true ) ), "the original's depth with TEXTURE32 1 keeps eight" );
+			Assert.IsTrue( Texture.KeepsEightBits );
+			Assert.AreEqual( 2, read );
+		}
+		finally { Texture.KeepsEightBits = was; }
+	}
+
+	/// <summary>
 	/// opentpw.cfg's <c>textures</c> line: <c>original</c> asks for the original's depth, <c>full</c> or none keeps
 	/// eight, and the file written says which, read back the same.
 	/// </summary>
@@ -145,6 +179,15 @@ public class TextureCutTests
 			File.WriteAllText( file, "textures full\n" );
 			SaveFolder.LoadDisplay();
 			Assert.IsFalse( GameOptions.Current.OriginalTextureDepth, "full" );
+
+			// Only the word "original" asks for it: any other value keeps eight.
+			foreach ( var other in new[] { "8", "4", "yes", "originals" } )
+			{
+				GameOptions.Current.OriginalTextureDepth = true;
+				File.WriteAllText( file, $"textures {other}\n" );
+				SaveFolder.LoadDisplay();
+				Assert.IsFalse( GameOptions.Current.OriginalTextureDepth, $"\"{other}\" is not \"original\"" );
+			}
 
 			GameOptions.Current = new() { OriginalTextureDepth = true };
 			SaveFolder.SaveDisplay();

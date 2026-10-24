@@ -21,8 +21,10 @@ namespace OpenTPW;
 ///
 ///     mkfifo /tmp/tpw.in
 ///     ( sleep 99999 &gt; /tmp/tpw.in ) &amp;     # hold the write end open, or the first echo ends the reader
-///     OPENTPW_DEBUG_CONSOLE=1 dotnet OpenTPW.dll --game &lt;folder&gt; &lt; /tmp/tpw.in
+///     OPENTPW_LOG_DIR=&lt;run folder&gt; OPENTPW_DEBUG_CONSOLE=1 dotnet OpenTPW.dll --game &lt;folder&gt; &lt; /tmp/tpw.in
 ///     echo "island 2" &gt; /tmp/tpw.in
+///
+/// OPENTPW_LOG_DIR keeps the run's console.log out of the game folder, so a run does not rotate the player's own.
 ///
 /// Every command answers on stdout with a line beginning "[dbg]", so a caller can wait for the
 /// reply rather than guessing how long something took.

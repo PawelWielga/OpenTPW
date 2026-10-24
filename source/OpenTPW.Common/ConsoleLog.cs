@@ -11,9 +11,14 @@ namespace OpenTPW;
 ///
 /// <para>
 /// The file goes in the game folder beside <c>save\</c>; where that cannot be written (a Program Files install)
-/// it goes in the player's own data folder. <c>OPENTPW_LOG_DIR</c> names a folder instead, which a harness or a
-/// test run sets to its own, so a run never rotates the player's own logs away. What is printed before the
-/// folder is known is held and written once it is.
+/// it goes in the player's own data folder (<c>%AppData%\OpenTPW</c> on Windows, <c>~/.local/share/OpenTPW</c>
+/// elsewhere), and the terminal says which. <c>OPENTPW_LOG_DIR</c> names a folder instead, which a harness
+/// that starts the game sets to its own, so a run never rotates the player's own logs away. What is printed
+/// before the folder is known is held and written once it is.
+/// </para>
+/// <para>
+/// A write to the file that fails (a full disk, a removed drive) ends the file there, says so once on the
+/// terminal, and the terminal carries on: the log never stops the game.
 /// </para>
 /// <para>
 /// A launch that finds no game writes no file: nothing is rotated for it, and the terminal has all it said.
@@ -48,11 +53,21 @@ public static class ConsoleLog
 	/// <summary>Opens the file now the game's folder is found: rotates the old one and writes what was held.</summary>
 	public static void Open( string gameFolder )
 	{
-		var userFolder = System.IO.Path.Join(
-			Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ), "OpenTPW" );
+		if ( _sink is not { } sink )
+			return;
 
-		if ( _sink is { } sink && !sink.Open( Candidates( gameFolder, Environment.GetEnvironmentVariable( DirectoryVariable ), userFolder ), Header() ) )
+		if ( !sink.Open( Candidates( gameFolder, Environment.GetEnvironmentVariable( DirectoryVariable ), UserFolder() ), Header() ) )
 			Console.Error.WriteLine( $"[console log] no folder could be written, so this run is not kept: {sink.Failures}" );
+		else if ( sink.Failures.Length > 0 )
+			Console.Error.WriteLine( $"[console log] this run is kept in {sink.Path}: {sink.Failures}" );
+	}
+
+	/// <summary>The player's own data folder for the log: <c>%AppData%\OpenTPW</c> on Windows, <c>~/.local/share/OpenTPW</c> elsewhere.</summary>
+	public static string UserFolder()
+	{
+		var root = OperatingSystem.IsWindows() ? Environment.SpecialFolder.ApplicationData : Environment.SpecialFolder.LocalApplicationData;
+
+		return System.IO.Path.Join( Environment.GetFolderPath( root ), "OpenTPW" );
 	}
 
 	/// <summary>The folders to try, in order: the variable's alone when set, otherwise the game's and then the player's own.</summary>
@@ -73,22 +88,52 @@ public static class ConsoleLog
 	public sealed class Sink : IDisposable
 	{
 		private readonly object _lock = new();
+		private readonly Func<string, Stream> _create;
 		private StringBuilder? _held = new();
 		private StreamWriter? _file;
+
+		/// <param name="create">Opens the file at a path; a test hands in a stream that fails.</param>
+		public Sink( Func<string, Stream>? create = null )
+		{
+			_create = create ?? ( path => new FileStream( path, FileMode.Create, FileAccess.Write, FileShare.Read ) );
+		}
 
 		public string Path { get; private set; } = string.Empty;
 
 		/// <summary>Why each folder tried could not be written, one clause each.</summary>
 		public string Failures { get; private set; } = string.Empty;
 
-		public void Write( string text )
+		/// <summary>
+		/// Adds the text to the file (or holds it until there is one). When the file cannot be written it is
+		/// closed for good and the answer is the line to tell the terminal, once; otherwise null.
+		/// </summary>
+		public string? Write( string text )
 		{
 			lock ( _lock )
 			{
 				if ( _held != null )
 					_held.Append( text );
-				else
-					_file?.Write( text );
+				else if ( _file != null )
+					return Guarded( () => _file.Write( text ) );
+
+				return null;
+			}
+		}
+
+		private string? Guarded( Action write )
+		{
+			try
+			{
+				write();
+				return null;
+			}
+			catch ( IOException e )
+			{
+				try { _file?.Dispose(); } catch ( IOException ) { }
+
+				_file = null;
+
+				return $"[console log] writing {Path} failed ({e.GetType().Name}: {e.Message}); the file stops here and the terminal carries on";
 			}
 		}
 
@@ -112,7 +157,7 @@ public static class ConsoleLog
 						if ( File.Exists( path ) )
 							File.Move( path, System.IO.Path.Join( folder, PreviousName ), overwrite: true );
 
-						_file = new StreamWriter( new FileStream( path, FileMode.Create, FileAccess.Write, FileShare.Read ), new UTF8Encoding( false ) ) { AutoFlush = true };
+						_file = new StreamWriter( _create( path ), new UTF8Encoding( false ) ) { AutoFlush = true };
 						Path = path;
 						break;
 					}
@@ -125,10 +170,13 @@ public static class ConsoleLog
 					}
 				}
 
-				if ( _file != null )
+				if ( _file != null && Guarded( () =>
 				{
 					_file.WriteLine( header );
 					_file.Write( _held );
+				} ) is { } lost )
+				{
+					Failures += Failures.Length == 0 ? lost : "; " + lost;
 				}
 
 				_held = null;
@@ -139,7 +187,9 @@ public static class ConsoleLog
 		public void Dispose()
 		{
 			lock ( _lock )
-				_file?.Dispose();
+			{
+				try { _file?.Dispose(); } catch ( IOException ) { }
+			}
 		}
 	}
 
@@ -151,13 +201,13 @@ public static class ConsoleLog
 		public override void Write( char value )
 		{
 			terminal.Write( value );
-			sink.Write( value.ToString() );
+			Note( sink.Write( value.ToString() ) );
 		}
 
 		public override void Write( string? value )
 		{
 			terminal.Write( value );
-			sink.Write( value ?? string.Empty );
+			Note( sink.Write( value ?? string.Empty ) );
 		}
 
 		public override void Write( char[] buffer, int index, int count ) => Write( new string( buffer, index, count ) );
@@ -165,5 +215,13 @@ public static class ConsoleLog
 		public override void Write( ReadOnlySpan<char> buffer ) => Write( new string( buffer ) );
 
 		public override void Flush() => terminal.Flush();
+
+		// The terminal's own line, once: the sink answers it only the first time the file fails. It may land
+		// mid-line, so it starts on a fresh one.
+		private void Note( string? line )
+		{
+			if ( line != null )
+				terminal.Write( "\n" + line + "\n" );
+		}
 	}
 }

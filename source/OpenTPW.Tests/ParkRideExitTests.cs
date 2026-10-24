@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 
 namespace OpenTPW.Tests;
 
@@ -382,6 +383,55 @@ public class ParkRideExitTests
 			.Dismiss( script, ride, tick: 9, new Random( 1 ) ), "the guest should have been let off" );
 
 		return (park, peep);
+	}
+
+	/// <summary>
+	/// <b>The till sounds once for a price, after the deposit and before the cash comes off, and not at all at a
+	/// price of nought</b> (<c>Person_PayCharge</c>, <c>0x004fe1a0</c>: the sound is <c>0x004fe1be</c>..<c>0x004fe1cb</c>,
+	/// between <c>FUN_004e16b0</c> and the <c>sub</c> at <c>0x004fe1d0</c>). What the park and the guest hold when it
+	/// sounds is read at that moment.
+	/// </summary>
+	private List<(Vector3 At, int Balance, int Takings, int Cash)> TillsFor( int price )
+	{
+		var ride = Park().Objects.Single( o => o.ThingId == Ride ) with { PricePerUse = price };
+		var park = new ParkState( parkIsClosed: false, visitorsToDate: 0, balance: 500 );
+		var peep = Guest( 7, PeepState.Riding );
+		peep.Cash = 300;
+
+		var script = Script();
+		script.Set( ParkRideOperation.DismissVariable, 7 );
+
+		var heard = new List<(Vector3, int, int, int)>();
+		var places = new List<Peep>();
+
+		var operation = new ParkRideOperation( park, new Dictionary<int, Peep> { [7] = peep } )
+		{
+			TillPlace = who => { places.Add( who ); return new Vector3( 525f, 305f, 0f ); },
+			Till = at => heard.Add( (at, park.Balance, park.TakingsFor( Ride ), peep.Cash) ),
+		};
+
+		Assert.IsTrue( operation.Dismiss( script, ride, tick: 9, new Random( 1 ) ) );
+		CollectionAssert.AreEqual( heard.Count == 0 ? Array.Empty<Peep>() : new[] { peep }, places, "the place asked for is the paying guest's" );
+
+		return heard;
+	}
+
+	[TestMethod]
+	public void APricedRideSoundsTheTillOnceAfterTheDepositAndBeforeTheCashComesOff()
+	{
+		var tills = TillsFor( price: 20 );
+
+		Assert.AreEqual( 1, tills.Count, "one till for one charge" );
+		Assert.AreEqual( new Vector3( 525f, 305f, 0f ), tills[0].At );
+		Assert.AreEqual( 520, tills[0].Balance, "the deposit is made first" );
+		Assert.AreEqual( 20, tills[0].Takings, "and the ride credited" );
+		Assert.AreEqual( 300, tills[0].Cash, "and the guest's cash is still whole" );
+	}
+
+	[TestMethod]
+	public void APriceOfNoughtSoundsNoTill()
+	{
+		Assert.AreEqual( 0, TillsFor( price: 0 ).Count );
 	}
 
 	/// <summary>

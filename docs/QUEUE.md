@@ -1949,6 +1949,21 @@ filed the items that cite it.
   ours draws in those two controls now, build the engine once (the gadget's tag at `0x007502b8` uses it too) and the two
   banners on it, counting what is not built. Confirm: the End reached in Lost Kingdom beside the original's, with the
   meshes in its `American/` (Q733).
+- [ ] **Q651. The till's place: where the original's paying guest stands. Decode first.** From the run 9 review of
+  Q611 (`review9/VERIFY-1.md`, Q611 1). Build the original's place for a paying guest's till (kids 208). The original
+  sounds it at the person's model position (Person_PlaySound 0x004faa00 hands `[ecx+0xc]` to 0x004754e0, which copies
+  the model's +0x88/+0x8c/+0x90, made integers by _ftol before 0x0051bfc0), and ExitRide's teleport (0x004fa930) never
+  writes `[esi+0xc]`, so the till is where the guest was last drawn. Ours sounds at the walker after PutDownAtTheExit,
+  the exit cell's centre: (525, 305) at the Spray, (435, 305) at the Kiosk, against the original's (525, 300) and
+  (434-435, 303-304) (q611/run1/run.log; docs/exe/audio.md, "A guest who pays sounds kids 208"; the deviation is said
+  at ParkRideOperation.Charge). First decode which point the model holds at the settle-up: the Spray's (525, 300) is
+  its .sam stand point (EntryCellStandPos/ExitCellAppearPos 0.5, 0.1 -> (525, 300.98)) truncated, but the Kiosk's
+  434-435, 303-304 is NOT its exit point (Shops.sam's 0.5, 0.5 would give exactly (435, 305)) and varies by guest. The
+  source reads neither key anywhere (they are only named in ItemDescriptionFile's key list). Not yet looked at:
+  whether 0x50f8e0's deep callees (0x511420, 0x511470, 0x5108a0, 0x511350, 0x4d8750) touch the person's model. Then
+  hand the place to Charge through the existing TillPlace seam, truncated to whole units as the original does, and
+  confirm in the running game against the original's Sound_PlayEffect hits (q567/orig/brk.sh) for the Spray and the
+  Kiosk.
 
 ## B. Docs and comments
 

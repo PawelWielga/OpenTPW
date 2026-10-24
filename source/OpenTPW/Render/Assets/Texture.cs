@@ -398,6 +398,13 @@ public partial class Texture : Asset
 	/// </summary>
 	internal static bool KeepsEightBitsUnder( bool originalDepth, bool texture32 ) => !originalDepth || texture32;
 
+	/// <summary>
+	/// What <c>Game</c> sets <see cref="KeepsEightBits"/> to at boot, and sets it: the options' depth, and the detail
+	/// file's <c>TEXTURE32</c> read (through <paramref name="texture32"/>) only where the original's depth is asked for.
+	/// </summary>
+	internal static bool SetDepthFor( GameOptions options, Func<bool> texture32 )
+		=> KeepsEightBits = KeepsEightBitsUnder( options.OriginalTextureDepth, options.OriginalTextureDepth && texture32() );
+
 	/// <summary>Whether this texture's texels are cut to four bits a channel - see <see cref="CutLevels"/>.</summary>
 	public bool Cut => CutsFor( Requested );
 

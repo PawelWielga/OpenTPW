@@ -92,8 +92,7 @@ internal static class Game
 		// original's depth, which reads the detail file the game starts with, as the original's window setup does
 		// (0x0044e1f4).
 		var originalDepth = GameOptions.Current.OriginalTextureDepth;
-		var texture32 = originalDepth && Level.Texture32( Level.DetailFile );
-		Texture.KeepsEightBits = Texture.KeepsEightBitsUnder( originalDepth, texture32 );
+		Texture.SetDepthFor( GameOptions.Current, () => Level.Texture32( Level.DetailFile ) );
 		Log.Info( !originalDepth
 			? "Textures: every texture keeps eight bits a channel (A8R8G8B8), OpenTPW's default; opentpw.cfg's \"textures original\" takes the original's depth"
 			: Texture.KeepsEightBits

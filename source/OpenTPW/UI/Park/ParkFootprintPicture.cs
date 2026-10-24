@@ -97,8 +97,9 @@ internal sealed class ParkFootprintPicture : UiControl
 	}
 
 	/// <summary>
-	/// A square's one-texel texture is cut to four bits a channel with the rest of the game's art: its colours are the
-	/// original's fill (<c>FUN_004ab1b0</c>), which a 16-bit frame draws cut (docs/exe/textures.md, "OpenTPW cuts").
+	/// A square's one-texel texture goes through the same depth as the rest of the game's art: cut to four bits a channel
+	/// at the original's depth, where its colours are the original's fill (<c>FUN_004ab1b0</c>) as a 16-bit frame draws it;
+	/// eight bits by default (docs/exe/textures.md, "OpenTPW keeps eight bits a channel by default").
 	/// </summary>
 	internal const TextureFlags SquareFlags = TextureFlags.None;
 

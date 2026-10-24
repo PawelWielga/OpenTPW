@@ -775,7 +775,7 @@ calls `Person_PlaySound` (`0x004faa00`) with the global kids category `[0x00803a
 position from its model (`0x004754e0` on `[ecx+0xc]`) and makes `Sound_PlayEffect( 0, category, effect, x, y, z )`: no
 handle, no level, so the voice is a plain one-shot at its variation's own volume. Kids 208 (`cat_kidsSFX.map`, flags
 `0x0`) has one variation, volume 42, pitch and wait nought, range 60, and one sample, `cashD2b.mp2` (bank 2,
-`Sound\UI`, entry 8; 1158 ms): a till. Neither rides map holds a 208. The charge is reached only from the settle-up
+`Sound\UI`, entry 8 counted from one; 1158 ms): a till. Neither rides map holds a 208. The charge is reached only from the settle-up
 (`FUN_004fd970`, on leaving any visitable thing), so it sounds at a sideshow's or a shop's exit as the guest leaves,
 won or lost.
 
@@ -790,9 +790,17 @@ takes it off the guest at the same point, and now sounds kids 208 between them (
 guest, its own range 60, no repeat delay, the variation's volume 42, which the channel makes 32 of 127, and pitch
 nought). The stock park here (`q611/run1`, off-screen): 13 "paid" lines in 150 s, 13 charge lines, all `cashD2b.mp2`
 at volume 0.1760, pitch 0, range 60, at (525, 305) (the Spray's) and (435, 305) (the Kiosk's), and the sample is
-in the game's own mix (UIHD entry 7, score 1.000). Its place is the guest's sprite's feet where the original's is its
-model's position (525, 300), five units nearer in y; the original's guest is read at the settle-up, ours as the
-sprite stands, and the two were not matched to the unit.
+in the game's own mix (UIHD entry 7 counted from nought, the same eighth entry, score 1.000). **Its place differs, and
+the deviation is said at `ParkRideOperation.Charge`.** Both games read the guest's place at the settle-up, but not from
+the same thing. The original reads the person's model (`0x004754e0` on `[ecx+0xc]`), which ExitRide's teleport
+(`0x004fa930`) does not move: it writes the walker and the cell words and never `[esi+0xc]`. So the original sounds
+where the guest was last drawn: (525, 300) at the Spray, (434 or 435, 303 or 304) at the Kiosk, varying by guest. Ours
+reads the walker (`Navigator.Position`) after `PutDownAtTheExit` has set it to the exit cell's centre, so it sounds at
+(525, 305) at the Spray and (435, 305) at the Kiosk: 5 further along y at the Spray, 1 or 2 at the Kiosk. The
+Spray's (525, 300) is its `.sam` stand point (0.5, 0.1) truncated; the Kiosk's place is not its exit point (the
+default 0.5, 0.5 would put every guest at exactly (435, 305)), so which point the model holds there is not decoded.
+Nor is the original's place whole-unit in ours: it is made an integer (`_ftol`, `0x0067a830`) before `0x0051bfc0`, ours
+is a float.
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|

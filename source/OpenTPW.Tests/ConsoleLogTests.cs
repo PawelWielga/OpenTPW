@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace OpenTPW.Tests;
@@ -101,5 +102,102 @@ public class ConsoleLogTests
 			Assert.AreEqual( "abdef", File.ReadAllText( Path.Join( folder, ConsoleLog.FileName ) ).ReplaceLineEndings( "" ) );
 		}
 		finally { Directory.Delete( folder, true ); }
+	}
+
+	[TestMethod]
+	public void AnExistingFolderThatCannotBeWrittenFallsThroughToTheNext()
+	{
+		if ( OperatingSystem.IsWindows() )
+		{
+			Assert.Inconclusive( "Folder permissions are set with Unix modes here." );
+			return;
+		}
+
+		var folder = Scratch();
+		var readOnly = Path.Join( folder, "readonly" );
+
+		try
+		{
+			Directory.CreateDirectory( readOnly );
+			File.SetUnixFileMode( readOnly, UnixFileMode.UserRead | UnixFileMode.UserExecute );
+
+			// A superuser writes anywhere, so the folder would not be refused.
+			try { File.WriteAllText( Path.Join( readOnly, "probe" ), "x" ); Assert.Inconclusive( "Running as a user that ignores folder permissions." ); }
+			catch ( UnauthorizedAccessException ) { }
+
+			using var sink = new ConsoleLog.Sink();
+
+			Assert.IsTrue( sink.Open( [readOnly, Path.Join( folder, "own" )], "H" ) );
+			Assert.AreEqual( Path.Join( folder, "own", ConsoleLog.FileName ), sink.Path );
+			StringAssert.Contains( sink.Failures, "UnauthorizedAccessException" );
+		}
+		finally
+		{
+			File.SetUnixFileMode( readOnly, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute );
+			Directory.Delete( folder, true );
+		}
+	}
+
+	[TestMethod]
+	public void AFileThatStopsBeingWritableEndsTheFileAndNeverTheTerminal()
+	{
+		var terminal = new StringWriter();
+		var disk = new FailingStream();
+		using var sink = new ConsoleLog.Sink( _ => disk );
+		var tee = new ConsoleLog.Tee( terminal, sink );
+
+		sink.Open( ["anywhere"], "H" );
+		tee.WriteLine( "kept" );
+		disk.Full = true;
+
+		// None of these may throw; the terminal gets every one, and the failure is told once.
+		tee.WriteLine( "lost 1" );
+		tee.Write( 'x' );
+		tee.WriteLine( "lost 2" );
+
+		var shown = terminal.ToString().ReplaceLineEndings( "\n" );
+
+		StringAssert.Contains( shown, "kept\nlost 1" );
+		StringAssert.Contains( shown, "xlost 2" );
+		Assert.AreEqual( 1, System.Text.RegularExpressions.Regex.Count( shown, "the file stops here" ) );
+		StringAssert.Contains( Encoding.UTF8.GetString( disk.Written ), "kept" );
+		Assert.IsFalse( Encoding.UTF8.GetString( disk.Written ).Contains( "lost" ) );
+	}
+
+	[TestMethod]
+	public void TheUserFolderIsAppDataOnWindowsAndTheLocalShareElsewhere()
+	{
+		var expected = OperatingSystem.IsWindows()
+			? Environment.GetFolderPath( Environment.SpecialFolder.ApplicationData )
+			: Path.Join( Environment.GetEnvironmentVariable( "HOME" ) ?? Environment.GetFolderPath( Environment.SpecialFolder.UserProfile ), ".local", "share" );
+
+		if ( !OperatingSystem.IsWindows() && Environment.GetEnvironmentVariable( "XDG_DATA_HOME" ) is { Length: > 0 } )
+			Assert.Inconclusive( "XDG_DATA_HOME moves the local share." );
+
+		Assert.AreEqual( Path.Join( expected, "OpenTPW" ), ConsoleLog.UserFolder() );
+	}
+
+	/// <summary>A file that takes writes until <see cref="Full"/>, then fails as a full disk does.</summary>
+	private sealed class FailingStream : MemoryStream
+	{
+		public bool Full;
+
+		public byte[] Written => ToArray();
+
+		public override void Write( byte[] buffer, int offset, int count )
+		{
+			if ( Full )
+				throw new IOException( "No space left on device" );
+
+			base.Write( buffer, offset, count );
+		}
+
+		public override void Write( ReadOnlySpan<byte> buffer )
+		{
+			if ( Full )
+				throw new IOException( "No space left on device" );
+
+			base.Write( buffer );
+		}
 	}
 }

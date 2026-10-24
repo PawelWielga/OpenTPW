@@ -183,8 +183,8 @@ public sealed class ProceduralGround
 	/// <summary>
 	/// <c>FUN_0055f780</c>'s last pass (<c>0x00560926</c> on): each pixel of the tile, in order, is the scratch's pixel
 	/// the word's turn picks (<see cref="Turn"/>) with the path's texel at row <c>k x (h / N)</c> and column
-	/// <c>j x (w / N)</c> laid over by its alpha, <c>t + ((p - t) x a &gt;&gt; 8)</c> a channel. The alpha is four
-	/// bits, so the path covers at most 240 of 256.
+	/// <c>j x (w / N)</c> laid over by its alpha, <c>t + ((p - t) x a &gt;&gt; 8)</c> a channel. At the original's depth the
+	/// alpha is four bits, so the path covers at most 240 of 256; at eight bits (OpenTPW's default) up to 255.
 	/// </summary>
 	private byte[] LayOver( byte[] scratch, Overlay overlay )
 	{
