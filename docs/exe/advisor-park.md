@@ -1998,6 +1998,8 @@ written to the project; `ECX` the balance object, kept in `ESI`):
 `MinScoreForConsideration` is 25, so **row 8 speaks from a share of 10 (27) to 25 (72), and row 9 from 26 (52) on**;
 the two never score together. The keys' names are the file's: row 8's "low" cut-off is taken off, not compared.
 
+`FUN_004ccdf0`, `FUN_004c81b0` and `FUN_00508380` are named by address: each is a call target in the listing that begins at a function prologue, and the Ghidra copy of 2026-10-22 held no function at any of them (`citecheck.py`, Q646).
+
 **The litter share, `FUN_004ccdf0`**, walks every cell of the map (`[0x0080239c] + 0x2d8 + (y x 128 + x) x 0x44`, x and
 y from 127 down). A cell is **counted** where `FUN_00536310` (`mType` 1, path) or `FUN_00536320` (3 or 9) passes **or**
 its `mLitter` (`+0x2c`) is not nought, and **littered** where `mLitter` is not nought, whatever its kind; the answer is

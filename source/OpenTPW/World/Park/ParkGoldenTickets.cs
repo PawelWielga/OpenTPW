@@ -54,7 +54,7 @@ public static class ParkGoldenTickets
 
 	/// <summary>
 	/// The tests and the awards, in the original's order (<c>GoldenTicket_CheckLocal</c> <c>0x004d4bc0</c>,
-	/// <c>GoldenTicket_CheckGlobal</c> <c>0x004d4e50</c>, the Secret's at <c>0x004d4a6e</c>): a Local ticket the park
+	/// <c>GoldenTicket_CheckGlobal</c> <c>0x004d4e50</c>, the Secret's held test at <c>0x004d4a66</c>): a Local ticket the park
 	/// holds is skipped; a Global is always asked of the award, which decides; the Secret's index 0 alone, when it is
 	/// not held and every counted cell is watched.
 	/// </summary>

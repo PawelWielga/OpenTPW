@@ -33,7 +33,7 @@ internal sealed class ParkShopWindow : UiWindow
 	/// <summary>How often the figures are filled again, in milliseconds of real time: timer <c>0x80080</c>, armed with 4000 on message <c>0x15</c>.</summary>
 	private const long RefreshEvery = 4000;
 
-	/// <summary>How many finished days the month's rows add up (<c>0x1e</c>, <c>0x004b0213</c>).</summary>
+	/// <summary>How many finished days the month's rows add up (<c>0x1e</c>, <c>0x004b0211</c>).</summary>
 	private const int MonthDays = 30;
 
 	/// <summary>Quality's slider runs 0 to 2 (<c>0x004b06b7</c>) and is the shop's <c>mQualityOfGoods</c> over 50 (<c>0x004b09d0</c>).</summary>
@@ -259,7 +259,7 @@ internal sealed class ParkShopWindow : UiWindow
 			} );
 		}
 
-		// Satisfaction in ridestatbar.wct from 50 (0x004afe8d), local happiness in happygrad.wct from 100.
+		// Satisfaction in ridestatbar.wct from 50 (0x004b00ec), local happiness in happygrad.wct from 100 (0x004b01aa).
 		_satisfaction = stats.Add( new ParkObjectWindow.UiStatBar
 		{
 			Id = 0xc079,

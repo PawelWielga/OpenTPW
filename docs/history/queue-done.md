@@ -9739,6 +9739,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   a run never rotates Alexah's own logs away (add it to `parkrun.py` and the desk recipes, `docs/TOOLING.md`). No
   change to what is drawn. Confirm: two launches, the first's file now `console-prev.log`, the second's `console.log`,
   both whole beside the terminal's output; a harness run leaves the game folder's pair alone.
+- [x] **Q646. The doc citations `citecheck.py` flags in the last 60 commits.** Found 2026-10-22 by the new checker
+  (`~/.cache/tpw-harnesses/lib/citecheck-2026-10-22-last60.txt`, 26 lines, some repeated across commits): addresses
+  that start no instruction in objdump or Ghidra (`scenes.md:134` and `Advisor.cs:630` cite `0x00599a2a`, inside the `mov`
+  at `0x00599a28`), names beside an address in another function (`scenes.md:131` pairs `UIParticles_PlaceChannels`, which
+  is `0x005ed770`, with `0x00599800`), and `FUN_004ccdf0` and `FUN_004c81b0`, which the project holds no function at
+  (`STATUS.md`, `WORKS.md`, `TOOLING.md`). Read each against the listing; correct the doc or the comment, or say why the
+  citation stands (`saves.md:2468`s `0x00544154` and `0x00544144` are a byte table and a jump table inside `.text`, so they start no instruction by design). Docs and comments only.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

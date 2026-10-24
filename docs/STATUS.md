@@ -36,7 +36,7 @@ One line per system; the detail, item by item, is `docs/WORKS.md` (grep it by ar
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q647 (`console.log` per launch; no change to what is drawn): shown only off-screen on lane B's private display (`q647/run1`, `run2`, `run3`: `lobby.png`, white textures), never a desktop run or a player's own game folder; the log is held equal to the terminal's `run.log` line for line, the screen proves nothing here. Not run: a read-only game folder (the fall to the user's data folder is tested in `ConsoleLogTests`, not launched), Windows (`%AppData%`), a launch that finds no game (writes no file by design), a native crash (the runtime's own stderr bypasses `Console.Error`). Full Simulation: not relevant.
+- Q646 (doc citations; no change to what is drawn): nothing drawn is touched, so no screenshot exists or is claimed. Not re-read in Ghidra: lane B has only the objdump and the private copy's names, so `Game_Resume` (`0x0040932b`, `QUEUE.md`) stands on the real project's name, which the copy does not hold, and `FUN_004ccdf0`, `FUN_004c81b0`, `FUN_00508380` are noted as unnamed by address. The 0x32 and 0x64 of `ParkShopWindow` are read from the listing's pushes (`0x004b00ec` after the `ridestatbar.wct` push, `0x004b01aa`), not run.
 
 ## Numbers (take counts fresh; these go stale within a day)
 

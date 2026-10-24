@@ -271,13 +271,6 @@ filed the items that cite it.
   (Q644), and whatever Q617 to Q621 leave as a chosen difference. Each improvement reads one switch, set at one place
   (rule 9); say it in the option's own text and at the site. Confirm: a frame pair with the toggle on and off at the
   gate, the on frame matching the original's.
-- [ ] **Q646. The doc citations `citecheck.py` flags in the last 60 commits.** Found 2026-10-22 by the new checker
-  (`~/.cache/tpw-harnesses/lib/citecheck-2026-10-22-last60.txt`, 26 lines, some repeated across commits): addresses
-  that start no instruction in objdump or Ghidra (`scenes.md:134` and `Advisor.cs:630` cite `0x00599a2a`, inside the `mov`
-  at `0x00599a28`), names beside an address in another function (`scenes.md:131` pairs `UIParticles_PlaceChannels`, which
-  is `0x005ed770`, with `0x00599800`), and `FUN_004ccdf0` and `FUN_004c81b0`, which the project holds no function at
-  (`STATUS.md`, `WORKS.md`, `TOOLING.md`). Read each against the listing; correct the doc or the comment, or say why the
-  citation stands (`saves.md:2468`'s `0x00544154` is a four-letter tag, not an address). Docs and comments only.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
@@ -1858,7 +1851,7 @@ filed the items that cite it.
   hide his head for the first 633 ms of the second line, which the film contradicts. Also not read: the original's
   `0x80000000` locks against OpenTPW's unconditional shows, and whether `Dress`'s hidden props include a node in clip
   16's tracks (the map, node 6) on the slot 1 model's first clip, where the original's channel at `0xc` skips
-  `FUN_00472310` (`0x00473096`).
+  the call to `FUN_00472310` (the test at `0x00473096`, in `FUN_00472f60`; the call is `0x004730a9`).
 - [ ] **Q729. A rotation track's last key, held or wrapped.** From the run 7 review (Q599 4's lead). `Anim_FindKey`
   (`0x00470b60`) takes key 0 as the upper key past a track's last key where its `param_5` is non-zero
   (`0x00470bee`..`0x00470bf9`), and the rotation call passes 1 (`0x00471c45`), so the original's rotation sampler WRAPS

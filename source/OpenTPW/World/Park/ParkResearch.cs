@@ -172,7 +172,7 @@ public sealed class ParkResearch
 			: (int)((uint)_kinds[kind].Output * ((uint)(ability * 100) / (uint)most) / 100);
 
 	/// <summary>
-	/// The highest group a kind's raise stops below (<c>0x00503c2a</c>): the loop leaves at a highest group over 6.
+	/// The highest group a kind's raise stops below (<c>0x00503c22</c>): the loop leaves at a highest group over 6.
 	/// </summary>
 	public const int MostGroup = 7;
 

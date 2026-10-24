@@ -2820,7 +2820,7 @@ public sealed partial class ParkPeople : Entity
 	/// happiness, each one's truncated to its low byte (FUN_004c9750); and the staff pool's researchers to hire
 	/// (FUN_00508380 asked for kind four); and the lifetime visitors (FUN_004c94c0), <see cref="GuestsInsideHappiness"/>
 	/// (FUN_004c7bb0), the arrival loads called (five once the ring of loads has wrapped, else its slot plus one;
-	/// 0x005a0797) and <see cref="AdvisorTicketFacts"/>, which the golden-ticket hints read. With no catalogue no kind is counted.
+	/// 0x005a078e) and <see cref="AdvisorTicketFacts"/>, which the golden-ticket hints read. With no catalogue no kind is counted.
 	/// </summary>
 	/// <remarks>
 	/// The builder's object is DAT_008186ac, which the original also sets from the thing the interface has
