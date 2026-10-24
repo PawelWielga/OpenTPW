@@ -9728,6 +9728,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   busy. The coaster test takes 200 turns with no ride: 993 counted (`COAST` 992, `SPAWN` 1, each reported as often);
   the old loop stopped on turn 1's `WAITANIM` and counted 1. `mutate.py` (`q144/`): 8 bugs, 8 caught by the new tests;
   the old three caught 1 of them. No game run, as the item says.
+- [x] **Q647. Every launch writes `console.log`, the one before kept as `console-prev.log`.** Alexah, 2026-10-22, after
+  the play test's console was lost to a short terminal scrollback: a log file for comparing two runs of one build and for
+  bug reports from other machines. **Alexah (2026-10-22): in the game folder beside `save/`; where that cannot be written
+  (a Program Files install), the user's own data folder (`~/.local/share/OpenTPW`, `%AppData%\OpenTPW`).** At start,
+  rename an existing `console.log` to `console-prev.log` (replacing it), then write everything the process prints, stdout
+  and stderr (`Logger`'s lines, the debug console's `[dbg]` replies, exceptions), with the build's commit and the start
+  time at the top; what is printed before the game folder is found is held and written once it is. An environment
+  variable `OPENTPW_LOG_DIR` puts the two files elsewhere: every harness and test run sets it to its own run folder, so
+  a run never rotates Alexah's own logs away (add it to `parkrun.py` and the desk recipes, `docs/TOOLING.md`). No
+  change to what is drawn. Confirm: two launches, the first's file now `console-prev.log`, the second's `console.log`,
+  both whole beside the terminal's output; a harness run leaves the game folder's pair alone.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

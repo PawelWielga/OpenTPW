@@ -58,6 +58,7 @@ dotnet test  source/OpenTPW.sln --no-build          # ~1 s. Without the game, ev
 OPENTPW_GAME_PATH="<game folder>" dotnet test source/OpenTPW.sln --no-build   # every test runs, none skip
 dotnet source/OpenTPW/bin/Debug/net10.0/OpenTPW.dll --game "<game folder>"
 OPENTPW_DEBUG_CONSOLE=1 ...                          # commands on stdin; `unimplemented` prints the gap census
+OPENTPW_LOG_DIR=<folder> ...                         # where console.log / console-prev.log go; every harness and test run sets it
 ```
 
 - `dotnet test` does not accept `--no-incremental`; build first, then test with `--no-build`.

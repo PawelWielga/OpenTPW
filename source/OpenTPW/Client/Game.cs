@@ -38,6 +38,9 @@ internal static class Game
 			return;
 		}
 
+		// Now there is a folder to keep the console's log in, and what was printed so far goes into it.
+		ConsoleLog.Open( GameDir.Root );
+
 		// Register game data directory
 		FileSystem = new BaseFileSystem( GameDir.Data );
 		FileSystem.RegisterArchiveHandler<WadArchive>( ".wad" );

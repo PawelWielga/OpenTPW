@@ -74,17 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q647. Every launch writes `console.log`, the one before kept as `console-prev.log`.** Alexah, 2026-10-22, after
-  the play test's console was lost to a short terminal scrollback: a log file for comparing two runs of one build and for
-  bug reports from other machines. **Alexah (2026-10-22): in the game folder beside `save/`; where that cannot be written
-  (a Program Files install), the user's own data folder (`~/.local/share/OpenTPW`, `%AppData%\OpenTPW`).** At start,
-  rename an existing `console.log` to `console-prev.log` (replacing it), then write everything the process prints, stdout
-  and stderr (`Logger`'s lines, the debug console's `[dbg]` replies, exceptions), with the build's commit and the start
-  time at the top; what is printed before the game folder is found is held and written once it is. An environment
-  variable `OPENTPW_LOG_DIR` puts the two files elsewhere: every harness and test run sets it to its own run folder, so
-  a run never rotates Alexah's own logs away (add it to `parkrun.py` and the desk recipes, `docs/TOOLING.md`). No
-  change to what is drawn. Confirm: two launches, the first's file now `console-prev.log`, the second's `console.log`,
-  both whole beside the terminal's output; a harness run leaves the game folder's pair alone.
 - [ ] **Q616. Eight bits a channel is the default: TEXTURE32 on.** From Alexah's play test, 2026-10-21
   (`playtest-2026-10-21/notes.md` note 1). **Alexah (2026-10-21): this reverses their 2026-10-18 choice (Q700: four bits
   by default, an option keeps eight).** The four-bit cut beside the crisp UI is unsettling; improvements over the
