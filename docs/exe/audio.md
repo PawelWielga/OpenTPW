@@ -928,8 +928,9 @@ category lacks, or a node its model lacks, frees an `ADDOBJ`'s record. Counted a
 (the ferry's 172 and the seaplane's 173, whose scripts run with no nodes). The End here: the same places, distances,
 gains and volumes (`q553/PREDICTION.txt`; the console's `scriptsounds`). **Said:** a record a load put back starts
 nothing, as the loader `FUN_005597a0` copies it raw; the original's park entered fresh from a file does hear its looped
-script sounds, as the file puts their voices back (the stock park's fountain, `q565/orig/`, run b; Q612), where here the
-fountain is silent. There is no
+script sounds, as the file puts their voices back (the stock park's fountain, `q565/orig/`, run b). Here a record
+takes the held chain the file put back under its handle ("A park file's voices", below), and a one-shot's, a plain
+voice's or a music voice's is not put back (Q741), so the fountain is still silent. There is no
 voice pool here (Q43): every script voice sounds, where the original's service keeps twelve. A chain out of range makes
 no child here either, and one at once in range again ("A voice out of range makes nothing next", below). With no sound
 device a record is kept (`ParkAudio.ScriptSoundStart.NoDevice`), where the original's `Sound_PlayEffect` answers nought
@@ -977,9 +978,9 @@ restored 177 already had one (`0x006bdb1b`). Whether a breakpoint set as the gam
 tested; run g set its breakpoints once the lobby was up.
 
 **OpenTPW** builds the held chain for a script (`ScriptVoiceClass.HeldChain`, `ScriptVoice.Held`, `Parameter`):
-the same children as the chain of any variation, the variation by the zones. It puts back no voice from a park file
-(`PARK_FILE_SOUND_VOICES`, at every park read), so the stock park's gates make no chain here where the original's restored
-one makes children (Q612). The Loudspeaker here (`q559/confirm.py`, run3 on the final binary): its chain at (455,205,0), first child
+the same children as the chain of any variation, the variation by the zones, and puts back a park file's held chains
+with their kept children ("A park file's voices", below), so the stock park's gates make children from the entry as the
+original's restored one does. The Loudspeaker here (`q559/confirm.py`, run3 on the final binary): its chain at (455,205,0), first child
 variation 1, 22 children with no repeat, waits 1124 to 3993 ms, each gap its stated wait within 0.001 to 0.006 s
 (run2, the first build: 27, 1079 to 3819 ms).
 
@@ -1255,16 +1256,51 @@ Over the 580 bodies on hand (31 different lists) the voices are also the screams
 no saved record), the Loudspeakers' 177 to 180 and the Staff Room's 188 (each a script's record), rides' voices of
 the music's class (jungle rides 204, 216 and 217 in Alexah's Full Simulation autosave); never a type 2 or 10.
 
-**OpenTPW** reads none of it: at every park read it counts `PARK_FILE_SOUND_VOICES` and starts nothing from the list
-(`Level.cs`), and its save carries the loaded file's sound block unchanged. In the stock park here the gates make no
-chain and no script voice sounds (`q560/run1`, the same build: "1x PARK_FILE_SOUND_VOICES", `scriptsounds` "sounding
-0", `1-gates.png`). The build is Q612.
+**A held chain put back** (read for Q612 in the listing). The child is read and set up before its chain: its record
+at `0x006bd587`, then the chain's set-up (slot `+0x10`) at `0x006bd5b1`. So the child's set-up draws its variation
+among the zones of the chain's SAVED variation that hold the saved parameter (`0x006c3e00`, reached through slot `+0x38`
+with nought, reading the chain through the child's controller block `+0x1c`, which `0x006c3a6c` sets), writing it into
+both; keeps the saved sample (`0x006bbfda`); and sets the child's time to the clock, 250 ms and the sample's length
+(`0x006bc01b`). The chain's own set-up then draws the chain's variation again by weight among all (`0x006bbfc5` ->
+`0x006bc810`), over the child's. The controllers come back with their saved values: `0x006b7150` makes a block only
+where the record made none. The chain's tick (`0x006bdae0`) extends and then prunes with the same clock reading
+(`0x006bdaef`, `0x006bdaf7`), so the newest child due on that very millisecond is pruned with no successor and the list
+is empty for one pass; the next pass makes its child as a first (`HeldChain_HeadOrFirstChild`, above).
+
+**OpenTPW** (Q612, the first piece) reads the list at every park read (`ParkVoices`, through `ParkWorld.Voices`) and
+puts back each **held chain** of a category a script plays in (`ParkAudio.PutBackFileVoices`): the slot named by its
+file name, the effect, variation and sample by their places, at its saved place, as the file's, its child's saved sample
+kept and started as the chain is first in range, at a volume, pitch and range of the child's drawn variation, its time
+as above, the chain's own variation drawn again, and no `0x20` (`ScriptVoice.FirstChildTaken`). A resumed script's
+record of a sound type takes the voice its saved handle names (`RideScript.TakeRestoredSounds`), so its `KILLOBJ`,
+`FADEOBJ`, `SETOBJPARAM` and its end reach it. Every chain here keeps the tick's empty pass on a due millisecond
+(`ScriptVoice.ListEmpty`); the screams' own chain (`ParkScreams`) does not. Counted and not put back, each a voice:
+`PARK_FILE_SOUND_VOICE_ONE_SHOT`, `_PLAIN`, `_MUSIC_CLASS` (the crowd's and the music's among them), `_CHAIN`,
+`_CLASS_2`, a held chain of the screams (`_SCREAM`, `ParkScreams`' own), of a category no script plays in
+(`_NO_CATEGORY`), with no such sample (`_NO_SAMPLE`), no key (`_HELD_CHAIN_NO_KEY`), a range or rectangle of its own
+(`_HELD_CHAIN_OWN_RANGE`), another child class (`_HELD_CHAIN_CHILD_TYPE`) or no zone for its child (`_HELD_CHILD_NO_ZONE`);
+a list cut short by a type 10 or a handle with no free slot counts `PARK_FILE_SOUND_VOICE_CLASS_10` or `_UNREAD` and is
+read no further. **Not the original's:** its reader stops every live voice first, so the land's own sounds this park
+starts at its entry go and the file's copies stand in for them; here the land's stand and the file's copies are counted
+with their classes (the rest is Q741). **The writer** writes the loaded file's list less each voice put back and let go
+since (`ParkVoices.Without`), so a chain stopped here, a sold Loudspeaker's, does not come back at the next load with
+nothing to stop it; it writes nothing started here, nor a put-back voice's draws since (carried, not counted, as the coasters' and the
+advisor's modules are; the original writes the live voices, `0x0051c350`).
+Here (`q612/confirm.py`, run5 on the final binary, off-screen, the log, the census and the game's own mix):
+the stock park's 177 put back under `0x012e0055` at (450,160,0), its kept child `TP BEAST 9.mp2` (variation 8's) first,
+the next due 2,990 ms after the put-back (its 2,740 ms and 250), then 17 children in 40 s with no repeat, gaps 1,502 to
+3,982 ms (the original's restored chain, `q559/orig/` runs d-f: no repeat, 1,080 to 3,676 ms, variation 8's sample
+first; runs 2 and 4 of the build before, 1,054 to 3,992); the kept sample in the mix at its drawn pitch (0.955 against
+the other eight samples' best 0.41). The original's file with a Loudspeaker (`q257n/orig/bought-by-the-original.TPWS`): its 177 under `0x00bb0062` taken
+by script 16's record tagged 10, saved here and loaded again the same, stopped by the speaker's sale after 6
+samples, and that park saved and loaded leaves it out (1 of 11 put back).
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
 | `0x006ba0c0`, `0x006ba150` | `SoundManager_WriteState`, `SoundManager_ReadState` | The three floats and the voice list, written and read | Decompiled |
 | `0x006bccf0` | `Voice_WriteRecord` | A voice's record: class, place, nought, range, four places, controllers, `0x1000`, handle, child | Decompiled; disassembly; the sweep |
-| `0x006bd0a0` | `Voice_ReadRecord` | The record read back, the pointers rebuilt, the set-up (slot `+0x10`) run | Decompiled; run b |
+| `0x006bd0a0` | `Voice_ReadRecord` | The record read back, the pointers rebuilt, its child read and set up (`0x006bd587`), then its own set-up (slot `+0x10`, `0x006bd5b1`) | Decompiled; run b; disassembly (Q612) |
+| `0x006b7150` | — | A voice's controller block, made (nought) only where it has none, so a record's saved values stand | Disassembly (Q612) |
 | `0x006d1bd0` | `SoundLibrary_VoiceIndices` | A voice's category slot (nought for none), effect, variation and sample as places | Disassembly |
 | `0x006c0dc0`, `0x006c0f50` | `SoundLibrary_WriteCategories`, `SoundLibrary_ReadCategories` | The category slots and their file names | Disassembly; the sweep |
 | `0x006b69b0` | `VoicePool_AddBlock` | 100 voice slots of `0x50` bytes, numbered on from `[manager + 0x2c]`; `[manager + 0x28]` counts the blocks | Disassembly |

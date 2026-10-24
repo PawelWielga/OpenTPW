@@ -9782,6 +9782,13 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`q617/side-by-side-bounce.png`). The 16 is the memory test misreading a large machine; `med.sam` asks 32.
   `q617/PREDICTION.txt`: 6 of 8 held, P3 and P5 missed with their causes. Left: Q649 (blend the floors), Q650 (the tile
   size, Alexah's choice).
+- [x] **Q612. A park file's held chains put back (Q560's build, its first piece).** From Q560 (`audio.md`, "A park
+  file's voices"; FileFormats `saves.md`, "The voice list"). At a park read the list is read (`ParkVoices`) and each held
+  chain of a script's category put back under its saved handle with its kept child, and a resumed script's record takes
+  the voice its handle names; the other classes are counted; a save leaves out a voice put back and let go since. **Done
+  (lane B, 2026-10-24):** the stock park's 177 under `0x012e0055` making children from the entry (`TP BEAST 9.mp2` first,
+  17 children in 40 s with no repeat, gaps 1,502 to 3,982 ms, the original's 1,080 to 3,676) and the original's
+  Loudspeaker file's 177 taken by script 16, saved and loaded again, stopped by its sale (`q612/run5`). The rest is Q741.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

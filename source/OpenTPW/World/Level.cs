@@ -505,6 +505,17 @@ public class Level
 		// And the sounds the land itself carries, started as the level loads: the jungle's waterfall and its river,
 		// and its gulls and its sea, which follow the listener.
 		ParkPlacedObjects.StartSounds( ThemeName, audio.StartPlaced, audio.StartFollowing );
+
+		// And the park file's live voices, which the original's load puts back (FUN_0051c400, 0x0051c497): the held
+		// chains here, each handed to the resumed script record that names its handle (ParkAudio.PutBackFileVoices).
+		if ( park is ParkWorld world )
+		{
+			var voices = audio.PutBackFileVoices( world.Voices );
+			var taken = rides.Scheduler.Scripts.Sum( script => script.TakeRestoredSounds( voices ) );
+
+			Log.Info( $"{ThemeName}: {voices.Count} of the park file's voices put back, {taken} of them taken by a script's record" );
+		}
+
 		load.Mark( "audio" );
 
 		// After the audio, because a park opens with its weather already rolled and that first roll
@@ -627,10 +638,6 @@ public class Level
 				Log.Warning( $"{themeName}: the park file's world block did not end where it should have" );
 
 			Log.Info( $"{themeName}: park file holds {world.ThingCount} things, {world.Objects.Count} of them objects" );
-
-			// Every park file holds the sound manager's live voices, which the original's load puts back (FUN_0051c400,
-			// 0x0051c497): the stock park's gates' held chain among them. They are carried here and none is started.
-			Unimplemented.Report( "PARK_FILE_SOUND_VOICES" );
 
 			// Taken as the file is read, before anything of the park starts an effect, as the original's file read
 			// calls its loader (0x00415437).
@@ -1000,7 +1007,11 @@ public class Level
 			state.RandomSeed,
 			people != null ? (people.Strikes.ForceWord, people.Strikes.Records) : null,
 			state.Economy, state.CalendarAtLastUpdate, ParkWeather.Current?.Written( loaded.WeatherRecord ), research?.Written,
-			state.RecentlyResearched.Written, ids );
+			state.RecentlyResearched.Written, ids, ParkAudio.Current?.FileVoicesLetGo );
+
+		// The sound module goes out as the loaded file's, less the voices put back from it and let go since: the original
+		// writes the manager's live voices (Sound_SaveModule, 0x0051c350), so what was started here, and each put-back
+		// voice's children and draws since, are not written. Carried, as the coasters' and the advisor's modules are.
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;

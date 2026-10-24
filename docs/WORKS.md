@@ -40,4 +40,5 @@ belongs to or at the end. Grep it by area or Q-number; never read it whole.
   (111.9, 60.8, 60.9) by default, (115.5, 54.0, 53.8) cut, the original's (116.1, 54.2, 53.4) (`q616/side-by-side-B.png`);
   the path below the park gate (147.9, 107.8, 60.6), (137.4, 106.2, 46.2) cut, the original's (139.4, 107.2, 44.4)
   (`q616/side-by-side-gate.png`).
+- **A park file's held chains come back from the file** (Q612): each under its saved handle, its kept child's sample first, its variation drawn again, and the script record that names it takes it, so the stock park's gates make their chain of beasts from the entry (`TP BEAST 9.mp2` first, then 16 to 17 children in 40 s with no repeat) and a Loudspeaker's chain loaded, saved and loaded again stops with its sale; a save leaves out a chain stopped here (`docs/exe/audio.md`, "A park file's voices").
 - The original runs under Proton as a reference (Q168, `docs/TOOLING.md`); the console's `admit`/`send` place a guest (Q184).

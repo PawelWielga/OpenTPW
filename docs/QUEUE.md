@@ -368,24 +368,16 @@ filed the items that cite it.
   - **Note (fork watch 2026-10-24):** the P key's row and the overlay it puts up are read (`hud.md`, the pause
     overlay); building the overlay is Q739.
 
-- [ ] **Q612. A park file's voices put back (Q560's build).** From Q560 (`audio.md`, "A park file's voices"; FileFormats
-  `saves.md`, "The voice list"; `parkfile.py -N` prints any file's list with the record or word that keeps each handle).
-  At a park read, rebuild what Lost Kingdom's files hold and this game plays: the held chains (the gates' 177 with its
-  saved child's sample, a fresh draw for its own variation and no flag `0x20`, so its first empty child list restarts it
-  at variation 1 once; the Loudspeakers' 177 to 180, the Staff Room's 188, the screams' kids 71 to 73), the crowd (kids
-  91, the sound block's word at `+0x4` naming it), the music's class (the jungle music, the rides' 204, 216, 217), the
-  plain voices (the litter bins' 93, the two rectangle voices global ambient 2 and 3) and the one-shots (the level's
-  placed 7, 8 and 181, the Fountain's 107...), each under its saved handle, so that a script record's `KILLOBJ`,
-  `FADEOBJ` or `SETOBJPARAM`, the crowd's beat (`0x0051e7b0`) and the music's (`0x0051e790`, the sound block's word
-  `+0x0`; `+0xc` keeps one more) reach it as in the original. Build each voice's class from the record's type, as
-  `0x006b6f1c` does, not from the effect's flags (the stock file's 181 is a one-shot by type, though its flags `0x0206`
-  make the plain class), and map the category slots by the slot's file name, since their number and order change by file
-  and theme. Decide, and say at the site, how the
-  land's own placed sounds (started here at the entry) meet the file's copies, which the original's reader stops first.
-  Say what this game's writer leaves out (it carries the loaded file's block unchanged today). Count a class 2 or 10
-  voice if one is ever met (none in 580 bodies), and a record whose handle's number has no free slot, which the
-  original skips unread the same way (`0x006b6f04`). Confirm: the stock park's gates' chain making children from the entry
-  (`chains.py` against the original's run b), and a Loudspeaker's chain saved and loaded, stopped by its script.
+- [ ] **Q741. A park file's other voices put back (Q612's rest).** From Q612 (`audio.md`, "A park file's voices"). Put
+  back the classes Q612 counts: the one-shots (`PARK_FILE_SOUND_VOICE_ONE_SHOT`: the Fountain's looped 107, the level's
+  placed 7, 8 and 181), the plain voices (`_PLAIN`: the Litter Bin's 93, the rectangle voices global ambient 2 and 3), the
+  music's class (`_MUSIC_CLASS`: the jungle music under the sound block's word `+0x0`, kids 91 the crowd under `+0x4`,
+  whose beats `0x0051e790` and `0x0051e7b0` reach it, and the rides' 204, 216, 217), the chain of any variation
+  (`_CHAIN`), and the screams' held chains (`_SCREAM`, `ParkScreams`' own; find first whether a screaming script's
+  `+0xd0` is saved). Decide, and say at the site, how the land's own placed sounds started at the entry meet the file's
+  copies, which the original's reader stops first. Then the writer: write the live voices (`Sound_SaveModule`,
+  `0x0051c350`) where today it carries the loaded file's list less the voices let go (`ParkVoices.Without`, not counted).
+  Confirm: the stock park's Fountain heard from the entry (`q565/orig/` run b), and a save and load round trip.
 - [ ] **Q719. Does a loaded park play at the save's sound volumes? (one game check)** From the fork watch, 2026-10-20
   (`verify-world.md` M2; `saves.md`, "Sound"). The loader `0x0051c400` overwrites the live sound words at `0x00803aa0` with
   the save's (the volumes and the three on-flags; all 558 park files on hand hold 100/75/60/75 and on/on/on) and sets

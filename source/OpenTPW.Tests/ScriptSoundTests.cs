@@ -453,7 +453,11 @@ public class ScriptSoundTests
 				var made = (gates.Samples, speaker.Samples);
 
 				waits.Add( gates.Wait );
+				// A pass a millisecond on as well: the one whose child was due on the first pass's very millisecond had its
+				// list emptied there, and makes its child on the next.
 				Time.Now = Math.Max( gates.NextAt, speaker.NextAt ) + 0.001f;
+				park.ServeScriptSounds();
+				Time.Now += 0.001f;
 				park.ServeScriptSounds();
 
 				Assert.AreEqual( (made.Item1 + 1, made.Item2 + 1), (gates.Samples, speaker.Samples), "a child each" );
@@ -1764,4 +1768,214 @@ public class ScriptSoundTests
 
 	/// <summary>The End's sound node 10 on its model, in whole units of the world, the height last.</summary>
 	private static readonly Vector3 NodePlace = new( -21f, 57f, 16f );
+
+	/// <summary>
+	/// <b>The stock park's gates' held chain comes back from <c>Easymode.TPWI</c> under its handle</b>
+	/// (<c>docs/exe/audio.md</c>, "A park file's voices"): the jungle ambient's 177 at (450, 0, 160), with its saved
+	/// child's sample, variation 8's first, kept and played as the chain is first in range at a variation the zones of
+	/// variation 8 draw (never 8), its own variation drawn again, and no flag <c>0x20</c>, so the first time its list is
+	/// empty its child is the effect's first variation, and the second time it goes on from its own. The file's other
+	/// nine are counted by class: four one-shots, three plain voices, two of the music's class.
+	/// </summary>
+	[TestMethod]
+	public void TheShippedParksGatesChainIsPutBackWithItsChild()
+	{
+		var nowBefore = Time.Now;
+
+		WithAParksAudio( park =>
+		{
+			Time.Now = 100f;
+			HearFrom( new Vector3( 450f, 160f, 0f ) );
+
+			var put = park.PutBackFileVoices( ShippedVoices() );
+
+			Assert.AreEqual( 1, put.Count );
+
+			var gates = put[0x012e0055];
+			var headers = gates.Category.VariationsOf( 177 );
+			var saved = gates.Category.SampleAt( 177, 7, 0, out var length );
+
+			Assert.AreEqual( ("held chain", 177, 4, "the park file"), (gates.Kind, gates.Effect, gates.Type, gates.Owner) );
+			Assert.AreEqual( new Vector3( 450f, 160f, 0f ), gates.Place );
+			Assert.IsTrue( park.ScriptVoices.Contains( gates ) );
+			Assert.IsFalse( gates.ListEmpty || gates.FirstChildTaken, "its child kept, and no 0x20" );
+			Assert.AreSame( saved, gates.KeptChild, "variation 8's sample" );
+			Assert.AreNotEqual( 7, gates.KeptChildVariation, "the child's variation one of variation 8's zones, which never name 8" );
+			Assert.AreEqual( 100f + 0.25f + (float)length.TotalSeconds, gates.NextAt, 1e-4f, "its set-up's clock, 250 ms and the sample's length" );
+			Assert.AreEqual( 0, gates.Samples );
+			Assert.IsFalse( Counted( "PARK_FILE_SOUND_VOICE_SCREAM" ) || Counted( "PARK_FILE_SOUND_VOICE_NO_CATEGORY" ) );
+			Assert.AreEqual( 4, Times( "PARK_FILE_SOUND_VOICE_ONE_SHOT" ) );
+			Assert.AreEqual( 3, Times( "PARK_FILE_SOUND_VOICE_PLAIN" ) );
+			Assert.AreEqual( 2, Times( "PARK_FILE_SOUND_VOICE_MUSIC_CLASS" ) );
+
+			park.ServeScriptSounds();
+
+			Assert.AreEqual( 1, gates.Samples, "the kept child as the chain is in range" );
+			Assert.AreEqual( saved!.Name, gates.Voice!.Name );
+			Assert.AreEqual( headers[gates.KeptChildVariation].Range, gates.Voice.Range, "over its own variation's range" );
+			Assert.IsNull( gates.KeptChild );
+
+			park.ServeScriptSounds();
+			Assert.AreEqual( 1, gates.Samples, "nothing more before its time" );
+
+			var own = gates.Variation;
+
+			Time.Now = gates.NextAt + 0.001f;
+			park.ServeScriptSounds();
+
+			Assert.AreEqual( 2, gates.Samples );
+			Assert.AreNotEqual( own, gates.Variation, "the next among the zones of the chain's own variation" );
+
+			Time.Now = gates.NextAt;
+			park.ServeScriptSounds();
+
+			Assert.IsTrue( gates.ListEmpty, "pruned on the millisecond it was due, with no child after it" );
+			Assert.AreEqual( 2, gates.Samples );
+
+			Time.Now += 0.001f;
+			park.ServeScriptSounds();
+
+			Assert.AreEqual( (3, 0), (gates.Samples, gates.Variation), "the first child from an empty list: the effect's first" );
+			Assert.IsTrue( gates.FirstChildTaken );
+
+			Time.Now = gates.NextAt;
+			park.ServeScriptSounds();
+			Time.Now += 0.001f;
+			park.ServeScriptSounds();
+
+			Assert.AreEqual( 4, gates.Samples );
+			Assert.AreNotEqual( 0, gates.Variation, "the second time it goes on from its own variation" );
+		} );
+
+		Time.Now = nowBefore;
+	}
+
+	/// <summary>
+	/// <b>Each put-back draws the chain's own variation again</b>, by weight among all nine of 177's
+	/// (<c>0x006bbfc5</c>), and its kept child's among the zones of the saved eighth, which never name it.
+	/// </summary>
+	[TestMethod]
+	public void APutBackChainDrawsItsVariationsAgain()
+	{
+		WithAParksAudio( park =>
+		{
+			var voices = ShippedVoices();
+			var own = new HashSet<int>();
+			var child = new HashSet<int>();
+
+			for ( var time = 0; time < 60; ++time )
+			{
+				var gates = park.PutBackFileVoices( voices )[0x012e0055];
+
+				own.Add( gates.Variation );
+				child.Add( gates.KeptChildVariation );
+			}
+
+			Assert.IsTrue( own.Count >= 5, $"the chain's own drawn among all: {string.Join( ",", own )}" );
+			Assert.IsTrue( child.Count >= 4 && !child.Contains( 7 ), $"the child's among variation 8's zones: {string.Join( ",", child )}" );
+		} );
+	}
+
+	/// <summary>
+	/// <b>The kept child sounds over its own variation's range, not its chain's</b>: the Staff Room's 188 (its place 5 in
+	/// <c>cat_staff</c>), whose fourth variation reaches 85 and the other six 90, put back until the chain's own variation
+	/// and its child's differ in range.
+	/// </summary>
+	[TestMethod]
+	public void AKeptChildSoundsOverItsOwnVariationsRange()
+	{
+		WithAParksAudio( park =>
+		{
+			var voices = new ParkVoices( ParkVoicesTests.Body( (0x01000003, 6, true, 5, 5) ) );
+			ParkAudio.ScriptVoice? staff = null;
+
+			for ( var time = 0; time < 300 && staff is null; ++time )
+			{
+				var put = park.PutBackFileVoices( voices )[0x01000003];
+				var ranges = put.Category.VariationsOf( 188 );
+
+				if ( ranges[put.Variation].Range != ranges[put.KeptChildVariation].Range )
+					staff = put;
+			}
+
+			Assert.IsNotNull( staff, "a chain whose own variation and its child's differ in range" );
+			HearFrom( new Vector3( 12f, 56f, 0f ) );
+			park.ServeScriptSounds();
+
+			var headers = staff.Category.VariationsOf( 188 );
+
+			Assert.AreEqual( 1, staff.Samples );
+			Assert.AreEqual( headers[staff.KeptChildVariation].Range, staff.Voice!.Range );
+		} );
+	}
+
+	/// <summary>
+	/// <b>A held chain of the screams, or of a category no script plays in, is counted and not put back</b>: the kids'
+	/// 73 is <see cref="ParkScreams"/>' (its place 15 in <c>cat_kids</c>), and the speech is no script's.
+	/// </summary>
+	[TestMethod]
+	public void AScreamsChainAndASpeechChainAreCountedNotPutBack()
+	{
+		WithAParksAudio( park =>
+		{
+			var voices = new ParkVoices( ParkVoicesTests.Body( (0x01000003, 6, true, 3, 15), (0x01000004, 6, false, 4, 0) ) );
+
+			Assert.IsNull( voices.Problem );
+			Assert.AreEqual( 2, voices.Saved.Count );
+			Assert.AreEqual( 0, park.PutBackFileVoices( voices ).Count );
+			Assert.AreEqual( (1, 1), (Times( "PARK_FILE_SOUND_VOICE_SCREAM" ), Times( "PARK_FILE_SOUND_VOICE_NO_CATEGORY" )) );
+		} );
+	}
+
+	/// <summary>
+	/// <b>A record a load put back takes the voice the file kept under its handle</b>, and its <c>KILLOBJ</c> stops it, as
+	/// the Loudspeaker's and the Staff Room's records name theirs: not a particle's record of the same handle, nor a sound's
+	/// of a handle no voice was put back under.
+	/// </summary>
+	[TestMethod]
+	public void ARestoredRecordTakesTheVoiceItsHandleNamesAndItsKillStopsIt()
+	{
+		WithAParksAudio( park =>
+		{
+			var put = park.PutBackFileVoices( ShippedVoices() );
+			var gates = put[0x012e0055];
+			var script = new RideScript( Build( Word( Opcode.KILLOBJ ), 10, Word( Opcode.END ) ) ) { Effects = new RideEffects(), Id = 16 };
+
+			// Restored newest first, so the particle's record is met first and the sound's last.
+			script.Effects!.Restore( [new SavedEffect( 4, 0x012e0055, -1, -1, 10 ), new SavedEffect( 4, 0x0abc0001, -1, -1, 11 ),
+				new SavedEffect( 1, 0x012e0055, -1, -1, 12 )] );
+
+			var other = new RideScript( Build( Word( Opcode.END ) ) ) { Effects = new RideEffects(), Id = 17 };
+
+			other.Effects!.Restore( [new SavedEffect( 4, 0x012e0055, -1, -1, 10 )] );
+
+			Assert.AreEqual( 12, script.Effects.Records[0].Tag );
+			Assert.AreEqual( 1, script.TakeRestoredSounds( put ) );
+			Assert.AreEqual( 0, other.TakeRestoredSounds( put ), "a voice another record has taken" );
+			Assert.IsNull( other.Effects.Records[0].Sound );
+			Assert.AreEqual( (16, "script 16"), (gates.Script, gates.Owner) );
+			Assert.AreSame( gates, script.Effects.Records.Single( record => record.Tag == 10 ).Sound );
+			Assert.IsTrue( script.Effects.Records.Where( record => record.Tag != 10 ).All( record => record.Sound is null ) );
+			Assert.AreEqual( 0, script.TakeRestoredSounds( put ), "taken once" );
+
+			Assert.AreEqual( 0, park.FileVoicesLetGo.Count );
+
+			script.Turn( 0f );
+
+			Assert.IsTrue( gates.Stopped );
+			Assert.IsFalse( park.ScriptVoices.Contains( gates ) );
+			CollectionAssert.AreEquivalent( new[] { 0x012e0055 }, park.FileVoicesLetGo.ToArray(), "what a save leaves out" );
+		} );
+	}
+
+	/// <summary>The stock park's voice list.</summary>
+	private static ParkVoices ShippedVoices()
+	{
+		using var stream = new MemoryStream( FileSystem.ReadAllBytes( "levels/jungle/Easymode.TPWI" ) );
+		var reader = new SaveReader( stream );
+
+		return new ParkWorld( reader.ReadFile(), reader.Preamble ).Voices;
+	}
+
+	private static int Times( string what ) => Unimplemented.Summary.FirstOrDefault( entry => entry.What == what ).Times;
 }

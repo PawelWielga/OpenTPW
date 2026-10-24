@@ -150,8 +150,11 @@ public sealed partial class ParkAudio
 	/// <summary>One sound a script started, for as long as it can sound.</summary>
 	internal sealed class ScriptVoice
 	{
-		/// <summary>The script's id, its type and its effect.</summary>
-		public required int Script { get; init; }
+		/// <summary>
+		/// The script's id, its type and its effect. A voice put back from a park file is the file's
+		/// (<see cref="FileOwner"/>) until a script's record that names its handle takes it.
+		/// </summary>
+		public required int Script { get; set; }
 
 		public required int Type { get; init; }
 
@@ -197,7 +200,38 @@ public sealed partial class ParkAudio
 		public int Parameter { get => Values[0]; set => Values[0] = value; }
 
 		/// <summary>Who started it, for the log: a script, or the interface (<see cref="InterfaceOwner"/>).</summary>
-		public string Owner => Script == InterfaceOwner ? "the interface" : $"script {Script}";
+		public string Owner => Script switch
+		{
+			InterfaceOwner => "the interface",
+			FileOwner => "the park file",
+			_ => $"script {Script}"
+		};
+
+		/// <summary>The handle a park file kept it under, for one put back from it (<see cref="PutBackFileVoices"/>), or nought.</summary>
+		public int Handle { get; init; }
+
+		/// <summary>
+		/// Whether a chain's list holds no child: as it is made, and when its newest child is pruned on the very
+		/// millisecond it is due, which <c>HeldChain_Extend</c> passes over (<c>now &gt; +0x1c</c>, <c>0x006bdb88</c>) and
+		/// <c>HeldChain_Prune</c> does not (<c>now &gt;= +0x1c</c>, <c>0x006bdc23</c>). The next pass makes its child as a first.
+		/// </summary>
+		public bool ListEmpty { get; set; } = true;
+
+		/// <summary>
+		/// The original's voice flag <c>0x20</c>: set as a chain's first child is made from an empty list
+		/// (<c>HeldChain_HeadOrFirstChild</c>, <c>0x006bdb10</c>), which before it takes the effect's first variation where
+		/// the effect has a key. A chain put back from a park file comes back without it.
+		/// </summary>
+		public bool FirstChildTaken { get; set; }
+
+		/// <summary>
+		/// A chain put back from a park file: the saved child's sample, started as the chain is first in range, or null once
+		/// it has been (<see cref="StartKeptChild"/>).
+		/// </summary>
+		public AudioClip? KeptChild { get; set; }
+
+		/// <summary>The kept child's own variation, zero-based, whose header its volume, pitch and range come from.</summary>
+		public int KeptChildVariation { get; set; }
 
 		/// <summary>When a chain's next child is made: its newest child's start and that child's wait (<c>0x006bdb88</c>).</summary>
 		public float NextAt { get; set; }
@@ -439,7 +473,8 @@ public sealed partial class ParkAudio
 
 	/// <summary>
 	/// Each plain script voice's next sample once the last has ended and its silence is over, as a following voice's
-	/// is (<see cref="ServeFollowing"/>; drawn then, not as the original queues it: <see cref="NextScriptSample"/>), each chain's next child once the clock passes its newest child's time, and
+	/// is (<see cref="ServeFollowing"/>; drawn then, not as the original queues it: <see cref="NextScriptSample"/>), each chain's next child once the clock passes its newest child's time
+	/// (on the very millisecond of it the list empties instead, and the next pass makes the child as a first: <see cref="ScriptVoice.ListEmpty"/>), and
 	/// every one-shot served (<see cref="ServeOneShot"/>). A voice out of range makes nothing (<see cref="InRange"/>): a
 	/// plain, music or one-shot voice's sample is cut, and in range again its sample starts afresh (a one-shot's unless its
 	/// start is refused, <see cref="StartOneShot"/>).
@@ -459,8 +494,26 @@ public sealed partial class ParkAudio
 				if ( !Reached( sound ) )
 					continue;
 
-				if ( Time.Now > sound.NextAt )
+				if ( sound.KeptChild is not null )
+					StartKeptChild( sound );
+
+				if ( sound.ListEmpty )
+				{
 					NextChainChild( sound );
+					continue;
+				}
+
+				var (now, due) = (Milliseconds( Time.Now ), Milliseconds( sound.NextAt ));
+
+				if ( now > due )
+				{
+					NextChainChild( sound );
+				}
+				else if ( now == due )
+				{
+					sound.ListEmpty = true;
+					Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect}, its newest child pruned on the millisecond it was due, its list empty" );
+				}
 
 				continue;
 			}
@@ -905,11 +958,18 @@ public sealed partial class ParkAudio
 	/// (<c>0x006bc2d0</c>). The child before plays out, as the original prunes it without a stop. A chain of any variation's
 	/// child (class <c>0x0070a970</c>) draws by weight among all of the effect's (<c>FUN_006bc810</c> asked with 0, so with
 	/// no rule against the one before); a held chain's (<c>0x0070a9e0</c>) takes the zones' rule (<c>0x006c3e00</c>), and
-	/// with no zone for its parameter makes nothing, as the original parks it.
+	/// with no zone for its parameter makes nothing, as the original parks it. From an empty list, a chain whose effect has
+	/// a key and that has not been there before (<see cref="ScriptVoice.FirstChildTaken"/>) takes the effect's first variation.
 	/// One due while the world is held is made unheard (<see cref="Unheard"/>): its draws and its wait, and no voice.
 	/// </summary>
 	private void NextChainChild( ScriptVoice sound )
 	{
+		if ( sound.ListEmpty && sound.Key != 0 && !sound.FirstChildTaken )
+		{
+			sound.Variation = -1;
+			sound.FirstChildTaken = true;
+		}
+
 		var headers = sound.Category.VariationsOf( sound.Effect );
 		var next = sound.Held
 			? ParkScreams.NextVariation( headers, sound.Variation, sound.Parameter, _scriptRandom )
@@ -918,6 +978,7 @@ public sealed partial class ParkAudio
 		if ( next < 0 )
 			return;
 
+		sound.ListEmpty = false;
 		sound.Variation = next;
 		sound.Kept = HeldSample( headers[next], first: true, sound.Kept, 0, 0, _scriptRandom );
 		sound.Wait = ParkScreams.GapMilliseconds( headers[next], _scriptRandom );
@@ -945,6 +1006,44 @@ public sealed partial class ParkAudio
 		Log.Info( $"Park audio: {sound.Owner}'s {(sound.Held ? "held chain" : "chain")} {sound.Effect}, child {sound.Samples} at {Time.Now:F3} s, sample '{sound.Voice.Name}' variation {next + 1} "
 			+ $"volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, the next in {sound.Wait} ms" );
 	}
+
+	/// <summary>
+	/// A chain put back from a park file, first in range: its saved child's channel started (the child's tick,
+	/// <c>0x006bd800</c>) on the kept sample, at a volume and a pitch of its own variation's (<c>0x006c3ae0</c>) and over that
+	/// variation's range. Its time was set as it was put back.
+	/// </summary>
+	private void StartKeptChild( ScriptVoice sound )
+	{
+		var headers = sound.Category.VariationsOf( sound.Effect );
+		var clip = sound.KeptChild!;
+		var header = headers[sound.KeptChildVariation];
+
+		sound.KeptChild = null;
+		sound.Kept = HeldSample( header, first: true, sound.Kept, 0, 0, _scriptRandom );
+
+		if ( Unheard( sound.Place ) )
+		{
+			++sound.Unheard;
+			Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect}, the park file's child unheard while the world is held" );
+			return;
+		}
+
+		sound.Voice = Audio.Play( clip, ChannelGain( sound.Kept.Volume ), bus: AudioBus.Effects, position: sound.Place,
+			range: sound.Place is null ? null : header.Range );
+
+		if ( sound.Voice is null )
+			return;
+
+		sound.Voice.SetRate( ParkCarSounds.Rate( sound.Kept.Pitch ) );
+		++sound.Samples;
+
+		Log.Info( $"Park audio: {sound.Owner}'s {sound.Kind} {sound.Effect}, the park file's child at {Time.Now:F3} s, sample '{sound.Voice.Name}' "
+			+ $"variation {sound.KeptChildVariation + 1} volume {sound.Kept.Volume} plays {sound.Voice.Volume:F4} pitch {sound.Kept.Pitch}, "
+			+ $"the next at {sound.NextAt:F3} s" );
+	}
+
+	/// <summary>A time on <see cref="Time"/>'s clock in whole milliseconds, as the sound service reads its own (<c>0x005f5fa0</c>).</summary>
+	internal static long Milliseconds( float seconds ) => (long)Math.Round( seconds * 1000.0 );
 
 	/// <summary>Every script sound let go as the park ends.</summary>
 	private void StopScriptSounds()
@@ -982,7 +1081,8 @@ public sealed partial class ParkAudio
 			var values = sound.Follows ? $" values {string.Join( ",", sound.Values )} kept {sound.Kept.Volume}/{sound.Kept.Pitch}" : "";
 
 			lines.Add( $"{sound.Owner} type {sound.Type} effect {sound.Effect} {sound.Kind} "
-				+ $"'{voice?.Name}' volume {voice?.Volume ?? 0f:F4} {(voice is { Playing: true } ? "playing" : "silent")}{(sound.Away ? " away" : "")} samples {sound.Samples}{music}{values} {where}" );
+				+ $"'{voice?.Name}' volume {voice?.Volume ?? 0f:F4} {(voice is { Playing: true } ? "playing" : "silent")}{(sound.Away ? " away" : "")} samples {sound.Samples}{music}{values} {where}"
+				+ (sound.Handle != 0 ? $" handle 0x{sound.Handle:x8}" : "") );
 		}
 
 		return string.Join( "; ", lines );

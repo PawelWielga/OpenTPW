@@ -1649,6 +1649,14 @@ public sealed partial class ParkWorld : IParkInitialState
 	private ParkParticles? _particles;
 
 	/// <summary>
+	/// The sound manager's live voices as this park was saved - see <see cref="ParkVoices"/>. Never null; ask it for its
+	/// own <see cref="ParkVoices.Problem"/>.
+	/// </summary>
+	public ParkVoices Voices => _voices ??= new ParkVoices( _data );
+
+	private ParkVoices? _voices;
+
+	/// <summary>
 	/// Every track ride this park held, with the track laid for it - see <see cref="ParkTrackRides"/>. Never null;
 	/// ask it for its own <see cref="ParkTrackRides.Problem"/>.
 	/// </summary>

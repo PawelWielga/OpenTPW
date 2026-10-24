@@ -111,6 +111,32 @@ public sealed class SoundCategory
 	public IEnumerable<int> EffectIds => _effects.Select( effect => effect.Id );
 
 	/// <summary>
+	/// The id of the effect at <paramref name="index"/> in the category's effect table, from nought, as a park file's
+	/// voice names it (FileFormats <c>saves.md</c>, "The voice list"), or -1 for none.
+	/// </summary>
+	public int EffectAt( int index ) => index >= 0 && index < _effects.Count ? _effects[index].Id : -1;
+
+	/// <summary>
+	/// Sample <paramref name="sample"/> of variation <paramref name="variation"/> of effect <paramref name="id"/>, each a
+	/// place from nought, as a park file's voice names the one it holds, and its record's length; null where there is
+	/// no such sample or it would not decode.
+	/// </summary>
+	public AudioClip? SampleAt( int id, int variation, int sample, out TimeSpan length )
+	{
+		length = TimeSpan.Zero;
+		var effect = _effects.FirstOrDefault( candidate => candidate.Id == id );
+
+		if ( effect == null || variation < 0 || variation >= effect.Variations.Count
+			|| sample < 0 || sample >= effect.Variations[variation].Count )
+			return null;
+
+		var record = effect.Variations[variation][sample];
+		length = record.Duration;
+
+		return record.Bank < _banks.Count ? _banks[record.Bank][record.Index] : null;
+	}
+
+	/// <summary>
 	/// Plays effect <paramref name="id"/>, picking one of its samples at the odds the category
 	/// states, and returns the voice - or null if the effect is unknown, empty, or was played too
 	/// recently.

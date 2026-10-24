@@ -1539,6 +1539,35 @@ public sealed class RideScript
 	}
 
 	/// <summary>
+	/// Hands each sound record a load put back the voice the park file kept under its handle, put back with it
+	/// (<see cref="ParkAudio.PutBackFileVoices"/>), so its <c>KILLOBJ</c>, <c>FADEOBJ</c> and <c>SETOBJPARAM</c> and its end
+	/// reach it as the original's reach the voice its reader put back under the same handle (<c>0x006b6fc3</c>).
+	/// Answers how many it took.
+	/// </summary>
+	internal int TakeRestoredSounds( IReadOnlyDictionary<int, ParkAudio.ScriptVoice> voices )
+	{
+		if ( Effects is null )
+			return 0;
+
+		var taken = 0;
+
+		foreach ( var record in Effects.Records )
+		{
+			if ( record.IsParticle || !record.Restored || record.Sound is not null
+				|| !voices.TryGetValue( record.SavedHandle, out var sound ) || sound.Script != ParkAudio.FileOwner )
+				continue;
+
+			sound.Script = Id;
+			record.Sound = sound;
+			++taken;
+
+			Log.Info( $"Park audio: script {Id} of thing {ThingId} takes the park file's {sound.Kind} {sound.Effect} under 0x{record.SavedHandle:x8} for its record tagged {record.Tag}" );
+		}
+
+		return taken;
+	}
+
+	/// <summary>
 	/// Stops every emitter and every sound this script's records hold, as its end does (<c>FUN_00558500</c>):
 	/// <c>FUN_0051ff70( handle, -2 )</c> for a particle, which stops emitting while what it threw out lives out its
 	/// time, and <c>Sound_Stop</c> for a sound.

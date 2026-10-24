@@ -101,7 +101,8 @@ public static class ParkFileWriter
 		(int ForceStrike, IReadOnlyList<ParkWorld.StrikeRecord> Records)? Strikes = null,
 		ParkWorld.EconomyState? Economy = null, (int Month, int Day)? Calendar = null,
 		ParkWorld.WeatherState? Weather = null, ParkWorld.WrittenLab? Lab = null,
-		IReadOnlyList<ParkWorld.ResearchedRing>? RecentlyResearched = null, ParkWorld.ThingIds? Ids = null );
+		IReadOnlyList<ParkWorld.ResearchedRing>? RecentlyResearched = null, ParkWorld.ThingIds? Ids = null,
+		IReadOnlySet<int>? VoicesLetGo = null );
 
 	/// <summary>
 	/// The file's objects, scripts and models as the running park has them (<c>docs/exe/saves.md</c>, "OpenTPW's
@@ -514,6 +515,11 @@ public static class ParkFileWriter
 		// The map lies before the thing list, so it is still where the file has it; its length changes last of all.
 		if ( running.Effects is { } effects )
 			body = loaded.PutEffects( body, effects );
+
+		// The sound module is the file's, less each voice put back from it and let go since (ParkVoices.Without), so a
+		// chain stopped here does not come back at the next load with nothing to stop it.
+		if ( running.VoicesLetGo is { Count: > 0 } letGo )
+			body = ParkVoices.Without( body, letGo );
 
 		// The aerial's tags end the body, behind every module (FUN_004164c0's last call, FUN_004816a0).
 		if ( running.Tags is { } tags )
