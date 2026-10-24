@@ -88,12 +88,17 @@ internal static class Game
 			Log.Warning( $"Cache folder: {cacheFolder} cannot be made ({e.GetType().Name}: {e.Message}); nothing in the game reads it" );
 		}
 
-		// The texture format, read once from the detail file the game starts with, as the original's window setup takes
-		// it (0x0044e1f4).
-		Texture.KeepsEightBits = Level.Texture32( Level.DetailFile );
-		Log.Info( Texture.KeepsEightBits
-			? $"Textures: {Level.DetailFile}'s TEXTURE32 1, so every texture keeps eight bits a channel (A8R8G8B8)"
-			: $"Textures: {Level.DetailFile}'s TEXTURE32 0, so the game's art is cut to four bits a channel (A4R4G4B4)" );
+		// The texture format, once, before the first texture. Eight bits a channel unless opentpw.cfg asks for the
+		// original's depth, which reads the detail file the game starts with, as the original's window setup does
+		// (0x0044e1f4).
+		var originalDepth = GameOptions.Current.OriginalTextureDepth;
+		var texture32 = originalDepth && Level.Texture32( Level.DetailFile );
+		Texture.KeepsEightBits = Texture.KeepsEightBitsUnder( originalDepth, texture32 );
+		Log.Info( !originalDepth
+			? "Textures: every texture keeps eight bits a channel (A8R8G8B8), OpenTPW's default; opentpw.cfg's \"textures original\" takes the original's depth"
+			: Texture.KeepsEightBits
+				? $"Textures: opentpw.cfg's \"textures original\" and {Level.DetailFile}'s TEXTURE32 1, so every texture keeps eight bits a channel (A8R8G8B8)"
+				: $"Textures: opentpw.cfg's \"textures original\" and {Level.DetailFile}'s TEXTURE32 0, so the game's art is cut to four bits a channel (A4R4G4B4)" );
 
 		//
 		// Init renderer

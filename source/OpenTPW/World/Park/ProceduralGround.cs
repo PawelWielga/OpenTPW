@@ -66,7 +66,7 @@ public sealed class ProceduralGround
 	/// A path cell's own texture as the original's compositor reads it from the texture's locked surface: its rows
 	/// bottom up against the file's, and each channel cut to its top four bits, A4R4G4B4 (the 16-bit mode the original
 	/// runs in, where <c>[0x007014c8 + 4 x [0x008bd554]]</c> is 2; in its 32-bit mode it would read 8:8:8:8, which
-	/// <see cref="Texture.KeepsEightBits"/> (<c>TEXTURE32</c> 1) keeps here).
+	/// <see cref="Texture.KeepsEightBits"/>, OpenTPW's default, keeps here).
 	/// </summary>
 	public sealed class PathTexture
 	{
@@ -74,7 +74,7 @@ public sealed class ProceduralGround
 
 		public int Height { get; }
 
-		/// <summary>Red, green, blue and alpha a texel, each <c>byte &amp; 0xf0</c> (whole under <c>TEXTURE32</c> 1), the surface's row 0 first.</summary>
+		/// <summary>Red, green, blue and alpha a texel, each <c>byte &amp; 0xf0</c> (whole under <see cref="Texture.KeepsEightBits"/>), the surface's row 0 first.</summary>
 		internal byte[] Texels { get; }
 
 		private PathTexture( int width, int height, byte[] texels )

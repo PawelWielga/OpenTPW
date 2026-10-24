@@ -272,24 +272,31 @@ and uncut (111.9, 60.8, 60.9) (`q700/PREDICTION.txt`, P9-P11). The red left over
 display (`RENDER32` 0), whose 5-6-5 OpenTPW does not draw; not read. Not read either: `FUN_0057b6e0`'s format-2
 branch (`0x0057b716`).
 
-**OpenTPW** cuts every texture of the game's art the same (Q700, `Texture.CutChannel`, `v >> 4` widened to `n x 17`,
-alpha too), unless the detail file the game starts with says `TEXTURE32 1` (`Texture.KeepsEightBits`, the original's
-format 3). Each level is made on the processor, the rounded mean of the eight-bit level above's two by two, cut, down to
-one texel (the original's four levels and its filler not followed). Kept at eight (`TextureFlags.OwnPixels`): the
+**OpenTPW keeps eight bits a channel by default, a deviation from the original** (Q616, Alexah 2026-10-21: the four-bit
+cut beside the crisp interface was unsettling; `Texture.KeepsEightBitsUnder`). At the original's depth, `textures
+original` in `save/opentpw.cfg` (`GameOptions.OriginalTextureDepth`), it follows the original's rule: it cuts every
+texture of the game's art the same (Q700, `Texture.CutChannel`, `v >> 4` widened to `n x 17`, alpha too), unless the
+detail file the game starts with says `TEXTURE32 1` (`Texture.KeepsEightBits`, the original's format 3). The log says
+which once at boot ("Textures: ..."). At camera B, ours at its default against the original: brick (111.9, 60.8, 60.9)
+against (116.1, 54.2, 53.4), the sea's period mean (5.5, 57.7, 71.2) against (1.9, 54.4, 68.5); at `textures original`,
+(115.5, 54.0, 53.8) and (3.0, 54.5, 69.2), the pixels main drew while the cut was its default (mad 0.00); the path
+below the park gate (147.9, 107.8, 60.6) by default, (137.4, 106.2, 46.2) cut, the original's (139.4, 107.2, 44.4), a
+path's alpha cut too (`q616/PREDICTION.txt`). Where cut, each level is made on the processor, the rounded mean of the
+eight-bit level above's two by two, cut, down to one texel (the original's four levels and its filler not followed). Kept at eight (`TextureFlags.OwnPixels`): the
 loading bar's reds, the object window's green and red lines and the sky's tint, which are OpenTPW's own, and the loading
 screen, the pointer and the letters, whose way to the screen in the original is not read (Q517). The footprint picture's
 three colours are the original's (`FUN_004ab1b0`, park-engine.md) and are cut with the rest: measured (8,89,140),
 (0,117,25), (115,53,0) over black on a 16-bit frame fit the cut alone (the blue's red 0x1e is 8, the green's red 0x0f 0,
 the brown's blue 0x0f 0), not the eight-bit colour. The procedural ground's sheet goes through the same cut, so a path's
-texels, which its compositor reads from the locked surface as `n << 4` (Q489), reach the screen as `n x 17`; under
-`TEXTURE32` 1 the sheet is not cut and a path stays `n << 4`.
+texels, which its compositor reads from the locked surface as `n << 4` (Q489), reach the screen as `n x 17`; at eight
+bits the compositor reads a path's texels whole (`ProceduralGround.PathTexture`) and the sheet is not cut.
 
 **The sky's colour ramp is the exception to `n x 17`** (Q700). `sky_rgb.tga` is loaded as the other art is, A4R4G4B4, and
 the ramp is read back from that surface at format 2 (`0x00585d67`..`0x00585da2`) as each colour channel `n << 4 | 8`
 and alpha 255; at format 3 the texel is copied (`0x00585dc5`). OpenTPW writes `(v & 0xf0) | 8` and 255
-(`Sky.WidenRamp`) unless `TEXTURE32` 1.
+(`Sky.WidenRamp`) where the art is cut, and copies the texel at eight bits.
 
-**What the cut costs** (Q700). The park loads about 0.76 s slower than with eight bits kept (totals 3.4 s against 4.2 s over
+**What the cut costs** (Q700), now under `textures original` only (Q616). The park loads about 0.76 s slower than with eight bits kept (totals 3.4 s against 4.2 s over
 four runs: guest sprites 273 -> 729 ms, ground 560 -> 691, objects 717 -> 785, fixed items 172 -> 206; `q700/*/run.log`);
 the guest atlas is also packed and cut again on every switch into and out of first person (about 0.45 s by the load
 figure, not measured).

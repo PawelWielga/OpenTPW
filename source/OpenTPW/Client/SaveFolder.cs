@@ -27,6 +27,9 @@ internal static class SaveFolder
 {
 	private const string ConfigName = "Config.tcf";
 	private const string DisplayName = "opentpw.cfg";
+	private const string TexturesName = "textures";
+	private const string TexturesFull = "full";
+	private const string TexturesOriginal = "original";
 	private const string UsersFolder = "users";
 	private const string OnlineFolder = "online";
 	private const string PlayerFileName = "gms.dat";
@@ -113,7 +116,8 @@ internal static class SaveFolder
 	/// <summary>
 	/// Reads save\opentpw.cfg: the settings that are OpenTPW's own, because the original's files have
 	/// nowhere to put them. How the game fills the screen, and the mode full screen asks the display
-	/// for - see <see cref="Display"/>.
+	/// for - see <see cref="Display"/>; and the texture depth (<see cref="GameOptions.OriginalTextureDepth"/>), read
+	/// before the first texture is made.
 	///
 	/// <para>
 	/// It is a plain text file of its own rather than more fields in Config.tcf, so that the original's
@@ -156,6 +160,11 @@ internal static class SaveFolder
 						GameOptions.Current.FullScreenSize = new VideoMode( width, height, refresh );
 						break;
 
+					// "original" draws the game's art at the original's depth; anything else keeps eight bits.
+					case TexturesName:
+						GameOptions.Current.OriginalTextureDepth = parts[1].Equals( TexturesOriginal, StringComparison.OrdinalIgnoreCase );
+						break;
+
 					// What a kind of load cost when it was last measured - see LoadStepCounts. Read before
 					// anything loads, which is why this is called from Game.Run rather than with a scene.
 					case LoadStepCounts.LineName when parts.Length >= 3 && int.TryParse( parts[2], out var steps ):
@@ -194,7 +203,10 @@ internal static class SaveFolder
 				.AppendLine( "# OpenTPW's own settings. The original's Config.tcf beside this one holds the" )
 				.AppendLine( "# options it knows about; these are the ones it has no room for." )
 				.AppendLine( $"display {mode}" )
-				.AppendLine( $"fullscreen {options.FullScreenSize.Width} {options.FullScreenSize.Height} {options.FullScreenSize.RefreshRate}" );
+				.AppendLine( $"fullscreen {options.FullScreenSize.Width} {options.FullScreenSize.Height} {options.FullScreenSize.RefreshRate}" )
+				.AppendLine( "# textures full: the game's art keeps eight bits a channel, OpenTPW's improvement. textures original:" )
+				.AppendLine( "# cut to four bits a channel, as the original draws it, unless the detail file says TEXTURE32 1." )
+				.AppendLine( $"{TexturesName} {(options.OriginalTextureDepth ? TexturesOriginal : TexturesFull)}" );
 
 			// How many steps each kind of load took last time, which is how the loading bar knows how far
 			// to fill without being told - see LoadStepCounts. These are measurements rather than choices,

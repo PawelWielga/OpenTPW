@@ -74,16 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q616. Eight bits a channel is the default: TEXTURE32 on.** From Alexah's play test, 2026-10-21
-  (`playtest-2026-10-21/notes.md` note 1). **Alexah (2026-10-21): this reverses their 2026-10-18 choice (Q700: four bits
-  by default, an option keeps eight).** The four-bit cut beside the crisp UI is unsettling; improvements over the
-  original are on by default. `Level.Texture32` reads the start's detail file once, and `TEXTURE32 1` keeps eight (done
-  in Q700, `docs/history/queue-done.md:8004-8020`); the shipped presets set neither, and the original itself stores `v
-  >> 4`, A4R4G4B4 (`textures.md`; `boot.md:29`). Make eight the default, a key in the detail file (or an option)
-  bringing the original's four back, which Q645's toggle will also set. Say the deviation at the site, in `textures.md`
-  and in the option's text. Q517 (loading screen, pointer and letters, not cut) and Q518 (the 16-bit display) stand.
-  Confirm: the gate's ground and the sea at Q490's camera B shot with the default and with the cut, beside the
-  original's frame; the log's line for the mode; Q717's cost figure is now the cost of the option, not of the default.
 - [ ] **Q617. The ground's cells are not drawn at one sharpness. Decode first.** From Alexah's play test, 2026-10-21
   (note 5, shots 1 to 3; PRIORITY: show the original as well as we can). The ground shows square cells: most blurred, a
   few beside them crisp, a hard seam between (shot3: a crisp grass cell beside blurred ones at the gate); worst at the
@@ -1703,10 +1693,10 @@ filed the items that cite it.
   at the stock band and at -2/-1) and ours at the same stand; predict the shape (the person's own `.FPC` picture laid
   along the sun) and 0x67/255 darkening on opaque texels. Measure the order too: ours draws every shadow after every
   body, the original's 0x80 walk adds each straight after its own body (said at `BuildShadows`).
-- [ ] **Q717. The cost of cutting every texture to four bits.** From the run 4 review (Q700 4): a park loads 0.76 s
-  slower with the cut, and each switch into and out of first person packs the guest atlas again (about 0.45 s by the
-  load figure, not measured). Measure a camcorder switch with and without the cut (`TEXTURE32 1` in a private game
-  folder); if it is felt, make `CutLevels` cheaper (a 256-entry table, one row loop a level). Said at
+- [ ] **Q717. The cost of cutting every texture to four bits.** From the run 4 review (Q700 4); since Q616 the cost of
+  the option `textures original`, not of the default: a park loads 0.76 s slower with the cut, and each switch into
+  and out of first person packs the guest atlas again (about 0.45 s by the load figure, not measured). Measure a camcorder switch with and without the cut (`textures original` in a private game
+  folder's `save/opentpw.cfg`); if it is felt, make `CutLevels` cheaper (a 256-entry table, one row loop a level). Said at
   `Texture.LevelsFor` and in `docs/exe/textures.md`, "What the cut costs".
 - [ ] **Q718. A first-person right click let go inside one frame reaches the park after first person is left.** From the
   run 4 review (Q499 2, latent). `Hud.Update` (`Level.cs`) runs the window stack before `WorldClick`: the stack's release

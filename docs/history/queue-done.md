@@ -9753,6 +9753,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   not nought, after the deposit, before the cash comes off. Confirm in the stock park with the camera on the Jungle
   Spray (525, 300), `q567/confirm.py` with a check for the log's start of effect 208 at the payer's place, and the
   sample in the game's own mix (`lib/mixmatch.py`); the original's places and count are `q567/orig/` run a.
+- [x] **Q616. Eight bits a channel is the default: TEXTURE32 on.** From Alexah's play test, 2026-10-21
+  (`playtest-2026-10-21/notes.md` note 1). **Alexah (2026-10-21): this reverses their 2026-10-18 choice (Q700: four bits
+  by default, an option keeps eight).** The four-bit cut beside the crisp UI is unsettling; improvements over the
+  original are on by default. `Level.Texture32` reads the start's detail file once, and `TEXTURE32 1` keeps eight (done
+  in Q700, `docs/history/queue-done.md:8004-8020`); the shipped presets set neither, and the original itself stores `v
+  >> 4`, A4R4G4B4 (`textures.md`; `boot.md:29`). Make eight the default, a key in the detail file (or an option)
+  bringing the original's four back, which Q645's toggle will also set. Say the deviation at the site, in `textures.md`
+  and in the option's text. Q517 (loading screen, pointer and letters, not cut) and Q518 (the 16-bit display) stand.
+  Confirm: the gate's ground and the sea at Q490's camera B shot with the default and with the cut, beside the
+  original's frame; the log's line for the mode; Q717's cost figure is now the cost of the option, not of the default.
+  **Done 2026-10-24, `alexah/692-eight-bit-textures-by-default`:** eight bits whatever the detail file says
+  (`Texture.KeepsEightBitsUnder`, said at the site, in `textures.md` and in `opentpw.cfg`'s own text); `textures
+  original` in `save/opentpw.cfg` (`GameOptions.OriginalTextureDepth`, for Q645 to set) takes the original's rule, cut
+  unless `TEXTURE32 1`, and draws main's cut frames to the pixel (mad 0.00). Camera B's brick (111.9, 60.8, 60.9)
+  default, (115.5, 54.0, 53.8) cut, the original's (116.1, 54.2, 53.4); the gate's path (147.9, 107.8, 60.6), (137.4,
+  106.2, 46.2), the original's (139.4, 107.2, 44.4). The oracle tests of the path compositor run at the original's
+  depth. 2 tests; 10 of 10 bugs put back fail (`q616/`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

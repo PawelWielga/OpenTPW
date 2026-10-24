@@ -30,22 +30,24 @@ One line per system; the detail, item by item, is `docs/WORKS.md` (grep it by ar
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next Q616 (eight bits a channel by default): Alexah's play test of 2026-10-21 put Q616 to Q645 first, the display, then what a player hits, then the chosen improvements (`playtest-2026-10-21/notes.md`); Q598 (every clip's scale track posed) follows them in section A (Q609, the advisor's row 19 that Q602 decoded, and Q587 to Q589, the karts' and the water ride's build, are filed after it; Q586 stood above the ordered block; Q608, the draws left both-sided, is filed after Q713): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next Q617 (the ground's cells at one sharpness, decode first): Alexah's play test of 2026-10-21 put Q616 to Q645 first, the display, then what a player hits, then the chosen improvements (`playtest-2026-10-21/notes.md`); Q598 (every clip's scale track posed) follows them in section A (Q609, the advisor's row 19 that Q602 decoded, and Q587 to Q589, the karts' and the water ride's build, are filed after it; Q586 stood above the ordered block; Q608, the draws left both-sided, is filed after Q713): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q611 (the charge's till, kids 208 at the paying guest; lane B, off-screen): textures are drawn white there, so the claims rest on the log and the game's own mix, not on a picture (`q611/run1/spray.png` is named, not evidence). The sound's place is the sprite's feet, (525, 305), where the original's model position read (525, 0, 300): not matched to the unit, and the original was not run again. Two put-back bugs survive the unit suite (the call in `ParkRideOperation.Charge` taken out, and made before the price test): a unit test cannot stand a ground up for `Feet`, so only the running game's log catches them (`q611/mutate.out`). Not heard by listening; the mix match is the evidence. Full Simulation not run: the charge is the same code in both.
-
+- Q616 (eight bits a channel by default; `textures original` in `save/opentpw.cfg` cuts to four): confirmed on the
+  desk at cameras A and B, the original under Proton beside it (`q616/PREDICTION.txt`, 7 of 8 held, P8's sea by eye
+  missed and recorded). Not shown: the option on any screen (none has it; Q645's toggle will set it), and the cost of
+  a camcorder switch under the cut (Q717). 10 of 10 bugs put back fail a test.
 
 ## Numbers (take counts fresh; these go stale within a day)
 
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3807**, 0 fail, 0 skip with the game | 2026-10-21, the run 8 review's fixes, alone in a worktree |
-| Tests without the game | **1330** ran, **2477** skipped, of 3807 | 2026-10-21, the run 8 review's fixes, alone in a worktree |
+| Tests | **3814**, 0 fail, 0 skip with the game | 2026-10-24, Q616 rebased on Q611, alone in a worktree |
+| Tests without the game | **1337** ran, **2477** skipped, of 3814 | 2026-10-24, Q616 rebased on Q611, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

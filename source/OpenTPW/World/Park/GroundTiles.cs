@@ -11,8 +11,8 @@ namespace OpenTPW;
 /// alone, so making every one as the park loads, and again where the path laid over changes (<see cref="Remake"/>),
 /// draws the same pixels. Laid side by side, a tile's smaller mip levels take in its
 /// neighbours, which are the cells beside it on the ground. The original's tiles are 16-bit (<c>0x0057257a</c>);
-/// these are cut to four bits a channel with the rest of the game's art (<see cref="Texture.CutLevels"/>), unless
-/// <c>TEXTURE32</c> 1.
+/// these keep eight bits a channel with the rest of the game's art, or are cut to four with it at the original's depth
+/// (<see cref="Texture.CutLevels"/>).
 /// </remarks>
 public sealed class GroundTiles
 {

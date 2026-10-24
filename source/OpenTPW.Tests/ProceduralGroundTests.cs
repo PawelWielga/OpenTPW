@@ -25,6 +25,25 @@ public class ProceduralGroundTests
 	private static string Hash( byte[] bytes ) => Convert.ToHexString( SHA256.HashData( bytes ) ).ToLowerInvariant();
 
 	/// <summary>
+	/// <paramref name="test"/> at the original's texture depth, four bits a channel (opentpw.cfg's <c>textures original</c>),
+	/// where a path texture's texels are the ones the original's oracle was given.
+	/// </summary>
+	private static void AtTheOriginalsDepth( Action test )
+	{
+		var was = Texture.KeepsEightBits;
+
+		try
+		{
+			Texture.KeepsEightBits = false;
+			test();
+		}
+		finally
+		{
+			Texture.KeepsEightBits = was;
+		}
+	}
+
+	/// <summary>
 	/// Every cell of the box, 0..95 x 0..84, of all four parks at 16 pixels, as one run of tiles row by row.
 	/// </summary>
 	/// <remarks><b>Mutation:</b> any step of the tile changed - a ramp, the window, a layer's pair, a span's class, the
@@ -216,7 +235,7 @@ public class ProceduralGroundTests
 	/// every w / N, the path turned where the ground should be, or the angle's turn bits swapped, each changes the
 	/// hash.</remarks>
 	[TestMethod]
-	public void EveryPathTileOfTheShippedParkIsTheOriginals()
+	public void EveryPathTileOfTheShippedParkIsTheOriginals() => AtTheOriginalsDepth( () =>
 	{
 		var data = GameData.Required();
 		FileSystem = data;
@@ -251,7 +270,7 @@ public class ProceduralGroundTests
 
 		Assert.AreEqual( 78, paths );
 		Assert.AreEqual( "d231594b1b4fd9cd97f7cfb90e92e6ab66c6f09f5a53e29e64adccce9bb4774e", Hash( all.ToArray() ) );
-	}
+	} );
 
 	/// <summary>
 	/// Each of the eight cases at the last pass's head on one cell and one tile (jungle's (10, 10), whose ground tells
@@ -272,8 +291,8 @@ public class ProceduralGroundTests
 	[DataRow( (ushort)0x98, "e5bde34f54b4492745faaff320cfb3823790c53f79551777a280c403fe83db99" )]
 	[DataRow( (ushort)0xb0, "0e6a2ec806c356fa20ddf028b0ad3549fb3d8b5038ffc93acfba48c7994d8b90" )]
 	[DataRow( (ushort)0xf0, "43b6de9ee68e78c411b80cf779c275bb81c42636b9889bd4777e7de35daa5dcd" )]
-	public void EachTurnOfTheLastPassIsTheOriginals( ushort word, string expected )
-		=> Assert.AreEqual( expected, Hash( Ground( "jungle" ).Tile( 10, 10, new ProceduralGround.Overlay( PathTexture( "jpa_tju1" ), word ) ) ) );
+	public void EachTurnOfTheLastPassIsTheOriginals( ushort word, string expected ) => AtTheOriginalsDepth(
+		() => Assert.AreEqual( expected, Hash( Ground( "jungle" ).Tile( 10, 10, new ProceduralGround.Overlay( PathTexture( "jpa_tju1" ), word ) ) ) ) );
 
 	/// <summary>A grey tile returns before the last pass: (28, 0) with a path over it is still all grey.</summary>
 	[TestMethod]
@@ -299,22 +318,22 @@ public class ProceduralGroundTests
 	}
 
 	/// <summary>
-	/// The texels as the original's surface holds them: the file's last row first, each channel's top four bits.
+	/// The texels as the original's surface holds them at its depth: the file's last row first, each channel's top four bits.
 	/// </summary>
 	/// <remarks><b>Mutation:</b> the rows kept top down puts 0x10 first; rounding to the nearest nibble gives 0xb0 for
 	/// 0xaf.</remarks>
 	[TestMethod]
-	public void APathTextureIsCutToFourBitsAndReadBottomUp()
+	public void APathTextureIsCutToFourBitsAndReadBottomUp() => AtTheOriginalsDepth( () =>
 	{
 		var texture = ProceduralGround.PathTexture.FromRgba( [0x10, 0x20, 0x30, 0x40, 0xaf, 0x0f, 0xff, 0x88], 1, 2 );
 
 		CollectionAssert.AreEqual( new byte[] { 0xa0, 0x00, 0xf0, 0x80, 0x10, 0x20, 0x30, 0x40 }, texture.Texels );
-	}
+	} );
 
-	/// <summary><c>TEXTURE32</c> 1 keeps the texels whole (the original's 8:8:8:8 read), rows still bottom up.</summary>
+	/// <summary>Eight bits a channel, OpenTPW's default, keeps the texels whole (the original's 8:8:8:8 read under <c>TEXTURE32</c> 1), rows still bottom up.</summary>
 	/// <remarks><b>Mutation:</b> the mask taken whatever the mode gives 0xa0 first.</remarks>
 	[TestMethod]
-	public void APathTextureIsKeptWholeUnderTexture32()
+	public void APathTextureIsKeptWholeAtEightBits()
 	{
 		var was = Texture.KeepsEightBits;
 

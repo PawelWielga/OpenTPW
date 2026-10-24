@@ -30,8 +30,8 @@ namespace OpenTPW;
 /// belong to the player, in their gms.dat (<see cref="PlayerOptions"/>), with the movie volume again - the
 /// player's copy wins when they are picked. Every gms.dat written takes the options as they stand.
 /// <para>
-/// The two that are OpenTPW's own - <see cref="DisplayMode"/> and <see cref="FullScreenSize"/> - go in a
-/// third file, save\opentpw.cfg (<see cref="SaveFolder.LoadDisplay"/>), rather than into fields the
+/// The three that are OpenTPW's own - <see cref="DisplayMode"/>, <see cref="FullScreenSize"/> and
+/// <see cref="OriginalTextureDepth"/> - go in a third file, save\opentpw.cfg (<see cref="SaveFolder.LoadDisplay"/>), rather than into fields the
 /// original's own file has no room for. That way Config.tcf stays a file the original can still read.
 /// </para>
 /// </para>
@@ -65,6 +65,13 @@ internal sealed class GameOptions
 	/// of nothing means the display's current mode, which is what the first run gets.
 	/// </summary>
 	public VideoMode FullScreenSize { get; set; }
+
+	/// <summary>
+	/// The original's texture depth: the game's art cut to four bits a channel unless the detail file says
+	/// <c>TEXTURE32</c> 1, as the shipped game draws it (<see cref="Texture.KeepsEightBitsUnder"/>). <b>OpenTPW's own</b>,
+	/// off by default: OpenTPW keeps eight bits a channel whatever the detail file says, a deviation from the original.
+	/// </summary>
+	public bool OriginalTextureDepth { get; set; }
 
 	/// <summary>+0x08: low, medium or high, as 0, 1 or 2.</summary>
 	public int GraphicsQuality { get; set; } = 1;

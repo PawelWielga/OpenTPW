@@ -6,8 +6,8 @@ namespace OpenTPW.Tests;
 
 /// <summary>
 /// The shipped game's textures are A4R4G4B4: every channel cut to its top four bits as it is stored, and the nibble
-/// read back as <c>n / 15</c> (docs/exe/textures.md, "The texture cache's surface format"). <c>TEXTURE32</c> 1 keeps
-/// eight.
+/// read back as <c>n / 15</c> (docs/exe/textures.md, "The texture cache's surface format"). OpenTPW keeps eight unless
+/// opentpw.cfg asks for the original's depth, and then <c>TEXTURE32</c> 1 keeps eight, as in the original.
 /// </summary>
 [TestClass]
 public class TextureCutTests
@@ -49,7 +49,7 @@ public class TextureCutTests
 		Assert.AreEqual( 34, levels[1].Pixels[0] );
 	}
 
-	/// <summary>The game's art is cut unless <c>TEXTURE32</c> is 1; OpenTPW's own pixels never are.</summary>
+	/// <summary>The game's art is cut unless the game keeps eight bits; OpenTPW's own pixels never are.</summary>
 	/// <remarks><b>Mutation:</b> either test in <c>CutsFor</c> dropped or turned round fails.</remarks>
 	[TestMethod]
 	public void TheGamesArtIsCutUnlessItKeepsEightBits()
@@ -71,7 +71,7 @@ public class TextureCutTests
 		}
 	}
 
-	/// <summary>No shipped detail file sets <c>TEXTURE32</c> to 1; a file saying 1 keeps eight, and 2 does not.</summary>
+	/// <summary>No shipped detail file sets <c>TEXTURE32</c> to 1; a file saying 1 asks for eight, and 2 does not.</summary>
 	/// <remarks><b>Mutation:</b> the value's test made <c>!= 0</c> keeps eight at 2; turned round, the shipped files keep
 	/// eight; the key ignored, the written 1 is cut.</remarks>
 	[TestMethod]
@@ -100,6 +100,69 @@ public class TextureCutTests
 		Assert.IsFalse( Level.Texture32( "low.sam" ) );
 		Assert.IsFalse( Level.Texture32( "med.sam" ) );
 		Assert.IsFalse( Level.Texture32( "high.sam" ) );
+	}
+
+	/// <summary>
+	/// Eight bits a channel by default, whatever the detail file says (a deviation from the original); at the original's
+	/// depth, eight only for <c>TEXTURE32</c> 1, as the original's format <c>2 + TEXTURE32</c>.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the original's rule taken always cuts the default; the option ignored keeps eight at
+	/// the original's depth; <c>TEXTURE32</c> ignored cuts its 1; the option's default made true cuts the game.</remarks>
+	[TestMethod]
+	public void EightBitsAreKeptUnlessTheOriginalsDepthIsAsked()
+	{
+		Assert.IsTrue( Texture.KeepsEightBitsUnder( originalDepth: false, texture32: false ), "default, every shipped file" );
+		Assert.IsTrue( Texture.KeepsEightBitsUnder( originalDepth: false, texture32: true ) );
+		Assert.IsFalse( Texture.KeepsEightBitsUnder( originalDepth: true, texture32: false ), "the original's own, shipped" );
+		Assert.IsTrue( Texture.KeepsEightBitsUnder( originalDepth: true, texture32: true ) );
+		Assert.IsFalse( new GameOptions().OriginalTextureDepth, "OpenTPW's default" );
+	}
+
+	/// <summary>
+	/// opentpw.cfg's <c>textures</c> line: <c>original</c> asks for the original's depth, <c>full</c> or none keeps
+	/// eight, and the file written says which, read back the same.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> the line not read, read as any value, or written as the other word, fails a step.</remarks>
+	[TestMethod]
+	public void TheTextureDepthIsKeptInOpenTpwCfg()
+	{
+		var folder = Path.Combine( Path.GetTempPath(), $"opentpw-textures-{System.Guid.NewGuid():N}" );
+		Directory.CreateDirectory( folder );
+		var was = GameOptions.Current;
+		var wasSaves = SaveFileSystem;
+
+		try
+		{
+			Log = new();
+			SaveFileSystem = new BaseFileSystem( folder );
+			var file = Path.Combine( folder, "opentpw.cfg" );
+
+			GameOptions.Current = new();
+			File.WriteAllText( file, "display windowed\ntextures original\n" );
+			SaveFolder.LoadDisplay();
+			Assert.IsTrue( GameOptions.Current.OriginalTextureDepth, "original" );
+
+			File.WriteAllText( file, "textures full\n" );
+			SaveFolder.LoadDisplay();
+			Assert.IsFalse( GameOptions.Current.OriginalTextureDepth, "full" );
+
+			GameOptions.Current = new() { OriginalTextureDepth = true };
+			SaveFolder.SaveDisplay();
+			StringAssert.Contains( File.ReadAllText( file ), "\ntextures original\n" );
+			GameOptions.Current = new();
+			SaveFolder.LoadDisplay();
+			Assert.IsTrue( GameOptions.Current.OriginalTextureDepth, "written original, read back" );
+
+			GameOptions.Current = new();
+			SaveFolder.SaveDisplay();
+			StringAssert.Contains( File.ReadAllText( file ), "\ntextures full\n" );
+		}
+		finally
+		{
+			GameOptions.Current = was;
+			SaveFileSystem = wasSaves;
+			Directory.Delete( folder, true );
+		}
 	}
 
 	/// <summary>
