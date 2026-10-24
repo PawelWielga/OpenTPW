@@ -23,6 +23,9 @@ public static class TestRun
 		// Real time stands still for every test but the wall clock's own: the interface's click limits read a clock
 		// each test sets (Time.PinWall), so a slow machine cannot turn a click into a held press.
 		Time.PinWall( 0 );
+
+		// And no sample draw gives "none" by chance (a roll above a list's last odds): see NoneFreeRoll.
+		SoundCategory.RandomSource = static () => new NoneFreeRoll();
 	}
 
 	/// <summary>

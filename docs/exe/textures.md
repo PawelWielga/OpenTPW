@@ -57,7 +57,7 @@ here by the texture alone, the same border shows the sky's clear colour** (`q359
 no ground under a footprint (`ParkObjects.CoversGround`), so nothing lies under the clear texels. That is why the
 `0x2` gate stays (Q359), and what the old note "removing the gate exposed holes" was.
 
-**The original draws no ground under a footprint either, and draws the floor's clear texels** (Q360). `FUN_005365d0`
+**The original draws no ground under a footprint either, and what shows at the floor's clear texels is the composited tile** (Q360, read again at Q617). `FUN_005365d0`
 (and `FUN_005366e0`) ask `FUN_00535dd0` for a cell's ground tile, which answers 8 for cell types 2, 4, 7, 9, 10, 21 and
 30 (a built thing's footprint is 4, 9 and 10); `FUN_00450470` hands that to `FUN_0046df50`, which ORs `0x101` into the
 heightfield cell's flag word (`[[0x007a0854] + 0x6c] + 0x2c`, four bytes a cell, the flag word low and the ground's
@@ -75,10 +75,11 @@ the box's mean (0, 0, 0) against (80.5, 121.9, 40.4), 15,496 of its 30,000 pixel
 is the frame's clear colour, black. **With `0x1` on all twelve of its cells, so no ground under it, the Belly Bounce's
 floor border is green** (`a-2-loaded.png`), as it is with the bit cleared and the ground drawn under it
 (`a-3-later.png`); the 37 pixels under 8 in its box in each frame are the trench's and the queue's, none on the
-border. So the original draws the plate's clear texels, its painted grass, where this game's texture alone would cut
-them.
+border. So the original shows green at the plate's clear border where this game's texture alone would cut it. Q360 read
+that as the plate's own painted grass; Q617 found the floor's texture replaced by a composited tile (below), so what
+shows at a clear texel is the ground tile blended in, and the plate's own texels are not shown to be the source.
 
-**It draws them because it sets the floor's materials `0x800` when the model loads** (Q361). The object model loader
+**It sets the floor's materials `0x800` when the model loads** (Q361), the opaque word, which Q360 took for the reason the clear texels show; Q617's composited tile (below) is what is drawn there, and whether `0x800` still matters is not read: clearing it changed nothing on screen. The object model loader
 `FUN_004629d0`, given flag `0x1` and a model exported "with 'has procedural base'" (its `+0x30` has `0x8`, else it logs
 `0x0074d774`), calls `ProceduralBase_Build` (`0x0046a5a0`), which finds the floor mesh (`+0x2c`, marked `0x4000`) and
 calls `ProceduralBase_SkirtFlags` (`0x0046aa10`, "Has %d flipped and %d non-flipped skirt textures"). That walks the

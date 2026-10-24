@@ -378,7 +378,7 @@ filed the items that cite it.
   under Proton: set music off in the options, load `Easymode.TPWI` (or a copy), and listen or record the mix
   (`record.sh`); then decide whether OpenTPW's load should do the same (it keeps the player's options today) and say the
   result at the site. Nothing is built before the check.
-- [ ] **Q742. The avoid-repeat step for the park's own voices.** From Q723. The crowd's voice, the land's following voices and the park music ask the draw with 1 in the original, and here `SoundCategory.PickFrom( ..., avoidRepeat: true )` counts `SAMPLE_NO_REPEAT` where the variation holds more than two samples, and plays whatever the roll gives. Keep each voice's last pick (the voice's `+0x46`, which a variation change leaves alone: read it in `FUN_006bc680`'s callers before choosing where it lives) and pass it to `SoundCategory.Draw`; confirm by the chosen voice's log (`Crowd voice: sample ...`, the land's following lines) never naming one sample twice running within a variation of three or more, the bug put back.
+- [ ] **Q742. The avoid-repeat step for the park's own voices.** From Q723. The plain-class and music-class voices ask the draw with 1 for every sample after the first (`0x006bde33`; the first asks with 0, `0x006bbfe3`, and the pick is stored on every draw from a list of two or more, `0x006bc747`): the crowd's voice, the land's following voices, the park music, a script's plain and music sounds (the End's global rides 200, eleven samples) and the interface's loops (`cat_ui` 154 and 155, started by `PlayInterfaceSound` for the research screen). Here `SoundCategory.PickFrom( ..., avoidRepeat: !first )` counts `SAMPLE_NO_REPEAT` where the variation holds more than two samples, and plays whatever the roll gives. Keep each voice's last pick (the voice's `+0x46`, which a variation change leaves alone: read it in `FUN_006bc680`'s callers before choosing where it lives) and pass it to `SoundCategory.Draw`; confirm by the chosen voice's log (`Crowd voice: sample ...`, the land's following lines) never naming one sample twice running within a variation of three or more, the bug put back.
 
 - [ ] **Q562. The bus at its stops beside the original's.** From Q561. Q583 built what this asked for, for every route
   clip: the open route's segment count and the facing along the route (`park.md`, "Where a route key puts its node");
@@ -1946,6 +1946,31 @@ filed the items that cite it.
   hand the place to Charge through the existing TillPlace seam, truncated to whole units as the original does, and
   confirm in the running game against the original's Sound_PlayEffect hits (q567/orig/brk.sh) for the Spray and the
   Kiosk.
+- [ ] **Q653. The cost of the ground at 32-pixel tiles.** From the run 9 review (Q618 M3). The default 32 made the park load
+  slower: `[load] jungle: ground took 731 ms` at 16 against `1472 ms` at 32, the whole load 5.6 s against 6.2 s (the same
+  dll, `q618/runB` and `runA`), and the atlas is four times the memory (3072 x 2720, 33 MB). Measure where the 0.74 s goes
+  (`GroundTiles.Make`'s `Lay` of 8160 tiles, `ProceduralGround.Upsample`, the 33 MB `Texture`, or the `Remake` that makes the
+  texture again whenever a path changes), and cut it where it is cheap: `Lay` per tile in parallel, or the texture made
+  once and its changed tiles written in place. Confirm with the `[load]` step times before and after, and the frame rate at
+  32 beside 16 (not yet measured).
+- [ ] **Q654. The screams' chain on a due millisecond.** From the run 9 review (Q612 M3). The original's chain tick extends nothing
+  when `now == +0x1c` (`0x006bdb88`, `now > due`) and prunes the newest child (`0x006bdc23`, `now >= due`), so the list is
+  empty for a pass and its next child is made as a first (`HeldChain_HeadOrFirstChild`, `docs/exe/audio.md`). Every script
+  chain here keeps that pass (`ScriptVoice.ListEmpty`); `ParkScreams.Pump` waits for `now > NextAt` and makes the next
+  child as the next of its run, so the kids 71 to 73's chains differ on the one millisecond of a child's time (about one
+  child in nine to twenty-five in a script chain's runs, `q612/run5/run.log`). Give `ParkScreams.Chain` the same empty-pass
+  rule, with a test that fails when the pass is skipped, and confirm in a run by the first child's variation after a due
+  millisecond.
+- [ ] **Q655. A sold Loudspeaker's chain carried by a save made without sound.** From the run 9 review (Q612 M4). With no sound
+  device `PutBackFileVoices` puts nothing back, so `ParkAudio.FileVoicesLetGo` is empty and `ParkFileWriter` carries every
+  voice of the loaded file; a Loudspeaker sold on such a machine is saved with its 177 chain, and that file loaded where
+  there is sound puts the chain back under a handle no record names (the thing is gone): `FileOwner` for ever, beasts at an
+  empty spot. The original's save with its sound off writes no voice list (FileFormats `saves.md`: records are written when
+  both dwords are set). When the park ran with no sound device, leave out every held chain whose handle no surviving script
+  record names (or write the list empty, as the original's soundless save does), and say it at `Level`'s save. Confirm:
+  buy a Loudspeaker, sell it, save without a device (`SDL_AUDIODRIVER=dummy` is not that; use a test with `Audio.Ready`
+  false), load the save with sound, and `PARK_FILE_SOUND_VOICE_*` / the log show no chain for the sold speaker; the bug
+  put back fails a test in `ParkVoicesTests`.
 
 ## B. Docs and comments
 

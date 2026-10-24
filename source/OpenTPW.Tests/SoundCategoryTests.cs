@@ -107,25 +107,88 @@ public class SoundCategoryTests
 	[TestMethod]
 	public void TheGlobalRidesPlayTheSamplesTheirRecordsName()
 	{
-		var rides = new SoundCategory( "global", "global/sound", "rides" );
-
-		Assert.IsTrue( rides.IsValid, "the global rides should load" );
-
-		foreach ( var (effect, milliseconds) in new[] { (212, 1442), (211, 999), (203, 395) } )
+		// 202's six records end at 65,532 (10922 ... 65532), so a roll of 65,533 or more gives no sample. The rolls are
+		// the test's own, every record's odds and the one above the last, so no draw is left to chance.
+		FixedRoll.During( 0, roll =>
 		{
-			Assert.IsNotNull( rides.PickSample( effect, out var variation, out var length ), $"effect {effect} should decode" );
-			Assert.AreEqual( (0, milliseconds), (variation, (int)length.TotalMilliseconds), $"effect {effect}'s sample" );
-		}
+			var rides = new SoundCategory( "global", "global/sound", "rides" );
 
-		var lengths = new System.Collections.Generic.HashSet<int>();
+			Assert.IsTrue( rides.IsValid, "the global rides should load" );
 
-		for ( int i = 0; i < 400; ++i )
+			foreach ( var (effect, milliseconds) in new[] { (212, 1442), (211, 999), (203, 395) } )
+			{
+				Assert.IsNotNull( rides.PickSample( effect, out var variation, out var length ), $"effect {effect} should decode" );
+				Assert.AreEqual( (0, milliseconds), (variation, (int)length.TotalMilliseconds), $"effect {effect}'s sample" );
+			}
+
+			var lengths = new System.Collections.Generic.HashSet<int>();
+
+			foreach ( var odds in new[] { 0, 10922, 21844, 32766, 43688, 54610, 65532 } )
+			{
+				roll.Roll = odds;
+				Assert.IsNotNull( rides.PickSample( 202, out _, out var length ), $"roll {odds} lands in a record" );
+				lengths.Add( (int)length.TotalMilliseconds );
+			}
+
+			CollectionAssert.AreEquivalent( new[] { 1794, 1452, 944 }, lengths.ToArray(), "202's three samples, never 203's" );
+
+			foreach ( var above in new[] { 65533, 65535 } )
+			{
+				roll.Roll = above;
+				Assert.IsNull( rides.PickSample( 202, out _, out var length ), $"roll {above} is above the last odds: no sample" );
+				Assert.AreEqual( TimeSpan.Zero, length );
+			}
+		} );
+	}
+
+	/// <summary>
+	/// The lobby's music (effect 1 of <c>locallobbymusic</c>: one list of three samples, odds 21845, 43690, 65535) as a
+	/// voice draws it (<c>FUN_006bc680</c>): the pick is kept on every draw of a list of two or more (<c>0x006bc747</c>),
+	/// asked for the step or not, and the step is taken only where asked. The rolls are the test's own.
+	/// </summary>
+	[TestMethod]
+	public void ADrawKeepsItsPickWhetherOrNotItAskedAndOnlyAnAskStepsOffIt()
+	{
+		FixedRoll.During( 0, roll =>
 		{
-			rides.PickSample( 202, out _, out var length );
-			lengths.Add( (int)length.TotalMilliseconds );
-		}
+			var music = new SoundCategory( "levels/jungle", ParkSound, "locallobbymusic" );
 
-		CollectionAssert.AreEquivalent( new[] { 1794, 1452, 944 }, lengths.ToArray(), "202's three samples, never 203's" );
+			Assert.IsTrue( music.IsValid, "jungle's lobby music should load" );
+
+			int Draw( int at, bool ask )
+			{
+				roll.Roll = at;
+				Assert.IsNotNull( music.PickSample( 1, out _, out var length, ask ), $"roll {at} lands in a sample" );
+
+				return music.LastSampleOf( 1 );
+			}
+
+			Assert.AreEqual( -1, music.LastSampleOf( 1 ), "nothing drawn yet" );
+			Assert.AreEqual( 0, Draw( 0, ask: false ), "a first draw asks for no step and still keeps its pick" );
+			Assert.AreEqual( 0, Draw( 0, ask: false ), "and an unasked draw does not step off the pick kept" );
+			Assert.AreEqual( 1, Draw( 0, ask: true ), "an asked draw that repeats the kept pick moves on to the next" );
+			Assert.AreEqual( 0, Draw( 0, ask: true ), "and one that does not repeat it (0 after 1) stays where the roll put it" );
+			Assert.AreEqual( 1, Draw( 0, ask: true ), "a repeat is read against the pick kept: 0 again moves on to 1" );
+			Assert.AreEqual( 2, Draw( 30000, ask: true ), "and 1 again moves on to 2" );
+			Assert.AreEqual( 0, Draw( 65535, ask: true ), "the last sample's repeat wraps to the first" );
+			Assert.AreEqual( 2, Draw( 65535, ask: false ), "an unasked draw keeps its pick, which the next ask reads" );
+			Assert.AreEqual( 0, Draw( 65535, ask: true ), "so asking now steps off the last" );
+		} );
+	}
+
+	/// <summary>A list of one is returned with no draw and no store (<c>0x006bc6ae</c>): the pick kept from before stays.</summary>
+	[TestMethod]
+	public void AListOfOneKeepsNoPick()
+	{
+		FixedRoll.During( 0, dice =>
+		{
+			var rides = new SoundCategory( "global", "global/sound", "rides" );
+
+			Assert.IsNotNull( rides.PickSample( 212, out _, out _, avoidRepeat: true ) );
+			Assert.AreEqual( -1, rides.LastSampleOf( 212 ), "212 is one sample of one list" );
+			Assert.IsNotNull( rides.PickSample( 202, out _, out _ ) );
+			Assert.AreEqual( 0, rides.LastSampleOf( 202 ), "and 202's six samples keep theirs" );
+		} );
 	}
 
 	/// <summary>

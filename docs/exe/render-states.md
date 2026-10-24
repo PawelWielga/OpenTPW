@@ -185,7 +185,7 @@ Prior observations that removing it makes holes do not prove the original bit's 
 opaque"). The gate is gone; Q361's 174 of 174 floor materials are that loader's.
 
 **Settled since (Q359):** the holes were this game's own: a floor plate's clear border shows what lies under the
-footprint, and neither game draws ground there (`textures.md`, "What a floor's clear border shows"); the reference is the
+footprint, and neither game's terrain pass draws ground there; the original's floor texture is a composited tile since Q617, so its border is the blended ground (`textures.md`, "What a floor's clear border shows"); the reference is the
 texture's header since then.
 
 **Unknown then:** why those holes occur. Texture decoding, another setup path, runtime mutation,
@@ -260,7 +260,7 @@ Decoded for Q617 from the listing (`lib/testme.objdump`; the device's `SetTextur
 | Address / value | What it does | Evidence |
 |---|---|---|
 | `DetailFile_Apply`, `0x0044d8f0`..`0x0044d921` | `GraphicalOptions.TEXTUREFILTERING` (`[0x00785878]`, key 1 of the table at `0x00744300`; the files' comment says 0 point, 1 bilinear, 2 trilinear, 3 anisotropic): 0 and 1 clear `0x18` of `[0x008bd550]`, 2 and 3 set both bits, any other value leaves them. **So 0 and 1 draw alike, and 2 and 3 alike.** Shipped: `low.sam` 0, `med.sam` 1, `high.sam` 2 | Disassembly |
-| `0x005669cc`..`0x00566a4a` (the device's init `FUN_00566840`) | With `[0x008bd550]` `0x2` (`MIPMAP` 1, `0x0044db3a`; 1 in all three files): `MIPFILTER` 3 (`D3DTFP_LINEAR`) where `0x8` is set and the triangle caps' filter word (`[0x00879da8] + 0xb0`) has `0x20` (`LINEARMIPLINEAR`), else 2 (`POINT`) where it has `0x8` (`MIPLINEAR`), else 1 (`NONE`), and 1 on the card `[ebp+0x408]` `0x12d2`, `[ebp+0x40c]` `0x18` (not identified); `MAGFILTER` 5 (`ANISOTROPIC`) where `0x10` is set and the caps have `0x4000000` (`MAGFANISOTROPIC`), else 2 (`LINEAR`); `MINFILTER` 1 (`D3DTFN_POINT`). Without `MIPMAP` the three are not written there. Handed to stage 0 at `0x00566ca9`, `0x00566cbd`, `0x00566cd1` | Disassembly |
+| `0x005669cc`..`0x00566a4a` (the device's init `FUN_00566840`) | With `[0x008bd550]` `0x2` (`MIPMAP` 1, `0x0044db3a`; 1 in all three files): `MIPFILTER` 3 (`D3DTFP_LINEAR`) where `0x8` is set and the triangle caps' filter word (`[0x00879da8] + 0xb0`) has `0x20` (`LINEARMIPLINEAR`), else 2 (`POINT`) where it has `0x8` (`MIPLINEAR`), else 1 (`NONE`), and 1 on the card `[ebp+0x408]` `0x12d2`, `[ebp+0x40c]` `0x18` (not identified); `MAGFILTER` 5 (`ANISOTROPIC`) where `0x10` is set and the caps have `0x4000000` (`MAGFANISOTROPIC`), else 2 (`LINEAR`); `MINFILTER` 1 (`D3DTFN_POINT`). Without `MIPMAP` `MIPFILTER` is still written 1 (`NONE`, `mov [esi-0x20],ebx` at `0x005669cc`, before the `MIPMAP` test); only the `MAGFILTER` and `MINFILTER` slots are skipped (jump `0x005669d6` to `0x00566a4d`). Handed to stage 0 at `0x00566ca9`, `0x00566cbd`, `0x00566cd1` | Disassembly |
 | `0x00566f7b` | The init leaves the state cache's word `0xffffffff`, every bit "set" | Disassembly |
 | `FUN_00567620`, `0x0056788e`..`0x0056792a` | Each word, through `FUN_00567a70` (which writes a state only where the bit differs from the cached word): `0x20000` set `MAGFILTER` 1 (`POINT`), clear 2 (`LINEAR`); `0x40000` set `MIPFILTER` 1 (`NONE`), clear the init's choice. `MINFILTER` is written on every word: 2 (`LINEAR`) where the word has `0x400000` (the wrap bit, "Texture addressing" above), 1 (`POINT`) where it has not. With the cache all ones, the init's `ANISOTROPIC` stands only until the first word without `0x20000` | Disassembly |
 | `FUN_00566fa0` (from `0x00569d23`) | `MIPMAPLODBIAS` = `[0x008bd4a8]`, which no instruction writes: 0 (the zero-filled end of `.data`) | Disassembly |
@@ -268,9 +268,9 @@ Decoded for Q617 from the listing (`lib/testme.objdump`; the device's `SetTextur
 
 So a clamped texture, the ground's tiles and every texture packed in a page among them, is minified by its nearest
 texel and magnified bilinear; at `med.sam` (`TEXTUREFILTERING` 1) the mip level is the nearest one where the caps
-allow (`POINT`), at `high.sam` the two nearest blended. What the caps answer under Proton, and so which `MIPFILTER`
-the reference install draws, is not read live. **OpenTPW** samples every material 16x anisotropic over every mip level
-(`Material.CreateSampler`), which differs from the original only where a texture is minified (Q29). The ground's
+allow (`POINT`), at `high.sam` the two nearest blended where the caps have `0x20` (and the nearest or none where they do not). What the caps answer under Proton, and so which `MIPFILTER`
+the reference install draws, is not read live. **OpenTPW** samples every material but the `PointFilter` ones (the loading screen's status box) 16x anisotropic over every mip level
+(`Material.CreateSampler`, `Texture.SamplerFor`), which differs from the original only where a texture is minified (Q29). The ground's
 tiles at the park's own cameras are magnified in both, and bilinear in both, at 16 pixels (Q617: the gate's path, `q617/path-zoom-ours-left-original-right.png`) and at 32 (Q618, `q618/side-by-side-gate.png`; `park-engine.md`, "The original at 32").
 
 ## Three back-to-front sorts — which OpenTPW does not do

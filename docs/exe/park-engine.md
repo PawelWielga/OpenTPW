@@ -4278,7 +4278,7 @@ tile and composites the cell into it, and a hit composites again only when the c
 **The tile size.** `FUN_00457a90` asks 16 when `[0x0079d86c]` has 4, 32 when it has 2, 64 when 1 and 32 with
 none (`GraphicalOptions.PROCEDURALTEXTURING` 1, 2, 3 set 4, 2, 1; 0 turns the compositor off), and `FUN_00572110` cuts
 the ask to 16 when `[0x008bd520]` < 48 MB or the texture memory `[0x008c1624]` < bytes-a-pixel x 3 MB, and 64 to 32 under
-64 MB or 5 MB. **`[0x008bd520]` is `GlobalMemoryStatus`'s `dwTotalPhys`** (`0x0058357b`) and the test is signed
+64 MB `dwTotalPhys` (`0x00572170`) or when the texture memory is under 5 x bytes-a-texel MB (`0x00572178`). **`[0x008bd520]` is `GlobalMemoryStatus`'s `dwTotalPhys`** (`0x0058357b`) and the test is signed
 (`JL`, `0x0057215f`): read live over 4 GB (under Proton) it is -1, so the original makes **16-pixel tiles whatever the detail asks**
 there. Between 2 and 4 GB is not measured: `testme.exe` is not large-address aware, and if Windows reports
 `0x7fffffff` for it the test is not taken and the texture-memory test decides, so medium could ask 32. Read live at medium: `[0x0079d86c]` `0x82`, `[0x008bd520]` `0xffffffff`, tile size 16, 2,000 tiles.
@@ -4287,8 +4287,8 @@ entry (`original/prepoke32.sh`), the running original makes its cache at 32 (`co
 object's set 1) and draws the stock park's paths and grass about twice as sharp as at 16: at the gate, the path 3.23
 against 1.79 and the grass 3.64 against 1.74 (`lib/sharp.py`; `q618/side-by-side-gate.png`). Written before a later
 load instead, it changes nothing: the cache made at the first entry is kept (`q618/PREDICTION.txt`, P2). **OpenTPW
-draws the size asked** (`Level.TileSizeFor`; 32 at the shipped medium and high, as the original drew on the machines of
-its day, Alexah's choice of 2026-10-24), a deviation from the original as it runs on today's machines; `save/opentpw.cfg`'s
+draws the size asked** (`Level.TileSizeFor`; 32 at the shipped medium and high, which the original is inferred to have drawn on the machines of
+its day (no such machine measured), Alexah's choice of 2026-10-24), a deviation from the original as it runs on today's machines; `save/opentpw.cfg`'s
 `ground original` takes the 16. At 32 the two games read alike at the gate (the path 3.20 here against 3.23, the
 grass 3.72 against 3.64), and every 32-pixel tile of the four parks and the stock park's 78 path tiles equal the
 original's code (`ProceduralGroundTests`).
@@ -4372,8 +4372,8 @@ every texture laid over 128 x 128 at 2 bytes a texel and every word holding `0x2
 OpenTPW's `cell` they are 40 footprint cells (types 4, 9 and 10) of eleven things and the four queue cells (type 3)
 at (49..52, 22) before the Belly Bounce (`q617/cells.out`). At the Belly Bounce (camera (525,240) 110 180,
 `q617/side-by-side-bounce.png`) the original's floor is as soft as the ground beside it, sharpness 2.38 against 1.79
-(`q617/sharp.py`, the mean absolute Laplacian of luminance), where OpenTPW draws the floor with its own texture,
-10.91 against 1.11 (`q617/PREDICTION.txt`, P6 to P8): **OpenTPW does not blend a floor** (Q649). The lobby calls the
+(`lib/sharp.py`, the mean absolute Laplacian of luminance), where OpenTPW, then at 16, drew the floor with its own texture,
+10.91 against 1.11 (`q617/PREDICTION.txt`, P6 to P8; at the 32 it draws now the ground beside it reads 3.68, Q649). The two boxes were mapped by eye on the same spot, the corner of the floor cell beside the second fence post, and the frames differ in size (1280 x 720 against 1024 x 768), so the ratio is a rough magnitude, not a like-for-like measure: **OpenTPW does not blend a floor** (Q649). The lobby calls the
 same load (`FUN_005d84a0`) but no lobby wad holds a `base.lnd`, so the bit is not set there.
 
 **Which cell is handed on, and how its tile is laid** (Q488). `FUN_0056f090` keys each visible box cell
@@ -4385,17 +4385,19 @@ with the compositor on unturned, but for a path cell (`0x80`), which keeps its w
 the cell's own tile on 84 of 122 cells, OpenTPW's on 115.
 
 **Why the ground shows cells of two sharpnesses** (Q617, from Alexah's play test of 2026-10-21). At the park gate
-(Q471's camera (475,155) 110 180, `q617/gate-ours-over-original.png`) both games draw the open ground as 16-pixel tiles
-magnified bilinear (render-states.md, "Texture filtering"), and both draw the strips beside the gate path crisp: those
+(Q471's camera (475,155) 110 180, `q617/gate-ours-over-original.png`) both games then drew the open ground as 16-pixel tiles
+magnified bilinear (render-states.md, "Texture filtering"; OpenTPW has drawn 32 by default since Q618, below), and both draw the strips beside the gate path crisp: those
 cells, (45,18) and (50,18) among them, are type 7, hidden ground the scenery of `base.MD2` covers with its own texture,
 so **the seam there is the original's own**. Sharpness (the mean absolute Laplacian of luminance), strip against ground:
-the original 8.62 against 1.73, OpenTPW 16.12 against 1.20 (`q617/PREDICTION.txt`, P4, P5). OpenTPW's strip is the
-sharper and its ground the softer; eight bits a channel (Q616), the anisotropic sampler against the original's nearest
+the original 8.62 against 1.73, OpenTPW 16.12 against 1.20 (`q617/PREDICTION.txt`, P4, P5): at 16, OpenTPW's strip was the
+sharper and its ground the softer (at its 32 now the gate grass reads 3.72 against the original's 1.74 at 16, Q618); eight bits a channel (Q616), the anisotropic sampler against the original's nearest
 texel and mip, and the two resolutions (1280 x 720 against 1024 x 768) are not separated. The one seam the original has
 not is a built thing's floor ("A built thing's floor", above). **The 16-pixel tile is the memory test misreading a large
 machine** ("The tile size"): the shipped `med.sam` and `high.sam` ask 32 (`PROCEDURALTEXTURING` 2), which `FUN_00572110`
-keeps wherever `dwTotalPhys` reads as a positive 48 MB or more and the texture memory as bytes a texel x 3 MB or more,
-so on the machines of its day; OpenTPW draws that 32 (Q618, "The original at 32", above).
+keeps wherever `dwTotalPhys` reads as a positive 48 MB or more and the texture memory as bytes a texel x 3 MB or more.
+Under Proton the texture memory reads 33,554,432 at 2 bytes a texel (clear of that bar) and only the signed `dwTotalPhys`
+test cuts the ask (`q618/PREDICTION.txt`, P2); that 32 is what the original drew on "the machines of its day" is an
+inference, no such machine was measured. OpenTPW draws that 32 (Q618, "The original at 32", above).
 
 ---
 

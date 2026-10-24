@@ -232,8 +232,8 @@ public class ProceduralGroundTests
 
 	/// <summary>
 	/// Every one of the shipped park's 78 path cells, its own tile (by the <c>.tct</c>'s PathTex) laid over its ground
-	/// by the word the path writes, against the original's function given the same texels (<c>oracle.py</c>: the
-	/// surface's A4R4G4B4, measured in the running original), at 16 pixels and at 32 (<c>q618/oracle32.py</c>). Without
+	/// by the word the path writes, against the original's function given the same texels (<c>lib/pathoracle.py N</c>: the
+	/// surface's A4R4G4B4, measured in the running original), at 16 pixels and at 32. Without
 	/// the path the same 78 hash <c>1724f766...</c> at 16.
 	/// </summary>
 	/// <remarks><b>Mutation:</b> the alpha taken as eight bits, the texture read top down or at every texel rather than

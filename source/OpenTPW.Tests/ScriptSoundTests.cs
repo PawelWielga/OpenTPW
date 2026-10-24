@@ -84,6 +84,13 @@ public class ScriptSoundTests
 
 	/// <summary>Runs <paramref name="play"/> with a device stood in and a park's audio up, and takes away every voice it made.</summary>
 	private void WithAParksAudio( Action<ParkAudio> play )
+		=> FixedRoll.During( 0, dice => WithAParksAudioRolling( play ) );
+
+	/// <summary>
+	/// <see cref="WithAParksAudio"/>'s body. Its categories roll 0, the first sample of every list: a roll above a list's
+	/// last odds gives no sample (Q723), and global rides 200, 201 and 202 end between 65,527 and 65,534.
+	/// </summary>
+	private void WithAParksAudioRolling( Action<ParkAudio> play )
 	{
 		FileSystem = GameData.Required();
 		Log ??= new();

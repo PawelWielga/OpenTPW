@@ -419,7 +419,7 @@ public class Level
 			HearResearch( researched, state, catalogue!, ThemeName, () => OweTheEndFeature( state ) );
 		}
 
-		_ = new ParkGround( ThemeName, park, Balance, ParkLight.Lit, ProceduralTileSize() );
+		_ = MakeGround( ThemeName, park, Balance, ParkLight.Lit );
 		load.Mark( "ground" );
 
 		_ = new ParkPaths( ThemeName, park );
@@ -1011,7 +1011,12 @@ public class Level
 
 		// The sound module goes out as the loaded file's, less the voices put back from it and let go since: the original
 		// writes the manager's live voices (Sound_SaveModule, 0x0051c350), so what was started here, and each put-back
-		// voice's children and draws since, are not written. Carried, as the coasters' and the advisor's modules are.
+		// voice's children and draws since, are not written. Carried, as the coasters' and the advisor's modules are, and
+		// counted where the park holds a voice started here (PARK_FILE_SOUND_WRITER_LIVE_VOICES). With no sound device
+		// nothing was put back, so nothing is let go and the file's voices are all carried, where the original's save
+		// writes no voice list at all (FileFormats saves.md): a sold Loudspeaker's chain survives such a save.
+		if ( ParkAudio.Current is { HoldsVoicesStartedHere: true } )
+			Unimplemented.Report( "PARK_FILE_SOUND_WRITER_LIVE_VOICES" );
 
 		byte[] file;
 		ParkWorld.PeopleWritten? peopleWritten;
@@ -1562,6 +1567,10 @@ public class Level
 		return size;
 	}
 
+	/// <summary>The park's ground, its tiles the size <see cref="ProceduralTileSize"/> gives; the one place a park's ground is made.</summary>
+	internal static ParkGround MakeGround( string themeName, IParkInitialState? park, ParkBalance? balance, bool lighting )
+		=> new( themeName, park, balance, lighting, ProceduralTileSize() );
+
 	/// <summary>
 	/// The tile size for a <c>PROCEDURALTEXTURING</c> of <paramref name="ask"/>: 0 for 0 (the compositor off, low.sam),
 	/// 16 for 1, 64 for 3 and 32 for any other, as <c>FUN_00457a90</c> asks (<c>0x00457ac5</c>; the shipped med.sam and
@@ -1569,7 +1578,7 @@ public class Level
 	/// reads any machine over 4 GB (<c>FUN_00572110</c>; docs/exe/park-engine.md, "The tile size"), so on today's machines
 	/// it draws 16 whatever is asked. OpenTPW draws the ask, what the original drew on the machines of its day: a
 	/// deviation from the original as it runs now. <paramref name="original"/> (opentpw.cfg's <c>ground original</c>)
-	/// takes the cut. The original's other cuts, on its texture memory, are not modelled.
+	/// takes the cut. The original's other cuts (its texture memory; 64 to 32 under 64 MB, <c>0x00572170</c>) are not modelled.
 	/// </summary>
 	internal static int TileSizeFor( int ask, bool original ) => ask switch
 	{

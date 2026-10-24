@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
+using System.Linq;
 
 namespace OpenTPW.Tests;
 
@@ -63,6 +64,47 @@ public class GroundTileSizeTests
 			CollectionAssert.AreEqual( new[] { 0, 16, 16 }, Sizes( true ), "the original's" );
 		}
 		finally { GameOptions.Current = was; }
+	}
+
+	/// <summary>
+	/// The park's ground is made at the size <see cref="Level.ProceduralTileSize"/> gives: a level's one ground-making call
+	/// (<see cref="Level.MakeGround"/>) lays its tiles at 32 by default and at 16 under <c>ground original</c>, as
+	/// <c>GroundTiles.Make</c> logs it. The ground's texture needs a device, so the call may throw once its tiles are laid;
+	/// the log line is read either way.
+	/// </summary>
+	/// <remarks><b>Mutation:</b> a literal 16 in <see cref="Level.MakeGround"/>, or the tile size ignored by the ground,
+	/// fails the first row.</remarks>
+	[TestMethod]
+	public void TheParksGroundIsLaidAtTheSizeTheOptionsGive()
+	{
+		FileSystem = GameData.Required();
+		Log = new();
+		var was = GameOptions.Current;
+		var wasLog = Logger.OnLog;
+		var lines = new System.Collections.Generic.List<string>();
+
+		Logger.OnLog = ( _, text ) => lines.Add( text );
+
+		try
+		{
+			foreach ( var (original, pixels) in new[] { (false, 32), (true, 16) } )
+			{
+				lines.Clear();
+				GameOptions.Current = new() { GraphicsQuality = 1, OriginalGroundTiles = original };
+
+				try { Level.MakeGround( "jungle", null, null, true ); }
+				catch ( System.Exception ) { /* the device-bound part, after the tiles are laid */ }
+
+				Assert.IsTrue( lines.Any( line => line.Contains( $"tiles of {pixels} pixels" ) ),
+					$"original {original}: the ground lays {pixels}-pixel tiles\n{string.Join( '\n', lines )}" );
+			}
+		}
+		finally
+		{
+			Logger.OnLog = wasLog;
+			GameOptions.Current = was;
+			Entity.ApplyDeletions();
+		}
 	}
 
 	/// <summary>

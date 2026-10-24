@@ -430,18 +430,23 @@ public class ParkScreamChainTests
 	[TestMethod]
 	public void AChainsPickIsNotHeldUpByTheEffectsThrottle()
 	{
-		var kids = new SoundCategory( "global", "global/sound", "kids" );
+		// Effect 71's lists end between 65,528 and 65,534, so the roll is the test's own: a roll above a list's last
+		// odds gives no sample (Q723), which is not what this test asks about.
+		FixedRoll.During( 0, dice =>
+		{
+			var kids = new SoundCategory( "global", "global/sound", "kids" );
 
-		Assert.IsTrue( kids.IsValid, "the global kids category should load" );
-		Assert.IsNotNull( kids.PickFrom( 0x47, 0 ), "variation 1 of effect 71 has samples" );
+			Assert.IsTrue( kids.IsValid, "the global kids category should load" );
+			Assert.IsNotNull( kids.PickFrom( 0x47, 0 ), "variation 1 of effect 71 has samples" );
 
-		// Sets the effect's throttle as a play does, device or not.
-		kids.Play( 0x47 );
+			// Sets the effect's throttle as a play does, device or not.
+			kids.Play( 0x47 );
 
-		for ( int variation = 0; variation < 4; ++variation )
-			Assert.IsNotNull( kids.PickFrom( 0x47, variation ), $"variation {variation + 1}, straight after a play" );
+			for ( int variation = 0; variation < 4; ++variation )
+				Assert.IsNotNull( kids.PickFrom( 0x47, variation ), $"variation {variation + 1}, straight after a play" );
 
-		Assert.IsNull( kids.PickFrom( 0x47, 4 ), "there is no fifth" );
+			Assert.IsNull( kids.PickFrom( 0x47, 4 ), "there is no fifth" );
+		} );
 	}
 	/// <summary>
 	/// A child is due only once the clock has passed its time, not when it reaches it - the original's

@@ -186,6 +186,12 @@ public sealed class LobbyAudio : Entity
 	{
 		public Voice? Music;
 		public Voice? Bed;
+
+		/// <summary>
+		/// Whether this stay's music voice has drawn its first sample, which asks the draw for no step; its later
+		/// samples do (<c>0x006bbfe3</c>, <c>0x006bde33</c>). A silenced park starts a fresh voice.
+		/// </summary>
+		public bool MusicDrawn;
 	}
 
 	/// <summary>What each park has sounding, by theme. A park with nothing playing keeps no entry.</summary>
@@ -404,8 +410,12 @@ public sealed class LobbyAudio : Entity
 
 		var voices = VoicesFor( island.ThemeName );
 
+		// An arrival is a fresh voice (FUN_005e14a0 stops both and plays effects 1 and 2 again): its first draw asks for
+		// no step, so it may open on the track last heard here, and stores its pick for the restarts (KeepParkPlaying).
+		// The pick is kept per effect, not per voice; the same, as only one voice of effect 1 sounds at a time.
 		voices.Music = _current.Music.Play( LocalMusic, MusicVolume, fadeInSeconds: CrossfadeSeconds,
-			bus: AudioBus.Music, avoidRepeat: true );
+			bus: AudioBus.Music, avoidRepeat: false );
+		voices.MusicDrawn = voices.Music != null;
 		voices.Bed = _current.Ambience.Play( LocalBed, BedVolume, fadeInSeconds: CrossfadeSeconds );
 
 		Log.Info( $"Lobby audio: {island.ThemeName} - theme '{Describe( voices.Music )}', bed '{Describe( voices.Bed )}'" );
@@ -422,6 +432,7 @@ public sealed class LobbyAudio : Entity
 
 		voices.Music = null;
 		voices.Bed = null;
+		voices.MusicDrawn = false;
 
 		// Those voices were holding their effects - see SoundCategory.Play - so the park being left
 		// has to be told it may start them again next time the camera comes round.
@@ -491,7 +502,12 @@ public sealed class LobbyAudio : Entity
 		var voices = VoicesFor( theme );
 
 		if ( voices.Music is not { Playing: true } )
-			voices.Music = park.Music.Play( LocalMusic, MusicVolume, bus: AudioBus.Music, position: position, avoidRepeat: true );
+		{
+			// The park's first start after a Silence is a fresh voice and asks for no step; each restart does.
+			voices.Music = park.Music.Play( LocalMusic, MusicVolume, bus: AudioBus.Music, position: position,
+				avoidRepeat: voices.MusicDrawn );
+			voices.MusicDrawn |= voices.Music != null;
+		}
 
 		if ( voices.Music is { Playing: true } restarted
 			&& !( _lastMusicLogged.TryGetValue( theme, out var logged ) && ReferenceEquals( restarted, logged ) ) )

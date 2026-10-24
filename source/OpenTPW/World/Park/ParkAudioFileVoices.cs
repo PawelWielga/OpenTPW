@@ -33,6 +33,12 @@ public sealed partial class ParkAudio
 		=> _fileVoices.Where( entry => !_scriptVoices.Contains( entry.Value ) ).Select( entry => entry.Key ).ToHashSet();
 
 	/// <summary>
+	/// Whether the park holds a script voice it started itself, none put back from the file: what the original's save
+	/// writes from its live voices (<c>0x0051c350</c>) and this one's does not (<see cref="Level"/>'s save counts it).
+	/// </summary>
+	internal bool HoldsVoicesStartedHere => _scriptVoices.Any( sound => !_fileVoices.ContainsValue( sound ) );
+
+	/// <summary>
 	/// Puts back the held chains of <paramref name="voices"/> and answers them by their saved handles; the rest are
 	/// counted. With no sound device nothing is loaded and nothing put back, as the original's load with its sound off
 	/// skips the list (<c>0x0051c547</c>).

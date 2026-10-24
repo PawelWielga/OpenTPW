@@ -620,8 +620,10 @@ of this class is a variation drawn as `FUN_006bc810` draws it, a sample of it, t
 kept, and after every sample, the first included, a silence drawn from its variation's wait, timed on the frame clock
 from the frame the sample is found ended. Built for the land's own type 3 sounds alone; the run is in `park.md`,
 "The land's own sounds". The sample draw's own rule against the sample before (`FUN_006bc680` asked with 1, for a
-variation of more than two samples) is not built for the land's following voices, the crowd's or the park music's (counted
-`SAMPLE_NO_REPEAT`, Q742); the lobby's music builds it (Q723).
+variation of more than two samples) is not built for the voices of the plain and music classes: the land's following
+voices, the crowd's, the park music's, a script's plain and music sounds (the End's global rides 200) and the interface's
+(`cat_ui` 154 and 155). Each voice's later samples ask (`0x006bde33`) and its first does not (`0x006bbfe3`), so only the
+later samples are counted (`SAMPLE_NO_REPEAT`, Q742); the lobby's music builds it (Q723).
 
 **The sample draw, `FUN_006bc680( voice, avoidRepeat )`** (read from the stored dump of the same program; upstream look
 2026-10-19, `verify-sound-ui.md`, "The music roll rule"). A variation with no samples gives none; a variation with one
@@ -630,12 +632,20 @@ generator (`DAT_00fb1f20 * 0x19660d + 0x3c6ef35f`) is rotated right 13 and shift
 and the samples are walked in order: the **first whose odds (record `+4`) are at least the roll** wins. If no sample's
 odds reach the roll (a list whose last odds are below 65,535) the draw gives **no sample**, and the voice plays
 nothing. With the argument set and more than two samples, a pick equal to the voice's last (`+0x46`) moves on to the next
-index, modulo the count; the pick is stored at `+0x46`. The lobby's music asks with 1: all four `cat_locallobbymusic`
+index, modulo the count; the pick is stored at `+0x46` (`0x006bc747`) on **every** draw from a list of two or more, asked or
+not (`je 0x6bc747` at `0x6bc708`); a list of one returns before the store (`0x006bc6ae`). Who asks: a voice's set-up
+(`FUN_006bbf60`, `push 0` at `0x6bbfe3`) and a held chain's child (`0x6c3aac`) ask with 0; slot 0 `0x6bde00` of the plain and
+music classes (`push 1` at `0x6bde33`) and the music class's parked restart (`0x6be5b7`) ask with 1, so only a voice's
+samples after its first step. The lobby's music asks with 1 on its restarts: all four `cat_locallobbymusic`
 effect 1 hold one variation of three samples (odds 21,845, 43,690, 65,535), so the rule applies to the lobby's music (flags `0x206`, the plain class). 201 of
 the 1,592 sample lists in the 31 SFX maps end below 65,535 (lowest 65,516; the global lobby music effect 2 ends at
 65,534), so the no-sample case happens at most 20 times in 65,536. OpenTPW's `SoundCategory.Draw` is this rule (Q723): the roll is 0 to 65,535, no sample past the last odds, and the
-previous-pick step is kept per effect and asked by the lobby's music alone (confirmed: ten to twelve selections of each
-island in 240 s, no track twice running, `q723/run3`). The park's own voices keep no last pick yet (Q742).
+pick is kept on every draw from a list of two or more and the step is taken only where asked, which is the lobby's music
+restarts (an island's arrival is a fresh voice and asks for none, as `FUN_005e14a0` starts it; confirmed: ten to twelve
+selections of each island in 240 s, no track twice running, `q723/run3`). The pick is kept per effect where the
+original keeps it per voice, the same while one voice of the effect sounds at a time, as the lobby's does. The park's own
+voices keep no last pick yet (Q742). The roll comes from a `System.Random` each category owns, where the original's is
+the shared generator.
 
 | Address | Original name | What it is | Evidence |
 |---|---|---|---|
@@ -1286,8 +1296,11 @@ read no further. **Not the original's:** its reader stops every live voice first
 starts at its entry go and the file's copies stand in for them; here the land's stand and the file's copies are counted
 with their classes (the rest is Q741). **The writer** writes the loaded file's list less each voice put back and let go
 since (`ParkVoices.Without`), so a chain stopped here, a sold Loudspeaker's, does not come back at the next load with
-nothing to stop it; it writes nothing started here, nor a put-back voice's draws since (carried, not counted, as the coasters' and the
-advisor's modules are; the original writes the live voices, `0x0051c350`).
+nothing to stop it; it writes nothing started here, nor a put-back voice's draws since (carried as the coasters' and the advisor's modules
+are, and counted `PARK_FILE_SOUND_WRITER_LIVE_VOICES` at a save where the park holds a script voice started here; the
+original writes the live voices, `0x0051c350`). With no sound device nothing is put back, so the writer lets nothing go
+and carries every voice of the loaded file, where the original's soundless save writes none: a Loudspeaker sold on such a
+machine is saved with its chain (filed).
 Here (`q612/confirm.py`, run5 on the final binary, off-screen, the log, the census and the game's own mix):
 the stock park's 177 put back under `0x012e0055` at (450,160,0), its kept child `TP BEAST 9.mp2` (variation 8's) first,
 the next due 2,990 ms after the put-back (its 2,740 ms and 250), then 17 children in 40 s with no repeat, gaps 1,502 to

@@ -732,7 +732,9 @@ public sealed partial class ParkAudio
 		sound.Wait = ParkScreams.GapMilliseconds( headers[next], _scriptRandom );
 		sound.Kept = first ? ControlledSample( headers[next], sound.Values, _scriptRandom ) : sound.Kept;
 		sound.EndedAt = null;
-		sound.Clip = sound.Category.PickFrom( sound.Effect, next );
+		// The plain and music classes ask the draw for its step on every sample after the first (0x006bde33); the
+		// step is not built, and the ask is counted SAMPLE_NO_REPEAT where the variation holds more than two samples.
+		sound.Clip = sound.Category.PickFrom( sound.Effect, next, avoidRepeat: !first );
 
 		// Started out of range, it holds its first variation and plays nothing until it is in range (see SoundAgain).
 		if ( first && !Reached( sound ) )

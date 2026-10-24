@@ -129,6 +129,11 @@ internal sealed class ParkScreams
 	/// Called every frame, a park's menu or not. The original's service runs whenever the group volumes are applied
 	/// (<c>0x0051bfab</c>), each frame through a pause, at a rate not measured, and starts a new child on the pass after
 	/// the one that makes it; both put a child here at most a frame from where the original's lands.
+	///
+	/// Not the original's: on the very millisecond of a child's time its tick extends nothing (<c>now &gt; due</c>,
+	/// <c>0x006bdb88</c>) and prunes the child (<c>now &gt;= due</c>, <c>0x006bdc23</c>), so the list is empty for a pass
+	/// and the next child is made as a first. Here a chain waits for <c>now &gt; NextAt</c> and makes it as the next of
+	/// its run, which a script's own chains do not (<see cref="ScriptVoice.ListEmpty"/>).
 	/// </remarks>
 	internal void Pump( float now )
 	{

@@ -74,7 +74,7 @@ internal sealed class GameOptions
 	public bool OriginalTextureDepth { get; set; }
 
 	/// <summary>
-	/// The original's ground tiles: 16 pixels whatever the detail file asks, as the original draws on a machine with over
+	/// The original's ground tiles: 16 pixels whatever size the detail file asks (none at PROCEDURALTEXTURING 0), as the original draws on a machine with over
 	/// 4 GB (<see cref="Level.TileSizeFor"/>). <b>OpenTPW's own</b>, off by default: OpenTPW draws the tile size asked,
 	/// 32 for the shipped medium and high, as the original drew on the machines of its day, a deviation from the original.
 	/// </summary>

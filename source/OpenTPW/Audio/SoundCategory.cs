@@ -43,7 +43,12 @@ public sealed class SoundCategory
 		/// </summary>
 		public float AvailableAt = float.NegativeInfinity;
 
-		/// <summary>The sample the last draw that asked for the avoid-repeat step took, as the voice's <c>+0x46</c>; -1 for none.</summary>
+		/// <summary>
+		/// The sample the last draw from a list of two or more took, asked for the avoid-repeat step or not, as the
+		/// original's voice keeps it in its byte <c>+0x46</c> (<c>0x006bc747</c>); -1 for none. The original keeps it per
+		/// voice and here it is kept per effect, which is the same wherever one voice of the effect sounds at a time (the
+		/// lobby's music, see <see cref="LobbyAudio"/>); a voice's first draw does not ask, and so does not read it.
+		/// </summary>
 		public int LastSample = -1;
 	}
 
@@ -57,7 +62,14 @@ public sealed class SoundCategory
 
 	private readonly List<SoundBank> _banks = new();
 	private readonly List<Effect> _effects = new();
-	private readonly Random _random = new();
+	private Random _random = RandomSource();
+
+	/// <summary>
+	/// Makes a category's source of rolls. The original's is one generator the whole sound library shares (<c>[0xfb1f20]</c>,
+	/// stepped by <c>0x006bc6b9</c>..<c>0x006bc6de</c>); each category here has its own <see cref="Random"/>, with the same
+	/// range and no sequence anyone could tell apart. Tests that draw replace this to force a roll.
+	/// </summary>
+	internal static Func<Random> RandomSource { get; set; } = static () => new Random();
 
 	/// <param name="root">
 	/// What the category's bank paths are relative to - the level folder, or "global". This is not
@@ -168,8 +180,9 @@ public sealed class SoundCategory
 	/// </param>
 	/// <param name="avoidRepeat">
 	/// Asks the sample draw for its step against the sample before (<c>FUN_006bc680</c> asked with 1): with more
-	/// than two samples in the variation, a pick equal to the effect's last moves on to the next. The lobby's
-	/// music asks, the original's plain class asking with 1.
+	/// than two samples in the variation, a pick equal to the effect's last moves on to the next. A voice's later
+	/// samples ask (<c>0x006bde33</c>) and its first does not (<c>0x006bbfe3</c>), so the lobby's music restarts ask
+	/// and its arrival does not; either way the pick is kept.
 	/// </param>
 	/// <param name="gain">
 	/// Given, the volume is what it makes of the picked variation's header, and <paramref name="volume"/> is not
@@ -206,14 +219,18 @@ public sealed class SoundCategory
 	/// </summary>
 	/// <param name="length">The sample record's length (FileFormats <c>sound-categories.md</c>, its <c>+0x08</c>).</param>
 	/// <returns>The sample, or null for an unknown or empty effect, or one that would not decode.</returns>
-	public AudioClip? PickSample( int id, out int variation, out TimeSpan length )
+	/// <param name="avoidRepeat">As for <see cref="Play(int, float, bool, float, bool, AudioBus, Vector3?, float?, bool, Func{SoundCategoryFile.Variation, float}?, Func{SoundCategoryFile.Variation, float}?, bool)"/>.</param>
+	public AudioClip? PickSample( int id, out int variation, out TimeSpan length, bool avoidRepeat = false )
 	{
 		variation = -1;
 		length = TimeSpan.Zero;
 		var effect = _effects.FirstOrDefault( candidate => candidate.Id == id );
 
-		return effect == null || effect.SampleCount == 0 ? null : Pick( effect, out variation, out length );
+		return effect == null || effect.SampleCount == 0 ? null : Pick( effect, out variation, out length, avoidRepeat );
 	}
+
+	/// <summary>The sample effect <paramref name="id"/>'s last draw from a list of two or more took, or -1 for none (<see cref="Effect.LastSample"/>).</summary>
+	internal int LastSampleOf( int id ) => _effects.FirstOrDefault( candidate => candidate.Id == id )?.LastSample ?? -1;
 
 	/// <summary>
 	/// Plays <paramref name="clip"/>, a sample of variation <paramref name="variation"/> of effect <paramref name="id"/>
@@ -288,9 +305,9 @@ public sealed class SoundCategory
 	/// </summary>
 	/// <returns>The sample, or null for an unknown effect or variation, or one that would not decode.</returns>
 	/// <param name="avoidRepeat">
-	/// The voice asks the draw for its step against the sample before, which a held voice's child has no
-	/// place to keep here: where the variation has more than two samples it is counted <c>SAMPLE_NO_REPEAT</c>
-	/// (Q723), the step not built.
+	/// The voice asks the draw for its step against the sample before (a voice's later samples do, <c>0x006bde33</c>).
+	/// The voice's last pick is not kept here yet: where the variation has more than two samples the ask is counted
+	/// <c>SAMPLE_NO_REPEAT</c> (Q742), the step not built.
 	/// </param>
 	public AudioClip? PickFrom( int id, int variation, bool avoidRepeat = false )
 	{
@@ -361,8 +378,8 @@ public sealed class SoundCategory
 	/// <summary>
 	/// Picks one of an effect's samples: a variation evenly, then a sample within it by weight.
 	///
-	/// The weights are a running total out of 65,535, so a roll in that range lands in exactly one
-	/// entry's slice. The variation is drawn evenly: this does not read the weight a variation's
+	/// The weights are a running total out of 65,535, and a roll above a list's last total lands in none of its
+	/// slices and gives no sample (<see cref="Draw"/>). The variation is drawn evenly: this does not read the weight a variation's
 	/// header carries (<see cref="SoundCategoryFile.Variation.Weight"/>) - which for hallow means its
 	/// rain, its terrors, its three pairs of bats and its spirit each get a turn rather than the
 	/// bats crowding out everything else.
@@ -374,20 +391,26 @@ public sealed class SoundCategory
 	{
 		variation = _random.Next( effect.Variations.Count );
 
-		var index = Draw( effect.Variations[variation], _random.Next( RollRange ), avoidRepeat ? effect.LastSample : -1 );
+		var list = effect.Variations[variation];
+		var index = Draw( list, _random.Next( RollRange ), avoidRepeat ? effect.LastSample : -1 );
 
 		length = TimeSpan.Zero;
 
 		if ( index < 0 )
 			return null;
 
-		if ( avoidRepeat )
+		// Stored on every draw from a list of two or more, asked for the step or not (0x006bc747); a list of one
+		// returns its sample before the store (0x006bc6ae).
+		if ( list.Count > 1 )
 			effect.LastSample = index;
 
 		return Clip( effect.Variations[variation][index], out length );
 	}
 
-	/// <summary>The sample draw's roll runs 0 to 65,535 (<c>FUN_006bc680</c>); <c>Random.Next</c>'s bound is exclusive.</summary>
+	/// <summary>
+	/// The sample draw's roll runs 0 to 65,535 (<c>FUN_006bc680</c>); <c>Random.Next</c>'s bound is exclusive. The
+	/// original's roll is the shared generator's (see <see cref="RandomSource"/>).
+	/// </summary>
 	internal const int RollRange = 65536;
 
 	/// <summary>
