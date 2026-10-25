@@ -39,7 +39,8 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 
 - Q636 (the hire screen's skill bar): the original off-screen and ours on the desktop, the stock park's hire screen
   opened by real clicks, its first row picked. Not looked at: Full Simulation (the builder asks no game mode), a window
-  other than 1280 x 720, the bar at nought or full, the inset helper's other 31 callers (not swept).
+  other than 1280 x 720, the bar at nought or full, the inset helper's other 31 calls, swept by the review instead: 18 built and inset as the original's, the ride
+  window's four gauges not (Q693), 9 in windows not built (Q450, Q31b).
 
 
 

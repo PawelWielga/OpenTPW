@@ -313,6 +313,14 @@ filed the items that cite it.
   whose openers call `FUN_00486b70` (`0x0047efa0`, `0x0049f406`). The game menu (`0x0048c830`) and the options screen
   (`0x004a3a30`) also pause but are not among the `0x0040cfa0` callers read. Read their handlers, measure one key held
   behind the menu in the original, then widen `CameraTableOff` or say why not.
+- [ ] **Q693. The ride window's four condition gauges stand in 10 from their rows' top and bottom, as the original's.**
+  From the Q636 review (run 9; VERIFY-10). The ride window's stats fill `0x004ad890` (the ride vtable `0x006ffbe8`
+  `+0xc`, called by the shared opener at `0x0048cf55` on every ride window) calls `FUN_00485e30( gauge, 0, 10 )` on
+  `0x3e16`, `0x3e18`, `0x3e19` and `0x3e17` (`0x004adc69`, `0x004adcc7`, `0x004add25`, `0x004add83`): 10 off the top and
+  the bottom in the stream's 2048 x 1536 units, none off the sides, so three rows of 45 draw 25 tall and `0x3e18`'s 44
+  draws 24. Ours (`ParkObjectWindow.cs`, the gauge rows about 79-82, built about 252-254) fills the whole row. Build the
+  inset as Q636 did the hire screen's; a test that fails with it removed or doubled; confirm a ride window beside the
+  original's (`original/uitree.py` reads the original's rects).
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
@@ -2529,6 +2537,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     speed, duration and capacity controls and the apply `0x004af440`.
   - **Note (play test 2026-10-21, notes 12 and 17):** a click on a sideshow, and on a toilet, opens no window. Counted
     `SIDESHOW_WINDOW` and `FEATURE_WINDOW` (`source/OpenTPW/World/Level.cs:2732-2733`); `docs/PLAYER-GAPS.md:95`.
+  - **Note (Q636's review, run 9):** the sideshow window's bars `0xa094`, `0xa096`, `0xa099`, `0xa09e`, the toilet window's
+    `0x15bbb` and the resting-staff list `0x1e7b` are inset (0, 10) by `FUN_00485e30` in the original: build them so.
 - [ ] **Q32. Graphics tiers.** `Level` reads the detail files (`low.sam`, `med.sam`, `high.sam`) for `GameOptions.PARTICLEDENSITY`
   and `NUMKIDS` (the kid and staff bank caps) and for three `GraphicalOptions.*` keys: `LIGHTING` (a counted no-op),
   `TEXTUREQUALITY` (the sea's and the flags' folder) and `PROCEDURALTEXTURING` (the ground's tile size). `SPRITESHADOW` is read too (Q480: medium's silhouette built, the own
@@ -2756,6 +2766,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     thing's state of repair through the three-stop ramp (`hud.md`, "The park map": the stops, the clamp, the eight sites);
     for codes 1, 2, 3 and 8 the radio's settings 2 and 3 use `FUN_004e0860` and `FUN_004e1e30` instead. Part (2)'s "which record colours which code" is
     answered for those eight codes.
+  - **Note (Q636's review, run 9):** the buy window's gauges `0x1ee` to `0x1f0` are inset (0, 10) by `FUN_00485e30` in the
+    original: build them so.
 - [ ] **Q714. The Park Status screen (`PARK_STATUS_SCREEN`), starting with the Top 3 Thoughts.** From the fork watch,
   2026-10-19 (`verify-other-b.md` H2; `hud.md`, "The Park Status screen's Top 3 Thoughts"). Counted when opened, never
   asked for by an item (the notes under Q420 list the rings it graphs). The screen shows people in the park, arrival rate,

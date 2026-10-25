@@ -328,7 +328,7 @@ address here has an empty 'What it is', try the subsystem page first: `park.md`,
 | `0x004acdae` | Buy screen opener FUN_004acc70: letters control 0x200 with the balance as the screen is made, as the timer's tick does | OpenTPW/UI/Park/ParkBuyScreen.cs  |
 | `0x004ad606` | The ride window sets its door down while `mCanLoad` is nought (`Button_SetDown`, from here) | OpenTPW/UI/Park/ParkObjectWindow.cs  |
 | `0x004ad622` | The ride window's door position (to here) | OpenTPW/UI/Park/ParkObjectWindow.cs  |
-| `0x004ad890` | The object windows' shared base, vtable `+0xc`: fills the stats table's labels | OpenTPW/UI/Park/ParkObjectWindow.cs  |
+| `0x004ad890` | The ride window's own stats fill (ride vtable `0x006ffbe8` `+0xc`; the shared opener `0x0048cea0` calls it at `0x0048cf55`): fills the stats table's labels and insets its four gauges (0, 10) | OpenTPW/UI/Park/ParkObjectWindow.cs  |
 | `0x004ade7d` | FUN_004ade40, the ride window: Users last month sums the object's customers ring, +0x1a8, over its last min( filled, 30 ) finished days | OpenTPW/UI/Park/ParkObjectWindow.cs OpenTPW/World/Park/ParkObjectRings.cs  |
 | `0x004ade83` | FUN_004ade40, Users last month: MOV EDI,0x1e, the thirty days asked for | OpenTPW/UI/Park/ParkObjectWindow.cs  |
 | `0x004adeb7` | FUN_004ade40, Users last month: the filled count compared with 30, FUN_00495d40 when fewer | OpenTPW.Tests/ParkSettleUpCountsTests.cs OpenTPW/World/Park/ParkObjectRings.cs  |
