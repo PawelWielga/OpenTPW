@@ -10069,6 +10069,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     opened the two screens; D ended Mike Cooper's follow; the staff window's b_allstaff read "(E)"
     (`q631/side-by-side.png`). Tests 3907 with the game; mutants 20 of 20 caught. Website key list: W A S D pan, Up and
     Down zoom, O all items, E all staff (the Sentinel's).
+- [x] **Q632. Building a path makes no sound. Decode first.** From Alexah's play test, 2026-10-21 (note 9). No doc,
+  queue line or counted gap names a laying sound; only the demolish sound `0x96`-`0x99` by size (`park-engine.md:2599`;
+  Q38, QUEUE:1978-1982, counts the demolish side) and the refusal `0xaf` are known. Find in the original's path tool
+  what plays on a click that lays (by `watch.sh` / the disk driver), then build and count what is not found. Confirm:
+  the sound in the original's mix and in ours (`verifying-audio-by-capture.md`).
+  Done 2026-10-25 (decode only; the build is Q671): the commit's mode 1 and 3 arm plays `cat_ui` effect `0x65`,
+  `rj_laypath_2` (`sfUiHD.sdt` entry 7, 123 ms, volume 100, flat), at `0x005271ea` on every click the red latch has not
+  refused, the arming click included (`park-engine.md`, "The laying sound"). The item's premise was short: the doc
+  named `0x65` at the click and ours counted it, `PATH_TOOL_CLICK_SOUND_0x65`, but nobody had named the sample or heard
+  it. The original (`q632/orig`, round d, the stock park, its music off): a click on (62,18) anchored, one on (66,18)
+  laid five cells; `brk.sh` on `Sound_PlayEffect` for `0x65` hit twice, `args handle 0 cat 3 effect 65`, each returning
+  to `0x005271ef`, x 620 then 660; `rj_laypath_2` 0.29 to 0.35 in the click windows in three runs against 0.16 to 0.19
+  quiet. Ours, the main build (`q632/run1`, 3 of 3): "path: anchored at (62,18)", "path: laid 5 from (62,18) to
+  (66,18)", the mix silent there (0.000) and the count 2; the control's `blnl_error1` 0.986. `RunQueue` neither plays
+  nor counts `0x65`. `lib/sfxmap.py` now names an effect's samples (`q632/PREDICTION.txt`, `side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -4990,7 +4990,7 @@ printing it as `run total` and a `$` on a square refused for money.
 
 **A click** (`0x005271b7`..`0x00527655`, on release at the preview's target): any red square lays
 nothing, plays `0xaf` and puts the tool away — the arming click included, so a click outside the park's
-land arms and refuses at once. Otherwise sound `0x65`, then: unanchored, set the anchor, empty the
+land arms and refuses at once. Otherwise sound `0x65` ("The laying sound", below), then: unanchored, set the anchor, empty the
 pending list, push the cell, advisor `0xb8`; anchored, count the click (advisor `0xd6` at the third,
 `0x00527316`..`0x0052733d`), snap, and if the target is the anchor with a run already laid, put the tool
 away; else push the target and run the passes — `0x87`, the stamp, `0x80`, `0x82`, `0x85`, `0x86`,
@@ -5005,6 +5005,27 @@ whose one-cell walk steps +1 in y, so it flows `0x01`. What each pass does to a 
 | `0x85`, `0x86` | track types 11, 13, 16, 18 only — none in Lost Kingdom |
 | `0x83` | owner := the low word of `DAT_00818698`, the selected thing's cell; nought for a plain grass click is inferred |
 | `0x81` | retile |
+
+**The laying sound** (Q632). The commit sends modes 1 and 3 alike to `0x005271b7` (`0x00524b0f`..`0x00524b2d`),
+whose first act, with no layout replay running (`[0x00785a2c]` nought), is
+`Sound_PlayEffect( 0, cat_ui [0x00803a2c], 0x65, x * [0x00700c9c], 0, y * [0x00700c9c] )` at `0x005271ea`: x and y
+are the click's cell and `[0x00700c9c]` is 10.0. It comes after the red refusal (`0x00524a63`, `0xaf`) and before
+every arm, so **every click of the path tool or the queue tool that is not refused sounds it once**: the click that
+arms and anchors, each click that lays a run, a click on the anchor. The commit's one other play of `0x65` is the
+coaster bar's track tool, mode `0x15` (`0x00526423`). `cat_ui` effect `0x65` is `rj_laypath_2` (`sfUiHD.sdt`, volume
+100, 123 ms; FileFormats `sound-categories.md`), flagged `0x0201`, as 29 of the category's 45 effects are, so it
+sounds flat ("A voice's range" in `audio.md`) and goes through the deferred queue that bit `0x1` names, where
+`original/oneshots.py`'s walk does not see it. The queue tool's finishing link adds
+`0x8b`, `connectPath`, at `0x00527587` ("The run's last cell may be a path" above).
+Measured in the original (`q632/orig`, the stock park, its music off): the hand empty, a click on bare grass at
+(62,18) read mode 1, anchor (62,18), nothing laid; a click on (66,18) laid five cells of type 1 and moved the anchor
+there. A hardware breakpoint on `Sound_PlayEffect` for effect `0x65` hit exactly twice in 30 s, once a click, each
+returning to `0x005271ef`, category 3 (`[0x00803a2c]`), handle 0, x 620 then 660. In the mix `rj_laypath_2` scored
+0.29 to 0.35 in each click's window against 0.16 to 0.19 in the quiet stretch, in three runs; `laysmall` scores nearly
+as high there, as the two samples match each other at 0.30, so the breakpoint is what names the effect.
+In OpenTPW (`ParkPathBuilding.RunPath`) the path tool's click is counted, `PATH_TOOL_CLICK_SOUND_0x65`, and plays
+nothing: the same two clicks on the stock park left the mix silent where `rj_laypath_2` would be (score 0.000), and
+the count went to 2. `RunQueue`'s click neither plays nor counts it. The build is Q671.
 
 **Leaving the tool**, every exit through `FUN_0052f200(0,…)`: a run that ends on path or queue; a
 click on the anchor; a red click; a quick right click with RMB cancel on; **Escape** — game-table row 0,

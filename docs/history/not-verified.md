@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q631 (W, A, S and D pan, the arrows zoom, all-items and all-staff on O and E): ours on the stock park on the desktop
+  at 1280 x 720, each key held once; the original off-screen with the reference player's 90 degree turn set. Not looked
+  at: the keypad's keys in ours (tests only), a pan under the full-screen view or in Full Simulation (the camera's keys
+  are the same in both modes), a pan coasting as a park screen opens, eight of the nine moved help rows on screen (one
+  shown), the original's turn without its 90 degree option.
 - Q630 (the key puff at park entry, decoded and measured; no build): both games entering Lost Kingdom from its island
   panel as a copy of Alexah's Full Simulation profile, once each on the desktop, ours at 1280 x 720 and the original
   filmed at 30 a second. Not looked at: the other three islands, a player with one key or none to spare, an entry by a

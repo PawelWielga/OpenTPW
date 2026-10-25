@@ -74,11 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q632. Building a path makes no sound. Decode first.** From Alexah's play test, 2026-10-21 (note 9). No doc,
-  queue line or counted gap names a laying sound; only the demolish sound `0x96`-`0x99` by size (`park-engine.md:2599`;
-  Q38, QUEUE:1978-1982, counts the demolish side) and the refusal `0xaf` are known. Find in the original's path tool
-  what plays on a click that lays (by `watch.sh` / the disk driver), then build and count what is not found. Confirm:
-  the sound in the original's mix and in ours (`verifying-audio-by-capture.md`).
 - [ ] **Q633. Building a queue shows the path tool's previews, not the queue's.** From Alexah's play test, 2026-10-21
   (note 10). The queue tool has its own squares and cursor (`STATUS.md:29`; `hud.md:2955`); not reproduced by the
   drafter; `CARRY_PREVIEW_MARKERS` and Q541 (QUEUE:1523) are the nearby code. Reproduce from the Queue button and from a
@@ -268,6 +263,15 @@ filed the items that cite it.
   (`+0x14`, `+0x18`, `+0x20` of the island camera) a frame at a time over a flight, and its frame rate, before changing
   anything: a per-pass rate under the 30 fps cap would make the flight's length the frame rate's. Confirm: the same film
   in both games, the three phases' times predicted first.
+- [ ] **Q671. The path and queue tools' click sound `0x65` (Q632's build).** Every click of the path tool or the queue
+  tool that the red latch has not refused plays `cat_ui` effect `0x65`, `rj_laypath_2`, flat at its variation's volume
+  100, once, before the click's arm runs (`0x005271b7`..`0x005271ea`; `park-engine.md`, "The laying sound"): the arming
+  click, each run laid, a click on the anchor, and each click of the queue tool. Ours counts it in `RunPath` only
+  (`PATH_TOOL_CLICK_SOUND_0x65`) and `RunQueue` not at all. Unlike `0xaf` it has no gate on the press (`0x005271b7`
+  tests only the layout replay, `[0x00785a2c]`), so it sounds where the press went to an open park screen too. The
+  coaster bar's track tool plays it as well (mode `0x15`, `0x00526423`), unbuilt with that bar. Confirm:
+  `q632/confirm.py`'s two clicks and a queue click, `rj_laypath_2` matched once a click in ours' mix at a gain of about
+  0.50 (predicted from `blnl_error1`'s 0.175 at volume 35, Q442), beside `q632/orig`'s.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
