@@ -1567,6 +1567,33 @@ public sealed partial class ParkPeople : Entity
 		return thing == 0 ? null : _scriptFor( thing );
 	}
 
+	/// <summary>Each vehicle's <c>VAR_STATUS</c> as the last sweep's turn left it, for <see cref="LogVehicleStatuses"/>.</summary>
+	private readonly int?[] _loggedVehicleStatus = new int?[3];
+
+	/// <summary>
+	/// Debug logging (Q627): one line each time a vehicle's <c>VAR_STATUS</c> changes between two sweeps, with
+	/// <c>mGameTick</c>, so a visit is counted however short it is: 2 the arrivals' stop, 4 the leavers'
+	/// (<c>docs/exe/ride-operation.md</c>, "Q128"). A stand for leavers can last one sweep, under any census poll.
+	/// </summary>
+	private void LogVehicleStatuses()
+	{
+		for ( var vehicle = 1; vehicle <= 3; ++vehicle )
+		{
+			int? status = VehicleScript( vehicle ) is { } script ? script[VehicleState] : null;
+
+			if ( status == _loggedVehicleStatus[vehicle - 1] )
+				continue;
+
+			if ( status != null )
+			{
+				Log.Info( $"People: the {ParkFixedItems.VehicleName( vehicle )}'s status {_loggedVehicleStatus[vehicle - 1]?.ToString() ?? "none"} "
+					+ $"-> {status} on mGameTick {State.GameTick}{(vehicle == _arrivalVehicle ? ", current" : "")}" );
+			}
+
+			_loggedVehicleStatus[vehicle - 1] = status;
+		}
+	}
+
 	/// <summary>
 	/// The arrival timer, for the debug console's <c>arrivals</c>: the park's clock, the mark, and either the load
 	/// held or the <c>mGameTick</c> the next is due on, then the vehicle that is current, with its thing where the
@@ -2400,6 +2427,7 @@ public sealed partial class ParkPeople : Entity
 			// reaches its own tail the same way, from every arm above. Without this the vehicle is
 			// released once and parks at the next of its three spins for ever.
 			StepVehicle();
+			LogVehicleStatuses();
 
 			// The staff pool's turn follows the arrival manager's in the sweep's tail (0x004d7b30).
 			ParkStaffPool.Current?.Sweep( State.GameTick,

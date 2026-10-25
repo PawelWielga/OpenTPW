@@ -5,6 +5,12 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q626 (leaving the camcorder puts the orbit's point and yaw back): the original measured off-screen on Lost Kingdom's
+  stock park, Instant Action, entered by the gadget's pick at (450, 165), zoom 110, rotation 180, turned by the pointer
+  and left by C; ours on the desktop at 1280 x 720, entered and left by C. Not looked at: leaving by Escape, the eject
+  button or a right click in either game (ours runs the same `Leave`), a walk in the original before leaving (only its
+  turn), the original's drawn turn back as frames (read from memory only; not built here, Q23), Full Simulation (the
+  same code path, not run), and the other themes.
 - Q625 (the orbit camera's edge, decode only): measured in the original off-screen on Lost Kingdom's stock park,
   Instant Action, zoom 110, at rotations 0 and 90, about 30 to 60 ms a frame by the overshoot; ours on the desktop at 1280 x 720. Not
   looked at: the other themes' heightfields (960 by 850 by the docs, not read live there), the pointer's push past 0.95

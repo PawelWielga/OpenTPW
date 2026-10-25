@@ -74,13 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q627. Guests are picked up and dropped off by the vehicles almost non-stop. Measure first.** From Alexah's play
-  test, 2026-10-21 (note 38). The arrival pace is decoded and built: the first load 126 s in, the next about 150 s after
-  the last guest got off (`docs/PLAYER-GAPS.md:236-253`, Q68b); the leavers' pick-up rate is not measured (map). The
-  vehicle is chosen by crowd size (under 36 the bus, to 60 the seaplane, beyond that the ferry), one guest per sweep.
-  Count the vehicle's visits over ten park minutes in Lost Kingdom with a crowd, and read the leavers' summons
-  (`STATUS.md:40`, `PeepState.AtTheBusStop`, `PLAYER-GAPS.md:228-231`) against the original's own (decode first).
-  Confirm: the visit times in both games.
 - [ ] **Q628. A staff member's click range is very large. Measure first.** From Alexah's play test, 2026-10-21 (note
   20). Q468 built the original's pick: a circle about the picture's left edge, radius squared `0.0002 x (span across^2 +
   span down^2)` (`0x0070203c`), the nearer sprite wins (`park-engine.md:1773-1790`), so a large range may be faithful.
@@ -289,6 +282,13 @@ filed the items that cite it.
   should not pre-empt beyond the bound. Past the edge the original draws flat grass (`q625/orig/b-right-2-after.png`) and
   ours the sea: read what that ground is before building anything there. Confirm: a pan held against each of the four
   edges in both games (`original/campoi.py`, `q625/orig/run.sh`), the same stopping cell (x 97 or -2, y 86 or -2).
+- [ ] **Q668. From a crowd, guests go home faster than the original's. Measure first.** From Q627. Loaded with
+  `q416/guard.TPWS` (212 inside), over the same 2420 sweeps 204 went home here (`People: guest N went home`) and 155 in
+  the original (`original/vehicles.py`'s `GONE`; its census 225, 200, 141, 115, 107 a minute apart, ours 225, 199, 124,
+  101, 62 two minutes apart; `q627/run2-crowd/run.log`, `q627/orig/b-load.log`). A guest sets off home only from the
+  deciding turn: happiness under 1, the park shut, or the day exactly nought (Q109; `ride-operation.md`, the leaving
+  row). Count the setters-off by cause in both games on that file (their happiness and `mExitLevel` at the turn)
+  before building anything. Confirm: the census a minute in both games, and the causes, predicted first.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,

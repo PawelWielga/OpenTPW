@@ -9978,6 +9978,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   leaving first person"). Ours puts the yaw back at once: no ease (a deviation, said at the site; noted under Q23).
   Ours walked 40 and turned to -5.7597 and came back to (481.897, 166.285) and -3.1416 (`q626/PREDICTION.txt`, 12 held,
   1 missed; `q626/side-by-side.png`). Tests `ParkCamcorderLeaveTests`, 3; mutate.py 8 of 8.
+- [x] **Q627. Guests are picked up and dropped off by the vehicles almost non-stop. Measure first.** From Alexah's play
+  test, 2026-10-21 (note 38). The arrival pace is decoded and built: the first load 126 s in, the next about 150 s after
+  the last guest got off (`docs/PLAYER-GAPS.md:236-253`, Q68b); the leavers' pick-up rate is not measured (map). The
+  vehicle is chosen by crowd size (under 36 the bus, to 60 the seaplane, beyond that the ferry), one guest per sweep.
+  Count the vehicle's visits over ten park minutes in Lost Kingdom with a crowd, and read the leavers' summons
+  (`STATUS.md:40`, `PeepState.AtTheBusStop`, `PLAYER-GAPS.md:228-231`) against the original's own (decode first).
+  Confirm: the visit times in both games.
+  **Done (2026-10-25), measured: the original's own rhythm, nothing to change.** Every trip stands at both stops, the
+  arrivals' (`VAR_STATUS` 2) then the leavers' (4), and a leaver at the stop with no vehicle current summons one at
+  random, so the loads are a quarter of the trips or fewer (the manager's tail re-read at `0x004cf4b6`..`0x004cf556`;
+  `ride-operation.md`, "Q627: how often a vehicle comes"). Over 2420 sweeps: the stock park, 11 trips in the original
+  and 11 here, 3 loads and 21 gone in each; `q416/guard.TPWS` (212 inside), 18 there and 16 here, 4 loads each. New:
+  the log's `the <vehicle>'s status A -> B on mGameTick N` (`ParkPeople.LogVehicleStatuses`, debug logging) and
+  `original/vehicles.py`. From the same crowd 204 went home here and 155 in the original: Q668
+  (`q627/PREDICTION.txt`, 5 held, 3 missed; `q627/side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

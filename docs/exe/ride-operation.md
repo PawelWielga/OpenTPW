@@ -1687,6 +1687,19 @@ polls of 452.
 Not built: the particle `0x13` as a guest goes (counted, `LEAVER_BOARDING_PARTICLE`); the walking mode `+0x188`.
 Not pinned by a test: the facing `0x7ff` for a larger vehicle.
 
+**Q627: how often a vehicle comes, measured in both games.** Every trip a vehicle makes stands at both stops in turn,
+the arrivals' (`VAR_STATUS` 2) and then the leavers' (4), whoever summoned it, and a leaver standing in `0x15` with no
+vehicle current summons one at random (the tail above, re-read at `0x004cf4b6`..`0x004cf556`). So with guests going
+home a vehicle comes every 135 to 220 sweeps (34 to 55 s), most of them for the leavers: the loads are a quarter of
+the trips or fewer.
+Measured over 2420 sweeps (ten minutes), each game's own instrument (`original/vehicles.py` at 50 ms; this game's log line
+`the <vehicle>'s status A -> B on mGameTick N`): the stock Lost Kingdom park from entry, **11 trips in the original
+(3 loads, 21 guests gone) and 11 here (3 loads, 21 gone)**; `q416/guard.TPWS`, 212 inside, from its load, **18 in the
+original and 16 here** (4 loads each). A load is dropped by whichever vehicle is current, the leavers' at random, so
+the stock park's first load came on the seaplane here and the third on the ferry in the original. The near-constant
+coming and going is the original's (`~/.cache/tpw-harnesses/q627/`). From the same 212, 204 went home here where the
+original's 155 went (Q668).
+
 **Q111: the arms either side of the leave test are counted**, none built, the listing re-read first-hand
 (`0x004fecb9`..`0x004ff3ae`; the corrections are in the list above). `PeepBehaviour.CountBeforeLeaving` counts
 `DECIDE_HAPPY_SPOT_ANIMATION`, `DECIDE_VOMIT` and, for litter, `DECIDE_LITTER_BIN_ERRAND` with a `HoldsLitter` thing
