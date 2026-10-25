@@ -1363,7 +1363,9 @@ internal sealed class ParkGadget : UiWindow
 	/// The streams a change of the list starts, measured against the list as it was last built: a tag put on plays the
 	/// red top's at 0x00752e48 unless one plays on it already (LAB_004a11e0, 0x004a135b); a tag taken off plays the
 	/// stream at 0x007502f0 on each tag above it that plays none, and on the red top, started over (FUN_0048dae0,
-	/// 0x0048dcda, 0x0048dd06). Another park's list, a park loaded, starts none.
+	/// 0x0048dcda, 0x0048dd06). Another park's list, a park loaded, starts none: the original's loader posts 0x100001 per
+	/// tag (0x0048ed90, through FUN_0048eb20), so its red top plays the put-on squash at a load; whether any of it shows
+	/// past the loading screen is not measured.
 	/// </summary>
 	private void StartSquashes( ParkTags tags, long now )
 	{

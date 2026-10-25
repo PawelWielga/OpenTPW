@@ -395,7 +395,7 @@ public class ParkGadgetPressTests
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> no squash; the top's stream at a tag's 20 ms; a tag's at the top's 50; the bottom moved too; the
-	/// put-on stream started over; the take-off's not; the tags below the one gone squashed; a row on the ideal clock, not by frames.
+	/// put-on stream started over; the take-off's not; the tags below the one gone squashed; a row on the ideal clock, not by frames; a tag above restarted though it plays (0x0048dcce); any of rows 8 to 12 of the table changed.
 	/// </remarks>
 	[TestMethod]
 	public void ATagPutOnOrTakenOffSquashesTheTopAndTheTagsAbove()
@@ -424,6 +424,16 @@ public class ParkGadgetPressTests
 		Assert.AreEqual( new UI.UiRect( 65, 710, 173, 826 ), Top(), "six rows, twelve" );
 		Until( 1.42f );
 		Assert.AreEqual( new UI.UiRect( 69, 706, 169, 826 ), Top(), "the seventh row back four" );
+		Until( 1.48f );
+		Assert.AreEqual( new UI.UiRect( 73, 702, 165, 826 ), Top(), "row 8: four" );
+		Until( 1.54f );
+		Assert.AreEqual( new UI.UiRect( 71, 704, 167, 826 ), Top(), "row 9: six" );
+		Until( 1.60f );
+		Assert.AreEqual( new UI.UiRect( 69, 706, 169, 826 ), Top(), "row 10: eight" );
+		Until( 1.66f );
+		Assert.AreEqual( new UI.UiRect( 71, 704, 167, 826 ), Top(), "row 11: six" );
+		Until( 1.72f );
+		Assert.AreEqual( new UI.UiRect( 73, 702, 165, 826 ), Top(), "row 12: four" );
 		Until( 1.78f );
 		Assert.AreEqual( new UI.UiRect( 75, 700, 163, 826 ), Top(), "thirteen rows" );
 		Until( 1.95f );
@@ -442,8 +452,18 @@ public class ParkGadgetPressTests
 		Until( 3.68f );
 		Assert.AreEqual( new UI.UiRect( 72, 921, 166, 974 ), Find( gadget, 900 ).Rect, "six rows" );
 		Assert.AreEqual( new UI.UiRect( 71, 704, 167, 826 ), Top() );
+		Until( 3.74f );
+		Assert.AreEqual( new UI.UiRect( 80, 913, 158, 974 ), Find( gadget, 900 ).Rect, "a tag's row 8: four" );
+		Until( 3.77f );
+		Assert.AreEqual( new UI.UiRect( 78, 915, 160, 974 ), Find( gadget, 900 ).Rect, "row 9: six" );
+		Until( 3.80f );
+		Assert.AreEqual( new UI.UiRect( 76, 917, 162, 974 ), Find( gadget, 900 ).Rect, "row 10: eight" );
+		Until( 3.83f );
+		Assert.AreEqual( new UI.UiRect( 78, 915, 160, 974 ), Find( gadget, 900 ).Rect, "row 11: six" );
 		Until( 3.85f );
 		tags.Hide( tags.Standing[1], 3850 );
+		Until( 3.86f );
+		Assert.AreEqual( new UI.UiRect( 80, 913, 158, 974 ), Find( gadget, 900 ).Rect, "row 12: four" );
 		Until( 3.89f );
 		Assert.AreEqual( new UI.UiRect( 82, 911, 156, 974 ), Find( gadget, 900 ).Rect, "thirteen rows: two left" );
 		Until( 3.92f );
@@ -456,6 +476,26 @@ public class ParkGadgetPressTests
 		Until( 4.41f );
 		Assert.AreEqual( new UI.UiRect( 75, 775, 163, 901 ), Top(), "one row of the stream started again" );
 		Assert.AreEqual( new UI.UiRect( 84, 909, 154, 974 ), Find( gadget, 900 ).Rect, "the tag below the one gone keeps still" );
+
+		// Three more tags, then the oldest two hidden 100 ms apart, so the second goes while the tags above still play the
+		// first's 20 ms stream: they play none new (0x0048dcce), the stream running on from the first.
+		tags.Said( 68, 14, 4450 );
+		tags.Said( 68, 15, 4450 );
+		tags.Said( 150, 0, 4450 );
+		Until( 5.6f );
+		Assert.AreEqual( 4, tags.Standing.Count );
+		var older = tags.Standing[0];
+		var second = tags.Standing[1];
+		tags.Hide( older, 5600 );
+		Until( 5.7f );
+		tags.Hide( second, 5700 );
+		Until( 6.11f );
+		Assert.AreEqual( 3, tags.Standing.Count, "the oldest is gone, the second still stands" );
+		Until( 6.21f );
+		Assert.AreEqual( 2, tags.Standing.Count, "and the second is gone" );
+		Until( 6.28f );
+		Assert.AreEqual( new UI.UiRect( 72, 921, 166, 974 ), Find( gadget, 900 ).Rect, "the tag above plays on, row 6: twelve, not started again" );
+		Assert.AreEqual( new UI.UiRect( 72, 846, 166, 899 ), Find( gadget, 901 ).Rect, "and the one above that" );
 	}
 
 	/// <summary>
