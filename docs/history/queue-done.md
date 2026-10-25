@@ -10067,8 +10067,8 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     running game (`q631/ours-run3`, 11 of 11, the final binary): each WASD key held about 1.18 s moved the point 119 to 122 units in the
     hold (the model's within 1) and coasted 9 to 10, W at yaw 90 down x; Up 0.5 s gave zoom 85, then 70 and 130; O and E
     opened the two screens; D ended Mike Cooper's follow; the staff window's b_allstaff read "(E)"
-    (`q631/side-by-side.png`). Tests 3907 with the game; mutants 20 of 20 caught. Website key list: W A S D pan, Up and
-    Down zoom, O all items, E all staff (the Sentinel's).
+    (`q631/side-by-side.png`). Tests 3907 with the game; mutants 20 of 20 caught. The website lists no keys; nothing to
+    change there.
 - [x] **Q632. Building a path makes no sound. Decode first.** From Alexah's play test, 2026-10-21 (note 9). No doc,
   queue line or counted gap names a laying sound; only the demolish sound `0x96`-`0x99` by size (`park-engine.md:2599`;
   Q38, QUEUE:1978-1982, counts the demolish side) and the refusal `0xaf` are known. Find in the original's path tool

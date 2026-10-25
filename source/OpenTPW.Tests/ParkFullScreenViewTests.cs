@@ -394,7 +394,7 @@ public class ParkFullScreenViewTests
 	/// <c>ParkOrbitCameraMode.Panning</c> says a pan was held, which ends a locator's follow.
 	/// </summary>
 	/// <remarks><b>Mutations:</b> the pan left out of the frame; the park screen's gate taken out; the zoom's rate or
-	/// direction; Panning not set.</remarks>
+	/// direction; Panning not set; <c>Time.Delta</c> left out of the point's move.</remarks>
 	[TestMethod]
 	public void TheWASDKeysPanTheOrbitCameraAndUpZooms()
 	{
@@ -414,6 +414,7 @@ public class ParkFullScreenViewTests
 			WorldFrame( stack, park, Down( Key.A ) );
 			Assert.IsTrue( ParkOrbitCameraMode.Panning, "A held is a pan" );
 			Assert.IsTrue( ParkOrbitCameraMode.PointOfInterest.X < from.X - 1f && ParkOrbitCameraMode.PointOfInterest.Y == from.Y, "A held: left" );
+			Assert.AreEqual( from.X - 9.368f, ParkOrbitCameraMode.PointOfInterest.X, 0.01f, "by the term times Time.Delta: the first frame's rise of 0.8932 of 104.88, for 0.1 s" );
 			Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "and opens no screen" );
 
 			WorldFrame( stack, park, Up( Key.A ) );
@@ -445,6 +446,116 @@ public class ParkFullScreenViewTests
 			Time.Delta = delta;
 			ParkOrbitCameraMode.Forget();
 			UI.ParkCategoryScreens.Seed();
+		}
+	}
+
+	/// <summary>
+	/// <b>No camera key pans or zooms under a message box or the Save or Load screen</b>: their openers switch the
+	/// camera's table off (<c>FUN_00486b70</c>, <c>0x0047efa0</c>, <c>0x0049f406</c>), and a box being typed into has
+	/// the keyboard (<c>Input.TextCaptured</c>). With the box shut the same keys move the park.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> <c>WindowStack.CameraTableOff</c> left out of the keys' gate; the message box or the
+	/// file screen left out of <c>CameraTableOff</c>; the <c>TextCaptured</c> test taken out of the keys.</remarks>
+	[TestMethod]
+	public void TheCameraKeysAreSilentUnderAMessageBoxTheFileScreensAndATextBox()
+	{
+		var stack = APark();
+		var park = AParkLevel( stack );
+		var delta = Time.Delta;
+		Time.Delta = 0.1f;
+
+		try
+		{
+			var from = ParkOrbitCameraMode.PointOfInterest;
+			var box = new UI.MessageBox( stack, "Test", () => { } );
+			stack.Open( box );
+			WorldFrame( stack, park, Down( Key.A ), Down( Key.Up ) );
+			Assert.AreEqual( (from, 110f, false), (ParkOrbitCameraMode.PointOfInterest, ParkOrbitCameraMode.Zoom, ParkOrbitCameraMode.Panning), "under a message box: no camera key" );
+			WorldFrame( stack, park, Up( Key.A ), Up( Key.Up ) );
+			stack.Close( box );
+
+			var screen = new AFileScreen( stack );
+			stack.Open( screen );
+			WorldFrame( stack, park, Down( Key.A ), Down( Key.Up ) );
+			Assert.AreEqual( (from, 110f, false), (ParkOrbitCameraMode.PointOfInterest, ParkOrbitCameraMode.Zoom, ParkOrbitCameraMode.Panning), "under a file screen: none" );
+			WorldFrame( stack, park, Up( Key.A ), Up( Key.Up ) );
+			stack.Close( screen );
+
+			Frame( stack, Down( Key.A ), Down( Key.Up ) );
+			Input.TextCaptured = true;
+			Camera.Update();
+			Assert.AreEqual( (from, 110f, false), (ParkOrbitCameraMode.PointOfInterest, ParkOrbitCameraMode.Zoom, ParkOrbitCameraMode.Panning), "a text box with the keyboard: none" );
+			Frame( stack, Up( Key.A ), Up( Key.Up ) );
+
+			WorldFrame( stack, park, Down( Key.A ), Down( Key.Up ) );
+			Assert.IsTrue( ParkOrbitCameraMode.PointOfInterest.X < from.X - 1f && ParkOrbitCameraMode.Zoom < 110f, "the box shut: the same keys move the park" );
+			WorldFrame( stack, park, Up( Key.A ), Up( Key.Up ) );
+		}
+		finally
+		{
+			Time.Delta = delta;
+			ParkOrbitCameraMode.Forget();
+			UI.ParkCategoryScreens.Seed();
+		}
+	}
+
+	/// <summary>
+	/// <b>Keypad 5 and Home are counted once a press</b> (<c>CAMERA_HOME_RESET</c>): the original's camera reset (rows 19
+	/// and 24, <c>0x0042a500</c>) is not built; with a modifier held, or a park screen up, nothing is counted.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the count asked every frame the key is held; the modifier test left out; the park
+	/// screen's gate left out.</remarks>
+	[TestMethod]
+	public void TheCameraResetKeysAreCountedOncePerPress()
+	{
+		var stack = APark();
+		var park = AParkLevel( stack );
+
+		try
+		{
+			var before = Times( "CAMERA_HOME_RESET" );
+			WorldFrame( stack, park, Down( Key.Home ) );
+			WorldFrame( stack, park );
+			WorldFrame( stack, park, Up( Key.Home ) );
+			Assert.AreEqual( before + 1, Times( "CAMERA_HOME_RESET" ), "Home held three frames: one" );
+
+			WorldFrame( stack, park, Down( Key.Keypad5 ) );
+			WorldFrame( stack, park, Up( Key.Keypad5 ) );
+			Assert.AreEqual( before + 2, Times( "CAMERA_HOME_RESET" ), "keypad 5: another" );
+
+			WorldFrame( stack, park, Down( Key.ControlLeft ), Down( Key.Home ) );
+			WorldFrame( stack, park, Up( Key.Home ), Up( Key.ControlLeft ) );
+			Assert.AreEqual( before + 2, Times( "CAMERA_HOME_RESET" ), "Ctrl+Home: not the row" );
+		}
+		finally
+		{
+			ParkOrbitCameraMode.Forget();
+			UI.ParkCategoryScreens.Seed();
+		}
+	}
+
+	/// <summary>A park's stack with a bare park level over it, the camera put on the orbit and its state forgotten.</summary>
+	private static Level AParkLevel( UI.WindowStack stack )
+	{
+		var park = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
+		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( park, Level.Scene.Park );
+		typeof( Level ).GetField( "_windows", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( park, stack );
+		Level.Current = park;
+		ParkOrbitCameraMode.Forget();
+		Camera.SetCameraMode<ParkOrbitCameraMode>();
+
+		return park;
+	}
+
+	/// <summary>A file screen with no rows: the Save and Load screens' base, which holds the camera's table off.</summary>
+	private sealed class AFileScreen : UI.ParkFileScreen
+	{
+		public AFileScreen( UI.WindowStack stack ) : base( stack, "jungle", UIStrings.LoadPark )
+		{
+		}
+
+		protected override void RowClicked( int row )
+		{
 		}
 	}
 

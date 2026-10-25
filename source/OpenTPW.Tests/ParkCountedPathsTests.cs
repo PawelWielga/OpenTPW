@@ -374,7 +374,7 @@ public class ParkCountedPathsTests
 	/// </summary>
 	/// <remarks><b>Mutations:</b> a key's direction turned over; a modifier let through (Ctrl+S, Alt+S); a keypad key left
 	/// out; Up and Down exchanged; the speed not by the root of the zoom; the yaw's turn the other way; the rise or the
-	/// coast at another rate; the floor of 0.1 left out.</remarks>
+	/// coast at another rate; the floor of 0.1 left out; the rise made half the gap a frame whatever <c>Time.Delta</c> is.</remarks>
 	[TestMethod]
 	public void TheKeysPanAndZoomTheOrbitCamera()
 	{
@@ -401,6 +401,11 @@ public class ParkCountedPathsTests
 		{
 			AreNear( (50f, -25f), ParkOrbitCameraMode.StepScroll( Vector2.Zero, new Vector2( 100f, -50f ), true ), "half the gap in 31 ms" );
 			AreNear( (73.345f, 0f), ParkOrbitCameraMode.StepScroll( new Vector2( 100f, 0.09f ), new Vector2( 5f, 5f ), false ), "the coast, and under 0.1 nought" );
+
+			// The original halves the gap every frame, whatever the frame's length (not on dt); this rise is on Time.Delta,
+			// so at half the frame it takes 29.29 % of the gap, not half.
+			Time.Delta = 0.0155f;
+			AreNear( (29.289f, -14.645f), ParkOrbitCameraMode.StepScroll( Vector2.Zero, new Vector2( 100f, -50f ), true ), "the rise in 15.5 ms" );
 		}
 		finally
 		{

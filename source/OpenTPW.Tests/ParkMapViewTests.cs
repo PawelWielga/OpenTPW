@@ -199,9 +199,11 @@ public class ParkMapViewTests
 		ParkEscapeOnReleaseTests.Frame( stack, ParkEscapeOnReleaseTests.Up( Key.Up ) );
 		Assert.AreEqual( (49f, 27f), (map.View.Across, map.View.Down) );
 
+		ParkOrbitCameraMode.Scroll = new Vector2( 60f, -40f );
 		Ok( map ).Clicked!();
 		Assert.IsFalse( stack.Windows.Contains( map ), "OK closes it" );
 		Assert.AreEqual( new Vector3( 490f, 270f, 0f ), ParkOrbitCameraMode.PointOfInterest, "on the view's cell" );
+		Assert.AreEqual( Vector2.Zero, ParkOrbitCameraMode.Scroll, "FUN_0042aab0 noughts the pan's momentum with the point" );
 
 		map = new ParkMapScreen( stack );
 		stack.Open( map );

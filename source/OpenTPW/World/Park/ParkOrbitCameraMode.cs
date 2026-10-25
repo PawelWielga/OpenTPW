@@ -152,8 +152,10 @@ public sealed class ParkOrbitCameraMode : CameraMode
 
 	/// <summary>
 	/// How fast the pan's term coasts away with no key held, a second: the original divides it by <c>1 + 0.01 dt</c> a
-	/// frame (<c>0x006fddc8</c>), which this is at a frame of no length; at its 30 frames a second the coast is about an
-	/// eighth shorter.
+	/// frame (<c>0x006fddc8</c>), which this is at a frame of no length. The original's coast totals exactly 100 times the
+	/// term at any frame rate; this one steps the term and then moves by it, so it totals less, and by an amount that
+	/// depends on the frame rate: 10.1 units from a term of 104.9 a second at 144 frames a second, 9.6 at 60 and 8.8 at 30,
+	/// against the original's 10.5.
 	/// </summary>
 	private const float PanCoastRate = 10f;
 
@@ -174,6 +176,9 @@ public sealed class ParkOrbitCameraMode : CameraMode
 	private static float _zoomHeld;
 
 	private static (float Forward, float Right) _panHeld;
+
+	/// <summary>Whether the reset keys were held last frame, so the count is one a press.</summary>
+	private static bool _resetHeld;
 
 	private static float _panSeconds;
 
@@ -228,7 +233,13 @@ public sealed class ParkOrbitCameraMode : CameraMode
 		// rows' latches (FUN_00485b70, 0x00485ccd), and the screen's handler runs the shortcuts' table alone, so no
 		// camera key is heard until it closes. The mouse still reaches the camera from the park beside the screen. The park
 		// map is handed to the same switch (0x005f0c01), and its own handler takes the arrow keys.
-		var keys = !UI.WindowStack.ParkScreenOpen && !UI.WindowStack.MapOpen;
+		//
+		// Nor under a message box or the Save or Load screen: each opener calls FUN_00486b70 (0x0047efa0, 0x0049f406),
+		// which switches the camera's table off and clears its latches (docs/exe/hud.md, "The research opener and its two boxes";
+		// docs/exe/saves.md, "One screen, two uses"). That is WindowStack.CameraTableOff, the narrower test than
+		// Level.PausedByWindow: the game menu and the options screen also pause, but whether their openers switch the
+		// table off is not read, so the keys are left to them.
+		var keys = !UI.WindowStack.ParkScreenOpen && !UI.WindowStack.MapOpen && !UI.WindowStack.CameraTableOff;
 
 		if ( keys && Input.Pressed( InputButton.RotateLeft ) )
 			Yaw -= MathF.PI / 4f;
@@ -257,6 +268,19 @@ public sealed class ParkOrbitCameraMode : CameraMode
 
 		_zoomHeld = zoom;
 
+		// Keypad 5 and Home reset the camera in the original (camera rows 19 and 24, 0x0042a500, applied at 0x0042b518: zoom
+		// 110, rotation 0, the point (475, 175), the follow cleared; docs/exe/park-engine.md, "The point of interest's
+		// edge"). Not built: counted, so a press that does nothing here is not silent.
+		var reset = ResetInput( down );
+
+		if ( reset && !_resetHeld )
+			Unimplemented.Report( "CAMERA_HOME_RESET" );
+
+		_resetHeld = reset;
+
+		// Not the original's, for the pan's edge: the original holds the point inside the heightfield's soft bound
+		// (0x0042b668..0x0042b716, 0x0042bc2a..0x0042bd65) and this adds the move with no bound, so a held pan runs on
+		// over the edge. The build is Q667.
 		var (forward, right) = PanInput( down );
 		var panned = Panning;
 		Panning = forward != 0f || right != 0f;
@@ -306,6 +330,13 @@ public sealed class ParkOrbitCameraMode : CameraMode
 			? 0f
 			: Held( down, Key.Down, Key.Keypad3 ) - Held( down, Key.Up, Key.Keypad1 );
 
+	/// <summary>
+	/// Whether a reset key is held, with no modifier: keypad 5 and Home, the camera table's rows 19 and 24 (action
+	/// <c>0x14</c>, <c>0x18</c>).
+	/// </summary>
+	internal static bool ResetInput( IReadOnlyCollection<Key> down )
+		=> Input.HeldIn( down ) == Input.Modifiers.None && Held( down, Key.Home, Key.Keypad5 ) != 0f;
+
 	private static float Held( IReadOnlyCollection<Key> down, Key a, Key b )
 		=> down.Contains( a ) || down.Contains( b ) ? 1f : 0f;
 
@@ -327,6 +358,11 @@ public sealed class ParkOrbitCameraMode : CameraMode
 	/// The pan's term a frame on: eased up to the target while a key is held, coasting out with none, and nought under
 	/// 0.1 a second, the original's 0.0001 a millisecond (<c>0x0074c988</c>).
 	/// </summary>
+	/// <remarks>
+	/// Each axis is noughted on its own. The original noughts its three terms (the two here and the one it keeps for
+	/// the height) only when all three are under the floor (<c>0x0042bd69</c>..<c>0x0042bdc3</c>), so an axis under it
+	/// stays while the other is over; the difference is below 0.1 a second.
+	/// </remarks>
 	internal static Vector2 StepScroll( Vector2 term, Vector2 target, bool held )
 	{
 		var next = held
@@ -384,8 +420,9 @@ public sealed class ParkOrbitCameraMode : CameraMode
 	/// </summary>
 	/// <remarks>
 	/// The original's write (<c>FUN_0042aab0</c>) also zeroes the camera's three scroll terms
-	/// (<c>0x00790a88</c>..<c>0x00790a90</c>); this camera keeps none. In first person the same two words are where
-	/// the viewer stands, and no screen is open there in the original; here only the orbit's point moves.
+	/// (<c>0x00790a88</c>..<c>0x00790a90</c>); so does this, for the two it keeps (<see cref="Scroll"/>). In first
+	/// person the same two words are where the viewer stands, and no screen is open there in the original; here only
+	/// the orbit's point moves.
 	/// </remarks>
 	public static bool GoToThing( int thingId )
 	{
@@ -393,6 +430,7 @@ public sealed class ParkOrbitCameraMode : CameraMode
 			return false;
 
 		PointOfInterest = new Vector3( x * 10f, y * 10f, 0f );
+		Scroll = Vector2.Zero;
 
 		Log.Info( $"Camera: to thing {thingId} on cell ({x},{y}), point of interest ({PointOfInterest.X:F0},{PointOfInterest.Y:F0})" );
 
@@ -433,9 +471,9 @@ public sealed class ParkOrbitCameraMode : CameraMode
 	/// <para>
 	/// The three pieces of state here are static so they survive <see cref="Camera.SetCameraMode{T}"/>
 	/// building a fresh instance, which means they survive the scene too unless something says
-	/// otherwise. It matters because coming back from camcorder mode writes wherever the
-	/// player wandered to into <see cref="PointOfInterest"/>, so without this a second park opens
-	/// looking at a spot that belonged to the first one.
+	/// otherwise. It matters because a pan, the camera put on a thing and a park's own camera move
+	/// <see cref="PointOfInterest"/>, so without this a second park opens looking at a spot that
+	/// belonged to the first one.
 	/// </para>
 	/// </summary>
 	public static void Forget()

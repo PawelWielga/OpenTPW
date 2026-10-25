@@ -9,9 +9,9 @@ namespace OpenTPW.Tests;
 /// A chord should fire one shortcut. The original compares a binding's modifiers for equality and
 /// not for containment, so Ctrl+C is Close Park and nothing else, and a plain C is camcorder mode
 /// and nothing else. Eight of the cases here fail against a rule that asks only for a
-/// binding's own keys: the Ctrl+C/H/S/V/P rows, EitherControlKeyStandsForControl,
+/// binding's own keys: the Ctrl+O/C/H/V/P rows, EitherControlKeyStandsForControl,
 /// AModifierNobodyAskedForStopsABinding, and the last assert of CloneIsTheControlKeyBeingDown. The
-/// rest pin behaviour that has to keep working - the Ctrl+O row has no plain-O shortcut to collide
+/// rest pin behaviour that has to keep working - the Ctrl+S row has no plain-S shortcut to collide
 /// with at all - and the two-frame tests at the bottom cover a hole the single-frame ones cannot
 /// see.
 /// </summary>

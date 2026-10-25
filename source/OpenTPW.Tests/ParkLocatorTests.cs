@@ -163,9 +163,11 @@ public class ParkLocatorTests
 		Click( 0x95e );
 		Assert.AreEqual( byKind[1][0].ThingId, Locator.Actor );
 
+		ParkOrbitCameraMode.Scroll = new Vector2( 60f, -40f );
 		Click( button );
 		var first = many.Value[0];
 		Assert.AreEqual( (first.ThingId, true, true), (Locator.Actor, Locator.Strip.Visible, Locator.Following) );
+		Assert.AreEqual( Vector2.Zero, ParkOrbitCameraMode.Scroll, "the follow's write noughts the pan's momentum (FUN_0042aab0)" );
 		Assert.AreEqual( first.Name, Find( Locator.Strip, 0x147 ).Text );
 		Assert.AreEqual( ParkLocator.PointOf( first.Navigator.Previous, first.Navigator.Position, ParkPeople.ThingTickFraction ),
 			ParkOrbitCameraMode.PointOfInterest );

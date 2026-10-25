@@ -176,6 +176,8 @@ public class SpritePickTests
 		Assert.AreEqual( (1f, 1f), (SpritePick.Frame( 1024, 768 ).X, SpritePick.Frame( 1024, 768 ).Y) );
 		Assert.AreEqual( 1f, SpritePick.Frame( 960, 960 ).X );
 		Assert.AreEqual( 4f / 3f, SpritePick.Frame( 960, 960 ).Y, 1e-6f );
+		Assert.AreEqual( 1f, SpritePick.Frame( 768, 1024 ).X, "a narrow window holds the frame's width" );
+		Assert.AreEqual( 1f / (0.75f * 0.75f), SpritePick.Frame( 768, 1024 ).Y, 1e-5f, "at 768 x 1024: 1.778 down; a ratio turned over gives 1.0" );
 	}
 
 	/// <summary>The window's pixel in the 4:3 frame's -1 to 1 box, down positive: at 2000 x 1200 the box reaches 1.25 of

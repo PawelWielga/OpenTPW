@@ -1142,10 +1142,11 @@ which came first is not kept between the two buttons).
 Decoded first-hand (Ghidra, names given this session) and seen in the original's frames. With the cursor library on
 (`CursorLib_Start`, `0x0047e7d0`, the default unless `-bwcursor`), the start sets two hooks, `[0x008bd510]` =
 `CursorLib_HookBeforeFlip` (`0x0047e9b0`) and `[0x008bd514]` = `CursorLib_HookAfterFlip` (`0x0047e9c0`).
-`Display_Present` (`0x00564210`, called from `0x0051b010` and `0x00573cc0`) calls the first, then flips (the surface's
+`Display_Present` (`0x00564210`, called from `0x0051b010`, `0x00573cc0` and, through the vtable thunk `0x00573880` ->
+`0x00573890` (`mov ecx,[0x00879a24]; jmp 0x00564210`), from a vtable slot) calls the first, then flips (the surface's
 `+0x2c`) or blits (`+0x14`) the back buffer, then calls the second. The first is `CursorLib_DrawBeforeFlip`
-(`0x005fbd40`): it takes the library's lock and draws the pointer onto the back buffer (`CursorLib_DrawAt`,
-`0x005faef0`); the second (`0x005fbd90`) ends the draw (`0x005fb820`), sets the thread's next time and releases the
+(`0x005fbd40`): it takes the library's lock and draws the pointer onto the back buffer (through `0x005fb7f0`, which clears
+`+0x20` and calls `CursorLib_DrawAt`, `0x005faef0`); the second (`0x005fbd90`) ends the draw (`0x005fb820`), sets the thread's next time and releases the
 lock. Between frames the library's own thread (`0x005fba70`) draws it again at most every `0x42` ms, and only when it
 has moved or its `+0x2c` is set (read, not run). `UI_RunPass`
 (`0x0048a580`) only hands it the shape and the position. So **the pointer goes onto the finished frame, over everything
@@ -2875,7 +2876,8 @@ leaves it as it is. **Rows 4 and 5 are O and E here, not the original's A and S*
 (Q631, `park-engine.md`, "The point of interest's edge"); the help bar's nine rows that name A and S name O and E
 (`HelpBar.OurKeys`). On the stock park (`q366/run-fix2`, the final game binary): each
 key's `Park keys: shortcut row N, name` line and the screen `windows` named, a frame a screen (`run-fix2/1-items-by-A.png`
-to `9-map.png`); A held a second left the camera's point where it was, W held a second moved it 200 units.
+to `9-map.png`); in that run, before Q631, A held a second left the camera's point where it was and W held a second moved it
+200 units (now A pans and W moves about 105 a second at zoom 110: `q631/ours-run3`).
 
 #### The staff and visitor locators
 

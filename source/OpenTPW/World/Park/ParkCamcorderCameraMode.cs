@@ -315,6 +315,10 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 			return;
 		}
 
+		// Not the original's, for the wheel: its viewfinder layer passes every message on to FUN_0042a760 (0x00488b6a), and the
+		// wheel there adds or takes 10 from the zoom with no flag test (0x0042a91d), so a wheel turned in first person changes
+		// the walk's speed (sqrt( zoom ) x 0.02) and the zoom the orbit comes back at. Read from the listing only, never
+		// turned in the original's first person. This reads no wheel and counts nothing.
 		Steer();
 		Walk();
 

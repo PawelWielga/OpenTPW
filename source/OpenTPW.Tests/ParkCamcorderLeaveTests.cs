@@ -112,7 +112,9 @@ public class ParkCamcorderLeaveTests
 	/// <summary>
 	/// <b>A park left lets the saved view go</b> with the rest of the ground-level state (<see cref="Level.ForgetPark"/>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> <see cref="ParkCamcorderCameraMode.Forget"/> keeping either saved value.</remarks>
+	/// <remarks>Hygiene, not the restore: nothing reads the saved view after a forget, because every caller of
+	/// <c>Leave</c> is guarded by <c>Active</c> and <c>Enter</c> saves it afresh, so the two mutations below change no
+	/// behaviour. <b>Mutations:</b> <see cref="ParkCamcorderCameraMode.Forget"/> keeping either saved value.</remarks>
 	[TestMethod]
 	public void ForgettingTheParkForgetsTheSavedView()
 	{

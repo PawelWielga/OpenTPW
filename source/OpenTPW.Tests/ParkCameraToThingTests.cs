@@ -183,7 +183,7 @@ public class ParkCameraToThingTests
 	/// </summary>
 	/// <remarks>
 	/// <b>Mutations:</b> the cell's middle (plus 5); the thing's own position, not the corner; the spin or the zoom
-	/// reset; an unknown thing moving the camera.
+	/// reset; an unknown thing moving the camera; the pan's momentum left.
 	/// </remarks>
 	[TestMethod]
 	public void TheCameraGoesToTheCornerOfTheThingsCell()
@@ -192,8 +192,10 @@ public class ParkCameraToThingTests
 		Assert.IsFalse( ParkOrbitCameraMode.GoToThing( 0 ) );
 		Assert.AreEqual( Start, ParkOrbitCameraMode.PointOfInterest, "an id nothing has moves nothing" );
 
+		ParkOrbitCameraMode.Scroll = new Vector2( 60f, -40f );
 		Assert.IsTrue( ParkOrbitCameraMode.GoToThing( 13 ) );
 		Assert.AreEqual( new Vector3( 510f, 230f, 0f ), ParkOrbitCameraMode.PointOfInterest );
+		Assert.AreEqual( Vector2.Zero, ParkOrbitCameraMode.Scroll, "and the pan's momentum is noughted (FUN_0042aab0)" );
 		Assert.AreEqual( 1.25f, ParkOrbitCameraMode.Yaw, "the spin is left" );
 		Assert.AreEqual( 95f, ParkOrbitCameraMode.Zoom, "and the zoom" );
 	}

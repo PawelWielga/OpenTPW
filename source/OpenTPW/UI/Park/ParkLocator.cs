@@ -527,6 +527,7 @@ internal sealed class ParkLocator
 	{
 		var navigator = member?.Navigator ?? guest!.Navigator;
 		ParkOrbitCameraMode.PointOfInterest = PointOf( navigator.Previous, navigator.Position, ParkPeople.ThingTickFraction );
+		ParkOrbitCameraMode.Scroll = Vector2.Zero;
 	}
 
 	/// <summary>Where <see cref="Camera"/> puts the point: each axis <c>prev + (cur - prev) * t</c>, truncated, times ten over <see cref="FixedVector.One"/>.</summary>

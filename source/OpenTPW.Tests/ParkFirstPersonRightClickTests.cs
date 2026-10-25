@@ -39,7 +39,7 @@ public class ParkFirstPersonRightClickTests
 		_screen = Screen.Size;
 		Screen.Size = new Point2( 2048, 1536 );
 
-		// Leaving first person hands the orbit camera the viewer's place and heading, so both are put back after.
+		// Leaving first person writes the orbit camera's point and yaw (the copy saved at entry), so both are put back after.
 		_orbitLooksAt = ParkOrbitCameraMode.PointOfInterest;
 		_orbitYaw = ParkOrbitCameraMode.Yaw;
 		_rmbCancel = GameOptions.Current.RmbCancel;

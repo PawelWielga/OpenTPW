@@ -405,15 +405,19 @@ either: the soft bound on the walker ("Nothing clamps the position", under "Walk
 - **The speed.** The inputs are turned by the drawn rotation, `vx = x cos r + f sin r`, `vz = f cos r - x sin r`
   (`0x0042bbe6`..`0x0042bc28`), and each scroll term becomes `(sqrt( zoom ) x 0.02 x input + term) x 0.5` a frame
   (`0x006fddf8`, `0x006fddfc`): a held key settles at `sqrt( zoom ) x 0.01` units a millisecond, 104.9 a second at zoom
-  110, 83.7 at 70, 114.0 at 130. With no input each term is divided by `1 + 0.01 dt` a frame (`0x006fddc8` = -0.01) and
-  noughted under 0.0001 (`0x0074c988`). The orbit's point moves `dt x term` (`0x0042c5ed`..`0x0042c61b`); `dt` is the frame's milliseconds,
+  110, 83.7 at 70, 114.0 at 130. With no key held and the pointer not past 0.95, each term is divided by `1 + 0.01 dt` a
+  frame (`0x006fddc8` = -0.01, `0x0042b73d`..`0x0042b78f`); with a pan key held, an axis with no input halves a frame
+  (`(0 + term) x 0.5`, `0x0042bc60`..`0x0042bc88`, no `dt`). All three terms are noughted together, once all three are under
+  0.0001 (`0x0074c988`; `0x0042bd69`..`0x0042bdbc`). The orbit's point moves `dt x term` (`0x0042c5ed`..`0x0042c61b`); `dt` is the frame's milliseconds,
   100 past 200 and 1 at or below nought (`0x0042b2c3`).
 - **The edge.** Before the move (`0x0042b668`..`0x0042b716`) the point is flagged past x < 0 (1), z < 0 (4),
   x > `+0x18 x +0x10` (2) and z > `+0x1c x +0x14` (8) of the heightfield `[[0x007a0854] + 0x6c]`: 960 and 850 in Lost
   Kingdom, not the 128-cell map. Where flagged and the new term points further out, the term becomes the frame's old one
   divided by `1 + 0.01 dt` (`0x0042bca0`..`0x0042bd5f`): the push is dropped and the coast decays. Nothing pulls the point
   back, and a pan inward is free. So a held pan stops `100 x |term|` past the edge plus up to one frame's step: 10.5 to
-  14 units at zoom 110 and 30 frames a second, in the second cell out (x 97 or -2, z 86 or -2; at zoom 70, 8.4 to 11).
+  14 units at zoom 110 and 30 frames a second, in the second cell out (x 97 or -2, z 86 or -2, counting by floor; the
+  original's own cell is `(int)( x x 0.1 )`, which truncates, `0x0042c545`, so -11.989 is its cell -1 and the high edge's
+  97 and 86 are the same either way; at zoom 70, 8.4 to 11).
 - **Measured** (Q625, `original/campoi.py` on the stock park, zoom 110, `q625/orig/a-*.log`, `b-*.log`): keypad 4 from
   x 40 stopped at -11.989; keypad 2 from z 40 at -12.806; keypad 6 from x 920 at 973.517 (and at 970.643 and 973.435 with its release lost); keypad 8
   from z 810 at 863.621; keypad 4 at rotation 90 from z 810 left by z, at 862.013. The held term read 0.10488 a
@@ -424,15 +428,21 @@ either: the soft bound on the walker ("Nothing clamps the position", under "Walk
   with the reference player's 90 degree option set (`[0x0078d912]` 1) Left raised the asked rotation by 90 once and
   Right lowered it by 90; W and D moved nothing; the point stood through all six. The table's keys, read from the exe
   (`lib/bindtables.py`), by action: 0 and 1 `0x2600` Up and `0x2800` Down, 6 and 7 `0x2500` Left and `0x2700` Right,
-  `0xd` to `0x10` the keypad's 8, 2, 4 and 6, `0x15` and `0x16` keypad 1 and 3, `0x12` and `0x13` keypad 9 and 7. No row of the six tables binds
+  `0xd` to `0x10` the keypad's 8, 2, 4 and 6, `0x15` and `0x16` keypad 1 and 3, `0x12` and `0x13` keypad 9 and 7, `0x14` keypad 5
+  (`0x0065`) and `0x18` Home (`0x2400`), both the reset (handler `0x0042a500` sets bit `0x100` of `[0x00790aac]`; the update
+  answers at `0x0042b518`: zoom 110, rotation 0, the point (475, 175), the follow's bit `0x1000` cleared; not measured in the
+  running original). No row of the six tables binds
   D, E, J, K, M, N, O, Q, U, W, X, Y or Z with no modifier.
 - **OpenTPW** (Q631, `ParkOrbitCameraMode`): the keypad's 8, 2, 4 and 6 pan, and so do W, S, A and D, its deviation
   (`PanInput`; all-items and all-staff move to O and E, `ParkFrontEnd.ShortcutRow`, and the help bar's nine rows say so,
   `HelpBar.OurKeys`); each only with no modifier held. A held pan settles at `sqrt( zoom ) x 10` a second, the term eased
   up by half every 31 ms and coasting out at 10 a second, nought under 0.1 (`PanTarget`, `StepScroll`), and ends a
   locator's follow (`Panning`). Up, Down and keypad 1 and 3 zoom at 50 a second. Nothing bounds the point: from x 920, a
-  key held 4 s runs on over the sea (`q625/side-by-side.png`, on the old 200 a second); the bound is Q667. Keypad 9 and
-  7 do not turn, and the turn's step is not the original's (Q23).
+  key held 4 s runs on past the land (`q625/side-by-side.png`, on the old 200 a second), where the frame is one flat cyan
+  with no shore or horizon; whether that is a sea or the fog clear colour with nothing drawn was not measured (the clear
+  is `Level.FogColour`, `Renderer.cs`); the bound is Q667. Keypad 9 and
+  7 do not turn, and the turn's step is not the original's (Q23). Keypad 5 and Home are counted, not built
+  (`CAMERA_HOME_RESET`).
 
 The camera persists a *saved* POI and *saved* Y rotation as well as the *required* ones — the shape of a camera that leaves its position and is put back (camcorder mode does exactly that).
 
@@ -1693,6 +1703,9 @@ whose `+0x4ac` is nought gets `FUN_004e15b0( 0 )` instead.
   rule ("The turn"). **Measured** (Q626, `original/campoi.py`, `q626/orig/b-poll.log`): entered from (450, 165) at 180,
   the copy read 450, 165, 180 and the viewer stood at the pick, (481.897, 166.285); turned to 278.14, asked and drawn
   alike; C put back 180.00 and (450, 165) by the next poll, the drawn rotation then 240.24 and at 180.00 1.36 s later.
+  **The zoom is not saved:** the wheel still reaches `FUN_0042a760` in first person (`0x00488b6a`, `0x0042a91d`), which adds
+  or takes 10 with no flag test, and the orbit keeps the change (clamped to 70..130 by its update, `0x0042c621`). Read from
+  the listing only, never turned in the original's first person. OpenTPW's first person reads no wheel and counts nothing.
 - **The sprites swap.** Entering ends by calling `FUN_00542420` (`0x0042af85`), leaving by calling `FUN_00542640`
   (`0x0042afba`). `FUN_00542420` runs only while `DAT_00763f80` is 1, sets it to 0, and reloads every loaded bank
   whose `+0x205` (the `.ESP` byte `0x10C`) is set from its `.fpc` (the static at `0x00875fe8`, built from

@@ -1398,9 +1398,19 @@ public class Level
 		// Over the interface it decorates and under the pointer, which is the order SetupHud uses.
 		Hud.AddChild( new ScreenParticles() );
 
-		// Not a child: the pointer is drawn after the overlay pass (Render).
-		_cursor = new Cursor();
-		Hud.Pointer = _cursor;
+		_cursor = AttachPointer( Hud, new Cursor() );
+	}
+
+	/// <summary>
+	/// Hands the pointer to the interface as its <see cref="RootPanel.Pointer"/>. Not a child: the pointer is
+	/// drawn after the overlay pass (<see cref="RenderOverTheWorld"/>), and as a child it would be drawn a second time,
+	/// under the previews.
+	/// </summary>
+	internal static T AttachPointer<T>( RootPanel hud, T pointer ) where T : Panel
+	{
+		hud.Pointer = pointer;
+
+		return pointer;
 	}
 
 	private void SetupHud()
@@ -1418,8 +1428,7 @@ public class Level
 		// On-screen particle effects go over the interface they decorate, and under the pointer.
 		Hud.AddChild( new ScreenParticles() );
 
-		// Not a child: the pointer is drawn after the overlay pass (Render).
-		Hud.Pointer = new Cursor();
+		AttachPointer( Hud, new Cursor() );
 	}
 
 	/// <summary>
@@ -2979,43 +2988,67 @@ public class Level
 		// The solid geometry, then everything see-through, then the sprites.
 		Entity.RenderWorld();
 
-		// And the HUD on top of the finished world. Nothing in either pass above can reach it,
-		// because it is not an entity at all - see RootPanel.
-		Hud.Render();
+		RenderOverTheWorld( Hud, () => global::Global.Render.CommandList.ClearDepthStencil( 1 ), DrawPreviews, DrawActiveWarning,
+			() => Entity.All.ForEach( entity => entity.RenderOverlay() ) );
+	}
+
+	/// <summary>
+	/// A ride's window shows the ride itself, turning, in a panel. It is drawn HERE rather than with
+	/// the interface because it is a model: the HUD pass draws flat UI meshes, and this needs the
+	/// depth-cleared overlay stage the advisor already uses. A scissor keeps it inside the panel.
+	/// </summary>
+	private void DrawPreviews()
+	{
+		if ( _windows is not { } showing )
+			return;
+
+		foreach ( var window in showing.Windows )
+		{
+			if ( window is UI.ParkObjectWindow ride )
+				ride.DrawPreview();
+			else if ( window is UI.ParkShopWindow shop )
+				shop.DrawPreview();
+		}
+	}
+
+	/// <summary>
+	/// The active warning, drawn after every preview but beneath the advisor. Covered windows keep their HUD drawing
+	/// order; the preview pass has its own existing overlay behaviour.
+	/// </summary>
+	private void DrawActiveWarning()
+	{
+		if ( _windows is not { } showing )
+			return;
+
+		var active = showing.Windows.LastOrDefault( window => !window.Hidden && !window.PutAway );
+
+		if ( active is UI.ParkObjectWindow activeRide )
+			activeRide.DrawStatus();
+		else if ( active is UI.ParkShopWindow activeShop )
+			activeShop.DrawStatus();
+	}
+
+	/// <summary>
+	/// The frame's end, after the world: the HUD, the depth cleared, the windows' model previews, the active warning, the
+	/// entities' overlays (the advisor), and the pointer last, as the original's cursor library draws it onto the finished
+	/// frame just before the flip (<c>0x00564210</c>; <c>docs/exe/hud.md</c>, "The pointer is drawn last"). The steps are
+	/// handed in so a test can see the order.
+	/// </summary>
+	internal static void RenderOverTheWorld( RootPanel hud, Action clearDepth, Action previews, Action warning, Action overlays )
+	{
+		// The HUD on the finished world. Nothing in the passes before can reach it, because it is not an entity at all -
+		// see RootPanel.
+		hud.Render();
 
 		// Then whatever sits on the screen in front of everything but the pointer, the HUD included - the advisor,
 		// who covers whatever he pops up over. Depth is cleared first so nothing drawn before can
 		// cut into him: the original draws him in screen space, flattened almost to nothing in
 		// depth.
-		global::Global.Render.CommandList.ClearDepthStencil( 1 );
+		clearDepth();
+		previews();
+		warning();
+		overlays();
 
-		// A ride's window shows the ride itself, turning, in a panel. It is drawn HERE rather than with
-		// the interface because it is a model: the HUD pass draws flat UI meshes, and this needs the
-		// depth-cleared overlay stage the advisor already uses. A scissor keeps it inside the panel.
-		if ( _windows is { } showing )
-		{
-			foreach ( var window in showing.Windows )
-			{
-				if ( window is UI.ParkObjectWindow ride )
-					ride.DrawPreview();
-				else if ( window is UI.ParkShopWindow shop )
-					shop.DrawPreview();
-			}
-
-			// Draw the active warning after every preview, but beneath the advisor. Covered windows
-			// keep their HUD drawing order; the preview pass has its own existing overlay behaviour.
-			var active = showing.Windows.LastOrDefault( window => !window.Hidden && !window.PutAway );
-
-			if ( active is UI.ParkObjectWindow activeRide )
-				activeRide.DrawStatus();
-			else if ( active is UI.ParkShopWindow activeShop )
-				activeShop.DrawStatus();
-		}
-
-		Entity.All.ForEach( entity => entity.RenderOverlay() );
-
-		// The pointer goes over everything, the previews and the advisor included, as the original's cursor library
-		// draws it onto the finished frame just before the flip (0x00564210; docs/exe/hud.md, "The pointer is drawn last").
-		Hud.RenderPointer();
+		hud.RenderPointer();
 	}
 }

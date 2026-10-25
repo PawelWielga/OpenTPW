@@ -129,6 +129,15 @@ internal sealed class WindowStack : Panel
 	/// </summary>
 	internal static bool MapOpen { get; private set; }
 
+	/// <summary>
+	/// Whether a message box or the Save or Load screen is open: their openers call <c>FUN_00486b70</c> (<c>0x0047efa0</c>,
+	/// <c>0x0049f406</c>), which switches the camera's table off, so no camera key pans or zooms the park behind them.
+	/// Narrower than <see cref="Level.PausedByWindow"/>, which also holds for the game menu and the options screen: those
+	/// two openers are not among that function's callers, so their keys are not read as switched off. Written as
+	/// <see cref="ParkScreenOpen"/> is.
+	/// </summary>
+	internal static bool CameraTableOff { get; private set; }
+
 	/// <summary>Whether one of the park's screens is open in this stack - see <see cref="ParkScreenOpen"/>.</summary>
 	internal bool ParkScreenUp => _windows.Exists( window => window.ParkScreen );
 
@@ -409,6 +418,7 @@ internal sealed class WindowStack : Panel
 		CoverRightClick = null;
 		ParkScreenOpen = false;
 		MapOpen = false;
+		CameraTableOff = false;
 		HelpBarTop = null;
 		_pointed = null;
 		PostHelp( -1, [] );
@@ -429,6 +439,7 @@ internal sealed class WindowStack : Panel
 
 		ParkScreenOpen = ParkScreenUp;
 		MapOpen = _windows.Exists( window => window is ParkMapScreen );
+		CameraTableOff = _windows.Exists( window => window is MessageBox or ParkFileScreen && !window.Hidden && !window.PutAway );
 
 		// Ours: the hover is hit-tested once a frame, and a press made after the last frame goes to it. The original works
 		// its hover out only on a move and when its interface changes (FUN_006589f9), so a press made after a window

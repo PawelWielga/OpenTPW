@@ -296,6 +296,7 @@ internal sealed class ParkMapScreen : UiWindow
 	{
 		var (x, y) = _view.CameraPoint();
 		ParkOrbitCameraMode.PointOfInterest = new Vector3( x, y, ParkOrbitCameraMode.PointOfInterest.Z );
+		ParkOrbitCameraMode.Scroll = Vector2.Zero;
 		Log.Info( $"Park map: closed on the view, {_view}, the camera's point ({x:0},{y:0})" );
 		Stack.Close( this );
 	}
