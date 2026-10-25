@@ -269,6 +269,17 @@ Each was found by trial in the item named, and cost a run to find.
   prediction that a line waiting behind another is said "by tick N" is not to be made from the original's four sweeps
   a second.
 
+- **One frame of this game held on screen, the frame a real click is dealt in** (Q623, `q623/run4.py`): `pause` and
+  `step` cannot show it, since the next frame's sweep runs before any grab, and a full-rate film misses one frame.
+  `stall N` sleeps at the END of `Level.Update`, after the clicks and before the draw, so chain three: send `stall
+  1500`, click by XTEST and send `stall 1500` within it (the next frame reads both, deals the click and stalls before
+  drawing it), then send a third `stall 1500` during the second: the frame after reads it and stalls before ITS draw,
+  so the click's own frame stands on screen for 1.5 s. Grab in the third stall's window, timed by the replies' `stall:
+  N ms from wall W` lines; a grab one window earlier is the frame before the click, the control. The park clock then
+  catches up the 4.5 s at once, so frames after it are not the next ones. In the original the same placement filmed
+  by `record.sh` (`q623/orig/`): `setcam.py` after the buy screen's row (the align sweep pans the camera), Buy
+  (117,588), the features tab (843,123), the Round Fountain's row (570,261), then the click on the ground.
+
 - **The game's `console.log` and a harness run** (Q647). Every launch writes `console.log` and keeps the launch before as `console-prev.log`, in the game folder beside `save/` (the player's own data folder where that cannot be written; `OpenTPW.Common/ConsoleLog.cs`). A harness or test run that starts the game sets `OPENTPW_LOG_DIR` to its own run folder, or the run rotates Alexah's pair away: `parkrun.py` does it by default (`OUT`); a hand launch needs `OPENTPW_LOG_DIR=<folder>` beside `OPENTPW_GAME_PATH`. The log holds what stdout and stderr printed, so it equals the run's `run.log` with a header line (the build's commit, the start time) on top. A launch that finds no game writes no file.
 
 - **The daily fork watch** (2026-10-16, `fork-review-2/watch/2026-10-16/`): what the meneerkrabs fork newly reads from

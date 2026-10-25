@@ -74,11 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q623. The round fountain flashes a couple of times when first placed.** From Alexah's play test, 2026-10-21
-  (note 23). Nothing in the docs or the queue names it (the only fountain hits are sounds, QUEUE:170 and :1708); not
-  reproduced. Film the placement (`record.sh`) and count the frames: which draw (placement preview, the object's first
-  frame, an effect) shows twice. Compare the original's placement. Confirm: the frame pair, then the same film with the
-  fix.
 - [ ] **Q624. The map screen is badly broken.** From Alexah's play test, 2026-10-21 (note 26). Known: no overlay, no
   terrain colours, its zoom and scroll "not decoded" (`source/OpenTPW/UI/Park/ParkMapScreen.cs:22-40`; Q450 (2),
   QUEUE:2398-2403). "Badly broken" is wider than that and the note lists no faults, so first take the screen's faults on
@@ -278,6 +273,11 @@ filed the items that cite it.
   `hidemeshes.py`). Build it where the start is known (`RideAnimations.StartOn`) and the drawn model reached; also carry
   the start's `0x4`/`0x8` to the rest, which the engine skips on them (`park.md`, "The per-clip hide list"). Confirm:
   a Fries Shop bought, its build filmed in both games.
+- [ ] **Q663. A bought thing's build draws no sparkles. Decode first.** From Q623. The original's Round Fountain, placed
+  in `late30.TPWS`, rises from its bare floor among yellow and green sparkles for its whole build (`q623/orig/a/appear.png`,
+  film `original/shots/q623-a.mkv` frames 87 to 120); ours rises with none, and nothing counts it. Which effect it is,
+  who starts it (the placer, the build path or the item's own effect nodes) and when it ends are not decoded. Decode
+  it, count it where ours reaches it, then build it. Confirm: the same placement filmed in both games.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,

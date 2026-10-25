@@ -822,6 +822,18 @@ public sealed class ParkObjects : Entity
 			standing.Animations.PoseOnto( standing.Model, standing.Posed );
 		}
 	}
+
+	/// <summary>
+	/// Poses one standing thing from its players as they stand, advancing nothing: a thing built after this frame's
+	/// <see cref="Sweep"/> (a placing click is dealt out after it) is drawn as its clips hold it from its first frame,
+	/// not as <see cref="PoseAsBuilt"/> left it.
+	/// </summary>
+	public void PoseNow( int thingId )
+	{
+		if ( _standing.TryGetValue( thingId, out var standing ) )
+			standing.Animations.PoseOnto( standing.Model, standing.Posed );
+	}
+
 	/// <summary>
 	/// Lets go of every sign painted for this park's objects, for the reason
 	/// LobbyIsland.OnDelete gives: a material leaves the textures bound into it alone because they

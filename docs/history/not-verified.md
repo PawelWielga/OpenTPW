@@ -5,6 +5,13 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q622 (the seaplane drawn on every visit): seen in the stock park, Instant Action, the seaplane summoned by `load 40`
+  twice at one camera on the harbour (rot 0), and in the original sent round by a write of its `VAR_TRIGGER`
+  (`original/retrigger.py`) and by its own summons, from `late30` with seed 3. Not run: the ferry's and the bus's later
+  visits here (their landings show themselves by their own keys; the original's ferry was seen on four), the other
+  themes, Full Simulation (the same clips and code). The change reaches every placed thing's change of clip: of the
+  bought Crazy Ape and Loudspeaker photographed, neither differs from main's; the Lava Spurt, the Mammoth Fountain, the
+  Volcano and the other speakers were not looked at. A start on an idle channel hides no list (Q658).
 - Q147 (`MP2File.Duration` reads the version bits; lane B, off-screen): a length fix. Textures are drawn white there, so the evidence is the
   log and the suite: the park-entry cue (global effect 4, `keyexplode`, MPEG-1) is 3056.6 ms, 4075.5 ms with the bug put back (ratio 1.3333);
   3739 of 3739 shipped entries run 14.4 to 82.8 ms longer than the game plays (the first count, 3094 of 3094 to 78.5 ms, missed the five `.SDT` speech banks). Not run: the cue heard (the length is what changed, the

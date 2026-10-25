@@ -756,14 +756,21 @@ public class ParkFileWriterBoughtAndSoldTests
 
 		Assert.IsTrue( thing.Script.NameAt >= 0, "the script had named itself, and its name's offset goes with it" );
 
-		// Its model's two tables, from its own file: nothing started on it yet, so the words are a fresh model's.
+		// Its model's two tables, from its own file: nothing of its script run yet, so the words are a fresh model's with the
+		// build path's start of its construction clip on channel 0, frozen on frame nought (RideAnimations.StandOnBuildClip).
 		Assert.IsTrue( catalogue.TryGet( CrazyApe, out var apeItem ) );
 
 		using ( var modelFile = data.OpenRead( $"{apeItem.Directory}/{apeItem.Stem}.MD2" ) )
 		{
 			var model = new ModelFile( modelFile! );
+			var clips = RideAnimations.Load( apeItem.Directory, apeItem.Stem, data, apeItem.AnimationChannels );
+			var built = new ParkModelTables.Running( model, clips.ChannelCount );
+			built.Started( 0, clips.Clip( 0, 0 )!, float.MaxValue );
+			var frames = Enumerable.Repeat( float.MaxValue, clips.ChannelCount ).ToArray();
+			frames[0] = 0f;
 
-			CollectionAssert.AreEqual( ParkModelTables.NodeWordsAtRest( model ), thing.Tables!.Value.NodeWords.ToArray() );
+			CollectionAssert.AreNotEqual( ParkModelTables.NodeWordsAtRest( model ), built.Words( frames ), "the construction clip binds something" );
+			CollectionAssert.AreEqual( built.Words( frames ), thing.Tables!.Value.NodeWords.ToArray() );
 			CollectionAssert.AreEqual( ParkModelTables.Lookups( model, apeItem.DoHeadProcessing ), thing.Tables.Value.Lookups.ToArray() );
 			Assert.AreEqual( (34, 24, 3), (thing.Tables.Value.NodeWords.Count, thing.Tables.Value.Lookups.Count, thing.Tables.Value.Shared) );
 		}

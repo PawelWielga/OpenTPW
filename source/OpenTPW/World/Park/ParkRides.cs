@@ -115,6 +115,10 @@ public sealed class ParkRides : Entity
 		if ( TableModel( placed.CatalogueId ) is { } fresh )
 			script.Animations.Nodes = new ParkModelTables.Running( fresh.Model, script.Animations.ChannelCount );
 
+		// Drawn so from this frame on, as its construction begins, not finished, until the script's first tick plays it.
+		if ( script.Animations.StandOnBuildClip( NowMilliseconds ) )
+			_objects?.PoseNow( placed.ThingId );
+
 		if ( script.Animations.Loaded > 0 )
 			_animated.Add( placed.ThingId );
 

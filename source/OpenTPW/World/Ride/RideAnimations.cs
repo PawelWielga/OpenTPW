@@ -270,6 +270,23 @@ public sealed class RideAnimations
 	}
 
 	/// <summary>
+	/// Stands a newly built model on the first frame of its construction clip, role nought entry nought, frozen there
+	/// until its script plays it - the build path's two triggers on channel 0 (<c>FUN_00463060</c>: role 0 at
+	/// <c>0x00463205</c>, then role 13 at once at <c>0x0046321f</c>, after <c>FUN_00472d10</c> found the clip). A model
+	/// with no role nought clip is left idle, at rest. Answers whether it was stood.
+	/// </summary>
+	public bool StandOnBuildClip( int now )
+	{
+		if ( !Carries( 0, 0 ) )
+			return false;
+
+		Trigger( 0, 0, 0, 1f, now );
+		Trigger( AnimTimeControl.FreezeAtStart, 0, 0, 1f, now );
+
+		return true;
+	}
+
+	/// <summary>
 	/// Puts a clip on a channel and answers its length, or a flat second where there is no such clip - the
 	/// body of <c>FUN_00472f60</c> and the <c>if (answer == 0) answer = 1000</c> its caller applies.
 	/// </summary>

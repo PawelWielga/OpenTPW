@@ -9921,6 +9921,17 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   Confirmed on the final binary (`q622/PREDICTION.txt`, run-F3): the second visit landing and at its stop beside main's
   empty harbour (`q622/control-vs-fix.png`), and the original's seaplane drawn on its second and third visits
   (`q622/orig/d-six.png`, `original/retrigger.py`). `mutate.py` 9 of 10 (the survivor is main's own behaviour).
+- [x] **Q623. The round fountain flashes a couple of times when first placed.** From Alexah's play test, 2026-10-21
+  (note 23). Nothing in the docs or the queue names it (the only fountain hits are sounds, QUEUE:170 and :1708); not
+  reproduced. Film the placement (`record.sh`) and count the frames: which draw (placement preview, the object's first
+  frame, an effect) shows twice. Compare the original's placement. Confirm: the frame pair, then the same film with the
+  fix.
+  **Done:** a bought thing was drawn finished (`ParkObjects.PoseAsBuilt`) until its script's first tick ran `TRIGANIM 0`,
+  then dropped to its construction clip's frame nought and rose. Now `ParkRides.BindNew` stands it on role 0 frame
+  nought, frozen, as the original's build path does (`FUN_00463060`, `0x00463205`, `0x0046321f`), and poses it at once,
+  since a placing click is dealt after the frame's sweep (`park.md`, "Who advances a channel, and when"). The click's own frame held on screen:
+  main drew the finished fountain (`q623/run4c`), this build its bare floor (`run4`), the original the footprint then
+  the bare floor (`orig/a`). The original's build sparkles are Q663.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
