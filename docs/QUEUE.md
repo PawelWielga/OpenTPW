@@ -79,13 +79,11 @@ filed the items that cite it.
   drafter; `CARRY_PREVIEW_MARKERS` and Q541 (QUEUE:1523) are the nearby code. Reproduce from the Queue button and from a
   ride's hand-over, find which marker set is drawn, fix it. Confirm: a screenshot beside the original's with the tool
   log.
-  **Needs Alexah (2026-10-25):** not reproduced in four rounds of real clicks on the stock park and a fresh Full
-  Simulation park (`q633/PREDICTION.txt`): after a ride's hand-over and from its window's queue button ours shows the
-  queue tool's own blue squares and rope pointer, as the original's frames do, and lays railed queue; the one route into
-  the path tool found is a click whose run has a red square, which puts the queue tool away, so the next click on grass
-  picks up the path tool, as the original's does (`0x00524a63`). What did you see? (a) right after placing a ride, the
-  squares or pointer looked like the path tool's; (b) after a click the queue tool was gone and further clicks laid path;
-  (c) path pieces appeared where you laid queue; (d) something else - please describe.
+  **Alexah (2026-10-25):** while building a queue, the holograms (the build previews) carried the path tool's icons,
+  not the queue's. Not reproduced in four rounds (`q633/PREDICTION.txt`), which checked the squares' colour, the rope
+  pointer and the railed result, not the icons drawn on the previews: compare those icons with the original's queue
+  frames (`q540/orig`, `q538/orig`) first. The one route into the path tool found, a click with a red square then a
+  click on grass, is the original's own (`0x00524a63`).
 - [ ] **Q638. A tag leaving the gadget does not sparkle before it goes.** From Alexah's play test, 2026-10-21 (note 27).
   The original puts effect `0x5b` over the tag five seconds before its end, shown and hidden with the tag
   (`advisor-park.md:892`; `hud.md:1308-1313`); here it is counted, `TAG_ENDING_PARTICLE`
