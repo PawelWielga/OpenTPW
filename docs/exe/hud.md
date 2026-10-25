@@ -1850,7 +1850,7 @@ groups: **0x98b** with options 0x98e/0x98f/0x98c/0x98d from `+0x1c`, and **0x996
 from `+0x20` — the **metric pickers**. **0x991** is a label, font 4, **yellow** (0xff,0xff,0,0xff).
 **0x990** and **0x995** are display-only (vtable+0x14 with 0), and 0x990's depth+2 is handed to the six
 toggles. **0x992** takes handler `LAB_005f0b20` (it calls the viewport's proc `0x005f18d0` on the static); 0x98a/0x984/0x981/0x988
-get `FUN_00668f35( 0, 10 )`, a repeating button's two delays (below, "The map's view").
+get `FUN_00668f35( 0, 10 )` (`Button_SetRepeatDelays` in Ghidra), a repeating button's two delays (below, "The map's view").
 
 ### Sprite sheets
 
@@ -1898,10 +1898,11 @@ The screen is one static object at `0x00f86db8` (the `ECX` of every call); its c
   down, 3 takes** (its jump table `0x005f366c`), then the centre is held to 0 and the cells less one (95, 84) and the view
   redone (`0x005f3230`). Callers, each one cell: the arrows' repeats `0x10009`/`0x10008` (0x981 down 3, 0x984 left 0,
   0x988 right 1, 0x98a up 2; the table `0x005f18a4`), and the key cases `0x1000a` (`VK_LEFT` 0, `VK_UP` 2, `VK_RIGHT` 1,
-  `VK_DOWN` 3, `0x005f16aa`). The arrows are repeating buttons (flag `0x20`, delays 0 and 10 ms by `FUN_00668f35`): from
+  `VK_DOWN` 3, `0x005f16aa`). The arrows are repeating buttons (flag `0x20`, delays 0 and 10 ms by `FUN_00668f35`, `Button_SetRepeatDelays`): from
   the first interface pass after the press one repeat a pass while the pointer is on the arrow (`FUN_00668dd9`), and a
-  button that has repeated posts no `0x100` as it is let go (`FUN_00668eff`), so no click sound (`0x00485780`) and no
-  click: the arrows' `0x100` cases do nothing. Measured: the right arrow held, 30 cells a second under the 30 fps cap; the
+  button that has repeated posts no `0x100` as it is let go (`FUN_00668eff`), so a held arrow makes no click sound (`0x00485780`) and no
+  click: the arrows' `0x100` cases do nothing. (One let go in state 1 before its first repeat, a press and release taken in the same pass, does post it and
+  sounds; that is not built.) Measured: the right arrow held, 30 cells a second under the 30 fps cap; the
   Up key one cell up.
 - **The edges and the right button** follow the Options' Scroll (`[0x0078d910]`, `GameOptions` `+0x38`). With Pushscroll
   (0) the root's frame message (`0x005f126b`) takes the pointer as fractions of 2048 and 1536 (`0x00703014`, `0x00703018`)
@@ -1926,13 +1927,18 @@ The screen is one static object at `0x00f86db8` (the `ECX` of every call); its c
   record was hovered (below), hands its `+0x18` to `FUN_00486920` after the close (not read). Measured: zoom 1.5, a click at layout (1218,765): 58.104,
   26.156, the camera on (580,260). **Escape** (the key-up case `0x005f17ef`) closes it without `0x005f1050`: the camera
   stays.
-- **The help bar** stands at the top while the map is up: the opener's `FUN_00492530( -1, 10 )` (`0x005f1015`; it moves
+- **The help bar** stands at the top while the map is up: the opener's `FUN_00492530( -1, 10 )` (`HelpBar_MoveTo` in Ghidra; `0x005f1015`; it moves
   the bar's label to top 10, keeping its left), the close's `FUN_00492530( -1, -1 )` (`0x005f1256`) puts it back.
 - **The camera's table is off**: the opener hands its root to `FUN_00485b70` (`0x005f0c01`), as a park screen's.
 - **The advisor**: the opener posts line `0x130` (`FUN_00486b00`, `0x005f100d`), the close withdraws it
   (`FUN_00486b40`). Not built here: counted `MAP_ADVISOR_LINE` (Q666).
-- **Hover**: on the viewport's `0x10001` the nearest record of the list at `+0x20080` within 5 (`0x00703040`) of the
-  pointer's picture point is kept at `+0x20060` (`0x005f198e`..`0x005f1a9a`). Not built: counted `MAP_HOVER` as the pointer comes onto the map (Q665).
+- **Hover**: on the viewport's `0x10001` the nearest record of the list at `+0x20080` within 5 (`0x00703040`) **screen
+  pixels** of the pointer (taken in the game's pixels, x x W / 2048 and (`0x600` - y) x H / 1536, so y counts from the
+  bottom; a record's `+0xc`/`+0x10` are written by `0x005f4180` as the cell centre x 480 / cells x zoom + W / 2, so the
+  distance is zoom-dependent in picture terms) is kept at `+0x20060` (`0x005f198e`..`0x005f1a9a`). It also builds a string
+  for the label `0x991` (`0x005f1bab`..`0x005f1cfc`; the control is found through `0x0065d55a`/`0x0065d7d0`, then its vtable
+  `+0x24`): the thing's name (`0x00506860`) for kinds 4 to 8, the text of row `0x1c8` or `0x1c9` (`0x006acd60`) for kind 1,
+  or otherwise the `0x007cfb90` table's entry (`0x004e2780`) for the code word `+0x20064` under the pointer. Not built: counted `MAP_HOVER` as the pointer comes onto the map, and `MAP_CLICK_HANDOFF` at a click (Q665).
 
 **OpenTPW** draws the map at the scale the original has at 800 x 600, whatever the window (a deviation: the original's
 shrinks on a finer screen), moves a per-pass amount at thirty passes a second on `Time.Delta`, and draws the source

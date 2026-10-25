@@ -214,7 +214,10 @@ public class ParkMapViewTests
 
 	/// <summary>
 	/// <b>A held arrow moves a cell a pass, thirty passes a second, and only while the pointer is on it</b> (the button's
-	/// repeat, <c>0x00668dd9</c>): the original's right arrow took about 30 cells a second.
+	/// repeat, <c>0x00668dd9</c>): the original's right arrow took about 30 cells a second. Each of the four moves its own
+	/// way (0x98a up adds to the centre down, 0x981 takes, 0x984 left, 0x988 right: the table <c>0x005f18a4</c>), and the
+	/// move is a pass's share of the frame, not a cell a frame: three frames of a thirtieth of a second are three cells, of a
+	/// sixtieth one and a half.
 	/// </summary>
 	[TestMethod]
 	public void AHeldArrowMovesACellAPassWhileThePointerIsOnIt()
@@ -222,23 +225,146 @@ public class ParkMapViewTests
 		var stack = ParkEscapeOnReleaseTests.APark();
 		GameOptions.Current.RightButtonScroll = true;
 		ParkOrbitCameraMode.PointOfInterest = new Vector3( 480f, 265f, 0f );
-		Time.Delta = 1f / 30f;
 
 		var map = new ParkMapScreen( stack );
 		stack.Open( map );
-		var right = (UiButton)Control( map, 0x988 );
-		right.Pressed = true;
-		right.Hovered = true;
 
-		for ( var frame = 0; frame < 3; ++frame )
-			ParkEscapeOnReleaseTests.Frame( stack );
+		foreach ( var (id, across, down) in new[] { (0x988, 1f, 0f), (0x984, -1f, 0f), (0x98a, 0f, 1f), (0x981, 0f, -1f) } )
+		{
+			foreach ( var (delta, cells) in new[] { (1f / 30f, 3f), (1f / 60f, 1.5f) } )
+			{
+				Time.Delta = delta;
+				var arrow = (UiButton)Control( map, id );
+				var (startAcross, startDown) = (map.View.Across, map.View.Down);
+				arrow.Pressed = true;
+				arrow.Hovered = true;
 
-		Assert.AreEqual( 51f, map.View.Across, 1e-3f, "three passes, three cells" );
+				for ( var frame = 0; frame < 3; ++frame )
+					ParkEscapeOnReleaseTests.Frame( stack );
 
-		right.Hovered = false;
-		ParkEscapeOnReleaseTests.Frame( stack );
-		Assert.AreEqual( 51f, map.View.Across, 1e-3f, "the pointer off it: no move" );
-		Assert.IsFalse( right.Clicks, "a held arrow is silent" );
+				Assert.AreEqual( (startAcross + (across * cells), startDown + (down * cells)), (map.View.Across, map.View.Down),
+					$"0x{id:x} held three frames of {delta * 1000f:0} ms" );
+
+				arrow.Hovered = false;
+				ParkEscapeOnReleaseTests.Frame( stack );
+				Assert.AreEqual( (startAcross + (across * cells), startDown + (down * cells)), (map.View.Across, map.View.Down), "the pointer off it: no move" );
+				Assert.IsFalse( arrow.Clicks, "a held arrow is silent" );
+				arrow.Pressed = false;
+
+				// Back to the middle, so the next arrow has room both ways.
+				map.View.CentreOn( 1024f, 768f );
+				map.View.Scroll( 48f - map.View.Across, 26f - map.View.Down );
+			}
+		}
+	}
+
+	/// <summary>
+	/// <b>The screen's own pass wires the edge push to Pushscroll and the right button's drag to Right button scroll</b>
+	/// (<c>[0x0078d910]</c>; <c>0x005f126b</c>, <c>0x005f1913</c>), the pure rules of which
+	/// <see cref="TheEdgesPushAndTheRightButtonDrags"/> holds: the top edge pushes up, the drag follows a press made on
+	/// the map, and neither runs under the other option.
+	/// </summary>
+	[TestMethod]
+	public void TheEdgePushAndTheDragAreWiredToTheirOptions()
+	{
+		var screen = Screen.Size;
+
+		try
+		{
+			Screen.Size = new Point2( 2048, 1536 );
+			Time.Delta = 1f / 30f;
+			var stack = ParkEscapeOnReleaseTests.APark();
+			ParkOrbitCameraMode.PointOfInterest = new Vector3( 480f, 265f, 0f );
+			var map = new ParkMapScreen( stack );
+			stack.Open( map );
+
+			GameOptions.Current.RightButtonScroll = false;
+			Input.Mouse = new() { Position = new System.Numerics.Vector2( 1024f, 0f ) };
+			map.Update();
+			Assert.AreEqual( (48f, 28.5f), (map.View.Across, map.View.Down), "Pushscroll: the top edge pushes up 2.5 a pass" );
+
+			Time.Delta = 1f / 60f;
+			map.Update();
+			Assert.AreEqual( (48f, 29.75f), (map.View.Across, map.View.Down), "half a pass is half the push" );
+			Time.Delta = 1f / 30f;
+
+			GameOptions.Current.RightButtonScroll = true;
+			map.Update();
+			Assert.AreEqual( (48f, 29.75f), (map.View.Across, map.View.Down), "Right button scroll: the edge pushes nothing" );
+
+			Input.Mouse = new() { Right = true, Position = new System.Numerics.Vector2( 1024f + 409.6f, 768f ) };
+			map.Update();
+			Assert.AreEqual( (48f, 29.75f), (map.View.Across, map.View.Down), "no drag before a press on the map" );
+
+			Control( map, 0x992 ).RightPressed!();
+			map.Update();
+			Assert.AreEqual( (49f, 29.75f), (map.View.Across, map.View.Down), "dragged right a cell" );
+
+			GameOptions.Current.RightButtonScroll = false;
+			Input.Mouse = new() { Right = true, Position = new System.Numerics.Vector2( 1024f, 768f ) };
+			map.Update();
+			Assert.AreEqual( (49f, 29.75f), (map.View.Across, map.View.Down), "Pushscroll: the right button drags nothing" );
+		}
+		finally
+		{
+			Screen.Size = screen;
+		}
+	}
+
+	/// <summary>
+	/// <b>The zoom buttons step it by a half, plus in and minus out</b> (<c>0x986</c>, <c>0x985</c>; the keypad's cases
+	/// <c>0x6b00</c>, <c>0x6d00</c>), through the screen's own controls and keys, not the view's method: swapping the two
+	/// buttons' ids or their handlers would otherwise pass.
+	/// </summary>
+	[TestMethod]
+	public void TheZoomButtonsAndTheKeypadStepTheZoomOnTheScreen()
+	{
+		var stack = ParkEscapeOnReleaseTests.APark();
+		var map = new ParkMapScreen( stack );
+		stack.Open( map );
+		Assert.AreEqual( 1f, map.View.Zoom );
+
+		( (UiButton)Control( map, 0x986 ) ).Clicked!();
+		Assert.AreEqual( 1.5f, map.View.Zoom, "b_plus" );
+
+		( (UiButton)Control( map, 0x986 ) ).Clicked!();
+		( (UiButton)Control( map, 0x985 ) ).Clicked!();
+		Assert.AreEqual( 1.5f, map.View.Zoom, "b_minus" );
+
+		ParkEscapeOnReleaseTests.Frame( stack, ParkEscapeOnReleaseTests.Down( Key.KeypadPlus ) );
+		Assert.AreEqual( 2f, map.View.Zoom, "the keypad's +" );
+
+		ParkEscapeOnReleaseTests.Frame( stack, ParkEscapeOnReleaseTests.Up( Key.KeypadPlus ), ParkEscapeOnReleaseTests.Down( Key.KeypadMinus ) );
+		Assert.AreEqual( 1.5f, map.View.Zoom, "the keypad's -" );
+	}
+
+	/// <summary>
+	/// <b>The map being up is known to the camera's keys and to the help bar</b>: <see cref="UI.WindowStack.MapOpen"/> is
+	/// what <see cref="ParkOrbitCameraMode"/> reads to leave the arrow keys alone, and the bar stands at the top (10) while
+	/// the map is up and goes back when it closes (<c>0x005f1015</c>, <c>0x005f1256</c>).
+	/// </summary>
+	[TestMethod]
+	public void TheStackKnowsTheMapIsUpAndTheHelpBarStandsAtTheTop()
+	{
+		var stack = ParkEscapeOnReleaseTests.APark();
+		var update = typeof( UI.WindowStack ).GetMethod( "OnUpdate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic )!;
+
+		// The stack a test makes has neither the bar nor the glint a real one is built with.
+		const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+		typeof( UI.WindowStack ).GetField( "_helpBar", any )!.SetValue( stack, new UI.HelpBar() );
+		typeof( UI.WindowStack ).GetField( "_glint", any )!.SetValue( stack, new UI.ButtonGlint() );
+		Assert.IsNull( stack.HelpBarTop );
+		var map = new ParkMapScreen( stack );
+
+		stack.Open( map );
+		update.Invoke( stack, [] );
+		Assert.IsTrue( UI.WindowStack.MapOpen, "the camera's keys are held off" );
+		Assert.AreEqual( 10, stack.HelpBarTop );
+
+		stack.Close( map );
+		update.Invoke( stack, [] );
+		Assert.IsFalse( UI.WindowStack.MapOpen );
+		Assert.IsNull( stack.HelpBarTop );
 	}
 
 	private static UiButton Ok( ParkMapScreen map ) => (UiButton)Control( map, -1 );

@@ -1690,15 +1690,20 @@ Not pinned by a test: the facing `0x7ff` for a larger vehicle.
 **Q627: how often a vehicle comes, measured in both games.** Every trip a vehicle makes stands at both stops in turn,
 the arrivals' (`VAR_STATUS` 2) and then the leavers' (4), whoever summoned it, and a leaver standing in `0x15` with no
 vehicle current summons one at random (the tail above, re-read at `0x004cf4b6`..`0x004cf556`). So with guests going
-home a vehicle comes every 135 to 220 sweeps (34 to 55 s), most of them for the leavers: the loads are a quarter of
-the trips or fewer.
+home a vehicle comes to the arrivals' stop every 115 to 199 sweeps in the crowd's runs (29 to 50 s; the original's 115 to
+179, ours 117 to 199) and every 124 to 468 in the stock park (the original's 131 to 468, ours 124 to 290), most of them
+for the leavers: the loads are about a quarter of the trips.
 Measured over 2420 sweeps (ten minutes), each game's own instrument (`original/vehicles.py` at 50 ms; this game's log line
 `the <vehicle>'s status A -> B on mGameTick N`): the stock Lost Kingdom park from entry, **11 trips in the original
 (3 loads, 21 guests gone) and 11 here (3 loads, 21 gone)**; `q416/guard.TPWS`, 212 inside, from its load, **18 in the
-original and 16 here** (4 loads each). A load is dropped by whichever vehicle is current, the leavers' at random, so
+original and 16 here** (4 loads each; sizes 13, 12, 12, 11 here and 13, 4, 12, 4 there, the 4s Q222's). The 18 is counted
+at the leavers' stop (status 4) in the window, which takes in the bus's stand at tick 1241, the tail of the trip the loaded
+file was saved in; at the arrivals' stop it is 17, and ours is 16 by either. The splits differ: the original's bus 11,
+seaplane 5, ferry 2 against ours 7, 4 and 5. A load is dropped by whichever vehicle is current, the leavers' at random, so
 the stock park's first load came on the seaplane here and the third on the ferry in the original. The near-constant
 coming and going is the original's (`~/.cache/tpw-harnesses/q627/`). From the same 212, 204 went home here where the
-original's 155 went (Q668).
+original's 155 went, but ours admitted 48 arrivals in its four loads and the original 33 (34 with the guest its load
+made), so the two are not like for like (Q668).
 
 **Q111: the arms either side of the leave test are counted**, none built, the listing re-read first-hand
 (`0x004fecb9`..`0x004ff3ae`; the corrections are in the list above). `PeepBehaviour.CountBeforeLeaving` counts
@@ -3892,8 +3897,9 @@ one the park holds (`FUN_005af7f0(i)`); the Globals have no such test, because t
 Secret is ever awarded (`FUN_005afb00`'s one caller, `0x004d4a84`), so nothing found sets `+0x27`.
 
 **A poor park's first ticket is Local 0, the visitors', in both games** (Q629, Alexah's play test of 2026-10-21, note 22:
-"a poor park won a golden ticket for happiness"). Their profile of that play (`gms.dat`, `lib/gmsfile.py`) holds one
-ticket, jungle Local 0, not Local 2. Lost Kingdom's `Visitors` is 100, cumulative, with Halloween's the lowest of the four themes (FileFormats
+"a poor park won a golden ticket for happiness"). Their profile (`gms.dat`, `lib/gmsfile.py`; last written 2026-10-22 23:33, after the play, so
+that it is that play's profile is an inference: no file or log of the play was saved) holds one
+ticket, jungle Local 0, not Local 2. Lost Kingdom's `Visitors` is 100, cumulative, the lowest of the four themes, with Halloween's 100 too (FileFormats
 `sam.md`), so any park that has let 101 in wins it however unhappy; Local 2 asks a mean over 75 **and** over 150 inside, and
 its mean is already the counted guests' alone (`ParkPeople.GuestsInsideHappiness`, `FUN_004c7bb0`; Q148's open term is the
 gauge's and the music's, not the tickets'). The ticket's own tag says "for getting 100 visitors to your park" (tag 102,

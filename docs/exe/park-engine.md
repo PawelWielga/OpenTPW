@@ -5014,8 +5014,9 @@ every arm, so **every click of the path tool or the queue tool that is not refus
 arms and anchors, each click that lays a run, a click on the anchor. The commit's one other play of `0x65` is the
 coaster bar's track tool, mode `0x15` (`0x00526423`). `cat_ui` effect `0x65` is `rj_laypath_2` (`sfUiHD.sdt`, volume
 100, 123 ms; FileFormats `sound-categories.md`), flagged `0x0201`, as 29 of the category's 45 effects are, so it
-sounds flat ("A voice's range" in `audio.md`) and goes through the deferred queue that bit `0x1` names, where
-`original/oneshots.py`'s walk does not see it. The queue tool's finishing link adds
+sounds flat ("A voice's range" in `audio.md`) and goes through the deferred queue that bit `0x1` names. `original/oneshots.py`'s
+walk did not see it (one 25 s walk, two clicks, `0x65` only; nothing in the script filters `0x1` out, and whether a deferred voice
+ever joins the list it walks is not shown). The queue tool's finishing link adds
 `0x8b`, `connectPath`, at `0x00527587` ("The run's last cell may be a path" above).
 Measured in the original (`q632/orig`, the stock park, its music off): the hand empty, a click on bare grass at
 (62,18) read mode 1, anchor (62,18), nothing laid; a click on (66,18) laid five cells of type 1 and moved the anchor

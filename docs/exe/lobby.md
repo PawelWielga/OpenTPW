@@ -171,7 +171,7 @@ Measured, Lost Kingdom from the lobby as a Full Simulation player with two keys 
 | | the original (`orig-a`, the real screen) | ours (`run4`, the final build) |
 |---|---|---|
 | the emitter | `emitters.py`, 0.1 s after the click: slot 1, handle `0x20001`, effect 98 at (48, 0, 14), 28 then 32 particles | `particles screen`: slot 1, effect 98, 31 then 32 particles, owner `IslandPanel`, closed |
-| its life | none in use 1.0 s later; the key sparkle 97 dies with it | 8 particles at 1.0 s, none after |
+| its life | none in use 1.0 s later; the key sparkle 97 dies with it | 8 particles at about 0.9 s, none after |
 | on screen | a cloud of some thirty keys over the island, 0.2 to 1.0 s after the click | nothing. `windows` at 0.5 s: none |
 | the fade (Q61) | the frame mean 112.7 at the click, 106.5 at +4.3 s, 5.8 at +6.8 s | none: 102.5 to 109.2 to the loading screen |
 | the loading screen | +7.3 s; the turn onto the gate alone takes about 4 s | +3.0 to +3.8 s (Q670) |

@@ -55,7 +55,7 @@ borders; decode how the original draws and filters the ground first), Q619 (the 
 invisible), Q623 (the fountain's flash). Then what a player hits: Q624 (the map screen), Q31b (the sideshow and toilet
 windows), Q625 (the camera leaves the park), Q626 (leaving the camcorder), Q25 (its crosshair and its speed), Q51 (staff
 stacked at the staff room), Q627 (vehicles pick up nearly non-stop), Q628 (the staff click range), Q55 (staff walking on
-the spot), Q629 (a golden ticket for a poor park), Q630 (the key animation at entry), Q543 (the advisor's opening lines),
+the spot), Q543 (the advisor's opening lines),
 Q27 (push scroll), Q631 (WASD and the arrow keys), Q632 (path sounds), Q633 (queue previews), Q634 (the cursor behind the
 preview), Q635 (Ctrl+click), Q419 (the hire screen's picture), Q636 (its skill meter), Q637 (the gadget's aerial), Q525
 (the price's "$"), Q638 (the tag's sparkle), Q639 (the golden ticket's centring), Q640 (the pumps' stutter), Q641 (the
@@ -247,11 +247,17 @@ filed the items that cite it.
   edges in both games (`original/campoi.py`, `q625/orig/run.sh`), the same stopping cell (x 97 or -2, y 86 or -2).
 - [ ] **Q668. From a crowd, guests go home faster than the original's. Measure first.** From Q627. Loaded with
   `q416/guard.TPWS` (212 inside), over the same 2420 sweeps 204 went home here (`People: guest N went home`) and 155 in
-  the original (`original/vehicles.py`'s `GONE`; its census 225, 200, 141, 115, 107 a minute apart, ours 225, 199, 124,
-  101, 62 two minutes apart; `q627/run2-crowd/run.log`, `q627/orig/b-load.log`). A guest sets off home only from the
+  the original (`original/vehicles.py`'s `GONE`). **Not like for like: ours admitted 48 in four loads (13, 12, 12, 11),
+  the original 33 (13, 4, 12, 4, the 4s Q222's; 34 with the guest its load made), so count the setters-off among the
+  loaded 212 apart from the arrivals.** The original's census, a minute apart: 225, 220, 200, 165, 141, 126, 115, 108,
+  107, 91. Ours' `guests` reply runs 5 above its own count of guests at every poll (what the five are is not read), so
+  take the log's count, as the sweep-for-sweep series: ours 220, 194, 119, 96, 57 against the original's 220, 165, 126,
+  108, 91 at the same sweeps (`q627/run2-crowd/run.log`, `q627/orig/b-load.log`): level at two minutes, slower at four,
+  faster from six on. A guest sets off home only from the
   deciding turn: happiness under 1, the park shut, or the day exactly nought (Q109; `ride-operation.md`, the leaving
   row). Count the setters-off by cause in both games on that file (their happiness and `mExitLevel` at the turn)
-  before building anything. Confirm: the census a minute in both games, and the causes, predicted first.
+  before building anything. Confirm: the census a minute in both games (ours by the log's count, not the reply's), and
+  the causes, predicted first.
 - [ ] **Q669. Draw the key puff at park entry (Q630's build).** `IslandPanel.EnterPark` starts effect 98 with the panel as
   its owner after closing it, so it is never drawn (`lobby.md`, "The key puff at park entry"). Start it with no owner,
   as the original's, and say at the site why the owner rule (`lobby.md`, "Deliberate departure") does not bite: no window
@@ -271,10 +277,13 @@ filed the items that cite it.
   100, once, before the click's arm runs (`0x005271b7`..`0x005271ea`; `park-engine.md`, "The laying sound"): the arming
   click, each run laid, a click on the anchor, and each click of the queue tool. Ours counts it in `RunPath` only
   (`PATH_TOOL_CLICK_SOUND_0x65`) and `RunQueue` not at all. Unlike `0xaf` it has no gate on the press (`0x005271b7`
-  tests only the layout replay, `[0x00785a2c]`), so it sounds where the press went to an open park screen too. The
+  tests only the layout replay, `[0x00785a2c]`), so it sounds where the press went to an open park screen too (by the
+  listing, not run: the sound itself beside an open screen was not heard). The
   coaster bar's track tool plays it as well (mode `0x15`, `0x00526423`), unbuilt with that bar. Confirm:
-  `q632/confirm.py`'s two clicks and a queue click, `rj_laypath_2` matched once a click in ours' mix at a gain of about
-  0.50 (predicted from `blnl_error1`'s 0.175 at volume 35, Q442), beside `q632/orig`'s.
+  `q632/confirm.py`'s two clicks, and a queue click, which is new work in both games (neither harness has one; the
+  original's wants a breakpoint on `0x0051bfc0` for `0x65` with the queue tool armed), `rj_laypath_2` matched once a click
+  in ours' mix, and in the original's capture, which is on its own scale (its gains for it were about 0.04, `q632/orig`'s
+  `b-match.txt`, `c-match.txt`): compare the match's score and its presence between the games, not the gain.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,

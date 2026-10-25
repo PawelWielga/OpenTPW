@@ -32,7 +32,7 @@ later item may have run what an earlier one lists as untested.
 - Q627 (the vehicles' visits measured; nothing changed but a debug log line): both games on Lost Kingdom, Instant
   Action, the original off-screen and ours on the desktop at 1280 x 720, one run of each scene. Not looked at: Full
   Simulation (the same manager and summons, not run), the other themes, a park the player has grown over hours (the
-  crowd was made by `admit` at one place), and the trips' order of vehicles, which is the park's generator's and
+  crowd was made by `admit` at two cells eight apart, half at (52,26) and half at (52,34)), and the trips' order of vehicles, which is the park's generator's and
   differs run to run in both games. The frames show a vehicle at its stop; the counts are the logs'.
 - Q626 (leaving the camcorder puts the orbit's point and yaw back): the original measured off-screen on Lost Kingdom's
   stock park, Instant Action, entered by the gadget's pick at (450, 165), zoom 110, rotation 180, turned by the pointer

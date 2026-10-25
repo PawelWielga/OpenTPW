@@ -330,6 +330,8 @@ internal sealed class IslandPanel : UiWindow
 			// the price while it can be afforded is 97.
 			if ( ParticleSystem.Current is { } particles )
 			{
+				// Not the original's: it starts the puff before the panel is hidden (0x004b8fd0, then message 6), and this panel
+				// has just been closed, so the puff it owns is never drawn (ScreenParticles; Q669).
 				var rect = _price.Rect;
 				var middle = ((rect.Bottom - rect.Top) >> 1) + rect.Top;
 
@@ -343,8 +345,8 @@ internal sealed class IslandPanel : UiWindow
 
 		Log.Info( $"Front end: entering '{island.ParkName}'" );
 
-		// 0x005e1e30 is three calls: set the camera leaving, the cue and the puff above, and message 6 to this panel's
-		// tree, which hides it. The camera then swings round onto the gate, opens it, flies in, and asks for the park
+		// 0x005e1e30 is a store, a call and a tail jump: set the camera leaving, the cue and the puff above, and message 6 to
+		// this panel's tree, which hides it (this panel is closed before the puff, above). The camera then swings round onto the gate, opens it, flies in, and asks for the park
 		// when it arrives - see LobbyCameraMode.LeaveForPark. Escape before then cancels it and shows this panel again.
 		LobbyCameraMode.LeaveForPark( () => Game.RequestParkLoad( island.ThemeName ) );
 	}

@@ -1379,8 +1379,6 @@ public static class DebugConsole
 					break;
 				}
 
-			// Where the park camera is, in world units and in grid cells - the two coordinate systems
-			// a park is described in, and the pair most worth seeing side by side while placing things.
 			// The park map's census: its view (centre, zoom, the picture's source and where it lands) and the help bar's
 			// place; "map zoom Z" sets the kept zoom for a repeatable picture.
 			case "map":
@@ -1392,6 +1390,8 @@ public static class DebugConsole
 					: $"map: not open, kept zoom {UI.ParkMapView.KeptZoom:0.0}" );
 				break;
 
+			// Where the park camera is, in world units and in grid cells - the two coordinate systems
+			// a park is described in, and the pair most worth seeing side by side while placing things.
 			case "camera":
 				if ( parts.Length > 2 )
 					ParkOrbitCameraMode.PointOfInterest = new Vector3( Argument( 1 ), Argument( 2 ), 0f );
@@ -2230,9 +2230,14 @@ public static class DebugConsole
 
 						++onScreen;
 
+						// "open" only where ScreenParticles would draw it: the window up and showing, the stack not covered, the
+						// emitter shown and holding a particle.
 						var ownedBy = emitter.Owner is not { } window ? "no window (drawn over all)"
-							: $"{window.GetType().Name}, " + (stackNow?.Windows.Contains( window ) != true ? "closed (not drawn)"
-								: window.Hidden ? "hidden (not drawn)" : window.PutAway ? "put away (not drawn)" : "open");
+							: stackNow is null ? $"{window.GetType().Name}, no window stack"
+							: $"{window.GetType().Name}, " + (!stackNow.Windows.Contains( window ) ? "closed (not drawn)"
+								: window.Hidden ? "hidden (not drawn)" : window.PutAway ? "put away (not drawn)"
+								: emitter.Hidden ? "emitter hidden (not drawn)" : emitter.Count == 0 ? "no particles (not drawn)"
+								: stackNow.Covered ? "stack covered (not drawn)" : "open");
 
 						Reply( $"particles: screen slot {slot} effect {emitter.Effect} life {emitter.Lifetime} particles {emitter.Count} owner {ownedBy}" );
 					}

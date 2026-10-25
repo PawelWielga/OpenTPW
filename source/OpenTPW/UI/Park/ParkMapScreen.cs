@@ -108,8 +108,8 @@ internal sealed class ParkMapScreen : UiWindow
 			LeftClicked = CentreAndClose,
 			RightPressed = () => _dragging = GameOptions.Current.RightButtonScroll,
 
-			// The viewport's 0x10001 keeps the nearest record of the overlay's list under the pointer (0x005f198e),
-			// which a click then hands on: not built (Q665).
+			// The viewport's 0x10001 keeps the nearest record of the overlay's list within 5 screen pixels of the pointer
+			// (0x005f198e) and shows its name in 0x991; a click then hands it on: not built (Q665).
 			Entered = () => Unimplemented.Report( "MAP_HOVER" )
 		} );
 
@@ -129,8 +129,9 @@ internal sealed class ParkMapScreen : UiWindow
 		} );
 
 		// Yellow, font 4 - FUN_005f0b40 fetches 0x991, hands it a label skin and calls the colour setter
-		// with (0xff, 0xff, 0, 0xff). WHAT IT SAYS IS NOT TRACED: the original fills it from a resource
-		// this has not read back, so it is drawn empty rather than given words it may not have.
+		// with (0xff, 0xff, 0, 0xff). The original fills it as the pointer moves over the map with the name of the thing
+		// or the cell code's text under it (docs/exe/hud.md, "The map's view", Hover; Q665), which is not built, so it is
+		// drawn empty rather than given words it may not have.
 		Root.Add( new UiControl
 		{
 			Id = 0x991,
@@ -278,6 +279,10 @@ internal sealed class ParkMapScreen : UiWindow
 	/// <summary>A click on the map (0x005f1d19): the view centred on the cell under the pointer, then the close OK makes.</summary>
 	private void CentreAndClose()
 	{
+		// The original hands the hovered record, or the cell's code word's text, on after the close (0x005f1de8,
+		// 0x005f1df5; Q665); nothing here does, and the count tells a click from a hover.
+		Unimplemented.Report( "MAP_CLICK_HANDOFF" );
+
 		var (x, y) = PointerOnTheScreen();
 		_view.CentreOn( x, y );
 		CloseOnTheView();
@@ -313,9 +318,11 @@ internal sealed class ParkMapScreen : UiWindow
 	}
 
 	/// <summary>
-	/// A scroll arrow: a repeating button (<c>FUN_00668f35( 0, 10 )</c>) that moves the view while it is held. A held
-	/// button that has repeated posts no click as it is let go (<c>FUN_00668eff</c>), and the click sound plays only on
-	/// a click (<c>0x00485780</c>), so it is silent; the original's arrows answer a click with nothing.
+	/// A scroll arrow: a repeating button (<c>FUN_00668f35( 0, 10 )</c>, <c>Button_SetRepeatDelays</c> in Ghidra) that moves
+	/// the view while it is held. A held button that has repeated posts no click as it is let go (<c>FUN_00668eff</c>), and
+	/// the click sound plays only on a click (<c>0x00485780</c>), so a held arrow is silent; the original's arrows answer a
+	/// click with nothing, and one let go before its first repeat (a press and release in the same pass) would sound,
+	/// which is not built.
 	/// </summary>
 	private sealed class MapArrow( int across, int down ) : UiButton
 	{
