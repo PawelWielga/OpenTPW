@@ -86,13 +86,6 @@ filed the items that cite it.
   picks up the path tool, as the original's does (`0x00524a63`). What did you see? (a) right after placing a ride, the
   squares or pointer looked like the path tool's; (b) after a click the queue tool was gone and further clicks laid path;
   (c) path pieces appeared where you laid queue; (d) something else - please describe.
-- [ ] **Q635. Ctrl+click does not keep the same building for continuous placement. Decode first.** From Alexah's play
-  test, 2026-10-21 (note 16). The original's Ctrl+click on a placed object buys another copy of the item into the cursor
-  (`park-engine.md:3477`; help row "Hold CTRL and click to buy another", `park-engine.md:4744`; `FUN_004879d0`, refusal
-  sound `0x1D` if dearer than the balance, Q402, QUEUE:1120-1125, "Clone has nothing behind it"); the Clone binding
-  exists only as a test (`source/OpenTPW.Tests/InputBindingTests.cs:105`). Whether Ctrl while placing keeps the item is
-  not documented: decode first what the original does with Ctrl on a click while an item is in the cursor and on a
-  placed one, then build Clone. Confirm: both games, a ride cloned twice, the money and the log line.
 - [ ] **Q636. The hire screen's skill meter is thicker than the original's.** From Alexah's play test, 2026-10-21 (note
   19). The bar is control `0x2e8`, (1376,235)-(1592,274), 40 tall, 154 down a row (`hud.md:750`); built (`STATUS.md:27`,
   `hud.md:2719`); our height is not measured (inferred). Measure it on a frame against 40 virtual units and the
@@ -291,6 +284,17 @@ filed the items that cite it.
   original's wants a breakpoint on `0x0051bfc0` for `0x65` with the queue tool armed), `rj_laypath_2` matched once a click
   in ours' mix, and in the original's capture, which is on its own scale (its gains for it were about 0.04, `q632/orig`'s
   `b-match.txt`, `c-match.txt`): compare the match's score and its presence between the games, not the gain.
+- [ ] **Q672. Ctrl+click on a placed thing buys another (Q635's build).** The original's world click on a placed object
+  with Ctrl down (`GetAsyncKeyState( 0x11 )`, either Ctrl) opens no window: where the item's control-table price is at most
+  the bank it puts the item in the hand as the buy screen does, turned to the clicked thing's angle, nothing charged until
+  the put-down; a dearer one plays `cat_ui` `0x1D` and leaves the hand empty (`park-engine.md`, "Ctrl+click buys another of
+  a placed thing"). Ours opens the window (`Level.ClickWorldAt`, no Ctrl arm, nothing counted); the put-down's Ctrl half
+  is built (`ParkBuilding.PlaceCarried`). Build the arm before `OpenObjectWindow`, on Ctrl held whatever Shift and Alt
+  are (the original asks `VK_CONTROL` alone, not the modifier word that `Input.ControlAlone` and the `Clone` binding test), with the refusal through
+  `ParkBuildMode.RefusedSound`'s sound. Open: a mystery ride's clone asks for cash only (read, not run), and a fixed item
+  with no catalogue row (the gate's booths) reaches category 13 or 14, not 4. Confirm: `q635/confirm.py` (U1 becomes the
+  Belly Bounce in the hand, item 1100, no window; then put down for 500 and the queue tool), twice, and the bank at 50
+  refused with the sound, beside `q635/orig/b-run.out` and `c2-run.out`.
 - [ ] **Q690. Keypad 5 and Home reset the park camera, as the original's.** From the Q631 review (run 9). Camera-table
   rows 19 and 24 (`lib/bindtables.py`: actions `0x14` key `0x0065`, `0x18` key `0x2400`) run `0x0042a500`, which sets bit
   `0x100` of `[0x00790aac]`; the update answers at `0x0042b518`: zoom `[0x007909ec]` = 110.0, asked rotation

@@ -10094,6 +10094,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   end of `Level.Render`. Reproduced on main's build (the arrow's pixels 0.00 found over either preview), 1.00 on the
   branch, whole over the model in the original's frames (`q634/side-by-side.png`). The console's `preview` reaches the
   shop window now too.
+- [x] **Q635. Ctrl+click does not keep the same building for continuous placement. Decode first.** From Alexah's play
+  test, 2026-10-21 (note 16). The original's Ctrl+click on a placed object buys another copy of the item into the cursor
+  (`park-engine.md:3477`; help row "Hold CTRL and click to buy another", `park-engine.md:4744`; `FUN_004879d0`, refusal
+  sound `0x1D` if dearer than the balance, Q402, QUEUE:1120-1125, "Clone has nothing behind it"); the Clone binding
+  exists only as a test (`source/OpenTPW.Tests/InputBindingTests.cs:105`). Whether Ctrl while placing keeps the item is
+  not documented: decode first what the original does with Ctrl on a click while an item is in the cursor and on a
+  placed one, then build Clone. Confirm: both games, a ride cloned twice, the money and the log line.
+  Done 2026-10-25 (decode only; the build is Q672): the world click's category 4 arm tests `GetAsyncKeyState( 0x11 )`
+  (`0x00487ac0`); with Ctrl down it sets the item's control-table price against the bank, refuses a dearer one with
+  `cat_ui` `0x1D` (`0x00487b56`), and otherwise puts the item in the hand as the buy screen does (`FUN_0046c5a0( 4, item )`),
+  turned to the clicked thing's angle, with no window and nothing charged until the put-down (`park-engine.md`, "Ctrl+click
+  buys another of a placed thing"). At the put-down Ctrl keeps a queueless thing in the hand (built here already), and a
+  ride always hands over the queue tool. Note 16's gap is the first half: ours opens the window. The original
+  (`q635/orig`, rounds b and c2): Ctrl+click on the Belly Bounce, tool 0 to 4 and item 1100, no window; put down for 500
+  and the queue tool (88112 to 87612, tool 3, `c2-4-put.png`), twice over two loads; the Drinks Shop cloned, 650 under Ctrl
+  with the tool kept at 4 and item 1203, then 650 plain and the tool 0; the bank held at 50, `brk.sh` at `0x00487b56` once,
+  `esi` 500. Ours, main's build (`q635/run3`, 5 of 5): "world click: opened the window for thing 13", hand item 0; the shop
+  "Ctrl is held, so another is still in the hand" for 650 each; the ride's put-down "laying queue for thing 45"; no
+  clone counted (`q635/PREDICTION.txt`, `side-by-side.png`). Two runs void and three checks missed on the scripts' own
+  faults, recorded there.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

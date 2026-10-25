@@ -1827,6 +1827,41 @@ and `Level.ClickWorldAt` takes the window of each from its own.
 **A left click reaches the mode's own handler only when `FUN_004879d0` returned non-zero** - i.e. only
 when the world click did not consume it. A fixed "click then dispatch" sequence is wrong.
 
+### Ctrl+click buys another of a placed thing (Q635)
+
+The help row "Hold CTRL and click to buy another" is category 4's other arm (`0x00487a7b`..`0x00487bf4`). With the
+cell's object found, `GetAsyncKeyState( 0x11 )` (`0x00487ac0`) (`VK_CONTROL`, either Ctrl; Shift and Alt are not asked here) decides:
+
+- **Ctrl up:** the object's window (`FUN_00486920`), as above.
+- **Ctrl down:** the thing's item `[thing + 0xe]` is looked up in the control table (`FUN_004d3d10( item, 0 )`) and its
+  price `+4` set against the bank (`FUN_006ad810` on `FUN_005195d0`'s thing). **A price above the bank** plays `cat_ui`
+  `0x1D` (`0x00487b56`) and answers 0, with no window and no tool. **Otherwise** it installs the carry shell
+  `FUN_0046c5a0( 4, item )` - the buy screen's own purchase, so nothing is charged until the put-down - and
+  `FUN_0052f1b0( [thing + 0x10], 1 )`, which turns the hand to the clicked thing's angle. No window opens, and no
+  golden-ticket test is made: the clone of a mystery ride asks for its cash price alone (read, not run).
+
+**What happens at the put-down** is `FUN_00524960`'s, whose third argument is the modifier word (Ctrl alone is `0xC`;
+"The commit hands the player the queue tool"): a thing with **no queue** stays in the hand under Ctrl alone
+(`0x005253b8`; the add-on arm the same at `0x00524d6d`, the move's at `0x005259e2`), and a thing **with a queue** always hands the player the
+queue tool (`FUN_0052f580( 3, 0 )`), Ctrl or not, so a ride is never placed twice in a row; Ctrl there keeps only the
+rotation (`0x005259fa`). A right click puts the queue tool away (measured below), so a second ride is a second
+Ctrl+click on a placed one.
+
+Measured in the original (`q635/orig/`, `PREDICTION.txt`; the stock park off-screen, the camera 470,270 125 180):
+Ctrl+click on the Belly Bounce (51,23), category 4, took the tool word `[0x0081ae2c]` from 0 to 4, the item
+`[0x008186e0]` to 1100 and the rotation `[0x0081d7a4]` to 0 (the Belly Bounce stands at 0, so the turn is read, not
+seen), with no window (`[0x007c2658]` 0) and the bank unmoved;
+the plain put-down on (48,31) took 88112 to 87612 and the tool to 3 (`c2-4-put.png`), and in a second load on (41,22)
+the same less the gate's takings. The Drinks Shop (43,30) Ctrl+clicked took item 1203; put down with Ctrl held on
+(45,23) the bank fell 650 and the tool stayed 4 with item 1203, and a plain put-down on (45,26) fell 650 again and put
+the tool away (`b-3-4-put-ctrl.png`, `b-3-5-put-plain.png`). With the bank held at 50 (`thingpoke.py`) the Ctrl+click
+left the tool at 0 and `brk.sh` caught `0x00487b56` once, `esi` 500, the Belly Bounce's price (`b-brk.log`).
+
+**OpenTPW** (main `e457475c`, `q635/run3`, five of five): the same Ctrl+click opens the Belly Bounce's window and
+leaves the hand empty (`Level.ClickWorldAt` has no Ctrl arm; nothing is counted); the put-down's half is built
+(`ParkBuilding.PlaceCarried`: the shop kept under Ctrl, "Ctrl is held, so another is still in the hand", 650 each; the
+Belly Bounce handing over the queue tool). The clone is Q672. Side by side: `q635/side-by-side.png`.
+
 ### Picking is a real ray cast, not a grid lookup
 
 `FUN_0045bf90` builds a camera ray from the cursor, walks the terrain height grid testing the two

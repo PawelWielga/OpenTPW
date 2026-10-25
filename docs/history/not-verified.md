@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q634 (the pointer drawn last): ours on the desktop, the stock park paused, the Drinks Shop's and the Belly Bounce's
+  windows with the preview held and the pointer on its model, main's build as the control; the original off-screen at
+  800 x 600, the same two windows. Not looked at: the pointer over the advisor (the same order puts it on top, not
+  photographed), the lobby, the other object windows (the visitor's and staff member's previews are unbuilt), Full
+  Simulation (the draw order is the same in both modes).
 - Q632 (the path tool's laying sound, decode only): the original on the stock park off-screen, its music off, two
   clicks (anchor and a five-cell run) in three runs, the effect named by a breakpoint and the mix; ours on the desktop,
   the same two clicks and a refused one as the control. Not looked at: the queue tool's click and a click on the anchor
