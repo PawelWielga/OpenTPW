@@ -9907,6 +9907,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `SoundCategoryFile` summary's "the two readers agree except in four categories" (a forecast, not measured). Confirm: a test over every shipped bank that each entry's length agrees
   with its decode, `ReadSamples` and `ReadVariations` agreeing in both global categories, and the park-entry effect
   heard by capture.
+- [x] **Q622. The seaplane is invisible landing, picking up and dropping off.** From Alexah's play test, 2026-10-21
+  (note 37). Its sounds play and it works otherwise. Q583 placed the seaplane at its stop
+  (`docs/history/queue-done.md:9583-9600`) and Q26c makes vehicles on demand; sound-only vehicles use
+  `RIDE_EFFECT_SOUND_NO_PLACE` (QUEUE:139-143). Not reproduced by the drafter: find whether the thing is created and not
+  drawn (model, track, height or culling) with a `guests` / `rides` census at a seaplane arrival, then draw it. Confirm:
+  a screenshot of the seaplane on the water beside the original's.
+  **Done (2026-10-24):** the first visit was drawn; every later one was not. The take-off (`seaplanem3`) hides its five
+  meshes by visibility keys from frame 396 of 400 and the landing (`seaplanem1`) carries none, so only the original's
+  clip change shows it again: `Anim_RestoreOutgoing` clears the hidden bit on every node the outgoing clip tracks or
+  lists (`0x00472486`), then the incoming hide list is hidden (`0x00473117`; `park.md`, "The per-clip hide list").
+  Built: `LobbyModel.ShownAtChange`, applied in `LobbyModel.Rest`; a start on an idle channel counted (Q658).
+  Confirmed on the final binary (`q622/PREDICTION.txt`, run-F3): the second visit landing and at its stop beside main's
+  empty harbour (`q622/control-vs-fix.png`), and the original's seaplane drawn on its second and third visits
+  (`q622/orig/d-six.png`, `original/retrigger.py`). `mutate.py` 9 of 10 (the survivor is main's own behaviour).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

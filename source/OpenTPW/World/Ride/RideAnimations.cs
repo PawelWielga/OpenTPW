@@ -278,7 +278,14 @@ public sealed class RideAnimations
 		// The model's nodes are marked as the clip's only where the start binds it, which the caller's 0x8 says it
 		// does not (0x00473117); the frame the outgoing clip stood on is what its visibility tracks leave behind.
 		if ( (flags & AnimTimeControl.KeepShownFlag) == 0 && Clip( role, entry ) is { } clip )
+		{
 			Nodes?.Started( Array.IndexOf( _channels, channel ), clip, channel.IsIdle ? float.MaxValue : channel.AnimFrame );
+
+			// The drawn model hides a clip's hide list at a change of clip (LobbyModel.Rest); on an idle channel there is
+			// none, and the bind's hiding (0x00473117) is counted: a bought Fries Shop's construction lists its mesh 10.
+			if ( channel.IsIdle && clip.HideList.Length > 0 )
+				Unimplemented.Report( "CLIP_HIDE_LIST_ON_IDLE_CHANNEL" );
+		}
 
 		// Where the outgoing clip had already run past its end, the new one starts that far in rather than
 		// at nought, so a chain of clips does not lose a fraction of a frame at every join.

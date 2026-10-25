@@ -74,12 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q622. The seaplane is invisible landing, picking up and dropping off.** From Alexah's play test, 2026-10-21
-  (note 37). Its sounds play and it works otherwise. Q583 placed the seaplane at its stop
-  (`docs/history/queue-done.md:9583-9600`) and Q26c makes vehicles on demand; sound-only vehicles use
-  `RIDE_EFFECT_SOUND_NO_PLACE` (QUEUE:139-143). Not reproduced by the drafter: find whether the thing is created and not
-  drawn (model, track, height or culling) with a `guests` / `rides` census at a seaplane arrival, then draw it. Confirm:
-  a screenshot of the seaplane on the water beside the original's.
 - [ ] **Q623. The round fountain flashes a couple of times when first placed.** From Alexah's play test, 2026-10-21
   (note 23). Nothing in the docs or the queue names it (the only fountain hits are sounds, QUEUE:170 and :1708); not
   reproduced. Film the placement (`record.sh`) and count the frames: which draw (placement preview, the object's first
@@ -266,6 +260,15 @@ filed the items that cite it.
   Confirm: the four lines of `q621/ours.py` beside `q621/orig/r1-four.png`, each part's median and 95th percentile by
   `q621/parts.py` within 8 of the original's but the gloves' 239 (our texel's 231 at eight bits, said at the site);
   predicted first.
+- [ ] **Q658. A clip started on an idle channel hides its hide list.** From Q622. The original's bind hides a clip's hide
+  list at every start without the caller's `0x8` (`FUN_00472d70` at `0x00473117`); the drawn model here applies it only
+  at a change of clip (`LobbyModel.ShownAtChange`), so a start on an idle channel counts `CLIP_HIDE_LIST_ON_IDLE_CHANNEL`
+  (three in q622's run-F3: the seaplane's first landing, a bought Crazy Ape's and a bought Loudspeaker's builds, whose
+  lists name no mesh). In Lost
+  Kingdom the one mesh it would hide is a bought Fries Shop's mesh 10 in its construction (`lib/cliphide.py`, Q622's
+  `hidemeshes.py`). Build it where the start is known (`RideAnimations.StartOn`) and the drawn model reached; also carry
+  the start's `0x4`/`0x8` to the rest, which the engine skips on them (`park.md`, "The per-clip hide list"). Confirm:
+  a Fries Shop bought, its build filmed in both games.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,

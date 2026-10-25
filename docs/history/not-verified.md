@@ -5,6 +5,10 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q147 (`MP2File.Duration` reads the version bits; lane B, off-screen): a length fix. Textures are drawn white there, so the evidence is the
+  log and the suite: the park-entry cue (global effect 4, `keyexplode`, MPEG-1) is 3056.6 ms, 4075.5 ms with the bug put back (ratio 1.3333);
+  3094 of 3094 shipped entries run 14.4 to 78.5 ms longer than the game plays. Not run: the cue heard (the length is what changed, the
+  sample is the same), and Full Simulation's key click that plays it (`parkcue` is the same call).
 - Q615 (a make that fails after it took its id; lane B, off-screen): a sweep and a decision, no change to what runs. Textures are
   drawn white there, so the evidence is the census and the log: 61 of 61 buyable items built in a Full Simulation park, 41 of 61 in the
   stock Instant Action park (the other 20 are not in its catalogue), the End made and ended. Not run: the original at a failed make
