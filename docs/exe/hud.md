@@ -1137,6 +1137,25 @@ gives the stack's right press and click, and `Level.WorldClick`'s quick right cl
 left's. A frame whose quick right click put the hand away hands the park none of that frame's left presses (ours:
 which came first is not kept between the two buttons).
 
+### The pointer is drawn last (Q634)
+
+Decoded first-hand (Ghidra, names given this session) and seen in the original's frames. With the cursor library on
+(`CursorLib_Start`, `0x0047e7d0`, the default unless `-bwcursor`), the start sets two hooks, `[0x008bd510]` =
+`CursorLib_HookBeforeFlip` (`0x0047e9b0`) and `[0x008bd514]` = `CursorLib_HookAfterFlip` (`0x0047e9c0`).
+`Display_Present` (`0x00564210`, called from `0x0051b010` and `0x00573cc0`) calls the first, then flips (the surface's
+`+0x2c`) or blits (`+0x14`) the back buffer, then calls the second. The first is `CursorLib_DrawBeforeFlip`
+(`0x005fbd40`): it takes the library's lock and draws the pointer onto the back buffer (`CursorLib_DrawAt`,
+`0x005faef0`); the second (`0x005fbd90`) ends the draw (`0x005fb820`), sets the thread's next time and releases the
+lock. Between frames the library's own thread (`0x005fba70`) draws it again at most every `0x42` ms, and only when it
+has moved or its `+0x2c` is set (read, not run). `UI_RunPass`
+(`0x0048a580`) only hands it the shape and the position. So **the pointer goes onto the finished frame, over everything
+drawn in it**: the park, the interface, the object windows' model previews, the advisor. The frames agree
+(`q634/orig/`): in the Drinks Shop's window and the Belly Bounce's the arrow is whole over the turning model.
+
+OpenTPW: the pointer is not one of the interface's children but `RootPanel.Pointer`, drawn by `RootPanel.RenderPointer`
+at the end of `Level.Render`, after the previews, the window's warning and the advisor (it was the interface's last
+child, so the previews and the advisor, drawn after the interface, covered it). It hides with the interface under F2.
+
 ### Who acts on the click, and who on the release
 
 Decoded for `docs/QUEUE.md` Q123b, first-hand, and run in the original.

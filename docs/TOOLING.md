@@ -451,6 +451,14 @@ Each was found by trial in the item named, and cost a run to find.
   `tpwmem.py read` of the category `[0x007c24f4]`, the cell `[0x007b05cc]` and the thing `[0x007c24f8]` read the
   same cells, and the frame the bar and the pointer. The shop is aimed at (43,31), its cell furthest from the Litter Bin
   (44,29), which the first round's pixel (at the clamped zoom) met. The reference install's rows are `Language/american`'s ("edit this line").
+- **The pointer over a window's model preview in either game** (Q634, `q634/confirm.py`, `q634/orig/run.sh`): here the
+  stock park at camera (480,265) 130 180, paused, the Drinks Shop and the Belly Bounce clicked as Q478 finds them;
+  `preview 0.6` holds the turning model (the ride's window and the shop's), `place c06c` / `3e24` is the panel, and
+  `pointer` names the control under it. The arrow's own test is the frame: the share of the cursor picture's opaque
+  pixels (`Cnor.tga`, its four frames, the best kept) found within 40 of their colour in the 32 x 32 box at the pointer
+  (1.00 drawn, 0.00 covered); a shot with the pointer above the panel says the model fills the box. In the original
+  the pointer is in the captured frame (its cursor library draws it into the back buffer): Q31's shop pixel and Q478's
+  ride pixel open the windows, (270,183) of the 1024 x 768 frame is the preview's middle, OK (856,431) closes each.
 - **A message box in either game, and its cross** (Q410, `q410/confirm.py`, `q410/orig/run.sh`): here the console's
   `windows` ends "MessageBox" while one is up (the reply begins `[dbg] windows:`), and `control 9873c8` finds its
   bottom place to click; R and the gadget's Research button (`control 2b`) open one in an Instant Action park. In the

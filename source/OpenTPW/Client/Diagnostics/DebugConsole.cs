@@ -2530,19 +2530,27 @@ public static class DebugConsole
 					: "money: a park has to be loaded" );
 				break;
 
-			// The open object window's preview: what it shows, its fit and where its turn and clip stand.
-			// `preview <radians>` holds the turn there for a repeatable frame; `preview go` lets it turn.
+			// The open ride or shop window's preview, the latest opened: what it shows, its fit and where its turn and clip
+			// stand. `preview <radians>` holds the turn there for a repeatable frame; `preview go` lets it turn.
 			case "preview":
-				if ( Level.Current?.OpenObjectWindows().LastOrDefault() is not { } previewWindow )
+				var previewWindow = Level.Current?.OpenPreviewWindows().LastOrDefault();
+				(Action<float?> Hold, Func<string?> Census)? previewOf = previewWindow switch
+				{
+					UI.ParkObjectWindow ride => (ride.HoldPreview, () => ride.PreviewCensus),
+					UI.ParkShopWindow shop => (shop.HoldPreview, () => shop.PreviewCensus),
+					_ => null
+				};
+
+				if ( previewOf is not { } preview )
 				{
 					Reply( "preview: no object window is open" );
 					break;
 				}
 
 				if ( parts.Length > 1 )
-					previewWindow.HoldPreview( parts[1] == "go" ? null : (float)Argument( 1 ) );
+					preview.Hold( parts[1] == "go" ? null : (float)Argument( 1 ) );
 
-				Reply( $"preview: {previewWindow.PreviewCensus ?? "none built"}" );
+				Reply( $"preview: {preview.Census() ?? "none built"}" );
 				break;
 
 			// Every bound hoarding: its panels, texture, progress and flags.

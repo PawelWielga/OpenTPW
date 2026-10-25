@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q632 (the path tool's laying sound, decode only): the original on the stock park off-screen, its music off, two
+  clicks (anchor and a five-cell run) in three runs, the effect named by a breakpoint and the mix; ours on the desktop,
+  the same two clicks and a refused one as the control. Not looked at: the queue tool's click and a click on the anchor
+  in either game, the coaster bar's track tool (unbuilt), the original's sound beside an open park screen, Full
+  Simulation (the commit is the same in both modes). The original's mix cannot tell `rj_laypath_2` from `laysmall`.
 - Q631 (W, A, S and D pan, the arrows zoom, all-items and all-staff on O and E): ours on the stock park on the desktop
   at 1280 x 720, each key held once; the original off-screen with the reference player's 90 degree turn set. Not looked
   at: the keypad's keys in ours (tests only), a pan under the full-screen view or in Full Simulation (the camera's keys

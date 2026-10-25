@@ -19,6 +19,12 @@ public class RootPanel
 	public List<Panel> Children { get; set; } = new();
 
 	/// <summary>
+	/// The pointer, held apart from <see cref="Children"/> so it can be drawn last in the frame, over the object
+	/// windows' model previews and the advisor as well as the interface (<see cref="RenderPointer"/>).
+	/// </summary>
+	public Panel? Pointer { get; set; }
+
+	/// <summary>
 	/// Hides the whole HUD, so a screenshot shows the scene with nothing in front of it.
 	/// Toggled with <see cref="InputButton.HideUI"/> (F2), OpenTPW's own key, kept beside the original's full-screen
 	/// view on F3 (<c>docs/DECISIONS.md</c>). Static so it survives the panel being rebuilt when a level is loaded.
@@ -31,6 +37,19 @@ public class RootPanel
 			return;
 
 		Children.ForEach( child => child.Draw() );
+	}
+
+	/// <summary>
+	/// Draws the pointer over the finished frame. <see cref="Level"/> calls it after every other draw: the original's
+	/// cursor library draws it onto the back buffer just before the flip (<c>Display_Present</c>, <c>0x00564210</c>;
+	/// <c>docs/exe/hud.md</c>, "The pointer is drawn last"). Hidden with the rest of the interface.
+	/// </summary>
+	public void RenderPointer()
+	{
+		if ( Hidden )
+			return;
+
+		Pointer?.Draw();
 	}
 
 	public void Update()

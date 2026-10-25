@@ -86,10 +86,6 @@ filed the items that cite it.
   picks up the path tool, as the original's does (`0x00524a63`). What did you see? (a) right after placing a ride, the
   squares or pointer looked like the path tool's; (b) after a click the queue tool was gone and further clicks laid path;
   (c) path pieces appeared where you laid queue; (d) something else - please describe.
-- [ ] **Q634. In the shop and ride windows the cursor is hidden behind the 3D model preview.** From Alexah's play test,
-  2026-10-21 (note 15). Nothing in the docs or queue; not reproduced. Find the draw order of the preview's pass against
-  the pointer's (the pointer is drawn last in the original: decode first where). Confirm: a screenshot with the pointer
-  over the preview.
 - [ ] **Q635. Ctrl+click does not keep the same building for continuous placement. Decode first.** From Alexah's play
   test, 2026-10-21 (note 16). The original's Ctrl+click on a placed object buys another copy of the item into the cursor
   (`park-engine.md:3477`; help row "Hold CTRL and click to buy another", `park-engine.md:4744`; `FUN_004879d0`, refusal

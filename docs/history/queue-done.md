@@ -10084,6 +10084,16 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   quiet. Ours, the main build (`q632/run1`, 3 of 3): "path: anchored at (62,18)", "path: laid 5 from (62,18) to
   (66,18)", the mix silent there (0.000) and the count 2; the control's `blnl_error1` 0.986. `RunQueue` neither plays
   nor counts `0x65`. `lib/sfxmap.py` now names an effect's samples (`q632/PREDICTION.txt`, `side-by-side.png`).
+- [x] **Q634. In the shop and ride windows the cursor is hidden behind the 3D model preview.** From Alexah's play test,
+  2026-10-21 (note 15). Nothing in the docs or queue; not reproduced. Find the draw order of the preview's pass against
+  the pointer's (the pointer is drawn last in the original: decode first where). Confirm: a screenshot with the pointer
+  over the preview.
+  Done 2026-10-25: the original's cursor library draws the pointer onto the finished back buffer from `Display_Present`
+  (`0x00564210`) just before the flip (`hud.md`, "The pointer is drawn last"). Ours drew it as the interface's last
+  child, and the previews, the window's warning and the advisor came after; it is now `RootPanel.Pointer`, drawn at the
+  end of `Level.Render`. Reproduced on main's build (the arrow's pixels 0.00 found over either preview), 1.00 on the
+  branch, whole over the model in the original's frames (`q634/side-by-side.png`). The console's `preview` reaches the
+  shop window now too.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

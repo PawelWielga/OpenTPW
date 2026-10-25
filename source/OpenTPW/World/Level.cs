@@ -1398,7 +1398,9 @@ public class Level
 		// Over the interface it decorates and under the pointer, which is the order SetupHud uses.
 		Hud.AddChild( new ScreenParticles() );
 
-		_cursor = Hud.AddChild( new Cursor() );
+		// Not a child: the pointer is drawn after the overlay pass (Render).
+		_cursor = new Cursor();
+		Hud.Pointer = _cursor;
 	}
 
 	private void SetupHud()
@@ -1416,7 +1418,8 @@ public class Level
 		// On-screen particle effects go over the interface they decorate, and under the pointer.
 		Hud.AddChild( new ScreenParticles() );
 
-		Hud.AddChild( new Cursor() );
+		// Not a child: the pointer is drawn after the overlay pass (Render).
+		Hud.Pointer = new Cursor();
 	}
 
 	/// <summary>
@@ -2742,9 +2745,10 @@ public class Level
 	/// <returns>Whether one was open.</returns>
 	internal bool CloseParkScreen() => _windows?.CloseParkScreen() == true;
 
-	/// <summary>The object windows open in this park, oldest first - the debug console's way to the preview.</summary>
-	internal IEnumerable<UI.ParkObjectWindow> OpenObjectWindows()
-		=> _windows?.Windows.OfType<UI.ParkObjectWindow>() ?? [];
+	/// <summary>The windows open in this park that turn a model in a preview, the ride's and the shop's, oldest first - the
+	/// debug console's way to the preview.</summary>
+	internal IEnumerable<UI.UiWindow> OpenPreviewWindows()
+		=> _windows?.Windows.Where( window => window is UI.ParkObjectWindow or UI.ParkShopWindow ) ?? [];
 
 	/// <summary>
 	/// Opens the management window for one thing - the original's <c>FUN_00486920</c>, which switches
@@ -2979,7 +2983,7 @@ public class Level
 		// because it is not an entity at all - see RootPanel.
 		Hud.Render();
 
-		// Then whatever sits on the screen in front of everything, the HUD included - the advisor,
+		// Then whatever sits on the screen in front of everything but the pointer, the HUD included - the advisor,
 		// who covers whatever he pops up over. Depth is cleared first so nothing drawn before can
 		// cut into him: the original draws him in screen space, flattened almost to nothing in
 		// depth.
@@ -3009,5 +3013,9 @@ public class Level
 		}
 
 		Entity.All.ForEach( entity => entity.RenderOverlay() );
+
+		// The pointer goes over everything, the previews and the advisor included, as the original's cursor library
+		// draws it onto the finished frame just before the flip (0x00564210; docs/exe/hud.md, "The pointer is drawn last").
+		Hud.RenderPointer();
 	}
 }
